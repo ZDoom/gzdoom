@@ -11,6 +11,7 @@
 #include "templates.h"
 #include "serializer.h"
 #include "r_data/r_translate.h"
+#include "vm.h"
 
 //----------------------------------------------------------------------------
 //

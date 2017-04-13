@@ -51,6 +51,8 @@
 #include "gi.h"
 #include "i_sound.h"
 #include "cmdlib.h"
+#include "vm.h"
+#include "types.h"
 
 
 
@@ -371,7 +373,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("ListMenuItem"))
 			{
-				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", true));
+				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
 				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
@@ -384,7 +386,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						params.Push(desc);
 						start = 2;
 					}
-					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
+					auto TypeCVar = NewPointer(NewStruct("CVar", nullptr, true));
 
 					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
 					TArray<FString> strings(args.Size());
@@ -480,7 +482,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 					}
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
-					GlobalVMStack.Call(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
+					VMCall(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
 
 					if (cls->IsDescendantOf("ListMenuItemSelectable"))
@@ -746,14 +748,14 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 			PClass *cls = PClass::FindClass(buildname);
 			if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
 			{
-				auto func = dyn_cast<PFunction>(cls->Symbols.FindSymbol("Init", true));
+				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
 				if (func != nullptr && !(func->Variants[0].Flags & (VARF_Protected | VARF_Private)))	// skip internal classes which have a protexted init method.
 				{
 					auto &args = func->Variants[0].Proto->ArgumentTypes;
 					TArray<VMValue> params;
 
 					params.Push(0);
-					auto TypeCVar = NewPointer(NewNativeStruct("CVar", nullptr));
+					auto TypeCVar = NewPointer(NewStruct("CVar", nullptr, true));
 
 					// Note that this array may not be reallocated so its initial size must be the maximum possible elements.
 					TArray<FString> strings(args.Size());
@@ -837,7 +839,7 @@ static void ParseOptionMenuBody(FScanner &sc, DOptionMenuDescriptor *desc)
 
 					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
 					params[0] = item;
-					GlobalVMStack.Call(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
+					VMCall(func->Variants[0].Implementation, &params[0], params.Size(), nullptr, 0);
 					desc->mItems.Push((DMenuItemBase*)item);
 
 					success = true;

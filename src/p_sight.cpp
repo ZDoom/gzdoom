@@ -24,6 +24,7 @@
 #include "r_utility.h"
 #include "b_bot.h"
 #include "p_spec.h"
+#include "vm.h"
 
 // State.
 #include "r_state.h"

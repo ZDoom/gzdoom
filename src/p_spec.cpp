@@ -76,6 +76,7 @@
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
+#include "vm.h"
 
 // State.
 #include "r_state.h"

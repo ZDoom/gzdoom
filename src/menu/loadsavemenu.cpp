@@ -48,6 +48,7 @@
 #include "d_gui.h"
 #include "serializer.h"
 #include "resourcefiles/resourcefile.h"
+#include "vm.h"
 
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24

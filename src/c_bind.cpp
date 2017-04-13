@@ -46,6 +46,7 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "dobject.h"
+#include "vm.h"
 
 #include <math.h>
 #include <stdlib.h>

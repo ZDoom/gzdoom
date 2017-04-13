@@ -39,7 +39,9 @@
 
 #include "tarray.h"
 #include "dobject.h"
-#include "thingdef.h"
+#include "vm.h"
+#include "types.h"
+
 // We need one specific type for each of the 7 integral VM types and instantiate the needed functions for each of them.
 // Dynamic arrays cannot hold structs because for every type there'd need to be an internal implementation which is impossible.
 
@@ -97,7 +99,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I8, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -200,7 +202,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I16, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -303,7 +305,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I32, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -406,7 +408,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_F32, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -509,7 +511,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_F64, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -612,7 +614,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -716,7 +718,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_String, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }

@@ -3,6 +3,7 @@
 
 #include "memarena.h"
 #include "sc_man.h"
+#include "types.h"
 
 struct ZCCToken
 {
@@ -193,9 +194,9 @@ struct ZCC_NamedNode : ZCC_TreeNode
 
 struct ZCC_Struct : ZCC_NamedNode
 {
-	VM_UWORD Flags;
+	uint32_t Flags;
 	ZCC_TreeNode *Body;
-	PStruct *Type;
+	PContainerType *Type;
 	VersionInfo Version;
 };
 
@@ -209,7 +210,7 @@ struct ZCC_Class : ZCC_Struct
 	ZCC_Identifier *ParentName;
 	ZCC_Identifier *Replaces;
 
-	PClass *CType() { return static_cast<PClass *>(Type); }
+	PClass *CType() { return static_cast<PClassType *>(Type)->Descriptor; }
 };
 
 struct ZCC_Enum : ZCC_NamedNode

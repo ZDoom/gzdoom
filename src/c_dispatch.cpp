@@ -55,6 +55,7 @@
 #include "d_main.h"
 #include "serializer.h"
 #include "menu/menu.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 

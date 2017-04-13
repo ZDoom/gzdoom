@@ -14,6 +14,7 @@
 #include "d_net.h"
 #include "serializer.h"
 #include "d_player.h"
+#include "vm.h"
 
 IMPLEMENT_CLASS(DBot, false, true)
 

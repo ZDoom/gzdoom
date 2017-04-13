@@ -68,7 +68,7 @@
 #include "r_utility.h"
 #include "thingdef.h"
 #include "d_player.h"
-#include "virtual.h"
+#include "vm.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
 #include "events.h"
@@ -152,9 +152,6 @@ AActor::~AActor ()
 	// Please avoid calling the destructor directly (or through delete)!
 	// Use Destroy() instead.
 }
-
-extern FFlagDef InternalActorFlagDefs[];
-extern FFlagDef ActorFlagDefs[];
 
 DEFINE_FIELD(AActor, snext)
 DEFINE_FIELD(AActor, player)
@@ -632,8 +629,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		}
 		if (!(newstate->UseFlags & SUF_ACTOR))
 		{
-			auto so = FState::StaticFindStateOwner(newstate);
-			Printf(TEXTCOLOR_RED "State %s.%d in %s not flagged for use as an actor sprite\n", so->TypeName.GetChars(), int(newstate - so->OwnedStates), GetClass()->TypeName.GetChars());
+			Printf(TEXTCOLOR_RED "State %s in %s not flagged for use as an actor sprite\n", FState::StaticGetStateName(newstate), GetClass()->TypeName.GetChars());
 			state = nullptr;
 			Destroy();
 			return false;
@@ -842,7 +838,7 @@ void AActor::RemoveInventory(AInventory *item)
 				IFVIRTUALPTR(item, AInventory, DetachFromOwner)
 				{
 					VMValue params[1] = { item };
-					GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+					VMCall(func, params, 1, nullptr, 0);
 				}
 
 				item->Owner = NULL;
@@ -1110,7 +1106,7 @@ AInventory *AActor::DropInventory (AInventory *item, int amt)
 	{
 		VMValue params[] = { (DObject*)item, amt };
 		VMReturn ret((void**)&drop);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1, nullptr);
+		VMCall(func, params, countof(params), &ret, 1);
 	}
 	if (drop == nullptr) return NULL;
 	drop->SetOrigin(PosPlusZ(10.), false);
@@ -1606,22 +1602,21 @@ bool AActor::IsVisibleToPlayer() const
 		(signed)(VisibleToTeam-1) != players[consoleplayer].userinfo.GetTeam() )
 		return false;
 
+	auto &vis = GetInfo()->VisibleToPlayerClass;
+	if (vis.Size() == 0) return true;	// early out for the most common case.
+
 	const player_t* pPlayer = players[consoleplayer].camera->player;
 
-	if (pPlayer && pPlayer->mo && GetClass()->VisibleToPlayerClass.Size() > 0)
+	if (pPlayer)
 	{
-		bool visible = false;
-		for(unsigned int i = 0;i < GetClass()->VisibleToPlayerClass.Size();++i)
+		for(auto cls : vis)
 		{
-			auto cls = GetClass()->VisibleToPlayerClass[i];
 			if (cls && pPlayer->mo->GetClass()->IsDescendantOf(cls))
 			{
-				visible = true;
-				break;
+				return true;
 			}
 		}
-		if (!visible)
-			return false;
+		return false;
 	}
 
 	// [BB] Passed all checks.
@@ -1683,7 +1678,7 @@ void AActor::CallTouch(AActor *toucher)
 	IFVIRTUAL(AActor, Touch)
 	{
 		VMValue params[2] = { (DObject*)this, toucher };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 	else Touch(toucher);
 }
@@ -3575,7 +3570,7 @@ int AActor::GetMissileDamage (int mask, int add)
 
 	result.IntAt(&amount);
 
-	if (GlobalVMStack.Call(DamageFunc, &param, 1, &result, 1) < 1)
+	if (VMCall(DamageFunc, &param, 1, &result, 1) < 1)
 	{ // No results
 		return 0;
 	}
@@ -3640,7 +3635,7 @@ bool AActor::CallSlam(AActor *thing)
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		VMCall(func, params, 2, &ret, 1);
 		return !!retval;
 
 	}
@@ -3658,7 +3653,7 @@ int AActor::SpecialMissileHit (AActor *victim)
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		VMCall(func, params, 2, &ret, 1);
 		return retval;
 	}
 	else return -1;
@@ -3718,7 +3713,7 @@ int AActor::AbsorbDamage(int damage, FName dmgtype)
 		IFVIRTUALPTR(item, AInventory, AbsorbDamage)
 		{
 			VMValue params[4] = { item, damage, dmgtype.GetIndex(), &damage };
-			GlobalVMStack.Call(func, params, 4, nullptr, 0, nullptr);
+			VMCall(func, params, 4, nullptr, 0);
 		}
 	}
 	return damage;
@@ -3738,7 +3733,7 @@ void AActor::AlterWeaponSprite(visstyle_t *vis)
 		IFVIRTUALPTR(items[i], AInventory, AlterWeaponSprite)
 		{
 			VMValue params[3] = { items[i], vis, &changed };
-			GlobalVMStack.Call(func, params, 3, nullptr, 0, nullptr);
+			VMCall(func, params, 3, nullptr, 0);
 		}
 	}
 }
@@ -3893,7 +3888,7 @@ PClassActor *AActor::GetBloodType(int type) const
 		VMValue params[] = { (DObject*)this, type };
 		PClassActor *res;
 		VMReturn ret((void**)&res);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+		VMCall(func, params, countof(params), &ret, 1);
 		return res;
 	}
 	return nullptr;
@@ -4053,7 +4048,7 @@ void AActor::Tick ()
 			IFVIRTUALPTR(item, AInventory, DoEffect)
 			{
 				VMValue params[1] = { item };
-				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				VMCall(func, params, 1, nullptr, 0);
 			}
 			item = item->Inventory;
 		}
@@ -5043,7 +5038,7 @@ PClassActor *ClassForSpawn(FName classname)
 	{
 		I_Error("Attempt to spawn actor of unknown type '%s'\n", classname.GetChars());
 	}
-	if (!cls->IsKindOf(RUNTIME_CLASS(PClassActor)))
+	if (!cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
 	{
 		I_Error("Attempt to spawn non-actor of type '%s'\n", classname.GetChars());
 	}
@@ -5141,7 +5136,7 @@ void AActor::CallBeginPlay()
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 	else BeginPlay();
 }
@@ -5232,7 +5227,7 @@ void AActor::CallActivate(AActor *activator)
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[2] = { (DObject*)this, (DObject*)activator };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 	else Activate(activator);
 }
@@ -5278,7 +5273,7 @@ void AActor::CallDeactivate(AActor *activator)
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[2] = { (DObject*)this, (DObject*)activator };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 	else Deactivate(activator);
 }
@@ -5584,7 +5579,7 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 		IFVIRTUALPTR(p->mo, APlayerPawn, OnRespawn)
 		{
 			VMValue param = p->mo;
-			GlobalVMStack.Call(func, &param, 1, nullptr, 0);
+			VMCall(func, &param, 1, nullptr, 0);
 		}
 	}
 
@@ -5865,7 +5860,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 			Printf ("%s at (%.1f, %.1f) has no frames\n",
 					i->TypeName.GetChars(), mthing->pos.X, mthing->pos.Y);
 			i = PClass::FindActor("Unknown");
-			assert(i->IsKindOf(RUNTIME_CLASS(PClassActor)));
+			assert(i->IsDescendantOf(RUNTIME_CLASS(AActor)));
 		}
 
 	const AActor *info = GetDefaultByType (i);
@@ -7460,7 +7455,7 @@ int AActor::CallDoSpecialDamage(AActor *target, int damage, FName damagetype)
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 4, &ret, 1, nullptr);
+		VMCall(func, params, 4, &ret, 1);
 		return retval;
 	}
 	else return DoSpecialDamage(target, damage, damagetype);
@@ -7525,7 +7520,7 @@ int AActor::CallTakeSpecialDamage(AActor *inflictor, AActor *source, int damage,
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 5, &ret, 1, nullptr);
+		VMCall(func, params, 5, &ret, 1);
 		return retval;
 	}
 	else return TakeSpecialDamage(inflictor, source, damage, damagetype);
@@ -7669,7 +7664,7 @@ int AActor::GetGibHealth() const
 		VMValue params[] = { (DObject*)this };
 		int h;
 		VMReturn ret(&h);
-		GlobalVMStack.Call(func, params, 1, &ret, 1);
+		VMCall(func, params, 1, &ret, 1);
 		return h;
 	}
 	return -SpawnHealth();
@@ -7689,7 +7684,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetCameraHeight)
 
 FDropItem *AActor::GetDropItems() const
 {
-	return GetClass()->DropItems;
+	return GetInfo()->DropItems;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, GetDropItems)
@@ -7805,7 +7800,7 @@ int AActor::GetModifiedDamage(FName damagetype, int damage, bool passive)
 		IFVIRTUALPTR(inv, AInventory, ModifyDamage)
 		{
 			VMValue params[5] = { (DObject*)inv, damage, int(damagetype), &damage, passive };
-			GlobalVMStack.Call(func, params, 5, nullptr, 0, nullptr);
+			VMCall(func, params, 5, nullptr, 0);
 		}
 		inv = inv->Inventory;
 	}
@@ -7826,7 +7821,7 @@ int AActor::ApplyDamageFactor(FName damagetype, int damage) const
 	damage = int(damage * DamageFactor);
 	if (damage > 0)
 	{
-		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, GetClass()->DamageFactors);
+		damage = DamageTypeDefinition::ApplyMobjDamageFactor(damage, damagetype, &GetInfo()->DamageFactors);
 	}
 	return damage;
 }
@@ -8277,10 +8272,10 @@ DEFINE_ACTION_FUNCTION(AActor, ApplyDamageFactors)
 	PARAM_INT(damage);
 	PARAM_INT(defdamage);
 
-	DmgFactors *df = itemcls->DamageFactors;
-	if (df != nullptr && df->CountUsed() != 0)
+	DmgFactors &df = itemcls->ActorInfo()->DamageFactors;
+	if (df.Size() != 0)
 	{
-		ACTION_RETURN_INT(df->Apply(damagetype, damage));
+		ACTION_RETURN_INT(df.Apply(damagetype, damage));
 	}
 	else
 	{

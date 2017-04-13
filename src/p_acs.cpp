@@ -87,6 +87,8 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "stats.h"
+#include "types.h"
+#include "vm.h"
 
 	// P-codes for ACS scripts
 	enum
@@ -5012,7 +5014,7 @@ int DLevelScript::LineFromID(int id)
 
 bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type, bool readonly)
 {
-	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 	PArray *arraytype;
 
 	if (var == NULL || (!readonly && (var->Flags & VARF_Native)))
@@ -5362,7 +5364,7 @@ static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 		{
 			I_Error("ACS call to unknown class in script function %s.%s", clsname, funcname);
 		}
-		auto funcsym = dyn_cast<PFunction>(cls->Symbols.FindSymbol(funcname, true));
+		auto funcsym = dyn_cast<PFunction>(cls->FindSymbol(funcname, true));
 		if (funcsym == nullptr)
 		{
 			I_Error("ACS call to unknown script function %s.%s", clsname, funcname);
@@ -5431,7 +5433,7 @@ static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 		// The return value can be the same types as the parameter types, plus void
 		if (func->Proto->ReturnTypes.Size() == 0)
 		{
-			GlobalVMStack.Call(func, &params[0], params.Size(), nullptr, 0);
+			VMCall(func, &params[0], params.Size(), nullptr, 0);
 		}
 		else
 		{
@@ -5439,7 +5441,7 @@ static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 			if (rettype == TypeSInt32 || rettype == TypeBool || rettype == TypeColor || rettype == TypeName || rettype == TypeSound)
 			{
 				VMReturn ret(&retval);
-				GlobalVMStack.Call(func, &params[0], params.Size(), &ret, 1);
+				VMCall(func, &params[0], params.Size(), &ret, 1);
 				if (rettype == TypeName)
 				{
 					retval = GlobalACSStrings.AddString(FName(ENamedName(retval)));
@@ -5453,20 +5455,20 @@ static int ScriptCall(AActor *activator, unsigned argc, int32_t *args)
 			{
 				double d;
 				VMReturn ret(&d);
-				GlobalVMStack.Call(func, &params[0], params.Size(), &ret, 1);
+				VMCall(func, &params[0], params.Size(), &ret, 1);
 				retval = DoubleToACS(d);
 			}
 			else if (rettype == TypeString)
 			{
 				FString d;
 				VMReturn ret(&d);
-				GlobalVMStack.Call(func, &params[0], params.Size(), &ret, 1);
+				VMCall(func, &params[0], params.Size(), &ret, 1);
 				retval = GlobalACSStrings.AddString(d);
 			}
 			else
 			{
 				// All other return values can not be handled so ignore them.
-				GlobalVMStack.Call(func, &params[0], params.Size(), nullptr, 0);
+				VMCall(func, &params[0], params.Size(), nullptr, 0);
 			}
 		}
 	}
@@ -6910,7 +6912,7 @@ static void SetMarineWeapon(AActor *marine, int weapon)
 	if (smw)
 	{
 		VMValue params[2] = { marine, weapon };
-		GlobalVMStack.Call(smw, params, 2, nullptr, 0, nullptr);
+		VMCall(smw, params, 2, nullptr, 0);
 	}
 }
 
@@ -6921,7 +6923,7 @@ static void SetMarineSprite(AActor *marine, PClassActor *source)
 	if (sms)
 	{
 		VMValue params[2] = { marine, source };
-		GlobalVMStack.Call(sms, params, 2, nullptr, 0, nullptr);
+		VMCall(sms, params, 2, nullptr, 0);
 	}
 }
 
@@ -9777,8 +9779,7 @@ scriptwait:
 			}
 			else
 			{
-				AInventory *item = activator->FindInventory (dyn_cast<PClassActor>(
-					PClass::FindClass (FBehavior::StaticLookupString (STACK(1)))));
+				AInventory *item = activator->FindInventory (PClass::FindActor (FBehavior::StaticLookupString (STACK(1))));
 
 				if (item == NULL || !item->IsKindOf(NAME_Weapon))
 				{

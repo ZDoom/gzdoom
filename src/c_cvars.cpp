@@ -52,6 +52,7 @@
 #include "v_video.h"
 #include "colormatcher.h"
 #include "menu/menu.h"
+#include "vm.h"
 
 struct FLatchedValue
 {

@@ -844,7 +844,7 @@ namespace swrenderer
 			//if (thing->validcount == validcount) continue;
 			//thing->validcount = validcount;
 
-			FIntCVar *cvar = thing->GetClass()->distancecheck;
+			FIntCVar *cvar = thing->GetInfo()->distancecheck;
 			if (cvar != nullptr && *cvar >= 0)
 			{
 				double dist = (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared();

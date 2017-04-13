@@ -42,6 +42,7 @@
 #include "i_system.h"
 #include "v_video.h"
 #include "g_level.h"
+#include "vm.h"
 
 gameinfo_t gameinfo;
 

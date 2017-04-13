@@ -82,6 +82,8 @@
 #include "r_utility.h"
 #include "sbar.h"
 #include "actorinlines.h"
+#include "vm.h"
+#include "types.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
 
@@ -130,8 +132,7 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 	{
 		if (!(state->UseFlags & SUF_ITEM))
 		{
-			auto so = FState::StaticFindStateOwner(state);
-			Printf(TEXTCOLOR_RED "State %s.%d not flagged for use in CustomInventory state chains.\n", so->TypeName.GetChars(), int(state - so->OwnedStates));
+			Printf(TEXTCOLOR_RED "State %s not flagged for use in CustomInventory state chains.\n", FState::StaticGetStateName(state));
 			return false;
 		}
 
@@ -144,8 +145,8 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
 				auto owner = FState::StaticFindStateOwner(state);
-				Printf(TEXTCOLOR_RED "Unsafe state call in state %s.%d to %s which accesses user variables. The action function has been removed from this state\n",
-					owner->TypeName.GetChars(), int(state - owner->OwnedStates), state->ActionFunc->PrintableName.GetChars());
+				Printf(TEXTCOLOR_RED "Unsafe state call in state %s to %s which accesses user variables. The action function has been removed from this state\n",
+					FState::StaticGetStateName(state), state->ActionFunc->PrintableName.GetChars());
 				state->ActionFunc = nullptr;
 			}
 
@@ -183,14 +184,12 @@ bool AStateProvider::CallStateChain (AActor *actor, FState *state)
 			}
 			try
 			{
-				GlobalVMStack.Call(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
+				VMCall(state->ActionFunc, params, state->ActionFunc->ImplicitArgs, wantret, numret);
 			}
 			catch (CVMAbortException &err)
 			{
 				err.MaybePrintMessage();
-				auto owner = FState::StaticFindStateOwner(state);
-				int offs = int(state - owner->OwnedStates);
-				err.stacktrace.AppendFormat("Called from state %s.%d in inventory state chain in %s\n", owner->TypeName.GetChars(), offs, GetClass()->TypeName.GetChars());
+				err.stacktrace.AppendFormat("Called from state %s in inventory state chain in %s\n", FState::StaticGetStateName(state), GetClass()->TypeName.GetChars());
 				throw;
 			}
 
@@ -3320,9 +3319,9 @@ DEFINE_ACTION_FUNCTION(AActor, A_SpawnDebris)
 			{
 				mo->Translation = self->Translation;
 			}
-			if (i < mo->GetClass()->NumOwnedStates)
+			if (i < mo->GetInfo()->NumOwnedStates)
 			{
-				mo->SetState (mo->GetClass()->OwnedStates + i);
+				mo->SetState (mo->GetInfo()->OwnedStates + i);
 			}
 			mo->Vel.X = mult_h * pr_spawndebris.Random2() / 64.;
 			mo->Vel.Y = mult_h * pr_spawndebris.Random2() / 64.;
@@ -4752,7 +4751,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_ChangeVelocity)
 
 static PField *GetVar(DObject *self, FName varname)
 {
-	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 
 	if (var == NULL || (var->Flags & (VARF_Native | VARF_Private | VARF_Protected | VARF_Static)) || !var->Type->IsKindOf(RUNTIME_CLASS(PBasicType)))
 	{
@@ -4801,7 +4800,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetUserVarFloat)
 
 static PField *GetArrayVar(DObject *self, FName varname, int pos)
 {
-	PField *var = dyn_cast<PField>(self->GetClass()->Symbols.FindSymbol(varname, true));
+	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
 
 	if (var == NULL || (var->Flags & (VARF_Native | VARF_Private | VARF_Protected | VARF_Static)) ||
 		!var->Type->IsKindOf(RUNTIME_CLASS(PArray)) ||

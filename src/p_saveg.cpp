@@ -852,7 +852,7 @@ void CopyPlayer(player_t *dst, player_t *src, const char *name)
 	{
 		dst->userinfo.TransferFrom(uibackup);
 		// The player class must come from the save, so that the menu reflects the currently playing one.
-		dst->userinfo.PlayerClassChanged(src->mo->GetClass()->DisplayName); 
+		dst->userinfo.PlayerClassChanged(src->mo->GetInfo()->DisplayName); 
 	}
 
 	// Validate the skin

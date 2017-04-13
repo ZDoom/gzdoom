@@ -47,6 +47,7 @@
 #include "templates.h"
 #include "po_man.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 sector_t *P_PointInSectorBuggy(double x, double y);
 int P_VanillaPointOnDivlineSide(double x, double y, const divline_t* line);

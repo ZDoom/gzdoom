@@ -41,6 +41,7 @@
 #include "v_font.h"
 #include "v_video.h"
 #include "w_wad.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -154,7 +154,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 
 bool RenderPolySprite::IsThingCulled(AActor *thing)
 {
-	FIntCVar *cvar = thing->GetClass()->distancecheck;
+	FIntCVar *cvar = thing->GetInfo()->distancecheck;
 	if (cvar != nullptr && *cvar >= 0)
 	{
 		double dist = (thing->Pos() - PolyRenderer::Instance()->Viewpoint.Pos).LengthSquared();

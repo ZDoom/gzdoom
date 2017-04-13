@@ -61,7 +61,7 @@
 #include "p_local.h"
 #include "menu/menu.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 #include "actorinlines.h"
 
 // The conversations as they exist inside a SCRIPTxx lump.
@@ -367,7 +367,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpea
 	node->SpeakerName = speech.Name;
 
 	// The item the speaker should drop when killed.
-	node->DropType = dyn_cast<PClassActor>(GetStrifeType(speech.DropType));
+	node->DropType = GetStrifeType(speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
 	node->ItemCheck.Resize(3);
@@ -447,7 +447,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, uint32_t &prevSpea
 	node->SpeakerName = speech.Name;
 
 	// The item the speaker should drop when killed.
-	node->DropType = dyn_cast<PClassActor>(GetStrifeType (speech.DropType));
+	node->DropType = GetStrifeType (speech.DropType);
 
 	// Items you need to have to make the speaker use a different node.
 	node->ItemCheck.Resize(3);
@@ -512,7 +512,7 @@ static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses)
 		reply->LogString = "";
 
 		// The item to receive when this reply is used.
-		reply->GiveType = dyn_cast<PClassActor>(GetStrifeType (rsp->GiveType));
+		reply->GiveType = GetStrifeType (rsp->GiveType);
 		reply->ActionSpecial = 0;
 
 		// Do you need anything special for this reply to succeed?
@@ -639,7 +639,7 @@ static void TakeStrifeItem (player_t *player, PClassActor *itemtype, int amount)
 		return;
 
 	// Don't take the sigil.
-	if (itemtype->GetClass()->TypeName == NAME_Sigil)
+	if (itemtype->TypeName == NAME_Sigil)
 		return;
 
 	player->mo->TakeInventory(itemtype, amount);
@@ -867,7 +867,7 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 		{
 			VMValue params[] = { cmenu, CurNode, pc->player, StaticLastReply };
 			VMReturn ret(&ConversationMenuY);
-			GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+			VMCall(func, params, countof(params), &ret, 1);
 		}
 
 		if (CurNode != PrevNode)

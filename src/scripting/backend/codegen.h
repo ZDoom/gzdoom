@@ -46,6 +46,8 @@
 #include "actor.h"
 #include "vmbuilder.h"
 #include "scopebarrier.h"
+#include "types.h"
+#include "vmintern.h"
 
 
 #define CHECKRESOLVED() if (isresolved) return this; isresolved=true;
@@ -78,7 +80,7 @@ struct FCompileContext
 	FxCompoundStatement *Block = nullptr;
 	PPrototype *ReturnProto;
 	PFunction *Function;	// The function that is currently being compiled (or nullptr for constant evaluation.)
-	PStruct *Class;			// The type of the owning class.
+	PContainerType *Class;		// The type of the owning class.
 	bool FromDecorate;		// DECORATE must silence some warnings and demote some errors.
 	int StateIndex;			// index in actor's state table for anonymous functions, otherwise -1 (not used by DECORATE which pre-resolves state indices)
 	int StateCount;			// amount of states an anoymous function is being used on (must be 1 for state indices to be allowed.)
@@ -90,7 +92,7 @@ struct FCompileContext
 	FString VersionString;
 
 	FCompileContext(PNamespace *spc, PFunction *func, PPrototype *ret, bool fromdecorate, int stateindex, int statecount, int lump, const VersionInfo &ver);
-	FCompileContext(PNamespace *spc, PStruct *cls, bool fromdecorate);	// only to be used to resolve constants!
+	FCompileContext(PNamespace *spc, PContainerType *cls, bool fromdecorate);	// only to be used to resolve constants!
 
 	PSymbol *FindInClass(FName identifier, PSymbolTable *&symt);
 	PSymbol *FindInSelfClass(FName identifier, PSymbolTable *&symt);
@@ -333,10 +335,11 @@ public:
 	bool IsPointer() const { return ValueType->GetRegType() == REGT_POINTER; }
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
 	bool IsBoolCompat() const { return ValueType->GetRegCount() == 1 && (ValueType->GetRegType() == REGT_INT || ValueType->GetRegType() == REGT_FLOAT || ValueType->GetRegType() == REGT_POINTER); }
-	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && !ValueType->IsKindOf(RUNTIME_CLASS(PClassPointer)) && ValueType != TypeNullPtr && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PClass)); }
+	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PObjectPointer)); }
 	bool IsArray() const { return ValueType->IsKindOf(RUNTIME_CLASS(PArray)) || (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PArray))); }
 	bool IsResizableArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PPointer)) && static_cast<PPointer*>(ValueType)->PointedType->IsKindOf(RUNTIME_CLASS(PStaticArray))); } // can only exist in pointer form.
 	bool IsDynamicArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PDynArray))); }
+	bool IsNativeStruct() const { return (ValueType->IsA(RUNTIME_CLASS(PStruct)) && static_cast<PStruct*>(ValueType)->isNative); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 	void EmitStatement(VMFunctionBuilder *build);
@@ -372,7 +375,7 @@ public:
 
 	FxIdentifier(FName i, const FScriptPosition &p);
 	FxExpression *Resolve(FCompileContext&);
-	FxExpression *ResolveMember(FCompileContext&, PStruct*, FxExpression*&, PStruct*);
+	FxExpression *ResolveMember(FCompileContext&, PContainerType*, FxExpression*&, PContainerType*);
 };
 
 
@@ -2004,7 +2007,7 @@ public:
 
 class FxStateByIndex : public FxExpression
 {
-	int index;
+	unsigned index;
 
 public:
 

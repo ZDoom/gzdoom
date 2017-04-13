@@ -52,6 +52,7 @@
 #include "p_checkposition.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)

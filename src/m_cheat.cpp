@@ -48,7 +48,7 @@
 #include "r_utility.h"
 #include "a_morph.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 #include "events.h"
 #include "p_acs.h"
 
@@ -479,7 +479,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				VMReturn ret;
 				int oldpieces = 1;
 				ret.IntAt(&oldpieces);
-				GlobalVMStack.Call(gsp, params, 1, &ret, 1, nullptr);
+				VMCall(gsp, params, 1, &ret, 1);
 				item = player->mo->FindInventory(NAME_Sigil);
 
 				if (item != NULL)
@@ -604,7 +604,7 @@ void cht_Give (player_t *player, const char *name, int amount)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
-		GlobalVMStack.Call(func, params, 3, nullptr, 0);
+		VMCall(func, params, 3, nullptr, 0);
 	}
 }
 
@@ -616,7 +616,7 @@ void cht_Take (player_t *player, const char *name, int amount)
 	{
 		FString namestr = name;
 		VMValue params[3] = { player->mo, &namestr, amount };
-		GlobalVMStack.Call(func, params, 3, nullptr, 0);
+		VMCall(func, params, 3, nullptr, 0);
 	}
 }
 

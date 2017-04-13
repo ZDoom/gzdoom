@@ -40,7 +40,7 @@
 #include "doomerrors.h"
 #include "serializer.h"
 #include "d_player.h"
-#include "virtual.h"
+#include "vm.h"
 
 
 static int ThinkCount;
@@ -315,7 +315,7 @@ void DThinker::CallPostBeginPlay()
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 	else
 	{
@@ -560,7 +560,7 @@ void DThinker::CallTick()
 	{
 		// Without the type cast this picks the 'void *' assignment...
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 	else Tick();
 }

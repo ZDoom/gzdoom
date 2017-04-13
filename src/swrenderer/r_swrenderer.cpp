@@ -132,9 +132,9 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 	{
 		PClassActor *cls = pair->Key;
 
-		for (int i = 0; i < cls->NumOwnedStates; i++)
+		for (unsigned i = 0; i < cls->GetStateCount(); i++)
 		{
-			spritelist[cls->OwnedStates[i].sprite] = true;
+			spritelist[cls->GetStates()[i].sprite] = true;
 		}
 	}
 

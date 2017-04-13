@@ -57,7 +57,7 @@
 #include "r_utility.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 #include "p_acs.h"
 #include "r_data/r_translate.h"
 #include "sbarinfo.h"
@@ -329,7 +329,7 @@ void ST_CreateStatusBar(bool bTitleLevel)
 	IFVIRTUALPTR(StatusBar, DBaseStatusBar, Init)
 	{
 		VMValue params[] = { StatusBar };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 
 	GC::WriteBarrier(StatusBar);
@@ -560,7 +560,7 @@ void DBaseStatusBar::AttachToPlayer(player_t *player)
 	IFVIRTUAL(DBaseStatusBar, AttachToPlayer)
 	{
 		VMValue params[] = { (DObject*)this, player };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -641,7 +641,7 @@ void DBaseStatusBar::CallTick()
 	IFVIRTUAL(DBaseStatusBar, Tick)
 	{
 		VMValue params[] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 	else Tick();
 	mugshot.Tick(CPlayer);
@@ -973,7 +973,7 @@ void DBaseStatusBar::Draw (EHudState state)
 		IFVIRTUAL(DBaseStatusBar, DrawMyPos)
 		{
 			VMValue params[] = { (DObject*)this };
-			GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+			VMCall(func, params, countof(params), nullptr, 0);
 		}
 		V_SetBorderNeedRefresh();
 	}
@@ -990,7 +990,7 @@ void DBaseStatusBar::Draw (EHudState state)
 		IFVIRTUAL(DBaseStatusBar, DrawAutomapHUD)
 		{
 			VMValue params[] = { (DObject*)this, r_viewpoint.TicFrac };
-			GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+			VMCall(func, params, countof(params), nullptr, 0);
 		}
 	}
 }
@@ -1008,7 +1008,7 @@ void DBaseStatusBar::CallDraw(EHudState state)
 	IFVIRTUAL(DBaseStatusBar, Draw)
 	{
 		VMValue params[] = { (DObject*)this, state, r_viewpoint.TicFrac };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 	else Draw(state);
 	screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
@@ -1073,7 +1073,7 @@ bool DBaseStatusBar::MustDrawLog(EHudState state)
 		VMValue params[] = { (DObject*)this };
 		int rv;
 		VMReturn ret(&rv);
-		GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+		VMCall(func, params, countof(params), &ret, 1);
 		return !!rv;
 	}
 	return true;
@@ -1095,7 +1095,7 @@ void DBaseStatusBar::SetMugShotState(const char *stateName, bool waitTillDone, b
 	{
 		FString statestring = stateName;
 		VMValue params[] = { (DObject*)this, &statestring, waitTillDone, reset };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -1133,7 +1133,7 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 		IFVIRTUAL(DBaseStatusBar, DrawPowerups)
 		{
 			VMValue params[] = { (DObject*)this };
-			GlobalVMStack.Call(func, params, 1, nullptr, 0);
+			VMCall(func, params, 1, nullptr, 0);
 		}
 		fullscreenOffsets = saved;
 	}
@@ -1261,7 +1261,7 @@ void DBaseStatusBar::FlashItem (const PClass *itemtype)
 	IFVIRTUAL(DBaseStatusBar, FlashItem)
 	{
 		VMValue params[] = { (DObject*)this, (PClass*)itemtype };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -1270,7 +1270,7 @@ void DBaseStatusBar::NewGame ()
 	IFVIRTUAL(DBaseStatusBar, NewGame)
 	{
 		VMValue params[] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 	mugshot.Reset();
 }
@@ -1280,7 +1280,7 @@ void DBaseStatusBar::ShowPop(int pop)
 	IFVIRTUAL(DBaseStatusBar, ShowPop)
 	{
 		VMValue params[] = { (DObject*)this, pop };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 }
 
@@ -1319,7 +1319,7 @@ void DBaseStatusBar::CallScreenSizeChanged()
 	IFVIRTUAL(DBaseStatusBar, ScreenSizeChanged)
 	{
 		VMValue params[] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, countof(params), nullptr, 0);
+		VMCall(func, params, countof(params), nullptr, 0);
 	}
 	else ScreenSizeChanged();
 }

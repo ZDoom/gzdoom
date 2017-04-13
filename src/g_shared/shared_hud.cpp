@@ -54,7 +54,7 @@
 #include "r_utility.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 
 #include <time.h>
 
@@ -385,21 +385,20 @@ static void SetKeyTypes()
 {
 	for(unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); i++)
 	{
-		PClass *ti = PClassActor::AllActorClasses[i];
+		PClassActor *ti = PClassActor::AllActorClasses[i];
 		auto kt = PClass::FindActor(NAME_Key);
 
 		if (ti->IsDescendantOf(kt))
 		{
-			PClassActor *tia = static_cast<PClassActor *>(ti);
-			AInventory *key = (AInventory*)(GetDefaultByType(tia));
+			AInventory *key = (AInventory*)(GetDefaultByType(ti));
 
 			if (key->Icon.isValid() && key->special1 > 0)
 			{
-				KeyTypes.Push(tia);
+				KeyTypes.Push(ti);
 			}
 			else 
 			{
-				UnassignedKeyTypes.Push(tia);
+				UnassignedKeyTypes.Push(ti);
 			}
 		}
 	}
@@ -1094,7 +1093,7 @@ static void DrawPowerups(player_t *CPlayer)
 			VMValue param[] = { item };
 			int rv;
 			VMReturn ret(&rv);
-			GlobalVMStack.Call(func, param, 1, &ret, 1);
+			VMCall(func, param, 1, &ret, 1);
 			auto tex = FSetTextureID(rv);
 			if (!tex.isValid()) continue;
 			auto texture = TexMan(tex);

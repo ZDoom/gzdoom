@@ -61,13 +61,22 @@
 #include "serializer.h"
 #include "wi_stuff.h"
 #include "a_dynlight.h"
+#include "vm.h"
+#include "types.h"
 
 static TArray<FPropertyInfo*> properties;
 static TArray<AFuncDesc> AFTable;
 static TArray<FieldDesc> FieldTable;
 extern int				BackbuttonTime;
 extern float			BackbuttonAlpha;
-static AWeapon *wpnochg;
+
+// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but is used everywhere as a special flag.
+// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
+// is to create a static variable from it that points to an otherwise unused object and reference that in the script. Yuck!!!
+// This must point to a valid DObject derived object so that the garbage collector can deal with it.
+// The global VM types are the most convenient options here because they get created before the compiler is started and they
+// are not exposed in other ways to scripts - and they do not change unless the engine is shut down.
+DEFINE_GLOBAL_NAMED(TypeSInt32, wp_nochange);
 
 //==========================================================================
 //
@@ -505,6 +514,7 @@ static const struct FFlagList { const PClass * const *Type; FFlagDef *Defs; int 
 	{ &RUNTIME_CLASS_CASTLESS(AInventory), 	InventoryFlagDefs,	countof(InventoryFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(AWeapon), 	WeaponFlagDefs,		countof(WeaponFlagDefs), 3 },
 	{ &RUNTIME_CLASS_CASTLESS(APlayerPawn),	PlayerPawnFlagDefs,	countof(PlayerPawnFlagDefs), 3 },
+	{ &RUNTIME_CLASS_CASTLESS(ADynamicLight),DynLightFlagDefs,	countof(DynLightFlagDefs), 3 },
 };
 #define NUM_FLAG_LISTS (countof(FlagLists))
 
@@ -667,7 +677,7 @@ static int CompareClassNames(const Desc& a, const Desc& b)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PStruct *cls, const char * string)
+AFuncDesc *FindFunction(PContainerType *cls, const char * string)
 {
 	int min = 0, max = AFTable.Size() - 1;
 
@@ -698,7 +708,7 @@ AFuncDesc *FindFunction(PStruct *cls, const char * string)
 //
 //==========================================================================
 
-FieldDesc *FindField(PStruct *cls, const char * string)
+FieldDesc *FindField(PContainerType *cls, const char * string)
 {
 	int min = 0, max = FieldTable.Size() - 1;
 	const char * cname = cls ? cls->TypeName.GetChars() : "";
@@ -733,7 +743,7 @@ FieldDesc *FindField(PStruct *cls, const char * string)
 
 VMFunction *FindVMFunction(PClass *cls, const char *name)
 {
-	auto f = dyn_cast<PFunction>(cls->Symbols.FindSymbol(name, true));
+	auto f = dyn_cast<PFunction>(cls->FindSymbol(name, true));
 	return f == nullptr ? nullptr : f->Variants[0].Implementation;
 }
 
@@ -777,11 +787,11 @@ static int fieldcmp(const void * a, const void * b)
 void InitThingdef()
 {
 	// Some native types need size and serialization information added before the scripts get compiled.
-	auto secplanestruct = NewNativeStruct("Secplane", nullptr);
+	auto secplanestruct = NewStruct("Secplane", nullptr, true);
 	secplanestruct->Size = sizeof(secplane_t);
 	secplanestruct->Align = alignof(secplane_t);
 
-	auto sectorstruct = NewNativeStruct("Sector", nullptr);
+	auto sectorstruct = NewStruct("Sector", nullptr, true);
 	sectorstruct->Size = sizeof(sector_t);
 	sectorstruct->Align = alignof(sector_t);
 	NewPointer(sectorstruct, false)->InstallHandlers(
@@ -796,7 +806,7 @@ void InitThingdef()
 		}
 	);
 
-	auto linestruct = NewNativeStruct("Line", nullptr);
+	auto linestruct = NewStruct("Line", nullptr, true);
 	linestruct->Size = sizeof(line_t);
 	linestruct->Align = alignof(line_t);
 	NewPointer(linestruct, false)->InstallHandlers(
@@ -811,7 +821,7 @@ void InitThingdef()
 		}
 	);
 
-	auto sidestruct = NewNativeStruct("Side", nullptr);
+	auto sidestruct = NewStruct("Side", nullptr, true);
 	sidestruct->Size = sizeof(side_t);
 	sidestruct->Align = alignof(side_t);
 	NewPointer(sidestruct, false)->InstallHandlers(
@@ -826,7 +836,7 @@ void InitThingdef()
 		}
 	);
 
-	auto vertstruct = NewNativeStruct("Vertex", nullptr);
+	auto vertstruct = NewStruct("Vertex", nullptr, true);
 	vertstruct->Size = sizeof(vertex_t);
 	vertstruct->Align = alignof(vertex_t);
 	NewPointer(vertstruct, false)->InstallHandlers(
@@ -841,23 +851,23 @@ void InitThingdef()
 		}
 	);
 
-	auto sectorportalstruct = NewNativeStruct("SectorPortal", nullptr);
+	auto sectorportalstruct = NewStruct("SectorPortal", nullptr, true);
 	sectorportalstruct->Size = sizeof(FSectorPortal);
 	sectorportalstruct->Align = alignof(FSectorPortal);
 
-	auto playerclassstruct = NewNativeStruct("PlayerClass", nullptr);
+	auto playerclassstruct = NewStruct("PlayerClass", nullptr, true);
 	playerclassstruct->Size = sizeof(FPlayerClass);
 	playerclassstruct->Align = alignof(FPlayerClass);
 
-	auto playerskinstruct = NewNativeStruct("PlayerSkin", nullptr);
+	auto playerskinstruct = NewStruct("PlayerSkin", nullptr, true);
 	playerskinstruct->Size = sizeof(FPlayerSkin);
 	playerskinstruct->Align = alignof(FPlayerSkin);
 
-	auto teamstruct = NewNativeStruct("Team", nullptr);
+	auto teamstruct = NewStruct("Team", nullptr, true);
 	teamstruct->Size = sizeof(FTeam);
 	teamstruct->Align = alignof(FTeam);
 
-	PStruct *pstruct = NewNativeStruct("PlayerInfo", nullptr);
+	PStruct *pstruct = NewStruct("PlayerInfo", nullptr, true);
 	pstruct->Size = sizeof(player_t);
 	pstruct->Align = alignof(player_t);
 	NewPointer(pstruct, false)->InstallHandlers(
@@ -872,7 +882,7 @@ void InitThingdef()
 		}
 	);
 
-	auto fontstruct = NewNativeStruct("FFont", nullptr);
+	auto fontstruct = NewStruct("FFont", nullptr, true);
 	fontstruct->Size = sizeof(FFont);
 	fontstruct->Align = alignof(FFont);
 	NewPointer(fontstruct, false)->InstallHandlers(
@@ -887,32 +897,9 @@ void InitThingdef()
 		}
 	);
 
-	auto wbplayerstruct = NewNativeStruct("WBPlayerStruct", nullptr);
+	auto wbplayerstruct = NewStruct("WBPlayerStruct", nullptr, true);
 	wbplayerstruct->Size = sizeof(wbplayerstruct_t);
 	wbplayerstruct->Align = alignof(wbplayerstruct_t);
-	
-
-	// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but it used everywhere as a special flag.
-	// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
-	// is to create a static variable from it and reference that in the script. Yuck!!!
-	wpnochg = WP_NOCHANGE;
-	PField *fieldptr = new PField("WP_NOCHANGE", NewPointer(RUNTIME_CLASS(AWeapon), false), VARF_Native | VARF_Static | VARF_ReadOnly, (intptr_t)&wpnochg);
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(fieldptr);
-
-	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
-	for (auto &fl : FlagLists)
-	{
-		if (fl.Use & 2)
-		{
-			for(int i=0;i<fl.NumDefs;i++)
-			{
-				if (fl.Defs[i].structoffset > 0) // skip the deprecated entries in this list
-				{
-					const_cast<PClass*>(*fl.Type)->AddNativeField(FStringf("b%s", fl.Defs[i].name), (fl.Defs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), fl.Defs[i].structoffset, fl.Defs[i].varflags, fl.Defs[i].flagbit);
-				}
-			}
-		}
-	}
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
@@ -980,9 +967,37 @@ void InitThingdef()
 		FieldTable.ShrinkToFit();
 		qsort(&FieldTable[0], FieldTable.Size(), sizeof(FieldTable[0]), fieldcmp);
 	}
-
 }
 
+void SynthesizeFlagFields()
+{
+	// These are needed for inserting the flag symbols
+	/*
+	NewClassType(RUNTIME_CLASS(DObject));
+	NewClassType(RUNTIME_CLASS(DThinker));
+	NewClassType(RUNTIME_CLASS(AActor));
+	NewClassType(RUNTIME_CLASS(AInventory));
+	NewClassType(RUNTIME_CLASS(AStateProvider));
+	NewClassType(RUNTIME_CLASS(AWeapon));
+	NewClassType(RUNTIME_CLASS(APlayerPawn));
+	NewClassType(RUNTIME_CLASS(ADynamicLight));
+	*/
+	// synthesize a symbol for each flag from the flag name tables to avoid redundant declaration of them.
+	for (auto &fl : FlagLists)
+	{
+		auto cls = const_cast<PClass*>(*fl.Type);
+		if (fl.Use & 2)
+		{
+			for (int i = 0; i < fl.NumDefs; i++)
+			{
+				if (fl.Defs[i].structoffset > 0) // skip the deprecated entries in this list
+				{
+					cls->VMType->AddNativeField(FStringf("b%s", fl.Defs[i].name), (fl.Defs[i].fieldsize == 4 ? TypeSInt32 : TypeSInt16), fl.Defs[i].structoffset, fl.Defs[i].varflags, fl.Defs[i].flagbit);
+				}
+			}
+		}
+	}
+}
 DEFINE_ACTION_FUNCTION(DObject, GameType)
 {
 	PARAM_PROLOGUE;

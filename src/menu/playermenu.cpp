@@ -47,6 +47,7 @@
 #include "r_state.h"
 #include "r_data/r_translate.h"
 #include "v_text.h"
+#include "vm.h"
 
 EXTERN_CVAR(Int, team)
 EXTERN_CVAR(Float, autoaim)

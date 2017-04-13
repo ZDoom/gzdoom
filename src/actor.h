@@ -33,7 +33,6 @@
 // States are tied to finite states are tied to animation frames.
 #include "info.h"
 
-#include <forward_list>
 #include "doomdef.h"
 #include "textures/textures.h"
 #include "r_data/renderstyle.h"
@@ -611,6 +610,12 @@ public:
 	{
 		return (AActor *)(this->GetClass()->Defaults);
 	}
+
+	FActorInfo *GetInfo() const
+	{
+		return ((PClassActor*)GetClass())->ActorInfo();
+	}
+
 
 	FDropItem *GetDropItems() const;
 
@@ -1564,6 +1569,17 @@ template<class T> inline T *Spawn(const DVector3 &pos, replace_t allowreplacemen
 template<class T> inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
 {
 	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
+}
+
+inline PClassActor *PClass::FindActor(FName name)
+{
+	auto cls = FindClass(name);
+	return cls && cls->IsDescendantOf(RUNTIME_CLASS(AActor)) ? static_cast<PClassActor*>(cls) : nullptr;
+}
+
+inline PClassActor *ValidateActor(PClass *cls)
+{
+	return cls && cls->IsDescendantOf(RUNTIME_CLASS(AActor)) ? static_cast<PClassActor*>(cls) : nullptr;
 }
 
 void PrintMiscActorInfo(AActor * query);

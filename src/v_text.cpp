@@ -47,6 +47,7 @@
 #include "doomstat.h"
 #include "templates.h"
 #include "gstrings.h"
+#include "vm.h"
 
 int ListGetInt(VMVa_List &tags);
 

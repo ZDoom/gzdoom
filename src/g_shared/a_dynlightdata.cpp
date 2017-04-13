@@ -1058,7 +1058,7 @@ void InitializeActorLights()
 			void *mem = ClassDataAllocator.Alloc(sizeof(FInternalLightAssociation));
 			FInternalLightAssociation * iasso = new(mem) FInternalLightAssociation(&LightAssociations[i]);
 			if (iasso->Light() != nullptr)
-				ti->LightAssociations.Push(iasso);
+				ti->ActorInfo()->LightAssociations.Push(iasso);
 		}
 	}
 	// we don't need the parser data for the light associations anymore
@@ -1124,7 +1124,7 @@ void AActor::AttachLight(unsigned int count, const FLightDefaults *lightdef)
 
 void AActor::SetDynamicLights()
 {
-	TArray<FInternalLightAssociation *> & LightAssociations = GetClass()->LightAssociations;
+	TArray<FInternalLightAssociation *> & LightAssociations = GetInfo()->LightAssociations;
 	unsigned int count = 0;
 
 	if (state == NULL) return;

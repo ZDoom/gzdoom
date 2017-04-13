@@ -14,6 +14,7 @@
 #include "r_data/sprites.h"
 #include "r_data/voxels.h"
 #include "textures/textures.h"
+#include "vm.h"
 
 void gl_InitModels();
 

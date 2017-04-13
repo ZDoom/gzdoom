@@ -58,7 +58,7 @@
 #include "p_blockmap.h"
 #include "a_morph.h"
 #include "p_spec.h"
-#include "virtual.h"
+#include "vm.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "r_data/r_translate.h"
@@ -170,14 +170,14 @@ FString GetPrintableDisplayName(PClassActor *cls)
 { 
 	// Fixme; This needs a decent way to access the string table without creating a mess.
 	// [RH] ????
-	return cls->DisplayName;
+	return cls->GetDisplayName();
 }
 
 DEFINE_ACTION_FUNCTION(APlayerPawn, GetPrintableDisplayName)
 {
 	PARAM_PROLOGUE;
 	PARAM_CLASS(type, AActor);
-	ACTION_RETURN_STRING(type->DisplayName);
+	ACTION_RETURN_STRING(type->GetDisplayName());
 }
 
 bool ValidatePlayerClass(PClassActor *ti, const char *name)
@@ -192,7 +192,7 @@ bool ValidatePlayerClass(PClassActor *ti, const char *name)
 		Printf("Invalid player class '%s'\n", name);
 		return false;
 	}
-	else if (ti->DisplayName.IsEmpty())
+	else if (ti->GetDisplayName().IsEmpty())
 	{
 		Printf ("Missing displayname for player class '%s'\n", name);
 		return false;
@@ -267,7 +267,7 @@ CCMD (playerclasses)
 	{
 		Printf ("%3d: Class = %s, Name = %s\n", i,
 			PlayerClasses[i].Type->TypeName.GetChars(),
-			PlayerClasses[i].Type->DisplayName.GetChars());
+			PlayerClasses[i].Type->GetDisplayName().GetChars());
 	}
 }
 
@@ -1242,7 +1242,7 @@ void APlayerPawn::CheckWeaponSwitch(PClassActor *ammotype)
 DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponSwitch)
 {
 	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_OBJECT(ammotype, PClassActor);
+	PARAM_POINTER(ammotype, PClassActor);
 	self->CheckWeaponSwitch(ammotype);
 	return 0;
 }
@@ -1505,7 +1505,7 @@ void APlayerPawn::PlayIdle ()
 	IFVIRTUAL(APlayerPawn, PlayIdle)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1514,7 +1514,7 @@ void APlayerPawn::PlayRunning ()
 	IFVIRTUAL(APlayerPawn, PlayRunning)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1523,7 +1523,7 @@ void APlayerPawn::PlayAttacking ()
 	IFVIRTUAL(APlayerPawn, PlayAttacking)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1532,7 +1532,7 @@ void APlayerPawn::PlayAttacking2 ()
 	IFVIRTUAL(APlayerPawn, PlayAttacking2)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1630,7 +1630,7 @@ void APlayerPawn::MorphPlayerThink ()
 	IFVIRTUAL(APlayerPawn, MorphPlayerThink)
 	{
 		VMValue params[1] = { (DObject*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 

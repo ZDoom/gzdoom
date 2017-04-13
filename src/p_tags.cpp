@@ -37,6 +37,7 @@
 #include "p_tags.h"
 #include "c_dispatch.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 FTagManager tagManager;
 

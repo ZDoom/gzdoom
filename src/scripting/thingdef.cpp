@@ -59,7 +59,7 @@
 #include "a_weapons.h"
 #include "p_conversation.h"
 #include "v_text.h"
-#include "thingdef.h"
+//#include "thingdef.h"
 #include "backend/codegen.h"
 #include "a_sharedglobal.h"
 #include "backend/vmbuilder.h"
@@ -101,7 +101,7 @@ FScriptPosition & GetStateSource(FState *state)
 //
 //==========================================================================
 
-void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PStruct *cls, uint32_t funcflags, int useflags)
+void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PContainerType *cls, uint32_t funcflags, int useflags)
 {
 	// Must be called before adding any other arguments.
 	assert(args == nullptr || args->Size() == 0);
@@ -154,7 +154,7 @@ void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<F
 //
 //==========================================================================
 
-PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags)
+PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags)
 {
 	TArray<PType *> rets(1);
 	TArray<PType *> args;
@@ -184,7 +184,7 @@ PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, i
 //
 //==========================================================================
 
-PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error)
+PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error)
 {
 	// Skip ACS_NamedExecuteWithResult. Anything calling this should use the builtin instead.
 	if (name == NAME_ACS_NamedExecuteWithResult) return nullptr;
@@ -195,8 +195,8 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 
 	if (symbol != nullptr)
 	{
-		PClass* cls_ctx = dyn_cast<PClass>(funccls);
-		PClass* cls_target = funcsym?dyn_cast<PClass>(funcsym->OwningClass):nullptr;
+		auto cls_ctx = dyn_cast<PClassType>(funccls);
+		auto cls_target = funcsym ? dyn_cast<PClassType>(funcsym->OwningClass) : nullptr;
 		if (funcsym == nullptr)
 		{
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());
@@ -206,7 +206,7 @@ PFunction *FindClassMemberFunction(PStruct *selfcls, PStruct *funccls, FName nam
 			// private access is only allowed if the symbol table belongs to the class in which the current function is being defined.
 			sc.Message(MSG_ERROR, "%s is declared private and not accessible", symbol->SymbolName.GetChars());
 		}
-		else if ((funcsym->Variants[0].Flags & VARF_Protected) && symtable != &funccls->Symbols && (!cls_ctx || !cls_target || !cls_ctx->IsDescendantOf((PClass*)cls_target)))
+		else if ((funcsym->Variants[0].Flags & VARF_Protected) && symtable != &funccls->Symbols && (!cls_ctx || !cls_target || !cls_ctx->Descriptor->IsDescendantOf(cls_target->Descriptor)))
 		{
 			sc.Message(MSG_ERROR, "%s is declared protected and not accessible", symbol->SymbolName.GetChars());
 		}
@@ -236,7 +236,7 @@ void CreateDamageFunction(PNamespace *OutNamespace, const VersionInfo &ver, PCla
 	else
 	{
 		auto dmg = new FxReturnStatement(new FxIntCast(id, true), id->ScriptPosition);
-		auto funcsym = CreateAnonymousFunction(info, TypeSInt32, 0);
+		auto funcsym = CreateAnonymousFunction(info->VMType, TypeSInt32, 0);
 		defaults->DamageFunc = FunctionBuildList.AddFunction(OutNamespace, ver, funcsym, dmg, FStringf("%s.DamageFunction", info->TypeName.GetChars()), fromDecorate, -1, 0, lumpnum);
 	}
 }
@@ -282,9 +282,8 @@ static void CheckForUnsafeStates(PClassActor *obj)
 			if (state->ActionFunc && state->ActionFunc->Unsafe)
 			{
 				// If an unsafe function (i.e. one that accesses user variables) is being detected, print a warning once and remove the bogus function. We may not call it because that would inevitably crash.
-				auto owner = FState::StaticFindStateOwner(state);
-				GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "Unsafe state call in state %s.%d which accesses user variables, reached by %s.%s.\n",
-					owner->TypeName.GetChars(), int(state - owner->OwnedStates), obj->TypeName.GetChars(), FName(*test).GetChars());
+				GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "Unsafe state call in state %s which accesses user variables, reached by %s.%s.\n",
+					FState::StaticGetStateName(state), obj->TypeName.GetChars(), FName(*test).GetChars());
 			}
 			state = state->NextState;
 		}
@@ -308,9 +307,8 @@ static void CheckLabel(PClassActor *obj, FStateLabel *slb, int useflag, FName st
 	{
 		if (!(state->UseFlags & useflag))
 		{
-			auto owner = FState::StaticFindStateOwner(state);
-			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "%s references state %s.%d as %s state, but this state is not flagged for use as %s.\n",
-				obj->TypeName.GetChars(), owner->TypeName.GetChars(), int(state - owner->OwnedStates), statename.GetChars(), descript);
+			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "%s references state %s as %s state, but this state is not flagged for use as %s.\n",
+				obj->TypeName.GetChars(), FState::StaticGetStateName(state), statename.GetChars(), descript);
 		}
 	}
 	if (slb->Children != nullptr)
@@ -325,7 +323,7 @@ static void CheckLabel(PClassActor *obj, FStateLabel *slb, int useflag, FName st
 
 static void CheckStateLabels(PClassActor *obj, ENamedName *test, int useflag,  const char *descript)
 {
-	FStateLabels *labels = obj->StateList;
+	FStateLabels *labels = obj->GetStateLabels();
 
 	for (; *test != NAME_None; test++)
 	{
@@ -355,13 +353,13 @@ static void CheckStates(PClassActor *obj)
 	{
 		CheckStateLabels(obj, pickupstates, SUF_ITEM, "CustomInventory state chain");
 	}
-	for (int i = 0; i < obj->NumOwnedStates; i++)
+	for (unsigned i = 0; i < obj->GetStateCount(); i++)
 	{
-		auto state = obj->OwnedStates + i;
+		auto state = obj->GetStates() + i;
 		if (state->NextState && (state->UseFlags & state->NextState->UseFlags) != state->UseFlags)
 		{
-			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "State %s.%d links to a state with incompatible restrictions.\n",
-				obj->TypeName.GetChars(), int(state - obj->OwnedStates));
+			GetStateSource(state).Message(MSG_ERROR, TEXTCOLOR_RED "State %s links to a state with incompatible restrictions.\n",
+				FState::StaticGetStateName(state));
 		}
 	}
 }
@@ -375,6 +373,7 @@ static void CheckStates(PClassActor *obj)
 //==========================================================================
 void ParseScripts();
 void ParseAllDecorate();
+void SynthesizeFlagFields();
 
 void LoadActors()
 {
@@ -389,6 +388,7 @@ void LoadActors()
 
 	FScriptPosition::StrictErrors = false;
 	ParseAllDecorate();
+	SynthesizeFlagFields();
 
 	FunctionBuildList.Build();
 
@@ -403,7 +403,7 @@ void LoadActors()
 		auto ti = PClassActor::AllActorClasses[i];
 		if (ti->Size == TentativeClass)
 		{
-			if (ti->ObjectFlags & OF_Transient)
+			if (ti->bOptional)
 			{
 				Printf(TEXTCOLOR_ORANGE "Class %s referenced but not defined\n", ti->TypeName.GetChars());
 				FScriptPosition::WarnCounter++;

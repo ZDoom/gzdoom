@@ -25,16 +25,17 @@ protected:
 
 class DMover : public DSectorEffect
 {
-	DECLARE_CLASS (DMover, DSectorEffect)
+	DECLARE_ABSTRACT_CLASS (DMover, DSectorEffect)
 	HAS_OBJECT_POINTERS
-public:
+protected:
 	DMover (sector_t *sector);
-	void StopInterpolation(bool force = false);
-protected:
+
 	TObjPtr<DInterpolation*> interpolation;
-private:
+public:
+	void StopInterpolation(bool force = false);
+
 protected:
-	DMover ();
+	DMover () {}
 	
 	void Serialize(FSerializer &arc);
 	void OnDestroy() override;
@@ -42,20 +43,18 @@ protected:
 
 class DMovingFloor : public DMover
 {
-	DECLARE_CLASS (DMovingFloor, DMover)
-public:
-	DMovingFloor (sector_t *sector);
+	DECLARE_ABSTRACT_CLASS (DMovingFloor, DMover)
 protected:
-	DMovingFloor ();
+	DMovingFloor (sector_t *sector);
+	DMovingFloor() {}
 };
 
 class DMovingCeiling : public DMover
 {
-	DECLARE_CLASS (DMovingCeiling, DMover)
-public:
-	DMovingCeiling (sector_t *sector, bool interpolate = true);
+	DECLARE_ABSTRACT_CLASS (DMovingCeiling, DMover)
 protected:
-	DMovingCeiling ();
+	DMovingCeiling (sector_t *sector, bool interpolate = true);
+	DMovingCeiling () {}
 };
 
 #endif //__DSECTOREFFECT_H__

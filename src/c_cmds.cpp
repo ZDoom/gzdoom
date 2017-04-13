@@ -1149,34 +1149,6 @@ CCMD(currentpos)
 
 //-----------------------------------------------------------------------------
 //
-//
-//
-//-----------------------------------------------------------------------------
-CCMD(vmengine)
-{
-	if (argv.argc() == 2)
-	{
-		if (stricmp(argv[1], "default") == 0)
-		{
-			VMSelectEngine(VMEngine_Default);
-			return;
-		}
-		else if (stricmp(argv[1], "checked") == 0)
-		{
-			VMSelectEngine(VMEngine_Checked);
-			return;
-		}
-		else if (stricmp(argv[1], "unchecked") == 0)
-		{
-			VMSelectEngine(VMEngine_Unchecked);
-			return;
-		}
-	}
-	Printf("Usage: vmengine <default|checked|unchecked>\n");
-}
-
-//-----------------------------------------------------------------------------
-//
 // Print secret info (submitted by Karl Murks)
 //
 //-----------------------------------------------------------------------------

@@ -58,7 +58,7 @@
 #include "d_net.h"
 #include "d_netinf.h"
 #include "a_morph.h"
-#include "virtual.h"
+#include "vm.h"
 #include "g_levellocals.h"
 #include "events.h"
 #include "actorinlines.h"
@@ -248,7 +248,7 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 				VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
 				FString ret;
 				VMReturn rett(&ret);
-				GlobalVMStack.Call(func, params, countof(params), &rett, 1);
+				VMCall(func, params, countof(params), &rett, 1);
 				if (ret.IsNotEmpty()) message = ret;
 			}
 		}
@@ -326,7 +326,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 		IFVIRTUALPTR(item, AInventory, OwnerDied)
 		{
 			VMValue params[1] = { item };
-			GlobalVMStack.Call(func, params, 1, nullptr, 0);
+			VMCall(func, params, 1, nullptr, 0);
 		}
 		item = next;
 	}
@@ -367,7 +367,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	{
 		VMValue params[] = { (DObject*)this };
 		VMReturn ret(&Height);
-		GlobalVMStack.Call(func, params, 1, &ret, 1);
+		VMCall(func, params, 1, &ret, 1);
 	}
 
 	// [RH] If the thing has a special, execute and remove it
@@ -733,7 +733,7 @@ void AActor::CallDie(AActor *source, AActor *inflictor, int dmgflags)
 	IFVIRTUAL(AActor, Die)
 	{
 		VMValue params[4] = { (DObject*)this, source, inflictor, dmgflags };
-		GlobalVMStack.Call(func, params, 4, nullptr, 0, nullptr);
+		VMCall(func, params, 4, nullptr, 0);
 	}
 	else return Die(source, inflictor, dmgflags);
 }
@@ -916,7 +916,6 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	int temp;
 	int painchance = 0;
 	FState * woundstate = NULL;
-	PainChanceList * pc = NULL;
 	bool justhit = false;
 	bool plrDontThrust = false;
 	bool invulpain = false;
@@ -1422,7 +1421,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				{
 					VMValue params[] = { source, target, draindmg, mod.GetIndex() };
 					VMReturn ret(&draindmg);
-					GlobalVMStack.Call(func, params, countof(params), &ret, 1);
+					VMCall(func, params, countof(params), &ret, 1);
 				}
 				if (P_GiveBody(source, draindmg))
 				{
@@ -1500,14 +1499,13 @@ fakepain: //Needed so we can skip the rest of the above, but still obey the orig
 	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
 		(target->player != NULL || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
 	{
-		pc = target->GetClass()->PainChances;
 		painchance = target->PainChance;
-		if (pc != NULL)
+		for (auto & pc : target->GetInfo()->PainChances)
 		{
-			int *ppc = pc->CheckKey(mod);
-			if (ppc != NULL)
+			if (pc.first == mod)
 			{
-				painchance = *ppc;
+				painchance = pc.second;
+				break;
 			}
 		}
 
@@ -1620,7 +1618,7 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);
-		GlobalVMStack.Call(func, params, 7, &ret, 1, nullptr);
+		VMCall(func, params, 7, &ret, 1);
 		return retval;
 	}
 	else
@@ -1772,7 +1770,7 @@ bool AActor::CallOkayToSwitchTarget(AActor *other)
 		VMValue params[] = { (DObject*)this, other };
 		int retv;
 		VMReturn ret(&retv);
-		GlobalVMStack.Call(func, params, 2, &ret, 1);
+		VMCall(func, params, 2, &ret, 1);
 		return !!retv;
 	}
 	return OkayToSwitchTarget(other);

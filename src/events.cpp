@@ -1,5 +1,5 @@
 #include "events.h"
-#include "virtual.h"
+#include "vm.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "gi.h"
@@ -7,6 +7,7 @@
 #include "actor.h"
 #include "c_dispatch.h"
 #include "d_net.h"
+#include "vm.h"
 
 DStaticEventHandler* E_FirstEventHandler = nullptr;
 DStaticEventHandler* E_LastEventHandler = nullptr;
@@ -626,7 +627,7 @@ void DStaticEventHandler::OnRegister()
 		if (func == DStaticEventHandler_OnRegister_VMPtr)
 			return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -638,7 +639,7 @@ void DStaticEventHandler::OnUnregister()
 		if (func == DStaticEventHandler_OnUnregister_VMPtr)
 			return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -660,7 +661,7 @@ void DStaticEventHandler::WorldLoaded()
 			return;
 		FWorldEvent e = E_SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -673,7 +674,7 @@ void DStaticEventHandler::WorldUnloaded()
 			return;
 		FWorldEvent e = E_SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -687,7 +688,7 @@ void DStaticEventHandler::WorldThingSpawned(AActor* actor)
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -702,7 +703,7 @@ void DStaticEventHandler::WorldThingDied(AActor* actor, AActor* inflictor)
 		e.Thing = actor;
 		e.Inflictor = inflictor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -716,7 +717,7 @@ void DStaticEventHandler::WorldThingRevived(AActor* actor)
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -735,7 +736,7 @@ void DStaticEventHandler::WorldThingDamaged(AActor* actor, AActor* inflictor, AA
 		e.DamageFlags = flags;
 		e.DamageAngle = angle;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -749,7 +750,7 @@ void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -762,7 +763,7 @@ void DStaticEventHandler::WorldLightning()
 			return;
 		FWorldEvent e = E_SetupWorldEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -774,7 +775,7 @@ void DStaticEventHandler::WorldTick()
 		if (func == DStaticEventHandler_WorldTick_VMPtr)
 			return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -799,7 +800,7 @@ void DStaticEventHandler::RenderFrame()
 			return;
 		FRenderEvent e = E_SetupRenderEvent();
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -813,7 +814,7 @@ void DStaticEventHandler::RenderOverlay(EHudState state)
 		FRenderEvent e = E_SetupRenderEvent();
 		e.HudState = int(state);
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -826,7 +827,7 @@ void DStaticEventHandler::PlayerEntered(int num, bool fromhub)
 			return;
 		FPlayerEvent e = { num, fromhub };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -839,7 +840,7 @@ void DStaticEventHandler::PlayerRespawned(int num)
 			return;
 		FPlayerEvent e = { num, false };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -852,7 +853,7 @@ void DStaticEventHandler::PlayerDied(int num)
 			return;
 		FPlayerEvent e = { num, false };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -865,7 +866,7 @@ void DStaticEventHandler::PlayerDisconnected(int num)
 			return;
 		FPlayerEvent e = { num, false };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+		VMCall(func, params, 2, nullptr, 0);
 	}
 }
 
@@ -921,7 +922,7 @@ bool DStaticEventHandler::UiProcess(const event_t* ev)
 		int processed;
 		VMReturn results[1] = { &processed };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, results, 1, nullptr);
+		VMCall(func, params, 2, results, 1);
 		return !!processed;
 	}
 
@@ -969,7 +970,7 @@ bool DStaticEventHandler::InputProcess(const event_t* ev)
 		int processed;
 		VMReturn results[1] = { &processed };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
-		GlobalVMStack.Call(func, params, 2, results, 1, nullptr);
+		VMCall(func, params, 2, results, 1);
 		return !!processed;
 	}
 
@@ -984,7 +985,7 @@ void DStaticEventHandler::UiTick()
 		if (func == DStaticEventHandler_UiTick_VMPtr)
 			return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
-		GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1008,7 +1009,7 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 			e.IsManual = manual;
 
 			VMValue params[2] = { (DStaticEventHandler*)this, &e };
-			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+			VMCall(func, params, 2, nullptr, 0);
 		}
 	}
 	else
@@ -1029,7 +1030,7 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 			e.IsManual = manual;
 
 			VMValue params[2] = { (DStaticEventHandler*)this, &e };
-			GlobalVMStack.Call(func, params, 2, nullptr, 0, nullptr);
+			VMCall(func, params, 2, nullptr, 0);
 		}
 	}
 }

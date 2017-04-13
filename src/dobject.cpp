@@ -48,8 +48,9 @@
 #include "a_sharedglobal.h"
 #include "dsectoreffect.h"
 #include "serializer.h"
-#include "virtual.h"
+#include "vm.h"
 #include "g_levellocals.h"
+#include "types.h"
 
 //==========================================================================
 //
@@ -91,21 +92,22 @@ CCMD (dumpactors)
 		"25:DoomStrifeChex", "26:HereticStrifeChex", "27:NotHexen",	"28:HexenStrifeChex", "29:NotHeretic",
 		"30:NotDoom", "31:All",
 	};
-	Printf("%i object class types total\nActor\tEd Num\tSpawnID\tFilter\tSource\n", PClass::AllClasses.Size());
+	Printf("%u object class types total\nActor\tEd Num\tSpawnID\tFilter\tSource\n", PClass::AllClasses.Size());
 	for (unsigned int i = 0; i < PClass::AllClasses.Size(); i++)
 	{
 		PClass *cls = PClass::AllClasses[i];
-		PClassActor *acls = dyn_cast<PClassActor>(cls);
+		PClassActor *acls = ValidateActor(cls);
 		if (acls != NULL)
 		{
+			auto ainfo = acls->ActorInfo();
 			Printf("%s\t%i\t%i\t%s\t%s\n",
-				acls->TypeName.GetChars(), acls->DoomEdNum,
-				acls->SpawnID, filters[acls->GameFilter & 31],
+				acls->TypeName.GetChars(), ainfo->DoomEdNum,
+				ainfo->SpawnID, filters[ainfo->GameFilter & 31],
 				acls->SourceLumpName.GetChars());
 		}
 		else if (cls != NULL)
 		{
-			Printf("%s\tn/a\tn/a\tn/a\tEngine (not an actor type)\n", cls->TypeName.GetChars());
+			Printf("%s\tn/a\tn/a\tn/a\tEngine (not an actor type)\tSource: %s\n", cls->TypeName.GetChars(), cls->SourceLumpName.GetChars());
 		}
 		else
 		{
@@ -371,7 +373,7 @@ void DObject:: Destroy ()
 		IFVIRTUAL(DObject, OnDestroy)
 		{
 			VMValue params[1] = { (DObject*)this };
-			GlobalVMStack.Call(func, params, 1, nullptr, 0);
+			VMCall(func, params, 1, nullptr, 0);
 		}
 	}
 	OnDestroy();
@@ -624,7 +626,7 @@ DEFINE_ACTION_FUNCTION(DObject, MSTime)
 void *DObject::ScriptVar(FName field, PType *type)
 {
 	auto cls = GetClass();
-	auto sym = dyn_cast<PField>(cls->Symbols.FindSymbol(field, true));
+	auto sym = dyn_cast<PField>(cls->FindSymbol(field, true));
 	if (sym && (sym->Type == type || type == nullptr))
 	{
 		if (!(sym->Flags & VARF_Meta))

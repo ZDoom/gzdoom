@@ -33,6 +33,7 @@
 #include "c_dispatch.h"
 #include "r_state.h"
 #include "actor.h"
+#include "cmdlib.h"
 #ifdef _WIN32
 #include "win32gliface.h"
 #endif
@@ -841,10 +842,11 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		PClassActor *cls = pair->Key;
 		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
 
-		for (int i = 0; i < cls->NumOwnedStates; i++)
+		for (int i = 0; i < cls->GetStateCount(); i++)
 		{
-			spritelist[cls->OwnedStates[i].sprite].Insert(gltrans, true);
-			FSpriteModelFrame * smf = gl_FindModelFrame(cls, cls->OwnedStates[i].sprite, cls->OwnedStates[i].Frame, false);
+			auto &state = cls->GetStates()[i];
+			spritelist[state.sprite].Insert(gltrans, true);
+			FSpriteModelFrame * smf = gl_FindModelFrame(cls, state.sprite, state.Frame, false);
 			if (smf != NULL)
 			{
 				for (int i = 0; i < MAX_MODELS_PER_FRAME; i++)

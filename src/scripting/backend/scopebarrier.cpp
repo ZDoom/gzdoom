@@ -1,5 +1,7 @@
 #include "dobject.h"
 #include "scopebarrier.h"
+#include "types.h"
+#include "vmintern.h"
 
 
 // Note: the same object can't be both UI and Play. This is checked explicitly in the field construction and will cause esoteric errors here if found.
@@ -175,14 +177,14 @@ void FScopeBarrier::AddFlags(int flags1, int flags2, const char* name)
 // these are for vmexec.h
 void FScopeBarrier::ValidateNew(PClass* cls, int outerside)
 {
-	int innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
+	int innerside = FScopeBarrier::SideFromObjectFlags(cls->VMType->ObjectFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
 		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
 }
 
 void FScopeBarrier::ValidateCall(PClass* selftype, VMFunction *calledfunc, int outerside)
 {
-	int innerside = FScopeBarrier::SideFromObjectFlags(selftype->ObjectFlags);
+	int innerside = FScopeBarrier::SideFromObjectFlags(selftype->VMType->ObjectFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData))
 		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->PrintableName.GetChars(), FScopeBarrier::StringFromSide(outerside));
 }

@@ -43,7 +43,7 @@
 #include "w_wad.h"
 #include "doomstat.h"
 #include "v_font.h"
-
+#include "vm.h"
 
 //===========================================================================
 //

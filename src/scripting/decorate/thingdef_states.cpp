@@ -97,7 +97,7 @@ FxVMFunctionCall *DoActionSpecials(FScanner &sc, FState & state, Baggage &bag)
 		{
 			sc.ScriptError ("Too many arguments to %s", specname.GetChars());
 		}
-		auto f = dyn_cast<PFunction>(RUNTIME_CLASS(AActor)->Symbols.FindSymbol("A_CallSpecial", false));
+		auto f = dyn_cast<PFunction>(RUNTIME_CLASS(AActor)->FindSymbol("A_CallSpecial", false));
 		assert(f != nullptr);
 		return new FxVMFunctionCall(new FxSelf(sc), f, args, sc, false);
 	}
@@ -142,7 +142,7 @@ void ParseStates(FScanner &sc, PClassActor * actor, AActor * defaults, Baggage &
 	char lastsprite[5] = "";
 	FxExpression *ScriptCode;
 	FArgumentList *args = nullptr;
-	int flagdef = actor->DefaultStateUsage;
+	int flagdef = actor->ActorInfo()->DefaultStateUsage;
 	FScriptPosition scp;
 
 	if (sc.CheckString("("))
@@ -339,7 +339,7 @@ do_stop:
 endofstate:
 			if (ScriptCode != nullptr)
 			{
-				auto funcsym = CreateAnonymousFunction(actor, nullptr, state.UseFlags);
+				auto funcsym = CreateAnonymousFunction(actor->VMType, nullptr, state.UseFlags);
 				state.ActionFunc = FunctionBuildList.AddFunction(bag.Namespace, bag.Version, funcsym, ScriptCode, FStringf("%s.StateFunction.%d", actor->TypeName.GetChars(), bag.statedef.GetStateCount()), true, bag.statedef.GetStateCount(), int(statestring.Len()), sc.LumpNum);
 			}
 			int count = bag.statedef.AddStates(&state, statestring, scp);
@@ -583,7 +583,7 @@ FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, B
 
 	FName symname = FName(sc.String, true);
 	symname = CheckCastKludges(symname);
-	PFunction *afd = dyn_cast<PFunction>(bag.Info->Symbols.FindSymbol(symname, true));
+	PFunction *afd = dyn_cast<PFunction>(bag.Info->FindSymbol(symname, true));
 	if (afd != NULL)
 	{
 		FArgumentList args;

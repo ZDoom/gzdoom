@@ -53,6 +53,7 @@
 #include "m_joy.h"
 #include "sbar.h"
 #include "hardware.h"
+#include "vm.h"
 
 /*=======================================
  *

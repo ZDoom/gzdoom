@@ -247,13 +247,13 @@ public:
 	void Destroy();
 
 	// Add other types as needed.
-	bool &BoolVar(FName field);
-	int &IntVar(FName field);
-	FSoundID &SoundVar(FName field);
-	PalEntry &ColorVar(FName field);
-	FName &NameVar(FName field);
-	double &FloatVar(FName field);
-	FString &StringVar(FName field);
+	inline bool &BoolVar(FName field);
+	inline int &IntVar(FName field);
+	inline FSoundID &SoundVar(FName field);
+	inline PalEntry &ColorVar(FName field);
+	inline FName &NameVar(FName field);
+	inline double &FloatVar(FName field);
+	inline FString &StringVar(FName field);
 	template<class T> T*& PointerVar(FName field);
 
 	// If you need to replace one object with another and want to
@@ -407,6 +407,42 @@ template<class T> T *dyn_cast(DObject *p)
 template<class T> const T *dyn_cast(const DObject *p)
 {
 	return dyn_cast<T>(const_cast<DObject *>(p));
+}
+
+inline bool &DObject::BoolVar(FName field)
+{
+	return *(bool*)ScriptVar(field, nullptr);
+}
+
+inline int &DObject::IntVar(FName field)
+{
+	return *(int*)ScriptVar(field, nullptr);
+}
+
+inline FSoundID &DObject::SoundVar(FName field)
+{
+	return *(FSoundID*)ScriptVar(field, nullptr);
+}
+
+inline PalEntry &DObject::ColorVar(FName field)
+{
+	return *(PalEntry*)ScriptVar(field, nullptr);
+}
+
+inline FName &DObject::NameVar(FName field)
+{
+	return *(FName*)ScriptVar(field, nullptr);
+}
+
+inline double &DObject::FloatVar(FName field)
+{
+	return *(double*)ScriptVar(field, nullptr);
+}
+
+template<class T>
+inline T *&DObject::PointerVar(FName field)
+{
+	return *(T**)ScriptVar(field, nullptr);	// pointer check is more tricky and for the handful of uses in the DECORATE parser not worth the hassle.
 }
 
 #endif //__DOBJECT_H__

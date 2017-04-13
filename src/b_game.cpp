@@ -62,6 +62,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "d_player.h"
 #include "doomerrors.h"
 #include "events.h"
+#include "vm.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 

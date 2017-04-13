@@ -64,6 +64,7 @@ extern void ChildSigHandler (int signum);
 #include "templates.h"
 #include "stats.h"
 #include "timidity/timidity.h"
+#include "vm.h"
 
 #define GZIP_ID1		31
 #define GZIP_ID2		139

@@ -53,6 +53,7 @@
 #include "actorptrselect.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "vm.h"
 
 // Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
 FClassMap SpawnableThings;
@@ -526,7 +527,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpawnableType)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(num);
-	ACTION_RETURN_OBJECT(P_GetSpawnableType(num));
+	ACTION_RETURN_POINTER(P_GetSpawnableType(num));
 }
 
 struct MapinfoSpawnItem

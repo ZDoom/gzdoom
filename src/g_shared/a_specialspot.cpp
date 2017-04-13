@@ -40,6 +40,7 @@
 #include "doomstat.h"
 #include "serializer.h"
 #include "a_pickups.h"
+#include "vm.h"
 
 static FRandom pr_spot ("SpecialSpot");
 static FRandom pr_spawnmace ("SpawnMace");

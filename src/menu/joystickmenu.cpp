@@ -50,6 +50,7 @@
 #include "d_gui.h"
 #include "i_music.h"
 #include "m_joy.h"
+#include "vm.h"
 
 static TArray<IJoystickConfig *> Joysticks;
 

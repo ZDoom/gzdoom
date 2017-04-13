@@ -95,6 +95,7 @@ The FON2 header is followed by variable length data:
 #include "colormatcher.h"
 #include "v_palette.h"
 #include "v_text.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -535,6 +535,7 @@ void V_Init2 ();
 void V_Shutdown ();
 
 class FScanner;
+struct FScriptPosition;
 // Returns the closest color to the one desired. String
 // should be of the form "rr gg bb".
 int V_GetColorFromString (const uint32_t *palette, const char *colorstring, FScriptPosition *sc = nullptr);

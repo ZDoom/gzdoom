@@ -289,27 +289,27 @@ const char *PType::DescriptiveName() const
 void PType::StaticInit()
 {
 	// Create types and add them type the type table.
-	TypeTable.AddType(TypeError = new PErrorType);
-	TypeTable.AddType(TypeAuto = new PErrorType(2));
-	TypeTable.AddType(TypeVoid = new PVoidType);
-	TypeTable.AddType(TypeSInt8 = new PInt(1, false));
-	TypeTable.AddType(TypeUInt8 = new PInt(1, true));
-	TypeTable.AddType(TypeSInt16 = new PInt(2, false));
-	TypeTable.AddType(TypeUInt16 = new PInt(2, true));
-	TypeTable.AddType(TypeSInt32 = new PInt(4, false));
-	TypeTable.AddType(TypeUInt32 = new PInt(4, true));
-	TypeTable.AddType(TypeBool = new PBool);
-	TypeTable.AddType(TypeFloat32 = new PFloat(4));
-	TypeTable.AddType(TypeFloat64 = new PFloat(8));
-	TypeTable.AddType(TypeString = new PString);
-	TypeTable.AddType(TypeName = new PName);
-	TypeTable.AddType(TypeSound = new PSound);
-	TypeTable.AddType(TypeColor = new PColor);
-	TypeTable.AddType(TypeState = new PStatePointer);
-	TypeTable.AddType(TypeStateLabel = new PStateLabel);
-	TypeTable.AddType(TypeNullPtr = new PPointer);
-	TypeTable.AddType(TypeSpriteID = new PSpriteID);
-	TypeTable.AddType(TypeTextureID = new PTextureID);
+	TypeTable.AddType(TypeError = new PErrorType, NAME_None);
+	TypeTable.AddType(TypeAuto = new PErrorType(2), NAME_None);
+	TypeTable.AddType(TypeVoid = new PVoidType, NAME_Void);
+	TypeTable.AddType(TypeSInt8 = new PInt(1, false), NAME_Int);
+	TypeTable.AddType(TypeUInt8 = new PInt(1, true), NAME_Int);
+	TypeTable.AddType(TypeSInt16 = new PInt(2, false), NAME_Int);
+	TypeTable.AddType(TypeUInt16 = new PInt(2, true), NAME_Int);
+	TypeTable.AddType(TypeSInt32 = new PInt(4, false), NAME_Int);
+	TypeTable.AddType(TypeUInt32 = new PInt(4, true), NAME_Int);
+	TypeTable.AddType(TypeBool = new PBool, NAME_Bool);
+	TypeTable.AddType(TypeFloat32 = new PFloat(4), NAME_Float);
+	TypeTable.AddType(TypeFloat64 = new PFloat(8), NAME_Float);
+	TypeTable.AddType(TypeString = new PString, NAME_String);
+	TypeTable.AddType(TypeName = new PName, NAME_Name);
+	TypeTable.AddType(TypeSound = new PSound, NAME_Sound);
+	TypeTable.AddType(TypeColor = new PColor, NAME_Color);
+	TypeTable.AddType(TypeState = new PStatePointer, NAME_Pointer);
+	TypeTable.AddType(TypeStateLabel = new PStateLabel, NAME_Label);
+	TypeTable.AddType(TypeNullPtr = new PPointer, NAME_Pointer);
+	TypeTable.AddType(TypeSpriteID = new PSpriteID, NAME_SpriteID);
+	TypeTable.AddType(TypeTextureID = new PTextureID, NAME_TextureID);
 
 	TypeVoidPtr = NewPointer(TypeVoid, false);
 	TypeColorStruct = NewStruct("@ColorStruct", nullptr);	//This name is intentionally obfuscated so that it cannot be used explicitly. The point of this type is to gain access to the single channels of a color value.
@@ -330,7 +330,7 @@ void PType::StaticInit()
 	TypeVector2 = new PStruct(NAME_Vector2, nullptr);
 	TypeVector2->AddField(NAME_X, TypeFloat64);
 	TypeVector2->AddField(NAME_Y, TypeFloat64);
-	TypeTable.AddType(TypeVector2);
+	TypeTable.AddType(TypeVector2, NAME_Struct);
 	TypeVector2->loadOp = OP_LV2;
 	TypeVector2->storeOp = OP_SV2;
 	TypeVector2->moveOp = OP_MOVEV2;
@@ -343,7 +343,7 @@ void PType::StaticInit()
 	TypeVector3->AddField(NAME_Z, TypeFloat64);
 	// allow accessing xy as a vector2. This is not supposed to be serialized so it's marked transient
 	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Transient, 0));
-	TypeTable.AddType(TypeVector3);
+	TypeTable.AddType(TypeVector3, NAME_Struct);
 	TypeVector3->loadOp = OP_LV3;
 	TypeVector3->storeOp = OP_SV3;
 	TypeVector3->moveOp = OP_MOVEV3;
@@ -1458,15 +1458,15 @@ bool PObjectPointer::ReadValue(FSerializer &ar, const char *key, void *addr) con
 
 PPointer *NewPointer(PType *type, bool isconst)
 {
-	auto cp = dyn_cast<PClassType>(type);
+	auto cp = PType::toClass(type);
 	if (cp) return NewPointer(cp->Descriptor, isconst);
 
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
+	PType *ptype = TypeTable.FindType(NAME_Pointer, (intptr_t)type, isconst ? 1 : 0, &bucket);
 	if (ptype == nullptr)
 	{
 		ptype = new PPointer(type, isconst);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
+		TypeTable.AddType(ptype, NAME_Pointer, (intptr_t)type, isconst ? 1 : 0, bucket);
 	}
 	return static_cast<PPointer *>(ptype);
 }
@@ -1477,11 +1477,11 @@ PPointer *NewPointer(PClass *cls, bool isconst)
 
 	auto type = cls->VMType;
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, &bucket);
+	PType *ptype = TypeTable.FindType(NAME_Pointer, (intptr_t)type, isconst ? 1 : 0, &bucket);
 	if (ptype == nullptr)
 	{
 		ptype = new PObjectPointer(cls, isconst);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PObjectPointer), (intptr_t)type, isconst ? 1 : 0, bucket);
+		TypeTable.AddType(ptype, NAME_Pointer, (intptr_t)type, isconst ? 1 : 0, bucket);
 	}
 	return static_cast<PPointer *>(ptype);
 }
@@ -1581,7 +1581,7 @@ bool PClassPointer::ReadValue(FSerializer &ar, const char *key, void *addr) cons
 
 bool PClassPointer::isCompatible(PType *type)
 {
-	auto other = dyn_cast<PClassPointer>(type);
+	auto other = PType::toClassPointer(type);
 	return (other != nullptr && other->ClassRestriction->IsDescendantOf(ClassRestriction));
 }
 
@@ -1630,11 +1630,11 @@ void PClassPointer::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 PClassPointer *NewClassPointer(PClass *restrict)
 {
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PClassPointer), 0, (intptr_t)restrict, &bucket);
+	PType *ptype = TypeTable.FindType(NAME_Class, 0, (intptr_t)restrict, &bucket);
 	if (ptype == nullptr)
 	{
 		ptype = new PClassPointer(restrict);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PClassPointer), 0, (intptr_t)restrict, bucket);
+		TypeTable.AddType(ptype, NAME_Class, 0, (intptr_t)restrict, bucket);
 	}
 	return static_cast<PClassPointer *>(ptype);
 }
@@ -1683,11 +1683,11 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 {
 	size_t bucket;
 	if (outer == nullptr) outer = Namespaces.GlobalNamespace;
-	PType *etype = TypeTable.FindType(RUNTIME_CLASS(PEnum), (intptr_t)outer, (intptr_t)name, &bucket);
+	PType *etype = TypeTable.FindType(NAME_Enum, (intptr_t)outer, (intptr_t)name, &bucket);
 	if (etype == nullptr)
 	{
 		etype = new PEnum(name, outer);
-		TypeTable.AddType(etype, RUNTIME_CLASS(PEnum), (intptr_t)outer, (intptr_t)name, bucket);
+		TypeTable.AddType(etype, NAME_Enum, (intptr_t)outer, (intptr_t)name, bucket);
 	}
 	return static_cast<PEnum *>(etype);
 }
@@ -1843,11 +1843,11 @@ void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 PArray *NewArray(PType *type, unsigned int count)
 {
 	size_t bucket;
-	PType *atype = TypeTable.FindType(RUNTIME_CLASS(PArray), (intptr_t)type, count, &bucket);
+	PType *atype = TypeTable.FindType(NAME_Array, (intptr_t)type, count, &bucket);
 	if (atype == nullptr)
 	{
 		atype = new PArray(type, count);
-		TypeTable.AddType(atype, RUNTIME_CLASS(PArray), (intptr_t)type, count, bucket);
+		TypeTable.AddType(atype, NAME_Array, (intptr_t)type, count, bucket);
 	}
 	return (PArray *)atype;
 }
@@ -1917,11 +1917,11 @@ void PStaticArray::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 PStaticArray *NewStaticArray(PType *type)
 {
 	size_t bucket;
-	PType *atype = TypeTable.FindType(RUNTIME_CLASS(PStaticArray), (intptr_t)type, 0, &bucket);
+	PType *atype = TypeTable.FindType(NAME_StaticArray, (intptr_t)type, 0, &bucket);
 	if (atype == nullptr)
 	{
 		atype = new PStaticArray(type);
-		TypeTable.AddType(atype, RUNTIME_CLASS(PStaticArray), (intptr_t)type, 0, bucket);
+		TypeTable.AddType(atype, NAME_StaticArray, (intptr_t)type, 0, bucket);
 	}
 	return (PStaticArray *)atype;
 }
@@ -2142,7 +2142,7 @@ bool PDynArray::ReadValue(FSerializer &ar, const char *key, void *addr) const
 PDynArray *NewDynArray(PType *type)
 {
 	size_t bucket;
-	PType *atype = TypeTable.FindType(RUNTIME_CLASS(PDynArray), (intptr_t)type, 0, &bucket);
+	PType *atype = TypeTable.FindType(NAME_DynArray, (intptr_t)type, 0, &bucket);
 	if (atype == nullptr)
 	{
 		FString backingname;
@@ -2172,7 +2172,7 @@ PDynArray *NewDynArray(PType *type)
 
 		auto backing = NewStruct(backingname, nullptr, true);
 		atype = new PDynArray(type, backing);
-		TypeTable.AddType(atype, RUNTIME_CLASS(PDynArray), (intptr_t)type, 0, bucket);
+		TypeTable.AddType(atype, NAME_DynArray, (intptr_t)type, 0, bucket);
 	}
 	return (PDynArray *)atype;
 }
@@ -2247,11 +2247,11 @@ void PMap::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 PMap *NewMap(PType *keytype, PType *valuetype)
 {
 	size_t bucket;
-	PType *maptype = TypeTable.FindType(RUNTIME_CLASS(PMap), (intptr_t)keytype, (intptr_t)valuetype, &bucket);
+	PType *maptype = TypeTable.FindType(NAME_Map, (intptr_t)keytype, (intptr_t)valuetype, &bucket);
 	if (maptype == nullptr)
 	{
 		maptype = new PMap(keytype, valuetype);
-		TypeTable.AddType(maptype, RUNTIME_CLASS(PMap), (intptr_t)keytype, (intptr_t)valuetype, bucket);
+		TypeTable.AddType(maptype, NAME_Map, (intptr_t)keytype, (intptr_t)valuetype, bucket);
 	}
 	return (PMap *)maptype;
 }
@@ -2398,11 +2398,11 @@ PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
 {
 	size_t bucket;
 	if (outer == nullptr) outer = Namespaces.GlobalNamespace;
-	PType *stype = TypeTable.FindType(RUNTIME_CLASS(PStruct), (intptr_t)outer, (intptr_t)name, &bucket);
+	PType *stype = TypeTable.FindType(NAME_Struct, (intptr_t)outer, (intptr_t)name, &bucket);
 	if (stype == nullptr)
 	{
 		stype = new PStruct(name, outer, native);
-		TypeTable.AddType(stype, RUNTIME_CLASS(PStruct), (intptr_t)outer, (intptr_t)name, bucket);
+		TypeTable.AddType(stype, NAME_Struct, (intptr_t)outer, (intptr_t)name, bucket);
 	}
 	return static_cast<PStruct *>(stype);
 }
@@ -2485,11 +2485,11 @@ size_t PPrototype::PropagateMark()
 PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes)
 {
 	size_t bucket;
-	PType *proto = TypeTable.FindType(RUNTIME_CLASS(PPrototype), (intptr_t)&argtypes, (intptr_t)&rettypes, &bucket);
+	PType *proto = TypeTable.FindType(NAME_Prototype, (intptr_t)&argtypes, (intptr_t)&rettypes, &bucket);
 	if (proto == nullptr)
 	{
 		proto = new PPrototype(rettypes, argtypes);
-		TypeTable.AddType(proto, RUNTIME_CLASS(PPrototype), (intptr_t)&argtypes, (intptr_t)&rettypes, bucket);
+		TypeTable.AddType(proto, NAME_Prototype, (intptr_t)&argtypes, (intptr_t)&rettypes, bucket);
 	}
 	return static_cast<PPrototype *>(proto);
 }
@@ -2552,11 +2552,11 @@ PField *PClassType::AddNativeField(FName name, PType *type, size_t address, uint
 PClassType *NewClassType(PClass *cls)
 {
 	size_t bucket;
-	PType *ptype = TypeTable.FindType(RUNTIME_CLASS(PClassType), 0, (intptr_t)cls->TypeName, &bucket);
+	PType *ptype = TypeTable.FindType(NAME_Object, 0, (intptr_t)cls->TypeName, &bucket);
 	if (ptype == nullptr)
 	{
 		ptype = new PClassType(cls);
-		TypeTable.AddType(ptype, RUNTIME_CLASS(PClassType), 0, (intptr_t)cls->TypeName, bucket);
+		TypeTable.AddType(ptype, NAME_Object, 0, (intptr_t)cls->TypeName, bucket);
 	}
 	return static_cast<PClassType *>(ptype);
 }
@@ -2570,16 +2570,16 @@ PClassType *NewClassType(PClass *cls)
 //
 //==========================================================================
 
-PType *FTypeTable::FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, size_t *bucketnum)
+PType *FTypeTable::FindType(FName type_name, intptr_t parm1, intptr_t parm2, size_t *bucketnum)
 {
-	size_t bucket = Hash(metatype, parm1, parm2) % HASH_SIZE;
+	size_t bucket = Hash(type_name, parm1, parm2) % HASH_SIZE;
 	if (bucketnum != nullptr)
 	{
 		*bucketnum = bucket;
 	}
 	for (PType *type = TypeHash[bucket]; type != nullptr; type = type->HashNext)
 	{
-		if (type->TypeTableType == metatype && type->IsMatch(parm1, parm2))
+		if (type->TypeTableType == type_name && type->IsMatch(parm1, parm2))
 		{
 			return type;
 		}
@@ -2593,14 +2593,14 @@ PType *FTypeTable::FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, si
 //
 //==========================================================================
 
-void FTypeTable::AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t parm2, size_t bucket)
+void FTypeTable::AddType(PType *type, FName type_name, intptr_t parm1, intptr_t parm2, size_t bucket)
 {
 #ifdef _DEBUG
 	size_t bucketcheck;
-	assert(FindType(metatype, parm1, parm2, &bucketcheck) == nullptr && "Type must not be inserted more than once");
+	assert(FindType(type_name, parm1, parm2, &bucketcheck) == nullptr && "Type must not be inserted more than once");
 	assert(bucketcheck == bucket && "Passed bucket was wrong");
 #endif
-	type->TypeTableType = metatype;
+	type->TypeTableType = type_name;
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
 	type->Release();
@@ -2612,17 +2612,16 @@ void FTypeTable::AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t
 //
 //==========================================================================
 
-void FTypeTable::AddType(PType *type)
+void FTypeTable::AddType(PType *type, FName type_name)
 {
 	intptr_t parm1, parm2;
 	size_t bucket;
 
 	// Type table stuff id only needed to let all classes hash to the same group. For all other types this is pointless.
-	type->TypeTableType = type->GetClass();
-	PClass *metatype = type->TypeTableType;
+	type->TypeTableType = type_name;
 	type->GetTypeIDs(parm1, parm2);
-	bucket = Hash(metatype, parm1, parm2) % HASH_SIZE;
-	assert(FindType(metatype, parm1, parm2, nullptr) == nullptr && "Type must not be inserted more than once");
+	bucket = Hash(type_name, parm1, parm2) % HASH_SIZE;
+	assert(FindType(type_name, parm1, parm2, nullptr) == nullptr && "Type must not be inserted more than once");
 
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
@@ -2635,7 +2634,7 @@ void FTypeTable::AddType(PType *type)
 //
 //==========================================================================
 
-size_t FTypeTable::Hash(const PClass *p1, intptr_t p2, intptr_t p3)
+size_t FTypeTable::Hash(FName p1, intptr_t p2, intptr_t p3)
 {
 	size_t i1 = (size_t)p1;
 
@@ -2643,7 +2642,7 @@ size_t FTypeTable::Hash(const PClass *p1, intptr_t p2, intptr_t p3)
 	// to transform this into a ROR or ROL.
 	i1 = (i1 >> (sizeof(size_t)*4)) | (i1 << (sizeof(size_t)*4));
 
-	if (p1 != RUNTIME_CLASS(PPrototype))
+	if (p1 != NAME_Prototype)
 	{
 		size_t i2 = (size_t)p2;
 		size_t i3 = (size_t)p3;

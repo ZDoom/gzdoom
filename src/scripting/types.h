@@ -89,7 +89,7 @@ protected:
 	};
 
 public:
-	PClass *TypeTableType;			// The type to use for hashing into the type table
+	FName TypeTableType;			// The type to use for hashing into the type table
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
 	unsigned int	Flags = 0;		// What is this type?
@@ -192,13 +192,13 @@ public:
 	bool isRealPointer() const { return (Flags & (TYPE_Pointer|TYPE_ClassPointer)) == TYPE_Pointer; }	// This excludes class pointers which use their PointedType differently
 	bool isObjectPointer() const { return !!(Flags & TYPE_ObjectPointer); }
 	bool isClassPointer() const { return !!(Flags & TYPE_ClassPointer); }
-	bool isEnum() const { return TypeTableType->TypeName == NAME_Enum; }
+	bool isEnum() const { return TypeTableType == NAME_Enum; }
 	bool isArray() const { return !!(Flags & TYPE_Array); }
-	bool isStaticArray() const { return TypeTableType->TypeName == NAME_StaticArray; }
-	bool isDynArray() const { return TypeTableType->TypeName == NAME_DynArray; }
-	bool isStruct() const { return TypeTableType->TypeName == NAME_Struct; }
-	bool isClass() const { return TypeTableType->TypeName == FName("ClassType"); }
-	bool isPrototype() const { return TypeTableType->TypeName == NAME_Prototype; }
+	bool isStaticArray() const { return TypeTableType == NAME_StaticArray; }
+	bool isDynArray() const { return TypeTableType == NAME_DynArray; }
+	bool isStruct() const { return TypeTableType == NAME_Struct; }
+	bool isClass() const { return TypeTableType == NAME_Object; }
+	bool isPrototype() const { return TypeTableType == NAME_Prototype; }
 
 	PContainerType *toContainer() { return isContainer() ? (PContainerType*)this : nullptr; }
 	PPointer *toPointer() { return isPointer() ? (PPointer*)this : nullptr; }
@@ -676,12 +676,12 @@ struct FTypeTable
 
 	PType *TypeHash[HASH_SIZE];
 
-	PType *FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, size_t *bucketnum);
-	void AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t parm2, size_t bucket);
-	void AddType(PType *type);
+	PType *FindType(FName type_name, intptr_t parm1, intptr_t parm2, size_t *bucketnum);
+	void AddType(PType *type, FName type_name, intptr_t parm1, intptr_t parm2, size_t bucket);
+	void AddType(PType *type, FName type_name);
 	void Clear();
 
-	static size_t Hash(const PClass *p1, intptr_t p2, intptr_t p3);
+	static size_t Hash(FName p1, intptr_t p2, intptr_t p3);
 };
 
 

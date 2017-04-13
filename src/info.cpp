@@ -118,7 +118,7 @@ IMPLEMENT_CLASS(PActorInfo, false, false)
 void AddActorInfo(PClass *cls)
 {
 	auto type = new PActorInfo;
-	TypeTable.AddType(type);
+	TypeTable.AddType(type, NAME_Actor);
 	cls->AddField("*", type, VARF_Meta);
 }
 

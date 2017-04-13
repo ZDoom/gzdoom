@@ -170,6 +170,7 @@ FLightDefaults::FLightDefaults(FName name, ELightType type)
 	m_additive = false;
 	m_halo = false;
 	m_dontlightself = false;
+	m_dontlightactors = false;
 	m_attenuate = -1;
 }
 

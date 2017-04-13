@@ -195,8 +195,8 @@ PFunction *FindClassMemberFunction(PContainerType *selfcls, PContainerType *func
 
 	if (symbol != nullptr)
 	{
-		auto cls_ctx = dyn_cast<PClassType>(funccls);
-		auto cls_target = funcsym ? dyn_cast<PClassType>(funcsym->OwningClass) : nullptr;
+		auto cls_ctx = PType::toClass(funccls);
+		auto cls_target = funcsym ? PType::toClass(funcsym->OwningClass) : nullptr;
 		if (funcsym == nullptr)
 		{
 			sc.Message(MSG_ERROR, "%s is not a member function of %s", name.GetChars(), selfcls->TypeName.GetChars());

@@ -446,8 +446,8 @@ int MatchString (const char *in, const char **strings)
 
 static bool PointerCheck(PType *symtype, PType *checktype)
 {
-	auto symptype = dyn_cast<PClassPointer>(symtype);
-	auto checkptype = dyn_cast<PClassPointer>(checktype);
+	auto symptype = PType::toClassPointer(symtype);
+	auto checkptype = PType::toClassPointer(checktype);
 	return symptype != nullptr && checkptype != nullptr && symptype->ClassRestriction->IsDescendantOf(checkptype->ClassRestriction);
 }
 

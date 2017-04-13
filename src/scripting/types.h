@@ -4,7 +4,6 @@
 #include "serializer.h"
 
 // Variable/parameter/field flags -------------------------------------------
-class PStruct;
 
 // Making all these different storage types use a common set of flags seems
 // like the simplest thing to do.
@@ -61,26 +60,33 @@ enum
 //   Map                           *      *
 //   Prototype                     *+     *+
 
-enum ETypeFlags
-{
-	TYPE_Scalar = 1,
-	TYPE_Container = 2,
-	TYPE_Int = 4,
-	TYPE_IntNotInt = 8,				// catch-all for subtypes that are not being checked by type directly.
-	TYPE_Float = 16,
-	TYPE_Pointer = 32,
-
-	TYPE_IntCompatible = TYPE_Int | TYPE_IntNotInt,	// must be the combination of all flags that are subtypes of int and can be cast to an int.
-};
-
 class PContainerType;
 class PPointer;
+class PClassPointer;
+class PArray;
+class PStruct;
+class PClassType;
 
 struct ZCC_ExprConstant;
 class PType : public PTypeBase
 {
 	DECLARE_ABSTRACT_CLASS(PType, PTypeBase)
 protected:
+
+	enum ETypeFlags
+	{
+		TYPE_Scalar = 1,
+		TYPE_Container = 2,
+		TYPE_Int = 4,
+		TYPE_IntNotInt = 8,				// catch-all for subtypes that are not being checked by type directly.
+		TYPE_Float = 16,
+		TYPE_Pointer = 32,
+		TYPE_ObjectPointer = 64,
+		TYPE_ClassPointer = 128,
+		TYPE_Array = 256,
+
+		TYPE_IntCompatible = TYPE_Int | TYPE_IntNotInt,	// must be the combination of all flags that are subtypes of int and can be cast to an int.
+	};
 
 public:
 	PClass *TypeTableType;			// The type to use for hashing into the type table
@@ -183,10 +189,21 @@ public:
 	bool isIntCompatible() const { return !!(Flags & TYPE_IntCompatible); }
 	bool isFloat() const { return !!(Flags & TYPE_Float); }
 	bool isPointer() const { return !!(Flags & TYPE_Pointer); }
-	bool isRealPointer() const { return !!(Flags & TYPE_Pointer); }	// This excludes class pointers which use their PointedType differently
+	bool isRealPointer() const { return (Flags & (TYPE_Pointer|TYPE_ClassPointer)) == TYPE_Pointer; }	// This excludes class pointers which use their PointedType differently
+	bool isObjectPointer() const { return !!(Flags & TYPE_ObjectPointer); }
+	bool isClassPointer() const { return !!(Flags & TYPE_ClassPointer); }
+	bool isEnum() const { return TypeTableType->TypeName == NAME_Enum; }
+	bool isArray() const { return !!(Flags & TYPE_Array); }
+	bool isStaticArray() const { return TypeTableType->TypeName == NAME_StaticArray; }
+	bool isDynArray() const { return TypeTableType->TypeName == NAME_DynArray; }
+	bool isStruct() const { return TypeTableType->TypeName == NAME_Struct; }
+	bool isClass() const { return TypeTableType->TypeName == FName("ClassType"); }
+	bool isPrototype() const { return TypeTableType->TypeName == NAME_Prototype; }
 
 	PContainerType *toContainer() { return isContainer() ? (PContainerType*)this : nullptr; }
 	PPointer *toPointer() { return isPointer() ? (PPointer*)this : nullptr; }
+	static PClassPointer *toClassPointer(PType *t) { return t && t->isClassPointer() ? (PClassPointer*)t : nullptr; }
+	static PClassType *toClass(PType *t) { return t && t->isClass() ? (PClassType*)t : nullptr; }
 };
 
 // Not-really-a-type types --------------------------------------------------
@@ -493,7 +510,7 @@ public:
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *special) override;
 
 protected:
-	PArray();
+	PArray();//deleteme
 };
 
 class PStaticArray : public PArray
@@ -506,7 +523,7 @@ public:
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 
 protected:
-	PStaticArray();
+	PStaticArray();// deleteme
 };
 
 class PDynArray : public PCompoundType
@@ -529,7 +546,7 @@ public:
 	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const override;
 
 protected:
-	PDynArray();
+	PDynArray(); // deleteme
 };
 
 class PMap : public PCompoundType
@@ -544,7 +561,7 @@ public:
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 protected:
-	PMap();
+	PMap(); // deleteme
 };
 
 class PStruct : public PContainerType
@@ -568,7 +585,7 @@ public:
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) override;
 
 protected:
-	PStruct();
+	PStruct(); // deleteme
 };
 
 class PPrototype : public PCompoundType
@@ -584,7 +601,7 @@ public:
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
 protected:
-	PPrototype();
+	PPrototype(); // deleteme
 };
 
 

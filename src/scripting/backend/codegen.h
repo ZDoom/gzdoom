@@ -335,11 +335,11 @@ public:
 	bool IsPointer() const { return ValueType->isPointer(); }
 	bool IsVector() const { return ValueType == TypeVector2 || ValueType == TypeVector3; };
 	bool IsBoolCompat() const { return ValueType->isScalar(); }
-	bool IsObject() const { return ValueType->IsKindOf(RUNTIME_CLASS(PObjectPointer)); }
-	bool IsArray() const { return ValueType->IsKindOf(RUNTIME_CLASS(PArray)) || (ValueType->isPointer() && ValueType->toPointer()->PointedType->IsKindOf(RUNTIME_CLASS(PArray))); }
-	bool IsResizableArray() const { return (ValueType->isPointer() && ValueType->toPointer()->PointedType->IsKindOf(RUNTIME_CLASS(PStaticArray))); } // can only exist in pointer form.
-	bool IsDynamicArray() const { return (ValueType->IsKindOf(RUNTIME_CLASS(PDynArray))); }
-	bool IsNativeStruct() const { return (ValueType->IsA(RUNTIME_CLASS(PStruct)) && static_cast<PStruct*>(ValueType)->isNative); }
+	bool IsObject() const { return ValueType->isObjectPointer(); }
+	bool IsArray() const { return ValueType->isArray() || (ValueType->isPointer() && ValueType->toPointer()->PointedType->isArray()); }
+	bool isStaticArray() const { return (ValueType->isPointer() && ValueType->toPointer()->PointedType->isStaticArray()); } // can only exist in pointer form.
+	bool IsDynamicArray() const { return (ValueType->isDynArray()); }
+	bool IsNativeStruct() const { return (ValueType->isStruct() && static_cast<PStruct*>(ValueType)->isNative); }
 
 	virtual ExpEmit Emit(VMFunctionBuilder *build);
 	void EmitStatement(VMFunctionBuilder *build);

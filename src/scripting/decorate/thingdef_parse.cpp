@@ -203,7 +203,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type)
 			x = new FxRuntimeStateIndex(ParseExpression(sc, cls));
 		}
 	}
-	else if (type->GetClass() == RUNTIME_CLASS(PClassPointer))
+	else if (type->isClassPointer())
 	{	// Actor name
 		sc.SetEscape(true);
 		sc.MustGetString();
@@ -881,7 +881,7 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			sc.MustGetString();
 			*(FString*)addr = strbin1(sc.String);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+		else if (f->Type->isClassPointer())
 		{
 			sc.MustGetString();
 
@@ -892,13 +892,14 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			else
 			{
 				auto cls = PClass::FindClass(sc.String);
+				auto cp = static_cast<PClassPointer*>(f->Type);
 				if (cls == nullptr)
 				{
-					cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(sc.String);
+					cls = cp->ClassRestriction->FindClassTentative(sc.String);
 				}
-				else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+				else if (!cls->IsDescendantOf(cp->ClassRestriction))
 				{
-					sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+					sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, cp->ClassRestriction->TypeName.GetChars());
 					FScriptPosition::ErrorCounter++;
 				}
 				*(PClass**)addr = cls;

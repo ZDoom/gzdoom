@@ -1407,6 +1407,7 @@ PObjectPointer::PObjectPointer(PClass *cls, bool isconst)
 	: PPointer(cls->VMType, isconst)
 {
 	loadOp = OP_LO;
+	Flags |= TYPE_ObjectPointer;
 	// Non-destroyed thinkers are always guaranteed to be linked into the thinker chain so we don't need the write barrier for them.
 	if (cls && !cls->IsDescendantOf(RUNTIME_CLASS(DThinker))) storeOp = OP_SO;
 }
@@ -1545,6 +1546,7 @@ PClassPointer::PClassPointer(PClass *restrict)
 	else mDescriptiveName = "ClassPointer";
 	loadOp = OP_LP;
 	storeOp = OP_SP;
+	Flags |= TYPE_ClassPointer;
 	mVersion = restrict->VMType->mVersion;
 }
 
@@ -1664,6 +1666,7 @@ PEnum::PEnum(FName name, PTypeBase *outer)
 {
 	EnumName = name;
 	Outer = outer;
+	Flags |= TYPE_IntNotInt;
 	mDescriptiveName.Format("Enum<%s>", name.GetChars());
 }
 
@@ -1721,6 +1724,7 @@ PArray::PArray(PType *etype, unsigned int ecount)
 	// also be padded to the nearest alignment.
 	ElementSize = (etype->Size + (etype->Align - 1)) & ~(etype->Align - 1);
 	Size = ElementSize * ecount;
+	Flags |= TYPE_Array;
 }
 
 //==========================================================================

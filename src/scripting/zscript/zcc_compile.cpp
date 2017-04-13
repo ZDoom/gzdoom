@@ -1320,7 +1320,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 						}
 						// For native structs a size check cannot be done because they normally have no size. But for a native reference they are still fine.
 						else if (thisfieldtype->Size != ~0u && fd->FieldSize != ~0u && thisfieldtype->Size != fd->FieldSize && fd->BitValue == 0 && 
-							(!thisfieldtype->IsA(RUNTIME_CLASS(PStruct)) || !static_cast<PStruct*>(thisfieldtype)->isNative))
+							(!thisfieldtype->isStruct() || !static_cast<PStruct*>(thisfieldtype)->isNative))
 						{
 							Error(field, "The member variable '%s.%s' has mismatching sizes in internal and external declaration. (Internal = %d, External = %d)", type == nullptr ? "" : type->TypeName.GetChars(), FName(name->Name).GetChars(), fd->FieldSize, thisfieldtype->Size);
 						}
@@ -1652,7 +1652,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 				return TypeError;
 			}
 			auto typesym = dyn_cast<PSymbolType>(sym);
-			if (typesym == nullptr || !typesym->Type->IsKindOf(RUNTIME_CLASS(PClassType)))
+			if (typesym == nullptr || !typesym->Type->isClass())
 			{
 				Error(field, "%s does not represent a class type", FName(ctype->Restriction->Id).GetChars());
 				return TypeError;
@@ -1703,15 +1703,15 @@ PType *ZCCCompiler::ResolveUserType(ZCC_BasicType *type, PSymbolTable *symt, boo
 			return TypeError;
 		}
 
-		if (ptype->IsKindOf(RUNTIME_CLASS(PEnum)))
+		if (ptype->isEnum())
 		{
 			if (!nativetype) return TypeSInt32;	// hack this to an integer until we can resolve the enum mess.
 		}
-		else if (ptype->IsKindOf(RUNTIME_CLASS(PClassType))) // classes cannot be instantiated at all, they always get used as references.
+		else if (ptype->isClass()) // classes cannot be instantiated at all, they always get used as references.
 		{
 			return NewPointer(ptype, type->isconst);
 		}
-		else if (ptype->IsKindOf(RUNTIME_CLASS(PStruct)) && static_cast<PStruct*>(ptype)->isNative)	// native structs and classes cannot be instantiated, they always get used as reference.
+		else if (ptype->isStruct() && static_cast<PStruct*>(ptype)->isNative)	// native structs and classes cannot be instantiated, they always get used as reference.
 		{
 			if (!nativetype) return NewPointer(ptype, type->isconst);
 			return ptype;	// instantiation of native structs. Only for internal use.
@@ -2035,7 +2035,7 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 		{
 			*(FString*)addr = GetStringConst(ex, ctx);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+		else if (f->Type->isClassPointer())
 		{
 			auto clsname = GetStringConst(ex, ctx);
 			if (*clsname == 0 || !stricmp(clsname, "none"))
@@ -2045,13 +2045,14 @@ void ZCCCompiler::DispatchScriptProperty(PProperty *prop, ZCC_PropertyStmt *prop
 			else
 			{
 				auto cls = PClass::FindClass(clsname);
+				auto cp = static_cast<PClassPointer*>(f->Type);
 				if (cls == nullptr)
 				{
-					cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(clsname);
+					cls = cp->ClassRestriction->FindClassTentative(clsname);
 				}
-				else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+				else if (!cls->IsDescendantOf(cp->ClassRestriction))
 				{
-					Error(property, "class %s is not compatible with property type %s", clsname, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+					Error(property, "class %s is not compatible with property type %s", clsname, cp->ClassRestriction->TypeName.GetChars());
 				}
 				*(PClass**)addr = cls;
 			}
@@ -2495,7 +2496,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 				{
 					auto type = DetermineType(c->Type(), p, f->Name, p->Type, false, false);
 					int flags = 0;
-					if ((type->IsA(RUNTIME_CLASS(PStruct)) && type != TypeVector2 && type != TypeVector3) || type->IsA(RUNTIME_CLASS(PDynArray)))
+					if ((type->isStruct() && type != TypeVector2 && type != TypeVector3) || type->isDynArray())
 					{
 						// Structs are being passed by pointer, but unless marked 'out' that pointer must be readonly.
 						type = NewPointer(type /*, !(p->Flags & ZCC_Out)*/);
@@ -2565,7 +2566,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 									break;
 
 								case REGT_POINTER:
-									if (type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+									if (type->isClassPointer())
 										vmval[0] = (DObject*)cnst->GetValue().GetPointer();
 									else
 										vmval[0] = cnst->GetValue().GetPointer();
@@ -2609,7 +2610,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr ? nullptr : *(afd->VMPointer), varflags, useflags);
 		c->Type()->Symbols.ReplaceSymbol(sym);
 
-		auto vcls = dyn_cast<PClassType>(c->Type());
+		auto vcls = PType::toClass(c->Type());
 		auto cls = vcls ? vcls->Descriptor : nullptr;
 		PFunction *virtsym = nullptr;
 		if (cls != nullptr && cls->ParentClass != nullptr) virtsym = dyn_cast<PFunction>(cls->ParentClass->VMType->Symbols.FindSymbol(FName(f->Name), true));
@@ -2656,7 +2657,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
 		}
 
-		PClass *clstype = static_cast<PClassType *>(c->Type())->Descriptor;
+		PClass *clstype = forclass? static_cast<PClassType *>(c->Type())->Descriptor : nullptr;
 		if (varflags & VARF_Virtual)
 		{
 			if (sym->Variants[0].Implementation == nullptr)
@@ -2817,7 +2818,7 @@ FxExpression *ZCCCompiler::SetupActionFunction(PClass *cls, ZCC_TreeNode *af, in
 				{
 					FArgumentList argumentlist;
 					// We can use this function directly without wrapping it in a caller.
-					assert(dyn_cast<PClassType>(afd->Variants[0].SelfClass) != nullptr);	// non classes are not supposed to get here.
+					assert(PType::toClass(afd->Variants[0].SelfClass) != nullptr);	// non classes are not supposed to get here.
 
 					int comboflags = afd->Variants[0].UseFlags & StateFlags;
 					if (comboflags == StateFlags)	// the function must satisfy all the flags the state requires

@@ -5015,7 +5015,6 @@ int DLevelScript::LineFromID(int id)
 bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *&type, bool readonly)
 {
 	PField *var = dyn_cast<PField>(self->GetClass()->FindSymbol(varname, true));
-	PArray *arraytype;
 
 	if (var == NULL || (!readonly && (var->Flags & VARF_Native)))
 	{
@@ -5023,9 +5022,9 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 	}
 	type = var->Type;
 	uint8_t *baddr = reinterpret_cast<uint8_t *>(self) + var->Offset;
-	arraytype = dyn_cast<PArray>(type);
-	if (arraytype != NULL)
+	if (type->isArray())
 	{
+		PArray *arraytype = static_cast<PArray*>(type);
 		// unwrap contained type
 		type = arraytype->ElementType;
 		// offset by index (if in bounds)

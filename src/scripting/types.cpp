@@ -68,9 +68,6 @@ PPointer *TypeVoidPtr;
 
 // CODE --------------------------------------------------------------------
 
-IMPLEMENT_CLASS(PErrorType, false, false)
-IMPLEMENT_CLASS(PVoidType, false, false)
-
 void DumpTypeTable()
 {
 	int used = 0;
@@ -115,8 +112,6 @@ void DumpTypeTable()
 }
 
 /* PType ******************************************************************/
-
-IMPLEMENT_CLASS(PType, true, false)
 
 //==========================================================================
 //
@@ -375,8 +370,6 @@ void PType::StaticInit()
 
 /* PBasicType *************************************************************/
 
-IMPLEMENT_CLASS(PBasicType, true, false)
-
 //==========================================================================
 //
 // PBasicType Parameterized Constructor
@@ -392,8 +385,6 @@ PBasicType::PBasicType(unsigned int size, unsigned int align)
 
 /* PCompoundType **********************************************************/
 
-IMPLEMENT_CLASS(PCompoundType, true, false)
-
 //==========================================================================
 //
 // PBasicType Parameterized Constructor
@@ -408,8 +399,6 @@ PCompoundType::PCompoundType(unsigned int size, unsigned int align)
 
 /* PContainerType *************************************************************/
 
-IMPLEMENT_CLASS(PContainerType, true, false)
-
 //==========================================================================
 //
 // PContainerType :: IsMatch
@@ -418,7 +407,7 @@ IMPLEMENT_CLASS(PContainerType, true, false)
 
 bool PContainerType::IsMatch(intptr_t id1, intptr_t id2) const
 {
-	const DObject *outer = (const DObject *)id1;
+	const PTypeBase *outer = (const PTypeBase *)id1;
 	FName name = (ENamedName)(intptr_t)id2;
 	
 	return Outer == outer && TypeName == name;
@@ -437,23 +426,6 @@ void PContainerType::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 }
 
 /* PInt *******************************************************************/
-
-IMPLEMENT_CLASS(PInt, false, false)
-
-//==========================================================================
-//
-// PInt Default Constructor
-//
-//==========================================================================
-
-PInt::PInt()
-: PBasicType(4, 4), Unsigned(false), IntCompatible(true)
-{
-	mDescriptiveName = "SInt32";
-	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, -0x7FFFFFFF - 1));
-	Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this,  0x7FFFFFFF));
-	SetOps();
-}
 
 //==========================================================================
 //
@@ -678,8 +650,6 @@ double PInt::GetValueFloat(void *addr) const
 
 /* PBool ******************************************************************/
 
-IMPLEMENT_CLASS(PBool, false, false)
-
 //==========================================================================
 //
 // PInt :: SetValue
@@ -721,8 +691,6 @@ PBool::PBool()
 }
 
 /* PFloat *****************************************************************/
-
-IMPLEMENT_CLASS(PFloat, false, false)
 
 //==========================================================================
 //
@@ -968,8 +936,6 @@ void PFloat::SetOps()
 
 /* PString ****************************************************************/
 
-IMPLEMENT_CLASS(PString, false, false)
-
 //==========================================================================
 //
 // PString Default Constructor
@@ -1065,8 +1031,6 @@ void PString::DestroyValue(void *addr) const
 
 /* PName ******************************************************************/
 
-IMPLEMENT_CLASS(PName, false, false)
-
 //==========================================================================
 //
 // PName Default Constructor
@@ -1116,8 +1080,6 @@ bool PName::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 /* PSpriteID ******************************************************************/
 
-IMPLEMENT_CLASS(PSpriteID, false, false)
-
 //==========================================================================
 //
 // PName Default Constructor
@@ -1158,8 +1120,6 @@ bool PSpriteID::ReadValue(FSerializer &ar, const char *key, void *addr) const
 }
 
 /* PTextureID ******************************************************************/
-
-IMPLEMENT_CLASS(PTextureID, false, false)
 
 //==========================================================================
 //
@@ -1202,8 +1162,6 @@ bool PTextureID::ReadValue(FSerializer &ar, const char *key, void *addr) const
 }
 
 /* PSound *****************************************************************/
-
-IMPLEMENT_CLASS(PSound, false, false)
 
 //==========================================================================
 //
@@ -1254,8 +1212,6 @@ bool PSound::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 /* PColor *****************************************************************/
 
-IMPLEMENT_CLASS(PColor, false, false)
-
 //==========================================================================
 //
 // PColor Default Constructor
@@ -1272,8 +1228,6 @@ PColor::PColor()
 
 /* PStateLabel *****************************************************************/
 
-IMPLEMENT_CLASS(PStateLabel, false, false)
-
 //==========================================================================
 //
 // PStateLabel Default Constructor
@@ -1288,8 +1242,6 @@ PStateLabel::PStateLabel()
 }
 
 /* PPointer ***************************************************************/
-
-IMPLEMENT_CLASS(PPointer, false, false)
 
 //==========================================================================
 //
@@ -1395,8 +1347,6 @@ bool PPointer::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 /* PObjectPointer **********************************************************/
 
-IMPLEMENT_CLASS(PObjectPointer, false, false)
-
 //==========================================================================
 //
 // PPointer :: GetStoreOp
@@ -1488,8 +1438,6 @@ PPointer *NewPointer(PClass *cls, bool isconst)
 
 /* PStatePointer **********************************************************/
 
-IMPLEMENT_CLASS(PStatePointer, false, false)
-
 //==========================================================================
 //
 // PStatePointer Default Constructor
@@ -1530,8 +1478,6 @@ bool PStatePointer::ReadValue(FSerializer &ar, const char *key, void *addr) cons
 
 
 /* PClassPointer **********************************************************/
-
-IMPLEMENT_CLASS(PClassPointer,false, false)
 
 //==========================================================================
 //
@@ -1641,20 +1587,6 @@ PClassPointer *NewClassPointer(PClass *restrict)
 
 /* PEnum ******************************************************************/
 
-IMPLEMENT_CLASS(PEnum, false, false)
-
-//==========================================================================
-//
-// PEnum - Default Constructor
-//
-//==========================================================================
-
-PEnum::PEnum()
-: PInt(4, false)
-{
-	mDescriptiveName = "Enum";
-}
-
 //==========================================================================
 //
 // PEnum - Parameterized Constructor
@@ -1693,20 +1625,6 @@ PEnum *NewEnum(FName name, PTypeBase *outer)
 }
 
 /* PArray *****************************************************************/
-
-IMPLEMENT_CLASS(PArray, false, false)
-
-//==========================================================================
-//
-// PArray - Default Constructor
-//
-//==========================================================================
-
-PArray::PArray()
-: ElementType(nullptr), ElementCount(0)
-{
-	mDescriptiveName = "Array";
-}
 
 //==========================================================================
 //
@@ -1854,19 +1772,6 @@ PArray *NewArray(PType *type, unsigned int count)
 
 /* PArray *****************************************************************/
 
-IMPLEMENT_CLASS(PStaticArray, false, false)
-
-//==========================================================================
-//
-// PArray - Default Constructor
-//
-//==========================================================================
-
-PStaticArray::PStaticArray()
-{
-	mDescriptiveName = "ResizableArray";
-}
-
 //==========================================================================
 //
 // PArray - Parameterized Constructor
@@ -1927,22 +1832,6 @@ PStaticArray *NewStaticArray(PType *type)
 }
 
 /* PDynArray **************************************************************/
-
-IMPLEMENT_CLASS(PDynArray, false, false)
-
-//==========================================================================
-//
-// PDynArray - Default Constructor
-//
-//==========================================================================
-
-PDynArray::PDynArray()
-: ElementType(nullptr)
-{
-	mDescriptiveName = "DynArray";
-	Size = sizeof(FArray);
-	Align = alignof(FArray);
-}
 
 //==========================================================================
 //
@@ -2064,7 +1953,7 @@ void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffs
 
 void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special) const
 {
-	if (ElementType->IsKindOf(RUNTIME_CLASS(PObjectPointer)))
+	if (ElementType->isObjectPointer())
 	{
 		// Add to the list of pointer arrays for this class.
 		special->Push(offset);
@@ -2179,22 +2068,6 @@ PDynArray *NewDynArray(PType *type)
 
 /* PMap *******************************************************************/
 
-IMPLEMENT_CLASS(PMap, false, false)
-
-//==========================================================================
-//
-// PMap - Default Constructor
-//
-//==========================================================================
-
-PMap::PMap()
-: KeyType(nullptr), ValueType(nullptr)
-{
-	mDescriptiveName = "Map";
-	Size = sizeof(FMap);
-	Align = alignof(FMap);
-}
-
 //==========================================================================
 //
 // PMap - Parameterized Constructor
@@ -2257,20 +2130,6 @@ PMap *NewMap(PType *keytype, PType *valuetype)
 }
 
 /* PStruct ****************************************************************/
-
-IMPLEMENT_CLASS(PStruct, false, false)
-
-//==========================================================================
-//
-// PStruct - Default Constructor
-//
-//==========================================================================
-
-PStruct::PStruct()
-{
-	mDescriptiveName = "Struct";
-	Size = 0;
-}
 
 //==========================================================================
 //
@@ -2410,18 +2269,6 @@ PStruct *NewStruct(FName name, PTypeBase *outer, bool native)
 
 /* PPrototype *************************************************************/
 
-IMPLEMENT_CLASS(PPrototype, false, false)
-
-//==========================================================================
-//
-// PPrototype - Default Constructor
-//
-//==========================================================================
-
-PPrototype::PPrototype()
-{
-}
-
 //==========================================================================
 //
 // PPrototype - Parameterized Constructor
@@ -2461,20 +2308,6 @@ void PPrototype::GetTypeIDs(intptr_t &id1, intptr_t &id2) const
 
 //==========================================================================
 //
-// PPrototype :: PropagateMark
-//
-//==========================================================================
-
-size_t PPrototype::PropagateMark()
-{
-	GC::MarkArray(ArgumentTypes);
-	GC::MarkArray(ReturnTypes);
-	return (ArgumentTypes.Size() + ReturnTypes.Size()) * sizeof(void*) +
-		Super::PropagateMark();
-}
-
-//==========================================================================
-//
 // NewPrototype
 //
 // Returns a PPrototype for the given return and argument types, making sure
@@ -2496,8 +2329,6 @@ PPrototype *NewPrototype(const TArray<PType *> &rettypes, const TArray<PType *> 
 
 /* PClass *****************************************************************/
 
-IMPLEMENT_CLASS(PClassType, false, false)
-
 //==========================================================================
 //
 //
@@ -2514,6 +2345,7 @@ PClassType::PClassType(PClass *cls)
 		ParentType = cls->ParentClass->VMType;
 		assert(ParentType != nullptr);
 		Symbols.SetParentTable(&ParentType->Symbols);
+		ScopeFlags = ParentType->ScopeFlags;
 	}
 	cls->VMType = this;
 	mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
@@ -2603,7 +2435,6 @@ void FTypeTable::AddType(PType *type, FName type_name, intptr_t parm1, intptr_t 
 	type->TypeTableType = type_name;
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
-	type->Release();
 }
 
 //==========================================================================
@@ -2625,7 +2456,6 @@ void FTypeTable::AddType(PType *type, FName type_name)
 
 	type->HashNext = TypeHash[bucket];
 	TypeHash[bucket] = type;
-	type->Release();
 }
 
 //==========================================================================

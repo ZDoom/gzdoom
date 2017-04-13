@@ -2,6 +2,13 @@
 
 #include "zstring.h"
 
+enum EScopeFlags
+{
+	Scope_All = 0,
+	Scope_UI = 1,		// Marks a class that defaults to VARF_UI for its fields/methods
+	Scope_Play = 2,	// Marks a class that defaults to VARF_Play for its fields/methods
+};
+
 class PClass;
 class VMFunction;
 
@@ -34,11 +41,11 @@ struct FScopeBarrier
 	static int SideFromFlags(int flags);
 
 	// same as above, but from object flags
-	static int SideFromObjectFlags(int flags);
+	static int SideFromObjectFlags(EScopeFlags flags);
 
 	//
 	static int FlagsFromSide(int side);
-	static int ObjectFlagsFromSide(int side);
+	static EScopeFlags ObjectFlagsFromSide(int side);
 	
 	// used for errors
 	static const char* StringFromSide(int side);
@@ -46,7 +53,7 @@ struct FScopeBarrier
 	// this modifies VARF_ flags and sets the side properly.
 	static int ChangeSideInFlags(int flags, int side);
 	// this modifies OF_ flags and sets the side properly.
-	static int ChangeSideInObjectFlags(int flags, int side);
+	static EScopeFlags ChangeSideInObjectFlags(EScopeFlags flags, int side);
 	FScopeBarrier();
 	FScopeBarrier(int flags1, int flags2, const char* name);
 

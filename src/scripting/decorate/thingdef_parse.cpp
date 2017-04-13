@@ -102,7 +102,7 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 	{
 		// [ZZ] DECORATE classes are always play
 		auto vmtype = type->VMType;
-		vmtype->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(vmtype->ObjectFlags, FScopeBarrier::Side_Play);
+		vmtype->ScopeFlags = FScopeBarrier::ChangeSideInObjectFlags(vmtype->ScopeFlags, FScopeBarrier::Side_Play);
 	}
 
 	return type;

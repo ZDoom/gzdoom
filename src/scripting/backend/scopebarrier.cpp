@@ -19,11 +19,11 @@ int FScopeBarrier::SideFromFlags(int flags)
 }
 
 // same as above, but from object flags
-int FScopeBarrier::SideFromObjectFlags(int flags)
+int FScopeBarrier::SideFromObjectFlags(EScopeFlags flags)
 {
-	if (flags & OF_UI)
+	if (flags & Scope_UI)
 		return Side_UI;
-	if (flags & OF_Play)
+	if (flags & Scope_Play)
 		return Side_Play;
 	return Side_PlainData;
 }
@@ -46,16 +46,16 @@ int FScopeBarrier::FlagsFromSide(int side)
 	}
 }
 
-int FScopeBarrier::ObjectFlagsFromSide(int side)
+EScopeFlags FScopeBarrier::ObjectFlagsFromSide(int side)
 {
 	switch (side)
 	{
 	case Side_Play:
-		return OF_Play;
+		return Scope_Play;
 	case Side_UI:
-		return OF_UI;
+		return Scope_UI;
 	default:
-		return 0;
+		return Scope_All;
 	}
 }
 
@@ -88,11 +88,12 @@ int FScopeBarrier::ChangeSideInFlags(int flags, int side)
 }
 
 // this modifies OF_ flags and sets the side properly.
-int FScopeBarrier::ChangeSideInObjectFlags(int flags, int side)
+EScopeFlags FScopeBarrier::ChangeSideInObjectFlags(EScopeFlags flags, int side)
 {
-	flags &= ~(OF_UI | OF_Play);
-	flags |= ObjectFlagsFromSide(side);
-	return flags;
+	int f = int(flags);
+	f &= ~(Scope_UI | Scope_Play);
+	f |= ObjectFlagsFromSide(side);
+	return (EScopeFlags)flags;
 }
 
 FScopeBarrier::FScopeBarrier()
@@ -177,14 +178,14 @@ void FScopeBarrier::AddFlags(int flags1, int flags2, const char* name)
 // these are for vmexec.h
 void FScopeBarrier::ValidateNew(PClass* cls, int outerside)
 {
-	int innerside = FScopeBarrier::SideFromObjectFlags(cls->VMType->ObjectFlags);
+	int innerside = FScopeBarrier::SideFromObjectFlags(cls->VMType->ScopeFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
 		ThrowAbortException(X_OTHER, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
 }
 
 void FScopeBarrier::ValidateCall(PClass* selftype, VMFunction *calledfunc, int outerside)
 {
-	int innerside = FScopeBarrier::SideFromObjectFlags(selftype->VMType->ObjectFlags);
+	int innerside = FScopeBarrier::SideFromObjectFlags(selftype->VMType->ScopeFlags);
 	if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData))
 		ThrowAbortException(X_OTHER, "Cannot call %s function %s from %s context", FScopeBarrier::StringFromSide(innerside), calledfunc->PrintableName.GetChars(), FScopeBarrier::StringFromSide(outerside));
 }

@@ -77,7 +77,6 @@ cycle_t ActionCycles;
 
 class PActorInfo : public PCompoundType
 {
-	DECLARE_CLASS(PActorInfo, PCompoundType);
 public:
 	PActorInfo()
 		:PCompoundType(sizeof(FActorInfo), alignof(FActorInfo))
@@ -112,8 +111,6 @@ public:
 	}
 
 };
-
-IMPLEMENT_CLASS(PActorInfo, false, false)
 
 void AddActorInfo(PClass *cls)
 {

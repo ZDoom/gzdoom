@@ -5159,8 +5159,8 @@ FxExpression *FxNew::Resolve(FCompileContext &ctx)
 		//
 		int outerside = ctx.Function && ctx.Function->Variants.Size() ? FScopeBarrier::SideFromFlags(ctx.Function->Variants[0].Flags) : FScopeBarrier::Side_Virtual;
 		if (outerside == FScopeBarrier::Side_Virtual)
-			outerside = FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags);
-		int innerside = FScopeBarrier::SideFromObjectFlags(cls->VMType->ObjectFlags);
+			outerside = FScopeBarrier::SideFromObjectFlags(ctx.Class->ScopeFlags);
+		int innerside = FScopeBarrier::SideFromObjectFlags(cls->VMType->ScopeFlags);
 		if ((outerside != innerside) && (innerside != FScopeBarrier::Side_PlainData)) // "cannot construct ui class ... from data context"
 		{
 			ScriptPosition.Message(MSG_ERROR, "Cannot construct %s class %s from %s context", FScopeBarrier::StringFromSide(innerside), cls->TypeName.GetChars(), FScopeBarrier::StringFromSide(outerside));
@@ -5190,7 +5190,7 @@ ExpEmit FxNew::Emit(VMFunctionBuilder *build)
 	{
 		int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
 		if (outerside == FScopeBarrier::Side_Virtual)
-			outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ObjectFlags);
+			outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ScopeFlags);
 		build->Emit(OP_NEW, to.RegNum, from.RegNum, outerside+1);	// +1 to ensure it's not 0
 	}
 	else
@@ -6947,7 +6947,7 @@ bool FxStructMember::RequestAddress(FCompileContext &ctx, bool *writable)
 			{
 				outerflags = ctx.Function->Variants[0].Flags;
 				if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
-					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ScopeFlags));
 			}
 			FScopeBarrier scopeBarrier(outerflags, FScopeBarrier::FlagsFromSide(BarrierSide), membervar->SymbolName.GetChars());
 			if (!scopeBarrier.writable)
@@ -6991,7 +6991,7 @@ FxExpression *FxStructMember::Resolve(FCompileContext &ctx)
 	{
 		outerflags = ctx.Function->Variants[0].Flags;
 		if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
-			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ScopeFlags));
 	}
 	FScopeBarrier scopeBarrier(outerflags, membervar->Flags, membervar->SymbolName.GetChars());
 	if (!scopeBarrier.readable)
@@ -7619,14 +7619,14 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 			{
 				outerflags = ctx.Function->Variants[0].Flags;
 				if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
-					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+					outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ScopeFlags));
 			}
 			int innerflags = afd->Variants[0].Flags;
 			int innerside = FScopeBarrier::SideFromFlags(innerflags);
 			// [ZZ] check this at compile time. this would work for most legit cases.
 			if (innerside == FScopeBarrier::Side_Virtual)
 			{
-				innerside = FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags);
+				innerside = FScopeBarrier::SideFromObjectFlags(ctx.Class->ScopeFlags);
 				innerflags = FScopeBarrier::FlagsFromSide(innerside);
 			}
 			FScopeBarrier scopeBarrier(outerflags, innerflags, MethodName.GetChars());
@@ -8300,14 +8300,14 @@ isresolved:
 	{
 		outerflags = ctx.Function->Variants[0].Flags;
 		if (((outerflags & (VARF_VirtualScope | VARF_Virtual)) == (VARF_VirtualScope | VARF_Virtual)) && ctx.Class)
-			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ObjectFlags));
+			outerflags = FScopeBarrier::FlagsFromSide(FScopeBarrier::SideFromObjectFlags(ctx.Class->ScopeFlags));
 	}
 	int innerflags = afd->Variants[0].Flags;
 	int innerside = FScopeBarrier::SideFromFlags(innerflags);
 	// [ZZ] check this at compile time. this would work for most legit cases.
 	if (innerside == FScopeBarrier::Side_Virtual)
 	{
-		innerside = FScopeBarrier::SideFromObjectFlags(cls->ObjectFlags);
+		innerside = FScopeBarrier::SideFromObjectFlags(cls->ScopeFlags);
 		innerflags = FScopeBarrier::FlagsFromSide(innerside);
 	}
 	else if (innerside != FScopeBarrier::Side_Clear)
@@ -8938,11 +8938,11 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 
 		if (innerside == FScopeBarrier::Side_Virtual)
 		{
-			auto selfside = FScopeBarrier::SideFromObjectFlags(Self->ValueType->toPointer()->PointedType->ObjectFlags);
+			auto selfside = FScopeBarrier::SideFromObjectFlags(Self->ValueType->toPointer()->PointedType->ScopeFlags);
 
 			int outerside = FScopeBarrier::SideFromFlags(CallingFunction->Variants[0].Flags);
 			if (outerside == FScopeBarrier::Side_Virtual)
-				outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ObjectFlags);
+				outerside = FScopeBarrier::SideFromObjectFlags(CallingFunction->OwningClass->ScopeFlags);
 
 			// [ZZ] only emit if target side cannot be checked at compile time.
 			if (selfside == FScopeBarrier::Side_PlainData)

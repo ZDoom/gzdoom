@@ -377,6 +377,8 @@ static inline void GC::WriteBarrier(DObject *pointed)
 	}
 }
 
+#include "memarena.h"
+extern FMemArena ClassDataAllocator;
 #include "symbols.h"
 #include "dobjtype.h"
 

@@ -367,8 +367,6 @@ static void MarkRoot()
 	}
 	Mark(SectorMarker);
 	Mark(interpolator.Head);
-	// Mark global symbols
-	Namespaces.MarkSymbols();
 	// Mark bot stuff.
 	Mark(bglobal.firstthing);
 	Mark(bglobal.body1);

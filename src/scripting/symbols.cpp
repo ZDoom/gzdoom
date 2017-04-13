@@ -47,7 +47,6 @@ FNamespaceManager Namespaces;
 
 // Symbol tables ------------------------------------------------------------
 
-IMPLEMENT_CLASS(PTypeBase, true, false);
 IMPLEMENT_CLASS(PSymbol, true, false);
 IMPLEMENT_CLASS(PSymbolConst, false, false);
 IMPLEMENT_CLASS(PSymbolConstNumeric, false, false);
@@ -56,12 +55,6 @@ IMPLEMENT_CLASS(PSymbolTreeNode, false, false)
 IMPLEMENT_CLASS(PSymbolType, false, false)
 IMPLEMENT_CLASS(PSymbolVMFunction, false, false)
 IMPLEMENT_CLASS(PFunction, false, false)
-IMPLEMENT_CLASS(PNamespace, false, true)
-
-IMPLEMENT_POINTERS_START(PNamespace)
-IMPLEMENT_POINTER(Parent)
-IMPLEMENT_POINTERS_END
-
 
 //==========================================================================
 //
@@ -523,21 +516,6 @@ PNamespace *FNamespaceManager::NewNamespace(int filenum)
 //
 //==========================================================================
 
-size_t FNamespaceManager::MarkSymbols()
-{
-	for (auto ns : AllNamespaces)
-	{
-		GC::Mark(ns);
-	}
-	return AllNamespaces.Size();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void FNamespaceManager::ReleaseSymbols()
 {
 	RemoveSymbols();
@@ -559,7 +537,7 @@ int FNamespaceManager::RemoveSymbols()
 	for (auto ns : AllNamespaces)
 	{
 		count += ns->Symbols.Symbols.CountUsed();
-		ns->Symbols.ReleaseSymbols();
+		delete ns;
 	}
 	return count;
 }

@@ -527,6 +527,7 @@ void ZCCCompiler::CreateStructTypes()
 			s->strct->Type->mVersion = s->strct->Version;
 		}
 
+		auto &sf = s->Type()->ScopeFlags;
 		if (mVersion >= MakeVersion(2, 4, 0))
 		{
 			if ((s->strct->Flags & (ZCC_UIFlag | ZCC_Play)) == (ZCC_UIFlag | ZCC_Play))
@@ -534,19 +535,19 @@ void ZCCCompiler::CreateStructTypes()
 				Error(s->strct, "Struct %s has incompatible flags", s->NodeName().GetChars());
 			}
 
-			if (outer != OutNamespace) s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(outer->ObjectFlags));
+			if (outer != OutNamespace) sf = FScopeBarrier::ChangeSideInObjectFlags(sf, FScopeBarrier::SideFromObjectFlags(static_cast<PType*>(outer)->ScopeFlags));
 			else if (s->strct->Flags & ZCC_ClearScope) Warn(s->strct, "Useless 'ClearScope' on struct %s not inside a class", s->NodeName().GetChars());
 			if (s->strct->Flags & ZCC_UIFlag)
-				s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_UI);
+				sf = FScopeBarrier::ChangeSideInObjectFlags(sf, FScopeBarrier::Side_UI);
 			if (s->strct->Flags & ZCC_Play)
-				s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_Play);
+				sf = FScopeBarrier::ChangeSideInObjectFlags(sf, FScopeBarrier::Side_Play);
 			if (s->strct->Flags & ZCC_ClearScope)
-				s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_PlainData); // don't inherit the scope from the outer class
+				sf = FScopeBarrier::ChangeSideInObjectFlags(sf, FScopeBarrier::Side_PlainData); // don't inherit the scope from the outer class
 		}
 		else
 		{
 			// old versions force 'play'.
-			s->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(s->Type()->ObjectFlags, FScopeBarrier::Side_Play);
+			sf = FScopeBarrier::ChangeSideInObjectFlags(sf, FScopeBarrier::Side_Play);
 		}
 		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
 		syms->AddSymbol(s->strct->Symbol);
@@ -663,7 +664,7 @@ void ZCCCompiler::CreateClassTypes()
 				}
 
 				if (c->cls->Flags & ZCC_Abstract)
-					c->Type()->ObjectFlags |= OF_Abstract;
+					c->ClassType()->bAbstract = true;
 
 				if (c->cls->Flags & ZCC_Version)
 				{
@@ -683,21 +684,21 @@ void ZCCCompiler::CreateClassTypes()
 					}
 
 					if (c->cls->Flags & ZCC_UIFlag)
-						c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_Play) | OF_UI;
+						c->Type()->ScopeFlags = EScopeFlags((c->Type()->ScopeFlags&~Scope_Play) | Scope_UI);
 					if (c->cls->Flags & ZCC_Play)
-						c->Type()->ObjectFlags = (c->Type()->ObjectFlags&~OF_UI) | OF_Play;
-					if (parent->VMType->ObjectFlags & (OF_UI | OF_Play)) // parent is either ui or play
+						c->Type()->ScopeFlags = EScopeFlags((c->Type()->ScopeFlags&~Scope_UI) | Scope_Play);
+					if (parent->VMType->ScopeFlags & (Scope_UI | Scope_Play)) // parent is either ui or play
 					{
 						if (c->cls->Flags & (ZCC_UIFlag | ZCC_Play))
 						{
 							Error(c->cls, "Can't change class scope in class %s", c->NodeName().GetChars());
 						}
-						c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::SideFromObjectFlags(parent->VMType->ObjectFlags));
+						c->Type()->ScopeFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ScopeFlags, FScopeBarrier::SideFromObjectFlags(parent->VMType->ScopeFlags));
 					}
 				}
 				else
 				{
-					c->Type()->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ObjectFlags, FScopeBarrier::Side_Play);
+					c->Type()->ScopeFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ScopeFlags, FScopeBarrier::Side_Play);
 				}
 
 				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
@@ -1104,7 +1105,7 @@ ZCC_ExprTypeRef *ZCCCompiler::NodeFromSymbolType(PSymbolType *sym, ZCC_Expressio
 	ZCC_ExprTypeRef *ref = static_cast<ZCC_ExprTypeRef *>(AST.InitNode(sizeof(*ref), AST_ExprTypeRef, idnode));
 	ref->Operation = PEX_TypeRef;
 	ref->RefType = sym->Type;
-	ref->Type = NewClassPointer(RUNTIME_CLASS(PType));
+	ref->Type = NewClassPointer(RUNTIME_CLASS(DObject));
 	return ref;
 }
 
@@ -1245,9 +1246,9 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		{
 			if (type != nullptr)
 			{
-				if (type->ObjectFlags & OF_UI)
+				if (type->ScopeFlags & Scope_UI)
 					varflags |= VARF_UI;
-				if (type->ObjectFlags & OF_Play)
+				if (type->ScopeFlags & Scope_Play)
 					varflags |= VARF_Play;
 			}
 			if (field->Flags & ZCC_UIFlag)
@@ -2366,9 +2367,9 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		if (f->Flags & ZCC_FuncConst) varflags |= VARF_ReadOnly; // FuncConst method is internally marked as VARF_ReadOnly
 		if (mVersion >= MakeVersion(2, 4, 0))
 		{
-			if (c->Type()->ObjectFlags & OF_UI)
+			if (c->Type()->ScopeFlags & Scope_UI)
 				varflags |= VARF_UI;
-			if (c->Type()->ObjectFlags & OF_Play)
+			if (c->Type()->ScopeFlags & Scope_Play)
 				varflags |= VARF_Play;
 			//if (f->Flags & ZCC_FuncConst)
 			//	varflags = FScopeBarrier::ChangeSideInFlags(varflags, FScopeBarrier::Side_PlainData); // const implies clearscope. this is checked a bit later to also not have ZCC_Play/ZCC_UIFlag.

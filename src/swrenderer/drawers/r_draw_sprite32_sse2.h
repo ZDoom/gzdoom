@@ -126,7 +126,7 @@ namespace swrenderer
 			}
 
 			int textureheight = args.TextureHeight();
-			uint32_t one = ((0x80000000 + textureheight - 1) / textureheight) * 2 + 1;
+			uint32_t one = ((0x20000000 + textureheight - 1) / textureheight) * 2 + 1;
 
 			// Shade constants
 			__m128i dynlight = _mm_cvtsi32_si128(args.DynamicLight());

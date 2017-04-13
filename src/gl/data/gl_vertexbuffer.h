@@ -285,13 +285,10 @@ struct FModelVertex
 
 	void SetNormal(float nx, float ny, float nz)
 	{
-	/*
-		int inx = int(nx * 512);
-		int iny = int(ny * 512);
-		int inz = int(nz * 512);
-		packedNormal = 0x40000000 | ((inx & 1023) << 20) | ((iny & 1023) << 10) | (inz & 1023);
-	*/
-		packedNormal = 0;	// Per-pixel lighting for models isn't implemented yet so leave this at 0 for now.
+		int inx = clamp(int(nx * 512), -512, 511);
+		int iny = clamp(int(ny * 512), -512, 511);
+		int inz = clamp(int(nz * 512), -512, 511);
+		packedNormal = /*0x40000000 |*/ ((inx & 1023) << 20) | ((iny & 1023) << 10) | (inz & 1023);
 	}
 };
 

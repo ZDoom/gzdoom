@@ -132,7 +132,6 @@ public:
 	VSMatrix mModelMatrix;
 	VSMatrix mTextureMatrix;
 	VSMatrix mNormalViewMatrix;
-	VSMatrix mNormalModelMatrix;
 
 	FRenderState()
 	{

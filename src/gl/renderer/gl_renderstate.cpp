@@ -280,7 +280,7 @@ bool FRenderState::ApplyShader()
 		mModelMatrix.matrixToGL(activeShader->modelmatrix_index);
 		VSMatrix norm;
 		norm.computeNormalMatrix(mModelMatrix);
-		mNormalModelMatrix.matrixToGL(activeShader->normalmodelmatrix_index);
+		norm.matrixToGL(activeShader->normalmodelmatrix_index);
 		activeShader->currentModelMatrixState = true;
 	}
 	else if (activeShader->currentModelMatrixState)

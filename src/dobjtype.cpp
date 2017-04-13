@@ -754,7 +754,7 @@ PClass *PClass::FindClassTentative(FName name)
 	Derive(type, name);
 	type->Size = TentativeClass;
 
-	InsertIntoHash();
+	type->InsertIntoHash();
 	return type;
 }
 

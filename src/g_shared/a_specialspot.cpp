@@ -248,7 +248,7 @@ void DSpotState::Tick ()
 
 DSpotState *DSpotState::GetSpotState(bool create)
 {
-	if (SpotState == NULL && create) SpotState = new DSpotState;
+	if (SpotState == NULL && create) SpotState = Create<DSpotState>();
 	return SpotState;
 }
 

@@ -907,7 +907,7 @@ DInterpolation *side_t::SetInterpolation(int position)
 {
 	if (textures[position].interpolation == NULL)
 	{
-		textures[position].interpolation = new DWallScrollInterpolation(this, position);
+		textures[position].interpolation = Create<DWallScrollInterpolation>(this, position);
 	}
 	textures[position].interpolation->AddRef();
 	GC::WriteBarrier(textures[position].interpolation);
@@ -942,19 +942,19 @@ DInterpolation *sector_t::SetInterpolation(int position, bool attach)
 		switch (position)
 		{
 		case sector_t::CeilingMove:
-			interp = new DSectorPlaneInterpolation(this, true, attach);
+			interp = Create<DSectorPlaneInterpolation>(this, true, attach);
 			break;
 
 		case sector_t::FloorMove:
-			interp = new DSectorPlaneInterpolation(this, false, attach);
+			interp = Create<DSectorPlaneInterpolation>(this, false, attach);
 			break;
 
 		case sector_t::CeilingScroll:
-			interp = new DSectorScrollInterpolation(this, true);
+			interp = Create<DSectorScrollInterpolation>(this, true);
 			break;
 
 		case sector_t::FloorScroll:
-			interp = new DSectorScrollInterpolation(this, false);
+			interp = Create<DSectorScrollInterpolation>(this, false);
 			break;
 
 		default:
@@ -981,7 +981,7 @@ DInterpolation *FPolyObj::SetInterpolation()
 	}
 	else
 	{
-		interpolation = new DPolyobjInterpolation(this);
+		interpolation = Create<DPolyobjInterpolation>(this);
 		interpolation->AddRef();
 	}
 	GC::WriteBarrier(interpolation);

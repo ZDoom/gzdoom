@@ -91,9 +91,10 @@ public:
 	static DThinker *FirstThinker (int statnum);
 	static bool bSerialOverride;
 
-private:
+	// only used internally but Create needs access.
 	enum no_link_type { NO_LINK };
 	DThinker(no_link_type) throw();
+private:
 	static void DestroyThinkersInList (FThinkerList &list);
 	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
 	static void SaveList(FSerializer &arc, DThinker *node);

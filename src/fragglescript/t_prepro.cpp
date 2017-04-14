@@ -156,7 +156,7 @@ void DFsScript::ClearSections()
 DFsSection *DFsScript::NewSection(const char *brace)
 {
 	int n = section_hash(brace);
-	DFsSection *newsec = new DFsSection;
+	DFsSection *newsec = Create<DFsSection>();
 	
 	newsec->start_index = MakeIndex(brace);
 	newsec->next = sections[n];

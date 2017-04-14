@@ -111,10 +111,8 @@ xx(Ironlich)
 xx(Minotaur)
 xx(Sorcerer2)
 
-// P_SpawnMapThing checks for these as health items (I smell a FIXME)
-xx(Berserk)
-xx(Soulsphere)
-xx(Megasphere)		// also counts as armor for P_SpawnMapThing
+// Bots check this
+xx(Megasphere)
 
 // Standard player classes
 xx(DoomPlayer)

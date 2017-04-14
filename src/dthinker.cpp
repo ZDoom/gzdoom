@@ -69,7 +69,7 @@ void FThinkerList::AddTail(DThinker *thinker)
 	assert(!(thinker->ObjectFlags & OF_EuthanizeMe));
 	if (Sentinel == NULL)
 	{
-		Sentinel = new DThinker(DThinker::NO_LINK);
+		Sentinel = Create<DThinker>(DThinker::NO_LINK);
 		Sentinel->ObjectFlags |= OF_Sentinel;
 		Sentinel->NextThinker = Sentinel;
 		Sentinel->PrevThinker = Sentinel;
@@ -727,7 +727,7 @@ DEFINE_ACTION_FUNCTION(DThinkerIterator, Create)
 	PARAM_PROLOGUE;
 	PARAM_CLASS_DEF(type, DThinker);
 	PARAM_INT_DEF(statnum);
-	ACTION_RETURN_OBJECT(new DThinkerIterator(type, statnum));
+	ACTION_RETURN_OBJECT(Create<DThinkerIterator>(type, statnum));
 }
 
 DEFINE_ACTION_FUNCTION(DThinkerIterator, Next)

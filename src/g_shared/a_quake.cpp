@@ -374,7 +374,7 @@ bool P_StartQuakeXYZ(AActor *activator, int tid, int intensityX, int intensityY,
 	{
 		if (activator != NULL)
 		{
-			new DEarthquake(activator, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
+			Create<DEarthquake>(activator, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
 				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave);
 			return true;
 		}
@@ -385,7 +385,7 @@ bool P_StartQuakeXYZ(AActor *activator, int tid, int intensityX, int intensityY,
 		while ( (center = iterator.Next ()) )
 		{
 			res = true;
-			new DEarthquake(center, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
+			Create<DEarthquake>(center, intensityX, intensityY, intensityZ, duration, damrad, tremrad,
 				quakesfx, flags, waveSpeedX, waveSpeedY, waveSpeedZ, falloff, highpoint, rollIntensity, rollWave);
 		}
 	}

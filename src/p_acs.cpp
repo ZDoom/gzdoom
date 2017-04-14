@@ -3659,7 +3659,7 @@ DLevelScript::DLevelScript ()
 {
 	next = prev = NULL;
 	if (DACSThinker::ActiveThinker == NULL)
-		new DACSThinker;
+		Create<DACSThinker>();
 	activefont = SmallFont;
 }
 
@@ -4071,7 +4071,7 @@ showme:
 							fa1 = viewer->BlendA;
 						}
 					}
-					new DFlashFader (fr1, fg1, fb1, fa1, fr2, fg2, fb2, fa2, ftime, viewer->mo);
+					Create<DFlashFader> (fr1, fg1, fb1, fa1, fr2, fg2, fb2, fa2, ftime, viewer->mo);
 				}
 			}
 		}
@@ -8819,13 +8819,13 @@ scriptwait:
 					{
 					default:	// normal
 						alpha = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 1.f;
-						msg = new DHUDMessage (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
+						msg = Create<DHUDMessage> (activefont, work, x, y, hudwidth, hudheight, color, holdTime);
 						break;
 					case 1:		// fade out
 						{
 							float fadeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							alpha = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 1.f;
-							msg = new DHUDMessageFadeOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
+							msg = Create<DHUDMessageFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, fadeTime);
 						}
 						break;
 					case 2:		// type on, then fade out
@@ -8833,7 +8833,7 @@ scriptwait:
 							float typeTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.05f;
 							float fadeTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart+2]) : 1.f;
-							msg = new DHUDMessageTypeOnFadeOut (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
+							msg = Create<DHUDMessageTypeOnFadeOut> (activefont, work, x, y, hudwidth, hudheight, color, typeTime, holdTime, fadeTime);
 						}
 						break;
 					case 3:		// fade in, then fade out
@@ -8841,7 +8841,7 @@ scriptwait:
 							float inTime = (optstart < sp) ? ACSToFloat(Stack[optstart]) : 0.5f;
 							float outTime = (optstart < sp-1) ? ACSToFloat(Stack[optstart+1]) : 0.5f;
 							alpha = (optstart < sp-2) ? ACSToFloat(Stack[optstart + 2]) : 1.f;
-							msg = new DHUDMessageFadeInOut (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
+							msg = Create<DHUDMessageFadeInOut> (activefont, work, x, y, hudwidth, hudheight, color, holdTime, inTime, outTime);
 						}
 						break;
 					}
@@ -9630,13 +9630,13 @@ scriptwait:
 			break;
 
 		case PCD_SETFLOORTRIGGER:
-			new DPlaneWatcher (activator, activationline, backSide, false, STACK(8),
+			Create<DPlaneWatcher> (activator, activationline, backSide, false, STACK(8),
 				STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
 			sp -= 8;
 			break;
 
 		case PCD_SETCEILINGTRIGGER:
-			new DPlaneWatcher (activator, activationline, backSide, true, STACK(8),
+			Create<DPlaneWatcher> (activator, activationline, backSide, true, STACK(8),
 				STACK(7), STACK(6), STACK(5), STACK(4), STACK(3), STACK(2), STACK(1));
 			sp -= 8;
 			break;
@@ -10513,7 +10513,7 @@ static DLevelScript *P_GetScriptGoing (AActor *who, line_t *where, int num, cons
 		return NULL;
 	}
 
-	return new DLevelScript (who, where, num, code, module, args, argcount, flags);
+	return Create<DLevelScript> (who, where, num, code, module, args, argcount, flags);
 }
 
 DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr *code, FBehavior *module,
@@ -10521,7 +10521,7 @@ DLevelScript::DLevelScript (AActor *who, line_t *where, int num, const ScriptPtr
 	: activeBehavior (module)
 {
 	if (DACSThinker::ActiveThinker == NULL)
-		new DACSThinker;
+		Create<DACSThinker>();
 
 	script = num;
 	assert(code->VarCount >= code->ArgCount);

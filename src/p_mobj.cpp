@@ -1382,6 +1382,54 @@ DEFINE_ACTION_FUNCTION(AActor, ObtainInventory)
 
 //---------------------------------------------------------------------------
 //
+// FUNC P_GetRealMaxHealth
+//
+// Taken out of P_GiveBody so that the bot code can also use it to decide
+// whether to pick up an item or not.
+//
+//---------------------------------------------------------------------------
+
+int P_GetRealMaxHealth(APlayerPawn *actor, int max)
+{
+	// Max is 0 by default, preserving default behavior for P_GiveBody()
+	// calls while supporting health pickups.
+	auto player = actor->player;
+	if (max <= 0)
+	{
+		max = actor->GetMaxHealth(true);
+		// [MH] First step in predictable generic morph effects
+		if (player->morphTics)
+		{
+			if (player->MorphStyle & MORPH_FULLHEALTH)
+			{
+				if (!(player->MorphStyle & MORPH_ADDSTAMINA))
+				{
+					max -= actor->stamina + actor->BonusHealth;
+				}
+			}
+			else // old health behaviour
+			{
+				max = MAXMORPHHEALTH;
+				if (player->MorphStyle & MORPH_ADDSTAMINA)
+				{
+					max += actor->stamina + actor->BonusHealth;
+				}
+			}
+		}
+	}
+	else
+	{
+		// Bonus health should be added on top of the item's limit.
+		if (player->morphTics == 0 || (player->MorphStyle & MORPH_ADDSTAMINA))
+		{
+			max += actor->BonusHealth;
+		}
+	}
+	return max;
+}
+
+//---------------------------------------------------------------------------
+//
 // FUNC P_GiveBody
 //
 // Returns false if the body isn't needed at all.
@@ -1400,33 +1448,8 @@ bool P_GiveBody(AActor *actor, int num, int max)
 	num = clamp(num, -65536, 65536);	// prevent overflows for bad values
 	if (player != NULL)
 	{
-		// Max is 0 by default, preserving default behavior for P_GiveBody()
-		// calls while supporting health pickups.
-		if (max <= 0)
-		{
-			max = static_cast<APlayerPawn*>(actor)->GetMaxHealth(true);
-			// [MH] First step in predictable generic morph effects
-			if (player->morphTics)
-			{
-				if (player->MorphStyle & MORPH_FULLHEALTH)
-				{
-					if (!(player->MorphStyle & MORPH_ADDSTAMINA))
-					{
-						max -= player->mo->stamina + player->mo->BonusHealth;
-					}
-				}
-				else // old health behaviour
-				{
-					max = MAXMORPHHEALTH;
-					if (player->MorphStyle & MORPH_ADDSTAMINA)
-					{
-						max += player->mo->stamina + player->mo->BonusHealth;
-					}
-				}
-			}
-		}
-		// [RH] For Strife: A negative body sets you up with a percentage
-		// of your full health.
+		max = P_GetRealMaxHealth(player->mo, max);	// do not pass voodoo dolls in here.
+		// [RH] For Strife: A negative value sets you up with a percentage of your full health.
 		if (num < 0)
 		{
 			num = max * -num / 100;
@@ -7949,7 +7972,7 @@ DEFINE_ACTION_FUNCTION(DActorIterator, Create)
 	PARAM_PROLOGUE;
 	PARAM_INT(tid);
 	PARAM_CLASS_DEF(type, AActor);
-	ACTION_RETURN_OBJECT(new DActorIterator(type, tid));
+	ACTION_RETURN_OBJECT(Create<DActorIterator>(type, tid));
 }
 
 DEFINE_ACTION_FUNCTION(DActorIterator, Next)

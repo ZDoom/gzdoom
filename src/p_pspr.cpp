@@ -255,7 +255,7 @@ DPSprite *player_t::GetPSprite(PSPLayers layer)
 	DPSprite *pspr = FindPSprite(layer);
 	if (pspr == nullptr)
 	{
-		pspr = new DPSprite(this, newcaller, layer);
+		pspr = Create<DPSprite>(this, newcaller, layer);
 	}
 	else
 	{
@@ -1263,7 +1263,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Overlay)
 	}
 
 	DPSprite *pspr;
-	pspr = new DPSprite(player, stateowner, layer);
+	pspr = Create<DPSprite>(player, stateowner, layer);
 	pspr->SetState(state);
 	ACTION_RETURN_BOOL(true);
 }

@@ -311,7 +311,7 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 
 PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align)
 {
-	PField *field = new PField(name, type, flags);
+	PField *field = Create<PField>(name, type, flags);
 
 	// The new field is added to the end of this struct, alignment permitting.
 	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
@@ -345,7 +345,7 @@ PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned
 
 PField *PSymbolTable::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
-	PField *field = new PField(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
+	PField *field = Create<PField>(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
 
 	if (AddSymbol(field) == nullptr)
 	{ // name is already in use

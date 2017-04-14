@@ -171,7 +171,7 @@ PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *retur
 	rets[0] = returntype != nullptr? returntype : TypeError;	// Use TypeError as placeholder if we do not know the return type yet.
 	SetImplicitArgs(&args, &argflags, &argnames, containingclass, fflags, flags);
 
-	PFunction *sym = new PFunction(containingclass, NAME_None);	// anonymous functions do not have names.
+	PFunction *sym = Create<PFunction>(containingclass, NAME_None);	// anonymous functions do not have names.
 	sym->AddVariant(NewPrototype(rets, args), argflags, argnames, nullptr, fflags, flags);
 	return sym;
 }

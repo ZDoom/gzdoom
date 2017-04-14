@@ -313,12 +313,13 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	old = player->mo->Pos();
 }
 
+int P_GetRealMaxHealth(APlayerPawn *actor, int max);
+
 //BOT_WhatToGet
 //
 //Determines if the bot will roam after an item or not.
 void DBot::WhatToGet (AActor *item)
 {
-#define typeis(x) item->IsKindOf (PClass::FindClass (#x))
 	if ((item->renderflags & RF_INVISIBLE) //Under respawn and away.
 		|| item == prev)
 	{
@@ -350,17 +351,24 @@ void DBot::WhatToGet (AActor *item)
 	{
 		auto ac = PClass::FindActor(NAME_Ammo);
 		auto parent = item->GetClass();
-		while (parent->ParentClass != ac) parent = (PClassActor*)(parent->ParentClass);
+		while (parent->ParentClass != ac) parent = static_cast<PClassActor*>(parent->ParentClass);
 		AInventory *holdingammo = player->mo->FindInventory(parent);
 		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)
 		{
 			return;
 		}
 	}
-	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && player->mo->health >= deh.MaxSoulsphere)
-		return;
-	else if (item->IsKindOf (PClass::FindActor(NAME_Health)) && player->mo->health >= player->mo->GetMaxHealth(true))
-		return;
+	else if (item->GetClass()->TypeName == NAME_Megasphere || item->IsKindOf(NAME_Health))
+	{
+		// do the test with the health item that's actually given.
+		if (item->GetClass()->TypeName == NAME_Megasphere) item = GetDefaultByName("MegasphereHealth");
+		if (item != nullptr)
+		{
+			int maxhealth = P_GetRealMaxHealth(player->mo, item->IntVar(NAME_MaxAmount));
+			if (player->mo->health >= maxhealth)
+				return;
+		}
+	}
 
 	if ((dest == NULL ||
 		!(dest->flags & MF_SPECIAL)/* ||

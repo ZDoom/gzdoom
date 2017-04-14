@@ -382,7 +382,7 @@ DEFINE_ACTION_FUNCTION(DSectorTagIterator, Create)
 	PARAM_PROLOGUE;
 	PARAM_INT(tag);
 	PARAM_POINTER_DEF(line, line_t);
-	ACTION_RETURN_POINTER(new DSectorTagIterator(tag, line));
+	ACTION_RETURN_POINTER(Create<DSectorTagIterator>(tag, line));
 }
 
 DEFINE_ACTION_FUNCTION(DSectorTagIterator, Next)
@@ -416,7 +416,7 @@ DEFINE_ACTION_FUNCTION(DLineIdIterator, Create)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(tag);
-	ACTION_RETURN_POINTER(new DLineIdIterator(tag));
+	ACTION_RETURN_POINTER(Create<DLineIdIterator>(tag));
 }
 
 DEFINE_ACTION_FUNCTION(DLineIdIterator, Next)

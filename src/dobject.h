@@ -35,6 +35,7 @@
 #define __DOBJECT_H__
 
 #include <stdlib.h>
+#include <type_traits>
 #include "doomtype.h"
 #include "i_system.h"
 
@@ -45,8 +46,6 @@ class FSoundID;
 
 class   DObject;
 /*
-class           DArgs;
-class           DCanvas;
 class           DConsoleCommand;
 class                   DConsoleAlias;
 class           DSeqNode;
@@ -231,11 +230,6 @@ public:
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);
 
-	void ClearClass()
-	{
-		Class = NULL;
-	}
-
 	// Releases the object from the GC, letting the caller care of any maintenance.
 	void Release();
 
@@ -264,12 +258,7 @@ public:
 
 	PClass *GetClass() const
 	{
-		if (Class == NULL)
-		{
-			// Save a little time the next time somebody wants this object's type
-			// by recording it now.
-			const_cast<DObject *>(this)->Class = StaticType();
-		}
+		assert(Class != nullptr);
 		return Class;
 	}
 
@@ -278,9 +267,20 @@ public:
 		Class = inClass;
 	}
 
-	void *operator new(size_t len)
+private:
+	struct nonew
+	{
+	};
+
+	void *operator new(size_t len, nonew&)
 	{
 		return M_Malloc(len);
+	}
+public:
+
+	void operator delete (void *mem, nonew&)
+	{
+		M_Free(mem);
 	}
 
 	void operator delete (void *mem)
@@ -354,7 +354,22 @@ protected:
 	{
 		M_Free (mem);
 	}
+
+	template<typename T, typename... Args>
+		friend T* Create(Args&&... args);
+
 };
+
+template<typename T, typename... Args>
+T* Create(Args&&... args)
+{
+	DObject::nonew nono;
+	T *object = new(nono) T(std::forward<Args>(args)...);
+	object->SetClass(RUNTIME_CLASS(T));
+	assert(object->GetClass() != nullptr);	// beware of object that get created before the type system is up.
+	return object;
+}
+
 
 class AInventory;//
 

@@ -329,7 +329,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 					case AST_Enum:
 						zenumType = static_cast<ZCC_Enum *>(node);
 						enumType = NewEnum(zenumType->NodeName, OutNamespace);
-						OutNamespace->Symbols.AddSymbol(new PSymbolType(zenumType->NodeName, enumType));
+						OutNamespace->Symbols.AddSymbol(Create<PSymbolType>(zenumType->NodeName, enumType));
 						break;
 
 					case AST_Class:
@@ -399,7 +399,7 @@ PSymbolTreeNode *ZCCCompiler::AddTreeNode(FName name, ZCC_TreeNode *node, PSymbo
 	}
 	else
 	{
-		auto sy = new PSymbolTreeNode(name, node);
+		auto sy = Create<PSymbolTreeNode>(name, node);
 		FString name;
 		treenodes->AddSymbol(sy);
 		return sy;
@@ -549,13 +549,13 @@ void ZCCCompiler::CreateStructTypes()
 			// old versions force 'play'.
 			sf = FScopeBarrier::ChangeSideInObjectFlags(sf, FScopeBarrier::Side_Play);
 		}
-		s->strct->Symbol = new PSymbolType(s->NodeName(), s->Type());
+		s->strct->Symbol = Create<PSymbolType>(s->NodeName(), s->Type());
 		syms->AddSymbol(s->strct->Symbol);
 
 		for (auto e : s->Enums)
 		{
 			auto etype = NewEnum(e->NodeName, s->Type());
-			s->Type()->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
+			s->Type()->Symbols.AddSymbol(Create<PSymbolType>(e->NodeName, etype));
 		}
 	}
 }
@@ -701,7 +701,7 @@ void ZCCCompiler::CreateClassTypes()
 					c->Type()->ScopeFlags = FScopeBarrier::ChangeSideInObjectFlags(c->Type()->ScopeFlags, FScopeBarrier::Side_Play);
 				}
 
-				c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
+				c->cls->Symbol = Create<PSymbolType>(c->NodeName(), c->Type());
 				OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 				Classes.Push(c);
 				OrigClasses.Delete(i--);
@@ -725,7 +725,7 @@ void ZCCCompiler::CreateClassTypes()
 					Error(c->cls, "Class %s has unknown base class %s", c->NodeName().GetChars(), FName(c->cls->ParentName->Id).GetChars());
 					// create a placeholder so that the compiler can continue looking for errors.
 					c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()));
-					c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
+					c->cls->Symbol = Create<PSymbolType>(c->NodeName(), c->Type());
 					OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 					Classes.Push(c);
 					OrigClasses.Delete(i--);
@@ -741,7 +741,7 @@ void ZCCCompiler::CreateClassTypes()
 	{
 		Error(c->cls, "Class %s has circular inheritance", FName(c->NodeName()).GetChars());
 		c->cls->Type = NewClassType(RUNTIME_CLASS(DObject)->FindClassTentative(c->NodeName()));
-		c->cls->Symbol = new PSymbolType(c->NodeName(), c->Type());
+		c->cls->Symbol = Create<PSymbolType>(c->NodeName(), c->Type());
 		OutNamespace->Symbols.AddSymbol(c->cls->Symbol);
 		Classes.Push(c);
 	}
@@ -752,7 +752,7 @@ void ZCCCompiler::CreateClassTypes()
 		for (auto e : cd->Enums)
 		{
 			auto etype = NewEnum(e->NodeName, cd->Type());
-			cd->Type()->Symbols.AddSymbol(new PSymbolType(e->NodeName, etype));
+			cd->Type()->Symbols.AddSymbol(Create<PSymbolType>(e->NodeName, etype));
 		}
 		// Link the tree node tables. We only can do this after we know the class relations.
 		for (auto cc : Classes)
@@ -872,13 +872,13 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 		ZCC_ExprConstant *cval = static_cast<ZCC_ExprConstant *>(val);
 		if (cval->Type == TypeString)
 		{
-			def->Symbol = new PSymbolConstString(def->NodeName, *(cval->StringVal));
+			def->Symbol = Create<PSymbolConstString>(def->NodeName, *(cval->StringVal));
 		}
 		else if (cval->Type->isInt())
 		{
 			// How do we get an Enum type in here without screwing everything up???
 			//auto type = def->Type != nullptr ? def->Type : cval->Type;
-			def->Symbol = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->IntVal);
+			def->Symbol = Create<PSymbolConstNumeric>(def->NodeName, cval->Type, cval->IntVal);
 		}
 		else if (cval->Type->isFloat())
 		{
@@ -886,7 +886,7 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 			{
 				Error(def, "Enum members must be integer values");
 			}
-			def->Symbol = new PSymbolConstNumeric(def->NodeName, cval->Type, cval->DoubleVal);
+			def->Symbol = Create<PSymbolConstNumeric>(def->NodeName, cval->Type, cval->DoubleVal);
 		}
 		else
 		{
@@ -898,13 +898,13 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 	{
 		if (c.Type == TypeString)
 		{
-			def->Symbol = new PSymbolConstString(def->NodeName, c.GetString());
+			def->Symbol = Create<PSymbolConstString>(def->NodeName, c.GetString());
 		}
 		else if (c.Type->isInt())
 		{
 			// How do we get an Enum type in here without screwing everything up???
 			//auto type = def->Type != nullptr ? def->Type : cval->Type;
-			def->Symbol = new PSymbolConstNumeric(def->NodeName, c.Type, c.GetInt());
+			def->Symbol = Create<PSymbolConstNumeric>(def->NodeName, c.Type, c.GetInt());
 		}
 		else if (c.Type->isFloat())
 		{
@@ -912,7 +912,7 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 			{
 				Error(def, "Enum members must be integer values");
 			}
-			def->Symbol = new PSymbolConstNumeric(def->NodeName, c.Type, c.GetFloat());
+			def->Symbol = Create<PSymbolConstNumeric>(def->NodeName, c.Type, c.GetFloat());
 		}
 		else
 		{
@@ -924,7 +924,7 @@ void ZCCCompiler::AddConstant(ZCC_ConstantWork &constant)
 	if (def->Symbol == nullptr)
 	{
 		// Create a dummy constant so we don't make any undefined value warnings.
-		def->Symbol = new PSymbolConstNumeric(def->NodeName, TypeError, 0);
+		def->Symbol = Create<PSymbolConstNumeric>(def->NodeName, TypeError, 0);
 	}
 	constant.Outputtable->ReplaceSymbol(def->Symbol);
 }
@@ -1025,7 +1025,7 @@ void ZCCCompiler::CompileArrays(ZCC_StructWork *work)
 				copyp += ztype->Align;
 			}
 		}
-		work->Type()->Symbols.AddSymbol(new PField(sas->Id, NewArray(ztype, values.Size()), VARF_Static | VARF_ReadOnly, (size_t)destmem));
+		work->Type()->Symbols.AddSymbol(Create<PField>(sas->Id, NewArray(ztype, values.Size()), VARF_Static | VARF_ReadOnly, (size_t)destmem));
 	}
 }
 
@@ -1337,7 +1337,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 						{
 							// This is a global variable.
 							if (fd->BitValue != 0) thisfieldtype = fd->FieldSize == 1 ? TypeUInt8 : fd->FieldSize == 2 ? TypeUInt16 : TypeUInt32;
-							PField *field = new PField(name->Name, thisfieldtype, varflags | VARF_Native | VARF_Static, fd->FieldOffset, fd->BitValue);
+							PField *field = Create<PField>(name->Name, thisfieldtype, varflags | VARF_Native | VARF_Static, fd->FieldOffset, fd->BitValue);
 
 							if (OutNamespace->Symbols.AddSymbol(field) == nullptr)
 							{ // name is already in use
@@ -1428,7 +1428,7 @@ bool ZCCCompiler::CompileProperties(PClass *type, TArray<ZCC_Property *> &Proper
 		else qualifiedname.Format("@property@%s.%s", prefix.GetChars(), name.GetChars());
 
 		fields.ShrinkToFit();
-		if (!type->VMType->Symbols.AddSymbol(new PProperty(qualifiedname, fields)))
+		if (!type->VMType->Symbols.AddSymbol(Create<PProperty>(qualifiedname, fields)))
 		{
 			Error(id, "Unable to add property %s to class %s", FName(p->NodeName).GetChars(), type->TypeName.GetChars());
 		}
@@ -2607,7 +2607,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			} while (p != f->Params);
 		}
 
-		PFunction *sym = new PFunction(c->Type(), f->Name);
+		PFunction *sym = Create<PFunction>(c->Type(), f->Name);
 		sym->AddVariant(NewPrototype(rets, args), argflags, argnames, afd == nullptr ? nullptr : *(afd->VMPointer), varflags, useflags);
 		c->Type()->Symbols.ReplaceSymbol(sym);
 

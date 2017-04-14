@@ -315,7 +315,7 @@ bool FScriptLoader::ParseInfo(MapData * map)
     }
 	if (HasScripts) 
 	{
-		new DFraggleThinker;
+		Create<DFraggleThinker>();
 		DFraggleThinker::ActiveThinker->LevelScript->data = copystring(scriptsrc.GetChars());
 
 		if (drownflag==-1) drownflag = (level.maptype != MAPTYPE_DOOM || fsglobal);

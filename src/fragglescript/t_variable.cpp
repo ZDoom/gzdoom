@@ -334,7 +334,7 @@ void DFsVariable::Serialize(FSerializer & ar)
 
 DFsVariable *DFsScript::NewVariable(const char *name, int vtype)
 {
-	DFsVariable *newvar = new DFsVariable(name);
+	DFsVariable *newvar = Create<DFsVariable>(name);
 	newvar->type = vtype;
 	
 	int n = variable_hash(name);

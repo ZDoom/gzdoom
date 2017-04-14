@@ -613,7 +613,7 @@ public:
 
 	FActorInfo *GetInfo() const
 	{
-		return ((PClassActor*)GetClass())->ActorInfo();
+		return static_cast<PClassActor*>(GetClass())->ActorInfo();
 	}
 
 

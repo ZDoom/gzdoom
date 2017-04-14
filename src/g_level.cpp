@@ -1059,7 +1059,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	// [RH] Always save the game when entering a new level.
 	if (autosave && !savegamerestore && disableautosave < 1)
 	{
-		DAutosaver GCCNOWARN *dummy = new DAutosaver;
+		DAutosaver GCCNOWARN *dummy = Create<DAutosaver>();
 	}
 }
 

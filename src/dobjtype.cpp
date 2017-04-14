@@ -226,7 +226,7 @@ void PClass::StaticInit ()
 
 	// WP_NOCHANGE must point to a valid object, although it does not need to be a weapon.
 	// A simple DObject is enough to give the GC the ability to deal with it, if subjected to it.
-	WP_NOCHANGE = (AWeapon*)new DObject;
+	WP_NOCHANGE = (AWeapon*)Create<DObject>();
 	WP_NOCHANGE->Release();
 }
 

@@ -897,7 +897,7 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t s
 	if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
 	viewactive = false;
 	automapactive = false;
-	DIntermissionController::CurrentIntermission = new DIntermissionController(desc, deleteme, state);
+	DIntermissionController::CurrentIntermission = Create<DIntermissionController>(desc, deleteme, state);
 	GC::WriteBarrier(DIntermissionController::CurrentIntermission);
 }
 

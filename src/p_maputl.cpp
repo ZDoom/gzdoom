@@ -938,7 +938,7 @@ DEFINE_ACTION_FUNCTION(DBlockLinesIterator, Create)
 	PARAM_PROLOGUE;
 	PARAM_OBJECT_NOT_NULL(origin, AActor);
 	PARAM_FLOAT_DEF(radius);
-	ACTION_RETURN_OBJECT(new DBlockLinesIterator(origin, radius));
+	ACTION_RETURN_OBJECT(Create<DBlockLinesIterator>(origin, radius));
 }
 
 DEFINE_ACTION_FUNCTION(DBlockLinesIterator, CreateFromPos)
@@ -950,7 +950,7 @@ DEFINE_ACTION_FUNCTION(DBlockLinesIterator, CreateFromPos)
 	PARAM_FLOAT(h);
 	PARAM_FLOAT(radius);
 	PARAM_POINTER_DEF(sec, sector_t);
-	ACTION_RETURN_OBJECT(new DBlockLinesIterator(x, y, z, h, radius, sec));
+	ACTION_RETURN_OBJECT(Create<DBlockLinesIterator>(x, y, z, h, radius, sec));
 }
 
 DEFINE_ACTION_FUNCTION(DBlockLinesIterator, Next)
@@ -1277,7 +1277,7 @@ DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Create)
 	PARAM_OBJECT_NOT_NULL(origin, AActor);
 	PARAM_FLOAT_DEF(radius);
 	PARAM_BOOL_DEF(ignore);
-	ACTION_RETURN_OBJECT(new DBlockThingsIterator(origin, radius, ignore));
+	ACTION_RETURN_OBJECT(Create<DBlockThingsIterator>(origin, radius, ignore));
 }
 
 DEFINE_ACTION_FUNCTION(DBlockThingsIterator, CreateFromPos)
@@ -1289,7 +1289,7 @@ DEFINE_ACTION_FUNCTION(DBlockThingsIterator, CreateFromPos)
 	PARAM_FLOAT(h);
 	PARAM_FLOAT(radius);
 	PARAM_BOOL(ignore);
-	ACTION_RETURN_OBJECT(new DBlockThingsIterator(x, y, z, h, radius, ignore, nullptr));
+	ACTION_RETURN_OBJECT(Create<DBlockThingsIterator>(x, y, z, h, radius, ignore, nullptr));
 }
 
 DEFINE_ACTION_FUNCTION(DBlockThingsIterator, Next)

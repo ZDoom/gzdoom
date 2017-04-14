@@ -390,7 +390,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 			// cannot do rotations on linked polyportals.
 			break;
 		}
-		pe = new DRotatePoly(poly->tag);
+		pe = Create<DRotatePoly>(poly->tag);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		if (byteAngle != 0)
@@ -472,7 +472,7 @@ bool EV_MovePoly (line_t *line, int polyNum, double speed, DAngle angle,
 		{ // poly is already in motion
 			break;
 		}
-		pe = new DMovePoly(poly->tag);
+		pe = Create<DMovePoly>(poly->tag);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		pe->m_Dist = dist; // Distance
@@ -554,7 +554,7 @@ bool EV_MovePolyTo(line_t *line, int polyNum, double speed, const DVector2 &targ
 		{ // poly is already in motion
 			break;
 		}
-		pe = new DMovePolyTo(poly->tag);
+		pe = Create<DMovePolyTo>(poly->tag);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		pe->m_Dist = distlen;
@@ -709,7 +709,7 @@ bool EV_OpenPolyDoor(line_t *line, int polyNum, double speed, DAngle angle, int 
 			break;
 		}
 
-		pd = new DPolyDoor(poly->tag, type);
+		pd = Create<DPolyDoor>(poly->tag, type);
 		poly->specialdata = pd;
 		if (type == PODOOR_SLIDE)
 		{

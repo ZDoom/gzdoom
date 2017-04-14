@@ -408,7 +408,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 					SexMessage (GStrings("SPREEKILLSELF"), buff,
 						player->userinfo.GetGender(), player->userinfo.GetName(),
 						player->userinfo.GetName());
-					StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
+					StatusBar->AttachMessage (Create<DHUDMessageFadeOut>(SmallFont, buff,
 							1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 				}
 			}
@@ -465,7 +465,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 						{
 							SexMessage (GStrings("SPREEOVER"), buff, player->userinfo.GetGender(),
 								player->userinfo.GetName(), source->player->userinfo.GetName());
-							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
+							StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
 					}
@@ -475,7 +475,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 						{
 							SexMessage (spreemsg, buff, player->userinfo.GetGender(),
 								player->userinfo.GetName(), source->player->userinfo.GetName());
-							StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
+							StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, buff,
 								1.5f, 0.2f, 0, 0, CR_WHITE, 3.f, 0.5f), MAKE_ID('K','S','P','R'));
 						}
 					}
@@ -525,7 +525,7 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 							{
 								SexMessage (multimsg, buff, player->userinfo.GetGender(),
 									player->userinfo.GetName(), source->player->userinfo.GetName());
-								StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, buff,
+								StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, buff,
 									1.5f, 0.8f, 0, 0, CR_RED, 3.f, 0.5f), MAKE_ID('M','K','I','L'));
 							}
 						}

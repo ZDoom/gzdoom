@@ -251,7 +251,7 @@ DEFINE_ACTION_FUNCTION(DInterBackground, Create)
 {
 	PARAM_PROLOGUE;
 	PARAM_POINTER(wbst, wbstartstruct_t);
-	ACTION_RETURN_POINTER(new DInterBackground(wbst));
+	ACTION_RETURN_POINTER(Create<DInterBackground>(wbst));
 }
 
 //====================================================================

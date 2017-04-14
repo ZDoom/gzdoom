@@ -771,7 +771,7 @@ void DBaseStatusBar::ShowPlayerName ()
 	EColorRange color;
 
 	color = (CPlayer == &players[consoleplayer]) ? CR_GOLD : CR_GREEN;
-	AttachMessage (new DHUDMessageFadeOut (SmallFont, CPlayer->userinfo.GetName(),
+	AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, CPlayer->userinfo.GetName(),
 		1.5f, 0.92f, 0, 0, color, 2.f, 0.35f), MAKE_ID('P','N','A','M'));
 }
 
@@ -1664,7 +1664,7 @@ DEFINE_ACTION_FUNCTION(DHUDFont, Create)
 	PARAM_BOOL_DEF(mono);
 	PARAM_INT_DEF(sx);
 	PARAM_INT_DEF(sy);
-	ACTION_RETURN_POINTER(new DHUDFont(fnt, spac, mono, sy, sy));
+	ACTION_RETURN_POINTER(Create<DHUDFont>(fnt, spac, mono, sy, sy));
 }
 
 DEFINE_FIELD(DHUDFont, mFont);

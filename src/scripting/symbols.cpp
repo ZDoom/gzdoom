@@ -512,13 +512,16 @@ PNamespace *FNamespaceManager::NewNamespace(int filenum)
 
 //==========================================================================
 //
-//
+// Deallocate the entire namespace manager.
 //
 //==========================================================================
 
 void FNamespaceManager::ReleaseSymbols()
 {
-	RemoveSymbols();
+	for (auto ns : AllNamespaces)
+	{
+		delete ns;
+	}
 	GlobalNamespace = nullptr;
 	AllNamespaces.Clear();
 }
@@ -537,7 +540,7 @@ int FNamespaceManager::RemoveSymbols()
 	for (auto ns : AllNamespaces)
 	{
 		count += ns->Symbols.Symbols.CountUsed();
-		delete ns;
+		ns->Symbols.ReleaseSymbols();
 	}
 	return count;
 }
@@ -550,7 +553,6 @@ int FNamespaceManager::RemoveSymbols()
 
 void RemoveUnusedSymbols()
 {
-	// Global symbols are not needed anymore after running the compiler.
 	int count = Namespaces.RemoveSymbols();
 
 	// We do not need any non-field and non-function symbols in structs and classes anymore.

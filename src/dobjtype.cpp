@@ -267,6 +267,7 @@ void PClass::StaticShutdown ()
 	{
 		p.PendingWeapon = nullptr;
 	}
+	Namespaces.ReleaseSymbols();
 
 	// This must be done in two steps because the native classes are not ordered by inheritance,
 	// so all meta data must be gone before deleting the actual class objects.
@@ -275,7 +276,6 @@ void PClass::StaticShutdown ()
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
 	bShutdown = true;
 	TypeTable.Clear();
-	Namespaces.ReleaseSymbols();
 	ClassDataAllocator.FreeAllBlocks();
 	AllClasses.Clear();
 	PClassActor::AllActorClasses.Clear();

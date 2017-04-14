@@ -1122,20 +1122,27 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 
 	{
 		int reflectdamage = 0;
+		bool reflecttype = false;
 		for (auto p = target->player->mo->Inventory; p != nullptr; p = p->Inventory)
 		{
 			// This picks the reflection item with the maximum efficiency for the given damage type.
 			if (p->IsKindOf(NAME_PowerReflection))
 			{
-				int mydamage = p->ApplyDamageFactor(mod, damage);
-				if (mydamage > reflectdamage) reflectdamage = mydamage;
+				double alwaysreflect = p->FloatVar(NAME_Strength);
+				int alwaysdamage = clamp(int(damage * alwaysreflect), 0, damage);
+				int mydamage = alwaysdamage + p->ApplyDamageFactor(mod, damage - alwaysdamage);
+				if (mydamage > reflectdamage)
+				{
+					reflectdamage = mydamage;
+					reflecttype = p->BoolVar(NAME_ReflectType);
+				}
 			}
 		}
 
 		if (reflectdamage > 0)
 		{
 			// use the reflect item's damage factors to get the final value here.
-			P_DamageMobj(source, nullptr, target, reflectdamage, NAME_Reflection );
+			P_DamageMobj(source, nullptr, target, reflectdamage, reflecttype? mod : NAME_Reflection );
 
 			// Reset means of death flag.
 			MeansOfDeath = mod;

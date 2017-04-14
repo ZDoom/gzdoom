@@ -17,13 +17,11 @@ extern long gl_frameMS;
 class OpenGLFrameBuffer : public Win32GLFrameBuffer
 {
 	typedef Win32GLFrameBuffer Super;
-	DECLARE_CLASS(OpenGLFrameBuffer, Win32GLFrameBuffer)
 #else
 #include "sdlglvideo.h"
 class OpenGLFrameBuffer : public SDLGLFB
 {
-//	typedef SDLGLFB Super;	//[C]commented, DECLARE_CLASS defines this in linux
-	DECLARE_CLASS(OpenGLFrameBuffer, SDLGLFB)
+	typedef SDLGLFB Super;	//[C]commented, DECLARE_CLASS defines this in linux
 #endif
 
 

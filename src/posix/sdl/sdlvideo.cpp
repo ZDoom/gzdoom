@@ -24,8 +24,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_CLASS(SDLFB, false, false)
-
 struct MiniModeInfo
 {
 	uint16_t Width, Height;

@@ -4,7 +4,7 @@
 
 class SDLFB : public SDLBaseFB
 {
-	DECLARE_CLASS(SDLFB, SDLBaseFB)
+	typedef SDLBaseFB Super;
 public:
 	SDLFB(int width, int height, bool bgra, bool fullscreen, SDL_Window *oldwin);
 	~SDLFB();

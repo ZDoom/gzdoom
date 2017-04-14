@@ -27,7 +27,7 @@ FRenderer *gl_CreateInterface();
 
 class Win32GLFrameBuffer : public BaseWinFB
 {
-	DECLARE_CLASS(Win32GLFrameBuffer, BaseWinFB)
+	typedef BaseWinFB Super;
 
 public:
 	Win32GLFrameBuffer() {}

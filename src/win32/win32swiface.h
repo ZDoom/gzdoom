@@ -18,7 +18,7 @@ extern HANDLE FPSLimitEvent;
 
 class DDrawFB : public BaseWinFB
 {
-	DECLARE_CLASS(DDrawFB, BaseWinFB)
+	typedef BaseWinFB Super;
 public:
 	DDrawFB (int width, int height, bool fullscreen);
 	~DDrawFB ();
@@ -100,7 +100,7 @@ private:
 
 class D3DFB : public BaseWinFB
 {
-	DECLARE_CLASS(D3DFB, BaseWinFB)
+	typedef BaseWinFB Super;
 public:
 	D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen);
 	~D3DFB ();

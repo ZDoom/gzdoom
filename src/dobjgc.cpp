@@ -326,7 +326,6 @@ static void MarkRoot()
 
 	Gray = NULL;
 	Mark(Args);
-	Mark(screen);
 	Mark(StatusBar);
 	M_MarkMenus();
 	Mark(DIntermissionController::CurrentIntermission);

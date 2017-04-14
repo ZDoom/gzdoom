@@ -73,8 +73,6 @@ int active_con_scale();
 
 FRenderer *Renderer;
 
-IMPLEMENT_CLASS(DCanvas, true, false)
-IMPLEMENT_CLASS(DFrameBuffer, true, false)
 EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Bool, fullscreen)
 
@@ -86,7 +84,7 @@ EXTERN_CVAR (Bool, fullscreen)
 
 class DDummyFrameBuffer : public DFrameBuffer
 {
-	DECLARE_CLASS (DDummyFrameBuffer, DFrameBuffer);
+	typedef DFrameBuffer Super;
 public:
 	DDummyFrameBuffer (int width, int height)
 		: DFrameBuffer (0, 0, false)
@@ -112,11 +110,6 @@ public:
 
 	float Gamma;
 };
-IMPLEMENT_CLASS(DDummyFrameBuffer, true, false)
-
-// SimpleCanvas is not really abstract, but this macro does not
-// try to generate a CreateNew() function.
-IMPLEMENT_CLASS(DSimpleCanvas, true, false)
 
 class FPaletteTester : public FTexture
 {
@@ -1272,7 +1265,6 @@ bool V_DoModeSetup (int width, int height, int bits)
 	}
 
 	screen = buff;
-	GC::WriteBarrier(screen);
 	screen->SetGamma (Gamma);
 
 	// Load fonts now so they can be packed into textures straight away,
@@ -1544,7 +1536,6 @@ void V_Init (bool restart)
 
 void V_Init2()
 {
-	assert (screen->IsKindOf(RUNTIME_CLASS(DDummyFrameBuffer)));
 	int width = screen->GetWidth();
 	int height = screen->GetHeight();
 	float gamma = static_cast<DDummyFrameBuffer *>(screen)->Gamma;
@@ -1552,7 +1543,6 @@ void V_Init2()
 	{
 		DFrameBuffer *s = screen;
 		screen = NULL;
-		s->ObjectFlags |= OF_YesReallyDelete;
 		delete s;
 	}
 
@@ -1579,7 +1569,6 @@ void V_Shutdown()
 	{
 		DFrameBuffer *s = screen;
 		screen = NULL;
-		s->ObjectFlags |= OF_YesReallyDelete;
 		delete s;
 	}
 	V_ClearFonts();

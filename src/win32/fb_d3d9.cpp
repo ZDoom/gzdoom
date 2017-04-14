@@ -92,8 +92,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_CLASS(D3DFB, false, false)
-
 struct D3DFB::PackedTexture
 {
 	D3DFB::Atlas *Owner;

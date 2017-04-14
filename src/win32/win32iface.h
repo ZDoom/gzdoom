@@ -103,7 +103,7 @@ class Win32Video : public IVideo
 
 class BaseWinFB : public DFrameBuffer
 {
-	DECLARE_ABSTRACT_CLASS(BaseWinFB, DFrameBuffer)
+	typedef DFrameBuffer Super;
 public:
 	BaseWinFB(int width, int height, bool bgra) : DFrameBuffer(width, height, bgra), Windowed(true) {}
 

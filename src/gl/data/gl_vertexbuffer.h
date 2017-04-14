@@ -288,7 +288,8 @@ struct FModelVertex
 		int inx = clamp(int(nx * 512), -512, 511);
 		int iny = clamp(int(ny * 512), -512, 511);
 		int inz = clamp(int(nz * 512), -512, 511);
-		packedNormal = /*0x40000000 |*/ ((inx & 1023) << 20) | ((iny & 1023) << 10) | (inz & 1023);
+		int inw = 0;
+		packedNormal = (inw << 30) | ((inz & 1023) << 20) | ((iny & 1023) << 10) | (inx & 1023);
 	}
 };
 

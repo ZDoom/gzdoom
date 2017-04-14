@@ -93,7 +93,7 @@ EScopeFlags FScopeBarrier::ChangeSideInObjectFlags(EScopeFlags flags, int side)
 	int f = int(flags);
 	f &= ~(Scope_UI | Scope_Play);
 	f |= ObjectFlagsFromSide(side);
-	return (EScopeFlags)flags;
+	return (EScopeFlags)f;
 }
 
 FScopeBarrier::FScopeBarrier()

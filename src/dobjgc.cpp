@@ -79,8 +79,6 @@
 #include "g_levellocals.h"
 #include "events.h"
 
-void MarkACSThinker();
-
 // MACROS ------------------------------------------------------------------
 
 /*
@@ -331,7 +329,6 @@ static void MarkRoot()
 	Mark(DIntermissionController::CurrentIntermission);
 	DThinker::MarkRoots();
 	FCanvasTextureInfo::Mark();
-	MarkACSThinker();
 	Mark(E_FirstEventHandler);
 	Mark(E_LastEventHandler);
 	for (auto &s : level.sectorPortals)

@@ -7775,6 +7775,13 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 		}
 		break;
 
+	case NAME_GetClassName:
+		if (CheckArgSize(NAME_GetClassName, ArgList, 0, 0, ScriptPosition))
+		{
+			func = new FxGetClassName(new FxSelf(ScriptPosition));
+		}
+		break;
+
 	case NAME_GetDefaultByType:
 		if (CheckArgSize(NAME_GetDefaultByType, ArgList, 1, 1, ScriptPosition))
 		{
@@ -8215,14 +8222,20 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 	if (MethodName == NAME_GetParentClass &&
 		(Self->IsObject() || Self->ValueType->isClassPointer()))
 	{
-		if (ArgList.Size() > 0)
+		if (CheckArgSize(NAME_GetParentClass, ArgList, 0, 0, ScriptPosition))
 		{
-			ScriptPosition.Message(MSG_ERROR, "too many parameters in call to %s", MethodName.GetChars());
-			delete this;
-			return nullptr;
+			auto x = new FxGetParentClass(Self);
+			return x->Resolve(ctx);
 		}
-		auto x = new FxGetParentClass(Self);
-		return x->Resolve(ctx);
+	}
+	if (MethodName == NAME_GetClassName &&
+		(Self->IsObject() || Self->ValueType->isClassPointer()))
+	{
+		if (CheckArgSize(NAME_GetClassName, ArgList, 0, 0, ScriptPosition))
+		{
+			auto x = new FxGetClassName(Self);
+			return x->Resolve(ctx);
+		}
 	}
 
 	if (Self->ValueType->isRealPointer())
@@ -9336,11 +9349,11 @@ FxExpression *FxGetParentClass::Resolve(FCompileContext &ctx)
 
 	if (!Self->ValueType->isClassPointer() && !Self->IsObject())
 	{
-		ScriptPosition.Message(MSG_ERROR, "GetClass() requires an object");
+		ScriptPosition.Message(MSG_ERROR, "GetParentClass() requires an object");
 		delete this;
 		return nullptr;
 	}
-	ValueType = NewClassPointer(RUNTIME_CLASS(DObject)); // 
+	ValueType = NewClassPointer(RUNTIME_CLASS(DObject));
 	return this;
 }
 
@@ -9357,6 +9370,52 @@ ExpEmit FxGetParentClass::Emit(VMFunctionBuilder *build)
 	}
 	ExpEmit to(build, REGT_POINTER);
 	build->Emit(OP_LP, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, ParentClass)));
+	return to;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+FxGetClassName::FxGetClassName(FxExpression *self)
+	:FxExpression(EFX_GetClassName, self->ScriptPosition)
+{
+	Self = self;
+}
+
+FxGetClassName::~FxGetClassName()
+{
+	SAFE_DELETE(Self);
+}
+
+FxExpression *FxGetClassName::Resolve(FCompileContext &ctx)
+{
+	SAFE_RESOLVE(Self, ctx);
+
+	if (!Self->ValueType->isClassPointer() && !Self->IsObject())
+	{
+		ScriptPosition.Message(MSG_ERROR, "GetClassName() requires an object");
+		delete this;
+		return nullptr;
+	}
+	ValueType = TypeName;
+	return this;
+}
+
+ExpEmit FxGetClassName::Emit(VMFunctionBuilder *build)
+{
+	ExpEmit op = Self->Emit(build);
+	op.Free(build);
+	if (Self->IsObject())
+	{
+		ExpEmit to(build, REGT_POINTER);
+		build->Emit(OP_CLSS, to.RegNum, op.RegNum);
+		op = to;
+		op.Free(build);
+	}
+	ExpEmit to(build, REGT_INT);
+	build->Emit(OP_LW, to.RegNum, op.RegNum, build->GetConstantInt(myoffsetof(PClass, TypeName)));
 	return to;
 }
 

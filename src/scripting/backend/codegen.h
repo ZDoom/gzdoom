@@ -296,6 +296,7 @@ enum EFxType
 	EFX_NamedNode,
 	EFX_GetClass,
 	EFX_GetParentClass,
+	EFX_GetClassName,
 	EFX_StrLen,
 	EFX_ColorLiteral,
 	EFX_GetDefaultByType,
@@ -1656,6 +1657,24 @@ public:
 
 	FxGetParentClass(FxExpression *self);
 	~FxGetParentClass();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
+//	FxGetClass
+//
+//==========================================================================
+
+class FxGetClassName : public FxExpression
+{
+	FxExpression *Self;
+
+public:
+
+	FxGetClassName(FxExpression *self);
+	~FxGetClassName();
 	FxExpression *Resolve(FCompileContext&);
 	ExpEmit Emit(VMFunctionBuilder *build);
 };

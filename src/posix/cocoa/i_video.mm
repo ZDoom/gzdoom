@@ -632,7 +632,6 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 		}
 
 		old->GetFlash(flashColor, flashAmount);
-		old->ObjectFlags |= OF_YesReallyDelete;
 
 		if (old == screen)
 		{
@@ -1306,7 +1305,6 @@ void I_ShutdownGraphics()
 {
 	if (NULL != screen)
 	{
-		screen->ObjectFlags |= OF_YesReallyDelete;
 		delete screen;
 		screen = NULL;
 	}

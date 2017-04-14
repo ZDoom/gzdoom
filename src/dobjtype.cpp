@@ -242,7 +242,6 @@ void PClass::StaticShutdown ()
 {
 	if (WP_NOCHANGE != nullptr)
 	{
-		WP_NOCHANGE->ObjectFlags |= OF_YesReallyDelete;
 		delete WP_NOCHANGE;
 	}
 

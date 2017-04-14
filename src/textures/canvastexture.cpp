@@ -114,7 +114,6 @@ void FCanvasTexture::MakeTexture ()
 {
 	Canvas = new DSimpleCanvas (Width, Height, false);
 	Canvas->Lock ();
-	GC::AddSoftRoot(Canvas);
 
 	if (Width != Height || Width != Canvas->GetPitch())
 	{
@@ -136,7 +135,6 @@ void FCanvasTexture::MakeTextureBgra()
 {
 	CanvasBgra = new DSimpleCanvas(Width, Height, true);
 	CanvasBgra->Lock();
-	GC::AddSoftRoot(CanvasBgra);
 
 	if (Width != Height || Width != CanvasBgra->GetPitch())
 	{
@@ -172,16 +170,12 @@ void FCanvasTexture::Unload ()
 
 	if (Canvas != NULL)
 	{
-		GC::DelSoftRoot(Canvas);
-		Canvas->Destroy();
-		Canvas = NULL;
+		delete Canvas;
 	}
 
 	if (CanvasBgra != NULL)
 	{
-		GC::DelSoftRoot(CanvasBgra);
-		CanvasBgra->Destroy();
-		CanvasBgra = NULL;
+		delete CanvasBgra;
 	}
 
 	FTexture::Unload();

@@ -60,8 +60,6 @@
 
 // TYPES -------------------------------------------------------------------
 
-IMPLEMENT_CLASS(DDrawFB, false, false)
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------

@@ -66,14 +66,18 @@ DEFINE_ACTION_FUNCTION(DMessageBoxMenu, CallHandler)
 
 DMenu *CreateMessageBoxMenu(DMenu *parent, const char *message, int messagemode, bool playsound, FName action = NAME_None, hfunc handler = nullptr)
 {
-	auto c = PClass::FindClass("MessageBoxMenu");
+	auto c = PClass::FindClass(gameinfo.MessageBoxClass);
+	if (!c->IsDescendantOf(NAME_MessageBoxMenu)) c = PClass::FindClass(NAME_MessageBoxMenu);
 	auto p = c->CreateNew();
 	FString namestr = message;
-	VMValue params[] = { p, parent, &namestr, messagemode, playsound, action.GetIndex(), reinterpret_cast<void*>(handler) };
 
-	auto f = dyn_cast<PFunction>(c->FindSymbol("Init", false));
-	VMCall(f->Variants[0].Implementation, params, countof(params), nullptr, 0);
-	return (DMenu*)p;
+	IFVIRTUALPTRNAME(p, NAME_MessageBoxMenu, Init)
+	{
+		VMValue params[] = { p, parent, &namestr, messagemode, playsound, action.GetIndex(), reinterpret_cast<void*>(handler) };
+		VMCall(func, params, countof(params), nullptr, 0);
+		return (DMenu*)p;
+	}
+	return nullptr;
 }
 
 //=============================================================================

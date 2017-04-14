@@ -65,6 +65,7 @@ gameinfo
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"
+	messageboxclass = "MessageBoxMenu"
 }
 
 DoomEdNums

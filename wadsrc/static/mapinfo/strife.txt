@@ -67,6 +67,7 @@ gameinfo
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "RavenStatusScreen"
 	statusbarclass = "StrifeStatusBar"
+	messageboxclass = "MessageBoxMenu"
 }
 
 DoomEdNums

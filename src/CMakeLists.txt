@@ -111,6 +111,7 @@ if( WIN32 )
 		( MSVC15 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v150_xp" ) )		# For VS 2017.
 		# for modern Windows SDKs the DirectX headers should be available by default.
 		set( DX_dinput8_LIBRARY dinput8 )
+		set( DX_dxguid_LIBRARY dxguid )
 	else()
 		
 		find_path( D3D_INCLUDE_DIR d3d9.h

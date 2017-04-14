@@ -84,8 +84,7 @@ class                                   DPillar;
 class PClassActor;
 
 #define RUNTIME_CLASS_CASTLESS(cls)	(cls::RegistrationInfo.MyClass)	// Passed a native class name, returns a PClass representing that class
-#define RUNTIME_CLASS(cls)			((cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// Like above, but returns the true type of the meta object
-#define RUNTIME_TEMPLATE_CLASS(cls)	((typename cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// RUNTIME_CLASS, but works with templated parameters on GCC
+#define RUNTIME_CLASS(cls)			((typename cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// Like above, but returns the true type of the meta object
 #define NATIVE_TYPE(object)			(object->StaticType())			// Passed an object, returns the type of the C++ class representing the object
 
 // Enumerations for the meta classes created by ClassReg::RegisterClass()

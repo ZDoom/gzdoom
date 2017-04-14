@@ -10739,27 +10739,21 @@ FxExpression *FxClassTypeCast::Resolve(FCompileContext &ctx)
 
 int BuiltinNameToClass(VMValue *param, TArray<VMValue> &defaultparam, int numparam, VMReturn *ret, int numret)
 {
-	assert(numparam == 2);
-	assert(numret == 1);
-	assert(param[0].Type == REGT_INT);
-	assert(param[1].Type == REGT_POINTER);
-	assert(ret->RegType == REGT_POINTER);
+	PARAM_PROLOGUE;
+	PARAM_NAME(clsname);
+	PARAM_CLASS(desttype, DObject);
 
-	FName clsname = ENamedName(param[0].i);
+	PClass *cls = nullptr;
 	if (clsname != NAME_None)
 	{
-		const PClass *cls = PClass::FindClass(clsname);
-		const PClass *desttype = reinterpret_cast<PClass *>(param[1].a);
-
-		if (cls->VMType == nullptr || !cls->IsDescendantOf(desttype))
+		cls = PClass::FindClass(clsname);
+		if (cls != nullptr && (cls->VMType == nullptr || !cls->IsDescendantOf(desttype)))
 		{
-			// Let the caller check this. Making this an error with a message is only taking away options from the user.
+			// does not match required parameters or is invalid.
 			cls = nullptr;
 		}
-		ret->SetPointer(const_cast<PClass *>(cls));
 	}
-	else ret->SetPointer(nullptr);
-	return 1;
+	ACTION_RETURN_POINTER(cls);
 }
 
 ExpEmit FxClassTypeCast::Emit(VMFunctionBuilder *build)

@@ -102,7 +102,7 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 	{
 		// [ZZ] DECORATE classes are always play
 		auto vmtype = type->VMType;
-		vmtype->ObjectFlags = FScopeBarrier::ChangeSideInObjectFlags(vmtype->ObjectFlags, FScopeBarrier::Side_Play);
+		vmtype->ScopeFlags = FScopeBarrier::ChangeSideInObjectFlags(vmtype->ScopeFlags, FScopeBarrier::Side_Play);
 	}
 
 	return type;
@@ -203,7 +203,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type)
 			x = new FxRuntimeStateIndex(ParseExpression(sc, cls));
 		}
 	}
-	else if (type->GetClass() == RUNTIME_CLASS(PClassPointer))
+	else if (type->isClassPointer())
 	{	// Actor name
 		sc.SetEscape(true);
 		sc.MustGetString();
@@ -866,22 +866,22 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			if (sc.CheckNumber()) *(int*)addr = sc.Number;
 			else *(PalEntry*)addr = V_GetColor(nullptr, sc);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		else if (f->Type->isIntCompatible())
 		{
 			sc.MustGetNumber();
 			static_cast<PInt*>(f->Type)->SetValue(addr, sc.Number);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		else if (f->Type->isFloat())
 		{
 			sc.MustGetFloat();
 			static_cast<PFloat*>(f->Type)->SetValue(addr, sc.Float);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
+		else if (f->Type == TypeString)
 		{
 			sc.MustGetString();
 			*(FString*)addr = strbin1(sc.String);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+		else if (f->Type->isClassPointer())
 		{
 			sc.MustGetString();
 
@@ -892,13 +892,14 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			else
 			{
 				auto cls = PClass::FindClass(sc.String);
+				auto cp = static_cast<PClassPointer*>(f->Type);
 				if (cls == nullptr)
 				{
-					cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(sc.String);
+					cls = cp->ClassRestriction->FindClassTentative(sc.String);
 				}
-				else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+				else if (!cls->IsDescendantOf(cp->ClassRestriction))
 				{
-					sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
+					sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, cp->ClassRestriction->TypeName.GetChars());
 					FScriptPosition::ErrorCounter++;
 				}
 				*(PClass**)addr = cls;

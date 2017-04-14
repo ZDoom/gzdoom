@@ -75,12 +75,11 @@ cycle_t ActionCycles;
 //
 //==========================================================================
 
-class PActorInfo : public PBasicType
+class PActorInfo : public PCompoundType
 {
-	DECLARE_CLASS(PActorInfo, PBasicType);
 public:
 	PActorInfo()
-		:PBasicType(sizeof(FActorInfo), alignof(FActorInfo))
+		:PCompoundType(sizeof(FActorInfo), alignof(FActorInfo))
 	{
 	}
 
@@ -113,12 +112,10 @@ public:
 
 };
 
-IMPLEMENT_CLASS(PActorInfo, false, false)
-
 void AddActorInfo(PClass *cls)
 {
 	auto type = new PActorInfo;
-	TypeTable.AddType(type);
+	TypeTable.AddType(type, NAME_Actor);
 	cls->AddField("*", type, VARF_Meta);
 }
 

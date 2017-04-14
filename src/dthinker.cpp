@@ -714,10 +714,6 @@ class DThinkerIterator : public DObject, public FThinkerIterator
 {
 	DECLARE_ABSTRACT_CLASS(DThinkerIterator, DObject)
 
-	DThinkerIterator()
-	{
-	}
-
 public:
 	DThinkerIterator(PClass *cls, int statnum = MAX_STATNUM + 1)
 		: FThinkerIterator(cls, statnum)

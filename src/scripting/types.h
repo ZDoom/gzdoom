@@ -2,9 +2,9 @@
 
 #include "dobject.h"
 #include "serializer.h"
+#include "scripting/backend/scopebarrier.h"
 
 // Variable/parameter/field flags -------------------------------------------
-class PStruct;
 
 // Making all these different storage types use a common set of flags seems
 // like the simplest thing to do.
@@ -61,22 +61,45 @@ enum
 //   Map                           *      *
 //   Prototype                     *+     *+
 
+class PContainerType;
+class PPointer;
+class PClassPointer;
+class PArray;
+class PStruct;
+class PClassType;
+
 struct ZCC_ExprConstant;
 class PType : public PTypeBase
 {
-	DECLARE_ABSTRACT_CLASS(PType, PTypeBase)
 protected:
 
+	enum ETypeFlags
+	{
+		TYPE_Scalar = 1,
+		TYPE_Container = 2,
+		TYPE_Int = 4,
+		TYPE_IntNotInt = 8,				// catch-all for subtypes that are not being checked by type directly.
+		TYPE_Float = 16,
+		TYPE_Pointer = 32,
+		TYPE_ObjectPointer = 64,
+		TYPE_ClassPointer = 128,
+		TYPE_Array = 256,
+
+		TYPE_IntCompatible = TYPE_Int | TYPE_IntNotInt,	// must be the combination of all flags that are subtypes of int and can be cast to an int.
+	};
+
 public:
-	PClass *TypeTableType;			// The type to use for hashing into the type table
+	FName TypeTableType;			// The type to use for hashing into the type table
 	unsigned int	Size;			// this type's size
 	unsigned int	Align;			// this type's preferred alignment
+	unsigned int	Flags = 0;		// What is this type?
 	PType			*HashNext;		// next type in this type table
 	PSymbolTable	Symbols;
 	bool			MemberOnly = false;		// type may only be used as a struct/class member but not as a local variable or function argument.
 	FString			mDescriptiveName;
 	VersionInfo		mVersion = { 0,0,0 };
 	uint8_t loadOp, storeOp, moveOp, RegType, RegCount;
+	EScopeFlags ScopeFlags = (EScopeFlags)0;
 
 	PType(unsigned int size = 1, unsigned int align = 1);
 	virtual ~PType();
@@ -160,20 +183,40 @@ public:
 	const char *DescriptiveName() const;
 
 	static void StaticInit();
+
+	bool isScalar() const { return !!(Flags & TYPE_Scalar); }
+	bool isContainer() const { return !!(Flags & TYPE_Container); }
+	bool isInt() const { return (Flags & TYPE_IntCompatible) == TYPE_Int; }
+	bool isIntCompatible() const { return !!(Flags & TYPE_IntCompatible); }
+	bool isFloat() const { return !!(Flags & TYPE_Float); }
+	bool isPointer() const { return !!(Flags & TYPE_Pointer); }
+	bool isRealPointer() const { return (Flags & (TYPE_Pointer|TYPE_ClassPointer)) == TYPE_Pointer; }	// This excludes class pointers which use their PointedType differently
+	bool isObjectPointer() const { return !!(Flags & TYPE_ObjectPointer); }
+	bool isClassPointer() const { return !!(Flags & TYPE_ClassPointer); }
+	bool isEnum() const { return TypeTableType == NAME_Enum; }
+	bool isArray() const { return !!(Flags & TYPE_Array); }
+	bool isStaticArray() const { return TypeTableType == NAME_StaticArray; }
+	bool isDynArray() const { return TypeTableType == NAME_DynArray; }
+	bool isStruct() const { return TypeTableType == NAME_Struct; }
+	bool isClass() const { return TypeTableType == NAME_Object; }
+	bool isPrototype() const { return TypeTableType == NAME_Prototype; }
+
+	PContainerType *toContainer() { return isContainer() ? (PContainerType*)this : nullptr; }
+	PPointer *toPointer() { return isPointer() ? (PPointer*)this : nullptr; }
+	static PClassPointer *toClassPointer(PType *t) { return t && t->isClassPointer() ? (PClassPointer*)t : nullptr; }
+	static PClassType *toClass(PType *t) { return t && t->isClass() ? (PClassType*)t : nullptr; }
 };
 
 // Not-really-a-type types --------------------------------------------------
 
 class PErrorType : public PType
 {
-	DECLARE_CLASS(PErrorType, PType);
 public:
 	PErrorType(int which = 1) : PType(0, which) {}
 };
 
 class PVoidType : public PType
 {
-	DECLARE_CLASS(PVoidType, PType);
 public:
 	PVoidType() : PType(0, 1) {}
 };
@@ -182,29 +225,31 @@ public:
 
 class PBasicType : public PType
 {
-	DECLARE_ABSTRACT_CLASS(PBasicType, PType);
-public:
-	PBasicType();
-	PBasicType(unsigned int size, unsigned int align);
+protected:
+	PBasicType(unsigned int size = 1, unsigned int align = 1);
 };
 
 class PCompoundType : public PType
 {
-	DECLARE_ABSTRACT_CLASS(PCompoundType, PType);
+protected:
+	PCompoundType(unsigned int size = 1, unsigned int align = 1);
 };
 
 class PContainerType : public PCompoundType
 {
-	DECLARE_ABSTRACT_CLASS(PContainerType, PCompoundType);
 public:
 	PTypeBase		*Outer;			// object this type is contained within
 	FName			TypeName;		// this type's name
 
-	PContainerType() : Outer(NULL) {
-		mDescriptiveName = "NamedType";
+	PContainerType() : Outer(NULL) 
+	{
+		mDescriptiveName = "ContainerType";
+		Flags |= TYPE_Container;
 	}
-	PContainerType(FName name, PTypeBase *outer) : Outer(outer), TypeName(name) {
+	PContainerType(FName name, PTypeBase *outer) : Outer(outer), TypeName(name) 
+	{
 		mDescriptiveName = name.GetChars();
+		Flags |= TYPE_Container;
 	}
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
@@ -217,7 +262,6 @@ public:
 
 class PInt : public PBasicType
 {
-	DECLARE_CLASS(PInt, PBasicType);
 public:
 	PInt(unsigned int size, bool unsign, bool compatible = true);
 
@@ -233,13 +277,11 @@ public:
 	bool Unsigned;
 	bool IntCompatible;
 protected:
-	PInt();
 	void SetOps();
 };
 
 class PBool : public PInt
 {
-	DECLARE_CLASS(PBool, PInt);
 public:
 	PBool();
 	virtual void SetValue(void *addr, int val);
@@ -250,9 +292,8 @@ public:
 
 class PFloat : public PBasicType
 {
-	DECLARE_CLASS(PFloat, PBasicType);
 public:
-	PFloat(unsigned int size);
+	PFloat(unsigned int size = 8);
 
 	void WriteValue(FSerializer &ar, const char *key,const void *addr) const override;
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
@@ -263,7 +304,6 @@ public:
 	virtual double GetValueFloat(void *addr) const;
 	virtual bool isNumeric() override { return true; }
 protected:
-	PFloat();
 	void SetOps();
 private:
 	struct SymbolInitF
@@ -285,7 +325,6 @@ private:
 
 class PString : public PBasicType
 {
-	DECLARE_CLASS(PString, PBasicType);
 public:
 	PString();
 
@@ -300,7 +339,6 @@ public:
 
 class PName : public PInt
 {
-	DECLARE_CLASS(PName, PInt);
 public:
 	PName();
 
@@ -310,7 +348,6 @@ public:
 
 class PSound : public PInt
 {
-	DECLARE_CLASS(PSound, PInt);
 public:
 	PSound();
 
@@ -320,7 +357,6 @@ public:
 
 class PSpriteID : public PInt
 {
-	DECLARE_CLASS(PSpriteID, PInt);
 public:
 	PSpriteID();
 
@@ -330,7 +366,6 @@ public:
 
 class PTextureID : public PInt
 {
-	DECLARE_CLASS(PTextureID, PInt);
 public:
 	PTextureID();
 
@@ -340,14 +375,12 @@ public:
 
 class PColor : public PInt
 {
-	DECLARE_CLASS(PColor, PInt);
 public:
 	PColor();
 };
 
 class PStateLabel : public PInt
 {
-	DECLARE_CLASS(PStateLabel, PInt);
 public:
 	PStateLabel();
 };
@@ -356,7 +389,6 @@ public:
 
 class PPointer : public PBasicType
 {
-	DECLARE_CLASS(PPointer, PBasicType);
 
 public:
 	typedef void(*WriteHandler)(FSerializer &ar, const char *key, const void *addr);
@@ -389,7 +421,6 @@ protected:
 
 class PStatePointer : public PPointer
 {
-	DECLARE_CLASS(PStatePointer, PPointer);
 public:
 	PStatePointer();
 
@@ -400,7 +431,6 @@ public:
 
 class PObjectPointer : public PPointer
 {
-	DECLARE_CLASS(PObjectPointer, PPointer);
 public:
 	PObjectPointer(PClass *pointedtype = nullptr, bool isconst = false);
 
@@ -413,7 +443,6 @@ public:
 
 class PClassPointer : public PPointer
 {
-	DECLARE_CLASS(PClassPointer, PPointer);
 public:
 	PClassPointer(class PClass *restrict = nullptr);
 
@@ -432,19 +461,15 @@ public:
 
 class PEnum : public PInt
 {
-	DECLARE_CLASS(PEnum, PInt);
 public:
 	PEnum(FName name, PTypeBase *outer);
 
 	PTypeBase *Outer;
 	FName EnumName;
-protected:
-	PEnum();
 };
 
 class PArray : public PCompoundType
 {
-	DECLARE_CLASS(PArray, PCompoundType);
 public:
 	PArray(PType *etype, unsigned int ecount);
 
@@ -460,27 +485,19 @@ public:
 
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *special) override;
-
-protected:
-	PArray();
 };
 
 class PStaticArray : public PArray
 {
-	DECLARE_CLASS(PStaticArray, PArray);
 public:
 	PStaticArray(PType *etype);
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-
-protected:
-	PStaticArray();
 };
 
 class PDynArray : public PCompoundType
 {
-	DECLARE_CLASS(PDynArray, PCompoundType);
 public:
 	PDynArray(PType *etype, PStruct *backing);
 
@@ -496,14 +513,10 @@ public:
 	void InitializeValue(void *addr, const void *def) const override;
 	void DestroyValue(void *addr) const override;
 	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const override;
-
-protected:
-	PDynArray();
 };
 
 class PMap : public PCompoundType
 {
-	DECLARE_CLASS(PMap, PCompoundType);
 public:
 	PMap(PType *keytype, PType *valtype);
 
@@ -512,14 +525,10 @@ public:
 
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-protected:
-	PMap();
 };
 
 class PStruct : public PContainerType
 {
-	DECLARE_CLASS(PStruct, PContainerType);
-
 public:
 	PStruct(FName name, PTypeBase *outer, bool isnative = false);
 
@@ -535,25 +544,18 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) override;
-
-protected:
-	PStruct();
 };
 
 class PPrototype : public PCompoundType
 {
-	DECLARE_CLASS(PPrototype, PCompoundType);
 public:
 	PPrototype(const TArray<PType *> &rettypes, const TArray<PType *> &argtypes);
 
 	TArray<PType *> ArgumentTypes;
 	TArray<PType *> ReturnTypes;
 
-	size_t PropagateMark();
 	virtual bool IsMatch(intptr_t id1, intptr_t id2) const;
 	virtual void GetTypeIDs(intptr_t &id1, intptr_t &id2) const;
-protected:
-	PPrototype();
 };
 
 
@@ -561,10 +563,6 @@ protected:
 
 class PClassType : public PContainerType
 {
-	DECLARE_CLASS(PClassType, PContainerType);
-
-private:
-
 public:
 	PClass *Descriptor;
 	PClassType *ParentType;
@@ -628,12 +626,12 @@ struct FTypeTable
 
 	PType *TypeHash[HASH_SIZE];
 
-	PType *FindType(PClass *metatype, intptr_t parm1, intptr_t parm2, size_t *bucketnum);
-	void AddType(PType *type, PClass *metatype, intptr_t parm1, intptr_t parm2, size_t bucket);
-	void AddType(PType *type);
+	PType *FindType(FName type_name, intptr_t parm1, intptr_t parm2, size_t *bucketnum);
+	void AddType(PType *type, FName type_name, intptr_t parm1, intptr_t parm2, size_t bucket);
+	void AddType(PType *type, FName type_name);
 	void Clear();
 
-	static size_t Hash(const PClass *p1, intptr_t p2, intptr_t p3);
+	static size_t Hash(FName p1, intptr_t p2, intptr_t p3);
 };
 
 

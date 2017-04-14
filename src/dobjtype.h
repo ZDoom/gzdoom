@@ -5,8 +5,6 @@
 #error You must #include "dobject.h" to get dobjtype.h
 #endif
 
-#include "memarena.h"
-
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 
 #if 0
@@ -27,8 +25,6 @@ struct VMReturn;
 class VMFunction;
 class PClassType;
 struct FNamespaceManager;
-
-extern FMemArena ClassDataAllocator;
 
 enum
 {
@@ -52,7 +48,6 @@ public:
 
 	static void StaticInit();
 	static void StaticShutdown();
-	static void StaticBootstrap();
 
 	// Per-class information -------------------------------------
 	PClass				*ParentClass = nullptr;	// the class this class derives from

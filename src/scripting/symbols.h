@@ -1,10 +1,6 @@
 // Note: This must not be included by anything but dobject.h!
 #pragma once
 
-#ifndef __DOBJECT_H__
-#error You must #include "dobject.h" to get symbols.h
-#endif
-
 
 class VMFunction;
 class PType;
@@ -14,11 +10,18 @@ class PContainerType;
 
 // Symbol information -------------------------------------------------------
 
-class PTypeBase : public DObject
+class PTypeBase
 {
-	DECLARE_ABSTRACT_CLASS(PTypeBase, DObject)
-
 public:
+	// Allocate everything on the global memory arena because all subtypes of this 
+	// will live until the end of the game.
+	void *operator new(size_t size)
+	{
+		return ClassDataAllocator.Alloc(size);
+	}
+
+	void operator delete(void *)
+	{}
 };
 
 class PSymbol : public DObject
@@ -249,15 +252,11 @@ private:
 
 class PNamespace : public PTypeBase
 {
-	DECLARE_CLASS(PNamespace, PTypeBase)
-	HAS_OBJECT_POINTERS;
-
 public:
 	PSymbolTable Symbols;
 	PNamespace *Parent;
 	int FileNum;	// This is for blocking DECORATE access to later files.
 
-	PNamespace() {}
 	PNamespace(int filenum, PNamespace *parent);
 };
 
@@ -268,7 +267,6 @@ struct FNamespaceManager
 
 	FNamespaceManager();
 	PNamespace *NewNamespace(int filenum);
-	size_t MarkSymbols();
 	void ReleaseSymbols();
 	int RemoveSymbols();
 };

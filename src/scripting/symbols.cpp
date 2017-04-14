@@ -47,7 +47,6 @@ FNamespaceManager Namespaces;
 
 // Symbol tables ------------------------------------------------------------
 
-IMPLEMENT_CLASS(PTypeBase, true, false);
 IMPLEMENT_CLASS(PSymbol, true, false);
 IMPLEMENT_CLASS(PSymbolConst, false, false);
 IMPLEMENT_CLASS(PSymbolConstNumeric, false, false);
@@ -56,12 +55,6 @@ IMPLEMENT_CLASS(PSymbolTreeNode, false, false)
 IMPLEMENT_CLASS(PSymbolType, false, false)
 IMPLEMENT_CLASS(PSymbolVMFunction, false, false)
 IMPLEMENT_CLASS(PFunction, false, false)
-IMPLEMENT_CLASS(PNamespace, false, true)
-
-IMPLEMENT_POINTERS_START(PNamespace)
-IMPLEMENT_POINTER(Parent)
-IMPLEMENT_POINTERS_END
-
 
 //==========================================================================
 //
@@ -104,9 +97,9 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<uint32_t> &argflags, TA
 	if (flags & VARF_Method)
 	{
 		assert(proto->ArgumentTypes.Size() > 0);
-		auto selftypeptr = dyn_cast<PPointer>(proto->ArgumentTypes[0]);
+		auto selftypeptr = proto->ArgumentTypes[0]->toPointer();
 		assert(selftypeptr != nullptr);
-		variant.SelfClass = dyn_cast<PContainerType>(selftypeptr->PointedType);
+		variant.SelfClass = selftypeptr->PointedType->toContainer();
 		assert(variant.SelfClass != nullptr);
 	}
 	else
@@ -155,7 +148,7 @@ PField::PField(FName name, PType *type, uint32_t flags, size_t offset, int bitva
 		unsigned val = bitvalue;
 		while ((val >>= 1)) BitValue++;
 
-		if (type->IsA(RUNTIME_CLASS(PInt)) && unsigned(BitValue) < 8u * type->Size)
+		if (type->isInt() && unsigned(BitValue) < 8u * type->Size)
 		{
 			// map to the single bytes in the actual variable. The internal bit instructions operate on 8 bit values.
 #ifndef __BIG_ENDIAN__
@@ -523,21 +516,6 @@ PNamespace *FNamespaceManager::NewNamespace(int filenum)
 //
 //==========================================================================
 
-size_t FNamespaceManager::MarkSymbols()
-{
-	for (auto ns : AllNamespaces)
-	{
-		GC::Mark(ns);
-	}
-	return AllNamespaces.Size();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 void FNamespaceManager::ReleaseSymbols()
 {
 	RemoveSymbols();
@@ -559,7 +537,7 @@ int FNamespaceManager::RemoveSymbols()
 	for (auto ns : AllNamespaces)
 	{
 		count += ns->Symbols.Symbols.CountUsed();
-		ns->Symbols.ReleaseSymbols();
+		delete ns;
 	}
 	return count;
 }
@@ -582,7 +560,7 @@ void RemoveUnusedSymbols()
 	{
 		for (PType *ty = TypeTable.TypeHash[i]; ty != nullptr; ty = ty->HashNext)
 		{
-			if (ty->IsKindOf(RUNTIME_CLASS(PContainerType)))
+			if (ty->isContainer())
 			{
 				auto it = ty->Symbols.GetIterator();
 				PSymbolTable::MapType::Pair *pair;

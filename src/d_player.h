@@ -235,7 +235,7 @@ enum
 // The VM cannot deal with this as an invalid pointer because it performs a read barrier on every object pointer read.
 // This doesn't have to point to a valid weapon, though, because WP_NOCHANGE is never dereferenced, but it must point to a valid object
 // and the class descriptor just works fine for that.
-#define WP_NOCHANGE ((AWeapon*)RUNTIME_CLASS_CASTLESS(AWeapon))
+extern AWeapon *WP_NOCHANGE;
 
 
 #define MAXPLAYERNAME	15

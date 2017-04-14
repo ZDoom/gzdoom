@@ -143,7 +143,7 @@ class HereticStatusBar : BaseStatusBar
 
 		//armor
 		let armor = CPlayer.mo.FindInventory("BasicArmor");
-		if (armor != null)
+		if (armor != null && armor.Amount > 0)
 		{
 			DrawInventoryIcon(armor, (58, -24));
 			DrawString(mBigFont, FormatNumber(armor.Amount, 3), (41, -43), DI_TEXT_ALIGN_RIGHT);

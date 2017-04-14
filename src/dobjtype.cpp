@@ -74,6 +74,12 @@ TArray<VMFunction**> PClass::FunctionPtrList;
 bool PClass::bShutdown;
 bool PClass::bVMOperational;
 
+// Originally this was just a bogus pointer, but with the VM performing a read barrier on every object pointer write
+// that does not work anymore. WP_NOCHANGE needs to point to a vaild object to work as intended.
+// This Object does not need to be garbage collected, though, but it needs to provide the proper structure so that the
+// GC can process it.
+AWeapon *WP_NOCHANGE;
+DEFINE_GLOBAL(WP_NOCHANGE);
 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -205,7 +211,6 @@ void PClass::StaticInit ()
 {
 	atterm (StaticShutdown);
 
-	StaticBootstrap();
 	Namespaces.GlobalNamespace = Namespaces.NewNamespace(0);
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
@@ -219,6 +224,10 @@ void PClass::StaticInit ()
 	// I'm not sure if this is really necessary to maintain any sort of sync.
 	qsort(&AllClasses[0], AllClasses.Size(), sizeof(AllClasses[0]), cregcmp);
 
+	// WP_NOCHANGE must point to a valid object, although it does not need to be a weapon.
+	// A simple DObject is enough to give the GC the ability to deal with it, if subjected to it.
+	WP_NOCHANGE = (AWeapon*)new DObject;
+	WP_NOCHANGE->Release();
 }
 
 //==========================================================================
@@ -231,6 +240,12 @@ void PClass::StaticInit ()
 
 void PClass::StaticShutdown ()
 {
+	if (WP_NOCHANGE != nullptr)
+	{
+		WP_NOCHANGE->ObjectFlags |= OF_YesReallyDelete;
+		delete WP_NOCHANGE;
+	}
+
 	// delete all variables containing pointers to script functions.
 	for (auto p : FunctionPtrList)
 	{
@@ -265,6 +280,7 @@ void PClass::StaticShutdown ()
 	ClassDataAllocator.FreeAllBlocks();
 	AllClasses.Clear();
 	PClassActor::AllActorClasses.Clear();
+	ClassMap.Clear();
 
 	FAutoSegIterator probe(CRegHead, CRegTail);
 
@@ -274,16 +290,6 @@ void PClass::StaticShutdown ()
 		cr->MyClass = nullptr;
 	}
 	
-}
-
-//==========================================================================
-//
-// PClass :: StaticBootstrap										STATIC
-//
-//==========================================================================
-
-void PClass::StaticBootstrap()
-{
 }
 
 //==========================================================================
@@ -363,7 +369,6 @@ void ClassReg::SetupClass(PClass *cls)
 	cls->Size = SizeOf;
 	cls->Pointers = Pointers;
 	cls->ConstructNative = ConstructNative;
-	//cls->mDescriptiveName.Format("Class<%s>", cls->TypeName.GetChars());
 }
 
 //==========================================================================

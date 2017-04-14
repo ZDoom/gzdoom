@@ -403,7 +403,7 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 			// Compute implicit values by adding one to the preceding value.
 			assert(prev->Value != NULL);
 			// If the preceding node is a constant, then we can do this now.
-			if (prev->Value->Operation == PEX_ConstValue && prev->Value->Type->IsA(RUNTIME_CLASS(PInt)))
+			if (prev->Value->Operation == PEX_ConstValue && prev->Value->Type->isInt())
 			{
 				NEW_INTCONST_NODE(cval, prev->Value->Type, static_cast<ZCC_ExprConstant *>(prev->Value)->IntVal + 1, node);
 				node->Value = cval;
@@ -1256,9 +1256,9 @@ unary_expr(X) ::= primary(X).
 unary_expr(X) ::= SUB unary_expr(A). [UNARY]
 {
 	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
-	if (A->Operation == PEX_ConstValue && (con->Type->IsA(RUNTIME_CLASS(PInt)) || con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	if (A->Operation == PEX_ConstValue && (con->Type->isInt() || con->Type->isFloat()))
 	{ // For constants, manipulate the child node directly, and don't create a new node.
-		if (con->Type->IsA(RUNTIME_CLASS(PInt)))
+		if (con->Type->isInt())
 		{
 			con->IntVal = -con->IntVal;
 		}
@@ -1280,7 +1280,7 @@ unary_expr(X) ::= ADD unary_expr(A). [UNARY]
 	// it so we can type check that it is being applied to something numeric.
 	// But we can do that right now for constant numerals.
 	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
-	if (A->Operation != PEX_ConstValue || (!con->Type->IsA(RUNTIME_CLASS(PInt)) && !con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	if (A->Operation != PEX_ConstValue || (!con->Type->isInt() && !con->Type->isFloat()))
 	{
 		UNARY_EXPR(A,PEX_AntiNegate);
 		X = expr1;

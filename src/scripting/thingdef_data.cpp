@@ -70,14 +70,6 @@ static TArray<FieldDesc> FieldTable;
 extern int				BackbuttonTime;
 extern float			BackbuttonAlpha;
 
-// Argh. It sucks when bad hacks need to be supported. WP_NOCHANGE is just a bogus pointer but is used everywhere as a special flag.
-// It cannot be defined as constant because constants can either be numbers or strings but nothing else, so the only 'solution'
-// is to create a static variable from it that points to an otherwise unused object and reference that in the script. Yuck!!!
-// This must point to a valid DObject derived object so that the garbage collector can deal with it.
-// The global VM types are the most convenient options here because they get created before the compiler is started and they
-// are not exposed in other ways to scripts - and they do not change unless the engine is shut down.
-DEFINE_GLOBAL_NAMED(TypeSInt32, wp_nochange);
-
 //==========================================================================
 //
 // List of all flags

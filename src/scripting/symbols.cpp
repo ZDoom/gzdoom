@@ -370,7 +370,7 @@ void PSymbolTable::WriteFields(FSerializer &ar, const void *addr, const void *de
 	{
 		const PField *field = dyn_cast<PField>(pair->Value);
 		// Skip fields without or with native serialization
-		if (field && !(field->Flags & (VARF_Transient | VARF_Meta)))
+		if (field && !(field->Flags & (VARF_Transient | VARF_Meta | VARF_Static)))
 		{
 			// todo: handle defaults in WriteValue
 			//auto defp = def == nullptr ? nullptr : (const uint8_t *)def + field->Offset;

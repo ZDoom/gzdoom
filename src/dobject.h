@@ -360,13 +360,18 @@ protected:
 
 };
 
+// This is the only method aside from calling CreateNew that should be used for creating DObjects
+// to ensure that the Class pointer is always set.
 template<typename T, typename... Args>
 T* Create(Args&&... args)
 {
 	DObject::nonew nono;
 	T *object = new(nono) T(std::forward<Args>(args)...);
-	object->SetClass(RUNTIME_CLASS(T));
-	assert(object->GetClass() != nullptr);	// beware of object that get created before the type system is up.
+	if (object != nullptr)
+	{
+		object->SetClass(RUNTIME_CLASS(T));
+		assert(object->GetClass() != nullptr);	// beware of objects that get created before the type system is up.
+	}
 	return object;
 }
 

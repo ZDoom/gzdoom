@@ -888,7 +888,10 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool bgra, bool fullsc
 
 	if (!isOpenGLInitialized)
 	{
-		ogl_LoadFunctions();
+		if (ogl_LoadFunctions() == ogl_LOAD_FAILED)
+		{
+			I_FatalError("Failed to load OpenGL functions.");
+		}
 		isOpenGLInitialized = true;
 	}
 

@@ -6813,7 +6813,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(name);
-	SprayDecal(self, name);
+	PARAM_FLOAT_DEF(dist);
+	SprayDecal(self, name, dist);
 	return 0;
 }
 

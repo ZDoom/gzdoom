@@ -704,7 +704,7 @@ CCMD (spray)
 	Net_WriteString (argv[1]);
 }
 
-void SprayDecal(AActor *shooter, const char *name)
+void SprayDecal(AActor *shooter, const char *name, double distance)
 {
 	FTraceResults trace;
 
@@ -713,7 +713,7 @@ void SprayDecal(AActor *shooter, const char *name)
 	double c = pitch.Cos();
 	DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
 
-	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, 172., 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
+	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
 	{
 		if (trace.HitType == TRACE_HitWall)
 		{

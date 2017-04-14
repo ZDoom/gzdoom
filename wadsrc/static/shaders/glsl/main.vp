@@ -62,7 +62,7 @@ void main()
 			gl_ClipDistance[4] = worldcoord.y + ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
 
-		vWorldNormal = NormalModelMatrix * aNormal;
+		vWorldNormal = NormalModelMatrix * normalize(aNormal);
 		vEyeNormal = NormalViewMatrix * vWorldNormal;
 	#endif
 	

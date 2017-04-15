@@ -85,6 +85,7 @@ class DCorpsePointer : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DCorpsePointer (AActor *ptr);
+	void Queue();
 	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	TObjPtr<AActor*> Corpse;
@@ -115,11 +116,14 @@ CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 }
 
 
-DCorpsePointer::DCorpsePointer (AActor *ptr)
-: DThinker (STAT_CORPSEPOINTER), Corpse (ptr)
+DCorpsePointer::DCorpsePointer(AActor *ptr)
+	: DThinker(STAT_CORPSEPOINTER), Corpse(ptr)
 {
 	Count = 0;
+}
 
+void DCorpsePointer::Queue()
+{
 	// Thinkers are added to the end of their respective lists, so
 	// the first thinker in the list is the oldest one.
 	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
@@ -184,7 +188,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 
 	if (sv_corpsequeuesize > 0)
 	{
-		Create<DCorpsePointer> (self);
+		auto p = Create<DCorpsePointer> (self);
+		p->Queue();
 	}
 	return 0;
 }

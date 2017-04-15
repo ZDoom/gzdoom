@@ -307,38 +307,47 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		lightlevel = 255;
 	}
 
-	PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
-	ThingColor.a = 255;
+	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 
-	visstyle_t vis;
+	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
+	// light mode here to draw the weapon sprite.
+	int oldlightmode = glset.lightmode;
+	if (glset.lightmode == 8) glset.lightmode = 2;
 
-	vis.RenderStyle = STYLE_Count;
-	vis.Alpha = playermo->Alpha;
-	vis.Invert = false;
-	playermo->AlterWeaponSprite(&vis);
-	
-	FRenderStyle RenderStyle;
-	if (vis.RenderStyle == STYLE_Count) RenderStyle = playermo->RenderStyle;
-	else RenderStyle = vis.RenderStyle;
-
-	if (vis.Invert)
+	for(DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
-		// this only happens for Strife's inverted weapon sprite
-		RenderStyle.Flags |= STYLEF_InvertSource;
-	}
-	if (RenderStyle.AsDWORD == 0)
-	{
-		// This is RenderStyle None.
-		return;
-	}
+		auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->Alpha);
 
-	// Set the render parameters
+		visstyle_t vis;
+		float trans = 0.f;
 
-	int OverrideShader = -1;
-	float trans = 0.f;
-	if (RenderStyle.BlendOp >= STYLEOP_Fuzz && RenderStyle.BlendOp <= STYLEOP_FuzzOrRevSub)
-	{
-		RenderStyle.CheckFuzz();
+		vis.RenderStyle = STYLE_Count;
+		vis.Alpha = rs.second;
+		vis.Invert = false;
+		playermo->AlterWeaponSprite(&vis);
+
+		FRenderStyle RenderStyle;
+
+		if (!(psp->Flags & PSPF_FORCEALPHA)) trans = vis.Alpha;
+
+		if (vis.RenderStyle != STYLE_Count && !(psp->Flags & PSPF_FORCESTYLE))
+		{
+			RenderStyle = vis.RenderStyle;
+		}
+		else
+		{
+			RenderStyle = rs.first;
+		}
+
+		if (vis.Invert)
+		{
+			// this only happens for Strife's inverted weapon sprite
+			RenderStyle.Flags |= STYLEF_InvertSource;
+		}
+
+		// Set the render parameters
+
+		int OverrideShader = -1;
 		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
 			if (gl_fuzztype != 0)
@@ -353,40 +362,35 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				RenderStyle.BlendOp = STYLEOP_Shadow;
 			}
 		}
-	}
 
-	gl_SetRenderStyle(RenderStyle, false, false);
+		gl_SetRenderStyle(RenderStyle, false, false);
 
-	if (RenderStyle.Flags & STYLEF_TransSoulsAlpha)
-	{
-		trans = transsouls;
-	}
-	else if (RenderStyle.Flags & STYLEF_Alpha1)
-	{
-		trans = 1.f;
-	}
-	else if (trans == 0.f)
-	{
-		trans = vis.Alpha;
-	}
+		if (RenderStyle.Flags & STYLEF_TransSoulsAlpha)
+		{
+			trans = transsouls;
+		}
+		else if (RenderStyle.Flags & STYLEF_Alpha1)
+		{
+			trans = 1.f;
+		}
+		else if (trans == 0.f)
+		{
+			trans = vis.Alpha;
+		}
 
-	// now draw the different layers of the weapon
-	gl_RenderState.EnableBrightmap(true);
-	PalEntry finalcol(ThingColor.a,
-		ThingColor.r * viewsector->SpecialColors[sector_t::sprites].r / 255,
-		ThingColor.g * viewsector->SpecialColors[sector_t::sprites].g / 255,
-		ThingColor.b * viewsector->SpecialColors[sector_t::sprites].b / 255);
+		PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
+		ThingColor.a = 255;
 
-	gl_RenderState.SetObjectColor(finalcol);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+		// now draw the different layers of the weapon.
+		// For stencil render styles brightmaps need to be disabled.
+		gl_RenderState.EnableBrightmap(!(RenderStyle.Flags & STYLEF_ColorIsFixed));
+		PalEntry finalcol(ThingColor.a,
+			ThingColor.r * viewsector->SpecialColors[sector_t::sprites].r / 255,
+			ThingColor.g * viewsector->SpecialColors[sector_t::sprites].g / 255,
+			ThingColor.b * viewsector->SpecialColors[sector_t::sprites].b / 255);
 
-	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
-	// light mode here to draw the weapon sprite.
-	int oldlightmode = glset.lightmode;
-	if (glset.lightmode == 8) glset.lightmode = 2;
+		gl_RenderState.SetObjectColor(finalcol);
 
-	for(DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
-	{
 		if (psp->GetState() != nullptr) 
 		{
 			FColormap cmc = cm;

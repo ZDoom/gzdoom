@@ -3574,8 +3574,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetBlend)
 	if (color2.a == 0)
 		color2 = color;
 
-	new DFlashFader(color.r/255.f, color.g/255.f, color.b/255.f, float(alpha),
-					color2.r/255.f, color2.g/255.f, color2.b/255.f, 0,
+	Create<DFlashFader>(color.r/255.f, color.g/255.f, color.b/255.f, float(alpha),
+					color2.r/255.f, color2.g/255.f, color2.b/255.f, 0.f,
 					float(tics)/TICRATE, self);
 	return 0;
 }
@@ -6813,7 +6813,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_SprayDecal)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_STRING(name);
-	SprayDecal(self, name);
+	PARAM_FLOAT_DEF(dist);
+	SprayDecal(self, name, dist);
 	return 0;
 }
 

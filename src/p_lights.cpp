@@ -152,14 +152,16 @@ class DPhased : public DLighting
 public:
 	DPhased(sector_t *sector);
 	DPhased(sector_t *sector, int baselevel, int phase);
+	// These are for internal use only but the Create template needs access to them.
+	DPhased();
+	DPhased(sector_t *sector, int baselevel);
+
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
 	uint8_t		m_BaseLevel;
 	uint8_t		m_Phase;
 private:
-	DPhased();
-	DPhased(sector_t *sector, int baselevel);
 	int PhaseHelper(sector_t *sector, int index, int light, sector_t *prev);
 };
 
@@ -325,7 +327,7 @@ void EV_StartLightFlickering (int tag, int upper, int lower)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		new DFlicker (&level.sectors[secnum], upper, lower);
+		Create<DFlicker> (&level.sectors[secnum], upper, lower);
 	}
 }
 
@@ -506,7 +508,7 @@ void EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 		if (sec->lightingdata)
 			continue;
 		
-		new DStrobe (sec, upper, lower, utics, ltics);
+		Create<DStrobe> (sec, upper, lower, utics, ltics);
 	}
 }
 
@@ -520,7 +522,7 @@ void EV_StartLightStrobing (int tag, int utics, int ltics)
 		if (sec->lightingdata)
 			continue;
 		
-		new DStrobe (sec, utics, ltics, false);
+		Create<DStrobe> (sec, utics, ltics, false);
 	}
 }
 
@@ -826,7 +828,7 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 		if (sec->lightingdata)
 			continue;
 		
-		new DGlow2 (sec, upper, lower, tics, false);
+		Create<DGlow2> (sec, upper, lower, tics, false);
 	}
 }
 
@@ -856,7 +858,7 @@ void EV_StartLightFading (int tag, int value, int tics)
 			if (sec->lightlevel == value)
 				continue;
 
-			new DGlow2 (sec, sec->lightlevel, value, tics, true);
+			Create<DGlow2> (sec, sec->lightlevel, value, tics, true);
 		}
 	}
 }
@@ -930,7 +932,7 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 			m_BaseLevel = baselevel;
 		}
 		else
-			l = new DPhased (sector, baselevel);
+			l = Create<DPhased> (sector, baselevel);
 
 		int numsteps = PhaseHelper (sector->NextSpecialSector (
 				sector->special == LightSequenceSpecial1 ?
@@ -998,52 +1000,52 @@ void P_SpawnLights(sector_t *sector)
 	switch (sector->special)
 	{
 	case Light_Phased:
-		new DPhased(sector, 48, 63 - (sector->lightlevel & 63));
+		Create<DPhased>(sector, 48, 63 - (sector->lightlevel & 63));
 		break;
 
 		// [RH] Hexen-like phased lighting
 	case LightSequenceStart:
-		new DPhased(sector);
+		Create<DPhased>(sector);
 		break;
 
 	case dLight_Flicker:
-		new DLightFlash(sector);
+		Create<DLightFlash>(sector);
 		break;
 
 	case dLight_StrobeFast:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_StrobeSlow:
-		new DStrobe(sector, STROBEBRIGHT, SLOWDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, false);
 		break;
 
 	case dLight_Strobe_Hurt:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_Glow:
-		new DGlow(sector);
+		Create<DGlow>(sector);
 		break;
 
 	case dLight_StrobeSlowSync:
-		new DStrobe(sector, STROBEBRIGHT, SLOWDARK, true);
+		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, true);
 		break;
 
 	case dLight_StrobeFastSync:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, true);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, true);
 		break;
 
 	case dLight_FireFlicker:
-		new DFireFlicker(sector);
+		Create<DFireFlicker>(sector);
 		break;
 
 	case dScroll_EastLavaDamage:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case sLight_Strobe_Hurt:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	default:

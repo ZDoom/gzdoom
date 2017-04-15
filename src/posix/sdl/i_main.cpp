@@ -82,7 +82,7 @@ void Mac_I_FatalError(const char* errortext);
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The command line arguments.
-DArgs *Args;
+FArgs *Args;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -218,7 +218,7 @@ int main (int argc, char **argv)
 	
     try
     {
-		Args = new DArgs(argc, argv);
+		Args = new FArgs(argc, argv);
 
 		/*
 		  killough 1/98:

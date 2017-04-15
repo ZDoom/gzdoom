@@ -613,7 +613,7 @@ public:
 
 	FActorInfo *GetInfo() const
 	{
-		return ((PClassActor*)GetClass())->ActorInfo();
+		return static_cast<PClassActor*>(GetClass())->ActorInfo();
 	}
 
 
@@ -739,7 +739,7 @@ public:
 	AInventory *FindInventory (FName type, bool subclass = false);
 	template<class T> T *FindInventory ()
 	{
-		return static_cast<T *> (FindInventory (RUNTIME_TEMPLATE_CLASS(T)));
+		return static_cast<T *> (FindInventory (RUNTIME_CLASS(T)));
 	}
 
 	// Adds one item of a particular type. Returns NULL if it could not be added.
@@ -1512,7 +1512,7 @@ public:
 		do
 		{
 			actor = FActorIterator::Next ();
-		} while (actor && !actor->IsKindOf (RUNTIME_TEMPLATE_CLASS(T)));
+		} while (actor && !actor->IsKindOf (RUNTIME_CLASS(T)));
 		return static_cast<T *>(actor);
 	}
 };
@@ -1563,12 +1563,12 @@ inline AActor *Spawn(FName type, const DVector3 &pos, replace_t allowreplacement
 
 template<class T> inline T *Spawn(const DVector3 &pos, replace_t allowreplacement)
 {
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), pos, allowreplacement));
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_CLASS(T), pos, allowreplacement));
 }
 
 template<class T> inline T *Spawn()	// for inventory items we do not need coordinates and replacement info.
 {
-	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_TEMPLATE_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
+	return static_cast<T *>(AActor::StaticSpawn(RUNTIME_CLASS(T), DVector3(0, 0, 0), NO_REPLACE));
 }
 
 inline PClassActor *PClass::FindActor(FName name)

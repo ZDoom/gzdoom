@@ -1861,6 +1861,10 @@ class PowerInfiniteAmmo : Powerup
 
 class PowerReflection : Powerup
 {
+	// if 1, reflects the damage type as well.
+	bool ReflectType;
+	property ReflectType : ReflectType;
+	
 	Default
 	{
 		Powerup.Duration -60;

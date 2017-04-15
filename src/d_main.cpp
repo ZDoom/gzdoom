@@ -1770,7 +1770,7 @@ bool ConsiderPatches (const char *arg)
 //
 //==========================================================================
 
-FExecList *D_MultiExec (DArgs *list, FExecList *exec)
+FExecList *D_MultiExec (FArgs *list, FExecList *exec)
 {
 	for (int i = 0; i < list->NumArgs(); ++i)
 	{
@@ -1980,7 +1980,8 @@ static void SetMapxxFlag()
 
 static void FinalGC()
 {
-	Args = NULL;
+	delete Args;
+	Args = nullptr;
 	GC::FinalGC = true;
 	GC::FullGC();
 	GC::DelSoftRootHead();	// the soft root head will not be collected by a GC so we have to do it explicitly
@@ -2264,7 +2265,6 @@ void D_DoomMain (void)
 	int p;
 	const char *v;
 	const char *wad;
-	DArgs *execFiles;
 	TArray<FString> pwads;
 	FString *args;
 	int argcount;	
@@ -2372,13 +2372,15 @@ void D_DoomMain (void)
 
 		// Process automatically executed files
 		FExecList *exec;
-		execFiles = new DArgs;
+		FArgs *execFiles = new FArgs;
 		GameConfig->AddAutoexec(execFiles, gameinfo.ConfigName);
 		exec = D_MultiExec(execFiles, NULL);
+		delete execFiles;
 
 		// Process .cfg files at the start of the command line.
 		execFiles = Args->GatherFiles ("-exec");
 		exec = D_MultiExec(execFiles, exec);
+		delete execFiles;
 
 		// [RH] process all + commands on the command line
 		exec = C_ParseCmdLineParams(exec);
@@ -2747,10 +2749,7 @@ void D_DoomMain (void)
 
 		GC::FullGC();					// perform one final garbage collection after shutdown
 
-		for (DObject *obj = GC::Root; obj; obj = obj->ObjNext)
-		{
-			obj->ClearClass();	// Delete the Class pointer because the data it points to has been deleted. This will automatically be reset if needed.
-		}
+		assert(GC::Root == nullptr);
 
 		restart++;
 		PClass::bShutdown = false;

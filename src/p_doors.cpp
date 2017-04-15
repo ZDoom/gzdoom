@@ -485,7 +485,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			}
 			return false;
 		}
-		if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
+		if (Create<DDoor> (sec, type, speed, delay, lightTag, topcountdown))
 			rtn = true;
 	}
 	else
@@ -499,7 +499,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 
-			if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
+			if (Create<DDoor>(sec, type, speed, delay, lightTag, topcountdown))
 				rtn = true;
 		}
 				
@@ -779,7 +779,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay,
 		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
-			new DAnimatedDoor (sec, line, speed, delay, anim, type);
+			Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 			return true;
 		}
 		return false;
@@ -804,7 +804,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay,
 			if (anim != NULL)
 			{
 				rtn = true;
-				new DAnimatedDoor (sec, line, speed, delay, anim, type);
+				Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 				break;
 			}
 		}

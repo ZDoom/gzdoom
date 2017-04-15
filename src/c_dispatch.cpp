@@ -636,7 +636,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{
-				new DStoredCommand (com, beg);
+				Create<DStoredCommand> (com, beg);
 			}
 		}
 	}
@@ -730,7 +730,7 @@ void AddCommandString (char *cmd, int keynum)
 						  // Note that deferred commands lose track of which key
 						  // (if any) they were pressed from.
 							*brkpt = ';';
-							new DWaitingCommand (brkpt, tics);
+							Create<DWaitingCommand> (brkpt, tics);
 						}
 						return;
 					}

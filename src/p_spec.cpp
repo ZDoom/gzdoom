@@ -1133,7 +1133,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorCloseIn30:
-		new DDoor(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
+		Create<DDoor>(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1141,7 +1141,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		new DDoor (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
+		Create<DDoor> (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:
@@ -1322,19 +1322,19 @@ void P_SpawnSpecials (void)
 		// killough 3/16/98: Add support for setting
 		// floor lighting independently (e.g. lava)
 		case Transfer_FloorLight:
-			new DLightTransfer (line.frontsector, line.args[0], true);
+			Create<DLightTransfer> (line.frontsector, line.args[0], true);
 			break;
 
 		// killough 4/11/98: Add support for setting
 		// ceiling lighting independently
 		case Transfer_CeilingLight:
-			new DLightTransfer (line.frontsector, line.args[0], false);
+			Create<DLightTransfer> (line.frontsector, line.args[0], false);
 			break;
 
 		// [Graf Zahl] Add support for setting lighting
 		// per wall independently
 		case Transfer_WallLight:
-			new DWallLightTransfer (line.frontsector, line.args[0], line.args[1]);
+			Create<DWallLightTransfer> (line.frontsector, line.args[0], line.args[1]);
 			break;
 
 		case Sector_Attach3dMidtex:

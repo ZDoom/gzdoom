@@ -120,7 +120,10 @@ void OpenGLFrameBuffer::InitializeState()
 
 	if (first)
 	{
-		ogl_LoadFunctions();
+		if (ogl_LoadFunctions() == ogl_LOAD_FAILED)
+		{
+			I_FatalError("Failed to load OpenGL functions.");
+		}
 	}
 
 	gl_LoadExtensions();

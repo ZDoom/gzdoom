@@ -35,6 +35,7 @@
 #define __DOBJECT_H__
 
 #include <stdlib.h>
+#include <type_traits>
 #include "doomtype.h"
 #include "i_system.h"
 
@@ -45,8 +46,6 @@ class FSoundID;
 
 class   DObject;
 /*
-class           DArgs;
-class           DCanvas;
 class           DConsoleCommand;
 class                   DConsoleAlias;
 class           DSeqNode;
@@ -85,8 +84,7 @@ class                                   DPillar;
 class PClassActor;
 
 #define RUNTIME_CLASS_CASTLESS(cls)	(cls::RegistrationInfo.MyClass)	// Passed a native class name, returns a PClass representing that class
-#define RUNTIME_CLASS(cls)			((cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// Like above, but returns the true type of the meta object
-#define RUNTIME_TEMPLATE_CLASS(cls)	((typename cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// RUNTIME_CLASS, but works with templated parameters on GCC
+#define RUNTIME_CLASS(cls)			((typename cls::MetaClass *)RUNTIME_CLASS_CASTLESS(cls))	// Like above, but returns the true type of the meta object
 #define NATIVE_TYPE(object)			(object->StaticType())			// Passed an object, returns the type of the C++ class representing the object
 
 // Enumerations for the meta classes created by ClassReg::RegisterClass()
@@ -231,11 +229,6 @@ public:
 	void SerializeUserVars(FSerializer &arc);
 	virtual void Serialize(FSerializer &arc);
 
-	void ClearClass()
-	{
-		Class = NULL;
-	}
-
 	// Releases the object from the GC, letting the caller care of any maintenance.
 	void Release();
 
@@ -264,12 +257,7 @@ public:
 
 	PClass *GetClass() const
 	{
-		if (Class == NULL)
-		{
-			// Save a little time the next time somebody wants this object's type
-			// by recording it now.
-			const_cast<DObject *>(this)->Class = StaticType();
-		}
+		assert(Class != nullptr);
 		return Class;
 	}
 
@@ -278,9 +266,20 @@ public:
 		Class = inClass;
 	}
 
-	void *operator new(size_t len)
+private:
+	struct nonew
+	{
+	};
+
+	void *operator new(size_t len, nonew&)
 	{
 		return M_Malloc(len);
+	}
+public:
+
+	void operator delete (void *mem, nonew&)
+	{
+		M_Free(mem);
 	}
 
 	void operator delete (void *mem)
@@ -354,7 +353,27 @@ protected:
 	{
 		M_Free (mem);
 	}
+
+	template<typename T, typename... Args>
+		friend T* Create(Args&&... args);
+
 };
+
+// This is the only method aside from calling CreateNew that should be used for creating DObjects
+// to ensure that the Class pointer is always set.
+template<typename T, typename... Args>
+T* Create(Args&&... args)
+{
+	DObject::nonew nono;
+	T *object = new(nono) T(std::forward<Args>(args)...);
+	if (object != nullptr)
+	{
+		object->SetClass(RUNTIME_CLASS(T));
+		assert(object->GetClass() != nullptr);	// beware of objects that get created before the type system is up.
+	}
+	return object;
+}
+
 
 class AInventory;//
 

@@ -91,9 +91,10 @@ public:
 	static DThinker *FirstThinker (int statnum);
 	static bool bSerialOverride;
 
-private:
+	// only used internally but Create needs access.
 	enum no_link_type { NO_LINK };
 	DThinker(no_link_type) throw();
+private:
 	static void DestroyThinkersInList (FThinkerList &list);
 	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
 	static void SaveList(FSerializer &arc, DThinker *node);
@@ -133,10 +134,10 @@ protected:
 template <class T> class TThinkerIterator : public FThinkerIterator
 {
 public:
-	TThinkerIterator (int statnum=MAX_STATNUM+1) : FThinkerIterator (RUNTIME_TEMPLATE_CLASS(T), statnum)
+	TThinkerIterator (int statnum=MAX_STATNUM+1) : FThinkerIterator (RUNTIME_CLASS(T), statnum)
 	{
 	}
-	TThinkerIterator (int statnum, DThinker *prev) : FThinkerIterator (RUNTIME_TEMPLATE_CLASS(T), statnum, prev)
+	TThinkerIterator (int statnum, DThinker *prev) : FThinkerIterator (RUNTIME_CLASS(T), statnum, prev)
 	{
 	}
 	TThinkerIterator (const PClass *subclass, int statnum=MAX_STATNUM+1) : FThinkerIterator(subclass, statnum)

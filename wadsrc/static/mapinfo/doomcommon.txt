@@ -70,6 +70,7 @@ gameinfo
 	statscreen_coop = "CoopStatusScreen"
 	statscreen_dm = "DeathmatchStatusScreen"
 	statscreen_single = "DoomStatusScreen"
+	messageboxclass = "MessageBoxMenu"
 }
 
 spawnnums

@@ -323,7 +323,6 @@ static void MarkRoot()
 	int i;
 
 	Gray = NULL;
-	Mark(Args);
 	Mark(StatusBar);
 	M_MarkMenus();
 	Mark(DIntermissionController::CurrentIntermission);
@@ -351,7 +350,7 @@ static void MarkRoot()
 	// Mark sectors.
 	if (SectorMarker == nullptr && level.sectors.Size() > 0)
 	{
-		SectorMarker = new DSectorMarker;
+		SectorMarker = Create<DSectorMarker>();
 	}
 	else if (level.sectors.Size() == 0)
 	{
@@ -592,7 +591,7 @@ void AddSoftRoot(DObject *obj)
 		// Create a new object to root the soft roots off of, and stick
 		// it at the end of the object list, so we know that anything
 		// before it is not a soft root.
-		SoftRoots = new DObject;
+		SoftRoots = Create<DObject>();
 		SoftRoots->ObjectFlags |= OF_Fixed;
 		probe = &Root;
 		while (*probe != NULL)

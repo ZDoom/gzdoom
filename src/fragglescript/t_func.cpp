@@ -1873,7 +1873,7 @@ void FParser::SF_FadeLight(void)
 		FSectorTagIterator it(sectag);
 		while ((i = it.Next()) >= 0)
 		{
-			if (!level.sectors[i].lightingdata) new DLightLevel(&level.sectors[i],destlevel,speed);
+			if (!level.sectors[i].lightingdata) Create<DLightLevel>(&level.sectors[i],destlevel,speed);
 		}
 	}
 }
@@ -4036,7 +4036,7 @@ DRunningScript *FParser::SaveCurrentScript()
 	DFraggleThinker *th = DFraggleThinker::ActiveThinker;
 	if (th)
 	{
-		DRunningScript *runscr = new DRunningScript(Script->trigger, Script, Script->MakeIndex(Rover));
+		DRunningScript *runscr = Create<DRunningScript>(Script->trigger, Script, Script->MakeIndex(Rover));
 
 		// hook into chain at start
 		th->AddRunningScript(runscr);
@@ -4170,7 +4170,7 @@ void FParser::SF_StartScript()
 			script_error("script %i not defined\n", snum);
 		}
 		
-		DRunningScript *runscr = new DRunningScript(Script->trigger, script, 0);
+		DRunningScript *runscr = Create<DRunningScript>(Script->trigger, script, 0);
 		// hook into chain at start
 		th->AddRunningScript(runscr);
 	}

@@ -124,7 +124,7 @@ extern UINT TimerPeriod;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The command line arguments.
-DArgs *Args;
+FArgs *Args;
 
 HINSTANCE		g_hInst;
 DWORD			SessionID;
@@ -840,7 +840,7 @@ void DoMain (HINSTANCE hInstance)
 		_set_new_handler (NewFailure);
 #endif
 
-		Args = new DArgs(__argc, __argv);
+		Args = new FArgs(__argc, __argv);
 
 		// Load Win32 modules
 		Kernel32Module.Load({"kernel32.dll"});

@@ -643,7 +643,7 @@ void FGameConfigFile::CreateStandardAutoExec(const char *section, bool start)
 	}
 }
 
-void FGameConfigFile::AddAutoexec (DArgs *list, const char *game)
+void FGameConfigFile::AddAutoexec (FArgs *list, const char *game)
 {
 	char section[64];
 	const char *key;

@@ -253,7 +253,7 @@ bool EV_DoPlat (int tag, line_t *line, DPlat::EPlatType type, double height,
 
 		// Find lowest & highest floors around sector
 		rtn = true;
-		plat = new DPlat (sec);
+		plat = Create<DPlat> (sec);
 
 		plat->m_Type = type;
 		plat->m_Crush = -1;

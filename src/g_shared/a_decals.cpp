@@ -522,7 +522,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 
 DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, double ix, double iy, double iz, side_t *wall, F3DFloor * ffloor) const
 {
-	DBaseDecal *decal = new DBaseDecal(iz);
+	DBaseDecal *decal = Create<DBaseDecal>(iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
@@ -615,7 +615,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, const DVect
 			StaticCreate (tpl_low, pos, wall, ffloor, lowercolor);
 		}
 		DImpactDecal::CheckMax();
-		decal = new DImpactDecal (pos.Z);
+		decal = Create<DImpactDecal>(pos.Z);
 		if (decal == NULL)
 		{
 			return NULL;
@@ -651,7 +651,7 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 	}
 
 	DImpactDecal::CheckMax();
-	DImpactDecal *decal = new DImpactDecal(iz);
+	DImpactDecal *decal = Create<DImpactDecal>(iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
@@ -704,7 +704,7 @@ CCMD (spray)
 	Net_WriteString (argv[1]);
 }
 
-void SprayDecal(AActor *shooter, const char *name)
+void SprayDecal(AActor *shooter, const char *name, double distance)
 {
 	FTraceResults trace;
 
@@ -713,7 +713,7 @@ void SprayDecal(AActor *shooter, const char *name)
 	double c = pitch.Cos();
 	DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
 
-	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, 172., 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
+	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
 	{
 		if (trace.HitType == TRACE_HitWall)
 		{
@@ -739,7 +739,7 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	{
 		if (permanent)
 		{
-			decal = new DBaseDecal(trace.HitPos.Z);
+			decal = Create<DBaseDecal>(trace.HitPos.Z);
 			wall = trace.Line->sidedef[trace.Side];
 			decal->StickToWall(wall, trace.HitPos.X, trace.HitPos.Y, trace.ffloor);
 			tpl->ApplyToDecal(decal, wall);

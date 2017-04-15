@@ -54,6 +54,7 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedpatch = "WIF"
 	statscreen_enteringpatch = "WIENTER"
+	messageboxclass = "MessageBoxMenu"
 }
 
 DoomEdNums

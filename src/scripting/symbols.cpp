@@ -311,7 +311,7 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 
 PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align)
 {
-	PField *field = new PField(name, type, flags);
+	PField *field = Create<PField>(name, type, flags);
 
 	// The new field is added to the end of this struct, alignment permitting.
 	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
@@ -345,7 +345,7 @@ PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned
 
 PField *PSymbolTable::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
 {
-	PField *field = new PField(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
+	PField *field = Create<PField>(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
 
 	if (AddSymbol(field) == nullptr)
 	{ // name is already in use
@@ -370,7 +370,7 @@ void PSymbolTable::WriteFields(FSerializer &ar, const void *addr, const void *de
 	{
 		const PField *field = dyn_cast<PField>(pair->Value);
 		// Skip fields without or with native serialization
-		if (field && !(field->Flags & (VARF_Transient | VARF_Meta)))
+		if (field && !(field->Flags & (VARF_Transient | VARF_Meta | VARF_Static)))
 		{
 			// todo: handle defaults in WriteValue
 			//auto defp = def == nullptr ? nullptr : (const uint8_t *)def + field->Offset;
@@ -512,13 +512,16 @@ PNamespace *FNamespaceManager::NewNamespace(int filenum)
 
 //==========================================================================
 //
-//
+// Deallocate the entire namespace manager.
 //
 //==========================================================================
 
 void FNamespaceManager::ReleaseSymbols()
 {
-	RemoveSymbols();
+	for (auto ns : AllNamespaces)
+	{
+		delete ns;
+	}
 	GlobalNamespace = nullptr;
 	AllNamespaces.Clear();
 }
@@ -537,7 +540,7 @@ int FNamespaceManager::RemoveSymbols()
 	for (auto ns : AllNamespaces)
 	{
 		count += ns->Symbols.Symbols.CountUsed();
-		delete ns;
+		ns->Symbols.ReleaseSymbols();
 	}
 	return count;
 }
@@ -550,7 +553,6 @@ int FNamespaceManager::RemoveSymbols()
 
 void RemoveUnusedSymbols()
 {
-	// Global symbols are not needed anymore after running the compiler.
 	int count = Namespaces.RemoveSymbols();
 
 	// We do not need any non-field and non-function symbols in structs and classes anymore.

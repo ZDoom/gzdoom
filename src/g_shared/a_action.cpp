@@ -181,7 +181,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 
 	if (sv_corpsequeuesize > 0)
 	{
-		new DCorpsePointer (self);
+		Create<DCorpsePointer> (self);
 	}
 	return 0;
 }

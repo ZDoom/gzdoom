@@ -881,7 +881,7 @@ DSeqNode *SN_StartSequence (AActor *actor, int sequence, seqtype_t type, int mod
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
-		return new DSeqActorNode (actor, sequence, modenum);
+		return Create<DSeqActorNode> (actor, sequence, modenum);
 	}
 	return NULL;
 }
@@ -904,7 +904,7 @@ DSeqNode *SN_StartSequence (sector_t *sector, int chan, int sequence, seqtype_t 
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
-		return new DSeqSectorNode (sector, chan, sequence, modenum);
+		return Create<DSeqSectorNode>(sector, chan, sequence, modenum);
 	}
 	return NULL;
 }
@@ -928,7 +928,7 @@ DSeqNode *SN_StartSequence (FPolyObj *poly, int sequence, seqtype_t type, int mo
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
-		return new DSeqPolyNode (poly, sequence, modenum);
+		return Create<DSeqPolyNode>(poly, sequence, modenum);
 	}
 	return NULL;
 }

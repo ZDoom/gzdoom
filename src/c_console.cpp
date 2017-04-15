@@ -1822,7 +1822,7 @@ void C_MidPrint (FFont *font, const char *msg)
 		AddToConsole (-1, msg);
 		AddToConsole (-1, bar3);
 
-		StatusBar->AttachMessage (new DHUDMessage (font, msg, 1.5f, 0.375f, 0, 0,
+		StatusBar->AttachMessage (Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), MAKE_ID('C','N','T','R'));
 	}
 	else
@@ -1839,7 +1839,7 @@ void C_MidPrintBold (FFont *font, const char *msg)
 		AddToConsole (-1, msg);
 		AddToConsole (-1, bar3);
 
-		StatusBar->AttachMessage (new DHUDMessage (font, msg, 1.5f, 0.375f, 0, 0,
+		StatusBar->AttachMessage (Create<DHUDMessage> (font, msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), MAKE_ID('C','N','T','R'));
 	}
 	else

@@ -34,6 +34,7 @@
 #include "p_blockmap.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -390,7 +391,7 @@ bool EV_RotatePoly (line_t *line, int polyNum, int speed, int byteAngle,
 			// cannot do rotations on linked polyportals.
 			break;
 		}
-		pe = new DRotatePoly(poly->tag);
+		pe = Create<DRotatePoly>(poly->tag);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		if (byteAngle != 0)
@@ -472,7 +473,7 @@ bool EV_MovePoly (line_t *line, int polyNum, double speed, DAngle angle,
 		{ // poly is already in motion
 			break;
 		}
-		pe = new DMovePoly(poly->tag);
+		pe = Create<DMovePoly>(poly->tag);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		pe->m_Dist = dist; // Distance
@@ -554,7 +555,7 @@ bool EV_MovePolyTo(line_t *line, int polyNum, double speed, const DVector2 &targ
 		{ // poly is already in motion
 			break;
 		}
-		pe = new DMovePolyTo(poly->tag);
+		pe = Create<DMovePolyTo>(poly->tag);
 		poly->specialdata = pe;
 		poly->bBlocked = false;
 		pe->m_Dist = distlen;
@@ -709,7 +710,7 @@ bool EV_OpenPolyDoor(line_t *line, int polyNum, double speed, DAngle angle, int 
 			break;
 		}
 
-		pd = new DPolyDoor(poly->tag, type);
+		pd = Create<DPolyDoor>(poly->tag, type);
 		poly->specialdata = pd;
 		if (type == PODOOR_SLIDE)
 		{
@@ -1536,19 +1537,23 @@ static void SpawnPolyobj (int index, int tag, int type)
 		{
 			if (po->Sidedefs.Size() > 0)
 			{
-				I_Error ("SpawnPolyobj: Polyobj %d already spawned.\n", tag);
+				Printf (TEXTCOLOR_RED "SpawnPolyobj: Polyobj %d already spawned.\n", tag);
+				return;
 			}
-			sd->linedef->special = 0;
-			sd->linedef->args[0] = 0;
-			IterFindPolySides(&polyobjs[index], sd);
-			po->MirrorNum = sd->linedef->args[1];
-			po->crush = (type != SMT_PolySpawn) ? 3 : 0;
-			po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
-			po->tag = tag;
-			po->seqType = sd->linedef->args[2];
-			if (po->seqType < 0 || po->seqType > 63)
+			else
 			{
-				po->seqType = 0;
+				sd->linedef->special = 0;
+				sd->linedef->args[0] = 0;
+				IterFindPolySides(&polyobjs[index], sd);
+				po->MirrorNum = sd->linedef->args[1];
+				po->crush = (type != SMT_PolySpawn) ? 3 : 0;
+				po->bHurtOnTouch = (type == SMT_PolySpawnHurt);
+				po->tag = tag;
+				po->seqType = sd->linedef->args[2];
+				if (po->seqType < 0 || po->seqType > 63)
+				{
+					po->seqType = 0;
+				}
 			}
 			break;
 		}
@@ -1570,9 +1575,13 @@ static void SpawnPolyobj (int index, int tag, int type)
 			{
 				if (!level.sides[i].linedef->args[1])
 				{
-					I_Error("SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, level.sides[i].linedef->Index());
+					Printf(TEXTCOLOR_RED "SpawnPolyobj: Explicit line missing order number in poly %d, linedef %d.\n", tag, level.sides[i].linedef->Index());
+					return;
 				}
-				po->Sidedefs.Push (&level.sides[i]);
+				else
+				{
+					po->Sidedefs.Push(&level.sides[i]);
+				}
 			}
 		}
 		qsort(&po->Sidedefs[0], po->Sidedefs.Size(), sizeof(po->Sidedefs[0]), posicmp);
@@ -1585,7 +1594,10 @@ static void SpawnPolyobj (int index, int tag, int type)
 			po->MirrorNum = po->Sidedefs[0]->linedef->args[2];
 		}
 		else
-			I_Error ("SpawnPolyobj: Poly %d does not exist\n", tag);
+		{
+			Printf(TEXTCOLOR_RED "SpawnPolyobj: Poly %d does not exist\n", tag);
+			return;
+		}
 	}
 
 	validcount++;	
@@ -1648,11 +1660,13 @@ static void TranslateToStartSpot (int tag, const DVector2 &origin)
 	}
 	if (po == NULL)
 	{ // didn't match the tag with a polyobj tag
-		I_Error("TranslateToStartSpot: Unable to match polyobj tag: %d\n", tag);
+		Printf(TEXTCOLOR_RED "TranslateToStartSpot: Unable to match polyobj tag: %d\n", tag);
+		return;
 	}
 	if (po->Sidedefs.Size() == 0)
 	{
-		I_Error ("TranslateToStartSpot: Anchor point located without a StartSpot point: %d\n", tag);
+		Printf(TEXTCOLOR_RED "TranslateToStartSpot: Anchor point located without a StartSpot point: %d\n", tag);
+		return;
 	}
 	po->OriginalPts.Resize(po->Sidedefs.Size());
 	po->PrevPts.Resize(po->Sidedefs.Size());
@@ -1738,8 +1752,7 @@ void PO_Init (void)
 	{
 		if (polyobjs[polyIndex].OriginalPts.Size() == 0)
 		{
-			I_Error ("PO_Init: StartSpot located without an Anchor point: %d\n",
-				polyobjs[polyIndex].tag);
+			Printf (TEXTCOLOR_RED "PO_Init: StartSpot located without an Anchor point: %d\n", polyobjs[polyIndex].tag);
 		}
 	}
 	InitBlockMap();

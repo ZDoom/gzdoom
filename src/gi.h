@@ -152,6 +152,7 @@ struct gameinfo_t
 	int statusbarfile = -1;
 	FName statusbarclass;
 	int statusbarclassfile = -1;
+	FName MessageBoxClass;
 	FName backpacktype;
 	FString intermissionMusic;
 	int intermissionOrder;

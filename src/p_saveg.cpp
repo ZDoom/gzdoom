@@ -996,7 +996,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 
 	// [ZZ] serialize events
 	E_SerializeEvents(arc);
-	DThinker::SerializeThinkers(arc, !hubload);
+	DThinker::SerializeThinkers(arc, hubload);
 	arc.Array("polyobjs", polyobjs, po_NumPolyobjs);
 	SerializeSubsectors(arc, "subsectors");
 	StatusBar->SerializeMessages(arc);

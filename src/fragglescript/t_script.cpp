@@ -406,8 +406,8 @@ DFraggleThinker::DFraggleThinker()
 	else
 	{
 		ActiveThinker = this;
-		RunningScripts = new DRunningScript;
-		LevelScript = new DFsScript;
+		RunningScripts = Create<DRunningScript>();
+		LevelScript = Create<DFsScript>();
 		LevelScript->parent = global_script;
 		GC::WriteBarrier(this, RunningScripts);
 		GC::WriteBarrier(this, LevelScript);
@@ -669,7 +669,7 @@ bool T_RunScript(int snum, AActor * t_trigger)
 		DFsScript *script = th->LevelScript->children[snum];
 		if(!script)	return false;
 	
-		DRunningScript *runscr = new DRunningScript(t_trigger, script, 0);
+		DRunningScript *runscr = Create<DRunningScript>(t_trigger, script, 0);
 		// hook into chain at start
 		th->AddRunningScript(runscr);
 		return true;
@@ -699,7 +699,7 @@ void T_Init()
 
 	if (global_script == NULL)
 	{
-		global_script = new DFsScript;
+		global_script = Create<DFsScript>();
 		GC::AddSoftRoot(global_script);
 		init_functions();
 	}

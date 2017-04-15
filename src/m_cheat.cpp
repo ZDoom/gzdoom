@@ -666,7 +666,7 @@ void cht_Suicide (player_t *plyr)
 	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		DSuicider *suicide = new DSuicider;
+		DSuicider *suicide = Create<DSuicider>();
 		suicide->Pawn = plyr->mo;
 		GC::WriteBarrier(suicide, suicide->Pawn);
 	}

@@ -255,12 +255,12 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls, P
 			PSymbolConstNumeric *sym;
 			if (type == TK_Int)
 			{
-				sym = new PSymbolConstNumeric(symname, TypeSInt32);
+				sym = Create<PSymbolConstNumeric>(symname, TypeSInt32);
 				sym->Value = val.GetInt();
 			}
 			else
 			{
-				sym = new PSymbolConstNumeric(symname, TypeFloat64);
+				sym = Create<PSymbolConstNumeric>(symname, TypeFloat64);
 				sym->Float = val.GetFloat();
 			}
 			if (symt->AddSymbol (sym) == NULL)
@@ -318,7 +318,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls, PName
 				FScriptPosition::ErrorCounter++;
 			}
 		}
-		PSymbolConstNumeric *sym = new PSymbolConstNumeric(symname, TypeSInt32);
+		PSymbolConstNumeric *sym = Create<PSymbolConstNumeric>(symname, TypeSInt32);
 		sym->Value = currvalue;
 		if (symt->AddSymbol (sym) == NULL)
 		{

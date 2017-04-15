@@ -543,7 +543,7 @@ static void ParseListMenu(FScanner &sc)
 {
 	sc.MustGetString();
 
-	DListMenuDescriptor *desc = new DListMenuDescriptor;
+	DListMenuDescriptor *desc = Create<DListMenuDescriptor>();
 	desc->mMenuName = sc.String;
 	desc->mSelectedItem = -1;
 	desc->mAutoselect = -1;
@@ -867,7 +867,7 @@ static void ParseOptionMenu(FScanner &sc)
 {
 	sc.MustGetString();
 
-	DOptionMenuDescriptor *desc = new DOptionMenuDescriptor;
+	DOptionMenuDescriptor *desc = Create<DOptionMenuDescriptor>();
 	desc->mMenuName = sc.String;
 	desc->mSelectedItem = -1;
 	desc->mScrollPos = 0;
@@ -919,8 +919,8 @@ void M_ParseMenuDefs()
 	OptionSettings.mFontColorHighlight = V_FindFontColor(gameinfo.mFontColorHighlight);
 	OptionSettings.mFontColorSelection = V_FindFontColor(gameinfo.mFontColorSelection);
 	// these are supposed to get GC'd after parsing is complete.
-	DefaultListMenuSettings = new DListMenuDescriptor;
-	DefaultOptionMenuSettings = new DOptionMenuDescriptor;
+	DefaultListMenuSettings = Create<DListMenuDescriptor>();
+	DefaultOptionMenuSettings = Create<DOptionMenuDescriptor>();
 	DefaultListMenuSettings->Reset();
 	DefaultOptionMenuSettings->Reset();
 
@@ -1066,7 +1066,7 @@ static void BuildEpisodeMenu()
 	{
 		// Couldn't create the episode menu, either because there's too many episodes or some error occured
 		// Create an option menu for episode selection instead.
-		DOptionMenuDescriptor *od = new DOptionMenuDescriptor;
+		DOptionMenuDescriptor *od = Create<DOptionMenuDescriptor>();
 		MenuDescriptors[NAME_Episodemenu] = od;
 		od->mMenuName = NAME_Episodemenu;
 		od->mTitle = "$MNU_EPISODE";
@@ -1199,7 +1199,7 @@ static void BuildPlayerclassMenu()
 	{
 		// Couldn't create the playerclass menu, either because there's too many episodes or some error occured
 		// Create an option menu for class selection instead.
-		DOptionMenuDescriptor *od = new DOptionMenuDescriptor;
+		DOptionMenuDescriptor *od = Create<DOptionMenuDescriptor>();
 		MenuDescriptors[NAME_Playerclassmenu] = od;
 		od->mMenuName = NAME_Playerclassmenu;
 		od->mTitle = "$MNU_CHOOSECLASS";
@@ -1505,7 +1505,7 @@ fail:
 	DOptionMenuDescriptor *od;
 	if (desc == nullptr)
 	{
-		od = new DOptionMenuDescriptor;
+		od = Create<DOptionMenuDescriptor>();
 		MenuDescriptors[NAME_Skillmenu] = od;
 		od->mMenuName = NAME_Skillmenu;
 		od->mTitle = "$MNU_CHOOSESKILL";

@@ -337,7 +337,7 @@ void PType::StaticInit()
 	TypeVector3->AddField(NAME_Y, TypeFloat64);
 	TypeVector3->AddField(NAME_Z, TypeFloat64);
 	// allow accessing xy as a vector2. This is not supposed to be serialized so it's marked transient
-	TypeVector3->Symbols.AddSymbol(new PField(NAME_XY, TypeVector2, VARF_Transient, 0));
+	TypeVector3->Symbols.AddSymbol(Create<PField>(NAME_XY, TypeVector2, VARF_Transient, 0));
 	TypeTable.AddType(TypeVector3, NAME_Struct);
 	TypeVector3->loadOp = OP_LV3;
 	TypeVector3->storeOp = OP_SV3;
@@ -347,24 +347,24 @@ void PType::StaticInit()
 
 
 
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_sByte, TypeSInt8));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Byte, TypeUInt8));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Short, TypeSInt16));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_uShort, TypeUInt16));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Int, TypeSInt32));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_uInt, TypeUInt32));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Bool, TypeBool));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Float, TypeFloat64));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Double, TypeFloat64));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Float32, TypeFloat32));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Float64, TypeFloat64));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_String, TypeString));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Name, TypeName));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Sound, TypeSound));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Color, TypeColor));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_State, TypeState));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Vector2, TypeVector2));
-	Namespaces.GlobalNamespace->Symbols.AddSymbol(new PSymbolType(NAME_Vector3, TypeVector3));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_sByte, TypeSInt8));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Byte, TypeUInt8));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Short, TypeSInt16));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_uShort, TypeUInt16));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Int, TypeSInt32));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_uInt, TypeUInt32));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Bool, TypeBool));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Float, TypeFloat64));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Double, TypeFloat64));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Float32, TypeFloat32));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Float64, TypeFloat64));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_String, TypeString));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Name, TypeName));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Sound, TypeSound));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Color, TypeColor));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_State, TypeState));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector2, TypeVector2));
+	Namespaces.GlobalNamespace->Symbols.AddSymbol(Create<PSymbolType>(NAME_Vector3, TypeVector3));
 }
 
 
@@ -444,13 +444,13 @@ PInt::PInt(unsigned int size, bool unsign, bool compatible)
 	{
 		int maxval = (1u << ((8 * size) - 1)) - 1; // compute as unsigned to prevent overflow before -1
 		int minval = -maxval - 1;
-		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, minval));
-		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, maxval));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Min, this, minval));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Max, this, maxval));
 	}
 	else
 	{
-		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Min, this, 0u));
-		Symbols.AddSymbol(new PSymbolConstNumeric(NAME_Max, this, (1u << ((8 * size) - 1))));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Min, this, 0u));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(NAME_Max, this, (1u << ((8 * size) - 1))));
 	}
 	SetOps();
 }
@@ -799,7 +799,7 @@ void PFloat::SetSymbols(const PFloat::SymbolInitF *sym, size_t count)
 {
 	for (size_t i = 0; i < count; ++i)
 	{
-		Symbols.AddSymbol(new PSymbolConstNumeric(sym[i].Name, this, sym[i].Value));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(sym[i].Name, this, sym[i].Value));
 	}
 }
 
@@ -807,7 +807,7 @@ void PFloat::SetSymbols(const PFloat::SymbolInitI *sym, size_t count)
 {
 	for (size_t i = 0; i < count; ++i)
 	{
-		Symbols.AddSymbol(new PSymbolConstNumeric(sym[i].Name, this, sym[i].Value));
+		Symbols.AddSymbol(Create<PSymbolConstNumeric>(sym[i].Name, this, sym[i].Value));
 	}
 }
 

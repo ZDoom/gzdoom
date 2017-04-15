@@ -258,6 +258,7 @@ struct Translation version("2.4")
 	
 	native int AddTranslation();
 	native static bool SetPlayerTranslation(int group, int num, int plrnum, PlayerClass pclass);
+	native static int GetID(Name transname);
 	static int MakeID(int group, int num)
 	{
 		return (group << 16) + num;
@@ -342,7 +343,6 @@ class Object native
 	native static uint MSTime();
 	native vararg static void ThrowAbortException(String fmt, ...);
 
-	native Name GetClassName();
 	native virtualscope void Destroy();
 
 	// This does not call into the native method of the same name to avoid problems with objects that get garbage collected late on shutdown.

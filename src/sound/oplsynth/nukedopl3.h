@@ -30,7 +30,7 @@
 //version 1.6
 
 #include "opl.h"
-#include "muslib.h"
+#include "musicblock.h"
 
 typedef uintptr_t	Bitu;
 typedef intptr_t	Bits;

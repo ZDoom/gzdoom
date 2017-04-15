@@ -1256,8 +1256,8 @@ set (PCH_SOURCES
 	sound/musicformats/music_opl.cpp
 	sound/musicformats/music_stream.cpp
 	sound/oplsynth/fmopl.cpp
-	sound/oplsynth/mlopl.cpp
-	sound/oplsynth/mlopl_io.cpp
+	sound/oplsynth/musicblock.cpp
+	sound/oplsynth/oplio.cpp
 	sound/oplsynth/dosbox/opl.cpp
 	sound/oplsynth/OPL3.cpp
 	sound/oplsynth/nukedopl3.cpp

@@ -26,7 +26,7 @@
 
 #include "doomtype.h"
 #include "../opl.h"
-#include "../muslib.h"
+#include "../musicblock.h"
 #include <math.h>
 #include "m_random.h"
 

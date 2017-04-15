@@ -1,6 +1,8 @@
 #include "critsec.h"
 #include "muslib.h"
 
+class FileReader;
+
 class OPLmusicBlock : public musicBlock
 {
 public:

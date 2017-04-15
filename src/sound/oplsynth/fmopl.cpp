@@ -1311,7 +1311,7 @@ static inline void set_sl_rr(FM_OPL *OPL,int slot,int v)
 
 
 /* write a value v to register r on OPL chip */
-static void OPLWriteReg(FM_OPL *OPL, int r, int v)
+static void WriteRegister(FM_OPL *OPL, int r, int v)
 {
 	OPL_CH *CH;
 	int slot;
@@ -1523,11 +1523,11 @@ static void OPLResetChip(FM_OPL *OPL)
 	OPL_STATUS_RESET(OPL,0x7f);
 
 	/* reset with register write */
-	OPLWriteReg(OPL,0x01,0); /* wavesel disable */
-	OPLWriteReg(OPL,0x02,0); /* Timer1 */
-	OPLWriteReg(OPL,0x03,0); /* Timer2 */
-	OPLWriteReg(OPL,0x04,0); /* IRQ mask clear */
-	for(i = 0xff ; i >= 0x20 ; i-- ) OPLWriteReg(OPL,i,0);
+	WriteRegister(OPL,0x01,0); /* wavesel disable */
+	WriteRegister(OPL,0x02,0); /* Timer1 */
+	WriteRegister(OPL,0x03,0); /* Timer2 */
+	WriteRegister(OPL,0x04,0); /* IRQ mask clear */
+	for(i = 0xff ; i >= 0x20 ; i-- ) WriteRegister(OPL,i,0);
 
 	/* reset operator parameters */
 	for( c = 0 ; c < 9 ; c++ )
@@ -1569,7 +1569,7 @@ public:
 	/* YM3812 I/O interface */
 	void WriteReg(int reg, int v)
 	{
-		OPLWriteReg(&Chip, reg & 0xff, v);
+		WriteRegister(&Chip, reg & 0xff, v);
 	}
 
 	void Reset()

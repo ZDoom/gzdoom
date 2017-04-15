@@ -327,16 +327,16 @@ DiskWriterIO::DiskWriterIO(const char *filename)
 
 DiskWriterIO::~DiskWriterIO()
 {
-	OPLdeinit();
+	Reset();
 }
 
 //==========================================================================
 //
-// DiskWriterIO :: OPLinit
+// DiskWriterIO :: Init
 //
 //==========================================================================
 
-int DiskWriterIO::OPLinit(uint32_t numchips, bool, bool initopl3)
+int DiskWriterIO::Init(uint32_t numchips, bool, bool initopl3)
 {
 	FILE *file = fopen(Filename, "wb");
 	if (file == NULL)
@@ -357,10 +357,10 @@ int DiskWriterIO::OPLinit(uint32_t numchips, bool, bool initopl3)
 	{
 		chips[0] = new OPL_DOSBOXdump(file, numchips > 1);
 	}
-	OPLchannels = OPL2CHANNELS * numchips;
+	NumChannels = OPL_NUM_VOICES * numchips;
 	NumChips = numchips;
 	IsOPL3 = numchips > 1;
-	OPLwriteInitState(initopl3);
+	WriteInitState(initopl3);
 	return numchips;
 }
 

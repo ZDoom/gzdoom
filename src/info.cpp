@@ -513,8 +513,11 @@ void PClassActor::SetDamageFactor(FName type, double factor)
 {
 	for (auto & p : ActorInfo()->DamageFactors)
 	{
-		if (p.first == type) p.second = factor;
-		return;
+		if (p.first == type)
+		{
+			p.second = factor;
+			return;
+		}
 	}
 	ActorInfo()->DamageFactors.Push({ type, factor });
 }

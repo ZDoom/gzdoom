@@ -23,6 +23,8 @@
 #ifndef __P_PSPR_H__
 #define __P_PSPR_H__
 
+#include "r_data/renderstyle.h"
+
 // Basic data types.
 // Needs fixed point, and BAM angles.
 
@@ -81,13 +83,14 @@ public:
 	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
 	void		ResetInterpolation() { oldx = x; oldy = y; }
 	void OnDestroy() override;
+	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 
 	double x, y, alpha;
 	double oldx, oldy;
 	bool firstTic;
 	int Tics;
 	int Flags;
-	int RenderStyle;
+	FRenderStyle Renderstyle;
 
 private:
 	DPSprite () {}

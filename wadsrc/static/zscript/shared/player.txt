@@ -223,7 +223,7 @@ class PSprite : Object native play
 	native readonly PlayerInfo Owner;
 	native SpriteID Sprite;
 	native int Frame;
-	native readonly int RenderStyle;
+	//native readonly int RenderStyle;	had to be blocked because the internal representation was not ok. Renderstyle is still pending a proper solution.
 	native readonly int ID;
 	native Bool processPending;
 	native double x;

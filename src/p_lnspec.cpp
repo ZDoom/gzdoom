@@ -717,7 +717,7 @@ FUNC(LS_Ceiling_CrushStop)
 // Ceiling_CrushStop (tag, remove)
 {
 	bool remove;
-	switch (arg3)
+	switch (arg1)
 	{
 	case 1:
 		remove = false;

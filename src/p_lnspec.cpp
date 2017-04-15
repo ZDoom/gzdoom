@@ -417,7 +417,7 @@ FUNC(LS_Floor_LowerByValueTimes8)
 FUNC(LS_Floor_CrushStop)
 // Floor_CrushStop (tag)
 {
-	return EV_FloorCrushStop (arg0);
+	return EV_FloorCrushStop (arg0, ln);
 }
 
 FUNC(LS_Floor_LowerInstant)
@@ -571,7 +571,7 @@ FUNC(LS_Generic_Floor)
 FUNC(LS_Floor_Stop)
 // Floor_Stop (tag)
 {
-	return EV_StopFloor(arg0);
+	return EV_StopFloor(arg0, ln);
 }
 
 
@@ -882,7 +882,7 @@ FUNC(LS_Ceiling_LowerByTexture)
 FUNC(LS_Ceiling_Stop)
 // Ceiling_Stop (tag)
 {
-	return EV_StopCeiling(arg0);
+	return EV_StopCeiling(arg0, ln);
 }
 
 

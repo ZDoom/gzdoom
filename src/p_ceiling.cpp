@@ -585,9 +585,9 @@ bool EV_CeilingCrushStop (int tag, bool remove)
 	return rtn;
 }
 
-bool EV_StopCeiling(int tag)
+bool EV_StopCeiling(int tag, line_t *line)
 {
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(tag, line);
 	while (int sec = it.Next())
 	{
 		if (level.sectors[sec].ceilingdata)

@@ -543,10 +543,10 @@ bool EV_DoFloor (DFloor::EFloor floortype, line_t *line, int tag,
 //
 //==========================================================================
 
-bool EV_FloorCrushStop (int tag)
+bool EV_FloorCrushStop (int tag, line_t *line)
 {
 	int secnum;
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(tag, line);
 	while ((secnum = it.Next()) >= 0)
 	{
 		sector_t *sec = &level.sectors[secnum];
@@ -563,9 +563,9 @@ bool EV_FloorCrushStop (int tag)
 }
 
 // same as above but stops any floor mover that was active on the given sector.
-bool EV_StopFloor(int tag)
+bool EV_StopFloor(int tag, line_t *line)
 {
-	FSectorTagIterator it(tag);
+	FSectorTagIterator it(tag, line);
 	while (int sec = it.Next())
 	{
 		if (level.sectors[sec].floordata)

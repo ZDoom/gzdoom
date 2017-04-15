@@ -125,16 +125,19 @@ DCorpsePointer::DCorpsePointer (AActor *ptr)
 	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
 	DCorpsePointer *first = iterator.Next ();
 
-	if (first != this)
+	if (first != nullptr)
 	{
-		if (first->Count >= (uint32_t)sv_corpsequeuesize)
+		if (first != this)
 		{
-			DCorpsePointer *next = iterator.Next ();
-			first->Destroy ();
-			first = next;
+			if (first->Count >= (uint32_t)sv_corpsequeuesize)
+			{
+				DCorpsePointer *next = iterator.Next();
+				first->Destroy();
+				first = next;
+			}
 		}
+		++first->Count;
 	}
-	++first->Count;
 }
 
 void DCorpsePointer::OnDestroy ()

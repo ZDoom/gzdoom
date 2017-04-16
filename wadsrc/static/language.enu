@@ -2128,22 +2128,10 @@ SNDMNU_UNDERWATERREVERB	= "Underwater reverb";
 SNDMNU_RANDOMIZEPITCHES	= "Randomize pitches";
 SNDMNU_CHANNELS			= "Sound channels";
 SNDMNU_BACKEND			= "Sound backend";
-SNDMNU_FMOD				= "FMOD options";
 SNDMNU_OPENAL			= "OpenAL options";
 SNDMNU_RESTART			= "Restart sound";
 SNDMNU_ADVANCED			= "Advanced options";
 SNDMNU_MODREPLAYER		= "Module replayer options";
-
-// Fmod Options
-FMODMNU_TITLE			= "FMOD OPTIONS";
-FMODMNU_WATERCUTOFF		= "Underwater cutoff";
-FMODMNU_OUTPUTSYSTEM	= "Output system";
-FMODMNU_OUTPUTFORMAT	= "Output format";
-FMODMNU_SPEAKERMODE		= "Speaker mode";
-FMODMNU_RESAMPLER		= "Resampler";
-FMODMNU_HRTFFILTER		= "HRTF filter";
-FMODMNU_BUFFERSIZE		= "Buffer size";
-FMODMNU_BUFFERCOUNT		= "Buffer count";
 
 // OpenAL Options
 OPENALMNU_TITLE				= "OPENAL OPTIONS";
@@ -2428,7 +2416,6 @@ OPTSTR_5POINT1				= "5.1 speakers";
 OPTSTR_7POINT1				= "7.1 speakers";
 OPTSTR_NOINTERPOLATION		= "No interpolation";
 OPTSTR_SPLINE				= "Spline";
-OPTSTR_FMOD					= "FMOD Ex";
 OPTSTR_OPENAL				= "OpenAL";
 
 

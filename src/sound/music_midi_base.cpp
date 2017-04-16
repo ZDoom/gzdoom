@@ -96,23 +96,6 @@ void I_InitMusicWin32 ()
 	snd_mididevice.Callback ();
 }
 
-void I_ShutdownMusicWin32 ()
-{
-	// Ancient bug a saw on NT 4.0 and an old version of FMOD 3: If waveout
-	// is used for sound and a MIDI is also played, then when I quit, the OS
-	// tells me a free block was modified after being freed. This is
-	// apparently a synchronization issue between two threads, because if I
-	// put this Sleep here after stopping the music but before shutting down
-	// the entire sound system, the error does not happen. Observed with a
-	// Vortex 2 (may Aureal rest in peace) and an Audigy (damn you, Creative!).
-	// I no longer have a system with NT4 drivers, so I don't know if this
-	// workaround is still needed or not.
-	if (OSPlatform == os_WinNT4)
-	{
-		Sleep(50);
-	}
-}
-
 void I_BuildMIDIMenuList (FOptionValues *opt)
 {
 	AddDefaultMidiDevices(opt);

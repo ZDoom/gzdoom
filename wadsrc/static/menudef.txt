@@ -1557,50 +1557,11 @@ OptionString Resamplers
 }
 
 
-OptionString SoundBackends
-{
-	"fmod",		"$OPTSTR_FMOD"
-	"openal",	"$OPTSTR_OPENAL"
-	"null",		"$OPTSTR_NOSOUND"
-}
-
-OptionString SoundBackendsFModOnly
-{
-	"fmod",		"$OPTSTR_FMOD"
-	"null",		"$OPTSTR_NOSOUND"
-}
-
 OptionString SoundBackendsOpenALOnly
 {
 	"openal",	"$OPTSTR_OPENAL"
 	"null",		"$OPTSTR_NOSOUND"
 }
-
-OptionMenu FMODSoundItems
-{
-	Title "$FMODMNU_TITLE"
-	Slider	"$FMODMNU_WATERCUTOFF",			"snd_waterlp", 0.0, 2000.0, 50.0, 0
-	IfOption(Windows)
-	{
-		Option "$FMODMNU_OUTPUTSYSTEM",		"snd_output", "SoundOutputsWindows"
-	}
-	IfOption(Unix)
-	{
-		Option "$FMODMNU_OUTPUTSYSTEM",		"snd_output", "SoundOutputsUnix"
-	}
-	IfOption(Mac)
-	{
-		Option "$FMODMNU_OUTPUTSYSTEM",		"snd_output", "SoundOutputsMac"
-	}
-	Option "$FMODMNU_OUTPUTFORMAT",			"snd_output_format", "OutputFormats"
-	Option "$FMODMNU_SPEAKERMODE",			"snd_speakermode", "SpeakerModes"
-	Option "$FMODMNU_RESAMPLER",			"snd_resampler", "Resamplers"
-	Option "$FMODMNU_HRTFFILTER",			"snd_hrtf", "OnOff"
-	StaticText " "
-	Option "$FMODMNU_BUFFERSIZE",			"snd_buffersize", "BufferSizes"
-	Option "$FMODMNU_BUFFERCOUNT",			"snd_buffercount", "BufferCounts"
-}
-
 
 OptionMenu OpenALSoundItems
 {
@@ -1628,31 +1589,9 @@ OptionMenu SoundOptions
 	Slider "$SNDMNU_CHANNELS",			"snd_channels", 64, 256, 8, 0
 	StaticText " "
 
-	ifoption(fmodex)
-	{
-		ifoption(openal)
-		{
-			Option "$SNDMNU_BACKEND",		"snd_backend", "SoundBackends"
-		}
-		else
-		{
-			Option "$SNDMNU_BACKEND",		"snd_backend", "SoundBackendsFModOnly"
-		}
-	}
-	else
-	{
-		ifoption(openal)
-		{
-			Option "$SNDMNU_BACKEND",		"snd_backend", "SoundBackendsOpenALOnly"
-		}
-	}
-	
-	ifoption(fmodex)
-	{
-		Submenu "$SNDMNU_FMOD",			"FMODSoundItems"
-	}
 	ifoption(openal)
 	{
+		Option "$SNDMNU_BACKEND",		"snd_backend", "SoundBackendsOpenALOnly"
 		Submenu "$SNDMNU_OPENAL",		"OpenALSoundItems"
 	}
 	StaticText " "

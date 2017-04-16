@@ -630,7 +630,7 @@ public:
 };
 
 
-extern ReverbContainer *ForcedEnvironment;
+ReverbContainer *ForcedEnvironment;
 
 #define AREA_SOUND_RADIUS  (32.f)
 

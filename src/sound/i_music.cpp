@@ -184,9 +184,6 @@ void I_ShutdownMusic(bool onexit)
 	}
 	Timidity::FreeAll();
 	if (onexit) WildMidi_Shutdown();
-#ifdef _WIN32
-	I_ShutdownMusicWin32();
-#endif // _WIN32
 }
 
 void I_ShutdownMusicExit()

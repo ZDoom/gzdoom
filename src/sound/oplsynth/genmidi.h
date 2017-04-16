@@ -11,7 +11,7 @@ struct genmidi_op_t
 	uint8_t level;
 } FORCE_PACKED;
 
-struct genmidi_voice_t
+struct GenMidiVoice
 {
 	genmidi_op_t modulator;
 	uint8_t feedback;
@@ -21,12 +21,12 @@ struct genmidi_voice_t
 } FORCE_PACKED;
 
 
-struct genmidi_instr_t
+struct GenMidiInstrument
 {
 	uint16_t flags;
 	uint8_t fine_tuning;
 	uint8_t fixed_note;
-	genmidi_voice_t voices[2];
+	GenMidiVoice voices[2];
 } FORCE_PACKED;
 
 #pragma pack(pop)

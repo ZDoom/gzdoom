@@ -90,11 +90,11 @@ int musicBlock::replaceExistingVoice()
 //
 //----------------------------------------------------------------------------
 
-void musicBlock::voiceKeyOn(uint32_t slot, uint32_t channo, genmidi_instr_t *instrument, uint32_t instrument_voice, uint32_t key, uint32_t volume)
+void musicBlock::voiceKeyOn(uint32_t slot, uint32_t channo, GenMidiInstrument *instrument, uint32_t instrument_voice, uint32_t key, uint32_t volume)
 {
 	struct OPLVoice *voice = &voices[slot];
 	auto &channel = oplchannels[channo];
-	genmidi_voice_t *gmvoice;
+	GenMidiVoice *gmvoice;
 
 	voice->index = channo;
 	voice->key = key;
@@ -159,7 +159,7 @@ void musicBlock::noteOn(uint32_t channel, uint8_t key, int volume)
 		return;
 	}
 	uint32_t note;
-	genmidi_instr_t *instrument;
+	GenMidiInstrument *instrument;
 
 	// Percussion channel is treated differently.
 	if (channel == CHAN_PERCUSSION)

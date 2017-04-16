@@ -353,7 +353,7 @@ static uint8_t volumetable[128] = {
 	120, 121, 121, 122, 122, 123, 123, 123,
 	124, 124, 125, 125, 126, 126, 127, 127};
 
-void OPLio::WriteVolume(uint32_t channel, struct genmidi_voice_t *voice, uint32_t vol1, uint32_t vol2, uint32_t vol3)
+void OPLio::WriteVolume(uint32_t channel, struct GenMidiVoice *voice, uint32_t vol1, uint32_t vol2, uint32_t vol3)
 {
 	if (voice != nullptr)
 	{
@@ -392,7 +392,7 @@ void OPLio::WriteVolume(uint32_t channel, struct genmidi_voice_t *voice, uint32_
 //
 //----------------------------------------------------------------------------
 
-void OPLio::WritePan(uint32_t channel, struct genmidi_voice_t *voice, int pan)
+void OPLio::WritePan(uint32_t channel, struct GenMidiVoice *voice, int pan)
 {
 	if (voice != 0)
 	{
@@ -418,7 +418,7 @@ void OPLio::WritePan(uint32_t channel, struct genmidi_voice_t *voice, int pan)
 //
 //----------------------------------------------------------------------------
 
-void OPLio::WriteTremolo(uint32_t channel, struct genmidi_voice_t *voice, bool vibrato)
+void OPLio::WriteTremolo(uint32_t channel, struct GenMidiVoice *voice, bool vibrato)
 {
 	int val1 = voice->modulator.tremolo, val2 = voice->carrier.tremolo;
 	if (vibrato)
@@ -478,7 +478,7 @@ void OPLio::LoadOperatorData(uint32_t channel, int op_index, genmidi_op_t *data,
 //
 //----------------------------------------------------------------------------
 
-void OPLio::WriteInstrument(uint32_t channel, struct genmidi_voice_t *voice, bool vibrato)
+void OPLio::WriteInstrument(uint32_t channel, struct GenMidiVoice *voice, bool vibrato)
 {
 	bool modulating = (voice->feedback & 0x01) == 0;
 

@@ -54,7 +54,7 @@ enum
 
 };
 
-struct genmidi_voice_t;
+struct GenMidiVoice;
 
 struct OPLio 
 {
@@ -64,10 +64,10 @@ struct OPLio
 	void LoadOperatorData(uint32_t channel, int op_index, genmidi_op_t *op_data, bool maxlevel, bool vibrato);
 	void WriteValue(uint32_t regbase, uint32_t channel, uint8_t value);
 	void WriteFrequency(uint32_t channel, uint32_t freq, uint32_t octave, uint32_t keyon);
-	void WriteVolume(uint32_t channel, genmidi_voice_t *voice, uint32_t v1, uint32_t v2, uint32_t v3);
-	void WritePan(uint32_t channel, genmidi_voice_t *voice, int pan);
-	void WriteTremolo(uint32_t channel, genmidi_voice_t *voice, bool vibrato);
-	void WriteInstrument(uint32_t channel, genmidi_voice_t *voice, bool vibrato);
+	void WriteVolume(uint32_t channel, GenMidiVoice *voice, uint32_t v1, uint32_t v2, uint32_t v3);
+	void WritePan(uint32_t channel, GenMidiVoice *voice, int pan);
+	void WriteTremolo(uint32_t channel, GenMidiVoice *voice, bool vibrato);
+	void WriteInstrument(uint32_t channel, GenMidiVoice *voice, bool vibrato);
 	void WriteInitState(bool opl3);
 	void MuteChannel(uint32_t chan);
 	void StopPlayback();

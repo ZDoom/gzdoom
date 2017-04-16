@@ -87,7 +87,7 @@ OPLMIDIDevice::OPLMIDIDevice(const char *args)
 	uint8_t filehdr[8];
 	data.Read(filehdr, 8);
 	if (memcmp(filehdr, "#OPL_II#", 8)) I_Error("Corrupt GENMIDI lump");
-	data.Read(OPLinstruments, sizeof(genmidi_instr_t) * GENMIDI_NUM_TOTAL);
+	data.Read(OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
 	SampleRate = (int)OPL_SAMPLE_RATE;
 }
 

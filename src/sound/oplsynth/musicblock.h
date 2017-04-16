@@ -10,8 +10,8 @@ struct OPLVoice
 	unsigned int key;			// The midi key that this voice is playing.
 	unsigned int note;			// The note being played.  This is normally the same as the key, but if the instrument is a fixed pitch instrument, it is different.
 	unsigned int note_volume;	// The volume of the note being played on this channel.
-	genmidi_instr_t *current_instr;	// Currently-loaded instrument data
-	genmidi_voice_t *current_instr_voice;// The voice number in the instrument to use. This is normally set to the instrument's first voice; if this is a double voice instrument, it may be the second one
+	GenMidiInstrument *current_instr;	// Currently-loaded instrument data
+	GenMidiVoice *current_instr_voice;// The voice number in the instrument to use. This is normally set to the instrument's first voice; if this is a double voice instrument, it may be the second one
 	bool sustained;
 	int8_t	fine_tuning;
 	int	pitch;
@@ -21,13 +21,10 @@ struct musicBlock {
 	musicBlock();
 	~musicBlock();
 
-	uint8_t *score;
-	uint8_t *scoredata;
-	int playingcount;
 	OPLChannel oplchannels[NUM_CHANNELS];
 	OPLio *io;
 
-	struct genmidi_instr_t OPLinstruments[GENMIDI_NUM_TOTAL];
+	struct GenMidiInstrument OPLinstruments[GENMIDI_NUM_TOTAL];
 
 	void changeModulation(uint32_t id, int value);
 	void changeSustain(uint32_t id, int value);
@@ -50,9 +47,18 @@ protected:
 
 	int findFreeVoice();
 	int replaceExistingVoice();
-	void voiceKeyOn(uint32_t slot, uint32_t channo, genmidi_instr_t *instrument, uint32_t instrument_voice, uint32_t, uint32_t volume);
+	void voiceKeyOn(uint32_t slot, uint32_t channo, GenMidiInstrument *instrument, uint32_t instrument_voice, uint32_t, uint32_t volume);
 	int releaseVoice(uint32_t slot, uint32_t killed);
 
 	friend class Stat_opl;
 
+};
+
+enum ExtCtrl {
+	ctrlRPNHi,
+	ctrlRPNLo,
+	ctrlNRPNHi,
+	ctrlNRPNLo,
+	ctrlDataEntryHi,
+	ctrlDataEntryLo,
 };

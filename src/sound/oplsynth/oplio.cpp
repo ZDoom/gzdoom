@@ -31,6 +31,7 @@
 **---------------------------------------------------------------------------
 */
 
+#include <math.h>
 #include "genmidi.h"
 #include "oplio.h"
 #include "opl.h"

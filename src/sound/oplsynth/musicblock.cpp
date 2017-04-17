@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "muslib.h"
+#include "musicblock.h"
 #include "files.h"
 #include "templates.h"
 

@@ -1,3 +1,30 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright 2002-2016 Randy Heit
+// Copyright 2005-2014 Simon Howard 
+// Copyright 2017 Christoph Oelckers
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
+// This is mostly a reimplementation of the interface provided by
+// MusLib based on Chocolate-Doom's OPL player, although the
+// interface has been cleaned up a bit to be more consistent and readable.
+//
+//
+
 #include <stdlib.h>
 #include <string.h>
 #include "musicblock.h"

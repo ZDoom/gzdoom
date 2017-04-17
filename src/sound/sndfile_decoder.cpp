@@ -53,7 +53,7 @@ FModule SndFileModule{"SndFile"};
 #ifdef _WIN32
 #define SNDFILELIB "libsndfile-1.dll"
 #elif defined(__APPLE__)
-#define SNDFILELIB ""
+#define SNDFILELIB "libsndfile.1.dylib"
 #else
 #define SNDFILELIB "libsndfile.so.1"
 #endif

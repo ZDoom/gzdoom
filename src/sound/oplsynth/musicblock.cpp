@@ -36,7 +36,7 @@
 musicBlock::musicBlock ()
 {
 	memset (this, 0, sizeof(*this));
-	for(auto &voice : voices) voice.index = -1;	// mark all free.
+	for(auto &voice : voices) voice.index = ~0u;	// mark all free.
 }
 
 musicBlock::~musicBlock ()
@@ -53,7 +53,7 @@ int musicBlock::releaseVoice(uint32_t slot, uint32_t killed)
 {
 	struct OPLVoice *ch = &voices[slot];
 	io->WriteFrequency(slot, ch->note, ch->pitch, 0);
-	ch->index = -1;
+	ch->index = ~0u;
 	if (killed) io->MuteChannel(slot);
 	return slot;
 }
@@ -68,7 +68,7 @@ int musicBlock::findFreeVoice()
 {
 	for (uint32_t i = 0; i < io->NumChannels; ++i)
 	{
-		if (voices[i].index == -1)
+		if (voices[i].index == ~0u)
 		{
 			releaseVoice(i, 1);
 			return i;
@@ -185,7 +185,6 @@ void musicBlock::noteOn(uint32_t channel, uint8_t key, int volume)
 		noteOff(channel, key);
 		return;
 	}
-	uint32_t note;
 	GenMidiInstrument *instrument;
 
 	// Percussion channel is treated differently.

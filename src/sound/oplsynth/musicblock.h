@@ -6,7 +6,7 @@
 
 struct OPLVoice 
 {
-	int index;					// Index of this voice, or -1 if not in use.
+	unsigned int index;			// Index of this voice, or -1 if not in use.
 	unsigned int key;			// The midi key that this voice is playing.
 	unsigned int note;			// The note being played.  This is normally the same as the key, but if the instrument is a fixed pitch instrument, it is different.
 	unsigned int note_volume;	// The volume of the note being played on this channel.

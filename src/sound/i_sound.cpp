@@ -256,6 +256,15 @@ void I_InitSound ()
 		return;
 	}
 
+#ifndef NO_OPENAL
+	// Simplify transition to OpenAL backend
+	if (stricmp(snd_backend, "fmod") == 0)
+	{
+		Printf (TEXTCOLOR_ORANGE "FMOD Ex sound system was removed, switching to OpenAL\n");
+		snd_backend = "openal";
+	}
+#endif // NO_OPENAL
+
 	if (stricmp(snd_backend, "null") == 0)
 	{
 		GSnd = new NullSoundRenderer;

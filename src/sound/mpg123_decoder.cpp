@@ -38,8 +38,42 @@
 #include "mpg123_decoder.h"
 #include "files.h"
 #include "except.h"
+#include "i_module.h"
+#include "cmdlib.h"
 
 #ifdef HAVE_MPG123
+
+
+FModule MPG123Module{"MPG123"};
+
+#include "mpgload.h"
+
+#ifdef _WIN32
+#define MPG123LIB "libmpg123-0.dll"
+#elif defined(__APPLE__)
+#define MPG123LIB ""
+#else
+#define MPG123LIB "libmpg123.so.1"
+#endif
+
+bool IsMPG123Present()
+{
+#if !defined DYN_MPG123
+	return true;
+#else
+	static bool cached_result = false;
+	static bool done = false;
+
+	if (!done)
+	{
+		done = true;
+		cached_result = MPG123Module.Load({NicePath("$PROGDIR/" MPG123LIB), MPG123LIB});
+	}
+	return cached_result;
+#endif
+}
+
+
 static bool inited = false;
 
 
@@ -84,18 +118,9 @@ bool MPG123Decoder::open(FileReader *reader)
 {
     if(!inited)
     {
-#ifdef _MSC_VER
-		__try {
-#endif
-			if(mpg123_init() != MPG123_OK)
-				return false;
-			inited = true;
-#ifdef _MSC_VER
-        } __except (CheckException(GetExceptionCode())) {
-			// this means that the delay loaded decoder DLL was not found.
-			return false;
-		}
-#endif
+		if (!IsMPG123Present()) return false;
+		if(mpg123_init() != MPG123_OK) return false;
+		inited = true;
     }
 
     Reader = reader;

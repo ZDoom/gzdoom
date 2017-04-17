@@ -14,10 +14,14 @@
 
 #ifdef DYN_OPENAL
 #define AL_NO_PROTOTYPES
-#endif // DYN_OPENAL
-
+#include "thirdparty/al.h"
+#include "thirdparty/alc.h"
+#include "thirdparty/efx.h"
+#else
 #include "al.h"
 #include "alc.h"
+#include "efx.h"
+#endif
 
 #ifndef ALC_ENUMERATE_ALL_EXT
 #define ALC_ENUMERATE_ALL_EXT 1
@@ -70,7 +74,6 @@
 #define AL_SOURCE_RADIUS                         0x1031
 #endif
 
-#include "efx.h"
 
 
 class OpenALSoundStream;

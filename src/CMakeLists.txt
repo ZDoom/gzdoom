@@ -25,6 +25,8 @@ endif()
 
 option( DYN_FLUIDSYNTH "Dynamically load fluidsynth" ON )
 option( DYN_OPENAL "Dynamically load OpenAL" ON )
+option( DYN_SNDFILE "Dynamically load libsndfile" ON )
+option( DYN_MPG123 "Dynamically load libmpg123" ON )
 
 if( APPLE )
     option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
@@ -192,22 +194,22 @@ else()
 endif()
 
 if( NOT NO_OPENAL )
-	find_package( OpenAL )
-	mark_as_advanced(CLEAR OPENAL_INCLUDE_DIR)
-	if( OPENAL_INCLUDE_DIR )
-		include_directories( ${OPENAL_INCLUDE_DIR} )
-		if( DYN_OPENAL )
-			add_definitions( -DDYN_OPENAL )
-		else()
+	if ( NOT DYN_OPENAL )	# DYN_OPENAL uses local copies of the headers.
+		find_package( OpenAL )
+		mark_as_advanced(CLEAR OPENAL_INCLUDE_DIR)
+		if( OPENAL_INCLUDE_DIR )
+			include_directories( ${OPENAL_INCLUDE_DIR} )
 			mark_as_advanced(CLEAR OPENAL_LIBRARY)
 			if( OPENAL_LIBRARY )
 				set( ZDOOM_LIBS ${OPENAL_LIBRARY} ${ZDOOM_LIBS} )
 			else()
 				set( NO_OPENAL ON )
 			endif()
+		else()
+			set( NO_OPENAL ON )
 		endif()
 	else()
-		set( NO_OPENAL ON )
+		add_definitions( -DDYN_OPENAL )
 	endif()
 endif()
 
@@ -219,11 +221,15 @@ if( NO_OPENAL )
 else()
 	# Search for libSndFile
 
-	find_package( SndFile )
+	if ( NOT DYN_SNDFILE )
+		find_package( SndFile )
+	endif()
 
 	# Search for libmpg123
 
-	find_package( MPG123 )
+	if ( NOT DYN_MPG123 )
+		find_package( MPG123 )
+	endif()
 endif()
 
 # Search for FluidSynth
@@ -580,12 +586,18 @@ add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )
 
-if( SNDFILE_FOUND )
-    add_definitions( -DHAVE_SNDFILE )
+if( DYN_SNDFILE)
+	add_definitions( -DHAVE_SNDFILE -DDYN_SNDFILE )
+elseif( SNDFILE_FOUND )
+	add_definitions( -DHAVE_SNDFILE )
 endif()
-if( MPG123_FOUND )
-    add_definitions( -DHAVE_MPG123 )
+
+if( DYN_MPG123)
+	add_definitions( -DHAVE_MPG123 -DDYN_MPG123 )
+elseif( MPG123_FOUND )
+	add_definitions( -DHAVE_MPG123 )
 endif()
+
 if( DYN_FLUIDSYNTH )
 	add_definitions( -DHAVE_FLUIDSYNTH -DDYN_FLUIDSYNTH )
 elseif( FLUIDSYNTH_FOUND )
@@ -1224,9 +1236,6 @@ if( MSVC )
 
 	if( ZDOOM_GENERATE_MAPFILE )
 		set( LINKERSTUFF "${LINKERSTUFF} /MAP" )
-	endif()
-	if( NOT NO_OPENAL )
-		set( LINKERSTUFF "${LINKERSTUFF} /DELAYLOAD:\"libmpg123-0.dll\" /DELAYLOAD:\"libsndfile-1.dll\"" )
 	endif()
 	set_target_properties(zdoom PROPERTIES LINK_FLAGS ${LINKERSTUFF})
 

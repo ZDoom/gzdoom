@@ -40,8 +40,41 @@
 #include "files.h"
 #include "xs_Float.h"
 #include "except.h"
+#include "i_module.h"
+#include "cmdlib.h"
 
 #ifdef HAVE_SNDFILE
+
+FModule SndFileModule{"SndFile"};
+
+#include "sndload.h"
+
+
+#ifdef _WIN32
+#define SNDFILELIB "libsndfile-1.dll"
+#elif defined(__APPLE__)
+#define SNDFILELIB ""
+#else
+#define SNDFILELIB "libsndfile.so.1"
+#endif
+
+bool IsSndFilePresent()
+{
+#if !defined DYN_SNDFILE
+	return true;
+#else
+	static bool cached_result = false;
+	static bool done = false;
+
+	if (!done)
+	{
+		done = true;
+		cached_result = SndFileModule.Load({NicePath("$PROGDIR/" SNDFILELIB), SNDFILELIB});
+	}
+	return cached_result;
+#endif
+}
+
 
 sf_count_t SndFileDecoder::file_get_filelen(void *user_data)
 {
@@ -85,27 +118,21 @@ SndFileDecoder::~SndFileDecoder()
 
 bool SndFileDecoder::open(FileReader *reader)
 {
-#ifdef _MSC_VER
-	__try {
-#endif
-		SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
+	if (!IsSndFilePresent()) return false;
+	
+	SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
-		Reader = reader;
-		SndInfo.format = 0;
-		SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
-		if (SndFile)
-		{
-			if (SndInfo.channels == 1 || SndInfo.channels == 2)
-				return true;
+	Reader = reader;
+	SndInfo.format = 0;
+	SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
+	if (SndFile)
+	{
+		if (SndInfo.channels == 1 || SndInfo.channels == 2)
+			return true;
 
-			sf_close(SndFile);
-			SndFile = 0;
-		}
-#ifdef _MSC_VER
-	} __except (CheckException(GetExceptionCode())) {
-		// this means that the delay loaded decoder DLL was not found.
+		sf_close(SndFile);
+		SndFile = 0;
 	}
-#endif
     return false;
 }
 

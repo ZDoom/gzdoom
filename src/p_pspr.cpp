@@ -1,14 +1,27 @@
-
-//**************************************************************************
-//**
-//** p_pspr.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile: p_pspr.c,v $
-//** $Revision: 1.105 $
-//** $Date: 96/01/06 03:23:35 $
-//** $Author: bgokey $
-//**
-//**************************************************************************
+//-----------------------------------------------------------------------------
+//
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+// Copyright 2016 Leonard2
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
 
 // HEADER FILES ------------------------------------------------------------
 

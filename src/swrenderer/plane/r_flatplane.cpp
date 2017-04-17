@@ -160,7 +160,7 @@ namespace swrenderer
 #ifdef RANGECHECK
 		if (x2 < x1 || x1<0 || x2 >= viewwidth || (unsigned)y >= (unsigned)viewheight)
 		{
-			I_FatalError("R_MapPlane: %i, %i at %i", x1, x2, y);
+			I_Error("R_MapPlane: %i, %i at %i", x1, x2, y);
 		}
 #endif
 

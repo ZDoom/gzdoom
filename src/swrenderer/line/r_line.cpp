@@ -307,7 +307,7 @@ namespace swrenderer
 
 #ifdef RANGECHECK
 		if (start >= viewwidth || start >= stop)
-			I_FatalError("Bad R_StoreWallRange: %i to %i", start, stop);
+			I_Error("Bad R_StoreWallRange: %i to %i", start, stop);
 #endif
 
 		if (!rw_prepped)

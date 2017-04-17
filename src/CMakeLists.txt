@@ -823,7 +823,6 @@ set (PCH_SOURCES
 	dobject.cpp
 	dobjgc.cpp
 	dobjtype.cpp
-	doomdef.cpp
 	doomstat.cpp
 	dsectoreffect.cpp
 	dthinker.cpp
@@ -884,7 +883,6 @@ set (PCH_SOURCES
 	p_mobj.cpp
 	p_pillar.cpp
 	p_plats.cpp
-	p_portals.cpp
 	p_pspr.cpp
 	p_pusher.cpp
 	p_saveg.cpp

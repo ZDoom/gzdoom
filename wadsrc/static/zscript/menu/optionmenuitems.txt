@@ -44,7 +44,7 @@ class OptionMenuItem : MenuItemBase
 		mCentered = center;
 	}
 
-	protected void drawLabel(int indent, int y, int color, bool grayed = false)
+	protected int drawLabel(int indent, int y, int color, bool grayed = false)
 	{
 		String label = Stringtable.Localize(mLabel);
 		
@@ -55,6 +55,7 @@ class OptionMenuItem : MenuItemBase
 		if (!mCentered) x = indent - w;
 		else x = (screen.GetWidth() - w) / 2;
 		screen.DrawText (SmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+		return x;
 	}
 	
 	int CursorSpace()
@@ -92,16 +93,20 @@ class OptionMenuItem : MenuItemBase
 class OptionMenuItemSubmenu : OptionMenuItem
 {
 	int mParam;
-	OptionMenuItemSubmenu Init(String label, Name command, int param = 0)
+	OptionMenuItemSubmenu Init(String label, Name command, int param = 0, bool centered = false)
 	{
-		Super.init(label, command);
+		Super.init(label, command, centered);
 		mParam = param;
 		return self;
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColorMore);
+		int x = drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColorMore);
+		if (mCentered) 
+		{
+			return x - 16*CleanXfac_1;
+		}
 		return indent;
 	}
 
@@ -121,9 +126,9 @@ class OptionMenuItemSubmenu : OptionMenuItem
 
 class OptionMenuItemCommand : OptionMenuItemSubmenu
 {
-	OptionMenuItemCommand Init(String label, Name command)
+	OptionMenuItemCommand Init(String label, Name command, bool centered = false)
 	{
-		Super.Init(label, command);
+		Super.Init(label, command, 0, centered);
 		return self;
 	}
 

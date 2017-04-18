@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 
-#include "basictypes.h"
+#include "doomtype.h"
 #include "vectors.h"
 #include "tarray.h"
 
@@ -160,6 +160,16 @@ enum EMidiDevice
 	MDEV_GUS = 5,
 	MDEV_WILDMIDI = 6,
 };
+
+class MusInfo;
+struct MusPlayingInfo
+{
+	FString name;
+	MusInfo *handle;
+	int   baseorder;
+	bool  loop;
+};
+
 
 
 #endif

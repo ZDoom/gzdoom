@@ -41,6 +41,7 @@
 #include "gameconfigfile.h"
 #include "cmdlib.h"
 #include "m_misc.h"
+#include "s_sound.h"
 
 #include "templates.h"
 #include "v_text.h"
@@ -54,42 +55,6 @@ static bool		nummididevicesset;
 #else
 #define NUM_DEF_DEVICES 5
 #endif
-
-//Provide some lists from which the user can choose the music resources in the menu instead of having to type them in manually
-// These lists have to be maintained manually for the moment.
-TArray<FString> SoundFonts;
-TArray<FString> PatchSets;
-TArray<FString> TimidityExes;
-
-static void ReadSoundFonts()
-{
-	const char *key, *value;
-	// Do not check for missing files here so that they will be saved back.
-	// Deletion should be done explicitly im the menu, equivalent to how the savegame menu works.
-	if (GameConfig->SetSection("SoundFonts"))
-	{
-		while (GameConfig->NextInSection(key, value))
-		{
-			if (FileExists(value)) SoundFonts.Push(value);
-		}
-	}
-	if (GameConfig->SetSection("PatchSets"))
-	{
-		while (GameConfig->NextInSection(key, value))
-		{
-			if (FileExists(value)) PatchSets.Push(value);
-		}
-	}
-#ifdef _WIN32	// Different Timidity paths only make sense if they can be stored in arbitrary paths with local configs (i.e. not if things are done the Linux way)
-	if (GameConfig->SetSection("TimidityExes"))
-	{
-		while (GameConfig->NextInSection(key, value))
-		{
-			if (FileExists(value)) PatchSets.Push(value);
-		}
-	}
-#endif
-}
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
 {
@@ -115,6 +80,8 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 
 }
 
+extern MusPlayingInfo mus_playing;
+
 void MIDIDeviceChanged(int newdev, bool force)
 {
 	static int oldmididev = INT_MIN;
@@ -127,8 +94,18 @@ void MIDIDeviceChanged(int newdev, bool force)
 			MusInfo *song = currSong;
 			if (song->m_Status == MusInfo::STATE_Playing)
 			{
-				song->Stop();
-				song->Start(song->m_Looping);
+				if (song->GetDeviceType() == MDEV_FLUIDSYNTH && force)
+				{
+					// FluidSynth must reload the song to change the patch set.
+					auto mi = mus_playing;
+					S_StopMusic(true);
+					S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
+				}
+				else
+				{
+					song->Stop();
+					song->Start(song->m_Looping);
+				}
 			}
 		}
 		else

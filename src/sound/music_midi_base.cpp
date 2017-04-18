@@ -38,6 +38,9 @@
 #include "c_dispatch.h"
 #include "i_music.h"
 #include "i_system.h"
+#include "gameconfigfile.h"
+#include "cmdlib.h"
+#include "m_misc.h"
 
 #include "templates.h"
 #include "v_text.h"
@@ -51,6 +54,42 @@ static bool		nummididevicesset;
 #else
 #define NUM_DEF_DEVICES 5
 #endif
+
+//Provide some lists from which the user can choose the music resources in the menu instead of having to type them in manually
+// These lists have to be maintained manually for the moment.
+TArray<FString> SoundFonts;
+TArray<FString> PatchSets;
+TArray<FString> TimidityExes;
+
+static void ReadSoundFonts()
+{
+	const char *key, *value;
+	// Do not check for missing files here so that they will be saved back.
+	// Deletion should be done explicitly im the menu, equivalent to how the savegame menu works.
+	if (GameConfig->SetSection("SoundFonts"))
+	{
+		while (GameConfig->NextInSection(key, value))
+		{
+			if (FileExists(value)) SoundFonts.Push(value);
+		}
+	}
+	if (GameConfig->SetSection("PatchSets"))
+	{
+		while (GameConfig->NextInSection(key, value))
+		{
+			if (FileExists(value)) PatchSets.Push(value);
+		}
+	}
+#ifdef _WIN32	// Different Timidity paths only make sense if they can be stored in arbitrary paths with local configs (i.e. not if things are done the Linux way)
+	if (GameConfig->SetSection("TimidityExes"))
+	{
+		while (GameConfig->NextInSection(key, value))
+		{
+			if (FileExists(value)) PatchSets.Push(value);
+		}
+	}
+#endif
+}
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
 {
@@ -76,12 +115,12 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 
 }
 
-static void MIDIDeviceChanged(int newdev)
+void MIDIDeviceChanged(int newdev, bool force)
 {
 	static int oldmididev = INT_MIN;
 
 	// If a song is playing, move it to the new device.
-	if (oldmididev != newdev)
+	if (oldmididev != newdev || force)
 	{
 		if (currSong != NULL && currSong->IsMIDI())
 		{
@@ -97,7 +136,8 @@ static void MIDIDeviceChanged(int newdev)
 			S_MIDIDeviceChanged();
 		}
 	}
-	oldmididev = newdev;
+	// 'force' 
+	if (!force) oldmididev = newdev;
 }
 
 #ifdef _WIN32

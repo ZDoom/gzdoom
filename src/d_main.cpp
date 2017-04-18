@@ -132,6 +132,7 @@ extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern void HUD_InitHud();
+void DeinitMenus();
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -2736,6 +2737,7 @@ void D_DoomMain (void)
 		C_ClearAliases();				// CCMDs won't be reinitialized so these need to be deleted here
 		DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
 		FS_Close();						// destroy the global FraggleScript.
+		DeinitMenus();
 
 		GC::FullGC();					// clean up before taking down the object list.
 

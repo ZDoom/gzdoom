@@ -16,12 +16,12 @@
 #define AL_NO_PROTOTYPES
 #include "thirdparty/al.h"
 #include "thirdparty/alc.h"
-#include "thirdparty/efx.h"
 #else
 #include "al.h"
 #include "alc.h"
-#include "efx.h"
 #endif
+
+#include "efx.h"
 
 #ifndef ALC_ENUMERATE_ALL_EXT
 #define ALC_ENUMERATE_ALL_EXT 1

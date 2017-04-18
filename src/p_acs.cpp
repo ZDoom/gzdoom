@@ -5040,7 +5040,7 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 	}
 	addr = baddr;
 	// We don't want Int subclasses like Name or Color to be accessible here.
-	if (!type->isInt() && !type->isFloat())
+	if (!type->isInt() && !type->isFloat() && type != TypeBool)
 	{
 		// For reading, we also support Name and String types.
 		if (readonly && (type == TypeName || type == TypeString))

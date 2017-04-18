@@ -671,8 +671,10 @@ FXInputManager::FXInputManager()
 		InputSetState = (XInputSetStateType)GetProcAddress(XInputDLL, "XInputSetState");
 		InputGetCapabilities = (XInputGetCapabilitiesType)GetProcAddress(XInputDLL, "XInputGetCapabilities");
 		InputEnable = (XInputEnableType)GetProcAddress(XInputDLL, "XInputEnable");
-		if (InputGetState == NULL || InputSetState == NULL || InputGetCapabilities == NULL ||
-			InputEnable == NULL)
+		// Treat XInputEnable() function as optional
+		// It is not available in xinput9_1_0.dll which is XINPUT_DLL in modern SDKs
+		// See https://msdn.microsoft.com/en-us/library/windows/desktop/hh405051(v=vs.85).aspx
+		if (InputGetState == NULL || InputSetState == NULL || InputGetCapabilities == NULL)
 		{
 			FreeLibrary(XInputDLL);
 			XInputDLL = NULL;
@@ -781,7 +783,7 @@ void FXInputManager::GetDevices(TArray<IJoystickConfig *> &sticks)
 
 bool FXInputManager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
 {
-	if (message == WM_ACTIVATE)
+	if (nullptr != InputEnable && message == WM_ACTIVATE)
 	{
 		if (LOWORD(wParam) == WA_INACTIVE)
 		{

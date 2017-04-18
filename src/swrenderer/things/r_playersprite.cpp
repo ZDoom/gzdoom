@@ -1,15 +1,23 @@
+//-----------------------------------------------------------------------------
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2016 Magnus Norddahl
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -217,7 +225,7 @@ namespace swrenderer
 		flip = sprframe->Flip & 1;
 		tex = TexMan(picnum);
 
-		if (tex->UseType == FTexture::TEX_Null || pspr->RenderStyle == STYLE_None)
+		if (tex->UseType == FTexture::TEX_Null)
 			return;
 
 		if (pspr->firstTic)
@@ -320,111 +328,11 @@ namespace swrenderer
 		if (pspr->GetID() < PSP_TARGETCENTER)
 		{
 			// [MC] Set the render style 
+			auto rs = pspr->GetRenderStyle(owner->RenderStyle, owner->Alpha);
+			vis.RenderStyle = rs.first;
+			vis.Alpha = rs.second;
 
-			if (pspr->Flags & PSPF_RENDERSTYLE)
-			{
-				const int rs = clamp<int>(pspr->RenderStyle, 0, STYLE_Count);
-
-				if (pspr->Flags & PSPF_FORCESTYLE)
-				{
-					vis.RenderStyle = LegacyRenderStyles[rs];
-				}
-				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
-				{
-					vis.RenderStyle = LegacyRenderStyles[STYLE_Fuzzy];
-				}
-				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
-				{
-					vis.RenderStyle = LegacyRenderStyles[STYLE_OptFuzzy];
-					vis.RenderStyle.CheckFuzz();
-				}
-				else if (owner->RenderStyle == LegacyRenderStyles[STYLE_Subtract])
-				{
-					vis.RenderStyle = LegacyRenderStyles[STYLE_Subtract];
-				}
-				else
-				{
-					vis.RenderStyle = LegacyRenderStyles[rs];
-				}
-			}
-			else
-			{
-				vis.RenderStyle = owner->RenderStyle;
-			}
-
-			// Set the alpha based on if using the overlay's own or not. Also adjust
-			// and override the alpha if not forced.
-			if (pspr->Flags & PSPF_ALPHA)
-			{
-				if (vis.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy])
-				{
-					alpha = owner->Alpha;
-				}
-				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_OptFuzzy])
-				{
-					FRenderStyle style = vis.RenderStyle;
-					style.CheckFuzz();
-					switch (style.BlendOp)
-					{
-					default:
-						alpha = pspr->alpha * owner->Alpha;
-						break;
-					case STYLEOP_Fuzz:
-					case STYLEOP_Sub:
-						alpha = owner->Alpha;
-						break;
-					}
-
-				}
-				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Subtract])
-				{
-					alpha = owner->Alpha;
-				}
-				else if (vis.RenderStyle == LegacyRenderStyles[STYLE_Add] ||
-					vis.RenderStyle == LegacyRenderStyles[STYLE_Translucent] ||
-					vis.RenderStyle == LegacyRenderStyles[STYLE_TranslucentStencil] ||
-					vis.RenderStyle == LegacyRenderStyles[STYLE_AddStencil] ||
-					vis.RenderStyle == LegacyRenderStyles[STYLE_AddShaded])
-				{
-					alpha = owner->Alpha * pspr->alpha;
-				}
-				else
-				{
-					alpha = owner->Alpha;
-				}
-			}
-
-			// Should normal renderstyle come out on top at the end and we desire alpha,
-			// switch it to translucent. Normal never applies any sort of alpha.
-			if ((pspr->Flags & PSPF_ALPHA) &&
-				vis.RenderStyle == LegacyRenderStyles[STYLE_Normal] &&
-				vis.Alpha < 1.0)
-			{
-				vis.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				alpha = owner->Alpha * pspr->alpha;
-			}
-
-			// ALWAYS take priority if asked for, except fuzz. Fuzz does absolutely nothing
-			// no matter what way it's changed.
-			if (pspr->Flags & PSPF_FORCEALPHA)
-			{
-				//Due to lack of != operators...
-				if (vis.RenderStyle == LegacyRenderStyles[STYLE_Fuzzy] ||
-					vis.RenderStyle == LegacyRenderStyles[STYLE_SoulTrans] ||
-					vis.RenderStyle == LegacyRenderStyles[STYLE_Stencil])
-				{
-				}
-				else
-				{
-					alpha = pspr->alpha;
-					vis.RenderStyle.Flags |= STYLEF_ForceAlpha;
-				}
-			}
-			vis.Alpha = clamp<float>(float(alpha), 0.f, 1.f);
-
-			// Due to how some of the effects are handled, going to 0 or less causes some
-			// weirdness to display. There's no point rendering it anyway if it's 0.
-			if (vis.Alpha <= 0.)
+			if (!vis.RenderStyle.IsVisible(vis.Alpha))
 				return;
 
 			//-----------------------------------------------------------------------------
@@ -455,9 +363,9 @@ namespace swrenderer
 				
 				Thread->Viewport->viewpoint.camera->Inventory->AlterWeaponSprite(&visstyle);
 				
-				vis.Alpha = visstyle.Alpha;
+				if (!(pspr->Flags & PSPF_FORCEALPHA)) vis.Alpha = visstyle.Alpha;
 
-				if (visstyle.RenderStyle != STYLE_Count)
+				if (visstyle.RenderStyle != STYLE_Count && !(pspr->Flags & PSPF_FORCESTYLE))
 				{
 					vis.RenderStyle = visstyle.RenderStyle;
 				}

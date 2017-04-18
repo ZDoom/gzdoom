@@ -1,3 +1,35 @@
+/*
+** sndfile_decoder.cpp
+**
+**---------------------------------------------------------------------------
+** Copyright 2008-2010 Chris Robinson
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -8,8 +40,41 @@
 #include "files.h"
 #include "xs_Float.h"
 #include "except.h"
+#include "i_module.h"
+#include "cmdlib.h"
 
 #ifdef HAVE_SNDFILE
+
+FModule SndFileModule{"SndFile"};
+
+#include "sndload.h"
+
+
+#ifdef _WIN32
+#define SNDFILELIB "libsndfile-1.dll"
+#elif defined(__APPLE__)
+#define SNDFILELIB "libsndfile.1.dylib"
+#else
+#define SNDFILELIB "libsndfile.so.1"
+#endif
+
+bool IsSndFilePresent()
+{
+#if !defined DYN_SNDFILE
+	return true;
+#else
+	static bool cached_result = false;
+	static bool done = false;
+
+	if (!done)
+	{
+		done = true;
+		cached_result = SndFileModule.Load({NicePath("$PROGDIR/" SNDFILELIB), SNDFILELIB});
+	}
+	return cached_result;
+#endif
+}
+
 
 sf_count_t SndFileDecoder::file_get_filelen(void *user_data)
 {
@@ -53,27 +118,21 @@ SndFileDecoder::~SndFileDecoder()
 
 bool SndFileDecoder::open(FileReader *reader)
 {
-#ifdef _MSC_VER
-	__try {
-#endif
-		SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
+	if (!IsSndFilePresent()) return false;
+	
+	SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
-		Reader = reader;
-		SndInfo.format = 0;
-		SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
-		if (SndFile)
-		{
-			if (SndInfo.channels == 1 || SndInfo.channels == 2)
-				return true;
+	Reader = reader;
+	SndInfo.format = 0;
+	SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
+	if (SndFile)
+	{
+		if (SndInfo.channels == 1 || SndInfo.channels == 2)
+			return true;
 
-			sf_close(SndFile);
-			SndFile = 0;
-		}
-#ifdef _MSC_VER
-	} __except (CheckException(GetExceptionCode())) {
-		// this means that the delay loaded decoder DLL was not found.
+		sf_close(SndFile);
+		SndFile = 0;
 	}
-#endif
     return false;
 }
 

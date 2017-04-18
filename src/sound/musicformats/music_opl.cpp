@@ -32,7 +32,7 @@
 */
 
 #include "i_musicinterns.h"
-#include "oplsynth/muslib.h"
+#include "oplsynth/musicblock.h"
 #include "oplsynth/opl.h"
 
 static bool OPL_Active;

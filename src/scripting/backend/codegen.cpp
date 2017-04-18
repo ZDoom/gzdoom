@@ -7445,7 +7445,7 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 			else
 			{
 				start.Free(build);
-				ExpEmit dest(build, ValueType->GetRegType());
+				ExpEmit dest(build, ValueType->GetRegType(), ValueType->GetRegCount());
 				// added 1 to use the *_R version that takes the offset from a register
 				build->Emit(arraytype->ElementType->GetLoadOp() + 1, dest.RegNum, start.RegNum, indexwork.RegNum);
 				return dest;

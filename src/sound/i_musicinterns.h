@@ -10,7 +10,6 @@
 #include "wildmidi/wildmidi_lib.h"
 
 void I_InitMusicWin32 ();
-void I_ShutdownMusicWin32 ();
 
 extern float relative_volume;
 

@@ -122,6 +122,10 @@ void I_BuildALDeviceList(FOptionValues *opt)
 #endif
 }
 
+
+ReverbContainer *ForcedEnvironment;
+
+
 #ifndef NO_OPENAL
 
 
@@ -629,8 +633,6 @@ public:
 	}
 };
 
-
-extern ReverbContainer *ForcedEnvironment;
 
 #define AREA_SOUND_RADIUS  (32.f)
 

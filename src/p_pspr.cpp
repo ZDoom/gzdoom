@@ -1,14 +1,27 @@
-
-//**************************************************************************
-//**
-//** p_pspr.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile: p_pspr.c,v $
-//** $Revision: 1.105 $
-//** $Date: 96/01/06 03:23:35 $
-//** $Author: bgokey $
-//**
-//**************************************************************************
+//-----------------------------------------------------------------------------
+//
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+// Copyright 2016 Leonard2
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -122,7 +135,6 @@ DEFINE_FIELD(DPSprite, oldy)
 DEFINE_FIELD(DPSprite, firstTic)
 DEFINE_FIELD(DPSprite, Tics)
 DEFINE_FIELD(DPSprite, alpha)
-DEFINE_FIELD(DPSprite, RenderStyle)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddWeapon, PSPF_ADDWEAPON)
 DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
@@ -147,7 +159,7 @@ DPSprite::DPSprite(player_t *owner, AActor *caller, int id)
   processPending(true)
 {
 	alpha = 1;
-	RenderStyle = STYLE_Normal;
+	Renderstyle = STYLE_Normal;
 
 	DPSprite *prev = nullptr;
 	DPSprite *next = Owner->psprites;
@@ -297,6 +309,79 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetPSprite)	// the underscore is needed to g
 	ACTION_RETURN_OBJECT(self->GetPSprite((PSPLayers)id));
 }
 
+
+
+std::pair<FRenderStyle, float> DPSprite::GetRenderStyle(FRenderStyle ownerstyle, double owneralpha)
+{
+	FRenderStyle returnstyle, mystyle;
+	double returnalpha;
+
+	ownerstyle.CheckFuzz();
+	mystyle = Renderstyle;
+	mystyle.CheckFuzz();
+	if (Flags & PSPF_RENDERSTYLE)
+	{
+		ownerstyle.CheckFuzz();
+		if (Flags & PSPF_FORCESTYLE)
+		{
+			returnstyle = mystyle;
+		}
+		else if (ownerstyle.BlendOp != STYLEOP_Add)
+		{
+			// all styles that do more than simple blending need to be fully preserved.
+			returnstyle = ownerstyle;
+		}
+		else
+		{
+			returnstyle = mystyle;
+			if (ownerstyle.DestAlpha == STYLEALPHA_One)
+			{
+				// If the owner is additive and the overlay translucent, force additive result.
+				returnstyle.DestAlpha = STYLEALPHA_One;
+			}
+			if (ownerstyle.Flags & (STYLEF_ColorIsFixed|STYLEF_RedIsAlpha))
+			{
+				// If the owner's style is a stencil type, this must be preserved.
+				returnstyle.Flags = ownerstyle.Flags;
+			}
+		}
+	}
+	else
+	{
+		returnstyle = ownerstyle;
+	}
+
+	if ((Flags & PSPF_FORCEALPHA) && returnstyle.BlendOp != STYLEOP_Fuzz && returnstyle.BlendOp != STYLEOP_Shadow)
+	{
+		// ALWAYS take priority if asked for, except fuzz. Fuzz does absolutely nothing
+		// no matter what way it's changed.
+		returnalpha = alpha;
+		returnstyle.Flags &= ~(STYLEF_Alpha1 | STYLEF_TransSoulsAlpha);
+	}
+	else if (Flags & PSPF_ALPHA)
+	{
+		// Set the alpha based on if using the overlay's own or not. Also adjust
+		// and override the alpha if not forced.
+		if (returnstyle.BlendOp != STYLEOP_Add)
+		{
+			returnalpha = owneralpha;
+		}
+		else
+		{
+			returnalpha = owneralpha * alpha;
+		}
+	}
+
+	// Should normal renderstyle come out on top at the end and we desire alpha,
+	// switch it to translucent. Normal never applies any sort of alpha.
+	if (returnstyle.BlendOp == STYLEOP_Add && returnstyle.SrcAlpha == STYLEALPHA_One && returnstyle.DestAlpha == STYLEALPHA_Zero && returnalpha < 1.)
+	{
+		returnstyle = LegacyRenderStyles[STYLE_Translucent];
+		returnalpha = owneralpha * alpha;
+	}
+
+	return{ returnstyle, clamp<float>(float(alpha), 0.f, 1.f) };
+}
 
 //---------------------------------------------------------------------------
 //
@@ -1237,7 +1322,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_OverlayRenderStyle)
 		if (pspr == nullptr || style >= STYLE_Count || style < 0)
 			return 0;
 
-		pspr->RenderStyle = style;
+		pspr->Renderstyle = ERenderStyle(style);
 	}
 	return 0;
 }
@@ -1472,7 +1557,7 @@ void DPSprite::Serialize(FSerializer &arc)
 		("oldx", oldx)
 		("oldy", oldy)
 		("alpha", alpha)
-		("renderstyle", RenderStyle);
+		("renderstyle_", Renderstyle);	// The underscore is intentional to avoid problems with old savegames which had this as an ERenderStyle (which is not future proof.)
 }
 
 //------------------------------------------------------------------------

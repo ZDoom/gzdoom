@@ -9,7 +9,12 @@
 #include <stddef.h>
 typedef ptrdiff_t ssize_t;
 #endif
+
+#ifndef DYN_MPG123
 #include "mpg123.h"
+#else
+#include "thirdparty/mpg123.h"
+#endif
 
 struct MPG123Decoder : public SoundDecoder
 {

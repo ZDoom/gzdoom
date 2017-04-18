@@ -16,19 +16,6 @@ configuration:
   - Debug
   - Release
 
-cache:
-  - ci_deps_win_v01.zip
-
-environment:
-  # Update dependencies here: https://github.com/coelckers/gzdoom/releases/tag/ci_deps
-  DEPS_URL: https://github.com/coelckers/gzdoom/releases/download/ci_deps/
-  DEPS_FILENAME: ci_deps_win_v01.zip
-
-install:
-  - if not exist "%DEPS_FILENAME%"
-    appveyor DownloadFile "%DEPS_URL%%DEPS_FILENAME%"
-  - 7z x -y "%DEPS_FILENAME%"
-
 before_build:
   - md build
   - cd build
@@ -38,14 +25,6 @@ before_build:
   - set DEPS_LIB_DIR=%APPVEYOR_BUILD_FOLDER%\ci_deps_win\lib\%PLATFORM%
   - cmake -G "%CMAKE_GENERATOR_NAME%" -T "v140_xp"
     -DCMAKE_BUILD_TYPE="%CONFIGURATION%"
-    -DFMOD_INCLUDE_DIR="%DEPS_INCLUDE_DIR%"
-    -DFMOD_LIBRARY="%DEPS_LIB_DIR%\fmodex.lib"
-    -DOPENAL_INCLUDE_DIR="%DEPS_INCLUDE_DIR%"
-    -DOPENAL_LIBRARY="%DEPS_LIB_DIR%\OpenAL32.lib"
-    -DMPG123_INCLUDE_DIR="%DEPS_INCLUDE_DIR%"
-    -DMPG123_LIBRARIES="%DEPS_LIB_DIR%\libmpg123-0.lib"
-    -DSNDFILE_INCLUDE_DIR="%DEPS_INCLUDE_DIR%"
-    -DSNDFILE_LIBRARY="%DEPS_LIB_DIR%\libsndfile-1.lib"
     ..
 
 build:

@@ -2,7 +2,6 @@
 //---------------------------------------------------------------------------
 //
 // Voxel rendering
-// Copyright(c) 1993 - 1997 Ken Silverman
 // Copyright(c) 1998 - 2016 Randy Heit
 // All rights reserved.
 //

@@ -125,7 +125,7 @@ public:
 	// object is destroyed.
 	virtual void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special=NULL);
 	virtual void SetPointer(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL);
-	virtual void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const;
+	virtual void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL);
 
 	// Initialize the value, if needed (e.g. strings)
 	virtual void InitializeValue(void *addr, const void *def) const;
@@ -512,7 +512,7 @@ public:
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
 	void InitializeValue(void *addr, const void *def) const override;
 	void DestroyValue(void *addr) const override;
-	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) const override;
+	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) override;
 };
 
 class PMap : public PCompoundType
@@ -544,6 +544,7 @@ public:
 	bool ReadValue(FSerializer &ar, const char *key,void *addr) const override;
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *specials) override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *specials) override;
+	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *special) override;
 };
 
 class PPrototype : public PCompoundType

@@ -5,7 +5,11 @@
 
 #ifdef HAVE_SNDFILE
 
+#ifndef DYN_SNDFILE
 #include "sndfile.h"
+#else
+#include "thirdparty/sndfile.h"
+#endif
 
 struct SndFileDecoder : public SoundDecoder
 {

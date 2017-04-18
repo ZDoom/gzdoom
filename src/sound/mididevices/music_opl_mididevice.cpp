@@ -83,7 +83,11 @@ OPLMIDIDevice::OPLMIDIDevice(const char *args)
 	OPL_SetCore(args);
 	FullPan = opl_fullpan;
 	FWadLump data = Wads.OpenLumpName("GENMIDI");
-	OPLloadBank(data);
+
+	uint8_t filehdr[8];
+	data.Read(filehdr, 8);
+	if (memcmp(filehdr, "#OPL_II#", 8)) I_Error("Corrupt GENMIDI lump");
+	data.Read(OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
 	SampleRate = (int)OPL_SAMPLE_RATE;
 }
 
@@ -97,15 +101,15 @@ OPLMIDIDevice::OPLMIDIDevice(const char *args)
 
 int OPLMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
-	if (io == NULL || 0 == (NumChips = io->OPLinit(opl_numchips, FullPan, true)))
+	if (io == NULL || 0 == (NumChips = io->Init(opl_numchips, FullPan, true)))
 	{
 		return 1;
 	}
 	int ret = OpenStream(14, (FullPan || io->IsOPL3) ? 0 : SoundStream::Mono, callback, userdata);
 	if (ret == 0)
 	{
-		OPLstopMusic();
-		OPLplayMusic(100);
+		stopAllVoices();
+		resetAllControllers(100);
 		DEBUGOUT("========= New song started ==========\n", 0, 0, 0);
 	}
 	return ret;
@@ -120,7 +124,7 @@ int OPLMIDIDevice::Open(MidiCallback callback, void *userdata)
 void OPLMIDIDevice::Close()
 {
 	SoftSynthMIDIDevice::Close();
-	io->OPLdeinit();
+	io->Reset();
 }
 
 //==========================================================================
@@ -176,7 +180,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 	int command = status & 0xF0;
 	int channel = status & 0x0F;
 
-	// Swap channels 9 and 15, because their roles are reversed
+	// Swap voices 9 and 15, because their roles are reversed
 	// in MUS and MIDI formats.
 	if (channel == 9)
 	{
@@ -191,12 +195,12 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 	{
 	case MIDI_NOTEOFF:
 		playingcount--;
-		OPLreleaseNote(channel, parm1);
+		noteOff(channel, parm1);
 		break;
 
 	case MIDI_NOTEON:
 		playingcount++;
-		OPLplayNote(channel, parm1, parm2);
+		noteOn(channel, parm1, parm2);
 		break;
 
 	case MIDI_POLYPRESS:
@@ -206,26 +210,27 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 	case MIDI_CTRLCHANGE:
 		switch (parm1)
 		{
-		case 0:		OPLchangeControl(channel, ctrlBank, parm2);			break;
-		case 1:		OPLchangeControl(channel, ctrlModulation, parm2);	break;
-		case 6:		OPLchangeControl(channel, ctrlDataEntryHi, parm2);	break;
-		case 7:		OPLchangeControl(channel, ctrlVolume, parm2);		break;
-		case 10:	OPLchangeControl(channel, ctrlPan, parm2);			break;
-		case 11:	OPLchangeControl(channel, ctrlExpression, parm2);	break;
-		case 38:	OPLchangeControl(channel, ctrlDataEntryLo, parm2);	break;
-		case 64:	OPLchangeControl(channel, ctrlSustainPedal, parm2);	break;
-		case 67:	OPLchangeControl(channel, ctrlSoftPedal, parm2);	break;
-		case 91:	OPLchangeControl(channel, ctrlReverb, parm2);		break;
-		case 93:	OPLchangeControl(channel, ctrlChorus, parm2);		break;
-		case 98:	OPLchangeControl(channel, ctrlNRPNLo, parm2);		break;
-		case 99:	OPLchangeControl(channel, ctrlNRPNHi, parm2);		break;
-		case 100:	OPLchangeControl(channel, ctrlRPNLo, parm2);		break;
-		case 101:	OPLchangeControl(channel, ctrlRPNHi, parm2);		break;
-		case 120:	OPLchangeControl(channel, ctrlSoundsOff, parm2);	break;
-		case 121:	OPLresetControllers(channel, 100);					break;
-		case 123:	OPLchangeControl(channel, ctrlNotesOff, parm2);		break;
-		case 126:	OPLchangeControl(channel, ctrlMono, parm2);			break;
-		case 127:	OPLchangeControl(channel, ctrlPoly, parm2);			break;
+		// some controllers here get passed on but are not handled by the player.
+		//case 0:	changeBank(channel, parm2);							break;
+		case 1:		changeModulation(channel, parm2);					break;
+		case 6:		changeExtended(channel, ctrlDataEntryHi, parm2);	break;
+		case 7:		changeVolume(channel, parm2, false);				break;
+		case 10:	changePanning(channel, parm2);						break;
+		case 11:	changeVolume(channel, parm2, true);					break;
+		case 38:	changeExtended(channel, ctrlDataEntryLo, parm2);	break;
+		case 64:	changeSustain(channel, parm2);						break;
+		//case 67:	changeSoftPedal(channel, parm2);					break;
+		//case 91:	changeReverb(channel, parm2);						break;
+		//case 93:	changeChorus(channel, parm2);						break;
+		case 98:	changeExtended(channel, ctrlNRPNLo, parm2);			break;
+		case 99:	changeExtended(channel, ctrlNRPNHi, parm2);			break;
+		case 100:	changeExtended(channel, ctrlRPNLo, parm2);			break;
+		case 101:	changeExtended(channel, ctrlRPNHi, parm2);			break;
+		case 120:	allNotesOff(channel, parm2);						break;
+		case 121:	resetControllers(channel, 100);						break;
+		case 123:	notesOff(channel, parm2);							break;
+		//case 126:	changeMono(channel, parm2);							break;
+		//case 127:	changePoly(channel, parm2);							break;
 		default:
 			DEBUGOUT("Unhandled controller: Channel %d, controller %d, value %d\n", channel, parm1, parm2);
 			break;
@@ -233,7 +238,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		break;
 
 	case MIDI_PRGMCHANGE:
-		OPLprogramChange(channel, parm1);
+		programChange(channel, parm1);
 		break;
 
 	case MIDI_CHANPRESS:
@@ -241,7 +246,7 @@ void OPLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		break;
 
 	case MIDI_PITCHBEND:
-		OPLpitchWheel(channel, parm1 | (parm2 << 7));
+		changePitch(channel, parm1, parm2);
 		break;
 	}
 }
@@ -289,17 +294,17 @@ FString OPLMIDIDevice::GetStats()
 {
 	FString out;
 	char star[3] = { TEXTCOLOR_ESCAPE, 'A', '*' };
-	for (uint32_t i = 0; i < io->OPLchannels; ++i)
+	for (uint32_t i = 0; i < io->NumChannels; ++i)
 	{
-		if (channels[i].flags & CH_FREE)
+		if (voices[i].index == -1)
 		{
 			star[1] = CR_BRICK + 'A';
 		}
-		else if (channels[i].flags & CH_SUSTAIN)
+		else if (voices[i].sustained)
 		{
 			star[1] = CR_ORANGE + 'A';
 		}
-		else if (channels[i].flags & CH_SECONDARY)
+		else if (voices[i].current_instr_voice == &voices[i].current_instr->voices[1])
 		{
 			star[1] = CR_BLUE + 'A';
 		}

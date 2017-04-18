@@ -1,5 +1,7 @@
 #include "critsec.h"
-#include "muslib.h"
+#include "musicblock.h"
+
+class FileReader;
 
 class OPLmusicBlock : public musicBlock
 {
@@ -16,6 +18,9 @@ protected:
 	virtual int PlayTick() = 0;
 	void OffsetSamples(float *buff, int count);
 
+	uint8_t *score;
+	uint8_t *scoredata;
+	int playingcount;
 	double NextTickIn;
 	double SamplesPerTick;
 	int NumChips;

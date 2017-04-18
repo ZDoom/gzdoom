@@ -1,25 +1,60 @@
-﻿// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2017 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Moving object handling. Spawn functions.
 //
 //-----------------------------------------------------------------------------
+
+/* For code that originates from ZDoom the following applies:
+**
+**---------------------------------------------------------------------------
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 // HEADER FILES ------------------------------------------------------------
 #include <float.h>

@@ -183,7 +183,7 @@ void PType::SetPointer(void *base, unsigned offset, TArray<size_t> *stroffs)
 {
 }
 
-void PType::SetPointerArray(void *base, unsigned offset, TArray<size_t> *stroffs) const
+void PType::SetPointerArray(void *base, unsigned offset, TArray<size_t> *stroffs)
 {
 }
 
@@ -1951,7 +1951,7 @@ void PDynArray::SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffs
 //
 //==========================================================================
 
-void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special) const
+void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special)
 {
 	if (ElementType->isObjectPointer())
 	{
@@ -2181,6 +2181,26 @@ void PStruct::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 		if (field && !(field->Flags & VARF_Transient))
 		{
 			field->Type->SetPointer(base, unsigned(offset + field->Offset), special);
+		}
+	}
+}
+
+//==========================================================================
+//
+// PStruct :: SetPointerArray
+//
+//==========================================================================
+
+void PStruct::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special)
+{
+	auto it = Symbols.GetIterator();
+	PSymbolTable::MapType::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto field = dyn_cast<PField>(pair->Value);
+		if (field && !(field->Flags & VARF_Transient))
+		{
+			field->Type->SetPointerArray(base, unsigned(offset + field->Offset), special);
 		}
 	}
 }

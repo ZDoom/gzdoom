@@ -3,7 +3,8 @@
 ** Implements the type information class
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2010 Randy Heit
+** Copyright 1998-2016 Randy Heit
+** Copyright 2005-2016 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

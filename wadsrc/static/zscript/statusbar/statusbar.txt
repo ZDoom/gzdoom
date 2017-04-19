@@ -978,7 +978,7 @@ class BaseStatusBar native ui
 		Vector2 texsize = TexMan.GetScaledSize(ontex);
 		[position, flags] = AdjustPosition(position, flags, texsize.X, texsize.Y);
 		
-		double value = clamp(curval / maxval, 0, 1);
+		double value = (maxval != 0) ? clamp(curval / maxval, 0, 1) : 0;
 		if(border != 0) value = 1. - value; //invert since the new drawing method requires drawing the bg on the fg.
 		
 		

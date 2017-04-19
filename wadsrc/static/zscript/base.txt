@@ -93,6 +93,8 @@ struct TexMan
 	native static Vector2 GetScaledSize(TextureID tex);
 	native static Vector2 GetScaledOffset(TextureID tex);
 	native static int CheckRealHeight(TextureID tex);
+
+	native static void SetCameraToTexture(Actor viewpoint, String texture, int fov);
 }
 
 enum DrawTextureTags

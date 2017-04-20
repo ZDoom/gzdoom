@@ -532,8 +532,11 @@ void PClassActor::SetPainChance(FName type, int chance)
 {
 	for (auto & p : ActorInfo()->PainChances)
 	{
-		if (p.first == type) p.second = chance;
-		return;
+		if (p.first == type)
+		{
+			p.second = chance;
+			return;
+		}
 	}
 
 	if (chance >= 0) 

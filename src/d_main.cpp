@@ -2749,6 +2749,8 @@ void D_DoomMain (void)
 			*(afunc->VMPointer) = NULL;
 		}
 
+		GC::DelSoftRootHead();
+
 		PClass::StaticShutdown();
 
 		GC::FullGC();					// perform one final garbage collection after shutdown

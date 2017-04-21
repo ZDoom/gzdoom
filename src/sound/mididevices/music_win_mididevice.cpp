@@ -659,33 +659,47 @@ void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dw
 
 static bool IgnoreMIDIVolume(UINT id)
 {
-#ifndef __GNUC__
 	MIDIOUTCAPS caps;
+	bool mustcheck = false;
 
 	if (MMSYSERR_NOERROR == midiOutGetDevCaps(id, &caps, sizeof(caps)))
 	{
+		if (caps.wTechnology == MIDIDEV_MAPPER)
+		{
+			// We cannot determine what this is so we have to assume the worst, as the default
+			// devive's volume control is irreparably broken.
+			mustcheck = true;
+		}
 		// The Microsoft GS Wavetable Synth advertises itself as MIDIDEV_SWSYNTH with a VOLUME control.
 		// If the one we're using doesn't match that, we don't need to bother checking the name.
 		if (caps.wTechnology == MIDIDEV_SWSYNTH && (caps.dwSupport & MIDICAPS_VOLUME))
 		{
 			if (strncmp(caps.szPname, "Microsoft GS", 12) == 0)
 			{
-				IMMDeviceEnumerator *enumerator;
-
-				// Now try to create an IMMDeviceEnumerator interface. If it succeeds,
-				// we know we're using the new audio stack introduced with Vista and
-				// should ignore this MIDI device's volume control.
-				if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
-											   __uuidof(IMMDeviceEnumerator), (void**)&enumerator))
-					&& enumerator != nullptr)
-				{
-					enumerator->Release();
-					return true;
-				}
+				mustcheck = true;
 			}
 		}
-	}
+		if (mustcheck)
+		{
+#ifndef __GNUC__
+			IMMDeviceEnumerator *enumerator;
+
+			// Now try to create an IMMDeviceEnumerator interface. If it succeeds,
+			// we know we're using the new audio stack introduced with Vista and
+			// should ignore this MIDI device's volume control.
+			if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
+				__uuidof(IMMDeviceEnumerator), (void**)&enumerator))
+				&& enumerator != nullptr)
+			{
+				enumerator->Release();
+				return true;
+			}
+#else
+			// assume the worst and consider volume control broken.
+			return true;
 #endif
+		}
+	}
 	return false;
 }
 

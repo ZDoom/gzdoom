@@ -269,11 +269,13 @@ class Powerup : Inventory
 
 	//===========================================================================
 	//
-	// APowerup :: DrawPowerup
+	// AInventory :: GetPowerupIcon
+	//
+	// Returns the icon that should be drawn for an active powerup.
 	//
 	//===========================================================================
 
-	override TextureID GetPowerupIcon()
+	virtual clearscope version("2.5") TextureID GetPowerupIcon() const
 	{
 		return Icon;
 	}

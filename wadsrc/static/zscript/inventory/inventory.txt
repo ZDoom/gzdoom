@@ -860,21 +860,6 @@ class Inventory : Actor native
 
 	//===========================================================================
 	//
-	// AInventory :: GetPowerupIcon
-	//
-	// Returns the icon that should be drawn for an active powerup.
-	//
-	//===========================================================================
-
-	virtual clearscope version("2.5") TextureID GetPowerupIcon() const
-	{
-		TextureID id;
-		id.SetInvalid();
-		return id;
-	}
-
-	//===========================================================================
-	//
 	// AInventory :: AbsorbDamage
 	//
 	// Allows inventory items (primarily armor) to reduce the amount of damage

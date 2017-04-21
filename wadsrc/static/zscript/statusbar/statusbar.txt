@@ -813,18 +813,22 @@ class BaseStatusBar native ui
 		// that can obey AltHUD rules - which this cannot.
 		Vector2 pos = (-20, POWERUPICONSIZE * 5 / 4);
 		double maxpos = screen.GetWidth() / 2;
-		for (let item = CPlayer.mo.Inv; item != NULL; item = item.Inv)
+		for (let iitem = CPlayer.mo.Inv; iitem != NULL; iitem = iitem.Inv)
 		{
-			let icon = item.GetPowerupIcon();
-			if (icon.IsValid())
+			let item = Powerup(iitem);
+			if (item != null)
 			{
-				// Each icon gets a 32x32 block.
-				DrawTexture(icon, pos, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
-				pos.x -= POWERUPICONSIZE;
-				if (pos.x < -maxpos)
+				let icon = item.GetPowerupIcon();
+				if (icon.IsValid() && !item.IsBlinking())
 				{
-					pos.x = -20;
-					pos.y += POWERUPICONSIZE * 3 / 2;
+					// Each icon gets a 32x32 block.
+					DrawTexture(icon, pos, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
+					pos.x -= POWERUPICONSIZE;
+					if (pos.x < -maxpos)
+					{
+						pos.x = -20;
+						pos.y += POWERUPICONSIZE * 3 / 2;
+					}
 				}
 			}
 		}

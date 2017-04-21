@@ -32,6 +32,7 @@
 #include "files.h"
 #include "w_wad.h"
 
+// Unlike the other softsynths, this one cannot change its config data at run time. 
 CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, midi_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, gus_patchdir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

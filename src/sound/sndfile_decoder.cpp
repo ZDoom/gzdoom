@@ -39,7 +39,6 @@
 #include "templates.h"
 #include "files.h"
 #include "xs_Float.h"
-#include "except.h"
 #include "i_module.h"
 #include "cmdlib.h"
 

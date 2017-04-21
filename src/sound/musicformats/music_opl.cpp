@@ -53,7 +53,13 @@ CUSTOM_CVAR (Int, opl_numchips, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, opl_core, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
 int current_opl_core;
 
 // Get OPL core override from $mididevice

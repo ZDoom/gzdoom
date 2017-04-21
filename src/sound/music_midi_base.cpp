@@ -38,6 +38,10 @@
 #include "c_dispatch.h"
 #include "i_music.h"
 #include "i_system.h"
+#include "gameconfigfile.h"
+#include "cmdlib.h"
+#include "m_misc.h"
+#include "s_sound.h"
 
 #include "templates.h"
 #include "v_text.h"
@@ -76,20 +80,32 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 
 }
 
-static void MIDIDeviceChanged(int newdev)
+extern MusPlayingInfo mus_playing;
+
+void MIDIDeviceChanged(int newdev, bool force)
 {
 	static int oldmididev = INT_MIN;
 
 	// If a song is playing, move it to the new device.
-	if (oldmididev != newdev)
+	if (oldmididev != newdev || force)
 	{
 		if (currSong != NULL && currSong->IsMIDI())
 		{
 			MusInfo *song = currSong;
 			if (song->m_Status == MusInfo::STATE_Playing)
 			{
-				song->Stop();
-				song->Start(song->m_Looping);
+				if (song->GetDeviceType() == MDEV_FLUIDSYNTH && force)
+				{
+					// FluidSynth must reload the song to change the patch set.
+					auto mi = mus_playing;
+					S_StopMusic(true);
+					S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
+				}
+				else
+				{
+					song->Stop();
+					song->Start(song->m_Looping);
+				}
 			}
 		}
 		else
@@ -97,7 +113,8 @@ static void MIDIDeviceChanged(int newdev)
 			S_MIDIDeviceChanged();
 		}
 	}
-	oldmididev = newdev;
+	// 'force' 
+	if (!force) oldmididev = newdev;
 }
 
 #ifdef _WIN32

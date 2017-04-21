@@ -71,6 +71,7 @@ public:
 	void Stop();
 	bool IsOpen();
 	void TimidityVolumeChanged();
+	int GetDeviceType() const override { return MDEV_TIMIDITY; }
 
 protected:
 	bool LaunchTimidity();
@@ -105,10 +106,17 @@ BOOL SafeTerminateProcess(HANDLE hProcess, UINT uExitCode);
 static char TimidityTitle[] = "TiMidity (" GAMENAME " Launched)";
 const char TimidityPPMIDIDevice::EventName[] = "TiMidity Killer";
 
-CVAR (String, timidity_exe, "timidity.exe", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (String, timidity_exe, "timidity.exe", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 #else
-CVAR (String, timidity_exe, "timidity", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, timidity_exe, "timidity", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 #endif
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 CVAR (String, timidity_extargs, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// extra args to pass to Timidity
 CVAR (String, timidity_chorus, "0", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, timidity_reverb, "0", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

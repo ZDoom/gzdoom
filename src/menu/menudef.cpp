@@ -53,6 +53,7 @@
 #include "cmdlib.h"
 #include "vm.h"
 #include "types.h"
+#include "gameconfigfile.h"
 
 
 
@@ -136,7 +137,7 @@ DEFINE_ACTION_FUNCTION(FOptionValues, GetText)
 }
 
 
-static void DeinitMenus()
+void DeinitMenus()
 {
 	{
 		FOptionMap::Iterator it(OptionValues);
@@ -1285,6 +1286,93 @@ static void InitCrosshairsList()
 
 //=============================================================================
 //
+// Initialize the music configuration submenus
+//
+//=============================================================================
+static void InitMusicMenus()
+{
+	DMenuDescriptor **advmenu = MenuDescriptors.CheckKey("AdvSoundOptions");
+	DMenuDescriptor **gusmenu = MenuDescriptors.CheckKey("GusConfigMenu");
+	DMenuDescriptor **timiditymenu = MenuDescriptors.CheckKey("TimidityExeMenu");
+	DMenuDescriptor **wildmidimenu = MenuDescriptors.CheckKey("WildMidiConfigMenu");
+	DMenuDescriptor **fluidmenu = MenuDescriptors.CheckKey("FluidPatchsetMenu");
+
+	const char *key, *value;
+	if (GameConfig->SetSection("SoundFonts"))
+	{
+		while (GameConfig->NextInSection(key, value))
+		{
+			if (FileExists(value))
+			{
+				if (fluidmenu != nullptr)
+				{
+					auto it = CreateOptionMenuItemCommand(key, FStringf("fluid_patchset %s", NicePath(value).GetChars()), true);
+					static_cast<DOptionMenuDescriptor*>(*fluidmenu)->mItems.Push(it);
+				}
+			}
+		}
+	}
+	else if (advmenu != nullptr)
+	{
+		// Remove the item for this submenu
+		auto d = static_cast<DOptionMenuDescriptor*>(*advmenu);
+		auto it = d->GetItem("FluidPatchsetMenu");
+		if (it != nullptr) d->mItems.Delete(d->mItems.Find(it));
+	}
+	if (GameConfig->SetSection("PatchSets"))
+	{
+		while (GameConfig->NextInSection(key, value))
+		{
+			if (FileExists(value))
+			{
+				if (gusmenu != nullptr)
+				{
+					auto it = CreateOptionMenuItemCommand(key, FStringf("midi_config %s", NicePath(value).GetChars()), true);
+					static_cast<DOptionMenuDescriptor*>(*gusmenu)->mItems.Push(it);
+				}
+				if (wildmidimenu != nullptr)
+				{
+					auto it = CreateOptionMenuItemCommand(key, FStringf("wildmidi_config %s", NicePath(value).GetChars()), true);
+					static_cast<DOptionMenuDescriptor*>(*wildmidimenu)->mItems.Push(it);
+				}
+			}
+		}
+	}
+	else if (advmenu != nullptr)
+	{
+		// Remove the item for this submenu
+		auto d = static_cast<DOptionMenuDescriptor*>(*advmenu);
+		auto it = d->GetItem("GusConfigMenu");
+		if (it != nullptr) d->mItems.Delete(d->mItems.Find(it));
+		it = d->GetItem("WildMidiConfigMenu");
+		if (it != nullptr) d->mItems.Delete(d->mItems.Find(it));
+	}
+#ifdef _WIN32	// Different Timidity paths only make sense if they can be stored in arbitrary paths with local configs (i.e. not if things are done the Linux way)
+	if (GameConfig->SetSection("TimidityExes"))
+	{
+		while (GameConfig->NextInSection(key, value))
+		{
+			if (FileExists(value))
+			{
+				if (timiditymenu != nullptr)
+				{
+					auto it = CreateOptionMenuItemCommand(key, FStringf("timidity_exe %s", NicePath(value).GetChars()), true);
+					static_cast<DOptionMenuDescriptor*>(*timiditymenu)->mItems.Push(it);
+				}
+			}
+		}
+	}
+	else
+	{
+		auto d = static_cast<DOptionMenuDescriptor*>(*advmenu);
+		auto it = d->GetItem("TimidityExeMenu");
+		if (it != nullptr) d->mItems.Delete(d->mItems.Find(it));
+	}
+#endif
+}
+
+//=============================================================================
+//
 // With the current workings of the menu system this cannot be done any longer
 // from within the respective CCMDs.
 //
@@ -1332,6 +1420,7 @@ void M_CreateMenus()
 	BuildEpisodeMenu();
 	BuildPlayerclassMenu();
 	InitCrosshairsList();
+	InitMusicMenus();
 	InitKeySections();
 
 	FOptionValues **opt = OptionValues.CheckKey(NAME_Mididevices);

@@ -103,7 +103,13 @@ extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize
 
 CVAR(String, fluid_lib, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-CVAR(String, fluid_patchset, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, fluid_patchset, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_FLUIDSYNTH)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
 
 CUSTOM_CVAR(Float, fluid_gain, 0.5, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {

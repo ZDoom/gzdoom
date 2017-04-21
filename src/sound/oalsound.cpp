@@ -42,7 +42,6 @@
 #include <memory>
 #include <chrono>
 
-#include "except.h"
 #include "doomstat.h"
 #include "templates.h"
 #include "oalsound.h"

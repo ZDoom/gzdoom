@@ -120,15 +120,15 @@ void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end
 			continue;
 		}
 		c -= 3;
-		int len = LittleLong(*(int*)c);
-		if (len > 1000000 || len <= (eqp - c + 1))
+		int len = c[0] + 256*c[1] + 65536*c[2];
+		if (c[3] || len > 1000000 || len <= (eqp - c + 1))
 		{
 			// length looks fishy so retry with the next '='
 			continue;
 		}
 		c -= 4;
-		count = LittleLong(*(int*)c);
-		if (count <= 0 || count > 1000)
+		count = c[0] + 256 * c[1];
+		if (c[2] || c[3] || count <= 0 || count > 1000)
 		{
 			// very unlikely to have 1000 tags
 			continue;

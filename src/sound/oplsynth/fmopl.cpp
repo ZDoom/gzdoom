@@ -1,37 +1,22 @@
-/* 
+// license:GPL-2.0+
+// copyright-holders:Jarek Burczynski,Tatsuyuki Satoh
+/*
 
-This file is based on fmopl.c from MAME 0.95. The non-YM3816 parts have been
+This file is based on fmopl.c from MAME. The non-YM3816 parts have been
 ripped out in the interest of making this simpler, since Doom music doesn't
 need them. I also made it render the sound a voice at a time instead of a
 sample at a time, so unused voices don't waste time being calculated. If all
 voices are playing, it's not much difference, but it does offer a big
 improvement when only a few voices are playing.
 
-Here is the appropriate section from mame.txt:
 
-VI. Reuse of Source Code
---------------------------
-   This chapter might not apply to specific portions of MAME (e.g. CPU
-   emulators) which bear different copyright notices.
-   The source code cannot be used in a commercial product without the written
-   authorization of the authors. Use in non-commercial products is allowed, and
-   indeed encouraged.  If you use portions of the MAME source code in your
-   program, however, you must make the full source code freely available as
-   well.
-   Usage of the _information_ contained in the source code is free for any use.
-   However, given the amount of time and energy it took to collect this
-   information, if you find new information we would appreciate if you made it
-   freely available as well.
 
-*/
-
-/*
 **
 ** File: fmopl.c - software implementation of FM sound generator
 **                                            types OPL and OPL2
 **
-** Copyright (C) 2002,2003 Jarek Burczynski (bujar at mame dot net)
-** Copyright (C) 1999,2000 Tatsuyuki Satoh , MultiArcadeMachineEmulator development
+** Copyright Jarek Burczynski (bujar at mame dot net)
+** Copyright Tatsuyuki Satoh , MultiArcadeMachineEmulator development
 **
 ** Version 0.72
 **
@@ -49,12 +34,12 @@ Revision History:
 
 14-06-2003 Jarek Burczynski:
  - implemented all of the status register flags in Y8950 emulation
- - renamed Y8950SetDeltaTMemory() parameters from _rom_ to _mem_ since
+ - renamed y8950_set_delta_t_memory() parameters from _rom_ to _mem_ since
    they can be either RAM or ROM
 
 08-10-2002 Jarek Burczynski (thanks to Dox for the YM3526 chip)
- - corrected YM3526Read() to always set bit 2 and bit 1
-   to HIGH state - identical to YM3812Read (verified on real YM3526)
+ - corrected ym3526_read() to always set bit 2 and bit 1
+   to HIGH state - identical to ym3812_read (verified on real YM3526)
 
 04-28-2002 Jarek Burczynski:
  - binary exact Envelope Generator (verified on real YM3812);
@@ -62,7 +47,7 @@ Revision History:
    rates are 2 times slower and volume resolution is one bit less
  - modified interface functions (they no longer return pointer -
    that's internal to the emulator now):
-    - new wrapper functions for OPLCreate: YM3526Init(), YM3812Init() and Y8950Init()
+    - new wrapper functions for OPLCreate: ym3526_init(), ym3812_init() and y8950_init()
  - corrected 'off by one' error in feedback calculations (when feedback is off)
  - enabled waveform usage (credit goes to Vlad Romascanu and zazzal22)
  - speeded up noise generator calculations (Nicola Salmoria)
@@ -89,9 +74,9 @@ Revision History:
  - fixed subscription range of attack/decay tables
 
 
-	To do:
-		add delay before key off in CSM mode (see CSMKeyControll)
-		verify volume of the FM part on the Y8950
+    To do:
+        add delay before key off in CSM mode (see CSMKeyControll)
+        verify volume of the FM part on the Y8950
 */
 
 #include <stdio.h>
@@ -199,7 +184,7 @@ struct OPL_SLOT
 	uint8_t   vib;        /* LFO Phase Modulation enable flag (active high)*/
 
 	/* waveform select */
-	unsigned int wavetable;
+	uint16_t  wavetable;
 };
 
 struct OPL_CH

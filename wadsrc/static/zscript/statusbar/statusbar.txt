@@ -769,7 +769,7 @@ class BaseStatusBar native ui
 			// Draw item count
 			if (am_showitems)
 			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, level.found_items, level.total_items), (1, y), 0, highlight);
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, level.found_items, level.total_items), (textdist, y), 0, highlight);
 			}
 		}
 
@@ -813,18 +813,22 @@ class BaseStatusBar native ui
 		// that can obey AltHUD rules - which this cannot.
 		Vector2 pos = (-20, POWERUPICONSIZE * 5 / 4);
 		double maxpos = screen.GetWidth() / 2;
-		for (let item = CPlayer.mo.Inv; item != NULL; item = item.Inv)
+		for (let iitem = CPlayer.mo.Inv; iitem != NULL; iitem = iitem.Inv)
 		{
-			let icon = item.GetPowerupIcon();
-			if (icon.IsValid())
+			let item = Powerup(iitem);
+			if (item != null)
 			{
-				// Each icon gets a 32x32 block.
-				DrawTexture(icon, pos, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
-				pos.x -= POWERUPICONSIZE;
-				if (pos.x < -maxpos)
+				let icon = item.GetPowerupIcon();
+				if (icon.IsValid() && !item.IsBlinking())
 				{
-					pos.x = -20;
-					pos.y += POWERUPICONSIZE * 3 / 2;
+					// Each icon gets a 32x32 block.
+					DrawTexture(icon, pos, DI_SCREEN_RIGHT_TOP, 1.0, (POWERUPICONSIZE, POWERUPICONSIZE));
+					pos.x -= POWERUPICONSIZE;
+					if (pos.x < -maxpos)
+					{
+						pos.x = -20;
+						pos.y += POWERUPICONSIZE * 3 / 2;
+					}
 				}
 			}
 		}
@@ -969,7 +973,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0, double alpha = 1.)
+	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0)
 	{
 		let ontex = TexMan.CheckForTexture(ongfx, TexMan.TYPE_MiscPatch);
 		if (!ontex.IsValid()) return;

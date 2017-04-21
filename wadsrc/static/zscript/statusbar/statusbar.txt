@@ -769,7 +769,7 @@ class BaseStatusBar native ui
 			// Draw item count
 			if (am_showitems)
 			{
-				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, level.found_items, level.total_items), (1, y), 0, highlight);
+				DrawString(mSmallFont, String.Format("%s\34%c %d/%d", Stringtable.Localize("$AM_ITEMS"), crdefault+65, level.found_items, level.total_items), (texdist, y), 0, highlight);
 			}
 		}
 

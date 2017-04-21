@@ -1285,7 +1285,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 
 	if ((loop_start > 0 || loop_end > 0) && loop_end > loop_start && AL.SOFT_loop_points)
 	{
-		ALint loops[2] = { loop_start, loop_end };
+		ALint loops[2] = { static_cast<ALint>(loop_start), static_cast<ALint>(loop_end) };
 		DPrintf(DMSG_NOTIFY, "Setting loop points %d -> %d\n", loops[0], loops[1]);
 		alBufferiv(buffer, AL_LOOP_POINTS_SOFT, loops);
 		getALError();

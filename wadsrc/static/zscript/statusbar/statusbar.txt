@@ -969,7 +969,7 @@ class BaseStatusBar native ui
 	//
 	//============================================================================
 
-	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0, double alpha = 1.)
+	void DrawBar(String ongfx, String offgfx, double curval, double maxval, Vector2 position, int border, int vertical, int flags = 0)
 	{
 		let ontex = TexMan.CheckForTexture(ongfx, TexMan.TYPE_MiscPatch);
 		if (!ontex.IsValid()) return;

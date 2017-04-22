@@ -37,6 +37,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
+#include "x86.h"
 
 int PolyTriangleDrawer::viewport_x;
 int PolyTriangleDrawer::viewport_y;

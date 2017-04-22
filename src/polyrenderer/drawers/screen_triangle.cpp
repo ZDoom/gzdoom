@@ -40,6 +40,7 @@
 #include "poly_drawer32_sse2.h"
 #endif
 #include "poly_drawer8.h"
+#include "x86.h"
 
 namespace
 {

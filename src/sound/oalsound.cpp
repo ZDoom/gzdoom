@@ -1283,7 +1283,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	if (!startass) loop_start = Scale(loop_start, srate, 1000);
 	if (!endass) loop_end = Scale(loop_end, srate, 1000);
 	if (loop_start < 0)	loop_start = 0;
-	if (loop_end >= data.Size() / samplesize) loop_end = data.Size() / samplesize - 1;
+	if (loop_end > data.Size() / samplesize) loop_end = data.Size() / samplesize;
 
 	if ((loop_start > 0 || loop_end > 0) && loop_end > loop_start && AL.SOFT_loop_points)
 	{

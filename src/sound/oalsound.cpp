@@ -1205,7 +1205,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	ChannelConfig chans;
 	SampleType type;
 	int srate;
-	uint32_t loop_start = 0, loop_end = 0;
+	uint32_t loop_start = 0, loop_end = ~0u;
 	bool startass = false, endass = false;
 
 	if (!memcmp(sfxdata, "OggS", 4) || !memcmp(sfxdata, "FLAC", 4))

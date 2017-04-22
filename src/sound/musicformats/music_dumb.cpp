@@ -135,7 +135,6 @@ typedef struct MODMIDICFG
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CVAR(Bool, mod_dumb,					true,  CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_samplerate,				0,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_volramp,					2,	   CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR(Int,  mod_interp,					DUMB_LQ_CUBIC,	CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -779,11 +778,6 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	DUMBFILE *f = NULL;
 	long fpos = 0;
 	input_mod *state = NULL;
-
-	if (!mod_dumb)
-	{
-		return NULL;
-	}
 
 	bool is_it = false;
 	bool is_dos = true;

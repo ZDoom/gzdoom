@@ -582,9 +582,9 @@ DEFINE_ACTION_FUNCTION(DEventHandler, SendNetworkEvent)
 {
 	PARAM_PROLOGUE;
 	PARAM_STRING(name);
-	PARAM_INT(arg1);
-	PARAM_INT(arg2);
-	PARAM_INT(arg3);
+	PARAM_INT_DEF(arg1);
+	PARAM_INT_DEF(arg2);
+	PARAM_INT_DEF(arg3);
 	//
 
 	ACTION_RETURN_BOOL(E_SendNetworkEvent(name, arg1, arg2, arg3, false));

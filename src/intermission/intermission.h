@@ -304,6 +304,7 @@ public:
 	void OnDestroy() override;
 
 	friend void F_AdvanceIntermission();
+	friend void F_StartIntermission(FIntermissionDescriptor *, bool, uint8_t);
 };
 
 

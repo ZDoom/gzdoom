@@ -131,6 +131,11 @@ public:
 	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
 	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
 
+#ifndef NO_SSE
+	static void(*TriDrawers32_SSE2[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
+	static void(*RectDrawers32_SSE2[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
+#endif
+
 	static int FuzzStart;
 };
 

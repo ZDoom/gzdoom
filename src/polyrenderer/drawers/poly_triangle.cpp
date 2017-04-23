@@ -37,6 +37,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
+#include "x86.h"
 
 int PolyTriangleDrawer::viewport_x;
 int PolyTriangleDrawer::viewport_y;
@@ -151,14 +152,8 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, 
 	return sv;
 }
 
-void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread)
+void PolyTriangleDrawer::clip_to_viewport(TriVertex *clippedvert, int numclipvert)
 {
-	// Cull, clip and generate additional vertices as needed
-	TriVertex clippedvert[max_additional_vertices];
-	int numclipvert = clipedge(vert, clippedvert);
-
-#ifdef NO_SSE
-	// Map to 2D viewport:
 	for (int j = 0; j < numclipvert; j++)
 	{
 		auto &v = clippedvert[j];
@@ -173,8 +168,11 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 		v.x = viewport_x + viewport_width * (1.0f + v.x) * 0.5f;
 		v.y = viewport_y + viewport_height * (1.0f - v.y) * 0.5f;
 	}
-#else
-	// Map to 2D viewport:
+}
+
+#ifndef NO_SSE
+void PolyTriangleDrawer::clip_to_viewport_sse2(TriVertex *clippedvert, int numclipvert)
+{
 	__m128 mviewport_x = _mm_set1_ps((float)viewport_x);
 	__m128 mviewport_y = _mm_set1_ps((float)viewport_y);
 	__m128 mviewport_halfwidth = _mm_set1_ps(viewport_width * 0.5f);
@@ -205,7 +203,20 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 		_mm_storeu_ps(&clippedvert[j + 2].x, vz);
 		_mm_storeu_ps(&clippedvert[j + 3].x, vw);
 	}
+}
 #endif
+
+void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread)
+{
+	// Cull, clip and generate additional vertices as needed
+	TriVertex clippedvert[max_additional_vertices];
+	int numclipvert = CPU.bSSE2 ? clipedge_sse2(vert, clippedvert) : clipedge(vert, clippedvert);
+
+	// Map to 2D viewport:
+	if (CPU.bSSE2)
+		clip_to_viewport_sse2(clippedvert, numclipvert);
+	else
+		clip_to_viewport(clippedvert, numclipvert);
 
 	// Keep varyings in -128 to 128 range if possible
 	if (numclipvert > 0)
@@ -255,7 +266,6 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 	
 	// halfspace clip distances
 	static const int numclipdistances = 7;
-#ifdef NO_SSE
 	float clipdistance[numclipdistances * 3];
 	bool needsclipping = false;
 	float *clipd = clipdistance;
@@ -282,43 +292,6 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 		}
 		return 3;
 	}
-#else
-	__m128 mx = _mm_loadu_ps(&verts[0].x);
-	__m128 my = _mm_loadu_ps(&verts[1].x);
-	__m128 mz = _mm_loadu_ps(&verts[2].x);
-	__m128 mw = _mm_setzero_ps();
-	_MM_TRANSPOSE4_PS(mx, my, mz, mw);
-	__m128 clipd0 = _mm_add_ps(mx, mw);
-	__m128 clipd1 = _mm_sub_ps(mw, mx);
-	__m128 clipd2 = _mm_add_ps(my, mw);
-	__m128 clipd3 = _mm_sub_ps(mw, my);
-	__m128 clipd4 = _mm_add_ps(mz, mw);
-	__m128 clipd5 = _mm_sub_ps(mw, mz);
-	__m128 clipd6 = _mm_setr_ps(verts[0].clipDistance0, verts[1].clipDistance0, verts[2].clipDistance0, 0.0f);
-	__m128 mneedsclipping = _mm_cmplt_ps(clipd0, _mm_setzero_ps());
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd1, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd2, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd3, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd4, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd5, _mm_setzero_ps()));
-	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd6, _mm_setzero_ps()));
-	if (_mm_movemask_ps(mneedsclipping) == 0)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			memcpy(clippedvert + i, verts + i, sizeof(TriVertex));
-		}
-		return 3;
-	}
-	float clipdistance[numclipdistances * 4];
-	_mm_storeu_ps(clipdistance, clipd0);
-	_mm_storeu_ps(clipdistance + 4, clipd1);
-	_mm_storeu_ps(clipdistance + 8, clipd2);
-	_mm_storeu_ps(clipdistance + 12, clipd3);
-	_mm_storeu_ps(clipdistance + 16, clipd4);
-	_mm_storeu_ps(clipdistance + 20, clipd5);
-	_mm_storeu_ps(clipdistance + 24, clipd6);
-#endif
 
 	// use barycentric weights while clipping vertices
 	float weights[max_additional_vertices * 3 * 2];
@@ -341,7 +314,6 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 		for (int i = 0; i < inputverts; i++)
 		{
 			int j = (i + 1) % inputverts;
-#ifdef NO_SSE
 			float clipdistance1 =
 				clipdistance[0 * numclipdistances + p] * input[i * 3 + 0] +
 				clipdistance[1 * numclipdistances + p] * input[i * 3 + 1] +
@@ -351,17 +323,6 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 				clipdistance[0 * numclipdistances + p] * input[j * 3 + 0] +
 				clipdistance[1 * numclipdistances + p] * input[j * 3 + 1] +
 				clipdistance[2 * numclipdistances + p] * input[j * 3 + 2];
-#else
-			float clipdistance1 =
-				clipdistance[0 + p * 4] * input[i * 3 + 0] +
-				clipdistance[1 + p * 4] * input[i * 3 + 1] +
-				clipdistance[2 + p * 4] * input[i * 3 + 2];
-
-			float clipdistance2 =
-				clipdistance[0 + p * 4] * input[j * 3 + 0] +
-				clipdistance[1 + p * 4] * input[j * 3 + 1] +
-				clipdistance[2 + p * 4] * input[j * 3 + 2];
-#endif
 
 			// Clip halfspace
 			if ((clipdistance1 >= 0.0f || clipdistance2 >= 0.0f) && outputverts + 1 < max_additional_vertices)
@@ -407,6 +368,129 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 	}
 	return inputverts;
 }
+
+#ifndef NO_SSE
+int PolyTriangleDrawer::clipedge_sse2(const ShadedTriVertex *verts, TriVertex *clippedvert)
+{
+	// Clip and cull so that the following is true for all vertices:
+	// -v.w <= v.x <= v.w
+	// -v.w <= v.y <= v.w
+	// -v.w <= v.z <= v.w
+
+	// halfspace clip distances
+	static const int numclipdistances = 7;
+	__m128 mx = _mm_loadu_ps(&verts[0].x);
+	__m128 my = _mm_loadu_ps(&verts[1].x);
+	__m128 mz = _mm_loadu_ps(&verts[2].x);
+	__m128 mw = _mm_setzero_ps();
+	_MM_TRANSPOSE4_PS(mx, my, mz, mw);
+	__m128 clipd0 = _mm_add_ps(mx, mw);
+	__m128 clipd1 = _mm_sub_ps(mw, mx);
+	__m128 clipd2 = _mm_add_ps(my, mw);
+	__m128 clipd3 = _mm_sub_ps(mw, my);
+	__m128 clipd4 = _mm_add_ps(mz, mw);
+	__m128 clipd5 = _mm_sub_ps(mw, mz);
+	__m128 clipd6 = _mm_setr_ps(verts[0].clipDistance0, verts[1].clipDistance0, verts[2].clipDistance0, 0.0f);
+	__m128 mneedsclipping = _mm_cmplt_ps(clipd0, _mm_setzero_ps());
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd1, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd2, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd3, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd4, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd5, _mm_setzero_ps()));
+	mneedsclipping = _mm_or_ps(mneedsclipping, _mm_cmplt_ps(clipd6, _mm_setzero_ps()));
+	if (_mm_movemask_ps(mneedsclipping) == 0)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			memcpy(clippedvert + i, verts + i, sizeof(TriVertex));
+		}
+		return 3;
+	}
+	float clipdistance[numclipdistances * 4];
+	_mm_storeu_ps(clipdistance, clipd0);
+	_mm_storeu_ps(clipdistance + 4, clipd1);
+	_mm_storeu_ps(clipdistance + 8, clipd2);
+	_mm_storeu_ps(clipdistance + 12, clipd3);
+	_mm_storeu_ps(clipdistance + 16, clipd4);
+	_mm_storeu_ps(clipdistance + 20, clipd5);
+	_mm_storeu_ps(clipdistance + 24, clipd6);
+
+	// use barycentric weights while clipping vertices
+	float weights[max_additional_vertices * 3 * 2];
+	for (int i = 0; i < 3; i++)
+	{
+		weights[i * 3 + 0] = 0.0f;
+		weights[i * 3 + 1] = 0.0f;
+		weights[i * 3 + 2] = 0.0f;
+		weights[i * 3 + i] = 1.0f;
+	}
+
+	// Clip against each halfspace
+	float *input = weights;
+	float *output = weights + max_additional_vertices * 3;
+	int inputverts = 3;
+	for (int p = 0; p < numclipdistances; p++)
+	{
+		// Clip each edge
+		int outputverts = 0;
+		for (int i = 0; i < inputverts; i++)
+		{
+			int j = (i + 1) % inputverts;
+			float clipdistance1 =
+				clipdistance[0 + p * 4] * input[i * 3 + 0] +
+				clipdistance[1 + p * 4] * input[i * 3 + 1] +
+				clipdistance[2 + p * 4] * input[i * 3 + 2];
+
+			float clipdistance2 =
+				clipdistance[0 + p * 4] * input[j * 3 + 0] +
+				clipdistance[1 + p * 4] * input[j * 3 + 1] +
+				clipdistance[2 + p * 4] * input[j * 3 + 2];
+
+			// Clip halfspace
+			if ((clipdistance1 >= 0.0f || clipdistance2 >= 0.0f) && outputverts + 1 < max_additional_vertices)
+			{
+				float t1 = (clipdistance1 < 0.0f) ? MAX(-clipdistance1 / (clipdistance2 - clipdistance1), 0.0f) : 0.0f;
+				float t2 = (clipdistance2 < 0.0f) ? MIN(1.0f + clipdistance2 / (clipdistance1 - clipdistance2), 1.0f) : 1.0f;
+
+				// add t1 vertex
+				for (int k = 0; k < 3; k++)
+					output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t1) + input[j * 3 + k] * t1;
+				outputverts++;
+
+				if (t2 != 1.0f && t2 > t1)
+				{
+					// add t2 vertex
+					for (int k = 0; k < 3; k++)
+						output[outputverts * 3 + k] = input[i * 3 + k] * (1.0f - t2) + input[j * 3 + k] * t2;
+					outputverts++;
+				}
+			}
+		}
+		std::swap(input, output);
+		inputverts = outputverts;
+		if (inputverts == 0)
+			break;
+	}
+
+	// Convert barycentric weights to actual vertices
+	for (int i = 0; i < inputverts; i++)
+	{
+		auto &v = clippedvert[i];
+		memset(&v, 0, sizeof(TriVertex));
+		for (int w = 0; w < 3; w++)
+		{
+			float weight = input[i * 3 + w];
+			v.x += verts[w].x * weight;
+			v.y += verts[w].y * weight;
+			v.z += verts[w].z * weight;
+			v.w += verts[w].w * weight;
+			v.u += verts[w].u * weight;
+			v.v += verts[w].v * weight;
+		}
+	}
+	return inputverts;
+}
+#endif
 
 /////////////////////////////////////////////////////////////////////////////
 

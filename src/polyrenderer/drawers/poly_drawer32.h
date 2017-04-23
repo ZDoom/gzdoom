@@ -26,8 +26,20 @@
 
 namespace TriScreenDrawerModes
 {
+	namespace
+	{
+		struct BgraColor
+		{
+			uint32_t b, g, r, a;
+			BgraColor() { }
+			BgraColor(uint32_t c) : b(BPART(c)), g(GPART(c)), r(RPART(c)), a(APART(c)) { }
+			BgraColor &operator=(uint32_t c) { b = BPART(c); g = GPART(c); r = RPART(c); a = APART(c); return *this; }
+			operator uint32_t() const { return MAKEARGB(a, r, g, b); }
+		};
+	}
+
 	template<typename SamplerT, typename FilterModeT>
-	FORCEINLINE unsigned int VECTORCALL Sample32_SSE2(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, uint32_t oneU, uint32_t oneV, uint32_t color, const uint32_t *translation)
+	FORCEINLINE unsigned int Sample32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, uint32_t oneU, uint32_t oneV, uint32_t color, const uint32_t *translation)
 	{
 		uint32_t texel;
 		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz)
@@ -107,7 +119,7 @@ namespace TriScreenDrawerModes
 	}
 
 	template<typename SamplerT>
-	FORCEINLINE unsigned int VECTORCALL SampleShade32_SSE2(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, int &fuzzpos)
+	FORCEINLINE unsigned int SampleShade32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, int &fuzzpos)
 	{
 		if (SamplerT::Mode == (int)Samplers::Shaded)
 		{
@@ -143,139 +155,116 @@ namespace TriScreenDrawerModes
 	}
 
 	template<typename ShadeModeT>
-	FORCEINLINE __m128i VECTORCALL Shade32_SSE2(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light)
+	FORCEINLINE BgraColor Shade32(BgraColor fgcolor, BgraColor mlight, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light)
 	{
 		if (ShadeModeT::Mode == (int)ShadeMode::Simple)
 		{
-			fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, mlight), 8);
+			fgcolor.r = (fgcolor.r * mlight.r) >> 8;
+			fgcolor.g = (fgcolor.g * mlight.g) >> 8;
+			fgcolor.b = (fgcolor.b * mlight.b) >> 8;
 		}
 		else if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 		{
-			int blue0 = BPART(ifgcolor0);
-			int green0 = GPART(ifgcolor0);
-			int red0 = RPART(ifgcolor0);
-			int intensity0 = ((red0 * 77 + green0 * 143 + blue0 * 37) >> 8) * desaturate;
-
-			int blue1 = BPART(ifgcolor1);
-			int green1 = GPART(ifgcolor1);
-			int red1 = RPART(ifgcolor1);
-			int intensity1 = ((red1 * 77 + green1 * 143 + blue1 * 37) >> 8) * desaturate;
-
-			__m128i intensity = _mm_set_epi16(0, intensity1, intensity1, intensity1, 0, intensity0, intensity0, intensity0);
-
-			fgcolor = _mm_srli_epi16(_mm_add_epi16(_mm_mullo_epi16(fgcolor, inv_desaturate), intensity), 8);
-			fgcolor = _mm_mullo_epi16(fgcolor, mlight);
-			fgcolor = _mm_srli_epi16(_mm_add_epi16(shade_fade, fgcolor), 8);
-			fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, shade_light), 8);
+			uint32_t intensity = ((fgcolor.r * 77 + fgcolor.g * 143 + fgcolor.b * 37) >> 8) * desaturate;
+			fgcolor.r = (((shade_fade.r + ((fgcolor.r * inv_desaturate + intensity) >> 8) * mlight.r) >> 8) * shade_light.r) >> 8;
+			fgcolor.g = (((shade_fade.g + ((fgcolor.g * inv_desaturate + intensity) >> 8) * mlight.g) >> 8) * shade_light.g) >> 8;
+			fgcolor.b = (((shade_fade.b + ((fgcolor.b * inv_desaturate + intensity) >> 8) * mlight.b) >> 8) * shade_light.b) >> 8;
 		}
 		return fgcolor;
 	}
 
 	template<typename BlendT>
-	FORCEINLINE __m128i VECTORCALL Blend32_SSE2(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, unsigned int ifgshade0, unsigned int ifgshade1, uint32_t srcalpha, uint32_t destalpha)
+	FORCEINLINE BgraColor Blend32(BgraColor fgcolor, BgraColor bgcolor, uint32_t ifgcolor, uint32_t ifgshade, uint32_t srcalpha, uint32_t destalpha)
 	{
 		if (BlendT::Mode == (int)BlendModes::Opaque)
 		{
-			__m128i outcolor = fgcolor;
-			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-			return outcolor;
+			return fgcolor;
 		}
 		else if (BlendT::Mode == (int)BlendModes::Masked)
 		{
-			__m128i mask = _mm_cmpeq_epi32(_mm_packus_epi16(fgcolor, _mm_setzero_si128()), _mm_setzero_si128());
-			mask = _mm_unpacklo_epi8(mask, _mm_setzero_si128());
-			__m128i outcolor = _mm_or_si128(_mm_and_si128(mask, bgcolor), _mm_andnot_si128(mask, fgcolor));
-			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
-			return outcolor;
+			return (ifgcolor == 0) ? bgcolor : fgcolor;
 		}
 		else if (BlendT::Mode == (int)BlendModes::AddSrcColorOneMinusSrcColor)
 		{
-			__m128i inv_srccolor = _mm_sub_epi16(_mm_set1_epi16(256), _mm_add_epi16(fgcolor, _mm_srli_epi16(fgcolor, 7)));
-			__m128i outcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(bgcolor, inv_srccolor), 8));
-			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+			uint32_t srcred = fgcolor.r + (fgcolor.r >> 7);
+			uint32_t srcgreen = fgcolor.g + (fgcolor.g >> 7);
+			uint32_t srcblue = fgcolor.b + (fgcolor.b >> 7);
+			uint32_t inv_srcred = 256 - srcred;
+			uint32_t inv_srcgreen = 256 - srcgreen;
+			uint32_t inv_srcblue = 256 - srcblue;
+
+			BgraColor outcolor;
+			outcolor.r = (fgcolor.r * srcred + bgcolor.r * inv_srcred) >> 8;
+			outcolor.g = (fgcolor.g * srcgreen + bgcolor.g * inv_srcgreen) >> 8;
+			outcolor.b = (fgcolor.b * srcblue + bgcolor.b * inv_srcblue) >> 8;
+			outcolor.a = 255;
 			return outcolor;
 		}
 		else if (BlendT::Mode == (int)BlendModes::Shaded)
 		{
-			ifgshade0 = (ifgshade0 * srcalpha + 128) >> 8;
-			ifgshade1 = (ifgshade1 * srcalpha + 128) >> 8;
-			__m128i alpha = _mm_set_epi16(ifgshade1, ifgshade1, ifgshade1, ifgshade1, ifgshade0, ifgshade0, ifgshade0, ifgshade0);
-			__m128i inv_alpha = _mm_sub_epi16(_mm_set1_epi16(256), alpha);
+			uint32_t alpha = ifgshade;
+			uint32_t inv_alpha = 256 - alpha;
 
-			fgcolor = _mm_mullo_epi16(fgcolor, alpha);
-			bgcolor = _mm_mullo_epi16(bgcolor, inv_alpha);
-			__m128i outcolor = _mm_srli_epi16(_mm_add_epi16(fgcolor, bgcolor), 8);
-			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
+			BgraColor outcolor;
+			outcolor.r = (fgcolor.r * alpha + bgcolor.r * inv_alpha) >> 8;
+			outcolor.g = (fgcolor.g * alpha + bgcolor.g * inv_alpha) >> 8;
+			outcolor.b = (fgcolor.b * alpha + bgcolor.b * inv_alpha) >> 8;
+			outcolor.a = 255;
 			return outcolor;
 		}
 		else if (BlendT::Mode == (int)BlendModes::AddClampShaded)
 		{
-			ifgshade0 = (ifgshade0 * srcalpha + 128) >> 8;
-			ifgshade1 = (ifgshade1 * srcalpha + 128) >> 8;
-			__m128i alpha = _mm_set_epi16(ifgshade1, ifgshade1, ifgshade1, ifgshade1, ifgshade0, ifgshade0, ifgshade0, ifgshade0);
-
-			fgcolor = _mm_srli_epi16(_mm_mullo_epi16(fgcolor, alpha), 8);
-			__m128i outcolor = _mm_add_epi16(fgcolor, bgcolor);
-			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
+			uint32_t alpha = ifgshade;
+			BgraColor outcolor;
+			outcolor.r = ((fgcolor.r * alpha) >> 8) + bgcolor.r;
+			outcolor.g = ((fgcolor.g * alpha) >> 8) + bgcolor.g;
+			outcolor.b = ((fgcolor.b * alpha) >> 8) + bgcolor.b;
+			outcolor.a = 255;
 			return outcolor;
 		}
 		else
 		{
-			uint32_t alpha0 = APART(ifgcolor0);
-			uint32_t alpha1 = APART(ifgcolor1);
-			alpha0 += alpha0 >> 7; // 255->256
-			alpha1 += alpha1 >> 7; // 255->256
-			uint32_t inv_alpha0 = 256 - alpha0;
-			uint32_t inv_alpha1 = 256 - alpha1;
+			uint32_t alpha = APART(ifgcolor);
+			alpha += alpha >> 7; // 255->256
+			uint32_t inv_alpha = 256 - alpha;
 
-			uint32_t bgalpha0 = (destalpha * alpha0 + (inv_alpha0 << 8) + 128) >> 8;
-			uint32_t bgalpha1 = (destalpha * alpha1 + (inv_alpha1 << 8) + 128) >> 8;
-			uint32_t fgalpha0 = (srcalpha * alpha0 + 128) >> 8;
-			uint32_t fgalpha1 = (srcalpha * alpha1 + 128) >> 8;
+			uint32_t bgalpha = (destalpha * alpha + (inv_alpha << 8) + 128) >> 8;
+			uint32_t fgalpha = (srcalpha * alpha + 128) >> 8;
 
-			__m128i bgalpha = _mm_set_epi16(bgalpha1, bgalpha1, bgalpha1, bgalpha1, bgalpha0, bgalpha0, bgalpha0, bgalpha0);
-			__m128i fgalpha = _mm_set_epi16(fgalpha1, fgalpha1, fgalpha1, fgalpha1, fgalpha0, fgalpha0, fgalpha0, fgalpha0);
+			fgcolor.r *= fgalpha;
+			fgcolor.g *= fgalpha;
+			fgcolor.b *= fgalpha;
+			bgcolor.r *= bgalpha;
+			bgcolor.g *= bgalpha;
+			bgcolor.b *= bgalpha;
 
-			fgcolor = _mm_mullo_epi16(fgcolor, fgalpha);
-			bgcolor = _mm_mullo_epi16(bgcolor, bgalpha);
-
-			__m128i fg_lo = _mm_unpacklo_epi16(fgcolor, _mm_setzero_si128());
-			__m128i bg_lo = _mm_unpacklo_epi16(bgcolor, _mm_setzero_si128());
-			__m128i fg_hi = _mm_unpackhi_epi16(fgcolor, _mm_setzero_si128());
-			__m128i bg_hi = _mm_unpackhi_epi16(bgcolor, _mm_setzero_si128());
-
-			__m128i out_lo, out_hi;
+			BgraColor outcolor;
 			if (BlendT::Mode == (int)BlendModes::AddClamp)
 			{
-				out_lo = _mm_add_epi32(fg_lo, bg_lo);
-				out_hi = _mm_add_epi32(fg_hi, bg_hi);
+				outcolor.r = MIN<uint32_t>((fgcolor.r + bgcolor.r) >> 8, 255);
+				outcolor.g = MIN<uint32_t>((fgcolor.g + bgcolor.g) >> 8, 255);
+				outcolor.b = MIN<uint32_t>((fgcolor.b + bgcolor.b) >> 8, 255);
 			}
 			else if (BlendT::Mode == (int)BlendModes::SubClamp)
 			{
-				out_lo = _mm_sub_epi32(fg_lo, bg_lo);
-				out_hi = _mm_sub_epi32(fg_hi, bg_hi);
+				outcolor.r = MAX(int32_t(fgcolor.r - bgcolor.r) >> 8, 0);
+				outcolor.g = MAX(int32_t(fgcolor.g - bgcolor.g) >> 8, 0);
+				outcolor.b = MAX(int32_t(fgcolor.b - bgcolor.b) >> 8, 0);
 			}
 			else if (BlendT::Mode == (int)BlendModes::RevSubClamp)
 			{
-				out_lo = _mm_sub_epi32(bg_lo, fg_lo);
-				out_hi = _mm_sub_epi32(bg_hi, fg_hi);
+				outcolor.r = MAX(int32_t(bgcolor.r - fgcolor.r) >> 8, 0);
+				outcolor.g = MAX(int32_t(bgcolor.g - fgcolor.g) >> 8, 0);
+				outcolor.b = MAX(int32_t(bgcolor.b - fgcolor.b) >> 8, 0);
 			}
-
-			out_lo = _mm_srai_epi32(out_lo, 8);
-			out_hi = _mm_srai_epi32(out_hi, 8);
-			__m128i outcolor = _mm_packs_epi32(out_lo, out_hi);
-			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
-			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
+			outcolor.a = 255;
 			return outcolor;
 		}
 	}
 }
 
 template<typename BlendT, typename SamplerT>
-class TriScreenDrawer32_SSE2
+class TriScreenDrawer32
 {
 public:
 	static void Execute(int x, int y, uint32_t mask0, uint32_t mask1, const TriDrawTriangleArgs *args)
@@ -322,7 +311,7 @@ public:
 
 private:
 	template<typename ShadeModeT, typename FilterModeT>
-	FORCEINLINE static void VECTORCALL DrawBlock(int destX, int destY, uint32_t mask0, uint32_t mask1, const TriDrawTriangleArgs *args)
+	FORCEINLINE static void DrawBlock(int destX, int destY, uint32_t mask0, uint32_t mask1, const TriDrawTriangleArgs *args)
 	{
 		using namespace TriScreenDrawerModes;
 
@@ -375,21 +364,29 @@ private:
 		}
 
 		// Shade constants
-		__m128i inv_desaturate, shade_fade, shade_light;
+		int inv_desaturate;
+		BgraColor shade_fade, shade_light;
 		int desaturate;
 		if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 		{
-			inv_desaturate = _mm_setr_epi16(256, 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate(), 256, 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate(), 256 - args->uniforms->ShadeDesaturate());
-			shade_fade = _mm_set_epi16(args->uniforms->ShadeFadeAlpha(), args->uniforms->ShadeFadeRed(), args->uniforms->ShadeFadeGreen(), args->uniforms->ShadeFadeBlue(), args->uniforms->ShadeFadeAlpha(), args->uniforms->ShadeFadeRed(), args->uniforms->ShadeFadeGreen(), args->uniforms->ShadeFadeBlue());
-			shade_light = _mm_set_epi16(args->uniforms->ShadeLightAlpha(), args->uniforms->ShadeLightRed(), args->uniforms->ShadeLightGreen(), args->uniforms->ShadeLightBlue(), args->uniforms->ShadeLightAlpha(), args->uniforms->ShadeLightRed(), args->uniforms->ShadeLightGreen(), args->uniforms->ShadeLightBlue());
+			shade_fade.r = args->uniforms->ShadeFadeRed();
+			shade_fade.g = args->uniforms->ShadeFadeGreen();
+			shade_fade.b = args->uniforms->ShadeFadeBlue();
+			shade_light.r = args->uniforms->ShadeLightRed();
+			shade_light.g = args->uniforms->ShadeLightGreen();
+			shade_light.b = args->uniforms->ShadeLightBlue();
 			desaturate = args->uniforms->ShadeDesaturate();
+			inv_desaturate = 256 - desaturate;
 		}
 		else
 		{
-			inv_desaturate = _mm_setzero_si128();
-			shade_fade = _mm_setzero_si128();
-			shade_fade = _mm_setzero_si128();
-			shade_light = _mm_setzero_si128();
+			inv_desaturate = 0;
+			shade_fade.r = 0;
+			shade_fade.g = 0;
+			shade_fade.b = 0;
+			shade_light.r = 0;
+			shade_light.g = 0;
+			shade_light.b = 0;
 			desaturate = 0;
 		}
 
@@ -419,52 +416,50 @@ private:
 				fixed_t lightstep = (lightnext - lightpos) / 8;
 				lightstep = lightstep & lightmask;
 
-				for (int ix = 0; ix < 4; ix++)
+				for (int ix = 0; ix < 8; ix++)
 				{
 					// Load bgcolor
-					__m128i bgcolor;
+					BgraColor bgcolor;
 					if (BlendT::Mode != (int)BlendModes::Opaque)
-						bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)(dest + ix * 2)), _mm_setzero_si128());
+						bgcolor = dest[ix];
 					else
-						bgcolor = _mm_setzero_si128();
+						bgcolor = 0;
 
 					// Sample fgcolor
-					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
-					posU += stepU;
-					posV += stepV;
-
-					ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
 					// Setup light
 					int lightpos0 = lightpos >> 8;
 					lightpos += lightstep;
-					int lightpos1 = lightpos >> 8;
-					lightpos += lightstep;
-					__m128i mlight = _mm_set_epi16(256, lightpos1, lightpos1, lightpos1, 256, lightpos0, lightpos0, lightpos0);
+					BgraColor mlight;
+					mlight.r = lightpos0;
+					mlight.g = lightpos0;
+					mlight.b = lightpos0;
 
-					__m128i shade_fade_lit;
+					BgraColor shade_fade_lit;
 					if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 					{
-						__m128i inv_light = _mm_sub_epi16(_mm_set_epi16(0, 256, 256, 256, 0, 256, 256, 256), mlight);
-						shade_fade_lit = _mm_mullo_epi16(shade_fade, inv_light);
+						uint32_t inv_light = 256 - lightpos0;
+						shade_fade_lit.r = shade_fade.r * inv_light;
+						shade_fade_lit.g = shade_fade.g * inv_light;
+						shade_fade_lit.b = shade_fade.b * inv_light;
 					}
 					else
 					{
-						shade_fade_lit = _mm_setzero_si128();
+						shade_fade_lit.r = 0;
+						shade_fade_lit.g = 0;
+						shade_fade_lit.b = 0;
 					}
 
 					// Shade and blend
-					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-					fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 					// Store result
-					_mm_storel_epi64((__m128i*)(dest + ix * 2), outcolor);
+					dest[ix] = outcolor;
 				}
 
 				blockPosY.W += gradientY.W;
@@ -501,61 +496,54 @@ private:
 				fixed_t lightstep = (lightnext - lightpos) / 8;
 				lightstep = lightstep & lightmask;
 
-				for (int x = 0; x < 4; x++)
+				for (int x = 0; x < 8; x++)
 				{
 					// Load bgcolor
-					uint32_t desttmp[2];
-					__m128i bgcolor;
+					BgraColor bgcolor;
 					if (BlendT::Mode != (int)BlendModes::Opaque)
 					{
-						if (mask0 & (1 << 31)) desttmp[0] = dest[x * 2];
-						if (mask0 & (1 << 30)) desttmp[1] = dest[x * 2 + 1];
-						bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)desttmp), _mm_setzero_si128());
+						if (mask0 & (1 << 31)) bgcolor = dest[x];
 					}
 					else
-						bgcolor = _mm_setzero_si128();
+						bgcolor = 0;
 
 					// Sample fgcolor
-					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
-					posU += stepU;
-					posV += stepV;
-
-					ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
 					// Setup light
 					int lightpos0 = lightpos >> 8;
 					lightpos += lightstep;
-					int lightpos1 = lightpos >> 8;
-					lightpos += lightstep;
-					__m128i mlight = _mm_set_epi16(256, lightpos1, lightpos1, lightpos1, 256, lightpos0, lightpos0, lightpos0);
+					BgraColor mlight;
+					mlight.r = lightpos0;
+					mlight.g = lightpos0;
+					mlight.b = lightpos0;
 
-					__m128i shade_fade_lit;
+					BgraColor shade_fade_lit;
 					if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 					{
-						__m128i inv_light = _mm_sub_epi16(_mm_set_epi16(0, 256, 256, 256, 0, 256, 256, 256), mlight);
-						shade_fade_lit = _mm_mullo_epi16(shade_fade, inv_light);
+						uint32_t inv_light = 256 - lightpos0;
+						shade_fade_lit.r = shade_fade.r * inv_light;
+						shade_fade_lit.g = shade_fade.g * inv_light;
+						shade_fade_lit.b = shade_fade.b * inv_light;
 					}
 					else
 					{
-						shade_fade_lit = _mm_setzero_si128();
+						shade_fade_lit.r = 0;
+						shade_fade_lit.g = 0;
+						shade_fade_lit.b = 0;
 					}
 
 					// Shade and blend
-					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-					fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 					// Store result
-					_mm_storel_epi64((__m128i*)desttmp, outcolor);
-					if (mask0 & (1 << 31)) dest[x * 2] = desttmp[0];
-					if (mask0 & (1 << 30)) dest[x * 2 + 1] = desttmp[1];
+					if (mask0 & (1 << 31)) dest[x] = outcolor;
 
-					mask0 <<= 2;
+					mask0 <<= 1;
 				}
 
 				blockPosY.W += gradientY.W;
@@ -590,61 +578,54 @@ private:
 				fixed_t lightstep = (lightnext - lightpos) / 8;
 				lightstep = lightstep & lightmask;
 
-				for (int x = 0; x < 4; x++)
+				for (int x = 0; x < 8; x++)
 				{
 					// Load bgcolor
-					uint32_t desttmp[2];
-					__m128i bgcolor;
+					BgraColor bgcolor;
 					if (BlendT::Mode != (int)BlendModes::Opaque)
 					{
-						if (mask1 & (1 << 31)) desttmp[0] = dest[x * 2];
-						if (mask1 & (1 << 30)) desttmp[1] = dest[x * 2 + 1];
-						bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)desttmp), _mm_setzero_si128());
+						if (mask1 & (1 << 31)) bgcolor = dest[x];
 					}
 					else
-						bgcolor = _mm_setzero_si128();
+						bgcolor = 0;
 
 					// Sample fgcolor
-					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
-					posU += stepU;
-					posV += stepV;
-
-					ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
 					// Setup light
 					int lightpos0 = lightpos >> 8;
 					lightpos += lightstep;
-					int lightpos1 = lightpos >> 8;
-					lightpos += lightstep;
-					__m128i mlight = _mm_set_epi16(256, lightpos1, lightpos1, lightpos1, 256, lightpos0, lightpos0, lightpos0);
+					BgraColor mlight;
+					mlight.r = lightpos0;
+					mlight.g = lightpos0;
+					mlight.b = lightpos0;
 
-					__m128i shade_fade_lit;
+					BgraColor shade_fade_lit;
 					if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 					{
-						__m128i inv_light = _mm_sub_epi16(_mm_set_epi16(0, 256, 256, 256, 0, 256, 256, 256), mlight);
-						shade_fade_lit = _mm_mullo_epi16(shade_fade, inv_light);
+						uint32_t inv_light = 256 - lightpos0;
+						shade_fade_lit.r = shade_fade.r * inv_light;
+						shade_fade_lit.g = shade_fade.g * inv_light;
+						shade_fade_lit.b = shade_fade.b * inv_light;
 					}
 					else
 					{
-						shade_fade_lit = _mm_setzero_si128();
+						shade_fade_lit.r = 0;
+						shade_fade_lit.g = 0;
+						shade_fade_lit.b = 0;
 					}
 
 					// Shade and blend
-					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-					fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 					// Store result
-					_mm_storel_epi64((__m128i*)desttmp, outcolor);
-					if (mask1 & (1 << 31)) dest[x * 2] = desttmp[0];
-					if (mask1 & (1 << 30)) dest[x * 2 + 1] = desttmp[1];
+					if (mask1 & (1 << 31)) dest[x] = outcolor;
 
-					mask1 <<= 2;
+					mask1 <<= 1;
 				}
 
 				blockPosY.W += gradientY.W;
@@ -658,7 +639,7 @@ private:
 };
 
 template<typename BlendT, typename SamplerT>
-class RectScreenDrawer32_SSE2
+class RectScreenDrawer32
 {
 public:
 	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
@@ -677,7 +658,7 @@ public:
 
 private:
 	template<typename ShadeModeT, typename FilterModeT>
-	FORCEINLINE static void VECTORCALL Loop(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
+	FORCEINLINE static void Loop(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
 	{
 		using namespace TriScreenDrawerModes;
 
@@ -718,41 +699,46 @@ private:
 			oneV = 0;
 		}
 
-		// Shade constants
-		__m128i inv_desaturate, shade_fade, shade_light;
-		int desaturate;
-		if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
-		{
-			inv_desaturate = _mm_setr_epi16(256, 256 - args->ShadeDesaturate(), 256 - args->ShadeDesaturate(), 256 - args->ShadeDesaturate(), 256, 256 - args->ShadeDesaturate(), 256 - args->ShadeDesaturate(), 256 - args->ShadeDesaturate());
-			shade_fade = _mm_set_epi16(args->ShadeFadeAlpha(), args->ShadeFadeRed(), args->ShadeFadeGreen(), args->ShadeFadeBlue(), args->ShadeFadeAlpha(), args->ShadeFadeRed(), args->ShadeFadeGreen(), args->ShadeFadeBlue());
-			shade_light = _mm_set_epi16(args->ShadeLightAlpha(), args->ShadeLightRed(), args->ShadeLightGreen(), args->ShadeLightBlue(), args->ShadeLightAlpha(), args->ShadeLightRed(), args->ShadeLightGreen(), args->ShadeLightBlue());
-			desaturate = args->ShadeDesaturate();
-		}
-		else
-		{
-			inv_desaturate = _mm_setzero_si128();
-			shade_fade = _mm_setzero_si128();
-			shade_light = _mm_setzero_si128();
-			desaturate = 0;
-		}
-
 		// Setup light
 		uint32_t lightpos = args->Light();
 		lightpos += lightpos >> 7; // 255 -> 256
-		__m128i mlight = _mm_set_epi16(256, lightpos, lightpos, lightpos, 256, lightpos, lightpos, lightpos);
-		__m128i shade_fade_lit;
+		BgraColor mlight;
+
+		// Shade constants
+		int inv_desaturate;
+		BgraColor shade_fade_lit, shade_light;
+		int desaturate;
 		if (ShadeModeT::Mode == (int)ShadeMode::Advanced)
 		{
-			__m128i inv_light = _mm_sub_epi16(_mm_set_epi16(0, 256, 256, 256, 0, 256, 256, 256), mlight);
-			shade_fade_lit = _mm_mullo_epi16(shade_fade, inv_light);
+			uint32_t inv_light = 256 - lightpos;
+			shade_fade_lit.r = args->ShadeFadeRed() * inv_light;
+			shade_fade_lit.g = args->ShadeFadeGreen() * inv_light;
+			shade_fade_lit.b = args->ShadeFadeBlue() * inv_light;
+			shade_light.r = args->ShadeLightRed();
+			shade_light.g = args->ShadeLightGreen();
+			shade_light.b = args->ShadeLightBlue();
+			desaturate = args->ShadeDesaturate();
+			inv_desaturate = 256 - desaturate;
+			mlight.r = lightpos;
+			mlight.g = lightpos;
+			mlight.b = lightpos;
 		}
 		else
 		{
-			shade_fade_lit = _mm_setzero_si128();
+			inv_desaturate = 0;
+			shade_fade_lit.r = 0;
+			shade_fade_lit.g = 0;
+			shade_fade_lit.b = 0;
+			shade_light.r = 0;
+			shade_light.g = 0;
+			shade_light.b = 0;
+			desaturate = 0;
+			mlight.r = lightpos;
+			mlight.g = lightpos;
+			mlight.b = lightpos;
 		}
 
 		int count = x1 - x0;
-		int sseCount = count / 2;
 
 		int fuzzpos = (ScreenTriangle::FuzzStart + x0 * 123 + y0) % FUZZTABLE;
 
@@ -769,59 +755,27 @@ private:
 			uint32_t *dest = ((uint32_t*)destOrg) + y * destPitch + x0;
 
 			uint32_t posU = startU;
-			for (int i = 0; i < sseCount; i++)
+			for (int i = 0; i < count; i++)
 			{
 				// Load bgcolor
-				__m128i bgcolor;
+				BgraColor bgcolor;
 				if (BlendT::Mode != (int)BlendModes::Opaque)
-					bgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)dest), _mm_setzero_si128());
+					bgcolor = *dest;
 				else
-					bgcolor = _mm_setzero_si128();
+					bgcolor = 0;
 
 				// Sample fgcolor
-				unsigned int ifgcolor[2], ifgshade[2];
-				ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
-				posU += stepU;
-
-				ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+				unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+				unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				posU += stepU;
 
 				// Shade and blend
-				__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-				fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-				__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+				BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+				BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 				// Store result
-				_mm_storel_epi64((__m128i*)dest, outcolor);
-				dest += 2;
-			}
-
-			if (sseCount * 2 != count)
-			{
-				// Load bgcolor
-				__m128i bgcolor;
-				if (BlendT::Mode != (int)BlendModes::Opaque)
-					bgcolor = _mm_unpacklo_epi8(_mm_cvtsi32_si128(*dest), _mm_setzero_si128());
-				else
-					bgcolor = _mm_setzero_si128();
-
-				// Sample fgcolor
-				unsigned int ifgcolor[2], ifgshade[2];
-				ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
-				ifgcolor[1] = 0;
-				ifgshade[1] = 0;
-				posU += stepU;
-
-				// Shade and blend
-				__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-				fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-				__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
-
-				// Store result
-				*dest = _mm_cvtsi128_si32(outcolor);
+				*dest = outcolor;
+				dest++;
 			}
 		}
 	}

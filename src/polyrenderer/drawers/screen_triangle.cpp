@@ -36,20 +36,12 @@
 #include "poly_triangle.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
-#include "poly_drawer32.h"
-#include "poly_drawer8.h"
 #ifndef NO_SSE
 #include "poly_drawer32_sse2.h"
 #endif
+#include "poly_drawer8.h"
 #include "x86.h"
 
-namespace
-{
-	class SSE2CPU { public: static const int HasSSE2 = 1; };
-	class GenericCPU { public: static const int HasSSE2 = 0; };
-}
-
-template<typename CPUType>
 class TriangleBlock
 {
 public:
@@ -123,17 +115,9 @@ private:
 	void ClipTest();
 	void StencilWrite();
 	void SubsectorWrite();
-
-#ifndef NO_SSE
-	void CoverageTestSSE2();
-	void StencilEqualTestSSE2();
-	void SubsectorTestSSE2();
-	void SubsectorWriteSSE2();
-#endif
 };
 
-template<typename CPUType>
-TriangleBlock<CPUType>::TriangleBlock(const TriDrawTriangleArgs *args)
+TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args)
 {
 	const TriVertex &v1 = *args->v1;
 	const TriVertex &v2 = *args->v2;
@@ -162,32 +146,19 @@ TriangleBlock<CPUType>::TriangleBlock(const TriDrawTriangleArgs *args)
 	const int X2 = (int)round(16.0f * v2.x);
 	const int X3 = (int)round(16.0f * v3.x);
 #else
-	int Y1, Y2, Y3, X1, X2, X3;
-	if (CPUType::HasSSE2 == 1)
-	{
-		int tempround[4 * 3];
-		__m128 m16 = _mm_set1_ps(16.0f);
-		__m128 mhalf = _mm_set1_ps(65536.5f);
-		__m128i m65536 = _mm_set1_epi32(65536);
-		_mm_storeu_si128((__m128i*)tempround, _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v1), m16), mhalf)), m65536));
-		_mm_storeu_si128((__m128i*)(tempround + 4), _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v2), m16), mhalf)), m65536));
-		_mm_storeu_si128((__m128i*)(tempround + 8), _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v3), m16), mhalf)), m65536));
-		X1 = tempround[0];
-		X2 = tempround[4];
-		X3 = tempround[8];
-		Y1 = tempround[1];
-		Y2 = tempround[5];
-		Y3 = tempround[9];
-	}
-	else
-	{
-		Y1 = (int)round(16.0f * v1.y);
-		Y2 = (int)round(16.0f * v2.y);
-		Y3 = (int)round(16.0f * v3.y);
-		X1 = (int)round(16.0f * v1.x);
-		X2 = (int)round(16.0f * v2.x);
-		X3 = (int)round(16.0f * v3.x);
-	}
+	int tempround[4 * 3];
+	__m128 m16 = _mm_set1_ps(16.0f);
+	__m128 mhalf = _mm_set1_ps(65536.5f);
+	__m128i m65536 = _mm_set1_epi32(65536);
+	_mm_storeu_si128((__m128i*)tempround, _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v1), m16), mhalf)), m65536));
+	_mm_storeu_si128((__m128i*)(tempround + 4), _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v2), m16), mhalf)), m65536));
+	_mm_storeu_si128((__m128i*)(tempround + 8), _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v3), m16), mhalf)), m65536));
+	const int X1 = tempround[0];
+	const int X2 = tempround[4];
+	const int X3 = tempround[8];
+	const int Y1 = tempround[1];
+	const int Y2 = tempround[5];
+	const int Y3 = tempround[9];
 #endif
 
 	// Deltas
@@ -233,32 +204,28 @@ TriangleBlock<CPUType>::TriangleBlock(const TriDrawTriangleArgs *args)
 	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
 
 #ifndef NO_SSE
-	if (CPUType::HasSSE2 == 1)
-	{
-		mFDY12Offset = _mm_setr_epi32(0, FDY12, FDY12 * 2, FDY12 * 3);
-		mFDY23Offset = _mm_setr_epi32(0, FDY23, FDY23 * 2, FDY23 * 3);
-		mFDY31Offset = _mm_setr_epi32(0, FDY31, FDY31 * 2, FDY31 * 3);
-		mFDY12x4 = _mm_set1_epi32(FDY12 * 4);
-		mFDY23x4 = _mm_set1_epi32(FDY23 * 4);
-		mFDY31x4 = _mm_set1_epi32(FDY31 * 4);
-		mFDX12 = _mm_set1_epi32(FDX12);
-		mFDX23 = _mm_set1_epi32(FDX23);
-		mFDX31 = _mm_set1_epi32(FDX31);
-		mC1 = _mm_set1_epi32(C1);
-		mC2 = _mm_set1_epi32(C2);
-		mC3 = _mm_set1_epi32(C3);
-		mDX12 = _mm_set1_epi32(DX12);
-		mDY12 = _mm_set1_epi32(DY12);
-		mDX23 = _mm_set1_epi32(DX23);
-		mDY23 = _mm_set1_epi32(DY23);
-		mDX31 = _mm_set1_epi32(DX31);
-		mDY31 = _mm_set1_epi32(DY31);
-	}
+	mFDY12Offset = _mm_setr_epi32(0, FDY12, FDY12 * 2, FDY12 * 3);
+	mFDY23Offset = _mm_setr_epi32(0, FDY23, FDY23 * 2, FDY23 * 3);
+	mFDY31Offset = _mm_setr_epi32(0, FDY31, FDY31 * 2, FDY31 * 3);
+	mFDY12x4 = _mm_set1_epi32(FDY12 * 4);
+	mFDY23x4 = _mm_set1_epi32(FDY23 * 4);
+	mFDY31x4 = _mm_set1_epi32(FDY31 * 4);
+	mFDX12 = _mm_set1_epi32(FDX12);
+	mFDX23 = _mm_set1_epi32(FDX23);
+	mFDX31 = _mm_set1_epi32(FDX31);
+	mC1 = _mm_set1_epi32(C1);
+	mC2 = _mm_set1_epi32(C2);
+	mC3 = _mm_set1_epi32(C3);
+	mDX12 = _mm_set1_epi32(DX12);
+	mDY12 = _mm_set1_epi32(DY12);
+	mDX23 = _mm_set1_epi32(DX23);
+	mDY23 = _mm_set1_epi32(DY23);
+	mDX31 = _mm_set1_epi32(DX31);
+	mDY31 = _mm_set1_epi32(DY31);
 #endif
 }
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::Loop(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+void TriangleBlock::Loop(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	// First block line for this thread
 	int core = thread->core;
@@ -270,18 +237,9 @@ void TriangleBlock<CPUType>::Loop(const TriDrawTriangleArgs *args, WorkerThreadD
 	bool writeColor = args->uniforms->WriteColor();
 	bool writeStencil = args->uniforms->WriteStencil();
 	bool writeSubsector = args->uniforms->WriteSubsector();
-	int bmode = (int)args->uniforms->BlendMode();
 
-	// Find the drawer function for the given blend mode
-#ifndef NO_SSE
-	void(*drawFunc)(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
-	if (CPUType::HasSSE2 == 1)
-		drawFunc = args->destBgra ? ScreenTriangle::TriDrawers32_SSE2[bmode] : ScreenTriangle::TriDrawers8[bmode];
-	else
-		drawFunc = args->destBgra ? ScreenTriangle::TriDrawers32[bmode] : ScreenTriangle::TriDrawers8[bmode];
-#else
+	int bmode = (int)args->uniforms->BlendMode();
 	auto drawFunc = args->destBgra ? ScreenTriangle::TriDrawers32[bmode] : ScreenTriangle::TriDrawers8[bmode];
-#endif
 
 	// Loop through blocks
 	for (int y = start_miny; y < maxy; y += q * num_cores)
@@ -291,11 +249,7 @@ void TriangleBlock<CPUType>::Loop(const TriDrawTriangleArgs *args, WorkerThreadD
 			X = x;
 			Y = y;
 
-			if (CPUType::HasSSE2 == 1)
-				CoverageTestSSE2();
-			else
-				CoverageTest();
-
+			CoverageTest();
 			if (Mask0 == 0 && Mask1 == 0)
 				continue;
 
@@ -306,11 +260,7 @@ void TriangleBlock<CPUType>::Loop(const TriDrawTriangleArgs *args, WorkerThreadD
 			// To do: make the stencil test use its own flag for comparison mode instead of abusing the subsector test..
 			if (!subsectorTest)
 			{
-				if (CPUType::HasSSE2 == 1)
-					StencilEqualTestSSE2();
-				else
-					StencilEqualTest();
-
+				StencilEqualTest();
 				if (Mask0 == 0 && Mask1 == 0)
 					continue;
 			}
@@ -320,11 +270,7 @@ void TriangleBlock<CPUType>::Loop(const TriDrawTriangleArgs *args, WorkerThreadD
 				if (Mask0 == 0 && Mask1 == 0)
 					continue;
 
-				if (CPUType::HasSSE2 == 1)
-					SubsectorTestSSE2();
-				else
-					SubsectorTest();
-
+				SubsectorTest();
 				if (Mask0 == 0 && Mask1 == 0)
 					continue;
 			}
@@ -334,18 +280,14 @@ void TriangleBlock<CPUType>::Loop(const TriDrawTriangleArgs *args, WorkerThreadD
 			if (writeStencil)
 				StencilWrite();
 			if (writeSubsector)
-			{
-				if (CPUType::HasSSE2 == 1)
-					SubsectorWriteSSE2();
-				else
-					SubsectorWrite();
-			}
+				SubsectorWrite();
 		}
 	}
 }
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::SubsectorTest()
+#ifdef NO_SSE
+
+void TriangleBlock::SubsectorTest()
 {
 	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
 	uint32_t *subsector = subsectorGBuffer + block * 64;
@@ -371,10 +313,9 @@ void TriangleBlock<CPUType>::SubsectorTest()
 	Mask1 = Mask1 & mask1;
 }
 
-#ifndef NO_SSE
+#else
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::SubsectorTestSSE2()
+void TriangleBlock::SubsectorTest()
 {
 	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
 	uint32_t *subsector = subsectorGBuffer + block * 64;
@@ -402,8 +343,7 @@ void TriangleBlock<CPUType>::SubsectorTestSSE2()
 
 #endif
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::ClipTest()
+void TriangleBlock::ClipTest()
 {
 	static const uint32_t clipxmask[8] =
 	{
@@ -437,8 +377,9 @@ void TriangleBlock<CPUType>::ClipTest()
 	Mask1 = Mask1 & xmask & ymask1;
 }
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::StencilEqualTest()
+#ifdef NO_SSE
+
+void TriangleBlock::StencilEqualTest()
 {
 	// Stencil test the whole block, if possible
 	int block = (X >> 3) + (Y >> 3) * stencilPitch;
@@ -481,10 +422,9 @@ void TriangleBlock<CPUType>::StencilEqualTest()
 	}
 }
 
-#ifndef NO_SSE
+#else
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::StencilEqualTestSSE2()
+void TriangleBlock::StencilEqualTest()
 {
 	// Stencil test the whole block, if possible
 	int block = (X >> 3) + (Y >> 3) * stencilPitch;
@@ -550,8 +490,7 @@ void TriangleBlock<CPUType>::StencilEqualTestSSE2()
 
 #endif
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::StencilGreaterEqualTest()
+void TriangleBlock::StencilGreaterEqualTest()
 {
 	// Stencil test the whole block, if possible
 	int block = (X >> 3) + (Y >> 3) * stencilPitch;
@@ -594,8 +533,9 @@ void TriangleBlock<CPUType>::StencilGreaterEqualTest()
 	}
 }
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::CoverageTest()
+#ifdef NO_SSE
+
+void TriangleBlock::CoverageTest()
 {
 	// Corners of block
 	int x0 = X << 4;
@@ -692,10 +632,9 @@ void TriangleBlock<CPUType>::CoverageTest()
 	}
 }
 
-#ifndef NO_SSE
+#else
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::CoverageTestSSE2()
+void TriangleBlock::CoverageTest()
 {
 	// Corners of block
 	int x0 = X << 4;
@@ -805,8 +744,7 @@ void TriangleBlock<CPUType>::CoverageTestSSE2()
 
 #endif
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::StencilWrite()
+void TriangleBlock::StencilWrite()
 {
 	int block = (X >> 3) + (Y >> 3) * stencilPitch;
 	uint8_t *stencilBlock = &stencilValues[block * 64];
@@ -856,8 +794,9 @@ void TriangleBlock<CPUType>::StencilWrite()
 	}
 }
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::SubsectorWrite()
+#ifdef NO_SSE
+
+void TriangleBlock::SubsectorWrite()
 {
 	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
 	uint32_t *subsector = subsectorGBuffer + block * 64;
@@ -890,10 +829,9 @@ void TriangleBlock<CPUType>::SubsectorWrite()
 	}
 }
 
-#ifndef NO_SSE
+#else
 
-template<typename CPUType>
-void TriangleBlock<CPUType>::SubsectorWriteSSE2()
+void TriangleBlock::SubsectorWrite()
 {
 	int block = (X >> 3) + (Y >> 3) * subsectorPitch;
 	uint32_t *subsector = subsectorGBuffer + block * 64;
@@ -950,21 +888,8 @@ void TriangleBlock<CPUType>::SubsectorWriteSSE2()
 
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-#ifdef NO_SSE
-	TriangleBlock<GenericCPU> block(args);
+	TriangleBlock block(args);
 	block.Loop(args, thread);
-#else
-	if (CPU.bSSE2)
-	{
-		TriangleBlock<SSE2CPU> block(args);
-		block.Loop(args, thread);
-	}
-	else
-	{
-		TriangleBlock<GenericCPU> block(args);
-		block.Loop(args, thread);
-	}
-#endif
 }
 
 void(*ScreenTriangle::TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *) =
@@ -994,6 +919,15 @@ void(*ScreenTriangle::TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDraw
 	&TriScreenDrawer8<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute             // Fuzz
 };
 
+#ifdef NO_SSE
+
+void(*ScreenTriangle::TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *) =
+{
+	nullptr
+};
+
+#else
+
 void(*ScreenTriangle::TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *) =
 {
 	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
@@ -1019,35 +953,6 @@ void(*ScreenTriangle::TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDra
 	&TriScreenDrawer32<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillAddSrcColor
 	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute,          // Skycap
 	&TriScreenDrawer32<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute             // Fuzz
-};
-
-#ifndef NO_SSE
-
-void(*ScreenTriangle::TriDrawers32_SSE2[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *) =
-{
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureMasked
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureAdd
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureSub
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureRevSub
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureAddSrcColor
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedOpaque
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedMasked
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedAdd
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedSub
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedRevSub
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedAddSrcColor
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,          // Shaded
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,  // AddShaded
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute,         // Stencil
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute, // AddStencil
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute,            // FillOpaque
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillAdd
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillSub
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillRevSub
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillAddSrcColor
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute,          // Skycap
-	&TriScreenDrawer32_SSE2<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute             // Fuzz
 };
 
 #endif
@@ -1079,6 +984,15 @@ void(*ScreenTriangle::RectDrawers8[])(const void *, int, int, int, const RectDra
 	&RectScreenDrawer8<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute             // Fuzz
 };
 
+#ifdef NO_SSE
+
+void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *) =
+{
+	nullptr
+};
+
+#else
+
 void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *) =
 {
 	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
@@ -1104,35 +1018,6 @@ void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDr
 	&RectScreenDrawer32<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillAddSrcColor
 	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute,          // Skycap
 	&RectScreenDrawer32<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute             // Fuzz
-};
-
-#ifndef NO_SSE
-
-void(*ScreenTriangle::RectDrawers32_SSE2[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *) =
-{
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureMasked
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureAdd
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureSub
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureRevSub
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureAddSrcColor
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedOpaque
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedMasked
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedAdd
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedSub
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedRevSub
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedAddSrcColor
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,          // Shaded
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,  // AddShaded
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute,         // Stencil
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute, // AddStencil
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute,            // FillOpaque
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillAdd
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillSub
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillRevSub
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillAddSrcColor
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute,          // Skycap
-	&RectScreenDrawer32_SSE2<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute             // Fuzz
 };
 
 #endif

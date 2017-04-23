@@ -47,12 +47,8 @@ private:
 	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
 	static void draw_arrays(const PolyDrawArgs &args, WorkerThreadData *thread);
 	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void clip_to_viewport(TriVertex *clippedvert, int numclipvert);
+
 	static int clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert);
-#ifndef NO_SSE
-	static void clip_to_viewport_sse2(TriVertex *clippedvert, int numclipvert);
-	static int clipedge_sse2(const ShadedTriVertex *verts, TriVertex *clippedvert);
-#endif
 
 	static int viewport_x, viewport_y, viewport_width, viewport_height, dest_pitch, dest_width, dest_height;
 	static bool dest_bgra;

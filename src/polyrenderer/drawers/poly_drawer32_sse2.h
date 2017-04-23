@@ -27,7 +27,7 @@
 namespace TriScreenDrawerModes
 {
 	template<typename SamplerT, typename FilterModeT>
-	FORCEINLINE unsigned int VECTORCALL Sample32_SSE2(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, uint32_t oneU, uint32_t oneV, uint32_t color, const uint32_t *translation)
+	FORCEINLINE unsigned int VECTORCALL Sample32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, uint32_t oneU, uint32_t oneV, uint32_t color, const uint32_t *translation)
 	{
 		uint32_t texel;
 		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz)
@@ -107,7 +107,7 @@ namespace TriScreenDrawerModes
 	}
 
 	template<typename SamplerT>
-	FORCEINLINE unsigned int VECTORCALL SampleShade32_SSE2(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, int &fuzzpos)
+	FORCEINLINE unsigned int VECTORCALL SampleShade32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, int &fuzzpos)
 	{
 		if (SamplerT::Mode == (int)Samplers::Shaded)
 		{
@@ -143,7 +143,7 @@ namespace TriScreenDrawerModes
 	}
 
 	template<typename ShadeModeT>
-	FORCEINLINE __m128i VECTORCALL Shade32_SSE2(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light)
+	FORCEINLINE __m128i VECTORCALL Shade32(__m128i fgcolor, __m128i mlight, unsigned int ifgcolor0, unsigned int ifgcolor1, int desaturate, __m128i inv_desaturate, __m128i shade_fade, __m128i shade_light)
 	{
 		if (ShadeModeT::Mode == (int)ShadeMode::Simple)
 		{
@@ -172,7 +172,7 @@ namespace TriScreenDrawerModes
 	}
 
 	template<typename BlendT>
-	FORCEINLINE __m128i VECTORCALL Blend32_SSE2(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, unsigned int ifgshade0, unsigned int ifgshade1, uint32_t srcalpha, uint32_t destalpha)
+	FORCEINLINE __m128i VECTORCALL Blend32(__m128i fgcolor, __m128i bgcolor, unsigned int ifgcolor0, unsigned int ifgcolor1, unsigned int ifgshade0, unsigned int ifgshade1, uint32_t srcalpha, uint32_t destalpha)
 	{
 		if (BlendT::Mode == (int)BlendModes::Opaque)
 		{
@@ -275,7 +275,7 @@ namespace TriScreenDrawerModes
 }
 
 template<typename BlendT, typename SamplerT>
-class TriScreenDrawer32_SSE2
+class TriScreenDrawer32
 {
 public:
 	static void Execute(int x, int y, uint32_t mask0, uint32_t mask1, const TriDrawTriangleArgs *args)
@@ -430,13 +430,13 @@ private:
 
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
-					ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
@@ -460,8 +460,8 @@ private:
 
 					// Shade and blend
 					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-					fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+					fgcolor = Shade32<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					__m128i outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 					// Store result
 					_mm_storel_epi64((__m128i*)(dest + ix * 2), outcolor);
@@ -517,13 +517,13 @@ private:
 
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
-					ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
@@ -547,8 +547,8 @@ private:
 
 					// Shade and blend
 					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-					fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+					fgcolor = Shade32<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					__m128i outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 					// Store result
 					_mm_storel_epi64((__m128i*)desttmp, outcolor);
@@ -606,13 +606,13 @@ private:
 
 					// Sample fgcolor
 					unsigned int ifgcolor[2], ifgshade[2];
-					ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
-					ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-					ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+					ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+					ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
 					posV += stepV;
 
@@ -636,8 +636,8 @@ private:
 
 					// Shade and blend
 					__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-					fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-					__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+					fgcolor = Shade32<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					__m128i outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 					// Store result
 					_mm_storel_epi64((__m128i*)desttmp, outcolor);
@@ -658,7 +658,7 @@ private:
 };
 
 template<typename BlendT, typename SamplerT>
-class RectScreenDrawer32_SSE2
+class RectScreenDrawer32
 {
 public:
 	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
@@ -780,18 +780,18 @@ private:
 
 				// Sample fgcolor
 				unsigned int ifgcolor[2], ifgshade[2];
-				ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+				ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+				ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				posU += stepU;
 
-				ifgcolor[1] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[1] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+				ifgcolor[1] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+				ifgshade[1] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				posU += stepU;
 
 				// Shade and blend
 				__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-				fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-				__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+				fgcolor = Shade32<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
+				__m128i outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 				// Store result
 				_mm_storel_epi64((__m128i*)dest, outcolor);
@@ -809,16 +809,16 @@ private:
 
 				// Sample fgcolor
 				unsigned int ifgcolor[2], ifgshade[2];
-				ifgcolor[0] = Sample32_SSE2<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
-				ifgshade[0] = SampleShade32_SSE2<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
+				ifgcolor[0] = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
+				ifgshade[0] = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				ifgcolor[1] = 0;
 				ifgshade[1] = 0;
 				posU += stepU;
 
 				// Shade and blend
 				__m128i fgcolor = _mm_unpacklo_epi8(_mm_loadl_epi64((__m128i*)ifgcolor), _mm_setzero_si128());
-				fgcolor = Shade32_SSE2<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
-				__m128i outcolor = Blend32_SSE2<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
+				fgcolor = Shade32<ShadeModeT>(fgcolor, mlight, ifgcolor[0], ifgcolor[1], desaturate, inv_desaturate, shade_fade_lit, shade_light);
+				__m128i outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor[0], ifgcolor[1], ifgshade[0], ifgshade[1], srcalpha, destalpha);
 
 				// Store result
 				*dest = _mm_cvtsi128_si32(outcolor);

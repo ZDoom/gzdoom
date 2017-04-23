@@ -705,14 +705,13 @@ PFloat::PFloat(unsigned int size)
 	Flags |= TYPE_Float;
 	if (size == 8)
 	{
-#ifdef __i386__
-		// According to System V i386 ABI alignment of double type is 4
-		// GCC and Clang for 32-bit Intel targets follow this requirement
-		// However GCC has -malign-double option to enable 8-byte alignment
-		// So calculation of the actual alignment is needed
-		struct AlignmentCheck { uint8_t i; double d; };
-		Align = static_cast<unsigned int>(offsetof(AlignmentCheck, d));
-#endif // __i386__
+		if (sizeof(void*) == 4)
+		{
+			// Some ABIs for 32-bit platforms define alignment of double type as 4 bytes
+			// Intel POSIX (System V ABI) and PowerPC Macs are examples of those
+			struct AlignmentCheck { uint8_t i; double d; };
+			Align = static_cast<unsigned int>(offsetof(AlignmentCheck, d));
+		}
 
 		SetDoubleSymbols();
 	}

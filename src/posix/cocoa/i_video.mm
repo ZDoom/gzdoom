@@ -116,7 +116,7 @@
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
-CUSTOM_CVAR(Bool, vid_glswfb, false, CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, vid_glswfb, true, CVAR_NOINITCALL | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
@@ -658,6 +658,13 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 	else if (vid_glswfb)
 	{
 		fb = CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
+
+		if (!fb->IsValid())
+		{
+			delete fb;
+
+			fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
+		}
 	}
 	else
 	{

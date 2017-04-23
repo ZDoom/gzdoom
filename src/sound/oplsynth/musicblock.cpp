@@ -140,7 +140,7 @@ void musicBlock::voiceKeyOn(uint32_t slot, uint32_t channo, GenMidiInstrument *i
 
 	// Work out the note to use.  This is normally the same as
 	// the key, unless it is a fixed pitch instrument.
-	uint32_t note;
+	int note;
 	if (instrument->flags & GENMIDI_FLAG_FIXED)	note = instrument->fixed_note;
 	else if (channo == CHAN_PERCUSSION) note = 60;	
 	else note = key;
@@ -475,6 +475,6 @@ void musicBlock::stopAllVoices()
 {
 	for (uint32_t i = 0; i < io->NumChannels; i++)
 	{
-		if (voices[i].index >= 0) releaseVoice(i, 1);
+		if (voices[i].index != ~0u) releaseVoice(i, 1);
 	}
 }

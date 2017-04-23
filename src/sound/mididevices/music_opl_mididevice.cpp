@@ -296,7 +296,7 @@ FString OPLMIDIDevice::GetStats()
 	char star[3] = { TEXTCOLOR_ESCAPE, 'A', '*' };
 	for (uint32_t i = 0; i < io->NumChannels; ++i)
 	{
-		if (voices[i].index == -1)
+		if (voices[i].index == ~0u)
 		{
 			star[1] = CR_BRICK + 'A';
 		}

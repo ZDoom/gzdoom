@@ -14,11 +14,7 @@ extern double gl_MillisecPerCycle;
 
 __forceinline int64_t GetClockCycle ()
 {
-#if _M_X64
 	return __rdtsc();
-#else
-	return CPU.bRDTSC ? __rdtsc() : 0;
-#endif
 }
 
 #elif defined __APPLE__ && (defined __i386__ || defined __x86_64__)

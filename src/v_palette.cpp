@@ -410,7 +410,6 @@ void InitPalette ()
 	R_InitColormaps ();
 }
 
-void DoBlending_MMX (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 void DoBlending_SSE2 (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
@@ -435,37 +434,17 @@ void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, in
 		return;
 	}
 #if defined(_M_X64) || defined(_M_IX86) || defined(__i386__) || defined(__amd64__)
-	else if (CPU.bSSE2)
+	else if (count >= 4)
 	{
-		if (count >= 4)
+		int not3count = count & ~3;
+		DoBlending_SSE2 (from, to, not3count, r, g, b, a);
+		count &= 3;
+		if (count <= 0)
 		{
-			int not3count = count & ~3;
-			DoBlending_SSE2 (from, to, not3count, r, g, b, a);
-			count &= 3;
-			if (count <= 0)
-			{
-				return;
-			}
-			from += not3count;
-			to += not3count;
+			return;
 		}
-	}
-#endif
-#if defined(_M_IX86) || defined(__i386__)
-	else if (CPU.bMMX)
-	{
-		if (count >= 4)
-		{
-			int not3count = count & ~3;
-			DoBlending_MMX (from, to, not3count, r, g, b, a);
-			count &= 3;
-			if (count <= 0)
-			{
-				return;
-			}
-			from += not3count;
-			to += not3count;
-		}
+		from += not3count;
+		to += not3count;
 	}
 #endif
 	int i, ia;

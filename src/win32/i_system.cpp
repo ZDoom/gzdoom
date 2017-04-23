@@ -707,7 +707,7 @@ void CalculateCPUSpeed()
 
 	QueryPerformanceFrequency (&freq);
 
-	if (freq.QuadPart != 0 && CPU.bRDTSC)
+	if (freq.QuadPart != 0)
 	{
 		LARGE_INTEGER count1, count2;
 		cycle_t ClockCalibration;

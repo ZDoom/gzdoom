@@ -115,13 +115,7 @@ extern "C" unsigned __int64 __rdtsc(void);
 #pragma intrinsic(__rdtsc)
 inline unsigned __int64 rdtsc()
 {
-#ifndef _M_X64
-	if (CPU.bRDTSC)
-#endif
-	{
-		return __rdtsc();
-	}
-	return 0;
+	return __rdtsc();
 }
 #else
 inline uint64_t rdtsc()

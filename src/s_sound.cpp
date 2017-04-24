@@ -2596,21 +2596,8 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		{
 			if ((lumpnum = Wads.CheckNumForFullName (musicname, true, ns_music)) == -1)
 			{
-				if (strstr(musicname, "://") > musicname)
-				{
-					// Looks like a URL; try it as such.
-					handle = I_RegisterURLSong(musicname);
-					if (handle == NULL)
-					{
-						Printf ("Could not open \"%s\"\n", musicname);
-						return false;
-					}
-				}
-				else
-				{
-					Printf ("Music \"%s\" not found\n", musicname);
-					return false;
-				}
+				Printf ("Music \"%s\" not found\n", musicname);
+				return false;
 			}
 			if (handle == NULL)
 			{

@@ -90,11 +90,6 @@ StreamSong::StreamSong (FileReader *reader)
     m_Stream = GSnd->OpenStream (reader, SoundStream::Loop);
 }
 
-StreamSong::StreamSong (const char *url)
-{
-    m_Stream = GSnd->OpenStream (url, SoundStream::Loop);
-}
-
 bool StreamSong::IsPlaying ()
 {
 	if (m_Status != STATE_Stopped)

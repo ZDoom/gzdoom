@@ -560,25 +560,6 @@ MusInfo *I_RegisterCDSong (int track, int id)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-MusInfo *I_RegisterURLSong (const char *url)
-{
-	StreamSong *song;
-
-	song = new StreamSong(url);
-	if (song->IsValid())
-	{
-		return song;
-	}
-	delete song;
-	return NULL;
-}
-
-//==========================================================================
-//
 // ungzip
 //
 // VGZ files are compressed with gzip, so we need to uncompress them before

@@ -10,7 +10,7 @@ if( COMMAND cmake_policy )
 	endif()
 endif()
 
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} )
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( CreateLaunchers )
 include( FindPackageHandleStandardArgs )
 
@@ -147,8 +147,6 @@ endif()
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif()
-
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
 
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 

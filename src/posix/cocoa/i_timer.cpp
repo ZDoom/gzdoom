@@ -35,7 +35,6 @@
 #include <sys/sysctl.h>
 #include <sys/time.h>
 #include <pthread.h>
-#include <libkern/OSAtomic.h>
 
 #include "doomdef.h"
 #include "i_system.h"
@@ -124,12 +123,7 @@ void* TimerThreadFunc(void*)
 
 		if (!s_isTicFrozen)
 		{
-			// The following GCC/Clang intrinsic can be used instead of OS X specific function:
-			// __sync_add_and_fetch(&s_tics, 1);
-			// Although it's not supported on all platform/compiler combination,
-			// e.g. GCC 4.0.1 with PowerPC target architecture
-
-			OSAtomicIncrement32(&s_tics);
+			__sync_add_and_fetch(&s_tics, 1);
 		}
 
 		s_timerStart = I_MSTime();

@@ -594,7 +594,6 @@ class StreamSong : public MusInfo
 {
 public:
     StreamSong (FileReader *reader);
-	StreamSong (const char *url);
 	~StreamSong ();
 	void Play (bool looping, int subsong);
 	void Pause ();

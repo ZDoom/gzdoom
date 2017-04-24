@@ -244,9 +244,6 @@ void DumpCPUInfo(const CPUInfo *cpu)
 				cpu->Family, cpu->Model, cpu->Stepping);
 		}
 		Printf("  Features:");
-		if (cpu->bMMX)			Printf(" MMX");
-		if (cpu->bMMXPlus)		Printf(" MMX+");
-		if (cpu->bSSE)			Printf(" SSE");
 		if (cpu->bSSE2)			Printf(" SSE2");
 		if (cpu->bSSE3)			Printf(" SSE3");
 		if (cpu->bSSSE3)		Printf(" SSSE3");
@@ -257,50 +254,6 @@ void DumpCPUInfo(const CPUInfo *cpu)
 		Printf ("\n");
 	}
 }
-
-#if !defined(__amd64__) && !defined(_M_X64)
-
-void DoBlending_MMX(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)
-{
-	__m64 blendcolor;
-	__m64 blendalpha;
-	__m64 zero;
-	__m64 blending256;
-	__m64 color1;
-	__m64 color2;
-
-	zero = _mm_setzero_si64();
-#ifndef __GNUC__
-	blending256.m64_i64 = 0x10001000100;
-#else
-	blending256 = (__m64)0x10001000100ll;
-#endif
-
-	blendcolor = _mm_unpacklo_pi8(_m_from_int((r << 16) | (g << 8) | b), zero);	// 000000RR 00GG00BB
-	blendalpha = _mm_unpacklo_pi8(_m_from_int((a << 16) | (a << 8) | a), zero);	// 000000AA 00AA00AA
-
-	blendcolor = _mm_mullo_pi16(blendcolor, blendalpha);	// premultiply blend by alpha
-	blendalpha = _mm_subs_pu16(blending256, blendalpha);	// one minus alpha
-
-	// Do two colors per iteration: Count must be even
-	for (count >>= 1; count > 0; --count)
-	{
-		color1 = *(__m64 *)from;						// 00r2g2b2 00r1g1b1
-		from += 2;
-		color2 = _mm_unpackhi_pi8(color1, zero);		// 000000r2 00g200b2
-		color1 = _mm_unpacklo_pi8(color1, zero);		// 000000r1 00g100b1
-		color1 = _mm_mullo_pi16(blendalpha, color1);	// 0000r1rr g1ggb1bb
-		color2 = _mm_mullo_pi16(blendalpha, color2);	// 0000r2rr g2ggb2bb
-		color1 = _mm_adds_pu16(blendcolor, color1);
-		color2 = _mm_adds_pu16(blendcolor, color2);
-		color1 = _mm_srli_pi16(color1, 8);
-		color2 = _mm_srli_pi16(color2, 8);
-		*(__m64 *)to = _mm_packs_pu16(color1, color2);	// 00r2g2b2 00r1g1b1
-		to += 2;
-	}
-	_mm_empty();
-}
-#endif
 
 
 void DoBlending_SSE2(const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a)

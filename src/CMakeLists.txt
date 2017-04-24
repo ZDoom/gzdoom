@@ -1,6 +1,6 @@
 cmake_minimum_required( VERSION 2.8.7 )
 
-include(../precompiled_headers.cmake)
+include(precompiled_headers)
 
 if( COMMAND cmake_policy )
 	cmake_policy( SET CMP0003 NEW )
@@ -13,6 +13,7 @@ include( CheckIncludeFile )
 include( CheckIncludeFiles )
 include( CheckLibraryExists )
 include( FindPkgConfig )
+include( TargetArch )
 
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	option( NO_STRIP "Do not strip Release or MinSizeRel builds" )
@@ -32,7 +33,9 @@ if( APPLE )
     option( OSX_COCOA_BACKEND "Use native Cocoa backend instead of SDL" ON )
 endif()
 
-if( CMAKE_SIZEOF_VOID_P MATCHES "8" )
+target_architecture(ZDOOM_TARGET_ARCH)
+
+if( ${ZDOOM_TARGET_ARCH} MATCHES "x86_64" )
 	set( X64 64 )
 endif()
 
@@ -346,6 +349,11 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 			set( CMAKE_CXX_FLAGS "-mfpu=neon -DNO_SSE ${CMAKE_CXX_FLAGS}" )
 		endif ()
 	endif ()
+
+	if( NOT X64 AND NOT CAN_DO_MFPMATH )
+		set( CMAKE_C_FLAGS "-DNO_SSE ${CMAKE_CXX_FLAGS}" )
+		set( CMAKE_CXX_FLAGS "-DNO_SSE ${CMAKE_CXX_FLAGS}" )
+	endif()
 
 	# Use the highest C++ standard available since VS2015 compiles with C++14
 	# but we only require C++11.  The recommended way to do this in CMake is to

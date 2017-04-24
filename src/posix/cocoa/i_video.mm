@@ -116,11 +116,22 @@
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
+CUSTOM_CVAR(Bool, vid_glswfb, true, CVAR_NOINITCALL | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("This won't take effect until " GAMENAME " is restarted.\n");
+}
+
 EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 
-CUSTOM_CVAR(Bool, swtruecolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+#if defined __ppc__ || defined __ppc64__
+static const bool TRUECOLOR_DEFAULT = false;
+#else // other than PowerPC
+static const bool TRUECOLOR_DEFAULT = true;
+#endif // PowerPC
+
+CUSTOM_CVAR(Bool, swtruecolor, TRUECOLOR_DEFAULT, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// Strictly speaking this doesn't require a mode switch, but it is the easiest
 	// way to force a CreateFramebuffer call without a lot of refactoring.
@@ -551,9 +562,12 @@ CocoaVideo::CocoaVideo()
 
 	// Create OpenGL pixel format
 
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(OpenGLProfile::Core);
+	const OpenGLProfile defaultProfile = (1 == vid_renderer || vid_glswfb)
+		? OpenGLProfile::Core
+		: OpenGLProfile::Legacy;
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(defaultProfile);
 
-	if (nil == pixelFormat)
+	if (nil == pixelFormat && OpenGLProfile::Core == defaultProfile)
 	{
 		pixelFormat = CreatePixelFormat(OpenGLProfile::Legacy);
 
@@ -647,10 +661,20 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
  	{
 		fb = new OpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
 	}
+	else if (vid_glswfb)
+	{
+		fb = CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
+
+		if (!fb->IsValid())
+		{
+			delete fb;
+
+			fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
+		}
+	}
 	else
 	{
-		//fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
-		fb = CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
+		fb = new CocoaFrameBuffer(width, height, bgra, fullscreen);
 	}
 
 	fb->SetFlash(flashColor, flashAmount);

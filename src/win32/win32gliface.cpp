@@ -167,7 +167,7 @@ public:
 Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
 {
 	#ifdef _WIN32
-		 if (CPU.bRDTSC) gl_CalculateCPUSpeed();
+		 gl_CalculateCPUSpeed();
 	#endif
 	I_SetWndProc();
 	m_DisplayWidth = vid_defwidth;

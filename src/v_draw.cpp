@@ -778,7 +778,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 		if (parms->lclip < clipleft) parms->lclip = clipleft;
 		if (parms->rclip > clipleft + clipwidth) parms->rclip = clipleft + clipwidth;
 		if (parms->uclip < cliptop) parms->uclip = cliptop;
-		if (parms->dclip < cliptop + clipheight) parms->uclip = cliptop + clipheight;
+		if (parms->dclip > cliptop + clipheight) parms->dclip = cliptop + clipheight;
 	}
 
 	if (parms->uclip >= parms->dclip || parms->lclip >= parms->rclip)

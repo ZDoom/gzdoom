@@ -57,7 +57,6 @@ class MusInfo;
 struct MidiDeviceSetting;
 MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
-MusInfo *I_RegisterURLSong (const char *url);
 
 // The base music class. Everything is derived from this --------------------
 

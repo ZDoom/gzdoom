@@ -576,11 +576,6 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int le
 	return retval;
 }
 
-SoundStream *SoundRenderer::OpenStream(const char *url, int flags)
-{
-    return 0;
-}
-
 SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
 {
     SoundDecoder *decoder = NULL;

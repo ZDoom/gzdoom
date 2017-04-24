@@ -108,7 +108,6 @@ public:
 	// Streaming sounds.
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
     virtual SoundStream *OpenStream (FileReader *reader, int flags) = 0;
-	virtual SoundStream *OpenStream (const char *url, int flags);
 
 	// Starts a sound.
 	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan) = 0;

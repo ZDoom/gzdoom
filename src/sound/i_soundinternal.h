@@ -132,7 +132,7 @@ struct SoundDecoder
 
     virtual size_t read(char *buffer, size_t bytes) = 0;
     virtual TArray<char> readAll();
-    virtual bool seek(size_t ms_offset, bool ms) = 0;
+    virtual bool seek(size_t ms_offset, bool ms, bool mayrestart) = 0;
     virtual size_t getSampleOffset() = 0;
     virtual size_t getSampleLength() { return 0; }
 

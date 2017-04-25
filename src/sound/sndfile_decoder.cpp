@@ -190,7 +190,7 @@ TArray<char> SndFileDecoder::readAll()
     return output;
 }
 
-bool SndFileDecoder::seek(size_t ms_offset, bool ms)
+bool SndFileDecoder::seek(size_t ms_offset, bool ms, bool /*mayrestart*/)
 {
     size_t smp_offset = ms? (size_t)((double)ms_offset / 1000. * SndInfo.samplerate) : ms_offset;
     if(sf_seek(SndFile, smp_offset, SEEK_SET) < 0)

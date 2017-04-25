@@ -500,6 +500,24 @@ class SaveMenu : LoadSaveMenu
 	//
 	//=============================================================================
 
+	override bool MouseEvent(int type, int x, int y)
+	{
+		if (mSaveName.Length() > 0)
+		{
+			// Do not process events when saving is in progress to avoid update of the current index,
+			// i.e. Selected member variable must remain unchanged
+			return true;
+		}
+
+		return Super.MouseEvent(type, x, y);
+	}
+
+	//=============================================================================
+	//
+	//
+	//
+	//=============================================================================
+
 	override bool OnUIEvent(UIEvent ev)
 	{
 		if (ev.Type == UIEvent.Type_KeyDown)

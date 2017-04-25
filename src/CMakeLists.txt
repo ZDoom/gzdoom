@@ -886,7 +886,6 @@ set (PCH_SOURCES
 	p_3dmidtex.cpp
 	p_acs.cpp
 	p_actionfunctions.cpp
-	p_buildmap.cpp
 	p_ceiling.cpp
 	p_conversation.cpp
 	p_doors.cpp

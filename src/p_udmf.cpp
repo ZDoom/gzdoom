@@ -2073,6 +2073,7 @@ public:
 			else if (sc.Compare("sector"))
 			{
 				sector_t sec;
+				memset(&sec, 0, sizeof(sector_t));
 				ParseSector(&sec, ParsedSectors.Size());
 				ParsedSectors.Push(sec);
 			}

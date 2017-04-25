@@ -468,7 +468,7 @@ enum
 void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill=-1);
 
 void G_StartTravel ();
-void G_FinishTravel ();
+int G_FinishTravel ();
 
 void G_DoLoadLevel (int position, bool autosave);
 

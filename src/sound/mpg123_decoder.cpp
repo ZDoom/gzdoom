@@ -190,23 +190,38 @@ size_t MPG123Decoder::read(char *buffer, size_t bytes)
     return amt;
 }
 
-bool MPG123Decoder::seek(size_t ms_offset, bool ms)
+bool MPG123Decoder::seek(size_t ms_offset, bool ms, bool mayrestart)
 {
-    int enc, channels;
-    long srate;
+	int enc, channels;
+	long srate;
 
-    if(mpg123_getformat(MPG123, &srate, &channels, &enc) == MPG123_OK)
-    {
-        size_t smp_offset = ms? (size_t)((double)ms_offset / 1000. * srate) : ms_offset;
-        if(mpg123_seek(MPG123, (off_t)smp_offset, SEEK_SET) >= 0)
-        {
-            Done = false;
-            return true;
-        }
-    }
-    return false;
+	if (!mayrestart || ms_offset > 0)
+	{
+		if (mpg123_getformat(MPG123, &srate, &channels, &enc) == MPG123_OK)
+		{
+			size_t smp_offset = ms ? (size_t)((double)ms_offset / 1000. * srate) : ms_offset;
+			if (mpg123_seek(MPG123, (off_t)smp_offset, SEEK_SET) >= 0)
+			{
+				Done = false;
+				return true;
+			}
+		}
+		return false;
+	}
+	else
+	{
+		// Restart the song instead of rewinding. A rewind seems to cause distortion when done repeatedly.
+		// offset is intentionally ignored here.
+		if (MPG123)
+		{
+			mpg123_close(MPG123);
+			mpg123_delete(MPG123);
+			MPG123 = 0;
+		}
+		Reader->Seek(0, SEEK_SET);
+		return open(Reader);
+	}
 }
-
 size_t MPG123Decoder::getSampleOffset()
 {
     return mpg123_tell(MPG123);

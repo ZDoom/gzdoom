@@ -1934,10 +1934,17 @@ public:
 			P_AdjustLine(&lines[line]);
 			P_FinishLoadingLineDef(&lines[line], tempalpha[0]);
 		}
-		assert((unsigned)side <= level.sides.Size());
-		if ((unsigned)side > level.sides.Size())
+
+		const int sideDelta = level.sides.Size() - side;
+		assert(sideDelta >= 0);
+
+		if (sideDelta < 0)
 		{
-			Printf("Map had %d invalid side references\n", (int)level.sides.Size() - side);
+			Printf("Map had %d invalid side references\n", abs(sideDelta));
+		}
+		else if (sideDelta > 0)
+		{
+			level.sides.Resize(side);
 		}
 	}
 
@@ -2066,6 +2073,7 @@ public:
 			else if (sc.Compare("sector"))
 			{
 				sector_t sec;
+				memset(&sec, 0, sizeof(sector_t));
 				ParseSector(&sec, ParsedSectors.Size());
 				ParsedSectors.Push(sec);
 			}

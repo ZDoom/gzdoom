@@ -1205,7 +1205,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, 
 
 void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
 
-std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize)
+std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *pBuffer)
 {
 	SoundHandle retval = { NULL };
 	MemoryReader reader((const char*)sfxdata, length);
@@ -1223,29 +1223,30 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	}
 
 	std::unique_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
-	if(!decoder) return std::make_pair(retval, true);
+	if (!decoder) return std::make_pair(retval, true);
 
 	decoder->getInfo(&srate, &chans, &type);
 	int samplesize = 1;
-	if(chans == ChannelConfig_Mono || monoize)
+	if (chans == ChannelConfig_Mono || monoize)
 	{
-		if(type == SampleType_UInt8) format = AL_FORMAT_MONO8, samplesize = 1;
-		if(type == SampleType_Int16) format = AL_FORMAT_MONO16, samplesize = 2;
+		if (type == SampleType_UInt8) format = AL_FORMAT_MONO8, samplesize = 1;
+		if (type == SampleType_Int16) format = AL_FORMAT_MONO16, samplesize = 2;
 	}
-	else if(chans == ChannelConfig_Stereo)
+	else if (chans == ChannelConfig_Stereo)
 	{
-		if(type == SampleType_UInt8) format = AL_FORMAT_STEREO8, samplesize = 2;
-		if(type == SampleType_Int16) format = AL_FORMAT_STEREO16, samplesize = 4;
+		if (type == SampleType_UInt8) format = AL_FORMAT_STEREO8, samplesize = 2;
+		if (type == SampleType_Int16) format = AL_FORMAT_STEREO16, samplesize = 4;
 	}
 
-	if(format == AL_NONE)
+	if (format == AL_NONE)
 	{
 		Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
-			   GetSampleTypeName(type));
+			GetSampleTypeName(type));
 		return std::make_pair(retval, true);
 	}
 
-	TArray<char> data = decoder->readAll();
+	TArray<uint8_t> data = decoder->readAll();
+
 	if(chans != ChannelConfig_Mono && monoize)
 	{
 		size_t chancount = GetChannelCount(chans);
@@ -1289,7 +1290,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	}
 
 	if (!startass) loop_start = Scale(loop_start, srate, 1000);
-	if (!endass) loop_end = Scale(loop_end, srate, 1000);
+	if (!endass && loop_end != ~0u) loop_end = Scale(loop_end, srate, 1000);
 	const uint32_t samples = data.Size() / samplesize;
 	if (loop_start > samples) loop_start = 0;
 	if (loop_end > samples) loop_end = samples;
@@ -1302,6 +1303,98 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 		// no console messages here, please!
 	}
 
+	retval.data = MAKE_PTRID(buffer);
+	if (pBuffer != nullptr)
+	{
+		pBuffer->mBuffer = std::move(data);
+		pBuffer->loop_start = loop_start;
+		pBuffer->loop_end = loop_end;
+		pBuffer->chans = chans;
+		pBuffer->type = type;
+		pBuffer->srate = srate;
+	}
+	return std::make_pair(retval, (chans == ChannelConfig_Mono || monoize));
+}
+
+std::pair<SoundHandle, bool> OpenALSoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *pBuffer, bool monoize)
+{
+	SoundHandle retval = { NULL };
+	ALenum format = AL_NONE;
+	int srate = pBuffer->srate;
+	auto type = pBuffer->type;
+	auto chans = pBuffer->chans;
+	uint32_t loop_start = pBuffer->loop_start, loop_end = pBuffer->loop_end;
+
+	if (chans == ChannelConfig_Mono || monoize)
+	{
+		if (type == SampleType_UInt8) format = AL_FORMAT_MONO8;
+		if (type == SampleType_Int16) format = AL_FORMAT_MONO16;
+	}
+	else if (chans == ChannelConfig_Stereo)
+	{
+		if (type == SampleType_UInt8) format = AL_FORMAT_STEREO8;
+		if (type == SampleType_Int16) format = AL_FORMAT_STEREO16;
+	}
+
+	if (format == AL_NONE)
+	{
+		Printf("Unsupported audio format: %s, %s\n", GetChannelConfigName(chans),
+			GetSampleTypeName(type));
+		return std::make_pair(retval, true);
+	}
+
+	TArray<uint8_t> &data = pBuffer->mBuffer;
+
+	if (pBuffer->chans == ChannelConfig_Stereo && monoize)
+	{
+		size_t chancount = GetChannelCount(chans);
+		size_t frames = data.Size() / chancount /
+			(type == SampleType_Int16 ? 2 : 1);
+		if (type == SampleType_Int16)
+		{
+			short *sfxdata = (short*)&data[0];
+			for (size_t i = 0; i < frames; i++)
+			{
+				int sum = 0;
+				for (size_t c = 0; c < chancount; c++)
+					sum += sfxdata[i*chancount + c];
+				sfxdata[i] = short(sum / chancount);
+			}
+		}
+		else if (type == SampleType_UInt8)
+		{
+			uint8_t *sfxdata = (uint8_t*)&data[0];
+			for (size_t i = 0; i < frames; i++)
+			{
+				int sum = 0;
+				for (size_t c = 0; c < chancount; c++)
+					sum += sfxdata[i*chancount + c] - 128;
+				sfxdata[i] = uint8_t((sum / chancount) + 128);
+			}
+		}
+		data.Resize(unsigned(data.Size() / chancount));
+	}
+
+	ALenum err;
+	ALuint buffer = 0;
+	alGenBuffers(1, &buffer);
+	alBufferData(buffer, format, &data[0], data.Size(), srate);
+	if ((err = getALError()) != AL_NO_ERROR)
+	{
+		Printf("Failed to buffer data: %s\n", alGetString(err));
+		alDeleteBuffers(1, &buffer);
+		getALError();
+		return std::make_pair(retval, true);
+	}
+
+	// the loop points were already validated by the previous load.
+	if ((loop_start > 0 || loop_end > 0) && loop_end > loop_start && AL.SOFT_loop_points)
+	{
+		ALint loops[2] = { static_cast<ALint>(loop_start), static_cast<ALint>(loop_end) };
+		DPrintf(DMSG_NOTIFY, "Setting loop points %d -> %d\n", loops[0], loops[1]);
+		alBufferiv(buffer, AL_LOOP_POINTS_SOFT, loops);
+		// no console messages here, please!
+	}
 
 	retval.data = MAKE_PTRID(buffer);
 	return std::make_pair(retval, (chans == ChannelConfig_Mono || monoize));

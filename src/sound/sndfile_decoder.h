@@ -16,7 +16,7 @@ struct SndFileDecoder : public SoundDecoder
     virtual void getInfo(int *samplerate, ChannelConfig *chans, SampleType *type);
 
     virtual size_t read(char *buffer, size_t bytes);
-    virtual TArray<char> readAll();
+    virtual TArray<uint8_t> readAll();
     virtual bool seek(size_t ms_offset, bool ms, bool mayrestart);
 	virtual size_t getSampleOffset();
     virtual size_t getSampleLength();

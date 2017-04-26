@@ -120,7 +120,7 @@ public:
 	void SetMusicVolume (float volume)
 	{
 	}
-	std::pair<SoundHandle,bool> LoadSound(uint8_t *sfxdata, int length, bool monoize)
+	std::pair<SoundHandle,bool> LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *pBuffer)
 	{
 		SoundHandle retval = { NULL };
 		return std::make_pair(retval, true);
@@ -576,6 +576,12 @@ std::pair<SoundHandle,bool> SoundRenderer::LoadSoundVoc(uint8_t *sfxdata, int le
 	return retval;
 }
 
+std::pair<SoundHandle, bool> SoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *buffer, bool monoize)
+{
+	SoundHandle retval = { NULL };
+	return std::make_pair(retval, true);
+}
+
 SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
 {
     SoundDecoder *decoder = NULL;
@@ -604,14 +610,14 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileReader *reader)
 
 
 // Default readAll implementation, for decoders that can't do anything better
-TArray<char> SoundDecoder::readAll()
+TArray<uint8_t> SoundDecoder::readAll()
 {
-    TArray<char> output;
+    TArray<uint8_t> output;
     unsigned total = 0;
     unsigned got;
 
     output.Resize(total+32768);
-    while((got=(unsigned)read(&output[total], output.Size()-total)) > 0)
+    while((got=(unsigned)read((char*)&output[total], output.Size()-total)) > 0)
     {
         total += got;
         output.Resize(total*2);

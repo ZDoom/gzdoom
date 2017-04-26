@@ -310,8 +310,6 @@ inline void GLPortal::ClearClipper()
 
 	drawer->clipper.Clear();
 
-	static int call=0;
-
 	// Set the clipper to the minimal visible area
 	drawer->clipper.SafeAddClipRange(0,0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)

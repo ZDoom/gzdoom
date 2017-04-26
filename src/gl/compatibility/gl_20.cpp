@@ -130,8 +130,6 @@ void gl_PatchMenu()
 
 void gl_SetTextureMode(int type)
 {
-	static float white[] = {1.f,1.f,1.f,1.f};
-
 	if (type == TM_MASK)
 	{
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);

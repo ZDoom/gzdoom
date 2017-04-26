@@ -239,7 +239,6 @@ static const char bar2[] = TEXTCOLOR_RED "\35\36\36\36\36\36\36\36\36\36\36\36\3
 						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_GREEN "\n";
 static const char bar3[] = TEXTCOLOR_RED "\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
-static const char logbar[] = "\n<------------------------------->\n";
 
 void FConsoleBuffer::AddMidText(const char *string, bool bold, FILE *Logfile)
 {

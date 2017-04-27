@@ -192,7 +192,7 @@ class StatusScreen abstract play version("2.5")
 		{
 			let size = TexMan.GetScaledSize(pinfo.mPatch);
 			screen.DrawTexture(pinfo.mPatch, true, midx - size.X * CleanXfac/2, y, DTA_CleanNoMove, true);
-			return y + (size.Y * CleanYfac);
+			return y + int(size.Y * CleanYfac);
 		}
 		else 
 		{

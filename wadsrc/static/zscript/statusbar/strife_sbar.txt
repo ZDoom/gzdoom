@@ -266,7 +266,7 @@ class StrifeStatusBar : BaseStatusBar
 		{
 			double tmp, h;
 			[tmp, tmp, h] = StatusbarToRealCoords(0, 0, 8);
-			DrawPopScreen (GetTopOfStatusBar() - h, TicFrac);
+			DrawPopScreen (int(GetTopOfStatusBar() - h), TicFrac);
 		}
 
 		DrawImage("INVBACK", (0, 168), DI_ITEM_OFFSETS);

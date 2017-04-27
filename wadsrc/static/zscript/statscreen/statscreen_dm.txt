@@ -158,7 +158,7 @@ class DeathmatchStatusScreen : StatusScreen
 		// Use the readyico height if it's bigger.
 		Vector2 readysize = TexMan.GetScaledSize(readyico);
 		Vector2 readyoffset = TexMan.GetScaledOffset(readyico);
-		height = readysize.Y - readyoffset.Y;
+		height = int(readysize.Y - readyoffset.Y);
 		maxiconheight = MAX(height, maxiconheight);
 		height = SmallFont.GetHeight() * CleanYfac;
 		lineheight = MAX(height, maxiconheight * CleanYfac);

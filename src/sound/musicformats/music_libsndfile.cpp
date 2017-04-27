@@ -333,8 +333,8 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 			size_t endlen = song->Decoder->read(buff, endblock);
 			if (endlen != 0)
 			{
-				buff = buff + endblock;
-				len -= endblock;
+				buff = buff + endlen;
+				len -= endlen;
 				song->Decoder->seek(song->Loop_Start, false, true);
 			}
 			else

@@ -1244,7 +1244,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	{
 		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
 
-		int Selection = GetSliderValue();
+		int Selection = int(GetSliderValue());
 		if ((Selection == 0 || Selection == -1) && mClickVal <= 0)
 		{
 			String text = Selection == 0? TextZero : Selection == -1? TextNegOne  : "";
@@ -1260,7 +1260,7 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	
 	override bool MouseEvent(int type, int x, int y)
 	{
-		int value = GetSliderValue();
+		int value = int(GetSliderValue());
 		switch (type)
 		{
 			case Menu.MOUSE_Click:

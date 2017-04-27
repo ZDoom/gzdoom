@@ -212,6 +212,7 @@ struct FSoundChan : public FISoundChannel
 		float			 Point[3];	// Sound is not attached to any source.
 	};
 };
+
 extern FSoundChan *Channels;
 
 void S_ReturnChannel(FSoundChan *chan);
@@ -299,6 +300,7 @@ void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool
 #define ATTN_IDLE				1.001f
 #define ATTN_STATIC				3.f	// diminish very rapidly with distance
 
+struct FSoundLoadBuffer;
 int S_PickReplacement (int refid);
 void S_CacheRandomSound (sfxinfo_t *sfx);
 
@@ -384,7 +386,7 @@ int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int ref
 void S_MarkPlayerSounds (const char *playerclass);
 void S_ShrinkPlayerSoundLists ();
 void S_UnloadSound (sfxinfo_t *sfx);
-sfxinfo_t *S_LoadSound(sfxinfo_t *sfx);
+sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
 void S_ParseMusInfo();
 bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time);

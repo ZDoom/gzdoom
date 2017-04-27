@@ -175,16 +175,16 @@ size_t SndFileDecoder::read(char *buffer, size_t bytes)
     return total * SndInfo.channels * 2;
 }
 
-TArray<char> SndFileDecoder::readAll()
+TArray<uint8_t> SndFileDecoder::readAll()
 {
     if(SndInfo.frames <= 0)
         return SoundDecoder::readAll();
 
     int framesize = 2 * SndInfo.channels;
-    TArray<char> output;
+    TArray<uint8_t> output;
 
     output.Resize((unsigned)(SndInfo.frames * framesize));
-    size_t got = read(&output[0], output.Size());
+    size_t got = read((char*)&output[0], output.Size());
     output.Resize((unsigned)got);
 
     return output;

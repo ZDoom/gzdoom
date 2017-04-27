@@ -126,7 +126,7 @@ extern float S_GetMusicVolume (const char *music);
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void S_LoadSound3D(sfxinfo_t *sfx);
+static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer);
 static bool S_CheckSoundLimit(sfxinfo_t *sfx, const FVector3 &pos, int near_limit, float limit_range, AActor *actor, int channel);
 static bool S_IsChannelUsed(AActor *actor, int channel, int *seen);
 static void S_ActivatePlayList(bool goBack);
@@ -577,7 +577,10 @@ void S_CacheSound (sfxinfo_t *sfx)
 		}
 		else
 		{
-			S_LoadSound(sfx);
+			// Since we do not know in what format the sound will be used, we have to cache both.
+			FSoundLoadBuffer SoundBuffer;
+			S_LoadSound(sfx, &SoundBuffer);
+			S_LoadSound3D(sfx, &SoundBuffer);
 			sfx->bUsed = true;
 		}
 	}
@@ -906,6 +909,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	FSoundChan *chan;
 	FVector3 pos, vel;
 	FRolloffInfo *rolloff;
+	FSoundLoadBuffer SoundBuffer;
 
 	if (sound_id <= 0 || volume <= 0 || nosfx || nosound )
 		return NULL;
@@ -1050,7 +1054,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	}
 
 	// Make sure the sound is loaded.
-	sfx = S_LoadSound(sfx);
+	sfx = S_LoadSound(sfx, &SoundBuffer);
 
 	// The empty sound never plays.
 	if (sfx->lumpnum == sfx_empty)
@@ -1150,7 +1154,7 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 
 		if (attenuation > 0)
 		{
-            S_LoadSound3D(sfx);
+            S_LoadSound3D(sfx, &SoundBuffer);
 			SoundListener listener;
 			S_SetListener(listener, players[consoleplayer].camera);
             chan = (FSoundChan*)GSnd->StartSound3D (sfx->data3d, &listener, float(volume), rolloff, float(attenuation), pitch, basepriority, pos, vel, channel, startflags, NULL);
@@ -1213,12 +1217,13 @@ void S_RestartSound(FSoundChan *chan)
 
 	FSoundChan *ochan;
 	sfxinfo_t *sfx = &S_sfx[chan->SoundID];
+	FSoundLoadBuffer SoundBuffer;
 
 	// If this is a singular sound, don't play it if it's already playing.
 	if (sfx->bSingular && S_CheckSingular(chan->SoundID))
 		return;
 
-	sfx = S_LoadSound(sfx);
+	sfx = S_LoadSound(sfx, &SoundBuffer);
 
 	// The empty sound never plays.
 	if (sfx->lumpnum == sfx_empty)
@@ -1247,7 +1252,7 @@ void S_RestartSound(FSoundChan *chan)
 			return;
 		}
 
-        S_LoadSound3D(sfx);
+        S_LoadSound3D(sfx, &SoundBuffer);
 		SoundListener listener;
 		S_SetListener(listener, players[consoleplayer].camera);
 
@@ -1392,7 +1397,7 @@ void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool
 //
 //==========================================================================
 
-sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
+sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 {
 	if (GSnd->IsNull()) return sfx;
 
@@ -1452,7 +1457,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 			// If that fails, let the sound system try and figure it out.
 			else
 			{
-				snd = GSnd->LoadSound(sfxdata, size);
+				snd = GSnd->LoadSound(sfxdata, size, false, pBuffer);
 			}
 			delete[] sfxdata;
 
@@ -1474,7 +1479,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx)
 	return sfx;
 }
 
-static void S_LoadSound3D(sfxinfo_t *sfx)
+static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 {
     if (GSnd->IsNull()) return;
 
@@ -1483,40 +1488,47 @@ static void S_LoadSound3D(sfxinfo_t *sfx)
 
     DPrintf(DMSG_NOTIFY, "Loading monoized sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
-    int size = Wads.LumpLength(sfx->lumpnum);
-    if(size <= 0) return;
+	if (pBuffer->mBuffer.Size() > 0)
+	{
+		GSnd->LoadSoundBuffered(pBuffer, true);
+	}
+	else
+	{
+		int size = Wads.LumpLength(sfx->lumpnum);
+		if (size <= 0) return;
 
-    FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
-    uint8_t *sfxdata = new uint8_t[size];
-    wlump.Read(sfxdata, size);
-    int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
-    std::pair<SoundHandle,bool> snd;
+		FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
+		uint8_t *sfxdata = new uint8_t[size];
+		wlump.Read(sfxdata, size);
+		int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
+		std::pair<SoundHandle, bool> snd;
 
-    // If the sound is voc, use the custom loader.
-    if (strncmp ((const char *)sfxdata, "Creative Voice File", 19) == 0)
-    {
-        snd = GSnd->LoadSoundVoc(sfxdata, size, true);
-    }
-    // If the sound is raw, just load it as such.
-    else if (sfx->bLoadRAW)
-    {
-        snd = GSnd->LoadSoundRaw(sfxdata, size, sfx->RawRate, 1, 8, sfx->LoopStart, true);
-    }
-    // Otherwise, try the sound as DMX format.
-    else if (((uint8_t *)sfxdata)[0] == 3 && ((uint8_t *)sfxdata)[1] == 0 && dmxlen <= size - 8)
-    {
-        int frequency = LittleShort(((uint16_t *)sfxdata)[1]);
-        if (frequency == 0) frequency = 11025;
-        snd = GSnd->LoadSoundRaw(sfxdata+8, dmxlen, frequency, 1, 8, sfx->LoopStart, -1, true);
-    }
-    // If that fails, let the sound system try and figure it out.
-    else
-    {
-        snd = GSnd->LoadSound(sfxdata, size, true);
-    }
-    delete[] sfxdata;
+		// If the sound is voc, use the custom loader.
+		if (strncmp((const char *)sfxdata, "Creative Voice File", 19) == 0)
+		{
+			snd = GSnd->LoadSoundVoc(sfxdata, size, true);
+		}
+		// If the sound is raw, just load it as such.
+		else if (sfx->bLoadRAW)
+		{
+			snd = GSnd->LoadSoundRaw(sfxdata, size, sfx->RawRate, 1, 8, sfx->LoopStart, true);
+		}
+		// Otherwise, try the sound as DMX format.
+		else if (((uint8_t *)sfxdata)[0] == 3 && ((uint8_t *)sfxdata)[1] == 0 && dmxlen <= size - 8)
+		{
+			int frequency = LittleShort(((uint16_t *)sfxdata)[1]);
+			if (frequency == 0) frequency = 11025;
+			snd = GSnd->LoadSoundRaw(sfxdata + 8, dmxlen, frequency, 1, 8, sfx->LoopStart, -1, true);
+		}
+		// If that fails, let the sound system try and figure it out.
+		else
+		{
+			snd = GSnd->LoadSound(sfxdata, size, true, pBuffer);
+		}
+		delete[] sfxdata;
 
-    sfx->data3d = snd.first;
+		sfx->data3d = snd.first;
+	}
 }
 
 //==========================================================================

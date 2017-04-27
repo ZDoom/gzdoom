@@ -66,7 +66,7 @@ CVAR(Int, gl_breaksec, -1, 0)
 // information
 //
 //==========================================================================
-static float tics;
+
 void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture)
 {
 	// only manipulate the texture matrix if needed.

@@ -87,6 +87,16 @@ typedef bool (*SoundStreamCallback)(SoundStream *stream, void *buff, int len, vo
 struct SoundDecoder;
 class MIDIDevice;
 
+struct FSoundLoadBuffer
+{
+	TArray<uint8_t> mBuffer;
+	uint32_t loop_start;
+	uint32_t loop_end;
+	ChannelConfig chans;
+	SampleType type;
+	int srate;
+};
+
 class SoundRenderer
 {
 public:
@@ -97,9 +107,10 @@ public:
 	virtual void SetSfxVolume (float volume) = 0;
 	virtual void SetMusicVolume (float volume) = 0;
     // Returns a pair containing a sound handle and a boolean indicating the sound can be used in 3D.
-	virtual std::pair<SoundHandle,bool> LoadSound(uint8_t *sfxdata, int length, bool monoize=false) = 0;
+	virtual std::pair<SoundHandle,bool> LoadSound(uint8_t *sfxdata, int length, bool monoize=false, FSoundLoadBuffer *pBuffer = nullptr) = 0;
 	std::pair<SoundHandle,bool> LoadSoundVoc(uint8_t *sfxdata, int length, bool monoize=false);
 	virtual std::pair<SoundHandle,bool> LoadSoundRaw(uint8_t *sfxdata, int length, int frequency, int channels, int bits, int loopstart, int loopend = -1, bool monoize = false) = 0;
+	virtual std::pair<SoundHandle, bool> LoadSoundBuffered(FSoundLoadBuffer *buffer, bool monoize);
 	virtual void UnloadSound (SoundHandle sfx) = 0;	// unloads a sound from memory
 	virtual unsigned int GetMSLength(SoundHandle sfx) = 0;	// Gets the length of a sound at its default frequency
 	virtual unsigned int GetSampleLength(SoundHandle sfx) = 0;	// Gets the length of a sound at its default frequency

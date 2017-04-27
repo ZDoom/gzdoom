@@ -220,6 +220,14 @@ void PClass::StaticInit ()
 	{
 		((ClassReg *)*probe)->RegisterClass ();
 	}
+	probe.Reset();
+	for(auto cls : AllClasses)
+	{
+		if (cls->IsDescendantOf(RUNTIME_CLASS(AActor)))
+		{
+			PClassActor::AllActorClasses.Push(static_cast<PClassActor*>(cls));
+		}
+	}
 
 	// Keep built-in classes in consistant order. I did this before, though
 	// I'm not sure if this is really necessary to maintain any sort of sync.
@@ -344,7 +352,7 @@ PClass *ClassReg::RegisterClass()
 	PClass *cls = new PClass;
 
 	SetupClass(cls);
-	cls->InsertIntoHash();
+	cls->InsertIntoHash(true);
 	if (ParentType != nullptr)
 	{
 		cls->ParentClass = ParentType->RegisterClass();
@@ -379,7 +387,7 @@ void ClassReg::SetupClass(PClass *cls)
 //
 //==========================================================================
 
-void PClass::InsertIntoHash ()
+void PClass::InsertIntoHash (bool native)
 {
 	auto k = ClassMap.CheckKey(TypeName);
 	if (k != nullptr)
@@ -390,7 +398,7 @@ void PClass::InsertIntoHash ()
 	{
 		ClassMap[TypeName] = this;
 	}
-	if (IsDescendantOf(RUNTIME_CLASS(AActor)))
+	if (!native && IsDescendantOf(RUNTIME_CLASS(AActor)))
 	{
 		PClassActor::AllActorClasses.Push(static_cast<PClassActor*>(this));
 	}
@@ -690,7 +698,7 @@ PClass *PClass::CreateDerivedClass(FName name, unsigned int size)
 
 	if (!notnew)
 	{
-		type->InsertIntoHash();
+		type->InsertIntoHash(false);
 	}
 	return type;
 }
@@ -759,7 +767,7 @@ PClass *PClass::FindClassTentative(FName name)
 	Derive(type, name);
 	type->Size = TentativeClass;
 
-	type->InsertIntoHash();
+	type->InsertIntoHash(false);
 	return type;
 }
 

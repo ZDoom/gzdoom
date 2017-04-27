@@ -774,9 +774,9 @@ class BaseStatusBar native ui
 		}
 
 		String mapname = level.FormatMapName(crdefault);
-		BrokenLines lines = SmallFont.BreakLines(mapname, SCREENWIDTH / scale.X);
+		BrokenLines lines = SmallFont.BreakLines(mapname, int(SCREENWIDTH / scale.X));
 		int numlines = lines.Count();
-		int finalwidth = SmallFont.StringWidth(lines.StringAt(numlines-1)) * scale.X;
+		int finalwidth = int(SmallFont.StringWidth(lines.StringAt(numlines-1)) * scale.X);
 		
 		// calculate the top of the statusbar including any protrusion and transform it from status bar to screen space.
 		double tmp, hres;

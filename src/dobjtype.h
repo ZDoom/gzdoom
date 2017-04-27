@@ -75,7 +75,7 @@ public:
 	// The rest are all functions and static data ----------------
 	PClass();
 	~PClass();
-	void InsertIntoHash();
+	void InsertIntoHash(bool native);
 	DObject *CreateNew();
 	PClass *CreateDerivedClass(FName name, unsigned int size);
 

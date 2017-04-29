@@ -1267,7 +1267,11 @@ endif()
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	# Need to enable intrinsics for this file.
 	if( SSE_MATTERS )
-		set_source_files_properties( x86.cpp PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
+		set_source_files_properties(
+			x86.cpp
+			swrenderer/r_all.cpp
+			polyrenderer/poly_all.cpp
+			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
 	endif()
 endif()
 

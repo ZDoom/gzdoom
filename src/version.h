@@ -100,8 +100,8 @@ const char *GetVersionString();
 // More stuff that needs to be different for derivatives.
 #define GAMENAME "GZDoom"
 #define GAMENAMELOWERCASE "gzdoom"
-#define FORUM_URL "http://forum.drdteam.org"
-#define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=24"
+#define FORUM_URL "https://forum.zdoom.org"
+#define BUGS_FORUM_URL	"https://mantis.zdoom.org"
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME

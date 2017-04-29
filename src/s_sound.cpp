@@ -1488,9 +1488,11 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 
     DPrintf(DMSG_NOTIFY, "Loading monoized sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
 
+	std::pair<SoundHandle, bool> snd;
+
 	if (pBuffer->mBuffer.Size() > 0)
 	{
-		GSnd->LoadSoundBuffered(pBuffer, true);
+		snd = GSnd->LoadSoundBuffered(pBuffer, true);
 	}
 	else
 	{
@@ -1501,7 +1503,6 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 		uint8_t *sfxdata = new uint8_t[size];
 		wlump.Read(sfxdata, size);
 		int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
-		std::pair<SoundHandle, bool> snd;
 
 		// If the sound is voc, use the custom loader.
 		if (strncmp((const char *)sfxdata, "Creative Voice File", 19) == 0)
@@ -1526,9 +1527,9 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 			snd = GSnd->LoadSound(sfxdata, size, true, pBuffer);
 		}
 		delete[] sfxdata;
-
-		sfx->data3d = snd.first;
 	}
+
+	sfx->data3d = snd.first;
 }
 
 //==========================================================================

@@ -592,8 +592,8 @@ class StatusScreen abstract play version("2.5")
 			PlayerInfo player = players[i];
 			if (playeringame[i])
 			{
-				if ((player.buttons ^ player.oldbuttons) &&
-					((player.buttons & player.oldbuttons) == player.oldbuttons) && player.Bot == NULL)
+				if ((player.cmd.buttons ^ player.oldbuttons) &&
+					((player.cmd.buttons & player.oldbuttons) == player.oldbuttons) && player.Bot == NULL)
 				{
 					acceleratestage = 1;
 					playerready[i] = true;

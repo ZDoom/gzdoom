@@ -1,3 +1,15 @@
+
+struct UserCmd native
+{
+	native uint	buttons;
+	native int16	pitch;			// up/down
+	native int16	yaw;			// left/right
+	native int16	roll;			// "tilt"
+	native int16	forwardmove;
+	native int16	sidemove;
+	native int16	upmove;
+}
+
 class PlayerPawn : Actor native
 {
 	
@@ -94,6 +106,12 @@ class PlayerPawn : Actor native
 		Obituary "$OB_MPDEFAULT";
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	virtual void PlayIdle ()
 	{
 		if (InStateSequence(CurState, SeeState))
@@ -120,6 +138,12 @@ class PlayerPawn : Actor native
 	{
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	virtual void OnRespawn()
 	{
 		if (sv_respawnprotect && (multiplayer || alwaysapplydmflags))
@@ -132,6 +156,12 @@ class PlayerPawn : Actor native
 		}
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
 	{
 		if (victim.player != player && victim.IsTeammate(self))
@@ -162,7 +192,12 @@ class PlayerPawn : Actor native
 		}
 	}
 	
+	//----------------------------------------------------------------------------
+	//
 	// This is for SBARINFO.
+	//
+	//----------------------------------------------------------------------------
+
 	clearscope int, int GetEffectTicsForItem(class<Inventory> item) const 
 	{
 		let pg = (class<PowerupGiver>)(item);
@@ -180,6 +215,110 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_PlayerThink
+	//
+	//----------------------------------------------------------------------------
+	
+	native void CheckFOV();
+	native void CheckCheats();
+	native bool CheckFrozen();
+	native void CheckCrouch(bool totallyfrozen);
+	native void CheckMusicChange();
+	native void DeathThink ();
+	native void CheckPitch();
+	native void HandleMovement();
+	native void CalcHeight ();
+	native void CheckEnvironment();
+	native void CheckUse();
+	native void CheckUndoMorph();
+	// Cycle psprites
+	native void CheckPoison();
+	native void CheckDegeneration();
+	native void CheckAirSupply();
+	
+
+	virtual void PlayerThink()
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+		
+		CheckFOV();
+
+		if (player.inventorytics)
+		{
+			player.inventorytics--;
+		}
+		CheckCheats();
+
+		if (bJustAttacked)
+		{ // Chainsaw/Gauntlets attack auto forward motion
+			cmd.yaw = 0;
+			cmd.forwardmove = 0xc800/2;
+			cmd.sidemove = 0;
+			bJustAttacked = false;
+		}
+
+		bool totallyfrozen = CheckFrozen();
+
+		// Handle crouching
+		CheckCrouch(totallyfrozen);
+		CheckMusicChange();
+
+		if (player.playerstate == PST_DEAD)
+		{
+			DeathThink ();
+			return;
+		}
+		if (player.jumpTics != 0)
+		{
+			player.jumpTics--;
+			if (player.onground && player.jumpTics < -18)
+			{
+				player.jumpTics = 0;
+			}
+		}
+		if (player.morphTics && !(player.cheats & CF_PREDICTING))
+		{
+			MorphPlayerThink ();
+		}
+
+		CheckPitch();
+		HandleMovement();
+		CalcHeight ();
+
+		if (!(player.cheats & CF_PREDICTING))
+		{
+			CheckEnvironment();
+			CheckUse();
+			CheckUndoMorph();
+			// Cycle psprites
+			player.TickPSprites();
+
+			// Other Counters
+			if (player.damagecount)	player.damagecount--;
+			if (player.bonuscount) player.bonuscount--;
+
+			if (player.hazardcount)
+			{
+				player.hazardcount--;
+				if (!(level.time % player.hazardinterval) && player.hazardcount > 16*TICRATE)
+					DamageMobj (NULL, NULL, 5, player.hazardtype);
+			}
+
+			CheckPoison();
+			CheckDegeneration();
+			CheckAirSupply();
+		}
+	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	native clearscope int GetMaxHealth(bool withupgrades = false) const;
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
@@ -341,12 +480,9 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native double ConversationNPCAngle;
 	native bool ConversationFaceTalker;
 	native @WeaponSlots weapons;
+	native @UserCmd cmd;
+	native readonly @UserCmd original_cmd;
 
-/* these are not doable yet
-ticcmd_t	cmd;
-usercmd_t	original_cmd;
-*/
-	
 
 	native bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null);
 	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
@@ -375,6 +511,7 @@ usercmd_t	original_cmd;
 	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
 	native clearscope bool HasWeaponsInSlot(int slot) const;
+	native void TickPSprites();
 	
 	clearscope int fragSum () const
 	{

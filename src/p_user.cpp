@@ -3068,6 +3068,98 @@ void P_HandleMovement(player_t *player)
 	}
 }
 
+
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckFOV)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckFOV(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckCheats)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckCheats(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckFrozen)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	ACTION_RETURN_BOOL(P_CheckFrozen(self->player));
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckCrouch)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_BOOL(totally);
+	P_CheckCrouch(self->player, totally);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckMusicChange)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckMusicChange(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, DeathThink)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_DeathThink(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckPitch)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckPitch(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, HandleMovement)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_HandleMovement(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CalcHeight)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CalcHeight(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckEnvironment)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckEnvironment(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckUse)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckUse(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckUndoMorph)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckUndoMorph(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckPoison)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckPoison(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckDegeneration)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckDegeneration(self->player);
+	return 0;
+}
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckAirSupply)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckAirSupply(self->player);
+	return 0;
+}
+
 //----------------------------------------------------------------------------
 //
 // PROC P_PlayerThink
@@ -3098,75 +3190,10 @@ void P_PlayerThink (player_t *player)
 	// Don't interpolate the view for more than one tic
 	player->cheats &= ~CF_INTERPVIEW;
 
-	P_CheckFOV(player);
-
-	if (player->inventorytics)
+	IFVIRTUALPTR(player->mo, APlayerPawn, PlayerThink)
 	{
-		player->inventorytics--;
-	}
-	P_CheckCheats(player);
-
-	if (player->mo->flags & MF_JUSTATTACKED)
-	{ // Chainsaw/Gauntlets attack auto forward motion
-		cmd->ucmd.yaw = 0;
-		cmd->ucmd.forwardmove = 0xc800/2;
-		cmd->ucmd.sidemove = 0;
-		player->mo->flags &= ~MF_JUSTATTACKED;
-	}
-
-	bool totallyfrozen = P_CheckFrozen(player);
-
-	// Handle crouching
-	P_CheckCrouch(player, totallyfrozen);
-	P_CheckMusicChange(player);
-
-	if (player->playerstate == PST_DEAD)
-	{
-		P_DeathThink (player);
-		return;
-	}
-	if (player->jumpTics != 0)
-	{
-		player->jumpTics--;
-		if (player->onground && player->jumpTics < -18)
-		{
-			player->jumpTics = 0;
-		}
-	}
-	if (player->morphTics && !(player->cheats & CF_PREDICTING))
-	{
-		player->mo->MorphPlayerThink ();
-	}
-
-	P_CheckPitch(player);
-	P_HandleMovement(player);
-	P_CalcHeight (player);
-
-	if (!(player->cheats & CF_PREDICTING))
-	{
-		P_CheckEnvironment(player);
-		P_CheckUse(player);
-		P_CheckUndoMorph(player);
-		// Cycle psprites
-		player->TickPSprites();
-
-		// Other Counters
-		if (player->damagecount)
-			player->damagecount--;
-
-		if (player->bonuscount)
-			player->bonuscount--;
-
-		if (player->hazardcount)
-		{
-			player->hazardcount--;
-			if (!(level.time % player->hazardinterval) && player->hazardcount > 16*TICRATE)
-				P_DamageMobj (player->mo, NULL, NULL, 5, player->hazardtype);
-		}
-
-		P_CheckPoison(player);
-		P_CheckDegeneration(player);
-		P_CheckAirSupply(player);
+		VMValue param = player->mo;
+		VMCall(func, &param, 1, nullptr, 0);
 	}
 }
 
@@ -3727,11 +3754,19 @@ DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPC)
 DEFINE_FIELD_X(PlayerInfo, player_t, ConversationPC)
 DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPCAngle)
 DEFINE_FIELD_X(PlayerInfo, player_t, ConversationFaceTalker)
-DEFINE_FIELD_X(PlayerInfo, player_t, cmd)
+DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, cmd.ucmd, cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, original_cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, userinfo)
 DEFINE_FIELD_X(PlayerInfo, player_t, weapons)
 DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, cmd.ucmd.buttons, buttons)
+
+DEFINE_FIELD_X(UserCmd, usercmd_t, buttons)
+DEFINE_FIELD_X(UserCmd, usercmd_t, pitch)
+DEFINE_FIELD_X(UserCmd, usercmd_t, yaw)
+DEFINE_FIELD_X(UserCmd, usercmd_t, roll)
+DEFINE_FIELD_X(UserCmd, usercmd_t, forwardmove)
+DEFINE_FIELD_X(UserCmd, usercmd_t, sidemove)
+DEFINE_FIELD_X(UserCmd, usercmd_t, upmove)
 
 DEFINE_FIELD(FPlayerClass, Type)
 DEFINE_FIELD(FPlayerClass, Flags)

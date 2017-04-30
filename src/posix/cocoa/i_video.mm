@@ -157,14 +157,14 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
 
-static int s_currentRenderer;
+int currentrenderer;
 
 CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// 0: Software renderer
 	// 1: OpenGL renderer
 
-	if (self != s_currentRenderer)
+	if (self != currentrenderer)
 	{
 		switch (self)
 		{
@@ -657,7 +657,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	DFrameBuffer* fb = NULL;
 
-	if (1 == s_currentRenderer)
+	if (1 == currentrenderer)
  	{
 		fb = new OpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
 	}
@@ -1360,13 +1360,13 @@ static void I_DeleteRenderer()
 
 void I_CreateRenderer()
 {
-	s_currentRenderer = vid_renderer;
+	currentrenderer = vid_renderer;
 
 	if (NULL == Renderer)
 	{
 		extern FRenderer* gl_CreateInterface();
 
-		Renderer = 1 == s_currentRenderer
+		Renderer = 1 == currentrenderer
 			? gl_CreateInterface()
 			: new FSoftwareRenderer;
 		atterm(I_DeleteRenderer);

@@ -8,7 +8,43 @@ class StateProvider : Inventory native
 	action native void A_RailAttack(int damage, int spawnofs_xy = 0, bool useammo = true, color color1 = 0, color color2 = 0, int flags = 0, double maxdiff = 0, class<Actor> pufftype = "BulletPuff", double spread_xy = 0, double spread_z = 0, double range = 0, int duration = 0, double sparsity = 1.0, double driftspeed = 1.0, class<Actor> spawnclass = "none", double spawnofs_z = 0, int spiraloffset = 270, int limit = 0);
 	action native void A_WeaponReady(int flags = 0);
 
-	action native void A_ReFire(statelabel flash = null);
+	//---------------------------------------------------------------------------
+	//
+	// PROC A_ReFire
+	//
+	// The player can re-fire the weapon without lowering it entirely.
+	//
+	//---------------------------------------------------------------------------
+
+	action void A_ReFire(statelabel flash = null)
+	{
+		let player = self.player;
+		bool pending;
+
+		if (NULL == player)
+		{
+			return;
+		}
+		pending = player.PendingWeapon != WP_NOCHANGE && (player.WeaponState & WF_REFIRESWITCHOK);
+		if ((player.cmd.buttons & BT_ATTACK)
+			&& !player.ReadyWeapon.bAltFire && !pending && player.health > 0)
+		{
+			player.refire++;
+			player.mo.FireWeapon(ResolveState(flash));
+		}
+		else if ((player.cmd.buttons & BT_ALTATTACK)
+			&& player.ReadyWeapon.bAltFire && !pending && player.health > 0)
+		{
+			player.refire++;
+			player.mo.FireWeaponAlt(ResolveState(flash));
+		}
+		else
+		{
+			player.refire = 0;
+			player.ReadyWeapon.CheckAmmo (player.ReadyWeapon.bAltFire? Weapon.AltFire : Weapon.PrimaryFire, true);
+		}
+	}
+	
 	action native state A_CheckForReload(int counter, statelabel label, bool dontincrement = false);
 	action native void A_ResetReloadCounter();
 

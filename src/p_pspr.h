@@ -103,7 +103,6 @@ private:
 	DPSprite () {}
 
 	void Serialize(FSerializer &arc);
-	void Tick();
 
 public:	// must be public to be able to generate the field export tables. Grrr...
 	TObjPtr<AActor*> Caller;

@@ -218,6 +218,224 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 	
+
+	//===========================================================================
+	//
+	// APlayerPawn :: CheckWeaponSwitch
+	//
+	// Checks if weapons should be changed after picking up ammo
+	//
+	//===========================================================================
+
+	void CheckWeaponSwitch(Class<Ammo> ammotype)
+	{
+		let player = self.player;
+		if (!player.GetNeverSwitch() &&	player.PendingWeapon == WP_NOCHANGE && 
+			(player.ReadyWeapon == NULL || player.ReadyWeapon.bWimpy_Weapon))
+		{
+			let best = BestWeapon (ammotype);
+			if (best != NULL && (player.ReadyWeapon == NULL ||
+				best.SelectionOrder < player.ReadyWeapon.SelectionOrder))
+			{
+				player.PendingWeapon = best;
+			}
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_FireWeapon
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void FireWeapon (State stat)
+	{
+		let player = self.player;
+		
+		// [SO] 9/2/02: People were able to do an awful lot of damage
+		// when they were observers...
+		if (player.Bot == null && bot_observer)
+		{
+			return;
+		}
+
+		let weapn = player.ReadyWeapon;
+		if (weapn == null || !weapn.CheckAmmo (Weapon.PrimaryFire, true))
+		{
+			return;
+		}
+
+		player.WeaponState &= ~WF_WEAPONBOBBING;
+		PlayAttacking ();
+		weapn.bAltFire = false;
+		if (stat == null)
+		{
+			stat = weapn.GetAtkState(!!player.refire);
+		}
+		player.SetPsprite(PSP_WEAPON, stat);
+		if (!weapn.bNoAlert)
+		{
+			SoundAlert (self, false);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_FireWeaponAlt
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void FireWeaponAlt (State stat)
+	{
+		// [SO] 9/2/02: People were able to do an awful lot of damage
+		// when they were observers...
+		if (player.Bot == null && bot_observer)
+		{
+			return;
+		}
+
+		let weapn = player.ReadyWeapon;
+		if (weapn == null || weapn.FindState('AltFire') == null || !weapn.CheckAmmo (Weapon.AltFire, true))
+		{
+			return;
+		}
+
+		player.WeaponState &= ~WF_WEAPONBOBBING;
+		PlayAttacking ();
+		weapn.bAltFire = true;
+
+		if (stat == null)
+		{
+			stat = weapn.GetAltAtkState(!!player.refire);
+		}
+
+		player.SetPsprite(PSP_WEAPON, stat);
+		if (!weapn.bNoAlert)
+		{
+			SoundAlert (self, false);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_CheckWeaponFire
+	//
+	// The player can fire the weapon.
+	// [RH] This was in A_WeaponReady before, but that only works well when the
+	// weapon's ready frames have a one tic delay.
+	//
+	//---------------------------------------------------------------------------
+
+	void CheckWeaponFire ()
+	{
+		let player = self.player;
+		let weapon = player.ReadyWeapon;
+
+		if (weapon == NULL)
+			return;
+
+		// Check for fire. Some weapons do not auto fire.
+		if ((player.WeaponState & WF_WEAPONREADY) && (player.cmd.buttons & BT_ATTACK))
+		{
+			if (!player.attackdown || !weapon.bNoAutofire)
+			{
+				player.attackdown = true;
+				FireWeapon (NULL);
+				return;
+			}
+		}
+		else if ((player.WeaponState & WF_WEAPONREADYALT) && (player.cmd.buttons & BT_ALTATTACK))
+		{
+			if (!player.attackdown || !weapon.bNoAutofire)
+			{
+				player.attackdown = true;
+				FireWeaponAlt (NULL);
+				return;
+			}
+		}
+		else
+		{
+			player.attackdown = false;
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_CheckWeaponChange
+	//
+	// The player can change to another weapon at this time.
+	// [GZ] This was cut from P_CheckWeaponFire.
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void CheckWeaponChange ()
+	{
+		let player = self.player;
+		if ((player.WeaponState & WF_DISABLESWITCH) || // Weapon changing has been disabled.
+			player.morphTics != 0)					// Morphed classes cannot change weapons.
+		{ // ...so throw away any pending weapon requests.
+			player.PendingWeapon = WP_NOCHANGE;
+		}
+
+		// Put the weapon away if the player has a pending weapon or has died, and
+		// we're at a place in the state sequence where dropping the weapon is okay.
+		if ((player.PendingWeapon != WP_NOCHANGE || player.health <= 0) &&
+			player.WeaponState & WF_WEAPONSWITCHOK)
+		{
+			player.DropWeapon();
+		}
+	}
+	
+	//------------------------------------------------------------------------
+	//
+	// PROC P_MovePsprites
+	//
+	// Called every tic by player thinking routine
+	//
+	//------------------------------------------------------------------------
+
+	virtual void TickPSprites()
+	{
+		let player = self.player;
+		let pspr = player.psprites;
+		while (pspr)
+		{
+			// Destroy the psprite if it's from a weapon that isn't currently selected by the player
+			// or if it's from an inventory item that the player no longer owns. 
+			if ((pspr.Caller == null ||
+				(pspr.Caller is "Inventory" && Inventory(pspr.Caller).Owner != pspr.Owner.mo) ||
+				(pspr.Caller is "Weapon" && pspr.Caller != pspr.Owner.ReadyWeapon)))
+			{
+				pspr.Destroy();
+			}
+			else
+			{
+				pspr.Tick();
+			}
+
+			pspr = pspr.Next;
+		}
+
+		if ((health > 0) || (player.ReadyWeapon != null && !player.ReadyWeapon.bNoDeathInput))
+		{
+			if (player.ReadyWeapon == null)
+			{
+				if (player.PendingWeapon != WP_NOCHANGE)
+					player.BringUpWeapon();
+			}
+			else
+			{
+				CheckWeaponChange();
+				if (player.WeaponState & (WF_WEAPONREADY | WF_WEAPONREADYALT))
+				{
+					CheckWeaponFire();
+				}
+				// Check custom buttons
+				CheckWeaponButtons();
+			}
+		}
+	}
+
 	//==========================================================================
 	//
 	// P_DeathThink
@@ -231,7 +449,7 @@ class PlayerPawn : Actor native
 		double delta;
 
 		player.Uncrouch();
-		player.TickPSprites();
+		TickPSprites();
 
 		player.onground = (pos.Z <= floorz);
 		if (self is "PlayerChunk")
@@ -1022,7 +1240,7 @@ class PlayerPawn : Actor native
 			CheckUse();
 			CheckUndoMorph();
 			// Cycle psprites
-			player.TickPSprites();
+			TickPSprites();
 
 			// Other Counters
 			if (player.damagecount)	player.damagecount--;
@@ -1049,12 +1267,13 @@ class PlayerPawn : Actor native
 
 	native clearscope int GetMaxHealth(bool withupgrades = false) const;
 	native bool ResetAirSupply (bool playgasp = false);
-	native void CheckWeaponSwitch(class<Inventory> item);
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
 	native void CheckMusicChange();
 	native void CalcHeight ();
 	native void CheckEnvironment();
 	native void CheckUse();
+	native void CheckWeaponButtons();
+	native Weapon BestWeapon(class<Ammo> ammotype);
 
 }
 
@@ -1112,6 +1331,26 @@ class PSprite : Object native play
 	
 	native void SetState(State newstate, bool pending = false);
 
+	//------------------------------------------------------------------------
+	//
+	//
+	//
+	//------------------------------------------------------------------------
+
+	void Tick()
+	{
+		if (processPending)
+		{
+			// drop tic count and possibly change state
+			if (Tics != -1)	// a -1 tic count never changes
+			{
+				Tics--;
+				// [BC] Apply double firing speed.
+				if (bPowDouble && Tics && (Owner.mo.FindInventory ("PowerDoubleFiringSpeed", true))) Tics--;
+				if (!Tics) SetState(CurState.NextState);
+			}
+		}
+	}
 }
 
 enum EPlayerState
@@ -1243,7 +1482,6 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
 	native clearscope bool HasWeaponsInSlot(int slot) const;
-	native void TickPSprites();
 
 	bool IsTotallyFrozen()
 	{

@@ -100,7 +100,6 @@ public:
 	void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassActor *ammotype);
 	AWeapon *BestWeapon (PClassActor *ammotype);
-	void CheckWeaponSwitch(PClassActor *ammotype);
 	void GiveDeathmatchInventory ();
 	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
@@ -109,7 +108,6 @@ public:
 
 	// These are virtual on the script side only.
 	void PlayIdle();
-	void PlayAttacking ();
 	void PlayAttacking2 ();
 
 	const char *GetSoundClass () const;

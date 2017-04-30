@@ -1217,6 +1217,12 @@ AWeapon *APlayerPawn::BestWeapon(PClassActor *ammotype)
 	return bestMatch;
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, BestWeapon)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_CLASS(ammo, AActor);
+	ACTION_RETURN_POINTER(self->BestWeapon(ammo));
+}
 //===========================================================================
 //
 // APlayerPawn :: PickNewWeapon
@@ -1246,38 +1252,6 @@ AWeapon *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
 	return best;
 }
 
-
-//===========================================================================
-//
-// APlayerPawn :: CheckWeaponSwitch
-//
-// Checks if weapons should be changed after picking up ammo
-//
-//===========================================================================
-
-void APlayerPawn::CheckWeaponSwitch(PClassActor *ammotype)
-{
-	if (!player->userinfo.GetNeverSwitch() &&
-		player->PendingWeapon == WP_NOCHANGE && 
-		(player->ReadyWeapon == NULL ||
-		 (player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
-	{
-		AWeapon *best = BestWeapon (ammotype);
-		if (best != NULL && (player->ReadyWeapon == NULL ||
-			best->SelectionOrder < player->ReadyWeapon->SelectionOrder))
-		{
-			player->PendingWeapon = best;
-		}
-	}
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponSwitch)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_POINTER(ammotype, PClassActor);
-	self->CheckWeaponSwitch(ammotype);
-	return 0;
-}
 //===========================================================================
 //
 // APlayerPawn :: GiveDeathmatchInventory
@@ -1535,15 +1509,6 @@ DEFINE_ACTION_FUNCTION(APlayerPawn, ResetAirSupply)
 void APlayerPawn::PlayIdle ()
 {
 	IFVIRTUAL(APlayerPawn, PlayIdle)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
-}
-
-void APlayerPawn::PlayAttacking ()
-{
-	IFVIRTUAL(APlayerPawn, PlayAttacking)
 	{
 		VMValue params[1] = { (DObject*)this };
 		VMCall(func, params, 1, nullptr, 0);

@@ -309,6 +309,13 @@ OptionValue "OffOn"
 	1, "$OPTVAL_OFF"
 }
 
+OptionValue OffAutoOn
+{
+	-1, "$OPTVAL_OFF"
+	0, "$OPTVAL_AUTO"
+	1, "$OPTVAL_ON"
+}
+
 OptionMenuSettings
 {
 	// These can be overridden if a different menu fonts requires it.
@@ -1629,6 +1636,7 @@ OptionMenu AdvSoundOptions
 {
 	Title "$ADVSNDMNU_TITLE"
 	Option "$ADVSNDMNU_SAMPLERATE",			"snd_samplerate", "SampleRates"
+	Option "$ADVSNDMNU_HRTF",				"snd_hrtf", "OffAutoOn"
 	StaticText " "
 	StaticText "$ADVSNDMNU_OPLSYNTHESIS",	1
 	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
@@ -1724,11 +1732,11 @@ OptionMenu ModReplayerOptions
 {
 	Title "$MODMNU_TITLE"
 	Slider "$MODMNU_MASTERVOLUME",			"mod_dumb_mastervolume", 1, 16, 0.5, 1
-	Option "$ADVSNDMNU_SAMPLERATE",			"mod_samplerate", "SampleRates", "mod_dumb"
-	Option "$MODMNU_QUALITY",				"mod_interp", "ModQuality", "mod_dumb"
-	Option "$MODMNU_VOLUMERAMPING",			"mod_volramp", "ModVolumeRamps", "mod_dumb"
+	Option "$ADVSNDMNU_SAMPLERATE",			"mod_samplerate", "SampleRates"
+	Option "$MODMNU_QUALITY",				"mod_interp", "ModQuality"
+	Option "$MODMNU_VOLUMERAMPING",			"mod_volramp", "ModVolumeRamps"
 	StaticText " "
-	Option "$MODMNU_CHIPOMATIC",			"mod_autochip", "OnOff", "mod_dumb"
+	Option "$MODMNU_CHIPOMATIC",			"mod_autochip", "OnOff"
 	// TODO if the menu system is ever rewritten: Provide a decent
 	// mechanism to edit the chip-o-matic settings like you can with
 	// the foo_dumb preferences in foobar2000.

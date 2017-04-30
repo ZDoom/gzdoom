@@ -256,7 +256,7 @@ CCMD(recordmap)
 				G_DeferedInitNew(mapname);
 				gameaction = ga_recordgame;
 				newdemoname = argv[1];
-				newdemomap = argv[2];
+				newdemomap = mapname;
 			}
 		}
 		catch (CRecoverableError &error)

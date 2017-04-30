@@ -2141,6 +2141,7 @@ OPENALMNU_ENABLEEFX			= "Enable EFX";
 // Advanced Sound Options
 ADVSNDMNU_TITLE				= "ADVANCED SOUND OPTIONS";
 ADVSNDMNU_SAMPLERATE		= "Sample rate";
+ADVSNDMNU_HRTF				= "HRTF";
 ADVSNDMNU_OPLSYNTHESIS		= "OPL Synthesis";
 ADVSNDMNU_OPLNUMCHIPS		= "Number of emulated OPL chips";
 ADVSNDMNU_OPLFULLPAN		= "Full MIDI stereo panning";
@@ -2220,6 +2221,7 @@ JOYMNU_NOAXES = "No configurable axes";
 // Option Values
 OPTVAL_OFF					= "Off";
 OPTVAL_ON					= "On";
+OPTVAL_AUTO					= "Auto";
 OPTVAL_MALE					= "Male";
 OPTVAL_FEMALE				= "Female";
 OPTVAL_OTHER				= "Other";

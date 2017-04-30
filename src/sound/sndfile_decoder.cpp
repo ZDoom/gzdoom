@@ -163,7 +163,10 @@ size_t SndFileDecoder::read(char *buffer, size_t bytes)
     while(total < frames)
     {
         size_t todo = MIN<size_t>(frames-total, 64/SndInfo.channels);
-        float tmp[64];
+
+		// libsndfile uses SSE optimization on Intel platform
+		// This requires proper read buffer alignment
+        alignas(16) float tmp[64];
 
         size_t got = (size_t)sf_readf_float(SndFile, tmp, todo);
         if(got < todo) frames = total + got;

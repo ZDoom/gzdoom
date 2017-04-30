@@ -116,6 +116,8 @@
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
+int currentrenderer;
+
 CUSTOM_CVAR(Bool, vid_glswfb, true, CVAR_NOINITCALL | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
@@ -135,11 +137,14 @@ CUSTOM_CVAR(Bool, swtruecolor, TRUECOLOR_DEFAULT, CVAR_ARCHIVE | CVAR_GLOBALCONF
 {
 	// Strictly speaking this doesn't require a mode switch, but it is the easiest
 	// way to force a CreateFramebuffer call without a lot of refactoring.
-	extern int NewWidth, NewHeight, NewBits, DisplayBits;
-	NewWidth      = screen->GetWidth();
-	NewHeight     = screen->GetHeight();
-	NewBits       = DisplayBits;
-	setmodeneeded = true;
+	if (currentrenderer == 0)
+	{
+		extern int NewWidth, NewHeight, NewBits, DisplayBits;
+		NewWidth      = screen->GetWidth();
+		NewHeight     = screen->GetHeight();
+		NewBits       = DisplayBits;
+		setmodeneeded = true;
+	}
 }
 
 CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -156,8 +161,6 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 {
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
-
-int currentrenderer;
 
 CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {

@@ -76,7 +76,7 @@
 #include "gl/system//gl_interface.h"
 #include "vm.h"
 
-EXTERN_CVAR(Int, vid_renderer)
+extern int currentrenderer;
 
 
 CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -164,7 +164,7 @@ void ADynamicLight::BeginPlay()
 	specialf1 = DAngle(double(SpawnAngle)).Normalized360().Degrees;
 	visibletoplayer = true;
 
-	if (vid_renderer == 1 && gl.legacyMode && (flags4 & MF4_ATTENUATE))
+	if (currentrenderer == 1 && gl.legacyMode && (flags4 & MF4_ATTENUATE))
 	{
 		args[LIGHT_INTENSITY] = args[LIGHT_INTENSITY] * 2 / 3;
 		args[LIGHT_SECONDARY_INTENSITY] = args[LIGHT_SECONDARY_INTENSITY] * 2 / 3;

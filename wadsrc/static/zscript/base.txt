@@ -530,6 +530,7 @@ struct LevelLocals native
 	native static void RemoveAllBots(bool fromlist);
 	native void SetInterMusic(String nextmap);
 	native String FormatMapName(int mapnamecolor);
+	native bool IsCrouchingAllowed() const;
 	
 	String TimeFormatted(bool totals = false)
 	{

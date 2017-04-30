@@ -567,8 +567,6 @@ inline bool AActor::IsNoClip2() const
 	return false;
 }
 
-#define CROUCHSPEED (1./12)
-
 bool P_IsPlayerTotallyFrozen(const player_t *player);
 
 #endif // __D_PLAYER_H__

@@ -132,6 +132,7 @@ EXTERN_CVAR (Int, snd_channels)
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Bool, snd_waterreverb)
 EXTERN_CVAR (Bool, snd_pitched)
+EXTERN_CVAR (Int, snd_hrtf)
 
 
 #define MAKE_PTRID(x)  ((void*)(uintptr_t)(x))
@@ -722,6 +723,11 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	Device = InitDevice();
 	if (Device == NULL) return;
 
+	ALC.EXT_EFX = !!alcIsExtensionPresent(Device, "ALC_EXT_EFX");
+	ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");
+	ALC.SOFT_HRTF = !!alcIsExtensionPresent(Device, "ALC_SOFT_HRTF");
+	ALC.SOFT_pause_device = !!alcIsExtensionPresent(Device, "ALC_SOFT_pause_device");
+
 	const ALCchar *current = NULL;
 	if(alcIsExtensionPresent(Device, "ALC_ENUMERATE_ALL_EXT"))
 		current = alcGetString(Device, ALC_ALL_DEVICES_SPECIFIER);
@@ -747,6 +753,16 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	attribs.Push(MAX<ALCint>(*snd_channels, 2) - 1);
 	attribs.Push(ALC_STEREO_SOURCES);
 	attribs.Push(1);
+	if(ALC.SOFT_HRTF)
+	{
+		attribs.Push(ALC_HRTF_SOFT);
+		if(*snd_hrtf < 0)
+			attribs.Push(ALC_FALSE);
+		else if(*snd_hrtf > 0)
+			attribs.Push(ALC_TRUE);
+		else
+			attribs.Push(ALC_DONT_CARE_SOFT);
+	}
 	// Other attribs..?
 	attribs.Push(0);
 
@@ -768,9 +784,6 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	DPrintf(DMSG_SPAMMY, "	Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
 	DPrintf(DMSG_SPAMMY, "	Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
-	ALC.EXT_EFX = !!alcIsExtensionPresent(Device, "ALC_EXT_EFX");
-	ALC.EXT_disconnect = !!alcIsExtensionPresent(Device, "ALC_EXT_disconnect");
-	ALC.SOFT_pause_device = !!alcIsExtensionPresent(Device, "ALC_SOFT_pause_device");
 	AL.EXT_source_distance_model = !!alIsExtensionPresent("AL_EXT_source_distance_model");
 	AL.EXT_SOURCE_RADIUS = !!alIsExtensionPresent("AL_EXT_SOURCE_RADIUS");
 	AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");

@@ -309,10 +309,10 @@ OptionValue "OffOn"
 	1, "$OPTVAL_OFF"
 }
 
-OptionValue OffAutoOn
+OptionValue AutoOffOn
 {
-	-1, "$OPTVAL_OFF"
-	0, "$OPTVAL_AUTO"
+	-1, "$OPTVAL_AUTO"
+	0, "$OPTVAL_OFF"
 	1, "$OPTVAL_ON"
 }
 
@@ -1636,7 +1636,7 @@ OptionMenu AdvSoundOptions
 {
 	Title "$ADVSNDMNU_TITLE"
 	Option "$ADVSNDMNU_SAMPLERATE",			"snd_samplerate", "SampleRates"
-	Option "$ADVSNDMNU_HRTF",				"snd_hrtf", "OffAutoOn"
+	Option "$ADVSNDMNU_HRTF",				"snd_hrtf", "AutoOffOn"
 	StaticText " "
 	StaticText "$ADVSNDMNU_OPLSYNTHESIS",	1
 	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0

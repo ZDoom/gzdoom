@@ -378,9 +378,13 @@ void FGameConfigFile::DoGlobalSetup ()
 				if (var != NULL) var->ResetToDefault();
 				var = FindCVar("uiscale", NULL);
 				if (var != NULL) var->ResetToDefault();
-
 			}
-
+			if (last < 215)
+			{
+				// Previously a true/false boolean. Now an on/off/auto tri-state with auto as the default.
+				FBaseCVar *var = FindCVar("snd_hrtf", NULL);
+				if (var != NULL) var->ResetToDefault();
+			}
 		}
 	}
 }

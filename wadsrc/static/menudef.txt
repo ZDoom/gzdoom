@@ -309,6 +309,13 @@ OptionValue "OffOn"
 	1, "$OPTVAL_OFF"
 }
 
+OptionValue OffAutoOn
+{
+	-1, "$OPTVAL_OFF"
+	0, "$OPTVAL_AUTO"
+	1, "$OPTVAL_ON"
+}
+
 OptionMenuSettings
 {
 	// These can be overridden if a different menu fonts requires it.
@@ -1629,6 +1636,7 @@ OptionMenu AdvSoundOptions
 {
 	Title "$ADVSNDMNU_TITLE"
 	Option "$ADVSNDMNU_SAMPLERATE",			"snd_samplerate", "SampleRates"
+	Option "$ADVSNDMNU_HRTF",				"snd_hrtf", "OffAutoOn"
 	StaticText " "
 	StaticText "$ADVSNDMNU_OPLSYNTHESIS",	1
 	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0

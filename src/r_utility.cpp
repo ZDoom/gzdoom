@@ -154,6 +154,7 @@ FCanvasTextureInfo *FCanvasTextureInfo::List;
 DVector3a view;
 DAngle viewpitch;
 
+DEFINE_GLOBAL(LocalViewPitch);
 
 // CODE --------------------------------------------------------------------
 static void R_Shutdown ();

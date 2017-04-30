@@ -42,6 +42,7 @@ struct _ native	// These are the global variables, the struct is only here to av
 	native readonly int Net_Arbitrator;
 	native ui BaseStatusBar StatusBar;
 	native readonly Weapon WP_NOCHANGE;
+	native int LocalViewPitch;
 	
 }
 
@@ -513,6 +514,7 @@ struct LevelLocals native
 	native readonly bool checkswitchrange;
 	native readonly bool polygrind;
 	native readonly bool nomonsters;
+	native readonly bool allowrespawn;
 	native bool frozen;
 	native readonly bool infinite_flight;
 	native readonly bool no_dlg_freeze;
@@ -530,7 +532,9 @@ struct LevelLocals native
 	native static void RemoveAllBots(bool fromlist);
 	native void SetInterMusic(String nextmap);
 	native String FormatMapName(int mapnamecolor);
+	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
+	native bool IsFreelookAllowed() const;
 	
 	String TimeFormatted(bool totals = false)
 	{

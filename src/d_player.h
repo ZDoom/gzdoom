@@ -97,8 +97,6 @@ public:
 
 	bool ResetAirSupply (bool playgasp = true);
 	int GetMaxHealth(bool withupgrades = false) const;
-	void TweakSpeeds (double &forwardmove, double &sidemove);
-	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassActor *ammotype);
 	AWeapon *BestWeapon (PClassActor *ammotype);
@@ -111,7 +109,6 @@ public:
 
 	// These are virtual on the script side only.
 	void PlayIdle();
-	void PlayRunning();
 	void PlayAttacking ();
 	void PlayAttacking2 ();
 

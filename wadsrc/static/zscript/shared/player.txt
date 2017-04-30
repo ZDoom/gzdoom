@@ -13,6 +13,8 @@ struct UserCmd native
 class PlayerPawn : Actor native
 {
 	const CROUCHSPEED = (1./12);
+	// [RH] # of ticks to complete a turn180
+	const TURN180_TICKS = ((TICRATE / 4) + 1);
 	
 	native int			crouchsprite;
 	native int			MaxHealth;
@@ -216,6 +218,107 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 	
+	//==========================================================================
+	//
+	// P_DeathThink
+	//
+	//==========================================================================
+
+	virtual void DeathThink ()
+	{
+		let player = self.player;
+		int dir;
+		double delta;
+
+		player.Uncrouch();
+		player.TickPSprites();
+
+		player.onground = (pos.Z <= floorz);
+		if (self is "PlayerChunk")
+		{ // Flying bloody skull or flying ice chunk
+			player.viewheight = 6;
+			player.deltaviewheight = 0;
+			if (player.onground)
+			{
+				if (Pitch > -19.)
+				{
+					double lookDelta = (-19. - Pitch) / 8;
+					Pitch += lookDelta;
+				}
+			}
+		}
+		else if (!bIceCorpse)
+		{ // Fall to ground (if not frozen)
+			player.deltaviewheight = 0;
+			if (player.viewheight > 6)
+			{
+				player.viewheight -= 1;
+			}
+			if (player.viewheight < 6)
+			{
+				player.viewheight = 6;
+			}
+			if (Pitch < 0)
+			{
+				Pitch += 3;
+			}
+			else if (Pitch > 0)
+			{
+				Pitch -= 3;
+			}
+			if (abs(Pitch) < 3)
+			{
+				Pitch = 0.;
+			}
+		}
+		CalcHeight ();
+			
+		if (player.attacker && player.attacker != self)
+		{ // Watch killer
+			double diff = deltaangle(angle, AngleTo(player.attacker));
+			double delta = abs(diff);
+	
+			if (delta < 10)
+			{ // Looking at killer, so fade damage and poison counters
+				if (player.damagecount)
+				{
+					player.damagecount--;
+				}
+				if (player.poisoncount)
+				{
+					player.poisoncount--;
+				}
+			}
+			delta /= 8;
+			Angle += clamp(diff, -5., 5.);
+		}
+		else
+		{
+			if (player.damagecount)
+			{
+				player.damagecount--;
+			}
+			if (player.poisoncount)
+			{
+				player.poisoncount--;
+			}
+		}		
+
+		if ((player.cmd.buttons & BT_USE ||
+			((multiplayer || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
+		{
+			if (level.time >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
+			{
+				player.cls = NULL;		// Force a new class if the player is using a random class
+				player.playerstate = (multiplayer || (level.AllowRespawn) || sv_singleplayerrespawn)? PST_REBORN : PST_ENTER;
+				if (special1 > 2)
+				{
+					special1 = 0;
+				}
+			}
+		}
+	}
+
 	//----------------------------------------------------------------------------
 	//
 	// PROC P_CheckFOV
@@ -417,24 +520,453 @@ class PlayerPawn : Actor native
 
 	//----------------------------------------------------------------------------
 	//
+	// P_Thrust
+	//
+	// moves the given origin along a given angle
+	//
+	//----------------------------------------------------------------------------
+
+	void ForwardThrust (double move, double angle)
+	{
+		if ((waterlevel || bNoGravity) && Pitch != 0)
+		{
+			double zpush = move * sin(Pitch);
+			if (waterlevel && waterlevel < 2 && zpush < 0) zpush = 0;
+			Vel.Z -= zpush;
+			move *= cos(Pitch);
+		}
+		Thrust(move);
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// P_Bob
+	// Same as P_Thrust, but only affects bobbing.
+	//
+	// killough 10/98: We apply thrust separately between the real physical player
+	// and the part which affects bobbing. This way, bobbing only comes from player
+	// motion, nothing external, avoiding many problems, e.g. bobbing should not
+	// occur on conveyors, unless the player walks on one, and bobbing should be
+	// reduced at a regular rate, even on ice (where the player coasts).
+	//
+	//----------------------------------------------------------------------------
+
+	void Bob (double angle, double move, bool forward)
+	{
+		if (forward && (waterlevel || bNoGravity) && Pitch != 0)
+		{
+			move *= cos(Pitch);
+		}
+		player.Vel += AngleToVector(angle, move);
+	}
+	
+	//===========================================================================
+	//
+	// APlayerPawn :: TweakSpeeds
+	//
+	//===========================================================================
+
+	double, double TweakSpeeds (double forward, double side)
+	{
+		// Strife's player can't run when its health is below 10
+		if (health <= RunHealth)
+		{
+			forward = clamp(forward, -0x1900, 0x1900);
+			side = clamp(side, -0x1800, 0x1800);
+		}
+
+		// [GRB]
+		if (abs(forward) < 0x3200)
+		{
+			forward *= ForwardMove1;
+		}
+		else
+		{
+			forward *= ForwardMove2;
+		}
+
+		if (abs(side) < 0x2800)
+		{
+			side *= SideMove1;
+		}
+		else
+		{
+			side *= SideMove2;
+		}
+
+		if (!player.morphTics && Inv != NULL)
+		{
+			double factor = Inv.GetSpeedFactor ();
+			forward *= factor;
+			side *= factor;
+		}
+		return forward, side;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_MovePlayer
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void MovePlayer ()
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+
+		// [RH] 180-degree turn overrides all other yaws
+		if (player.turnticks)
+		{
+			player.turnticks--;
+			Angle += (180. / TURN180_TICKS);
+		}
+		else
+		{
+			Angle += cmd.yaw * (360./65536.);
+		}
+
+		player.onground = (pos.z <= floorz) || bOnMobj || bMBFBouncer || (player.cheats & CF_NOCLIP2);
+
+		// killough 10/98:
+		//
+		// We must apply thrust to the player and bobbing separately, to avoid
+		// anomalies. The thrust applied to bobbing is always the same strength on
+		// ice, because the player still "works just as hard" to move, while the
+		// thrust applied to the movement varies with 'movefactor'.
+
+		if (cmd.forwardmove | cmd.sidemove)
+		{
+			double forwardmove, sidemove;
+			double bobfactor;
+			double friction, movefactor;
+			double fm, sm;
+
+			[friction, movefactor] = GetFriction();
+			bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
+			if (!player.onground && !bNoGravity && !waterlevel)
+			{
+				// [RH] allow very limited movement if not on ground.
+				movefactor *= level.aircontrol;
+				bobfactor*= level.aircontrol;
+			}
+
+			fm = cmd.forwardmove;
+			sm = cmd.sidemove;
+			[fm, sm] = TweakSpeeds (fm, sm);
+			fm *= Speed / 256;
+			sm *= Speed / 256;
+
+			// When crouching, speed and bobbing have to be reduced
+			if (CanCrouch() && player.crouchfactor != 1)
+			{
+				fm *= player.crouchfactor;
+				sm *= player.crouchfactor;
+				bobfactor *= player.crouchfactor;
+			}
+
+			forwardmove = fm * movefactor * (35 / TICRATE);
+			sidemove = sm * movefactor * (35 / TICRATE);
+
+			if (forwardmove)
+			{
+				Bob(Angle, cmd.forwardmove * bobfactor / 256., true);
+				ForwardThrust(forwardmove, Angle);
+			}
+			if (sidemove)
+			{
+				let a = Angle - 90;
+				Bob(a, cmd.sidemove * bobfactor / 256., false);
+				Thrust(sidemove, a);
+			}
+
+			if (!(player.cheats & CF_PREDICTING) && (forwardmove != 0 || sidemove != 0))
+			{
+				PlayRunning ();
+			}
+
+			if (player.cheats & CF_REVERTPLEASE)
+			{
+				player.cheats &= ~CF_REVERTPLEASE;
+				player.camera = player.mo;
+			}
+		}
+	}		
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckPitch
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckPitch()
+	{
+		let player = self.player;
+		// [RH] Look up/down stuff
+		if (!level.IsFreelookAllowed())
+		{
+			Pitch = 0.;
+		}
+		else
+		{
+			// The player's view pitch is clamped between -32 and +56 degrees,
+			// which translates to about half a screen height up and (more than)
+			// one full screen height down from straight ahead when view panning
+			// is used.
+			int clook = player.cmd.pitch;
+			if (clook != 0)
+			{
+				if (clook == -32768)
+				{ // center view
+					player.centering = true;
+				}
+				else if (!player.centering)
+				{
+					// no more overflows with floating point. Yay! :)
+					Pitch = clamp(Pitch - clook * (360. / 65536.), player.MinPitch, player.MaxPitch);
+				}
+			}
+		}
+		if (player.centering)
+		{
+			if (abs(Pitch) > 2.)
+			{
+				Pitch *= (2. / 3.);
+			}
+			else
+			{
+				Pitch = 0.;
+				player.centering = false;
+				if (PlayerNumber() == consoleplayer)
+				{
+					LocalViewPitch = 0;
+				}
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckJump
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckJump()
+	{
+		let player = self.player;
+		// [RH] check for jump
+		if (player.cmd.buttons & BT_JUMP)
+		{
+			if (player.crouchoffset != 0)
+			{
+				// Jumping while crouching will force an un-crouch but not jump
+				player.crouching = 1;
+			}
+			else if (waterlevel >= 2)
+			{
+				Vel.Z = 4 * Speed;
+			}
+			else if (bNoGravity)
+			{
+				Vel.Z = 3.;
+			}
+			else if (level.IsJumpingAllowed() && player.onground && player.jumpTics == 0)
+			{
+				double jumpvelz = JumpZ * 35 / TICRATE;
+				double jumpfac = 0;
+
+				// [BC] If the player has the high jump power, double his jump velocity.
+				// (actually, pick the best factors from all active items.)
+				for (let p = Inv; p != null; p = p.Inv)
+				{
+					let pp = PowerHighJump(p);
+					if (pp)
+					{
+						double f = pp.Strength;
+						if (f > jumpfac) jumpfac = f;
+					}
+				}
+				if (jumpfac > 0) jumpvelz *= jumpfac;
+
+				Vel.Z += jumpvelz;
+				bOnMobj = false;
+				player.jumpTics = -1;
+				if (!(player.cheats & CF_PREDICTING)) A_PlaySound("*jump", CHAN_BODY);
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckMoveUpDown
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckMoveUpDown()
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+
+		if (cmd.upmove == -32768)
+		{ // Only land if in the air
+			if (bNoGravity && waterlevel < 2)
+			{
+				bNoGravity = false;
+			}
+		}
+		else if (cmd.upmove != 0)
+		{
+			// Clamp the speed to some reasonable maximum.
+			cmd.upmove = clamp(cmd.upmove, -0x300, 0x300);
+			if (waterlevel >= 2 ||  bFly || (player.cheats & CF_NOCLIP2))
+			{
+				Vel.Z = Speed * cmd.upmove / 128.;
+				if (waterlevel < 2 && !bNoGravity)
+				{
+					bFly = true;
+					bNoGravity = true;
+					if ((Vel.Z <= -39) && !(player.cheats & CF_PREDICTING))
+					{ // Stop falling scream
+						A_StopSound(CHAN_VOICE);
+					}
+				}
+			}
+			else if (cmd.upmove > 0 && !(player.cheats & CF_PREDICTING))
+			{
+				let fly = FindInventory("ArtiFly");
+				if (fly != NULL)
+				{
+					UseInventory(fly);
+				}
+			}
+		}
+	}
+
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_HandleMovement
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void HandleMovement()
+	{
+		let player = self.player;
+		// [RH] Check for fast turn around
+		if (player.cmd.buttons & BT_TURN180 && !(player.oldbuttons & BT_TURN180))
+		{
+			player.turnticks = TURN180_TICKS;
+		}
+
+		// Handle movement
+		if (reactiontime)
+		{ // Player is frozen
+			reactiontime--;
+		}
+		else
+		{
+			MovePlayer();
+			CheckJump();
+			CheckMoveUpDown();
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckUndoMorph
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckUndoMorph()
+	{
+		let player = self.player;
+		// Morph counter
+		if (player.morphTics)
+		{
+			if (player.chickenPeck)
+			{ // Chicken attack counter
+				player.chickenPeck -= 3;
+			}
+			if (!--player.morphTics)
+			{ // Attempt to undo the chicken/pig
+				player.UndoPlayerMorph(player, MRF_UNDOBYTIMEOUT);
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckPoison
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckPoison()
+	{
+		let player = self.player;
+		if (player.poisoncount && !(level.time & 15))
+		{
+			player.poisoncount -= 5;
+			if (player.poisoncount < 0)
+			{
+				player.poisoncount = 0;
+			}
+			player.PoisonDamage(player.poisoner, 1, true);
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckDegeneration
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckDegeneration()
+	{
+		// Apply degeneration.
+		if (sv_degeneration)
+		{
+			let player = self.player;
+			int maxhealth = GetMaxHealth(true);
+			if ((level.time % TICRATE) == 0 && player.health > maxhealth)
+			{
+				if (player.health - 5 < maxhealth)
+					player.health = maxhealth;
+				else
+					player.health--;
+
+				health = player.health;
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckAirSupply
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckAirSupply()
+	{
+		// Handle air supply
+		//if (level.airsupply > 0)
+		{
+			let player = self.player;
+			if (waterlevel < 3 || (bInvulnerable) || (player.cheats & (CF_GODMODE | CF_NOCLIP2)) ||	(player.cheats & CF_GODMODE2))
+			{
+				ResetAirSupply();
+			}
+			else if (player.air_finished <= level.time && !(level.time & 31))
+			{
+				DamageMobj(NULL, NULL, 2 + ((level.time - player.air_finished) / TICRATE), 'Drowning');
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
 	// PROC P_PlayerThink
 	//
 	//----------------------------------------------------------------------------
 	
-	native void CheckMusicChange();
-	native void DeathThink ();
-	native void CheckPitch();
-	native void HandleMovement();
-	native void CalcHeight ();
-	native void CheckEnvironment();
-	native void CheckUse();
-	native void CheckUndoMorph();
-	// Cycle psprites
-	native void CheckPoison();
-	native void CheckDegeneration();
-	native void CheckAirSupply();
-	
-
 	virtual void PlayerThink()
 	{
 		let player = self.player;
@@ -519,6 +1051,10 @@ class PlayerPawn : Actor native
 	native bool ResetAirSupply (bool playgasp = false);
 	native void CheckWeaponSwitch(class<Inventory> item);
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
+	native void CheckMusicChange();
+	native void CalcHeight ();
+	native void CheckEnvironment();
+	native void CheckUse();
 
 }
 
@@ -597,7 +1133,7 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native uint8 playerstate;
 	native readonly uint buttons;
 	native uint original_oldbuttons;
-	native readonly Class<PlayerPawn> cls;
+	native Class<PlayerPawn> cls;
 	native float DesiredFOV;
 	native float FOV;
 	native double viewz;

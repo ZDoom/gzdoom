@@ -1,5 +1,20 @@
+
+struct UserCmd native
+{
+	native uint	buttons;
+	native int16	pitch;			// up/down
+	native int16	yaw;			// left/right
+	native int16	roll;			// "tilt"
+	native int16	forwardmove;
+	native int16	sidemove;
+	native int16	upmove;
+}
+
 class PlayerPawn : Actor native
 {
+	const CROUCHSPEED = (1./12);
+	// [RH] # of ticks to complete a turn180
+	const TURN180_TICKS = ((TICRATE / 4) + 1);
 	
 	native int			crouchsprite;
 	native int			MaxHealth;
@@ -94,6 +109,12 @@ class PlayerPawn : Actor native
 		Obituary "$OB_MPDEFAULT";
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	virtual void PlayIdle ()
 	{
 		if (InStateSequence(CurState, SeeState))
@@ -120,6 +141,12 @@ class PlayerPawn : Actor native
 	{
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	virtual void OnRespawn()
 	{
 		if (sv_respawnprotect && (multiplayer || alwaysapplydmflags))
@@ -132,6 +159,12 @@ class PlayerPawn : Actor native
 		}
 	}
 	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
 	{
 		if (victim.player != player && victim.IsTeammate(self))
@@ -162,7 +195,12 @@ class PlayerPawn : Actor native
 		}
 	}
 	
+	//----------------------------------------------------------------------------
+	//
 	// This is for SBARINFO.
+	//
+	//----------------------------------------------------------------------------
+
 	clearscope int, int GetEffectTicsForItem(class<Inventory> item) const 
 	{
 		let pg = (class<PowerupGiver>)(item);
@@ -180,10 +218,1062 @@ class PlayerPawn : Actor native
 		return -1, -1;
 	}
 	
+
+	//===========================================================================
+	//
+	// APlayerPawn :: CheckWeaponSwitch
+	//
+	// Checks if weapons should be changed after picking up ammo
+	//
+	//===========================================================================
+
+	void CheckWeaponSwitch(Class<Ammo> ammotype)
+	{
+		let player = self.player;
+		if (!player.GetNeverSwitch() &&	player.PendingWeapon == WP_NOCHANGE && 
+			(player.ReadyWeapon == NULL || player.ReadyWeapon.bWimpy_Weapon))
+		{
+			let best = BestWeapon (ammotype);
+			if (best != NULL && (player.ReadyWeapon == NULL ||
+				best.SelectionOrder < player.ReadyWeapon.SelectionOrder))
+			{
+				player.PendingWeapon = best;
+			}
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_FireWeapon
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void FireWeapon (State stat)
+	{
+		let player = self.player;
+		
+		// [SO] 9/2/02: People were able to do an awful lot of damage
+		// when they were observers...
+		if (player.Bot == null && bot_observer)
+		{
+			return;
+		}
+
+		let weapn = player.ReadyWeapon;
+		if (weapn == null || !weapn.CheckAmmo (Weapon.PrimaryFire, true))
+		{
+			return;
+		}
+
+		player.WeaponState &= ~WF_WEAPONBOBBING;
+		PlayAttacking ();
+		weapn.bAltFire = false;
+		if (stat == null)
+		{
+			stat = weapn.GetAtkState(!!player.refire);
+		}
+		player.SetPsprite(PSP_WEAPON, stat);
+		if (!weapn.bNoAlert)
+		{
+			SoundAlert (self, false);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_FireWeaponAlt
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void FireWeaponAlt (State stat)
+	{
+		// [SO] 9/2/02: People were able to do an awful lot of damage
+		// when they were observers...
+		if (player.Bot == null && bot_observer)
+		{
+			return;
+		}
+
+		let weapn = player.ReadyWeapon;
+		if (weapn == null || weapn.FindState('AltFire') == null || !weapn.CheckAmmo (Weapon.AltFire, true))
+		{
+			return;
+		}
+
+		player.WeaponState &= ~WF_WEAPONBOBBING;
+		PlayAttacking ();
+		weapn.bAltFire = true;
+
+		if (stat == null)
+		{
+			stat = weapn.GetAltAtkState(!!player.refire);
+		}
+
+		player.SetPsprite(PSP_WEAPON, stat);
+		if (!weapn.bNoAlert)
+		{
+			SoundAlert (self, false);
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_CheckWeaponFire
+	//
+	// The player can fire the weapon.
+	// [RH] This was in A_WeaponReady before, but that only works well when the
+	// weapon's ready frames have a one tic delay.
+	//
+	//---------------------------------------------------------------------------
+
+	void CheckWeaponFire ()
+	{
+		let player = self.player;
+		let weapon = player.ReadyWeapon;
+
+		if (weapon == NULL)
+			return;
+
+		// Check for fire. Some weapons do not auto fire.
+		if ((player.WeaponState & WF_WEAPONREADY) && (player.cmd.buttons & BT_ATTACK))
+		{
+			if (!player.attackdown || !weapon.bNoAutofire)
+			{
+				player.attackdown = true;
+				FireWeapon (NULL);
+				return;
+			}
+		}
+		else if ((player.WeaponState & WF_WEAPONREADYALT) && (player.cmd.buttons & BT_ALTATTACK))
+		{
+			if (!player.attackdown || !weapon.bNoAutofire)
+			{
+				player.attackdown = true;
+				FireWeaponAlt (NULL);
+				return;
+			}
+		}
+		else
+		{
+			player.attackdown = false;
+		}
+	}
+
+	//---------------------------------------------------------------------------
+	//
+	// PROC P_CheckWeaponChange
+	//
+	// The player can change to another weapon at this time.
+	// [GZ] This was cut from P_CheckWeaponFire.
+	//
+	//---------------------------------------------------------------------------
+
+	virtual void CheckWeaponChange ()
+	{
+		let player = self.player;
+		if ((player.WeaponState & WF_DISABLESWITCH) || // Weapon changing has been disabled.
+			player.morphTics != 0)					// Morphed classes cannot change weapons.
+		{ // ...so throw away any pending weapon requests.
+			player.PendingWeapon = WP_NOCHANGE;
+		}
+
+		// Put the weapon away if the player has a pending weapon or has died, and
+		// we're at a place in the state sequence where dropping the weapon is okay.
+		if ((player.PendingWeapon != WP_NOCHANGE || player.health <= 0) &&
+			player.WeaponState & WF_WEAPONSWITCHOK)
+		{
+			player.DropWeapon();
+		}
+	}
+	
+	//------------------------------------------------------------------------
+	//
+	// PROC P_MovePsprites
+	//
+	// Called every tic by player thinking routine
+	//
+	//------------------------------------------------------------------------
+
+	virtual void TickPSprites()
+	{
+		let player = self.player;
+		let pspr = player.psprites;
+		while (pspr)
+		{
+			// Destroy the psprite if it's from a weapon that isn't currently selected by the player
+			// or if it's from an inventory item that the player no longer owns. 
+			if ((pspr.Caller == null ||
+				(pspr.Caller is "Inventory" && Inventory(pspr.Caller).Owner != pspr.Owner.mo) ||
+				(pspr.Caller is "Weapon" && pspr.Caller != pspr.Owner.ReadyWeapon)))
+			{
+				pspr.Destroy();
+			}
+			else
+			{
+				pspr.Tick();
+			}
+
+			pspr = pspr.Next;
+		}
+
+		if ((health > 0) || (player.ReadyWeapon != null && !player.ReadyWeapon.bNoDeathInput))
+		{
+			if (player.ReadyWeapon == null)
+			{
+				if (player.PendingWeapon != WP_NOCHANGE)
+					player.BringUpWeapon();
+			}
+			else
+			{
+				CheckWeaponChange();
+				if (player.WeaponState & (WF_WEAPONREADY | WF_WEAPONREADYALT))
+				{
+					CheckWeaponFire();
+				}
+				// Check custom buttons
+				CheckWeaponButtons();
+			}
+		}
+	}
+
+	//==========================================================================
+	//
+	// P_DeathThink
+	//
+	//==========================================================================
+
+	virtual void DeathThink ()
+	{
+		let player = self.player;
+		int dir;
+		double delta;
+
+		player.Uncrouch();
+		TickPSprites();
+
+		player.onground = (pos.Z <= floorz);
+		if (self is "PlayerChunk")
+		{ // Flying bloody skull or flying ice chunk
+			player.viewheight = 6;
+			player.deltaviewheight = 0;
+			if (player.onground)
+			{
+				if (Pitch > -19.)
+				{
+					double lookDelta = (-19. - Pitch) / 8;
+					Pitch += lookDelta;
+				}
+			}
+		}
+		else if (!bIceCorpse)
+		{ // Fall to ground (if not frozen)
+			player.deltaviewheight = 0;
+			if (player.viewheight > 6)
+			{
+				player.viewheight -= 1;
+			}
+			if (player.viewheight < 6)
+			{
+				player.viewheight = 6;
+			}
+			if (Pitch < 0)
+			{
+				Pitch += 3;
+			}
+			else if (Pitch > 0)
+			{
+				Pitch -= 3;
+			}
+			if (abs(Pitch) < 3)
+			{
+				Pitch = 0.;
+			}
+		}
+		CalcHeight ();
+			
+		if (player.attacker && player.attacker != self)
+		{ // Watch killer
+			double diff = deltaangle(angle, AngleTo(player.attacker));
+			double delta = abs(diff);
+	
+			if (delta < 10)
+			{ // Looking at killer, so fade damage and poison counters
+				if (player.damagecount)
+				{
+					player.damagecount--;
+				}
+				if (player.poisoncount)
+				{
+					player.poisoncount--;
+				}
+			}
+			delta /= 8;
+			Angle += clamp(diff, -5., 5.);
+		}
+		else
+		{
+			if (player.damagecount)
+			{
+				player.damagecount--;
+			}
+			if (player.poisoncount)
+			{
+				player.poisoncount--;
+			}
+		}		
+
+		if ((player.cmd.buttons & BT_USE ||
+			((multiplayer || alwaysapplydmflags) && sv_forcerespawn)) && !sv_norespawn)
+		{
+			if (level.time >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
+			{
+				player.cls = NULL;		// Force a new class if the player is using a random class
+				player.playerstate = (multiplayer || (level.AllowRespawn) || sv_singleplayerrespawn)? PST_REBORN : PST_ENTER;
+				if (special1 > 2)
+				{
+					special1 = 0;
+				}
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckFOV
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckFOV()
+	{
+		let player = self.player;
+
+		// [RH] Zoom the player's FOV
+		float desired = player.DesiredFOV;
+		// Adjust FOV using on the currently held weapon.
+		if (player.playerstate != PST_DEAD &&		// No adjustment while dead.
+			player.ReadyWeapon != NULL &&			// No adjustment if no weapon.
+			player.ReadyWeapon.FOVScale != 0)		// No adjustment if the adjustment is zero.
+		{
+			// A negative scale is used to prevent G_AddViewAngle/G_AddViewPitch
+			// from scaling with the FOV scale.
+			desired *= abs(player.ReadyWeapon.FOVScale);
+		}
+		if (player.FOV != desired)
+		{
+			if (abs(player.FOV - desired) < 7.)
+			{
+				player.FOV = desired;
+			}
+			else
+			{
+				float zoom = MAX(7., abs(player.FOV - desired) * 0.025);
+				if (player.FOV > desired)
+				{
+					player.FOV = player.FOV - zoom;
+				}
+				else
+				{
+					player.FOV = player.FOV + zoom;
+				}
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckCheats
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckCheats()
+	{
+		let player = self.player;
+		// No-clip cheat
+		if ((player.cheats & (CF_NOCLIP | CF_NOCLIP2)) == CF_NOCLIP2)
+		{ // No noclip2 without noclip
+			player.cheats &= ~CF_NOCLIP2;
+		}
+		bNoClip = (player.cheats & (CF_NOCLIP | CF_NOCLIP2) || Default.bNoClip);
+		if (player.cheats & CF_NOCLIP2)
+		{
+			bNoGravity = true;
+		}
+		else if (!bFly && !Default.bNoGravity)
+		{
+			bNoGravity = false;
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckFrozen
+	//
+	//----------------------------------------------------------------------------
+
+	virtual bool CheckFrozen()
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+		bool totallyfrozen = player.IsTotallyFrozen();
+
+		// [RH] Being totally frozen zeros out most input parameters.
+		if (totallyfrozen)
+		{
+			if (gamestate == GS_TITLELEVEL)
+			{
+				cmd.buttons = 0;
+			}
+			else
+			{
+				cmd.buttons &= BT_USE;
+			}
+			cmd.pitch = 0;
+			cmd.yaw = 0;
+			cmd.roll = 0;
+			cmd.forwardmove = 0;
+			cmd.sidemove = 0;
+			cmd.upmove = 0;
+			player.turnticks = 0;
+		}
+		else if (player.cheats & CF_FROZEN)
+		{
+			cmd.forwardmove = 0;
+			cmd.sidemove = 0;
+			cmd.upmove = 0;
+		}
+		return totallyfrozen;
+	}
+
+	virtual bool CanCrouch() const
+	{
+		return player.morphTics == 0 || bCrouchableMorph;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CrouchMove
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CrouchMove(int direction)
+	{
+		let player = self.player;
+		
+		double defaultheight = FullHeight;
+		double savedheight = Height;
+		double crouchspeed = direction * CROUCHSPEED;
+		double oldheight = player.viewheight;
+
+		player.crouchdir = direction;
+		player.crouchfactor += crouchspeed;
+
+		// check whether the move is ok
+		Height  = defaultheight * player.crouchfactor;
+		if (!TryMove(Pos.XY, false, NULL))
+		{
+			Height = savedheight;
+			if (direction > 0)
+			{
+				// doesn't fit
+				player.crouchfactor -= crouchspeed;
+				return;
+			}
+		}
+		Height = savedheight;
+
+		player.crouchfactor = clamp(player.crouchfactor, 0.5, 1.);
+		player.viewheight = ViewHeight * player.crouchfactor;
+		player.crouchviewdelta = player.viewheight - ViewHeight;
+
+		// Check for eyes going above/below fake floor due to crouching motion.
+		CheckFakeFloorTriggers(pos.Z + oldheight, true);
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckCrouch
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckCrouch(bool totallyfrozen)
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+
+		if (cmd.buttons & BT_JUMP)
+		{
+			cmd.buttons &= ~BT_CROUCH;
+		}
+		if (CanCrouch() && player.health > 0 && level.IsCrouchingAllowed())
+		{
+			if (!totallyfrozen)
+			{
+				int crouchdir = player.crouching;
+
+				if (crouchdir == 0)
+				{
+					crouchdir = (cmd.buttons & BT_CROUCH) ? -1 : 1;
+				}
+				else if (cmd.buttons & BT_CROUCH)
+				{
+					player.crouching = 0;
+				}
+				if (crouchdir == 1 && player.crouchfactor < 1 && pos.Z + height < ceilingz)
+				{
+					CrouchMove(1);
+				}
+				else if (crouchdir == -1 && player.crouchfactor > 0.5)
+				{
+					CrouchMove(-1);
+				}
+			}
+		}
+		else
+		{
+			player.Uncrouch();
+		}
+
+		player.crouchoffset = -(ViewHeight) * (1 - player.crouchfactor);
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// P_Thrust
+	//
+	// moves the given origin along a given angle
+	//
+	//----------------------------------------------------------------------------
+
+	void ForwardThrust (double move, double angle)
+	{
+		if ((waterlevel || bNoGravity) && Pitch != 0)
+		{
+			double zpush = move * sin(Pitch);
+			if (waterlevel && waterlevel < 2 && zpush < 0) zpush = 0;
+			Vel.Z -= zpush;
+			move *= cos(Pitch);
+		}
+		Thrust(move);
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// P_Bob
+	// Same as P_Thrust, but only affects bobbing.
+	//
+	// killough 10/98: We apply thrust separately between the real physical player
+	// and the part which affects bobbing. This way, bobbing only comes from player
+	// motion, nothing external, avoiding many problems, e.g. bobbing should not
+	// occur on conveyors, unless the player walks on one, and bobbing should be
+	// reduced at a regular rate, even on ice (where the player coasts).
+	//
+	//----------------------------------------------------------------------------
+
+	void Bob (double angle, double move, bool forward)
+	{
+		if (forward && (waterlevel || bNoGravity) && Pitch != 0)
+		{
+			move *= cos(Pitch);
+		}
+		player.Vel += AngleToVector(angle, move);
+	}
+	
+	//===========================================================================
+	//
+	// APlayerPawn :: TweakSpeeds
+	//
+	//===========================================================================
+
+	double, double TweakSpeeds (double forward, double side)
+	{
+		// Strife's player can't run when its health is below 10
+		if (health <= RunHealth)
+		{
+			forward = clamp(forward, -0x1900, 0x1900);
+			side = clamp(side, -0x1800, 0x1800);
+		}
+
+		// [GRB]
+		if (abs(forward) < 0x3200)
+		{
+			forward *= ForwardMove1;
+		}
+		else
+		{
+			forward *= ForwardMove2;
+		}
+
+		if (abs(side) < 0x2800)
+		{
+			side *= SideMove1;
+		}
+		else
+		{
+			side *= SideMove2;
+		}
+
+		if (!player.morphTics && Inv != NULL)
+		{
+			double factor = Inv.GetSpeedFactor ();
+			forward *= factor;
+			side *= factor;
+		}
+		return forward, side;
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_MovePlayer
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void MovePlayer ()
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+
+		// [RH] 180-degree turn overrides all other yaws
+		if (player.turnticks)
+		{
+			player.turnticks--;
+			Angle += (180. / TURN180_TICKS);
+		}
+		else
+		{
+			Angle += cmd.yaw * (360./65536.);
+		}
+
+		player.onground = (pos.z <= floorz) || bOnMobj || bMBFBouncer || (player.cheats & CF_NOCLIP2);
+
+		// killough 10/98:
+		//
+		// We must apply thrust to the player and bobbing separately, to avoid
+		// anomalies. The thrust applied to bobbing is always the same strength on
+		// ice, because the player still "works just as hard" to move, while the
+		// thrust applied to the movement varies with 'movefactor'.
+
+		if (cmd.forwardmove | cmd.sidemove)
+		{
+			double forwardmove, sidemove;
+			double bobfactor;
+			double friction, movefactor;
+			double fm, sm;
+
+			[friction, movefactor] = GetFriction();
+			bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
+			if (!player.onground && !bNoGravity && !waterlevel)
+			{
+				// [RH] allow very limited movement if not on ground.
+				movefactor *= level.aircontrol;
+				bobfactor*= level.aircontrol;
+			}
+
+			fm = cmd.forwardmove;
+			sm = cmd.sidemove;
+			[fm, sm] = TweakSpeeds (fm, sm);
+			fm *= Speed / 256;
+			sm *= Speed / 256;
+
+			// When crouching, speed and bobbing have to be reduced
+			if (CanCrouch() && player.crouchfactor != 1)
+			{
+				fm *= player.crouchfactor;
+				sm *= player.crouchfactor;
+				bobfactor *= player.crouchfactor;
+			}
+
+			forwardmove = fm * movefactor * (35 / TICRATE);
+			sidemove = sm * movefactor * (35 / TICRATE);
+
+			if (forwardmove)
+			{
+				Bob(Angle, cmd.forwardmove * bobfactor / 256., true);
+				ForwardThrust(forwardmove, Angle);
+			}
+			if (sidemove)
+			{
+				let a = Angle - 90;
+				Bob(a, cmd.sidemove * bobfactor / 256., false);
+				Thrust(sidemove, a);
+			}
+
+			if (!(player.cheats & CF_PREDICTING) && (forwardmove != 0 || sidemove != 0))
+			{
+				PlayRunning ();
+			}
+
+			if (player.cheats & CF_REVERTPLEASE)
+			{
+				player.cheats &= ~CF_REVERTPLEASE;
+				player.camera = player.mo;
+			}
+		}
+	}		
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckPitch
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckPitch()
+	{
+		let player = self.player;
+		// [RH] Look up/down stuff
+		if (!level.IsFreelookAllowed())
+		{
+			Pitch = 0.;
+		}
+		else
+		{
+			// The player's view pitch is clamped between -32 and +56 degrees,
+			// which translates to about half a screen height up and (more than)
+			// one full screen height down from straight ahead when view panning
+			// is used.
+			int clook = player.cmd.pitch;
+			if (clook != 0)
+			{
+				if (clook == -32768)
+				{ // center view
+					player.centering = true;
+				}
+				else if (!player.centering)
+				{
+					// no more overflows with floating point. Yay! :)
+					Pitch = clamp(Pitch - clook * (360. / 65536.), player.MinPitch, player.MaxPitch);
+				}
+			}
+		}
+		if (player.centering)
+		{
+			if (abs(Pitch) > 2.)
+			{
+				Pitch *= (2. / 3.);
+			}
+			else
+			{
+				Pitch = 0.;
+				player.centering = false;
+				if (PlayerNumber() == consoleplayer)
+				{
+					LocalViewPitch = 0;
+				}
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckJump
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckJump()
+	{
+		let player = self.player;
+		// [RH] check for jump
+		if (player.cmd.buttons & BT_JUMP)
+		{
+			if (player.crouchoffset != 0)
+			{
+				// Jumping while crouching will force an un-crouch but not jump
+				player.crouching = 1;
+			}
+			else if (waterlevel >= 2)
+			{
+				Vel.Z = 4 * Speed;
+			}
+			else if (bNoGravity)
+			{
+				Vel.Z = 3.;
+			}
+			else if (level.IsJumpingAllowed() && player.onground && player.jumpTics == 0)
+			{
+				double jumpvelz = JumpZ * 35 / TICRATE;
+				double jumpfac = 0;
+
+				// [BC] If the player has the high jump power, double his jump velocity.
+				// (actually, pick the best factors from all active items.)
+				for (let p = Inv; p != null; p = p.Inv)
+				{
+					let pp = PowerHighJump(p);
+					if (pp)
+					{
+						double f = pp.Strength;
+						if (f > jumpfac) jumpfac = f;
+					}
+				}
+				if (jumpfac > 0) jumpvelz *= jumpfac;
+
+				Vel.Z += jumpvelz;
+				bOnMobj = false;
+				player.jumpTics = -1;
+				if (!(player.cheats & CF_PREDICTING)) A_PlaySound("*jump", CHAN_BODY);
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckMoveUpDown
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckMoveUpDown()
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+
+		if (cmd.upmove == -32768)
+		{ // Only land if in the air
+			if (bNoGravity && waterlevel < 2)
+			{
+				bNoGravity = false;
+			}
+		}
+		else if (cmd.upmove != 0)
+		{
+			// Clamp the speed to some reasonable maximum.
+			cmd.upmove = clamp(cmd.upmove, -0x300, 0x300);
+			if (waterlevel >= 2 ||  bFly || (player.cheats & CF_NOCLIP2))
+			{
+				Vel.Z = Speed * cmd.upmove / 128.;
+				if (waterlevel < 2 && !bNoGravity)
+				{
+					bFly = true;
+					bNoGravity = true;
+					if ((Vel.Z <= -39) && !(player.cheats & CF_PREDICTING))
+					{ // Stop falling scream
+						A_StopSound(CHAN_VOICE);
+					}
+				}
+			}
+			else if (cmd.upmove > 0 && !(player.cheats & CF_PREDICTING))
+			{
+				let fly = FindInventory("ArtiFly");
+				if (fly != NULL)
+				{
+					UseInventory(fly);
+				}
+			}
+		}
+	}
+
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_HandleMovement
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void HandleMovement()
+	{
+		let player = self.player;
+		// [RH] Check for fast turn around
+		if (player.cmd.buttons & BT_TURN180 && !(player.oldbuttons & BT_TURN180))
+		{
+			player.turnticks = TURN180_TICKS;
+		}
+
+		// Handle movement
+		if (reactiontime)
+		{ // Player is frozen
+			reactiontime--;
+		}
+		else
+		{
+			MovePlayer();
+			CheckJump();
+			CheckMoveUpDown();
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckUndoMorph
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckUndoMorph()
+	{
+		let player = self.player;
+		// Morph counter
+		if (player.morphTics)
+		{
+			if (player.chickenPeck)
+			{ // Chicken attack counter
+				player.chickenPeck -= 3;
+			}
+			if (!--player.morphTics)
+			{ // Attempt to undo the chicken/pig
+				player.UndoPlayerMorph(player, MRF_UNDOBYTIMEOUT);
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckPoison
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckPoison()
+	{
+		let player = self.player;
+		if (player.poisoncount && !(level.time & 15))
+		{
+			player.poisoncount -= 5;
+			if (player.poisoncount < 0)
+			{
+				player.poisoncount = 0;
+			}
+			player.PoisonDamage(player.poisoner, 1, true);
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckDegeneration
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckDegeneration()
+	{
+		// Apply degeneration.
+		if (sv_degeneration)
+		{
+			let player = self.player;
+			int maxhealth = GetMaxHealth(true);
+			if ((level.time % TICRATE) == 0 && player.health > maxhealth)
+			{
+				if (player.health - 5 < maxhealth)
+					player.health = maxhealth;
+				else
+					player.health--;
+
+				health = player.health;
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_CheckAirSupply
+	//
+	//----------------------------------------------------------------------------
+
+	virtual void CheckAirSupply()
+	{
+		// Handle air supply
+		//if (level.airsupply > 0)
+		{
+			let player = self.player;
+			if (waterlevel < 3 || (bInvulnerable) || (player.cheats & (CF_GODMODE | CF_NOCLIP2)) ||	(player.cheats & CF_GODMODE2))
+			{
+				ResetAirSupply();
+			}
+			else if (player.air_finished <= level.time && !(level.time & 31))
+			{
+				DamageMobj(NULL, NULL, 2 + ((level.time - player.air_finished) / TICRATE), 'Drowning');
+			}
+		}
+	}
+
+	//----------------------------------------------------------------------------
+	//
+	// PROC P_PlayerThink
+	//
+	//----------------------------------------------------------------------------
+	
+	virtual void PlayerThink()
+	{
+		let player = self.player;
+		UserCmd cmd = player.cmd;
+		
+		CheckFOV();
+
+		if (player.inventorytics)
+		{
+			player.inventorytics--;
+		}
+		CheckCheats();
+
+		if (bJustAttacked)
+		{ // Chainsaw/Gauntlets attack auto forward motion
+			cmd.yaw = 0;
+			cmd.forwardmove = 0xc800/2;
+			cmd.sidemove = 0;
+			bJustAttacked = false;
+		}
+
+		bool totallyfrozen = CheckFrozen();
+
+		// Handle crouching
+		CheckCrouch(totallyfrozen);
+		CheckMusicChange();
+
+		if (player.playerstate == PST_DEAD)
+		{
+			DeathThink ();
+			return;
+		}
+		if (player.jumpTics != 0)
+		{
+			player.jumpTics--;
+			if (player.onground && player.jumpTics < -18)
+			{
+				player.jumpTics = 0;
+			}
+		}
+		if (player.morphTics && !(player.cheats & CF_PREDICTING))
+		{
+			MorphPlayerThink ();
+		}
+
+		CheckPitch();
+		HandleMovement();
+		CalcHeight ();
+
+		if (!(player.cheats & CF_PREDICTING))
+		{
+			CheckEnvironment();
+			CheckUse();
+			CheckUndoMorph();
+			// Cycle psprites
+			TickPSprites();
+
+			// Other Counters
+			if (player.damagecount)	player.damagecount--;
+			if (player.bonuscount) player.bonuscount--;
+
+			if (player.hazardcount)
+			{
+				player.hazardcount--;
+				if (!(level.time % player.hazardinterval) && player.hazardcount > 16*TICRATE)
+					DamageMobj (NULL, NULL, 5, player.hazardtype);
+			}
+
+			CheckPoison();
+			CheckDegeneration();
+			CheckAirSupply();
+		}
+	}
+	
+	//----------------------------------------------------------------------------
+	//
+	// 
+	//
+	//----------------------------------------------------------------------------
+
 	native clearscope int GetMaxHealth(bool withupgrades = false) const;
 	native bool ResetAirSupply (bool playgasp = false);
-	native void CheckWeaponSwitch(class<Inventory> item);
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
+	native void CheckMusicChange();
+	native void CalcHeight ();
+	native void CheckEnvironment();
+	native void CheckUse();
+	native void CheckWeaponButtons();
+	native Weapon BestWeapon(class<Ammo> ammotype);
 
 }
 
@@ -241,6 +1331,26 @@ class PSprite : Object native play
 	
 	native void SetState(State newstate, bool pending = false);
 
+	//------------------------------------------------------------------------
+	//
+	//
+	//
+	//------------------------------------------------------------------------
+
+	void Tick()
+	{
+		if (processPending)
+		{
+			// drop tic count and possibly change state
+			if (Tics != -1)	// a -1 tic count never changes
+			{
+				Tics--;
+				// [BC] Apply double firing speed.
+				if (bPowDouble && Tics && (Owner.mo.FindInventory ("PowerDoubleFiringSpeed", true))) Tics--;
+				if (!Tics) SetState(CurState.NextState);
+			}
+		}
+	}
 }
 
 enum EPlayerState
@@ -262,7 +1372,7 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native uint8 playerstate;
 	native readonly uint buttons;
 	native uint original_oldbuttons;
-	native readonly Class<PlayerPawn> cls;
+	native Class<PlayerPawn> cls;
 	native float DesiredFOV;
 	native float FOV;
 	native double viewz;
@@ -341,12 +1451,9 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native double ConversationNPCAngle;
 	native bool ConversationFaceTalker;
 	native @WeaponSlots weapons;
+	native @UserCmd cmd;
+	native readonly @UserCmd original_cmd;
 
-/* these are not doable yet
-ticcmd_t	cmd;
-usercmd_t	original_cmd;
-*/
-	
 
 	native bool MorphPlayer(playerinfo p, Class<PlayerPawn> spawntype, int duration, int style, Class<Actor> enter_flash = null, Class<Actor> exit_flash = null);
 	native bool UndoPlayerMorph(playerinfo player, int unmorphflag = 0, bool force = false);
@@ -375,7 +1482,29 @@ usercmd_t	original_cmd;
 	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
 	native clearscope bool HasWeaponsInSlot(int slot) const;
+
+	bool IsTotallyFrozen()
+	{
+		return
+			gamestate == GS_TITLELEVEL ||
+			(cheats & CF_TOTALLYFROZEN) ||
+			(level.frozen && timefreezer == 0);
+	}
+
+	void Uncrouch()
+	{
+		if (crouchfactor != 1)
+		{
+			crouchfactor = 1;
+			crouchoffset = 0;
+			crouchdir = 0;
+			crouching = 0;
+			crouchviewdelta = 0;
+			viewheight = mo.ViewHeight;
+		}
+	}
 	
+
 	clearscope int fragSum () const
 	{
 		int i;

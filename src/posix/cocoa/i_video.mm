@@ -116,6 +116,8 @@
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
+int currentrenderer;
+
 CUSTOM_CVAR(Bool, vid_glswfb, true, CVAR_NOINITCALL | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
@@ -135,11 +137,14 @@ CUSTOM_CVAR(Bool, swtruecolor, TRUECOLOR_DEFAULT, CVAR_ARCHIVE | CVAR_GLOBALCONF
 {
 	// Strictly speaking this doesn't require a mode switch, but it is the easiest
 	// way to force a CreateFramebuffer call without a lot of refactoring.
-	extern int NewWidth, NewHeight, NewBits, DisplayBits;
-	NewWidth      = screen->GetWidth();
-	NewHeight     = screen->GetHeight();
-	NewBits       = DisplayBits;
-	setmodeneeded = true;
+	if (currentrenderer == 0)
+	{
+		extern int NewWidth, NewHeight, NewBits, DisplayBits;
+		NewWidth      = screen->GetWidth();
+		NewHeight     = screen->GetHeight();
+		NewBits       = DisplayBits;
+		setmodeneeded = true;
+	}
 }
 
 CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -157,14 +162,12 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
 
-static int s_currentRenderer;
-
 CUSTOM_CVAR(Int, vid_renderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// 0: Software renderer
 	// 1: OpenGL renderer
 
-	if (self != s_currentRenderer)
+	if (self != currentrenderer)
 	{
 		switch (self)
 		{
@@ -657,7 +660,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	DFrameBuffer* fb = NULL;
 
-	if (1 == s_currentRenderer)
+	if (1 == currentrenderer)
  	{
 		fb = new OpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
 	}
@@ -1360,13 +1363,13 @@ static void I_DeleteRenderer()
 
 void I_CreateRenderer()
 {
-	s_currentRenderer = vid_renderer;
+	currentrenderer = vid_renderer;
 
 	if (NULL == Renderer)
 	{
 		extern FRenderer* gl_CreateInterface();
 
-		Renderer = 1 == s_currentRenderer
+		Renderer = 1 == currentrenderer
 			? gl_CreateInterface()
 			: new FSoftwareRenderer;
 		atterm(I_DeleteRenderer);

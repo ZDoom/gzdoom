@@ -132,8 +132,6 @@ public:
 	FState *GetUpState ();
 	FState *GetDownState ();
 	FState *GetReadyState ();
-	FState *GetAtkState (bool hold);
-	FState *GetAltAtkState (bool hold);
 	
 	FState *GetStateForButtonName (FName button);
 

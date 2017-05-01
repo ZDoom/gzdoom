@@ -756,7 +756,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	if(ALC.SOFT_HRTF)
 	{
 		attribs.Push(ALC_HRTF_SOFT);
-		if(*snd_hrtf < 0)
+		if(*snd_hrtf == 0)
 			attribs.Push(ALC_FALSE);
 		else if(*snd_hrtf > 0)
 			attribs.Push(ALC_TRUE);

@@ -97,12 +97,9 @@ public:
 
 	bool ResetAirSupply (bool playgasp = true);
 	int GetMaxHealth(bool withupgrades = false) const;
-	void TweakSpeeds (double &forwardmove, double &sidemove);
-	void MorphPlayerThink ();
 	void ActivateMorphWeapon ();
 	AWeapon *PickNewWeapon (PClassActor *ammotype);
 	AWeapon *BestWeapon (PClassActor *ammotype);
-	void CheckWeaponSwitch(PClassActor *ammotype);
 	void GiveDeathmatchInventory ();
 	void FilterCoopRespawnInventory (APlayerPawn *oldplayer);
 
@@ -111,8 +108,6 @@ public:
 
 	// These are virtual on the script side only.
 	void PlayIdle();
-	void PlayRunning();
-	void PlayAttacking ();
 	void PlayAttacking2 ();
 
 	const char *GetSoundClass () const;
@@ -566,8 +561,6 @@ inline bool AActor::IsNoClip2() const
 	}
 	return false;
 }
-
-#define CROUCHSPEED (1./12)
 
 bool P_IsPlayerTotallyFrozen(const player_t *player);
 

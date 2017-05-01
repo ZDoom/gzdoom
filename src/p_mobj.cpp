@@ -3270,6 +3270,14 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 	}
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckFakeFloorTriggers)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(oldz);
+	PARAM_BOOL_DEF(oldz_has_viewh);
+	P_CheckFakeFloorTriggers(self, oldz, oldz_has_viewh);
+	return 0;
+}
 //===========================================================================
 //
 // PlayerLandedOnThing

@@ -102,9 +102,6 @@
 
 static FRandom pr_skullpop ("SkullPop");
 
-// [RH] # of ticks to complete a turn180
-#define TURN180_TICKS	((TICRATE / 4) + 1)
-
 // [SP] Allows respawn in single player
 CVAR(Bool, sv_singleplayerrespawn, false, CVAR_SERVERINFO | CVAR_LATCH)
 
@@ -1220,6 +1217,12 @@ AWeapon *APlayerPawn::BestWeapon(PClassActor *ammotype)
 	return bestMatch;
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, BestWeapon)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	PARAM_CLASS(ammo, AActor);
+	ACTION_RETURN_POINTER(self->BestWeapon(ammo));
+}
 //===========================================================================
 //
 // APlayerPawn :: PickNewWeapon
@@ -1249,38 +1252,6 @@ AWeapon *APlayerPawn::PickNewWeapon(PClassActor *ammotype)
 	return best;
 }
 
-
-//===========================================================================
-//
-// APlayerPawn :: CheckWeaponSwitch
-//
-// Checks if weapons should be changed after picking up ammo
-//
-//===========================================================================
-
-void APlayerPawn::CheckWeaponSwitch(PClassActor *ammotype)
-{
-	if (!player->userinfo.GetNeverSwitch() &&
-		player->PendingWeapon == WP_NOCHANGE && 
-		(player->ReadyWeapon == NULL ||
-		 (player->ReadyWeapon->WeaponFlags & WIF_WIMPY_WEAPON)))
-	{
-		AWeapon *best = BestWeapon (ammotype);
-		if (best != NULL && (player->ReadyWeapon == NULL ||
-			best->SelectionOrder < player->ReadyWeapon->SelectionOrder))
-		{
-			player->PendingWeapon = best;
-		}
-	}
-}
-
-DEFINE_ACTION_FUNCTION(APlayerPawn, CheckWeaponSwitch)
-{
-	PARAM_SELF_PROLOGUE(APlayerPawn);
-	PARAM_POINTER(ammotype, PClassActor);
-	self->CheckWeaponSwitch(ammotype);
-	return 0;
-}
 //===========================================================================
 //
 // APlayerPawn :: GiveDeathmatchInventory
@@ -1544,24 +1515,6 @@ void APlayerPawn::PlayIdle ()
 	}
 }
 
-void APlayerPawn::PlayRunning ()
-{
-	IFVIRTUAL(APlayerPawn, PlayRunning)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
-}
-
-void APlayerPawn::PlayAttacking ()
-{
-	IFVIRTUAL(APlayerPawn, PlayAttacking)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMCall(func, params, 1, nullptr, 0);
-	}
-}
-
 void APlayerPawn::PlayAttacking2 ()
 {
 	IFVIRTUAL(APlayerPawn, PlayAttacking2)
@@ -1657,15 +1610,6 @@ void APlayerPawn::GiveDefaultInventory ()
 			}
 		}
 		di = di->Next;
-	}
-}
-
-void APlayerPawn::MorphPlayerThink ()
-{
-	IFVIRTUAL(APlayerPawn, MorphPlayerThink)
-	{
-		VMValue params[1] = { (DObject*)this };
-		VMCall(func, params, 1, nullptr, 0);
 	}
 }
 
@@ -1787,48 +1731,6 @@ void APlayerPawn::Die (AActor *source, AActor *inflictor, int dmgflags)
 		{
 			F_StartIntermission(level.info->deathsequence, FSTATE_EndingGame);
 		}
-	}
-}
-
-//===========================================================================
-//
-// APlayerPawn :: TweakSpeeds
-//
-//===========================================================================
-
-void APlayerPawn::TweakSpeeds (double &forward, double &side)
-{
-	// Strife's player can't run when its health is below 10
-	if (health <= RunHealth)
-	{
-		forward = clamp<double>(forward, -0x1900, 0x1900);
-		side = clamp<double>(side, -0x1800, 0x1800);
-	}
-
-	// [GRB]
-	if (fabs(forward) < 0x3200)
-	{
-		forward *= ForwardMove1;
-	}
-	else
-	{
-		forward *= ForwardMove2;
-	}
-
-	if (fabs(side) < 0x2800)
-	{
-		side *= SideMove1;
-	}
-	else
-	{
-		side *= SideMove2;
-	}
-
-	if (!player->morphTics && Inventory != NULL)
-	{
-		double factor = Inventory->GetSpeedFactor ();
-		forward *= factor;
-		side *= factor;
 	}
 }
 
@@ -2032,57 +1934,6 @@ void P_CheckPlayerSprite(AActor *actor, int &spritenum, DVector2 &scale)
 /*
 ==================
 =
-= P_Thrust
-=
-= moves the given origin along a given angle
-=
-==================
-*/
-
-void P_SideThrust (player_t *player, DAngle angle, double move)
-{
-	player->mo->Thrust(angle-90, move);
-}
-
-void P_ForwardThrust (player_t *player, DAngle angle, double move)
-{
-	if ((player->mo->waterlevel || (player->mo->flags & MF_NOGRAVITY))
-		&& player->mo->Angles.Pitch != 0)
-	{
-		double zpush = move * player->mo->Angles.Pitch.Sin();
-		if (player->mo->waterlevel && player->mo->waterlevel < 2 && zpush < 0)
-			zpush = 0;
-		player->mo->Vel.Z -= zpush;
-		move *= player->mo->Angles.Pitch.Cos();
-	}
-	player->mo->Thrust(angle, move);
-}
-
-//
-// P_Bob
-// Same as P_Thrust, but only affects bobbing.
-//
-// killough 10/98: We apply thrust separately between the real physical player
-// and the part which affects bobbing. This way, bobbing only comes from player
-// motion, nothing external, avoiding many problems, e.g. bobbing should not
-// occur on conveyors, unless the player walks on one, and bobbing should be
-// reduced at a regular rate, even on ice (where the player coasts).
-//
-
-void P_Bob (player_t *player, DAngle angle, double move, bool forward)
-{
-	if (forward
-		&& (player->mo->waterlevel || (player->mo->flags & MF_NOGRAVITY))
-		&& player->mo->Angles.Pitch != 0)
-	{
-		move *= player->mo->Angles.Pitch.Cos();
-	}
-	player->Vel += angle.ToVector(move);
-}
-
-/*
-==================
-=
 = P_CalcHeight
 =
 =
@@ -2205,114 +2056,18 @@ void P_CalcHeight (player_t *player)
 	}
 }
 
-/*
-=================
-=
-= P_MovePlayer
-=
-=================
-*/
+DEFINE_ACTION_FUNCTION(APlayerPawn, CalcHeight)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CalcHeight(self->player);
+	return 0;
+}
+
 CUSTOM_CVAR (Float, sv_aircontrol, 0.00390625f, CVAR_SERVERINFO|CVAR_NOSAVE)
 {
 	level.aircontrol = self;
 	G_AirControlChanged ();
 }
-
-void P_MovePlayer (player_t *player)
-{
-	ticcmd_t *cmd = &player->cmd;
-	APlayerPawn *mo = player->mo;
-
-	// [RH] 180-degree turn overrides all other yaws
-	if (player->turnticks)
-	{
-		player->turnticks--;
-		mo->Angles.Yaw += (180. / TURN180_TICKS);
-	}
-	else
-	{
-		mo->Angles.Yaw += cmd->ucmd.yaw * (360./65536.);
-	}
-
-	player->onground = (mo->Z() <= mo->floorz) || (mo->flags2 & MF2_ONMOBJ) || (mo->BounceFlags & BOUNCE_MBF) || (player->cheats & CF_NOCLIP2);
-
-	// killough 10/98:
-	//
-	// We must apply thrust to the player and bobbing separately, to avoid
-	// anomalies. The thrust applied to bobbing is always the same strength on
-	// ice, because the player still "works just as hard" to move, while the
-	// thrust applied to the movement varies with 'movefactor'.
-
-	if (cmd->ucmd.forwardmove | cmd->ucmd.sidemove)
-	{
-		double forwardmove, sidemove;
-		double bobfactor;
-		double friction, movefactor;
-		double fm, sm;
-
-		movefactor = P_GetMoveFactor (mo, &friction);
-		bobfactor = friction < ORIG_FRICTION ? movefactor : ORIG_FRICTION_FACTOR;
-		if (!player->onground && !(player->mo->flags & MF_NOGRAVITY) && !player->mo->waterlevel)
-		{
-			// [RH] allow very limited movement if not on ground.
-			movefactor *= level.aircontrol;
-			bobfactor*= level.aircontrol;
-		}
-
-		fm = cmd->ucmd.forwardmove;
-		sm = cmd->ucmd.sidemove;
-		mo->TweakSpeeds (fm, sm);
-		fm *= player->mo->Speed / 256;
-		sm *= player->mo->Speed / 256;
-
-		// When crouching, speed and bobbing have to be reduced
-		if (player->CanCrouch() && player->crouchfactor != 1)
-		{
-			fm *= player->crouchfactor;
-			sm *= player->crouchfactor;
-			bobfactor *= player->crouchfactor;
-		}
-
-		forwardmove = fm * movefactor * (35 / TICRATE);
-		sidemove = sm * movefactor * (35 / TICRATE);
-
-		if (forwardmove)
-		{
-			P_Bob(player, mo->Angles.Yaw, cmd->ucmd.forwardmove * bobfactor / 256., true);
-			P_ForwardThrust(player, mo->Angles.Yaw, forwardmove);
-		}
-		if (sidemove)
-		{
-			P_Bob(player, mo->Angles.Yaw - 90, cmd->ucmd.sidemove * bobfactor / 256., false);
-			P_SideThrust(player, mo->Angles.Yaw, sidemove);
-		}
-
-		if (debugfile)
-		{
-			fprintf (debugfile, "move player for pl %d%c: (%f,%f,%f) (%f,%f) %f %f w%d [", int(player-players),
-				player->cheats&CF_PREDICTING?'p':' ',
-				player->mo->X(), player->mo->Y(), player->mo->Z(),forwardmove, sidemove, movefactor, friction, player->mo->waterlevel);
-			msecnode_t *n = player->mo->touching_sectorlist;
-			while (n != NULL)
-			{
-				fprintf (debugfile, "%d ", n->m_sector->sectornum);
-				n = n->m_tnext;
-			}
-			fprintf (debugfile, "]\n");
-		}
-
-		if (!(player->cheats & CF_PREDICTING) && (forwardmove != 0 || sidemove != 0))
-		{
-			player->mo->PlayRunning ();
-		}
-
-		if (player->cheats & CF_REVERTPLEASE)
-		{
-			player->cheats &= ~CF_REVERTPLEASE;
-			player->camera = player->mo;
-		}
-	}
-}		
 
 //==========================================================================
 //
@@ -2409,311 +2164,6 @@ void P_FallingDamage (AActor *actor)
 	P_DamageMobj (actor, NULL, NULL, damage, NAME_Falling);
 }
 
-//==========================================================================
-//
-// P_DeathThink
-//
-//==========================================================================
-
-void P_DeathThink (player_t *player)
-{
-	int dir;
-	DAngle delta;
-
-	player->Uncrouch();
-	player->TickPSprites();
-
-	player->onground = (player->mo->Z() <= player->mo->floorz);
-	if (player->mo->IsKindOf (PClass::FindActor("PlayerChunk")))
-	{ // Flying bloody skull or flying ice chunk
-		player->viewheight = 6;
-		player->deltaviewheight = 0;
-		if (player->onground)
-		{
-			if (player->mo->Angles.Pitch > -19.)
-			{
-				DAngle lookDelta = (-19. - player->mo->Angles.Pitch) / 8;
-				player->mo->Angles.Pitch += lookDelta;
-			}
-		}
-	}
-	else if (!(player->mo->flags & MF_ICECORPSE))
-	{ // Fall to ground (if not frozen)
-		player->deltaviewheight = 0;
-		if (player->viewheight > 6)
-		{
-			player->viewheight -= 1;
-		}
-		if (player->viewheight < 6)
-		{
-			player->viewheight = 6;
-		}
-		if (player->mo->Angles.Pitch < 0)
-		{
-			player->mo->Angles.Pitch += 3;
-		}
-		else if (player->mo->Angles.Pitch > 0)
-		{
-			player->mo->Angles.Pitch -= 3;
-		}
-		if (fabs(player->mo->Angles.Pitch) < 3)
-		{
-			player->mo->Angles.Pitch = 0.;
-		}
-	}
-	P_CalcHeight (player);
-		
-	if (player->attacker && player->attacker != player->mo)
-	{ // Watch killer
-		dir = P_FaceMobj (player->mo, player->attacker, &delta);
-		if (delta < 10)
-		{ // Looking at killer, so fade damage and poison counters
-			if (player->damagecount)
-			{
-				player->damagecount--;
-			}
-			if (player->poisoncount)
-			{
-				player->poisoncount--;
-			}
-		}
-		delta /= 8;
-		if (delta > 5.)
-		{
-			delta = 5.;
-		}
-		if (dir)
-		{ // Turn clockwise
-			player->mo->Angles.Yaw += delta;
-		}
-		else
-		{ // Turn counter clockwise
-			player->mo->Angles.Yaw -= delta;
-		}
-	}
-	else
-	{
-		if (player->damagecount)
-		{
-			player->damagecount--;
-		}
-		if (player->poisoncount)
-		{
-			player->poisoncount--;
-		}
-	}		
-
-	if ((player->cmd.ucmd.buttons & BT_USE ||
-		((multiplayer || alwaysapplydmflags) && (dmflags & DF_FORCE_RESPAWN))) && !(dmflags2 & DF2_NO_RESPAWN))
-	{
-		if (level.time >= player->respawn_time || ((player->cmd.ucmd.buttons & BT_USE) && player->Bot == NULL))
-		{
-			player->cls = NULL;		// Force a new class if the player is using a random class
-			player->playerstate = 
-				(multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn)
-				? PST_REBORN : PST_ENTER;
-			if (player->mo->special1 > 2)
-			{
-				player->mo->special1 = 0;
-			}
-		}
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CrouchMove
-//
-//----------------------------------------------------------------------------
-
-void P_CrouchMove(player_t * player, int direction)
-{
-	double defaultheight = player->mo->FullHeight;
-	double savedheight = player->mo->Height;
-	double crouchspeed = direction * CROUCHSPEED;
-	double oldheight = player->viewheight;
-
-	player->crouchdir = (signed char) direction;
-	player->crouchfactor += crouchspeed;
-
-	// check whether the move is ok
-	player->mo->Height  = defaultheight * player->crouchfactor;
-	if (!P_TryMove(player->mo, player->mo->Pos(), false, NULL))
-	{
-		player->mo->Height = savedheight;
-		if (direction > 0)
-		{
-			// doesn't fit
-			player->crouchfactor -= crouchspeed;
-			return;
-		}
-	}
-	player->mo->Height = savedheight;
-
-	player->crouchfactor = clamp(player->crouchfactor, 0.5, 1.);
-	player->viewheight = player->mo->ViewHeight * player->crouchfactor;
-	player->crouchviewdelta = player->viewheight - player->mo->ViewHeight;
-
-	// Check for eyes going above/below fake floor due to crouching motion.
-	P_CheckFakeFloorTriggers(player->mo, player->mo->Z() + oldheight, true);
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckFOV
-//
-//----------------------------------------------------------------------------
-
-void P_CheckFOV(player_t *player)
-{
-	// [RH] Zoom the player's FOV
-	float desired = player->DesiredFOV;
-	// Adjust FOV using on the currently held weapon.
-	if (player->playerstate != PST_DEAD &&		// No adjustment while dead.
-		player->ReadyWeapon != NULL &&			// No adjustment if no weapon.
-		player->ReadyWeapon->FOVScale != 0)		// No adjustment if the adjustment is zero.
-	{
-		// A negative scale is used to prevent G_AddViewAngle/G_AddViewPitch
-		// from scaling with the FOV scale.
-		desired *= fabsf(player->ReadyWeapon->FOVScale);
-	}
-	if (player->FOV != desired)
-	{
-		if (fabsf(player->FOV - desired) < 7.f)
-		{
-			player->FOV = desired;
-		}
-		else
-		{
-			float zoom = MAX(7.f, fabsf(player->FOV - desired) * 0.025f);
-			if (player->FOV > desired)
-			{
-				player->FOV = player->FOV - zoom;
-			}
-			else
-			{
-				player->FOV = player->FOV + zoom;
-			}
-		}
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckCheats
-//
-//----------------------------------------------------------------------------
-
-void P_CheckCheats(player_t *player)
-{
-	// No-clip cheat
-	if ((player->cheats & (CF_NOCLIP | CF_NOCLIP2)) == CF_NOCLIP2)
-	{ // No noclip2 without noclip
-		player->cheats &= ~CF_NOCLIP2;
-	}
-	if (player->cheats & (CF_NOCLIP | CF_NOCLIP2) || (player->mo->GetDefault()->flags & MF_NOCLIP))
-	{
-		player->mo->flags |= MF_NOCLIP;
-	}
-	else
-	{
-		player->mo->flags &= ~MF_NOCLIP;
-	}
-	if (player->cheats & CF_NOCLIP2)
-	{
-		player->mo->flags |= MF_NOGRAVITY;
-	}
-	else if (!(player->mo->flags2 & MF2_FLY) && !(player->mo->GetDefault()->flags & MF_NOGRAVITY))
-	{
-		player->mo->flags &= ~MF_NOGRAVITY;
-	}
-}
-
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckFrozen
-//
-//----------------------------------------------------------------------------
-
-bool P_CheckFrozen(player_t *player)
-{
-	auto cmd = &player->cmd;
-	bool totallyfrozen = P_IsPlayerTotallyFrozen(player);
-
-	// [RH] Being totally frozen zeros out most input parameters.
-	if (totallyfrozen)
-	{
-		if (gamestate == GS_TITLELEVEL)
-		{
-			cmd->ucmd.buttons = 0;
-		}
-		else
-		{
-			cmd->ucmd.buttons &= BT_USE;
-		}
-		cmd->ucmd.pitch = 0;
-		cmd->ucmd.yaw = 0;
-		cmd->ucmd.roll = 0;
-		cmd->ucmd.forwardmove = 0;
-		cmd->ucmd.sidemove = 0;
-		cmd->ucmd.upmove = 0;
-		player->turnticks = 0;
-	}
-	else if (player->cheats & CF_FROZEN)
-	{
-		cmd->ucmd.forwardmove = 0;
-		cmd->ucmd.sidemove = 0;
-		cmd->ucmd.upmove = 0;
-	}
-	return totallyfrozen;
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckCrouch
-//
-//----------------------------------------------------------------------------
-
-void P_CheckCrouch(player_t *player, bool totallyfrozen)
-{
-	if (player->cmd.ucmd.buttons & BT_JUMP)
-	{
-		player->cmd.ucmd.buttons &= ~BT_CROUCH;
-	}
-	if (player->CanCrouch() && player->health > 0 && level.IsCrouchingAllowed())
-	{
-		if (!totallyfrozen)
-		{
-			int crouchdir = player->crouching;
-
-			if (crouchdir == 0)
-			{
-				crouchdir = (player->cmd.ucmd.buttons & BT_CROUCH) ? -1 : 1;
-			}
-			else if (player->cmd.ucmd.buttons & BT_CROUCH)
-			{
-				player->crouching = 0;
-			}
-			if (crouchdir == 1 && player->crouchfactor < 1 &&
-				player->mo->Top() < player->mo->ceilingz)
-			{
-				P_CrouchMove(player, 1);
-			}
-			else if (crouchdir == -1 && player->crouchfactor > 0.5)
-			{
-				P_CrouchMove(player, -1);
-			}
-		}
-	}
-	else
-	{
-		player->Uncrouch();
-	}
-
-	player->crouchoffset = -(player->mo->ViewHeight) * (1 - player->crouchfactor);
-}
-
 //----------------------------------------------------------------------------
 //
 // PROC P_CheckMusicChange
@@ -2748,153 +2198,12 @@ void P_CheckMusicChange(player_t *player)
 	}
 }
 
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckPitch
-//
-//----------------------------------------------------------------------------
-
-void P_CheckPitch(player_t *player)
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckMusicChange)
 {
-	// [RH] Look up/down stuff
-	if (!level.IsFreelookAllowed())
-	{
-		player->mo->Angles.Pitch = 0.;
-	}
-	else
-	{
-		// The player's view pitch is clamped between -32 and +56 degrees,
-		// which translates to about half a screen height up and (more than)
-		// one full screen height down from straight ahead when view panning
-		// is used.
-		int clook = player->cmd.ucmd.pitch;
-		if (clook != 0)
-		{
-			if (clook == -32768)
-			{ // center view
-				player->centering = true;
-			}
-			else if (!player->centering)
-			{
-				// no more overflows with floating point. Yay! :)
-				player->mo->Angles.Pitch = clamp(player->mo->Angles.Pitch - clook * (360. / 65536.), player->MinPitch, player->MaxPitch);
-			}
-		}
-	}
-	if (player->centering)
-	{
-		if (fabs(player->mo->Angles.Pitch) > 2.)
-		{
-			player->mo->Angles.Pitch *= (2. / 3.);
-		}
-		else
-		{
-			player->mo->Angles.Pitch = 0.;
-			player->centering = false;
-			if (player - players == consoleplayer)
-			{
-				LocalViewPitch = 0;
-			}
-		}
-	}
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckMusicChange(self->player);
+	return 0;
 }
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckJump
-//
-//----------------------------------------------------------------------------
-
-void P_CheckJump(player_t *player)
-{
-	// [RH] check for jump
-	if (player->cmd.ucmd.buttons & BT_JUMP)
-	{
-		if (player->crouchoffset != 0)
-		{
-			// Jumping while crouching will force an un-crouch but not jump
-			player->crouching = 1;
-		}
-		else if (player->mo->waterlevel >= 2)
-		{
-			player->mo->Vel.Z = 4 * player->mo->Speed;
-		}
-		else if (player->mo->flags & MF_NOGRAVITY)
-		{
-			player->mo->Vel.Z = 3.;
-		}
-		else if (level.IsJumpingAllowed() && player->onground && player->jumpTics == 0)
-		{
-			double jumpvelz = player->mo->JumpZ * 35 / TICRATE;
-			double jumpfac = 0;
-
-			// [BC] If the player has the high jump power, double his jump velocity.
-			// (actually, pick the best factors from all active items.)
-			for (auto p = player->mo->Inventory; p != nullptr; p = p->Inventory)
-			{
-				if (p->IsKindOf(NAME_PowerHighJump))
-				{
-					double f = p->FloatVar(NAME_Strength);
-					if (f > jumpfac) jumpfac = f;
-				}
-			}
-			if (jumpfac > 0) jumpvelz *= jumpfac;
-
-			player->mo->Vel.Z += jumpvelz;
-			player->mo->flags2 &= ~MF2_ONMOBJ;
-			player->jumpTics = -1;
-			if (!(player->cheats & CF_PREDICTING))
-				S_Sound(player->mo, CHAN_BODY, "*jump", 1, ATTN_NORM);
-		}
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckMoveUpDown
-//
-//----------------------------------------------------------------------------
-
-void P_CheckMoveUpDown(player_t *player)
-{
-	auto cmd = &player->cmd;
-
-	if (cmd->ucmd.upmove == -32768)
-	{ // Only land if in the air
-		if ((player->mo->flags & MF_NOGRAVITY) && player->mo->waterlevel < 2)
-		{
-			//player->mo->flags2 &= ~MF2_FLY;
-			player->mo->flags &= ~MF_NOGRAVITY;
-		}
-	}
-	else if (cmd->ucmd.upmove != 0)
-	{
-		// Clamp the speed to some reasonable maximum.
-		cmd->ucmd.upmove = clamp<short>(cmd->ucmd.upmove, -0x300, 0x300);
-		if (player->mo->waterlevel >= 2 || (player->mo->flags2 & MF2_FLY) || (player->cheats & CF_NOCLIP2))
-		{
-			player->mo->Vel.Z = player->mo->Speed * cmd->ucmd.upmove / 128.;
-			if (player->mo->waterlevel < 2 && !(player->mo->flags & MF_NOGRAVITY))
-			{
-				player->mo->flags2 |= MF2_FLY;
-				player->mo->flags |= MF_NOGRAVITY;
-				if ((player->mo->Vel.Z <= -39) && !(player->cheats & CF_PREDICTING))
-				{ // Stop falling scream
-					S_StopSound(player->mo, CHAN_VOICE);
-				}
-			}
-		}
-		else if (cmd->ucmd.upmove > 0 && !(player->cheats & CF_PREDICTING))
-		{
-			AInventory *fly = player->mo->FindInventory(NAME_ArtiFly);
-			if (fly != NULL)
-			{
-				player->mo->UseInventory(fly);
-			}
-		}
-	}
-}
-
 
 //----------------------------------------------------------------------------
 //
@@ -2925,6 +2234,13 @@ void P_CheckEnvironment(player_t *player)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckEnvironment)
+{
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckEnvironment(self->player);
+	return 0;
+}
+
 //----------------------------------------------------------------------------
 //
 // PROC P_CheckUse
@@ -2951,121 +2267,12 @@ void P_CheckUse(player_t *player)
 	}
 }
 
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckUndoMorph
-//
-//----------------------------------------------------------------------------
 
-void P_CheckUndoMorph(player_t *player)
+DEFINE_ACTION_FUNCTION(APlayerPawn, CheckUse)
 {
-	// Morph counter
-	if (player->morphTics)
-	{
-		if (player->chickenPeck)
-		{ // Chicken attack counter
-			player->chickenPeck -= 3;
-		}
-		if (!--player->morphTics)
-		{ // Attempt to undo the chicken/pig
-			P_UndoPlayerMorph(player, player, MORPH_UNDOBYTIMEOUT);
-		}
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckPoison
-//
-//----------------------------------------------------------------------------
-
-void P_CheckPoison(player_t *player)
-{
-	if (player->poisoncount && !(level.time & 15))
-	{
-		player->poisoncount -= 5;
-		if (player->poisoncount < 0)
-		{
-			player->poisoncount = 0;
-		}
-		P_PoisonDamage(player, player->poisoner, 1, true);
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckDegeneration
-//
-//----------------------------------------------------------------------------
-
-void P_CheckDegeneration(player_t *player)
-{
-	// Apply degeneration.
-	if (dmflags2 & DF2_YES_DEGENERATION)
-	{
-		int maxhealth = player->mo->GetMaxHealth(true);
-		if ((level.time % TICRATE) == 0 && player->health > maxhealth)
-		{
-			if (player->health - 5 < maxhealth)
-				player->health = maxhealth;
-			else
-				player->health--;
-
-			player->mo->health = player->health;
-		}
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_CheckAirSupply
-//
-//----------------------------------------------------------------------------
-
-void P_CheckAirSupply(player_t *player)
-{
-	// Handle air supply
-	//if (level.airsupply > 0)
-	{
-		if (player->mo->waterlevel < 3 ||
-			(player->mo->flags2 & MF2_INVULNERABLE) ||
-			(player->cheats & (CF_GODMODE | CF_NOCLIP2)) ||
-			(player->cheats & CF_GODMODE2))
-		{
-			player->mo->ResetAirSupply();
-		}
-		else if (player->air_finished <= level.time && !(level.time & 31))
-		{
-			P_DamageMobj(player->mo, NULL, NULL, 2 + ((level.time - player->air_finished) / TICRATE), NAME_Drowning);
-		}
-	}
-}
-
-//----------------------------------------------------------------------------
-//
-// PROC P_HandleMovement
-//
-//----------------------------------------------------------------------------
-
-void P_HandleMovement(player_t *player)
-{
-	// [RH] Check for fast turn around
-	if (player->cmd.ucmd.buttons & BT_TURN180 && !(player->oldbuttons & BT_TURN180))
-	{
-		player->turnticks = TURN180_TICKS;
-	}
-
-	// Handle movement
-	if (player->mo->reactiontime)
-	{ // Player is frozen
-		player->mo->reactiontime--;
-	}
-	else
-	{
-		P_MovePlayer(player);
-		P_CheckJump(player);
-		P_CheckMoveUpDown(player);
-	}
+	PARAM_SELF_PROLOGUE(APlayerPawn);
+	P_CheckUse(self->player);
+	return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -3098,75 +2305,10 @@ void P_PlayerThink (player_t *player)
 	// Don't interpolate the view for more than one tic
 	player->cheats &= ~CF_INTERPVIEW;
 
-	P_CheckFOV(player);
-
-	if (player->inventorytics)
+	IFVIRTUALPTR(player->mo, APlayerPawn, PlayerThink)
 	{
-		player->inventorytics--;
-	}
-	P_CheckCheats(player);
-
-	if (player->mo->flags & MF_JUSTATTACKED)
-	{ // Chainsaw/Gauntlets attack auto forward motion
-		cmd->ucmd.yaw = 0;
-		cmd->ucmd.forwardmove = 0xc800/2;
-		cmd->ucmd.sidemove = 0;
-		player->mo->flags &= ~MF_JUSTATTACKED;
-	}
-
-	bool totallyfrozen = P_CheckFrozen(player);
-
-	// Handle crouching
-	P_CheckCrouch(player, totallyfrozen);
-	P_CheckMusicChange(player);
-
-	if (player->playerstate == PST_DEAD)
-	{
-		P_DeathThink (player);
-		return;
-	}
-	if (player->jumpTics != 0)
-	{
-		player->jumpTics--;
-		if (player->onground && player->jumpTics < -18)
-		{
-			player->jumpTics = 0;
-		}
-	}
-	if (player->morphTics && !(player->cheats & CF_PREDICTING))
-	{
-		player->mo->MorphPlayerThink ();
-	}
-
-	P_CheckPitch(player);
-	P_HandleMovement(player);
-	P_CalcHeight (player);
-
-	if (!(player->cheats & CF_PREDICTING))
-	{
-		P_CheckEnvironment(player);
-		P_CheckUse(player);
-		P_CheckUndoMorph(player);
-		// Cycle psprites
-		player->TickPSprites();
-
-		// Other Counters
-		if (player->damagecount)
-			player->damagecount--;
-
-		if (player->bonuscount)
-			player->bonuscount--;
-
-		if (player->hazardcount)
-		{
-			player->hazardcount--;
-			if (!(level.time % player->hazardinterval) && player->hazardcount > 16*TICRATE)
-				P_DamageMobj (player->mo, NULL, NULL, 5, player->hazardtype);
-		}
-
-		P_CheckPoison(player);
-		P_CheckDegeneration(player);
-		P_CheckAirSupply(player);
+		VMValue param = player->mo;
+		VMCall(func, &param, 1, nullptr, 0);
 	}
 }
 
@@ -3727,11 +2869,19 @@ DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPC)
 DEFINE_FIELD_X(PlayerInfo, player_t, ConversationPC)
 DEFINE_FIELD_X(PlayerInfo, player_t, ConversationNPCAngle)
 DEFINE_FIELD_X(PlayerInfo, player_t, ConversationFaceTalker)
-DEFINE_FIELD_X(PlayerInfo, player_t, cmd)
+DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, cmd.ucmd, cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, original_cmd)
 DEFINE_FIELD_X(PlayerInfo, player_t, userinfo)
 DEFINE_FIELD_X(PlayerInfo, player_t, weapons)
 DEFINE_FIELD_NAMED_X(PlayerInfo, player_t, cmd.ucmd.buttons, buttons)
+
+DEFINE_FIELD_X(UserCmd, usercmd_t, buttons)
+DEFINE_FIELD_X(UserCmd, usercmd_t, pitch)
+DEFINE_FIELD_X(UserCmd, usercmd_t, yaw)
+DEFINE_FIELD_X(UserCmd, usercmd_t, roll)
+DEFINE_FIELD_X(UserCmd, usercmd_t, forwardmove)
+DEFINE_FIELD_X(UserCmd, usercmd_t, sidemove)
+DEFINE_FIELD_X(UserCmd, usercmd_t, upmove)
 
 DEFINE_FIELD(FPlayerClass, Type)
 DEFINE_FIELD(FPlayerClass, Flags)

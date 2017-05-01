@@ -448,46 +448,6 @@ FState *AWeapon::GetReadyState ()
 
 //===========================================================================
 //
-// AWeapon :: GetAtkState
-//
-//===========================================================================
-
-FState *AWeapon::GetAtkState (bool hold)
-{
-	IFVIRTUAL(AWeapon, GetAtkState)
-	{
-		VMValue params[2] = { (DObject*)this, hold };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		VMCall(func, params, 2, &ret, 1);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
-// AWeapon :: GetAtkState
-//
-//===========================================================================
-
-FState *AWeapon::GetAltAtkState (bool hold)
-{
-	IFVIRTUAL(AWeapon, GetAltAtkState)
-	{
-		VMValue params[2] = { (DObject*)this, hold };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		VMCall(func, params, 2, &ret, 1);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
 // AWeapon :: GetStateForButtonName
 //
 //===========================================================================

@@ -1450,6 +1450,13 @@ bool FLevelLocals::IsJumpingAllowed() const
 	return !(flags & LEVEL_JUMP_NO);
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, IsJumpingAllowed)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_BOOL(self->IsJumpingAllowed());
+}
+
+
 //==========================================================================
 //
 //
@@ -1462,6 +1469,12 @@ bool FLevelLocals::IsCrouchingAllowed() const
 	if (dmflags & DF_YES_CROUCH)
 		return true;
 	return !(flags & LEVEL_CROUCH_NO);
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, IsCrouchingAllowed)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_BOOL(self->IsCrouchingAllowed());
 }
 
 //==========================================================================
@@ -1477,6 +1490,13 @@ bool FLevelLocals::IsFreelookAllowed() const
 		return true;
 	return !(flags & LEVEL_FREELOOK_NO);
 }
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, IsFreelookAllowed)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_BOOL(self->IsFreelookAllowed());
+}
+
 
 //==========================================================================
 //
@@ -1932,6 +1952,7 @@ DEFINE_FIELD_BIT(FLevelLocals, flags2, missilesactivateimpact, LEVEL2_MISSILESAC
 DEFINE_FIELD_BIT(FLevelLocals, flags2, monsterfallingdamage, LEVEL2_MONSTERFALLINGDAMAGE)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, checkswitchrange, LEVEL2_CHECKSWITCHRANGE)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, polygrind, LEVEL2_POLYGRIND)
+DEFINE_FIELD_BIT(FLevelLocals, flags2, allowrespawn, LEVEL2_ALLOWRESPAWN)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, nomonsters, LEVEL2_NOMONSTERS)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, frozen, LEVEL2_FROZEN)
 DEFINE_FIELD_BIT(FLevelLocals, flags2, infinite_flight, LEVEL2_INFINITE_FLIGHT)

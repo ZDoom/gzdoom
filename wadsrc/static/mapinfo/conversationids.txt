@@ -323,4 +323,12 @@ conversationids
 	341 = QuestItem30
 	342 = QuestItem31
 	343 = SlideshowStarter
+	345 = SVEBlueChalice
+	346 = SVEFlagSpotRed
+	347 = SVEFlagSpotBlue
+	348 = SVETalismanRed
+	349 = SVETalismanGreen
+	350 = SVETalismanBlue
+	351 = SVEOpenDoor225
+	
 }

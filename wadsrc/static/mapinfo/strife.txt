@@ -323,6 +323,30 @@ DoomEdNums
   3004 = Peasant1
   3005 = Crusader
   3006 = Sentinel
+  
+  5080 = none	// CTC stuff
+  5081 = none
+  5130 = SVEFlagSpotBlue
+  5131 = SVEFlagSpotRed
+  7957 = none	// AltLight for lightmapped geometry.
+  7958 = SVELight7958, noskillflags
+  7959 = SVELight7959, noskillflags
+  7960 = SVELight7960, noskillflags
+  7961 = SVELight7961, noskillflags
+  7962 = SVELight7962, noskillflags
+  7963 = none
+  7964 = SVELight7964, noskillflags
+  7965 = SVELight7965, noskillflags
+  7966 = SVETalismanRed
+  7967 = SVETalismanGreen
+  7968 = SVETalismanBlue
+  7969 = none	// Bloom threshold.
+  7970 = SVEBlueChalice
+  7971 = SVELight7971, noskillflags
+  7972 = SVELight7972, noskillflags
+  7973 = SVELight7973, noskillflags
+  7974 = SVELight7974, noskillflags
+  7975 = SVEOreSpawner
 }
 
 SpawnNums
@@ -858,6 +882,38 @@ map MAP34 "AREA 3: Movement Base"
 	music = "D_MAP3"
 	cluster = 2
 	noallies
+}
+
+map MAP35 "AREA 35: Factory: Production"
+{
+	next = "MAP01"
+	sky1 = "SKYMNT01"
+	music = "D_TRIBAL"
+	cluster = 1
+}
+
+map MAP36 "AREA 36: Castle Clash"
+{
+	next = "MAP37"
+	sky1 = "SKYMNT01"
+	music = "D_MARCH"
+	cluster = 3
+}
+
+map MAP37 "AREA 37: Killing Grounds"
+{
+	next = "MAP38"
+	sky1 = "SKYMNT01"
+	music = "D_STRIKE"
+	cluster = 3
+}
+
+map MAP38 "AREA 38: Ordered Chaos"
+{
+	next = "MAP36"
+	sky1 = "SKYMNT01"
+	music = "D_TRIBAL"
+	cluster = 3
 }
 
 cluster 1

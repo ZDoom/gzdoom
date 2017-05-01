@@ -88,6 +88,7 @@ struct MapinfoEdMapItem
 	// These are for error reporting. We must store the file information because it's no longer available when these items get resolved.
 	FString filename;
 	int linenum;
+	bool noskillflags;
 };
 
 typedef TMap<int, MapinfoEdMapItem> IdMap;
@@ -184,12 +185,18 @@ void FMapInfoParser::ParseDoomEdNums()
 			}
 			memset(editem.args, 0, sizeof(editem.args));
 			editem.argsdefined = 0;
+			editem.noskillflags = false;
 
 			int minargs = 0;
 			int maxargs = 5;
 			FString specialname;
 			if (sc.CheckString(","))
 			{
+				if (sc.CheckString("noskillflags"))
+				{
+					editem.noskillflags = true;
+					if (!sc.CheckString(",")) goto noargs;
+				}
 				editem.argsdefined = 5; // mark args as used - if this is done we need to prevent assignment of map args in P_SpawnMapThing.
 				if (editem.special < 0) editem.special = 0;
 				if (!sc.CheckNumber())
@@ -238,6 +245,7 @@ void FMapInfoParser::ParseDoomEdNums()
 					error++;
 				}
 			}
+		noargs:
 			DoomEdFromMapinfo.Insert(ednum, editem);
 		}
 		else
@@ -275,6 +283,7 @@ void InitActorNumsFromMapinfo()
 		ent.Type = cls;
 		ent.Special = pair->Value.special;
 		ent.ArgsDefined = pair->Value.argsdefined;
+		ent.NoSkillFlags = pair->Value.noskillflags;
 		memcpy(ent.Args, pair->Value.args, sizeof(ent.Args));
 		DoomEdMap.Insert(pair->Key, ent);
 	}

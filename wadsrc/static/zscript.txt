@@ -247,6 +247,8 @@ version "2.5"
 #include "zscript/strife/weapongrenade.txt"
 #include "zscript/strife/weaponmauler.txt"
 #include "zscript/strife/sigil.txt"
+#include "zscript/strife/svestuff.txt"
+#include "zscript/strife/svelights.txt"
 
 #include "zscript/chex/chexmonsters.txt"
 #include "zscript/chex/chexkeys.txt"

@@ -5817,7 +5817,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		}
 
 		mask = G_SkillProperty(SKILLP_SpawnFilter);
-		if (!(mthing->SkillFilter & mask))
+		if (!(mthing->SkillFilter & mask) && !mentry->NoSkillFlags)
 		{
 			return NULL;
 		}

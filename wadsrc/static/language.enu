@@ -2807,3 +2807,12 @@ TCMNU_MAGFILTER				= "Linear filter when upscaling";
 TCMNU_MIPMAP					= "Use mipmapped textures";
 TCMNU_DYNLIGHTS				= "Dynamic lights";
 
+// SVE strings:
+
+TAG_TALISMANRED = "Red Talisman";
+TAG_TALISMANGREEN = "Green Talisman";
+TAG_TALISMANBLUE = "Blue Talisman";
+MSG_TALISMANRED = "You have a feeling that it wasn't to be touched...";
+MSG_TALISMANGREEN = "Whatever it is, it doesn't belong in this world...";
+MSG_TALISMANBLUE = "It must do something...";
+MSG_TALISMANPOWER = "You have super strength!";

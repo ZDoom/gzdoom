@@ -2669,7 +2669,7 @@ GLTEXMNU_SORTDRAWLIST 	= "Sort draw lists by texture";
 
 // Dynamic Light Options
 GLLIGHTMNU_TITLE 			= "DYNAMIC LIGHTS";
-GLLIGHTMNU_LIGHTSENABLED 	= "Dynamic Lights enabled";
+GLLIGHTMNU_LIGHTSENABLED 	= "Dynamic Lights (OpenGL)";
 GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
 GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
 GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
@@ -2803,5 +2803,5 @@ TCMNU_TRUECOLOR				= "True color output";
 TCMNU_MINFILTER				= "Linear filter when downscaling";
 TCMNU_MAGFILTER				= "Linear filter when upscaling";
 TCMNU_MIPMAP					= "Use mipmapped textures";
-TCMNU_DYNLIGHTS				= "Dynamic lights";
+TCMNU_DYNLIGHTS				= "Dynamic lights (Software)";
 

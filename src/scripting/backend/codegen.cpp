@@ -8481,6 +8481,12 @@ FxExpression *FxActionSpecialCall::Resolve(FCompileContext& ctx)
 			if (ArgList[i]->ValueType->GetRegType() == REGT_FLOAT /* lax */)
 			{
 				ArgList[i] = new FxIntCast(ArgList[i], ctx.FromDecorate);
+				ArgList[i] = ArgList[i]->Resolve(ctx);
+				if (ArgList[i] == nullptr)
+				{
+					delete this;
+					return nullptr;
+				}
 			}
 			else
 			{

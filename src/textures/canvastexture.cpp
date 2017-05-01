@@ -171,11 +171,13 @@ void FCanvasTexture::Unload ()
 	if (Canvas != NULL)
 	{
 		delete Canvas;
+		Canvas = nullptr;
 	}
 
 	if (CanvasBgra != NULL)
 	{
 		delete CanvasBgra;
+		CanvasBgra = nullptr;
 	}
 
 	FTexture::Unload();

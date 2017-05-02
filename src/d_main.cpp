@@ -682,6 +682,13 @@ void D_Display ()
 	// [RH] change the screen mode if needed
 	if (setmodeneeded)
 	{
+		int oldrenderer;
+		extern int currentrenderer;
+		EXTERN_CVAR(Int, vid_renderer)
+		oldrenderer = vid_renderer; // [SP] Save pending vid_renderer setting (hack)
+		if (currentrenderer != vid_renderer)
+			vid_renderer = currentrenderer;
+
 		// Change screen mode.
 		if (Video->SetResolution (NewWidth, NewHeight, NewBits))
 		{
@@ -700,6 +707,7 @@ void D_Display ()
 			// Reset the mouse cursor in case the bit depth changed
 			vid_cursor.Callback();
 		}
+		vid_renderer = oldrenderer; // [SP] Restore pending vid_renderer setting
 	}
 
 	// change the view size if needed

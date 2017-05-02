@@ -682,23 +682,36 @@ void D_Display ()
 	// [RH] change the screen mode if needed
 	if (setmodeneeded)
 	{
-		// Change screen mode.
-		if (Video->SetResolution (NewWidth, NewHeight, NewBits))
+		extern int currentrenderer;
+		EXTERN_CVAR(Int, vid_renderer)
+		if (currentrenderer != vid_renderer)
 		{
-			// Recalculate various view parameters.
-			setsizeneeded = true;
-			// Let the status bar know the screen size changed
-			if (StatusBar != NULL)
+			// [SP] Block mode changes if a restart is pending. This is the only reliable way to completely
+			// prevent crashes due to renderer changes. If the user needs to reset their renderer they
+			// should've done it by this point, anyway.
+			Printf("You have changed your renderer but have not restarted " GAMENAME " for it to take effect. You must restart the game in order to change your mode!\n");
+			setmodeneeded = false;
+		}
+		else
+		{
+			// Change screen mode.
+			if (Video->SetResolution (NewWidth, NewHeight, NewBits))
 			{
-				StatusBar->CallScreenSizeChanged ();
+				// Recalculate various view parameters.
+				setsizeneeded = true;
+				// Let the status bar know the screen size changed
+				if (StatusBar != NULL)
+				{
+					StatusBar->CallScreenSizeChanged ();
+				}
+				// Refresh the console.
+				C_NewModeAdjust ();
+				// Reload crosshair if transitioned to a different size
+				ST_LoadCrosshair (true);
+				AM_NewResolution ();
+				// Reset the mouse cursor in case the bit depth changed
+				vid_cursor.Callback();
 			}
-			// Refresh the console.
-			C_NewModeAdjust ();
-			// Reload crosshair if transitioned to a different size
-			ST_LoadCrosshair (true);
-			AM_NewResolution ();
-			// Reset the mouse cursor in case the bit depth changed
-			vid_cursor.Callback();
 		}
 	}
 

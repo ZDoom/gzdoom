@@ -67,8 +67,13 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 
 	// Determine actor z
 	double zpos = decal->Z;
-	sector_t *front = line->frontsector;
 	sector_t *back = (line->backsector != nullptr) ? line->backsector : line->frontsector;
+
+	// for 3d-floor segments use the model sector as reference
+	sector_t *front;
+	if ((decal->RenderFlags&RF_CLIPMASK) == RF_CLIPMID) front = decal->Sector;
+	else front = line->frontsector;
+
 	switch (decal->RenderFlags & RF_RELMASK)
 	{
 	default:

@@ -267,6 +267,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->Vel.X = mo->Vel.Y = 0;
 	player->Vel.Zero();
 	mo->Vel.Z = pmo->Vel.Z;
+	mo->floorz = pmo->floorz;
 	if (!(pmo->special2 & MF_JUSTHIT))
 	{
 		mo->renderflags &= ~RF_INVISIBLE;

@@ -102,8 +102,20 @@ IWad
 
 IWad
 {
+	Name = "Strife: Veteran Edition"
+	Autoname = "strife.veteran"
+	Game = "Strife"
+	Config = "Strife"
+	Mapinfo = "mapinfo/strife.txt"
+	MustContain = "MAP35", "I_RELB", "FXAA_F"
+	BannerColors = "f0 f0 f0", "6b 3c 18"
+	Required = "Strife: Quest for the Sigil"
+}
+
+IWad
+{
 	Name = "Strife: Quest for the Sigil"
-	Autoname = "strife"
+	Autoname = "strife.strife"
 	Game = "Strife"
 	Config = "Strife"
 	Mapinfo = "mapinfo/strife.txt"
@@ -418,4 +430,5 @@ Names
 	"hacx2.wad"
 	"square1.pk3"
 	"delaweare.wad"
+	"sve.wad"
 }

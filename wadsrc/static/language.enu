@@ -2671,7 +2671,7 @@ GLTEXMNU_SORTDRAWLIST 	= "Sort draw lists by texture";
 
 // Dynamic Light Options
 GLLIGHTMNU_TITLE 			= "DYNAMIC LIGHTS";
-GLLIGHTMNU_LIGHTSENABLED 	= "Dynamic Lights enabled";
+GLLIGHTMNU_LIGHTSENABLED 	= "Dynamic Lights (OpenGL)";
 GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
 GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
 GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
@@ -2806,5 +2806,14 @@ TCMNU_TRUECOLOR				= "True color output";
 TCMNU_MINFILTER				= "Linear filter when downscaling";
 TCMNU_MAGFILTER				= "Linear filter when upscaling";
 TCMNU_MIPMAP					= "Use mipmapped textures";
-TCMNU_DYNLIGHTS				= "Dynamic lights";
+TCMNU_DYNLIGHTS				= "Dynamic lights (Software)";
 
+// SVE strings:
+
+TAG_TALISMANRED = "Red Talisman";
+TAG_TALISMANGREEN = "Green Talisman";
+TAG_TALISMANBLUE = "Blue Talisman";
+MSG_TALISMANRED = "You have a feeling that it wasn't to be touched...";
+MSG_TALISMANGREEN = "Whatever it is, it doesn't belong in this world...";
+MSG_TALISMANBLUE = "It must do something...";
+MSG_TALISMANPOWER = "You have super strength!";

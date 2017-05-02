@@ -515,6 +515,8 @@ namespace swrenderer
 
 		RenderWallPart renderWallpart(Thread);
 		renderWallpart.Render(drawerargs, frontsector, curline, WallC, rw_pic, x1, x2, wallupper.ScreenY, walllower.ScreenY, texturemid, MaskedSWall, walltexcoords.UPos, yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
+
+		RenderDecal::RenderDecals(Thread, curline->sidedef, ds, wallshade, rw_light, rw_lightstep, curline, WallC, ds->foggy, basecolormap, wallupper.ScreenY, walllower.ScreenY, true);
 	}
 
 	// kg3D - walls of fake floors
@@ -926,7 +928,6 @@ namespace swrenderer
 				break;
 			}
 		}
-		return;
 	}
 
 	// Clip a midtexture to the floor and ceiling of the sector in front of it.

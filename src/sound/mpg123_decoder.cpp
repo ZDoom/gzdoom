@@ -52,7 +52,7 @@ FModule MPG123Module{"MPG123"};
 #elif defined(__APPLE__)
 #define MPG123LIB "libmpg123.0.dylib"
 #else
-#define MPG123LIB "libmpg123.so.1"
+#define MPG123LIB "libmpg123.so.0"
 #endif
 
 bool IsMPG123Present()

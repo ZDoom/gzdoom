@@ -37,7 +37,7 @@ struct spritedef_t
 	uint8_t numframes;
 	uint16_t spriteframes;
 
-	FTextureID GetSpriteFrame(int frame, int rot, DAngle ang, bool *mirror);
+	FTextureID GetSpriteFrame(int frame, int rot, DAngle ang, bool *mirror, bool flipagain = false);
 };
 
 extern TArray<spriteframe_t> SpriteFrames;

@@ -57,19 +57,15 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom)
+	void RenderDecal::RenderDecals(RenderThread *thread, side_t *sidedef, DrawSegment *draw_segment, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &wallC, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
 		for (DBaseDecal *decal = sidedef->AttachedDecals; decal != NULL; decal = decal->WallNext)
 		{
-			Render(thread, sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, walltop, wallbottom, 0);
+			Render(thread, sidedef, decal, draw_segment, wallshade, lightleft, lightstep, curline, wallC, foggy, basecolormap, walltop, wallbottom, drawsegPass);
 		}
 	}
 
-	// pass = 0: when seg is first drawn
-	//		= 1: drawing masked textures (including sprites)
-	// Currently, only pass = 0 is done or used
-
-	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &savecoord, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, int pass)
+	void RenderDecal::Render(RenderThread *thread, side_t *wall, DBaseDecal *decal, DrawSegment *clipper, int wallshade, float lightleft, float lightstep, seg_t *curline, const FWallCoords &savecoord, bool foggy, FDynamicColormap *basecolormap, const short *walltop, const short *wallbottom, bool drawsegPass)
 	{
 		DVector2 decal_left, decal_right, decal_pos;
 		int x1, x2;
@@ -77,7 +73,7 @@ namespace swrenderer
 		uint8_t flipx;
 		double zpos;
 		int needrepeat = 0;
-		sector_t *front, *back;
+		sector_t *back;
 		bool calclighting;
 		bool rereadcolormap;
 		FDynamicColormap *usecolormap;
@@ -90,8 +86,13 @@ namespace swrenderer
 
 		// Determine actor z
 		zpos = decal->Z;
-		front = curline->frontsector;
 		back = (curline->backsector != NULL) ? curline->backsector : curline->frontsector;
+
+		// for 3d-floor segments use the model sector as reference
+		sector_t *front;
+		if ((decal->RenderFlags&RF_CLIPMASK) == RF_CLIPMID) front = decal->Sector;
+		else front = curline->frontsector;
+
 		switch (decal->RenderFlags & RF_RELMASK)
 		{
 		default:
@@ -171,62 +172,64 @@ namespace swrenderer
 		FWallTmapVals WallT;
 		WallT.InitFromWallCoords(thread, &WallC);
 
-		// Get the top and bottom clipping arrays
-		switch (decal->RenderFlags & RF_CLIPMASK)
+		if (drawsegPass)
 		{
-		default:
-			// keep GCC quiet.
-			return;
+			uint32_t clipMode = decal->RenderFlags & RF_CLIPMASK;
+			if (clipMode != RF_CLIPMID && clipMode != RF_CLIPFULL)
+				return;
 
-		case RF_CLIPFULL:
-			if (curline->backsector == NULL)
-			{
-				if (pass != 0)
-				{
-					return;
-				}
-				mceilingclip = walltop;
-				mfloorclip = wallbottom;
-			}
-			else if (pass == 0)
-			{
-				mceilingclip = walltop;
-				mfloorclip = thread->OpaquePass->ceilingclip;
-				needrepeat = 1;
-			}
-			else
+			// Clip decal to stay within the draw segment wall
+			mceilingclip = walltop;
+			mfloorclip = wallbottom;
+
+			// Rumor has it that if RT_CLIPMASK is specified then the decal should be clipped according
+			// to the full drawsegment visibility, as implemented in the remarked section below.
+			//
+			// This is problematic because not all 3d floors may have been drawn yet at this point. The
+			// code below might work ok for cases where there is only one 3d floor.
+
+			/*if (clipMode == RF_CLIPFULL)
 			{
 				mceilingclip = clipper->sprtopclip - clipper->x1;
 				mfloorclip = clipper->sprbottomclip - clipper->x1;
-			}
-			break;
-
-		case RF_CLIPUPPER:
-			if (pass != 0)
+			}*/
+		}
+		else
+		{
+			// Get the top and bottom clipping arrays
+			switch (decal->RenderFlags & RF_CLIPMASK)
 			{
+			default:
+				// keep GCC quiet.
 				return;
-			}
-			mceilingclip = walltop;
-			mfloorclip = thread->OpaquePass->ceilingclip;
-			break;
 
-		case RF_CLIPMID:
-			if (curline->backsector != NULL && pass != 2)
-			{
-				return;
-			}
-			mceilingclip = clipper->sprtopclip - clipper->x1;
-			mfloorclip = clipper->sprbottomclip - clipper->x1;
-			break;
+			case RF_CLIPFULL:
+				if (curline->backsector == NULL)
+				{
+					mceilingclip = walltop;
+					mfloorclip = wallbottom;
+				}
+				else
+				{
+					mceilingclip = walltop;
+					mfloorclip = thread->OpaquePass->ceilingclip;
+					needrepeat = 1;
+				}
+				break;
 
-		case RF_CLIPLOWER:
-			if (pass != 0)
-			{
+			case RF_CLIPUPPER:
+				mceilingclip = walltop;
+				mfloorclip = thread->OpaquePass->ceilingclip;
+				break;
+
+			case RF_CLIPMID:
 				return;
+
+			case RF_CLIPLOWER:
+				mceilingclip = thread->OpaquePass->floorclip;
+				mfloorclip = wallbottom;
+				break;
 			}
-			mceilingclip = thread->OpaquePass->floorclip;
-			mfloorclip = wallbottom;
-			break;
 		}
 
 		yscale = decal->ScaleY;

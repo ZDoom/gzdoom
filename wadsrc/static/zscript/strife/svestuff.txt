@@ -81,7 +81,7 @@ class SVETalismanRed : Inventory
 				toucher.FindInventory("SVETalismanBlue"))
 			{
 				toucher.A_Print("$MSG_TALISMANPOWER");
-				GiveInventoryType("SVETalismanPowerup");
+				toucher.GiveInventoryType("SVETalismanPowerup");
 			}
 		}
 		return useok;

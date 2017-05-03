@@ -521,7 +521,7 @@ void gl_InitModels()
 				path = "";
 				sc.MustGetString();
 				memset(&smf, 0, sizeof(smf));
-				smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
+				smf.modelIDs[0] = smf.modelIDs[1] = smf.modelIDs[2] = smf.modelIDs[3] = -1;
 				smf.xscale=smf.yscale=smf.zscale=1.f;
 
 				smf.type = PClass::FindClass(sc.String);

@@ -321,7 +321,6 @@ std::pair<FRenderStyle, float> DPSprite::GetRenderStyle(FRenderStyle ownerstyle,
 	mystyle.CheckFuzz();
 	if (Flags & PSPF_RENDERSTYLE)
 	{
-		ownerstyle.CheckFuzz();
 		if (Flags & PSPF_FORCESTYLE)
 		{
 			returnstyle = mystyle;
@@ -371,6 +370,10 @@ std::pair<FRenderStyle, float> DPSprite::GetRenderStyle(FRenderStyle ownerstyle,
 			returnalpha = owneralpha * alpha;
 		}
 	}
+	else
+	{
+		returnalpha = owneralpha;
+	}
 
 	// Should normal renderstyle come out on top at the end and we desire alpha,
 	// switch it to translucent. Normal never applies any sort of alpha.
@@ -380,7 +383,7 @@ std::pair<FRenderStyle, float> DPSprite::GetRenderStyle(FRenderStyle ownerstyle,
 		returnalpha = owneralpha * alpha;
 	}
 
-	return{ returnstyle, clamp<float>(float(alpha), 0.f, 1.f) };
+	return{ returnstyle, clamp<float>(float(returnalpha), 0.f, 1.f) };
 }
 
 //---------------------------------------------------------------------------

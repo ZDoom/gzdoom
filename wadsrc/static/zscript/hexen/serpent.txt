@@ -373,7 +373,7 @@ class SerpentHead : Actor
 			}
 			else
 			{
-				SetStateLabel ("NAME_Death");
+				SetStateLabel ("Death");
 			}
 		}
 	}

@@ -798,7 +798,8 @@ class BaseStatusBar native ui
 	
 	virtual void DrawAutomapHUD(double ticFrac)
 	{
-		DoDrawAutomapHUD(Font.CR_GREY, Font.CR_YELLOW);
+		// game needs to be checked here, so that SBARINFO also gets the correct colors.
+		DoDrawAutomapHUD(Font.CR_GREY, gameinfo.gametype & GAME_DoomChex? Font.CR_UNTRANSLATED : Font.CR_YELLOW);
 	}
 	
 	//---------------------------------------------------------------------------

@@ -64,7 +64,7 @@ PalEntry		OtherGameSkinPalette[256];
 //
 //===========================================================================
 
-FTextureID spritedef_t::GetSpriteFrame(int frame, int rot, DAngle ang, bool *mirror)
+FTextureID spritedef_t::GetSpriteFrame(int frame, int rot, DAngle ang, bool *mirror, bool flipagain)
 {
 	if ((unsigned)frame >= numframes)
 	{
@@ -77,9 +77,17 @@ FTextureID spritedef_t::GetSpriteFrame(int frame, int rot, DAngle ang, bool *mir
 		spriteframe_t *sprframe = &SpriteFrames[spriteframes + frame];
 		if (rot == -1)
 		{
-			if (sprframe->Texture[0] == sprframe->Texture[1])
+			if ((sprframe->Texture[0] == sprframe->Texture[1]) && flipagain)
+			{
+				rot = (360.0 - ang + 45.0 / 2 * 9).BAMs() >> 28;
+			}
+			else if (sprframe->Texture[0] == sprframe->Texture[1])
 			{
 				rot = (ang + 45.0 / 2 * 9).BAMs() >> 28;
+			}
+			else if (flipagain)
+			{
+				rot = (360.0 - ang + (45.0 / 2 * 9 - 180.0 / 16)).BAMs() >> 28;
 			}
 			else
 			{

@@ -800,7 +800,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 				sprangle = 0.;
 				rot = 0;
 			}
-			patch = sprites[spritenum].GetSpriteFrame(thing->frame, rot, sprangle, &mirror);
+			patch = sprites[spritenum].GetSpriteFrame(thing->frame, rot, sprangle, &mirror, !!(thing->flags7 & MF7_SPRITEFLIP));
 		}
 
 		if (!patch.isValid()) return;
@@ -814,6 +814,11 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		if (thing->renderflags & RF_YFLIP) std::swap(vt, vb);
 
 		gltexture->GetSpriteRect(&r);
+
+		// [SP] SpriteFlip
+		if (thing->flags7 & MF7_SPRITEFLIP)
+			thing->renderflags ^= RF_XFLIP;
+
 		if (mirror ^ !!(thing->renderflags & RF_XFLIP))
 		{
 			r.left = -r.width - r.left;	// mirror the sprite's x-offset
@@ -825,6 +830,9 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			ul = gltexture->GetSpriteUR();
 			ur = gltexture->GetSpriteUL();
 		}
+
+		if (thing->flags7 & MF7_SPRITEFLIP) // [SP] Flip back
+			thing->renderflags ^= RF_XFLIP;
 
 		r.Scale(sprscale.X, sprscale.Y);
 

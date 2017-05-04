@@ -64,9 +64,9 @@ typedef enum
 
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 {
-	unsigned short special = (unsigned short) LittleShort(mld->special);
-	short tag = LittleShort(mld->tag);
-	uint32_t flags = LittleShort(mld->flags);
+	uint32_t special = mld->special;
+	short tag = mld->tag;
+	uint32_t flags =mld->flags;
 	INTBOOL passthrough = 0;
 
 	uint32_t flags1 = flags;

@@ -2173,6 +2173,9 @@ void P_LoadLineDefs (MapData * map)
 		// [RH] Translate old linedef special and flags to be
 		//		compatible with the new format.
 
+		mld->special = LittleShort(mld->special);
+		mld->tag = LittleShort(mld->tag);
+		mld->flags = LittleShort(mld->flags);
 		P_TranslateLineDef (ld, mld, -1);
 		// do not assign the tag for Extradata lines.
 		if (ld->special != Static_Init || (ld->args[1] != Init_EDLine && ld->args[1] != Init_EDSector))

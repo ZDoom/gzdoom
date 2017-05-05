@@ -209,7 +209,8 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 #endif
 
 	// Keep varyings in -128 to 128 range if possible
-	if (numclipvert > 0)
+	// But don't do this for the skycap mode since the V texture coordinate is used for blending
+	if (numclipvert > 0 && args->uniforms->BlendMode() != TriBlendMode::Skycap)
 	{
 		float newOriginU = floorf(clippedvert[0].u * 0.1f) * 10.0f;
 		float newOriginV = floorf(clippedvert[0].v * 0.1f) * 10.0f;

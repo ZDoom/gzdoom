@@ -37,17 +37,41 @@ PolySkyDome::PolySkyDome()
 
 void PolySkyDome::Render(const TriMatrix &worldToClip)
 {
-	FTextureID sky1tex, sky2tex;
-	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
-		sky1tex = sky2texture;
-	else
-		sky1tex = sky1texture;
-	sky2tex = sky2texture;
+	PolySkySetup frameSetup;
+	frameSetup.Update();
 
-	FTexture *frontskytex = TexMan(sky1tex, true);
-	FTexture *backskytex = nullptr;
-	if (level.flags & LEVEL_DOUBLESKY)
-		backskytex = TexMan(sky2tex, true);
+	if (frameSetup != mCurrentSetup)
+	{
+		double frontTexWidth = (double)frameSetup.frontskytex->GetWidth();
+		float scaleFrontU = (float)(frameSetup.frontcyl / frontTexWidth);
+		if (frameSetup.skyflip)
+			scaleFrontU = -scaleFrontU;
+
+		float baseOffset = (float)(frameSetup.skyangle / 65536.0 / frontTexWidth);
+		float offsetFrontU = baseOffset * scaleFrontU + (float)(frameSetup.frontpos / 65536.0 / frontTexWidth);
+
+		float scaleFrontV = (float)(frameSetup.frontskytex->Scale.Y * 1.6);
+		float offsetFrontV;
+
+		// BTSX
+		/*{
+			offsetFrontU += 0.5f;
+			offsetFrontV = (float)((28.0f - frameSetup.skymid) / frameSetup.frontskytex->GetHeight());
+		}*/
+		// E1M1
+		{
+			offsetFrontV = (float)((28.0f + frameSetup.skymid) / frameSetup.frontskytex->GetHeight());
+		}
+
+		unsigned int count = mVertices.Size();
+		for (unsigned int i = 0; i < count; i++)
+		{
+			mVertices[i].u = offsetFrontU + mInitialUV[i].X * scaleFrontU;
+			mVertices[i].v = offsetFrontV + mInitialUV[i].Y * scaleFrontV;
+		}
+
+		mCurrentSetup = frameSetup;
+	}
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	TriMatrix objectToWorld = TriMatrix::translate((float)viewpoint.Pos.X, (float)viewpoint.Pos.Y, (float)viewpoint.Pos.Z);
@@ -63,13 +87,13 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	args.SetWriteStencil(true, 1);
 	args.SetClipPlane(PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f));
 
-	RenderCapColorRow(args, frontskytex, 0, false);
-	RenderCapColorRow(args, frontskytex, rc, true);
+	RenderCapColorRow(args, mCurrentSetup.frontskytex, 0, false);
+	RenderCapColorRow(args, mCurrentSetup.frontskytex, rc, true);
 
-	args.SetTexture(frontskytex);
+	args.SetTexture(mCurrentSetup.frontskytex);
 
-	uint32_t topcapcolor = frontskytex->GetSkyCapColor(false);
-	uint32_t bottomcapcolor = frontskytex->GetSkyCapColor(true);
+	uint32_t topcapcolor = mCurrentSetup.frontskytex->GetSkyCapColor(false);
+	uint32_t bottomcapcolor = mCurrentSetup.frontskytex->GetSkyCapColor(true);
 	uint8_t topcapindex = RGB256k.All[((RPART(topcapcolor) >> 2) << 12) | ((GPART(topcapcolor) >> 2) << 6) | (BPART(topcapcolor) >> 2)];
 	uint8_t bottomcapindex = RGB256k.All[((RPART(bottomcapcolor) >> 2) << 12) | ((GPART(bottomcapcolor) >> 2) << 6) | (BPART(bottomcapcolor) >> 2)];
 
@@ -174,6 +198,108 @@ void PolySkyDome::SkyVertex(int r, int c, bool zflip)
 
 	// And finally the vertex.
 	TriVertex vert;
-	vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u * 4.0f, v * 1.2f - 0.5f);
+	vert = SetVertexXYZ(-pos.X, z - 1.f, pos.Y, u, v - 0.5f);
 	mVertices.Push(vert);
+	mInitialUV.Push({ vert.u, vert.v });
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PolySkySetup::Update()
+{
+	FTextureID sky1tex, sky2tex;
+	double frontdpos = 0, backdpos = 0;
+
+	if ((level.flags & LEVEL_SWAPSKIES) && !(level.flags & LEVEL_DOUBLESKY))
+	{
+		sky1tex = sky2texture;
+	}
+	else
+	{
+		sky1tex = sky1texture;
+	}
+	sky2tex = sky2texture;
+	skymid = skytexturemid;
+	skyangle = 0;
+
+	int sectorSky = 0;// sector->sky;
+
+	if (!(sectorSky & PL_SKYFLAT))
+	{	// use sky1
+	sky1:
+		frontskytex = TexMan(sky1tex, true);
+		if (level.flags & LEVEL_DOUBLESKY)
+			backskytex = TexMan(sky2tex, true);
+		else
+			backskytex = nullptr;
+		skyflip = false;
+		frontdpos = sky1pos;
+		backdpos = sky2pos;
+		frontcyl = sky1cyl;
+		backcyl = sky2cyl;
+	}
+	else if (sectorSky == PL_SKYFLAT)
+	{	// use sky2
+		frontskytex = TexMan(sky2tex, true);
+		backskytex = nullptr;
+		frontcyl = sky2cyl;
+		skyflip = false;
+		frontdpos = sky2pos;
+	}
+	else
+	{	// MBF's linedef-controlled skies
+		// Sky Linedef
+		const line_t *l = &level.lines[(sectorSky & ~PL_SKYFLAT) - 1];
+
+		// Sky transferred from first sidedef
+		const side_t *s = l->sidedef[0];
+		int pos;
+
+		// Texture comes from upper texture of reference sidedef
+		// [RH] If swapping skies, then use the lower sidedef
+		if (level.flags & LEVEL_SWAPSKIES && s->GetTexture(side_t::bottom).isValid())
+		{
+			pos = side_t::bottom;
+		}
+		else
+		{
+			pos = side_t::top;
+		}
+
+		frontskytex = TexMan(s->GetTexture(pos), true);
+		if (frontskytex == nullptr || frontskytex->UseType == FTexture::TEX_Null)
+		{ // [RH] The blank texture: Use normal sky instead.
+			goto sky1;
+		}
+		backskytex = nullptr;
+
+		// Horizontal offset is turned into an angle offset,
+		// to allow sky rotation as well as careful positioning.
+		// However, the offset is scaled very small, so that it
+		// allows a long-period of sky rotation.
+		skyangle += FLOAT2FIXED(s->GetTextureXOffset(pos));
+
+		// Vertical offset allows careful sky positioning.
+		skymid = s->GetTextureYOffset(pos);
+
+		// We sometimes flip the picture horizontally.
+		//
+		// Doom always flipped the picture, so we make it optional,
+		// to make it easier to use the new feature, while to still
+		// allow old sky textures to be used.
+		skyflip = l->args[2] ? false : true;
+
+		int frontxscale = int(frontskytex->Scale.X * 1024);
+		frontcyl = MAX(frontskytex->GetWidth(), frontxscale);
+		if (skystretch)
+		{
+			skymid = skymid * frontskytex->GetScaledHeightDouble() / SKYSTRETCH_HEIGHT;
+		}
+	}
+
+	frontpos = int(fmod(frontdpos, sky1cyl * 65536.0));
+	if (backskytex != nullptr)
+	{
+		backpos = int(fmod(backdpos, sky2cyl * 65536.0));
+	}
 }

@@ -23,6 +23,25 @@
 
 #include "polyrenderer/drawers/poly_triangle.h"
 
+class PolySkySetup
+{
+public:
+	void Update();
+
+	bool operator==(const PolySkySetup &that) const { return memcmp(this, &that, sizeof(PolySkySetup)) == 0; }
+	bool operator!=(const PolySkySetup &that) const { return memcmp(this, &that, sizeof(PolySkySetup)) != 0; }
+
+	FTexture *frontskytex = nullptr;
+	FTexture *backskytex = nullptr;
+	bool skyflip = 0;
+	int frontpos = 0;
+	int backpos = 0;
+	fixed_t frontcyl = 0;
+	fixed_t backcyl = 0;
+	double skymid = 0.0;
+	angle_t skyangle = 0;
+};
+
 class PolySkyDome
 {
 public:
@@ -30,6 +49,7 @@ public:
 	void Render(const TriMatrix &worldToClip);
 
 private:
+	TArray<FVector2> mInitialUV;
 	TArray<TriVertex> mVertices;
 	TArray<unsigned int> mPrimStart;
 	int mRows, mColumns;
@@ -42,4 +62,6 @@ private:
 	void RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap);
 
 	TriVertex SetVertexXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0);
+
+	PolySkySetup mCurrentSetup;
 };

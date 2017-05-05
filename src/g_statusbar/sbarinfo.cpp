@@ -386,6 +386,7 @@ enum //Key words
 	SBARINFO_STATUSBAR,
 	SBARINFO_MUGSHOT,
 	SBARINFO_CREATEPOPUP,
+	SBARINFO_PROTRUSION,
 };
 
 enum //Bar types
@@ -414,6 +415,7 @@ static const char *SBarInfoTopLevel[] =
 	"statusbar",
 	"mugshot",
 	"createpopup",
+	"protrusion",
 	NULL
 };
 
@@ -740,6 +742,21 @@ void SBarInfo::ParseSBarInfo(int lump)
 						sc.ScriptError("Unkown transition type: '%s'", sc.String);
 				}
 				popup.init();
+				sc.MustGetToken(';');
+				break;
+			}
+			case SBARINFO_PROTRUSION:
+			{
+				double lastvalue = -DBL_EPSILON;
+				do
+				{
+					sc.MustGetToken(TK_FloatConst);
+					if (sc.Float <= lastvalue) sc.ScriptError("Protrusion factors must be in ascending order");
+					lastvalue = sc.Float;
+					sc.MustGetToken(',');
+					sc.MustGetToken(TK_IntConst);
+					protrusions.Push({ lastvalue, sc.Number });
+				} while (sc.CheckToken(','));
 				sc.MustGetToken(';');
 				break;
 			}
@@ -1160,6 +1177,17 @@ public:
 		}
 	}
 
+	int _GetProtrusion(double scalefac)
+	{
+		int returnval = 0;
+		for (auto &prot : script->protrusions)
+		{
+			if (prot.first > scalefac) break;
+			returnval = prot.second;
+		}
+		return returnval;
+	}
+
 	//draws an image with the specified flags
 	void DrawGraphic(FTexture* texture, SBarInfoCoordinate x, SBarInfoCoordinate y, int xOffset, int yOffset, double Alpha, bool fullScreenOffsets, bool translate=false, bool dim=false, int offsetflags=0, bool alphaMap=false, int forceWidth=-1, int forceHeight=-1, const double *clip = nulclip, bool clearDontDraw=false) const
 	{
@@ -1538,6 +1566,12 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, ShowPop)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DSBarInfo, GetProtrusion)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(DSBarInfo);
+	PARAM_FLOAT(scalefac);
+	ACTION_RETURN_INT(self->_GetProtrusion(scalefac));
+}
 
 DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 {

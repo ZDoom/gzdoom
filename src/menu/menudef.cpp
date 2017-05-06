@@ -69,6 +69,7 @@ PClass *DefaultListMenuClass;
 PClass *DefaultOptionMenuClass;
 
 void I_BuildALDeviceList(FOptionValues *opt);
+void I_BuildALResamplersList(FOptionValues *opt);
 
 DEFINE_GLOBAL_NAMED(OptionSettings, OptionMenuSettings)
 
@@ -1432,6 +1433,11 @@ void M_CreateMenus()
 	if (opt != nullptr) 
 	{
 		I_BuildALDeviceList(*opt);
+	}
+	opt = OptionValues.CheckKey(NAME_Alresamplers);
+	if (opt != nullptr)
+	{
+		I_BuildALResamplersList(*opt);
 	}
 }
 

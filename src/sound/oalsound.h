@@ -97,6 +97,17 @@ ALC_API ALCboolean ALC_APIENTRY alcResetDeviceSOFT(ALCdevice *device, const ALCi
 #define AL_SOURCE_RADIUS                         0x1031
 #endif
 
+#ifndef AL_SOFT_source_resampler
+#define AL_SOFT_source_resampler 1
+#define AL_NUM_RESAMPLERS_SOFT                   0x1210
+#define AL_DEFAULT_RESAMPLER_SOFT                0x1211
+#define AL_SOURCE_RESAMPLER_SOFT                 0x1212
+#define AL_RESAMPLER_NAME_SOFT                   0x1213
+typedef const ALchar* (AL_APIENTRY*LPALGETSTRINGISOFT)(ALenum pname, ALsizei index);
+#ifdef AL_ALEXT_PROTOTYPES
+AL_API const ALchar* AL_APIENTRY alGetStringiSOFT(ALenum pname, ALsizei index);
+#endif
+#endif
 
 
 class OpenALSoundStream;
@@ -172,6 +183,7 @@ private:
         bool EXT_SOURCE_RADIUS;
         bool SOFT_deferred_updates;
         bool SOFT_loop_points;
+        bool SOFT_source_resampler;
     } AL;
 
 	// EFX Extension function pointer variables. Loaded after context creation
@@ -216,6 +228,8 @@ private:
 
     ALvoid (AL_APIENTRY*alDeferUpdatesSOFT)(void);
     ALvoid (AL_APIENTRY*alProcessUpdatesSOFT)(void);
+
+    LPALGETSTRINGISOFT alGetStringiSOFT;
 
     void (ALC_APIENTRY*alcDevicePauseSOFT)(ALCdevice *device);
     void (ALC_APIENTRY*alcDeviceResumeSOFT)(ALCdevice *device);

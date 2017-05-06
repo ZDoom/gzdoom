@@ -71,6 +71,10 @@
 
 #include "swrenderer/scene/r_light.h"
 
+#ifndef NO_SSE
+#include <immintrin.h>
+#endif
+
 CVAR(Int, gl_showpacks, 0, 0)
 #ifndef WIN32 // Defined in fb_d3d9 for Windows
 CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

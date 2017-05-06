@@ -63,5 +63,7 @@ private:
 
 	TriVertex SetVertexXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0);
 
+	TriMatrix GLSkyMath();
+
 	PolySkySetup mCurrentSetup;
 };

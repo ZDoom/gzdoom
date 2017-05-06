@@ -8,6 +8,7 @@ struct SBarInfo native ui
 	native bool MustDrawLog(int state);
 	native void Tick();
 	native void ShowPop(int popnum);
+	native int GetProtrusion(double scalefac);
 }
 
 
@@ -60,6 +61,11 @@ class SBarInfoWrapper : BaseStatusBar
 	{
 		Super.ShowPop(popnum);
 		core.ShowPop(popnum);
+	}
+
+	override int GetProtrusion(double scaleratio) const
+	{
+		return core.GetProtrusion(scaleratio);
 	}
 
 

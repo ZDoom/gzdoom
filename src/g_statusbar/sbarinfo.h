@@ -101,6 +101,7 @@ struct SBarInfo
 	bool completeBorder;
 	bool lowerHealthCap;
 	char spacingCharacter;
+	TArray<std::pair<double, int>> protrusions;
 	MonospaceAlignment spacingAlignment;
 	int interpolationSpeed;
 	int armorInterpolationSpeed;

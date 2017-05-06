@@ -82,18 +82,16 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
 	double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
 	double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
+	double topTexZ = frontsector->GetPlaneTexZ(sector_t::ceiling);
+	double bottomTexZ = frontsector->GetPlaneTexZ(sector_t::floor);
 
 	if (line->backsector == nullptr)
 	{
 		if (line->sidedef)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
-			wall.TopZ1 = frontceilz1;
-			wall.TopZ2 = frontceilz2;
-			wall.BottomZ1 = frontfloorz1;
-			wall.BottomZ2 = frontfloorz2;
-			wall.UnpeggedCeil1 = frontceilz1;
-			wall.UnpeggedCeil2 = frontceilz2;
+			wall.TopTexZ = topTexZ;
+			wall.BottomTexZ = bottomTexZ;
 			wall.Texpart = side_t::mid;
 			wall.Polyportal = polyportal;
 			wall.Render(worldToClip, clipPlane, cull);
@@ -128,12 +126,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 		if ((topceilz1 > topfloorz1 || topceilz2 > topfloorz2) && line->sidedef && !bothSkyCeiling)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), topceilz1, topfloorz1, topceilz2, topfloorz2);
-			wall.TopZ1 = topceilz1;
-			wall.TopZ2 = topceilz2;
-			wall.BottomZ1 = topfloorz1;
-			wall.BottomZ2 = topfloorz2;
-			wall.UnpeggedCeil1 = topceilz1;
-			wall.UnpeggedCeil2 = topceilz2;
+			wall.TopTexZ = topTexZ;
+			wall.BottomTexZ = MIN(topfloorz1, topfloorz2);
 			wall.Texpart = side_t::top;
 			wall.Render(worldToClip, clipPlane, cull);
 		}
@@ -141,10 +135,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef && !bothSkyFloor)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), bottomceilz1, bottomfloorz1, bottomceilz2, bottomfloorz2);
-			wall.TopZ1 = bottomceilz1;
-			wall.TopZ2 = bottomceilz2;
-			wall.BottomZ1 = bottomfloorz1;
-			wall.BottomZ2 = bottomfloorz2;
+			wall.TopTexZ = MAX(bottomceilz1, bottomceilz2);
+			wall.BottomTexZ = bottomTexZ;
 			wall.UnpeggedCeil1 = topceilz1;
 			wall.UnpeggedCeil2 = topceilz2;
 			wall.Texpart = side_t::bottom;
@@ -154,12 +146,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 		if (line->sidedef)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), middleceilz1, middlefloorz1, middleceilz2, middlefloorz2);
-			wall.TopZ1 = middleceilz1;
-			wall.TopZ2 = middleceilz2;
-			wall.BottomZ1 = middlefloorz1;
-			wall.BottomZ2 = middlefloorz2;
-			wall.UnpeggedCeil1 = topceilz1;
-			wall.UnpeggedCeil2 = topceilz2;
+			wall.TopTexZ = MAX(middleceilz1, middleceilz2);
+			wall.BottomTexZ = MIN(middlefloorz1, middlefloorz2);
 			wall.Texpart = side_t::mid;
 			wall.Masked = true;
 
@@ -183,6 +171,8 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
 	double frontceilz2 = fakeFloor->top.plane->ZatPoint(line->v2);
 	double frontfloorz2 = fakeFloor->bottom.plane->ZatPoint(line->v2);
+	double topTexZ = frontsector->GetPlaneTexZ(sector_t::ceiling);
+	double bottomTexZ = frontsector->GetPlaneTexZ(sector_t::floor);
 
 	RenderPolyWall wall;
 	wall.LineSeg = line;
@@ -193,10 +183,8 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 	wall.SubsectorDepth = subsectorDepth;
 	wall.StencilValue = stencilValue;
 	wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
-	wall.TopZ1 = frontceilz1;
-	wall.TopZ2 = frontceilz2;
-	wall.BottomZ1 = frontfloorz1;
-	wall.BottomZ2 = frontfloorz2;
+	wall.TopTexZ = topTexZ;
+	wall.BottomTexZ = bottomTexZ;
 	wall.UnpeggedCeil1 = frontceilz1;
 	wall.UnpeggedCeil2 = frontceilz2;
 	wall.Texpart = side_t::mid;
@@ -245,8 +233,8 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	if (tex)
 	{
 		PolyWallTextureCoordsU texcoordsU(tex, LineSeg, Line, Side, Texpart);
-		PolyWallTextureCoordsV texcoordsVLeft(tex, Line, Side, Texpart, TopZ1, BottomZ1, UnpeggedCeil1);
-		PolyWallTextureCoordsV texcoordsVRght(tex, Line, Side, Texpart, TopZ2, BottomZ2, UnpeggedCeil2);
+		PolyWallTextureCoordsV texcoordsVLeft(tex, Line, Side, Texpart, ceil1, floor1, UnpeggedCeil1, TopTexZ, BottomTexZ);
+		PolyWallTextureCoordsV texcoordsVRght(tex, Line, Side, Texpart, ceil2, floor2, UnpeggedCeil2, TopTexZ, BottomTexZ);
 		vertices[0].u = (float)texcoordsU.u1;
 		vertices[0].v = (float)texcoordsVLeft.v1;
 		vertices[1].u = (float)texcoordsU.u2;
@@ -397,7 +385,7 @@ PolyWallTextureCoordsU::PolyWallTextureCoordsU(FTexture *tex, const seg_t *lines
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolyWallTextureCoordsV::PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil)
+PolyWallTextureCoordsV::PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil, double topTexZ, double bottomTexZ)
 {
 	double vscale = side->GetTextureYScale(texpart) * tex->Scale.Y;
 
@@ -409,19 +397,30 @@ PolyWallTextureCoordsV::PolyWallTextureCoordsV(FTexture *tex, const line_t *line
 	{
 	default:
 	case side_t::mid:
-		CalcVMidPart(tex, line, side, topz, bottomz, vscale, yoffset);
+		CalcVMidPart(tex, line, side, topTexZ, bottomTexZ, vscale, yoffset);
 		break;
 	case side_t::top:
-		CalcVTopPart(tex, line, side, topz, bottomz, vscale, yoffset);
+		CalcVTopPart(tex, line, side, topTexZ, bottomTexZ, vscale, yoffset);
 		break;
 	case side_t::bottom:
-		CalcVBottomPart(tex, line, side, topz, bottomz, unpeggedceil, vscale, yoffset);
+		CalcVBottomPart(tex, line, side, topTexZ, bottomTexZ, unpeggedceil, vscale, yoffset);
 		break;
 	}
 
 	int texHeight = tex->GetHeight();
 	v1 /= texHeight;
 	v2 /= texHeight;
+
+	double texZHeight = (bottomTexZ - topTexZ);
+	if (texZHeight > 0.0f || texZHeight < -0.0f)
+	{
+		double t1 = (topz - topTexZ) / texZHeight;
+		double t2 = (bottomz - topTexZ) / texZHeight;
+		double vorig1 = v1;
+		double vorig2 = v2;
+		v1 = vorig1 * (1.0f - t1) + vorig2 * t1;
+		v2 = vorig1 * (1.0f - t2) + vorig2 * t2;
+	}
 }
 
 void PolyWallTextureCoordsV::CalcVTopPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset)

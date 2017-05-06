@@ -48,10 +48,8 @@ public:
 	const line_t *Line = nullptr;
 	const side_t *Side = nullptr;
 	side_t::ETexpart Texpart = side_t::mid;
-	double TopZ1 = 0.0;
-	double TopZ2 = 0.0;
-	double BottomZ1 = 0.0;
-	double BottomZ2 = 0.0;
+	double TopTexZ = 0.0;
+	double BottomTexZ = 0.0;
 	double UnpeggedCeil1 = 0.0;
 	double UnpeggedCeil2 = 0.0;
 	FSWColormap *Colormap = nullptr;
@@ -77,7 +75,7 @@ public:
 class PolyWallTextureCoordsV
 {
 public:
-	PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
+	PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil, double topTexZ, double bottomTexZ);
 
 	double v1, v2;
 

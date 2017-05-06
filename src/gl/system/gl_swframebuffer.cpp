@@ -2544,7 +2544,7 @@ void OpenGLSWFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, in
 	}
 	if (In2D < 2)
 	{
-		Super::Dim(color, amount, x1, y1, w, h);
+		Super::DoDim(color, amount, x1, y1, w, h);
 		return;
 	}
 	if (!InScene)

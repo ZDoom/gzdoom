@@ -48,9 +48,12 @@ public:
 	const line_t *Line = nullptr;
 	const side_t *Side = nullptr;
 	side_t::ETexpart Texpart = side_t::mid;
-	double TopZ = 0.0;
-	double BottomZ = 0.0;
-	double UnpeggedCeil = 0.0;
+	double TopZ1 = 0.0;
+	double TopZ2 = 0.0;
+	double BottomZ1 = 0.0;
+	double BottomZ2 = 0.0;
+	double UnpeggedCeil1 = 0.0;
+	double UnpeggedCeil2 = 0.0;
 	FSWColormap *Colormap = nullptr;
 	bool Masked = false;
 	uint32_t SubsectorDepth = 0;
@@ -63,18 +66,22 @@ private:
 	int GetLightLevel();
 };
 
-// Texture coordinates for a wall
-class PolyWallTextureCoords
+class PolyWallTextureCoordsU
 {
 public:
-	PolyWallTextureCoords(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
+	PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart);
 
 	double u1, u2;
+};
+
+class PolyWallTextureCoordsV
+{
+public:
+	PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
+
 	double v1, v2;
 
 private:
-	void CalcU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart);
-	void CalcV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil);
 	void CalcVTopPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset);
 	void CalcVMidPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset);
 	void CalcVBottomPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double vscale, double yoffset);

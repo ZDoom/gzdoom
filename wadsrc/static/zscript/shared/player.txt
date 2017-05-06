@@ -812,9 +812,13 @@ class PlayerPawn : Actor native
 			side *= SideMove2;
 		}
 
-		if (!player.morphTics && Inv != NULL)
+		if (!player.morphTics)
 		{
-			double factor = Inv.GetSpeedFactor ();
+			double factor = 1.;
+			for(let it = Inv; it != null; it = it.Inv)
+			{
+				factor *= Inv.GetSpeedFactor ();
+			}
 			forward *= factor;
 			side *= factor;
 		}

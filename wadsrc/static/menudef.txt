@@ -1531,6 +1531,11 @@ OptionString ALDevices
 	// filled in by the sound code
 }
 
+OptionString ALResamplers
+{
+	// filled in by the sound code
+}
+
 OptionString OutputFormats
 {
 	"PCM-8",		"$OPTSTR_PCM8BIT"
@@ -1572,8 +1577,9 @@ OptionString SoundBackendsOpenALOnly
 OptionMenu OpenALSoundItems
 {
 	Title "$OPENALMNU_TITLE"
-	Option "$OPENALMNU_PLAYBACKDEVICE",		"snd_aldevice",	"ALDevices"
-	Option "$OPENALMNU_ENABLEEFX",			"snd_efx",		"OnOff"
+	Option "$OPENALMNU_PLAYBACKDEVICE",		"snd_aldevice",		"ALDevices"
+	Option "$OPENALMNU_ENABLEEFX",			"snd_efx",			"OnOff"
+	Option "$OPENALMNU_RESAMPLER",			"snd_alresampler",	"ALResamplers"
 }
 
 

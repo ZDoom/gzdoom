@@ -52,6 +52,7 @@
 #include "p_tags.h"
 #include "r_state.h"
 #include "w_wad.h"
+#include "textures.h"
 #include "g_levellocals.h"
 
 // MACROS ------------------------------------------------------------------
@@ -621,9 +622,9 @@ void SetCompatibilityParams()
 				}
 				case CP_SETWALLTEXTURE:
 				{
-					if (CompatParams[i + 1] < numlines)
+					if ((unsigned)CompatParams[i + 1] < level.lines.Size())
 					{
-						side_t *side = lines[CompatParams[i + 1]].sidedef[CompatParams[i + 2]];
+						side_t *side = level.lines[CompatParams[i + 1]].sidedef[CompatParams[i + 2]];
 						if (side != NULL)
 						{
 							assert(TexNames.Size() > (unsigned int)CompatParams[i + 4]);

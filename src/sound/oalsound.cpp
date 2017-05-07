@@ -65,6 +65,7 @@ FModule OpenALModule{"OpenAL"};
 
 CVAR (String, snd_aldevice, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, snd_efx, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (String, snd_alresampler, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 #ifdef _WIN32
 #define OPENALLIB "openal32.dll"
@@ -117,6 +118,32 @@ void I_BuildALDeviceList(FOptionValues *opt)
 
 			names += strlen(names) + 1;
 		}
+	}
+#endif
+}
+
+void I_BuildALResamplersList(FOptionValues *opt)
+{
+	opt->mValues.Resize(1);
+	opt->mValues[0].TextValue = "Default";
+	opt->mValues[0].Text = "Default";
+
+#ifndef NO_OPENAL
+	if (!IsOpenALPresent())
+		return;
+	if (!alcGetCurrentContext() || !alIsExtensionPresent("AL_SOFT_source_resampler"))
+		return;
+
+	LPALGETSTRINGISOFT alGetStringiSOFT = reinterpret_cast<LPALGETSTRINGISOFT>(alGetProcAddress("alGetStringiSOFT"));
+	ALint num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
+
+	unsigned int idx = opt->mValues.Reserve(num_resamplers);
+	for(ALint i = 0;i < num_resamplers;++i)
+	{
+		const ALchar *name = alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i);
+		opt->mValues[idx].TextValue = name;
+		opt->mValues[idx].Text = name;
+		++idx;
 	}
 #endif
 }
@@ -788,6 +815,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	AL.EXT_SOURCE_RADIUS = !!alIsExtensionPresent("AL_EXT_SOURCE_RADIUS");
 	AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");
 	AL.SOFT_loop_points = !!alIsExtensionPresent("AL_SOFT_loop_points");
+	AL.SOFT_source_resampler = !!alIsExtensionPresent("AL_SOFT_source_resampler");
 
 	alDopplerFactor(0.5f);
 	alSpeedOfSound(343.3f * 96.0f);
@@ -805,6 +833,9 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 		alDeferUpdatesSOFT = _wrap_DeferUpdatesSOFT;
 		alProcessUpdatesSOFT = _wrap_ProcessUpdatesSOFT;
 	}
+
+	if(AL.SOFT_source_resampler)
+		LOAD_FUNC(alGetStringiSOFT);
 
 	if(ALC.SOFT_pause_device)
 	{
@@ -958,6 +989,26 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 
 	if(EnvSlot)
 		Printf("  EFX enabled\n");
+
+	if(AL.SOFT_source_resampler && strcmp(*snd_alresampler, "Default") != 0)
+	{
+		const ALint num_resamplers = alGetInteger(AL_NUM_RESAMPLERS_SOFT);
+		ALint ridx = alGetInteger(AL_DEFAULT_RESAMPLER_SOFT);
+		ALint i;
+
+		for(i = 0;i < num_resamplers;i++)
+		{
+			if(strcmp(alGetStringiSOFT(AL_RESAMPLER_NAME_SOFT, i), *snd_alresampler) == 0)
+			{
+				ridx = i;
+				break;
+			}
+		}
+		if(i == num_resamplers)
+			Printf(TEXTCOLOR_RED" Failed to find resampler " TEXTCOLOR_ORANGE"%s\n", *snd_alresampler);
+		else for(ALint src : Sources)
+			alSourcei(src, AL_SOURCE_RESAMPLER_SOFT, ridx);
+	}
 }
 #undef LOAD_DEV_FUNC
 #undef LOAD_FUNC

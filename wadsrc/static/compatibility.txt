@@ -2,25 +2,25 @@
 {
 	// Slightly squash the pillars in the starting room with "stimpacks"
 	// floating on them so that they can be obtained.
-	sectorflooroffset 62 -8
+	setsectoroffset 62 floor -8
 	setwallyscale 286 front bot 1.090909
 	setwallyscale 287 front bot 1.090909
 	setwallyscale 288 front bot 1.090909
 	setwallyscale 289 front bot 1.090909
 	
-	sectorflooroffset 63 -8
+	setsectoroffset 63 floor -8
 	setwallyscale 290 front bot 1.090909
 	setwallyscale 291 front bot 1.090909
 	setwallyscale 292 front bot 1.090909
 	setwallyscale 293 front bot 1.090909
 	
-	sectorflooroffset 118 -8
+	setsectoroffset 118 floor -8
 	setwallyscale 710 front bot 1.090909
 	setwallyscale 711 front bot 1.090909
 	setwallyscale 712 front bot 1.090909
 	setwallyscale 713 front bot 1.090909
 	
-	sectorflooroffset 119 -8
+	setsectoroffset 119 floor -8
 	setwallyscale 714 front bot 1.090909
 	setwallyscale 715 front bot 1.090909
 	setwallyscale 716 front bot 1.090909
@@ -566,3 +566,63 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 	clipmidtex
 }
 
+
+// Cosmetic fixes for Heretic: Shadow of the Serpent Riders
+D94587625BA779644D58151A87897CF1 // e1m2
+{
+	// Missing textures
+	setwalltexture 477 back top MOSSRCK1
+	setwalltexture 478 back top MOSSRCK1
+	setwalltexture 479 back top MOSSRCK1
+	setwalltexture 1057 front top MOSSRCK1
+}
+ADD0FAC41AFB0B3C9B9F3C0006F93805 // e1m3
+{
+	// Broken door between the hallway that leads to a Torch 
+	// and the passage that has a Bag of Holding at its end
+	setsectoroffset 86 floor -128
+	setsectoroffset 86 ceil -128
+}
+916318D8B06DAC2D83424B23E4B66531 // e1m4
+{
+	// Wrong sector offsets
+	setsectoroffset 0 ceil 8
+	setsectoroffset 1 ceil 8
+	setsectoroffset 2 ceil 8
+	setsectoroffset 3 ceil 8
+	setsectoroffset 4 ceil 8
+	setsectoroffset 6 ceil 8
+	setsectoroffset 6 floor 8
+	setsectoroffset 17 ceil 8
+	// Yellow key door
+	setsectoroffset 284 floor -8
+	setsectoroffset 284 ceil -8
+	// Missing textures
+	setwalltexture 490 back bot GRSTNPB
+	setwalltexture 722 front bot WOODWL
+	setwalltexture 911 front bot WOODWL
+	setwalltexture 1296 front bot WOODWL
+}
+397A0E17A39542E4E8294E156FAB0502 // e2m2
+{
+	// Missing green door statues on easy and hard difficulties
+	setthingskills 17 31
+	setthingskills 18 31
+}
+CA3773ED313E8899311F3DD0CA195A68 // e3m6
+{
+	// Quartz flask outside of map
+	setthingskills 373 0
+	// Missing wall torch on hard difficulty
+	setthingskills 448 31
+	// Missing textures
+	setwalltexture 343 front top MOSSRCK1
+	setwalltexture 370 front top MOSSRCK1
+}
+5E3FCFDE78310BB89F92B1626A47D0AD // heretic.wad E4M7
+{
+	// Missing textures
+	setwalltexture 1274 front top CSTLRCK
+	setwalltexture 1277 back top CSTLRCK
+	setwalltexture 1278 front top CSTLRCK
+}

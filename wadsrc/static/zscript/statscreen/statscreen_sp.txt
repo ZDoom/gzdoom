@@ -156,7 +156,7 @@ class DoomStatusScreen : StatusScreen
 
 		if (wbs.partime)
 		{
-			screen.DrawTexture (Par, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true);
+			screen.DrawTexture (Par, true, 160 + SP_TIMEX, SP_TIMEY, DTA_Clean, true);
 			drawTime (320 - SP_TIMEX, SP_TIMEY, cnt_par);
 		}
 	}

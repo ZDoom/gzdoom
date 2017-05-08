@@ -79,6 +79,18 @@ protected:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 16)
+	{
+		self = 16;
+	}
+	else if (self > 1024)
+	{
+		self = 1024;
+	}
+}
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -206,7 +218,7 @@ SndFileSong::SndFileSong(FileReader *reader, SoundDecoder *decoder, uint32_t loo
 	Reader = reader;
 	Decoder = decoder;
 	Channels = iChannels == ChannelConfig_Stereo? 2:1;
-	m_Stream = GSnd->CreateStream(Read, 32*1024, iChannels == ChannelConfig_Stereo? 0 : SoundStream::Mono, SampleRate, this);
+	m_Stream = GSnd->CreateStream(Read, snd_streambuffersize * 1024, iChannels == ChannelConfig_Stereo? 0 : SoundStream::Mono, SampleRate, this);
 }
 
 //==========================================================================

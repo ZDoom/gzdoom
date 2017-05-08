@@ -420,7 +420,7 @@ void OPLio::WriteTremolo(uint32_t channel, struct GenMidiVoice *voice, bool vibr
 		val2 |= 0x40;
 	}
 	WriteOperator(OPL_REGS_TREMOLO, channel, 1, val2);
-	WriteOperator(OPL_REGS_TREMOLO, channel, 0, val2);
+	WriteOperator(OPL_REGS_TREMOLO, channel, 0, val1);
 }
 
 //----------------------------------------------------------------------------

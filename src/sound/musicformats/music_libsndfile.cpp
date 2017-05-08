@@ -339,7 +339,7 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 		if (currentpos + framestoread > song->Loop_End)
 		{
 			size_t endblock = (song->Loop_End - currentpos) * song->Channels * 2;
-			size_t endlen = song->Decoder->read(buff, endblock);
+			size_t endlen = song->Decoder->read(buff, 0 == endblock ? len : endblock);
 			if (endlen != 0)
 			{
 				buff = buff + endlen;

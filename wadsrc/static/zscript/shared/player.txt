@@ -817,7 +817,7 @@ class PlayerPawn : Actor native
 			double factor = 1.;
 			for(let it = Inv; it != null; it = it.Inv)
 			{
-				factor *= Inv.GetSpeedFactor ();
+				factor *= it.GetSpeedFactor ();
 			}
 			forward *= factor;
 			side *= factor;

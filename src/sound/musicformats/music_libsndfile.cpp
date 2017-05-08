@@ -130,7 +130,7 @@ void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end
 		}
 		c -= 3;
 		int len = c[0] + 256*c[1] + 65536*c[2];
-		if (c[3] || len > 1000000 || len <= (eqp - c + 1))
+		if (c[3] || len > 1000000 || len < (eqp - c - 3))
 		{
 			// length looks fishy so retry with the next '='
 			continue;

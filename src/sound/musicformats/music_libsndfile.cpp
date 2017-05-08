@@ -38,10 +38,7 @@
 #include "c_cvars.h"
 #include "critsec.h"
 #include "v_text.h"
-#include "files.h"
 #include "templates.h"
-#include "sndfile_decoder.h"
-#include "mpg123_decoder.h"
 #include "m_fixed.h"
 
 // MACROS ------------------------------------------------------------------

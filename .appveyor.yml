@@ -21,8 +21,6 @@ before_build:
   - cd build
   - if "%PLATFORM%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
   - if "%PLATFORM%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
-  - set DEPS_INCLUDE_DIR=%APPVEYOR_BUILD_FOLDER%\ci_deps_win\include
-  - set DEPS_LIB_DIR=%APPVEYOR_BUILD_FOLDER%\ci_deps_win\lib\%PLATFORM%
   - cmake -G "%CMAKE_GENERATOR_NAME%" -T "v140_xp"
     -DCMAKE_BUILD_TYPE="%CONFIGURATION%"
     ..
@@ -31,6 +29,13 @@ build:
   project: build\GZDoom.sln
   parallel: true
   verbosity: minimal
+
+after_build:
+  - set OUTPUT_DIR=%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\
+  - 7z a ..\gzdoom.zip "%OUTPUT_DIR%gzdoom.exe" "%OUTPUT_DIR%*.pk3"
+
+artifacts:
+  - path: gzdoom.zip
 
 notifications:
   - provider: Email

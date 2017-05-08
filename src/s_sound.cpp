@@ -594,15 +594,14 @@ void S_CacheSound (sfxinfo_t *sfx)
 
 void S_UnloadSound (sfxinfo_t *sfx)
 {
+	if (sfx->data3d.isValid() && sfx->data != sfx->data3d)
+		GSnd->UnloadSound(sfx->data3d);
 	if (sfx->data.isValid())
-	{
-        if(sfx->data3d.isValid() && sfx->data != sfx->data3d)
-            GSnd->UnloadSound(sfx->data3d);
 		GSnd->UnloadSound(sfx->data);
-		sfx->data.Clear();
-        sfx->data3d.Clear();
+	if (sfx->data.isValid() || sfx->data3d.isValid())
 		DPrintf(DMSG_NOTIFY, "Unloaded sound \"%s\" (%td)\n", sfx->name.GetChars(), sfx - &S_sfx[0]);
-	}
+	sfx->data.Clear();
+	sfx->data3d.Clear();
 }
 
 //==========================================================================

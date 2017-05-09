@@ -69,6 +69,7 @@ public:
 
 	void InitClipper(angle_t a1, angle_t a2)
 	{
+		clipper.Clear();
 		clipper.SafeAddClipRangeRealAngles(a1, a2);
 	}
 

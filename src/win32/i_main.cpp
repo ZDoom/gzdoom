@@ -1222,7 +1222,11 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	// Otherwise, put the crashing thread to sleep and signal the main thread to clean up.
 	if (GetCurrentThreadId() == MainThreadID)
 	{
+#ifdef _M_X64
 		*info->ContextRecord = MainThreadContext;
+#else
+		info->ContextRecord->Eip = (DWORD_PTR)ExitFatally;
+#endif // _M_X64
 	}
 	else
 	{
@@ -1315,6 +1319,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	{
 		SetUnhandledExceptionFilter (CatchAllExceptions);
 
+#ifdef _M_X64
 		static bool setJumpResult = false;
 		RtlCaptureContext(&MainThreadContext);
 		if (setJumpResult)
@@ -1323,6 +1328,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 			return 0;
 		}
 		setJumpResult = true;
+#endif // _M_X64
 	}
 #endif
 

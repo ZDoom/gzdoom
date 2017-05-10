@@ -66,29 +66,31 @@ struct TriDrawTriangleArgs
 	ScreenTriangleStepVariables gradientX;
 	ScreenTriangleStepVariables gradientY;
 
-	void CalculateGradients()
+	bool CalculateGradients()
 	{
-		gradientX.W = FindGradientX(v1->x, v1->y, v2->x, v2->y, v3->x, v3->y, v1->w, v2->w, v3->w);
-		gradientY.W = FindGradientY(v1->x, v1->y, v2->x, v2->y, v3->x, v3->y, v1->w, v2->w, v3->w);
-		gradientX.U = FindGradientX(v1->x, v1->y, v2->x, v2->y, v3->x, v3->y, v1->u * v1->w, v2->u * v2->w, v3->u * v3->w);
-		gradientY.U = FindGradientY(v1->x, v1->y, v2->x, v2->y, v3->x, v3->y, v1->u * v1->w, v2->u * v2->w, v3->u * v3->w);
-		gradientX.V = FindGradientX(v1->x, v1->y, v2->x, v2->y, v3->x, v3->y, v1->v * v1->w, v2->v * v2->w, v3->v * v3->w);
-		gradientY.V = FindGradientY(v1->x, v1->y, v2->x, v2->y, v3->x, v3->y, v1->v * v1->w, v2->v * v2->w, v3->v * v3->w);
+		float bottomX = (v2->x - v3->x) * (v1->y - v3->y) - (v1->x - v3->x) * (v2->y - v3->y);
+		float bottomY = (v1->x - v3->x) * (v2->y - v3->y) - (v2->x - v3->x) * (v1->y - v3->y);
+		if ((bottomX >= -FLT_EPSILON && bottomX <= FLT_EPSILON) || (bottomY >= -FLT_EPSILON && bottomY <= FLT_EPSILON))
+			return false;
+
+		gradientX.W = FindGradientX(bottomX, v1->w, v2->w, v3->w);
+		gradientY.W = FindGradientY(bottomY, v1->w, v2->w, v3->w);
+		gradientX.U = FindGradientX(bottomX, v1->u * v1->w, v2->u * v2->w, v3->u * v3->w);
+		gradientY.U = FindGradientY(bottomY, v1->u * v1->w, v2->u * v2->w, v3->u * v3->w);
+		gradientX.V = FindGradientX(bottomX, v1->v * v1->w, v2->v * v2->w, v3->v * v3->w);
+		gradientY.V = FindGradientY(bottomY, v1->v * v1->w, v2->v * v2->w, v3->v * v3->w);
+		return true;
 	}
 
 private:
-	static float FindGradientX(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+	float FindGradientX(float bottomX, float c0, float c1, float c2)
 	{
-		float top = (c1 - c2) * (y0 - y2) - (c0 - c2) * (y1 - y2);
-		float bottom = (x1 - x2) * (y0 - y2) - (x0 - x2) * (y1 - y2);
-		return top / bottom;
+		return ((c1 - c2) * (v1->y - v3->y) - (c0 - c2) * (v2->y - v3->y)) / bottomX;
 	}
 
-	static float FindGradientY(float x0, float y0, float x1, float y1, float x2, float y2, float c0, float c1, float c2)
+	float FindGradientY(float bottomY, float c0, float c1, float c2)
 	{
-		float top = (c1 - c2) * (x0 - x2) - (c0 - c2) * (x1 - x2);
-		float bottom = (x0 - x2) * (y1 - y2) - (x1 - x2) * (y0 - y2);
-		return top / bottom;
+		return ((c1 - c2) * (v1->x - v3->x) - (c0 - c2) * (v2->x - v3->x)) / bottomY;
 	}
 };
 

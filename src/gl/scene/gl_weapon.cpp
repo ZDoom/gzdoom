@@ -338,6 +338,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		{
 			RenderStyle = rs.first;
 		}
+		if (RenderStyle.BlendOp == STYLEOP_None) continue;
 
 		if (vis.Invert)
 		{

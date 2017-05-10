@@ -38,10 +38,7 @@
 #include "c_cvars.h"
 #include "critsec.h"
 #include "v_text.h"
-#include "files.h"
 #include "templates.h"
-#include "sndfile_decoder.h"
-#include "mpg123_decoder.h"
 #include "m_fixed.h"
 
 // MACROS ------------------------------------------------------------------
@@ -82,6 +79,18 @@ protected:
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
+CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 16)
+	{
+		self = 16;
+	}
+	else if (self > 1024)
+	{
+		self = 1024;
+	}
+}
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -121,7 +130,7 @@ void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end
 		}
 		c -= 3;
 		int len = c[0] + 256*c[1] + 65536*c[2];
-		if (c[3] || len > 1000000 || len <= (eqp - c + 1))
+		if (c[3] || len > 1000000 || len < (eqp - c - 3))
 		{
 			// length looks fishy so retry with the next '='
 			continue;
@@ -209,7 +218,7 @@ SndFileSong::SndFileSong(FileReader *reader, SoundDecoder *decoder, uint32_t loo
 	Reader = reader;
 	Decoder = decoder;
 	Channels = iChannels == ChannelConfig_Stereo? 2:1;
-	m_Stream = GSnd->CreateStream(Read, 32*1024, iChannels == ChannelConfig_Stereo? 0 : SoundStream::Mono, SampleRate, this);
+	m_Stream = GSnd->CreateStream(Read, snd_streambuffersize * 1024, iChannels == ChannelConfig_Stereo? 0 : SoundStream::Mono, SampleRate, this);
 }
 
 //==========================================================================
@@ -330,7 +339,7 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 		if (currentpos + framestoread > song->Loop_End)
 		{
 			size_t endblock = (song->Loop_End - currentpos) * song->Channels * 2;
-			size_t endlen = song->Decoder->read(buff, endblock);
+			size_t endlen = song->Decoder->read(buff, 0 == endblock ? len : endblock);
 			if (endlen != 0)
 			{
 				buff = buff + endlen;

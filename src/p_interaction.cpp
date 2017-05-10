@@ -187,6 +187,7 @@ void SexMessage (const char *from, char *to, int gender, const char *victim, con
 void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgflags)
 {
 	FName mod;
+	FString ret;
 	const char *message;
 	const char *messagename;
 	char gendermessage[1024];
@@ -218,17 +219,17 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 	}
 
 	FString obit = DamageTypeDefinition::GetObituary(mod);
-	if (attacker == nullptr) messagename = obit;
+	if (attacker == nullptr && obit.IsNotEmpty()) messagename = obit;
 	else
 	{
 		switch (mod)
 		{
-		case NAME_Suicide:		message = "$OB_SUICIDE";	break;
-		case NAME_Falling:		message = "$OB_FALLING";	break;
-		case NAME_Crush:		message = "$OB_CRUSH";		break;
-		case NAME_Exit:			message = "$OB_EXIT";		break;
-		case NAME_Drowning:		message = "$OB_WATER";		break;
-		case NAME_Slime:		message = "$OB_SLIME";		break;
+		case NAME_Suicide:		messagename = "$OB_SUICIDE";	break;
+		case NAME_Falling:		messagename = "$OB_FALLING";	break;
+		case NAME_Crush:		messagename = "$OB_CRUSH";		break;
+		case NAME_Exit:			messagename = "$OB_EXIT";		break;
+		case NAME_Drowning:		messagename = "$OB_WATER";		break;
+		case NAME_Slime:		messagename = "$OB_SLIME";		break;
 		case NAME_Fire:			messagename = "$OB_LAVA";		break;
 		}
 	}
@@ -250,7 +251,6 @@ void ClientObituary (AActor *self, AActor *inflictor, AActor *attacker, int dmgf
 			IFVIRTUALPTR(attacker, AActor, GetObituary)
 			{
 				VMValue params[] = { attacker, self, inflictor, mod.GetIndex(), !!(dmgflags & DMG_PLAYERATTACK) };
-				FString ret;
 				VMReturn rett(&ret);
 				VMCall(func, params, countof(params), &rett, 1);
 				if (ret.IsNotEmpty()) message = ret;

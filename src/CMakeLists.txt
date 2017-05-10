@@ -1265,12 +1265,13 @@ if( CMAKE_COMPILER_IS_GNUCXX )
 	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
 endif()
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
-	# Need to enable intrinsics for this file.
+	# Need to enable intrinsics for these files.
 	if( SSE_MATTERS )
 		set_source_files_properties(
-			x86.cpp
-			swrenderer/r_all.cpp
+			gl/system/gl_swframebuffer.cpp
 			polyrenderer/poly_all.cpp
+			swrenderer/r_all.cpp
+			x86.cpp
 			PROPERTIES COMPILE_FLAGS "-msse2 -mmmx" )
 	endif()
 endif()

@@ -152,8 +152,28 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const TriMatrix &objectToClip, 
 	return sv;
 }
 
+bool PolyTriangleDrawer::is_degenerate(const ShadedTriVertex *vert)
+{
+	// A degenerate triangle has a zero cross product for two of its sides.
+	float ax = vert[1].x - vert[0].x;
+	float ay = vert[1].y - vert[0].y;
+	float az = vert[1].w - vert[0].w;
+	float bx = vert[2].x - vert[0].x;
+	float by = vert[2].y - vert[0].y;
+	float bz = vert[2].w - vert[0].w;
+	float crossx = ay * bz - az * by;
+	float crossy = az * bx - ax * bz;
+	float crossz = ax * by - ay * bx;
+	float crosslengthsqr = crossx * crossx + crossy * crossy + crossz * crossz;
+	return crosslengthsqr <= 1.e-6f;
+}
+
 void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
+	// Reject triangle if degenerate
+	if (is_degenerate(vert))
+		return;
+
 	// Cull, clip and generate additional vertices as needed
 	TriVertex clippedvert[max_additional_vertices];
 	int numclipvert = clipedge(vert, clippedvert);
@@ -224,14 +244,13 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 	// Draw screen triangles
 	if (ccw)
 	{
-		for (int i = numclipvert; i > 1; i--)
+		for (int i = numclipvert - 1; i > 1; i--)
 		{
 			args->v1 = &clippedvert[numclipvert - 1];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i - 2];
-			args->CalculateGradients();
-
-			ScreenTriangle::Draw(args, thread);
+			if (args->CalculateGradients())
+				ScreenTriangle::Draw(args, thread);
 		}
 	}
 	else
@@ -241,9 +260,8 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[0];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i];
-			args->CalculateGradients();
-			
-			ScreenTriangle::Draw(args, thread);
+			if (args->CalculateGradients())
+				ScreenTriangle::Draw(args, thread);
 		}
 	}
 }

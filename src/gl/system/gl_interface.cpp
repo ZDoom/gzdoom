@@ -42,6 +42,8 @@ void gl_PatchMenu();
 static TArray<FString>  m_Extensions;
 RenderContext gl;
 
+EXTERN_CVAR(Bool, gl_legacy_mode)
+
 //==========================================================================
 //
 // 
@@ -311,8 +313,8 @@ void gl_LoadExtensions()
 		FUDGE_FUNC(glRenderbufferStorage, EXT);
 		FUDGE_FUNC(glBindRenderbuffer, EXT);
 		FUDGE_FUNC(glCheckFramebufferStatus, EXT);
-		gl_PatchMenu();
 	}
+	gl_legacy_mode = gl.legacyMode;
 }
 
 //==========================================================================

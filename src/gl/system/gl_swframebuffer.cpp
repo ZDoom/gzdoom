@@ -92,6 +92,7 @@ EXTERN_CVAR(Float, Gamma)
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
+EXTERN_CVAR(Bool, gl_legacy_mode)
 
 CVAR(Int, vid_max_width, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, vid_max_height, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -205,6 +206,13 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	
 	const char *glversion = (const char*)glGetString(GL_VERSION);
 	bool isGLES = (glversion && strlen(glversion) > 10 && memcmp(glversion, "OpenGL ES ", 10) == 0);
+
+	// GL 3.0 is mostly broken on MESA drivers which really are the only relevant case here that doesn't fulfill the requirements based on version number alone.
+#ifdef _WIN32
+	gl_legacy_mode = !ogl_IsVersionGEQ(3, 0);
+#else
+	gl_legacy_mode = !ogl_IsVersionGEQ(3, 1);
+#endif
 	if (!isGLES && ogl_IsVersionGEQ(3, 0) == 0)
 	{
 		Printf("OpenGL acceleration requires at least OpenGL 3.0. No Acceleration will be used.\n");

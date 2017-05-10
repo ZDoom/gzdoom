@@ -3823,28 +3823,22 @@ DEFINE_ACTION_FUNCTION(AActor, PlayActiveSound)
 
 bool AActor::IsOkayToAttack (AActor *link)
 {
-	if (!(player							// Original AActor::IsOkayToAttack was only for players
-	//	|| (flags  & MF_FRIENDLY)			// Maybe let friendly monsters use the function as well?
-		|| (flags5 & MF5_SUMMONEDMONSTER)	// AMinotaurFriend has its own version, generalized to other summoned monsters
-		|| (flags2 & MF2_SEEKERMISSILE)))	// AHolySpirit and AMageStaffFX2 as well, generalized to other seeker missiles
-	{	// Normal monsters and other actors always return false.
-		return false;
-	}
 	// Standard things to eliminate: an actor shouldn't attack itself,
 	// or a non-shootable, dormant, non-player-and-non-monster actor.
 	if (link == this)									return false;
 	if (!(link->player||(link->flags3 & MF3_ISMONSTER)))return false;
 	if (!(link->flags & MF_SHOOTABLE))					return false;
 	if (link->flags2 & MF2_DORMANT)						return false;
+	if (link->flags7 & MF7_NEVERTARGET)					return false; // NEVERTARGET means just that.
 
 	// An actor shouldn't attack friendly actors. The reference depends
 	// on the type of actor: for a player's actor, itself; for a projectile,
 	// its target; and for a summoned minion, its tracer.
-	AActor * Friend = NULL;
-	if (player)											Friend = this;
-	else if (flags5 & MF5_SUMMONEDMONSTER)				Friend = tracer;
+	AActor * Friend;
+	if (flags5 & MF5_SUMMONEDMONSTER)					Friend = tracer;
 	else if (flags2 & MF2_SEEKERMISSILE)				Friend = target;
 	else if ((flags & MF_FRIENDLY) && FriendPlayer)		Friend = players[FriendPlayer-1].mo;
+	else												Friend = this;
 
 	// Friend checks
 	if (link == Friend)									return false;

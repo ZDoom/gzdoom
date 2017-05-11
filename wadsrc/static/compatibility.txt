@@ -490,9 +490,9 @@ F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 }
 EBDAC00E9D25D884B2C8F4B1F0390539 // doom2.wad map21
 {
-   // push ceiling down in glitchy sectors above the stair switches
-   setsectoroffset 50 ceil -56
-   setsectoroffset 54 ceil -56
+	// push ceiling down in glitchy sectors above the stair switches
+	setsectoroffset 50 ceil -56
+	setsectoroffset 54 ceil -56
 }
 110F84DE041052B59307FAF0293E6BC0 // Doom II, map27
 {

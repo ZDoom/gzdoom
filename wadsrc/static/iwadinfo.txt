@@ -110,6 +110,7 @@ IWad
 	MustContain = "MAP35", "I_RELB", "FXAA_F"
 	BannerColors = "f0 f0 f0", "6b 3c 18"
 	Required = "Strife: Quest for the Sigil"
+	Load = "voices.wad"
 }
 
 IWad
@@ -412,6 +413,7 @@ Names
 	"hexdd.wad"
 	"hexendemo.wad"
 	"hexdemo.wad"
+	"sve.wad"
 	"strife1.wad"
 	"strife0.wad"
 	"strife.wad"
@@ -430,5 +432,4 @@ Names
 	"hacx2.wad"
 	"square1.pk3"
 	"delaweare.wad"
-	"sve.wad"
 }

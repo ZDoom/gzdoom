@@ -491,6 +491,7 @@ F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 110F84DE041052B59307FAF0293E6BC0 // Doom II, map27
 {
 	setsectorspecial 93 0
+	setwalltexture 582 back top ZIMMER3
 }
 ABC4EB5A1535ECCD0061AD14F3547908 // Plutonia Experiment, map26
 {

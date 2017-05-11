@@ -633,3 +633,13 @@ CA3773ED313E8899311F3DD0CA195A68 // e3m6
 	setwalltexture 1277 back top CSTLRCK
 	setwalltexture 1278 front top CSTLRCK
 }
+
+39C594CAC07EE51C80F757DA465FCC94 // strife1.wad map10
+{
+	// fix the shooting range by matching sector 138 and 145 properties together
+	setsectoroffset 145 floor -32
+	setsectoroffset 145 ceil 40
+	setsectortexture 145 floor F_CONCRP
+	setsectorlight 138 192
+	setwalltexture 3431 back top BRKGRY01
+}

@@ -90,6 +90,8 @@ enum
 	CP_SETTHINGFLAGS,
 	CP_SETVERTEX,
 	CP_SETTHINGSKILLS,
+	CP_SETSECTORTEXTURE,
+	CP_SETSECTORLIGHT,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -398,6 +400,33 @@ void ParseCompatibility()
 				sc.MustGetNumber();
 				CompatParams.Push(sc.Number);
 			}
+			else if (sc.Compare("setsectortexture"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETSECTORTEXTURE);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(SectorPlanes));
+				sc.MustGetString();
+				const FString texName = sc.String;
+				const unsigned int texIndex = TexNames.Find(texName);
+				const unsigned int texCount = TexNames.Size();
+				if (texIndex == texCount)
+				{
+					TexNames.Push(texName);
+				}
+				CompatParams.Push(texIndex);
+			}
+			else if (sc.Compare("setsectorlight"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETSECTORLIGHT);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+			}
 			else
 			{
 				sc.UnGet();
@@ -686,6 +715,35 @@ void SetCompatibilityParams()
 					if ((unsigned)CompatParams[i + 1] < MapThingsConverted.Size())
 					{
 						MapThingsConverted[CompatParams[i + 1]].SkillFilter = CompatParams[i + 2];
+					}
+					i += 3;
+					break;
+				}
+				case CP_SETSECTORTEXTURE:
+				{
+					if ((unsigned)CompatParams[i + 1] < level.sectors.Size())
+					{
+						sector_t *sec = &level.sectors[CompatParams[i+1]];
+						assert (sec != nullptr);
+						secplane_t& plane = sector_t::floor == CompatParams[i + 2] 
+							? sec->floorplane 
+							: sec->ceilingplane;
+						assert(TexNames.Size() > (unsigned int)CompatParams[i + 3]);
+						const FTextureID texID = TexMan.GetTexture(TexNames[CompatParams[i + 3]], FTexture::TEX_Any);
+
+						sec->SetTexture(CompatParams[i + 2], texID);
+					}
+					i += 4;
+					break;
+				}
+				case CP_SETSECTORLIGHT:
+				{
+					if ((unsigned)CompatParams[i + 1] < level.sectors.Size())
+					{
+						sector_t *sec = &level.sectors[CompatParams[i+1]];
+						assert (sec != nullptr);
+
+						sec->SetLightLevel((unsigned)CompatParams[i + 2]);
 					}
 					i += 3;
 					break;

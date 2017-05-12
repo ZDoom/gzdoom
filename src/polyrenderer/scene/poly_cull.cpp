@@ -70,26 +70,6 @@ void PolyCull::CullNode(void *node)
 
 void PolyCull::CullSubsector(subsector_t *sub)
 {
-	// Mark poly objects first
-	if (sub->polys)
-	{
-		if (sub->BSP == nullptr || sub->BSP->bDirty)
-		{
-			sub->BuildPolyBSP();
-		}
-		
-		if (sub->BSP->Nodes.Size() == 0)
-		{
-			CullSubsector(&sub->BSP->Subsectors[0]);
-		}
-		else
-		{
-			CullNode(&sub->BSP->Nodes.Last());
-		}
-		
-		return; // Hmm, seems a bit strange the subsector is then ignored. But that's what the sw renderer seems to be doing..
-	}
-	
 	// Update sky heights for the scene
 	if (!FirstSkyHeight)
 	{

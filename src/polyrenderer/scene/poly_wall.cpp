@@ -363,20 +363,24 @@ int RenderPolyWall::GetLightLevel()
 
 PolyWallTextureCoordsU::PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart)
 {
-	double lineLength = side->TexelLength;
-	double lineStart = 0.0;
-
-	bool entireSegment = ((lineseg->v1 == line->v1) && (lineseg->v2 == line->v2)) || ((lineseg->v2 == line->v1) && (lineseg->v1 == line->v2));
-	if (!entireSegment)
+	double t1, t2;
+	double deltaX = line->v2->fX() - line->v1->fX();
+	double deltaY = line->v2->fY() - line->v1->fY();
+	if (fabs(deltaX) > fabs(deltaY))
 	{
-		lineLength = (lineseg->v2->fPos() - lineseg->v1->fPos()).Length();
-		lineStart = (lineseg->v1->fPos() - line->v1->fPos()).Length();
+		t1 = (lineseg->v1->fX() - line->v1->fX()) / deltaX;
+		t2 = (lineseg->v2->fX() - line->v1->fX()) / deltaX;
+	}
+	else
+	{
+		t1 = (lineseg->v1->fY() - line->v1->fY()) / deltaY;
+		t2 = (lineseg->v2->fY() - line->v1->fY()) / deltaY;
 	}
 
 	int texWidth = tex->GetWidth();
 	double uscale = side->GetTextureXScale(texpart) * tex->Scale.X;
-	u1 = lineStart + side->GetTextureXOffset(texpart);
-	u2 = u1 + lineLength;
+	u1 = t1 * side->TexelLength + side->GetTextureXOffset(texpart);
+	u2 = t2 * side->TexelLength + side->GetTextureXOffset(texpart);
 	u1 *= uscale;
 	u2 *= uscale;
 	u1 /= texWidth;

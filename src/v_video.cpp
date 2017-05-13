@@ -1747,6 +1747,32 @@ bool AspectTallerThanWide(float aspect)
 	return aspect < 1.333f;
 }
 
+void ScaleWithAspect (int &w, int &h, int Width, int Height)
+{
+	int resRatio = CheckRatio (Width, Height);
+	int screenRatio;
+	CheckRatio (w, h, &screenRatio);
+	if (resRatio == screenRatio)
+		return;
+
+	double yratio;
+	switch(resRatio)
+	{
+		case 0: yratio = 4./3.; break;
+		case 1: yratio = 16./9.; break;
+		case 2: yratio = 16./10.; break;
+		case 3: yratio = 17./10.; break;
+		case 4: yratio = 5./4.; break;
+		case 6: yratio = 21./9.; break;
+		default: return;
+	}
+	double y = w/yratio;
+	if (y > h)
+		w = h*yratio;
+	else
+		h = y;
+}
+
 void IVideo::DumpAdapters ()
 {
 	Printf("Multi-monitor support unavailable.\n");

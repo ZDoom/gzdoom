@@ -117,10 +117,16 @@ void MIDIDeviceChanged(int newdev, bool force)
 	if (!force) oldmididev = newdev;
 }
 
+#ifdef HAVE_FLUIDSYNTH 
+#define DEF_MIDIDEV -5
+#else
+#define DEF_MIDIDEV -3
+#endif
+
 #ifdef _WIN32
 unsigned mididevice;
 
-CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (!nummididevicesset)
 		return;
@@ -131,10 +137,11 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		if (self != 0)
 		{
 			Printf("ID out of range. Using default device.\n");
-			self = 0;
+			self = DEF_MIDIDEV;
 		}
 		return;
 	}
+	else if (self == -1) self = DEF_MIDIDEV;
 	mididevice = MAX<UINT>(0, self);
 	MIDIDeviceChanged(self);
 }
@@ -215,7 +222,6 @@ CCMD (snd_listmididevices)
 	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MIDIDEV_SWSYNTH, 0);
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MIDIDEV_FMSYNTH, 0);
 	PrintMidiDevice (-2, "TiMidity++", MIDIDEV_SWSYNTH, 0);
-	PrintMidiDevice (-1, "Sound System", 0, 0);
 	if (nummididevices != 0)
 	{
 		for (id = 0; id < nummididevices; ++id)
@@ -237,12 +243,12 @@ CCMD (snd_listmididevices)
 
 // Everything but Windows uses this code.
 
-CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < -6)
 		self = -6;
-	else if (self > -1)
-		self = -1;
+	else if (self > -2)
+		self = -2;
 	else
 		MIDIDeviceChanged(self);
 }
@@ -261,6 +267,5 @@ CCMD (snd_listmididevices)
 	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-1. Sound System\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 }
 #endif

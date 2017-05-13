@@ -43,6 +43,7 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "v_text.h"
+#include "version.h"
 #include "cmdlib.h"
 
 // MACROS ------------------------------------------------------------------
@@ -53,6 +54,7 @@
 
 // do this without including windows.h for this one single prototype
 extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize);
+const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinprogdir = false);
 
 #ifndef _M_X64
 #define FLUIDSYNTHLIB1	"fluidsynth.dll"
@@ -315,43 +317,53 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 	int res = 0;
 	if (args != NULL && *args != 0)
 	{
-		res = LoadPatchSets(args);
+		if (LoadPatchSets(args)) return;
 	}
 
-	if (res == 0 && 0 == LoadPatchSets(fluid_patchset))
+	if (LoadPatchSets(fluid_patchset))
 	{
-#ifdef __unix__
-		// This is the standard location on Ubuntu.
-		if (0 == LoadPatchSets("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2"))
-		{
-#endif
-#ifdef _WIN32
-		// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
-		char sysdir[MAX_PATH+sizeof("\\CT4MGM.SF2")];
-		uint32_t filepart;
-		if (0 != (filepart = GetSystemDirectoryA(sysdir, MAX_PATH)))
-		{
-			strcat(sysdir, "\\CT4MGM.SF2");
-			if (0 == LoadPatchSets(sysdir))
-			{
-				// Try again with CT2MGM.SF2
-				sysdir[filepart + 3] = '2';
-				if (0 == LoadPatchSets(sysdir))
-				{
-#endif
-					Printf("Failed to load any MIDI patches.\n");
-					delete_fluid_synth(FluidSynth);
-					FluidSynth = NULL;
-#ifdef _WIN32
-				}
-			}
-		}
-#endif
-#ifdef __unix__
-		}
-#endif
+		return;
 	}
+#ifdef __unix__
+	// This is the standard location on Ubuntu.
+	if (LoadPatchSets("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2"))
+	{
+		return;
+	}
+#endif
+#ifdef _WIN32
+	// On Windows, look for the 4 megabyte patch set installed by Creative's drivers as a default.
+	char sysdir[MAX_PATH + sizeof("\\CT4MGM.SF2")];
+	uint32_t filepart;
+	if (0 != (filepart = GetSystemDirectoryA(sysdir, MAX_PATH)))
+	{
+		strcat(sysdir, "\\CT4MGM.SF2");
+		if (LoadPatchSets(sysdir))
+		{
+			return;
+		}
+		// Try again with CT2MGM.SF2
+		sysdir[filepart + 3] = '2';
+		if (LoadPatchSets(sysdir))
+		{
+			return;
+		}
+	}
+
+#endif
+	// Last try the base sound font which should be provided by the GZDoom binary package.
+	auto wad = BaseFileSearch(BASESF, NULL, true);
+	if (wad != NULL && 	LoadPatchSets(wad))
+	{
+		return;
+	}
+
+	Printf("Failed to load any MIDI patches.\n");
+	delete_fluid_synth(FluidSynth);
+	FluidSynth = NULL;
+
 }
+
 
 //==========================================================================
 //

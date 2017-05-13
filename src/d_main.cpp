@@ -149,7 +149,7 @@ void ParseGLDefs();
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 void D_DoomLoop ();
-static const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir=false);
+const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir=false);
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
@@ -1693,7 +1693,7 @@ static void D_AddDirectory (TArray<FString> &wadfiles, const char *dir)
 //
 //==========================================================================
 
-static const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir)
+const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir)
 {
 	static char wad[PATH_MAX];
 

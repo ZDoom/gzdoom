@@ -522,7 +522,7 @@ uint32_t *XMISong::SendCommand (uint32_t *events, EventSource due, uint32_t dela
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_EVENTS-1)*3*4 || DeviceType == MDEV_SNDSYS)
+			if (len >= (MAX_EVENTS-1)*3*4)
 			{ // This message will never fit. Throw it away.
 				track->EventP += len;
 			}

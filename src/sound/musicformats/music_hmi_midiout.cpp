@@ -651,7 +651,7 @@ uint32_t *HMISong::SendCommand (uint32_t *events, TrackInfo *track, uint32_t del
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = ReadVarLen(track);
-			if (len >= (MAX_EVENTS-1)*3*4 || DeviceType == MDEV_SNDSYS)
+			if (len >= (MAX_EVENTS-1)*3*4)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}

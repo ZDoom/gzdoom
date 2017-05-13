@@ -54,7 +54,6 @@
 
 // do this without including windows.h for this one single prototype
 extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize);
-const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinprogdir = false);
 
 #ifndef _M_X64
 #define FLUIDSYNTHLIB1	"fluidsynth.dll"
@@ -92,6 +91,8 @@ const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinpr
 // TYPES -------------------------------------------------------------------
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
+
+const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinprogdir = false);
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 

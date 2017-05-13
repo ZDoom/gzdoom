@@ -51,7 +51,7 @@ int main(int argc, char **argv)
 	// on a tag, it returns that tag. Otherwise it returns <most recent tag>-<number of
 	// commits since the tag>-<short hash>.
 	// Use git log to get the time of the latest commit in ISO 8601 format and its full hash.
-	stream = popen("git describe --tags && git log -1 --format=%ai*%H", "r");
+	stream = popen("git describe --tags --dirty=-m && git log -1 --format=%ai*%H", "r");
 
 	if (NULL != stream)
 	{

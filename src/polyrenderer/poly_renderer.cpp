@@ -115,9 +115,9 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	
 	DontMapLines = dontmaplines;
 	
+	R_SetupFrame(Viewpoint, Viewwindow, actor);
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
-	R_SetupFrame(Viewpoint, Viewwindow, actor);
 
 	if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
 	else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;

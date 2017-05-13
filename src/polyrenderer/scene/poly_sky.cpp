@@ -61,7 +61,7 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 
 		float scaleFrontU = frameSetup.frontcyl / (float)frameSetup.frontskytex->GetWidth();
 		float scaleFrontV = (float)frameSetup.frontskytex->Scale.Y * scaleBaseV;
-		float offsetFrontU = (float)(frameSetup.frontpos / 65536.0 / frameSetup.frontskytex->GetWidth());
+		float offsetFrontU = (float)((frameSetup.frontpos / 65536.0 + frameSetup.frontcyl / 2) / frameSetup.frontskytex->GetWidth());
 		float offsetFrontV = (float)((frameSetup.skymid / frameSetup.frontskytex->GetHeight() + offsetBaseV) * scaleBaseV);
 
 		unsigned int count = mVertices.Size();

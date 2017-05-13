@@ -285,6 +285,8 @@ class OpenALSoundStream : public SoundStream
 		}
 		if(Renderer->AL.EXT_SOURCE_RADIUS)
 			alSourcef(Source, AL_SOURCE_RADIUS, 0.f);
+		if(Renderer->AL.SOFT_source_spatialize)
+			alSourcei(Source, AL_SOURCE_SPATIALIZE_SOFT, AL_AUTO_SOFT);
 
 		alGenBuffers(BufferCount, Buffers);
 		return (getALError() == AL_NO_ERROR);
@@ -816,6 +818,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	AL.SOFT_deferred_updates = !!alIsExtensionPresent("AL_SOFT_deferred_updates");
 	AL.SOFT_loop_points = !!alIsExtensionPresent("AL_SOFT_loop_points");
 	AL.SOFT_source_resampler = !!alIsExtensionPresent("AL_SOFT_source_resampler");
+	AL.SOFT_source_spatialize = !!alIsExtensionPresent("AL_SOFT_source_spatialize");
 
 	alDopplerFactor(0.5f);
 	alSpeedOfSound(343.3f * 96.0f);
@@ -1177,6 +1180,9 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, 
 
 	if(length == 0) return std::make_pair(retval, true);
 
+	/* Only downmix to mono if we can't spatialize multi-channel sounds. */
+	monoize = monoize && !AL.SOFT_source_spatialize;
+
 	if(bits == -8)
 	{
 		// Simple signed->unsigned conversion
@@ -1264,7 +1270,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, 
 	}
 
 	retval.data = MAKE_PTRID(buffer);
-	return std::make_pair(retval, channels==1);
+	return std::make_pair(retval, AL.SOFT_source_spatialize || channels==1);
 }
 
 void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
@@ -1279,6 +1285,9 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	int srate;
 	uint32_t loop_start = 0, loop_end = ~0u;
 	bool startass = false, endass = false;
+
+	/* Only downmix to mono if we can't spatialize multi-channel sounds. */
+	monoize = monoize && !AL.SOFT_source_spatialize;
 
 	if (!memcmp(sfxdata, "OggS", 4) || !memcmp(sfxdata, "FLAC", 4))
 	{
@@ -1377,7 +1386,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 		pBuffer->type = type;
 		pBuffer->srate = srate;
 	}
-	return std::make_pair(retval, (chans == ChannelConfig_Mono || monoize));
+	return std::make_pair(retval, AL.SOFT_source_spatialize || chans == ChannelConfig_Mono || monoize);
 }
 
 std::pair<SoundHandle, bool> OpenALSoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *pBuffer, bool monoize)
@@ -1388,6 +1397,9 @@ std::pair<SoundHandle, bool> OpenALSoundRenderer::LoadSoundBuffered(FSoundLoadBu
 	auto type = pBuffer->type;
 	auto chans = pBuffer->chans;
 	uint32_t loop_start = pBuffer->loop_start, loop_end = pBuffer->loop_end;
+
+	/* Only downmix to mono if we can't spatialize multi-channel sounds. */
+	monoize = monoize && !AL.SOFT_source_spatialize;
 
 	if (chans == ChannelConfig_Mono || monoize)
 	{
@@ -1461,7 +1473,7 @@ std::pair<SoundHandle, bool> OpenALSoundRenderer::LoadSoundBuffered(FSoundLoadBu
 	}
 
 	retval.data = MAKE_PTRID(buffer);
-	return std::make_pair(retval, (chans == ChannelConfig_Mono || monoize));
+	return std::make_pair(retval, AL.SOFT_source_spatialize || chans == ChannelConfig_Mono || monoize);
 }
 
 void OpenALSoundRenderer::UnloadSound(SoundHandle sfx)
@@ -1560,6 +1572,8 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 	alSourcef(source, AL_GAIN, SfxVolume*vol);
 	if(AL.EXT_SOURCE_RADIUS)
 		alSourcef(source, AL_SOURCE_RADIUS, 0.f);
+	if(AL.SOFT_source_spatialize)
+		alSourcei(source, AL_SOURCE_SPATIALIZE_SOFT, AL_AUTO_SOFT);
 
 	if(EnvSlot)
 	{
@@ -1768,6 +1782,8 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 
 	alSourcef(source, AL_MAX_GAIN, SfxVolume);
 	alSourcef(source, AL_GAIN, SfxVolume*vol);
+	if(AL.SOFT_source_spatialize)
+		alSourcei(source, AL_SOURCE_SPATIALIZE_SOFT, AL_TRUE);
 
 	if(EnvSlot)
 	{

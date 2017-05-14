@@ -37,35 +37,50 @@
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 
-bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals)
+bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals, line_t *lastPortalLine)
 {
+	double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
+	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
+	double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
+	double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
+	double topTexZ = frontsector->GetPlaneTexZ(sector_t::ceiling);
+	double bottomTexZ = frontsector->GetPlaneTexZ(sector_t::floor);
+
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
 	{
-		if (PolyRenderer::Instance()->InsertSeenMirror(line->linedef))
+		if (lastPortalLine == line->linedef ||
+			(line->linedef->v1->fX() * clipPlane.A + line->linedef->v1->fY() * clipPlane.B + clipPlane.D <= 0.0f) ||
+			(line->linedef->v2->fX() * clipPlane.A + line->linedef->v2->fY() * clipPlane.B + clipPlane.D <= 0.0f))
 		{
-			linePortals.push_back(std::unique_ptr<PolyDrawLinePortal>(new PolyDrawLinePortal(line->linedef)));
-			polyportal = linePortals.back().get();
+			return false;
 		}
+
+		linePortals.push_back(std::unique_ptr<PolyDrawLinePortal>(new PolyDrawLinePortal(line->linedef)));
+		polyportal = linePortals.back().get();
 	}
 	else if (line->linedef && line->linedef->isVisualPortal())
 	{
-		FLinePortal *portal = line->linedef->getPortal();
-		if (PolyRenderer::Instance()->InsertSeenLinePortal(portal))
+		if (lastPortalLine == line->linedef ||
+			(line->linedef->v1->fX() * clipPlane.A + line->linedef->v1->fY() * clipPlane.B + clipPlane.D <= 0.0f) ||
+			(line->linedef->v2->fX() * clipPlane.A + line->linedef->v2->fY() * clipPlane.B + clipPlane.D <= 0.0f))
 		{
-			for (auto &p : linePortals)
+			return false;
+		}
+
+		FLinePortal *portal = line->linedef->getPortal();
+		for (auto &p : linePortals)
+		{
+			if (p->Portal == portal) // To do: what other criterias do we need to check for?
 			{
-				if (p->Portal == portal) // To do: what other criterias do we need to check for?
-				{
-					polyportal = p.get();
-					break;
-				}
+				polyportal = p.get();
+				break;
 			}
-			if (!polyportal)
-			{
-				linePortals.push_back(std::unique_ptr<PolyDrawLinePortal>(new PolyDrawLinePortal(portal)));
-				polyportal = linePortals.back().get();
-			}
+		}
+		if (!polyportal)
+		{
+			linePortals.push_back(std::unique_ptr<PolyDrawLinePortal>(new PolyDrawLinePortal(portal)));
+			polyportal = linePortals.back().get();
 		}
 	}
 
@@ -77,13 +92,6 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
 	wall.StencilValue = stencilValue;
-
-	double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
-	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
-	double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
-	double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
-	double topTexZ = frontsector->GetPlaneTexZ(sector_t::ceiling);
-	double bottomTexZ = frontsector->GetPlaneTexZ(sector_t::floor);
 
 	if (line->backsector == nullptr)
 	{
@@ -244,6 +252,14 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 		vertices[3].u = (float)texcoordsU.u1;
 		vertices[3].v = (float)texcoordsVLeft.v2;
 	}
+	else
+	{
+		for (int i = 0; i < 4; i++)
+		{
+			vertices[i].u = 0.0f;
+			vertices[i].v = 0.0f;
+		}
+	}
 
 	// Masked walls clamp to the 0-1 range (no texture repeat)
 	if (Masked)
@@ -259,7 +275,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(StencilValue);
 	args.SetWriteStencil(true, StencilValue + 1);
-	if (tex)
+	if (tex && !Polyportal)
 		args.SetTexture(tex);
 	args.SetClipPlane(clipPlane);
 
@@ -270,10 +286,6 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 		args.SetWriteSubsectorDepth(false);
 		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 		Polyportal->Shape.push_back({ vertices, 4, true, SubsectorDepth });
-
-		angle_t angle1, angle2;
-		if (cull.GetAnglesForLine(v1.X, v1.Y, v2.X, v2.Y, angle1, angle2))
-			Polyportal->Segments.push_back({ angle1, angle2 });
 	}
 	else if (!Masked)
 	{

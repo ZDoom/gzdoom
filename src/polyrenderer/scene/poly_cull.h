@@ -40,6 +40,8 @@ public:
 	double MaxCeilingHeight = 0.0;
 	double MinFloorHeight = 0.0;
 
+	static angle_t PointToPseudoAngle(double x, double y);
+
 private:
 	struct SolidSegment
 	{
@@ -62,6 +64,5 @@ private:
 
 	PolyClipPlane PortalClipPlane;
 
-	static angle_t PointToPseudoAngle(double x, double y);
 	static angle_t AngleToPseudo(angle_t ang);
 };

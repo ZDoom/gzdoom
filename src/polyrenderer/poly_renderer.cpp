@@ -159,8 +159,6 @@ void PolyRenderer::ClearBuffers()
 	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
 	PolySubsectorGBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
 	NextStencilValue = 0;
-	SeenLinePortals.clear();
-	SeenMirrors.clear();
 }
 
 void PolyRenderer::SetSceneViewport()
@@ -215,14 +213,4 @@ void PolyRenderer::SetupPerspectiveMatrix()
 		TriMatrix::translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
 
 	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
-}
-
-bool PolyRenderer::InsertSeenLinePortal(FLinePortal *portal)
-{
-	return SeenLinePortals.insert(portal).second;
-}
-
-bool PolyRenderer::InsertSeenMirror(line_t *mirrorLine)
-{
-	return SeenMirrors.insert(mirrorLine).second;
 }

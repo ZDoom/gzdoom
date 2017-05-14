@@ -51,9 +51,9 @@ static uint32_t	nummididevices;
 static bool		nummididevicesset;
 
 #ifdef HAVE_FLUIDSYNTH
-#define NUM_DEF_DEVICES 6
-#else
 #define NUM_DEF_DEVICES 5
+#else
+#define NUM_DEF_DEVICES 4
 #endif
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
@@ -75,8 +75,6 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 	pair[p+2].Value = -2.0;
 	pair[p+3].Text = "WildMidi";
 	pair[p+3].Value = -6.0;
-	pair[p+4].Text = "Sound System";
-	pair[p+4].Value = -1.0;
 
 }
 

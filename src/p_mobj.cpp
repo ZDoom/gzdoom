@@ -407,6 +407,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("flags5", flags5)
 		A("flags6", flags6)
 		A("flags7", flags7)
+		A("flags8", flags8)
 		A("weaponspecial", weaponspecial)
 		A("special1", special1)
 		A("special2", special2)
@@ -8394,6 +8395,9 @@ void PrintMiscActorInfo(AActor *query)
 		Printf("\n   flags7: %x", query->flags7.GetValue());
 		for (flagi = 0; flagi <= 31; flagi++)
 			if (query->flags7 & ActorFlags7::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags7));
+		Printf("\n   flags8: %x", query->flags8.GetValue());
+		for (flagi = 0; flagi <= 31; flagi++)
+			if (query->flags8 & ActorFlags8::FromInt(1<<flagi)) Printf(" %s", FLAG_NAME(1<<flagi, flags8));
 		Printf("\nBounce flags: %x\nBounce factors: f:%f, w:%f", 
 			query->BounceFlags.GetValue(), query->bouncefactor,
 			query->wallbouncefactor);

@@ -756,6 +756,16 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 			if ((flags & CPXF_CHECKSIGHT) && !(P_CheckSight(mo, ref, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY)))
 				continue;
 
+			if (mo->flags6 & MF6_KILLED)
+			{
+				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
+					continue;
+			}
+			else
+			{
+				if (flags & CPXF_DEADONLY)
+					continue;
+			}
 			if (ptrWillChange)
 			{
 				current = ref->Distance2D(mo);
@@ -772,16 +782,6 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 				}
 				else if (!dist)
 					dist = mo; // Just get the first one and call it quits if there's nothing selected.
-			}
-			if (mo->flags6 & MF6_KILLED)
-			{
-				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
-					continue;
-			}
-			else
-			{
-				if (flags & CPXF_DEADONLY)
-					continue;
 			}
 			counter++;
 

@@ -1027,8 +1027,17 @@ void P_CreateLinkedPortals()
 	{
 		if (linePortals[i].mType == PORTT_LINKED)
 		{
-			if (CollectSectors(id, linePortals[i].mOrigin->frontsector)) id++;
-			if (CollectSectors(id, linePortals[i].mDestination->frontsector)) id++;
+			if (linePortals[i].mDestination == nullptr)
+			{
+				Printf("Linked portal on line %d is unconnected and will be disabled\n", linePortals[i].mOrigin->Index());
+				linePortals[i].mOrigin->portalindex = UINT_MAX;
+				linePortals[i].mType = PORTT_VISUAL;
+			}
+			else
+			{
+				if (CollectSectors(id, linePortals[i].mOrigin->frontsector)) id++;
+				if (CollectSectors(id, linePortals[i].mDestination->frontsector)) id++;
+			}
 		}
 	}
 

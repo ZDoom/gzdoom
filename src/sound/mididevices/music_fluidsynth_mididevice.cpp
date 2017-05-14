@@ -526,14 +526,21 @@ int FluidSynthMIDIDevice::LoadPatchSets(const char *patches)
 		{
 			path = NicePath(tok);
 		}
-		if (FLUID_FAILED != fluid_synth_sfload(FluidSynth, path, count == 0))
+		if (FileExists(path))
 		{
-			DPrintf(DMSG_NOTIFY, "Loaded patch set %s.\n", tok);
-			count++;
+			if (FLUID_FAILED != fluid_synth_sfload(FluidSynth, path, count == 0))
+			{
+				DPrintf(DMSG_NOTIFY, "Loaded patch set %s.\n", tok);
+				count++;
+			}
+			else
+			{
+				DPrintf(DMSG_ERROR, "Failed to load patch set %s.\n", tok);
+			}
 		}
 		else
 		{
-			DPrintf(DMSG_ERROR, "Failed to load patch set %s.\n", tok);
+			DPrintf(DMSG_ERROR, "Could not find patch set %s.\n", tok);
 		}
 		tok = strtok(NULL, delim);
 	}

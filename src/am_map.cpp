@@ -1564,27 +1564,31 @@ CCMD(am_zoom)
 void AM_doFollowPlayer ()
 {
 	double sx, sy;
-
-    if (players[consoleplayer].camera != NULL &&
-		(f_oldloc.x != players[consoleplayer].camera->X() ||
-		 f_oldloc.y != players[consoleplayer].camera->Y()))
+	auto cam = players[consoleplayer].camera;
+	if (cam != nullptr)
 	{
-		m_x = players[consoleplayer].camera->X() - m_w/2;
-		m_y = players[consoleplayer].camera->Y() - m_h/2;
-		m_x2 = m_x + m_w;
-		m_y2 = m_y + m_h;
+		double delta = cam->player ? cam->player->viewz - cam->Z() : cam->GetCameraHeight();
+		DVector3 ampos = cam->GetPortalTransition(delta);
 
-  		// do the parallax parchment scrolling.
-		sx = (players[consoleplayer].camera->X() - f_oldloc.x);
-		sy = (f_oldloc.y - players[consoleplayer].camera->Y());
-		if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+		if (f_oldloc.x != ampos.X || f_oldloc.y != ampos.Y)
 		{
-			AM_rotate (&sx, &sy, players[consoleplayer].camera->Angles.Yaw - 90);
-		}
-		AM_ScrollParchment (sx, sy);
+			m_x = ampos.X - m_w / 2;
+			m_y = ampos.Y - m_h / 2;
+			m_x2 = m_x + m_w;
+			m_y2 = m_y + m_h;
 
-		f_oldloc.x = players[consoleplayer].camera->X();
-		f_oldloc.y = players[consoleplayer].camera->Y();
+			// do the parallax parchment scrolling.
+			sx = (ampos.X - f_oldloc.x);
+			sy = (f_oldloc.y - ampos.Y);
+			if (am_rotate == 1 || (am_rotate == 2 && viewactive))
+			{
+				AM_rotate(&sx, &sy, cam->Angles.Yaw - 90);
+			}
+			AM_ScrollParchment(sx, sy);
+
+			f_oldloc.x = ampos.X;
+			f_oldloc.y = ampos.Y;
+		}
 	}
 }
 

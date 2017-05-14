@@ -2105,7 +2105,7 @@ void P_FallingDamage (AActor *actor)
 		}
 		if (vel >= 63)
 		{ // automatic death
-			damage = 1000000;
+			damage = TELEFRAG_DAMAGE;
 		}
 		else
 		{
@@ -2126,7 +2126,7 @@ void P_FallingDamage (AActor *actor)
 		}
 		if (vel >= 84)
 		{ // automatic death
-			damage = 1000000;
+			damage = TELEFRAG_DAMAGE;
 		}
 		else
 		{
@@ -2156,7 +2156,7 @@ void P_FallingDamage (AActor *actor)
 	{
 		S_Sound (actor, CHAN_AUTO, "*land", 1, ATTN_NORM);
 		P_NoiseAlert (actor, actor, true);
-		if (damage == 1000000 && (actor->player->cheats & (CF_GODMODE | CF_BUDDHA)))
+		if (damage >= TELEFRAG_DAMAGE && (actor->player->cheats & (CF_GODMODE | CF_BUDDHA | CF_POWERBUDDHA )))
 		{
 			damage = 999;
 		}

@@ -1458,7 +1458,7 @@ class PowerBuddha : Powerup
 		if (Owner== null || Owner.player == null)
 			return;
 
-		Owner.player.cheats |= CF_BUDDHA;
+		Owner.player.cheats |= CF_POWERBUDDHA;
 	}
 
 	override void EndEffect ()
@@ -1468,7 +1468,7 @@ class PowerBuddha : Powerup
 		if (Owner== null || Owner.player == null)
 			return;
 
-		Owner.player.cheats &= ~CF_BUDDHA;
+		Owner.player.cheats &= ~CF_POWERBUDDHA;
 	}
 }
 

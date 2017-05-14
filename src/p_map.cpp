@@ -2764,7 +2764,7 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 	double		newz = thing->Z();
 
 	auto f1 = thing->flags & MF_PICKUP;
-	thing->flags &= MF_PICKUP;
+	thing->flags &= ~MF_PICKUP;
 	auto res = P_CheckPosition(thing, pos, tm);
 	thing->flags |= f1;
 	if (!res)

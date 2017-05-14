@@ -2977,7 +2977,7 @@ FUNC(LS_SetPlayerProperty)
 	switch (arg2)
 	{
 	case PROP_BUDDHA:
-		mask = CF_BUDDHA;
+		mask = CF_POWERBUDDHA;
 		break;
 	case PROP_FROZEN:
 		mask = CF_FROZEN;

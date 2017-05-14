@@ -70,6 +70,20 @@ void PolyCull::CullNode(void *node)
 
 void PolyCull::CullSubsector(subsector_t *sub)
 {
+	// Check if subsector is clipped entirely by the portal clip plane
+	bool visible = false;
+	for (uint32_t i = 0; i < sub->numlines; i++)
+	{
+		seg_t *line = &sub->firstline[i];
+		if (PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D > 0.0)
+		{
+			visible = true;
+			break;
+		}
+	}
+	if (!visible)
+		return;
+
 	// Update sky heights for the scene
 	if (!FirstSkyHeight)
 	{
@@ -98,6 +112,13 @@ void PolyCull::CullSubsector(subsector_t *sub)
 			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 				continue;
 
+			// Skip line if entirely behind portal clipping plane
+			if ((PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D <= 0.0) ||
+				(PortalClipPlane.A * line->v2->fX() + PortalClipPlane.B * line->v2->fY() + PortalClipPlane.D <= 0.0))
+			{
+				continue;
+			}
+
 			angle_t angle1, angle2;
 			if (GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2))
 			{
@@ -119,11 +140,11 @@ void PolyCull::InvertSegments()
 	angle_t cur = 0;
 	for (const auto &segment : TempInvertSolidSegments)
 	{
-		if (segment.Start != 0 || segment.End != ANGLE_MAX)
+		if (cur < segment.Start)
 			MarkSegmentCulled(cur, segment.Start - 1);
 		cur = segment.End + 1;
 	}
-	if (cur != 0)
+	if (cur < ANGLE_MAX)
 		MarkSegmentCulled(cur, ANGLE_MAX);
 }
 
@@ -241,32 +262,6 @@ bool PolyCull::CheckBBox(float *bspcoord)
 
 bool PolyCull::GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const
 {
-#if 0
-	// Clip line to the portal clip plane
-	float distance1 = Vec4f::dot(PortalClipPlane, Vec4f((float)x1, (float)y1, 0.0f, 1.0f));
-	float distance2 = Vec4f::dot(PortalClipPlane, Vec4f((float)x2, (float)y2, 0.0f, 1.0f));
-	if (distance1 < 0.0f && distance2 < 0.0f)
-	{
-		return false;
-	}
-	else if (distance1 < 0.0f || distance2 < 0.0f)
-	{
-		double t1 = 0.0f, t2 = 1.0f;
-		if (distance1 < 0.0f)
-			t1 = clamp(distance1 / (distance1 - distance2), 0.0f, 1.0f);
-		else
-			t2 = clamp(distance2 / (distance1 - distance2), 0.0f, 1.0f);
-		double nx1 = x1 * (1.0 - t1) + x2 * t1;
-		double ny1 = y1 * (1.0 - t1) + y2 * t1;
-		double nx2 = x1 * (1.0 - t2) + x2 * t2;
-		double ny2 = y1 * (1.0 - t2) + y2 * t2;
-		x1 = nx1;
-		x2 = nx2;
-		y1 = ny1;
-		y2 = ny2;
-	}
-#endif
-
 	angle2 = PointToPseudoAngle(x1, y1);
 	angle1 = PointToPseudoAngle(x2, y2);
 	return !IsSegmentCulled(angle1, angle2);

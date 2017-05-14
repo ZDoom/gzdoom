@@ -517,7 +517,6 @@ set( PLAT_UNIX_SOURCES
 	posix/unix/i_specialpaths.cpp
 	posix/unix/iwadpicker_gtk.cpp )
 set( PLAT_OSX_SOURCES
-	sound/mididevices/music_audiotoolbox_mididevice.cpp
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/i_specialpaths.mm
 	posix/osx/zdoom.icns )
@@ -1254,12 +1253,17 @@ if( MSVC )
 	create_default_target_launcher( zdoom WORKING_DIRECTORY ${ZDOOM_OUTPUT_DIR} )
 endif()
 
-if( NOT WIN32 )
+if( NOT WIN32 AND NOT APPLE )
 	FILE( WRITE ${CMAKE_CURRENT_BINARY_DIR}/link-make "if [ ! -e ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME} ]; then ln -sf ${CMAKE_CURRENT_BINARY_DIR}/${ZDOOM_EXE_NAME} ${ZDOOM_OUTPUT_DIR}/${ZDOOM_EXE_NAME}; fi" )
 	add_custom_command( TARGET zdoom POST_BUILD
 		COMMAND chmod +x ${CMAKE_CURRENT_BINARY_DIR}/link-make
 		COMMAND /bin/sh -c ${CMAKE_CURRENT_BINARY_DIR}/link-make )
 endif()
+
+add_custom_command(TARGET zdoom POST_BUILD
+	COMMAND ${CMAKE_COMMAND} -E copy_if_different
+	${CMAKE_SOURCE_DIR}/soundfont/gzdoom.sf2 $<TARGET_FILE_DIR:zdoom>)
+
 if( CMAKE_COMPILER_IS_GNUCXX )
 	# GCC misoptimizes this file
 	set_source_files_properties( oplsynth/fmopl.cpp PROPERTIES COMPILE_FLAGS "-fno-tree-dominator-opts -fno-tree-fre" )
@@ -1278,7 +1282,7 @@ endif()
 
 if( APPLE )
 	set_target_properties(zdoom PROPERTIES
-		LINK_FLAGS "-framework AudioToolbox -framework AudioUnit -framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
+		LINK_FLAGS "-framework Carbon -framework Cocoa -framework IOKit -framework OpenGL"
 		MACOSX_BUNDLE_INFO_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/posix/osx/zdoom-info.plist" )
 
 endif()

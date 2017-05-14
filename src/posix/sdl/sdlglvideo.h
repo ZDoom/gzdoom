@@ -72,6 +72,8 @@ public:
 	int GetClientWidth();
 	int GetClientHeight();
 
+	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
+
 	SDL_Window *GetSDLWindow() override { return Screen; }
 
 protected:

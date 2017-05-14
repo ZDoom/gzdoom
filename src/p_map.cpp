@@ -2763,7 +2763,11 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 	FCheckPosition tm;
 	double		newz = thing->Z();
 
-	if (!P_CheckPosition(thing, pos, tm))
+	auto f1 = thing->flags & MF_PICKUP;
+	thing->flags &= ~MF_PICKUP;
+	auto res = P_CheckPosition(thing, pos, tm);
+	thing->flags |= f1;
+	if (!res)
 	{
 		// Ignore PCM_DROPOFF. Not necessary here: a little later it is.
 		if (!flags || (!(flags & PCM_NOACTORS) && !(flags & PCM_NOLINES)))

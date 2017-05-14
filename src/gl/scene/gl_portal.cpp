@@ -119,6 +119,7 @@ void GLPortal::ClearScreen()
 	gl_RenderState.mViewMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.ortho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1.0f, 1.0f);
 	gl_RenderState.ApplyMatrices();
+	glVertexAttrib4f(VATTR_COLOR, 0, 0, 0, 1);	// color should be black.
 
 	glDisable(GL_MULTISAMPLE);
 	glDisable(GL_DEPTH_TEST);

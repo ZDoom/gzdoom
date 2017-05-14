@@ -80,6 +80,8 @@ public:
 
 	static const uint32_t SkySubsectorDepth = 0x7fffffff;
 
+	line_t *LastPortalLine = nullptr;
+
 private:
 	void ClearBuffers();
 	void RenderPortals(int portalDepth);

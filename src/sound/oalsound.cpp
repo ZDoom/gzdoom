@@ -2320,18 +2320,6 @@ void OpenALSoundRenderer::PrintDriversList()
 	}
 }
 
-MIDIDevice* OpenALSoundRenderer::CreateMIDIDevice() const
-{
-#ifdef _WIN32
-	extern unsigned mididevice;
-	return CreateWinMIDIDevice(mididevice);
-#elif defined __APPLE__
-	return CreateAudioToolboxMIDIDevice();
-#else
-	return new OPLMIDIDevice(nullptr);
-#endif
-}
-
 void OpenALSoundRenderer::PurgeStoppedSources()
 {
 	// Release channels that are stopped

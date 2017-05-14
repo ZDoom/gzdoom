@@ -43,43 +43,9 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	if (Portal->mType == PORTS_HORIZON || Portal->mType == PORTS_PLANE)
 		return;
 
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-
-	PolyClipPlane portalPlane(0.0f, 0.0f, 0.0f, 1.0f);
-	if (Portal->mType != PORTS_SKYVIEWPOINT)
-	{
-		float minHeight;
-		float maxHeight;
-		bool first = true;
-		for (const auto &range : Shape)
-		{
-			for (int i = 0; i < range.Count; i++)
-			{
-				if (first)
-				{
-					minHeight = range.Vertices[i].z;
-					maxHeight = range.Vertices[i].z;
-					first = false;
-				}
-				else
-				{
-					minHeight = MIN(minHeight, range.Vertices[i].z);
-					maxHeight = MAX(maxHeight, range.Vertices[i].z);
-				}
-			}
-		}
-
-		if (!first && minHeight > viewpoint.Pos.Z)
-		{
-			portalPlane = PolyClipPlane(0.0f, 0.0f, 1.0f, -minHeight);
-		}
-		else if (!first && maxHeight < viewpoint.Pos.Z)
-		{
-			portalPlane = PolyClipPlane(0.0f, 0.0f, -1.0f, maxHeight);
-		}
-	}
-
 	SaveGlobals();
+
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
 	// To do: get this information from PolyRenderer instead of duplicating the code..
 	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
@@ -100,6 +66,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
+	PolyClipPlane portalPlane(0.0f, 0.0f, 0.0f, 1.0f);
 	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
 	RenderPortal.SetPortalSegments(Segments);
 	RenderPortal.Render(portalDepth);
@@ -211,14 +178,29 @@ void PolyDrawLinePortal::Render(int portalDepth)
 		worldToView = TriMatrix::scale(-1.0f, 1.0f, 1.0f) * worldToView;
 	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
 
-	// Calculate plane clipping
+	// Find portal destination line and make sure it faces the right way
 	line_t *clipLine = Portal ? Portal->mDestination : Mirror;
-	DVector2 planePos = clipLine->v1->fPos();
-	DVector2 planeNormal = (clipLine->v2->fPos() - clipLine->v1->fPos()).Rotated90CW();
+	DVector2 pt1 = clipLine->v1->fPos() - viewpoint.Pos;
+	DVector2 pt2 = clipLine->v2->fPos() - viewpoint.Pos;
+	bool backfacing = (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0);
+	vertex_t *v1 = backfacing ? clipLine->v1 : clipLine->v2;
+	vertex_t *v2 = backfacing ? clipLine->v2 : clipLine->v1;
+
+	// Calculate plane clipping
+	DVector2 planePos = v1->fPos();
+	DVector2 planeNormal = (v2->fPos() - v1->fPos()).Rotated90CW();
 	planeNormal.MakeUnit();
 	double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
 	PolyClipPlane portalPlane((float)planeNormal.X, (float)planeNormal.Y, (float)0.0f, (float)planeD);
 
+	// Cull everything outside the portal line
+	// To do: this doesn't work for some strange reason..
+	/*angle_t angle1 = PolyCull::PointToPseudoAngle(v1->fX(), v1->fY());
+	angle_t angle2 = PolyCull::PointToPseudoAngle(v2->fX(), v2->fY());
+	Segments.clear();
+	Segments.push_back({ angle1, angle2 });*/
+
+	RenderPortal.LastPortalLine = clipLine;
 	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
 	RenderPortal.SetPortalSegments(Segments);
 	RenderPortal.Render(portalDepth);
@@ -296,6 +278,9 @@ void PolyDrawLinePortal::SaveGlobals()
 		P_TranslatePortalXY(src, viewpoint.Path[0].X, viewpoint.Path[0].Y);
 		P_TranslatePortalXY(src, viewpoint.Path[1].X, viewpoint.Path[1].Y);
 
+		if (viewpoint.camera)
+			viewpoint.camera->renderflags &= ~RF_INVISIBLE;
+
 		if (!viewpoint.showviewer && viewpoint.camera && P_PointOnLineSidePrecise(viewpoint.Path[0], dst) != P_PointOnLineSidePrecise(viewpoint.Path[1], dst))
 		{
 			double distp = (viewpoint.Path[0] - viewpoint.Path[1]).Length();
@@ -312,8 +297,8 @@ void PolyDrawLinePortal::SaveGlobals()
 		}
 	}
 
-	//camera = nullptr;
-	//viewsector = R_PointInSubsector(ViewPos)->sector;
+	viewpoint.camera = nullptr;
+	viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
 	R_SetViewAngle(viewpoint, viewwindow);
 
 	if (Mirror)

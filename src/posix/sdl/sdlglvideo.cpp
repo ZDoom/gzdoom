@@ -555,3 +555,38 @@ int SDLGLFB::GetClientHeight()
 	SDL_GL_GetDrawableSize(Screen, nullptr, &height);
 	return height;
 }
+
+void SDLGLFB::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
+{
+	int w, h;
+	SDL_GetWindowSize (Screen, &w, &h);
+
+	// Detect if we're doing scaling in the Window and adjust the mouse
+	// coordinates accordingly. This could be more efficent, but I
+	// don't think performance is an issue in the menus.
+	if(IsFullscreen())
+	{
+		int realw = w, realh = h;
+		ScaleWithAspect (realw, realh, SCREENWIDTH, SCREENHEIGHT);
+		if (realw != SCREENWIDTH || realh != SCREENHEIGHT)
+		{
+			double xratio = (double)SCREENWIDTH/realw;
+			double yratio = (double)SCREENHEIGHT/realh;
+			if (realw < w)
+			{
+				x = (x - (w - realw)/2)*xratio;
+				y *= yratio;
+			}
+			else
+			{
+				y = (y - (h - realh)/2)*yratio;
+				x *= xratio;
+			}
+		}
+	}
+	else
+	{
+		x = (int16_t)(x*Width/w);
+		y = (int16_t)(y*Height/h);
+	}
+}

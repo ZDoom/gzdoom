@@ -1027,8 +1027,17 @@ void P_CreateLinkedPortals()
 	{
 		if (linePortals[i].mType == PORTT_LINKED)
 		{
-			if (CollectSectors(id, linePortals[i].mOrigin->frontsector)) id++;
-			if (CollectSectors(id, linePortals[i].mDestination->frontsector)) id++;
+			if (linePortals[i].mDestination == nullptr)
+			{
+				Printf("Linked portal on line %d is unconnected and will be disabled\n", linePortals[i].mOrigin->Index());
+				linePortals[i].mOrigin->portalindex = UINT_MAX;
+				linePortals[i].mType = PORTT_VISUAL;
+			}
+			else
+			{
+				if (CollectSectors(id, linePortals[i].mOrigin->frontsector)) id++;
+				if (CollectSectors(id, linePortals[i].mDestination->frontsector)) id++;
+			}
 		}
 	}
 
@@ -1237,6 +1246,7 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 		{
 			int othergroup = wsec->GetOppositePortalGroup(sector_t::ceiling);
 			DVector2 pos = Displacements.getOffset(startgroup, othergroup) + position;
+			if (processMask.getBit(othergroup)) break;
 			processMask.setBit(othergroup);
 			out.Add(othergroup | FPortalGroupArray::UPPER);
 			wsec = P_PointInSector(pos);	// get upper sector at the exact spot we want to check and repeat
@@ -1247,6 +1257,7 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 		{
 			int othergroup = wsec->GetOppositePortalGroup(sector_t::floor);
 			DVector2 pos = Displacements.getOffset(startgroup, othergroup) + position;
+			if (processMask.getBit(othergroup)) break;
 			processMask.setBit(othergroup);
 			out.Add(othergroup | FPortalGroupArray::LOWER);
 			wsec = P_PointInSector(pos);	// get lower sector at the exact spot we want to check and repeat

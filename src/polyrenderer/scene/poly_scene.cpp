@@ -219,7 +219,7 @@ void RenderPolyScene::RenderPolySubsector(subsector_t *sub, uint32_t subsectorDe
 			}
 
 			// Render wall, and update culling info if its an occlusion blocker
-			if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals))
+			if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals, LastPortalLine))
 			{
 				Cull.MarkSegmentCulled(angle1, angle2);
 			}
@@ -319,7 +319,7 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals))
+	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals, LastPortalLine))
 	{
 		Cull.MarkSegmentCulled(angle1, angle2);
 	}

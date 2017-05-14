@@ -168,8 +168,6 @@ public:
 
 	virtual void DrawWaveDebug(int mode);
 
-	virtual MIDIDevice* CreateMIDIDevice() const = 0;
-
     static SoundDecoder *CreateDecoder(FileReader *reader);
 };
 

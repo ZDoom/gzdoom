@@ -963,7 +963,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		}
 		return 0;
 	}
-	if (target == source && damage < TELEFRAG_DAMAGE)
+	if (target == source && (!telefragDamage || target->flags7 & MF7_LAXTELEFRAGDMG))
 	{
 		damage = int(damage * target->SelfDamageFactor);
 	}

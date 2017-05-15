@@ -1360,7 +1360,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			// but telefragging should still do enough damage to kill the player)
 			// Ignore players that are already dead.
 			// [MC]Buddha2 absorbs telefrag damage, and anything else thrown their way.
-			if (!(flags & DMG_FORCED) && (((player->cheats & CF_BUDDHA2) || (((player->cheats & CF_BUDDHA|CF_POWERBUDDHA) || (player->mo->flags7 & MF7_BUDDHA)) && !telefragDamage)) && (player->playerstate != PST_DEAD)))
+			if (!(flags & DMG_FORCED) && (((player->cheats & CF_BUDDHA2) || (((player->cheats & CF_BUDDHA) || (player->cheats & CF_POWERBUDDHA) || (player->mo->flags7 & MF7_BUDDHA)) && !telefragDamage)) && (player->playerstate != PST_DEAD)))
 			{
 				// If this is a voodoo doll we need to handle the real player as well.
 				player->mo->health = target->health = player->health = 1;

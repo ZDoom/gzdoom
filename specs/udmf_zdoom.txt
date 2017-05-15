@@ -111,7 +111,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       wrapmidtex = <bool>;        // Line's mid textures are wrapped.
       midtex3d = <bool>;          // Actors can walk on mid texture.
       midtex3dimpassible = <bool>;// Used in conjuction with midtex3d - causes the mid
-                                  // texture to behave like an impassible line (projectiles
+                                  // texture to behave like an impassable line (projectiles
                                   // pass through it).
       checkswitchrange = <bool>;  // Switches can only be activated when vertically reachable.
       blockprojectiles = <bool>;  // Line blocks all projectiles

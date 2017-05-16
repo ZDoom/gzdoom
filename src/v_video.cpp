@@ -1768,9 +1768,9 @@ void ScaleWithAspect (int &w, int &h, int Width, int Height)
 	}
 	double y = w/yratio;
 	if (y > h)
-		w = h*yratio;
+		w = static_cast<int>(h * yratio);
 	else
-		h = y;
+		h = static_cast<int>(y);
 }
 
 void IVideo::DumpAdapters ()

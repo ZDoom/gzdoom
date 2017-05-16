@@ -1450,26 +1450,6 @@ class PowerBuddha : Powerup
 	{
 		Powerup.Duration -60;
 	}
-
-	override void InitEffect ()
-	{
-		Super.InitEffect();
-
-		if (Owner== null || Owner.player == null)
-			return;
-
-		Owner.player.cheats |= CF_POWERBUDDHA;
-	}
-
-	override void EndEffect ()
-	{
-		Super.EndEffect();
-
-		if (Owner== null || Owner.player == null)
-			return;
-
-		Owner.player.cheats &= ~CF_POWERBUDDHA;
-	}
 }
 
 //===========================================================================

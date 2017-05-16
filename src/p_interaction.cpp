@@ -1898,8 +1898,8 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 	target->health -= damage;
 	if (target->health <= 0)
 	{ // Death
-		if ((((player->cheats & CF_BUDDHA) ||
-			(player->mo->flags7 & MF7_BUDDHA)) && damage < TELEFRAG_DAMAGE) || (player->cheats & CF_BUDDHA2) ||
+		if ((((player->cheats & CF_BUDDHA) || (player->cheats & CF_BUDDHA2) ||
+			(player->mo->flags7 & MF7_BUDDHA)) && damage < TELEFRAG_DAMAGE) ||
 			(player->mo->FindInventory (PClass::FindActor(NAME_PowerBuddha),true) != nullptr))
 		{ // [SP] Save the player... 
 			player->health = target->health = 1;

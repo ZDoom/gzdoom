@@ -4726,11 +4726,11 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 	PARAM_CLASS(puffType, AActor);
 	PARAM_INT_DEF(flags);
 	PARAM_POINTER_DEF(victim, FTranslatedLineTarget);
-	PARAM_FLOAT_DEF(sz);
+	PARAM_FLOAT_DEF(offsetz);
 
 	int acdmg;
 	if (puffType == nullptr) puffType = PClass::FindActor("BulletPuff");	// P_LineAttack does not work without a puff to take info from.
-	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg, sz);
+	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg, offsetz);
 	if (numret > 0) ret[0].SetObject(puff);
 	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
 	return numret;

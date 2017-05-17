@@ -207,6 +207,7 @@ xx(QuestItem28)
 xx(QuestItem29)
 xx(PowerDoubleFiringSpeed)
 xx(PowerInfiniteAmmo)
+xx(PowerBuddha)
 
 xx(AcolyteBlue)
 xx(SpectralLightningV1)

@@ -398,6 +398,10 @@ enum ActorFlag7
 	MF7_FORCEINFIGHTING	= 0x40000000,	// overrides a map setting of 'no infighting'.
 	MF7_SPRITEFLIP		= 0x80000000,	// sprite flipped on x-axis
 };
+enum ActorFlag8
+{
+	MF8_FRIGHTENING		= 0x00000001,	// for those moments when halloween just won't do
+};
 
 // --- mobj.renderflags ---
 enum ActorRenderFlag
@@ -517,6 +521,7 @@ typedef TFlags<ActorFlag4> ActorFlags4;
 typedef TFlags<ActorFlag5> ActorFlags5;
 typedef TFlags<ActorFlag6> ActorFlags6;
 typedef TFlags<ActorFlag7> ActorFlags7;
+typedef TFlags<ActorFlag8> ActorFlags8;
 typedef TFlags<ActorRenderFlag> ActorRenderFlags;
 typedef TFlags<ActorBounceFlag, uint16_t> ActorBounceFlags;
 DEFINE_TFLAGS_OPERATORS (ActorFlags)
@@ -526,6 +531,7 @@ DEFINE_TFLAGS_OPERATORS (ActorFlags4)
 DEFINE_TFLAGS_OPERATORS (ActorFlags5)
 DEFINE_TFLAGS_OPERATORS (ActorFlags6)
 DEFINE_TFLAGS_OPERATORS (ActorFlags7)
+DEFINE_TFLAGS_OPERATORS (ActorFlags8)
 DEFINE_TFLAGS_OPERATORS (ActorRenderFlags)
 DEFINE_TFLAGS_OPERATORS (ActorBounceFlags)
 
@@ -1022,6 +1028,7 @@ public:
 	ActorFlags5		flags5;			// OMG! We need another one.
 	ActorFlags6		flags6;			// Shit! Where did all the flags go?
 	ActorFlags7		flags7;			// WHO WANTS TO BET ON 8!?
+	ActorFlags8		flags8;			// I see your 8, and raise you a bet for 9.
 	double			Floorclip;		// value to use for floor clipping
 	double			radius, Height;		// for movement checking
 

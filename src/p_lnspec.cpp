@@ -2873,7 +2873,7 @@ FUNC(LS_SetPlayerProperty)
 	// Add or remove a power
 	if (arg2 >= PROP_INVULNERABILITY && arg2 <= PROP_SPEED)
 	{
-		static ENamedName powers[13] =
+		static ENamedName powers[14] =
 		{
 			NAME_PowerInvulnerable,
 			NAME_PowerStrength,
@@ -2887,7 +2887,8 @@ FUNC(LS_SetPlayerProperty)
 			NAME_None,
 			NAME_PowerSpeed,
 			NAME_PowerInfiniteAmmo,
-			NAME_PowerDoubleFiringSpeed
+			NAME_PowerDoubleFiringSpeed,
+			NAME_PowerBuddha
 		};
 		int power = arg2 - PROP_INVULNERABILITY;
 
@@ -2977,7 +2978,7 @@ FUNC(LS_SetPlayerProperty)
 	switch (arg2)
 	{
 	case PROP_BUDDHA:
-		mask = CF_POWERBUDDHA;
+		mask = CF_BUDDHA;
 		break;
 	case PROP_FROZEN:
 		mask = CF_FROZEN;

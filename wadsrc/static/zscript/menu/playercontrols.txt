@@ -363,6 +363,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 	int mMinrange, mMaxrange;
 	int mStep;
 	int mSelection;
+	int mDrawX;
 
 	//=============================================================================
 	//
@@ -380,6 +381,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 		mMinrange = min;
 		mMaxrange = max;
 		mStep = step;
+		mDrawX = 0;
 	}
 
 	//=============================================================================
@@ -398,6 +400,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 		mMinrange = min;
 		mMaxrange = max;
 		mStep = step;
+		mDrawX = 0;
 	}
 
 	//=============================================================================
@@ -466,8 +469,8 @@ class ListMenuItemSlider : ListMenuItemSelectable
 			lm.ReleaseFocus();
 		}
 
-		int slide_left = SmallFont.StringWidth ("Green") + 8 + int(mXpos);
-		int slide_right = slide_left + 12*8;	// 12 char cells with 8 pixels each.
+		int slide_left = mDrawX + 8;
+		int slide_right = slide_left + 10*8;	// 12 char cells with 8 pixels each.
 
 		if (type == Menu.MOUSE_Click)
 		{
@@ -520,6 +523,8 @@ class ListMenuItemSlider : ListMenuItemSelectable
 
 		double x = SmallFont.StringWidth ("Green") + 8 + mXpos;
 		double x2 = SmallFont.StringWidth (text) + 8 + mXpos;
-		DrawSlider (MAX(x2, x), mYpos);
+		mDrawX = MAX(x2, x);
+
+		DrawSlider (mDrawX, mYpos);
 	}
 }

@@ -106,11 +106,11 @@ class ListMenu : Menu
 
 	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.Type == UIEvent.Type_KeyDown)
+		if (ev.Type == UIEvent.Type_KeyDown && ev.KeyChar > 0)
 		{
 			// tolower
 			int ch = ev.KeyChar;
-			ch = ch >= 65 && ch <91? ch + 32 : ch;
+			ch = ch >= 65 && ch < 91 ? ch + 32 : ch;
 
 			for(int i = mDesc.mSelectedItem + 1; i < mDesc.mItems.Size(); i++)
 			{

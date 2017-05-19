@@ -750,6 +750,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 		// is no longer necessary.
 
 		ceiling = true;
+		Colormap = frontsector->Colormap;
 		for (k = 0; k < (int)x.ffloors.Size(); k++)
 		{
 			rover = x.ffloors[k];

@@ -4098,7 +4098,7 @@ void AActor::Tick ()
 			CheckPortalTransition(false);
 			LinkToWorld(&ctx);
 		}
-		flags8 &= MF8_INSCROLLSEC;
+		flags8 &= ~MF8_INSCROLLSEC;
 	}
 	else
 	{
@@ -4259,7 +4259,7 @@ void AActor::Tick ()
 			int countx, county;
 
 			// Clear the flag for the next frame.
-			flags8 &= MF8_INSCROLLSEC;
+			flags8 &= ~MF8_INSCROLLSEC;
 
 			// killough 3/7/98: Carry things on floor
 			// killough 3/20/98: use new sector list which reflects true members

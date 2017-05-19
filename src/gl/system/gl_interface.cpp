@@ -213,6 +213,16 @@ void gl_LoadExtensions()
 			gl.glslversion = 0;
 			gl.flags |= RFL_NO_CLIP_PLANES;
 		}
+		else if (gl.glslversion < 1.4f && !CheckExtension("GL_ARB_uniform_buffer_object"))
+		{
+			// Some old ATI drivers report OpenGL 3.1 with GLSL version 1.3 and no support for uniform buffers.
+			// We have no choice but to force them down to OpenGL 2.x.
+			gl.legacyMode = true;
+			gl.lightmethod = LM_LEGACY;
+			gl.buffermethod = BM_LEGACY;
+			gl.glslversion = 0;
+			gl.flags |= RFL_NO_CLIP_PLANES;
+		}
 		else
 		{
 			gl.legacyMode = false;

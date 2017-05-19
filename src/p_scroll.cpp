@@ -256,6 +256,11 @@ void DScroller::Tick ()
 		case EScroll::sc_carry:
 			level.Scrolls[m_Affectee].X += dx;
 			level.Scrolls[m_Affectee].Y += dy;
+			// mark all potentially affected things here so that the very expensive calculation loop in AActor::Tick does not need to run for actors which do not touch a scrolling sector.
+			for (auto n = level.sectors[m_Affectee].touching_thinglist; n; n = n->m_snext)
+			{
+				n->m_thing->flags8 |= MF8_INSCROLLSEC;
+			}
 			break;
 
 		case EScroll::sc_carry_ceiling:       // to be added later

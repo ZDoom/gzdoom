@@ -81,6 +81,7 @@
 #include "doomstat.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "s_sound.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -1060,6 +1061,7 @@ void DoMain (HINSTANCE hInstance)
 	{
 		I_ShutdownGraphics ();
 		RestoreConView ();
+		S_StopMusic(true);
 		I_FlushBufferedConsoleStuff();
 		if (error.GetMessage ())
 		{

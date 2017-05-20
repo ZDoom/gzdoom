@@ -4098,6 +4098,7 @@ void AActor::Tick ()
 			CheckPortalTransition(false);
 			LinkToWorld(&ctx);
 		}
+		flags8 &= ~MF8_INSCROLLSEC;
 	}
 	else
 	{
@@ -4250,11 +4251,15 @@ void AActor::Tick ()
 
 		// [RH] Consider carrying sectors here
 		DVector2 cumm(0, 0);
-		if ((level.Scrolls.Size() != 0 || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
+
+		if ((((flags8 & MF8_INSCROLLSEC) && level.Scrolls.Size() > 0) || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
 		{
 			double height, waterheight;	// killough 4/4/98: add waterheight
 			const msecnode_t *node;
 			int countx, county;
+
+			// Clear the flag for the next frame.
+			flags8 &= ~MF8_INSCROLLSEC;
 
 			// killough 3/7/98: Carry things on floor
 			// killough 3/20/98: use new sector list which reflects true members
@@ -5079,6 +5084,8 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	{
 		level.total_secrets++;
 	}
+	// force scroller check in the first tic.
+	actor->flags8 |= MF8_INSCROLLSEC;
 	return actor;
 }
 

@@ -174,11 +174,6 @@ xx(MAX_RK,		max,	RIRIKI,		MAX_RR,	4, REGT_INT),
 xx(ABS,			abs,	RIRI,		NOP,	0, 0),			// dA = abs(dB)
 xx(NEG,			neg,	RIRI,		NOP,	0, 0),			// dA = -dB
 xx(NOT,			not,	RIRI,		NOP,	0, 0),			// dA = ~dB
-xx(SEXT,		sext,	RIRII8,		NOP,	0, 0),		// dA = dB, sign extended by shifting left then right by C
-xx(ZAP_R,		zap,	RIRIRI,		NOP,	0, 0),		// dA = dB, with bytes zeroed where bits in C/dC are one
-xx(ZAP_I,		zap,	RIRII8,		NOP,	0, 0),
-xx(ZAPNOT_R,	zapnot,	RIRIRI,		NOP,	0, 0),		// dA = dB, with bytes zeroed where bits in C/dC are zero
-xx(ZAPNOT_I,	zapnot,	RIRII8,		NOP,	0, 0),
 xx(EQ_R,		beq,	CIRR,		NOP,	0, 0),			// if ((dB == dkC) != A) then pc++
 xx(EQ_K,		beq,	CIRK,		EQ_R,	4, REGT_INT),
 xx(LT_RR,		blt,	CIRR,		NOP,	0, 0),			// if ((dkB < dkC) != A) then pc++

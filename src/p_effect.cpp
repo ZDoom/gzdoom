@@ -814,7 +814,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 	// Create the inner trail.
 	if (color2 != -1 && r_rail_trailsparsity > 0 && spawnclass == NULL)
 	{
-		double stepsize = 3 * r_rail_spiralsparsity * sparsity;
+		double stepsize = 3 * r_rail_trailsparsity * sparsity;
 		int trail_steps = xs_FloorToInt(steps * r_rail_trailsparsity / sparsity);
 
 		color2 = color2 == 0 ? -1 : ParticleColor(color2);
@@ -891,7 +891,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 		if (sparsity < 1)
 			sparsity = 32;
 
-		double stepsize = 3 * r_rail_spiralsparsity * sparsity;
+		double stepsize = sparsity;
 		int trail_steps = (int)((steps * 3) / sparsity);
 		DVector3 diff(0, 0, 0);
 

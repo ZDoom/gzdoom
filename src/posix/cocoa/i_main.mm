@@ -32,6 +32,7 @@
  */
 
 #include "i_common.h"
+#include "s_sound.h"
 
 #include <sys/sysctl.h>
 #include <unistd.h>
@@ -125,6 +126,7 @@ void popterm()
 void Mac_I_FatalError(const char* const message)
 {
 	I_SetMainWindowVisible(false);
+	S_StopMusic(true);
 
 	FConsoleWindow::GetInstance().ShowFatalError(message);
 }

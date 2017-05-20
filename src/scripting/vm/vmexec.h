@@ -1195,28 +1195,6 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		reg.d[a] = ~reg.d[B];
 		NEXTOP;
 
-	OP(SEXT):
-		ASSERTD(a); ASSERTD(B);
-		reg.d[a] = (VM_SWORD)(reg.d[B] << C) >> C;
-		NEXTOP;
-
-	OP(ZAP_R):
-		ASSERTD(a); ASSERTD(B); ASSERTD(C);
-		reg.d[a] = reg.d[B] & ZapTable[(reg.d[C] & 15) ^ 15];
-		NEXTOP;
-	OP(ZAP_I):
-		ASSERTD(a); ASSERTD(B);
-		reg.d[a] = reg.d[B] & ZapTable[(C & 15) ^ 15];
-		NEXTOP;
-	OP(ZAPNOT_R):
-		ASSERTD(a); ASSERTD(B); ASSERTD(C);
-		reg.d[a] = reg.d[B] & ZapTable[reg.d[C] & 15];
-		NEXTOP;
-	OP(ZAPNOT_I):
-		ASSERTD(a); ASSERTD(B);
-		reg.d[a] = reg.d[B] & ZapTable[C & 15];
-		NEXTOP;
-
 	OP(EQ_R):
 		ASSERTD(B); ASSERTD(C);
 		CMPJMP(reg.d[B] == reg.d[C]);

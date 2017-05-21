@@ -933,6 +933,7 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 {
 	GL_IRECT bounds;
 
+	P_FindParticleSubsectors();	// make sure that all recently spawned particles have a valid subsector.
 	bounds.left=0;
 	bounds.top=0;
 	bounds.width=width;

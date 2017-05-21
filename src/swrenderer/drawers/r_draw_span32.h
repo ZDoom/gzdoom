@@ -86,9 +86,6 @@ namespace swrenderer
 			texdata.ystep = args.TextureVStep();
 			texdata.xfrac = args.TextureUPos();
 			texdata.yfrac = args.TextureVPos();
-			texdata.yshift = 32 - texdata.ybits;
-			texdata.xshift = texdata.yshift - texdata.xbits;
-			texdata.xmask = ((1 << texdata.xbits) - 1) << texdata.ybits;
 			
 			texdata.source = (const uint32_t*)args.TexturePixels();
 			
@@ -111,7 +108,11 @@ namespace swrenderer
 				}
 			}
 
-			bool is_nearest_filter = !((magnifying && r_magfilter) || (!magnifying && r_minfilter));
+			texdata.yshift = 32 - texdata.ybits;
+			texdata.xshift = texdata.yshift - texdata.xbits;
+			texdata.xmask = ((1 << texdata.xbits) - 1) << texdata.ybits;
+
+			bool is_nearest_filter = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
 			bool is_64x64 = texdata.xbits == 6 && texdata.ybits == 6;
 			
 			auto shade_constants = args.ColormapConstants();

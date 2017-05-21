@@ -255,7 +255,10 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	{
 		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
 		if (!fb->IsValid())
+		{
+			delete fb;
 			fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
+		}
 	}
 
 	retry = 0;

@@ -489,7 +489,7 @@ class PlayerPawn : Actor native
 				Pitch = 0.;
 			}
 		}
-		CalcHeight ();
+		player.mo.CalcHeight ();
 			
 		if (player.attacker && player.attacker != self)
 		{ // Watch killer
@@ -1243,9 +1243,9 @@ class PlayerPawn : Actor native
 			CheckEnvironment();
 			CheckUse();
 			CheckUndoMorph();
-			// Cycle psprites
-			TickPSprites();
-
+			// Cycle psprites.
+			// Note that after this point the PlayerPawn may have changed due to getting unmorphed so 'self' is no longer safe to use.
+			player.mo.TickPSprites();
 			// Other Counters
 			if (player.damagecount)	player.damagecount--;
 			if (player.bonuscount) player.bonuscount--;
@@ -1254,12 +1254,11 @@ class PlayerPawn : Actor native
 			{
 				player.hazardcount--;
 				if (!(level.time % player.hazardinterval) && player.hazardcount > 16*TICRATE)
-					DamageMobj (NULL, NULL, 5, player.hazardtype);
+					player.mo.DamageMobj (NULL, NULL, 5, player.hazardtype);
 			}
-
-			CheckPoison();
-			CheckDegeneration();
-			CheckAirSupply();
+			player.mo.CheckPoison();
+			player.mo.CheckDegeneration();
+			player.mo.CheckAirSupply();
 		}
 	}
 	

@@ -36,6 +36,7 @@
 musicBlock::musicBlock ()
 {
 	memset (this, 0, sizeof(*this));
+	for(auto &oplchannel : oplchannels) oplchannel.Panning = 64;	// default to center panning.
 	for(auto &voice : voices) voice.index = ~0u;	// mark all free.
 }
 

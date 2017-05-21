@@ -57,6 +57,11 @@
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/things/r_playersprite.h"
+#include <chrono>
+
+#ifdef WIN32
+void PeekThreadedErrorPane();
+#endif
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
@@ -217,9 +222,18 @@ namespace swrenderer
 		// Wait for everyone to finish:
 		if (Threads.size() > 1)
 		{
+			using namespace std::chrono_literals;
 			std::unique_lock<std::mutex> end_lock(end_mutex);
 			finished_threads++;
-			end_condition.wait(end_lock, [&]() { return finished_threads == Threads.size(); });
+			if (!end_condition.wait_for(end_lock, 5s, [&]() { return finished_threads == Threads.size(); }))
+			{
+#ifdef WIN32
+				PeekThreadedErrorPane();
+#endif
+				// Invoke the crash reporter so that we can capture the call stack of whatever the hung worker thread is doing
+				int *threadCrashed = nullptr;
+				*threadCrashed = 0xdeadbeef;
+			}
 			finished_threads = 0;
 		}
 

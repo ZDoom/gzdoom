@@ -37,6 +37,7 @@ version "2.5"
 #include "zscript/statusbar/heretic_sbar.txt"
 #include "zscript/statusbar/hexen_sbar.txt"
 #include "zscript/statusbar/strife_sbar.txt"
+#include "zscript/statusbar/harm_sbar.txt"
 #include "zscript/statusbar/sbarinfowrapper.txt"
 
 #include "zscript/inventory/inventory.txt"

@@ -303,6 +303,15 @@ void ST_CreateStatusBar(bool bTitleLevel)
 		{
 			StatusBar = CreateCustomStatusBar(SCRIPT_DEFAULT);
 		}
+		// SBARINFO failed so try the current statusbarclass again.
+		if (StatusBar == nullptr)
+		{
+			auto cls = PClass::FindClass(gameinfo.statusbarclass);
+			if (cls != nullptr)
+			{
+				StatusBar = (DBaseStatusBar *)cls->CreateNew();
+			}
+		}
 	}
 	if (StatusBar == nullptr)
 	{

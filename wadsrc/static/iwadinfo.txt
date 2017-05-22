@@ -39,7 +39,7 @@ IWad
 	Autoname = "harmony"
 	Game = "Doom"
 	Config = "Harmony"
-	Mapinfo = "mapinfo/hacxharm.txt"
+	Mapinfo = "mapinfo/harmony.txt"
 	MustContain = "MAP01", "0HAWK01", "0CARA3", "0NOSE1"
 	BannerColors = "6e b4 d6", "45 4f 7e"
 }
@@ -50,7 +50,7 @@ IWad
 	Game = "Doom"
 	Config = "Hacx"
 	Autoname = "hacx.hacx2"
-	Mapinfo = "mapinfo/hacxharm.txt"
+	Mapinfo = "mapinfo/hacx.txt"
 	MustContain = "MAP01", "HACX-E"
 	BannerColors = "ff ff ff", "00 88 22"
 }
@@ -61,7 +61,7 @@ IWad
 	Game = "Doom"
 	Config = "Hacx"
 	Autoname = "hacx.hacx1"
-	Mapinfo = "mapinfo/hacxharm.txt"
+	Mapinfo = "mapinfo/hacx.txt"
 	MustContain = "MAP01", "HACX-R"
 	BannerColors = "00 00 a8", "a8 a8 a8"
 }

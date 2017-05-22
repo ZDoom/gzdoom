@@ -33,6 +33,11 @@
 #include "r_thread.h"
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
+#include <chrono>
+
+#ifdef WIN32
+void PeekThreadedErrorPane();
+#endif
 
 CVAR(Bool, r_multithreaded, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -73,10 +78,20 @@ void DrawerThreads::Execute(DrawerCommandQueuePtr commands)
 
 void DrawerThreads::WaitForWorkers()
 {
+	using namespace std::chrono_literals;
+
 	// Wait for workers to finish
 	auto queue = Instance();
 	std::unique_lock<std::mutex> end_lock(queue->end_mutex);
-	queue->end_condition.wait(end_lock, [&]() { return queue->tasks_left == 0; });
+	if (!queue->end_condition.wait_for(end_lock, 5s, [&]() { return queue->tasks_left == 0; }))
+	{
+#ifdef WIN32
+		PeekThreadedErrorPane();
+#endif
+		// Invoke the crash reporter so that we can capture the call stack of whatever the hung worker thread is doing
+		int *threadCrashed = nullptr;
+		*threadCrashed = 0xdeadbeef;
+	}
 	end_lock.unlock();
 
 	// Clean up

@@ -1185,10 +1185,11 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	y = particle->Pos.Y;
 	z = particle->Pos.Z;
 	
-	float scalefac=particle->size/4.0f;
-	// [BB] The smooth particles are smaller than the other ones. Compensate for this here.
-	if (gl_particles_style==2)
-		scalefac *= 1.7;
+	float factor;
+	if (gl_particles_style == 1) factor = 1.3f / 7.f;
+	else if (gl_particles_style == 2) factor = 2.5f / 7.f;
+	else factor = 1 / 7.f;
+	float scalefac=particle->size * factor;
 
 	float viewvecX = GLRenderer->mViewVector.X;
 	float viewvecY = GLRenderer->mViewVector.Y;

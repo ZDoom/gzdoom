@@ -1576,8 +1576,7 @@ DEFINE_ACTION_FUNCTION(DSBarInfo, GetProtrusion)
 DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 {
 	auto script = SBarInfoScript[scriptno];
-	if (script == NULL)
-		I_FatalError("Tried to create a status bar with no script!");
+	if (script == nullptr) return nullptr;
 
 	auto sbar = (DBaseStatusBar*)PClass::FindClass("SBarInfoWrapper")->CreateNew();
 	auto core = new DSBarInfo(sbar, script);

@@ -71,13 +71,12 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTextureID picnum, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
+	void RenderWallSprite::Project(RenderThread *thread, AActor *thing, const DVector3 &pos, FTexture *pic, const DVector2 &scale, int renderflags, int spriteshade, bool foggy, FDynamicColormap *basecolormap)
 	{
 		FWallCoords wallc;
 		double x1, x2;
 		DVector2 left, right;
 		double gzb, gzt, tz;
-		FTexture *pic = TexMan(picnum, true);
 		DAngle ang = thing->Angles.Yaw + 90;
 		double angcos = ang.Cos();
 		double angsin = ang.Sin();
@@ -93,7 +92,7 @@ namespace swrenderer
 		left.X = pos.X - x1 * angcos - thread->Viewport->viewpoint.Pos.X;
 		left.Y = pos.Y - x1 * angsin - thread->Viewport->viewpoint.Pos.Y;
 		right.X = left.X + x2 * angcos;
-		right.Y = right.Y + x2 * angsin;
+		right.Y = left.Y + x2 * angsin;
 
 		// Is it off-screen?
 		if (wallc.Init(thread, left, right, TOO_CLOSE_Z))

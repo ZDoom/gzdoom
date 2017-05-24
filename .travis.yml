@@ -43,6 +43,19 @@ matrix:
             - libsdl2-dev
 
     - os: linux
+      compiler: gcc
+      env:
+        - GCC_VERSION=7
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-7
+            - libsdl2-dev
+
+    - os: linux
       compiler: clang
       env:
         - CLANG_VERSION=3.9

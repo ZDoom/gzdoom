@@ -593,8 +593,9 @@ bool EV_CeilingCrushStop (int tag, bool remove)
 
 bool EV_StopCeiling(int tag, line_t *line)
 {
+	int sec;
 	FSectorTagIterator it(tag, line);
-	while (int sec = it.Next())
+	while ((sec = it.Next()) >= 0)
 	{
 		if (level.sectors[sec].ceilingdata)
 		{

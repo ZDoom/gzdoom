@@ -46,7 +46,6 @@ matrix:
       compiler: gcc
       env:
         - GCC_VERSION=7
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel"
       addons:
         apt:
           sources:
@@ -58,15 +57,15 @@ matrix:
     - os: linux
       compiler: clang
       env:
-        - CLANG_VERSION=3.9
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
+        - CLANG_VERSION=4.0
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-3.9
+            - llvm-toolchain-trusty-4.0
           packages:
-            - clang-3.9
+            - clang-4.0
             - libstdc++-5-dev
             - libsdl2-dev
             - libgme-dev

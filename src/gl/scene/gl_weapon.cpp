@@ -437,7 +437,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 			if (psp->Flags & PSPF_ADDBOB)
 			{
-				sx += bobx;
+				sx += (psp->Flags & PSPF_MIRROR) ? -bobx : bobx;
 				sy += boby;
 			}
 

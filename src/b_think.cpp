@@ -395,10 +395,12 @@ void DBot::WhatToGet (AActor *item)
 	else if (item->GetClass()->TypeName == NAME_Megasphere || item->IsKindOf(NAME_Health))
 	{
 		// do the test with the health item that's actually given.
-		if (item->GetClass()->TypeName == NAME_Megasphere) item = GetDefaultByName("MegasphereHealth");
-		if (item != nullptr)
+		AActor* const testItem = NAME_Megasphere == item->GetClass()->TypeName
+			? GetDefaultByName("MegasphereHealth")
+			: item;
+		if (nullptr != testItem)
 		{
-			int maxhealth = P_GetRealMaxHealth(player->mo, item->IntVar(NAME_MaxAmount));
+			const int maxhealth = P_GetRealMaxHealth(player->mo, testItem->IntVar(NAME_MaxAmount));
 			if (player->mo->health >= maxhealth)
 				return;
 		}

@@ -138,7 +138,7 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 	y2 = y1 + (r.height * scale) + 1;
 
 
-	if (!(mirror) != !(psp->Flags & (PSPF_FLIP|PSPF_MIRROR)))
+	if (!(mirror) != !(psp->Flags & (PSPF_FLIP)))
 	{
 		fU2 = tex->GetSpriteUL();
 		fV1 = tex->GetSpriteVT();

@@ -141,6 +141,7 @@ DEFINE_FIELD_BIT(DPSprite, Flags, bAddBob, PSPF_ADDBOB)
 DEFINE_FIELD_BIT(DPSprite, Flags, bPowDouble, PSPF_POWDOUBLE)
 DEFINE_FIELD_BIT(DPSprite, Flags, bCVarFast, PSPF_CVARFAST)
 DEFINE_FIELD_BIT(DPSprite, Flags, bFlip, PSPF_FLIP)
+DEFINE_FIELD_BIT(DPSprite, Flags, bMirror, PSPF_MIRROR)
 
 //------------------------------------------------------------------------
 //

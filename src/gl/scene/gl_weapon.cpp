@@ -98,7 +98,7 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 	// calculate edges of the shape
 	scalex = (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * vw / 320;
 
-	tx = sx - (160 - r.left);
+	tx = (psp->Flags & PSPF_MIRROR) ? ((160 - r.width) - (sx + r.left)) : (sx - (160 - r.left));
 	x1 = tx * scalex + vw/2;
 	if (x1 > vw)	return; // off the right side
 	x1 += viewwindowx;
@@ -107,6 +107,13 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 	x2 = tx * scalex + vw / 2;
 	if (x2 < 0) return; // off the left side
 	x2 += viewwindowx;
+	/*
+	if (psp->Flags & PSPF_MIRROR)
+	{
+		float dist = 320.f - sx;
+		x1 += dist * scalex;
+		x2 += dist * scalex;
+	}*/
 
 
 	// killough 12/98: fix psprite positioning problem
@@ -130,7 +137,8 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
 	y2 = y1 + (r.height * scale) + 1;
 
-	if (!(mirror) != !(psp->Flags & PSPF_FLIP))
+
+	if (!(mirror) != !(psp->Flags & (PSPF_FLIP|PSPF_MIRROR)))
 	{
 		fU2 = tex->GetSpriteUL();
 		fV1 = tex->GetSpriteVT();

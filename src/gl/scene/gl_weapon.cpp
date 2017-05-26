@@ -107,14 +107,6 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 	x2 = tx * scalex + vw / 2;
 	if (x2 < 0) return; // off the left side
 	x2 += viewwindowx;
-	/*
-	if (psp->Flags & PSPF_MIRROR)
-	{
-		float dist = 320.f - sx;
-		x1 += dist * scalex;
-		x2 += dist * scalex;
-	}*/
-
 
 	// killough 12/98: fix psprite positioning problem
 	ftexturemid = 100.f - sy - r.top;

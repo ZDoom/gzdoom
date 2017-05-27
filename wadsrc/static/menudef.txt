@@ -1771,6 +1771,12 @@ OptionValue "GLD3D"
 	1, "$OPTVAL_GL"
 }
 
+OptionValue "GLSDL"
+{
+	0, "$OPTVAL_SDL"
+	1, "$OPTVAL_GL"
+}
+
 OptionMenu RendererMenu
 {
 	Title "$RNDMNU_TITLE"
@@ -1779,7 +1785,11 @@ OptionMenu RendererMenu
 	Option "$RNDMNU_POLY",		"r_polyrenderer", "OnOff"
 	IfOption(Windows)
 	{
-		Option "$RNDMNU_CANVAS",	"vid_used3d", "D3DGL"
+		Option "$RNDMNU_CANVAS",	"vid_glswfb", "GLD3D"
+	}
+	IfOption(Linux)
+	{
+		Option "$RNDMNU_CANVAS",	"vid_glswfb", "GLSDL"
 	}
 }
 

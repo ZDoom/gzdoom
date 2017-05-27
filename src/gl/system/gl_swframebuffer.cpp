@@ -360,7 +360,7 @@ std::unique_ptr<OpenGLSWFrameBuffer::HWFrameBuffer> OpenGLSWFrameBuffer::CreateF
 		return nullptr;
 	}
 
-	return std::move(fb);
+	return fb;
 }
 
 std::unique_ptr<OpenGLSWFrameBuffer::HWPixelShader> OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines)
@@ -443,7 +443,7 @@ std::unique_ptr<OpenGLSWFrameBuffer::HWPixelShader> OpenGLSWFrameBuffer::CreateP
 	shader->NewScreenLocation = glGetUniformLocation(shader->Program, "NewScreen");
 	shader->BurnLocation = glGetUniformLocation(shader->Program, "Burn");
 
-	return std::move(shader);
+	return shader;
 }
 
 std::unique_ptr<OpenGLSWFrameBuffer::HWVertexBuffer> OpenGLSWFrameBuffer::CreateVertexBuffer(int size)
@@ -473,7 +473,7 @@ std::unique_ptr<OpenGLSWFrameBuffer::HWVertexBuffer> OpenGLSWFrameBuffer::Create
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(oldBinding);
 
-	return std::move(obj);
+	return obj;
 }
 
 std::unique_ptr<OpenGLSWFrameBuffer::HWIndexBuffer> OpenGLSWFrameBuffer::CreateIndexBuffer(int size)
@@ -492,7 +492,7 @@ std::unique_ptr<OpenGLSWFrameBuffer::HWIndexBuffer> OpenGLSWFrameBuffer::CreateI
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oldBinding);
 
-	return std::move(obj);
+	return obj;
 }
 
 std::unique_ptr<OpenGLSWFrameBuffer::HWTexture> OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int height, int levels, int format)
@@ -519,7 +519,7 @@ std::unique_ptr<OpenGLSWFrameBuffer::HWTexture> OpenGLSWFrameBuffer::CreateTextu
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: srcformat = GL_RGBA; break;
 	default:
 		I_FatalError("Unknown format passed to CreateTexture");
-		return false;
+		return nullptr;
 	}
 	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, srcformat, GL_UNSIGNED_BYTE, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -529,7 +529,7 @@ std::unique_ptr<OpenGLSWFrameBuffer::HWTexture> OpenGLSWFrameBuffer::CreateTextu
 
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 
-	return std::move(obj);
+	return obj;
 }
 
 std::unique_ptr<OpenGLSWFrameBuffer::HWTexture> OpenGLSWFrameBuffer::CopyCurrentScreen()
@@ -551,7 +551,7 @@ std::unique_ptr<OpenGLSWFrameBuffer::HWTexture> OpenGLSWFrameBuffer::CopyCurrent
 
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 
-	return std::move(obj);
+	return obj;
 }
 
 void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp)

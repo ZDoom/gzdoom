@@ -1787,7 +1787,7 @@ OptionMenu RendererMenu
 	{
 		Option "$RNDMNU_CANVAS",	"vid_glswfb", "GLD3D"
 	}
-	IfOption(Linux)
+	IfOption(unix)
 	{
 		Option "$RNDMNU_CANVAS",	"vid_glswfb", "GLSDL"
 	}

@@ -98,7 +98,7 @@ public:
 private:
 	static const int WIDTH = 64, HEIGHT = 64;
 	uint8_t BurnArray[WIDTH * (HEIGHT + 5)];
-	HWTexture *BurnTexture;
+	std::unique_ptr<HWTexture> BurnTexture;
 	int Density;
 	int BurnTime;
 };
@@ -247,8 +247,8 @@ void OpenGLSWFrameBuffer::WipeCleanup()
 		delete ScreenWipe;
 		ScreenWipe = NULL;
 	}
-	SafeRelease( InitialWipeScreen );
-	SafeRelease( FinalWipeScreen );
+	InitialWipeScreen.reset();
+	FinalWipeScreen.reset();
 	GatheringWipeScreen = false;
 	if (!Accel2D)
 	{
@@ -283,7 +283,7 @@ void OpenGLSWFrameBuffer::Wiper::DrawScreen(OpenGLSWFrameBuffer *fb, HWTexture *
 	fb->CalcFullscreenCoords(verts, false, color0, color1);
 	fb->SetTexture(0, tex);
 	fb->SetAlphaBlend(blendop, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor]);
+	fb->SetPixelShader(fb->Shaders[SHADER_NormalColor].get());
 	fb->DrawTriangleFans(2, verts);
 }
 
@@ -313,10 +313,10 @@ bool OpenGLSWFrameBuffer::Wiper_Crossfade::Run(int ticks, OpenGLSWFrameBuffer *f
 	Clock += ticks;
 
 	// Put the initial screen back to the buffer.
-	DrawScreen(fb, fb->InitialWipeScreen);
+	DrawScreen(fb, fb->InitialWipeScreen.get());
 
 	// Draw the new screen on top of it.
-	DrawScreen(fb, fb->FinalWipeScreen, GL_FUNC_ADD, ColorValue(0,0,0,Clock / 32.f), ColorRGBA(255,255,255,0));
+	DrawScreen(fb, fb->FinalWipeScreen.get(), GL_FUNC_ADD, ColorValue(0,0,0,Clock / 32.f), ColorRGBA(255,255,255,0));
 
 	return Clock >= 32;
 }
@@ -354,7 +354,7 @@ OpenGLSWFrameBuffer::Wiper_Melt::Wiper_Melt()
 bool OpenGLSWFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLSWFrameBuffer *fb)
 {
 	// Draw the new screen on the bottom.
-	DrawScreen(fb, fb->FinalWipeScreen);
+	DrawScreen(fb, fb->FinalWipeScreen.get());
 
 	int i, dy;
 	int fbwidth = fb->Width;
@@ -401,7 +401,7 @@ bool OpenGLSWFrameBuffer::Wiper_Melt::Run(int ticks, OpenGLSWFrameBuffer *fb)
 					quad->Flags = BQF_DisableAlphaTest;
 					quad->ShaderNum = BQS_Plain;
 					quad->Palette = NULL;
-					quad->Texture = fb->InitialWipeScreen;
+					quad->Texture = fb->InitialWipeScreen.get();
 					quad->NumVerts = 4;
 					quad->NumTris = 2;
 
@@ -485,10 +485,12 @@ OpenGLSWFrameBuffer::Wiper_Burn::Wiper_Burn(OpenGLSWFrameBuffer *fb)
 	Density = 4;
 	BurnTime = 0;
 	memset(BurnArray, 0, sizeof(BurnArray));
-	if (fb->Shaders[SHADER_BurnWipe] == NULL || !fb->CreateTexture("BurnWipe", WIDTH, HEIGHT, 1, GL_R8, &BurnTexture))
+	if (fb->Shaders[SHADER_BurnWipe] == nullptr)
 	{
-		BurnTexture = NULL;
+		BurnTexture = nullptr;
 	}
+
+	BurnTexture = fb->CreateTexture("BurnWipe", WIDTH, HEIGHT, 1, GL_R8);
 }
 
 //==========================================================================
@@ -499,7 +501,7 @@ OpenGLSWFrameBuffer::Wiper_Burn::Wiper_Burn(OpenGLSWFrameBuffer *fb)
 
 OpenGLSWFrameBuffer::Wiper_Burn::~Wiper_Burn()
 {
-	SafeRelease( BurnTexture );
+	BurnTexture.reset();
 }
 
 //==========================================================================
@@ -555,7 +557,7 @@ bool OpenGLSWFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLSWFrameBuffer *fb)
 	}
 
 	// Put the initial screen back to the buffer.
-	DrawScreen(fb, fb->InitialWipeScreen);
+	DrawScreen(fb, fb->InitialWipeScreen.get());
 
 	// Burn the new screen on top of it.
 	float right = float(fb->Width);
@@ -569,10 +571,10 @@ bool OpenGLSWFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLSWFrameBuffer *fb)
 		{ 0.f,   bot, 0.f, 1.f, 0.f, 1.f, 0, 1 }
 	};
 
-	fb->SetTexture(0, fb->FinalWipeScreen);
-	fb->SetTexture(1, BurnTexture);
+	fb->SetTexture(0, fb->FinalWipeScreen.get());
+	fb->SetTexture(1, BurnTexture.get());
 	fb->SetAlphaBlend(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	fb->SetPixelShader(fb->Shaders[SHADER_BurnWipe]);
+	fb->SetPixelShader(fb->Shaders[SHADER_BurnWipe].get());
 	glActiveTexture(GL_TEXTURE1);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	fb->DrawTriangleFans(2, verts);

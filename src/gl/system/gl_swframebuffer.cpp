@@ -272,7 +272,7 @@ void *OpenGLSWFrameBuffer::MapBuffer(int target, int size)
 OpenGLSWFrameBuffer::HWFrameBuffer::~HWFrameBuffer()
 {
 	if (Framebuffer != 0) glDeleteFramebuffers(1, (GLuint*)&Framebuffer);
-	delete Texture;
+	Texture.reset();
 }
 
 OpenGLSWFrameBuffer::HWTexture::~HWTexture()
@@ -324,17 +324,17 @@ OpenGLSWFrameBuffer::HWPixelShader::~HWPixelShader()
 	if (FragmentShader != 0) glDeleteShader(FragmentShader);
 }
 
-bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int height, HWFrameBuffer **outFramebuffer)
+std::unique_ptr<OpenGLSWFrameBuffer::HWFrameBuffer> OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int height)
 {
 	std::unique_ptr<HWFrameBuffer> fb(new HWFrameBuffer());
 	
 	GLint format = GL_RGBA16F;
 	if (gl.es) format = GL_RGB;
 
-	if (!CreateTexture(name, width, height, 1, format, &fb->Texture))
+	fb->Texture = CreateTexture(name, width, height, 1, format);
+	if (!fb->Texture)
 	{
-		outFramebuffer = nullptr;
-		return false;
+		return nullptr;
 	}
 
 	glGenFramebuffers(1, (GLuint*)&fb->Framebuffer);
@@ -357,24 +357,22 @@ bool OpenGLSWFrameBuffer::CreateFrameBuffer(const FString &name, int width, int 
 	if (result != GL_FRAMEBUFFER_COMPLETE)
 	{
 		Printf("Framebuffer is not complete\n");
-		outFramebuffer = nullptr;
-		return false;
+		return nullptr;
 	}
 
-	*outFramebuffer = fb.release();
-	return true;
+	return fb;
 }
 
-bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader)
+std::unique_ptr<OpenGLSWFrameBuffer::HWPixelShader> OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines)
 {
 	std::unique_ptr<HWPixelShader> shader(new HWPixelShader());
 
 	shader->Program = glCreateProgram();
-	if (shader->Program == 0) { Printf("glCreateProgram failed. Disabling OpenGL hardware acceleration.\n"); return false; }
+	if (shader->Program == 0) { Printf("glCreateProgram failed. Disabling OpenGL hardware acceleration.\n"); return nullptr; }
 	shader->VertexShader = glCreateShader(GL_VERTEX_SHADER);
-	if (shader->VertexShader == 0) { Printf("glCreateShader(GL_VERTEX_SHADER) failed. Disabling OpenGL hardware acceleration.\n"); return false; }
+	if (shader->VertexShader == 0) { Printf("glCreateShader(GL_VERTEX_SHADER) failed. Disabling OpenGL hardware acceleration.\n"); return nullptr; }
 	shader->FragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	if (shader->FragmentShader == 0) { Printf("glCreateShader(GL_FRAGMENT_SHADER) failed. Disabling OpenGL hardware acceleration.\n"); return false; }
+	if (shader->FragmentShader == 0) { Printf("glCreateShader(GL_FRAGMENT_SHADER) failed. Disabling OpenGL hardware acceleration.\n"); return nullptr; }
 	
 	int maxGlslVersion = 330;
 	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
@@ -412,8 +410,7 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 		glGetShaderInfoLog(errorShader, 10000, &length, buffer);
 		//Printf("Shader compile failed: %s", buffer);
 
-		*outShader = nullptr;
-		return false;
+		return nullptr;
 	}
 
 	glAttachShader(shader->Program, shader->VertexShader);
@@ -433,8 +430,7 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 		glGetProgramInfoLog(shader->Program, 10000, &length, buffer);
 		//Printf("Shader link failed: %s", buffer);
 	
-		*outShader = nullptr;
-		return false;
+		return nullptr;
 	}
 
 	shader->ConstantLocations[PSCONST_Desaturation] = glGetUniformLocation(shader->Program, "Desaturation");
@@ -447,11 +443,10 @@ bool OpenGLSWFrameBuffer::CreatePixelShader(FString vertexsrc, FString fragments
 	shader->NewScreenLocation = glGetUniformLocation(shader->Program, "NewScreen");
 	shader->BurnLocation = glGetUniformLocation(shader->Program, "Burn");
 
-	*outShader = shader.release();
-	return true;
+	return shader;
 }
 
-bool OpenGLSWFrameBuffer::CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer)
+std::unique_ptr<OpenGLSWFrameBuffer::HWVertexBuffer> OpenGLSWFrameBuffer::CreateVertexBuffer(int size)
 {
 	std::unique_ptr<HWVertexBuffer> obj(new HWVertexBuffer());
 
@@ -478,11 +473,10 @@ bool OpenGLSWFrameBuffer::CreateVertexBuffer(int size, HWVertexBuffer **outVerte
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(oldBinding);
 
-	*outVertexBuffer = obj.release();
-	return true;
+	return obj;
 }
 
-bool OpenGLSWFrameBuffer::CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer)
+std::unique_ptr<OpenGLSWFrameBuffer::HWIndexBuffer> OpenGLSWFrameBuffer::CreateIndexBuffer(int size)
 {
 	std::unique_ptr<HWIndexBuffer> obj(new HWIndexBuffer());
 
@@ -498,11 +492,10 @@ bool OpenGLSWFrameBuffer::CreateIndexBuffer(int size, HWIndexBuffer **outIndexBu
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, oldBinding);
 
-	*outIndexBuffer = obj.release();
-	return true;
+	return obj;
 }
 
-bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int height, int levels, int format, HWTexture **outTexture)
+std::unique_ptr<OpenGLSWFrameBuffer::HWTexture> OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int height, int levels, int format)
 {
 	std::unique_ptr<HWTexture> obj(new HWTexture());
 
@@ -526,7 +519,7 @@ bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int heig
 	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT: srcformat = GL_RGBA; break;
 	default:
 		I_FatalError("Unknown format passed to CreateTexture");
-		return false;
+		return nullptr;
 	}
 	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, srcformat, GL_UNSIGNED_BYTE, nullptr);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -536,11 +529,10 @@ bool OpenGLSWFrameBuffer::CreateTexture(const FString &name, int width, int heig
 
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 
-	*outTexture = obj.release();
-	return true;
+	return obj;
 }
 
-OpenGLSWFrameBuffer::HWTexture *OpenGLSWFrameBuffer::CopyCurrentScreen()
+std::unique_ptr<OpenGLSWFrameBuffer::HWTexture> OpenGLSWFrameBuffer::CopyCurrentScreen()
 {
 	std::unique_ptr<HWTexture> obj(new HWTexture());
 	obj->Format = GL_RGBA16F;
@@ -559,7 +551,7 @@ OpenGLSWFrameBuffer::HWTexture *OpenGLSWFrameBuffer::CopyCurrentScreen()
 
 	glBindTexture(GL_TEXTURE_2D, oldBinding);
 
-	return obj.release();
+	return obj;
 }
 
 void OpenGLSWFrameBuffer::SetGammaRamp(const GammaRamp *ramp)
@@ -747,8 +739,8 @@ void OpenGLSWFrameBuffer::Present()
 
 		FBVERTEX verts[4];
 		CalcFullscreenCoords(verts, false, 0, 0xFFFFFFFF);
-		SetTexture(0, OutputFB->Texture);
-		SetPixelShader(Shaders[SHADER_GammaCorrection]);
+		SetTexture(0, OutputFB->Texture.get());
+		SetPixelShader(Shaders[SHADER_GammaCorrection].get());
 		SetAlphaBlend(0);
 		EnableAlphaTest(false);
 		DrawTriangleFans(2, verts);
@@ -823,7 +815,8 @@ bool OpenGLSWFrameBuffer::CreateResources()
 	if (!LoadShaders())
 		return false;
 
-	if (!CreateFrameBuffer("OutputFB", Width, Height, &OutputFB))
+	OutputFB = CreateFrameBuffer("OutputFB", Width, Height);
+	if (!OutputFB)
 		return false;
 		
 	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
@@ -865,7 +858,8 @@ bool OpenGLSWFrameBuffer::LoadShaders()
 	for (i = 0; i < NUM_SHADERS; ++i)
 	{
 		shaderpath = shaderdir;
-		if (!CreatePixelShader(vertsource, fragsource, ShaderDefines[i], &Shaders[i]) && i < SHADER_BurnWipe)
+		Shaders[i] = CreatePixelShader(vertsource, fragsource, ShaderDefines[i]);
+		if (!Shaders[i] && i < SHADER_BurnWipe)
 		{
 			break;
 		}
@@ -884,7 +878,7 @@ bool OpenGLSWFrameBuffer::LoadShaders()
 	// Failure. Release whatever managed to load (which is probably nothing.)
 	for (i = 0; i < NUM_SHADERS; ++i)
 	{
-		SafeRelease(Shaders[i]);
+		Shaders[i].reset();
 	}
 	return false;
 }
@@ -903,11 +897,11 @@ void OpenGLSWFrameBuffer::ReleaseResources()
 	KillNativeTexs();
 	KillNativePals();
 	ReleaseDefaultPoolItems();
-	SafeRelease(ScreenshotTexture);
-	SafeRelease(PaletteTexture);
+	ScreenshotTexture.reset();
+	PaletteTexture.reset();
 	for (int i = 0; i < NUM_SHADERS; ++i)
 	{
-		SafeRelease(Shaders[i]);
+		Shaders[i].reset();
 	}
 	if (ScreenWipe != nullptr)
 	{
@@ -925,19 +919,20 @@ void OpenGLSWFrameBuffer::ReleaseResources()
 
 void OpenGLSWFrameBuffer::ReleaseDefaultPoolItems()
 {
-	SafeRelease(FBTexture);
-	SafeRelease(FinalWipeScreen);
-	SafeRelease(InitialWipeScreen);
-	SafeRelease(VertexBuffer);
-	SafeRelease(IndexBuffer);
-	SafeRelease(OutputFB);
+	FBTexture.reset();
+	FinalWipeScreen.reset();
+	InitialWipeScreen.reset();
+	VertexBuffer.reset();
+	IndexBuffer.reset();
+	OutputFB.reset();
 }
 
 bool OpenGLSWFrameBuffer::Reset()
 {
 	ReleaseDefaultPoolItems();
 
-	if (!CreateFrameBuffer("OutputFB", Width, Height, &OutputFB) || !CreateFBTexture() || !CreateVertexes())
+	OutputFB = CreateFrameBuffer("OutputFB", Width, Height);
+	if (!OutputFB || !CreateFBTexture() || !CreateVertexes())
 	{
 		return false;
 	}
@@ -983,7 +978,8 @@ void OpenGLSWFrameBuffer::KillNativeTexs()
 
 bool OpenGLSWFrameBuffer::CreateFBTexture()
 {
-	return CreateTexture("FBTexture", Width, Height, 1, IsBgra() ? GL_RGBA8 : GL_R8, &FBTexture);
+	FBTexture = CreateTexture("FBTexture", Width, Height, 1, IsBgra() ? GL_RGBA8 : GL_R8);
+	return FBTexture != nullptr;
 }
 
 //==========================================================================
@@ -994,7 +990,8 @@ bool OpenGLSWFrameBuffer::CreateFBTexture()
 
 bool OpenGLSWFrameBuffer::CreatePaletteTexture()
 {
-	return CreateTexture("PaletteTexture", 256, 1, 1, GL_RGBA8, &PaletteTexture);
+	PaletteTexture = CreateTexture("PaletteTexture", 256, 1, 1, GL_RGBA8);
+	return PaletteTexture != nullptr;
 }
 
 //==========================================================================
@@ -1009,11 +1006,13 @@ bool OpenGLSWFrameBuffer::CreateVertexes()
 	IndexPos = -1;
 	QuadBatchPos = -1;
 	BatchType = BATCH_None;
-	if (!CreateVertexBuffer(sizeof(FBVERTEX)*NUM_VERTS, &VertexBuffer))
+	VertexBuffer = CreateVertexBuffer(sizeof(FBVERTEX)*NUM_VERTS);
+	if (!VertexBuffer)
 	{
 		return false;
 	}
-	if (!CreateIndexBuffer(sizeof(uint16_t)*NUM_INDEXES, &IndexBuffer))
+	IndexBuffer = CreateIndexBuffer(sizeof(uint16_t)*NUM_INDEXES);
+	if (!IndexBuffer)
 	{
 		return false;
 	}
@@ -1421,15 +1420,15 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 	else
 		glDisable(GL_LINE_SMOOTH);
 
-	SetTexture(0, FBTexture);
-	SetPaletteTexture(PaletteTexture, 256, BorderColor);
+	SetTexture(0, FBTexture.get());
+	SetPaletteTexture(PaletteTexture.get(), 256, BorderColor);
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(0);
 	EnableAlphaTest(false);
 	if (IsBgra())
-		SetPixelShader(Shaders[SHADER_NormalColor]);
+		SetPixelShader(Shaders[SHADER_NormalColor].get());
 	else
-		SetPixelShader(Shaders[SHADER_NormalColorPal]);
+		SetPixelShader(Shaders[SHADER_NormalColorPal].get());
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
@@ -1447,9 +1446,9 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 				color0 = ColorValue(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
 				color1 = ColorValue(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
 				if (IsBgra())
-					SetPixelShader(Shaders[SHADER_SpecialColormap]);
+					SetPixelShader(Shaders[SHADER_SpecialColormap].get());
 				else
-					SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
+					SetPixelShader(Shaders[SHADER_SpecialColormapPal].get());
 			}
 		}
 		else
@@ -1461,9 +1460,9 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 		DrawTriangleFans(2, verts);
 	}
 	if (IsBgra())
-		SetPixelShader(Shaders[SHADER_NormalColor]);
+		SetPixelShader(Shaders[SHADER_NormalColor].get());
 	else
-		SetPixelShader(Shaders[SHADER_NormalColorPal]);
+		SetPixelShader(Shaders[SHADER_NormalColorPal].get());
 }
 
 //==========================================================================
@@ -1696,7 +1695,7 @@ void OpenGLSWFrameBuffer::ReleaseScreenshotBuffer()
 	{
 		Super::ReleaseScreenshotBuffer();
 	}
-	SafeRelease(ScreenshotTexture);
+	ScreenshotTexture.reset();
 }
 
 /**************************************************************************/
@@ -1782,7 +1781,7 @@ void OpenGLSWFrameBuffer::DrawPackedTextures(int packnum)
 			quad->ShaderNum = BQS_Plain;
 		}
 		quad->Palette = nullptr;
-		quad->Texture = pack->Tex;
+		quad->Texture = pack->Tex.get();
 		quad->NumVerts = 4;
 		quad->NumTris = 2;
 
@@ -1911,7 +1910,6 @@ OpenGLSWFrameBuffer::PackedTexture *OpenGLSWFrameBuffer::AllocPackedTexture(int 
 OpenGLSWFrameBuffer::Atlas::Atlas(OpenGLSWFrameBuffer *fb, int w, int h, int format)
 	: Packer(w, h, true)
 {
-	Tex = nullptr;
 	Format = format;
 	UsedList = nullptr;
 	OneUse = false;
@@ -1927,7 +1925,7 @@ OpenGLSWFrameBuffer::Atlas::Atlas(OpenGLSWFrameBuffer *fb, int w, int h, int for
 	}
 	*prev = this;
 
-	fb->CreateTexture("Atlas", w, h, 1, format, &Tex);
+	Tex = fb->CreateTexture("Atlas", w, h, 1, format);
 	Width = w;
 	Height = h;
 }
@@ -1942,7 +1940,7 @@ OpenGLSWFrameBuffer::Atlas::~Atlas()
 {
 	PackedTexture *box, *next;
 
-	SafeRelease(Tex);
+	Tex.reset();
 	for (box = UsedList; box != nullptr; box = next)
 	{
 		next = box->Next;
@@ -2293,7 +2291,7 @@ FTextureFormat OpenGLSWFrameBuffer::OpenGLTex::ToTexFmt(int fmt)
 //==========================================================================
 
 OpenGLSWFrameBuffer::OpenGLPal::OpenGLPal(FRemapTable *remap, OpenGLSWFrameBuffer *fb)
-	: Tex(nullptr), Remap(remap)
+	: Remap(remap)
 {
 	int count;
 
@@ -2317,12 +2315,12 @@ OpenGLSWFrameBuffer::OpenGLPal::OpenGLPal(FRemapTable *remap, OpenGLSWFrameBuffe
 
 	BorderColor = 0;
 	RoundedPaletteSize = count;
-	if (fb->CreateTexture("Pal", count, 1, 1, GL_RGBA8, &Tex))
+	Tex = fb->CreateTexture("Pal", count, 1, 1, GL_RGBA8);
+	if (Tex)
 	{
 		if (!Update())
 		{
-			delete Tex;
-			Tex = nullptr;
+			Tex.reset();
 		}
 	}
 }
@@ -2335,7 +2333,7 @@ OpenGLSWFrameBuffer::OpenGLPal::OpenGLPal(FRemapTable *remap, OpenGLSWFrameBuffe
 
 OpenGLSWFrameBuffer::OpenGLPal::~OpenGLPal()
 {
-	SafeRelease(Tex);
+	Tex.reset();
 	// Detach from the palette list
 	*Prev = Next;
 	if (Next != nullptr)
@@ -2639,9 +2637,9 @@ void OpenGLSWFrameBuffer::EndLineBatch()
 	VertexBuffer->Unlock();
 	if (VertexPos > 0)
 	{
-		SetPixelShader(Shaders[SHADER_VertexColor]);
+		SetPixelShader(Shaders[SHADER_VertexColor].get());
 		SetAlphaBlend(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		SetStreamSource(VertexBuffer);
+		SetStreamSource(VertexBuffer.get());
 		DrawLineList(VertexPos / 2);
 	}
 	VertexPos = -1;
@@ -2718,7 +2716,7 @@ void OpenGLSWFrameBuffer::DrawPixel(int x, int y, int palcolor, uint32_t color)
 		float(x), float(y), 0, 1, color
 	};
 	EndBatch();		// Draw out any batched operations.
-	SetPixelShader(Shaders[SHADER_VertexColor]);
+	SetPixelShader(Shaders[SHADER_VertexColor].get());
 	SetAlphaBlend(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	DrawPoints(1, &pt);
 }
@@ -2829,7 +2827,7 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 		goto done;
 	}
 
-	quad->Texture = tex->Box->Owner->Tex;
+	quad->Texture = tex->Box->Owner->Tex.get();
 	if (parms.bilinear)
 	{
 		quad->Flags |= BQF_Bilinear;
@@ -2956,7 +2954,7 @@ void OpenGLSWFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTe
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = nullptr;
-	quad->Texture = tex->Box->Owner->Tex;
+	quad->Texture = tex->Box->Owner->Tex.get();
 	quad->NumVerts = 4;
 	quad->NumTris = 2;
 
@@ -3085,7 +3083,7 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = nullptr;
-	quad->Texture = tex->Box->Owner->Tex;
+	quad->Texture = tex->Box->Owner->Tex.get();
 	quad->NumVerts = npoints;
 	quad->NumTris = npoints - 2;
 
@@ -3295,8 +3293,8 @@ void OpenGLSWFrameBuffer::EndQuadBatch()
 		IndexPos = -1;
 		return;
 	}
-	SetStreamSource(VertexBuffer);
-	SetIndices(IndexBuffer);
+	SetStreamSource(VertexBuffer.get());
+	SetIndices(IndexBuffer.get());
 	bool uv_wrapped = false;
 	bool uv_should_wrap;
 	int indexpos, vertpos;
@@ -3335,12 +3333,12 @@ void OpenGLSWFrameBuffer::EndQuadBatch()
 		// Set the palette (if one)
 		if ((quad->Flags & BQF_Paletted) == BQF_GamePalette)
 		{
-			SetPaletteTexture(PaletteTexture, 256, BorderColor);
+			SetPaletteTexture(PaletteTexture.get(), 256, BorderColor);
 		}
 		else if ((quad->Flags & BQF_Paletted) == BQF_CustomPalette)
 		{
 			assert(quad->Palette != nullptr);
-			SetPaletteTexture(quad->Palette->Tex, quad->Palette->RoundedPaletteSize, quad->Palette->BorderColor);
+			SetPaletteTexture(quad->Palette->Tex.get(), quad->Palette->RoundedPaletteSize, quad->Palette->BorderColor);
 		}
 
 		// Set the alpha blending
@@ -3352,29 +3350,26 @@ void OpenGLSWFrameBuffer::EndQuadBatch()
 		// Set the pixel shader
 		if (quad->ShaderNum == BQS_PalTex)
 		{
-			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
-				SHADER_NormalColorPalInv : SHADER_NormalColorPal]);
+			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ? SHADER_NormalColorPalInv : SHADER_NormalColorPal].get());
 		}
 		else if (quad->ShaderNum == BQS_Plain)
 		{
-			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
-				SHADER_NormalColorInv : SHADER_NormalColor]);
+			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ? SHADER_NormalColorInv : SHADER_NormalColor].get());
 		}
 		else if (quad->ShaderNum == BQS_RedToAlpha)
 		{
-			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
-				SHADER_RedToAlphaInv : SHADER_RedToAlpha]);
+			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ? SHADER_RedToAlphaInv : SHADER_RedToAlpha].get());
 		}
 		else if (quad->ShaderNum == BQS_ColorOnly)
 		{
-			SetPixelShader(Shaders[SHADER_VertexColor]);
+			SetPixelShader(Shaders[SHADER_VertexColor].get());
 		}
 		else if (quad->ShaderNum == BQS_SpecialColormap)
 		{
 			int select;
 
 			select = !!(quad->Flags & BQF_Paletted);
-			SetPixelShader(Shaders[SHADER_SpecialColormap + select]);
+			SetPixelShader(Shaders[SHADER_SpecialColormap + select].get());
 		}
 		else if (quad->ShaderNum == BQS_InGameColormap)
 		{
@@ -3387,7 +3382,7 @@ void OpenGLSWFrameBuffer::EndQuadBatch()
 			{
 				SetConstant(PSCONST_Desaturation, quad->Desat / 255.f, (255 - quad->Desat) / 255.f, 0, 0);
 			}
-			SetPixelShader(Shaders[SHADER_InGameColormap + select]);
+			SetPixelShader(Shaders[SHADER_InGameColormap + select].get());
 		}
 
 		// Set the texture clamp addressing mode

@@ -129,7 +129,7 @@ private:
 		~HWFrameBuffer();
 
 		int Framebuffer = 0;
-		HWTexture *Texture = nullptr;
+		std::unique_ptr<HWTexture> Texture;
 	};
 
 
@@ -177,11 +177,12 @@ private:
 		int BurnLocation = -1;
 	};
 
-	bool CreateFrameBuffer(const FString &name, int width, int height, HWFrameBuffer **outFramebuffer);
-	bool CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines, HWPixelShader **outShader);
-	bool CreateVertexBuffer(int size, HWVertexBuffer **outVertexBuffer);
-	bool CreateIndexBuffer(int size, HWIndexBuffer **outIndexBuffer);
-	bool CreateTexture(const FString &name, int width, int height, int levels, int format, HWTexture **outTexture);
+	std::unique_ptr<HWFrameBuffer> CreateFrameBuffer(const FString &name, int width, int height);
+	std::unique_ptr<HWPixelShader> CreatePixelShader(FString vertexsrc, FString fragmentsrc, const FString &defines);
+	std::unique_ptr<HWVertexBuffer> CreateVertexBuffer(int size);
+	std::unique_ptr<HWIndexBuffer> CreateIndexBuffer(int size);
+	std::unique_ptr<HWTexture> CreateTexture(const FString &name, int width, int height, int levels, int format);
+
 	void SetGammaRamp(const GammaRamp *ramp);
 	void SetPixelShaderConstantF(int uniformIndex, const float *data, int vec4fcount);
 	void SetHWPixelShader(HWPixelShader *shader);
@@ -250,7 +251,7 @@ private:
 
 		SkylineBinPack Packer;
 		Atlas *Next;
-		HWTexture *Tex;
+		std::unique_ptr<HWTexture> Tex;
 		int Format;
 		PackedTexture *UsedList;	// Boxes that contain images
 		int Width, Height;
@@ -287,7 +288,7 @@ private:
 		OpenGLPal **Prev;
 		OpenGLPal *Next;
 
-		HWTexture *Tex;
+		std::unique_ptr<HWTexture> Tex;
 		uint32_t BorderColor;
 		bool DoColorSkip;
 
@@ -392,7 +393,7 @@ private:
 	void UploadPalette();
 	void CalcFullscreenCoords(FBVERTEX verts[4], bool viewarea_only, uint32_t color0, uint32_t color1) const;
 	bool Reset();
-	HWTexture *CopyCurrentScreen();
+	std::unique_ptr<HWTexture> CopyCurrentScreen();
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
@@ -422,8 +423,6 @@ private:
 	void SetSamplerWrapT(int tnum, int mode);
 	void SetPaletteTexture(HWTexture *texture, int count, uint32_t border_color);
 
-	template<typename T> static void SafeRelease(T &x) { if (x != nullptr) { delete x; x = nullptr; } }
-
 	bool Valid = false;
 	std::shared_ptr<FGLDebug> Debug;
 
@@ -431,7 +430,7 @@ private:
 	float ShaderConstants[NumPSCONST * 4];
 	HWPixelShader *CurrentShader = nullptr;
 
-	HWFrameBuffer *OutputFB = nullptr;
+	std::unique_ptr<HWFrameBuffer> OutputFB;
 
 	bool AlphaTestEnabled = false;
 	bool AlphaBlendEnabled = false;
@@ -467,13 +466,13 @@ private:
 	OpenGLTex *Textures = nullptr;
 	Atlas *Atlases = nullptr;
 
-	HWTexture *FBTexture = nullptr;
-	HWTexture *PaletteTexture = nullptr;
-	HWTexture *ScreenshotTexture = nullptr;
+	std::unique_ptr<HWTexture> FBTexture;
+	std::unique_ptr<HWTexture> PaletteTexture;
+	std::unique_ptr<HWTexture> ScreenshotTexture;
 
-	HWVertexBuffer *VertexBuffer = nullptr;
+	std::unique_ptr<HWVertexBuffer> VertexBuffer;
 	FBVERTEX *VertexData = nullptr;
-	HWIndexBuffer *IndexBuffer = nullptr;
+	std::unique_ptr<HWIndexBuffer> IndexBuffer;
 	uint16_t *IndexData = nullptr;
 	BufferedTris *QuadExtra = nullptr;
 	int VertexPos;
@@ -481,9 +480,9 @@ private:
 	int QuadBatchPos;
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
 
-	HWPixelShader *Shaders[NUM_SHADERS];
+	std::unique_ptr<HWPixelShader> Shaders[NUM_SHADERS];
 
-	HWTexture *InitialWipeScreen = nullptr, *FinalWipeScreen = nullptr;
+	std::unique_ptr<HWTexture> InitialWipeScreen, FinalWipeScreen;
 
 	class Wiper
 	{

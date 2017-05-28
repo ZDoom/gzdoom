@@ -50,6 +50,7 @@ public:
 	void BlitToEyeTexture(int eye);
 	void BindEyeTexture(int eye, int texunit);
 	void BindEyeFB(int eye, bool readBuffer = false);
+	GLuint GetEyeTextureGLHandle(int eye) const; // Needed for OpenVR API
 
 	void BindShadowMapFB();
 	void BindShadowMapTexture(int index);

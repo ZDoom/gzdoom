@@ -458,7 +458,8 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 
 	while (mEyeFBs.Size() <= unsigned(eye))
 	{
-		GLuint texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
+		// GL_RGBA16F, GL_RGBA16, GL_RGBA32F all do not work with OpenVR and HTC Vive
+		GLuint texture = Create2DTexture("EyeTexture", GL_RGBA12, mWidth, mHeight);
 		mEyeTextures.Push(texture);
 		mEyeFBs.Push(CreateFrameBuffer("EyeFB", texture));
 	}
@@ -485,6 +486,7 @@ GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int
 	switch (format)
 	{
 	case GL_RGBA8:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_BYTE; break;
+	case GL_RGBA12:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_SHORT; break;
 	case GL_RGBA16:				dataformat = GL_RGBA; datatype = GL_UNSIGNED_SHORT; break;
 	case GL_RGBA16F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
 	case GL_RGBA32F:			dataformat = GL_RGBA; datatype = GL_FLOAT; break;
@@ -738,6 +740,10 @@ void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
 {
 	CreateEyeBuffers(eye);
 	glBindFramebuffer(readBuffer ? GL_READ_FRAMEBUFFER : GL_FRAMEBUFFER, mEyeFBs[eye]);
+}
+
+GLuint FGLRenderBuffers::GetEyeTextureGLHandle(int eye) const { // Needed for OpenVR API
+	return mEyeTextures[eye];
 }
 
 //==========================================================================

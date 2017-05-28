@@ -473,6 +473,31 @@ if( NOT DYN_FLUIDSYNTH )
 	endif()
 endif()
 
+if (GZDOOM_USE_OPENVR)
+	find_path(OPENVR_SDK_PATH
+		NAMES
+			headers/openvr.h
+		HINTS
+			ENV OPENVR_DIR ENV PROGRAMFILES ENV HOME ENV USERPROFILE
+		PATH_SUFFIXES
+			openvr git/openvr
+	)
+	find_path(OPENVR_INCLUDE_DIRECTORY
+		NAMES
+			openvr.h
+		HINTS
+			${OPENVR_SDK_PATH}/headers
+	)
+	include_directories("${OPENVR_INCLUDE_DIRECTORY}")
+	find_library(OPENVR_LIBRARY
+		NAMES openvr_api
+		# TODO: Generalize for Mac and Linux and 64-bit Windows
+		HINTS "${OPENVR_SDK_PATH}/lib/win32/"
+	)
+	list(APPEND ZDOOM_LIBS ${OPENVR_LIBRARY})
+	add_definitions("-DUSE_OPENVR")
+endif()
+
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	sound/mididevices/music_win_mididevice.cpp
@@ -1006,6 +1031,7 @@ set (PCH_SOURCES
 	gl/stereo3d/gl_stereo_leftright.cpp
 	gl/stereo3d/scoped_view_shifter.cpp
 	gl/stereo3d/gl_anaglyph.cpp
+	gl/stereo3d/gl_openvr.cpp
 	gl/stereo3d/gl_quadstereo.cpp
 	gl/stereo3d/gl_sidebyside3d.cpp
 	gl/stereo3d/gl_interleaved3d.cpp

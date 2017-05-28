@@ -508,7 +508,7 @@ CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
 	setwalltexture 111 front top STONE
 	setwalltexture 127 front top STONE
 	setwalltexture 128 front top STONE
-	// remove erronious blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
+	// remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
 	setsectortag 19 0
 	setsectortag 20 0
 	setsectortag 23 0

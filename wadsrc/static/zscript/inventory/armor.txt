@@ -214,7 +214,7 @@ class BasicArmor : Armor
 		// Once the armor has absorbed its part of the damage, then apply its damage factor, if any, to the player
 		if ((damage > 0) && (ArmorType != 'None')) // BasicArmor is not going to have any damage factor, so skip it.
 		{
-			ApplyDamageFactors(ArmorType, damageType, damage, damage);
+			newdamage = ApplyDamageFactors(ArmorType, damageType, damage, damage);
 		}
 	}
 }

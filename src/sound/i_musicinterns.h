@@ -363,7 +363,12 @@ public:
 	void WildMidiSetOption(int opt, int set);
 	void CreateSMF(TArray<uint8_t> &file, int looplimit=0);
 	int ServiceEvent();
-	int GetDeviceType() const override { return MIDI->GetDeviceType(); }
+	int GetDeviceType() const override
+	{
+		return nullptr == MIDI
+			? MusInfo::GetDeviceType()
+			: MIDI->GetDeviceType();
+	}
 
 protected:
 	MIDIStreamer(const char *dumpname, EMidiDevice type);

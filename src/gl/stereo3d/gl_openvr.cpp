@@ -140,7 +140,7 @@ static HmdVector3d_t eulerAnglesFromMatrix(HmdMatrix34_t mat) {
 	return eulerAnglesFromQuat(quatFromMatrix(mat));
 }
 
-OpenVREyePose::OpenVREyePose(vr::EVREye eye)
+OpenVREyePose::OpenVREyePose(int eye)
 	: ShiftedEyePose( 0.0f )
 	, eye(eye)
 	, eyeTexture(nullptr)
@@ -254,7 +254,7 @@ void OpenVREyePose::initialize(vr::IVRSystem& vrsystem)
 	float zNear = 5.0;
 	float zFar = 65536.0;
 	vr::HmdMatrix44_t projection = vrsystem.GetProjectionMatrix(
-			eye, zNear, zFar);
+			vr::EVREye(eye), zNear, zFar);
 	vr::HmdMatrix44_t proj_transpose;
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
@@ -264,7 +264,7 @@ void OpenVREyePose::initialize(vr::IVRSystem& vrsystem)
 	projectionMatrix.loadIdentity();
 	projectionMatrix.multMatrix(&proj_transpose.m[0][0]);
 
-	vr::HmdMatrix34_t eyeToHead = vrsystem.GetEyeToHeadTransform(eye);
+	vr::HmdMatrix34_t eyeToHead = vrsystem.GetEyeToHeadTransform(vr::EVREye(eye));
 	vSMatrixFromHmdMatrix34(eyeToHeadTransform, eyeToHead);
 	vr::HmdMatrix34_t otherEyeToHead = vrsystem.GetEyeToHeadTransform(eye == Eye_Left ? Eye_Right : Eye_Left);
 	vSMatrixFromHmdMatrix34(otherEyeToHeadTransform, otherEyeToHead);
@@ -291,7 +291,7 @@ bool OpenVREyePose::submitFrame() const
 	if (vr::VRCompositor() == nullptr)
 		return false;
 	eyeTexture->handle = (void *)GLRenderer->mBuffers->GetEyeTextureGLHandle((int)eye);
-	vr::VRCompositor()->Submit(eye, eyeTexture);
+	vr::VRCompositor()->Submit(vr::EVREye(eye), eyeTexture);
 	return true;
 }
 

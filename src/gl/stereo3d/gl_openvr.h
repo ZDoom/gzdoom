@@ -45,7 +45,6 @@ namespace vr {
 	struct HmdMatrix44_t;
 	struct Texture_t;
 	struct TrackedDevicePose_t;
-	enum EVREye;
 }
 
 /* stereoscopic 3D API */
@@ -54,7 +53,7 @@ namespace s3d {
 class OpenVREyePose : public ShiftedEyePose
 {
 public:
-	OpenVREyePose(vr::EVREye eye);
+	OpenVREyePose(int eye);
 	virtual ~OpenVREyePose() override;
 	virtual VSMatrix GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const override;
 	virtual void GetViewShift(float yaw, float outViewShift[3]) const override;
@@ -69,7 +68,7 @@ protected:
 	VSMatrix eyeToHeadTransform;
 	VSMatrix otherEyeToHeadTransform;
 	vr::Texture_t* eyeTexture;
-	vr::EVREye eye;
+	int eye;
 
 	// TODO: adjust doomUnitsPerMeter according to player height
 	float verticalDoomUnitsPerMeter;

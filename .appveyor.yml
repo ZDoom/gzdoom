@@ -6,29 +6,34 @@ branches:
 
 clone_depth: 10
 
-os: Visual Studio 2015
+environment:
+  matrix:
+    - GENERATOR: "Visual Studio 14 2015"
+      CONFIGURATION: Release
+      TOOLSET: v140_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
+    - GENERATOR: "Visual Studio 14 2015 Win64"
+      CONFIGURATION: Release
+      TOOLSET: v140_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
+    - GENERATOR: "Visual Studio 15 2017"
+      CONFIGURATION: Release
+      TOOLSET: v141_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
+    - GENERATOR: "Visual Studio 15 2017 Win64"
+      CONFIGURATION: Release
+      TOOLSET: v141_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
+    - GENERATOR: "Visual Studio 14 2015 Win64"
+      CONFIGURATION: Debug
+      TOOLSET: v140
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
 
-platform: 
-  - Win32
-  - x64
-
-configuration:
-  - Debug
-  - Release
-
-before_build:
+build_script:
   - md build
   - cd build
-  - if "%PLATFORM%"=="Win32" set CMAKE_GENERATOR_NAME=Visual Studio 14 2015
-  - if "%PLATFORM%"=="x64"   set CMAKE_GENERATOR_NAME=Visual Studio 14 2015 Win64
-  - cmake -G "%CMAKE_GENERATOR_NAME%" -T "v140_xp"
-    -DCMAKE_BUILD_TYPE="%CONFIGURATION%"
-    ..
-
-build:
-  project: build\GZDoom.sln
-  parallel: true
-  verbosity: minimal
+  - cmake -G "%GENERATOR%" -T "%TOOLSET%" ..
+  - cmake --build . --config "%CONFIGURATION%"
 
 after_build:
   - set OUTPUT_DIR=%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\

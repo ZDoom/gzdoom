@@ -187,6 +187,7 @@ bool Win32Video::InitD3D9 ()
 	// Load the Direct3D 9 library.
 	if ((D3D9_dll = LoadLibraryA ("d3d9.dll")) == NULL)
 	{
+		Printf("Unable to load d3d9.dll! Falling back to DirectDraw...\n");
 		return false;
 	}
 
@@ -248,6 +249,7 @@ d3drelease:
 	D3D = NULL;
 closelib:
 	FreeLibrary (D3D9_dll);
+	Printf("Direct3D acceleration failed! Falling back to DirectDraw...\n");
 	return false;
 }
 

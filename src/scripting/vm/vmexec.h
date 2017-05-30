@@ -37,16 +37,6 @@
 #error vmexec.h must not be #included outside vmexec.cpp. Use vm.h instead.
 #endif
 
-static PClass* GetClass(void* ptr)
-{
-	if (nullptr == ptr)
-	{
-		ThrowAbortException(X_READ_NIL, nullptr);
-	}
-
-	return static_cast<DObject*>(ptr)->GetClass();
-}
-
 static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 {
 #if COMPGOTO
@@ -149,14 +139,30 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		NEXTOP;
 
 	OP(CLSS):
+	{
 		ASSERTA(a); ASSERTA(B);
-		reg.a[a] = GetClass(reg.a[B]);
+		DObject *o = (DObject*)reg.a[B];
+		if (o == nullptr)
+		{
+			ThrowAbortException(X_READ_NIL, nullptr);
+			return 0;
+		}
+		reg.a[a] = o->GetClass();
 		NEXTOP;
+	}
 
 	OP(META):
+	{
 		ASSERTA(a); ASSERTA(B);
-		reg.a[a] = GetClass(reg.a[B])->Meta;
+		DObject *o = (DObject*)reg.a[B];
+		if (o == nullptr)
+		{
+			ThrowAbortException(X_READ_NIL, nullptr);
+			return 0;
+		}
+		reg.a[a] = o->GetClass()->Meta;
 		NEXTOP;
+	}
 
 	OP(LB):
 		ASSERTD(a); ASSERTA(B); ASSERTKD(C);
@@ -825,15 +831,18 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (cls->ConstructNative == nullptr)
 		{
 			ThrowAbortException(X_OTHER, "Class %s requires native construction", cls->TypeName.GetChars());
+			return 0;
 		}
 		if (cls->bAbstract)
 		{
 			ThrowAbortException(X_OTHER, "Cannot instantiate abstract class %s", cls->TypeName.GetChars());
+			return 0;
 		}
 		// Creating actors here must be outright prohibited,
 		if (cls->IsDescendantOf(NAME_Actor))
 		{
 			ThrowAbortException(X_OTHER, "Cannot create actors with 'new'");
+			return 0;
 		}
 		// [ZZ] validate readonly and between scope construction
 		c = C;
@@ -888,6 +897,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[a] >= BC)
 		{
 			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", BC, reg.d[a]);
+			return 0;
 		}
 		NEXTOP;
 
@@ -896,6 +906,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[a] >= konstd[BC])
 		{
 			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", konstd[BC], reg.d[a]);
+			return 0;
 		}
 		NEXTOP;
 
@@ -904,6 +915,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[a] >= reg.d[B])
 		{
 			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", reg.d[B], reg.d[a]);
+			return 0;
 		}
 		NEXTOP;
 
@@ -1051,6 +1063,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = reg.d[B] / reg.d[C];
 		NEXTOP;
@@ -1059,6 +1072,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (konstd[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = reg.d[B] / konstd[C];
 		NEXTOP;
@@ -1067,6 +1081,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = konstd[B] / reg.d[C];
 		NEXTOP;
@@ -1076,6 +1091,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -1084,6 +1100,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (konstd[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = int((unsigned)reg.d[B] / (unsigned)konstd[C]);
 		NEXTOP;
@@ -1092,6 +1109,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = int((unsigned)konstd[B] / (unsigned)reg.d[C]);
 		NEXTOP;
@@ -1101,6 +1119,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = reg.d[B] % reg.d[C];
 		NEXTOP;
@@ -1109,6 +1128,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (konstd[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = reg.d[B] % konstd[C];
 		NEXTOP;
@@ -1117,6 +1137,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = konstd[B] % reg.d[C];
 		NEXTOP;
@@ -1126,6 +1147,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -1134,6 +1156,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (konstd[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = int((unsigned)reg.d[B] % (unsigned)konstd[C]);
 		NEXTOP;
@@ -1142,6 +1165,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[C] == 0)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.d[a] = int((unsigned)konstd[B] % (unsigned)reg.d[C]);
 		NEXTOP;
@@ -1298,6 +1322,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.f[C] == 0.)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.f[a] = reg.f[B] / reg.f[C];
 		NEXTOP;
@@ -1306,6 +1331,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (konstf[C] == 0.)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.f[a] = reg.f[B] / konstf[C];
 		NEXTOP;
@@ -1314,6 +1340,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.f[C] == 0.)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.f[a] = konstf[B] / reg.f[C];
 		NEXTOP;
@@ -1325,6 +1352,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (fc == 0.)
 		{
 			ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+			return 0;
 		}
 		reg.f[a] = luai_nummod(fb, fc);
 		NEXTOP;

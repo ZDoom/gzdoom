@@ -101,7 +101,7 @@ void ThrowVMException(VMException *x);
 	}
 
 #define GETADDR(a,o,x) \
-	if (a == NULL) { ThrowAbortException(x, nullptr); } \
+	if (a == NULL) { ThrowAbortException(x, nullptr); return 0; } \
 	ptr = (VM_SBYTE *)a + o
 
 #ifdef NDEBUG

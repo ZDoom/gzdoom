@@ -177,6 +177,9 @@ public:
 	static bool RenderFirstSkyPortal(int recursion);
 	static void EndFrame();
 	static GLPortal * FindPortal(const void * src);
+
+	static void Initialize();
+	static void Shutdown();
 };
 
 struct GLLinePortal : public GLPortal

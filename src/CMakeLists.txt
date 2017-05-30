@@ -477,31 +477,39 @@ if (GZDOOM_USE_OPENVR)
 			${OPENVR_SDK_PATH}/headers
 	)
 	include_directories("${OPENVR_INCLUDE_DIRECTORY}")
-	# Link to correct library for this platform
-	if(WIN32)
-		set(OPENVR_PLAT "win")
-	elseif( APPLE )
-		set(OPENVR_PLAT "osx")
-	else()
-		set(OPENVR_PLAT "linux")
+	option( GZDOOM_OPENVR_STATIC "Statically link OpenVR API" ON )
+	if(GZDOOM_OPENVR_STATIC)
+		# Incorporate the whole openvr API into zdoom, using a few rules lifted from the OpenVR CMakeLists.txt files
+		add_definitions( -DVR_API_PUBLIC )
+		include_directories(${OPENVR_SDK_PATH}/src ${OPENVR_SDK_PATH}/src/vrcommon)
+		file(GLOB OPENVR_SOURCES "${OPENVR_SDK_PATH}/src/*.cpp" "${OPENVR_SDK_PATH}/src/vrcommon/*.cpp")
+	else() # link to shared OpenVR library
+		# Link to correct library for this platform
+		if(WIN32)
+			set(OPENVR_PLAT "win")
+		elseif( APPLE )
+			set(OPENVR_PLAT "osx")
+		else()
+			set(OPENVR_PLAT "linux")
+		endif()
+		if(X64)
+			set(OPENVR_PLAT ${OPENVR_PLAT}64)
+		else()
+			set(OPENVR_PLAT ${OPENVR_PLAT}32)
+		endif()
+		find_library(OPENVR_LIBRARY
+			NAMES openvr_api
+			HINTS "${OPENVR_SDK_PATH}/lib/${OPENVR_PLAT}/"
+		)
+		list(APPEND ZDOOM_LIBS ${OPENVR_LIBRARY})
+		# Find shared library file needed for package distribution
+		find_program(OPENVR_SHARED_LIBRARY
+			NAMES libopenvr_api.so libopenvr_api.dylib openvr_api.dll
+			PATHS "${OPENVR_SDK_PATH}/bin/${OPENVR_PLAT}/"
+			NO_DEFAULT_PATH
+		)
 	endif()
-	if(X64)
-		set(OPENVR_PLAT ${OPENVR_PLAT}64)
-	else()
-		set(OPENVR_PLAT ${OPENVR_PLAT}32)
-	endif()
-	find_library(OPENVR_LIBRARY
-		NAMES openvr_api
-		HINTS "${OPENVR_SDK_PATH}/lib/${OPENVR_PLAT}/"
-	)
-	list(APPEND ZDOOM_LIBS ${OPENVR_LIBRARY})
 	add_definitions("-DUSE_OPENVR")
-	# Find shared library file needed for package distribution
-	find_program(OPENVR_SHARED_LIBRARY
-		NAMES libopenvr_api.so libopenvr_api.dylib openvr_api.dll
-		PATHS "${OPENVR_SDK_PATH}/bin/${OPENVR_PLAT}/"
-		NO_DEFAULT_PATH
-	)
 endif()
 
 # Start defining source files for ZDoom
@@ -1190,6 +1198,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${X86_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
+	${OPENVR_SOURCES}
 	x86.cpp
 	strnatcmp.c
 	zstring.cpp

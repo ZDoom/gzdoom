@@ -37,6 +37,16 @@
 #error vmexec.h must not be #included outside vmexec.cpp. Use vm.h instead.
 #endif
 
+static PClass* GetClass(void* ptr)
+{
+	if (nullptr == ptr)
+	{
+		ThrowAbortException(X_READ_NIL, nullptr);
+	}
+
+	return static_cast<DObject*>(ptr)->GetClass();
+}
+
 static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 {
 #if COMPGOTO
@@ -140,12 +150,12 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 
 	OP(CLSS):
 		ASSERTA(a); ASSERTA(B);
-		reg.a[a] = ((DObject*)reg.a[B])->GetClass();	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
+		reg.a[a] = GetClass(reg.a[B]);
 		NEXTOP;
 
 	OP(META):
 		ASSERTA(a); ASSERTA(B);
-		reg.a[a] = ((DObject*)reg.a[B])->GetClass()->Meta;	// I wish this could be done without a special opcode but there's really no good way to guarantee initialization of the Class pointer...
+		reg.a[a] = GetClass(reg.a[B])->Meta;
 		NEXTOP;
 
 	OP(LB):

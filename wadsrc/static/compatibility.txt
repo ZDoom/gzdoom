@@ -484,6 +484,46 @@ F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 	setsectorspecial 263 0
 	setsectorspecial 264 0
 }
+AB24AE6E2CB13CBDD04600A4D37F9189 // doom2.wad map02
+1EC0AF1E3985650F0C9000319C599D0C // doom2bfg.wad map02
+{
+	// missing textures
+	setwalltexture 327 front bot STONE4
+	setwalltexture 328 front bot STONE4
+	setwalltexture 338 front bot STONE4
+	setwalltexture 339 front bot STONE4
+}
+CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
+{
+	// missing textures
+	setwalltexture 456 back top SUPPORT3
+	setwalltexture 108 front top STONE
+	setwalltexture 109 front top STONE
+	setwalltexture 110 front top STONE
+	setwalltexture 111 front top STONE
+	setwalltexture 127 front top STONE
+	setwalltexture 128 front top STONE
+	// remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
+	setsectortag 19 0
+	setsectortag 20 0
+	setsectortag 23 0
+	setsectortag 28 0
+	setsectortag 33 0
+	setsectortag 34 0
+	setsectortag 83 0
+	setsectortag 85 0
+}
+9E061AD7FBCD7FAD968C976CB4AA3B9D // doom2.wad map05
+{
+	// fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
+	setsectortag 4 0
+	setsectortag 153 0
+}
+66C46385EB1A23D60839D1532522076B // doom2.wad map08
+{
+	// missing texture
+	setwalltexture 101 back top BRICK7
+}
 1A540BA717BF9EC85F8522594C352F2A // Doom II, map15
 {
 	setsectorspecial 147 0

@@ -209,15 +209,6 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	setactivation 943 2
 }
 
-2B65CB046EA40D2E44576949381769CA // Commercial Doom e3m4
-{
-	// This line is erroneously specified as Door_Raise that monsters
-	// can operate. If they do, they block you off from half the map. Change
-	// this into a one-shot Door_Open so that it won't close.
-	setlinespecial 1069 Door_Open 0 16 0 0 0
-	clearlineflags 1069 0x200
-}
-
 3F249EDD62A3A08F53A6C53CB4C7ABE5 // Artica 3 map01
 {
 	clearlinespecial 66
@@ -454,9 +445,74 @@ D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 	pointonline
 }
 
-// Remove unreachable secrets
+5B26545FF21B051CA06D389CE535684C // doom.wad e1m4
+{
+	// missing textures	
+	setwalltexture 693 back top BROWN1
+	// fix HOM errors with sectors too low
+	setsectoroffset 9 floor 8
+	setsectoroffset 105 floor 8
+	setsectoroffset 132 floor 8
+	setsectoroffset 137 floor 8
+}
+A24FE135D5B6FD427FE27BEF89717A65 // doom.wad e2m2
+{
+	// missing textures
+	setwalltexture 947 back top BROWN1
+	setwalltexture 1596 back top WOOD1
+}
+1BC04D646B32D3A3E411DAF3C1A38FF8 // doom.wad e2m4
+{
+	// missing textures
+	setwalltexture 551 back top PIPE4
+	setwalltexture 865 back bot STEP5
+	setwalltexture 1062 front top GSTVINE1
+	setwalltexture 1071 front top MARBLE1	
+}
+99C580AD8FABE923CAB485CB7F3C5E5D // doom.wad e2m5
+{
+	// missing textures
+	setwalltexture 590 back top GRAYBIG
+	setwalltexture 590 front bot BROWN1
+}
+3838AB29292587A7EE3CA71E7040868D // doom.wad e2m6
+{
+	// missing texture
+	setwalltexture 1091 back top compspan
+}
+8590F489879870C098CD7029C3187159 // doom.wad e2m7
+{
+	// missing texture
+	setwalltexture 1286 front bot SHAWN2
+}
+8A6399FAAA2E68649D4E4B16642074BE // doom.wad e2m9
+{
+	// missing textures
+	setwalltexture 121 back top SW1LION
+	setwalltexture 123 back top GSTONE1
+	setwalltexture 140 back top GSTONE1
+}
+2B65CB046EA40D2E44576949381769CA // Commercial Doom e3m4
+{
+	// This line is erroneously specified as Door_Raise that monsters
+	// can operate. If they do, they block you off from half the map. Change
+	// this into a one-shot Door_Open so that it won't close.
+	setlinespecial 1069 Door_Open 0 16 0 0 0
+	clearlineflags 1069 0x200
+}
+5AC51CA9F1B57D4538049422A5E37291 // doom.wad e3m7
+{
+	// missing texture
+	setwalltexture 971 back top SP_HOT1
+}
+DA0C8281AC70EEC31127C228BCD7FE2C // doom.wad e4m1
+{
+	// missing texture
+	setwalltexture 470 front top GSTONE1
+}
 F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 {
+	// Remove unreachable secrets
 	setsectorspecial 124 0
 	setsectorspecial 125 0
 	// clear staircase to secret area
@@ -479,11 +535,22 @@ F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 	setsectorspecial 152 0
 	setsectorspecial 155 0
 }
+AAECADD4D97970AFF702D86FAFAC7D17 // doom.wad e4m4
+{
+	// missing textures
+	setwalltexture 427 back top BROWNHUG
+	setwalltexture 558 back top BROWNHUG
+	setwalltexture 567 front top BROWNHUG
+	setwalltexture 572 front top BROWNHUG
+}
 94D4C869A0C02EF4F7375022B36AAE45 // Ultimate Doom, e4m7
 {
+	// Remove unreachable secrets
 	setsectorspecial 263 0
 	setsectorspecial 264 0
 }
+
+
 AB24AE6E2CB13CBDD04600A4D37F9189 // doom2.wad map02
 1EC0AF1E3985650F0C9000319C599D0C // doom2bfg.wad map02
 {

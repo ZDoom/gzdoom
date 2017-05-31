@@ -324,7 +324,7 @@ void ADynamicLight::Tick()
 		if (scale == 0.f) scale = 1.f;
 		
 		intensity = Sector->lightlevel * scale;
-		intensity = clamp<float>(intensity, 0.f, 255.f);
+		intensity = clamp<float>(intensity, 0.f, 1024.f);
 		
 		m_currentRadius = intensity;
 		break;

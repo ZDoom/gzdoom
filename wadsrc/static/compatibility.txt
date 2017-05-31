@@ -493,11 +493,6 @@ AB24AE6E2CB13CBDD04600A4D37F9189 // doom2.wad map02
 	setwalltexture 338 front bot STONE4
 	setwalltexture 339 front bot STONE4
 }
-5E8679670469F92E15CF4219B5B98FEF // doom2.wad map03
-{
-	// unmarked secret
-	setsectorspecial 62 1024
-}
 CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
 {
 	// missing textures
@@ -526,20 +521,8 @@ CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
 }
 66C46385EB1A23D60839D1532522076B // doom2.wad map08
 {
+	// missing texture
 	setwalltexture 101 back top BRICK7
-}
-6C620F43705BEC0ABBABBF46AC3E62D2 // doom2.wad map10
-{
-	// unmarked secrets
-	setsectorspecial 25 1090
-	setsectorspecial 137 1024
-	setsectorspecial 176 1024
-}
-73D9E03CEE7BF1A97EFD2EAD86688EF8 // doom2.wad map11
-{
-	// unmarked secrets
-	setsectorspecial 94 1024
-	setsectorspecial 138 1024	
 }
 1A540BA717BF9EC85F8522594C352F2A // Doom II, map15
 {

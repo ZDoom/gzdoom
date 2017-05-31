@@ -244,7 +244,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	}
 	else
 	{
-		fakesec    = gl_FakeFlat(viewsector, &fs, in_area, false);
+		fakesec = gl_FakeFlat(viewsector, &fs, in_area, false);
 
 		// calculate light level for weapon sprites
 		lightlevel = gl_ClampLight(fakesec->lightlevel);
@@ -282,7 +282,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 		lightlevel = gl_CalcLightLevel(lightlevel, getExtraLight(), true);
 
-		if (glset.lightmode == 8)
+		if (glset.lightmode == 8 || lightlevel < 92)
 		{
 			// Korshun: the way based on max possible light level for sector like in software renderer.
 			float min_L = 36.0 / 31.0 - ((lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63

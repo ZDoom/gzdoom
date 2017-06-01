@@ -186,6 +186,7 @@ class GoldWandPuff1 : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+PUFFONACTORS
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 

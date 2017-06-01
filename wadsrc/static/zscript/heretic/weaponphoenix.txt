@@ -292,6 +292,7 @@ class PhoenixFX2 : Actor
 		DamageType "Fire";
 		Projectile;
 		RenderStyle "Add";
+		+ZDOOMADD
 		Obituary "$OB_MPPPHOENIXROD";
 	}
 

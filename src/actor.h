@@ -396,13 +396,11 @@ enum ActorFlag7
 	MF7_FORCEZERORADIUSDMG = 0x10000000,	// passes zero radius damage on to P_DamageMobj, this is necessary in some cases where DoSpecialDamage gets overrideen.
 	MF7_NOINFIGHTSPECIES = 0x20000000,	// don't start infights with one's own species.
 	MF7_FORCEINFIGHTING	= 0x40000000,	// overrides a map setting of 'no infighting'.
-	MF7_SPRITEFLIP		= 0x80000000,	// sprite flipped on x-axis
 };
 enum ActorFlag8
 {
 	MF8_FRIGHTENING		= 0x00000001,	// for those moments when halloween just won't do
 	MF8_INSCROLLSEC		= 0x00000002,	// actor is partially inside a scrolling sector
-	MF8_ZDOOMTRANS		= 0x00000004,	// is not normally transparent in Vanilla Doom
 };
 
 // --- mobj.renderflags ---
@@ -444,6 +442,10 @@ enum ActorRenderFlag
 	RF_INTERPOLATEANGLES		= 0x01000000, // [MC] Allow interpolation of the actor's angle, pitch and roll.
 	RF_MAYBEINVISIBLE	= 0x02000000,
 	RF_DONTINTERPOLATE	= 0x04000000,	// no render interpolation ever!
+
+	RF_SPRITEFLIP		= 0x08000000,	// sprite flipped on x-axis
+	RF_ZDOOMTRANS		= 0x10000000,	// is not normally transparent in Vanilla Doom
+	RF_ZDOOMADD		= 0x20000000,	// is not normally additive in Vanilla Hexen/Heretic/Strife
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

@@ -632,6 +632,7 @@ class TeleportSwirl : Actor
 	Default
 	{
 		+NOBLOCKMAP
+		+ZDOOMADD
 		RenderStyle "Add";
 		Alpha 0.25;
 	}

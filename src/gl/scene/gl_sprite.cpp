@@ -1004,13 +1004,6 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			RenderStyle.SrcAlpha = STYLEALPHA_One;
 			RenderStyle.DestAlpha = STYLEALPHA_Zero;
 		}
-		if (thing->renderflags & RF_ZDOOMADD)
-		{
-			RenderStyle.BlendOp = STYLEOP_Add;
-			RenderStyle.SrcAlpha = STYLEALPHA_Src;
-			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
-		}
-
 	}
 	if (trans >= 1.f - FLT_EPSILON && RenderStyle.BlendOp != STYLEOP_Shadow && (
 		(RenderStyle.SrcAlpha == STYLEALPHA_One && RenderStyle.DestAlpha == STYLEALPHA_Zero) ||

@@ -40,7 +40,7 @@ class StrifeSpark : StrifePuff
 {
 	Default
 	{
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States

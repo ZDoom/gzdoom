@@ -228,7 +228,7 @@ class HereticImpBall : Actor
 		+SPAWNSOUNDSOURCE
 		-ACTIVATEPCROSS
 		-ACTIVATEIMPACT
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States

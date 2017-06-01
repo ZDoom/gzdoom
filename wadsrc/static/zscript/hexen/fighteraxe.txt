@@ -307,6 +307,7 @@ class AxePuffGlow : AxePuff
 	Default
 	{
 		+PUFFONACTORS
+		+ZDOOMADD
 		RenderStyle "Add";
 		Alpha 1;
 	}

@@ -655,6 +655,7 @@ class MinotaurFX1 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
+		+ZDOOMADD
 		RenderStyle "Add";
 	}
 	States

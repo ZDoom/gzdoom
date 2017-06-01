@@ -105,7 +105,8 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 	drawerargs.SetTranslationMap(translation);
 	drawerargs.SetLight(basecolormap, 0.0f, shade);
 
-	bool visible = drawerargs.SetStyle(viewport, parms.style, parms.Alpha, -1, parms.fillcolor, basecolormap);
+	uint32_t myfillcolor = (RGB256k.All[((parms.fillcolor & 0xfc0000) >> 6) | ((parms.fillcolor & 0xfc00) >> 4) | ((parms.fillcolor & 0xfc) >> 2)]) << 24;
+	bool visible = drawerargs.SetStyle(viewport, parms.style, parms.Alpha, -1, myfillcolor, basecolormap);
 
 	double x0 = parms.x - parms.left * parms.destwidth / parms.texwidth;
 	double y0 = parms.y - parms.top * parms.destheight / parms.texheight;

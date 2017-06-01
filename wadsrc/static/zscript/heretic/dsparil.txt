@@ -192,7 +192,7 @@ class SorcererFX1 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -411,7 +411,7 @@ class Sorcerer2FX1 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -459,7 +459,7 @@ class Sorcerer2FXSpark : Actor
 		+NOGRAVITY
 		+NOTELEPORT
 		+CANNOTPUSH
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -484,7 +484,7 @@ class Sorcerer2FX2 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 

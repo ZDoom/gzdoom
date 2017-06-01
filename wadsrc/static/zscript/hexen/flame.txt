@@ -5,7 +5,7 @@ class FlameSmallTemp : Actor
 	Default
 	{
 		+NOTELEPORT
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -29,7 +29,7 @@ class FlameLargeTemp : Actor
 	Default
 	{
 		+NOTELEPORT
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -64,7 +64,7 @@ class FlameSmall : SwitchableDecoration
 	{
 		+NOTELEPORT
 		+INVISIBLE
-		+ZDOOMADD
+		+ZDOOMTRANS
 		Radius 15;
 		RenderStyle "Add";
 	}
@@ -98,7 +98,7 @@ class FlameLarge : SwitchableDecoration
 	{
 		+NOTELEPORT
 		+INVISIBLE
-		+ZDOOMADD
+		+ZDOOMTRANS
 		Radius 15;
 		RenderStyle "Add";
 	}

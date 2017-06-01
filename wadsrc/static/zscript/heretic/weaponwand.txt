@@ -142,7 +142,7 @@ class GoldWandFX1 : Actor
 		Damage 2;
 		Projectile;
 		RenderStyle "Add";
-		+ZDOOMADD
+		+ZDOOMTRANS
 		DeathSound "weapons/wandhit";
 		Obituary "$OB_MPPGOLDWAND";
 	}

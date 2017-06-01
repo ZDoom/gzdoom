@@ -49,7 +49,7 @@ class Bang4Cloud : Actor
 	{
 		+NOBLOCKMAP
 		+NOGRAVITY
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		VSpeed 1;
 	}

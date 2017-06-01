@@ -165,7 +165,7 @@ class LightningCeiling : Lightning
 		Damage 8;
 		Projectile;
 		+CEILINGHUGGER
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -320,7 +320,7 @@ class LightningFloor : LightningCeiling
 	{
 		-CEILINGHUGGER
 		+FLOORHUGGER
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -376,7 +376,7 @@ class LightningZap : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Obituary "$OB_MPMWEAPLIGHTNING";
 	}

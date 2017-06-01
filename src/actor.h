@@ -445,7 +445,6 @@ enum ActorRenderFlag
 
 	RF_SPRITEFLIP		= 0x08000000,	// sprite flipped on x-axis
 	RF_ZDOOMTRANS		= 0x10000000,	// is not normally transparent in Vanilla Doom
-	RF_ZDOOMADD		= 0x20000000,	// is not normally additive in Vanilla Hexen/Heretic/Strife
 };
 
 // This translucency value produces the closest match to Heretic's TINTTAB.

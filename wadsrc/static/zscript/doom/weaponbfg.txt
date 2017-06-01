@@ -142,6 +142,7 @@ class BFGBall : Actor
 		Damage 100;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 0.75;
 		DeathSound "weapons/bfgx";

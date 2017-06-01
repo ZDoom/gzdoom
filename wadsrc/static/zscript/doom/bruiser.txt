@@ -121,6 +121,7 @@ class BaronBall : Actor
 		Damage 8;
 		Projectile ;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 1;
 		SeeSound "baron/attack";

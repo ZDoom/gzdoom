@@ -77,6 +77,7 @@ class DoomImpBall : Actor
 		Damage 3;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 1;
 		SeeSound "imp/attack";

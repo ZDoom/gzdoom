@@ -120,6 +120,7 @@ class SpawnFire : Actor
 		Height 78;
 		+NOBLOCKMAP
 		+NOGRAVITY
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States

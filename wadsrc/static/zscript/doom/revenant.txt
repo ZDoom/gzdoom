@@ -80,6 +80,7 @@ class RevenantTracer : Actor
 		Projectile;
 		+SEEKERMISSILE 
 		+RANDOMIZE
+		+ZDOOMTRANS
 		SeeSound "skeleton/attack";
 		DeathSound "skeleton/tracex";
 		RenderStyle "Add";
@@ -110,6 +111,7 @@ class RevenantTracerSmoke : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+NOTELEPORT
+		+ZDOOMTRANS
 		RenderStyle "Translucent";
 		Alpha 0.5;
 	}

@@ -74,6 +74,7 @@ class FatShot : Actor
 		Damage 8;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 1;
 		SeeSound "fatso/attack";

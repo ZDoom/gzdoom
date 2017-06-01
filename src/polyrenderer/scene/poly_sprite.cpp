@@ -31,6 +31,7 @@
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
+EXTERN_CVAR (Bool, r_canontrans)
 
 bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 {
@@ -145,7 +146,10 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
 	args.SetClipPlane(clipPlane);
-	args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
+	if ((thing->flags8 & MF8_ZDOOMTRANS) && r_canontrans)
+		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
+	else
+		args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	args.SetSubsectorDepthTest(true);
 	args.SetWriteSubsectorDepth(false);
 	args.SetWriteStencil(false);

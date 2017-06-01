@@ -75,6 +75,7 @@ CUSTOM_CVAR(Int, gl_fuzztype, 0, CVAR_ARCHIVE)
 }
 
 EXTERN_CVAR (Float, transsouls)
+EXTERN_CVAR (Bool, r_canontrans)
 
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
@@ -991,6 +992,13 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	else if (RenderStyle.Flags & STYLEF_Alpha1)
 	{
 		trans = 1.f;
+	}
+	if ((thing->flags8 & MF8_ZDOOMTRANS) && r_canontrans)
+	{	// [SP] "canonical transparency" - with the flip of a CVar, disable transparency for Doom objects
+		trans = 1.f;
+		RenderStyle.BlendOp = STYLEOP_Add;
+		RenderStyle.SrcAlpha = STYLEALPHA_One;
+		RenderStyle.DestAlpha = STYLEALPHA_Zero;
 	}
 
 	if (trans >= 1.f - FLT_EPSILON && RenderStyle.BlendOp != STYLEOP_Shadow && (

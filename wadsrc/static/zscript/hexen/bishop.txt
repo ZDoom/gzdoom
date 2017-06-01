@@ -290,7 +290,7 @@ class BishopFX : Actor
 		Projectile;
 		+SEEKERMISSILE
 		-ACTIVATEIMPACT -ACTIVATEPCROSS
-		+STRIFEDAMAGE
+		+STRIFEDAMAGE +ZDOOMADD
 		RenderStyle "Add";
 		DeathSound "BishopMissileExplode";
 	}

@@ -148,8 +148,6 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetClipPlane(clipPlane);
 	if ((thing->renderflags & RF_ZDOOMTRANS) && r_vanillatrans)
 		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
-	else if ((thing->renderflags & RF_ZDOOMADD) && r_vanillatrans)
-		args.SetStyle(LegacyRenderStyles[STYLE_Translucent], thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	else
 		args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	args.SetSubsectorDepthTest(true);

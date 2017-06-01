@@ -217,8 +217,6 @@ namespace swrenderer
 		{
 			if (thing->renderflags & RF_ZDOOMTRANS)
 				vis->RenderStyle = LegacyRenderStyles[STYLE_Normal];
-			if (thing->renderflags & RF_ZDOOMADD)
-				vis->RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 		}
 		vis->FillColor = thing->fillcolor;
 		vis->Translation = thing->Translation;		// [RH] thing translation table

@@ -85,7 +85,7 @@ class FlameMissile : Actor
 		Projectile;
 		-NOGRAVITY
 		+STRIFEDAMAGE
-		+ZDOOMADD
+		+ZDOOMTRANS
 		MaxStepHeight 4;
 		RenderStyle "Add";
 		SeeSound "weapons/flamethrower";

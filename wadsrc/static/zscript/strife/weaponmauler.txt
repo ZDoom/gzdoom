@@ -181,7 +181,7 @@ class MaulerPuff : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+PUFFONACTORS
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		DamageType "Disintegrate";
 	}
@@ -207,7 +207,7 @@ class MaulerTorpedo : Actor
 		DamageType "Disintegrate";
 		Projectile;
 		+STRIFEDAMAGE
-		+ZDOOMADD
+		+ZDOOMTRANS
 		MaxStepHeight 4;
 		RenderStyle "Add";
 		SeeSound "weapons/mauler2fire";
@@ -270,7 +270,7 @@ class MaulerTorpedoWave : Actor
 		DamageType "Disintegrate";
 		Projectile;
 		+STRIFEDAMAGE
-		+ZDOOMADD
+		+ZDOOMTRANS
 		MaxStepHeight 4;
 		RenderStyle "Add";
 		Obituary "$OB_MPMAULER";

@@ -143,7 +143,7 @@ class HornRodFX1 : Actor
 		Damage 3;
 		Projectile;
 		+WINDTHRUST
-		+ZDOOMADD
+		+ZDOOMTRANS
 		-NOBLOCKMAP
 		RenderStyle "Add";
 		SeeSound "weapons/hornrodshoot";
@@ -178,7 +178,7 @@ class HornRodFX2 : Actor
 		Health 140;
 		Projectile;
 		RenderStyle "Add";
-		+ZDOOMADD
+		+ZDOOMTRANS
 		SeeSound "weapons/hornrodpowshoot";
 		DeathSound "weapons/hornrodpowhit";
 		Obituary "$OB_MPPSKULLROD";
@@ -366,7 +366,7 @@ class RainPillar : Actor
 		Projectile;
 		-ACTIVATEPCROSS
 		-ACTIVATEIMPACT
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Obituary "$OB_MPPSKULLROD";
 	}

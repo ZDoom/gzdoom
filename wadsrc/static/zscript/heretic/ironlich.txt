@@ -144,7 +144,7 @@ class HeadFX1 : Actor
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
 		+THRUGHOST
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -196,7 +196,7 @@ class HeadFX2 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -225,7 +225,7 @@ class HeadFX3 : Actor
 		Damage 5;
 		Projectile;
 		+WINDTHRUST	
-		+ZDOOMADD
+		+ZDOOMTRANS
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
 		-NOBLOCKMAP

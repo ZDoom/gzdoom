@@ -311,7 +311,7 @@ class DragonFireball : Actor
 		DamageType "Fire";
 		Projectile;
 		-ACTIVATEIMPACT -ACTIVATEPCROSS
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		DeathSound "DragonFireballExplode";
 	}
@@ -365,7 +365,7 @@ class DragonExplosion : Actor
 		+NOBLOCKMAP
 		+NOTELEPORT
 		+INVISIBLE
-		+ZDOOMADD
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		DeathSound "DragonFireballExplode";
 	}

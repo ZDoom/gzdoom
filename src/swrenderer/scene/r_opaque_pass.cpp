@@ -1008,17 +1008,22 @@ namespace swrenderer
 				bool flipX;
 
 				FTextureID tex = sprdef->GetSpriteFrame(thing->frame, -1, sprangle, &flipX, !!(thing->flags7 & MF7_SPRITEFLIP));
-				if (!tex.isValid()) return false;
-
-				if (flipX)
+				if (tex.isValid())
 				{
-					sprite.renderflags ^= RF_XFLIP;
+					if (flipX)
+					{
+						sprite.renderflags ^= RF_XFLIP;
+					}
+					sprite.tex = TexMan[tex];	// Do not animate the rotation
 				}
-				sprite.tex = TexMan[tex];	// Do not animate the rotation
+
 				if (r_drawvoxels)
 				{
 					sprite.voxel = SpriteFrames[sprdef->spriteframes + thing->frame].Voxel;
 				}
+
+				if (sprite.voxel == nullptr && !tex.isValid())
+					return false;
 			}
 
 			if (sprite.voxel == nullptr && (sprite.tex == nullptr || sprite.tex->UseType == FTexture::TEX_Null))

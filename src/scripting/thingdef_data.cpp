@@ -325,6 +325,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, SPRITEFLIP, AActor, flags7),
 
 	DEFINE_FLAG(MF8, FRIGHTENING, AActor, flags8),
+	DEFINE_FLAG(MF8, ZDOOMTRANS, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

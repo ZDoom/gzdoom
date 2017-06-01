@@ -68,6 +68,7 @@
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, gl_light_sprites)
+EXTERN_CVAR (Bool, r_canontrans)
 
 namespace swrenderer
 {
@@ -212,6 +213,8 @@ namespace swrenderer
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
+		if ((thing->flags8 & MF8_ZDOOMTRANS) && r_canontrans)
+			vis->RenderStyle = LegacyRenderStyles[STYLE_Normal];
 		vis->FillColor = thing->fillcolor;
 		vis->Translation = thing->Translation;		// [RH] thing translation table
 		vis->FakeFlatStat = fakeside;

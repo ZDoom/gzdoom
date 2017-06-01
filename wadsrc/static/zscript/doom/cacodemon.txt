@@ -71,6 +71,7 @@ class CacodemonBall : Actor
 		Damage 5;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 1;
 		SeeSound "caco/attack";

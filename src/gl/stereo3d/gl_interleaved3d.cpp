@@ -37,6 +37,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_postprocessstate.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_present3dRowshader.h"
 
@@ -122,6 +123,8 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 
 void CheckerInterleaved3D::Present() const
 {
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(2);
 	prepareInterleavedPresent(*GLRenderer->mPresent3dCheckerShader);
 
 	// Compute absolute offset from top of screen to top of current display window
@@ -165,6 +168,8 @@ void s3d::CheckerInterleaved3D::AdjustViewports() const
 
 void ColumnInterleaved3D::Present() const
 {
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(2);
 	prepareInterleavedPresent(*GLRenderer->mPresent3dColumnShader);
 
 	// Compute absolute offset from top of screen to top of current display window
@@ -185,6 +190,8 @@ void ColumnInterleaved3D::Present() const
 
 void RowInterleaved3D::Present() const
 {
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(2);
 	prepareInterleavedPresent(*GLRenderer->mPresent3dRowShader);
 
 	// Compute absolute offset from top of screen to top of current display window

@@ -1323,6 +1323,27 @@ public:
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+class FxRandomSeed : public FxExpression
+{
+protected:
+	bool EmitTail;
+	FRandom *rng;
+	FxExpression *seed;
+
+public:
+
+	FxRandomSeed(FRandom *, FxExpression *mi, const FScriptPosition &pos, bool nowarn);
+	~FxRandomSeed();
+	FxExpression *Resolve(FCompileContext&);
+	ExpEmit Emit(VMFunctionBuilder *build);
+};
+
+//==========================================================================
+//
 //	FxMemberBase
 //
 //==========================================================================

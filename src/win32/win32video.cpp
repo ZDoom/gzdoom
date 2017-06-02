@@ -187,6 +187,7 @@ bool Win32Video::InitD3D9 ()
 	// Load the Direct3D 9 library.
 	if ((D3D9_dll = LoadLibraryA ("d3d9.dll")) == NULL)
 	{
+		Printf("Unable to load d3d9.dll! Falling back to DirectDraw...\n");
 		return false;
 	}
 
@@ -248,6 +249,7 @@ d3drelease:
 	D3D = NULL;
 closelib:
 	FreeLibrary (D3D9_dll);
+	Printf("Direct3D acceleration failed! Falling back to DirectDraw...\n");
 	return false;
 }
 
@@ -282,7 +284,9 @@ void Win32Video::InitDDraw ()
 	if (FAILED(dderr))
 		I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
 
-	dderr = ddraw1->QueryInterface (IID_IDirectDraw2, (LPVOID*)&DDraw);
+	static const GUID IDIRECTDRAW2_GUID = { 0xB3A6F3E0, 0x2B43, 0x11CF, 0xA2, 0xDE, 0x00, 0xAA, 0x00, 0xB9, 0x33, 0x56 };
+
+	dderr = ddraw1->QueryInterface (IDIRECTDRAW2_GUID, (LPVOID*)&DDraw);
 	if (FAILED(dderr))
 	{
 		ddraw1->Release ();

@@ -50,6 +50,7 @@
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_ambientshader.h"
 #include "gl/shaders/gl_bloomshader.h"
@@ -184,10 +185,14 @@ void FGLRenderer::Initialize(int width, int height)
 	mShaderManager = new FShaderManager;
 	mSamplerManager = new FSamplerManager;
 	gl_LoadModels();
+
+	GLPortal::Initialize();
 }
 
 FGLRenderer::~FGLRenderer() 
 {
+	GLPortal::Shutdown();
+
 	gl_FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();

@@ -60,7 +60,6 @@ if( WIN32 )
 		( MSVC15 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v141_xp" ) )		# For VS 2017.
 		# for modern Windows SDKs the DirectX headers should be available by default.
 		set( DX_dinput8_LIBRARY dinput8 )
-		set( DX_dxguid_LIBRARY dxguid )
 	else()
 		
 		find_path( D3D_INCLUDE_DIR d3d9.h
@@ -97,9 +96,6 @@ if( WIN32 )
 		find_library( DX_dinput8_LIBRARY dinput8
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Lib Lib/${XBITS} )
-		find_library( DX_dxguid_LIBRARY dxguid
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Lib Lib/${XBITS} )
 
 		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
 		# CMake cannot find these libraries via find_library.
@@ -108,11 +104,6 @@ if( WIN32 )
 			set( DX_dinput8_LIBRARY dinput8 )
 		endif()
 
-		# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
-		# were moved to dinput8.lib.
-		if( NOT DX_dxguid_LIBRARY )
-			message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
-		endif()
 	endif()
 
 	set( ZDOOM_LIBS
@@ -133,9 +124,6 @@ if( WIN32 )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
 	endif()
 
-	if( DX_dxguid_LIBRARY )
-		list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
-	endif()
 else()
 	if( APPLE )
 		set( NO_GTK ON )

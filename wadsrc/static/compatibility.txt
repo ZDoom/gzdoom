@@ -209,15 +209,6 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	setactivation 943 2
 }
 
-2B65CB046EA40D2E44576949381769CA // Commercial Doom e3m4
-{
-	// This line is erroneously specified as Door_Raise that monsters
-	// can operate. If they do, they block you off from half the map. Change
-	// this into a one-shot Door_Open so that it won't close.
-	setlinespecial 1069 Door_Open 0 16 0 0 0
-	clearlineflags 1069 0x200
-}
-
 3F249EDD62A3A08F53A6C53CB4C7ABE5 // Artica 3 map01
 {
 	clearlinespecial 66
@@ -454,9 +445,74 @@ D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 	pointonline
 }
 
-// Remove unreachable secrets
+5B26545FF21B051CA06D389CE535684C // doom.wad e1m4
+{
+	// missing textures	
+	setwalltexture 693 back top BROWN1
+	// fix HOM errors with sectors too low
+	setsectoroffset 9 floor 8
+	setsectoroffset 105 floor 8
+	setsectoroffset 132 floor 8
+	setsectoroffset 137 floor 8
+}
+A24FE135D5B6FD427FE27BEF89717A65 // doom.wad e2m2
+{
+	// missing textures
+	setwalltexture 947 back top BROWN1
+	setwalltexture 1596 back top WOOD1
+}
+1BC04D646B32D3A3E411DAF3C1A38FF8 // doom.wad e2m4
+{
+	// missing textures
+	setwalltexture 551 back top PIPE4
+	setwalltexture 865 back bot STEP5
+	setwalltexture 1062 front top GSTVINE1
+	setwalltexture 1071 front top MARBLE1	
+}
+99C580AD8FABE923CAB485CB7F3C5E5D // doom.wad e2m5
+{
+	// missing textures
+	setwalltexture 590 back top GRAYBIG
+	setwalltexture 590 front bot BROWN1
+}
+3838AB29292587A7EE3CA71E7040868D // doom.wad e2m6
+{
+	// missing texture
+	setwalltexture 1091 back top compspan
+}
+8590F489879870C098CD7029C3187159 // doom.wad e2m7
+{
+	// missing texture
+	setwalltexture 1286 front bot SHAWN2
+}
+8A6399FAAA2E68649D4E4B16642074BE // doom.wad e2m9
+{
+	// missing textures
+	setwalltexture 121 back top SW1LION
+	setwalltexture 123 back top GSTONE1
+	setwalltexture 140 back top GSTONE1
+}
+2B65CB046EA40D2E44576949381769CA // Commercial Doom e3m4
+{
+	// This line is erroneously specified as Door_Raise that monsters
+	// can operate. If they do, they block you off from half the map. Change
+	// this into a one-shot Door_Open so that it won't close.
+	setlinespecial 1069 Door_Open 0 16 0 0 0
+	clearlineflags 1069 0x200
+}
+5AC51CA9F1B57D4538049422A5E37291 // doom.wad e3m7
+{
+	// missing texture
+	setwalltexture 971 back top SP_HOT1
+}
+DA0C8281AC70EEC31127C228BCD7FE2C // doom.wad e4m1
+{
+	// missing texture
+	setwalltexture 470 front top GSTONE1
+}
 F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 {
+	// Remove unreachable secrets
 	setsectorspecial 124 0
 	setsectorspecial 125 0
 	// clear staircase to secret area
@@ -479,10 +535,67 @@ F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 	setsectorspecial 152 0
 	setsectorspecial 155 0
 }
+AAECADD4D97970AFF702D86FAFAC7D17 // doom.wad e4m4
+{
+	// missing textures
+	setwalltexture 427 back top BROWNHUG
+	setwalltexture 558 back top BROWNHUG
+	setwalltexture 567 front top BROWNHUG
+	setwalltexture 572 front top BROWNHUG
+}
 94D4C869A0C02EF4F7375022B36AAE45 // Ultimate Doom, e4m7
 {
+	// Remove unreachable secrets
 	setsectorspecial 263 0
 	setsectorspecial 264 0
+}
+
+
+AB24AE6E2CB13CBDD04600A4D37F9189 // doom2.wad map02
+1EC0AF1E3985650F0C9000319C599D0C // doom2bfg.wad map02
+{
+	// missing textures
+	setwalltexture 327 front bot STONE4
+	setwalltexture 328 front bot STONE4
+	setwalltexture 338 front bot STONE4
+	setwalltexture 339 front bot STONE4
+}
+CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
+{
+	// missing textures
+	setwalltexture 456 back top SUPPORT3
+	setwalltexture 108 front top STONE
+	setwalltexture 109 front top STONE
+	setwalltexture 110 front top STONE
+	setwalltexture 111 front top STONE
+	setwalltexture 127 front top STONE
+	setwalltexture 128 front top STONE
+	// remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
+	setsectortag 19 0
+	setsectortag 20 0
+	setsectortag 23 0
+	setsectortag 28 0
+	setsectortag 33 0
+	setsectortag 34 0
+	setsectortag 83 0
+	setsectortag 85 0
+}
+9E061AD7FBCD7FAD968C976CB4AA3B9D // doom2.wad map05
+{
+	// fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
+	setsectortag 4 0
+	setsectortag 153 0
+}
+66C46385EB1A23D60839D1532522076B // doom2.wad map08
+{
+	// missing texture
+	setwalltexture 101 back top BRICK7
+}
+5BDA34DA60C0530794CC1EA2DA017976 // doom2.wad map14
+{
+	// missing textures
+	setwalltexture 1259 back top BSTONE2
+	setwalltexture 1305 back top BSTONE2
 }
 1A540BA717BF9EC85F8522594C352F2A // Doom II, map15
 {
@@ -493,6 +606,12 @@ F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
 	// missing textures
 	setwalltexture 451 front mid metal
 	setwalltexture 459 front mid metal
+}
+B5506B1E8F2FC272AD0C77B9E0DF5491 // doom2.wad map19
+{
+	// missing textures
+	setwalltexture 355 back top STONE2
+	setwalltexture 736 front top SLADWALL
 }
 EBDAC00E9D25D884B2C8F4B1F0390539 // doom2.wad map21
 {

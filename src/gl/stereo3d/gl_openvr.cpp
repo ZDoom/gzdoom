@@ -351,6 +351,20 @@ void OpenVRMode::AdjustViewports() const
 	GLRenderer->mScreenViewport.height = sceneHeight;
 }
 
+void OpenVRMode::Adjust2DMatrices(int eye_index) const
+{
+	auto old_projection = gl_RenderState.mProjectionMatrix;
+	VSMatrix new_projection;
+	new_projection.loadIdentity();
+	// new_projection.multMatrix(old_projection);
+
+	new_projection.translate(-1, 1, 0);
+	new_projection.scale(2.0 / SCREENWIDTH, -2.0 / SCREENHEIGHT, -1.0);
+
+	gl_RenderState.mProjectionMatrix = new_projection;
+	gl_RenderState.ApplyMatrices();
+}
+
 /* virtual */
 void OpenVRMode::Present() const {
 	// TODO: For performance, don't render to the desktop screen here

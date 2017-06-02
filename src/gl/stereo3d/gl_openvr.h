@@ -77,6 +77,7 @@ public:
 	virtual void TearDown() const override; // called immediately after rendering a scene frame
 	virtual void Present() const override;
 	virtual void AdjustViewports() const override;
+	virtual void Adjust2DMatrices(int eye_index) const override;
 
 protected:
 	OpenVRMode();

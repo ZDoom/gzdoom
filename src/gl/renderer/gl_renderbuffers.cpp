@@ -770,7 +770,7 @@ void FGLRenderBuffers::CreateShadowMap()
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &frameBufferBinding);
 
-	mShadowMapTexture = Create2DTexture("ShadowMap", GL_R32F, 1024, 1024);
+	mShadowMapTexture = Create2DTexture("ShadowMap", GL_R32F, SHADOWMAP_QUALITY, 1024);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

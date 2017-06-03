@@ -8,6 +8,10 @@
 class ADynamicLight;
 struct level_info_t;
 
+// This constant must match the same constant in shadowmap.fp
+//#define SHADOWMAP_QUALITY 1024
+#define SHADOWMAP_QUALITY 128
+
 class FShadowMap
 {
 public:

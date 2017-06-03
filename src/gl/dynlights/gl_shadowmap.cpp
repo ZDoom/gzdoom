@@ -106,7 +106,7 @@ void FShadowMap::Update()
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mNodesBuffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLinesBuffer);
 
-	glViewport(0, 0, 1024, 1024);
+	glViewport(0, 0, SHADOWMAP_QUALITY, 1024);
 	GLRenderer->RenderScreenQuad();
 
 	const auto &viewport = GLRenderer->mScreenViewport;

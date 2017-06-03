@@ -82,6 +82,23 @@ ADD_STAT(shadowmap)
 	return out;
 }
 
+CUSTOM_CVAR(Int, gl_shadowmap_quality, 128, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	switch (self)
+	{
+	case 32:
+	case 64:
+	case 128:
+	case 256:
+	case 512:
+	case 1024:
+		break;
+	default:
+		self = 128;
+		break;
+	}
+}
+
 void FShadowMap::Update()
 {
 	UpdateCycles.Reset();
@@ -102,11 +119,12 @@ void FShadowMap::Update()
 	GLRenderer->mBuffers->BindShadowMapFB();
 
 	GLRenderer->mShadowMapShader->Bind();
+	GLRenderer->mShadowMapShader->ShadowmapQuality.Set(gl_shadowmap_quality);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLightList);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mNodesBuffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLinesBuffer);
 
-	glViewport(0, 0, SHADOWMAP_QUALITY, 1024);
+	glViewport(0, 0, gl_shadowmap_quality, 1024);
 	GLRenderer->RenderScreenQuad();
 
 	const auto &viewport = GLRenderer->mScreenViewport;

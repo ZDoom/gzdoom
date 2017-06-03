@@ -3,8 +3,9 @@ in vec2 TexCoord;
 out vec4 FragColor;
 
 // This constant must match the same constant in gl_shadowmap.h
-// #define SHADOWMAP_QUALITY 1024
-#define SHADOWMAP_QUALITY 128
+// #define ShadowmapQuality 1024
+//#define ShadowmapQuality 128
+uniform float ShadowmapQuality;
 
 struct GPUNode
 {
@@ -144,12 +145,12 @@ void main()
 	if (radius > 0.0)
 	{
 		vec2 pixelpos;
-		switch (int(gl_FragCoord.x) / int(SHADOWMAP_QUALITY/4))
+		switch (int(gl_FragCoord.x) / int(ShadowmapQuality/4.0))
 		{
-		case 0: pixelpos = vec2((gl_FragCoord.x - float(SHADOWMAP_QUALITY/8)) / float(SHADOWMAP_QUALITY/8), 1.0); break;
-		case 1: pixelpos = vec2(1.0, (gl_FragCoord.x - float(SHADOWMAP_QUALITY/4 + SHADOWMAP_QUALITY/8)) / float(SHADOWMAP_QUALITY/8)); break;
-		case 2: pixelpos = vec2(-(gl_FragCoord.x - float(SHADOWMAP_QUALITY/2 + SHADOWMAP_QUALITY/8)) / float(SHADOWMAP_QUALITY/8), -1.0); break;
-		case 3: pixelpos = vec2(-1.0, -(gl_FragCoord.x - float(SHADOWMAP_QUALITY*3/4 + SHADOWMAP_QUALITY/8)) / float(SHADOWMAP_QUALITY/8)); break;
+		case 0: pixelpos = vec2((gl_FragCoord.x - float(ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0), 1.0); break;
+		case 1: pixelpos = vec2(1.0, (gl_FragCoord.x - float(ShadowmapQuality/4.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0)); break;
+		case 2: pixelpos = vec2(-(gl_FragCoord.x - float(ShadowmapQuality/2.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0), -1.0); break;
+		case 3: pixelpos = vec2(-1.0, -(gl_FragCoord.x - float(ShadowmapQuality*3.0/4.0 + ShadowmapQuality/8.0)) / float(ShadowmapQuality/8.0)); break;
 		}
 		pixelpos = lightpos + pixelpos * radius;
 

@@ -33,6 +33,7 @@
 #include "gl/shaders/gl_shadowmapshader.h"
 #include "r_state.h"
 #include "g_levellocals.h"
+#include "stats.h"
 
 /*
 	The 1D shadow maps are stored in a 1024x1024 texture as float depth values (R32F).
@@ -67,10 +68,30 @@
 	as on the CPU, except everything uses indexes as pointers are not allowed in GLSL.
 */
 
+namespace
+{
+	cycle_t UpdateCycles;
+	int LightsProcessed;
+	int LightsShadowmapped;
+}
+
+ADD_STAT(shadowmap)
+{
+	FString out;
+	out.Format("upload=%04.2f ms  lights=%d  shadowmapped=%d", UpdateCycles.TimeMS(), LightsProcessed, LightsShadowmapped);
+	return out;
+}
+
 void FShadowMap::Update()
 {
+	UpdateCycles.Reset();
+	LightsProcessed = 0;
+	LightsShadowmapped = 0;
+
 	if (!IsEnabled())
 		return;
+
+	UpdateCycles.Clock();
 
 	UploadAABBTree();
 	UploadLights();
@@ -98,6 +119,8 @@ void FShadowMap::Update()
 	GLRenderer->mBuffers->BindShadowMapTexture(16);
 
 	FGLDebug::PopGroup();
+
+	UpdateCycles.Unclock();
 }
 
 bool FShadowMap::ShadowTest(ADynamicLight *light, const DVector3 &pos)
@@ -133,8 +156,11 @@ void FShadowMap::UploadLights()
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 	while (auto light = it.Next())
 	{
+		LightsProcessed++;
 		if (light->shadowmapped)
 		{
+			LightsShadowmapped++;
+
 			mLightToShadowmap[light] = lightindex >> 2;
 
 			mLights[lightindex] = light->X();

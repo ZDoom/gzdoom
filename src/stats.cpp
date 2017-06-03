@@ -89,8 +89,10 @@ void FStat::ToggleStat ()
 
 void FStat::PrintStat ()
 {
+	int textScale = active_con_scale();
+
 	int fontheight = ConFont->GetHeight() + 1;
-	int y = SCREENHEIGHT;
+	int y = SCREENHEIGHT / textScale;
 	int count = 0;
 
 	for (FStat *stat = FirstStat; stat != NULL; stat = stat->m_Next)
@@ -107,7 +109,10 @@ void FStat::PrintStat ()
 					// Count number of linefeeds but ignore terminating ones.
 					if (stattext[i] == '\n') y -= fontheight;
 				}
-				screen->DrawText(ConFont, CR_GREEN, 5, y, stattext, TAG_DONE);
+				screen->DrawText(ConFont, CR_GREEN, 5 / textScale, y, stattext,
+					DTA_VirtualWidth, screen->GetWidth() / textScale,
+					DTA_VirtualHeight, screen->GetHeight() / textScale,
+					DTA_KeepRatio, true, TAG_DONE);
 				count++;
 			}
 		}

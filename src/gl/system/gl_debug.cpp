@@ -32,7 +32,7 @@
 #include "stats.h"
 #include <set>
 #include <string>
-#include <map>
+#include <vector>
 
 #ifndef _MSC_VER
 #include <signal.h>

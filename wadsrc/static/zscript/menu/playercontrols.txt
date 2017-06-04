@@ -523,7 +523,7 @@ class ListMenuItemSlider : ListMenuItemSelectable
 
 		double x = SmallFont.StringWidth ("Green") + 8 + mXpos;
 		double x2 = SmallFont.StringWidth (text) + 8 + mXpos;
-		mDrawX = MAX(x2, x);
+		mDrawX = int(MAX(x2, x));
 
 		DrawSlider (mDrawX, mYpos);
 	}

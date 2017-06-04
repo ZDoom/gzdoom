@@ -69,7 +69,6 @@
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, gl_light_sprites)
-EXTERN_CVAR (Bool, r_vanillatrans)
 
 namespace swrenderer
 {
@@ -214,7 +213,7 @@ namespace swrenderer
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
-		if (UseVanillaTransparency())
+		if (r_UseVanillaTransparency)
 		{
 			if (thing->renderflags & RF_ZDOOMTRANS)
 				vis->RenderStyle = LegacyRenderStyles[STYLE_Normal];

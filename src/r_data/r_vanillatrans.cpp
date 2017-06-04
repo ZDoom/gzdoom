@@ -32,7 +32,8 @@
 #include "c_dispatch.h"
 #endif
 
-CVAR (Int, r_vanillatrans, 2, CVAR_ARCHIVE)
+bool r_UseVanillaTransparency;
+CVAR (Int, r_vanillatrans, 0, CVAR_ARCHIVE)
 
 namespace
 {

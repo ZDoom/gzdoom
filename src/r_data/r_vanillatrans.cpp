@@ -33,7 +33,7 @@
 #endif
 
 bool r_UseVanillaTransparency;
-CVAR (Int, r_vanillatrans, 2, CVAR_ARCHIVE)
+CVAR (Int, r_vanillatrans, 0, CVAR_ARCHIVE)
 
 namespace
 {

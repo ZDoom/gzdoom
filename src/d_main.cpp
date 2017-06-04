@@ -670,6 +670,8 @@ void D_Display ()
 	cycles.Reset();
 	cycles.Clock();
 
+	r_UseVanillaTransparency = UseVanillaTransparency(); // [SP] Cache UseVanillaTransparency() call
+
 	if (players[consoleplayer].camera == NULL)
 	{
 		players[consoleplayer].camera = players[consoleplayer].mo;

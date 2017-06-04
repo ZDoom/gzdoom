@@ -146,7 +146,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
 	args.SetClipPlane(clipPlane);
-	if ((thing->renderflags & RF_ZDOOMTRANS) && UseVanillaTransparency())
+	if ((thing->renderflags & RF_ZDOOMTRANS) && r_UseVanillaTransparency)
 		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	else
 		args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);

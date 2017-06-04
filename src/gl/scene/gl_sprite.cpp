@@ -993,7 +993,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	{
 		trans = 1.f;
 	}
-	if (UseVanillaTransparency())
+	if (r_UseVanillaTransparency)
 	{
 		// [SP] "canonical transparency" - with the flip of a CVar, disable transparency for Doom objects,
 		//   and disable 'additive' translucency for certain objects from other games.

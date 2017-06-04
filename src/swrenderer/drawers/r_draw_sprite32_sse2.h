@@ -185,7 +185,8 @@ namespace swrenderer
 			uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
 			uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 			uint32_t srccolor = args.SrcColorBgra();
-			uint32_t color = LightBgra::shade_pal_index_simple(args.SolidColor(), light);
+			uint32_t color = LightBgra::shade_bgra_simple(args.SolidColorBgra(),
+				LightBgra::calc_light_multiplier(light));
 
 			int ssecount = count / 2;
 			for (int index = 0; index < ssecount; index++)

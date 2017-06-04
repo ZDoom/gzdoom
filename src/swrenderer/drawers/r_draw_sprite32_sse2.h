@@ -326,7 +326,7 @@ namespace swrenderer
 		{
 			using namespace DrawSprite32TModes;
 
-			if (BlendT::Mode == (int)SpriteBlendModes::Copy || BlendT::Mode == (int)SpriteBlendModes::Shaded)
+			if (BlendT::Mode == (int)SpriteBlendModes::Copy)
 				return fgcolor;
 
 			if (ShadeModeT::Mode == (int)ShadeMode::Simple)

@@ -1171,6 +1171,7 @@ public:
 
 	uint8_t smokecounter;
 	uint8_t FloatBobPhase;
+	double FloatBobStrength;
 	uint8_t FriendPlayer;				// [RH] Player # + 1 this friendly monster works for (so 0 is no player, 1 is player 0, etc)
 	PalEntry BloodColor;
 	uint32_t BloodTranslation;

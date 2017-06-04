@@ -1079,7 +1079,7 @@ bool DBaseStatusBar::MustDrawLog(EHudState state)
 {
 	IFVIRTUAL(DBaseStatusBar, MustDrawLog)
 	{
-		VMValue params[] = { (DObject*)this };
+		VMValue params[] = { (DObject*)this, int(state) };
 		int rv;
 		VMReturn ret(&rv);
 		VMCall(func, params, countof(params), &ret, 1);

@@ -40,6 +40,7 @@ void FShadowMapShader::Bind()
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/shadowmap");
 		mShader.SetAttribLocation(0, "PositionInProjection");
+		ShadowmapQuality.Init(mShader, "ShadowmapQuality");
 	}
 	mShader.Bind();
 }

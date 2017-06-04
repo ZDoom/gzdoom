@@ -89,6 +89,7 @@ private:
 	void ClearBloom();
 	void ClearExposureLevels();
 	void ClearAmbientOcclusion();
+	void ClearShadowMap();
 	void CreateScene(int width, int height, int samples, bool needsSceneTextures);
 	void CreatePipeline(int width, int height);
 	void CreateBloom(int width, int height);
@@ -142,6 +143,7 @@ private:
 	// Shadow map texture
 	GLuint mShadowMapTexture = 0;
 	GLuint mShadowMapFB = 0;
+	int mCurrentShadowMapSize = 0;
 
 	static bool FailedCreate;
 	static bool BuffersActive;

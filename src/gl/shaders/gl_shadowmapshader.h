@@ -8,6 +8,8 @@ class FShadowMapShader
 public:
 	void Bind();
 
+	FBufferedUniform1f ShadowmapQuality;
+
 private:
 	FShaderProgram mShader;
 };

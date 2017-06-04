@@ -1071,6 +1071,7 @@ set (PCH_SOURCES
 	r_data/voxels.cpp
 	r_data/renderstyle.cpp
 	r_data/r_interpolate.cpp
+	r_data/r_vanillatrans.cpp
 	scripting/symbols.cpp
 	scripting/types.cpp
 	scripting/thingdef.cpp

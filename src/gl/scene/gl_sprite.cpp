@@ -39,6 +39,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "actorinlines.h"
+#include "r_data/r_vanillatrans.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -75,7 +76,6 @@ CUSTOM_CVAR(Int, gl_fuzztype, 0, CVAR_ARCHIVE)
 }
 
 EXTERN_CVAR (Float, transsouls)
-EXTERN_CVAR (Bool, r_vanillatrans)
 
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
@@ -993,7 +993,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	{
 		trans = 1.f;
 	}
-	if (r_vanillatrans)
+	if (UseVanillaTransparency())
 	{
 		// [SP] "canonical transparency" - with the flip of a CVar, disable transparency for Doom objects,
 		//   and disable 'additive' translucency for certain objects from other games.

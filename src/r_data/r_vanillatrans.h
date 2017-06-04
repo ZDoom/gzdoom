@@ -1,0 +1,3 @@
+
+void UpdateVanillaTransparency();
+bool UseVanillaTransparency();

@@ -2369,6 +2369,10 @@ OPTVAL_SWDOOM				= "Doom Software Renderer";
 OPTVAL_DEDICATED			= "High-Performance";
 OPTVAL_INTEGRATED			= "Power-Saving";
 OPTVAL_VANILLA				= "Vanilla";
+OPTVAL_VTFZDOOM				= "ZDoom (Forced)";
+OPTVAL_VTFVANILLA			= "Vanilla (Forced)";
+OPTVAL_VTAZDOOM				= "Auto (Vanilla Preferred)";
+OPTVAL_VTAVANILLA			= "Auto (ZDoom Preferred)";
 
 // Colors
 C_BRICK					= "\cabrick";

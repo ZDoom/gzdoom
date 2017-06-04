@@ -65,6 +65,7 @@
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "a_dynlight.h"
+#include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, gl_light_sprites)
@@ -213,7 +214,7 @@ namespace swrenderer
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
-		if (r_vanillatrans)
+		if (UseVanillaTransparency())
 		{
 			if (thing->renderflags & RF_ZDOOMTRANS)
 				vis->RenderStyle = LegacyRenderStyles[STYLE_Normal];

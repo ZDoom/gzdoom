@@ -116,6 +116,7 @@
 #include "r_utility.h"
 #include "vm.h"
 #include "types.h"
+#include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -2605,6 +2606,9 @@ void D_DoomMain (void)
 			StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
 			D_CheckNetGame ();
 		}
+
+		// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now
+		UpdateVanillaTransparency();
 
 		// [RH] Lock any cvars that should be locked now that we're
 		// about to begin the game.

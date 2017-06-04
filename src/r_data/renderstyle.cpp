@@ -38,7 +38,6 @@
 #include "serializer.h"
 
 CVAR (Bool, r_drawtrans, true, 0)
-CVAR (Bool, r_vanillatrans, false, CVAR_ARCHIVE)
 CVAR (Int, r_drawfuzz, 1, CVAR_ARCHIVE)
 
 // Convert legacy render styles to flexible render styles.

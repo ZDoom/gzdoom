@@ -28,10 +28,10 @@
 #include "poly_sprite.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
-EXTERN_CVAR (Bool, r_vanillatrans)
 
 bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 {
@@ -146,7 +146,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
 	args.SetClipPlane(clipPlane);
-	if ((thing->renderflags & RF_ZDOOMTRANS) && r_vanillatrans)
+	if ((thing->renderflags & RF_ZDOOMTRANS) && UseVanillaTransparency())
 		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	else
 		args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);

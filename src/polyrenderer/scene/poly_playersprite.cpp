@@ -232,7 +232,7 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *pspr, AActor *owner, float 
 
 	if (pspr->Flags & PSPF_ADDBOB)
 	{
-		sx += bobx;
+		sx += (pspr->Flags & PSPF_MIRROR) ? -bobx : bobx;
 		sy += boby;
 	}
 
@@ -248,17 +248,20 @@ void RenderPolyPlayerSprites::RenderSprite(DPSprite *pspr, AActor *owner, float 
 	double pspriteyscale = pspritexscale * yaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
-	// calculate edges of the shape
-	tx = sx - BASEXCENTER;
+	int tleft = tex->GetScaledLeftOffset();
+	int twidth = tex->GetScaledWidth();
 
-	tx -= tex->GetScaledLeftOffset();
+	// calculate edges of the shape
+	//tx = sx - BASEXCENTER;
+	tx = (pspr->Flags & PSPF_MIRROR) ? ((BASEXCENTER - twidth) - (sx - tleft)) : ((sx - BASEXCENTER) - tleft);
+
 	x1 = xs_RoundToInt(viewwindow.centerx + tx * pspritexscale);
 
 	// off the right side
 	if (x1 > viewwidth)
 		return;
 
-	tx += tex->GetScaledWidth();
+	tx += twidth;
 	x2 = xs_RoundToInt(viewwindow.centerx + tx * pspritexscale);
 
 	// off the left side

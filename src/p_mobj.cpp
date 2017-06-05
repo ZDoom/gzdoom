@@ -3877,7 +3877,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 void AActor::SetShade (uint32_t rgb)
 {
 	PalEntry *entry = (PalEntry *)&rgb;
-	fillcolor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
+	fillcolor = (rgb & 0xffffff) | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
 }
 
 void AActor::SetShade (int r, int g, int b)
@@ -6062,7 +6062,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->score)
 		mobj->Score = mthing->score;
 	if (mthing->fillcolor)
-		mobj->fillcolor = mthing->fillcolor;
+		mobj->fillcolor = (mthing->fillcolor & 0xffffff) | (ColorMatcher.Pick((mthing->fillcolor & 0xff0000) >> 16,
+			(mthing->fillcolor & 0xff00) >> 8, (mthing->fillcolor & 0xff)) << 24);
 
 	mobj->CallBeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))

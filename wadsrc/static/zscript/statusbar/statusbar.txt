@@ -450,17 +450,17 @@ class BaseStatusBar native ui
 		return armor? armor.Amount : 0;
 	}
 	
-	int, int GetAmount(class<Inventory> item)
+	int, int GetAmount(class<Inventory> item, bool subclass = false)
 	{
-		let it = CPlayer.mo.FindInventory(item);
+		let it = CPlayer.mo.FindInventory(item, subclass);
 		int ret1 = it? it.Amount : 0;
 		int ret2 = it? it.MaxAmount : GetDefaultByType(item).MaxAmount;
 		return ret1, ret2;
 	}
 
-	int GetMaxAmount(class<Inventory> item)
+	int GetMaxAmount(class<Inventory> item, bool subclass = false)
 	{
-		let it = CPlayer.mo.FindInventory(item);
+		let it = CPlayer.mo.FindInventory(item, subclass);
 		return it? it.MaxAmount : GetDefaultByType(item).MaxAmount;
 	}
 

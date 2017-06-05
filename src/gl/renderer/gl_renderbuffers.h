@@ -43,6 +43,8 @@ public:
 	void BindNextFB();
 	void NextTexture();
 
+	int GetCurrentFB() const { return mPipelineFB[mCurrentPipelineTexture]; }
+
 	void BindOutputFB();
 
 	void BlitToEyeTexture(int eye);

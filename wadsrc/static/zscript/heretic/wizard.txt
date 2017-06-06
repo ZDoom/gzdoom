@@ -112,16 +112,17 @@ class Wizard : Actor
 	void A_WizAtk3 ()
 	{
 		A_GhostOff();
-		if (!target) return;
+		let targ = target;
+		if (!targ) return;
 		A_PlaySound (AttackSound, CHAN_WEAPON);
 		if (CheckMeleeRange())
 		{
 			int damage = random[WizAtk3](1, 8) * 4;
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			return;
 		}
-		Actor mo = SpawnMissile (target, "WizardFX1");
+		Actor mo = SpawnMissile (targ, "WizardFX1");
 		if (mo != null)
 		{
 			SpawnMissileAngle("WizardFX1", mo.Angle - 45. / 8, mo.Vel.Z);

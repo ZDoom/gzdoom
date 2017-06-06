@@ -2371,8 +2371,8 @@ OPTVAL_INTEGRATED			= "Power-Saving";
 OPTVAL_VANILLA				= "Vanilla";
 OPTVAL_VTFZDOOM				= "ZDoom (Forced)";
 OPTVAL_VTFVANILLA			= "Vanilla (Forced)";
-OPTVAL_VTAZDOOM				= "Auto (Vanilla Preferred)";
-OPTVAL_VTAVANILLA			= "Auto (ZDoom Preferred)";
+OPTVAL_VTAZDOOM				= "Auto (ZDoom Preferred)";
+OPTVAL_VTAVANILLA			= "Auto (Vanilla Preferred)";
 
 // Colors
 C_BRICK					= "\cabrick";

@@ -70,7 +70,8 @@ class Ironlich : Actor
 		// Whirlwind	(close 40% : far 20%)
 		// Distance threshold = 8 cells
 
-		if (target == null)
+		let targ = target;
+		if (targ == null)
 		{
 			return;
 		}
@@ -78,20 +79,20 @@ class Ironlich : Actor
 		if (CheckMeleeRange ())
 		{
 			int damage = random[LichAttack](1, 8) * 6;
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			return;
 		}
-		int dist = Distance2D(target) > 8 * 64;
+		int dist = Distance2D(targ) > 8 * 64;
 		int randAttack = random[LichAttack]();
 		if (randAttack < atkResolve1[dist])
 		{ // Ice ball
-			SpawnMissile (target, "HeadFX1");
+			SpawnMissile (targ, "HeadFX1");
 			A_PlaySound ("ironlich/attack2", CHAN_BODY);
 		}
 		else if (randAttack < atkResolve2[dist])
 		{ // Fire column
-			Actor baseFire = SpawnMissile (target, "HeadFX3");
+			Actor baseFire = SpawnMissile (targ, "HeadFX3");
 			if (baseFire != null)
 			{
 				baseFire.SetStateLabel("NoGrow");
@@ -116,11 +117,11 @@ class Ironlich : Actor
 		}
 		else
 		{ // Whirlwind
-			Actor mo = SpawnMissile (target, "Whirlwind");
+			Actor mo = SpawnMissile (targ, "Whirlwind");
 			if (mo != null)
 			{
 				mo.AddZ(-32);
-				mo.tracer = target;
+				mo.tracer = targ;
 				mo.health = 20*TICRATE; // Duration
 				A_PlaySound ("ironlich/attack3", CHAN_BODY);
 			}

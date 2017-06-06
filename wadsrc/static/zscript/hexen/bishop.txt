@@ -82,7 +82,8 @@ class Bishop : Actor
 
 	void A_BishopAttack()
 	{
-		if (!target)
+		let targ = target;
+		if (!targ)
 		{
 			return;
 		}
@@ -90,8 +91,8 @@ class Bishop : Actor
 		if (CheckMeleeRange())
 		{
 			int damage = random[BishopAttack](1, 8) * 4;
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			return;
 		}
 		missilecount = (random[BishopAttack]() & 3) + 5;

@@ -240,15 +240,16 @@ class Serpent : Actor
 
 	void A_SerpentMeleeAttack()
 	{
-		if (!target)
+		let targ = target;
+		if (!targ)
 		{
 			return;
 		}
 		if (CheckMeleeRange ())
 		{
 			int damage = random[SerpentAttack](1, 8) * 5;
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			A_PlaySound ("SerpentMeleeHit", CHAN_BODY);
 		}
 		if (random[SerpentAttack]() < 96)

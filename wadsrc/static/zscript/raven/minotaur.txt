@@ -165,18 +165,19 @@ class Minotaur : Actor
 
 	void A_MinotaurAtk1()
 	{
-		if (!target)
+		let targ = target;
+		if (!targ)
 		{
 			return;
 		}
 		A_PlaySound ("minotaur/melee", CHAN_WEAPON);
 		if (CheckMeleeRange())
 		{
+			PlayerInfo player = targ.player;
 			int damage = random[MinotaurAtk1](1, 8) * 4;
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
-			PlayerInfo player = target.player;
-			if (player != null && player.mo == target)
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+			if (player != null && player.mo == targ)
 			{ // Squish the player
 				player.deltaviewheight = -16;
 			}
@@ -284,7 +285,8 @@ class Minotaur : Actor
 	{
 		bool friendly = bSummonedMonster;
 
-		if (target == null)
+		let targ = target;
+		if (targ == null)
 		{
 			return;
 		}
@@ -292,13 +294,13 @@ class Minotaur : Actor
 		if (CheckMeleeRange())
 		{
 			int damage = random[MinotaurAtk2](1, 8) * (friendly ? 3 : 5);
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			return;
 		}
 		double z = pos.z + 40;
 		Class<Actor> fx = "MinotaurFX1";
-		Actor mo = SpawnMissileZ (z, target, fx);
+		Actor mo = SpawnMissileZ (z, targ, fx);
 		if (mo != null)
 		{
 //			S_Sound (mo, CHAN_WEAPON, "minotaur/attack2", 1, ATTN_NORM);
@@ -323,18 +325,19 @@ class Minotaur : Actor
 	{
 		bool friendly = bSummonedMonster;
 
-		if (!target)
+		let targ = target;
+		if (!targ)
 		{
 			return;
 		}
 		A_PlaySound ("minotaur/attack3", CHAN_VOICE);
 		if (CheckMeleeRange())
 		{
+			PlayerInfo player = targ.player;
 			int damage = random[MinotaurAtk3](1, 8) * (friendly ? 3 : 5);
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
-			PlayerInfo player = target.player;
-			if (player != null && player.mo == target)
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
+			if (player != null && player.mo == targ)
 			{ // Squish the player
 				player.deltaviewheight = -16;
 			}

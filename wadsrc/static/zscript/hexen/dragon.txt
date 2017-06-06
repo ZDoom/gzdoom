@@ -109,8 +109,8 @@ class Dragon : Actor
 				if (CheckMeleeRange ())
 				{
 					int damage = random[DragonSeek](1, 8) * 10;
-					int newdam = target.DamageMobj (self, self, damage, 'Melee');
-					target.TraceBleed (newdam > 0 ? newdam : damage, self);
+					int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+					targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 					A_PlaySound (AttackSound, CHAN_WEAPON);
 				}
 				else if (random[DragonSeek]() < 128 && CheckMissileRange())
@@ -210,7 +210,8 @@ class Dragon : Actor
 		double ang;
 
 		DragonSeek (4., 8.);
-		if (target)
+		let targ = target;
+		if (targ)
 		{
 			if(!target.bShootable)
 			{ // target died
@@ -221,8 +222,8 @@ class Dragon : Actor
 			if (ang <22.5 && CheckMeleeRange())
 			{
 				int damage = random[DragonFlight](1, 8) * 8;
-				int newdam = target.DamageMobj (self, self, damage, 'Melee');
-				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+				int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 				A_PlaySound (AttackSound, CHAN_WEAPON);
 			}
 			else if (ang <= 20)

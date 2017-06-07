@@ -8137,7 +8137,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
 	PARAM_FLOAT(speed);
 	PARAM_ANGLE(angle);
 	PARAM_ANGLE(pitch);
-	self->Vel3DFromAngle(pitch, angle, speed);
+	self->Vel3DFromAngle(angle, pitch, speed);
 	return 0;
 }
 

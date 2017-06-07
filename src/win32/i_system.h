@@ -47,15 +47,6 @@ extern void SetLanguageIDs ();
 // [RH] Detects the OS the game is running under.
 void I_DetectOS (void);
 
-typedef enum {
-	os_unknown,
-	os_Win95,
-	os_WinNT4,
-	os_Win2k
-} os_t;
-
-extern os_t OSPlatform;
-
 // Called by DoomMain.
 void I_Init (void);
 

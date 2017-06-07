@@ -1191,11 +1191,7 @@ void I_StartupMouse ()
 	{
 	case 0:
 	default:
-		if (OSPlatform == os_WinNT4)
-		{
-			new_mousemode = MM_Win32;
-		}
-		else if (MyRegisterRawInputDevices != NULL)
+		if (MyRegisterRawInputDevices != NULL)
 		{
 			new_mousemode = MM_RawInput;
 		}

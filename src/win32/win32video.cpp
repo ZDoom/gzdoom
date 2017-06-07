@@ -325,13 +325,6 @@ void Win32Video::InitDDraw ()
 	}
 	else
 	{
-		if (OSPlatform == os_Win95)
-		{
-			// Windows 95 will let us use Mode X. If we didn't find any linear
-			// modes in the loop above, add the Mode X modes here.
-			AddMode (320, 200, 8, 200, 0);
-			AddMode (320, 240, 8, 240, 0);
-		}
 		AddLowResModes ();
 	}
 	AddLetterboxModes ();

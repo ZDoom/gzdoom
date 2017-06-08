@@ -31,7 +31,7 @@
 
 namespace s3d {
 
-ScopedViewShifter::ScopedViewShifter(float dxyz[3]) // in meters
+ScopedViewShifter::ScopedViewShifter(float dxyz[3]) // in doom units
 {
 	// save original values
 	cachedView = r_viewpoint.Pos;

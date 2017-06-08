@@ -2106,6 +2106,7 @@ OptionValue VRMode
 	5, "$OPTVAL_LEFTEYE"
 	6, "$OPTVAL_RIGHTEYE"
 	7, "$OPTVAL_QUADBUFFERED"
+	10, "$OPTVAL_OPENVR"
 }
 
 OptionMenu "GLTextureGLOptions"

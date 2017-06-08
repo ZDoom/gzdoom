@@ -44,10 +44,13 @@ namespace s3d {
 class OpenVREyePose : public ShiftedEyePose
 {
 public:
+	friend class OpenVRMode;
+
 	OpenVREyePose(int eye);
 	virtual ~OpenVREyePose() override;
 	virtual VSMatrix GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const override;
-	virtual void GetViewShift(float yaw, float outViewShift[3]) const override;
+	void GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const override;
+	virtual void Adjust2DMatrices() const override;
 
 	void initialize(vr::IVRSystem& vrsystem);
 	void dispose();
@@ -60,9 +63,6 @@ protected:
 	VSMatrix otherEyeToHeadTransform;
 	vr::Texture_t* eyeTexture;
 	int eye;
-
-	// TODO: adjust doomUnitsPerMeter according to player height
-	float verticalDoomUnitsPerMeter;
 
 	mutable const vr::TrackedDevicePose_t * currentPose;
 };
@@ -77,6 +77,7 @@ public:
 	virtual void TearDown() const override; // called immediately after rendering a scene frame
 	virtual void Present() const override;
 	virtual void AdjustViewports() const override;
+	virtual void AdjustPlayerSprites() const override;
 
 protected:
 	OpenVRMode();

@@ -137,7 +137,7 @@ public:
 
 	LSMatrix44 transpose() const {
 		LSMatrix44 result;
-		for (int i = 0; i < 3; ++i) {
+		for (int i = 0; i < 4; ++i) {
 			for (int j = 0; j < 4; ++j) {
 				result[i][j] = (*this)[j][i];
 			}

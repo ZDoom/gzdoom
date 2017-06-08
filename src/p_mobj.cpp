@@ -6758,7 +6758,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 
 	// killough 3/15/98: no dropoff (really = don't care for missiles)
 	auto oldf2 = th->flags2;
-	th->flags2 &= ~MF2_MCROSS;	// The following check is not supposed to activate missile triggers.
+	th->flags2 &= ~(MF2_MCROSS|MF2_PCROSS);	// The following check is not supposed to activate missile triggers.
 	if (!(P_TryMove (th, newpos, false, NULL, tm, true)))
 	{
 		// [RH] Don't explode ripping missiles that spawn inside something

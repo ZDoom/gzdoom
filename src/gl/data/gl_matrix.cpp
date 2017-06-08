@@ -55,6 +55,21 @@ VSMatrix::loadIdentity()
 }
 
 
+void VSMatrix::multVector(FLOATTYPE * aVector)
+{
+	FLOATTYPE res[4];
+
+	for (int i = 0; i < 4; ++i)
+	{
+		res[i] = 0.0f;
+		for (int j = 0; j < 4; ++j)
+		{
+			res[i] += mMatrix[j*4 + i] * aVector[j]; // todo:
+		}
+	}
+	memcpy(aVector, res, 4 * sizeof(FLOATTYPE));
+}
+
 // gl MultMatrix implementation
 void 
 VSMatrix::multMatrix(const FLOATTYPE *aMatrix)

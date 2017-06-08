@@ -48,6 +48,7 @@ public:
 	virtual ~OpenVREyePose() override;
 	virtual VSMatrix GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const override;
 	virtual void GetViewShift(float yaw, float outViewShift[3]) const override;
+	virtual void Adjust2DMatrices() const override;
 
 	void initialize(vr::IVRSystem& vrsystem);
 	void dispose();
@@ -77,7 +78,6 @@ public:
 	virtual void TearDown() const override; // called immediately after rendering a scene frame
 	virtual void Present() const override;
 	virtual void AdjustViewports() const override;
-	virtual void Adjust2DMatrices(int eye_index) const override;
 
 protected:
 	OpenVRMode();

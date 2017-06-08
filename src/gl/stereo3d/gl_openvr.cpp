@@ -238,7 +238,7 @@ void OpenVREyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const
 VSMatrix OpenVREyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOATTYPE fovRatio) const
 {
 	// Ignore those arguments and get the projection from the SDK
-	VSMatrix vs1 = ShiftedEyePose::GetProjection(fov, aspectRatio, fovRatio);
+	// VSMatrix vs1 = ShiftedEyePose::GetProjection(fov, aspectRatio, fovRatio);
 	return projectionMatrix;
 }
 
@@ -351,15 +351,65 @@ void OpenVRMode::AdjustViewports() const
 	GLRenderer->mScreenViewport.height = sceneHeight;
 }
 
-void OpenVRMode::Adjust2DMatrices(int eye_index) const
+void OpenVREyePose::Adjust2DMatrices() const
 {
-	auto old_projection = gl_RenderState.mProjectionMatrix;
+	const bool doAdjust2D = true; // Don't use default 2D projection
+	const bool doRecomputeDefault2D = false; // For debugging, recapitulate default 2D projection
+
+	if ( ! doAdjust2D ) // for debugging
+		return;
+
 	VSMatrix new_projection;
 	new_projection.loadIdentity();
-	// new_projection.multMatrix(old_projection);
+	if ( doRecomputeDefault2D ) { // for debugging
+		// quad coordinates from pixel coordinates [xy range -1,1]
+		new_projection.translate(-1, 1, 0);
+		new_projection.scale(2.0 / SCREENWIDTH, -2.0 / SCREENHEIGHT, -1.0);
+	}
+	else {
+		// doom_units from meters
+		new_projection.scale(
+			-verticalDoomUnitsPerMeter, 
+			verticalDoomUnitsPerMeter, 
+			-verticalDoomUnitsPerMeter);
+		// 
 
-	new_projection.translate(-1, 1, 0);
-	new_projection.scale(2.0 / SCREENWIDTH, -2.0 / SCREENHEIGHT, -1.0);
+		// eye coordinates from hmd coordinates
+		LSMatrix44 e2h(eyeToHeadTransform);
+		new_projection.multMatrix(e2h.transpose());
+
+		// Un-apply HMD yaw angle, to keep the menu in front of the player
+		float openVrYawDegrees = RAD2DEG(-eulerAnglesFromMatrix(currentPose->mDeviceToAbsoluteTracking).v[0]);
+		new_projection.rotate(openVrYawDegrees, 0, 1, 0);
+
+		// apply inverse of hmd rotation, to keep the menu fixed in the world
+		LSMatrix44 hmdPose(currentPose->mDeviceToAbsoluteTracking);
+		hmdPose = hmdPose.getWithoutTranslation();
+		new_projection.multMatrix(hmdPose.transpose());
+
+		// hmd coordinates (meters) from ndc coordinates
+		const float menu_distance_meters = 1.0f;
+		const float menu_width_meters = 0.5f * menu_distance_meters;
+		const float aspect = SCREENWIDTH / float(SCREENHEIGHT);
+		new_projection.translate(0.0, 0.0, menu_distance_meters);
+		new_projection.scale(
+			-menu_width_meters,
+			menu_width_meters / aspect,
+			-menu_width_meters);
+
+		// ndc coordinates from pixel coordinates
+		new_projection.translate(-1.0, 1.0, 0);
+		new_projection.scale(2.0 / SCREENWIDTH, -2.0 / SCREENHEIGHT, -1.0);
+
+		// projection matrix - clip coordinates from eye coordinates
+		VSMatrix proj(projectionMatrix);
+		proj.multMatrix(new_projection);
+		new_projection = proj;
+
+		float test_vec[4] = {SCREENWIDTH, SCREENHEIGHT, 0, 1};
+		new_projection.multVector(test_vec);
+		int x = 3;
+	}
 
 	gl_RenderState.mProjectionMatrix = new_projection;
 	gl_RenderState.ApplyMatrices();
@@ -440,8 +490,11 @@ void OpenVRMode::updateHmdPose(
 	if (doLateScheduledRotationTracking) {
 		if (doTrackHmdPitch)
 			GLRenderer->mAngles.Pitch = RAD2DEG(-hmdpitch);
-		if (doTrackHmdYaw)
+		if (doTrackHmdYaw) {
+			// TODO: this is not working, especially in menu mode
 			GLRenderer->mAngles.Yaw += RAD2DEG(dYaw); // "plus" is the correct direction
+			// Printf("In updateHmdPose: %.1f\n", r_viewpoint.Angles.Yaw.Degrees);
+		}
 	}
 }
 

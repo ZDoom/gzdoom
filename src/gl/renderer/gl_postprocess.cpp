@@ -711,7 +711,7 @@ void FGLRenderer::Flush()
 			mBuffers->BindEyeFB(eye_ix);
 			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 			glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-			stereo3dMode.Adjust2DMatrices(eye_ix);
+			stereo3dMode.getEyePose(eye_ix)->Adjust2DMatrices();
 			m2DDrawer->Draw();
 			FGLDebug::PopGroup();
 		}

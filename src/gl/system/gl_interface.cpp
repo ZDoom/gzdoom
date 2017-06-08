@@ -324,7 +324,10 @@ void gl_LoadExtensions()
 		FUDGE_FUNC(glBindRenderbuffer, EXT);
 		FUDGE_FUNC(glCheckFramebufferStatus, EXT);
 	}
-	gl_legacy_mode = gl.legacyMode;
+
+	UCVarValue value;
+	value.Bool = gl.legacyMode;
+	gl_legacy_mode.ForceSet (value, CVAR_Bool);
 }
 
 //==========================================================================

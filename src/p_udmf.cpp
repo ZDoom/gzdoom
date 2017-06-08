@@ -48,6 +48,7 @@
 #include "w_wad.h"
 #include "p_tags.h"
 #include "p_terrain.h"
+#include "p_spec.h"
 #include "g_levellocals.h"
 #include "info.h"
 #include "vm.h"
@@ -443,6 +444,14 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, GetUDMFString)
 //
 //===========================================================================
 
+struct UDMFScroll
+{
+	bool ceiling;
+	int index;
+	double x, y;
+	FName type;
+};
+
 class UDMFParser : public UDMFParserBase
 {
 	bool isTranslated;
@@ -454,6 +463,7 @@ class UDMFParser : public UDMFParserBase
 	TArray<intmapsidedef_t> ParsedSideTextures;
 	TArray<sector_t> ParsedSectors;
 	TArray<vertex_t> ParsedVertices;
+	TArray<UDMFScroll> UDMFScrollers;
 
 	FDynamicColormap	*fogMap, *normMap;
 	FMissingTextureTracker &missingTex;
@@ -1348,6 +1358,16 @@ public:
 		double fp[4] = { 0 }, cp[4] = { 0 };
 		FString tagstring;
 
+		// Brand new UDMF scroller properties
+		double scroll_ceil_x = 0;
+		double scroll_ceil_y = 0;
+		FName scroll_ceil_type;
+
+		double scroll_floor_x = 0;
+		double scroll_floor_y = 0;
+		FName scroll_floor_type;
+
+
 		memset(sec, 0, sizeof(*sec));
 		sec->lightlevel = 160;
 		sec->SetXScale(sector_t::floor, 1.);	// [RH] floor and ceiling scaling
@@ -1726,6 +1746,30 @@ public:
 					else if (!stricmp(CheckString(key), "additive")) sec->planes[sector_t::floor].Flags |= PLANEF_ADDITIVE;
 					break;
 
+				case NAME_scroll_ceil_x:
+					scroll_ceil_x = CheckFloat(key);
+					break;
+
+				case NAME_scroll_ceil_y:
+					scroll_ceil_y = CheckFloat(key);
+					break;
+
+				case NAME_scroll_ceil_type:
+					scroll_ceil_type = CheckString(key);
+					break;
+
+				case NAME_scroll_floor_x:
+					scroll_floor_x = CheckFloat(key);
+					break;
+
+				case NAME_scroll_floor_y:
+					scroll_floor_y = CheckFloat(key);
+					break;
+
+				case NAME_scroll_floor_type:
+					scroll_floor_type = CheckString(key);
+					break;
+
 				// These two are used by Eternity for something I do not understand.
 				//case NAME_portal_ceil_useglobaltex:
 				//case NAME_portal_floor_useglobaltex:
@@ -1759,6 +1803,17 @@ public:
 			sec->leakydamage = 0;
 			sec->Flags &= ~SECF_DAMAGEFLAGS;
 		}
+
+		// Cannot be initialized yet because they need the final sector array.
+		if (scroll_ceil_type != NAME_None)
+		{
+			UDMFScrollers.Push({ true, index, scroll_ceil_x, scroll_ceil_y, scroll_ceil_type });
+		}
+		if (scroll_floor_type != NAME_None)
+		{
+			UDMFScrollers.Push({ false, index, scroll_floor_x, scroll_floor_y, scroll_floor_type });
+		}
+
 		
 		// Reset the planes to their defaults if not all of the plane equation's parameters were found.
 		if (fplaneflags != 15)
@@ -2109,6 +2164,20 @@ public:
 		for(unsigned i = 0; i < level.sectors.Size(); i++)
 		{
 			level.sectors[i].e = &level.sectors[0].e[i];
+		}
+		// Now create the scrollers.
+		for (auto &scroll : UDMFScrollers)
+		{
+			const double scrollfactor = 1 / 3.2;	// I hope this is correct, it's just a guess taken from Eternity's code.
+			if (scroll.type == NAME_Both || scroll.type == NAME_Visual)
+			{
+				P_CreateScroller(scroll.ceiling ? EScroll::sc_ceiling : EScroll::sc_floor, scroll.x * scrollfactor, scroll.y * scrollfactor, -1, scroll.index, 0);
+			}
+			if (scroll.type == NAME_Both || scroll.type == NAME_Physical)
+			{
+				// sc_carry_ceiling doesn't do anything yet.
+				P_CreateScroller(scroll.ceiling ? EScroll::sc_carry_ceiling : EScroll::sc_carry, scroll.x * scrollfactor, scroll.y * scrollfactor, -1, scroll.index, 0);
+			}
 		}
 
 		// Create the real linedefs and decompress the sidedefs

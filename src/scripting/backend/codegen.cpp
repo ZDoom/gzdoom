@@ -5975,7 +5975,7 @@ ExpEmit FxRandomSeed::Emit(VMFunctionBuilder *build)
 
 	build->Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, build->GetConstantAddress(rng));
 	EmitParameter(build, seed, ScriptPosition);
-	build->Emit(opcode, build->GetConstantAddress(callfunc), 2, 1);
+	build->Emit(opcode, build->GetConstantAddress(callfunc), 2, 0);
 
 	ExpEmit call;
 	if (EmitTail) call.Final = true;

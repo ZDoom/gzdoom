@@ -5884,7 +5884,10 @@ bool P_AdjustFloorCeil(AActor *thing, FChangePosition *cpos)
 	}
 
 	bool isgood = P_CheckPosition(thing, thing->Pos(), tm);
-	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE))
+
+	// This is essentially utterly broken because it even uses the return from a failed P_CheckPosition but the entire logic will break down if that isn't done.
+	// However, if tm.floorz is greater than tm.ceilingz we have a real problem that needs to be dealt with exolicitly.
+	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE) && tm.floorz <= tm.ceilingz)
 	{
 		thing->floorz = tm.floorz;
 		thing->ceilingz = tm.ceilingz;

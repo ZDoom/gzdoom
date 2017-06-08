@@ -2638,7 +2638,7 @@ void D3DFB::DoClear (int left, int top, int right, int bottom, int palcolor, uin
 {
 	if (In2D < 2)
 	{
-		//Super::Clear(left, top, right, bottom, palcolor, color);
+		Super::DoClear(left, top, right, bottom, palcolor, color);
 		return;
 	}
 	if (!InScene)

@@ -1,7 +1,7 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2016 Magnus Norddahl
+// Copyright(C) 2017 Rachael Alexanderson
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,27 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
-#include "files.h"
-#include "m_swap.h"
-#include "v_video.h"
-#include "gl/gl_functions.h"
-#include "vectors.h"
-#include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
-#include "gl/shaders/gl_shadowmapshader.h"
 
-void FShadowMapShader::Bind()
-{
-	if (!mShader)
-	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", "", 430);
-		mShader.SetFragDataLocation(0, "FragColor");
-		mShader.Link("shaders/glsl/shadowmap");
-		mShader.SetAttribLocation(0, "PositionInProjection");
-		ShadowmapQuality.Init(mShader, "ShadowmapQuality");
-	}
-	mShader.Bind();
-}
+void UpdateVanillaTransparency();
+bool UseVanillaTransparency();
+extern bool r_UseVanillaTransparency;

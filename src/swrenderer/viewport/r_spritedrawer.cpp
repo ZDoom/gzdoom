@@ -440,6 +440,7 @@ namespace swrenderer
 			drawer_needs_pal_input = true;
 			CameraLight *cameraLight = CameraLight::Instance();
 			dc_color = cameraLight->FixedColormap() ? cameraLight->FixedColormap()->Maps[APART(color)] : basecolormap->Maps[APART(color)];
+			dc_color_bgra = color;
 			basecolormap = &ShadeFakeColormap[16 - alpha];
 			if (cameraLight->FixedLightLevel() >= 0 && !cameraLight->FixedColormap())
 			{
@@ -465,6 +466,7 @@ namespace swrenderer
 			uint32_t b = BPART(color);
 			// dc_color is used by the rt_* routines. It is indexed into dc_srcblend.
 			dc_color = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
+			dc_color_bgra = color;
 			if (style.Flags & STYLEF_InvertSource)
 			{
 				r = 255 - r;

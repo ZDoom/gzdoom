@@ -168,6 +168,7 @@ class FSwordMissile : Actor
 		Damage 8;
 		Projectile;
 		+EXTREMEDEATH
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		DeathSound "FighterSwordExplode";
 		Obituary "$OB_MPFWEAPQUIETUS";

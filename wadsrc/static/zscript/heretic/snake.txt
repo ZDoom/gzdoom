@@ -64,6 +64,7 @@ class SnakeProjA : Actor
 		-ACTIVATEPCROSS
 		+WINDTHRUST
 		+SPAWNSOUNDSOURCE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		SeeSound "snake/attack";
 	}

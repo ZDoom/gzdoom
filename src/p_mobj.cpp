@@ -282,6 +282,7 @@ DEFINE_FIELD(AActor, Floorclip)
 DEFINE_FIELD(AActor, DamageType)
 DEFINE_FIELD(AActor, DamageTypeReceived)
 DEFINE_FIELD(AActor, FloatBobPhase)
+DEFINE_FIELD(AActor, FloatBobStrength)
 DEFINE_FIELD(AActor, RipperLevel)
 DEFINE_FIELD(AActor, RipLevelMin)
 DEFINE_FIELD(AActor, RipLevelMax)
@@ -443,6 +444,7 @@ void AActor::Serialize(FSerializer &arc)
 		("inventory", Inventory)
 		A("inventoryid", InventoryID)
 		A("floatbobphase", FloatBobPhase)
+		A("floatbobstrength", FloatBobStrength)
 		A("translation", Translation)
 		A("bloodcolor", BloodColor)
 		A("bloodtranslation", BloodTranslation)
@@ -3875,7 +3877,7 @@ bool AActor::IsOkayToAttack (AActor *link)
 void AActor::SetShade (uint32_t rgb)
 {
 	PalEntry *entry = (PalEntry *)&rgb;
-	fillcolor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
+	fillcolor = (rgb & 0xffffff) | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
 }
 
 void AActor::SetShade (int r, int g, int b)
@@ -6060,7 +6062,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->score)
 		mobj->Score = mthing->score;
 	if (mthing->fillcolor)
-		mobj->fillcolor = mthing->fillcolor;
+		mobj->fillcolor = (mthing->fillcolor & 0xffffff) | (ColorMatcher.Pick((mthing->fillcolor & 0xff0000) >> 16,
+			(mthing->fillcolor & 0xff00) >> 8, (mthing->fillcolor & 0xff)) << 24);
 
 	mobj->CallBeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))
@@ -6715,6 +6718,8 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 			th->tics = 1;
 	}
 
+	DVector3 newpos = th->Pos();
+
 	if (maxdist > 0)
 	{
 		// move a little forward so an angle can be computed if it immediately explodes
@@ -6728,7 +6733,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 			advance *= 0.5f;
 		}
 		while (advance.XY().LengthSquared() >= maxsquared);
-		th->SetXYZ(th->Pos() + advance);
+		newpos += advance;
 	}
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
@@ -6752,7 +6757,9 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 	bool MBFGrenade = (!(th->flags & MF_MISSILE) || (th->BounceFlags & BOUNCE_MBF));
 
 	// killough 3/15/98: no dropoff (really = don't care for missiles)
-	if (!(P_TryMove (th, th->Pos(), false, NULL, tm, true)))
+	auto oldf2 = th->flags2;
+	th->flags2 &= ~(MF2_MCROSS|MF2_PCROSS);	// The following check is not supposed to activate missile triggers.
+	if (!(P_TryMove (th, newpos, false, NULL, tm, true)))
 	{
 		// [RH] Don't explode ripping missiles that spawn inside something
 		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
@@ -6775,6 +6782,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 			return false;
 		}
 	}
+	th->flags2 = oldf2;
 	th->ClearInterpolation();
 	return true;
 }
@@ -7988,7 +7996,7 @@ double AActor::GetBobOffset(double ticfrac) const
 	{
 		return 0;
 	}
-	return BobSin(FloatBobPhase + level.maptime + ticfrac);
+	return BobSin(FloatBobPhase + level.maptime + ticfrac) * FloatBobStrength;
 }
 
 DEFINE_ACTION_FUNCTION(AActor, GetBobOffset)
@@ -8129,7 +8137,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vel3DFromAngle)
 	PARAM_FLOAT(speed);
 	PARAM_ANGLE(angle);
 	PARAM_ANGLE(pitch);
-	self->Vel3DFromAngle(pitch, angle, speed);
+	self->Vel3DFromAngle(angle, pitch, speed);
 	return 0;
 }
 

@@ -65,6 +65,7 @@
 #include "swrenderer/r_memory.h"
 #include "swrenderer/r_renderthread.h"
 #include "a_dynlight.h"
+#include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 EXTERN_CVAR(Bool, gl_light_sprites)
@@ -146,7 +147,7 @@ namespace swrenderer
 		renderflags ^= renderportal->MirrorFlags & RF_XFLIP;
 
 		// [SP] SpriteFlip
-		if (thing->flags7 & MF7_SPRITEFLIP)
+		if (thing->renderflags & RF_SPRITEFLIP)
 			renderflags ^= RF_XFLIP;
 
 		// calculate edges of the shape
@@ -212,6 +213,11 @@ namespace swrenderer
 		if (thing->flags5 & MF5_BRIGHT)
 			vis->renderflags |= RF_FULLBRIGHT; // kg3D
 		vis->RenderStyle = thing->RenderStyle;
+		if (r_UseVanillaTransparency)
+		{
+			if (thing->renderflags & RF_ZDOOMTRANS)
+				vis->RenderStyle = LegacyRenderStyles[STYLE_Normal];
+		}
 		vis->FillColor = thing->fillcolor;
 		vis->Translation = thing->Translation;		// [RH] thing translation table
 		vis->FakeFlatStat = fakeside;

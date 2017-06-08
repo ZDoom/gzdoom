@@ -131,6 +131,7 @@ class Actor : Thinker native
 	native name DamageType;
 	native name DamageTypeReceived;
 	native uint8 FloatBobPhase;
+	native double FloatBobStrength;
 	native int RipperLevel;
 	native int RipLevelMin;
 	native int RipLevelMax;
@@ -325,6 +326,7 @@ class Actor : Thinker native
 		BounceCount -1;
 		FloatSpeed 4;
 		FloatBobPhase -1;	// randomly initialize by default
+		FloatBobStrength 1.0;
 		Gravity 1;
 		Friction 1;
 		DamageFactor 1.0;		// damage multiplier as target of damage.
@@ -902,22 +904,23 @@ class Actor : Thinker native
 	
 	private void DoAttack (bool domelee, bool domissile, int MeleeDamage, Sound MeleeSound, Class<Actor> MissileType,double MissileHeight)
 	{
-		if (target == NULL) return;
+		let targ = target;
+		if (targ == NULL) return;
 
 		A_FaceTarget ();
 		if (domelee && MeleeDamage>0 && CheckMeleeRange ())
 		{
 			int damage = random[CustomMelee](1, 8) * MeleeDamage;
 			if (MeleeSound) A_PlaySound (MeleeSound, CHAN_WEAPON);
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 		}
 		else if (domissile && MissileType != NULL)
 		{
 			// This seemingly senseless code is needed for proper aiming.
 			double add = MissileHeight + GetBobOffset() - 32;
 			AddZ(add);
-			Actor missile = SpawnMissileXYZ (Pos + (0, 0, 32), target, MissileType, false);
+			Actor missile = SpawnMissileXYZ (Pos + (0, 0, 32), targ, MissileType, false);
 			AddZ(-add);
 
 			if (missile)
@@ -925,7 +928,7 @@ class Actor : Thinker native
 				// automatic handling of seeker missiles
 				if (missile.bSeekerMissile)
 				{
-					missile.tracer = target;
+					missile.tracer = targ;
 				}
 				missile.CheckMissileSpawn(radius);
 			}

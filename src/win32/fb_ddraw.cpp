@@ -87,7 +87,6 @@ extern IDirectDraw2 *DDraw;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CVAR (Bool, vid_palettehack, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, vid_attachedsurfaces, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, vid_noblitter, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Int, vid_displaybits, 8, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CUSTOM_CVAR (Float, rgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -264,16 +263,8 @@ bool DDrawFB::CreateResources ()
 		}
 		LOG3 ("Mode set to %d x %d x %d\n", Width, Height, bits);
 
-		if (vid_attachedsurfaces && OSPlatform == os_WinNT4)
-		{
-			if (!CreateSurfacesAttached ())
-				return false;
-		}
-		else
-		{
-			if (!CreateSurfacesComplex ())
-				return false;
-		}
+		if (!CreateSurfacesComplex ())
+			return false;
 
 		if (UseBlitter)
 		{

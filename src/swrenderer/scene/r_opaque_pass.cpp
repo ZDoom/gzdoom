@@ -1007,7 +1007,7 @@ namespace swrenderer
 				DAngle sprangle = thing->GetSpriteAngle((sprite.pos - viewpoint.Pos).Angle(), viewpoint.TicFrac);
 				bool flipX;
 
-				FTextureID tex = sprdef->GetSpriteFrame(thing->frame, -1, sprangle, &flipX, !!(thing->flags7 & MF7_SPRITEFLIP));
+				FTextureID tex = sprdef->GetSpriteFrame(thing->frame, -1, sprangle, &flipX, !!(thing->renderflags & RF_SPRITEFLIP));
 				if (tex.isValid())
 				{
 					if (flipX)

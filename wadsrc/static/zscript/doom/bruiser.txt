@@ -121,6 +121,7 @@ class BaronBall : Actor
 		Damage 8;
 		Projectile ;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 1;
 		SeeSound "baron/attack";
@@ -148,14 +149,15 @@ extend class Actor
 {
 	void A_BruisAttack()
 	{
-		if (target)
+		let targ = target;
+		if (targ)
 		{
 			if (CheckMeleeRange())
 			{
 				int damage = random[pr_bruisattack](1, 8) * 10;
 				A_PlaySound ("baron/melee", CHAN_WEAPON);
 				int newdam = target.DamageMobj (self, self, damage, "Melee");
-				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			}
 			else
 			{

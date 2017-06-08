@@ -29,8 +29,10 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
+#include "stats.h"
 #include <set>
 #include <string>
+#include <vector>
 
 #ifndef _MSC_VER
 #include <signal.h>
@@ -46,6 +48,20 @@ CUSTOM_CVAR(Int, gl_debug_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOIN
 
 CVAR(Bool, gl_debug_breakpoint, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
+namespace
+{
+	bool gpuStatActive = false;
+	bool keepGpuStatActive = false;
+	std::vector<std::pair<FString, GLuint>> timeElapsedQueries;
+	FString gpuStatOutput;
+}
+
+ADD_STAT(gpu)
+{
+	keepGpuStatActive = true;
+	return gpuStatOutput;
+}
+
 //-----------------------------------------------------------------------------
 //
 // Updates OpenGL debugging state
@@ -54,6 +70,22 @@ CVAR(Bool, gl_debug_breakpoint, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 void FGLDebug::Update()
 {
+	gpuStatOutput = "";
+	for (auto &query : timeElapsedQueries)
+	{
+		GLuint timeElapsed = 0;
+		glGetQueryObjectuiv(query.second, GL_QUERY_RESULT, &timeElapsed);
+		glDeleteQueries(1, &query.second);
+
+		FString out;
+		out.Format("%s=%04.2f ms\n", query.first.GetChars(), timeElapsed / 1000000.0f);
+		gpuStatOutput += out;
+	}
+	timeElapsedQueries.clear();
+
+	gpuStatActive = keepGpuStatActive;
+	keepGpuStatActive = false;
+
 	if (!HasDebugApi())
 		return;
 
@@ -98,6 +130,14 @@ void FGLDebug::PushGroup(const FString &name)
 	{
 		glPushDebugGroup(GL_DEBUG_SOURCE_APPLICATION, 0, (GLsizei)name.Len(), name.GetChars());
 	}
+
+	if (gpuStatActive)
+	{
+		GLuint queryHandle = 0;
+		glGenQueries(1, &queryHandle);
+		glBeginQuery(GL_TIME_ELAPSED, queryHandle);
+		timeElapsedQueries.push_back({ name, queryHandle });
+	}
 }
 
 void FGLDebug::PopGroup()
@@ -105,6 +145,11 @@ void FGLDebug::PopGroup()
 	if (HasDebugApi() && gl_debug_level != 0)
 	{
 		glPopDebugGroup();
+	}
+
+	if (gpuStatActive)
+	{
+		glEndQuery(GL_TIME_ELAPSED);
 	}
 }
 

@@ -217,6 +217,7 @@ class PhosphorousFire : Actor
 	+NOTELEPORT
 	+NODAMAGETHRUST
 	+DONTSPLASH
+	+ZDOOMTRANS
 	RenderStyle "Add";
 	Obituary "$OB_MPPHOSPHOROUSGRENADE";
 	}

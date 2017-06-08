@@ -690,6 +690,14 @@ OptionValue Fuzziness
 	2.0, "$OPTVAL_SHADOW"
 }
 
+OptionValue VanillaTrans
+{
+	0.0, "$OPTVAL_VTFZDOOM"
+	1.0, "$OPTVAL_VTFVANILLA"
+	2.0, "$OPTVAL_VTAZDOOM"
+	3.0, "$OPTVAL_VTAVANILLA"
+}
+
 OptionValue GPUSwitch
 {
 	0.0, "$OPTVAL_DEFAULT"
@@ -750,6 +758,7 @@ OptionMenu "VideoOptions"
 	}
 	
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
+	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
 	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
 	Option "$DSPLYMNU_FAKECONTRAST",			"r_fakecontrast", "Contrast"
 	Option "$DSPLYMNU_ROCKETTRAILS",			"cl_rockettrails", "RocketTrailTypes"

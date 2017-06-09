@@ -1295,6 +1295,9 @@ class PowerTargeter : Powerup
 		InitEffect ();
 	}
 
+	const POS_X = 160 - 3;
+	const POS_Y = 100 - 3;
+
 	override void InitEffect ()
 	{
 		// Why is this called when the inventory isn't even attached yet
@@ -1318,10 +1321,10 @@ class PowerTargeter : Powerup
 			player.SetPsprite(PSprite.TARGETRIGHT, stat + 2);
 		}
 
-		player.GetPSprite(PSprite.TARGETCENTER).x = (160-3);
-		player.GetPSprite(PSprite.TARGETCENTER).y =
-			player.GetPSprite(PSprite.TARGETLEFT).y =
-			player.GetPSprite(PSprite.TARGETRIGHT).y = (100-3);
+		PSprite center = player.GetPSprite(PSprite.TARGETCENTER);
+		center.x = POS_X;
+		center.y = POS_Y;
+
 		PositionAccuracy ();
 	}
 
@@ -1397,8 +1400,13 @@ class PowerTargeter : Powerup
 
 		if (player != null)
 		{
-			player.GetPSprite(PSprite.TARGETLEFT).x = (160-3) - ((100 - player.mo.accuracy));
-			player.GetPSprite(PSprite.TARGETRIGHT).x = (160-3)+ ((100 - player.mo.accuracy));
+			PSprite left = player.GetPSprite(PSprite.TARGETLEFT);
+			left.x = POS_X - (100 - player.mo.accuracy);
+			left.y = POS_Y;
+
+			PSprite right = player.GetPSprite(PSprite.TARGETRIGHT);
+			right.x = POS_X + (100 - player.mo.accuracy);
+			right.y = POS_Y;
 		}
 	}
 	

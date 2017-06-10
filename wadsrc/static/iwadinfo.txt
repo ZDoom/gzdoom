@@ -2,17 +2,6 @@
 
 IWad
 {
-	Name = "Rise Of The Wool Ball"
-	Autoname = "woolball.rotwb"
-	Game = "Doom"
-	Config = "WoolBall"
-	Mapinfo = "mapinfo/doom2.txt"
-	MustContain = "E3M6", "B3DED", "WORLDMAP", "NUCLSKYM", "PLANETLE", "MEOWZEKI", "ZEKIINTR", "NOWAYBAC"
-	BannerColors = "32 54 43", "c6 dc d1"
-}
-
-IWad
-{
 	Name = "Delaweare"
 	Autoname = "delaweare"
 	Game = "Doom"
@@ -338,6 +327,17 @@ IWad
 		          "E3M1","E3M2","E3M3","E3M4","E3M5","E3M6","E3M7","E3M8","E3M9",
 		          "DPHOOF","BFGGA0","HEADA1","CYBRA1","SPIDA1D1"
 	BannerColors = "54 54 54", "a8 a8 a8"
+}
+
+IWad
+{
+	Name = "Rise Of The Wool Ball"
+	Autoname = "woolball.rotwb"
+	Game = "Doom"
+	Config = "WoolBall"
+	Mapinfo = "mapinfo/doom2.txt"
+	MustContain = "E3M6", "B3DED", "WORLDMAP", "NUCLSKYM", "PLANETLE", "MEOWZEKI", "ZEKIINTR", "NOWAYBAC"
+	BannerColors = "32 54 43", "c6 dc d1"
 }
 
 IWad

@@ -388,6 +388,16 @@ IWad
 	Load = "nerve.wad"
 }
 
+IWad
+{
+	Name = "WolfenDoom: Blade of Agony"
+	Game = "Doom"
+	BannerColors = "E30000", "E3E3E3"
+	Mapinfo = "mapinfo/doom2.txt"
+	MustContain = "BOALIB", "C1M1", "Episode3", "MSPUB0"
+	Config = "BoA"
+}
+
 // Doom 2 must be last to be checked becaude MAP01 is its only requirement
 IWad
 {
@@ -444,4 +454,5 @@ Names
 	"square1.pk3"
 	"delaweare.wad"
 	"rotwb.wad"
+	"boa_c2.pk3"
 }

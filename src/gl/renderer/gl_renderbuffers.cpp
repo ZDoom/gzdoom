@@ -81,6 +81,7 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearBloom();
 	ClearExposureLevels();
 	ClearAmbientOcclusion();
+	ClearShadowMap();
 }
 
 void FGLRenderBuffers::ClearScene()
@@ -759,10 +760,19 @@ void FGLRenderBuffers::BindShadowMapTexture(int texunit)
 	glBindTexture(GL_TEXTURE_2D, mShadowMapTexture);
 }
 
+void FGLRenderBuffers::ClearShadowMap()
+{
+	DeleteFrameBuffer(mShadowMapFB);
+	DeleteTexture(mShadowMapTexture);
+	mCurrentShadowMapSize = 0;
+}
+
 void FGLRenderBuffers::CreateShadowMap()
 {
-	if (mShadowMapTexture != 0)
+	if (mShadowMapTexture != 0 && gl_shadowmap_quality == mCurrentShadowMapSize)
 		return;
+
+	ClearShadowMap();
 
 	GLint activeTex, textureBinding, frameBufferBinding;
 	glGetIntegerv(GL_ACTIVE_TEXTURE, &activeTex);
@@ -770,7 +780,7 @@ void FGLRenderBuffers::CreateShadowMap()
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &textureBinding);
 	glGetIntegerv(GL_FRAMEBUFFER_BINDING, &frameBufferBinding);
 
-	mShadowMapTexture = Create2DTexture("ShadowMap", GL_R32F, 1024, 1024);
+	mShadowMapTexture = Create2DTexture("ShadowMap", GL_R32F, gl_shadowmap_quality, 1024);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -781,6 +791,8 @@ void FGLRenderBuffers::CreateShadowMap()
 	glBindTexture(GL_TEXTURE_2D, textureBinding);
 	glActiveTexture(activeTex);
 	glBindFramebuffer(GL_FRAMEBUFFER, frameBufferBinding);
+
+	mCurrentShadowMapSize = gl_shadowmap_quality;
 }
 
 //==========================================================================

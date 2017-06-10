@@ -205,7 +205,7 @@ class TeleGlitter1 : Actor
 {
 	Default
 	{
-		+NOBLOCKMAP +NOGRAVITY +MISSILE
+		+NOBLOCKMAP +NOGRAVITY +MISSILE +ZDOOMTRANS
 		RenderStyle "Add";
 		Damage 0;
 	}

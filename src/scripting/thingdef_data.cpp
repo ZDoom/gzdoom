@@ -322,7 +322,6 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, FORCEZERORADIUSDMG, AActor, flags7),
 	DEFINE_FLAG(MF7, NOINFIGHTSPECIES, AActor, flags7),
 	DEFINE_FLAG(MF7, FORCEINFIGHTING, AActor, flags7),
-	DEFINE_FLAG(MF7, SPRITEFLIP, AActor, flags7),
 
 	DEFINE_FLAG(MF8, FRIGHTENING, AActor, flags8),
 
@@ -346,6 +345,8 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(RF, YFLIP, AActor, renderflags),
 	DEFINE_FLAG(RF, INTERPOLATEANGLES, AActor, renderflags),
 	DEFINE_FLAG(RF, DONTINTERPOLATE, AActor, renderflags),
+	DEFINE_FLAG(RF, SPRITEFLIP, AActor, renderflags),
+	DEFINE_FLAG(RF, ZDOOMTRANS, AActor, renderflags),
 
 	// Bounce flags
 	DEFINE_FLAG2(BOUNCE_Walls, BOUNCEONWALLS, AActor, BounceFlags),

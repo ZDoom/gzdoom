@@ -19,7 +19,7 @@ namespace swrenderer
 		bool SetStyle(RenderViewport *viewport, FRenderStyle style, float alpha, int translation, uint32_t color, FDynamicColormap *&basecolormap, fixed_t shadedlightshade = 0);
 		void SetDest(RenderViewport *viewport, int x, int y);
 		void SetCount(int count) { dc_count = count; }
-		void SetSolidColor(int color) { dc_color = color; }
+		void SetSolidColor(int color) { dc_color = color; dc_color_bgra = GPalette.BaseColors[color]; }
 		void SetDynamicLight(uint32_t color) { dynlightcolor = color; }
 
 		void DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
@@ -39,6 +39,7 @@ namespace swrenderer
 		fixed_t TextureVStep() const { return dc_iscale; }
 
 		int SolidColor() const { return dc_color; }
+		uint32_t SolidColorBgra() const { return dc_color_bgra; }
 		uint32_t SrcColorIndex() const { return dc_srccolor; }
 		uint32_t SrcColorBgra() const { return dc_srccolor_bgra; }
 
@@ -84,6 +85,7 @@ namespace swrenderer
 		int dc_yh = 0;
 
 		int dc_color = 0;
+		uint32_t dc_color_bgra = 0;
 		uint32_t dc_srccolor = 0;
 		uint32_t dc_srccolor_bgra = 0;
 		

@@ -28,6 +28,7 @@
 #include "poly_sprite.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
@@ -145,7 +146,10 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
 	args.SetClipPlane(clipPlane);
-	args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
+	if ((thing->renderflags & RF_ZDOOMTRANS) && r_UseVanillaTransparency)
+		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
+	else
+		args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	args.SetSubsectorDepthTest(true);
 	args.SetWriteSubsectorDepth(false);
 	args.SetWriteStencil(false);

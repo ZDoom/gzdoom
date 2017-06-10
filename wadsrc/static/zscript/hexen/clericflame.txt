@@ -72,7 +72,7 @@ class CFlameFloor : Actor
 {
 	Default
 	{
-		+NOBLOCKMAP +NOGRAVITY
+		+NOBLOCKMAP +NOGRAVITY +ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States
@@ -93,8 +93,8 @@ class FlamePuff : Actor
 	{
 		Radius 1;
 		Height 1;
-		+NOBLOCKMAP +NOGRAVITY
-		RenderStyle "Add";;
+		+NOBLOCKMAP +NOGRAVITY +ZDOOMTRANS
+		RenderStyle "Add";
 		SeeSound "ClericFlameExplode";
 		AttackSound "ClericFlameExplode";
 	}
@@ -159,6 +159,7 @@ class CircleFlame : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		DeathSound "ClericFlameCircle";
 		Obituary "$OB_MPCWEAPFLAME";
@@ -216,6 +217,7 @@ class CFlameMissile : FastProjectile
 		Damage 8;
 		DamageType "Fire";
 		+INVISIBLE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Obituary "$OB_MPCWEAPFLAME";
 	}

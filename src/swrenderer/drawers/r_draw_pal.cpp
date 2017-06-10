@@ -1396,7 +1396,7 @@ namespace swrenderer
 			int color = args.SolidColor();
 			do
 			{
-				uint32_t val = source[frac >> FRACBITS];
+				uint32_t val = colormap[source[frac >> FRACBITS]] << 2;
 
 				int r = (palette[*dest].r * (255-val) + palette[color].r * val) >> 10;
 				int g = (palette[*dest].g * (255-val) + palette[color].g * val) >> 10;
@@ -1439,7 +1439,7 @@ namespace swrenderer
 		int color = args.SolidColor();
 		do
 		{
-			uint32_t val = source[frac >> FRACBITS];
+			uint32_t val = colormap[source[frac >> FRACBITS]] << 2;
 
 			int r = (palette[*dest].r * (255) + palette[color].r * val) >> 10;
 			int g = (palette[*dest].g * (255) + palette[color].g * val) >> 10;

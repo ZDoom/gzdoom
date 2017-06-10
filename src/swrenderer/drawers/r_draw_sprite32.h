@@ -194,7 +194,8 @@ namespace swrenderer
 			uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
 			uint32_t destalpha = args.DestAlpha() >> (FRACBITS - 8);
 			uint32_t srccolor = args.SrcColorBgra();
-			uint32_t color = LightBgra::shade_pal_index_simple(args.SolidColor(), light);
+			uint32_t color = LightBgra::shade_bgra_simple(args.SolidColorBgra(),
+				LightBgra::calc_light_multiplier(light));
 
 			for (int index = 0; index < count; index++)
 			{
@@ -290,7 +291,7 @@ namespace swrenderer
 		{
 			using namespace DrawSprite32TModes;
 
-			if (BlendT::Mode == (int)SpriteBlendModes::Copy || BlendT::Mode == (int)SpriteBlendModes::Shaded)
+			if (BlendT::Mode == (int)SpriteBlendModes::Copy)
 				return fgcolor;
 
 			if (ShadeModeT::Mode == (int)ShadeMode::Simple)
@@ -340,9 +341,9 @@ namespace swrenderer
 			{
 				uint32_t alpha = ifgshade;
 				BgraColor outcolor;
-				outcolor.r = ((fgcolor.r * alpha) >> 8) + bgcolor.r;
-				outcolor.g = ((fgcolor.g * alpha) >> 8) + bgcolor.g;
-				outcolor.b = ((fgcolor.b * alpha) >> 8) + bgcolor.b;
+				outcolor.r = MIN<uint32_t>(((fgcolor.r * alpha) >> 8) + bgcolor.r, 255);
+				outcolor.g = MIN<uint32_t>(((fgcolor.g * alpha) >> 8) + bgcolor.g, 255);
+				outcolor.b = MIN<uint32_t>(((fgcolor.b * alpha) >> 8) + bgcolor.b, 255);
 				outcolor.a = 255;
 				return outcolor;
 			}

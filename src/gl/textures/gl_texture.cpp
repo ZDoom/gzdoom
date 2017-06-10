@@ -167,50 +167,6 @@ void gl_GenerateGlobalBrightmapFromColormap()
 	}
 }
 
-//===========================================================================
-//
-// averageColor
-//  input is RGBA8 pixel format.
-//	The resulting RGB color can be scaled uniformly so that the highest 
-//	component becomes one.
-//
-//===========================================================================
-static PalEntry averageColor(const uint32_t *data, int size, int maxout)
-{
-	int				i;
-	unsigned int	r, g, b;
-
-
-
-	// First clear them.
-	r = g = b = 0;
-	if (size==0) 
-	{
-		return PalEntry(255,255,255);
-	}
-	for(i = 0; i < size; i++)
-	{
-		r += BPART(data[i]);
-		g += GPART(data[i]);
-		b += RPART(data[i]);
-	}
-
-	r = r/size;
-	g = g/size;
-	b = b/size;
-
-	int maxv=MAX(MAX(r,g),b);
-
-	if(maxv && maxout)
-	{
-		r = Scale(r, maxout, maxv);
-		g = Scale(g, maxout, maxv);
-		b = Scale(b, maxout, maxv);
-	}
-	return PalEntry(255,r,g,b);
-}
-
-
 
 //==========================================================================
 //

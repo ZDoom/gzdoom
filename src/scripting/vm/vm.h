@@ -579,7 +579,7 @@ class AActor;
 //   callingstate - State this action was called from
 #define PARAM_ACTION_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
-	PARAM_OBJECT	 (self, AActor); \
+	PARAM_OBJECT_NOT_NULL (self, AActor); \
 	PARAM_OBJECT (stateowner, type) \
 	PARAM_POINTER  (stateinfo, FStateParamInfo) \
 
@@ -588,12 +588,12 @@ class AActor;
 
 #define PARAM_SELF_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
-	PARAM_OBJECT(self, type);
+	PARAM_OBJECT_NOT_NULL(self, type);
 
 // for structs we cannot do a class validation
 #define PARAM_SELF_STRUCT_PROLOGUE(type) \
 	PARAM_PROLOGUE; \
-	PARAM_POINTER(self, type);
+	PARAM_POINTER_NOT_NULL(self, type);
 
 class PFunction;
 

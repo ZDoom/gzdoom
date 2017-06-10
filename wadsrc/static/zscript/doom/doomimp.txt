@@ -77,6 +77,7 @@ class DoomImpBall : Actor
 		Damage 3;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 1;
 		SeeSound "imp/attack";
@@ -103,19 +104,20 @@ extend class Actor
 {
 	void A_TroopAttack()
 	{
-		if (target)
+		let targ = target;
+		if (targ)
 		{
 			if (CheckMeleeRange())
 			{
 				int damage = random[pr_troopattack](1, 8) * 3;
 				A_PlaySound ("imp/melee", CHAN_WEAPON);
-				int newdam = target.DamageMobj (self, self, damage, "Melee");
-				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+				int newdam = targ.DamageMobj (self, self, damage, "Melee");
+				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			}
 			else
 			{
 				// launch a missile
-				SpawnMissile (target, "DoomImpBall");
+				SpawnMissile (targ, "DoomImpBall");
 			}
 		}
 	}

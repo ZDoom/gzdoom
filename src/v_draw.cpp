@@ -1060,7 +1060,7 @@ void DCanvas::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
 			h -= (cliptop - y1);
 			y1 = cliptop;
 		}
-		if (h > clipheight) w = clipheight;
+		if (h > clipheight) h = clipheight;
 		if (h <= 0) return;
 	}
 	DoDim(color, damount, x1, y1, w, h);

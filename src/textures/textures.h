@@ -307,6 +307,7 @@ public:
 
 	void SetScaledSize(int fitwidth, int fitheight);
 	PalEntry GetSkyCapColor(bool bottom);
+	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
 
 	virtual void HackHack (int newheight);	// called by FMultipatchTexture to discover corrupt patches.
 

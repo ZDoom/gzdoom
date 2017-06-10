@@ -512,7 +512,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 static bool CheckCompatible(DMenuDescriptor *newd, DMenuDescriptor *oldd)
 {
 	if (oldd->mClass == nullptr) return true;
-	return oldd->mClass == newd->mClass;
+	return newd->mClass->IsDescendantOf(oldd->mClass);
 }
 
 static bool ReplaceMenu(FScanner &sc, DMenuDescriptor *desc)

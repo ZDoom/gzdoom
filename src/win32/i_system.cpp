@@ -168,7 +168,6 @@ int (*I_GetTime) (bool saveMS);
 int (*I_WaitForTic) (int);
 void (*I_FreezeTime) (bool frozen);
 
-os_t OSPlatform;
 bool gameisdead;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -542,24 +541,7 @@ void I_DetectOS(void)
 
 	switch (info.dwPlatformId)
 	{
-	case VER_PLATFORM_WIN32_WINDOWS:
-		OSPlatform = os_Win95;
-		if (info.dwMinorVersion < 10)
-		{
-			osname = "95";
-		}
-		else if (info.dwMinorVersion < 90)
-		{
-			osname = "98";
-		}
-		else
-		{
-			osname = "Me";
-		}
-		break;
-
 	case VER_PLATFORM_WIN32_NT:
-		OSPlatform = info.dwMajorVersion < 5 ? os_WinNT4 : os_Win2k;
 		osname = "NT";
 		if (info.dwMajorVersion == 5)
 		{
@@ -605,31 +587,14 @@ void I_DetectOS(void)
 		break;
 
 	default:
-		OSPlatform = os_unknown;
 		osname = "Unknown OS";
 		break;
 	}
 
-	if (OSPlatform == os_Win95)
-	{
-		if (!batchrun) Printf ("OS: Windows %s %lu.%lu.%lu %s\n",
-				osname,
-				info.dwMajorVersion, info.dwMinorVersion,
-				info.dwBuildNumber & 0xffff, info.szCSDVersion);
-	}
-	else
-	{
-		if (!batchrun) Printf ("OS: Windows %s (NT %lu.%lu) Build %lu\n    %s\n",
-				osname,
-				info.dwMajorVersion, info.dwMinorVersion,
-				info.dwBuildNumber, info.szCSDVersion);
-	}
-
-	if (OSPlatform == os_unknown)
-	{
-		if (!batchrun) Printf ("(Assuming Windows 2000)\n");
-		OSPlatform = os_Win2k;
-	}
+	if (!batchrun) Printf ("OS: Windows %s (NT %lu.%lu) Build %lu\n    %s\n",
+			osname,
+			info.dwMajorVersion, info.dwMinorVersion,
+			info.dwBuildNumber, info.szCSDVersion);
 }
 
 //==========================================================================

@@ -179,7 +179,7 @@ class AlienSpectre1 : SpectralMonster
 		if (log > 0)
 		{
 			String voc = "svox/voc" .. log;
-			A_PlaySound(voc, CHAN_VOICE);
+			A_PlaySound(voc, CHAN_VOICE, 1, false, ATTN_NONE);
 			player.player.SetLogNumber (log);
 		}
 	}

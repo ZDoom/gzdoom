@@ -132,6 +132,7 @@ class StaffPuff2 : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+PUFFONACTORS
+		+ZDOOMTRANS
 		AttackSound "weapons/staffpowerhit";
 	}
 

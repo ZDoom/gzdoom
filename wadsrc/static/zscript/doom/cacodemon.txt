@@ -71,6 +71,7 @@ class CacodemonBall : Actor
 		Damage 5;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 1;
 		SeeSound "caco/attack";
@@ -98,19 +99,20 @@ extend class Actor
 {
 	void A_HeadAttack()
 	{
-		if (target)
+		let targ = target;
+		if (targ)
 		{
 			if (CheckMeleeRange())
 			{
 				int damage = random[pr_headattack](1, 6) * 10;
 				A_PlaySound (AttackSound, CHAN_WEAPON);
 				int newdam = target.DamageMobj (self, self, damage, "Melee");
-				target.TraceBleed (newdam > 0 ? newdam : damage, self);
+				targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			}
 			else
 			{
 				// launch a missile
-				SpawnMissile (target, "CacodemonBall");
+				SpawnMissile (targ, "CacodemonBall");
 			}
 		}
 	}

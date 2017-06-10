@@ -1815,6 +1815,7 @@ DSPLYMNU_SKYMODE				= "Sky render mode";
 DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Fullbright overrides sector color";
 DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
+DSPLYMNU_OLDTRANS				= "Classic Transparency";
 DSPLYMNU_TRANSSOUL				= "Lost Soul translucency";
 DSPLYMNU_FAKECONTRAST			= "Use fake contrast";
 DSPLYMNU_ROCKETTRAILS			= "Rocket Trails";
@@ -2367,6 +2368,11 @@ OPTVAL_HWPOLY				= "OpenGL-Accelerated";
 OPTVAL_SWDOOM				= "Doom Software Renderer";
 OPTVAL_DEDICATED			= "High-Performance";
 OPTVAL_INTEGRATED			= "Power-Saving";
+OPTVAL_VANILLA				= "Vanilla";
+OPTVAL_VTFZDOOM				= "ZDoom (Forced)";
+OPTVAL_VTFVANILLA			= "Vanilla (Forced)";
+OPTVAL_VTAZDOOM				= "Auto (ZDoom Preferred)";
+OPTVAL_VTAVANILLA			= "Auto (Vanilla Preferred)";
 
 // Colors
 C_BRICK					= "\cabrick";

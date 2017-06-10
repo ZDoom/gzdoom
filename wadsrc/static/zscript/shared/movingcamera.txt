@@ -45,6 +45,8 @@ class InterpolationPoint : Actor
 {
 	
 	InterpolationPoint	Next;
+
+	bool bVisited;
 	
 	default
 	{
@@ -66,9 +68,9 @@ class InterpolationPoint : Actor
 		
 		while (me != null)
 		{
-			if (me.bAmbush)	return;
+			if (me.bVisited) return;
 
-			me.bAmbush = true;
+			me.bVisited = true;
 
 			let iterator = ActorIterator.Create(me.args[3] + 256 * me.args[4], "InterpolationPoint");
 			me.Next = InterpolationPoint(iterator.Next ());

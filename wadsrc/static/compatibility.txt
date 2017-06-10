@@ -629,6 +629,11 @@ ABC4EB5A1535ECCD0061AD14F3547908 // Plutonia Experiment, map26
 	setsectorspecial 156 0
 }
 
+FF635FB9A2F076566299910F8C78F707 // nerve.wad, level04
+{
+	setsectorspecial 868 0
+}
+
 B68EB7CFB4CC481796E2919B9C16DFBD // Moc11.wad e1m6
 {
 	setvertex 1650 -3072 2671

@@ -117,10 +117,10 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 
 		double topceilz1 = frontceilz1;
 		double topceilz2 = frontceilz2;
-		double topfloorz1 = MIN(backceilz1, frontceilz1);
-		double topfloorz2 = MIN(backceilz2, frontceilz2);
-		double bottomceilz1 = MAX(frontfloorz1, backfloorz1);
-		double bottomceilz2 = MAX(frontfloorz2, backfloorz2);
+		double topfloorz1 = MAX(MIN(backceilz1, frontceilz1), frontfloorz1);
+		double topfloorz2 = MAX(MIN(backceilz2, frontceilz2), frontfloorz2);
+		double bottomceilz1 = MIN(MAX(frontfloorz1, backfloorz1), frontceilz1);
+		double bottomceilz2 = MIN(MAX(frontfloorz2, backfloorz2), frontceilz2);
 		double bottomfloorz1 = frontfloorz1;
 		double bottomfloorz2 = frontfloorz2;
 		double middleceilz1 = topfloorz1;
@@ -135,7 +135,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), topceilz1, topfloorz1, topceilz2, topfloorz2);
 			wall.TopTexZ = topTexZ;
-			wall.BottomTexZ = MIN(topfloorz1, topfloorz2);
+			wall.BottomTexZ = MIN(MIN(backceilz1, frontceilz1), MIN(backceilz2, frontceilz2));
 			wall.Texpart = side_t::top;
 			wall.Render(worldToClip, clipPlane, cull);
 		}
@@ -143,7 +143,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef && !bothSkyFloor)
 		{
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), bottomceilz1, bottomfloorz1, bottomceilz2, bottomfloorz2);
-			wall.TopTexZ = MAX(bottomceilz1, bottomceilz2);
+			wall.TopTexZ = MAX(MAX(frontfloorz1, backfloorz1), MAX(frontfloorz2, backfloorz2));
 			wall.BottomTexZ = bottomTexZ;
 			wall.UnpeggedCeil1 = topceilz1;
 			wall.UnpeggedCeil2 = topceilz2;

@@ -203,6 +203,7 @@ class Sigil : Weapon
 		}
 		PSprite pspr = player.GetPSprite(PSP_WEAPON);
 		pspr.SetState(pspr.CurState + invoker.health);
+		invoker.downpieces = 0;
 	}
 
 	//============================================================================

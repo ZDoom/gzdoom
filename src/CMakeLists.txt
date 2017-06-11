@@ -461,7 +461,9 @@ if( NOT DYN_FLUIDSYNTH )
 	endif()
 endif()
 
-if (GZDOOM_USE_OPENVR)
+option( ENABLE_OPENVR "Enable OpenVR virtual reality mode" OFF )
+if (ENABLE_OPENVR)
+	add_definitions("-DUSE_OPENVR")
 	find_path(OPENVR_SDK_PATH
 		NAMES
 			headers/openvr.h
@@ -477,17 +479,24 @@ if (GZDOOM_USE_OPENVR)
 			${OPENVR_SDK_PATH}/headers
 	)
 	include_directories("${OPENVR_INCLUDE_DIRECTORY}")
-	option( GZDOOM_OPENVR_STATIC "Statically link OpenVR API" ON )
-	if(GZDOOM_OPENVR_STATIC)
-		# Incorporate the whole openvr API into zdoom, using a few rules lifted from the OpenVR CMakeLists.txt files
-		# This branch avoids the need to ship openvr_api.dll
-		add_definitions( -DVR_API_PUBLIC )
-		if(WIN32 AND X64)
-			add_definitions( -DWIN64 )
+	option( DYN_OPENVR "Dynamically load OpenVR" ON )
+	if (DYN_OPENVR)
+		add_definitions( -DDYN_OPENVR )
+	else(DYN_OPENVR)
+		option( STATIC_OPENVR "Statically link OpenVR API" ON )
+		if(STATIC_OPENVR)
+			# Incorporate the whole openvr API into zdoom, using a few rules lifted from the OpenVR CMakeLists.txt files
+			# This branch avoids the need to ship openvr_api.dll
+			add_definitions( -DVR_API_PUBLIC )
+			add_definitions( -DOPENVR_API_NODLL )
+			if(WIN32 AND X64)
+				add_definitions( -DWIN64 )
+			endif()
+			include_directories(${OPENVR_SDK_PATH}/src ${OPENVR_SDK_PATH}/src/vrcommon)
+			file(GLOB OPENVR_SOURCES "${OPENVR_SDK_PATH}/src/*.cpp" "${OPENVR_SDK_PATH}/src/vrcommon/*.cpp")
 		endif()
-		include_directories(${OPENVR_SDK_PATH}/src ${OPENVR_SDK_PATH}/src/vrcommon)
-		file(GLOB OPENVR_SOURCES "${OPENVR_SDK_PATH}/src/*.cpp" "${OPENVR_SDK_PATH}/src/vrcommon/*.cpp")
-	else() # link to shared OpenVR library
+	endif()
+	if(DYN_OPENVR OR NOT STATIC_OPENVR)
 		# Link to correct library for this platform
 		if(WIN32)
 			set(OPENVR_PLAT "win")
@@ -505,15 +514,17 @@ if (GZDOOM_USE_OPENVR)
 			NAMES openvr_api
 			HINTS "${OPENVR_SDK_PATH}/lib/${OPENVR_PLAT}/"
 		)
-		list(APPEND ZDOOM_LIBS ${OPENVR_LIBRARY})
-		# Find shared library file needed for package distribution
+		# Find shared library file needed for package distribution (see install rule later in this file)
 		find_program(OPENVR_SHARED_LIBRARY
 			NAMES libopenvr_api.so libopenvr_api.dylib openvr_api.dll
 			PATHS "${OPENVR_SDK_PATH}/bin/${OPENVR_PLAT}/"
 			NO_DEFAULT_PATH
 		)
+		if(NOT DYN_OPENVR)
+			# Link directly to shared library
+			list(APPEND ZDOOM_LIBS ${OPENVR_LIBRARY})
+		endif()
 	endif()
-	add_definitions("-DUSE_OPENVR")
 endif()
 
 # Start defining source files for ZDoom

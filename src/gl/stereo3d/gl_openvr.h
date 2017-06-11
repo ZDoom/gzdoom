@@ -30,13 +30,11 @@
 #include "gl_stereo3d.h"
 #include "gl_stereo_leftright.h"
 
-// forward declaration from openvr.h
-namespace vr {
-	class IVRSystem;
-	struct HmdMatrix44_t;
-	struct Texture_t;
-	struct TrackedDevicePose_t;
-}
+// forward declarations
+struct TrackedDevicePose_t;
+struct Texture_t;
+struct VR_IVRSystem_FnTable;
+struct VR_IVRCompositor_FnTable;
 
 /* stereoscopic 3D API */
 namespace s3d {
@@ -52,19 +50,19 @@ public:
 	void GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const override;
 	virtual void Adjust2DMatrices() const override;
 
-	void initialize(vr::IVRSystem& vrsystem);
+	void initialize(VR_IVRSystem_FnTable * vrsystem);
 	void dispose();
-	void setCurrentHmdPose(const vr::TrackedDevicePose_t * pose) const {currentPose = pose;}
-	bool submitFrame() const;
+	void setCurrentHmdPose(const TrackedDevicePose_t * pose) const {currentPose = pose;}
+	bool submitFrame(VR_IVRCompositor_FnTable * vrCompositor) const;
 
 protected:
 	VSMatrix projectionMatrix;
 	VSMatrix eyeToHeadTransform;
 	VSMatrix otherEyeToHeadTransform;
-	vr::Texture_t* eyeTexture;
+	Texture_t* eyeTexture;
 	int eye;
 
-	mutable const vr::TrackedDevicePose_t * currentPose;
+	mutable const TrackedDevicePose_t * currentPose;
 };
 
 class OpenVRMode : public Stereo3DMode
@@ -87,7 +85,10 @@ protected:
 	OpenVREyePose leftEyeView;
 	OpenVREyePose rightEyeView;
 
-	vr::IVRSystem* vrSystem;
+	VR_IVRSystem_FnTable * vrSystem;
+	VR_IVRCompositor_FnTable * vrCompositor;
+	uint32_t vrToken;
+
 	mutable int cachedScreenBlocks;
 
 private:

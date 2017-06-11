@@ -30,9 +30,7 @@
 #include "gl/data/gl_matrix.h"
 #include "openvr.h"
 
-namespace vr {
-	HmdMatrix34_t;
-}
+struct HmdMatrix34_t;
 
 class LSVec3
 {
@@ -92,7 +90,7 @@ public:
 		loadIdentity();
 	}
 		
-	LSMatrix44(const vr::HmdMatrix34_t& m) {
+	LSMatrix44(const HmdMatrix34_t& m) {
 		loadIdentity();
 		for (int i = 0; i < 3; ++i) {
 			for (int j = 0; j < 4; ++j) {

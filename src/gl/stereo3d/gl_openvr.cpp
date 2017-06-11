@@ -28,7 +28,7 @@
 #ifdef USE_OPENVR
 
 #include "gl_openvr.h"
-#include "openvr.h"
+#include "openvr_capi.h"
 #include <string>
 #include "gl/system/gl_system.h"
 #include "doomtype.h" // Printf
@@ -41,14 +41,85 @@
 #include "g_levellocals.h" // pixelstretch
 #include "math/cmath.h"
 #include "c_cvars.h"
+#include "cmdlib.h"
 #include "LSMatrix.h"
+
+#ifdef DYN_OPENVR
+// Dynamically load OpenVR
+
+#include "i_module.h"
+FModule OpenVRModule{ "OpenVR" };
+
+/** Pointer-to-function type, useful for dynamically getting OpenVR entry points. */
+// Derived from global entry at the bottom of openvr_capi.h, plus a few other functions
+typedef intptr_t (*LVR_InitInternal)(EVRInitError *peError, EVRApplicationType eType);
+typedef void (*LVR_ShutdownInternal)();
+typedef bool (*LVR_IsHmdPresent)();
+typedef intptr_t (*LVR_GetGenericInterface)(const char *pchInterfaceVersion, EVRInitError *peError);
+typedef bool (*LVR_IsRuntimeInstalled)();
+typedef const char * (*LVR_GetVRInitErrorAsSymbol)(EVRInitError error);
+typedef const char * (*LVR_GetVRInitErrorAsEnglishDescription)(EVRInitError error);
+typedef bool (*LVR_IsInterfaceVersionValid)(const char * version);
+typedef uint32_t (*LVR_GetInitToken)();
+
+#define DEFINE_ENTRY(name) static TReqProc<OpenVRModule, L##name> name{#name};
+DEFINE_ENTRY(VR_InitInternal)
+DEFINE_ENTRY(VR_ShutdownInternal)
+DEFINE_ENTRY(VR_IsHmdPresent)
+DEFINE_ENTRY(VR_GetGenericInterface)
+DEFINE_ENTRY(VR_IsRuntimeInstalled)
+DEFINE_ENTRY(VR_GetVRInitErrorAsSymbol)
+DEFINE_ENTRY(VR_GetVRInitErrorAsEnglishDescription)
+DEFINE_ENTRY(VR_IsInterfaceVersionValid)
+DEFINE_ENTRY(VR_GetInitToken)
+
+#ifdef _WIN32
+#define OPENVRLIB "openvr_api.dll"
+#elif defined(__APPLE__)
+#define OPENVRLIB "libopenvr_api.dylib"
+#else
+#define OPENVRLIB "libopenvr_api.so"
+#endif
+
+#else
+// Non-dynamic loading of OpenVR
+
+// OpenVR Global entry points
+S_API intptr_t VR_InitInternal(EVRInitError *peError, EVRApplicationType eType);
+S_API void VR_ShutdownInternal();
+S_API bool VR_IsHmdPresent();
+S_API intptr_t VR_GetGenericInterface(const char *pchInterfaceVersion, EVRInitError *peError);
+S_API bool VR_IsRuntimeInstalled();
+S_API const char * VR_GetVRInitErrorAsSymbol(EVRInitError error);
+S_API const char * VR_GetVRInitErrorAsEnglishDescription(EVRInitError error);
+S_API bool VR_IsInterfaceVersionValid(const char * version);
+S_API uint32_t VR_GetInitToken();
+
+#endif
+
+bool IsOpenVRPresent()
+{
+#ifndef USE_OPENVR
+	return false;
+#elif !defined DYN_OPENVR
+	return true;
+#else
+	static bool cached_result = false;
+	static bool done = false;
+
+	if (!done)
+	{
+		done = true;
+		cached_result = OpenVRModule.Load({ NicePath("$PROGDIR/" OPENVRLIB), OPENVRLIB });
+	}
+	return cached_result;
+#endif
+}
 
 // For conversion between real-world and doom units
 #define VERTICAL_DOOM_UNITS_PER_METER 27.0f
 
 EXTERN_CVAR(Int, screenblocks);
-
-using namespace vr;
 
 // feature toggles, for testing and debugging
 static const bool doTrackHmdYaw = true;
@@ -148,7 +219,7 @@ OpenVREyePose::~OpenVREyePose()
 	dispose();
 }
 
-static void vSMatrixFromHmdMatrix34(VSMatrix& m1, const vr::HmdMatrix34_t& m2)
+static void vSMatrixFromHmdMatrix34(VSMatrix& m1, const HmdMatrix34_t& m2)
 {
 	float tmp[16];
 	for (int i = 0; i < 3; ++i) {
@@ -172,7 +243,7 @@ void OpenVREyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const
 
 	if (currentPose == nullptr)
 		return;
-	const vr::TrackedDevicePose_t& hmd = *currentPose;
+	const TrackedDevicePose_t& hmd = *currentPose;
 	if (! hmd.bDeviceIsConnected)
 		return;
 	if (! hmd.bPoseIsValid)
@@ -181,7 +252,7 @@ void OpenVREyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const
 	if (! doStereoscopicViewpointOffset)
 		return;
 
-	const vr::HmdMatrix34_t& hmdPose = hmd.mDeviceToAbsoluteTracking;
+	const HmdMatrix34_t& hmdPose = hmd.mDeviceToAbsoluteTracking;
 
 	// Pitch and Roll are identical between OpenVR and Doom worlds.
 	// But yaw can differ, depending on starting state, and controller movement.
@@ -241,13 +312,13 @@ VSMatrix OpenVREyePose::GetProjection(FLOATTYPE fov, FLOATTYPE aspectRatio, FLOA
 	return projectionMatrix;
 }
 
-void OpenVREyePose::initialize(vr::IVRSystem& vrsystem)
+void OpenVREyePose::initialize(VR_IVRSystem_FnTable * vrsystem)
 {
 	float zNear = 5.0;
 	float zFar = 65536.0;
-	vr::HmdMatrix44_t projection = vrsystem.GetProjectionMatrix(
-			vr::EVREye(eye), zNear, zFar);
-	vr::HmdMatrix44_t proj_transpose;
+	HmdMatrix44_t projection = vrsystem->GetProjectionMatrix(
+			EVREye(eye), zNear, zFar);
+	HmdMatrix44_t proj_transpose;
 	for (int i = 0; i < 4; ++i) {
 		for (int j = 0; j < 4; ++j) {
 			proj_transpose.m[i][j] = projection.m[j][i];
@@ -256,16 +327,16 @@ void OpenVREyePose::initialize(vr::IVRSystem& vrsystem)
 	projectionMatrix.loadIdentity();
 	projectionMatrix.multMatrix(&proj_transpose.m[0][0]);
 
-	vr::HmdMatrix34_t eyeToHead = vrsystem.GetEyeToHeadTransform(vr::EVREye(eye));
+	HmdMatrix34_t eyeToHead = vrsystem->GetEyeToHeadTransform(EVREye(eye));
 	vSMatrixFromHmdMatrix34(eyeToHeadTransform, eyeToHead);
-	vr::HmdMatrix34_t otherEyeToHead = vrsystem.GetEyeToHeadTransform(eye == Eye_Left ? Eye_Right : Eye_Left);
+	HmdMatrix34_t otherEyeToHead = vrsystem->GetEyeToHeadTransform(eye == EVREye_Eye_Left ? EVREye_Eye_Right : EVREye_Eye_Left);
 	vSMatrixFromHmdMatrix34(otherEyeToHeadTransform, otherEyeToHead);
 
 	if (eyeTexture == nullptr)
-		eyeTexture = new vr::Texture_t();
+		eyeTexture = new Texture_t();
 	eyeTexture->handle = nullptr; // TODO: populate this at resolve time
-	eyeTexture->eType = vr::TextureType_OpenGL;
-	eyeTexture->eColorSpace = vr::ColorSpace_Linear;
+	eyeTexture->eType = ETextureType_TextureType_OpenGL;
+	eyeTexture->eColorSpace = EColorSpace_ColorSpace_Linear;
 }
 
 void OpenVREyePose::dispose()
@@ -276,11 +347,11 @@ void OpenVREyePose::dispose()
 	}
 }
 
-bool OpenVREyePose::submitFrame() const
+bool OpenVREyePose::submitFrame(VR_IVRCompositor_FnTable * vrCompositor) const
 {
 	if (eyeTexture == nullptr)
 		return false;
-	if (vr::VRCompositor() == nullptr)
+	if (vrCompositor == nullptr)
 		return false;
 	// Copy HDR framebuffer into 24-bit RGB texture
 	GLRenderer->mBuffers->BindEyeFB(eye, true);
@@ -298,7 +369,7 @@ bool OpenVREyePose::submitFrame() const
 	glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 0, 0,
 		GLRenderer->mSceneViewport.width,
 		GLRenderer->mSceneViewport.height, 0);
-	vr::VRCompositor()->Submit(vr::EVREye(eye), eyeTexture);
+	vrCompositor->Submit(EVREye(eye), eyeTexture, nullptr, EVRSubmitFlags_Submit_Default);
 	return true;
 }
 
@@ -323,20 +394,23 @@ void OpenVREyePose::Adjust2DMatrices() const
 			-VERTICAL_DOOM_UNITS_PER_METER,
 			VERTICAL_DOOM_UNITS_PER_METER,
 			-VERTICAL_DOOM_UNITS_PER_METER);
-		new_projection.scale(level.info->pixelstretch, level.info->pixelstretch, 1.0); // Doom universe is scaled by 1990s pixel aspect ratio
+		if (level.info != nullptr)
+			new_projection.scale(level.info->pixelstretch, level.info->pixelstretch, 1.0); // Doom universe is scaled by 1990s pixel aspect ratio
 
 		// eye coordinates from hmd coordinates
 		LSMatrix44 e2h(eyeToHeadTransform);
 		new_projection.multMatrix(e2h.transpose());
 
-		// Un-apply HMD yaw angle, to keep the menu in front of the player
-		float openVrYawDegrees = RAD2DEG(-eulerAnglesFromMatrix(currentPose->mDeviceToAbsoluteTracking).v[0]);
-		new_projection.rotate(openVrYawDegrees, 0, 1, 0);
+		if (currentPose != nullptr) {
+			// Un-apply HMD yaw angle, to keep the menu in front of the player
+			float openVrYawDegrees = RAD2DEG(-eulerAnglesFromMatrix(currentPose->mDeviceToAbsoluteTracking).v[0]);
+			new_projection.rotate(openVrYawDegrees, 0, 1, 0);
 
-		// apply inverse of hmd rotation, to keep the menu fixed in the world
-		LSMatrix44 hmdPose(currentPose->mDeviceToAbsoluteTracking);
-		hmdPose = hmdPose.getWithoutTranslation();
-		new_projection.multMatrix(hmdPose.transpose());
+			// apply inverse of hmd rotation, to keep the menu fixed in the world
+			LSMatrix44 hmdPose(currentPose->mDeviceToAbsoluteTracking);
+			hmdPose = hmdPose.getWithoutTranslation();
+			new_projection.multMatrix(hmdPose.transpose());
+		}
 
 		// Tilt the HUD downward, so its not so high up
 		new_projection.rotate(15, 1, 0, 0);
@@ -367,35 +441,51 @@ void OpenVREyePose::Adjust2DMatrices() const
 
 OpenVRMode::OpenVRMode() 
 	: vrSystem(nullptr)
-	, leftEyeView(vr::Eye_Left)
-	, rightEyeView(vr::Eye_Right)
+	, leftEyeView(EVREye_Eye_Left)
+	, rightEyeView(EVREye_Eye_Right)
 	, hmdWasFound(false)
 	, sceneWidth(0), sceneHeight(0)
+	, vrCompositor(nullptr)
+	, vrToken(0)
 {
-	eye_ptrs.Push(&leftEyeView); // default behavior to Mono non-stereo rendering
+	eye_ptrs.Push(&leftEyeView); // initially default behavior to Mono non-stereo rendering
+
+	if ( ! IsOpenVRPresent() ) return; // failed to load openvr API dynamically
+
+	if ( ! VR_IsRuntimeInstalled() ) return; // failed to find OpenVR implementation
+
+	if ( ! VR_IsHmdPresent() ) return; // no VR headset is attached
 
 	EVRInitError eError;
-	if (VR_IsHmdPresent())
-	{
-		vrSystem = VR_Init(&eError, VRApplication_Scene);
-		if (eError != vr::VRInitError_None) {
-			std::string errMsg = VR_GetVRInitErrorAsEnglishDescription(eError);
-			vrSystem = nullptr;
-			return;
-			// TODO: report error
-		}
-		vrSystem->GetRecommendedRenderTargetSize(&sceneWidth, &sceneHeight);
-
-		// OK
-		leftEyeView.initialize(*vrSystem);
-		rightEyeView.initialize(*vrSystem);
-
-		if (!vr::VRCompositor())
-			return;
-
-		eye_ptrs.Push(&rightEyeView); // NOW we render to two eyes
-		hmdWasFound = true;
+	// Code below recapitulates the effects of C++ call vr::VR_Init()
+	VR_InitInternal(&eError, EVRApplicationType_VRApplication_Scene);
+	if (eError != EVRInitError_VRInitError_None) {
+		std::string errMsg = VR_GetVRInitErrorAsEnglishDescription(eError);
+		return;
 	}
+	if (! VR_IsInterfaceVersionValid(IVRSystem_Version))
+	{
+		VR_ShutdownInternal();
+		return;
+	}
+	vrToken = VR_GetInitToken();
+	const std::string sys_key = std::string("FnTable:") + std::string(IVRSystem_Version);
+	vrSystem = (VR_IVRSystem_FnTable*) VR_GetGenericInterface(sys_key.c_str() , &eError);
+	if (vrSystem == nullptr)
+		return;
+
+	vrSystem->GetRecommendedRenderTargetSize(&sceneWidth, &sceneHeight);
+
+	leftEyeView.initialize(vrSystem);
+	rightEyeView.initialize(vrSystem);
+
+	const std::string comp_key = std::string("FnTable:") + std::string(IVRCompositor_Version);
+	vrCompositor = (VR_IVRCompositor_FnTable*)VR_GetGenericInterface(comp_key.c_str(), &eError);
+	if (vrCompositor == nullptr)
+		return;
+
+	eye_ptrs.Push(&rightEyeView); // NOW we render to two eyes
+	hmdWasFound = true;
 }
 
 /* virtual */
@@ -498,8 +588,8 @@ void OpenVRMode::Present() const {
 
 	if (doRenderToHmd) 
 	{
-		leftEyeView.submitFrame();
-		rightEyeView.submitFrame();
+		leftEyeView.submitFrame(vrCompositor);
+		rightEyeView.submitFrame(vrCompositor);
 	}
 }
 
@@ -565,19 +655,19 @@ void OpenVRMode::SetUp() const
 	cachedScreenBlocks = screenblocks;
 	screenblocks = 12; // always be full-screen during 3D scene render
 
-	if (vr::VRCompositor() == nullptr)
+	if (vrCompositor == nullptr)
 		return;
 
-	static vr::TrackedDevicePose_t poses[vr::k_unMaxTrackedDeviceCount];
-	vr::VRCompositor()->WaitGetPoses(
-		poses, vr::k_unMaxTrackedDeviceCount, // current pose
+	static TrackedDevicePose_t poses[k_unMaxTrackedDeviceCount];
+	vrCompositor->WaitGetPoses(
+		poses, k_unMaxTrackedDeviceCount, // current pose
 		nullptr, 0 // future pose?
 	);
 
-	TrackedDevicePose_t& hmdPose0 = poses[vr::k_unTrackedDeviceIndex_Hmd];
+	TrackedDevicePose_t& hmdPose0 = poses[k_unTrackedDeviceIndex_Hmd];
 
 	if (hmdPose0.bPoseIsValid) {
-		const vr::HmdMatrix34_t& hmdPose = hmdPose0.mDeviceToAbsoluteTracking;
+		const HmdMatrix34_t& hmdPose = hmdPose0.mDeviceToAbsoluteTracking;
 		HmdVector3d_t eulerAngles = eulerAnglesFromMatrix(hmdPose);
 		// Printf("%.1f %.1f %.1f\n", eulerAngles.v[0], eulerAngles.v[1], eulerAngles.v[2]);
 		updateHmdPose(eulerAngles.v[0], eulerAngles.v[1], eulerAngles.v[2]);
@@ -598,8 +688,9 @@ void OpenVRMode::TearDown() const
 OpenVRMode::~OpenVRMode() 
 {
 	if (vrSystem != nullptr) {
-		VR_Shutdown();
+		VR_ShutdownInternal();
 		vrSystem = nullptr;
+		vrCompositor = nullptr;
 		leftEyeView.dispose();
 		rightEyeView.dispose();
 	}

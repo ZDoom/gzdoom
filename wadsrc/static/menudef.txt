@@ -335,7 +335,7 @@ DefaultOptionMenu
 	}
 }
 
-OptionMenu "OptionsMenu"
+OptionMenu "OptionsMenu" protected
 {
 	Title "$OPTMNU_TITLE"
 	Submenu "$OPTMNU_CONTROLS",			"CustomizeControls"
@@ -422,7 +422,7 @@ ListMenu "PlayerMenu"
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu "CustomizeControls"
+OptionMenu "CustomizeControls" protected
 {
 	Title "$CNTRLMNU_TITLE"
 	ScrollTop 2
@@ -536,7 +536,7 @@ OptionString "Cursors"
 	"-", "$OPTSTR_SYSTEMCURSOR"
 }
 
-OptionMenu "MouseOptions"
+OptionMenu "MouseOptions" protected
 {
 	Title "$MOUSEMNU_TITLE"
 	Option "$MOUSEMNU_ENABLEMOUSE",		"use_mouse", "YesNo"
@@ -566,7 +566,7 @@ OptionMenu "MouseOptions"
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu "JoystickOptionsDefaults"
+OptionMenu "JoystickOptionsDefaults" protected
 {
 	Title "$JOYMNU_OPTIONS"
 	Option "$JOYMNU_ENABLE", "use_joystick", "YesNo"
@@ -585,7 +585,7 @@ OptionMenu "JoystickOptionsDefaults"
 	// The rest will be filled in by joystick code if devices get connected or disconnected
 }
 
-OptionMenu "JoystickOptions"
+OptionMenu "JoystickOptions" protected
 {
 	Title "$JOYMNU_OPTIONS"
 }
@@ -606,7 +606,7 @@ OptionValue "Inversion"
 	1, "$OPTVAL_INVERTED"
 }
 
-OptionMenu "JoystickConfigMenu"
+OptionMenu "JoystickConfigMenu" protected
 {
 	Title "$JOY_CONFIG"
 	Class "JoystickConfigMenu"
@@ -706,7 +706,7 @@ OptionValue GPUSwitch
 }
 
 
-OptionMenu "TrueColorOptions"
+OptionMenu "TrueColorOptions" protected
 {
 	Title "$TCMNU_TITLE"
 	StaticText " "
@@ -716,7 +716,7 @@ OptionMenu "TrueColorOptions"
 	Option "$TCMNU_MIPMAP",					"r_mipmap", "OnOff"
 }
 
-OptionMenu "SWROptions"
+OptionMenu "SWROptions" protected
 {
 	Title "$DSPLYMNU_SWOPT"
 	Submenu "$DSPLYMNU_TCOPT",			"TrueColorOptions"
@@ -727,7 +727,7 @@ OptionMenu "SWROptions"
 	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
 }
 
-OptionMenu "VideoOptions"
+OptionMenu "VideoOptions" protected
 {
 	Title "$DSPLYMNU_TITLE"
 	
@@ -840,7 +840,7 @@ OptionValue ZDoomStrife
 	1.0, "$OPTVAL_STRIFE"
 }
 
-OptionMenu "HUDOptions"
+OptionMenu "HUDOptions" protected
 {
 	Title "$HUDMNU_TITLE"
 	Submenu "$HUDMNU_SCALEOPT",				"ScalingOptions"
@@ -864,7 +864,7 @@ OptionMenu "HUDOptions"
 	Option "$HUDMNU_HAZARDFLASHES",			"pf_hazard", "ZDoomStrife"
 }
 
-OptionMenu "ScalingOptions"
+OptionMenu "ScalingOptions" protected
 {
 	Title "$SCALEMNU_TITLE"
 	ScaleSlider "$HUDMNU_UISCALE",				"uiscale", 0.0, 8.0, 1.0, "$SCALEMNU_ADAPT"
@@ -925,7 +925,7 @@ OptionValue "AltHUDAmmoOrder"
 	1, "$OPTVAL_AMMOTEXTIMAGE"
 }
 
-OptionMenu "AltHUDOptions"
+OptionMenu "AltHUDOptions" protected
 {
 	Title "$ALTHUDMNU_TITLE"
 	//Indent 220
@@ -981,7 +981,7 @@ OptionValue dehopt
 	2,	"$OPTVAL_ONLYLASTONE"
 }
 
-OptionMenu "MiscOptions"
+OptionMenu "MiscOptions" protected
 {
 	Title "$MISCMNU_TITLE"
 	//Indent 220
@@ -1072,7 +1072,7 @@ OptionValue MapTriggers
 	2, "$OPTVAL_ON"
 }
 
-OptionMenu AutomapOptions
+OptionMenu AutomapOptions protected
 {
 	Title "$AUTOMAPMNU_TITLE"
 	Option "$AUTOMAPMNU_COLORSET",				"am_colorset", "MapColorTypes"
@@ -1105,7 +1105,7 @@ OptionMenu AutomapOptions
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu MapControlsMenu
+OptionMenu MapControlsMenu protected
 {
 	Title "$MAPCNTRLMNU_TITLE"
 	ScrollTop 2
@@ -1132,7 +1132,7 @@ OptionMenu MapControlsMenu
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu MapColorMenu
+OptionMenu MapColorMenu protected
 {
 	Title "$MAPCOLORMNU_TITLE"
 	SafeCommand "$MAPCOLORMNU_DEFAULTMAPCOLORS", 		"am_restorecolors"
@@ -1194,7 +1194,7 @@ OptionMenu MapColorMenu
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu ColorPickerMenu
+OptionMenu ColorPickerMenu protected
 {
 	Title "$MNU_COLORPICKER"
 	// This menu will be created by the calling code
@@ -1223,7 +1223,7 @@ OptionValue DevMessageLevels
 	4, "$OPTVAL_EVERYTHING"
 }
 
-OptionMenu MessageOptions
+OptionMenu MessageOptions protected
 {
 	Title 	"$MSGMNU_TITLE"
 	Option "$MSGMNU_SHOWMESSAGES",				"show_messages", "OnOff"
@@ -1252,7 +1252,7 @@ OptionMenu MessageOptions
 //
 //-------------------------------------------------------------------------------------------
 
-OptionMenu ScoreboardOptions
+OptionMenu ScoreboardOptions protected
 {
 	Title "$SCRBRDMNU_TITLE"
 	StaticText "$SCRBRDMNU_COOPERATIVE", 1
@@ -1307,7 +1307,7 @@ OptionValue  JumpCrouchFreeLook
 }
 
 
-OptionMenu GameplayOptions
+OptionMenu GameplayOptions protected
 {
 	Title 	"$GMPLYMNU_TITLE"
 	//Indent 222
@@ -1392,7 +1392,7 @@ OptionValue CompatModes
 	4, "$OPTVAL_ZDOOM2063"
 }
 
-OptionMenu "CompatibilityOptions"
+OptionMenu "CompatibilityOptions" protected
 {
 	Title "$CMPTMNU_TITLE"
 	Option "$CMPTMNU_MODE",							"compatmode", "CompatModes", "", 1
@@ -1583,7 +1583,7 @@ OptionString SoundBackendsOpenALOnly
 	"null",		"$OPTSTR_NOSOUND"
 }
 
-OptionMenu OpenALSoundItems
+OptionMenu OpenALSoundItems protected
 {
 	Title "$OPENALMNU_TITLE"
 	Option "$OPENALMNU_PLAYBACKDEVICE",		"snd_aldevice",		"ALDevices"
@@ -1597,7 +1597,7 @@ OptionValue MidiDevices
 	// filled in by the sound code
 }
 
-OptionMenu SoundOptions
+OptionMenu SoundOptions protected
 {
 	Title "$SNDMNU_TITLE"
 	Slider "$SNDMNU_SFXVOLUME",			"snd_sfxvolume", 0, 1, 0.05, 2
@@ -1646,7 +1646,7 @@ OptionValue OplCores
 	3, "$OPTVAL_NUKEDOPL3"
 }
 
-OptionMenu AdvSoundOptions
+OptionMenu AdvSoundOptions protected
 {
 	Title "$ADVSNDMNU_TITLE"
 	Option "$ADVSNDMNU_SAMPLERATE",			"snd_samplerate", "SampleRates"
@@ -1688,22 +1688,22 @@ OptionMenu AdvSoundOptions
 	Option "$ADVSNDMNU_REVERB", 			"wildmidi_reverb", "OnOff"
 }
 
-OptionMenu GusConfigMenu
+OptionMenu GusConfigMenu protected
 {
 	Title "$ADVSNDMNU_SELCONFIG"
 }
 
-OptionMenu WildMidiConfigMenu
+OptionMenu WildMidiConfigMenu protected
 {
 	Title "$ADVSNDMNU_SELCONFIG"
 }
 
-OptionMenu TimidityExeMenu
+OptionMenu TimidityExeMenu protected
 {
 	Title "$ADVSNDMNU_SELCONFIG"
 }
 
-OptionMenu FluidPatchsetMenu
+OptionMenu FluidPatchsetMenu protected
 {
 	Title "$ADVSNDMNU_SELCONFIG"
 }
@@ -1742,7 +1742,7 @@ OptionValue ModVolumeRamps
 }
 
 
-OptionMenu ModReplayerOptions
+OptionMenu ModReplayerOptions protected
 {
 	Title "$MODMNU_TITLE"
 	Slider "$MODMNU_MASTERVOLUME",			"mod_dumb_mastervolume", 1, 16, 0.5, 1
@@ -1792,7 +1792,7 @@ OptionValue "GLCOCOA"
 	1, "$OPTVAL_GL"
 }
 
-OptionMenu RendererMenu
+OptionMenu RendererMenu protected
 {
 	Title "$RNDMNU_TITLE"
 	Option "$RNDMNU_RENDERER",	"vid_renderer", "PolyDoom"
@@ -1848,7 +1848,7 @@ OptionValue RatiosTFT
 	 -1, "$OPTVAL_ALL"
 }
 
-OptionMenu VideoModeMenu
+OptionMenu VideoModeMenu protected
 {
 	Title "$VIDMNU_TITLE"
 	
@@ -1883,7 +1883,7 @@ OptionMenu VideoModeMenu
  *
  *=======================================*/
 
-OptionMenu NetworkOptions
+OptionMenu NetworkOptions protected
 {
 	Title "$NETMNU_TITLE"
 	StaticText "$NETMNU_LOCALOPTIONS", 1
@@ -2108,7 +2108,7 @@ OptionValue VRMode
 	7, "$OPTVAL_QUADBUFFERED"
 }
 
-OptionMenu "GLTextureGLOptions"
+OptionMenu "GLTextureGLOptions" protected
 {
 	Title "$GLTEXMNU_TITLE"
 	Option "$GLTEXMNU_TEXENABLED",		gl_texture,						"YesNo"
@@ -2125,7 +2125,7 @@ OptionMenu "GLTextureGLOptions"
 	Option "$GLTEXMNU_SORTDRAWLIST", 	gl_sort_textures,				"YesNo"
 }
 
-OptionMenu "GLLightOptions"
+OptionMenu "GLLightOptions" protected
 {
 	Title "$GLLIGHTMNU_TITLE"
 	Option "$TCMNU_DYNLIGHTS",				"r_dynlights", "OnOff"
@@ -2137,7 +2137,7 @@ OptionMenu "GLLightOptions"
 	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",	gl_light_shadowmap,				"YesNo"
 }
 
-OptionMenu "OpenGLOptions"
+OptionMenu "OpenGLOptions" protected
 {
 	Title "$GLMNU_TITLE"
 	Submenu "$GLMNU_TEXOPT", 			"GLTextureGLOptions"

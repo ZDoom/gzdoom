@@ -124,6 +124,7 @@ public:
 	FName mMenuName;
 	FString mNetgameMessage;
 	PClass *mClass = nullptr;
+	bool mProtected = false;
 
 	virtual size_t PropagateMark() { return 0;  }
 };

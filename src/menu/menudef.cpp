@@ -521,9 +521,9 @@ static bool ReplaceMenu(FScanner &sc, DMenuDescriptor *desc)
 	DMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
 	if (pOld != nullptr && *pOld != nullptr) 
 	{
-		if (desc->mMenuName == NAME_Optionsmenu)
+		if ((*pOld)->mProtected)
 		{
-			sc.ScriptMessage("Cannot replace the main options menu!");
+			sc.ScriptMessage("Cannot replace protected menu %s!", desc->mMenuName.GetChars());
 			return true;
 		}
 
@@ -881,6 +881,7 @@ static void ParseOptionMenu(FScanner &sc)
 	desc->mScrollTop = DefaultOptionMenuSettings->mScrollTop;
 	desc->mIndent =  DefaultOptionMenuSettings->mIndent;
 	desc->mDontDim =  DefaultOptionMenuSettings->mDontDim;
+	desc->mProtected = sc.CheckString("protected");
 
 	ParseOptionMenuBody(sc, desc);
 	ReplaceMenu(sc, desc);

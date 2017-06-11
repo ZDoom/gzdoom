@@ -537,6 +537,7 @@ static bool FindMatchingItem(DMenuItemBase *desc)
 	if (grp == 5) return true;	// static texts always match
 
 	FName name = desc->mAction;
+
 	if (grp == 1)
 	{
 		// Check for presence of menu
@@ -545,9 +546,17 @@ static bool FindMatchingItem(DMenuItemBase *desc)
 	}
 	else if (grp == 4)
 	{
+		static const FName CVarBlacklist[] = {
+			NAME_snd_waterlp, NAME_snd_output, NAME_snd_output_format, NAME_snd_speakermode, NAME_snd_resampler, NAME_AlwaysRun };
+
 		// Check for presence of CVAR and blacklist
-		auto cv = GetCVar(nullptr, name.GetChars());
+		auto cv = FindCVar(name.GetChars(), nullptr);
 		if (cv == nullptr) return true;
+
+		for (auto bname : CVarBlacklist)
+		{
+			if (name == bname) return true;
+		}
 	}
 
 	MenuDescriptorList::Iterator it(MenuDescriptors);
@@ -585,15 +594,16 @@ static bool ReplaceMenu(FScanner &sc, DMenuDescriptor *desc)
 			}
 			if (desc->mItems.Size() > 0)
 			{
-				auto sep = CreateOptionMenuItemStaticText("---------------", CR_YELLOW);
+				auto sep = CreateOptionMenuItemStaticText(" ");
+				(*pOld)->mItems.Push(sep);
+				auto sep = CreateOptionMenuItemStaticText("---------------", 1);
 				(*pOld)->mItems.Push(sep);
 				for (auto it : desc->mItems)
 				{
 					(*pOld)->mItems.Push(it);
 				}
 				desc->mItems.Clear();
-
-				sc.ScriptMessage("Merged %d items into %s", desc->mItems.Size(), desc->mMenuName.GetChars());
+				//sc.ScriptMessage("Merged %d items into %s", desc->mItems.Size(), desc->mMenuName.GetChars());
 			}
 			return true;
 		}

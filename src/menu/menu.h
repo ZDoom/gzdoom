@@ -109,6 +109,7 @@ extern FSavegameManager savegameManager;
 class DMenu;
 extern DMenu *CurrentMenu;
 extern int MenuTime;
+class DMenuItemBase;
 
 //=============================================================================
 //
@@ -125,18 +126,17 @@ public:
 	FString mNetgameMessage;
 	PClass *mClass = nullptr;
 	bool mProtected = false;
+	TArray<DMenuItemBase *> mItems;
 
 	virtual size_t PropagateMark() { return 0;  }
 };
 
-class DMenuItemBase;
 
 class DListMenuDescriptor : public DMenuDescriptor
 {
 	DECLARE_CLASS(DListMenuDescriptor, DMenuDescriptor)
 
 public:
-	TArray<DMenuItemBase *> mItems;
 	int mSelectedItem;
 	double mSelectOfsX;
 	double mSelectOfsY;
@@ -187,7 +187,6 @@ class DOptionMenuDescriptor : public DMenuDescriptor
 	DECLARE_CLASS(DOptionMenuDescriptor, DMenuDescriptor)
 
 public:
-	TArray<DMenuItemBase *> mItems;
 	FString mTitle;
 	int mSelectedItem;
 	int mDrawTop;
@@ -350,7 +349,7 @@ void M_MarkMenus();
 
 
 struct IJoystickConfig;
-DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v);
+DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, int v = -1);
 DMenuItemBase * CreateOptionMenuItemSubmenu(const char *label, FName cmd, int center);
 DMenuItemBase * CreateOptionMenuItemControl(const char *label, FName cmd, FKeyBindings *bindings);
 DMenuItemBase * CreateOptionMenuItemJoyConfigMenu(const char *label, IJoystickConfig *joy);

@@ -1121,7 +1121,7 @@ DEFINE_FIELD(FOptionMenuSettings, mLinespacing)
 
 struct IJoystickConfig;
 // These functions are used by dynamic menu creation.
-DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, bool v)
+DMenuItemBase * CreateOptionMenuItemStaticText(const char *name, int v)
 {
 	auto c = PClass::FindClass("OptionMenuItemStaticText");
 	auto p = c->CreateNew();

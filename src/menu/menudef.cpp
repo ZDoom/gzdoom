@@ -54,6 +54,7 @@
 #include "vm.h"
 #include "types.h"
 #include "gameconfigfile.h"
+#include "m_argv.h"
 
 
 
@@ -520,6 +521,12 @@ static bool ReplaceMenu(FScanner &sc, DMenuDescriptor *desc)
 	DMenuDescriptor **pOld = MenuDescriptors.CheckKey(desc->mMenuName);
 	if (pOld != nullptr && *pOld != nullptr) 
 	{
+		if (desc->mMenuName == NAME_Optionsmenu)
+		{
+			sc.ScriptMessage("Cannot replace the main options menu!");
+			return true;
+		}
+
 		if (!CheckCompatible(desc, *pOld))
 		{
 			sc.ScriptMessage("Tried to replace menu '%s' with a menu of different type", desc->mMenuName.GetChars());
@@ -980,6 +987,7 @@ void M_ParseMenuDefs()
 				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
+		if (Args->CheckParm("-nocustommenu")) break;
 	}
 	DefaultListMenuClass = DefaultListMenuSettings->mClass;
 	DefaultListMenuSettings = nullptr;

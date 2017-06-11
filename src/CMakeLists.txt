@@ -482,6 +482,9 @@ if (GZDOOM_USE_OPENVR)
 		# Incorporate the whole openvr API into zdoom, using a few rules lifted from the OpenVR CMakeLists.txt files
 		# This branch avoids the need to ship openvr_api.dll
 		add_definitions( -DVR_API_PUBLIC )
+		if(WIN32 AND X64)
+			add_definitions( -DWIN64 )
+		endif()
 		include_directories(${OPENVR_SDK_PATH}/src ${OPENVR_SDK_PATH}/src/vrcommon)
 		file(GLOB OPENVR_SOURCES "${OPENVR_SDK_PATH}/src/*.cpp" "${OPENVR_SDK_PATH}/src/vrcommon/*.cpp")
 	else() # link to shared OpenVR library

@@ -287,14 +287,14 @@ bool OpenVREyePose::submitFrame() const
 	if (eyeTexture->handle == nullptr) {
 		GLuint handle;
 		glGenTextures(1, &handle);
-		eyeTexture->handle = (void *)handle;
+		eyeTexture->handle = (void *)(std::ptrdiff_t)handle;
 		glBindTexture(GL_TEXTURE_2D, handle);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_BASE_LEVEL, 0);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_LEVEL, 0);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, GLRenderer->mSceneViewport.width,
 			GLRenderer->mSceneViewport.height, 0, GL_RGB, GL_UNSIGNED_BYTE, nullptr);
 	}
-	glBindTexture(GL_TEXTURE_2D, (GLuint)eyeTexture->handle);
+	glBindTexture(GL_TEXTURE_2D, (GLuint)(std::ptrdiff_t)eyeTexture->handle);
 	glCopyTexImage2D(GL_TEXTURE_2D, 0, GL_RGB8, 0, 0,
 		GLRenderer->mSceneViewport.width,
 		GLRenderer->mSceneViewport.height, 0);

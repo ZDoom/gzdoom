@@ -937,4 +937,10 @@ xx(OptionMenuFieldBase)
 xx(OptionMenuItemColorPicker)
 xx(OptionMenuItemStaticText)
 xx(OptionMenuItemStaticTextSwitchable)
-xx(mAction)
+
+// blacklisted former CVARs
+xx(snd_waterlp)
+xx(snd_output)
+xx(snd_output_format)
+xx(snd_speakermode)
+xx(snd_resampler)

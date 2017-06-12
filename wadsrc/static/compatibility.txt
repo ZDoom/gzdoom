@@ -348,6 +348,32 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	rebuildnodes
 }
 
+3D1E36E50F5A8D289E15433941605224 // Master Levels, catwalk.wad
+{
+	// make it impossible to open door to 1-way bridge before getting red key
+	setsectortag 35 0 // existing tag must be cleared before new one can be set
+	setsectortag 35 15
+	setactivation 605 1 // SPAC_PCross
+	setactivation 606 1
+	setactivation 607 1
+	setactivation 608 1
+	setlinespecial 605 Door_Open 15 64 0 0 0 // fast, stay open
+	setlinespecial 606 Door_Open 15 64 0 0 0
+	setlinespecial 607 Door_Open 15 64 0 0 0
+	setlinespecial 608 Door_Open 15 64 0 0 0
+}
+
+3B9CAA02952F405269353FAAD8F8EC33 // Master Levels, nessus.wad
+{
+	// move secret sector from too-thin doorframe to BFG closet
+	setsectorspecial 211 0
+	setsectorspecial 212 1024
+	// lower floor a bit so secret sector can be entered fully
+	setsectoroffset 212 floor -16
+	// make secret door stay open so you can't get locked in closet
+	setlinespecial 1008 Door_Open 0 64 0 0 0
+}
+
 1891E029994B023910CFE0B3209C3CDB // Ultimate Simplicity, map07
 {
 	// It is possible to get stuck on skill 0 or 1 when no shots have been fired

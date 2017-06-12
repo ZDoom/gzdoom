@@ -30,7 +30,6 @@
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
 
-CVAR(Bool, r_debug_cull, 0, 0)
 EXTERN_CVAR(Int, r_portal_recursions)
 
 /////////////////////////////////////////////////////////////////////////////
@@ -92,19 +91,52 @@ void RenderPolyScene::ClearBuffers()
 
 void RenderPolyScene::RenderSectors()
 {
-	if (r_debug_cull)
+	int count = (int)Cull.PvsSectors.size();
+	auto subsectors = Cull.PvsSectors.data();
+
+	int nextCeilingZChange = 0;
+	int nextFloorZChange = 0;
+	uint32_t ceilingSubsectorDepth = 0;
+	uint32_t floorSubsectorDepth = 0;
+
+	for (int i = 0; i < count; i++)
 	{
-		for (auto it = Cull.PvsSectors.rbegin(); it != Cull.PvsSectors.rend(); ++it)
-			RenderSubsector(*it);
-	}
-	else
-	{
-		for (auto it = Cull.PvsSectors.begin(); it != Cull.PvsSectors.end(); ++it)
-			RenderSubsector(*it);
+		// The software renderer only updates the clipping if the sector height changes.
+		// Find the subsector depths for when that happens.
+		if (i == nextCeilingZChange)
+		{
+			double z = subsectors[i]->sector->ceilingplane.Zat0();
+			nextCeilingZChange++;
+			while (nextCeilingZChange < count)
+			{
+				double nextZ = subsectors[nextCeilingZChange]->sector->ceilingplane.Zat0();
+				if (nextZ > z)
+					break;
+				z = nextZ;
+				nextCeilingZChange++;
+			}
+			ceilingSubsectorDepth = NextSubsectorDepth + nextCeilingZChange - i - 1;
+		}
+		if (i == nextFloorZChange)
+		{
+			double z = subsectors[i]->sector->floorplane.Zat0();
+			nextFloorZChange++;
+			while (nextFloorZChange < count)
+			{
+				double nextZ = subsectors[nextFloorZChange]->sector->floorplane.Zat0();
+				if (nextZ < z)
+					break;
+				z = nextZ;
+				nextFloorZChange++;
+			}
+			floorSubsectorDepth = NextSubsectorDepth + nextFloorZChange - i - 1;
+		}
+
+		RenderSubsector(subsectors[i], ceilingSubsectorDepth, floorSubsectorDepth);
 	}
 }
 
-void RenderPolyScene::RenderSubsector(subsector_t *sub)
+void RenderPolyScene::RenderSubsector(subsector_t *sub, uint32_t ceilingSubsectorDepth, uint32_t floorSubsectorDepth)
 {
 	sector_t *frontsector = sub->sector;
 	frontsector->MoreFlags |= SECF_DRAWN;
@@ -147,7 +179,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub)
 
 	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, subsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, ceilingSubsectorDepth, floorSubsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 
 	if (mainBSP)

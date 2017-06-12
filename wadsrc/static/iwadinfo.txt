@@ -331,6 +331,17 @@ IWad
 
 IWad
 {
+	Name = "Rise Of The Wool Ball"
+	Autoname = "woolball.rotwb"
+	Game = "Doom"
+	Config = "WoolBall"
+	Mapinfo = "mapinfo/doom2.txt"
+	MustContain = "E3M6", "B3DED", "WORLDMAP", "NUCLSKYM", "PLANETLE", "MEOWZEKI", "ZEKIINTR", "NOWAYBAC"
+	BannerColors = "32 54 43", "c6 dc d1"
+}
+
+IWad
+{
 	Name = "DOOM Shareware"
 	Game = "Doom"
 	Config = "Doom"
@@ -375,6 +386,16 @@ IWad
 	MustContain = "MAP01", "DMENUPIC", "M_ACPT", "M_CAN", "M_EXITO", "M_CHG"
 	BannerColors = "a8 00 00", "a8 a8 a8"
 	Load = "nerve.wad"
+}
+
+IWad
+{
+	Name = "WolfenDoom: Blade of Agony"
+	Game = "Doom"
+	BannerColors = "E30000", "E3E3E3"
+	Mapinfo = "mapinfo/doom2.txt"
+	MustContain = "BOALIB", "C1M1", "Episode3", "MSPUB0"
+	Config = "BoA"
 }
 
 // Doom 2 must be last to be checked becaude MAP01 is its only requirement
@@ -432,4 +453,6 @@ Names
 	"hacx2.wad"
 	"square1.pk3"
 	"delaweare.wad"
+	"rotwb.wad"
+	"boa_c2.pk3"
 }

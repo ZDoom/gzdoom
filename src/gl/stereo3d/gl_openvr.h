@@ -90,6 +90,7 @@ protected:
 	uint32_t vrToken;
 
 	mutable int cachedScreenBlocks;
+	mutable double hmdYaw; // cached latest value in radians
 
 private:
 	typedef Stereo3DMode super;

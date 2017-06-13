@@ -57,6 +57,13 @@ public:
 		return *this;
 	}
 
+	LSVec3& operator+=(const LSVec3& rhs) {
+		LSVec3& lhs = *this;
+		for (int i = 0; i < 4; ++i)
+			lhs[i] += rhs[i];
+		return *this;
+	}
+
 	const FLOATTYPE& operator[](int i) const {return mVec[i];}
 	FLOATTYPE& operator[](int i) { return mVec[i]; }
 

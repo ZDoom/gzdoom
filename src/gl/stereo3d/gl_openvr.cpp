@@ -129,8 +129,8 @@ static const bool doLateScheduledRotationTracking = true;
 static const bool doStereoscopicViewpointOffset = true;
 static const bool doRenderToDesktop = true; // mirroring to the desktop is very helpful for debugging
 static const bool doRenderToHmd = true;
-static const bool doTrackHmdVerticalPosition = false; // todo:
-static const bool doTrackHmdHorizontalPostion = false; // todo:
+static const bool doTrackHmdVerticalPosition = true;
+static const bool doTrackHmdHorizontalPosition = true;
 static const bool doTrackVrControllerPosition = false; // todo:
 
 namespace s3d 
@@ -299,6 +299,44 @@ void OpenVREyePose::GetViewShift(FLOATTYPE yaw, FLOATTYPE outViewShift[3]) const
 	doomInOpenVR.rotate(deltaYawDegrees, 0, 0, 1);
 
 	LSVec3 doom_EyeOffset = LSMatrix44(doomInOpenVR) * openvr_EyeOffset;
+
+	if (doTrackHmdVerticalPosition) {
+		// In OpenVR, the real world floor level is at y==0
+		// In Doom, the virtual player foot level is viewheight below the current viewpoint (on the Z axis)
+		// We want to align those two heights here
+		const player_t & player = players[consoleplayer];
+		double vh = player.viewheight; // Doom thinks this is where you are
+		double hh = openvr_X_hmd[1][3] * VERTICAL_DOOM_UNITS_PER_METER; // HMD is actually here
+		doom_EyeOffset[2] += hh - vh;
+		// TODO: optionally allow player to jump and crouch by actually jumping and crouching
+	}
+
+	if (doTrackHmdHorizontalPosition) {
+		// shift viewpoint when hmd position shifts
+		static bool is_initial_origin_set = false;
+		static LSVec3 openvr_origin(0, 0, 0);
+		if (! is_initial_origin_set) {
+			// initialize origin to first noted HMD location
+			// TODO: implement recentering based on a CCMD
+			openvr_origin = openvr_HmdPos;
+			is_initial_origin_set = true;
+		}
+		LSVec3 openvr_dpos = openvr_HmdPos - openvr_origin;
+		{
+			// Suddenly recenter if deviation gets too large
+			const double max_shift = 0.70; // meters
+			if (std::abs(openvr_dpos[0]) + std::abs(openvr_dpos[2]) > max_shift) {
+				openvr_origin += 0.75 * openvr_dpos; // recenter MOST of the way to the new position
+				openvr_dpos = openvr_HmdPos - openvr_origin;
+			}
+		}
+		LSVec3 doom_dpos = LSMatrix44(doomInOpenVR) * openvr_dpos;
+		doom_EyeOffset[0] += doom_dpos[0];
+		doom_EyeOffset[1] += doom_dpos[1];
+
+		// TODO: update player playsim position based on HMD position changes
+	}
+
 	outViewShift[0] = doom_EyeOffset[0];
 	outViewShift[1] = doom_EyeOffset[1];
 	outViewShift[2] = doom_EyeOffset[2];
@@ -604,7 +642,7 @@ void OpenVRMode::updateHmdPose(
 	double hmdPitchRadians, 
 	double hmdRollRadians) const 
 {
-	double hmdyaw = hmdYawRadians;
+	hmdYaw = hmdYawRadians;
 	double hmdpitch = hmdPitchRadians;
 	double hmdroll = hmdRollRadians;
 
@@ -614,12 +652,12 @@ void OpenVRMode::updateHmdPose(
 		static double previousYaw = 0;
 		static bool havePreviousYaw = false;
 		if (!havePreviousYaw) {
-			previousYaw = hmdyaw;
+			previousYaw = hmdYaw;
 			havePreviousYaw = true;
 		}
-		dYaw = hmdyaw - previousYaw;
+		dYaw = hmdYaw - previousYaw;
 		G_AddViewAngle(mAngleFromRadians(-dYaw));
-		previousYaw = hmdyaw;
+		previousYaw = hmdYaw;
 	}
 
 	/* */
@@ -640,9 +678,38 @@ void OpenVRMode::updateHmdPose(
 		if (doTrackHmdPitch)
 			GLRenderer->mAngles.Pitch = RAD2DEG(-hmdpitch);
 		if (doTrackHmdYaw) {
-			// TODO: this is not working, especially in menu GS_TITLESCREEN mode
-			GLRenderer->mAngles.Yaw += RAD2DEG(dYaw); // "plus" is the correct direction
-			// Printf("In updateHmdPose: %.1f\n", r_viewpoint.Angles.Yaw.Degrees);
+			static double yawOffset = 0;
+
+			// Late scheduled update of yaw angle reduces motion sickness
+			//  * by lowering latency of view update after head motion
+			//  * by ignoring lag and interpolation of the game view angle
+			// Mostly rely on HMD to provide yaw angle, unless the discrepency gets large.
+			// I'm not sure how to reason about which angle changes are from the HMD and
+			// which are from the controllers. So here I'm assuming every discrepancy larger
+			// than some cutoff comes from elsewhere. This is how we acheive rock solid
+			// head tracking, at the expense of jerky controller turning.
+			double hmdViewAngle = RAD2DEG(hmdYaw);
+			double doomViewAngle = r_viewpoint.Angles.Yaw.Degrees;
+			double currentOffset = doomViewAngle - hmdViewAngle;
+			Printf("%.1f\n", currentOffset);
+			if ((gamestate == GS_LEVEL)
+				&& (menuactive == MENU_Off))
+			{
+				double discrepancy = yawOffset - currentOffset;
+				while (discrepancy > 180.0) discrepancy -= 360.0;
+				while (discrepancy < -180.0) discrepancy += 360.0;
+				discrepancy = std::abs(discrepancy);
+				if (discrepancy > 5.0) 
+				{
+					yawOffset = currentOffset;
+				}
+			}
+			double viewYaw = hmdViewAngle + yawOffset;
+			while (viewYaw <= -180.0) 
+				viewYaw += 360.0;
+			while (viewYaw > 180.0) 
+				viewYaw -= 360.0;
+			r_viewpoint.Angles.Yaw = viewYaw;
 		}
 	}
 }

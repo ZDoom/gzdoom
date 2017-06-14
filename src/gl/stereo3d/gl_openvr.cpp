@@ -691,7 +691,6 @@ void OpenVRMode::updateHmdPose(
 			double hmdViewAngle = RAD2DEG(hmdYaw);
 			double doomViewAngle = r_viewpoint.Angles.Yaw.Degrees;
 			double currentOffset = doomViewAngle - hmdViewAngle;
-			Printf("%.1f\n", currentOffset);
 			if ((gamestate == GS_LEVEL)
 				&& (menuactive == MENU_Off))
 			{

@@ -470,14 +470,6 @@ void CheckCompatibility(MapData *map)
 		ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
 		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
 	}
-	else if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATPOLY1) && Wads.CheckLumpName(map->lumpnum, "MAP36"))
-	{
-		ii_compatflags = COMPATF_POLYOBJ;
-	}
-	else if (Wads.GetLumpFile(map->lumpnum) == 2 && (gameinfo.flags & GI_COMPATPOLY2) && Wads.CheckLumpName(map->lumpnum, "MAP47"))
-	{
-		ii_compatflags = COMPATF_POLYOBJ;
-	}
 
 	map->GetChecksum(md5.Bytes);
 

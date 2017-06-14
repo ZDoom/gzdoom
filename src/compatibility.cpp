@@ -456,7 +456,11 @@ void CheckCompatibility(MapData *map)
 {
 	FMD5Holder md5;
 	FCompatValues *flags;
-	bool onlyparams = true;
+
+	ii_compatflags = 0;
+	ii_compatflags2 = 0;
+	ib_compatflags = 0;
+	ii_compatparams = -1;
 
 	// When playing Doom IWAD levels force COMPAT_SHORTTEX and COMPATF_LIGHT.
 	// I'm not sure if the IWAD maps actually need COMPATF_LIGHT but it certainly does not hurt.
@@ -465,27 +469,14 @@ void CheckCompatibility(MapData *map)
 	{
 		ii_compatflags = COMPATF_SHORTTEX|COMPATF_LIGHT;
 		if (gameinfo.flags & GI_COMPATSTAIRS) ii_compatflags |= COMPATF_STAIRINDEX;
-		ii_compatflags2 = 0;
-		ib_compatflags = 0;
-		ii_compatparams = -1;
 	}
 	else if (Wads.GetLumpFile(map->lumpnum) == 1 && (gameinfo.flags & GI_COMPATPOLY1) && Wads.CheckLumpName(map->lumpnum, "MAP36"))
 	{
 		ii_compatflags = COMPATF_POLYOBJ;
-		ii_compatflags2 = 0;
-		ib_compatflags = 0;
-		ii_compatparams = -1;
 	}
 	else if (Wads.GetLumpFile(map->lumpnum) == 2 && (gameinfo.flags & GI_COMPATPOLY2) && Wads.CheckLumpName(map->lumpnum, "MAP47"))
 	{
 		ii_compatflags = COMPATF_POLYOBJ;
-		ii_compatflags2 = 0;
-		ib_compatflags = 0;
-		ii_compatparams = -1;
-	}
-	else
-	{
-		onlyparams = false;
 	}
 
 	map->GetChecksum(md5.Bytes);
@@ -512,24 +503,12 @@ void CheckCompatibility(MapData *map)
 
 	if (flags != NULL)
 	{
-		if (!onlyparams)
-		{
-			ii_compatflags = flags->CompatFlags[SLOT_COMPAT];
-			ii_compatflags2 = flags->CompatFlags[SLOT_COMPAT2];
-			ib_compatflags = flags->CompatFlags[SLOT_BCOMPAT];
-		}
+		ii_compatflags |= flags->CompatFlags[SLOT_COMPAT];
+		ii_compatflags2 |= flags->CompatFlags[SLOT_COMPAT2];
+		ib_compatflags |= flags->CompatFlags[SLOT_BCOMPAT];
 		ii_compatparams = flags->ExtCommandIndex;
 	}
-	else
-	{
-		if (!onlyparams)
-		{
-			ii_compatflags = 0;
-			ii_compatflags2 = 0;
-			ib_compatflags = 0;
-		}
-		ii_compatparams = -1;
-	}
+
 	// Reset i_compatflags
 	compatflags.Callback();
 	compatflags2.Callback();

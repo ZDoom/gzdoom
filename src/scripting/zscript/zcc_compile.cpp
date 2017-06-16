@@ -2555,7 +2555,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 							else
 							{
 								auto cnst = static_cast<FxConstant *>(x);
-								hasdefault = true;
 								switch (type->GetRegType())
 								{
 								case REGT_INT:
@@ -2583,6 +2582,8 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 									break;
 								}
 							}
+
+							hasdefault = true;
 						}
 						if (x != nullptr) delete x;
 					}

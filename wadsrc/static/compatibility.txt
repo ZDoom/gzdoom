@@ -420,9 +420,47 @@ B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
 	DisablePushWindowCheck
 }
 
+DFC18B92BF3E8142B8684ECD8BD2EF06 // TNT: Evilution map15
+{
+	// raise up sector with its counterpart so 100% kills becomes possible
+	setsectortag 330 11
+}
+
+2C4A3356C5EB3526D2C72A4AA4B18A36 // TNT: Evilution map29
+{
+	// remove mancubus who always gets stuck in teleport tunnel, preventing
+	// 100% kills on HMP
+	setthingflags 405 0
+}
+
 A53AE580A4AF2B5D0B0893F86914781E // TNT: Evilution map31
 {
 	setthingflags 470 2016
+}
+
+D99AD22FF21A41B4EECDB3A7C803D75E // TNT: Evilution map32
+{
+	// door can close permanently; make switch that opens it repeatable
+	setlineflags 872 0x200
+	// switch should only open way to red key, don't lower bars yet,
+	// instead make line just before red key open bars
+	setsectortag 197 0
+	setsectortag 197 8
+	setlinespecial 1279 Floor_LowerToLowest 8 32 0 0 0
+	setactivation 1240 1 // SPAC_PCross
+	setlinespecial 1240 Floor_LowerToLowest 38 32 0 0 0
+}
+
+279BB50468FE9F5B36C6D821E4902369 // Plutonia Experiment map30
+{
+	// flag items in deathmatch-only area correctly so that 100% items
+	// are possible in solo
+	setthingflags 250 17
+	setthingflags 251 17
+	setthingflags 252 17
+	setthingflags 253 17
+	setthingflags 254 17
+	setthingflags 206 17
 }
 
 4CB7AAC5C43CF32BDF05FD36481C1D9F // Plutonia: Revisited map27

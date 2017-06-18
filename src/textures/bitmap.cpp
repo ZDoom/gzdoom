@@ -444,10 +444,17 @@ void FBitmap::CopyPixelData(int originx, int originy, const uint8_t * patch, int
 		PalEntry penew[256];
 
 		memset(penew, 0, sizeof(penew));
-		if (inf && inf->blend)
+		if (inf)
 		{
-			iCopyColors<cPalEntry, cBGRA, bCopy>((uint8_t*)penew, (const uint8_t*)palette, 256, 4, inf, 0, 0, 0);
-			palette = penew;
+			if (inf->blend)
+			{
+				iCopyColors<cPalEntry, cBGRA, bCopy>((uint8_t*)penew, (const uint8_t*)palette, 256, 4, inf, 0, 0, 0);
+				palette = penew;
+			}
+			else if (inf->palette)
+			{
+				palette = inf->palette;
+			}
 		}
 
 		copypalettedfuncs[inf==NULL? OP_COPY : inf->op](buffer, patch, srcwidth, srcheight, Pitch, 

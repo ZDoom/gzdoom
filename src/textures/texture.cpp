@@ -811,10 +811,9 @@ int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyI
 	return 0;
 }
 
-int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf)
+int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf)
 {
-	PalEntry *palette = remap->Palette;
-	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, palette, inf);
+	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, remap, inf);
 	return 0;
 }
 

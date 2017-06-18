@@ -349,6 +349,7 @@ struct FCopyInfo
 	blend_t blendcolor[4];
 	blend_t alpha;
 	blend_t invalpha;
+	PalEntry *palette;
 };
 
 struct bOverwrite

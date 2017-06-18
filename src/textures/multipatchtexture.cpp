@@ -620,7 +620,7 @@ int FMultiPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rota
 
 		if (Parts[i].Translation != NULL)
 		{ // Using a translation forces downconversion to the base palette
-			ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, Parts[i].Translation, &info);
+			ret = Parts[i].Texture->CopyTrueColorTranslated(bmp, x+Parts[i].OriginX, y+Parts[i].OriginY, Parts[i].Rotate, Parts[i].Translation->Palette, &info);
 		}
 		else
 		{

@@ -242,7 +242,7 @@ public:
 	virtual bool Mipmapped() { return true; }
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
-	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, FRemapTable *remap, FCopyInfo *inf = NULL);
+	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return SourceLump; }
 	virtual FTexture *GetRedirect(bool wantwarped);

@@ -1008,7 +1008,6 @@ set (PCH_SOURCES
 	gl/textures/gl_texture.cpp
 	gl/textures/gl_material.cpp
 	gl/textures/gl_hirestex.cpp
-	gl/textures/gl_bitmap.cpp
 	gl/textures/gl_samplers.cpp
 	gl/textures/gl_translate.cpp
 	gl/textures/gl_hqresize.cpp

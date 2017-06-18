@@ -72,7 +72,6 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_bitmap.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
 

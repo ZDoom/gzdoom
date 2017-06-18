@@ -1058,7 +1058,7 @@ class BaseStatusBar native ui
 		{
 			for(int j = 0; j < 2; j++)
 			{
-				if (j ^ !!(parms.flags & DI_DRAWCURSORFIRST)) 
+				if (j ^ !!(flags & DI_DRAWCURSORFIRST))
 				{
 					if (item == CPlayer.mo.InvSel)
 					{
@@ -1073,7 +1073,7 @@ class BaseStatusBar native ui
 				}
 			}
 			
-			if (parms.amountfont != null && (item.Amount > 1 || (parms.flags & DI_ALWAYSSHOWCOUNTERS)))
+			if (parms.amountfont != null && (item.Amount > 1 || (flags & DI_ALWAYSSHOWCOUNTERS)))
 			{
 				DrawString(parms.amountfont, FormatNumber(item.Amount, 0, 5), textpos + (boxsize.X * i, 0), flags | DI_TEXT_ALIGN_RIGHT, parms.cr, parms.itemalpha);
 			}

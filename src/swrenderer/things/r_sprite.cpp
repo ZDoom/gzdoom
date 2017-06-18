@@ -255,7 +255,7 @@ namespace swrenderer
 			while (node != nullptr)
 			{
 				ADynamicLight *light = node->lightsource;
-				if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->flags4&MF4_DONTLIGHTSELF) || light->target != thing) && !(light->flags4&MF4_DONTLIGHTACTORS))
+				if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != thing) && !(light->lightflags&LF_DONTLIGHTACTORS))
 				{
 					float lx = (float)(light->X() - thing->X());
 					float ly = (float)(light->Y() - thing->Y());

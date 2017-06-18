@@ -488,12 +488,12 @@ static FFlagDef PlayerPawnFlagDefs[] =
 static FFlagDef DynLightFlagDefs[] =
 {
 	// PlayerPawn flags
-	DEFINE_FLAG(MF4, SUBTRACTIVE, ADynamicLight, flags4),
-	DEFINE_FLAG(MF4, ADDITIVE, ADynamicLight, flags4),
-	DEFINE_FLAG(MF4, DONTLIGHTSELF, ADynamicLight, flags4),
-	DEFINE_FLAG(MF4, ATTENUATE, ADynamicLight, flags4),
-	DEFINE_FLAG(MF4, NOSHADOWMAP, ADynamicLight, flags4),
-	DEFINE_FLAG(MF4, DONTLIGHTACTORS, ADynamicLight, flags4),
+	DEFINE_FLAG(LF, SUBTRACTIVE, ADynamicLight, lightflags),
+	DEFINE_FLAG(LF, ADDITIVE, ADynamicLight, lightflags),
+	DEFINE_FLAG(LF, DONTLIGHTSELF, ADynamicLight, lightflags),
+	DEFINE_FLAG(LF, ATTENUATE, ADynamicLight, lightflags),
+	DEFINE_FLAG(LF, NOSHADOWMAP, ADynamicLight, lightflags),
+	DEFINE_FLAG(LF, DONTLIGHTACTORS, ADynamicLight, lightflags),
 };
 
 static FFlagDef PowerSpeedFlagDefs[] =

@@ -21,13 +21,19 @@ enum
    LIGHT_SCALE = 3,
 };
 
-// This is as good as something new
-#define MF4_SUBTRACTIVE MF4_MISSILEEVENMORE
-#define MF4_ADDITIVE MF4_MISSILEMORE
-#define MF4_DONTLIGHTSELF MF4_SEESDAGGERS
-#define MF4_ATTENUATE MF4_INCOMBAT
-#define MF4_NOSHADOWMAP MF4_STANDSTILL
-#define MF4_DONTLIGHTACTORS MF4_EXTREMEDEATH
+enum LightFlag
+{
+	LF_SUBTRACTIVE = 1,
+	LF_ADDITIVE = 2,
+	LF_DONTLIGHTSELF = 4,
+	LF_ATTENUATE = 8,
+	LF_NOSHADOWMAP = 16,
+	LF_DONTLIGHTACTORS = 32
+};
+
+typedef TFlags<LightFlag> LightFlags;
+DEFINE_TFLAGS_OPERATORS(LightFlags)
+
 
 enum ELightType
 {
@@ -69,7 +75,7 @@ struct FLightNode
 class ADynamicLight : public AActor
 {
 	friend class FLightDefaults;
-	DECLARE_CLASS (ADynamicLight, AActor)
+	DECLARE_CLASS(ADynamicLight, AActor)
 public:
 	virtual void Tick();
 	void Serialize(FSerializer &arc);
@@ -80,10 +86,10 @@ public:
 	float GetRadius() const { return (IsActive() ? m_currentRadius * 2.f : 0.f); }
 	void LinkLight();
 	void UnlinkLight();
-	size_t PointerSubstitution (DObject *old, DObject *notOld);
+	size_t PointerSubstitution(DObject *old, DObject *notOld);
 
 	void BeginPlay();
-	void SetOrigin (double x, double y, double z, bool moving = false);
+	void SetOrigin(double x, double y, double z, bool moving = false);
 	void PostBeginPlay();
 	void OnDestroy() override;
 	void Activate(AActor *activator);
@@ -92,8 +98,8 @@ public:
 	void UpdateLocation();
 	bool IsOwned() const { return owned; }
 	bool IsActive() const { return !(flags2&MF2_DORMANT); }
-	bool IsSubtractive() { return !!(flags4&MF4_SUBTRACTIVE); }
-	bool IsAdditive() { return !!(flags4&MF4_ADDITIVE); }
+	bool IsSubtractive() { return !!(lightflags & LF_SUBTRACTIVE); }
+	bool IsAdditive() { return !!(lightflags & LF_ADDITIVE); }
 	FState *targetState;
 	FLightNode * touching_sides;
 	FLightNode * touching_subsectors;
@@ -112,7 +118,6 @@ protected:
 
 public:
 	int m_tickCount;
-	uint8_t lightflags;
 	uint8_t lighttype;
 	bool owned;
 	bool halo;
@@ -121,6 +126,7 @@ public:
 	bool swapped;
 	bool shadowmapped;
 	int bufferindex;
+	LightFlags lightflags;
 
 
 };

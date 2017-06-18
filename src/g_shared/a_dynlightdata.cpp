@@ -178,11 +178,11 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	for (int a = 0; a < 3; a++) light->args[a] = clamp<int>((int)(m_Args[a]), 0, 255);
 	light->args[LIGHT_INTENSITY] = m_Args[LIGHT_INTENSITY];
 	light->args[LIGHT_SECONDARY_INTENSITY] = m_Args[LIGHT_SECONDARY_INTENSITY];
-	light->flags4 &= ~(MF4_ADDITIVE | MF4_SUBTRACTIVE | MF4_DONTLIGHTSELF);
-	if (m_subtractive) light->flags4 |= MF4_SUBTRACTIVE;
-	if (m_additive) light->flags4 |= MF4_ADDITIVE;
-	if (m_dontlightself) light->flags4 |= MF4_DONTLIGHTSELF;
-	if (m_dontlightactors) light->flags4 |= MF4_DONTLIGHTACTORS;
+	light->lightflags &= ~(LF_ADDITIVE | LF_SUBTRACTIVE | LF_DONTLIGHTSELF);
+	if (m_subtractive) light->lightflags |= LF_SUBTRACTIVE;
+	if (m_additive) light->lightflags |= LF_ADDITIVE;
+	if (m_dontlightself) light->lightflags |= LF_DONTLIGHTSELF;
+	if (m_dontlightactors) light->lightflags |= LF_DONTLIGHTACTORS;
 	light->m_tickCount = 0;
 	if (m_type == PulseLight)
 	{
@@ -200,9 +200,9 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 
 	switch (m_attenuate)
 	{
-		case 0: light->flags4 &= ~MF4_ATTENUATE; break;
-		case 1: light->flags4 |= MF4_ATTENUATE; break;
-		default: if (level.flags3 & LEVEL3_ATTENUATE)  light->flags4 |= MF4_ATTENUATE; else light->flags4 &= ~MF4_ATTENUATE; break;
+		case 0: light->lightflags &= ~LF_ATTENUATE; break;
+		case 1: light->lightflags |= LF_ATTENUATE; break;
+		default: if (level.flags3 & LEVEL3_ATTENUATE)  light->lightflags |= LF_ATTENUATE; else light->lightflags &= ~LF_ATTENUATE; break;
 	}
 	}
 
@@ -1103,7 +1103,7 @@ void AActor::AttachLight(unsigned int count, const FLightDefaults *lightdef)
 		light->target = this;
 		light->owned = true;
 		light->ObjectFlags |= OF_Transient;
-		//light->flags4 |= MF4_ATTENUATE;
+		//light->lightflags |= LF_ATTENUATE;
 		AttachedLights.Push(light);
 	}
 	light->flags2&=~MF2_DORMANT;

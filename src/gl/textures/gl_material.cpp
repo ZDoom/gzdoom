@@ -242,26 +242,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	{
 		// When using translations everything must be mapped to the base palette.
 		// so use CopyTrueColorTranslated
-		PalEntry penew[256];
-		PalEntry *pal;
-
-		// Todo: Give all palettes proper alpha and make sure the software renderer can handle it.
-		PalEntry *ptrans = GLTranslationPalette::GetPalette(translation);
-		if (ptrans && !alphatrans)
-		{
-			for (int i = 1; i < 256; i++)
-			{
-				penew[i] = (ptrans[i] | 0xff000000);
-			}
-			penew[0] = 0;
-			pal = penew;
-		}
-		else if (ptrans)
-		{
-			pal = ptrans;
-		}
-
-		tex->CopyTrueColorTranslated(&bmp, exx, exx, 0, pal);
+		tex->CopyTrueColorTranslated(&bmp, exx, exx, 0, GLTranslationPalette::GetPalette(translation));
 		isTransparent = 0;
 		// This is not conclusive for setting the texture's transparency info.
 	}

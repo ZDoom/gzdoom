@@ -220,11 +220,12 @@ namespace swrenderer
 		{
 			CheckOffscreenBuffer(viewport->RenderTarget->GetWidth(), viewport->RenderTarget->GetHeight(), !!(flags & DVF_SPANSONLY));
 		}
+		*/
+
 		if (spr->bInMirror)
 		{
 			flags |= DVF_MIRRORED;
 		}
-		*/
 
 		// Render the voxel, either directly to the screen or offscreen.
 		DrawVoxel(thread, drawerargs, spr->pa.vpos, spr->pa.vang, spr->gpos, spr->Angle,
@@ -276,18 +277,18 @@ namespace swrenderer
 		fixed_t cosang, sinang, sprcosang, sprsinang;
 		int backx, backy, gxinc, gyinc;
 		int daxscalerecip, dayscalerecip, cnt, gxstart, gystart, dazscale;
-		int lx, rx, nx, ny, x1=0, y1=0, x2=0, y2=0, yinc=0;
-		int yoff, xs=0, ys=0, xe, ye, xi=0, yi=0, cbackx, cbacky, dagxinc, dagyinc;
+		int lx, rx, nx, ny, x1 = 0, y1 = 0, x2 = 0, y2 = 0, yinc = 0;
+		int yoff, xs = 0, ys = 0, xe, ye, xi = 0, yi = 0, cbackx, cbacky, dagxinc, dagyinc;
 		kvxslab_t *voxptr, *voxend;
 		FVoxelMipLevel *mip;
 		int z1a[64], z2a[64], yplc[64];
 
 		auto viewport = thread->Viewport.get();
 
-		const int nytooclose = viewport->viewwindow.centerxwide * 2100, nytoofar = 32768*32768 - 1048576;
+		const int nytooclose = viewport->viewwindow.centerxwide * 2100, nytoofar = 32768 * 32768 - 1048576;
 		const int xdimenscale = FLOAT2FIXED(viewport->viewwindow.centerxwide * viewport->YaspectMul / 160);
 		const double centerxwide_f = viewport->viewwindow.centerxwide;
-		const double centerxwidebig_f = centerxwide_f * 65536*65536*8;
+		const double centerxwidebig_f = centerxwide_f * 65536 * 65536 * 8;
 
 		// Convert to Build's coordinate system.
 		fixed_t globalposx = xs_Fix<4>::ToFix(globalpos.X);
@@ -329,14 +330,14 @@ namespace swrenderer
 		minslabz >>= k;
 		maxslabz >>= k;
 
-		daxscale <<= (k+8); dayscale <<= (k+8);
+		daxscale <<= (k + 8); dayscale <<= (k + 8);
 		dazscale = FixedDiv(dayscale, FLOAT2FIXED(viewport->BaseYaspectMul));
 		daxscale = fixed_t(daxscale / viewport->YaspectMul);
 		daxscale = Scale(daxscale, xdimenscale, viewport->viewwindow.centerxwide << 9);
 		dayscale = Scale(dayscale, FixedMul(xdimenscale, viewport->viewingrangerecip), viewport->viewwindow.centerxwide << 9);
 
-		daxscalerecip = (1<<30) / daxscale;
-		dayscalerecip = (1<<30) / dayscale;
+		daxscalerecip = (1 << 30) / daxscale;
+		dayscalerecip = (1 << 30) / dayscale;
 
 		fixed_t piv_x = fixed_t(mip->Pivot.X*256.);
 		fixed_t piv_y = fixed_t(mip->Pivot.Y*256.);
@@ -344,7 +345,7 @@ namespace swrenderer
 
 		x = FixedMul(globalposx - dasprx, daxscalerecip);
 		y = FixedMul(globalposy - daspry, daxscalerecip);
-		backx = (DMulScale10(x, sprcosang, y,  sprsinang) + piv_x) >> 8;
+		backx = (DMulScale10(x, sprcosang, y, sprsinang) + piv_x) >> 8;
 		backy = (DMulScale10(y, sprcosang, x, -sprsinang) + piv_y) >> 8;
 		cbackx = clamp(backx, 0, mip->SizeX - 1);
 		cbacky = clamp(backy, 0, mip->SizeY - 1);
@@ -353,7 +354,7 @@ namespace swrenderer
 		sprsinang = MulScale14(daxscale, sprsinang);
 
 		x = (dasprx - globalposx) - DMulScale18(piv_x, sprcosang, piv_y, -sprsinang);
-		y = (daspry - globalposy) - DMulScale18(piv_y, sprcosang, piv_x,  sprsinang);
+		y = (daspry - globalposy) - DMulScale18(piv_y, sprcosang, piv_x, sprsinang);
 
 		cosang = FixedMul(cosang, dayscalerecip);
 		sinang = FixedMul(sinang, dayscalerecip);
@@ -361,7 +362,7 @@ namespace swrenderer
 		gxstart = y*cosang - x*sinang;
 		gystart = x*cosang + y*sinang;
 		gxinc = DMulScale10(sprsinang, cosang, sprcosang, -sinang);
-		gyinc = DMulScale10(sprcosang, cosang, sprsinang,  sinang);
+		gyinc = DMulScale10(sprcosang, cosang, sprsinang, sinang);
 		if ((abs(globalposz - dasprz) >> 10) >= abs(dazscale)) return;
 
 		x = 0; y = 0; j = MAX(mip->SizeX, mip->SizeY);
@@ -376,18 +377,24 @@ namespace swrenderer
 		syoff = DivScale21(globalposz - dasprz, FixedMul(dazscale, 0xE800)) + (piv_z << 7);
 		yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
+		bool useSlabDataBgra = !drawerargs.DrawerNeedsPalInput() && viewport->RenderTarget->IsBgra();
+
+		const int maxoutblocks = 100;
+		VoxelBlock *outblocks = thread->FrameMemory->AllocMemory<VoxelBlock>(maxoutblocks);
+		int nextoutblock = 0;
+
 		for (cnt = 0; cnt < 8; cnt++)
 		{
 			switch (cnt)
 			{
-				case 0: xs = 0;				ys = 0;				xi =  1; yi =  1; break;
-				case 1: xs = mip->SizeX-1;	ys = 0;				xi = -1; yi =  1; break;
-				case 2: xs = 0;				ys = mip->SizeY-1;	xi =  1; yi = -1; break;
-				case 3: xs = mip->SizeX-1;	ys = mip->SizeY-1;	xi = -1; yi = -1; break;
-				case 4: xs = 0;				ys = cbacky;		xi =  1; yi =  2; break;
-				case 5: xs = mip->SizeX-1;	ys = cbacky;		xi = -1; yi =  2; break;
-				case 6: xs = cbackx;		ys = 0;				xi =  2; yi =  1; break;
-				case 7: xs = cbackx;		ys = mip->SizeY-1;	xi =  2; yi = -1; break;
+			case 0: xs = 0;				ys = 0;				xi = 1; yi = 1; break;
+			case 1: xs = mip->SizeX - 1;	ys = 0;				xi = -1; yi = 1; break;
+			case 2: xs = 0;				ys = mip->SizeY - 1;	xi = 1; yi = -1; break;
+			case 3: xs = mip->SizeX - 1;	ys = mip->SizeY - 1;	xi = -1; yi = -1; break;
+			case 4: xs = 0;				ys = cbacky;		xi = 1; yi = 2; break;
+			case 5: xs = mip->SizeX - 1;	ys = cbacky;		xi = -1; yi = 2; break;
+			case 6: xs = cbackx;		ys = 0;				xi = 2; yi = 1; break;
+			case 7: xs = cbackx;		ys = mip->SizeY - 1;	xi = 2; yi = -1; break;
 			}
 			xe = cbackx; ye = cbacky;
 			if (cnt < 4)
@@ -407,28 +414,28 @@ namespace swrenderer
 			}
 
 			i = sgn(ys - backy) + sgn(xs - backx) * 3 + 4;
-			switch(i)
+			switch (i)
 			{
-				case 6: case 7: x1 = 0;				y1 = 0;				break;
-				case 8: case 5: x1 = gxinc;			y1 = gyinc;			break;
-				case 0: case 3: x1 = gyinc;			y1 = -gxinc;		break;
-				case 2: case 1: x1 = gxinc+gyinc;	y1 = gyinc-gxinc;	break;
+			case 6: case 7: x1 = 0;				y1 = 0;				break;
+			case 8: case 5: x1 = gxinc;			y1 = gyinc;			break;
+			case 0: case 3: x1 = gyinc;			y1 = -gxinc;		break;
+			case 2: case 1: x1 = gxinc + gyinc;	y1 = gyinc - gxinc;	break;
 			}
-			switch(i)
+			switch (i)
 			{
-				case 2: case 5: x2 = 0;				y2 = 0;				break;
-				case 0: case 1: x2 = gxinc;			y2 = gyinc;			break;
-				case 8: case 7: x2 = gyinc;			y2 = -gxinc;		break;
-				case 6: case 3: x2 = gxinc+gyinc;	y2 = gyinc-gxinc;	break;
+			case 2: case 5: x2 = 0;				y2 = 0;				break;
+			case 0: case 1: x2 = gxinc;			y2 = gyinc;			break;
+			case 8: case 7: x2 = gyinc;			y2 = -gxinc;		break;
+			case 6: case 3: x2 = gxinc + gyinc;	y2 = gyinc - gxinc;	break;
 			}
-			uint8_t oand = (1 << int(xs<backx)) + (1 << (int(ys<backy)+2));
+			uint8_t oand = (1 << int(xs < backx)) + (1 << (int(ys < backy) + 2));
 			uint8_t oand16 = oand + 16;
 			uint8_t oand32 = oand + 32;
 
-			if (yi > 0) { dagxinc =  gxinc; dagyinc =  FixedMul(gyinc, viewport->viewingrangerecip); }
-				   else { dagxinc = -gxinc; dagyinc = -FixedMul(gyinc, viewport->viewingrangerecip); }
+			if (yi > 0) { dagxinc = gxinc; dagyinc = FixedMul(gyinc, viewport->viewingrangerecip); }
+			else { dagxinc = -gxinc; dagyinc = -FixedMul(gyinc, viewport->viewingrangerecip); }
 
-				/* Fix for non 90 degree viewing ranges */
+			/* Fix for non 90 degree viewing ranges */
 			nxoff = FixedMul(x2 - x1, viewport->viewingrangerecip);
 			x1 = FixedMul(x1, viewport->viewingrangerecip);
 
@@ -446,7 +453,7 @@ namespace swrenderer
 				{
 					if ((ny <= nytooclose) || (ny >= nytoofar)) continue;
 					voxptr = (kvxslab_t *)(slabxoffs + xyoffs[y]);
-					voxend = (kvxslab_t *)(slabxoffs + xyoffs[y+1]);
+					voxend = (kvxslab_t *)(slabxoffs + xyoffs[y + 1]);
 					if (voxptr >= voxend) continue;
 
 					lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + viewport->viewwindow.centerx;
@@ -516,7 +523,7 @@ namespace swrenderer
 						}
 						else
 						{
-							if (z2-z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
+							if (z2 - z1 >= 1024) yinc = FixedDiv(zleng, z2 - z1);
 							else yinc = (((1 << 24) - 1) / (z2 - z1)) * zleng >> 8;
 						}
 						// [RH] Clip each column separately, not just by the first one.
@@ -549,7 +556,7 @@ namespace swrenderer
 							}
 
 							const uint8_t *columnColors = col;
-							if (!drawerargs.DrawerNeedsPalInput() && viewport->RenderTarget->IsBgra())
+							if (useSlabDataBgra)
 							{
 								// The true color slab data array is identical, except its using uint32_t instead of uint8.
 								//
@@ -575,12 +582,31 @@ namespace swrenderer
 										break;
 								}
 
+								outblocks[nextoutblock].x = lxt + xxl;
+								outblocks[nextoutblock].y = z1;
+								outblocks[nextoutblock].width = xxr - xxl;
+								outblocks[nextoutblock].height = z2 - z1;
+								outblocks[nextoutblock].vPos = yplc[xxl];
+								outblocks[nextoutblock].vStep = yinc;
+								outblocks[nextoutblock].voxels = columnColors;
+								outblocks[nextoutblock].voxelsCount = zleng;
+								nextoutblock++;
+
+								if (nextoutblock == maxoutblocks)
+								{
+									drawerargs.DrawVoxelBlocks(thread, outblocks, nextoutblock);
+									outblocks = thread->FrameMemory->AllocMemory<VoxelBlock>(maxoutblocks);
+									nextoutblock = 0;
+								}
+
+								/*
 								for (int x = xxl; x < xxr; ++x)
 								{
 									drawerargs.SetDest(viewport, lxt + x, z1);
 									drawerargs.SetCount(z2 - z1);
 									drawerargs.DrawVoxelColumn(thread, yplc[xxl], yinc, columnColors, zleng);
 								}
+								*/
 
 								/*
 								if (!(flags & DVF_OFFSCREEN))
@@ -617,6 +643,11 @@ namespace swrenderer
 					}
 				}
 			}
+		}
+
+		if (nextoutblock != 0)
+		{
+			drawerargs.DrawVoxelBlocks(thread, outblocks, nextoutblock);
 		}
 	}
 

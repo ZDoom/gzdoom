@@ -10,6 +10,17 @@ namespace swrenderer
 {
 	class RenderThread;
 	
+	class VoxelBlock
+	{
+	public:
+		int x, y;
+		uint16_t width, height;
+		fixed_t vPos;
+		fixed_t vStep;
+		const uint8_t *voxels;
+		int voxelsCount;
+	};
+
 	class SpriteDrawerArgs : public DrawerArgs
 	{
 	public:
@@ -24,7 +35,7 @@ namespace swrenderer
 
 		void DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *texture, fixed_t column, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked = false);
 		void FillColumn(RenderThread *thread);
-		void DrawVoxelColumn(RenderThread *thread, fixed_t vPos, fixed_t vStep, const uint8_t *voxels, int voxelsCount);
+		void DrawVoxelBlocks(RenderThread *thread, const VoxelBlock *blocks, int blockcount);
 
 		uint8_t *Dest() const { return dc_dest; }
 		int DestY() const { return dc_dest_y; }
@@ -95,5 +106,8 @@ namespace swrenderer
 		SpriteDrawerFunc colfunc;
 
 		RenderViewport *dc_viewport = nullptr;
+
+		friend class DrawVoxelBlocksRGBACommand;
+		friend class DrawVoxelBlocksPalCommand;
 	};
 }

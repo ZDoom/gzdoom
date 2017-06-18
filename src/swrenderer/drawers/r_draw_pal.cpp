@@ -3011,4 +3011,107 @@ namespace swrenderer
 	{
 		return "DrawParticle";
 	}
+
+	/////////////////////////////////////////////////////////////////////////////
+
+	DrawVoxelBlocksPalCommand::DrawVoxelBlocksPalCommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) : args(args), blocks(blocks), blockcount(blockcount)
+	{
+	}
+
+	void DrawVoxelBlocksPalCommand::Execute(DrawerThread *thread)
+	{
+		int destpitch = args.Viewport()->RenderTarget->GetPitch();
+		uint8_t *destorig = args.Viewport()->RenderTarget->GetBuffer();
+		const uint8_t *colormap = args.Colormap(args.Viewport());
+
+		for (int i = 0; i < blockcount; i++)
+		{
+			const VoxelBlock &block = blocks[i];
+
+			const uint8_t *source = block.voxels;
+
+			fixed_t fracpos = block.vPos;
+			fixed_t iscale = block.vStep;
+			int count = block.height;
+			int width = block.width;
+			int pitch = destpitch;
+			uint8_t *dest = destorig + (block.x + block.y * pitch);
+
+			count = thread->count_for_thread(block.y, count);
+			dest = thread->dest_for_thread(block.y, pitch, dest);
+			fracpos += iscale * thread->skipped_by_thread(block.y);
+			iscale *= thread->num_cores;
+			pitch *= thread->num_cores;
+
+			if (width == 1)
+			{
+				while (count > 0)
+				{
+					uint8_t color = colormap[source[fracpos >> FRACBITS]];
+					*dest = color;
+					dest += pitch;
+					fracpos += iscale;
+					count--;
+				}
+			}
+			else if (width == 2)
+			{
+				while (count > 0)
+				{
+					uint8_t color = colormap[source[fracpos >> FRACBITS]];
+					dest[0] = color;
+					dest[1] = color;
+					dest += pitch;
+					fracpos += iscale;
+					count--;
+				}
+			}
+			else if (width == 3)
+			{
+				while (count > 0)
+				{
+					uint8_t color = colormap[source[fracpos >> FRACBITS]];
+					dest[0] = color;
+					dest[1] = color;
+					dest[2] = color;
+					dest += pitch;
+					fracpos += iscale;
+					count--;
+				}
+			}
+			else if (width == 4)
+			{
+				while (count > 0)
+				{
+					uint8_t color = colormap[source[fracpos >> FRACBITS]];
+					dest[0] = color;
+					dest[1] = color;
+					dest[2] = color;
+					dest[3] = color;
+					dest += pitch;
+					fracpos += iscale;
+					count--;
+				}
+			}
+			else
+			{
+				while (count > 0)
+				{
+					uint8_t color = colormap[source[fracpos >> FRACBITS]];
+
+					for (int x = 0; x < width; x++)
+						dest[x] = color;
+
+					dest += pitch;
+					fracpos += iscale;
+					count--;
+				}
+			}
+		}
+	}
+
+	FString DrawVoxelBlocksPalCommand::DebugInfo()
+	{
+		return "DrawVoxelBlocks";
+	}
 }

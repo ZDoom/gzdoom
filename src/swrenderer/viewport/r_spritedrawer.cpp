@@ -494,8 +494,11 @@ namespace swrenderer
 		thread->Drawers(dc_viewport)->FillColumn(*this);
 	}
 
-	void SpriteDrawerArgs::DrawVoxelColumn(RenderThread *thread, fixed_t vPos, fixed_t vStep, const uint8_t *voxels, int voxelsCount)
+	void SpriteDrawerArgs::DrawVoxelBlocks(RenderThread *thread, const VoxelBlock *blocks, int blockcount)
 	{
+		SetDest(thread->Viewport.get(), 0, 0);
+		thread->Drawers(dc_viewport)->DrawVoxelBlocks(*this, blocks, blockcount);
+#if 0
 		if (dc_viewport->RenderTarget->IsBgra())
 		{
 			double v = vPos / (double)voxelsCount / FRACUNIT;
@@ -514,6 +517,7 @@ namespace swrenderer
 		dc_source2 = 0;
 		dc_textureheight = voxelsCount;
 		(thread->Drawers(dc_viewport)->*colfunc)(*this);
+#endif
 	}
 
 	void SpriteDrawerArgs::SetDest(RenderViewport *viewport, int x, int y)

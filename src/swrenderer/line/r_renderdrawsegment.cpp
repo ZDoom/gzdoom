@@ -66,21 +66,6 @@ namespace swrenderer
 	void RenderDrawSegment::Render(DrawSegment *ds, int x1, int x2)
 	{
 		auto viewport = Thread->Viewport.get();
-		RenderFogBoundary renderfog;
-		float *MaskedSWall = nullptr, MaskedScaleY = 0, rw_scalestep = 0;
-		fixed_t *maskedtexturecol = nullptr;
-	
-		FTexture	*tex;
-		int			i;
-		sector_t	tempsec;		// killough 4/13/98
-		double		texheight, texheightscale;
-		bool		notrelevant = false;
-		double		rowoffset;
-		bool		wrap = false;
-
-		const sector_t *sec;
-
-		bool sprflipvert = false;
 
 		curline = ds->curline;
 
@@ -105,14 +90,9 @@ namespace swrenderer
 		frontsector = curline->frontsector;
 		backsector = curline->backsector;
 
-		tex = TexMan(curline->sidedef->GetTexture(side_t::mid), true);
-		if (i_compatflags & COMPATF_MASKEDMIDTEX)
-		{
-			tex = tex->GetRawTexture();
-		}
-
 		// killough 4/13/98: get correct lightlevel for 2s normal textures
-		sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
+		sector_t tempsec;
+		const sector_t *sec = Thread->OpaquePass->FakeFlat(frontsector, &tempsec, nullptr, nullptr, nullptr, 0, 0, 0, 0);
 
 		FDynamicColormap *basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::walltop]);	// [RH] Set basecolormap
 
@@ -122,14 +102,15 @@ namespace swrenderer
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
+		if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
+		{
+			clip3d->sclipTop = sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
+		}
+
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() < 0)
 		{
-			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
-			{
-				clip3d->sclipTop = sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
-			}
-			for (i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+			for (int i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
 				if (clip3d->sclipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
 				{
@@ -142,30 +123,71 @@ namespace swrenderer
 			}
 		}
 
-		short *mfloorclip = ds->sprbottomclip - ds->x1;
-		short *mceilingclip = ds->sprtopclip - ds->x1;
-		double spryscale;
+		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 
 		// [RH] Draw fog partition
+		bool notrelevant = false;
 		if (ds->bFogBoundary)
 		{
+			short *mfloorclip = ds->sprbottomclip - ds->x1;
+			short *mceilingclip = ds->sprtopclip - ds->x1;
+
+			RenderFogBoundary renderfog;
 			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep, basecolormap);
-			if (ds->maskedtexturecol == nullptr)
+
+			if (!ds->maskedtexturecol)
 			{
-				goto clearfog;
+				if (!(ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || visible)
+					notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade, wrap);
 			}
 		}
-		if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || !visible)
+		else if (!(ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || visible)
 		{
-			goto clearfog;
+			notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade, wrap);
 		}
 
-		MaskedSWall = ds->swall - ds->x1;
-		MaskedScaleY = ds->yscale;
-		maskedtexturecol = ds->maskedtexturecol - ds->x1;
-		spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
-		rw_scalestep = ds->iscalestep;
+		if (ds->bFakeBoundary & 3)
+		{
+			RenderFakeWallRange(ds, x1, x2, wallshade);
+		}
+		if (!notrelevant)
+		{
+			if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
+			{
+				if (!wrap)
+				{
+					assert(ds->bkup != nullptr);
+					memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * 2);
+				}
+			}
+			else
+			{
+				fillshort(ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
+			}
+		}
+	}
 
+	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade, bool wrap)
+	{
+		auto viewport = Thread->Viewport.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
+
+		FTexture *tex = TexMan(curline->sidedef->GetTexture(side_t::mid), true);
+		if (i_compatflags & COMPATF_MASKEDMIDTEX)
+		{
+			tex = tex->GetRawTexture();
+		}
+
+		short *mfloorclip = ds->sprbottomclip - ds->x1;
+		short *mceilingclip = ds->sprtopclip - ds->x1;
+
+		float *MaskedSWall = ds->swall - ds->x1;
+		float MaskedScaleY = ds->yscale;
+		fixed_t *maskedtexturecol = ds->maskedtexturecol - ds->x1;
+		double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
+		float rw_scalestep = ds->iscalestep;
+
+		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() >= 0)
 		{
 			walldrawerargs.SetLight((r_fullbrightignoresectorcolor) ? &FullNormalLight : basecolormap, 0, cameraLight->FixedLightLevelShade());
@@ -178,8 +200,8 @@ namespace swrenderer
 		}
 
 		// find positioning
-		texheight = tex->GetScaledHeightDouble();
-		texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
+		double texheight = tex->GetScaledHeightDouble();
+		double texheightscale = fabs(curline->sidedef->GetTextureYScale(side_t::mid));
 		if (texheightscale != 1)
 		{
 			texheight = texheight / texheightscale;
@@ -195,12 +217,13 @@ namespace swrenderer
 			texturemid = MIN(frontsector->GetPlaneTexZ(sector_t::ceiling), backsector->GetPlaneTexZ(sector_t::ceiling));
 		}
 
-		rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
+		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 
-		wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 		if (!wrap)
 		{ // Texture does not wrap vertically.
 			double textop;
+
+			bool sprflipvert = false;
 
 			if (MaskedScaleY < 0)
 			{
@@ -231,23 +254,21 @@ namespace swrenderer
 			// [RH] Don't bother drawing segs that are completely offscreen
 			if (viewport->globaldclip * ds->sz1 < -textop && viewport->globaldclip * ds->sz2 < -textop)
 			{ // Texture top is below the bottom of the screen
-				goto clearfog;
+				return false;
 			}
 
 			if (viewport->globaluclip * ds->sz1 > texheight - textop && viewport->globaluclip * ds->sz2 > texheight - textop)
 			{ // Texture bottom is above the top of the screen
-				goto clearfog;
+				return false;
 			}
 
 			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && textop < clip3d->sclipBottom - Thread->Viewport->viewpoint.Pos.Z)
 			{
-				notrelevant = true;
-				goto clearfog;
+				return true;
 			}
 			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && textop - texheight > clip3d->sclipTop - Thread->Viewport->viewpoint.Pos.Z)
 			{
-				notrelevant = true;
-				goto clearfog;
+				return true;
 			}
 
 			WallC.sz1 = ds->sz1;
@@ -272,12 +293,12 @@ namespace swrenderer
 				walllower.Project(Thread->Viewport.get(), textop - texheight, &WallC);
 			}
 
-			for (i = x1; i < x2; i++)
+			for (int i = x1; i < x2; i++)
 			{
 				if (wallupper.ScreenY[i] < mceilingclip[i])
 					wallupper.ScreenY[i] = mceilingclip[i];
 			}
-			for (i = x1; i < x2; i++)
+			for (int i = x1; i < x2; i++)
 			{
 				if (walllower.ScreenY[i] > mfloorclip[i])
 					walllower.ScreenY[i] = mfloorclip[i];
@@ -358,7 +379,7 @@ namespace swrenderer
 			if (clip3d->fake3D & FAKE3D_CLIPTOP)
 			{
 				wallupper.Project(Thread->Viewport.get(), clip3d->sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
-				for (i = x1; i < x2; i++)
+				for (int i = x1; i < x2; i++)
 				{
 					if (wallupper.ScreenY[i] < mceilingclip[i])
 						wallupper.ScreenY[i] = mceilingclip[i];
@@ -368,7 +389,7 @@ namespace swrenderer
 			if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
 			{
 				walllower.Project(Thread->Viewport.get(), clip3d->sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
-				for (i = x1; i < x2; i++)
+				for (int i = x1; i < x2; i++)
 				{
 					if (walllower.ScreenY[i] > mfloorclip[i])
 						walllower.ScreenY[i] = mfloorclip[i];
@@ -386,27 +407,7 @@ namespace swrenderer
 			renderWallpart.Render(walldrawerargs, frontsector, curline, WallC, rw_pic, x1, x2, mceilingclip, mfloorclip, texturemid, MaskedSWall, maskedtexturecol, ds->yscale, top, bot, true, wallshade, rw_offset, rw_light, rw_lightstep, nullptr, ds->foggy, basecolormap);
 		}
 
-	clearfog:
-		if (ds->bFakeBoundary & 3)
-		{
-			RenderFakeWallRange(ds, x1, x2, wallshade);
-		}
-		if (!notrelevant)
-		{
-			if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
-			{
-				if (!wrap)
-				{
-					assert(ds->bkup != nullptr);
-					memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * 2);
-				}
-			}
-			else
-			{
-				fillshort(ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
-			}
-		}
-		return;
+		return false;
 	}
 
 	// kg3D - render one fake wall

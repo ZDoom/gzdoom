@@ -538,7 +538,7 @@ void FBrightmapTexture::Unload ()
 
 int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
-	SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, &GlobalBrightmap);
+	SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, GlobalBrightmap.Palette);
 	return 0;
 }
 

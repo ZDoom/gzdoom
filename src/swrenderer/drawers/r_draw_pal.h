@@ -49,10 +49,10 @@ namespace swrenderer
 		PalColumnCommand(const SpriteDrawerArgs &args);
 		FString DebugInfo() override { return "PalColumnCommand"; }
 
+		SpriteDrawerArgs args;
+
 	protected:
 		uint8_t AddLights(uint8_t fg, uint8_t material, uint32_t lit_r, uint32_t lit_g, uint32_t lit_b);
-		
-		SpriteDrawerArgs args;
 	};
 
 	class DrawColumnPalCommand : public PalColumnCommand { public: using PalColumnCommand::PalColumnCommand; void Execute(DrawerThread *thread) override; };
@@ -205,6 +205,19 @@ namespace swrenderer
 		uint32_t _fracposx;
 	};
 
+	class DrawVoxelBlocksPalCommand : public DrawerCommand
+	{
+	public:
+		DrawVoxelBlocksPalCommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount);
+		void Execute(DrawerThread *thread) override;
+		FString DebugInfo() override;
+
+	private:
+		SpriteDrawerArgs args;
+		const VoxelBlock *blocks;
+		int blockcount;
+	};
+
 	class SWPalDrawers : public SWPixelFormatDrawers
 	{
 	public:
@@ -244,6 +257,7 @@ namespace swrenderer
 		void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnSubClampTranslatedPalCommand>(args); }
 		void DrawRevSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnRevSubClampPalCommand>(args); }
 		void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnRevSubClampTranslatedPalCommand>(args); }
+		void DrawVoxelBlocks(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) override { Queue->Push<DrawVoxelBlocksPalCommand>(args, blocks, blockcount); }
 		void DrawSpan(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanPalCommand>(args); }
 		void DrawSpanMasked(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanMaskedPalCommand>(args); }
 		void DrawSpanTranslucent(const SpanDrawerArgs &args) override { Queue->Push<DrawSpanTranslucentPalCommand>(args); }

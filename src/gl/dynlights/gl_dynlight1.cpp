@@ -110,7 +110,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	float shadowIndex = GLRenderer->mShadowMap.ShadowMapIndex(light) + 1.0f;
 	bool attenuate;
 
-	if (gl_attenuate == -1) attenuate = !!(light->flags4 & MF4_ATTENUATE);
+	if (gl_attenuate == -1) attenuate = !!(light->lightflags & LF_ATTENUATE);
 	else attenuate = !!gl_attenuate;
 
 	if (attenuate) shadowIndex = -shadowIndex;

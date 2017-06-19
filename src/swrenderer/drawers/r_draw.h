@@ -28,6 +28,7 @@ namespace swrenderer
 	class WallDrawerArgs;
 	class SpanDrawerArgs;
 	class SpriteDrawerArgs;
+	class VoxelBlock;
 
 	extern uint8_t shadetables[/*NUMCOLORMAPS*16*256*/];
 	extern FDynamicColormap ShadeFakeColormap[16];
@@ -79,6 +80,7 @@ namespace swrenderer
 		virtual void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawRevSubClampColumn(const SpriteDrawerArgs &args) = 0;
 		virtual void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) = 0;
+		virtual void DrawVoxelBlocks(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) = 0;
 		virtual void DrawSpan(const SpanDrawerArgs &args) = 0;
 		virtual void DrawSpanMasked(const SpanDrawerArgs &args) = 0;
 		virtual void DrawSpanTranslucent(const SpanDrawerArgs &args) = 0;

@@ -207,7 +207,7 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 			}
 		}
 	}
-	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, GL_RGBA, GL_UNSIGNED_BYTE, buffer);
+	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
 
 	if (deletebuffer) free(buffer);
 

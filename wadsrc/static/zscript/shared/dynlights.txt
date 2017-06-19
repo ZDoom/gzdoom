@@ -77,13 +77,13 @@ class PointLightFlickerRandom : PointLight
 	}
 }
 
-// MISSILEMORE and MISSILEEVENMORE are used by the lights for additive and subtractive lights
+// DYNAMICLIGHT.ADDITIVE and DYNAMICLIGHT.SUBTRACTIVE are used by the lights for additive and subtractive lights
 
 class PointLightAdditive : PointLight
 {
 	Default
 	{
-		+MISSILEMORE
+		+DYNAMICLIGHT.ADDITIVE
 	}
 }
 
@@ -91,7 +91,7 @@ class PointLightPulseAdditive : PointLightPulse
 {
 	Default
 	{
-		+MISSILEMORE
+		+DYNAMICLIGHT.ADDITIVE
 	}
 }
 
@@ -99,7 +99,7 @@ class PointLightFlickerAdditive : PointLightFlicker
 {
 	Default
 	{
-		+MISSILEMORE
+		+DYNAMICLIGHT.ADDITIVE
 	}
 }
 
@@ -107,7 +107,7 @@ class SectorPointLightAdditive : SectorPointLight
 {
 	Default
 	{
-		+MISSILEMORE
+		+DYNAMICLIGHT.ADDITIVE
 	}
 }
 
@@ -115,7 +115,7 @@ class PointLightFlickerRandomAdditive :PointLightFlickerRandom
 {
 	Default
 	{
-		+MISSILEMORE
+		+DYNAMICLIGHT.ADDITIVE
 	}
 }
 
@@ -123,7 +123,7 @@ class PointLightSubtractive : PointLight
 {
 	Default
 	{
-		+MISSILEEVENMORE
+		+DYNAMICLIGHT.SUBTRACTIVE
 	}
 }
 
@@ -131,7 +131,7 @@ class PointLightPulseSubtractive : PointLightPulse
 {
 	Default
 	{
-		+MISSILEEVENMORE
+		+DYNAMICLIGHT.SUBTRACTIVE
 	}
 }
 
@@ -139,7 +139,7 @@ class PointLightFlickerSubtractive : PointLightFlicker
 {
 	Default
 	{
-		+MISSILEEVENMORE
+		+DYNAMICLIGHT.SUBTRACTIVE
 	}
 }
 
@@ -147,7 +147,7 @@ class SectorPointLightSubtractive : SectorPointLight
 {
 	Default
 	{
-		+MISSILEEVENMORE
+		+DYNAMICLIGHT.SUBTRACTIVE
 	}
 }
 
@@ -155,7 +155,7 @@ class PointLightFlickerRandomSubtractive : PointLightFlickerRandom
 {
 	Default
 	{
-		+MISSILEEVENMORE
+		+DYNAMICLIGHT.SUBTRACTIVE
 	}
 }
 
@@ -163,7 +163,7 @@ class PointLightAttenuated : PointLight
 {
 	Default
 	{
-		+INCOMBAT
+		+DYNAMICLIGHT.ATTENUATE
 	}
 }
 
@@ -171,7 +171,7 @@ class PointLightPulseAttenuated : PointLightPulse
 {
 	Default
 	{
-		+INCOMBAT
+		+DYNAMICLIGHT.ATTENUATE
 	}
 }
 
@@ -179,7 +179,7 @@ class PointLightFlickerAttenuated : PointLightFlicker
 {
 	Default
 	{
-		+INCOMBAT
+		+DYNAMICLIGHT.ATTENUATE
 	}
 }
 
@@ -187,7 +187,7 @@ class SectorPointLightAttenuated : SectorPointLight
 {
 	Default
 	{
-		+INCOMBAT
+		+DYNAMICLIGHT.ATTENUATE
 	}
 }
 
@@ -195,7 +195,7 @@ class PointLightFlickerRandomAttenuated :PointLightFlickerRandom
 {
 	Default
 	{
-		+INCOMBAT
+		+DYNAMICLIGHT.ATTENUATE
 	}
 }
 

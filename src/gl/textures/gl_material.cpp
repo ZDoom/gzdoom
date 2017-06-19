@@ -33,6 +33,7 @@
 #include "sc_man.h"
 #include "colormatcher.h"
 #include "textures/warpbuffer.h"
+#include "textures/bitmap.h"
 
 //#include "gl/gl_intern.h"
 
@@ -43,7 +44,6 @@
 #include "gl/data/gl_data.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
-#include "gl/textures/gl_bitmap.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/shaders/gl_shader.h"
@@ -120,7 +120,7 @@ unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *heig
 		unsigned char * buffer=new unsigned char[w*(h+1)*4];
 		memset(buffer, 0, w * (h+1) * 4);
 
-		FGLBitmap bmp(buffer, w*4, w, h);
+		FBitmap bmp(buffer, w*4, w, h);
 		
 		int trans = hirestexture->CopyTrueColorPixels(&bmp, 0, 0);
 		hirestexture->CheckTrans(buffer, w*h, trans);
@@ -210,38 +210,39 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	buffer=new unsigned char[W*(H+1)*4];
 	memset(buffer, 0, W * (H+1) * 4);
 
-	FGLBitmap bmp(buffer, W*4, W, H);
-	bmp.SetTranslationInfo(translation, alphatrans);
+	FBitmap bmp(buffer, W*4, W, H);
 
-	if (tex->bComplex)
+	if (translation <= 0)
 	{
-		FBitmap imgCreate;
-
-		// The texture contains special processing so it must be composited using the
-		// base bitmap class and then be converted as a whole.
-		if (imgCreate.Create(W, H))
+		// Q: Is this special treatment still needed? Needs to be checked.
+		if (tex->bComplex)
 		{
-			memset(imgCreate.GetPixels(), 0, W * H * 4);
-			int trans = tex->CopyTrueColorPixels(&imgCreate, exx, exx);
-			bmp.CopyPixelDataRGB(0, 0, imgCreate.GetPixels(), W, H, 4, W * 4, 0, CF_BGRA);
+			FBitmap imgCreate;
+
+			// The texture contains special processing so it must be fully composited before being converted as a whole.
+			if (imgCreate.Create(W, H))
+			{
+				memset(imgCreate.GetPixels(), 0, W * H * 4);
+				int trans = tex->CopyTrueColorPixels(&imgCreate, exx, exx);
+				bmp.CopyPixelDataRGB(0, 0, imgCreate.GetPixels(), W, H, 4, W * 4, 0, CF_BGRA);
+				tex->CheckTrans(buffer, W*H, trans);
+				isTransparent = tex->gl_info.mIsTransparent;
+				if (bIsTransparent == -1) bIsTransparent = isTransparent;
+			}
+		}
+		else
+		{
+			int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
 			tex->CheckTrans(buffer, W*H, trans);
 			isTransparent = tex->gl_info.mIsTransparent;
 			if (bIsTransparent == -1) bIsTransparent = isTransparent;
 		}
 	}
-	else if (translation<=0)
-	{
-		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
-		tex->CheckTrans(buffer, W*H, trans);
-		isTransparent = tex->gl_info.mIsTransparent;
-		if (bIsTransparent == -1) bIsTransparent = isTransparent;
-	}
 	else
 	{
 		// When using translations everything must be mapped to the base palette.
-		// Since FTexture's method is doing exactly that by calling GetPixels let's use that here
-		// to do all the dirty work for us. ;)
-		tex->FTexture::CopyTrueColorPixels(&bmp, exx, exx);
+		// so use CopyTrueColorTranslated
+		tex->CopyTrueColorTranslated(&bmp, exx, exx, 0, GLTranslationPalette::GetPalette(translation));
 		isTransparent = 0;
 		// This is not conclusive for setting the texture's transparency info.
 	}

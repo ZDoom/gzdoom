@@ -201,6 +201,11 @@ namespace swrenderer
 		Queue->Push<DrawSpriteTranslatedRevSubClamp32Command>(args);
 	}
 
+	void SWTruecolorDrawers::DrawVoxelBlocks(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount)
+	{
+		Queue->Push<DrawVoxelBlocksRGBACommand>(args, blocks, blockcount);
+	}
+
 	void SWTruecolorDrawers::DrawSpan(const SpanDrawerArgs &args)
 	{
 		Queue->Push<DrawSpan32Command>(args);
@@ -858,4 +863,44 @@ namespace swrenderer
 		return "DrawParticle";
 	}
 
+	/////////////////////////////////////////////////////////////////////////////
+
+	DrawVoxelBlocksRGBACommand::DrawVoxelBlocksRGBACommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) : args(args), blocks(blocks), blockcount(blockcount)
+	{
+	}
+
+	void DrawVoxelBlocksRGBACommand::Execute(DrawerThread *thread)
+	{
+		int pitch = args.Viewport()->RenderTarget->GetPitch();
+		uint8_t *destorig = args.Viewport()->RenderTarget->GetBuffer();
+
+		DrawSprite32Command drawer(args);
+		drawer.args.dc_texturefracx = 0;
+		drawer.args.dc_source2 = 0;
+		for (int i = 0; i < blockcount; i++)
+		{
+			const VoxelBlock &block = blocks[i];
+
+			double v = block.vPos / (double)block.voxelsCount / FRACUNIT;
+			double vstep = block.vStep / (double)block.voxelsCount / FRACUNIT;
+			drawer.args.dc_texturefrac = (int)(v * (1 << 30));
+			drawer.args.dc_iscale = (int)(vstep * (1 << 30));
+			drawer.args.dc_source = block.voxels;
+			drawer.args.dc_textureheight = block.voxelsCount;
+			drawer.args.dc_count = block.height;
+			drawer.args.dc_dest_y = block.y;
+			drawer.args.dc_dest = destorig + (block.x + block.y * pitch) * 4;
+
+			for (int j = 0; j < block.width; j++)
+			{
+				drawer.Execute(thread);
+				drawer.args.dc_dest += 4;
+			}
+		}
+	}
+
+	FString DrawVoxelBlocksRGBACommand::DebugInfo()
+	{
+		return "DrawVoxelBlocks";
+	}
 }

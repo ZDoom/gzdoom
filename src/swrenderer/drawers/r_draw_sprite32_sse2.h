@@ -56,10 +56,9 @@ namespace swrenderer
 	template<typename BlendT, typename SamplerT>
 	class DrawSprite32T : public DrawerCommand
 	{
-	protected:
+	public:
 		SpriteDrawerArgs args;
 
-	public:
 		DrawSprite32T(const SpriteDrawerArgs &drawerargs) : args(drawerargs) { }
 
 		void Execute(DrawerThread *thread) override

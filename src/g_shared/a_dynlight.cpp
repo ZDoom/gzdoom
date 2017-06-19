@@ -139,6 +139,19 @@ void ADynamicLight::Serialize(FSerializer &arc)
 	if (lighttype == PulseLight)
 		arc("lastupdate", m_lastUpdate, def->m_lastUpdate)
 			("cycler", m_cycler, def->m_cycler);
+
+	// Remap the old flags.
+	if (SaveVersion < 4552)
+	{
+		lightflags = 0;
+		if (flags4 & MF4_MISSILEEVENMORE) lightflags |= LF_SUBTRACTIVE;
+		if (flags4 & MF4_MISSILEMORE) lightflags |= LF_ADDITIVE;
+		if (flags4 & MF4_SEESDAGGERS) lightflags |= LF_DONTLIGHTSELF;
+		if (flags4 & MF4_INCOMBAT) lightflags |= LF_ATTENUATE;
+		if (flags4 & MF4_STANDSTILL) lightflags |= LF_NOSHADOWMAP;
+		if (flags4 & MF4_EXTREMEDEATH) lightflags |= LF_DONTLIGHTACTORS;
+		flags4 &= ~(MF4_SEESDAGGERS);	// this flag is dangerous and must be cleared. The others do not matter.
+	}
 }
 
 
@@ -164,7 +177,7 @@ void ADynamicLight::BeginPlay()
 	specialf1 = DAngle(double(SpawnAngle)).Normalized360().Degrees;
 	visibletoplayer = true;
 
-	if (currentrenderer == 1 && gl.legacyMode && (flags4 & MF4_ATTENUATE))
+	if (currentrenderer == 1 && gl.legacyMode && (lightflags & LF_ATTENUATE))
 	{
 		args[LIGHT_INTENSITY] = args[LIGHT_INTENSITY] * 2 / 3;
 		args[LIGHT_SECONDARY_INTENSITY] = args[LIGHT_SECONDARY_INTENSITY] * 2 / 3;
@@ -663,7 +676,7 @@ void ADynamicLight::CollectWithinRadius(const DVector3 &opos, subsector_t *subSe
 			}
 		}
 	}
-	shadowmapped = hitonesidedback && !(flags4 & MF4_NOSHADOWMAP);
+	shadowmapped = hitonesidedback && !(lightflags & LF_NOSHADOWMAP);
 }
 
 //==========================================================================
@@ -791,7 +804,7 @@ CCMD(listlights)
 		Printf("%s at (%f, %f, %f), color = 0x%02x%02x%02x, radius = %f %s %s",
 			dl->target? dl->target->GetClass()->TypeName.GetChars() : dl->GetClass()->TypeName.GetChars(),
 			dl->X(), dl->Y(), dl->Z(), dl->args[LIGHT_RED], 
-			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], dl->radius, (dl->flags4 & MF4_ATTENUATE)? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
+			dl->args[LIGHT_GREEN], dl->args[LIGHT_BLUE], dl->radius, (dl->lightflags & LF_ATTENUATE)? "attenuated" : "", dl->shadowmapped? "shadowmapped" : "");
 		i++;
 		shadowcount += dl->shadowmapped;
 

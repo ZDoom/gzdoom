@@ -215,6 +215,21 @@ namespace swrenderer
 
 	/////////////////////////////////////////////////////////////////////////////
 
+	class DrawVoxelBlocksRGBACommand : public DrawerCommand
+	{
+	public:
+		DrawVoxelBlocksRGBACommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount);
+		void Execute(DrawerThread *thread) override;
+		FString DebugInfo() override;
+
+	private:
+		SpriteDrawerArgs args;
+		const VoxelBlock *blocks;
+		int blockcount;
+	};
+
+	/////////////////////////////////////////////////////////////////////////////
+
 	class SWTruecolorDrawers : public SWPixelFormatDrawers
 	{
 	public:
@@ -246,6 +261,7 @@ namespace swrenderer
 		void DrawSubClampTranslatedColumn(const SpriteDrawerArgs &args) override;
 		void DrawRevSubClampColumn(const SpriteDrawerArgs &args) override;
 		void DrawRevSubClampTranslatedColumn(const SpriteDrawerArgs &args) override;
+		void DrawVoxelBlocks(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) override;
 		void DrawSpan(const SpanDrawerArgs &args) override;
 		void DrawSpanMasked(const SpanDrawerArgs &args) override;
 		void DrawSpanTranslucent(const SpanDrawerArgs &args) override;

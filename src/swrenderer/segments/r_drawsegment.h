@@ -39,6 +39,7 @@ namespace swrenderer
 		uint8_t silhouette; // 0=none, 1=bottom, 2=top, 3=both
 		uint8_t bFogBoundary;
 		uint8_t bFakeBoundary; // for fake walls
+		bool bRenewDrawn;
 		int shade;
 		bool foggy;
 

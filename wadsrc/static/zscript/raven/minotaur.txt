@@ -28,6 +28,8 @@ class Minotaur : Actor
 		ActiveSound "minotaur/active";
 		DropItem "ArtiSuperHealth", 51;
 		DropItem "PhoenixRodAmmo", 84, 10;
+		Obituary "$OB_MINOTAUR";
+		HitObituary "$OB_MINOTAURHIT";
 	}
 
 	States

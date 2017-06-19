@@ -163,12 +163,10 @@ namespace swrenderer
 			if (ds->fake) continue;
 			if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
 			{
-				if (renew && ds->bRenewDrawn)
-					continue;
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2);
-				if (renew && ds->bFogBoundary)
-					ds->bRenewDrawn = true;
+				if (renew && ds->bFogBoundary) // don't draw fogboundary again
+					ds->bFogBoundary = false;
 			}
 		}
 	}

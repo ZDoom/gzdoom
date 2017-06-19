@@ -85,7 +85,6 @@ namespace swrenderer
 
 	void DrawSegmentList::Push(DrawSegment *segment)
 	{
-		segment->bRenewDrawn = false;
 		Segments.Push(segment);
 	}
 

@@ -726,7 +726,7 @@ int FRemapTable::StoreTranslation(int slot)
 //
 //----------------------------------------------------------------------------
 
-TArray<PalEntry> BloodTranslationColors;
+static TArray<PalEntry> BloodTranslationColors;
 
 int CreateBloodTranslation(PalEntry color)
 {
@@ -754,7 +754,9 @@ int CreateBloodTranslation(PalEntry color)
 		I_Error("Too many blood colors");
 	}
 	FRemapTable *trans = new FRemapTable;
-	for (i = 0; i < 256; i++)
+	trans->Palette[0] = 0;
+	trans->Remap[0] = 0;
+	for (i = 1; i < 256; i++)
 	{
 		int bright = MAX(MAX(GPalette.BaseColors[i].r, GPalette.BaseColors[i].g), GPalette.BaseColors[i].b);
 		PalEntry pe = PalEntry(255, color.r*bright/255, color.g*bright/255, color.b*bright/255);

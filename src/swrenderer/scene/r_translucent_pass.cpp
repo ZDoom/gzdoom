@@ -165,6 +165,8 @@ namespace swrenderer
 			{
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2);
+				if (renew && ds->bFogBoundary) // don't draw fogboundary again
+					ds->bFogBoundary = false;
 			}
 		}
 	}

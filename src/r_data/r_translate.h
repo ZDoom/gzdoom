@@ -108,8 +108,6 @@ void R_GetPlayerTranslation (int color, const struct FPlayerColorSet *colorset, 
 
 extern const uint8_t IcePalette[16][3];
 
-extern TArray<PalEntry> BloodTranslationColors;
-
 int CreateBloodTranslation(PalEntry color);
 
 int R_FindCustomTranslation(FName name);

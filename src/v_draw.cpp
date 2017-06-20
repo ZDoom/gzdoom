@@ -94,7 +94,7 @@ int GetUIScale(int altval)
 	int vmax = screen->GetHeight() / 200;
 	int hmax = screen->GetWidth() / 320;
 	int max = MAX(vmax, hmax);
-	return MIN(scaleval, max);
+	return MAX(1,MIN(scaleval, max));
 }
 
 // [RH] Stretch values to make a 320x200 image best fit the screen

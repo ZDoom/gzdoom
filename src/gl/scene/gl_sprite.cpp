@@ -79,7 +79,6 @@ EXTERN_CVAR (Float, transsouls)
 
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
-extern TArray<PalEntry> BloodTranslationColors;
 
 enum HWRenderStyle
 {

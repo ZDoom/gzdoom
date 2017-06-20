@@ -126,6 +126,7 @@ namespace swrenderer
 		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 
 		// [RH] Draw fog partition
+		bool renderwall = true;
 		bool notrelevant = false;
 		if (ds->bFogBoundary)
 		{
@@ -135,16 +136,16 @@ namespace swrenderer
 			RenderFogBoundary renderfog;
 			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep, basecolormap);
 
-			if (!ds->maskedtexturecol)
-			{
-				if (!(ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || visible)
-					notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade, wrap);
-			}
+			if (ds->maskedtexturecol == nullptr)
+				renderwall = false;
 		}
-		else if (!(ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || visible)
+		else if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || !visible)
 		{
-			notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade, wrap);
+			renderwall = false;
 		}
+
+		if (renderwall)
+			notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade, wrap);
 
 		if (ds->bFakeBoundary & 3)
 		{

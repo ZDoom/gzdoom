@@ -34,7 +34,8 @@ namespace swrenderer
 	{
 		thread->PrepareTexture(tex);
 
-		tex->GetWidth();
+		ds_texwidth = tex->GetWidth();
+		ds_texheight = tex->GetHeight();
 		ds_xbits = tex->WidthBits;
 		ds_ybits = tex->HeightBits;
 		if ((1 << ds_xbits) > tex->GetWidth())

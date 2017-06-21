@@ -37,7 +37,6 @@ union QWORD_UNION
 #define FRACUNIT						(1<<FRACBITS)
 
 typedef int32_t							fixed_t;
-typedef uint32_t						dsfixed_t;				// fixedpt used by span drawer
 
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)

@@ -171,27 +171,11 @@ namespace swrenderer
 
 		double distance = viewport->PlaneDepth(y, planeheight);
 
-		if (drawerargs.TextureWidthBits() != 0)
-		{
-			drawerargs.SetTextureUStep(xs_ToFixed(32 - drawerargs.TextureWidthBits(), distance * xstepscale));
-			drawerargs.SetTextureUPos(xs_ToFixed(32 - drawerargs.TextureWidthBits(), distance * curxfrac + pviewx));
-		}
-		else
-		{
-			drawerargs.SetTextureUStep(0);
-			drawerargs.SetTextureUPos(0);
-		}
+		drawerargs.SetTextureUStep(distance * xstepscale / drawerargs.TextureWidth());
+		drawerargs.SetTextureUPos((distance * curxfrac + pviewx) / drawerargs.TextureWidth());
 
-		if (drawerargs.TextureHeightBits() != 0)
-		{
-			drawerargs.SetTextureVStep(xs_ToFixed(32 - drawerargs.TextureHeightBits(), distance * ystepscale));
-			drawerargs.SetTextureVPos(xs_ToFixed(32 - drawerargs.TextureHeightBits(), distance * curyfrac + pviewy));
-		}
-		else
-		{
-			drawerargs.SetTextureVStep(0);
-			drawerargs.SetTextureVPos(0);
-		}
+		drawerargs.SetTextureVStep(distance * ystepscale / drawerargs.TextureHeight());
+		drawerargs.SetTextureVPos((distance * curyfrac + pviewy) / drawerargs.TextureHeight());
 		
 		if (viewport->RenderTarget->IsBgra())
 		{

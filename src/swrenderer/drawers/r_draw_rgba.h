@@ -286,7 +286,7 @@ namespace swrenderer
 	{
 	public:
 		// calculates the light constant passed to the shade_pal_index function
-		FORCEINLINE static uint32_t calc_light_multiplier(dsfixed_t light)
+		FORCEINLINE static uint32_t calc_light_multiplier(uint32_t light)
 		{
 			return 256 - (light >> (FRACBITS - 8));
 		}

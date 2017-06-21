@@ -271,8 +271,8 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 
 	viewport->RenderTarget->Lock(true);
 
-	scalex /= tex->Scale.X;
-	scaley /= tex->Scale.Y;
+	scalex = tex->Scale.X / scalex;
+	scaley = tex->Scale.Y / scaley;
 
 	// Use the CRT's functions here.
 	cosrot = cos(rotation.Radians());

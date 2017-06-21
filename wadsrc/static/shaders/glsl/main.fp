@@ -120,7 +120,7 @@ float R_DoomLightingEquation(float light)
 	float shade = 2.0 - (L + 12.0) / 128.0;
 	float lightscale;
 	if (uPalLightLevels != 0)
-		lightscale = float(int(shade - vis));
+		lightscale = float(-int(-(shade - vis) * 32.0)) / 32.0;
 	else
 		lightscale = shade - vis;
 

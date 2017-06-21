@@ -378,6 +378,8 @@ void NullParam(const char *varname);
 
 #ifdef _DEBUG
 bool AssertObject(void * ob);
+#else
+#define AssertObject(o) TRUE
 #endif
 
 #define PARAM_NULLCHECK(ptr, var) (ptr == nullptr? NullParam(#var), ptr : ptr)

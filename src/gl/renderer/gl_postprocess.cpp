@@ -531,9 +531,9 @@ void FGLRenderer::CreateTonemapPalette()
 				{
 					PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 0, 256)];
 					int index = ((r * 64 + g) * 64 + b) * 4;
-					lut[index] = color.r;
+					lut[index] = color.b;
 					lut[index + 1] = color.g;
-					lut[index + 2] = color.b;
+					lut[index + 2] = color.r;
 					lut[index + 3] = 255;
 				}
 			}

@@ -61,15 +61,14 @@ namespace swrenderer
 
 		struct TextureData
 		{
-			uint32_t xbits;
-			uint32_t ybits;
+			uint32_t width;
+			uint32_t height;
+			uint32_t xone;
+			uint32_t yone;
 			uint32_t xstep;
 			uint32_t ystep;
 			uint32_t xfrac;
 			uint32_t yfrac;
-			uint32_t yshift;
-			uint32_t xshift;
-			uint32_t xmask;
 			const uint32_t *source;
 		};
 
@@ -80,8 +79,8 @@ namespace swrenderer
 			if (thread->line_skipped_by_thread(args.DestY())) return;
 			
 			TextureData texdata;
-			texdata.xbits = args.TextureWidthBits();
-			texdata.ybits = args.TextureHeightBits();
+			texdata.width = args.TextureWidth();
+			texdata.height = args.TextureHeight();
 			texdata.xstep = args.TextureUStep();
 			texdata.ystep = args.TextureVStep();
 			texdata.xfrac = args.TextureUPos();
@@ -98,22 +97,21 @@ namespace swrenderer
 				int level = (int)lod;
 				while (level > 0)
 				{
-					if (texdata.xbits <= 2 || texdata.ybits <= 2)
+					if (texdata.width <= 2 || texdata.height <= 2)
 						break;
 
-					texdata.source += (1 << (texdata.xbits)) * (1 << (texdata.ybits));
-					texdata.xbits -= 1;
-					texdata.ybits -= 1;
+					texdata.source += texdata.width * texdata.height;
+					texdata.width = MAX<uint32_t>(texdata.width / 2, 1);
+					texdata.height = MAX<uint32_t>(texdata.height / 2, 1);
 					level--;
 				}
 			}
 
-			texdata.yshift = 32 - texdata.ybits;
-			texdata.xshift = texdata.yshift - texdata.xbits;
-			texdata.xmask = ((1 << texdata.xbits) - 1) << texdata.ybits;
+			texdata.xone = (0x80000000u / texdata.width) << 1;
+			texdata.yone = (0x80000000u / texdata.height) << 1;
 
 			bool is_nearest_filter = (magnifying && !r_magfilter) || (!magnifying && !r_minfilter);
-			bool is_64x64 = texdata.xbits == 6 && texdata.ybits == 6;
+			bool is_64x64 = texdata.width == 64 && texdata.height == 64;
 			
 			auto shade_constants = args.ColormapConstants();
 			if (shade_constants.simple_shade)
@@ -198,8 +196,8 @@ namespace swrenderer
 
 			if (FilterModeT::Mode == (int)FilterModes::Linear)
 			{
-				texdata.xfrac -= 1 << (31 - texdata.xbits);
-				texdata.yfrac -= 1 << (31 - texdata.ybits);
+				texdata.xfrac -= texdata.xone / 2;
+				texdata.yfrac -= texdata.yone / 2;
 			}
 
 			uint32_t srcalpha = args.SrcAlpha() >> (FRACBITS - 8);
@@ -217,7 +215,7 @@ namespace swrenderer
 					bgcolor = 0;
 				}
 
-				uint32_t ifgcolor = Sample<FilterModeT, TextureSizeT>(texdata.xbits, texdata.ybits, texdata.xstep, texdata.ystep, texdata.xfrac, texdata.yfrac, texdata.yshift, texdata.xshift, texdata.xmask, texdata.source);
+				uint32_t ifgcolor = Sample<FilterModeT, TextureSizeT>(texdata.width, texdata.height, texdata.xone, texdata.yone, texdata.xstep, texdata.ystep, texdata.xfrac, texdata.yfrac, texdata.source);
 				BgraColor fgcolor = Shade<ShadeModeT>(ifgcolor, light, desaturate, inv_desaturate, shade_fade, shade_light, lights, num_lights, viewpos_x);
 				BgraColor outcolor = Blend(fgcolor, bgcolor, srcalpha, destalpha, ifgcolor);
 
@@ -231,7 +229,7 @@ namespace swrenderer
 		}
 
 		template<typename FilterModeT, typename TextureSizeT>
-		FORCEINLINE uint32_t Sample(uint32_t xbits, uint32_t ybits, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, uint32_t yshift, uint32_t xshift, uint32_t xmask, const uint32_t *source)
+		FORCEINLINE uint32_t Sample(uint32_t width, uint32_t height, uint32_t xone, uint32_t yone, uint32_t xstep, uint32_t ystep, uint32_t xfrac, uint32_t yfrac, const uint32_t *source)
 		{
 			using namespace DrawSpan32TModes;
 
@@ -242,37 +240,44 @@ namespace swrenderer
 			}
 			else if (FilterModeT::Mode == (int)FilterModes::Nearest)
 			{
-				int sample_index = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				uint32_t x = ((xfrac >> 16) * width) >> 16;
+				uint32_t y = ((yfrac >> 16) * height) >> 16;
+				int sample_index = x * height + y;
 				return source[sample_index];
 			}
 			else
 			{
-				uint32_t xxbits, yybits;
+				uint32_t p00, p01, p10, p11;
+				uint32_t frac_x, frac_y;
 				if (TextureSizeT::Mode == (int)SpanTextureSize::Size64x64)
 				{
-					xxbits = 26;
-					yybits = 26;
+					frac_x = xfrac >> 16 << 6;
+					frac_y = yfrac >> 16 << 6;
+					uint32_t x0 = frac_x >> 16;
+					uint32_t y0 = frac_y >> 16;
+					uint32_t x1 = (x0 + 1) & 0x3f;
+					uint32_t y1 = (y0 + 1) & 0x3f;
+					p00 = source[(y0 + (x0 << 6))];
+					p01 = source[(y1 + (x0 << 6))];
+					p10 = source[(y0 + (x1 << 6))];
+					p11 = source[(y1 + (x1 << 6))];
 				}
 				else
 				{
-					xxbits = 32 - xbits;
-					yybits = 32 - ybits;
+					frac_x = (xfrac >> 16) * width;
+					frac_y = (yfrac >> 16) * height;
+					uint32_t x0 = frac_x >> 16;
+					uint32_t y0 = frac_y >> 16;
+					uint32_t x1 = (((xfrac + xone) >> 16) * width) >> 16;
+					uint32_t y1 = (((yfrac + yone) >> 16) * height) >> 16;
+					p00 = source[y0 + x0 * height];
+					p01 = source[y1 + x0 * height];
+					p10 = source[y0 + x1 * height];
+					p11 = source[y1 + x1 * height];
 				}
 
-				uint32_t xxshift = (32 - xxbits);
-				uint32_t yyshift = (32 - yybits);
-				uint32_t xxmask = (1 << xxshift) - 1;
-				uint32_t yymask = (1 << yyshift) - 1;
-				uint32_t x = xfrac >> xxbits;
-				uint32_t y = yfrac >> yybits;
-
-				uint32_t p00 = source[((y & yymask) + ((x & xxmask) << yyshift))];
-				uint32_t p01 = source[(((y + 1) & yymask) + ((x & xxmask) << yyshift))];
-				uint32_t p10 = source[((y & yymask) + (((x + 1) & xxmask) << yyshift))];
-				uint32_t p11 = source[(((y + 1) & yymask) + (((x + 1) & xxmask) << yyshift))];
-
-				uint32_t inv_b = (xfrac >> (xxbits - 4)) & 15;
-				uint32_t inv_a = (yfrac >> (yybits - 4)) & 15;
+				uint32_t inv_b = (frac_x >> 12) & 15;
+				uint32_t inv_a = (frac_y >> 12) & 15;
 				uint32_t a = 16 - inv_a;
 				uint32_t b = 16 - inv_b;
 

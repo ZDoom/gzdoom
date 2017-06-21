@@ -285,26 +285,12 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 		drawerargs.SetLight(colormap, 0, clamp(shade >> FRACBITS, 0, NUMCOLORMAPS - 1));
 	else
 		drawerargs.SetLight(&identitycolormap, 0, 0);
-	if (drawerargs.TextureWidthBits() != 0)
-	{
-		scalex = double(1u << (32 - drawerargs.TextureWidthBits())) / scalex;
-		drawerargs.SetTextureUStep(xs_RoundToInt(cosrot * scalex));
-	}
-	else
-	{ // Texture is one pixel wide.
-		scalex = 0;
-		drawerargs.SetTextureUStep(0);
-	}
-	if (drawerargs.TextureHeightBits() != 0)
-	{
-		scaley = double(1u << (32 - drawerargs.TextureHeightBits())) / scaley;
-		drawerargs.SetTextureVStep(xs_RoundToInt(sinrot * scaley));
-	}
-	else
-	{ // Texture is one pixel tall.
-		scaley = 0;
-		drawerargs.SetTextureVStep(0);
-	}
+
+	scalex /= drawerargs.TextureWidth();
+	scaley /= drawerargs.TextureHeight();
+
+	drawerargs.SetTextureUStep(cosrot * scalex);
+	drawerargs.SetTextureVStep(sinrot * scaley);
 
 	int width = canvas->GetWidth();
 
@@ -382,8 +368,8 @@ void SWCanvas::FillSimplePoly(DCanvas *canvas, FTexture *tex, FVector2 *points, 
 						tex.X = t * cosrot - tex.Y * sinrot;
 						tex.Y = tex.Y * cosrot + t * sinrot;
 					}
-					drawerargs.SetTextureUPos(xs_RoundToInt(tex.X * scalex));
-					drawerargs.SetTextureVPos(xs_RoundToInt(tex.Y * scaley));
+					drawerargs.SetTextureUPos(tex.X * scalex);
+					drawerargs.SetTextureVPos(tex.Y * scaley);
 
 					drawerargs.DrawSpan(&thread);
 #endif

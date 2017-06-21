@@ -21,10 +21,10 @@ namespace swrenderer
 		void SetDestX2(int x) { ds_x2 = x; }
 		void SetTexture(RenderThread *thread, FTexture *tex);
 		void SetTextureLOD(double lod) { ds_lod = lod; }
-		void SetTextureUPos(dsfixed_t xfrac) { ds_xfrac = xfrac; }
-		void SetTextureVPos(dsfixed_t yfrac) { ds_yfrac = yfrac; }
-		void SetTextureUStep(dsfixed_t xstep) { ds_xstep = xstep; }
-		void SetTextureVStep(dsfixed_t vstep) { ds_ystep = vstep; }
+		void SetTextureUPos(double u) { ds_xfrac = (uint32_t)(int64_t)(u * 4294967296.0); }
+		void SetTextureVPos(double v) { ds_yfrac = (uint32_t)(int64_t)(v * 4294967296.0); }
+		void SetTextureUStep(double ustep) { ds_xstep = (uint32_t)(int64_t)(ustep * 4294967296.0); }
+		void SetTextureVStep(double vstep) { ds_ystep = (uint32_t)(int64_t)(vstep * 4294967296.0); }
 		void SetSolidColor(int colorIndex) { ds_color = colorIndex; }
 
 		void DrawSpan(RenderThread *thread);
@@ -39,11 +39,13 @@ namespace swrenderer
 		int DestY() const { return ds_y; }
 		int DestX1() const { return ds_x1; }
 		int DestX2() const { return ds_x2; }
-		dsfixed_t TextureUPos() const { return ds_xfrac; }
-		dsfixed_t TextureVPos() const { return ds_yfrac; }
-		dsfixed_t TextureUStep() const { return ds_xstep; }
-		dsfixed_t TextureVStep() const { return ds_ystep; }
+		uint32_t TextureUPos() const { return ds_xfrac; }
+		uint32_t TextureVPos() const { return ds_yfrac; }
+		uint32_t TextureUStep() const { return ds_xstep; }
+		uint32_t TextureVStep() const { return ds_ystep; }
 		int SolidColor() const { return ds_color; }
+		int TextureWidth() const { return ds_texwidth; }
+		int TextureHeight() const { return ds_texheight; }
 		int TextureWidthBits() const { return ds_xbits; }
 		int TextureHeightBits() const { return ds_ybits; }
 		const uint8_t *TexturePixels() const { return ds_source; }
@@ -64,14 +66,16 @@ namespace swrenderer
 		int ds_y;
 		int ds_x1;
 		int ds_x2;
+		int ds_texwidth;
+		int ds_texheight;
 		int ds_xbits;
 		int ds_ybits;
 		const uint8_t *ds_source;
 		bool ds_source_mipmapped;
-		dsfixed_t ds_xfrac;
-		dsfixed_t ds_yfrac;
-		dsfixed_t ds_xstep;
-		dsfixed_t ds_ystep;
+		uint32_t ds_xfrac;
+		uint32_t ds_yfrac;
+		uint32_t ds_xstep;
+		uint32_t ds_ystep;
 		uint32_t *dc_srcblend;
 		uint32_t *dc_destblend;
 		fixed_t dc_srcalpha;

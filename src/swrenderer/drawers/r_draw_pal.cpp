@@ -1964,8 +1964,8 @@ namespace swrenderer
 		_dest = args.Viewport()->GetDest(_x1, _y);
 		_xstep = args.TextureUStep();
 		_ystep = args.TextureVStep();
-		_xbits = args.TextureWidthBits();
-		_ybits = args.TextureHeightBits();
+		_srcwidth = args.TextureWidth();
+		_srcheight = args.TextureHeight();
 		_srcblend = args.SrcBlend();
 		_destblend = args.DestBlend();
 		_color = args.SolidColor();
@@ -2035,10 +2035,10 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		dsfixed_t xfrac;
-		dsfixed_t yfrac;
-		dsfixed_t xstep;
-		dsfixed_t ystep;
+		uint32_t xfrac;
+		uint32_t yfrac;
+		uint32_t xstep;
+		uint32_t ystep;
 		uint8_t *dest;
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
@@ -2060,7 +2060,7 @@ namespace swrenderer
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;
 
-		if (_xbits == 6 && _ybits == 6 && num_dynlights == 0)
+		if (_srcwidth == 64 && _srcheight == 64 && num_dynlights == 0)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -2077,7 +2077,7 @@ namespace swrenderer
 				yfrac += ystep;
 			} while (--count);
 		}
-		else if (_xbits == 6 && _ybits == 6)
+		else if (_srcwidth == 64 && _srcheight == 64)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -2097,14 +2097,13 @@ namespace swrenderer
 		}
 		else
 		{
-			uint8_t yshift = 32 - _ybits;
-			uint8_t xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
+			uint8_t srcwidth = _srcwidth;
+			uint8_t srcheight = _srcheight;
 
 			do
 			{
 				// Current texture index in u,v.
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 
 				// Lookup pixel from flat texture tile,
 				//  re-index using light/colormap.
@@ -2123,10 +2122,10 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		dsfixed_t xfrac;
-		dsfixed_t yfrac;
-		dsfixed_t xstep;
-		dsfixed_t ystep;
+		uint32_t xfrac;
+		uint32_t yfrac;
+		uint32_t xstep;
+		uint32_t ystep;
 		uint8_t *dest;
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
@@ -2148,7 +2147,7 @@ namespace swrenderer
 		float viewpos_x = _viewpos_x;
 		float step_viewpos_x = _step_viewpos_x;
 
-		if (_xbits == 6 && _ybits == 6)
+		if (_srcwidth == 64 && _srcheight == 64)
 		{
 			// 64x64 is the most common case by far, so special case it.
 			do
@@ -2169,14 +2168,14 @@ namespace swrenderer
 		}
 		else
 		{
-			uint8_t yshift = 32 - _ybits;
-			uint8_t xshift = yshift - _xbits;
-			int xmask = ((1 << _xbits) - 1) << _ybits;
+			uint8_t srcwidth = _srcwidth;
+			uint8_t srcheight = _srcheight;
+
 			do
 			{
 				int texdata;
 
-				spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+				spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 				texdata = source[spot];
 				if (texdata != 0)
 				{
@@ -2195,10 +2194,10 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		dsfixed_t xfrac;
-		dsfixed_t yfrac;
-		dsfixed_t xstep;
-		dsfixed_t ystep;
+		uint32_t xfrac;
+		uint32_t yfrac;
+		uint32_t xstep;
+		uint32_t ystep;
 		uint8_t *dest;
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
@@ -2226,7 +2225,7 @@ namespace swrenderer
 
 		if (!r_blendmethod)
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2245,12 +2244,12 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					fg = fg2rgb[fg];
@@ -2265,7 +2264,7 @@ namespace swrenderer
 		}
 		else
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2285,12 +2284,12 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
@@ -2311,10 +2310,10 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		dsfixed_t xfrac;
-		dsfixed_t yfrac;
-		dsfixed_t xstep;
-		dsfixed_t ystep;
+		uint32_t xfrac;
+		uint32_t yfrac;
+		uint32_t xstep;
+		uint32_t ystep;
 		uint8_t *dest;
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
@@ -2342,7 +2341,7 @@ namespace swrenderer
 
 		if (!r_blendmethod)
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2368,14 +2367,14 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
 					uint8_t texdata;
 
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					texdata = source[spot];
 					if (texdata != 0)
 					{
@@ -2395,7 +2394,7 @@ namespace swrenderer
 		}
 		else
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2421,14 +2420,14 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
 					uint8_t texdata;
 
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					texdata = source[spot];
 					if (texdata != 0)
 					{
@@ -2453,10 +2452,10 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		dsfixed_t xfrac;
-		dsfixed_t yfrac;
-		dsfixed_t xstep;
-		dsfixed_t ystep;
+		uint32_t xfrac;
+		uint32_t yfrac;
+		uint32_t xstep;
+		uint32_t ystep;
 		uint8_t *dest;
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
@@ -2483,7 +2482,7 @@ namespace swrenderer
 
 		if (!r_blendmethod)
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2506,12 +2505,12 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t a = fg2rgb[fg] + bg2rgb[*dest];
 					uint32_t b = a;
@@ -2530,7 +2529,7 @@ namespace swrenderer
 		}
 		else
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2550,12 +2549,12 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					uint32_t fg = num_dynlights != 0 ? AddLights(dynlights, num_dynlights, viewpos_x, colormap[source[spot]], source[spot]) : colormap[source[spot]];
 					uint32_t bg = *dest;
 					int r = MAX((palette[fg].r * _srcalpha + palette[bg].r * _destalpha)>>18, 0);
@@ -2576,10 +2575,10 @@ namespace swrenderer
 		if (thread->line_skipped_by_thread(_y))
 			return;
 
-		dsfixed_t xfrac;
-		dsfixed_t yfrac;
-		dsfixed_t xstep;
-		dsfixed_t ystep;
+		uint32_t xfrac;
+		uint32_t yfrac;
+		uint32_t xstep;
+		uint32_t ystep;
 		uint8_t *dest;
 		const uint8_t *source = _source;
 		const uint8_t *colormap = _colormap;
@@ -2606,7 +2605,7 @@ namespace swrenderer
 
 		if (!r_blendmethod)
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2636,14 +2635,14 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
 					uint8_t texdata;
 
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					texdata = source[spot];
 					if (texdata != 0)
 					{
@@ -2667,7 +2666,7 @@ namespace swrenderer
 		}
 		else
 		{
-			if (_xbits == 6 && _ybits == 6)
+			if (_srcwidth == 64 && _srcheight == 64)
 			{
 				// 64x64 is the most common case by far, so special case it.
 				do
@@ -2693,14 +2692,14 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t yshift = 32 - _ybits;
-				uint8_t xshift = yshift - _xbits;
-				int xmask = ((1 << _xbits) - 1) << _ybits;
+				uint8_t srcwidth = _srcwidth;
+				uint8_t srcheight = _srcheight;
+
 				do
 				{
 					uint8_t texdata;
 
-					spot = ((xfrac >> xshift) & xmask) + (yfrac >> yshift);
+					spot = (((xfrac >> 16) * srcwidth) >> 16) * srcheight + (((yfrac >> 16) * srcheight) >> 16);
 					texdata = source[spot];
 					if (texdata != 0)
 					{

@@ -449,7 +449,7 @@ struct DropItem native
 	native readonly DropItem Next;
 	native readonly name Name;
 	native readonly int Probability;
-	native int Amount;
+	native readonly int Amount;
 }
 
 class SpotState : Object native

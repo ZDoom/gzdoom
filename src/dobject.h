@@ -198,7 +198,7 @@ protected:
 	enum { MetaClassNum = CLASSREG_PClass };
 
 	// Per-instance variables. There are four.
-#ifdef _DEBUG
+#ifndef NDEBUG
 public:
 	enum
 	{

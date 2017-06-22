@@ -229,7 +229,7 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 }
 
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 bool AssertObject(void * ob)
 {
 	auto obj = (DObject*)ob;

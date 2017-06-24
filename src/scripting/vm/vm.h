@@ -376,7 +376,7 @@ int VMCall(VMFunction *func, VMValue *params, int numparams, VMReturn *results, 
 // variable name <x> at position <p>
 void NullParam(const char *varname);
 
-#ifdef _DEBUG
+#ifndef NDEBUG
 bool AssertObject(void * ob);
 #endif
 

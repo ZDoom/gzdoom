@@ -17,6 +17,7 @@ EXTERN_CVAR(Int, r_drawfuzz);
 EXTERN_CVAR(Bool, r_drawtrans);
 EXTERN_CVAR(Float, transsouls);
 EXTERN_CVAR(Bool, r_dynlights);
+EXTERN_CVAR(Bool, r_fuzzscale);
 
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
@@ -41,7 +42,9 @@ namespace swrenderer
 
 	// Spectre/Invisibility.
 	#define FUZZTABLE 50
+	#define FUZZ_RANDOM_X_SIZE 100
 	extern int fuzzoffset[FUZZTABLE + 1];
+	extern int fuzz_random_x_offset[FUZZ_RANDOM_X_SIZE];
 	extern int fuzzpos;
 	extern int fuzzviewheight;
 
@@ -99,5 +102,6 @@ namespace swrenderer
 	void R_InitFuzzTable(int fuzzoff);
 	void R_InitParticleTexture();
 
+	void R_UpdateFuzzPosFrameStart();
 	void R_UpdateFuzzPos(const SpriteDrawerArgs &args);
 }

@@ -142,7 +142,10 @@ namespace swrenderer
 
 	void SWTruecolorDrawers::DrawFuzzColumn(const SpriteDrawerArgs &args)
 	{
-		Queue->Push<DrawFuzzColumnRGBACommand>(args);
+		if (r_fuzzscale)
+			Queue->Push<DrawScaledFuzzColumnRGBACommand>(args);
+		else
+			Queue->Push<DrawFuzzColumnRGBACommand>(args);
 		R_UpdateFuzzPos(args);
 	}
 
@@ -244,6 +247,69 @@ namespace swrenderer
 	void SWTruecolorDrawers::DrawDoubleSkyColumn(const SkyDrawerArgs &args)
 	{
 		Queue->Push<DrawSkyDouble32Command>(args);
+	}
+
+	/////////////////////////////////////////////////////////////////////////////
+
+	DrawScaledFuzzColumnRGBACommand::DrawScaledFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs)
+	{
+		_x = drawerargs.FuzzX();
+		_yl = drawerargs.FuzzY1();
+		_yh = drawerargs.FuzzY2();
+		_destorg = drawerargs.Viewport()->GetDest(0, 0);
+		_pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
+		_fuzzpos = fuzzpos;
+		_fuzzviewheight = fuzzviewheight;
+	}
+
+	void DrawScaledFuzzColumnRGBACommand::Execute(DrawerThread *thread)
+	{
+		int x = _x;
+		int yl = MAX(_yl, 1);
+		int yh = MIN(_yh, _fuzzviewheight);
+
+		int count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0) return;
+
+		int pitch = _pitch;
+		uint32_t *dest = _pitch * yl + x + (uint32_t*)_destorg;
+
+		int scaled_x = x * 200 / _fuzzviewheight;
+		int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + _fuzzpos;
+
+		fixed_t fuzzstep = (200 << FRACBITS) / _fuzzviewheight;
+		fixed_t fuzzcount = FUZZTABLE << FRACBITS;
+		fixed_t fuzz = (fuzz_x << FRACBITS) + yl * fuzzstep;
+
+		dest = thread->dest_for_thread(yl, pitch, dest);
+		pitch *= thread->num_cores;
+
+		fuzz += fuzzstep * thread->skipped_by_thread(yl);
+		fuzz %= fuzzcount;
+		fuzzstep *= thread->num_cores;
+
+		while (count > 0)
+		{
+			int alpha = 32 - fuzzoffset[fuzz >> FRACBITS];
+
+			uint32_t bg = *dest;
+			uint32_t red = (RPART(bg) * alpha) >> 5;
+			uint32_t green = (GPART(bg) * alpha) >> 5;
+			uint32_t blue = (BPART(bg) * alpha) >> 5;
+
+			*dest = 0xff000000 | (red << 16) | (green << 8) | blue;
+			dest += pitch;
+
+			fuzz += fuzzstep;
+			if (fuzz >= fuzzcount) fuzz -= fuzzcount;
+
+			count--;
+		}
+	}
+
+	FString DrawScaledFuzzColumnRGBACommand::DebugInfo()
+	{
+		return "DrawScaledFuzzColumn";
 	}
 
 	/////////////////////////////////////////////////////////////////////////////

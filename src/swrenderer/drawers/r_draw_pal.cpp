@@ -1834,6 +1834,60 @@ namespace swrenderer
 		}
 	}
 
+	/////////////////////////////////////////////////////////////////////////////
+
+	DrawScaledFuzzColumnPalCommand::DrawScaledFuzzColumnPalCommand(const SpriteDrawerArgs &drawerargs)
+	{
+		_x = drawerargs.FuzzX();
+		_yl = drawerargs.FuzzY1();
+		_yh = drawerargs.FuzzY2();
+		_destorg = drawerargs.Viewport()->GetDest(0, 0);
+		_pitch = drawerargs.Viewport()->RenderTarget->GetPitch();
+		_fuzzpos = fuzzpos;
+		_fuzzviewheight = fuzzviewheight;
+	}
+
+	void DrawScaledFuzzColumnPalCommand::Execute(DrawerThread *thread)
+	{
+		int x = _x;
+		int yl = MAX(_yl, 1);
+		int yh = MIN(_yh, _fuzzviewheight);
+
+		int count = thread->count_for_thread(yl, yh - yl + 1);
+		if (count <= 0) return;
+
+		int pitch = _pitch;
+		uint8_t *dest = _pitch * yl + x + (uint8_t*)_destorg;
+
+		int scaled_x = x * 200 / _fuzzviewheight;
+		int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + _fuzzpos;
+
+		fixed_t fuzzstep = (200 << FRACBITS) / _fuzzviewheight;
+		fixed_t fuzzcount = FUZZTABLE << FRACBITS;
+		fixed_t fuzz = (fuzz_x << FRACBITS) + yl * fuzzstep;
+
+		dest = thread->dest_for_thread(yl, pitch, dest);
+		pitch *= thread->num_cores;
+
+		fuzz += fuzzstep * thread->skipped_by_thread(yl);
+		fuzz %= fuzzcount;
+		fuzzstep *= thread->num_cores;
+
+		uint8_t *map = NormalLight.Maps;
+
+		while (count > 0)
+		{
+			int offset = fuzzoffset[fuzz >> FRACBITS] << 8;
+			*dest = map[offset + *dest];
+			dest += pitch;
+
+			fuzz += fuzzstep;
+			if (fuzz >= fuzzcount) fuzz -= fuzzcount;
+
+			count--;
+		}
+	}
+
 	/////////////////////////////////////////////////////////////////////////
 
 	DrawFuzzColumnPalCommand::DrawFuzzColumnPalCommand(const SpriteDrawerArgs &args)

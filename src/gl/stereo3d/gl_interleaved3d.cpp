@@ -41,6 +41,7 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_present3dRowshader.h"
 
+EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Bool, fullscreen)
@@ -106,6 +107,7 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 		shader.InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
 		shader.Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 		shader.Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+		shader.Saturation.Set(clamp<float>(vid_saturation, -3.0f, 3.0f));
 	}
 	shader.Scale.Set(
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),

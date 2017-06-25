@@ -73,6 +73,14 @@ CUSTOM_CVAR (Float, vid_contrast, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
+CUSTOM_CVAR (Float, vid_saturation, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma(Gamma); //SetContrast (self);
+	}
+}
+
 
 // Do some tinkering with the menus so that certain options only appear
 // when they are actually valid.

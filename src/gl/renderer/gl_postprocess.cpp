@@ -149,6 +149,7 @@ CVAR(Float, gl_menu_blur, -1.0f, CVAR_ARCHIVE)
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
+EXTERN_CVAR(Float, vid_saturation)
 
 
 void FGLRenderer::RenderScreenQuad()
@@ -858,12 +859,14 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 		mPresentShader->InvGamma.Set(1.0f);
 		mPresentShader->Contrast.Set(1.0f);
 		mPresentShader->Brightness.Set(0.0f);
+		mPresentShader->Saturation.Set(1.0f);
 	}
 	else
 	{
 		mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
 		mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 		mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+		mPresentShader->Saturation.Set(clamp<float>(vid_saturation, -3.0f, 3.f));
 	}
 	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 	RenderScreenQuad();

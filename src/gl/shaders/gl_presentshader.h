@@ -12,6 +12,7 @@ public:
 	FBufferedUniform1f InvGamma;
 	FBufferedUniform1f Contrast;
 	FBufferedUniform1f Brightness;
+	FBufferedUniform1f Saturation;
 	FBufferedUniform2f Scale;
 
 protected:

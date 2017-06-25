@@ -90,6 +90,23 @@ namespace swrenderer
 		int _fuzzviewheight;
 	};
 
+	class DrawScaledFuzzColumnPalCommand : public DrawerCommand
+	{
+	public:
+		DrawScaledFuzzColumnPalCommand(const SpriteDrawerArgs &drawerargs);
+		void Execute(DrawerThread *thread) override;
+		FString DebugInfo() override { return "DrawScaledFuzzColumnPalCommand"; }
+
+	private:
+		int _x;
+		int _yl;
+		int _yh;
+		uint8_t *_destorg;
+		int _pitch;
+		int _fuzzpos;
+		int _fuzzviewheight;
+	};
+
 	class PalSpanCommand : public DrawerCommand
 	{
 	public:
@@ -245,7 +262,14 @@ namespace swrenderer
 		void FillAddClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnAddClampPalCommand>(args); }
 		void FillSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnSubClampPalCommand>(args); }
 		void FillRevSubClampColumn(const SpriteDrawerArgs &args) override { Queue->Push<FillColumnRevSubClampPalCommand>(args); }
-		void DrawFuzzColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawFuzzColumnPalCommand>(args); R_UpdateFuzzPos(args); }
+		void DrawFuzzColumn(const SpriteDrawerArgs &args) override
+		{
+			if (r_fuzzscale)
+				Queue->Push<DrawScaledFuzzColumnPalCommand>(args);
+			else
+				Queue->Push<DrawFuzzColumnPalCommand>(args);
+			R_UpdateFuzzPos(args);
+		}
 		void DrawAddColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnAddPalCommand>(args); }
 		void DrawTranslatedColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnTranslatedPalCommand>(args); }
 		void DrawTranslatedAddColumn(const SpriteDrawerArgs &args) override { Queue->Push<DrawColumnTlatedAddPalCommand>(args); }

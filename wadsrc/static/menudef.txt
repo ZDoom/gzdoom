@@ -725,6 +725,7 @@ OptionMenu "SWROptions" protected
 	Option "$DSPLYMNU_SKYMODE",					"r_skymode", "SkyModes"
 	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
 	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
+	Option "$DSPLYMNU_SCALEFUZZ",				"r_fuzzscale", "OnOff"
 }
 
 OptionMenu "VideoOptions" protected

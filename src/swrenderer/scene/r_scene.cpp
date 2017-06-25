@@ -152,6 +152,8 @@ namespace swrenderer
 		// Link the polyobjects right before drawing the scene to reduce the amounts of calls to this function
 		PO_LinkToSubsectors();
 
+		R_UpdateFuzzPosFrameStart();
+
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
 		if (!MainThread()->Viewport->viewpoint.showviewer)

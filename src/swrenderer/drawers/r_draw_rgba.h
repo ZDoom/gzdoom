@@ -86,6 +86,22 @@ namespace swrenderer
 		FString DebugInfo() override;
 	};
 
+	class DrawScaledFuzzColumnRGBACommand : public DrawerCommand
+	{
+		int _x;
+		int _yl;
+		int _yh;
+		uint8_t * RESTRICT _destorg;
+		int _pitch;
+		int _fuzzpos;
+		int _fuzzviewheight;
+
+	public:
+		DrawScaledFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs);
+		void Execute(DrawerThread *thread) override;
+		FString DebugInfo() override;
+	};
+
 	class FillSpanRGBACommand : public DrawerCommand
 	{
 		int _x1;

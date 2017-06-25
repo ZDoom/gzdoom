@@ -53,6 +53,7 @@
 #include "swrenderer/scene/r_light.h"
 
 CVAR(Bool, r_dynlights, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Bool, r_fuzzscale, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 namespace swrenderer
 {
@@ -63,6 +64,20 @@ namespace swrenderer
 	int fuzzoffset[FUZZTABLE + 1];
 	int fuzzpos;
 	int fuzzviewheight;
+
+	int fuzz_random_x_offset[FUZZ_RANDOM_X_SIZE] =
+	{
+		75, 76, 21, 91, 56, 33, 62, 99, 61, 79,
+		95, 54, 41, 18, 69, 43, 49, 59, 10, 84,
+		94, 17, 57, 46,  9, 39, 55, 34,100, 81,
+		73, 88, 92,  3, 63, 36,  7, 28, 13, 80,
+		16, 96, 78, 29, 71, 58, 89, 24,  1, 35,
+		52, 82,  4, 14, 22, 53, 38, 66, 12, 72,
+		90, 44, 77, 83,  6, 27, 48, 30, 42, 32,
+		65, 15, 97, 20, 67, 74, 98, 85, 60, 68,
+		19, 26,  8, 87, 86, 64, 11, 37, 31, 47,
+		25,  5, 50, 51, 23,  2, 93, 70, 40, 45
+	};
 
 	uint32_t particle_texture[NUM_PARTICLE_TEXTURES][PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
 
@@ -176,11 +191,28 @@ namespace swrenderer
 		}
 	}
 
+	void R_UpdateFuzzPosFrameStart()
+	{
+		if (r_fuzzscale)
+		{
+			int next_random = 0;
+
+			fuzzpos = (fuzzpos + fuzz_random_x_offset[next_random] * FUZZTABLE / 100) % FUZZTABLE;
+
+			next_random++;
+			if (next_random == FUZZ_RANDOM_X_SIZE)
+				next_random = 0;
+		}
+	}
+
 	void R_UpdateFuzzPos(const SpriteDrawerArgs &args)
 	{
-		int yl = MAX(args.FuzzY1(), 1);
-		int yh = MIN(args.FuzzY2(), fuzzviewheight);
-		if (yl <= yh)
-			fuzzpos = (fuzzpos + yh - yl + 1) % FUZZTABLE;
+		if (!r_fuzzscale)
+		{
+			int yl = MAX(args.FuzzY1(), 1);
+			int yh = MIN(args.FuzzY2(), fuzzviewheight);
+			if (yl <= yh)
+				fuzzpos = (fuzzpos + yh - yl + 1) % FUZZTABLE;
+		}
 	}
 }

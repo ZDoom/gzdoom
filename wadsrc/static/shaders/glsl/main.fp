@@ -114,13 +114,13 @@ float R_DoomLightingEquation(float light)
 
 	// z is the depth in view/eye space, positive going into the screen
 	float z;
-	if ((uPalLightLevels >> 8) == 1)
+	if ((uPalLightLevels >> 8) == 2)
 	{
-		z = pixelpos.w;
+		z = distance(pixelpos.xyz, uCameraPos.xyz);
 	}
 	else 
 	{
-		z = distance(pixelpos.xyz, uCameraPos.xyz);
+		z = pixelpos.w;
 	}
 
 	// The zdoom light equation

@@ -2657,7 +2657,8 @@ MUSIC_DM2INT = "dm2int";
 DSPLYMNU_GLOPT		= "OpenGL Renderer";
 DSPLYMNU_SWOPT		= "Software Renderer";
 DSPLYMNU_GAMMA		= "Gamma correction";
-DSPLYMNU_CONTRAST 	="Contrast";
+DSPLYMNU_CONTRAST 	= "Contrast";
+DSPLYMNU_SATURATION = "Saturation";
 DSPLYMNU_HWGAMMA	= "Hardware Gamma";
 
 // OpenGL Options

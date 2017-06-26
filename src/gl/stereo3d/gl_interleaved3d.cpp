@@ -107,7 +107,7 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 		shader.InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
 		shader.Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 		shader.Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
-		shader.Saturation.Set(clamp<float>(vid_saturation, -3.0f, 3.0f));
+		shader.Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.0f));
 	}
 	shader.Scale.Set(
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),

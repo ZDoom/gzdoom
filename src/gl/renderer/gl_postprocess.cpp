@@ -866,7 +866,7 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 		mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
 		mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 		mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
-		mPresentShader->Saturation.Set(clamp<float>(vid_saturation, -3.0f, 3.f));
+		mPresentShader->Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.f));
 	}
 	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 	RenderScreenQuad();

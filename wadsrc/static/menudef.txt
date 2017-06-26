@@ -734,14 +734,15 @@ OptionMenu "VideoOptions" protected
 	
 	Submenu "$DSPLYMNU_GLOPT", 			"OpenGLOptions"
 	Submenu "$DSPLYMNU_SWOPT", 			"SWROptions"
-	Submenu "$GLMNU_DYNLIGHT",	"GLLightOptions"
+	Submenu "$GLMNU_DYNLIGHT",			"GLLightOptions"
 	Submenu "$DSPLYMNU_SCOREBOARD", 			"ScoreboardOptions"
 	StaticText " "
-	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 3.0, 12.0, 1.0, 0
+	Slider "$DSPLYMNU_SCREENSIZE",				"screenblocks", 				3.0, 12.0, 1.0, 0
 
-	Slider "$DSPLYMNU_GAMMA",			"Gamma",						0.75, 3.0, 0.05, 2
+	Slider "$DSPLYMNU_GAMMA",					"Gamma",						0.75, 3.0, 0.05, 2
 	Slider "$DSPLYMNU_BRIGHTNESS",				"vid_brightness",				-0.8,0.8, 0.05,2
-	Slider "$DSPLYMNU_CONTRAST",					"vid_contrast",	   				0.1, 3.0, 0.1
+	Slider "$DSPLYMNU_CONTRAST",				"vid_contrast",	   				0.1, 3.0, 0.1
+	Slider "$DSPLYMNU_SATURATION",				"vid_saturation",  				-3.0, 3.0, 0.25
 	Option "$DSPLYMNU_HWGAMMA",					"vid_hwgamma", "HWGammaModes"
 
 	Option "$DSPLYMNU_VSYNC",					"vid_vsync", "OnOff"

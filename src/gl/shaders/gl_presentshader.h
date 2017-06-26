@@ -13,6 +13,7 @@ public:
 	FBufferedUniform1f Contrast;
 	FBufferedUniform1f Brightness;
 	FBufferedUniform1f Saturation;
+	FBufferedUniform1i GrayFormula;
 	FBufferedUniform2f Scale;
 
 protected:

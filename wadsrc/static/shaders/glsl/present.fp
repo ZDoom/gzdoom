@@ -7,12 +7,16 @@ uniform float InvGamma;
 uniform float Contrast;
 uniform float Brightness;
 uniform float Saturation;
+uniform int GrayFormula;
 
 vec4 ApplyGamma(vec4 c)
 {
 	vec3 valgray;
 	if (Saturation != 1.0) // attempt to cool things a bit, this calculation makes the GPU run really hot
-		valgray = (0.3 * c.r + 0.59 * c.g + 0.11 * c.b) * (1 - Saturation) + c.rgb * Saturation;
+		if (GrayFormula == 0)
+			valgray = vec3(c.r + c.g + c.b) * (1 - Saturation) / 3 + c.rgb * Saturation;
+		else
+			valgray = vec3(0.3 * c.r + 0.56 * c.g + 0.14 * c.b) * (1 - Saturation) + c.rgb * Saturation;
 	else
 		valgray = c.rgb;
 	vec3 val = valgray * Contrast - (Contrast - 1.0) * 0.5;

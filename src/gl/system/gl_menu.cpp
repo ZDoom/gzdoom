@@ -77,7 +77,15 @@ CUSTOM_CVAR (Float, vid_saturation, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (screen != NULL)
 	{
-		screen->SetGamma(Gamma); //SetContrast (self);
+		screen->SetGamma(Gamma);
+	}
+}
+
+CUSTOM_CVAR(Int, gl_satformula, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+{
+	if (screen != NULL)
+	{
+		screen->SetGamma(Gamma);
 	}
 }
 

@@ -113,13 +113,21 @@ float R_DoomLightingEquation(float light)
 	float L = light * 255.0;
 
 	// z is the depth in view/eye space, positive going into the screen
-	float z = pixelpos.w;
+	float z;
+	if ((uPalLightLevels >> 8) == 2)
+	{
+		z = distance(pixelpos.xyz, uCameraPos.xyz);
+	}
+	else 
+	{
+		z = pixelpos.w;
+	}
 
 	// The zdoom light equation
 	float vis = min(globVis / z, 24.0 / 32.0);
 	float shade = 2.0 - (L + 12.0) / 128.0;
 	float lightscale;
-	if (uPalLightLevels != 0)
+	if ((uPalLightLevels & 0xff) != 0)
 		lightscale = float(-int(-(shade - vis) * 32.0)) / 32.0;
 	else
 		lightscale = shade - vis;

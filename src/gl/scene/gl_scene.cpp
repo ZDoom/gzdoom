@@ -819,6 +819,8 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 	stereo3dMode.SetUp();
 	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
 	{
+		if (eye_ix > 0)
+			SetFixedColormap(camera->player); // reiterate color map for each eye, so night vision goggles work in both eyes
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
 		GLRenderer->SetOutputViewport(bounds);

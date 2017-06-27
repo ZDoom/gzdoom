@@ -438,10 +438,8 @@ namespace swrenderer
 		Thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
 		if (!savedvisibility && viewpoint.camera) viewpoint.camera->renderflags &= ~RF_INVISIBLE;
 
-		PlaneCycles.Clock();
 		Thread->PlaneList->Render();
 		RenderPlanePortals();
-		PlaneCycles.Unclock();
 
 		double vzp = viewpoint.Pos.Z;
 
@@ -458,9 +456,7 @@ namespace swrenderer
 		if (Thread->MainThread)
 			NetUpdate();
 
-		MaskedCycles.Clock(); // [ZZ] count sprites in portals/mirrors along with normal ones.
 		Thread->TranslucentPass->Render();	  //      this is required since with portals there often will be cases when more than 80% of the view is inside a portal.
-		MaskedCycles.Unclock();
 
 		if (Thread->MainThread)
 			NetUpdate();

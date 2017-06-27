@@ -331,6 +331,9 @@ namespace swrenderer
 
 	int VisiblePlaneList::Render()
 	{
+		if (Thread->MainThread)
+			PlaneCycles.Clock();
+
 		VisiblePlane *pl;
 		int i;
 		int vpcount = 0;
@@ -351,6 +354,10 @@ namespace swrenderer
 				}
 			}
 		}
+
+		if (Thread->MainThread)
+			PlaneCycles.Unclock();
+
 		return vpcount;
 	}
 

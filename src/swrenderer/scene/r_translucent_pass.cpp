@@ -173,6 +173,9 @@ namespace swrenderer
 
 	void RenderTranslucentPass::Render()
 	{
+		if (Thread->MainThread)
+			MaskedCycles.Clock();
+
 		CollectPortals();
 		Thread->SpriteList->Sort();
 		Thread->DrawSegments->BuildSegmentGroups();
@@ -223,5 +226,8 @@ namespace swrenderer
 			clip3d->DeleteHeights();
 			clip3d->fake3D = 0;
 		}
+
+		if (Thread->MainThread)
+			MaskedCycles.Unclock();
 	}
 }

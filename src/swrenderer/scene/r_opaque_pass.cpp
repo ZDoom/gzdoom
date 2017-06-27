@@ -779,11 +779,17 @@ namespace swrenderer
 
 	void RenderOpaquePass::RenderScene()
 	{
+		if (Thread->MainThread)
+			WallCycles.Clock();
+
 		SeenSpriteSectors.clear();
 		SeenActors.clear();
 
 		InSubsector = nullptr;
 		RenderBSPNode(level.HeadNode());	// The head node is the last node output.
+
+		if (Thread->MainThread)
+			WallCycles.Unclock();
 	}
 
 	//

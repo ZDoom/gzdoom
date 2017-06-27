@@ -902,7 +902,7 @@ struct TAngle
 
 	TAngle &operator= (double other)
 	{
-		Degrees = other;
+		Degrees = (vec_t)other;
 		return *this;
 	}
 
@@ -1084,7 +1084,7 @@ struct TAngle
 
 	vec_t Radians() const
 	{
-		return Degrees * (pi::pi() / 180.0);
+		return Degrees * (vec_t)(pi::pi() / 180.0);
 	}
 
 	unsigned BAMs() const

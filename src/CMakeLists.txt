@@ -461,6 +461,72 @@ if( NOT DYN_FLUIDSYNTH )
 	endif()
 endif()
 
+option( ENABLE_OPENVR "Enable OpenVR virtual reality mode" OFF )
+if (ENABLE_OPENVR)
+	add_definitions("-DUSE_OPENVR")
+	find_path(OPENVR_SDK_PATH
+		NAMES
+			headers/openvr.h
+		HINTS
+			ENV OPENVR_DIR ENV PROGRAMFILES ENV HOME ENV USERPROFILE
+		PATH_SUFFIXES
+			openvr git/openvr
+	)
+	find_path(OPENVR_INCLUDE_DIRECTORY
+		NAMES
+			openvr.h
+		HINTS
+			${OPENVR_SDK_PATH}/headers
+	)
+	include_directories("${OPENVR_INCLUDE_DIRECTORY}")
+	option( DYN_OPENVR "Dynamically load OpenVR" ON )
+	if (DYN_OPENVR)
+		add_definitions( -DDYN_OPENVR )
+	else(DYN_OPENVR)
+		option( STATIC_OPENVR "Statically link OpenVR API" ON )
+		if(STATIC_OPENVR)
+			# Incorporate the whole openvr API into zdoom, using a few rules lifted from the OpenVR CMakeLists.txt files
+			# This branch avoids the need to ship openvr_api.dll
+			add_definitions( -DVR_API_PUBLIC )
+			add_definitions( -DOPENVR_API_NODLL )
+			if(WIN32 AND X64)
+				add_definitions( -DWIN64 )
+			endif()
+			include_directories(${OPENVR_SDK_PATH}/src ${OPENVR_SDK_PATH}/src/vrcommon)
+			file(GLOB OPENVR_SOURCES "${OPENVR_SDK_PATH}/src/*.cpp" "${OPENVR_SDK_PATH}/src/vrcommon/*.cpp")
+		endif()
+	endif()
+	if(DYN_OPENVR OR NOT STATIC_OPENVR)
+		# Link to correct library for this platform
+		if(WIN32)
+			set(OPENVR_PLAT "win")
+		elseif( APPLE )
+			set(OPENVR_PLAT "osx")
+		else()
+			set(OPENVR_PLAT "linux")
+		endif()
+		if(X64)
+			set(OPENVR_PLAT ${OPENVR_PLAT}64)
+		else()
+			set(OPENVR_PLAT ${OPENVR_PLAT}32)
+		endif()
+		find_library(OPENVR_LIBRARY
+			NAMES openvr_api
+			HINTS "${OPENVR_SDK_PATH}/lib/${OPENVR_PLAT}/"
+		)
+		# Find shared library file needed for package distribution (see install rule later in this file)
+		find_program(OPENVR_SHARED_LIBRARY
+			NAMES libopenvr_api.so libopenvr_api.dylib openvr_api.dll
+			PATHS "${OPENVR_SDK_PATH}/bin/${OPENVR_PLAT}/"
+			NO_DEFAULT_PATH
+		)
+		if(NOT DYN_OPENVR)
+			# Link directly to shared library
+			list(APPEND ZDOOM_LIBS ${OPENVR_LIBRARY})
+		endif()
+	endif()
+endif()
+
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	sound/mididevices/music_win_mididevice.cpp
@@ -994,6 +1060,7 @@ set (PCH_SOURCES
 	gl/stereo3d/gl_stereo_leftright.cpp
 	gl/stereo3d/scoped_view_shifter.cpp
 	gl/stereo3d/gl_anaglyph.cpp
+	gl/stereo3d/gl_openvr.cpp
 	gl/stereo3d/gl_quadstereo.cpp
 	gl/stereo3d/gl_sidebyside3d.cpp
 	gl/stereo3d/gl_interleaved3d.cpp
@@ -1146,6 +1213,7 @@ add_executable( zdoom WIN32 MACOSX_BUNDLE
 	${X86_SOURCES}
 	${FASTMATH_SOURCES}
 	${PCH_SOURCES}
+	${OPENVR_SOURCES}
 	x86.cpp
 	strnatcmp.c
 	zstring.cpp
@@ -1283,6 +1351,11 @@ endif()
 install(TARGETS zdoom
 		DESTINATION ${INSTALL_PATH}
 		COMPONENT "Game executable")
+if(OPENVR_SHARED_LIBRARY)
+	install(PROGRAMS ${OPENVR_SHARED_LIBRARY} 
+		DESTINATION ${INSTALL_PATH}
+		COMPONENT "Shared libraries")
+endif()
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")

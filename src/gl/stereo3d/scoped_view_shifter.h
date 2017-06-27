@@ -40,7 +40,7 @@ namespace s3d {
 	class ScopedViewShifter
 	{
 	public:
-		ScopedViewShifter(float dxyz[3]); // in meters
+		ScopedViewShifter(float dxyz[3]); // in doom units
 		~ScopedViewShifter();
 
 	private:

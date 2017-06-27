@@ -70,7 +70,7 @@ CVAR(Bool, r_scene_multithreaded, false, 0);
 
 namespace swrenderer
 {
-	cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+	cycle_t WallCycles, PlaneCycles, MaskedCycles, DrawerWaitCycles;
 	
 	RenderScene::RenderScene()
 	{
@@ -124,7 +124,9 @@ namespace swrenderer
 			DrawerThreads::Execute(queue);
 		}
 
+		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
+		DrawerWaitCycles.Unclock();
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -132,7 +134,7 @@ namespace swrenderer
 		WallCycles.Reset();
 		PlaneCycles.Reset();
 		MaskedCycles.Reset();
-		WallScanCycles.Reset();
+		DrawerWaitCycles.Reset();
 		
 		R_SetupFrame(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, actor);
 
@@ -179,7 +181,9 @@ namespace swrenderer
 	{
 		// Player sprites needs to be rendered after all the slices because they may be hardware accelerated.
 		// If they are not hardware accelerated the drawers must run after all sliced drawers finished.
+		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
+		DrawerWaitCycles.Unclock();
 		MainThread()->DrawQueue->Clear();
 		MainThread()->PlayerSprites->Render();
 		DrawerThreads::Execute(MainThread()->DrawQueue);
@@ -266,41 +270,23 @@ namespace swrenderer
 		if (thread->X2 < viewwidth)
 			thread->ClipSegments->Clip(thread->X2, viewwidth, true, &visitor);
 
-		if (thread->MainThread)
-			WallCycles.Clock();
-
 		thread->OpaquePass->RenderScene();
 		thread->Clip3D->ResetClip(); // reset clips (floor/ceiling)
-
-		if (thread == MainThread())
-			WallCycles.Unclock();
 
 		if (thread->MainThread)
 			NetUpdate();
 
 		if (viewactive)
 		{
-			if (thread->MainThread)
-				PlaneCycles.Clock();
-
 			thread->PlaneList->Render();
+
 			thread->Portal->RenderPlanePortals();
-
-			if (thread->MainThread)
-				PlaneCycles.Unclock();
-
 			thread->Portal->RenderLinePortals();
 
 			if (thread->MainThread)
 				NetUpdate();
 
-			if (thread->MainThread)
-				MaskedCycles.Clock();
-
 			thread->TranslucentPass->Render();
-
-			if (thread->MainThread)
-				MaskedCycles.Unclock();
 
 			if (thread->MainThread)
 				NetUpdate();
@@ -373,7 +359,9 @@ namespace swrenderer
 		viewport->SetViewport(MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
 
 		RenderActorView(actor, dontmaplines);
+		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
+		DrawerWaitCycles.Unclock();
 
 		viewport->RenderTarget = screen;
 
@@ -419,12 +407,12 @@ namespace swrenderer
 	ADD_STAT(fps)
 	{
 		FString out;
-		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms",
-			FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS());
+		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  drawers=%04.1f ms",
+			FrameCycles.TimeMS(), WallCycles.TimeMS(), PlaneCycles.TimeMS(), MaskedCycles.TimeMS(), DrawerWaitCycles.TimeMS());
 		return out;
 	}
 
-	static double f_acc, w_acc, p_acc, m_acc;
+	static double f_acc, w_acc, p_acc, m_acc, drawer_acc;
 	static int acc_c;
 
 	ADD_STAT(fps_accumulated)
@@ -433,10 +421,11 @@ namespace swrenderer
 		w_acc += WallCycles.TimeMS();
 		p_acc += PlaneCycles.TimeMS();
 		m_acc += MaskedCycles.TimeMS();
+		drawer_acc += DrawerWaitCycles.TimeMS();
 		acc_c++;
 		FString out;
-		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  %d counts",
-			f_acc / acc_c, w_acc / acc_c, p_acc / acc_c, m_acc / acc_c, acc_c);
+		out.Format("frame=%04.1f ms  walls=%04.1f ms  planes=%04.1f ms  masked=%04.1f ms  drawers=%04.1f ms  %d counts",
+			f_acc / acc_c, w_acc / acc_c, p_acc / acc_c, m_acc / acc_c, drawer_acc / acc_c, acc_c);
 		Printf(PRINT_LOG, "%s\n", out.GetChars());
 		return out;
 	}
@@ -457,24 +446,4 @@ namespace swrenderer
 	{
 		bestwallcycles = HUGE_VAL;
 	}
-
-#if 0
-	// The replacement code for Build's wallscan doesn't have any timing calls so this does not work anymore.
-	static double bestscancycles = HUGE_VAL;
-
-	ADD_STAT(scancycles)
-	{
-		FString out;
-		double scancycles = WallScanCycles.Time();
-		if (scancycles && scancycles < bestscancycles)
-			bestscancycles = scancycles;
-		out.Format("%g", bestscancycles);
-		return out;
-	}
-
-	CCMD(clearscancycles)
-	{
-		bestscancycles = HUGE_VAL;
-	}
-#endif
 }

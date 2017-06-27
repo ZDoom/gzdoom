@@ -34,7 +34,7 @@ extern cycle_t FrameCycles;
 
 namespace swrenderer
 {
-	extern cycle_t WallCycles, PlaneCycles, MaskedCycles, WallScanCycles;
+	extern cycle_t WallCycles, PlaneCycles, MaskedCycles, DrawerWaitCycles;
 
 	class RenderThread;
 	

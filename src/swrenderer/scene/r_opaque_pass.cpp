@@ -72,6 +72,20 @@
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 EXTERN_CVAR(Bool, r_drawvoxels);
 
+namespace { double sprite_distance_cull = 1e16; }
+
+CUSTOM_CVAR(Float, r_sprite_distance_cull, 5000.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (r_sprite_distance_cull > 0.0)
+	{
+		sprite_distance_cull = r_sprite_distance_cull * r_sprite_distance_cull;
+	}
+	else
+	{
+		sprite_distance_cull = 1e16;
+	}
+}
+
 namespace swrenderer
 {
 	RenderOpaquePass::RenderOpaquePass(RenderThread *thread) : renderline(thread)
@@ -934,6 +948,10 @@ namespace swrenderer
 		// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
 		RenderPortal *renderportal = Thread->Portal.get();
 		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), renderportal->CurrentPortal->dst))
+			return false;
+
+		double distanceSquared = (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared();
+		if (distanceSquared > sprite_distance_cull)
 			return false;
 
 		return true;

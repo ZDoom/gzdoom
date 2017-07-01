@@ -63,6 +63,7 @@ namespace swrenderer
 		short *sprbottomclip;
 		unsigned int BeginIndex;
 		unsigned int EndIndex;
+		bool GroupDrawn;
 	};
 
 	class DrawSegmentList

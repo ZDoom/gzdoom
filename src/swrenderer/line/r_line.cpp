@@ -508,9 +508,9 @@ namespace swrenderer
 						draw_segment->shade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 					}
 
-					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
+					if ((draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr) && !draw_segment->fake)
 					{
-						Thread->DrawSegments->PushInteresting(draw_segment);
+						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}
 				}
 		}

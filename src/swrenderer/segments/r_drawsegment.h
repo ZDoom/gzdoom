@@ -63,7 +63,6 @@ namespace swrenderer
 		short *sprbottomclip;
 		unsigned int BeginIndex;
 		unsigned int EndIndex;
-		bool GroupDrawn;
 	};
 
 	class DrawSegmentList
@@ -76,14 +75,14 @@ namespace swrenderer
 		unsigned int SegmentsCount() const { return Segments.Size() - StartIndices.Last(); }
 		DrawSegment *Segment(unsigned int index) const { return Segments[Segments.Size() - 1 - index]; }
 
-		unsigned int InterestingSegmentsCount() const { return InterestingSegments.Size() - StartInterestingIndices.Last(); }
-		DrawSegment *InterestingSegment(unsigned int index) const { return InterestingSegments[InterestingSegments.Size() - 1 - index]; }
+		unsigned int TranslucentSegmentsCount() const { return TranslucentSegments.Size() - StartTranslucentIndices.Last(); }
+		DrawSegment *TranslucentSegment(unsigned int index) const { return TranslucentSegments[TranslucentSegments.Size() - 1 - index]; }
 
 		void Clear();
 		void PushPortal();
 		void PopPortal();
 		void Push(DrawSegment *segment);
-		void PushInteresting(DrawSegment *segment);
+		void PushTranslucent(DrawSegment *segment);
 
 		void BuildSegmentGroups();
 
@@ -93,8 +92,8 @@ namespace swrenderer
 		TArray<DrawSegment *> Segments;
 		TArray<unsigned int> StartIndices;
 
-		TArray<DrawSegment *> InterestingSegments; // drawsegs that have something drawn on them
-		TArray<unsigned int> StartInterestingIndices;
+		TArray<DrawSegment *> TranslucentSegments; // drawsegs that have something drawn on them
+		TArray<unsigned int> StartTranslucentIndices;
 
 		// For building segment groups
 		short cliptop[MAXWIDTH];

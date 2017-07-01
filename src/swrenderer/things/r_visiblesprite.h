@@ -46,6 +46,8 @@ namespace swrenderer
 		double SortDist2D() const { return DVector2(deltax, deltay).LengthSquared(); }
 		float SortDist() const { return idepth; }
 
+		float DrawSegDepth() const { return depth; }
+
 	protected:
 		virtual bool IsParticle() const { return false; }
 		virtual bool IsVoxel() const { return false; }

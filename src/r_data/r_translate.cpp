@@ -942,7 +942,9 @@ void R_InitTranslationTables ()
 		IcePaletteRemap[i] = ColorMatcher.Pick (IcePalette[i][0], IcePalette[i][1], IcePalette[i][2]);
 	}
 	FRemapTable *remap = translationtables[TRANSLATION_Standard][7];
-	for (i = 0; i < 256; ++i)
+	remap->Remap[0] = 0;
+	remap->Palette[0] = 0;
+	for (i = 1; i < 256; ++i)
 	{
 		int r = GPalette.BaseColors[i].r;
 		int g = GPalette.BaseColors[i].g;
@@ -955,7 +957,9 @@ void R_InitTranslationTables ()
 	// The alphatexture translation. Since alphatextures use the red channel this is just a standard grayscale mapping.
 	PushIdentityTable(TRANSLATION_Standard);
 	remap = translationtables[TRANSLATION_Standard][8];
-	for (i = 0; i < 256; i++)
+	remap->Remap[0] = 0;
+	remap->Palette[0] = 0;
+	for (i = 1; i < 256; i++)
 	{
 		remap->Remap[i] = i;
 		remap->Palette[i] = PalEntry(255, i, i, i);

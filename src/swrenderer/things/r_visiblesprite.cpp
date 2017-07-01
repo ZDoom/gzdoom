@@ -296,7 +296,7 @@ namespace swrenderer
 		for (unsigned int groupIndex = 0; groupIndex < segmentlist->SegmentGroups.Size(); groupIndex++)
 		{
 			auto &group = segmentlist->SegmentGroups[groupIndex];
-			if (group.x1 >= x2 || group.x2 <= x1)
+			if (group.x1 >= x2 || group.x2 <= x1 || group.neardepth > spr->depth)
 				continue;
 
 			if (group.fardepth < spr->depth) 
@@ -334,11 +334,6 @@ namespace swrenderer
 				for (unsigned int index = group.BeginIndex; index != group.EndIndex; index++)
 				{
 					DrawSegment *ds = segmentlist->Segment(index);
-
-					// [ZZ] portal handling here
-					//if (ds->CurrentPortalUniq != spr->CurrentPortalUniq)
-					//	continue;
-					// [ZZ] WARNING: uncommenting the two above lines, totally breaks sprite clipping
 
 					// kg3D - no clipping on fake segs
 					if (ds->fake) continue;
@@ -380,8 +375,7 @@ namespace swrenderer
 						RenderPortal *renderportal = thread->Portal.get();
 
 						// seg is behind sprite, so draw the mid texture if it has one
-						if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && // [ZZ] instead, portal uniq check is made here
-							(ds->maskedtexturecol != nullptr || ds->bFogBoundary))
+						if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && (ds->maskedtexturecol != nullptr || ds->bFogBoundary))
 						{
 							RenderDrawSegment renderer(thread);
 							renderer.Render(ds, r1, r2);

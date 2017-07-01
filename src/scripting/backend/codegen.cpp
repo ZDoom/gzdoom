@@ -3071,6 +3071,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 					}
 				}
 				ValueType = left->ValueType;
+				break;
 			}
 			else if (right->IsVector() && left->IsNumeric())
 			{
@@ -3085,8 +3086,9 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 					}
 				}
 				ValueType = right->ValueType;
+				break;
 			}
-			break;
+			// Incompatible operands, intentional fall-through
 
 		default:
 			// Vector modulus is not permitted

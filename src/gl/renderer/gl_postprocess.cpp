@@ -42,6 +42,7 @@
 #include "r_utility.h"
 #include "p_local.h"
 #include "colormatcher.h"
+#include "w_wad.h"
 #include "gl/gl_functions.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -188,9 +189,14 @@ void FGLRenderer::RunCustomPostProcessShaders(FString target)
 
 		if (!shader.Instance)
 		{
+			const char *lumpName = shader.ShaderLumpName.GetChars();
+			int lump = Wads.CheckNumForFullName(lumpName);
+			if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
+			FString code = Wads.ReadLump(lump).GetString().GetChars();
+
 			shader.Instance = std::make_shared<PostProcessShaderInstance>();
 			shader.Instance->Program.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330); // Hmm, should this use shader.shaderversion?
-			shader.Instance->Program.Compile(FShaderProgram::Fragment, shader.ShaderLumpName.GetChars(), "", shader.ShaderVersion);
+			shader.Instance->Program.Compile(FShaderProgram::Fragment, lumpName, code, "", shader.ShaderVersion);
 			shader.Instance->Program.SetFragDataLocation(0, "FragColor");
 			shader.Instance->Program.Link(shader.ShaderLumpName.GetChars());
 			shader.Instance->Program.SetAttribLocation(0, "PositionInProjection");

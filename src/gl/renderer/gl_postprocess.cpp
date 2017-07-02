@@ -42,6 +42,7 @@
 #include "r_utility.h"
 #include "p_local.h"
 #include "colormatcher.h"
+#include "w_wad.h"
 #include "gl/gl_functions.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -152,6 +153,14 @@ EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Int, gl_satformula)
 
+class PostProcessShaderInstance
+{
+public:
+	FShaderProgram Program;
+	FBufferedUniformSampler InputTexture;
+	FBufferedUniformSampler CustomTexture;
+	FHardwareTexture *HWTexture = nullptr;
+};
 
 void FGLRenderer::RenderScreenQuad()
 {
@@ -169,6 +178,75 @@ void FGLRenderer::PostProcessScene(int fixedcm)
 	ColormapScene(fixedcm);
 	LensDistortScene();
 	ApplyFXAA();
+	RunCustomPostProcessShaders("screen");
+}
+
+void FGLRenderer::RunCustomPostProcessShaders(FString target)
+{
+	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	{
+		PostProcessShader &shader = PostProcessShaders[i];
+
+		if (shader.Target != target)
+			continue;
+
+		if (!shader.Instance)
+		{
+			const char *lumpName = shader.ShaderLumpName.GetChars();
+			int lump = Wads.CheckNumForFullName(lumpName);
+			if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
+			FString code = Wads.ReadLump(lump).GetString().GetChars();
+
+			shader.Instance = std::make_shared<PostProcessShaderInstance>();
+			shader.Instance->Program.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330); // Hmm, should this use shader.shaderversion?
+			shader.Instance->Program.Compile(FShaderProgram::Fragment, lumpName, code, "", shader.ShaderVersion);
+			shader.Instance->Program.SetFragDataLocation(0, "FragColor");
+			shader.Instance->Program.Link(shader.ShaderLumpName.GetChars());
+			shader.Instance->Program.SetAttribLocation(0, "PositionInProjection");
+			shader.Instance->InputTexture.Init(shader.Instance->Program, "InputTexture");
+			shader.Instance->CustomTexture.Init(shader.Instance->Program, "CustomTexture");
+
+			if (shader.Texture)
+			{
+				shader.Instance->HWTexture = new FHardwareTexture(shader.Texture->GetWidth(), shader.Texture->GetHeight(), false);
+				shader.Instance->HWTexture->CreateTexture((unsigned char*)shader.Texture->GetPixelsBgra(), shader.Texture->GetWidth(), shader.Texture->GetHeight(), 0, false, 0, "CustomTexture");
+			}
+		}
+
+		FGLDebug::PushGroup(shader.ShaderLumpName.GetChars());
+
+		FGLPostProcessState savedState;
+		savedState.SaveTextureBindings(2);
+
+		mBuffers->BindNextFB();
+		mBuffers->BindCurrentTexture(0);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		shader.Instance->Program.Bind();
+
+		shader.Instance->InputTexture.Set(0);
+
+		if (shader.Instance->HWTexture)
+		{
+			glActiveTexture(GL_TEXTURE1);
+			glBindTexture(GL_TEXTURE_2D, shader.Instance->HWTexture->GetTextureHandle(0));
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glActiveTexture(GL_TEXTURE0);
+
+			shader.Instance->CustomTexture.Set(1);
+		}
+		RenderScreenQuad();
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		mBuffers->NextTexture();
+
+		FGLDebug::PopGroup();
+	}
 }
 
 //-----------------------------------------------------------------------------

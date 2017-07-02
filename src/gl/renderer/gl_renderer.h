@@ -42,6 +42,7 @@ class FPresent3DRowShader;
 class F2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
+class PostProcessShaderInstance;
 
 inline float DEG2RAD(float deg)
 {
@@ -84,6 +85,17 @@ enum
 	DM_PORTAL,
 	DM_SKYPORTAL
 };
+
+struct PostProcessShader
+{
+	FString Target;
+	FString ShaderLumpName;
+	int ShaderVersion = 0;
+	FTexture *Texture = nullptr;
+	std::shared_ptr<PostProcessShaderInstance> Instance;
+};
+
+extern TArray<PostProcessShader> PostProcessShaders;
 
 class FGLRenderer
 {
@@ -171,6 +183,7 @@ public:
 
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm);
+	void RunCustomPostProcessShaders(FString target);
 	void AmbientOccludeScene();
 	void UpdateCameraExposure();
 	void BloomScene(int fixedcm);

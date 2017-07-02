@@ -103,23 +103,28 @@ namespace swrenderer
 		// calls to GetPixels for this to work.
 
 		static std::mutex loadmutex;
-		loadmutex.lock();
-		try
+
+		std::unique_lock<std::mutex> lock(loadmutex);
+
+		texture->GetPixels();
+		const FTexture::Span *spans;
+		texture->GetColumn(0, &spans);
+		if (Viewport->RenderTarget->IsBgra())
 		{
-			texture->GetPixels();
-			const FTexture::Span *spans;
-			texture->GetColumn(0, &spans);
-			if (Viewport->RenderTarget->IsBgra())
-			{
-				texture->GetPixelsBgra();
-				texture->GetColumnBgra(0, &spans);
-			}
-			loadmutex.unlock();
+			texture->GetPixelsBgra();
+			texture->GetColumnBgra(0, &spans);
 		}
-		catch (...)
+	}
+
+	void RenderThread::PreparePolyObject(subsector_t *sub)
+	{
+		static std::mutex polyobjmutex;
+
+		std::unique_lock<std::mutex> lock(polyobjmutex);
+
+		if (sub->BSP == nullptr || sub->BSP->bDirty)
 		{
-			loadmutex.unlock();
-			throw;
+			sub->BuildPolyBSP();
 		}
 	}
 }

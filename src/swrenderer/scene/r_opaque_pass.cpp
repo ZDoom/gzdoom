@@ -390,10 +390,8 @@ namespace swrenderer
 
 	void RenderOpaquePass::AddPolyobjs(subsector_t *sub)
 	{
-		if (sub->BSP == nullptr || sub->BSP->bDirty)
-		{
-			sub->BuildPolyBSP();
-		}
+		Thread->PreparePolyObject(sub);
+
 		if (sub->BSP->Nodes.Size() == 0)
 		{
 			RenderSubsector(&sub->BSP->Subsectors[0]);

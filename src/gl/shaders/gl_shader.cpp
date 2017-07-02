@@ -669,63 +669,98 @@ void gl_DestroyUserShaders()
 //
 //==========================================================================
 
+TArray<PostProcessShader> PostProcessShaders;
+
 void gl_ParseHardwareShader(FScanner &sc, int deflump)
 {
-	int type = FTexture::TEX_Any;
-	bool disable_fullbright=false;
-	bool thiswad = false;
-	bool iwad = false;
-	int maplump = -1;
-	FString maplumpname;
-	float speed = 1.f;
-
 	sc.MustGetString();
-	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
-	else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
-	else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
-	else sc.UnGet();
-
-	sc.MustGetString();
-	FTextureID no = TexMan.CheckForTexture(sc.String, type);
-	FTexture *tex = TexMan[no];
-
-	sc.MustGetToken('{');
-	while (!sc.CheckToken('}'))
+	if (sc.Compare("postprocess"))
 	{
 		sc.MustGetString();
-		if (sc.Compare("shader"))
+
+		PostProcessShader shaderdesc;
+		shaderdesc.Target = sc.String;
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
 			sc.MustGetString();
-			maplumpname = sc.String;
-		}
-		else if (sc.Compare("speed"))
-		{
-			sc.MustGetFloat();
-			speed = float(sc.Float);
-		}
-	}
-	if (!tex)
-	{
-		return;
-	}
-
-	if (maplumpname.IsNotEmpty())
-	{
-		if (tex->bWarped != 0)
-		{
-			Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
-			return;
-		}
-		tex->gl_info.shaderspeed = speed; 
-		for(unsigned i=0;i<usershaders.Size();i++)
-		{
-			if (!usershaders[i].CompareNoCase(maplumpname))
+			if (sc.Compare("shader"))
 			{
-				tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
-				return;
+				sc.MustGetString();
+				shaderdesc.ShaderLumpName = sc.String;
+
+				sc.MustGetNumber();
+				shaderdesc.ShaderVersion = sc.Number;
+			}
+			else if (sc.Compare("texture"))
+			{
+				sc.MustGetString();
+				FTextureID no = TexMan.CheckForTexture(sc.String, FTexture::TEX_Wall);
+				shaderdesc.Texture = TexMan[no];
 			}
 		}
-		tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
-	}	
+
+		PostProcessShaders.Push(shaderdesc);
+	}
+	else
+	{
+		int type = FTexture::TEX_Any;
+
+		if (sc.Compare("texture")) type = FTexture::TEX_Wall;
+		else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
+		else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
+		else sc.UnGet();
+
+		bool disable_fullbright = false;
+		bool thiswad = false;
+		bool iwad = false;
+		int maplump = -1;
+		FString maplumpname;
+		float speed = 1.f;
+
+		sc.MustGetString();
+		FTextureID no = TexMan.CheckForTexture(sc.String, type);
+		FTexture *tex = TexMan[no];
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
+		{
+			sc.MustGetString();
+			if (sc.Compare("shader"))
+			{
+				sc.MustGetString();
+				maplumpname = sc.String;
+			}
+			else if (sc.Compare("speed"))
+			{
+				sc.MustGetFloat();
+				speed = float(sc.Float);
+			}
+		}
+		if (!tex)
+		{
+			return;
+		}
+
+		if (maplumpname.IsNotEmpty())
+		{
+			if (tex->bWarped != 0)
+			{
+				Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
+				return;
+			}
+			tex->gl_info.shaderspeed = speed;
+			for (unsigned i = 0; i < usershaders.Size(); i++)
+			{
+				if (!usershaders[i].CompareNoCase(maplumpname))
+				{
+					tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
+					return;
+				}
+			}
+			tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
+		}
+	}
 }
 

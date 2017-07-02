@@ -84,10 +84,6 @@ namespace swrenderer
 		if (x1 >= x2)
 			return;
 
-		// Reject sprites outside the slice rendered by the thread
-		if (x2 < thread->X1 || x1 > thread->X2)
-			return;
-
 		// [RH] Sprites split behind a one-sided line can also be discarded.
 		if (spr->sector == nullptr)
 			return;

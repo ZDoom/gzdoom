@@ -527,8 +527,8 @@ namespace swrenderer
 	
 	void RenderPortal::SetMainPortal()
 	{
-		WindowLeft = 0;
-		WindowRight = viewwidth;
+		WindowLeft = Thread->X1;
+		WindowRight = Thread->X2;
 		MirrorFlags = 0;
 		CurrentPortal = nullptr;
 		CurrentPortalUniq = 0;

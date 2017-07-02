@@ -457,10 +457,7 @@ namespace swrenderer
 					if (voxptr >= voxend) continue;
 
 					lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + viewport->viewwindow.centerx;
-					if (lx < 0) lx = 0;
 					rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + viewport->viewwindow.centerx;
-					if (rx > viewwidth) rx = viewwidth;
-					if (rx <= lx) continue;
 
 					if (flags & DVF_MIRRORED)
 					{
@@ -468,6 +465,10 @@ namespace swrenderer
 						lx = viewwidth - rx;
 						rx = t;
 					}
+
+					if (lx < this->x1) lx = this->x1;
+					if (rx > this->x2) rx = this->x2;
+					if (rx <= lx) continue;
 
 					fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
 					fixed_t l2 = xs_RoundToInt(centerxwidebig_f / (ny + yoff));

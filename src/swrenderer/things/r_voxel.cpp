@@ -124,7 +124,7 @@ namespace swrenderer
 		vis->yscale = (float)yscale;
 		vis->x1 = renderportal->WindowLeft;
 		vis->x2 = renderportal->WindowRight;
-		vis->idepth = 1 / MINZ;
+		vis->idepth = float(1 / tz);
 		vis->floorclip = thing->Floorclip;
 
 		pos.Z -= thing->Floorclip;
@@ -189,7 +189,19 @@ namespace swrenderer
 
 		vis->Light.SetColormap(thread->Light->SpriteGlobVis(foggy) / MAX(tz, MINZ), spriteshade, basecolormap, fullbright, invertcolormap, fadeToBlack);
 
-		thread->SpriteList->Push(vis, true);
+		// Fake a voxel drawing to find its extents..
+		SpriteDrawerArgs drawerargs;
+		drawerargs.SetLight(vis->Light.BaseColormap, 0, vis->Light.ColormapNum << FRACBITS);
+		basecolormap = (FDynamicColormap*)vis->Light.BaseColormap;
+		bool visible = drawerargs.SetStyle(thread->Viewport.get(), vis->RenderStyle, vis->Alpha, vis->Translation, vis->FillColor, basecolormap);
+		if (!visible)
+			return;
+		int flags = vis->bInMirror ? (DVF_MIRRORED | DVF_FIND_X1X2) : DVF_FIND_X1X2;
+		vis->DrawVoxel(thread, drawerargs, vis->pa.vpos, vis->pa.vang, vis->gpos, vis->Angle, vis->xscale, FLOAT2FIXED(vis->yscale), vis->voxel, nullptr, nullptr, 0, 0, flags);
+		if (vis->x1 >= vis->x2)
+			return;
+
+		thread->SpriteList->Push(vis);
 	}
 
 	void RenderVoxel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
@@ -379,8 +391,13 @@ namespace swrenderer
 
 		bool useSlabDataBgra = !drawerargs.DrawerNeedsPalInput() && viewport->RenderTarget->IsBgra();
 
+		int coverageX1 = this->x2;
+		int coverageX2 = this->x1;
+
 		const int maxoutblocks = 100;
-		VoxelBlock *outblocks = thread->FrameMemory->AllocMemory<VoxelBlock>(maxoutblocks);
+		VoxelBlock *outblocks = nullptr;
+		if ((flags & DVF_FIND_X1X2) == 0)
+			outblocks = thread->FrameMemory->AllocMemory<VoxelBlock>(maxoutblocks);
 		int nextoutblock = 0;
 
 		for (cnt = 0; cnt < 8; cnt++)
@@ -457,16 +474,24 @@ namespace swrenderer
 					if (voxptr >= voxend) continue;
 
 					lx = xs_RoundToInt(nx * centerxwide_f / (ny + y1)) + viewport->viewwindow.centerx;
-					if (lx < 0) lx = 0;
 					rx = xs_RoundToInt((nx + nxoff) * centerxwide_f / (ny + y2)) + viewport->viewwindow.centerx;
-					if (rx > viewwidth) rx = viewwidth;
-					if (rx <= lx) continue;
 
 					if (flags & DVF_MIRRORED)
 					{
 						int t = viewwidth - lx;
 						lx = viewwidth - rx;
 						rx = t;
+					}
+
+					if (lx < this->x1) lx = this->x1;
+					if (rx > this->x2) rx = this->x2;
+					if (rx <= lx) continue;
+
+					if (flags & DVF_FIND_X1X2)
+					{
+						coverageX1 = MIN(coverageX1, lx);
+						coverageX2 = MAX(coverageX2, rx);
+						continue;
 					}
 
 					fixed_t l1 = xs_RoundToInt(centerxwidebig_f / (ny - yoff));
@@ -594,7 +619,7 @@ namespace swrenderer
 
 								if (nextoutblock == maxoutblocks)
 								{
-									drawerargs.DrawVoxelBlocks(thread, outblocks, nextoutblock);
+									drawerargs.DrawVoxelBlocks(thread, outblocks, maxoutblocks);
 									outblocks = thread->FrameMemory->AllocMemory<VoxelBlock>(maxoutblocks);
 									nextoutblock = 0;
 								}
@@ -645,9 +670,17 @@ namespace swrenderer
 			}
 		}
 
-		if (nextoutblock != 0)
+		if (flags & DVF_FIND_X1X2)
 		{
-			drawerargs.DrawVoxelBlocks(thread, outblocks, nextoutblock);
+			this->x1 = coverageX1;
+			this->x2 = coverageX2;
+		}
+		else
+		{
+			if (nextoutblock != 0)
+			{
+				drawerargs.DrawVoxelBlocks(thread, outblocks, nextoutblock);
+			}
 		}
 	}
 

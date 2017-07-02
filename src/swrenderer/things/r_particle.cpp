@@ -275,12 +275,10 @@ namespace swrenderer
 		// Draw any masked textures behind this particle so that when the
 		// particle is drawn, it will be in front of them.
 		DrawSegmentList *segmentlist = thread->DrawSegments.get();
-		for (unsigned int index = 0; index != segmentlist->InterestingSegmentsCount(); index++)
+		for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
 		{
-			DrawSegment *ds = segmentlist->InterestingSegment(index);
+			DrawSegment *ds = segmentlist->TranslucentSegment(index);
 
-			// kg3D - no fake segs
-			if (ds->fake) continue;
 			if (ds->x1 >= x2 || ds->x2 <= x1)
 			{
 				continue;

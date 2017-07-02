@@ -58,7 +58,6 @@ namespace swrenderer
 
 		int i;
 		int x1, x2;
-		int r1, r2;
 		short topclip, botclip;
 		short *clip1, *clip2;
 		FSWColormap *colormap = spr->Light.BaseColormap;
@@ -83,10 +82,6 @@ namespace swrenderer
 
 		// [RH] Quickly reject sprites with bad x ranges.
 		if (x1 >= x2)
-			return;
-
-		// Reject sprites outside the slice rendered by the thread
-		if (x2 < thread->X1 || x1 > thread->X2)
 			return;
 
 		// [RH] Sprites split behind a one-sided line can also be discarded.
@@ -293,16 +288,48 @@ namespace swrenderer
 		// The first drawseg that is closer than the sprite is the clip seg.
 
 		DrawSegmentList *segmentlist = thread->DrawSegments.get();
+		RenderPortal *renderportal = thread->Portal.get();
+
+		// Render draw segments behind sprite
+		for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
+		{
+			DrawSegment *ds = segmentlist->TranslucentSegment(index);
+
+			if (ds->x1 >= x2 || ds->x2 <= x1)
+			{
+				continue;
+			}
+
+			float neardepth = MIN(ds->sz1, ds->sz2);
+			float fardepth = MAX(ds->sz1, ds->sz2);
+
+			// Check if sprite is in front of draw seg:
+			if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
+				(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
+				(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
+			{
+				if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
+				{
+					int r1 = MAX<int>(ds->x1, x1);
+					int r2 = MIN<int>(ds->x2, x2);
+
+					RenderDrawSegment renderer(thread);
+					renderer.Render(ds, r1, r2);
+				}
+			}
+		}
+
 		for (unsigned int groupIndex = 0; groupIndex < segmentlist->SegmentGroups.Size(); groupIndex++)
 		{
 			auto &group = segmentlist->SegmentGroups[groupIndex];
+
 			if (group.x1 >= x2 || group.x2 <= x1 || group.neardepth > spr->depth)
 				continue;
 
 			if (group.fardepth < spr->depth) 
 			{
-				r1 = MAX<int>(group.x1, x1);
-				r2 = MIN<int>(group.x2, x2);
+				int r1 = MAX<int>(group.x1, x1);
+				int r2 = MIN<int>(group.x2, x2);
 
 				// Clip bottom
 				clip1 = clipbot + r1;
@@ -330,13 +357,10 @@ namespace swrenderer
 			}
 			else
 			{
-				//for (unsigned int index = segmentlist->BeginIndex(); index != segmentlist->EndIndex(); index++)
 				for (unsigned int index = group.BeginIndex; index != group.EndIndex; index++)
 				{
 					DrawSegment *ds = segmentlist->Segment(index);
 
-					// kg3D - no clipping on fake segs
-					if (ds->fake) continue;
 					// determine if the drawseg obscures the sprite
 					if (ds->x1 >= x2 || ds->x2 <= x1 ||
 						(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == nullptr &&
@@ -346,41 +370,18 @@ namespace swrenderer
 						continue;
 					}
 
-					r1 = MAX<int>(ds->x1, x1);
-					r2 = MIN<int>(ds->x2, x2);
+					int r1 = MAX<int>(ds->x1, x1);
+					int r2 = MIN<int>(ds->x2, x2);
 
-					float neardepth, fardepth;
-					if (!spr->IsWallSprite())
-					{
-						if (ds->sz1 < ds->sz2)
-						{
-							neardepth = ds->sz1, fardepth = ds->sz2;
-						}
-						else
-						{
-							neardepth = ds->sz2, fardepth = ds->sz1;
-						}
-					}
-					else
-					{
-						// GCC complained about this case, is there something missing here?
-						fardepth = neardepth = 0;
-					}
+					float neardepth = MIN(ds->sz1, ds->sz2);
+					float fardepth = MAX(ds->sz1, ds->sz2);
 
 					// Check if sprite is in front of draw seg:
 					if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
 						(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
 						(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
 					{
-						RenderPortal *renderportal = thread->Portal.get();
-
-						// seg is behind sprite, so draw the mid texture if it has one
-						if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq && (ds->maskedtexturecol != nullptr || ds->bFogBoundary))
-						{
-							RenderDrawSegment renderer(thread);
-							renderer.Render(ds, r1, r2);
-						}
-
+						// seg is behind sprite
 						continue;
 					}
 

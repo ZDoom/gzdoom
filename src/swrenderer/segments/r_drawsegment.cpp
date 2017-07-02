@@ -63,15 +63,15 @@ namespace swrenderer
 		StartIndices.Clear();
 		StartIndices.Push(0);
 
-		InterestingSegments.Clear();
-		StartInterestingIndices.Clear();
-		StartInterestingIndices.Push(0);
+		TranslucentSegments.Clear();
+		StartTranslucentIndices.Clear();
+		StartTranslucentIndices.Push(0);
 	}
 
 	void DrawSegmentList::PushPortal()
 	{
 		StartIndices.Push(Segments.Size());
-		StartInterestingIndices.Push(InterestingSegments.Size());
+		StartTranslucentIndices.Push(TranslucentSegments.Size());
 	}
 
 	void DrawSegmentList::PopPortal()
@@ -79,8 +79,8 @@ namespace swrenderer
 		Segments.Resize(StartIndices.Last());
 		StartIndices.Pop();
 
-		InterestingSegments.Resize(StartInterestingIndices.Last());
-		StartInterestingIndices.Pop();
+		TranslucentSegments.Resize(StartTranslucentIndices.Last());
+		StartTranslucentIndices.Pop();
 	}
 
 	void DrawSegmentList::Push(DrawSegment *segment)
@@ -88,9 +88,9 @@ namespace swrenderer
 		Segments.Push(segment);
 	}
 
-	void DrawSegmentList::PushInteresting(DrawSegment *segment)
+	void DrawSegmentList::PushTranslucent(DrawSegment *segment)
 	{
-		InterestingSegments.Push(segment);
+		TranslucentSegments.Push(segment);
 	}
 
 	void DrawSegmentList::BuildSegmentGroups()
@@ -130,9 +130,6 @@ namespace swrenderer
 			for (unsigned int groupIndex = group.BeginIndex; groupIndex < group.EndIndex; groupIndex++)
 			{
 				ds = Segment(groupIndex);
-
-				// kg3D - no clipping on fake segs
-				if (ds->fake) continue;
 
 				if (ds->silhouette & SIL_BOTTOM)
 				{

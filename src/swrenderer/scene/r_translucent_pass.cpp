@@ -136,36 +136,10 @@ namespace swrenderer
 		RenderPortal *renderportal = Thread->Portal.get();
 		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
 
-		int numGroups = drawseglist->SegmentGroups.Size();
-		for (int j = 0; j < numGroups; j++)
-			drawseglist->SegmentGroups[j].GroupDrawn = false;
-
 		auto &sortedSprites = Thread->SpriteList->SortedSprites;
 		for (int i = sortedSprites.Size(); i > 0; i--)
 		{
 			VisibleSprite *sprite = sortedSprites[i - 1];
-
-			// Draw the draw segments known to be behind us now.
-			for (int j = numGroups; j > 0; j--)
-			{
-				auto &group = drawseglist->SegmentGroups[j - 1];
-				if (!group.GroupDrawn && group.neardepth > sprite->DrawSegDepth())
-				{
-					for (unsigned int index = group.BeginIndex; index != group.EndIndex; index++)
-					{
-						DrawSegment *ds = drawseglist->Segment(index);
-
-						if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq) continue;
-						if (ds->fake) continue;
-						if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
-						{
-							RenderDrawSegment renderer(Thread);
-							renderer.Render(ds, ds->x1, ds->x2);
-						}
-					}
-					group.GroupDrawn = true;
-				}
-			}
 
 			if (sprite->IsCurrentPortalUniq(renderportal->CurrentPortalUniq))
 			{
@@ -187,8 +161,6 @@ namespace swrenderer
 			// [ZZ] the same as above
 			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
-			// kg3D - no fake segs
-			if (ds->fake) continue;
 			if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
 			{
 				RenderDrawSegment renderer(Thread);

@@ -83,6 +83,9 @@ namespace swrenderer
 
 		// Make sure texture can accessed safely
 		void PrepareTexture(FTexture *texture);
+
+		// Setup poly object in a threadsafe manner
+		void PreparePolyObject(subsector_t *sub);
 		
 	private:
 		std::unique_ptr<SWTruecolorDrawers> tc_drawers;

@@ -73,6 +73,12 @@ namespace swrenderer
 			FAngle vang = { 0.0f }; // view angle
 		};
 
+		struct VoxelBlockEntry
+		{
+			VoxelBlock *block;
+			VoxelBlockEntry *next;
+		};
+
 		posang pa;
 		DAngle Angle = { 0.0 };
 		fixed_t xscale = 0;
@@ -82,7 +88,7 @@ namespace swrenderer
 		uint32_t Translation = 0;
 		uint32_t FillColor = 0;
 
-		enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4 };
+		enum { DVF_OFFSCREEN = 1, DVF_SPANSONLY = 2, DVF_MIRRORED = 4, DVF_FIND_X1X2 = 8 };
 
 		static kvxslab_t *GetSlabStart(const FVoxelMipLevel &mip, int x, int y);
 		static kvxslab_t *GetSlabEnd(const FVoxelMipLevel &mip, int x, int y);

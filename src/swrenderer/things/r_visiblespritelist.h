@@ -11,7 +11,7 @@ namespace swrenderer
 		void Clear();
 		void PushPortal();
 		void PopPortal();
-		void Push(VisibleSprite *sprite, bool isVoxel = false);
+		void Push(VisibleSprite *sprite);
 		void Sort();
 
 		TArray<VisibleSprite *> SortedSprites;
@@ -19,6 +19,5 @@ namespace swrenderer
 	private:
 		TArray<VisibleSprite *> Sprites;
 		TArray<unsigned int> StartIndices;
-		bool DrewAVoxel = false;
 	};
 }

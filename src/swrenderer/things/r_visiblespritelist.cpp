@@ -41,7 +41,6 @@ namespace swrenderer
 		Sprites.Clear();
 		StartIndices.Clear();
 		SortedSprites.Clear();
-		DrewAVoxel = false;
 	}
 
 	void VisibleSpriteList::PushPortal()
@@ -55,17 +54,13 @@ namespace swrenderer
 		StartIndices.Pop();
 	}
 
-	void VisibleSpriteList::Push(VisibleSprite *sprite, bool isVoxel)
+	void VisibleSpriteList::Push(VisibleSprite *sprite)
 	{
 		Sprites.Push(sprite);
-		if (isVoxel)
-			DrewAVoxel = true;
 	}
 
 	void VisibleSpriteList::Sort()
 	{
-		bool compare2d = DrewAVoxel;
-
 		unsigned int first = StartIndices.Size() == 0 ? 0 : StartIndices.Last();
 		unsigned int count = Sprites.Size() - first;
 
@@ -88,25 +83,9 @@ namespace swrenderer
 				SortedSprites[i] = Sprites[first + count - i - 1];
 		}
 
-		if (compare2d)
+		std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
 		{
-			// This is an alternate version, for when one or more voxel is in view.
-			// It does a 2D distance test based on whichever one is furthest from
-			// the viewpoint.
-
-			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
-			{
-				return a->SortDist2D() < b->SortDist2D();
-			});
-		}
-		else
-		{
-			// This is the standard version, which does a simple test based on depth.
-
-			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
-			{
-				return a->SortDist() > b->SortDist();
-			});
-		}
+			return a->SortDist() > b->SortDist();
+		});
 	}
 }

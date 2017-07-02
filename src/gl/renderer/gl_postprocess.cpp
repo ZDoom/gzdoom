@@ -198,7 +198,10 @@ void FGLRenderer::RunCustomPostProcessShaders(FString target)
 			shader.Instance->CustomTexture.Init(shader.Instance->Program, "CustomTexture");
 
 			if (shader.Texture)
+			{
 				shader.Instance->HWTexture = new FHardwareTexture(shader.Texture->GetWidth(), shader.Texture->GetHeight(), false);
+				shader.Instance->HWTexture->CreateTexture((unsigned char*)shader.Texture->GetPixelsBgra(), shader.Texture->GetWidth(), shader.Texture->GetHeight(), 0, false, 0, "CustomTexture");
+			}
 		}
 
 		FGLDebug::PushGroup(shader.ShaderLumpName.GetChars());

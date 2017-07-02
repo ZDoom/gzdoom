@@ -36,22 +36,33 @@ namespace swrenderer
 		float siz1, siz2; // 1/z for left, right of parent seg on screen
 		float cx, cy, cdx, cdy;
 		float yscale;
-		uint8_t silhouette; // 0=none, 1=bottom, 2=top, 3=both
-		uint8_t bFogBoundary;
-		uint8_t bFakeBoundary; // for fake walls
-		int shade;
-		bool foggy;
+		uint8_t silhouette = 0; // 0=none, 1=bottom, 2=top, 3=both
+		bool bFogBoundary = false;
+		int shade = 0;
+		bool foggy = false;
 
 		// Pointers to lists for sprite clipping, all three adjusted so [x1] is first value.
-		short *sprtopclip;
-		short *sprbottomclip;
-		fixed_t *maskedtexturecol;
-		float *swall;
-		short *bkup; // sprtopclip backup, for mid and fake textures
+		short *sprtopclip = nullptr;
+		short *sprbottomclip = nullptr;
+		fixed_t *maskedtexturecol = nullptr;
+		float *swall = nullptr;
+		short *bkup = nullptr; // sprtopclip backup, for mid and fake textures
 		
 		FWallTmapVals tmapvals;
 		
-		int CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
+		int CurrentPortalUniq = 0; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
+
+		bool Has3DFloorWalls() const { return b3DFloorBoundary != 0; }
+		bool Has3DFloorFrontSectorWalls() const { return (b3DFloorBoundary & 2) == 2; }
+		bool Has3DFloorBackSectorWalls() const { return (b3DFloorBoundary & 1) == 1; }
+		bool Has3DFloorMidTexture() const { return (b3DFloorBoundary & 4) == 4; }
+
+		void SetHas3DFloorFrontSectorWalls() { b3DFloorBoundary |= 2; }
+		void SetHas3DFloorBackSectorWalls() { b3DFloorBoundary |= 1; }
+		void SetHas3DFloorMidTexture() { b3DFloorBoundary |= 4; }
+
+	private:
+		uint8_t b3DFloorBoundary = 0; // 1=backsector, 2=frontsector, 4=midtexture
 	};
 
 	struct DrawSegmentGroup

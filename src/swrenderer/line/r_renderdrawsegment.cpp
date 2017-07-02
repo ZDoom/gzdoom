@@ -79,7 +79,7 @@ namespace swrenderer
 		FDynamicColormap *patchstylecolormap = nullptr;
 		bool visible = columndrawerargs.SetStyle(viewport, LegacyRenderStyles[additive ? STYLE_Add : STYLE_Translucent], alpha, 0, 0, patchstylecolormap);
 
-		if (!visible && !ds->bFogBoundary && !ds->bFakeBoundary)
+		if (!visible && !ds->bFogBoundary && !ds->Has3DFloorWalls())
 		{
 			return;
 		}
@@ -139,7 +139,7 @@ namespace swrenderer
 			if (ds->maskedtexturecol == nullptr)
 				renderwall = false;
 		}
-		else if ((ds->bFakeBoundary && !(ds->bFakeBoundary & 4)) || !visible)
+		else if ((ds->Has3DFloorWalls() && !ds->Has3DFloorMidTexture()) || !visible)
 		{
 			renderwall = false;
 		}
@@ -147,7 +147,7 @@ namespace swrenderer
 		if (renderwall)
 			notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade, wrap);
 
-		if (ds->bFakeBoundary & 3)
+		if (ds->Has3DFloorFrontSectorWalls() || ds->Has3DFloorBackSectorWalls())
 		{
 			RenderFakeWallRange(ds, x1, x2, wallshade);
 		}
@@ -540,7 +540,7 @@ namespace swrenderer
 		{
 			return;
 		}
-		if ((ds->bFakeBoundary & 3) == 2)
+		if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
 		{
 			sector_t *sec = backsector;
 			backsector = frontsector;
@@ -709,7 +709,7 @@ namespace swrenderer
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
 				{
-					if ((ds->bFakeBoundary & 3) == 2)
+					if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
 					{
 						for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						{
@@ -888,7 +888,7 @@ namespace swrenderer
 				CameraLight *cameraLight = CameraLight::Instance();
 				if (cameraLight->FixedLightLevel() < 0)
 				{
-					if ((ds->bFakeBoundary & 3) == 2)
+					if (ds->Has3DFloorFrontSectorWalls() && !ds->Has3DFloorBackSectorWalls())
 					{
 						for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						{

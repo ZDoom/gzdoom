@@ -334,7 +334,7 @@ namespace swrenderer
 		draw_segment->sx2 = WallC.sx2;
 		draw_segment->sz1 = WallC.sz1;
 		draw_segment->sz2 = WallC.sz2;
-		draw_segment->cx = WallC.tleft.X;;
+		draw_segment->cx = WallC.tleft.X;
 		draw_segment->cy = WallC.tleft.Y;
 		draw_segment->cdx = WallC.tright.X - WallC.tleft.X;
 		draw_segment->cdy = WallC.tright.Y - WallC.tleft.Y;
@@ -344,15 +344,7 @@ namespace swrenderer
 		draw_segment->x1 = start;
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;
-		draw_segment->bFogBoundary = false;
-		draw_segment->bFakeBoundary = false;
 		draw_segment->foggy = foggy;
-
-		draw_segment->sprtopclip = nullptr;
-		draw_segment->sprbottomclip = nullptr;
-		draw_segment->maskedtexturecol = nullptr;
-		draw_segment->bkup = nullptr;
-		draw_segment->swall = nullptr;
 
 		bool markportal = ShouldMarkPortal();
 
@@ -371,8 +363,6 @@ namespace swrenderer
 		else
 		{
 			// two sided line
-			draw_segment->silhouette = 0;
-
 			if (mFrontFloorZ1 > mBackFloorZ1 || mFrontFloorZ2 > mBackFloorZ2 ||
 				mBackSector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) < 0)
 			{
@@ -414,7 +404,7 @@ namespace swrenderer
 					for (i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
 						F3DFloor *rover = mBackSector->e->XFloor.ffloors[i];
 						if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
-							draw_segment->bFakeBoundary |= 1;
+							draw_segment->SetHas3DFloorBackSectorWalls();
 							break;
 						}
 					}
@@ -423,7 +413,7 @@ namespace swrenderer
 					for (i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
 						F3DFloor *rover = mFrontSector->e->XFloor.ffloors[i];
 						if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
-							draw_segment->bFakeBoundary |= 2;
+							draw_segment->SetHas3DFloorFrontSectorWalls();
 							break;
 						}
 					}
@@ -433,7 +423,7 @@ namespace swrenderer
 			if (!onlyUpdatePlaneClip)
 				// allocate space for masked texture tables, if needed
 				// [RH] Don't just allocate the space; fill it in too.
-				if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || draw_segment->bFakeBoundary || IsFogBoundary(mFrontSector, mBackSector)) &&
+				if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || draw_segment->Has3DFloorWalls() || IsFogBoundary(mFrontSector, mBackSector)) &&
 					(mCeilingClipped != ProjectedWallCull::OutsideBelow || !sidedef->GetTexture(side_t::top).isValid()) &&
 					(mFloorClipped != ProjectedWallCull::OutsideAbove || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 					(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
@@ -449,10 +439,10 @@ namespace swrenderer
 					memcpy(draw_segment->bkup, &Thread->OpaquePass->ceilingclip[start], sizeof(short)*(stop - start));
 
 					draw_segment->bFogBoundary = IsFogBoundary(mFrontSector, mBackSector);
-					if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->bFakeBoundary)
+					if (sidedef->GetTexture(side_t::mid).isValid() || draw_segment->Has3DFloorWalls())
 					{
 						if (sidedef->GetTexture(side_t::mid).isValid())
-							draw_segment->bFakeBoundary |= 4; // it is also mid texture
+							draw_segment->SetHas3DFloorMidTexture();
 
 						draw_segment->maskedtexturecol = Thread->FrameMemory->AllocMemory<fixed_t>(stop - start);
 						draw_segment->swall = Thread->FrameMemory->AllocMemory<float>(stop - start);

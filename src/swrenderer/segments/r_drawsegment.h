@@ -51,7 +51,6 @@ namespace swrenderer
 		
 		FWallTmapVals tmapvals;
 		
-		int fake; // ident fake drawseg, don't draw and clip sprites backups
 		int CurrentPortalUniq; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 	};
 

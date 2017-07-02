@@ -131,9 +131,6 @@ namespace swrenderer
 			{
 				ds = Segment(groupIndex);
 
-				// kg3D - no clipping on fake segs
-				if (ds->fake) continue;
-
 				if (ds->silhouette & SIL_BOTTOM)
 				{
 					short *clip1 = clipbottom + ds->x1;

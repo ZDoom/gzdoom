@@ -319,9 +319,15 @@ namespace swrenderer
 		side_t *sidedef = mLineSegment->sidedef;
 
 		RenderPortal *renderportal = Thread->Portal.get();
+		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		DrawSegment *draw_segment = Thread->FrameMemory->NewObject<DrawSegment>();
-		Thread->DrawSegments->Push(draw_segment);
+
+		// 3D floors code abuses the line render code to update plane clipping
+		// lists but doesn't actually draw anything.
+		bool onlyUpdatePlaneClip = (clip3d->fake3D & FAKE3D_FAKEMASK) ? true : false;
+		if (!onlyUpdatePlaneClip)
+			Thread->DrawSegments->Push(draw_segment);
 
 		draw_segment->CurrentPortalUniq = renderportal->CurrentPortalUniq;
 		draw_segment->sx1 = WallC.sx1;
@@ -341,10 +347,6 @@ namespace swrenderer
 		draw_segment->bFogBoundary = false;
 		draw_segment->bFakeBoundary = false;
 		draw_segment->foggy = foggy;
-
-		Clip3DFloors *clip3d = Thread->Clip3D.get();
-		if (clip3d->fake3D & FAKE3D_FAKEMASK) draw_segment->fake = 1;
-		else draw_segment->fake = 0;
 
 		draw_segment->sprtopclip = nullptr;
 		draw_segment->sprbottomclip = nullptr;
@@ -406,26 +408,29 @@ namespace swrenderer
 				}
 			}
 
-			if (!draw_segment->fake && r_3dfloors && mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
-				for (i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
-					F3DFloor *rover = mBackSector->e->XFloor.ffloors[i];
-					if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
-						draw_segment->bFakeBoundary |= 1;
-						break;
+			if (!onlyUpdatePlaneClip && r_3dfloors)
+			{
+				if (mBackSector->e && mBackSector->e->XFloor.ffloors.Size()) {
+					for (i = 0; i < (int)mBackSector->e->XFloor.ffloors.Size(); i++) {
+						F3DFloor *rover = mBackSector->e->XFloor.ffloors[i];
+						if (rover->flags & FF_RENDERSIDES && (!(rover->flags & FF_INVERTSIDES) || rover->flags & FF_ALLSIDES)) {
+							draw_segment->bFakeBoundary |= 1;
+							break;
+						}
+					}
+				}
+				if (mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
+					for (i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
+						F3DFloor *rover = mFrontSector->e->XFloor.ffloors[i];
+						if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
+							draw_segment->bFakeBoundary |= 2;
+							break;
+						}
 					}
 				}
 			}
-			if (!draw_segment->fake && r_3dfloors && mFrontSector->e && mFrontSector->e->XFloor.ffloors.Size()) {
-				for (i = 0; i < (int)mFrontSector->e->XFloor.ffloors.Size(); i++) {
-					F3DFloor *rover = mFrontSector->e->XFloor.ffloors[i];
-					if (rover->flags & FF_RENDERSIDES && (rover->flags & FF_ALLSIDES || rover->flags & FF_INVERTSIDES)) {
-						draw_segment->bFakeBoundary |= 2;
-						break;
-					}
-				}
-			}
-			// kg3D - no for fakes
-			if (!draw_segment->fake)
+
+			if (!onlyUpdatePlaneClip)
 				// allocate space for masked texture tables, if needed
 				// [RH] Don't just allocate the space; fill it in too.
 				if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || draw_segment->bFakeBoundary || IsFogBoundary(mFrontSector, mBackSector)) &&
@@ -508,7 +513,7 @@ namespace swrenderer
 						draw_segment->shade = LightVisibility::LightLevelToShade(mLineSegment->sidedef->GetLightLevel(foggy, mLineSegment->frontsector->lightlevel) + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()), foggy);
 					}
 
-					if ((draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr) && !draw_segment->fake)
+					if (draw_segment->bFogBoundary || draw_segment->maskedtexturecol != nullptr)
 					{
 						Thread->DrawSegments->PushTranslucent(draw_segment);
 					}

@@ -161,8 +161,6 @@ namespace swrenderer
 			// [ZZ] the same as above
 			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
-			// kg3D - no fake segs
-			if (ds->fake) continue;
 			if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
 			{
 				RenderDrawSegment renderer(Thread);

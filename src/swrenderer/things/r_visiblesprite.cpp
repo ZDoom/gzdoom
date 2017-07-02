@@ -365,8 +365,6 @@ namespace swrenderer
 				{
 					DrawSegment *ds = segmentlist->Segment(index);
 
-					// kg3D - no clipping on fake segs
-					if (ds->fake) continue;
 					// determine if the drawseg obscures the sprite
 					if (ds->x1 >= x2 || ds->x2 <= x1 ||
 						(!(ds->silhouette & SIL_BOTH) && ds->maskedtexturecol == nullptr &&

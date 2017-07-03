@@ -775,3 +775,8 @@ class Lighting : SectorEffect native
 {
 }
 
+struct Shader native
+{
+	native static void SetUniform1f(string shaderName, string uniformName, float value);
+	native static void SetUniform1i(string shaderName, string uniformName, int value);
+}

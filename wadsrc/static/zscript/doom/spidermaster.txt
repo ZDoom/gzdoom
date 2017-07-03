@@ -14,7 +14,6 @@ class SpiderMastermind : Actor
 		Speed 12;
 		PainChance 40;
 		Monster;
-		MinMissileChance 160;
 		+BOSS
 		+MISSILEMORE
 		+FLOORCLIP

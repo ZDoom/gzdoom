@@ -178,6 +178,40 @@ void FGLRenderer::PostProcessScene(int fixedcm)
 	RunCustomPostProcessShaders("screen");
 }
 
+#include "vm.h"
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(value);
+
+	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	{
+		PostProcessShader &shader = PostProcessShaders[i];
+		if (shader.Name == shaderName)
+			shader.Uniform1f[uniformName] = value;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_INT_DEF(value);
+
+	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	{
+		PostProcessShader &shader = PostProcessShaders[i];
+		if (shader.Name == shaderName)
+			shader.Uniform1i[uniformName] = value;
+	}
+	return 0;
+}
+
 void FGLRenderer::RunCustomPostProcessShaders(FString target)
 {
 	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
@@ -221,6 +255,24 @@ void FGLRenderer::RunCustomPostProcessShaders(FString target)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
 		shader.Instance->Program.Bind();
+
+		TMap<FString, float>::Iterator it1f(shader.Uniform1f);
+		TMap<FString, float>::Pair *pair1f;
+		while (it1f.NextPair(pair1f))
+		{
+			int location = glGetUniformLocation(shader.Instance->Program, pair1f->Key.GetChars());
+			if (location != -1)
+				glUniform1f(location, pair1f->Value);
+		}
+
+		TMap<FString, int>::Iterator it1i(shader.Uniform1i);
+		TMap<FString, int>::Pair *pair1i;
+		while (it1i.NextPair(pair1i))
+		{
+			int location = glGetUniformLocation(shader.Instance->Program, pair1i->Key.GetChars());
+			if (location != -1)
+				glUniform1i(location, pair1i->Value);
+		}
 
 		shader.Instance->InputTexture.Set(0);
 

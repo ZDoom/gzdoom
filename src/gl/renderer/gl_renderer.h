@@ -92,6 +92,11 @@ struct PostProcessShader
 	FString ShaderLumpName;
 	int ShaderVersion = 0;
 	FTexture *Texture = nullptr;
+
+	FString Name;
+	TMap<FString, int> Uniform1i;
+	TMap<FString, float> Uniform1f;
+
 	std::shared_ptr<PostProcessShaderInstance> Instance;
 };
 

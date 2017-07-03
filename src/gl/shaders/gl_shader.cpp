@@ -693,6 +693,11 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 				sc.MustGetNumber();
 				shaderdesc.ShaderVersion = sc.Number;
 			}
+			else if (sc.Compare("name"))
+			{
+				sc.MustGetString();
+				shaderdesc.Name = sc.String;
+			}
 			else if (sc.Compare("texture"))
 			{
 				sc.MustGetString();

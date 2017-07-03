@@ -147,6 +147,8 @@ CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITC
 }
 
 
+CVAR(Bool, gl_custompost, true, 0)
+
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 
@@ -175,7 +177,7 @@ void FGLRenderer::PostProcessScene(int fixedcm)
 	ColormapScene(fixedcm);
 	LensDistortScene();
 	ApplyFXAA();
-	RunCustomPostProcessShaders("screen");
+	RunCustomPostProcessShaders("scene");
 }
 
 #include "vm.h"
@@ -214,6 +216,9 @@ DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
 
 void FGLRenderer::RunCustomPostProcessShaders(FString target)
 {
+	if (!gl_custompost)
+		return;
+
 	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
 	{
 		PostProcessShader &shader = PostProcessShaders[i];
@@ -863,6 +868,8 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
 	m2DDrawer->Draw();	// draw all pending 2D stuff before copying the buffer
 	m2DDrawer->Clear();
+
+	RunCustomPostProcessShaders("screen");
 
 	FGLDebug::PushGroup("CopyToBackbuffer");
 	if (FGLRenderBuffers::IsEnabled())

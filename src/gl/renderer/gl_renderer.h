@@ -42,7 +42,7 @@ class FPresent3DRowShader;
 class F2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
-class PostProcessShaderInstance;
+class FCustomPostProcessShaders;
 
 inline float DEG2RAD(float deg)
 {
@@ -86,22 +86,6 @@ enum
 	DM_SKYPORTAL
 };
 
-struct PostProcessShader
-{
-	FString Target;
-	FString ShaderLumpName;
-	int ShaderVersion = 0;
-	FTexture *Texture = nullptr;
-
-	FString Name;
-	TMap<FString, int> Uniform1i;
-	TMap<FString, float> Uniform1f;
-
-	std::shared_ptr<PostProcessShaderInstance> Instance;
-};
-
-extern TArray<PostProcessShader> PostProcessShaders;
-
 class FGLRenderer
 {
 public:
@@ -143,6 +127,7 @@ public:
 	FPresent3DColumnShader *mPresent3dColumnShader;
 	FPresent3DRowShader *mPresent3dRowShader;
 	FShadowMapShader *mShadowMapShader;
+	FCustomPostProcessShaders *mCustomPostProcessShaders;
 
 	FShadowMap mShadowMap;
 
@@ -188,7 +173,6 @@ public:
 
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm);
-	void RunCustomPostProcessShaders(FString target);
 	void AmbientOccludeScene();
 	void UpdateCameraExposure();
 	void BloomScene(int fixedcm);

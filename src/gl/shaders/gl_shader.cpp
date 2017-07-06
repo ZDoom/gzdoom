@@ -36,6 +36,7 @@
 #include "v_palette.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "vm.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
@@ -46,6 +47,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_shaderprogram.h"
+#include "gl/shaders/gl_postprocessshader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
@@ -669,8 +671,6 @@ void gl_DestroyUserShaders()
 //
 //==========================================================================
 
-TArray<PostProcessShader> PostProcessShaders;
-
 void gl_ParseHardwareShader(FScanner &sc, int deflump)
 {
 	sc.MustGetString();
@@ -769,3 +769,34 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(value);
+
+	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	{
+		PostProcessShader &shader = PostProcessShaders[i];
+		if (shader.Name == shaderName)
+			shader.Uniform1f[uniformName] = value;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_INT_DEF(value);
+
+	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	{
+		PostProcessShader &shader = PostProcessShaders[i];
+		if (shader.Name == shaderName)
+			shader.Uniform1i[uniformName] = value;
+	}
+	return 0;
+}

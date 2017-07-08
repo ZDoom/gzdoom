@@ -109,7 +109,7 @@ void CheckGUICapture()
 	}
 }
 
-void CenterCursor()
+void SetCursorPosition(const NSPoint position)
 {
 	NSWindow* window = [NSApp keyWindow];
 	if (nil == window)
@@ -118,15 +118,14 @@ void CenterCursor()
 	}
 
 	const NSRect  displayRect = [[window screen] frame];
-	const NSRect   windowRect = [window frame];
-	const CGPoint centerPoint = CGPointMake(NSMidX(windowRect), displayRect.size.height - NSMidY(windowRect));
+	const CGPoint eventPoint = CGPointMake(position.x, displayRect.size.height - position.y);
 
 	CGEventSourceRef eventSource = CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
 
 	if (NULL != eventSource)
 	{
 		CGEventRef mouseMoveEvent = CGEventCreateMouseEvent(eventSource,
-			kCGEventMouseMoved, centerPoint, kCGMouseButtonLeft);
+			kCGEventMouseMoved, eventPoint, kCGMouseButtonLeft);
 
 		if (NULL != mouseMoveEvent)
 		{
@@ -141,6 +140,20 @@ void CenterCursor()
 	s_skipMouseMoves = 2;
 }
 
+void CenterCursor()
+{
+	NSWindow* window = [NSApp keyWindow];
+	if (nil == window)
+	{
+		return;
+	}
+
+	const NSRect  displayRect = [[window screen] frame];
+	const NSRect   windowRect = [window frame];
+	const NSPoint centerPoint = { NSMidX(windowRect), NSMidY(windowRect) };
+
+	SetCursorPosition(centerPoint);
+}
 
 bool IsInGame()
 {
@@ -227,6 +240,7 @@ void I_ReleaseMouseCapture()
 void I_SetNativeMouse(bool wantNative)
 {
 	static bool nativeMouse = true;
+	static NSPoint mouseLocation;
 
 	if (wantNative != nativeMouse)
 	{
@@ -234,6 +248,7 @@ void I_SetNativeMouse(bool wantNative)
 
 		if (!wantNative)
 		{
+			mouseLocation = [NSEvent mouseLocation];
 			CenterCursor();
 		}
 
@@ -241,6 +256,8 @@ void I_SetNativeMouse(bool wantNative)
 
 		if (wantNative)
 		{
+			SetCursorPosition(mouseLocation);
+
 			[NSCursor unhide];
 		}
 		else
@@ -492,19 +509,6 @@ void ProcessMouseMoveInMenu(NSEvent* theEvent)
 
 void ProcessMouseMoveInGame(NSEvent* theEvent)
 {
-	if (!use_mouse)
-	{
-		return;
-	}
-
-	// TODO: remove this magic!
-
-	if (s_skipMouseMoves > 0)
-	{
-		--s_skipMouseMoves;
-		return;
-	}
-
 	int x([theEvent deltaX]);
 	int y(-[theEvent deltaY]);
 
@@ -628,6 +632,12 @@ void ProcessMouseMoveEvent(NSEvent* theEvent)
 {
 	if (!use_mouse)
 	{
+		return;
+	}
+
+	if (s_skipMouseMoves > 0)
+	{
+		--s_skipMouseMoves;
 		return;
 	}
 

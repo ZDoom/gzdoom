@@ -777,6 +777,9 @@ class Lighting : SectorEffect native
 
 struct Shader native
 {
-	native static void SetUniform1f(string shaderName, string uniformName, float value);
-	native static void SetUniform1i(string shaderName, string uniformName, int value);
+	native clearscope static void SetEnabled(PlayerInfo player, string shaderName, bool enable);
+	native clearscope static void SetUniform1f(PlayerInfo player, string shaderName, string uniformName, float value);
+	native clearscope static void SetUniform2f(PlayerInfo player, string shaderName, string uniformName, vector2 value);
+	native clearscope static void SetUniform3f(PlayerInfo player, string shaderName, string uniformName, vector3 value);
+	native clearscope static void SetUniform1i(PlayerInfo player, string shaderName, string uniformName, int value);
 }

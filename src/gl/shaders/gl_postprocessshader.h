@@ -4,16 +4,31 @@
 
 class PostProcessShaderInstance;
 
+enum class PostProcessUniformType
+{
+	Undefined,
+	Int,
+	Float,
+	Vec2,
+	Vec3
+};
+
+struct PostProcessUniformValue
+{
+	PostProcessUniformType Type = PostProcessUniformType::Undefined;
+	double Values[4] = { 0.0, 0.0, 0.0, 0.0 };
+};
+
 struct PostProcessShader
 {
 	FString Target;
 	FString ShaderLumpName;
 	int ShaderVersion = 0;
-	FTexture *Texture = nullptr;
 
 	FString Name;
-	TMap<FString, int> Uniform1i;
-	TMap<FString, float> Uniform1f;
+	bool Enabled = false;
+
+	TMap<FString, PostProcessUniformValue> Uniforms;
 };
 
 extern TArray<PostProcessShader> PostProcessShaders;
@@ -26,10 +41,14 @@ public:
 	void Run();
 
 	PostProcessShader *Desc;
-	FShaderProgram Program;
-	FBufferedUniformSampler InputTexture;
-	FBufferedUniformSampler CustomTexture;
-	FHardwareTexture *HWTexture = nullptr;
+
+private:
+	bool IsShaderSupported();
+	void CompileShader();
+	void UpdateUniforms();
+
+	FShaderProgram mProgram;
+	FBufferedUniformSampler mInputTexture;
 };
 
 class FCustomPostProcessShaders

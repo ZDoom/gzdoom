@@ -509,19 +509,6 @@ void ProcessMouseMoveInMenu(NSEvent* theEvent)
 
 void ProcessMouseMoveInGame(NSEvent* theEvent)
 {
-	if (!use_mouse)
-	{
-		return;
-	}
-
-	// TODO: remove this magic!
-
-	if (s_skipMouseMoves > 0)
-	{
-		--s_skipMouseMoves;
-		return;
-	}
-
 	int x([theEvent deltaX]);
 	int y(-[theEvent deltaY]);
 
@@ -645,6 +632,12 @@ void ProcessMouseMoveEvent(NSEvent* theEvent)
 {
 	if (!use_mouse)
 	{
+		return;
+	}
+
+	if (s_skipMouseMoves > 0)
+	{
+		--s_skipMouseMoves;
 		return;
 	}
 

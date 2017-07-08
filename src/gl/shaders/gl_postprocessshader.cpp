@@ -69,72 +69,29 @@ void FCustomPostProcessShaders::Run(FString target)
 
 void PostProcessShaderInstance::Run()
 {
-	if (!Program)
-	{
-		const char *lumpName = Desc->ShaderLumpName.GetChars();
-		int lump = Wads.CheckNumForFullName(lumpName);
-		if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
-		FString code = Wads.ReadLump(lump).GetString().GetChars();
+	if (!IsShaderSupported())
+		return;
 
-		Program.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330); // Hmm, should this use shader.shaderversion?
-		Program.Compile(FShaderProgram::Fragment, lumpName, code, "", Desc->ShaderVersion);
-		Program.SetFragDataLocation(0, "FragColor");
-		Program.Link(Desc->ShaderLumpName.GetChars());
-		Program.SetAttribLocation(0, "PositionInProjection");
-		InputTexture.Init(Program, "InputTexture");
-		CustomTexture.Init(Program, "CustomTexture");
+	CompileShader();
 
-		if (Desc->Texture)
-		{
-			HWTexture = new FHardwareTexture(Desc->Texture->GetWidth(), Desc->Texture->GetHeight(), false);
-			HWTexture->CreateTexture((unsigned char*)Desc->Texture->GetPixelsBgra(), Desc->Texture->GetWidth(), Desc->Texture->GetHeight(), 0, false, 0, "CustomTexture");
-		}
-	}
+	if (!Desc->Enabled)
+		return;
 
 	FGLDebug::PushGroup(Desc->ShaderLumpName.GetChars());
 
 	FGLPostProcessState savedState;
-	savedState.SaveTextureBindings(2);
 
 	GLRenderer->mBuffers->BindNextFB();
 	GLRenderer->mBuffers->BindCurrentTexture(0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	Program.Bind();
+	mProgram.Bind();
 
-	TMap<FString, float>::Iterator it1f(Desc->Uniform1f);
-	TMap<FString, float>::Pair *pair1f;
-	while (it1f.NextPair(pair1f))
-	{
-		int location = glGetUniformLocation(Program, pair1f->Key.GetChars());
-		if (location != -1)
-			glUniform1f(location, pair1f->Value);
-	}
+	UpdateUniforms();
 
-	TMap<FString, int>::Iterator it1i(Desc->Uniform1i);
-	TMap<FString, int>::Pair *pair1i;
-	while (it1i.NextPair(pair1i))
-	{
-		int location = glGetUniformLocation(Program, pair1i->Key.GetChars());
-		if (location != -1)
-			glUniform1i(location, pair1i->Value);
-	}
+	mInputTexture.Set(0);
 
-	InputTexture.Set(0);
-
-	if (HWTexture)
-	{
-		glActiveTexture(GL_TEXTURE1);
-		glBindTexture(GL_TEXTURE_2D, HWTexture->GetTextureHandle(0));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glActiveTexture(GL_TEXTURE0);
-
-		CustomTexture.Set(1);
-	}
 	GLRenderer->RenderScreenQuad();
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -142,4 +99,96 @@ void PostProcessShaderInstance::Run()
 	GLRenderer->mBuffers->NextTexture();
 
 	FGLDebug::PopGroup();
+}
+
+bool PostProcessShaderInstance::IsShaderSupported()
+{
+	int activeShaderVersion = (int)round(gl.glslversion * 10) * 10;
+	return activeShaderVersion >= Desc->ShaderVersion;
+}
+
+void PostProcessShaderInstance::CompileShader()
+{
+	if (mProgram)
+		return;
+
+	// Get the custom shader
+	const char *lumpName = Desc->ShaderLumpName.GetChars();
+	int lump = Wads.CheckNumForFullName(lumpName);
+	if (lump == -1) I_FatalError("Unable to load '%s'", lumpName);
+	FString code = Wads.ReadLump(lump).GetString().GetChars();
+
+	// Build an uniform block to use be used as input
+	// (this is technically not an uniform block, but it could be changed into that for Vulkan GLSL support)
+	FString uniformBlock;
+	TMap<FString, PostProcessUniformValue>::Iterator it(Desc->Uniforms);
+	TMap<FString, PostProcessUniformValue>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		FString type;
+		FString name = pair->Key;
+
+		switch (pair->Value.Type)
+		{
+		case PostProcessUniformType::Float: type = "float"; break;
+		case PostProcessUniformType::Int: type = "int"; break;
+		case PostProcessUniformType::Vec2: type = "vec2"; break;
+		case PostProcessUniformType::Vec3: type = "vec3"; break;
+		default: break;
+		}
+
+		if (!type.IsEmpty())
+			uniformBlock.AppendFormat("uniform %s %s;\n", type.GetChars(), name.GetChars());
+	}
+
+	// Build the input textures
+	FString uniformTextures;
+	uniformTextures += "uniform sampler2D InputTexture;\n";
+
+	// Setup pipeline
+	FString pipelineInOut;
+	pipelineInOut += "in vec2 TexCoord;\n";
+	pipelineInOut += "out vec4 FragColor;\n";
+
+	FString prolog;
+	prolog += uniformBlock;
+	prolog += uniformTextures;
+	prolog += pipelineInOut;
+
+	mProgram.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", Desc->ShaderVersion);
+	mProgram.Compile(FShaderProgram::Fragment, lumpName, code, prolog.GetChars(), Desc->ShaderVersion);
+	mProgram.SetFragDataLocation(0, "FragColor");
+	mProgram.Link(Desc->ShaderLumpName.GetChars());
+	mProgram.SetAttribLocation(0, "PositionInProjection");
+	mInputTexture.Init(mProgram, "InputTexture");
+}
+
+void PostProcessShaderInstance::UpdateUniforms()
+{
+	TMap<FString, PostProcessUniformValue>::Iterator it(Desc->Uniforms);
+	TMap<FString, PostProcessUniformValue>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		int location = glGetUniformLocation(mProgram, pair->Key.GetChars());
+		if (location != -1)
+		{
+			switch (pair->Value.Type)
+			{
+			case PostProcessUniformType::Float:
+				glUniform1f(location, (float)pair->Value.Values[0]);
+				break;
+			case PostProcessUniformType::Int:
+				glUniform1i(location, (int)pair->Value.Values[0]);
+				break;
+			case PostProcessUniformType::Vec2:
+				glUniform2f(location, (float)pair->Value.Values[0], (float)pair->Value.Values[1]);
+				break;
+			case PostProcessUniformType::Vec3:
+				glUniform3f(location, (float)pair->Value.Values[0], (float)pair->Value.Values[1], (float)pair->Value.Values[2]);
+				break;
+			default:
+				break;
+			}
+		}
+	}
 }

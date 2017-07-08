@@ -37,6 +37,7 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "vm.h"
+#include "d_player.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
@@ -698,11 +699,28 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 				sc.MustGetString();
 				shaderdesc.Name = sc.String;
 			}
-			else if (sc.Compare("texture"))
+			else if (sc.Compare("uniform"))
 			{
 				sc.MustGetString();
-				FTextureID no = TexMan.CheckForTexture(sc.String, FTexture::TEX_Wall);
-				shaderdesc.Texture = TexMan[no];
+				FString uniformType = sc.String;
+				uniformType.ToLower();
+
+				sc.MustGetString();
+				FString uniformName = sc.String;
+
+				PostProcessUniformType parsedType = PostProcessUniformType::Undefined;
+
+				if (uniformType.Compare("int") == 0)
+					parsedType = PostProcessUniformType::Int;
+				else if (uniformType.Compare("float") == 0)
+					parsedType = PostProcessUniformType::Float;
+				else if (uniformType.Compare("vec2") == 0)
+					parsedType = PostProcessUniformType::Vec2;
+				else if (uniformType.Compare("vec3") == 0)
+					parsedType = PostProcessUniformType::Vec3;
+
+				if (parsedType != PostProcessUniformType::Undefined)
+					shaderdesc.Uniforms[uniformName].Type = parsedType;
 			}
 		}
 
@@ -769,18 +787,110 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 	}
 }
 
+static bool IsConsolePlayer(player_t *player)
+{
+	AActor *activator = player ? player->mo : nullptr;
+	if (activator == nullptr || activator->player == nullptr)
+		return false;
+	return int(activator->player - players) == consoleplayer;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_BOOL_DEF(value);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+				shader.Enabled = value;
+		}
+	}
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
 {
 	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
 	PARAM_STRING(shaderName);
 	PARAM_STRING(uniformName);
 	PARAM_FLOAT_DEF(value);
 
-	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	if (IsConsolePlayer(player))
 	{
-		PostProcessShader &shader = PostProcessShaders[i];
-		if (shader.Name == shaderName)
-			shader.Uniform1f[uniformName] = value;
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = value;
+				vec4[1] = 0.0;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform2f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = x;
+				vec4[1] = y;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform3f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(z);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = x;
+				vec4[1] = y;
+				vec4[2] = z;
+				vec4[3] = 1.0;
+			}
+		}
 	}
 	return 0;
 }
@@ -788,15 +898,25 @@ DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
 DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
 {
 	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
 	PARAM_STRING(shaderName);
 	PARAM_STRING(uniformName);
 	PARAM_INT_DEF(value);
 
-	for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+	if (IsConsolePlayer(player))
 	{
-		PostProcessShader &shader = PostProcessShaders[i];
-		if (shader.Name == shaderName)
-			shader.Uniform1i[uniformName] = value;
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = (double)value;
+				vec4[1] = 0.0;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
 	}
 	return 0;
 }

@@ -24,6 +24,8 @@
 
 #include "swrenderer/scene/r_light.h"
 
+struct FViewWindow;
+
 // Keep using the software renderer's camera light class, for now.
 // The DFrameBuffer abstraction relies on this being globally shared
 typedef swrenderer::CameraLight PolyCameraLight;
@@ -31,9 +33,11 @@ typedef swrenderer::CameraLight PolyCameraLight;
 class PolyLightVisibility
 {
 public:
-	double WallGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0 : WallVisibility / FocalTangent(); }
-	double SpriteGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0 : WallVisibility / FocalTangent(); }
-	double ParticleGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0 : WallVisibility * 0.5 / FocalTangent(); }
+	void SetVisibility(FViewWindow &viewwindow, float vis);
+
+	double WallGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0 : GlobVis; }
+	double SpriteGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0 : GlobVis; }
+	double ParticleGlobVis(bool foggy) const { return (NoLightFade && !foggy) ? 0.0 : GlobVis * 0.5; }
 
 	// The vis value to pass into the GETPALOOKUP or LIGHTSCALE macros
 	double WallVis(double screenZ, bool foggy) const { return WallGlobVis(foggy) / screenZ; }
@@ -43,9 +47,6 @@ public:
 	static fixed_t LightLevelToShade(int lightlevel, bool foggy);
 
 private:
-	static double FocalTangent();
-
-	// 1706 is the value for walls on 1080p 16:9 displays.
-	double WallVisibility = 1706.0;
+	double GlobVis = 0.0f;
 	bool NoLightFade = false;
 };

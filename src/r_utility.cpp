@@ -280,6 +280,77 @@ void R_ExecuteSetViewSize (FRenderViewpoint &viewpoint, FViewWindow &viewwindow)
 
 //==========================================================================
 //
+// r_visibility
+//
+// Controls how quickly light ramps across a 1/z range.
+//
+//==========================================================================
+
+double R_ClampVisibility(double vis)
+{
+	// Allow negative visibilities, just for novelty's sake
+	return clamp(vis, -204.7, 204.7);	// (205 and larger do not work in 5:4 aspect ratio)
+}
+
+CUSTOM_CVAR(Float, r_visibility, 8.0f, CVAR_NOINITCALL)
+{
+	if (netgame && self != 8.0f)
+	{
+		Printf("Visibility cannot be changed in net games.\n");
+		self = 8.0f;
+	}
+	else
+	{
+		float clampValue = (float)R_ClampVisibility(self);
+		if (self != clampValue)
+			self = clampValue;
+	}
+}
+
+//==========================================================================
+//
+// R_GetGlobVis
+//
+// Calculates the global visibility constant used by the software renderer
+//
+//==========================================================================
+
+double R_GetGlobVis(const FViewWindow &viewwindow, double vis)
+{
+	vis = R_ClampVisibility(vis);
+
+	double virtwidth = screen->GetWidth();
+	double virtheight = screen->GetHeight();
+
+	if (AspectTallerThanWide(viewwindow.WidescreenRatio))
+	{
+		virtheight = (virtheight * AspectMultiplier(viewwindow.WidescreenRatio)) / 48;
+	}
+	else
+	{
+		virtwidth = (virtwidth * AspectMultiplier(viewwindow.WidescreenRatio)) / 48;
+	}
+
+	double YaspectMul = 320.0 * virtheight / (200.0 * virtwidth);
+	double InvZtoScale = YaspectMul * viewwindow.centerx;
+
+	double wallVisibility = vis;
+
+	// Prevent overflow on walls
+	double maxVisForWall = (InvZtoScale * (screen->GetWidth() * r_Yaspect) / (viewwidth * screen->GetHeight() * viewwindow.FocalTangent));
+	maxVisForWall = 32767.0 / maxVisForWall;
+	if (vis < 0 && vis < -maxVisForWall)
+		wallVisibility = -maxVisForWall;
+	else if (vis > 0 && vis > maxVisForWall)
+		wallVisibility = maxVisForWall;
+
+	wallVisibility = InvZtoScale * screen->GetWidth() * AspectBaseHeight(viewwindow.WidescreenRatio) / (viewwidth * screen->GetHeight() * 3) * (wallVisibility * viewwindow.FocalTangent);
+
+	return wallVisibility / viewwindow.FocalTangent;
+}
+
+//==========================================================================
+//
 // CVAR screenblocks
 //
 // Selects the size of the visible window

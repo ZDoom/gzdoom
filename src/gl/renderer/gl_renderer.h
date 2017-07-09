@@ -151,6 +151,8 @@ public:
 
 	float mSceneClearColor[3];
 
+	float mGlobVis = 0.0f;
+
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
 

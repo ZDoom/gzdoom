@@ -40,6 +40,7 @@
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, screenblocks)
+EXTERN_CVAR(Float, r_visibility)
 void InitGLRMapinfoData();
 
 /////////////////////////////////////////////////////////////////////////////
@@ -122,6 +123,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
 	else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;
 
+	Light.SetVisibility(Viewwindow, r_visibility);
 
 	PolyCameraLight::Instance()->SetCamera(Viewpoint, RenderTarget, actor);
 	//Viewport->SetupFreelook();

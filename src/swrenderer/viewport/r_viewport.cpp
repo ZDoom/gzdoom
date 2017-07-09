@@ -46,6 +46,8 @@
 
 CVAR(String, r_viewsize, "", CVAR_NOSET)
 
+EXTERN_CVAR(Float, r_visibility);
+
 namespace swrenderer
 {
 	RenderViewport::RenderViewport()
@@ -109,7 +111,7 @@ namespace swrenderer
 		InitTextureMapping();
 
 		// Reset r_*Visibility vars
-		thread->Light->SetVisibility(this, thread->Light->GetVisibility());
+		thread->Light->SetVisibility(this, r_visibility);
 
 		SetupBuffer();
 	}

@@ -122,6 +122,8 @@ void R_ExecuteSetViewSize (FRenderViewpoint &viewpoint, FViewWindow &viewwindow)
 void R_SetViewSize (int blocks);
 void R_SetWindow (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, int windowSize, int fullWidth, int fullHeight, int stHeight, bool renderingToCanvas = false);
 
+double R_GetGlobVis(const FViewWindow &viewwindow, double vis);
+double R_ClampVisibility(double vis);
 
 extern void R_FreePastViewers ();
 extern void R_ClearPastViewer (AActor *actor);

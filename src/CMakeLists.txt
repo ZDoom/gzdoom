@@ -477,31 +477,13 @@ if (GZDOOM_USE_OPENVR)
 			${OPENVR_SDK_PATH}/headers
 	)
 	include_directories("${OPENVR_INCLUDE_DIRECTORY}")
-	# Link to correct library for this platform
-	if(WIN32)
-		set(OPENVR_PLAT "win")
-	elseif( APPLE )
-		set(OPENVR_PLAT "osx")
-	else()
-		set(OPENVR_PLAT "linux")
-	endif()
-	if(X64)
-		set(OPENVR_PLAT ${OPENVR_PLAT}64)
-	else()
-		set(OPENVR_PLAT ${OPENVR_PLAT}32)
-	endif()
 	find_library(OPENVR_LIBRARY
 		NAMES openvr_api
-		HINTS "${OPENVR_SDK_PATH}/lib/${OPENVR_PLAT}/"
+		# TODO: Generalize for Mac and Linux and 64-bit Windows
+		HINTS "${OPENVR_SDK_PATH}/lib/win32/"
 	)
 	list(APPEND ZDOOM_LIBS ${OPENVR_LIBRARY})
 	add_definitions("-DUSE_OPENVR")
-	# Find shared library file needed for package distribution
-	find_program(OPENVR_SHARED_LIBRARY
-		NAMES libopenvr_api.so libopenvr_api.dylib openvr_api.dll
-		PATHS "${OPENVR_SDK_PATH}/bin/${OPENVR_PLAT}/"
-		NO_DEFAULT_PATH
-	)
 endif()
 
 # Start defining source files for ZDoom
@@ -1328,11 +1310,6 @@ endif()
 install(TARGETS zdoom
 		DESTINATION ${INSTALL_PATH}
 		COMPONENT "Game executable")
-if(OPENVR_SHARED_LIBRARY)
-	install(PROGRAMS ${OPENVR_SHARED_LIBRARY} 
-		DESTINATION ${INSTALL_PATH}
-		COMPONENT "Shared libraries")
-endif()
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")

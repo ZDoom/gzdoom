@@ -4119,6 +4119,22 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 	}
 
+	// [SP] move unfriendly players around
+	// horribly hacky - yes, this needs rewritten.
+	for (i = 0; i < MAXPLAYERS; ++i)
+	{
+		if (playeringame[i] && players[i].mo != NULL)
+		{
+			if (!(players[i].mo->flags & MF_FRIENDLY))
+			{
+				AActor * oldSpawn = players[i].mo;
+				G_DeathMatchSpawnPlayer (i);
+				oldSpawn->Destroy();
+			}
+		}
+	}
+
+
 	// Don't count monsters in end-of-level sectors if option is on
 	if (dmflags2 & DF2_NOCOUNTENDMONST)
 	{

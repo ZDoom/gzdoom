@@ -300,8 +300,6 @@ endif()
 
 set( LZMA_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lzma/C" )
 
-option( GZDOOM_USE_OPENVR "Support OpenVR API for virtual reality head mounted displays" OFF )
-
 if( NOT CMAKE_CROSSCOMPILING )
 	if( NOT CROSS_EXPORTS )
 		set( CROSS_EXPORTS "" )

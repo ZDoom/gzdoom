@@ -66,7 +66,7 @@ class DHUDMessage : public DObject
 public:
 	DHUDMessage (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime);
-	virtual ~DHUDMessage ();
+	virtual void OnDestroy () override;
 
 	virtual void Serialize(FSerializer &arc);
 

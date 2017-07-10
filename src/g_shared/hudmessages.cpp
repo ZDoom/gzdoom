@@ -150,7 +150,7 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 //
 //============================================================================
 
-DHUDMessage::~DHUDMessage ()
+void DHUDMessage::OnDestroy()
 {
 	if (Lines)
 	{
@@ -164,6 +164,7 @@ DHUDMessage::~DHUDMessage ()
 	if (SourceText != NULL)
 	{
 		delete[] SourceText;
+		SourceText = nullptr;
 	}
 }
 

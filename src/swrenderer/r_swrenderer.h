@@ -35,9 +35,6 @@ struct FSoftwareRenderer : public FRenderer
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
 
-	double GetVisibility() override;
-	void SetVisibility(double vis) override;
-
 private:
 	void PrecacheTexture(FTexture *tex, int cache);
 

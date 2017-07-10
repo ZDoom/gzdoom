@@ -378,14 +378,3 @@ void FSoftwareRenderer::PreprocessLevel()
 void FSoftwareRenderer::CleanLevelData()
 {
 }
-
-double FSoftwareRenderer::GetVisibility()
-{
-	return mScene.MainThread()->Light->GetVisibility();
-}
-
-void FSoftwareRenderer::SetVisibility(double vis)
-{
-	mScene.MainThread()->Light->SetVisibility(mScene.MainThread()->Viewport.get(), vis);
-}
-

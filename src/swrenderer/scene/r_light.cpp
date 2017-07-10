@@ -104,8 +104,7 @@ namespace swrenderer
 	// Changes how rapidly things get dark with distance
 	void LightVisibility::SetVisibility(RenderViewport *viewport, double vis)
 	{
-		// Allow negative visibilities, just for novelty's sake
-		vis = clamp(vis, -204.7, 204.7);	// (205 and larger do not work in 5:4 aspect ratio)
+		vis = R_ClampVisibility(vis);
 
 		CurrentVisibility = vis;
 
@@ -164,25 +163,6 @@ namespace swrenderer
 			// fixed point. Why the +12? I wish I knew, but experimentation indicates it
 			// is necessary in order to best reproduce Doom's original lighting.
 			return (NUMCOLORMAPS * 2 * FRACUNIT) - ((lightlevel + 12) * (FRACUNIT*NUMCOLORMAPS / 128));
-		}
-	}
-
-	// Controls how quickly light ramps across a 1/z range. Set this, and it
-	// sets all the r_*Visibility variables (except r_SkyVisibilily, which is
-	// currently unused).
-	CCMD(r_visibility)
-	{
-		if (argv.argc() < 2)
-		{
-			Printf("Visibility is %g\n", Renderer->GetVisibility());
-		}
-		else if (!netgame)
-		{
-			Renderer->SetVisibility(atof(argv[1]));
-		}
-		else
-		{
-			Printf("Visibility cannot be changed in net games.\n");
 		}
 	}
 

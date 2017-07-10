@@ -27,6 +27,11 @@
 #include "poly_light.h"
 #include "polyrenderer/poly_renderer.h"
 
+void PolyLightVisibility::SetVisibility(FViewWindow &viewwindow, float vis)
+{
+	GlobVis = R_GetGlobVis(viewwindow, vis);
+}
+
 fixed_t PolyLightVisibility::LightLevelToShade(int lightlevel, bool foggy)
 {
 	bool nolightfade = !foggy && ((level.flags3 & LEVEL3_NOLIGHTFADE));
@@ -41,9 +46,4 @@ fixed_t PolyLightVisibility::LightLevelToShade(int lightlevel, bool foggy)
 		// is necessary in order to best reproduce Doom's original lighting.
 		return (NUMCOLORMAPS * 2 * FRACUNIT) - ((lightlevel + 12) * (FRACUNIT*NUMCOLORMAPS / 128));
 	}
-}
-
-double PolyLightVisibility::FocalTangent()
-{
-	return PolyRenderer::Instance()->Viewwindow.FocalTangent;
 }

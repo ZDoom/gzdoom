@@ -339,18 +339,12 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 		if (currentpos + framestoread > song->Loop_End)
 		{
 			size_t endblock = (song->Loop_End - currentpos) * song->Channels * 2;
-			size_t endlen = song->Decoder->read(buff, 0 == endblock ? len : endblock);
-			if (endlen != 0)
-			{
-				buff = buff + endlen;
-				len -= endlen;
-				song->Decoder->seek(song->Loop_Start, false, true);
-			}
-			else
-			{
-				song->CritSec.Leave();
-				return false;
-			}
+			size_t endlen = song->Decoder->read(buff, endblock);
+
+			// Even if zero bytes was read give it a chance to start from the beginning
+			buff = buff + endlen;
+			len -= endlen;
+			song->Decoder->seek(song->Loop_Start, false, true);
 		}
 		while (len > 0)
 		{

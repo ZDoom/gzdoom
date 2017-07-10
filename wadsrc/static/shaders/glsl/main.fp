@@ -103,12 +103,6 @@ vec4 getTexel(vec2 st)
 //===========================================================================
 float R_DoomLightingEquation(float light)
 {
-	// globVis = WallVisibility / r_viewwindow.FocalTangent / 32.0
-	//
-	// WallVisibility is calculated in LightVisibility::SetVisibility
-	// 1706 is the default value for WallVisibility on 1080p 16:9 displays.
-	float globVis = 1706.0 / 1.3333333333333333 / 32.0;
-
 	// L is the integer light level used in the game
 	float L = light * 255.0;
 
@@ -124,7 +118,7 @@ float R_DoomLightingEquation(float light)
 	}
 
 	// The zdoom light equation
-	float vis = min(globVis / z, 24.0 / 32.0);
+	float vis = min(uGlobVis / z, 24.0 / 32.0);
 	float shade = 2.0 - (L + 12.0) / 128.0;
 	float lightscale;
 	if ((uPalLightLevels & 0xff) != 0)

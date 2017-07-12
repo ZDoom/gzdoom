@@ -9,6 +9,7 @@
 #include "drawers/r_thread.cpp"
 #include "line/r_fogboundary.cpp"
 #include "line/r_line.cpp"
+#include "line/r_farclip_line.cpp"
 #include "line/r_renderdrawsegment.cpp"
 #include "line/r_walldraw.cpp"
 #include "line/r_wallsetup.cpp"

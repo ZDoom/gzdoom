@@ -691,6 +691,7 @@ set ( SWRENDER_SOURCES
 	swrenderer/viewport/r_viewport.cpp
 	swrenderer/viewport/r_walldrawer.cpp
 	swrenderer/line/r_line.cpp
+	swrenderer/line/r_farclip_line.cpp
 	swrenderer/line/r_walldraw.cpp
 	swrenderer/line/r_wallsetup.cpp
 	swrenderer/line/r_fogboundary.cpp

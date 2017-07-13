@@ -723,6 +723,10 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 				if (parsedType != PostProcessUniformType::Undefined)
 					shaderdesc.Uniforms[uniformName].Type = parsedType;
 			}
+			else if (sc.Compare("enabled"))
+			{
+				shaderdesc.Enabled = true;
+			}
 		}
 
 		PostProcessShaders.Push(shaderdesc);

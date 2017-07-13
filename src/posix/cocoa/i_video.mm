@@ -498,13 +498,7 @@ CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 	return window;
 }
 
-enum OpenGLProfile
-{
-	Core,
-	Legacy
-};
-
-NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
+NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profile)
 {
 	NSOpenGLPixelFormatAttribute attributes[16];
 	size_t i = 0;
@@ -522,20 +516,8 @@ NSOpenGLPixelFormat* CreatePixelFormat(const OpenGLProfile profile)
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
 	}
 
-	if (NSAppKitVersionNumber >= AppKit10_7 && OpenGLProfile::Core == profile)
+	if (NSAppKitVersionNumber >= AppKit10_7)
 	{
-		NSOpenGLPixelFormatAttribute profile = NSOpenGLProfileVersion3_2Core;
-		const char* const glversion = Args->CheckValue("-glversion");
-
-		if (nullptr != glversion)
-		{
-			const double version = strtod(glversion, nullptr) + 0.01;
-			if (version < 3.0)
-			{
-				profile = NSOpenGLProfileVersionLegacy;
-			}
-		}
-
 		attributes[i++] = NSOpenGLPFAOpenGLProfile;
 		attributes[i++] = profile;
 	}
@@ -564,15 +546,33 @@ CocoaVideo::CocoaVideo()
 	gl_CalculateCPUSpeed();
 
 	// Create OpenGL pixel format
+	NSOpenGLPixelFormatAttribute defaultProfile = NSOpenGLProfileVersion3_2Core;
 
-	const OpenGLProfile defaultProfile = (1 == vid_renderer || vid_glswfb)
-		? OpenGLProfile::Core
-		: OpenGLProfile::Legacy;
+	if (1 == vid_renderer && NSAppKitVersionNumber < AppKit10_9)
+	{
+		// There is no support for OpenGL 3.3 before Mavericks
+		defaultProfile = NSOpenGLProfileVersionLegacy;
+	}
+	else if (0 == vid_renderer && vid_glswfb && NSAppKitVersionNumber < AppKit10_7)
+	{
+		// There is no support for OpenGL 3.x before Lion
+		defaultProfile = NSOpenGLProfileVersionLegacy;
+	}
+	else if (const char* const glversion = Args->CheckValue("-glversion"))
+	{
+		// Check for explicit version specified in command line
+		const double version = strtod(glversion, nullptr) + 0.01;
+		if (version < 3.3)
+		{
+			defaultProfile = NSOpenGLProfileVersionLegacy;
+		}
+	}
+
 	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(defaultProfile);
 
-	if (nil == pixelFormat && OpenGLProfile::Core == defaultProfile)
+	if (nil == pixelFormat && NSOpenGLProfileVersion3_2Core == defaultProfile)
 	{
-		pixelFormat = CreatePixelFormat(OpenGLProfile::Legacy);
+		pixelFormat = CreatePixelFormat(NSOpenGLProfileVersionLegacy);
 
 		if (nil == pixelFormat)
 		{

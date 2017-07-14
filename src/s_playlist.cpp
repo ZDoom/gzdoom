@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include <ctime>
 
 #include "cmdlib.h"
 #include "s_playlist.h"
@@ -162,6 +163,7 @@ void FPlayList::Shuffle ()
 
 	for (i = 0; i < numsongs; ++i)
 	{
+		srand(time(NULL));
 		swapvalues (Songs[i], Songs[(rand() % (numsongs - i)) + i]);
 	}
 	Position = 0;

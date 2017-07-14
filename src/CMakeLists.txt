@@ -265,6 +265,16 @@ else( X64 )
 	set( CMAKE_CXX_FLAGS ${SAFE_CMAKE_CXX_FLAGS} )
 endif( X64 )
 
+CHECK_CXX_SOURCE_COMPILES("#include <ppl.h>
+	int main() { concurrency::parallel_for(0, 1, 1, [](int) { } ); }"
+	HAVE_PARALLEL_FOR)
+
+if( NOT HAVE_PARALLEL_FOR )
+	CHECK_CXX_SOURCE_COMPILES("#include <dispatch/dispatch.h>
+		int main() { dispatch_apply(1, dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), ^(size_t) { }); }"
+		HAVE_DISPATCH_APPLY)
+endif()
+
 # Set up flags for MSVC
 if (MSVC)
 	set( CMAKE_CXX_FLAGS "/MP ${CMAKE_CXX_FLAGS}" )
@@ -566,6 +576,23 @@ if( HAVE_MMX )
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
+
+if( HAVE_PARALLEL_FOR )
+	add_definitions( -DHAVE_PARALLEL_FOR=1 )
+elseif( HAVE_DISPATCH_APPLY )
+	add_definitions( -DHAVE_DISPATCH_APPLY=1 )
+else()
+	option( NO_OPENMP "Disable usage of OpenMP" OFF )
+
+	if( NOT NO_OPENMP )
+		include( FindOpenMP )
+
+		if( OPENMP_FOUND )
+			set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}" )
+			set( CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}" )
+		endif( OPENMP_FOUND )
+	endif( NOT NO_OPENMP )
+endif()
 
 add_custom_command( OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c ${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.h
 	COMMAND lemon -C${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/xlat/xlat_parser.y

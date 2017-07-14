@@ -34,6 +34,7 @@
 
 #include <stdlib.h>
 #include <errno.h>
+#include <ctime>
 
 #include "cmdlib.h"
 #include "s_playlist.h"
@@ -159,6 +160,8 @@ void FPlayList::Shuffle ()
 {
 	unsigned int numsongs = Songs.Size();
 	unsigned int i;
+	
+	srand(time(NULL));
 
 	for (i = 0; i < numsongs; ++i)
 	{

@@ -160,12 +160,10 @@ void FPlayList::Shuffle ()
 {
 	unsigned int numsongs = Songs.Size();
 	unsigned int i;
-	
-	srand(time(NULL));
 
 	for (i = 0; i < numsongs; ++i)
 	{
-		swapvalues (Songs[i], Songs[(rand() % (numsongs - i)) + i]);
+		swapvalues (Songs[i], Songs[(time(NULL) % (numsongs - i)) + i]);
 	}
 	Position = 0;
 }

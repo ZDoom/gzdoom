@@ -432,27 +432,27 @@ void M_LoadDefaults ()
 
 struct pcx_t
 {
-	char				manufacturer;
-	char				version;
-	char				encoding;
-	char				bits_per_pixel;
+	int8_t				manufacturer;
+	int8_t				version;
+	int8_t				encoding;
+	int8_t				bits_per_pixel;
 
-	unsigned short		xmin;
-	unsigned short		ymin;
-	unsigned short		xmax;
-	unsigned short		ymax;
+	uint16_t			xmin;
+	uint16_t			ymin;
+	uint16_t			xmax;
+	uint16_t			ymax;
 	
-	unsigned short		hdpi;
-	unsigned short		vdpi;
+	uint16_t			hdpi;
+	uint16_t			vdpi;
 
-	unsigned char		palette[48];
+	uint8_t				palette[48];
 	
-	char				reserved;
-	char				color_planes;
-	unsigned short		bytes_per_line;
-	unsigned short		palette_type;
+	int8_t				reserved;
+	int8_t				color_planes;
+	uint16_t			bytes_per_line;
+	uint16_t			palette_type;
 	
-	char				filler[58];
+	int8_t				filler[58];
 };
 
 

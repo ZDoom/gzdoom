@@ -250,7 +250,7 @@ xx(EQV3_K,		beqv3,	CVRK,		NOP,	0, 0),			// this will never be used.
 
 // Pointer math.
 xx(ADDA_RR,		add,	RPRPRI,		NOP,	0, 0),		// pA = pB + dkC
-xx(ADDA_RK,		add,	RPRPKI,		ADDA_RR,4, REGT_POINTER),
+xx(ADDA_RK,		add,	RPRPKI,		ADDA_RR,4, REGT_INT),
 xx(SUBA,		sub,	RIRPRP,		NOP,	0, 0),		// dA = pB - pC
 xx(EQA_R,		beq,	CPRR,		NOP,	0, 0),			// if ((pB == pkC) != A) then pc++
 xx(EQA_K,		beq,	CPRK,		EQA_R,	4, REGT_POINTER),

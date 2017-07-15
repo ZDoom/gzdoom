@@ -57,7 +57,7 @@ class FGLTexture
 public:
 	FTexture * tex;
 	FTexture * hirestexture;
-	char bIsTransparent;
+	int8_t bIsTransparent;
 	int HiresLump;
 
 private:

@@ -301,6 +301,7 @@ boom_line(A) ::= boom_selector(sel) boom_op(op) boom_args(args).
 {
 	A.bOrExisting = (op == OR_EQUAL);
 	A.bUseConstant = (args.filters == NULL);
+	A.ListSize = 0;
 	A.ArgNum = sel;
 	A.ConstantValue = args.constant;
 	A.AndValue = args.mask;

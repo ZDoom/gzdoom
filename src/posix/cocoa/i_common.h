@@ -60,6 +60,8 @@ extern RenderBufferOptions rbOpts;
 #define AppKit10_5  949
 #define AppKit10_6 1038
 #define AppKit10_7 1138
+#define AppKit10_8 1187
+#define AppKit10_9 1265
 
 
 @interface NSWindow(ExitAppOnClose)

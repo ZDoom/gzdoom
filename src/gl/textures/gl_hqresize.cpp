@@ -46,44 +46,7 @@
 #include "gl/xbr/xbrz.h"
 #include "gl/xbr/xbrz_old.h"
 
-#ifdef HAVE_PARALLEL_FOR
-
-#include <ppl.h>
-
-template <typename Index, typename Function>
-inline void parallel_for(const Index count, const Index step, const Function& function)
-{
-	concurrency::parallel_for(0, count, step, function);
-}
-
-#elif defined HAVE_DISPATCH_APPLY
-
-#include <dispatch/dispatch.h>
-
-template <typename Index, typename Function>
-inline void parallel_for(const Index count, const Index step, const Function& function)
-{
-	const dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-
-	dispatch_apply(count / step + 1, queue, ^(size_t sliceY)
-	{
-		function(sliceY * step);
-	});
-}
-
-#else
-
-template <typename Index, typename Function>
-inline void parallel_for(const Index count, const Index step, const Function& function)
-{
-#pragma omp parallel for
-	for (Index i = 0; i < count; i += step)
-	{
-		function(i);
-	}
-}
-
-#endif // HAVE_PARALLEL_FOR
+#include "parallel_for.h"
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {

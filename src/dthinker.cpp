@@ -462,6 +462,21 @@ void DThinker::DestroyThinkersInList (FThinkerList &list)
 //
 //
 //==========================================================================
+CVAR(Bool, profilethinkers, false, 0)
+
+struct ProfileInfo
+{
+	int numcalls = 0;
+	cycle_t timer;
+
+	ProfileInfo()
+	{
+		timer.Reset();
+	}
+};
+
+TMap<FName, ProfileInfo> Profiles;
+
 
 void DThinker::RunThinkers ()
 {
@@ -475,21 +490,50 @@ void DThinker::RunThinkers ()
 
 	ThinkCycles.Clock();
 
-	// Tick every thinker left from last time
-	for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
+	if (!profilethinkers)
 	{
-		TickThinkers (&Thinkers[i], NULL);
-	}
-
-	// Keep ticking the fresh thinkers until there are no new ones.
-	do
-	{
-		count = 0;
+		// Tick every thinker left from last time
 		for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
 		{
-			count += TickThinkers (&FreshThinkers[i], &Thinkers[i]);
+			TickThinkers(&Thinkers[i], NULL);
 		}
-	} while (count != 0);
+
+		// Keep ticking the fresh thinkers until there are no new ones.
+		do
+		{
+			count = 0;
+			for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
+			{
+				count += TickThinkers(&FreshThinkers[i], &Thinkers[i]);
+			}
+		} while (count != 0);
+	}
+	else
+	{
+		Profiles.Clear();
+		// Tick every thinker left from last time
+		for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
+		{
+			ProfileThinkers(&Thinkers[i], NULL);
+		}
+
+		// Keep ticking the fresh thinkers until there are no new ones.
+		do
+		{
+			count = 0;
+			for (i = STAT_FIRST_THINKING; i <= MAX_STATNUM; ++i)
+			{
+				count += ProfileThinkers(&FreshThinkers[i], &Thinkers[i]);
+			}
+		} while (count != 0);
+		auto it = TMap<FName, ProfileInfo>::Iterator(Profiles);
+		TMap<FName, ProfileInfo>::Pair *pair;
+		while (it.NextPair(pair))
+		{
+			Printf("%s, %dx, %fms\n", pair->Key.GetChars(), pair->Value.numcalls, pair->Value.timer.TimeMS());
+		}
+		profilethinkers = false;
+	}
 
 	ThinkCycles.Unclock();
 }
@@ -533,6 +577,57 @@ int DThinker::TickThinkers (FThinkerList *list, FThinkerList *dest)
 		{ // Only tick thinkers not scheduled for destruction
 			ThinkCount++;
 			node->CallTick();
+			node->ObjectFlags &= ~OF_JustSpawned;
+			GC::CheckGC();
+		}
+		node = NextToThink;
+	}
+	return count;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+int DThinker::ProfileThinkers(FThinkerList *list, FThinkerList *dest)
+{
+	int count = 0;
+	DThinker *node = list->GetHead();
+
+	if (node == NULL)
+	{
+		return 0;
+	}
+
+	while (node != list->Sentinel)
+	{
+		++count;
+		NextToThink = node->NextThinker;
+		if (node->ObjectFlags & OF_JustSpawned)
+		{
+			// Leave OF_JustSpawn set until after Tick() so the ticker can check it.
+			if (dest != NULL)
+			{ // Move thinker from this list to the destination list
+				node->Remove();
+				dest->AddTail(node);
+			}
+			node->CallPostBeginPlay();
+		}
+		else if (dest != NULL)
+		{
+			I_Error("There is a thinker in the fresh list that has already ticked.\n");
+		}
+
+		if (!(node->ObjectFlags & OF_EuthanizeMe))
+		{ // Only tick thinkers not scheduled for destruction
+			ThinkCount++;
+
+			auto &prof = Profiles[node->GetClass()->TypeName];
+			prof.numcalls++;
+			prof.timer.Clock();
+			node->CallTick();
+			prof.timer.Unclock();
 			node->ObjectFlags &= ~OF_JustSpawned;
 			GC::CheckGC();
 		}

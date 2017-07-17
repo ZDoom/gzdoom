@@ -97,6 +97,7 @@ public:
 private:
 	static void DestroyThinkersInList (FThinkerList &list);
 	static int TickThinkers (FThinkerList *list, FThinkerList *dest);	// Returns: # of thinkers ticked
+	static int ProfileThinkers(FThinkerList *list, FThinkerList *dest);
 	static void SaveList(FSerializer &arc, DThinker *node);
 	void Remove();
 

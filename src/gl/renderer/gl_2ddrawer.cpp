@@ -133,14 +133,14 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	if (parms.style.Flags & STYLEF_ColorIsFixed)
 	{
 		color = parms.fillcolor;
-		std::swap(color.r, color.b);
 	}
 	else
 	{
 		color = PalEntry(light, light, light);
 	}
 	color.a = (uint8_t)(parms.Alpha * 255);
-	color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
+	// red and blue channels are swapped to use value as vertex color
+	color = PalEntry((color.a * parms.color.a) / 255, (color.b * parms.color.b) / 255, (color.g * parms.color.g) / 255, (color.r * parms.color.r) / 255);
 
 	// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
 	dg.mScissor[0] = GLRenderer->ScreenToWindowX(parms.lclip);

@@ -219,7 +219,8 @@ enum ECheatCommand
 	CHT_BUDDHA,
 	CHT_NOCLIP2,
 	CHT_BUDDHA2,
-	CHT_GOD2
+	CHT_GOD2,
+	CHT_MASSACRE2
 };
 
 void StartChunk (int id, uint8_t **stream);

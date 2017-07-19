@@ -381,6 +381,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 	Next = FirstFont;
 	FirstFont = this;
 	Cursor = '_';
+	ActiveColors = 0;
 
 	maxyoffs = 0;
 

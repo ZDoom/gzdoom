@@ -3595,7 +3595,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_BossDeath)
 //
 //----------------------------------------------------------------------------
 
-int P_Massacre ()
+int P_Massacre (bool baddies)
 {
 	// jff 02/01/98 'em' cheat - kill all monsters
 	// partially taken from Chi's .46 port
@@ -3609,7 +3609,7 @@ int P_Massacre ()
 
 	while ( (actor = iterator.Next ()) )
 	{
-		if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER))
+		if (!(actor->flags2 & MF2_DORMANT) && (actor->flags3 & MF3_ISMONSTER) && (!baddies || !(actor->flags & MF_FRIENDLY)))
 		{
 			killcount += actor->Massacre();
 		}

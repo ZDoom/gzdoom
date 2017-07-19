@@ -321,8 +321,9 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MASSACRE:
+	case CHT_MASSACRE2:
 		{
-			int killcount = P_Massacre ();
+			int killcount = P_Massacre (cheat == CHT_MASSACRE2);
 			// killough 3/22/98: make more intelligent about plural
 			// Ty 03/27/98 - string(s) *not* externalized
 			mysnprintf (msgbuild, countof(msgbuild), "%d Monster%s Killed", killcount, killcount==1 ? "" : "s");

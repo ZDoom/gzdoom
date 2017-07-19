@@ -48,14 +48,14 @@ const char *GetVersionString();
 #ifdef GIT_DESCRIPTION
 #define VERSIONSTR GIT_DESCRIPTION
 #else
-#define VERSIONSTR "2.1pre"
+#define VERSIONSTR "3.2pre"
 #endif
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 2,1,9999,0
-#define RC_PRODUCTVERSION 2,1,9999,0
+#define RC_FILEVERSION 3,1,9999,0
+#define RC_PRODUCTVERSION 3,1,9999,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
-// These are for content versioning. The current state is '3.2'.
+// These are for content versioning. The current state is '2.4'.
 #define VER_MAJOR 3
 #define VER_MINOR 2
 #define VER_REVISION 0
@@ -94,15 +94,15 @@ const char *GetVersionString();
 #define SAVEVER 4552
 
 // This is so that derivates can use the same savegame versions without worrying about engine compatibility
-#define GAMESIG "QZDOOM"
-#define BASEWAD "qzdoom.pk3"
+#define GAMESIG "GZDOOM"
+#define BASEWAD "gzdoom.pk3"
 #define BASESF "gzdoom.sf2"
 
 // More stuff that needs to be different for derivatives.
-#define GAMENAME "QZDoom"
-#define GAMENAMELOWERCASE "qzdoom"
-#define FORUM_URL "http://forum.drdteam.org/viewforum.php?f=196"
-#define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=197"
+#define GAMENAME "GZDoom"
+#define GAMENAMELOWERCASE "gzdoom"
+#define FORUM_URL "http://forum.drdteam.org"
+#define BUGS_FORUM_URL	"http://forum.drdteam.org/viewforum.php?f=24"
 
 #if defined(__APPLE__) || defined(_WIN32)
 #define GAME_DIR GAMENAME

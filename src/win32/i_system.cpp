@@ -484,10 +484,22 @@ static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw
 // saved tic.
 //
 //==========================================================================
+static uint32_t FrameTime;
+
+void I_SetFrameTime()
+{
+	FrameTime = timeGetTime();
+}
 
 double I_GetTimeFrac(uint32_t *ms)
 {
-	DWORD now = timeGetTime();
+	//DWORD now = MAX<uint32_t>(FrameTime, TicStart);
+	DWORD now = FrameTime;
+	if (FrameTime < TicStart)
+	{
+		// Preliminary kept in to see if this can happen. Should be removed once confirmed ok.
+		Printf("Timer underflow!\n");
+	}
 	if (ms != NULL)
 	{
 		*ms = TicNext;

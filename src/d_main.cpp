@@ -1017,7 +1017,8 @@ void D_DoomLoop ()
 				lasttic = gametic;
 				I_StartFrame ();
 			}
-			
+			I_SetFrameTime();
+
 			// process one or more tics
 			if (singletics)
 			{

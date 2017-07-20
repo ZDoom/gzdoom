@@ -63,6 +63,7 @@ extern int (*I_WaitForTic) (int);
 extern void (*I_FreezeTime) (bool frozen);
 
 double I_GetTimeFrac (uint32_t *ms);
+void I_SetFrameTime();
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();

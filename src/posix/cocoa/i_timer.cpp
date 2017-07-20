@@ -178,9 +178,17 @@ unsigned int I_FPSTime()
 }
 
 
+static uint32_t FrameTime;
+
+void I_SetFrameTime()
+{
+	FrameTime = I_MSTime();
+}
+
+
 double I_GetTimeFrac(uint32_t* ms)
 {
-	const uint32_t now = I_MSTime();
+	const uint32_t now = FrameTime;
 
 	if (NULL != ms)
 	{

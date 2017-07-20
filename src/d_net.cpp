@@ -1948,6 +1948,7 @@ void TryRunTics (void)
 			C_Ticker ();
 			M_Ticker ();
 			I_GetTime (true);
+			I_SetFrameTime();
 			G_Ticker();
 			gametic++;
 

@@ -208,10 +208,18 @@ void I_SelectTimer()
 	}
 }
 
+
+static uint32_t FrameTime;
+
+void I_SetFrameTime()
+{
+	FrameTime = SDL_GetTicks();
+}
+
 // Returns the fractional amount of a tic passed since the most recent tic
 double I_GetTimeFrac (uint32_t *ms)
 {
-	uint32_t now = SDL_GetTicks ();
+	uint32_t now = FrameTime;
 	if (ms) *ms = TicStart + (1000 / TICRATE);
 	if (TicStart == 0)
 	{

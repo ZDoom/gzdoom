@@ -46,6 +46,8 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	InvGamma.Init(mShader, "InvGamma");
 	Contrast.Init(mShader, "Contrast");
 	Brightness.Init(mShader, "Brightness");
+	Saturation.Init(mShader, "Saturation");
+	GrayFormula.Init(mShader, "GrayFormula");
 	Scale.Init(mShader, "UVScale");
 }
 

@@ -79,6 +79,9 @@ CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
 EXTERN_CVAR (Bool, show_obituaries)
 
+CVAR (Float, sv_damagefactormobj, 1.0, CVAR_SERVERINFO|CVAR_NOSAVE)
+CVAR (Float, sv_damagefactorfriendly, 1.0, CVAR_SERVERINFO|CVAR_NOSAVE)
+CVAR (Float, sv_damagefactorplayer, 1.0, CVAR_SERVERINFO|CVAR_NOSAVE)
 
 FName MeansOfDeath;
 
@@ -1036,7 +1039,17 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			if (player && damage > 1)
 			{
 				// Take half damage in trainer mode
-				damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
+				damage = int(damage * G_SkillProperty(SKILLP_DamageFactor) * sv_damagefactorplayer);
+			}
+			else if (!player && damage > 1 && !(target->flags & MF_FRIENDLY))
+			{
+				// inflict scaled damage to non-players
+				damage = int(damage * sv_damagefactormobj);
+			}
+			else if (!player && damage > 1 && (target->flags & MF_FRIENDLY))
+			{
+				// inflict scaled damage to non-player friends
+				damage = int(damage * sv_damagefactorfriendly);
 			}
 			// Special damage types
 			if (inflictor)
@@ -1865,7 +1878,7 @@ void P_PoisonDamage (player_t *player, AActor *source, int damage, bool playPain
 		return;
 	}
 	// Take half damage in trainer mode
-	damage = int(damage * G_SkillProperty(SKILLP_DamageFactor));
+	damage = int(damage * G_SkillProperty(SKILLP_DamageFactor) * sv_damagefactorplayer);
 	// Handle passive damage modifiers (e.g. PowerProtection)
 	damage = target->GetModifiedDamage(player->poisontype, damage, true);
 	// Modify with damage factors

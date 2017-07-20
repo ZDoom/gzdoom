@@ -6718,7 +6718,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 			th->tics = 1;
 	}
 
-	DVector3 newpos = th->Pos();
+	DVector3 newpos = { 0,0,0 };
 
 	if (maxdist > 0)
 	{
@@ -6735,6 +6735,9 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 		while (advance.XY().LengthSquared() >= maxsquared);
 		newpos += advance;
 	}
+
+	newpos = th->Vec3Offset(newpos);
+	th->SetXYZ(newpos);
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
 
@@ -7351,7 +7354,7 @@ bool AActor::IsTeammate (AActor *other)
 	}
 	else if (!deathmatch && player && other->player)
 	{
-		return true;
+		return (!((flags ^ other->flags) & MF_FRIENDLY));
 	}
 	else if (teamplay)
 	{
@@ -7432,6 +7435,9 @@ bool AActor::IsFriend (AActor *other)
 			other->FriendPlayer == 0 ||
 			players[FriendPlayer-1].mo->IsTeammate(players[other->FriendPlayer-1].mo);
 	}
+	// [SP] If friendly flags match, then they are on the same team.
+	/*if (!((flags ^ other->flags) & MF_FRIENDLY))
+		return true;*/
 	return false;
 }
 

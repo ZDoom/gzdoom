@@ -41,8 +41,10 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_present3dRowshader.h"
 
+EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
+EXTERN_CVAR(Int, gl_satformula)
 EXTERN_CVAR(Bool, fullscreen)
 EXTERN_CVAR(Int, win_x) // screen pixel position of left of display window
 EXTERN_CVAR(Int, win_y) // screen pixel position of top of display window
@@ -100,12 +102,15 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 		shader.InvGamma.Set(1.0f);
 		shader.Contrast.Set(1.0f);
 		shader.Brightness.Set(0.0f);
+		shader.Saturation.Set(1.0f);
 	}
 	else
 	{
 		shader.InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
 		shader.Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 		shader.Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+		shader.Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.0f));
+		shader.GrayFormula.Set(static_cast<int>(gl_satformula));
 	}
 	shader.Scale.Set(
 		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),

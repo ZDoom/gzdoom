@@ -38,6 +38,7 @@ gameinfo
 	weaponslot = 8, "Sigil"
 	dimcolor = "ff d7 00"
 	dimamount = 0.2
+	bluramount = 0
 	definventorymaxamount = 25
 	defaultrespawntime = 16
 	defaultdropstyle = 2

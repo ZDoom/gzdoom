@@ -718,6 +718,7 @@ set ( SWRENDER_SOURCES
 	swrenderer/viewport/r_viewport.cpp
 	swrenderer/viewport/r_walldrawer.cpp
 	swrenderer/line/r_line.cpp
+	swrenderer/line/r_farclip_line.cpp
 	swrenderer/line/r_walldraw.cpp
 	swrenderer/line/r_wallsetup.cpp
 	swrenderer/line/r_fogboundary.cpp
@@ -1006,6 +1007,7 @@ set (PCH_SOURCES
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_texshader.cpp
 	gl/shaders/gl_shaderprogram.cpp
+	gl/shaders/gl_postprocessshader.cpp
 	gl/shaders/gl_shadowmapshader.cpp
 	gl/shaders/gl_presentshader.cpp
 	gl/shaders/gl_present3dRowshader.cpp

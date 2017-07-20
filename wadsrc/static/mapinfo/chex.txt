@@ -38,6 +38,7 @@ gameinfo
 	weaponslot = 7, "LAZDevice"
 	dimcolor = "ff d7 00"
 	dimamount = 0.2
+	bluramount = 0.0
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1

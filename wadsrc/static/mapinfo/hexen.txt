@@ -37,6 +37,7 @@ gameinfo
 	weaponslot = 4, "FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
 	dimcolor = "00 00 ff"
 	dimamount = 0.2
+	bluramount = 0.0
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1

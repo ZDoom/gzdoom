@@ -38,6 +38,7 @@ gameinfo
 	weaponslot = 7, "Mace"
 	dimcolor = "00 00 ff"
 	dimamount = 0.2
+	bluramount = 0
 	definventorymaxamount = 16
 	defaultrespawntime = 12
 	defaultdropstyle = 1

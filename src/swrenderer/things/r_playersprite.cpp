@@ -240,7 +240,7 @@ namespace swrenderer
 
 		if (pspr->Flags & PSPF_ADDBOB)
 		{
-			sx += bobx;
+			sx += (pspr->Flags & PSPF_MIRROR) ? -bobx : bobx;
 			sy += boby;
 		}
 
@@ -256,17 +256,18 @@ namespace swrenderer
 		double pspriteyscale = pspritexscale * viewport->YaspectMul;
 		double pspritexiscale = 1 / pspritexscale;
 
-		// calculate edges of the shape
-		tx = sx - BASEXCENTER;
+		int tleft = tex->GetScaledLeftOffset();
+		int twidth = tex->GetScaledWidth();
 
-		tx -= tex->GetScaledLeftOffset();
+		// calculate edges of the shape
+		tx = (pspr->Flags & PSPF_MIRROR) ? ((BASEXCENTER - twidth) - (sx - tleft)) : ((sx - BASEXCENTER) - tleft);
 		x1 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
 
 		// off the right side
 		if (x1 > viewwidth)
 			return;
 
-		tx += tex->GetScaledWidth();
+		tx += twidth;
 		x2 = xs_RoundToInt(viewport->CenterX + tx * pspritexscale);
 
 		// off the left side

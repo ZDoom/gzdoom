@@ -36,6 +36,8 @@
 #include "v_palette.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "vm.h"
+#include "d_player.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
@@ -46,6 +48,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_shaderprogram.h"
+#include "gl/shaders/gl_postprocessshader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
@@ -672,61 +675,253 @@ void gl_DestroyUserShaders()
 
 void gl_ParseHardwareShader(FScanner &sc, int deflump)
 {
-	int type = FTexture::TEX_Any;
-	bool disable_fullbright=false;
-	bool thiswad = false;
-	bool iwad = false;
-	int maplump = -1;
-	FString maplumpname;
-	float speed = 1.f;
-
 	sc.MustGetString();
-	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
-	else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
-	else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
-	else sc.UnGet();
-
-	sc.MustGetString();
-	FTextureID no = TexMan.CheckForTexture(sc.String, type);
-	FTexture *tex = TexMan[no];
-
-	sc.MustGetToken('{');
-	while (!sc.CheckToken('}'))
+	if (sc.Compare("postprocess"))
 	{
 		sc.MustGetString();
-		if (sc.Compare("shader"))
+
+		PostProcessShader shaderdesc;
+		shaderdesc.Target = sc.String;
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
 			sc.MustGetString();
-			maplumpname = sc.String;
-		}
-		else if (sc.Compare("speed"))
-		{
-			sc.MustGetFloat();
-			speed = float(sc.Float);
-		}
-	}
-	if (!tex)
-	{
-		return;
-	}
-
-	if (maplumpname.IsNotEmpty())
-	{
-		if (tex->bWarped != 0)
-		{
-			Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
-			return;
-		}
-		tex->gl_info.shaderspeed = speed; 
-		for(unsigned i=0;i<usershaders.Size();i++)
-		{
-			if (!usershaders[i].CompareNoCase(maplumpname))
+			if (sc.Compare("shader"))
 			{
-				tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
-				return;
+				sc.MustGetString();
+				shaderdesc.ShaderLumpName = sc.String;
+
+				sc.MustGetNumber();
+				shaderdesc.ShaderVersion = sc.Number;
+			}
+			else if (sc.Compare("name"))
+			{
+				sc.MustGetString();
+				shaderdesc.Name = sc.String;
+			}
+			else if (sc.Compare("uniform"))
+			{
+				sc.MustGetString();
+				FString uniformType = sc.String;
+				uniformType.ToLower();
+
+				sc.MustGetString();
+				FString uniformName = sc.String;
+
+				PostProcessUniformType parsedType = PostProcessUniformType::Undefined;
+
+				if (uniformType.Compare("int") == 0)
+					parsedType = PostProcessUniformType::Int;
+				else if (uniformType.Compare("float") == 0)
+					parsedType = PostProcessUniformType::Float;
+				else if (uniformType.Compare("vec2") == 0)
+					parsedType = PostProcessUniformType::Vec2;
+				else if (uniformType.Compare("vec3") == 0)
+					parsedType = PostProcessUniformType::Vec3;
+
+				if (parsedType != PostProcessUniformType::Undefined)
+					shaderdesc.Uniforms[uniformName].Type = parsedType;
+			}
+			else if (sc.Compare("enabled"))
+			{
+				shaderdesc.Enabled = true;
 			}
 		}
-		tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
-	}	
+
+		PostProcessShaders.Push(shaderdesc);
+	}
+	else
+	{
+		int type = FTexture::TEX_Any;
+
+		if (sc.Compare("texture")) type = FTexture::TEX_Wall;
+		else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
+		else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
+		else sc.UnGet();
+
+		bool disable_fullbright = false;
+		bool thiswad = false;
+		bool iwad = false;
+		int maplump = -1;
+		FString maplumpname;
+		float speed = 1.f;
+
+		sc.MustGetString();
+		FTextureID no = TexMan.CheckForTexture(sc.String, type);
+		FTexture *tex = TexMan[no];
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
+		{
+			sc.MustGetString();
+			if (sc.Compare("shader"))
+			{
+				sc.MustGetString();
+				maplumpname = sc.String;
+			}
+			else if (sc.Compare("speed"))
+			{
+				sc.MustGetFloat();
+				speed = float(sc.Float);
+			}
+		}
+		if (!tex)
+		{
+			return;
+		}
+
+		if (maplumpname.IsNotEmpty())
+		{
+			if (tex->bWarped != 0)
+			{
+				Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
+				return;
+			}
+			tex->gl_info.shaderspeed = speed;
+			for (unsigned i = 0; i < usershaders.Size(); i++)
+			{
+				if (!usershaders[i].CompareNoCase(maplumpname))
+				{
+					tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
+					return;
+				}
+			}
+			tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
+		}
+	}
 }
 
+static bool IsConsolePlayer(player_t *player)
+{
+	AActor *activator = player ? player->mo : nullptr;
+	if (activator == nullptr || activator->player == nullptr)
+		return false;
+	return int(activator->player - players) == consoleplayer;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_BOOL_DEF(value);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+				shader.Enabled = value;
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(value);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = value;
+				vec4[1] = 0.0;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform2f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = x;
+				vec4[1] = y;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform3f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(z);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = x;
+				vec4[1] = y;
+				vec4[2] = z;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_INT_DEF(value);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = (double)value;
+				vec4[1] = 0.0;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}

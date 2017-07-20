@@ -42,6 +42,7 @@ class FPresent3DRowShader;
 class F2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
+class FCustomPostProcessShaders;
 
 inline float DEG2RAD(float deg)
 {
@@ -126,6 +127,7 @@ public:
 	FPresent3DColumnShader *mPresent3dColumnShader;
 	FPresent3DRowShader *mPresent3dRowShader;
 	FShadowMapShader *mShadowMapShader;
+	FCustomPostProcessShaders *mCustomPostProcessShaders;
 
 	FShadowMap mShadowMap;
 
@@ -182,6 +184,7 @@ public:
 	void ClearTonemapPalette();
 	void LensDistortScene();
 	void ApplyFXAA();
+	void BlurScene(float gameinfobluramount);
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();

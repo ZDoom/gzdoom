@@ -82,7 +82,7 @@ class CWeapStaff : ClericWeapon
 					{
 						angle = t.angleFromSource;
 						if (((t.linetarget.player && (!t.linetarget.IsTeammate(self) || level.teamdamage != 0)) || t.linetarget.bIsMonster)
-							&& (!t.linetarget.bDormant && !bInvulnerable))
+							&& (!t.linetarget.bDormant && !t.linetarget.bInvulnerable))
 						{
 							int newLife = player.health + (damage >> 3);
 							newLife = newLife > max ? max : newLife;

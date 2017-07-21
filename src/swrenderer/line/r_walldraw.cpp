@@ -75,7 +75,7 @@ namespace swrenderer
 				v *= height;
 				v *= (1 << uv_fracbits);
 
-				uv_pos = (uint32_t)v;
+				uv_pos = (uint32_t)(int64_t)v;
 				uv_step = xs_ToFixed(uv_fracbits, uv_stepd);
 				if (uv_step == 0) // To prevent divide by zero elsewhere
 					uv_step = 1;
@@ -117,8 +117,8 @@ namespace swrenderer
 			}
 
 			// Convert to uint32_t:
-			uv_pos = (uint32_t)(v * 0x100000000LL);
-			uv_step = (uint32_t)(v_step * 0x100000000LL);
+			uv_pos = (uint32_t)(int64_t)(v * 0x100000000LL);
+			uv_step = (uint32_t)(int64_t)(v_step * 0x100000000LL);
 			uv_max = 0;
 
 			// Texture mipmap and filter selection:
@@ -288,6 +288,7 @@ namespace swrenderer
 				uint32_t uv_pos = sampler.uv_pos;
 
 				uint32_t left = y2 - y1;
+				int y = y1;
 				while (left > 0)
 				{
 					uint32_t available = sampler.uv_max - uv_pos;
@@ -298,12 +299,13 @@ namespace swrenderer
 
 					drawerargs.SetTexture(sampler.source, sampler.source2, sampler.height);
 					drawerargs.SetTextureUPos(sampler.texturefracx);
-					drawerargs.SetDest(Thread->Viewport.get(), x, y1);
+					drawerargs.SetDest(Thread->Viewport.get(), x, y);
 					drawerargs.SetCount(count);
 					drawerargs.SetTextureVStep(sampler.uv_step);
 					drawerargs.SetTextureVPos(uv_pos);
 					drawerargs.DrawColumn(Thread);
 
+					y += count;
 					left -= count;
 					uv_pos += sampler.uv_step * count;
 					if (uv_pos >= sampler.uv_max)

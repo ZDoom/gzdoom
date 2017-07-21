@@ -478,9 +478,9 @@ namespace swrenderer
 						iend = 1 / iend;
 						draw_segment->yscale = (float)yscale;
 						draw_segment->iscale = (float)istart;
-						if (stop - start > 0)
+						if (stop - start > 1)
 						{
-							draw_segment->iscalestep = float((iend - istart) / (stop - start));
+							draw_segment->iscalestep = float((iend - istart) / (stop - start - 1));
 						}
 						else
 						{
@@ -1292,45 +1292,58 @@ namespace swrenderer
 			swapvalues(tleft.Y, tright.Y);
 		}
 
+		float fsx1, fsz1, fsx2, fsz2;
+
 		if (tleft.X >= -tleft.Y)
 		{
 			if (tleft.X > tleft.Y) return true;	// left edge is off the right side
 			if (tleft.Y == 0) return true;
-			sx1 = xs_RoundToInt(viewport->CenterX + tleft.X * viewport->CenterX / tleft.Y);
-			sz1 = tleft.Y;
+			fsx1 = viewport->CenterX + tleft.X * viewport->CenterX / tleft.Y;
+			fsz1 = tleft.Y;
 		}
 		else
 		{
 			if (tright.X < -tright.Y) return true;	// wall is off the left side
 			float den = tleft.X - tright.X - tright.Y + tleft.Y;
 			if (den == 0) return true;
-			sx1 = 0;
-			sz1 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X + tleft.Y) / den;
+			fsx1 = 0;
+			fsz1 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X + tleft.Y) / den;
 		}
 
-		if (sz1 < too_close)
+		if (fsz1 < too_close)
 			return true;
 
 		if (tright.X <= tright.Y)
 		{
 			if (tright.X < -tright.Y) return true;	// right edge is off the left side
 			if (tright.Y == 0) return true;
-			sx2 = xs_RoundToInt(viewport->CenterX + tright.X * viewport->CenterX / tright.Y);
-			sz2 = tright.Y;
+			fsx2 = viewport->CenterX + tright.X * viewport->CenterX / tright.Y;
+			fsz2 = tright.Y;
 		}
 		else
 		{
 			if (tleft.X > tleft.Y) return true;	// wall is off the right side
 			float den = tright.Y - tleft.Y - tright.X + tleft.X;
 			if (den == 0) return true;
-			sx2 = viewwidth;
-			sz2 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X - tleft.Y) / den;
+			fsx2 = viewwidth;
+			fsz2 = tleft.Y + (tright.Y - tleft.Y) * (tleft.X - tleft.Y) / den;
 		}
 
-		if (sz2 < too_close || sx2 <= sx1)
+		if (fsz2 < too_close)
 			return true;
 
-		return false;
+		sx1 = xs_RoundToInt(fsx1);
+		sx2 = xs_RoundToInt(fsx2);
+
+		float delta = fsx2 - fsx1;
+		float t1 = (sx1 + 0.5f - fsx1) / delta;
+		float t2 = (sx2 + 0.5f - fsx1) / delta;
+		float invZ1 = 1.0f / fsz1;
+		float invZ2 = 1.0f / fsz2;
+		sz1 = 1.0f / (invZ1 * (1.0f - t1) + invZ2 * t1);
+		sz2 = 1.0f / (invZ1 * (1.0f - t2) + invZ2 * t2);
+
+		return sx2 <= sx1;
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -1346,9 +1359,9 @@ namespace swrenderer
 		{
 			swapvalues(left, right);
 		}
-		UoverZorg = left->X * thread->Viewport->viewwindow.centerx;
+		UoverZorg = left->X * thread->Viewport->CenterX;
 		UoverZstep = -left->Y;
-		InvZorg = (left->X - right->X) * thread->Viewport->viewwindow.centerx;
+		InvZorg = (left->X - right->X) * thread->Viewport->CenterX;
 		InvZstep = right->Y - left->Y;
 	}
 
@@ -1371,9 +1384,9 @@ namespace swrenderer
 			fullx2 = -fullx2;
 		}
 
-		UoverZorg = float(fullx1 * viewport->viewwindow.centerx);
+		UoverZorg = float(fullx1 * viewport->CenterX);
 		UoverZstep = float(-fully1);
-		InvZorg = float((fullx1 - fullx2) * viewport->viewwindow.centerx);
+		InvZorg = float((fullx1 - fullx2) * viewport->CenterX);
 		InvZstep = float(fully2 - fully1);
 	}
 }

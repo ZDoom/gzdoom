@@ -1252,3 +1252,18 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Filter)
 	ACTION_RETURN_STRING(strbin1(*self));
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, IndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	PARAM_INT_DEF(startIndex);
+	ACTION_RETURN_INT(self->IndexOf(substr, startIndex));
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_STRING(substr);
+	ACTION_RETURN_INT(self->LastIndexOf(substr));
+}
+

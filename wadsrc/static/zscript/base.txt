@@ -656,6 +656,8 @@ struct StringStruct native
 	native String CharAt(int pos) const;
 	native int CharCodeAt(int pos) const;
 	native String Filter();
+	native int IndexOf(String substr, int startIndex = 0) const;
+	native int LastIndexOf(String substr) const;
 }
 
 class SectorEffect : Thinker native

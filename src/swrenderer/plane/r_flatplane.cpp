@@ -108,7 +108,7 @@ namespace swrenderer
 
 		planeang += M_PI / 2;
 		double cosine = cos(planeang), sine = -sin(planeang);
-		x = pl->right - viewport->CenterX - 0.5;
+		x = pl->right - viewport->CenterX + 0.5;
 		rightxfrac = _xscale * (cosine + x * xstep);
 		rightyfrac = _yscale * (sine + x * ystep);
 		x = pl->left - viewport->CenterX + 0.5;
@@ -117,8 +117,16 @@ namespace swrenderer
 
 		basexfrac = leftxfrac;
 		baseyfrac = leftyfrac;
-		xstepscale = (rightxfrac - leftxfrac) / (pl->right - pl->left + 1);
-		ystepscale = (rightyfrac - leftyfrac) / (pl->right - pl->left + 1);
+		if (pl->left != pl->right)
+		{
+			xstepscale = (rightxfrac - leftxfrac) / (pl->right - pl->left);
+			ystepscale = (rightyfrac - leftyfrac) / (pl->right - pl->left);
+		}
+		else
+		{
+			xstepscale = 0;
+			ystepscale = 0;
+		}
 
 		minx = pl->left;
 
@@ -166,8 +174,8 @@ namespace swrenderer
 
 		auto viewport = Thread->Viewport.get();
 
-		double curxfrac = basexfrac + xstepscale * (x1 + 0.5 - minx);
-		double curyfrac = baseyfrac + ystepscale * (x1 + 0.5 - minx);
+		double curxfrac = basexfrac + xstepscale * (x1 - minx);
+		double curyfrac = baseyfrac + ystepscale * (x1 - minx);
 
 		double distance = viewport->PlaneDepth(y, planeheight);
 

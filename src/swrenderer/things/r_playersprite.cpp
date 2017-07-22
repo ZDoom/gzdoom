@@ -539,7 +539,7 @@ namespace swrenderer
 		thread->PrepareTexture(pic);
 		for (int x = x1; x < x2; x++)
 		{
-			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac + xiscale / 2, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
 			frac += xiscale;
 		}
 

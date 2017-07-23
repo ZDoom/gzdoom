@@ -140,8 +140,8 @@ CUSTOM_CVAR(Bool, swtruecolor, TRUECOLOR_DEFAULT, CVAR_ARCHIVE | CVAR_GLOBALCONF
 	if (currentrenderer == 0)
 	{
 		extern int NewWidth, NewHeight, NewBits, DisplayBits;
-		NewWidth      = screen->GetWidth();
-		NewHeight     = screen->GetHeight();
+		NewWidth      = screen->VideoWidth;
+		NewHeight     = screen->VideoHeight;
 		NewBits       = DisplayBits;
 		setmodeneeded = true;
 	}

@@ -153,6 +153,8 @@ EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Int, gl_satformula)
 
+extern bool bSuperSampled;
+
 void FGLRenderer::RenderScreenQuad()
 {
 	mVBO->BindVBO();
@@ -854,8 +856,16 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 	glViewport(box.left, box.top, box.width, box.height);
 
 	glActiveTexture(GL_TEXTURE0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	if (bSuperSampled)
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
 
 	mPresentShader->Bind();
 	mPresentShader->InputTexture.Set(0);

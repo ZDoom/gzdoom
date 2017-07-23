@@ -79,6 +79,7 @@ int testingmode;		// Holds time to revert to old mode
 int OldWidth, OldHeight, OldBits;
 static FIntCVar DummyDepthCvar (NULL, 0, 0);
 static uint8_t BitTranslate[32];
+bool bSuperSampled = false;	// is this mode supersampled?
 
 CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 {
@@ -125,10 +126,14 @@ CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR (Int, vid_scalemode, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < 0 || self > 3)
+	if (self < 0 || self > 4)
 	{
 		self = 0;
 	}
+	if (self == 4) // [SP] hack, for now, but we might add custom modes later and special handling will be needed for that...
+		bSuperSampled = true;
+	else
+		bSuperSampled = false;
 }
 
 int ViewportScaledWidth(int width)
@@ -140,6 +145,7 @@ int ViewportScaledWidth(int width)
 	case 1: return 320;
 	case 2: return 640;
 	case 3: return (int)roundf(width * 0.5f);
+	case 4: return (int)(width * 2.0f);
 	}
 }
 
@@ -152,6 +158,7 @@ int ViewportScaledHeight(int height)
 	case 1: return 200;
 	case 2: return 400;
 	case 3: return (int)roundf(height * 0.5f);
+	case 4: return (int)(height * 2.0f);
 	}
 }
 

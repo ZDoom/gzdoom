@@ -94,6 +94,8 @@ EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Bool, gl_legacy_mode)
 
+extern bool bSuperSampled;
+
 #ifdef WIN32
 extern cycle_t BlitCycles;
 #endif
@@ -751,6 +753,16 @@ void OpenGLSWFrameBuffer::Present()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
 	glViewport(0, 0, Width, Height);
+	if (bSuperSampled)
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
 }
 
 //==========================================================================

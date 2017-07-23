@@ -142,8 +142,8 @@ namespace swrenderer
 
 		curr = (ClipStack*)M_Malloc(sizeof(ClipStack));
 		curr->next = 0;
-		memcpy(curr->floorclip, Thread->OpaquePass->floorclip, sizeof(short) * MAXWIDTH);
-		memcpy(curr->ceilingclip, Thread->OpaquePass->ceilingclip, sizeof(short) * MAXWIDTH);
+		memcpy(curr->floorclip, Thread->OpaquePass->floorclip, sizeof(short) * Thread->Viewport->RenderTarget->GetWidth());
+		memcpy(curr->ceilingclip, Thread->OpaquePass->ceilingclip, sizeof(short) * Thread->Viewport->RenderTarget->GetWidth());
 		curr->ffloor = fakeFloor;
 		assert(fakeFloor->floorclip == nullptr);
 		assert(fakeFloor->ceilingclip == nullptr);

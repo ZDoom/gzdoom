@@ -52,8 +52,8 @@ struct seg_t;
 struct sector_t;
 class AActor;
 
-#define MAXWIDTH 5760
-#define MAXHEIGHT 3600
+#define MAXWIDTH 12000
+#define MAXHEIGHT 5000
 
 const uint16_t NO_INDEX = 0xffffu;
 const uint32_t NO_SIDE = 0xffffffffu;

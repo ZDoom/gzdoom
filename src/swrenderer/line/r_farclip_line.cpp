@@ -113,7 +113,7 @@ namespace swrenderer
 
 			//walltop.Project(Thread->Viewport.get(), mFrontSector->ceilingplane, &WallC, mLineSegment, Thread->Portal->MirrorFlags & RF_XFLIP);
 			wallbottom.Project(Thread->Viewport.get(), mFrontSector->floorplane, &WallC, mLineSegment, Thread->Portal->MirrorFlags & RF_XFLIP);
-			memcpy(walltop.ScreenY, wallbottom.ScreenY, sizeof(short) * MAXWIDTH);
+			memcpy(walltop.ScreenY, wallbottom.ScreenY, sizeof(short) * Thread->Viewport->RenderTarget->GetWidth());
 		}
 
 		ClipSegmentTopBottom(x1, x2);

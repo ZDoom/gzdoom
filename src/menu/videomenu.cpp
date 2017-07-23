@@ -145,7 +145,7 @@ int ViewportScaledWidth(int width)
 	case 1: return 320;
 	case 2: return 640;
 	case 3: return (int)roundf(width * 0.5f);
-	case 4: return (int)(width * 2.0f);
+	case 4: return width * 2;
 	}
 }
 
@@ -158,7 +158,7 @@ int ViewportScaledHeight(int height)
 	case 1: return 200;
 	case 2: return 400;
 	case 3: return (int)roundf(height * 0.5f);
-	case 4: return (int)(height * 2.0f);
+	case 4: return height * 2;
 	}
 }
 

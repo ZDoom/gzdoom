@@ -94,21 +94,15 @@ EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Bool, gl_legacy_mode)
 
-CVAR(Int, vid_max_width, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, vid_max_height, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
-namespace
-{
-	int ClampWidth(int width) { return (vid_max_width == 0 || width < vid_max_width) ? width : vid_max_width; }
-	int ClampHeight(int height) { return (vid_max_height == 0 || height < vid_max_height) ? height : vid_max_height; }
-}
-
 #ifdef WIN32
 extern cycle_t BlitCycles;
 #endif
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
+
+int ViewportScaledWidth(int width);
+int ViewportScaledHeight(int height);
 
 #ifndef WIN32
 // This has to be in this file because system headers conflict Doom headers
@@ -147,7 +141,7 @@ const char *const OpenGLSWFrameBuffer::ShaderDefines[OpenGLSWFrameBuffer::NUM_SH
 };
 
 OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) :
-	Super(hMonitor, ClampWidth(width), ClampHeight(height), bits, refreshHz, fullscreen, bgra)
+	Super(hMonitor, width, height, bits, refreshHz, fullscreen, bgra)
 {
 	VertexBuffer = nullptr;
 	IndexBuffer = nullptr;
@@ -1174,6 +1168,14 @@ void OpenGLSWFrameBuffer::Unlock()
 	else if (--m_Lock == 0)
 	{
 		Buffer = nullptr;
+
+		if (MappedMemBuffer)
+		{
+			BindFBBuffer();
+			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+			MappedMemBuffer = nullptr;
+		}
 	}
 }
 
@@ -1283,8 +1285,8 @@ void OpenGLSWFrameBuffer::Flip()
 
 	if (!IsFullscreen())
 	{
-		int clientWidth = ClampWidth(GetClientWidth());
-		int clientHeight = ClampHeight(GetClientHeight());
+		int clientWidth = ViewportScaledWidth(GetClientWidth());
+		int clientHeight = ViewportScaledHeight(GetClientHeight());
 		if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
 		{
 			Resize(clientWidth, clientHeight);

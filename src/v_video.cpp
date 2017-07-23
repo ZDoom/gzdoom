@@ -88,6 +88,9 @@ EXTERN_CVAR(Bool, r_blendmethod)
 
 int active_con_scale();
 
+int ViewportScaledWidth(int width);
+int ViewportScaledHeight(int height);
+
 FRenderer *Renderer;
 
 EXTERN_CVAR (Bool, swtruecolor)
@@ -782,7 +785,7 @@ void DSimpleCanvas::Unlock ()
 //==========================================================================
 
 DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
-	: DSimpleCanvas (width, height, bgra)
+	: DSimpleCanvas (ViewportScaledWidth(width), ViewportScaledHeight(height), bgra)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
@@ -1289,7 +1292,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 	FFont::StaticPreloadFonts();
 
 	DisplayBits = bits;
-	V_UpdateModeSize(width, height);
+	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
 
 	M_RefreshModesList ();
 

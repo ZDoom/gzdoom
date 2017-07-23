@@ -315,6 +315,8 @@ namespace swrenderer
 				lit = _mm_add_epi16(lit, _mm_srli_epi16(_mm_mullo_epi16(light_color, attenuation), 8));
 			}
 
+			lit = _mm_min_epi16(lit, _mm_set1_epi16(256));
+
 			fgcolor = _mm_add_epi16(fgcolor, _mm_srli_epi16(_mm_mullo_epi16(material, lit), 8));
 			fgcolor = _mm_min_epi16(fgcolor, _mm_set1_epi16(255));
 			return fgcolor;

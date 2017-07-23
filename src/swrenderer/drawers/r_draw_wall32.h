@@ -269,6 +269,10 @@ namespace swrenderer
 				lit.b += (light_color.b * attenuation) >> 8;
 			}
 
+			lit.r = MIN<uint32_t>(lit.r, 256);
+			lit.g = MIN<uint32_t>(lit.g, 256);
+			lit.b = MIN<uint32_t>(lit.b, 256);
+
 			fgcolor.r = MIN<uint32_t>(fgcolor.r + ((material.r * lit.r) >> 8), 255);
 			fgcolor.g = MIN<uint32_t>(fgcolor.g + ((material.g * lit.g) >> 8), 255);
 			fgcolor.b = MIN<uint32_t>(fgcolor.b + ((material.b * lit.b) >> 8), 255);

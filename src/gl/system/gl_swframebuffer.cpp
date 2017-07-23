@@ -93,6 +93,7 @@ EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Bool, gl_legacy_mode)
+EXTERN_CVAR(Int, vid_scalemode)
 
 extern bool bSuperSampled;
 
@@ -727,9 +728,20 @@ void OpenGLSWFrameBuffer::Present()
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 		glViewport(0, 0, clientWidth, clientHeight);
 
-		float scale = MIN(clientWidth / (float)Width, clientHeight / (float)Height);
-		int letterboxWidth = (int)round(Width * scale);
-		int letterboxHeight = (int)round(Height * scale);
+		float scaleX, scaleY;
+		if (vid_scalemode == 1 || vid_scalemode == 2)
+		{
+			scaleX = MIN(clientWidth / (float)Width, clientHeight / (Height * 1.2f));
+			scaleY = scaleX * 1.2f;
+		}
+		else
+		{
+			scaleX = MIN(clientWidth / (float)Width, clientHeight / (float)Height);
+			scaleY = scaleX;
+		}
+
+		int letterboxWidth = (int)round(Width * scaleX);
+		int letterboxHeight = (int)round(Height * scaleY);
 		int letterboxX = (clientWidth - letterboxWidth) / 2;
 		int letterboxY = (clientHeight - letterboxHeight) / 2;
 

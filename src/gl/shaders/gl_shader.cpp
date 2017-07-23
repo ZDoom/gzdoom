@@ -683,6 +683,13 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 		PostProcessShader shaderdesc;
 		shaderdesc.Target = sc.String;
 
+		bool validTarget = false;
+		if (sc.Compare("beforebloom")) validTarget = true;
+		if (sc.Compare("scene")) validTarget = true;
+		if (sc.Compare("screen")) validTarget = true;		
+		if (!validTarget)
+			sc.ScriptError("Invalid target '%s' for postprocess shader",sc.String);
+
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{
@@ -694,6 +701,8 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 
 				sc.MustGetNumber();
 				shaderdesc.ShaderVersion = sc.Number;
+				if (sc.Number > 450 || sc.Number < 330)
+					sc.ScriptError("Shader version must be in range 330 to 450!");
 			}
 			else if (sc.Compare("name"))
 			{
@@ -719,6 +728,8 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 					parsedType = PostProcessUniformType::Vec2;
 				else if (uniformType.Compare("vec3") == 0)
 					parsedType = PostProcessUniformType::Vec3;
+				else
+					sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
 
 				if (parsedType != PostProcessUniformType::Undefined)
 					shaderdesc.Uniforms[uniformName].Type = parsedType;
@@ -726,6 +737,10 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 			else if (sc.Compare("enabled"))
 			{
 				shaderdesc.Enabled = true;
+			}
+			else
+			{
+				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
 

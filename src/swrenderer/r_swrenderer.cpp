@@ -251,8 +251,8 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 
 int FSoftwareRenderer::GetMaxViewPitch(bool down)
 {
-	const int MAX_DN_ANGLE = 56; // Max looking down angle
-	const int MAX_UP_ANGLE = 32; // Max looking up angle
+	int MAX_DN_ANGLE = MIN(56, (int)maxviewpitch); // Max looking down angle
+	int MAX_UP_ANGLE = MIN(32, (int)maxviewpitch); // Max looking up angle
 	return (r_polyrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE));
 }
 

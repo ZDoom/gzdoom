@@ -153,7 +153,7 @@ EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Int, gl_satformula)
 
-extern bool bSuperSampled;
+bool ViewportLinearScale();
 
 void FGLRenderer::RenderScreenQuad()
 {
@@ -856,7 +856,7 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 	glViewport(box.left, box.top, box.width, box.height);
 
 	glActiveTexture(GL_TEXTURE0);
-	if (bSuperSampled)
+	if (ViewportLinearScale())
 	{
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);

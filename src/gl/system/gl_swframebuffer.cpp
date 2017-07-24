@@ -95,7 +95,7 @@ EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Bool, gl_legacy_mode)
 EXTERN_CVAR(Int, vid_scalemode)
 
-extern bool bSuperSampled;
+bool ViewportLinearScale();
 
 #ifdef WIN32
 extern cycle_t BlitCycles;
@@ -751,6 +751,18 @@ void OpenGLSWFrameBuffer::Present()
 		FBVERTEX verts[4];
 		CalcFullscreenCoords(verts, false, 0, 0xFFFFFFFF);
 		SetTexture(0, OutputFB->Texture.get());
+
+		if (ViewportLinearScale())
+		{
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		}
+		else
+		{
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+		}
+
 		SetPixelShader(Shaders[SHADER_GammaCorrection].get());
 		SetAlphaBlend(0);
 		EnableAlphaTest(false);
@@ -765,16 +777,6 @@ void OpenGLSWFrameBuffer::Present()
 
 	glBindFramebuffer(GL_FRAMEBUFFER, OutputFB->Framebuffer);
 	glViewport(0, 0, Width, Height);
-	if (bSuperSampled)
-	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	}
-	else
-	{
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	}
 }
 
 //==========================================================================

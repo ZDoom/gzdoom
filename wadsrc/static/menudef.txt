@@ -1855,7 +1855,8 @@ OptionValue ScaleModes
 	1, "320x200"
 	2, "640x400"
 	3, "0.5x"
-	4, "2x SSAA"
+	4, "0.75x"
+	5, "2x SSAA"
 }
 
 OptionMenu VideoModeMenu protected

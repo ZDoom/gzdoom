@@ -1013,6 +1013,7 @@ static FString CreateCacheName(MapData *map, bool create)
 	if (create) CreatePath(path);
 
 	lumpname.ReplaceChars('/', '%');
+	lumpname.ReplaceChars(':', '$');
 	path << '/' << lumpname.Right(lumpname.Len() - separator - 1) << ".gzc";
 	return path;
 }

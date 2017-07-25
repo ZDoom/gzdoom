@@ -35,6 +35,8 @@
 
 #define MAX_QPATH 64
 
+extern int modellightindex;
+
 //===========================================================================
 //
 // decode the lat/lng normal to a 3 float normal
@@ -372,6 +374,7 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, translation, -1, false);
 
 		gl_RenderState.Apply();
+		if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);
 		mVBuf->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, surf->numVertices);
 		glDrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, (void*)(intptr_t)(surf->iindex * sizeof(unsigned int)));
 	}

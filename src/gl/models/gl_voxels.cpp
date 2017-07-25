@@ -50,6 +50,7 @@
 #include "gl/utility/gl_convert.h"
 #include "gl/renderer/gl_renderstate.h"
 
+extern int modellightindex;
 
 //===========================================================================
 //
@@ -445,6 +446,7 @@ void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double int
 	gl_RenderState.SetMaterial(tex, CLAMP_NOFILTER, translation, -1, false);
 
 	gl_RenderState.Apply();
+	if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);
 	mVBuf->SetupFrame(0, 0, 0);
 	glDrawElements(GL_TRIANGLES, mNumIndices, GL_UNSIGNED_INT, (void*)(intptr_t)0);
 }

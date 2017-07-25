@@ -42,7 +42,10 @@
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 
+FDynLightData modellightdata;
+int modellightindex = -1;
 
 //==========================================================================
 //
@@ -114,6 +117,7 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 		node = node->nextLight;
 	}
 	gl_RenderState.SetDynLight(out[0], out[1], out[2]);
+	modellightindex = -1;
 }
 
 void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
@@ -126,4 +130,27 @@ void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
 	{
 		gl_SetDynSpriteLight(NULL, particle->Pos.X, particle->Pos.Y, particle->Pos.Z, particle->subsector);
 	}
+}
+
+void gl_SetDynModelLight(AActor *self, float x, float y, float z, subsector_t * subsec)
+{
+	Plane p;
+	p.Set(subsec->sector->ceilingplane); // Is this correct?
+
+	modellightdata.Clear();
+
+	// Go through both light lists
+	FLightNode * node = subsec->lighthead;
+	while (node)
+	{
+		ADynamicLight *light = node->lightsource;
+		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self) && !(light->lightflags&LF_DONTLIGHTACTORS))
+		{
+			gl_GetLight(subsec->sector->PortalGroup, p, node->lightsource, false, modellightdata, false);
+		}
+		node = node->nextLight;
+	}
+
+	gl_RenderState.SetDynLight(0, 0, 0);
+	modellightindex = GLRenderer->mLights->UploadLights(modellightdata);
 }

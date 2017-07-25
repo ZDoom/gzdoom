@@ -63,22 +63,24 @@ CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata)
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata, bool planecheck)
 {
 	int i = 0;
 
 	DVector3 pos = light->PosRelative(group);
-	
-	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
 	float radius = (light->GetRadius());
-	
-	if (radius <= 0.f) return false;
-	if (dist > radius) return false;
-	if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
-	{
-		return false;
-	}
 
+	if (planecheck)
+	{
+		float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
+
+		if (radius <= 0.f) return false;
+		if (dist > radius) return false;
+		if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
+		{
+			return false;
+		}
+	}
 
 	float cs;
 	if (light->IsAdditive()) 

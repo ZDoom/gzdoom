@@ -39,7 +39,6 @@
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
-#include <wordexp.h>
 #include "mus2midi.h"
 extern void ChildSigHandler (int signum);
 #endif

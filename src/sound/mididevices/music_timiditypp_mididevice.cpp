@@ -46,7 +46,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <wordexp.h>
+#include <glob.h>
 #include <signal.h>
 
 int ChildQuit;
@@ -523,15 +523,15 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 	
 	int forkres;
-	wordexp_t words = {};
+	glob_t glb;
 
-	switch (wordexp (CommandLine.GetChars(), &words, 0))
+	switch (glob (CommandLine.GetChars(), 0, NULL, &glb))
 	{
 	case 0: // all good
 		break;
 		
-	case WRDE_NOSPACE:
-		wordfree (&words);
+	case GLOB_NOSPACE:
+		globfree (&glb);
 	default:
 		return false;
 	}
@@ -546,7 +546,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 //		freopen ("/dev/null", "w", stderr);
 		close (WavePipe[1]);
 
-		execvp (words.we_wordv[0], words.we_wordv);
+		execvp (glb.gl_pathv[0], glb.gl_pathv);
 		fprintf(stderr,"execvp failed\n");
 		_exit (0);	// if execvp succeeds, we never get here
 	}
@@ -567,7 +567,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		}*/
 	}
 	
-	wordfree (&words);
+	globfree (&glb);
 	return ChildProcess != -1;
 #endif // _WIN32
 }

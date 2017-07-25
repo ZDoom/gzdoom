@@ -30,6 +30,8 @@
 #include <dirent.h>
 #include <ctype.h>
 
+#define __solaris__ (defined(__sun) || defined(__sun__) || defined(__SRV4) || defined(__srv4__))
+
 #include "doomtype.h"
 
 struct ticcmd_t;

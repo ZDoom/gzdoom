@@ -8328,7 +8328,7 @@ DEFINE_ACTION_FUNCTION(AActor, AccuracyFactor)
 DEFINE_ACTION_FUNCTION(AActor, CountsAsKill)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	ACTION_RETURN_FLOAT(self->CountsAsKill());
+	ACTION_RETURN_BOOL(self->CountsAsKill());
 }
 
 DEFINE_ACTION_FUNCTION(AActor, IsZeroDamage)

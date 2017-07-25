@@ -141,7 +141,7 @@ int ViewportScaledWidth(int width)
 	switch (vid_scalemode)
 	{
 	default:
-	case 0: return width;
+	case 0: return (width==0)?vid_defwidth:width;
 	case 1: return 320;
 	case 2: return 640;
 	case 3: return (int)roundf(width * 0.5f);
@@ -155,7 +155,7 @@ int ViewportScaledHeight(int height)
 	switch (vid_scalemode)
 	{
 	default:
-	case 0: return height;
+	case 0: return (height==0)?vid_defheight:height;
 	case 1: return 200;
 	case 2: return 400;
 	case 3: return (int)roundf(height * 0.5f);

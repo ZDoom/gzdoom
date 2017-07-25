@@ -147,7 +147,7 @@ CUSTOM_CVAR(Bool, swtruecolor, TRUECOLOR_DEFAULT, CVAR_ARCHIVE | CVAR_GLOBALCONF
 	}
 }
 
-CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	extern int NewWidth, NewHeight, NewBits, DisplayBits;
 

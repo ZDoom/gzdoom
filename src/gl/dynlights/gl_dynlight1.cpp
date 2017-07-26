@@ -63,7 +63,7 @@ CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata, bool planecheck)
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata, bool planecheck, bool hudmodel)
 {
 	int i = 0;
 
@@ -80,6 +80,31 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		{
 			return false;
 		}
+	}
+
+	if (hudmodel)
+	{
+		// HUD model is already translated and rotated. We must rotate the lights into that view space.
+
+		DVector3 rotation;
+		DVector3 localpos = pos - r_viewpoint.Pos;
+
+		rotation.X = localpos.X * r_viewpoint.Angles.Yaw.Sin() - localpos.Y * r_viewpoint.Angles.Yaw.Cos();
+		rotation.Y = localpos.X * r_viewpoint.Angles.Yaw.Cos() + localpos.Y * r_viewpoint.Angles.Yaw.Sin();
+		rotation.Z = localpos.Z;
+		localpos = rotation;
+
+		rotation.X = localpos.X;
+		rotation.Y = localpos.Y * r_viewpoint.Angles.Pitch.Sin() - localpos.Z * r_viewpoint.Angles.Pitch.Cos();
+		rotation.Z = localpos.Y * r_viewpoint.Angles.Pitch.Cos() + localpos.Z * r_viewpoint.Angles.Pitch.Sin();
+		localpos = rotation;
+
+		rotation.Y = localpos.Y;
+		rotation.Z = localpos.Z * r_viewpoint.Angles.Roll.Sin() - localpos.X * r_viewpoint.Angles.Roll.Cos();
+		rotation.X = localpos.Z * r_viewpoint.Angles.Roll.Cos() + localpos.X * r_viewpoint.Angles.Roll.Sin();
+		localpos = rotation;
+
+		pos = localpos;
 	}
 
 	float cs;

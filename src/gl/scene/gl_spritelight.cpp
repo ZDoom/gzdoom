@@ -132,7 +132,7 @@ void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
 	}
 }
 
-void gl_SetDynModelLight(AActor *self, float x, float y, float z, subsector_t * subsec)
+void gl_SetDynModelLight(AActor *self, float x, float y, float z, subsector_t * subsec, bool hudmodel)
 {
 	Plane p;
 	p.Set(subsec->sector->ceilingplane); // Is this correct?
@@ -146,7 +146,7 @@ void gl_SetDynModelLight(AActor *self, float x, float y, float z, subsector_t * 
 		ADynamicLight *light = node->lightsource;
 		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self) && !(light->lightflags&LF_DONTLIGHTACTORS))
 		{
-			gl_GetLight(subsec->sector->PortalGroup, p, node->lightsource, false, modellightdata, false);
+			gl_GetLight(subsec->sector->PortalGroup, p, node->lightsource, false, modellightdata, false, hudmodel);
 		}
 		node = node->nextLight;
 	}

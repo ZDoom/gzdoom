@@ -420,7 +420,11 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			{
 				if (gl_lights && GLRenderer->mLightCount && FixedColormap == CM_DEFAULT && gl_light_sprites)
 				{
-					gl_SetDynSpriteLight(playermo, NULL);
+					FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
+					if (smf)
+						gl_SetDynModelLight(playermo, playermo->X(), playermo->Y(), playermo->Center(), playermo->subsector, true);
+					else
+						gl_SetDynSpriteLight(playermo, NULL);
 				}
 				SetColor(ll, 0, cmc, trans, true);
 			}

@@ -1099,6 +1099,9 @@ void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 	// so we have to reset the view matrix.
 	gl_RenderState.mViewMatrix.loadIdentity();
 
+	// Need to reset the normal matrix too
+	gl_RenderState.mNormalViewMatrix.loadIdentity();
+
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
 	gl_RenderState.mViewMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
 	

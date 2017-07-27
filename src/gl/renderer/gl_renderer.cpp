@@ -78,8 +78,6 @@ EXTERN_CVAR(Int, vid_scalemode)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 
-bool ViewportIsScaled43();
-
 //===========================================================================
 // 
 // Renderer interface

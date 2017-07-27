@@ -68,6 +68,7 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"
 #include "gl_debug.h"
+#include "r_videoscale.h"
 
 #include "swrenderer/scene/r_light.h"
 
@@ -93,9 +94,6 @@ EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Bool, gl_legacy_mode)
-EXTERN_CVAR(Int, vid_scalemode)
-
-bool ViewportLinearScale();
 
 #ifdef WIN32
 extern cycle_t BlitCycles;
@@ -103,9 +101,6 @@ extern cycle_t BlitCycles;
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
-
-int ViewportScaledWidth(int width);
-int ViewportScaledHeight(int height);
 
 #ifndef WIN32
 // This has to be in this file because system headers conflict Doom headers
@@ -729,7 +724,7 @@ void OpenGLSWFrameBuffer::Present()
 		glViewport(0, 0, clientWidth, clientHeight);
 
 		float scaleX, scaleY;
-		if (vid_scalemode == 1 || vid_scalemode == 2)
+		if (ViewportIsScaled43())
 		{
 			scaleX = MIN(clientWidth / (float)Width, clientHeight / (Height * 1.2f));
 			scaleY = scaleX * 1.2f;

@@ -51,6 +51,7 @@
 #include "gl/gl_functions.h"
 #include "gl/renderer/gl_2ddrawer.h"
 #include "gl_debug.h"
+#include "r_videoscale.h"
 
 EXTERN_CVAR (Float, vid_brightness)
 EXTERN_CVAR (Float, vid_contrast)
@@ -64,8 +65,6 @@ FGLRenderer *GLRenderer;
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
 void gl_SetupMenu();
-int ViewportScaledWidth(int width);
-int ViewportScaledHeight(int height);
 
 CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {

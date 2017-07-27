@@ -78,6 +78,8 @@ EXTERN_CVAR(Int, vid_scalemode)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 
+bool ViewportIsScaled43();
+
 //===========================================================================
 // 
 // Renderer interface
@@ -283,7 +285,7 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	int screenWidth = framebuffer->GetWidth();
 	int screenHeight = framebuffer->GetHeight();
 	float scaleX, scaleY;
-	if (vid_scalemode == 1 || vid_scalemode == 2)
+	if (ViewportIsScaled43())
 	{
 		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (screenHeight * 1.2f));
 		scaleY = scaleX * 1.2f;

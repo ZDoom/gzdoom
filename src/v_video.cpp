@@ -83,13 +83,11 @@
 #include "menu/menu.h"
 #include "r_data/voxels.h"
 #include "vm.h"
+#include "r_videoscale.h"
 
 EXTERN_CVAR(Bool, r_blendmethod)
 
 int active_con_scale();
-
-int ViewportScaledWidth(int width);
-int ViewportScaledHeight(int height);
 
 FRenderer *Renderer;
 

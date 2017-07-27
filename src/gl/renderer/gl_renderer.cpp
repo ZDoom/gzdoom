@@ -72,6 +72,7 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Int, vid_scalemode)

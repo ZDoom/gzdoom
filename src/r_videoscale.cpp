@@ -27,7 +27,7 @@
 
 CUSTOM_CVAR (Int, vid_scalemode, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < 0 || self > 5)
+	if (self < 0 || self > 6)
 	{
 		self = 0;
 	}
@@ -35,7 +35,13 @@ CUSTOM_CVAR (Int, vid_scalemode, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 bool ViewportLinearScale()
 {
-	return vid_scalemode == 4 || vid_scalemode == 5;
+	switch(vid_scalemode)
+	{
+	default: return false;
+	case 4:
+	case 5:
+	case 6: return true;
+	}
 }
 
 int ViewportScaledWidth(int width)
@@ -49,6 +55,7 @@ int ViewportScaledWidth(int width)
 	case 3: return (int)roundf(width * 0.5f);
 	case 4: return (int)roundf(width * 0.75f);
 	case 5: return width * 2;
+	case 6: return 1280;
 	}
 }
 
@@ -63,6 +70,7 @@ int ViewportScaledHeight(int height)
 	case 3: return (int)roundf(height * 0.5f);
 	case 4: return (int)roundf(height * 0.75f);
 	case 5: return height * 2;
+	case 6: return 800;
 	}
 }
 
@@ -72,7 +80,8 @@ bool ViewportIsScaled43()
 	{
 	default: return false;
 	case 1:
-	case 2: return true;
+	case 2:
+	case 6: return true;
 	}
 }
 

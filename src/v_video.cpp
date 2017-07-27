@@ -1602,7 +1602,6 @@ CUSTOM_CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 	}
 }
 
-EXTERN_CVAR (Int, vid_scalemode)
 CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 {
 	setsizeneeded = true;
@@ -1629,7 +1628,7 @@ int ActiveFakeRatio(int width, int height)
 			fakeratio = 3;
 		}
 	}
-	else if (vid_aspect == 0 && (vid_scalemode == 1 || vid_scalemode == 2))
+	else if (vid_aspect == 0 && ViewportIsScaled43())
 	{
 		fakeratio = 0;
 	}

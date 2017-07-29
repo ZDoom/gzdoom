@@ -72,6 +72,8 @@ public:
 	int GetTrueHeight() override { return TrueHeight; }
 #endif
 
+	void ScaleCoordsFromWindow(int16_t &x, int16_t &y) override;
+
 private:
 	struct FBVERTEX
 	{
@@ -194,6 +196,8 @@ private:
 	void DrawLineList(int count);
 	void DrawTriangleList(int minIndex, int numVertices, int startIndex, int primitiveCount);
 	void Present();
+
+	void GetLetterboxFrame(int &x, int &y, int &width, int &height);
 	
 	static void BgraToRgba(uint32_t *dest, const uint32_t *src, int width, int height, int srcpitch);
 

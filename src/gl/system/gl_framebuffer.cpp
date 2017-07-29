@@ -548,3 +548,18 @@ void OpenGLFrameBuffer::GameRestart()
 	gl_GenerateGlobalBrightmapFromColormap();
 }
 
+
+void OpenGLFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
+{
+	int letterboxX = GLRenderer->mOutputLetterbox.left;
+	int letterboxY = GLRenderer->mOutputLetterbox.top;
+	int letterboxWidth = GLRenderer->mOutputLetterbox.width;
+	int letterboxHeight = GLRenderer->mOutputLetterbox.height;
+
+	// Subtract the LB video mode letterboxing
+	if (IsFullscreen())
+		y -= (GetTrueHeight() - VideoHeight) / 2;
+
+	x = int16_t((x - letterboxX) * Width / letterboxWidth);
+	y = int16_t((y - letterboxY) * Height / letterboxHeight);
+}

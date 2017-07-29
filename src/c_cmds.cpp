@@ -1279,3 +1279,23 @@ CCMD(angleconvtest)
 			ang, ang1, ang2, ang3);
 	}
 }
+
+extern uint32_t r_renderercaps;
+#define PRINT_CAP(X, Y) Printf("  %-18s: %s (%s)\n", #Y, !!(r_renderercaps & Y) ? "Yes" : "No ", X);
+CCMD(r_showcaps)
+{
+	Printf("Renderer capabilities:\n");
+	PRINT_CAP("Flat Sprites", RFF_FLATSPRITES)
+	PRINT_CAP("3D Models", RFF_MODELS)
+	PRINT_CAP("Sloped 3D floors", RFF_SLOPE3DFLOORS)
+	PRINT_CAP("Full Freelook", RFF_TILTPITCH)	
+	PRINT_CAP("Roll Sprites", RFF_ROLLSPRITES)
+	PRINT_CAP("Unclipped Sprites", RFF_UNCLIPPEDTEX)
+	PRINT_CAP("Material Shaders", RFF_MATSHADER)
+	PRINT_CAP("Post-processing Shaders", RFF_POSTSHADER)
+	PRINT_CAP("Brightmaps", RFF_BRIGHTMAP)
+	PRINT_CAP("Custom COLORMAP lumps", RFF_COLORMAP)
+	PRINT_CAP("Uses Polygon rendering", RFF_POLYGONAL)
+	PRINT_CAP("Truecolor Enabled", RFF_TRUECOLOR)
+	PRINT_CAP("Voxels", RFF_VOXELS)
+}

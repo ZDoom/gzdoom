@@ -64,6 +64,9 @@ bool D_AddFile (TArray<FString> &wadfiles, const char *file, bool check = true, 
 // [RH] Set this to something to draw an icon during the next screen refresh.
 extern const char *D_DrawIcon;
 
+// [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
+extern uint32_t r_renderercaps;
+
 
 struct WadStuff
 {

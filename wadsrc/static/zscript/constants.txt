@@ -1183,7 +1183,7 @@ enum ActorRenderFeatureFlag
 	RFF_TILTPITCH		= 1<<3, // full free-look
 	RFF_ROLLSPRITES		= 1<<4, // roll sprites
 	RFF_UNCLIPPEDTEX	= 1<<5, // midtex and sprite can render "into" flats and walls
-	RFF_FRAGMENTSHADER	= 1<<6, // fragment (material) shaders
+	RFF_MATSHADER		= 1<<6, // material shaders
 	RFF_POSTSHADER		= 1<<7, // post-process shaders (renderbuffers)
 	RFF_BRIGHTMAP		= 1<<8, // brightmaps
 	RFF_COLORMAP		= 1<<9, // custom colormaps (incl. ability to fullbright certain ranges, ala Strife)

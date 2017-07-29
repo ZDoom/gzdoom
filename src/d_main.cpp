@@ -247,6 +247,9 @@ bool batchrun;	// just run the startup and collect all error messages in a logfi
 
 cycle_t FrameCycles;
 
+// [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
+uint32_t r_renderercaps = 0;
+
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -671,6 +674,7 @@ void D_Display ()
 	cycles.Clock();
 
 	r_UseVanillaTransparency = UseVanillaTransparency(); // [SP] Cache UseVanillaTransparency() call
+	r_renderercaps = Renderer->GetCaps(); // [SP] Get the current capabilities of the renderer
 
 	if (players[consoleplayer].camera == NULL)
 	{

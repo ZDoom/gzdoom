@@ -1175,13 +1175,13 @@ uint32_t FGLInterface::GetCaps()
 	else if (!(FGLRenderBuffers::IsEnabled()))
 	{
 		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
-		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER;
+		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;
 	}
 	else
 	{
 		if (gl_tonemap != 5) // not running palette tonemap shader
 			FlagSet |= RFF_TRUECOLOR;
-		FlagSet |= RFF_MATSHADER | RFF_POSTSHADER;
+		FlagSet |= RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
 	}
 	return (uint32_t)FlagSet;
 }

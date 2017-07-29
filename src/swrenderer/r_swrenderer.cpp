@@ -378,3 +378,20 @@ void FSoftwareRenderer::PreprocessLevel()
 void FSoftwareRenderer::CleanLevelData()
 {
 }
+
+uint32_t FSoftwareRenderer::GetCaps()
+{
+	ActorRenderFeatureFlags FlagSet = RFF_UNCLIPPEDTEX;
+
+	if (r_polyrenderer)
+		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH;
+	else
+		FlagSet |= RFF_VOXELS;
+
+	if (screen && screen->IsBgra())
+		FlagSet |= RFF_TRUECOLOR;
+	else
+		FlagSet |= RFF_COLORMAP;
+
+	return (uint32_t)FlagSet;
+}

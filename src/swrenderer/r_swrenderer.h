@@ -35,6 +35,8 @@ struct FSoftwareRenderer : public FRenderer
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
 
+	uint32_t GetCaps() override;
+
 private:
 	void PrecacheTexture(FTexture *tex, int cache);
 

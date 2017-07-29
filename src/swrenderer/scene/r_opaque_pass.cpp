@@ -971,8 +971,8 @@ namespace swrenderer
 
 		// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,
 		// check renderhidden vs r_rendercaps, if anything matches we do support that feature and should hide it.
-		if ((!!((uint32_t)(thing->renderrequired) & ~r_renderercaps)) ||
-			(!!((uint32_t)(thing->renderhidden) & r_renderercaps)))
+		if ((!!(thing->RenderRequired & ~r_renderercaps)) ||
+			(!!(thing->RenderHidden & r_renderercaps)))
 			return false;
 
 		// [ZZ] Or less definitely not visible (hue)

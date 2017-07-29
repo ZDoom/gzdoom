@@ -1045,9 +1045,10 @@ public:
 	uint32_t			fillcolor;			// Color to draw when STYLE_Shaded
 	uint32_t			Translation;
 
+	uint32_t			RenderRequired;		// current renderer must have this feature set
+	uint32_t			RenderHidden;		// current renderer must *not* have any of these features
+
 	ActorRenderFlags	renderflags;		// Different rendering flags
-	ActorRenderFeatureFlags	renderrequired;		// current renderer must have this feature set
-	ActorRenderFeatureFlags	renderhidden;		// current renderer must *not* have any of these features
 	ActorFlags		flags;
 	ActorFlags2		flags2;			// Heretic flags
 	ActorFlags3		flags3;			// [RH] Hexen/Heretic actor-dependant behavior made flaggable

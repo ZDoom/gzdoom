@@ -1837,3 +1837,18 @@ DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, PowerMorph)
 }
 
 
+//==========================================================================
+// actor render feature filters - stop rendering if the renderer does/does not support certain features
+//==========================================================================
+DEFINE_SCRIPTED_PROPERTY(renderrequired, I, Actor)
+{
+	PROP_INT_PARM(f, 0);
+	defaults->renderrequired = f;
+}
+
+DEFINE_SCRIPTED_PROPERTY(renderhidden, I, Actor)
+{
+	PROP_INT_PARM(f, 0);
+	defaults->renderhidden = f;
+}
+

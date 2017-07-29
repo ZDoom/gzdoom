@@ -32,6 +32,7 @@
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
+extern uint32_t r_renderercaps;
 
 bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 {
@@ -175,6 +176,12 @@ bool RenderPolySprite::IsThingCulled(AActor *thing)
 	{
 		return true;
 	}
+
+	// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,
+	// check renderhidden vs r_rendercaps, if anything matches we do support that feature and should hide it.
+	if ((!!((uint32_t)(thing->renderrequired) & ~r_renderercaps)) ||
+		(!!((uint32_t)(thing->renderhidden) & r_renderercaps)))
+		return true;
 
 	return false;
 }

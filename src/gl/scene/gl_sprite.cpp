@@ -79,6 +79,7 @@ EXTERN_CVAR (Float, transsouls)
 
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
+extern uint32_t r_renderercaps;
 
 enum HWRenderStyle
 {
@@ -677,6 +678,13 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		if (!(thing->flags & MF_STEALTH) || !mDrawer->FixedColormap || !gl_enhanced_nightvision || thing == camera)
 			return;
 	}
+
+	// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,
+	// check renderhidden vs r_rendercaps, if anything matches we do support that feature and should hide it.
+	if ((!!((uint32_t)(thing->renderrequired) & ~r_renderercaps)) ||
+		(!!((uint32_t)(thing->renderhidden) & r_renderercaps)))
+		return;
+
 	int spritenum = thing->sprite;
 	DVector2 sprscale = thing->Scale;
 	if (thing->player != NULL)

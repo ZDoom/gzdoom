@@ -533,6 +533,7 @@ enum ActorRenderFeatureFlag
 	RFF_COLORMAP		= 1<<9, // custom colormaps (incl. ability to fullbright certain ranges, ala Strife)
 	RFF_POLYGONAL		= 1<<10, // uses polygons instead of wallscans/visplanes (i.e. softpoly and hardware opengl)
 	RFF_TRUECOLOR		= 1<<11, // renderer is currently truecolor
+	RFF_VOXELS		= 1<<12, // renderer is capable of voxels
 };
 
 // [TP] Flagset definitions

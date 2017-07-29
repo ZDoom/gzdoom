@@ -72,6 +72,7 @@
 
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 EXTERN_CVAR(Bool, r_drawvoxels);
+EXTERN_CVAR(Bool, r_debug_disable_vis_filter);
 extern uint32_t r_renderercaps;
 
 namespace
@@ -971,7 +972,7 @@ namespace swrenderer
 
 		// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,
 		// check renderhidden vs r_rendercaps, if anything matches we do support that feature and should hide it.
-		if ((!!(thing->RenderRequired & ~r_renderercaps)) ||
+		if (!r_debug_disable_vis_filter && (!!(thing->RenderRequired & ~r_renderercaps)) ||
 			(!!(thing->RenderHidden & r_renderercaps)))
 			return false;
 

@@ -694,11 +694,13 @@ const char *G_GetSecretExitMap()
 
 void G_ExitLevel (int position, bool keepFacing)
 {
+	level.flags3 |= LEVEL3_EXITNORMALUSED;
 	G_ChangeLevel(G_GetExitMap(), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
 }
 
 void G_SecretExitLevel (int position) 
 {
+	level.flags3 |= LEVEL3_EXITSECRETUSED;
 	G_ChangeLevel(G_GetSecretExitMap(), position, 0);
 }
 
@@ -1110,16 +1112,55 @@ void G_WorldDone (void)
 			}
 		}
 
-		F_StartFinale (thiscluster->MessageMusic, thiscluster->musicorder,
-			thiscluster->cdtrack, thiscluster->cdid,
-			thiscluster->FinaleFlat, thiscluster->ExitText,
-			thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
-			thiscluster->flags & CLUSTER_FINALEPIC,
-			thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
-			true, endsequence);
+		auto ext = level.info->ExitMapTexts.CheckKey(level.flags3 & LEVEL3_EXITSECRETUSED ? NAME_Secret : NAME_Normal);
+		if (ext != nullptr && (ext->mDefined & FExitText::DEF_TEXT))
+		{
+			F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
+				ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+				-1, 0,
+				ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
+				ext->mText,
+				false,
+				ext->mDefined & FExitText::DEF_PIC,
+				ext->mDefined & FExitText::DEF_LOOKUP,
+				true, endsequence);
+		}
+		else
+		{
+			F_StartFinale(thiscluster->MessageMusic, thiscluster->musicorder,
+				thiscluster->cdtrack, thiscluster->cdid,
+				thiscluster->FinaleFlat, thiscluster->ExitText,
+				thiscluster->flags & CLUSTER_EXITTEXTINLUMP,
+				thiscluster->flags & CLUSTER_FINALEPIC,
+				thiscluster->flags & CLUSTER_LOOKUPEXITTEXT,
+				true, endsequence);
+		}
 	}
 	else
 	{
+		FExitText *ext = nullptr;
+		
+		if (level.flags3 & LEVEL3_EXITSECRETUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Secret);
+		else if (level.flags3 & LEVEL3_EXITNORMALUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Normal);
+		if (ext == nullptr) ext = level.info->ExitMapTexts.CheckKey(nextlevel);
+
+		if (ext != nullptr)
+		{
+			if ((ext->mDefined & FExitText::DEF_TEXT))
+			{
+				F_StartFinale(ext->mDefined & FExitText::DEF_MUSIC ? ext->mMusic : gameinfo.finaleMusic,
+					ext->mDefined & FExitText::DEF_MUSIC ? ext->mOrder : gameinfo.finaleOrder,
+					-1, 0,
+					ext->mDefined & FExitText::DEF_BACKDROP ? ext->mBackdrop : gameinfo.FinaleFlat,
+					ext->mText,
+					false,
+					ext->mDefined & FExitText::DEF_PIC,
+					ext->mDefined & FExitText::DEF_LOOKUP,
+					false);
+			}
+			return;
+		}
+
 		nextcluster = FindClusterInfo (FindLevelInfo (nextlevel)->cluster);
 
 		if (nextcluster->cluster != level.cluster && !deathmatch)

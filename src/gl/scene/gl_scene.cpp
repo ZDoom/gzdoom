@@ -85,6 +85,7 @@ EXTERN_CVAR (Bool, r_deathcamera)
 EXTERN_CVAR (Float, underwater_fade_scalar)
 EXTERN_CVAR (Float, r_visibility)
 EXTERN_CVAR (Bool, gl_legacy_mode)
+EXTERN_CVAR (Bool, r_drawvoxels)
 
 extern bool NoInterpolateView;
 
@@ -1166,7 +1167,9 @@ uint32_t FGLInterface::GetCaps()
 {
 	// describe our basic feature set
 	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
-		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL | RFF_VOXELS;
+		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL;
+	if (r_drawvoxels)
+		FlagSet |= RFF_VOXELS;
 	if (gl_legacy_mode)
 	{
 		// legacy mode always has truecolor because palette tonemap is not available

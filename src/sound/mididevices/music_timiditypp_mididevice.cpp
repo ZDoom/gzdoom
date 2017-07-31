@@ -564,6 +564,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	int curSpace = spaceIdx, i = 1;
 
 	TimidityArgs[0] = new char[TimidityExe.Len() + 1];
+	TimidityArgs[0][TimidityExe.Len()] = 0;
 	strcpy(TimidityArgs[0], TimidityExe.GetChars());
 
 	int argLen;
@@ -578,6 +579,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 				argLen = CommandLine.Len() - curSpace;
 			}
 			TimidityArgs[i] = new char[argLen];
+			TimidityArgs[i][argLen-1] = 0;
 			strcpy(TimidityArgs[i], CommandLine.Mid(spaceIdx, curSpace - spaceIdx).GetChars());
 			i += 1;
 		}

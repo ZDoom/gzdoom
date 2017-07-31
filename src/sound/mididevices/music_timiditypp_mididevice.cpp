@@ -558,7 +558,8 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 	strCount -= spaceInExePathCount;
 
-	char** TimidityArgs = new char*[strCount];
+	char** TimidityArgs = new char*[strCount + 1];
+	TimidityArgs[strCount] = NULL;
 
 	spaceIdx = CommandLine.IndexOf(' ');
 	int curSpace = spaceIdx, i = 1;

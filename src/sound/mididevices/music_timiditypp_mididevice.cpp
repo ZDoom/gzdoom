@@ -532,13 +532,15 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	do
 	{
 		spaceIdx = CommandLine.IndexOf(' ', spaceIdx);
-		spaceInExePathCount += 1;
 		TimidityExe = CommandLine.Left(spaceIdx);
 		glob(TimidityExe.GetChars(), 0, NULL, &glb);
-	} while (spaceIdx != -1 && glb.gl_pathc == 0);
-	if (spaceIdx == -1)
+		spaceIdx += 1;
+		spaceInExePathCount += 1;
+	} while (spaceIdx != 0 && glb.gl_pathc == 0);
+	if (spaceIdx == 0)
 	{
 		TimidityExe = FString("timidity"); // Maybe it's in your PATH?
+		spaceInExePathCount = 0;
 	}
 	globfree(&glb);
 

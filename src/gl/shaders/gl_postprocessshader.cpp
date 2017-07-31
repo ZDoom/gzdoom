@@ -209,8 +209,6 @@ void PostProcessShaderInstance::UpdateUniforms()
 			}
 		}
 	}
-
-	glUniform1i(glGetUniformLocation(mProgram, "SillyTexture"), 1);
 }
 
 void PostProcessShaderInstance::BindTextures()

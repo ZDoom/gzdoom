@@ -529,20 +529,27 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	int spaceIdx = 0;
 	int spaceInExePathCount = -1;
 	FString TimidityExe;
-	do {
+	do
+	{
 		spaceIdx = CommandLine.IndexOf(' ', spaceIdx);
 		spaceInExePathCount += 1;
 		TimidityExe = CommandLine.Left(spaceIdx);
 		glob(TimidityExe.GetChars(), 0, NULL, &glb);
 	} while (spaceIdx != -1 && glb.gl_pathc == 0);
-	if (spaceIdx == -1) return false;
+	if (spaceIdx == -1)
+	{
+		TimidityExe = FString("timidity"); // Maybe it's in your PATH?
+	}
 	globfree(&glb);
 
 	int strCount = 1;
-	for (spaceIdx = 0; spaceIdx < CommandLine.Len(); spaceIdx++) {
-		if (CommandLine[spaceIdx] == ' ') {
+	for (spaceIdx = 0; spaceIdx < CommandLine.Len(); spaceIdx++)
+	{
+		if (CommandLine[spaceIdx] == ' ')
+		{
 			++strCount;
-			if (CommandLine[spaceIdx+1] == ' ') {
+			if (CommandLine[spaceIdx+1] == ' ')
+			{
 				--strCount;
 			}
 		}
@@ -558,11 +565,14 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	strcpy(TimidityArgs[0], TimidityExe.GetChars());
 
 	int argLen;
-	while (curSpace != -1) {
+	while (curSpace != -1)
+	{
 		curSpace = CommandLine.IndexOf(' ', spaceIdx);
-		if (curSpace != spaceIdx) {
+		if (curSpace != spaceIdx)
+		{
 			argLen = curSpace - spaceIdx + 1;
-			if (argLen < 0) {
+			if (argLen < 0)
+			{
 				argLen = CommandLine.Len() - curSpace;
 			}
 			TimidityArgs[i] = new char[argLen];
@@ -573,7 +583,8 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 
 	DPrintf(DMSG_NOTIFY, "Timidity EXE: \x1cG%s\n", TimidityExe.GetChars());
-	for (i = 0; i < strCount; i++) {
+	for (i = 0; i < strCount; i++)
+	{
 		DPrintf(DMSG_NOTIFY, "arg %d: \x1cG%s\n", i, TimidityArgs[i]);
 	}
 
@@ -588,7 +599,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		close (WavePipe[1]);
 
 		execvp (TimidityExe.GetChars(), TimidityArgs);
-		fprintf(stderr,"execvp failed\n");
+		fprintf(stderr,"execvp failed: %s\n", strerror(errno));
 		_exit (0);	// if execvp succeeds, we never get here
 	}
 	else if (forkres < 0)

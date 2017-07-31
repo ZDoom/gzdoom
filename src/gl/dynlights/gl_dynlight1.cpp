@@ -63,24 +63,35 @@ CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata, bool planecheck, bool hudmodel)
+bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata)
+{
+	DVector3 pos = light->PosRelative(group);
+	float radius = (light->GetRadius());
+
+	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
+
+	if (radius <= 0.f) return false;
+	if (dist > radius) return false;
+	if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
+	{
+		return false;
+	}
+
+	gl_AddLightToList(group, light, ldata, false);
+	return true;
+}
+
+//==========================================================================
+//
+// Add one dynamic light to the light data list
+//
+//==========================================================================
+void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata, bool hudmodel)
 {
 	int i = 0;
 
 	DVector3 pos = light->PosRelative(group);
-	float radius = (light->GetRadius());
-
-	if (planecheck)
-	{
-		float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
-
-		if (radius <= 0.f) return false;
-		if (dist > radius) return false;
-		if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
-		{
-			return false;
-		}
-	}
+	float radius = light->GetRadius();
 
 	if (hudmodel)
 	{
@@ -151,6 +162,5 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	data[5] = g;
 	data[6] = b;
 	data[7] = shadowIndex;
-	return true;
 }
 

@@ -422,7 +422,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				{
 					FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
 					if (smf)
-						gl_SetDynModelLight(playermo, playermo->X(), playermo->Y(), playermo->Center(), playermo->subsector, true);
+						gl_SetDynModelLight(playermo, true);
 					else
 						gl_SetDynSpriteLight(playermo, NULL);
 				}

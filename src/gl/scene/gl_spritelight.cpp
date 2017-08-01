@@ -148,7 +148,7 @@ static bool CheckBBoxCircle(float *bbox, float x, float y, float radiusSquared)
 }
 
 template<typename Callback>
-void BSPNodeWalkCircle(void *node, float x, float y, float radiusSquared, Callback &callback)
+void BSPNodeWalkCircle(void *node, float x, float y, float radiusSquared, const Callback &callback)
 {
 	while (!((size_t)node & 1))
 	{
@@ -168,7 +168,7 @@ void BSPNodeWalkCircle(void *node, float x, float y, float radiusSquared, Callba
 }
 
 template<typename Callback>
-void BSPWalkCircle(float x, float y, float radiusSquared, Callback &callback)
+void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callback)
 {
 	if (level.nodes.Size() == 0)
 		callback(&level.subsectors[0]);

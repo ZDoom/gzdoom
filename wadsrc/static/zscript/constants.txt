@@ -1172,3 +1172,23 @@ enum EWeaponState
 	WF_USER3OK			= 1 << 10,
 	WF_USER4OK			= 1 << 11,
 };
+
+// these flags are for filtering actor visibility based on certain conditions of the renderer's feature support.
+// currently, no renderer supports every single one of these features.
+enum ActorRenderFeatureFlag
+{
+	RFF_FLATSPRITES		= 1<<0, // flat sprites
+	RFF_MODELS			= 1<<1, // 3d models
+	RFF_SLOPE3DFLOORS	= 1<<2, // sloped 3d floor support
+	RFF_TILTPITCH		= 1<<3, // full free-look
+	RFF_ROLLSPRITES		= 1<<4, // roll sprites
+	RFF_UNCLIPPEDTEX	= 1<<5, // midtex and sprite can render "into" flats and walls
+	RFF_MATSHADER		= 1<<6, // material shaders
+	RFF_POSTSHADER		= 1<<7, // post-process shaders (renderbuffers)
+	RFF_BRIGHTMAP		= 1<<8, // brightmaps
+	RFF_COLORMAP		= 1<<9, // custom colormaps (incl. ability to fullbright certain ranges, ala Strife)
+	RFF_POLYGONAL		= 1<<10, // uses polygons instead of wallscans/visplanes (i.e. softpoly and hardware opengl)
+	RFF_TRUECOLOR		= 1<<11, // renderer is currently truecolor
+	RFF_VOXELS		= 1<<12, // renderer is capable of voxels
+};
+

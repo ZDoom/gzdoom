@@ -76,6 +76,7 @@ public:
 
 	SDL_Window *GetSDLWindow() override { return Screen; }
 
+	virtual int GetTrueHeight() { return GetClientHeight(); }
 protected:
 	bool CanUpdate();
 	void SetGammaTable(uint16_t *tbl);

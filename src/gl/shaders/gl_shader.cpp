@@ -734,6 +734,16 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 				if (parsedType != PostProcessUniformType::Undefined)
 					shaderdesc.Uniforms[uniformName].Type = parsedType;
 			}
+			else if (sc.Compare("texture"))
+			{
+				sc.MustGetString();
+				FString textureName = sc.String;
+
+				sc.MustGetString();
+				FString textureSource = sc.String;
+
+				shaderdesc.Textures[textureName] = textureSource;
+			}
 			else if (sc.Compare("enabled"))
 			{
 				shaderdesc.Enabled = true;

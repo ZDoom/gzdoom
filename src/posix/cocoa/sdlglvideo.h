@@ -65,6 +65,7 @@ public:
 	int GetClientWidth();
 	int GetClientHeight();
 
+	virtual int GetTrueHeight() { return GetClientHeight(); }
 protected:
 	int                 m_Lock;
 	bool                UpdatePending;

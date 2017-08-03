@@ -54,6 +54,7 @@ struct FRenderer
 	virtual void CleanLevelData() {}
 	virtual bool RequireGLNodes() { return false; }
 
+	virtual uint32_t GetCaps() { return 0; }
 };
 
 

@@ -82,6 +82,8 @@ public:
 
 	void SetVSync(bool vsync);
 
+	void ScaleCoordsFromWindow(int16_t &x, int16_t &y) override;
+
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 private:

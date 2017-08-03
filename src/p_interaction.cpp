@@ -79,9 +79,9 @@ CVAR (Bool, cl_showsprees, true, CVAR_ARCHIVE)
 CVAR (Bool, cl_showmultikills, true, CVAR_ARCHIVE)
 EXTERN_CVAR (Bool, show_obituaries)
 
-CVAR (Float, sv_damagefactormobj, 1.0, CVAR_SERVERINFO)
-CVAR (Float, sv_damagefactorfriendly, 1.0, CVAR_SERVERINFO)
-CVAR (Float, sv_damagefactorplayer, 1.0, CVAR_SERVERINFO)
+CVAR (Float, sv_damagefactormobj, 1.0, CVAR_SERVERINFO|CVAR_CHEAT)
+CVAR (Float, sv_damagefactorfriendly, 1.0, CVAR_SERVERINFO|CVAR_CHEAT)
+CVAR (Float, sv_damagefactorplayer, 1.0, CVAR_SERVERINFO|CVAR_CHEAT)
 
 FName MeansOfDeath;
 

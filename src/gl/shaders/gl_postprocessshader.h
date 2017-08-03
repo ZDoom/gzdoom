@@ -1,6 +1,7 @@
 #pragma once
 
 #include "gl_shaderprogram.h"
+#include <map>
 
 class PostProcessShaderInstance;
 
@@ -29,6 +30,7 @@ struct PostProcessShader
 	bool Enabled = false;
 
 	TMap<FString, PostProcessUniformValue> Uniforms;
+	TMap<FString, FString> Textures;
 };
 
 extern TArray<PostProcessShader> PostProcessShaders;
@@ -37,6 +39,7 @@ class PostProcessShaderInstance
 {
 public:
 	PostProcessShaderInstance(PostProcessShader *desc) : Desc(desc) { }
+	~PostProcessShaderInstance();
 
 	void Run();
 
@@ -46,9 +49,11 @@ private:
 	bool IsShaderSupported();
 	void CompileShader();
 	void UpdateUniforms();
+	void BindTextures();
 
 	FShaderProgram mProgram;
 	FBufferedUniformSampler mInputTexture;
+	std::map<FTexture*, int> mTextureHandles;
 };
 
 class FCustomPostProcessShaders

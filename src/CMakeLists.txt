@@ -944,6 +944,7 @@ set (PCH_SOURCES
 	portal.cpp
 	r_utility.cpp
 	r_sky.cpp
+	r_videoscale.cpp
 	s_advsound.cpp
 	s_environment.cpp
 	s_playlist.cpp

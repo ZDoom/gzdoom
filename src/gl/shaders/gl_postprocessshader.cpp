@@ -34,6 +34,8 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/shaders/gl_postprocessshader.h"
+#include "textures/textures.h"
+#include "textures/bitmap.h"
 
 CVAR(Bool, gl_custompost, true, 0)
 
@@ -67,6 +69,12 @@ void FCustomPostProcessShaders::Run(FString target)
 
 /////////////////////////////////////////////////////////////////////////////
 
+PostProcessShaderInstance::~PostProcessShaderInstance()
+{
+	for (const auto &it : mTextureHandles)
+		glDeleteTextures(1, (GLuint*)&it.second);
+}
+
 void PostProcessShaderInstance::Run()
 {
 	if (!IsShaderSupported())
@@ -80,6 +88,7 @@ void PostProcessShaderInstance::Run()
 	FGLDebug::PushGroup(Desc->ShaderLumpName.GetChars());
 
 	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(1 + Desc->Textures.CountUsed());
 
 	GLRenderer->mBuffers->BindNextFB();
 	GLRenderer->mBuffers->BindCurrentTexture(0);
@@ -89,11 +98,13 @@ void PostProcessShaderInstance::Run()
 	mProgram.Bind();
 
 	UpdateUniforms();
+	BindTextures();
 
 	mInputTexture.Set(0);
 
 	GLRenderer->RenderScreenQuad();
 
+	glActiveTexture(GL_TEXTURE0);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	GLRenderer->mBuffers->NextTexture();
@@ -145,6 +156,13 @@ void PostProcessShaderInstance::CompileShader()
 	FString uniformTextures;
 	uniformTextures += "uniform sampler2D InputTexture;\n";
 
+	TMap<FString, FString>::Iterator itTextures(Desc->Textures);
+	TMap<FString, FString>::Pair *pairTextures;
+	while (itTextures.NextPair(pairTextures))
+	{
+		uniformTextures.AppendFormat("uniform sampler2D %s;\n", pairTextures->Key.GetChars());
+	}
+
 	// Setup pipeline
 	FString pipelineInOut;
 	pipelineInOut += "in vec2 TexCoord;\n";
@@ -189,6 +207,49 @@ void PostProcessShaderInstance::UpdateUniforms()
 			default:
 				break;
 			}
+		}
+	}
+}
+
+void PostProcessShaderInstance::BindTextures()
+{
+	int textureUnit = 1;
+	TMap<FString, FString>::Iterator it(Desc->Textures);
+	TMap<FString, FString>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		int location = glGetUniformLocation(mProgram, pair->Key.GetChars());
+		if (location == -1)
+			continue;
+
+		FString name = pair->Value;
+		FTexture *tex = TexMan(TexMan.CheckForTexture(name, FTexture::TEX_Any));
+		if (tex && tex->UseType != FTexture::TEX_Null)
+		{
+			glUniform1i(location, textureUnit);
+
+			glActiveTexture(GL_TEXTURE0 + 1);
+			auto it = mTextureHandles.find(tex);
+			if (it == mTextureHandles.end())
+			{
+				FBitmap bitmap;
+				bitmap.Create(tex->GetWidth(), tex->GetHeight());
+				tex->CopyTrueColorPixels(&bitmap, 0, 0);
+
+				GLuint handle = 0;
+				glGenTextures(1, &handle);
+				glBindTexture(GL_TEXTURE_2D, handle);
+				glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, tex->GetWidth(), tex->GetHeight(), 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.GetPixels());
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				mTextureHandles[tex] = handle;
+			}
+			else
+			{
+				glBindTexture(GL_TEXTURE_2D, it->second);
+			}
+
+			textureUnit++;
 		}
 	}
 }

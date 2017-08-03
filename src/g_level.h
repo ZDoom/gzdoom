@@ -95,6 +95,9 @@ struct FMapInfoParser
 	void ParseMusic(FString &name, int &order);
 	//void ParseLumpOrTextureName(char *name);
 	void ParseLumpOrTextureName(FString &name);
+	void ParseExitText(FName formap, level_info_t *info);
+	void ParseExitMusic(FName formap, level_info_t *info);
+	void ParseExitBackdrop(FName formap, level_info_t *info, bool ispic);
 
 	void ParseCluster();
 	void ParseNextMap(FString &mapname);
@@ -241,6 +244,8 @@ enum ELevelFlags : unsigned int
 	LEVEL3_ATTENUATE			= 0x00000004,	// attenuate lights?
 	LEVEL3_NOLIGHTFADE			= 0x00000008,	// no light fading to black.
 	LEVEL3_NOCOLOREDSPRITELIGHTING = 0x00000010,	// draw sprites only with color-less light
+	LEVEL3_EXITNORMALUSED		= 0x00000020,
+	LEVEL3_EXITSECRETUSED		= 0x00000040,
 };
 
 
@@ -287,6 +292,23 @@ enum EMapType : int
 	MAPTYPE_UDMF	// This does not distinguish between namespaces.
 };
 
+struct FExitText
+{
+	enum EDefined
+	{
+		DEF_TEXT = 1,
+		DEF_MUSIC = 2,
+		DEF_BACKDROP = 4,
+		DEF_LOOKUP = 8,
+		DEF_PIC = 16
+	};
+	int16_t mDefined = 0;
+	int16_t mOrder = -1;
+	FString mText;
+	FString mMusic;
+	FString mBackdrop;
+};
+
 struct level_info_t
 {
 	int			levelnum;
@@ -301,6 +323,8 @@ struct level_info_t
 	FString		F1Pic;
 	FString		BorderTexture;
 	FString		MapBackground;
+
+	TMap<FName, FExitText> ExitMapTexts;
 
 	int			cluster;
 	int			partime;

@@ -65,6 +65,7 @@
 #include "gl/shaders/gl_postprocessshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
 #include "gl/stereo3d/gl_stereo3d.h"
+#include "r_videoscale.h"
 
 //==========================================================================
 //
@@ -152,8 +153,6 @@ EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Int, gl_satformula)
-
-bool ViewportLinearScale();
 
 void FGLRenderer::RenderScreenQuad()
 {

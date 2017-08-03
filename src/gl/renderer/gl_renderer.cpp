@@ -72,6 +72,7 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Int, vid_scalemode)
@@ -283,7 +284,7 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	int screenWidth = framebuffer->GetWidth();
 	int screenHeight = framebuffer->GetHeight();
 	float scaleX, scaleY;
-	if (vid_scalemode == 1 || vid_scalemode == 2)
+	if (ViewportIsScaled43())
 	{
 		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (screenHeight * 1.2f));
 		scaleY = scaleX * 1.2f;

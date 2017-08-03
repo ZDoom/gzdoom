@@ -51,7 +51,6 @@
 #include "r_data/colormaps.h"
 #include "p_maputl.h"
 #include "p_setup.h"
-#include "version.h"
 #include "r_utility.h"
 #include "r_3dfloors.h"
 #include "g_levellocals.h"

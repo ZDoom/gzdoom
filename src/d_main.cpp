@@ -218,6 +218,7 @@ CUSTOM_CVAR (String, vid_cursor, "None", CVAR_ARCHIVE | CVAR_NOINITCALL)
 CVAR (Bool, disableautoload, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, autoloadbrightmaps, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
 CVAR (Bool, autoloadlights, false, CVAR_ARCHIVE | CVAR_NOINITCALL | CVAR_GLOBALCONFIG)
+CVAR (Bool, r_debug_disable_vis_filter, false, 0)
 
 bool wantToRestart;
 bool DrawFSHUD;				// [RH] Draw fullscreen HUD?
@@ -246,6 +247,9 @@ int restart = 0;
 bool batchrun;	// just run the startup and collect all error messages in a logfile, then quit without any interaction
 
 cycle_t FrameCycles;
+
+// [SP] Store the capabilities of the renderer in a global variable, to prevent excessive per-frame processing
+uint32_t r_renderercaps = 0;
 
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
@@ -671,6 +675,7 @@ void D_Display ()
 	cycles.Clock();
 
 	r_UseVanillaTransparency = UseVanillaTransparency(); // [SP] Cache UseVanillaTransparency() call
+	r_renderercaps = Renderer->GetCaps(); // [SP] Get the current capabilities of the renderer
 
 	if (players[consoleplayer].camera == NULL)
 	{

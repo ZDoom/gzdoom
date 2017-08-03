@@ -1090,6 +1090,7 @@ DEFINE_PROPERTY(distancecheck, S, Actor)
 	}
 }
 
+
 //==========================================================================
 //
 // Special inventory properties
@@ -1835,5 +1836,4 @@ DEFINE_SCRIPTED_PROPERTY(unmorphflash, S, PowerMorph)
 	PROP_STRING_PARM(str, 0);
 	defaults->PointerVar<PClassActor>(NAME_UnMorphFlash) = FindClassTentative(str, RUNTIME_CLASS(AActor), bag.fromDecorate);
 }
-
 

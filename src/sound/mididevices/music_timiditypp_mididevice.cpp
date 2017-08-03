@@ -269,7 +269,7 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 
 #ifdef _WIN32
 	static SECURITY_ATTRIBUTES inheritable = { sizeof(inheritable), NULL, true };
-	
+
 	if (!Validated && !ValidateTimidity ())
 	{
 		return 101;
@@ -287,7 +287,7 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 		// buffer reads in FillStream() under NT. This does not seem to be an
 		// issue under 9x.
 		int bitmask = pipeSize & -pipeSize;
-		
+
 		while (bitmask < pipeSize)
 			bitmask <<= 1;
 		pipeSize = bitmask;
@@ -321,7 +321,7 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 #endif
 			}
 		}
-		
+
 		if (pipeSize == 0)
 		{
 			Printf(PRINT_BOLD, "If your soundcard cannot play more than one\n"
@@ -514,26 +514,83 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		// Timidity was previously launched, so the write end of the pipe
 		// is closed, and the read end is still open. Close the pipe
 		// completely and reopen it.
-		
+
 		close (WavePipe[0]);
 		WavePipe[0] = -1;
 		delete Stream;
 		Stream = NULL;
 		Open (NULL, NULL);
 	}
-	
+
 	int forkres;
 	glob_t glb;
 
-	switch (glob (CommandLine.GetChars(), 0, NULL, &glb))
+	// Get timidity executable path
+	int spaceIdx = 0;
+	int spaceInExePathCount = -1;
+	FString TimidityExe;
+	do
 	{
-	case 0: // all good
-		break;
-		
-	case GLOB_NOSPACE:
-		globfree (&glb);
-	default:
-		return false;
+		spaceIdx = CommandLine.IndexOf(' ', spaceIdx);
+		TimidityExe = CommandLine.Left(spaceIdx);
+		glob(TimidityExe.GetChars(), 0, NULL, &glb);
+		spaceIdx += 1;
+		spaceInExePathCount += 1;
+	} while (spaceIdx != 0 && glb.gl_pathc == 0);
+	if (spaceIdx == 0)
+	{
+		TimidityExe = FString("timidity"); // Maybe it's in your PATH?
+		spaceInExePathCount = 0;
+	}
+	globfree(&glb);
+
+	int strCount = 1;
+	for (spaceIdx = 0; spaceIdx < CommandLine.Len(); spaceIdx++)
+	{
+		if (CommandLine[spaceIdx] == ' ')
+		{
+			++strCount;
+			if (CommandLine[spaceIdx+1] == ' ')
+			{
+				--strCount;
+			}
+		}
+	}
+	strCount -= spaceInExePathCount;
+
+	char** TimidityArgs = new char*[strCount + 1];
+	TimidityArgs[strCount] = NULL;
+
+	spaceIdx = CommandLine.IndexOf(' ');
+	int curSpace = spaceIdx, i = 1;
+
+	TimidityArgs[0] = new char[TimidityExe.Len() + 1];
+	TimidityArgs[0][TimidityExe.Len()] = 0;
+	strcpy(TimidityArgs[0], TimidityExe.GetChars());
+
+	int argLen;
+	while (curSpace != -1)
+	{
+		curSpace = CommandLine.IndexOf(' ', spaceIdx);
+		if (curSpace != spaceIdx)
+		{
+			argLen = curSpace - spaceIdx + 1;
+			if (argLen < 0)
+			{
+				argLen = CommandLine.Len() - curSpace;
+			}
+			TimidityArgs[i] = new char[argLen];
+			TimidityArgs[i][argLen-1] = 0;
+			strcpy(TimidityArgs[i], CommandLine.Mid(spaceIdx, curSpace - spaceIdx).GetChars());
+			i += 1;
+		}
+		spaceIdx = curSpace + 1;
+	}
+
+	DPrintf(DMSG_NOTIFY, "Timidity EXE: \x1cG%s\n", TimidityExe.GetChars());
+	for (i = 0; i < strCount; i++)
+	{
+		DPrintf(DMSG_NOTIFY, "arg %d: \x1cG%s\n", i, TimidityArgs[i]);
 	}
 
 	forkres = fork ();
@@ -546,8 +603,8 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 //		freopen ("/dev/null", "w", stderr);
 		close (WavePipe[1]);
 
-		execvp (glb.gl_pathv[0], glb.gl_pathv);
-		fprintf(stderr,"execvp failed\n");
+		execvp (TimidityExe.GetChars(), TimidityArgs);
+		fprintf(stderr,"execvp failed: %s\n", strerror(errno));
 		_exit (0);	// if execvp succeeds, we never get here
 	}
 	else if (forkres < 0)
@@ -566,7 +623,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		    fprintf(stderr,"Launching timidity failed\n");
 		}*/
 	}
-	
+
 	globfree (&glb);
 	return ChildProcess != -1;
 #endif // _WIN32
@@ -581,7 +638,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, void *userdata)
 {
 	TimidityPPMIDIDevice *song = (TimidityPPMIDIDevice *)userdata;
-	
+
 #ifdef _WIN32
 	DWORD avail, got, didget;
 
@@ -606,7 +663,7 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 				memset ((uint8_t *)buff+didget, 0, len-didget);
 				break;
 			}
-		} 
+		}
 	}
 #else
 	ssize_t got;

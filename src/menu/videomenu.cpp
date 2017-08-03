@@ -54,6 +54,7 @@
 #include "sbar.h"
 #include "hardware.h"
 #include "vm.h"
+#include "r_videoscale.h"
 
 /*=======================================
  *
@@ -123,46 +124,6 @@ CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}	
 }
 
-CUSTOM_CVAR (Int, vid_scalemode, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0 || self > 5)
-	{
-		self = 0;
-	}
-}
-
-bool ViewportLinearScale()
-{
-	return vid_scalemode == 4 || vid_scalemode == 5;
-}
-
-int ViewportScaledWidth(int width)
-{
-	switch (vid_scalemode)
-	{
-	default:
-	case 0: return width;
-	case 1: return 320;
-	case 2: return 640;
-	case 3: return (int)roundf(width * 0.5f);
-	case 4: return (int)roundf(width * 0.75f);
-	case 5: return width * 2;
-	}
-}
-
-int ViewportScaledHeight(int height)
-{
-	switch (vid_scalemode)
-	{
-	default:
-	case 0: return height;
-	case 1: return 200;
-	case 2: return 400;
-	case 3: return (int)roundf(height * 0.5f);
-	case 4: return (int)roundf(height * 0.75f);
-	case 5: return height * 2;
-	}
-}
 
 //=============================================================================
 //

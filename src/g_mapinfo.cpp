@@ -607,21 +607,97 @@ bool FMapInfoParser::ParseLookupName(FString &dest)
 //
 //==========================================================================
 
-/*
-void FMapInfoParser::ParseLumpOrTextureName(char *name)
-{
-	sc.MustGetString();
-	uppercopy(name, sc.String);
-	name[8]=0;
-}
-*/
-
 void FMapInfoParser::ParseLumpOrTextureName(FString &name)
 {
 	sc.MustGetString();
 	name = sc.String;
 }
 
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseExitText(FName formap, level_info_t *info)
+{
+	FString nexttext;
+	bool nextlookup = ParseLookupName(nexttext);
+
+	auto def = info->ExitMapTexts.CheckKey(formap);
+	if (def != nullptr)
+	{
+		def->mText = nexttext;
+		if (nextlookup) def->mDefined |= FExitText::DEF_LOOKUP;
+		else def->mDefined &= ~FExitText::DEF_LOOKUP;
+		def->mDefined |= FExitText::DEF_TEXT;
+	}
+	else
+	{
+		FExitText def;
+		def.mText = nexttext;
+		if (nextlookup) def.mDefined |= FExitText::DEF_LOOKUP;
+		def.mDefined |= FExitText::DEF_TEXT;
+		info->ExitMapTexts.Insert(formap, def);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseExitMusic(FName formap, level_info_t *info)
+{
+	FString music;
+	int order;
+	ParseMusic(music, order);
+
+	auto def = info->ExitMapTexts.CheckKey(formap);
+	if (def != nullptr)
+	{
+		def->mMusic = music;
+		def->mOrder = order;
+		def->mDefined |= FExitText::DEF_MUSIC;
+	}
+	else
+	{
+		FExitText def;
+		def.mMusic = music;
+		def.mOrder = order;
+		def.mDefined |= FExitText::DEF_MUSIC;
+		info->ExitMapTexts.Insert(formap, def);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseExitBackdrop(FName formap, level_info_t *info, bool ispic)
+{
+	FString drop;
+	ParseLumpOrTextureName(drop);
+
+	auto def = info->ExitMapTexts.CheckKey(formap);
+	if (def != nullptr)
+	{
+		def->mBackdrop = drop;
+		def->mDefined |= FExitText::DEF_BACKDROP;
+		if (ispic) def->mDefined |= FExitText::DEF_PIC;
+		else def->mDefined &= ~FExitText::DEF_PIC;
+	}
+	else
+	{
+		FExitText def;
+		def.mBackdrop = drop;
+		def.mDefined |= FExitText::DEF_BACKDROP;
+		def.mDefined |= FExitText::DEF_MUSIC;
+		if (ispic) def.mDefined |= FExitText::DEF_PIC;
+		info->ExitMapTexts.Insert(formap, def);
+	}
+}
 
 //==========================================================================
 //
@@ -1175,6 +1251,42 @@ DEFINE_MAP_OPTION(mapbackground, true)
 {
 	parse.ParseAssign();
 	parse.ParseLumpOrTextureName(info->MapBackground);
+}
+
+DEFINE_MAP_OPTION(exittext, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitText(nextmap, info);
+}
+
+DEFINE_MAP_OPTION(textmusic, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitMusic(nextmap, info);
+}
+
+DEFINE_MAP_OPTION(textflat, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitBackdrop(nextmap, info, false);
+}
+
+DEFINE_MAP_OPTION(textpic, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitBackdrop(nextmap, info, true);
 }
 
 DEFINE_MAP_OPTION(defaultenvironment, false)

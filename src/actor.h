@@ -516,6 +516,26 @@ enum ActorBounceFlag
 
 };
 
+// this is a special flag set that is exposed directly to DECORATE/ZScript
+// these flags are for filtering actor visibility based on certain conditions of the renderer's feature support.
+// currently, no renderer supports every single one of these features.
+enum ActorRenderFeatureFlag
+{
+	RFF_FLATSPRITES		= 1<<0, // flat sprites
+	RFF_MODELS			= 1<<1, // 3d models
+	RFF_SLOPE3DFLOORS	= 1<<2, // sloped 3d floor support
+	RFF_TILTPITCH		= 1<<3, // full free-look
+	RFF_ROLLSPRITES		= 1<<4, // roll sprites
+	RFF_UNCLIPPEDTEX	= 1<<5, // midtex and sprite can render "into" flats and walls
+	RFF_MATSHADER		= 1<<6, // material shaders
+	RFF_POSTSHADER		= 1<<7, // post-process shaders (renderbuffers)
+	RFF_BRIGHTMAP		= 1<<8, // brightmaps
+	RFF_COLORMAP		= 1<<9, // custom colormaps (incl. ability to fullbright certain ranges, ala Strife)
+	RFF_POLYGONAL		= 1<<10, // uses polygons instead of wallscans/visplanes (i.e. softpoly and hardware opengl)
+	RFF_TRUECOLOR		= 1<<11, // renderer is currently truecolor
+	RFF_VOXELS		= 1<<12, // renderer is capable of voxels
+};
+
 // [TP] Flagset definitions
 typedef TFlags<ActorFlag> ActorFlags;
 typedef TFlags<ActorFlag2> ActorFlags2;
@@ -527,6 +547,7 @@ typedef TFlags<ActorFlag7> ActorFlags7;
 typedef TFlags<ActorFlag8> ActorFlags8;
 typedef TFlags<ActorRenderFlag> ActorRenderFlags;
 typedef TFlags<ActorBounceFlag, uint16_t> ActorBounceFlags;
+typedef TFlags<ActorRenderFeatureFlag> ActorRenderFeatureFlags;
 DEFINE_TFLAGS_OPERATORS (ActorFlags)
 DEFINE_TFLAGS_OPERATORS (ActorFlags2)
 DEFINE_TFLAGS_OPERATORS (ActorFlags3)
@@ -537,6 +558,7 @@ DEFINE_TFLAGS_OPERATORS (ActorFlags7)
 DEFINE_TFLAGS_OPERATORS (ActorFlags8)
 DEFINE_TFLAGS_OPERATORS (ActorRenderFlags)
 DEFINE_TFLAGS_OPERATORS (ActorBounceFlags)
+DEFINE_TFLAGS_OPERATORS (ActorRenderFeatureFlags)
 
 // Used to affect the logic for thing activation through death, USESPECIAL and BUMPSPECIAL
 // "thing" refers to what has the flag and the special, "trigger" refers to what used or bumped it
@@ -1022,6 +1044,9 @@ public:
 	FTextureID		picnum;				// Draw this instead of sprite if valid
 	uint32_t			fillcolor;			// Color to draw when STYLE_Shaded
 	uint32_t			Translation;
+
+	uint32_t			RenderRequired;		// current renderer must have this feature set
+	uint32_t			RenderHidden;		// current renderer must *not* have any of these features
 
 	ActorRenderFlags	renderflags;		// Different rendering flags
 	ActorFlags		flags;

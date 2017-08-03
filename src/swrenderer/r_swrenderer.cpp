@@ -60,7 +60,8 @@ CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG 
 }
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
-EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from GZDoom
+EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from OpenGL Renderer
+EXTERN_CVAR(Bool, r_drawvoxels)
 
 CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -377,4 +378,21 @@ void FSoftwareRenderer::PreprocessLevel()
 
 void FSoftwareRenderer::CleanLevelData()
 {
+}
+
+uint32_t FSoftwareRenderer::GetCaps()
+{
+	ActorRenderFeatureFlags FlagSet = RFF_UNCLIPPEDTEX;
+
+	if (r_polyrenderer)
+		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH;
+	else if (r_drawvoxels)
+		FlagSet |= RFF_VOXELS;
+
+	if (screen && screen->IsBgra())
+		FlagSet |= RFF_TRUECOLOR;
+	else
+		FlagSet |= RFF_COLORMAP;
+
+	return (uint32_t)FlagSet;
 }

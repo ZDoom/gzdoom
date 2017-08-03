@@ -122,7 +122,9 @@
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 
 EXTERN_CVAR(Bool, cl_predict_specials)
-CVAR(Bool, sv_debug_blockscriptexit, false, CVAR_SERVERINFO) // [SP] Prevent ACS from exiting the level (may sometimes happen when a mod detects GZDoom)
+
+// [SP] Prevent ACS from exiting the level (may sometimes happen when a mod detects GZDoom)
+CVAR(Bool, sv_debug_blockscriptexit, false, CVAR_SERVERINFO | CVAR_CHEAT)
 
 // killough 3/7/98: Initialize generalized scrolling
 void P_SpawnScrollers();

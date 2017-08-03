@@ -90,6 +90,8 @@
 #include "types.h"
 #include "vm.h"
 
+CVAR(Bool, sv_debug_block_acs, false, CVAR_CHEAT | CVAR_SERVERINFO | CVAR_LATCH)
+
 	// P-codes for ACS scripts
 	enum
 	{
@@ -2378,6 +2380,8 @@ bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
 	uint8_t *object;
 	int i;
 
+	if (sv_debug_block_acs)
+		return false;
 	LumpNum = lumpnum;
 
 	// Now that everything is set up, record this module as being among the loaded modules.
@@ -10684,7 +10688,7 @@ int P_StartScript (AActor *who, line_t *where, int script, const char *map, cons
 		}
 		else
 		{
-			if (!(flags & ACS_NET) || (who && who->player == &players[consoleplayer]))
+			if (!sv_debug_block_acs && (!(flags & ACS_NET) || (who && who->player == &players[consoleplayer])))
 			{
 				Printf("P_StartScript: Unknown %s\n", ScriptPresentation(script).GetChars());
 			}

@@ -966,9 +966,8 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
 	PARAM_INT(x1);
 	PARAM_INT(y1);
 	PARAM_INT(color);
-	PARAM_INT_DEF(palcol);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	screen->DrawLine(x0, y0, x1, y1, palcol, color);
+	screen->DrawLine(x0, y0, x1, y1, -1, color);
 	return 0;
 }
 

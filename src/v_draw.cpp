@@ -958,6 +958,20 @@ void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t re
 #endif
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(x0);
+	PARAM_INT(y0);
+	PARAM_INT(x1);
+	PARAM_INT(y1);
+	PARAM_INT(color);
+	PARAM_INT_DEF(palcol);
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	screen->DrawLine(x0, y0, x1, y1, palcol, color);
+	return 0;
+}
+
 void DCanvas::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
 {
 #ifndef NO_SWRENDER

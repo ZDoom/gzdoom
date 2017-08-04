@@ -124,7 +124,7 @@ static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 EXTERN_CVAR(Bool, cl_predict_specials)
 
 // [SP] Prevent ACS from exiting the level (may sometimes happen when a mod detects GZDoom)
-CVAR(Bool, sv_debug_blockscriptexit, false, CVAR_SERVERINFO | CVAR_CHEAT)
+CVAR(Bool, sv_debug_block_scriptexit, false, CVAR_SERVERINFO | CVAR_CHEAT)
 
 // killough 3/7/98: Initialize generalized scrolling
 void P_SpawnScrollers();
@@ -137,7 +137,7 @@ bool CheckIfExitIsGood (AActor *self, level_info_t *info)
 {
 	cluster_info_t *cluster;
 
-	if (sv_debug_blockscriptexit) return false;
+	if (sv_debug_block_scriptexit) return false;
 
 	// The world can always exit itself.
 	if (self == NULL)

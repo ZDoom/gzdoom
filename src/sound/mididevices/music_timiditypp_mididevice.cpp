@@ -624,6 +624,12 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		}*/
 	}
 
+	for (i = 0; i < strCount; i++)
+	{
+		delete [] TimidityArgs[i];
+	}
+
+	delete [] TimidityArgs;
 	globfree (&glb);
 	return ChildProcess != -1;
 #endif // _WIN32

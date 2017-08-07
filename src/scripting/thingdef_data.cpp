@@ -1267,3 +1267,16 @@ DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
 	ACTION_RETURN_INT(self->LastIndexOf(substr));
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, ToUpper)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToUpper();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, ToLower)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	self->ToLower();
+	return 0;
+}

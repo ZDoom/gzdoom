@@ -658,6 +658,8 @@ struct StringStruct native
 	native String Filter();
 	native int IndexOf(String substr, int startIndex = 0) const;
 	native int LastIndexOf(String substr) const;
+	native void ToUpper();
+	native void ToLower();
 }
 
 class SectorEffect : Thinker native

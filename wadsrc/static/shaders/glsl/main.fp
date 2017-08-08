@@ -220,6 +220,7 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 float pointLightAttenuation(vec4 lightpos, float lightcolorA)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
+	if (attenuation == 0.0) return 0.0;
 #ifdef SUPPORTS_SHADOWMAPS
 	float shadowIndex = abs(lightcolorA) - 1.0;
 	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);

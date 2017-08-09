@@ -689,6 +689,30 @@ EBDAC00E9D25D884B2C8F4B1F0390539 // doom2.wad map21
 	setsectorspecial 93 0
 	setwalltexture 582 back top ZIMMER3
 }
+20251EDA21B2F2ECF6FF5B8BBC00B26C // Doom II, MAP29
+{
+	// Missing textures on teleporters
+	setwalltexture 405 back bot SUPPORT3
+	setwalltexture 406 back bot SUPPORT3
+	setwalltexture 407 back bot SUPPORT3
+	setwalltexture 408 back bot SUPPORT3
+	setwalltexture 516 back bot SUPPORT3
+	setwalltexture 517 back bot SUPPORT3
+	setwalltexture 518 back bot SUPPORT3
+	setwalltexture 519 back bot SUPPORT3
+	setwalltexture 524 back bot SUPPORT3
+	setwalltexture 525 back bot SUPPORT3
+	setwalltexture 526 back bot SUPPORT3
+	setwalltexture 527 back bot SUPPORT3
+	setwalltexture 1146 back bot SUPPORT3
+	setwalltexture 1147 back bot SUPPORT3
+	setwalltexture 1148 back bot SUPPORT3
+	setwalltexture 1149 back bot SUPPORT3
+	setwalltexture 1138 back bot SUPPORT3
+	setwalltexture 1139 back bot SUPPORT3
+	setwalltexture 1140 back bot SUPPORT3
+	setwalltexture 1141 back bot SUPPORT3
+}
 ABC4EB5A1535ECCD0061AD14F3547908 // Plutonia Experiment, map26
 {
 	setsectorspecial 156 0

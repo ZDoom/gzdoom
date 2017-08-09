@@ -762,6 +762,7 @@ void DStaticEventHandler::WorldThingDamaged(AActor* actor, AActor* inflictor, AA
 			return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
+		e.Inflictor = inflictor;
 		e.Damage = damage;
 		e.DamageSource = source;
 		e.DamageType = mod;

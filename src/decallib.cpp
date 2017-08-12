@@ -562,6 +562,10 @@ void FDecalLib::ParseDecal (FScanner &sc)
 		case DECAL_ANIMATOR:
 			sc.MustGetString ();
 			newdecal.Animator = FindAnimator (sc.String);
+			if (newdecal.Animator == nullptr)
+			{
+				sc.ScriptMessage("Unable to find animator %s", sc.String);
+			}
 			break;
 
 		case DECAL_LOWERDECAL:

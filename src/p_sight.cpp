@@ -236,7 +236,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 	FLinePortal *lport = li->getPortal();
 
-	if (open.range == 0 && open.portalflags == 0 && (lport == NULL || lport->mType != PORTT_LINKED))		// quick test for totally closed doors (must be delayed if portal checks are needed, though)
+	if (open.range == 0 && open.portalflags == 0 && (lport == nullptr || lport->mType != PORTT_LINKED))		// quick test for totally closed doors (must be delayed if portal checks are needed, though)
 		return false;		// stop
 
 	if (in->frac == 0)
@@ -284,7 +284,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 			portals.Push({ in->frac, topslope, bottomslope, sector_t::floor, backsec->GetOppositePortalGroup(sector_t::floor) });
 		}
 	}
-	if (lport)
+	if (lport != nullptr && lport->mDestination != nullptr)
 	{
 		portals.Push({ in->frac, topslope, bottomslope, portaldir, lport->mDestination->frontsector->PortalGroup });
 		return false;

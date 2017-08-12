@@ -2089,7 +2089,7 @@ class FxMultiNameState : public FxExpression
 	TArray<FName> names;
 public:
 
-	FxMultiNameState(const char *statestring, const FScriptPosition &pos);
+	FxMultiNameState(const char *statestring, const FScriptPosition &pos, PClassActor *checkclass = nullptr);
 	FxExpression *Resolve(FCompileContext&);
 };
 

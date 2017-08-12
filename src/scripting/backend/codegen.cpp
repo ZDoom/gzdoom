@@ -11101,7 +11101,7 @@ ExpEmit FxRuntimeStateIndex::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPosition &pos)
+FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPosition &pos, PClassActor *checkclass)
 	:FxExpression(EFX_MultiNameState, pos)
 {
 	FName scopename;
@@ -11119,7 +11119,7 @@ FxMultiNameState::FxMultiNameState(const char *_statestring, const FScriptPositi
 	}
 	names = MakeStateNameList(statestring);
 	names.Insert(0, scopename);
-	scope = nullptr;
+	scope = checkclass;
 }
 
 //==========================================================================
@@ -11135,8 +11135,8 @@ FxExpression *FxMultiNameState::Resolve(FCompileContext &ctx)
 	int symlabel;
 
 	auto vclass = PType::toClass(ctx.Class);
-	assert(vclass != nullptr);
-	auto clstype = ValidateActor(vclass->Descriptor);
+	//assert(vclass != nullptr);
+	auto clstype = vclass == nullptr? nullptr : ValidateActor(vclass->Descriptor);
 
 	if (names[0] == NAME_None)
 	{

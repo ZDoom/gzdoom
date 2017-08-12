@@ -61,6 +61,9 @@ enum
 	STAT_MAPMARKER,							// Map marker actors
 	STAT_DLIGHT,
 	
+	STAT_USER = 70,
+	STAT_USER_MAX = 90,
+
 	STAT_DEFAULT = 100,						// Thinkers go here unless specified otherwise.
 	STAT_SECTOREFFECT,						// All sector effects that cause floor and ceiling movement
 	STAT_ACTORMOVER,						// actor movers

@@ -34,5 +34,7 @@ public:
 	static FTexture *GetSpriteTexture(AActor *thing, /*out*/ bool &flipX);
 
 private:
-	//visstyle_t GetSpriteVisStyle(AActor *thing, double z);
+	static double PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, double spriteheight, double z);
+	static double GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos);
+	static double GetSpriteCeilingZ(AActor *thing, const DVector2 &thingpos);
 };

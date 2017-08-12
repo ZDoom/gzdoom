@@ -29,10 +29,14 @@
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
 #include "r_data/r_vanillatrans.h"
+#include "actorinlines.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, r_drawfuzz)
 EXTERN_CVAR (Bool, r_debug_disable_vis_filter)
+EXTERN_CVAR(Int, gl_spriteclip)
+EXTERN_CVAR(Float, gl_sclipthreshold)
+EXTERN_CVAR(Float, gl_sclipfactor)
 extern uint32_t r_renderercaps;
 
 bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
@@ -74,8 +78,17 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 		return;
 	
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
-	pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
+	DVector3 thingpos = thing->InterpolatedPosition(viewpoint.TicFrac);
+
+	DVector3 pos = thingpos;
+
+	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
+
+	if (spritetype == RF_FACESPRITE)
+		pos.Z -= thing->Floorclip;
+
+	if (thing->flags2 & MF2_FLOATBOB)
+		pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
 	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
@@ -85,19 +98,18 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	DVector2 spriteScale = thing->Scale;
 	double thingxscalemul = spriteScale.X / tex->Scale.X;
 	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
+	double spriteHalfWidth = thingxscalemul * tex->GetWidth() * 0.5;
+	double spriteHeight = thingyscalemul * tex->GetHeight();
 
 	if (flipTextureX)
 		pos.X -= (tex->GetWidth() - tex->LeftOffset) * thingxscalemul;
 	else
 		pos.X -= tex->LeftOffset * thingxscalemul;
 
-	//pos.Z -= tex->TopOffset * thingyscalemul;
-	pos.Z -= (tex->GetHeight() - tex->TopOffset) * thingyscalemul + thing->Floorclip;
-
-	double spriteHalfWidth = thingxscalemul * tex->GetWidth() * 0.5;
-	double spriteHeight = thingyscalemul * tex->GetHeight();
-
 	pos.X += spriteHalfWidth;
+
+	pos.Z -= (tex->GetHeight() - tex->TopOffset) * thingyscalemul;
+	pos.Z = PerformSpriteClipAdjustment(thing, thingpos, spriteHeight, pos.Z);
 
 	//double depth = 1.0;
 	//visstyle_t visstyle = GetSpriteVisStyle(thing, depth);
@@ -155,6 +167,109 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+}
+
+double RenderPolySprite::GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos)
+{
+	extsector_t::xfloor &x = thing->Sector->e->XFloor;
+	for (unsigned int i = 0; i < x.ffloors.Size(); i++)
+	{
+		F3DFloor *ff = x.ffloors[i];
+		double floorh = ff->top.plane->ZatPoint(thingpos);
+		if (floorh == thing->floorz)
+			return floorh;
+	}
+
+	if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	{
+		if (thing->flags2&MF2_ONMOBJ && thing->floorz == thing->Sector->heightsec->floorplane.ZatPoint(thingpos))
+		{
+			return thing->floorz;
+		}
+	}
+
+	return thing->Sector->floorplane.ZatPoint(thing) - thing->Floorclip;
+}
+
+double RenderPolySprite::GetSpriteCeilingZ(AActor *thing, const DVector2 &thingpos)
+{
+	extsector_t::xfloor &x = thing->Sector->e->XFloor;
+	for (unsigned int i = 0; i < x.ffloors.Size(); i++)
+	{
+		F3DFloor *ff = x.ffloors[i];
+		double ceilingh = ff->bottom.plane->ZatPoint(thingpos);
+		if (ceilingh == thing->ceilingz)
+			return ceilingh;
+	}
+
+	if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	{
+		if (thing->flags2&MF2_ONMOBJ && thing->ceilingz == thing->Sector->heightsec->ceilingplane.ZatPoint(thingpos))
+		{
+			return thing->ceilingz;
+		}
+	}
+
+	return thing->Sector->ceilingplane.ZatPoint(thingpos);
+}
+
+double RenderPolySprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, double spriteheight, double z2)
+{
+	int spriteclip = 2; // gl_spriteclip, but use 'always' mode for now
+
+	double z1 = z2 + spriteheight;
+
+	// Tests show that this doesn't look good for many decorations and corpses
+	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
+	if (!(spriteheight > 0 && spriteclip > 0 && spritetype == RF_FACESPRITE))
+		return z2;
+
+	bool clipthing = (thing->player || thing->flags3&MF3_ISMONSTER || thing->IsKindOf(RUNTIME_CLASS(AInventory))) && (thing->flags&MF_ICECORPSE || !(thing->flags&MF_CORPSE));
+	bool smarterclip = !clipthing && spriteclip == 3;
+	if (clipthing || spriteclip > 1)
+	{
+		double diffb = MIN(z2 - GetSpriteFloorZ(thing, thingpos), 0.0);
+
+		// Adjust sprites clipping into ceiling and adjust clipping adjustment for tall graphics
+		if (smarterclip)
+		{
+			// Reduce slightly clipping adjustment of corpses
+			if (thing->flags & MF_CORPSE || spriteheight > fabs(diffb))
+			{
+				double ratio = clamp<double>((fabs(diffb) * (double)gl_sclipfactor / (spriteheight + 1)), 0.5, 1.0);
+				diffb *= ratio;
+			}
+			if (!diffb)
+			{
+				double difft = MAX(z1 - GetSpriteCeilingZ(thing, thingpos), 0.0);
+				if (difft >= (double)gl_sclipthreshold)
+				{
+					// dumb copy of the above.
+					if (!(thing->flags3&MF3_ISMONSTER) || (thing->flags&MF_NOGRAVITY) || (thing->flags&MF_CORPSE) || difft > (double)gl_sclipthreshold)
+					{
+						difft = 0;
+					}
+				}
+				if (spriteheight > fabs(difft))
+				{
+					double ratio = clamp<double>((fabs(difft) * (double)gl_sclipfactor / (spriteheight + 1)), 0.5, 1.0);
+					difft *= ratio;
+				}
+				z2 -= difft;
+			}
+		}
+		if (diffb <= (0 - (double)gl_sclipthreshold))	// such a large displacement can't be correct! 
+		{
+			// for living monsters standing on the floor allow a little more.
+			if (!(thing->flags3&MF3_ISMONSTER) || (thing->flags&MF_NOGRAVITY) || (thing->flags&MF_CORPSE) || diffb < (-1.8*(double)gl_sclipthreshold))
+			{
+				diffb = 0;
+			}
+		}
+
+		z2 -= diffb;
+	}
+	return z2;
 }
 
 bool RenderPolySprite::IsThingCulled(AActor *thing)

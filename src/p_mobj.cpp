@@ -4036,6 +4036,14 @@ void AActor::CheckPortalTransition(bool islinked)
 	if (islinked && moved) LinkToWorld(&ctx);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckPortalTransition)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_BOOL_DEF(linked);
+	self->CheckPortalTransition(linked);
+	return 0;
+}
+
 //
 // P_MobjThinker
 //

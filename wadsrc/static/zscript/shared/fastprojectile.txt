@@ -156,6 +156,7 @@ class FastProjectile : Actor
 					ExplodeMissile (NULL, NULL);
 					return;
 				}
+				CheckPortalTransition();
 				if (changexy && ripcount <= 0) 
 				{
 					ripcount = count >> 3;

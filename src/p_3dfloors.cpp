@@ -876,8 +876,7 @@ void P_Spawn3DFloors (void)
 					line.args[4]=0;
 				}
 			}
-			if (line.args[0] != 0)
-				P_Set3DFloor(&line, line.args[1]&~8, line.args[2], line.args[3]);
+			P_Set3DFloor(&line, line.args[1]&~8, line.args[2], line.args[3]);
 			break;
 
 		default:

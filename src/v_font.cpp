@@ -766,6 +766,7 @@ FRemapTable *FFont::GetColorTranslation (EColorRange range, PalEntry *color) con
 		if (range >= 0 && range < NumTextColors && range != CR_UNTRANSLATED)
 		{
 			retcolor = TranslationColors[range];
+			retcolor.a = 255;
 		}
 		if (color != nullptr) *color = retcolor;
 	}

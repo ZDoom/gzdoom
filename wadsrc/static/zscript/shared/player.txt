@@ -753,7 +753,7 @@ class PlayerPawn : Actor native
 			Vel.Z -= zpush;
 			move *= cos(Pitch);
 		}
-		Thrust(move);
+		Thrust(move, angle);
 	}
 
 	//----------------------------------------------------------------------------

@@ -67,7 +67,7 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	return true;
 }
 
-void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, float t1, float t2)
+void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
 {
 	DVector2 line[2];
 	if (!GetLine(thing, line[0], line[1]))
@@ -142,7 +142,6 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 
 	PolyDrawArgs args;
 	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
-	args.SetSubsectorDepth(subsectorDepth);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
@@ -152,8 +151,8 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	else
 		args.SetStyle(thing->RenderStyle, thing->Alpha, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
-	args.SetSubsectorDepthTest(true);
-	args.SetWriteSubsectorDepth(false);
+	args.SetDepthTest(true);
+	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

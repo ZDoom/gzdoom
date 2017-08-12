@@ -83,7 +83,6 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 
 	PolyDrawArgs args;
 	args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(false), true);
-	args.SetSubsectorDepth(RenderPolyScene::SkySubsectorDepth);
 	args.SetTransform(&objectToClip);
 	args.SetStencilTestValue(255);
 	args.SetWriteStencil(true, 1);

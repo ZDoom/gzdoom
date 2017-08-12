@@ -179,7 +179,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub, uint32_t ceilingSubsecto
 
 	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
 	{
-		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, ceilingSubsectorDepth, floorSubsectorDepth, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 
 	if (mainBSP)
@@ -384,7 +384,6 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);
-				args.SetSubsectorDepth(verts.SubsectorDepth);
 				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
@@ -396,7 +395,6 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);
-				args.SetSubsectorDepth(verts.SubsectorDepth);
 				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
@@ -420,7 +418,6 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);
-				args.SetSubsectorDepth(verts.SubsectorDepth);
 				args.SetWriteColor(false);
 				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
@@ -439,7 +436,6 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);
-				args.SetSubsectorDepth(verts.SubsectorDepth);
 				args.SetWriteColor(false);
 				args.DrawArray(verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
@@ -467,7 +463,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 		if (obj->particle)
 		{
 			RenderPolyParticle spr;
-			spr.Render(WorldToClip, PortalPlane, obj->particle, obj->sub, obj->subsectorDepth, StencilValue + 1);
+			spr.Render(WorldToClip, PortalPlane, obj->particle, obj->sub, StencilValue + 1);
 		}
 		else if (!obj->thing)
 		{
@@ -476,12 +472,12 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 		else if ((obj->thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderPolyWallSprite wallspr;
-			wallspr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, obj->subsectorDepth, StencilValue + 1);
+			wallspr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, StencilValue + 1);
 		}
 		else
 		{
 			RenderPolySprite spr;
-			spr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, obj->subsectorDepth, StencilValue + 1, obj->SpriteLeft, obj->SpriteRight);
+			spr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, StencilValue + 1, obj->SpriteLeft, obj->SpriteRight);
 		}
 	}
 }

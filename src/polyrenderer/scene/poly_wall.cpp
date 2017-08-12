@@ -270,7 +270,6 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 
 	PolyDrawArgs args;
 	args.SetLight(GetColorTable(Line->frontsector->Colormap, Line->frontsector->SpecialColors[sector_t::walltop]), GetLightLevel(), PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
-	args.SetSubsectorDepth(SubsectorDepth);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(StencilValue);
@@ -283,9 +282,9 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	{
 		args.SetWriteStencil(true, Polyportal->StencilValue);
 		args.SetWriteColor(false);
-		args.SetWriteSubsectorDepth(false);
+		args.SetWriteDepth(false);
 		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
-		Polyportal->Shape.push_back({ vertices, 4, true, SubsectorDepth });
+		Polyportal->Shape.push_back({ vertices, 4, true });
 	}
 	else if (!Masked)
 	{
@@ -298,13 +297,13 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 		double srcalpha = MIN(Line->alpha, 1.0);
 		double destalpha = addtrans ? 1.0 : 1.0 - srcalpha;
 		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
-		args.SetSubsectorDepthTest(true);
-		args.SetWriteSubsectorDepth(true);
+		args.SetDepthTest(true);
+		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
 		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 	}
 
-	RenderPolyDecal::RenderWallDecals(worldToClip, clipPlane, LineSeg, SubsectorDepth, StencilValue);
+	RenderPolyDecal::RenderWallDecals(worldToClip, clipPlane, LineSeg, StencilValue);
 }
 
 void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)

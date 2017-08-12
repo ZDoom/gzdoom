@@ -27,7 +27,7 @@
 class RenderPolySprite
 {
 public:
-	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue, float t1, float t2);
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2);
 
 	static bool GetLine(AActor *thing, DVector2 &left, DVector2 &right);
 	static bool IsThingCulled(AActor *thing);

@@ -159,7 +159,7 @@ void PolyRenderer::ClearBuffers()
 {
 	FrameMemory.Clear();
 	PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
-	PolySubsectorGBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
+	PolyZBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
 	NextStencilValue = 0;
 }
 

@@ -53,12 +53,11 @@ public:
 	void SetTexture(FTexture *texture);
 	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);
-	void SetSubsectorDepth(uint32_t subsectorDepth) { mSubsectorDepth = subsectorDepth; }
-	void SetSubsectorDepthTest(bool enable) { mSubsectorTest = enable; }
+	void SetDepthTest(bool enable) { mDepthTest = enable; }
 	void SetStencilTestValue(uint8_t stencilTestValue) { mStencilTestValue = stencilTestValue; }
 	void SetWriteColor(bool enable) { mWriteColor = enable; }
 	void SetWriteStencil(bool enable, uint8_t stencilWriteValue = 0) { mWriteStencil = enable; mStencilWriteValue = stencilWriteValue; }
-	void SetWriteSubsectorDepth(bool enable) { mWriteSubsector = enable; }
+	void SetWriteDepth(bool enable) { mWriteDepth = enable; }
 	void SetFaceCullCCW(bool counterclockwise) { mFaceCullCCW = counterclockwise; }
 	void SetStyle(TriBlendMode blendmode, double srcalpha = 1.0, double destalpha = 1.0) { mBlendMode = blendmode; mSrcAlpha = (uint32_t)(srcalpha * 256.0 + 0.5); mDestAlpha = (uint32_t)(destalpha * 256.0 + 0.5); }
 	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
@@ -85,9 +84,8 @@ public:
 	uint8_t StencilTestValue() const { return mStencilTestValue; }
 	uint8_t StencilWriteValue() const { return mStencilWriteValue; }
 
-	bool SubsectorTest() const { return mSubsectorTest; }
-	bool WriteSubsector() const { return mWriteSubsector; }
-	uint32_t SubsectorDepth() const { return mSubsectorDepth; }
+	bool DepthTest() const { return mDepthTest; }
+	bool WriteDepth() const { return mWriteDepth; }
 
 	TriBlendMode BlendMode() const { return mBlendMode; }
 	uint32_t Color() const { return mColor; }
@@ -117,10 +115,10 @@ private:
 	int mVertexCount = 0;
 	PolyDrawMode mDrawMode = PolyDrawMode::Triangles;
 	bool mFaceCullCCW = false;
-	bool mSubsectorTest = false;
+	bool mDepthTest = false;
 	bool mWriteStencil = true;
 	bool mWriteColor = true;
-	bool mWriteSubsector = true;
+	bool mWriteDepth = true;
 	const uint8_t *mTexturePixels = nullptr;
 	int mTextureWidth = 0;
 	int mTextureHeight = 0;
@@ -131,7 +129,6 @@ private:
 	float mClipPlane[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
 	TriBlendMode mBlendMode = TriBlendMode::FillOpaque;
 	uint32_t mLight = 0;
-	uint32_t mSubsectorDepth = 0;
 	uint32_t mColor = 0;
 	uint32_t mSrcAlpha = 0;
 	uint32_t mDestAlpha = 0;

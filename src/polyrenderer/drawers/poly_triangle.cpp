@@ -99,7 +99,7 @@ void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadD
 	args.stencilPitch = PolyStencilBuffer::Instance()->BlockWidth();
 	args.stencilValues = PolyStencilBuffer::Instance()->Values();
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
-	args.subsectorGBuffer = PolySubsectorGBuffer::Instance()->Values();
+	args.zbuffer = PolyZBuffer::Instance()->Values();
 
 	bool ccw = drawargs.FaceCullCCW();
 	const TriVertex *vinput = drawargs.Vertices();

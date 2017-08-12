@@ -31,7 +31,7 @@
 
 EXTERN_CVAR(Int, gl_particles_style)
 
-void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
 {
 	DVector3 pos = particle->Pos;
 	double psize = particle->size / 8.0;
@@ -75,15 +75,14 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlan
 
 	PolyDrawArgs args;
 	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.ParticleGlobVis(foggy), fullbrightSprite);
-	args.SetSubsectorDepth(subsectorDepth);
-	args.SetSubsectorDepthTest(true);
+	args.SetDepthTest(true);
 	args.SetColor(particle->color | 0xff000000, particle->color >> 24);
 	args.SetStyle(TriBlendMode::Shaded, particle->alpha, 1.0 - particle->alpha);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(false);
-	args.SetWriteSubsectorDepth(false);
+	args.SetWriteDepth(false);
 	args.SetClipPlane(clipPlane);
 	args.SetTexture(GetParticleTexture(), ParticleTextureSize, ParticleTextureSize);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);

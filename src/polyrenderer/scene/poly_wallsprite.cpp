@@ -29,7 +29,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
 
-void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue)
 {
 	if (RenderPolySprite::IsThingCulled(thing))
 		return;
@@ -106,8 +106,8 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPl
 	args.SetStencilTestValue(stencilValue);
 	args.SetTexture(tex);
 	args.SetClipPlane(clipPlane);
-	args.SetSubsectorDepthTest(true);
-	args.SetWriteSubsectorDepth(false);
+	args.SetDepthTest(true);
+	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
 	args.SetStyle(TriBlendMode::TextureMasked);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);

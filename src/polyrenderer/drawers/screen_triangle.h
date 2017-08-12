@@ -60,7 +60,7 @@ struct TriDrawTriangleArgs
 	uint8_t *stencilValues;
 	uint32_t *stencilMasks;
 	int32_t stencilPitch;
-	uint32_t *subsectorGBuffer;
+	float *zbuffer;
 	const PolyDrawArgs *uniforms;
 	bool destBgra;
 	ScreenTriangleStepVariables gradientX;

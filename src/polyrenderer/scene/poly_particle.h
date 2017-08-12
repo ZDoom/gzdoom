@@ -28,7 +28,7 @@
 class RenderPolyParticle
 {
 public:
-	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue);
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue);
 
 private:
 	static uint8_t *GetParticleTexture();

@@ -31,7 +31,7 @@
 #include "a_sharedglobal.h"
 #include "swrenderer/scene/r_scene.h"
 
-void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue)
 {
 	if (line->linedef == nullptr && line->sidedef == nullptr)
 		return;
@@ -39,11 +39,11 @@ void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const PolyC
 	for (DBaseDecal *decal = line->sidedef->AttachedDecals; decal != nullptr; decal = decal->WallNext)
 	{
 		RenderPolyDecal render;
-		render.Render(worldToClip, clipPlane, decal, line, subsectorDepth, stencilValue);
+		render.Render(worldToClip, clipPlane, decal, line, stencilValue);
 	}
 }
 
-void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue)
+void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue)
 {
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -62,6 +62,10 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 	DVector2 decal_pos = { dcx, dcy };
 
 	DVector2 angvec = (line->v2->fPos() - line->v1->fPos()).Unit();
+	DVector2 normal = { angvec.Y, -angvec.X };
+
+	decal_pos += normal;
+
 	DVector2 decal_left = decal_pos - edge_left * angvec;
 	DVector2 decal_right = decal_pos + edge_right * angvec;
 
@@ -139,7 +143,6 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 
 	PolyDrawArgs args;
 	args.SetLight(GetColorTable(front->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
-	args.SetSubsectorDepth(subsectorDepth);
 	args.SetColor(0xff000000 | decal->AlphaColor, decal->AlphaColor >> 24);
 	args.SetStyle(decal->RenderStyle, decal->Alpha, decal->AlphaColor, decal->Translation, tex, false);
 	args.SetTransform(&worldToClip);
@@ -147,8 +150,8 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
 	args.SetClipPlane(clipPlane);
-	args.SetSubsectorDepthTest(true);
+	args.SetDepthTest(true);
 	args.SetWriteStencil(false);
-	args.SetWriteSubsectorDepth(false);
+	args.SetWriteDepth(false);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

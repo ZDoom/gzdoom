@@ -26,21 +26,21 @@
 
 struct TriVertex;
 
-class PolySubsectorGBuffer
+class PolyZBuffer
 {
 public:
-	static PolySubsectorGBuffer *Instance();
+	static PolyZBuffer *Instance();
 	void Resize(int newwidth, int newheight);
 	int Width() const { return width; }
 	int Height() const { return height; }
 	int BlockWidth() const { return (width + 7) / 8; }
 	int BlockHeight() const { return (height + 7) / 8; }
-	uint32_t *Values() { return values.data(); }
+	float *Values() { return values.data(); }
 
 private:
 	int width;
 	int height;
-	std::vector<uint32_t> values;
+	std::vector<float> values;
 };
 
 class PolyStencilBuffer

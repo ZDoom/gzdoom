@@ -27,8 +27,8 @@
 class RenderPolyDecal
 {
 public:
-	static void RenderWallDecals(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue);
+	static void RenderWallDecals(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue);
 
 private:
-	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t subsectorDepth, uint32_t stencilValue);
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue);
 };

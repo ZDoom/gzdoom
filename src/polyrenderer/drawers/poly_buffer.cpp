@@ -38,13 +38,13 @@
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolySubsectorGBuffer *PolySubsectorGBuffer::Instance()
+PolyZBuffer *PolyZBuffer::Instance()
 {
-	static PolySubsectorGBuffer buffer;
+	static PolyZBuffer buffer;
 	return &buffer;
 }
 
-void PolySubsectorGBuffer::Resize(int newwidth, int newheight)
+void PolyZBuffer::Resize(int newwidth, int newheight)
 {
 	width = newwidth;
 	height = newheight;

@@ -40,6 +40,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "actorinlines.h"
 
 extern gamestate_t wipegamestate;
 

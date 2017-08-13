@@ -1843,7 +1843,9 @@ static bool DoUseInv (AActor *actor, PClassActor *info)
 	AInventory *item = actor->FindInventory (info);
 	if (item != NULL)
 	{
-		if (actor->player == NULL)
+		player_t* const player = actor->player;
+
+		if (nullptr == player)
 		{
 			return actor->UseInventory(item);
 		}
@@ -1853,10 +1855,10 @@ static bool DoUseInv (AActor *actor, PClassActor *info)
 			bool res;
 
 			// Bypass CF_TOTALLYFROZEN
-			cheats = actor->player->cheats;
-			actor->player->cheats &= ~CF_TOTALLYFROZEN;
+			cheats = player->cheats;
+			player->cheats &= ~CF_TOTALLYFROZEN;
 			res = actor->UseInventory(item);
-			actor->player->cheats |= (cheats & CF_TOTALLYFROZEN);
+			player->cheats |= (cheats & CF_TOTALLYFROZEN);
 			return res;
 		}
 	}

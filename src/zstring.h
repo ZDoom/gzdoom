@@ -46,16 +46,10 @@
 #define PRINTFISH(x)
 #endif
 
-#ifdef __clang__
+#ifdef __GNUC__
 #define IGNORE_FORMAT_PRE \
 	_Pragma("GCC diagnostic push") \
-	_Pragma("GCC diagnostic ignored \"-Wformat-invalid-specifier\"") \
-	_Pragma("GCC diagnostic ignored \"-Wformat-extra-args\"")
-#define IGNORE_FORMAT_POST _Pragma("GCC diagnostic pop")
-#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))
-#define IGNORE_FORMAT_PRE \
-	_Pragma("GCC diagnostic push") \
-	_Pragma("GCC diagnostic ignored \"-Wformat=\"") \
+	_Pragma("GCC diagnostic ignored \"-Wformat\"") \
 	_Pragma("GCC diagnostic ignored \"-Wformat-extra-args\"")
 #define IGNORE_FORMAT_POST _Pragma("GCC diagnostic pop")
 #else

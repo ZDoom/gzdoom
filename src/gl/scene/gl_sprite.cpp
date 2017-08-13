@@ -682,7 +682,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 	// check renderrequired vs ~r_rendercaps, if anything matches we don't support that feature,
 	// check renderhidden vs r_rendercaps, if anything matches we do support that feature and should hide it.
-	if (!r_debug_disable_vis_filter && (!!(thing->RenderRequired & ~r_renderercaps)) ||
+	if ((!r_debug_disable_vis_filter && !!(thing->RenderRequired & ~r_renderercaps)) ||
 		(!!(thing->RenderHidden & r_renderercaps)))
 		return;
 

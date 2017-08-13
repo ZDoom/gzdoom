@@ -545,7 +545,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	globfree(&glb);
 
 	int strCount = 1;
-	for (spaceIdx = 0; spaceIdx < CommandLine.Len(); spaceIdx++)
+	for (spaceIdx = 0; spaceIdx < static_cast<int>(CommandLine.Len()); spaceIdx++)
 	{
 		if (CommandLine[spaceIdx] == ' ')
 		{

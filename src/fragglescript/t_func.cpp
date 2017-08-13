@@ -2910,11 +2910,14 @@ void FParser::SF_MoveCamera(void)
 
 			DAngle targetangle = floatvalue(t_argv[4]);
 			DAngle anglespeed = floatvalue(t_argv[5]);
-			DAngle diffangle = deltaangle(cam->Angles.Yaw, targetangle);
 
 			if (movespeed > 0 && anglespeed == 0.)
 			{
-				if (!finished) targetangle = diffangle * movespeed / movelen;
+				if (!finished)
+				{
+					const DAngle diffangle = targetangle - cam->Angles.Yaw;
+					targetangle = cam->Angles.Yaw + diffangle * movespeed / movelen;
+				}
 			}
 			else
 			{
@@ -2924,6 +2927,7 @@ void FParser::SF_MoveCamera(void)
 			cam->radius = 1 / 8192.;
 			cam->Height = 1 / 8192.;
 			cam->SetOrigin(movepos, true);
+			cam->SetAngle(targetangle, false);
 			t_return.value.i = 1;
 		}
 		else

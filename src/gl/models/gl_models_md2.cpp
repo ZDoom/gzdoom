@@ -40,6 +40,8 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/data/gl_vertexbuffer.h"
 
+extern int modellightindex;
+
 static float   avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
 };
@@ -379,6 +381,7 @@ void FDMDModel::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 	gl_RenderState.SetInterpolationFactor((float)inter);
 
 	gl_RenderState.Apply();
+	if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);
 	mVBuf->SetupFrame(frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
 	glDrawArrays(GL_TRIANGLES, 0, lodInfo[0].numTriangles * 3);
 	gl_RenderState.SetInterpolationFactor(0.f);

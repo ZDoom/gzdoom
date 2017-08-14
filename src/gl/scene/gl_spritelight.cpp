@@ -32,6 +32,8 @@
 #include "vectors.h"
 #include "gl/gl_functions.h"
 #include "g_level.h"
+#include "g_levellocals.h"
+#include "actorinlines.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderer.h"
@@ -42,7 +44,10 @@
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 
+FDynLightData modellightdata;
+int modellightindex = -1;
 
 //==========================================================================
 //
@@ -114,6 +119,7 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 		node = node->nextLight;
 	}
 	gl_RenderState.SetDynLight(out[0], out[1], out[2]);
+	modellightindex = -1;
 }
 
 void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
@@ -126,4 +132,95 @@ void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
 	{
 		gl_SetDynSpriteLight(NULL, particle->Pos.X, particle->Pos.Y, particle->Pos.Z, particle->subsector);
 	}
+}
+
+// Check if circle potentially intersects with node AABB
+static bool CheckBBoxCircle(float *bbox, float x, float y, float radiusSquared)
+{
+	float centerX = (bbox[BOXRIGHT] + bbox[BOXLEFT]) * 0.5f;
+	float centerY = (bbox[BOXBOTTOM] + bbox[BOXTOP]) * 0.5f;
+	float extentX = (bbox[BOXRIGHT] - bbox[BOXLEFT]) * 0.5f;
+	float extentY = (bbox[BOXBOTTOM] - bbox[BOXTOP]) * 0.5f;
+	float aabbRadiusSquared = extentX * extentX + extentY * extentY;
+	x -= centerX;
+	y -= centerY;
+	float dist = x * x + y * y;
+	return dist <= radiusSquared + aabbRadiusSquared;
+}
+
+template<typename Callback>
+void BSPNodeWalkCircle(void *node, float x, float y, float radiusSquared, const Callback &callback)
+{
+	while (!((size_t)node & 1))
+	{
+		node_t *bsp = (node_t *)node;
+
+		if (CheckBBoxCircle(bsp->bbox[0], x, y, radiusSquared))
+			BSPNodeWalkCircle(bsp->children[0], x, y, radiusSquared, callback);
+
+		if (!CheckBBoxCircle(bsp->bbox[1], x, y, radiusSquared))
+			return;
+
+		node = bsp->children[1];
+	}
+
+	subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
+	callback(sub);
+}
+
+template<typename Callback>
+void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callback)
+{
+	if (level.nodes.Size() == 0)
+		callback(&level.subsectors[0]);
+	else
+		BSPNodeWalkCircle(level.HeadNode(), x, y, radiusSquared, callback);
+}
+
+void gl_SetDynModelLight(AActor *self, bool hudmodel)
+{
+	modellightdata.Clear();
+
+	if (self)
+	{
+		static std::vector<ADynamicLight*> addedLights; // static so that we build up a reserve (memory allocations stop)
+
+		addedLights.clear();
+
+		float x = self->X();
+		float y = self->Y();
+		float z = self->Center();
+		float radiusSquared = self->renderradius * self->renderradius;
+
+		BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
+		{
+			FLightNode * node = subsector->lighthead;
+			while (node) // check all lights touching a subsector
+			{
+				ADynamicLight *light = node->lightsource;
+				if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self) && !(light->lightflags&LF_DONTLIGHTACTORS))
+				{
+					int group = subsector->sector->PortalGroup;
+					DVector3 pos = light->PosRelative(group);
+					float radius = light->GetRadius();
+					double dx = pos.X - x;
+					double dy = pos.Y - y;
+					double dz = pos.Z - z;
+					double distSquared = dx * dx + dy * dy + dz * dz;
+					if (distSquared < radiusSquared + radius * radius) // Light and actor touches
+					{
+						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
+						{
+							gl_AddLightToList(group, light, modellightdata, hudmodel);
+							addedLights.push_back(light);
+						}
+					}
+				}
+				node = node->nextLight;
+			}
+		});
+	}
+
+	gl_RenderState.SetDynLight(0, 0, 0);
+	modellightindex = GLRenderer->mLights->UploadLights(modellightdata);
 }

@@ -36,6 +36,7 @@
 #include "g_levellocals.h"
 
 EXTERN_CVAR(Bool, r_drawmirrors)
+EXTERN_CVAR(Bool, r_fogboundary)
 
 bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals, line_t *lastPortalLine)
 {
@@ -158,9 +159,10 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			wall.BottomTexZ = MIN(middlefloorz1, middlefloorz2);
 			wall.Texpart = side_t::mid;
 			wall.Masked = true;
+			wall.FogBoundary = IsFogBoundary(frontsector, backsector);
 
 			FTexture *midtex = TexMan(line->sidedef->GetTexture(side_t::mid), true);
-			if (midtex && midtex->UseType != FTexture::TEX_Null)
+			if (midtex && midtex->UseType != FTexture::TEX_Null || wall.FogBoundary)
 				translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(wall));
 
 			if (polyportal)
@@ -171,6 +173,13 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 		}
 	}
 	return polyportal != nullptr;
+}
+
+bool RenderPolyWall::IsFogBoundary(sector_t *front, sector_t *back)
+{
+	return r_fogboundary && PolyCameraLight::Instance()->FixedColormap() == nullptr && front->Colormap.FadeColor &&
+		front->Colormap.FadeColor != back->Colormap.FadeColor &&
+		(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
 }
 
 void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
@@ -213,7 +222,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 {
 	bool foggy = false;
 	FTexture *tex = GetTexture();
-	if (!tex && !Polyportal)
+	if (!tex && !Polyportal && !FogBoundary)
 		return;
 
 	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
@@ -277,6 +286,18 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	if (tex && !Polyportal)
 		args.SetTexture(tex);
 	args.SetClipPlane(clipPlane);
+
+	if (FogBoundary)
+	{
+		args.SetStyle(TriBlendMode::FogBoundary);
+		args.SetColor(0xffffffff, 254);
+		args.SetDepthTest(true);
+		args.SetWriteDepth(true);
+		args.SetWriteStencil(false);
+		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+		if (!tex)
+			return;
+	}
 
 	if (Polyportal)
 	{

@@ -54,6 +54,7 @@ public:
 	double UnpeggedCeil2 = 0.0;
 	FSWColormap *Colormap = nullptr;
 	bool Masked = false;
+	bool FogBoundary = false;
 	uint32_t SubsectorDepth = 0;
 	uint32_t StencilValue = 0;
 	PolyDrawLinePortal *Polyportal = nullptr;
@@ -62,6 +63,8 @@ private:
 	void ClampHeight(TriVertex &v1, TriVertex &v2);
 	FTexture *GetTexture();
 	int GetLightLevel();
+
+	static bool IsFogBoundary(sector_t *front, sector_t *back);
 };
 
 class PolyWallTextureCoordsU

@@ -42,7 +42,7 @@ namespace TriScreenDrawerModes
 	FORCEINLINE unsigned int Sample32(int32_t u, int32_t v, const uint32_t *texPixels, int texWidth, int texHeight, uint32_t oneU, uint32_t oneV, uint32_t color, const uint32_t *translation)
 	{
 		uint32_t texel;
-		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz)
+		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz || SamplerT::Mode == (int)Samplers::FogBoundary)
 		{
 			return color;
 		}
@@ -426,6 +426,7 @@ private:
 						bgcolor = 0;
 
 					// Sample fgcolor
+					if (SamplerT::Mode == (int)Samplers::FogBoundary) color = dest[ix];
 					unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
 					unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
@@ -508,6 +509,7 @@ private:
 						bgcolor = 0;
 
 					// Sample fgcolor
+					if (SamplerT::Mode == (int)Samplers::FogBoundary && (mask0 & (1 << 31))) color = dest[x];
 					unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
 					unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
@@ -590,6 +592,7 @@ private:
 						bgcolor = 0;
 
 					// Sample fgcolor
+					if (SamplerT::Mode == (int)Samplers::FogBoundary && (mask1 & (1 << 31))) color = dest[x];
 					unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
 					unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					posU += stepU;
@@ -765,6 +768,7 @@ private:
 					bgcolor = 0;
 
 				// Sample fgcolor
+				if (SamplerT::Mode == (int)Samplers::FogBoundary) color = *dest;
 				unsigned int ifgcolor = Sample32<SamplerT, FilterModeT>(posU, posV, texPixels, texWidth, texHeight, oneU, oneV, color, translation);
 				unsigned int ifgshade = SampleShade32<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				posU += stepU;

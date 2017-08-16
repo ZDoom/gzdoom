@@ -30,7 +30,7 @@ namespace TriScreenDrawerModes
 	FORCEINLINE unsigned int Sample8(int32_t u, int32_t v, const uint8_t *texPixels, int texWidth, int texHeight, uint32_t color, const uint8_t *translation)
 	{
 		uint8_t texel;
-		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz)
+		if (SamplerT::Mode == (int)Samplers::Shaded || SamplerT::Mode == (int)Samplers::Stencil || SamplerT::Mode == (int)Samplers::Fill || SamplerT::Mode == (int)Samplers::Fuzz || SamplerT::Mode == (int)Samplers::FogBoundary)
 		{
 			return color;
 		}
@@ -290,6 +290,7 @@ public:
 				{
 					int lightshade = lightpos >> 8;
 					uint8_t bgcolor = dest[ix];
+					if (SamplerT::Mode == (int)Samplers::FogBoundary) color = bgcolor;
 					uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
 					uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 					if (SamplerT::Mode == (int)Samplers::Fuzz) lightshade = 256;
@@ -339,6 +340,7 @@ public:
 					{
 						int lightshade = lightpos >> 8;
 						uint8_t bgcolor = dest[x];
+						if (SamplerT::Mode == (int)Samplers::FogBoundary) color = bgcolor;
 						uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
 						uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 						if (SamplerT::Mode == (int)Samplers::Fuzz) lightshade = 256;
@@ -390,6 +392,7 @@ public:
 					{
 						int lightshade = lightpos >> 8;
 						uint8_t bgcolor = dest[x];
+						if (SamplerT::Mode == (int)Samplers::FogBoundary) color = bgcolor;
 						uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
 						uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 						if (SamplerT::Mode == (int)Samplers::Fuzz) lightshade = 256;
@@ -473,6 +476,7 @@ public:
 			for (int i = 0; i < count; i++)
 			{
 				uint8_t bgcolor = *dest;
+				if (SamplerT::Mode == (int)Samplers::FogBoundary) color = bgcolor;
 				uint8_t fgcolor = Sample8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, color, translation);
 				uint32_t fgshade = SampleShade8<SamplerT>(posU, posV, texPixels, texWidth, texHeight, fuzzpos);
 				*dest = ShadeAndBlend8<BlendT>(fgcolor, bgcolor, fgshade, lightshade, colormaps, srcalpha, destalpha);

@@ -120,7 +120,8 @@ enum class TriBlendMode
 	FillRevSub,
 	FillAddSrcColor,
 	Skycap,
-	Fuzz
+	Fuzz,
+	FogBoundary
 };
 
 class ScreenTriangle
@@ -157,7 +158,7 @@ namespace TriScreenDrawerModes
 	struct SimpleShade { static const int Mode = (int)ShadeMode::Simple; };
 	struct AdvancedShade { static const int Mode = (int)ShadeMode::Advanced; };
 
-	enum class Samplers { Texture, Fill, Shaded, Stencil, Translated, Skycap, Fuzz };
+	enum class Samplers { Texture, Fill, Shaded, Stencil, Translated, Skycap, Fuzz, FogBoundary };
 	struct TextureSampler { static const int Mode = (int)Samplers::Texture; };
 	struct FillSampler { static const int Mode = (int)Samplers::Fill; };
 	struct ShadedSampler { static const int Mode = (int)Samplers::Shaded; };
@@ -165,6 +166,7 @@ namespace TriScreenDrawerModes
 	struct TranslatedSampler { static const int Mode = (int)Samplers::Translated; };
 	struct SkycapSampler { static const int Mode = (int)Samplers::Skycap; };
 	struct FuzzSampler { static const int Mode = (int)Samplers::Fuzz; };
+	struct FogBoundarySampler { static const int Mode = (int)Samplers::FogBoundary; };
 
 	static const int fuzzcolormap[FUZZTABLE] =
 	{

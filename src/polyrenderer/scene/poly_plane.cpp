@@ -109,6 +109,9 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClip
 		lightlevel = *light->p_lightlevel;
 	}
 
+	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
+
 	UVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
 
 	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
@@ -299,8 +302,12 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		}
 	}
 
+	int lightlevel = frontsector->lightlevel;
+	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
+
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling]), frontsector->lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetLight(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling]), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
 	//args.SetSubsectorDepth(isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(ccw);

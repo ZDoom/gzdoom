@@ -80,7 +80,7 @@ public:
 	double v1, v2;
 
 private:
-	void CalcVTopPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset);
-	void CalcVMidPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double vscale, double yoffset);
-	void CalcVBottomPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double vscale, double yoffset);
+	void CalcVTopPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double yoffset);
+	void CalcVMidPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double yoffset);
+	void CalcVBottomPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double yoffset);
 };

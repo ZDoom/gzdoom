@@ -273,8 +273,12 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	// Masked walls clamp to the 0-1 range (no texture repeat)
 	if (Masked)
 	{
-		ClampHeight(vertices[0], vertices[3]);
-		ClampHeight(vertices[1], vertices[2]);
+		bool wrap = (Line->flags & ML_WRAP_MIDTEX) || (Side->Flags & WALLF_WRAP_MIDTEX);
+		if (!wrap)
+		{
+			ClampHeight(vertices[0], vertices[3]);
+			ClampHeight(vertices[1], vertices[2]);
+		}
 	}
 
 	PolyDrawArgs args;

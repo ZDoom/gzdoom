@@ -167,19 +167,20 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub, uint32_t ceilingSubsecto
 		{
 			RenderPolyNode(&sub->BSP->Nodes.Last(), subsectorDepth, frontsector);
 		}
+
+		RenderPolyPlane::Render3DPlanes(WorldToClip, PortalPlane, sub, StencilValue);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 	else
 	{
+		RenderPolyPlane::Render3DPlanes(WorldToClip, PortalPlane, sub, StencilValue);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
 			RenderLine(sub, line, frontsector, subsectorDepth);
 		}
-	}
-
-	if (sub->sector->CenterFloor() != sub->sector->CenterCeiling())
-	{
-		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 
 	if (mainBSP)
@@ -345,6 +346,7 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 			F3DFloor *fakeFloor = line->backsector->e->XFloor.ffloors[i];
 			if (!(fakeFloor->flags & FF_EXISTS)) continue;
 			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+			if (fakeFloor->flags & FF_SWIMMABLE) continue;
 			if (!fakeFloor->model) continue;
 			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects);
 		}

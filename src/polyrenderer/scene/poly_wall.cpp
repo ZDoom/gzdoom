@@ -395,29 +395,34 @@ int RenderPolyWall::GetLightLevel()
 
 PolyWallTextureCoordsU::PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart)
 {
+	// Calculate the U texture coordinate for the line
+	double lineu1 = side->GetTextureXOffset(texpart);
+	double lineu2 = side->GetTextureXOffset(texpart) + side->TexelLength * side->GetTextureXScale(texpart);
+	lineu1 *= tex->Scale.X / tex->GetWidth();
+	lineu2 *= tex->Scale.X / tex->GetWidth();
+
+	// Calculate where we are on the lineseg
 	double t1, t2;
-	double deltaX = line->v2->fX() - line->v1->fX();
-	double deltaY = line->v2->fY() - line->v1->fY();
-	if (fabs(deltaX) > fabs(deltaY))
+	if (fabs(line->delta.X) > fabs(line->delta.Y))
 	{
-		t1 = (lineseg->v1->fX() - line->v1->fX()) / deltaX;
-		t2 = (lineseg->v2->fX() - line->v1->fX()) / deltaX;
+		t1 = (lineseg->v1->fX() - line->v1->fX()) / line->delta.X;
+		t2 = (lineseg->v2->fX() - line->v1->fX()) / line->delta.X;
 	}
 	else
 	{
-		t1 = (lineseg->v1->fY() - line->v1->fY()) / deltaY;
-		t2 = (lineseg->v2->fY() - line->v1->fY()) / deltaY;
+		t1 = (lineseg->v1->fY() - line->v1->fY()) / line->delta.Y;
+		t2 = (lineseg->v2->fY() - line->v1->fY()) / line->delta.Y;
 	}
 
+	// Check if lineseg is the backside of the line
 	if (t2 < t1)
-		std::swap(t1, t2);
+	{
+		std::swap(lineu1, lineu2);
+	}
 
-	u1 = t1 * side->TexelLength * side->GetTextureXScale(texpart);
-	u2 = t2 * side->TexelLength * side->GetTextureXScale(texpart);
-	u1 += side->GetTextureXOffset(texpart);
-	u2 += side->GetTextureXOffset(texpart);
-	u1 *= tex->Scale.X / tex->GetWidth();
-	u2 *= tex->Scale.X / tex->GetWidth();
+	// Calculate texture coordinates for the lineseg
+	u1 = (1.0 - t1) * lineu1 + t1 * lineu2;
+	u2 = (1.0 - t2) * lineu1 + t2 * lineu2;
 }
 
 /////////////////////////////////////////////////////////////////////////////

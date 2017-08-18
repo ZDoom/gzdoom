@@ -49,7 +49,6 @@ void RenderPolyPlane::Render3DPlanes(const TriMatrix &worldToClip, const PolyCli
 		F3DFloor *fakeFloor = ffloors[i];
 		if (!(fakeFloor->flags & FF_EXISTS)) continue;
 		if (!fakeFloor->model) continue;
-		if (fakeFloor->bottom.plane->isSlope()) continue;
 		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
 		//	R_3D_AddHeight(fakeFloor->top.plane, frontsector);
 		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
@@ -58,7 +57,7 @@ void RenderPolyPlane::Render3DPlanes(const TriMatrix &worldToClip, const PolyCli
 		//fakeFloor->alpha
 
 		double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
-		if (fakeHeight < viewpoint.Pos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
+		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight < viewpoint.Pos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot)))
 		{
 			RenderPolyPlane plane;
 			plane.Render3DFloor(worldToClip, clipPlane, sub, stencilValue, false, fakeFloor);
@@ -71,7 +70,6 @@ void RenderPolyPlane::Render3DPlanes(const TriMatrix &worldToClip, const PolyCli
 		F3DFloor *fakeFloor = ffloors[i];
 		if (!(fakeFloor->flags & FF_EXISTS)) continue;
 		if (!fakeFloor->model) continue;
-		if (fakeFloor->top.plane->isSlope()) continue;
 		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
 		//	R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
 		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
@@ -80,7 +78,7 @@ void RenderPolyPlane::Render3DPlanes(const TriMatrix &worldToClip, const PolyCli
 		//fakeFloor->alpha
 
 		double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
-		if (fakeHeight > viewpoint.Pos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
+		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight > viewpoint.Pos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot)))
 		{
 			RenderPolyPlane plane;
 			plane.Render3DFloor(worldToClip, clipPlane, sub, stencilValue, true, fakeFloor);

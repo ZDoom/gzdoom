@@ -2151,8 +2151,8 @@ namespace swrenderer
 		}
 		else
 		{
-			uint8_t srcwidth = _srcwidth;
-			uint8_t srcheight = _srcheight;
+			uint32_t srcwidth = _srcwidth;
+			uint32_t srcheight = _srcheight;
 
 			do
 			{
@@ -2222,8 +2222,8 @@ namespace swrenderer
 		}
 		else
 		{
-			uint8_t srcwidth = _srcwidth;
-			uint8_t srcheight = _srcheight;
+			uint32_t srcwidth = _srcwidth;
+			uint32_t srcheight = _srcheight;
 
 			do
 			{
@@ -2298,8 +2298,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{
@@ -2338,8 +2338,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{
@@ -2421,8 +2421,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{
@@ -2474,8 +2474,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{
@@ -2559,8 +2559,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{
@@ -2603,8 +2603,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{
@@ -2689,8 +2689,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{
@@ -2746,8 +2746,8 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t srcwidth = _srcwidth;
-				uint8_t srcheight = _srcheight;
+				uint32_t srcwidth = _srcwidth;
+				uint32_t srcheight = _srcheight;
 
 				do
 				{

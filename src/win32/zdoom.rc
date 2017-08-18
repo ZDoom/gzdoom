@@ -72,13 +72,13 @@ BEGIN
     "        BEGIN\r\n"
     "            VALUE ""Comments"", ""Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg.""\r\n"
     "            VALUE ""CompanyName"", "" ""\r\n"
-    "            VALUE ""FileDescription"", ""QZDoom""\r\n"
+    "            VALUE ""FileDescription"", ""GZDoom""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
-    "            VALUE ""InternalName"", ""QZDoom""\r\n"
+    "            VALUE ""InternalName"", ""GZDoom""\r\n"
     "            VALUE ""LegalCopyright"", ""Copyright \\u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
     "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
-    "            VALUE ""OriginalFilename"", ""qzdoom.exe""\r\n"
-    "            VALUE ""ProductName"", ""QZDoom""\r\n"
+    "            VALUE ""OriginalFilename"", ""gzdoom.exe""\r\n"
+    "            VALUE ""ProductName"", ""GZDoom""\r\n"
     "            VALUE ""ProductVersion"", RC_PRODUCTVERSION2\r\n"
     "        END\r\n"
     "    END\r\n"
@@ -228,7 +228,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 FONT 8, "MS Shell Dlg"
 {
    CONTROL 101, IDC_STATIC, STATIC, SS_ICON | WS_CHILD | WS_VISIBLE, 7, 7, 21, 20
-   CONTROL "Welcome to QZDoom!", IDC_STATIC, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 42, 8, 180, 8
+   CONTROL "Welcome to GZDoom!", IDC_STATIC, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 42, 8, 180, 8
    CONTROL "<Version info>", IDC_WELCOME_VERSION, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 42, 18, 180, 8
    CONTROL "IWAD selection", IDC_STATIC, BUTTON, BS_GROUPBOX | WS_CHILD | WS_VISIBLE, 8, 32, 208, 117
    CONTROL "Select which game file (IWAD) to run.", IDC_STATIC, STATIC, SS_LEFT | WS_CHILD | WS_VISIBLE | WS_GROUP, 12, 44, 190, 8
@@ -242,7 +242,7 @@ FONT 8, "MS Shell Dlg"
    CONTROL "Load lights", IDC_WELCOME_LIGHTS, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 130, 180, 51, 10
    CONTROL "Load brightmaps", IDC_WELCOME_BRIGHTMAPS, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 130, 190, 65, 10
    CONTROL "Don't ask me this again", IDC_DONTASKIWAD, BUTTON, BS_AUTOCHECKBOX | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 73, 211, 87, 10
-   CONTROL "Play QZDoom", IDOK, BUTTON, BS_DEFPUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 8, 228, 90, 14
+   CONTROL "Play GZDoom", IDOK, BUTTON, BS_DEFPUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 8, 228, 90, 14
    CONTROL "Exit", IDCANCEL, BUTTON, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 166, 228, 50, 14
 }
 
@@ -504,13 +504,13 @@ BEGIN
         BEGIN
             VALUE "Comments", "Thanks to id Software for creating DOOM and then releasing the source code. Thanks also to TeamTNT for creating BOOM, which ZDoom is partially based on. Includes code based on the Cajun Bot 0.97 by Martin Collberg."
             VALUE "CompanyName", " "
-            VALUE "FileDescription", "QZDoom"
+            VALUE "FileDescription", "GZDoom"
             VALUE "FileVersion", RC_FILEVERSION2
-            VALUE "InternalName", "QZDoom"
+            VALUE "InternalName", "GZDoom"
             VALUE "LegalCopyright", "Copyright \u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
             VALUE "LegalTrademarks", "DoomR is a Registered Trademark of id Software, Inc."
-            VALUE "OriginalFilename", "qzdoom.exe"
-            VALUE "ProductName", "QZDoom"
+            VALUE "OriginalFilename", "gzdoom.exe"
+            VALUE "ProductName", "GZDoom"
             VALUE "ProductVersion", RC_PRODUCTVERSION2
         END
     END

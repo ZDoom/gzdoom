@@ -596,8 +596,8 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornu
 DEFINE_ACTION_FUNCTION(AActor, GiveSecret)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL(printmessage);
-	PARAM_BOOL(playsound);
+	PARAM_BOOL_DEF(printmessage);
+	PARAM_BOOL_DEF(playsound);
 	P_GiveSecret(self, printmessage, playsound, -1);
 	return 0;
 }

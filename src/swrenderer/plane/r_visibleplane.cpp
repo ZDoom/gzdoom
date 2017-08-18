@@ -76,7 +76,7 @@ namespace swrenderer
 
 		while (node)
 		{
-			if (!(node->lightsource->flags2&MF2_DORMANT))
+			if (!(node->lightsource->flags2&MF2_DORMANT) && (height.PointOnSide(node->lightsource->Pos()) > 0))
 			{
 				bool found = false;
 				VisiblePlaneLight *light_node = lights;

@@ -602,6 +602,16 @@ DEFINE_ACTION_FUNCTION(AActor, GiveSecret)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, GiveSecret)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(activator, AActor);
+	PARAM_BOOL_DEF(printmessage);
+	PARAM_BOOL_DEF(playsound);
+	P_GiveSecret(activator, printmessage, playsound, -1);
+	return 0;
+}
+
 //============================================================================
 //
 // P_PlayerOnSpecialFlat

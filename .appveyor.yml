@@ -23,7 +23,7 @@ environment:
     - GENERATOR: "Visual Studio 15 2017 Win64"
       CONFIGURATION: Release
       TOOLSET: v141_xp
-      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
+      APPVEYOR_BUILD_WORKER_IMAGE: "Previous Visual Studio 2017"
     - GENERATOR: "Visual Studio 14 2015 Win64"
       CONFIGURATION: Debug
       TOOLSET: v140

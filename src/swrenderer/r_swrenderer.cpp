@@ -385,7 +385,7 @@ uint32_t FSoftwareRenderer::GetCaps()
 	ActorRenderFeatureFlags FlagSet = RFF_UNCLIPPEDTEX;
 
 	if (r_polyrenderer)
-		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH;
+		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH | RFF_SLOPE3DFLOORS;
 	else if (r_drawvoxels)
 		FlagSet |= RFF_VOXELS;
 

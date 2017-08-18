@@ -339,7 +339,7 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 	}
 
 	// Render 3D floor sides
-	if (line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
+	if (line->sidedef && line->backsector && line->backsector->e && line->backsector->e->XFloor.ffloors.Size())
 	{
 		for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 		{

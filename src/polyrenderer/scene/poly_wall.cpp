@@ -89,6 +89,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 	wall.LineSeg = line;
 	wall.Line = line->linedef;
 	wall.Side = line->sidedef;
+	wall.LineSegLine = line->linedef;
 	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
@@ -188,11 +189,12 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
 	double frontceilz2 = fakeFloor->top.plane->ZatPoint(line->v2);
 	double frontfloorz2 = fakeFloor->bottom.plane->ZatPoint(line->v2);
-	double topTexZ = frontsector->GetPlaneTexZ(sector_t::ceiling);
-	double bottomTexZ = frontsector->GetPlaneTexZ(sector_t::floor);
+	double topTexZ = fakeFloor->model->GetPlaneTexZ(sector_t::ceiling);
+	double bottomTexZ = fakeFloor->model->GetPlaneTexZ(sector_t::floor);
 
 	RenderPolyWall wall;
 	wall.LineSeg = line;
+	wall.LineSegLine = line->linedef;
 	wall.Line = fakeFloor->master;
 	wall.Side = fakeFloor->master->sidedef[0];
 	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
@@ -202,8 +204,6 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 	wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
 	wall.TopTexZ = topTexZ;
 	wall.BottomTexZ = bottomTexZ;
-	wall.UnpeggedCeil1 = frontceilz1;
-	wall.UnpeggedCeil2 = frontceilz2;
 	wall.Texpart = side_t::mid;
 	wall.Render(worldToClip, clipPlane, cull);
 }
@@ -249,7 +249,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 
 	if (tex)
 	{
-		PolyWallTextureCoordsU texcoordsU(tex, LineSeg, Line, Side, Texpart);
+		PolyWallTextureCoordsU texcoordsU(tex, LineSeg, LineSegLine, Side, Texpart);
 		PolyWallTextureCoordsV texcoordsVLeft(tex, Line, Side, Texpart, ceil1, floor1, UnpeggedCeil1, TopTexZ, BottomTexZ);
 		PolyWallTextureCoordsV texcoordsVRght(tex, Line, Side, Texpart, ceil2, floor2, UnpeggedCeil2, TopTexZ, BottomTexZ);
 		vertices[0].u = (float)texcoordsU.u1;
@@ -401,7 +401,7 @@ PolyWallTextureCoordsU::PolyWallTextureCoordsU(FTexture *tex, const seg_t *lines
 {
 	// Calculate the U texture coordinate for the line
 	double lineu1 = side->GetTextureXOffset(texpart);
-	double lineu2 = side->GetTextureXOffset(texpart) + side->TexelLength * side->GetTextureXScale(texpart);
+	double lineu2 = side->GetTextureXOffset(texpart) + line->sidedef[0]->TexelLength * side->GetTextureXScale(texpart);
 	lineu1 *= tex->Scale.X / tex->GetWidth();
 	lineu2 *= tex->Scale.X / tex->GetWidth();
 

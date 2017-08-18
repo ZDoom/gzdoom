@@ -45,6 +45,7 @@ public:
 	double floor2 = 0.0;
 
 	const seg_t *LineSeg = nullptr;
+	const line_t *LineSegLine = nullptr;
 	const line_t *Line = nullptr;
 	const side_t *Side = nullptr;
 	side_t::ETexpart Texpart = side_t::mid;
@@ -70,7 +71,7 @@ private:
 class PolyWallTextureCoordsU
 {
 public:
-	PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart);
+	PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *linesegline, const side_t *side, side_t::ETexpart texpart);
 
 	double u1, u2;
 };

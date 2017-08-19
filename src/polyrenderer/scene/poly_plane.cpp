@@ -30,6 +30,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "r_sky.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "p_lnspec.h"
 
 EXTERN_CVAR(Int, r_3dfloors)
 
@@ -387,6 +388,12 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 				{
 					continue;
 				}
+			}
+			else if (portal && line->linedef && line->linedef->special == Line_Horizon)
+			{
+				// Not entirely correct as this closes the line horizon rather than allowing the floor to continue to infinity
+				skyBottomz1 = frontsector->floorplane.ZatPoint(line->v1);
+				skyBottomz2 = frontsector->floorplane.ZatPoint(line->v2);
 			}
 
 			if (ceiling)

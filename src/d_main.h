@@ -70,29 +70,38 @@ extern uint32_t r_renderercaps;
 
 struct WadStuff
 {
-	WadStuff() : Type(0) {}
-
 	FString Path;
 	FString Name;
-	int Type;
 };
 
 struct FIWADInfo
 {
 	FString Name;			// Title banner text for this IWAD
 	FString Autoname;		// Name of autoload ini section for this IWAD
+	FString IWadname;		// Default name this game would use - this is for IWAD detection in GAMEINFO.
+	int prio = 0;			// selection priority for given IWAD name.
 	FString Configname;		// Name of config section for this IWAD
 	FString Required;		// Requires another IWAD
-	uint32_t FgColor;			// Foreground color for title banner
-	uint32_t BkColor;			// Background color for title banner
-	EGameType gametype;		// which game are we playing?
+	uint32_t FgColor = 0;	// Foreground color for title banner
+	uint32_t BkColor = 0xc0c0c0;		// Background color for title banner
+	EGameType gametype = GAME_Doom;		// which game are we playing?
 	FString MapInfo;		// Base mapinfo to load
 	TArray<FString> Load;	// Wads to be loaded with this one.
 	TArray<FString> Lumps;	// Lump names for identification
-	int flags;
-	int preload;
+	int flags = 0;
+};
 
-	FIWADInfo() { flags = 0; preload = -1; FgColor = 0; BkColor= 0xc0c0c0; gametype = GAME_Doom; }
+struct FFoundWadInfo
+{
+	FString mFullPath;
+	FString mRequiredPath;
+	int mInfoIndex = -1;	// must be an index because of reallocation
+
+	FFoundWadInfo() {}
+	FFoundWadInfo(const FString &s1, const FString &s2, int index)
+		: mFullPath(s1), mRequiredPath(s2), mInfoIndex(index)
+	{
+	}
 };
 
 struct FStartupInfo
@@ -123,28 +132,31 @@ extern FStartupInfo DoomStartupInfo;
 
 class FIWadManager
 {
-	TArray<FIWADInfo> mIWads;
+	TArray<FIWADInfo> mIWadInfos;
 	TArray<FString> mIWadNames;
+	TArray<FString> mSearchPaths;
+	TArray<FString> mOrderNames;
+	TArray<FFoundWadInfo> mFoundWads;
 	TArray<int> mLumpsFound;
 
-	void ParseIWadInfo(const char *fn, const char *data, int datasize);
-	void ClearChecks();
-	void CheckLumpName(const char *name);
-	int GetIWadInfo();
+	void ParseIWadInfo(const char *fn, const char *data, int datasize, FIWADInfo *result = nullptr);
 	int ScanIWAD (const char *iwad);
-	int CheckIWAD (const char *doomwaddir, WadStuff *wads);
+	int CheckIWADInfo(const char *iwad);
 	int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad);
+	void CollectSearchPaths();
+	void AddIWADCandidates(const char *dir);
+	void ValidateIWADs();
 public:
-	void ParseIWadInfos(const char *fn);
+	FIWadManager(const char *fn);
 	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 	const FString *GetAutoname(unsigned int num) const
 	{
-		if (num < mIWads.Size()) return &mIWads[num].Autoname;
+		if (num < mIWadInfos.Size()) return &mIWadInfos[num].Autoname;
 		else return NULL;
 	}
 	int GetIWadFlags(unsigned int num) const
 	{
-		if (num < mIWads.Size()) return mIWads[num].flags;
+		if (num < mIWadInfos.Size()) return mIWadInfos[num].flags;
 		else return false;
 	}
 

@@ -2342,8 +2342,7 @@ void D_DoomMain (void)
 	}
 	FString basewad = wad;
 
-	iwad_man = new FIWadManager;
-	iwad_man->ParseIWadInfos(basewad);
+	iwad_man = new FIWadManager(basewad);
 
 	// Now that we have the IWADINFO, initialize the autoload ini sections.
 	GameConfig->DoAutoloadSetup(iwad_man);
@@ -2373,8 +2372,7 @@ void D_DoomMain (void)
 
 		if (iwad_man == NULL)
 		{
-			iwad_man = new FIWadManager;
-			iwad_man->ParseIWadInfos(basewad);
+			iwad_man = new FIWadManager(basewad);
 		}
 		const FIWADInfo *iwad_info = iwad_man->FindIWAD(allwads, iwad, basewad);
 		gameinfo.gametype = iwad_info->gametype;

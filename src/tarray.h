@@ -242,6 +242,15 @@ public:
 		::new((void*)&Array[Count]) T(item);
 		return Count++;
 	}
+	void Append(const TArray<T> &item)
+	{
+		unsigned start = Reserve(item.Size());
+		for (unsigned i = 0; i < item.Size(); i++)
+		{
+			Array[start + i] = item[i];
+		}
+	}
+
 	bool Pop ()
 	{
 		if (Count > 0)

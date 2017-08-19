@@ -186,6 +186,25 @@ bool FileExists (const char *filename)
 
 //==========================================================================
 //
+// DirExists
+//
+// Returns true if the given path exists and is a directory.
+//
+//==========================================================================
+
+bool DirExists(const char *filename)
+{
+	struct stat buff;
+
+	// [RH] Empty filenames are never there
+	if (filename == NULL || *filename == 0)
+		return false;
+
+	return stat(filename, &buff) == 0 && (buff.st_mode & S_IFDIR);
+}
+
+//==========================================================================
+//
 // DirEntryExists
 //
 // Returns true if the given path exists, be it a directory or a file.

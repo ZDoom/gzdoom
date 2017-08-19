@@ -64,6 +64,8 @@
 #include "textures.h"
 #include "vm.h"
 
+EXTERN_CVAR(Int, screenblocks)
+
 CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
 	if (self < 0)
@@ -75,6 +77,7 @@ CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 	{
 		StatusBar->CallScreenSizeChanged();
 	}
+	R_SetViewSize(screenblocks);
 }
 
 int GetUIScale(int altval)

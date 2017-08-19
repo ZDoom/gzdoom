@@ -163,7 +163,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			wall.FogBoundary = IsFogBoundary(frontsector, backsector);
 
 			FTexture *midtex = TexMan(line->sidedef->GetTexture(side_t::mid), true);
-			if (midtex && midtex->UseType != FTexture::TEX_Null || wall.FogBoundary)
+			if ((midtex && midtex->UseType != FTexture::TEX_Null) || wall.FogBoundary)
 				translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(wall));
 
 			if (polyportal)

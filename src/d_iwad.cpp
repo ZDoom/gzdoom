@@ -414,6 +414,12 @@ void FIWadManager::CollectSearchPaths()
 //
 //==========================================================================
 
+#ifdef _WIN32
+#define ENTRYNAME findstate.Name
+#else
+#define ENTRYNAME findstate.namelist[0]->d_name
+#endif
+
 void FIWadManager::AddIWADCandidates(const char *dir)
 {
 	void *handle;
@@ -426,18 +432,18 @@ void FIWadManager::AddIWADCandidates(const char *dir)
 		{
 			if (!(I_FindAttr(&findstate) & FA_DIREC))
 			{
-				auto p = strrchr(findstate.Name, '.');
+				auto p = strrchr(ENTRYNAME, '.');
 				if (p != nullptr)
 				{
 					// special IWAD extension.
 					if (!stricmp(p, ".iwad") || !stricmp(p, ".ipk3") || !stricmp(p, "ipk7"))
 					{
-						mFoundWads.Push(FFoundWadInfo{ slasheddir + findstate.Name, "", -1 });
+						mFoundWads.Push(FFoundWadInfo{ slasheddir + ENTRYNAME, "", -1 });
 					}
 				}
 				for (auto &name : mIWadNames)
 				{
-					if (!stricmp(name, findstate.Name))
+					if (!stricmp(name, ENTRYNAME))
 					{
 						mFoundWads.Push(FFoundWadInfo{ slasheddir + name, "", -1 });
 					}

@@ -149,9 +149,15 @@ bool I_SetCursor(FTexture *);
 
 struct findstate_t
 {
+private:
     int count;
     struct dirent **namelist;
     int current;
+
+	friend void *I_FindFirst(const char *filespec, findstate_t *fileinfo);
+	friend int I_FindNext(void *handle, findstate_t *fileinfo);
+	friend const char *I_FindName(findstate_t *fileinfo);
+	friend int I_FindAttr(findstate_t *fileinfo);
 };
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
@@ -159,7 +165,10 @@ int I_FindNext (void *handle, findstate_t *fileinfo);
 int I_FindClose (void *handle);
 int I_FindAttr (findstate_t *fileinfo); 
 
-#define I_FindName(a)	((a)->namelist[(a)->current]->d_name)
+inline const char *I_FindName(findstate_t *fileinfo)
+{
+	return (fileinfo->namelist[fileinfo->current]->d_name);
+}
 
 #define FA_RDONLY	1
 #define FA_HIDDEN	2
@@ -177,8 +186,5 @@ static inline char *strlwr(char *str)
 	}
 	return str;
 }
-
-// for the IWAD handling
-#define FS_ENTRYNAME findstate.namelist[findstate.current]->d_name
 
 #endif

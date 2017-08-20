@@ -426,18 +426,19 @@ void FIWadManager::AddIWADCandidates(const char *dir)
 		{
 			if (!(I_FindAttr(&findstate) & FA_DIREC))
 			{
-				auto p = strrchr(FS_ENTRYNAME, '.');
+				auto FindName = I_FindName(&findstate);
+				auto p = strrchr(FindName, '.');
 				if (p != nullptr)
 				{
 					// special IWAD extension.
 					if (!stricmp(p, ".iwad") || !stricmp(p, ".ipk3") || !stricmp(p, "ipk7"))
 					{
-						mFoundWads.Push(FFoundWadInfo{ slasheddir + FS_ENTRYNAME, "", -1 });
+						mFoundWads.Push(FFoundWadInfo{ slasheddir + FindName, "", -1 });
 					}
 				}
 				for (auto &name : mIWadNames)
 				{
-					if (!stricmp(name, FS_ENTRYNAME))
+					if (!stricmp(name, FindName))
 					{
 						mFoundWads.Push(FFoundWadInfo{ slasheddir + name, "", -1 });
 					}
@@ -530,7 +531,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		{
 			for (auto &dir : mSearchPaths)
 			{
-				FStringf fullpath("%s/%s", dir.GetChars(), custwad.GetChars());
+				FStringf fullpath("%s/%s", dir, custwad.GetChars());
 				if (FileExists(fullpath))
 				{
 					mFoundWads.Push({ fullpath, "", -1 });

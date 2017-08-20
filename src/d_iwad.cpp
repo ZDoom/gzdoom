@@ -202,18 +202,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 			{
 				sc.MustGetString();
 				FString wadname = sc.String;
-#if defined(_WIN32) || defined(__APPLE__) // Turns out Mac OS X is case insensitive.
 				mIWadNames.Push(wadname);
-#else
-				// check for lowercase, uppercased first letter and full uppercase on Linux etc.
-				wadname.ToLower();
-				mIWadNames.Push(wadname);
-				wadname.LockBuffer()[0] = toupper(wadname[0]);
-				wadname.UnlockBuffer();
-				mIWadNames.Push(wadname);
-				wadname.ToUpper();
-				mIWadNames.Push(wadname);
-#endif
 			}
 		}
 		else if (result == nullptr && sc.Compare("ORDER"))

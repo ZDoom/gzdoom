@@ -395,11 +395,11 @@ static NSString* GetArchitectureString()
 #endif
 }
 
-static void RestartWithParameters(const char* iwadPath, NSString* parameters)
+static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 {
 	assert(nil != parameters);
 
-	defaultiwad = ExtractFileBase(iwadPath);
+	defaultiwad = wad.Name;
 
 	GameConfig->DoGameSetup("Doom");
 	M_SaveDefaults(NULL);
@@ -427,7 +427,7 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 
 		[arguments addObject:@"-wad_picker_restart"];
 		[arguments addObject:@"-iwad"];
-		[arguments addObject:[NSString stringWithUTF8String:iwadPath]];
+		[arguments addObject:[NSString stringWithUTF8String:wad.Path]];
 
 		for (int i = 1, count = Args->NumArgs(); i < count; ++i)
 		{
@@ -477,7 +477,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 	{
 		if (0 != [parametersToAppend length])
 		{
-			RestartWithParameters(wads[ret].Path, parametersToAppend);
+			RestartWithParameters(wads[ret], parametersToAppend);
 		}
 	}
 

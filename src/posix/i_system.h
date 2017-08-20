@@ -178,4 +178,7 @@ static inline char *strlwr(char *str)
 	return str;
 }
 
+// for the IWAD handling
+#define FS_ENTRYNAME findstate.namelist[findstate.current]->d_name
+
 #endif

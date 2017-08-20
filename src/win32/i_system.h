@@ -193,4 +193,7 @@ int I_FindClose (void *handle);
 #define FA_DIREC	0x00000010
 #define FA_ARCH		0x00000020
 
+// for the IWAD handling
+#define FS_ENTRYNAME findstate.Name
+
 #endif

@@ -508,6 +508,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		// Check if the given IWAD has an absolute path, in which case the search path will be ignored.
 		custwad = iwadparm;
 		FixPathSeperator(custwad);
+		DefaultExtension(custwad, ".wad");
 		bool isAbsolute = (custwad[0] == '/');
 #ifdef WINDOWS
 		isAbsolute |= (custwad.Len() >= 2 && custwad[1] == ':');

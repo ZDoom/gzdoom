@@ -531,7 +531,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		{
 			for (auto &dir : mSearchPaths)
 			{
-				FStringf fullpath("%s/%s", dir, custwad.GetChars());
+				FStringf fullpath("%s/%s", dir.GetChars(), custwad.GetChars());
 				if (FileExists(fullpath))
 				{
 					mFoundWads.Push({ fullpath, "", -1 });

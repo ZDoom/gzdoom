@@ -656,11 +656,9 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		{
 			for (unsigned i = 0; i < picks.Size(); ++i)
 			{
-				FString basename = mIWadInfos[picks[i].mInfoIndex].Name;
-				FString defname = ExtractFileBase(defaultiwad);
-				if (stricmp(basename, defname) == 0)
+				FString &basename = mIWadInfos[picks[i].mInfoIndex].Name;
+				if (stricmp(basename, defaultiwad) == 0)
 				{
-					// Delete all but the wanted one.
 					pick = i;
 					break;
 				}

@@ -158,6 +158,7 @@ private:
 	friend int I_FindNext(void *handle, findstate_t *fileinfo);
 	friend const char *I_FindName(findstate_t *fileinfo);
 	friend int I_FindAttr(findstate_t *fileinfo);
+	friend int I_FindClose(void *handle);
 };
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo);

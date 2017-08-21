@@ -179,6 +179,13 @@ void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callba
 
 void gl_SetDynModelLight(AActor *self, bool hudmodel)
 {
+	// Legacy and deferred render paths gets the old flat model light
+	if (gl.lightmethod != LM_DIRECT)
+	{
+		gl_SetDynSpriteLight(self, nullptr);
+		return;
+	}
+
 	modellightdata.Clear();
 
 	if (self)

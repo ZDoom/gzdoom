@@ -15,8 +15,15 @@ include( CreateLaunchers )
 include( FindPackageHandleStandardArgs )
 
 # Produce a warning if XP support will be missing.
-if( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" )
-	message( WARNING "This project supports Windows XP (including XP x64), but you must set the optional toolset to v140_xp manually to have it in your build! Use -T \"v140_xp\" from the command prompt." )
+if( MSVC )
+	list( APPEND WINXP_TOOLSETS v140_xp v141_xp)
+	list( FIND WINXP_TOOLSETS "${CMAKE_GENERATOR_TOOLSET}" HAVE_WINXP_SUPPORT)
+
+	if( HAVE_WINXP_SUPPORT EQUAL -1 )
+		string( REPLACE ";" " or " WINXP_TOOLSETS_STR "${WINXP_TOOLSETS}" )
+		message( WARNING "This project supports Windows XP but you must set the optional toolset to ${WINXP_TOOLSETS_STR} manually to have it in your build!\n"
+			"Assign toolset's name to CMAKE_GENERATOR_TOOLSET variable or use -T <toolset> from the command prompt." )
+	endif()
 endif()
 
 # Support cross compiling

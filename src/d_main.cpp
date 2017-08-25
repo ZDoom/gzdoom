@@ -981,6 +981,7 @@ void D_ErrorCleanup ()
 		G_CheckDemoStatus ();
 	Net_ClearBuffers ();
 	G_NewInit ();
+	M_ClearMenus ();
 	singletics = false;
 	playeringame[0] = 1;
 	players[0].playerstate = PST_LIVE;

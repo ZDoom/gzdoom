@@ -664,6 +664,8 @@ struct StringStruct native
 	native int LastIndexOf(String substr) const;
 	native void ToUpper();
 	native void ToLower();
+	native int ToInt(int base = 0) const;
+	native double ToDouble() const;
 }
 
 class SectorEffect : Thinker native

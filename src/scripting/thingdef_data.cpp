@@ -1280,3 +1280,16 @@ DEFINE_ACTION_FUNCTION(FStringStruct, ToLower)
 	self->ToLower();
 	return 0;
 }
+
+DEFINE_ACTION_FUNCTION(FStringStruct, ToInt)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_INT_DEF(base);
+	ACTION_RETURN_INT(self->ToLong(base));
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, ToDouble)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	ACTION_RETURN_FLOAT(self->ToDouble());
+}

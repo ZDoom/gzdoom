@@ -1655,6 +1655,13 @@ TArray<FString> I_GetGogPaths()
 		result.Push(path + "/Plutonia");
 	}
 
+	// Look for Doom 3: BFG Edition
+	gamepath = gogregistrypath + "\\1135892318";
+	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))
+	{
+		result.Push(path + "/base/wads");	// in a subdirectory
+	}
+
 	// Look for Strife: Veteran Edition
 	gamepath = gogregistrypath + "\\1432899949";
 	if (QueryPathKey(HKEY_LOCAL_MACHINE, gamepath.GetChars(), "Path", path))

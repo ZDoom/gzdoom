@@ -6745,6 +6745,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 
 	newpos = th->Vec3Offset(newpos);
 	th->SetXYZ(newpos);
+	th->Sector = P_PointInSector(th->Pos());
 
 	FCheckPosition tm(!!(th->flags2 & MF2_RIP));
 

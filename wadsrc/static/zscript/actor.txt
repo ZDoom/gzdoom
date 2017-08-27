@@ -22,6 +22,7 @@ struct FCheckPosition
 	native Actor		stepthing;
 	native bool			DoRipping;
 	native bool			portalstep;
+	native int			portalgroup;
 
 	native int			PushTime;
 	

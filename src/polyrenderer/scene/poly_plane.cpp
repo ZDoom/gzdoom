@@ -308,7 +308,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		}
 	}
 
-	int lightlevel = frontsector->lightlevel;
+	int lightlevel = ceiling ? frontsector->GetCeilingLight() : frontsector->GetFloorLight();
 	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
 

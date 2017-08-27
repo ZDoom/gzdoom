@@ -31,4 +31,8 @@ public:
 
 private:
 	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue);
+
+	void GetDecalSectors(DBaseDecal *decal, const seg_t *line, sector_t **front, sector_t **back);
+	double GetDecalZ(DBaseDecal *decal, const seg_t *line, sector_t *front, sector_t *back);
+	void GetWallZ(DBaseDecal *decal, const seg_t *line, sector_t *front, sector_t *back, double &walltopz, double &wallbottomz);
 };

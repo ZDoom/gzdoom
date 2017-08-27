@@ -289,7 +289,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	args.SetWriteStencil(true, StencilValue + 1);
 	if (tex && !Polyportal)
 		args.SetTexture(tex);
-	args.SetClipPlane(clipPlane);
+	args.SetClipPlane(0, clipPlane);
 
 	if (FogBoundary)
 	{
@@ -314,7 +314,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	else if (!Masked)
 	{
 		args.SetStyle(TriBlendMode::TextureOpaque);
-		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+		DrawStripes(args, vertices);
 	}
 	else
 	{
@@ -325,10 +325,64 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
-		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+		DrawStripes(args, vertices);
 	}
 
 	RenderPolyDecal::RenderWallDecals(worldToClip, clipPlane, LineSeg, StencilValue);
+}
+
+void RenderPolyWall::DrawStripes(PolyDrawArgs &args, TriVertex *vertices)
+{
+	const auto &lightlist = Line->frontsector->e->XFloor.lightlist;
+	if (lightlist.Size() > 0)
+	{
+		PolyClipPlane topPlane;
+
+		for (unsigned int i = 0; i < lightlist.Size(); i++)
+		{
+			lightlist_t *lit = &lightlist[i];
+
+			DVector3 normal = lit->plane.Normal();
+			double d = lit->plane.fD();
+			if (normal.Z < 0.0)
+			{
+				normal = -normal;
+				d = -d;
+			}
+
+			PolyClipPlane bottomPlane = { (float)normal.X, (float)normal.Y, (float)normal.Z, (float)d };
+
+			args.SetClipPlane(1, topPlane);
+			args.SetClipPlane(2, bottomPlane);
+			args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+
+			FDynamicColormap *basecolormap = GetColorTable(lit->extra_colormap, Line->frontsector->SpecialColors[sector_t::walltop]);
+
+			bool foggy = false;
+			int lightlevel;
+			PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+			if (cameraLight->FixedLightLevel() >= 0 || cameraLight->FixedColormap())
+			{
+				lightlevel = 255;
+			}
+			else
+			{
+				int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+				lightlevel = clamp(Side->GetLightLevel(foggy, *lit->p_lightlevel) + actualextralight, 0, 255);
+			}
+			args.SetLight(basecolormap, lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+
+			topPlane = { (float)-normal.X, (float)-normal.Y, (float)-normal.Z, (float)-d };
+		}
+
+		args.SetClipPlane(1, topPlane);
+		args.SetClipPlane(2, PolyClipPlane());
+		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+	}
+	else
+	{
+		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+	}
 }
 
 void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)

@@ -48,7 +48,7 @@ public:
 class PolyDrawArgs
 {
 public:
-	void SetClipPlane(const PolyClipPlane &plane);
+	void SetClipPlane(int index, const PolyClipPlane &plane) { mClipPlane[index] = plane; }
 	void SetTexture(const uint8_t *texels, int width, int height);
 	void SetTexture(FTexture *texture);
 	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false);
@@ -66,7 +66,7 @@ public:
 	void DrawArray(const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 
 	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
-	const float *ClipPlane() const { return mClipPlane; }
+	const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }
 
 	const TriVertex *Vertices() const { return mVertices; }
 	int VertexCount() const { return mVertexCount; }
@@ -126,7 +126,7 @@ private:
 	uint8_t mStencilTestValue = 0;
 	uint8_t mStencilWriteValue = 0;
 	const uint8_t *mColormaps = nullptr;
-	float mClipPlane[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+	PolyClipPlane mClipPlane[3];
 	TriBlendMode mBlendMode = TriBlendMode::FillOpaque;
 	uint32_t mLight = 0;
 	uint32_t mColor = 0;

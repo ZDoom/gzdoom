@@ -29,9 +29,10 @@
 #include "polyrenderer/drawers/poly_buffer.h"
 #include "polyrenderer/drawers/poly_draw_args.h"
 
-struct ShadedTriVertex : public TriVertex
+struct ShadedTriVertex
 {
-	float clipDistance0;
+	TriVertex position;
+	float clipDistance[3];
 };
 
 typedef void(*PolyDrawFuncPtr)(const TriDrawTriangleArgs *, WorkerThreadData *);
@@ -44,7 +45,7 @@ public:
 	static bool is_mirror();
 
 private:
-	static ShadedTriVertex shade_vertex(const TriMatrix &objectToClip, const float *clipPlane, const TriVertex &v);
+	static ShadedTriVertex shade_vertex(const PolyDrawArgs &drawargs, const TriVertex &v);
 	static void draw_arrays(const PolyDrawArgs &args, WorkerThreadData *thread);
 	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static bool is_degenerate(const ShadedTriVertex *vertices);

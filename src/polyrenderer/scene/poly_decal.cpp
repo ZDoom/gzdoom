@@ -189,7 +189,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue);
-	args.SetClipPlane(clipPlane);
+	args.SetClipPlane(0, clipPlane);
 	args.SetDepthTest(true);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);

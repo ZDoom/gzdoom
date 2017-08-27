@@ -376,7 +376,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		args.SetTransform(&WorldToClip);
 		args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(foggy), true);
 		args.SetColor(0, 0);
-		args.SetClipPlane(PortalPlane);
+		args.SetClipPlane(0, PortalPlane);
 		args.SetStyle(TriBlendMode::FillOpaque);
 
 		for (auto &portal : SectorPortals)
@@ -416,7 +416,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			args.SetTransform(&WorldToClip);
 			args.SetStencilTestValue(portal->StencilValue + 1);
 			args.SetWriteStencil(true, StencilValue + 1);
-			args.SetClipPlane(PortalPlane);
+			args.SetClipPlane(0, PortalPlane);
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);
@@ -434,7 +434,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			args.SetTransform(&WorldToClip);
 			args.SetStencilTestValue(portal->StencilValue + 1);
 			args.SetWriteStencil(true, StencilValue + 1);
-			args.SetClipPlane(PortalPlane);
+			args.SetClipPlane(0, PortalPlane);
 			for (const auto &verts : portal->Shape)
 			{
 				args.SetFaceCullCCW(verts.Ccw);

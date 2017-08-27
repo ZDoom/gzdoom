@@ -146,7 +146,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClip
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
 	args.SetTexture(tex);
-	args.SetClipPlane(clipPlane);
+	args.SetClipPlane(0, clipPlane);
 	args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }
 
@@ -313,13 +313,13 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
 
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling]), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetLight(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
 	//args.SetSubsectorDepth(isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(ccw);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
-	args.SetClipPlane(clipPlane);
+	args.SetClipPlane(0, clipPlane);
 
 	if (!isSky)
 	{

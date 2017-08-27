@@ -65,6 +65,8 @@ private:
 	FTexture *GetTexture();
 	int GetLightLevel();
 
+	void DrawStripes(PolyDrawArgs &args, TriVertex *vertices);
+
 	static bool IsFogBoundary(sector_t *front, sector_t *back);
 };
 

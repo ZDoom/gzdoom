@@ -83,7 +83,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlan
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);
-	args.SetClipPlane(clipPlane);
+	args.SetClipPlane(0, clipPlane);
 	args.SetTexture(GetParticleTexture(), ParticleTextureSize, ParticleTextureSize);
 	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
 }

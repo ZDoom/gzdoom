@@ -598,14 +598,17 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 			bool picked = false;
 			for (int j = 0; j < (int)mFoundWads.Size(); j++)
 			{
-				if (mIWadInfos[mFoundWads[j].mInfoIndex].Name.Compare(mOrderNames[i]) == 0)
+				if (mFoundWads[j].mInfoIndex >= 0)
 				{
-					if (!picked)
+					if (mIWadInfos[mFoundWads[j].mInfoIndex].Name.Compare(mOrderNames[i]) == 0)
 					{
-						picked = true;
-						picks.Push(mFoundWads[j]);
+						if (!picked)
+						{
+							picked = true;
+							picks.Push(mFoundWads[j]);
+						}
+						mFoundWads.Delete(j--);
 					}
-					mFoundWads.Delete(j--);
 				}
 			}
 		}

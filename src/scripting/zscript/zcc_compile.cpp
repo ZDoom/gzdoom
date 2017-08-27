@@ -1298,6 +1298,11 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		auto name = field->Names;
 		do
 		{
+			if (fieldtype->Size == 0 && !(varflags & VARF_Native))	// Size not known yet.
+			{
+				return false;
+			}
+
 			if (AddTreeNode(name->Name, name, TreeNodes, !forstruct))
 			{
 				auto thisfieldtype = fieldtype;

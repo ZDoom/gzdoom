@@ -2247,6 +2247,7 @@ bool PStruct::ReadValue(FSerializer &ar, const char *key, void *addr) const
 
 PField *PStruct::AddField(FName name, PType *type, uint32_t flags)
 {
+	assert(type->Size > 0);
 	return Symbols.AddField(name, type, flags, Size, &Align);
 }
 

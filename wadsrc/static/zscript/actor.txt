@@ -194,6 +194,7 @@ class Actor : Thinker native
 	native voidptr /*DecalBase*/ DecalGenerator;
 	native uint8 fountaincolor;
 	native double CameraHeight;	// Height of camera when used as such
+	native double CameraFOV;
 	native double RadiusDamageFactor;		// Radius damage factor
 	native double SelfDamageFactor;
 	native double StealthAlpha;
@@ -276,6 +277,7 @@ class Actor : Thinker native
 	property SelfDamageFactor: SelfDamageFactor;
 	property StealthAlpha: StealthAlpha;
 	property CameraHeight: CameraHeight;
+	property CameraFOV: CameraFOV;
 	property VSpeed: velz;
 	property SpriteRotation: SpriteRotation;
 	property VisibleAngles: VisibleStartAngle, VisibleEndAngle;
@@ -359,6 +361,7 @@ class Actor : Thinker native
 		VisiblePitch 0, 0;
 		DefaultStateUsage SUF_ACTOR|SUF_OVERLAY;
 		CameraHeight int.min;
+		CameraFOV 90.f;
 		FastSpeed -1;
 		RadiusDamageFactor 1;
 		SelfDamageFactor 1;

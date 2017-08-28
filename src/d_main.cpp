@@ -685,16 +685,12 @@ void D_Display ()
 	if (viewactive)
 	{
 		DAngle fov = 90.f;
-		if (players[consoleplayer].camera != nullptr)
+		AActor *cam = players[consoleplayer].camera;
+		if (cam)
 		{
-			if (players[consoleplayer].camera && players[consoleplayer].camera->player)
-			{
-				fov = players[consoleplayer].camera->player->FOV;
-			}
-			else
-			{
-				fov = players[consoleplayer].camera->CameraFOV;
-			}
+			if (cam->player)
+				fov = cam->player->FOV;
+			else fov = cam->CameraFOV;
 		}
 		R_SetFOV(r_viewpoint, fov);
 	}

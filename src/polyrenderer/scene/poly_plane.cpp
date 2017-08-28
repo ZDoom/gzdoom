@@ -153,7 +153,6 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClip
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	bool foggy = false;
 	
 	sector_t *fakesector = sub->sector->heightsec;
 	if (fakesector && (fakesector == sub->sector || (fakesector->MoreFlags & SECF_IGNOREHEIGHTSEC) == SECF_IGNOREHEIGHTSEC))
@@ -308,12 +307,26 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		}
 	}
 
+	bool foggy = level.fadeto || frontsector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
+
 	int lightlevel = ceiling ? frontsector->GetCeilingLight() : frontsector->GetFloorLight();
 	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
 
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+	FDynamicColormap *basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]);
+	if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
+	{
+		lightlist_t *light = P_GetPlaneLight(frontsector, ceiling ? &frontsector->ceilingplane : &frontsector->floorplane, false);
+		basecolormap = GetColorTable(light->extra_colormap, frontsector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]);
+		if (light->p_lightlevel != &frontsector->lightlevel) // If this is the real ceiling, don't discard plane lighting R_FakeFlat() accounted for.
+		{
+			lightlevel = *light->p_lightlevel;
+		}
+	}
+
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(frontsector->Colormap, frontsector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetLight(basecolormap, lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
 	//args.SetSubsectorDepth(isSky ? RenderPolyScene::SkySubsectorDepth : subsectorDepth);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(ccw);

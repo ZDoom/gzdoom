@@ -685,7 +685,7 @@ void D_Display ()
 	if (viewactive)
 	{
 		R_SetFOV (r_viewpoint, players[consoleplayer].camera && players[consoleplayer].camera->player ?
-			players[consoleplayer].camera->player->FOV : 90.f);
+			players[consoleplayer].camera->player->FOV : players[consoleplayer].camera->CameraFOV);
 	}
 
 	// [RH] change the screen mode if needed

@@ -699,7 +699,7 @@ fp_begin:
 			{
 				flags |= F_NEGATIVE;
 			}
-			if (expt == INT_MAX)	// inf or nan
+			if (expt == 9999)	// inf or nan
 			{
 				if (*obuff == 'N')
 				{

@@ -1398,9 +1398,9 @@ namespace swrenderer
 			{
 				uint32_t val = colormap[source[frac >> FRACBITS]] << 2;
 
-				int r = (palette[*dest].r * (255-val) + palette[color].r * val) >> 10;
-				int g = (palette[*dest].g * (255-val) + palette[color].g * val) >> 10;
-				int b = (palette[*dest].b * (255-val) + palette[color].b * val) >> 10;
+				int r = (palette[*dest].r * (256-val) + palette[color].r * val) >> 10;
+				int g = (palette[*dest].g * (256-val) + palette[color].g * val) >> 10;
+				int b = (palette[*dest].b * (256-val) + palette[color].b * val) >> 10;
 				*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 
 				dest += pitch;
@@ -1441,9 +1441,9 @@ namespace swrenderer
 		{
 			uint32_t val = colormap[source[frac >> FRACBITS]] << 2;
 
-			int r = (palette[*dest].r * (255) + palette[color].r * val) >> 10;
-			int g = (palette[*dest].g * (255) + palette[color].g * val) >> 10;
-			int b = (palette[*dest].b * (255) + palette[color].b * val) >> 10;
+			int r = (palette[*dest].r * (256) + palette[color].r * val) >> 10;
+			int g = (palette[*dest].g * (256) + palette[color].g * val) >> 10;
+			int b = (palette[*dest].b * (256) + palette[color].b * val) >> 10;
 			*dest = RGB256k.RGB[clamp(r,0,63)][clamp(g,0,63)][clamp(b,0,63)];
 
 			dest += pitch;

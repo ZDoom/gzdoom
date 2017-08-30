@@ -2127,6 +2127,16 @@ OptionValue VRMode
 	7, "$OPTVAL_QUADBUFFERED"
 }
 
+OptionValue ShadowMapQuality
+{
+	32, "32"
+	64, "64"
+	128, "128"
+	256, "256"
+	512, "512"
+	1024, "1024"
+}
+
 OptionMenu "GLTextureGLOptions" protected
 {
 	Title "$GLTEXMNU_TITLE"
@@ -2147,13 +2157,14 @@ OptionMenu "GLTextureGLOptions" protected
 OptionMenu "GLLightOptions" protected
 {
 	Title "$GLLIGHTMNU_TITLE"
-	Option "$TCMNU_DYNLIGHTS",				"r_dynlights", "OnOff"
-	Option "$GLLIGHTMNU_LIGHTSENABLED",		gl_lights,						"OnOff"
-	Option "$GLLIGHTMNU_LIGHTDEFS",			gl_attachedlights,				"YesNo"
-	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
-	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
-	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
-	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",	gl_light_shadowmap,				"YesNo"
+	Option "$TCMNU_DYNLIGHTS",					"r_dynlights", "OnOff"
+	Option "$GLLIGHTMNU_LIGHTSENABLED",			gl_lights,				"OnOff"
+	Option "$GLLIGHTMNU_LIGHTDEFS",				gl_attachedlights,		"YesNo"
+	Option "$GLLIGHTMNU_CLIPLIGHTS",			gl_lights_checkside,	"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSPRITES",			gl_light_sprites,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTPARTICLES",		gl_light_particles,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",		gl_light_shadowmap,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAPQUALITY", gl_shadowmap_quality,	"ShadowMapQuality"
 }
 
 OptionMenu "OpenGLOptions" protected

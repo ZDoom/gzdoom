@@ -2684,13 +2684,14 @@ GLTEXMNU_TRIMSPREDGE	= "Trim sprite edges";
 GLTEXMNU_SORTDRAWLIST 	= "Sort draw lists by texture";
 
 // Dynamic Light Options
-GLLIGHTMNU_TITLE 			= "DYNAMIC LIGHTS";
-GLLIGHTMNU_LIGHTSENABLED 	= "Dynamic Lights (OpenGL)";
-GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
-GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
-GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
-GLLIGHTMNU_LIGHTPARTICLES 	= "Lights affect particles";
-GLLIGHTMNU_LIGHTSHADOWMAP 	= "Light shadowmaps";
+GLLIGHTMNU_TITLE					= "DYNAMIC LIGHTS";
+GLLIGHTMNU_LIGHTSENABLED			= "Dynamic Lights (OpenGL)";
+GLLIGHTMNU_LIGHTDEFS				= "Enable light definitions";
+GLLIGHTMNU_CLIPLIGHTS				= "Clip lights";
+GLLIGHTMNU_LIGHTSPRITES				= "Lights affect sprites";
+GLLIGHTMNU_LIGHTPARTICLES			= "Lights affect particles";
+GLLIGHTMNU_LIGHTSHADOWMAP			= "Light shadowmaps";
+GLLIGHTMNU_LIGHTSHADOWMAPQUALITY	= "Shadowmap quality";
 
 // OpenGL Preferences
 GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";

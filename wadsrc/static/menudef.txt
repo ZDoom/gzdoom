@@ -2129,8 +2129,6 @@ OptionValue VRMode
 
 OptionValue ShadowMapQuality
 {
-	32, "32"
-	64, "64"
 	128, "128"
 	256, "256"
 	512, "512"

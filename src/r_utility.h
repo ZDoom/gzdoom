@@ -136,9 +136,9 @@ struct FCanvasTextureInfo
 	TObjPtr<AActor*> Viewpoint;
 	FCanvasTexture *Texture;
 	FTextureID PicNum;
-	int FOV;
+	double FOV;
 
-	static void Add (AActor *viewpoint, FTextureID picnum, int fov);
+	static void Add (AActor *viewpoint, FTextureID picnum, double fov);
 	static void UpdateAll ();
 	static void EmptyList ();
 	static void Serialize(FSerializer &arc);

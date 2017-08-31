@@ -3439,7 +3439,7 @@ void FBehavior::StartTypedScripts (uint16_t type, AActor *activator, bool always
 		{
 			DLevelScript *runningScript = P_GetScriptGoing (activator, NULL, ptr->Number,
 				ptr, this, &arg1, 1, always ? ACS_ALWAYS : 0);
-			if (runNow)
+			if (nullptr != runningScript && runNow)
 			{
 				runningScript->RunScript ();
 			}

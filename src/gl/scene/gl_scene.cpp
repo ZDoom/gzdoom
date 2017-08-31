@@ -987,7 +987,7 @@ struct FGLInterface : public FRenderer
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
 	void StartSerialize(FSerializer &arc) override;
 	void EndSerialize(FSerializer &arc) override;
-	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov) override;
+	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, double fov) override;
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
 	bool RequireGLNodes() override;
@@ -1098,7 +1098,7 @@ void FGLInterface::Init()
 CVAR(Bool, gl_usefb, false , CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 extern TexFilter_s TexFilter[];
 
-void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, int FOV)
+void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 

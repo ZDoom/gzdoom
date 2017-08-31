@@ -979,6 +979,15 @@ DEFINE_ACTION_FUNCTION(AActor, A_StopSound)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, A_SoundVolume)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_INT(channel);
+	PARAM_FLOAT(volume);
+	S_ChangeSoundVolume(self, channel, static_cast<float>(volume));
+	return 0;
+}
+
 //==========================================================================
 //
 // These come from a time when DECORATE constants did not exist yet and

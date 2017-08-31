@@ -614,7 +614,7 @@ void player_t::SetFOV(float fov)
 		{
 			Net_WriteByte(DEM_MYFOV);
 		}
-		Net_WriteByte((uint8_t)clamp<float>(fov, 5.f, 179.f));
+		Net_WriteFloat(clamp<float>(fov, 5.f, 179.f));
 	}
 }
 

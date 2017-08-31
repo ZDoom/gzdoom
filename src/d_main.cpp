@@ -399,7 +399,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
 	{
-		double fov;
+		float fov;
 
 		Net_WriteByte (DEM_FOV);
 

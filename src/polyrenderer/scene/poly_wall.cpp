@@ -102,7 +102,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
 			wall.TopTexZ = topTexZ;
 			wall.BottomTexZ = bottomTexZ;
-			wall.Texpart = side_t::mid;
+			wall.Wallpart = side_t::mid;
+			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 			wall.Polyportal = polyportal;
 			wall.Render(worldToClip, clipPlane, cull);
 			return true;
@@ -138,7 +139,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), topceilz1, topfloorz1, topceilz2, topfloorz2);
 			wall.TopTexZ = topTexZ;
 			wall.BottomTexZ = MIN(MIN(backceilz1, frontceilz1), MIN(backceilz2, frontceilz2));
-			wall.Texpart = side_t::top;
+			wall.Wallpart = side_t::top;
+			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::top);
 			wall.Render(worldToClip, clipPlane, cull);
 		}
 
@@ -149,7 +151,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			wall.BottomTexZ = bottomTexZ;
 			wall.UnpeggedCeil1 = topceilz1;
 			wall.UnpeggedCeil2 = topceilz2;
-			wall.Texpart = side_t::bottom;
+			wall.Wallpart = side_t::bottom;
+			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::bottom);
 			wall.Render(worldToClip, clipPlane, cull);
 		}
 
@@ -158,7 +161,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			wall.SetCoords(line->v1->fPos(), line->v2->fPos(), middleceilz1, middlefloorz1, middleceilz2, middlefloorz2);
 			wall.TopTexZ = MAX(middleceilz1, middleceilz2);
 			wall.BottomTexZ = MIN(middlefloorz1, middlefloorz2);
-			wall.Texpart = side_t::mid;
+			wall.Wallpart = side_t::mid;
+			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 			wall.Masked = true;
 			wall.FogBoundary = IsFogBoundary(frontsector, backsector);
 
@@ -204,7 +208,13 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 	wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
 	wall.TopTexZ = topTexZ;
 	wall.BottomTexZ = bottomTexZ;
-	wall.Texpart = side_t::mid;
+	wall.Wallpart = side_t::mid;
+	if (fakeFloor->flags & FF_UPPERTEXTURE)
+		wall.Texture = GetTexture(line->linedef, line->sidedef, side_t::top);
+	else if (fakeFloor->flags & FF_LOWERTEXTURE)
+		wall.Texture = GetTexture(line->linedef, line->sidedef, side_t::bottom);
+	else
+		wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 	wall.Render(worldToClip, clipPlane, cull);
 }
 
@@ -221,8 +231,7 @@ void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ce
 void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull)
 {
 	bool foggy = false;
-	FTexture *tex = GetTexture();
-	if (!tex && !Polyportal && !FogBoundary)
+	if (!Texture && !Polyportal && !FogBoundary)
 		return;
 
 	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
@@ -247,11 +256,11 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	vertices[3].z = (float)floor1;
 	vertices[3].w = 1.0f;
 
-	if (tex)
+	if (Texture)
 	{
-		PolyWallTextureCoordsU texcoordsU(tex, LineSeg, LineSegLine, Side, Texpart);
-		PolyWallTextureCoordsV texcoordsVLeft(tex, Line, Side, Texpart, ceil1, floor1, UnpeggedCeil1, TopTexZ, BottomTexZ);
-		PolyWallTextureCoordsV texcoordsVRght(tex, Line, Side, Texpart, ceil2, floor2, UnpeggedCeil2, TopTexZ, BottomTexZ);
+		PolyWallTextureCoordsU texcoordsU(Texture, LineSeg, LineSegLine, Side, Wallpart);
+		PolyWallTextureCoordsV texcoordsVLeft(Texture, Line, Side, Wallpart, ceil1, floor1, UnpeggedCeil1, TopTexZ, BottomTexZ);
+		PolyWallTextureCoordsV texcoordsVRght(Texture, Line, Side, Wallpart, ceil2, floor2, UnpeggedCeil2, TopTexZ, BottomTexZ);
 		vertices[0].u = (float)texcoordsU.u1;
 		vertices[0].v = (float)texcoordsVLeft.v1;
 		vertices[1].u = (float)texcoordsU.u2;
@@ -287,8 +296,8 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(StencilValue);
 	args.SetWriteStencil(true, StencilValue + 1);
-	if (tex && !Polyportal)
-		args.SetTexture(tex);
+	if (Texture && !Polyportal)
+		args.SetTexture(Texture);
 	args.SetClipPlane(0, clipPlane);
 
 	if (FogBoundary)
@@ -299,7 +308,7 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
 		args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
-		if (!tex)
+		if (!Texture)
 			return;
 	}
 
@@ -405,27 +414,27 @@ void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
 	v2.v = texv1 * inv_t2 + texv2 * t2;
 }
 
-FTexture *RenderPolyWall::GetTexture()
+FTexture *RenderPolyWall::GetTexture(const line_t *line, const side_t *side, side_t::ETexpart texpart)
 {
-	FTexture *tex = TexMan(Side->GetTexture(Texpart), true);
+	FTexture *tex = TexMan(side->GetTexture(texpart), true);
 	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
 	{
 		// Mapping error. Doom floodfills this with a plane.
 		// This code doesn't do that, but at least it uses the "right" texture..
 
-		if (Line && Line->backsector && Line->sidedef[0] == Side)
+		if (line && line->backsector && line->sidedef[0] == side)
 		{
-			if (Texpart == side_t::top)
-				tex = TexMan(Line->backsector->GetTexture(sector_t::ceiling), true);
-			else if (Texpart == side_t::bottom)
-				tex = TexMan(Line->backsector->GetTexture(sector_t::floor), true);
+			if (texpart == side_t::top)
+				tex = TexMan(line->backsector->GetTexture(sector_t::ceiling), true);
+			else if (texpart == side_t::bottom)
+				tex = TexMan(line->backsector->GetTexture(sector_t::floor), true);
 		}
-		if (Line && Line->backsector && Line->sidedef[1] == Side)
+		if (line && line->backsector && line->sidedef[1] == side)
 		{
-			if (Texpart == side_t::top)
-				tex = TexMan(Line->frontsector->GetTexture(sector_t::ceiling), true);
-			else if (Texpart == side_t::bottom)
-				tex = TexMan(Line->frontsector->GetTexture(sector_t::floor), true);
+			if (texpart == side_t::top)
+				tex = TexMan(line->frontsector->GetTexture(sector_t::ceiling), true);
+			else if (texpart == side_t::bottom)
+				tex = TexMan(line->frontsector->GetTexture(sector_t::floor), true);
 		}
 
 		if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
@@ -451,11 +460,11 @@ int RenderPolyWall::GetLightLevel()
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolyWallTextureCoordsU::PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart texpart)
+PolyWallTextureCoordsU::PolyWallTextureCoordsU(FTexture *tex, const seg_t *lineseg, const line_t *line, const side_t *side, side_t::ETexpart wallpart)
 {
 	// Calculate the U texture coordinate for the line
-	double lineu1 = side->GetTextureXOffset(texpart);
-	double lineu2 = side->GetTextureXOffset(texpart) + line->sidedef[0]->TexelLength * side->GetTextureXScale(texpart);
+	double lineu1 = side->GetTextureXOffset(wallpart);
+	double lineu2 = side->GetTextureXOffset(wallpart) + line->sidedef[0]->TexelLength * side->GetTextureXScale(wallpart);
 	lineu1 *= tex->Scale.X / tex->GetWidth();
 	lineu2 *= tex->Scale.X / tex->GetWidth();
 
@@ -485,13 +494,13 @@ PolyWallTextureCoordsU::PolyWallTextureCoordsU(FTexture *tex, const seg_t *lines
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolyWallTextureCoordsV::PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart texpart, double topz, double bottomz, double unpeggedceil, double topTexZ, double bottomTexZ)
+PolyWallTextureCoordsV::PolyWallTextureCoordsV(FTexture *tex, const line_t *line, const side_t *side, side_t::ETexpart wallpart, double topz, double bottomz, double unpeggedceil, double topTexZ, double bottomTexZ)
 {
-	double yoffset = side->GetTextureYOffset(texpart);
+	double yoffset = side->GetTextureYOffset(wallpart);
 	if (tex->bWorldPanning)
-		yoffset *= side->GetTextureYScale(texpart) * tex->Scale.Y;
+		yoffset *= side->GetTextureYScale(wallpart) * tex->Scale.Y;
 
-	switch (texpart)
+	switch (wallpart)
 	{
 	default:
 	case side_t::mid:

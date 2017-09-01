@@ -164,6 +164,8 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 			wall.Wallpart = side_t::mid;
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 			wall.Masked = true;
+			wall.Additive = !!(wall.Line->flags & ML_ADDTRANS);
+			wall.Alpha = wall.Line->alpha;
 			wall.FogBoundary = IsFogBoundary(frontsector, backsector);
 
 			FTexture *midtex = TexMan(line->sidedef->GetTexture(side_t::mid), true);
@@ -189,6 +191,12 @@ bool RenderPolyWall::IsFogBoundary(sector_t *front, sector_t *back)
 
 void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
 {
+	if (!(fakeFloor->flags & FF_EXISTS)) return;
+	if (!(fakeFloor->flags & FF_RENDERPLANES)) return;
+	if (fakeFloor->flags & FF_SWIMMABLE) return;
+	if (!fakeFloor->model) return;
+	if (fakeFloor->alpha == 0) return;
+
 	double frontceilz1 = fakeFloor->top.plane->ZatPoint(line->v1);
 	double frontfloorz1 = fakeFloor->bottom.plane->ZatPoint(line->v1);
 	double frontceilz2 = fakeFloor->top.plane->ZatPoint(line->v2);
@@ -202,7 +210,17 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 	wall.Line = fakeFloor->master;
 	wall.Side = fakeFloor->master->sidedef[0];
 	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
-	wall.Masked = false;
+	wall.Additive = !!(fakeFloor->flags & FF_ADDITIVETRANS);
+	if (!wall.Additive && fakeFloor->alpha == 255)
+	{
+		wall.Masked = false;
+		wall.Alpha = 1.0;
+	}
+	else
+	{
+		wall.Masked = true;
+		wall.Alpha = fakeFloor->alpha / 255.0;
+	}
 	wall.SubsectorDepth = subsectorDepth;
 	wall.StencilValue = stencilValue;
 	wall.SetCoords(line->v1->fPos(), line->v2->fPos(), frontceilz1, frontfloorz1, frontceilz2, frontfloorz2);
@@ -215,7 +233,11 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 		wall.Texture = GetTexture(line->linedef, line->sidedef, side_t::bottom);
 	else
 		wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
-	wall.Render(worldToClip, clipPlane, cull);
+
+	if (!wall.Masked)
+		wall.Render(worldToClip, clipPlane, cull);
+	else
+		translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(wall));
 }
 
 void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)
@@ -327,9 +349,8 @@ void RenderPolyWall::Render(const TriMatrix &worldToClip, const PolyClipPlane &c
 	}
 	else
 	{
-		bool addtrans = !!(Line->flags & ML_ADDTRANS);
-		double srcalpha = MIN(Line->alpha, 1.0);
-		double destalpha = addtrans ? 1.0 : 1.0 - srcalpha;
+		double srcalpha = MIN(Alpha, 1.0);
+		double destalpha = Additive ? 1.0 : 1.0 - srcalpha;
 		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);

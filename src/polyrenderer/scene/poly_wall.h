@@ -56,6 +56,8 @@ public:
 	double UnpeggedCeil2 = 0.0;
 	FSWColormap *Colormap = nullptr;
 	bool Masked = false;
+	bool Additive = false;
+	double Alpha = 1.0;
 	bool FogBoundary = false;
 	uint32_t SubsectorDepth = 0;
 	uint32_t StencilValue = 0;

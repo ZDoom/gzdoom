@@ -344,10 +344,6 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 		for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 		{
 			F3DFloor *fakeFloor = line->backsector->e->XFloor.ffloors[i];
-			if (!(fakeFloor->flags & FF_EXISTS)) continue;
-			if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
-			if (fakeFloor->flags & FF_SWIMMABLE) continue;
-			if (!fakeFloor->model) continue;
 			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects);
 		}
 	}

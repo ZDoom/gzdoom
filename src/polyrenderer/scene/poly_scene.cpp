@@ -252,7 +252,7 @@ void RenderPolyScene::RenderPolySubsector(subsector_t *sub, uint32_t subsectorDe
 			}
 
 			// Render wall, and update culling info if its an occlusion blocker
-			if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals, LastPortalLine))
+			if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals, LastPortalLine))
 			{
 				Cull.MarkSegmentCulled(angle1, angle2);
 			}
@@ -344,12 +344,12 @@ void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *fronts
 		for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 		{
 			F3DFloor *fakeFloor = line->backsector->e->XFloor.ffloors[i];
-			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects);
+			RenderPolyWall::Render3DFloorLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, Cull, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals, LastPortalLine))
+	if (RenderPolyWall::RenderLine(WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects, LinePortals, LastPortalLine))
 	{
 		Cull.MarkSegmentCulled(angle1, angle2);
 	}
@@ -465,7 +465,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 		}
 		else if (!obj->thing)
 		{
-			obj->wall.Render(WorldToClip, PortalPlane, Cull);
+			obj->wall.Render(WorldToClip, PortalPlane);
 		}
 		else if ((obj->thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{

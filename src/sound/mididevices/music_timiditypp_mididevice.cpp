@@ -672,7 +672,6 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 		}
 	}
 #else
-	ssize_t got;
 	fd_set rfds;
 	struct timeval tv;
 
@@ -697,11 +696,26 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 	}
 //	fprintf(stderr,"something\n");
 
-	got = read(song->WavePipe[0], (uint8_t *)buff, len);
-	if (got < len)
-	{
-		memset((uint8_t *)buff+got, 0, len-got);
-	}
+	ssize_t got = 0;
+	do {
+		ssize_t r = read(song->WavePipe[0], (uint8_t*)buff+got, len-got);
+		if(r < 0)
+		{
+			if(errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				FD_ZERO(&rfds);
+				FD_SET(song->WavePipe[0], &rfds);
+				tv.tv_sec = 0;
+				tv.tv_usec = 50;
+				select(1, &rfds, NULL, NULL, &tv);
+				continue;
+			}
+			break;
+		}
+		got += r;
+	} while(got < len);
+	if(got < len)
+		memset((uint8_t*)buff+got, 0, len-got);
 #endif
 	return true;
 }

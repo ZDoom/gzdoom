@@ -4113,18 +4113,22 @@ void AActor::Tick ()
 	}
 	else
 	{
-		AInventory * item = Inventory;
 
-		// Handle powerup effects here so that the order is controlled
-		// by the order in the inventory, not the order in the thinker table
-		while (item != NULL && item->Owner == this)
+		if (!player || !(player->cheats & CF_PREDICTING))
 		{
-			IFVIRTUALPTR(item, AInventory, DoEffect)
+			// Handle powerup effects here so that the order is controlled
+			// by the order in the inventory, not the order in the thinker table
+			AInventory *item = Inventory;
+			
+			while (item != NULL && item->Owner == this)
 			{
-				VMValue params[1] = { item };
-				VMCall(func, params, 1, nullptr, 0);
+				IFVIRTUALPTR(item, AInventory, DoEffect)
+				{
+					VMValue params[1] = { item };
+					VMCall(func, params, 1, nullptr, 0);
+				}
+				item = item->Inventory;
 			}
-			item = item->Inventory;
 		}
 
 		if (flags & MF_UNMORPHED)

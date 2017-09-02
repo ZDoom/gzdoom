@@ -69,3 +69,16 @@ public:
 	bool Additive = false;
 	double Alpha = 1.0;
 };
+
+class PolyTranslucent3DFloorPlane : public PolyTranslucentObject
+{
+public:
+	PolyTranslucent3DFloorPlane(Render3DFloorPlane plane, uint32_t subsectorDepth) : PolyTranslucentObject(subsectorDepth, 1e7), plane(plane) { }
+
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) override
+	{
+		plane.Render(worldToClip, portalPlane);
+	}
+
+	Render3DFloorPlane plane;
+};

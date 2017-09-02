@@ -26,9 +26,14 @@
 #include "p_maputl.h"
 #include "sbar.h"
 #include "r_data/r_translate.h"
-#include "polyrenderer/scene/poly_scene.h"
 #include "polyrenderer/poly_renderer.h"
+#include "polyrenderer/scene/poly_scene.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/scene/poly_wall.h"
+#include "polyrenderer/scene/poly_wallsprite.h"
+#include "polyrenderer/scene/poly_plane.h"
+#include "polyrenderer/scene/poly_particle.h"
+#include "polyrenderer/scene/poly_sprite.h"
 
 EXTERN_CVAR(Int, r_portal_recursions)
 
@@ -151,7 +156,7 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub, uint32_t subsectorDepth)
 		for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			particle_t *particle = Particles + i;
-			TranslucentObjects.push_back(memory.NewObject<PolyTranslucentObject>(particle, sub, subsectorDepth));
+			TranslucentObjects.push_back(memory.NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, StencilValue));
 		}
 	}
 
@@ -233,7 +238,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, const DVe
 		subsector_t *sub = &level.subsectors[0];
 		auto it = SubsectorDepths.find(sub);
 		if (it != SubsectorDepths.end())
-			TranslucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(thing, sub, it->second, sortDistance, 0.0f, 1.0f));
+			TranslucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, 0.0f, 1.0f, StencilValue));
 	}
 	else
 	{
@@ -274,7 +279,7 @@ void RenderPolyScene::RenderSprite(AActor *thing, double sortDistance, DVector2 
 	
 	auto it = SubsectorDepths.find(sub);
 	if (it != SubsectorDepths.end())
-		TranslucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(thing, sub, it->second, sortDistance, (float)t1, (float)t2));
+		TranslucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, (float)t1, (float)t2, StencilValue));
 }
 
 void RenderPolyScene::RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
@@ -419,29 +424,9 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 	for (auto it = TranslucentObjects.rbegin(); it != TranslucentObjects.rend(); ++it)
 	{
 		PolyTranslucentObject *obj = *it;
-		// To do: convert PolyTranslucentObject to an interface with subclasses!
-		if (obj->type == PolyTranslucentObjectType::Particle)
-		{
-			RenderPolyParticle spr;
-			spr.Render(WorldToClip, PortalPlane, obj->particle, obj->sub, StencilValue + 1);
-		}
-		else if (obj->type == PolyTranslucentObjectType::Wall)
-		{
-			obj->wall.Render(WorldToClip, PortalPlane);
-		}
-		else if (obj->type == PolyTranslucentObjectType::Plane)
-		{
-			obj->plane.Render(WorldToClip, PortalPlane);
-		}
-		else if (obj->type == PolyTranslucentObjectType::Thing && (obj->thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
-		{
-			RenderPolyWallSprite wallspr;
-			wallspr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, StencilValue + 1);
-		}
-		else if (obj->type == PolyTranslucentObjectType::Thing)
-		{
-			RenderPolySprite spr;
-			spr.Render(WorldToClip, PortalPlane, obj->thing, obj->sub, StencilValue + 1, obj->SpriteLeft, obj->SpriteRight);
-		}
+		obj->Render(WorldToClip, PortalPlane);
+		obj->~PolyTranslucentObject();
 	}
+
+	TranslucentObjects.clear();
 }

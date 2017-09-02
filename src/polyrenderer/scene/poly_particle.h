@@ -39,3 +39,19 @@ private:
 		ParticleTextureSize = 64
 	};
 };
+
+class PolyTranslucentParticle : public PolyTranslucentObject
+{
+public:
+	PolyTranslucentParticle(particle_t *particle, subsector_t *sub, uint32_t subsectorDepth, uint32_t stencilValue) : PolyTranslucentObject(subsectorDepth, 0.0), particle(particle), sub(sub), StencilValue(stencilValue) { }
+
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) override
+	{
+		RenderPolyParticle spr;
+		spr.Render(worldToClip, portalPlane, particle, sub, StencilValue + 1);
+	}
+
+	particle_t *particle = nullptr;
+	subsector_t *sub = nullptr;
+	uint32_t StencilValue = 0;
+};

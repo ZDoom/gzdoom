@@ -29,49 +29,26 @@
 #include "doomdata.h"
 #include "r_utility.h"
 #include "polyrenderer/drawers/poly_triangle.h"
-#include "poly_wall.h"
-#include "poly_sprite.h"
-#include "poly_wallsprite.h"
 #include "poly_playersprite.h"
-#include "poly_particle.h"
-#include "poly_plane.h"
 #include "poly_cull.h"
 #include <set>
 #include <unordered_map>
 
-enum class PolyTranslucentObjectType
-{
-	Particle,
-	Thing,
-	Wall,
-	Plane
-};
-
 class PolyTranslucentObject
 {
 public:
-	PolyTranslucentObject(particle_t *particle, subsector_t *sub, uint32_t subsectorDepth) : type(PolyTranslucentObjectType::Particle), particle(particle), sub(sub), subsectorDepth(subsectorDepth) { }
-	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth, double dist, float t1, float t2) : type(PolyTranslucentObjectType::Thing), thing(thing), sub(sub), subsectorDepth(subsectorDepth), DistanceSquared(dist), SpriteLeft(t1), SpriteRight(t2) { }
-	PolyTranslucentObject(RenderPolyWall wall) : type(PolyTranslucentObjectType::Wall), wall(wall), subsectorDepth(wall.SubsectorDepth), DistanceSquared(1.e6) { }
-	PolyTranslucentObject(Render3DFloorPlane plane, uint32_t subsectorDepth) : type(PolyTranslucentObjectType::Plane), plane(plane), subsectorDepth(subsectorDepth), DistanceSquared(1.e7) { }
+	PolyTranslucentObject(uint32_t subsectorDepth = 0, double distanceSquared = 0.0) : subsectorDepth(subsectorDepth), DistanceSquared(distanceSquared) { }
+	virtual ~PolyTranslucentObject() { }
+
+	virtual void Render(const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) = 0;
 
 	bool operator<(const PolyTranslucentObject &other) const
 	{
 		return subsectorDepth != other.subsectorDepth ? subsectorDepth < other.subsectorDepth : DistanceSquared < other.DistanceSquared;
 	}
 
-	PolyTranslucentObjectType type;
-	particle_t *particle = nullptr;
-	AActor *thing = nullptr;
-	subsector_t *sub = nullptr;
-
-	RenderPolyWall wall;
-	Render3DFloorPlane plane;
-	
-	uint32_t subsectorDepth = 0;
-	double DistanceSquared = 0.0;
-	
-	float SpriteLeft = 0.0f, SpriteRight = 1.0f;
+	uint32_t subsectorDepth;
+	double DistanceSquared;
 };
 
 class PolyDrawSectorPortal;

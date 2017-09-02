@@ -92,3 +92,16 @@ private:
 	void CalcVMidPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double yoffset);
 	void CalcVBottomPart(FTexture *tex, const line_t *line, const side_t *side, double topz, double bottomz, double unpeggedceil, double yoffset);
 };
+
+class PolyTranslucentWall : public PolyTranslucentObject
+{
+public:
+	PolyTranslucentWall(RenderPolyWall wall) : PolyTranslucentObject(wall.SubsectorDepth, 1e6), wall(wall) { }
+
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) override
+	{
+		wall.Render(worldToClip, portalPlane);
+	}
+
+	RenderPolyWall wall;
+};

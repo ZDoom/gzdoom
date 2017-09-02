@@ -32,6 +32,7 @@
 #include "po_man.h"
 #include "st_stuff.h"
 #include "g_levellocals.h"
+#include "p_effect.h"
 #include "polyrenderer/scene/poly_light.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/drawers/r_draw_rgba.h"

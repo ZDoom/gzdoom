@@ -430,7 +430,7 @@ void Render3DFloorPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyCl
 			if (!plane.Masked)
 				plane.Render(worldToClip, clipPlane);
 			else
-				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(plane, subsectorDepth));
+				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
 		}
 	}
 
@@ -470,7 +470,7 @@ void Render3DFloorPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyCl
 			if (!plane.Masked)
 				plane.Render(worldToClip, clipPlane);
 			else
-				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(plane, subsectorDepth));
+				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
 		}
 	}
 }

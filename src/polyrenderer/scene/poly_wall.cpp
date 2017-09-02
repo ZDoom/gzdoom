@@ -170,7 +170,7 @@ bool RenderPolyWall::RenderLine(const TriMatrix &worldToClip, const PolyClipPlan
 
 			FTexture *midtex = TexMan(line->sidedef->GetTexture(side_t::mid), true);
 			if ((midtex && midtex->UseType != FTexture::TEX_Null) || wall.FogBoundary)
-				translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(wall));
+				translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentWall>(wall));
 
 			if (polyportal)
 			{
@@ -237,7 +237,7 @@ void RenderPolyWall::Render3DFloorLine(const TriMatrix &worldToClip, const PolyC
 	if (!wall.Masked)
 		wall.Render(worldToClip, clipPlane);
 	else
-		translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(wall));
+		translucentWallsOutput.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentWall>(wall));
 }
 
 void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2)

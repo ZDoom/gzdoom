@@ -97,7 +97,7 @@ private:
 	void ClearBuffers();
 	void RenderPortals(int portalDepth);
 	void RenderSectors();
-	void RenderSubsector(subsector_t *sub, uint32_t ceilingSubsectorDepth, uint32_t floorSubsectorDepth);
+	void RenderSubsector(subsector_t *sub, uint32_t subsectorDepth);
 	void RenderLine(subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
 	void RenderSprite(AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right);
 	void RenderSprite(AActor *thing, double sortDistance, DVector2 left, DVector2 right, double t1, double t2, void *node);
@@ -110,7 +110,6 @@ private:
 	PolyClipPlane PortalPlane;
 	uint32_t StencilValue = 0;
 	PolyCull Cull;
-	uint32_t NextSubsectorDepth = 0;
 	std::set<sector_t *> SeenSectors;
 	std::unordered_map<subsector_t *, uint32_t> SubsectorDepths;
 	std::vector<PolyTranslucentObject *> TranslucentObjects;

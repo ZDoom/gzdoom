@@ -86,7 +86,6 @@ void RenderPolyScene::ClearBuffers()
 	TranslucentObjects.clear();
 	SectorPortals.clear();
 	LinePortals.clear();
-	NextSubsectorDepth = 0;
 }
 
 void RenderPolyScene::RenderSectors()
@@ -94,54 +93,16 @@ void RenderPolyScene::RenderSectors()
 	int count = (int)Cull.PvsSectors.size();
 	auto subsectors = Cull.PvsSectors.data();
 
-	int nextCeilingZChange = 0;
-	int nextFloorZChange = 0;
-	uint32_t ceilingSubsectorDepth = 0;
-	uint32_t floorSubsectorDepth = 0;
-
 	for (int i = 0; i < count; i++)
 	{
-		// The software renderer only updates the clipping if the sector height changes.
-		// Find the subsector depths for when that happens.
-		if (i == nextCeilingZChange)
-		{
-			double z = subsectors[i]->sector->ceilingplane.Zat0();
-			nextCeilingZChange++;
-			while (nextCeilingZChange < count)
-			{
-				double nextZ = subsectors[nextCeilingZChange]->sector->ceilingplane.Zat0();
-				if (nextZ > z)
-					break;
-				z = nextZ;
-				nextCeilingZChange++;
-			}
-			ceilingSubsectorDepth = NextSubsectorDepth + nextCeilingZChange - i - 1;
-		}
-		if (i == nextFloorZChange)
-		{
-			double z = subsectors[i]->sector->floorplane.Zat0();
-			nextFloorZChange++;
-			while (nextFloorZChange < count)
-			{
-				double nextZ = subsectors[nextFloorZChange]->sector->floorplane.Zat0();
-				if (nextZ < z)
-					break;
-				z = nextZ;
-				nextFloorZChange++;
-			}
-			floorSubsectorDepth = NextSubsectorDepth + nextFloorZChange - i - 1;
-		}
-
-		RenderSubsector(subsectors[i], ceilingSubsectorDepth, floorSubsectorDepth);
+		RenderSubsector(subsectors[i], i);
 	}
 }
 
-void RenderPolyScene::RenderSubsector(subsector_t *sub, uint32_t ceilingSubsectorDepth, uint32_t floorSubsectorDepth)
+void RenderPolyScene::RenderSubsector(subsector_t *sub, uint32_t subsectorDepth)
 {
 	sector_t *frontsector = sub->sector;
 	frontsector->MoreFlags |= SECF_DRAWN;
-
-	uint32_t subsectorDepth = NextSubsectorDepth++;
 
 	bool mainBSP = sub->polys == nullptr;
 

@@ -34,59 +34,6 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::Render3DPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue)
-{
-	if (!r_3dfloors || sub->sector->CenterFloor() == sub->sector->CenterCeiling())
-		return;
-
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-
-	auto frontsector = sub->sector;
-	auto &ffloors = frontsector->e->XFloor.ffloors;
-
-	// 3D floor floors
-	for (int i = 0; i < (int)ffloors.Size(); i++)
-	{
-		F3DFloor *fakeFloor = ffloors[i];
-		if (!(fakeFloor->flags & FF_EXISTS)) continue;
-		if (!fakeFloor->model) continue;
-		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
-		//	R_3D_AddHeight(fakeFloor->top.plane, frontsector);
-		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
-		if (fakeFloor->alpha == 0) continue;
-		if (fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
-		//fakeFloor->alpha
-
-		double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
-		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight < viewpoint.Pos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot)))
-		{
-			RenderPolyPlane plane;
-			plane.Render3DFloor(worldToClip, clipPlane, sub, stencilValue, false, fakeFloor);
-		}
-	}
-
-	// 3D floor ceilings
-	for (int i = 0; i < (int)ffloors.Size(); i++)
-	{
-		F3DFloor *fakeFloor = ffloors[i];
-		if (!(fakeFloor->flags & FF_EXISTS)) continue;
-		if (!fakeFloor->model) continue;
-		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
-		//	R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
-		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
-		if (fakeFloor->alpha == 0) continue;
-		if (!(fakeFloor->flags & FF_THISINSIDE) && (fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
-		//fakeFloor->alpha
-
-		double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
-		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight > viewpoint.Pos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot)))
-		{
-			RenderPolyPlane plane;
-			plane.Render3DFloor(worldToClip, clipPlane, sub, stencilValue, true, fakeFloor);
-		}
-	}
-}
-
 void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	if (sub->sector->CenterFloor() == sub->sector->CenterCeiling())
@@ -95,59 +42,6 @@ void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipP
 	RenderPolyPlane plane;
 	plane.Render(worldToClip, clipPlane, cull, sub, stencilValue, true, skyCeilingHeight, sectorPortals);
 	plane.Render(worldToClip, clipPlane, cull, sub, stencilValue, false, skyFloorHeight, sectorPortals);
-}
-
-void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, F3DFloor *fakeFloor)
-{
-	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
-	FTexture *tex = TexMan(picnum);
-	if (tex->UseType == FTexture::TEX_Null)
-		return;
-
-	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
-
-	int lightlevel = 255;
-	bool foggy = false;
-	if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
-	{
-		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
-		//basecolormap = light->extra_colormap;
-		lightlevel = *light->p_lightlevel;
-	}
-
-	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
-	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
-
-	PolyPlaneUVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
-
-	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
-	if (ceiling)
-	{
-		for (uint32_t i = 0; i < sub->numlines; i++)
-		{
-			seg_t *line = &sub->firstline[i];
-			vertices[sub->numlines - 1 - i] = xform.GetVertex(line->v1, fakeFloor->bottom.plane->ZatPoint(line->v1));
-		}
-	}
-	else
-	{
-		for (uint32_t i = 0; i < sub->numlines; i++)
-		{
-			seg_t *line = &sub->firstline[i];
-			vertices[i] = xform.GetVertex(line->v1, fakeFloor->top.plane->ZatPoint(line->v1));
-		}
-	}
-
-	PolyDrawArgs args;
-	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
-	args.SetTransform(&worldToClip);
-	args.SetStyle(TriBlendMode::TextureOpaque);
-	args.SetFaceCullCCW(true);
-	args.SetStencilTestValue(stencilValue);
-	args.SetWriteStencil(true, stencilValue + 1);
-	args.SetTexture(tex);
-	args.SetClipPlane(0, clipPlane);
-	args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }
 
 void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
@@ -486,4 +380,162 @@ float PolyPlaneUVTransform::GetU(float x, float y) const
 float PolyPlaneUVTransform::GetV(float x, float y) const
 {
 	return (yOffs - x * sine - y * cosine) * yscale;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void Render3DFloorPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, uint32_t subsectorDepth, std::vector<PolyTranslucentObject *> &translucentObjects)
+{
+	if (!r_3dfloors || sub->sector->CenterFloor() == sub->sector->CenterCeiling())
+		return;
+
+	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+
+	auto frontsector = sub->sector;
+	auto &ffloors = frontsector->e->XFloor.ffloors;
+
+	// 3D floor floors
+	for (int i = 0; i < (int)ffloors.Size(); i++)
+	{
+		F3DFloor *fakeFloor = ffloors[i];
+		if (!(fakeFloor->flags & FF_EXISTS)) continue;
+		if (!fakeFloor->model) continue;
+		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+		//	R_3D_AddHeight(fakeFloor->top.plane, frontsector);
+		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+		if (fakeFloor->alpha == 0) continue;
+		if (fakeFloor->flags & FF_THISINSIDE && fakeFloor->flags & FF_INVERTSECTOR) continue;
+		//fakeFloor->alpha
+
+		double fakeHeight = fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
+		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight < viewpoint.Pos.Z && fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot)))
+		{
+			Render3DFloorPlane plane;
+			plane.sub = sub;
+			plane.stencilValue = stencilValue;
+			plane.ceiling = false;
+			plane.fakeFloor = fakeFloor;
+			plane.Additive = !!(fakeFloor->flags & FF_ADDITIVETRANS);
+			if (!plane.Additive && fakeFloor->alpha == 255)
+			{
+				plane.Masked = false;
+				plane.Alpha = 1.0;
+			}
+			else
+			{
+				plane.Masked = true;
+				plane.Alpha = fakeFloor->alpha / 255.0;
+			}
+
+			if (!plane.Masked)
+				plane.Render(worldToClip, clipPlane);
+			else
+				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(plane, subsectorDepth));
+		}
+	}
+
+	// 3D floor ceilings
+	for (int i = 0; i < (int)ffloors.Size(); i++)
+	{
+		F3DFloor *fakeFloor = ffloors[i];
+		if (!(fakeFloor->flags & FF_EXISTS)) continue;
+		if (!fakeFloor->model) continue;
+		//if (!(fakeFloor->flags & FF_NOSHADE) || (fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+		//	R_3D_AddHeight(fakeFloor->bottom.plane, frontsector);
+		if (!(fakeFloor->flags & FF_RENDERPLANES)) continue;
+		if (fakeFloor->alpha == 0) continue;
+		if (!(fakeFloor->flags & FF_THISINSIDE) && (fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
+		//fakeFloor->alpha
+
+		double fakeHeight = fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
+		if (fakeFloor->bottom.plane->isSlope() || (fakeHeight > viewpoint.Pos.Z && fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot)))
+		{
+			Render3DFloorPlane plane;
+			plane.sub = sub;
+			plane.stencilValue = stencilValue;
+			plane.ceiling = true;
+			plane.fakeFloor = fakeFloor;
+			plane.Additive = !!(fakeFloor->flags & FF_ADDITIVETRANS);
+			if (!plane.Additive && fakeFloor->alpha == 255)
+			{
+				plane.Masked = false;
+				plane.Alpha = 1.0;
+			}
+			else
+			{
+				plane.Masked = true;
+				plane.Alpha = fakeFloor->alpha / 255.0;
+			}
+
+			if (!plane.Masked)
+				plane.Render(worldToClip, clipPlane);
+			else
+				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucentObject>(plane, subsectorDepth));
+		}
+	}
+}
+
+void Render3DFloorPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane)
+{
+	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
+	FTexture *tex = TexMan(picnum);
+	if (tex->UseType == FTexture::TEX_Null)
+		return;
+
+	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
+
+	int lightlevel = 255;
+	bool foggy = false;
+	if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
+	{
+		lightlist_t *light = P_GetPlaneLight(sub->sector, &sub->sector->ceilingplane, false);
+		//basecolormap = light->extra_colormap;
+		lightlevel = *light->p_lightlevel;
+	}
+
+	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
+	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
+
+	PolyPlaneUVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
+
+	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
+	if (ceiling)
+	{
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[sub->numlines - 1 - i] = xform.GetVertex(line->v1, fakeFloor->bottom.plane->ZatPoint(line->v1));
+		}
+	}
+	else
+	{
+		for (uint32_t i = 0; i < sub->numlines; i++)
+		{
+			seg_t *line = &sub->firstline[i];
+			vertices[i] = xform.GetVertex(line->v1, fakeFloor->top.plane->ZatPoint(line->v1));
+		}
+	}
+
+	PolyDrawArgs args;
+	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetTransform(&worldToClip);
+	if (!Masked)
+	{
+		args.SetStyle(TriBlendMode::TextureOpaque);
+	}
+	else
+	{
+		double srcalpha = MIN(Alpha, 1.0);
+		double destalpha = Additive ? 1.0 : 1.0 - srcalpha;
+		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
+		args.SetDepthTest(true);
+		args.SetWriteDepth(true);
+		args.SetWriteStencil(false);
+	}
+	args.SetFaceCullCCW(true);
+	args.SetStencilTestValue(stencilValue);
+	args.SetWriteStencil(true, stencilValue + 1);
+	args.SetTexture(tex);
+	args.SetClipPlane(0, clipPlane);
+	args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }

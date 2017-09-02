@@ -39,23 +39,34 @@
 #include <set>
 #include <unordered_map>
 
+enum class PolyTranslucentObjectType
+{
+	Particle,
+	Thing,
+	Wall,
+	Plane
+};
+
 class PolyTranslucentObject
 {
 public:
-	PolyTranslucentObject(particle_t *particle, subsector_t *sub, uint32_t subsectorDepth) : particle(particle), sub(sub), subsectorDepth(subsectorDepth) { }
-	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth, double dist, float t1, float t2) : thing(thing), sub(sub), subsectorDepth(subsectorDepth), DistanceSquared(dist), SpriteLeft(t1), SpriteRight(t2) { }
-	PolyTranslucentObject(RenderPolyWall wall) : wall(wall), subsectorDepth(wall.SubsectorDepth), DistanceSquared(1.e6) { }
+	PolyTranslucentObject(particle_t *particle, subsector_t *sub, uint32_t subsectorDepth) : type(PolyTranslucentObjectType::Particle), particle(particle), sub(sub), subsectorDepth(subsectorDepth) { }
+	PolyTranslucentObject(AActor *thing, subsector_t *sub, uint32_t subsectorDepth, double dist, float t1, float t2) : type(PolyTranslucentObjectType::Thing), thing(thing), sub(sub), subsectorDepth(subsectorDepth), DistanceSquared(dist), SpriteLeft(t1), SpriteRight(t2) { }
+	PolyTranslucentObject(RenderPolyWall wall) : type(PolyTranslucentObjectType::Wall), wall(wall), subsectorDepth(wall.SubsectorDepth), DistanceSquared(1.e6) { }
+	PolyTranslucentObject(Render3DFloorPlane plane, uint32_t subsectorDepth) : type(PolyTranslucentObjectType::Plane), plane(plane), subsectorDepth(subsectorDepth), DistanceSquared(1.e7) { }
 
 	bool operator<(const PolyTranslucentObject &other) const
 	{
 		return subsectorDepth != other.subsectorDepth ? subsectorDepth < other.subsectorDepth : DistanceSquared < other.DistanceSquared;
 	}
 
+	PolyTranslucentObjectType type;
 	particle_t *particle = nullptr;
 	AActor *thing = nullptr;
 	subsector_t *sub = nullptr;
 
 	RenderPolyWall wall;
+	Render3DFloorPlane plane;
 	
 	uint32_t subsectorDepth = 0;
 	double DistanceSquared = 0.0;

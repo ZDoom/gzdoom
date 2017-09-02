@@ -118,7 +118,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClip
 	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
 
-	UVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
+	PolyPlaneUVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
 
 	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
 	if (ceiling)
@@ -126,7 +126,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClip
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, fakeFloor->bottom.plane->ZatPoint(line->v1), xform);
+			vertices[sub->numlines - 1 - i] = xform.GetVertex(line->v1, fakeFloor->bottom.plane->ZatPoint(line->v1));
 		}
 	}
 	else
@@ -134,7 +134,7 @@ void RenderPolyPlane::Render3DFloor(const TriMatrix &worldToClip, const PolyClip
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[i] = PlaneVertex(line->v1, fakeFloor->top.plane->ZatPoint(line->v1), xform);
+			vertices[i] = xform.GetVertex(line->v1, fakeFloor->top.plane->ZatPoint(line->v1));
 		}
 	}
 
@@ -286,7 +286,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 #endif
 	}
 
-	UVTransform transform(ceiling ? frontsector->planes[sector_t::ceiling].xform : frontsector->planes[sector_t::floor].xform, tex);
+	PolyPlaneUVTransform transform(ceiling ? frontsector->planes[sector_t::ceiling].xform : frontsector->planes[sector_t::floor].xform, tex);
 
 	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
 
@@ -295,7 +295,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[sub->numlines - 1 - i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->ceilingplane.ZatPoint(line->v1), transform);
+			vertices[sub->numlines - 1 - i] = transform.GetVertex(line->v1, isSky ? skyHeight : frontsector->ceilingplane.ZatPoint(line->v1));
 		}
 	}
 	else
@@ -303,7 +303,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t *line = &sub->firstline[i];
-			vertices[i] = PlaneVertex(line->v1, isSky ? skyHeight : frontsector->floorplane.ZatPoint(line->v1), transform);
+			vertices[i] = transform.GetVertex(line->v1, isSky ? skyHeight : frontsector->floorplane.ZatPoint(line->v1));
 		}
 	}
 
@@ -356,97 +356,92 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 		args.SetWriteDepth(false);
 		args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
 
-		for (uint32_t i = 0; i < sub->numlines; i++)
+		RenderSkyWalls(args, sub, frontsector, portal, polyportal, ceiling, skyHeight, transform);
+	}
+}
+
+void RenderPolyPlane::RenderSkyWalls(PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform)
+{
+	for (uint32_t i = 0; i < sub->numlines; i++)
+	{
+		TriVertex *wallvert = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
+
+		seg_t *line = &sub->firstline[i];
+
+		double skyBottomz1 = frontsector->ceilingplane.ZatPoint(line->v1);
+		double skyBottomz2 = frontsector->ceilingplane.ZatPoint(line->v2);
+		if (line->backsector)
 		{
-			TriVertex *wallvert = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
+			sector_t *backsector = (line->backsector != line->frontsector) ? line->backsector : line->frontsector;
 
-			seg_t *line = &sub->firstline[i];
+			double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
+			double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
+			double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
+			double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
 
-			double skyBottomz1 = frontsector->ceilingplane.ZatPoint(line->v1);
-			double skyBottomz2 = frontsector->ceilingplane.ZatPoint(line->v2);
-			if (line->backsector)
+			double backceilz1 = backsector->ceilingplane.ZatPoint(line->v1);
+			double backfloorz1 = backsector->floorplane.ZatPoint(line->v1);
+			double backceilz2 = backsector->ceilingplane.ZatPoint(line->v2);
+			double backfloorz2 = backsector->floorplane.ZatPoint(line->v2);
+
+			double topceilz1 = frontceilz1;
+			double topceilz2 = frontceilz2;
+			double topfloorz1 = MIN(backceilz1, frontceilz1);
+			double topfloorz2 = MIN(backceilz2, frontceilz2);
+			double bottomceilz1 = MAX(frontfloorz1, backfloorz1);
+			double bottomceilz2 = MAX(frontfloorz2, backfloorz2);
+			double middleceilz1 = topfloorz1;
+			double middleceilz2 = topfloorz2;
+			double middlefloorz1 = MIN(bottomceilz1, middleceilz1);
+			double middlefloorz2 = MIN(bottomceilz2, middleceilz2);
+
+			bool bothSkyCeiling = frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
+
+			bool closedSector = backceilz1 == backfloorz1 && backceilz2 == backfloorz2;
+			if (ceiling && bothSkyCeiling && closedSector)
 			{
-				sector_t *backsector = (line->backsector != line->frontsector) ? line->backsector : line->frontsector;
-
-				double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
-				double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
-				double frontceilz2 = frontsector->ceilingplane.ZatPoint(line->v2);
-				double frontfloorz2 = frontsector->floorplane.ZatPoint(line->v2);
-
-				double backceilz1 = backsector->ceilingplane.ZatPoint(line->v1);
-				double backfloorz1 = backsector->floorplane.ZatPoint(line->v1);
-				double backceilz2 = backsector->ceilingplane.ZatPoint(line->v2);
-				double backfloorz2 = backsector->floorplane.ZatPoint(line->v2);
-
-				double topceilz1 = frontceilz1;
-				double topceilz2 = frontceilz2;
-				double topfloorz1 = MIN(backceilz1, frontceilz1);
-				double topfloorz2 = MIN(backceilz2, frontceilz2);
-				double bottomceilz1 = MAX(frontfloorz1, backfloorz1);
-				double bottomceilz2 = MAX(frontfloorz2, backfloorz2);
-				double middleceilz1 = topfloorz1;
-				double middleceilz2 = topfloorz2;
-				double middlefloorz1 = MIN(bottomceilz1, middleceilz1);
-				double middlefloorz2 = MIN(bottomceilz2, middleceilz2);
-
-				bool bothSkyCeiling = frontsector->GetTexture(sector_t::ceiling) == skyflatnum && backsector->GetTexture(sector_t::ceiling) == skyflatnum;
-
-				bool closedSector = backceilz1 == backfloorz1 && backceilz2 == backfloorz2;
-				if (ceiling && bothSkyCeiling && closedSector)
-				{
-					skyBottomz1 = middlefloorz1;
-					skyBottomz2 = middlefloorz2;
-				}
-				else if (bothSkyCeiling)
-				{
-					continue;
-				}
+				skyBottomz1 = middlefloorz1;
+				skyBottomz2 = middlefloorz2;
 			}
-			else if (portal && line->linedef && line->linedef->special == Line_Horizon)
+			else if (bothSkyCeiling)
 			{
-				// Not entirely correct as this closes the line horizon rather than allowing the floor to continue to infinity
-				skyBottomz1 = frontsector->floorplane.ZatPoint(line->v1);
-				skyBottomz2 = frontsector->floorplane.ZatPoint(line->v2);
+				continue;
 			}
+		}
+		else if (portal && line->linedef && line->linedef->special == Line_Horizon)
+		{
+			// Not entirely correct as this closes the line horizon rather than allowing the floor to continue to infinity
+			skyBottomz1 = frontsector->floorplane.ZatPoint(line->v1);
+			skyBottomz2 = frontsector->floorplane.ZatPoint(line->v2);
+		}
 
-			if (ceiling)
-			{
-				wallvert[0] = PlaneVertex(line->v1, skyHeight, transform);
-				wallvert[1] = PlaneVertex(line->v2, skyHeight, transform);
-				wallvert[2] = PlaneVertex(line->v2, skyBottomz2, transform);
-				wallvert[3] = PlaneVertex(line->v1, skyBottomz1, transform);
-			}
-			else
-			{
-				wallvert[0] = PlaneVertex(line->v1, frontsector->floorplane.ZatPoint(line->v1), transform);
-				wallvert[1] = PlaneVertex(line->v2, frontsector->floorplane.ZatPoint(line->v2), transform);
-				wallvert[2] = PlaneVertex(line->v2, skyHeight, transform);
-				wallvert[3] = PlaneVertex(line->v1, skyHeight, transform);
-			}
+		if (ceiling)
+		{
+			wallvert[0] = transform.GetVertex(line->v1, skyHeight);
+			wallvert[1] = transform.GetVertex(line->v2, skyHeight);
+			wallvert[2] = transform.GetVertex(line->v2, skyBottomz2);
+			wallvert[3] = transform.GetVertex(line->v1, skyBottomz1);
+		}
+		else
+		{
+			wallvert[0] = transform.GetVertex(line->v1, frontsector->floorplane.ZatPoint(line->v1));
+			wallvert[1] = transform.GetVertex(line->v2, frontsector->floorplane.ZatPoint(line->v2));
+			wallvert[2] = transform.GetVertex(line->v2, skyHeight);
+			wallvert[3] = transform.GetVertex(line->v1, skyHeight);
+		}
 
-			args.DrawArray(wallvert, 4, PolyDrawMode::TriangleFan);
-			
-			if (portal)
-			{
-				polyportal->Shape.push_back({ wallvert, 4, ccw });
-			}
+		args.DrawArray(wallvert, 4, PolyDrawMode::TriangleFan);
+
+		if (portal)
+		{
+			polyportal->Shape.push_back({ wallvert, 4, args.FaceCullCCW() });
 		}
 	}
 }
 
-TriVertex RenderPolyPlane::PlaneVertex(vertex_t *v1, double height, const UVTransform &transform)
-{
-	TriVertex v;
-	v.x = (float)v1->fPos().X;
-	v.y = (float)v1->fPos().Y;
-	v.z = (float)height;
-	v.w = 1.0f;
-	v.u = transform.GetU(v.x, v.y);
-	v.v = transform.GetV(v.x, v.y);
-	return v;
-}
+/////////////////////////////////////////////////////////////////////////////
 
-RenderPolyPlane::UVTransform::UVTransform(const FTransform &transform, FTexture *tex)
+PolyPlaneUVTransform::PolyPlaneUVTransform(const FTransform &transform, FTexture *tex)
 {
 	if (tex)
 	{
@@ -471,12 +466,24 @@ RenderPolyPlane::UVTransform::UVTransform(const FTransform &transform, FTexture 
 	}
 }
 
-float RenderPolyPlane::UVTransform::GetU(float x, float y) const
+TriVertex PolyPlaneUVTransform::GetVertex(vertex_t *v1, double height) const
+{
+	TriVertex v;
+	v.x = (float)v1->fPos().X;
+	v.y = (float)v1->fPos().Y;
+	v.z = (float)height;
+	v.w = 1.0f;
+	v.u = GetU(v.x, v.y);
+	v.v = GetV(v.x, v.y);
+	return v;
+}
+
+float PolyPlaneUVTransform::GetU(float x, float y) const
 {
 	return (xOffs + x * cosine - y * sine) * xscale;
 }
 
-float RenderPolyPlane::UVTransform::GetV(float x, float y) const
+float PolyPlaneUVTransform::GetV(float x, float y) const
 {
 	return (yOffs - x * sine - y * cosine) * yscale;
 }

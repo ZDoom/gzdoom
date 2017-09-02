@@ -27,6 +27,24 @@
 class PolyDrawSectorPortal;
 class PolyCull;
 
+class PolyPlaneUVTransform
+{
+public:
+	PolyPlaneUVTransform(const FTransform &transform, FTexture *tex);
+
+	TriVertex GetVertex(vertex_t *v1, double height) const;
+
+private:
+	float GetU(float x, float y) const;
+	float GetV(float x, float y) const;
+
+	float xscale;
+	float yscale;
+	float cosine;
+	float sine;
+	float xOffs, yOffs;
+};
+
 class RenderPolyPlane
 {
 public:
@@ -34,21 +52,7 @@ public:
 	static void Render3DPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue);
 
 private:
-	struct UVTransform
-	{
-		UVTransform(const FTransform &transform, FTexture *tex);
-
-		float GetU(float x, float y) const;
-		float GetV(float x, float y) const;
-
-		float xscale;
-		float yscale;
-		float cosine;
-		float sine;
-		float xOffs, yOffs;
-	};
-
 	void Render3DFloor(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, F3DFloor *fakefloor);
 	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
-	TriVertex PlaneVertex(vertex_t *v1, double height, const UVTransform &transform);
+	void RenderSkyWalls(PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform);
 };

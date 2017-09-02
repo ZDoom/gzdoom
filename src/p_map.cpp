@@ -6704,7 +6704,8 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 			false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
 
 		// Clears the special if it was run on thing's death or if flag is set.
-		if (death || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
+		// Note that Hexen originally did not clear the special which some original maps depend on (e.g. the bell in HEXDD.)
+		if ((death && !(level.flags2 & LEVEL2_HEXENHACK)) || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
 	}
 
 	// Returns the result

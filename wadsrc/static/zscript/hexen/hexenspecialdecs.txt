@@ -898,11 +898,6 @@ class ZBell : Actor
 	{
 		bNoGravity = true;
 		Height = Default.Height;
-		if (special)
-		{ // Initiate death action
-			A_CallSpecial(special, args[0], args[1], args[2], args[3], args[4]);
-			special = 0;
-		}
 	}
 
 	//===========================================================================

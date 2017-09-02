@@ -1,5 +1,5 @@
 /*
-**  Handling drawing a plane (ceiling, floor)
+**  Polygon Doom software renderer
 **  Copyright (c) 2016 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied
@@ -34,17 +34,17 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	if (sub->sector->CenterFloor() == sub->sector->CenterCeiling())
 		return;
 
 	RenderPolyPlane plane;
-	plane.Render(worldToClip, clipPlane, cull, sub, stencilValue, true, skyCeilingHeight, sectorPortals);
-	plane.Render(worldToClip, clipPlane, cull, sub, stencilValue, false, skyFloorHeight, sectorPortals);
+	plane.Render(worldToClip, clipPlane, sub, stencilValue, true, skyCeilingHeight, sectorPortals);
+	plane.Render(worldToClip, clipPlane, sub, stencilValue, false, skyFloorHeight, sectorPortals);
 }
 
-void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	

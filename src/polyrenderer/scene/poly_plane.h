@@ -1,5 +1,5 @@
 /*
-**  Handling drawing a plane (ceiling, floor)
+**  Polygon Doom software renderer
 **  Copyright (c) 2016 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied
@@ -25,7 +25,6 @@
 #include "polyrenderer/drawers/poly_triangle.h"
 
 class PolyDrawSectorPortal;
-class PolyCull;
 
 class PolyPlaneUVTransform
 {
@@ -48,10 +47,10 @@ private:
 class RenderPolyPlane
 {
 public:
-	static void RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	static void RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
 
 private:
-	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, PolyCull &cull, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
 	void RenderSkyWalls(PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform);
 };
 

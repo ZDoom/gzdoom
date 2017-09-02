@@ -1,5 +1,5 @@
 /*
-**  Handling drawing a player sprite
+**  Polygon Doom software renderer
 **  Copyright (c) 2016 Magnus Norddahl
 **
 **  This software is provided 'as-is', without any express or implied

@@ -130,12 +130,12 @@ void RenderPolyScene::RenderSubsector(subsector_t *sub, uint32_t subsectorDepth)
 		}
 
 		Render3DFloorPlane::RenderPlanes(WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 	else
 	{
 		Render3DFloorPlane::RenderPlanes(WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, Cull, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		RenderPolyPlane::RenderPlanes(WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{

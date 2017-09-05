@@ -429,7 +429,7 @@ void FIWadManager::AddIWADCandidates(const char *dir)
 				{
 					if (!stricmp(name, FindName))
 					{
-						mFoundWads.Push(FFoundWadInfo{ slasheddir + name, "", -1 });
+						mFoundWads.Push(FFoundWadInfo{ slasheddir + FindName, "", -1 });
 					}
 				}
 			}

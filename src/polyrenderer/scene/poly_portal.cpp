@@ -68,7 +68,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 
 	PolyClipPlane portalPlane(0.0f, 0.0f, 0.0f, 1.0f);
 	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
-	RenderPortal.SetPortalSegments(Segments);
+	//RenderPortal.SetPortalSegments(Segments);
 	RenderPortal.Render(portalDepth);
 	
 	RestoreGlobals();
@@ -202,7 +202,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 
 	RenderPortal.LastPortalLine = clipLine;
 	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
-	RenderPortal.SetPortalSegments(Segments);
+	//RenderPortal.SetPortalSegments(Segments);
 	RenderPortal.Render(portalDepth);
 
 	RestoreGlobals();

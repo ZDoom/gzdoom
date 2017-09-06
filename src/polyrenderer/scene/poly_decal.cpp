@@ -28,10 +28,11 @@
 #include "poly_decal.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/poly_renderthread.h"
 #include "a_sharedglobal.h"
 #include "swrenderer/scene/r_scene.h"
 
-void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue)
+void RenderPolyDecal::RenderWallDecals(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue)
 {
 	if (line->linedef == nullptr && line->sidedef == nullptr)
 		return;
@@ -39,11 +40,11 @@ void RenderPolyDecal::RenderWallDecals(const TriMatrix &worldToClip, const PolyC
 	for (DBaseDecal *decal = line->sidedef->AttachedDecals; decal != nullptr; decal = decal->WallNext)
 	{
 		RenderPolyDecal render;
-		render.Render(worldToClip, clipPlane, decal, line, stencilValue);
+		render.Render(thread, worldToClip, clipPlane, decal, line, stencilValue);
 	}
 }
 
-void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue)
+void RenderPolyDecal::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue)
 {
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -148,7 +149,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 
 	// Generate vertices for the decal
 
-	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
+	TriVertex *vertices = thread->FrameMemory->AllocMemory<TriVertex>(4);
 	vertices[0].x = (float)decal_left.X;
 	vertices[0].y = (float)decal_left.Y;
 	vertices[0].z = (float)ztop;
@@ -193,7 +194,7 @@ void RenderPolyDecal::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 	args.SetDepthTest(true);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);
-	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 void RenderPolyDecal::GetDecalSectors(DBaseDecal *decal, const seg_t *line, sector_t **front, sector_t **back)

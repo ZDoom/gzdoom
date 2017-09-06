@@ -50,7 +50,7 @@ public:
 	FSectorPortal *Portal = nullptr;
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
-	std::vector<PolyPortalSegment> Segments;
+	//std::vector<PolyPortalSegment> Segments;
 
 private:
 	void SaveGlobals();
@@ -80,7 +80,7 @@ public:
 	line_t *Mirror = nullptr;
 	uint32_t StencilValue = 0;
 	std::vector<PolyPortalVertexRange> Shape;
-	std::vector<PolyPortalSegment> Segments;
+	//std::vector<PolyPortalSegment> Segments;
 
 private:
 	void SaveGlobals();

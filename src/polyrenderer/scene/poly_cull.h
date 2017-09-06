@@ -23,22 +23,25 @@
 #pragma once
 
 #include "polyrenderer/drawers/poly_triangle.h"
+#include <set>
+#include <unordered_map>
 
 class PolyCull
 {
 public:
-	void ClearSolidSegments();
 	void CullScene(const TriMatrix &worldToClip, const PolyClipPlane &portalClipPlane);
 
-	bool GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const;
-	void MarkSegmentCulled(angle_t angle1, angle_t angle2);
-	bool IsSegmentCulled(angle_t angle1, angle_t angle2) const;
-	void InvertSegments();
-	void MarkViewFrustum();
+	bool IsLineSegVisible(uint32_t subsectorDepth, uint32_t lineIndex)
+	{
+		return PvsLineVisible[PvsLineStart[subsectorDepth] + lineIndex];
+	}
 
 	std::vector<subsector_t *> PvsSectors;
 	double MaxCeilingHeight = 0.0;
 	double MinFloorHeight = 0.0;
+
+	std::set<sector_t *> SeenSectors;
+	std::unordered_map<subsector_t *, uint32_t> SubsectorDepths;
 
 	static angle_t PointToPseudoAngle(double x, double y);
 
@@ -49,6 +52,13 @@ private:
 		angle_t Start, End;
 	};
 
+	void ClearSolidSegments();
+	void MarkViewFrustum();
+
+	bool GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const;
+	bool IsSegmentCulled(angle_t angle1, angle_t angle2) const;
+	void InvertSegments();
+
 	void CullNode(void *node);
 	void CullSubsector(subsector_t *sub);
 	int PointOnSide(const DVector2 &pos, const node_t *node);
@@ -57,12 +67,17 @@ private:
 	// Returns true if some part of the bbox might be visible.
 	bool CheckBBox(float *bspcoord);
 
+	void MarkSegmentCulled(angle_t angle1, angle_t angle2);
+
 	std::vector<SolidSegment> SolidSegments;
 	std::vector<SolidSegment> TempInvertSolidSegments;
 	const int SolidCullScale = 3000;
 	bool FirstSkyHeight = true;
 
 	PolyClipPlane PortalClipPlane;
+
+	std::vector<uint32_t> PvsLineStart;
+	std::vector<bool> PvsLineVisible;
 
 	static angle_t AngleToPseudo(angle_t ang);
 };

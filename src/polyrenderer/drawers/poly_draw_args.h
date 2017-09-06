@@ -26,6 +26,7 @@
 #include "r_data/colormaps.h"
 #include "screen_triangle.h"
 
+class PolyRenderThread;
 class FTexture;
 struct TriMatrix;
 
@@ -63,7 +64,7 @@ public:
 	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
 	void SetTransform(const TriMatrix *objectToClip) { mObjectToClip = objectToClip; }
 	void SetColor(uint32_t bgra, uint8_t palindex);
-	void DrawArray(const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void DrawArray(PolyRenderThread *thread, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 
 	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
 	const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }
@@ -157,7 +158,7 @@ public:
 	void SetStyle(TriBlendMode blendmode, double srcalpha = 1.0, double destalpha = 1.0) { mBlendMode = blendmode; mSrcAlpha = (uint32_t)(srcalpha * 256.0 + 0.5); mDestAlpha = (uint32_t)(destalpha * 256.0 + 0.5); }
 	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
 	void SetColor(uint32_t bgra, uint8_t palindex);
-	void Draw(double x0, double x1, double y0, double y1, double u0, double u1, double v0, double v1);
+	void Draw(PolyRenderThread *thread, double x0, double x1, double y0, double y1, double u0, double u1, double v0, double v1);
 
 	const uint8_t *TexturePixels() const { return mTexturePixels; }
 	int TextureWidth() const { return mTextureWidth; }

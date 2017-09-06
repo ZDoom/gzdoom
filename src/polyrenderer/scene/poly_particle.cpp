@@ -28,10 +28,11 @@
 #include "poly_particle.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/poly_renderthread.h"
 
 EXTERN_CVAR(Int, gl_particles_style)
 
-void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
+void RenderPolyParticle::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
 {
 	DVector3 pos = particle->Pos;
 	double psize = particle->size / 8.0;
@@ -45,7 +46,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlan
 		{ pos.X + viewpoint.Sin * psize, pos.Y - viewpoint.Cos * psize }
 	};
 
-	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
+	TriVertex *vertices = thread->FrameMemory->AllocMemory<TriVertex>(4);
 
 	bool foggy = false;
 	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
@@ -85,7 +86,7 @@ void RenderPolyParticle::Render(const TriMatrix &worldToClip, const PolyClipPlan
 	args.SetWriteDepth(false);
 	args.SetClipPlane(0, clipPlane);
 	args.SetTexture(GetParticleTexture(), ParticleTextureSize, ParticleTextureSize);
-	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 uint8_t *RenderPolyParticle::GetParticleTexture()

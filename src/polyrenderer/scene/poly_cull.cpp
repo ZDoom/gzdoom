@@ -30,7 +30,14 @@
 
 void PolyCull::CullScene(const TriMatrix &worldToClip, const PolyClipPlane &portalClipPlane)
 {
+	ClearSolidSegments();
+	MarkViewFrustum();
+
 	PvsSectors.clear();
+	PvsLineStart.clear();
+	PvsLineVisible.clear();
+	SeenSectors.clear();
+	SubsectorDepths.clear();
 	PortalClipPlane = portalClipPlane;
 
 	// Cull front to back
@@ -97,35 +104,49 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		FirstSkyHeight = false;
 	}
 
+	uint32_t subsectorDepth = (uint32_t)PvsSectors.size();
+
 	// Mark that we need to render this
 	PvsSectors.push_back(sub);
+	PvsLineStart.push_back((uint32_t)PvsLineVisible.size());
+
+	DVector3 viewpos = PolyRenderer::Instance()->Viewpoint.Pos;
 
 	// Update culling info for further bsp clipping
 	for (uint32_t i = 0; i < sub->numlines; i++)
 	{
 		seg_t *line = &sub->firstline[i];
-		if ((line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ)) && line->backsector == nullptr)
+
+		// Skip lines not facing viewer
+		DVector2 pt1 = line->v1->fPos() - viewpos;
+		DVector2 pt2 = line->v2->fPos() - viewpos;
+		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 		{
-			// Skip lines not facing viewer
-			DVector2 pt1 = line->v1->fPos() - PolyRenderer::Instance()->Viewpoint.Pos;
-			DVector2 pt2 = line->v2->fPos() - PolyRenderer::Instance()->Viewpoint.Pos;
-			if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
-				continue;
-
-			// Skip line if entirely behind portal clipping plane
-			if ((PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D <= 0.0) ||
-				(PortalClipPlane.A * line->v2->fX() + PortalClipPlane.B * line->v2->fY() + PortalClipPlane.D <= 0.0))
-			{
-				continue;
-			}
-
-			angle_t angle1, angle2;
-			if (GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2))
-			{
-				MarkSegmentCulled(angle1, angle2);
-			}
+			PvsLineVisible.push_back(false);
+			continue;
 		}
+
+		// Skip line if entirely behind portal clipping plane
+		if ((PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D <= 0.0) ||
+			(PortalClipPlane.A * line->v2->fX() + PortalClipPlane.B * line->v2->fY() + PortalClipPlane.D <= 0.0))
+		{
+			PvsLineVisible.push_back(false);
+			continue;
+		}
+
+		angle_t angle1, angle2;
+		bool lineVisible = GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2);
+		if (lineVisible && line->backsector == nullptr)
+		{
+			MarkSegmentCulled(angle1, angle2);
+		}
+
+		// Mark if this line was visible
+		PvsLineVisible.push_back(lineVisible);
 	}
+
+	SeenSectors.insert(sub->sector);
+	SubsectorDepths[sub] = subsectorDepth;
 }
 
 void PolyCull::ClearSolidSegments()

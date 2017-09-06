@@ -28,6 +28,7 @@
 #include "poly_sprite.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/poly_renderthread.h"
 #include "r_data/r_vanillatrans.h"
 #include "actorinlines.h"
 
@@ -71,7 +72,7 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	return true;
 }
 
-void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
+void RenderPolySprite::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
 {
 	DVector2 line[2];
 	if (!GetLine(thing, line[0], line[1]))
@@ -116,7 +117,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	// Rumor has it that AlterWeaponSprite needs to be called with visstyle passed in somewhere around here..
 	//R_SetColorMapLight(visstyle.BaseColormap, 0, visstyle.ColormapNum << FRACBITS);
 
-	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
+	TriVertex *vertices = thread->FrameMemory->AllocMemory<TriVertex>(4);
 
 	bool foggy = false;
 	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
@@ -166,7 +167,7 @@ void RenderPolySprite::Render(const TriMatrix &worldToClip, const PolyClipPlane 
 	args.SetDepthTest(true);
 	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
-	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 double RenderPolySprite::GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos)

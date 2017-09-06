@@ -28,8 +28,9 @@
 #include "poly_wallsprite.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/poly_renderthread.h"
 
-void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue)
+void RenderPolyWallSprite::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue)
 {
 	if (RenderPolySprite::IsThingCulled(thing))
 		return;
@@ -69,7 +70,7 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPl
 
 	DVector2 points[2] = { left, right };
 
-	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
+	TriVertex *vertices = thread->FrameMemory->AllocMemory<TriVertex>(4);
 
 	bool foggy = false;
 	int actualextralight = foggy ? 0 : viewpoint.extralight << 4;
@@ -110,5 +111,5 @@ void RenderPolyWallSprite::Render(const TriMatrix &worldToClip, const PolyClipPl
 	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
 	args.SetStyle(TriBlendMode::TextureMasked);
-	args.DrawArray(vertices, 4, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread, vertices, 4, PolyDrawMode::TriangleFan);
 }

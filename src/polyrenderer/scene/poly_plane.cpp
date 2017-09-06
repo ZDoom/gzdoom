@@ -30,21 +30,22 @@
 #include "polyrenderer/poly_renderer.h"
 #include "r_sky.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/poly_renderthread.h"
 #include "p_lnspec.h"
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	if (sub->sector->CenterFloor() == sub->sector->CenterCeiling())
 		return;
 
 	RenderPolyPlane plane;
-	plane.Render(worldToClip, clipPlane, sub, stencilValue, true, skyCeilingHeight, sectorPortals);
-	plane.Render(worldToClip, clipPlane, sub, stencilValue, false, skyFloorHeight, sectorPortals);
+	plane.Render(thread, worldToClip, clipPlane, sub, stencilValue, true, skyCeilingHeight, sectorPortals);
+	plane.Render(thread, worldToClip, clipPlane, sub, stencilValue, false, skyFloorHeight, sectorPortals);
 }
 
-void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	
@@ -182,7 +183,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 
 	PolyPlaneUVTransform transform(ceiling ? frontsector->planes[sector_t::ceiling].xform : frontsector->planes[sector_t::floor].xform, tex);
 
-	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
+	TriVertex *vertices = thread->FrameMemory->AllocMemory<TriVertex>(sub->numlines);
 
 	if (ceiling)
 	{
@@ -232,7 +233,7 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 	{
 		args.SetTexture(tex);
 		args.SetStyle(TriBlendMode::TextureOpaque);
-		args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
+		args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
@@ -248,17 +249,17 @@ void RenderPolyPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &
 
 		args.SetWriteColor(false);
 		args.SetWriteDepth(false);
-		args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
+		args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
 
-		RenderSkyWalls(args, sub, frontsector, portal, polyportal, ceiling, skyHeight, transform);
+		RenderSkyWalls(thread, args, sub, frontsector, portal, polyportal, ceiling, skyHeight, transform);
 	}
 }
 
-void RenderPolyPlane::RenderSkyWalls(PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform)
+void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform)
 {
 	for (uint32_t i = 0; i < sub->numlines; i++)
 	{
-		TriVertex *wallvert = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(4);
+		TriVertex *wallvert = thread->FrameMemory->AllocMemory<TriVertex>(4);
 
 		seg_t *line = &sub->firstline[i];
 
@@ -324,7 +325,7 @@ void RenderPolyPlane::RenderSkyWalls(PolyDrawArgs &args, subsector_t *sub, secto
 			wallvert[3] = transform.GetVertex(line->v1, skyHeight);
 		}
 
-		args.DrawArray(wallvert, 4, PolyDrawMode::TriangleFan);
+		args.DrawArray(thread, wallvert, 4, PolyDrawMode::TriangleFan);
 
 		if (portal)
 		{
@@ -384,7 +385,7 @@ float PolyPlaneUVTransform::GetV(float x, float y) const
 
 /////////////////////////////////////////////////////////////////////////////
 
-void Render3DFloorPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, uint32_t subsectorDepth, std::vector<PolyTranslucentObject *> &translucentObjects)
+void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, uint32_t subsectorDepth, std::vector<PolyTranslucentObject *> &translucentObjects)
 {
 	if (!r_3dfloors || sub->sector->CenterFloor() == sub->sector->CenterCeiling())
 		return;
@@ -428,9 +429,9 @@ void Render3DFloorPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyCl
 			}
 
 			if (!plane.Masked)
-				plane.Render(worldToClip, clipPlane);
+				plane.Render(thread, worldToClip, clipPlane);
 			else
-				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
+				translucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
 		}
 	}
 
@@ -468,14 +469,14 @@ void Render3DFloorPlane::RenderPlanes(const TriMatrix &worldToClip, const PolyCl
 			}
 
 			if (!plane.Masked)
-				plane.Render(worldToClip, clipPlane);
+				plane.Render(thread, worldToClip, clipPlane);
 			else
-				translucentObjects.push_back(PolyRenderer::Instance()->FrameMemory.NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
+				translucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
 		}
 	}
 }
 
-void Render3DFloorPlane::Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane)
+void Render3DFloorPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane)
 {
 	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
 	FTexture *tex = TexMan(picnum);
@@ -498,7 +499,7 @@ void Render3DFloorPlane::Render(const TriMatrix &worldToClip, const PolyClipPlan
 
 	PolyPlaneUVTransform xform(ceiling ? fakeFloor->top.model->planes[sector_t::ceiling].xform : fakeFloor->top.model->planes[sector_t::floor].xform, tex);
 
-	TriVertex *vertices = PolyRenderer::Instance()->FrameMemory.AllocMemory<TriVertex>(sub->numlines);
+	TriVertex *vertices = thread->FrameMemory->AllocMemory<TriVertex>(sub->numlines);
 	if (ceiling)
 	{
 		for (uint32_t i = 0; i < sub->numlines; i++)
@@ -537,5 +538,5 @@ void Render3DFloorPlane::Render(const TriMatrix &worldToClip, const PolyClipPlan
 	args.SetWriteStencil(true, stencilValue + 1);
 	args.SetTexture(tex);
 	args.SetClipPlane(0, clipPlane);
-	args.DrawArray(vertices, sub->numlines, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }

@@ -1,4 +1,5 @@
 #include "poly_renderer.cpp"
+#include "poly_renderthread.cpp"
 #include "drawers/poly_buffer.cpp"
 #include "drawers/poly_draw_args.cpp"
 #include "drawers/poly_triangle.cpp"

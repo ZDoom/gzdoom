@@ -33,6 +33,7 @@
 #include "scene/poly_sky.h"
 #include "scene/poly_light.h"
 #include "swrenderer/r_memory.h"
+#include "poly_renderthread.h"
 
 class AActor;
 class DCanvas;
@@ -54,8 +55,7 @@ public:
 
 	bool DontMapLines = false;
 	
-	RenderMemory FrameMemory;
-	DrawerCommandQueuePtr DrawQueue;
+	PolyRenderThreads Threads;
 	DCanvas *RenderTarget = nullptr;
 	FViewWindow Viewwindow;
 	FRenderViewpoint Viewpoint;

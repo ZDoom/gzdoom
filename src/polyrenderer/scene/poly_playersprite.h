@@ -61,7 +61,7 @@ public:
 
 	short renderflags = 0;
 
-	void Render();
+	void Render(PolyRenderThread *thread);
 };
 
 class PolyHWAccelPlayerSprite
@@ -90,11 +90,11 @@ public:
 class RenderPolyPlayerSprites
 {
 public:
-	void Render();
+	void Render(PolyRenderThread *thread);
 	void RenderRemainingSprites();
 
 private:
-	void RenderSprite(DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy);
+	void RenderSprite(PolyRenderThread *thread, DPSprite *pspr, AActor *owner, float bobx, float boby, double wx, double wy, double ticfrac, int spriteshade, FDynamicColormap *basecolormap, bool foggy);
 	static fixed_t LightLevelToShade(int lightlevel, bool foggy);
 
 	enum { BASEXCENTER = 160 };

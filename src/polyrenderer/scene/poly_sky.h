@@ -46,7 +46,7 @@ class PolySkyDome
 {
 public:
 	PolySkyDome();
-	void Render(const TriMatrix &worldToClip);
+	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip);
 
 private:
 	TArray<FVector2> mInitialUV;
@@ -58,8 +58,8 @@ private:
 	void SkyVertex(int r, int c, bool yflip);
 	void CreateSkyHemisphere(bool zflip);
 	void CreateDome();
-	void RenderRow(PolyDrawArgs &args, int row, uint32_t capcolor, uint8_t capcolorindex);
-	void RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap);
+	void RenderRow(PolyRenderThread *thread, PolyDrawArgs &args, int row, uint32_t capcolor, uint8_t capcolorindex);
+	void RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap);
 
 	TriVertex SetVertexXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0);
 

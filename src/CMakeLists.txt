@@ -744,6 +744,7 @@ set ( SWRENDER_SOURCES
 
 set( POLYRENDER_SOURCES
 	polyrenderer/poly_renderer.cpp
+	polyrenderer/poly_renderthread.cpp
 	polyrenderer/scene/poly_scene.cpp
 	polyrenderer/scene/poly_portal.cpp
 	polyrenderer/scene/poly_cull.cpp

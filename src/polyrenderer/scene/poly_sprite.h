@@ -27,7 +27,7 @@
 class RenderPolySprite
 {
 public:
-	void Render(const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2);
+	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2);
 
 	static bool GetLine(AActor *thing, DVector2 &left, DVector2 &right);
 	static bool IsThingCulled(AActor *thing);
@@ -44,17 +44,17 @@ class PolyTranslucentThing : public PolyTranslucentObject
 public:
 	PolyTranslucentThing(AActor *thing, subsector_t *sub, uint32_t subsectorDepth, double dist, float t1, float t2, uint32_t stencilValue) : PolyTranslucentObject(subsectorDepth, dist), thing(thing), sub(sub), SpriteLeft(t1), SpriteRight(t2), StencilValue(stencilValue) { }
 
-	void Render(const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) override
+	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) override
 	{
 		if ((thing->renderflags & RF_SPRITETYPEMASK) == RF_WALLSPRITE)
 		{
 			RenderPolyWallSprite wallspr;
-			wallspr.Render(worldToClip, portalPlane, thing, sub, StencilValue + 1);
+			wallspr.Render(thread, worldToClip, portalPlane, thing, sub, StencilValue + 1);
 		}
 		else
 		{
 			RenderPolySprite spr;
-			spr.Render(worldToClip, portalPlane, thing, sub, StencilValue + 1, SpriteLeft, SpriteRight);
+			spr.Render(thread, worldToClip, portalPlane, thing, sub, StencilValue + 1, SpriteLeft, SpriteRight);
 		}
 	}
 

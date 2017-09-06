@@ -35,7 +35,7 @@ PolySkyDome::PolySkyDome()
 	CreateDome();
 }
 
-void PolySkyDome::Render(const TriMatrix &worldToClip)
+void PolySkyDome::Render(PolyRenderThread *thread, const TriMatrix &worldToClip)
 {
 #ifdef USE_GL_DOME_MATH
 	TriMatrix modelMatrix = GLSkyMath();
@@ -88,8 +88,8 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 	args.SetWriteStencil(true, 1);
 	args.SetClipPlane(0, PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f));
 
-	RenderCapColorRow(args, mCurrentSetup.frontskytex, 0, false);
-	RenderCapColorRow(args, mCurrentSetup.frontskytex, rc, true);
+	RenderCapColorRow(thread, args, mCurrentSetup.frontskytex, 0, false);
+	RenderCapColorRow(thread, args, mCurrentSetup.frontskytex, rc, true);
 
 	args.SetTexture(mCurrentSetup.frontskytex);
 
@@ -100,20 +100,20 @@ void PolySkyDome::Render(const TriMatrix &worldToClip)
 
 	for (int i = 1; i <= mRows; i++)
 	{
-		RenderRow(args, i, topcapcolor, topcapindex);
-		RenderRow(args, rc + i, bottomcapcolor, bottomcapindex);
+		RenderRow(thread, args, i, topcapcolor, topcapindex);
+		RenderRow(thread, args, rc + i, bottomcapcolor, bottomcapindex);
 	}
 }
 
-void PolySkyDome::RenderRow(PolyDrawArgs &args, int row, uint32_t capcolor, uint8_t capcolorindex)
+void PolySkyDome::RenderRow(PolyRenderThread *thread, PolyDrawArgs &args, int row, uint32_t capcolor, uint8_t capcolorindex)
 {
 	args.SetFaceCullCCW(false);
 	args.SetColor(capcolor, capcolorindex);
 	args.SetStyle(TriBlendMode::Skycap);
-	args.DrawArray(&mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
+	args.DrawArray(thread, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
 }
 
-void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
+void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
 {
 	uint32_t solid = skytex->GetSkyCapColor(bottomCap);
 	uint8_t palsolid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
@@ -121,7 +121,7 @@ void PolySkyDome::RenderCapColorRow(PolyDrawArgs &args, FTexture *skytex, int ro
 	args.SetFaceCullCCW(bottomCap);
 	args.SetColor(solid, palsolid);
 	args.SetStyle(TriBlendMode::FillOpaque);
-	args.DrawArray(&mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
+	args.DrawArray(thread, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
 }
 
 void PolySkyDome::CreateDome()

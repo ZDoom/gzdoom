@@ -143,9 +143,9 @@ CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR (Int, timidity_pipe, 90, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 { // pipe size in ms
-	if (timidity_pipe < 0)
-	{ // a negative size makes no sense
-		timidity_pipe = 0;
+	if (self < 20)
+	{ // Don't allow pipes less than 20ms
+		self = 20;
 	}
 }
 
@@ -317,49 +317,31 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 #endif
 		{
 			Printf(PRINT_BOLD, "Could not create a data pipe for TiMidity++.\n");
-			pipeSize = 0;
+			return 1;
 		}
-		else
+
+		Stream = GSnd->CreateStream(FillStream, pipeSize,
+			(timidity_stereo ? 0 : SoundStream::Mono) |
+			(timidity_8bit ? SoundStream::Bits8 : 0),
+			timidity_frequency, this);
+		if (Stream == NULL)
 		{
-			Stream = GSnd->CreateStream(FillStream, pipeSize,
-				(timidity_stereo ? 0 : SoundStream::Mono) |
-				(timidity_8bit ? SoundStream::Bits8 : 0),
-				timidity_frequency, this);
-			if (Stream == NULL)
-			{
-				Printf(PRINT_BOLD, "Could not create music stream.\n");
-				pipeSize = 0;
+			Printf(PRINT_BOLD, "Could not create music stream.\n");
 #ifdef _WIN32
-				CloseHandle(WriteWavePipe);
-				CloseHandle(ReadWavePipe);
-				ReadWavePipe = WriteWavePipe = INVALID_HANDLE_VALUE;
+			CloseHandle(WriteWavePipe);
+			CloseHandle(ReadWavePipe);
+			ReadWavePipe = WriteWavePipe = INVALID_HANDLE_VALUE;
 #else
-				close(WavePipe[1]);
-				close(WavePipe[0]);
-				WavePipe[0] = WavePipe[1] = -1;
+			close(WavePipe[1]);
+			close(WavePipe[0]);
+			WavePipe[0] = WavePipe[1] = -1;
 #endif
-			}
+			return 1;
 		}
-
-		if (pipeSize == 0)
-		{
-			Printf(PRINT_BOLD, "If your soundcard cannot play more than one\n"
-								"wave at a time, you will hear no music.\n");
-		}
-#ifdef _WIN32
-		else
-		{
-			CommandLine += "-o - -Ors";
-		}
-#endif
 	}
 
 #ifdef _WIN32
-	if (pipeSize == 0)
-	{
-		CommandLine += "-Od";
-	}
-
+	CommandLine += "-o - -Ors";
 	CommandLine += timidity_stereo ? 'S' : 'M';
 	CommandLine += timidity_8bit ? '8' : '1';
 	if (timidity_byteswap)
@@ -775,8 +757,7 @@ int TimidityPPMIDIDevice::Resume()
 	{
 		if (LaunchTimidity())
 		{
-			// Assume success if not mixing with the sound system
-			if (Stream == NULL || Stream->Play(true, timidity_mastervolume))
+			if (Stream != NULL && Stream->Play(true, timidity_mastervolume))
 			{
 				Started = true;
 				return 0;

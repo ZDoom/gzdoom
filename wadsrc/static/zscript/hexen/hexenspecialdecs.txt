@@ -882,7 +882,7 @@ class ZBell : Actor
 	
 	override void Activate (Actor activator)
 	{
-		if (health > 0) A_Die();
+		if (health > 0)
 		{
 			DamageMobj (activator, activator, 10, 'Melee', DMG_THRUSTLESS); // 'ring' the bell
 		}

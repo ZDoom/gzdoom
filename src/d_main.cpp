@@ -2087,6 +2087,11 @@ static void AddAutoloadFiles(const char *autoname)
 {
 	LumpFilterIWAD.Format("%s.", autoname);	// The '.' is appened to simplify parsing the string 
 
+	// [SP] Load non-free assets if available.
+	const char *optionalassets = BaseFileSearch(OPTIONALWAD, NULL);
+	if (optionalassets)
+		D_AddFile(allwads, optionalassets);
+
 	// [SP] Dialog reaction - load lights.pk3 and brightmaps.pk3 based on user choices
 	if (!(gameinfo.flags & GI_SHAREWARE))
 	{

@@ -51,6 +51,8 @@
 #include "doomerrors.h"
 #include "v_text.h"
 
+// external function declarations
+const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinprogdir=false);
 
 CVAR (Bool, queryiwad, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 CVAR (String, defaultiwad, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -687,6 +689,11 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	// zdoom.pk3 must always be the first file loaded and the IWAD second.
 	wadfiles.Clear();
 	D_AddFile (wadfiles, zdoom_wad);
+
+	// [SP] Load non-free assets if available. This must be done before the IWAD.
+	const char *optionalassets = BaseFileSearch(OPTIONALWAD, NULL, true);
+	if (optionalassets)
+		D_AddFile(wadfiles, optionalassets);
 
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{

@@ -142,13 +142,13 @@ class FIWadManager
 	void ParseIWadInfo(const char *fn, const char *data, int datasize, FIWADInfo *result = nullptr);
 	int ScanIWAD (const char *iwad);
 	int CheckIWADInfo(const char *iwad);
-	int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad);
+	int IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, const char *zdoom_wad, const char *optional_wad);
 	void CollectSearchPaths();
 	void AddIWADCandidates(const char *dir);
 	void ValidateIWADs();
 public:
 	FIWadManager(const char *fn);
-	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
+	const FIWADInfo *FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad, const char *optionalwad);
 	const FString *GetAutoname(unsigned int num) const
 	{
 		if (num < mIWadInfos.Size()) return &mIWadInfos[num].Autoname;

@@ -63,7 +63,7 @@ class TextEnterMenu : Menu
 		mEnterString = textbuffer;
 		mEnterSize = maxlen < 0 ? 0x7fffffff : maxlen;
 		mSizeMode = sizemode;
-		mInputGridOkay = showgrid || m_showinputgrid;
+		mInputGridOkay = (showgrid && (m_showinputgrid == 0)) || (m_showinputgrid >= 1);
 		if (mEnterString.Length() > 0)
 		{
 			InputGridX = INPUTGRID_WIDTH - 1;

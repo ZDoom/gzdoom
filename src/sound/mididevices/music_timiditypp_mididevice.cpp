@@ -34,6 +34,8 @@
 
 #include "i_midi_win32.h"
 
+#include <string>
+#include <vector>
 
 #include "i_musicinterns.h"
 #include "c_cvars.h"
@@ -46,6 +48,7 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <wordexp.h>
 #include <glob.h>
 #include <signal.h>
 
@@ -81,14 +84,16 @@ protected:
 	HANDLE ReadWavePipe;
 	HANDLE WriteWavePipe;
 	HANDLE ChildProcess;
+	FString CommandLine;
+	size_t LoopPos;
 	bool Validated;
 	bool ValidateTimidity();
 #else // _WIN32
 	int WavePipe[2];
 	pid_t ChildProcess;
 #endif
-	FString CommandLine;
-	size_t LoopPos;
+	FString ExeName;
+	bool Looping;
 
 	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
 #ifdef _WIN32
@@ -118,6 +123,7 @@ CUSTOM_CVAR(String, timidity_exe, "timidity", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 }
 
 CVAR (String, timidity_extargs, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// extra args to pass to Timidity
+CVAR (String, timidity_config, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, timidity_chorus, "0", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, timidity_reverb, "0", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, timidity_stereo, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -137,9 +143,9 @@ CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR (Int, timidity_pipe, 90, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 { // pipe size in ms
-	if (timidity_pipe < 0)
-	{ // a negative size makes no sense
-		timidity_pipe = 0;
+	if (self < 20)
+	{ // Don't allow pipes less than 20ms
+		self = 20;
 	}
 }
 
@@ -162,20 +168,30 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 #ifdef _WIN32
 	  ReadWavePipe(INVALID_HANDLE_VALUE), WriteWavePipe(INVALID_HANDLE_VALUE),
 	  ChildProcess(INVALID_HANDLE_VALUE),
-	  Validated(false)
+	  Validated(false),
 #else
-	  ChildProcess(-1)
+	  ChildProcess(-1),
 #endif
+	  Looping(false)
 {
 #ifndef _WIN32
 	WavePipe[0] = WavePipe[1] = -1;
 #endif
 
 	if (args == NULL || *args == 0) args = timidity_exe;
+	ExeName = args;
 
+#ifdef _WIN32
 	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
 		args, *timidity_extargs,
 		*timidity_chorus, *timidity_reverb, *timidity_frequency);
+	if (**timidity_config != '\0')
+	{
+		CommandLine += "-c \"";
+		CommandLine += timidity_config;
+		CommandLine += "\" ";
+	}
+#endif
 
 	if (DiskName == NULL)
 	{
@@ -229,14 +245,17 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 	bool success;
 	FILE *f;
 
-	if (CommandLine.IsEmpty())
+	if (ExeName.IsEmpty())
 	{
 		return false;
 	}
 
 	// Tell TiMidity++ whether it should loop or not
+#ifdef _WIN32
 	CommandLine.LockBuffer()[LoopPos] = looping ? 'l' : ' ';
 	CommandLine.UnlockBuffer();
+#endif
+	Looping = looping;
 
 	// Write MIDI song to temporary file
 	song->CreateSMF(midi, looping ? 0 : 1);
@@ -298,46 +317,31 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 #endif
 		{
 			Printf(PRINT_BOLD, "Could not create a data pipe for TiMidity++.\n");
-			pipeSize = 0;
+			return 1;
 		}
-		else
+
+		Stream = GSnd->CreateStream(FillStream, pipeSize,
+			(timidity_stereo ? 0 : SoundStream::Mono) |
+			(timidity_8bit ? SoundStream::Bits8 : 0),
+			timidity_frequency, this);
+		if (Stream == NULL)
 		{
-			Stream = GSnd->CreateStream(FillStream, pipeSize,
-				(timidity_stereo ? 0 : SoundStream::Mono) |
-				(timidity_8bit ? SoundStream::Bits8 : 0),
-				timidity_frequency, this);
-			if (Stream == NULL)
-			{
-				Printf(PRINT_BOLD, "Could not create music stream.\n");
-				pipeSize = 0;
+			Printf(PRINT_BOLD, "Could not create music stream.\n");
 #ifdef _WIN32
-				CloseHandle(WriteWavePipe);
-				CloseHandle(ReadWavePipe);
-				ReadWavePipe = WriteWavePipe = INVALID_HANDLE_VALUE;
+			CloseHandle(WriteWavePipe);
+			CloseHandle(ReadWavePipe);
+			ReadWavePipe = WriteWavePipe = INVALID_HANDLE_VALUE;
 #else
-				close(WavePipe[1]);
-				close(WavePipe[0]);
-				WavePipe[0] = WavePipe[1] = -1;
+			close(WavePipe[1]);
+			close(WavePipe[0]);
+			WavePipe[0] = WavePipe[1] = -1;
 #endif
-			}
-		}
-
-		if (pipeSize == 0)
-		{
-			Printf(PRINT_BOLD, "If your soundcard cannot play more than one\n"
-								"wave at a time, you will hear no music.\n");
-		}
-		else
-		{
-			CommandLine += "-o - -Ors";
+			return 1;
 		}
 	}
 
-	if (pipeSize == 0)
-	{
-		CommandLine += "-Od";
-	}
-
+#ifdef _WIN32
+	CommandLine += "-o - -Ors";
 	CommandLine += timidity_stereo ? 'S' : 'M';
 	CommandLine += timidity_8bit ? '8' : '1';
 	if (timidity_byteswap)
@@ -349,6 +353,7 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 
 	CommandLine += " -idl ";
 	CommandLine += DiskName.GetName();
+#endif
 	return 0;
 }
 
@@ -456,6 +461,7 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 
 bool TimidityPPMIDIDevice::LaunchTimidity ()
 {
+#ifdef _WIN32
 	if (CommandLine.IsEmpty())
 	{
 		return false;
@@ -463,7 +469,6 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 
 	DPrintf (DMSG_NOTIFY, "cmd: \x1cG%s\n", CommandLine.GetChars());
 
-#ifdef _WIN32
 	STARTUPINFO startup = { sizeof(startup), };
 	PROCESS_INFORMATION procInfo;
 
@@ -509,6 +514,11 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 	return false;
 #else
+	if (ExeName.IsEmpty())
+	{
+		return false;
+	}
+
 	if (WavePipe[0] != -1 && WavePipe[1] == -1 && Stream != NULL)
 	{
 		// Timidity was previously launched, so the write end of the pipe
@@ -523,78 +533,55 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 
 	int forkres;
+	wordexp_t words;
 	glob_t glb;
 
 	// Get timidity executable path
-	int spaceIdx = 0;
-	int spaceInExePathCount = -1;
-	FString TimidityExe;
-	do
+	const char *exename = "timidity"; // Fallback default
+	glob(ExeName.GetChars(), 0, NULL, &glb);
+	if(glb.gl_pathc != 0)
+		exename = glb.gl_pathv[0];
+	// Get user-defined extra args
+	wordexp(timidity_extargs, &words, WRDE_NOCMD);
+
+	std::string chorusarg = std::string("-EFchorus=") + *timidity_chorus;
+	std::string reverbarg = std::string("-EFreverb=") + *timidity_reverb;
+	std::string sratearg = std::string("-s") + std::to_string(*timidity_frequency);
+	std::string outfilearg = "-o"; // An extra "-" is added later
+	std::string outmodearg = "-Or";
+	outmodearg += timidity_8bit ? "u8" : "s1";
+	outmodearg += timidity_stereo ? "S" : "M";
+	if(timidity_byteswap) outmodearg += "x";
+	std::string ifacearg = "-id";
+	if(Looping) ifacearg += "l";
+
+	std::vector<const char*> arglist;
+	arglist.push_back(exename);
+	for(size_t i = 0;i < words.we_wordc;i++)
+		arglist.push_back(words.we_wordv[i]);
+	if(**timidity_config != '\0')
 	{
-		spaceIdx = CommandLine.IndexOf(' ', spaceIdx);
-		TimidityExe = CommandLine.Left(spaceIdx);
-		glob(TimidityExe.GetChars(), 0, NULL, &glb);
-		spaceIdx += 1;
-		spaceInExePathCount += 1;
-	} while (spaceIdx != 0 && glb.gl_pathc == 0);
-	if (spaceIdx == 0)
-	{
-		TimidityExe = FString("timidity"); // Maybe it's in your PATH?
-		spaceInExePathCount = 0;
+		arglist.push_back("-c");
+		arglist.push_back(timidity_config);
 	}
-	globfree(&glb);
+	arglist.push_back(chorusarg.c_str());
+	arglist.push_back(reverbarg.c_str());
+	arglist.push_back(sratearg.c_str());
+	arglist.push_back(outfilearg.c_str());
+	arglist.push_back("-");
+	arglist.push_back(outmodearg.c_str());
+	arglist.push_back(ifacearg.c_str());
+	arglist.push_back(DiskName.GetName());
 
-	int strCount = 1;
-	for (spaceIdx = 0; spaceIdx < static_cast<int>(CommandLine.Len()); spaceIdx++)
-	{
-		if (CommandLine[spaceIdx] == ' ')
-		{
-			++strCount;
-			if (CommandLine[spaceIdx+1] == ' ')
-			{
-				--strCount;
-			}
-		}
-	}
-	strCount -= spaceInExePathCount;
-
-	char** TimidityArgs = new char*[strCount + 1];
-	TimidityArgs[strCount] = NULL;
-
-	spaceIdx = CommandLine.IndexOf(' ');
-	int curSpace = spaceIdx, i = 1;
-
-	TimidityArgs[0] = new char[TimidityExe.Len() + 1];
-	TimidityArgs[0][TimidityExe.Len()] = 0;
-	strcpy(TimidityArgs[0], TimidityExe.GetChars());
-
-	int argLen;
-	while (curSpace != -1)
-	{
-		curSpace = CommandLine.IndexOf(' ', spaceIdx);
-		if (curSpace != spaceIdx)
-		{
-			argLen = curSpace - spaceIdx + 1;
-			if (argLen < 0)
-			{
-				argLen = CommandLine.Len() - curSpace;
-			}
-			TimidityArgs[i] = new char[argLen];
-			TimidityArgs[i][argLen-1] = 0;
-			strcpy(TimidityArgs[i], CommandLine.Mid(spaceIdx, curSpace - spaceIdx).GetChars());
-			i += 1;
-		}
-		spaceIdx = curSpace + 1;
-	}
-
-	DPrintf(DMSG_NOTIFY, "Timidity EXE: \x1cG%s\n", TimidityExe.GetChars());
-	for (i = 0; i < strCount; i++)
-	{
-		DPrintf(DMSG_NOTIFY, "arg %d: \x1cG%s\n", i, TimidityArgs[i]);
-	}
+	DPrintf(DMSG_NOTIFY, "Timidity EXE: \x1cG%s\n", exename);
+	int i = 1;
+	std::for_each(arglist.begin()+1, arglist.end(),
+		[&i](const char *arg)
+		{ DPrintf(DMSG_NOTIFY, "arg %d: \x1cG%s\n", i++, arg); }
+	);
+	arglist.push_back(nullptr);
 
 	forkres = fork ();
-
 	if (forkres == 0)
 	{
 		close (WavePipe[0]);
@@ -603,7 +590,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 //		freopen ("/dev/null", "w", stderr);
 		close (WavePipe[1]);
 
-		execvp (TimidityExe.GetChars(), TimidityArgs);
+		execvp (exename, const_cast<char*const*>(arglist.data()));
 		fprintf(stderr,"execvp failed: %s\n", strerror(errno));
 		_exit (0);	// if execvp succeeds, we never get here
 	}
@@ -624,12 +611,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		}*/
 	}
 
-	for (i = 0; i < strCount; i++)
-	{
-		delete [] TimidityArgs[i];
-	}
-
-	delete [] TimidityArgs;
+	wordfree(&words);
 	globfree (&glb);
 	return ChildProcess != -1;
 #endif // _WIN32
@@ -672,7 +654,6 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 		}
 	}
 #else
-	ssize_t got;
 	fd_set rfds;
 	struct timeval tv;
 
@@ -697,11 +678,26 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 	}
 //	fprintf(stderr,"something\n");
 
-	got = read(song->WavePipe[0], (uint8_t *)buff, len);
-	if (got < len)
-	{
-		memset((uint8_t *)buff+got, 0, len-got);
-	}
+	ssize_t got = 0;
+	do {
+		ssize_t r = read(song->WavePipe[0], (uint8_t*)buff+got, len-got);
+		if(r < 0)
+		{
+			if(errno == EWOULDBLOCK || errno == EAGAIN)
+			{
+				FD_ZERO(&rfds);
+				FD_SET(song->WavePipe[0], &rfds);
+				tv.tv_sec = 0;
+				tv.tv_usec = 50;
+				select(1, &rfds, NULL, NULL, &tv);
+				continue;
+			}
+			break;
+		}
+		got += r;
+	} while(got < len);
+	if(got < len)
+		memset((uint8_t*)buff+got, 0, len-got);
 #endif
 	return true;
 }
@@ -761,8 +757,7 @@ int TimidityPPMIDIDevice::Resume()
 	{
 		if (LaunchTimidity())
 		{
-			// Assume success if not mixing with the sound system
-			if (Stream == NULL || Stream->Play(true, timidity_mastervolume))
+			if (Stream != NULL && Stream->Play(true, timidity_mastervolume))
 			{
 				Started = true;
 				return 0;

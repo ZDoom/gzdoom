@@ -65,7 +65,7 @@
 CVAR (Float, mouse_sensitivity, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, show_messages, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, show_obituaries, true, CVAR_ARCHIVE)
-CVAR(Bool, m_showinputgrid, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR (Int, m_showinputgrid, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, m_blockcontrollers, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 

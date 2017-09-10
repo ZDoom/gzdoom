@@ -1680,6 +1680,8 @@ OptionMenu AdvSoundOptions protected
 	{
 		SubMenu "$ADVSNDMNU_SELCONFIG",		"TimidityExeMenu"
 	}
+	TextField "$ADVSNDMNU_TIMIDITYCONFIG", 	"timidity_config"
+	SubMenu "$ADVSNDMNU_SELCONFIG",		"TimidityConfigMenu"
 	Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "OnOff"
 	Option "$ADVSNDMNU_TIMIDITYCHORUS", 	"timidity_chorus", "OnOff"
 	Slider "$ADVSNDMNU_TIMIDITYVOLUME",		"timidity_mastervolume", 0, 4, 0.2, 1
@@ -1701,6 +1703,11 @@ OptionMenu WildMidiConfigMenu protected
 }
 
 OptionMenu TimidityExeMenu protected
+{
+	Title "$ADVSNDMNU_SELCONFIG"
+}
+
+OptionMenu TimidityConfigMenu protected
 {
 	Title "$ADVSNDMNU_SELCONFIG"
 }

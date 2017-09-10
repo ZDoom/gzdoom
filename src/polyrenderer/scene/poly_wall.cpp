@@ -205,6 +205,9 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, const TriMatrix
 	double topTexZ = fakeFloor->model->GetPlaneTexZ(sector_t::ceiling);
 	double bottomTexZ = fakeFloor->model->GetPlaneTexZ(sector_t::floor);
 
+	if (frontceilz1 <= frontfloorz1 || frontceilz2 <= frontfloorz2)
+		return;
+
 	RenderPolyWall wall;
 	wall.LineSeg = line;
 	wall.LineSegLine = line->linedef;

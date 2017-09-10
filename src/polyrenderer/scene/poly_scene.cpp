@@ -58,17 +58,11 @@ void RenderPolyScene::Render(int portalDepth)
 {
 	PolyRenderThread *thread = PolyRenderer::Instance()->Threads.MainThread();
 
-	ClearBuffers(thread);
+	SectorPortals.clear();
+	LinePortals.clear();
 	Cull.CullScene(WorldToClip, PortalPlane);
 	RenderSectors();
 	RenderPortals(portalDepth);
-}
-
-void RenderPolyScene::ClearBuffers(PolyRenderThread *thread)
-{
-	thread->TranslucentObjects.clear();
-	thread->SectorPortals.clear();
-	thread->LinePortals.clear();
 }
 
 void RenderPolyScene::RenderSectors()
@@ -78,12 +72,11 @@ void RenderPolyScene::RenderSectors()
 	int totalcount = (int)Cull.PvsSectors.size();
 	auto subsectors = Cull.PvsSectors.data();
 
+	TranslucentObjects.resize(PolyRenderer::Instance()->Threads.NumThreads());
+
 	PolyRenderer::Instance()->Threads.RenderThreadSlices(totalcount, [&](PolyRenderThread *thread)
 	{
-		if (!thread->MainThread)
-		{
-			ClearBuffers(thread);
-		}
+		TranslucentObjects[thread->ThreadIndex].clear();
 
 		int start = thread->Start;
 		int end = thread->End;
@@ -93,7 +86,8 @@ void RenderPolyScene::RenderSectors()
 		}
 	}, [&](PolyRenderThread *thread)
 	{
-		mainthread->TranslucentObjects.insert(mainthread->TranslucentObjects.end(), thread->TranslucentObjects.begin(), thread->TranslucentObjects.end());
+		const auto &objects = TranslucentObjects[thread->ThreadIndex];
+		TranslucentObjects[0].insert(TranslucentObjects[0].end(), objects.begin(), objects.end());
 	});
 }
 
@@ -127,13 +121,13 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 			RenderPolyNode(thread, &sub->BSP->Nodes.Last(), subsectorDepth, frontsector);
 		}
 
-		Render3DFloorPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, thread->TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals);
+		Render3DFloorPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, TranslucentObjects[thread->ThreadIndex]);
+		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 	}
 	else
 	{
-		Render3DFloorPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, thread->TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals);
+		Render3DFloorPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, TranslucentObjects[thread->ThreadIndex]);
+		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -151,7 +145,7 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 		for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			particle_t *particle = Particles + i;
-			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, StencilValue));
+			TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, StencilValue));
 		}
 	}
 }
@@ -204,7 +198,7 @@ void RenderPolyScene::RenderPolySubsector(PolyRenderThread *thread, subsector_t 
 				sub->flags |= SSECF_DRAWN;
 			}
 
-			RenderPolyWall::RenderLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, thread->TranslucentObjects, thread->LinePortals, LastPortalLine);
+			RenderPolyWall::RenderLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects[thread->ThreadIndex], LinePortals, LastPortalLine);
 		}
 	}
 }
@@ -221,7 +215,7 @@ void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, doub
 		subsector_t *sub = &level.subsectors[0];
 		auto it = Cull.SubsectorDepths.find(sub);
 		if (it != Cull.SubsectorDepths.end())
-			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, 0.0f, 1.0f, StencilValue));
+			TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, 0.0f, 1.0f, StencilValue));
 	}
 	else
 	{
@@ -262,7 +256,7 @@ void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, doub
 	
 	auto it = Cull.SubsectorDepths.find(sub);
 	if (it != Cull.SubsectorDepths.end())
-		thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, (float)t1, (float)t2, StencilValue));
+		TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, (float)t1, (float)t2, StencilValue));
 }
 
 void RenderPolyScene::RenderLine(PolyRenderThread *thread, subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
@@ -280,12 +274,12 @@ void RenderPolyScene::RenderLine(PolyRenderThread *thread, subsector_t *sub, seg
 		for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 		{
 			F3DFloor *fakeFloor = line->backsector->e->XFloor.ffloors[i];
-			RenderPolyWall::Render3DFloorLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, thread->TranslucentObjects);
+			RenderPolyWall::Render3DFloorLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects[thread->ThreadIndex]);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	RenderPolyWall::RenderLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, thread->TranslucentObjects, thread->LinePortals, LastPortalLine);
+	RenderPolyWall::RenderLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects[thread->ThreadIndex], LinePortals, LastPortalLine);
 }
 
 void RenderPolyScene::RenderPortals(int portalDepth)
@@ -295,10 +289,10 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 	bool foggy = false;
 	if (portalDepth < r_portal_recursions)
 	{
-		for (auto &portal : thread->SectorPortals)
+		for (auto &portal : SectorPortals)
 			portal->Render(portalDepth + 1);
 
-		for (auto &portal : thread->LinePortals)
+		for (auto &portal : LinePortals)
 			portal->Render(portalDepth + 1);
 	}
 	else // Fill with black
@@ -310,7 +304,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 		args.SetClipPlane(0, PortalPlane);
 		args.SetStyle(TriBlendMode::FillOpaque);
 
-		for (auto &portal : thread->SectorPortals)
+		for (auto &portal : SectorPortals)
 		{
 			args.SetStencilTestValue(portal->StencilValue);
 			args.SetWriteStencil(true, portal->StencilValue + 1);
@@ -321,7 +315,7 @@ void RenderPolyScene::RenderPortals(int portalDepth)
 			}
 		}
 
-		for (auto &portal : thread->LinePortals)
+		for (auto &portal : LinePortals)
 		{
 			args.SetStencilTestValue(portal->StencilValue);
 			args.SetWriteStencil(true, portal->StencilValue + 1);
@@ -340,7 +334,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 
 	if (portalDepth < r_portal_recursions)
 	{
-		for (auto it = thread->SectorPortals.rbegin(); it != thread->SectorPortals.rend(); ++it)
+		for (auto it = SectorPortals.rbegin(); it != SectorPortals.rend(); ++it)
 		{
 			auto &portal = *it;
 			portal->RenderTranslucent(portalDepth + 1);
@@ -358,7 +352,7 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 			}
 		}
 
-		for (auto it = thread->LinePortals.rbegin(); it != thread->LinePortals.rend(); ++it)
+		for (auto it = LinePortals.rbegin(); it != LinePortals.rend(); ++it)
 		{
 			auto &portal = *it;
 			portal->RenderTranslucent(portalDepth + 1);
@@ -390,14 +384,14 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 		}
 	}
 
-	std::stable_sort(thread->TranslucentObjects.begin(), thread->TranslucentObjects.end(), [](auto a, auto b) { return *a < *b; });
+	std::stable_sort(TranslucentObjects[0].begin(), TranslucentObjects[0].end(), [](auto a, auto b) { return *a < *b; });
 
-	for (auto it = thread->TranslucentObjects.rbegin(); it != thread->TranslucentObjects.rend(); ++it)
+	for (auto it = TranslucentObjects[0].rbegin(); it != TranslucentObjects[0].rend(); ++it)
 	{
 		PolyTranslucentObject *obj = *it;
 		obj->Render(thread, WorldToClip, PortalPlane);
 		obj->~PolyTranslucentObject();
 	}
 
-	thread->TranslucentObjects.clear();
+	TranslucentObjects[0].clear();
 }

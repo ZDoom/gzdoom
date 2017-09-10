@@ -490,7 +490,7 @@ class StatusScreen abstract play version("2.5")
 		CurState = ShowNextLoc;
 		acceleratestage = 0;
 		cnt = SHOWNEXTLOCDELAY * Thinker.TICRATE;
-		bg.LoadBackground(true);
+		noautostartmap = bg.LoadBackground(true);
 	}
 
 	//====================================================================
@@ -693,7 +693,6 @@ class StatusScreen abstract play version("2.5")
 
 	virtual void Start (wbstartstruct wbstartstruct)
 	{
-		noautostartmap = false;
 		wbs = wbstartstruct;
 		acceleratestage = 0;
 		cnt = bcnt = 0;
@@ -717,7 +716,7 @@ class StatusScreen abstract play version("2.5")
 		lnametexts[1] = wbstartstruct.nextname;
 
 		bg = InterBackground.Create(wbs);
-		bg.LoadBackground(false);
+		noautostartmap = bg.LoadBackground(false);
 		initStats();
 	}
 	

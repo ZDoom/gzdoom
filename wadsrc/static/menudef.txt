@@ -1861,10 +1861,10 @@ OptionValue ScaleModes
 	0, "$OPTVAL_OFF"
 	1, "320x200"
 	2, "640x400"
-	3, "0.5x"
-	4, "0.75x"
-	5, "2x SSAA"
-	6, "1280x800"
+	3, "1280x800"
+	8, "0.5x"
+	9, "0.75x"
+	10, "2x SSAA"
 }
 
 OptionMenu VideoModeMenu protected

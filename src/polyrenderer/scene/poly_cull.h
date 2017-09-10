@@ -70,6 +70,8 @@ private:
 
 	void MarkSegmentCulled(angle_t angle1, angle_t angle2);
 
+	FString lastLevelName;
+
 	std::vector<SolidSegment> SolidSegments;
 	std::vector<SolidSegment> TempInvertSolidSegments;
 	const int SolidCullScale = 3000;

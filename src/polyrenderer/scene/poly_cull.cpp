@@ -33,13 +33,24 @@ void PolyCull::CullScene(const TriMatrix &worldToClip, const PolyClipPlane &port
 	ClearSolidSegments();
 	MarkViewFrustum();
 
-	for (const auto &sub : PvsSectors)
-		SubsectorDepths[sub->Index()] = 0xffffffff;
-	SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+	if (level.LevelName != lastLevelName) // Is this the best way to detect a level change?
+	{
+		lastLevelName = level.LevelName;
+		SubsectorDepths.clear();
+		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+		SectorSeen.clear();
+		SectorSeen.resize(level.sectors.Size());
+	}
+	else
+	{
+		for (const auto &sub : PvsSectors)
+			SubsectorDepths[sub->Index()] = 0xffffffff;
+		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
 
-	for (const auto &sector : SeenSectors)
-		SectorSeen[sector->Index()] = false;
-	SectorSeen.resize(level.sectors.Size());
+		for (const auto &sector : SeenSectors)
+			SectorSeen[sector->Index()] = false;
+		SectorSeen.resize(level.sectors.Size());
+	}
 
 	PvsSectors.clear();
 	SeenSectors.clear();

@@ -27,7 +27,7 @@
 
 #define NUMSCALEMODES 11
 
-namespace vidscale
+namespace
 {
 	struct v_ScaleTable
 	{
@@ -56,7 +56,7 @@ namespace vidscale
 
 CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < 0 || self >= NUMSCALEMODES || vidscale::vScaleTable[self].isValid == false)
+	if (self < 0 || self >= NUMSCALEMODES || vScaleTable[self].isValid == false)
 	{
 		self = 0;
 	}
@@ -64,22 +64,22 @@ CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 bool ViewportLinearScale()
 {
-	return vidscale::vScaleTable[vid_scalemode].isLinear;
+	return vScaleTable[vid_scalemode].isLinear;
 }
 
 int ViewportScaledWidth(int width)
 {
-	return vidscale::vScaleTable[vid_scalemode].GetScaledWidth(width);
+	return vScaleTable[vid_scalemode].GetScaledWidth(width);
 }
 
 int ViewportScaledHeight(int height)
 {
-	return vidscale::vScaleTable[vid_scalemode].GetScaledHeight(height);
+	return vScaleTable[vid_scalemode].GetScaledHeight(height);
 }
 
 bool ViewportIsScaled43()
 {
-	return vidscale::vScaleTable[vid_scalemode].isScaled43;
+	return vScaleTable[vid_scalemode].isScaled43;
 }
 
 

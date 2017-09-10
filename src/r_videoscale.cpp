@@ -25,7 +25,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 
-#define NUMSCALEMODES 11
+#define NUMSCALEMODES 5
 
 namespace
 {
@@ -41,17 +41,17 @@ namespace
 	{
 		//	isValid,	isLinear,	GetScaledWidth(),										GetScaledHeight(),											isScaled43
 		{ true,			false,		[](uint32_t Width)->uint32_t { return Width; },			[](uint32_t Height)->uint32_t { return Height; },			false	},	// 0  - Native
-		{ true,			false,		[](uint32_t Width)->uint32_t { return 320; },			[](uint32_t Height)->uint32_t { return 200; },				true	},	// 1  - 320x200
-		{ true,			true,		[](uint32_t Width)->uint32_t { return 640; },			[](uint32_t Height)->uint32_t { return 400; },				true	},	// 2  - 640x400
-		{ true,			true,		[](uint32_t Width)->uint32_t { return 1280; },			[](uint32_t Height)->uint32_t { return 800; },				true	},	// 3  - 1280x800		
-		{ false,		false,		nullptr,												nullptr,													false	},	// 4
-		{ false,		false,		nullptr,												nullptr,													false	},	// 5
-		{ false,		false,		nullptr,												nullptr,													false	},	// 6
-		{ false,		false,		nullptr,												nullptr,													false	},	// 7
-		{ true,			false,		[](uint32_t Width)->uint32_t { return Width / 2; },		[](uint32_t Height)->uint32_t { return Height / 2; },		false	},	// 8  - Half-Res
-		{ true,			true,		[](uint32_t Width)->uint32_t { return Width * 0.75; },	[](uint32_t Height)->uint32_t { return Height * 0.75; },	false	},	// 9  - Res * 0.75
-		{ true,			true,		[](uint32_t Width)->uint32_t { return Width * 2; },		[](uint32_t Height)->uint32_t { return Height * 2; },		false	},	// 10 - SSAAx2
+		{ true,			true,		[](uint32_t Width)->uint32_t { return Width; },			[](uint32_t Height)->uint32_t { return Height; },			false	},	// 1  - Native (Linear)
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 320; },			[](uint32_t Height)->uint32_t { return 200; },				true	},	// 2  - 320x200
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },			[](uint32_t Height)->uint32_t { return 400; },				true	},	// 3  - 640x400
+		{ true,			true,		[](uint32_t Width)->uint32_t { return 1280; },			[](uint32_t Height)->uint32_t { return 800; },				true	},	// 4  - 1280x800		
 	};
+}
+
+CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0.0 || self > 2.0)
+		self = 1.0;
 }
 
 CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -64,17 +64,18 @@ CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 bool ViewportLinearScale()
 {
-	return vScaleTable[vid_scalemode].isLinear;
+	// vid_scalefactor > 1 == forced linear scale
+	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
 }
 
 int ViewportScaledWidth(int width)
 {
-	return vScaleTable[vid_scalemode].GetScaledWidth(width);
+	return vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor));
 }
 
 int ViewportScaledHeight(int height)
 {
-	return vScaleTable[vid_scalemode].GetScaledHeight(height);
+	return vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor));
 }
 
 bool ViewportIsScaled43()

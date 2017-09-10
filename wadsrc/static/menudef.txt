@@ -1858,13 +1858,11 @@ OptionValue RatiosTFT
 }
 OptionValue ScaleModes
 {
-	0, "$OPTVAL_OFF"
-	1, "320x200"
-	2, "640x400"
-	3, "0.5x"
-	4, "0.75x"
-	5, "2x SSAA"
-	6, "1280x800"
+	0, "$OPTVAL_SCALENEAREST"
+	1, "$OPTVAL_SCALELINEAR"
+	2, "320x200"
+	3, "640x400"
+	4, "1280x800"
 }
 
 OptionMenu VideoModeMenu protected
@@ -1880,6 +1878,7 @@ OptionMenu VideoModeMenu protected
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_5X4ASPECTRATIO",	"vid_tft", "YesNo"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
+	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
 	StaticText " "
 	ScreenResolution "res_0"
 	ScreenResolution "res_1"
@@ -2128,6 +2127,14 @@ OptionValue VRMode
 	7, "$OPTVAL_QUADBUFFERED"
 }
 
+OptionValue ShadowMapQuality
+{
+	128, "128"
+	256, "256"
+	512, "512"
+	1024, "1024"
+}
+
 OptionMenu "GLTextureGLOptions" protected
 {
 	Title "$GLTEXMNU_TITLE"
@@ -2148,13 +2155,14 @@ OptionMenu "GLTextureGLOptions" protected
 OptionMenu "GLLightOptions" protected
 {
 	Title "$GLLIGHTMNU_TITLE"
-	Option "$TCMNU_DYNLIGHTS",				"r_dynlights", "OnOff"
-	Option "$GLLIGHTMNU_LIGHTSENABLED",		gl_lights,						"OnOff"
-	Option "$GLLIGHTMNU_LIGHTDEFS",			gl_attachedlights,				"YesNo"
-	Option "$GLLIGHTMNU_CLIPLIGHTS",		gl_lights_checkside,			"YesNo"
-	Option "$GLLIGHTMNU_LIGHTSPRITES",		gl_light_sprites,				"YesNo"
-	Option "$GLLIGHTMNU_LIGHTPARTICLES",	gl_light_particles,				"YesNo"
-	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",	gl_light_shadowmap,				"YesNo"
+	Option "$TCMNU_DYNLIGHTS",					"r_dynlights", "OnOff"
+	Option "$GLLIGHTMNU_LIGHTSENABLED",			gl_lights,				"OnOff"
+	Option "$GLLIGHTMNU_LIGHTDEFS",				gl_attachedlights,		"YesNo"
+	Option "$GLLIGHTMNU_CLIPLIGHTS",			gl_lights_checkside,	"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSPRITES",			gl_light_sprites,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTPARTICLES",		gl_light_particles,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAP",		gl_light_shadowmap,		"YesNo"
+	Option "$GLLIGHTMNU_LIGHTSHADOWMAPQUALITY", gl_shadowmap_quality,	"ShadowMapQuality"
 }
 
 OptionMenu "OpenGLOptions" protected

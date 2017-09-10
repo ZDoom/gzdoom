@@ -2193,6 +2193,7 @@ VIDMNU_ASPECTRATIO		= "Aspect ratio";
 VIDMNU_FORCEASPECT		= "Force aspect ratio";
 VIDMNU_5X4ASPECTRATIO	= "Enable 5:4 aspect ratio";
 VIDMNU_SCALEMODE		= "Resolution scale";
+VIDMNU_SCALEFACTOR		= "Scale Factor";
 VIDMNU_ENTERTEXT		= "Press ENTER to set mode";
 VIDMNU_TESTTEXT1		= "T to test mode for 5 seconds";
 VIDMNU_TESTTEXT2		= "Please wait 5 seconds...";
@@ -2378,6 +2379,8 @@ OPTVAL_VTFZDOOM				= "ZDoom (Forced)";
 OPTVAL_VTFVANILLA			= "Vanilla (Forced)";
 OPTVAL_VTAZDOOM				= "Auto (ZDoom Preferred)";
 OPTVAL_VTAVANILLA			= "Auto (Vanilla Preferred)";
+OPTVAL_SCALENEAREST			= "Scaled (Nearest)";
+OPTVAL_SCALELINEAR			= "Scaled (Linear)";
 
 // Colors
 C_BRICK					= "\cabrick";
@@ -2685,13 +2688,14 @@ GLTEXMNU_TRIMSPREDGE	= "Trim sprite edges";
 GLTEXMNU_SORTDRAWLIST 	= "Sort draw lists by texture";
 
 // Dynamic Light Options
-GLLIGHTMNU_TITLE 			= "DYNAMIC LIGHTS";
-GLLIGHTMNU_LIGHTSENABLED 	= "Dynamic Lights (OpenGL)";
-GLLIGHTMNU_LIGHTDEFS		= "Enable light definitions";
-GLLIGHTMNU_CLIPLIGHTS 		= "Clip lights";
-GLLIGHTMNU_LIGHTSPRITES 	= "Lights affect sprites";
-GLLIGHTMNU_LIGHTPARTICLES 	= "Lights affect particles";
-GLLIGHTMNU_LIGHTSHADOWMAP 	= "Light shadowmaps";
+GLLIGHTMNU_TITLE					= "DYNAMIC LIGHTS";
+GLLIGHTMNU_LIGHTSENABLED			= "Dynamic Lights (OpenGL)";
+GLLIGHTMNU_LIGHTDEFS				= "Enable light definitions";
+GLLIGHTMNU_CLIPLIGHTS				= "Clip lights";
+GLLIGHTMNU_LIGHTSPRITES				= "Lights affect sprites";
+GLLIGHTMNU_LIGHTPARTICLES			= "Lights affect particles";
+GLLIGHTMNU_LIGHTSHADOWMAP			= "Light shadowmaps";
+GLLIGHTMNU_LIGHTSHADOWMAPQUALITY	= "Shadowmap quality";
 
 // OpenGL Preferences
 GLPREFMNU_TITLE 				= "OPENGL PREFERENCES";

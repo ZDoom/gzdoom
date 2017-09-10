@@ -213,9 +213,8 @@ void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, doub
 	if (level.nodes.Size() == 0)
 	{
 		subsector_t *sub = &level.subsectors[0];
-		auto it = Cull.SubsectorDepths.find(sub);
-		if (it != Cull.SubsectorDepths.end())
-			TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, 0.0f, 1.0f, StencilValue));
+		if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
+			TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, 0.0f, 1.0f, StencilValue));
 	}
 	else
 	{
@@ -254,9 +253,8 @@ void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, doub
 	
 	subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
 	
-	auto it = Cull.SubsectorDepths.find(sub);
-	if (it != Cull.SubsectorDepths.end())
-		TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, it->second, sortDistance, (float)t1, (float)t2, StencilValue));
+	if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
+		TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, (float)t1, (float)t2, StencilValue));
 }
 
 void RenderPolyScene::RenderLine(PolyRenderThread *thread, subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)

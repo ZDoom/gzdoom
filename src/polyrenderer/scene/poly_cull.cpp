@@ -33,11 +33,32 @@ void PolyCull::CullScene(const TriMatrix &worldToClip, const PolyClipPlane &port
 	ClearSolidSegments();
 	MarkViewFrustum();
 
+	if (level.LevelName != lastLevelName) // Is this the best way to detect a level change?
+	{
+		lastLevelName = level.LevelName;
+		SubsectorDepths.clear();
+		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+		SectorSeen.clear();
+		SectorSeen.resize(level.sectors.Size());
+	}
+	else
+	{
+		for (const auto &sub : PvsSectors)
+			SubsectorDepths[sub->Index()] = 0xffffffff;
+		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+
+		for (const auto &sector : SeenSectors)
+			SectorSeen[sector->Index()] = false;
+		SectorSeen.resize(level.sectors.Size());
+	}
+
 	PvsSectors.clear();
-	PvsLineStart.clear();
-	PvsLineVisible.clear();
 	SeenSectors.clear();
-	SubsectorDepths.clear();
+
+	NextPvsLineStart = 0;
+	PvsLineStart.clear();
+	PvsLineVisible.resize(level.segs.Size());
+
 	PortalClipPlane = portalClipPlane;
 
 	// Cull front to back
@@ -108,7 +129,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 
 	// Mark that we need to render this
 	PvsSectors.push_back(sub);
-	PvsLineStart.push_back((uint32_t)PvsLineVisible.size());
+	PvsLineStart.push_back(NextPvsLineStart);
 
 	DVector3 viewpos = PolyRenderer::Instance()->Viewpoint.Pos;
 
@@ -122,7 +143,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		DVector2 pt2 = line->v2->fPos() - viewpos;
 		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
 		{
-			PvsLineVisible.push_back(false);
+			PvsLineVisible[NextPvsLineStart++] = false;
 			continue;
 		}
 
@@ -130,7 +151,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		if ((PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D <= 0.0) ||
 			(PortalClipPlane.A * line->v2->fX() + PortalClipPlane.B * line->v2->fY() + PortalClipPlane.D <= 0.0))
 		{
-			PvsLineVisible.push_back(false);
+			PvsLineVisible[NextPvsLineStart++] = false;
 			continue;
 		}
 
@@ -142,11 +163,16 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		}
 
 		// Mark if this line was visible
-		PvsLineVisible.push_back(lineVisible);
+		PvsLineVisible[NextPvsLineStart++] = lineVisible;
 	}
 
-	SeenSectors.insert(sub->sector);
-	SubsectorDepths[sub] = subsectorDepth;
+	if (!SectorSeen[sub->sector->Index()])
+	{
+		SectorSeen[sub->sector->Index()] = true;
+		SeenSectors.push_back(sub->sector);
+	}
+
+	SubsectorDepths[sub->Index()] = subsectorDepth;
 }
 
 void PolyCull::ClearSolidSegments()

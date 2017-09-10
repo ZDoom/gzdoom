@@ -40,8 +40,9 @@ public:
 	double MaxCeilingHeight = 0.0;
 	double MinFloorHeight = 0.0;
 
-	std::set<sector_t *> SeenSectors;
-	std::unordered_map<subsector_t *, uint32_t> SubsectorDepths;
+	std::vector<sector_t *> SeenSectors;
+	std::vector<bool> SectorSeen;
+	std::vector<uint32_t> SubsectorDepths;
 
 	static angle_t PointToPseudoAngle(double x, double y);
 
@@ -69,6 +70,8 @@ private:
 
 	void MarkSegmentCulled(angle_t angle1, angle_t angle2);
 
+	FString lastLevelName;
+
 	std::vector<SolidSegment> SolidSegments;
 	std::vector<SolidSegment> TempInvertSolidSegments;
 	const int SolidCullScale = 3000;
@@ -78,6 +81,7 @@ private:
 
 	std::vector<uint32_t> PvsLineStart;
 	std::vector<bool> PvsLineVisible;
+	uint32_t NextPvsLineStart = 0;
 
 	static angle_t AngleToPseudo(angle_t ang);
 };

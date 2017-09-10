@@ -25,9 +25,38 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 
-CUSTOM_CVAR (Int, vid_scalemode, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+#define NUMSCALEMODES 5
+
+namespace
 {
-	if (self < 0 || self > 6)
+	struct v_ScaleTable
+	{
+		bool isValid;
+		bool isLinear;
+		uint32_t(*GetScaledWidth)(uint32_t Width);
+		uint32_t(*GetScaledHeight)(uint32_t Height);
+		bool isScaled43;
+	};
+	v_ScaleTable vScaleTable[NUMSCALEMODES] =
+	{
+		//	isValid,	isLinear,	GetScaledWidth(),										GetScaledHeight(),											isScaled43
+		{ true,			false,		[](uint32_t Width)->uint32_t { return Width; },			[](uint32_t Height)->uint32_t { return Height; },			false	},	// 0  - Native
+		{ true,			true,		[](uint32_t Width)->uint32_t { return Width; },			[](uint32_t Height)->uint32_t { return Height; },			false	},	// 1  - Native (Linear)
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 320; },			[](uint32_t Height)->uint32_t { return 200; },				true	},	// 2  - 320x200
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },			[](uint32_t Height)->uint32_t { return 400; },				true	},	// 3  - 640x400
+		{ true,			true,		[](uint32_t Width)->uint32_t { return 1280; },			[](uint32_t Height)->uint32_t { return 800; },				true	},	// 4  - 1280x800		
+	};
+}
+
+CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self <= 0.0 || self > 2.0)
+		self = 1.0;
+}
+
+CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self >= NUMSCALEMODES || vScaleTable[self].isValid == false)
 	{
 		self = 0;
 	}
@@ -35,53 +64,23 @@ CUSTOM_CVAR (Int, vid_scalemode, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 bool ViewportLinearScale()
 {
-	switch(vid_scalemode)
-	{
-	default: return false;
-	case 4:
-	case 5:
-	case 6: return true;
-	}
+	// vid_scalefactor > 1 == forced linear scale
+	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
 }
 
 int ViewportScaledWidth(int width)
 {
-	switch (vid_scalemode)
-	{
-	default:
-	case 0: return width;
-	case 1: return 320;
-	case 2: return 640;
-	case 3: return (int)roundf(width * 0.5f);
-	case 4: return (int)roundf(width * 0.75f);
-	case 5: return width * 2;
-	case 6: return 1280;
-	}
+	return vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor));
 }
 
 int ViewportScaledHeight(int height)
 {
-	switch (vid_scalemode)
-	{
-	default:
-	case 0: return height;
-	case 1: return 200;
-	case 2: return 400;
-	case 3: return (int)roundf(height * 0.5f);
-	case 4: return (int)roundf(height * 0.75f);
-	case 5: return height * 2;
-	case 6: return 800;
-	}
+	return vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor));
 }
 
 bool ViewportIsScaled43()
 {
-	switch (vid_scalemode)
-	{
-	default: return false;
-	case 1:
-	case 2:
-	case 6: return true;
-	}
+	return vScaleTable[vid_scalemode].isScaled43;
 }
+
 

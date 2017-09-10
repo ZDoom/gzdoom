@@ -118,6 +118,7 @@ CUSTOM_CVAR(String, timidity_exe, "timidity", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 }
 
 CVAR (String, timidity_extargs, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)	// extra args to pass to Timidity
+CVAR (String, timidity_config, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, timidity_chorus, "0", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (String, timidity_reverb, "0", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, timidity_stereo, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -176,6 +177,12 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	CommandLine.Format("%s %s -EFchorus=%s -EFreverb=%s -s%d ",
 		args, *timidity_extargs,
 		*timidity_chorus, *timidity_reverb, *timidity_frequency);
+	if (**timidity_config != '\0')
+	{
+		CommandLine += "-c \"";
+		CommandLine += timidity_config;
+		CommandLine += "\" ";
+	}
 
 	if (DiskName == NULL)
 	{

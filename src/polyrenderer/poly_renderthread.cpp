@@ -46,9 +46,8 @@ void PeekThreadedErrorPane();
 
 EXTERN_CVAR(Bool, r_scene_multithreaded);
 
-PolyRenderThread::PolyRenderThread(bool mainThread)
+PolyRenderThread::PolyRenderThread(int threadIndex) : MainThread(threadIndex == 0), ThreadIndex(threadIndex)
 {
-	MainThread = mainThread;
 	FrameMemory.reset(new RenderMemory());
 	DrawQueue = std::make_shared<DrawerCommandQueue>(FrameMemory.get());
 }
@@ -118,7 +117,7 @@ void PolyRenderThread::PreparePolyObject(subsector_t *sub)
 
 PolyRenderThreads::PolyRenderThreads()
 {
-	std::unique_ptr<PolyRenderThread> thread(new PolyRenderThread(true));
+	std::unique_ptr<PolyRenderThread> thread(new PolyRenderThread(0));
 	Threads.push_back(std::move(thread));
 }
 
@@ -220,7 +219,7 @@ void PolyRenderThreads::StartThreads(size_t numThreads)
 {
 	while (Threads.size() < (size_t)numThreads)
 	{
-		std::unique_ptr<PolyRenderThread> thread(new PolyRenderThread(false));
+		std::unique_ptr<PolyRenderThread> thread(new PolyRenderThread((int)Threads.size()));
 		auto renderthread = thread.get();
 		int start_run_id = run_id;
 		thread->thread = std::thread([=]()

@@ -68,7 +68,6 @@ public:
 	line_t *LastPortalLine = nullptr;
 
 private:
-	void ClearBuffers(PolyRenderThread *thread);
 	void RenderPortals(int portalDepth);
 	void RenderSectors();
 	void RenderSubsector(PolyRenderThread *thread, subsector_t *sub, uint32_t subsectorDepth);
@@ -85,4 +84,8 @@ private:
 	uint32_t StencilValue = 0;
 	PolyCull Cull;
 	bool PortalSegmentsAdded = false;
+
+	std::vector<std::vector<PolyTranslucentObject *>> TranslucentObjects;
+	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
+	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;
 };

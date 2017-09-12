@@ -10041,7 +10041,7 @@ scriptwait:
 					}
 					else
 					{
-						FCanvasTextureInfo::Add (camera, picnum, ACSToDouble(STACK(1)));
+						FCanvasTextureInfo::Add (camera, picnum, STACK(1));
 					}
 				}
 				sp -= 3;

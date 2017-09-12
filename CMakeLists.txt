@@ -330,6 +330,7 @@ add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
+add_subdirectory( wadsrc_extra )
 add_subdirectory( src )
 
 if( NOT CMAKE_CROSSCOMPILING )

@@ -31,11 +31,21 @@ class PolyPlaneUVTransform
 public:
 	PolyPlaneUVTransform(const FTransform &transform, FTexture *tex);
 
-	TriVertex GetVertex(vertex_t *v1, double height) const;
+	TriVertex GetVertex(vertex_t *v1, double height) const
+	{
+		TriVertex v;
+		v.x = (float)v1->fX();
+		v.y = (float)v1->fY();
+		v.z = (float)height;
+		v.w = 1.0f;
+		v.u = GetU(v.x, v.y);
+		v.v = GetV(v.x, v.y);
+		return v;
+	}
 
 private:
-	float GetU(float x, float y) const;
-	float GetV(float x, float y) const;
+	float GetU(float x, float y) const { return (xOffs + x * cosine - y * sine) * xscale; }
+	float GetV(float x, float y) const { return (yOffs - x * sine - y * cosine) * yscale; }
 
 	float xscale;
 	float yscale;

@@ -112,7 +112,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const TriMatrix &world
 	}
 	else
 	{
-		sector_t *backsector = (line->backsector != line->frontsector) ? line->backsector : line->frontsector;
+		sector_t *backsector = line->backsector;
 
 		double backceilz1 = backsector->ceilingplane.ZatPoint(line->v1);
 		double backfloorz1 = backsector->floorplane.ZatPoint(line->v1);

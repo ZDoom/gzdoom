@@ -43,6 +43,7 @@ static TArray<FString>  m_Extensions;
 RenderContext gl;
 
 EXTERN_CVAR(Bool, gl_legacy_mode)
+extern int currentrenderer;
 
 //==========================================================================
 //
@@ -207,7 +208,8 @@ void gl_LoadExtensions()
 	
 		// The minimum requirement for the modern render path is GL 3.3.
 		// Although some GL 3.1 or 3.2 solutions may theoretically work they are usually too broken or too slow.
-		if (gl_version < 3.3f)
+		// unless, of course, we're simply using this as a software backend...
+		if ((gl_version < 3.3f && (currentrenderer==1)) || gl_version < 3.0f)
 		{
 			gl.legacyMode = true;
 			gl.lightmethod = LM_LEGACY;

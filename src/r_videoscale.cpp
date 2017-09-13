@@ -46,6 +46,10 @@ namespace
 		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },			[](uint32_t Height)->uint32_t { return 400; },				true	},	// 3  - 640x400
 		{ true,			true,		[](uint32_t Width)->uint32_t { return 1280; },			[](uint32_t Height)->uint32_t { return 800; },				true	},	// 4  - 1280x800		
 	};
+	bool isOutOfBounds(int x)
+	{
+		return (x < 0 || x >= NUMSCALEMODES || vScaleTable[x].isValid == false);
+	}
 }
 
 CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -56,31 +60,35 @@ CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self < 0 || self >= NUMSCALEMODES || vScaleTable[self].isValid == false)
-	{
+	if (isOutOfBounds(self))
 		self = 0;
-	}
 }
 
 bool ViewportLinearScale()
 {
+	if (isOutOfBounds(vid_scalemode))
+		vid_scalemode = 0;
 	// vid_scalefactor > 1 == forced linear scale
 	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
 }
 
 int ViewportScaledWidth(int width)
 {
+	if (isOutOfBounds(vid_scalemode))
+		vid_scalemode = 0;
 	return vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor));
 }
 
 int ViewportScaledHeight(int height)
 {
+	if (isOutOfBounds(vid_scalemode))
+		vid_scalemode = 0;
 	return vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor));
 }
 
 bool ViewportIsScaled43()
 {
+	if (isOutOfBounds(vid_scalemode))
+		vid_scalemode = 0;
 	return vScaleTable[vid_scalemode].isScaled43;
 }
-
-

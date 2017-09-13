@@ -581,7 +581,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		// scan the list of found IWADs for a matching one for the current PWAD.
 		for (auto &found : mFoundWads)
 		{
-			if (mIWadInfos[found.mInfoIndex].IWadname.CompareNoCase(iwad) == 0 && mIWadInfos[found.mInfoIndex].prio > pickedprio)
+			if (found.mInfoIndex >= 0 && mIWadInfos[found.mInfoIndex].IWadname.CompareNoCase(iwad) == 0 && mIWadInfos[found.mInfoIndex].prio > pickedprio)
 			{
 				picks.Clear();
 				picks.Push(found);

@@ -2275,7 +2275,7 @@ void V_InitCustomFonts()
 					{
 						*p = TexMan[texid];
 					}
-					else if (Wads.GetLumpFile(sc.LumpNum) >= Wads.IWAD_FILENUM)
+					else if (Wads.GetLumpFile(sc.LumpNum) >= Wads.GetIwadNum())
 					{
 						// Print a message only if this isn't in zdoom.pk3
 						sc.ScriptMessage("%s: Unable to find texture in font definition for %s", sc.String, namebuffer.GetChars());

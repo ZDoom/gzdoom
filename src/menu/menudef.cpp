@@ -1014,7 +1014,7 @@ void M_ParseMenuDefs()
 	atterm(	DeinitMenus);
 	DeinitMenus();
 
-	int IWADMenu = Wads.CheckNumForName("MENUDEF", ns_global, FWadCollection::IWAD_FILENUM);
+	int IWADMenu = Wads.CheckNumForName("MENUDEF", ns_global, Wads.GetIwadNum());
 
 	while ((lump = Wads.FindLump ("MENUDEF", &lastlump)) != -1)
 	{

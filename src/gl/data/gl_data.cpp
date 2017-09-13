@@ -88,13 +88,13 @@ void AdjustSpriteOffsets()
 	for (int i = 0; i < numtex; i++)
 	{
 		if (Wads.GetLumpFile(i) > 1) break; // we are past the IWAD
-		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == FWadCollection::IWAD_FILENUM)
+		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == Wads.GetIwadNum())
 		{
 			char str[9];
 			Wads.GetLumpName(str, i);
 			str[8] = 0;
 			FTextureID texid = TexMan.CheckForTexture(str, FTexture::TEX_Sprite, 0);
-			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > FWadCollection::IWAD_FILENUM)
+			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > Wads.GetIwadNum())
 			{
 				// This texture has been replaced by some PWAD.
 				memcpy(&sprid, str, 4);
@@ -137,9 +137,9 @@ void AdjustSpriteOffsets()
 				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
 				{
 					int wadno = Wads.GetLumpFile(lumpnum);
-					if ((iwadonly && wadno==FWadCollection::IWAD_FILENUM) || (!iwadonly && wadno == ofslumpno))
+					if ((iwadonly && wadno==Wads.GetIwadNum()) || (!iwadonly && wadno == ofslumpno))
 					{
-						if (wadno == FWadCollection::IWAD_FILENUM && !forced && iwadonly)
+						if (wadno == Wads.GetIwadNum() && !forced && iwadonly)
 						{
 							memcpy(&sprid, &tex->Name[0], 4);
 							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.

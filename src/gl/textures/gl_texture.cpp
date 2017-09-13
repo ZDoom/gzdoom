@@ -614,7 +614,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 		if (lumpnum != -1)
 		{
-			if (iwad && Wads.GetLumpFile(lumpnum) <= FWadCollection::IWAD_FILENUM) useme = true;
+			if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetIwadNum()) useme = true;
 			if (thiswad && Wads.GetLumpFile(lumpnum) == deflump) useme = true;
 		}
 		if (!useme) return;

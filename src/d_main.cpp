@@ -1992,9 +1992,9 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 static void SetMapxxFlag()
 {
-	int lump_name = Wads.CheckNumForName("MAP01", ns_global, FWadCollection::IWAD_FILENUM);
-	int lump_wad = Wads.CheckNumForFullName("maps/map01.wad", FWadCollection::IWAD_FILENUM);
-	int lump_map = Wads.CheckNumForFullName("maps/map01.map", FWadCollection::IWAD_FILENUM);
+	int lump_name = Wads.CheckNumForName("MAP01", ns_global, Wads.GetIwadNum());
+	int lump_wad = Wads.CheckNumForFullName("maps/map01.wad", Wads.GetIwadNum());
+	int lump_map = Wads.CheckNumForFullName("maps/map01.map", Wads.GetIwadNum());
 
 	if (lump_name >= 0 || lump_wad >= 0 || lump_map >= 0) gameinfo.flags |= GI_MAPxx;
 }

@@ -2195,7 +2195,7 @@ static void PutSaveWads (FSerializer &arc)
 	const char *name;
 
 	// Name of IWAD
-	name = Wads.GetWadName (FWadCollection::IWAD_FILENUM);
+	name = Wads.GetWadName (Wads.GetIwadNum());
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in

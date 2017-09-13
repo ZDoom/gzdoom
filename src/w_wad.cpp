@@ -281,7 +281,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 			lump_p->wadnum = Files.Size();
 		}
 
-		if (Files.Size() == IWAD_FILENUM && gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
+		if (Files.Size() == GetIwadNum() && gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
 		{
 			resfile->FindStrifeTeaserVoices();
 		}
@@ -859,7 +859,7 @@ void FWadCollection::RenameSprites ()
 		if (LumpInfo[i].lump->Namespace == ns_sprites)
 		{
 			// Only sprites in the IWAD normally get renamed
-			if (renameAll || LumpInfo[i].wadnum == IWAD_FILENUM)
+			if (renameAll || LumpInfo[i].wadnum == GetIwadNum())
 			{
 				for (int j = 0; j < numrenames; ++j)
 				{
@@ -921,7 +921,7 @@ void FWadCollection::RenameNerve ()
 	static const uint8_t nerve[16] = { 0x96, 0x7d, 0x5a, 0xe2, 0x3d, 0xaf, 0x45, 0x19,
 		0x62, 0x12, 0xae, 0x1b, 0x60, 0x5d, 0xa3, 0xb0 };
 	size_t nervesize = 3819855; // NERVE.WAD's file size
-	int w = IWAD_FILENUM;
+	int w = GetIwadNum();
 	while (++w < GetNumWads())
 	{
 		FileReader *fr = GetFileReader(w);
@@ -985,7 +985,7 @@ void FWadCollection::FixMacHexen()
 		return;
 	}
 
-	FileReader* const reader = GetFileReader(IWAD_FILENUM);
+	FileReader* const reader = GetFileReader(GetIwadNum());
 	const long iwadSize = reader->GetLength();
 
 	static const long DEMO_SIZE = 13596228;
@@ -1038,8 +1038,8 @@ void FWadCollection::FixMacHexen()
 	// Hexen Beta is very similar to Demo but it has MAP41: Maze at the end of the WAD
 	// So keep this map if it's present but discard all extra lumps
 
-	const int lastLump = GetLastLump(IWAD_FILENUM) - (isBeta ? 12 : 0);
-	assert(GetFirstLump(IWAD_FILENUM) + 299 < lastLump);
+	const int lastLump = GetLastLump(GetIwadNum()) - (isBeta ? 12 : 0);
+	assert(GetFirstLump(GetIwadNum()) + 299 < lastLump);
 
 	for (int i = lastLump - EXTRA_LUMPS + 1; i <= lastLump; ++i)
 	{

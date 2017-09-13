@@ -962,7 +962,7 @@ void APlayerPawn::BeginPlay ()
 		int wadnorm = Wads.GetLumpFile(spritenorm);
 		int wadcrouch = Wads.GetLumpFile(spritenorm);
 		
-		if (wadnorm > FWadCollection::IWAD_FILENUM && wadcrouch <= FWadCollection::IWAD_FILENUM) 
+		if (wadnorm > Wads.GetIwadNum() && wadcrouch <= Wads.GetIwadNum())
 		{
 			// Question: Add an option / disable crouching or do what?
 			crouchsprite = 0;

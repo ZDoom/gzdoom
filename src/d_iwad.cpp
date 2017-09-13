@@ -688,8 +688,10 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 	D_AddFile (wadfiles, zdoom_wad);
 
 	// [SP] Load non-free assets if available. This must be done before the IWAD.
-	if (optional_wad)
-		D_AddFile(wadfiles, optional_wad);
+	if (D_AddFile(wadfiles, optional_wad))
+		Wads.SetIwadNum(2);
+	else
+		Wads.SetIwadNum(1);
 
 	if (picks[pick].mRequiredPath.IsNotEmpty())
 	{

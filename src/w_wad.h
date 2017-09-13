@@ -134,7 +134,8 @@ public:
 	~FWadCollection ();
 
 	// The wadnum for the IWAD
-	enum { IWAD_FILENUM = 1 };
+	int GetIwadNum() { return IwadIndex; }
+	void SetIwadNum(int x) { IwadIndex = x; }
 
 	void InitMultipleFiles (TArray<FString> &filenames);
 	void AddFile (const char *filename, FileReader *wadinfo = NULL);
@@ -223,6 +224,8 @@ protected:
 
 	uint32_t NumLumps;					// Not necessarily the same as LumpInfo.Size()
 	uint32_t NumWads;
+
+	int IwadIndex;
 
 	void SkinHack (int baselump);
 	void InitHashChains ();								// [RH] Set up the lumpinfo hashing

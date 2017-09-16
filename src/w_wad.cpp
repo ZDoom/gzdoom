@@ -281,7 +281,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 			lump_p->wadnum = Files.Size();
 		}
 
-		if (Files.Size() == GetIwadNum() && gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
+		if (static_cast<int>(Files.Size()) == GetIwadNum() && gameinfo.gametype == GAME_Strife && gameinfo.flags & GI_SHAREWARE)
 		{
 			resfile->FindStrifeTeaserVoices();
 		}

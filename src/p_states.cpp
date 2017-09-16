@@ -154,7 +154,7 @@ void FStateLabels::Destroy ()
 		if (Labels[i].Children != NULL)
 		{
 			Labels[i].Children->Destroy();
-			free(Labels[i].Children);	// These are malloc'd, not new'd!
+			M_Free(Labels[i].Children);	// These are malloc'd, not new'd!
 			Labels[i].Children = NULL;
 		}
 	}

@@ -253,7 +253,7 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 
 		double pspritexscale = viewport->viewwindow.centerxwide / 160.0;
-		double pspriteyscale = pspritexscale * viewport->YaspectMul;
+		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul;
 		double pspritexiscale = 1 / pspritexscale;
 
 		int tleft = tex->GetScaledLeftOffset();

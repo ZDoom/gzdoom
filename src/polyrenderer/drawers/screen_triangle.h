@@ -32,6 +32,13 @@ struct WorkerThreadData
 {
 	int32_t core;
 	int32_t num_cores;
+
+	// The number of lines to skip to reach the first line to be rendered by this thread
+	int skipped_by_thread(int first_line)
+	{
+		int core_skip = (num_cores - (first_line - core) % num_cores) % num_cores;
+		return core_skip;
+	}
 };
 
 struct TriVertex

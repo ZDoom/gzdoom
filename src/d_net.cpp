@@ -2049,7 +2049,7 @@ FDynamicBuffer::~FDynamicBuffer ()
 {
 	if (m_Data)
 	{
-		free (m_Data);
+		M_Free (m_Data);
 		m_Data = NULL;
 	}
 	m_Len = m_BufferLen = 0;

@@ -335,7 +335,7 @@ int FIWadManager::CheckIWADInfo(const char *fn)
 					delete resfile;
 					for (auto &wadinf : mIWadInfos)
 					{
-						if (wadinf.Name.Compare(result.Name))
+						if (wadinf.Name == result.Name)
 						{
 							return -1;	// do not show the same one twice.
 						}

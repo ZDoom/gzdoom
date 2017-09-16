@@ -48,7 +48,6 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <wordexp.h>
 #include <glob.h>
 #include <signal.h>
 
@@ -533,7 +532,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 
 	int forkres;
-	wordexp_t words;
+	glob_t args;
 	glob_t glb;
 
 	// Get timidity executable path
@@ -542,7 +541,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	if(glb.gl_pathc != 0)
 		exename = glb.gl_pathv[0];
 	// Get user-defined extra args
-	wordexp(timidity_extargs, &words, WRDE_NOCMD);
+	glob(timidity_extargs, 0, NULL, &args);
 
 	std::string chorusarg = std::string("-EFchorus=") + *timidity_chorus;
 	std::string reverbarg = std::string("-EFreverb=") + *timidity_reverb;
@@ -557,8 +556,8 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 
 	std::vector<const char*> arglist;
 	arglist.push_back(exename);
-	for(size_t i = 0;i < words.we_wordc;i++)
-		arglist.push_back(words.we_wordv[i]);
+	for(auto i = 0;i < args.gl_matchc;i++)
+		arglist.push_back(args.gl_pathv[i]);
 	if(**timidity_config != '\0')
 	{
 		arglist.push_back("-c");
@@ -611,7 +610,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		}*/
 	}
 
-	wordfree(&words);
+	globfree(&args);
 	globfree (&glb);
 	return ChildProcess != -1;
 #endif // _WIN32

@@ -336,7 +336,7 @@ static bool VerifyJumpTarget(PClassActor *cls, FState *CallingState, int index)
 
 FState *FStateLabelStorage::GetState(int pos, PClassActor *cls, bool exact)
 {
-	if (pos > 0x10000000)
+	if (pos >= 0x10000000)
 	{
 		return cls? cls->FindState(ENamedName(pos - 0x10000000)) : nullptr;
 	}

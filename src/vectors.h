@@ -655,6 +655,283 @@ struct TVector3
 };
 
 template<class vec_t>
+struct TVector4
+{
+	typedef TVector3<vec_t> Vector3;
+
+	vec_t X, Y, Z, W;
+
+	TVector4()
+	{
+	}
+
+	TVector4(vec_t a, vec_t b, vec_t c, vec_t d)
+		: X(a), Y(b), Z(c), W(d)
+	{
+	}
+
+	TVector4(vec_t *o)
+		: X(o[0]), Y(o[1]), Z(o[2]), W(o[3])
+	{
+	}
+
+	TVector4(const TVector4 &other)
+		: X(other.X), Y(other.Y), Z(other.Z), W(other.W)
+	{
+	}
+
+	TVector4(const Vector3 &xyz, vec_t w)
+		: X(xyz.X), Y(xyz.Y), Z(xyz.Z), W(w)
+	{
+	}
+
+	void Zero()
+	{
+		Z = Y = X = W = 0;
+	}
+
+	bool isZero() const
+	{
+		return X == 0 && Y == 0 && Z == 0 && W == 0;
+	}
+
+	TVector4 &operator= (const TVector4 &other)
+	{
+		W = other.W, Z = other.Z, Y = other.Y, X = other.X;
+		return *this;
+	}
+
+	// Access X and Y and Z as an array
+	vec_t &operator[] (int index)
+	{
+		return (&X)[index];
+	}
+
+	const vec_t &operator[] (int index) const
+	{
+		return (&X)[index];
+	}
+
+	// Test for equality
+	bool operator== (const TVector4 &other) const
+	{
+		return X == other.X && Y == other.Y && Z == other.Z && W = other.W;
+	}
+
+	// Test for inequality
+	bool operator!= (const TVector4 &other) const
+	{
+		return X != other.X || Y != other.Y || Z != other.Z || W != other.W;
+	}
+
+	// Test for approximate equality
+	bool ApproximatelyEquals(const TVector4 &other) const
+	{
+		return fabs(X - other.X) < EQUAL_EPSILON && fabs(Y - other.Y) < EQUAL_EPSILON && fabs(Z - other.Z) < EQUAL_EPSILON && fabs(W - other.W) < EQUAL_EPSILON;
+	}
+
+	// Test for approximate inequality
+	bool DoesNotApproximatelyEqual(const TVector4 &other) const
+	{
+		return fabs(X - other.X) >= EQUAL_EPSILON || fabs(Y - other.Y) >= EQUAL_EPSILON || fabs(Z - other.Z) >= EQUAL_EPSILON || fabs(W - other.W) >= EQUAL_EPSILON;
+	}
+
+	// Unary negation
+	TVector4 operator- () const
+	{
+		return TVector4(-X, -Y, -Z, -W);
+	}
+
+	// Scalar addition
+	TVector4 &operator+= (vec_t scalar)
+	{
+		X += scalar, Y += scalar, Z += scalar; W += scalar;
+		return *this;
+	}
+
+	friend TVector4 operator+ (const TVector4 &v, vec_t scalar)
+	{
+		return TVector4(v.X + scalar, v.Y + scalar, v.Z + scalar, v.W + scalar);
+	}
+
+	friend TVector4 operator+ (vec_t scalar, const TVector4 &v)
+	{
+		return TVector4(v.X + scalar, v.Y + scalar, v.Z + scalar, v.W + scalar);
+	}
+
+	// Scalar subtraction
+	TVector4 &operator-= (vec_t scalar)
+	{
+		X -= scalar, Y -= scalar, Z -= scalar, W -= scalar;
+		return *this;
+	}
+
+	TVector4 operator- (vec_t scalar) const
+	{
+		return TVector4(X - scalar, Y - scalar, Z - scalar, W - scalar);
+	}
+
+	// Scalar multiplication
+	TVector4 &operator*= (vec_t scalar)
+	{
+		X = vec_t(X *scalar), Y = vec_t(Y * scalar), Z = vec_t(Z * scalar), W = vec_t(W * scalar);
+		return *this;
+	}
+
+	friend TVector4 operator* (const TVector4 &v, vec_t scalar)
+	{
+		return TVector4(v.X * scalar, v.Y * scalar, v.Z * scalar, v.W * scalar);
+	}
+
+	friend TVector4 operator* (vec_t scalar, const TVector4 &v)
+	{
+		return TVector4(v.X * scalar, v.Y * scalar, v.Z * scalar, v.W * scalar);
+	}
+
+	// Scalar division
+	TVector4 &operator/= (vec_t scalar)
+	{
+		scalar = 1 / scalar, X = vec_t(X * scalar), Y = vec_t(Y * scalar), Z = vec_t(Z * scalar), W = vec_t(W * scalar);
+		return *this;
+	}
+
+	TVector4 operator/ (vec_t scalar) const
+	{
+		scalar = 1 / scalar;
+		return TVector4(X * scalar, Y * scalar, Z * scalar, W * scalar);
+	}
+
+	// Vector addition
+	TVector4 &operator+= (const TVector4 &other)
+	{
+		X += other.X, Y += other.Y, Z += other.Z, W += other.W;
+		return *this;
+	}
+
+	TVector4 operator+ (const TVector4 &other) const
+	{
+		return TVector4(X + other.X, Y + other.Y, Z + other.Z, W + other.W);
+	}
+
+	// Vector subtraction
+	TVector4 &operator-= (const TVector4 &other)
+	{
+		X -= other.X, Y -= other.Y, Z -= other.Z, W -= other.W;
+		return *this;
+	}
+
+	TVector4 operator- (const TVector4 &other) const
+	{
+		return TVector4(X - other.X, Y - other.Y, Z - other.Z, W - other.W);
+	}
+
+	// Add a 3D vector to this 4D vector, leaving W unchanged.
+	TVector4 &operator+= (const Vector3 &other)
+	{
+		X += other.X, Y += other.Y, Z += other.Z;
+		return *this;
+	}
+
+	// Subtract a 3D vector from this 4D vector, leaving W unchanged.
+	TVector4 &operator-= (const Vector3 &other)
+	{
+		X -= other.X, Y -= other.Y, Z -= other.Z;
+		return *this;
+	}
+
+	// returns the XYZ fields as a 3D-vector.
+	Vector3 XYZ() const
+	{
+		return{ X, Y, Z };
+	}
+
+	// Add a 4D vector and a 3D vector.
+	friend TVector4 operator+ (const TVector4 &v4, const Vector3 &v3)
+	{
+		return TVector4(v4.X + v3.X, v4.Y + v3.Y, v4.Z + v3.Z, v4.W);
+	}
+
+	friend TVector4 operator- (const TVector4 &v4, const Vector3 &v3)
+	{
+		return TVector4(v4.X - v3.X, v4.Y - v3.Y, v4.Z - v3.Z, v4.W);
+	}
+
+	friend Vector3 operator+ (const Vector3 &v3, const TVector4 &v4)
+	{
+		return Vector3(v3.X + v4.X, v3.Y + v4.Y, v3.Z + v4.Z);
+	}
+
+	// Subtract a 4D vector and a 3D vector.
+	// Discards the W component of the 4D vector and returns a 3D vector.
+	friend Vector3 operator- (const TVector3<vec_t> &v3, const TVector4 &v4)
+	{
+		return Vector3(v3.X - v4.X, v3.Y - v4.Y, v3.Z - v4.Z);
+	}
+
+	// Vector length
+	double Length() const
+	{
+		return g_sqrt(X*X + Y*Y + Z*Z + W*W);
+	}
+
+	double LengthSquared() const
+	{
+		return X*X + Y*Y + Z*Z + W*W;
+	}
+
+	// Return a unit vector facing the same direction as this one
+	TVector4 Unit() const
+	{
+		double len = Length();
+		if (len != 0) len = 1 / len;
+		return *this * (vec_t)len;
+	}
+
+	// Scales this vector into a unit vector
+	void MakeUnit()
+	{
+		double len = Length();
+		if (len != 0) len = 1 / len;
+		*this *= (vec_t)len;
+	}
+
+	// Resizes this vector to be the specified length (if it is not 0)
+	TVector4 &MakeResize(double len)
+	{
+		double vlen = Length();
+		if (vlen != 0.)
+		{
+			double scale = len / vlen;
+			X = vec_t(X * scale);
+			Y = vec_t(Y * scale);
+			Z = vec_t(Z * scale);
+			w = vec_t(W * scale);
+		}
+		return *this;
+	}
+
+	TVector4 Resized(double len)
+	{
+		double vlen = Length();
+		if (vlen != 0.)
+		{
+			double scale = len / vlen;
+			return{ vec_t(X * scale), vec_t(Y * scale), vec_t(Z * scale), vec_t(W * scale) };
+		}
+		else
+		{
+			return *this;
+		}
+	}
+
+	// Dot product
+	vec_t operator | (const TVector4 &other) const
+	{
+		return X*other.X + Y*other.Y + Z*other.Z + W*other.W;
+	}
+};
+
+template<class vec_t>
 struct TMatrix3x3
 {
 	typedef TVector3<vec_t> Vector3;
@@ -1383,12 +1660,14 @@ inline TMatrix3x3<T>::TMatrix3x3(const TVector3<T> &axis, TAngle<T> degrees)
 
 typedef TVector2<float>		FVector2;
 typedef TVector3<float>		FVector3;
+typedef TVector4<float>		FVector4;
 typedef TRotator<float>		FRotator;
 typedef TMatrix3x3<float>	FMatrix3x3;
 typedef TAngle<float>		FAngle;
 
 typedef TVector2<double>		DVector2;
 typedef TVector3<double>		DVector3;
+typedef TVector4<double>		DVector4;
 typedef TRotator<double>		DRotator;
 typedef TMatrix3x3<double>		DMatrix3x3;
 typedef TAngle<double>			DAngle;

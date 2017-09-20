@@ -323,7 +323,7 @@ private:
 		int fuzzpos = (ScreenTriangle::FuzzStart + destX * 123 + destY) % FUZZTABLE;
 
 		// Calculate gradients
-		const TriVertex &v1 = *args->v1;
+		const ShadedTriVertex &v1 = *args->v1;
 		ScreenTriangleStepVariables gradientX = args->gradientX;
 		ScreenTriangleStepVariables gradientY = args->gradientY;
 		ScreenTriangleStepVariables blockPosY;

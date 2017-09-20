@@ -146,8 +146,15 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const PolyDrawArgs &drawargs, c
 	const TriMatrix &objectToClip = *drawargs.ObjectToClip();
 
 	// Apply transform to get clip coordinates:
+	FVector4 position = objectToClip * FVector4(v.x, v.y, v.z, v.w);
+
 	ShadedTriVertex sv;
-	sv.position = objectToClip * v;
+	sv.x = position.X;
+	sv.y = position.Y;
+	sv.z = position.Z;
+	sv.w = position.W;
+	sv.u = v.u;
+	sv.v = v.v;
 
 	// Calculate gl_ClipDistance[i]
 	for (int i = 0; i < 3; i++)
@@ -162,12 +169,12 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const PolyDrawArgs &drawargs, c
 bool PolyTriangleDrawer::is_degenerate(const ShadedTriVertex *vert)
 {
 	// A degenerate triangle has a zero cross product for two of its sides.
-	float ax = vert[1].position.x - vert[0].position.x;
-	float ay = vert[1].position.y - vert[0].position.y;
-	float az = vert[1].position.w - vert[0].position.w;
-	float bx = vert[2].position.x - vert[0].position.x;
-	float by = vert[2].position.y - vert[0].position.y;
-	float bz = vert[2].position.w - vert[0].position.w;
+	float ax = vert[1].x - vert[0].x;
+	float ay = vert[1].y - vert[0].y;
+	float az = vert[1].w - vert[0].w;
+	float bx = vert[2].x - vert[0].x;
+	float by = vert[2].y - vert[0].y;
+	float bz = vert[2].w - vert[0].w;
 	float crossx = ay * bz - az * by;
 	float crossy = az * bx - ax * bz;
 	float crossz = ax * by - ay * bx;
@@ -182,7 +189,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 		return;
 
 	// Cull, clip and generate additional vertices as needed
-	TriVertex clippedvert[max_additional_vertices];
+	ShadedTriVertex clippedvert[max_additional_vertices];
 	int numclipvert = clipedge(vert, clippedvert);
 
 #ifdef NO_SSE
@@ -273,7 +280,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 	}
 }
 
-int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert)
+int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert)
 {
 	// Clip and cull so that the following is true for all vertices:
 	// -v.w <= v.x <= v.w
@@ -288,16 +295,16 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 	float *clipd = clipdistance;
 	for (int i = 0; i < 3; i++)
 	{
-		const auto &v = verts[i].position;
+		const auto &v = verts[i];
 		clipd[0] = v.x + v.w;
 		clipd[1] = v.w - v.x;
 		clipd[2] = v.y + v.w;
 		clipd[3] = v.w - v.y;
 		clipd[4] = v.z + v.w;
 		clipd[5] = v.w - v.z;
-		clipd[6] = verts[i].clipDistance[0];
-		clipd[7] = verts[i].clipDistance[1];
-		clipd[8] = verts[i].clipDistance[2];
+		clipd[6] = v.clipDistance[0];
+		clipd[7] = v.clipDistance[1];
+		clipd[8] = v.clipDistance[2];
 		for (int j = 0; j < 9; j++)
 			needsclipping = needsclipping || clipd[i];
 		clipd += numclipdistances;
@@ -308,14 +315,14 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			memcpy(clippedvert + i, &verts[i].position, sizeof(TriVertex));
+			memcpy(clippedvert + i, &verts[i], sizeof(ShadedTriVertex));
 		}
 		return 3;
 	}
 #else
-	__m128 mx = _mm_loadu_ps(&verts[0].position.x);
-	__m128 my = _mm_loadu_ps(&verts[1].position.x);
-	__m128 mz = _mm_loadu_ps(&verts[2].position.x);
+	__m128 mx = _mm_loadu_ps(&verts[0].x);
+	__m128 my = _mm_loadu_ps(&verts[1].x);
+	__m128 mz = _mm_loadu_ps(&verts[2].x);
 	__m128 mw = _mm_setzero_ps();
 	_MM_TRANSPOSE4_PS(mx, my, mz, mw);
 	__m128 clipd0 = _mm_add_ps(mx, mw);
@@ -340,7 +347,7 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 	{
 		for (int i = 0; i < 3; i++)
 		{
-			memcpy(clippedvert + i, &verts[i].position, sizeof(TriVertex));
+			memcpy(clippedvert + i, &verts[i], sizeof(ShadedTriVertex));
 		}
 		return 3;
 	}
@@ -429,16 +436,16 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, TriVertex *clippe
 	for (int i = 0; i < inputverts; i++)
 	{
 		auto &v = clippedvert[i];
-		memset(&v, 0, sizeof(TriVertex));
+		memset(&v, 0, sizeof(ShadedTriVertex));
 		for (int w = 0; w < 3; w++)
 		{
 			float weight = input[i * 3 + w];
-			v.x += verts[w].position.x * weight;
-			v.y += verts[w].position.y * weight;
-			v.z += verts[w].position.z * weight;
-			v.w += verts[w].position.w * weight;
-			v.u += verts[w].position.u * weight;
-			v.v += verts[w].position.v * weight;
+			v.x += verts[w].x * weight;
+			v.y += verts[w].y * weight;
+			v.z += verts[w].z * weight;
+			v.w += verts[w].w * weight;
+			v.u += verts[w].u * weight;
+			v.v += verts[w].v * weight;
 		}
 	}
 	return inputverts;

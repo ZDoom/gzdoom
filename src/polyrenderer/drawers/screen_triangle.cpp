@@ -140,9 +140,9 @@ private:
 
 TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args, WorkerThreadData *thread) : args(args), thread(thread)
 {
-	const TriVertex &v1 = *args->v1;
-	const TriVertex &v2 = *args->v2;
-	const TriVertex &v3 = *args->v3;
+	const ShadedTriVertex &v1 = *args->v1;
+	const ShadedTriVertex &v2 = *args->v2;
+	const ShadedTriVertex &v3 = *args->v3;
 
 	clipright = args->clipright;
 	clipbottom = args->clipbottom;
@@ -368,7 +368,7 @@ void TriangleBlock::DepthTest(const TriDrawTriangleArgs *args)
 	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
 	float *depth = zbuffer + block * 64;
 
-	const TriVertex &v1 = *args->v1;
+	const ShadedTriVertex &v1 = *args->v1;
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
@@ -416,7 +416,7 @@ void TriangleBlock::DepthTest(const TriDrawTriangleArgs *args)
 	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
 	float *depth = zbuffer + block * 64;
 
-	const TriVertex &v1 = *args->v1;
+	const ShadedTriVertex &v1 = *args->v1;
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
@@ -962,7 +962,7 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
 	float *depth = zbuffer + block * 64;
 
-	const TriVertex &v1 = *args->v1;
+	const ShadedTriVertex &v1 = *args->v1;
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
@@ -1023,7 +1023,7 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
 	float *depth = zbuffer + block * 64;
 
-	const TriVertex &v1 = *args->v1;
+	const ShadedTriVertex &v1 = *args->v1;
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
@@ -1081,7 +1081,7 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 
 #else
 
-static void SortVertices(const TriDrawTriangleArgs *args, TriVertex **sortedVertices)
+static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sortedVertices)
 {
 	sortedVertices[0] = args->v1;
 	sortedVertices[1] = args->v2;
@@ -1098,7 +1098,7 @@ static void SortVertices(const TriDrawTriangleArgs *args, TriVertex **sortedVert
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	// Sort vertices by Y position
-	TriVertex *sortedVertices[3];
+	ShadedTriVertex *sortedVertices[3];
 	SortVertices(args, sortedVertices);
 
 	int clipright = args->clipright;

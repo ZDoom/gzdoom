@@ -173,33 +173,27 @@ TriMatrix TriMatrix::operator*(const TriMatrix &mult) const
 	return result;
 }
 
-TriVertex TriMatrix::operator*(TriVertex v) const
+FVector4 TriMatrix::operator*(const FVector4 &v) const
 {
 #ifdef NO_SSE
-	float vx = matrix[0 * 4 + 0] * v.x + matrix[1 * 4 + 0] * v.y + matrix[2 * 4 + 0] * v.z + matrix[3 * 4 + 0] * v.w;
-	float vy = matrix[0 * 4 + 1] * v.x + matrix[1 * 4 + 1] * v.y + matrix[2 * 4 + 1] * v.z + matrix[3 * 4 + 1] * v.w;
-	float vz = matrix[0 * 4 + 2] * v.x + matrix[1 * 4 + 2] * v.y + matrix[2 * 4 + 2] * v.z + matrix[3 * 4 + 2] * v.w;
-	float vw = matrix[0 * 4 + 3] * v.x + matrix[1 * 4 + 3] * v.y + matrix[2 * 4 + 3] * v.z + matrix[3 * 4 + 3] * v.w;
-	TriVertex sv;
-	sv.x = vx;
-	sv.y = vy;
-	sv.z = vz;
-	sv.w = vw;
+	float vx = matrix[0 * 4 + 0] * v.X + matrix[1 * 4 + 0] * v.Y + matrix[2 * 4 + 0] * v.Z + matrix[3 * 4 + 0] * v.W;
+	float vy = matrix[0 * 4 + 1] * v.X + matrix[1 * 4 + 1] * v.Y + matrix[2 * 4 + 1] * v.Z + matrix[3 * 4 + 1] * v.W;
+	float vz = matrix[0 * 4 + 2] * v.X + matrix[1 * 4 + 2] * v.Y + matrix[2 * 4 + 2] * v.Z + matrix[3 * 4 + 2] * v.W;
+	float vw = matrix[0 * 4 + 3] * v.X + matrix[1 * 4 + 3] * v.Y + matrix[2 * 4 + 3] * v.Z + matrix[3 * 4 + 3] * v.W;
+	return{ vx, vy, vz, vw };
 #else
 	__m128 m0 = _mm_loadu_ps(matrix);
 	__m128 m1 = _mm_loadu_ps(matrix + 4);
 	__m128 m2 = _mm_loadu_ps(matrix + 8);
 	__m128 m3 = _mm_loadu_ps(matrix + 12);
-	__m128 mv = _mm_loadu_ps(&v.x);
+	__m128 mv = _mm_loadu_ps(&v.X);
 	m0 = _mm_mul_ps(m0, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(0, 0, 0, 0)));
 	m1 = _mm_mul_ps(m1, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(1, 1, 1, 1)));
 	m2 = _mm_mul_ps(m2, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(2, 2, 2, 2)));
 	m3 = _mm_mul_ps(m3, _mm_shuffle_ps(mv, mv, _MM_SHUFFLE(3, 3, 3, 3)));
 	mv = _mm_add_ps(_mm_add_ps(_mm_add_ps(m0, m1), m2), m3);
-	TriVertex sv;
-	_mm_storeu_ps(&sv.x, mv);
-#endif
-	sv.u = v.u;
-	sv.v = v.v;
+	FVector4 sv;
+	_mm_storeu_ps(&sv.X, mv);
 	return sv;
+#endif
 }

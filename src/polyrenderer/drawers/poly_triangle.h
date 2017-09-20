@@ -29,12 +29,6 @@
 #include "polyrenderer/drawers/poly_buffer.h"
 #include "polyrenderer/drawers/poly_draw_args.h"
 
-struct ShadedTriVertex
-{
-	TriVertex position;
-	float clipDistance[3];
-};
-
 typedef void(*PolyDrawFuncPtr)(const TriDrawTriangleArgs *, WorkerThreadData *);
 
 class PolyTriangleDrawer
@@ -50,7 +44,7 @@ private:
 	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread);
 	static bool is_degenerate(const ShadedTriVertex *vertices);
 
-	static int clipedge(const ShadedTriVertex *verts, TriVertex *clippedvert);
+	static int clipedge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert);
 
 	static int viewport_x, viewport_y, viewport_width, viewport_height, dest_pitch, dest_width, dest_height;
 	static bool dest_bgra;

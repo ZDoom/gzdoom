@@ -46,6 +46,15 @@ public:
 	float A, B, C, D;
 };
 
+struct TriVertex
+{
+	TriVertex() { }
+	TriVertex(float x, float y, float z, float w, float u, float v) : x(x), y(y), z(z), w(w), u(u), v(v) { }
+
+	float x, y, z, w;
+	float u, v;
+};
+
 class PolyDrawArgs
 {
 public:

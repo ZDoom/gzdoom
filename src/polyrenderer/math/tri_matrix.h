@@ -39,7 +39,7 @@ struct TriMatrix
 	//static TriMatrix worldToView(const FRenderViewpoint &viewpoint); // Software renderer world to view space transform
 	//static TriMatrix viewToClip(double focalTangent, double centerY, double invZtoScale); // Software renderer shearing projection
 
-	TriVertex operator*(TriVertex v) const;
+	FVector4 operator*(const FVector4 &v) const;
 	TriMatrix operator*(const TriMatrix &m) const;
 
 	float matrix[16];

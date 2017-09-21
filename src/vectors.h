@@ -905,7 +905,7 @@ struct TVector4
 			X = vec_t(X * scale);
 			Y = vec_t(Y * scale);
 			Z = vec_t(Z * scale);
-			w = vec_t(W * scale);
+			W = vec_t(W * scale);
 		}
 		return *this;
 	}

@@ -28,7 +28,7 @@
 #include "poly_cull.h"
 #include "polyrenderer/poly_renderer.h"
 
-void PolyCull::CullScene(const TriMatrix &worldToClip, const PolyClipPlane &portalClipPlane)
+void PolyCull::CullScene(const PolyClipPlane &portalClipPlane)
 {
 	ClearSolidSegments();
 	MarkViewFrustum();

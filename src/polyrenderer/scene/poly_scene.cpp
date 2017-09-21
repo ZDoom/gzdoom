@@ -60,7 +60,7 @@ void RenderPolyScene::Render(int portalDepth)
 
 	SectorPortals.clear();
 	LinePortals.clear();
-	Cull.CullScene(WorldToClip, PortalPlane);
+	Cull.CullScene(PortalPlane);
 	RenderSectors();
 	RenderPortals(portalDepth);
 }

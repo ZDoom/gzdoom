@@ -29,7 +29,7 @@
 class PolyCull
 {
 public:
-	void CullScene(const TriMatrix &worldToClip, const PolyClipPlane &portalClipPlane);
+	void CullScene(const PolyClipPlane &portalClipPlane);
 
 	bool IsLineSegVisible(uint32_t subsectorDepth, uint32_t lineIndex)
 	{

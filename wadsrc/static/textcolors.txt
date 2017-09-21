@@ -140,7 +140,8 @@ Flat:
 
 Cream
 {
-	#CF8353  #FFD7BB
+	#6B4727  #BF7B4B    0 94
+	#BF7B4B  #FFBF9B   95 256
 Console:
 	#2B230F  #BF7B4B    0 127
 	#FFB383  #FFFFFF  128 256
@@ -150,7 +151,7 @@ Flat:
 
 Olive
 {
-	#2F371F  #7B7F50
+	#171F07  #7B7F50
 Console:
 	#373F27  #7B7F63    0 127
 	#676B4F  #D1D8A8  128 256

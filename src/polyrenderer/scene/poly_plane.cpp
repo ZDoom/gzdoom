@@ -32,6 +32,7 @@
 #include "polyrenderer/scene/poly_light.h"
 #include "polyrenderer/poly_renderthread.h"
 #include "p_lnspec.h"
+#include "a_dynlight.h"
 
 EXTERN_CVAR(Int, r_3dfloors)
 
@@ -253,6 +254,7 @@ void RenderPolyPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 
 	if (!isSky)
 	{
+		SetDynLights(thread, args, sub);
 		args.SetTexture(tex);
 		args.SetStyle(TriBlendMode::TextureOpaque);
 		args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
@@ -275,6 +277,64 @@ void RenderPolyPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 
 		RenderSkyWalls(thread, args, sub, frontsector, portal, polyportal, ceiling, skyHeight, transform);
 	}
+}
+
+void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub)
+{
+	FLightNode *light_list = sub->lighthead;
+
+	auto cameraLight = PolyCameraLight::Instance();
+	if ((cameraLight->FixedLightLevel() >= 0) || (cameraLight->FixedColormap() != nullptr))
+	{
+		args.SetLights(nullptr, 0); // [SP] Don't draw dynlights if invul/lightamp active
+		return;
+	}
+
+	// Calculate max lights that can touch the wall so we can allocate memory for the list
+	int max_lights = 0;
+	FLightNode *cur_node = light_list;
+	while (cur_node)
+	{
+		if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+			max_lights++;
+		cur_node = cur_node->nextLight;
+	}
+
+	if (max_lights == 0)
+	{
+		args.SetLights(nullptr, 0);
+		return;
+	}
+
+	int dc_num_lights = 0;
+	PolyLight *dc_lights = thread->FrameMemory->AllocMemory<PolyLight>(max_lights);
+
+	// Setup lights
+	cur_node = light_list;
+	while (cur_node)
+	{
+		if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+		{
+			//bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
+
+			// To do: cull lights not touching subsector
+
+			uint32_t red = cur_node->lightsource->GetRed();
+			uint32_t green = cur_node->lightsource->GetGreen();
+			uint32_t blue = cur_node->lightsource->GetBlue();
+
+			auto &light = dc_lights[dc_num_lights++];
+			light.x = (float)cur_node->lightsource->X();
+			light.y = (float)cur_node->lightsource->Y();
+			light.z = (float)cur_node->lightsource->Z();
+			light.radius = 256.0f / cur_node->lightsource->GetRadius();
+			light.color = (red << 16) | (green << 8) | blue;
+		}
+
+		cur_node = cur_node->nextLight;
+	}
+
+	args.SetLights(dc_lights, dc_num_lights);
 }
 
 void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform)

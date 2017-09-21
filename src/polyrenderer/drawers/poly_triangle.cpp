@@ -155,6 +155,9 @@ ShadedTriVertex PolyTriangleDrawer::shade_vertex(const PolyDrawArgs &drawargs, c
 	sv.w = position.W;
 	sv.u = v.u;
 	sv.v = v.v;
+	sv.worldX = v.x;
+	sv.worldY = v.y;
+	sv.worldZ = v.z;
 
 	// Calculate gl_ClipDistance[i]
 	for (int i = 0; i < 3; i++)
@@ -446,6 +449,9 @@ int PolyTriangleDrawer::clipedge(const ShadedTriVertex *verts, ShadedTriVertex *
 			v.w += verts[w].w * weight;
 			v.u += verts[w].u * weight;
 			v.v += verts[w].v * weight;
+			v.worldX += verts[w].worldX * weight;
+			v.worldY += verts[w].worldY * weight;
+			v.worldZ += verts[w].worldZ * weight;
 		}
 	}
 	return inputverts;

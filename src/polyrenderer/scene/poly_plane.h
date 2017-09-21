@@ -62,6 +62,7 @@ public:
 private:
 	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
 	void RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform);
+	void SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub);
 };
 
 class Render3DFloorPlane

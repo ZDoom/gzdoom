@@ -55,6 +55,13 @@ struct TriVertex
 	float u, v;
 };
 
+struct PolyLight
+{
+	uint32_t color;
+	float x, y, z;
+	float radius;
+};
+
 class PolyDrawArgs
 {
 public:
@@ -73,6 +80,7 @@ public:
 	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
 	void SetTransform(const TriMatrix *objectToClip) { mObjectToClip = objectToClip; }
 	void SetColor(uint32_t bgra, uint8_t palindex);
+	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
 	void DrawArray(PolyRenderThread *thread, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 
 	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
@@ -119,6 +127,9 @@ public:
 	bool NearestFilter() const { return mNearestFilter; }
 	bool FixedLight() const { return mFixedLight; }
 
+	PolyLight *Lights() const { return mLights; }
+	int NumLights() const { return mNumLights; }
+
 private:
 	const TriMatrix *mObjectToClip = nullptr;
 	const TriVertex *mVertices = nullptr;
@@ -155,6 +166,8 @@ private:
 	bool mSimpleShade = true;
 	bool mNearestFilter = true;
 	bool mFixedLight = false;
+	PolyLight *mLights = nullptr;
+	int mNumLights = 0;
 };
 
 class RectDrawArgs

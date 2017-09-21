@@ -35,6 +35,7 @@
 #include "polyrenderer/scene/poly_light.h"
 #include "polyrenderer/poly_renderthread.h"
 #include "g_levellocals.h"
+#include "a_dynlight.h"
 
 EXTERN_CVAR(Bool, r_drawmirrors)
 EXTERN_CVAR(Bool, r_fogboundary)
@@ -326,6 +327,8 @@ void RenderPolyWall::Render(PolyRenderThread *thread, const TriMatrix &worldToCl
 		args.SetTexture(Texture);
 	args.SetClipPlane(0, clipPlane);
 
+	SetDynLights(thread, args);
+
 	if (FogBoundary)
 	{
 		args.SetStyle(TriBlendMode::FogBoundary);
@@ -363,6 +366,64 @@ void RenderPolyWall::Render(PolyRenderThread *thread, const TriMatrix &worldToCl
 	}
 
 	RenderPolyDecal::RenderWallDecals(thread, worldToClip, clipPlane, LineSeg, StencilValue);
+}
+
+void RenderPolyWall::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args)
+{
+	FLightNode *light_list = (LineSeg && LineSeg->sidedef) ? LineSeg->sidedef->lighthead : nullptr;
+
+	auto cameraLight = PolyCameraLight::Instance();
+	if ((cameraLight->FixedLightLevel() >= 0) || (cameraLight->FixedColormap() != nullptr))
+	{
+		args.SetLights(nullptr, 0); // [SP] Don't draw dynlights if invul/lightamp active
+		return;
+	}
+
+	// Calculate max lights that can touch the wall so we can allocate memory for the list
+	int max_lights = 0;
+	FLightNode *cur_node = light_list;
+	while (cur_node)
+	{
+		if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+			max_lights++;
+		cur_node = cur_node->nextLight;
+	}
+
+	if (max_lights == 0)
+	{
+		args.SetLights(nullptr, 0);
+		return;
+	}
+
+	int dc_num_lights = 0;
+	PolyLight *dc_lights = thread->FrameMemory->AllocMemory<PolyLight>(max_lights);
+
+	// Setup lights
+	cur_node = light_list;
+	while (cur_node)
+	{
+		if (!(cur_node->lightsource->flags2&MF2_DORMANT))
+		{
+			//bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
+
+			// To do: cull lights not touching wall
+
+			uint32_t red = cur_node->lightsource->GetRed();
+			uint32_t green = cur_node->lightsource->GetGreen();
+			uint32_t blue = cur_node->lightsource->GetBlue();
+
+			auto &light = dc_lights[dc_num_lights++];
+			light.x = (float)cur_node->lightsource->X();
+			light.y = (float)cur_node->lightsource->Y();
+			light.z = (float)cur_node->lightsource->Z();
+			light.radius = 256.0f / cur_node->lightsource->GetRadius();
+			light.color = (red << 16) | (green << 8) | blue;
+		}
+
+		cur_node = cur_node->nextLight;
+	}
+
+	args.SetLights(dc_lights, dc_num_lights);
 }
 
 void RenderPolyWall::DrawStripes(PolyRenderThread *thread, PolyDrawArgs &args, TriVertex *vertices)

@@ -46,11 +46,13 @@ struct ShadedTriVertex
 	float x, y, z, w;
 	float u, v;
 	float clipDistance[3];
+	float worldX, worldY, worldZ;
 };
 
 struct ScreenTriangleStepVariables
 {
 	float W, U, V;
+	float WorldX, WorldY, WorldZ, Padding; // Padding so it can be loaded directly into a XMM register
 };
 
 struct TriDrawTriangleArgs
@@ -79,11 +81,19 @@ struct TriDrawTriangleArgs
 			return false;
 
 		gradientX.W = FindGradientX(bottomX, 1.0f, 1.0f, 1.0f);
-		gradientY.W = FindGradientY(bottomY, 1.0f, 1.0f, 1.0f);
 		gradientX.U = FindGradientX(bottomX, v1->u, v2->u, v3->u);
-		gradientY.U = FindGradientY(bottomY, v1->u, v2->u, v3->u);
 		gradientX.V = FindGradientX(bottomX, v1->v, v2->v, v3->v);
+		gradientX.WorldX = FindGradientX(bottomX, v1->worldX, v2->worldX, v3->worldX);
+		gradientX.WorldY = FindGradientX(bottomX, v1->worldY, v2->worldY, v3->worldY);
+		gradientX.WorldZ = FindGradientX(bottomX, v1->worldZ, v2->worldZ, v3->worldZ);
+
+		gradientY.W = FindGradientY(bottomY, 1.0f, 1.0f, 1.0f);
+		gradientY.U = FindGradientY(bottomY, v1->u, v2->u, v3->u);
 		gradientY.V = FindGradientY(bottomY, v1->v, v2->v, v3->v);
+		gradientY.WorldX = FindGradientY(bottomY, v1->worldX, v2->worldX, v3->worldX);
+		gradientY.WorldY = FindGradientY(bottomY, v1->worldY, v2->worldY, v3->worldY);
+		gradientY.WorldZ = FindGradientY(bottomY, v1->worldZ, v2->worldZ, v3->worldZ);
+
 		return true;
 	}
 

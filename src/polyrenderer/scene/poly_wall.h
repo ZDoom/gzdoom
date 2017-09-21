@@ -68,6 +68,8 @@ private:
 	int GetLightLevel();
 	void DrawStripes(PolyRenderThread *thread, PolyDrawArgs &args, TriVertex *vertices);
 
+	void SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args);
+
 	static bool IsFogBoundary(sector_t *front, sector_t *back);
 	static FTexture *GetTexture(const line_t *Line, const side_t *Side, side_t::ETexpart texpart);
 };

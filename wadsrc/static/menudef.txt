@@ -823,6 +823,10 @@ OptionValue TextColors
 	19.0, "$C_PURPLE"
 	20.0, "$C_DARKGRAY"
 	21.0, "$C_CYAN"
+	22.0, "$C_ICE"
+	23.0, "$C_FIRE"
+	24.0, "$C_SAPPHIRE"
+	25.0, "$C_TEAL"
 }
 
 OptionValue Crosshairs

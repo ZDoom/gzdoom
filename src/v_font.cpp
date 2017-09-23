@@ -2666,7 +2666,7 @@ EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int 
 	}
 	else							// Incomplete!
 	{
-		color_value = ch - (*ch == '\0');
+		color_value = ch - (newcolor == '\0');
 		return CR_UNDEFINED;
 	}
 	color_value = ch;

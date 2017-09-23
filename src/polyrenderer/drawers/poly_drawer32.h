@@ -154,9 +154,62 @@ namespace TriScreenDrawerModes
 		}
 	}
 
-	template<typename ShadeModeT>
-	FORCEINLINE BgraColor Shade32(BgraColor fgcolor, BgraColor mlight, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light)
+	FORCEINLINE BgraColor VECTORCALL AddLights(BgraColor material, BgraColor fgcolor, BgraColor dynlight)
 	{
+		fgcolor.r = MIN(fgcolor.r + ((material.r * dynlight.r) >> 8), (uint32_t)255);
+		fgcolor.g = MIN(fgcolor.g + ((material.g * dynlight.g) >> 8), (uint32_t)255);
+		fgcolor.b = MIN(fgcolor.b + ((material.b * dynlight.b) >> 8), (uint32_t)255);
+		return fgcolor;
+	}
+
+	FORCEINLINE BgraColor VECTORCALL CalcDynamicLight(const PolyLight *lights, int num_lights, FVector3 worldpos, FVector3 worldnormal, uint32_t dynlightcolor)
+	{
+		BgraColor lit = dynlightcolor;
+
+		for (int i = 0; i != num_lights; i++)
+		{
+			FVector3 lightpos = { lights[i].x, lights[i].y, lights[i].z };
+			float light_radius = lights[i].radius;
+
+			bool is_attenuated = light_radius < 0.0f;
+			if (is_attenuated)
+				light_radius = -light_radius;
+
+			// L = light-pos
+			// dist = sqrt(dot(L, L))
+			// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+			FVector3 L = lightpos - worldpos;
+			float dist2 = L | L;
+			float rcp_dist = 1.0f / sqrt(dist2);
+			float dist = dist2 * rcp_dist;
+			float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+
+			// The simple light type
+			float simple_attenuation = distance_attenuation;
+
+			// The point light type
+			// diffuse = max(dot(N,normalize(L)),0) * attenuation
+			float dotNL = worldnormal | (L * rcp_dist);
+			float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
+
+			uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
+
+			BgraColor light_color = lights[i].color;
+			lit.r += (light_color.r * attenuation) >> 8;
+			lit.g += (light_color.g * attenuation) >> 8;
+			lit.b += (light_color.b * attenuation) >> 8;
+		}
+
+		lit.r = MIN(lit.r, (uint32_t)256);
+		lit.g = MIN(lit.g, (uint32_t)256);
+		lit.b = MIN(lit.b, (uint32_t)256);
+		return lit;
+	}
+
+	template<typename ShadeModeT>
+	FORCEINLINE BgraColor Shade32(BgraColor fgcolor, BgraColor mlight, uint32_t desaturate, uint32_t inv_desaturate, BgraColor shade_fade, BgraColor shade_light, BgraColor dynlight)
+	{
+		BgraColor material = fgcolor;
 		if (ShadeModeT::Mode == (int)ShadeMode::Simple)
 		{
 			fgcolor.r = (fgcolor.r * mlight.r) >> 8;
@@ -170,7 +223,7 @@ namespace TriScreenDrawerModes
 			fgcolor.g = (((shade_fade.g + ((fgcolor.g * inv_desaturate + intensity) >> 8) * mlight.g) >> 8) * shade_light.g) >> 8;
 			fgcolor.b = (((shade_fade.b + ((fgcolor.b * inv_desaturate + intensity) >> 8) * mlight.b) >> 8) * shade_light.b) >> 8;
 		}
-		return fgcolor;
+		return AddLights(material, fgcolor, dynlight);
 	}
 
 	template<typename BlendT>
@@ -322,6 +375,11 @@ private:
 
 		int fuzzpos = (ScreenTriangle::FuzzStart + destX * 123 + destY) % FUZZTABLE;
 
+		auto lights = args->uniforms->Lights();
+		auto num_lights = args->uniforms->NumLights();
+		FVector3 worldnormal = args->uniforms->Normal();
+		uint32_t dynlightcolor = args->uniforms->DynLightColor();
+
 		// Calculate gradients
 		const ShadedTriVertex &v1 = *args->v1;
 		ScreenTriangleStepVariables gradientX = args->gradientX;
@@ -330,9 +388,15 @@ private:
 		blockPosY.W = v1.w + gradientX.W * (destX - v1.x) + gradientY.W * (destY - v1.y);
 		blockPosY.U = v1.u * v1.w + gradientX.U * (destX - v1.x) + gradientY.U * (destY - v1.y);
 		blockPosY.V = v1.v * v1.w + gradientX.V * (destX - v1.x) + gradientY.V * (destY - v1.y);
+		blockPosY.WorldX = v1.worldX * v1.w + gradientX.WorldX * (destX - v1.x) + gradientY.WorldX * (destY - v1.y);
+		blockPosY.WorldY = v1.worldY * v1.w + gradientX.WorldY * (destX - v1.x) + gradientY.WorldY * (destY - v1.y);
+		blockPosY.WorldZ = v1.worldZ * v1.w + gradientX.WorldZ * (destX - v1.x) + gradientY.WorldZ * (destY - v1.y);
 		gradientX.W *= 8.0f;
 		gradientX.U *= 8.0f;
 		gradientX.V *= 8.0f;
+		gradientX.WorldX *= 8.0f;
+		gradientX.WorldY *= 8.0f;
+		gradientX.WorldZ *= 8.0f;
 
 		// Output
 		uint32_t * RESTRICT destOrg = (uint32_t*)args->dest;
@@ -401,10 +465,16 @@ private:
 				fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
+				FVector3 worldpos = FVector3(blockPosY.WorldX, blockPosY.WorldY, blockPosY.WorldZ) / blockPosY.W;
+				BgraColor dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
+
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 				blockPosX.W += gradientX.W;
 				blockPosX.U += gradientX.U;
 				blockPosX.V += gradientX.V;
+				blockPosX.WorldX += gradientX.WorldX;
+				blockPosX.WorldY += gradientX.WorldY;
+				blockPosX.WorldZ += gradientX.WorldZ;
 
 				rcpW = 0x01000000 / blockPosX.W;
 				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
@@ -415,6 +485,13 @@ private:
 				fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				fixed_t lightstep = (lightnext - lightpos) / 8;
 				lightstep = lightstep & lightmask;
+
+				worldpos = FVector3(blockPosX.WorldX, blockPosX.WorldY, blockPosX.WorldZ) / blockPosX.W;
+				BgraColor dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
+				BgraColor dynlightstep;
+				dynlightstep.r = int32_t(dynlightnext.r - dynlight.r) >> 3;
+				dynlightstep.g = int32_t(dynlightnext.g - dynlight.g) >> 3;
+				dynlightstep.b = int32_t(dynlightnext.b - dynlight.b) >> 3;
 
 				for (int ix = 0; ix < 8; ix++)
 				{
@@ -456,16 +533,23 @@ private:
 					}
 
 					// Shade and blend
-					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light, dynlight);
 					BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 					// Store result
 					dest[ix] = outcolor;
+
+					dynlight.r = MAX<int32_t>(dynlight.r + dynlightstep.r, 0);
+					dynlight.g = MAX<int32_t>(dynlight.g + dynlightstep.g, 0);
+					dynlight.b = MAX<int32_t>(dynlight.b + dynlightstep.b, 0);
 				}
 
 				blockPosY.W += gradientY.W;
 				blockPosY.U += gradientY.U;
 				blockPosY.V += gradientY.V;
+				blockPosY.WorldX += gradientY.WorldX;
+				blockPosY.WorldY += gradientY.WorldY;
+				blockPosY.WorldZ += gradientY.WorldZ;
 
 				dest += pitch;
 			}
@@ -482,10 +566,16 @@ private:
 				fixed_t lightpos = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
+				FVector3 worldpos = FVector3(blockPosY.WorldX, blockPosY.WorldY, blockPosY.WorldZ) / blockPosY.W;
+				BgraColor dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
+
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 				blockPosX.W += gradientX.W;
 				blockPosX.U += gradientX.U;
 				blockPosX.V += gradientX.V;
+				blockPosX.WorldX += gradientX.WorldX;
+				blockPosX.WorldY += gradientX.WorldY;
+				blockPosX.WorldZ += gradientX.WorldZ;
 
 				rcpW = 0x01000000 / blockPosX.W;
 				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
@@ -496,6 +586,13 @@ private:
 				fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				fixed_t lightstep = (lightnext - lightpos) / 8;
 				lightstep = lightstep & lightmask;
+
+				worldpos = FVector3(blockPosX.WorldX, blockPosX.WorldY, blockPosX.WorldZ) / blockPosX.W;
+				BgraColor dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
+				BgraColor dynlightstep;
+				dynlightstep.r = int32_t(dynlightnext.r - dynlight.r) >> 3;
+				dynlightstep.g = int32_t(dynlightnext.g - dynlight.g) >> 3;
+				dynlightstep.b = int32_t(dynlightnext.b - dynlight.b) >> 3;
 
 				for (int x = 0; x < 8; x++)
 				{
@@ -539,18 +636,25 @@ private:
 					}
 
 					// Shade and blend
-					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light, dynlight);
 					BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 					// Store result
 					if (mask0 & (1 << 31)) dest[x] = outcolor;
 
 					mask0 <<= 1;
+
+					dynlight.r = MAX<int32_t>(dynlight.r + dynlightstep.r, 0);
+					dynlight.g = MAX<int32_t>(dynlight.g + dynlightstep.g, 0);
+					dynlight.b = MAX<int32_t>(dynlight.b + dynlightstep.b, 0);
 				}
 
 				blockPosY.W += gradientY.W;
 				blockPosY.U += gradientY.U;
 				blockPosY.V += gradientY.V;
+				blockPosY.WorldX += gradientY.WorldX;
+				blockPosY.WorldY += gradientY.WorldY;
+				blockPosY.WorldZ += gradientY.WorldZ;
 
 				dest += pitch;
 			}
@@ -565,10 +669,16 @@ private:
 				fixed_t lightpos = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosY.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 
+				FVector3 worldpos = FVector3(blockPosY.WorldX, blockPosY.WorldY, blockPosY.WorldZ) / blockPosY.W;
+				BgraColor dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
+
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 				blockPosX.W += gradientX.W;
 				blockPosX.U += gradientX.U;
 				blockPosX.V += gradientX.V;
+				blockPosX.WorldX += gradientX.WorldX;
+				blockPosX.WorldY += gradientX.WorldY;
+				blockPosX.WorldZ += gradientX.WorldZ;
 
 				rcpW = 0x01000000 / blockPosX.W;
 				int32_t nextU = (int32_t)(blockPosX.U * rcpW);
@@ -579,6 +689,13 @@ private:
 				fixed_t lightnext = FRACUNIT - (fixed_t)(clamp(shade - MIN(24.0f / 32.0f, globVis * blockPosX.W), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 				fixed_t lightstep = (lightnext - lightpos) / 8;
 				lightstep = lightstep & lightmask;
+
+				worldpos = FVector3(blockPosX.WorldX, blockPosX.WorldY, blockPosX.WorldZ) / blockPosX.W;
+				BgraColor dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
+				BgraColor dynlightstep;
+				dynlightstep.r = int32_t(dynlightnext.r - dynlight.r) >> 3;
+				dynlightstep.g = int32_t(dynlightnext.g - dynlight.g) >> 3;
+				dynlightstep.b = int32_t(dynlightnext.b - dynlight.b) >> 3;
 
 				for (int x = 0; x < 8; x++)
 				{
@@ -622,18 +739,25 @@ private:
 					}
 
 					// Shade and blend
-					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+					BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light, dynlight);
 					BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 					// Store result
 					if (mask1 & (1 << 31)) dest[x] = outcolor;
 
 					mask1 <<= 1;
+
+					dynlight.r = MAX<int32_t>(dynlight.r + dynlightstep.r, 0);
+					dynlight.g = MAX<int32_t>(dynlight.g + dynlightstep.g, 0);
+					dynlight.b = MAX<int32_t>(dynlight.b + dynlightstep.b, 0);
 				}
 
 				blockPosY.W += gradientY.W;
 				blockPosY.U += gradientY.U;
 				blockPosY.V += gradientY.V;
+				blockPosY.WorldX += gradientY.WorldX;
+				blockPosY.WorldY += gradientY.WorldY;
+				blockPosY.WorldZ += gradientY.WorldZ;
 
 				dest += pitch;
 			}
@@ -707,6 +831,8 @@ private:
 		lightpos += lightpos >> 7; // 255 -> 256
 		BgraColor mlight;
 
+		BgraColor dynlight = 0;
+
 		// Shade constants
 		int inv_desaturate;
 		BgraColor shade_fade_lit, shade_light;
@@ -774,7 +900,7 @@ private:
 				posU += stepU;
 
 				// Shade and blend
-				BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light);
+				BgraColor fgcolor = Shade32<ShadeModeT>(ifgcolor, mlight, desaturate, inv_desaturate, shade_fade_lit, shade_light, dynlight);
 				BgraColor outcolor = Blend32<BlendT>(fgcolor, bgcolor, ifgcolor, ifgshade, srcalpha, destalpha);
 
 				// Store result

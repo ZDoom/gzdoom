@@ -154,6 +154,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const TriMatrix &worldTo
 	int lightlevel = fullbrightSprite ? 255 : thing->Sector->lightlevel + actualextralight;
 
 	PolyDrawArgs args;
+	SetDynlight(thing, args);
 	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
@@ -367,4 +368,52 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 			return TexMan[tex];
 		}
 	}
+}
+
+void RenderPolySprite::SetDynlight(AActor *thing, PolyDrawArgs &args)
+{
+	float lit_red = 0;
+	float lit_green = 0;
+	float lit_blue = 0;
+	auto node = thing->Sector->lighthead;
+	while (node != nullptr)
+	{
+		ADynamicLight *light = node->lightsource;
+		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != thing) && !(light->lightflags&LF_DONTLIGHTACTORS))
+		{
+			float lx = (float)(light->X() - thing->X());
+			float ly = (float)(light->Y() - thing->Y());
+			float lz = (float)(light->Z() - thing->Center());
+			float LdotL = lx * lx + ly * ly + lz * lz;
+			float radius = node->lightsource->GetRadius();
+			if (radius * radius >= LdotL)
+			{
+				float distance = sqrt(LdotL);
+				float attenuation = 1.0f - distance / radius;
+				if (attenuation > 0.0f)
+				{						
+					float red = light->GetRed() * (1.0f / 255.0f);
+					float green = light->GetGreen() * (1.0f / 255.0f);
+					float blue = light->GetBlue() * (1.0f / 255.0f);
+					/*if (light->IsSubtractive())
+					{
+						float bright = FVector3(lr, lg, lb).Length();
+						FVector3 lightColor(lr, lg, lb);
+						red = (bright - lr) * -1;
+						green = (bright - lg) * -1;
+						blue = (bright - lb) * -1;
+					}*/
+						
+					lit_red += red * attenuation;
+					lit_green += green * attenuation;
+					lit_blue += blue * attenuation;
+				}
+			}
+		}
+		node = node->nextLight;
+	}
+	lit_red = clamp(lit_red * 255.0f, 0.0f, 255.0f);
+	lit_green = clamp(lit_green * 255.0f, 0.0f, 255.0f);
+	lit_blue = clamp(lit_blue * 255.0f, 0.0f, 255.0f);
+	args.SetDynLightColor((((uint32_t)lit_red) << 16) | (((uint32_t)lit_green) << 8) | ((uint32_t)lit_blue));
 }

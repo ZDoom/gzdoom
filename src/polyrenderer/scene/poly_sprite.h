@@ -37,6 +37,7 @@ private:
 	static double PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, double spriteheight, double z);
 	static double GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos);
 	static double GetSpriteCeilingZ(AActor *thing, const DVector2 &thingpos);
+	static void SetDynlight(AActor *thing, PolyDrawArgs &args);
 };
 
 class PolyTranslucentThing : public PolyTranslucentObject

@@ -81,6 +81,7 @@ public:
 	void SetTransform(const TriMatrix *objectToClip) { mObjectToClip = objectToClip; }
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
+	void SetDynLightColor(uint32_t color) { mDynLightColor = color; }
 	void DrawArray(PolyRenderThread *thread, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 
 	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
@@ -129,6 +130,7 @@ public:
 
 	PolyLight *Lights() const { return mLights; }
 	int NumLights() const { return mNumLights; }
+	uint32_t DynLightColor() const { return mDynLightColor; }
 
 	const FVector3 &Normal() const { return mNormal; }
 	void SetNormal(const FVector3 &normal) { mNormal = normal; }
@@ -172,6 +174,7 @@ private:
 	PolyLight *mLights = nullptr;
 	int mNumLights = 0;
 	FVector3 mNormal;
+	uint32_t mDynLightColor = 0;
 };
 
 class RectDrawArgs

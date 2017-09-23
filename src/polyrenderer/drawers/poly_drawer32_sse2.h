@@ -149,9 +149,10 @@ namespace TriScreenDrawerModes
 		return fgcolor;
 	}
 
-	FORCEINLINE __m128i VECTORCALL CalcDynamicLight(const PolyLight *lights, int num_lights, __m128 worldpos, __m128 worldnormal)
+	FORCEINLINE __m128i VECTORCALL CalcDynamicLight(const PolyLight *lights, int num_lights, __m128 worldpos, __m128 worldnormal, uint32_t dynlightcolor)
 	{
-		__m128i lit = _mm_setzero_si128();
+		__m128i lit = _mm_unpacklo_epi8(_mm_cvtsi32_si128(dynlightcolor), _mm_setzero_si128());
+		lit = _mm_shuffle_epi32(lit, _MM_SHUFFLE(1, 0, 1, 0));
 
 		for (int i = 0; i != num_lights; i++)
 		{
@@ -396,6 +397,7 @@ private:
 		auto lights = args->uniforms->Lights();
 		auto num_lights = args->uniforms->NumLights();
 		__m128 worldnormal = _mm_setr_ps(args->uniforms->Normal().X, args->uniforms->Normal().Y, args->uniforms->Normal().Z, 0.0f);
+		uint32_t dynlightcolor = args->uniforms->DynLightColor();
 
 		// Calculate gradients
 		const ShadedTriVertex &v1 = *args->v1;
@@ -476,7 +478,7 @@ private:
 
 				__m128 mrcpW = _mm_set1_ps(1.0f / blockPosY.W);
 				__m128 worldpos = _mm_mul_ps(_mm_loadu_ps(&blockPosY.WorldX), mrcpW);
-				__m128i dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal);
+				__m128i dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
 
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 				blockPosX.W += gradientX.W;
@@ -498,7 +500,7 @@ private:
 
 				mrcpW = _mm_set1_ps(1.0f / blockPosX.W);
 				worldpos = _mm_mul_ps(_mm_loadu_ps(&blockPosX.WorldX), mrcpW);
-				__m128i dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal);
+				__m128i dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
 				__m128i dynlightstep = _mm_srai_epi16(_mm_sub_epi16(dynlightnext, dynlight), 3);
 				dynlight = _mm_max_epi16(_mm_min_epi16(_mm_add_epi16(dynlight, _mm_and_si128(dynlightstep, _mm_set_epi32(0xffff,0xffff,0,0))), _mm_set1_epi16(256)), _mm_setzero_si128());
 				dynlightstep = _mm_slli_epi16(dynlightstep, 1);
@@ -579,7 +581,7 @@ private:
 
 				__m128 mrcpW = _mm_set1_ps(1.0f / blockPosY.W);
 				__m128 worldpos = _mm_mul_ps(_mm_loadu_ps(&blockPosY.WorldX), mrcpW);
-				__m128i dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal);
+				__m128i dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
 
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 				blockPosX.W += gradientX.W;
@@ -601,7 +603,7 @@ private:
 
 				mrcpW = _mm_set1_ps(1.0f / blockPosX.W);
 				worldpos = _mm_mul_ps(_mm_loadu_ps(&blockPosX.WorldX), mrcpW);
-				__m128i dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal);
+				__m128i dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
 				__m128i dynlightstep = _mm_srai_epi16(_mm_sub_epi16(dynlightnext, dynlight), 3);
 				dynlight = _mm_max_epi16(_mm_min_epi16(_mm_add_epi16(dynlight, _mm_and_si128(dynlightstep, _mm_set_epi32(0xffff, 0xffff, 0, 0))), _mm_set1_epi16(256)), _mm_setzero_si128());
 				dynlightstep = _mm_slli_epi16(dynlightstep, 1);
@@ -689,7 +691,7 @@ private:
 
 				__m128 mrcpW = _mm_set1_ps(1.0f / blockPosY.W);
 				__m128 worldpos = _mm_mul_ps(_mm_loadu_ps(&blockPosY.WorldX), mrcpW);
-				__m128i dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal);
+				__m128i dynlight = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
 
 				ScreenTriangleStepVariables blockPosX = blockPosY;
 				blockPosX.W += gradientX.W;
@@ -711,7 +713,7 @@ private:
 
 				mrcpW = _mm_set1_ps(1.0f / blockPosX.W);
 				worldpos = _mm_mul_ps(_mm_loadu_ps(&blockPosX.WorldX), mrcpW);
-				__m128i dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal);
+				__m128i dynlightnext = CalcDynamicLight(lights, num_lights, worldpos, worldnormal, dynlightcolor);
 				__m128i dynlightstep = _mm_srai_epi16(_mm_sub_epi16(dynlightnext, dynlight), 3);
 				dynlight = _mm_max_epi16(_mm_min_epi16(_mm_add_epi16(dynlight, _mm_and_si128(dynlightstep, _mm_set_epi32(0xffff, 0xffff, 0, 0))), _mm_set1_epi16(256)), _mm_setzero_si128());
 				dynlightstep = _mm_slli_epi16(dynlightstep, 1);

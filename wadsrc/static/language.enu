@@ -2405,6 +2405,10 @@ C_DARKBROWN				= "\csdark brown";
 C_PURPLE				= "\ctpurple";
 C_DARKGRAY				= "\cudark gray";
 C_CYAN					= "\cvcyan";
+C_ICE					= "\cwice";
+C_FIRE					= "\cxfire";
+C_SAPPHIRE				= "\cysapphire";
+C_TEAL					= "\czteal";
 // Option Strings
 OPTSTR_SIMPLEARROW			= "Simple arrow";
 OPTSTR_HERETIC				= "Heretic";

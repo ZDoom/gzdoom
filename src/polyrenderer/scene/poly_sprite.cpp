@@ -372,6 +372,13 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 
 void RenderPolySprite::SetDynlight(AActor *thing, PolyDrawArgs &args)
 {
+	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
+	if (fullbrightSprite)
+	{
+		args.SetDynLightColor(0);
+		return;
+	}
+
 	float lit_red = 0;
 	float lit_green = 0;
 	float lit_blue = 0;

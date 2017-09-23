@@ -180,9 +180,10 @@ namespace TriScreenDrawerModes
 			__m128 simple_attenuation = distance_attenuation;
 
 			// The point light type
-			// diffuse = dot(N,L) * attenuation
-			__m128 dotNL = _mm_mul_ps(worldnormal, L);
+			// diffuse = max(dot(N,normalize(L)),0) * attenuation
+			__m128 dotNL = _mm_mul_ps(worldnormal, _mm_mul_ps(L, _mm_shuffle_ps(rcp_dist, rcp_dist, _MM_SHUFFLE(0, 0, 0, 0))));
 			dotNL = _mm_add_ss(dotNL, _mm_add_ss(_mm_shuffle_ps(dotNL, dotNL, _MM_SHUFFLE(0, 0, 0, 1)), _mm_shuffle_ps(dotNL, dotNL, _MM_SHUFFLE(0, 0, 0, 2))));
+			dotNL = _mm_max_ss(dotNL, _mm_setzero_ps());
 			__m128 point_attenuation = _mm_mul_ss(dotNL, distance_attenuation);
 			point_attenuation = _mm_shuffle_ps(point_attenuation, point_attenuation, _MM_SHUFFLE(0, 0, 0, 0));
 
@@ -394,7 +395,7 @@ private:
 
 		auto lights = args->uniforms->Lights();
 		auto num_lights = args->uniforms->NumLights();
-		__m128 worldnormal = _mm_setzero_ps();
+		__m128 worldnormal = _mm_setr_ps(args->uniforms->Normal().X, args->uniforms->Normal().Y, args->uniforms->Normal().Z, 0.0f);
 
 		// Calculate gradients
 		const ShadedTriVertex &v1 = *args->v1;

@@ -254,7 +254,7 @@ void RenderPolyPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 
 	if (!isSky)
 	{
-		SetDynLights(thread, args, sub);
+		SetDynLights(thread, args, sub, ceiling);
 		args.SetTexture(tex);
 		args.SetStyle(TriBlendMode::TextureOpaque);
 		args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
@@ -279,7 +279,7 @@ void RenderPolyPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 	}
 }
 
-void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub)
+void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling)
 {
 	FLightNode *light_list = sub->lighthead;
 
@@ -315,7 +315,7 @@ void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args,
 	{
 		if (!(cur_node->lightsource->flags2&MF2_DORMANT))
 		{
-			//bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
+			bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
 
 			// To do: cull lights not touching subsector
 
@@ -329,12 +329,17 @@ void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args,
 			light.z = (float)cur_node->lightsource->Z();
 			light.radius = 256.0f / cur_node->lightsource->GetRadius();
 			light.color = (red << 16) | (green << 8) | blue;
+			if (is_point_light)
+				light.radius = -light.radius;
 		}
 
 		cur_node = cur_node->nextLight;
 	}
 
 	args.SetLights(dc_lights, dc_num_lights);
+
+	DVector3 normal = ceiling ? sub->sector->ceilingplane.Normal() : sub->sector->floorplane.Normal();
+	args.SetNormal({ (float)normal.X, (float)normal.Y, (float)normal.Z });
 }
 
 void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform)

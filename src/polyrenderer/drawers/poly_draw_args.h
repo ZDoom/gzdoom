@@ -130,6 +130,9 @@ public:
 	PolyLight *Lights() const { return mLights; }
 	int NumLights() const { return mNumLights; }
 
+	const FVector3 &Normal() const { return mNormal; }
+	void SetNormal(const FVector3 &normal) { mNormal = normal; }
+
 private:
 	const TriMatrix *mObjectToClip = nullptr;
 	const TriVertex *mVertices = nullptr;
@@ -168,6 +171,7 @@ private:
 	bool mFixedLight = false;
 	PolyLight *mLights = nullptr;
 	int mNumLights = 0;
+	FVector3 mNormal;
 };
 
 class RectDrawArgs

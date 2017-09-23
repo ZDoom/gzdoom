@@ -404,7 +404,7 @@ void RenderPolyWall::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args)
 	{
 		if (!(cur_node->lightsource->flags2&MF2_DORMANT))
 		{
-			//bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
+			bool is_point_light = (cur_node->lightsource->lightflags & LF_ATTENUATE) != 0;
 
 			// To do: cull lights not touching wall
 
@@ -418,12 +418,25 @@ void RenderPolyWall::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args)
 			light.z = (float)cur_node->lightsource->Z();
 			light.radius = 256.0f / cur_node->lightsource->GetRadius();
 			light.color = (red << 16) | (green << 8) | blue;
+			if (is_point_light)
+				light.radius = -light.radius;
 		}
 
 		cur_node = cur_node->nextLight;
 	}
 
 	args.SetLights(dc_lights, dc_num_lights);
+
+	// Face normal:
+	float dx = (float)(v2.X - v1.X);
+	float dy = (float)(v2.Y - v1.Y);
+	float nx = dy;
+	float ny = -dx;
+	float lensqr = nx * nx + ny * ny;
+	float rcplen = 1.0f / sqrt(lensqr);
+	nx *= rcplen;
+	ny *= rcplen;
+	args.SetNormal({ nx, ny, 0.0f });
 }
 
 void RenderPolyWall::DrawStripes(PolyRenderThread *thread, PolyDrawArgs &args, TriVertex *vertices)

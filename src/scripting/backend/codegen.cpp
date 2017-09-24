@@ -6464,6 +6464,12 @@ FxExpression *FxMemberIdentifier::Resolve(FCompileContext& ctx)
 					}
 				}
 			}
+			else
+			{
+				ScriptPosition.Message(MSG_ERROR, "%s is not a member of %s", Identifier.GetChars(), ccls->TypeName.GetChars());
+				delete this;
+				return nullptr;
+			}
 		}
 	}
 

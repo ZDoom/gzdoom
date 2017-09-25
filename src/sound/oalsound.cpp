@@ -273,6 +273,7 @@ class OpenALSoundStream : public SoundStream
 		alSourcef(Source, AL_MAX_GAIN, 1.f);
 		alSourcef(Source, AL_GAIN, 1.f);
 		alSourcef(Source, AL_PITCH, 1.f);
+		alSourcef(Source, AL_DOPPLER_FACTOR, 0.f);
 		alSourcef(Source, AL_ROLLOFF_FACTOR, 0.f);
 		alSourcef(Source, AL_SEC_OFFSET, 0.f);
 		alSourcei(Source, AL_SOURCE_RELATIVE, AL_TRUE);
@@ -821,8 +822,15 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	AL.SOFT_source_resampler = !!alIsExtensionPresent("AL_SOFT_source_resampler");
 	AL.SOFT_source_spatialize = !!alIsExtensionPresent("AL_SOFT_source_spatialize");
 
-	alDopplerFactor(0.5f);
-	alSpeedOfSound(343.3f * 96.0f);
+	// Speed of sound is in units per second. Presuming we want to simulate a
+	// typical speed of sound of 343.3 meters per second, multiply it by the
+	// units per meter scale (32?), and set the meters per unit to the scale's
+	// reciprocal. It's important to set these correctly for both doppler
+	// effects and reverb.
+	alSpeedOfSound(343.3f * 32.0f);
+	if(ALC.EXT_EFX)
+		alListenerf(AL_METERS_PER_UNIT, 1.0f/32.0f);
+
 	alDistanceModel(AL_INVERSE_DISTANCE);
 	if(AL.EXT_source_distance_model)
 		alEnable(AL_SOURCE_DISTANCE_MODEL);
@@ -1568,6 +1576,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound(SoundHandle sfx, float vol, int 
 
 	alSourcef(source, AL_REFERENCE_DISTANCE, 1.f);
 	alSourcef(source, AL_MAX_DISTANCE, 1000.f);
+	alSourcef(source, AL_DOPPLER_FACTOR, 0.f);
 	alSourcef(source, AL_ROLLOFF_FACTOR, 0.f);
 	alSourcef(source, AL_MAX_GAIN, SfxVolume);
 	alSourcef(source, AL_GAIN, SfxVolume*vol);
@@ -1778,6 +1787,7 @@ FISoundChannel *OpenALSoundRenderer::StartSound3D(SoundHandle sfx, SoundListener
 	}
 	alSource3f(source, AL_VELOCITY, vel[0], vel[1], -vel[2]);
 	alSource3f(source, AL_DIRECTION, 0.f, 0.f, 0.f);
+	alSourcef(source, AL_DOPPLER_FACTOR, 0.f);
 
 	alSourcei(source, AL_LOOPING, (chanflags&SNDF_LOOP) ? AL_TRUE : AL_FALSE);
 

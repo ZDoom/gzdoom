@@ -957,8 +957,13 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 			{
 				counter++;
 				if (!countOnly)
-					Printf("%s at (%f,%f,%f)\n",
+				{
+					Printf("%s at (%f,%f,%f)",
 						mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
+					if (mo->tid)
+						Printf(" (TID:%d)", mo->tid);
+					Printf("\n");
+				}
 			}
 		}
 	}

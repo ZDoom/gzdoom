@@ -54,6 +54,13 @@ private:
 	float xOffs, yOffs;
 };
 
+enum class HeightSecLocation
+{
+	Above, // Above control sector ceiling (A)
+	Between, // Between control sector ceiling and floor (B)
+	Below // Below control sector floor (C)
+};
+
 class RenderPolyPlane
 {
 public:
@@ -61,8 +68,26 @@ public:
 
 private:
 	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
-	void RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, sector_t *frontsector, FSectorPortal *portal, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight, const PolyPlaneUVTransform &transform);
+
+	void RenderPortal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	void RenderNormal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight);
+
+	void RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight);
+
+	void SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling);
 	void SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling);
+
+	FTextureID GetPlaneTexture(subsector_t *sub, bool ceiling);
+	PolyPlaneUVTransform GetPlaneTransform(subsector_t *sub, bool ceiling, FTexture *texture);
+	const secplane_t &GetSecPlane(subsector_t *sub, bool ceiling);
+
+	sector_t *GetHeightSec(subsector_t *sub, bool ceiling);
+	HeightSecLocation GetHeightSecLocation(sector_t *controlsector);
+
+	TriVertex *CreatePlaneVertices(PolyRenderThread *thread, subsector_t *sub, const PolyPlaneUVTransform &transform, const secplane_t &plane);
+	TriVertex *CreateSkyPlaneVertices(PolyRenderThread *thread, subsector_t *sub, double skyHeight);
+
+	static TriVertex GetSkyVertex(vertex_t *v, double height) { return { (float)v->fX(), (float)v->fY(), (float)height, 1.0f, 0.0f, 0.0f }; }
 };
 
 class Render3DFloorPlane

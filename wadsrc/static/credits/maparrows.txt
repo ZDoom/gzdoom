@@ -1,0 +1,2 @@
+All content in /maparrows is from the Doom and Heretic source and licensed under the GPL.
+See licenses.zip/gpl.txt for details.

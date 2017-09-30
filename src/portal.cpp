@@ -307,10 +307,9 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_TELEPORT;
 			}
 		}
-		if (port->mDestination != nullptr)
-		{
-			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;
-		}
+		port->mDefFlags = port->mType == PORTT_VISUAL   ? PORTF_VISIBLE :
+		                  port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT :
+		                                                  PORTF_TYPEINTERACTIVE;
 	}
 	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
 	{
@@ -360,6 +359,13 @@ void P_SpawnLinePortal(line_t* line)
 
 void P_UpdatePortal(FLinePortal *port)
 {
+	if (port->mType != PORTT_VISUAL && port->mOrigin->backsector == nullptr && !(port->mOrigin->sidedef[0]->Flags & WALLF_POLYOBJ))
+	{
+		Printf(TEXTCOLOR_RED "Warning: Traversable portals must have a back-sector and empty space behind them (or be on a polyobject)! Changing line %d to visual-portal!\n", port->mOrigin->Index());
+		port->mType = PORTT_VISUAL;
+		port->mDefFlags &= ~(PORTF_PASSABLE | PORTF_SOUNDTRAVERSE);
+	}
+
 	if (port->mDestination == nullptr)
 	{
 		// Portal has no destination: switch it off
@@ -374,6 +380,7 @@ void P_UpdatePortal(FLinePortal *port)
 			// this is illegal. Demote the type to TELEPORT
 			port->mType = PORTT_TELEPORT;
 			port->mDefFlags &= ~PORTF_INTERACTIVE;
+			Printf(TEXTCOLOR_RED "Warning: linked portal did not have matching reverse portal. Changing line %d to teleport-portal!\n", port->mOrigin->Index());
 		}
 	}
 	else
@@ -465,6 +472,10 @@ static bool ChangePortalLine(line_t *line, int destid)
 			port->mFlags = port->mDefFlags;
 		}
 		SetRotation(portd);
+	}
+	else
+	{
+		port->mFlags = port->mDefFlags;
 	}
 	SetRotation(port);
 	return true;

@@ -57,6 +57,8 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
 
+	PolyTransferHeights fakeflat(viewpoint.camera->subsector);
+
 	FDynamicColormap *basecolormap;
 	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
 	if (cameraLight->FixedLightLevel() < 0 && viewpoint.sector->e && viewpoint.sector->e->XFloor.lightlist.Size())
@@ -89,10 +91,10 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 	else
 	{	// This used to use camera->Sector but due to interpolation that can be incorrect
 		// when the interpolated viewpoint is in a different sector than the camera.
-		//sec = FakeFlat(viewpoint.sector, &tempsec, &floorlight, &ceilinglight, nullptr, 0, 0, 0, 0);
-		// Softpoly has no FakeFlat (its FAKE! Everything is FAKE in Doom. Sigh. Might as well call it FooFlat!)
-		sec = viewpoint.camera->Sector;
-		floorlight = ceilinglight = sec->lightlevel;
+
+		sec = fakeflat.FrontSector;
+		floorlight = fakeflat.FloorLightLevel;
+		ceilinglight = fakeflat.CeilingLightLevel;
 
 		// [RH] set basecolormap
 		basecolormap = GetColorTable(sec->Colormap, sec->SpecialColors[sector_t::sprites], true);

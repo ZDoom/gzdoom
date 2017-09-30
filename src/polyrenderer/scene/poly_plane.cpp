@@ -36,46 +36,46 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
-	if (sub->sector->CenterFloor() == sub->sector->CenterCeiling())
+	if (fakeflat.FrontSector->CenterFloor() == fakeflat.FrontSector->CenterCeiling())
 		return;
 
 	RenderPolyPlane plane;
-	plane.Render(thread, worldToClip, clipPlane, sub, stencilValue, true, skyCeilingHeight, sectorPortals);
-	plane.Render(thread, worldToClip, clipPlane, sub, stencilValue, false, skyFloorHeight, sectorPortals);
+	plane.Render(thread, worldToClip, clipPlane, fakeflat, stencilValue, true, skyCeilingHeight, sectorPortals);
+	plane.Render(thread, worldToClip, clipPlane, fakeflat, stencilValue, false, skyFloorHeight, sectorPortals);
 }
 
-void RenderPolyPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
-	FSectorPortal *portal = sub->sector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
+	FSectorPortal *portal = fakeflat.FrontSector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
 	if (!portal || (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
 	{
-		RenderNormal(thread, worldToClip, clipPlane, sub, stencilValue, ceiling, skyHeight);
+		RenderNormal(thread, worldToClip, clipPlane, fakeflat, stencilValue, ceiling, skyHeight);
 	}
 	else
 	{
-		RenderPortal(thread, worldToClip, clipPlane, sub, stencilValue, ceiling, skyHeight, portal, sectorPortals);
+		RenderPortal(thread, worldToClip, clipPlane, fakeflat, stencilValue, ceiling, skyHeight, portal, sectorPortals);
 	}
 }
 
-void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight)
+void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	
-	FTextureID picnum = GetPlaneTexture(sub, ceiling);
+
+	FTextureID picnum = fakeflat.FrontSector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
 	if (picnum != skyflatnum)
 	{
 		FTexture *tex = TexMan(picnum);
 		if (!tex || tex->UseType == FTexture::TEX_Null)
 			return;
 
-		PolyPlaneUVTransform transform = GetPlaneTransform(sub, ceiling, tex);
-		TriVertex *vertices = CreatePlaneVertices(thread, sub, transform, GetSecPlane(sub, ceiling));
+		PolyPlaneUVTransform transform = PolyPlaneUVTransform(ceiling ? fakeflat.FrontSector->planes[sector_t::ceiling].xform : fakeflat.FrontSector->planes[sector_t::floor].xform, tex);
+		TriVertex *vertices = CreatePlaneVertices(thread, fakeflat.Subsector, transform, ceiling ? fakeflat.FrontSector->ceilingplane : fakeflat.FrontSector->floorplane);
 
 		PolyDrawArgs args;
-		SetLightLevel(thread, args, sub, ceiling);
-		SetDynLights(thread, args, sub, ceiling);
+		SetLightLevel(thread, args, fakeflat, ceiling);
+		SetDynLights(thread, args, fakeflat.Subsector, ceiling);
 		args.SetTransform(&worldToClip);
 		args.SetFaceCullCCW(true);
 		args.SetStencilTestValue(stencilValue);
@@ -83,11 +83,11 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const TriMatrix &wo
 		args.SetClipPlane(0, clipPlane);
 		args.SetTexture(tex);
 		args.SetStyle(TriBlendMode::TextureOpaque);
-		args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
+		args.DrawArray(thread, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
-		TriVertex *vertices = CreateSkyPlaneVertices(thread, sub, skyHeight);
+		TriVertex *vertices = CreateSkyPlaneVertices(thread, fakeflat.Subsector, skyHeight);
 
 		PolyDrawArgs args;
 		args.SetTransform(&worldToClip);
@@ -98,24 +98,22 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const TriMatrix &wo
 		args.SetWriteStencil(true, 255);
 		args.SetWriteColor(false);
 		args.SetWriteDepth(false);
-		args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
+		args.DrawArray(thread, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 
-		RenderSkyWalls(thread, args, sub, nullptr, ceiling, skyHeight);
+		RenderSkyWalls(thread, args, fakeflat.Subsector, nullptr, ceiling, skyHeight);
 	}
 }
 
-void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
 	PolyDrawSectorPortal *polyportal = nullptr;
 	std::vector<PolyPortalSegment> portalSegments;
 
-	sector_t *frontsector = sub->sector;
-
 	// Skip portals not facing the camera
-	if ((ceiling && frontsector->ceilingplane.PointOnSide(viewpoint.Pos) < 0) ||
-		(!ceiling && frontsector->floorplane.PointOnSide(viewpoint.Pos) < 0))
+	if ((ceiling && fakeflat.FrontSector->ceilingplane.PointOnSide(viewpoint.Pos) < 0) ||
+		(!ceiling && fakeflat.FrontSector->floorplane.PointOnSide(viewpoint.Pos) < 0))
 	{
 		return;
 	}
@@ -159,7 +157,7 @@ void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const TriMatrix &wo
 	}
 #endif
 
-	TriVertex *vertices = CreateSkyPlaneVertices(thread, sub, skyHeight);
+	TriVertex *vertices = CreateSkyPlaneVertices(thread, fakeflat.Subsector, skyHeight);
 
 	PolyDrawArgs args;
 	args.SetTransform(&worldToClip);
@@ -170,11 +168,11 @@ void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const TriMatrix &wo
 	args.SetWriteStencil(true, polyportal->StencilValue);
 	args.SetWriteColor(false);
 	args.SetWriteDepth(false);
-	args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 
-	RenderSkyWalls(thread, args, sub, polyportal, ceiling, skyHeight);
+	RenderSkyWalls(thread, args, fakeflat.Subsector, polyportal, ceiling, skyHeight);
 
-	polyportal->Shape.push_back({ vertices, (int)sub->numlines, true });
+	polyportal->Shape.push_back({ vertices, (int)fakeflat.Subsector->numlines, true });
 }
 
 void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight)
@@ -257,139 +255,21 @@ void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &arg
 	}
 }
 
-sector_t *RenderPolyPlane::GetHeightSec(subsector_t *sub, bool ceiling)
+void RenderPolyPlane::SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args, const PolyTransferHeights &fakeflat, bool ceiling)
 {
-	sector_t *controlsector = sub->sector->GetHeightSec();
-	if (!controlsector || controlsector == sub->sector || (ceiling && !!(controlsector->MoreFlags & SECF_FAKEFLOORONLY)))
-		return nullptr;
-	else
-		return controlsector;
-}
+	bool foggy = level.fadeto || fakeflat.FrontSector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
 
-HeightSecLocation RenderPolyPlane::GetHeightSecLocation(sector_t *controlsector)
-{
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	if (viewpoint.Pos.Z > controlsector->ceilingplane.ZatPoint(viewpoint.Pos.XY())) // Above control sector ceiling (A)
-		return HeightSecLocation::Above;
-	else if (viewpoint.Pos.Z > controlsector->floorplane.ZatPoint(viewpoint.Pos.XY())) // Between control sector ceiling and floor (B)
-		return HeightSecLocation::Between;
-	else
-		return HeightSecLocation::Below;
-}
-
-FTextureID RenderPolyPlane::GetPlaneTexture(subsector_t *sub, bool ceiling)
-{
-	sector_t *controlsector = GetHeightSec(sub, ceiling);
-	if (!controlsector)
-		return sub->sector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
-
-	bool diffTex = !!(controlsector->MoreFlags & SECF_CLIPFAKEPLANES);
-
-	switch (GetHeightSecLocation(controlsector))
-	{
-	default:
-	case HeightSecLocation::Above:
-		if (diffTex && ceiling)
-			return sub->sector->GetTexture(sector_t::ceiling);
-		else
-			return controlsector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
-
-	case HeightSecLocation::Between:
-		return sub->sector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
-
-	case HeightSecLocation::Below:
-		if (diffTex && !ceiling)
-			return sub->sector->GetTexture(sector_t::floor);
-		else
-			return controlsector->GetTexture(ceiling ? sector_t::ceiling : sector_t::floor);
-	}
-}
-
-PolyPlaneUVTransform RenderPolyPlane::GetPlaneTransform(subsector_t *sub, bool ceiling, FTexture *tex)
-{
-	sector_t *controlsector = GetHeightSec(sub, ceiling);
-	if (!controlsector)
-		return PolyPlaneUVTransform(ceiling ? sub->sector->planes[sector_t::ceiling].xform : sub->sector->planes[sector_t::floor].xform, tex);
-
-	bool diffTex = !!(controlsector->MoreFlags & SECF_CLIPFAKEPLANES);
-
-	switch (GetHeightSecLocation(controlsector))
-	{
-	default:
-	case HeightSecLocation::Above:
-		if (diffTex && ceiling)
-			return PolyPlaneUVTransform(sub->sector->planes[sector_t::ceiling].xform, tex);
-		else
-			return PolyPlaneUVTransform(ceiling ? controlsector->planes[sector_t::ceiling].xform : controlsector->planes[sector_t::floor].xform, tex);
-
-	case HeightSecLocation::Between:
-		return PolyPlaneUVTransform(ceiling ? sub->sector->planes[sector_t::ceiling].xform : sub->sector->planes[sector_t::floor].xform, tex);
-
-	case HeightSecLocation::Below:
-		if (diffTex && !ceiling)
-			return PolyPlaneUVTransform(sub->sector->planes[sector_t::floor].xform, tex);
-		else
-			return PolyPlaneUVTransform(ceiling ? controlsector->planes[sector_t::ceiling].xform : controlsector->planes[sector_t::floor].xform, tex);
-	}
-}
-
-const secplane_t &RenderPolyPlane::GetSecPlane(subsector_t *sub, bool ceiling)
-{
-	sector_t *controlsector = GetHeightSec(sub, ceiling);
-	if (!controlsector)
-		return ceiling ? sub->sector->ceilingplane : sub->sector->floorplane;
-
-	switch (GetHeightSecLocation(controlsector))
-	{
-	default:
-	case HeightSecLocation::Above:
-		return ceiling ? sub->sector->ceilingplane : controlsector->ceilingplane;
-	case HeightSecLocation::Between:
-		return ceiling ? controlsector->ceilingplane : controlsector->floorplane;
-	case HeightSecLocation::Below:
-		return ceiling ? controlsector->floorplane : sub->sector->floorplane;
-	}
-}
-
-void RenderPolyPlane::SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling)
-{
-	sector_t *lightSector = sub->sector;
-	sector_t *controlsector = GetHeightSec(sub, ceiling);
-	if (controlsector)
-	{
-		bool diffTex = !!(controlsector->MoreFlags & SECF_CLIPFAKEPLANES);
-		bool noFakeLight = !!(controlsector->MoreFlags & SECF_NOFAKELIGHT);
-
-		switch (GetHeightSecLocation(controlsector))
-		{
-		default:
-		case HeightSecLocation::Above:
-			// todo: upper texture as colormap
-			lightSector = controlsector;
-			break;
-		case HeightSecLocation::Between:
-			// normal texture as colormap
-			break;
-		case HeightSecLocation::Below:
-			// todo: lower texture as colormap
-			lightSector = controlsector;
-			break;
-		}
-	}
-
-	bool foggy = level.fadeto || lightSector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
-
-	int lightlevel = ceiling ? lightSector->GetCeilingLight() : lightSector->GetFloorLight();
+	int lightlevel = ceiling ? fakeflat.CeilingLightLevel : fakeflat.FloorLightLevel;
 	int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
 	lightlevel = clamp(lightlevel + actualextralight, 0, 255);
 
 	PolyCameraLight *cameraLight = PolyCameraLight::Instance();
-	FDynamicColormap *basecolormap = GetColorTable(lightSector->Colormap, lightSector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]);
-	if (cameraLight->FixedLightLevel() < 0 && lightSector->e && lightSector->e->XFloor.lightlist.Size())
+	FDynamicColormap *basecolormap = GetColorTable(fakeflat.FrontSector->Colormap, fakeflat.FrontSector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]);
+	if (cameraLight->FixedLightLevel() < 0 && fakeflat.FrontSector->e && fakeflat.FrontSector->e->XFloor.lightlist.Size())
 	{
-		lightlist_t *light = P_GetPlaneLight(lightSector, ceiling ? &lightSector->ceilingplane : &lightSector->floorplane, false);
-		basecolormap = GetColorTable(light->extra_colormap, lightSector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]);
-		if (light->p_lightlevel != &lightSector->lightlevel) // If this is the real ceiling, don't discard plane lighting R_FakeFlat() accounted for.
+		lightlist_t *light = P_GetPlaneLight(fakeflat.FrontSector, ceiling ? &fakeflat.FrontSector->ceilingplane : &fakeflat.FrontSector->floorplane, false);
+		basecolormap = GetColorTable(light->extra_colormap, fakeflat.FrontSector->SpecialColors[ceiling ? sector_t::ceiling : sector_t::floor]);
+		if (light->p_lightlevel != &fakeflat.FrontSector->lightlevel) // If this is the real ceiling, don't discard plane lighting R_FakeFlat() accounted for.
 		{
 			lightlevel = *light->p_lightlevel;
 		}

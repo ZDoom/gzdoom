@@ -89,3 +89,25 @@ private:
 	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
 	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;
 };
+
+enum class PolyWaterFakeSide
+{
+	Center,
+	BelowFloor,
+	AboveCeiling
+};
+
+class PolyTransferHeights
+{
+public:
+	PolyTransferHeights(subsector_t *sub);
+
+	subsector_t *Subsector = nullptr;
+	sector_t *FrontSector = nullptr;
+	PolyWaterFakeSide FakeSide = PolyWaterFakeSide::Center;
+	int FloorLightLevel = 0;
+	int CeilingLightLevel = 0;
+
+private:
+	sector_t tempsec;
+};

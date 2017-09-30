@@ -96,6 +96,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const TriMatrix &world
 	wall.Masked = false;
 	wall.SubsectorDepth = subsectorDepth;
 	wall.StencilValue = stencilValue;
+	wall.SectorLightLevel = frontsector->lightlevel;
 
 	if (line->backsector == nullptr)
 	{
@@ -111,9 +112,10 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const TriMatrix &world
 			return true;
 		}
 	}
-	else
+	else if (line->PartnerSeg)
 	{
-		sector_t *backsector = line->backsector;
+		PolyTransferHeights fakeback(line->PartnerSeg->Subsector);
+		sector_t *backsector = fakeback.FrontSector;
 
 		double backceilz1 = backsector->ceilingplane.ZatPoint(line->v1);
 		double backfloorz1 = backsector->floorplane.ZatPoint(line->v1);
@@ -215,6 +217,7 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, const TriMatrix
 	wall.Line = fakeFloor->master;
 	wall.Side = fakeFloor->master->sidedef[0];
 	wall.Colormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
+	wall.SectorLightLevel = frontsector->lightlevel;
 	wall.Additive = !!(fakeFloor->flags & FF_ADDITIVETRANS);
 	if (!wall.Additive && fakeFloor->alpha == 255)
 	{
@@ -318,7 +321,7 @@ void RenderPolyWall::Render(PolyRenderThread *thread, const TriMatrix &worldToCl
 	}
 
 	PolyDrawArgs args;
-	args.SetLight(GetColorTable(Line->frontsector->Colormap, Line->frontsector->SpecialColors[sector_t::walltop]), GetLightLevel(), PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
+	args.SetLight(Colormap, GetLightLevel(), PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(StencilValue);
@@ -553,7 +556,7 @@ int RenderPolyWall::GetLightLevel()
 	{
 		bool foggy = false;
 		int actualextralight = foggy ? 0 : PolyRenderer::Instance()->Viewpoint.extralight << 4;
-		return clamp(Side->GetLightLevel(foggy, LineSeg->frontsector->lightlevel) + actualextralight, 0, 255);
+		return clamp(Side->GetLightLevel(foggy, SectorLightLevel) + actualextralight, 0, 255);
 	}
 }
 

@@ -54,35 +54,21 @@ private:
 	float xOffs, yOffs;
 };
 
-enum class HeightSecLocation
-{
-	Above, // Above control sector ceiling (A)
-	Between, // Between control sector ceiling and floor (B)
-	Below // Below control sector floor (C)
-};
-
 class RenderPolyPlane
 {
 public:
-	static void RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	static void RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
 
 private:
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
 
-	void RenderPortal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
-	void RenderNormal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, bool ceiling, double skyHeight);
+	void RenderPortal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	void RenderNormal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight);
 
 	void RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight);
 
-	void SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling);
+	void SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args, const PolyTransferHeights &fakeflat, bool ceiling);
 	void SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling);
-
-	FTextureID GetPlaneTexture(subsector_t *sub, bool ceiling);
-	PolyPlaneUVTransform GetPlaneTransform(subsector_t *sub, bool ceiling, FTexture *texture);
-	const secplane_t &GetSecPlane(subsector_t *sub, bool ceiling);
-
-	sector_t *GetHeightSec(subsector_t *sub, bool ceiling);
-	HeightSecLocation GetHeightSecLocation(sector_t *controlsector);
 
 	TriVertex *CreatePlaneVertices(PolyRenderThread *thread, subsector_t *sub, const PolyPlaneUVTransform &transform, const secplane_t &plane);
 	TriVertex *CreateSkyPlaneVertices(PolyRenderThread *thread, subsector_t *sub, double skyHeight);

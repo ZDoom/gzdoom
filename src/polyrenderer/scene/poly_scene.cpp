@@ -126,15 +126,17 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 	}
 	else
 	{
+		PolyTransferHeights fakeflat(sub);
+
 		Render3DFloorPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, TranslucentObjects[thread->ThreadIndex]);
-		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, fakeflat, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			if (Cull.IsLineSegVisible(subsectorDepth, i))
 			{
 				seg_t *line = &sub->firstline[i];
-				RenderLine(thread, sub, line, frontsector, subsectorDepth);
+				RenderLine(thread, sub, line, fakeflat.FrontSector, subsectorDepth);
 			}
 		}
 	}
@@ -392,4 +394,160 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 	}
 
 	TranslucentObjects[0].clear();
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyTransferHeights::PolyTransferHeights(subsector_t *sub) : Subsector(sub)
+{
+	sector_t *sec = sub->sector;
+
+	// If player's view height is underneath fake floor, lower the
+	// drawn ceiling to be just under the floor height, and replace
+	// the drawn floor and ceiling textures, and light level, with
+	// the control sector's.
+	//
+	// Similar for ceiling, only reflected.
+
+	// [RH] allow per-plane lighting
+	FloorLightLevel = sec->GetFloorLight();
+	CeilingLightLevel = sec->GetCeilingLight();
+
+	FakeSide = PolyWaterFakeSide::Center;
+
+	const sector_t *s = sec->GetHeightSec();
+	if (s != nullptr)
+	{
+		sector_t *heightsec = PolyRenderer::Instance()->Viewpoint.sector->heightsec;
+		bool underwater = (heightsec && heightsec->floorplane.PointOnSide(PolyRenderer::Instance()->Viewpoint.Pos) <= 0);
+		bool doorunderwater = false;
+		int diffTex = (s->MoreFlags & SECF_CLIPFAKEPLANES);
+
+		// Replace sector being drawn with a copy to be hacked
+		tempsec = *sec;
+
+		// Replace floor and ceiling height with control sector's heights.
+		if (diffTex)
+		{
+			if (s->floorplane.CopyPlaneIfValid(&tempsec.floorplane, &sec->ceilingplane))
+			{
+				tempsec.SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
+			}
+			else if (s->MoreFlags & SECF_FAKEFLOORONLY)
+			{
+				if (underwater)
+				{
+					tempsec.Colormap = s->Colormap;
+					if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+					{
+						tempsec.lightlevel = s->lightlevel;
+
+						FloorLightLevel = s->GetFloorLight();
+						CeilingLightLevel = s->GetCeilingLight();
+					}
+					FakeSide = PolyWaterFakeSide::BelowFloor;
+					FrontSector = &tempsec;
+					return;
+				}
+				FrontSector = sec;
+				return;
+			}
+		}
+		else
+		{
+			tempsec.floorplane = s->floorplane;
+		}
+
+		if (!(s->MoreFlags & SECF_FAKEFLOORONLY))
+		{
+			if (diffTex)
+			{
+				if (s->ceilingplane.CopyPlaneIfValid(&tempsec.ceilingplane, &sec->floorplane))
+				{
+					tempsec.SetTexture(sector_t::ceiling, s->GetTexture(sector_t::ceiling), false);
+				}
+			}
+			else
+			{
+				tempsec.ceilingplane = s->ceilingplane;
+			}
+		}
+
+		double refceilz = s->ceilingplane.ZatPoint(PolyRenderer::Instance()->Viewpoint.Pos);
+		double orgceilz = sec->ceilingplane.ZatPoint(PolyRenderer::Instance()->Viewpoint.Pos);
+
+		if (underwater || doorunderwater)
+		{
+			tempsec.floorplane = sec->floorplane;
+			tempsec.ceilingplane = s->floorplane;
+			tempsec.ceilingplane.FlipVert();
+			tempsec.ceilingplane.ChangeHeight(-1 / 65536.);
+			tempsec.Colormap = s->Colormap;
+		}
+
+		// killough 11/98: prevent sudden light changes from non-water sectors:
+		if (underwater || doorunderwater)
+		{
+			// head-below-floor hack
+			tempsec.SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
+			tempsec.planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
+
+			tempsec.ceilingplane = s->floorplane;
+			tempsec.ceilingplane.FlipVert();
+			tempsec.ceilingplane.ChangeHeight(-1 / 65536.);
+			if (s->GetTexture(sector_t::ceiling) == skyflatnum)
+			{
+				tempsec.floorplane = tempsec.ceilingplane;
+				tempsec.floorplane.FlipVert();
+				tempsec.floorplane.ChangeHeight(+1 / 65536.);
+				tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor), false);
+				tempsec.planes[sector_t::ceiling].xform = tempsec.planes[sector_t::floor].xform;
+			}
+			else
+			{
+				tempsec.SetTexture(sector_t::ceiling, diffTex ? s->GetTexture(sector_t::floor) : s->GetTexture(sector_t::ceiling), false);
+				tempsec.planes[sector_t::ceiling].xform = s->planes[sector_t::ceiling].xform;
+			}
+
+			if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+			{
+				tempsec.lightlevel = s->lightlevel;
+
+				FloorLightLevel = s->GetFloorLight();
+				CeilingLightLevel = s->GetCeilingLight();
+			}
+			FakeSide = PolyWaterFakeSide::BelowFloor;
+		}
+		else if (heightsec && heightsec->ceilingplane.PointOnSide(PolyRenderer::Instance()->Viewpoint.Pos) <= 0 && orgceilz > refceilz && !(s->MoreFlags & SECF_FAKEFLOORONLY))
+		{
+			// Above-ceiling hack
+			tempsec.ceilingplane = s->ceilingplane;
+			tempsec.floorplane = s->ceilingplane;
+			tempsec.floorplane.FlipVert();
+			tempsec.floorplane.ChangeHeight(+1 / 65536.);
+			tempsec.Colormap = s->Colormap;
+
+			tempsec.SetTexture(sector_t::ceiling, diffTex ? sec->GetTexture(sector_t::ceiling) : s->GetTexture(sector_t::ceiling), false);
+			tempsec.SetTexture(sector_t::floor, s->GetTexture(sector_t::ceiling), false);
+			tempsec.planes[sector_t::ceiling].xform = tempsec.planes[sector_t::floor].xform = s->planes[sector_t::ceiling].xform;
+
+			if (s->GetTexture(sector_t::floor) != skyflatnum)
+			{
+				tempsec.ceilingplane = sec->ceilingplane;
+				tempsec.SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
+				tempsec.planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
+			}
+
+			if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+			{
+				tempsec.lightlevel = s->lightlevel;
+
+				FloorLightLevel = s->GetFloorLight();
+				CeilingLightLevel = s->GetCeilingLight();
+			}
+			FakeSide = PolyWaterFakeSide::AboveCeiling;
+		}
+		sec = &tempsec;
+	}
+	FrontSector = sec;
 }

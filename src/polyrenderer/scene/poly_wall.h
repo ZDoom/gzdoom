@@ -55,6 +55,7 @@ public:
 	double UnpeggedCeil1 = 0.0;
 	double UnpeggedCeil2 = 0.0;
 	FSWColormap *Colormap = nullptr;
+	int SectorLightLevel = 0;
 	bool Masked = false;
 	bool Additive = false;
 	double Alpha = 1.0;

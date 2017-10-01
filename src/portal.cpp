@@ -451,20 +451,30 @@ static bool ChangePortalLine(line_t *line, int destid)
 	{
 		port->mFlags = 0;
 	}
-	else if (port->mType == PORTT_INTERACTIVE)
+	else 
 	{
-		FLinePortal *portd = port->mDestination->portalindex < linePortals.Size()? &linePortals[port->mDestination->portalindex] : nullptr;
-		if (portd != nullptr && portd->mType == PORTT_INTERACTIVE && portd->mDestination == line)
+		if (port->mType == PORTT_INTERACTIVE)
 		{
-			// this is a 2-way interactive portal
-			port->mFlags = port->mDefFlags | PORTF_INTERACTIVE;
-			portd->mFlags = portd->mDefFlags | PORTF_INTERACTIVE;
+			FLinePortal *portd = port->mDestination->portalindex < linePortals.Size()? &linePortals[port->mDestination->portalindex] : nullptr;
+			if (portd != nullptr && portd->mType == PORTT_INTERACTIVE && portd->mDestination == line)
+			{
+				// this is a 2-way interactive portal
+				port->mFlags = port->mDefFlags | PORTF_INTERACTIVE;
+				portd->mFlags = portd->mDefFlags | PORTF_INTERACTIVE;
+			}
+			else
+			{
+				port->mFlags = port->mDefFlags;
+			}
+			SetRotation(portd);
 		}
 		else
 		{
-			port->mFlags = port->mDefFlags;
+			if (port->mType == PORTT_VISUAL || port->mType == PORTT_TELEPORT)
+			{ 
+				port->mFlags = port->mDefFlags;
+			}
 		}
-		SetRotation(portd);
 	}
 	SetRotation(port);
 	return true;

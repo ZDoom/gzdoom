@@ -363,7 +363,7 @@ void P_UpdatePortal(FLinePortal *port)
 	{
 		Printf(TEXTCOLOR_RED "Warning: Traversable portals must have a back-sector and empty space behind them (or be on a polyobject)! Changing line %d to visual-portal!\n", port->mOrigin->Index());
 		port->mType = PORTT_VISUAL;
-		port->mDefFlags &= ~(PORTF_PASSABLE | PORTF_SOUNDTRAVERSE);
+		port->mDefFlags &= ~(PORTF_PASSABLE | PORTF_SOUNDTRAVERSE | PORTF_INTERACTIVE);
 	}
 
 	if (port->mDestination == nullptr)

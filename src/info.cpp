@@ -355,8 +355,16 @@ void PClassActor::RegisterIDs()
 		return;
 	}
 
+	FActorInfo *actorInfo = ActorInfo();
+
+	if (nullptr == actorInfo)
+	{
+		// Undefined class, exiting
+		return;
+	}
+
 	// Conversation IDs have never been filtered by game so we cannot start doing that.
-	auto ConversationID = ActorInfo()->ConversationID;
+	auto ConversationID = actorInfo->ConversationID;
 	if (ConversationID > 0)
 	{
 		StrifeTypes[ConversationID] = cls;
@@ -365,9 +373,9 @@ void PClassActor::RegisterIDs()
 			Printf(TEXTCOLOR_RED"Conversation ID %d refers to hidden class type '%s'\n", ConversationID, cls->TypeName.GetChars());
 		}
 	}
-	if (ActorInfo()->GameFilter == GAME_Any || (ActorInfo()->GameFilter & gameinfo.gametype))
+	if (actorInfo->GameFilter == GAME_Any || (ActorInfo()->GameFilter & gameinfo.gametype))
 	{
-		auto SpawnID = ActorInfo()->SpawnID;
+		auto SpawnID = actorInfo->SpawnID;
 		if (SpawnID > 0)
 		{
 			SpawnableThings[SpawnID] = cls;
@@ -376,7 +384,7 @@ void PClassActor::RegisterIDs()
 				Printf(TEXTCOLOR_RED"Spawn ID %d refers to hidden class type '%s'\n", SpawnID, cls->TypeName.GetChars());
 			}
 		}
-		auto DoomEdNum = ActorInfo()->DoomEdNum;
+		auto DoomEdNum = actorInfo->DoomEdNum;
 		if (DoomEdNum != -1)
 		{
 			FDoomEdEntry *oldent = DoomEdMap.CheckKey(DoomEdNum);

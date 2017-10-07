@@ -273,10 +273,7 @@ int OriginalMain(int argc, char** argv)
 // ---------------------------------------------------------------------------
 
 
-@interface ApplicationController : NSResponder
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-	<NSApplicationDelegate>
-#endif
+@interface ApplicationController : NSResponder<NSApplicationDelegate>
 {
 }
 

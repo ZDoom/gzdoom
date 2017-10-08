@@ -1868,6 +1868,11 @@ OptionValue ScaleModes
 	3, "640x400"
 	4, "1280x800"
 }
+OptionValue CropAspect
+{
+	0, "$OPTVAL_STRETCH"
+	1, "$OPTVAL_LETTERBOX"
+}
 
 OptionMenu VideoModeMenu protected
 {
@@ -1880,6 +1885,7 @@ OptionMenu VideoModeMenu protected
 	}
 	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
+	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"
 	Option "$VIDMNU_5X4ASPECTRATIO",	"vid_tft", "YesNo"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2

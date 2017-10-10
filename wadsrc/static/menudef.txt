@@ -1844,15 +1844,6 @@ OptionValue ForceRatios
 OptionValue Ratios
 {
 	0.0, "4:3"
-	1.0, "16:9"
-	2.0, "16:10"
-	3.0, "17:10"
-	6.0, "21:9"
-	 -1, "$OPTVAL_ALL"
-}
-OptionValue RatiosTFT
-{
-	0.0, "4:3"
 	4.0, "5:4"
 	1.0, "16:9"
 	2.0, "16:10"
@@ -1886,7 +1877,6 @@ OptionMenu VideoModeMenu protected
 	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"
-	Option "$VIDMNU_5X4ASPECTRATIO",	"vid_tft", "YesNo"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
 	StaticText " "

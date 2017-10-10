@@ -74,7 +74,6 @@ EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
 EXTERN_CVAR (Int, vid_defbits)
 EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Bool, vid_tft)		// Defined below
 
 int testingmode;		// Holds time to revert to old mode
 int OldWidth, OldHeight, OldBits;
@@ -87,41 +86,10 @@ CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 	{
 		self = -1;
 	}
-	else if (self == 4 && !vid_tft)
-	{
-		self = 0;
-	}
 	else
 	{
 		BuildModesList (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 	}
-}
-
-CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	const int OptionMenuItemOptionBase_OP_VALUES = 0x11001;
-
-	DOptionMenuDescriptor *opt = GetVideoModeMenu();
-	if (opt != NULL)
-	{
-		DMenuItemBase *it = opt->GetItem("menu_screenratios");
-		if (it != NULL)
-		{
-			if (self)
-			{
-				it->SetString(OptionMenuItemOptionBase_OP_VALUES, "RatiosTFT");
-			}
-			else
-			{
-				it->SetString(OptionMenuItemOptionBase_OP_VALUES, "Ratios");
-			}
-		}
-	}
-	setsizeneeded = true;
-	if (StatusBar != NULL)
-	{
-		StatusBar->CallScreenSizeChanged();
-	}	
 }
 
 
@@ -278,7 +246,6 @@ void M_InitVideoModesMenu ()
 	size_t currval = 0;
 
 	M_RefreshModesList();
-	vid_tft.Callback();
 
 	for (unsigned int i = 1; i <= 32 && currval < countof(BitTranslate); i++)
 	{

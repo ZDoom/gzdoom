@@ -234,7 +234,7 @@ void PostProcessShaderInstance::BindTextures()
 			{
 				FBitmap bitmap;
 				bitmap.Create(tex->GetWidth(), tex->GetHeight());
-				tex->CopyTrueColorPixels(&bitmap, 0, 0, 6);
+				tex->CopyTrueColorPixels(&bitmap, 0, 0);
 
 				GLuint handle = 0;
 				glGenTextures(1, &handle);

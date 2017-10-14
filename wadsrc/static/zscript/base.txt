@@ -333,6 +333,7 @@ struct GameInfoStruct native
 	native GIFont mStatscreenFinishedFont;
 	native double gibfactor;
 	native bool intermissioncounter;
+	native Name mSliderColor;
 }
 
 class Object native

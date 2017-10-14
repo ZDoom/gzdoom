@@ -182,6 +182,21 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 					sc.MustGetString();
 					iwad->Required = sc.String;
 				}
+				else if (sc.Compare("StartupType"))
+				{
+					sc.MustGetStringName("=");
+					sc.MustGetString();
+					FString sttype = sc.String;
+					if (!sttype.CompareNoCase("DOOM"))
+						iwad->StartupType = FStartupInfo::DoomStartup;
+					else if (!sttype.CompareNoCase("HERETIC"))
+						iwad->StartupType = FStartupInfo::HereticStartup;
+					else if (!sttype.CompareNoCase("HEXEN"))
+						iwad->StartupType = FStartupInfo::HexenStartup;
+					else if (!sttype.CompareNoCase("STRIFE"))
+						iwad->StartupType = FStartupInfo::StrifeStartup;
+					else iwad->StartupType = FStartupInfo::DefaultStartup;
+				}
 				else
 				{
 					sc.ScriptError("Unknown keyword '%s'", sc.String);
@@ -739,6 +754,7 @@ const FIWADInfo *FIWadManager::FindIWAD(TArray<FString> &wadfiles, const char *i
 		DoomStartupInfo.BkColor = iwad_info->BkColor;
 		DoomStartupInfo.FgColor = iwad_info->FgColor;
 	}
+	if (DoomStartupInfo.Type == 0) DoomStartupInfo.Type = iwad_info->StartupType;
 	I_SetIWADInfo();
 	return iwad_info;
 }

@@ -74,6 +74,23 @@ struct WadStuff
 	FString Name;
 };
 
+struct FStartupInfo
+{
+	FString Name;
+	uint32_t FgColor;			// Foreground color for title banner
+	uint32_t BkColor;			// Background color for title banner
+	FString Song;
+	int Type;
+	enum
+	{
+		DefaultStartup,
+		DoomStartup,
+		HereticStartup,
+		HexenStartup,
+		StrifeStartup,
+	};
+};
+
 struct FIWADInfo
 {
 	FString Name;			// Title banner text for this IWAD
@@ -85,6 +102,7 @@ struct FIWADInfo
 	uint32_t FgColor = 0;	// Foreground color for title banner
 	uint32_t BkColor = 0xc0c0c0;		// Background color for title banner
 	EGameType gametype = GAME_Doom;		// which game are we playing?
+	int StartupType = FStartupInfo::DefaultStartup;		// alternate startup type
 	FString MapInfo;		// Base mapinfo to load
 	TArray<FString> Load;	// Wads to be loaded with this one.
 	TArray<FString> Lumps;	// Lump names for identification
@@ -102,24 +120,6 @@ struct FFoundWadInfo
 		: mFullPath(s1), mRequiredPath(s2), mInfoIndex(index)
 	{
 	}
-};
-
-struct FStartupInfo
-{
-	FString Name;
-	uint32_t FgColor;			// Foreground color for title banner
-	uint32_t BkColor;			// Background color for title banner
-	FString Song;
-	int Type;
-	enum
-	{
-		DefaultStartup,
-		DoomStartup,
-		HereticStartup,
-		HexenStartup,
-		StrifeStartup,
-	};
-
 };
 
 extern FStartupInfo DoomStartupInfo;

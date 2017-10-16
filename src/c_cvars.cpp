@@ -183,6 +183,14 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 	}
 }
 
+// ADDED BY NERO
+DEFINE_ACTION_FUNCTION(_CVar, GetBool)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	auto v = self->GetGenericRep(CVAR_Bool);
+	ACTION_RETURN_BOOL(v.Bool);
+}
+
 DEFINE_ACTION_FUNCTION(_CVar, GetInt)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
@@ -202,6 +210,18 @@ DEFINE_ACTION_FUNCTION(_CVar, GetString)
 	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
 	auto v = self->GetGenericRep(CVAR_String);
 	ACTION_RETURN_STRING(v.String);
+}
+
+//ADDED BY NERO
+DEFINE_ACTION_FUNCTION(_CVar, SetBool)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FBaseCVar);
+	if (!(self->GetFlags() & CVAR_MOD) && CurrentMenu == nullptr) return 0;
+	PARAM_BOOL(val);
+	UCVarValue v;
+	v.Bool = val;
+	self->SetGenericRep(v, CVAR_Bool);
+	return 0;
 }
 
 DEFINE_ACTION_FUNCTION(_CVar, SetInt)

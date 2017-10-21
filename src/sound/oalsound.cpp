@@ -72,6 +72,8 @@ CVAR (String, snd_alresampler, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 #define OPENALLIB "openal32.dll"
 #elif defined(__APPLE__)
 #define OPENALLIB "OpenAL.framework/OpenAL"
+#elif defined(__OpenBSD__)
+#define OPENALLIB "libopenal.so"
 #else
 #define OPENALLIB "libopenal.so.1"
 #endif

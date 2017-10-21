@@ -2193,7 +2193,7 @@ static void PutSaveWads (FSerializer &arc)
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	if (Wads.GetLumpFile (level.lumpnum) > 1)
+	if (Wads.GetLumpFile (level.lumpnum) > Wads.GetIwadNum())
 	{
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
 		arc.AddString("Map WAD", name);

@@ -136,7 +136,7 @@ extend class Actor
 			A_PlaySound(snd, CHAN_WEAPON);
 			int newdam = targ.DamageMobj (self, self, initialdmg, (flags & VAF_DMGTYPEAPPLYTODIRECT)? damagetype : 'none');
 
-			TraceBleed (newdam > 0 ? newdam : initialdmg, targ);
+			targ.TraceBleed (newdam > 0 ? newdam : initialdmg, self);
 			
 			Actor fire = tracer;
 			if (fire)

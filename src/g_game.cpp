@@ -608,24 +608,20 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		if (Button_Right.bDown)
 		{
 			G_AddViewAngle (angleturn[tspeed]);
-			LocalKeyboardTurner = true;
 		}
 		if (Button_Left.bDown)
 		{
 			G_AddViewAngle (-angleturn[tspeed]);
-			LocalKeyboardTurner = true;
 		}
 	}
 
 	if (Button_LookUp.bDown)
 	{
 		G_AddViewPitch (lookspeed[speed]);
-		LocalKeyboardTurner = true;
 	}
 	if (Button_LookDown.bDown)
 	{
 		G_AddViewPitch (-lookspeed[speed]);
-		LocalKeyboardTurner = true;
 	}
 
 	if (Button_MoveUp.bDown)
@@ -701,12 +697,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (joyaxes[JOYAXIS_Pitch] != 0)
 	{
 		G_AddViewPitch(joyint(joyaxes[JOYAXIS_Pitch] * 2048));
-		LocalKeyboardTurner = true;
 	}
 	if (joyaxes[JOYAXIS_Yaw] != 0)
 	{
 		G_AddViewAngle(joyint(-1280 * joyaxes[JOYAXIS_Yaw]));
-		LocalKeyboardTurner = true;
 	}
 
 	side -= joyint(sidemove[speed] * joyaxes[JOYAXIS_Side]);
@@ -794,7 +788,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 //[Graf Zahl] This really helps if the mouse update rate can't be increased!
 CVAR (Bool,		smooth_mouse,	false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
-void G_AddViewPitch (int look)
+void G_AddViewPitch (int look, bool mouse)
 {
 	if (gamestate == GS_TITLELEVEL)
 	{
@@ -837,11 +831,11 @@ void G_AddViewPitch (int look)
 	}
 	if (look != 0)
 	{
-		LocalKeyboardTurner = smooth_mouse;
+		LocalKeyboardTurner = (!mouse || smooth_mouse);
 	}
 }
 
-void G_AddViewAngle (int yaw)
+void G_AddViewAngle (int yaw, bool mouse)
 {
 	if (gamestate == GS_TITLELEVEL)
 	{
@@ -857,7 +851,7 @@ void G_AddViewAngle (int yaw)
 	LocalViewAngle -= yaw;
 	if (yaw != 0)
 	{
-		LocalKeyboardTurner = smooth_mouse;
+		LocalKeyboardTurner = (!mouse || smooth_mouse);
 	}
 }
 
@@ -2199,7 +2193,7 @@ static void PutSaveWads (FSerializer &arc)
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	if (Wads.GetLumpFile (level.lumpnum) > 1)
+	if (Wads.GetLumpFile (level.lumpnum) > Wads.GetIwadNum())
 	{
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
 		arc.AddString("Map WAD", name);

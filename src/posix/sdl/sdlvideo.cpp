@@ -501,14 +501,6 @@ void SDLFB::SetVSync (bool vsync)
 	if (CGLContextObj context = CGLGetCurrentContext())
 	{
 		// Apply vsync for native backend only (where OpenGL context is set)
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-		// Inconsistency between 10.4 and 10.5 SDKs:
-		// third argument of CGLSetParameter() is const long* on 10.4 and const GLint* on 10.5
-		// So, GLint typedef'ed to long instead of int to workaround this issue
-		typedef long GLint;
-#endif // prior to 10.5
-
 		const GLint value = vsync ? 1 : 0;
 		CGLSetParameter(context, kCGLCPSwapInterval, &value);
 	}

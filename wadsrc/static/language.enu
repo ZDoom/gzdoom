@@ -2191,6 +2191,7 @@ VIDMNU_FULLSCREEN		= "Fullscreen";
 VIDMNU_HIDPI			= "Retina/HiDPI support";
 VIDMNU_ASPECTRATIO		= "Aspect ratio";
 VIDMNU_FORCEASPECT		= "Force aspect ratio";
+VIDMNU_CROPASPECT		= "Forced ratio style";
 VIDMNU_5X4ASPECTRATIO	= "Enable 5:4 aspect ratio";
 VIDMNU_SCALEMODE		= "Resolution scale";
 VIDMNU_SCALEFACTOR		= "Scale Factor";
@@ -2381,6 +2382,7 @@ OPTVAL_VTAZDOOM				= "Auto (ZDoom Preferred)";
 OPTVAL_VTAVANILLA			= "Auto (Vanilla Preferred)";
 OPTVAL_SCALENEAREST			= "Scaled (Nearest)";
 OPTVAL_SCALELINEAR			= "Scaled (Linear)";
+OPTVAL_LETTERBOX			= "Letterbox";
 
 // Colors
 C_BRICK					= "\cabrick";

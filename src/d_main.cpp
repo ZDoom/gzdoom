@@ -328,12 +328,12 @@ void D_PostEvent (const event_t *ev)
 			int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
 			if (invertmouse)
 				look = -look;
-			G_AddViewPitch (look);
+			G_AddViewPitch (look, true);
 			events[eventhead].y = 0;
 		}
 		if (!Button_Strafe.bDown && !lookstrafe)
 		{
-			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0));
+			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0), true);
 			events[eventhead].x = 0;
 		}
 		if ((events[eventhead].x | events[eventhead].y) == 0)

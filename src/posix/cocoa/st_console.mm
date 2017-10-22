@@ -113,11 +113,8 @@ FConsoleWindow::FConsoleWindow()
 	[m_window center];
 	[m_window exitAppOnClose];
 
-	if (NSAppKitVersionNumber >= AppKit10_7)
-	{
-		// Do not allow fullscreen mode for this window
-		[m_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenAuxiliary];
-	}
+	// Do not allow fullscreen mode for this window
+	[m_window setCollectionBehavior:NSWindowCollectionBehaviorFullScreenAuxiliary];
 
 	[[m_window contentView] addSubview:m_scrollView];
 

@@ -87,7 +87,7 @@ void AdjustSpriteOffsets()
 
 	for (int i = 0; i < numtex; i++)
 	{
-		if (Wads.GetLumpFile(i) > 1) break; // we are past the IWAD
+		if (Wads.GetLumpFile(i) > Wads.GetIwadNum()) break; // we are past the IWAD
 		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == Wads.GetIwadNum())
 		{
 			char str[9];

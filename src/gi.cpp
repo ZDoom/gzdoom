@@ -63,6 +63,7 @@ DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, intermissioncounter)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_single)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_coop)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_dm)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderColor)
 
 
 const char *GameNames[17] =
@@ -382,8 +383,8 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_COLOR(dimcolor, "dimcolor")
 		GAMEINFOKEY_FLOAT(dimamount, "dimamount")
 		GAMEINFOKEY_FLOAT(bluramount, "bluramount")
+		GAMEINFOKEY_STRING(mSliderColor, "menuslidercolor")
 		GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
-		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
 		GAMEINFOKEY_STRING(Endoom, "endoom")

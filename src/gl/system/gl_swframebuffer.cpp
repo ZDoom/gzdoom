@@ -1304,8 +1304,8 @@ void OpenGLSWFrameBuffer::Flip()
 
 	if (!IsFullscreen())
 	{
-		int clientWidth = ViewportScaledWidth(GetClientWidth());
-		int clientHeight = ViewportScaledHeight(GetClientHeight());
+		int clientWidth = ViewportScaledWidth(GetClientWidth(), GetClientHeight());
+		int clientHeight = ViewportScaledHeight(GetClientWidth(), GetClientHeight());
 		if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
 		{
 			Resize(clientWidth, clientHeight);

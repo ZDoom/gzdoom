@@ -24,6 +24,7 @@
 #include <math.h>
 #include "c_dispatch.h"
 #include "c_cvars.h"
+#include "v_video.h"
 
 #define NUMSCALEMODES 5
 
@@ -64,6 +65,8 @@ CUSTOM_CVAR(Int, vid_scalemode, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		self = 0;
 }
 
+CVAR(Bool, vid_cropaspect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 bool ViewportLinearScale()
 {
 	if (isOutOfBounds(vid_scalemode))
@@ -72,17 +75,21 @@ bool ViewportLinearScale()
 	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
 }
 
-int ViewportScaledWidth(int width)
+int ViewportScaledWidth(int width, int height)
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
+	if (vid_cropaspect && height > 0)
+		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
 	return vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor));
 }
 
-int ViewportScaledHeight(int height)
+int ViewportScaledHeight(int width, int height)
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
+	if (vid_cropaspect && height > 0)
+		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
 	return vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor));
 }
 

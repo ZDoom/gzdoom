@@ -35,8 +35,6 @@
 
 #include "i_common.h"
 
-#import <Carbon/Carbon.h>
-
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
 
@@ -68,19 +66,6 @@
 
 #undef Class
 
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1070
-
-@implementation NSView(Compatibility)
-
-- (NSRect)convertRectToBacking:(NSRect)aRect
-{
-	return [self convertRect:aRect toView:[self superview]];
-}
-
-@end
-
-#endif // prior to 10.7
 
 @implementation NSWindow(ExitAppOnClose)
 
@@ -304,7 +289,6 @@ private:
 	bool m_fullscreen;
 	bool m_hiDPI;
 
-	void SetStyleMask(NSUInteger styleMask);
 	void SetFullscreenMode(int width, int height);
 	void SetWindowedMode(int width, int height);
 	void SetMode(int width, int height, bool fullscreen, bool hiDPI);
@@ -510,16 +494,12 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 	attributes[i++] = NSOpenGLPixelFormatAttribute(24);
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
-
-	if (NSAppKitVersionNumber >= AppKit10_5 && !vid_autoswitch)
+	attributes[i++] = NSOpenGLPFAOpenGLProfile;
+	attributes[i++] = profile;
+	
+	if (!vid_autoswitch)
 	{
 		attributes[i++] = NSOpenGLPFAAllowOfflineRenderers;
-	}
-
-	if (NSAppKitVersionNumber >= AppKit10_7)
-	{
-		attributes[i++] = NSOpenGLPFAOpenGLProfile;
-		attributes[i++] = profile;
 	}
 
 	attributes[i] = NSOpenGLPixelFormatAttribute(0);
@@ -553,9 +533,9 @@ CocoaVideo::CocoaVideo()
 		// There is no support for OpenGL 3.3 before Mavericks
 		defaultProfile = NSOpenGLProfileVersionLegacy;
 	}
-	else if (0 == vid_renderer && vid_glswfb && NSAppKitVersionNumber < AppKit10_7)
+	else if (0 == vid_renderer && 0 == vid_glswfb)
 	{
-		// There is no support for OpenGL 3.x before Lion
+		// Software renderer uses OpenGL 2.1 for blitting
 		defaultProfile = NSOpenGLProfileVersionLegacy;
 	}
 	else if (const char* const glversion = Args->CheckValue("-glversion"))
@@ -738,26 +718,6 @@ void CocoaVideo::SetWindowVisible(bool visible)
 }
 
 
-static bool HasModernFullscreenAPI()
-{
-	return NSAppKitVersionNumber >= AppKit10_6;
-}
-
-void CocoaVideo::SetStyleMask(const NSUInteger styleMask)
-{
-	// Before 10.6 it's impossible to change window's style mask
-	// To workaround this new window should be created with required style mask
-	// This method should not be called when running on Snow Leopard or newer
-
-	assert(!HasModernFullscreenAPI());
-
-	CocoaWindow* tempWindow = CreateCocoaWindow(styleMask);
-	[tempWindow setContentView:[m_window contentView]];
-
-	[m_window close];
-	m_window = tempWindow;
-}
-
 void CocoaVideo::SetFullscreenMode(const int width, const int height)
 {
 	NSScreen* screen = [m_window screen];
@@ -783,20 +743,8 @@ void CocoaVideo::SetFullscreenMode(const int width, const int height)
 
 	if (!m_fullscreen)
 	{
-		if (HasModernFullscreenAPI())
-		{
-			[m_window setLevel:LEVEL_FULLSCREEN];
-			[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
-		}
-		else
-		{
-			// Old Carbon-based way to make fullscreen window above dock and menu
-			// It's supported on 64-bit, but on 10.6 and later the following is preferred:
-			// [NSWindow setLevel:NSMainMenuWindowLevel + 1]
-
-			SetSystemUIMode(kUIModeAllHidden, 0);
-			SetStyleMask(STYLE_MASK_FULLSCREEN);
-		}
+		[m_window setLevel:LEVEL_FULLSCREEN];
+		[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
 
 		[m_window setHidesOnDeactivate:YES];
 	}
@@ -821,16 +769,8 @@ void CocoaVideo::SetWindowedMode(const int width, const int height)
 
 	if (m_fullscreen)
 	{
-		if (HasModernFullscreenAPI())
-		{
-			[m_window setLevel:LEVEL_WINDOWED];
-			[m_window setStyleMask:STYLE_MASK_WINDOWED];
-		}
-		else
-		{
-			SetSystemUIMode(kUIModeNormal, 0);
-			SetStyleMask(STYLE_MASK_WINDOWED);
-		}
+		[m_window setLevel:LEVEL_WINDOWED];
+		[m_window setStyleMask:STYLE_MASK_WINDOWED];
 
 		[m_window setHidesOnDeactivate:NO];
 	}
@@ -851,11 +791,8 @@ void CocoaVideo::SetMode(const int width, const int height, const bool fullscree
 		return;
 	}
 
-	if (I_IsHiDPISupported())
-	{
-		NSOpenGLView* const glView = [m_window contentView];
-		[glView setWantsBestResolutionOpenGLSurface:hiDPI];
-	}
+	NSOpenGLView* const glView = [m_window contentView];
+	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
 
 	if (fullscreen)
 	{
@@ -1115,11 +1052,7 @@ bool CocoaFrameBuffer::IsFullscreen()
 
 void CocoaFrameBuffer::SetVSync(bool vsync)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-	const long value = vsync ? 1 : 0;
-#else // 10.5 or newer
 	const GLint value = vsync ? 1 : 0;
-#endif // prior to 10.5
 
 	[[NSOpenGLContext currentContext] setValues:&value
 								   forParameter:NSOpenGLCPSwapInterval];
@@ -1237,11 +1170,7 @@ bool SDLGLFB::IsFullscreen()
 
 void SDLGLFB::SetVSync(bool vsync)
 {
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-	const long value = vsync ? 1 : 0;
-#else // 10.5 or newer
 	const GLint value = vsync ? 1 : 0;
-#endif // prior to 10.5
 
 	[[NSOpenGLContext currentContext] setValues:&value
 								   forParameter:NSOpenGLCPSwapInterval];
@@ -1473,14 +1402,7 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (I_IsHiDPISupported())
-	{
-		CocoaVideo::UseHiDPI(self);
-	}
-	else if (0 != self)
-	{
-		self = 0;
-	}
+	CocoaVideo::UseHiDPI(self);
 }
 
 

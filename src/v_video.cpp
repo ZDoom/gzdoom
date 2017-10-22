@@ -783,7 +783,7 @@ void DSimpleCanvas::Unlock ()
 //==========================================================================
 
 DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
-	: DSimpleCanvas (ViewportScaledWidth(width), ViewportScaledHeight(height), bgra)
+	: DSimpleCanvas (ViewportScaledWidth(width, height), ViewportScaledHeight(width, height), bgra)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
@@ -1592,16 +1592,6 @@ void V_Shutdown()
 	V_ClearFonts();
 }
 
-EXTERN_CVAR (Bool, vid_tft)
-CUSTOM_CVAR (Bool, vid_nowidescreen, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
-{
-	setsizeneeded = true;
-	if (StatusBar != NULL)
-	{
-		StatusBar->CallScreenSizeChanged();
-	}
-}
-
 CUSTOM_CVAR (Int, vid_aspect, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 {
 	setsizeneeded = true;
@@ -1631,17 +1621,6 @@ int ActiveFakeRatio(int width, int height)
 	else if (vid_aspect == 0 && ViewportIsScaled43())
 	{
 		fakeratio = 0;
-	}
-	if (vid_nowidescreen)
-	{
-		if (!vid_tft)
-		{
-			fakeratio = 0;
-		}
-		else
-		{
-			fakeratio = (height * 5 / 4 == width) ? 4 : 0;
-		}
 	}
 	return fakeratio;
 }

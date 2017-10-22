@@ -136,7 +136,7 @@ extend class Actor
 			A_PlaySound(snd, CHAN_WEAPON);
 			int newdam = targ.DamageMobj (self, self, initialdmg, (flags & VAF_DMGTYPEAPPLYTODIRECT)? damagetype : 'none');
 
-			TraceBleed (newdam > 0 ? newdam : initialdmg, targ);
+			targ.TraceBleed (newdam > 0 ? newdam : initialdmg, self);
 			
 			Actor fire = tracer;
 			if (fire)
@@ -170,7 +170,7 @@ extend class Actor
 		// don't move it if the vile lost sight
 		if (!target.CheckSight (dest, 0) ) return;
 
-		SetOrigin(dest.Vec3Angle(24, dest.angle, height), true);
+		SetOrigin(dest.Vec3Angle(24, dest.angle, spawnheight), true);
 	}
 	
 	void A_FireCrackle()

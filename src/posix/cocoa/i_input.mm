@@ -479,12 +479,9 @@ void NSEventToGameMousePosition(NSEvent* inEvent, event_t* outEvent)
 	const NSView*     view = [window contentView];
 
 	const NSPoint screenPos = [NSEvent mouseLocation];
-	const NSPoint windowPos = [window convertScreenToBase:screenPos];
-
-	const NSPoint   viewPos = I_IsHiDPISupported()
-		? [view convertPointToBacking:windowPos]
-		: [view convertPoint:windowPos fromView:nil];
-
+	const NSRect screenRect = NSMakeRect(screenPos.x, screenPos.y, 0, 0);
+	const NSRect windowRect = [window convertRectFromScreen:screenRect];
+	const NSPoint   viewPos = [view convertPointToBacking:windowRect.origin];
 	const CGFloat frameHeight = I_GetContentViewSize(window).height;
 
 	const CGFloat posX = (              viewPos.x - rbOpts.shiftX) / rbOpts.pixelScale;

@@ -50,10 +50,6 @@
 #include <wordexp.h>
 #include <unistd.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-// Missing type definition for 10.4 and earlier
-typedef unsigned int NSUInteger;
-#endif // prior to 10.5
 
 CVAR(String, osx_additional_parameters, "", CVAR_ARCHIVE | CVAR_NOSET | CVAR_GLOBALCONFIG);
 
@@ -68,10 +64,7 @@ enum
 static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 
 // Class to convert the IWAD data into a form that Cocoa can use.
-@interface IWADTableData : NSObject
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-	<NSTableViewDataSource>
-#endif
+@interface IWADTableData : NSObject<NSTableViewDataSource>
 {
 	NSMutableArray *data;
 }

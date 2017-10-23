@@ -187,6 +187,9 @@ public:
 	FString &operator << (char tail) { return *this += tail; }
 	FString &operator << (const FName &name) { return *this += name.GetChars(); }
 
+	const char &Front() const { assert(IsNotEmpty()); return Chars[0]; }
+	const char &Back() const { assert(IsNotEmpty()); return Chars[Len() - 1]; }
+
 	FString Left (size_t numChars) const;
 	FString Right (size_t numChars) const;
 	FString Mid (size_t pos, size_t numChars = ~(size_t)0) const;

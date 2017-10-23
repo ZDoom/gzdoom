@@ -211,6 +211,21 @@ FString &FString::operator = (const FString &other)
 	}
 	return *this;
 }
+
+FString &FString::operator = (FString &&other)
+{
+	assert (Chars != NULL);
+
+	if (&other != this)
+	{
+		Data()->Release();
+		Chars = other.Chars;
+		other.ResetToNull();
+	}
+
+	return *this;
+}
+
 FString &FString::operator = (const char *copyStr)
 {
 	if (copyStr != Chars)

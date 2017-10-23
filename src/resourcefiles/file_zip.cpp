@@ -312,7 +312,7 @@ bool FZipFile::Open(bool quiet)
 		}
 		
 		// skip Directories
-		if (name[len - 1] == '/' && LittleLong(zip_fh->UncompressedSize) == 0) 
+		if (name.IsEmpty() || (name.Back() == '/' && LittleLong(zip_fh->UncompressedSize) == 0))
 		{
 			skipped++;
 			continue;

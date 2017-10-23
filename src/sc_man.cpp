@@ -321,11 +321,11 @@ void FScanner::PrepareScript ()
 {
 	// The scanner requires the file to end with a '\n', so add one if
 	// it doesn't already.
-	if (ScriptBuffer.Len() == 0 || ScriptBuffer[ScriptBuffer.Len() - 1] != '\n')
+	if (ScriptBuffer.Len() == 0 || ScriptBuffer.Back() != '\n')
 	{
 		// If the last character in the buffer is a null character, change
 		// it to a newline. Otherwise, append a newline to the end.
-		if (ScriptBuffer.Len() > 0 && ScriptBuffer[ScriptBuffer.Len() - 1] == '\0')
+		if (ScriptBuffer.Len() > 0 && ScriptBuffer.Back() == '\0')
 		{
 			ScriptBuffer.LockBuffer()[ScriptBuffer.Len() - 1] = '\n';
 			ScriptBuffer.UnlockBuffer();

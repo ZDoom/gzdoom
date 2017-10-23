@@ -405,7 +405,7 @@ void FIWadManager::CollectSearchPaths()
 	for (auto &str : mSearchPaths)
 	{
 		FixPathSeperator(str);
-		if (str[str.Len() - 1] == '/') str.Truncate(str.Len() - 1);
+		if (str.Back() == '/') str.Truncate(str.Len() - 1);
 	}
 }
 

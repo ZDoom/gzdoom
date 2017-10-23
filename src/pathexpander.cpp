@@ -48,7 +48,7 @@ static FString BuildPath(const FString &base, const char *name)
 	if (base.IsNotEmpty())
 	{
 		current = base;
-		if (current[current.Len() - 1] != '/') current += '/';
+		if (current.Back() != '/') current += '/';
 	}
 	current += name;
 	return current;

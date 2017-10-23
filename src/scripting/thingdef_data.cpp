@@ -1051,7 +1051,7 @@ FString FStringFormat(VM_ARGS)
 		if (in_fmt)
 		{
 			if ((c >= '0' && c <= '9') ||
-				c == '-' || c == '+' || (c == ' ' && fmt_current[fmt_current.Len() - 1] != ' ') || c == '#' || c == '.')
+				c == '-' || c == '+' || (c == ' ' && fmt_current.Back() != ' ') || c == '#' || c == '.')
 			{
 				fmt_current += c;
 			}

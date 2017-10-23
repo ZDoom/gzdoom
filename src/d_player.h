@@ -330,6 +330,10 @@ struct userinfo_t : TMap<FName,FBaseCVar *>
 	{
 		return *static_cast<FIntCVar *>(*CheckKey(NAME_PlayerClass));
 	}
+	bool GetClassicFlight() const
+	{
+		return *static_cast<FBoolCVar *>(*CheckKey(NAME_ClassicFlight));
+	}
 	PClassActor *GetPlayerClassType() const
 	{
 		return PlayerClasses[GetPlayerClassNum()].Type;

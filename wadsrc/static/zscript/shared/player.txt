@@ -746,7 +746,7 @@ class PlayerPawn : Actor native
 
 	void ForwardThrust (double move, double angle)
 	{
-		if ((waterlevel || bNoGravity) && Pitch != 0)
+		if ((waterlevel || bNoGravity) && Pitch != 0 && !player.GetClassicFlight())
 		{
 			double zpush = move * sin(Pitch);
 			if (waterlevel && waterlevel < 2 && zpush < 0) zpush = 0;
@@ -1484,6 +1484,7 @@ struct PlayerInfo native play	// this is what internally is known as player_t
 	native float GetAutoaim() const;
 	native bool GetNoAutostartMap() const;
 	native void SetFOV(float fov);
+	native bool GetClassicFlight() const;
 	native clearscope bool HasWeaponsInSlot(int slot) const;
 
 	bool IsTotallyFrozen()

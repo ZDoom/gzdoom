@@ -30,7 +30,9 @@
 #include <dirent.h>
 #include <ctype.h>
 
-#define __solaris__ (defined(__sun) || defined(__sun__) || defined(__SRV4) || defined(__srv4__))
+#if defined(__sun) || defined(__sun__) || defined(__SRV4) || defined(__srv4__)
+#define __solaris__ 1
+#endif
 
 #include "doomtype.h"
 

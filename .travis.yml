@@ -19,7 +19,7 @@ matrix:
       compiler: gcc
       env:
         - GCC_VERSION=5
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release"
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
       addons:
         apt:
           sources:
@@ -32,7 +32,7 @@ matrix:
       compiler: gcc
       env:
         - GCC_VERSION=6
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
       addons:
         apt:
           sources:
@@ -45,6 +45,7 @@ matrix:
       compiler: gcc
       env:
         - GCC_VERSION=7
+        - CMAKE_OPTIONS="-DCMAKE_CXX_FLAGS=-Wno-implicit-fallthrough"
       addons:
         apt:
           sources:

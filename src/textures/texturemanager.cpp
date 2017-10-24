@@ -1202,6 +1202,20 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 //
 //==========================================================================
 
+DEFINE_ACTION_FUNCTION(_TexMan, GetName)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	const FTexture* const tex = TexMan.ByIndex(texid);
+	ACTION_RETURN_STRING(nullptr == tex ? FString() : tex->Name);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
 {
 	PARAM_PROLOGUE;

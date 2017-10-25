@@ -302,9 +302,11 @@ struct CVar native
 
 	native static CVar FindCVar(Name name);
 	native static CVar GetCVar(Name name, PlayerInfo player = null);
+	bool GetBool() { return GetInt(); }
 	native int GetInt();
 	native double GetFloat();
 	native String GetString();
+	void SetBool(bool b) { SetInt(b); }
 	native void SetInt(int v);
 	native void SetFloat(double v);
 	native void SetString(String s);

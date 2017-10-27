@@ -2698,6 +2698,8 @@ FxExpression *FxMultiAssign::Resolve(FCompileContext &ctx)
 		auto varaccess = new FxLocalVariable(singlevar, ScriptPosition);
 		auto assignee = new FxTypeCast(varaccess, Base[i]->ValueType, false);
 		LocalVarContainer->Add(new FxAssign(Base[i], assignee, false));
+		// now temporary variable owns the current item
+		Base[i] = nullptr;
 	}
 	auto x = LocalVarContainer->Resolve(ctx);
 	LocalVarContainer = nullptr;

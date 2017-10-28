@@ -1162,6 +1162,49 @@ void FString::ReallocBuffer (size_t newlen)
 	}
 }
 
+TArray<FString> FString::Split(const FString &delimiter, const EmptyTokenType keepEmpty) const
+{
+	return Split(delimiter.GetChars(), keepEmpty);
+}
+
+TArray<FString> FString::Split(const char *const delimiter, const EmptyTokenType keepEmpty) const
+{
+	TArray<FString> tokens;
+	Split(tokens, delimiter, keepEmpty);
+	return tokens;
+}
+
+void FString::Split(TArray<FString>& tokens, const FString &delimiter, EmptyTokenType keepEmpty) const
+{
+	Split(tokens, delimiter.GetChars(), keepEmpty);
+}
+
+void FString::Split(TArray<FString>& tokens, const char *delimiter, EmptyTokenType keepEmpty) const
+{
+	assert(nullptr != delimiter);
+
+	const long selfLen = static_cast<long>(Len());
+	const long delimLen = static_cast<long>(strlen(delimiter));
+	long lastPos = 0;
+
+	while (lastPos <= selfLen)
+	{
+		long pos = IndexOf(delimiter, lastPos);
+
+		if (-1 == pos)
+		{
+			pos = selfLen;
+		}
+
+		if (pos != lastPos || TOK_KEEPEMPTY == keepEmpty)
+		{
+			tokens.Push(FString(GetChars() + lastPos, pos - lastPos));
+		}
+
+		lastPos = pos + delimLen;
+	}
+}
+
 // Under Windows, use the system heap functions for managing string memory.
 // Under other OSs, use ordinary memory management instead.
 

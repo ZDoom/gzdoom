@@ -659,6 +659,12 @@ enum EPickStart
 	PPS_NOBLOCKINGCHECK		= 2,
 }
 
+enum EmptyTokenType
+{
+	TOK_SKIPEMPTY = 0,
+	TOK_KEEPEMPTY = 1,
+}
+
 // Although String is a builtin type, this is a convenient way to attach methods to it.
 struct StringStruct native
 {
@@ -678,6 +684,7 @@ struct StringStruct native
 	native void ToLower();
 	native int ToInt(int base = 0) const;
 	native double ToDouble() const;
+	native void Split(out Array<String> tokens, String delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
 }
 
 class SectorEffect : Thinker native

@@ -1293,3 +1293,13 @@ DEFINE_ACTION_FUNCTION(FStringStruct, ToDouble)
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	ACTION_RETURN_FLOAT(self->ToDouble());
 }
+
+DEFINE_ACTION_FUNCTION(FStringStruct, Split)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_POINTER(tokens, TArray<FString>);
+	PARAM_STRING(delimiter);
+	PARAM_INT_DEF(keepEmpty);
+	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
+	return 0;
+}

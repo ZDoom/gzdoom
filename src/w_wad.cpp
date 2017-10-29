@@ -567,6 +567,13 @@ int FWadCollection::CheckNumForFullName (const char *name, bool trynormal, int n
 	return -1;
 }
 
+DEFINE_ACTION_FUNCTION(_Wads, CheckNumForFullName)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	ACTION_RETURN_INT(Wads.CheckNumForFullName(name));
+}
+
 int FWadCollection::CheckNumForFullName (const char *name, int wadnum)
 {
 	uint32_t i;

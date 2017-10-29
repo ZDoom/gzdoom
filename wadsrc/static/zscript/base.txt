@@ -631,7 +631,14 @@ struct Wads
 		ns_firstskin,
 	}
 
+	enum FindLumpNamespace
+	{
+		GlobalNamespace = 0,
+		AnyNamespace = 1,
+	}
+
 	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
+	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
 }
 
 struct TerrainDef native

@@ -1086,6 +1086,16 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 	return -1;
 }
 
+DEFINE_ACTION_FUNCTION(_Wads, FindLump)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT_DEF(startlump);
+	PARAM_INT_DEF(ns);
+	const bool isLumpValid = startlump >= 0 && startlump < Wads.GetNumLumps();
+	ACTION_RETURN_INT(isLumpValid ? Wads.FindLump(name, &startlump, 0 != ns) : -1);
+}
+
 //==========================================================================
 //
 // W_FindLumpMulti

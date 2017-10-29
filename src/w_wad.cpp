@@ -1290,6 +1290,14 @@ FMemLump FWadCollection::ReadLump (int lump)
 	return FMemLump(FString(ELumpNum(lump)));
 }
 
+DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(lump);
+	const bool isLumpValid = lump >= 0 && lump < Wads.GetNumLumps();
+	ACTION_RETURN_STRING(isLumpValid ? Wads.ReadLump(lump).GetString() : FString());
+}
+
 //==========================================================================
 //
 // OpenLumpNum

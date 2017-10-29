@@ -639,6 +639,7 @@ struct Wads
 
 	native static int CheckNumForName(string name, int ns, int wadnum = -1, bool exact = false);
 	native static int FindLump(string name, int startlump = 0, FindLumpNamespace ns = GlobalNamespace);
+	native static string ReadLump(int lump);
 }
 
 struct TerrainDef native

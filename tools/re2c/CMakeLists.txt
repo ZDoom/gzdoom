@@ -31,7 +31,8 @@ CHECK_TYPE_SIZE( "void *" SIZEOF_VOID_P )
 CHECK_TYPE_SIZE( __int64 SIZEOF___INT_64 )
 
 configure_file( ${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h )
-include_directories( ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} )
+include_directories( ${CMAKE_CURRENT_BINARY_DIR} 
+${CMAKE_CURRENT_SOURCE_DIR} "/system/develop/headers/c++/*/" )
 add_definitions( -DHAVE_CONFIG_H )
 
 file( GLOB SRC_HDR

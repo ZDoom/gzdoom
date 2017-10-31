@@ -551,3 +551,16 @@ ADD_STAT (blit)
 		BlitCycles.TimeMS(), SDLFlipCycles.TimeMS());
 	return out;
 }
+
+// each platform has its own specific version of this function.
+void I_SetWindowTitle(const char* caption)
+{
+	if (caption)
+		SDL_SetWindowTitle(Screen, caption);
+	else
+	{
+		FString default_caption;
+		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+		SDL_SetWindowTitle(Screen, default_caption);
+	}
+}

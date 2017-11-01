@@ -1360,3 +1360,16 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	MainThread = INVALID_HANDLE_VALUE;
 	return 0;
 }
+
+// each platform has its own specific version of this function.
+void I_SetWindowTitle(const char* caption)
+{
+	if (caption)
+		SetWindowText(Window, (LPCTSTR)caption);
+	else
+	{
+		char default_caption[100];
+		mysnprintf(default_caption, countof(default_caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		SetWindowText(Window, default_caption);
+	}
+}

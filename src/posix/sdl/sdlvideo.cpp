@@ -556,11 +556,12 @@ ADD_STAT (blit)
 void I_SetWindowTitle(const char* caption)
 {
 	if (caption)
-		SDL_SetWindowTitle(Screen, caption);
+		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), caption);
 	else
 	{
 		FString default_caption;
 		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
-		SDL_SetWindowTitle(Screen, default_caption);
+		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), default_caption);
 	}
 }
+

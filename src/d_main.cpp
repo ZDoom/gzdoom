@@ -2781,6 +2781,10 @@ void D_DoomMain (void)
 		FS_Close();						// destroy the global FraggleScript.
 		DeinitMenus();
 
+		// delete DoomStartupInfo data
+		DoomStartupInfo.Name = (const char*)0;
+		DoomStartupInfo.BkColor = DoomStartupInfo.FgColor = DoomStartupInfo.Type = 0;
+
 		GC::FullGC();					// clean up before taking down the object list.
 
 		// Delete the reference to the VM functions here which were deleted and will be recreated after the restart.

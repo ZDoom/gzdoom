@@ -1264,7 +1264,8 @@ DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
-	ACTION_RETURN_INT(self->LastIndexOf(substr));
+	PARAM_INT_DEF(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
 }
 
 DEFINE_ACTION_FUNCTION(FStringStruct, ToUpper)

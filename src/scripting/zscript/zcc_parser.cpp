@@ -211,6 +211,7 @@ static void InitTokenMap()
 	TOKENDEF2(TK_Color,			ZCC_COLOR,		NAME_Color);
 	TOKENDEF2(TK_Sound,			ZCC_SOUND,		NAME_Sound);
 	TOKENDEF2(TK_Let,			ZCC_LET,		NAME_let);
+	TOKENDEF2(TK_StaticConst,	ZCC_STATICCONST,NAME_Staticconst);
 
 	TOKENDEF (TK_Identifier,	ZCC_IDENTIFIER);
 	TOKENDEF (TK_StringConst,	ZCC_STRCONST);

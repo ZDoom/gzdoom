@@ -145,6 +145,7 @@ private:
 
 	FxExpression *ConvertAST(PContainerType *cclass, ZCC_TreeNode *ast);
 	FxExpression *ConvertNode(ZCC_TreeNode *node);
+	FxExpression *ConvertImplicitScopeNode(ZCC_TreeNode *node, ZCC_Statement *nested);
 	FArgumentList &ConvertNodeList(FArgumentList &, ZCC_TreeNode *head);
 
 	DObject *Outer;

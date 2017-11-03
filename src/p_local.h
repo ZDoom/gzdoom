@@ -324,15 +324,17 @@ enum	// P_AimLineAttack flags
 enum	// P_LineAttack flags
 {
 	LAF_ISMELEEATTACK = 1,
-	LAF_NORANDOMPUFFZ = 2,
-	LAF_NOIMPACTDECAL = 4,
-	LAF_NOINTERACT =	8,
-	LAF_TARGETISSOURCE = 16,
-	LAF_OVERRIDEZ =		32,
+	LAF_NORANDOMPUFFZ = 1 << 1,
+	LAF_NOIMPACTDECAL = 1 << 2,
+	LAF_NOINTERACT =    1 << 3,
+	LAF_TARGETISSOURCE= 1 << 4,
+	LAF_OVERRIDEZ =     1 << 5,
+	LAF_ABSOFFSET =     1 << 6,
+	LAF_ABSPOSITION =   1 << 7,
 };
 
-AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL, double sz = 0.0);
-AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, FName pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL, double sz = 0.0);
+AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL, double sz = 0.0, double offsetforward = 0.0, double offsetside = 0.0);
+AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, FName pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL, double sz = 0.0, double offsetforward = 0.0, double offsetside = 0.0);
 
 void	P_TraceBleed(int damage, const DVector3 &pos, AActor *target, DAngle angle, DAngle pitch);
 void	P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch);

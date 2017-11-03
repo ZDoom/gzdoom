@@ -132,10 +132,10 @@ public:
 		Count = 0;
 		Array = NULL;
 	}
-	TArray (int max)
+	TArray (int max, bool reserve = false)
 	{
 		Most = max;
-		Count = 0;
+		Count = reserve? max : 0;
 		Array = (T *)M_Malloc (sizeof(T)*max);
 	}
 	TArray (const TArray<T,TT> &other)

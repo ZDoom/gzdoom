@@ -200,13 +200,13 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
  */
 #ifdef _WIN32
 	/* MSVC flags */
-	oflag =  _O_BINARY|_O_CREAT|_O_EXCL|_O_RDWR;
+	oflag =  _O_BINARY|_O_CREAT|_O_RDWR;
 	if (!keep)
 		oflag |= _O_TEMPORARY;
 	pmode = _S_IREAD | _S_IWRITE;
 #else 
 	/* Standard POSIX flags */
-	oflag = O_CREAT|O_EXCL|O_RDWR;
+	oflag = O_CREAT|O_RDWR;
 	pmode = S_IRUSR|S_IWUSR;
 #endif
 
@@ -239,7 +239,7 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 
 #ifndef _WIN32
 		/* [Unix only] And make sure the file will be deleted once closed */
-		if (!keep) unlink(tmpname);
+		if (!keep) remove(tmpname);
 #endif
 
 	}

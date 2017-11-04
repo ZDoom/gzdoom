@@ -42,6 +42,7 @@
 #include "cmdlib.h"
 #include "templates.h"
 #include "version.h"
+#include "tmpfileplus.h"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -81,13 +82,12 @@ public:
 protected:
 	bool LaunchTimidity();
 
-	FTempFileName DiskName;
+	char* DiskName;
 #ifdef _WIN32
 	HANDLE ReadWavePipe;
 	HANDLE WriteWavePipe;
 	HANDLE ChildProcess;
 	FString CommandLine;
-	size_t LoopPos;
 	bool Validated;
 	bool ValidateTimidity();
 #else // _WIN32
@@ -166,7 +166,7 @@ CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //==========================================================================
 
 TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
-	: DiskName("zmid"),
+	: DiskName(nullptr),
 #ifdef _WIN32
 	  ReadWavePipe(INVALID_HANDLE_VALUE), WriteWavePipe(INVALID_HANDLE_VALUE),
 	  ChildProcess(INVALID_HANDLE_VALUE),
@@ -194,12 +194,6 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 		CommandLine += "\" ";
 	}
 #endif
-
-	if (DiskName == NULL)
-	{
-		Printf(PRINT_BOLD, "Could not create temp music file\n");
-		return;
-	}
 }
 
 //==========================================================================
@@ -210,6 +204,12 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 
 TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 {
+	if (nullptr != DiskName)
+	{
+		remove(DiskName);
+		free(DiskName);
+	}
+
 #if _WIN32
 	if (WriteWavePipe != INVALID_HANDLE_VALUE)
 	{
@@ -252,17 +252,12 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 		return false;
 	}
 
-	// Tell TiMidity++ whether it should loop or not
-#ifdef _WIN32
-	CommandLine.LockBuffer()[LoopPos] = looping ? 'l' : ' ';
-	CommandLine.UnlockBuffer();
-#endif
 	Looping = looping;
 
 	// Write MIDI song to temporary file
 	song->CreateSMF(midi, looping ? 0 : 1);
 
-	f = fopen(DiskName, "wb");
+	f = tmpfileplus(nullptr, "zmid", &DiskName, 1);
 	if (f == NULL)
 	{
 		Printf(PRINT_BOLD, "Could not open temp music file\n");
@@ -275,6 +270,16 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 	{
 		Printf(PRINT_BOLD, "Could not write temp music file\n");
 	}
+
+#ifdef _WIN32
+	CommandLine.AppendFormat("-o - -Ors%c%c%c -id%c %s",
+		timidity_stereo ? 'S' : 'M',
+		timidity_8bit ? '8' : '1',
+		timidity_byteswap ? 'x' : ' ',
+		looping ? 'l' : ' ',
+		DiskName);
+#endif
+
 	return false;
 }
 
@@ -342,20 +347,6 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 		}
 	}
 
-#ifdef _WIN32
-	CommandLine += "-o - -Ors";
-	CommandLine += timidity_stereo ? 'S' : 'M';
-	CommandLine += timidity_8bit ? '8' : '1';
-	if (timidity_byteswap)
-	{
-		CommandLine += 'x';
-	}
-
-	LoopPos = CommandLine.Len() + 4;
-
-	CommandLine += " -idl ";
-	CommandLine += DiskName.GetName();
-#endif
 	return 0;
 }
 
@@ -463,12 +454,12 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 
 bool TimidityPPMIDIDevice::LaunchTimidity ()
 {
-#ifdef _WIN32
-	if (CommandLine.IsEmpty())
+	if (ExeName.IsEmpty() || nullptr == DiskName)
 	{
 		return false;
 	}
 
+#ifdef _WIN32
 	DPrintf (DMSG_NOTIFY, "cmd: \x1cG%s\n", CommandLine.GetChars());
 
 	STARTUPINFO startup = { sizeof(startup), };
@@ -516,11 +507,6 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 	return false;
 #else
-	if (ExeName.IsEmpty())
-	{
-		return false;
-	}
-
 	if (WavePipe[0] != -1 && WavePipe[1] == -1 && Stream != NULL)
 	{
 		// Timidity was previously launched, so the write end of the pipe
@@ -579,7 +565,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	arglist.push_back("-");
 	arglist.push_back(outmodearg.c_str());
 	arglist.push_back(ifacearg.c_str());
-	arglist.push_back(DiskName.GetName());
+	arglist.push_back(DiskName);
 
 	DPrintf(DMSG_NOTIFY, "Timidity EXE: \x1cG%s\n", exename);
 	int i = 1;

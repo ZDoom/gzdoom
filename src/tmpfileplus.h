@@ -23,6 +23,10 @@
 
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Create a unique temporary file.
 @param dir (optional) directory to create file. If NULL use default TMP directory.
 @param prefix (optional) prefix for file name. If NULL use "tmp.".
@@ -49,5 +53,9 @@ FILE *tmpfileplus(const char *dir, const char *prefix, char **pathname, int keep
 FILE *tmpfileplus_f(const char *dir, const char *prefix, char *pathnamebuf, size_t pathsize, int keep);
 
 #define TMPFILE_KEEP 1
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* end TMPFILEPLUS_H_ */

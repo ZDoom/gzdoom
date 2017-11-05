@@ -177,7 +177,7 @@ void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callba
 		BSPNodeWalkCircle(level.HeadNode(), x, y, radiusSquared, callback);
 }
 
-void gl_SetDynModelLight(AActor *self, bool hudmodel)
+void gl_SetDynModelLight(AActor *self)
 {
 	// Legacy and deferred render paths gets the old flat model light
 	if (gl.lightmethod != LM_DIRECT)
@@ -218,7 +218,7 @@ void gl_SetDynModelLight(AActor *self, bool hudmodel)
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							gl_AddLightToList(group, light, modellightdata, hudmodel);
+							gl_AddLightToList(group, light, modellightdata);
 							addedLights.push_back(light);
 						}
 					}

@@ -18,6 +18,19 @@ matrix:
     - os: linux
       compiler: gcc
       env:
+        - GCC_VERSION=4.9
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+            - libsdl2-dev
+
+    - os: linux
+      compiler: gcc
+      env:
         - GCC_VERSION=5
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
       addons:

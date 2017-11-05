@@ -4506,12 +4506,12 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	if (flags & LAF_ABSPOSITION)
 		tempos = DVector3(offsetforward, offsetside, sz);
 	else if (flags & LAF_ABSOFFSET)
-		tempos = t1->Vec3Offset(offsetforward, offsetside, shootz);
+		tempos = t1->Vec2OffsetZ(offsetforward, offsetside, shootz);
 	else
 	{
 		double s = angle.Sin();
 		double c = angle.Cos();
-		tempos = t1->Vec3Offset(offsetforward * c + offsetside * s, offsetforward * s - offsetside * c, shootz);
+		tempos = t1->Vec2OffsetZ(offsetforward * c + offsetside * s, offsetforward * s - offsetside * c, shootz);
 	}
 
 	// Perform the trace.

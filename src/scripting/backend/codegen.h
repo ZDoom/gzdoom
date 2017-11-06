@@ -1425,7 +1425,6 @@ class FxLocalVariable : public FxExpression
 public:
 	FxLocalVariableDeclaration *Variable;
 	bool AddressRequested;
-	bool IsLocalVariable; // false for function parameter and true otherwise
 	int RegOffset;
 
 	FxLocalVariable(FxLocalVariableDeclaration*, const FScriptPosition&);
@@ -1443,9 +1442,7 @@ public:
 class FxStackVariable : public FxMemberBase
 {
 public:
-	FxLocalVariableDeclaration *Variable;
-
-	FxStackVariable(FxLocalVariableDeclaration*, const FScriptPosition&);
+	FxStackVariable(PType *type, int offset, const FScriptPosition&);
 	~FxStackVariable();
 	FxExpression *Resolve(FCompileContext&);
 	bool RequestAddress(FCompileContext &ctx, bool *writable);
@@ -2124,7 +2121,6 @@ class FxLocalVariableDeclaration : public FxExpression
 {
 	friend class FxCompoundStatement;
 	friend class FxLocalVariable;
-	friend class FxStackVariable;
 	friend class FxStaticArrayVariable;
 
 	FName Name;
@@ -2134,7 +2130,6 @@ class FxLocalVariableDeclaration : public FxExpression
 public:
 	int StackOffset = -1;
 	int RegNum = -1;
-	bool IsInitialized = false;
 
 	FxLocalVariableDeclaration(PType *type, FName name, FxExpression *initval, int varflags, const FScriptPosition &p);
 	~FxLocalVariableDeclaration();
@@ -2142,7 +2137,7 @@ public:
 	ExpEmit Emit(VMFunctionBuilder *build);
 	void Release(VMFunctionBuilder *build);
 	void SetReg(ExpEmit reginfo);
-	void WarnIfUninitialized(const FScriptPosition &varPos) const;
+
 };
 
 //==========================================================================

@@ -2692,7 +2692,6 @@ FxExpression *FxMultiAssign::Resolve(FCompileContext &ctx)
 	for (unsigned i = 0; i < Base.Size(); i++)
 	{
 		auto singlevar = new FxLocalVariableDeclaration(rets[i], NAME_None, nullptr, 0, ScriptPosition);
-		singlevar->IsInitialized = true;
 		LocalVarContainer->Add(singlevar);
 		Base[i] = Base[i]->Resolve(ctx);
 		ABORT(Base[i]);
@@ -6032,7 +6031,7 @@ FxExpression *FxIdentifier::Resolve(FCompileContext& ctx)
 		}
 		else
 		{
-			auto x = new FxStackVariable(local, ScriptPosition);
+			auto x = new FxStackVariable(local->ValueType, local->StackOffset, ScriptPosition);
 			delete this;
 			return x->Resolve(ctx);
 		}
@@ -6521,7 +6520,6 @@ FxLocalVariable::FxLocalVariable(FxLocalVariableDeclaration *var, const FScriptP
 FxExpression *FxLocalVariable::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	IsLocalVariable = ctx.FunctionArgs.Find(Variable) == ctx.FunctionArgs.Size();
 	return this;
 }
 
@@ -6555,16 +6553,7 @@ ExpEmit FxLocalVariable::Emit(VMFunctionBuilder *build)
 	{
 		ExpEmit ret(Variable->RegNum + RegOffset, Variable->ValueType->GetRegType(), false, true);
 		ret.RegCount = ValueType->GetRegCount();
-		if (AddressRequested)
-		{
-			Variable->IsInitialized = true;
-			ret.Target = true;
-		}
-		else if (IsLocalVariable)
-		{
-			Variable->WarnIfUninitialized(ScriptPosition);
-		}
-
+		if (AddressRequested) ret.Target = true;
 		return ret;
 	}
 }
@@ -6906,9 +6895,8 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 //
 //==========================================================================
 
-FxStackVariable::FxStackVariable(FxLocalVariableDeclaration *var, const FScriptPosition &pos)
-	: FxMemberBase(EFX_StackVariable, Create<PField>(NAME_None, var->ValueType, 0, var->StackOffset), pos)
-	, Variable(var)
+FxStackVariable::FxStackVariable(PType *type, int offset, const FScriptPosition &pos)
+	: FxMemberBase(EFX_StackVariable, Create<PField>(NAME_None, type, 0, offset), pos)
 {
 }
 
@@ -6959,8 +6947,6 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 
 	if (AddressRequested)
 	{
-		Variable->IsInitialized = true;
-
 		if (offsetreg >= 0)
 		{
 			ExpEmit obj(build, REGT_POINTER);
@@ -6971,10 +6957,6 @@ ExpEmit FxStackVariable::Emit(VMFunctionBuilder *build)
 		{
 			return build->FramePointer;
 		}
-	}
-	else
-	{
-		Variable->WarnIfUninitialized(ScriptPosition);
 	}
 	ExpEmit loc(build, membervar->Type->GetRegType(), membervar->Type->GetRegCount());
 
@@ -11419,16 +11401,6 @@ void FxLocalVariableDeclaration::Release(VMFunctionBuilder *build)
 	}
 	// Stack space will not be released because that would make controlled destruction impossible.
 	// For that all local stack variables need to live for the entire execution of a function.
-}
-
-void FxLocalVariableDeclaration::WarnIfUninitialized(const FScriptPosition &varPos) const
-{
-	if (!IsInitialized && nullptr == Init)
-	{
-		varPos.Message(MSG_WARNING,
-			"Usage of uninitialized variable '%s' defined at line %i",
-			Name.GetChars(), ScriptPosition.ScriptLine);
-	}
 }
 
 

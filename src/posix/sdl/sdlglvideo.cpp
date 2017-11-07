@@ -38,6 +38,7 @@
 #include "templates.h"
 #include "i_system.h"
 #include "i_video.h"
+#include "m_argv.h"
 #include "v_video.h"
 #include "v_pfx.h"
 #include "stats.h"
@@ -343,7 +344,7 @@ bool SDLGLVideo::SetResolution (int width, int height, int bits)
 //
 //==========================================================================
 
-bool SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
+void SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample, const int *glver)
 {
 	SDL_GL_SetAttribute( SDL_GL_RED_SIZE,  8 );
 	SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE,  8 );
@@ -365,24 +366,18 @@ bool SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample)
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
 		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
 	}
-	
-	return true;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-bool SDLGLVideo::InitHardware (bool allowsoftware, int multisample)
-{
-	if (!SetupPixelFormat(allowsoftware, multisample))
+	else if (glver[0] > 2)
 	{
-		Printf ("R_OPENGL: Reverting to software mode...\n");
-		return false;
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, glver[0]);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, glver[1]);
 	}
-	return true;
+	else
+	{
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 2);
+		SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 0);
+	}
 }
 
 
@@ -391,32 +386,66 @@ bool SDLGLVideo::InitHardware (bool allowsoftware, int multisample)
 SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen, bool bgra)
 	: SDLBaseFB (width, height, bgra)
 {
+	// NOTE: Core profiles were added with GL 3.2, so there's no sense trying
+	// to set core 3.1 or 3.0. We could try a forward-compatible context
+	// instead, but that would be too restrictive (w.r.t. shaders).
+	static const int glvers[][2] = {
+		{ 4, 5 }, { 4, 4 }, { 4, 3 }, { 4, 2 }, { 4, 1 }, { 4, 0 },
+		{ 3, 3 }, { 3, 2 }, { 2, 0 },
+		{ 0, 0 },
+	};
+	int glveridx = 0;
 	int i;
-	
-	m_Lock=0;
 
+	m_Lock=0;
 	UpdatePending = false;
-	
-	if (!static_cast<SDLGLVideo*>(Video)->InitHardware(false, 0))
+
+	const char *version = Args->CheckValue("-glversion");
+	if (version != NULL)
 	{
-		vid_renderer = 0;
-		return;
+		double gl_version = strtod(version, NULL) + 0.01;
+		int vermaj = (int)gl_version;
+		int vermin = (int)(gl_version*10.0) % 10;
+
+		while (glvers[glveridx][0] > vermaj || (glvers[glveridx][0] == vermaj &&
+		        glvers[glveridx][1] > vermin))
+		{
+			glveridx++;
+			if (glvers[glveridx][0] == 0)
+			{
+				glveridx = 0;
+				break;
+			}
+		}
 	}
 
 	FString caption;
 	caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
-	Screen = SDL_CreateWindow (caption,
-		SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter), SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-		width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_OPENGL);
 
-	if (Screen == NULL)
-		return;
+	for ( ; glvers[glveridx][0] > 0; ++glveridx)
+	{
+		static_cast<SDLGLVideo*>(Video)->SetupPixelFormat(false, 0, glvers[glveridx]);
 
-	GLContext = SDL_GL_CreateContext(Screen);
-	if (GLContext == NULL)
-		return;
+		Screen = SDL_CreateWindow (caption,
+			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
+			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
+			width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_OPENGL
+		);
+		if (Screen != NULL)
+		{
+			GLContext = SDL_GL_CreateContext(Screen);
+			if (GLContext != NULL)
+			{
+				m_supportsGamma = -1 != SDL_GetWindowGammaRamp(Screen,
+					 m_origGamma[0], m_origGamma[1], m_origGamma[2]
+				);
+				return;
+			}
 
-	m_supportsGamma = -1 != SDL_GetWindowGammaRamp(Screen, m_origGamma[0], m_origGamma[1], m_origGamma[2]);
+			SDL_DestroyWindow(Screen);
+			Screen = NULL;
+		}
+	}
 }
 
 SDLGLFB::~SDLGLFB ()

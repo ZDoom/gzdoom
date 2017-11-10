@@ -198,7 +198,7 @@ static uint32_t performanceGetTime()
 
 static unsigned int FirstFrameStartTime;
 static unsigned int CurrentFrameStartTime;
-static bool TimeFrozen;
+static unsigned int FreezeTime;
 
 void I_SetFrameTime()
 {
@@ -207,7 +207,7 @@ void I_SetFrameTime()
 	// performanceGetTime() must only ever be called once or otherwise the playsim
 	// processing time will affect the interpolation done by the renderer.
 
-	if (!TimeFrozen)
+	if (FreezeTime == 0)
 	{
 		CurrentFrameStartTime = performanceGetTime();
 		if (FirstFrameStartTime == 0)
@@ -247,7 +247,7 @@ static int I_WaitForTicWin32(int prevtic)
 
 unsigned int I_FPSTime()
 {
-	if (!TimeFrozen)
+	if (FreezeTime == 0)
 		return CurrentFrameStartTime;
 	else
 		return performanceGetTime();
@@ -255,7 +255,7 @@ unsigned int I_FPSTime()
 
 unsigned int I_MSTime()
 {
-	if (!TimeFrozen)
+	if (FreezeTime == 0)
 	{
 		return CurrentFrameStartTime - FirstFrameStartTime;
 	}
@@ -292,13 +292,16 @@ double I_GetTimeFrac(uint32_t *ms)
 
 void I_FreezeTimeWin32(bool frozen)
 {
-	if (TimeFrozen && !frozen)
+	if (frozen)
 	{
-		unsigned int timeFrozen = performanceGetTime() - CurrentFrameStartTime;
-		FirstFrameStartTime += timeFrozen;
+		FreezeTime = performanceGetTime();
 	}
-
-	TimeFrozen = frozen;
+	else
+	{
+		FirstFrameStartTime += performanceGetTime() - FreezeTime;
+		FreezeTime = 0;
+		I_SetFrameTime();
+	}
 }
 
 int(*I_GetTime)(bool saveMS) = I_GetTimeWin32;

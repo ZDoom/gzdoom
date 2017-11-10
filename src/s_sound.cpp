@@ -1761,6 +1761,12 @@ void S_RelinkSound (AActor *from, AActor *to)
 
 bool S_ChangeSoundVolume(AActor *actor, int channel, float volume)
 {
+	// don't let volume get out of bounds
+	if (volume < 0.0)
+		volume = 0.0;
+	else if (volume > 1.0)
+		volume = 1.0;
+
 	for (FSoundChan *chan = Channels; chan != NULL; chan = chan->NextChan)
 	{
 		if (chan->SourceType == SOURCE_Actor &&

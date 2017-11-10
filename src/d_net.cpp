@@ -1947,8 +1947,6 @@ void TryRunTics (void)
 			if (debugfile) fprintf (debugfile, "run tic %d\n", gametic);
 			C_Ticker ();
 			M_Ticker ();
-			I_GetTime (true);
-			I_SetFrameTime();
 			G_Ticker();
 			gametic++;
 

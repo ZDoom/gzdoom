@@ -22,3 +22,7 @@ void I_FreezeTime(bool frozen);
 // [RH] Returns millisecond-accurate time
 unsigned int I_MSTime();
 unsigned int I_FPSTime();
+
+// Nanosecond-accurate time
+uint64_t I_NSTime();
+uint64_t I_FPSTimeNS();

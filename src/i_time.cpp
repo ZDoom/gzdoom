@@ -45,14 +45,34 @@
 //
 //==========================================================================
 
-static unsigned int FirstFrameStartTime;
-static unsigned int CurrentFrameStartTime;
-static unsigned int FreezeTime;
+static uint64_t FirstFrameStartTime;
+static uint64_t CurrentFrameStartTime;
+static uint64_t FreezeTime;
 
-static uint32_t performanceGetTime()
+static uint64_t GetClockTimeNS()
 {
 	using namespace std::chrono;
-	return (uint32_t)duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+	return (uint64_t)duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+static uint64_t MSToNS(unsigned int ms)
+{
+	return static_cast<uint64_t>(ms) * 1'000'000;
+}
+
+static uint32_t NSToMS(uint64_t ns)
+{
+	return static_cast<uint32_t>(ns / 1'000'000);
+}
+
+static int NSToTic(uint64_t ns)
+{
+	return static_cast<int>(ns * TICRATE / 1'000'000'000);
+}
+
+static uint64_t TicToNS(int tic)
+{
+	return static_cast<uint64_t>(tic) * 1'000'000'000 / TICRATE;
 }
 
 void I_SetFrameTime()
@@ -65,7 +85,7 @@ void I_SetFrameTime()
 
 	if (FreezeTime == 0)
 	{
-		CurrentFrameStartTime = performanceGetTime();
+		CurrentFrameStartTime = GetClockTimeNS();
 		if (FirstFrameStartTime == 0)
 			FirstFrameStartTime = CurrentFrameStartTime;
 	}
@@ -100,15 +120,7 @@ int I_WaitForTic(int prevtic)
 	return time;
 }
 
-unsigned int I_FPSTime()
-{
-	if (FreezeTime == 0)
-		return CurrentFrameStartTime;
-	else
-		return performanceGetTime();
-}
-
-unsigned int I_MSTime()
+uint64_t I_NSTime()
 {
 	if (FreezeTime == 0)
 	{
@@ -118,26 +130,44 @@ unsigned int I_MSTime()
 	{
 		if (FirstFrameStartTime == 0)
 		{
-			FirstFrameStartTime = performanceGetTime();
+			FirstFrameStartTime = GetClockTimeNS();
 			return 0;
 		}
 		else
 		{
-			return performanceGetTime() - FirstFrameStartTime;
+			return GetClockTimeNS() - FirstFrameStartTime;
 		}
 	}
 }
 
+uint64_t I_FPSTimeNS()
+{
+	if (FreezeTime == 0)
+		return NSToMS(CurrentFrameStartTime);
+	else
+		return NSToMS(GetClockTimeNS());
+}
+
+unsigned int I_MSTime()
+{
+	return NSToMS(I_NSTime());
+}
+
+unsigned int I_FPSTime()
+{
+	return NSToMS(I_FPSTimeNS());
+}
+
 int I_GetTime()
 {
-	return (CurrentFrameStartTime - FirstFrameStartTime) * TICRATE / 1000 + 1;
+	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime) + 1;
 }
 
 double I_GetTimeFrac(uint32_t *ms)
 {
-	unsigned int currentTic = (CurrentFrameStartTime - FirstFrameStartTime) * TICRATE / 1000;
-	unsigned int ticStartTime = FirstFrameStartTime + currentTic * 1000 / TICRATE;
-	unsigned int ticNextTime = FirstFrameStartTime + (currentTic + 1) * 1000 / TICRATE;
+	int currentTic = NSToTic(CurrentFrameStartTime - FirstFrameStartTime);
+	uint64_t ticStartTime = FirstFrameStartTime + TicToNS(currentTic);
+	uint64_t ticNextTime = FirstFrameStartTime + TicToNS(currentTic + 1);
 
 	if (ms)
 		*ms = currentTic + 1;
@@ -149,11 +179,11 @@ void I_FreezeTime(bool frozen)
 {
 	if (frozen)
 	{
-		FreezeTime = performanceGetTime();
+		FreezeTime = GetClockTimeNS();
 	}
 	else
 	{
-		FirstFrameStartTime += performanceGetTime() - FreezeTime;
+		FirstFrameStartTime += GetClockTimeNS() - FreezeTime;
 		FreezeTime = 0;
 		I_SetFrameTime();
 	}

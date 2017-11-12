@@ -615,7 +615,7 @@ void DObject::CheckIfSerialized () const
 
 DEFINE_ACTION_FUNCTION(DObject, MSTime)
 {
-	ACTION_RETURN_INT(I_MSTime());
+	ACTION_RETURN_INT(I_FPSTime());
 }
 
 void *DObject::ScriptVar(FName field, PType *type)

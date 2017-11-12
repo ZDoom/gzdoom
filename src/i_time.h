@@ -14,15 +14,13 @@ double I_GetTimeFrac(uint32_t *ms);
 int I_WaitForTic(int);
 
 // Freezes tic counting temporarily. While frozen, calls to I_GetTime()
-// will always return the same value. This does not affect I_MSTime().
+// will always return the same value.
 // You must also not call I_WaitForTic() while freezing time, since the
 // tic will never arrive (unless it's the current one).
 void I_FreezeTime(bool frozen);
 
 // [RH] Returns millisecond-accurate time
-unsigned int I_MSTime();
 unsigned int I_FPSTime();
 
 // Nanosecond-accurate time
-uint64_t I_NSTime();
 uint64_t I_FPSTimeNS();

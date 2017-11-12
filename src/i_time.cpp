@@ -80,7 +80,7 @@ void I_SetFrameTime()
 	// Must only be called once per frame/swapbuffers.
 	//
 	// Caches all timing information for the current rendered frame so that any
-	// calls to I_FPSTime, I_MSTime, I_GetTime or I_GetTimeFrac will return
+	// calls to I_GetTime or I_GetTimeFrac will return
 	// the same time.
 
 	if (FreezeTime == 0)
@@ -120,34 +120,9 @@ int I_WaitForTic(int prevtic)
 	return time;
 }
 
-uint64_t I_NSTime()
-{
-	if (FreezeTime == 0)
-	{
-		return CurrentFrameStartTime - FirstFrameStartTime;
-	}
-	else
-	{
-		if (FirstFrameStartTime == 0)
-		{
-			FirstFrameStartTime = GetClockTimeNS();
-			return 0;
-		}
-		else
-		{
-			return GetClockTimeNS() - FirstFrameStartTime;
-		}
-	}
-}
-
 uint64_t I_FPSTimeNS()
 {
 	return GetClockTimeNS();
-}
-
-unsigned int I_MSTime()
-{
-	return NSToMS(I_NSTime());
 }
 
 unsigned int I_FPSTime()

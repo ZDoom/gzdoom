@@ -55,7 +55,7 @@
 
 static inline float GetTimeFloat()
 {
-	return (float)I_MSTime() * (float)TICRATE / 1000.0f;
+	return (float)gl_frameMS * (float)TICRATE / 1000.0f;
 }
 
 CVAR(Bool, gl_interpolate_model_frames, true, CVAR_ARCHIVE)

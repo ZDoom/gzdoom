@@ -684,6 +684,7 @@ struct StringStruct native
 	native String Left(int len) const;
 	native String Mid(int pos = 0, int len = 2147483647) const;
 	native void Truncate(int newlen);
+	native void Remove(int index, int remlen);
 	native String CharAt(int pos) const;
 	native int CharCodeAt(int pos) const;
 	native String Filter();

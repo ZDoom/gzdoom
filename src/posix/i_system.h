@@ -140,10 +140,6 @@ TArray<FString> I_GetGogPaths();
 // The ini could not be saved at exit
 bool I_WriteIniFailed ();
 
-// [RH] Returns millisecond-accurate time
-unsigned int I_MSTime (void);
-unsigned int I_FPSTime();
-
 class FTexture;
 bool I_SetCursor(FTexture *);
 

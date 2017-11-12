@@ -45,6 +45,7 @@
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "d_main.h"
 
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/system/gl_interface.h"

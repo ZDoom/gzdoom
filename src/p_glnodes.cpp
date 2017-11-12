@@ -68,6 +68,7 @@
 #include "r_utility.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "d_main.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 

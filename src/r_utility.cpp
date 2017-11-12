@@ -66,6 +66,7 @@
 #include "sbar.h"
 #include "math/cmath.h"
 #include "vm.h"
+#include "d_main.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
@@ -135,8 +136,6 @@ FRenderViewpoint::FRenderViewpoint()
 
 FRenderViewpoint r_viewpoint;
 FViewWindow		r_viewwindow;
-
-int				otic;
 
 bool			r_NoInterpolate;
 
@@ -784,7 +783,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 	iview = FindPastViewer (viewpoint.camera);
 
-	int nowtic = I_GetTime (false);
+	int nowtic = I_GetTime ();
 	if (iview->otic != -1 && nowtic > iview->otic)
 	{
 		iview->otic = nowtic;

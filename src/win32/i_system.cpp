@@ -122,10 +122,6 @@ static void CalculateCPUSpeed();
 static int I_GetTimePolled(bool saveMS);
 static int I_WaitForTicPolled(int prevtic);
 static void I_FreezeTimePolled(bool frozen);
-static int I_GetTimeEventDriven(bool saveMS);
-static int I_WaitForTicEvent(int prevtic);
-static void I_FreezeTimeEventDriven(bool frozen);
-static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2);
 
 static HCURSOR CreateCompatibleCursor(FTexture *cursorpic);
 static HCURSOR CreateAlphaCursor(FTexture *cursorpic);
@@ -173,140 +169,6 @@ static int NumWads;
 static int DefaultWad;
 
 static HCURSOR CustomCursor;
-
-//==========================================================================
-//
-// Tick time functions
-//
-//==========================================================================
-
-static LARGE_INTEGER frequency;
-
-static uint32_t performanceGetTime()
-{
-	if (frequency.QuadPart != 0)
-	{
-		LARGE_INTEGER current;
-		QueryPerformanceCounter(&current);
-		return current.QuadPart * 1000 / frequency.QuadPart;
-	}
-	else
-	{
-		return timeGetTime();
-	}
-}
-
-static unsigned int FirstFrameStartTime;
-static unsigned int CurrentFrameStartTime;
-static unsigned int FreezeTime;
-
-void I_SetFrameTime()
-{
-	// It is critical that all timing is calculated only once at a start of a frame.
-	//
-	// performanceGetTime() must only ever be called once or otherwise the playsim
-	// processing time will affect the interpolation done by the renderer.
-
-	if (FreezeTime == 0)
-	{
-		CurrentFrameStartTime = performanceGetTime();
-		if (FirstFrameStartTime == 0)
-			FirstFrameStartTime = CurrentFrameStartTime;
-	}
-}
-
-void I_WaitVBL(int count)
-{
-	// I_WaitVBL is never used to actually synchronize to the vertical blank.
-	// Instead, it's used for delay purposes. Doom used a 70 Hz display mode,
-	// so that's what we use to determine how long to wait for.
-
-	Sleep(1000 * count / 70);
-	I_SetFrameTime();
-}
-
-static int I_WaitForTicWin32(int prevtic)
-{
-	// Waits until the current tic is greater than prevtic. Time must not be frozen.
-
-	int time;
-	assert(TicFrozen == 0);
-	while ((time = I_GetTime(false)) <= prevtic)
-	{
-		// The minimum amount of time a thread can sleep is controlled by timeBeginPeriod.
-		// We set this to 1 ms in DoMain.
-		int sleepTime = prevtic - time;
-		if (sleepTime > 2)
-			Sleep(sleepTime - 2);
-
-		I_SetFrameTime();
-	}
-
-	return time;
-}
-
-unsigned int I_FPSTime()
-{
-	if (FreezeTime == 0)
-		return CurrentFrameStartTime;
-	else
-		return performanceGetTime();
-}
-
-unsigned int I_MSTime()
-{
-	if (FreezeTime == 0)
-	{
-		return CurrentFrameStartTime - FirstFrameStartTime;
-	}
-	else
-	{
-		if (FirstFrameStartTime == 0)
-		{
-			FirstFrameStartTime = performanceGetTime();
-			return 0;
-		}
-		else
-		{
-			return performanceGetTime() - FirstFrameStartTime;
-		}
-	}
-}
-
-int I_GetTimeWin32(bool saveMS)
-{
-	return (CurrentFrameStartTime - FirstFrameStartTime) * TICRATE / 1000 + 1;
-}
-
-double I_GetTimeFrac(uint32_t *ms)
-{
-	unsigned int currentTic = (CurrentFrameStartTime - FirstFrameStartTime) * TICRATE / 1000;
-	unsigned int ticStartTime = FirstFrameStartTime + currentTic * 1000 / TICRATE;
-	unsigned int ticNextTime = FirstFrameStartTime + (currentTic + 1) * 1000 / TICRATE;
-
-	if (ms)
-		*ms = currentTic + 1;
-
-	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
-}
-
-void I_FreezeTimeWin32(bool frozen)
-{
-	if (frozen)
-	{
-		FreezeTime = performanceGetTime();
-	}
-	else
-	{
-		FirstFrameStartTime += performanceGetTime() - FreezeTime;
-		FreezeTime = 0;
-		I_SetFrameTime();
-	}
-}
-
-int(*I_GetTime)(bool saveMS) = I_GetTimeWin32;
-int(*I_WaitForTic)(int) = I_WaitForTicWin32;
-void(*I_FreezeTime)(bool frozen) = I_FreezeTimeWin32;
 
 //==========================================================================
 //
@@ -542,8 +404,6 @@ void I_Init()
 	CheckCPUID(&CPU);
 	CalculateCPUSpeed();
 	DumpCPUInfo(&CPU);
-
-	QueryPerformanceFrequency(&frequency);
 
 	atterm (I_ShutdownSound);
 	I_InitSound ();

@@ -117,6 +117,8 @@
 #include "vm.h"
 #include "types.h"
 #include "r_data/r_vanillatrans.h"
+#include <chrono>
+#include <thread>
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -280,7 +282,7 @@ void D_ProcessEvents (void)
 		{
 			M_SetDefaultMode ();
 		}
-		else if (testingmode <= I_GetTime(false))
+		else if (testingmode <= I_GetTime())
 		{
 			M_RestoreMode ();
 		}
@@ -1077,6 +1079,127 @@ void D_DoomLoop ()
 			Printf("%s", error.stacktrace.GetChars());
 			D_ErrorCleanup();
 		}
+	}
+}
+
+//==========================================================================
+//
+// Tick time functions
+//
+//==========================================================================
+
+static unsigned int FirstFrameStartTime;
+static unsigned int CurrentFrameStartTime;
+static unsigned int FreezeTime;
+
+static uint32_t performanceGetTime()
+{
+	using namespace std::chrono;
+	return (uint32_t)duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+}
+
+void I_SetFrameTime()
+{
+	// Must only be called once per frame/swapbuffers.
+	//
+	// Caches all timing information for the current rendered frame so that any
+	// calls to I_FPSTime, I_MSTime, I_GetTime or I_GetTimeFrac will return
+	// the same time.
+
+	if (FreezeTime == 0)
+	{
+		CurrentFrameStartTime = performanceGetTime();
+		if (FirstFrameStartTime == 0)
+			FirstFrameStartTime = CurrentFrameStartTime;
+	}
+}
+
+void I_WaitVBL(int count)
+{
+	// I_WaitVBL is never used to actually synchronize to the vertical blank.
+	// Instead, it's used for delay purposes. Doom used a 70 Hz display mode,
+	// so that's what we use to determine how long to wait for.
+
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000 * count / 70));
+	I_SetFrameTime();
+}
+
+int I_WaitForTic(int prevtic)
+{
+	// Waits until the current tic is greater than prevtic. Time must not be frozen.
+
+	int time;
+	assert(TicFrozen == 0);
+	while ((time = I_GetTime()) <= prevtic)
+	{
+		// The minimum amount of time a thread can sleep is controlled by timeBeginPeriod.
+		// We set this to 1 ms in DoMain.
+		int sleepTime = prevtic - time;
+		if (sleepTime > 2)
+			std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime - 2));
+
+		I_SetFrameTime();
+	}
+
+	return time;
+}
+
+unsigned int I_FPSTime()
+{
+	if (FreezeTime == 0)
+		return CurrentFrameStartTime;
+	else
+		return performanceGetTime();
+}
+
+unsigned int I_MSTime()
+{
+	if (FreezeTime == 0)
+	{
+		return CurrentFrameStartTime - FirstFrameStartTime;
+	}
+	else
+	{
+		if (FirstFrameStartTime == 0)
+		{
+			FirstFrameStartTime = performanceGetTime();
+			return 0;
+		}
+		else
+		{
+			return performanceGetTime() - FirstFrameStartTime;
+		}
+	}
+}
+
+int I_GetTime()
+{
+	return (CurrentFrameStartTime - FirstFrameStartTime) * TICRATE / 1000 + 1;
+}
+
+double I_GetTimeFrac(uint32_t *ms)
+{
+	unsigned int currentTic = (CurrentFrameStartTime - FirstFrameStartTime) * TICRATE / 1000;
+	unsigned int ticStartTime = FirstFrameStartTime + currentTic * 1000 / TICRATE;
+	unsigned int ticNextTime = FirstFrameStartTime + (currentTic + 1) * 1000 / TICRATE;
+
+	if (ms)
+		*ms = currentTic + 1;
+
+	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
+}
+
+void I_FreezeTime(bool frozen)
+{
+	if (frozen)
+	{
+		FreezeTime = performanceGetTime();
+	}
+	else
+	{
+		FirstFrameStartTime += performanceGetTime() - FreezeTime;
+		FreezeTime = 0;
+		I_SetFrameTime();
 	}
 }
 

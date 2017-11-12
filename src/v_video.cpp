@@ -84,6 +84,7 @@
 #include "r_data/voxels.h"
 #include "vm.h"
 #include "r_videoscale.h"
+#include "d_main.h"
 
 EXTERN_CVAR(Bool, r_blendmethod)
 
@@ -902,7 +903,7 @@ void DFrameBuffer::DrawRateStuff ()
 	// draws little dots on the bottom of the screen
 	if (ticker)
 	{
-		int i = I_GetTime(false);
+		int i = I_GetTime();
 		int tics = i - LastTic;
 		uint8_t *buffer = GetBuffer();
 

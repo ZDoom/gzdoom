@@ -51,6 +51,7 @@
 #include "vm.h"
 #include "g_levellocals.h"
 #include "types.h"
+#include "d_main.h"
 
 //==========================================================================
 //

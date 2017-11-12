@@ -47,6 +47,7 @@
 #include "templates.h"
 #include "dobject.h"
 #include "vm.h"
+#include "d_main.h"
 
 #include <math.h>
 #include <stdlib.h>

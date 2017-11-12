@@ -40,6 +40,7 @@
 #include "r_data/voxels.h"
 #include "r_data/sprites.h"
 #include "d_net.h"
+#include "d_main.h"
 #include "po_man.h"
 #include "r_utility.h"
 #include "swrenderer/drawers/r_draw.h"

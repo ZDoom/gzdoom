@@ -142,10 +142,7 @@ uint64_t I_NSTime()
 
 uint64_t I_FPSTimeNS()
 {
-	if (FreezeTime == 0)
-		return CurrentFrameStartTime;
-	else
-		return GetClockTimeNS();
+	return GetClockTimeNS();
 }
 
 unsigned int I_MSTime()

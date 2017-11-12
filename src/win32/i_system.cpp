@@ -119,10 +119,6 @@ extern void LayoutMainWindow(HWND hWnd, HWND pane);
 
 static void CalculateCPUSpeed();
 
-static int I_GetTimePolled(bool saveMS);
-static int I_WaitForTicPolled(int prevtic);
-static void I_FreezeTimePolled(bool frozen);
-
 static HCURSOR CreateCompatibleCursor(FTexture *cursorpic);
 static HCURSOR CreateAlphaCursor(FTexture *cursorpic);
 static HCURSOR CreateBitmapCursor(int xhot, int yhot, HBITMAP and_mask, HBITMAP color_mask);

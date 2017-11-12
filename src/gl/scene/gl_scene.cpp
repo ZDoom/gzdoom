@@ -878,7 +878,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::RenderView (player_t* player)
+void FGLRenderer::RenderView (player_t* player, unsigned int nowtime)
 {
 	checkBenchActive();
 
@@ -891,7 +891,7 @@ void FGLRenderer::RenderView (player_t* player)
 	// Get this before everything else
 	if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
 	else r_viewpoint.TicFrac = I_GetTimeFrac (&r_viewpoint.FrameTime);
-	gl_frameMS = I_MSTime();
+	gl_frameMS = nowtime;
 
 	P_FindParticleSubsectors ();
 
@@ -984,7 +984,7 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 struct FGLInterface : public FRenderer
 {
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
-	void RenderView(player_t *player) override;
+	void RenderView(player_t *player, unsigned int nowtime) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
 	void StartSerialize(FSerializer &arc) override;
 	void EndSerialize(FSerializer &arc) override;
@@ -1075,9 +1075,9 @@ void FGLInterface::WriteSavePic (player_t *player, FileWriter *file, int width, 
 //
 //===========================================================================
 
-void FGLInterface::RenderView(player_t *player)
+void FGLInterface::RenderView(player_t *player, unsigned int nowtime)
 {
-	GLRenderer->RenderView(player);
+	GLRenderer->RenderView(player, nowtime);
 }
 
 //===========================================================================

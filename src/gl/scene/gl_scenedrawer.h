@@ -60,7 +60,7 @@ public:
 	void CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector);
 
 	sector_t *RenderViewpoint(AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
-	void RenderView(player_t *player);
+	void RenderView(player_t *player, unsigned int nowtime);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 
 	void DrawPSprite(player_t * player, DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);

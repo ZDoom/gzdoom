@@ -29,7 +29,7 @@ struct FRenderer
 	virtual void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
 
 	// render 3D view
-	virtual void RenderView(player_t *player) = 0;
+	virtual void RenderView(player_t *player, unsigned int nowtime) = 0;
 
 	// Remap voxel palette
 	virtual void RemapVoxels() {}

@@ -808,7 +808,7 @@ void D_Display ()
 			// [ZZ] execute event hook that we just started the frame
 			//E_RenderFrame();
 			//
-			Renderer->RenderView(&players[consoleplayer]);
+			Renderer->RenderView(&players[consoleplayer], nowtime);
 
 			if ((hw2d = screen->Begin2D(viewactive)))
 			{

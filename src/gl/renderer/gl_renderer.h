@@ -171,7 +171,7 @@ public:
 	unsigned char *GetTextureBuffer(FTexture *tex, int &w, int &h);
 	void SetupLevel();
 
-	void RenderView(player_t* player);
+	void RenderView(player_t* player, unsigned int nowtime);
 
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm);

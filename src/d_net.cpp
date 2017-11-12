@@ -68,7 +68,7 @@
 #include "intermission/intermission.h"
 #include "g_levellocals.h"
 #include "events.h"
-#include "d_main.h"
+#include "i_time.h"
 
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
@@ -532,7 +532,7 @@ void HSendPacket (int node, int len)
 	{
 		PacketStore store;
 		store.message = doomcom;
-		store.timer = I_GetTime(false) + ((net_fakelatency / 2) / (1000 / TICRATE));
+		store.timer = I_GetTime() + ((net_fakelatency / 2) / (1000 / TICRATE));
 		OutBuffer.Push(store);
 	}
 	else
@@ -540,7 +540,7 @@ void HSendPacket (int node, int len)
 
 	for (unsigned int i = 0; i < OutBuffer.Size(); i++)
 	{
-		if (OutBuffer[i].timer <= I_GetTime(false))
+		if (OutBuffer[i].timer <= I_GetTime())
 		{
 			doomcom = OutBuffer[i].message;
 			I_NetCmd();
@@ -581,7 +581,7 @@ bool HGetPacket (void)
 	{
 		PacketStore store;
 		store.message = doomcom;
-		store.timer = I_GetTime(false) + ((net_fakelatency / 2) / (1000 / TICRATE));
+		store.timer = I_GetTime() + ((net_fakelatency / 2) / (1000 / TICRATE));
 		InBuffer.Push(store);
 		doomcom.remotenode = -1;
 	}
@@ -591,7 +591,7 @@ bool HGetPacket (void)
 		bool gotmessage = false;
 		for (unsigned int i = 0; i < InBuffer.Size(); i++)
 		{
-			if (InBuffer[i].timer <= I_GetTime(false))
+			if (InBuffer[i].timer <= I_GetTime())
 			{
 				doomcom = InBuffer[i].message;
 				InBuffer.Delete(i);

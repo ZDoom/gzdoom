@@ -47,7 +47,7 @@
 #include "templates.h"
 #include "dobject.h"
 #include "vm.h"
-#include "d_main.h"
+#include "i_time.h"
 
 #include <math.h>
 #include <stdlib.h>

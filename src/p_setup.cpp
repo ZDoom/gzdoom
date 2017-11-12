@@ -115,7 +115,7 @@
 #endif
 #include "events.h"
 #include "types.h"
-#include "d_main.h"
+#include "i_time.h"
 
 #include "fragglescript/t_fs.h"
 

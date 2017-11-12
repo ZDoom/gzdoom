@@ -69,7 +69,7 @@
 #include "c_consolebuffer.h"
 #include "g_levellocals.h"
 #include "vm.h"
-#include "d_main.h"
+#include "i_time.h"
 
 FString FStringFormat(VM_ARGS); // extern from thingdef_data.cpp
 

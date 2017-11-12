@@ -39,7 +39,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "r_utility.h"
-#include "d_main.h"
+#include "i_time.h"
 //#include "resources/voxels.h"
 //#include "gl/gl_intern.h"
 

@@ -84,7 +84,7 @@
 #include "r_data/voxels.h"
 #include "vm.h"
 #include "r_videoscale.h"
-#include "d_main.h"
+#include "i_time.h"
 
 EXTERN_CVAR(Bool, r_blendmethod)
 

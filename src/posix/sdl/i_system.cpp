@@ -86,10 +86,6 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 double PerfToSec, PerfToMillisec;
 uint32_t LanguageIDs[4];
 	
-int (*I_GetTime) (bool saveMS);
-int (*I_WaitForTic) (int);
-void (*I_FreezeTime) (bool frozen);
-
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
 }

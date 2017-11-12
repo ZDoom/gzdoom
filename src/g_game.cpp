@@ -32,6 +32,7 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
+#include "i_time.h"
 #include "templates.h"
 #include "version.h"
 #include "doomdef.h" 

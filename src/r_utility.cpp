@@ -66,7 +66,7 @@
 #include "sbar.h"
 #include "math/cmath.h"
 #include "vm.h"
-#include "d_main.h"
+#include "i_time.h"
 
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------

@@ -877,6 +877,7 @@ set (PCH_SOURCES
 	hu_scores.cpp
 	i_module.cpp
 	i_net.cpp
+	i_time.cpp
 	info.cpp
 	keysections.cpp
 	lumpconfigfile.cpp

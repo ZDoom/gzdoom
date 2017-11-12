@@ -55,7 +55,7 @@
 #include "hardware.h"
 #include "vm.h"
 #include "r_videoscale.h"
-#include "d_main.h"
+#include "i_time.h"
 
 /*=======================================
  *

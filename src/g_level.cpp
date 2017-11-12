@@ -94,7 +94,7 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "vm.h"
-#include "d_main.h"
+#include "i_time.h"
 
 #include <string.h>
 

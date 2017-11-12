@@ -26,6 +26,7 @@
 */
 
 #include "gl/system/gl_system.h"
+#include "i_time.h"
 #include "gi.h"
 #include "m_png.h"
 #include "m_random.h"
@@ -45,7 +46,6 @@
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"
-#include "d_main.h"
 
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/system/gl_interface.h"

@@ -111,7 +111,7 @@ void R_ClearInterpolationPath();
 void R_AddInterpolationPoint(const DVector3a &vec);
 void R_SetViewSize (int blocks);
 void R_SetFOV (FRenderViewpoint &viewpoint, DAngle fov);
-void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor * camera, unsigned int renderTime);
+void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor * camera);
 void R_SetViewAngle (FRenderViewpoint &viewpoint, const FViewWindow &viewwindow);
 
 // Called by startup code.

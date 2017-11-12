@@ -779,9 +779,9 @@ void D_Display ()
 
 
 	{
-		unsigned int nowtime = I_FPSTime();
-		TexMan.UpdateAnimations(nowtime);
-		R_UpdateSky(nowtime);
+		screen->FrameTime = I_FPSTime();
+		TexMan.UpdateAnimations(screen->FrameTime);
+		R_UpdateSky(screen->FrameTime);
 		switch (gamestate)
 		{
 		case GS_FULLCONSOLE:
@@ -808,7 +808,7 @@ void D_Display ()
 			// [ZZ] execute event hook that we just started the frame
 			//E_RenderFrame();
 			//
-			Renderer->RenderView(&players[consoleplayer], nowtime);
+			Renderer->RenderView(&players[consoleplayer]);
 
 			if ((hw2d = screen->Begin2D(viewactive)))
 			{

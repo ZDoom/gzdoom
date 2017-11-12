@@ -744,8 +744,8 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	dclick = false;
 
 	// This used level.time which didn't work outside a level.
-	nowtime = I_MSTime();
-	if (doublebinds != NULL && DClickTime[ev->data1] > nowtime && ev->type == EV_KeyDown)
+	nowtime = I_FPSTime();
+	if (doublebinds != NULL && int(DClickTime[ev->data1] - nowtime) > 0 && ev->type == EV_KeyDown)
 	{
 		// Key pressed for a double click
 		binding = doublebinds->GetBinding(ev->data1);

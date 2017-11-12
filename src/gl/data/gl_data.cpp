@@ -55,7 +55,6 @@
 #include "gl/gl_functions.h"
 
 GLRenderSettings glset;
-long gl_frameMS;
 
 EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool, gl_brightfog)

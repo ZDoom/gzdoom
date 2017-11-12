@@ -200,7 +200,7 @@ struct TimedUpdater
 {
 	explicit TimedUpdater(const Function& function)
 	{
-		const unsigned int currentTime = I_MSTime();
+		const unsigned int currentTime = I_FPSTime();
 
 		if (currentTime - m_previousTime > interval)
 		{

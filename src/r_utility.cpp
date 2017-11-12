@@ -751,7 +751,7 @@ static double QuakePower(double factor, double intensity, double offset)
 //
 //==========================================================================
 
-void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor *actor, unsigned int renderTime)
+void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor *actor)
 {
 	if (actor == NULL)
 	{
@@ -982,7 +982,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 		if (hom == 3)
 		{
-			hom = ((renderTime / 128) & 1) + 1;
+			hom = ((screen->FrameTime / 128) & 1) + 1;
 		}
 		if (hom == 1)
 		{
@@ -994,7 +994,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		}
 		else if (hom == 4)
 		{
-			color = (renderTime / 32) & 255;
+			color = (screen->FrameTime / 32) & 255;
 		}
 		else
 		{

@@ -870,7 +870,7 @@ void DFrameBuffer::DrawRateStuff ()
 	// Draws frame time and cumulative fps
 	if (vid_fps)
 	{
-		uint32_t ms = I_FPSTime();
+		uint32_t ms = screen->FrameTime;
 		uint32_t howlong = ms - LastMS;
 		if ((signed)howlong >= 0)
 		{

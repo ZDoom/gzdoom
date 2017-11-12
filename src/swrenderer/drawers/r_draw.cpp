@@ -64,7 +64,6 @@ namespace swrenderer
 	int fuzzoffset[FUZZTABLE + 1];
 	int fuzzpos;
 	int fuzzviewheight;
-	unsigned int renderTime;
 
 	int fuzz_random_x_offset[FUZZ_RANDOM_X_SIZE] =
 	{

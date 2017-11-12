@@ -161,7 +161,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muClipHeight.Set(mClipHeight);
 	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
-	activeShader->muTimer.Set(gl_frameMS * mShaderTimer / 1000.f);
+	activeShader->muTimer.Set(screen->FrameTime * mShaderTimer / 1000.f);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
 	activeShader->muClipSplit.Set(mClipSplit);

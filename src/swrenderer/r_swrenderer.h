@@ -13,7 +13,7 @@ struct FSoftwareRenderer : public FRenderer
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 
 	// render 3D view
-	void RenderView(player_t *player, unsigned int nowtime) override;
+	void RenderView(player_t *player) override;
 
 	// Remap voxel palette
 	void RemapVoxels() override;

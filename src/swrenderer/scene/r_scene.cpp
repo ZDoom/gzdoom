@@ -136,7 +136,7 @@ namespace swrenderer
 		MaskedCycles.Reset();
 		DrawerWaitCycles.Reset();
 		
-		R_SetupFrame(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, actor, renderTime);
+		R_SetupFrame(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, actor);
 
 		if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
 		else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;

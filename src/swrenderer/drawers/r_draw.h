@@ -35,7 +35,6 @@ namespace swrenderer
 	extern FDynamicColormap ShadeFakeColormap[16];
 	extern uint8_t identitymap[256];
 	extern FDynamicColormap identitycolormap;
-	extern unsigned int renderTime;
 
 	// Constant arrays used for psprite clipping and initializing clipping.
 	extern short zeroarray[MAXWIDTH];

@@ -115,7 +115,7 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	
 	DontMapLines = dontmaplines;
 	
-	R_SetupFrame(Viewpoint, Viewwindow, actor);
+	R_SetupFrame(Viewpoint, Viewwindow, actor, swrenderer::renderTime);
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
 

@@ -170,8 +170,9 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 	}
 }
 
-void FSoftwareRenderer::RenderView(player_t *player, unsigned int /*nowtime*/)
+void FSoftwareRenderer::RenderView(player_t *player, unsigned int nowtime)
 {
+	renderTime = nowtime;
 	if (r_polyrenderer)
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;

@@ -135,7 +135,7 @@ namespace swrenderer
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
 		{
-			DAngle ang = double(I_FPSTime()) * voxelspin / 1000;
+			DAngle ang = double(renderTime) * voxelspin / 1000;
 			vis->Angle -= ang;
 		}
 

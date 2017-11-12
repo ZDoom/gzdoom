@@ -785,7 +785,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 	GLRenderer->mSceneClearColor[0] = 0.0f;
 	GLRenderer->mSceneClearColor[1] = 0.0f;
 	GLRenderer->mSceneClearColor[2] = 0.0f;
-	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
+	R_SetupFrame (r_viewpoint, r_viewwindow, camera, gl_frameMS);
 	SetViewArea();
 
 	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);

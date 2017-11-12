@@ -890,7 +890,7 @@ void FGLRenderer::RenderView (player_t* player)
 
 	// Get this before everything else
 	if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
-	else r_viewpoint.TicFrac = I_GetTimeFrac (&r_viewpoint.FrameTime);
+	else r_viewpoint.TicFrac = I_GetTimeFrac ();
 
 	P_FindParticleSubsectors ();
 

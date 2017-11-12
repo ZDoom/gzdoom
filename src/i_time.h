@@ -8,7 +8,7 @@ void I_SetFrameTime();
 // Called by D_DoomLoop, returns current time in tics.
 int I_GetTime();
 
-double I_GetTimeFrac(uint32_t *ms);
+double I_GetTimeFrac();
 
 // like I_GetTime, except it waits for a new tic before returning
 int I_WaitForTic(int);
@@ -20,7 +20,7 @@ int I_WaitForTic(int);
 void I_FreezeTime(bool frozen);
 
 // [RH] Returns millisecond-accurate time
-unsigned int I_FPSTime();
+unsigned int I_msTime();
 
 // Nanosecond-accurate time
-uint64_t I_FPSTimeNS();
+uint64_t I_nsTime();

@@ -120,14 +120,14 @@ int I_WaitForTic(int prevtic)
 	return time;
 }
 
-uint64_t I_FPSTimeNS()
+uint64_t I_nsTime()
 {
 	return GetClockTimeNS();
 }
 
-unsigned int I_FPSTime()
+unsigned int I_msTime()
 {
-	return NSToMS(I_FPSTimeNS());
+	return NSToMS(I_nsTime());
 }
 
 int I_GetTime()
@@ -135,14 +135,11 @@ int I_GetTime()
 	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime) + 1;
 }
 
-double I_GetTimeFrac(uint32_t *ms)
+double I_GetTimeFrac()
 {
 	int currentTic = NSToTic(CurrentFrameStartTime - FirstFrameStartTime);
 	uint64_t ticStartTime = FirstFrameStartTime + TicToNS(currentTic);
 	uint64_t ticNextTime = FirstFrameStartTime + TicToNS(currentTic + 1);
-
-	if (ms)
-		*ms = currentTic + 1;
 
 	return (CurrentFrameStartTime - ticStartTime) / (double)(ticNextTime - ticStartTime);
 }

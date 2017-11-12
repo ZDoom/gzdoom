@@ -831,7 +831,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		iview->otic = nowtic;
 	}
 
-	viewpoint.TicFrac = I_GetTimeFrac (&viewpoint.FrameTime);
+	viewpoint.TicFrac = I_GetTimeFrac ();
 	if (cl_capfps || r_NoInterpolate)
 	{
 		viewpoint.TicFrac = 1.;

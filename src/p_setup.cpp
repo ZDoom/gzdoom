@@ -3938,7 +3938,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	{
 		BuildGLNodes = RequireGLNodes || multiplayer || demoplayback || demorecording || genglnodes;
 
-		startTime = I_FPSTime ();
+		startTime = I_msTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
 		P_GetPolySpots (map, polyspots, anchors);
 		FNodeBuilder::FLevel leveldata =
@@ -3954,7 +3954,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		// if the different machines' am_textured setting differs.
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		builder.Extract (level);
-		endTime = I_FPSTime ();
+		endTime = I_msTime ();
 		DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
 		oldvertextable = builder.GetOldVertexTable();
 		reloop = true;

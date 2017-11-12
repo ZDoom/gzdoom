@@ -779,7 +779,7 @@ void D_Display ()
 
 
 	{
-		screen->FrameTime = I_FPSTime();
+		screen->FrameTime = I_msTime();
 		TexMan.UpdateAnimations(screen->FrameTime);
 		R_UpdateSky(screen->FrameTime);
 		switch (gamestate)
@@ -945,7 +945,7 @@ void D_Display ()
 		I_FreezeTime(true);
 		screen->WipeEndScreen ();
 
-		wipestart = I_FPSTime();
+		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation
 
 		do
@@ -953,7 +953,7 @@ void D_Display ()
 			do
 			{
 				I_WaitVBL(2);
-				nowtime = I_FPSTime();
+				nowtime = I_msTime();
 				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
 			} while (diff < 1);
 			wipestart = nowtime;

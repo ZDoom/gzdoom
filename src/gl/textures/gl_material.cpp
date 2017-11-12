@@ -320,10 +320,10 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 					// need to do software warping
 					FWarpTexture *wt = static_cast<FWarpTexture*>(tex);
 					unsigned char *warpbuffer = new unsigned char[w*h*4];
-					WarpBuffer((uint32_t*)warpbuffer, (const uint32_t*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, r_viewpoint.FrameTime, wt->Speed, tex->bWarped);
+					WarpBuffer((uint32_t*)warpbuffer, (const uint32_t*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, screen->FrameTime, wt->Speed, tex->bWarped);
 					delete[] buffer;
 					buffer = warpbuffer;
-					wt->GenTime = r_viewpoint.FrameTime;
+					wt->GenTime = screen->FrameTime;
 				}
 				tex->ProcessData(buffer, w, h, false);
 			}

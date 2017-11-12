@@ -783,7 +783,7 @@ void GetPackets (void)
 		// [RH] Get "ping" times - totally useless, since it's bound to the frequency
 		// packets go out at.
 		lastrecvtime[netconsole] = currrecvtime[netconsole];
-		currrecvtime[netconsole] = I_FPSTime ();
+		currrecvtime[netconsole] = I_msTime ();
 
 		// check for exiting the game
 		if (netbuffer[0] & NCMD_EXIT)

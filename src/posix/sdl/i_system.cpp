@@ -105,18 +105,6 @@ void I_EndRead(void)
 }
 
 
-void I_WaitVBL (int count)
-{
-    // I_WaitVBL is never used to actually synchronize to the
-    // vertical blank. Instead, it's used for delay purposes.
-    struct timespec delay, rem;
-    delay.tv_sec = count / 70;
-    /* Avoid overflow. Microsec res should be good enough. */
-    delay.tv_nsec = (count%70)*1000000/70 * 1000;
-    while(nanosleep(&delay, &rem) == -1 && errno == EINTR)
-        delay = rem;
-}
-
 //
 // SetLanguageIDs
 //

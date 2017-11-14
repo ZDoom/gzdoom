@@ -53,9 +53,9 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 
-static inline float GetTimeFloat()
+static inline double GetTimeFloat()
 {
-	return (float)screen->FrameTime * (float)TICRATE / 1000.0f;
+	return (double)screen->FrameTime * (double)TICRATE / 1000.;
 }
 
 CVAR(Bool, gl_interpolate_model_frames, true, CVAR_ARCHIVE)
@@ -890,7 +890,7 @@ void gl_RenderFrameModels( const FSpriteModelFrame *smf,
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
 			if ( ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN) )
 			{
-				float time = GetTimeFloat();
+				double time = GetTimeFloat();
 				ticFraction = (time - static_cast<int>(time));
 			}
 			inter = static_cast<double>(curState->Tics - curTics - ticFraction)/static_cast<double>(curState->Tics);
@@ -999,8 +999,8 @@ void gl_RenderModel(GLSprite * spr)
 
 	if( smf->flags & MDL_ROTATING )
 	{
-		const float time = smf->rotationSpeed*GetTimeFloat()/200.f;
-		rotateOffset = float((time - xs_FloorToInt(time)) *360.f );
+		const double time = smf->rotationSpeed*GetTimeFloat()/200.;
+		rotateOffset = double((time - xs_FloorToInt(time)) *360. );
 	}
 
 	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.

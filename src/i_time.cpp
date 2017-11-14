@@ -60,9 +60,9 @@ static uint64_t MSToNS(unsigned int ms)
 	return static_cast<uint64_t>(ms) * 1'000'000;
 }
 
-static uint32_t NSToMS(uint64_t ns)
+static uint64_t NSToMS(uint64_t ns)
 {
-	return static_cast<uint32_t>(ns / 1'000'000);
+	return static_cast<uint64_t>(ns / 1'000'000);
 }
 
 static int NSToTic(uint64_t ns)
@@ -125,7 +125,7 @@ uint64_t I_nsTime()
 	return GetClockTimeNS();
 }
 
-unsigned int I_msTime()
+uint64_t I_msTime()
 {
 	return NSToMS(I_nsTime());
 }

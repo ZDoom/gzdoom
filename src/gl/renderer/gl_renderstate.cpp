@@ -118,6 +118,10 @@ void FRenderState::Reset()
 
 bool FRenderState::ApplyShader()
 {
+	static int firstFrame = 0;
+	if (firstFrame == 0)
+		firstFrame = screen->FrameTime;
+
 	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };
 	if (mSpecialEffect > EFF_NONE)
 	{
@@ -161,7 +165,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muClipHeight.Set(mClipHeight);
 	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
-	activeShader->muTimer.Set(screen->FrameTime * mShaderTimer / 1000.f);
+	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * mShaderTimer / 1000.f);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
 	activeShader->muClipSplit.Set(mClipSplit);

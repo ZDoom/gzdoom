@@ -20,7 +20,7 @@ int I_WaitForTic(int);
 void I_FreezeTime(bool frozen);
 
 // [RH] Returns millisecond-accurate time
-unsigned int I_msTime();
+uint64_t I_msTime();
 
 // Nanosecond-accurate time
 uint64_t I_nsTime();

@@ -118,8 +118,10 @@ void FRenderState::Reset()
 
 bool FRenderState::ApplyShader()
 {
-	static int firstFrame = 0;
-	if (firstFrame == 0)
+	static uint64_t firstFrame = 0;
+	// if firstFrame is not yet initialized, initialize it to current time
+	// if we're going to overflow a float (after ~4.6 hours, or 24 bits), re-init to regain precision
+	if ((firstFrame == 0) || (screen->FrameTime - firstFrame >= 1<<24))
 		firstFrame = screen->FrameTime;
 
 	static const float nulvec[] = { 0.f, 0.f, 0.f, 0.f };

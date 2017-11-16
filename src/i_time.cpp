@@ -38,6 +38,8 @@
 #include <stdint.h>
 #include "i_time.h"
 #include "doomdef.h"
+#include "c_cvars.h"
+#include "doomstat.h"
 
 //==========================================================================
 //
@@ -49,10 +51,30 @@ static uint64_t FirstFrameStartTime;
 static uint64_t CurrentFrameStartTime;
 static uint64_t FreezeTime;
 
+static double TimeScale = 1.0;
+
+CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
+{
+	if (netgame && self != 1.0f)
+	{
+		Printf("Time scale cannot be changed in net games.\n");
+		self = 1.0f;
+	}
+	else
+	{
+		I_FreezeTime(true);
+		float clampValue = (self < 0.05) ? 0.05 : self;
+		if (self != clampValue)
+			self = clampValue;
+		TimeScale = self;
+		I_FreezeTime(false);
+	}
+}
+
 static uint64_t GetClockTimeNS()
 {
 	using namespace std::chrono;
-	return (uint64_t)duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count();
+	return (uint64_t)duration_cast<nanoseconds>(steady_clock::now().time_since_epoch()).count() * TimeScale;
 }
 
 static uint64_t MSToNS(unsigned int ms)

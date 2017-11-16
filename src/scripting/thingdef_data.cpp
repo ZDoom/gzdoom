@@ -1225,6 +1225,15 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Truncate)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, Remove)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(index);
+	PARAM_UINT(remlen);
+	self->Remove(index, remlen);
+	return 0;
+}
+
 // CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
 DEFINE_ACTION_FUNCTION(FStringStruct, CharAt)
 {

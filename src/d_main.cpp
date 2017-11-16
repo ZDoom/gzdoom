@@ -1053,10 +1053,10 @@ void D_DoomLoop ()
 			}
 			else
 			{
-				I_StartTic ();
 				TryRunTics (); // will run at least one tic
 			}
 			// Update display, next frame, with current state.
+			I_StartTic ();
 			D_Display ();
 			if (wantToRestart)
 			{

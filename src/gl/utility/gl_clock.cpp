@@ -187,8 +187,8 @@ static void AppendLightStats(FString &out)
 ADD_STAT(rendertimes)
 {
 	static FString buff;
-	static int lasttime=0;
-	int t=I_msTime();
+	static int64_t lasttime=0;
+	int64_t t=I_msTime();
 	if (t-lasttime>1000) 
 	{
 		buff.Truncate(0);
@@ -217,7 +217,7 @@ void AppendMissingTextureStats(FString &out);
 
 static int printstats;
 static bool switchfps;
-static unsigned int waitstart;
+static uint64_t waitstart;
 EXTERN_CVAR(Bool, vid_fps)
 
 void CheckBench()

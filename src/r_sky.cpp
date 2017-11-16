@@ -165,7 +165,7 @@ void R_InitSkyMap ()
 //
 //==========================================================================
 
-void R_UpdateSky (uint32_t mstime)
+void R_UpdateSky (uint64_t mstime)
 {
 	// Scroll the sky
 	double ms = (double)mstime * FRACUNIT;

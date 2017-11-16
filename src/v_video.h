@@ -442,7 +442,7 @@ public:
 
 	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y) {}
 
-	uint32_t GetLastFPS() const { return LastCount; }
+	uint64_t GetLastFPS() const { return LastCount; }
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
@@ -463,7 +463,7 @@ protected:
 	DFrameBuffer () {}
 
 private:
-	uint32_t LastMS, LastSec, FrameCount, LastCount, LastTic;
+	uint64_t LastMS, LastSec, FrameCount, LastCount, LastTic;
 	bool isIn2D = false;
 };
 

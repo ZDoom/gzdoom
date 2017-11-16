@@ -113,9 +113,9 @@ bool	 		remoteresend[MAXNETNODES];				// set when local needs tics
 int 			resendto[MAXNETNODES];					// set when remote needs tics
 int 			resendcount[MAXNETNODES];
 
-unsigned int	lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
-unsigned int	currrecvtime[MAXPLAYERS];
-unsigned int	lastglobalrecvtime;						// Identify the last time a packet was received.
+uint64_t		lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
+uint64_t		currrecvtime[MAXPLAYERS];
+uint64_t		lastglobalrecvtime;						// Identify the last time a packet was received.
 bool			hadlate;
 int				netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
 int				lastaverage;

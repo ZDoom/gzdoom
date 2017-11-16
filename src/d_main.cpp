@@ -938,7 +938,7 @@ void D_Display ()
 	else
 	{
 		// wipe update
-		unsigned int wipestart, nowtime, diff;
+		uint64_t wipestart, nowtime, diff;
 		bool done;
 
 		GSnd->SetSfxPaused(true, 1);
@@ -1053,10 +1053,10 @@ void D_DoomLoop ()
 			}
 			else
 			{
+				I_StartTic ();
 				TryRunTics (); // will run at least one tic
 			}
 			// Update display, next frame, with current state.
-			I_StartTic ();
 			D_Display ();
 			if (wantToRestart)
 			{

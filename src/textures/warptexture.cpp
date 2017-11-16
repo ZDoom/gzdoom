@@ -86,7 +86,7 @@ bool FWarpTexture::CheckModified ()
 
 const uint8_t *FWarpTexture::GetPixels ()
 {
-	uint32_t time = screen->FrameTime;
+	uint64_t time = screen->FrameTime;
 
 	if (Pixels == NULL || time != GenTime)
 	{
@@ -97,7 +97,7 @@ const uint8_t *FWarpTexture::GetPixels ()
 
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
-	uint32_t time = screen->FrameTime;
+	uint64_t time = screen->FrameTime;
 	if (Pixels == NULL || time != GenTime)
 		MakeTexture(time);
 
@@ -119,7 +119,7 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 
 const uint8_t *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
-	uint32_t time =screen->FrameTime;
+	uint64_t time =screen->FrameTime;
 
 	if (Pixels == NULL || time != GenTime)
 	{
@@ -148,7 +148,7 @@ const uint8_t *FWarpTexture::GetColumn (unsigned int column, const Span **spans_
 }
 
 
-void FWarpTexture::MakeTexture(uint32_t time)
+void FWarpTexture::MakeTexture(uint64_t time)
 {
 	const uint8_t *otherpix = SourcePic->GetPixels();
 

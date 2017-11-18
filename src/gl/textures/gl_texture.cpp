@@ -564,7 +564,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 	else sc.UnGet();
 
 	sc.MustGetString();
-	FTextureID no = TexMan.CheckForTexture(sc.String, type);
+	FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
 	FTexture *tex = TexMan[no];
 
 	sc.MustGetToken('{');

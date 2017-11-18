@@ -555,6 +555,7 @@ ADD_STAT (blit)
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
+	auto Screen = static_cast<SDLFB *>(screen)->GetSDLWindow();
 	if (caption)
 		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), caption);
 	else

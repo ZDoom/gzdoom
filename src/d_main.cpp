@@ -2902,7 +2902,7 @@ DEFINE_FIELD_X(InputEventData, event_t, x)
 DEFINE_FIELD_X(InputEventData, event_t, y)
 
 
-CUSTOM_CVAR(Bool, I_FriendlyWindowTitle, false, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, I_FriendlyWindowTitle, true, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
 {
 	if (self)
 		I_SetWindowTitle(DoomStartupInfo.Name.GetChars());

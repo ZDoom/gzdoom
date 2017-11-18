@@ -177,7 +177,7 @@ void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callba
 		BSPNodeWalkCircle(level.HeadNode(), x, y, radiusSquared, callback);
 }
 
-void gl_SetDynModelLight(AActor *self, bool hudmodel)
+void gl_SetDynModelLight(AActor *self)
 {
 	// Legacy and deferred render paths gets the old flat model light
 	if (gl.lightmethod != LM_DIRECT)
@@ -209,16 +209,16 @@ void gl_SetDynModelLight(AActor *self, bool hudmodel)
 				{
 					int group = subsector->sector->PortalGroup;
 					DVector3 pos = light->PosRelative(group);
-					float radius = light->GetRadius();
+					float radius = light->GetRadius() + self->renderradius;
 					double dx = pos.X - x;
 					double dy = pos.Y - y;
 					double dz = pos.Z - z;
 					double distSquared = dx * dx + dy * dy + dz * dz;
-					if (distSquared < radiusSquared + radius * radius) // Light and actor touches
+					if (distSquared < radius * radius) // Light and actor touches
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							gl_AddLightToList(group, light, modellightdata, hudmodel);
+							gl_AddLightToList(group, light, modellightdata);
 							addedLights.push_back(light);
 						}
 					}

@@ -3495,7 +3495,9 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	case AST_IfStmt:
 	{
 		auto iff = static_cast<ZCC_IfStmt *>(ast);
-		return new FxIfStatement(ConvertNode(iff->Condition), ConvertNode(iff->TruePath), ConvertNode(iff->FalsePath), *ast);
+		FxExpression *const truePath = ConvertImplicitScopeNode(ast, iff->TruePath);
+		FxExpression *const falsePath = ConvertImplicitScopeNode(ast, iff->FalsePath);
+		return new FxIfStatement(ConvertNode(iff->Condition), truePath, falsePath, *ast);
 	}
 
 	case AST_IterationStmt:
@@ -3504,7 +3506,8 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		if (iter->CheckAt == ZCC_IterationStmt::End)
 		{
 			assert(iter->LoopBumper == nullptr);
-			return new FxDoWhileLoop(ConvertNode(iter->LoopCondition), ConvertNode(iter->LoopStatement), *ast);
+			FxExpression *const loop = ConvertImplicitScopeNode(ast, iter->LoopStatement);
+			return new FxDoWhileLoop(ConvertNode(iter->LoopCondition), loop, *ast);
 		}
 		else if (iter->LoopBumper != nullptr)
 		{
@@ -3520,7 +3523,8 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 		}
 		else
 		{
-			return new FxWhileLoop(ConvertNode(iter->LoopCondition), ConvertNode(iter->LoopStatement), *ast);
+			FxExpression *const loop = ConvertImplicitScopeNode(ast, iter->LoopStatement);
+			return new FxWhileLoop(ConvertNode(iter->LoopCondition), loop, *ast);
 		}
 	}
 
@@ -3582,6 +3586,45 @@ FxExpression *ZCCCompiler::ConvertNode(ZCC_TreeNode *ast)
 	// only for development. I_Error is more convenient here than a normal error.
 	I_Error("ConvertNode encountered unsupported node of type %d", ast->NodeType);
 	return nullptr;
+}
+
+//==========================================================================
+//
+// Wrapper around ConvertNode() that adds a scope (a compound statement)
+// when needed to avoid leaking of variable or contant to an outer scope:
+//
+//  if (true) int i; else bool b[1];
+//  while (false) readonly<Actor> a;
+//  do static const float f[] = {0}; while (false);
+//
+// Accessing such variables outside of their statements is now an error
+//
+//==========================================================================
+
+FxExpression *ZCCCompiler::ConvertImplicitScopeNode(ZCC_TreeNode *node, ZCC_Statement *nested)
+{
+	assert(nullptr != node);
+
+	if (nullptr == nested)
+	{
+		return nullptr;
+	}
+	
+	FxExpression *nestedExpr = ConvertNode(nested);
+	assert(nullptr != nestedExpr);
+
+	const EZCCTreeNodeType nestedType = nested->NodeType;
+	const bool needScope = AST_LocalVarStmt == nestedType || AST_StaticArrayStatement == nestedType;
+
+	if (needScope)
+	{
+		FxCompoundStatement *implicitCompound = new FxCompoundStatement(*node);
+		implicitCompound->Add(nestedExpr);
+
+		nestedExpr = implicitCompound;
+	}
+
+	return nestedExpr;
 }
 
 

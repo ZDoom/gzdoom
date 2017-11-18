@@ -93,8 +93,8 @@ void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, un
 	// down we will need to gather a grid of pixels of the size of the scale
 	// factor in each direction and then do an averaging of the pixels.
 
-	TArray<BoxPrecalc> vPrecalcs(height);
-	TArray<BoxPrecalc> hPrecalcs(width);
+	TArray<BoxPrecalc> vPrecalcs(height, true);
+	TArray<BoxPrecalc> hPrecalcs(width, true);
 
 	ResampleBoxPrecalc(vPrecalcs, texheight);
 	ResampleBoxPrecalc(hPrecalcs, texwidth);

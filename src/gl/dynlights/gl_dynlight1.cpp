@@ -77,7 +77,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		return false;
 	}
 
-	gl_AddLightToList(group, light, ldata, false);
+	gl_AddLightToList(group, light, ldata);
 	return true;
 }
 
@@ -86,37 +86,12 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 // Add one dynamic light to the light data list
 //
 //==========================================================================
-void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata, bool hudmodel)
+void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
 {
 	int i = 0;
 
 	DVector3 pos = light->PosRelative(group);
 	float radius = light->GetRadius();
-
-	if (hudmodel)
-	{
-		// HUD model is already translated and rotated. We must rotate the lights into that view space.
-
-		DVector3 rotation;
-		DVector3 localpos = pos - r_viewpoint.Pos;
-
-		rotation.X = localpos.X * r_viewpoint.Angles.Yaw.Sin() - localpos.Y * r_viewpoint.Angles.Yaw.Cos();
-		rotation.Y = localpos.X * r_viewpoint.Angles.Yaw.Cos() + localpos.Y * r_viewpoint.Angles.Yaw.Sin();
-		rotation.Z = localpos.Z;
-		localpos = rotation;
-
-		rotation.X = localpos.X;
-		rotation.Y = localpos.Y * r_viewpoint.Angles.Pitch.Sin() - localpos.Z * r_viewpoint.Angles.Pitch.Cos();
-		rotation.Z = localpos.Y * r_viewpoint.Angles.Pitch.Cos() + localpos.Z * r_viewpoint.Angles.Pitch.Sin();
-		localpos = rotation;
-
-		rotation.Y = localpos.Y;
-		rotation.Z = localpos.Z * r_viewpoint.Angles.Roll.Sin() - localpos.X * r_viewpoint.Angles.Roll.Cos();
-		rotation.X = localpos.Z * r_viewpoint.Angles.Roll.Cos() + localpos.X * r_viewpoint.Angles.Roll.Sin();
-		localpos = rotation;
-
-		pos = localpos;
-	}
 
 	float cs;
 	if (light->IsAdditive()) 

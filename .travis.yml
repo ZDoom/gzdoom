@@ -11,9 +11,22 @@ git:
 matrix:
   include:
     - os: osx
-      osx_image: xcode9
+      osx_image: xcode9.1
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
+
+    - os: linux
+      compiler: gcc
+      env:
+        - GCC_VERSION=4.9
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS=-Wno-maybe-uninitialized"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-4.9
+            - libsdl2-dev
 
     - os: linux
       compiler: gcc

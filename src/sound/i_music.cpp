@@ -59,7 +59,6 @@ extern void ChildSigHandler (int signum);
 #include "s_sound.h"
 #include "m_swap.h"
 #include "i_cd.h"
-#include "tempfiles.h"
 #include "templates.h"
 #include "stats.h"
 #include "timidity/timidity.h"

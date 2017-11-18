@@ -122,9 +122,9 @@ xx(THROW,	throw,	THROW,		NOP,	0, 0),		// A == 0: Throw exception object pB
 												// A == 2: (pB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 												// A == 3: (pkB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 												// for A > 0, exception is stored in pC
-xx(BOUND,	bound,	RII16,		NOP,	0, 0),		// if rA >= BC, throw exception
-xx(BOUND_K,	bound,	LKI,		NOP,	0, 0),		// if rA >= const[BC], throw exception
-xx(BOUND_R,	bound,	RIRI,		NOP,	0, 0),		// if rA >= rB, throw exception
+xx(BOUND,	bound,	RII16,		NOP,	0, 0),		// if rA < 0 or rA >= BC, throw exception
+xx(BOUND_K,	bound,	LKI,		NOP,	0, 0),		// if rA < 0 or rA >= const[BC], throw exception
+xx(BOUND_R,	bound,	RIRI,		NOP,	0, 0),		// if rA < 0 or rA >= rB, throw exception
 
 // String instructions.
 xx(CONCAT,		concat,	RSRSRS,		NOP,	0, 0),		// sA = sB..sC

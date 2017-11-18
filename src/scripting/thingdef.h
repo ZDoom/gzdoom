@@ -113,9 +113,9 @@ class FStateDefinitions
 	FStateDefine *FindStateAddress(const char *name);
 	FState *FindState(const char *name);
 
-	FState *ResolveGotoLabel(AActor *actor, PClassActor *mytype, char *name);
+	FState *ResolveGotoLabel(PClassActor *mytype, char *name);
 	static void FixStatePointers(PClassActor *actor, TArray<FStateDefine> & list);
-	void ResolveGotoLabels(PClassActor *actor, AActor *defaults, TArray<FStateDefine> & list);
+	void ResolveGotoLabels(PClassActor *actor, TArray<FStateDefine> & list);
 public:
 
 	FStateDefinitions()
@@ -129,7 +129,7 @@ public:
 	void AddStateLabel(const char *statename);
 	int GetStateLabelIndex (FName statename);
 	void InstallStates(PClassActor *info, AActor *defaults);
-	int FinishStates(PClassActor *actor, AActor *defaults);
+	int FinishStates(PClassActor *actor);
 
 	void MakeStateDefines(const PClassActor *cls);
 	void AddStateDefines(const FStateLabels *list);

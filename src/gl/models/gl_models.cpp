@@ -1095,33 +1095,33 @@ void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 		glFrontFace(GL_CCW);
 	}
 
-	// [BB] The model has to be drawn independently from the position of the player,
-	// so we have to reset the view matrix.
-	gl_RenderState.mViewMatrix.loadIdentity();
-
-	// Need to reset the normal matrix too
-	gl_RenderState.mNormalViewMatrix.loadIdentity();
+	// The model position and orientation has to be drawn independently from the position of the player,
+	// but we need to position it correctly in the world for light to work properly.
+	VSMatrix objectToWorldMatrix;
+	gl_RenderState.mViewMatrix.inverseMatrix(objectToWorldMatrix);
 
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	gl_RenderState.mViewMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
+	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
 	
 	// Aplying model offsets (model offsets do not depend on model scalings).
-	gl_RenderState.mViewMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
 
 	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	gl_RenderState.mViewMatrix.rotate(ofsX/4, 0, 1, 0);
-	gl_RenderState.mViewMatrix.rotate((ofsY-WEAPONTOP)/-4., 1, 0, 0);
+	objectToWorldMatrix.rotate(ofsX/4, 0, 1, 0);
+	objectToWorldMatrix.rotate((ofsY-WEAPONTOP)/-4., 1, 0, 0);
 
 	// [BB] For some reason the jDoom models need to be rotated.
-	gl_RenderState.mViewMatrix.rotate(90.f, 0, 1, 0);
+	objectToWorldMatrix.rotate(90.f, 0, 1, 0);
 
 	// Applying angleoffset, pitchoffset, rolloffset.
-	gl_RenderState.mViewMatrix.rotate(-smf->angleoffset, 0, 1, 0);
-	gl_RenderState.mViewMatrix.rotate(smf->pitchoffset, 0, 0, 1);
-	gl_RenderState.mViewMatrix.rotate(-smf->rolloffset, 1, 0, 0);
-	gl_RenderState.ApplyMatrices();
+	objectToWorldMatrix.rotate(-smf->angleoffset, 0, 1, 0);
+	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
+	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
+	gl_RenderState.mModelMatrix = objectToWorldMatrix;
+	gl_RenderState.EnableModelMatrix(true);
 	gl_RenderFrameModels( smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), nullptr, 0 );
+	gl_RenderState.EnableModelMatrix(false);
 
 	glDepthFunc(GL_LESS);
 	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))

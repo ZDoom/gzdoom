@@ -724,6 +724,18 @@ FName FMapInfoParser::ParseEndGame()
 //
 //==========================================================================
 
+FName MakeEndPic(const char *string)
+{
+	FString seqname;
+	seqname << "@EndPic_" << string;
+	FIntermissionDescriptor *desc = new FIntermissionDescriptor;
+	FIntermissionAction *action = new FIntermissionAction;
+	action->mBackground = string;
+	desc->mActions.Push(action);
+	ReplaceIntermission(seqname, desc);
+	return FName(seqname);
+}
+
 FName FMapInfoParser::CheckEndSequence()
 {
 	const char *seqname = NULL;
@@ -756,14 +768,7 @@ FName FMapInfoParser::CheckEndSequence()
 	{
 		ParseComma();
 		sc.MustGetString ();
-		FString seqname;
-		seqname << "@EndPic_" << sc.String;
-		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
-		FIntermissionAction *action = new FIntermissionAction;
-		action->mBackground = sc.String;
-		desc->mActions.Push(action);
-		ReplaceIntermission(seqname, desc);
-		return FName(seqname);
+		return MakeEndPic(sc.String);
 	}
 	else if (sc.Compare("endbunny"))
 	{

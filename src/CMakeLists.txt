@@ -958,6 +958,7 @@ set (PCH_SOURCES
 	stats.cpp
 	stringtable.cpp
 	teaminfo.cpp
+	umapinfo.cpp
 	v_blend.cpp
 	v_collection.cpp
 	v_draw.cpp

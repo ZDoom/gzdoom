@@ -682,6 +682,7 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 
 		PostProcessShader shaderdesc;
 		shaderdesc.Target = sc.String;
+		shaderdesc.Target.ToLower();
 
 		bool validTarget = false;
 		if (sc.Compare("beforebloom")) validTarget = true;

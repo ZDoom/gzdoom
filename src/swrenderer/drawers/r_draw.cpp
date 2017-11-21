@@ -195,7 +195,7 @@ namespace swrenderer
 	{
 		if (r_fuzzscale)
 		{
-			int next_random = 0;
+			static int next_random = 0;
 
 			fuzzpos = (fuzzpos + fuzz_random_x_offset[next_random] * FUZZTABLE / 100) % FUZZTABLE;
 

@@ -651,6 +651,7 @@ struct TVector3
 	TVector3 &operator ^= (const TVector3 &other)
 	{
 		*this = *this ^ other;
+		return *this;
 	}
 };
 

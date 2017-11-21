@@ -265,11 +265,11 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 					alpha.ShouldCycle(true);
 					alpha.SetCycleType(ParseCycleType(sc));
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					start = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					end = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					cycle = sc.Float;
 
 					alpha.SetParams(start, end, cycle);
@@ -287,11 +287,11 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 					srcFactor.ShouldCycle(true);
 					srcFactor.SetCycleType(ParseCycleType(sc));
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					start = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					end = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					cycle = sc.Float;
 
 					srcFactor.SetParams(start, end, cycle);
@@ -309,11 +309,11 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 					dstFactor.ShouldCycle(true);
 					dstFactor.SetCycleType(ParseCycleType(sc));
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					start = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					end = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					cycle = sc.Float;
 
 					dstFactor.SetParams(start, end, cycle);
@@ -351,23 +351,23 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 					g.SetCycleType(type);
 					b.SetCycleType(type);
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r1 = float(sc.Float);
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g1 = float(sc.Float);
-					sc.GetFloat();
+					sc.MustGetFloat();
 					b1 = float(sc.Float);
 
 					// get color2
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r2 = float(sc.Float);
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g2 = float(sc.Float);
-					sc.GetFloat();
+					sc.MustGetFloat();
 					b2 = float(sc.Float);
 
                   // get cycle time
-					sc.GetFloat();
+					sc.MustGetFloat();
 					cycle = sc.Float;
 
 					r.SetParams(r1, r2, cycle);
@@ -376,11 +376,11 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
                }
                else
                {
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r1 = float(sc.Float);
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g1 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					b1 = sc.Float;
 
 					r.SetParams(r1, r1, 0.f);
@@ -390,9 +390,9 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 			}
 			else if (sc.Compare("center"))
 			{
-               sc.GetFloat();
+               sc.MustGetFloat();
                centerX = sc.Float;
-               sc.GetFloat();
+               sc.MustGetFloat();
                centerY = sc.Float;
 			}
 			else if (sc.Compare("emissive"))
@@ -407,17 +407,17 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 					adjustX.ShouldCycle(true);
 					adjustY.ShouldCycle(true);
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r1 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r2 = sc.Float;
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g1 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g2 = sc.Float;
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					cycle = sc.Float;
 
 					offsetX = r1;
@@ -428,9 +428,9 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 				}
 				else
 				{
-					sc.GetFloat();
+					sc.MustGetFloat();
 					offsetX = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					offsetY = sc.Float;
 				}
 			}
@@ -447,12 +447,12 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 			}
 			else if (sc.Compare("rotate"))
 			{
-               sc.GetFloat();
+               sc.MustGetFloat();
                rotate = sc.Float;
 			}
 			else if (sc.Compare("rotation"))
 			{
-               sc.GetFloat();
+               sc.MustGetFloat();
                rotation = sc.Float;
 			}
 			else if (sc.Compare("scale"))
@@ -462,17 +462,17 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 					scaleX.ShouldCycle(true);
 					scaleY.ShouldCycle(true);
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r1 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r2 = sc.Float;
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g1 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g2 = sc.Float;
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					cycle = sc.Float;
 
 					scaleX.SetParams(r1, g1, cycle);
@@ -480,9 +480,9 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 				}
 				else
 				{
-					sc.GetFloat();
+					sc.MustGetFloat();
 					scaleX.SetParams(sc.Float, sc.Float, 0.f);
-					sc.GetFloat();
+					sc.MustGetFloat();
 					scaleY.SetParams(sc.Float, sc.Float, 0.f);
 				}
 			}
@@ -510,15 +510,15 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 					vectorX.ShouldCycle(true);
 					vectorY.ShouldCycle(true);
 
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r1 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g1 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					r2 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					g2 = sc.Float;
-					sc.GetFloat();
+					sc.MustGetFloat();
 					cycle = sc.Float;
 
 					vectorX.SetParams(r1, r2, cycle);
@@ -526,9 +526,9 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 				}
 				else
 				{
-					sc.GetFloat();
+					sc.MustGetFloat();
 					vectorX.SetParams(sc.Float, sc.Float, 0.f);
-					sc.GetFloat();
+					sc.MustGetFloat();
 					vectorY.SetParams(sc.Float, sc.Float, 0.f);
 				}
 			}

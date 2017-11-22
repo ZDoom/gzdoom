@@ -470,6 +470,12 @@ public:
 		uint32_t posV = startV;
 		for (int y = y0; y < y1; y++, posV += stepV)
 		{
+			int coreBlock = y / 8;
+			if (coreBlock % thread->num_cores != thread->core)
+			{
+				continue;
+			}
+
 			uint8_t *dest = ((uint8_t*)destOrg) + y * destPitch + x0;
 
 			uint32_t posU = startU;

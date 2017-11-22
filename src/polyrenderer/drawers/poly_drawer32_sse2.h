@@ -901,6 +901,12 @@ private:
 		uint32_t posV = startV;
 		for (int y = y0; y < y1; y++, posV += stepV)
 		{
+			int coreBlock = y / 8;
+			if (coreBlock % thread->num_cores != thread->core)
+			{
+				continue;
+			}
+
 			uint32_t *dest = ((uint32_t*)destOrg) + y * destPitch + x0;
 
 			uint32_t posU = startU;

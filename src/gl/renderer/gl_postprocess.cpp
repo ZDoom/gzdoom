@@ -938,7 +938,7 @@ int FGLRenderer::PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, int
 	static bool firstTime = true;
 	static float trackpowtable = 0.;
 
-	double fbestdist, fdist;
+	double fbestdist = DBL_MAX, fdist;
 	int bestcolor = 0;
 
 	if (firstTime || trackpowtable != gl_paltonemap_powtable)

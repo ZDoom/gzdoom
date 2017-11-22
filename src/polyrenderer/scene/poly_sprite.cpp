@@ -57,18 +57,17 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	double thingxscalemul = spriteScale.X / tex->Scale.X;
 	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
 
-	if (flipTextureX)
-		pos.X -= (tex->GetWidth() - tex->LeftOffset) * thingxscalemul;
-	else
-		pos.X -= tex->LeftOffset * thingxscalemul;
-
-	double spriteHalfWidth = thingxscalemul * tex->GetWidth() * 0.5;
+	double spriteWidth = thingxscalemul * tex->GetWidth();
 	double spriteHeight = thingyscalemul * tex->GetHeight();
 
-	pos.X += spriteHalfWidth;
+	double offsetX;
+	if (flipTextureX)
+		offsetX = (tex->GetWidth() - tex->LeftOffset) * thingxscalemul;
+	else
+		offsetX = tex->LeftOffset * thingxscalemul;
 
-	left = DVector2(pos.X - viewpoint.Sin * spriteHalfWidth, pos.Y + viewpoint.Cos * spriteHalfWidth);
-	right = DVector2(pos.X + viewpoint.Sin * spriteHalfWidth, pos.Y - viewpoint.Cos * spriteHalfWidth);
+	left = DVector2(pos.X - viewpoint.Sin * offsetX, pos.Y + viewpoint.Cos * offsetX);
+	right = DVector2(left.X + viewpoint.Sin * spriteWidth, left.Y - viewpoint.Cos * spriteWidth);
 	return true;
 }
 
@@ -81,36 +80,26 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const TriMatrix &worldTo
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	DVector3 thingpos = thing->InterpolatedPosition(viewpoint.TicFrac);
 
-	DVector3 pos = thingpos;
+	double posZ = thingpos.Z;
 
 	uint32_t spritetype = (thing->renderflags & RF_SPRITETYPEMASK);
 
 	if (spritetype == RF_FACESPRITE)
-		pos.Z -= thing->Floorclip;
+		posZ -= thing->Floorclip;
 
 	if (thing->flags2 & MF2_FLOATBOB)
-		pos.Z += thing->GetBobOffset(viewpoint.TicFrac);
+		posZ += thing->GetBobOffset(viewpoint.TicFrac);
 
 	bool flipTextureX = false;
 	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
 	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
 		return;
 
-	DVector2 spriteScale = thing->Scale;
-	double thingxscalemul = spriteScale.X / tex->Scale.X;
-	double thingyscalemul = spriteScale.Y / tex->Scale.Y;
-	double spriteHalfWidth = thingxscalemul * tex->GetWidth() * 0.5;
+	double thingyscalemul = thing->Scale.Y / tex->Scale.Y;
 	double spriteHeight = thingyscalemul * tex->GetHeight();
 
-	if (flipTextureX)
-		pos.X -= (tex->GetWidth() - tex->LeftOffset) * thingxscalemul;
-	else
-		pos.X -= tex->LeftOffset * thingxscalemul;
-
-	pos.X += spriteHalfWidth;
-
-	pos.Z -= (tex->GetHeight() - tex->TopOffset) * thingyscalemul;
-	pos.Z = PerformSpriteClipAdjustment(thing, thingpos, spriteHeight, pos.Z);
+	posZ -= (tex->GetHeight() - tex->TopOffset) * thingyscalemul;
+	posZ = PerformSpriteClipAdjustment(thing, thingpos, spriteHeight, posZ);
 
 	//double depth = 1.0;
 	//visstyle_t visstyle = GetSpriteVisStyle(thing, depth);
@@ -142,7 +131,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const TriMatrix &worldTo
 
 		vertices[i].x = (float)p.X;
 		vertices[i].y = (float)p.Y;
-		vertices[i].z = (float)(pos.Z + spriteHeight * offsets[i].second);
+		vertices[i].z = (float)(posZ + spriteHeight * offsets[i].second);
 		vertices[i].w = 1.0f;
 		vertices[i].u = (float)(offsets[i].first * tex->Scale.X);
 		vertices[i].v = (float)((1.0f - offsets[i].second) * tex->Scale.Y);

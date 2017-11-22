@@ -2243,6 +2243,7 @@ void G_ParseMapInfo (FString basemapinfo)
 			ParseUMapInfo(lump);
 		}
 	}
+	CommitUMapinfo(&gamedefaults);	// commit remaining UMPAINFOs.
 
 	if (AllEpisodes.Size() == 0)
 	{

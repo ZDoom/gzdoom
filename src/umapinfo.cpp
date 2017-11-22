@@ -45,18 +45,18 @@ struct UMapEntry
 	FString InterTextSecret;
 	TArray<FSpecialAction> BossActions;
 
-	char levelpic[9];
-	char nextmap[9];
-	char nextsecret[9];
-	char music[9];
-	char skytexture[9];
-	char endpic[9];
-	char exitpic[9];
-	char enterpic[9];
+	char levelpic[9] = "";
+	char nextmap[9] = "";
+	char nextsecret[9] = "";
+	char music[9] = "";
+	char skytexture[9] = "";
+	char endpic[9] = "";
+	char exitpic[9] = "";
+	char enterpic[9] = "";
 	char interbackdrop[9] = "FLOOR4_8";
-	char intermusic[9];
-	int partime;
-	int nointermission;
+	char intermusic[9] = "";
+	int partime = 0;
+	int nointermission = 0;
 };
 
 static TArray<UMapEntry> Maps;
@@ -132,7 +132,7 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 	if (!pname.CompareNoCase("levelname"))
 	{
 		scanner.MustGetToken(TK_StringConst);
-		mape->LevelName, scanner.String;
+		mape->LevelName = scanner.String;
 	}
 	else if (!pname.CompareNoCase("next"))
 	{
@@ -216,7 +216,43 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 	{
 		FString Episode = ParseMultiString(scanner, 1);
 		if (Episode.IsEmpty()) return 0;
-		//M_AddEpisode(mape->mapname, lname);
+		if (Episode.Compare("-") == 0)
+		{
+			// clear the given episode
+			for (unsigned i = 0; i < AllEpisodes.Size(); i++)
+			{
+				if (AllEpisodes[i].mEpisodeMap.CompareNoCase(mape->MapName) == 0)
+				{
+					AllEpisodes.Delete(i);
+					break;
+				}
+			}
+		}
+		else
+		{
+			auto split = Episode.Split("\n");
+			// add the given episode
+			FEpisode epi;
+
+			epi.mEpisodeName = split[1];
+			epi.mEpisodeMap = mape->MapName;
+			epi.mPicName = split[0];
+			epi.mShortcut = split[2][0];
+
+			unsigned i;
+			for (i = 0; i < AllEpisodes.Size(); i++)
+			{
+				if (AllEpisodes[i].mEpisodeMap.CompareNoCase(mape->MapName) == 0)
+				{
+					AllEpisodes[i] = std::move(epi);
+					break;
+				}
+			}
+			if (i == AllEpisodes.Size())
+			{
+				AllEpisodes.Push(epi);
+			}
+		}
 	}
 	else if (!pname.CompareNoCase("bossaction"))
 	{
@@ -255,12 +291,12 @@ static int ParseStandardProperty(FScanner &scanner, UMapEntry *mape)
 		// Skip over all unknown properties.
 		do
 		{
-			if (!scanner.CheckFloat())
+			if (!scanner.CheckValue(true))
 			{
 				scanner.MustGetAnyToken();
 				if (scanner.TokenType != TK_Identifier && scanner.TokenType != TK_StringConst && scanner.TokenType != TK_True && scanner.TokenType != TK_False)
 				{
-					scanner.ScriptError("Identifier or value expecte3d");
+					scanner.ScriptError("Identifier or value expected");
 				}
 			}
 			
@@ -279,7 +315,7 @@ static int ParseMapEntry(FScanner &scanner, UMapEntry *val)
 {
 	scanner.MustGetToken(TK_Identifier);
 
-	val->MapName, scanner.String;
+	val->MapName = scanner.String;
 	scanner.MustGetToken('{');
 	while(!scanner.CheckToken('}'))
 	{
@@ -299,12 +335,10 @@ int ParseUMapInfo(int lumpnum)
 	FScanner scanner(lumpnum);
 	unsigned int i;
 
-	while (scanner.CheckToken(TK_Identifier))
+	while (scanner.GetToken())
 	{
-		if (!scanner.Compare("map"))
-		{
-			scanner.ScriptError("'MAP' expected");
-		}
+		scanner.TokenMustBe(TK_Map);
+
 		UMapEntry parsed;
 		ParseMapEntry(scanner, &parsed);
 
@@ -355,73 +389,85 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		auto levelinfo = FindLevelInfo(map.MapName);
 		if (levelinfo == nullptr)
 		{
+			// Map did not exist yet.
+			auto levelindex = wadlevelinfos.Reserve(1);
+			levelinfo = &wadlevelinfos[levelindex];
 			*levelinfo = *defaultinfo;
-			if (map.MapName.IsNotEmpty()) levelinfo->MapName = map.MapName;
-			if (map.MapName.IsNotEmpty()) levelinfo->LevelName = map.LevelName;
-			if (map.levelpic[0]) levelinfo->PName = map.levelpic;
-			if (map.nextmap[0]) levelinfo->NextMap = map.nextmap;
-			else if (map.endpic[0])
-			{
-				FName name;
-
-				if (!stricmp(map.endpic, "$CAST"))
-				{
-					name = "INTER_CAST";
-				}
-				else if (!stricmp(map.endpic, "$BUNNY"))
-				{
-					name = "INTER_BUNNY";
-				}
-				else
-				{
-					name = MakeEndPic(map.endpic);
-				}
-				if (name != NAME_None)
-				{
-					levelinfo->NextMap.Format("enDSeQ%04x", int(name));
-				}
-			}
-
-			if (map.nextsecret[0]) levelinfo->NextSecretMap = map.nextsecret;
-			if (map.music[0])
-			{
-				levelinfo->Music = map.music;
-				levelinfo->musicorder = 0;
-			}
-			if (map.skytexture[0])
-			{
-				levelinfo->SkyPic1 = map.skytexture;
-				levelinfo->skyspeed1 = 0;
-				levelinfo->SkyPic2 = "";
-				levelinfo->skyspeed2 = 0;
-			}
-			if (map.partime > 0) levelinfo->partime = map.partime;
-			if (map.enterpic[0]) levelinfo->EnterPic = map.enterpic;
-			if (map.exitpic[0]) levelinfo->ExitPic = map.exitpic;
-			if (map.intermusic[0])
-			{
-				levelinfo->InterMusic = map.intermusic;
-				levelinfo->intermusicorder = 0;
-			}
-			if (map.BossActions.Size() > 0) levelinfo->specialactions = std::move(map.BossActions);
-
-			const int exflags = FExitText::DEF_TEXT | FExitText::DEF_BACKDROP | FExitText::DEF_MUSIC;
-			if (map.InterText.IsNotEmpty())
-			{
-				if (map.InterText.Compare("-") != 0)
-					levelinfo->ExitMapTexts[NAME_Normal] = { exflags, 0, map.InterText, map.interbackdrop, map.intermusic[0]? map.intermusic : gameinfo.intermissionMusic };
-				else
-					levelinfo->ExitMapTexts[NAME_Normal] = { 0, 0 };
-			}
-			if (map.InterTextSecret.IsNotEmpty())
-			{
-				if (map.InterTextSecret.Compare("-") != 0)
-					levelinfo->ExitMapTexts[NAME_Secret] = { exflags, 0, map.InterTextSecret, map.interbackdrop, map.intermusic[0] ? map.intermusic : gameinfo.intermissionMusic };
-				else
-					levelinfo->ExitMapTexts[NAME_Secret] = { 0, 0 };
-			}
-			if (map.nointermission) levelinfo->flags |= LEVEL_NOINTERMISSION;
 		}
+		if (map.MapName.IsNotEmpty()) levelinfo->MapName = map.MapName;
+		if (map.LevelName.IsNotEmpty())
+		{
+			levelinfo->LevelName = map.LevelName;
+			levelinfo->PName = "";	// clear the map name patch to force the string version to be shown - unless explicitly overridden right next.
+		}
+		if (map.levelpic[0]) levelinfo->PName = map.levelpic;
+		if (map.nextmap[0]) levelinfo->NextMap = map.nextmap;
+		else if (map.endpic[0])
+		{
+			FName name;
+
+			if (!stricmp(map.endpic, "$CAST"))
+			{
+				name = "INTER_CAST";
+			}
+			else if (!stricmp(map.endpic, "$BUNNY"))
+			{
+				name = "INTER_BUNNY";
+			}
+			else
+			{
+				name = MakeEndPic(map.endpic);
+			}
+			if (name != NAME_None)
+			{
+				levelinfo->NextMap.Format("enDSeQ%04x", int(name));
+			}
+		}
+
+		if (map.nextsecret[0]) levelinfo->NextSecretMap = map.nextsecret;
+		if (map.music[0])
+		{
+			levelinfo->Music = map.music;
+			levelinfo->musicorder = 0;
+		}
+		if (map.skytexture[0])
+		{
+			levelinfo->SkyPic1 = map.skytexture;
+			levelinfo->skyspeed1 = 0;
+			levelinfo->SkyPic2 = "";
+			levelinfo->skyspeed2 = 0;
+		}
+		if (map.partime > 0) levelinfo->partime = map.partime;
+		if (map.enterpic[0]) levelinfo->EnterPic = map.enterpic;
+		if (map.exitpic[0]) levelinfo->ExitPic = map.exitpic;
+		if (map.intermusic[0])
+		{
+			levelinfo->InterMusic = map.intermusic;
+			levelinfo->intermusicorder = 0;
+		}
+		if (map.BossActions.Size() > 0)
+		{
+			// Setting a boss action will deactivate the flag based monster actions.
+			levelinfo->specialactions = std::move(map.BossActions);
+			levelinfo->flags &= ~(LEVEL_BRUISERSPECIAL | LEVEL_CYBORGSPECIAL | LEVEL_SPIDERSPECIAL | LEVEL_MAP07SPECIAL | LEVEL_MINOTAURSPECIAL | LEVEL_HEADSPECIAL | LEVEL_SORCERER2SPECIAL | LEVEL_SPECACTIONSMASK | LEVEL_SPECKILLMONSTERS);
+		}
+
+		const int exflags = FExitText::DEF_TEXT | FExitText::DEF_BACKDROP | FExitText::DEF_MUSIC;
+		if (map.InterText.IsNotEmpty())
+		{
+			if (map.InterText.Compare("-") != 0)
+				levelinfo->ExitMapTexts[NAME_Normal] = { exflags, 0, map.InterText, map.interbackdrop, map.intermusic[0]? map.intermusic : gameinfo.intermissionMusic };
+			else
+				levelinfo->ExitMapTexts[NAME_Normal] = { 0, 0 };
+		}
+		if (map.InterTextSecret.IsNotEmpty())
+		{
+			if (map.InterTextSecret.Compare("-") != 0)
+				levelinfo->ExitMapTexts[NAME_Secret] = { exflags, 0, map.InterTextSecret, map.interbackdrop, map.intermusic[0] ? map.intermusic : gameinfo.intermissionMusic };
+			else
+				levelinfo->ExitMapTexts[NAME_Secret] = { 0, 0 };
+		}
+		if (map.nointermission) levelinfo->flags |= LEVEL_NOINTERMISSION;
 	}
 
 

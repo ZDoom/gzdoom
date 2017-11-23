@@ -293,8 +293,23 @@ struct FModelVertex
 	}
 };
 
+class FModelRenderer;
 
-class FModelVertexBuffer : public FVertexBuffer
+class IModelVertexBuffer
+{
+public:
+	virtual ~IModelVertexBuffer() { }
+
+	virtual FModelVertex *LockVertexBuffer(unsigned int size) = 0;
+	virtual void UnlockVertexBuffer() = 0;
+
+	virtual unsigned int *LockIndexBuffer(unsigned int size) = 0;
+	virtual void UnlockIndexBuffer() = 0;
+
+	virtual void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) = 0;
+};
+
+class FModelVertexBuffer : public FVertexBuffer, public IModelVertexBuffer
 {
 	int mIndexFrame[2];
 	FModelVertex *vbo_ptr;
@@ -305,14 +320,14 @@ public:
 	FModelVertexBuffer(bool needindex, bool singleframe);
 	~FModelVertexBuffer();
 
-	FModelVertex *LockVertexBuffer(unsigned int size);
-	void UnlockVertexBuffer();
+	FModelVertex *LockVertexBuffer(unsigned int size) override;
+	void UnlockVertexBuffer() override;
 
-	unsigned int *LockIndexBuffer(unsigned int size);
-	void UnlockIndexBuffer();
+	unsigned int *LockIndexBuffer(unsigned int size) override;
+	void UnlockIndexBuffer() override;
 
-	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2, unsigned int size);
-	void BindVBO();
+	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
+	void BindVBO() override;
 };
 
 #define VMO ((FModelVertex*)NULL)

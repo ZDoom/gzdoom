@@ -14,6 +14,7 @@
 #include "scene/poly_scene.cpp"
 #include "scene/poly_sky.cpp"
 #include "scene/poly_sprite.cpp"
+#include "scene/poly_model.cpp"
 #include "scene/poly_wall.cpp"
 #include "scene/poly_wallsprite.cpp"
 #include "scene/poly_light.cpp"

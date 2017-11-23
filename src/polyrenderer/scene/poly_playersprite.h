@@ -102,4 +102,5 @@ private:
 
 	TArray<PolyHWAccelPlayerSprite> AcceleratedSprites;
 	sector_t tempsec;
+	bool renderHUDModel = false;
 };

@@ -84,6 +84,64 @@ bool PolyTriangleDrawer::is_mirror()
 	return mirror;
 }
 
+void PolyTriangleDrawer::draw_elements(const PolyDrawArgs &drawargs, WorkerThreadData *thread)
+{
+	if (drawargs.VertexCount() < 3)
+		return;
+
+	TriDrawTriangleArgs args;
+	args.dest = dest;
+	args.pitch = dest_pitch;
+	args.clipright = dest_width;
+	args.clipbottom = dest_height;
+	args.uniforms = &drawargs;
+	args.destBgra = dest_bgra;
+	args.stencilPitch = PolyStencilBuffer::Instance()->BlockWidth();
+	args.stencilValues = PolyStencilBuffer::Instance()->Values();
+	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
+	args.zbuffer = PolyZBuffer::Instance()->Values();
+
+	bool ccw = drawargs.FaceCullCCW();
+	const TriVertex *vinput = drawargs.Vertices();
+	const unsigned int *elements = drawargs.Elements();
+	int vcount = drawargs.VertexCount();
+
+	ShadedTriVertex vert[3];
+	if (drawargs.DrawMode() == PolyDrawMode::Triangles)
+	{
+		for (int i = 0; i < vcount / 3; i++)
+		{
+			for (int j = 0; j < 3; j++)
+				vert[j] = shade_vertex(drawargs, vinput[*(elements++)]);
+			draw_shaded_triangle(vert, ccw, &args, thread);
+		}
+	}
+	else if (drawargs.DrawMode() == PolyDrawMode::TriangleFan)
+	{
+		vert[0] = shade_vertex(drawargs, vinput[*(elements++)]);
+		vert[1] = shade_vertex(drawargs, vinput[*(elements++)]);
+		for (int i = 2; i < vcount; i++)
+		{
+			vert[2] = shade_vertex(drawargs, vinput[*(elements++)]);
+			draw_shaded_triangle(vert, ccw, &args, thread);
+			vert[1] = vert[2];
+		}
+	}
+	else // TriangleDrawMode::TriangleStrip
+	{
+		vert[0] = shade_vertex(drawargs, vinput[*(elements++)]);
+		vert[1] = shade_vertex(drawargs, vinput[*(elements++)]);
+		for (int i = 2; i < vcount; i++)
+		{
+			vert[2] = shade_vertex(drawargs, vinput[*(elements++)]);
+			draw_shaded_triangle(vert, ccw, &args, thread);
+			vert[0] = vert[1];
+			vert[1] = vert[2];
+			ccw = !ccw;
+		}
+	}
+}
+
 void PolyTriangleDrawer::draw_arrays(const PolyDrawArgs &drawargs, WorkerThreadData *thread)
 {
 	if (drawargs.VertexCount() < 3)
@@ -472,7 +530,10 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 	thread_data.core = thread->core;
 	thread_data.num_cores = thread->num_cores;
 
-	PolyTriangleDrawer::draw_arrays(args, &thread_data);
+	if (!args.Elements())
+		PolyTriangleDrawer::draw_arrays(args, &thread_data);
+	else
+		PolyTriangleDrawer::draw_elements(args, &thread_data);
 }
 
 /////////////////////////////////////////////////////////////////////////////

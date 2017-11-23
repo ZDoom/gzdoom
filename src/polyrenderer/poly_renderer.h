@@ -61,13 +61,15 @@ public:
 	FRenderViewpoint Viewpoint;
 	PolyLightVisibility Light;
 
+	TriMatrix WorldToView;
+	TriMatrix WorldToClip;
+
 private:
 	void RenderActorView(AActor *actor, bool dontmaplines);
 	void ClearBuffers();
 	void SetSceneViewport();
 	void SetupPerspectiveMatrix();
 
-	TriMatrix WorldToClip;
 	RenderPolyScene MainPortal;
 	PolySkyDome Skydome;
 	RenderPolyPlayerSprites PlayerSprites;

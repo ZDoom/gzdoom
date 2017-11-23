@@ -83,12 +83,14 @@ public:
 	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
 	void SetDynLightColor(uint32_t color) { mDynLightColor = color; }
 	void DrawArray(PolyRenderThread *thread, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void DrawElements(PolyRenderThread *thread, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 
 	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
 	const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }
 
 	const TriVertex *Vertices() const { return mVertices; }
 	int VertexCount() const { return mVertexCount; }
+	const unsigned int *Elements() const { return mElements; }
 	PolyDrawMode DrawMode() const { return mDrawMode; }
 
 	bool FaceCullCCW() const { return mFaceCullCCW; }
@@ -139,6 +141,7 @@ private:
 	const TriMatrix *mObjectToClip = nullptr;
 	const TriVertex *mVertices = nullptr;
 	int mVertexCount = 0;
+	const unsigned int *mElements = nullptr;
 	PolyDrawMode mDrawMode = PolyDrawMode::Triangles;
 	bool mFaceCullCCW = false;
 	bool mDepthTest = false;

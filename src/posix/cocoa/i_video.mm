@@ -197,9 +197,12 @@ namespace
 
 @interface CocoaWindow : NSWindow
 {
+	NSString* m_title;
 }
 
 - (BOOL)canBecomeKeyWindow;
+- (void)setTitle:(NSString*)title;
+- (void)updateTitle;
 
 @end
 
@@ -209,6 +212,23 @@ namespace
 - (BOOL)canBecomeKeyWindow
 {
 	return true;
+}
+
+- (void)setTitle:(NSString*)title
+{
+	m_title = title;
+
+	[self updateTitle];
+}
+
+- (void)updateTitle
+{
+	if (nil == m_title)
+	{
+		m_title = [NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
+	}
+
+	[super setTitle:m_title];
 }
 
 @end
@@ -271,6 +291,7 @@ public:
 	static void UseHiDPI(bool hiDPI);
 	static void SetCursor(NSCursor* cursor);
 	static void SetWindowVisible(bool visible);
+	static void SetWindowTitle(const char* title);
 
 private:
 	struct ModeIterator
@@ -717,6 +738,16 @@ void CocoaVideo::SetWindowVisible(bool visible)
 	}
 }
 
+void CocoaVideo::SetWindowTitle(const char* title)
+{
+	if (CocoaVideo* const video = GetInstance())
+	{
+		NSString* const nsTitle = nullptr == title ? nil :
+			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
+		[video->m_window setTitle:nsTitle];
+	}
+}
+
 
 void CocoaVideo::SetFullscreenMode(const int width, const int height)
 {
@@ -813,9 +844,7 @@ void CocoaVideo::SetMode(const int width, const int height, const bool fullscree
 
 	[[NSOpenGLContext currentContext] flushBuffer];
 
-	static NSString* const TITLE_STRING =
-	[NSString stringWithFormat:@"%s %s", GAMESIG, GetVersionString()];
-	[m_window setTitle:TITLE_STRING];
+	[m_window updateTitle];
 
 	if (![m_window isKeyWindow])
 	{
@@ -1518,4 +1547,10 @@ NSSize I_GetContentViewSize(const NSWindow* const window)
 void I_SetMainWindowVisible(bool visible)
 {
 	CocoaVideo::SetWindowVisible(visible);
+}
+
+// each platform has its own specific version of this function.
+void I_SetWindowTitle(const char* title)
+{
+	CocoaVideo::SetWindowTitle(title);
 }

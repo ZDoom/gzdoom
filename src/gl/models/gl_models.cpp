@@ -76,7 +76,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	float scaleFactorZ = actor->Scale.Y * smf->zscale;
 	float pitch = 0;
 	float roll = 0;
-	float rotateOffset = 0;
+	double rotateOffset = 0;
 	float angle = actor->Angles.Yaw.Degrees;
 
 	// [BB] Workaround for the missing pitch information.
@@ -102,8 +102,8 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	if (smf->flags & MDL_ROTATING)
 	{
-		const double time = smf->rotationSpeed*GetTimeFloat() / 200.f;
-		rotateOffset = float((time - xs_FloorToInt(time)) *360.f);
+		const double time = smf->rotationSpeed*GetTimeFloat() / 200.;
+		rotateOffset = double((time - xs_FloorToInt(time)) *360.);
 	}
 
 	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.

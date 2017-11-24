@@ -3,8 +3,8 @@
 ** Implements the timer
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2916 Randy Heit
-** Copyright 2917 Magnus Norddahl
+** Copyright 1998-2016 Randy Heit
+** Copyright 2017 Magnus Norddahl
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

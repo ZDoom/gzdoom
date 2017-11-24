@@ -118,15 +118,6 @@ extern void LayoutMainWindow(HWND hWnd, HWND pane);
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
 static void CalculateCPUSpeed();
-static void I_SelectTimer();
-
-static int I_GetTimePolled(bool saveMS);
-static int I_WaitForTicPolled(int prevtic);
-static void I_FreezeTimePolled(bool frozen);
-static int I_GetTimeEventDriven(bool saveMS);
-static int I_WaitForTicEvent(int prevtic);
-static void I_FreezeTimeEventDriven(bool frozen);
-static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2);
 
 static HCURSOR CreateCompatibleCursor(FTexture *cursorpic);
 static HCURSOR CreateAlphaCursor(FTexture *cursorpic);
@@ -158,15 +149,9 @@ CVAR (String, queryiwad_key, "shift", CVAR_GLOBALCONFIG|CVAR_ARCHIVE);
 CVAR (Bool, con_debugoutput, false, 0);
 
 double PerfToSec, PerfToMillisec;
-UINT TimerPeriod;
-UINT TimerEventID;
-UINT MillisecondsPerTic;
-HANDLE NewTicArrived;
 uint32_t LanguageIDs[4];
 
-int (*I_GetTime) (bool saveMS);
-int (*I_WaitForTic) (int);
-void (*I_FreezeTime) (bool frozen);
+UINT TimerPeriod;
 
 bool gameisdead;
 
@@ -175,23 +160,11 @@ bool gameisdead;
 static ticcmd_t emptycmd;
 static bool HasExited;
 
-static DWORD basetime = 0;
-// These are for the polled timer.
-static DWORD TicStart;
-static DWORD TicNext;
-static int TicFrozen;
-
-// These are for the event-driven timer.
-static int tics;
-static DWORD ted_start, ted_next;
-
 static WadStuff *WadList;
 static int NumWads;
 static int DefaultWad;
 
 static HCURSOR CustomCursor;
-
-// CODE --------------------------------------------------------------------
 
 //==========================================================================
 //
@@ -220,314 +193,6 @@ void I_Tactile(int on, int off, int total)
 ticcmd_t *I_BaseTiccmd()
 {
 	return &emptycmd;
-}
-
-// Stubs that select the timer to use and then call into it ----------------
-
-//==========================================================================
-//
-// I_GetTimeSelect
-//
-//==========================================================================
-
-static int I_GetTimeSelect(bool saveMS)
-{
-	I_SelectTimer();
-	return I_GetTime(saveMS);
-}
-
-//==========================================================================
-//
-// I_WaitForTicSelect
-//
-//==========================================================================
-
-static int I_WaitForTicSelect(int prevtic)
-{
-	I_SelectTimer();
-	return I_WaitForTic(prevtic);
-}
-
-//==========================================================================
-//
-// I_SelectTimer
-//
-// Tries to create a timer event for efficent CPU use when the FPS is
-// capped. Failing that, it sets things up for a polling timer instead.
-//
-//==========================================================================
-
-static void I_SelectTimer()
-{
-	assert(basetime == 0);
-
-	// Use a timer event if possible.
-	NewTicArrived = CreateEvent(NULL, FALSE, FALSE, NULL);
-	if (NewTicArrived)
-	{
-		UINT delay;
-		const char *cmdDelay;
-
-		cmdDelay = Args->CheckValue("-timerdelay");
-		delay = 0;
-		if (cmdDelay != 0)
-		{
-			delay = atoi(cmdDelay);
-		}
-		if (delay == 0)
-		{
-			delay = 1000/TICRATE;
-		}
-		MillisecondsPerTic = delay;
-		TimerEventID = timeSetEvent(delay, 0, TimerTicked, 0, TIME_PERIODIC);
-	}
-	// Get the current time as the basetime.
-	basetime = timeGetTime();
-	// Set timer functions.
-	if (TimerEventID != 0)
-	{
-		I_GetTime = I_GetTimeEventDriven;
-		I_WaitForTic = I_WaitForTicEvent;
-		I_FreezeTime = I_FreezeTimeEventDriven;
-	}
-	else
-	{
-		I_GetTime = I_GetTimePolled;
-		I_WaitForTic = I_WaitForTicPolled;
-		I_FreezeTime = I_FreezeTimePolled;
-	}
-}
-
-//==========================================================================
-//
-// I_MSTime
-//
-// Returns the current time in milliseconds, where 0 is the first call
-// to I_GetTime or I_WaitForTic.
-//
-//==========================================================================
-
-unsigned int I_MSTime()
-{
-	assert(basetime != 0);
-	return timeGetTime() - basetime;
-}
-
-//==========================================================================
-//
-// I_FPSTime
-//
-// Returns the current system time in milliseconds. This is used by the FPS
-// meter of DFrameBuffer::DrawRateStuff(). Since the screen can display
-// before the play simulation is ready to begin, this needs to be
-// separate from I_MSTime().
-//
-//==========================================================================
-
-unsigned int I_FPSTime()
-{
-	return timeGetTime();
-}
-
-//==========================================================================
-//
-// I_GetTimePolled
-//
-// Returns the current time in tics. If saveMS is true, then calls to
-// I_GetTimeFrac() will use this tic as 0 and the next tic as 1.
-//
-//==========================================================================
-
-static int I_GetTimePolled(bool saveMS)
-{
-	DWORD tm;
-
-	if (TicFrozen != 0)
-	{
-		return TicFrozen;
-	}
-
-	tm = timeGetTime();
-	if (basetime == 0)
-	{
-		basetime = tm;
-	}
-	if (saveMS)
-	{
-		TicStart = tm;
-		TicNext = (tm * TICRATE / 1000 + 1) * 1000 / TICRATE;
-	}
-
-	return ((tm-basetime)*TICRATE)/1000;
-}
-
-//==========================================================================
-//
-// I_WaitForTicPolled
-//
-// Busy waits until the current tic is greater than prevtic. Time must not
-// be frozen.
-//
-//==========================================================================
-
-static int I_WaitForTicPolled(int prevtic)
-{
-	int time;
-
-	assert(TicFrozen == 0);
-	while ((time = I_GetTimePolled(false)) <= prevtic)
-	{ }
-
-	return time;
-}
-
-//==========================================================================
-//
-// I_FreezeTimePolled
-//
-// Freeze/unfreeze the timer.
-//
-//==========================================================================
-
-static void I_FreezeTimePolled(bool frozen)
-{
-	if (frozen)
-	{
-		assert(TicFrozen == 0);
-		TicFrozen = I_GetTimePolled(false);
-	}
-	else
-	{
-		assert(TicFrozen != 0);
-		int froze = TicFrozen;
-		TicFrozen = 0;
-		int now = I_GetTimePolled(false);
-		basetime += (now - froze) * 1000 / TICRATE;
-	}
-}
-
-//==========================================================================
-//
-// I_GetTimeEventDriven
-//
-// Returns the current tick counter. This is incremented asynchronously as
-// the timer event fires.
-//
-//==========================================================================
-
-static int I_GetTimeEventDriven(bool saveMS)
-{
-	if (saveMS)
-	{
-		TicStart = ted_start;
-		TicNext = ted_next;
-	}
-	return tics;
-}
-
-//==========================================================================
-//
-// I_WaitForTicEvent
-//
-// Waits on the timer event as long as the current tic is not later than
-// prevtic.
-//
-//==========================================================================
-
-static int I_WaitForTicEvent(int prevtic)
-{
-	assert(!TicFrozen);
-	while (prevtic >= tics)
-	{
-		WaitForSingleObject(NewTicArrived, 1000/TICRATE);
-	}
-	return tics;
-}
-
-//==========================================================================
-//
-// I_FreezeTimeEventDriven
-//
-// Freeze/unfreeze the ticker.
-//
-//==========================================================================
-
-static void I_FreezeTimeEventDriven(bool frozen)
-{
-	TicFrozen = frozen;
-}
-
-//==========================================================================
-//
-// TimerTicked
-//
-// Advance the tick count and signal the NewTicArrived event.
-//
-//==========================================================================
-
-static void CALLBACK TimerTicked(UINT id, UINT msg, DWORD_PTR user, DWORD_PTR dw1, DWORD_PTR dw2)
-{
-	if (!TicFrozen)
-	{
-		tics++;
-	}
-	ted_start = timeGetTime ();
-	ted_next = ted_start + MillisecondsPerTic;
-	SetEvent(NewTicArrived);
-}
-
-//==========================================================================
-//
-// I_GetTimeFrac
-//
-// Returns the fractional amount of a tic passed since the most recently
-// saved tic.
-//
-//==========================================================================
-static uint32_t FrameTime;
-
-void I_SetFrameTime()
-{
-	FrameTime = timeGetTime();
-}
-
-double I_GetTimeFrac(uint32_t *ms)
-{
-	//DWORD now = MAX<uint32_t>(FrameTime, TicStart);
-	DWORD now = FrameTime;
-	if (FrameTime < TicStart)
-	{
-		// Preliminary kept in to see if this can happen. Should be removed once confirmed ok.
-		Printf("Timer underflow!\n");
-	}
-	if (ms != NULL)
-	{
-		*ms = TicNext;
-	}
-	DWORD step = TicNext - TicStart;
-	if (step == 0)
-	{
-		return 1.;
-	}
-	else
-	{
-		return clamp<double>(double(now - TicStart) / step, 0, 1);
-	}
-}
-
-//==========================================================================
-//
-// I_WaitVBL
-//
-// I_WaitVBL is never used to actually synchronize to the vertical blank.
-// Instead, it's used for delay purposes. Doom used a 70 Hz display mode,
-// so that's what we use to determine how long to wait for.
-//
-//==========================================================================
-
-void I_WaitVBL(int count)
-{
-	Sleep(1000 * count / 70);
 }
 
 //==========================================================================
@@ -736,9 +401,6 @@ void I_Init()
 	CalculateCPUSpeed();
 	DumpCPUInfo(&CPU);
 
-	I_GetTime = I_GetTimeSelect;
-	I_WaitForTic = I_WaitForTicSelect;
-
 	atterm (I_ShutdownSound);
 	I_InitSound ();
 }
@@ -753,15 +415,8 @@ void I_Quit()
 {
 	HasExited = true;		/* Prevent infinitely recursive exits -- killough */
 
-	if (TimerEventID != 0)
-	{
-		timeKillEvent(TimerEventID);
-	}
-	if (NewTicArrived != NULL)
-	{
-		CloseHandle(NewTicArrived);
-	}
 	timeEndPeriod(TimerPeriod);
+
 	if (demorecording)
 	{
 		G_CheckDemoStatus();

@@ -39,6 +39,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "r_utility.h"
+#include "i_time.h"
 //#include "resources/voxels.h"
 //#include "gl/gl_intern.h"
 
@@ -75,7 +76,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	float scaleFactorZ = actor->Scale.Y * smf->zscale;
 	float pitch = 0;
 	float roll = 0;
-	float rotateOffset = 0;
+	double rotateOffset = 0;
 	float angle = actor->Angles.Yaw.Degrees;
 
 	// [BB] Workaround for the missing pitch information.
@@ -101,8 +102,8 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	if (smf->flags & MDL_ROTATING)
 	{
-		const float time = smf->rotationSpeed*GetTimeFloat() / 200.f;
-		rotateOffset = float((time - xs_FloorToInt(time)) *360.f);
+		const double time = smf->rotationSpeed*GetTimeFloat() / 200.;
+		rotateOffset = double((time - xs_FloorToInt(time)) *360.);
 	}
 
 	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.
@@ -224,7 +225,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf,
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
 			if (ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN))
 			{
-				float time = GetTimeFloat();
+				double time = GetTimeFloat();
 				ticFraction = (time - static_cast<int>(time));
 			}
 			inter = static_cast<double>(curState->Tics - curTics - ticFraction) / static_cast<double>(curState->Tics);
@@ -381,9 +382,9 @@ void FGLModelRenderer::DrawElements(int primitiveType, int numIndices, int eleme
 	glDrawElements(primitiveType, numIndices, elementType, (void*)(intptr_t)offset);
 }
 
-float FGLModelRenderer::GetTimeFloat()
+double FGLModelRenderer::GetTimeFloat()
 {
-	return (float)I_MSTime() * (float)TICRATE / 1000.0f;
+	return (float)I_msTime() * (float)TICRATE / 1000.0f;
 }
 
 /////////////////////////////////////////////////////////////////////////////

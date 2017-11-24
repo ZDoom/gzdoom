@@ -57,14 +57,19 @@ typedef enum
 #endif
 #endif
 
-// The maximum number of players, multiplayer/networking.
-#define MAXPLAYERS		8
+// Global constants that were defines.
+enum
+{
+	// The maximum number of players, multiplayer/networking.
+	MAXPLAYERS = 8,
 
-// State updates, number of tics / second.
-#define TICRATE 		35
+	// State updates, number of tics / second.
+	TICRATE = 35,
 
-// Amount of damage done by a telefrag.
-#define TELEFRAG_DAMAGE	1000000
+	// Amount of damage done by a telefrag.
+	TELEFRAG_DAMAGE = 1000000
+};
+
 
 // The current state of the game: whether we are
 // playing, gazing at the intermission screen,
@@ -114,6 +119,7 @@ enum ESkillLevels
 // DOOM keyboard definition. Everything below 0x100 matches
 // a mode 1 keyboard scan code.
 //
+
 #define KEY_PAUSE				0xc5	// DIK_PAUSE
 #define KEY_RIGHTARROW			0xcd	// DIK_RIGHT
 #define KEY_LEFTARROW			0xcb	// DIK_LEFT

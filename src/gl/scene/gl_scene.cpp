@@ -26,6 +26,7 @@
 */
 
 #include "gl/system/gl_system.h"
+#include "i_time.h"
 #include "gi.h"
 #include "m_png.h"
 #include "m_random.h"
@@ -799,8 +800,8 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
 
 	// Scroll the sky
-	GLRenderer->mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;
-	GLRenderer->mSky2Pos = (float)fmod(gl_frameMS * level.skyspeed2, 1024.f) * 90.f/256.f;
+	GLRenderer->mSky1Pos = (double)fmod(screen->FrameTime * level.skyspeed1, 1024.f) * 90./256.;
+	GLRenderer->mSky2Pos = (double)fmod(screen->FrameTime * level.skyspeed2, 1024.f) * 90./256.;
 
 
 
@@ -889,8 +890,7 @@ void FGLRenderer::RenderView (player_t* player)
 
 	// Get this before everything else
 	if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
-	else r_viewpoint.TicFrac = I_GetTimeFrac (&r_viewpoint.FrameTime);
-	gl_frameMS = I_MSTime();
+	else r_viewpoint.TicFrac = I_GetTimeFrac ();
 
 	P_FindParticleSubsectors ();
 

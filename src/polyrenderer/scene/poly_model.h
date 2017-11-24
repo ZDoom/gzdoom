@@ -46,7 +46,7 @@ public:
 	void SetMaterial(FTexture *skin, int clampmode, int translation) override;
 	void DrawArrays(int primitiveType, int start, int count) override;
 	void DrawElements(int primitiveType, int numIndices, int elementType, size_t offset) override;
-	float GetTimeFloat() override;
+	double GetTimeFloat() override;
 
 	PolyRenderThread *Thread = nullptr;
 	const TriMatrix &WorldToClip;

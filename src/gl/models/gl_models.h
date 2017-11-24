@@ -71,7 +71,7 @@ public:
 	virtual void DrawArrays(int primitiveType, int start, int count) = 0;
 	virtual void DrawElements(int primitiveType, int numIndices, int elementType, size_t offset) = 0;
 
-	virtual float GetTimeFloat() = 0;
+	virtual double GetTimeFloat() = 0;
 
 private:
 	void RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, Matrix3x4 *normaltransform, int translation);
@@ -92,7 +92,7 @@ public:
 	void SetMaterial(FTexture *skin, int clampmode, int translation) override;
 	void DrawArrays(int primitiveType, int start, int count) override;
 	void DrawElements(int primitiveType, int numIndices, int elementType, size_t offset) override;
-	float GetTimeFloat() override;
+	double GetTimeFloat() override;
 };
 
 class FModel

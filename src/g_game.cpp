@@ -32,6 +32,7 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
+#include "i_time.h"
 #include "templates.h"
 #include "version.h"
 #include "doomdef.h" 
@@ -92,6 +93,7 @@
 #include "g_hub.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "d_main.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -2887,7 +2889,7 @@ bool G_CheckDemoStatus (void)
 		int endtime = 0;
 
 		if (timingdemo)
-			endtime = I_GetTime (false) - starttime;
+			endtime = I_GetTime () - starttime;
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 		M_Free (demobuffer);

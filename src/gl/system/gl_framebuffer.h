@@ -12,7 +12,6 @@ class FHardwareTexture;
 class FSimpleVertexBuffer;
 class FGLDebug;
 
-extern long gl_frameMS;
 #ifdef _WIN32
 class OpenGLFrameBuffer : public Win32GLFrameBuffer
 {

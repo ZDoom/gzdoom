@@ -35,7 +35,7 @@
 #include "textures/textures.h"
 
 template<class TYPE> 
-void WarpBuffer(TYPE *Pixels, const TYPE *source, int width, int height, int xmul, int ymul, unsigned time, float Speed, int warptype)
+void WarpBuffer(TYPE *Pixels, const TYPE *source, int width, int height, int xmul, int ymul, uint64_t time, float Speed, int warptype)
 {
 	int ymask = height - 1;
 	int x, y;

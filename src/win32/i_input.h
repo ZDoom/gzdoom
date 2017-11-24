@@ -56,6 +56,7 @@ enum
 
 // Don't make these definitions available to the main body of the source code.
 
+
 struct tagRAWINPUT;
 
 class FInputDevice

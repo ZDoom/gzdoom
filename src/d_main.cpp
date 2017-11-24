@@ -51,6 +51,7 @@
 
 #include "doomerrors.h"
 
+#include "i_time.h"
 #include "d_gui.h"
 #include "m_random.h"
 #include "doomdef.h"
@@ -280,7 +281,7 @@ void D_ProcessEvents (void)
 		{
 			M_SetDefaultMode ();
 		}
-		else if (testingmode <= I_GetTime(false))
+		else if (testingmode <= I_GetTime())
 		{
 			M_RestoreMode ();
 		}
@@ -778,9 +779,9 @@ void D_Display ()
 
 
 	{
-		unsigned int nowtime = I_FPSTime();
-		TexMan.UpdateAnimations(nowtime);
-		R_UpdateSky(nowtime);
+		screen->FrameTime = I_msTime();
+		TexMan.UpdateAnimations(screen->FrameTime);
+		R_UpdateSky(screen->FrameTime);
 		switch (gamestate)
 		{
 		case GS_FULLCONSOLE:
@@ -937,14 +938,14 @@ void D_Display ()
 	else
 	{
 		// wipe update
-		unsigned int wipestart, nowtime, diff;
+		uint64_t wipestart, nowtime, diff;
 		bool done;
 
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
 		screen->WipeEndScreen ();
 
-		wipestart = I_MSTime();
+		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation
 
 		do
@@ -952,7 +953,7 @@ void D_Display ()
 			do
 			{
 				I_WaitVBL(2);
-				nowtime = I_MSTime();
+				nowtime = I_msTime();
 				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
 			} while (diff < 1);
 			wipestart = nowtime;

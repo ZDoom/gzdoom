@@ -115,6 +115,7 @@
 #endif
 #include "events.h"
 #include "types.h"
+#include "i_time.h"
 
 #include "fragglescript/t_fs.h"
 
@@ -3626,6 +3627,8 @@ void P_SetupLevel (const char *lumpname, int position)
 	bool buildmap;
 	const int *oldvertextable = NULL;
 
+	level.ShaderStartTime = I_msTime(); // indicate to the shader system that the level just started
+
 	// This is motivated as follows:
 
 	bool RequireGLNodes = Renderer->RequireGLNodes() || am_textured;
@@ -3930,14 +3933,14 @@ void P_SetupLevel (const char *lumpname, int position)
 	}
 	else reloop = true;
 
-	unsigned int startTime=0, endTime=0;
+	uint64_t startTime=0, endTime=0;
 
 	bool BuildGLNodes;
 	if (ForceNodeBuild)
 	{
 		BuildGLNodes = RequireGLNodes || multiplayer || demoplayback || demorecording || genglnodes;
 
-		startTime = I_FPSTime ();
+		startTime = I_msTime ();
 		TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
 		P_GetPolySpots (map, polyspots, anchors);
 		FNodeBuilder::FLevel leveldata =
@@ -3953,7 +3956,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		// if the different machines' am_textured setting differs.
 		FNodeBuilder builder (leveldata, polyspots, anchors, BuildGLNodes);
 		builder.Extract (level);
-		endTime = I_FPSTime ();
+		endTime = I_msTime ();
 		DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
 		oldvertextable = builder.GetOldVertexTable();
 		reloop = true;
@@ -3987,7 +3990,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		// If the original nodes being loaded are not GL nodes they will be kept around for
 		// use in P_PointInSubsector to avoid problems with maps that depend on the specific
 		// nodes they were built with (P:AR E1M3 is a good example for a map where this is the case.)
-		reloop |= P_CheckNodes(map, BuildGLNodes, endTime - startTime);
+		reloop |= P_CheckNodes(map, BuildGLNodes, (uint32_t)(endTime - startTime));
 		hasglnodes = true;
 	}
 	else

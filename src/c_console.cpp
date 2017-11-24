@@ -69,6 +69,7 @@
 #include "c_consolebuffer.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "i_time.h"
 
 FString FStringFormat(VM_ARGS); // extern from thingdef_data.cpp
 
@@ -528,7 +529,7 @@ static void maybedrawnow (bool tick, bool force)
 		|| gamestate == GS_STARTUP))
 	{
 		static size_t lastprinttime = 0;
-		size_t nowtime = I_GetTime(false);
+		size_t nowtime = I_GetTime();
 
 		if (nowtime - lastprinttime > 1 || force)
 		{

@@ -67,6 +67,8 @@ struct FLevelLocals
 	FString		F1Pic;
 	EMapType	maptype;
 
+	uint64_t	ShaderStartTime = 0;	// tell the shader system when we started the level (forces a timer restart)
+
 	TArray<vertex_t> vertexes;
 	TArray<sector_t> sectors;
 	TArray<line_t*> linebuffer;	// contains the line lists for the sectors.

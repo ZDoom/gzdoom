@@ -663,14 +663,8 @@ FTextureID LoadSkin(const char * path, const char * fn)
 	buffer.Format("%s%s", path, fn);
 
 	int texlump = FindGFXFile(buffer);
-	if (texlump>=0)
-	{
-		return TexMan.CheckForTexture(Wads.GetLumpFullName(texlump), FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
-	}
-	else 
-	{
-		return FNullTextureID();
-	}
+	const char * const texname = texlump < 0 ? fn : Wads.GetLumpFullName(texlump);
+	return TexMan.CheckForTexture(texname, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
 }
 
 //===========================================================================

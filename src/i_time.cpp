@@ -132,7 +132,7 @@ int I_WaitForTic(int prevtic)
 	{
 		// The minimum amount of time a thread can sleep is controlled by timeBeginPeriod.
 		// We set this to 1 ms in DoMain.
-		int sleepTime = prevtic - time;
+		uint64_t sleepTime = NSToMS(FirstFrameStartTime + TicToNS(prevtic + 1) - I_nsTime());
 		if (sleepTime > 2)
 			std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime - 2));
 
@@ -154,7 +154,7 @@ uint64_t I_msTime()
 
 int I_GetTime()
 {
-	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime) + 1;
+	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime);
 }
 
 double I_GetTimeFrac()

@@ -384,7 +384,7 @@ void FGLModelRenderer::DrawElements(int primitiveType, int numIndices, int eleme
 
 float FGLModelRenderer::GetTimeFloat()
 {
-	return (float)I_MSTime() * (float)TICRATE / 1000.0f;
+	return (float)I_msTime() * (float)TICRATE / 1000.0f;
 }
 
 /////////////////////////////////////////////////////////////////////////////

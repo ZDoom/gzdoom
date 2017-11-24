@@ -119,6 +119,8 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
 
+	swrenderer::R_UpdateFuzzPosFrameStart();
+
 	if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
 	else NormalLight.Maps = realcolormaps.Maps + NUMCOLORMAPS * 256 * R_OldBlend;
 
@@ -206,12 +208,12 @@ void PolyRenderer::SetupPerspectiveMatrix()
 	float fovratio = (Viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(Viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
 
-	TriMatrix worldToView =
+	WorldToView =
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
 		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
 		TriMatrix::swapYZ() *
 		TriMatrix::translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
 
-	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
+	WorldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * WorldToView;
 }

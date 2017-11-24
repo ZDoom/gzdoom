@@ -29,6 +29,7 @@
 #include "polyrenderer/poly_renderer.h"
 #include "d_player.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/scene/poly_model.h"
 
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
@@ -39,6 +40,10 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 {
 	// This code cannot be moved directly to RenderRemainingSprites because the engine
 	// draws the canvas textures between this call and the final call to RenderRemainingSprites..
+	//
+	// We also can't move it because the model render code relies on it
+
+	renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -242,6 +247,12 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 	{
 		sx += wx;
 		sy += wy;
+	}
+
+	if (renderHUDModel)
+	{
+		PolyRenderHUDModel(thread, PolyRenderer::Instance()->WorldToClip, PolyClipPlane(), 1, pspr, (float)sx, (float)sy);
+		return;
 	}
 
 	double yaspectMul = 1.2 * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;

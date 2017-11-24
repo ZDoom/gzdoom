@@ -193,9 +193,9 @@ namespace swrenderer
 
 	void R_UpdateFuzzPosFrameStart()
 	{
-		if (r_fuzzscale)
+		if (r_fuzzscale || r_polyrenderer)
 		{
-			int next_random = 0;
+			static int next_random = 0;
 
 			fuzzpos = (fuzzpos + fuzz_random_x_offset[next_random] * FUZZTABLE / 100) % FUZZTABLE;
 
@@ -207,7 +207,7 @@ namespace swrenderer
 
 	void R_UpdateFuzzPos(const SpriteDrawerArgs &args)
 	{
-		if (!r_fuzzscale)
+		if (!r_fuzzscale && !r_polyrenderer)
 		{
 			int yl = MAX(args.FuzzY1(), 1);
 			int yh = MIN(args.FuzzY2(), fuzzviewheight);

@@ -35,8 +35,6 @@
 
 #define MAX_QPATH 64
 
-extern int modellightindex;
-
 //===========================================================================
 //
 // decode the lat/lng normal to a 3 float normal
@@ -240,7 +238,7 @@ void FMD3Model::LoadGeometry()
 //
 //===========================================================================
 
-void FMD3Model::BuildVertexBuffer()
+void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 {
 	if (mVBuf == nullptr)
 	{
@@ -256,7 +254,7 @@ void FMD3Model::BuildVertexBuffer()
 			ibufsize += 3 * surf->numTriangles;
 		}
 
-		mVBuf = new FModelVertexBuffer(true, numFrames == 1);
+		mVBuf = renderer->CreateVertexBuffer(true, numFrames == 1);
 		FModelVertex *vertptr = mVBuf->LockVertexBuffer(vbufsize);
 		unsigned int *indxptr = mVBuf->LockIndexBuffer(ibufsize);
 
@@ -343,11 +341,11 @@ int FMD3Model::FindFrame(const char * name)
 //
 //===========================================================================
 
-void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double inter, int translation)
+void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	if (frameno>=numFrames || frameno2>=numFrames) return;
 
-	gl_RenderState.SetInterpolationFactor((float)inter);
+	renderer->SetInterpolation(inter);
 	for(int i=0;i<numSurfaces;i++)
 	{
 		MD3Surface * surf = &surfaces[i];
@@ -369,16 +367,11 @@ void FMD3Model::RenderFrame(FTexture * skin, int frameno, int frameno2, double i
 			if (!surfaceSkin) return;
 		}
 
-		FMaterial * tex = FMaterial::ValidateTexture(surfaceSkin, false);
-
-		gl_RenderState.SetMaterial(tex, CLAMP_NONE, translation, -1, false);
-
-		gl_RenderState.Apply();
-		if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);
-		mVBuf->SetupFrame(surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, surf->numVertices);
-		glDrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, (void*)(intptr_t)(surf->iindex * sizeof(unsigned int)));
+		renderer->SetMaterial(surfaceSkin, CLAMP_NONE, translation);
+		mVBuf->SetupFrame(renderer, surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, surf->numVertices);
+		renderer->DrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, surf->iindex * sizeof(unsigned int));
 	}
-	gl_RenderState.SetInterpolationFactor(0.f);
+	renderer->SetInterpolation(0.f);
 }
 
 //===========================================================================

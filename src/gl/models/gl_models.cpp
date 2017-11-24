@@ -53,11 +53,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 
-static inline double GetTimeFloat()
-{
-	return (double)screen->FrameTime * (double)TICRATE / 1000.;
-}
-
 CVAR(Bool, gl_interpolate_model_frames, true, CVAR_ARCHIVE)
 CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
 EXTERN_CVAR(Int, gl_fogmode)
@@ -67,6 +62,332 @@ extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
 DeletingModelArray Models;
 
+void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)
+{
+	// Setup transformation.
+
+	int translation = 0;
+	if (!(smf->flags & MDL_IGNORETRANSLATION))
+		translation = actor->Translation;
+
+	// y scale for a sprite means height, i.e. z in the world!
+	float scaleFactorX = actor->Scale.X * smf->xscale;
+	float scaleFactorY = actor->Scale.X * smf->yscale;
+	float scaleFactorZ = actor->Scale.Y * smf->zscale;
+	float pitch = 0;
+	float roll = 0;
+	float rotateOffset = 0;
+	float angle = actor->Angles.Yaw.Degrees;
+
+	// [BB] Workaround for the missing pitch information.
+	if ((smf->flags & MDL_PITCHFROMMOMENTUM))
+	{
+		const double x = actor->Vel.X;
+		const double y = actor->Vel.Y;
+		const double z = actor->Vel.Z;
+
+		if (actor->Vel.LengthSquared() > EQUAL_EPSILON)
+		{
+			// [BB] Calculate the pitch using spherical coordinates.
+			if (z || x || y) pitch = float(atan(z / sqrt(x*x + y*y)) / M_PI * 180);
+
+			// Correcting pitch if model is moving backwards
+			if (fabs(x) > EQUAL_EPSILON || fabs(y) > EQUAL_EPSILON)
+			{
+				if ((x * cos(angle * M_PI / 180) + y * sin(angle * M_PI / 180)) / sqrt(x * x + y * y) < 0) pitch *= -1;
+			}
+			else pitch = fabs(pitch);
+		}
+	}
+
+	if (smf->flags & MDL_ROTATING)
+	{
+		const float time = smf->rotationSpeed*GetTimeFloat() / 200.f;
+		rotateOffset = float((time - xs_FloorToInt(time)) *360.f);
+	}
+
+	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.
+	// If both flags MDL_USEACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the velocity vector pitch.
+	if (smf->flags & MDL_USEACTORPITCH)
+	{
+		double d = actor->Angles.Pitch.Degrees;
+		if (smf->flags & MDL_BADROTATION) pitch += d;
+		else pitch -= d;
+	}
+	if (smf->flags & MDL_USEACTORROLL) roll += actor->Angles.Roll.Degrees;
+
+	VSMatrix objectToWorldMatrix;
+	objectToWorldMatrix.loadIdentity();
+
+	// Model space => World space
+	objectToWorldMatrix.translate(x, z, y);
+
+	// [Nash] take SpriteRotation into account
+	angle += actor->SpriteRotation.Degrees;
+
+	if (actor->renderflags & RF_INTERPOLATEANGLES)
+	{
+		// [Nash] use interpolated angles
+		DRotator Angles = actor->InterpolatedAngles(r_viewpoint.TicFrac);
+		angle = Angles.Yaw.Degrees;
+	}
+
+	// Applying model transformations:
+	// 1) Applying actor angle, pitch and roll to the model
+	objectToWorldMatrix.rotate(-angle, 0, 1, 0);
+	objectToWorldMatrix.rotate(pitch, 0, 0, 1);
+	objectToWorldMatrix.rotate(-roll, 1, 0, 0);
+
+	// 2) Applying Doomsday like rotation of the weapon pickup models
+	// The rotation angle is based on the elapsed time.
+
+	if (smf->flags & MDL_ROTATING)
+	{
+		objectToWorldMatrix.translate(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
+		objectToWorldMatrix.rotate(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
+		objectToWorldMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
+	}
+
+	// 3) Scaling model.
+	objectToWorldMatrix.scale(scaleFactorX, scaleFactorZ, scaleFactorY);
+
+	// 4) Aplying model offsets (model offsets do not depend on model scalings).
+	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+
+	// 5) Applying model rotations.
+	objectToWorldMatrix.rotate(-smf->angleoffset, 0, 1, 0);
+	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
+	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
+
+	// consider the pixel stretching. For non-voxels this must be factored out here
+	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor() : 1.f) / level.info->pixelstretch;
+	objectToWorldMatrix.scale(1, stretch, 1);
+
+	BeginDrawModel(actor, smf, objectToWorldMatrix);
+	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), nullptr, translation);
+	EndDrawModel(actor, smf);
+}
+
+void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
+{
+	AActor * playermo = players[consoleplayer].camera;
+	FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
+
+	// [BB] No model found for this sprite, so we can't render anything.
+	if (smf == nullptr)
+		return;
+
+	// The model position and orientation has to be drawn independently from the position of the player,
+	// but we need to position it correctly in the world for light to work properly.
+	VSMatrix objectToWorldMatrix = GetViewToWorldMatrix();
+
+	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
+	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
+
+	// Aplying model offsets (model offsets do not depend on model scalings).
+	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
+
+	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
+	objectToWorldMatrix.rotate(ofsX / 4, 0, 1, 0);
+	objectToWorldMatrix.rotate((ofsY - WEAPONTOP) / -4., 1, 0, 0);
+
+	// [BB] For some reason the jDoom models need to be rotated.
+	objectToWorldMatrix.rotate(90.f, 0, 1, 0);
+
+	// Applying angleoffset, pitchoffset, rolloffset.
+	objectToWorldMatrix.rotate(-smf->angleoffset, 0, 1, 0);
+	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
+	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
+
+	BeginDrawHUDModel(playermo, objectToWorldMatrix);
+	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), nullptr, 0);
+	EndDrawHUDModel(playermo);
+}
+
+void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf,
+	const FState *curState,
+	const int curTics,
+	const PClass *ti,
+	Matrix3x4 *normaltransform,
+	int translation)
+{
+	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
+	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
+	FSpriteModelFrame * smfNext = nullptr;
+	double inter = 0.;
+	if (gl_interpolate_model_frames && !(smf->flags & MDL_NOINTERPOLATION))
+	{
+		FState *nextState = curState->GetNextState();
+		if (curState != nextState && nextState)
+		{
+			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
+			float ticFraction = 0.;
+			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
+			if (ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN))
+			{
+				float time = GetTimeFloat();
+				ticFraction = (time - static_cast<int>(time));
+			}
+			inter = static_cast<double>(curState->Tics - curTics - ticFraction) / static_cast<double>(curState->Tics);
+
+			// [BB] For some actors (e.g. ZPoisonShroom) spr->actor->tics can be bigger than curState->Tics.
+			// In this case inter is negative and we need to set it to zero.
+			if (inter < 0.)
+				inter = 0.;
+			else
+			{
+				// [BB] Workaround for actors that use the same frame twice in a row.
+				// Most of the standard Doom monsters do this in their see state.
+				if ((smf->flags & MDL_INTERPOLATEDOUBLEDFRAMES))
+				{
+					const FState *prevState = curState - 1;
+					if ((curState->sprite == prevState->sprite) && (curState->Frame == prevState->Frame))
+					{
+						inter /= 2.;
+						inter += 0.5;
+					}
+					if ((curState->sprite == nextState->sprite) && (curState->Frame == nextState->Frame))
+					{
+						inter /= 2.;
+						nextState = nextState->GetNextState();
+					}
+				}
+				if (inter != 0.0)
+					smfNext = gl_FindModelFrame(ti, nextState->sprite, nextState->Frame, false);
+			}
+		}
+	}
+
+	for (int i = 0; i<MAX_MODELS_PER_FRAME; i++)
+	{
+		if (smf->modelIDs[i] != -1)
+		{
+			FModel * mdl = Models[smf->modelIDs[i]];
+			FTexture *tex = smf->skinIDs[i].isValid() ? TexMan(smf->skinIDs[i]) : nullptr;
+			mdl->BuildVertexBuffer(this);
+			SetVertexBuffer(mdl->mVBuf);
+
+			mdl->PushSpriteMDLFrame(smf, i);
+
+			if (smfNext && smf->modelframes[i] != smfNext->modelframes[i])
+				mdl->RenderFrame(this, tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);
+			else
+				mdl->RenderFrame(this, tex, smf->modelframes[i], smf->modelframes[i], 0.f, translation);
+
+			ResetVertexBuffer();
+		}
+	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+extern int modellightindex;
+
+VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
+{
+	VSMatrix objectToWorldMatrix;
+	gl_RenderState.mViewMatrix.inverseMatrix(objectToWorldMatrix);
+	return objectToWorldMatrix;
+}
+
+void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)
+{
+	glDepthFunc(GL_LEQUAL);
+	gl_RenderState.EnableTexture(true);
+	// [BB] In case the model should be rendered translucent, do back face culling.
+	// This solves a few of the problems caused by the lack of depth sorting.
+	// [Nash] Don't do back face culling if explicitly specified in MODELDEF
+	// TO-DO: Implement proper depth sorting.
+	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
+	{
+		glEnable(GL_CULL_FACE);
+		glFrontFace(GL_CW);
+	}
+
+	gl_RenderState.mModelMatrix = objectToWorldMatrix;
+	gl_RenderState.EnableModelMatrix(true);
+}
+
+void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
+{
+	gl_RenderState.EnableModelMatrix(false);
+
+	glDepthFunc(GL_LESS);
+	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
+		glDisable(GL_CULL_FACE);
+}
+
+void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix)
+{
+	glDepthFunc(GL_LEQUAL);
+
+	// [BB] In case the model should be rendered translucent, do back face culling.
+	// This solves a few of the problems caused by the lack of depth sorting.
+	// TO-DO: Implement proper depth sorting.
+	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
+	{
+		glEnable(GL_CULL_FACE);
+		glFrontFace(GL_CCW);
+	}
+
+	gl_RenderState.mModelMatrix = objectToWorldMatrix;
+	gl_RenderState.EnableModelMatrix(true);
+}
+
+void FGLModelRenderer::EndDrawHUDModel(AActor *actor)
+{
+	gl_RenderState.EnableModelMatrix(false);
+
+	glDepthFunc(GL_LESS);
+	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
+		glDisable(GL_CULL_FACE);
+}
+
+IModelVertexBuffer *FGLModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
+{
+	return new FModelVertexBuffer(needindex, singleframe);
+}
+
+void FGLModelRenderer::SetVertexBuffer(IModelVertexBuffer *buffer)
+{
+	gl_RenderState.SetVertexBuffer((FModelVertexBuffer*)buffer);
+}
+
+void FGLModelRenderer::ResetVertexBuffer()
+{
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
+}
+
+void FGLModelRenderer::SetInterpolation(double inter)
+{
+	gl_RenderState.SetInterpolationFactor((float)inter);
+}
+
+void FGLModelRenderer::SetMaterial(FTexture *skin, int clampmode, int translation)
+{
+	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
+	gl_RenderState.SetMaterial(tex, clampmode, translation, -1, false);
+
+	gl_RenderState.Apply();
+	if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);
+}
+
+void FGLModelRenderer::DrawArrays(int primitiveType, int start, int count)
+{
+	glDrawArrays(primitiveType, start, count);
+}
+
+void FGLModelRenderer::DrawElements(int primitiveType, int numIndices, int elementType, size_t offset)
+{
+	glDrawElements(primitiveType, numIndices, elementType, (void*)(intptr_t)offset);
+}
+
+float FGLModelRenderer::GetTimeFloat()
+{
+	return (float)I_MSTime() * (float)TICRATE / 1000.0f;
+}
+
+/////////////////////////////////////////////////////////////////////////////
 
 void gl_LoadModels()
 {
@@ -239,7 +560,7 @@ void FModelVertexBuffer::UnlockIndexBuffer()
 //===========================================================================
 static TArray<FModelVertex> iBuffer;
 
-unsigned int FModelVertexBuffer::SetupFrame(unsigned int frame1, unsigned int frame2, unsigned int size)
+void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	if (vbo_id > 0)
@@ -277,7 +598,6 @@ unsigned int FModelVertexBuffer::SetupFrame(unsigned int frame1, unsigned int fr
 			iBuffer[i].z = vbo_ptr[frame1 + i].z * (1.f - frac) + vbo_ptr[frame2 + i].z * frac;
 		}
 	}
-	return frame1;
 }
 
 //===========================================================================
@@ -869,206 +1189,11 @@ FSpriteModelFrame * gl_FindModelFrame(const PClass * ti, int sprite, int frame, 
 //
 //===========================================================================
 
-void gl_RenderFrameModels( const FSpriteModelFrame *smf,
-						   const FState *curState,
-						   const int curTics,
-						   const PClass *ti,
-						   Matrix3x4 *normaltransform,
-						   int translation)
-{
-	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
-	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
-	FSpriteModelFrame * smfNext = nullptr;
-	double inter = 0.;
-	if( gl_interpolate_model_frames && !(smf->flags & MDL_NOINTERPOLATION) )
-	{
-		FState *nextState = curState->GetNextState( );
-		if( curState != nextState && nextState )
-		{
-			// [BB] To interpolate at more than 35 fps we take tic fractions into account.
-			float ticFraction = 0.;
-			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
-			if ( ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN) )
-			{
-				double time = GetTimeFloat();
-				ticFraction = (time - static_cast<int>(time));
-			}
-			inter = static_cast<double>(curState->Tics - curTics - ticFraction)/static_cast<double>(curState->Tics);
-
-			// [BB] For some actors (e.g. ZPoisonShroom) spr->actor->tics can be bigger than curState->Tics.
-			// In this case inter is negative and we need to set it to zero.
-			if ( inter < 0. )
-				inter = 0.;
-			else
-			{
-				// [BB] Workaround for actors that use the same frame twice in a row.
-				// Most of the standard Doom monsters do this in their see state.
-				if ( (smf->flags & MDL_INTERPOLATEDOUBLEDFRAMES) )
-				{
-					const FState *prevState = curState - 1;
-					if ( (curState->sprite == prevState->sprite) && ( curState->Frame == prevState->Frame) )
-					{
-						inter /= 2.;
-						inter += 0.5;
-					}
-					if ( (curState->sprite == nextState->sprite) && ( curState->Frame == nextState->Frame) )
-					{
-						inter /= 2.;
-						nextState = nextState->GetNextState( );
-					}
-				}
-				if ( inter != 0.0 )
-					smfNext = gl_FindModelFrame(ti, nextState->sprite, nextState->Frame, false);
-			}
-		}
-	}
-
-	for(int i=0; i<MAX_MODELS_PER_FRAME; i++)
-	{
-		if (smf->modelIDs[i] != -1)
-		{
-			FModel * mdl = Models[smf->modelIDs[i]];
-			FTexture *tex = smf->skinIDs[i].isValid()? TexMan(smf->skinIDs[i]) : nullptr;
-			mdl->BuildVertexBuffer();
-			gl_RenderState.SetVertexBuffer(mdl->mVBuf);
-
-			mdl->PushSpriteMDLFrame(smf, i);
-
-			if ( smfNext && smf->modelframes[i] != smfNext->modelframes[i] )
-				mdl->RenderFrame(tex, smf->modelframes[i], smfNext->modelframes[i], inter, translation);
-			else
-				mdl->RenderFrame(tex, smf->modelframes[i], smf->modelframes[i], 0.f, translation);
-
-			gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-		}
-	}
-}
-
 void gl_RenderModel(GLSprite * spr)
 {
-	FSpriteModelFrame * smf = spr->modelframe;
-
-
-	// Setup transformation.
-	glDepthFunc(GL_LEQUAL);
-	gl_RenderState.EnableTexture(true);
-	// [BB] In case the model should be rendered translucent, do back face culling.
-	// This solves a few of the problems caused by the lack of depth sorting.
-	// [Nash] Don't do back face culling if explicitly specified in MODELDEF
-	// TO-DO: Implement proper depth sorting.
-	if (!(spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
-	{
-		glEnable(GL_CULL_FACE);
-		glFrontFace(GL_CW);
-	}
-
-	int translation = 0;
-	if ( !(smf->flags & MDL_IGNORETRANSLATION) )
-		translation = spr->actor->Translation;
-
-
-	// y scale for a sprite means height, i.e. z in the world!
-	float scaleFactorX = spr->actor->Scale.X * smf->xscale;
-	float scaleFactorY = spr->actor->Scale.X * smf->yscale;
-	float scaleFactorZ = spr->actor->Scale.Y * smf->zscale;
-	float pitch = 0;
-	float roll = 0;
-	float rotateOffset = 0;
-	float angle = spr->actor->Angles.Yaw.Degrees;
-
-	// [BB] Workaround for the missing pitch information.
-	if ( (smf->flags & MDL_PITCHFROMMOMENTUM) )
-	{
-		const double x = spr->actor->Vel.X;
-		const double y = spr->actor->Vel.Y;
-		const double z = spr->actor->Vel.Z;
-
-		if (spr->actor->Vel.LengthSquared() > EQUAL_EPSILON)
-		{
-			// [BB] Calculate the pitch using spherical coordinates.
-			if (z || x || y) pitch = float(atan(z / sqrt(x*x + y*y)) / M_PI * 180);
-
-			// Correcting pitch if model is moving backwards
-			if (fabs(x) > EQUAL_EPSILON || fabs(y) > EQUAL_EPSILON)
-			{
-				if ((x * cos(angle * M_PI / 180) + y * sin(angle * M_PI / 180)) / sqrt(x * x + y * y) < 0) pitch *= -1;
-			}
-			else pitch = fabs(pitch);
-		}
-	}
-
-	if( smf->flags & MDL_ROTATING )
-	{
-		const double time = smf->rotationSpeed*GetTimeFloat()/200.;
-		rotateOffset = double((time - xs_FloorToInt(time)) *360. );
-	}
-
-	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.
-	// If both flags MDL_USEACTORPITCH and MDL_PITCHFROMMOMENTUM are set, the pitch sums up the actor pitch and the velocity vector pitch.
-	if (smf->flags & MDL_USEACTORPITCH)
-	{
-		double d = spr->actor->Angles.Pitch.Degrees;
-		if (smf->flags & MDL_BADROTATION) pitch += d;
-		else pitch -= d;
-	}
-	if(smf->flags & MDL_USEACTORROLL) roll += spr->actor->Angles.Roll.Degrees;
-
-	gl_RenderState.mModelMatrix.loadIdentity();
-
-	// Model space => World space
-	gl_RenderState.mModelMatrix.translate(spr->x, spr->z, spr->y );	
-
-	// [Nash] take SpriteRotation into account
-	angle += spr->actor->SpriteRotation.Degrees;
-
-	if (spr->actor->renderflags & RF_INTERPOLATEANGLES)
-	{
-		// [Nash] use interpolated angles
-		DRotator Angles = spr->actor->InterpolatedAngles(r_viewpoint.TicFrac);
-		angle = Angles.Yaw.Degrees;
-	}
-	
-	// Applying model transformations:
-	// 1) Applying actor angle, pitch and roll to the model
-	gl_RenderState.mModelMatrix.rotate(-angle, 0, 1, 0);
-	gl_RenderState.mModelMatrix.rotate(pitch, 0, 0, 1);
-	gl_RenderState.mModelMatrix.rotate(-roll, 1, 0, 0);
-	
-	// 2) Applying Doomsday like rotation of the weapon pickup models
-	// The rotation angle is based on the elapsed time.
-	
-	if( smf->flags & MDL_ROTATING )
-	{
-		gl_RenderState.mModelMatrix.translate(smf->rotationCenterX, smf->rotationCenterY, smf->rotationCenterZ);
-		gl_RenderState.mModelMatrix.rotate(rotateOffset, smf->xrotate, smf->yrotate, smf->zrotate);
-		gl_RenderState.mModelMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterY, -smf->rotationCenterZ);
-	}
-
-	// 3) Scaling model.
-	gl_RenderState.mModelMatrix.scale(scaleFactorX, scaleFactorZ, scaleFactorY);
-
-	// 4) Aplying model offsets (model offsets do not depend on model scalings).
-	gl_RenderState.mModelMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
-	
-	// 5) Applying model rotations.
-	gl_RenderState.mModelMatrix.rotate(-smf->angleoffset, 0, 1, 0);
-	gl_RenderState.mModelMatrix.rotate(smf->pitchoffset, 0, 0, 1);
-	gl_RenderState.mModelMatrix.rotate(-smf->rolloffset, 1, 0, 0);
-
-	// consider the pixel stretching. For non-voxels this must be factored out here
-	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor() : 1.f) / level.info->pixelstretch;
-	gl_RenderState.mModelMatrix.scale(1, stretch, 1);
-
-
-	gl_RenderState.EnableModelMatrix(true);
-	gl_RenderFrameModels( smf, spr->actor->state, spr->actor->tics, spr->actor->GetClass(), nullptr, translation );
-	gl_RenderState.EnableModelMatrix(false);
-
-	glDepthFunc(GL_LESS);
-	if (!( spr->actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
-		glDisable(GL_CULL_FACE);
+	FGLModelRenderer renderer;
+	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor);
 }
-
 
 //===========================================================================
 //
@@ -1078,55 +1203,8 @@ void gl_RenderModel(GLSprite * spr)
 
 void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 {
-	AActor * playermo=players[consoleplayer].camera;
-	FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
-
-	// [BB] No model found for this sprite, so we can't render anything.
-	if ( smf == nullptr )
-		return;
-
-	glDepthFunc(GL_LEQUAL);
-
-	// [BB] In case the model should be rendered translucent, do back face culling.
-	// This solves a few of the problems caused by the lack of depth sorting.
-	// TO-DO: Implement proper depth sorting.
-	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
-	{
-		glEnable(GL_CULL_FACE);
-		glFrontFace(GL_CCW);
-	}
-
-	// The model position and orientation has to be drawn independently from the position of the player,
-	// but we need to position it correctly in the world for light to work properly.
-	VSMatrix objectToWorldMatrix;
-	gl_RenderState.mViewMatrix.inverseMatrix(objectToWorldMatrix);
-
-	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
-	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
-	
-	// Aplying model offsets (model offsets do not depend on model scalings).
-	objectToWorldMatrix.translate(smf->xoffset / smf->xscale, smf->zoffset / smf->zscale, smf->yoffset / smf->yscale);
-
-	// [BB] Weapon bob, very similar to the normal Doom weapon bob.
-	objectToWorldMatrix.rotate(ofsX/4, 0, 1, 0);
-	objectToWorldMatrix.rotate((ofsY-WEAPONTOP)/-4., 1, 0, 0);
-
-	// [BB] For some reason the jDoom models need to be rotated.
-	objectToWorldMatrix.rotate(90.f, 0, 1, 0);
-
-	// Applying angleoffset, pitchoffset, rolloffset.
-	objectToWorldMatrix.rotate(-smf->angleoffset, 0, 1, 0);
-	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
-	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
-
-	gl_RenderState.mModelMatrix = objectToWorldMatrix;
-	gl_RenderState.EnableModelMatrix(true);
-	gl_RenderFrameModels( smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), nullptr, 0 );
-	gl_RenderState.EnableModelMatrix(false);
-
-	glDepthFunc(GL_LESS);
-	if (!( playermo->RenderStyle == LegacyRenderStyles[STYLE_Normal] ))
-		glDisable(GL_CULL_FACE);
+	FGLModelRenderer renderer;
+	renderer.RenderHUDModel(psp, ofsX, ofsY);
 }
 
 //===========================================================================

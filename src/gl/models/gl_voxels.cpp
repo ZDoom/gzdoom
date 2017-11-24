@@ -50,8 +50,6 @@
 #include "gl/utility/gl_convert.h"
 #include "gl/renderer/gl_renderstate.h"
 
-extern int modellightindex;
-
 //===========================================================================
 //
 // Creates a 16x16 texture from the palette so that we can
@@ -364,13 +362,13 @@ void FVoxelModel::Initialize()
 //
 //===========================================================================
 
-void FVoxelModel::BuildVertexBuffer()
+void FVoxelModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
 	if (mVBuf == NULL)
 	{
 		Initialize();
 
-		mVBuf = new FModelVertexBuffer(true, true);
+		mVBuf = renderer->CreateVertexBuffer(true, true);
 		FModelVertex *vertptr = mVBuf->LockVertexBuffer(mVertices.Size());
 		unsigned int *indxptr = mVBuf->LockIndexBuffer(mIndices.Size());
 
@@ -440,14 +438,10 @@ float FVoxelModel::getAspectFactor()
 //
 //===========================================================================
 
-void FVoxelModel::RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation)
+void FVoxelModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation)
 {
-	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
-	gl_RenderState.SetMaterial(tex, CLAMP_NOFILTER, translation, -1, false);
-
-	gl_RenderState.Apply();
-	if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);
-	mVBuf->SetupFrame(0, 0, 0);
-	glDrawElements(GL_TRIANGLES, mNumIndices, GL_UNSIGNED_INT, (void*)(intptr_t)0);
+	renderer->SetMaterial(skin, CLAMP_NOFILTER, translation);
+	mVBuf->SetupFrame(renderer, 0, 0, 0);
+	renderer->DrawElements(GL_TRIANGLES, mNumIndices, GL_UNSIGNED_INT, 0);
 }
 

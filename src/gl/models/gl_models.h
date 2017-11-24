@@ -45,6 +45,56 @@ FTextureID LoadSkin(const char * path, const char * fn);
 // [JM] Necessary forward declaration
 typedef struct FSpriteModelFrame FSpriteModelFrame;
 
+class FModelRenderer
+{
+public:
+	virtual ~FModelRenderer() { }
+
+	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor);
+	void RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
+
+	virtual void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) = 0;
+	virtual void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) = 0;
+
+	virtual IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) = 0;
+
+	virtual void SetVertexBuffer(IModelVertexBuffer *buffer) = 0;
+	virtual void ResetVertexBuffer() = 0;
+
+	virtual VSMatrix GetViewToWorldMatrix() = 0;
+
+	virtual void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix) = 0;
+	virtual void EndDrawHUDModel(AActor *actor) = 0;
+
+	virtual void SetInterpolation(double interpolation) = 0;
+	virtual void SetMaterial(FTexture *skin, int clampmode, int translation) = 0;
+	virtual void DrawArrays(int primitiveType, int start, int count) = 0;
+	virtual void DrawElements(int primitiveType, int numIndices, int elementType, size_t offset) = 0;
+
+	virtual float GetTimeFloat() = 0;
+
+private:
+	void RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, Matrix3x4 *normaltransform, int translation);
+};
+
+class FGLModelRenderer : public FModelRenderer
+{
+public:
+	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) override;
+	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
+	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
+	void SetVertexBuffer(IModelVertexBuffer *buffer) override;
+	void ResetVertexBuffer() override;
+	VSMatrix GetViewToWorldMatrix() override;
+	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix) override;
+	void EndDrawHUDModel(AActor *actor) override;
+	void SetInterpolation(double interpolation) override;
+	void SetMaterial(FTexture *skin, int clampmode, int translation) override;
+	void DrawArrays(int primitiveType, int start, int count) override;
+	void DrawElements(int primitiveType, int numIndices, int elementType, size_t offset) override;
+	float GetTimeFloat() override;
+};
+
 class FModel
 {
 public:
@@ -57,8 +107,8 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
 	virtual int FindFrame(const char * name) = 0;
-	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
-	virtual void BuildVertexBuffer() = 0;
+	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
+	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist) = 0;
 	void DestroyVertexBuffer()
 	{
@@ -71,7 +121,7 @@ public:
 	int curMDLIndex;
 	void PushSpriteMDLFrame(const FSpriteModelFrame *smf, int index) { curSpriteMDLFrame = smf; curMDLIndex = index; };
 
-	FModelVertexBuffer *mVBuf;
+	IModelVertexBuffer *mVBuf;
 	FString mFileName;
 };
 
@@ -183,12 +233,12 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	virtual void LoadGeometry();
 	virtual void AddSkins(uint8_t *hitlist);
 
 	void UnloadGeometry();
-	void BuildVertexBuffer();
+	void BuildVertexBuffer(FModelRenderer *renderer);
 
 };
 
@@ -289,9 +339,9 @@ public:
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	void LoadGeometry();
-	void BuildVertexBuffer();
+	void BuildVertexBuffer(FModelRenderer *renderer);
 	virtual void AddSkins(uint8_t *hitlist);
 };
 
@@ -344,10 +394,10 @@ public:
 	bool Load(const char * fn, int lumpnum, const char * buffer, int length);
 	void Initialize();
 	virtual int FindFrame(const char * name);
-	virtual void RenderFrame(FTexture * skin, int frame, int frame2, double inter, int translation=0);
+	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0);
 	virtual void AddSkins(uint8_t *hitlist);
 	FTextureID GetPaletteTexture() const { return mPalette; }
-	void BuildVertexBuffer();
+	void BuildVertexBuffer(FModelRenderer *renderer);
 	float getAspectFactor();
 };
 

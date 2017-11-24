@@ -2206,7 +2206,7 @@ void G_ParseMapInfo (FString basemapinfo)
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}
 
-	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", NULL };
+	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", "UMAPINFO", NULL };
 	int nindex;
 
 	// Parse any extra MAPINFOs.
@@ -2222,10 +2222,28 @@ void G_ParseMapInfo (FString basemapinfo)
 
 			if (altlump >= 0) continue;
 		}
-		FMapInfoParser parse(nindex == 1? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
-		level_info_t defaultinfo;
-		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
+		else if (nindex == 2)
+		{
+			// MAPINFO and ZMAPINFO will override UMAPINFO if in the same WAD.
+			int wad = Wads.GetLumpFile(lump);
+			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			if (altlump >= 0) continue;
+			altlump = Wads.CheckNumForName("MAPINFO", ns_global, wad, true);
+			if (altlump >= 0) continue;
+		}
+		if (nindex != 2)
+		{
+			CommitUMapinfo(&gamedefaults);	// UMPAINFOs are collected until a regular MAPINFO is found so that they properly use the base settings.
+			FMapInfoParser parse(nindex == 1 ? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
+			level_info_t defaultinfo;
+			parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
+		}
+		else
+		{
+			ParseUMapInfo(lump);
+		}
 	}
+	CommitUMapinfo(&gamedefaults);	// commit remaining UMPAINFOs.
 
 	if (AllEpisodes.Size() == 0)
 	{

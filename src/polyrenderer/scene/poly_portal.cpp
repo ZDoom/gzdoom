@@ -59,6 +59,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	float fovratio = (viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
 	TriMatrix worldToView =
+		TriMatrix::rotate((float)viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
 		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
@@ -169,6 +170,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	float fovratio = (viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
 	TriMatrix worldToView =
+		TriMatrix::rotate((float)viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
 		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
 		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *

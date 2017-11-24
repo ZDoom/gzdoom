@@ -175,7 +175,7 @@ void PolyModelRenderer::DrawElements(int primitiveType, int numIndices, int elem
 	args.DrawElements(Thread, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
 }
 
-float PolyModelRenderer::GetTimeFloat()
+double PolyModelRenderer::GetTimeFloat()
 {
 	return 0.0f; // (float)gl_frameMS * (float)TICRATE / 1000.0f;
 }

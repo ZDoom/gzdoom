@@ -20,18 +20,13 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl/system/gl_system.h" // for GL_TRIANGLES
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "m_crc32.h"
-
-#include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/models/gl_models.h"
-#include "gl/textures/gl_material.h"
-#include "gl/shaders/gl_shader.h"
+#include "models/models.h"
+#include "gl/textures/gl_material.h" // for CLAMP_NONE
 
 #define MAX_QPATH 64
 

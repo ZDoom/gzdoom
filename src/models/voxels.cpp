@@ -26,7 +26,7 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
+#include "gl/system/gl_system.h" // for GL_TRIANGLES
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sc_man.h"
@@ -38,17 +38,8 @@
 #include "colormatcher.h"
 #include "textures/bitmap.h"
 #include "g_levellocals.h"
-//#include "gl/gl_intern.h"
-
-#include "gl/system/gl_interface.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/models/gl_models.h"
-#include "gl/textures/gl_material.h"
-#include "gl/utility/gl_geometric.h"
-#include "gl/utility/gl_convert.h"
-#include "gl/renderer/gl_renderstate.h"
+#include "models.h"
+#include "gl/textures/gl_material.h" // for CLAMP_NONE
 
 //===========================================================================
 //

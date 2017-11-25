@@ -26,7 +26,7 @@
 #include "tarray.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/system/gl_interface.h"
-#include "models/models.h"
+#include "r_data/models/models.h"
 
 struct vertex_t;
 struct secplane_t;

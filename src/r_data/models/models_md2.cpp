@@ -30,7 +30,7 @@
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "m_crc32.h"
-#include "models/models.h"
+#include "r_data/models/models.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data

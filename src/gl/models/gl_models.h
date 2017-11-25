@@ -27,7 +27,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "p_pspr.h"
 #include "r_data/voxels.h"
-#include "models/models.h"
+#include "r_data/models/models.h"
 
 class FGLModelRenderer : public FModelRenderer
 {

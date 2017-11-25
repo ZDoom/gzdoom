@@ -26,7 +26,6 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sc_man.h"
@@ -41,6 +40,10 @@
 #include "r_utility.h"
 #include "i_time.h"
 #include "r_data/models/models.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
+#endif
 
 CVAR(Bool, gl_interpolate_model_frames, true, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, r_drawvoxels)

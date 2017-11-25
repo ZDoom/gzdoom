@@ -67,7 +67,7 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 
 inline int Tics2Seconds(int tics)
 {
-	return tics * TICRATE;
+	return tics / TICRATE;
 }
 
 

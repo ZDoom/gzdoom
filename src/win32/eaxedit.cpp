@@ -50,6 +50,9 @@
 #include "c_cvars.h"
 #include "doomstat.h"
 #include "v_video.h"
+#include "vm.h"
+#include "symbols.h"
+#include "menu/menu.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -1409,4 +1412,84 @@ CCMD (reverbedit)
 			ShowEAXEditor ();
 		}
 	}
+}
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, GetValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	ACTION_RETURN_FLOAT(0);
+	return 1;
+}
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	PARAM_FLOAT(value);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, GrayCheck)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_BOOL(false);
+	return 1;
+}
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, GetSelectedEnvironment)
+{
+	PARAM_PROLOGUE;
+	if (numret > 1)
+	{
+		numret = 2;
+		ret[1].SetInt(CurrentEnv ? CurrentEnv->ID : -1);
+	}
+	if (numret > 0)
+	{
+		ret[0].SetString(CurrentEnv ? CurrentEnv->Name : nullptr);
+	}
+	return numret;
+}
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, FillSelectMenu)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(desc, DOptionMenuDescriptor);
+	desc->mItems.Clear();
+	for (auto env = Environments; env != nullptr; env = env->Next)
+	{
+		FStringf text("(%d, %d) %s", (env->ID >> 8) & 255, env->ID & 255, env->Name);
+		FStringf cmd("selectenvironment \"%s\"", env->Name);
+		PClass *cls = PClass::FindClass("OptionMenuItemCommand");
+		if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
+		{
+			auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
+			if (func != nullptr)
+			{
+				DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
+				VMValue params[] = { item, &text, FName(cmd).GetIndex(), false, true };
+				VMCall(func->Variants[0].Implementation, params, 5, nullptr, 0);
+				desc->mItems.Push((DMenuItemBase*)item);
+			}
+		}
+	}
+	return 0;
+}
+
+CCMD(selectenvironment)
+{
+	if (argv.argc() > 1)
+	{
+		for (auto env = Environments; env != nullptr; env = env->Next)
+		{
+			if (!strcmp(env->Name, argv[1]))
+			{
+				CurrentEnv = env;
+				if (eaxedit_test) ForcedEnvironment = env;
+				return;
+			}
+		}
+	}
+	CurrentEnv = nullptr;
 }

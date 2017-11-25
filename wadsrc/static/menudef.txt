@@ -2203,3 +2203,63 @@ OptionMenu "OpenGLOptions" protected
 	Slider "$GLPREFMNU_PALTONEMAPPOWER",		gl_paltonemap_powtable,			0.2, 3.0, 0.1, 1
 	Option "$GLPREFMNU_PALTONEMAPORDER",		gl_paltonemap_reverselookup,	"LookupOrder"
 }
+
+OptionMenu "ReverbEdit" protected
+{
+	Class "ReverbEdit"
+	Title "Reverb Environment Editor"
+	StaticTextSwitchable 	"", "", "EvironmentName", 1
+	StaticTextSwitchable 	"", "", "EvironmentID"
+	StaticText " "
+	Submenu "Select Environment", "ReverbSelect"
+	Option "Test Environment", "eaxedit_test", OnOff
+	StaticText " "
+	Submenu "New Environment", "ReverbNew"
+	Submenu "Save Environments", "ReverbSave"
+	Submenu "Edit Environment", "ReverbEdit"
+}
+
+OptionMenu "ReverbSelect" protected
+{
+	Class "ReverbSelect"
+	Title "Select Environment"
+	// filled in by code
+}
+	
+/*
+    CONTROL         "Reflections Scale",IDC_REFLECTIONSSCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,353,70,10
+    CONTROL         "Reflections Delay Scale",IDC_REFLECTIONSDELAYSCALE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,366,90,10
+    CONTROL         "Decay Time Scale",IDC_DECAYTIMESCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,377,71,10
+    CONTROL         "Decay HF Limit",IDC_DECAYHFLIMIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,390,63,10
+    CONTROL         "Reverb Scale",IDC_REVERBSCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,353,58,10
+    CONTROL         "Reverb Delay Scale",IDC_REVERBDELAYSCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,366,78,10
+    CONTROL         "Echo Time Scale",IDC_ECHOTIMESCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,377,67,10
+    CONTROL         "Modulation Time Scale",IDC_MODULATIONTIMESCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,390,86,10
+    LTEXT           "Environment Size",IDC_STATIC,17,9,56,8,0,WS_EX_RIGHT
+    LTEXT           "Environment Diffusion",IDC_STATIC,2,22,71,8,0,WS_EX_RIGHT
+    LTEXT           "Room",IDC_STATIC,53,35,19,8,0,WS_EX_RIGHT
+    LTEXT           "Room HF",IDC_STATIC,43,48,30,8,0,WS_EX_RIGHT
+    LTEXT           "Room LF",IDC_STATIC,45,60,28,8,0,WS_EX_RIGHT
+    LTEXT           "Decay Time",IDC_STATIC,35,74,38,8,0,WS_EX_RIGHT
+    LTEXT           "Decay HF Ratio",IDC_STATIC,23,87,50,8,0,WS_EX_RIGHT
+    LTEXT           "Decay LF Ratio",IDC_STATIC,24,100,49,8,0,WS_EX_RIGHT
+    LTEXT           "Reflections",IDC_STATIC,37,113,36,8,0,WS_EX_RIGHT
+    LTEXT           "Reflections Delay",IDC_STATIC,17,126,56,8,0,WS_EX_RIGHT
+    LTEXT           "Reflections Pan X",IDC_STATIC,17,267,56,8,0,WS_EX_RIGHT
+    LTEXT           "Reflections Pan Y",IDC_STATIC,17,280,56,8,0,WS_EX_RIGHT
+    LTEXT           "Reflections Pan Z",IDC_STATIC,17,293,56,8,0,WS_EX_RIGHT
+    LTEXT           "Reverb",IDC_STATIC,49,137,24,8,0,WS_EX_RIGHT
+    LTEXT           "Reverb Delay",IDC_STATIC,29,150,44,8,0,WS_EX_RIGHT
+    LTEXT           "Reverb Pan X",IDC_STATIC,29,306,44,8,0,WS_EX_RIGHT
+    LTEXT           "Reverb Pan Y",IDC_STATIC,29,319,44,8,0,WS_EX_RIGHT
+    LTEXT           "Reverb Pan Z",IDC_STATIC,29,332,44,8,0,WS_EX_RIGHT
+    LTEXT           "Echo Time",IDC_STATIC,40,163,33,8,0,WS_EX_RIGHT
+    LTEXT           "Echo Depth",IDC_STATIC,35,176,38,8,0,WS_EX_RIGHT
+    LTEXT           "Modulation Time",IDC_STATIC,21,189,52,8,0,WS_EX_RIGHT
+    LTEXT           "Modulation Depth",IDC_STATIC,16,202,57,8,0,WS_EX_RIGHT
+    LTEXT           "Air Absorption HF",IDC_STATIC,16,215,57,8,0,WS_EX_RIGHT
+    LTEXT           "HF Reference",IDC_STATIC,28,228,45,8,0,WS_EX_RIGHT
+    LTEXT           "LF Reference",IDC_STATIC,29,241,44,8,0,WS_EX_RIGHT
+    LTEXT           "Room Rolloff Factor",IDC_STATIC,9,254,64,8,0,WS_EX_RIGHT
+*/

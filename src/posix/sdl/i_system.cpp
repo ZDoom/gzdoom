@@ -119,9 +119,6 @@ void SetLanguageIDs ()
 	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
 }
 
-void I_InitTimer ();
-void I_ShutdownTimer ();
-
 //
 // I_Init
 //
@@ -132,7 +129,6 @@ void I_Init (void)
 
 	atterm (I_ShutdownSound);
     I_InitSound ();
-	I_InitTimer ();
 }
 
 //
@@ -148,8 +144,6 @@ void I_Quit (void)
 		G_CheckDemoStatus();
 
 	C_DeinitConsole();
-
-	I_ShutdownTimer();
 }
 
 

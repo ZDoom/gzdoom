@@ -507,7 +507,6 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
 	posix/sdl/i_system.cpp
-	posix/sdl/i_timer.cpp
 	posix/sdl/sdlvideo.cpp
 	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
@@ -525,7 +524,6 @@ set( PLAT_COCOA_SOURCES
 	posix/cocoa/i_main.mm
 	posix/cocoa/i_main_except.cpp
 	posix/cocoa/i_system.mm
-	posix/cocoa/i_timer.cpp
 	posix/cocoa/i_video.mm
 	posix/cocoa/st_console.mm
 	posix/cocoa/st_start.mm )

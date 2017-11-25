@@ -84,9 +84,6 @@ void SetLanguageIDs()
 }
 
 
-void I_InitTimer();
-void I_ShutdownTimer();
-
 double PerfToSec, PerfToMillisec;
 
 static void CalculateCPUSpeed()
@@ -114,7 +111,6 @@ void I_Init(void)
 
 	atterm(I_ShutdownSound);
     I_InitSound();
-	I_InitTimer();
 }
 
 static int has_exited;
@@ -129,8 +125,6 @@ void I_Quit()
 	}
 
 	C_DeinitConsole();
-
-	I_ShutdownTimer();
 }
 
 

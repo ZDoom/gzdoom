@@ -69,9 +69,9 @@ public:
 	virtual void EndDrawHUDModel(AActor *actor) = 0;
 
 	virtual void SetInterpolation(double interpolation) = 0;
-	virtual void SetMaterial(FTexture *skin, int clampmode, int translation) = 0;
-	virtual void DrawArrays(int primitiveType, int start, int count) = 0;
-	virtual void DrawElements(int primitiveType, int numIndices, int elementType, size_t offset) = 0;
+	virtual void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) = 0;
+	virtual void DrawArrays(int start, int count) = 0;
+	virtual void DrawElements(int numIndices, size_t offset) = 0;
 
 	virtual double GetTimeFloat() = 0;
 

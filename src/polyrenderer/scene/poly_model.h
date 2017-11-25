@@ -43,9 +43,9 @@ public:
 	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix) override;
 	void EndDrawHUDModel(AActor *actor) override;
 	void SetInterpolation(double interpolation) override;
-	void SetMaterial(FTexture *skin, int clampmode, int translation) override;
-	void DrawArrays(int primitiveType, int start, int count) override;
-	void DrawElements(int primitiveType, int numIndices, int elementType, size_t offset) override;
+	void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) override;
+	void DrawArrays(int start, int count) override;
+	void DrawElements(int numIndices, size_t offset) override;
 	double GetTimeFloat() override;
 
 	PolyRenderThread *Thread = nullptr;

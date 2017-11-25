@@ -26,13 +26,15 @@
 **
 **/
 
-#include "gl/system/gl_system.h" // for GL_TRIANGLES
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "m_crc32.h"
 #include "models/models.h"
-#include "gl/textures/gl_material.h" // for CLAMP_NONE
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
+#endif
 
 static float   avertexnormals[NUMVERTEXNORMALS][3] = {
 #include "tab_anorms.h"
@@ -368,9 +370,9 @@ void FDMDModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 	}
 
 	renderer->SetInterpolation(inter);
-	renderer->SetMaterial(skin, CLAMP_NONE, translation);
+	renderer->SetMaterial(skin, false, translation);
 	mVBuf->SetupFrame(renderer, frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
-	renderer->DrawArrays(GL_TRIANGLES, 0, lodInfo[0].numTriangles * 3);
+	renderer->DrawArrays(0, lodInfo[0].numTriangles * 3);
 	renderer->SetInterpolation(0.f);
 }
 

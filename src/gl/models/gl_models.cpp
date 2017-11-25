@@ -137,23 +137,23 @@ void FGLModelRenderer::SetInterpolation(double inter)
 	gl_RenderState.SetInterpolationFactor((float)inter);
 }
 
-void FGLModelRenderer::SetMaterial(FTexture *skin, int clampmode, int translation)
+void FGLModelRenderer::SetMaterial(FTexture *skin, bool clampNoFilter, int translation)
 {
 	FMaterial * tex = FMaterial::ValidateTexture(skin, false);
-	gl_RenderState.SetMaterial(tex, clampmode, translation, -1, false);
+	gl_RenderState.SetMaterial(tex, clampNoFilter ? CLAMP_NOFILTER : CLAMP_NONE, translation, -1, false);
 
 	gl_RenderState.Apply();
 	if (modellightindex != -1) gl_RenderState.ApplyLightIndex(modellightindex);
 }
 
-void FGLModelRenderer::DrawArrays(int primitiveType, int start, int count)
+void FGLModelRenderer::DrawArrays(int start, int count)
 {
-	glDrawArrays(primitiveType, start, count);
+	glDrawArrays(GL_TRIANGLES, start, count);
 }
 
-void FGLModelRenderer::DrawElements(int primitiveType, int numIndices, int elementType, size_t offset)
+void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 {
-	glDrawElements(primitiveType, numIndices, elementType, (void*)(intptr_t)offset);
+	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, (void*)(intptr_t)offset);
 }
 
 double FGLModelRenderer::GetTimeFloat()

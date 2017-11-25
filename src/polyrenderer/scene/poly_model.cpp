@@ -31,6 +31,7 @@
 #include "polyrenderer/poly_renderthread.h"
 #include "r_data/r_vanillatrans.h"
 #include "actorinlines.h"
+#include "i_time.h"
 
 void PolyRenderModel(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)
 {
@@ -102,12 +103,12 @@ void PolyModelRenderer::SetInterpolation(double interpolation)
 	InterpolationFactor = (float)interpolation;
 }
 
-void PolyModelRenderer::SetMaterial(FTexture *skin, int clampmode, int translation)
+void PolyModelRenderer::SetMaterial(FTexture *skin, bool clampNoFilter, int translation)
 {
 	SkinTexture = skin;
 }
 
-void PolyModelRenderer::DrawArrays(int primitiveType, int start, int count)
+void PolyModelRenderer::DrawArrays(int start, int count)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -141,7 +142,7 @@ void PolyModelRenderer::DrawArrays(int primitiveType, int start, int count)
 	args.DrawArray(Thread, VertexBuffer + start, count);
 }
 
-void PolyModelRenderer::DrawElements(int primitiveType, int numIndices, int elementType, size_t offset)
+void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -177,7 +178,7 @@ void PolyModelRenderer::DrawElements(int primitiveType, int numIndices, int elem
 
 double PolyModelRenderer::GetTimeFloat()
 {
-	return 0.0f; // (float)gl_frameMS * (float)TICRATE / 1000.0f;
+	return (float)I_msTime() * (float)TICRATE / 1000.0f;
 }
 
 /////////////////////////////////////////////////////////////////////////////

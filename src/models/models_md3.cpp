@@ -20,15 +20,17 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h" // for GL_TRIANGLES
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sc_man.h"
 #include "m_crc32.h"
 #include "models/models.h"
-#include "gl/textures/gl_material.h" // for CLAMP_NONE
 
 #define MAX_QPATH 64
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
+#endif
 
 //===========================================================================
 //
@@ -362,9 +364,9 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 			if (!surfaceSkin) return;
 		}
 
-		renderer->SetMaterial(surfaceSkin, CLAMP_NONE, translation);
+		renderer->SetMaterial(surfaceSkin, false, translation);
 		mVBuf->SetupFrame(renderer, surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, surf->numVertices);
-		renderer->DrawElements(GL_TRIANGLES, surf->numTriangles * 3, GL_UNSIGNED_INT, surf->iindex * sizeof(unsigned int));
+		renderer->DrawElements(surf->numTriangles * 3, surf->iindex * sizeof(unsigned int));
 	}
 	renderer->SetInterpolation(0.f);
 }

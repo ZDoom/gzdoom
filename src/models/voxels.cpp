@@ -26,7 +26,6 @@
 **
 **/
 
-#include "gl/system/gl_system.h" // for GL_TRIANGLES
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "sc_man.h"
@@ -39,7 +38,10 @@
 #include "textures/bitmap.h"
 #include "g_levellocals.h"
 #include "models.h"
-#include "gl/textures/gl_material.h" // for CLAMP_NONE
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
+#endif
 
 //===========================================================================
 //
@@ -431,8 +433,8 @@ float FVoxelModel::getAspectFactor()
 
 void FVoxelModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation)
 {
-	renderer->SetMaterial(skin, CLAMP_NOFILTER, translation);
+	renderer->SetMaterial(skin, true, translation);
 	mVBuf->SetupFrame(renderer, 0, 0, 0);
-	renderer->DrawElements(GL_TRIANGLES, mNumIndices, GL_UNSIGNED_INT, 0);
+	renderer->DrawElements(mNumIndices, 0);
 }
 

@@ -11,13 +11,16 @@ This is a simplified version of VSMatrix that has been adjusted for GZDoom's nee
 ----------------------------------------------------*/
 
 #include <algorithm>
-#include "gl/system/gl_system.h"
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include "doomtype.h"
-#include "gl/data/gl_matrix.h"
+#include "matrix.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable : 4244)     // truncate from double to float
+#endif
 
 static inline FLOATTYPE 
 DegToRad(FLOATTYPE degrees) 
@@ -309,22 +312,6 @@ VSMatrix::get(MatrixTypes aType)
 /* -----------------------------------------------------
              SEND MATRICES TO OPENGL
 ------------------------------------------------------*/
-
-
-
-
-// universal
-void
-VSMatrix::matrixToGL(int loc)
-{
-#ifdef USE_DOUBLE
-	float copyto[16];
-	copy(copyto);
-	glUniformMatrix4fv(loc, 1, false, copyto);
-#else
-	glUniformMatrix4fv(loc, 1, false, mMatrix);
-#endif
-}
 
 // -----------------------------------------------------
 //                      AUX functions

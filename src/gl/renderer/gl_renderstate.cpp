@@ -50,6 +50,11 @@ CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
 static VSMatrix identityMatrix(1);
 TArray<VSMatrix> gl_MatrixStack;
 
+static void matrixToGL(const VSMatrix &mat, int loc)
+{
+	glUniformMatrix4fv(loc, 1, false, (float*)&mat);
+}
+
 //==========================================================================
 //
 //
@@ -273,28 +278,28 @@ bool FRenderState::ApplyShader()
 	}
 	if (mTextureMatrixEnabled)
 	{
-		mTextureMatrix.matrixToGL(activeShader->texturematrix_index);
+		matrixToGL(mTextureMatrix, activeShader->texturematrix_index);
 		activeShader->currentTextureMatrixState = true;
 	}
 	else if (activeShader->currentTextureMatrixState)
 	{
 		activeShader->currentTextureMatrixState = false;
-		identityMatrix.matrixToGL(activeShader->texturematrix_index);
+		matrixToGL(identityMatrix, activeShader->texturematrix_index);
 	}
 
 	if (mModelMatrixEnabled)
 	{
-		mModelMatrix.matrixToGL(activeShader->modelmatrix_index);
+		matrixToGL(mModelMatrix, activeShader->modelmatrix_index);
 		VSMatrix norm;
 		norm.computeNormalMatrix(mModelMatrix);
-		norm.matrixToGL(activeShader->normalmodelmatrix_index);
+		matrixToGL(norm, activeShader->normalmodelmatrix_index);
 		activeShader->currentModelMatrixState = true;
 	}
 	else if (activeShader->currentModelMatrixState)
 	{
 		activeShader->currentModelMatrixState = false;
-		identityMatrix.matrixToGL(activeShader->modelmatrix_index);
-		identityMatrix.matrixToGL(activeShader->normalmodelmatrix_index);
+		matrixToGL(identityMatrix, activeShader->modelmatrix_index);
+		matrixToGL(identityMatrix, activeShader->normalmodelmatrix_index);
 	}
 	return true;
 }

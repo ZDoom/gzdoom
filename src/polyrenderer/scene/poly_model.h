@@ -23,7 +23,7 @@
 #pragma once
 
 #include "polyrenderer/drawers/poly_triangle.h"
-#include "gl/data/gl_matrix.h"
+#include "r_data/matrix.h"
 #include "gl/models/gl_models.h"
 
 void PolyRenderModel(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor);

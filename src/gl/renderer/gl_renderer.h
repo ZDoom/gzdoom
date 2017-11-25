@@ -5,7 +5,7 @@
 #include "v_video.h"
 #include "vectors.h"
 #include "r_renderer.h"
-#include "gl/data/gl_matrix.h"
+#include "r_data/matrix.h"
 #include "gl/dynlights/gl_shadowmap.h"
 
 struct particle_t;

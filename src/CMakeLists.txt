@@ -796,7 +796,6 @@ set( FASTMATH_SOURCES
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
 	sound/mididevices/music_timiditypp_mididevice.cpp
-	gl/data/gl_matrix.cpp
 	gl/utility/gl_clock.cpp
 	gl/renderer/gl_2ddrawer.cpp
 	gl/hqnx/init.cpp
@@ -826,6 +825,7 @@ set( FASTMATH_SOURCES
 	gl/system/gl_load.c
 	gl/models/gl_models.cpp
 	r_data/models/models.cpp
+	r_data/matrix.cpp
 )
 
 set (PCH_SOURCES

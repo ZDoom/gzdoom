@@ -796,7 +796,7 @@ class Ceiling : MovingCeiling native
 		crushSlowdown = 2
 	}
 	
-	native bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
+	native static bool CreateCeiling(sector sec, int type, line ln, double speed, double speed2, double height = 0, int crush = -1, int silent = 0, int change = 0, int crushmode = crushDoom);
 	
 }
 

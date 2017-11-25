@@ -820,7 +820,7 @@ void I_SetFPSLimit(int limit)
 		{
 			CloseHandle(FPSLimitEvent);
 			FPSLimitEvent = NULL;
-			Printf("Failed to create FPS limitter timer\n");
+			Printf("Failed to create FPS limiter timer\n");
 			return;
 		}
 		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", period);

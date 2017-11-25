@@ -49,6 +49,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "doomstat.h"
+#include "v_video.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -1384,6 +1385,8 @@ void ShowEAXEditor ()
 	EAXEditWindow = CreateDialog (g_hInst, MAKEINTRESOURCE(IDD_EAXEDIT), Window, EAXProc);
 }
 
+extern int NewWidth, NewHeight, NewBits, DisplayBits;
+
 CCMD (reverbedit)
 {
 	if (EAXEditWindow != 0)
@@ -1395,6 +1398,9 @@ CCMD (reverbedit)
 		ForceWindowed = true;
 		if (fullscreen)
 		{
+			NewWidth = screen->VideoWidth;
+			NewHeight = screen->VideoHeight;
+			NewBits = DisplayBits;
 			setmodeneeded = true;
 			SpawnEAXWindow = true;
 		}

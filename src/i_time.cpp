@@ -130,11 +130,22 @@ int I_WaitForTic(int prevtic)
 	int time;
 	while ((time = I_GetTime()) <= prevtic)
 	{
+		// Windows-specific note:
 		// The minimum amount of time a thread can sleep is controlled by timeBeginPeriod.
 		// We set this to 1 ms in DoMain.
-		uint64_t sleepTime = NSToMS(FirstFrameStartTime + TicToNS(prevtic + 1) - I_nsTime());
-		if (sleepTime > 2)
-			std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime - 2));
+
+		const uint64_t next = FirstFrameStartTime + TicToNS(prevtic + 1);
+		const uint64_t now = I_nsTime();
+
+		if (next > now)
+		{
+			const uint64_t sleepTime = NSToMS(next - now);
+
+			if (sleepTime > 2)
+			{
+				std::this_thread::sleep_for(std::chrono::milliseconds(sleepTime - 2));
+			}
+		}
 
 		I_SetFrameTime();
 	}

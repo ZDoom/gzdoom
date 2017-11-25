@@ -1104,7 +1104,7 @@ set (PCH_SOURCES
 	r_data/r_vanillatrans.cpp
 	r_data/models/models_md3.cpp
 	r_data/models/models_md2.cpp
-	r_data/models/voxels.cpp
+	r_data/models/models_voxel.cpp
 	scripting/symbols.cpp
 	scripting/types.cpp
 	scripting/thingdef.cpp

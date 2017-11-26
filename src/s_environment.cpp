@@ -41,6 +41,8 @@
 #include "w_wad.h"
 #include "i_system.h"
 
+void InitReverbMenu();
+
 struct FReverbField
 {
 	int Min, Max;
@@ -629,6 +631,7 @@ void S_ParseReverbDef ()
 	{
 		ReadReverbDef (lump);
 	}
+	InitReverbMenu();
 }
 
 void S_UnloadReverbDef ()

@@ -5,7 +5,7 @@ class ReverbEdit : OptionMenu
 	static native double SetValue(int index, double value);
 	static native bool GrayCheck();
 	static native string, int GetSelectedEnvironment();
-	static native void FillSelectMenu(OptionMenuDescriptor desc);
+	static native void FillSelectMenu(String ccmd, OptionMenuDescriptor desc);
 
 	override void Init(Menu parent, OptionMenuDescriptor desc)
 	{
@@ -59,7 +59,7 @@ class ReverbSelect : OptionMenu
 
 	override void Init(Menu parent, OptionMenuDescriptor desc)
 	{
-		ReverbEdit.FillSelectMenu(desc);
+		ReverbEdit.FillSelectMenu("selectenvironment", desc);
 		super.Init(parent, desc);
 	}
 }
@@ -70,10 +70,9 @@ class ReverbSelect : OptionMenu
 //
 //=============================================================================
 
-/*
-class OptionMenuItemReverbEditSelected : OptionMenuItemSubMenu
+class OptionMenuItemReverbSelect : OptionMenuItemSubMenu
 {
-	OptionMenuItemSubmenu Init(String label, Name command)
+	OptionMenuItemReverbSelect Init(String label, Name command)
 	{
 		Super.init(label, command, 0, false);
 		return self;
@@ -84,14 +83,12 @@ class OptionMenuItemReverbEditSelected : OptionMenuItemSubMenu
 	{
 		int x = drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
 
-		String text = GetSelected();
-		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+		String text = ReverbEdit.GetSelectedEnvironment();
+		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
 		
 		return indent;
 	}
 }
-*/
-
 
 
 //=============================================================================

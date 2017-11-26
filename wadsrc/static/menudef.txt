@@ -2267,3 +2267,13 @@ OptionMenu "ReverbSettings" protected
     ReverbOption "Echo Time Scale", 32, OnOff
     ReverbOption "Modulation Time Scale", 33, OnOff
 }
+
+OptionMenu "ReverbNew" protected
+{
+	Title "New Reverb Environment"
+	ReverbSelect "Based on", "ReverbSelect"
+	TextField "Name", "reverbedit_name"
+	NumberField "ID #1", "reverbedit_id1", 0, 255
+	NumberField "ID #2", "reverbedit_id2", 0, 255
+	Command "Create", "createenvironment", 0, 1
+}

@@ -31,13 +31,6 @@
 **
 */
 
-#define WIN32_LEAN_AND_MEAN
-#define _WIN32_WINNT 0x0500
-#define _WIN32_IE 0x0500
-#include <windows.h>
-#include <commctrl.h>
-#include <commdlg.h>
-
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -50,97 +43,25 @@
 #include "c_cvars.h"
 #include "doomstat.h"
 #include "v_video.h"
+#include "c_cvars.h"
 #include "vm.h"
 #include "symbols.h"
 #include "menu/menu.h"
 
-#ifdef _MSC_VER
-#pragma warning(disable:4244)
-#endif
-
-// More w32api lackings
-#ifndef TTM_SETTITLE
-#define TTM_SETTITLEA (WM_USER+32)
-#define TTM_SETTITLEW (WM_USER+33)
-#ifdef UNICODE
-#define TTM_SETTITLE TTM_SETTITLEW
-#else
-#define TTM_SETTITLE TTM_SETTITLEA
-#endif
-#endif
-#ifndef TTF_TRACK
-#define TTF_TRACK 0x0020
-#endif
-#ifndef TTF_TRANSPARENT
-#define TTF_TRANSPARENT 0x0100
-#endif
-
-#ifndef OFN_ENABLESIZING
-#define OFN_ENABLESIZING 0x00800000
-typedef struct w32apiFixedOFNA {
-	DWORD lStructSize;
-	HWND hwndOwner;
-	HINSTANCE hInstance;
-	LPCSTR lpstrFilter;
-	LPSTR lpstrCustomFilter;
-	DWORD nMaxCustFilter;
-	DWORD nFilterIndex;
-	LPSTR lpstrFile;
-	DWORD nMaxFile;
-	LPSTR lpstrFileTitle;
-	DWORD nMaxFileTitle;
-	LPCSTR lpstrInitialDir;
-	LPCSTR lpstrTitle;
-	DWORD Flags;
-	uint16_t nFileOffset;
-	uint16_t nFileExtension;
-	LPCSTR lpstrDefExt;
-	LPARAM lCustData;
-	LPOFNHOOKPROC lpfnHook;
-	LPCSTR lpTemplateName;
-	void *pvReserved;
-	DWORD dwReserved;
-	DWORD FlagsEx;
-} FIXEDOPENFILENAMEA;
-#define OPENFILENAME FIXEDOPENFILENAMEA
-#endif
-
-extern HINSTANCE g_hInst;
-extern HWND Window;
-extern bool ForceWindowed;
-EXTERN_CVAR (Bool, fullscreen)
-extern ReverbContainer *ForcedEnvironment;
-
-HWND EAXEditWindow;
-HWND hPropList;
-POINT PropListMaxSize;
-LONG PropListHeightDiff;
-POINT EditWindowSize;
-POINT DoneLocation;
-WNDPROC StdEditProc;
-LONG NewLeft;
-LONG SaveLeft;
-LONG RevertLeft;
-POINT TestLocation;
-
-bool SpawnEAXWindow;
 
 REVERB_PROPERTIES SavedProperties;
 ReverbContainer *CurrentEnv;
+extern ReverbContainer *ForcedEnvironment;
 
 CUSTOM_CVAR (Bool, eaxedit_test, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
-	if (EAXEditWindow != 0)
+	if (self)
 	{
-		CheckDlgButton (EAXEditWindow, IDC_TESTEAX, self ? BST_CHECKED : BST_UNCHECKED);
-		if (self)
-		{
-			ForcedEnvironment = CurrentEnv;
-		}
-		else
-		{
-			ForcedEnvironment = NULL;
-		}
+		ForcedEnvironment = CurrentEnv;
+	}
+	else
+	{
+		ForcedEnvironment = nullptr;
 	}
 }
 
@@ -148,10 +69,10 @@ struct MySaveData
 {
 	const ReverbContainer *Default;
 	const ReverbContainer **Saves;
-	UINT NumSaves;
+	uint32_t NumSaves;
 
 	MySaveData (const ReverbContainer *def)
-		: Default (def), Saves (NULL), NumSaves (0) {}
+		: Default (def), Saves (nullptr), NumSaves (0) {}
 	~MySaveData ()
 	{
 		if (Saves) delete[] Saves;
@@ -176,13 +97,7 @@ struct EnvFlag
 	const char *Name;
 	int CheckboxControl;
 	unsigned int Flag;
-	HWND CheckboxHWND;
 };
-
-void PopulateEnvDropDown (HWND hCtl);
-void SetupEnvControls (HWND hDlg);
-void UpdateControls (const ReverbContainer *env, HWND hDlg);
-void UpdateControl (const EnvControl *control, int value, bool slider);
 
 EnvControl EnvControls[] =
 {
@@ -229,103 +144,14 @@ EnvFlag EnvFlags[] =
 	{ "bModulationTimeScale",	IDC_MODULATIONTIMESCALE, REVERB_FLAGS_MODULATIONTIMESCALE }
 };
 
-LRESULT AddEnvToDropDown (HWND hCtl, bool showID, const ReverbContainer *env)
+inline int HIBYTE(int i)
 {
-	char buff[128];
-	LRESULT i;
-
-	if (showID)
-	{
-		mysnprintf (buff, countof(buff), "(%3d,%3d) %s", HIBYTE(env->ID), LOBYTE(env->ID), env->Name);
-		i = SendMessage (hCtl, CB_ADDSTRING, 0, (LPARAM)buff);
-	}
-	else
-	{
-		i = SendMessage (hCtl, CB_ADDSTRING, 0, (LPARAM)env->Name);
-	}
-	SendMessage (hCtl, CB_SETITEMDATA, i, (LPARAM)env);
-	return i;
+	return (i >> 8) & 255;
 }
 
-void PopulateEnvDropDown (HWND hCtl, bool showIDs, const ReverbContainer *defEnv)
+inline int LOBYTE(int i)
 {
-	const ReverbContainer *env;
-	WPARAM envCount = 0;
-	LPARAM strCount = 0;
-	LRESULT i;
-	
-	for (env = Environments; env != NULL; env = env->Next)
-	{
-		envCount++;
-		strCount += strlen (env->Name) + 1;
-	}
-
-	SendMessage (hCtl, WM_SETREDRAW, FALSE, 0);
-	SendMessage (hCtl, CB_RESETCONTENT, 0, 0);
-	SendMessage (hCtl, CB_INITSTORAGE, envCount, showIDs ?
-		strCount + envCount * 10 : strCount);
-
-	for (env = Environments; env != NULL; env = env->Next)
-	{
-		AddEnvToDropDown (hCtl, showIDs, env);
-	}
-
-	SendMessage (hCtl, WM_SETREDRAW, TRUE, 0);
-
-	if (defEnv == NULL)
-	{
-		SendMessage (hCtl, CB_SETCURSEL, 0, 0);
-		SetFocus (hCtl);
-	}
-	else
-	{
-		for (i = 0; i < (LPARAM)envCount; ++i)
-		{
-			if ((const ReverbContainer  *)SendMessage (hCtl, CB_GETITEMDATA, i, 0)
-				== defEnv)
-			{
-				SendMessage (hCtl, CB_SETCURSEL, i, 0);
-				break;
-			}
-		}
-	}
-}
-
-void SetIDEdits (HWND hDlg, uint16_t id)
-{
-	char text[4];
-
-	mysnprintf (text, countof(text), "%d", HIBYTE(id));
-	SendMessage (GetDlgItem (hDlg, IDC_EDITID1), WM_SETTEXT, 0, (LPARAM)text);
-	mysnprintf (text, countof(text), "%d", LOBYTE(id));
-	SendMessage (GetDlgItem (hDlg, IDC_EDITID2), WM_SETTEXT, 0, (LPARAM)text);
-}
-
-void PopulateEnvList (HWND hCtl, bool show, const ReverbContainer *defEnv)
-{
-	const ReverbContainer *env;
-	int i;
-	LVITEM item;
-	
-	SendMessage (hCtl, WM_SETREDRAW, FALSE, 0);
-
-	item.mask = LVIF_TEXT | LVIF_PARAM | LVIF_STATE;
-	item.stateMask = LVIS_SELECTED|LVIS_FOCUSED;
-	item.iSubItem = 0;
-
-	for (env = Environments, i = 0; env != NULL; env = env->Next, ++i)
-	{
-		if (!env->Builtin || show)
-		{
-			item.iItem = i;
-			item.pszText = (LPSTR)env->Name;
-			item.lParam = (LPARAM)env;
-			item.state = env == defEnv ? LVIS_SELECTED|LVIS_FOCUSED : 0;
-			SendMessage (hCtl, LVM_INSERTITEM, 0, (LPARAM)&item);
-		}
-	}
-
-	SendMessage (hCtl, WM_SETREDRAW, TRUE, 0);
+	return i & 255;
 }
 
 uint16_t FirstFreeID (uint16_t base, bool builtin)
@@ -339,7 +165,7 @@ uint16_t FirstFreeID (uint16_t base, bool builtin)
 	{
 		for (priID = 30; priID < 256; ++priID)
 		{
-			if (S_FindEnvironment (priID << 8) == NULL)
+			if (S_FindEnvironment (priID << 8) == nullptr)
 			{
 				break;
 			}
@@ -361,7 +187,7 @@ uint16_t FirstFreeID (uint16_t base, bool builtin)
 		// by 1 until a match is found. If all the IDs searchable by this
 		// algorithm are in use, then you're in trouble.
 
-		while (env != NULL)
+		while (env != nullptr)
 		{
 			if (HIBYTE(env->ID) > priID)
 			{
@@ -403,299 +229,9 @@ uint16_t FirstFreeID (uint16_t base, bool builtin)
 	}
 }
 
-LRESULT CALLBACK EditControlProc (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+FString SuggestNewName (const ReverbContainer *env)
 {
-	char buff[16];
-	double val;
-	const EnvControl *env;
-	MSG *msg;
-
-	switch (uMsg)
-	{
-	case WM_GETDLGCODE:
-		msg = (MSG *)lParam;
-		if (msg && LOWORD(msg->message) == WM_KEYDOWN)
-		{
-			// Do not close the dialog if Enter was pressed
-			// inside an edit control.
-			if (msg->wParam == VK_RETURN || msg->wParam == VK_ESCAPE)
-			{
-				return DLGC_WANTALLKEYS;
-			}
-		}
-		break;
-
-	case WM_CHAR:
-		// Only allow numeric symbols.
-		if (wParam >= ' ' && wParam <= 127 &&
-			(wParam < '0' || wParam > '9') &&
-			wParam != '.' &&
-			wParam != '-' &&
-			wParam != '+')
-		{
-			return 0;
-		}
-		break;
-
-	case WM_KEYDOWN:
-		if (wParam != VK_RETURN)
-		{
-			if (wParam == VK_ESCAPE)
-			{ // Put the original value back in the edit control.
-				env = (const EnvControl *)(LONG_PTR)GetWindowLongPtr (hWnd, GWLP_USERDATA);
-				int vali = SendMessage (env->SliderHWND, TBM_GETPOS, 0, 0);
-				if (env->Float)
-				{
-					mysnprintf (buff, countof(buff), "%d.%03d", vali/1000, abs(vali%1000));
-				}
-				else
-				{
-					mysnprintf (buff, countof(buff), "%d", vali);
-				}
-				CallWindowProc (StdEditProc, hWnd, WM_SETTEXT, 0, (LPARAM)buff);
-				CallWindowProc (StdEditProc, hWnd, EM_SETSEL, 0, -1);
-				return 0;
-			}
-			break;
-		}
-
-		// intentional fallthrough
-
-	case WM_KILLFOCUS:
-		// Validate the new value and update the corresponding slider.
-		env = (const EnvControl *)(LONG_PTR)GetWindowLongPtr (hWnd, GWLP_USERDATA);
-		val = 0.0;
-		if (CallWindowProc (StdEditProc, hWnd, WM_GETTEXT, 16, (LPARAM)buff) > 0)
-		{
-			val = atof (buff);
-		}
-		if (env->Float)
-		{
-			val *= 1000.0;
-		}
-		if (val < env->Min) val = env->Min;
-		else if (val > env->Max) val = env->Max;
-		UpdateControl (env, int(val), true);
-		break;
-	}
-	return CallWindowProc (StdEditProc, hWnd, uMsg, wParam, lParam);
-}
-
-LRESULT CALLBACK EditControlProcNoDeci (HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	// This is just like the above WndProc, except it only accepts integers.
-	if (uMsg == WM_CHAR && wParam == '.')
-	{
-		return 0;
-	}
-	return EditControlProc (hWnd, uMsg, wParam, lParam);
-}
-
-void SetupEnvControls (HWND hDlg)
-{
-	size_t i;
-
-	for (i = 0; i < countof(EnvControls); ++i)
-	{
-		if (EnvControls[i].EditControl == 0)
-			continue;
-
-		EnvControls[i].EditHWND = GetDlgItem (hDlg, EnvControls[i].EditControl);
-		EnvControls[i].SliderHWND = GetDlgItem (hDlg, EnvControls[i].SliderControl);
-		SendMessage (EnvControls[i].SliderHWND, TBM_SETRANGEMIN, FALSE, EnvControls[i].Min);
-		SendMessage (EnvControls[i].SliderHWND, TBM_SETRANGEMAX, TRUE, EnvControls[i].Max);
-		SendMessage (EnvControls[i].EditHWND, EM_LIMITTEXT, 10, 0);
-		StdEditProc = (WNDPROC)(LONG_PTR)SetWindowLongPtr (EnvControls[i].EditHWND, GWLP_WNDPROC,
-			(LONG_PTR)(EnvControls[i].Float ? EditControlProc : EditControlProcNoDeci));
-		SetWindowLongPtr (EnvControls[i].EditHWND, GWLP_USERDATA, (LONG_PTR)&EnvControls[i]);
-		SetWindowLongPtr (EnvControls[i].SliderHWND, GWLP_USERDATA, (LONG_PTR)&EnvControls[i]);
-	}
-	for (i = 0; i < countof(EnvFlags); ++i)
-	{
-		EnvFlags[i].CheckboxHWND = GetDlgItem (hDlg, EnvFlags[i].CheckboxControl);
-		SetWindowLongPtr (EnvFlags[i].CheckboxHWND, GWLP_USERDATA, (LONG_PTR)&EnvFlags[i]);
-	}
-}
-
-void UpdateControl (const EnvControl *control, int value, bool slider)
-{
-	char buff[16];
-
-	if (slider)
-	{
-		SendMessage (control->SliderHWND, TBM_SETPOS, TRUE, value);
-	}
-	if (control->Float)
-	{
-		mysnprintf (buff, countof(buff), "%d.%03d", value/1000, abs(value%1000));
-		if (CurrentEnv != NULL)
-		{
-			CurrentEnv->Properties.*control->Float = float(value) / 1000.0;
-		}
-	}
-	else
-	{
-		mysnprintf (buff, countof(buff), "%d", value);
-		if (CurrentEnv != NULL)
-		{
-			CurrentEnv->Properties.*control->Int = value;
-		}
-	}
-	SendMessage (control->EditHWND, WM_SETTEXT, 0, (LPARAM)buff);
-	if (CurrentEnv != NULL)
-	{
-		CurrentEnv->Modified = true;
-	}
-}
-
-void UpdateControls (ReverbContainer *env, HWND hDlg)
-{
-	char buff[4];
-	size_t i;
-
-	if (env == NULL)
-		return;
-
-	CurrentEnv = NULL;
-
-	for (i = 0; i < countof(EnvControls); ++i)
-	{
-		EnvControl *ctrl = &EnvControls[i];
-
-		if (ctrl->Float)
-		{
-			float v = env->Properties.*ctrl->Float * 1000;
-			UpdateControl (ctrl, int(v >= 0.0 ? v + 0.5 : v - 0.5), true);
-		}
-		else
-		{
-			UpdateControl (ctrl, env->Properties.*ctrl->Int, true);
-		}
-		EnableWindow (ctrl->EditHWND, !env->Builtin);
-		EnableWindow (ctrl->SliderHWND, !env->Builtin);
-	}
-	for (i = 0; i < countof(EnvFlags); ++i)
-	{
-		SendMessage (EnvFlags[i].CheckboxHWND, BM_SETCHECK,
-			(env->Properties.Flags & EnvFlags[i].Flag) ? BST_CHECKED : BST_UNCHECKED, 0);
-		EnableWindow (EnvFlags[i].CheckboxHWND, !env->Builtin);
-	}
-	EnableWindow (GetDlgItem (hDlg, IDC_REVERT), !env->Builtin);
-
-	mysnprintf (buff, countof(buff), "%d", HIBYTE(env->ID));
-	SendMessage (GetDlgItem (hDlg, IDC_ID1), WM_SETTEXT, 0, (LPARAM)buff);
-
-	mysnprintf (buff, countof(buff), "%d", LOBYTE(env->ID));
-	SendMessage (GetDlgItem (hDlg, IDC_ID2), WM_SETTEXT, 0, (LPARAM)buff);
-
-	SavedProperties = env->Properties;
-	CurrentEnv = env;
-
-	if (SendMessage (GetDlgItem (hDlg, IDC_TESTEAX), BM_GETCHECK, 0,0) == BST_CHECKED)
-	{
-		ForcedEnvironment = env;
-	}
-}
-
-INT_PTR CALLBACK EAXProp (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	const EnvControl *env;
-	SCROLLINFO si;
-	int yPos;
-
-	switch (uMsg)
-	{
-	case WM_INITDIALOG:
-		SetupEnvControls (hDlg);
-		return FALSE;
-
-	case WM_VSCROLL:
-		si.cbSize = sizeof(si);
-		si.fMask = SIF_ALL;
-		GetScrollInfo (hDlg, SB_VERT, &si);
-		yPos = si.nPos;
-
-		switch (LOWORD(wParam))
-		{
-		case SB_TOP:		si.nPos = si.nMin;		break;
-		case SB_BOTTOM:		si.nPos = si.nMax;		break;
-		case SB_LINEUP:		si.nPos -= 16;			break;
-		case SB_LINEDOWN:	si.nPos += 16;			break;
-		case SB_PAGEUP:		si.nPos -= si.nPage;	break;
-		case SB_PAGEDOWN:	si.nPos += si.nPage;	break;
-		case SB_THUMBTRACK:	si.nPos = si.nTrackPos;	break;
-		}
-		si.fMask = SIF_POS;
-		SetScrollInfo (hDlg, SB_VERT, &si, TRUE);
-		GetScrollInfo (hDlg, SB_VERT, &si);
-		if (si.nPos != yPos)
-		{
-			ScrollWindow (hDlg, 0, yPos - si.nPos, NULL, NULL);
-			UpdateWindow (hDlg);
-		}
-		return TRUE;
-
-	case WM_HSCROLL:
-		env = (const EnvControl *)(LONG_PTR)GetWindowLongPtr ((HWND)lParam, GWLP_USERDATA);
-		UpdateControl (env, SendMessage ((HWND)lParam, TBM_GETPOS, 0, 0), false);
-		return TRUE;
-
-	case WM_SIZE:
-		if (wParam != SIZE_MAXSHOW && wParam != SIZE_MAXHIDE)
-		{
-			si.cbSize = sizeof(si);
-			si.fMask = SIF_POS;
-			GetScrollInfo (hDlg, SB_VERT, &si);
-			yPos = si.nPos;
-
-			// If we let the scroll bar disappear, then when that happens,
-			// it will resize the window before SetScrollInfo returns.
-			// Rather than checking for recursive WM_SIZE messages, I choose
-			// to force the scroll bar to always be present. The dialog is
-			// really designed with the appearance of the scroll bar in
-			// mind anyway, since it does nothing to resize the controls
-			// horizontally.
-
-			si.fMask = SIF_POS|SIF_PAGE|SIF_DISABLENOSCROLL;
-			si.nPage = HIWORD(lParam);
-
-			SetScrollInfo (hDlg, SB_VERT, &si, TRUE);
-			GetScrollInfo (hDlg, SB_VERT, &si);
-			if (si.nPos != yPos)
-			{
-				ScrollWindow (hDlg, 0, yPos - si.nPos, NULL, NULL);
-				UpdateWindow (hDlg);
-			}
-		}
-		return TRUE;
-
-	case WM_COMMAND:
-		if (HIWORD(wParam) == BN_CLICKED && CurrentEnv != NULL)
-		{
-			for (size_t i = 0; i < countof(EnvFlags); ++i)
-			{
-				if ((HWND)lParam == EnvFlags[i].CheckboxHWND)
-				{
-					if (SendMessage ((HWND)lParam, BM_GETCHECK, 0, 0) == BST_CHECKED)
-					{
-						CurrentEnv->Properties.Flags |= EnvFlags[i].Flag;
-					}
-					else
-					{
-						CurrentEnv->Properties.Flags &= ~EnvFlags[i].Flag;
-					}
-					return TRUE;;
-				}
-			}
-		}
-		return FALSE;
-	}
-	return FALSE;
-}
-
-void SuggestNewName (const ReverbContainer *env, HWND hEdit)
-{
-	const ReverbContainer *probe = NULL;
+	const ReverbContainer *probe = nullptr;
 	char text[32];
 	size_t len;
 	int number, numdigits;
@@ -733,351 +269,30 @@ void SuggestNewName (const ReverbContainer *env, HWND hEdit)
 		mysnprintf (text + len, countof(text) - len, "%d", number);
 
 		probe = Environments;
-		while (probe != NULL)
+		while (probe != nullptr)
 		{
 			if (stricmp (probe->Name, text) == 0)
 				break;
 			probe = probe->Next;
 		}
-		if (probe == NULL)
+		if (probe == nullptr)
 		{
 			break;
 		}
 	}
-
-	if (probe == NULL)
-	{
-		SetWindowText (hEdit, text);
-	}
+	return text;
 }
 
-void ShowErrorTip (HWND ToolTip, TOOLINFO &ti, HWND hDlg, const char *title)
-{
-	SendMessage (ToolTip, TTM_SETTITLE, 3, (LPARAM)title);
-	
-	ti.cbSize = sizeof(ti);
-	ti.hinst = g_hInst;
-	SendMessage (ToolTip, TTM_UPDATETIPTEXT, 0, (LPARAM)&ti);
-	GetClientRect (ti.hwnd, &ti.rect);
-	POINT pt = { (ti.rect.left + ti.rect.right) / 2, ti.rect.bottom - 4 };
-	ClientToScreen (ti.hwnd, &pt);
-	SendMessage (ToolTip, TTM_TRACKACTIVATE, FALSE, 0);
-	SendMessage (ToolTip, TTM_TRACKPOSITION, 0, MAKELONG(pt.x, pt.y));
-	SendMessage (ToolTip, TTM_TRACKACTIVATE, TRUE, (LPARAM)&ti);
-	SetFocus (ti.hwnd);
-	SendMessage (ti.hwnd, EM_SETSEL, 0, -1);
-	MessageBeep (MB_ICONEXCLAMATION);
-	SetTimer (hDlg, 11223, 10000, NULL);
-}
-
-INT_PTR CALLBACK NewEAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
-{
-	const ReverbContainer *rev;
-	TOOLINFO ti;
-	char buff[33], buff4[4];
-	int id1, id2;
-	static HWND ToolTip;
-	HWND hWnd;
-	int i;
-
-	switch (uMsg)
-	{
-	case WM_INITDIALOG:
-		hWnd = GetDlgItem (hDlg, IDC_ENVIRONMENTLIST);
-		PopulateEnvList (hWnd, true, (const ReverbContainer *)lParam);
-		SendMessage (GetDlgItem (hDlg, IDC_SPINID1), UDM_SETRANGE, 0, MAKELONG(255,0));
-		SendMessage (GetDlgItem (hDlg, IDC_SPINID2), UDM_SETRANGE, 0, MAKELONG(255,0));
-		SendMessage (GetDlgItem (hDlg, IDC_EDITID1), EM_LIMITTEXT, 3, 0);
-		SendMessage (GetDlgItem (hDlg, IDC_EDITID2), EM_LIMITTEXT, 3, 0);
-
-		hWnd = GetDlgItem (hDlg, IDC_NEWENVNAME);
-		SendMessage (hWnd, EM_LIMITTEXT, 31, 0);
-		SuggestNewName ((const ReverbContainer *)lParam, hWnd);
-		SetIDEdits (hDlg, FirstFreeID (((const ReverbContainer *)lParam)->ID,
-			((const ReverbContainer *)lParam)->Builtin));
-
-		ToolTip = CreateWindowEx (WS_EX_TOPMOST, TOOLTIPS_CLASS, NULL,
-			WS_POPUP|TTS_NOPREFIX|TTS_ALWAYSTIP|TTS_BALLOON|TTS_CLOSE,
-			0, 0, 0, 0,
-			hDlg, NULL, g_hInst, NULL);
-		if (ToolTip)
-		{
-			char zero = '\0';
-			ti.cbSize = sizeof(ti);
-			ti.uFlags = TTF_TRACK | TTF_TRANSPARENT;
-			ti.hinst = g_hInst;
-			ti.lpszText = &zero;
-			for (i = 0; i < 3; ++i)
-			{
-				ti.uId = i;
-				ti.hwnd = GetDlgItem (hDlg, IDC_NEWENVNAME+i);
-				GetClientRect (ti.hwnd, &ti.rect);
-				SendMessage (ToolTip, TTM_ADDTOOL, 0, (LPARAM)&ti);
-			}
-		}
-
-		return 1;
-
-	case WM_TIMER:
-		if (wParam == 11223)
-		{
-			SendMessage (ToolTip, TTM_TRACKACTIVATE, FALSE, 0);
-			KillTimer (hDlg, 11223);
-		}
-		return 1;
-
-	case WM_MOVE:
-		// Just hide the tool tip if the user moves the window.
-		SendMessage (ToolTip, TTM_TRACKACTIVATE, FALSE, 0);
-		return 1;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case IDOK:
-			id1 = 256; id2 = 256;
-			buff[0] = 0;
-			if (0 == GetWindowText (GetDlgItem (hDlg, IDC_NEWENVNAME), buff, 32) ||
-				S_FindEnvironment (buff) != NULL)
-			{
-				static CHAR text0[] = "That name is already used.";
-				static CHAR text1[] = "Please enter a name.";
-				ti.uId = 0;
-				ti.hwnd = GetDlgItem (hDlg, IDC_NEWENVNAME);
-				ti.lpszText = buff[0] ? text0 : text1;
-				ShowErrorTip (ToolTip, ti, hDlg, "Bad Name");
-				return 0;
-			}
-			if (0 < GetWindowText (GetDlgItem (hDlg, IDC_EDITID1), buff4, 4))
-			{
-				id1 = atoi (buff4);
-			}
-			if (0 < GetWindowText (GetDlgItem (hDlg, IDC_EDITID2), buff4, 4))
-			{
-				id2 = atoi (buff4);
-			}
-			if (id1 > 255 || id2 > 255)
-			{
-				static CHAR text[] = "Please enter a number between 0 and 255.";
-				ti.uId = id1 > 255 ? 1 : 2;
-				ti.hwnd = GetDlgItem (hDlg, IDC_EDITID1 + ti.uId - 1);
-				ti.lpszText = text;
-				ShowErrorTip (ToolTip, ti, hDlg, "Bad Value");
-			}
-			else if (NULL != (rev = S_FindEnvironment (MAKEWORD (id2, id1))))
-			{
-				static char foo[80];
-				ti.uId = 2;
-				ti.hwnd = GetDlgItem (hDlg, IDC_EDITID2);
-				mysnprintf (foo, countof(foo), "This ID is already used by \"%s\".", rev->Name);
-				ti.lpszText = foo;
-				ShowErrorTip (ToolTip, ti, hDlg, "Bad ID");
-			}
-			else
-			{
-				LVITEM item;
-
-				hWnd = GetDlgItem (hDlg, IDC_ENVIRONMENTLIST);
-				i = SendMessage (hWnd, LVM_GETNEXTITEM, (WPARAM)-1, LVNI_ALL|LVNI_SELECTED);
-
-				if (i == -1)
-				{
-					MessageBeep (MB_ICONEXCLAMATION);
-					return 0;
-				}
-
-				item.iItem = i;
-				item.iSubItem = 0;
-				item.mask = LVIF_PARAM;
-				if (!SendMessage (hWnd, LVM_GETITEM, 0, (LPARAM)&item))
-				{
-					MessageBeep (MB_ICONEXCLAMATION);
-					return 0;
-				}
-
-				ReverbContainer *env = new ReverbContainer;
-				rev = (ReverbContainer *)item.lParam;
-
-				env->Builtin = false;
-				env->ID = MAKEWORD (id2, id1);
-				env->Name = copystring (buff);
-				env->Next = NULL;
-				env->Properties = rev->Properties;
-				S_AddEnvironment (env);
-
-				EndDialog (hDlg, (INT_PTR)env);
-			}
-			return 0;
-
-		case IDCANCEL:
-			EndDialog (hDlg, 0);
-			break;
-		}
-		return 0;
-
-	case WM_NOTIFY:
-		if (wParam == IDC_ENVIRONMENTLIST && ((LPNMHDR)lParam)->code == LVN_ITEMCHANGED)
-		{
-			LPNMLISTVIEW nmlv = (LPNMLISTVIEW)lParam;
-
-			if (nmlv->iItem != -1 &&
-				(nmlv->uNewState & LVIS_SELECTED) &&
-				!(nmlv->uOldState & LVIS_SELECTED))
-			{
-				SuggestNewName ((const ReverbContainer *)nmlv->lParam, GetDlgItem (hDlg, IDC_NEWENVNAME));
-				SetIDEdits (hDlg, FirstFreeID (((const ReverbContainer *)nmlv->lParam)->ID,
-					((const ReverbContainer *)lParam)->Builtin));
-			}
-		}
-		return 0;
-	}
-	return FALSE;
-}
-
-UINT_PTR CALLBACK SaveHookProc (HWND hDlg, UINT msg, WPARAM wParam, LPARAM lParam)
-{
-	static LONG ButtonsLeftOffset;
-	static LONG ListRightOffset;
-	static LONG GroupRightOffset;
-
-	MySaveData *msd;
-	HWND hWnd;
-	LVITEM item;
-	int i, count;
-	RECT rect1, rect2;
-	UINT ns;
-
-	switch (msg)
-	{
-	case WM_INITDIALOG:
-		GetClientRect (hDlg, &rect1);
-		GetWindowRect (GetDlgItem (hDlg, IDC_SELECTALL), &rect2);
-		ScreenToClient (hDlg, (LPPOINT)&rect2.left);
-		ButtonsLeftOffset = rect2.left - rect1.right;
-		GetWindowRect (GetDlgItem (hDlg, IDC_ENVLIST), &rect2);
-		ListRightOffset = (rect2.right - rect2.left) - rect1.right;
-		GetWindowRect (GetDlgItem (hDlg, IDC_SAVEGROUP), &rect2);
-		GroupRightOffset = (rect2.right - rect2.left) - rect1.right;
-
-		hWnd = GetDlgItem (hDlg, IDC_ENVLIST);
-		PopulateEnvList (hWnd, false,
-			((MySaveData *)(((LPOPENFILENAME)lParam)->lCustData))->Default);
-		SetWindowLongPtr (hDlg, DWLP_USER, (LONG_PTR)((LPOPENFILENAME)lParam)->lCustData);
-		return 1;
-
-	case WM_ERASEBKGND:
-		SetWindowLongPtr (hDlg, DWLP_MSGRESULT, 1);
-		return 1;
-
-	case WM_SIZE:
-		if (wParam != SIZE_MAXHIDE && wParam != SIZE_MAXSHOW)
-		{
-			GetWindowRect (hWnd = GetDlgItem (hDlg, IDC_SAVEGROUP), &rect1);
-			SetWindowPos (hWnd, NULL, 0, 0, LOWORD(lParam) + GroupRightOffset, rect1.bottom-rect1.top, SWP_NOMOVE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_DEFERERASE);
-
-			GetWindowRect (hWnd = GetDlgItem (hDlg, IDC_SELECTALL), &rect1);
-			ScreenToClient (hDlg, (LPPOINT)&rect1.left);
-			SetWindowPos (hWnd, NULL, LOWORD(lParam)+ButtonsLeftOffset, rect1.top, 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOOWNERZORDER);
-
-			GetWindowRect (hWnd = GetDlgItem (hDlg, IDC_SELECTNONE), &rect1);
-			ScreenToClient (hDlg, (LPPOINT)&rect1.left);
-			SetWindowPos (hWnd, NULL, LOWORD(lParam)+ButtonsLeftOffset, rect1.top, 0, 0, SWP_NOSIZE|SWP_NOZORDER|SWP_NOOWNERZORDER);
-
-			GetWindowRect (hWnd = GetDlgItem (hDlg, IDC_ENVLIST), &rect1);
-			SetWindowPos (hWnd, NULL, 0, 0, LOWORD(lParam) + ListRightOffset, rect1.bottom-rect1.top, SWP_DEFERERASE|SWP_NOMOVE|SWP_NOZORDER|SWP_NOOWNERZORDER);
-		}
-		return 1;
-
-	case WM_COMMAND:
-		switch (LOWORD(wParam))
-		{
-		case IDC_SELECTALL:
-		case IDC_SELECTNONE:
-			hWnd = GetDlgItem (hDlg, IDC_ENVLIST);
-			SendMessage (hWnd, WM_SETREDRAW, FALSE, 0);
-			count = ListView_GetItemCount (hWnd);
-			item.iSubItem = 0;
-			item.mask = LVIF_STATE;
-			item.stateMask = LVIS_SELECTED;
-			item.state = LOWORD(wParam)==IDC_SELECTALL ? LVIS_SELECTED : 0;
-			for (i = 0; i < count; ++i)
-			{
-				item.iItem = i;
-				ListView_SetItem (hWnd, &item);
-			}
-			if (LOWORD(wParam) == IDC_SELECTALL)
-			{
-				SetFocus (hWnd);
-			}
-			SendMessage (hWnd, WM_SETREDRAW, TRUE, 0);
-			return 1;
-		}
-		return 0;
-
-	case WM_NOTIFY:
-		switch (((LPNMHDR)lParam)->code)
-		{
-		case CDN_INITDONE:
-			hWnd = GetParent (hDlg);
-			GetWindowRect (hWnd, &rect1);
-			GetWindowRect (hDlg, &rect2);
-			SetWindowPos (hDlg, NULL, 0, 0, rect1.right-rect1.left, rect2.bottom-rect2.top, SWP_NOMOVE|SWP_NOZORDER|SWP_NOOWNERZORDER);
-			return 1;
-
-		case CDN_FILEOK:
-			msd = (MySaveData *)(LONG_PTR)GetWindowLongPtr (hDlg, DWLP_USER);
-			hWnd = GetDlgItem (hDlg, IDC_ENVLIST);
-			ns = ListView_GetSelectedCount (hWnd);
-			if (ns == 0)
-			{
-				msd->NumSaves = 0;
-				if (IDNO == MessageBox (hDlg,
-					"You have not selected any EAX environments to save.\n"
-					"Do you want to cancel the save operation?",
-					"Nothing Selected",
-					MB_YESNO|MB_ICONEXCLAMATION|MB_DEFBUTTON2))
-				{
-					SetWindowLongPtr (hDlg, DWLP_MSGRESULT, 1);
-					return 1;
-				}
-			}
-			else
-			{
-				UINT x;
-				msd->Saves = new const ReverbContainer *[ns];
-				item.iItem = -1;
-				item.iSubItem = 0;
-				item.mask = LVIF_PARAM;
-
-				for (x = 0; x != ns; )
-				{
-					item.iItem = ListView_GetNextItem (hWnd, item.iItem, LVNI_SELECTED);
-					if (item.iItem != -1 && ListView_GetItem (hWnd, &item))
-					{
-						msd->Saves[x++] = (const ReverbContainer *)item.lParam;
-					}
-				}
-				msd->NumSaves = x;
-			}
-			return 0;
-		}
-		return 0;
-
-	default:
-		return 0;
-	}
-}
-
-void ExportEnvironments (const char *filename, UINT count, const ReverbContainer **envs)
+void ExportEnvironments (const char *filename, uint32_t count, const ReverbContainer **envs)
 {
 	FILE *f;
 
 retry:
 	f = fopen (filename, "w");
 
-	if (f != NULL)
+	if (f != nullptr)
 	{
-		for (UINT i = 0; i < count; ++i)
+		for (uint32_t i = 0; i < count; ++i)
 		{
 			const ReverbContainer *env = envs[i];
 			const ReverbContainer *base;
@@ -1089,7 +304,7 @@ retry:
 			}
 			else
 			{
-				base = NULL;
+				base = nullptr;
 			}
 			fprintf (f, "\"%s\" %u %u\n{\n", env->Name, HIBYTE(env->ID), LOBYTE(env->ID));
 			for (j = 0; j < countof(EnvControls); ++j)
@@ -1132,12 +347,12 @@ retry:
 		FormatMessage (FORMAT_MESSAGE_ALLOCATE_BUFFER |
 			FORMAT_MESSAGE_FROM_SYSTEM |
 			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
+			nullptr,
 			GetLastError(),
 			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
 			(LPTSTR)&lpMsgBuf,
 			0,
-			NULL);
+			nullptr);
 		if (IDRETRY == MessageBox (EAXEditWindow, (LPCTSTR)lpMsgBuf, "Save Failed!", MB_RETRYCANCEL|MB_ICONERROR))
 		{
 			LocalFree (lpMsgBuf);
@@ -1156,14 +371,14 @@ void SaveEnvironments (HWND owner, const ReverbContainer *defEnv)
 	ofn.hwndOwner = owner;
 	ofn.hInstance = g_hInst;
 	ofn.lpstrFilter = "Text Files\0*.txt\0All Files\0*.*\0";
-	ofn.lpstrCustomFilter = NULL;
+	ofn.lpstrCustomFilter = nullptr;
 	ofn.nMaxCustFilter = 0;
 	ofn.nFilterIndex = 1;
 	ofn.lpstrFile = filename;
 	ofn.nMaxFile = sizeof(filename);
-	ofn.lpstrFileTitle = NULL;
+	ofn.lpstrFileTitle = nullptr;
 	ofn.nMaxFileTitle = 0;
-	ofn.lpstrInitialDir = NULL;
+	ofn.lpstrInitialDir = nullptr;
 	ofn.lpstrTitle = "Save EAX Environments As...";
 	ofn.Flags = OFN_ENABLEHOOK|OFN_ENABLESIZING|OFN_ENABLETEMPLATE|OFN_EXPLORER|
 		OFN_NOCHANGEDIR|OFN_OVERWRITEPROMPT;
@@ -1182,7 +397,7 @@ void SaveEnvironments (HWND owner, const ReverbContainer *defEnv)
 	}
 }
 
-INT_PTR CALLBACK EAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
+INT_PTR CALLBACK EAXProc (HWND hDlg, uint32_t uMsg, WPARAM wParam, LPARAM lParam)
 {
 	SCROLLINFO scrollInfo;
 	HWND hWnd;
@@ -1227,13 +442,13 @@ INT_PTR CALLBACK EAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 		hWnd = CreateWindow(
 			"Scrollbar", 
-			(LPSTR)NULL,
+			(LPSTR)nullptr,
 			WS_CHILD | WS_VISIBLE | SBS_SIZEGRIP | SBS_SIZEBOXBOTTOMRIGHTALIGN | WS_CLIPSIBLINGS,
 			0,0,rect.right,rect.bottom,
 			hDlg,
 			(HMENU)IDC_SIZEBOX,
 			g_hInst,
-			NULL);
+			nullptr);
 
 		TestLocation.x = DoneLocation.x = rect.right;
 		TestLocation.y = DoneLocation.y = rect.bottom;
@@ -1264,7 +479,7 @@ INT_PTR CALLBACK EAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		RevertLeft = rect.left;
 
 		hWnd = GetDlgItem (hDlg, IDC_CURRENTENVIRONMENT);
-		PopulateEnvDropDown (hWnd, IsDlgButtonChecked (hDlg, IDC_SHOWIDS)==BST_CHECKED, NULL);
+		PopulateEnvDropDown (hWnd, IsDlgButtonChecked (hDlg, IDC_SHOWIDS)==BST_CHECKED, nullptr);
 		EAXProc (hDlg, WM_COMMAND, MAKELONG(IDC_CURRENTENVIRONMENT,CBN_SELENDOK), (LPARAM)hWnd);
 
 		CheckDlgButton (hDlg, IDC_TESTEAX, eaxedit_test ? BST_CHECKED : BST_UNCHECKED);
@@ -1276,12 +491,12 @@ INT_PTR CALLBACK EAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 			GetClientRect (hWnd = GetDlgItem (hDlg, IDC_SIZEBOX), &rect);
 			SetWindowPos (hWnd, HWND_BOTTOM, LOWORD(lParam)-rect.right, HIWORD(lParam)-rect.bottom, 0, 0, SWP_NOSIZE);
 
-			SetWindowPos (hPropList, NULL, 0, 0, PropListMaxSize.x, HIWORD(lParam)-PropListHeightDiff, SWP_NOMOVE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_DEFERERASE);
-			SetWindowPos (GetDlgItem (hDlg, IDOK), NULL, LOWORD(lParam)-DoneLocation.x, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
-			SetWindowPos (GetDlgItem (hDlg, IDC_NEW), NULL, NewLeft, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
-			SetWindowPos (GetDlgItem (hDlg, IDC_SAVE), NULL, SaveLeft, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
-			SetWindowPos (GetDlgItem (hDlg, IDC_REVERT), NULL, RevertLeft, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
-			SetWindowPos (GetDlgItem (hDlg, IDC_TESTEAX), NULL, LOWORD(lParam)-TestLocation.x, HIWORD(lParam)-TestLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
+			SetWindowPos (hPropList, nullptr, 0, 0, PropListMaxSize.x, HIWORD(lParam)-PropListHeightDiff, SWP_NOMOVE|SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_DEFERERASE);
+			SetWindowPos (GetDlgItem (hDlg, IDOK), nullptr, LOWORD(lParam)-DoneLocation.x, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
+			SetWindowPos (GetDlgItem (hDlg, IDC_NEW), nullptr, NewLeft, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
+			SetWindowPos (GetDlgItem (hDlg, IDC_SAVE), nullptr, SaveLeft, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
+			SetWindowPos (GetDlgItem (hDlg, IDC_REVERT), nullptr, RevertLeft, HIWORD(lParam)-DoneLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
+			SetWindowPos (GetDlgItem (hDlg, IDC_TESTEAX), nullptr, LOWORD(lParam)-TestLocation.x, HIWORD(lParam)-TestLocation.y, 0, 0, SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_NOSIZE);
 		}
 		return 0;
 
@@ -1293,7 +508,7 @@ INT_PTR CALLBACK EAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 		{
 			setmodeneeded = true;
 		}
-		ForcedEnvironment = NULL;
+		ForcedEnvironment = nullptr;
 		break;
 
 	case WM_COMMAND:
@@ -1311,7 +526,7 @@ INT_PTR CALLBACK EAXProc (HWND hDlg, UINT uMsg, WPARAM wParam, LPARAM lParam)
 				MAKEINTRESOURCE(IDD_NEWEAX), hDlg, NewEAXProc,
 				SendMessage (hWnd, CB_GETITEMDATA,
 					SendMessage (hWnd, CB_GETCURSEL, 0, 0), 0));
-			if (env != NULL)
+			if (env != nullptr)
 			{
 				LRESULT i = AddEnvToDropDown (hWnd,
 					SendMessage (GetDlgItem (hDlg, IDC_SHOWIDS), BM_GETCHECK, 0, 0)==BST_CHECKED,
@@ -1390,29 +605,7 @@ void ShowEAXEditor ()
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
-CCMD (reverbedit)
-{
-	if (EAXEditWindow != 0)
-	{
-		SetForegroundWindow (EAXEditWindow);
-	}
-	else
-	{
-		ForceWindowed = true;
-		if (fullscreen)
-		{
-			NewWidth = screen->VideoWidth;
-			NewHeight = screen->VideoHeight;
-			NewBits = DisplayBits;
-			setmodeneeded = true;
-			SpawnEAXWindow = true;
-		}
-		else
-		{
-			ShowEAXEditor ();
-		}
-	}
-}
+
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, GetValue)
 {
@@ -1434,7 +627,7 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
 DEFINE_ACTION_FUNCTION(DReverbEdit, GrayCheck)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_BOOL(true);
+	ACTION_RETURN_BOOL(CurrentEnv->Builtin);
 	return 1;
 }
 
@@ -1456,12 +649,13 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, GetSelectedEnvironment)
 DEFINE_ACTION_FUNCTION(DReverbEdit, FillSelectMenu)
 {
 	PARAM_PROLOGUE;
+	PARAM_STRING(ccmd);
 	PARAM_OBJECT(desc, DOptionMenuDescriptor);
 	desc->mItems.Clear();
 	for (auto env = Environments; env != nullptr; env = env->Next)
 	{
-		FStringf text("(%d, %d) %s", (env->ID >> 8) & 255, env->ID & 255, env->Name);
-		FStringf cmd("selectenvironment \"%s\"", env->Name);
+		FStringf text("(%d, %d) %s", HIBYTE(env->ID), LOBYTE(env->ID), env->Name);
+		FStringf cmd("%s \"%s\"", ccmd.GetChars(), env->Name);
 		PClass *cls = PClass::FindClass("OptionMenuItemCommand");
 		if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
 		{
@@ -1478,22 +672,51 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, FillSelectMenu)
 	return 0;
 }
 
+// These are for internal use only and not supposed to be user-settable
+CVAR(String, reverbedit_name, "", CVAR_NOSET);
+CVAR(Int, reverbedit_id1, 0, CVAR_NOSET);
+CVAR(Int, reverbedit_id2, 0, CVAR_NOSET);
+
+static void SelectEnvironment(const char *envname)
+{
+	for (auto env = Environments; env != nullptr; env = env->Next)
+	{
+		if (!strcmp(env->Name, envname))
+		{
+			CurrentEnv = env;
+			SavedProperties = env->Properties;
+			if (eaxedit_test) ForcedEnvironment = env;
+
+			// Set up defaults for a new environment based on this one.
+			int newid = FirstFreeID(env->ID, env->Builtin);
+			UCVarValue cv;
+			cv.Int = HIBYTE(newid);
+			reverbedit_id1.ForceSet(cv, CVAR_Int);
+			cv.Int = LOBYTE(newid);
+			reverbedit_id2.ForceSet(cv, CVAR_Int);
+			FString selectname = SuggestNewName(env);
+			cv.String = selectname.GetChars();
+			reverbedit_name.ForceSet(cv, CVAR_String);
+			return;
+		}
+	}
+}
+
+void InitReverbMenu()
+{
+	// Make sure that the editor's variables are properly initialized.
+	SelectEnvironment("Off");
+}
+
 CCMD(selectenvironment)
 {
 	if (argv.argc() > 1)
 	{
-		for (auto env = Environments; env != nullptr; env = env->Next)
-		{
-			if (!strcmp(env->Name, argv[1]))
-			{
-				CurrentEnv = env;
-				SavedProperties = env->Properties;
-				if (eaxedit_test) ForcedEnvironment = env;
-				return;
-			}
-		}
+		auto str = argv[1];
+		SelectEnvironment(str);
 	}
-	CurrentEnv = nullptr;
+	else
+		InitReverbMenu();
 }
 
 CCMD(revertenvironment)
@@ -1503,3 +726,33 @@ CCMD(revertenvironment)
 		CurrentEnv->Properties = SavedProperties;
 	}
 }
+
+CCMD(createenvironment)
+{
+	if (S_FindEnvironment(reverbedit_name))
+	{
+		M_StartMessage(FStringf("An environment with the name '%s' already exists", *reverbedit_name), 1);
+		return;
+	}
+	int id = (reverbedit_id1 * 255) + reverbedit_id2;
+	if (S_FindEnvironment(id))
+	{
+		M_StartMessage(FStringf("An environment with the ID (%d, %d) already exists", *reverbedit_id1, *reverbedit_id2), 1);
+		return;
+	}
+
+	auto newenv = new ReverbContainer;
+	newenv->Builtin = false;
+	newenv->ID = id;
+	newenv->Name = copystring(reverbedit_name);
+	newenv->Next = nullptr;
+	newenv->Properties = CurrentEnv->Properties;
+	S_AddEnvironment(newenv);
+	SelectEnvironment(newenv->Name);
+}
+
+CCMD(reverbedit)
+{
+	C_DoCommand("openmenu reverbedit");
+}
+

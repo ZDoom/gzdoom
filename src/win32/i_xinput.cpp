@@ -165,7 +165,7 @@ public:
 
 	bool GetDevice();
 	void ProcessInput();
-	bool WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result);
+	bool WndProcHook(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam, LRESULT *result);
 	void AddAxes(float axes[NUM_JOYAXIS]);
 	void GetDevices(TArray<IJoystickConfig *> &sticks);
 	IJoystickConfig *Rescan();
@@ -781,7 +781,7 @@ void FXInputManager::GetDevices(TArray<IJoystickConfig *> &sticks)
 //
 //===========================================================================
 
-bool FXInputManager::WndProcHook(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam, LRESULT *result)
+bool FXInputManager::WndProcHook(HWND hWnd, uint32_t message, WPARAM wParam, LPARAM lParam, LRESULT *result)
 {
 	if (nullptr != InputEnable && message == WM_ACTIVATE)
 	{

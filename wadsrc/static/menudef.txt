@@ -354,6 +354,8 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	Submenu "$OPTMNU_CHANGERENDER",		"RendererMenu"
 	StaticText " "
+	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
+	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
@@ -2207,7 +2209,7 @@ OptionMenu "OpenGLOptions" protected
 OptionMenu "ReverbEdit" protected
 {
 	Class "ReverbEdit"
-	Title "Reverb Environment Editor"
+	Title "$OPTMNU_REVERB"
 	StaticTextSwitchable 	"", "", "EvironmentName", 1
 	StaticTextSwitchable 	"", "", "EvironmentID"
 	StaticText " "
@@ -2232,7 +2234,7 @@ OptionMenu "ReverbSettings" protected
   	SafeCommand "Revert settings", "revertenvironment"
 	StaticText " "
 	SliderReverbEditOption "Environment Size", 1, 100, 0.01, 3, 1
-    SliderReverbEditOption "Environment Diffusion", 0, 10, 0.01, 3, 2
+    SliderReverbEditOption "Environment Diffusion", 0, 1, 0.01, 3, 2
     SliderReverbEditOption "Room", -10000, 0, 1, 0, 3
     SliderReverbEditOption "Room HF", -10000, 0, 1, 0, 4
     SliderReverbEditOption "Room LF", -10000, 0, 1, 0, 5

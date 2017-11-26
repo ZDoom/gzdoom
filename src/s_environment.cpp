@@ -894,7 +894,25 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, GetValue)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(index);
-	ACTION_RETURN_FLOAT(0);
+	float v;
+
+	if (index >= 0 && index < countof(ReverbFields))
+	{
+		auto rev = &ReverbFields[index];
+		if (rev->Int != nullptr)
+		{
+			v = float(CurrentEnv->Properties.*(rev->Int));
+		}
+		else if (rev->Float != nullptr)
+		{
+			v = CurrentEnv->Properties.*(rev->Float);
+		}
+		else
+		{
+			v = !!(CurrentEnv->Properties.Flags & (1 << int(rev->Flag)));
+		}
+	}
+	ACTION_RETURN_FLOAT(v);
 	return 1;
 }
 
@@ -902,8 +920,27 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(index);
-	PARAM_FLOAT(value);
-	ACTION_RETURN_FLOAT(value);
+	PARAM_FLOAT(v);
+
+	if (index >= 0 && index < countof(ReverbFields))
+	{
+		auto rev = &ReverbFields[index];
+		if (rev->Int != nullptr)
+		{
+			v = CurrentEnv->Properties.*(rev->Int) = clamp<int>(int(v), rev->Min, rev->Max);
+		}
+		else if (rev->Float != nullptr)
+		{
+			v = CurrentEnv->Properties.*(rev->Float) = clamp<float>(float(v), rev->Min / 1000.f, rev->Max / 1000.f);
+		}
+		else
+		{
+			if (v == 0) CurrentEnv->Properties.Flags &= ~(1 << int(rev->Flag));
+			else CurrentEnv->Properties.Flags |= (1 << int(rev->Flag));
+		}
+	}
+
+	ACTION_RETURN_FLOAT(v);
 	return 1;
 }
 
@@ -1017,7 +1054,7 @@ CCMD(createenvironment)
 		M_StartMessage(FStringf("An environment with the name '%s' already exists", *reverbedit_name), 1);
 		return;
 	}
-	int id = (reverbedit_id1 * 255) + reverbedit_id2;
+	int id = (reverbedit_id1 << 8) + reverbedit_id2;
 	if (S_FindEnvironment(id))
 	{
 		M_StartMessage(FStringf("An environment with the ID (%d, %d) already exists", *reverbedit_id1, *reverbedit_id2), 1);

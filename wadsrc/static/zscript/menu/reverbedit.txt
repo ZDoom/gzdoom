@@ -168,7 +168,7 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, selected ? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, Selectable());
+		drawLabel(indent, y, selected ? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, ReverbEdit.GrayCheck());
 
 		int DrawX = indent + CursorSpace();
 		if (mEnter)

@@ -1,4 +1,4 @@
-This is GZDoom - a Doom port based on ZDoom. It adds an OpenGL rendered to it.
+This is GZDoom - a Doom port based on ZDoom. It adds an OpenGL renderer to it.
 
 More information can be found here:
 

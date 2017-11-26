@@ -2216,7 +2216,7 @@ OptionMenu "ReverbEdit" protected
 	StaticText " "
 	Submenu "New Environment", "ReverbNew"
 	Submenu "Save Environments", "ReverbSave"
-	Submenu "Edit Environment", "ReverbEdit"
+	Submenu "Edit Environment", "ReverbSettings"
 }
 
 OptionMenu "ReverbSelect" protected
@@ -2225,41 +2225,45 @@ OptionMenu "ReverbSelect" protected
 	Title "Select Environment"
 	// filled in by code
 }
-	
-/*
-    CONTROL         "Reflections Scale",IDC_REFLECTIONSSCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,353,70,10
-    CONTROL         "Reflections Delay Scale",IDC_REFLECTIONSDELAYSCALE,
-                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,366,90,10
-    CONTROL         "Decay Time Scale",IDC_DECAYTIMESCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,377,71,10
-    CONTROL         "Decay HF Limit",IDC_DECAYHFLIMIT,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,19,390,63,10
-    CONTROL         "Reverb Scale",IDC_REVERBSCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,353,58,10
-    CONTROL         "Reverb Delay Scale",IDC_REVERBDELAYSCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,366,78,10
-    CONTROL         "Echo Time Scale",IDC_ECHOTIMESCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,377,67,10
-    CONTROL         "Modulation Time Scale",IDC_MODULATIONTIMESCALE,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,139,390,86,10
-    LTEXT           "Environment Size",IDC_STATIC,17,9,56,8,0,WS_EX_RIGHT
-    LTEXT           "Environment Diffusion",IDC_STATIC,2,22,71,8,0,WS_EX_RIGHT
-    LTEXT           "Room",IDC_STATIC,53,35,19,8,0,WS_EX_RIGHT
-    LTEXT           "Room HF",IDC_STATIC,43,48,30,8,0,WS_EX_RIGHT
-    LTEXT           "Room LF",IDC_STATIC,45,60,28,8,0,WS_EX_RIGHT
-    LTEXT           "Decay Time",IDC_STATIC,35,74,38,8,0,WS_EX_RIGHT
-    LTEXT           "Decay HF Ratio",IDC_STATIC,23,87,50,8,0,WS_EX_RIGHT
-    LTEXT           "Decay LF Ratio",IDC_STATIC,24,100,49,8,0,WS_EX_RIGHT
-    LTEXT           "Reflections",IDC_STATIC,37,113,36,8,0,WS_EX_RIGHT
-    LTEXT           "Reflections Delay",IDC_STATIC,17,126,56,8,0,WS_EX_RIGHT
-    LTEXT           "Reflections Pan X",IDC_STATIC,17,267,56,8,0,WS_EX_RIGHT
-    LTEXT           "Reflections Pan Y",IDC_STATIC,17,280,56,8,0,WS_EX_RIGHT
-    LTEXT           "Reflections Pan Z",IDC_STATIC,17,293,56,8,0,WS_EX_RIGHT
-    LTEXT           "Reverb",IDC_STATIC,49,137,24,8,0,WS_EX_RIGHT
-    LTEXT           "Reverb Delay",IDC_STATIC,29,150,44,8,0,WS_EX_RIGHT
-    LTEXT           "Reverb Pan X",IDC_STATIC,29,306,44,8,0,WS_EX_RIGHT
-    LTEXT           "Reverb Pan Y",IDC_STATIC,29,319,44,8,0,WS_EX_RIGHT
-    LTEXT           "Reverb Pan Z",IDC_STATIC,29,332,44,8,0,WS_EX_RIGHT
-    LTEXT           "Echo Time",IDC_STATIC,40,163,33,8,0,WS_EX_RIGHT
-    LTEXT           "Echo Depth",IDC_STATIC,35,176,38,8,0,WS_EX_RIGHT
-    LTEXT           "Modulation Time",IDC_STATIC,21,189,52,8,0,WS_EX_RIGHT
-    LTEXT           "Modulation Depth",IDC_STATIC,16,202,57,8,0,WS_EX_RIGHT
-    LTEXT           "Air Absorption HF",IDC_STATIC,16,215,57,8,0,WS_EX_RIGHT
-    LTEXT           "HF Reference",IDC_STATIC,28,228,45,8,0,WS_EX_RIGHT
-    LTEXT           "LF Reference",IDC_STATIC,29,241,44,8,0,WS_EX_RIGHT
-    LTEXT           "Room Rolloff Factor",IDC_STATIC,9,254,64,8,0,WS_EX_RIGHT
-*/
+
+OptionMenu "ReverbSettings" protected
+{
+	Title "Edit Reverb Environment"
+  	SafeCommand "Revert settings", "revertenvironment"
+	StaticText " "
+	SliderReverbEditOption "Environment Size", 1, 100, 0.01, 3, 0
+    SliderReverbEditOption "Environment Diffusion", 0, 10, 0.01, 3, 1
+    SliderReverbEditOption "Room", -10000, 0, 1, 0, 2
+    SliderReverbEditOption "Room HF", -10000, 0, 1, 0, 3
+    SliderReverbEditOption "Room LF", -10000, 0, 1, 0, 4
+    SliderReverbEditOption "Decay Time", 1, 200, 0.01, 3, 5
+    SliderReverbEditOption "Decay HF Ratio", 1, 20, 0.01, 3, 6
+    SliderReverbEditOption "Decay LF Ratio", 1, 20, 0.01, 3, 7
+    SliderReverbEditOption "Reflections", -10000, 1000, 1, 0, 8
+    SliderReverbEditOption "Reflections Delay", 0, 0.3, 1, 3, 9
+    SliderReverbEditOption "Reflections Pan X", -2000, 2000, 1, 3, 10
+    SliderReverbEditOption "Reflections Pan Y", -2000, 2000, 1, 3, 11
+    SliderReverbEditOption "Reflections Pan Z", -2000, 2000, 1, 3, 12
+    SliderReverbEditOption "Reverb", -10000, 2000, 1, 0, 13
+    SliderReverbEditOption "Reverb Delay", 0, 0.1, 0.01, 3, 14
+    SliderReverbEditOption "Reverb Pan X", -2000, 2000, 1, 3, 15
+    SliderReverbEditOption "Reverb Pan Y", -2000, 2000, 1, 3, 16
+    SliderReverbEditOption "Reverb Pan Z", -2000, 2000, 1, 3, 17
+    SliderReverbEditOption "Echo Time", 0.075, 0.25, 0.005, 3, 18
+    SliderReverbEditOption "Echo Depth", 0, 1, 0.01, 3, 19
+    SliderReverbEditOption "Modulation Time", 0.04, 4, 0.01, 3, 20
+    SliderReverbEditOption "Modulation Depth",0, 1, 0.01, 3, 21
+    SliderReverbEditOption "Air Absorption HF", -100, 0, 0.01, 3, 22
+    SliderReverbEditOption "HF Reference", 10000, 200000, 1, 3, 23
+    SliderReverbEditOption "LF Reference",20, 10000, 0.1, 3, 24
+    SliderReverbEditOption "Room Rolloff Factor",0, 10, 0.01, 3, 25
+	StaticText " "
+    ReverbOption "Reflections Scale", 26, OnOff
+    ReverbOption "Reflections Delay Scale", 27, OnOff
+    ReverbOption "Decay Time Scale", 28, OnOff
+    ReverbOption "Decay HF Limit", 29, OnOff
+    ReverbOption "Reverb Scale", 30, OnOff
+    ReverbOption "Reverb Delay Scale", 31, OnOff
+    ReverbOption "Echo Time Scale", 32, OnOff
+    ReverbOption "Modulation Time Scale", 33, OnOff
+}

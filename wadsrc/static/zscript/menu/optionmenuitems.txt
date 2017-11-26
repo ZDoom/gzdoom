@@ -250,11 +250,11 @@ class OptionMenuItemOptionBase : OptionMenuItem
 	virtual void SetSelection(int Selection)
 	{
 	}
-
+	
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		bool grayed = mGrayCheck != null && !(mGrayCheck.GetInt());
+		bool grayed = isGrayed();
 
 		if (mCenter)
 		{
@@ -299,10 +299,15 @@ class OptionMenuItemOptionBase : OptionMenuItem
 		}
 		return true;
 	}
+	
+	virtual bool isGrayed()
+	{
+		return mGrayCheck != null && !mGrayCheck.GetInt();
+	}
 
 	override bool Selectable()
 	{
-		return mGrayCheck == null || mGrayCheck.GetInt();
+		return !isGrayed();
 	}
 }
 

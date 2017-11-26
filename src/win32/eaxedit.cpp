@@ -1427,13 +1427,14 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
 	PARAM_PROLOGUE;
 	PARAM_INT(index);
 	PARAM_FLOAT(value);
-	return 0;
+	ACTION_RETURN_FLOAT(value);
+	return 1;
 }
 
 DEFINE_ACTION_FUNCTION(DReverbEdit, GrayCheck)
 {
 	PARAM_PROLOGUE;
-	ACTION_RETURN_BOOL(false);
+	ACTION_RETURN_BOOL(true);
 	return 1;
 }
 
@@ -1447,7 +1448,7 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, GetSelectedEnvironment)
 	}
 	if (numret > 0)
 	{
-		ret[0].SetString(CurrentEnv ? CurrentEnv->Name : nullptr);
+		ret[0].SetString(CurrentEnv ? CurrentEnv->Name : "");
 	}
 	return numret;
 }
@@ -1486,10 +1487,19 @@ CCMD(selectenvironment)
 			if (!strcmp(env->Name, argv[1]))
 			{
 				CurrentEnv = env;
+				SavedProperties = env->Properties;
 				if (eaxedit_test) ForcedEnvironment = env;
 				return;
 			}
 		}
 	}
 	CurrentEnv = nullptr;
+}
+
+CCMD(revertenvironment)
+{
+	if (CurrentEnv != nullptr)
+	{
+		CurrentEnv->Properties = SavedProperties;
+	}
 }

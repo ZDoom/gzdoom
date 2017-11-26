@@ -2,7 +2,7 @@
 class ReverbEdit : OptionMenu
 {
 	static native double GetValue(int index);
-	static native void SetValue(int index, double value);
+	static native double SetValue(int index, double value);
 	static native bool GrayCheck();
 	static native string, int GetSelectedEnvironment();
 	static native void FillSelectMenu(OptionMenuDescriptor desc);
@@ -100,13 +100,46 @@ class OptionMenuItemReverbEditSelected : OptionMenuItemSubMenu
 //
 //=============================================================================
 
-class OptionMenuSliderReverbEditOption : OptionMenuSliderBase
+class OptionMenuItemReverbOption : OptionMenuItemOptionBase
+{
+	int mValIndex;
+
+	OptionMenuItemReverbOption Init(String label, int valindex, Name values)
+	{
+		Super.Init(label, "", values, null, false);
+		mValIndex = valindex;
+		return self;
+	}
+
+	override bool isGrayed()
+	{
+		return ReverbEdit.GrayCheck();
+	}
+
+	override int GetSelection()
+	{
+		return int(ReverbEdit.GetValue(mValIndex));
+	}
+	
+	override void SetSelection(int Selection)
+	{
+		ReverbEdit.SetValue(mValIndex, Selection);
+	}
+}
+
+//=============================================================================
+//
+//
+//
+//=============================================================================
+
+class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 {
 	int mValIndex;
 	String mEditValue;
 	TextEnterMenu mEnter;
 	
-	OptionMenuSliderReverbEditOption Init(String label, double min, double max, double step, int showval, int valindex)
+	OptionMenuItemSliderReverbEditOption Init(String label, double min, double max, double step, int showval, int valindex)
 	{
 		Super.Init(label, min, max, step, showval);
 		mValIndex = valindex;
@@ -127,7 +160,7 @@ class OptionMenuSliderReverbEditOption : OptionMenuSliderBase
 	
 	override bool Selectable()
 	{
-		return ReverbEdit.GrayCheck();
+		return !ReverbEdit.GrayCheck();
 	}
 
 	virtual String Represent()

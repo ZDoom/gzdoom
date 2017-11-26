@@ -474,7 +474,6 @@ endif()
 # Start defining source files for ZDoom
 set( PLAT_WIN32_SOURCES
 	sound/mididevices/music_win_mididevice.cpp
-	win32/eaxedit.cpp
 	win32/critsec.cpp
 	win32/fb_d3d9.cpp
 	win32/fb_d3d9_wipe.cpp

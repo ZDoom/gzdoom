@@ -224,6 +224,8 @@ namespace swrenderer
 			drawerargs.DrawSingleSkyColumn(Thread);
 		else
 			drawerargs.DrawDoubleSkyColumn(Thread);
+
+		drawerargs.DrawDepthSkyColumn(Thread, 1.0f / 65536.0f);
 	}
 
 	void RenderSkyPlane::DrawSkyColumn(int start_x, int y1, int y2)

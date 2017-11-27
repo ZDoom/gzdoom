@@ -45,6 +45,7 @@
 #include "swrenderer/things/r_wallsprite.h"
 #include "swrenderer/things/r_voxel.h"
 #include "swrenderer/things/r_particle.h"
+#include "swrenderer/things/r_model.h"
 #include "swrenderer/segments/r_clipsegment.h"
 #include "swrenderer/line/r_wallsetup.h"
 #include "swrenderer/line/r_farclip_line.h"
@@ -951,7 +952,18 @@ namespace swrenderer
 					}
 					else
 					{
-						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
+						int spritenum = thing->sprite;
+						bool isPicnumOverride = thing->picnum.isValid();
+						FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+						if (modelframe)
+						{
+							DVector3 pos = thing->InterpolatedPosition(Thread->Viewport->viewpoint.TicFrac);
+							RenderModel::Project(Thread, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
+						}
+						else
+						{
+							RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
+						}
 					}
 				}
 			}

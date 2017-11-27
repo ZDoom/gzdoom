@@ -156,6 +156,8 @@ namespace swrenderer
 
 		R_UpdateFuzzPosFrameStart();
 
+		MainThread()->Viewport->SetupPolyViewport();
+
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
 		if (!MainThread()->Viewport->viewpoint.showviewer)

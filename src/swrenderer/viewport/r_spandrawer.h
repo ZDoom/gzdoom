@@ -27,6 +27,7 @@ namespace swrenderer
 		void SetTextureVStep(double vstep) { ds_ystep = (uint32_t)(int64_t)(vstep * 4294967296.0); }
 		void SetSolidColor(int colorIndex) { ds_color = colorIndex; }
 
+		void DrawDepthSpan(RenderThread *thread, float idepth);
 		void DrawSpan(RenderThread *thread);
 		void DrawTiltedSpan(RenderThread *thread, int y, int x1, int x2, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
 		void DrawColoredSpan(RenderThread *thread, int y, int x1, int x2);

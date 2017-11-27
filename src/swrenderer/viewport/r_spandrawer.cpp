@@ -107,6 +107,11 @@ namespace swrenderer
 		}
 	}
 
+	void SpanDrawerArgs::DrawDepthSpan(RenderThread *thread, float idepth)
+	{
+		thread->Drawers(ds_viewport)->DrawDepthSpan(*this, idepth);
+	}
+
 	void SpanDrawerArgs::DrawSpan(RenderThread *thread)
 	{
 		(thread->Drawers(ds_viewport)->*spanfunc)(*this);

@@ -30,6 +30,7 @@ namespace swrenderer
 
 		bool IsMaskedDrawer() const;
 
+		void DrawDepthColumn(RenderThread *thread, float idepth);
 		void DrawColumn(RenderThread *thread);
 
 		uint8_t *Dest() const { return dc_dest; }

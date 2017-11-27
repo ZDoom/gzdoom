@@ -24,7 +24,7 @@
 
 #include "polyrenderer/drawers/poly_triangle.h"
 #include "r_data/matrix.h"
-#include "gl/models/gl_models.h"
+#include "r_data/models/models.h"
 
 void PolyRenderModel(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor);
 void PolyRenderHUDModel(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy);
@@ -32,7 +32,7 @@ void PolyRenderHUDModel(PolyRenderThread *thread, const TriMatrix &worldToClip, 
 class PolyModelRenderer : public FModelRenderer
 {
 public:
-	PolyModelRenderer(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue) : Thread(thread), WorldToClip(worldToClip), ClipPlane(clipPlane), StencilValue(stencilValue) { }
+	PolyModelRenderer(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue);
 
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) override;
 	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;

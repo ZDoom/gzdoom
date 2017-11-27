@@ -88,6 +88,8 @@ namespace swrenderer
 		int			floorlight, ceilinglight;
 		F3DFloor *rover;
 
+		renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+
 		if (!r_drawplayersprites ||
 			!Thread->Viewport->viewpoint.camera ||
 			!Thread->Viewport->viewpoint.camera->player ||
@@ -250,6 +252,12 @@ namespace swrenderer
 			sy += wy;
 		}
 		
+		if (renderHUDModel)
+		{
+			RenderHUDModel(Thread, pspr, (float)sx, (float)sy);
+			return;
+		}
+
 		auto viewport = Thread->Viewport.get();
 
 		double pspritexscale = viewport->viewwindow.centerxwide / 160.0;

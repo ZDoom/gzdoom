@@ -36,6 +36,7 @@
 #include "things/r_visiblespritelist.cpp"
 #include "things/r_voxel.cpp"
 #include "things/r_wallsprite.cpp"
+#include "things/r_model.cpp"
 #include "viewport/r_drawerargs.cpp"
 #include "viewport/r_skydrawer.cpp"
 #include "viewport/r_spandrawer.cpp"

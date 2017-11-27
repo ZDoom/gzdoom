@@ -51,6 +51,12 @@ namespace swrenderer
 {
 	void VisibleSprite::Render(RenderThread *thread)
 	{
+		if (IsModel())
+		{
+			Render(thread, nullptr, nullptr, 0, 0);
+			return;
+		}
+
 		short *clipbot = thread->clipbot;
 		short *cliptop = thread->cliptop;
 

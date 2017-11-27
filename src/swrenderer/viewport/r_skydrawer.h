@@ -41,6 +41,7 @@ namespace swrenderer
 
 		RenderViewport *Viewport() const { return dc_viewport; }
 
+		void DrawDepthSkyColumn(RenderThread *thread, float idepth);
 		void DrawSingleSkyColumn(RenderThread *thread);
 		void DrawDoubleSkyColumn(RenderThread *thread);
 

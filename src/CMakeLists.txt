@@ -734,6 +734,7 @@ set ( SWRENDER_SOURCES
 	swrenderer/things/r_sprite.cpp
 	swrenderer/things/r_wallsprite.cpp
 	swrenderer/things/r_decal.cpp
+	swrenderer/things/r_model.cpp
 	swrenderer/plane/r_visibleplane.cpp
 	swrenderer/plane/r_visibleplanelist.cpp
 	swrenderer/plane/r_skyplane.cpp

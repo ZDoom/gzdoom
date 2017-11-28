@@ -1463,7 +1463,7 @@ void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs 
 
 	auto colormaps = args->uniforms->BaseColormap();
 
-	const uint32_t *texPixels = (const uint32_t*)args->uniforms->TexturePixels();
+	const uint8_t *texPixels = args->uniforms->TexturePixels();
 	int texWidth = args->uniforms->TextureWidth();
 	int texHeight = args->uniforms->TextureHeight();
 
@@ -1476,8 +1476,8 @@ void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs 
 
 	float *zbufferLine = args->zbuffer + args->stencilPitch * 8 * y;
 
-	uint32_t *dest = (uint32_t*)args->dest;
-	uint32_t *destLine = dest + args->pitch * y;
+	uint8_t *dest = (uint8_t*)args->dest;
+	uint8_t *destLine = dest + args->pitch * y;
 
 	int x = x0;
 	while (x < x1)

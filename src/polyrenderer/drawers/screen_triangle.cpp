@@ -1179,21 +1179,88 @@ void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, WorkerThreadD
 
 	// Draw the triangle:
 
-	if (args->destBgra)
+	auto drawfunc = (args->destBgra) ? DrawSpan32 : DrawSpan8;
+
+	float stepXW = args->gradientX.W;
+	float v1X = args->v1->x;
+	float v1Y = args->v1->y;
+	float v1W = args->v1->w;
+
+	int num_cores = thread->num_cores;
+	for (int y = topY + thread->skipped_by_thread(topY); y < bottomY; y += num_cores)
 	{
-		int num_cores = thread->num_cores;
-		for (int y = topY + thread->skipped_by_thread(topY); y < bottomY; y += num_cores)
+		int x = leftEdge[y];
+		int xend = rightEdge[y];
+
+		float *zbufferLine = args->zbuffer + args->stencilPitch * 8 * y;
+
+		float startX = x + (0.5f - v1X);
+		float startY = y + (0.5f - v1Y);
+		float posXW = v1W + stepXW * startX + args->gradientY.W * startY;
+
+#ifndef NO_SSE
+		__m128 mstepXW = _mm_set1_ps(stepXW * 4.0f);
+		__m128 mfirstStepXW = _mm_setr_ps(0.0f, stepXW, stepXW + stepXW, stepXW + stepXW + stepXW);
+		while (x < xend)
 		{
-			DrawSpan32(y, leftEdge[y], rightEdge[y], args);
+			int xstart = x;
+
+			int xendsse = x + ((xend - x) & ~3);
+			__m128 mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+			while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 15 && x < xendsse)
+			{
+				_mm_storeu_ps(zbufferLine + x, mposXW);
+				mposXW = _mm_add_ps(mposXW, mstepXW);
+				x += 4;
+			}
+			posXW = _mm_cvtss_f32(mposXW);
+
+			while (zbufferLine[x] <= posXW && x < xend)
+			{
+				zbufferLine[x] = posXW;
+				posXW += stepXW;
+				x++;
+			}
+
+			if (x > xstart)
+				drawfunc(y, xstart, x, args);
+
+			xendsse = x + ((xend - x) & ~3);
+			mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+			while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 0 && x < xendsse)
+			{
+				mposXW = _mm_add_ps(mposXW, mstepXW);
+				x += 4;
+			}
+			posXW = _mm_cvtss_f32(mposXW);
+
+			while (zbufferLine[x] > posXW && x < xend)
+			{
+				posXW += stepXW;
+				x++;
+			}
 		}
-	}
-	else
-	{
-		int num_cores = thread->num_cores;
-		for (int y = topY + thread->skipped_by_thread(topY); y < bottomY; y += num_cores)
+#else
+		while (x < xend)
 		{
-			DrawSpan8(y, leftEdge[y], rightEdge[y], args);
+			int xstart = x;
+			while (zbufferLine[x] <= posXW && x < xend)
+			{
+				zbufferLine[x] = posXW;
+				posXW += stepXW;
+				x++;
+			}
+
+			if (x > xstart)
+				drawfunc(y, xstart, x, args);
+
+			while (zbufferLine[x] > posXW && x < xend)
+			{
+				posXW += stepXW;
+				x++;
+			}
 		}
+#endif
 	}
 }
 
@@ -1226,140 +1293,87 @@ void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs
 	float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
 	light += light >> 7; // 255 -> 256
 
-	float *zbufferLine = args->zbuffer + args->stencilPitch * 8 * y;
-
 	uint32_t *dest = (uint32_t*)args->dest;
 	uint32_t *destLine = dest + args->pitch * y;
 
 	int x = x0;
-	int sseEnd = x0 + (x1 - x0) / 2 * 2;
+	int sseEnd = x0 + ((x1 - x0) & ~3);
 	while (x < sseEnd)
 	{
-		if (zbufferLine[x] <= posXW && zbufferLine[x + 1] <= posXW + stepXW)
-		{
-			zbufferLine[x] = posXW;
-			zbufferLine[x + 1] = posXW + stepXW;
+		uint32_t fgcolor[2];
+		int32_t lightshade[2];
 
-			uint32_t fgcolor[2];
-			int32_t lightshade[2];
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		fgcolor[0] = texPixels[texelX * texHeight + texelY];
 
-			float rcpW = 0x01000000 / posXW;
-			int32_t u = (int32_t)(posXU * rcpW);
-			int32_t v = (int32_t)(posXV * rcpW);
-			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-			fgcolor[0] = texPixels[texelX * texHeight + texelY];
+		fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+		lightshade[0] = lightpos >> 8;
 
-			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-			lightshade[0] = lightpos >> 8;
+		posXW += stepXW;
+		posXU += stepXU;
+		posXV += stepXV;
 
-			posXW += stepXW;
-			posXU += stepXU;
-			posXV += stepXV;
+		rcpW = 0x01000000 / posXW;
+		u = (int32_t)(posXU * rcpW);
+		v = (int32_t)(posXV * rcpW);
+		texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		fgcolor[1] = texPixels[texelX * texHeight + texelY];
 
-			rcpW = 0x01000000 / posXW;
-			u = (int32_t)(posXU * rcpW);
-			v = (int32_t)(posXV * rcpW);
-			texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-			texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-			fgcolor[1] = texPixels[texelX * texHeight + texelY];
+		lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+		lightshade[1] = lightpos >> 8;
 
-			lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-			lightshade[1] = lightpos >> 8;
+		posXW += stepXW;
+		posXU += stepXU;
+		posXV += stepXV;
 
-			posXW += stepXW;
-			posXU += stepXU;
-			posXV += stepXV;
+		__m128i mfgcolor = _mm_loadl_epi64((const __m128i*)fgcolor);
+		mfgcolor = _mm_unpacklo_epi8(mfgcolor, _mm_setzero_si128());
 
-			__m128i mfgcolor = _mm_loadl_epi64((const __m128i*)fgcolor);
-			mfgcolor = _mm_unpacklo_epi8(mfgcolor, _mm_setzero_si128());
+		__m128i mlightshade = _mm_loadl_epi64((const __m128i*)lightshade);
+		mlightshade = _mm_shuffle_epi32(mlightshade, _MM_SHUFFLE(1, 0, 1, 0));
+		mlightshade = _mm_packs_epi32(mlightshade, mlightshade);
 
-			__m128i mlightshade = _mm_loadl_epi64((const __m128i*)lightshade);
-			mlightshade = _mm_shuffle_epi32(mlightshade, _MM_SHUFFLE(1, 0, 1, 0));
-			mlightshade = _mm_packs_epi32(mlightshade, mlightshade);
+		__m128i mdestcolor = _mm_srli_epi16(_mm_mullo_epi16(mfgcolor, mlightshade), 8);
+		mdestcolor = _mm_packus_epi16(mdestcolor, _mm_setzero_si128());
+		mdestcolor = _mm_or_si128(mdestcolor, _mm_set1_epi32(0xff000000));
 
-			__m128i mdestcolor = _mm_srli_epi16(_mm_mullo_epi16(mfgcolor, mlightshade), 8);
-			mdestcolor = _mm_packus_epi16(mdestcolor, _mm_setzero_si128());
-			mdestcolor = _mm_or_si128(mdestcolor, _mm_set1_epi32(0xff000000));
+		_mm_storel_epi64((__m128i*)(destLine + x), mdestcolor);
 
-			_mm_storel_epi64((__m128i*)(destLine + x), mdestcolor);
-
-			x += 2;
-		}
-		else
-		{
-			for (int i = 0; i < 2; i++)
-			{
-				if (zbufferLine[x] <= posXW)
-				{
-					float rcpW = 0x01000000 / posXW;
-					int32_t u = (int32_t)(posXU * rcpW);
-					int32_t v = (int32_t)(posXV * rcpW);
-
-					uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-					uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-					uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
-
-					uint32_t fgcolor_r = RPART(fgcolor);
-					uint32_t fgcolor_g = GPART(fgcolor);
-					uint32_t fgcolor_b = BPART(fgcolor);
-					uint32_t fgcolor_a = APART(fgcolor);
-					if (fgcolor_a > 127)
-					{
-						fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-						lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-						int lightshade = lightpos >> 8;
-
-						fgcolor_r = (fgcolor_r * lightshade) >> 8;
-						fgcolor_g = (fgcolor_g * lightshade) >> 8;
-						fgcolor_b = (fgcolor_b * lightshade) >> 8;
-
-						destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
-					}
-
-					zbufferLine[x] = posXW;
-				}
-
-				posXW += stepXW;
-				posXU += stepXU;
-				posXV += stepXV;
-				x++;
-			}
-		}
+		x += 2;
 	}
 
 	while (x < x1)
 	{
-		if (zbufferLine[x] <= posXW)
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
+
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
+
+		uint32_t fgcolor_r = RPART(fgcolor);
+		uint32_t fgcolor_g = GPART(fgcolor);
+		uint32_t fgcolor_b = BPART(fgcolor);
+		uint32_t fgcolor_a = APART(fgcolor);
+		if (fgcolor_a > 127)
 		{
-			float rcpW = 0x01000000 / posXW;
-			int32_t u = (int32_t)(posXU * rcpW);
-			int32_t v = (int32_t)(posXV * rcpW);
+			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+			int lightshade = lightpos >> 8;
 
-			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-			uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
+			fgcolor_r = (fgcolor_r * lightshade) >> 8;
+			fgcolor_g = (fgcolor_g * lightshade) >> 8;
+			fgcolor_b = (fgcolor_b * lightshade) >> 8;
 
-			uint32_t fgcolor_r = RPART(fgcolor);
-			uint32_t fgcolor_g = GPART(fgcolor);
-			uint32_t fgcolor_b = BPART(fgcolor);
-			uint32_t fgcolor_a = APART(fgcolor);
-			if (fgcolor_a > 127)
-			{
-				fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-				int lightshade = lightpos >> 8;
-
-				fgcolor_r = (fgcolor_r * lightshade) >> 8;
-				fgcolor_g = (fgcolor_g * lightshade) >> 8;
-				fgcolor_b = (fgcolor_b * lightshade) >> 8;
-
-				destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
-			}
-
-			zbufferLine[x] = posXW;
+			destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
 		}
 
 		posXW += stepXW;
@@ -1398,42 +1412,35 @@ void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs
 	float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
 	light += light >> 7; // 255 -> 256
 
-	float *zbufferLine = args->zbuffer + args->stencilPitch * 8 * y;
-
 	uint32_t *dest = (uint32_t*)args->dest;
 	uint32_t *destLine = dest + args->pitch * y;
 
 	int x = x0;
 	while (x < x1)
 	{
-		if (zbufferLine[x] <= posXW)
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
+
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
+
+		uint32_t fgcolor_r = RPART(fgcolor);
+		uint32_t fgcolor_g = GPART(fgcolor);
+		uint32_t fgcolor_b = BPART(fgcolor);
+		uint32_t fgcolor_a = APART(fgcolor);
+		if (fgcolor_a > 127)
 		{
-			float rcpW = 0x01000000 / posXW;
-			int32_t u = (int32_t)(posXU * rcpW);
-			int32_t v = (int32_t)(posXV * rcpW);
+			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+			int lightshade = lightpos >> 8;
 
-			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-			uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
+			fgcolor_r = (fgcolor_r * lightshade) >> 8;
+			fgcolor_g = (fgcolor_g * lightshade) >> 8;
+			fgcolor_b = (fgcolor_b * lightshade) >> 8;
 
-			uint32_t fgcolor_r = RPART(fgcolor);
-			uint32_t fgcolor_g = GPART(fgcolor);
-			uint32_t fgcolor_b = BPART(fgcolor);
-			uint32_t fgcolor_a = APART(fgcolor);
-			if (fgcolor_a > 127)
-			{
-				fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-				lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-				int lightshade = lightpos >> 8;
-
-				fgcolor_r = (fgcolor_r * lightshade) >> 8;
-				fgcolor_g = (fgcolor_g * lightshade) >> 8;
-				fgcolor_b = (fgcolor_b * lightshade) >> 8;
-
-				destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
-			}
-
-			zbufferLine[x] = posXW;
+			destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
 		}
 
 		posXW += stepXW;
@@ -1474,34 +1481,29 @@ void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs 
 	float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
 	light += light >> 7; // 255 -> 256
 
-	float *zbufferLine = args->zbuffer + args->stencilPitch * 8 * y;
-
 	uint8_t *dest = (uint8_t*)args->dest;
 	uint8_t *destLine = dest + args->pitch * y;
 
 	int x = x0;
 	while (x < x1)
 	{
-		if (zbufferLine[x] <= posXW)
-		{
-			float rcpW = 0x01000000 / posXW;
-			int32_t u = (int32_t)(posXU * rcpW);
-			int32_t v = (int32_t)(posXV * rcpW);
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
 
-			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-			uint8_t fgcolor = texPixels[texelX * texHeight + texelY];
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		uint8_t fgcolor = texPixels[texelX * texHeight + texelY];
 
-			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-			int lightshade = lightpos >> 8;
+		fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+		int lightshade = lightpos >> 8;
 
-			lightshade = ((256 - lightshade) * NUMCOLORMAPS) & 0xffffff00;
-			uint8_t shadedfg = colormaps[lightshade + fgcolor];
+		lightshade = ((256 - lightshade) * NUMCOLORMAPS) & 0xffffff00;
+		uint8_t shadedfg = colormaps[lightshade + fgcolor];
 
-			if (fgcolor != 0)
-				destLine[x] = shadedfg;
-		}
+		if (fgcolor != 0)
+			destLine[x] = shadedfg;
 
 		posXW += stepXW;
 		posXU += stepXU;

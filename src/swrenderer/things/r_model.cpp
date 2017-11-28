@@ -115,6 +115,25 @@ namespace swrenderer
 
 	VSMatrix SWModelRenderer::GetViewToWorldMatrix()
 	{
+		// Calculate the WorldToView matrix as it would have looked like without yshearing:
+		const auto &Viewpoint = Thread->Viewport->viewpoint;
+		const auto &Viewwindow = Thread->Viewport->viewwindow;
+		double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();
+		double angx = cos(radPitch);
+		double angy = sin(radPitch) * level.info->pixelstretch;
+		double alen = sqrt(angx*angx + angy*angy);
+		float adjustedPitch = (float)asin(angy / alen);
+		float adjustedViewAngle = (float)(Viewpoint.Angles.Yaw - 90).Radians();
+		float ratio = Viewwindow.WidescreenRatio;
+		float fovratio = (Viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
+		float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(Viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
+		TriMatrix altWorldToView =
+			TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+			TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
+			TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
+			TriMatrix::swapYZ() *
+			TriMatrix::translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
+
 		TriMatrix swapYZ = TriMatrix::null();
 		swapYZ.matrix[0 + 0 * 4] = 1.0f;
 		swapYZ.matrix[1 + 2 * 4] = 1.0f;
@@ -122,7 +141,7 @@ namespace swrenderer
 		swapYZ.matrix[3 + 3 * 4] = 1.0f;
 
 		VSMatrix worldToView;
-		worldToView.loadMatrix((Thread->Viewport->WorldToView * swapYZ).matrix);
+		worldToView.loadMatrix((altWorldToView * swapYZ).matrix);
 
 		VSMatrix objectToWorld;
 		worldToView.inverseMatrix(objectToWorld);

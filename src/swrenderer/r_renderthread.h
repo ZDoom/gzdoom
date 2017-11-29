@@ -29,6 +29,8 @@ class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 class RenderMemory;
 
+EXTERN_CVAR(Bool, r_models);
+
 namespace swrenderer
 {
 	class VisibleSpriteList;

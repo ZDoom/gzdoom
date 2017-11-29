@@ -67,6 +67,7 @@ EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
 
 CVAR(Bool, r_scene_multithreaded, false, 0);
+CVAR(Bool, r_models, false, 0);
 
 namespace swrenderer
 {
@@ -156,7 +157,8 @@ namespace swrenderer
 
 		R_UpdateFuzzPosFrameStart();
 
-		MainThread()->Viewport->SetupPolyViewport();
+		if (r_models)
+			MainThread()->Viewport->SetupPolyViewport();
 
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode

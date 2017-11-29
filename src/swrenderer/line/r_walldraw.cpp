@@ -262,7 +262,8 @@ namespace swrenderer
 			drawerargs.SetTextureVStep(sampler.uv_step);
 			drawerargs.SetTextureVPos(sampler.uv_pos);
 			drawerargs.DrawColumn(Thread);
-			drawerargs.DrawDepthColumn(Thread, zbufferdepth);
+			if (r_models)
+				drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 			uint64_t step64 = sampler.uv_step;
 			uint64_t pos64 = sampler.uv_pos;
@@ -281,7 +282,8 @@ namespace swrenderer
 				drawerargs.SetTextureVStep(sampler.uv_step);
 				drawerargs.SetTextureVPos(sampler.uv_pos);
 				drawerargs.DrawColumn(Thread);
-				drawerargs.DrawDepthColumn(Thread, zbufferdepth);
+				if (r_models)
+					drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 				uint64_t step64 = sampler.uv_step;
 				uint64_t pos64 = sampler.uv_pos;
@@ -308,7 +310,8 @@ namespace swrenderer
 					drawerargs.SetTextureVStep(sampler.uv_step);
 					drawerargs.SetTextureVPos(uv_pos);
 					drawerargs.DrawColumn(Thread);
-					drawerargs.DrawDepthColumn(Thread, zbufferdepth);
+					if (r_models)
+						drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 					y += count;
 					left -= count;

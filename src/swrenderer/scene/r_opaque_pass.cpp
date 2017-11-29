@@ -963,6 +963,10 @@ namespace swrenderer
 					{
 						RenderVoxel::Project(Thread, thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
 					}
+					else if (!r_models)
+					{
+						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
+					}
 					else
 					{
 						int spritenum = thing->sprite;

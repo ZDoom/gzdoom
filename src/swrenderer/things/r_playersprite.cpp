@@ -88,14 +88,15 @@ namespace swrenderer
 		int			floorlight, ceilinglight;
 		F3DFloor *rover;
 
-		renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
-
 		if (!r_drawplayersprites ||
 			!Thread->Viewport->viewpoint.camera ||
 			!Thread->Viewport->viewpoint.camera->player ||
 			(players[consoleplayer].cheats & CF_CHASECAM) ||
 			(r_deathcamera && Thread->Viewport->viewpoint.camera->health <= 0))
 			return;
+		
+		if (r_models && gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player))
+			renderHUDModel = true;
 
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();

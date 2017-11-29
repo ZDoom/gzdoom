@@ -55,19 +55,20 @@ static double TimeScale = 1.0;
 
 CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL)
 {
-	if (netgame && self != 1.0f)
+	if (netgame)
 	{
 		Printf("Time scale cannot be changed in net games.\n");
 		self = 1.0f;
 	}
-	else
+	else if (self >= 0.05f)
 	{
 		I_FreezeTime(true);
-		float clampValue = (self < 0.05) ? 0.05f : self;
-		if (self != clampValue)
-			self = clampValue;
 		TimeScale = self;
 		I_FreezeTime(false);
+	}
+	else
+	{
+		Printf("Time scale must be at least 0.05!\n");
 	}
 }
 

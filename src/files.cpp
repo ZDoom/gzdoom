@@ -87,13 +87,18 @@ FileReader::FileReader (FILE *file, long length)
 	FilePos = StartPos = ftell (file);
 }
 
-FileReader::~FileReader ()
+FileReader::~FileReader()
+{
+	Close();
+}
+
+void FileReader::Close()
 {
 	if (CloseOnDestruct && File != NULL)
 	{
 		fclose (File);
-		File = NULL;
 	}
+	File = NULL;
 }
 
 bool FileReader::Open (const char *filename)

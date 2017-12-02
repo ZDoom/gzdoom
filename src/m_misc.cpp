@@ -122,22 +122,18 @@ void M_FindResponseFile (void)
 			if (added_stuff < limit)
 			{
 				// READ THE RESPONSE FILE INTO MEMORY
-				handle = fopen (Args->GetArg(i) + 1,"rb");
-				if (!handle)
+				FileReader fr;
+				if (!fr.Open(Args->GetArg(i) + 1))
 				{ // [RH] Make this a warning, not an error.
 					Printf ("No such response file (%s)!\n", Args->GetArg(i) + 1);
 				}
 				else
 				{
 					Printf ("Found response file %s!\n", Args->GetArg(i) + 1);
-					fseek (handle, 0, SEEK_END);
-					size = ftell (handle);
-					fseek (handle, 0, SEEK_SET);
+					size = fr.GetLength();
 					file = new char[size+1];
-					fread (file, size, 1, handle);
+					fr.Read (file, size);
 					file[size] = 0;
-					fclose (handle);
-
 					argsize = ParseCommandLine (file, &argc, NULL);
 				}
 			}

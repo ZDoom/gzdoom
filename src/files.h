@@ -101,6 +101,7 @@ public:
 	FileReader (FILE *file);
 	FileReader (FILE *file, long length);
 	bool Open (const char *filename);
+	void Close();
 	virtual ~FileReader ();
 
 	virtual long Tell () const;

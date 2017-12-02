@@ -269,8 +269,8 @@ CCMD (md5sum)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		FILE *file = fopen(argv[i], "rb");
-		if (file == NULL)
+		FileReader fr;
+		if (!fr.Open(argv[i]))
 		{
 			Printf("%s: %s\n", argv[i], strerror(errno));
 		}
@@ -280,7 +280,7 @@ CCMD (md5sum)
 			uint8_t readbuf[8192];
 			size_t len;
 
-			while ((len = fread(readbuf, 1, sizeof(readbuf), file)) > 0)
+			while ((len = fr.Read(readbuf, sizeof(readbuf))) > 0)
 			{
 				md5.Update(readbuf, (unsigned int)len);
 			}
@@ -290,7 +290,6 @@ CCMD (md5sum)
 				Printf("%02x", readbuf[j]);
 			}
 			Printf(" *%s\n", argv[i]);
-			fclose (file);
 		}
 	}
 }

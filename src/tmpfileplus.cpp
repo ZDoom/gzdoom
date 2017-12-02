@@ -217,7 +217,7 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 
 	lentempname = strlen(tmpdir) + strlen(FILE_SEPARATOR) + strlen(pfx) + strlen(randpart);
 	DPRINTF1("lentempname=%d\n", lentempname);
-	tmpname = malloc(lentempname + 1);
+	tmpname = (char*)malloc(lentempname + 1);
 	if (!tmpname)
 	{
 		errno = ENOMEM;

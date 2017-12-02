@@ -239,7 +239,7 @@ public:
 	void Stop();
 
 protected:
-	FILE *File;
+	FileWriter *File;
 };
 
 // WildMidi implementation of a MIDI device ---------------------------------

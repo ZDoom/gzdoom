@@ -43,7 +43,7 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 	//
 	// We also can't move it because the model render code relies on it
 
-	renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	//renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 

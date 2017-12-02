@@ -115,60 +115,6 @@ bool M_WriteFile (char const *name, void *source, int length)
 }
 
 
-//
-// M_ReadFile
-//
-int M_ReadFile (char const *name, uint8_t **buffer)
-{
-	int handle, count, length;
-	struct stat fileinfo;
-	uint8_t *buf;
-
-	handle = open (name, O_RDONLY | O_BINARY, 0666);
-	if (handle == -1)
-		I_Error ("Couldn't read file %s", name);
-	// [BL] Use stat instead of fstat for v140_xp hack
-	if (stat (name,&fileinfo) == -1)
-		I_Error ("Couldn't read file %s", name);
-	length = fileinfo.st_size;
-	buf = new uint8_t[length];
-	count = read (handle, buf, length);
-	close (handle);
-
-	if (count < length)
-		I_Error ("Couldn't read file %s", name);
-
-	*buffer = buf;
-	return length;
-}
-
-//
-// M_ReadFile (same as above but use malloc instead of new to allocate the buffer.)
-//
-int M_ReadFileMalloc (char const *name, uint8_t **buffer)
-{
-	int handle, count, length;
-	struct stat fileinfo;
-	uint8_t *buf;
-
-	handle = open (name, O_RDONLY | O_BINARY, 0666);
-	if (handle == -1)
-		I_Error ("Couldn't read file %s", name);
-	// [BL] Use stat instead of fstat for v140_xp hack
-	if (stat (name,&fileinfo) == -1)
-		I_Error ("Couldn't read file %s", name);
-	length = fileinfo.st_size;
-	buf = (uint8_t*)M_Malloc(length);
-	count = read (handle, buf, length);
-	close (handle);
-
-	if (count < length)
-		I_Error ("Couldn't read file %s", name);
-
-	*buffer = buf;
-	return length;
-}
-
 //---------------------------------------------------------------------------
 //
 // PROC M_FindResponseFile

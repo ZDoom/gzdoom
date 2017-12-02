@@ -19,7 +19,7 @@ public:
 	FScanner &operator=(const FScanner &other);
 
 	void Open(const char *lumpname);
-	void OpenFile(const char *filename);
+	bool OpenFile(const char *filename);
 	void OpenMem(const char *name, const char *buffer, int size);
 	void OpenString(const char *name, FString buffer);
 	void OpenLumpNum(int lump);

@@ -2798,7 +2798,17 @@ void G_DoPlayDemo (void)
 	{
 		FixPathSeperator (defdemoname);
 		DefaultExtension (defdemoname, ".lmp");
-		M_ReadFileMalloc (defdemoname, &demobuffer);
+		FileReader fr;
+		if (!fr.Open(defdemoname))
+		{
+			I_Error("Unable to open demo '%s'", defdemoname.GetChars());
+		}
+		auto len = fr.GetLength();
+		demobuffer = (uint8_t*)M_Malloc(len);
+		if (fr.Read(demobuffer, len) != len)
+		{
+			I_Error("Unable to read demo '%s'", defdemoname.GetChars());
+		}
 	}
 	demo_p = demobuffer;
 

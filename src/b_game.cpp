@@ -532,13 +532,9 @@ bool FCajunMaster::LoadBots ()
 		DPrintf (DMSG_ERROR, "No " BOTFILENAME ", so no bots\n");
 		return false;
 	}
-	try
+	if (!sc.OpenFile(tmp))
 	{
-		sc.OpenFile(tmp);
-	}
-	catch (CRecoverableError &err)
-	{
-		Printf("%s. So no bots\n", err.GetMessage());
+		Printf("Unable to open %s. So no bots\n");
 		return false;
 	}
 

@@ -1554,7 +1554,7 @@ FWadLump::FWadLump(int lumpnum, FResourceLump *lump)
 		// Uncompressed lump in a file. For this we will have to open a new FILE, since we need it for streaming
 		int fileno = Wads.GetLumpFile(lumpnum);
 		const char *filename = Wads.GetWadFullName(fileno);
-		File = fopen(filename, "rb");
+		File = openfd(filename);
 		if (File != NULL)
 		{
 			Length = lump->LumpSize;

@@ -41,6 +41,35 @@
 
 //===========================================================================
 //
+// M_GetAppDataPath													macOS
+//
+// Returns the path for the AppData folder.
+//
+//===========================================================================
+
+FString M_GetAppDataPath(bool create)
+{
+	FString path;
+
+	char pathstr[PATH_MAX];
+	FSRef folder;
+
+	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, create ? kCreateFolder : 0, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
+	{
+		path = pathstr;
+	}
+	else
+	{
+		path = progdir;
+	}
+	path += "/" GAMENAMELOWERCASE;
+	if (create) CreatePath(path);
+	return path;
+}
+
+//===========================================================================
+//
 // M_GetCachePath													macOS
 //
 // Returns the path for cache GL nodes.
@@ -64,6 +93,7 @@ FString M_GetCachePath(bool create)
 		path = progdir;
 	}
 	path += "/zdoom/cache";
+	if (create) CreatePath(path);
 	return path;
 }
 

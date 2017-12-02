@@ -43,6 +43,7 @@
 #include "templates.h"
 #include "version.h"
 #include "tmpfileplus.h"
+#include "m_misc.h"
 
 #ifndef _WIN32
 #include <unistd.h>
@@ -82,7 +83,7 @@ public:
 protected:
 	bool LaunchTimidity();
 
-	char* DiskName;
+	FString DiskName;
 #ifdef _WIN32
 	HANDLE ReadWavePipe;
 	HANDLE WriteWavePipe;
@@ -165,8 +166,7 @@ CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
-	: DiskName(nullptr),
+TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args) :
 #ifdef _WIN32
 	  ReadWavePipe(INVALID_HANDLE_VALUE), WriteWavePipe(INVALID_HANDLE_VALUE),
 	  ChildProcess(INVALID_HANDLE_VALUE),
@@ -204,10 +204,9 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 
 TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 {
-	if (nullptr != DiskName)
+	if (DiskName.IsNotEmpty())
 	{
 		remove(DiskName);
-		free(DiskName);
 	}
 
 #if _WIN32
@@ -257,7 +256,10 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 	// Write MIDI song to temporary file
 	song->CreateSMF(midi, looping ? 0 : 1);
 
-	f = tmpfileplus(nullptr, "zmid", &DiskName, 1);
+	FString path = M_GetAppDataPath(false);
+	path += "/tmp";
+	CreatePath(path);
+	f = tmpfileplus(path, "zmid", &DiskName, 1);
 	if (f == NULL)
 	{
 		Printf(PRINT_BOLD, "Could not open temp music file\n");
@@ -454,7 +456,7 @@ bool TimidityPPMIDIDevice::ValidateTimidity()
 
 bool TimidityPPMIDIDevice::LaunchTimidity ()
 {
-	if (ExeName.IsEmpty() || nullptr == DiskName)
+	if (ExeName.IsEmpty() || DiskName.IsEmpty())
 	{
 		return false;
 	}
@@ -565,7 +567,7 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	arglist.push_back("-");
 	arglist.push_back(outmodearg.c_str());
 	arglist.push_back(ifacearg.c_str());
-	arglist.push_back(DiskName);
+	arglist.push_back(DiskName.GetChars());
 
 	DPrintf(DMSG_NOTIFY, "Timidity EXE: \x1cG%s\n", exename);
 	int i = 1;

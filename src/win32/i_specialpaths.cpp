@@ -155,6 +155,33 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 
 //===========================================================================
 //
+// M_GetAppDataPath													Windows
+//
+// Returns the path for the AppData folder.
+//
+//===========================================================================
+
+FString M_GetAppDataPath(bool create)
+{
+	FString path;
+
+	if (!GetKnownFolder(CSIDL_LOCAL_APPDATA, FOLDERID_LocalAppData, create, path))
+	{ // Failed (e.g. On Win9x): use program directory
+		path = progdir;
+	}
+	// Don't use GAME_DIR and such so that ZDoom and its child ports can
+	// share the node cache.
+	path += "/" GAMENAMELOWERCASE;
+	path.Substitute("//", "/");	// needed because progdir ends with a slash.
+	if (create)
+	{
+		CreatePath(path);
+	}
+	return path;
+}
+
+//===========================================================================
+//
 // M_GetCachePath													Windows
 //
 // Returns the path for cache GL nodes.
@@ -173,6 +200,10 @@ FString M_GetCachePath(bool create)
 	// share the node cache.
 	path += "/zdoom/cache";
 	path.Substitute("//", "/");	// needed because progdir ends with a slash.
+	if (create)
+	{
+		CreatePath(path);
+	}
 	return path;
 }
 

@@ -97,9 +97,8 @@
 
 #include "m_random.h"
 #include "cmdlib.h"
+#include "zstring.h"
 
-
-#define FILE_SEPARATOR "/"
 
 #define RANDCHARS	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 #define NRANDCHARS	(sizeof(RANDCHARS) - 1)
@@ -121,27 +120,13 @@ static char *set_randpart(char *s)
 	return s;
 }
 
-/** Call getenv and save a copy in buf */
-static char *getenv_save(const char *varname, char *buf, size_t bufsize)
-{
-	char *ptr = getenv(varname);
-	buf[0] = '\0';
-	if (ptr)
-	{
-		strncpy(buf, ptr, bufsize);
-		buf[bufsize-1] = '\0';
-		return buf;
-	}
-	return NULL;
-}
-
 /** 
  * Try and create a randomly-named file in directory `tmpdir`. 
  * If successful, allocate memory and set `tmpname_ptr` to full filepath, and return file pointer;
  * otherwise return NULL.
  * If `keep` is zero then create the file as temporary and it should not exist once closed.
  */
-static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmpname_ptr, int keep)
+static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, FString *tmpname_ptr, int keep)
 /* PRE: 
  * pfx is not NULL and points to a valid null-terminated string
  * tmpname_ptr is not NULL.
@@ -150,9 +135,7 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	FILE *fp;
 	int fd;
 	char randpart[] = "1234567890";
-	size_t lentempname;
 	int i;
-	char *tmpname = NULL;
 	int oflag, pmode;
 
 /* In Windows, we use the _O_TEMPORARY flag with `open` to ensure the file is deleted when closed.
@@ -176,18 +159,13 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 		return NULL;
 	}
 
-	lentempname = strlen(tmpdir) + strlen(FILE_SEPARATOR) + strlen(pfx) + strlen(randpart);
-	tmpname = (char*)malloc(lentempname + 1);
-	if (!tmpname)
-	{
-		errno = ENOMEM;
-		return NULL;
-	}
+	FString tempname;
+
 	/* If we don't manage to create a file after 10 goes, there is something wrong... */
 	for (i = 0; i < 10; i++)
 	{
-		sprintf(tmpname, "%s%s%s%s", tmpdir, FILE_SEPARATOR, pfx, set_randpart(randpart));
-		fd = OPEN_(tmpname, oflag, pmode);
+		tempname.Format("%s/%s%s", tmpdir, pfx, set_randpart(randpart));
+		fd = OPEN_(tempname, oflag, pmode);
 		if (fd != -1) break;
 	}
 	if (fd != -1)
@@ -205,13 +183,8 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	{	/* We failed */
 		fp = NULL;
 	}
-	if (!fp)
-	{
-		free(tmpname);
-		tmpname = NULL;
-	}
 
-	*tmpname_ptr = tmpname;
+	if (tmpname_ptr) *tmpname_ptr = tempname;
 	return fp;
 }
 
@@ -219,47 +192,10 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 /* EXPORTED FUNCTIONS */
 /**********************/
 
-FILE *tmpfileplus(const char *dir, const char *prefix, char **pathname, int keep)
+FILE *tmpfileplus(const char *dir, const char *prefix, FString *pathname, int keep)
 {
-	FILE *fp = NULL;
-	char *tmpname = NULL;
-	char *tmpdir = NULL;
-	const char *pfx = (prefix ? prefix : "tmp.");
-	char *tempdirs[12] = { 0 };
-	char env1[FILENAME_MAX+1] = { 0 };
-	char env2[FILENAME_MAX+1] = { 0 };
-	char env3[FILENAME_MAX+1] = { 0 };
-	int ntempdirs = 0;
-	int i;
-
-	/* Set up a list of temp directories we will try in order */
-	i = 0;
-	tempdirs[i++] = (char *)dir;
-#ifdef _WIN32
-	tempdirs[i++] = getenv_save("TMP", env1, sizeof(env1));
-	tempdirs[i++] = getenv_save("TEMP", env2, sizeof(env2));
-#else
-	tempdirs[i++] = getenv_save("TMPDIR", env3, sizeof(env3));
-	tempdirs[i++] = P_tmpdir;
-#endif
-	tempdirs[i++] = ".";
-	ntempdirs = i;
-
-	errno = 0;
-
-	/* Work through list we set up before, and break once we are successful */
-	for (i = 0; i < ntempdirs; i++)
-	{
-		tmpdir = tempdirs[i];
-		fp = mktempfile_internal(tmpdir, pfx, &tmpname, keep);
-		if (fp) break;
-	}
-	/* If we succeeded and the user passed a pointer, set it to the alloc'd pathname: the user must free this */
-	if (fp && pathname)
-		*pathname = tmpname;
-	else	/* Otherwise, free the alloc'd memory */
-		free(tmpname);
-
+	FILE *fp = mktempfile_internal(dir, (prefix ? prefix : "tmp."), pathname, keep);
+	if (!fp && pathname) *pathname = "";
 	return fp;
 }
 

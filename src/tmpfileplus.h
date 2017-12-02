@@ -23,6 +23,8 @@
 
 #include <stdio.h>
 
+class FString;
+
 /** Create a unique temporary file.
 @param dir (optional) directory to create file. If NULL use default TMP directory.
 @param prefix (optional) prefix for file name. If NULL use "tmp.".
@@ -33,7 +35,7 @@
 @return Pointer to stream opened in binary read/write (w+b) mode, or a null pointer on error.
 @exception ENOMEM Not enough memory to allocate filename.
 */
-FILE *tmpfileplus(const char *dir, const char *prefix, char **pathname, int keep);
+FILE *tmpfileplus(const char *dir, const char *prefix, FString *pathname, int keep);
 
 
 #define TMPFILE_KEEP 1

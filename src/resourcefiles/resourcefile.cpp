@@ -669,12 +669,11 @@ FExternalLump::FExternalLump(const char *_filename, int filesize)
 
 	if (filesize == -1)
 	{
-		FILE *f = fopen(_filename,"rb");
-		if (f != NULL)
+		FileReader f;
+
+		if (f.Open(_filename))
 		{
-			fseek(f, 0, SEEK_END);
-			LumpSize = ftell(f);
-			fclose(f);
+			LumpSize = f.GetLength();
 		}
 		else
 		{
@@ -703,11 +702,11 @@ FExternalLump::~FExternalLump()
 int FExternalLump::FillCache()
 {
 	Cache = new char[LumpSize];
-	FILE *f = fopen(filename, "rb");
-	if (f != NULL)
+	FileReader f;
+
+	if (f.Open(filename))
 	{
-		fread(Cache, 1, LumpSize, f);
-		fclose(f);
+		f.Read(Cache, LumpSize);
 	}
 	else
 	{

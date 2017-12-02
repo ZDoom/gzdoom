@@ -890,9 +890,10 @@ int FFont::StringWidth(const uint8_t *string) const
 
 	while (*string)
 	{
-		if (*string == TEXTCOLOR_ESCAPE)
+		auto chr = GetCharFromString(string);
+		if (chr == TEXTCOLOR_ESCAPE)
 		{
-			++string;
+			// We do not need to check for UTF-8 in here.
 			if (*string == '[')
 			{
 				while (*string != '\0' && *string != ']')
@@ -906,16 +907,15 @@ int FFont::StringWidth(const uint8_t *string) const
 			}
 			continue;
 		}
-		else if (*string == '\n')
+		else if (chr == '\n')
 		{
 			if (w > maxw)
 				maxw = w;
 			w = 0;
-			++string;
 		}
 		else
 		{
-			w += GetCharWidth(*string++) + GlobalKerning;
+			w += GetCharWidth(chr) + GlobalKerning;
 		}
 	}
 

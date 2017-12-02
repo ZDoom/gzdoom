@@ -93,6 +93,8 @@ public:
 
 class FileReader : public FileReaderBase
 {
+protected:
+	FILE *openfd(const char *filename);
 public:
 	FileReader ();
 	FileReader (const char *filename);

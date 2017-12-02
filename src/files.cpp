@@ -50,6 +50,11 @@
 //
 //==========================================================================
 
+FILE *FileReader::openfd(const char *filename)
+{
+	return fopen(filename, "rb");
+}
+
 FileReader::FileReader ()
 : File(NULL), Length(0), StartPos(0), FilePos(0), CloseOnDestruct(false)
 {
@@ -93,7 +98,7 @@ FileReader::~FileReader ()
 
 bool FileReader::Open (const char *filename)
 {
-	File = fopen (filename, "rb");
+	File = openfd (filename);
 	if (File == NULL) return false;
 	FilePos = 0;
 	StartPos = 0;

@@ -405,7 +405,7 @@ void FIWadManager::CollectSearchPaths()
 	for (auto &str : mSearchPaths)
 	{
 		FixPathSeperator(str);
-		if (str[str.Len() - 1] == '/') str.Truncate(str.Len() - 1);
+		if (str.Back() == '/') str.Truncate(str.Len() - 1);
 	}
 }
 
@@ -583,7 +583,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 		// We have a -iwad parameter. Pick the first usable IWAD we found through that.
 		for (unsigned i = numFoundWads; i < mFoundWads.Size(); i++)
 		{
-			if (mFoundWads[i].mInfoIndex > 0)
+			if (mFoundWads[i].mInfoIndex >= 0)
 			{
 				picks.Push(mFoundWads[i]);
 				break;

@@ -567,6 +567,13 @@ int FWadCollection::CheckNumForFullName (const char *name, bool trynormal, int n
 	return -1;
 }
 
+DEFINE_ACTION_FUNCTION(_Wads, CheckNumForFullName)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	ACTION_RETURN_INT(Wads.CheckNumForFullName(name));
+}
+
 int FWadCollection::CheckNumForFullName (const char *name, int wadnum)
 {
 	uint32_t i;
@@ -1086,6 +1093,16 @@ int FWadCollection::FindLump (const char *name, int *lastlump, bool anyns)
 	return -1;
 }
 
+DEFINE_ACTION_FUNCTION(_Wads, FindLump)
+{
+	PARAM_PROLOGUE;
+	PARAM_STRING(name);
+	PARAM_INT_DEF(startlump);
+	PARAM_INT_DEF(ns);
+	const bool isLumpValid = startlump >= 0 && startlump < Wads.GetNumLumps();
+	ACTION_RETURN_INT(isLumpValid ? Wads.FindLump(name, &startlump, 0 != ns) : -1);
+}
+
 //==========================================================================
 //
 // W_FindLumpMulti
@@ -1278,6 +1295,14 @@ void FWadCollection::ReadLump (int lump, void *dest)
 FMemLump FWadCollection::ReadLump (int lump)
 {
 	return FMemLump(FString(ELumpNum(lump)));
+}
+
+DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(lump);
+	const bool isLumpValid = lump >= 0 && lump < Wads.GetNumLumps();
+	ACTION_RETURN_STRING(isLumpValid ? Wads.ReadLump(lump).GetString() : FString());
 }
 
 //==========================================================================

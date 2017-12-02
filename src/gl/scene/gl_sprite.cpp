@@ -335,7 +335,7 @@ void GLSprite::Draw(int pass)
 		if (gl_lights && GLRenderer->mLightCount && mDrawer->FixedColormap == CM_DEFAULT && !fullbright)
 		{
 			if (modelframe && !particle)
-				gl_SetDynModelLight(gl_light_sprites ? actor : NULL, false);
+				gl_SetDynModelLight(gl_light_sprites ? actor : NULL);
 			else
 				gl_SetDynSpriteLight(gl_light_sprites ? actor : NULL, gl_light_particles ? particle : NULL);
 		}

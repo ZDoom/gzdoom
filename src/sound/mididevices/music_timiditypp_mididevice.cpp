@@ -49,7 +49,9 @@
 
 #include <sys/types.h>
 #include <sys/wait.h>
+#ifndef __OpenBSD__
 #include <wordexp.h>
+#endif
 #include <glob.h>
 #include <signal.h>
 
@@ -519,7 +521,9 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	}
 
 	int forkres;
+#ifndef __OpenBSD__
 	wordexp_t words;
+#endif
 	glob_t glb;
 
 	// Get timidity executable path
@@ -527,8 +531,10 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 	glob(ExeName.GetChars(), 0, NULL, &glb);
 	if(glb.gl_pathc != 0)
 		exename = glb.gl_pathv[0];
+#ifndef __OpenBSD__
 	// Get user-defined extra args
 	wordexp(timidity_extargs, &words, WRDE_NOCMD);
+#endif
 
 	std::string chorusarg = std::string("-EFchorus=") + *timidity_chorus;
 	std::string reverbarg = std::string("-EFreverb=") + *timidity_reverb;
@@ -543,8 +549,10 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 
 	std::vector<const char*> arglist;
 	arglist.push_back(exename);
+#ifndef __OpenBSD__
 	for(size_t i = 0;i < words.we_wordc;i++)
 		arglist.push_back(words.we_wordv[i]);
+#endif
 	if(**timidity_config != '\0')
 	{
 		arglist.push_back("-c");
@@ -597,7 +605,9 @@ bool TimidityPPMIDIDevice::LaunchTimidity ()
 		}*/
 	}
 
+#ifndef __OpenBSD__
 	wordfree(&words);
+#endif
 	globfree (&glb);
 	return ChildProcess != -1;
 #endif // _WIN32

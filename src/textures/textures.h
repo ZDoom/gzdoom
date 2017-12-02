@@ -90,7 +90,7 @@ struct FAnimDef
 	uint16_t	CurFrame;
 	uint8_t	AnimType;
 	bool	bDiscrete;			// taken out of AnimType to have better control
-	uint32_t	SwitchTime;			// Time to advance to next frame
+	uint64_t	SwitchTime;			// Time to advance to next frame
 	struct FAnimFrame
 	{
 		uint32_t	SpeedMin;		// Speeds are in ms, not tics
@@ -106,7 +106,7 @@ struct FAnimDef
 		ANIM_Random
 	};
 
-	void SetSwitchTime (uint32_t mstime);
+	void SetSwitchTime (uint64_t mstime);
 };
 
 struct FSwitchDef
@@ -505,7 +505,7 @@ public:
 
 	int NumTextures () const { return (int)Textures.Size(); }
 
-	void UpdateAnimations (uint32_t mstime);
+	void UpdateAnimations (uint64_t mstime);
 	int GuesstimateNumTextures ();
 
 	FSwitchDef *FindSwitch (FTextureID texture);
@@ -604,8 +604,8 @@ public:
 	void SetSpeed(float fac) { Speed = fac; }
 	FTexture *GetRedirect(bool wantwarped);
 
-	uint32_t GenTime;
-	uint32_t GenTimeBgra;
+	uint64_t GenTime;
+	uint64_t GenTimeBgra;
 	float Speed;
 	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 protected:
@@ -613,7 +613,7 @@ protected:
 	uint8_t *Pixels;
 	Span **Spans;
 
-	virtual void MakeTexture (uint32_t time);
+	virtual void MakeTexture (uint64_t time);
 	int NextPo2 (int v); // [mxd]
 	void SetupMultipliers (int width, int height); // [mxd]
 };

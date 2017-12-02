@@ -4395,7 +4395,8 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 //==========================================================================
 
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
-	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage, double sz)
+	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage, 
+	double sz, double offsetforward, double offsetside)
 {
 	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
@@ -4496,7 +4497,34 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags = TRACE_NoSky;
 	else tflags = TRACE_NoSky | TRACE_Impact;
 
-	if (!Trace(t1->PosAtZ(shootz), t1->Sector, direction, distance, MF_SHOOTABLE, 
+	// [MC] Check the flags and set the position according to what is desired.
+	// LAF_ABSPOSITION: Treat the offset parameters as direct coordinates.
+	// LAF_ABSOFFSET: Ignore the angle.
+
+	DVector3 tempos;
+
+	if (flags & LAF_ABSPOSITION)
+	{
+		tempos = DVector3(offsetforward, offsetside, sz);
+	}
+	else if (flags & LAF_ABSOFFSET)
+	{
+		tempos = t1->Vec2OffsetZ(offsetforward, offsetside, shootz);
+	}
+	else if (0.0 == offsetforward && 0.0 == offsetside)
+	{
+		// Default case so exact comparison is enough
+		tempos = t1->PosAtZ(shootz);
+	}
+	else
+	{
+		const double s = angle.Sin();
+		const double c = angle.Cos();
+		tempos = t1->Vec2OffsetZ(offsetforward * c + offsetside * s, offsetforward * s - offsetside * c, shootz);
+	}
+
+	// Perform the trace.
+	if (!Trace(tempos, t1->Sector, direction, distance, MF_SHOOTABLE, 
 		ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN, t1, trace, tflags, CheckForActor, &TData))
 	{ // hit nothing
 		if (!nointeract && puffDefaults && puffDefaults->ActiveSound)
@@ -4702,7 +4730,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 }
 
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
-	DAngle pitch, int damage, FName damageType, FName pufftype, int flags, FTranslatedLineTarget *victim, int *actualdamage, double sz)
+	DAngle pitch, int damage, FName damageType, FName pufftype, int flags, FTranslatedLineTarget *victim, int *actualdamage, 
+	double sz, double offsetforward, double offsetside)
 {
 	PClassActor *type = PClass::FindActor(pufftype);
 	if (type == NULL)
@@ -4716,7 +4745,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	}
 	else
 	{
-		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, flags, victim, actualdamage, sz);
+		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, flags, victim, actualdamage, sz, offsetforward, offsetside);
 	}
 }
 
@@ -4732,10 +4761,12 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 	PARAM_INT_DEF(flags);
 	PARAM_POINTER_DEF(victim, FTranslatedLineTarget);
 	PARAM_FLOAT_DEF(offsetz);
+	PARAM_FLOAT_DEF(offsetforward);
+	PARAM_FLOAT_DEF(offsetside);
 
 	int acdmg;
 	if (puffType == nullptr) puffType = PClass::FindActor("BulletPuff");	// P_LineAttack does not work without a puff to take info from.
-	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg, offsetz);
+	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg, offsetz, offsetforward, offsetside);
 	if (numret > 0) ret[0].SetObject(puff);
 	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
 	return numret;

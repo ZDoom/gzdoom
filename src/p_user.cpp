@@ -813,6 +813,12 @@ DEFINE_ACTION_FUNCTION(_PlayerInfo, GetNeverSwitch)
 	ACTION_RETURN_BOOL(self->userinfo.GetNeverSwitch());
 }
 
+DEFINE_ACTION_FUNCTION(_PlayerInfo, GetClassicFlight)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(player_t);
+	ACTION_RETURN_BOOL(self->userinfo.GetClassicFlight());
+}
+
 DEFINE_ACTION_FUNCTION(_PlayerInfo, GetColor)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(player_t);

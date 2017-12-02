@@ -899,6 +899,11 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", BC, reg.d[a]);
 			return 0;
 		}
+		else if (reg.d[a] < 0)
+		{
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", reg.d[a]);
+			return 0;
+		}
 		NEXTOP;
 
 	OP(BOUND_K):
@@ -908,6 +913,11 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", konstd[BC], reg.d[a]);
 			return 0;
 		}
+		else if (reg.d[a] < 0)
+		{
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", reg.d[a]);
+			return 0;
+		}
 		NEXTOP;
 
 	OP(BOUND_R):
@@ -915,6 +925,11 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		if (reg.d[a] >= reg.d[B])
 		{
 			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Max.index = %u, current index = %u\n", reg.d[B], reg.d[a]);
+			return 0;
+		}
+		else if (reg.d[a] < 0)
+		{
+			ThrowAbortException(X_ARRAY_OUT_OF_BOUNDS, "Negative current index = %i\n", reg.d[a]);
 			return 0;
 		}
 		NEXTOP;

@@ -945,3 +945,25 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 	caller->SetOrigin(old, true);
 	return false;
 }
+
+//==========================================================================
+//
+// A_Warp
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, Warp)
+{
+	PARAM_SELF_PROLOGUE(AActor)
+	PARAM_OBJECT_DEF(destination, AActor)
+	PARAM_FLOAT_DEF(xofs)				
+	PARAM_FLOAT_DEF(yofs)				
+	PARAM_FLOAT_DEF(zofs)				
+	PARAM_ANGLE_DEF(angle)				
+	PARAM_INT_DEF(flags)				
+	PARAM_FLOAT_DEF(heightoffset)		
+	PARAM_FLOAT_DEF(radiusoffset)		
+	PARAM_ANGLE_DEF(pitch)				
+
+	ACTION_RETURN_INT(!!P_Thing_Warp(self, destination, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch));
+}

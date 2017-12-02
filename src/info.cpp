@@ -322,18 +322,16 @@ bool PClassActor::SetReplacement(FName replaceName)
 
 void AActor::Finalize(FStateDefinitions &statedef)
 {
-	AActor *defaults = this;
-
 	try
 	{
-		statedef.FinishStates(GetClass(), defaults);
+		statedef.FinishStates(GetClass());
 	}
 	catch (CRecoverableError &)
 	{
 		statedef.MakeStateDefines(nullptr);
 		throw;
 	}
-	statedef.InstallStates(GetClass(), defaults);
+	statedef.InstallStates(GetClass(), this);
 	statedef.MakeStateDefines(nullptr);
 }
 

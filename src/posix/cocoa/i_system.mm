@@ -56,11 +56,6 @@ EXTERN_CVAR(String, language)
 uint32_t LanguageIDs[4];
 
 
-int (*I_GetTime)(bool saveMS);
-int (*I_WaitForTic)(int);
-void (*I_FreezeTime)(bool frozen);
-
-
 void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
 {
 }
@@ -72,18 +67,6 @@ ticcmd_t* I_BaseTiccmd()
     return &emptycmd;
 }
 
-
-void I_WaitVBL(const int count)
-{
-    // I_WaitVBL is never used to actually synchronize to the
-    // vertical blank. Instead, it's used for delay purposes.
-    struct timespec delay, rem;
-    delay.tv_sec = count / 70;
-    /* Avoid overflow. Microsec res should be good enough. */
-    delay.tv_nsec = (count%70)*1000000/70 * 1000;
-    while(nanosleep(&delay, &rem) == -1 && errno == EINTR)
-        delay = rem;
-}
 
 
 //

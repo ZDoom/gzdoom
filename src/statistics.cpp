@@ -420,7 +420,7 @@ static void StoreLevelStats()
 		LevelData[i].killcount = level.killed_monsters;
 		LevelData[i].totalsecrets = level.total_secrets;
 		LevelData[i].secretcount = level.found_secrets;
-		LevelData[i].leveltime = AdjustTics(level.maptime);
+		LevelData[i].leveltime = level.maptime;
 
 		// Check for living monsters. On some maps it can happen
 		// that the counter misses some. 
@@ -490,7 +490,7 @@ void STAT_ChangeLevel(const char *newl)
 			}
 
 			infostring.Format("%4d/%4d, %3d/%3d, %2d", statvals[0], statvals[1], statvals[2], statvals[3], validlevels);
-			FSessionStatistics *es = StatisticsEntry(sl, infostring, AdjustTics(level.totaltime));
+			FSessionStatistics *es = StatisticsEntry(sl, infostring, level.totaltime);
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{

@@ -269,7 +269,7 @@ extern int ScriptDepth;
 
 inline float ParseFloat(FScanner &sc)
 {
-   sc.GetFloat();
+   sc.MustGetFloat();
 
    return float(sc.Float);
 }
@@ -277,7 +277,7 @@ inline float ParseFloat(FScanner &sc)
 
 inline int ParseInt(FScanner &sc)
 {
-   sc.GetNumber();
+   sc.MustGetNumber();
 
    return sc.Number;
 }

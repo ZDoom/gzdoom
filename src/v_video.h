@@ -442,7 +442,7 @@ public:
 
 	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y) {}
 
-	uint32_t GetLastFPS() const { return LastCount; }
+	uint64_t GetLastFPS() const { return LastCount; }
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
@@ -453,6 +453,7 @@ public:
 	// The original size of the framebuffer as selected in the video menu.
 	int VideoWidth = 0;
 	int VideoHeight = 0;
+	uint64_t FrameTime = 0;
 
 protected:
 	void DrawRateStuff ();
@@ -462,7 +463,7 @@ protected:
 	DFrameBuffer () {}
 
 private:
-	uint32_t LastMS, LastSec, FrameCount, LastCount, LastTic;
+	uint64_t LastMS, LastSec, FrameCount, LastCount, LastTic;
 	bool isIn2D = false;
 };
 

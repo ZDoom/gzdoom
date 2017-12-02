@@ -51,6 +51,7 @@
 
 #include "doomerrors.h"
 
+#include "i_time.h"
 #include "d_gui.h"
 #include "m_random.h"
 #include "doomdef.h"
@@ -282,7 +283,7 @@ void D_ProcessEvents (void)
 		{
 			M_SetDefaultMode ();
 		}
-		else if (testingmode <= I_GetTime(false))
+		else if (testingmode <= I_GetTime())
 		{
 			M_RestoreMode ();
 		}
@@ -780,9 +781,9 @@ void D_Display ()
 
 
 	{
-		unsigned int nowtime = I_FPSTime();
-		TexMan.UpdateAnimations(nowtime);
-		R_UpdateSky(nowtime);
+		screen->FrameTime = I_msTime();
+		TexMan.UpdateAnimations(screen->FrameTime);
+		R_UpdateSky(screen->FrameTime);
 		switch (gamestate)
 		{
 		case GS_FULLCONSOLE:
@@ -939,14 +940,14 @@ void D_Display ()
 	else
 	{
 		// wipe update
-		unsigned int wipestart, nowtime, diff;
+		uint64_t wipestart, nowtime, diff;
 		bool done;
 
 		GSnd->SetSfxPaused(true, 1);
 		I_FreezeTime(true);
 		screen->WipeEndScreen ();
 
-		wipestart = I_MSTime();
+		wipestart = I_msTime();
 		NetUpdate();		// send out any new accumulation
 
 		do
@@ -954,7 +955,7 @@ void D_Display ()
 			do
 			{
 				I_WaitVBL(2);
-				nowtime = I_MSTime();
+				nowtime = I_msTime();
 				diff = (nowtime - wipestart) * 40 / 1000;	// Using 35 here feels too slow.
 			} while (diff < 1);
 			wipestart = nowtime;
@@ -1726,7 +1727,7 @@ const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinp
 	}
 	if (lookfirstinprogdir)
 	{
-		mysnprintf (wad, countof(wad), "%s%s%s", progdir.GetChars(), progdir[progdir.Len() - 1] != '/' ? "/" : "", file);
+		mysnprintf (wad, countof(wad), "%s%s%s", progdir.GetChars(), progdir.Back() == '/' ? "" : "/", file);
 		if (DirEntryExists (wad))
 		{
 			return wad;
@@ -1753,7 +1754,7 @@ const char *BaseFileSearch (const char *file, const char *ext, bool lookfirstinp
 				dir = NicePath(value);
 				if (dir.IsNotEmpty())
 				{
-					mysnprintf (wad, countof(wad), "%s%s%s", dir.GetChars(), dir[dir.Len() - 1] != '/' ? "/" : "", file);
+					mysnprintf (wad, countof(wad), "%s%s%s", dir.GetChars(), dir.Back() == '/' ? "" : "/", file);
 					if (DirEntryExists (wad))
 					{
 						return wad;

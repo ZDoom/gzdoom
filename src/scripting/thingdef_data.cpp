@@ -1051,7 +1051,7 @@ FString FStringFormat(VM_ARGS)
 		if (in_fmt)
 		{
 			if ((c >= '0' && c <= '9') ||
-				c == '-' || c == '+' || (c == ' ' && fmt_current[fmt_current.Len() - 1] != ' ') || c == '#' || c == '.')
+				c == '-' || c == '+' || (c == ' ' && fmt_current.Back() != ' ') || c == '#' || c == '.')
 			{
 				fmt_current += c;
 			}
@@ -1225,6 +1225,15 @@ DEFINE_ACTION_FUNCTION(FStringStruct, Truncate)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(FStringStruct, Remove)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_UINT(index);
+	PARAM_UINT(remlen);
+	self->Remove(index, remlen);
+	return 0;
+}
+
 // CharAt and CharCodeAt is how JS does it, and JS is similar here in that it doesn't have char type as int.
 DEFINE_ACTION_FUNCTION(FStringStruct, CharAt)
 {
@@ -1264,7 +1273,8 @@ DEFINE_ACTION_FUNCTION(FStringStruct, LastIndexOf)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	PARAM_STRING(substr);
-	ACTION_RETURN_INT(self->LastIndexOf(substr));
+	PARAM_INT_DEF(endIndex);
+	ACTION_RETURN_INT(self->LastIndexOf(substr, endIndex));
 }
 
 DEFINE_ACTION_FUNCTION(FStringStruct, ToUpper)
@@ -1292,4 +1302,14 @@ DEFINE_ACTION_FUNCTION(FStringStruct, ToDouble)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
 	ACTION_RETURN_FLOAT(self->ToDouble());
+}
+
+DEFINE_ACTION_FUNCTION(FStringStruct, Split)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FString);
+	PARAM_POINTER(tokens, TArray<FString>);
+	PARAM_STRING(delimiter);
+	PARAM_INT_DEF(keepEmpty);
+	self->Split(*tokens, delimiter, static_cast<FString::EmptyTokenType>(keepEmpty));
+	return 0;
 }

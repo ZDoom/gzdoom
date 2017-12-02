@@ -39,6 +39,7 @@
 #include <string.h>
 #include <new>
 #include <utility>
+#include <iterator>
 
 #if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
@@ -48,13 +49,37 @@
 
 #include "m_alloc.h"
 
-template<typename T> class TIterator
+template<typename T> class TIterator : public std::iterator<std::random_access_iterator_tag, T>
 {
 public:
+	typedef typename TIterator::value_type value_type;
+	typedef typename TIterator::difference_type difference_type;
+	typedef typename TIterator::pointer pointer;
+	typedef typename TIterator::reference reference;
+	typedef typename TIterator::iterator_category iterator_category;
+
 	TIterator(T* ptr = nullptr) { m_ptr = ptr; }
-	bool operator==(const TIterator<T>& other) const { return (m_ptr == other.m_ptr); }
-	bool operator!=(const TIterator<T>& other) const { return (m_ptr != other.m_ptr); }
-	TIterator<T> &operator++() { ++m_ptr; return (*this); }
+
+	// Comparison operators
+	bool operator==(const TIterator &other) const { return m_ptr == other.m_ptr; }
+	bool operator!=(const TIterator &other) const { return m_ptr != other.m_ptr; }
+	bool operator< (const TIterator &other) const { return m_ptr <  other.m_ptr; }
+	bool operator<=(const TIterator &other) const { return m_ptr <= other.m_ptr; }
+	bool operator> (const TIterator &other) const { return m_ptr >  other.m_ptr; }
+	bool operator>=(const TIterator &other) const { return m_ptr >= other.m_ptr; }
+
+	// Arithmetic operators
+	TIterator &operator++() { ++m_ptr; return *this; }
+	TIterator operator++(int) { pointer tmp = m_ptr; ++*this; return TIterator(tmp); }
+	TIterator &operator--() { --m_ptr; return *this; }
+	TIterator operator--(int) { pointer tmp = m_ptr; --*this; return TIterator(tmp); }
+	TIterator &operator+=(difference_type offset) { m_ptr += offset; return *this; }
+	TIterator operator+(difference_type offset) const { return TIterator(m_ptr + offset); }
+	friend TIterator operator+(difference_type offset, const TIterator &other) { return TIterator(offset + other.m_ptr); }
+	TIterator &operator-=(difference_type offset) { m_ptr -= offset; return *this; }
+	TIterator operator-(difference_type offset) const { return TIterator(m_ptr - offset); }
+	difference_type operator-(const TIterator &other) const { return m_ptr - other.m_ptr; }
+
 	T &operator*() { return *m_ptr; }
 	const T &operator*() const { return *m_ptr; }
 	T* operator->() { return m_ptr; }
@@ -132,10 +157,10 @@ public:
 		Count = 0;
 		Array = NULL;
 	}
-	TArray (int max)
+	TArray (int max, bool reserve = false)
 	{
 		Most = max;
-		Count = 0;
+		Count = reserve? max : 0;
 		Array = (T *)M_Malloc (sizeof(T)*max);
 	}
 	TArray (const TArray<T,TT> &other)

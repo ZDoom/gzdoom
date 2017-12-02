@@ -42,6 +42,7 @@
 #include "d_net.h"
 #include "po_man.h"
 #include "r_utility.h"
+#include "i_time.h"
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "swrenderer/things/r_visiblesprite.h"
@@ -134,7 +135,7 @@ namespace swrenderer
 		int voxelspin = (thing->flags & MF_DROPPED) ? voxel->DroppedSpin : voxel->PlacedSpin;
 		if (voxelspin != 0)
 		{
-			DAngle ang = double(I_FPSTime()) * voxelspin / 1000;
+			DAngle ang = double(screen->FrameTime) * voxelspin / 1000;
 			vis->Angle -= ang;
 		}
 

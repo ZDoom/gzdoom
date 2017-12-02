@@ -342,9 +342,9 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	if(${CMAKE_SYSTEM_PROCESSOR} MATCHES "arm")
 		set (USE_ARMV8 0 CACHE BOOL "Use ARMv8 instructions - Raspberry Pi 3")
 		if (USE_ARMV8)
-			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a53  -mfpu=neon-fp-armv8 -mtune=cortex-a53 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
+			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a53 -mfpu=neon-fp-armv8 -mtune=cortex-a53 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
 		else ()
-			set( CMAKE_CXX_FLAGS "-mfpu=neon -DNO_SSE ${CMAKE_CXX_FLAGS}" )
+			set( CMAKE_CXX_FLAGS "-mcpu=cortex-a7 -mfpu=neon-vfpv4 -mtune=cortex-a7 -mhard-float -DNO_SSE ${CMAKE_CXX_FLAGS}" )
 		endif ()
 	endif ()
 
@@ -877,6 +877,7 @@ set (PCH_SOURCES
 	hu_scores.cpp
 	i_module.cpp
 	i_net.cpp
+	i_time.cpp
 	info.cpp
 	keysections.cpp
 	lumpconfigfile.cpp

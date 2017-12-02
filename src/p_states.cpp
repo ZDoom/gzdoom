@@ -721,7 +721,7 @@ void FStateDefinitions::RetargetStates (intptr_t count, const char *target)
 //
 //==========================================================================
 
-FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype, char *name)
+FState *FStateDefinitions::ResolveGotoLabel (PClassActor *mytype, char *name)
 {
 	PClassActor *type = mytype;
 	FState *state;
@@ -741,7 +741,6 @@ FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype,
 		if (stricmp (classname, "Super") == 0)
 		{
 			type = ValidateActor(type->ParentClass);
-			actor = GetDefaultByType(type);
 		}
 		else
 		{
@@ -763,7 +762,6 @@ FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype,
 			if (type != stype)
 			{
 				type = static_cast<PClassActor *>(stype);
-				actor = GetDefaultByType (type);
 			}
 		}
 	}
@@ -836,16 +834,16 @@ void FStateDefinitions::FixStatePointers (PClassActor *actor, TArray<FStateDefin
 //
 //==========================================================================
 
-void FStateDefinitions::ResolveGotoLabels (PClassActor *actor, AActor *defaults, TArray<FStateDefine> & list)
+void FStateDefinitions::ResolveGotoLabels (PClassActor *actor, TArray<FStateDefine> & list)
 {
 	for (unsigned i = 0; i < list.Size(); i++)
 	{
 		if (list[i].State != NULL && list[i].DefineFlags == SDF_LABEL)
 		{ // It's not a valid state, so it must be a label string. Resolve it.
-			list[i].State = ResolveGotoLabel (defaults, actor, (char *)list[i].State);
+			list[i].State = ResolveGotoLabel (actor, (char *)list[i].State);
 			list[i].DefineFlags = SDF_STATE;
 		}
-		if (list[i].Children.Size() > 0) ResolveGotoLabels(actor, defaults, list[i].Children);
+		if (list[i].Children.Size() > 0) ResolveGotoLabels(actor, list[i].Children);
 	}
 }
 
@@ -1004,7 +1002,7 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars, const FS
 //
 //==========================================================================
 
-int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
+int FStateDefinitions::FinishStates(PClassActor *actor)
 {
 	int count = StateArray.Size();
 
@@ -1023,7 +1021,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 		FixStatePointers(actor, StateLabels);
 
 		// Fix state pointers that are gotos
-		ResolveGotoLabels(actor, defaults, StateLabels);
+		ResolveGotoLabels(actor, StateLabels);
 
 		for (i = 0; i < count; i++)
 		{
@@ -1047,7 +1045,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 				break;
 
 			case SDF_LABEL:
-				realstates[i].NextState = ResolveGotoLabel(defaults, actor, (char *)realstates[i].NextState);
+				realstates[i].NextState = ResolveGotoLabel(actor, (char *)realstates[i].NextState);
 				break;
 			}
 		}
@@ -1055,7 +1053,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 	else
 	{
 		// Fix state pointers that are gotos
-		ResolveGotoLabels(actor, defaults, StateLabels);
+		ResolveGotoLabels(actor, StateLabels);
 	}
 	return count;
 }

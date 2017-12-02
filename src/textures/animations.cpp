@@ -876,7 +876,7 @@ FDoorAnimation *FTextureManager::FindAnimatedDoor (FTextureID picnum)
 //
 //==========================================================================
 
-void FAnimDef::SetSwitchTime (uint32_t mstime)
+void FAnimDef::SetSwitchTime (uint64_t mstime)
 {
 	int speedframe = bDiscrete ? CurFrame : 0;
 
@@ -917,7 +917,7 @@ void FTextureManager::SetTranslation (FTextureID fromtexnum, FTextureID totexnum
 //
 //==========================================================================
 
-void FTextureManager::UpdateAnimations (uint32_t mstime)
+void FTextureManager::UpdateAnimations (uint64_t mstime)
 {
 	for (unsigned int j = 0; j < mAnimations.Size(); ++j)
 	{

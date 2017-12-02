@@ -52,7 +52,7 @@
 #include "g_levellocals.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
-
+#include "i_time.h"
 
 glcycle_t RenderWall,SetupWall,ClipWall;
 glcycle_t RenderFlat,SetupFlat;
@@ -187,8 +187,8 @@ static void AppendLightStats(FString &out)
 ADD_STAT(rendertimes)
 {
 	static FString buff;
-	static int lasttime=0;
-	int t=I_FPSTime();
+	static int64_t lasttime=0;
+	int64_t t=I_msTime();
 	if (t-lasttime>1000) 
 	{
 		buff.Truncate(0);
@@ -217,7 +217,7 @@ void AppendMissingTextureStats(FString &out);
 
 static int printstats;
 static bool switchfps;
-static unsigned int waitstart;
+static uint64_t waitstart;
 EXTERN_CVAR(Bool, vid_fps)
 
 void CheckBench()
@@ -226,7 +226,7 @@ void CheckBench()
 	{
 		// if we started the FPS counter ourselves or ran from the console 
 		// we need to wait for it to stabilize before using it.
-		if (waitstart > 0 && I_MSTime() < waitstart + 5000) return;
+		if (waitstart > 0 && I_msTime() - waitstart < 5000) return;
 
 		FString compose;
 
@@ -257,12 +257,12 @@ CCMD(bench)
 	if (vid_fps == 0) 
 	{
 		vid_fps = 1;
-		waitstart = I_MSTime();
+		waitstart = I_msTime();
 		switchfps = true;
 	}
 	else
 	{
-		if (ConsoleState == c_up) waitstart = I_MSTime();
+		if (ConsoleState == c_up) waitstart = I_msTime();
 		switchfps = false;
 	}
 	C_HideConsole ();

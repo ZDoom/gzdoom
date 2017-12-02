@@ -66,8 +66,7 @@ FString::FString (const char *copyStr)
 {
 	if (copyStr == NULL || *copyStr == '\0')
 	{
-		NullString.RefCount++;
-		Chars = &NullString.Nothing[0];
+		ResetToNull();
 	}
 	else
 	{
@@ -87,8 +86,7 @@ FString::FString (char oneChar)
 {
 	if (oneChar == '\0')
 	{
-		NullString.RefCount++;
-		Chars = &NullString.Nothing[0];
+		ResetToNull();
 	}
 	else
 	{
@@ -213,6 +211,21 @@ FString &FString::operator = (const FString &other)
 	}
 	return *this;
 }
+
+FString &FString::operator = (FString &&other)
+{
+	assert (Chars != NULL);
+
+	if (&other != this)
+	{
+		Data()->Release();
+		Chars = other.Chars;
+		other.ResetToNull();
+	}
+
+	return *this;
+}
+
 FString &FString::operator = (const char *copyStr)
 {
 	if (copyStr != Chars)
@@ -220,8 +233,7 @@ FString &FString::operator = (const char *copyStr)
 		if (copyStr == NULL || *copyStr == '\0')
 		{
 			Data()->Release();
-			NullString.RefCount++;
-			Chars = &NullString.Nothing[0];
+			ResetToNull();
 		}
 		else
 		{
@@ -362,8 +374,7 @@ FString &FString::CopyCStrPart(const char *tail, size_t tailLen)
 	else
 	{
 		Data()->Release();
-		NullString.RefCount++;
-		Chars = &NullString.Nothing[0];
+		ResetToNull();
 	}
 	return *this;
 }
@@ -373,8 +384,7 @@ void FString::Truncate(size_t newlen)
 	if (newlen == 0)
 	{
 		Data()->Release();
-		NullString.RefCount++;
-		Chars = &NullString.Nothing[0];
+		ResetToNull();
 	}
 	else if (newlen < Len())
 	{
@@ -1149,6 +1159,49 @@ void FString::ReallocBuffer (size_t newlen)
 			Chars = (char *)(Data()->Realloc(newlen) + 1);
 		}
 		Data()->Len = (unsigned int)newlen;
+	}
+}
+
+TArray<FString> FString::Split(const FString &delimiter, const EmptyTokenType keepEmpty) const
+{
+	return Split(delimiter.GetChars(), keepEmpty);
+}
+
+TArray<FString> FString::Split(const char *const delimiter, const EmptyTokenType keepEmpty) const
+{
+	TArray<FString> tokens;
+	Split(tokens, delimiter, keepEmpty);
+	return tokens;
+}
+
+void FString::Split(TArray<FString>& tokens, const FString &delimiter, EmptyTokenType keepEmpty) const
+{
+	Split(tokens, delimiter.GetChars(), keepEmpty);
+}
+
+void FString::Split(TArray<FString>& tokens, const char *delimiter, EmptyTokenType keepEmpty) const
+{
+	assert(nullptr != delimiter);
+
+	const long selfLen = static_cast<long>(Len());
+	const long delimLen = static_cast<long>(strlen(delimiter));
+	long lastPos = 0;
+
+	while (lastPos <= selfLen)
+	{
+		long pos = IndexOf(delimiter, lastPos);
+
+		if (-1 == pos)
+		{
+			pos = selfLen;
+		}
+
+		if (pos != lastPos || TOK_KEEPEMPTY == keepEmpty)
+		{
+			tokens.Push(FString(GetChars() + lastPos, pos - lastPos));
+		}
+
+		lastPos = pos + delimLen;
 	}
 }
 

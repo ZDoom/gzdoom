@@ -551,6 +551,16 @@ int main(int argc, char** argv)
 		{
 			s_restartedFromWADPicker = true;
 		}
+#if _DEBUG
+		else if (0 == strcmp(argument, "-wait_for_debugger"))
+		{
+			NSAlert* alert = [[NSAlert alloc] init];
+			[alert setMessageText:@GAMENAME];
+			[alert setInformativeText:@"Waiting for debugger..."];
+			[alert addButtonWithTitle:@"Continue"];
+			[alert runModal];
+		}
+#endif // _DEBUG
 		else
 		{
 			s_argvStorage.Push(argument);

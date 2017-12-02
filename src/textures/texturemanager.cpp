@@ -699,9 +699,9 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 						is32bit = !!sc.Compare("force32bit");
 						if (!is32bit) sc.UnGet();
 
-						sc.GetNumber();
+						sc.MustGetNumber();
 						width = sc.Number;
-						sc.GetNumber();
+						sc.MustGetNumber();
 						height = sc.Number;
 
 						if (lumpnum>=0)
@@ -1194,6 +1194,20 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 		return int(numtex) >= 0 ? numtex : 0;
 	}
 	return 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetName)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	const FTexture* const tex = TexMan.ByIndex(texid);
+	ACTION_RETURN_STRING(nullptr == tex ? FString() : tex->Name);
 }
 
 //==========================================================================

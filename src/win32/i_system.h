@@ -50,21 +50,6 @@ void I_DetectOS (void);
 // Called by DoomMain.
 void I_Init (void);
 
-// Called by D_DoomLoop, returns current time in tics.
-extern int (*I_GetTime) (bool saveMS);
-
-// like I_GetTime, except it waits for a new tic before returning
-extern int (*I_WaitForTic) (int);
-
-// Freezes tic counting temporarily. While frozen, calls to I_GetTime()
-// will always return the same value. This does not affect I_MSTime().
-// You must also not call I_WaitForTic() while freezing time, since the
-// tic will never arrive (unless it's the current one).
-extern void (*I_FreezeTime) (bool frozen);
-
-double I_GetTimeFrac (uint32_t *ms);
-void I_SetFrameTime();
-
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();
 
@@ -131,10 +116,6 @@ int I_PickIWad (WadStuff *wads, int numwads, bool queryiwad, int defaultiwad);
 
 // The ini could not be saved at exit
 bool I_WriteIniFailed ();
-
-// [RH] Returns millisecond-accurate time
-unsigned int I_MSTime (void);
-unsigned int I_FPSTime();
 
 // [RH] Used by the display code to set the normal window procedure
 void I_SetWndProc();

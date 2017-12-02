@@ -23,6 +23,10 @@ Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA */
 #undef PI
 #define PI 3.1415926535897932384626433832795029
 
+#if _MSC_VER >= 1911 && defined _M_X64
+#pragma float_control(precise, on, push)
+#endif // _MSC_VER >= 1911 && _M_X64
+
 static void gen_sinc( double rolloff, int width, double offset, double spacing, double scale,
 		int count, short* out )
 {
@@ -51,6 +55,10 @@ static void gen_sinc( double rolloff, int width, double offset, double spacing, 
 		angle += step;
 	}
 }
+
+#if _MSC_VER >= 1911 && defined _M_X64
+#pragma float_control(pop)
+#endif // _MSC_VER >= 1911 && _M_X64
 
 Fir_Resampler_::Fir_Resampler_( int width, sample_t* impulses_ ) :
 	width_( width ),

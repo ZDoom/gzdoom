@@ -2974,7 +2974,15 @@ bool G_CheckDemoStatus (void)
 		formlen = demobuffer + 4;
 		WriteLong (int(demo_p - demobuffer - 8), &formlen);
 
-		bool saved = M_WriteFile (demoname, demobuffer, int(demo_p - demobuffer)); 
+		auto fw = FileWriter::Open(demoname);
+		bool saved = false;
+		if (fw != nullptr)
+		{
+			auto size = long(demo_p - demobuffer);
+			saved = fw->Write(demobuffer, size) == size;
+			delete fw;
+			if (!saved) remove(demoname);
+		}
 		M_Free (demobuffer); 
 		demorecording = false;
 		stoprecording = false;

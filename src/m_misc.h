@@ -33,7 +33,6 @@ class FIWadManager;
 
 extern FGameConfigFile *GameConfig;
 
-bool M_WriteFile (char const *name, void *source, int length);
 void M_FindResponseFile (void);
 
 // [RH] M_ScreenShot now accepts a filename parameter.

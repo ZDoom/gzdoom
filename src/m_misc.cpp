@@ -88,32 +88,6 @@ EXTERN_CVAR(Bool, longsavemessages);
 
 static long ParseCommandLine (const char *args, int *argc, char **argv);
 
-//
-// M_WriteFile
-//
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
-bool M_WriteFile (char const *name, void *source, int length)
-{
-	int handle;
-	int count;
-
-	handle = open ( name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
-
-	if (handle == -1)
-		return false;
-
-	count = write (handle, source, length);
-	close (handle);
-
-	if (count < length)
-		return false;
-
-	return true;
-}
-
 
 //---------------------------------------------------------------------------
 //

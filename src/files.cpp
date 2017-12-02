@@ -634,6 +634,30 @@ size_t FileWriter::Write(const void *buffer, size_t len)
 	}
 }
 
+long FileWriter::Tell()
+{
+	if (File != NULL)
+	{
+		return ftell(File);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+long FileWriter::Seek(long offset, int mode)
+{
+	if (File != NULL)
+	{
+		return fseek(File, offset, mode);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
 
 size_t FileWriter::Printf(const char *fmt, ...)
 {

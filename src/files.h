@@ -409,6 +409,8 @@ public:
 	static FileWriter *Open(const char *filename);
 
 	virtual size_t Write(const void *buffer, size_t len);
+	virtual long Tell();
+	virtual long Seek(long offset, int mode);
 	size_t Printf(const char *fmt, ...) GCCPRINTF(2,3);
 
 protected:

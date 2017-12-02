@@ -147,26 +147,6 @@ void ReplaceString (char **ptr, const char *str)
 
 //==========================================================================
 //
-// Q_filelength
-//
-//==========================================================================
-
-int Q_filelength (FILE *f)
-{
-	int		pos;
-	int		end;
-
-	pos = ftell (f);
-	fseek (f, 0, SEEK_END);
-	end = ftell (f);
-	fseek (f, pos, SEEK_SET);
-
-	return end;
-}
-
-
-//==========================================================================
-//
 // FileExists
 //
 // Returns true if the given path exists and is a readable file.

@@ -306,15 +306,16 @@ int FTextureManager::CountBuildTiles ()
 			FString artpath = rffpath;
 			artpath += artfile;
 
-			FILE *f = fopen (artpath, "rb");
-			if (f == NULL)
+			FileReader fr;
+
+			if (!fr.Open(artpath))
 			{
 				break;
 			}
 
-			size_t len = Q_filelength (f);
+			long len = fr.GetLength();
 			uint8_t *art = new uint8_t[len];
-			if (fread (art, 1, len, f) != len || (numtiles = CountTiles(art)) == 0)
+			if (fr.Read (art, len) != len || (numtiles = CountTiles(art)) == 0)
 			{
 				delete[] art;
 			}
@@ -323,7 +324,6 @@ int FTextureManager::CountBuildTiles ()
 				BuildTileFiles.Push (art);
 				totaltiles += numtiles;
 			}
-			fclose (f);
 		}
 	}
 

@@ -67,23 +67,6 @@
 *
 */
 
-/* ADDED IN v2.0 */
-
-/*
-* NAME
-*        tmpfileplus_f - create a unique temporary file with filename stored in a fixed-length buffer
-*
-* SYNOPSIS
-*        FILE *tmpfileplus_f(const char *dir, const char *prefix, char *pathnamebuf, size_t pathsize, int keep);
-*
-* DESCRIPTION
-*        Same as tmpfileplus() except receives filename in a fixed-length buffer. No allocated memory to free.
-
-* ERRORS
-*        E2BIG Resulting filename is too big for the buffer `pathnamebuf`.
-
-*/
-
 #include "tmpfileplus.h"
 
 #include <stdio.h>
@@ -112,45 +95,30 @@
 #define FDOPEN_ fdopen
 #endif
 
+#include "m_random.h"
+#include "cmdlib.h"
 
 
-#ifdef _WIN32
-#define FILE_SEPARATOR "\\"
-#else
 #define FILE_SEPARATOR "/"
-#endif
 
 #define RANDCHARS	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 #define NRANDCHARS	(sizeof(RANDCHARS) - 1)
+
+static FRandom pr_tmpfile;
 
 /** Replace each byte in string s with a random character from TEMPCHARS */
 static char *set_randpart(char *s)
 {
 	size_t i;
 	unsigned int r;
-	static unsigned int seed;	/* NB static */
 
-	if (seed == 0)
-	{	/* First time set our seed using current time and clock */
-		seed = ((unsigned)time(NULL)<<8) ^ (unsigned)clock();
-	}
-	srand(seed++);	
+
 	for (i = 0; i < strlen(s); i++)
 	{
-		r = rand() % NRANDCHARS;
+		r = pr_tmpfile() % NRANDCHARS;
 		s[i] = (RANDCHARS)[r];
 	}
 	return s;
-}
-
-/** Return 1 if path is a valid directory otherwise 0 */
-static int is_valid_dir(const char *path)
-{
-	struct stat st;
-	if ((stat(path, &st) == 0) && (st.st_mode & S_IFDIR))
-		return 1;
-	
-	return 0;
 }
 
 /** Call getenv and save a copy in buf */
@@ -203,7 +171,7 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	pmode = S_IRUSR|S_IWUSR;
 #endif
 
-	if (!tmpdir || !is_valid_dir(tmpdir)) {
+	if (!tmpdir || !DirExists(tmpdir)) {
 		errno = ENOENT;
 		return NULL;
 	}
@@ -294,33 +262,4 @@ FILE *tmpfileplus(const char *dir, const char *prefix, char **pathname, int keep
 
 	return fp;
 }
-
-/* Same as tmpfileplus() but with fixed length buffer for output filename and no memory allocation */
-FILE *tmpfileplus_f(const char *dir, const char *prefix, char *pathnamebuf, size_t pathsize, int keep)
-{
-	char *tmpbuf = NULL;
-	FILE *fp;
-
-	/* If no buffer provided, do the normal way */
-	if (!pathnamebuf || (int)pathsize <= 0) {
-		return tmpfileplus(dir, prefix, NULL, keep);
-	}
-	/* Call with a temporary buffer */
-	fp = tmpfileplus(dir, prefix, &tmpbuf, keep);
-	if (fp && strlen(tmpbuf) > pathsize - 1) {
-		/* Succeeded but not enough room in output buffer, so clean up and return an error */
-		pathnamebuf[0] = 0;
-		fclose(fp);
-		if (keep) remove(tmpbuf);
-		free(tmpbuf);
-		errno = E2BIG;
-		return NULL;
-	}
-	/* Copy name into buffer */
-	strcpy(pathnamebuf, tmpbuf);
-	free(tmpbuf);
-
-	return fp;
-}
-
 

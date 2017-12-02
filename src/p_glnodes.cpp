@@ -1133,16 +1133,15 @@ static void CreateCachedNodes(MapData *map)
 	memcpy(compressed + offset - 4, "ZGL3", 4);
 
 	FString path = CreateCacheName(map, true);
-	FILE *f = fopen(path, "wb");
+	FileWriter *fw = FileWriter::Open(path);
 
-	if (f != NULL)
+	if (fw != nullptr)
 	{
-		if (fwrite(compressed, outlen+offset, 1, f) != 1)
+		if (fw->Write(compressed, outlen+offset) != 1)
 		{
 			Printf("Error saving nodes to file %s\n", path.GetChars());
 		}
-
-		fclose(f);
+		delete fw;
 	}
 	else
 	{
@@ -1162,32 +1161,30 @@ static bool CheckCachedNodes(MapData *map)
 	uint32_t *verts = NULL;
 
 	FString path = CreateCacheName(map, false);
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) return false;
+	FileReader fr;
 
-	if (fread(magic, 1, 4, f) != 4) goto errorout;
+	if (!fr.Open(path)) return false;
+
+	if (fr.Read(magic, 4) != 4) goto errorout;
 	if (memcmp(magic, "CACH", 4))  goto errorout;
 
-	if (fread(&numlin, 4, 1, f) != 1) goto errorout; 
+	if (fr.Read(&numlin, 4) != 4) goto errorout; 
 	numlin = LittleLong(numlin);
 	if (numlin != level.lines.Size()) goto errorout;
 
-	if (fread(md5, 1, 16, f) != 16) goto errorout;
+	if (fr.Read(md5, 16) != 16) goto errorout;
 	map->GetChecksum(md5map);
 	if (memcmp(md5, md5map, 16)) goto errorout;
 
 	verts = new uint32_t[numlin * 8];
-	if (fread(verts, 8, numlin, f) != numlin) goto errorout;
+	if (fr.Read(verts, 8 * numlin) != 8 * numlin) goto errorout;
 
-	if (fread(magic, 1, 4, f) != 4) goto errorout;
+	if (fr.Read(magic, 4) != 4) goto errorout;
 	if (memcmp(magic, "ZGL2", 4) && memcmp(magic, "ZGL3", 4))  goto errorout;
 
 
 	try
 	{
-		long pos = ftell(f);
-		FileReader fr(f);
-		fr.Seek(pos, SEEK_SET);
 		P_LoadZNodes (fr, MAKE_ID(magic[0],magic[1],magic[2],magic[3]));
 	}
 	catch (CRecoverableError &error)
@@ -1208,7 +1205,6 @@ static bool CheckCachedNodes(MapData *map)
 	}
 	delete [] verts;
 
-	fclose(f);
 	return true;
 
 errorout:
@@ -1216,7 +1212,6 @@ errorout:
 	{
 		delete[] verts;
 	}
-	fclose(f);
 	return false;
 }
 

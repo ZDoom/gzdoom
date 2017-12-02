@@ -456,12 +456,6 @@ PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 	return NULL;
 }
 
-PNGHandle *M_VerifyPNG(FILE *file)
-{
-	FileReader *fr = new FileReader(file);
-	return M_VerifyPNG(fr, true);
-}
-
 //==========================================================================
 //
 // M_FreePNG

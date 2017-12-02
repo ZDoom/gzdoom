@@ -113,13 +113,6 @@
 #endif
 
 
-/* DEBUGGING STUFF */
-#if defined(_DEBUG) && defined(SHOW_DPRINTF)
-#define DPRINTF1(s, a1) printf(s, a1)
-#else
-#define DPRINTF1(s, a1)
-#endif
-
 
 #ifdef _WIN32
 #define FILE_SEPARATOR "\\"
@@ -216,7 +209,6 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	}
 
 	lentempname = strlen(tmpdir) + strlen(FILE_SEPARATOR) + strlen(pfx) + strlen(randpart);
-	DPRINTF1("lentempname=%d\n", lentempname);
 	tmpname = (char*)malloc(lentempname + 1);
 	if (!tmpname)
 	{
@@ -227,11 +219,9 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	for (i = 0; i < 10; i++)
 	{
 		sprintf(tmpname, "%s%s%s%s", tmpdir, FILE_SEPARATOR, pfx, set_randpart(randpart));
-		DPRINTF1("[%s]\n", tmpname);
 		fd = OPEN_(tmpname, oflag, pmode);
 		if (fd != -1) break;
 	}
-	DPRINTF1("strlen(tmpname)=%d\n", strlen(tmpname));
 	if (fd != -1)
 	{	/* Success, so return user a proper ANSI C file pointer */
 		fp = FDOPEN_(fd, "w+b");
@@ -293,7 +283,6 @@ FILE *tmpfileplus(const char *dir, const char *prefix, char **pathname, int keep
 	for (i = 0; i < ntempdirs; i++)
 	{
 		tmpdir = tempdirs[i];
-		DPRINTF1("Trying tmpdir=[%s]\n", tmpdir);
 		fp = mktempfile_internal(tmpdir, pfx, &tmpname, keep);
 		if (fp) break;
 	}

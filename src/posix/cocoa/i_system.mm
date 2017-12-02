@@ -49,6 +49,7 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "x86.h"
+#include "cmdlib.h"
 
 
 EXTERN_CVAR(String, language)
@@ -336,11 +337,11 @@ int I_FindClose(void* const handle)
 int I_FindAttr(findstate_t* const fileinfo)
 {
 	dirent* const ent = fileinfo->namelist[fileinfo->current];
-	struct stat buf;
+	bool isdir;
 
-	if (stat(ent->d_name, &buf) == 0)
+	if (DirEntryExists(ent->d_name, &isdir))
 	{
-		return S_ISDIR(buf.st_mode) ? FA_DIREC : 0;
+		return isdir ? FA_DIREC : 0;
 	}
 
 	return 0;

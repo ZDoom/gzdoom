@@ -1946,13 +1946,11 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 		const char *filename = pwads[i];
 
 		// Does this exist? If so, is it a directory?
-		struct stat info;
-		if (stat(pwads[i], &info) != 0)
+		if (!DirEntryExists(pwads[i], &isdir))
 		{
 			Printf(TEXTCOLOR_RED "Could not stat %s\n", filename);
 			continue;
 		}
-		isdir = (info.st_mode & S_IFDIR) != 0;
 
 		if (!isdir)
 		{

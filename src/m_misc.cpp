@@ -112,7 +112,6 @@ void M_FindResponseFile (void)
 			char	**argv;
 			char	*file = NULL;
 			int		argc = 0;
-			FILE	*handle;
 			int 	size;
 			long	argsize = 0;
 			int 	index;

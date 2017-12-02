@@ -42,6 +42,7 @@
 #include "d_main.h"
 #include "zstring.h"
 #include "sc_man.h"
+#include "cmdlib.h"
 
 static void PSR_FindEndBlock(FScanner &sc)
 {
@@ -224,7 +225,7 @@ TArray<FString> I_GetSteamPath()
 		{
 			struct stat st;
 			FString candidate(SteamInstallFolders[i] + "/" + AppInfo[app].BasePath);
-			if(stat(candidate, &st) == 0 && S_ISDIR(st.st_mode))
+			if(DirExists(candidate))
 				result.Push(candidate);
 		}
 	}

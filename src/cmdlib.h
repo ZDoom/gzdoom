@@ -20,7 +20,7 @@
 
 bool FileExists (const char *filename);
 bool DirExists(const char *filename);
-bool DirEntryExists (const char *pathname);
+bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
 
 extern	FString progdir;
 

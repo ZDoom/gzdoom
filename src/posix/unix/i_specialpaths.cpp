@@ -218,3 +218,16 @@ FString M_GetSavegamesPath()
 {
 	return NicePath("~/" GAME_DIR);
 }
+
+//===========================================================================
+//
+// M_GetDocumentsPath												Unix
+//
+// Returns the path to the default documents directory.
+//
+//===========================================================================
+
+FString M_GetDocumentsPath()
+{
+	return NicePath("~/" GAME_DIR);
+}

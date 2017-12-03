@@ -380,3 +380,41 @@ FString M_GetSavegamesPath()
 	}
 	return path;
 }
+
+//===========================================================================
+//
+// M_GetDocumentsPath												Windows
+//
+// Returns the path to the default documents directory.
+//
+//===========================================================================
+
+FString M_GetDocumentsPath()
+{
+	FString path;
+
+	// A portable INI means that this storage location should also be portable.
+	path.Format("%s" GAMENAME "_portable.ini", progdir.GetChars());
+	if (FileExists(path))
+	{
+		return progdir;
+	}
+
+	if (!UseKnownFolders())
+	{
+		return progdir;
+	}
+	// Try defacto My Documents/My Games folder
+	else if (GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true, path))
+	{
+		// I assume since this isn't a standard folder, it doesn't have
+		// a localized name either.
+		path << "/My Games/" GAMENAME;
+		CreatePath(path);
+	}
+	else
+	{
+		path = progdir;
+	}
+	return path;
+}

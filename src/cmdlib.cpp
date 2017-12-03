@@ -544,18 +544,13 @@ void CreatePath(const char *fn)
 		{
 			*p = '\0';
 		}
-		struct stat info;
-		if (DirEntryExists(copy))
+		if (!DirEntryExists(copy) && mkdir(copy, 0755) == -1)
 		{
-			if (info.st_mode & S_IFDIR)
-				goto exists;
-		}
-		if (mkdir(copy, 0755) == -1)
-		{ // failed
+			// failed
 			free(copy);
 			return;
 		}
-exists:	if (p != NULL)
+		if (p != NULL)
 		{
 			*p = '/';
 		}

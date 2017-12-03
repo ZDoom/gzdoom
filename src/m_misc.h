@@ -60,5 +60,6 @@ FString M_GetCajunPath(const char *filename);
 FString M_GetConfigPath(bool for_reading);
 FString M_GetScreenshotsPath();
 FString M_GetSavegamesPath();
+FString M_GetDocumentsPath();
 
 #endif

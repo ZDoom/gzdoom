@@ -2281,3 +2281,13 @@ OptionMenu "ReverbNew" protected
 	NumberField "ID #2", "reverbedit_id2", 0, 255
 	Command "Create", "createenvironment", 0, 1
 }
+
+OptionMenu "ReverbSave" protected
+{
+	Class "ReverbSave"
+	Title "Save Reverb Environments"
+	Command "Save...", "savereverbs"
+	StaticText ""
+	StaticText "Environments to save"
+	// Rest is filled in by code.
+}

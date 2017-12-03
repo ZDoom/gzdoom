@@ -55,6 +55,12 @@ REVERB_PROPERTIES SavedProperties;
 ReverbContainer *CurrentEnv;
 extern ReverbContainer *ForcedEnvironment;
 
+// These are for internal use only and not supposed to be user-settable
+CVAR(String, reverbedit_name, "", CVAR_NOSET);
+CVAR(Int, reverbedit_id1, 0, CVAR_NOSET);
+CVAR(Int, reverbedit_id2, 0, CVAR_NOSET);
+CVAR(String, reverbsavename, "", CVAR_NOSET);
+
 struct FReverbField
 {
 	int Min, Max;
@@ -971,7 +977,7 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, FillSelectMenu)
 	PARAM_PROLOGUE;
 	PARAM_STRING(ccmd);
 	PARAM_OBJECT(desc, DOptionMenuDescriptor);
-	desc->mItems.Clear();
+	desc->mItems.Resize(2);
 	for (auto env = Environments; env != nullptr; env = env->Next)
 	{
 		FStringf text("(%d, %d) %s", HIBYTE(env->ID), LOBYTE(env->ID), env->Name);
@@ -992,10 +998,75 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, FillSelectMenu)
 	return 0;
 }
 
-// These are for internal use only and not supposed to be user-settable
-CVAR(String, reverbedit_name, "", CVAR_NOSET);
-CVAR(Int, reverbedit_id1, 0, CVAR_NOSET);
-CVAR(Int, reverbedit_id2, 0, CVAR_NOSET);
+static TArray<std::pair<ReverbContainer*, bool>> SaveState;
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, FillSaveMenu)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(desc, DOptionMenuDescriptor);
+	desc->mItems.Clear();
+	SaveState.Clear();
+	for (auto env = Environments; env != nullptr; env = env->Next)
+	{
+		if (!env->Builtin)
+		{
+			int index = (int)SaveState.Push(std::make_pair(env, false));
+
+			FStringf text("(%d, %d) %s", HIBYTE(env->ID), LOBYTE(env->ID), env->Name);
+			PClass *cls = PClass::FindClass("OptionMenuItemReverbSaveSelect");
+			if (cls != nullptr && cls->IsDescendantOf("OptionMenuItem"))
+			{
+				auto func = dyn_cast<PFunction>(cls->FindSymbol("Init", true));
+				if (func != nullptr)
+				{
+					DMenuItemBase *item = (DMenuItemBase*)cls->CreateNew();
+					VMValue params[] = { item, &text, index, FName("OnOff").GetIndex() };
+					VMCall(func->Variants[0].Implementation, params, 4, nullptr, 0);
+					desc->mItems.Push((DMenuItemBase*)item);
+				}
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, GetSaveSelection)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	bool res = false;
+	if ((unsigned)index <= SaveState.Size())
+	{
+		res = SaveState[index].second;
+	}
+	ACTION_RETURN_BOOL(res);
+}
+
+DEFINE_ACTION_FUNCTION(DReverbEdit, ToggleSaveSelection)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(index);
+	if ((unsigned)index <= SaveState.Size())
+	{
+		SaveState[index].second = !SaveState[index].second;
+	}
+	return 0;
+}
+
+
+CCMD(savereverbs)
+{
+	if (SaveState.Size() == 0) return;
+
+	TArray<const ReverbContainer*> toSave;
+
+	for (auto &p : SaveState)
+	{
+		if (p.second) toSave.Push(p.first);
+	}
+	ExportEnvironments(reverbsavename, toSave.Size(), &toSave[0]);
+	SaveState.Clear();
+}
 
 static void SelectEnvironment(const char *envname)
 {

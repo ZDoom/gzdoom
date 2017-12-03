@@ -172,12 +172,6 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, FString *t
 	{	/* Success, so return user a proper ANSI C file pointer */
 		fp = FDOPEN_(fd, "w+b");
 		errno = 0;
-
-#ifndef _WIN32
-		/* [Unix only] And make sure the file will be deleted once closed */
-		if (!keep) remove(tmpname);
-#endif
-
 	}
 	else
 	{	/* We failed */

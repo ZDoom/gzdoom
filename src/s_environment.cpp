@@ -59,7 +59,7 @@ extern ReverbContainer *ForcedEnvironment;
 CVAR(String, reverbedit_name, "", CVAR_NOSET);
 CVAR(Int, reverbedit_id1, 0, CVAR_NOSET);
 CVAR(Int, reverbedit_id2, 0, CVAR_NOSET);
-CVAR(String, reverbsavename, "", CVAR_NOSET);
+CVAR(String, reverbsavename, "", 0);
 
 struct FReverbField
 {
@@ -836,7 +836,7 @@ FString SuggestNewName(const ReverbContainer *env)
 
 void ExportEnvironments(const char *filename, uint32_t count, const ReverbContainer **envs)
 {
-	FileWriter *f = FileWriter::Open("filename");
+	FileWriter *f = FileWriter::Open(filename);
 
 	if (f != nullptr)
 	{
@@ -977,7 +977,7 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, FillSelectMenu)
 	PARAM_PROLOGUE;
 	PARAM_STRING(ccmd);
 	PARAM_OBJECT(desc, DOptionMenuDescriptor);
-	desc->mItems.Resize(2);
+	desc->mItems.Clear();
 	for (auto env = Environments; env != nullptr; env = env->Next)
 	{
 		FStringf text("(%d, %d) %s", HIBYTE(env->ID), LOBYTE(env->ID), env->Name);
@@ -1004,7 +1004,7 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, FillSaveMenu)
 {
 	PARAM_PROLOGUE;
 	PARAM_OBJECT(desc, DOptionMenuDescriptor);
-	desc->mItems.Clear();
+	desc->mItems.Resize(4);
 	SaveState.Clear();
 	for (auto env = Environments; env != nullptr; env = env->Next)
 	{

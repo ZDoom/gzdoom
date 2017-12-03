@@ -354,8 +354,6 @@ OptionMenu "OptionsMenu" protected
 	Submenu "$OPTMNU_VIDEO",			"VideoModeMenu"
 	Submenu "$OPTMNU_CHANGERENDER",		"RendererMenu"
 	StaticText " "
-	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
-	StaticText " "
 	SafeCommand "$OPTMNU_DEFAULTS",	"reset2defaults"
 	SafeCommand	"$OPTMNU_RESETTOSAVED",	"reset2saved"
 	Command "$OPTMNU_CONSOLE",			"menuconsole"
@@ -1629,6 +1627,8 @@ OptionMenu SoundOptions protected
 	StaticText " "
 	Submenu "$SNDMNU_ADVANCED",			"AdvSoundOptions"
 	Submenu "$SNDMNU_MODREPLAYER",		"ModReplayerOptions"
+	StaticText " "
+	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
 }
 
 /*=======================================
@@ -2287,6 +2287,7 @@ OptionMenu "ReverbSave" protected
 	Class "ReverbSave"
 	Title "Save Reverb Environments"
 	Command "Save...", "savereverbs"
+	TextField "File name", "reverbsavename"
 	StaticText ""
 	StaticText "Environments to save"
 	// Rest is filled in by code.

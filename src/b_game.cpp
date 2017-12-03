@@ -534,7 +534,7 @@ bool FCajunMaster::LoadBots ()
 	}
 	if (!sc.OpenFile(tmp))
 	{
-		Printf("Unable to open %s. So no bots\n");
+		Printf("Unable to open %s. So no bots\n", tmp.GetChars());
 		return false;
 	}
 

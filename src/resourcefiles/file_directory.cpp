@@ -35,27 +35,13 @@
 
 
 #include <sys/stat.h>
-#include <sys/types.h>
 #ifdef _WIN32
 #include <io.h>
-#define stat _stat
 #else
-#include <dirent.h>
-#ifndef __sun
 #include <fts.h>
 #endif
-#endif
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <errno.h>
-#include <stdlib.h>
-#include <time.h>
 
-#include "doomtype.h"
-#include "tarray.h"
 #include "resourcefile.h"
-#include "zstring.h"
 #include "cmdlib.h"
 #include "doomerrors.h"
 
@@ -185,46 +171,6 @@ int FDirectory::AddDirectory(const char *dirpath)
 	return count;
 }
 
-#elif defined(__sun) || defined(__APPLE__)
-
-int FDirectory::AddDirectory(const char *dirpath)
-{
-	int count = 0;
-	TArray<FString> scanDirectories;
-	scanDirectories.Push(dirpath);
-	for(unsigned int i = 0;i < scanDirectories.Size();i++)
-	{
-		DIR* directory = opendir(scanDirectories[i].GetChars());
-		if (directory == NULL)
-		{
-			Printf("Could not read directory: %s\n", strerror(errno));
-			return 0;
-		}
-
-		struct dirent *file;
-		while((file = readdir(directory)) != NULL)
-		{
-			if(file->d_name[0] == '.') //File is hidden or ./.. directory so ignore it.
-				continue;
-
-			FString fullFileName = scanDirectories[i] + file->d_name;
-
-			struct stat fileStat;
-			stat(fullFileName.GetChars(), &fileStat);
-
-			if(S_ISDIR(fileStat.st_mode))
-			{
-				scanDirectories.Push(scanDirectories[i] + file->d_name + "/");
-				continue;
-			}
-			AddEntry(scanDirectories[i] + file->d_name, fileStat.st_size);
-			count++;
-		}
-		closedir(directory);
-	}
-	return count;
-}
-
 #else
 
 //==========================================================================
@@ -249,6 +195,10 @@ int FDirectory::AddDirectory(const char *dirpath)
 		Printf("Failed to start directory traversal: %s\n", strerror(errno));
 		return 0;
 	}
+
+	const size_t namepos = strlen(Filename);
+	FString pathfix;
+
 	while ((ent = fts_read(fts)) != NULL)
 	{
 		if (ent->fts_info == FTS_D && ent->fts_name[0] == '.')
@@ -266,7 +216,22 @@ int FDirectory::AddDirectory(const char *dirpath)
 			// We're only interested in remembering files.
 			continue;
 		}
-		AddEntry(ent->fts_path, ent->fts_statp->st_size);
+
+		// Some implementations add an extra separator between
+		// root of the hierarchy and entity's path.
+		// It needs to be removed in order to resolve
+		// lumps' relative paths properly.
+		const char* path = ent->fts_path;
+
+		if ('/' == path[namepos])
+		{
+			pathfix = FString(path, namepos);
+			pathfix.AppendCStrPart(&path[namepos + 1], ent->fts_pathlen - namepos - 1);
+
+			path = pathfix.GetChars();
+		}
+
+		AddEntry(path, ent->fts_statp->st_size);
 		count++;
 	}
 	fts_close(fts);

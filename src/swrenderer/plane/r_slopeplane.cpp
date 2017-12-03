@@ -85,7 +85,7 @@ namespace swrenderer
 		{
 			return;
 		}
-		
+
 		auto viewport = Thread->Viewport.get();
 
 		drawerargs.SetSolidColor(3);
@@ -205,6 +205,15 @@ namespace swrenderer
 
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
+		/* To do: project (x1,y) and (x2,y) on the plane to calculate the depth
+		double distance = Thread->Viewport->PlaneDepth(y, planeheight);
+		float zbufferdepth = 1.0f / (distance * Thread->Viewport->viewwindow.FocalTangent);
+		drawerargs.SetDestX1(x1);
+		drawerargs.SetDestX2(x2);
+		drawerargs.SetDestY(Thread->Viewport.get(), y);
+		drawerargs.DrawDepthSpan(Thread, zbufferdepth);
+		*/
+
 		drawerargs.DrawTiltedSpan(Thread, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 }

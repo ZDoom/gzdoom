@@ -2798,7 +2798,17 @@ void G_DoPlayDemo (void)
 	{
 		FixPathSeperator (defdemoname);
 		DefaultExtension (defdemoname, ".lmp");
-		M_ReadFileMalloc (defdemoname, &demobuffer);
+		FileReader fr;
+		if (!fr.Open(defdemoname))
+		{
+			I_Error("Unable to open demo '%s'", defdemoname.GetChars());
+		}
+		auto len = fr.GetLength();
+		demobuffer = (uint8_t*)M_Malloc(len);
+		if (fr.Read(demobuffer, len) != len)
+		{
+			I_Error("Unable to read demo '%s'", defdemoname.GetChars());
+		}
 	}
 	demo_p = demobuffer;
 
@@ -2964,7 +2974,15 @@ bool G_CheckDemoStatus (void)
 		formlen = demobuffer + 4;
 		WriteLong (int(demo_p - demobuffer - 8), &formlen);
 
-		bool saved = M_WriteFile (demoname, demobuffer, int(demo_p - demobuffer)); 
+		auto fw = FileWriter::Open(demoname);
+		bool saved = false;
+		if (fw != nullptr)
+		{
+			auto size = long(demo_p - demobuffer);
+			saved = fw->Write(demobuffer, size) == size;
+			delete fw;
+			if (!saved) remove(demoname);
+		}
 		M_Free (demobuffer); 
 		demorecording = false;
 		stoprecording = false;

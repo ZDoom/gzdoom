@@ -43,6 +43,8 @@
 #include <sys/sysctl.h>
 #endif
 
+#include <inttypes.h>
+
 #include "i_system.h"
 #include "g_level.h"
 #include "c_console.h"
@@ -237,7 +239,7 @@ void CheckBench()
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);
 		AppendMissingTextureStats(compose);
-		compose.AppendFormat("%d fps\n\n", screen->GetLastFPS());
+		compose.AppendFormat("%" PRIu64 " fps\n\n", screen->GetLastFPS());
 
 		FILE *f = fopen("benchmarks.txt", "at");
 		if (f != NULL)

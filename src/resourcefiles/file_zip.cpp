@@ -542,7 +542,7 @@ static void time_to_dos(struct tm *time, unsigned short *dosdate, unsigned short
 //
 //==========================================================================
 
-int AppendToZip(FILE *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time)
+int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time)
 {
 	FZipLocalFileHeader local;
 	int position;
@@ -562,12 +562,12 @@ int AppendToZip(FILE *zip_file, const char *filename, FCompressedBuffer &content
 
 	// Fill in local directory header.
 
-	position = (int)ftell(zip_file);
+	position = (int)zip_file->Tell();
 
 	// Write out the header, file name, and file data.
-	if (fwrite(&local, sizeof(local), 1, zip_file) != 1 ||
-		fwrite(filename, strlen(filename), 1, zip_file) != 1 ||
-		fwrite(content.mBuffer, 1, content.mCompressedSize, zip_file) != content.mCompressedSize)
+	if (zip_file->Write(&local, sizeof(local)) != sizeof(local) ||
+		zip_file->Write(filename, strlen(filename)) != strlen(filename) ||
+		zip_file->Write(content.mBuffer, content.mCompressedSize) != content.mCompressedSize)
 	{
 		return -1;
 	}
@@ -583,7 +583,7 @@ int AppendToZip(FILE *zip_file, const char *filename, FCompressedBuffer &content
 //
 //==========================================================================
 
-int AppendCentralDirectory(FILE *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time, int position)
+int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time, int position)
 {
 	FZipCentralDirectoryInfo dir;
 
@@ -607,8 +607,8 @@ int AppendCentralDirectory(FILE *zip_file, const char *filename, FCompressedBuff
 	dir.ExternalAttributes = 0;
 	dir.LocalHeaderOffset = LittleLong(position);
 
-	if (fwrite(&dir, sizeof(dir), 1, zip_file) != 1 ||
-		fwrite(filename,  strlen(filename), 1, zip_file) != 1)
+	if (zip_file->Write(&dir, sizeof(dir)) != sizeof(dir) ||
+		zip_file->Write(filename,  strlen(filename)) != strlen(filename))
 	{
 		return -1;
 	}
@@ -629,7 +629,7 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 
 	if (filenames.Size() != content.Size()) return false;
 
-	FILE *f = fopen(filename, "wb");
+	auto f = FileWriter::Open(filename);
 	if (f != nullptr)
 	{
 		for (unsigned i = 0; i < filenames.Size(); i++)
@@ -637,19 +637,19 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 			int pos = AppendToZip(f, filenames[i], content[i], mydate, mytime);
 			if (pos == -1)
 			{
-				fclose(f);
+				delete f;
 				remove(filename);
 				return false;
 			}
 			positions.Push(pos);
 		}
 
-		int dirofs = (int)ftell(f);
+		int dirofs = (int)f->Tell();
 		for (unsigned i = 0; i < filenames.Size(); i++)
 		{
 			if (AppendCentralDirectory(f, filenames[i], content[i], mydate, mytime, positions[i]) < 0)
 			{
-				fclose(f);
+				delete f;
 				remove(filename);
 				return false;
 			}
@@ -662,15 +662,15 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		dirend.FirstDisk = 0;
 		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(filenames.Size());
 		dirend.DirectoryOffset = LittleLong(dirofs);
-		dirend.DirectorySize = LittleLong(ftell(f) - dirofs);
+		dirend.DirectorySize = LittleLong(f->Tell() - dirofs);
 		dirend.ZipCommentLength = 0;
-		if (fwrite(&dirend, sizeof(dirend), 1, f) != 1)
+		if (f->Write(&dirend, sizeof(dirend)) != sizeof(dirend))
 		{
-			fclose(f);
+			delete f;
 			remove(filename);
 			return false;
 		}
-		fclose(f);
+		delete f;
 		return true;
 	}
 	return false;

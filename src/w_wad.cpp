@@ -233,14 +233,12 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 	if (wadinfo == NULL)
 	{
 		// Does this exist? If so, is it a directory?
-		struct stat info;
-		if (stat(filename, &info) != 0)
+		if (!DirEntryExists(filename, &isdir))
 		{
-			Printf(TEXTCOLOR_RED "Could not stat %s\n", filename);
+			Printf(TEXTCOLOR_RED "%s: File or Directory not found\n", filename);
 			PrintLastError();
 			return;
 		}
-		isdir = (info.st_mode & S_IFDIR) != 0;
 
 		if (!isdir)
 		{
@@ -1554,7 +1552,7 @@ FWadLump::FWadLump(int lumpnum, FResourceLump *lump)
 		// Uncompressed lump in a file. For this we will have to open a new FILE, since we need it for streaming
 		int fileno = Wads.GetLumpFile(lumpnum);
 		const char *filename = Wads.GetWadFullName(fileno);
-		File = fopen(filename, "rb");
+		File = openfd(filename);
 		if (File != NULL)
 		{
 			Length = lump->LumpSize;

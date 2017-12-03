@@ -40,6 +40,7 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "opl.h"
+#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -48,7 +49,7 @@
 class OPLDump : public OPLEmul
 {
 public:
-	OPLDump(FILE *file) : File(file), TimePerTick(0), CurTime(0),
+	OPLDump(FileWriter *file) : File(file), TimePerTick(0), CurTime(0),
 		CurIntTime(0), TickMul(1), CurChip(0) {}
 
 	// If we're doing things right, these should never be reset.
@@ -66,7 +67,7 @@ public:
 	virtual void WriteDelay(int ticks) = 0;
 
 protected:
-	FILE *File;
+	FileWriter *File;
 	double TimePerTick;	// in milliseconds
 	double CurTime;
 	int CurIntTime;
@@ -91,10 +92,10 @@ protected:
 class OPL_RDOSdump : public OPLDump
 {
 public:
-	OPL_RDOSdump(FILE *file) : OPLDump(file)
+	OPL_RDOSdump(FileWriter *file) : OPLDump(file)
 	{
 		assert(File != NULL);
-		fwrite("RAWADATA\0", 1, 10, File);
+		file->Write("RAWADATA\0", 10);
 		NeedClockRate = true;
 	}
 	virtual ~OPL_RDOSdump()
@@ -102,8 +103,8 @@ public:
 		if (File != NULL)
 		{
 			uint16_t endmark = 0xFFFF;
-			fwrite(&endmark, 2, 1, File);
-			fclose(File);
+			File->Write(&endmark, 2);
+			delete File;
 		}
 	}
 
@@ -114,13 +115,13 @@ public:
 		if (chipnum != CurChip)
 		{
 			uint8_t switcher[2] = { (uint8_t)(chipnum + 1), 2 };
-			fwrite(switcher, 1, 2, File);
+			File->Write(switcher, 2);
 		}
 		reg &= 255;
 		if (reg != 0 && reg != 2 && (reg != 255 || v != 255))
 		{
 			uint8_t cmd[2] = { uint8_t(v), uint8_t(reg) };
-			fwrite(cmd, 1, 2, File);
+			File->Write(cmd, 2);
 		}
 	}
 
@@ -146,15 +147,15 @@ public:
 		if (NeedClockRate)
 		{ // Set the initial clock rate.
 			clock_word = LittleShort(clock_word);
-			fseek(File, 8, SEEK_SET);
-			fwrite(&clock_word, 2, 1, File);
-			fseek(File, 0, SEEK_END);
+			File->Seek(8, SEEK_SET);
+			File->Write(&clock_word, 2);
+			File->Seek(0, SEEK_END);
 			NeedClockRate = false;
 		}
 		else
 		{ // Change the clock rate in the middle of the song.
 			uint8_t clock_change[4] = { 0, 2, uint8_t(clock_word & 255), uint8_t(clock_word >> 8) };
-			fwrite(clock_change, 1, 4, File);
+			File->Write(clock_change, 4);
 		}
 	}
 	virtual void WriteDelay(int ticks)
@@ -170,10 +171,10 @@ public:
 			{
 				ticks -= 255;
 				delay[0] = 255;
-				fwrite(delay, 1, 2, File);
+				File->Write(delay, 2);
 			}
 			delay[0] = uint8_t(ticks);
-			fwrite(delay, 1, 2, File);
+			File->Write(delay, 2);
 		}
 	}
 protected:
@@ -183,30 +184,30 @@ protected:
 class OPL_DOSBOXdump : public OPLDump
 {
 public:
-	OPL_DOSBOXdump(FILE *file, bool dual) : OPLDump(file), Dual(dual)
+	OPL_DOSBOXdump(FileWriter *file, bool dual) : OPLDump(file), Dual(dual)
 	{
 		assert(File != NULL);
-		fwrite("DBRAWOPL"
+		File->Write("DBRAWOPL"
 			   "\0\0"		// Minor version number
 			   "\1\0"		// Major version number
 			   "\0\0\0\0"	// Total milliseconds
 			   "\0\0\0",	// Total data
-			   1, 20, File);
+			   20);
 		char type[4] = { (char)(Dual * 2), 0, 0, 0 };	// Single or dual OPL-2
-		fwrite(type, 1, 4, File);
+		File->Write(type, 4);
 	}
 	virtual ~OPL_DOSBOXdump()
 	{
 		if (File != NULL)
 		{
-			long where_am_i = ftell(File);
+			long where_am_i =File->Tell();
 			uint32_t len[2];
 
-			fseek(File, 12, SEEK_SET);
+			File->Seek(12, SEEK_SET);
 			len[0] = LittleLong(CurIntTime);
 			len[1] = LittleLong(uint32_t(where_am_i - 24));
-			fwrite(len, 4, 2, File);
-			fclose(File);
+			File->Write(len, 8);
+			delete File;
 		}
 	}
 	virtual void WriteReg(int reg, int v)
@@ -216,11 +217,12 @@ public:
 		if (chipnum != CurChip)
 		{
 			CurChip = chipnum;
-			fputc(chipnum + 2, File);
+			chipnum += 2;
+			File->Write(&chipnum, 1);
 		}
 		reg &= 255;
 		uint8_t cmd[3] = { 4, uint8_t(reg), uint8_t(v) };
-		fwrite (cmd + (reg > 4), 1, 3 - (reg > 4), File);
+		File->Write(cmd + (reg > 4), 3 - (reg > 4));
 	}
 	virtual void WriteDelay(int ticks)
 	{
@@ -234,20 +236,20 @@ public:
 			while (delay > 65536)
 			{
 				uint8_t cmd[3] = { 1, 255, 255 };
-				fwrite(cmd, 1, 2, File);
+				File->Write(cmd, 2);
 				delay -= 65536;
 			}
 			delay--;
 			if (delay <= 255)
 			{
 				uint8_t cmd[2] = { 0, uint8_t(delay) };
-				fwrite(cmd, 1, 2, File);
+				File->Write(cmd, 2);
 			}
 			else
 			{
 				assert(delay <= 65535);
 				uint8_t cmd[3] = { 1, uint8_t(delay & 255), uint8_t(delay >> 8) };
-				fwrite(cmd, 1, 3, File);
+				File->Write(cmd, 3);
 			}
 		}
 	}
@@ -338,7 +340,7 @@ DiskWriterIO::~DiskWriterIO()
 
 int DiskWriterIO::Init(uint32_t numchips, bool, bool initopl3)
 {
-	FILE *file = fopen(Filename, "wb");
+	FileWriter *file = FileWriter::Open(Filename);
 	if (file == NULL)
 	{
 		Printf("Could not open %s for writing.\n", Filename.GetChars());

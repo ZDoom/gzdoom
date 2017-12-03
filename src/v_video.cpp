@@ -880,7 +880,7 @@ void DFrameBuffer::DrawRateStuff ()
 
 			int textScale = active_con_scale();
 
-			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2u ms (%3u fps)", howlong, LastCount);
+			chars = mysnprintf (fpsbuff, countof(fpsbuff), "%2" PRIu64 " ms (%3" PRIu64 " fps)", howlong, LastCount);
 			rate_x = Width / textScale - ConFont->StringWidth(&fpsbuff[0]);
 			Clear (rate_x * textScale, 0, Width, ConFont->GetHeight() * textScale, GPalette.BlackIndex, 0);
 			DrawText (ConFont, CR_WHITE, rate_x, 0, (char *)&fpsbuff[0],

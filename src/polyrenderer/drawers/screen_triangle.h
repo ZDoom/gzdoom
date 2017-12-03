@@ -149,6 +149,9 @@ class ScreenTriangle
 {
 public:
 	static void Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void DrawSWRender(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args);
+	static void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args);
 
 	static void(*TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
 	static void(*TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);

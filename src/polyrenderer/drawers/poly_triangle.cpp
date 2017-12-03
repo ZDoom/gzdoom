@@ -243,6 +243,15 @@ bool PolyTriangleDrawer::is_degenerate(const ShadedTriVertex *vert)
 	return crosslengthsqr <= 1.e-6f;
 }
 
+bool PolyTriangleDrawer::is_frontfacing(TriDrawTriangleArgs *args)
+{
+	float a =
+		args->v1->x * args->v2->y - args->v2->x * args->v1->y +
+		args->v2->x * args->v3->y - args->v3->x * args->v2->y +
+		args->v3->x * args->v1->y - args->v1->x * args->v3->y;
+	return a <= 0.0f;
+}
+
 void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	// Reject triangle if degenerate
@@ -324,7 +333,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[numclipvert - 1];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i - 2];
-			if (args->CalculateGradients())
+			if (is_frontfacing(args) && args->CalculateGradients())
 				ScreenTriangle::Draw(args, thread);
 		}
 	}
@@ -335,7 +344,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[0];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i];
-			if (args->CalculateGradients())
+			if (!is_frontfacing(args) && args->CalculateGradients())
 				ScreenTriangle::Draw(args, thread);
 		}
 	}

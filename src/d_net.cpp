@@ -26,6 +26,7 @@
 //-----------------------------------------------------------------------------
 
 #include <stddef.h>
+#include <inttypes.h>
 
 #include "version.h"
 #include "menu/menu.h"
@@ -2871,7 +2872,7 @@ CCMD (pings)
 	int i;
 	for (i = 0; i < MAXPLAYERS; i++)
 		if (playeringame[i])
-			Printf ("% 4d %s\n", currrecvtime[i] - lastrecvtime[i],
+			Printf ("% 4" PRId64 " %s\n", currrecvtime[i] - lastrecvtime[i],
 					players[i].userinfo.GetName());
 }
 

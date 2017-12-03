@@ -380,18 +380,7 @@ enum
 	BQS_InGameColormap,
 };
 
-#if 0
-#define STARTLOG		do { if (!dbg) dbg = fopen ("e:/vid.log", "w"); } while(0)
-#define STOPLOG			do { if (dbg) { fclose (dbg); dbg=NULL; } } while(0)
-#define LOG(x)			do { if (dbg) { fprintf (dbg, x); fflush (dbg); } } while(0)
-#define LOG1(x,y)		do { if (dbg) { fprintf (dbg, x, y); fflush (dbg); } } while(0)
-#define LOG2(x,y,z)		do { if (dbg) { fprintf (dbg, x, y, z); fflush (dbg); } } while(0)
-#define LOG3(x,y,z,zz)	do { if (dbg) { fprintf (dbg, x, y, z, zz); fflush (dbg); } } while(0)
-#define LOG4(x,y,z,a,b)	do { if (dbg) { fprintf (dbg, x, y, z, a, b); fflush (dbg); } } while(0)
-#define LOG5(x,y,z,a,b,c) do { if (dbg) { fprintf (dbg, x, y, z, a, b, c); fflush (dbg); } } while(0)
-extern FILE *dbg;
-#define VID_FILE_DEBUG	1
-#elif _DEBUG && 0
+#if _DEBUG && 0
 #define STARTLOG
 #define STOPLOG
 #define LOG(x)			{ OutputDebugString(x); }

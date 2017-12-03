@@ -86,4 +86,6 @@ inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const char *str, b
 inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const FString &str, bool preservecolor = false, unsigned int *count = nullptr)
  { return V_BreakLines (font, maxwidth, (const uint8_t *)str.GetChars(), preservecolor, count); }
 
+int GetCharFromString(const uint8_t *&string);
+
 #endif //__V_TEXT_H__

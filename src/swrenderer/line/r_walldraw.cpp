@@ -177,16 +177,18 @@ namespace swrenderer
 	// Draw a column with support for non-power-of-two ranges
 	void RenderWallPart::Draw1Column(int x, int y1, int y2, WallSampler &sampler)
 	{
+		// Find column position in view space
+		float w1 = 1.0f / WallC.sz1;
+		float w2 = 1.0f / WallC.sz2;
+		float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
+		float wcol = w1 * (1.0f - t) + w2 * t;
+		float zcol = 1.0f / wcol;
+		float zbufferdepth = 1.0f / (zcol / Thread->Viewport->viewwindow.FocalTangent);
+
 		if (r_dynlights && light_list)
 		{
 			auto viewport = Thread->Viewport.get();
 			
-			// Find column position in view space
-			float w1 = 1.0f / WallC.sz1;
-			float w2 = 1.0f / WallC.sz2;
-			float t = (x - WallC.sx1 + 0.5f) / (WallC.sx2 - WallC.sx1);
-			float wcol = w1 * (1.0f - t) + w2 * t;
-			float zcol = 1.0f / wcol;
 			drawerargs.dc_viewpos.X = (float)((x + 0.5 - viewport->CenterX) / viewport->CenterX * zcol);
 			drawerargs.dc_viewpos.Y = zcol;
 			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y1 - 0.5) / viewport->InvZtoScale * zcol);
@@ -260,6 +262,8 @@ namespace swrenderer
 			drawerargs.SetTextureVStep(sampler.uv_step);
 			drawerargs.SetTextureVPos(sampler.uv_pos);
 			drawerargs.DrawColumn(Thread);
+			if (r_models)
+				drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 			uint64_t step64 = sampler.uv_step;
 			uint64_t pos64 = sampler.uv_pos;
@@ -278,6 +282,8 @@ namespace swrenderer
 				drawerargs.SetTextureVStep(sampler.uv_step);
 				drawerargs.SetTextureVPos(sampler.uv_pos);
 				drawerargs.DrawColumn(Thread);
+				if (r_models)
+					drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 				uint64_t step64 = sampler.uv_step;
 				uint64_t pos64 = sampler.uv_pos;
@@ -304,6 +310,8 @@ namespace swrenderer
 					drawerargs.SetTextureVStep(sampler.uv_step);
 					drawerargs.SetTextureVPos(uv_pos);
 					drawerargs.DrawColumn(Thread);
+					if (r_models)
+						drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 					y += count;
 					left -= count;

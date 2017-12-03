@@ -397,15 +397,16 @@ int I_FindClose (void *handle)
 	return 0;
 }
 
-int I_FindAttr (findstate_t *fileinfo)
+int I_FindAttr(findstate_t* const fileinfo)
 {
-	dirent *ent = fileinfo->namelist[fileinfo->current];
-	struct stat buf;
+	dirent* const ent = fileinfo->namelist[fileinfo->current];
+	bool isdir;
 
-	if (stat(ent->d_name, &buf) == 0)
+	if (DirEntryExists(ent->d_name, &isdir))
 	{
-		return S_ISDIR(buf.st_mode) ? FA_DIREC : 0;
+		return isdir ? FA_DIREC : 0;
 	}
+
 	return 0;
 }
 

@@ -93,12 +93,15 @@ public:
 
 class FileReader : public FileReaderBase
 {
+protected:
+	FILE *openfd(const char *filename);
 public:
 	FileReader ();
 	FileReader (const char *filename);
 	FileReader (FILE *file);
 	FileReader (FILE *file, long length);
 	bool Open (const char *filename);
+	void Close();
 	virtual ~FileReader ();
 
 	virtual long Tell () const;
@@ -409,6 +412,8 @@ public:
 	static FileWriter *Open(const char *filename);
 
 	virtual size_t Write(const void *buffer, size_t len);
+	virtual long Tell();
+	virtual long Seek(long offset, int mode);
 	size_t Printf(const char *fmt, ...) GCCPRINTF(2,3);
 
 protected:

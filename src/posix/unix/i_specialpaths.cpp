@@ -100,6 +100,26 @@ FString GetUserFile (const char *file)
 
 //===========================================================================
 //
+// M_GetAppDataPath														Unix
+//
+// Returns the path for the AppData folder.
+//
+//===========================================================================
+
+FString M_GetAppDataPath(bool create)
+{
+	// Don't use GAME_DIR and such so that ZDoom and its child ports can
+	// share the node cache.
+	FString path = NicePath("~/.config/" GAMENAMELOWERCASE);
+	if (create)
+	{
+		CreatePath(path);
+	}
+	return path;
+}
+
+//===========================================================================
+//
 // M_GetCachePath														Unix
 //
 // Returns the path for cache GL nodes.

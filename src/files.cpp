@@ -50,6 +50,11 @@
 //
 //==========================================================================
 
+FILE *FileReader::openfd(const char *filename)
+{
+	return fopen(filename, "rb");
+}
+
 FileReader::FileReader ()
 : File(NULL), Length(0), StartPos(0), FilePos(0), CloseOnDestruct(false)
 {
@@ -82,18 +87,23 @@ FileReader::FileReader (FILE *file, long length)
 	FilePos = StartPos = ftell (file);
 }
 
-FileReader::~FileReader ()
+FileReader::~FileReader()
+{
+	Close();
+}
+
+void FileReader::Close()
 {
 	if (CloseOnDestruct && File != NULL)
 	{
 		fclose (File);
-		File = NULL;
 	}
+	File = NULL;
 }
 
 bool FileReader::Open (const char *filename)
 {
-	File = fopen (filename, "rb");
+	File = openfd (filename);
 	if (File == NULL) return false;
 	FilePos = 0;
 	StartPos = 0;
@@ -627,6 +637,30 @@ size_t FileWriter::Write(const void *buffer, size_t len)
 	if (File != NULL)
 	{
 		return fwrite(buffer, 1, len, File);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+long FileWriter::Tell()
+{
+	if (File != NULL)
+	{
+		return ftell(File);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+long FileWriter::Seek(long offset, int mode)
+{
+	if (File != NULL)
+	{
+		return fseek(File, offset, mode);
 	}
 	else
 	{

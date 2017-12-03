@@ -94,6 +94,9 @@ namespace swrenderer
 			(players[consoleplayer].cheats & CF_CHASECAM) ||
 			(r_deathcamera && Thread->Viewport->viewpoint.camera->health <= 0))
 			return;
+		
+		if (r_models && gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player))
+			renderHUDModel = true;
 
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();
@@ -250,6 +253,12 @@ namespace swrenderer
 			sy += wy;
 		}
 		
+		if (renderHUDModel)
+		{
+			RenderHUDModel(Thread, pspr, (float)sx, (float)sy);
+			return;
+		}
+
 		auto viewport = Thread->Viewport.get();
 
 		double pspritexscale = viewport->viewwindow.centerxwide / 160.0;

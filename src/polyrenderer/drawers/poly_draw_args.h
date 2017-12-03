@@ -84,6 +84,8 @@ public:
 	void SetDynLightColor(uint32_t color) { mDynLightColor = color; }
 	void DrawArray(PolyRenderThread *thread, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 	void DrawElements(PolyRenderThread *thread, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void DrawArray(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void DrawElements(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 
 	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
 	const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }

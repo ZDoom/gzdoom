@@ -47,91 +47,16 @@ class CImage
     eConvSourceMemory    = 11,
     eConvDestMemory      = 12,
 
-    eSaveBmpFileOpen     = 20,
-    eSaveBmpFileWrite    = 21,
-    eSaveBmpSourceMemory = 22,
-    eSaveBmpColorDepth   = 23,
-
-    eLoadBmpFileOpen     = 30,
-    eLoadBmpFileRead     = 31,
-    eLoadBmpBadFormat    = 32,
-    eLoadBmpInit         = 33,
-    eLoadBmpColorDepth   = 34,
-
-    eSaveTgaFileOpen     = 40,
-    eSaveTgaFileWrite    = 41,
-    eSaveTgaSourceMemory = 42,
-    eSaveTgaColorDepth   = 43,
-
-    eLoadTgaFileOpen     = 50,
-    eLoadTgaFileRead     = 51,
-    eLoadTgaBadFormat    = 52,
-    eLoadTgaInit         = 53,
-    eLoadTgaColorDepth   = 54,
-
-    eLoadFilename        = 60,
-    eSaveFilename        = 61,
   };
 
-  struct _BMPFILEHEADER
-  {
-    unsigned short bfType;
-    long int       bfSize, bfRes1, bfOffBits; 
-  };
-
-  struct _BMPIMAGEHEADEROLD
-  {
-    long int       biSize;
-    unsigned short biWidth, biHeight;
-    unsigned short biPlanes, biBitCount;
-  };
-
-  struct _BMPIMAGEHEADER
-  {
-    long int       biSize, biWidth, biHeight;
-    unsigned short biPlanes, biBitCount;
-    long int       biCompression, biSizeImage;
-    long int       biXPelsPerMeter, biYPelsPerMeter;
-    long int       biClrUsed, biClrImportant; 
-  };
-
-  struct _TGAHEADER
-  {
-    unsigned char  tiIdentSize;
-    unsigned char  tiPaletteIncluded;
-    unsigned char  tiImageType;
-    unsigned short tiPaletteStart;
-    unsigned short tiPaletteSize;
-    unsigned char  tiPaletteBpp;
-    unsigned short tiX0;
-    unsigned short tiY0;
-    unsigned short tiXres;
-    unsigned short tiYres;
-    unsigned char  tiBitPerPixel;
-    unsigned char  tiAttrBits;
-  };
 
   public:
     int  DLL Init( int Xres, int Yres, unsigned short BitPerPixel );
     int  DLL SetImage(unsigned char *img, int width, int height, int bpp);
     int  DLL Destroy();
-    int  DLL ConvertTo32( void );
-    int  DLL ConvertTo24( void );
-    int  DLL ConvertTo16( void );
-    int  DLL Convert8To17( int transindex );
     int  DLL Convert32To17( void );
-    int  SaveBmp(char *szFilename);
-    int  LoadBmp(char *szFilename);
-    int  SaveTga(char *szFilename, bool bCompressed );
-    int  LoadTga(char *szFilename);
-    int  DLL Load(char *szFilename);
-    int  DLL Save(char *szFilename);
 
   private:
-    void Output( char * pcData, int nSize );
-    void Output( char c );
-    void Output( void );
-    unsigned char Input( void );
 
   public:
     int              m_Xres, m_Yres;

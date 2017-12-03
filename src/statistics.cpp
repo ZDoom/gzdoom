@@ -72,6 +72,7 @@
 #include "m_crc32.h"
 #include "serializer.h"
 #include "g_levellocals.h"
+#include "files.h"
 
 CVAR(Int, savestatistics, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, statfile, "zdoomstat.txt", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -136,7 +137,7 @@ static void ParseStatistics(const char *fn, TArray<FStatistics> &statlist)
 	try
 	{
 		FScanner sc;
-		sc.OpenFile(fn);
+		if (!sc.OpenFile(fn)) return;
 
 		while (sc.GetString())
 		{
@@ -260,8 +261,8 @@ static void SaveStatistics(const char *fn, TArray<FStatistics> &statlist)
 {
 	unsigned int j;
 
-	FILE * f = fopen(fn, "wt");
-	if (f==NULL) return;
+	FileWriter *fw = FileWriter::Open(fn);
+	if (fw == nullptr) return;
 
 	qsort(&statlist[0], statlist.Size(), sizeof(statlist[0]), compare_episode_names);
 	for(unsigned i=0;i<statlist.Size ();i++)
@@ -270,34 +271,34 @@ static void SaveStatistics(const char *fn, TArray<FStatistics> &statlist)
 
 		qsort(&ep_stats.stats[0], ep_stats.stats.Size(), sizeof(ep_stats.stats[0]), compare_dates);
 
-		fprintf(f, "%s \"%s\"\n{\n", ep_stats.epi_header.GetChars(), ep_stats.epi_name.GetChars());
+		fw->Printf("%s \"%s\"\n{\n", ep_stats.epi_header.GetChars(), ep_stats.epi_name.GetChars());
 		for(j=0;j<ep_stats.stats.Size();j++)
 		{
 			FSessionStatistics *sst = &ep_stats.stats[j];
 			if (sst->info[0]>0)
 			{
-				fprintf(f,"\t%2i. %10s \"%-22s\" %02d:%02d:%02d %i\n", j+1, sst->name, sst->info, 
+				fw->Printf("\t%2i. %10s \"%-22s\" %02d:%02d:%02d %i\n", j+1, sst->name, sst->info, 
 					hours(sst->timeneeded),	minutes(sst->timeneeded), seconds(sst->timeneeded),	sst->skill);
 
 				TArray<FLevelStatistics> &ls = sst->levelstats;
 				if (ls.Size() > 0)
 				{
-					fprintf(f,"\t{\n");
+					fw->Printf("\t{\n");
 
 					qsort(&ls[0], ls.Size(), sizeof(ls[0]), compare_level_names);
 
 					for(unsigned k=0;k<ls.Size ();k++)
 					{
-						fprintf(f, "\t\t%-8s \"%-22s\" %02d:%02d:%02d\n", ls[k].name, ls[k].info, 
+						fw->Printf("\t\t%-8s \"%-22s\" %02d:%02d:%02d\n", ls[k].name, ls[k].info, 
 							hours(ls[k].timeneeded), minutes(ls[k].timeneeded), seconds(ls[k].timeneeded));
 					}
-					fprintf(f,"\t}\n");
+					fw->Printf("\t}\n");
 				}
 			}
 		}
-		fprintf(f,"}\n\n");
+		fw->Printf("}\n\n");
 	}
-	fclose(f);
+	delete fw;
 }
 
 

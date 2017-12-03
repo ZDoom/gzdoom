@@ -88,86 +88,6 @@ EXTERN_CVAR(Bool, longsavemessages);
 
 static long ParseCommandLine (const char *args, int *argc, char **argv);
 
-//
-// M_WriteFile
-//
-#ifndef O_BINARY
-#define O_BINARY 0
-#endif
-
-bool M_WriteFile (char const *name, void *source, int length)
-{
-	int handle;
-	int count;
-
-	handle = open ( name, O_WRONLY | O_CREAT | O_TRUNC | O_BINARY, 0666);
-
-	if (handle == -1)
-		return false;
-
-	count = write (handle, source, length);
-	close (handle);
-
-	if (count < length)
-		return false;
-
-	return true;
-}
-
-
-//
-// M_ReadFile
-//
-int M_ReadFile (char const *name, uint8_t **buffer)
-{
-	int handle, count, length;
-	struct stat fileinfo;
-	uint8_t *buf;
-
-	handle = open (name, O_RDONLY | O_BINARY, 0666);
-	if (handle == -1)
-		I_Error ("Couldn't read file %s", name);
-	// [BL] Use stat instead of fstat for v140_xp hack
-	if (stat (name,&fileinfo) == -1)
-		I_Error ("Couldn't read file %s", name);
-	length = fileinfo.st_size;
-	buf = new uint8_t[length];
-	count = read (handle, buf, length);
-	close (handle);
-
-	if (count < length)
-		I_Error ("Couldn't read file %s", name);
-
-	*buffer = buf;
-	return length;
-}
-
-//
-// M_ReadFile (same as above but use malloc instead of new to allocate the buffer.)
-//
-int M_ReadFileMalloc (char const *name, uint8_t **buffer)
-{
-	int handle, count, length;
-	struct stat fileinfo;
-	uint8_t *buf;
-
-	handle = open (name, O_RDONLY | O_BINARY, 0666);
-	if (handle == -1)
-		I_Error ("Couldn't read file %s", name);
-	// [BL] Use stat instead of fstat for v140_xp hack
-	if (stat (name,&fileinfo) == -1)
-		I_Error ("Couldn't read file %s", name);
-	length = fileinfo.st_size;
-	buf = (uint8_t*)M_Malloc(length);
-	count = read (handle, buf, length);
-	close (handle);
-
-	if (count < length)
-		I_Error ("Couldn't read file %s", name);
-
-	*buffer = buf;
-	return length;
-}
 
 //---------------------------------------------------------------------------
 //
@@ -192,7 +112,6 @@ void M_FindResponseFile (void)
 			char	**argv;
 			char	*file = NULL;
 			int		argc = 0;
-			FILE	*handle;
 			int 	size;
 			long	argsize = 0;
 			int 	index;
@@ -202,22 +121,18 @@ void M_FindResponseFile (void)
 			if (added_stuff < limit)
 			{
 				// READ THE RESPONSE FILE INTO MEMORY
-				handle = fopen (Args->GetArg(i) + 1,"rb");
-				if (!handle)
+				FileReader fr;
+				if (!fr.Open(Args->GetArg(i) + 1))
 				{ // [RH] Make this a warning, not an error.
 					Printf ("No such response file (%s)!\n", Args->GetArg(i) + 1);
 				}
 				else
 				{
 					Printf ("Found response file %s!\n", Args->GetArg(i) + 1);
-					fseek (handle, 0, SEEK_END);
-					size = ftell (handle);
-					fseek (handle, 0, SEEK_SET);
+					size = fr.GetLength();
 					file = new char[size+1];
-					fread (file, size, 1, handle);
+					fr.Read (file, size);
 					file[size] = 0;
-					fclose (handle);
-
 					argsize = ParseCommandLine (file, &argc, NULL);
 				}
 			}

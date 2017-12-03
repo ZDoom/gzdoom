@@ -236,8 +236,8 @@ void FSavegameManager::ReadSaveStrings()
 				}
 				else // check for old formats.
 				{
-					FILE *file = fopen(filepath, "rb");
-					if (file != nullptr)
+					FileReader file;
+					if (file.Open(filepath))
 					{
 						PNGHandle *png;
 						char sig[16];
@@ -255,8 +255,7 @@ void FSavegameManager::ReadSaveStrings()
 
 						title[OLDSAVESTRINGSIZE] = 0;
 
-
-						if (nullptr != (png = M_VerifyPNG(file)))
+						if (nullptr != (png = M_VerifyPNG(&file, false)))
 						{
 							char *ver = M_GetPNGText(png, "ZDoom Save Version");
 							if (ver != nullptr)
@@ -273,13 +272,13 @@ void FSavegameManager::ReadSaveStrings()
 						}
 						else
 						{
-							fseek(file, 0, SEEK_SET);
-							if (fread(sig, 1, 16, file) == 16)
+							file.Seek(0, SEEK_SET);
+							if (file.Read(sig, 16) == 16)
 							{
 
 								if (strncmp(sig, "ZDOOMSAVE", 9) == 0)
 								{
-									if (fread(title, 1, OLDSAVESTRINGSIZE, file) == OLDSAVESTRINGSIZE)
+									if (file.Read(title, OLDSAVESTRINGSIZE) == OLDSAVESTRINGSIZE)
 									{
 										addIt = true;
 									}
@@ -287,8 +286,8 @@ void FSavegameManager::ReadSaveStrings()
 								else
 								{
 									memcpy(title, sig, 16);
-									if (fread(title + 16, 1, OLDSAVESTRINGSIZE - 16, file) == OLDSAVESTRINGSIZE - 16 &&
-										fread(sig, 1, 16, file) == 16 &&
+									if (file.Read(title + 16, OLDSAVESTRINGSIZE - 16) == OLDSAVESTRINGSIZE - 16 &&
+										file.Read(sig, 16) == 16 &&
 										strncmp(sig, "ZDOOMSAVE", 9) == 0)
 									{
 										addIt = true;
@@ -306,7 +305,6 @@ void FSavegameManager::ReadSaveStrings()
 							node->SaveTitle = title;
 							InsertSaveNode(node);
 						}
-						fclose(file);
 					}
 				}
 			} while (I_FindNext(filefirst, &c_file) == 0);
@@ -418,17 +416,14 @@ void FSavegameManager::DoSave(int Selected, const char *savegamestring)
 		// Find an unused filename and save as that
 		FString filename;
 		int i;
-		FILE *test;
 
 		for (i = 0;; ++i)
 		{
 			filename = G_BuildSaveName("save", i);
-			test = fopen(filename, "rb");
-			if (test == nullptr)
+			if (!FileExists(filename))
 			{
 				break;
 			}
-			fclose(test);
 		}
 		G_SaveGame(filename, savegamestring);
 	}

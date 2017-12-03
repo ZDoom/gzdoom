@@ -90,7 +90,6 @@ struct PNGHandle
 // each chunk is not done. If it is valid, you get a PNGHandle to pass to
 // the following functions.
 PNGHandle *M_VerifyPNG (FileReader *file, bool takereader = false);
-PNGHandle *M_VerifyPNG (FILE *file);
 
 // Finds a chunk in a PNG file. The file pointer will be positioned at the
 // beginning of the chunk data, and its length will be returned. A return

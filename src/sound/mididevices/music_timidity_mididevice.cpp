@@ -89,7 +89,7 @@ struct FmtChunk
 
 TimidityMIDIDevice::TimidityMIDIDevice(const char *args)
 {
-	Renderer = NULL;
+	Renderer = nullptr;
 	Renderer = new Timidity::Renderer((float)SampleRate, args);
 }
 
@@ -102,7 +102,7 @@ TimidityMIDIDevice::TimidityMIDIDevice(const char *args)
 TimidityMIDIDevice::~TimidityMIDIDevice()
 {
 	Close();
-	if (Renderer != NULL)
+	if (Renderer != nullptr)
 	{
 		delete Renderer;
 	}
@@ -246,10 +246,10 @@ FString TimidityMIDIDevice::GetStats()
 //==========================================================================
 
 TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename, int rate)
-	:TimidityMIDIDevice(NULL)
+	:TimidityMIDIDevice(nullptr)
 {
-	File = fopen(filename, "wb");
-	if (File != NULL)
+	File = FileWriter::Open(filename);
+	if (File != nullptr)
 	{ // Write wave header
 		uint32_t work[3];
 		FmtChunk fmt;
@@ -257,7 +257,7 @@ TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename,
 		work[0] = MAKE_ID('R','I','F','F');
 		work[1] = 0;								// filled in later
 		work[2] = MAKE_ID('W','A','V','E');
-		if (3 != fwrite(work, 4, 3, File)) goto fail;
+		if (4*3 != File->Write(work, 4 * 3)) goto fail;
 
 		fmt.ChunkID = MAKE_ID('f','m','t',' ');
 		fmt.ChunkLen = LittleLong(uint32_t(sizeof(fmt) - 8));
@@ -281,17 +281,17 @@ TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename,
 		fmt.SubFormatD[5] = 0x38;
 		fmt.SubFormatD[6] = 0x9b;
 		fmt.SubFormatD[7] = 0x71;
-		if (1 != fwrite(&fmt, sizeof(fmt), 1, File)) goto fail;
+		if (sizeof(fmt) != File->Write(&fmt, sizeof(fmt))) goto fail;
 
 		work[0] = MAKE_ID('d','a','t','a');
 		work[1] = 0;								// filled in later
-		if (2 != fwrite(work, 4, 2, File)) goto fail;
+		if (8 !=File->Write(work, 8)) goto fail;
 
 		return;
 fail:
 		Printf("Failed to write %s: %s\n", filename, strerror(errno));
-		fclose(File);
-		File = NULL;
+		delete File;
+		File = nullptr;
 	}
 }
 
@@ -303,30 +303,30 @@ fail:
 
 TimidityWaveWriterMIDIDevice::~TimidityWaveWriterMIDIDevice()
 {
-	if (File != NULL)
+	if (File != nullptr)
 	{
-		long pos = ftell(File);
+		long pos = File->Tell();
 		uint32_t size;
 
 		// data chunk size
 		size = LittleLong(uint32_t(pos - 8));
-		if (0 == fseek(File, 4, SEEK_SET))
+		if (0 == File->Seek(4, SEEK_SET))
 		{
-			if (1 == fwrite(&size, 4, 1, File))
+			if (4 == File->Write(&size, 4))
 			{
 				size = LittleLong(uint32_t(pos - 12 - sizeof(FmtChunk) - 8));
-				if (0 == fseek(File, 4 + sizeof(FmtChunk) + 4, SEEK_CUR))
+				if (0 == File->Seek(4 + sizeof(FmtChunk) + 4, SEEK_CUR))
 				{
-					if (1 == fwrite(&size, 4, 1, File))
+					if (1 == File->Write(&size, 4))
 					{
-						fclose(File);
+						delete File;
 						return;
 					}
 				}
 			}
 		}
 		Printf("Could not finish writing wave file: %s\n", strerror(errno));
-		fclose(File);
+		delete File;
 	}
 }
 
@@ -342,7 +342,7 @@ int TimidityWaveWriterMIDIDevice::Resume()
 
 	while (ServiceStream(writebuffer, sizeof(writebuffer)))
 	{
-		if (fwrite(writebuffer, sizeof(writebuffer), 1, File) != 1)
+		if (File->Write(writebuffer, sizeof(writebuffer)) != sizeof(writebuffer))
 		{
 			Printf("Could not write entire wave file: %s\n", strerror(errno));
 			return 1;

@@ -52,6 +52,7 @@ namespace swrenderer
 		virtual bool IsParticle() const { return false; }
 		virtual bool IsVoxel() const { return false; }
 		virtual bool IsWallSprite() const { return false; }
+		virtual bool IsModel() const { return false; }
 
 		virtual void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) = 0;
 

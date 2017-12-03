@@ -462,11 +462,11 @@ static void DoParse(int lumpnum)
 		FString filename = Wads.GetLumpFullPath(lumpnum);
 		filename.ReplaceChars(":\\/?|", '.');
 		filename << ".ast";
-		FILE *ff = fopen(filename, "w");
+		FileWriter *ff = FileWriter::Open(filename);
 		if (ff != NULL)
 		{
-			fputs(ast.GetChars(), ff);
-			fclose(ff);
+			ff->Write(ast.GetChars(), ast.Len());
+			delete ff;
 		}
 	}
 

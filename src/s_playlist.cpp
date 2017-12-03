@@ -39,6 +39,7 @@
 #include "s_playlist.h"
 #include "templates.h"
 #include "v_text.h"
+#include "files.h"
 
 FPlayList::FPlayList (const char *path)
 {
@@ -53,7 +54,7 @@ bool FPlayList::ChangeList (const char *path)
 {
 	FString playlistdir;
 	FString song;
-	FILE *file;
+	FileReader fr;
 	bool first;
 	bool pls;
 	int i;
@@ -61,7 +62,7 @@ bool FPlayList::ChangeList (const char *path)
 	Songs.Clear();
 	Position = 0;
 
-	if ( (file = fopen (path, "rb")) == NULL)
+	if (!fr.Open(path))
 	{
 		Printf ("Could not open " TEXTCOLOR_BOLD "%s" TEXTCOLOR_NORMAL ": %s\n", path, strerror(errno));
 		return false;
@@ -70,7 +71,7 @@ bool FPlayList::ChangeList (const char *path)
 	first = true;
 	pls = false;
 	playlistdir = ExtractFilePath(path);
-	while ((song = NextLine(file)).IsNotEmpty())
+	while ((song = NextLine(&fr)).IsNotEmpty())
 	{
 		if (first)
 		{
@@ -129,19 +130,17 @@ bool FPlayList::ChangeList (const char *path)
 			Songs.Push(song);
 		}
 	}
-	fclose (file);
-
 	return Songs.Size() != 0;
 }
 
-FString FPlayList::NextLine (FILE *file)
+FString FPlayList::NextLine (FileReader *file)
 {
 	char buffer[512];
 	char *skipper;
 
 	do
 	{
-		if (NULL == fgets (buffer, countof(buffer), file))
+		if (NULL == file->Gets (buffer, countof(buffer)))
 			return "";
 
 		for (skipper = buffer; *skipper != 0 && *skipper <= ' '; skipper++)

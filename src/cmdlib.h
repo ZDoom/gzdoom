@@ -18,10 +18,9 @@
 // the dec offsetof macro doesnt work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
 
-int		Q_filelength (FILE *f);
 bool FileExists (const char *filename);
 bool DirExists(const char *filename);
-bool DirEntryExists (const char *pathname);
+bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
 
 extern	FString progdir;
 

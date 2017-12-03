@@ -2488,17 +2488,16 @@ bool D_LoadDehLump(int lumpnum)
 
 bool D_LoadDehFile(const char *patchfile)
 {
-	FILE *deh;
+	FileReader fr;
 
-	deh = fopen(patchfile, "rb");
-	if (deh != NULL)
+	if (!fr.Open(patchfile))
 	{
-		PatchSize = Q_filelength(deh);
+		PatchSize = fr.GetLength();
 
 		PatchName = copystring(patchfile);
 		PatchFile = new char[PatchSize + 1];
-		fread(PatchFile, 1, PatchSize, deh);
-		fclose(deh);
+		fr.Read(PatchFile, PatchSize);
+		fr.Close();
 		PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
 		return DoDehPatch();
 	}

@@ -244,18 +244,25 @@ void FScanner::Open (const char *name)
 //
 //==========================================================================
 
-void FScanner::OpenFile (const char *name)
+bool FScanner::OpenFile (const char *name)
 {
-	uint8_t *filebuf;
-	int filesize;
-
 	Close ();
-	filesize = M_ReadFile (name, &filebuf);
+
+	FileReader fr(name);
+	if (!fr.Open(name)) return false;
+	auto filesize = fr.GetLength();
+	auto filebuf = new uint8_t[filesize];
+	if (fr.Read(filebuf, filesize) != filesize)
+	{
+		delete[] filebuf;
+		return false;
+	}
 	ScriptBuffer = FString((const char *)filebuf, filesize);
 	delete[] filebuf;
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
 	LumpNum = -1;
 	PrepareScript ();
+	return true;
 }
 
 //==========================================================================

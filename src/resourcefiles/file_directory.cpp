@@ -209,10 +209,7 @@ int FDirectory::AddDirectory(const char *dirpath)
 
 			FString fullFileName = scanDirectories[i] + file->d_name;
 
-			struct stat fileStat;
-			stat(fullFileName.GetChars(), &fileStat);
-
-			if(S_ISDIR(fileStat.st_mode))
+			if(DirExists(fullFileName.GetChars()))
 			{
 				scanDirectories.Push(scanDirectories[i] + file->d_name + "/");
 				continue;

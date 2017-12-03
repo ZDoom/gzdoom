@@ -32,6 +32,11 @@ namespace swrenderer
 		dc_dest_y = y;
 	}
 
+	void WallDrawerArgs::DrawDepthColumn(RenderThread *thread, float idepth)
+	{
+		thread->Drawers(dc_viewport)->DrawDepthWallColumn(*this, idepth);
+	}
+
 	void WallDrawerArgs::DrawColumn(RenderThread *thread)
 	{
 		(thread->Drawers(dc_viewport)->*wallfunc)(*this);

@@ -23,9 +23,7 @@
 
 #include <stdio.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+class FString;
 
 /** Create a unique temporary file.
 @param dir (optional) directory to create file. If NULL use default TMP directory.
@@ -37,25 +35,9 @@ extern "C" {
 @return Pointer to stream opened in binary read/write (w+b) mode, or a null pointer on error.
 @exception ENOMEM Not enough memory to allocate filename.
 */
-FILE *tmpfileplus(const char *dir, const char *prefix, char **pathname, int keep);
+FILE *tmpfileplus(const char *dir, const char *prefix, FString *pathname, int keep);
 
-
-/** Create a unique temporary file with filename stored in a fixed-length buffer.
-@param dir (optional) directory to create file. If NULL use default directory.
-@param prefix (optional) prefix for file name. If NULL use "tmp.".
-@param pathnamebuf (optional) buffer to receive full pathname of temporary file. Ignored if NULL.
-@param pathsize Size of buffer to receive filename and its terminating null character.
-@param keep If `keep` is nonzero and `pathname` is not NULL, then keep the file after closing.
-	Otherwise file is automatically deleted when closed.
-@return Pointer to stream opened in binary read/write (w+b) mode, or a null pointer on error.
-@exception E2BIG Resulting filename is too big for the buffer `pathnamebuf`.
-*/
-FILE *tmpfileplus_f(const char *dir, const char *prefix, char *pathnamebuf, size_t pathsize, int keep);
 
 #define TMPFILE_KEEP 1
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* end TMPFILEPLUS_H_ */

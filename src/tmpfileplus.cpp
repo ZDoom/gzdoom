@@ -67,23 +67,6 @@
 *
 */
 
-/* ADDED IN v2.0 */
-
-/*
-* NAME
-*        tmpfileplus_f - create a unique temporary file with filename stored in a fixed-length buffer
-*
-* SYNOPSIS
-*        FILE *tmpfileplus_f(const char *dir, const char *prefix, char *pathnamebuf, size_t pathsize, int keep);
-*
-* DESCRIPTION
-*        Same as tmpfileplus() except receives filename in a fixed-length buffer. No allocated memory to free.
-
-* ERRORS
-*        E2BIG Resulting filename is too big for the buffer `pathnamebuf`.
-
-*/
-
 #include "tmpfileplus.h"
 
 #include <stdio.h>
@@ -112,66 +95,29 @@
 #define FDOPEN_ fdopen
 #endif
 
+#include "m_random.h"
+#include "cmdlib.h"
+#include "zstring.h"
 
-/* DEBUGGING STUFF */
-#if defined(_DEBUG) && defined(SHOW_DPRINTF)
-#define DPRINTF1(s, a1) printf(s, a1)
-#else
-#define DPRINTF1(s, a1)
-#endif
-
-
-#ifdef _WIN32
-#define FILE_SEPARATOR "\\"
-#else
-#define FILE_SEPARATOR "/"
-#endif
 
 #define RANDCHARS	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 #define NRANDCHARS	(sizeof(RANDCHARS) - 1)
+
+static FRandom pr_tmpfile;
 
 /** Replace each byte in string s with a random character from TEMPCHARS */
 static char *set_randpart(char *s)
 {
 	size_t i;
 	unsigned int r;
-	static unsigned int seed;	/* NB static */
 
-	if (seed == 0)
-	{	/* First time set our seed using current time and clock */
-		seed = ((unsigned)time(NULL)<<8) ^ (unsigned)clock();
-	}
-	srand(seed++);	
+
 	for (i = 0; i < strlen(s); i++)
 	{
-		r = rand() % NRANDCHARS;
+		r = pr_tmpfile() % NRANDCHARS;
 		s[i] = (RANDCHARS)[r];
 	}
 	return s;
-}
-
-/** Return 1 if path is a valid directory otherwise 0 */
-static int is_valid_dir(const char *path)
-{
-	struct stat st;
-	if ((stat(path, &st) == 0) && (st.st_mode & S_IFDIR))
-		return 1;
-	
-	return 0;
-}
-
-/** Call getenv and save a copy in buf */
-static char *getenv_save(const char *varname, char *buf, size_t bufsize)
-{
-	char *ptr = getenv(varname);
-	buf[0] = '\0';
-	if (ptr)
-	{
-		strncpy(buf, ptr, bufsize);
-		buf[bufsize-1] = '\0';
-		return buf;
-	}
-	return NULL;
 }
 
 /** 
@@ -180,7 +126,7 @@ static char *getenv_save(const char *varname, char *buf, size_t bufsize)
  * otherwise return NULL.
  * If `keep` is zero then create the file as temporary and it should not exist once closed.
  */
-static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmpname_ptr, int keep)
+static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, FString *tmpname_ptr, int keep)
 /* PRE: 
  * pfx is not NULL and points to a valid null-terminated string
  * tmpname_ptr is not NULL.
@@ -189,9 +135,7 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	FILE *fp;
 	int fd;
 	char randpart[] = "1234567890";
-	size_t lentempname;
 	int i;
-	char *tmpname = NULL;
 	int oflag, pmode;
 
 /* In Windows, we use the _O_TEMPORARY flag with `open` to ensure the file is deleted when closed.
@@ -210,28 +154,20 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	pmode = S_IRUSR|S_IWUSR;
 #endif
 
-	if (!tmpdir || !is_valid_dir(tmpdir)) {
+	if (!tmpdir || !DirExists(tmpdir)) {
 		errno = ENOENT;
 		return NULL;
 	}
 
-	lentempname = strlen(tmpdir) + strlen(FILE_SEPARATOR) + strlen(pfx) + strlen(randpart);
-	DPRINTF1("lentempname=%d\n", lentempname);
-	tmpname = malloc(lentempname + 1);
-	if (!tmpname)
-	{
-		errno = ENOMEM;
-		return NULL;
-	}
+	FString tempname;
+
 	/* If we don't manage to create a file after 10 goes, there is something wrong... */
 	for (i = 0; i < 10; i++)
 	{
-		sprintf(tmpname, "%s%s%s%s", tmpdir, FILE_SEPARATOR, pfx, set_randpart(randpart));
-		DPRINTF1("[%s]\n", tmpname);
-		fd = OPEN_(tmpname, oflag, pmode);
+		tempname.Format("%s/%s%s", tmpdir, pfx, set_randpart(randpart));
+		fd = OPEN_(tempname, oflag, pmode);
 		if (fd != -1) break;
 	}
-	DPRINTF1("strlen(tmpname)=%d\n", strlen(tmpname));
 	if (fd != -1)
 	{	/* Success, so return user a proper ANSI C file pointer */
 		fp = FDOPEN_(fd, "w+b");
@@ -247,13 +183,8 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 	{	/* We failed */
 		fp = NULL;
 	}
-	if (!fp)
-	{
-		free(tmpname);
-		tmpname = NULL;
-	}
 
-	*tmpname_ptr = tmpname;
+	if (tmpname_ptr) *tmpname_ptr = tempname;
 	return fp;
 }
 
@@ -261,77 +192,10 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, char **tmp
 /* EXPORTED FUNCTIONS */
 /**********************/
 
-FILE *tmpfileplus(const char *dir, const char *prefix, char **pathname, int keep)
+FILE *tmpfileplus(const char *dir, const char *prefix, FString *pathname, int keep)
 {
-	FILE *fp = NULL;
-	char *tmpname = NULL;
-	char *tmpdir = NULL;
-	const char *pfx = (prefix ? prefix : "tmp.");
-	char *tempdirs[12] = { 0 };
-	char env1[FILENAME_MAX+1] = { 0 };
-	char env2[FILENAME_MAX+1] = { 0 };
-	char env3[FILENAME_MAX+1] = { 0 };
-	int ntempdirs = 0;
-	int i;
-
-	/* Set up a list of temp directories we will try in order */
-	i = 0;
-	tempdirs[i++] = (char *)dir;
-#ifdef _WIN32
-	tempdirs[i++] = getenv_save("TMP", env1, sizeof(env1));
-	tempdirs[i++] = getenv_save("TEMP", env2, sizeof(env2));
-#else
-	tempdirs[i++] = getenv_save("TMPDIR", env3, sizeof(env3));
-	tempdirs[i++] = P_tmpdir;
-#endif
-	tempdirs[i++] = ".";
-	ntempdirs = i;
-
-	errno = 0;
-
-	/* Work through list we set up before, and break once we are successful */
-	for (i = 0; i < ntempdirs; i++)
-	{
-		tmpdir = tempdirs[i];
-		DPRINTF1("Trying tmpdir=[%s]\n", tmpdir);
-		fp = mktempfile_internal(tmpdir, pfx, &tmpname, keep);
-		if (fp) break;
-	}
-	/* If we succeeded and the user passed a pointer, set it to the alloc'd pathname: the user must free this */
-	if (fp && pathname)
-		*pathname = tmpname;
-	else	/* Otherwise, free the alloc'd memory */
-		free(tmpname);
-
+	FILE *fp = mktempfile_internal(dir, (prefix ? prefix : "tmp."), pathname, keep);
+	if (!fp && pathname) *pathname = "";
 	return fp;
 }
-
-/* Same as tmpfileplus() but with fixed length buffer for output filename and no memory allocation */
-FILE *tmpfileplus_f(const char *dir, const char *prefix, char *pathnamebuf, size_t pathsize, int keep)
-{
-	char *tmpbuf = NULL;
-	FILE *fp;
-
-	/* If no buffer provided, do the normal way */
-	if (!pathnamebuf || (int)pathsize <= 0) {
-		return tmpfileplus(dir, prefix, NULL, keep);
-	}
-	/* Call with a temporary buffer */
-	fp = tmpfileplus(dir, prefix, &tmpbuf, keep);
-	if (fp && strlen(tmpbuf) > pathsize - 1) {
-		/* Succeeded but not enough room in output buffer, so clean up and return an error */
-		pathnamebuf[0] = 0;
-		fclose(fp);
-		if (keep) remove(tmpbuf);
-		free(tmpbuf);
-		errno = E2BIG;
-		return NULL;
-	}
-	/* Copy name into buffer */
-	strcpy(pathnamebuf, tmpbuf);
-	free(tmpbuf);
-
-	return fp;
-}
-
 

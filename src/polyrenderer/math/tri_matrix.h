@@ -36,8 +36,8 @@ struct TriMatrix
 	static TriMatrix perspective(float fovy, float aspect, float near, float far);
 	static TriMatrix frustum(float left, float right, float bottom, float top, float near, float far);
 
-	//static TriMatrix worldToView(const FRenderViewpoint &viewpoint); // Software renderer world to view space transform
-	//static TriMatrix viewToClip(double focalTangent, double centerY, double invZtoScale); // Software renderer shearing projection
+	static TriMatrix worldToView(const FRenderViewpoint &viewpoint); // Software renderer world to view space transform
+	static TriMatrix viewToClip(double focalTangent, double centerY, double YaspectMul); // Software renderer shearing projection
 
 	FVector4 operator*(const FVector4 &v) const;
 	TriMatrix operator*(const TriMatrix &m) const;

@@ -147,26 +147,6 @@ void ReplaceString (char **ptr, const char *str)
 
 //==========================================================================
 //
-// Q_filelength
-//
-//==========================================================================
-
-int Q_filelength (FILE *f)
-{
-	int		pos;
-	int		end;
-
-	pos = ftell (f);
-	fseek (f, 0, SEEK_END);
-	end = ftell (f);
-	fseek (f, pos, SEEK_SET);
-
-	return end;
-}
-
-
-//==========================================================================
-//
 // FileExists
 //
 // Returns true if the given path exists and is a readable file.
@@ -175,13 +155,9 @@ int Q_filelength (FILE *f)
 
 bool FileExists (const char *filename)
 {
-	struct stat buff;
-
-	// [RH] Empty filenames are never there
-	if (filename == NULL || *filename == 0)
-		return false;
-
-	return stat(filename, &buff) == 0 && !(buff.st_mode & S_IFDIR);
+	bool isdir;
+	bool res = DirEntryExists(filename, &isdir);
+	return res && !isdir;
 }
 
 //==========================================================================
@@ -194,13 +170,9 @@ bool FileExists (const char *filename)
 
 bool DirExists(const char *filename)
 {
-	struct stat buff;
-
-	// [RH] Empty filenames are never there
-	if (filename == NULL || *filename == 0)
-		return false;
-
-	return stat(filename, &buff) == 0 && (buff.st_mode & S_IFDIR);
+	bool isdir;
+	bool res = DirEntryExists(filename, &isdir);
+	return res && isdir;
 }
 
 //==========================================================================
@@ -211,13 +183,16 @@ bool DirExists(const char *filename)
 //
 //==========================================================================
 
-bool DirEntryExists(const char *pathname)
+bool DirEntryExists(const char *pathname, bool *isdir)
 {
+	if (isdir) *isdir = false;
 	if (pathname == NULL || *pathname == 0)
 		return false;
 
 	struct stat info;
-	return stat(pathname, &info) == 0;
+	bool res = stat(pathname, &info) == 0;
+	if (isdir) *isdir = !!(info.st_mode & S_IFDIR);
+	return res;
 }
 
 //==========================================================================
@@ -570,7 +545,7 @@ void CreatePath(const char *fn)
 			*p = '\0';
 		}
 		struct stat info;
-		if (stat(copy, &info) == 0)
+		if (DirEntryExists(copy))
 		{
 			if (info.st_mode & S_IFDIR)
 				goto exists;
@@ -1029,10 +1004,7 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 		FFileList *fl = &list[list.Reserve(1)];
 		fl->Filename << dirpath << file->d_name;
 
-		struct stat fileStat;
-		stat(fl->Filename, &fileStat);
-		fl->isDirectory = S_ISDIR(fileStat.st_mode);
-
+		fl->isDirectory = DirExists(fl->Filename);
 		if(fl->isDirectory)
 		{
 			FString newdir = fl->Filename;

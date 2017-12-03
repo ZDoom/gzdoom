@@ -383,18 +383,22 @@ PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 
 	if (filer->Read(&data, 8) != 8)
 	{
+		if (takereader) delete filer;
 		return NULL;
 	}
 	if (data[0] != MAKE_ID(137,'P','N','G') || data[1] != MAKE_ID(13,10,26,10))
 	{ // Does not have PNG signature
+		if (takereader) delete filer;
 		return NULL;
 	}
 	if (filer->Read (&data, 8) != 8)
 	{
+		if (takereader) delete filer;
 		return NULL;
 	}
 	if (data[1] != MAKE_ID('I','H','D','R'))
 	{ // IHDR must be the first chunk
+		if (takereader) delete filer;
 		return NULL;
 	}
 
@@ -450,12 +454,6 @@ PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 
 	delete png;
 	return NULL;
-}
-
-PNGHandle *M_VerifyPNG(FILE *file)
-{
-	FileReader *fr = new FileReader(file);
-	return M_VerifyPNG(fr, true);
 }
 
 //==========================================================================

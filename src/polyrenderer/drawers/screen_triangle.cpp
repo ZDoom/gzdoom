@@ -1071,15 +1071,20 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 
 #endif
 
-#if 1
+EXTERN_CVAR(Bool, r_polyrenderer)
 
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	TriangleBlock block(args, thread);
-	block.Render();
+	if (r_polyrenderer)
+	{
+		TriangleBlock block(args, thread);
+		block.Render();
+	}
+	else
+	{
+		DrawSWRender(args, thread);
+	}
 }
-
-#else
 
 static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sortedVertices)
 {
@@ -1095,7 +1100,7 @@ static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sort
 		std::swap(sortedVertices[1], sortedVertices[2]);
 }
 
-void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
 	// Sort vertices by Y position
 	ShadedTriVertex *sortedVertices[3];
@@ -1172,27 +1177,97 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 		}
 	}
 
-	// Make variables local so the compiler can optimize without worrying about pointer aliasing
+	// Draw the triangle:
 
-	bool depthTest = args->uniforms->DepthTest();
-	bool writeColor = args->uniforms->WriteColor();
-	bool writeStencil = args->uniforms->WriteStencil();
-	bool writeDepth = args->uniforms->WriteDepth();
+	auto drawfunc = (args->destBgra) ? DrawSpan32 : DrawSpan8;
 
-	uint8_t stencilTestValue = args->uniforms->StencilTestValue();
-	uint8_t stencilWriteValue = args->uniforms->StencilWriteValue();
+	float stepXW = args->gradientX.W;
+	float v1X = args->v1->x;
+	float v1Y = args->v1->y;
+	float v1W = args->v1->w;
 
-	int bmode = (int)args->uniforms->BlendMode();
-	auto drawFunc = args->destBgra ? ScreenTriangle::TriDrawers32[bmode] : ScreenTriangle::TriDrawers8[bmode];
+	int num_cores = thread->num_cores;
+	for (int y = topY + thread->skipped_by_thread(topY); y < bottomY; y += num_cores)
+	{
+		int x = leftEdge[y];
+		int xend = rightEdge[y];
 
-	uint8_t *dest = args->dest;
-	uint8_t *stencilbuffer = args->stencilValues;
-	uint32_t *stencilMasks = args->stencilMasks;
-	float *zbuffer = args->zbuffer;
-	int pitch = args->pitch;
-	int stencilpitch = args->stencilPitch * 8;
-	int color = ((int)(ptrdiff_t)args->uniforms->TexturePixels()) >> 2;
+		float *zbufferLine = args->zbuffer + args->stencilPitch * 8 * y;
 
+		float startX = x + (0.5f - v1X);
+		float startY = y + (0.5f - v1Y);
+		float posXW = v1W + stepXW * startX + args->gradientY.W * startY;
+
+#ifndef NO_SSE
+		__m128 mstepXW = _mm_set1_ps(stepXW * 4.0f);
+		__m128 mfirstStepXW = _mm_setr_ps(0.0f, stepXW, stepXW + stepXW, stepXW + stepXW + stepXW);
+		while (x < xend)
+		{
+			int xstart = x;
+
+			int xendsse = x + ((xend - x) & ~3);
+			__m128 mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+			while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 15 && x < xendsse)
+			{
+				_mm_storeu_ps(zbufferLine + x, mposXW);
+				mposXW = _mm_add_ps(mposXW, mstepXW);
+				x += 4;
+			}
+			posXW = _mm_cvtss_f32(mposXW);
+
+			while (zbufferLine[x] <= posXW && x < xend)
+			{
+				zbufferLine[x] = posXW;
+				posXW += stepXW;
+				x++;
+			}
+
+			if (x > xstart)
+				drawfunc(y, xstart, x, args);
+
+			xendsse = x + ((xend - x) & ~3);
+			mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+			while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 0 && x < xendsse)
+			{
+				mposXW = _mm_add_ps(mposXW, mstepXW);
+				x += 4;
+			}
+			posXW = _mm_cvtss_f32(mposXW);
+
+			while (zbufferLine[x] > posXW && x < xend)
+			{
+				posXW += stepXW;
+				x++;
+			}
+		}
+#else
+		while (x < xend)
+		{
+			int xstart = x;
+			while (zbufferLine[x] <= posXW && x < xend)
+			{
+				zbufferLine[x] = posXW;
+				posXW += stepXW;
+				x++;
+			}
+
+			if (x > xstart)
+				drawfunc(y, xstart, x, args);
+
+			while (zbufferLine[x] > posXW && x < xend)
+			{
+				posXW += stepXW;
+				x++;
+			}
+		}
+#endif
+	}
+}
+
+#ifndef NO_SSE
+
+void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
+{
 	float v1X = args->v1->x;
 	float v1Y = args->v1->y;
 	float v1W = args->v1->w;
@@ -1201,13 +1276,15 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 	float stepXW = args->gradientX.W;
 	float stepXU = args->gradientX.U;
 	float stepXV = args->gradientX.V;
-	float stepYW = args->gradientY.W;
-	float stepYU = args->gradientY.U;
-	float stepYV = args->gradientY.V;
+	float startX = x0 + (0.5f - v1X);
+	float startY = y + (0.5f - v1Y);
+	float posXW = v1W + stepXW * startX + args->gradientY.W * startY;
+	float posXU = v1U + stepXU * startX + args->gradientY.U * startY;
+	float posXV = v1V + stepXV * startX + args->gradientY.V * startY;
+
+	const uint32_t *texPixels = (const uint32_t*)args->uniforms->TexturePixels();
 	int texWidth = args->uniforms->TextureWidth();
 	int texHeight = args->uniforms->TextureHeight();
-	const uint8_t *texPixels = args->uniforms->TexturePixels();
-	auto colormaps = args->uniforms->BaseColormap();
 
 	bool is_fixed_light = args->uniforms->FixedLight();
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
@@ -1216,85 +1293,224 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thr
 	float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
 	light += light >> 7; // 255 -> 256
 
-	// Draw the triangle:
+	uint32_t *dest = (uint32_t*)args->dest;
+	uint32_t *destLine = dest + args->pitch * y;
 
-	int num_cores = thread->num_cores;
-	for (int y = topY + thread->skipped_by_thread(topY); y < bottomY; y += num_cores)
+	int x = x0;
+	int sseEnd = x0 + ((x1 - x0) & ~3);
+	while (x < sseEnd)
 	{
-		int x0 = leftEdge[y];
-		int x1 = rightEdge[y];
+		uint32_t fgcolor[2];
+		int32_t lightshade[2];
 
-		uint8_t *destLine = dest + pitch * y;
-		uint8_t *stencilLine = stencilbuffer + stencilpitch * y;
-		float *zbufferLine = zbuffer + stencilpitch * y;
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		fgcolor[0] = texPixels[texelX * texHeight + texelY];
 
-		if ((stencilMasks[y] & 0xffffff00) == 0xffffff00) // First time we draw a line we have to clear the stencil buffer
+		fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+		lightshade[0] = lightpos >> 8;
+
+		posXW += stepXW;
+		posXU += stepXU;
+		posXV += stepXV;
+
+		rcpW = 0x01000000 / posXW;
+		u = (int32_t)(posXU * rcpW);
+		v = (int32_t)(posXV * rcpW);
+		texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		fgcolor[1] = texPixels[texelX * texHeight + texelY];
+
+		lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+		lightshade[1] = lightpos >> 8;
+
+		posXW += stepXW;
+		posXU += stepXU;
+		posXV += stepXV;
+
+		__m128i mfgcolor = _mm_loadl_epi64((const __m128i*)fgcolor);
+		mfgcolor = _mm_unpacklo_epi8(mfgcolor, _mm_setzero_si128());
+
+		__m128i mlightshade = _mm_loadl_epi64((const __m128i*)lightshade);
+		mlightshade = _mm_shuffle_epi32(mlightshade, _MM_SHUFFLE(1, 0, 1, 0));
+		mlightshade = _mm_packs_epi32(mlightshade, mlightshade);
+
+		__m128i mdestcolor = _mm_srli_epi16(_mm_mullo_epi16(mfgcolor, mlightshade), 8);
+		mdestcolor = _mm_packus_epi16(mdestcolor, _mm_setzero_si128());
+		mdestcolor = _mm_or_si128(mdestcolor, _mm_set1_epi32(0xff000000));
+
+		_mm_storel_epi64((__m128i*)(destLine + x), mdestcolor);
+
+		x += 2;
+	}
+
+	while (x < x1)
+	{
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
+
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
+
+		uint32_t fgcolor_r = RPART(fgcolor);
+		uint32_t fgcolor_g = GPART(fgcolor);
+		uint32_t fgcolor_b = BPART(fgcolor);
+		uint32_t fgcolor_a = APART(fgcolor);
+		if (fgcolor_a > 127)
 		{
-			memset(stencilLine, stencilMasks[y] & 0xff, stencilpitch);
-			stencilMasks[y] = 0;
+			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+			int lightshade = lightpos >> 8;
+
+			fgcolor_r = (fgcolor_r * lightshade) >> 8;
+			fgcolor_g = (fgcolor_g * lightshade) >> 8;
+			fgcolor_b = (fgcolor_b * lightshade) >> 8;
+
+			destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
 		}
 
-		float posXW = v1W + stepXW * (x0 + (0.5f - v1X)) + stepYW * (y + (0.5f - v1Y));
-		float posXU = v1U + stepXU * (x0 + (0.5f - v1X)) + stepYU * (y + (0.5f - v1Y));
-		float posXV = v1V + stepXV * (x0 + (0.5f - v1X)) + stepYV * (y + (0.5f - v1Y));
-
-		int x = x0;
-		while (x < x1)
-		{
-			bool processPixel = true;
-
-			if (!depthTest) // To do: make the stencil test use its own flag for comparison mode instead of abusing the depth test..
-			{
-				processPixel = stencilTestValue == stencilLine[x];
-			}
-			else
-			{
-				processPixel = stencilTestValue >= stencilLine[x] && zbufferLine[x] <= posXW;
-			}
-
-			if (processPixel) // Pixel is visible (passed stencil and depth tests)
-			{
-				if (writeColor)
-				{
-					if (texPixels)
-					{
-						float rcpW = 0x01000000 / posXW;
-						int32_t u = (int32_t)(posXU * rcpW);
-						int32_t v = (int32_t)(posXV * rcpW);
-
-						uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-						uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-						uint8_t fgcolor = texPixels[texelX * texHeight + texelY];
-
-						fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-						lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-						int lightshade = lightpos >> 8;
-
-						lightshade = ((256 - lightshade) * NUMCOLORMAPS) & 0xffffff00;
-						uint8_t shadedfg = colormaps[lightshade + fgcolor];
-
-						if (fgcolor != 0)
-							destLine[x] = shadedfg;
-					}
-					else
-					{
-						destLine[x] = color;
-					}
-				}
-				if (writeStencil)
-					stencilLine[x] = stencilWriteValue;
-				if (writeDepth)
-					zbufferLine[x] = posXW;
-			}
-
-			posXW += stepXW;
-			posXU += stepXU;
-			posXV += stepXV;
-			x++;
-		}
+		posXW += stepXW;
+		posXU += stepXU;
+		posXV += stepXV;
+		x++;
 	}
 }
+
+#else
+
+void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
+{
+	float v1X = args->v1->x;
+	float v1Y = args->v1->y;
+	float v1W = args->v1->w;
+	float v1U = args->v1->u * v1W;
+	float v1V = args->v1->v * v1W;
+	float stepXW = args->gradientX.W;
+	float stepXU = args->gradientX.U;
+	float stepXV = args->gradientX.V;
+	float startX = x0 + (0.5f - v1X);
+	float startY = y + (0.5f - v1Y);
+	float posXW = v1W + stepXW * startX + args->gradientY.W * startY;
+	float posXU = v1U + stepXU * startX + args->gradientY.U * startY;
+	float posXV = v1V + stepXV * startX + args->gradientY.V * startY;
+
+	const uint32_t *texPixels = (const uint32_t*)args->uniforms->TexturePixels();
+	int texWidth = args->uniforms->TextureWidth();
+	int texHeight = args->uniforms->TextureHeight();
+
+	bool is_fixed_light = args->uniforms->FixedLight();
+	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
+	uint32_t light = args->uniforms->Light();
+	float shade = 2.0f - (light + 12.0f) / 128.0f;
+	float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
+	light += light >> 7; // 255 -> 256
+
+	uint32_t *dest = (uint32_t*)args->dest;
+	uint32_t *destLine = dest + args->pitch * y;
+
+	int x = x0;
+	while (x < x1)
+	{
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
+
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
+
+		uint32_t fgcolor_r = RPART(fgcolor);
+		uint32_t fgcolor_g = GPART(fgcolor);
+		uint32_t fgcolor_b = BPART(fgcolor);
+		uint32_t fgcolor_a = APART(fgcolor);
+		if (fgcolor_a > 127)
+		{
+			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+			int lightshade = lightpos >> 8;
+
+			fgcolor_r = (fgcolor_r * lightshade) >> 8;
+			fgcolor_g = (fgcolor_g * lightshade) >> 8;
+			fgcolor_b = (fgcolor_b * lightshade) >> 8;
+
+			destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
+		}
+
+		posXW += stepXW;
+		posXU += stepXU;
+		posXV += stepXV;
+		x++;
+	}
+}
+
 #endif
+
+void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
+{
+	float v1X = args->v1->x;
+	float v1Y = args->v1->y;
+	float v1W = args->v1->w;
+	float v1U = args->v1->u * v1W;
+	float v1V = args->v1->v * v1W;
+	float stepXW = args->gradientX.W;
+	float stepXU = args->gradientX.U;
+	float stepXV = args->gradientX.V;
+	float startX = x0 + (0.5f - v1X);
+	float startY = y + (0.5f - v1Y);
+	float posXW = v1W + stepXW * startX + args->gradientY.W * startY;
+	float posXU = v1U + stepXU * startX + args->gradientY.U * startY;
+	float posXV = v1V + stepXV * startX + args->gradientY.V * startY;
+
+	auto colormaps = args->uniforms->BaseColormap();
+
+	const uint8_t *texPixels = args->uniforms->TexturePixels();
+	int texWidth = args->uniforms->TextureWidth();
+	int texHeight = args->uniforms->TextureHeight();
+
+	bool is_fixed_light = args->uniforms->FixedLight();
+	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
+	uint32_t light = args->uniforms->Light();
+	float shade = 2.0f - (light + 12.0f) / 128.0f;
+	float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
+	light += light >> 7; // 255 -> 256
+
+	uint8_t *dest = (uint8_t*)args->dest;
+	uint8_t *destLine = dest + args->pitch * y;
+
+	int x = x0;
+	while (x < x1)
+	{
+		float rcpW = 0x01000000 / posXW;
+		int32_t u = (int32_t)(posXU * rcpW);
+		int32_t v = (int32_t)(posXV * rcpW);
+
+		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+		uint8_t fgcolor = texPixels[texelX * texHeight + texelY];
+
+		fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+		int lightshade = lightpos >> 8;
+
+		lightshade = ((256 - lightshade) * NUMCOLORMAPS) & 0xffffff00;
+		uint8_t shadedfg = colormaps[lightshade + fgcolor];
+
+		if (fgcolor != 0)
+			destLine[x] = shadedfg;
+
+		posXW += stepXW;
+		posXU += stepXU;
+		posXV += stepXV;
+		x++;
+	}
+}
 
 void(*ScreenTriangle::TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *) =
 {

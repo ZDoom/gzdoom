@@ -47,6 +47,7 @@
 CVAR(String, r_viewsize, "", CVAR_NOSET)
 
 EXTERN_CVAR(Float, r_visibility);
+EXTERN_CVAR(Int, screenblocks)
 
 namespace swrenderer
 {
@@ -56,6 +57,17 @@ namespace swrenderer
 	
 	RenderViewport::~RenderViewport()
 	{
+	}
+
+	void RenderViewport::SetupPolyViewport()
+	{
+		PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
+		PolyZBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
+
+		PolyTriangleDrawer::set_viewport(viewwindowx, viewwindowy, viewwidth, viewheight, RenderTarget);
+		WorldToView = TriMatrix::worldToView(viewpoint);
+		ViewToClip = TriMatrix::viewToClip(viewwindow.FocalTangent, CenterY, YaspectMul);
+		WorldToClip = ViewToClip * WorldToView;
 	}
 
 	void RenderViewport::SetViewport(RenderThread *thread, int fullWidth, int fullHeight, float trueratio)

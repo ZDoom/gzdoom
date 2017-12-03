@@ -170,14 +170,14 @@ class OptionMenuItemSliderReverbEditOption : OptionMenuSliderBase
 	{
 		drawLabel(indent, y, selected ? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor, ReverbEdit.GrayCheck());
 
-		int DrawX = indent + CursorSpace();
+		mDrawX = indent + CursorSpace();
 		if (mEnter)
 		{
-			screen.DrawText(SmallFont, OptionMenuSettings.mFontColorValue, DrawX, y, Represent(), DTA_CleanNoMove_1, true);
+			screen.DrawText(SmallFont, OptionMenuSettings.mFontColorValue, mDrawX, y, Represent(), DTA_CleanNoMove_1, true);
 		}
 		else
 		{
-			DrawSlider (DrawX, y, mMin, mMax, GetSliderValue(), mShowValue, indent);
+			DrawSlider (mDrawX, y, mMin, mMax, GetSliderValue(), mShowValue, indent);
 		}
 		return indent;
 	}

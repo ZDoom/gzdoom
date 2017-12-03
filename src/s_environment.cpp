@@ -40,6 +40,7 @@
 #include "templates.h"
 #include "w_wad.h"
 #include "i_system.h"
+#include "m_misc.h"
 
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -836,7 +837,9 @@ FString SuggestNewName(const ReverbContainer *env)
 
 void ExportEnvironments(const char *filename, uint32_t count, const ReverbContainer **envs)
 {
-	FileWriter *f = FileWriter::Open(filename);
+	FString dest = M_GetDocumentsPath() + filename;
+
+	FileWriter *f = FileWriter::Open(dest);
 
 	if (f != nullptr)
 	{

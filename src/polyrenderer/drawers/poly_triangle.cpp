@@ -333,7 +333,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[numclipvert - 1];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i - 2];
-			if (is_frontfacing(args) && args->CalculateGradients())
+			if (is_frontfacing(args) == ccw && args->CalculateGradients())
 				ScreenTriangle::Draw(args, thread);
 		}
 	}
@@ -344,7 +344,7 @@ void PolyTriangleDrawer::draw_shaded_triangle(const ShadedTriVertex *vert, bool 
 			args->v1 = &clippedvert[0];
 			args->v2 = &clippedvert[i - 1];
 			args->v3 = &clippedvert[i];
-			if (!is_frontfacing(args) && args->CalculateGradients())
+			if (is_frontfacing(args) != ccw && args->CalculateGradients())
 				ScreenTriangle::Draw(args, thread);
 		}
 	}

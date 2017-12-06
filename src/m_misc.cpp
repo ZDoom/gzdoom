@@ -521,11 +521,11 @@ void WritePCXfile (FileWriter *file, const uint8_t *buffer, const PalEntry *pale
 // WritePNGfile
 //
 void WritePNGfile (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
-				   ESSType color_type, int width, int height, int pitch)
+				   ESSType color_type, int width, int height, int pitch, float gamma)
 {
 	char software[100];
 	mysnprintf(software, countof(software), GAMENAME " %s", GetVersionString());
-	if (!M_CreatePNG (file, buffer, palette, color_type, width, height, pitch) ||
+	if (!M_CreatePNG (file, buffer, palette, color_type, width, height, pitch, gamma) ||
 		!M_AppendPNGText (file, "Software", software) ||
 		!M_FinishPNG (file))
 	{
@@ -626,8 +626,9 @@ void M_ScreenShot (const char *filename)
 	const uint8_t *buffer;
 	int pitch;
 	ESSType color_type;
+	float gamma;
 
-	screen->GetScreenshotBuffer(buffer, pitch, color_type);
+	screen->GetScreenshotBuffer(buffer, pitch, color_type, gamma);
 	if (buffer != NULL)
 	{
 		PalEntry palette[256];
@@ -651,7 +652,7 @@ void M_ScreenShot (const char *filename)
 		else
 		{
 			WritePNGfile(file, buffer, palette, color_type,
-				screen->GetWidth(), screen->GetHeight(), pitch);
+				screen->GetWidth(), screen->GetHeight(), pitch, gamma);
 		}
 		delete file;
 		screen->ReleaseScreenshotBuffer();

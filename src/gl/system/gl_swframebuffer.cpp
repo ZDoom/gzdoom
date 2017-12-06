@@ -1671,15 +1671,15 @@ void OpenGLSWFrameBuffer::SetBlendingRect(int x1, int y1, int x2, int y2)
 //
 //==========================================================================
 
-void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type)
+void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
 {
-	Super::GetScreenshotBuffer(buffer, pitch, color_type);
+	Super::GetScreenshotBuffer(buffer, pitch, color_type, gamma);
 	/*
 	LockedRect lrect;
 
 	if (!Accel2D)
 	{
-		Super::GetScreenshotBuffer(buffer, pitch, color_type);
+		Super::GetScreenshotBuffer(buffer, pitch, color_type, gamma);
 		return;
 	}
 	buffer = nullptr;
@@ -1702,6 +1702,7 @@ void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch
 			buffer = (const uint8_t *)lrect.pBits;
 			pitch = lrect.Pitch;
 			color_type = SS_BGRA;
+			gamma = Gamma;
 		}
 	}
 	*/

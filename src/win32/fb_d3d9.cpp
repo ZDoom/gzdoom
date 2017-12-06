@@ -1755,13 +1755,13 @@ void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
 //
 //==========================================================================
 
-void D3DFB::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type)
+void D3DFB::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
 {
 	D3DLOCKED_RECT lrect;
 
 	if (!Accel2D)
 	{
-		Super::GetScreenshotBuffer(buffer, pitch, color_type);
+		Super::GetScreenshotBuffer(buffer, pitch, color_type, gamma);
 		return;
 	}
 	buffer = NULL;
@@ -1784,6 +1784,7 @@ void D3DFB::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &col
 			buffer = (const uint8_t *)lrect.pBits;
 			pitch = lrect.Pitch;
 			color_type = SS_BGRA;
+			gamma = Gamma;
 		}
 	}
 }

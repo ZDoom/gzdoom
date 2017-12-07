@@ -3627,7 +3627,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	bool buildmap;
 	const int *oldvertextable = NULL;
 
-	level.ShaderStartTime = I_msTime(); // indicate to the shader system that the level just started
+	level.ShaderStartTime = I_msTimeFS(); // indicate to the shader system that the level just started
 
 	// This is motivated as follows:
 

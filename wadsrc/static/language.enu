@@ -1941,6 +1941,7 @@ AUTOMAPMNU_SHOWKEYS				= "Show keys (cheat)";
 AUTOMAPMNU_SHOWTRIGGERLINES		= "Show trigger lines";
 AUTOMAPMNU_SHOWTHINGSPRITES		= "Show things as sprites";
 AUTOMAPMNU_PTOVERLAY			= "Overlay portals";
+AUTOMAPMNU_EMPTYSPACEMARGIN		= "Empty space margin";
 
 // Automap Controls
 MAPCNTRLMNU_TITLE 			= "CUSTOMIZE MAP CONTROLS";

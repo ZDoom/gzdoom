@@ -608,7 +608,7 @@ OptionValue "Inversion"
 
 OptionMenu "JoystickConfigMenu" protected
 {
-	Title "$JOY_CONFIG"
+	Title "$JOYMNU_TITLE"
 	Class "JoystickConfigMenu"
 	// Will be filled in by joystick code.
 }

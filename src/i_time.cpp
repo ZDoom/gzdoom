@@ -166,7 +166,7 @@ uint64_t I_msTime()
 
 uint64_t I_msTimeFS() // from "start"
 {
-	return NSToMS(I_nsTime() - FirstFrameStartTime);
+	return (FirstFrameStartTime == 0) ? 0 : NSToMS(I_nsTime() - FirstFrameStartTime);
 }
 
 int I_GetTime()

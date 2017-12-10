@@ -1137,7 +1137,8 @@ static void CreateCachedNodes(MapData *map)
 
 	if (fw != nullptr)
 	{
-		if (fw->Write(compressed, outlen+offset) != 1)
+		const size_t length = outlen + offset;
+		if (fw->Write(compressed, length) != length)
 		{
 			Printf("Error saving nodes to file %s\n", path.GetChars());
 		}

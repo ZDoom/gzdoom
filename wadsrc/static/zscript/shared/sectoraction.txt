@@ -37,13 +37,16 @@ class SectorAction : Actor
 			else
 			{
 				Actor probe = CurSector.SecActTarget;
-				while (probe.tracer != self && probe.tracer != null)
+				if (null != probe)
 				{
-					probe = probe.tracer;
-				}
-				if (probe.tracer == self)
-				{
-					probe.tracer = tracer;
+					while (probe.tracer != self && probe.tracer != null)
+					{
+						probe = probe.tracer;
+					}
+					if (probe.tracer == self)
+					{
+						probe.tracer = tracer;
+					}
 				}
 			}
 		}

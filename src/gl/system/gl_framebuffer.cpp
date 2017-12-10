@@ -56,7 +56,6 @@
 EXTERN_CVAR (Float, vid_brightness)
 EXTERN_CVAR (Float, vid_contrast)
 EXTERN_CVAR (Bool, vid_vsync)
-EXTERN_CVAR(Int, vid_scalemode)
 
 CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 

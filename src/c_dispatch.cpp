@@ -664,13 +664,29 @@ void C_DoCommand (const char *cmd, int keynum)
 	}
 }
 
+#define ZS_SAFE_COMMAND(ccmd) if (stricmp(cmd, #ccmd) == 0) return true;
+
+bool C_ZSIsSafe(FString cmd)
+{
+	ZS_SAFE_COMMAND(snd_reset)	
+	ZS_SAFE_COMMAND(reset2defaults)
+	ZS_SAFE_COMMAND(menuconsole)
+	ZS_SAFE_COMMAND(clearnodecache)
+	ZS_SAFE_COMMAND(am_restorecolors)
+
+	return false;
+}
+
 // This is only accessible to the special menu item to run CCMDs.
 DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 {
 	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
-	C_DoCommand(cmd);
+	if (C_ZSIsSafe(cmd))
+		C_DoCommand(cmd);
+	else
+		Printf("Script attempted to call unsafe command '%s'\n", cmd);
 	return 0;
 }
 

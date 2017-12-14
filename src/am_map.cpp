@@ -104,9 +104,9 @@ CUSTOM_CVAR (Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 	{
 		self = 0;
 	}
-	else if (self > 50)
+	else if (self > 90)
 	{
-		self = 50;
+		self = 90;
 	}
 
 	AM_NewResolution();

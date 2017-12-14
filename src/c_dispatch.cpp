@@ -126,7 +126,7 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
 	Button_AM_ZoomIn, Button_AM_ZoomOut;
 
-bool ParsingKeyConf;
+bool ParsingKeyConf, ParsingMenuDef = false;
 
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
@@ -185,6 +185,21 @@ static const char *KeyConfCommands[] =
 	"setslot",
 	"addplayerclass",
 	"clearplayerclasses"
+};
+
+static const char *MenuDefCommands[] =
+{
+	"snd_reset",
+	"reset2defaults",
+	"menuconsole",
+	"clearnodecache",
+	"am_restorecolors",
+	"special",
+	"puke",
+	"fpuke",
+	"pukename",
+	"event",
+	"netevent"
 };
 
 // CODE --------------------------------------------------------------------
@@ -584,6 +599,25 @@ void C_DoCommand (const char *cmd, int keynum)
 		}
 	}
 
+	if (ParsingMenuDef)
+	{
+		int i;
+
+		for (i = countof(MenuDefCommands)-1; i >= 0; --i)
+		{
+			if (strnicmp (beg, MenuDefCommands[i], len) == 0 &&
+				MenuDefCommands[i][len] == 0)
+			{
+				break;
+			}
+		}
+		if (i < 0)
+		{
+			Printf ("Invalid command for MENUDEF/ZScript: %s\n", beg);
+			return;
+		}
+	}
+
 	// Check if this is an action
 	if (*beg == '+' || *beg == '-')
 	{
@@ -664,29 +698,15 @@ void C_DoCommand (const char *cmd, int keynum)
 	}
 }
 
-#define ZS_SAFE_COMMAND(ccmd) if (stricmp(cmd, #ccmd) == 0) return true;
-
-bool C_ZSIsSafe(FString cmd)
-{
-	ZS_SAFE_COMMAND(snd_reset)	
-	ZS_SAFE_COMMAND(reset2defaults)
-	ZS_SAFE_COMMAND(menuconsole)
-	ZS_SAFE_COMMAND(clearnodecache)
-	ZS_SAFE_COMMAND(am_restorecolors)
-
-	return false;
-}
-
 // This is only accessible to the special menu item to run CCMDs.
 DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 {
 	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
-	if (C_ZSIsSafe(cmd))
-		C_DoCommand(cmd);
-	else
-		Printf("Script attempted to call unsafe command '%s'\n", cmd);
+	ParsingMenuDef = true;
+	C_DoCommand(cmd);
+	ParsingMenuDef = false;
 	return 0;
 }
 

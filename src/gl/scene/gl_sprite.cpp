@@ -342,10 +342,9 @@ void GLSprite::Draw(int pass)
 		sector_t *cursec = actor ? actor->Sector : particle ? particle->subsector->sector : nullptr;
 		if (cursec != nullptr)
 		{
-			PalEntry finalcol(ThingColor.a,
-				ThingColor.r * cursec->SpecialColors[sector_t::sprites].r / 255,
-				ThingColor.g * cursec->SpecialColors[sector_t::sprites].g / 255,
-				ThingColor.b * cursec->SpecialColors[sector_t::sprites].b / 255);
+			const PalEntry finalcol = fullbright
+				? ThingColor
+				: ThingColor.Modulate(cursec->SpecialColors[sector_t::sprites]);
 
 			gl_RenderState.SetObjectColor(finalcol);
 		}

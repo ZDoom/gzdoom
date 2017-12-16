@@ -385,18 +385,18 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		// now draw the different layers of the weapon.
 		// For stencil render styles brightmaps need to be disabled.
 		gl_RenderState.EnableBrightmap(!(RenderStyle.Flags & STYLEF_ColorIsFixed));
-		PalEntry finalcol(ThingColor.a,
-			ThingColor.r * viewsector->SpecialColors[sector_t::sprites].r / 255,
-			ThingColor.g * viewsector->SpecialColors[sector_t::sprites].g / 255,
-			ThingColor.b * viewsector->SpecialColors[sector_t::sprites].b / 255);
 
+		const bool bright = isBright(psp);
+		const PalEntry finalcol = bright
+			? ThingColor
+			: ThingColor.Modulate(viewsector->SpecialColors[sector_t::sprites]);
 		gl_RenderState.SetObjectColor(finalcol);
 
 		if (psp->GetState() != nullptr) 
 		{
 			FColormap cmc = cm;
 			int ll = lightlevel;
-			if (isBright(psp)) 
+			if (bright)
 			{
 				if (fakesec == viewsector || in_area != area_below)	
 				{

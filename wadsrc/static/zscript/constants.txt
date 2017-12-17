@@ -913,6 +913,7 @@ enum EDmgFlags
 	DMG_FOILBUDDHA = 128,
 	DMG_NO_PROTECT = 256,
 	DMG_USEANGLE = 512,
+	DMG_NO_PAIN = 1024,
 }
 
 enum EReplace

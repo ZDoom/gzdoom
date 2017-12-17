@@ -2978,7 +2978,7 @@ bool G_CheckDemoStatus (void)
 		bool saved = false;
 		if (fw != nullptr)
 		{
-			auto size = long(demo_p - demobuffer);
+			const size_t size = demo_p - demobuffer;
 			saved = fw->Write(demobuffer, size) == size;
 			delete fw;
 			if (!saved) remove(demoname);

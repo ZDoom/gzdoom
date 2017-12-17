@@ -903,8 +903,7 @@ void P_AutoUseStrifeHealth (player_t *player)
 
 static inline bool MustForcePain(AActor *target, AActor *inflictor)
 {
-	return (!(target->flags5 & MF5_NOPAIN) && inflictor != NULL &&
-		(inflictor->flags6 & MF6_FORCEPAIN) && !(inflictor->flags5 & MF5_PAINLESS));
+	return (inflictor && (inflictor->flags6 & MF6_FORCEPAIN));
 }
 
 static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
@@ -928,6 +927,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 	bool invulpain = false;
 	bool fakedPain = false;
 	bool forcedPain = false;
+	bool noPain = false;
 	int fakeDamage = 0;
 	int holdDamage = 0;
 	const int rawdamage = damage;
@@ -940,9 +940,14 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 		return 0;
 	}
 
-	//Rather than unnecessarily call the function over and over again, let's be a little more efficient.
-	fakedPain = (isFakePain(target, inflictor, damage)); 
-	forcedPain = (MustForcePain(target, inflictor));
+	// Rather than unnecessarily call the function over and over again, let's be a little more efficient.
+	// But first, check and see if it's even needed, which it won't be if pain must not be triggered.
+	noPain = ((flags & DMG_NO_PAIN) || (target->flags5 & MF5_NOPAIN) || (inflictor && (inflictor->flags5 & MF5_PAINLESS)));
+	if (!noPain)
+	{
+		fakedPain = (isFakePain(target, inflictor, damage));
+		forcedPain = (MustForcePain(target, inflictor));
+	}
 
 	// Spectral targets only take damage from spectral projectiles.
 	if (target->flags4 & MF4_SPECTRAL && !telefragDamage)
@@ -1306,7 +1311,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 			{ // player is invulnerable, so don't hurt him
 				//Make sure no godmodes and NOPAIN flags are found first.
 				//Then, check to see if the player has NODAMAGE or ALLOWPAIN, or inflictor has CAUSEPAIN.
-				if ((player->cheats & CF_GODMODE) || (player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NOPAIN))
+				if ((flags & DMG_NO_PAIN) || (player->cheats & CF_GODMODE) || (player->cheats & CF_GODMODE2) || (player->mo->flags5 & MF5_NOPAIN))
 					return 0;
 				else if ((((player->mo->flags7 & MF7_ALLOWPAIN) || (player->mo->flags5 & MF5_NODAMAGE)) || ((inflictor != NULL) && (inflictor->flags7 & MF7_CAUSEPAIN))))
 				{
@@ -1333,7 +1338,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 				if (damage <= 0)
 				{
 					// [MC] Godmode doesn't need checking here, it's already being handled above.
-					if ((target->flags5 & MF5_NOPAIN) || (inflictor && (inflictor->flags5 & MF5_PAINLESS)))
+					if (noPain)
 						return 0;
 					
 					// If MF6_FORCEPAIN is set, make the player enter the pain state.
@@ -1522,7 +1527,7 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 
 fakepain: //Needed so we can skip the rest of the above, but still obey the original rules.
 
-	if (!(target->flags5 & MF5_NOPAIN) && (inflictor == NULL || !(inflictor->flags5 & MF5_PAINLESS)) &&
+	if (!noPain &&
 		(target->player != NULL || !G_SkillProperty(SKILLP_NoPain)) && !(target->flags & MF_SKULLFLY))
 	{
 		painchance = target->PainChance;

@@ -124,7 +124,7 @@ public:
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
-	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type);
+	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) override;
 	void ReleaseScreenshotBuffer();
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);

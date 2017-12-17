@@ -139,8 +139,8 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, FString *t
 	int oflag, pmode;
 
 /* In Windows, we use the _O_TEMPORARY flag with `open` to ensure the file is deleted when closed.
- * In Unix, we use the unlink function after opening the file. (This does not work in Windows,
- * which does not allow an open file to be unlinked.)
+ * In Unix, we use the remove function after opening the file. (This does not work in Windows,
+ * which does not allow an open file to be deleted.)
  */
 #ifdef _WIN32
 	/* MSVC flags */
@@ -172,6 +172,12 @@ static FILE *mktempfile_internal(const char *tmpdir, const char *pfx, FString *t
 	{	/* Success, so return user a proper ANSI C file pointer */
 		fp = FDOPEN_(fd, "w+b");
 		errno = 0;
+
+#ifndef _WIN32
+		/* [Unix only] And make sure the file will be deleted once closed */
+		if (!keep) remove(tempname);
+#endif
+
 	}
 	else
 	{	/* We failed */

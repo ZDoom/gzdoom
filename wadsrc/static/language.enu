@@ -1777,7 +1777,7 @@ MOUSEMNU_LOOKSTRAFE			= "Lookstrafe";
 
 // Joystick Menu
 
-JOYMNU_CONFIG				= "CONFIGURE CONTROLLER";
+JOYMNU_TITLE				= "CONFIGURE CONTROLLER";
 JOYMNU_OPTIONS				= "CONTROLLER OPTIONS";
 JOYMNU_NOMENU				= "Block controller input in menu";
 
@@ -1941,6 +1941,7 @@ AUTOMAPMNU_SHOWKEYS				= "Show keys (cheat)";
 AUTOMAPMNU_SHOWTRIGGERLINES		= "Show trigger lines";
 AUTOMAPMNU_SHOWTHINGSPRITES		= "Show things as sprites";
 AUTOMAPMNU_PTOVERLAY			= "Overlay portals";
+AUTOMAPMNU_EMPTYSPACEMARGIN		= "Empty space margin";
 
 // Automap Controls
 MAPCNTRLMNU_TITLE 			= "CUSTOMIZE MAP CONTROLS";
@@ -2796,7 +2797,6 @@ OPTVAL_TRANSLUCENTFUZZ 		= "Translucent fuzz";
 OPTVAL_NOISE 				= "Noise";
 OPTVAL_SMOOTHNOISE 			= "Smooth Noise";
 OPTVAL_JAGGEDFUZZ 			= "Jagged fuzz";
-OPTVAL_NORMAL 				= "Normal";
 OPTVAL_GREENMAGENTA 		= "Green/Magenta";
 OPTVAL_REDCYAN 				= "Red/Cyan";
 OPTVAL_AMBERBLUE 			= "Amber/Blue";

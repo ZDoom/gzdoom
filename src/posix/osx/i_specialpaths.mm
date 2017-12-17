@@ -215,3 +215,24 @@ FString M_GetSavegamesPath()
 	return path;
 }
 
+//===========================================================================
+//
+// M_GetDocumentsPath												Unix
+//
+// Returns the path to the default documents directory.
+//
+//===========================================================================
+
+FString M_GetDocumentsPath()
+{
+	FString path;
+	char cpath[PATH_MAX];
+	FSRef folder;
+
+	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	{
+		path << cpath << "/" GAME_DIR "/";
+	}
+	return path;
+}

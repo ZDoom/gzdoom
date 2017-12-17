@@ -166,6 +166,8 @@ bool FMD3Model::Load(const char * path, int lumpnum, const char * buffer, int le
 		for (int i = 0; i < s->numSkins; i++)
 		{
 			// [BB] According to the MD3 spec, Name is supposed to include the full path.
+			// ... and since some tools seem to output backslashes, these need to be replaced with forward slashes to work.
+			FixPathSeperator(shader[i].Name);
 			s->skins[i] = LoadSkin("", shader[i].Name);
 			// [BB] Fall back and check if Name is relative.
 			if (!s->skins[i].isValid())

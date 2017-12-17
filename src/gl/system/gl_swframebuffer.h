@@ -44,7 +44,7 @@ public:
 	int GetPageCount() override;
 	void SetVSync(bool vsync) override;
 	void NewRefreshRate() override;
-	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type) override;
+	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) override;
 	void ReleaseScreenshotBuffer() override;
 	void SetBlendingRect(int x1, int y1, int x2, int y2) override;
 	bool Begin2D(bool copy3d) override;

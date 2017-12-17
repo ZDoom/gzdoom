@@ -46,7 +46,7 @@ class FileWriter;
 // This function writes the PNG signature and the IHDR, gAMA, PLTE, and IDAT
 // chunks.
 bool M_CreatePNG (FileWriter *file, const uint8_t *buffer, const PalEntry *pal,
-				  ESSType color_type, int width, int height, int pitch);
+				  ESSType color_type, int width, int height, int pitch, float gamma);
 
 // Creates a grayscale 1x1 PNG file. Used for savegames without savepics.
 bool M_CreateDummyPNG (FileWriter *file);

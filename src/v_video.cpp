@@ -329,12 +329,13 @@ void DCanvas::Dim (PalEntry color)
 //
 //==========================================================================
 
-void DCanvas::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type)
+void DCanvas::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
 {
 	Lock(true);
 	buffer = GetBuffer();
 	pitch = IsBgra() ? GetPitch() * 4 : GetPitch();
 	color_type = IsBgra() ? SS_BGRA : SS_PAL;
+	gamma = Gamma;
 }
 
 //==========================================================================

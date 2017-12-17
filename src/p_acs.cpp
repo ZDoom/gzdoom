@@ -3655,6 +3655,12 @@ void DLevelScript::Serialize(FSerializer &arc)
 	if (arc.isReading())
 	{
 		activeBehavior = FBehavior::StaticGetModule(lib);
+
+		if (nullptr == activeBehavior)
+		{
+			I_Error("Could not find ACS module");
+		}
+
 		pc = activeBehavior->Ofs2PC(pcofs);
 	}
 }

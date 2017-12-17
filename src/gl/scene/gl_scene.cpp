@@ -800,8 +800,8 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
 
 	// Scroll the sky
-	GLRenderer->mSky1Pos = (double)fmod(screen->FrameTime * level.skyspeed1, 1024.f) * 90./256.;
-	GLRenderer->mSky2Pos = (double)fmod(screen->FrameTime * level.skyspeed2, 1024.f) * 90./256.;
+	GLRenderer->mSky1Pos = (double)fmod((double)screen->FrameTime * (double)level.skyspeed1, 1024.f) * 90./256.;
+	GLRenderer->mSky2Pos = (double)fmod((double)screen->FrameTime * (double)level.skyspeed2, 1024.f) * 90./256.;
 
 
 
@@ -969,7 +969,7 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 
 	uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
 	glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
-	M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width*3);
+	M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width * 3, Gamma);
 	M_Free(scr);
 }
 

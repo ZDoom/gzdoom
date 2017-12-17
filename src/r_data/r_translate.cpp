@@ -368,7 +368,7 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 	palstep = (pal2 - palcol) / (end - start);
 	for (int i = start; i <= end; palcol += palstep, ++i)
 	{
-		int j = GPalette.Remap[i], k = GPalette.Remap[int(palcol)];
+		int j = GPalette.Remap[i], k = GPalette.Remap[int(round(palcol))];
 		Remap[j] = k;
 		Palette[j] = GPalette.BaseColors[k];
 		Palette[j].a = j == 0 ? 0 : 255;

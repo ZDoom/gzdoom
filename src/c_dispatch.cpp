@@ -195,6 +195,7 @@ static const char *MenuDefCommands[] =
 	"menuconsole",
 	"clearnodecache",
 	"am_restorecolors",
+	"undocolorpic",
 	"special",
 	"puke",
 	"fpuke",

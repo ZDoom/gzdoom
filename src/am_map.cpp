@@ -109,7 +109,10 @@ CUSTOM_CVAR (Int, am_emptyspacemargin, 0, CVAR_ARCHIVE)
 		self = 90;
 	}
 
-	AM_NewResolution();
+	if (nullptr != StatusBar)
+	{
+		AM_NewResolution();
+	}
 }
 
 //=============================================================================

@@ -62,6 +62,7 @@ extern int paused;
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR (Bool, fullscreen)
 
@@ -312,7 +313,7 @@ void MessagePump (const SDL_Event &sev)
 		{
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
 			case SDL_WINDOWEVENT_FOCUS_LOST:
-				S_SetSoundPaused(sev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
+				S_SetSoundPaused((!!i_soundinbackground) || sev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
 				break;
 		}
 		break;

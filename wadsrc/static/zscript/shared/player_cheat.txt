@@ -272,7 +272,7 @@ extend class PlayerPawn
 			if (type != null && type is deletetype)
 			{
 				let pack = FindInventory(type);
-				if (pack) pack.Destroy();
+				if (pack) pack.DepleteOrDestroy();
 			}
 		}
 	}

@@ -3815,8 +3815,6 @@ void P_SetupLevel (const char *lumpname, int position)
 				P_LoadThings (map);
 			else
 				P_LoadThings2 (map);	// [RH] Load Hexen-style things
-
-			SetCompatibilityParams();
 		}
 		else
 		{
@@ -3824,6 +3822,8 @@ void P_SetupLevel (const char *lumpname, int position)
 			P_ParseTextMap(map, missingtex);
 			times[0].Unclock();
 		}
+
+		SetCompatibilityParams();
 
 		times[6].Clock();
 		P_LoopSidedefs (true);

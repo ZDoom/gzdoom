@@ -1772,7 +1772,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		}
 
 		// spawn at random spot if in deathmatch
-		if (deathmatch || isUnfriendly)
+		if ((deathmatch || isUnfriendly) && (level.deathmatchstarts.Size () > 0))
 		{
 			G_DeathMatchSpawnPlayer (playernum);
 			return;

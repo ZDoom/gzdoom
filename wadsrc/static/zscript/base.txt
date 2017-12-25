@@ -417,8 +417,7 @@ class Thinker : Object native play
 	
 	static clearscope int Tics2Seconds(int tics)
 	{
-		// This compensates for one tic being slightly less than 1/35 of a second.
-		return int(tics * (0.98 / TICRATE));
+		return int(tics / TICRATE);
 	}
 
 }

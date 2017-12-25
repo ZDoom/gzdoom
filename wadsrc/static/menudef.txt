@@ -1616,6 +1616,8 @@ OptionMenu SoundOptions protected
 	Option "$SNDMNU_RANDOMIZEPITCHES",	"snd_pitched", "OnOff"
 	Slider "$SNDMNU_CHANNELS",			"snd_channels", 64, 256, 8, 0
 	StaticText " "
+	Option "$SNDMNU_BACKGROUND",			"i_soundinbackground", "OnOff"
+	StaticText " "
 
 	ifoption(openal)
 	{

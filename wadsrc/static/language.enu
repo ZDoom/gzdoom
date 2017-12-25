@@ -2129,6 +2129,7 @@ SNDMNU_SFXVOLUME		= "Sounds volume";
 SNDMNU_MENUVOLUME		= "Menu volume";
 SNDMNU_MUSICVOLUME		= "Music volume";
 SNDMNU_MIDIDEVICE		= "MIDI device";
+SNDMNU_BACKGROUND		= "Sound in Background";
 SNDMNU_UNDERWATERREVERB	= "Underwater reverb";
 SNDMNU_RANDOMIZEPITCHES	= "Randomize pitches";
 SNDMNU_CHANNELS			= "Sound channels";

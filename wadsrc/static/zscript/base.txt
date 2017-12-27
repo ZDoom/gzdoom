@@ -547,6 +547,7 @@ struct LevelLocals native
 	native static void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
 	native void SetInterMusic(String nextmap);
+	native double GetPixelStretch();
 	native String FormatMapName(int mapnamecolor);
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;

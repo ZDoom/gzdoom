@@ -1957,6 +1957,23 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SetInterMusic)
 //
 //
 //==========================================================================
+
+float FLevelLocals::PixelStretch()
+{
+	return level.info->pixelstretch;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetPixelStretch)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	ACTION_RETURN_FLOAT(self->PixelStretch());
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 DEFINE_GLOBAL(level);
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)

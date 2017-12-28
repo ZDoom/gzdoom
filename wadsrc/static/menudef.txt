@@ -1678,7 +1678,8 @@ OptionMenu AdvSoundOptions protected
 	SubMenu "$ADVSNDMNU_SELCONFIG",		"FluidPatchsetMenu"
 	Slider "$ADVSNDMNU_FLUIDGAIN",			"fluid_gain", 0, 10, 0.5, 1
 	Option "$ADVSNDMNU_REVERB", 			"fluid_reverb", "OnOff"
-	Slider "$ADVSNDMNU_FLUIDVOICES", 		"fluid_voices", 16, 4096, 16, 1
+	Option "$ADVSNDMNU_CHORUS", 			"fluid_chorus", "OnOff"
+	Slider "$ADVSNDMNU_MIDIVOICES", 		"fluid_voices", 16, 4096, 16, 0
 	// Leaving out the more advanced stuff for now.
 	StaticText " "
 	StaticText "$ADVSNDMNU_TIMIDITY",	1
@@ -1690,7 +1691,7 @@ OptionMenu AdvSoundOptions protected
 	TextField "$ADVSNDMNU_TIMIDITYCONFIG", 	"timidity_config"
 	SubMenu "$ADVSNDMNU_SELCONFIG",		"TimidityConfigMenu"
 	Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "OnOff"
-	Option "$ADVSNDMNU_TIMIDITYCHORUS", 	"timidity_chorus", "OnOff"
+	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
 	Slider "$ADVSNDMNU_TIMIDITYVOLUME",		"timidity_mastervolume", 0, 4, 0.2, 1
 	StaticText " "
 	StaticText "$ADVSNDMNU_WILDMIDI",	1

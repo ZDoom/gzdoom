@@ -48,6 +48,7 @@ struct GLHorizonInfo
 	GLSectorPlane plane;
 	int lightlevel;
 	FColormap colormap;
+	PalEntry specialcolor;
 };
 
 struct GLSkyInfo

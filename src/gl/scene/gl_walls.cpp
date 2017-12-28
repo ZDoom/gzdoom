@@ -441,6 +441,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 			hi.plane.GetFromSector(fs, sector_t::ceiling);
 			hi.lightlevel = gl_ClampLight(fs->GetCeilingLight());
 			hi.colormap = fs->Colormap;
+			hi.specialcolor = fs->SpecialColors[sector_t::ceiling];
 
 			if (fs->e->XFloor.ffloors.Size())
 			{
@@ -469,6 +470,7 @@ bool GLWall::DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2)
 			hi.plane.GetFromSector(fs, sector_t::floor);
 			hi.lightlevel = gl_ClampLight(fs->GetFloorLight());
 			hi.colormap = fs->Colormap;
+			hi.specialcolor = fs->SpecialColors[sector_t::floor];
 
 			if (fs->e->XFloor.ffloors.Size())
 			{

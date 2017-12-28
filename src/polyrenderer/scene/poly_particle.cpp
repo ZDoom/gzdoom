@@ -34,7 +34,10 @@ EXTERN_CVAR(Int, gl_particles_style)
 
 void RenderPolyParticle::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
 {
-	DVector3 pos = particle->Pos;
+	double timefrac = r_viewpoint.TicFrac;
+	if (paused || bglobal.freeze)
+		timefrac = 0.;
+	DVector3 pos = particle->Pos + (particle->Vel * timefrac);
 	double psize = particle->size / 8.0;
 	double zpos = pos.Z;
 

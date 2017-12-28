@@ -77,7 +77,15 @@ namespace swrenderer
 		double	 			xscale, yscale;
 		int 				x1, x2, y1, y2;
 		sector_t*			heightsec = NULL;
-		
+
+		double timefrac = r_viewpoint.TicFrac;
+		if (paused || bglobal.freeze)
+			timefrac = 0.;
+
+		double ippx = particle->Pos.X + particle->Vel.X * timefrac;
+		double ippy = particle->Pos.Y + particle->Vel.Y * timefrac;
+		double ippz = particle->Pos.Z + particle->Vel.Z * timefrac;
+
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// [ZZ] Particle not visible through the portal plane
@@ -85,8 +93,8 @@ namespace swrenderer
 			return;
 
 		// transform the origin point
-		tr_x = particle->Pos.X - thread->Viewport->viewpoint.Pos.X;
-		tr_y = particle->Pos.Y - thread->Viewport->viewpoint.Pos.Y;
+		tr_x = ippx - thread->Viewport->viewpoint.Pos.X;
+		tr_y = ippy - thread->Viewport->viewpoint.Pos.Y;
 
 		tz = tr_x * thread->Viewport->viewpoint.TanCos + tr_y * thread->Viewport->viewpoint.TanSin;
 
@@ -121,7 +129,7 @@ namespace swrenderer
 		auto viewport = thread->Viewport.get();
 
 		yscale = xscale; // YaspectMul is not needed for particles as they should always be square
-		ty = (particle->Pos.Z - viewport->viewpoint.Pos.Z) * thread->Viewport->YaspectMul;
+		ty = (ippz - viewport->viewpoint.Pos.Z) * thread->Viewport->YaspectMul;
 		y1 = xs_RoundToInt(viewport->CenterY - (ty + psize) * yscale);
 		y2 = xs_RoundToInt(viewport->CenterY - (ty - psize) * yscale);
 
@@ -184,9 +192,9 @@ namespace swrenderer
 			map = GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true);
 		}
 
-		if (botpic != skyflatnum && particle->Pos.Z < botplane->ZatPoint(particle->Pos))
+		if (botpic != skyflatnum && ippz < botplane->ZatPoint(particle->Pos))
 			return;
-		if (toppic != skyflatnum && particle->Pos.Z >= topplane->ZatPoint(particle->Pos))
+		if (toppic != skyflatnum && ippz >= topplane->ZatPoint(particle->Pos))
 			return;
 
 		// store information in a vissprite
@@ -199,7 +207,7 @@ namespace swrenderer
 		//	vis->yscale *= InvZtoScale;
 		vis->depth = (float)tz;
 		vis->idepth = float(1 / tz);
-		vis->gpos = { (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z };
+		vis->gpos = { (float)ippx, (float)ippy, (float)ippz };
 		vis->y1 = y1;
 		vis->y2 = y2;
 		vis->x1 = x1;

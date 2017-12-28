@@ -558,6 +558,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	Infighting = other.Infighting;
 	ArmorFactor = other.ArmorFactor;
 	HealthFactor = other.HealthFactor;
+	PlayerRespawn = other.PlayerRespawn;
 	return *this;
 }
 

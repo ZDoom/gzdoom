@@ -84,19 +84,20 @@ class DFlashFader : public DThinker
 public:
 	DFlashFader (float r1, float g1, float b1, float a1,
 				 float r2, float g2, float b2, float a2,
-				 float time, AActor *who);
+				 float time, AActor *who, bool terminate = false);
 	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	void Tick ();
 	AActor *WhoFor() { return ForWho; }
 	void Cancel ();
+	
 
 protected:
 	float Blends[2][4];
 	int TotalTics;
 	int StartTic;
 	TObjPtr<AActor*> ForWho;
-
+	bool Terminate;
 	void SetBlend (float time);
 	DFlashFader ();
 };

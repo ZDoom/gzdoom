@@ -59,6 +59,7 @@ DFlashFader::DFlashFader (float r1, float g1, float b1, float a1,
 
 void DFlashFader::OnDestroy ()
 {
+	Blends[1][3] = 0.f; // Needed in order to cancel out the secondary fade.
 	SetBlend (1.f);
 	Super::OnDestroy();
 }

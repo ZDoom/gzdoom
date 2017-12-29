@@ -1481,6 +1481,8 @@ void G_InitLevelLocals ()
 	level.outsidefogdensity = info->outsidefogdensity;
 	level.skyfog = info->skyfog;
 
+	level.pixelstretch = info->pixelstretch;
+
 	compatflags.Callback();
 	compatflags2.Callback();
 
@@ -1957,23 +1959,6 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SetInterMusic)
 //
 //
 //==========================================================================
-
-float FLevelLocals::PixelStretch()
-{
-	return level.info->pixelstretch;
-}
-
-DEFINE_ACTION_FUNCTION(FLevelLocals, GetPixelStretch)
-{
-	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
-	ACTION_RETURN_FLOAT(self->PixelStretch());
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
 DEFINE_GLOBAL(level);
 DEFINE_FIELD(FLevelLocals, sectors)
 DEFINE_FIELD(FLevelLocals, lines)
@@ -2011,6 +1996,7 @@ DEFINE_FIELD(FLevelLocals, teamdamage)
 DEFINE_FIELD(FLevelLocals, fogdensity)
 DEFINE_FIELD(FLevelLocals, outsidefogdensity)
 DEFINE_FIELD(FLevelLocals, skyfog)
+DEFINE_FIELD(FLevelLocals, pixelstretch)
 DEFINE_FIELD_BIT(FLevelLocals, flags, noinventorybar, LEVEL_NOINVENTORYBAR)
 DEFINE_FIELD_BIT(FLevelLocals, flags, monsterstelefrag, LEVEL_MONSTERSTELEFRAG)
 DEFINE_FIELD_BIT(FLevelLocals, flags, actownspecial, LEVEL_ACTOWNSPECIAL)

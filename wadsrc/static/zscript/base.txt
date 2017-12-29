@@ -536,6 +536,7 @@ struct LevelLocals native
 	native readonly int fogdensity;
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
+	native readonly float pixelstretch;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);
@@ -547,7 +548,6 @@ struct LevelLocals native
 	native static void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
 	native void SetInterMusic(String nextmap);
-	native double GetPixelStretch();
 	native String FormatMapName(int mapnamecolor);
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;

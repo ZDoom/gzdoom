@@ -828,7 +828,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 				back->GetTexture(sector_t::ceiling) == skyflatnum)
 			{
 				// intra-sky lines do not clip the texture at all if there's no upper texture
-				topleft = topright = texturetop;
+				topleft = topright = wrap ? 1e16f : texturetop;
 			}
 			else
 			{

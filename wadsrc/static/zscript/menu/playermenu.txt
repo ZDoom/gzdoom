@@ -585,9 +585,9 @@ class PlayerMenu : ListMenu
 	override void Drawer ()
 	{
 		Super.Drawer();
-		String str = "PRESS " .. TEXTCOLOR_WHITE .. "SPACE";
+		String str = Stringtable.Localize("$PLYRMNU_PRESSSPACE");
 		screen.DrawText (SmallFont, Font.CR_GOLD, 320 - 32 - 32 - SmallFont.StringWidth (str)/2, 50 + 48 + 70, str, DTA_Clean, true);
-		str = mRotation ? "TO SEE FRONT" : "TO SEE BACK";
+		str = Stringtable.Localize(mRotation ? "$PLYRMNU_SEEFRONT" : "$PLYRMNU_SEEBACK");
 		screen.DrawText (SmallFont, Font.CR_GOLD, 320 - 32 - 32 - SmallFont.StringWidth (str)/2, 50 + 48 + 70 + SmallFont.GetHeight (), str, DTA_Clean, true);
 
 	}

@@ -2950,7 +2950,7 @@ void AM_drawThings ()
 						const size_t spriteIndex = sprite.spriteframes + (show > 1 ? t->frame : 0);
 
 						frame = &SpriteFrames[spriteIndex];
-						DAngle angle = 270. -t->Angles.Yaw;
+						DAngle angle = 270. + 22.5 - t->Angles.Yaw;
 						if (frame->Texture[0] != frame->Texture[1]) angle += 180. / 16;
 						if (am_rotate == 1 || (am_rotate == 2 && viewactive))
 						{

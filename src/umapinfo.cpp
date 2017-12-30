@@ -332,7 +332,7 @@ static int ParseMapEntry(FScanner &scanner, UMapEntry *val)
 
 int ParseUMapInfo(int lumpnum)
 {
-	P_LoadTranslator("xlat/doom.txt");
+	P_LoadTranslator(gameinfo.translator);
 
 	FScanner scanner(lumpnum);
 	unsigned int i;

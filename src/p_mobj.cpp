@@ -823,7 +823,7 @@ bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 	item->ClearCounters();
 	if (!givecheat || amount > 0)
 	{
-		if (type->IsDescendantOf (PClass::FindActor(NAME_BasicArmorPickup)) || type->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
+		if (type->IsDescendantOf(NAME_BasicArmorPickup) || type->IsDescendantOf(NAME_BasicArmorBonus))
 		{
 			item->IntVar(NAME_SaveAmount) *= amount;
 		}

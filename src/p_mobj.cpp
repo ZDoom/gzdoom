@@ -829,10 +829,16 @@ bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 		}
 		else
 		{
-			if (!givecheat)
-				item->Amount = amount;
+			if (givecheat)
+			{
+				item->Amount = MIN(amount, type->IsDescendantOf(NAME_Ammo)
+					? item->IntVar("BackpackMaxAmount")
+					: item->MaxAmount);
+			}
 			else
-				item->Amount = MIN (amount, item->MaxAmount);
+			{
+				item->Amount = amount;
+			}
 		}
 	}
 	if (!item->CallTryPickup (this))

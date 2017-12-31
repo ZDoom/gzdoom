@@ -831,9 +831,11 @@ bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 		{
 			if (givecheat)
 			{
-				item->Amount = MIN(amount, type->IsDescendantOf(NAME_Ammo)
-					? item->IntVar("BackpackMaxAmount")
-					: item->MaxAmount);
+				const AInventory *const haveitem = FindInventory(type);
+
+				item->Amount = MIN(amount, nullptr == haveitem
+					? static_cast<AInventory*>(GetDefaultByType(type))->MaxAmount
+					: haveitem->MaxAmount);
 			}
 			else
 			{

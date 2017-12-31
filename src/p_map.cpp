@@ -856,7 +856,7 @@ static int LineIsBelow(line_t *line, AActor *actor)
 //==========================================================================
 
 static // killough 3/26/98: make static
-bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
+bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm, const bool wasfit)
 {
 	line_t *ld = cres.line;
 	bool rail = false;
@@ -902,12 +902,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			double portz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
 			if (tm.thing->Z() < portz && tm.thing->Z() + tm.thing->MaxStepHeight >= portz && tm.floorz < portz)
 			{
-				tm.floorz = portz;
-				tm.floorsector = cres.line->frontsector;
-				tm.floorpic = cres.line->sidedef[0]->GetTexture(side_t::mid);
-				tm.floorterrain = 0;
-				tm.portalstep = true;
-				tm.portalgroup = cres.line->frontsector->GetOppositePortalGroup(sector_t::ceiling);
+				if (wasfit)
+				{
+					tm.floorz = portz;
+					tm.floorsector = cres.line->frontsector;
+					tm.floorpic = cres.line->sidedef[0]->GetTexture(side_t::mid);
+					tm.floorterrain = 0;
+					tm.portalstep = true;
+					tm.portalgroup = cres.line->frontsector->GetOppositePortalGroup(sector_t::ceiling);
+				}
 				return true;
 			}
 		}
@@ -916,7 +919,10 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		{
 			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
-		tm.thing->BlockingLine = ld;
+		if (wasfit)
+		{
+			tm.thing->BlockingLine = ld;
+		}
 		CheckForPushSpecial(ld, 0, tm.thing);
 		return false;
 	}
@@ -948,12 +954,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == -1) return true;
 				if (state == 1)
 				{
-					// the line should not block but we should set the ceilingz to the portal boundary so that we can't float up into that line.
-					double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::floor);
-					if (portalz < tm.ceilingz)
+					if (wasfit)
 					{
-						tm.ceilingz = portalz;
-						tm.ceilingsector = cres.line->frontsector;
+						// the line should not block but we should set the ceilingz to the portal boundary so that we can't float up into that line.
+						double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::floor);
+						if (portalz < tm.ceilingz)
+						{
+							tm.ceilingz = portalz;
+							tm.ceilingsector = cres.line->frontsector;
+						}
 					}
 					return true;
 				}
@@ -965,12 +974,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == -1) return true;
 				if (state == 1)
 				{
-					double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
-					if (portalz > tm.floorz)
+					if (wasfit)
 					{
-						tm.floorz = portalz;
-						tm.floorsector = cres.line->frontsector;
-						tm.floorterrain = 0;
+						double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
+						if (portalz > tm.floorz)
+						{
+							tm.floorz = portalz;
+							tm.floorsector = cres.line->frontsector;
+							tm.floorterrain = 0;
+						}
 					}
 					return true;
 				}
@@ -981,7 +993,10 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				{
 					P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 				}
-				tm.thing->BlockingLine = ld;
+				if (wasfit)
+				{
+					tm.thing->BlockingLine = ld;
+				}
 				// Calculate line side based on the actor's original position, not the new one.
 				CheckForPushSpecial(ld, P_PointOnLineSide(cres.Position, ld), tm.thing);
 				return false;
@@ -1000,9 +1015,12 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			double portz = tm.thing->Sector->GetPortalPlaneZ(sector_t::ceiling);
 			if (tm.thing->Z() < portz && tm.thing->Z() + tm.thing->MaxStepHeight >= portz && tm.floorz < portz)
 			{
-				// Actor is stepping through a portal.
-				tm.portalstep = true;
-				tm.portalgroup = tm.thing->Sector->GetOppositePortalGroup(sector_t::ceiling);
+				if (wasfit)
+				{
+					// Actor is stepping through a portal.
+					tm.portalstep = true;
+					tm.portalgroup = tm.thing->Sector->GetOppositePortalGroup(sector_t::ceiling);
+				}
 				return true;
 			}
 		}
@@ -1042,41 +1060,44 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		open.bottom += 32;
 	}
 
-	// adjust floor / ceiling heights
-	if (!(cres.portalflags & FFCF_NOCEILING))
+	if (wasfit)
 	{
-		if (open.top < tm.ceilingz)
+		// adjust floor / ceiling heights
+		if (!(cres.portalflags & FFCF_NOCEILING))
 		{
-			tm.ceilingz = open.top;
-			tm.ceilingsector = open.topsec;
-			tm.ceilingpic = open.ceilingpic;
-			tm.ceilingline = ld;
-			tm.thing->BlockingLine = ld;
-		}
-	}
-
-	// If we are stepping through a portal the line's opening must be checked, regardless of the NOFLOOR flag
-	if (!(cres.portalflags & FFCF_NOFLOOR) || (tm.portalstep && open.bottomsec->PortalGroup == tm.portalgroup))
-	{
-		if (open.bottom > tm.floorz)
-		{
-			tm.floorz = open.bottom;
-			tm.floorsector = open.bottomsec;
-			tm.floorpic = open.floorpic;
-			tm.floorterrain = open.floorterrain;
-			tm.touchmidtex = open.touchmidtex;
-			tm.abovemidtex = open.abovemidtex;
-			tm.thing->BlockingLine = ld;
-		}
-		else if (open.bottom == tm.floorz)
-		{
-			tm.touchmidtex |= open.touchmidtex;
-			tm.abovemidtex |= open.abovemidtex;
+			if (open.top < tm.ceilingz)
+			{
+				tm.ceilingz = open.top;
+				tm.ceilingsector = open.topsec;
+				tm.ceilingpic = open.ceilingpic;
+				tm.ceilingline = ld;
+				tm.thing->BlockingLine = ld;
+			}
 		}
 
-		if (open.lowfloor < tm.dropoffz)
+		// If we are stepping through a portal the line's opening must be checked, regardless of the NOFLOOR flag
+		if (!(cres.portalflags & FFCF_NOFLOOR) || (tm.portalstep && open.bottomsec->PortalGroup == tm.portalgroup))
 		{
-			tm.dropoffz = open.lowfloor;
+			if (open.bottom > tm.floorz)
+			{
+				tm.floorz = open.bottom;
+				tm.floorsector = open.bottomsec;
+				tm.floorpic = open.floorpic;
+				tm.floorterrain = open.floorterrain;
+				tm.touchmidtex = open.touchmidtex;
+				tm.abovemidtex = open.abovemidtex;
+				tm.thing->BlockingLine = ld;
+			}
+			else if (open.bottom == tm.floorz)
+			{
+				tm.touchmidtex |= open.touchmidtex;
+				tm.abovemidtex |= open.abovemidtex;
+			}
+
+			if (open.lowfloor < tm.dropoffz)
+			{
+				tm.dropoffz = open.lowfloor;
+			}
 		}
 	}
 
@@ -1881,7 +1902,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 
 	while (it.Next(&lcres))
 	{
-		bool thisresult = PIT_CheckLine(it, lcres, it.Box(), tm);
+		bool thisresult = PIT_CheckLine(it, lcres, it.Box(), tm, good);
 		good &= thisresult;
 		if (thisresult)
 		{
@@ -5920,10 +5941,7 @@ bool P_AdjustFloorCeil(AActor *thing, FChangePosition *cpos)
 	}
 
 	bool isgood = P_CheckPosition(thing, thing->Pos(), tm);
-
-	// This is essentially utterly broken because it even uses the return from a failed P_CheckPosition but the entire logic will break down if that isn't done.
-	// However, if tm.floorz is greater than tm.ceilingz we have a real problem that needs to be dealt with exolicitly.
-	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE) && tm.floorz <= tm.ceilingz)
+	if (!(thing->flags4 & MF4_ACTLIKEBRIDGE))
 	{
 		thing->floorz = tm.floorz;
 		thing->ceilingz = tm.ceilingz;

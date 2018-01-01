@@ -201,7 +201,8 @@ static const char *MenuDefCommands[] =
 	"fpuke",
 	"pukename",
 	"event",
-	"netevent"
+	"netevent",
+	"openmenu"
 };
 
 // CODE --------------------------------------------------------------------

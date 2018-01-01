@@ -8245,7 +8245,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
 	ACTION_RETURN_VEC2(self->Vec2Angle(length, angle, absolute));
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec2Diff)
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Diff)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(x1);
@@ -8261,7 +8261,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2Diff)
 	ACTION_RETURN_VEC2((v2 + Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup)) - v1);
 }
 
-DEFINE_ACTION_FUNCTION(AActor, Vec3Diff)
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
 {
 	PARAM_PROLOGUE;
 	PARAM_FLOAT(x1);

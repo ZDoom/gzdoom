@@ -8258,7 +8258,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2Diff)
 	sector_t *sec1 = P_PointInSector(v1);
 	sector_t *sec2 = P_PointInSector(v2);
 
-	ACTION_RETURN_VEC2((v2 + Displacements.getOffset(sec1->PortalGroup, sec2->PortalGroup)) - v1);
+	ACTION_RETURN_VEC2((v2 + Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup)) - v1);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, Vec3Diff)
@@ -8282,7 +8282,7 @@ DEFINE_ACTION_FUNCTION(AActor, Vec3Diff)
 	// PosRelative is:
 	// Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
 
-	ACTION_RETURN_VEC3((v2 + Displacements.getOffset(sec1->PortalGroup, sec2->PortalGroup)) - v1);
+	ACTION_RETURN_VEC3((v2 + Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup)) - v1);
 }
 
 DEFINE_ACTION_FUNCTION(AActor, Vec3To)

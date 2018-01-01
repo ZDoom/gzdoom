@@ -637,8 +637,8 @@ class Actor : Thinker native
 	native clearscope double AngleTo(Actor target, bool absolute = false) const;
 	native void AddZ(double zadd, bool moving = true);
 	native void SetZ(double z);
-	native clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
-	native clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
+	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
+	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
 	native clearscope vector2 Vec2To(Actor other) const;
 	native clearscope vector3 Vec3To(Actor other) const;
 	native clearscope vector3 Vec3Offset(double x, double y, double z, bool absolute = false) const;

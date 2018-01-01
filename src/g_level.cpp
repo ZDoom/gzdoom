@@ -1957,6 +1957,52 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SetInterMusic)
 //==========================================================================
 //
 //
+//==========================================================================
+
+template <typename T>
+inline T VecDiff(const T& v1, const T& v2)
+{
+	T result = v2 - v1;
+
+	if (level.subsectors.Size() > 0)
+	{
+		const sector_t *const sec1 = P_PointInSector(v1);
+		const sector_t *const sec2 = P_PointInSector(v2);
+
+		if (nullptr != sec1 && nullptr != sec2)
+		{
+			result += Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
+		}
+	}
+
+	return result;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Diff)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
+	PARAM_FLOAT(x2);
+	PARAM_FLOAT(y2);
+	ACTION_RETURN_VEC2(VecDiff(DVector2(x1, y1), DVector2(x2, y2)));
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
+	PARAM_FLOAT(z1);
+	PARAM_FLOAT(x2);
+	PARAM_FLOAT(y2);
+	PARAM_FLOAT(z2);
+	ACTION_RETURN_VEC3(VecDiff(DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
+}
+
+//==========================================================================
+//
+//
 //
 //==========================================================================
 DEFINE_GLOBAL(level);

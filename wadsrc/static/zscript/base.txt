@@ -552,6 +552,9 @@ struct LevelLocals native
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
+
+	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
+	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
 	
 	String TimeFormatted(bool totals = false)
 	{

@@ -8253,6 +8253,59 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2Angle)
 	ACTION_RETURN_VEC2(self->Vec2Angle(length, angle, absolute));
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Diff)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
+	PARAM_FLOAT(x2);
+	PARAM_FLOAT(y2);
+
+	DVector2 v1 = DVector2(x1, y1);
+	DVector2 v2 = DVector2(x2, y2);
+	sector_t *sec1 = P_PointInSector(v1);
+	sector_t *sec2 = P_PointInSector(v2);
+
+	if (!sec1 || !sec2)
+	{
+		ACTION_RETURN_VEC2(v2 - v1);
+	}
+	else
+	{
+		ACTION_RETURN_VEC2((v2 + Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup)) - v1);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x1);
+	PARAM_FLOAT(y1);
+	PARAM_FLOAT(z1);
+	PARAM_FLOAT(x2);
+	PARAM_FLOAT(y2);
+	PARAM_FLOAT(z2);
+
+	DVector3 v1 = DVector3(x1, y1, z1);
+	DVector3 v2 = DVector3(x2, y2, z2);
+	sector_t *sec1 = P_PointInSector(v1);
+	sector_t *sec2 = P_PointInSector(v2);
+
+	// Vec3To is:
+	// other->PosRelative(this) - Pos();
+
+	// PosRelative is:
+	// Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
+
+	if (!sec1 || !sec2)
+	{
+		ACTION_RETURN_VEC2(v2 - v1);
+	}
+	else
+	{
+		ACTION_RETURN_VEC2((v2 + Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup)) - v1);
+	}
+}
 
 DEFINE_ACTION_FUNCTION(AActor, Vec3To)
 {

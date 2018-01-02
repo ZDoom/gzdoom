@@ -8,7 +8,7 @@ class HereticPlayer : PlayerPawn
 		Mass 100;
 		Painchance 255;
 		Speed 1;
-		Player._DSPLYNAME "$HERETICPLAYER_DSPLYNAME";
+		Player.DisplayName "$HERETICPLAYER_DSPLYNAME";
 		Player.StartItem "GoldWand";
 		Player.StartItem "Staff";
 		Player.StartItem "GoldWandAmmo", 50;

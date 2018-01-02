@@ -4,7 +4,7 @@ class ChexPlayer : DoomPlayer
 {
 	Default
 	{
-		player._DSPLYNAME "$CHEXPLAYER_DSPLYNAME";
+		Player.DisplayName "$CHEXPLAYER_DSPLYNAME";
 		player.crouchsprite "";
 		player.colorrange 192, 207; //Not perfect, but its better than everyone being blue.
 		player.startitem "MiniZorcher";

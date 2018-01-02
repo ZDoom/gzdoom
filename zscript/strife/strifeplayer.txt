@@ -12,7 +12,7 @@ class StrifePlayer : PlayerPawn
 		Speed 1;
 		MaxStepHeight 16;
 		CrushPainSound "misc/pcrush";
-		Player._DSPLYNAME "$STRIFEPLAYER_DSPLYNAME";
+		Player.DisplayName "$STRIFEPLAYER_DSPLYNAME";
 		Player.StartItem "PunchDagger";
 		Player.RunHealth 15;
 		Player.WeaponSlot 1, "PunchDagger";

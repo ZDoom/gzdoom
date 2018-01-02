@@ -13,7 +13,7 @@ class DoomPlayer : PlayerPawn
 		Height 56;
 		Mass 100;
 		PainChance 255;
-		Player._DSPLYNAME "$DOOMPLAYER_DSPLYNAME";
+		Player.DisplayName "$DOOMPLAYER_DSPLYNAME";
 		Player.CrouchSprite "PLYC";
 		Player.StartItem "Pistol";
 		Player.StartItem "Fist";

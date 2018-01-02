@@ -410,9 +410,9 @@ skill baby
 	EasyBossBrain
 	SpawnFilter = Baby
 	Name = "$MNU_WETNURSE"
-	playerclassname = "fighter", "$MNU_SQUIRE"
-	playerclassname = "cleric", "$MNU_ALTARBOY"
-	playerclassname = "mage", "$MNU_APPRENTICE"
+	playerclassname = "$FIGHTERPLAYER_DSPLYNAME", "$MNU_SQUIRE"
+	playerclassname = "$CLERICPLAYER_DSPLYNAME", "$MNU_ALTARBOY"
+	playerclassname = "$MAGEPLAYER_DSPLYNAME", "$MNU_APPRENTICE"
 }
 
 skill easy
@@ -420,9 +420,9 @@ skill easy
 	DoubleAmmoFactor = 1.5
 	SpawnFilter = Easy
 	Name = "$MNU_YELLOWBELLIES"
-	playerclassname = "fighter", "$MNU_KNIGHT"
-	playerclassname = "cleric", "$MNU_ACOLYTE"
-	playerclassname = "mage", "$MNU_ENCHANTER"
+	playerclassname = "$FIGHTERPLAYER_DSPLYNAME", "$MNU_KNIGHT"
+	playerclassname = "$CLERICPLAYER_DSPLYNAME", "$MNU_ACOLYTE"
+	playerclassname = "$MAGEPLAYER_DSPLYNAME", "$MNU_ENCHANTER"
 }
 
 skill normal
@@ -430,9 +430,9 @@ skill normal
 	DoubleAmmoFactor = 1.5
 	SpawnFilter = Normal
 	Name = "$MNU_BRINGEST"
-	playerclassname = "fighter", "$MNU_WARRIOR"
-	playerclassname = "cleric", "$MNU_PRIEST"
-	playerclassname = "mage", "$MNU_SORCERER"
+	playerclassname = "$FIGHTERPLAYER_DSPLYNAME", "$MNU_WARRIOR"
+	playerclassname = "$CLERICPLAYER_DSPLYNAME", "$MNU_PRIEST"
+	playerclassname = "$MAGEPLAYER_DSPLYNAME", "$MNU_SORCERER"
 	DefaultSkill
 }
 
@@ -441,9 +441,9 @@ skill hard
 	DoubleAmmoFactor = 1.5
 	SpawnFilter = Hard
 	Name = "$MNU_SMITE"
-	playerclassname = "fighter", "$MNU_BERSERKER"
-	playerclassname = "cleric", "$MNU_CARDINAL"
-	playerclassname = "mage", "$MNU_WARLOCK"
+	playerclassname = "$FIGHTERPLAYER_DSPLYNAME", "$MNU_BERSERKER"
+	playerclassname = "$CLERICPLAYER_DSPLYNAME", "$MNU_CARDINAL"
+	playerclassname = "$MAGEPLAYER_DSPLYNAME", "$MNU_WARLOCK"
 }
 
 skill nightmare
@@ -454,9 +454,9 @@ skill nightmare
 	DisableCheats
 	SpawnFilter = Nightmare
 	Name = "$MNU_BLACKPLAGUE"
-	playerclassname = "fighter", "$MNU_TITAN"
-	playerclassname = "cleric", "$MNU_POPE"
-	playerclassname = "mage", "$MNU_ARCHMAGE"
+	playerclassname = "$FIGHTERPLAYER_DSPLYNAME", "$MNU_TITAN"
+	playerclassname = "$CLERICPLAYER_DSPLYNAME", "$MNU_POPE"
+	playerclassname = "$MAGEPLAYER_DSPLYNAME", "$MNU_ARCHMAGE"
 }
 
 clearepisodes

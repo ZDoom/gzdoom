@@ -18,7 +18,7 @@ class MagePlayer : PlayerPawn
 		Player.JumpZ 9;
 		Player.Viewheight 48;
 		Player.SpawnClass "Mage";
-		Player.DisplayName "Mage";
+		Player.DisplayName "$MAGEPLAYER_DSPLYNAME";
 		Player.SoundClass "mage";
 		Player.ScoreIcon "MAGEFACE";
 		Player.InvulnerabilityMode "Reflective";
@@ -35,14 +35,14 @@ class MagePlayer : PlayerPawn
 		Player.FlechetteType "ArtiPoisonBag2";
 		
 		Player.ColorRange 146, 163;
-		Player.Colorset		0, "Blue",			146, 163,    161;
-		Player.ColorsetFile 1, "Red",			"TRANTBL7",  0xB3;
-		Player.ColorsetFile 2, "Gold",			"TRANTBL8",  0x8C;
-		Player.ColorsetFile 3, "Dull Green",	"TRANTBL9",  0x41;
-		Player.ColorsetFile 4, "Green",			"TRANTBLA",  0xC9;
-		Player.ColorsetFile 5, "Gray",			"TRANTBLB",  0x30;
-		Player.ColorsetFile 6, "Brown",			"TRANTBLC",  0x72;
-		Player.ColorsetFile 7, "Purple",		"TRANTBLD",  0xEE;
+		Player.Colorset		0, "$PLYRMNU_BLUE",	146, 163,    161;
+		Player.ColorsetFile 1, "$PLYRMNU_RED",		"TRANTBL7",  0xB3;
+		Player.ColorsetFile 2, "$PLYRMNU_GOLD",		"TRANTBL8",  0x8C;
+		Player.ColorsetFile 3, "$PLYRMNU_DULLGREEN",	"TRANTBL9",  0x41;
+		Player.ColorsetFile 4, "$PLYRMNU_GREEN",	"TRANTBLA",  0xC9;
+		Player.ColorsetFile 5, "$PLYRMNU_GRAY",		"TRANTBLB",  0x30;
+		Player.ColorsetFile 6, "$PLYRMNU_BROWN",	"TRANTBLC",  0x72;
+		Player.ColorsetFile 7, "$PLYRMNU_PURPLE",	"TRANTBLD",  0xEE;
 	}
 
 	States

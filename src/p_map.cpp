@@ -2879,6 +2879,14 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(AActor, CheckMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT_DEF(flags);
+	ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), flags));
+}
 
 
 //==========================================================================

@@ -17,7 +17,7 @@ class FighterPlayer : PlayerPawn
 		Player.JumpZ 9;
 		Player.Viewheight 48;
 		Player.SpawnClass "Fighter";
-		Player.DisplayName "Fighter";
+		Player.DisplayName "$FIGHTERPLAYER_DSPLYNAME";
 		Player.SoundClass "fighter";
 		Player.ScoreIcon "FITEFACE";
 		Player.HealRadiusType "Armor";
@@ -32,14 +32,14 @@ class FighterPlayer : PlayerPawn
 		Player.WeaponSlot 4, "FWeapQuietus";
 		
 		Player.ColorRange 246, 254;
-		Player.Colorset		0, "Gold",			246, 254,    253;
-		Player.ColorsetFile 1, "Red",			"TRANTBL0",  0xAC;
-		Player.ColorsetFile 2, "Blue",			"TRANTBL1",  0x9D;
-		Player.ColorsetFile 3, "Dull Green",	"TRANTBL2",  0x3E;
-		Player.ColorsetFile 4, "Green",			"TRANTBL3",  0xC8;
-		Player.ColorsetFile 5, "Gray",			"TRANTBL4",  0x2D;
-		Player.ColorsetFile 6, "Brown",			"TRANTBL5",  0x6F;
-		Player.ColorsetFile 7, "Purple",		"TRANTBL6",  0xEE;
+		Player.Colorset		0, "$PLYRMNU_GOLD",	246, 254,    253;
+		Player.ColorsetFile 1, "$PLYRMNU_RED",		"TRANTBL0",  0xAC;
+		Player.ColorsetFile 2, "$PLYRMNU_BLUE",		"TRANTBL1",  0x9D;
+		Player.ColorsetFile 3, "$PLYRMNU_DULLGREEN",	"TRANTBL2",  0x3E;
+		Player.ColorsetFile 4, "$PLYRMNU_GREEN",	"TRANTBL3",  0xC8;
+		Player.ColorsetFile 5, "$PLYRMNU_GRAY",		"TRANTBL4",  0x2D;
+		Player.ColorsetFile 6, "$PLYRMNU_BROWN",	"TRANTBL5",  0x6F;
+		Player.ColorsetFile 7, "$PLYRMNU_PURPLE",	"TRANTBL6",  0xEE;
 	}
 	
 	States

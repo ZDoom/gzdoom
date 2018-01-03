@@ -2784,9 +2784,8 @@ DEFINE_ACTION_FUNCTION(AActor, TryMove)
 //
 //==========================================================================
 
-bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
+static bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int flags)
 {
-	FCheckPosition tm;
 	double		newz = thing->Z();
 
 	auto f1 = thing->flags & MF_PICKUP;
@@ -2879,13 +2878,27 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 	return true;
 }
 
+bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
+{
+	FCheckPosition tm;
+	return P_CheckMove(thing, pos, tm, flags);
+}
+
 DEFINE_ACTION_FUNCTION(AActor, CheckMove)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_INT_DEF(flags);
-	ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), flags));
+	PARAM_POINTER_DEF(tm, FCheckPosition);
+	if (tm == nullptr)
+	{
+		ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), flags));
+	}
+	else
+	{
+		ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), *tm, flags));
+	}
 }
 
 

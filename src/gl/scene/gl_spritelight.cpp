@@ -107,11 +107,12 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 
 				if (light->IsSpot())
 				{
+					L *= -1.0f / dist;
 					DAngle negPitch = -light->Angles.Pitch;
-					double xzLen = negPitch.Cos();
-					double spotDirX = -light->Angles.Yaw.Cos() * xzLen;
-					double spotDirY = -negPitch.Sin();
-					double spotDirZ = -light->Angles.Yaw.Sin() * xzLen;
+					double xyLen = negPitch.Cos();
+					double spotDirX = -light->Angles.Yaw.Cos() * xyLen;
+					double spotDirY = -light->Angles.Yaw.Sin() * xyLen;
+					double spotDirZ = -negPitch.Sin();
 					double cosDir = L.X * spotDirX + L.Y * spotDirY + L.Z * spotDirZ;
 					frac *= (float)smoothstep(light->SpotOuterAngle.Cos(), light->SpotInnerAngle.Cos(), cosDir);
 				}

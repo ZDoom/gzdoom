@@ -108,6 +108,7 @@
 #include "a_morph.h"
 #include "events.h"
 #include "actorinlines.h"
+#include "a_dynlight.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -6001,6 +6002,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		}
 	}
 
+
+
 	// spawn it
 	double sz;
 
@@ -6086,6 +6089,14 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (mthing->fillcolor)
 		mobj->fillcolor = (mthing->fillcolor & 0xffffff) | (ColorMatcher.Pick((mthing->fillcolor & 0xff0000) >> 16,
 			(mthing->fillcolor & 0xff00) >> 8, (mthing->fillcolor & 0xff)) << 24);
+
+	if (i->IsDescendantOf(RUNTIME_CLASS(ADynamicLight)))
+	{
+		if (mthing->SpotInnerAngle != 0)
+			((ADynamicLight*)mobj)->SpotInnerAngle = mthing->SpotInnerAngle;
+		if (mthing->SpotOuterAngle != 0)
+			((ADynamicLight*)mobj)->SpotOuterAngle = mthing->SpotOuterAngle;
+	}
 
 	mobj->CallBeginPlay ();
 	if (!(mobj->ObjectFlags & OF_EuthanizeMe))

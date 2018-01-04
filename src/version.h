@@ -48,22 +48,22 @@ const char *GetVersionString();
 #ifdef GIT_DESCRIPTION
 #define VERSIONSTR GIT_DESCRIPTION
 #else
-#define VERSIONSTR "3.2.4"
+#define VERSIONSTR "3.2.5"
 #endif
 
 // The version as seen in the Windows resource
-#define RC_FILEVERSION 3,2,4,0
-#define RC_PRODUCTVERSION 3,2,4,0
+#define RC_FILEVERSION 3,2,5,0
+#define RC_PRODUCTVERSION 3,2,5,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
-// These are for content versioning. The current state is '3.2.4'.
+// These are for content versioning. The current state is '3.2.5'.
 #define VER_MAJOR 3
 #define VER_MINOR 2
-#define VER_REVISION 4
+#define VER_REVISION 5
 
 // Version identifier for network games.
 // Bump it every time you do a release unless you're certain you
 // didn't change anything that will affect sync.
-#define NETGAMEVERSION 234
+#define NETGAMEVERSION 235
 
 // Version stored in the ini's [LastRun] section.
 // Bump it if you made some configuration change that you want to

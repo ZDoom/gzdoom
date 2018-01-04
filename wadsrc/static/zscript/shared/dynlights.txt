@@ -1,5 +1,11 @@
 class DynamicLight : Actor native
 {
+	native double SpotInnerAngle;
+	native double SpotOuterAngle;
+
+	property SpotInnerAngle: SpotInnerAngle;
+	property SpotOuterAngle: SpotOuterAngle;
+
 	enum EArgs
 	{
 	   LIGHT_RED = 0,
@@ -17,7 +23,7 @@ class DynamicLight : Actor native
 		FlickerLight,
 		RandomFlickerLight,
 		SectorLight,
-		SpotLight,
+		DummyLight,
 		ColorPulseLight,
 		ColorFlickerLight, 
 		RandomColorFlickerLight

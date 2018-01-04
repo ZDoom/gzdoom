@@ -114,6 +114,9 @@ DEFINE_CLASS_PROPERTY(type, S, DynamicLight)
 //==========================================================================
 IMPLEMENT_CLASS(ADynamicLight, false, false)
 
+DEFINE_FIELD(ADynamicLight, SpotInnerAngle)
+DEFINE_FIELD(ADynamicLight, SpotOuterAngle)
+
 static FRandom randLight;
 
 //==========================================================================
@@ -134,7 +137,9 @@ void ADynamicLight::Serialize(FSerializer &arc)
 	arc("lightflags", lightflags, def->lightflags)
 		("lighttype", lighttype, def->lighttype)
 		("tickcount", m_tickCount, def->m_tickCount)
-		("currentradius", m_currentRadius, def->m_currentRadius);
+		("currentradius", m_currentRadius, def->m_currentRadius)
+		("spotinnerangle", SpotInnerAngle, def->SpotInnerAngle)
+		("spotouterangle", SpotOuterAngle, def->SpotOuterAngle);
 
 	if (lighttype == PulseLight)
 		arc("lastupdate", m_lastUpdate, def->m_lastUpdate)

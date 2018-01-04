@@ -141,10 +141,10 @@ void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
 		spotOuterAngle = light->SpotOuterAngle.Cos();
 
 		DAngle negPitch = -light->Angles.Pitch;
-		float xyLen = negPitch.Cos();
-		spotDirX = -light->Angles.Yaw.Cos() * xyLen;
-		spotDirY = -light->Angles.Yaw.Sin() * xyLen;
-		spotDirZ = -negPitch.Sin();
+		double xzLen = negPitch.Cos();
+		spotDirX = -light->Angles.Yaw.Cos() * xzLen;
+		spotDirY = -negPitch.Sin();
+		spotDirZ = -light->Angles.Yaw.Sin() * xzLen;
 	}
 
 	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(16)];

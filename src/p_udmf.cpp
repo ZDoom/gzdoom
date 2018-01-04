@@ -799,6 +799,14 @@ public:
 				th->Scale.X = th->Scale.Y = CheckFloat(key);
 				break;
 
+			case NAME_SpotInnerAngle:
+				th->SpotInnerAngle = CheckFloat(key);
+				break;
+
+			case NAME_SpotOuterAngle:
+				th->SpotOuterAngle = CheckFloat(key);
+				break;
+
 			default:
 				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))

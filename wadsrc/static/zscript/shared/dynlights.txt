@@ -245,6 +245,132 @@ class SpotLightFlickerRandom : SpotLight
 		DynamicLight.Type "RandomFlicker";
 	}
 }
+<<<<<<< Updated upstream
+=======
+<<<<<<< HEAD
+
+class SpotLightAdditive : SpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightPulseAdditive : SpotLightPulse
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightFlickerAdditive : SpotLightFlicker
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SectorSpotLightAdditive : SectorSpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightFlickerRandomAdditive : SpotLightFlickerRandom
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightSubtractive : SpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightPulseSubtractive : SpotLightPulse
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightFlickerSubtractive : SpotLightFlicker
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SectorSpotLightSubtractive : SectorSpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightFlickerRandomSubtractive : SpotLightFlickerRandom
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightAttenuated : SpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SpotLightPulseAttenuated : SpotLightPulse
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SpotLightFlickerAttenuated : SpotLightFlicker
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SectorSpotLightAttenuated : SectorSpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SpotLightFlickerRandomAttenuated : SpotLightFlickerRandom
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+=======
+>>>>>>> 7f7c720883e6841ced9c5e66cdae5e6b531872ad
+>>>>>>> Stashed changes
 
 class VavoomLight : DynamicLight 
 {

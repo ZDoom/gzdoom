@@ -833,3 +833,14 @@ CA3773ED313E8899311F3DD0CA195A68 // e3m6
 {
 	polyobj
 }
+
+3D8ED20BF5CAAE6D6AE0E10999C75084 // hgarden.pk3 map01
+{
+	// spawn trees on top of arches
+	setthingz 399 168
+	setthingz 400 168
+	setthingz 401 168
+	setthingz 402 168
+	setthingz 403 168
+	setthingz 404 168
+}

@@ -78,6 +78,30 @@ const uint8_t IcePalette[16][3] =
 	{ 148,148,172 }
 };
 
+static bool IndexOutOfRange(const int color)
+{
+	const bool outOfRange = color < 0 || color > 255;
+
+	if (outOfRange)
+	{
+		Printf("Palette index %i is out of range [0..255]\n", color);
+	}
+
+	return outOfRange;
+}
+
+static bool IndexOutOfRange(const int start, const int end)
+{
+	const bool outOfRange = IndexOutOfRange(start);
+	return IndexOutOfRange(end) || outOfRange;
+}
+
+static bool IndexOutOfRange(const int start1, const int end1, const int start2, const int end2)
+{
+	const bool outOfRange = IndexOutOfRange(start1, end1);
+	return IndexOutOfRange(start2, end2) || outOfRange;
+}
+
 /****************************************************/
 /****************************************************/
 
@@ -348,6 +372,11 @@ FNativePalette *FRemapTable::GetNative()
 
 void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 {
+	if (IndexOutOfRange(start, end, pal1, pal2))
+	{
+		return;
+	}
+
 	double palcol, palstep;
 
 	if (start > end)
@@ -368,7 +397,7 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 	palstep = (pal2 - palcol) / (end - start);
 	for (int i = start; i <= end; palcol += palstep, ++i)
 	{
-		int j = GPalette.Remap[i], k = GPalette.Remap[int(palcol)];
+		int j = GPalette.Remap[i], k = GPalette.Remap[int(round(palcol))];
 		Remap[j] = k;
 		Palette[j] = GPalette.BaseColors[k];
 		Palette[j].a = j == 0 ? 0 : 255;
@@ -383,6 +412,11 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 
 void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, int _r2, int _g2, int _b2)
 {
+	if (IndexOutOfRange(start, end))
+	{
+		return;
+	}
+
 	double r1 = _r1;
 	double g1 = _g1;
 	double b1 = _b1;
@@ -442,6 +476,11 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 
 void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2)
 {
+	if (IndexOutOfRange(start, end))
+	{
+		return;
+	}
+
 	r1 = clamp(r1, 0.0, 2.0);
 	g1 = clamp(g1, 0.0, 2.0);
 	b1 = clamp(b1, 0.0, 2.0);
@@ -490,6 +529,11 @@ void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, doub
 
 void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
 {
+	if (IndexOutOfRange(start, end))
+	{
+		return;
+	}
+
 	for (int i = start; i < end; ++i)
 	{
 		double br = GPalette.BaseColors[i].r;
@@ -515,6 +559,11 @@ void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
 
 void FRemapTable::AddTint(int start, int end, int r, int g, int b, int amount)
 {
+	if (IndexOutOfRange(start, end))
+	{
+		return;
+	}
+
 	for (int i = start; i < end; ++i)
 	{
 		float br = GPalette.BaseColors[i].r;

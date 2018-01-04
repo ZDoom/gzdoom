@@ -1130,7 +1130,7 @@ void Win32GLFrameBuffer::InitializeState()
 
 bool Win32GLFrameBuffer::CanUpdate()
 {
-	if (!AppActive) return false;
+	if (!AppActive && IsFullscreen()) return false;
 	return true;
 }
 

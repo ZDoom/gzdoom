@@ -823,16 +823,24 @@ bool AActor::GiveInventory(PClassActor *type, int amount, bool givecheat)
 	item->ClearCounters();
 	if (!givecheat || amount > 0)
 	{
-		if (type->IsDescendantOf (PClass::FindActor(NAME_BasicArmorPickup)) || type->IsDescendantOf(PClass::FindActor(NAME_BasicArmorBonus)))
+		if (type->IsDescendantOf(NAME_BasicArmorPickup) || type->IsDescendantOf(NAME_BasicArmorBonus))
 		{
 			item->IntVar(NAME_SaveAmount) *= amount;
 		}
 		else
 		{
-			if (!givecheat)
-				item->Amount = amount;
+			if (givecheat)
+			{
+				const AInventory *const haveitem = FindInventory(type);
+
+				item->Amount = MIN(amount, nullptr == haveitem
+					? static_cast<AInventory*>(GetDefaultByType(type))->MaxAmount
+					: haveitem->MaxAmount);
+			}
 			else
-				item->Amount = MIN (amount, item->MaxAmount);
+			{
+				item->Amount = amount;
+			}
 		}
 	}
 	if (!item->CallTryPickup (this))
@@ -5648,7 +5656,8 @@ APlayerPawn *P_SpawnPlayer (FPlayerStart *mthing, int playernum, int flags)
 	{ // Give all cards in death match mode.
 		p->mo->GiveDeathmatchInventory ();
 	}
-	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn) && state == PST_REBORN && oldactor != NULL)
+	else if ((multiplayer || (level.flags2 & LEVEL2_ALLOWRESPAWN) || sv_singleplayerrespawn ||
+		!!G_SkillProperty(SKILLP_PlayerRespawn)) && state == PST_REBORN && oldactor != NULL)
 	{ // Special inventory handling for respawning in coop
 		p->mo->FilterCoopRespawnInventory (oldactor);
 	}

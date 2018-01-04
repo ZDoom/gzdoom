@@ -50,19 +50,19 @@ void QuadStereo::checkInitialRenderContextState()
 {
 	// Keep trying until we see at least one good OpenGL context to render to
 	static bool bDecentContextWasFound = false;
-	if (!bDecentContextWasFound) {
-		// I'm using a "random" OpenGL call (glGetFramebufferAttachmentParameteriv)
-		// that appears to correlate with whether the context is ready 
-		GLint attachmentType = GL_NONE;
-		glGetFramebufferAttachmentParameteriv(GL_DRAW_FRAMEBUFFER, GL_FRONT_LEFT, GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE, &attachmentType);
-		if (attachmentType != GL_NONE) // Finally, a useful OpenGL context
+	static int contextCheckCount = 0;
+	if ( (! bDecentContextWasFound) && (contextCheckCount < 200) )
+	{
+		contextCheckCount += 1;
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);  // This question is about the main screen display context
+		GLboolean supportsStereo, supportsBuffered;
+		glGetBooleanv(GL_DOUBLEBUFFER, &supportsBuffered);
+		if (supportsBuffered) // Finally, a useful OpenGL context
 		{
 			// This block will be executed exactly ONCE during a game run
 			bDecentContextWasFound = true; // now we can stop checking every frame...
 			// Now check whether this context supports hardware stereo
-			GLboolean supportsStereo, supportsBuffered;
 			glGetBooleanv(GL_STEREO, &supportsStereo);
-			glGetBooleanv(GL_DOUBLEBUFFER, &supportsBuffered);
 			bQuadStereoSupported = supportsStereo && supportsBuffered;
 			leftEye.bQuadStereoSupported = bQuadStereoSupported;
 			rightEye.bQuadStereoSupported = bQuadStereoSupported;

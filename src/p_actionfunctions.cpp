@@ -3575,17 +3575,18 @@ DEFINE_ACTION_FUNCTION(AActor, A_SetBlend)
 	PARAM_FLOAT		(alpha);
 	PARAM_INT		(tics);
 	PARAM_COLOR_DEF	(color2);
+	PARAM_FLOAT_DEF	(alpha2);
 
 	if (color == MAKEARGB(255,255,255,255))
 		color = 0;
 	if (color2 == MAKEARGB(255,255,255,255))
 		color2 = 0;
-	if (color2.a == 0)
-		color2 = color;
+//	if (color2.a == 0)
+//		color2 = color;
 
 	Create<DFlashFader>(color.r/255.f, color.g/255.f, color.b/255.f, float(alpha),
-					color2.r/255.f, color2.g/255.f, color2.b/255.f, 0.f,
-					float(tics)/TICRATE, self);
+					color2.r/255.f, color2.g/255.f, color2.b/255.f, float(alpha2),
+					float(tics)/TICRATE, self, true);
 	return 0;
 }
 

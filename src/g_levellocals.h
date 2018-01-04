@@ -148,6 +148,7 @@ struct FLevelLocals
 	int outsidefogdensity;
 	int skyfog;
 
+	float		pixelstretch;
 
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;

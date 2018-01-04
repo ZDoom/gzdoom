@@ -168,6 +168,7 @@ struct Screen native
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
+	native static void DrawLine(int x0, int y0, int x1, int y1, Color color);
 	native static void DrawFrame(int x, int y, int w, int h);
 	native static Vector2, Vector2 VirtualToRealCoords(Vector2 pos, Vector2 size, Vector2 vsize, bool vbottom=false, bool handleaspect=true);
 	native static double GetAspectRatio();
@@ -416,8 +417,7 @@ class Thinker : Object native play
 	
 	static clearscope int Tics2Seconds(int tics)
 	{
-		// This compensates for one tic being slightly less than 1/35 of a second.
-		return int(tics * (0.98 / TICRATE));
+		return int(tics / TICRATE);
 	}
 
 }
@@ -536,6 +536,7 @@ struct LevelLocals native
 	native readonly int fogdensity;
 	native readonly int outsidefogdensity;
 	native readonly int skyfog;
+	native readonly float pixelstretch;
 // level_info_t *info cannot be done yet.
 
 	native String GetUDMFString(int type, int index, Name key);
@@ -551,6 +552,9 @@ struct LevelLocals native
 	native bool IsJumpingAllowed() const;
 	native bool IsCrouchingAllowed() const;
 	native bool IsFreelookAllowed() const;
+
+	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
+	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
 	
 	String TimeFormatted(bool totals = false)
 	{

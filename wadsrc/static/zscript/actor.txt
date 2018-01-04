@@ -624,6 +624,7 @@ class Actor : Thinker native
 	}
 	
 	native bool TryMove(vector2 newpos, int dropoff, bool missilecheck = false, FCheckPosition tm = null);
+	native bool CheckMove(vector2 newpos, int flags = 0, FCheckPosition tm = null);
 	native void NewChaseDir();
 	native void RandomChaseDir();
 	native bool CheckMissileRange();
@@ -1030,7 +1031,7 @@ class Actor : Thinker native
 	native void A_SpawnParticle(color color1, int flags = 0, int lifetime = 35, double size = 1, double angle = 0, double xoff = 0, double yoff = 0, double zoff = 0, double velx = 0, double vely = 0, double velz = 0, double accelx = 0, double accely = 0, double accelz = 0, double startalphaf = 1, double fadestepf = -1, double sizestep = 0);
 	native void A_ExtChase(bool usemelee, bool usemissile, bool playactive = true, bool nightmarefast = false);
 	native void A_DropInventory(class<Inventory> itemtype, int amount = -1);
-	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0);
+	native void A_SetBlend(color color1, double alpha, int tics, color color2 = 0, double alpha2 = 0.);
 	deprecated("2.3") native void A_ChangeFlag(string flagname, bool value);
 	native void A_ChangeCountFlags(int kill = FLAG_NO_CHANGE, int item = FLAG_NO_CHANGE, int secret = FLAG_NO_CHANGE);
 	native void A_RaiseMaster(int flags = 0);

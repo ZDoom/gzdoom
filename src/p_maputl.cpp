@@ -1275,20 +1275,21 @@ void FMultiBlockThingsIterator::Reset()
 //
 //===========================================================================
 
-class DBlockThingsIterator : public DObject, public FMultiBlockThingsIterator
+class DBlockThingsIterator : public DObject
 {
 	DECLARE_ABSTRACT_CLASS(DBlockThingsIterator, DObject);
 	FPortalGroupArray check;
+	FMultiBlockThingsIterator iterator;
 public:
 	FMultiBlockThingsIterator::CheckResult cres;
 
 	bool Next()
 	{
-		return FMultiBlockThingsIterator::Next(&cres);
+		return iterator.Next(&cres);
 	}
 
 	DBlockThingsIterator(AActor *origin, double checkradius = -1, bool ignorerestricted = false)
-		: FMultiBlockThingsIterator(check, origin, checkradius, ignorerestricted)
+		: iterator(check, origin, checkradius, ignorerestricted)
 	{
 		cres.thing = nullptr;
 		cres.Position.Zero();
@@ -1296,7 +1297,7 @@ public:
 	}
 
 	DBlockThingsIterator(double checkx, double checky, double checkz, double checkh, double checkradius, bool ignorerestricted, sector_t *newsec)
-		: FMultiBlockThingsIterator(check, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
+		: iterator(check, checkx, checky, checkz, checkh, checkradius, ignorerestricted, newsec)
 	{
 		cres.thing = nullptr;
 		cres.Position.Zero();

@@ -516,6 +516,15 @@ enum EWarpFlags
 	WARPF_COPYPITCH = 0x8000,
 };
 
+// Flags for Actor.CheckMove()
+
+enum ECheckMoveFlags
+{
+	PCM_DROPOFF  = 1,
+	PCM_NOACTORS = 1 << 1,
+	PCM_NOLINES  = 1 << 2,
+};
+
 // flags for A_SetPitch/SetAngle/SetRoll
 enum EAngleFlags
 {
@@ -962,6 +971,7 @@ enum ESkillProperty
 	SKILLP_EasyKey,
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
+	SKILLP_PlayerRespawn,
 };
 enum EFSkillProperty	// floating point properties
 {

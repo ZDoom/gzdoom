@@ -1743,7 +1743,8 @@ static void G_QueueBody (AActor *body)
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 void G_DoReborn (int playernum, bool freshbot)
 {
-	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn)
+	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn &&
+		!G_SkillProperty(SKILLP_PlayerRespawn))
 	{
 		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
 		{ // Load game from the last point it was saved
@@ -1772,7 +1773,7 @@ void G_DoReborn (int playernum, bool freshbot)
 		}
 
 		// spawn at random spot if in deathmatch
-		if (deathmatch || isUnfriendly)
+		if ((deathmatch || isUnfriendly) && (level.deathmatchstarts.Size () > 0))
 		{
 			G_DeathMatchSpawnPlayer (playernum);
 			return;

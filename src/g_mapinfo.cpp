@@ -2233,7 +2233,7 @@ void G_ParseMapInfo (FString basemapinfo)
 		}
 		if (nindex != 2)
 		{
-			CommitUMapinfo(&gamedefaults);	// UMPAINFOs are collected until a regular MAPINFO is found so that they properly use the base settings.
+			CommitUMapinfo(&gamedefaults);	// UMAPINFOs are collected until a regular MAPINFO is found so that they properly use the base settings.
 			FMapInfoParser parse(nindex == 1 ? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
 			level_info_t defaultinfo;
 			parse.ParseMapInfo(lump, gamedefaults, defaultinfo);

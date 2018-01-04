@@ -89,6 +89,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.FriendlyHealth = 1.;
 	skill.NoPain = false;
 	skill.Infighting = 0;
+	skill.PlayerRespawn = false;
 
 	sc.MustGetString();
 	skill.Name = sc.String;
@@ -154,6 +155,10 @@ void FMapInfoParser::ParseSkill ()
 		else if (sc.Compare("nomenu"))
 		{
 			skill.NoMenu = true;
+		}
+		else if (sc.Compare ("playerrespawn"))
+		{
+			skill.PlayerRespawn = true;
 		}
 		else if (sc.Compare("respawntime"))
 		{
@@ -397,6 +402,9 @@ int G_SkillProperty(ESkillProperty prop)
 			if (AllSkills[gameskill].Infighting == LEVEL2_TOTALINFIGHTING) return 1;
 			if (AllSkills[gameskill].Infighting == LEVEL2_NOINFIGHTING) return -1;
 			return infighting;
+
+		case SKILLP_PlayerRespawn:
+			return AllSkills[gameskill].PlayerRespawn;
 		}
 	}
 	return 0;
@@ -550,6 +558,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	Infighting = other.Infighting;
 	ArmorFactor = other.ArmorFactor;
 	HealthFactor = other.HealthFactor;
+	PlayerRespawn = other.PlayerRespawn;
 	return *this;
 }
 

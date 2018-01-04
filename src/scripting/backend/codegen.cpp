@@ -8091,7 +8091,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					{
 						bool error;
 						PFunction *afd = FindClassMemberFunction(ccls, ctx.Class, MethodName, ScriptPosition, &error);
-						if ((afd->Variants[0].Flags & VARF_Method) && (afd->Variants[0].Flags & VARF_Virtual))
+						if ((nullptr != afd) && (afd->Variants[0].Flags & VARF_Method) && (afd->Variants[0].Flags & VARF_Virtual))
 						{
 							staticonly = false;
 							novirtual = true;

@@ -96,6 +96,7 @@ CVAR (Int, hud_armor_yellow, 50, CVAR_ARCHIVE)				// armor amount less than whic
 CVAR (Int, hud_armor_green, 100, CVAR_ARCHIVE)				// armor amount above is blue, below is green    
 
 CVAR (Bool, hud_berserk_health, true, CVAR_ARCHIVE);		// when found berserk pack instead of health box
+CVAR (Bool, hud_showangles, false, CVAR_ARCHIVE)			// show player's pitch, yaw, roll
 
 CVAR (Int, hudcolor_titl, CR_YELLOW, CVAR_ARCHIVE)			// color of automap title
 CVAR (Int, hudcolor_time, CR_RED, CVAR_ARCHIVE)				// color of level/hub time
@@ -907,20 +908,44 @@ static void DrawCoordinates(player_t * CPlayer)
 		DTA_KeepRatio, true,
 		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
 
-	mysnprintf(coordstr, countof(coordstr), "X: %d", int(pos.X));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+2*h, coordstr,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
+	int linenum = 3;
 
-	mysnprintf(coordstr, countof(coordstr), "Y: %d", int(pos.Y));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+3*h, coordstr,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
+	typedef struct CoordEntry
+	{
+		const char* const format;
+		double value;
+	}
+	CoordEntryList[3];
 
-	mysnprintf(coordstr, countof(coordstr), "Z: %d", int(pos.Z));
-	screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos+4*h, coordstr,
-		DTA_KeepRatio, true,
-		DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
+	const auto drawentries = [&](CoordEntryList&& entries)
+	{
+		for (const auto& entry : entries)
+		{
+			mysnprintf(coordstr, countof(coordstr), entry.format, entry.value);
+			screen->DrawText(SmallFont, hudcolor_xyco, xpos, ypos + linenum * h, coordstr,
+							 DTA_KeepRatio, true,
+							 DTA_VirtualWidth, hudwidth, DTA_VirtualHeight, hudheight, TAG_DONE);
+			++linenum;
+		}
+	};
+
+	drawentries({
+		{ "X: %.0f", pos.X },
+		{ "Y: %.0f", pos.Y },
+		{ "Z: %.0f", pos.Z }
+	});
+
+	if (hud_showangles)
+	{
+		const DRotator& angles = CPlayer->mo->Angles;
+		++linenum;
+
+		drawentries({
+			{ "P: %.1f", angles.Pitch.Degrees },
+			{ "Y: %.1f", (90.0 - angles.Yaw).Normalized360().Degrees },
+			{ "R: %.1f", angles.Roll.Degrees },
+		});
+	}
 }
 
 //---------------------------------------------------------------------------

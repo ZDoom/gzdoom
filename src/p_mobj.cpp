@@ -6092,10 +6092,8 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 
 	if (i->IsDescendantOf(RUNTIME_CLASS(ADynamicLight)))
 	{
-		if (mthing->SpotInnerAngle != 0)
-			((ADynamicLight*)mobj)->SpotInnerAngle = mthing->SpotInnerAngle;
-		if (mthing->SpotOuterAngle != 0)
-			((ADynamicLight*)mobj)->SpotOuterAngle = mthing->SpotOuterAngle;
+		((ADynamicLight*)mobj)->SpotInnerAngle = mthing->SpotInnerAngle;
+		((ADynamicLight*)mobj)->SpotOuterAngle = mthing->SpotOuterAngle;
 	}
 
 	mobj->CallBeginPlay ();

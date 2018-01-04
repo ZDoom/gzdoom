@@ -114,9 +114,6 @@ DoomEdNums
   9842 = SpotLightFlicker
   9843 = SectorSpotLight
   9844 = SpotLightFlickerRandom
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
   9850 = SpotLightAdditive
   9851 = SpotLightPulseAdditive
   9852 = SpotLightFlickerAdditive
@@ -132,9 +129,6 @@ DoomEdNums
   9872 = SpotLightFlickerAttenuated
   9873 = SectorSpotLightAttenuated
   9874 = SpotLightFlickerRandomAttenuated
-=======
->>>>>>> 7f7c720883e6841ced9c5e66cdae5e6b531872ad
->>>>>>> Stashed changes
   9982 = SecActEyesAboveC
   9983 = SecActEyesBelowC
   9988 = CustomSprite

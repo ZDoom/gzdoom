@@ -245,9 +245,6 @@ class SpotLightFlickerRandom : SpotLight
 		DynamicLight.Type "RandomFlicker";
 	}
 }
-<<<<<<< Updated upstream
-=======
-<<<<<<< HEAD
 
 class SpotLightAdditive : SpotLight
 {
@@ -368,9 +365,6 @@ class SpotLightFlickerRandomAttenuated : SpotLightFlickerRandom
 		+DYNAMICLIGHT.ATTENUATE
 	}
 }
-=======
->>>>>>> 7f7c720883e6841ced9c5e66cdae5e6b531872ad
->>>>>>> Stashed changes
 
 class VavoomLight : DynamicLight 
 {

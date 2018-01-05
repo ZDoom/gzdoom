@@ -1044,7 +1044,7 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		player->SetLogNumber(reply->LogNumber);
 	}
 
-	if (replyText != NULL && isconsole)
+	if (nullptr != replyText && '\0' != replyText[0] && isconsole)
 	{
 		TerminalResponse(replyText);
 	}

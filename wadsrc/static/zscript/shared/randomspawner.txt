@@ -168,6 +168,7 @@ class RandomSpawner : Actor
 			newmobj.SpawnFlags = SpawnFlags & ~MTF_SECRET;	// MTF_SECRET needs special treatment to avoid incrementing the secret counter twice. It had already been processed for the spawner itself.
 			newmobj.HandleSpawnFlags();
 			newmobj.SpawnFlags = SpawnFlags;
+			newmobj.bCountSecret = SpawnFlags & MTF_SECRET;	// "Transfer" count secret flag to spawned actor
 			newmobj.ChangeTid(tid);
 			newmobj.Vel	= Vel;
 			newmobj.master = master;	// For things such as DamageMaster/DamageChildren, transfer mastery.

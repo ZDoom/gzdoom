@@ -682,7 +682,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 	Reset3DViewport();
 
 	// Delay drawing psprites until after bloom has been applied, if enabled.
-	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom)
+	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom || FixedColormap != CM_DEFAULT)
 	{
 		DrawEndScene2D(viewsector);
 	}
@@ -864,7 +864,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom) DrawEndScene2D(lviewsector); });
+			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(lviewsector); });
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();

@@ -53,6 +53,7 @@
 #include "serializer.h"
 #include "v_text.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -491,6 +492,12 @@ unsigned int S_GetMSLength(FSoundID sound)
 	else return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DObject,S_GetLength)
+{
+	PARAM_PROLOGUE;
+	PARAM_SOUND(sound_id);
+	ACTION_RETURN_FLOAT(S_GetMSLength(sound_id)/1000.0);
+}
 
 //==========================================================================
 //

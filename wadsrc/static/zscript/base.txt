@@ -354,6 +354,7 @@ class Object native
 	native static void S_PauseSound (bool notmusic, bool notsfx);
 	native static void S_ResumeSound (bool notsfx);
 	native static bool S_ChangeMusic(String music_name, int order = 0, bool looping = true, bool force = false);
+	native static float S_GetLength(Sound sound_id);
 	native static uint BAM(double angle);
 	native static void SetMusicVolume(float vol);
 	native static uint MSTime();

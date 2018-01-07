@@ -467,7 +467,7 @@ CCMD (print)
 	}
 }
 
-CCMD (exec)
+UNSAFE_CCMD (exec)
 {
 	if (argv.argc() < 2)
 		return;
@@ -495,7 +495,7 @@ void execLogfile(const char *fn, bool append)
 	}
 }
 
-CCMD (logfile)
+UNSAFE_CCMD (logfile)
 {
 
 	if (Logfile)
@@ -651,7 +651,7 @@ CCMD (error)
 	}
 }
 
-CCMD (error_fatal)
+UNSAFE_CCMD (error_fatal)
 {
 	if (argv.argc() > 1)
 	{
@@ -794,7 +794,7 @@ CCMD (warp)
 //
 //==========================================================================
 
-CCMD (load)
+UNSAFE_CCMD (load)
 {
     if (argv.argc() != 2)
 	{
@@ -819,7 +819,7 @@ CCMD (load)
 //
 //==========================================================================
 
-CCMD (save)
+UNSAFE_CCMD (save)
 {
     if (argv.argc() < 2 || argv.argc() > 3)
 	{

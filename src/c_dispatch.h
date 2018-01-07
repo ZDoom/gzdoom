@@ -127,6 +127,22 @@ protected:
 	FConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
 	void Cmd_##n (FCommandLine &argv, APlayerPawn *who, int key)
 
+class FUnsafeConsoleCommand : public FConsoleCommand
+{
+public:
+	FUnsafeConsoleCommand (const char *name, CCmdRun RunFunc)
+	: FConsoleCommand (name, RunFunc)
+	{
+	}
+
+	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key) override;
+};
+
+#define UNSAFE_CCMD(n) \
+	static void Cmd_##n (FCommandLine &, APlayerPawn *, int key); \
+	static FUnsafeConsoleCommand Cmd_##n##_Ref (#n, Cmd_##n); \
+	void Cmd_##n (FCommandLine &argv, APlayerPawn *who, int key)
+
 const int KEY_DBLCLICKED = 0x8000;
 
 class FConsoleAlias : public FConsoleCommand
@@ -145,6 +161,17 @@ protected:
 	bool bDoSubstitution;
 	bool bRunning;
 	bool bKill;
+};
+
+class FUnsafeConsoleAlias : public FConsoleAlias
+{
+public:
+	FUnsafeConsoleAlias (const char *name, const char *command)
+	: FConsoleAlias (name, command, true)
+	{
+	}
+
+	virtual void Run (FCommandLine &args, APlayerPawn *instigator, int key) override;
 };
 
 // Actions

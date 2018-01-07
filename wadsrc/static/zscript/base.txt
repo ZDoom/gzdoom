@@ -555,6 +555,8 @@ struct LevelLocals native
 
 	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
+
+	native String GetChecksum() const;
 	
 	String TimeFormatted(bool totals = false)
 	{

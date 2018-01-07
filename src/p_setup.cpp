@@ -116,6 +116,7 @@
 #include "events.h"
 #include "types.h"
 #include "i_time.h"
+#include "scripting/vm/vm.h"
 
 #include "fragglescript/t_fs.h"
 
@@ -552,6 +553,18 @@ void MapData::GetChecksum(uint8_t cksum[16])
 	md5.Final(cksum);
 }
 
+DEFINE_ACTION_FUNCTION(FLevelLocals, GetChecksum)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	char md5string[33];
+
+	for(int j = 0; j < 16; ++j)
+	{
+        	sprintf(md5string + j * 2, "%02x", level.md5[j]);
+	}
+
+	ACTION_RETURN_STRING((const char*)md5string);
+}
 
 //===========================================================================
 //

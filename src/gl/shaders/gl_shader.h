@@ -284,6 +284,7 @@ class FShader
 	FBufferedUniform1f muClipHeight;
 	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
+	FBufferedUniform1i muViewHeight;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;
@@ -397,7 +398,7 @@ public:
 	}
 };
 
-#define FIRST_USER_SHADER 12
+#define FIRST_USER_SHADER 13
 
 enum
 {

@@ -2111,6 +2111,7 @@ OptionValue "FuzzStyle"
 	4, "$OPTVAL_TRANSLUCENTFUZZ"
 	6, "$OPTVAL_NOISE"
 	7, "$OPTVAL_SMOOTHNOISE"
+	8, "$OPTVAL_SOFTWARE"
 	//5, "$OPTVAL_JAGGEDFUZZ" I can't see any difference between this and 4 so it's disabled for now.
 }
 

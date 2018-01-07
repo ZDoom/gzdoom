@@ -651,6 +651,12 @@ void C_DoCommand (const char *cmd, int keynum)
 
 			if (args.argc() >= 2)
 			{ // Set the variable
+				if (UnsafeExecutionContext && !(var->GetFlags() & CVAR_MOD))
+				{
+					Printf(TEXTCOLOR_RED "Cannot set console variable" TEXTCOLOR_GOLD " %s " TEXTCOLOR_RED "from unsafe command\n", var->GetName());
+					return;
+				}
+
 				var->CmdSet (args[1]);
 			}
 			else

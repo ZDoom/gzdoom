@@ -67,7 +67,7 @@ struct CZDFileInStream
 		File = _file;
 	}
 
-	static SRes Read(void *pp, void *buf, size_t *size)
+	static SRes Read(const ISeekInStream *pp, void *buf, size_t *size)
 	{
 		CZDFileInStream *p = (CZDFileInStream *)pp;
 		long numread = p->File->Read(buf, (long)*size);
@@ -80,7 +80,7 @@ struct CZDFileInStream
 		return SZ_OK;
 	}
 
-	static SRes Seek(void *pp, Int64 *pos, ESzSeek origin)
+	static SRes Seek(const ISeekInStream *pp, Int64 *pos, ESzSeek origin)
 	{
 		CZDFileInStream *p = (CZDFileInStream *)pp;
 		int move_method;
@@ -111,7 +111,8 @@ struct C7zArchive
 {
 	CSzArEx DB;
 	CZDFileInStream ArchiveStream;
-	CLookToRead LookStream;
+	CLookToRead2 LookStream;
+	Byte StreamBuffer[1<<14];
 	UInt32 BlockIndex;
 	Byte *OutBuffer;
 	size_t OutBufferSize;
@@ -123,9 +124,11 @@ struct C7zArchive
 			CrcGenerateTable();
 		}
 		file->Seek(0, SEEK_SET);
-		LookToRead_CreateVTable(&LookStream, false);
+		LookToRead2_CreateVTable(&LookStream, false);
 		LookStream.realStream = &ArchiveStream.s;
-		LookToRead_Init(&LookStream);
+		LookToRead2_Init(&LookStream);
+		LookStream.bufSize = sizeof(StreamBuffer);
+		LookStream.buf = StreamBuffer;
 		SzArEx_Init(&DB);
 		BlockIndex = 0xFFFFFFFF;
 		OutBuffer = NULL;
@@ -143,13 +146,13 @@ struct C7zArchive
 
 	SRes Open()
 	{
-		return SzArEx_Open(&DB, &LookStream.s, &g_Alloc, &g_Alloc);
+		return SzArEx_Open(&DB, &LookStream.vt, &g_Alloc, &g_Alloc);
 	}
 
 	SRes Extract(UInt32 file_index, char *buffer)
 	{
 		size_t offset, out_size_processed;
-		SRes res = SzArEx_Extract(&DB, &LookStream.s, file_index,
+		SRes res = SzArEx_Extract(&DB, &LookStream.vt, file_index,
 			&BlockIndex, &OutBuffer, &OutBufferSize,
 			&offset, &out_size_processed,
 			&g_Alloc, &g_Alloc);

@@ -254,8 +254,8 @@ class BaseStatusBar native ui
 	
 	enum ENumFlags
 	{
-		FNF_FILLZEROS,
-		FNF_WHENNOTZERO,
+		FNF_WHENNOTZERO = 0x1,
+		FNF_FILLZEROS = 0x2,
 	}
 	
 	enum EShade

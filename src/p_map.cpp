@@ -5697,6 +5697,168 @@ CUSTOM_CVAR(Float, splashfactor, 1.f, CVAR_SERVERINFO)
 
 //==========================================================================
 //
+// P_GetRadiusDamage
+// 
+// Part of P_RadiusAttack, separated so the GetRadiusAttack function can
+// exist without needing to maintain more than one function.
+// 
+// Used by anything without OLDRADIUSDMG flag
+//==========================================================================
+
+static double P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource)
+{
+	// [RH] New code. The bounding box only covers the
+	// height of the thing and not the height of the map.
+	double points;
+	double len;
+	double dx, dy;
+	double boxradius;
+
+	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
+	double bombdamagefloat = (double)bombdamage;
+
+	DVector2 vec = bombspot->Vec2To(thing);
+	dx = fabs(vec.X);
+	dy = fabs(vec.Y);
+	boxradius = thing->radius;
+
+	// The damage pattern is square, not circular.
+	len = double(dx > dy ? dx : dy);
+
+	if (bombspot->Z() < thing->Z() || bombspot->Z() >= thing->Top())
+	{
+		double dz;
+
+		if (bombspot->Z() > thing->Z())
+		{
+			dz = double(bombspot->Z() - thing->Top());
+		}
+		else
+		{
+			dz = double(thing->Z() - bombspot->Z());
+		}
+		if (len <= boxradius)
+		{
+			len = dz;
+		}
+		else
+		{
+			len -= boxradius;
+			len = g_sqrt(len*len + dz*dz);
+		}
+	}
+	else
+	{
+		len -= boxradius;
+		if (len < 0.f)
+			len = 0.f;
+	}
+	len = clamp<double>(len - (double)fulldamagedistance, 0, len);
+	points = bombdamagefloat * (1. - len * bombdistancefloat);
+
+	// Calculate the splash and radius damage factor if called by P_RadiusAttack.
+	// Otherwise, just get the raw damage. This allows modders to manipulate it
+	// however they want.
+	if (!fromaction)
+	{
+		if (thingbombsource) //thing is bomb source
+		{
+			points = points * splashfactor;
+		}
+		points *= thing->RadiusDamageFactor;
+	}
+
+	return points;
+}
+
+//==========================================================================
+//
+// P_GetOldRadiusDamage
+// 
+// Part of P_RadiusAttack, separated so the GetRadiusAttack function can
+// exist without needing to maintain more than one function.
+// 
+// Used by barrels (OLDRADIUSDMG flag). Returns calculated damage 
+// based on XY distance.
+//==========================================================================
+
+static int P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance)
+{
+	const int ret = fromaction ? 0 : -1; // -1 is specifically for P_RadiusAttack; continue onto another actor.
+	double dx, dy, dist;
+
+	DVector2 vec = bombspot->Vec2To(thing);
+	dx = fabs(vec.X);
+	dy = fabs(vec.Y);
+
+	dist = dx>dy ? dx : dy;
+	dist -= thing->radius;
+
+	if (dist < 0)
+		dist = 0;
+
+	if (dist >= bombdistance)
+		return ret;  // out of range
+
+	// When called from the action function, ignore the sight check.
+	if (fromaction || P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+	{
+		dist = clamp<double>(dist - fulldamagedistance, 0, dist);
+		int damage = Scale(bombdamage, bombdistance - int(dist), bombdistance);
+
+		if (!fromaction)
+		{
+			double factor = splashfactor * thing->RadiusDamageFactor;
+			damage = int(damage * factor);
+		}
+
+		return damage;
+	}
+
+	return ret;	// Not in sight.
+}
+
+//==========================================================================
+//
+// GetRadiusDamage
+//
+// Returns the falloff damage from an A_Explode attack without doing any
+// damage and not taking into account any damage reduction.
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetRadiusDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(thing, AActor);
+	PARAM_INT(damage);
+	PARAM_INT(distance);
+	PARAM_INT_DEF(fulldmgdistance);
+	PARAM_BOOL_DEF(oldradiusdmg);
+
+	if (!thing)
+	{
+		ACTION_RETURN_INT(0);
+	}
+	else if (thing == self)
+	{	// No point in calculating falloff in this case since it is the bomb spot.
+		ACTION_RETURN_INT(damage);
+	}
+
+	fulldmgdistance = clamp<int>(fulldmgdistance, 0, distance - 1);
+
+	// Mirroring A_Explode's behavior.
+	if (distance <= 0)
+		distance = damage;
+
+	const int newdam = oldradiusdmg
+		? P_GetOldRadiusDamage(true, self, thing, damage, distance, fulldmgdistance)
+		: int(P_GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance, false));
+
+	ACTION_RETURN_INT(newdam);
+}
+
+//==========================================================================
+//
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
@@ -5708,9 +5870,6 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 	if (bombdistance <= 0)
 		return 0;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
-
-	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
-	double bombdamagefloat = (double)bombdamage;
 
 	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
 	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistance, false, bombspot->Sector);
@@ -5757,57 +5916,7 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		// which can make them near impossible to hit with the new code.
 		if ((flags & RADF_NODAMAGE) || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
 		{
-			// [RH] New code. The bounding box only covers the
-			// height of the thing and not the height of the map.
-			double points;
-			double len;
-			double dx, dy;
-			double boxradius;
-
-			DVector2 vec = bombspot->Vec2To(thing);
-			dx = fabs(vec.X);
-			dy = fabs(vec.Y);
-			boxradius = thing->radius;
-
-			// The damage pattern is square, not circular.
-			len = double(dx > dy ? dx : dy);
-
-			if (bombspot->Z() < thing->Z() || bombspot->Z() >= thing->Top())
-			{
-				double dz;
-
-				if (bombspot->Z() > thing->Z())
-				{
-					dz = double(bombspot->Z() - thing->Top());
-				}
-				else
-				{
-					dz = double(thing->Z() - bombspot->Z());
-				}
-				if (len <= boxradius)
-				{
-					len = dz;
-				}
-				else
-				{
-					len -= boxradius;
-					len = g_sqrt(len*len + dz*dz);
-				}
-			}
-			else
-			{
-				len -= boxradius;
-				if (len < 0.f)
-					len = 0.f;
-			}
-			len = clamp<double>(len - (double)fulldamagedistance, 0, len);
-			points = bombdamagefloat * (1. - len * bombdistancefloat);
-			if (thing == bombsource)
-			{
-				points = points * splashfactor;
-			}
-			points *= thing->RadiusDamageFactor;
-
+			double points = P_GetRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance, bombsource == thing);
 			double check = int(points) * bombdamage;
 			// points and bombdamage should be the same sign (the double cast of 'points' is needed to prevent overflows and incorrect values slipping through.)
 			if ((check > 0 || (check == 0 && bombspot->flags7 & MF7_FORCEZERORADIUSDMG)) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
@@ -5865,36 +5974,17 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		else
 		{
 			// [RH] Old code just for barrels
-			double dx, dy, dist;
+			int damage = P_GetOldRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance);
 
-			DVector2 vec = bombspot->Vec2To(thing);
-			dx = fabs(vec.X);
-			dy = fabs(vec.Y);
-
-			dist = dx>dy ? dx : dy;
-			dist -= thing->radius;
-
-			if (dist < 0)
-				dist = 0;
-
-			if (dist >= bombdistance)
-				continue;  // out of range
-
-			if (P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+			if (damage < 0)
+				continue;		// Sight check failed.
+			else if (damage > 0 || (bombspot->flags7 & MF7_FORCEZERORADIUSDMG))
 			{ // OK to damage; target is in direct path
-				dist = clamp<double>(dist - fulldamagedistance, 0, dist);
-				int damage = Scale(bombdamage, bombdistance - int(dist), bombdistance);
-
-				double factor = splashfactor * thing->RadiusDamageFactor;
-				damage = int(damage * factor);
-				if (damage > 0 || (bombspot->flags7 & MF7_FORCEZERORADIUSDMG))
-				{
-					//[MC] Don't count actors saved by buddha if already at 1 health.
-					int prehealth = thing->health;
-					int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
-					P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
-					if (thing->health < prehealth)	count++;
-				}
+				//[MC] Don't count actors saved by buddha if already at 1 health.
+				int prehealth = thing->health;
+				int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
+				P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
+				if (thing->health < prehealth)	count++;
 			}
 		}
 	}

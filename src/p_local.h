@@ -387,10 +387,6 @@ void	P_PlaySpawnSound(AActor *missile, AActor *spawner);
 // [RH] Position the chasecam
 void	P_AimCamera (AActor *t1, DVector3 &, DAngle &, sector_t *&sec, bool &unlinked);
 
-double	P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource = false);
-
-int		P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance);
-
 // [RH] Means of death
 enum
 {

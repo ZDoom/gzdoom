@@ -5695,43 +5695,7 @@ CUSTOM_CVAR(Float, splashfactor, 1.f, CVAR_SERVERINFO)
 		selfthrustscale = 1.f / self;
 }
 
-//==========================================================================
-//
-// GetRadiusDamage
-//
-// Returns the falloff damage from an A_Explode attack without doing any
-// damage and not taking into account any damage reduction.
-//==========================================================================
-DEFINE_ACTION_FUNCTION(AActor, GetRadiusDamage)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_OBJECT(thing, AActor);
-	PARAM_INT(damage);
-	PARAM_INT(distance);
-	PARAM_INT_DEF(fulldmgdistance);
-	PARAM_BOOL_DEF(oldradiusdmg);
 
-	if (!thing)
-	{
-		ACTION_RETURN_INT(0);
-	}
-	else if (thing == self)	
-	{	// No point in calculating falloff in this case since it is the bomb spot.
-		ACTION_RETURN_INT(damage);
-	}
-
-	fulldmgdistance = clamp<int>(fulldmgdistance, 0, distance - 1);
-
-	// Mirroring A_Explode's behavior.
-	if (distance <= 0)	distance = damage;
-
-	int newdam = 0;
-
-	if (oldradiusdmg)	newdam = P_GetOldRadiusDamage(true, self, thing, damage, distance, fulldmgdistance);
-	else				newdam = int(P_GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance));
-		
-	ACTION_RETURN_INT(newdam);
-}
 
 //==========================================================================
 //
@@ -5742,7 +5706,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetRadiusDamage)
 // 
 // Used by anything without OLDRADIUSDMG flag
 //==========================================================================
-double P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource)
+static double P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource)
 {
 	if (!bombspot || !thing)
 		return 0.;
@@ -5817,7 +5781,7 @@ double P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int b
 // Used by barrels (OLDRADIUSDMG flag). Returns calculated damage 
 // based on XY distance.
 //==========================================================================
-int P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance)
+static int P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance)
 {
 	if (!bombspot || !thing)
 		return 0;
@@ -5850,6 +5814,44 @@ int P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int b
 		return damage;
 	}
 	return ret;	// Not in sight.
+}
+
+//==========================================================================
+//
+// GetRadiusDamage
+//
+// Returns the falloff damage from an A_Explode attack without doing any
+// damage and not taking into account any damage reduction.
+//==========================================================================
+DEFINE_ACTION_FUNCTION(AActor, GetRadiusDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(thing, AActor);
+	PARAM_INT(damage);
+	PARAM_INT(distance);
+	PARAM_INT_DEF(fulldmgdistance);
+	PARAM_BOOL_DEF(oldradiusdmg);
+
+	if (!thing)
+	{
+		ACTION_RETURN_INT(0);
+	}
+	else if (thing == self)
+	{	// No point in calculating falloff in this case since it is the bomb spot.
+		ACTION_RETURN_INT(damage);
+	}
+
+	fulldmgdistance = clamp<int>(fulldmgdistance, 0, distance - 1);
+
+	// Mirroring A_Explode's behavior.
+	if (distance <= 0)	distance = damage;
+
+	int newdam = 0;
+
+	if (oldradiusdmg)	newdam = P_GetOldRadiusDamage(true, self, thing, damage, distance, fulldmgdistance);
+	else				newdam = int(P_GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance, false));
+
+	ACTION_RETURN_INT(newdam);
 }
 
 //==========================================================================

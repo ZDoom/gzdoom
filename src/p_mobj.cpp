@@ -355,6 +355,7 @@ DEFINE_FIELD(AActor, BloodColor)
 DEFINE_FIELD(AActor, BloodTranslation)
 DEFINE_FIELD(AActor, RenderHidden)
 DEFINE_FIELD(AActor, RenderRequired)
+DEFINE_FIELD(AActor, friendlyseeblocks)
 
 //==========================================================================
 //
@@ -533,6 +534,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("stealthalpha", StealthAlpha)
 		A("renderhidden", RenderHidden)
 		A("renderrequired", RenderRequired);
+		A("friendlyseeblocks", friendlyseeblocks);
 }
 
 #undef A

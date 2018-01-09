@@ -203,6 +203,7 @@ class Actor : Thinker native
 	native readonly int BloodTranslation;
 	native int RenderHidden;
 	native int RenderRequired;
+	native readonly int FriendlySeeBlocks;
 
 	meta String Obituary;		// Player was killed by this actor
 	meta String HitObituary;		// Player was killed by this actor in melee
@@ -292,6 +293,7 @@ class Actor : Thinker native
 	property RipLevelMax: RipLevelMax;
 	property RenderHidden: RenderHidden;
 	property RenderRequired: RenderRequired;
+	property FriendlySeeBlocks: FriendlySeeBlocks;
 	
 	// need some definition work first
 	//FRenderStyle RenderStyle;
@@ -372,6 +374,7 @@ class Actor : Thinker native
 		BurnHeight -1;
 		RenderHidden 0;
 		RenderRequired 0;
+		FriendlySeeBlocks 10; // 10 (blocks) * 128 (one map unit block)
 	}
 	
 	// Functions

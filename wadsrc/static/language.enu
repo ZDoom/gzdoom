@@ -2186,13 +2186,14 @@ MODMNU_CHIPOMATIC		= "Chip-o-matic";
 RNDMNU_TITLE			= "CHANGE RENDERER";
 RNDMNU_RENDERER			= "Hardware Acceleration";
 RNDMNU_TRUECOLOR		= "Software Truecolor Mode";
-RNDMNU_POLY				= "Poly Renderer (experimental)";
+RNDMNU_POLY			 	= "Poly Renderer (experimental)";
 RNDMNU_CANVAS			= "Software Canvas";
 
 // Video Options
 VIDMNU_TITLE			= "VIDEO MODE";
 VIDMNU_FULLSCREEN		= "Fullscreen";
 VIDMNU_HIDPI			= "Retina/HiDPI support";
+VIDMNU_BRDLSS			= "Borderless Windowed Mode";
 VIDMNU_ASPECTRATIO		= "Aspect ratio";
 VIDMNU_FORCEASPECT		= "Force aspect ratio";
 VIDMNU_CROPASPECT		= "Forced ratio style";

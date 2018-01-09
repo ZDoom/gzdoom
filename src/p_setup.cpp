@@ -1831,7 +1831,7 @@ void P_LoadThings2 (MapData * map)
 		mti[i].Alpha = -1;
 		mti[i].Health = 1;
 		mti[i].FloatbobPhase = -1;
-		mti[i].friendlyseeblocks = 10;
+		mti[i].friendlyseeblocks = -1;
 	}
 	delete[] mtp;
 }

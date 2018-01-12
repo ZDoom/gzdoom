@@ -128,6 +128,9 @@ public:
    void SetAttenuate(bool on) { m_attenuate = on; }
    void SetHalo(bool halo) { m_halo = halo; }
    void SetDontLightActors(bool on) { m_dontlightactors = on; }
+   void SetSpot(bool spot) { m_spot = spot; }
+   void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
+   void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
 
    void OrderIntensities()
    {
@@ -151,6 +154,9 @@ protected:
    bool m_dontlightself = false;
    bool m_dontlightactors = false;
    bool m_swapped = false;
+   bool m_spot = false;
+   double m_spotInnerAngle = 10.0;
+   double m_spotOuterAngle = 25.0;
 };
 
 TDeletingArray<FLightDefaults *> LightDefaults;
@@ -183,6 +189,10 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 	if (m_additive) light->lightflags |= LF_ADDITIVE;
 	if (m_dontlightself) light->lightflags |= LF_DONTLIGHTSELF;
 	if (m_dontlightactors) light->lightflags |= LF_DONTLIGHTACTORS;
+	if (m_spot)
+		light->lightflags |= LF_SPOT;
+	light->SpotInnerAngle = m_spotInnerAngle;
+	light->SpotOuterAngle = m_spotOuterAngle;
 	light->m_tickCount = 0;
 	if (m_type == PulseLight)
 	{
@@ -233,7 +243,8 @@ static const char *LightTags[]=
    "dontlightself",
    "attenuate",
    "dontlightactors",
-   NULL
+   "spot",
+   nullptr
 };
 
 
@@ -255,6 +266,7 @@ enum {
    LIGHTTAG_DONTLIGHTSELF,
    LIGHTTAG_ATTENUATE,
    LIGHTTAG_DONTLIGHTACTORS,
+   LIGHTTAG_SPOT
 };
 
 
@@ -395,6 +407,15 @@ static void ParsePointLight(FScanner &sc)
 			case LIGHTTAG_DONTLIGHTACTORS:
 				defaults->SetDontLightActors(ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_SPOT:
+				{
+					float innerAngle = ParseFloat(sc);
+					float outerAngle = ParseFloat(sc);
+					defaults->SetSpot(true);
+					defaults->SetSpotInnerAngle(innerAngle);
+					defaults->SetSpotOuterAngle(outerAngle);
+				}
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -479,6 +500,15 @@ static void ParsePulseLight(FScanner &sc)
 				break;
 			case LIGHTTAG_DONTLIGHTACTORS:
 				defaults->SetDontLightActors(ParseInt(sc) != 0);
+				break;
+			case LIGHTTAG_SPOT:
+				{
+					float innerAngle = ParseFloat(sc);
+					float outerAngle = ParseFloat(sc);
+					defaults->SetSpot(true);
+					defaults->SetSpotInnerAngle(innerAngle);
+					defaults->SetSpotOuterAngle(outerAngle);
+				}
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -567,6 +597,15 @@ void ParseFlickerLight(FScanner &sc)
 			case LIGHTTAG_DONTLIGHTACTORS:
 				defaults->SetDontLightActors(ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_SPOT:
+				{
+					float innerAngle = ParseFloat(sc);
+					float outerAngle = ParseFloat(sc);
+					defaults->SetSpot(true);
+					defaults->SetSpotInnerAngle(innerAngle);
+					defaults->SetSpotOuterAngle(outerAngle);
+				}
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -653,6 +692,15 @@ void ParseFlickerLight2(FScanner &sc)
 			case LIGHTTAG_DONTLIGHTACTORS:
 				defaults->SetDontLightActors(ParseInt(sc) != 0);
 				break;
+			case LIGHTTAG_SPOT:
+				{
+					float innerAngle = ParseFloat(sc);
+					float outerAngle = ParseFloat(sc);
+					defaults->SetSpot(true);
+					defaults->SetSpotInnerAngle(innerAngle);
+					defaults->SetSpotOuterAngle(outerAngle);
+				}
+				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);
 			}
@@ -735,6 +783,15 @@ static void ParseSectorLight(FScanner &sc)
 				break;
 			case LIGHTTAG_DONTLIGHTACTORS:
 				defaults->SetDontLightActors(ParseInt(sc) != 0);
+				break;
+			case LIGHTTAG_SPOT:
+				{
+					float innerAngle = ParseFloat(sc);
+					float outerAngle = ParseFloat(sc);
+					defaults->SetSpot(true);
+					defaults->SetSpotInnerAngle(innerAngle);
+					defaults->SetSpotOuterAngle(outerAngle);
+				}
 				break;
 			default:
 				sc.ScriptError("Unknown tag: %s\n", sc.String);

@@ -802,6 +802,13 @@ public:
 			case NAME_FriendlySeeBlocks:
 				CHECK_N(Zd | Zdt)
 				th->friendlyseeblocks = CheckInt(key);
+
+			case NAME_SpotInnerAngle:
+				th->SpotInnerAngle = CheckFloat(key);
+				break;
+
+			case NAME_SpotOuterAngle:
+				th->SpotOuterAngle = CheckFloat(key);
 				break;
 
 			default:

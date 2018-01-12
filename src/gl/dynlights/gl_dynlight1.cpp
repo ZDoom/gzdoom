@@ -128,7 +128,26 @@ void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
 
 	if (attenuate) shadowIndex = -shadowIndex;
 
-	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
+	float lightType = 0.0f;
+	float spotInnerAngle = 0.0f;
+	float spotOuterAngle = 0.0f;
+	float spotDirX = 0.0f;
+	float spotDirY = 0.0f;
+	float spotDirZ = 0.0f;
+	if (light->IsSpot())
+	{
+		lightType = 1.0f;
+		spotInnerAngle = light->SpotInnerAngle.Cos();
+		spotOuterAngle = light->SpotOuterAngle.Cos();
+
+		DAngle negPitch = -light->Angles.Pitch;
+		double xzLen = negPitch.Cos();
+		spotDirX = -light->Angles.Yaw.Cos() * xzLen;
+		spotDirY = -negPitch.Sin();
+		spotDirZ = -light->Angles.Yaw.Sin() * xzLen;
+	}
+
+	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(16)];
 	data[0] = pos.X;
 	data[1] = pos.Z;
 	data[2] = pos.Y;
@@ -137,5 +156,13 @@ void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
 	data[5] = g;
 	data[6] = b;
 	data[7] = shadowIndex;
+	data[8] = spotDirX;
+	data[9] = spotDirY;
+	data[10] = spotDirZ;
+	data[11] = lightType;
+	data[12] = spotInnerAngle;
+	data[13] = spotOuterAngle;
+	data[14] = 0.0f; // unused
+	data[15] = 0.0f; // unused
 }
 

@@ -1,5 +1,11 @@
 class DynamicLight : Actor native
 {
+	native double SpotInnerAngle;
+	native double SpotOuterAngle;
+
+	property SpotInnerAngle: SpotInnerAngle;
+	property SpotOuterAngle: SpotOuterAngle;
+
 	enum EArgs
 	{
 	   LIGHT_RED = 0,
@@ -17,7 +23,7 @@ class DynamicLight : Actor native
 		FlickerLight,
 		RandomFlickerLight,
 		SectorLight,
-		SpotLight,
+		DummyLight,
 		ColorPulseLight,
 		ColorFlickerLight, 
 		RandomColorFlickerLight
@@ -199,6 +205,166 @@ class PointLightFlickerRandomAttenuated :PointLightFlickerRandom
 	}
 }
 
+class SpotLight : DynamicLight
+{
+	Default
+	{
+		DynamicLight.Type "Point";
+		+DYNAMICLIGHT.SPOT
+	}
+}
+
+class SpotLightPulse : SpotLight
+{
+	Default
+	{
+		DynamicLight.Type "Pulse";
+	}
+}
+
+class SpotLightFlicker : SpotLight
+{
+	Default
+	{
+		DynamicLight.Type "Flicker";
+	}
+}
+
+class SectorSpotLight : SpotLight
+{
+	Default
+	{
+		DynamicLight.Type "Sector";
+	}
+}
+
+class SpotLightFlickerRandom : SpotLight
+{
+	Default
+	{
+		DynamicLight.Type "RandomFlicker";
+	}
+}
+
+class SpotLightAdditive : SpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightPulseAdditive : SpotLightPulse
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightFlickerAdditive : SpotLightFlicker
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SectorSpotLightAdditive : SectorSpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightFlickerRandomAdditive : SpotLightFlickerRandom
+{
+	Default
+	{
+		+DYNAMICLIGHT.ADDITIVE
+	}
+}
+
+class SpotLightSubtractive : SpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightPulseSubtractive : SpotLightPulse
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightFlickerSubtractive : SpotLightFlicker
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SectorSpotLightSubtractive : SectorSpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightFlickerRandomSubtractive : SpotLightFlickerRandom
+{
+	Default
+	{
+		+DYNAMICLIGHT.SUBTRACTIVE
+	}
+}
+
+class SpotLightAttenuated : SpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SpotLightPulseAttenuated : SpotLightPulse
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SpotLightFlickerAttenuated : SpotLightFlicker
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SectorSpotLightAttenuated : SectorSpotLight
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
+
+class SpotLightFlickerRandomAttenuated : SpotLightFlickerRandom
+{
+	Default
+	{
+		+DYNAMICLIGHT.ATTENUATE
+	}
+}
 
 class VavoomLight : DynamicLight 
 {

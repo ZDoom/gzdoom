@@ -542,7 +542,7 @@ static bool FindMatchingItem(DMenuItemBase *desc)
 	{
 		// Check for presence of menu
 		auto menu = MenuDescriptors.CheckKey(name);
-		if (menu == nullptr) return true;
+		if (menu == nullptr) return false;
 	}
 	else if (grp == 4)
 	{

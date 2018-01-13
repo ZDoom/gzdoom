@@ -46,6 +46,8 @@ struct StrifeDialogueNode native version("2.4")
 	native String Goodbye;
 
 	native StrifeDialogueReply Children;
+	native Name MenuClassName;
+	native String UserData;
 }
 
 // FStrifeDialogueReply holds responses the player can give to the NPC

@@ -226,14 +226,7 @@ void OriginalMainTry(int argc, char** argv)
 namespace
 {
 
-const int ARGC_MAX = 64;
-
-int   s_argc;
-char* s_argv[ARGC_MAX];
-
-TArray<FString> s_argvStorage;
-
-bool s_restartedFromWADPicker;
+TArray<FString> s_argv;
 
 
 void NewFailure()
@@ -348,7 +341,17 @@ ApplicationController* appCtrl;
 	FConsoleWindow::CreateInstance();
 	atterm(FConsoleWindow::DeleteInstance);
 
-	exit(OriginalMain(s_argc, s_argv));
+	const size_t argc = s_argv.Size();
+	TArray<char*> argv(argc + 1, true);
+
+	for (size_t i = 0; i < argc; ++i)
+	{
+		argv[i] = s_argv[i].LockBuffer();
+	}
+
+	argv[argc] = nullptr;
+
+	exit(OriginalMain(argc, &argv[0]));
 }
 
 
@@ -356,20 +359,13 @@ ApplicationController* appCtrl;
 {
 	ZD_UNUSED(theApplication);
 
-	if (s_restartedFromWADPicker
-		|| 0 == [filename length]
-		|| s_argc + 2 >= ARGC_MAX)
-	{
-		return FALSE;
-	}
-
 	// Some parameters from command line are passed to this function
 	// These parameters need to be skipped to avoid duplication
 	// Note: SDL has different approach to fix this issue, see the same method in SDLMain.m
 
 	const char* const charFileName = [filename UTF8String];
 
-	for (int i = 0; i < s_argc; ++i)
+	for (size_t i = 0, count = s_argv.Size(); i < count; ++i)
 	{
 		if (0 == strcmp(s_argv[i], charFileName))
 		{
@@ -377,11 +373,8 @@ ApplicationController* appCtrl;
 		}
 	}
 
-	s_argvStorage.Push("-file");
-	s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
-
-	s_argvStorage.Push([filename UTF8String]);
-	s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
+	s_argv.Push("-file");
+	s_argv.Push([filename UTF8String]);
 
 	return TRUE;
 }
@@ -539,21 +532,12 @@ void ReleaseApplicationController()
 
 int main(int argc, char** argv)
 {
-	for (int i = 0; i <= argc; ++i)
+	for (int i = 0; i < argc; ++i)
 	{
 		const char* const argument = argv[i];
 
-		if (NULL == argument || '\0' == argument[0])
-		{
-			continue;
-		}
-
-		if (0 == strcmp(argument, "-wad_picker_restart"))
-		{
-			s_restartedFromWADPicker = true;
-		}
 #if _DEBUG
-		else if (0 == strcmp(argument, "-wait_for_debugger"))
+		if (0 == strcmp(argument, "-wait_for_debugger"))
 		{
 			NSAlert* alert = [[NSAlert alloc] init];
 			[alert setMessageText:@GAMENAME];
@@ -562,11 +546,8 @@ int main(int argc, char** argv)
 			[alert runModal];
 		}
 #endif // _DEBUG
-		else
-		{
-			s_argvStorage.Push(argument);
-			s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
-		}
+
+		s_argv.Push(argument);
 	}
 
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];

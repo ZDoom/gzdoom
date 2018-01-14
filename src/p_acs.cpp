@@ -815,7 +815,7 @@ TArray<FString> ACS_StringBuilderStack;
 //
 //============================================================================
 
-#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__)
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
 inline int uallong(const int &foo)
 {
 	return foo;

@@ -897,6 +897,18 @@ enum ELineAttackFlags
 	LAF_ABSPOSITION    = 1 << 7,
 }
 
+enum ELineTraceFlags
+{
+	TRF_ABSPOSITION = 1,
+	TRF_ABSOFFSET = 2,
+	TRF_THRUSPECIES = 4,
+	TRF_THRUACTORS = 8,
+	TRF_THRUBLOCK = 16,
+	TRF_THRUHITSCAN = 32,
+	TRF_NOSKY = 64,
+	TRF_ALLACTORS = 128,
+}
+
 const DEFMELEERANGE = 64;
 const SAWRANGE = (64.+(1./65536.));	// use meleerange + 1 so the puff doesn't skip the flash (i.e. plays all states)
 const MISSILERANGE = (32*64);

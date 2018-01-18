@@ -79,6 +79,7 @@
 #include "p_terrain.h"
 #include "p_trace.h"
 #include "p_checkposition.h"
+#include "p_linetracedata.h"
 #include "r_utility.h"
 #include "p_blockmap.h"
 #include "p_3dmidtex.h"
@@ -4812,6 +4813,159 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 	if (numret > 0) ret[0].SetObject(puff);
 	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
 	return numret;
+}
+
+//==========================================================================
+//
+// P_LineTrace
+//
+//==========================================================================
+struct LineTraceData
+{
+	AActor *Caller;
+	bool ThruSpecies;
+	bool ThruActors;
+	int NumPortals;
+};
+
+static ETraceStatus CheckLineTrace(FTraceResults &res, void *userdata)
+{
+	LineTraceData *TData = (LineTraceData *)userdata;
+	if ( res.HitType == TRACE_CrossingPortal )
+	{
+		TData->NumPortals++;
+		return TRACE_Skip;
+	}
+	if ( res.HitType != TRACE_HitActor )
+	{
+		return TRACE_Stop;
+	}
+	if ( (TData->ThruActors) || (TData->ThruSpecies && res.Actor->GetSpecies() == TData->Caller->GetSpecies()) )
+	{
+		return TRACE_Skip;
+	}
+	return TRACE_Stop;
+}
+
+bool P_LineTrace(AActor *t1, DAngle angle, double distance,
+	DAngle pitch, int flags, double sz, double offsetforward,
+	double offsetside, FLineTraceData *outdata)
+{
+	FTraceResults trace;
+	LineTraceData TData;
+	TData.Caller = t1;
+	TData.ThruSpecies = (flags & TRF_THRUSPECIES);
+	TData.ThruActors = (flags & TRF_THRUACTORS);
+	TData.NumPortals = 0;
+	DVector3 direction;
+	double pc = pitch.Cos();
+	direction = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
+	DVector3 startpos;
+	double startz = t1->Z() - t1->Floorclip;
+	startz += sz;
+	if ( flags & TRF_ABSPOSITION )
+	{
+		startpos = DVector3(offsetforward, offsetside, sz);
+	}
+	else if ( flags & TRF_ABSOFFSET )
+	{
+		startpos = t1->Vec2OffsetZ(offsetforward, offsetside, startz);
+	}
+	else if ( (offsetforward == 0.0) && (offsetside == 0.0) )
+	{
+		startpos = t1->PosAtZ(startz);
+	}
+	else
+	{
+		const double s = angle.Sin();
+		const double c = angle.Cos();
+		startpos = t1->Vec2OffsetZ(offsetforward * c + offsetside * s, offsetforward * s - offsetside * c, startz);
+	}
+
+	ActorFlags aflags = (flags & TRF_ALLACTORS) ? ActorFlags::FromInt(0xFFFFFFFF) : MF_SHOOTABLE;
+	int lflags = 0;
+	if ( !(lflags & TRF_THRUBLOCK) ) lflags |= ML_BLOCKEVERYTHING;
+	if ( !(lflags & TRF_THRUHITSCAN) ) lflags |= ML_BLOCKHITSCAN;
+	int tflags = TRACE_ReportPortals;
+	if ( flags & TRF_NOSKY ) tflags |= TRACE_NoSky;
+
+	// Do trace
+	bool ret = Trace(startpos, t1->Sector, direction, distance, aflags, lflags, t1, trace, tflags, CheckLineTrace, &TData);
+	if ( outdata )
+	{
+		memset(outdata,0,sizeof(*outdata));
+		outdata->HitActor = trace.Actor;
+		outdata->HitLine = trace.Line;
+		outdata->HitSector = trace.Sector;
+		outdata->Hit3DFloor = trace.ffloor;
+		switch ( trace.HitType )
+		{
+		case TRACE_HitFloor:
+			outdata->SectorPlane = 0;
+			outdata->HitTexture = trace.Sector->planes[0].Texture;
+			break;
+		case TRACE_HitCeiling:
+			outdata->SectorPlane = 1;
+			outdata->HitTexture = trace.Sector->planes[1].Texture;
+			break;
+		case TRACE_HitWall:
+			outdata->LineSide = trace.Side;
+			int txpart;
+			switch ( trace.Tier )
+			{
+			case TIER_Middle:
+				outdata->LinePart = 1;
+				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[1].texture;
+				break;
+			case TIER_Upper:
+				outdata->LinePart = 0;
+				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[0].texture;
+				break;
+			case TIER_Lower:
+				outdata->LinePart = 2;
+				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[2].texture;
+				break;
+			case TIER_FFloor:
+				txpart = (trace.ffloor->flags & FF_UPPERTEXTURE) ? 0 : (trace.ffloor->flags & FF_LOWERTEXTURE) ? 2 : 1;
+				outdata->HitTexture = trace.ffloor->master->sidedef[0]->textures[txpart].texture;
+				break;
+			}
+		default:
+			break;
+		}
+		outdata->HitLocation = trace.HitPos;
+		outdata->Distance = trace.Distance;
+		outdata->NumPortals = TData.NumPortals;
+		outdata->HitType = trace.HitType;
+	}
+	return ret;
+}
+
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitActor);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLine);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LinePart);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, SectorPlane);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitType);
+
+DEFINE_ACTION_FUNCTION(AActor, LineTrace)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(distance);
+	PARAM_ANGLE(pitch);
+	PARAM_INT_DEF(flags);
+	PARAM_FLOAT_DEF(offsetz);
+	PARAM_FLOAT_DEF(offsetforward);
+	PARAM_FLOAT_DEF(offsetside);
+	PARAM_POINTER_DEF(data, FLineTraceData);
+	ACTION_RETURN_BOOL(P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data));
 }
 
 //==========================================================================

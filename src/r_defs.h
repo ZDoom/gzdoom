@@ -394,7 +394,7 @@ public:
 	}
 
 	// Moves a plane up/down by hdiff units
-	double GetChangedHeight(double hdiff)
+	double GetChangedHeight(double hdiff) const
 	{
 		return D - hdiff * normal.Z;
 	}

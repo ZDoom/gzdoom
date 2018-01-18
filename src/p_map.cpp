@@ -4820,7 +4820,7 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 // P_LineTrace
 //
 //==========================================================================
-struct LineTraceData
+struct CheckLineData
 {
 	AActor *Caller;
 	bool ThruSpecies;
@@ -4830,7 +4830,7 @@ struct LineTraceData
 
 static ETraceStatus CheckLineTrace(FTraceResults &res, void *userdata)
 {
-	LineTraceData *TData = (LineTraceData *)userdata;
+	CheckLineData *TData = (CheckLineData *)userdata;
 	if ( res.HitType == TRACE_CrossingPortal )
 	{
 		TData->NumPortals++;
@@ -4852,7 +4852,7 @@ bool P_LineTrace(AActor *t1, DAngle angle, double distance,
 	double offsetside, FLineTraceData *outdata)
 {
 	FTraceResults trace;
-	LineTraceData TData;
+	CheckLineData TData;
 	TData.Caller = t1;
 	TData.ThruSpecies = (flags & TRF_THRUSPECIES);
 	TData.ThruActors = (flags & TRF_THRUACTORS);

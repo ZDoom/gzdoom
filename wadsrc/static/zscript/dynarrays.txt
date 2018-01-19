@@ -115,6 +115,25 @@ struct DynArray_Ptr native
 	native void Clear ();
 }
 
+struct DynArray_Obj native
+{
+	native readonly uint Size;
+	
+	native void Copy(DynArray_Obj other);
+	native void Move(DynArray_Obj other);
+	native uint Find(Object item) const;
+	native uint Push (Object item);
+	native bool Pop ();
+	native void Delete (uint index, int deletecount = 1);
+	native void Insert (uint index, Object item);
+	native void ShrinkToFit ();
+	native void Grow (uint amount);
+	native void Resize (uint amount);
+	native uint Reserve (uint amount);
+	native uint Max () const;
+	native void Clear ();
+}
+
 struct DynArray_String native
 {
 	native readonly uint Size;

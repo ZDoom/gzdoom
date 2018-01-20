@@ -496,7 +496,7 @@ enum ELineTier
 
 struct TraceResults native
 {
-	native Sector Sec; // originally called "Sector". cannot be named like this in ZScript.
+	native Sector HitSector; // originally called "Sector". cannot be named like this in ZScript.
 	native TextureID HitTexture;
 	native vector3 HitPos;
 	native vector3 HitVector;
@@ -506,9 +506,9 @@ struct TraceResults native
 	native double Distance;
 	native double Fraction;
 
-	native Actor Thing;		// valid if hit an actor. // originally called "Actor".
+	native Actor HitActor;		// valid if hit an actor. // originally called "Actor".
 
-	native Line Linedef;		// valid if hit a line // originally called "Line".
+	native Line HitLine;		// valid if hit a line // originally called "Line".
 	native uint8 Side;
 	native uint8 Tier;		// see Tracer.ELineTier
 	native bool unlinked;		// passed through a portal without static offset.

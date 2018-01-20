@@ -959,7 +959,7 @@ IMPLEMENT_CLASS(DTracer, false, false)
 DEFINE_FIELD_X(Tracer, DTracer, Results)
 
 // define TraceResults fields
-DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Sector, Sec)
+DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Sector, HitSector)
 DEFINE_FIELD_X(TraceResults, FTraceResults, HitTexture)
 DEFINE_FIELD_X(TraceResults, FTraceResults, HitPos)
 DEFINE_FIELD_X(TraceResults, FTraceResults, HitVector)
@@ -967,8 +967,8 @@ DEFINE_FIELD_X(TraceResults, FTraceResults, SrcFromTarget)
 DEFINE_FIELD_X(TraceResults, FTraceResults, SrcAngleFromTarget)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Distance)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Fraction)
-DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Actor, Thing)
-DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Line, Linedef)
+DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Actor, HitActor)
+DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Line, HitLine)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Side)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Tier)
 DEFINE_FIELD_X(TraceResults, FTraceResults, unlinked)
@@ -1006,6 +1006,30 @@ ETraceStatus DTracer::TraceCallback(FTraceResults& res, void* pthis)
 {
 	DTracer* self = (DTracer*)pthis;
 	// "res" here should refer to self->Results anyway.
+
+	// patch results a bit. modders don't expect it to work like this most likely.
+	// code by MarisaKirisame
+	if (res.HitType == TRACE_HitWall)
+	{
+		int txpart;
+		switch (res.Tier)
+		{
+		case TIER_Middle:
+			res.HitTexture = res.Line->sidedef[res.Side]->textures[1].texture;
+			break;
+		case TIER_Upper:
+			res.HitTexture = res.Line->sidedef[res.Side]->textures[0].texture;
+			break;
+		case TIER_Lower:
+			res.HitTexture = res.Line->sidedef[res.Side]->textures[2].texture;
+			break;
+		case TIER_FFloor:
+			txpart = (res.ffloor->flags & FF_UPPERTEXTURE) ? 0 : (res.ffloor->flags & FF_LOWERTEXTURE) ? 2 : 1;
+			res.HitTexture = res.ffloor->master->sidedef[0]->textures[txpart].texture;
+			break;
+		}
+	}
+
 	return self->CallZScriptCallback();
 }
 

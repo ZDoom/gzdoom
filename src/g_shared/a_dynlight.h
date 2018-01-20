@@ -28,7 +28,8 @@ enum LightFlag
 	LF_DONTLIGHTSELF = 4,
 	LF_ATTENUATE = 8,
 	LF_NOSHADOWMAP = 16,
-	LF_DONTLIGHTACTORS = 32
+	LF_DONTLIGHTACTORS = 32,
+	LF_SPOT = 64
 };
 
 typedef TFlags<LightFlag> LightFlags;
@@ -42,7 +43,7 @@ enum ELightType
 	FlickerLight,
 	RandomFlickerLight,
 	SectorLight,
-	SpotLight,
+	DummyLight,
 	ColorPulseLight,
 	ColorFlickerLight, 
 	RandomColorFlickerLight
@@ -100,6 +101,7 @@ public:
 	bool IsActive() const { return !(flags2&MF2_DORMANT); }
 	bool IsSubtractive() { return !!(lightflags & LF_SUBTRACTIVE); }
 	bool IsAdditive() { return !!(lightflags & LF_ADDITIVE); }
+	bool IsSpot() { return !!(lightflags & LF_SPOT); }
 	FState *targetState;
 	FLightNode * touching_sides;
 	FLightNode * touching_subsectors;
@@ -127,6 +129,7 @@ public:
 	bool shadowmapped;
 	int bufferindex;
 	LightFlags lightflags;
-
+	DAngle SpotInnerAngle = 10.0;
+	DAngle SpotOuterAngle = 25.0;
 
 };

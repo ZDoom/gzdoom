@@ -49,6 +49,13 @@
 FDynLightData modellightdata;
 int modellightindex = -1;
 
+template<class T>
+T smoothstep(const T edge0, const T edge1, const T x)
+{
+	auto t = clamp((x - edge0) / (edge1 - edge0), 0.0, 1.0);
+	return t * t * (3.0 - 2.0 * t);
+}
+
 //==========================================================================
 //
 // Sets a single light value from all dynamic lights affecting the specified location
@@ -70,6 +77,7 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self) && !(light->lightflags&LF_DONTLIGHTACTORS))
 		{
 			float dist;
+			FVector3 L;
 
 			// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
 			// This will do the calculations explicitly rather than calling one of AActor's utility functions.
@@ -80,14 +88,15 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 				if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
 
 				DVector2 offset = Displacements.getOffset(fromgroup, togroup);
-				dist = FVector3(x - light->X() - offset.X, y - light->Y() - offset.Y, z - light->Z()).LengthSquared();
+				L = FVector3(x - light->X() - offset.X, y - light->Y() - offset.Y, z - light->Z());
 			}
 			else
 			{
 			direct:
-				dist = FVector3(x - light->X(), y - light->Y(), z - light->Z()).LengthSquared();
+				L = FVector3(x - light->X(), y - light->Y(), z - light->Z());
 			}
 
+			dist = L.LengthSquared();
 			radius = light->GetRadius();
 
 			if (dist < radius * radius)
@@ -95,6 +104,18 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 				dist = sqrtf(dist);	// only calculate the square root if we really need it.
 
 				frac = 1.0f - (dist / radius);
+
+				if (light->IsSpot())
+				{
+					L *= -1.0f / dist;
+					DAngle negPitch = -light->Angles.Pitch;
+					double xyLen = negPitch.Cos();
+					double spotDirX = -light->Angles.Yaw.Cos() * xyLen;
+					double spotDirY = -light->Angles.Yaw.Sin() * xyLen;
+					double spotDirZ = -negPitch.Sin();
+					double cosDir = L.X * spotDirX + L.Y * spotDirY + L.Z * spotDirZ;
+					frac *= (float)smoothstep(light->SpotOuterAngle.Cos(), light->SpotInnerAngle.Cos(), cosDir);
+				}
 
 				if (frac > 0 && GLRenderer->mShadowMap.ShadowTest(light, { x, y, z }))
 				{

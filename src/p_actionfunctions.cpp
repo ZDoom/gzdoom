@@ -988,13 +988,6 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoundVolume)
 	return 0;
 }
 
-DEFINE_ACTION_FUNCTION(AActor, A_IsPlayingSound)
-{
-	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_INT(channel);
-	PARAM_SOUND(sound);
-	ACTION_RETURN_BOOL(S_IsActorPlayingSomething(self,channel,sound));
-}
 
 //==========================================================================
 //

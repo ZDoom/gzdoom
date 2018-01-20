@@ -592,6 +592,12 @@ CCMD(printstats)
 
 CCMD(finishgame)
 {
+	bool gamestatecheck = gamestate == GS_LEVEL || gamestate == GS_INTERMISSION || gamestate == GS_FINALE;
+	if (!gamestatecheck)
+	{
+		Printf("Cannot use 'finishgame' while not in a game!\n");
+		return;
+	}
 	// This CCMD simulates an end-of-game action and exists to end mods that never exit their last level.
 	Net_WriteByte(DEM_FINISHGAME);
 }

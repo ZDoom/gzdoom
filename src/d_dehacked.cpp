@@ -2490,7 +2490,7 @@ bool D_LoadDehFile(const char *patchfile)
 {
 	FileReader fr;
 
-	if (!fr.Open(patchfile))
+	if (fr.Open(patchfile))
 	{
 		PatchSize = fr.GetLength();
 

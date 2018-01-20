@@ -627,7 +627,7 @@ void C_InitConsole (int width, int height, bool ingame)
 //
 //==========================================================================
 
-CCMD (atexit)
+UNSAFE_CCMD (atexit)
 {
 	if (argv.argc() == 1)
 	{

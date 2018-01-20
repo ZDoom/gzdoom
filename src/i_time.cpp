@@ -164,6 +164,11 @@ uint64_t I_msTime()
 	return NSToMS(I_nsTime());
 }
 
+uint64_t I_msTimeFS() // from "start"
+{
+	return (FirstFrameStartTime == 0) ? 0 : NSToMS(I_nsTime() - FirstFrameStartTime);
+}
+
 int I_GetTime()
 {
 	return NSToTic(CurrentFrameStartTime - FirstFrameStartTime);

@@ -160,6 +160,7 @@ BOOL AppActive = TRUE;
 int SessionState = 0;
 int BlockMouseMove; 
 
+CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, norawinput, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
@@ -551,7 +552,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
-		S_SetSoundPaused (wParam);
+		S_SetSoundPaused ((!!i_soundinbackground) || wParam);
 		break;
 
 	case WM_WTSSESSION_CHANGE:

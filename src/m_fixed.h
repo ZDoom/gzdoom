@@ -7,7 +7,7 @@
 // Unfortunately, the Scale function still gets badly handled on 32 bit x86 platforms so it's the last remaining piece of inline assembly 
 
 // GCC inlines
-#if defined(__GNUC__) && defined(__i386__) && !defined(__clang__)
+#if defined(__GNUC__) && defined(__i386__) && !defined(__clang__) && !defined(__PIC__)
 #ifndef alloca
 // MinGW does not seem to come with alloca defined.
 #define alloca __builtin_alloca

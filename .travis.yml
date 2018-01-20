@@ -11,7 +11,7 @@ git:
 matrix:
   include:
     - os: osx
-      osx_image: xcode9.1
+      osx_image: xcode9.2
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
 

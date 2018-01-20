@@ -781,7 +781,7 @@ void D_Display ()
 
 
 	{
-		screen->FrameTime = I_msTime();
+		screen->FrameTime = I_msTimeFS();
 		TexMan.UpdateAnimations(screen->FrameTime);
 		R_UpdateSky(screen->FrameTime);
 		switch (gamestate)
@@ -797,7 +797,13 @@ void D_Display ()
 		case GS_LEVEL:
 		case GS_TITLELEVEL:
 			if (!gametic)
+			{
+				if (!screen->HasBegun2D())
+				{
+					screen->Begin2D(false);
+				}
 				break;
+			}
 
 			if (StatusBar != NULL)
 			{
@@ -2815,7 +2821,7 @@ void D_DoomMain (void)
 //
 //==========================================================================
 
-CCMD(restart)
+UNSAFE_CCMD(restart)
 {
 	// remove command line args that would get in the way during restart
 	Args->RemoveArgs("-iwad");

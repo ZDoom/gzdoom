@@ -1778,7 +1778,7 @@ MOUSEMNU_LOOKSTRAFE			= "Lookstrafe";
 
 // Joystick Menu
 
-JOYMNU_CONFIG				= "CONFIGURE CONTROLLER";
+JOYMNU_TITLE				= "CONFIGURE CONTROLLER";
 JOYMNU_OPTIONS				= "CONTROLLER OPTIONS";
 JOYMNU_NOMENU				= "Block controller input in menu";
 
@@ -1796,6 +1796,9 @@ PLYRMNU_PLAYERGENDER	= "Gender";
 PLYRMNU_AUTOAIM			= "Autoaim";
 PLYRMNU_SWITCHONPICKUP	= "Switch on pickup";
 PLYRMNU_ALWAYSRUN		= "Always Run";
+PLYRMNU_PRESSSPACE		= "PRESS \cjSPACE";
+PLYRMNU_SEEFRONT		= "TO SEE FRONT";
+PLYRMNU_SEEBACK			= "TO SEE BACK";
 
 // Display Options
 DSPLYMNU_TITLE					= "DISPLAY OPTIONS";
@@ -1942,6 +1945,7 @@ AUTOMAPMNU_SHOWKEYS				= "Show keys (cheat)";
 AUTOMAPMNU_SHOWTRIGGERLINES		= "Show trigger lines";
 AUTOMAPMNU_SHOWTHINGSPRITES		= "Show things as sprites";
 AUTOMAPMNU_PTOVERLAY			= "Overlay portals";
+AUTOMAPMNU_EMPTYSPACEMARGIN		= "Empty space margin";
 
 // Automap Controls
 MAPCNTRLMNU_TITLE 			= "CUSTOMIZE MAP CONTROLS";
@@ -2129,6 +2133,7 @@ SNDMNU_SFXVOLUME		= "Sounds volume";
 SNDMNU_MENUVOLUME		= "Menu volume";
 SNDMNU_MUSICVOLUME		= "Music volume";
 SNDMNU_MIDIDEVICE		= "MIDI device";
+SNDMNU_BACKGROUND		= "Sound in Background";
 SNDMNU_UNDERWATERREVERB	= "Underwater reverb";
 SNDMNU_RANDOMIZEPITCHES	= "Randomize pitches";
 SNDMNU_CHANNELS			= "Sound channels";
@@ -2161,11 +2166,10 @@ ADVSNDMNU_FLUIDSYNTH		= "FluidSynth";
 ADVSNDMNU_FLUIDPATCHSET		= "Patch set";
 ADVSNDMNU_FLUIDGAIN			= "Gain";
 ADVSNDMNU_REVERB			= "Reverb";
-ADVSNDMNU_FLUIDVOICES		= "MIDI voices";
+ADVSNDMNU_CHORUS			= "Chorus";
 ADVSNDMNU_TIMIDITY			= "Timidity++";
 ADVSNDMNU_TIMIDITYEXE		= "Path for executable";
 ADVSNDMNU_TIMIDITYCONFIG	= "Timidity config file";
-ADVSNDMNU_TIMIDITYCHORUS	= "Chorus";
 ADVSNDMNU_TIMIDITYVOLUME	= "Relative volume";
 ADVSNDMNU_WILDMIDI			= "WildMidi";
 ADVSNDMNU_WILDMIDICONFIG	= "WildMidi config file";
@@ -2183,13 +2187,14 @@ MODMNU_CHIPOMATIC		= "Chip-o-matic";
 RNDMNU_TITLE			= "CHANGE RENDERER";
 RNDMNU_RENDERER			= "Hardware Acceleration";
 RNDMNU_TRUECOLOR		= "Software Truecolor Mode";
-RNDMNU_POLY				= "Poly Renderer (experimental)";
+RNDMNU_POLY			 	= "Poly Renderer (experimental)";
 RNDMNU_CANVAS			= "Software Canvas";
 
 // Video Options
 VIDMNU_TITLE			= "VIDEO MODE";
 VIDMNU_FULLSCREEN		= "Fullscreen";
 VIDMNU_HIDPI			= "Retina/HiDPI support";
+VIDMNU_BRDLSS			= "Borderless Windowed Mode";
 VIDMNU_ASPECTRATIO		= "Aspect ratio";
 VIDMNU_FORCEASPECT		= "Force aspect ratio";
 VIDMNU_CROPASPECT		= "Forced ratio style";
@@ -2724,7 +2729,7 @@ GLPREFMNU_AMBLIGHT 				= "Ambient light level";
 GLPREFMNU_RENDERQUALITY 		= "Rendering quality";
 GLPREFMNU_MENUBLUR				= "Menu Blur";
 GLPREFMNU_VRMODE 				= "Stereo 3D VR";
-GLPREFMNU_VRQUADSTEREO 			= "Enable Quad Stereo";
+GLPREFMNU_VRQUADSTEREO 			= "Enable Quad Stereo (Requires Restart)";
 GLPREFMNU_MULTISAMPLE			= "Multisample";
 GLPREFMNU_TONEMAP				= "Tonemap Mode";
 GLPREFMNU_BLOOM					= "Bloom effect";
@@ -2797,7 +2802,6 @@ OPTVAL_TRANSLUCENTFUZZ 		= "Translucent fuzz";
 OPTVAL_NOISE 				= "Noise";
 OPTVAL_SMOOTHNOISE 			= "Smooth Noise";
 OPTVAL_JAGGEDFUZZ 			= "Jagged fuzz";
-OPTVAL_NORMAL 				= "Normal";
 OPTVAL_GREENMAGENTA 		= "Green/Magenta";
 OPTVAL_REDCYAN 				= "Red/Cyan";
 OPTVAL_AMBERBLUE 			= "Amber/Blue";

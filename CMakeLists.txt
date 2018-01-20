@@ -234,6 +234,12 @@ else()
 	if( APPLE AND "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" )
 		set( ALL_C_FLAGS "-static-libgcc" )
 	endif()
+	
+	if( NOT APPLE )
+		# Generic GCC/Clang requires position independent executable to be enabled explicitly
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} -fPIE" )
+		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie" )
+	endif()
 endif()
 
 set( CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${REL_LINKER_FLAGS}" )

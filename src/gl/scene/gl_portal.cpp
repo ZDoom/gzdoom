@@ -1180,6 +1180,7 @@ void GLHorizonPortal::DrawContents()
 
 
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
+	gl_RenderState.SetObjectColor(origin->specialcolor);
 
 	gl_SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
@@ -1237,6 +1238,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.plane.GetFromSector(sector, sector_t::ceiling);
 		horz.lightlevel = gl_ClampLight(sector->GetCeilingLight());
 		horz.colormap = sector->Colormap;
+		horz.specialcolor = 0xffffffff;
 		if (portal->mType == PORTS_PLANE)
 		{
 			horz.plane.Texheight = r_viewpoint.Pos.Z + fabs(horz.plane.Texheight);
@@ -1250,6 +1252,7 @@ void GLEEHorizonPortal::DrawContents()
 		horz.plane.GetFromSector(sector, sector_t::floor);
 		horz.lightlevel = gl_ClampLight(sector->GetFloorLight());
 		horz.colormap = sector->Colormap;
+		horz.specialcolor = 0xffffffff;
 		if (portal->mType == PORTS_PLANE)
 		{
 			horz.plane.Texheight = r_viewpoint.Pos.Z - fabs(horz.plane.Texheight);

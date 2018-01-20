@@ -225,7 +225,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
 	screen->GetFlashedPalette (palette);
-	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch());
+	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch(), Gamma);
 	pic->Unlock ();
 	delete pic;
 }

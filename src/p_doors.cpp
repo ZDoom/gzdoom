@@ -711,9 +711,13 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 	}
 
 
-	picnum = m_Line1->sidedef[0]->GetTexture(side_t::top);
-	m_Line1->sidedef[0]->SetTexture(side_t::mid, picnum);
-	m_Line2->sidedef[0]->SetTexture(side_t::mid, picnum);
+	auto &tex1 = m_Line1->sidedef[0]->textures;
+	tex1[side_t::mid].InitFrom(tex1[side_t::top]);
+
+	auto &tex2 = m_Line2->sidedef[0]->textures;
+	tex2[side_t::mid].InitFrom(tex2[side_t::top]);
+
+	picnum = tex1[side_t::top].texture;
 
 	// don't forget texture scaling here!
 	FTexture *tex = TexMan[picnum];

@@ -458,7 +458,7 @@ class LeafSpawner : Actor
 
 			if (mo)
 			{
-				mo.Thrust(random[LeafSpawn]() / 128. + 3);
+				mo.Thrust(random[LeafSpawn]() / 128. + 3, angle);
 				mo.target = self;
 				mo.special1 = 0;
 			}

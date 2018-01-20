@@ -205,7 +205,11 @@ extend class Actor
 					if (mo.health > 0 && mo.bBossSpawned)
 					{
 						mo.DamageMobj(self, self, mo.health, "None", DMG_NO_ARMOR|DMG_FORCED|DMG_THRUSTLESS|DMG_NO_FACTOR);
-						count++;
+
+						// [Blue Shadow] If 'mo' is a RandomSpawner or another actor which can't be killed,
+						// it could cause this code to loop indefinitely. So only let it trigger a loop if it
+						// has been actually killed.
+						if (mo.bKilled) count++;
 					}
 				}
 			} while (count != 0);

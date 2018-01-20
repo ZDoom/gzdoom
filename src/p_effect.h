@@ -52,7 +52,7 @@ struct particle_t
 	double	size;
 	double	sizestep;
 	subsector_t * subsector;
-	short	ttl;
+	int32_t	ttl;
 	uint8_t	bright;
 	bool	notimefreeze;
 	float	fadestep;

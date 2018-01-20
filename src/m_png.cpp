@@ -132,7 +132,7 @@ CVAR(Float, png_gamma, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //==========================================================================
 
 bool M_CreatePNG (FileWriter *file, const uint8_t *buffer, const PalEntry *palette,
-				  ESSType color_type, int width, int height, int pitch)
+				  ESSType color_type, int width, int height, int pitch, float gamma)
 {
 	uint8_t work[8 +				// signature
 			  12+2*4+5 +		// IHDR
@@ -157,7 +157,7 @@ bool M_CreatePNG (FileWriter *file, const uint8_t *buffer, const PalEntry *palet
 	MakeChunk (ihdr, MAKE_ID('I','H','D','R'), 2*4+5);
 
 	// Assume a display exponent of 2.2 (100000/2.2 ~= 45454.5)
-	*gama = BigLong (int (45454.5f * (png_gamma == 0.f ? Gamma : png_gamma)));
+	*gama = BigLong (int (45454.5f * (png_gamma == 0.f ? gamma : png_gamma)));
 	MakeChunk (gama, MAKE_ID('g','A','M','A'), 4);
 
 	if (color_type == SS_PAL)

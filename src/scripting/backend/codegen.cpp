@@ -8091,7 +8091,7 @@ FxExpression *FxMemberFunctionCall::Resolve(FCompileContext& ctx)
 					{
 						bool error;
 						PFunction *afd = FindClassMemberFunction(ccls, ctx.Class, MethodName, ScriptPosition, &error);
-						if ((afd->Variants[0].Flags & VARF_Method) && (afd->Variants[0].Flags & VARF_Virtual))
+						if ((nullptr != afd) && (afd->Variants[0].Flags & VARF_Method) && (afd->Variants[0].Flags & VARF_Virtual))
 						{
 							staticonly = false;
 							novirtual = true;
@@ -8935,7 +8935,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			else
 			{
 				bool writable;
-				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
+				ArgList[i] = ArgList[i]->Resolve(ctx);	// must be resolved before the address is requested.
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
 					if (type == ArgList[i]->ValueType && type->isRealPointer() && type->toPointer()->PointedType->isStruct())

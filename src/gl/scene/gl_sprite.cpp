@@ -40,6 +40,7 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "r_data/r_vanillatrans.h"
+#include "i_time.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -342,10 +343,9 @@ void GLSprite::Draw(int pass)
 		sector_t *cursec = actor ? actor->Sector : particle ? particle->subsector->sector : nullptr;
 		if (cursec != nullptr)
 		{
-			PalEntry finalcol(ThingColor.a,
-				ThingColor.r * cursec->SpecialColors[sector_t::sprites].r / 255,
-				ThingColor.g * cursec->SpecialColors[sector_t::sprites].g / 255,
-				ThingColor.b * cursec->SpecialColors[sector_t::sprites].b / 255);
+			const PalEntry finalcol = fullbright
+				? ThingColor
+				: ThingColor.Modulate(cursec->SpecialColors[sector_t::sprites]);
 
 			gl_RenderState.SetObjectColor(finalcol);
 		}
@@ -1210,9 +1210,16 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 		}
 	}
 
-	x = particle->Pos.X;
-	y = particle->Pos.Y;
-	z = particle->Pos.Z;
+	double timefrac = r_viewpoint.TicFrac;
+	if (paused || bglobal.freeze)
+		timefrac = 0.;
+	float xvf = (particle->Vel.X) * timefrac;
+	float yvf = (particle->Vel.Y) * timefrac;
+	float zvf = (particle->Vel.Z) * timefrac;
+
+	x = float(particle->Pos.X) + xvf;
+	y = float(particle->Pos.Y) + yvf;
+	z = float(particle->Pos.Z) + zvf;
 	
 	float factor;
 	if (gl_particles_style == 1) factor = 1.3f / 7.f;

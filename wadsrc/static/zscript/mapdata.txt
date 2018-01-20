@@ -184,7 +184,7 @@ struct SecPlane native play
 	native bool isEqual(Secplane other) const;
 	native void ChangeHeight(double hdiff);
 	native double GetChangedHeight(double hdiff) const;
-	native double HeightDiff(double oldd, double newd = 0.0);
+	native double HeightDiff(double oldd, double newd = 0.0) const;
 	native double PointToDist(Vector2 xy, double z) const;
 }
 

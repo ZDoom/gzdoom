@@ -538,6 +538,7 @@ enum ESkillProperty
 	SKILLP_EasyKey,
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
+	SKILLP_PlayerRespawn,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -595,6 +596,7 @@ struct FSkillInfo
 	double FriendlyHealth;
 	bool NoPain;
 	int Infighting;
+	bool PlayerRespawn;
 
 	FSkillInfo() {}
 	FSkillInfo(const FSkillInfo &other)

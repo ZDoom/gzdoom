@@ -1627,7 +1627,7 @@ PType *ZCCCompiler::DetermineType(PType *outertype, ZCC_TreeNode *field, FName n
 			}
 			else
 			{
-				Error(field, "%s: Base type  for dynamic array types nust be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
+				Error(field, "%s: Base type for dynamic array types must be integral, but got %s", name.GetChars(), ftype->DescriptiveName());
 			}
 		}
 		else

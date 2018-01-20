@@ -8935,7 +8935,7 @@ FxExpression *FxVMFunctionCall::Resolve(FCompileContext& ctx)
 			else
 			{
 				bool writable;
-				ArgList[i] = ArgList[i]->Resolve(ctx);	// nust be resolved before the address is requested.
+				ArgList[i] = ArgList[i]->Resolve(ctx);	// must be resolved before the address is requested.
 				if (ArgList[i] != nullptr && ArgList[i]->ValueType != TypeNullPtr)
 				{
 					if (type == ArgList[i]->ValueType && type->isRealPointer() && type->toPointer()->PointedType->isStruct())

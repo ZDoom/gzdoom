@@ -735,7 +735,11 @@ void M_Ticker (void)
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
 		CurrentMenu->CallTicker();
+	}
 
+	// Check again because menu could be closed from Ticker()
+	if (CurrentMenu != nullptr && menuactive != MENU_Off)
+	{
 		for (int i = 0; i < NUM_MKEYS; ++i)
 		{
 			if (MenuButtons[i].bDown)

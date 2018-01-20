@@ -1704,7 +1704,7 @@ bool P_LookForEnemies (AActor *actor, INTBOOL allaround, FLookExParams *params)
 {
 	AActor *other;
 
-	other = P_BlockmapSearch (actor, 10, LookForEnemiesInBlock, params);
+	other = P_BlockmapSearch (actor, actor->friendlyseeblocks, LookForEnemiesInBlock, params);
 
 	if (other != NULL)
 	{

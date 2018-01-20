@@ -1874,10 +1874,17 @@ OptionMenu VideoModeMenu protected
 	Title "$VIDMNU_TITLE"
 	
 	Option "$VIDMNU_FULLSCREEN",		"fullscreen", "YesNo"
+	
 	IfOption(Mac)
 	{
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
 	}
+	
+	IfOption(Windows)
+	{
+		Option "$VIDMNU_BRDLSS",		"win_borderless", "YesNo"
+	}
+	
 	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"

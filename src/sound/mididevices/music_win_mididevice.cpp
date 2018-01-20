@@ -649,18 +649,11 @@ void CALLBACK WinMIDIDevice::CallbackFunc(HMIDIOUT hOut, UINT uMsg, DWORD_PTR dw
 // are done by sending MIDI channel volume messages to the stream, not
 // through midiOutSetVolume().)
 //
-// This is using VC++'s __uuidof extension instead of the the CLSID_ and
-// IID_ definitions because I couldn't figure out why it wasn't finding them
-// when linking, and __uuidof circumvents that problem. I'd also be
-// surprised if w32api includes any WASAPI stuff any time soon, so it's no
-// big loss making this VC++-specific for the time being
-//
 //==========================================================================
 
 static bool IgnoreMIDIVolume(UINT id)
 {
 	MIDIOUTCAPS caps;
-	bool mustcheck = false;
 
 	if (MMSYSERR_NOERROR == midiOutGetDevCaps(id, &caps, sizeof(caps)))
 	{
@@ -668,7 +661,7 @@ static bool IgnoreMIDIVolume(UINT id)
 		{
 			// We cannot determine what this is so we have to assume the worst, as the default
 			// devive's volume control is irreparably broken.
-			mustcheck = true;
+			return true;
 		}
 		// The Microsoft GS Wavetable Synth advertises itself as MIDIDEV_SWSYNTH with a VOLUME control.
 		// If the one we're using doesn't match that, we don't need to bother checking the name.
@@ -676,28 +669,8 @@ static bool IgnoreMIDIVolume(UINT id)
 		{
 			if (strncmp(caps.szPname, "Microsoft GS", 12) == 0)
 			{
-				mustcheck = true;
-			}
-		}
-		if (mustcheck)
-		{
-#ifndef __GNUC__
-			IMMDeviceEnumerator *enumerator;
-
-			// Now try to create an IMMDeviceEnumerator interface. If it succeeds,
-			// we know we're using the new audio stack introduced with Vista and
-			// should ignore this MIDI device's volume control.
-			if (SUCCEEDED(CoCreateInstance(__uuidof(MMDeviceEnumerator), nullptr, CLSCTX_ALL,
-				__uuidof(IMMDeviceEnumerator), (void**)&enumerator))
-				&& enumerator != nullptr)
-			{
-				enumerator->Release();
 				return true;
 			}
-#else
-			// assume the worst and consider volume control broken.
-			return true;
-#endif
 		}
 	}
 	return false;

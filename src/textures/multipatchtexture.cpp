@@ -175,15 +175,14 @@ protected:
 
 	struct TexPart
 	{
-		int16_t OriginX, OriginY;
-		uint8_t Rotate;
-		uint8_t op;
-		FRemapTable *Translation;
-		PalEntry Blend;
-		FTexture *Texture;
-		blend_t Alpha;
-
-		TexPart();
+		FRemapTable *Translation = nullptr;
+		FTexture *Texture = nullptr;
+		PalEntry Blend = 0;
+		blend_t Alpha = FRACUNIT;
+		int16_t OriginX = 0;
+		int16_t OriginY = 0;
+		uint8_t Rotate = 0;
+		uint8_t op = OP_COPY;
 	};
 
 	struct TexInit
@@ -799,23 +798,6 @@ FTexture *FMultiPatchTexture::GetRawTexture()
 
 //==========================================================================
 //
-// FMultiPatchTexture :: TexPart :: TexPart
-//
-//==========================================================================
-
-FMultiPatchTexture::TexPart::TexPart()
-{
-	OriginX = OriginY = 0;
-	Rotate = 0;
-	Texture = NULL;
-	Translation = NULL;
-	Blend = 0;
-	Alpha = FRACUNIT;
-	op = OP_COPY;
-}
-
-//==========================================================================
-//
 // FTextureManager :: AddTexturesLump
 //
 //==========================================================================
@@ -1369,7 +1351,7 @@ void FMultiPatchTexture::ResolvePatches()
 		{
 			if (Parts[i].Texture == nullptr)
 			{
-				memcpy(&Parts[i], &Parts[i + 1], NumParts - i - 1);
+				memcpy(&Parts[i], &Parts[i + 1], (NumParts - i - 1) * sizeof(TexPart));
 				i--;
 				NumParts--;
 			}

@@ -418,7 +418,6 @@ static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 			executablePath = @"/usr/bin/arch";
 		}
 
-		[arguments addObject:@"-wad_picker_restart"];
 		[arguments addObject:@"-iwad"];
 		[arguments addObject:[NSString stringWithUTF8String:wad.Path]];
 

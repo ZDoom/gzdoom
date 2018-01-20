@@ -799,6 +799,11 @@ public:
 				th->Scale.X = th->Scale.Y = CheckFloat(key);
 				break;
 
+			case NAME_FriendlySeeBlocks:
+				CHECK_N(Zd | Zdt)
+				th->friendlyseeblocks = CheckInt(key);
+				break;
+
 			default:
 				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))

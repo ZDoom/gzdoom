@@ -903,9 +903,9 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, GetValue)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(index);
-	float v;
+	float v = 0;
 
-	if (index >= 0 && index < countof(ReverbFields))
+	if (index >= 0 && index < (int)countof(ReverbFields))
 	{
 		auto rev = &ReverbFields[index];
 		if (rev->Int != nullptr)
@@ -931,7 +931,7 @@ DEFINE_ACTION_FUNCTION(DReverbEdit, SetValue)
 	PARAM_INT(index);
 	PARAM_FLOAT(v);
 
-	if (index >= 0 && index < countof(ReverbFields))
+	if (index >= 0 && index < (int)countof(ReverbFields))
 	{
 		auto rev = &ReverbFields[index];
 		if (rev->Int != nullptr)

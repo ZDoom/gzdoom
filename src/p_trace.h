@@ -112,4 +112,14 @@ bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, d
 	ActorFlags ActorMask, uint32_t WallMask, AActor *ignore, FTraceResults &res, uint32_t traceFlags = 0,
 	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL);
 
+// [ZZ] this is the object that's used for ZScript
+class DTracer : public DObject
+{
+	DECLARE_CLASS(DTracer, DObject)
+public:
+	FTraceResults Results;
+	static ETraceStatus TraceCallback(FTraceResults& res, void* pthis);
+	ETraceStatus CallZScriptCallback();
+};
+
 #endif //__P_TRACE_H__

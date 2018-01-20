@@ -1639,9 +1639,7 @@ FBaseCVar *C_CreateCVar(const char *var_name, ECVarType var_type, uint32_t flags
 
 void UnlatchCVars (void)
 {
-	FLatchedValue var;
-
-	while (LatchedValues.Pop (var))
+	for (const FLatchedValue& var : LatchedValues)
 	{
 		uint32_t oldflags = var.Variable->Flags;
 		var.Variable->Flags &= ~(CVAR_LATCH | CVAR_SERVERINFO);
@@ -1650,6 +1648,8 @@ void UnlatchCVars (void)
 			delete[] var.Value.String;
 		var.Variable->Flags = oldflags;
 	}
+
+	LatchedValues.Clear();
 }
 
 void DestroyCVarsFlagged (uint32_t flags)

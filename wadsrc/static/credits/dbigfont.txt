@@ -1,0 +1,9 @@
+DBIGFONT, SBIGFONT
+
+Taken from sp_usimp.zip (Ultimate Simplicity) by Agent Spork
+
+sp_usimp.txt contains the following permissions:
+
+Authors MAY use the contents of this file as a base for modification or
+reuse.  Permissions have been obtained from original authors for any of
+their resources modified or included in this file.

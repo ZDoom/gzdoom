@@ -65,7 +65,7 @@ class DWaitingCommand : public DThinker
 {
 	DECLARE_CLASS (DWaitingCommand, DThinker)
 public:
-	DWaitingCommand (const char *cmd, int tics);
+	DWaitingCommand (const char *cmd, int tics, bool unsafe);
 	~DWaitingCommand ();
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -75,6 +75,7 @@ private:
 
 	char *Command;
 	int TicsLeft;
+	bool IsUnsafe;
 };
 
 class DStoredCommand : public DThinker
@@ -126,7 +127,8 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
 	Button_AM_ZoomIn, Button_AM_ZoomOut;
 
-bool ParsingKeyConf, ParsingMenuDef = false;
+bool ParsingKeyConf;
+static bool UnsafeExecutionContext;
 
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
@@ -187,24 +189,6 @@ static const char *KeyConfCommands[] =
 	"clearplayerclasses"
 };
 
-static const char *MenuDefCommands[] =
-{
-	"snd_reset",
-	"reset2defaults",
-	"reset2saved",
-	"menuconsole",
-	"clearnodecache",
-	"am_restorecolors",
-	"undocolorpic",
-	"special",
-	"puke",
-	"fpuke",
-	"pukename",
-	"event",
-	"netevent",
-	"openmenu"
-};
-
 // CODE --------------------------------------------------------------------
 
 IMPLEMENT_CLASS(DWaitingCommand, false, false)
@@ -213,19 +197,22 @@ void DWaitingCommand::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
 	arc("command", Command)
-		("ticsleft", TicsLeft);
+		("ticsleft", TicsLeft)
+		("unsafe", IsUnsafe);
 }
 
 DWaitingCommand::DWaitingCommand ()
 {
 	Command = NULL;
 	TicsLeft = 1;
+	IsUnsafe = false;
 }
 
-DWaitingCommand::DWaitingCommand (const char *cmd, int tics)
+DWaitingCommand::DWaitingCommand (const char *cmd, int tics, bool unsafe)
 {
 	Command = copystring (cmd);
 	TicsLeft = tics+1;
+	IsUnsafe = unsafe;
 }
 
 DWaitingCommand::~DWaitingCommand ()
@@ -240,7 +227,10 @@ void DWaitingCommand::Tick ()
 {
 	if (--TicsLeft == 0)
 	{
+		const bool wasUnsafe = UnsafeExecutionContext;
+		UnsafeExecutionContext = IsUnsafe;
 		AddCommandString (Command);
+		UnsafeExecutionContext = wasUnsafe;
 		Destroy ();
 	}
 }
@@ -602,25 +592,6 @@ void C_DoCommand (const char *cmd, int keynum)
 		}
 	}
 
-	if (ParsingMenuDef)
-	{
-		int i;
-
-		for (i = countof(MenuDefCommands)-1; i >= 0; --i)
-		{
-			if (strnicmp (beg, MenuDefCommands[i], len) == 0 &&
-				MenuDefCommands[i][len] == 0)
-			{
-				break;
-			}
-		}
-		if (i < 0)
-		{
-			Printf ("Invalid command for MENUDEF/ZScript: %s\n", beg);
-			return;
-		}
-	}
-
 	// Check if this is an action
 	if (*beg == '+' || *beg == '-')
 	{
@@ -687,6 +658,12 @@ void C_DoCommand (const char *cmd, int keynum)
 
 			if (args.argc() >= 2)
 			{ // Set the variable
+				if (UnsafeExecutionContext && !(var->GetFlags() & CVAR_MOD))
+				{
+					Printf(TEXTCOLOR_RED "Cannot set console variable" TEXTCOLOR_GOLD " %s " TEXTCOLOR_RED "from unsafe command\n", var->GetName());
+					return;
+				}
+
 				var->CmdSet (args[1]);
 			}
 			else
@@ -707,9 +684,9 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
-	ParsingMenuDef = true;
+	UnsafeExecutionContext = true;
 	C_DoCommand(cmd);
-	ParsingMenuDef = false;
+	UnsafeExecutionContext = false;
 	return 0;
 }
 
@@ -769,7 +746,7 @@ void AddCommandString (char *cmd, int keynum)
 						  // Note that deferred commands lose track of which key
 						  // (if any) they were pressed from.
 							*brkpt = ';';
-							Create<DWaitingCommand> (brkpt, tics);
+							Create<DWaitingCommand> (brkpt, tics, UnsafeExecutionContext);
 						}
 						return;
 					}
@@ -1059,6 +1036,17 @@ FConsoleCommand::~FConsoleCommand ()
 void FConsoleCommand::Run (FCommandLine &argv, APlayerPawn *who, int key)
 {
 	m_RunFunc (argv, who, key);
+}
+
+void FUnsafeConsoleCommand::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+{
+	if (UnsafeExecutionContext)
+	{
+		Printf(TEXTCOLOR_RED "Cannot execute unsafe command " TEXTCOLOR_GOLD "%s\n", m_Name);
+		return;
+	}
+
+	FConsoleCommand::Run (args, instigator, key);
 }
 
 FConsoleAlias::FConsoleAlias (const char *name, const char *command, bool noSave)
@@ -1381,9 +1369,13 @@ CCMD (alias)
 					alias = NULL;
 				}
 			}
+			else if (ParsingKeyConf)
+			{
+				new FUnsafeConsoleAlias (argv[1], argv[2]);
+			}
 			else
 			{
-				new FConsoleAlias (argv[1], argv[2], ParsingKeyConf);
+				new FConsoleAlias (argv[1], argv[2], false);
 			}
 		}
 	}
@@ -1519,6 +1511,13 @@ void FConsoleAlias::SafeDelete ()
 	{
 		bKill = true;
 	}
+}
+
+void FUnsafeConsoleAlias::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+{
+	UnsafeExecutionContext = true;
+	FConsoleAlias::Run(args, instigator, key);
+	UnsafeExecutionContext = false;
 }
 
 void FExecList::AddCommand(const char *cmd, const char *file)

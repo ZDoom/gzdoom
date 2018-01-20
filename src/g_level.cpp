@@ -224,7 +224,7 @@ CCMD (map)
 //
 //==========================================================================
 
-CCMD(recordmap)
+UNSAFE_CCMD(recordmap)
 {
 	if (netgame)
 	{

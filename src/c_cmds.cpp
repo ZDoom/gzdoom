@@ -674,7 +674,7 @@ UNSAFE_CCMD (error_fatal)
 //==========================================================================
 
 #if !defined(_WIN32) || !defined(_DEBUG)
-CCMD (crashout)
+UNSAFE_CCMD (crashout)
 {
 	*(volatile int *)0 = 0;
 }

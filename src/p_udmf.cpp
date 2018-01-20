@@ -604,6 +604,7 @@ public:
 			case NAME_Arg0Str:
 				CHECK_N(Zd);
 				arg0str = CheckString(key);
+				th->arg0str = arg0str;
 				break;
 
 			case NAME_Arg1Str:
@@ -797,14 +798,6 @@ public:
 
 			case NAME_Scale:
 				th->Scale.X = th->Scale.Y = CheckFloat(key);
-				break;
-
-			case NAME_SpotInnerAngle:
-				th->SpotInnerAngle = CheckFloat(key);
-				break;
-
-			case NAME_SpotOuterAngle:
-				th->SpotOuterAngle = CheckFloat(key);
 				break;
 
 			case NAME_FriendlySeeBlocks:

@@ -195,6 +195,11 @@ FTexture::MiscGLInfo::MiscGLInfo() throw()
 	Material[1] = Material[0] = NULL;
 	SystemTexture[1] = SystemTexture[0] = NULL;
 	Brightmap = NULL;
+	Normal = NULL;
+	Specular = NULL;
+	Metallic = NULL;
+	Roughness = NULL;
+	AmbientOcclusion = NULL;
 }
 
 FTexture::MiscGLInfo::~MiscGLInfo()
@@ -542,6 +547,112 @@ int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotat
 	return 0;
 }
 
+//==========================================================================
+//
+// Parses a material definition
+//
+//==========================================================================
+
+void gl_ParseMaterial(FScanner &sc, int deflump)
+{
+	int type = FTexture::TEX_Any;
+	bool disable_fullbright = false;
+	bool disable_fullbright_specified = false;
+	bool thiswad = false;
+	bool iwad = false;
+
+	FTexture *textures[6];
+	const char *keywords[7] = { "brightmap", "normal", "specular", "metallic", "roughness", "ao", nullptr };
+	const char *notFound[6] = { "Brightmap", "Normalmap", "Specular texture", "Metallic texture", "Roughness texture", "Ambient occlusion texture" };
+	memset(textures, 0, sizeof(textures));
+
+	sc.MustGetString();
+	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
+	else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
+	else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
+	else sc.UnGet();
+
+	sc.MustGetString();
+	FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
+	FTexture *tex = TexMan[no];
+
+	sc.MustGetToken('{');
+	while (!sc.CheckToken('}'))
+	{
+		sc.MustGetString();
+		if (sc.Compare("disablefullbright"))
+		{
+			// This can also be used without a brightness map to disable
+			// fullbright in rotations that only use brightness maps on
+			// other angles.
+			disable_fullbright = true;
+			disable_fullbright_specified = true;
+		}
+		else if (sc.Compare("thiswad"))
+		{
+			// only affects textures defined in the WAD containing the definition file.
+			thiswad = true;
+		}
+		else if (sc.Compare ("iwad"))
+		{
+			// only affects textures defined in the IWAD.
+			iwad = true;
+		}
+		else
+		{
+			for (int i = 0; keywords[i] != nullptr; i++)
+			{
+				if (sc.Compare (keywords[i]))
+				{
+					sc.MustGetString();
+					if (textures[i])
+						Printf("Multiple %s definitions in texture %s\n", keywords[i], tex? tex->Name.GetChars() : "(null)");
+					textures[i] = TexMan.FindTexture(sc.String, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+					if (!textures[i])
+						Printf("%s '%s' not found in texture '%s'\n", notFound[i], sc.String, tex? tex->Name.GetChars() : "(null)");
+					break;
+				}
+			}
+		}
+	}
+	if (!tex)
+	{
+		return;
+	}
+	if (thiswad || iwad)
+	{
+		bool useme = false;
+		int lumpnum = tex->GetSourceLump();
+
+		if (lumpnum != -1)
+		{
+			if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetIwadNum()) useme = true;
+			if (thiswad && Wads.GetLumpFile(lumpnum) == deflump) useme = true;
+		}
+		if (!useme) return;
+	}
+
+	FTexture **bindings[6] =
+	{
+		&tex->gl_info.Brightmap,
+		&tex->gl_info.Normal,
+		&tex->gl_info.Specular,
+		&tex->gl_info.Metallic,
+		&tex->gl_info.Roughness,
+		&tex->gl_info.AmbientOcclusion
+	};
+	for (int i = 0; keywords[i] != nullptr; i++)
+	{
+		if (textures[i])
+		{
+			textures[i]->bMasked = false;
+			*bindings[i] = textures[i];
+		}
+	}
+
+	if (disable_fullbright_specified)
+		tex->gl_info.bDisableFullbright = disable_fullbright;
+}
 
 //==========================================================================
 //

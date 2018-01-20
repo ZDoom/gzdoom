@@ -127,11 +127,13 @@ class OptionMenuItemSubmenu : OptionMenuItem
 class OptionMenuItemCommand : OptionMenuItemSubmenu
 {
 	private String ccmd;	// do not allow access to this from the outside.
+	bool mCloseOnSelect;
 	
-	OptionMenuItemCommand Init(String label, Name command, bool centered = false)
+	OptionMenuItemCommand Init(String label, Name command, bool centered = false, bool closeonselect = false)
 	{
 		Super.Init(label, command, 0, centered);
 		ccmd = command;
+		mCloseOnSelect = closeonselect;
 		return self;
 	}
 
@@ -150,6 +152,11 @@ class OptionMenuItemCommand : OptionMenuItemSubmenu
 		}
 		Menu.MenuSound("menu/choose");
 		DoCommand(ccmd);
+		if (mCloseOnSelect)
+		{
+			let curmenu = Menu.GetCurrentMenu();
+			if (curmenu != null) curmenu.Close();
+		}
 		return true;
 	}
 
@@ -245,11 +252,11 @@ class OptionMenuItemOptionBase : OptionMenuItem
 	virtual void SetSelection(int Selection)
 	{
 	}
-
+	
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		bool grayed = mGrayCheck != null && !(mGrayCheck.GetInt());
+		bool grayed = isGrayed();
 
 		if (mCenter)
 		{
@@ -294,10 +301,15 @@ class OptionMenuItemOptionBase : OptionMenuItem
 		}
 		return true;
 	}
+	
+	virtual bool isGrayed()
+	{
+		return mGrayCheck != null && !mGrayCheck.GetInt();
+	}
 
 	override bool Selectable()
 	{
-		return mGrayCheck == null || mGrayCheck.GetInt();
+		return !isGrayed();
 	}
 }
 

@@ -1682,6 +1682,7 @@ OPTMNU_CHANGERENDER		= "Change Rendering Output";
 OPTMNU_DEFAULTS				= "Reset to defaults";
 OPTMNU_RESETTOSAVED			= "Reset to last saved";
 OPTMNU_CONSOLE				= "Go to console";
+OPTMNU_REVERB				= "Reverb environment editor";
 
 // Controls Menu
 

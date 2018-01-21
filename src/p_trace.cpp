@@ -996,6 +996,9 @@ DEFINE_ACTION_FUNCTION(DTracer, Trace)
 	// say thanks to oversimplifying the user API.
 	PARAM_INT(traceFlags);
 
+	// these are internal hacks.
+	traceFlags &= ~(TRACE_PCross | TRACE_Impact);
+
 	// Trace(vector3 start, Sector sector, vector3 direction, double maxDist, ETraceFlags traceFlags)
 	bool res = Trace(DVector3(start_x, start_y, start_z), sector, DVector3(direction_x, direction_y, direction_z), maxDist,
 					 (ActorFlag)0xFFFFFFFF, 0xFFFFFFFF, nullptr, self->Results, traceFlags, &DTracer::TraceCallback, self);

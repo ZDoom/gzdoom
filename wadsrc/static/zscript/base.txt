@@ -460,6 +460,87 @@ class BlockLinesIterator : Object native
 	native bool Next();
 }
 
+enum ETraceStatus
+{
+	TRACE_Stop,		// stop the trace, returning this hit
+	TRACE_Continue,		// continue the trace, returning this hit if there are none further along
+	TRACE_Skip,		// continue the trace; do not return this hit
+	TRACE_Abort		// stop the trace, returning no hits
+}
+
+enum ETraceFlags
+{
+	TRACE_NoSky		= 1,	// Hitting the sky returns TRACE_HitNone
+	//TRACE_PCross		= 2,	// Trigger SPAC_PCROSS lines
+	//TRACE_Impact		= 4,	// Trigger SPAC_IMPACT lines
+	TRACE_PortalRestrict	= 8,	// Cannot go through portals without a static link offset.
+	TRACE_ReportPortals	= 16	// Report any portal crossing to the TraceCallback
+}
+
+
+enum ETraceResult
+{
+	TRACE_HitNone,
+	TRACE_HitFloor,
+	TRACE_HitCeiling,
+	TRACE_HitWall,
+	TRACE_HitActor,
+	TRACE_CrossingPortal
+}
+
+enum ELineTier
+{
+	TIER_Middle,
+	TIER_Upper,
+	TIER_Lower,
+	TIER_FFloor
+}
+
+struct TraceResults native
+{
+	native Sector HitSector; // originally called "Sector". cannot be named like this in ZScript.
+	native TextureID HitTexture;
+	native vector3 HitPos;
+	native vector3 HitVector;
+	native vector3 SrcFromTarget;
+	native double SrcAngleFromTarget;
+
+	native double Distance;
+	native double Fraction;
+
+	native Actor HitActor;		// valid if hit an actor. // originally called "Actor".
+
+	native Line HitLine;		// valid if hit a line // originally called "Line".
+	native uint8 Side;
+	native uint8 Tier;		// see Tracer.ELineTier
+	native bool unlinked;		// passed through a portal without static offset.
+
+	native ETraceResult HitType;
+	// F3DFloor *ffloor;
+
+	native Sector CrossedWater;		// For Boom-style, Transfer_Heights-based deep water
+	native vector3 CrossedWaterPos;	// remember the position so that we can use it for spawning the splash
+	native Sector Crossed3DWater;		// For 3D floor-based deep water
+	native vector3 Crossed3DWaterPos;
+}
+
+class Tracer : Object native
+{
+	native @TraceResults Results;
+	native bool Trace(vector3 start, Sector sec, vector3 direction, double maxDist, ETraceFlags traceFlags);
+
+	virtual ETraceStatus TraceCallback()
+	{
+		// Normally you would examine Results.HitType (for ETraceResult), and determine either:
+		//  - stop tracing and return the entity that was found (return TRACE_Stop)
+		//  - ignore some object, like noclip, e.g. only count solid walls and floors, and ignore actors (return TRACE_Skip)
+		//  - find last object of some type (return TRACE_Continue)
+		//  - stop tracing entirely and assume we found nothing (return TRACE_Abort)
+		// TRACE_Abort and TRACE_Continue are of limited use in scripting.
+
+		return TRACE_Stop; // default callback returns first hit, whatever it is.
+	}
+}
 
 struct DropItem native
 {

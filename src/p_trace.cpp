@@ -42,6 +42,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "p_terrain.h"
+#include "vm.h"
 
 //==========================================================================
 //
@@ -947,4 +948,104 @@ static bool EditTraceResult (uint32_t flags, FTraceResults &res)
 		}
 	}
 	return true;
+}
+
+//==========================================================================
+//
+//  [ZZ] here go the methods for the ZScript interface
+//
+//==========================================================================
+IMPLEMENT_CLASS(DTracer, false, false)
+DEFINE_FIELD_X(Tracer, DTracer, Results)
+
+// define TraceResults fields
+DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Sector, HitSector)
+DEFINE_FIELD_X(TraceResults, FTraceResults, HitTexture)
+DEFINE_FIELD_X(TraceResults, FTraceResults, HitPos)
+DEFINE_FIELD_X(TraceResults, FTraceResults, HitVector)
+DEFINE_FIELD_X(TraceResults, FTraceResults, SrcFromTarget)
+DEFINE_FIELD_X(TraceResults, FTraceResults, SrcAngleFromTarget)
+DEFINE_FIELD_X(TraceResults, FTraceResults, Distance)
+DEFINE_FIELD_X(TraceResults, FTraceResults, Fraction)
+DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Actor, HitActor)
+DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Line, HitLine)
+DEFINE_FIELD_X(TraceResults, FTraceResults, Side)
+DEFINE_FIELD_X(TraceResults, FTraceResults, Tier)
+DEFINE_FIELD_X(TraceResults, FTraceResults, unlinked)
+DEFINE_FIELD_X(TraceResults, FTraceResults, HitType)
+DEFINE_FIELD_X(TraceResults, FTraceResults, CrossedWater)
+DEFINE_FIELD_X(TraceResults, FTraceResults, CrossedWaterPos)
+DEFINE_FIELD_X(TraceResults, FTraceResults, Crossed3DWater)
+DEFINE_FIELD_X(TraceResults, FTraceResults, Crossed3DWaterPos)
+
+DEFINE_ACTION_FUNCTION(DTracer, Trace)
+{
+	PARAM_SELF_PROLOGUE(DTracer);
+	/*bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
+	ActorFlags ActorMask, uint32_t WallMask, AActor *ignore, FTraceResults &res, uint32_t traceFlags = 0,
+	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL);*/
+	PARAM_FLOAT(start_x);
+	PARAM_FLOAT(start_y);
+	PARAM_FLOAT(start_z);
+	PARAM_POINTER(sector, sector_t);
+	PARAM_FLOAT(direction_x);
+	PARAM_FLOAT(direction_y);
+	PARAM_FLOAT(direction_z);
+	PARAM_FLOAT(maxDist);
+	// actor flags and wall flags are not supported due to how flags are implemented on the ZScript side.
+	// say thanks to oversimplifying the user API.
+	PARAM_INT(traceFlags);
+
+	// these are internal hacks.
+	traceFlags &= ~(TRACE_PCross | TRACE_Impact);
+
+	// Trace(vector3 start, Sector sector, vector3 direction, double maxDist, ETraceFlags traceFlags)
+	bool res = Trace(DVector3(start_x, start_y, start_z), sector, DVector3(direction_x, direction_y, direction_z), maxDist,
+					 (ActorFlag)0xFFFFFFFF, 0xFFFFFFFF, nullptr, self->Results, traceFlags, &DTracer::TraceCallback, self);
+	ACTION_RETURN_BOOL(res);
+}
+
+ETraceStatus DTracer::TraceCallback(FTraceResults& res, void* pthis)
+{
+	DTracer* self = (DTracer*)pthis;
+	// "res" here should refer to self->Results anyway.
+
+	// patch results a bit. modders don't expect it to work like this most likely.
+	// code by MarisaKirisame
+	if (res.HitType == TRACE_HitWall)
+	{
+		int txpart;
+		switch (res.Tier)
+		{
+		case TIER_Middle:
+			res.HitTexture = res.Line->sidedef[res.Side]->textures[1].texture;
+			break;
+		case TIER_Upper:
+			res.HitTexture = res.Line->sidedef[res.Side]->textures[0].texture;
+			break;
+		case TIER_Lower:
+			res.HitTexture = res.Line->sidedef[res.Side]->textures[2].texture;
+			break;
+		case TIER_FFloor:
+			txpart = (res.ffloor->flags & FF_UPPERTEXTURE) ? 0 : (res.ffloor->flags & FF_LOWERTEXTURE) ? 2 : 1;
+			res.HitTexture = res.ffloor->master->sidedef[0]->textures[txpart].texture;
+			break;
+		}
+	}
+
+	return self->CallZScriptCallback();
+}
+
+ETraceStatus DTracer::CallZScriptCallback()
+{
+	IFVIRTUAL(DTracer, TraceCallback)
+	{
+		int status;
+		VMReturn results[1] = { &status };
+		VMValue params[1] = { (DTracer*)this };
+		VMCall(func, params, 1, results, 1);
+		return (ETraceStatus)status;
+	}
+
+	return TRACE_Stop;
 }

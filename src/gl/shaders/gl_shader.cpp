@@ -325,9 +325,10 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, bool usediscard, EPassType passType)
+FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, const char *shaderdefines, bool usediscard, EPassType passType)
 {
 	FString defines;
+	defines += shaderdefines;
 	// this can't be in the shader code due to ATI strangeness.
 	if (gl.MaxLights() == 128) defines += "#define MAXLIGHTS128\n";
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
@@ -374,24 +375,29 @@ struct FDefaultShader
 {
 	const char * ShaderName;
 	const char * gettexelfunc;
+	const char * Defines;
 };
 
-// Note: the ShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
+// Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
 static const FDefaultShader defaultshaders[]=
 {	
-	{"Default",	"shaders/glsl/func_normal.fp"},
-	{"Warp 1",	"shaders/glsl/func_warp1.fp"},
-	{"Warp 2",	"shaders/glsl/func_warp2.fp"},
-	{"Brightmap","shaders/glsl/func_brightmap.fp"},
-	{"No Texture", "shaders/glsl/func_notexture.fp"},
-	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp"},
-	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp"},
-	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp"},
-	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp"},
-	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp"},
-	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp"},
-	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp"},
-	{NULL,NULL}
+	{"Default",	"shaders/glsl/func_normal.fp", ""},
+	{"Warp 1",	"shaders/glsl/func_warp1.fp", ""},
+	{"Warp 2",	"shaders/glsl/func_warp2.fp", ""},
+	{"Brightmap","shaders/glsl/func_brightmap.fp", ""},
+	{"Specular","shaders/glsl/func_normal.fp", "#define SPECULAR\n"},
+	{"SpecularBrightmap","shaders/glsl/func_brightmap.fp", "#define SPECULAR\n"},
+	{"PBR","shaders/glsl/func_normal.fp", "#define PBR\n"},
+	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "#define PBR\n"},
+	{"No Texture", "shaders/glsl/func_notexture.fp", ""},
+	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", ""},
+	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", ""},
+	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp", ""},
+	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp", ""},
+	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp", ""},
+	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", ""},
+	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", ""},
+	{NULL,NULL,NULL}
 };
 
 static TArray<FString> usershaders;
@@ -530,11 +536,11 @@ void FShaderCollection::CompileShaders(EPassType passType)
 
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true, passType);
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].Defines, true, passType);
 		mMaterialShaders.Push(shc);
-		if (i <= SHADER_Brightmap)
+		if (i < SHADER_NoTexture)
 		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, false, passType);
+			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].Defines, false, passType);
 			mMaterialShadersNAT.Push(shc);
 		}
 	}
@@ -544,7 +550,7 @@ void FShaderCollection::CompileShaders(EPassType passType)
 		FString name = ExtractFileBase(usershaders[i]);
 		FName sfn = name;
 
-		FShader *shc = Compile(sfn, usershaders[i], true, passType);
+		FShader *shc = Compile(sfn, usershaders[i], "", true, passType);
 		mMaterialShaders.Push(shc);
 	}
 

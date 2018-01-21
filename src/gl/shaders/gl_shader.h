@@ -365,7 +365,7 @@ class FShaderCollection
 public:
 	FShaderCollection(EPassType passType);
 	~FShaderCollection();
-	FShader *Compile(const char *ShaderName, const char *ShaderPath, bool usediscard, EPassType passType);
+	FShader *Compile(const char *ShaderName, const char *ShaderPath, const char *shaderdefines, bool usediscard, EPassType passType);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
@@ -399,19 +399,23 @@ public:
 
 enum MaterialShaderIndex
 {
-	SHADER_Default = 0,
-	SHADER_Warp1 = 1,
-	SHADER_Warp2 = 2,
-	SHADER_Brightmap = 3,
-	SHADER_NoTexture = 4,
-	SHADER_BasicFuzz = 5,
-	SHADER_SmoothFuzz = 6,
-	SHADER_SwirlyFuzz = 7,
-	SHADER_TranslucentFuzz = 8,
-	SHADER_JaggedFuzz = 9,
-	SHADER_NoiseFuzz = 10,
-	SHADER_SmoothNoiseFuzz = 11,
-	FIRST_USER_SHADER = 12
+	SHADER_Default,
+	SHADER_Warp1,
+	SHADER_Warp2,
+	SHADER_Brightmap,
+	SHADER_Specular,
+	SHADER_SpecularBrightmap,
+	SHADER_PBR,
+	SHADER_PBRBrightmap,
+	SHADER_NoTexture,
+	SHADER_BasicFuzz,
+	SHADER_SmoothFuzz,
+	SHADER_SwirlyFuzz,
+	SHADER_TranslucentFuzz,
+	SHADER_JaggedFuzz,
+	SHADER_NoiseFuzz,
+	SHADER_SmoothNoiseFuzz,
+	FIRST_USER_SHADER
 };
 
 enum

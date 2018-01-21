@@ -6098,7 +6098,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	if (i->IsDescendantOf(RUNTIME_CLASS(ADynamicLight)))
 	{
 		auto light = static_cast<ADynamicLight*>(mobj);
-		if (mthing->arg0str.IsNotEmpty())
+		if (mthing->arg0str != NAME_None)
 		{
 			PalEntry color = V_GetColor(nullptr, mthing->arg0str);
 		}

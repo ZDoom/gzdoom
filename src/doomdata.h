@@ -372,7 +372,7 @@ struct FMapThing
 	uint32_t		RenderStyle;
 	int			FloatbobPhase;
 	int			friendlyseeblocks;
-	FString arg0str;
+	FNameNoInit arg0str;
 };
 
 

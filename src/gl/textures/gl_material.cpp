@@ -438,7 +438,7 @@ int FMaterial::mMaxBound;
 
 FMaterial::FMaterial(FTexture * tx, bool expanded)
 {
-	mShaderIndex = 0;
+	mShaderIndex = SHADER_Default;
 	tex = tx;
 
 	// TODO: apply custom shader object here
@@ -449,7 +449,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	*/
 	if (tx->bWarped)
 	{
-		mShaderIndex = tx->bWarped;
+		mShaderIndex = tx->bWarped; // This picks SHADER_Warp1 or SHADER_Warp2
 		tx->gl_info.shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
 	}
 	else if (tx->bHasCanvas)
@@ -474,7 +474,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
 				FTextureLayer layer = {tx->gl_info.Brightmap, false};
 				mTextureLayers.Push(layer);
-				mShaderIndex = 3;
+				mShaderIndex = SHADER_Brightmap;
 			}
 		}
 	}
@@ -804,7 +804,7 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
 
 int FMaterial::GetAreas(FloatRect **pAreas) const
 {
-	if (mShaderIndex == 0)	// texture splitting can only be done if there's no attached effects
+	if (mShaderIndex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
 	{
 		FTexture *tex = mBaseLayer->tex;
 		*pAreas = tex->gl_info.areas;

@@ -355,8 +355,8 @@ private:
 
 class FShaderCollection
 {
-	TArray<FShader*> mTextureEffects;
-	TArray<FShader*> mTextureEffectsNAT;
+	TArray<FShader*> mMaterialShaders;
+	TArray<FShader*> mMaterialShadersNAT;
 	FShader *mEffectShaders[MAX_EFFECTS];
 
 	void Clean();
@@ -372,13 +372,13 @@ public:
 
 	void ResetFixedColormap()
 	{
-		for (unsigned i = 0; i < mTextureEffects.Size(); i++)
+		for (unsigned i = 0; i < mMaterialShaders.Size(); i++)
 		{
-			mTextureEffects[i]->currentfixedcolormap = -1;
+			mMaterialShaders[i]->currentfixedcolormap = -1;
 		}
-		for (unsigned i = 0; i < mTextureEffectsNAT.Size(); i++)
+		for (unsigned i = 0; i < mMaterialShadersNAT.Size(); i++)
 		{
-			mTextureEffectsNAT[i]->currentfixedcolormap = -1;
+			mMaterialShadersNAT[i]->currentfixedcolormap = -1;
 		}
 	}
 
@@ -387,17 +387,32 @@ public:
 		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
 		if (!alphateston && eff <= 3)
 		{
-			return mTextureEffectsNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
+			return mMaterialShadersNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
 		}
-		if (eff < mTextureEffects.Size())
+		if (eff < mMaterialShaders.Size())
 		{
-			return mTextureEffects[eff];
+			return mMaterialShaders[eff];
 		}
 		return NULL;
 	}
 };
 
-#define FIRST_USER_SHADER 12
+enum MaterialShaderIndex
+{
+	SHADER_Default = 0,
+	SHADER_Warp1 = 1,
+	SHADER_Warp2 = 2,
+	SHADER_Brightmap = 3,
+	SHADER_NoTexture = 4,
+	SHADER_BasicFuzz = 5,
+	SHADER_SmoothFuzz = 6,
+	SHADER_SwirlyFuzz = 7,
+	SHADER_TranslucentFuzz = 8,
+	SHADER_JaggedFuzz = 9,
+	SHADER_NoiseFuzz = 10,
+	SHADER_SmoothNoiseFuzz = 11,
+	FIRST_USER_SHADER = 12
+};
 
 enum
 {

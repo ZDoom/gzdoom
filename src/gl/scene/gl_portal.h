@@ -167,6 +167,8 @@ public:
 		return recursion;
 	}
 
+	static bool isMirrored() { return !!((MirrorFlag ^ PlaneMirrorFlag) & 1); }
+
 	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
 	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
 	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }

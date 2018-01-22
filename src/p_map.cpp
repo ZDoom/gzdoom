@@ -4854,8 +4854,8 @@ bool P_LineTrace(AActor *t1, DAngle angle, double distance,
 	FTraceResults trace;
 	CheckLineData TData;
 	TData.Caller = t1;
-	TData.ThruSpecies = (flags & TRF_THRUSPECIES);
-	TData.ThruActors = (flags & TRF_THRUACTORS);
+	TData.ThruSpecies = !!(flags & TRF_THRUSPECIES);
+	TData.ThruActors = !!(flags & TRF_THRUACTORS);
 	TData.NumPortals = 0;
 	DVector3 direction;
 	double pc = pitch.Cos();

@@ -468,13 +468,37 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		}
 		else
 		{
+			if (tx->gl_info.Normal && tx->gl_info.Specular)
+			{
+				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Specular })
+				{
+					ValidateSysTexture(texture, expanded);
+					mTextureLayers.Push({ texture, false });
+				}
+				mShaderIndex = SHADER_Specular;
+			}
+			else if (tx->gl_info.Normal && tx->gl_info.Metallic && tx->gl_info.Roughness && tx->gl_info.AmbientOcclusion)
+			{
+				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Metallic, tx->gl_info.Roughness, tx->gl_info.AmbientOcclusion })
+				{
+					ValidateSysTexture(texture, expanded);
+					mTextureLayers.Push({ texture, false });
+				}
+				mShaderIndex = SHADER_PBR;
+			}
+
 			tx->CreateDefaultBrightmap();
 			if (tx->gl_info.Brightmap != NULL)
 			{
 				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
 				FTextureLayer layer = {tx->gl_info.Brightmap, false};
 				mTextureLayers.Push(layer);
-				mShaderIndex = SHADER_Brightmap;
+				if (mShaderIndex == SHADER_Specular)
+					mShaderIndex = SHADER_SpecularBrightmap;
+				else if (mShaderIndex == SHADER_PBR)
+					mShaderIndex = SHADER_PBRBrightmap;
+				else
+					mShaderIndex = SHADER_Brightmap;
 			}
 		}
 	}

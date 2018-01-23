@@ -28,6 +28,22 @@ out vec4 FragNormal;
 uniform sampler2D tex;
 uniform sampler2D ShadowMap;
 
+#if defined(SPECULAR)
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+#define normaltexture texture2
+#define speculartexture texture3
+#elif defined(PBR)
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+uniform sampler2D texture4;
+uniform sampler2D texture5;
+#define normaltexture texture2
+#define metallictexture texture3
+#define roughnesstexture texture4
+#define aotexture texture5
+#endif
+
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
 vec4 ProcessLight(vec4 color);
@@ -440,6 +456,12 @@ vec3 AmbientOcclusionColor()
 void main()
 {
 	vec4 frag = ProcessTexel();
+	
+#if defined(SPECULAR)
+	frag = texture(speculartexture, vTexCoord.st);
+#elif defined(PBR)
+	frag = texture(metallictexture, vTexCoord.st);
+#endif
 	
 #ifndef NO_ALPHATEST
 	if (frag.a <= uAlphaThreshold) discard;

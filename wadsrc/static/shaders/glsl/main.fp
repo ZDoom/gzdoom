@@ -320,7 +320,7 @@ vec3 ApplyNormalMap()
 	#define WITH_NORMALMAP_GREEN_UP
 	//#define WITH_NORMALMAP_2CHANNEL
 
-	vec3 interpolatedNormal = normalize(gl_FrontFacing ? -vWorldNormal.xyz : vWorldNormal.xyz);
+	vec3 interpolatedNormal = normalize(vWorldNormal.xyz);
 
 	vec3 map = texture(normaltexture, vTexCoord.st).xyz;
 	#if defined(WITH_NORMALMAP_UNSIGNED)
@@ -369,7 +369,7 @@ vec2 pointLightAttenuation(vec4 lightpos, float lightcolorA)
 		float diffuseAmount = diffuseContribution(lightDirection, pixelnormal);
 
 #if defined(SPECULAR)
-		float specularAmount = blinnSpecularContribution(diffuseAmount, lightDirection, pixelnormal, 10.0, 0.12);
+		float specularAmount = blinnSpecularContribution(diffuseAmount, lightDirection, pixelnormal, 100.0, 200.0);
 		return vec2(diffuseAmount, specularAmount) * attenuation;
 #else
 		return vec2(attenuation * diffuseAmount, 0.0);

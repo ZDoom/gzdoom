@@ -29,6 +29,32 @@ struct FCheckPosition
 	native void ClearLastRipped();
 }
 
+struct FLineTraceData
+{
+	enum ETraceResult
+	{
+		TRACE_HitNone,
+		TRACE_HitFloor,
+		TRACE_HitCeiling,
+		TRACE_HitWall,
+		TRACE_HitActor,
+		TRACE_CrossingPortal
+	};
+
+	Actor HitActor;
+	Line HitLine;
+	Sector HitSector;
+	F3DFloor Hit3DFloor;
+	TextureID HitTexture;
+	Vector3 HitLocation;
+	double Distance;
+	int NumPortals;
+	int LineSide;
+	int LinePart;
+	int SectorPlane;
+	int HitType;
+}
+
 struct LinkContext
 {
 	voidptr sector_list;	// really msecnode but that's not exported yet.
@@ -602,6 +628,7 @@ class Actor : Thinker native
 	native void PoisonMobj (Actor inflictor, Actor source, int damage, int duration, int period, Name type);
 	native double AimLineAttack(double angle, double distance, out FTranslatedLineTarget pLineTarget = null, double vrange = 0., int flags = 0, Actor target = null, Actor friender = null);
 	native Actor, int LineAttack(double angle, double distance, double pitch, int damage, Name damageType, class<Actor> pufftype, int flags = 0, out FTranslatedLineTarget victim = null, double offsetz = 0., double offsetforward = 0., double offsetside = 0.);
+	native bool LineTrace(double angle, double distance, double pitch, int flags = 0, double offsetz = 0., double offsetforward = 0., double offsetside = 0., out FLineTraceData data = null);
 	native bool CheckSight(Actor target, int flags = 0);
 	native bool IsVisible(Actor other, bool allaround, LookExParams params = null);
 	native bool HitFriend();
@@ -1061,6 +1088,7 @@ class Actor : Thinker native
 	native void A_RadiusThrust(int force = 128, int distance = -1, int flags = RTF_AFFECTSOURCE, int fullthrustdistance = 0);
 	native void A_RadiusDamageSelf(int damage = 128, double distance = 128, int flags = 0, class<Actor> flashtype = null);
 	native int A_Explode(int damage = -1, int distance = -1, int flags = XF_HURTSOURCE, bool alert = false, int fulldamagedistance = 0, int nails = 0, int naildamage = 10, class<Actor> pufftype = "BulletPuff", name damagetype = "none");
+	native int GetRadiusDamage(Actor thing, int damage, int distance, int fulldmgdistance = 0, bool oldradiusdmg = false);
 	native void A_Stop();
 	native void A_Respawn(int flags = 1);
 	native void A_RestoreSpecialPosition();

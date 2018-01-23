@@ -604,6 +604,7 @@ public:
 			case NAME_Arg0Str:
 				CHECK_N(Zd);
 				arg0str = CheckString(key);
+				th->arg0str = arg0str;
 				break;
 
 			case NAME_Arg1Str:

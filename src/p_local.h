@@ -336,6 +336,18 @@ enum	// P_LineAttack flags
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL, double sz = 0.0, double offsetforward = 0.0, double offsetside = 0.0);
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance, DAngle pitch, int damage, FName damageType, FName pufftype, int flags = 0, FTranslatedLineTarget *victim = NULL, int *actualdamage = NULL, double sz = 0.0, double offsetforward = 0.0, double offsetside = 0.0);
 
+enum	// P_LineTrace flags
+{
+	TRF_ABSPOSITION = 1,
+	TRF_ABSOFFSET = 2,
+	TRF_THRUSPECIES = 4,
+	TRF_THRUACTORS = 8,
+	TRF_THRUBLOCK = 16,
+	TRF_THRUHITSCAN = 32,
+	TRF_NOSKY = 64,
+	TRF_ALLACTORS = 128,
+};
+
 void	P_TraceBleed(int damage, const DVector3 &pos, AActor *target, DAngle angle, DAngle pitch);
 void	P_TraceBleed(int damage, AActor *target, DAngle angle, DAngle pitch);
 

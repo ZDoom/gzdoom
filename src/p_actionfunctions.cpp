@@ -988,6 +988,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_SoundVolume)
 	return 0;
 }
 
+
 //==========================================================================
 //
 // These come from a time when DECORATE constants did not exist yet and

@@ -494,6 +494,7 @@ static FFlagDef DynLightFlagDefs[] =
 	DEFINE_FLAG(LF, ATTENUATE, ADynamicLight, lightflags),
 	DEFINE_FLAG(LF, NOSHADOWMAP, ADynamicLight, lightflags),
 	DEFINE_FLAG(LF, DONTLIGHTACTORS, ADynamicLight, lightflags),
+	DEFINE_FLAG(LF, SPOT, ADynamicLight, lightflags),
 };
 
 static FFlagDef PowerSpeedFlagDefs[] =

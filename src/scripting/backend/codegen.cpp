@@ -9378,6 +9378,13 @@ FxExpression *FxStrLen::Resolve(FCompileContext &ctx)
 {
 	SAFE_RESOLVE(Self, ctx);
 	assert(Self->ValueType == TypeString);
+	if (Self->isConstant())
+	{
+		auto constself = static_cast<FxConstant *>(Self);
+		auto constlen = new FxConstant((int)constself->GetValue().GetString().Len(), Self->ScriptPosition);
+		delete this;
+		return constlen->Resolve(ctx);
+	}
 	ValueType = TypeUInt32;
 	return this;
 }

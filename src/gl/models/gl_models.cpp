@@ -46,6 +46,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_convert.h"
@@ -100,7 +101,7 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace(GL_CCW);
+		glFrontFace(GLPortal::isMirrored()? GL_CW : GL_CCW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;

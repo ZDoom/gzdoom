@@ -420,7 +420,7 @@ static void InitVertexData()
 
 	for(unsigned i = 0; i < level.vertexes.Size(); ++i)
 	{
-		auto vert = level.vertexes[i];
+		auto &vert = level.vertexes[i];
 		int cnt = vt_sectorlists[i].Size();
 
 		vert.dirty = true;

@@ -175,6 +175,8 @@ void Linux_I_FatalError(const char* errortext)
 	} else if (I_GtkAvailable())
 	{
 		Linux_I_FatalError_Gtk(errortext);
+	} else {
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, (std::string("") + GAMESIG + ": No IWAD found").c_str(), errortext, NULL);
 	}
 }
 #endif

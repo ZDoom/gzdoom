@@ -511,7 +511,7 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
 	posix/unix/i_specialpaths.cpp
-	posix/unix/iwadpicker_gtk.cpp )
+	posix/unix/gtk_dialogs.cpp )
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/i_specialpaths.mm

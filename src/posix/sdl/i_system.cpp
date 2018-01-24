@@ -79,6 +79,7 @@ extern "C"
 #ifndef NO_GTK
 bool I_GtkAvailable ();
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
+void Linux_I_FatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
@@ -157,6 +158,27 @@ bool gameisdead;
 void Mac_I_FatalError(const char* errortext);
 #endif
 
+#ifdef __linux__
+void Linux_I_FatalError(const char* errortext)
+{
+	// Close window or exit fullscreen and release mouse capture
+	SDL_Quit();
+
+	const char *str;
+	if((str=getenv("XDG_CURRENT_DESKTOP")) && strcmp(str, "KDE") == 0)
+	{
+		FString cmd;
+		cmd << "kdialog --title \"" GAMESIG " ";
+		cmd << GetVersionString() << ": No IWAD found\" ";
+		cmd << "--msgbox \"" << errortext << "\"";
+		popen(cmd, "r");
+	} else if (I_GtkAvailable())
+	{
+		Linux_I_FatalError_Gtk(errortext);
+	}
+}
+#endif
+
 void I_FatalError (const char *error, ...)
 {
     static bool alreadyThrown = false;
@@ -175,6 +197,10 @@ void I_FatalError (const char *error, ...)
 #ifdef __APPLE__
 		Mac_I_FatalError(errortext);
 #endif // __APPLE__		
+
+#ifdef __linux__
+		Linux_I_FatalError(errortext);
+#endif
 		
 		// Record error to log (if logging)
 		if (Logfile)
@@ -182,7 +208,8 @@ void I_FatalError (const char *error, ...)
 			fprintf (Logfile, "\n**** DIED WITH FATAL ERROR:\n%s\n", errortext);
 			fflush (Logfile);
 		}
-//		throw CFatalError (errortext);
+
+		// throw CFatalError (errortext);
 		fprintf (stderr, "%s\n", errortext);
 		exit (-1);
     }
@@ -251,7 +278,7 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 
 #ifndef __APPLE__
 	const char *str;
-	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	if((str=getenv("XDG_CURRENT_DESKTOP")) && strcmp(str, "KDE") == 0)
 	{
 		FString cmd("kdialog --title \"" GAMESIG " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
@@ -300,13 +327,15 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 				return i;
 		}
 	}
-#endif
-
-#ifndef NO_GTK
-	if (I_GtkAvailable())
+	
+	// we're on Linux and not on KDE
+	#ifndef NO_GTK
+	else if (I_GtkAvailable())
 	{
 		return I_PickIWad_Gtk (wads, numwads, showwin, defaultiwad);
 	}
+	#endif
+
 #endif
 
 #ifdef __APPLE__

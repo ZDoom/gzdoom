@@ -172,11 +172,18 @@ void Linux_I_FatalError(const char* errortext)
 		cmd << GetVersionString() << ": No IWAD found\" ";
 		cmd << "--msgbox \"" << errortext << "\"";
 		popen(cmd, "r");
-	} else if (I_GtkAvailable())
+	} else 
+#ifndef NO_GTK
+	if (I_GtkAvailable())
 	{
 		Linux_I_FatalError_Gtk(errortext);
-	} else {
-		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, (std::string("") + GAMESIG + ": No IWAD found").c_str(), errortext, NULL);
+	} else 
+#endif
+	{
+		FString message;
+		message << GAMESIG " ";
+		message << GetVersionString() << ": No IWAD found";
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, message, errortext, NULL);
 	}
 }
 #endif

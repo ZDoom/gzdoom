@@ -509,9 +509,15 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/sdlvideo.cpp
 	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
-set( PLAT_UNIX_SOURCES
-	posix/unix/i_specialpaths.cpp
-	posix/unix/gtk_dialogs.cpp )
+if( NO_GTK )
+	set( PLAT_UNIX_SOURCES
+		posix/unix/i_specialpaths.cpp )
+endif()
+if( NOT NO_GTK )
+	set( PLAT_UNIX_SOURCES
+		posix/unix/i_specialpaths.cpp
+		posix/unix/gtk_dialogs.cpp )
+endif()
 set( PLAT_OSX_SOURCES
 	posix/osx/iwadpicker_cocoa.mm
 	posix/osx/i_specialpaths.mm

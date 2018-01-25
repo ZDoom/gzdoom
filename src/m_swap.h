@@ -91,6 +91,16 @@ inline unsigned short LittleShort (unsigned short x)
 	return (unsigned short)((x>>8) | (x<<8));
 }
 
+inline short LittleShort (int x)
+{
+	return LittleShort((short)x);
+}
+
+inline unsigned short LittleShort (unsigned int x)
+{
+	return LittleShort((unsigned short)x);
+}
+
 // Swapping 32bit.
 inline unsigned int LittleLong (unsigned int x)
 {
@@ -108,6 +118,16 @@ inline int LittleLong (int x)
 		| ((((unsigned int)x)>>8) & 0xff00)
 		| ((((unsigned int)x)<<8) & 0xff0000)
 		| (((unsigned int)x)<<24));
+}
+
+inline unsigned int LittleLong(unsigned long x)
+{
+	return LittleLong((unsigned int)x);
+}
+
+inline int LittleLong(long x)
+{
+	return LittleLong((int)x);
 }
 
 #define BigShort(x)		(x)

@@ -28,6 +28,22 @@ out vec4 FragNormal;
 uniform sampler2D tex;
 uniform sampler2D ShadowMap;
 
+#if defined(SPECULAR)
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+#define normaltexture texture2
+#define speculartexture texture3
+#elif defined(PBR)
+uniform sampler2D texture2;
+uniform sampler2D texture3;
+uniform sampler2D texture4;
+uniform sampler2D texture5;
+#define normaltexture texture2
+#define metallictexture texture3
+#define roughnesstexture texture4
+#define aotexture texture5
+#endif
+
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
 vec4 ProcessLight(vec4 color);
@@ -252,29 +268,112 @@ float diffuseContribution(vec3 lightDirection, vec3 normal)
 
 //===========================================================================
 //
-// Calculates the brightness of a dynamic point light
-// Todo: Find a better way to define which lighting model to use.
-// (Specular mode has been removed for now.)
+// Blinn specular light calculation
 //
 //===========================================================================
 
-float pointLightAttenuation(vec4 lightpos, float lightcolorA)
+float blinnSpecularContribution(float diffuseContribution, vec3 lightDirection, vec3 faceNormal, float glossiness, float specularLevel)
+{
+	if (diffuseContribution > 0.0f)
+	{
+		vec3 viewDir = normalize(uCameraPos.xyz - pixelpos.xyz);
+		vec3 halfDir = normalize(lightDirection + viewDir);
+		float specAngle = max(dot(halfDir, faceNormal), 0.0f);
+		float phExp = glossiness * 4.0f;
+		return specularLevel * pow(specAngle, phExp);
+	}
+	else
+	{
+		return 0.0f;
+	}
+}
+
+//===========================================================================
+//
+// Adjust normal vector according to the normal map
+//
+//===========================================================================
+
+#if defined(SPECULAR) || defined(PBR)
+mat3 cotangent_frame(vec3 n, vec3 p, vec2 uv)
+{
+	// get edge vectors of the pixel triangle
+	vec3 dp1 = dFdx(p);
+	vec3 dp2 = dFdy(p);
+	vec2 duv1 = dFdx(uv);
+	vec2 duv2 = dFdy(uv);
+
+	// solve the linear system
+	vec3 dp2perp = cross(n, dp2); // cross(dp2, n);
+	vec3 dp1perp = cross(dp1, n); // cross(n, dp1);
+	vec3 t = dp2perp * duv1.x + dp1perp * duv2.x;
+	vec3 b = dp2perp * duv1.y + dp1perp * duv2.y;
+
+	// construct a scale-invariant frame
+	float invmax = inversesqrt(max(dot(t,t), dot(b,b)));
+	return mat3(t * invmax, b * invmax, n);
+}
+
+vec3 ApplyNormalMap()
+{
+	#define WITH_NORMALMAP_UNSIGNED
+	#define WITH_NORMALMAP_GREEN_UP
+	//#define WITH_NORMALMAP_2CHANNEL
+
+	vec3 interpolatedNormal = normalize(vWorldNormal.xyz);
+
+	vec3 map = texture(normaltexture, vTexCoord.st).xyz;
+	#if defined(WITH_NORMALMAP_UNSIGNED)
+	map = map * 255./127. - 128./127.; // Math so "odd" because 0.5 cannot be precisely described in an unsigned format
+	#endif
+	#if defined(WITH_NORMALMAP_2CHANNEL)
+	map.z = sqrt(1 - dot(map.xy, map.xy));
+	#endif
+	#if defined(WITH_NORMALMAP_GREEN_UP)
+	map.y = -map.y;
+	#endif
+
+	mat3 tbn = cotangent_frame(interpolatedNormal, pixelpos.xyz, vTexCoord.st);
+	vec3 bumpedNormal = normalize(tbn * map);
+	return bumpedNormal;
+}
+#else
+vec3 ApplyNormalMap()
+{
+	return normalize(vWorldNormal.xyz);
+}
+#endif
+
+//===========================================================================
+//
+// Calculates the brightness of a dynamic point light
+//
+//===========================================================================
+
+vec2 pointLightAttenuation(vec4 lightpos, float lightcolorA)
 {
 	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-	if (attenuation == 0.0) return 0.0;
+	if (attenuation == 0.0) return vec2(0.0);
 #ifdef SUPPORTS_SHADOWMAPS
 	float shadowIndex = abs(lightcolorA) - 1.0;
 	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
 #endif
 	if (lightcolorA >= 0.0) // Sign bit is the attenuated light flag
 	{
-		return attenuation;
+		return vec2(attenuation, 0.0);
 	}
 	else
 	{
 		vec3 lightDirection = normalize(lightpos.xyz - pixelpos.xyz);
-		float diffuseAmount = diffuseContribution(lightDirection, normalize(vWorldNormal.xyz));
-		return attenuation * diffuseAmount;
+		vec3 pixelnormal = ApplyNormalMap();
+		float diffuseAmount = diffuseContribution(lightDirection, pixelnormal);
+
+#if defined(SPECULAR)
+		float specularAmount = blinnSpecularContribution(diffuseAmount, lightDirection, pixelnormal, 100.0, 200.0);
+		return vec2(diffuseAmount, specularAmount) * attenuation;
+#else
+		return vec2(attenuation * diffuseAmount, 0.0);
+#endif
 	}
 }
 
@@ -299,7 +398,7 @@ float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle
 //
 //===========================================================================
 
-vec4 getLightColor(float fogdist, float fogfactor)
+vec4 getLightColor(vec4 material, vec4 materialSpec, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
 	
@@ -345,6 +444,7 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	//
 	
 	vec4 dynlight = uDynLightColor;
+	vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
 
 #if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
 	if (uLightIndex >= 0)
@@ -362,11 +462,11 @@ vec4 getLightColor(float fogdist, float fogfactor)
 				vec4 lightspot1 = lights[i+2];
 				vec4 lightspot2 = lights[i+3];
 				
-				float attenuation = pointLightAttenuation(lightpos, lightcolor.a);
+				vec2 attenuation = pointLightAttenuation(lightpos, lightcolor.a);
 				if (lightspot1.w == 1.0)
-					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-				lightcolor.rgb *= attenuation;
-				dynlight.rgb += lightcolor.rgb;
+					attenuation.xy *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
+				dynlight.rgb += lightcolor.rgb * attenuation.x;
+				specular.rgb += lightcolor.rgb * attenuation.y;
 			}
 			//
 			// subtractive lights
@@ -378,19 +478,20 @@ vec4 getLightColor(float fogdist, float fogfactor)
 				vec4 lightspot1 = lights[i+2];
 				vec4 lightspot2 = lights[i+3];
 				
-				float attenuation = pointLightAttenuation(lightpos, lightcolor.a);
+				vec2 attenuation = pointLightAttenuation(lightpos, lightcolor.a);
 				if (lightspot1.w == 1.0)
-					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-				lightcolor.rgb *= attenuation;
-				dynlight.rgb -= lightcolor.rgb;
+					attenuation.xy *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
+				dynlight.rgb -= lightcolor.rgb * attenuation.x;
+				specular.rgb -= lightcolor.rgb * attenuation.y;
 			}
 		}
 	}
 #endif
 	color.rgb = clamp(color.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
-	
+	specular.rgb = clamp(specular.rgb + desaturate(specular).rgb, 0.0, 1.4);
+
 	// prevent any unintentional messing around with the alpha.
-	return vec4(color.rgb, vColor.a);
+	return vec4(material.rgb * color.rgb + materialSpec.rgb * specular.rgb, material.a * vColor.a);
 }
 
 //===========================================================================
@@ -470,8 +571,13 @@ void main()
 				fogfactor = exp2 (uFogDensity * fogdist);
 			}
 			
-			
-			frag *= getLightColor(fogdist, fogfactor);
+#if defined(SPECULAR)
+			vec4 materialSpec = texture(speculartexture, vTexCoord.st);
+#else
+			vec4 materialSpec = vec4(0.0);
+#endif
+
+			frag = getLightColor(frag, materialSpec, fogdist, fogfactor);
 			
 #if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
 			if (uLightIndex >= 0)
@@ -491,7 +597,7 @@ void main()
 						vec4 lightspot1 = lights[i+2];
 						vec4 lightspot2 = lights[i+3];
 						
-						float attenuation = pointLightAttenuation(lightpos, lightcolor.a);
+						float attenuation = pointLightAttenuation(lightpos, lightcolor.a).x;
 						if (lightspot1.w == 1.0)
 							attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
 						lightcolor.rgb *= attenuation;

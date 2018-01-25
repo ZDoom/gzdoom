@@ -325,9 +325,10 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, bool usediscard, EPassType passType)
+FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, const char *shaderdefines, bool usediscard, EPassType passType)
 {
 	FString defines;
+	defines += shaderdefines;
 	// this can't be in the shader code due to ATI strangeness.
 	if (gl.MaxLights() == 128) defines += "#define MAXLIGHTS128\n";
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
@@ -374,25 +375,29 @@ struct FDefaultShader
 {
 	const char * ShaderName;
 	const char * gettexelfunc;
+	const char * Defines;
 };
 
-// Note: the FIRST_USER_SHADER constant in gl_shader.h needs 
-// to be updated whenever the size of this array is modified.
+// Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
 static const FDefaultShader defaultshaders[]=
 {	
-	{"Default",	"shaders/glsl/func_normal.fp"},
-	{"Warp 1",	"shaders/glsl/func_warp1.fp"},
-	{"Warp 2",	"shaders/glsl/func_warp2.fp"},
-	{"Brightmap","shaders/glsl/func_brightmap.fp"},
-	{"No Texture", "shaders/glsl/func_notexture.fp"},
-	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp"},
-	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp"},
-	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp"},
-	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp"},
-	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp"},
-	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp"},
-	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp"},
-	{NULL,NULL}
+	{"Default",	"shaders/glsl/func_normal.fp", ""},
+	{"Warp 1",	"shaders/glsl/func_warp1.fp", ""},
+	{"Warp 2",	"shaders/glsl/func_warp2.fp", ""},
+	{"Brightmap","shaders/glsl/func_brightmap.fp", ""},
+	{"Specular","shaders/glsl/func_normal.fp", "#define SPECULAR\n"},
+	{"SpecularBrightmap","shaders/glsl/func_brightmap.fp", "#define SPECULAR\n"},
+	{"PBR","shaders/glsl/func_normal.fp", "#define PBR\n"},
+	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "#define PBR\n"},
+	{"No Texture", "shaders/glsl/func_notexture.fp", ""},
+	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", ""},
+	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", ""},
+	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp", ""},
+	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp", ""},
+	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp", ""},
+	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", ""},
+	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", ""},
+	{NULL,NULL,NULL}
 };
 
 static TArray<FString> usershaders;
@@ -522,8 +527,8 @@ FShaderCollection::~FShaderCollection()
 
 void FShaderCollection::CompileShaders(EPassType passType)
 {
-	mTextureEffects.Clear();
-	mTextureEffectsNAT.Clear();
+	mMaterialShaders.Clear();
+	mMaterialShadersNAT.Clear();
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		mEffectShaders[i] = NULL;
@@ -531,12 +536,12 @@ void FShaderCollection::CompileShaders(EPassType passType)
 
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true, passType);
-		mTextureEffects.Push(shc);
-		if (i <= 3)
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].Defines, true, passType);
+		mMaterialShaders.Push(shc);
+		if (i < SHADER_NoTexture)
 		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, false, passType);
-			mTextureEffectsNAT.Push(shc);
+			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].Defines, false, passType);
+			mMaterialShadersNAT.Push(shc);
 		}
 	}
 
@@ -545,8 +550,8 @@ void FShaderCollection::CompileShaders(EPassType passType)
 		FString name = ExtractFileBase(usershaders[i]);
 		FName sfn = name;
 
-		FShader *shc = Compile(sfn, usershaders[i], true, passType);
-		mTextureEffects.Push(shc);
+		FShader *shc = Compile(sfn, usershaders[i], "", true, passType);
+		mMaterialShaders.Push(shc);
 	}
 
 	for(int i=0;i<MAX_EFFECTS;i++)
@@ -569,21 +574,21 @@ void FShaderCollection::CompileShaders(EPassType passType)
 
 void FShaderCollection::Clean()
 {
-	for (unsigned int i = 0; i < mTextureEffectsNAT.Size(); i++)
+	for (unsigned int i = 0; i < mMaterialShadersNAT.Size(); i++)
 	{
-		if (mTextureEffectsNAT[i] != NULL) delete mTextureEffectsNAT[i];
+		if (mMaterialShadersNAT[i] != NULL) delete mMaterialShadersNAT[i];
 	}
-	for (unsigned int i = 0; i < mTextureEffects.Size(); i++)
+	for (unsigned int i = 0; i < mMaterialShaders.Size(); i++)
 	{
-		if (mTextureEffects[i] != NULL) delete mTextureEffects[i];
+		if (mMaterialShaders[i] != NULL) delete mMaterialShaders[i];
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		if (mEffectShaders[i] != NULL) delete mEffectShaders[i];
 		mEffectShaders[i] = NULL;
 	}
-	mTextureEffects.Clear();
-	mTextureEffectsNAT.Clear();
+	mMaterialShaders.Clear();
+	mMaterialShadersNAT.Clear();
 }
 
 //==========================================================================
@@ -596,9 +601,9 @@ int FShaderCollection::Find(const char * shn)
 {
 	FName sfn = shn;
 
-	for(unsigned int i=0;i<mTextureEffects.Size();i++)
+	for(unsigned int i=0;i<mMaterialShaders.Size();i++)
 	{
-		if (mTextureEffects[i]->mName == sfn)
+		if (mMaterialShaders[i]->mName == sfn)
 		{
 			return i;
 		}
@@ -636,19 +641,19 @@ void FShaderCollection::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 	VSMatrix norm;
 	norm.computeNormalMatrix(*view);
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < SHADER_NoTexture; i++)
 	{
-		mTextureEffects[i]->ApplyMatrices(proj, view, &norm);
-		mTextureEffectsNAT[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShadersNAT[i]->ApplyMatrices(proj, view, &norm);
 	}
-	mTextureEffects[4]->ApplyMatrices(proj, view, &norm);
+	mMaterialShaders[SHADER_NoTexture]->ApplyMatrices(proj, view, &norm);
 	if (gl_fuzztype != 0)
 	{
-		mTextureEffects[4 + gl_fuzztype]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[SHADER_NoTexture + gl_fuzztype]->ApplyMatrices(proj, view, &norm);
 	}
-	for (unsigned i = 12; i < mTextureEffects.Size(); i++)
+	for (unsigned i = FIRST_USER_SHADER; i < mMaterialShaders.Size(); i++)
 	{
-		mTextureEffects[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[i]->ApplyMatrices(proj, view, &norm);
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{

@@ -438,7 +438,7 @@ int FMaterial::mMaxBound;
 
 FMaterial::FMaterial(FTexture * tx, bool expanded)
 {
-	mShaderIndex = 0;
+	mShaderIndex = SHADER_Default;
 	tex = tx;
 
 	// TODO: apply custom shader object here
@@ -449,7 +449,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	*/
 	if (tx->bWarped)
 	{
-		mShaderIndex = tx->bWarped;
+		mShaderIndex = tx->bWarped; // This picks SHADER_Warp1 or SHADER_Warp2
 		tx->gl_info.shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
 	}
 	else if (tx->bHasCanvas)
@@ -468,13 +468,37 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		}
 		else
 		{
+			if (tx->gl_info.Normal && tx->gl_info.Specular)
+			{
+				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Specular })
+				{
+					ValidateSysTexture(texture, expanded);
+					mTextureLayers.Push({ texture, false });
+				}
+				mShaderIndex = SHADER_Specular;
+			}
+			else if (tx->gl_info.Normal && tx->gl_info.Metallic && tx->gl_info.Roughness && tx->gl_info.AmbientOcclusion)
+			{
+				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Metallic, tx->gl_info.Roughness, tx->gl_info.AmbientOcclusion })
+				{
+					ValidateSysTexture(texture, expanded);
+					mTextureLayers.Push({ texture, false });
+				}
+				mShaderIndex = SHADER_PBR;
+			}
+
 			tx->CreateDefaultBrightmap();
 			if (tx->gl_info.Brightmap != NULL)
 			{
 				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
 				FTextureLayer layer = {tx->gl_info.Brightmap, false};
 				mTextureLayers.Push(layer);
-				mShaderIndex = 3;
+				if (mShaderIndex == SHADER_Specular)
+					mShaderIndex = SHADER_SpecularBrightmap;
+				else if (mShaderIndex == SHADER_PBR)
+					mShaderIndex = SHADER_PBRBrightmap;
+				else
+					mShaderIndex = SHADER_Brightmap;
 			}
 		}
 	}
@@ -804,7 +828,7 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
 
 int FMaterial::GetAreas(FloatRect **pAreas) const
 {
-	if (mShaderIndex == 0)	// texture splitting can only be done if there's no attached effects
+	if (mShaderIndex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
 	{
 		FTexture *tex = mBaseLayer->tex;
 		*pAreas = tex->gl_info.areas;

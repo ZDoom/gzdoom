@@ -56,6 +56,7 @@
 int ScriptDepth;
 void gl_InitGlow(FScanner &sc);
 void gl_ParseBrightmap(FScanner &sc, int);
+void gl_ParseMaterial(FScanner &sc, int);
 void gl_DestroyUserShaders();
 void gl_ParseHardwareShader(FScanner &sc, int deflump);
 void gl_ParseDetailTexture(FScanner &sc);
@@ -963,7 +964,8 @@ static const char *CoreKeywords[]=
    "hardwareshader",
    "detail",
    "#include",
-   NULL
+   "material",
+   nullptr
 };
 
 
@@ -985,6 +987,7 @@ enum
    TAG_HARDWARESHADER,
    TAG_DETAIL,
    TAG_INCLUDE,
+   TAG_MATERIAL
 };
 
 
@@ -1341,6 +1344,9 @@ static void DoParseDefs(FScanner &sc, int workingLump)
 			break;
 		case TAG_BRIGHTMAP:
 			gl_ParseBrightmap(sc, workingLump);
+			break;
+		case TAG_MATERIAL:
+			gl_ParseMaterial(sc, workingLump);
 			break;
 		case TAG_HARDWARESHADER:
 			gl_ParseHardwareShader(sc, workingLump);

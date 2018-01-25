@@ -355,8 +355,8 @@ private:
 
 class FShaderCollection
 {
-	TArray<FShader*> mTextureEffects;
-	TArray<FShader*> mTextureEffectsNAT;
+	TArray<FShader*> mMaterialShaders;
+	TArray<FShader*> mMaterialShadersNAT;
 	FShader *mEffectShaders[MAX_EFFECTS];
 
 	void Clean();
@@ -365,20 +365,20 @@ class FShaderCollection
 public:
 	FShaderCollection(EPassType passType);
 	~FShaderCollection();
-	FShader *Compile(const char *ShaderName, const char *ShaderPath, bool usediscard, EPassType passType);
+	FShader *Compile(const char *ShaderName, const char *ShaderPath, const char *shaderdefines, bool usediscard, EPassType passType);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
 
 	void ResetFixedColormap()
 	{
-		for (unsigned i = 0; i < mTextureEffects.Size(); i++)
+		for (unsigned i = 0; i < mMaterialShaders.Size(); i++)
 		{
-			mTextureEffects[i]->currentfixedcolormap = -1;
+			mMaterialShaders[i]->currentfixedcolormap = -1;
 		}
-		for (unsigned i = 0; i < mTextureEffectsNAT.Size(); i++)
+		for (unsigned i = 0; i < mMaterialShadersNAT.Size(); i++)
 		{
-			mTextureEffectsNAT[i]->currentfixedcolormap = -1;
+			mMaterialShadersNAT[i]->currentfixedcolormap = -1;
 		}
 	}
 
@@ -387,17 +387,36 @@ public:
 		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
 		if (!alphateston && eff <= 3)
 		{
-			return mTextureEffectsNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
+			return mMaterialShadersNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
 		}
-		if (eff < mTextureEffects.Size())
+		if (eff < mMaterialShaders.Size())
 		{
-			return mTextureEffects[eff];
+			return mMaterialShaders[eff];
 		}
 		return NULL;
 	}
 };
 
-#define FIRST_USER_SHADER 12
+enum MaterialShaderIndex
+{
+	SHADER_Default,
+	SHADER_Warp1,
+	SHADER_Warp2,
+	SHADER_Brightmap,
+	SHADER_Specular,
+	SHADER_SpecularBrightmap,
+	SHADER_PBR,
+	SHADER_PBRBrightmap,
+	SHADER_NoTexture,
+	SHADER_BasicFuzz,
+	SHADER_SmoothFuzz,
+	SHADER_SwirlyFuzz,
+	SHADER_TranslucentFuzz,
+	SHADER_JaggedFuzz,
+	SHADER_NoiseFuzz,
+	SHADER_SmoothNoiseFuzz,
+	FIRST_USER_SHADER
+};
 
 enum
 {

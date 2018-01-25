@@ -177,7 +177,7 @@ inline int BigLong (int x)
 
 
 // Data accessors, since some data is highly likely to be unaligned.
-#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
 inline int GetShort(const unsigned char *foo)
 {
 	return *(const short *)foo;

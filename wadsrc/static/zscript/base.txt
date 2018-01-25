@@ -622,26 +622,26 @@ struct LevelLocals native
 	native readonly float pixelstretch;
 // level_info_t *info cannot be done yet.
 
-	native String GetUDMFString(int type, int index, Name key);
-	native int GetUDMFInt(int type, int index, Name key);
-	native double GetUDMFFloat(int type, int index, Name key);
+	native clearscope String GetUDMFString(int type, int index, Name key);
+	native clearscope int GetUDMFInt(int type, int index, Name key);
+	native clearscope double GetUDMFFloat(int type, int index, Name key);
 	native bool ExecuteSpecial(int special, Actor activator, line linedef, bool lineside, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0);
 	native static void GiveSecret(Actor activator, bool printmsg = true, bool playsound = true);
 	native static void StartSlideshow(Name whichone = 'none');
 	native static void WorldDone();
 	native static void RemoveAllBots(bool fromlist);
 	native void SetInterMusic(String nextmap);
-	native String FormatMapName(int mapnamecolor);
-	native bool IsJumpingAllowed() const;
-	native bool IsCrouchingAllowed() const;
-	native bool IsFreelookAllowed() const;
+	native clearscope String FormatMapName(int mapnamecolor);
+	native clearscope bool IsJumpingAllowed() const;
+	native clearscope bool IsCrouchingAllowed() const;
+	native clearscope bool IsFreelookAllowed() const;
 
 	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
 
-	native String GetChecksum() const;
+	native clearscope String GetChecksum() const;
 	
-	String TimeFormatted(bool totals = false)
+	clearscope String TimeFormatted(bool totals = false)
 	{
 		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);

@@ -63,37 +63,37 @@ struct Side native play
 	native int16	Light;
 	native uint8	Flags;
 
-	native TextureID GetTexture(int which);
+	native clearscope TextureID GetTexture(int which);
 	native void SetTexture(int which, TextureID tex);
 	native void SetTextureXOffset(int which, double offset);
-	native double GetTextureXOffset(int which);
+	native clearscope double GetTextureXOffset(int which);
 	native void AddTextureXOffset(int which, double delta);
 	native void SetTextureYOffset(int which, double offset);
-	native double GetTextureYOffset(int which);
+	native clearscope double GetTextureYOffset(int which);
 	native void AddTextureYOffset(int which, double delta);
 	native void SetTextureXScale(int which, double scale);
-	native double GetTextureXScale(int which);
+	native clearscope double GetTextureXScale(int which);
 	native void MultiplyTextureXScale(int which, double delta);
 	native void SetTextureYScale(int which, double scale);
-	native double GetTextureYScale(int which);
+	native clearscope double GetTextureYScale(int which);
 	native void MultiplyTextureYScale(int which, double delta);
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 
-	native Vertex V1();
-	native Vertex V2();
+	native clearscope Vertex V1();
+	native clearscope Vertex V2();
 
-	native int Index();
+	native clearscope int Index();
 	
-	int GetUDMFInt(Name nm)
+	clearscope int GetUDMFInt(Name nm)
 	{
 		return Level.GetUDMFInt(LevelLocals.UDMF_Side, Index(), nm);
 	}
-	double GetUDMFFloat(Name nm)
+	clearscope double GetUDMFFloat(Name nm)
 	{
 		return Level.GetUDMFFloat(LevelLocals.UDMF_Side, Index(), nm);
 	}
-	String GetUDMFString(Name nm)
+	clearscope String GetUDMFString(Name nm)
 	{
 		return Level.GetUDMFString(LevelLocals.UDMF_Side, Index(), nm);
 	}
@@ -151,21 +151,21 @@ struct Line native play
 	native readonly uint			portalindex;
 	native readonly uint			portaltransferred;
 	
-	native bool isLinePortal();
-	native bool isVisualPortal();
-	native Line getPortalDestination();
-	native int getPortalAlignment();
-	native int Index();
+	native clearscope bool isLinePortal();
+	native clearscope bool isVisualPortal();
+	native clearscope Line getPortalDestination();
+	native clearscope int getPortalAlignment();
+	native clearscope int Index();
 	
-	int GetUDMFInt(Name nm)
+	clearscope int GetUDMFInt(Name nm)
 	{
 		return Level.GetUDMFInt(LevelLocals.UDMF_Line, Index(), nm);
 	}
-	double GetUDMFFloat(Name nm)
+	clearscope double GetUDMFFloat(Name nm)
 	{
 		return Level.GetUDMFFloat(LevelLocals.UDMF_Line, Index(), nm);
 	}
-	String GetUDMFString(Name nm)
+	clearscope String GetUDMFString(Name nm)
 	{
 		return Level.GetUDMFString(LevelLocals.UDMF_Line, Index(), nm);
 	}
@@ -177,15 +177,15 @@ struct SecPlane native play
 	native double D;
 	native double negiC;
 	
-	native bool isSlope() const;
-	native int PointOnSide(Vector3 pos) const;
-	native double ZatPoint (Vector2 v) const;
-	native double ZatPointDist(Vector2 v, double dist) const;
-	native bool isEqual(Secplane other) const;
+	native clearscope bool isSlope() const;
+	native clearscope int PointOnSide(Vector3 pos) const;
+	native clearscope double ZatPoint (Vector2 v) const;
+	native clearscope double ZatPointDist(Vector2 v, double dist) const;
+	native clearscope bool isEqual(Secplane other) const;
 	native void ChangeHeight(double hdiff);
-	native double GetChangedHeight(double hdiff) const;
-	native double HeightDiff(double oldd, double newd = 0.0) const;
-	native double PointToDist(Vector2 xy, double z) const;
+	native clearscope double GetChangedHeight(double hdiff) const;
+	native clearscope double HeightDiff(double oldd, double newd = 0.0) const;
+	native clearscope double PointToDist(Vector2 xy, double z) const;
 }
 
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
@@ -331,116 +331,116 @@ struct Sector native play
 
 	native readonly int			sectornum;
 
-	native int Index();
+	native clearscope int Index();
 
-	native double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
-	native double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
+	native clearscope double, Sector, F3DFloor NextHighestCeilingAt(double x, double y, double bottomz, double topz, int flags = 0);
+	native clearscope double, Sector, F3DFloor NextLowestFloorAt(double x, double y, double z, int flags = 0, double steph = 0);
 
 	native void RemoveForceField();
 	native static Sector PointInSector(Vector2 pt);
 
-	native bool PlaneMoving(int pos);
-	native int GetFloorLight();
-	native int GetCeilingLight();
-	native Sector GetHeightSec();
+	native clearscope bool PlaneMoving(int pos);
+	native clearscope int GetFloorLight();
+	native clearscope int GetCeilingLight();
+	native clearscope Sector GetHeightSec();
 	native void TransferSpecial(Sector model);
-	native void GetSpecial(out SecSpecial spec);
+	native clearscope void GetSpecial(out SecSpecial spec);
 	native void SetSpecial( SecSpecial spec);
-	native int GetTerrain(int pos);
+	native clearscope int GetTerrain(int pos);
 	native void CheckPortalPlane(int plane);
-	native double, Sector HighestCeilingAt(Vector2 a);
-	native double, Sector LowestFloorAt(Vector2 a);
-	native double, double GetFriction(int plane);
+	native clearscope double, Sector HighestCeilingAt(Vector2 a);
+	native clearscope double, Sector LowestFloorAt(Vector2 a);
+	native clearscope double, double GetFriction(int plane);
 
 	native void SetXOffset(int pos, double o);
 	native void AddXOffset(int pos, double o);
-	native double GetXOffset(int pos);
+	native clearscope double GetXOffset(int pos);
 	native void SetYOffset(int pos, double o);
 	native void AddYOffset(int pos, double o);
-	native double GetYOffset(int pos, bool addbase = true);
+	native clearscope double GetYOffset(int pos, bool addbase = true);
 	native void SetXScale(int pos, double o);
-	native double GetXScale(int pos);
+	native clearscope double GetXScale(int pos);
 	native void SetYScale(int pos, double o);
-	native double GetYScale(int pos);
+	native clearscope double GetYScale(int pos);
 	native void SetAngle(int pos, double o);
-	native double GetAngle(int pos, bool addbase = true);
+	native clearscope double GetAngle(int pos, bool addbase = true);
 	native void SetBase(int pos, double y, double o);
 	native void SetAlpha(int pos, double o);
-	native double GetAlpha(int pos);
-	native int GetFlags(int pos);
-	native int GetVisFlags(int pos);
+	native clearscope double GetAlpha(int pos);
+	native clearscope int GetFlags(int pos);
+	native clearscope int GetVisFlags(int pos);
 	native void ChangeFlags(int pos, int And, int Or);
-	native int GetPlaneLight(int pos);
+	native clearscope int GetPlaneLight(int pos);
 	native void SetPlaneLight(int pos, int level);
 	native void SetColor(color c, int desat = 0);
 	native void SetFade(color c);
 	native void SetFogDensity(int dens);
-	native double GetGlowHeight(int pos);
-	native color GetGlowColor(int pos);
+	native clearscope double GetGlowHeight(int pos);
+	native clearscope color GetGlowColor(int pos);
 	native void SetGlowHeight(int pos, double height);
 	native void SetGlowColor(int pos, color color);
 	native void SetSpecialColor(int pos, color color);
 	
-	native TextureID GetTexture(int pos);
+	native clearscope TextureID GetTexture(int pos);
 	native void SetTexture(int pos, TextureID tex, bool floorclip = true);
-	native double GetPlaneTexZ(int pos);
+	native clearscope double GetPlaneTexZ(int pos);
 	native void SetPlaneTexZ(int pos, double val, bool dirtify = false);	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	native void ChangeLightLevel(int newval);
 	native void SetLightLevel(int newval);
-	native int GetLightLevel();
+	native clearscope int GetLightLevel();
 	native void AdjustFloorClip();
-	native bool IsLinked(Sector other, bool ceiling);
+	native clearscope bool IsLinked(Sector other, bool ceiling);
 
-	native bool PortalBlocksView(int plane);
-	native bool PortalBlocksSight(int plane);
-	native bool PortalBlocksMovement(int plane);
-	native bool PortalBlocksSound(int plane);
-	native bool PortalIsLinked(int plane);
+	native clearscope bool PortalBlocksView(int plane);
+	native clearscope bool PortalBlocksSight(int plane);
+	native clearscope bool PortalBlocksMovement(int plane);
+	native clearscope bool PortalBlocksSound(int plane);
+	native clearscope bool PortalIsLinked(int plane);
 	native void ClearPortal(int plane);
-	native double GetPortalPlaneZ(int plane);
-	native Vector2 GetPortalDisplacement(int plane);
-	native int GetPortalType(int plane);
-	native int GetOppositePortalGroup(int plane);
-	native double CenterFloor();
-	native double CenterCeiling();
+	native clearscope double GetPortalPlaneZ(int plane);
+	native clearscope Vector2 GetPortalDisplacement(int plane);
+	native clearscope int GetPortalType(int plane);
+	native clearscope int GetOppositePortalGroup(int plane);
+	native clearscope double CenterFloor();
+	native clearscope double CenterCeiling();
 	native bool TriggerSectorActions(Actor thing, int activation);
 
 	native int MoveFloor(double speed, double dest, int crush, int direction, bool hexencrush, bool instant = false);
 	native int MoveCeiling(double speed, double dest, int crush, int direction, bool hexencrush);
 
-	native Sector NextSpecialSector(int type, Sector prev);
-	native double, Vertex FindLowestFloorSurrounding();
-	native double, Vertex FindHighestFloorSurrounding();
-	native double, Vertex FindNextHighestFloor();
-	native double, Vertex FindNextLowestFloor();
-	native double, Vertex FindLowestCeilingSurrounding();
-	native double, Vertex FindHighestCeilingSurrounding();
-	native double, Vertex FindNextLowestCeiling();	
-	native double, Vertex FindNextHighestCeiling();
+	native clearscope Sector NextSpecialSector(int type, Sector prev);
+	native clearscope double, Vertex FindLowestFloorSurrounding();
+	native clearscope double, Vertex FindHighestFloorSurrounding();
+	native clearscope double, Vertex FindNextHighestFloor();
+	native clearscope double, Vertex FindNextLowestFloor();
+	native clearscope double, Vertex FindLowestCeilingSurrounding();
+	native clearscope double, Vertex FindHighestCeilingSurrounding();
+	native clearscope double, Vertex FindNextLowestCeiling();	
+	native clearscope double, Vertex FindNextHighestCeiling();
 
-	native double FindShortestTextureAround();
-	native double FindShortestUpperAround();
-	native Sector FindModelFloorSector(double floordestheight);
-	native Sector FindModelCeilingSector(double floordestheight);
-	native int FindMinSurroundingLight(int max);
-	native double, Vertex FindLowestCeilingPoint();
-	native double, Vertex FindHighestFloorPoint();
+	native clearscope double FindShortestTextureAround();
+	native clearscope double FindShortestUpperAround();
+	native clearscope Sector FindModelFloorSector(double floordestheight);
+	native clearscope Sector FindModelCeilingSector(double floordestheight);
+	native clearscope int FindMinSurroundingLight(int max);
+	native clearscope double, Vertex FindLowestCeilingPoint();
+	native clearscope double, Vertex FindHighestFloorPoint();
 
 	native void SetEnvironment(String env);
 	native void SetEnvironmentID(int envnum);
 
 	native SeqNode StartSoundSequenceID (int chan, int sequence, int type, int modenum, bool nostop = false);
 	native SeqNode StartSoundSequence (int chan, Name seqname, int modenum);
-	native SeqNode CheckSoundSequence (int chan);
+	native clearscope SeqNode CheckSoundSequence (int chan);
 	native void StopSoundSequence(int chan);
-	native bool IsMakingLoopingSound ();
+	native clearscope bool IsMakingLoopingSound ();
 	
-	 bool isSecret()
+	 clearscope bool isSecret()
 	 {
 		 return !!(Flags & SECF_SECRET);
 	 }
 
-	 bool wasSecret()
+	 clearscope bool wasSecret()
 	 {
 		 return !!(Flags & SECF_WASSECRET);
 	 }
@@ -450,15 +450,15 @@ struct Sector native play
 		 Flags &= ~SECF_SECRET;
 	 }
 	 
-	int GetUDMFInt(Name nm)
+	clearscope int GetUDMFInt(Name nm)
 	{
 		return Level.GetUDMFInt(LevelLocals.UDMF_Sector, Index(), nm);
 	}
-	double GetUDMFFloat(Name nm)
+	clearscope double GetUDMFFloat(Name nm)
 	{
 		return Level.GetUDMFFloat(LevelLocals.UDMF_Sector, Index(), nm);
 	}
-	String GetUDMFString(Name nm)
+	clearscope String GetUDMFString(Name nm)
 	{
 		return Level.GetUDMFString(LevelLocals.UDMF_Sector, Index(), nm);
 	}

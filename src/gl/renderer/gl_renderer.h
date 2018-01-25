@@ -7,6 +7,7 @@
 #include "r_renderer.h"
 #include "r_data/matrix.h"
 #include "gl/dynlights/gl_shadowmap.h"
+#include <functional>
 
 struct particle_t;
 class FCanvasTexture;
@@ -43,6 +44,7 @@ class F2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
 class FCustomPostProcessShaders;
+class GLSceneDrawer;
 
 inline float DEG2RAD(float deg)
 {
@@ -174,7 +176,7 @@ public:
 	void RenderView(player_t* player);
 
 	void RenderScreenQuad();
-	void PostProcessScene(int fixedcm);
+	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
 	void AmbientOccludeScene();
 	void UpdateCameraExposure();
 	void BloomScene(int fixedcm);

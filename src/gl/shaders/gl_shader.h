@@ -284,6 +284,7 @@ class FShader
 	FBufferedUniform1f muClipHeight;
 	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
+	FBufferedUniform1i muViewHeight;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;
@@ -415,6 +416,7 @@ enum MaterialShaderIndex
 	SHADER_JaggedFuzz,
 	SHADER_NoiseFuzz,
 	SHADER_SmoothNoiseFuzz,
+	SHADER_SoftwareFuzz,
 	FIRST_USER_SHADER
 };
 

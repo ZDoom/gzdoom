@@ -91,6 +91,16 @@ inline unsigned short LittleShort (unsigned short x)
 	return (unsigned short)((x>>8) | (x<<8));
 }
 
+inline short LittleShort (int x)
+{
+	return LittleShort((short)x);
+}
+
+inline unsigned short LittleShort (unsigned int x)
+{
+	return LittleShort((unsigned short)x);
+}
+
 // Swapping 32bit.
 inline unsigned int LittleLong (unsigned int x)
 {
@@ -108,6 +118,16 @@ inline int LittleLong (int x)
 		| ((((unsigned int)x)>>8) & 0xff00)
 		| ((((unsigned int)x)<<8) & 0xff0000)
 		| (((unsigned int)x)<<24));
+}
+
+inline unsigned int LittleLong(unsigned long x)
+{
+	return LittleLong((unsigned int)x);
+}
+
+inline int LittleLong(long x)
+{
+	return LittleLong((int)x);
 }
 
 #define BigShort(x)		(x)
@@ -177,7 +197,7 @@ inline int BigLong (int x)
 
 
 // Data accessors, since some data is highly likely to be unaligned.
-#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) 
+#if defined(_M_IX86) || defined(_M_X64) || defined(__i386__) || defined(__x86_64__)
 inline int GetShort(const unsigned char *foo)
 {
 	return *(const short *)foo;

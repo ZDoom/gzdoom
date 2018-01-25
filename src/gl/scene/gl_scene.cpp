@@ -681,10 +681,29 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 
 	Reset3DViewport();
 
-	// [BB] Only draw the sprites if we didn't render a HUD model before.
-	if ( renderHUDModel == false )
+	// Delay drawing psprites until after bloom has been applied, if enabled.
+	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom || FixedColormap != CM_DEFAULT)
 	{
-		DrawPlayerSprites (viewsector, false);
+		DrawEndScene2D(viewsector);
+	}
+	else
+	{
+		// Restore standard rendering state
+		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gl_RenderState.ResetColor();
+		gl_RenderState.EnableTexture(true);
+		glDisable(GL_SCISSOR_TEST);
+	}
+}
+
+void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
+{
+	const bool renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+
+	// [BB] Only draw the sprites if we didn't render a HUD model before.
+	if (renderHUDModel == false)
+	{
+		DrawPlayerSprites(viewsector, false);
 	}
 	if (gl.legacyMode)
 	{
@@ -705,7 +724,6 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 	gl_RenderState.EnableTexture(true);
 	glDisable(GL_SCISSOR_TEST);
 }
-
 
 //-----------------------------------------------------------------------------
 //
@@ -846,7 +864,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			GLRenderer->PostProcessScene(FixedColormap);
+			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(lviewsector); });
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();

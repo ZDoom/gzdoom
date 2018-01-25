@@ -51,6 +51,9 @@ uniform int uLightIndex;
 // Software fuzz scaling
 uniform int uViewHeight;
 
+// Blinn glossiness and specular level
+uniform vec2 uSpecularMaterial;
+
 // quad drawer stuff
 #ifdef USE_QUAD_DRAWER
 uniform mat4 uQuadVertices;

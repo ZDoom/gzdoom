@@ -254,6 +254,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muClipHeight.Init(hShader, "uClipHeight");
 	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
+	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muViewHeight.Init(hShader, "uViewHeight");
 	muTimer.Init(hShader, "timer");
 

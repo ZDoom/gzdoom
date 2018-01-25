@@ -285,6 +285,7 @@ class FShader
 	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform1i muViewHeight;
+	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;

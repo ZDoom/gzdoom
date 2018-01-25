@@ -87,6 +87,8 @@ void FRenderState::Reset()
 	mSpecialEffect = EFF_NONE;
 	mClipHeight = 0.f;
 	mClipHeightDirection = 0.f;
+	mGlossiness = 0.0f;
+	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
 	ClearClipSplit();
 
@@ -178,6 +180,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muViewHeight.Set(viewheight);
+	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 
 	if (mGlowEnabled)
 	{

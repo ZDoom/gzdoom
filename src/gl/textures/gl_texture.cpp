@@ -191,6 +191,8 @@ FTexture::MiscGLInfo::MiscGLInfo() throw()
 	mIsTransparent = -1;
 	shaderspeed = 1.f;
 	shaderindex = 0;
+	Glossiness = 0.0f;
+	SpecularLevel = 0.0f;
 
 	Material[1] = Material[0] = NULL;
 	SystemTexture[1] = SystemTexture[0] = NULL;
@@ -597,6 +599,18 @@ void gl_ParseMaterial(FScanner &sc, int deflump)
 		{
 			// only affects textures defined in the IWAD.
 			iwad = true;
+		}
+		else if (sc.Compare("glossiness"))
+		{
+			sc.MustGetFloat();
+			if (tex)
+				tex->gl_info.Glossiness = sc.Float;
+		}
+		else if (sc.Compare("specularlevel"))
+		{
+			sc.MustGetFloat();
+			if (tex)
+				tex->gl_info.SpecularLevel = sc.Float;
 		}
 		else
 		{

@@ -372,6 +372,8 @@ public:
 		FTexture *Metallic;						// Metalness texture for the physically based rendering (PBR) light model
 		FTexture *Roughness;					// Roughness texture for PBR
 		FTexture *AmbientOcclusion;				// Ambient occlusion texture for PBR
+		float Glossiness;
+		float SpecularLevel;
 		PalEntry GlowColor;
 		int GlowHeight;
 		FloatRect *areas;

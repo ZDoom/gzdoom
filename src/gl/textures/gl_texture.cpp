@@ -191,8 +191,8 @@ FTexture::MiscGLInfo::MiscGLInfo() throw()
 	mIsTransparent = -1;
 	shaderspeed = 1.f;
 	shaderindex = 0;
-	Glossiness = 0.0f;
-	SpecularLevel = 0.0f;
+	Glossiness = 10.0f;
+	SpecularLevel = 0.1f;
 
 	Material[1] = Material[0] = NULL;
 	SystemTexture[1] = SystemTexture[0] = NULL;

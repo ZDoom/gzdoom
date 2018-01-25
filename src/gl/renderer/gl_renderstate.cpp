@@ -139,7 +139,7 @@ bool FRenderState::ApplyShader()
 	}
 	else
 	{
-		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : 4, mAlphaThreshold >= 0.f, mPassType);
+		activeShader = GLRenderer->mShaderManager->Get(mTextureEnabled ? mEffectState : SHADER_NoTexture, mAlphaThreshold >= 0.f, mPassType);
 		activeShader->Bind();
 	}
 

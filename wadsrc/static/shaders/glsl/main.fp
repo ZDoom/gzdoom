@@ -530,7 +530,7 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 	vec3 color = ambient + Lo;
 
 	// Tonemap (reinhard) and apply sRGB gamma
-	color = color / (color + vec3(1.0));
+	//color = color / (color + vec3(1.0));
 	return pow(color, vec3(1.0 / 2.2));
 }
 

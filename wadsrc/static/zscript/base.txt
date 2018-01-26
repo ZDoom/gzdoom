@@ -591,6 +591,10 @@ struct LevelLocals native
 	native readonly int maptype;
 	native readonly String Music;
 	native readonly int musicorder;
+	native readonly TextureID skytexture1;
+	native readonly TextureID skytexture2;
+	native float skyspeed1;
+	native float skyspeed2;
 	native int total_secrets;
 	native int found_secrets;
 	native int total_items;
@@ -640,7 +644,9 @@ struct LevelLocals native
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
 
 	native String GetChecksum() const;
-	
+
+	native void ChangeSky( TextureID sky1, TextureID sky2 );
+
 	String TimeFormatted(bool totals = false)
 	{
 		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 

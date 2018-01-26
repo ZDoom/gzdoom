@@ -1,6 +1,6 @@
 # Welcome to GZDoom!
 
-[![Build Status](https://travis-ci.org/coelckers/gzdoom.svg?branch=master)](https://travis-ci.org/coelckers/gzdoom)
+[![Build Status](https://ci.appveyor.com/api/projects/status/github/coelckers/gzdoom?branch=master&svg=true)](https://ci.appveyor.com/project/coelckers/gzdoom) [![Build Status](https://travis-ci.org/coelckers/gzdoom.svg?branch=master)](https://travis-ci.org/coelckers/gzdoom)
 
 ## GZDoom is a modder-friendly OpenGL source port based on the DOOM engine
 

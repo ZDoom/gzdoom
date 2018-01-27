@@ -1659,7 +1659,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 PARAM_SELF_STRUCT_PROLOGUE(sector_t);
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(o);
-	 self->SetXScale(pos, o);
+	 self->SetYScale(pos, o);
 	 return 0;
  }
 

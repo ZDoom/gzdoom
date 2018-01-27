@@ -254,6 +254,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muClipHeight.Init(hShader, "uClipHeight");
 	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
+	muViewHeight.Init(hShader, "uViewHeight");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
@@ -392,6 +393,7 @@ static const FDefaultShader defaultshaders[]=
 	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp"},
 	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp"},
 	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp"},
+	{"Software Fuzz", "shaders/glsl/fuzz_software.fp"},
 	{NULL,NULL}
 };
 

@@ -177,6 +177,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
 	activeShader->muClipSplit.Set(mClipSplit);
+	activeShader->muViewHeight.Set(viewheight);
 
 	if (mGlowEnabled)
 	{

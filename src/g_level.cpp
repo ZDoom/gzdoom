@@ -2028,6 +2028,10 @@ DEFINE_FIELD(FLevelLocals, F1Pic)
 DEFINE_FIELD(FLevelLocals, maptype)
 DEFINE_FIELD(FLevelLocals, Music)
 DEFINE_FIELD(FLevelLocals, musicorder)
+DEFINE_FIELD(FLevelLocals, skytexture1)
+DEFINE_FIELD(FLevelLocals, skytexture2)
+DEFINE_FIELD(FLevelLocals, skyspeed1)
+DEFINE_FIELD(FLevelLocals, skyspeed2)
 DEFINE_FIELD(FLevelLocals, total_secrets)
 DEFINE_FIELD(FLevelLocals, found_secrets)
 DEFINE_FIELD(FLevelLocals, total_items)
@@ -2093,3 +2097,19 @@ CCMD(skyfog)
 	}
 }
 
+
+//==========================================================================
+//
+// ZScript counterpart to ACS ChangeSky, uses TextureIDs
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeSky)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(sky1);
+	PARAM_INT(sky2);
+	sky1texture = self->skytexture1 = FSetTextureID(sky1);
+	sky2texture = self->skytexture2 = FSetTextureID(sky2);
+	R_InitSkyMap();
+	return 0;
+}

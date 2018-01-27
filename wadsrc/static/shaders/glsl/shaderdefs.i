@@ -48,6 +48,9 @@ uniform float uGlobVis; // uGlobVis = R_GetGlobVis(r_visibility) / 32.0
 // dynamic lights
 uniform int uLightIndex;
 
+// Software fuzz scaling
+uniform int uViewHeight;
+
 // quad drawer stuff
 #ifdef USE_QUAD_DRAWER
 uniform mat4 uQuadVertices;

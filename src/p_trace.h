@@ -113,9 +113,9 @@ bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, d
 	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL);
 
 // [ZZ] this is the object that's used for ZScript
-class DTracer : public DObject
+class DLineTracer : public DObject
 {
-	DECLARE_CLASS(DTracer, DObject)
+	DECLARE_CLASS(DLineTracer, DObject)
 public:
 	FTraceResults Results;
 	static ETraceStatus TraceCallback(FTraceResults& res, void* pthis);

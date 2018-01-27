@@ -524,7 +524,7 @@ struct TraceResults native
 	native vector3 Crossed3DWaterPos;
 }
 
-class Tracer : Object native
+class LineTracer : Object native
 {
 	native @TraceResults Results;
 	native bool Trace(vector3 start, Sector sec, vector3 direction, double maxDist, ETraceFlags traceFlags);

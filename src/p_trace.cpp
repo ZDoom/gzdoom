@@ -955,8 +955,8 @@ static bool EditTraceResult (uint32_t flags, FTraceResults &res)
 //  [ZZ] here go the methods for the ZScript interface
 //
 //==========================================================================
-IMPLEMENT_CLASS(DTracer, false, false)
-DEFINE_FIELD_X(Tracer, DTracer, Results)
+IMPLEMENT_CLASS(DLineTracer, false, false)
+DEFINE_FIELD(DLineTracer, Results)
 
 // define TraceResults fields
 DEFINE_FIELD_NAMED_X(TraceResults, FTraceResults, Sector, HitSector)
@@ -978,9 +978,9 @@ DEFINE_FIELD_X(TraceResults, FTraceResults, CrossedWaterPos)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Crossed3DWater)
 DEFINE_FIELD_X(TraceResults, FTraceResults, Crossed3DWaterPos)
 
-DEFINE_ACTION_FUNCTION(DTracer, Trace)
+DEFINE_ACTION_FUNCTION(DLineTracer, Trace)
 {
-	PARAM_SELF_PROLOGUE(DTracer);
+	PARAM_SELF_PROLOGUE(DLineTracer);
 	/*bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
 	ActorFlags ActorMask, uint32_t WallMask, AActor *ignore, FTraceResults &res, uint32_t traceFlags = 0,
 	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL);*/
@@ -1001,13 +1001,13 @@ DEFINE_ACTION_FUNCTION(DTracer, Trace)
 
 	// Trace(vector3 start, Sector sector, vector3 direction, double maxDist, ETraceFlags traceFlags)
 	bool res = Trace(DVector3(start_x, start_y, start_z), sector, DVector3(direction_x, direction_y, direction_z), maxDist,
-					 (ActorFlag)0xFFFFFFFF, 0xFFFFFFFF, nullptr, self->Results, traceFlags, &DTracer::TraceCallback, self);
+					 (ActorFlag)0xFFFFFFFF, 0xFFFFFFFF, nullptr, self->Results, traceFlags, &DLineTracer::TraceCallback, self);
 	ACTION_RETURN_BOOL(res);
 }
 
-ETraceStatus DTracer::TraceCallback(FTraceResults& res, void* pthis)
+ETraceStatus DLineTracer::TraceCallback(FTraceResults& res, void* pthis)
 {
-	DTracer* self = (DTracer*)pthis;
+	DLineTracer* self = (DLineTracer*)pthis;
 	// "res" here should refer to self->Results anyway.
 
 	// patch results a bit. modders don't expect it to work like this most likely.
@@ -1036,13 +1036,13 @@ ETraceStatus DTracer::TraceCallback(FTraceResults& res, void* pthis)
 	return self->CallZScriptCallback();
 }
 
-ETraceStatus DTracer::CallZScriptCallback()
+ETraceStatus DLineTracer::CallZScriptCallback()
 {
-	IFVIRTUAL(DTracer, TraceCallback)
+	IFVIRTUAL(DLineTracer, TraceCallback)
 	{
 		int status;
 		VMReturn results[1] = { &status };
-		VMValue params[1] = { (DTracer*)this };
+		VMValue params[1] = { (DLineTracer*)this };
 		VMCall(func, params, 1, results, 1);
 		return (ETraceStatus)status;
 	}

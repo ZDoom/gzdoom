@@ -647,7 +647,7 @@ struct LevelLocals native
 
 	native void ChangeSky( TextureID sky1, TextureID sky2 );
 
-	String clearscope TimeFormatted(bool totals = false)
+	clearscope String TimeFormatted(bool totals = false)
 	{
 		int sec = Thinker.Tics2Seconds(totals? totaltime : time); 
 		return String.Format("%02d:%02d:%02d", sec / 3600, (sec % 3600) / 60, sec % 60);

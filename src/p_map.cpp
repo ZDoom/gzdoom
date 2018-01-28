@@ -4898,6 +4898,7 @@ bool P_LineTrace(AActor *t1, DAngle angle, double distance,
 		outdata->HitLine = trace.Line;
 		outdata->HitSector = trace.Sector;
 		outdata->Hit3DFloor = trace.ffloor;
+		outdata->SectorPlane = (trace.HitType == TRACE_HitCeiling) ? 1 : 0;
 		if ( trace.HitType == TRACE_HitWall )
 		{
 			outdata->LineSide = trace.Side;
@@ -4924,6 +4925,7 @@ bool P_LineTrace(AActor *t1, DAngle angle, double distance,
 		}
 		else outdata->HitTexture = trace.HitTexture;
 		outdata->HitLocation = trace.HitPos;
+		outdata->HitDir = trace.HitVector;
 		outdata->Distance = trace.Distance;
 		outdata->NumPortals = TData.NumPortals;
 		outdata->HitType = trace.HitType;

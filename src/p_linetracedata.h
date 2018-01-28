@@ -14,6 +14,7 @@ struct FLineTraceData
 	F3DFloor *Hit3DFloor;
 	FTextureID HitTexture;
 	DVector3 HitLocation;
+	DVector3 HitDir;
 	double Distance;
 	int NumPortals;
 	int LineSide;

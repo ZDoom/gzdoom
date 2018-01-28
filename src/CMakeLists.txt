@@ -445,10 +445,43 @@ endif()
 
 # Update gitinfo.h
 
-add_custom_target( revision_check ALL
-	COMMAND updaterevision src/gitinfo.h
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-	DEPENDS updaterevision )
+find_package(Git)
+if(GIT_FOUND)
+	execute_process ( COMMAND ${GIT_EXECUTABLE} describe --tags --dirty=-m
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_DESCRIPTION
+		ERROR_VARIABLE GIT_DESCRIPTION_ERROR
+		RESULT_VARIABLE GIT_DESCRIPTION_RESULT
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	execute_process ( COMMAND ${GIT_EXECUTABLE} log -1 --format=%ai
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_TIME
+		ERROR_VARIABLE GIT_TIME_ERROR
+		RESULT_VARIABLE GIT_TIME_RESULT
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+	execute_process ( COMMAND ${GIT_EXECUTABLE} log -1 --format=%H
+		WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+		OUTPUT_VARIABLE GIT_HASH
+		ERROR_VARIABLE GIT_HASH_ERROR
+		RESULT_VARIABLE GIT_HASH_RESULT
+		OUTPUT_STRIP_TRAILING_WHITESPACE
+	)
+else()
+	set(GIT_DESCRIPTION "${GZDOOM_VERSION}")
+	set(GIT_TIME "")
+	set(GIT_HASH "")
+endif()
+message(STATUS "Configured version: ${GIT_DESCRIPTION}")
+
+# Configure gitinfo.h and version.h
+configure_file("${CMAKE_SOURCE_DIR}/src/gitinfo.h.in"
+	"${CMAKE_BINARY_DIR}/gitinfo.h" )
+configure_file("${CMAKE_SOURCE_DIR}/src/version.h.in"
+        "${CMAKE_BINARY_DIR}/version.h" )
+include_directories ("${CMAKE_BINARY_DIR}")
+
 
 # Libraries ZDoom needs
 
@@ -1237,8 +1270,6 @@ include_directories( .
 	../dumb/include
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
-
-add_dependencies( zdoom revision_check )
 
 # Due to some quirks, we need to do this in this order
 if( NOT ZDOOM_OUTPUT_OLDSTYLE )

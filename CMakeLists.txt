@@ -1,6 +1,49 @@
 cmake_minimum_required( VERSION 2.8.7 )
 project(GZDoom)
 
+
+#### Versions
+# Base version of GZDoom
+set(GZDOOM_VERSION_MAJOR "3")
+set(GZDOOM_VERSION_MINOR "3")
+set(GZDOOM_VERSION_REVISION "0")
+
+set(GZDOOM_VERSION
+	"${GZDOOM_VERSION_MAJOR}.${GZDOOM_VERSION_MINOR}.${GZDOOM_VERSION_REVISION}")
+
+# Version identifier for network games.
+# Bump it every time you do a release unless you're certain you
+# didn't change anything that will affect sync.
+set(GZDOOM_NETGAMEVERSION "235")
+
+# Version stored in the ini's [LastRun] section.
+# Bump it if you made some configuration change that you want to
+# be able to migrate in FGameConfigFile::DoGlobalSetup().
+set(GZDOOM_LASTRUNVERSION "215")
+
+# Protocol version used in demos.
+# Bump it if you change existing DEM_ commands or add new ones.
+# Otherwise, it should be safe to leave it alone.
+set(GZDOOM_DEMOGAMEVERSION "0x221")
+
+# Minimum demo version we can play.
+# Bump it whenever you change or remove existing DEM_ commands.
+set(GZDOOM_MINDEMOVERSION "0x21F")
+
+# SAVEVER is the version of the information stored in level snapshots.
+# Note that SAVEVER is not directly comparable to VERSION.
+# SAVESIG should match SAVEVER.
+
+# MINSAVEVER is the minimum level snapshot version that can be loaded.
+set(GZDOOM_MINSAVEVER "4551")
+
+# Use 4500 as the base git save version, since it's higher than the
+# SVN revision ever got.
+set(GZDOOM_SAVEVER "4552")
+
+#### End of versions
+
+
 if( COMMAND cmake_policy )
 	if( POLICY CMP0011 )
 		cmake_policy( SET CMP0011 NEW )

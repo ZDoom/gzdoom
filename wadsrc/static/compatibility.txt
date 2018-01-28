@@ -848,3 +848,8 @@ CA3773ED313E8899311F3DD0CA195A68 // e3m6
 	setthingz 403 168
 	setthingz 404 168
 }
+
+6D4156EE0D12B77AD143A37C4D3DCF98 // dmonfear.wad map22
+{
+	shorttex
+}

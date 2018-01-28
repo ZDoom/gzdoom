@@ -191,7 +191,6 @@ DLighting::DLighting (sector_t *sector)
 	: DSectorEffect (sector)
 {
 	ChangeStatNum (STAT_LIGHT);
-	sector->lightingdata = this;
 }
 
 //-----------------------------------------------------------------------------

@@ -79,6 +79,12 @@ void DSectorEffect::Serialize(FSerializer &arc)
 DEFINE_FIELD(DSectorEffect, m_Sector)
 
 
+DEFINE_ACTION_FUNCTION(DSectorEffect, GetSector)
+{
+	PARAM_SELF_PROLOGUE(DSectorEffect);
+	ACTION_RETURN_POINTER(self->m_Sector);
+}
+
 IMPLEMENT_CLASS(DMover, true, true)
 
 IMPLEMENT_POINTERS_START(DMover)

@@ -231,9 +231,9 @@ struct Sector native play
 	native int			terrainnum[2];
 
 	// thinker_t for reversable actions
-	//SectorEffect floordata;	
-	//SectorEffect ceilingdata;	
-	//SectorEffect lightingdata;
+	native SectorEffect floordata;
+	native SectorEffect ceilingdata;
+	native SectorEffect lightingdata;
 
 	enum EPlane
 	{

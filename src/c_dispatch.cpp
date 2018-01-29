@@ -127,8 +127,7 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
 	Button_AM_ZoomIn, Button_AM_ZoomOut;
 
-bool ParsingKeyConf;
-static bool UnsafeExecutionContext;
+bool ParsingKeyConf, UnsafeExecutionContext;
 
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
@@ -658,12 +657,6 @@ void C_DoCommand (const char *cmd, int keynum)
 
 			if (args.argc() >= 2)
 			{ // Set the variable
-				if (UnsafeExecutionContext && !(var->GetFlags() & CVAR_MOD))
-				{
-					Printf(TEXTCOLOR_RED "Cannot set console variable" TEXTCOLOR_GOLD " %s " TEXTCOLOR_RED "from unsafe command\n", var->GetName());
-					return;
-				}
-
 				var->CmdSet (args[1]);
 			}
 			else

@@ -2599,7 +2599,7 @@ void G_DeferedPlayDemo (const char *name)
 	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
 }
 
-CCMD (playdemo)
+UNSAFE_CCMD (playdemo)
 {
 	if (netgame)
 	{

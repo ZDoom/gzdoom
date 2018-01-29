@@ -2707,7 +2707,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 		FLinkContext ctx;
 		DVector3 oldpos = thing->Pos();
 		thing->UnlinkFromWorld(&ctx);
-		thing->SetXYZ(thing->PosRelative(thing->Sector->GetOppositePortalGroup(sector_t::ceiling)));
+		thing->SetXYZ(thing->PosRelative(oldsec->GetOppositePortalGroup(sector_t::ceiling)));
 		thing->Prev = thing->Pos() - oldpos;
 		thing->Sector = P_PointInSector(thing->Pos());
 		thing->PrevPortalGroup = thing->Sector->PortalGroup;

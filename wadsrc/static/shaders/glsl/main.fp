@@ -427,6 +427,11 @@ vec3 fresnelSchlick(float cosTheta, vec3 F0)
 	return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
+{
+	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
+}
+
 vec3 applyLight(vec3 albedo, vec3 ambientLight)
 {
 	vec3 worldpos = pixelpos.xyz;
@@ -526,7 +531,25 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 	}
 #endif
 
-	vec3 ambient = ambientLight * albedo * ao;
+	// Pretend we sampled the sector light level from an irradiance map
+
+	vec3 F = fresnelSchlickRoughness(max(dot(N, V), 0.0), F0, roughness);
+
+	vec3 kS = F;
+	vec3 kD = 1.0 - kS;
+
+	vec3 irradiance = ambientLight; // texture(irradianceMap, N).rgb
+	vec3 diffuse = irradiance * albedo;
+
+	//kD *= 1.0 - metallic;
+	//const float MAX_REFLECTION_LOD = 4.0;
+	//vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;
+	//vec2 envBRDF = texture(brdfLUT, vec2(max(dot(N, V), 0.0), roughness)).rg;
+	//vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+
+	//vec3 ambient = (kD * diffuse + specular) * ao;
+	vec3 ambient = (kD * diffuse) * ao;
+
 	vec3 color = ambient + Lo;
 
 	// Tonemap (reinhard) and apply sRGB gamma

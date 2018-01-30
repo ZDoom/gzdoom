@@ -129,6 +129,23 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 
 bool ParsingKeyConf, UnsafeExecutionContext;
 
+class UnsafeExecutionScope
+{
+	const bool wasEnabled;
+
+public:
+	explicit UnsafeExecutionScope(const bool enable = true)
+	: wasEnabled(UnsafeExecutionContext)
+	{
+		UnsafeExecutionContext = enable;
+	}
+
+	~UnsafeExecutionScope()
+	{
+		UnsafeExecutionContext = wasEnabled;
+	}
+};
+
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
 // insert your new action into this list so that the keys remain sorted
@@ -226,10 +243,8 @@ void DWaitingCommand::Tick ()
 {
 	if (--TicsLeft == 0)
 	{
-		const bool wasUnsafe = UnsafeExecutionContext;
-		UnsafeExecutionContext = IsUnsafe;
+		UnsafeExecutionScope scope;
 		AddCommandString (Command);
-		UnsafeExecutionContext = wasUnsafe;
 		Destroy ();
 	}
 }
@@ -677,9 +692,8 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
-	UnsafeExecutionContext = true;
+	UnsafeExecutionScope scope;
 	C_DoCommand(cmd);
-	UnsafeExecutionContext = false;
 	return 0;
 }
 
@@ -1508,9 +1522,8 @@ void FConsoleAlias::SafeDelete ()
 
 void FUnsafeConsoleAlias::Run (FCommandLine &args, APlayerPawn *instigator, int key)
 {
-	UnsafeExecutionContext = true;
+	UnsafeExecutionScope scope;
 	FConsoleAlias::Run(args, instigator, key);
-	UnsafeExecutionContext = false;
 }
 
 void FExecList::AddCommand(const char *cmd, const char *file)

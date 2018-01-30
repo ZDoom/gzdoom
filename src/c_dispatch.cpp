@@ -692,7 +692,8 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
-	UnsafeExecutionScope scope;
+	PARAM_BOOL(unsafe);
+	UnsafeExecutionScope scope(unsafe);
 	C_DoCommand(cmd);
 	return 0;
 }

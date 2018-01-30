@@ -1,4 +1,3 @@
-
 struct UserCmd native
 {
 	native uint	buttons;
@@ -49,6 +48,7 @@ class PlayerPawn : Actor native
 	native color 		DamageFade;				// [CW] Fades for when you are being damaged.
 	native double		ViewBob;				// [SP] ViewBob Multiplier
 	native double		FullHeight;
+	double			AirControl;				//AirControl Multiplier
 
 	meta Name HealingRadiusType;
 	meta Name InvulMode;
@@ -69,6 +69,7 @@ class PlayerPawn : Actor native
 	property MorphWeapon: MorphWeapon;
 	property FlechetteType: FlechetteType;
 	property Portrait: Portrait;
+	property AirControl: AirControl;
 	
 	Default
 	{
@@ -106,6 +107,7 @@ class PlayerPawn : Actor native
 		Player.FlechetteType "ArtiPoisonBag3";
 		Player.AirCapacity 1;
 		Player.ViewBob 1;
+		Player.AirControl 1;
 		Obituary "$OB_MPDEFAULT";
 	}
 	
@@ -868,8 +870,8 @@ class PlayerPawn : Actor native
 			if (!player.onground && !bNoGravity && !waterlevel)
 			{
 				// [RH] allow very limited movement if not on ground.
-				movefactor *= level.aircontrol;
-				bobfactor*= level.aircontrol;
+				movefactor *= level.aircontrol * AirControl;
+				bobfactor *= level.aircontrol * AirControl;
 			}
 
 			fm = cmd.forwardmove;

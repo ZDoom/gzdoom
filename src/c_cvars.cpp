@@ -157,11 +157,6 @@ void FBaseCVar::SetGenericRep (UCVarValue value, ECVarType type)
 	{
 		return;
 	}
-	else if (UnsafeExecutionContext && !(GetFlags() & CVAR_MOD))
-	{
-		Printf(TEXTCOLOR_RED "Cannot set console variable" TEXTCOLOR_GOLD " %s " TEXTCOLOR_RED "from unsafe command\n", GetName());
-		return;
-	}
 	else if ((Flags & CVAR_LATCH) && gamestate != GS_FULLCONSOLE && gamestate != GS_STARTUP)
 	{
 		FLatchedValue latch;
@@ -1712,11 +1707,25 @@ void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 
 EXTERN_CVAR(Bool, sv_cheats);
 
+static bool IsUnsafe(const FBaseCVar *const var)
+{
+	const bool unsafe = UnsafeExecutionContext && !(var->GetFlags() & CVAR_MOD);
+	if (unsafe)
+	{
+		Printf(TEXTCOLOR_RED "Cannot set console variable" TEXTCOLOR_GOLD " %s " TEXTCOLOR_RED "from unsafe command\n", var->GetName());
+	}
+	return unsafe;
+}
+
 void FBaseCVar::CmdSet (const char *newval)
 {
 	if ((GetFlags() & CVAR_CHEAT) && !sv_cheats)
 	{
 		Printf("sv_cheats must be true to set this console variable.\n");
+		return;
+	}
+	else if (IsUnsafe(this))
+	{
 		return;
 	}
 
@@ -1805,6 +1814,11 @@ CCMD (toggle)
 	{
 		if ( (var = FindCVar (argv[1], &prev)) )
 		{
+			if (IsUnsafe(var))
+			{
+				return;
+			}
+
 			val = var->GetGenericRep (CVAR_Bool);
 			val.Bool = !val.Bool;
 			var->SetGenericRep (val, CVAR_Bool);

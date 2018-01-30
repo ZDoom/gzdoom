@@ -78,8 +78,8 @@ class Weapon : StateProvider native
 		Stop;
 	}
 	
-	native bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
-	native bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
+	native virtual bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
+	native virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
 	
 	virtual State GetReadyState ()
 	{

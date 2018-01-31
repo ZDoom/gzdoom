@@ -280,7 +280,7 @@ void PClass::StaticShutdown ()
 
 	// This must be done in two steps because the native classes are not ordered by inheritance,
 	// so all meta data must be gone before deleting the actual class objects.
-	for (auto cls : AllClasses)	cls->DestroyMeta(cls->Meta);
+	for (auto cls : AllClasses)	if (cls->Meta != nullptr) cls->DestroyMeta(cls->Meta);
 	for (auto cls : AllClasses)	delete cls;
 	// Unless something went wrong, anything left here should be class and type objects only, which do not own any scripts.
 	bShutdown = true;

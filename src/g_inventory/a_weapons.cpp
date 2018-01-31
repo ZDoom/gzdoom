@@ -324,7 +324,7 @@ bool AWeapon::DepleteAmmo(bool altFire, bool checkEnough, int ammouse)
 {
 	IFVIRTUAL(AWeapon, DepleteAmmo)
 	{
-		VMValue params[] = { (DObject*)this, AltFire, checkEnough, ammouse };
+		VMValue params[] = { (DObject*)this, altFire, checkEnough, ammouse };
 		VMReturn ret;
 		int retval;
 		ret.IntAt(&retval);

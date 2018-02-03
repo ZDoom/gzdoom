@@ -432,6 +432,31 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+float pointLightAttenuationQuadratic(vec4 lightpos, float lightcolorA)
+{
+	float strength = (1.0 + lightpos.w * lightpos.w * 0.25) * 0.5;
+
+	vec3 distVec = lightpos.xyz - pixelpos.xyz;
+	float attenuation = strength / (1.0 + dot(distVec, distVec));
+	if (attenuation <= 1.0 / 256.0) return 0.0;
+
+#ifdef SUPPORTS_SHADOWMAPS
+	float shadowIndex = abs(lightcolorA) - 1.0;
+	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
+#endif
+
+	if (lightcolorA >= 0.0) // Sign bit is the attenuated light flag
+	{
+		return attenuation;
+	}
+	else
+	{
+		vec3 lightDirection = normalize(lightpos.xyz - pixelpos.xyz);
+		vec3 pixelnormal = ApplyNormalMap();
+		return attenuation * diffuseContribution(lightDirection, pixelnormal);
+	}
+}
+
 vec3 applyLight(vec3 albedo, vec3 ambientLight)
 {
 	vec3 worldpos = pixelpos.xyz;
@@ -471,7 +496,7 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 				vec3 H = normalize(V + L);
 				//float distance = length(lightpos.xyz - worldpos);
 				//float attenuation = 1.0 / (distance * distance);
-				float attenuation = pointLightAttenuation(lightpos, lightcolor.a).x;
+				float attenuation = pointLightAttenuationQuadratic(lightpos, lightcolor.a);
 				if (lightspot1.w == 1.0)
 					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
 
@@ -506,7 +531,7 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 				vec3 H = normalize(V + L);
 				//float distance = length(lightpos.xyz - worldpos);
 				//float attenuation = 1.0 / (distance * distance);
-				float attenuation = pointLightAttenuation(lightpos, lightcolor.a).x;
+				float attenuation = pointLightAttenuationQuadratic(lightpos, lightcolor.a);
 				if (lightspot1.w == 1.0)
 					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
 

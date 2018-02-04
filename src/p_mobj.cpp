@@ -6101,6 +6101,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		if (mthing->arg0str != NAME_None)
 		{
 			PalEntry color = V_GetColor(nullptr, mthing->arg0str);
+			light->args[0] = color.r;
+			light->args[1] = color.g;
+			light->args[2] = color.b;
 		}
 		else if (light->lightflags & LF_SPOT)
 		{

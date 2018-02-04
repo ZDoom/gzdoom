@@ -394,6 +394,13 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	setlinespecial 411 NoiseAlert 0 0 0 0 0
 }
 
+F0E6F30F57B0425F17E43600AA813E80 // Ultimate Simplicity, map11
+{
+	// If door (sector #309) is closed it cannot be open again
+	// from one side potentially blocking level progression
+	clearlinespecial 2445
+}
+
 952CC8D03572E17BA550B01B366EFBB9 // Cheogsh map01
 {
 	// make the blue key spawn above the 3D floor

@@ -289,7 +289,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;
 		decal->GetXY(seg->sidedef, x, y);
-		gl_SetDynSpriteLight(NULL, x, y, zpos, sub);
+		gl_SetDynSpriteLight(nullptr, x, y, zpos - decalheight * 0.5f, sub);
 	}
 
 	// alpha color only has an effect when using an alpha texture.

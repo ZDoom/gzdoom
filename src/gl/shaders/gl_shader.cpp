@@ -63,9 +63,117 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	static char buffer[10000];
 	FString error;
 
-	int i_lump = Wads.CheckNumForFullName("shaders/glsl/shaderdefs.i", 0);
-	if (i_lump == -1) I_Error("Unable to load 'shaders/glsl/shaderdefs.i'");
-	FMemLump i_data = Wads.ReadLump(i_lump);
+	FString i_data;
+	
+	// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
+	i_data += "precision highp int;\n";
+	i_data += "precision highp float;\n";
+
+	i_data += "uniform vec4 uCameraPos;\n";
+	i_data += "uniform int uTextureMode;\n";
+	i_data += "uniform float uClipHeight;\n";
+	i_data += "uniform float uClipHeightDirection;\n";
+	i_data += "uniform vec2 uClipSplit;\n";
+	i_data += "uniform vec4 uClipLine;\n";
+	i_data += "uniform float uAlphaThreshold;\n";
+
+	// colors
+	i_data += "uniform vec4 uObjectColor;\n";
+	i_data += "uniform vec4 uObjectColor2;\n";
+	i_data += "uniform vec4 uDynLightColor;\n";
+	i_data += "uniform vec4 uFogColor;\n";
+	i_data += "uniform float uDesaturationFactor;\n";
+	i_data += "uniform float uInterpolationFactor;\n";
+
+	// Fixed colormap stuff
+	i_data += "uniform int uFixedColormap;\n"; // 0, when no fixed colormap, 1 for a light value, 2 for a color blend, 3 for a fog layer
+	i_data += "uniform vec4 uFixedColormapStart;\n";
+	i_data += "uniform vec4 uFixedColormapRange;\n";
+
+	// Glowing walls stuff
+	i_data += "uniform vec4 uGlowTopPlane;\n";
+	i_data += "uniform vec4 uGlowTopColor;\n";
+	i_data += "uniform vec4 uGlowBottomPlane;\n";
+	i_data += "uniform vec4 uGlowBottomColor;\n";
+
+	i_data += "uniform vec4 uSplitTopPlane;\n";
+	i_data += "uniform vec4 uSplitBottomPlane;\n";
+
+	// Lighting + Fog
+	i_data += "uniform vec4 uLightAttr;\n";
+	i_data += "#define uLightLevel uLightAttr.a\n";
+	i_data += "#define uFogDensity uLightAttr.b\n";
+	i_data += "#define uLightFactor uLightAttr.g\n";
+	i_data += "#define uLightDist uLightAttr.r\n";
+	i_data += "uniform int uFogEnabled;\n";
+	i_data += "uniform int uPalLightLevels;\n";
+	i_data += "uniform float uGlobVis;\n"; // uGlobVis = R_GetGlobVis(r_visibility) / 32.0
+
+	// dynamic lights
+	i_data += "uniform int uLightIndex;\n";
+
+	// Software fuzz scaling
+	i_data += "uniform int uViewHeight;\n";
+
+	// Blinn glossiness and specular level
+	i_data += "uniform vec2 uSpecularMaterial;\n";
+
+	// quad drawer stuff
+	i_data += "#ifdef USE_QUAD_DRAWER\n";
+	i_data += "uniform mat4 uQuadVertices;\n";
+	i_data += "uniform mat4 uQuadTexCoords;\n";
+	i_data += "uniform int uQuadMode;\n";
+	i_data += "#endif\n";
+
+	// matrices
+	i_data += "uniform mat4 ProjectionMatrix;\n";
+	i_data += "uniform mat4 ViewMatrix;\n";
+	i_data += "uniform mat4 ModelMatrix;\n";
+	i_data += "uniform mat4 NormalViewMatrix;\n";
+	i_data += "uniform mat4 NormalModelMatrix;\n";
+	i_data += "uniform mat4 TextureMatrix;\n";
+
+	// light buffers
+	i_data += "#ifdef SHADER_STORAGE_LIGHTS\n";
+	i_data += "layout(std430, binding = 1) buffer LightBufferSSO\n";
+	i_data += "{\n";
+	i_data += "    vec4 lights[];\n";
+	i_data += "};\n";
+	i_data += "#elif defined NUM_UBO_LIGHTS\n";
+	i_data += "uniform LightBufferUBO\n";
+	i_data += "{\n";
+	i_data += "    vec4 lights[NUM_UBO_LIGHTS];\n";
+	i_data += "};\n";
+	i_data += "#endif\n";
+
+	// textures
+	i_data += "uniform sampler2D tex;\n";
+	i_data += "uniform sampler2D ShadowMap;\n";
+	i_data += "uniform sampler2D texture2;\n";
+	i_data += "uniform sampler2D texture3;\n";
+	i_data += "uniform sampler2D texture4;\n";
+	i_data += "uniform sampler2D texture5;\n";
+	i_data += "uniform sampler2D texture6;\n";
+
+	// timer data
+	i_data += "uniform float timer;\n"; // To do: we must search user shaders for this declaration and remove it
+
+	// material types
+	i_data += "#if defined(SPECULAR)\n";
+	i_data += "#define normaltexture texture2\n";
+	i_data += "#define speculartexture texture3\n";
+	i_data += "#define brighttexture texture4\n";
+	i_data += "#elif defined(PBR)\n";
+	i_data += "#define normaltexture texture2\n";
+	i_data += "#define metallictexture texture3\n";
+	i_data += "#define roughnesstexture texture4\n";
+	i_data += "#define aotexture texture5\n";
+	i_data += "#define brighttexture texture6\n";
+	i_data += "#else\n";
+	i_data += "#define brighttexture texture2\n";
+	i_data += "#endif\n";
+
+	i_data += "#line 1\n";
 
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
@@ -120,7 +228,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}
 
-	vp_comb << defines << i_data.GetString().GetChars();
+	vp_comb << defines << i_data.GetChars();
 	FString fp_comb = vp_comb;
 
 	vp_comb << vp_data.GetString().GetChars() << "\n";

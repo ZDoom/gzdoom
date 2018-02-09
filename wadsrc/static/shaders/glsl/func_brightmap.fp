@@ -1,13 +1,3 @@
-#if defined(SPECULAR)
-uniform sampler2D texture4;
-#define brighttexture texture4
-#elif defined(PBR)
-uniform sampler2D texture6;
-#define brighttexture texture6
-#else
-uniform sampler2D texture2;
-#define brighttexture texture2
-#endif
 
 vec4 ProcessTexel()
 {

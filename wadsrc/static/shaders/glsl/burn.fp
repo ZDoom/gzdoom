@@ -1,5 +1,4 @@
-uniform sampler2D tex;
-uniform sampler2D texture2;
+
 in vec4 vTexCoord;
 in vec4 vColor;
 out vec4 FragColor;

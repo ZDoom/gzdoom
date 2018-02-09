@@ -12,38 +12,6 @@ out vec4 FragFog;
 out vec4 FragNormal;
 #endif
 
-#ifdef SHADER_STORAGE_LIGHTS
-	layout(std430, binding = 1) buffer LightBufferSSO
-	{
-		vec4 lights[];
-	};
-#elif defined NUM_UBO_LIGHTS
-	/*layout(std140)*/ uniform LightBufferUBO
-	{
-		vec4 lights[NUM_UBO_LIGHTS];
-	};
-#endif
-
-
-uniform sampler2D tex;
-uniform sampler2D ShadowMap;
-
-#if defined(SPECULAR)
-uniform sampler2D texture2;
-uniform sampler2D texture3;
-#define normaltexture texture2
-#define speculartexture texture3
-#elif defined(PBR)
-uniform sampler2D texture2;
-uniform sampler2D texture3;
-uniform sampler2D texture4;
-uniform sampler2D texture5;
-#define normaltexture texture2
-#define metallictexture texture3
-#define roughnesstexture texture4
-#define aotexture texture5
-#endif
-
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
 vec4 ProcessLight(vec4 color);

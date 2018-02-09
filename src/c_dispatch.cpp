@@ -127,8 +127,24 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
 	Button_AM_ZoomIn, Button_AM_ZoomOut;
 
-bool ParsingKeyConf;
-static bool UnsafeExecutionContext;
+bool ParsingKeyConf, UnsafeExecutionContext;
+
+class UnsafeExecutionScope
+{
+	const bool wasEnabled;
+
+public:
+	explicit UnsafeExecutionScope(const bool enable = true)
+	: wasEnabled(UnsafeExecutionContext)
+	{
+		UnsafeExecutionContext = enable;
+	}
+
+	~UnsafeExecutionScope()
+	{
+		UnsafeExecutionContext = wasEnabled;
+	}
+};
 
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
@@ -227,10 +243,8 @@ void DWaitingCommand::Tick ()
 {
 	if (--TicsLeft == 0)
 	{
-		const bool wasUnsafe = UnsafeExecutionContext;
-		UnsafeExecutionContext = IsUnsafe;
+		UnsafeExecutionScope scope;
 		AddCommandString (Command);
-		UnsafeExecutionContext = wasUnsafe;
 		Destroy ();
 	}
 }
@@ -658,12 +672,6 @@ void C_DoCommand (const char *cmd, int keynum)
 
 			if (args.argc() >= 2)
 			{ // Set the variable
-				if (UnsafeExecutionContext && !(var->GetFlags() & CVAR_MOD))
-				{
-					Printf(TEXTCOLOR_RED "Cannot set console variable" TEXTCOLOR_GOLD " %s " TEXTCOLOR_RED "from unsafe command\n", var->GetName());
-					return;
-				}
-
 				var->CmdSet (args[1]);
 			}
 			else
@@ -684,9 +692,9 @@ DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
-	UnsafeExecutionContext = true;
+	PARAM_BOOL(unsafe);
+	UnsafeExecutionScope scope(unsafe);
 	C_DoCommand(cmd);
-	UnsafeExecutionContext = false;
 	return 0;
 }
 
@@ -1515,9 +1523,8 @@ void FConsoleAlias::SafeDelete ()
 
 void FUnsafeConsoleAlias::Run (FCommandLine &args, APlayerPawn *instigator, int key)
 {
-	UnsafeExecutionContext = true;
+	UnsafeExecutionScope scope;
 	FConsoleAlias::Run(args, instigator, key);
-	UnsafeExecutionContext = false;
 }
 
 void FExecList::AddCommand(const char *cmd, const char *file)

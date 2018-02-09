@@ -376,6 +376,14 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	setlinespecial 1008 Door_Open 0 64 0 0 0
 }
 
+7ED9800213C00D6E7FB98652AB48B3DE // Ultimate Simplicity, map04
+{
+	// Add missing map spots on easy and medium skills
+	// Demons will teleport into starting room making 100% kills possible
+	setthingskills 31 31
+	setthingskills 32 31
+}
+
 1891E029994B023910CFE0B3209C3CDB // Ultimate Simplicity, map07
 {
 	// It is possible to get stuck on skill 0 or 1 when no shots have been fired
@@ -384,6 +392,13 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	// they won't teleport into the battle. ACS will wait forever for their deaths.
 	setlinespecial 397 NoiseAlert 0 0 0 0 0
 	setlinespecial 411 NoiseAlert 0 0 0 0 0
+}
+
+F0E6F30F57B0425F17E43600AA813E80 // Ultimate Simplicity, map11
+{
+	// If door (sector #309) is closed it cannot be open again
+	// from one side potentially blocking level progression
+	clearlinespecial 2445
 }
 
 952CC8D03572E17BA550B01B366EFBB9 // Cheogsh map01
@@ -685,6 +700,10 @@ EBDAC00E9D25D884B2C8F4B1F0390539 // doom2.wad map21
 	setsectoroffset 50 ceil -56
 	setsectoroffset 54 ceil -56
 }
+94893A0DC429A22ADC4B3A73DA537E16 // DOOM2.WAD map25
+{
+   rebuildnodes
+}
 110F84DE041052B59307FAF0293E6BC0 // Doom II, map27
 {
 	setsectorspecial 93 0
@@ -843,4 +862,9 @@ CA3773ED313E8899311F3DD0CA195A68 // e3m6
 	setthingz 402 168
 	setthingz 403 168
 	setthingz 404 168
+}
+
+6D4156EE0D12B77AD143A37C4D3DCF98 // dmonfear.wad map22
+{
+	shorttex
 }

@@ -283,6 +283,7 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
       For things with ACS specials (80-86 and 226), if arg0str is present and non-null, it
       will be used as the name of the script to execute, and arg0 will be ignored.
+	  On dynamic lights, arg0str can be used to set a color by name, this will supersede all args which are normally used to define a color.
    }
 
 
@@ -425,6 +426,9 @@ floor_reflect and ceiling_reflect.
 
 1.28 28.01.2017
 sector material colors.
+
+1.29 04.02.2018
+arg0str in dynamic lights.
 
 ===============================================================================
 EOF

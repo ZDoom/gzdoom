@@ -6101,6 +6101,9 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 		if (mthing->arg0str != NAME_None)
 		{
 			PalEntry color = V_GetColor(nullptr, mthing->arg0str);
+			light->args[0] = color.r;
+			light->args[1] = color.g;
+			light->args[2] = color.b;
 		}
 		else if (light->lightflags & LF_SPOT)
 		{
@@ -7766,7 +7769,13 @@ FState *AActor::GetRaiseState()
 void AActor::Revive()
 {
 	AActor *info = GetDefault();
+	FLinkContext ctx;
+
+	bool flagchange = (flags & (MF_NOBLOCKMAP | MF_NOSECTOR)) != (info->flags & (MF_NOBLOCKMAP | MF_NOSECTOR));
+
+	if (flagchange) UnlinkFromWorld(&ctx);
 	flags = info->flags;
+	if (flagchange) LinkToWorld(&ctx);
 	flags2 = info->flags2;
 	flags3 = info->flags3;
 	flags4 = info->flags4;

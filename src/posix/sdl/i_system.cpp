@@ -79,6 +79,7 @@ extern "C"
 #ifndef NO_GTK
 bool I_GtkAvailable ();
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
+void I_FatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
@@ -157,6 +158,37 @@ bool gameisdead;
 void Mac_I_FatalError(const char* errortext);
 #endif
 
+#ifdef __linux__
+void Linux_I_FatalError(const char* errortext)
+{
+	// Close window or exit fullscreen and release mouse capture
+	SDL_Quit();
+
+	const char *str;
+	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	{
+		FString cmd;
+		cmd << "kdialog --title \"" GAMESIG " ";
+		cmd << GetVersionString() << ": No IWAD found\" ";
+		cmd << "--msgbox \"" << errortext << "\"";
+		popen(cmd, "r");
+	}
+#ifndef NO_GTK
+	else if (I_GtkAvailable())
+	{
+		I_FatalError_Gtk(errortext);
+	}
+#endif
+	else
+	{
+		FString message;
+		message << GAMESIG " ";
+		message << GetVersionString() << ": No IWAD found";
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, message, errortext, NULL);
+	}
+}
+#endif
+
 void I_FatalError (const char *error, ...)
 {
     static bool alreadyThrown = false;
@@ -175,6 +207,10 @@ void I_FatalError (const char *error, ...)
 #ifdef __APPLE__
 		Mac_I_FatalError(errortext);
 #endif // __APPLE__		
+
+#ifdef __linux__
+		Linux_I_FatalError(errortext);
+#endif
 		
 		// Record error to log (if logging)
 		if (Logfile)

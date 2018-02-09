@@ -74,7 +74,7 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 	while (node)
 	{
 		light=node->lightsource;
-		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self) && !(light->lightflags&LF_DONTLIGHTACTORS))
+		if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != self || !self) && !(light->lightflags&LF_DONTLIGHTACTORS))
 		{
 			float dist;
 			FVector3 L;

@@ -528,7 +528,7 @@ class PlayerPawn : Actor native
 			if (level.time >= player.respawn_time || ((player.cmd.buttons & BT_USE) && player.Bot == NULL))
 			{
 				player.cls = NULL;		// Force a new class if the player is using a random class
-				player.playerstate = (multiplayer || (level.AllowRespawn) || sv_singleplayerrespawn)? PST_REBORN : PST_ENTER;
+				player.playerstate = (multiplayer || level.AllowRespawn || sv_singleplayerrespawn || G_SkillPropertyInt(SKILLP_PlayerRespawn)) ? PST_REBORN : PST_ENTER;
 				if (special1 > 2)
 				{
 					special1 = 0;

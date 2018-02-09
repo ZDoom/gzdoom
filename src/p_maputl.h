@@ -240,7 +240,7 @@ class FMultiBlockLinesIterator
 
 	bool GoUp(double x, double y);
 	bool GoDown(double x, double y);
-	void startIteratorForGroup(int group);
+	bool startIteratorForGroup(int group);
 
 public:
 

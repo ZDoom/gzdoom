@@ -220,7 +220,21 @@ void AWeapon::MarkPrecacheSounds() const
 //
 //===========================================================================
 
-bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
+bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
+{
+	IFVIRTUAL(AWeapon, CheckAmmo)
+	{
+		VMValue params[] = { (DObject*)this, fireMode, autoSwitch, requireAmmo, ammocount };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		VMCall(func, params, 5, &ret, 1);
+		return !!retval;
+	}
+	return CheckAmmo(fireMode, autoSwitch, requireAmmo, ammocount);
+}
+
+bool AWeapon::DoCheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
 {
 	int altFire;
 	int count1, count2;
@@ -293,7 +307,7 @@ DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
 	PARAM_BOOL(autoswitch);
 	PARAM_BOOL_DEF(require);
 	PARAM_INT_DEF(ammocnt);
-	ACTION_RETURN_BOOL(self->CheckAmmo(mode, autoswitch, require, ammocnt));
+	ACTION_RETURN_BOOL(self->DoCheckAmmo(mode, autoswitch, require, ammocnt));
 }
 
 //===========================================================================
@@ -306,7 +320,21 @@ DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
 //
 //===========================================================================
 
-bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough, int ammouse)
+bool AWeapon::DepleteAmmo(bool altFire, bool checkEnough, int ammouse)
+{
+	IFVIRTUAL(AWeapon, DepleteAmmo)
+	{
+		VMValue params[] = { (DObject*)this, altFire, checkEnough, ammouse };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		VMCall(func, params, 4, &ret, 1);
+		return !!retval;
+	}
+	return DoDepleteAmmo(altFire, checkEnough, ammouse);
+}
+
+bool AWeapon::DoDepleteAmmo (bool altFire, bool checkEnough, int ammouse)
 {
 	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr)))
 	{
@@ -357,7 +385,7 @@ DEFINE_ACTION_FUNCTION(AWeapon, DepleteAmmo)
 	PARAM_BOOL(altfire);
 	PARAM_BOOL_DEF(checkenough);
 	PARAM_INT_DEF(ammouse);
-	ACTION_RETURN_BOOL(self->DepleteAmmo(altfire, checkenough, ammouse));
+	ACTION_RETURN_BOOL(self->DoDepleteAmmo(altfire, checkenough, ammouse));
 }
 
 

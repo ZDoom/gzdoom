@@ -1,5 +1,5 @@
 /*
-** iwadpicker_gtk.cpp
+** gtk_dialogs.cpp
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008-2016 Braden Obrzut
@@ -126,12 +126,16 @@ DYN_GTK_SYM(gtk_window_new);
 DYN_GTK_SYM(gtk_window_set_gravity);
 DYN_GTK_SYM(gtk_window_set_position);
 DYN_GTK_SYM(gtk_window_set_title);
+DYN_GTK_SYM(gtk_window_set_resizable);
+DYN_GTK_SYM(gtk_dialog_run);
+DYN_GTK_SYM(gtk_dialog_get_type);
 
 // Gtk3 Only
 DYN_GTK_OPT3_SYM(gtk_box_new, GtkWidget *(*)(GtkOrientation, gint));
 DYN_GTK_OPT3_SYM(gtk_button_box_new, GtkWidget *(*)(GtkOrientation));
 DYN_GTK_OPT3_SYM(gtk_widget_set_halign, void(*)(GtkWidget *, GtkAlign));
 DYN_GTK_OPT3_SYM(gtk_widget_set_valign, void(*)(GtkWidget *, GtkAlign));
+DYN_GTK_OPT3_SYM(gtk_message_dialog_new, GtkWidget* (*)(GtkWindow*, GtkDialogFlags, GtkMessageType, GtkButtonsType, const gchar*, ...));
 
 // Gtk2 Only
 DYN_GTK_OPT2_SYM(gtk_misc_get_type, GType(*)());
@@ -342,11 +346,79 @@ static int PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	return i;
 }
 
+static void ShowError(const char* errortext)
+{
+	GtkWidget *window;
+	GtkWidget *widget;
+	GtkWidget *vbox = nullptr;
+	GtkWidget *bbox = nullptr;
+
+	window = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+	gtk_window_set_title (GTK_WINDOW(window), "Fatal error");
+	gtk_window_set_position (GTK_WINDOW(window), GTK_WIN_POS_CENTER);
+	gtk_window_set_gravity (GTK_WINDOW(window), GDK_GRAVITY_CENTER);
+	gtk_window_set_resizable (GTK_WINDOW(window), false);
+	gtk_container_set_border_width (GTK_CONTAINER(window), 10);
+	g_signal_connect (window, "delete_event", G_CALLBACK(gtk_main_quit), NULL);
+	g_signal_connect (window, "key_press_event", G_CALLBACK(CheckEscape), NULL);
+
+	// Create the vbox container.
+	if (gtk_box_new) // Gtk3
+		vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
+	else if (gtk_vbox_new) // Gtk2
+		vbox = gtk_vbox_new (FALSE, 10);
+
+	gtk_container_add (GTK_CONTAINER(window), vbox);
+
+	// Create the label.
+	widget = gtk_label_new ((const gchar *) errortext);
+	gtk_box_pack_start (GTK_BOX(vbox), widget, false, false, 0);
+
+	if (gtk_widget_set_halign && gtk_widget_set_valign) // Gtk3
+	{
+		gtk_widget_set_halign (widget, GTK_ALIGN_START);
+		gtk_widget_set_valign (widget, GTK_ALIGN_START);
+	}
+	else if (gtk_misc_set_alignment && gtk_misc_get_type) // Gtk2
+		gtk_misc_set_alignment (GTK_MISC(widget), 0, 0);
+
+	// Create the Exit button box.
+	if (gtk_button_box_new) // Gtk3
+		bbox = gtk_button_box_new (GTK_ORIENTATION_HORIZONTAL);
+	else if (gtk_hbutton_box_new) // Gtk2
+		bbox = gtk_hbutton_box_new ();
+
+	gtk_button_box_set_layout (GTK_BUTTON_BOX(bbox), GTK_BUTTONBOX_END);
+	gtk_box_set_spacing (GTK_BOX(bbox), 10);
+	gtk_box_pack_end (GTK_BOX(vbox), bbox, false, false, 0);
+
+	// Create the cancel button.
+	widget = gtk_button_new_with_label ("Exit");
+	gtk_box_pack_start (GTK_BOX(bbox), widget, false, false, 0);
+	g_signal_connect (widget, "clicked", G_CALLBACK(gtk_main_quit), &window);
+
+	// Finally we can show everything.
+	gtk_widget_show_all (window);
+
+	gtk_main ();
+
+	if (GTK_IS_WINDOW(window))
+	{
+		gtk_widget_destroy (window);
+		// If we don't do this, then the X window might not actually disappear.
+		while (g_main_context_iteration (NULL, FALSE)) {}
+	}
+}
+
 } // namespace Gtk
 
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 {
 	return Gtk::PickIWad (wads, numwads, showwin, defaultiwad);
+}
+
+void I_FatalError_Gtk(const char* errortext) {
+	Gtk::ShowError(errortext);
 }
 
 bool I_GtkAvailable()

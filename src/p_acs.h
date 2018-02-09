@@ -60,13 +60,32 @@ struct InitIntToZero
 };
 typedef TMap<int32_t, int32_t, THashTraits<int32_t>, InitIntToZero> FWorldGlobalArray;
 
-// ACS variables with world scope
-extern int32_t ACS_WorldVars[NUM_WORLDVARS];
-extern FWorldGlobalArray ACS_WorldArrays[NUM_WORLDVARS];
+// Type of elements count is unsigned int instead of size_t to match ACSStringPool interface
+template <typename T, unsigned int N>
+struct BoundsCheckingArray
+{
+	T &operator[](const unsigned int index)
+	{
+		if (index >= N)
+		{
+			I_Error("Out of bounds memory access in ACS VM");
+		}
+
+		return buffer[index];
+	}
+
+	T *Pointer() { return buffer; }
+	unsigned int Size() const { return N; }
+
+	void Fill(const T &value) { std::fill(std::begin(buffer), std::end(buffer), value); }
+
+private:
+	T buffer[N];
+};
 
 // ACS variables with global scope
-extern int32_t ACS_GlobalVars[NUM_GLOBALVARS];
-extern FWorldGlobalArray ACS_GlobalArrays[NUM_GLOBALVARS];
+extern BoundsCheckingArray<int32_t, NUM_GLOBALVARS> ACS_GlobalVars;
+extern BoundsCheckingArray<FWorldGlobalArray, NUM_GLOBALVARS> ACS_GlobalArrays;
 
 #define LIBRARYID_MASK			0xFFF00000
 #define LIBRARYID_SHIFT			20
@@ -359,7 +378,7 @@ public:
 	ACSProfileInfo *GetFunctionProfileData(ScriptFunction *func) { return GetFunctionProfileData((int)(func - (ScriptFunction *)Functions)); }
 	const char *LookupString (uint32_t index) const;
 
-	int32_t *MapVars[NUM_MAPVARS];
+	BoundsCheckingArray<int32_t *, NUM_MAPVARS> MapVars;
 
 	static FBehavior *StaticLoadModule (int lumpnum, FileReader * fr=NULL, int len=0);
 	static void StaticLoadDefaultModules ();

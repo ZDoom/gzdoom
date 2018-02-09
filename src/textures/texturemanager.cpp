@@ -1206,8 +1206,21 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetName)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
-	const FTexture* const tex = TexMan.ByIndex(texid);
-	ACTION_RETURN_STRING(nullptr == tex ? FString() : tex->Name);
+	auto tex = TexMan.ByIndex(texid);
+	FString retval;
+
+	if (tex != nullptr)
+	{
+		if (tex->Name.IsNotEmpty()) retval = tex->Name;
+		else
+		{
+			// Textures for full path names do not have their own name, they merely link to the source lump.
+			auto lump = tex->GetSourceLump();
+			if (Wads.GetLinkedTexture(lump) == tex)
+				retval = Wads.GetLumpFullName(lump);
+		}
+	}
+	ACTION_RETURN_STRING(retval);
 }
 
 //==========================================================================

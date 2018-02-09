@@ -987,9 +987,8 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		RenderStyle.CheckFuzz();
 		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl_fuzztype != 0 && !gl.legacyMode)
+			if (gl_fuzztype != 0 && !gl.legacyMode && !(RenderStyle.Flags & STYLEF_InvertSource))
 			{
-				// Todo: implement shader selection here
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 				OverrideShader = SHADER_NoTexture + gl_fuzztype;
 				trans = 0.99f;	// trans may not be 1 here

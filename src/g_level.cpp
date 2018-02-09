@@ -648,7 +648,8 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 			// If this is co-op, respawn any dead players now so they can
 			// keep their inventory on the next map.
-			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn) && !deathmatch && player->playerstate == PST_DEAD)
+			if ((multiplayer || level.flags2 & LEVEL2_ALLOWRESPAWN || sv_singleplayerrespawn || !!G_SkillProperty(SKILLP_PlayerRespawn))
+				&& !deathmatch && player->playerstate == PST_DEAD)
 			{
 				// Copied from the end of P_DeathThink [[
 				player->cls = NULL;		// Force a new class if the player is using a random class
@@ -2028,6 +2029,10 @@ DEFINE_FIELD(FLevelLocals, F1Pic)
 DEFINE_FIELD(FLevelLocals, maptype)
 DEFINE_FIELD(FLevelLocals, Music)
 DEFINE_FIELD(FLevelLocals, musicorder)
+DEFINE_FIELD(FLevelLocals, skytexture1)
+DEFINE_FIELD(FLevelLocals, skytexture2)
+DEFINE_FIELD(FLevelLocals, skyspeed1)
+DEFINE_FIELD(FLevelLocals, skyspeed2)
 DEFINE_FIELD(FLevelLocals, total_secrets)
 DEFINE_FIELD(FLevelLocals, found_secrets)
 DEFINE_FIELD(FLevelLocals, total_items)
@@ -2093,3 +2098,19 @@ CCMD(skyfog)
 	}
 }
 
+
+//==========================================================================
+//
+// ZScript counterpart to ACS ChangeSky, uses TextureIDs
+//
+//==========================================================================
+DEFINE_ACTION_FUNCTION(FLevelLocals, ChangeSky)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FLevelLocals);
+	PARAM_INT(sky1);
+	PARAM_INT(sky2);
+	sky1texture = self->skytexture1 = FSetTextureID(sky1);
+	sky2texture = self->skytexture2 = FSetTextureID(sky2);
+	R_InitSkyMap();
+	return 0;
+}

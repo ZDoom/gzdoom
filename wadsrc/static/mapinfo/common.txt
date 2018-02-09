@@ -118,7 +118,7 @@ DoomEdNums
   9851 = SpotLightPulseAdditive
   9852 = SpotLightFlickerAdditive
   9853 = SectorSpotLightAdditive
-  9854 = SpotLightFlickerRandomSubtractive
+  9854 = SpotLightFlickerRandomAdditive
   9860 = SpotLightSubtractive
   9861 = SpotLightPulseSubtractive
   9862 = SpotLightFlickerSubtractive

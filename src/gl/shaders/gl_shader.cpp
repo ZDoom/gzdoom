@@ -52,11 +52,60 @@
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
+static bool IsGlslWhitespace(char c)
+{
+	switch (c)
+	{
+	case ' ':
+	case '\r':
+	case '\n':
+	case '\t':
+	case '\f':
+		return true;
+	default:
+		return false;
+	}
+}
+
+static FString RemoveLegacyUserUniforms(FString code)
+{
+	// User shaders must declare their uniforms via the GLDEFS file.
+	// The following code searches for uniform declarations in the shader itself and replaces them with whitespace.
+
+	long len = (long)code.Len();
+	char *chars = code.LockBuffer();
+
+	long startIndex = 0;
+	while (true)
+	{
+		long matchIndex = code.IndexOf("uniform", startIndex);
+		if (matchIndex == -1)
+			break;
+
+		bool isKeywordStart = matchIndex == 0 || IsGlslWhitespace(chars[matchIndex - 1]);
+		bool isKeywordEnd = matchIndex + 7 == len || IsGlslWhitespace(chars[matchIndex + 7]);
+		if (isKeywordStart && isKeywordEnd)
+		{
+			long statementEndIndex = code.IndexOf(';', matchIndex + 7);
+			if (statementEndIndex == -1)
+				statementEndIndex = len;
+			for (long i = matchIndex; i < statementEndIndex; i++)
+			{
+				if (!IsGlslWhitespace(chars[i]))
+					chars[i] = ' ';
+			}
+			startIndex = statementEndIndex;
+		}
+		else
+		{
+			startIndex = matchIndex + 7;
+		}
+	}
+
+	code.UnlockBuffer();
+
+	return code;
+}
 
 bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * defines)
 {
@@ -232,7 +281,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FString fp_comb = vp_comb;
 
 	vp_comb << vp_data.GetString().GetChars() << "\n";
-	fp_comb << fp_data.GetString().GetChars() << "\n";
+	fp_comb << RemoveLegacyUserUniforms(fp_data.GetString()).GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{

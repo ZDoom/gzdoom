@@ -249,8 +249,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "#define brighttexture texture2\n";
 	i_data += "#endif\n";
 
-	i_data += "#line 1\n";
-
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
 	FMemLump vp_data = Wads.ReadLump(vp_lump);
@@ -307,11 +305,16 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	vp_comb << defines << i_data.GetChars();
 	FString fp_comb = vp_comb;
 
+	vp_comb << "#line 1\n";
+	fp_comb << "#line 1\n";
+
 	vp_comb << vp_data.GetString().GetChars() << "\n";
 	fp_comb << fp_data.GetString().GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{
+		fp_comb << "#line 1\n";
+
 		if (*proc_prog_lump != '#')
 		{
 			int pp_lump = Wads.CheckNumForFullName(proc_prog_lump);

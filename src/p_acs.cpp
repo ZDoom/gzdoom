@@ -1284,7 +1284,7 @@ int ACSStringPool::InsertString(FString &str, unsigned int h, unsigned int bucke
 	}
 	if (index == Pool.Size())
 	{ // There were no free entries; make a new one.
-		Pool.Reserve(1);
+		Pool.Reserve(MIN_GC_SIZE);
 		FirstFreeEntry++;
 	}
 	else

@@ -1276,8 +1276,6 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, 
 	return std::make_pair(retval, AL.SOFT_source_spatialize || channels==1);
 }
 
-void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
-
 std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *pBuffer)
 {
 	SoundHandle retval = { NULL };
@@ -1292,12 +1290,9 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	/* Only downmix to mono if we can't spatialize multi-channel sounds. */
 	monoize = monoize && !AL.SOFT_source_spatialize;
 
-	if (!memcmp(sfxdata, "OggS", 4) || !memcmp(sfxdata, "FLAC", 4))
-	{
-		MemoryReader mr((char*)sfxdata, length);
-		FindLoopTags(&mr, &loop_start, &startass, &loop_end, &endass);
-	}
+	FindLoopTags(&reader, &loop_start, &startass, &loop_end, &endass);
 
+	reader.Seek(0, SEEK_SET);
 	std::unique_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
 	if (!decoder) return std::make_pair(retval, true);
 

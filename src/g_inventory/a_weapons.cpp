@@ -231,7 +231,7 @@ bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int amm
 		VMCall(func, params, 5, &ret, 1);
 		return !!retval;
 	}
-	return CheckAmmo(fireMode, autoSwitch, requireAmmo, ammocount);
+	return DoCheckAmmo(fireMode, autoSwitch, requireAmmo, ammocount);
 }
 
 bool AWeapon::DoCheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)

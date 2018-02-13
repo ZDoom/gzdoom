@@ -118,10 +118,11 @@
 #include "vm.h"
 #include "types.h"
 #include "r_data/r_vanillatrans.h"
-#include "d_stats.cpp"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
+void D_DoAnonStats();
+
 
 // MACROS ------------------------------------------------------------------
 

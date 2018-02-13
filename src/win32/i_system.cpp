@@ -243,7 +243,7 @@ void I_DetectOS(void)
 			if (info.dwMinorVersion == 0)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "Vista" : "Server 2008";
-				sys_ostype = 1; // legacy OS
+				sys_ostype = 2; // legacy OS
 			}
 			else if (info.dwMinorVersion == 1)
 			{

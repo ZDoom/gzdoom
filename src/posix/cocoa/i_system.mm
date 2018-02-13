@@ -386,3 +386,8 @@ TArray<FString> I_GetGogPaths()
 	// GOG's Doom games are Windows only at the moment
 	return TArray<FString>();
 }
+
+bool I_HTTPRequest(const char* request)
+{
+	// todo
+}

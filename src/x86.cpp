@@ -143,6 +143,8 @@ haveid:
 	cpu->FeatureFlags[1] = foo[2];	// Store extended feature flags
 	cpu->FeatureFlags[2] = foo[3];	// Store feature flags
 
+	cpu->HyperThreading = (foo[3] & (1 << 28)) > 0;
+
 	// If CLFLUSH instruction is supported, get the real cache line size.
 	if (foo[3] & (1 << 19))
 	{
@@ -251,6 +253,7 @@ void DumpCPUInfo(const CPUInfo *cpu)
 		if (cpu->bSSE42)		Printf(" SSE4.2");
 		if (cpu->b3DNow)		Printf(" 3DNow!");
 		if (cpu->b3DNowPlus)	Printf(" 3DNow!+");
+		if (cpu->HyperThreading)	Printf(" HyperThreading");
 		Printf ("\n");
 	}
 }

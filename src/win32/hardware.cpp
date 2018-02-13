@@ -515,16 +515,16 @@ CCMD (vid_currentmode)
 EXTERN_CVAR(String, sys_statshost)
 EXTERN_CVAR(Int, sys_statsport)
 
-void D_DoHTTPRequest(char* request)
+bool I_HTTPRequest(const char* request)
 {
 	if (sys_statshost.GetHumanString() == NULL)
-		return; // no host, disable
+		return false; // no host, disable
 
 	WSADATA wsaData;
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0)
 	{
 		DPrintf(DMSG_ERROR, "WSAStartup failed.\n");
-		return;
+		return false;
 	}
 	SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	struct hostent *host;
@@ -537,9 +537,9 @@ void D_DoHTTPRequest(char* request)
 	if (connect(Socket, (SOCKADDR*)(&SockAddr), sizeof(SockAddr)) != 0)
 	{
 		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", sys_statshost.GetHumanString());
-		return;
+		return false;
 	}
-	send(Socket, request, strlen(request), 0);
+	send(Socket, request, (int)strlen(request), 0);
 	char buffer[1024];
 	int nDataLength;
 	while ((nDataLength = recv(Socket, buffer, 1024, 0)) > 0)
@@ -553,5 +553,5 @@ void D_DoHTTPRequest(char* request)
 	closesocket(Socket);
 	WSACleanup();
 	DPrintf(DMSG_NOTIFY, "Stats send successful.\n");
-	return;
+	return true;
 }

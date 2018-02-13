@@ -41,6 +41,7 @@
 void gl_PatchMenu();
 static TArray<FString>  m_Extensions;
 RenderContext gl;
+static double realglversion;	// this is public so the statistics code can access it.
 
 EXTERN_CVAR(Bool, gl_legacy_mode)
 extern int currentrenderer;
@@ -59,7 +60,7 @@ static void CollectExtensions()
 	int max = 0;
 	glGetIntegerv(GL_NUM_EXTENSIONS, &max);
 
-	if (0 == max)
+	if (max == 0)
 	{
 		// Try old method to collect extensions
 		const char *supported = (char *)glGetString(GL_EXTENSIONS);
@@ -144,6 +145,8 @@ void gl_LoadExtensions()
 	}
 
 	const char *version = Args->CheckValue("-glversion");
+	realglversion = strtod(glversion, NULL);
+
 
 	if (version == NULL)
 	{
@@ -152,9 +155,8 @@ void gl_LoadExtensions()
 	else
 	{
 		double v1 = strtod(version, NULL);
-		double v2 = strtod(glversion, NULL);
 		if (v1 >= 3.0 && v1 < 3.3) v1 = 3.3;	// promote '3' to 3.3 to avoid falling back to the legacy path.
-		if (v2 < v1) version = glversion;
+		if (realglversion < v1) version = glversion;
 		else Printf("Emulating OpenGL v %s\n", version);
 	}
 
@@ -385,3 +387,9 @@ void gl_PrintStartupLog()
 
 }
 
+std::pair<double, bool> gl_getInfo()
+{
+	// gl_ARB_bindless_texture is the closest we can get to determine Vulkan support from OpenGL.
+	// This isn't foolproof because Intel doesn't support it but for NVidia and AMD support of this extension means Vulkan support.
+	return std::make_pair(realglversion, CheckExtension("GL_ARB_bindless_texture"));
+}

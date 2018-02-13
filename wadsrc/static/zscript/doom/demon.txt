@@ -85,11 +85,12 @@ extend class Actor
 {
 	void A_SargAttack()
 	{
-		if (target && CheckMeleeRange())
+		let targ = target;
+		if (targ && CheckMeleeRange())
 		{
 			int damage = random[pr_sargattack](1, 10) * 4;
-			int newdam = target.DamageMobj (self, self, damage, "Melee");
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, "Melee");
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 		}
 	}
 }

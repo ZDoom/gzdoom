@@ -1,18 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //	 Duh.
@@ -64,6 +69,7 @@ void G_Ticker (void);
 bool G_Responder (event_t*	ev);
 
 void G_ScreenShot (char *filename);
+void G_StartSlideshow(FName whichone);
 
 FString G_BuildSaveName (const char *prefix, int slot);
 
@@ -83,10 +89,10 @@ void G_DoReborn (int playernum, bool freshbot);
 void G_DoPlayerPop(int playernum);
 
 // Adds pitch to consoleplayer's viewpitch and clamps it
-void G_AddViewPitch (int look);
+void G_AddViewPitch (int look, bool mouse = false);
 
 // Adds to consoleplayer's viewangle if allowed
-void G_AddViewAngle (int yaw);
+void G_AddViewAngle (int yaw, bool mouse = false);
 
 #define BODYQUESIZE 	32
 class AActor;
@@ -94,6 +100,7 @@ extern AActor *bodyque[BODYQUESIZE];
 extern int bodyqueslot; 
 class AInventory;
 extern const AInventory *SendItemUse, *SendItemDrop;
+extern int SendItemDropAmount;
 
 
 #endif

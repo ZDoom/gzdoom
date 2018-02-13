@@ -1,18 +1,22 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		System specific interface stuff.
@@ -25,6 +29,10 @@
 
 #include <dirent.h>
 #include <ctype.h>
+
+#if defined(__sun) || defined(__sun__) || defined(__SRV4) || defined(__srv4__)
+#define __solaris__ 1
+#endif
 
 #include "doomtype.h"
 
@@ -43,26 +51,11 @@ enum
 	LANGIDX_SysPreferred,
 	LANGIDX_SysDefault
 };
-extern DWORD LanguageIDs[4];
+extern uint32_t LanguageIDs[4];
 extern void SetLanguageIDs ();
 
 // Called by DoomMain.
 void I_Init (void);
-
-// Called by D_DoomLoop,
-// returns current time in tics.
-extern int (*I_GetTime) (bool saveMS);
-
-// like I_GetTime, except it waits for a new tic before returning
-extern int (*I_WaitForTic) (int);
-
-// Freezes tic counting temporarily. While frozen, calls to I_GetTime()
-// will always return the same value. This does not affect I_MSTime().
-// You must also not call I_WaitForTic() while freezing time, since the
-// tic will never arrive (unless it's the current one).
-extern void (*I_FreezeTime) (bool frozen);
-
-double I_GetTimeFrac (uint32 *ms);
 
 // Return a seed value for the RNG.
 unsigned int I_MakeRNGSeed();
@@ -131,10 +124,6 @@ TArray<FString> I_GetGogPaths();
 // The ini could not be saved at exit
 bool I_WriteIniFailed ();
 
-// [RH] Returns millisecond-accurate time
-unsigned int I_MSTime (void);
-unsigned int I_FPSTime();
-
 class FTexture;
 bool I_SetCursor(FTexture *);
 
@@ -142,9 +131,16 @@ bool I_SetCursor(FTexture *);
 
 struct findstate_t
 {
+private:
     int count;
     struct dirent **namelist;
     int current;
+
+	friend void *I_FindFirst(const char *filespec, findstate_t *fileinfo);
+	friend int I_FindNext(void *handle, findstate_t *fileinfo);
+	friend const char *I_FindName(findstate_t *fileinfo);
+	friend int I_FindAttr(findstate_t *fileinfo);
+	friend int I_FindClose(void *handle);
 };
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo);
@@ -152,7 +148,10 @@ int I_FindNext (void *handle, findstate_t *fileinfo);
 int I_FindClose (void *handle);
 int I_FindAttr (findstate_t *fileinfo); 
 
-#define I_FindName(a)	((a)->namelist[(a)->current]->d_name)
+inline const char *I_FindName(findstate_t *fileinfo)
+{
+	return (fileinfo->namelist[fileinfo->current]->d_name);
+}
 
 #define FA_RDONLY	1
 #define FA_HIDDEN	2

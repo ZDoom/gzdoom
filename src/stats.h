@@ -115,25 +115,28 @@ extern "C" unsigned __int64 __rdtsc(void);
 #pragma intrinsic(__rdtsc)
 inline unsigned __int64 rdtsc()
 {
-#ifndef _M_X64
-	if (CPU.bRDTSC)
-#endif
-	{
-		return __rdtsc();
-	}
-	return 0;
+	return __rdtsc();
 }
 #else
-inline unsigned long long rdtsc()
+inline uint64_t rdtsc()
 {
 #ifdef __amd64__
-	unsigned long long tsc;
+	uint64_t tsc;
 	asm volatile ("rdtsc; shlq $32, %%rdx; orq %%rdx, %%rax" : "=a" (tsc) :: "%rdx");
 	return tsc;
+#elif defined __ppc__
+	unsigned int lower, upper, temp;
+	do
+	{
+		asm volatile ("mftbu %0 \n mftb %1 \n mftbu %2 \n" 
+			: "=r"(upper), "=r"(lower), "=r"(temp));
+	}
+	while (upper != temp);
+	return (static_cast<unsigned long long>(upper) << 32) | lower;
 #else // i386
 	if (CPU.bRDTSC)
 	{
-		unsigned long long tsc;
+		uint64_t tsc;
 		asm volatile ("\trdtsc\n" : "=A" (tsc));
 		return tsc;
 	}
@@ -158,13 +161,13 @@ public:
 	
 	void Clock()
 	{
-		long long time = rdtsc();
+		int64_t time = rdtsc();
 		Counter -= time;
 	}
 	
 	void Unclock()
 	{
-		long long time = rdtsc();
+		int64_t time = rdtsc();
 		Counter += time;
 	}
 	
@@ -178,13 +181,13 @@ public:
 		return Counter * PerfToMillisec;
 	}
 
-	long long GetRawCounter()
+	int64_t GetRawCounter()
 	{
 		return Counter;
 	}
 
 private:
-	long long Counter;
+	int64_t Counter;
 };
 
 #endif

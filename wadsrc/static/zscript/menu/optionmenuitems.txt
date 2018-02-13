@@ -44,7 +44,7 @@ class OptionMenuItem : MenuItemBase
 		mCentered = center;
 	}
 
-	protected void drawLabel(int indent, int y, int color, bool grayed = false)
+	protected int drawLabel(int indent, int y, int color, bool grayed = false)
 	{
 		String label = Stringtable.Localize(mLabel);
 		
@@ -55,6 +55,7 @@ class OptionMenuItem : MenuItemBase
 		if (!mCentered) x = indent - w;
 		else x = (screen.GetWidth() - w) / 2;
 		screen.DrawText (SmallFont, color, x, y, label, DTA_CleanNoMove_1, true, DTA_ColorOverlay, overlay);
+		return x;
 	}
 	
 	int CursorSpace()
@@ -92,16 +93,20 @@ class OptionMenuItem : MenuItemBase
 class OptionMenuItemSubmenu : OptionMenuItem
 {
 	int mParam;
-	OptionMenuItemSubmenu Init(String label, Name command, int param = 0)
+	OptionMenuItemSubmenu Init(String label, Name command, int param = 0, bool centered = false)
 	{
-		Super.init(label, command);
+		Super.init(label, command, centered);
 		mParam = param;
 		return self;
 	}
 
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColorMore);
+		int x = drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColorMore);
+		if (mCentered) 
+		{
+			return x - 16*CleanXfac_1;
+		}
 		return indent;
 	}
 
@@ -121,24 +126,39 @@ class OptionMenuItemSubmenu : OptionMenuItem
 
 class OptionMenuItemCommand : OptionMenuItemSubmenu
 {
-	OptionMenuItemCommand Init(String label, Name command)
+	private String ccmd;	// do not allow access to this from the outside.
+	bool mCloseOnSelect;
+	private bool mUnsafe;
+	
+	OptionMenuItemCommand Init(String label, Name command, bool centered = false, bool closeonselect = false)
 	{
-		Super.Init(label, command);
+		Super.Init(label, command, 0, centered);
+		ccmd = command;
+		mCloseOnSelect = closeonselect;
+		mUnsafe = true;
 		return self;
 	}
 
-	private native static void DoCommand(String cmd);	// This is very intentionally limited to this menu item to prevent abuse.
+	private native static void DoCommand(String cmd, bool unsafe);	// This is very intentionally limited to this menu item to prevent abuse.
 
 	override bool Activate()
 	{
 		// This needs to perform a few checks to prevent abuse  by malicious modders.
-		let m = OptionMenu(Menu.GetCurrentMenu());
-		// don't execute if no menu is active
-		if (m == null) return false;	
-		// don't execute if this item cannot be found in the current menu.
-		if (m.mDesc.GetItem(mAction) != self) return false;
+		if (GetClass() != "OptionMenuItemSafeCommand")
+		{
+			let m = OptionMenu(Menu.GetCurrentMenu());
+			// don't execute if no menu is active
+			if (m == null) return false;	
+			// don't execute if this item cannot be found in the current menu.
+			if (m.GetItem(mAction) != self) return false;
+		}
 		Menu.MenuSound("menu/choose");
-		DoCommand(mAction);
+		DoCommand(ccmd, mUnsafe);
+		if (mCloseOnSelect)
+		{
+			let curmenu = Menu.GetCurrentMenu();
+			if (curmenu != null) curmenu.Close();
+		}
 		return true;
 	}
 
@@ -234,11 +254,11 @@ class OptionMenuItemOptionBase : OptionMenuItem
 	virtual void SetSelection(int Selection)
 	{
 	}
-
+	
 	//=============================================================================
 	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
 	{
-		bool grayed = mGrayCheck != null && !(mGrayCheck.GetInt());
+		bool grayed = isGrayed();
 
 		if (mCenter)
 		{
@@ -283,10 +303,15 @@ class OptionMenuItemOptionBase : OptionMenuItem
 		}
 		return true;
 	}
+	
+	virtual bool isGrayed()
+	{
+		return mGrayCheck != null && !mGrayCheck.GetInt();
+	}
 
 	override bool Selectable()
 	{
-		return mGrayCheck == null || mGrayCheck.GetInt();
+		return !isGrayed();
 	}
 }
 
@@ -396,16 +421,16 @@ class EnterKey : Menu
 		}
 	}
 
-	override bool Responder(InputEventData ev)
+	override bool OnInputEvent(InputEvent ev)
 	{
-		// This checks raw keys, not GUI keys.
-		if (ev.type == InputEventData.KeyDown)
+		// This menu checks raw keys, not GUI keys because it needs the raw codes for binding.
+		if (ev.type == InputEvent.Type_KeyDown)
 		{
-			mOwner.SendKey(ev.data1);
+			mOwner.SendKey(ev.KeyScan);
 			menuactive = Menu.On;
 			SetMenuMessage(0);
 			Close();
-			mParentMenu.MenuEvent((ev.data1 == InputEventData.KEY_ESCAPE)? Menu.MKEY_Abort : Menu.MKEY_Input, 0);
+			mParentMenu.MenuEvent((ev.KeyScan == InputEvent.KEY_ESCAPE)? Menu.MKEY_Abort : Menu.MKEY_Input, 0);
 			return true;
 		}
 		return false;
@@ -637,9 +662,9 @@ class OptionMenuSliderBase : OptionMenuItem
 	int mDrawX;
 	int mSliderShort;
 
-	protected void Init(String label, double min, double max, double step, int showval)
+	protected void Init(String label, double min, double max, double step, int showval, Name command = 'none')
 	{
-		Super.Init(label, 'None');
+		Super.Init(label, command);
 		mMin = min;
 		mMax = max;
 		mStep = step;
@@ -663,7 +688,7 @@ class OptionMenuSliderBase : OptionMenuItem
 	//
 	//=============================================================================
 
-	private void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
+	protected void DrawSlider (int x, int y, double min, double max, double cur, int fracdigits, int indent)
 	{
 		String formater = String.format("%%.%df", fracdigits);	// The format function cannot do the '%.*f' syntax.
 		String textbuf;
@@ -686,13 +711,13 @@ class OptionMenuSliderBase : OptionMenuItem
 		if (!mSliderShort)
 		{
 			Menu.DrawConText(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x11\x11\x11\x11\x11\x12");
-			Menu.DrawConText(Font.CR_ORANGE, x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), cy, "\x13");
+			Menu.DrawConText(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 78) / range)) * CleanXfac_1), cy, "\x13");
 		}
 		else
 		{
 			// On 320x200 we need a shorter slider
 			Menu.DrawConText(Font.CR_WHITE, x, cy, "\x10\x11\x11\x11\x11\x11\x12");
-			Menu.DrawConText(Font.CR_ORANGE, x + int((5 + ((ccur * 38) / range)) * CleanXfac_1), cy, "\x13");
+			Menu.DrawConText(Font.FindFontColor(gameinfo.mSliderColor), x + int((5 + ((ccur * 38) / range)) * CleanXfac_1), cy, "\x13");
 			right -= 5*8*CleanXfac_1;
 		}
 
@@ -784,7 +809,7 @@ class OptionMenuItemSlider : OptionMenuSliderBase
 	
 	OptionMenuItemSlider Init(String label, Name command, double min, double max, double step, int showval = 1)
 	{
-		Super.Init(label, min, max, step, showval);
+		Super.Init(label, min, max, step, showval, command);
 		mCVar =CVar.FindCVar(command);
 		return self;
 	}
@@ -1129,6 +1154,7 @@ class OptionMenuItemTextField : OptionMenuFieldBase
 		{
 			Menu.MenuSound("menu/choose");
 			mEnter = TextEnterMenu.Open(Menu.GetCurrentMenu(), GetCVarString(), -1, 2, fromcontroller);
+			mEnter.ActivateMenu();
 			return true;
 		}
 		else if (mkey == Menu.MKEY_Input)
@@ -1205,5 +1231,76 @@ class OptionMenuItemNumberField : OptionMenuFieldBase
 	float mMinimum;
 	float mMaximum;
 	float mStep;
+}
+
+//=============================================================================
+//
+// A special slider that displays plain text for special settings related
+// to scaling.
+//
+//=============================================================================
+
+class OptionMenuItemScaleSlider : OptionMenuItemSlider
+{
+	String TextZero;
+	String TextNegOne;
+	int mClickVal;
+	
+	OptionMenuItemScaleSlider Init(String label, Name command, double min, double max, double step, String zero, String negone = "")
+	{
+		Super.Init(label, command, min, max, step, 0);
+		mCVar =CVar.FindCVar(command);
+		TextZero = zero;
+		TextNEgOne = negone;
+		mClickVal = -10;
+		return self;
+	}
+
+	//=============================================================================
+	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
+	{
+		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
+
+		int Selection = int(GetSliderValue());
+		if ((Selection == 0 || Selection == -1) && mClickVal <= 0)
+		{
+			String text = Selection == 0? TextZero : Selection == -1? TextNegOne  : "";
+			screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
+		}
+		else
+		{
+			mDrawX = indent + CursorSpace();
+			DrawSlider (mDrawX, y, mMin, mMax, GetSliderValue(), mShowValue, indent);
+		}
+		return indent;
+	}
+	
+	override bool MouseEvent(int type, int x, int y)
+	{
+		int value = int(GetSliderValue());
+		switch (type)
+		{
+			case Menu.MOUSE_Click:
+				mClickVal = value;
+				if (value <= 0) return false;
+				return Super.MouseEvent(type, x, y);
+				
+			case Menu.MOUSE_Move:
+				if (mClickVal <= 0) return false;
+				return Super.MouseEvent(type, x, y);
+				
+			case Menu.MOUSE_Release:
+				if (mClickVal <= 0)
+				{
+					mClickVal = -10;
+					SetSliderValue(value + 1);
+					return true;
+				}
+				mClickVal = -10;
+				return Super.MouseEvent(type, x, y);
+		}
+		return false;
+	}
+	
 }
 

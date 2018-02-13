@@ -72,8 +72,13 @@ class USDFParser : public UDMFParserBase
 			}
 			type = cls;
 		}
-		if (type && type->IsDescendantOf(RUNTIME_CLASS(AInventory))) return type;
-		return nullptr;
+		return type;
+	}
+
+	PClassActor *CheckInventoryActorType(const char *key)
+	{
+		PClassActor* const type = CheckActorType(key);
+		return nullptr != type && type->IsDescendantOf(RUNTIME_CLASS(AInventory)) ? type : nullptr;
 	}
 
 	//===========================================================================
@@ -94,7 +99,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = CheckActorType(key);
+				check.Item = CheckInventoryActorType(key);
 				break;
 
 			case NAME_Amount:
@@ -121,7 +126,6 @@ class USDFParser : public UDMFParserBase
 	bool ParseChoice(FStrifeDialogueReply **&replyptr)
 	{
 		FStrifeDialogueReply *reply = new FStrifeDialogueReply;
-		memset(reply, 0, sizeof(*reply));
 
 		reply->Next = *replyptr;
 		*replyptr = reply;
@@ -193,8 +197,13 @@ class USDFParser : public UDMFParserBase
 
 				case NAME_Special:
 					reply->ActionSpecial = CheckInt(key);
-					if (reply->ActionSpecial < 0 || reply->ActionSpecial > 255)
+					if (reply->ActionSpecial < 0)
 						reply->ActionSpecial = 0;
+					break;
+
+				case NAME_SpecialName:
+					if (namespace_bits == Zd)
+						reply->ActionSpecial = P_FindLineSpecial(CheckString(key));
 					break;
 
 				case NAME_Arg0:
@@ -232,20 +241,21 @@ class USDFParser : public UDMFParserBase
 		// Todo: Finalize
 		if (reply->ItemCheck.Size() > 0)
 		{
-			if (reply->ItemCheck[0].Amount <= 0) reply->NeedsGold = false;
+			reply->PrintAmount = reply->ItemCheck[0].Amount;
+			if (reply->PrintAmount <= 0) reply->NeedsGold = false;
 		}
 
-		reply->Reply = ncopystring(ReplyString);
-		reply->QuickYes = ncopystring(QuickYes);
+		reply->Reply = ReplyString;
+		reply->QuickYes = QuickYes;
 		if (reply->ItemCheck.Size() > 0 && reply->ItemCheck[0].Item != NULL)
 		{
-			reply->QuickNo = ncopystring(QuickNo);
+			reply->QuickNo = QuickNo;
 		}
 		else
 		{
-			reply->QuickNo = NULL;
+			reply->QuickNo = "";
 		}
-		reply->LogString = ncopystring(LogString);
+		reply->LogString = LogString;
 		if(!closeDialog) reply->NextNode *= -1;
 		return true;
 	}
@@ -268,7 +278,7 @@ class USDFParser : public UDMFParserBase
 			switch(key)
 			{
 			case NAME_Item:
-				check.Item = CheckActorType(key);
+				check.Item = CheckInventoryActorType(key);
 				break;
 
 			case NAME_Count:
@@ -292,8 +302,6 @@ class USDFParser : public UDMFParserBase
 	{
 		FStrifeDialogueNode *node = new FStrifeDialogueNode;
 		FStrifeDialogueReply **replyptr = &node->Children;
-		memset(node, 0, sizeof(*node));
-		//node->ItemCheckCount[0] = node->ItemCheckCount[1] = node->ItemCheckCount[2] = -1;
 
 		node->ThisNodeNum = StrifeDialogues.Push(node);
 		node->ItemCheckNode = -1;
@@ -315,7 +323,14 @@ class USDFParser : public UDMFParserBase
 					break;
 
 				case NAME_Panel:
-					node->Backdrop = TexMan.CheckForTexture (CheckString(key), FTexture::TEX_MiscPatch);
+					node->Backdrop = CheckString(key);
+					break;
+
+				case NAME_Userstring:
+					if (namespace_bits == Zd)
+					{
+						node->UserData = CheckString(key);
+					}
 					break;
 
 				case NAME_Voice:
@@ -373,9 +388,9 @@ class USDFParser : public UDMFParserBase
 				}
 			}
 		}
-		node->SpeakerName = ncopystring(SpeakerName);
-		node->Dialogue = ncopystring(Dialogue);
-		node->Goodbye = ncopystring(Goodbye);
+		node->SpeakerName = SpeakerName;
+		node->Dialogue = Dialogue;
+		node->Goodbye = Goodbye;
 		return true;
 	}
 
@@ -390,6 +405,7 @@ class USDFParser : public UDMFParserBase
 	{
 		PClassActor *type = NULL;
 		int dlgid = -1;
+		FName clsid;
 		unsigned int startpos = StrifeDialogues.Size();
 
 		while (!sc.CheckToken('}'))
@@ -412,6 +428,13 @@ class USDFParser : public UDMFParserBase
 					if (namespace_bits == Zd)
 					{
 						dlgid = CheckInt(key);
+					}
+					break;
+
+				case NAME_Class:
+					if (namespace_bits == Zd)
+					{
+						clsid = CheckString(key);
 					}
 					break;
 				}
@@ -439,6 +462,7 @@ class USDFParser : public UDMFParserBase
 		for(;startpos < StrifeDialogues.Size(); startpos++)
 		{
 			StrifeDialogues[startpos]->SpeakerType = type;
+			StrifeDialogues[startpos]->MenuClassName = clsid;
 		}
 		return true;
 	}

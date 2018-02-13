@@ -1,0 +1,49 @@
+version: "{build}"
+
+branches:
+  except:
+    - /^travis.*$/
+
+clone_depth: 10
+
+environment:
+  matrix:
+    - GENERATOR: "Visual Studio 14 2015"
+      CONFIGURATION: Release
+      TOOLSET: v140_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
+    - GENERATOR: "Visual Studio 14 2015 Win64"
+      CONFIGURATION: Release
+      TOOLSET: v140_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
+    - GENERATOR: "Visual Studio 15 2017"
+      CONFIGURATION: Release
+      TOOLSET: v141_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
+    - GENERATOR: "Visual Studio 15 2017 Win64"
+      CONFIGURATION: Release
+      TOOLSET: v141_xp
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
+    - GENERATOR: "Visual Studio 14 2015 Win64"
+      CONFIGURATION: Debug
+      TOOLSET: v140
+      APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
+
+build_script:
+  - md build
+  - cd build
+  - cmake -G "%GENERATOR%" -T "%TOOLSET%" ..
+  - cmake --build . --config "%CONFIGURATION%" -- /verbosity:minimal
+
+after_build:
+  - set OUTPUT_DIR=%APPVEYOR_BUILD_FOLDER%\build\%CONFIGURATION%\
+  - 7z a ..\gzdoom.zip "%OUTPUT_DIR%gzdoom.exe" "%OUTPUT_DIR%*.pk3"
+
+artifacts:
+  - path: gzdoom.zip
+
+notifications:
+  - provider: Email
+    on_build_success: false
+    on_build_failure: false
+    on_build_status_changed: false

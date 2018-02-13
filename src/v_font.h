@@ -66,6 +66,10 @@ enum EColorRange : int
 	CR_PURPLE,
 	CR_DARKGRAY,
 	CR_CYAN,
+	CR_ICE,
+	CR_FIRE,
+	CR_SAPPHIRE,
+	CR_TEAL,
 	NUM_TEXT_COLORS,
 };
 
@@ -75,12 +79,12 @@ extern int NumTextColors;
 class FFont
 {
 public:
-	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump, int spacewidth=-1);
+	FFont (const char *fontname, const char *nametemplate, int first, int count, int base, int fdlump, int spacewidth=-1, bool notranslate = false);
 	virtual ~FFont ();
 
 	virtual FTexture *GetChar (int code, int *const width) const;
 	virtual int GetCharWidth (int code) const;
-	FRemapTable *GetColorTranslation (EColorRange range) const;
+	FRemapTable *GetColorTranslation (EColorRange range, PalEntry *color = nullptr) const;
 	int GetLump() const { return Lump; }
 	int GetSpaceWidth () const { return SpaceWidth; }
 	int GetHeight () const { return FontHeight; }
@@ -93,29 +97,31 @@ public:
 	static void StaticPreloadFonts();
 
 	// Return width of string in pixels (unscaled)
-	int StringWidth (const BYTE *str) const;
-	inline int StringWidth (const char *str) const { return StringWidth ((const BYTE *)str); }
-	inline int StringWidth (const FString &str) const { return StringWidth ((const BYTE *)str.GetChars()); }
+	int StringWidth (const uint8_t *str) const;
+	inline int StringWidth (const char *str) const { return StringWidth ((const uint8_t *)str); }
+	inline int StringWidth (const FString &str) const { return StringWidth ((const uint8_t *)str.GetChars()); }
 
 	int GetCharCode(int code, bool needpic) const;
 	char GetCursor() const { return Cursor; }
 	void SetCursor(char c) { Cursor = c; }
+	bool NoTranslate() const { return noTranslate; }
 
 protected:
 	FFont (int lump);
 
-	void BuildTranslations (const double *luminosity, const BYTE *identity,
+	void BuildTranslations (const double *luminosity, const uint8_t *identity,
 		const void *ranges, int total_colors, const PalEntry *palette);
 	void FixXMoves();
 
-	static int SimpleTranslation (BYTE *colorsused, BYTE *translation,
-		BYTE *identity, double **luminosity);
+	static int SimpleTranslation (uint8_t *colorsused, uint8_t *translation,
+		uint8_t *identity, double **luminosity);
 
 	int FirstChar, LastChar;
 	int SpaceWidth;
 	int FontHeight;
 	int GlobalKerning;
 	char Cursor;
+	bool noTranslate;
 	struct CharData
 	{
 		FTexture *Pic;
@@ -123,7 +129,7 @@ protected:
 	} *Chars;
 	int ActiveColors;
 	TArray<FRemapTable> Ranges;
-	BYTE *PatchRemap;
+	uint8_t *PatchRemap;
 
 	int Lump;
 	FName FontName;
@@ -142,7 +148,7 @@ void V_InitFonts();
 void V_ClearFonts();
 EColorRange V_FindFontColor (FName name);
 PalEntry V_LogColorFromColorRange (EColorRange range);
-EColorRange V_ParseFontColor (const BYTE *&color_value, int normalcolor, int boldcolor);
+EColorRange V_ParseFontColor (const uint8_t *&color_value, int normalcolor, int boldcolor);
 FFont *V_GetFont(const char *);
 void V_InitFontColors();
 

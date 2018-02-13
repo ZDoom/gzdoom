@@ -38,7 +38,7 @@
 #include <sys/stat.h>
 #include <sys/sysctl.h>
 
-#include "d_ticcmd.h"
+#include "d_protocol.h"
 #include "doomdef.h"
 #include "doomerrors.h"
 #include "doomstat.h"
@@ -49,16 +49,12 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "x86.h"
+#include "cmdlib.h"
 
 
 EXTERN_CVAR(String, language)
 
-DWORD LanguageIDs[4];
-
-
-int (*I_GetTime)(bool saveMS);
-int (*I_WaitForTic)(int);
-void (*I_FreezeTime)(bool frozen);
+uint32_t LanguageIDs[4];
 
 
 void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
@@ -73,13 +69,6 @@ ticcmd_t* I_BaseTiccmd()
 }
 
 
-void I_WaitVBL(const int count)
-{
-    // I_WaitVBL is never used to actually synchronize to the
-    // vertical blank. Instead, it's used for delay purposes.
-    usleep(1000000 * count / 70);
-}
-
 
 //
 // SetLanguageIDs
@@ -88,16 +77,13 @@ void SetLanguageIDs()
 {
 	size_t langlen = strlen(language);
 
-	DWORD lang = (langlen < 2 || langlen > 3)
+	uint32_t lang = (langlen < 2 || langlen > 3)
 		? MAKE_ID('e', 'n', 'u', '\0')
 		: MAKE_ID(language[0], language[1], language[2], '\0');
 
 	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
 }
 
-
-void I_InitTimer();
-void I_ShutdownTimer();
 
 double PerfToSec, PerfToMillisec;
 
@@ -126,7 +112,6 @@ void I_Init(void)
 
 	atterm(I_ShutdownSound);
     I_InitSound();
-	I_InitTimer();
 }
 
 static int has_exited;
@@ -141,8 +126,6 @@ void I_Quit()
 	}
 
 	C_DeinitConsole();
-
-	I_ShutdownTimer();
 }
 
 
@@ -354,11 +337,11 @@ int I_FindClose(void* const handle)
 int I_FindAttr(findstate_t* const fileinfo)
 {
 	dirent* const ent = fileinfo->namelist[fileinfo->current];
-	struct stat buf;
+	bool isdir;
 
-	if (stat(ent->d_name, &buf) == 0)
+	if (DirEntryExists(ent->d_name, &isdir))
 	{
-		return S_ISDIR(buf.st_mode) ? FA_DIREC : 0;
+		return isdir ? FA_DIREC : 0;
 	}
 
 	return 0;

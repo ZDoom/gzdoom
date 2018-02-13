@@ -37,7 +37,7 @@
 #include "doomtype.h"
 #include "configfile.h"
 
-class DArgs;
+class FArgs;
 class FIWadManager;
 
 class FGameConfigFile : public FConfigFile
@@ -53,7 +53,7 @@ public:
 	void DoModSetup (const char *gamename);
 	void ArchiveGlobalData ();
 	void ArchiveGameData (const char *gamename);
-	void AddAutoexec (DArgs *list, const char *gamename);
+	void AddAutoexec (FArgs *list, const char *gamename);
 	FString GetConfigPath (bool tryProg);
 	void ReadNetVars ();
 
@@ -63,7 +63,7 @@ protected:
 
 private:
 	void SetRavenDefaults (bool isHexen);
-	void ReadCVars (DWORD flags);
+	void ReadCVars (uint32_t flags);
 
 	bool bModSetup;
 

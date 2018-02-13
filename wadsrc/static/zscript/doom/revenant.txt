@@ -80,6 +80,7 @@ class RevenantTracer : Actor
 		Projectile;
 		+SEEKERMISSILE 
 		+RANDOMIZE
+		+ZDOOMTRANS
 		SeeSound "skeleton/attack";
 		DeathSound "skeleton/tracex";
 		RenderStyle "Add";
@@ -110,6 +111,7 @@ class RevenantTracerSmoke : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+NOTELEPORT
+		+ZDOOMTRANS
 		RenderStyle "Translucent";
 		Alpha 0.5;
 	}
@@ -152,15 +154,16 @@ extend class Actor
 
 	void A_SkelFist()
 	{
-		if (target == null) return;
+		let targ = target;
+		if (targ == null) return;
 		A_FaceTarget();
 		
 		if (CheckMeleeRange ())
 		{
 			int damage = random[SkelFist](1, 10) * 6;
 			A_PlaySound("skeleton/melee", CHAN_WEAPON);
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 		}
 	}
 

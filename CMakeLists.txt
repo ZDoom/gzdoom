@@ -10,13 +10,20 @@ if( COMMAND cmake_policy )
 	endif()
 endif()
 
-list( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR} )
+list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
 include( CreateLaunchers )
 include( FindPackageHandleStandardArgs )
 
 # Produce a warning if XP support will be missing.
-if( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" )
-	message( WARNING "This project supports Windows XP (including XP x64), but you must set the optional toolset to v140_xp manually to have it in your build! Use -T \"v140_xp\" from the command prompt." )
+if( MSVC )
+	list( APPEND WINXP_TOOLSETS v140_xp v141_xp)
+	list( FIND WINXP_TOOLSETS "${CMAKE_GENERATOR_TOOLSET}" HAVE_WINXP_SUPPORT)
+
+	if( HAVE_WINXP_SUPPORT EQUAL -1 )
+		string( REPLACE ";" " or " WINXP_TOOLSETS_STR "${WINXP_TOOLSETS}" )
+		message( WARNING "This project supports Windows XP but you must set the optional toolset to ${WINXP_TOOLSETS_STR} manually to have it in your build!\n"
+			"Assign toolset's name to CMAKE_GENERATOR_TOOLSET variable or use -T <toolset> from the command prompt." )
+	endif()
 endif()
 
 # Support cross compiling
@@ -148,9 +155,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 	set( PROFILE 0 CACHE BOOL "Enable profiling with gprof for Debug and RelWithDebInfo build types." )
 endif()
 
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}")
-
-option( NO_FMOD "Disable FMODEx sound support" OFF )
 option( NO_OPENAL "Disable OpenAL sound support" OFF )
 
 find_package( BZip2 )
@@ -174,20 +178,24 @@ if( MSVC )
 	# Disable run-time type information
 	set( ALL_C_FLAGS "/GF /Gy /GR-" )
 	
-	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
-		# SSE2 option (to allow x87 in 32 bit and disallow extended feature sets which have not yet been checked for precision)
-		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")
-		if (ZDOOM_USE_SSE2)
-			set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-		else ()
-			if (MSVC_VERSION GREATER 1699)
-				# On Visual C++ 2012 and later SSE2 is the default, so we need to switch it off explicitly
-				set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:IA32")
-			endif ()
-		endif ()
-	else()
-		set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
-	endif()
+	# Use SSE 2 as minimum always as the true color drawers needs it for __vectorcall
+	#set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2") # This is already the default
+
+
+#	if( CMAKE_SIZEOF_VOID_P MATCHES "4")
+#		# SSE2 option (to allow x87 in 32 bit and disallow extended feature sets which have not yet been checked for precision)
+#		option (ZDOOM_USE_SSE2	"Use SSE2 instruction set")
+#		if (ZDOOM_USE_SSE2)
+#			set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
+#		else ()
+#			if (MSVC_VERSION GREATER 1699)
+#				# On Visual C++ 2012 and later SSE2 is the default, so we need to switch it off explicitly
+#				set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:IA32")
+#			endif ()
+#		endif ()
+#	else()
+#		set( ALL_C_FLAGS "${ALL_C_FLAGS} /arch:SSE2")
+#	endif()
 	
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
 	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
@@ -225,6 +233,12 @@ else()
 	# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
 	if( APPLE AND "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" )
 		set( ALL_C_FLAGS "-static-libgcc" )
+	endif()
+	
+	if( NOT APPLE )
+		# Generic GCC/Clang requires position independent executable to be enabled explicitly
+		set( ALL_C_FLAGS "${ALL_C_FLAGS} -fPIE" )
+		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie" )
 	endif()
 endif()
 
@@ -322,11 +336,8 @@ add_subdirectory( gdtoa )
 add_subdirectory( wadsrc )
 add_subdirectory( wadsrc_bm )
 add_subdirectory( wadsrc_lights )
+add_subdirectory( wadsrc_extra )
 add_subdirectory( src )
-
-if( NOT WIN32 AND NOT APPLE )
-	add_subdirectory( output_sdl )
-endif()
 
 if( NOT CMAKE_CROSSCOMPILING )
 	export(TARGETS ${CROSS_EXPORTS} FILE "${CMAKE_BINARY_DIR}/ImportExecutables.cmake" )

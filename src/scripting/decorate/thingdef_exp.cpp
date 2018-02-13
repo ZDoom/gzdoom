@@ -88,7 +88,8 @@ FxExpression *ParseExpression (FScanner &sc, PClassActor *cls, PNamespace *spc)
 
 	if (spc)
 	{
-		FCompileContext ctx(spc, cls, true);
+		PClassType *vmtype = nullptr == cls ? nullptr : cls->VMType;
+		FCompileContext ctx(spc, vmtype, true);
 		data = data->Resolve(ctx);
 	}
 
@@ -505,7 +506,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 		default:
 			if (cls != nullptr)
 			{
-				func = dyn_cast<PFunction>(cls->Symbols.FindSymbol(identifier, true));
+				func = dyn_cast<PFunction>(cls->FindSymbol(identifier, true));
 
 				// There is an action function ACS_NamedExecuteWithResult which must be ignored here for this to work.
 				if (func != nullptr && identifier != NAME_ACS_NamedExecuteWithResult)

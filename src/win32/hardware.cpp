@@ -35,7 +35,6 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
-#define USE_WINDOWS_DWORD
 #include "hardware.h"
 #include "win32iface.h"
 #include "i_video.h"
@@ -47,14 +46,18 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "version.h"
-#include "r_swrenderer.h"
+#include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
+EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Float, vid_winscale)
+EXTERN_CVAR (Bool, vid_forceddraw)
+EXTERN_CVAR (Bool, win_borderless)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 extern HWND Window;
 
@@ -68,7 +71,41 @@ FRenderer *gl_CreateInterface();
 
 void I_RestartRenderer();
 int currentrenderer = -1;
+int currentcanvas = -1;
+int currentgpuswitch = -1;
 bool changerenderer;
+
+// Optimus/Hybrid switcher
+CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self != currentgpuswitch)
+	{
+		switch (self)
+		{
+		case 0:
+			Printf("Selecting default GPU...\n");
+			break;
+		case 1:
+			Printf("Selecting high-performance dedicated GPU...\n");
+			break;
+		case 2:
+			Printf("Selecting power-saving integrated GPU...\n");
+			break;
+		default:
+			Printf("Unknown option (%d) - falling back to 'default'\n", *vid_gpuswitch);
+			self = 0;
+			break;
+		}
+		Printf("You must restart " GAMENAME " for this change to take effect.\n");
+	}
+}
+
+// Software OpenGL canvas
+CUSTOM_CVAR(Bool, vid_glswfb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if ((self ? 1 : 0) != currentcanvas)
+		Printf("You must restart " GAMENAME " for this change to take effect.\n");
+}
 
 // [ZDoomGL]
 CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -107,7 +144,6 @@ void I_ShutdownGraphics ()
 	{
 		DFrameBuffer *s = screen;
 		screen = NULL;
-		s->ObjectFlags |= OF_YesReallyDelete;
 		delete s;
 	}
 	if (Video)
@@ -117,6 +153,13 @@ void I_ShutdownGraphics ()
 void I_InitGraphics ()
 {
 	UCVarValue val;
+
+	// todo: implement ATI version of this. this only works for nvidia notebooks, for now.
+	currentgpuswitch = vid_gpuswitch;
+	if (currentgpuswitch == 1)
+		putenv("SHIM_MCCOMPAT=0x800000001"); // discrete
+	else if (currentgpuswitch == 2)
+		putenv("SHIM_MCCOMPAT=0x800000000"); // integrated
 
 	// If the focus window is destroyed, it doesn't go back to the active window.
 	// (e.g. because the net pane was up, and a button on it had focus)
@@ -136,9 +179,13 @@ void I_InitGraphics ()
 	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
-	//currentrenderer = vid_renderer;
-	if (currentrenderer==1) Video = gl_CreateVideo();
-	else Video = new Win32Video (0);
+	if (currentcanvas == 0) // Software Canvas: 0 = D3D or DirectDraw, 1 = OpenGL
+		if (currentrenderer == 1)
+			Video = gl_CreateVideo();
+		else
+			Video = new Win32Video(0);
+	else
+		Video = gl_CreateVideo();
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
@@ -156,6 +203,17 @@ static void I_DeleteRenderer()
 void I_CreateRenderer()
 {
 	currentrenderer = vid_renderer;
+	currentcanvas = vid_glswfb;
+	if (currentrenderer == 1)
+		Printf("Renderer: OpenGL\n");
+	else if (currentcanvas == 1)
+		Printf("Renderer: Software on OpenGL\n");
+	else if (currentcanvas == 0 && vid_forceddraw == false)
+		Printf("Renderer: Software on Direct3D\n");
+	else if (currentcanvas == 0)
+		Printf("Renderer: Software on DirectDraw\n");
+	else
+		Printf("Renderer: Unknown\n");
 	if (Renderer == NULL)
 	{
 		if (currentrenderer==1) Renderer = gl_CreateInterface();
@@ -190,7 +248,7 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 		}
 		break;
 	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, fs, old);
+	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, swtruecolor, fs, old);
 
 	//* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
@@ -326,6 +384,8 @@ void I_SaveWindowedPos ()
 			win_x = wrect.left;
 			win_y = wrect.top;
 		}
+
+		win_maximized = IsZoomed(Window) == TRUE;
 	}
 }
 
@@ -353,14 +413,49 @@ void I_RestoreWindowedPos ()
 		KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
 	}
 	MoveWindow (Window, winx, winy, winw, winh, TRUE);
+
+	if (win_borderless && !Args->CheckParm("-0"))
+	{
+		LONG lStyle = GetWindowLong(Window, GWL_STYLE);
+		lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+		SetWindowLong(Window, GWL_STYLE, lStyle);
+		SetWindowPos(Window, HWND_TOP, 0, 0, scrwidth, scrheight, 0);
+	}
+	if (win_maximized && !Args->CheckParm("-0"))
+		ShowWindow(Window, SW_MAXIMIZE);
 }
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
+CUSTOM_CVAR(Bool, swtruecolor, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
+{
+	// Strictly speaking this doesn't require a mode switch, but it is the easiest
+	// way to force a CreateFramebuffer call without a lot of refactoring.
+	if (currentrenderer == 0)
+	{
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
+		NewBits = DisplayBits;
+		setmodeneeded = true;
+	}
+}
+
+CUSTOM_CVAR(Bool, win_borderless, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// Just reinit the window. Saves a lot of trouble.
+	if (!fullscreen)
+	{
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
+		NewBits = DisplayBits;
+		setmodeneeded = true;
+	}
+}
+
 CUSTOM_CVAR (Bool, fullscreen, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
 {
-	NewWidth = screen->GetWidth();
-	NewHeight = screen->GetHeight();
+	NewWidth = screen->VideoWidth;
+	NewHeight = screen->VideoHeight;
 	NewBits = DisplayBits;
 	setmodeneeded = true;
 }
@@ -374,8 +469,8 @@ CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	else if (Video)
 	{
 		Video->SetWindowedScale (self);
-		NewWidth = screen->GetWidth();
-		NewHeight = screen->GetHeight();
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
 		NewBits = DisplayBits;
 		//setmodeneeded = true;	// This CVAR doesn't do anything and only causes problems!
 	}

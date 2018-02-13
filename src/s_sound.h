@@ -1,16 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		The not so system specific sound interface.
@@ -23,10 +30,10 @@
 
 #include "doomtype.h"
 #include "i_soundinternal.h"
-#include "dobject.h"
 
 class AActor;
 class FScanner;
+class FSerializer;
 
 //
 // SoundFX struct.
@@ -46,21 +53,21 @@ struct sfxinfo_t
 	unsigned int next, index;			// [RH] For hashing
 	float		Volume;
 
-	BYTE		PitchMask;
-	SWORD		NearLimit;				// 0 means unlimited
+	uint8_t		PitchMask;
+	int16_t		NearLimit;				// 0 means unlimited
 	float		LimitRange;				// Range for sound limiting (squared for faster computations)
 
-	WORD		bRandomHeader:1;
-	WORD		bPlayerReserve:1;
-	WORD		bLoadRAW:1;
-	WORD		bPlayerCompat:1;
-	WORD		b16bit:1;
-	WORD		bUsed:1;
-	WORD		bSingular:1;
-	WORD		bTentative:1;
-	WORD		bPlayerSilent:1;		// This player sound is intentionally silent.
+	unsigned		bRandomHeader:1;
+	unsigned		bPlayerReserve:1;
+	unsigned		bLoadRAW:1;
+	unsigned		bPlayerCompat:1;
+	unsigned		b16bit:1;
+	unsigned		bUsed:1;
+	unsigned		bSingular:1;
+	unsigned		bTentative:1;
+	unsigned		bPlayerSilent:1;		// This player sound is intentionally silent.
 
-	WORD		RawRate;				// Sample rate to use when bLoadRAW is true
+	int		RawRate;				// Sample rate to use when bLoadRAW is true
 
 	int			LoopStart;				// -1 means no specific loop defined
 
@@ -177,7 +184,7 @@ public:
 };
 
 extern FRolloffInfo S_Rolloff;
-extern BYTE *S_SoundCurve;
+extern uint8_t *S_SoundCurve;
 extern int S_SoundCurveSize;
 
 // Information about one playing sound.
@@ -191,11 +198,11 @@ struct FSoundChan : public FISoundChannel
 	FSoundID	OrgID;		// Sound ID of sound used to start this channel.
 	float		Volume;
 	int			ChanFlags;
-	SWORD		Pitch;		// Pitch variation.
-	BYTE		EntChannel;	// Actor's sound channel.
-	SBYTE		Priority;
-	SWORD		NearLimit;
-	BYTE		SourceType;
+	int16_t		Pitch;		// Pitch variation.
+	uint8_t		EntChannel;	// Actor's sound channel.
+	int8_t		Priority;
+	int16_t		NearLimit;
+	uint8_t		SourceType;
 	float		LimitRange;
 	union
 	{
@@ -205,6 +212,7 @@ struct FSoundChan : public FISoundChannel
 		float			 Point[3];	// Sound is not attached to any source.
 	};
 };
+
 extern FSoundChan *Channels;
 
 void S_ReturnChannel(FSoundChan *chan);
@@ -292,6 +300,7 @@ void S_PlaySound(AActor *a, int chan, FSoundID sid, float vol, float atten, bool
 #define ATTN_IDLE				1.001f
 #define ATTN_STATIC				3.f	// diminish very rapidly with distance
 
+struct FSoundLoadBuffer;
 int S_PickReplacement (int refid);
 void S_CacheRandomSound (sfxinfo_t *sfx);
 
@@ -377,7 +386,7 @@ int S_AddPlayerSoundExisting (const char *playerclass, const int gender, int ref
 void S_MarkPlayerSounds (const char *playerclass);
 void S_ShrinkPlayerSoundLists ();
 void S_UnloadSound (sfxinfo_t *sfx);
-sfxinfo_t *S_LoadSound(sfxinfo_t *sfx);
+sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer = nullptr);
 unsigned int S_GetMSLength(FSoundID sound);
 void S_ParseMusInfo();
 bool S_ParseTimeTag(const char *tag, bool *as_samples, unsigned int *time);
@@ -393,18 +402,6 @@ void S_SetEnvironment (const ReverbContainer *settings);
 ReverbContainer *S_FindEnvironment (const char *name);
 ReverbContainer *S_FindEnvironment (int id);
 void S_AddEnvironment (ReverbContainer *settings);
-
-enum EMidiDevice
-{
-	MDEV_DEFAULT = -1,
-	MDEV_MMAPI = 0,
-	MDEV_OPL = 1,
-	MDEV_SNDSYS = 2,
-	MDEV_TIMIDITY = 3,
-	MDEV_FLUIDSYNTH = 4,
-	MDEV_GUS = 5,
-	MDEV_WILDMIDI = 6,
-};
 
 struct MidiDeviceSetting
 {

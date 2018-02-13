@@ -39,7 +39,6 @@
 #include "gl/utility/gl_convert.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
-extern int skyfog;
 
 //==========================================================================
 //
@@ -98,7 +97,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 			x_offset[0] = GLRenderer->mSky1Pos;
 		}
 	}
-	if (skyfog > 0)
+	if (level.skyfog > 0)
 	{
 		fadecolor = FadeColor;
 		fadecolor.a = 0;
@@ -159,8 +158,8 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 	}
 	else if (allowreflect && sector->GetReflect(plane) > 0)
 	{
-		if ((plane == sector_t::ceiling && ViewPos.Z > sector->ceilingplane.fD()) ||
-			(plane == sector_t::floor && ViewPos.Z < -sector->floorplane.fD())) return;
+		if ((plane == sector_t::ceiling && r_viewpoint.Pos.Z > sector->ceilingplane.fD()) ||
+			(plane == sector_t::floor && r_viewpoint.Pos.Z < -sector->floorplane.fD())) return;
 		ptype = PORTALTYPE_PLANEMIRROR;
 		planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 	}
@@ -289,7 +288,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::ceiling);
-			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD())
+			if (backreflect > 0 && bs->ceilingplane.fD() == fs->ceilingplane.fD() && !bs->isClosed())
 			{
 				// Don't add intra-portal line to the portal.
 				return;
@@ -345,7 +344,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 			else
 			{
 				// Special hack for Vrack2b
-				if (bs->floorplane.ZatPoint(ViewPos) > ViewPos.Z) return;
+				if (bs->floorplane.ZatPoint(r_viewpoint.Pos) > r_viewpoint.Pos.Z) return;
 			}
 		}
 		zbottom[0]=zbottom[1]=-32768.0f;
@@ -368,7 +367,7 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		if (frontreflect > 0)
 		{
 			float backreflect = bs->GetReflect(sector_t::floor);
-			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD())
+			if (backreflect > 0 && bs->floorplane.fD() == fs->floorplane.fD() && !bs->isClosed())
 			{
 				// Don't add intra-portal line to the portal.
 				return;

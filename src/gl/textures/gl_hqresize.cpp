@@ -46,16 +46,7 @@
 #include "gl/xbr/xbrz.h"
 #include "gl/xbr/xbrz_old.h"
 
-#ifdef __APPLE__
-#	include <AvailabilityMacros.h>
-#	if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-#		define GZ_USE_LIBDISPATCH
-#	endif // MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-#endif // __APPLE__
-
-#ifdef GZ_USE_LIBDISPATCH
-#	include <dispatch/dispatch.h>
-#endif // GZ_USE_LIBDISPATCH
+#include "parallel_for.h"
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -87,7 +78,6 @@ CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);
 CVAR (Flag, gl_texture_hqresize_sprites, gl_texture_hqresize_targets, 2);
 CVAR (Flag, gl_texture_hqresize_fonts, gl_texture_hqresize_targets, 4);
 
-#ifdef GZ_USE_LIBDISPATCH
 CVAR(Bool, gl_texture_hqresize_multithread, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_mt_width, 16, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -101,10 +91,9 @@ CUSTOM_CVAR(Int, gl_texture_hqresize_mt_height, 4, CVAR_ARCHIVE | CVAR_GLOBALCON
 	if (self < 2)    self = 2;
 	if (self > 1024) self = 1024;
 }
-#endif // GZ_USE_LIBDISPATCH
 
 
-static void scale2x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, int inHeight )
+static void scale2x ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight )
 {
 	const int width = 2* inWidth;
 	const int height = 2 * inHeight;
@@ -117,15 +106,15 @@ static void scale2x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, in
 		{
 			const int jMinus = (j > 0) ? (j-1) : 0;
 			const int jPlus = (j < inHeight - 1 ) ? (j+1) : j;
-			const uint32 A = inputBuffer[ iMinus +inWidth*jMinus];
-			const uint32 B = inputBuffer[ iMinus +inWidth*j    ];
-			const uint32 C = inputBuffer[ iMinus +inWidth*jPlus];
-			const uint32 D = inputBuffer[ i     +inWidth*jMinus];
-			const uint32 E = inputBuffer[ i     +inWidth*j    ];
-			const uint32 F = inputBuffer[ i     +inWidth*jPlus];
-			const uint32 G = inputBuffer[ iPlus +inWidth*jMinus];
-			const uint32 H = inputBuffer[ iPlus +inWidth*j    ];
-			const uint32 I = inputBuffer[ iPlus +inWidth*jPlus];
+			const uint32_t A = inputBuffer[ iMinus +inWidth*jMinus];
+			const uint32_t B = inputBuffer[ iMinus +inWidth*j    ];
+			const uint32_t C = inputBuffer[ iMinus +inWidth*jPlus];
+			const uint32_t D = inputBuffer[ i     +inWidth*jMinus];
+			const uint32_t E = inputBuffer[ i     +inWidth*j    ];
+			const uint32_t F = inputBuffer[ i     +inWidth*jPlus];
+			const uint32_t G = inputBuffer[ iPlus +inWidth*jMinus];
+			const uint32_t H = inputBuffer[ iPlus +inWidth*j    ];
+			const uint32_t I = inputBuffer[ iPlus +inWidth*jPlus];
 			if (B != H && D != F) {
 				outputBuffer[2*i   + width*2*j    ] = D == B ? D : E;
 				outputBuffer[2*i   + width*(2*j+1)] = B == F ? F : E;
@@ -141,7 +130,7 @@ static void scale2x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, in
 	}
 }
 
-static void scale3x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, int inHeight )
+static void scale3x ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight )
 {
 	const int width = 3* inWidth;
 	const int height = 3 * inHeight;
@@ -154,15 +143,15 @@ static void scale3x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, in
 		{
 			const int jMinus = (j > 0) ? (j-1) : 0;
 			const int jPlus = (j < inHeight - 1 ) ? (j+1) : j;
-			const uint32 A = inputBuffer[ iMinus +inWidth*jMinus];
-			const uint32 B = inputBuffer[ iMinus +inWidth*j    ];
-			const uint32 C = inputBuffer[ iMinus +inWidth*jPlus];
-			const uint32 D = inputBuffer[ i     +inWidth*jMinus];
-			const uint32 E = inputBuffer[ i     +inWidth*j    ];
-			const uint32 F = inputBuffer[ i     +inWidth*jPlus];
-			const uint32 G = inputBuffer[ iPlus +inWidth*jMinus];
-			const uint32 H = inputBuffer[ iPlus +inWidth*j    ];
-			const uint32 I = inputBuffer[ iPlus +inWidth*jPlus];
+			const uint32_t A = inputBuffer[ iMinus +inWidth*jMinus];
+			const uint32_t B = inputBuffer[ iMinus +inWidth*j    ];
+			const uint32_t C = inputBuffer[ iMinus +inWidth*jPlus];
+			const uint32_t D = inputBuffer[ i     +inWidth*jMinus];
+			const uint32_t E = inputBuffer[ i     +inWidth*j    ];
+			const uint32_t F = inputBuffer[ i     +inWidth*jPlus];
+			const uint32_t G = inputBuffer[ iPlus +inWidth*jMinus];
+			const uint32_t H = inputBuffer[ iPlus +inWidth*j    ];
+			const uint32_t I = inputBuffer[ iPlus +inWidth*jPlus];
 			if (B != H && D != F) {
 				outputBuffer[3*i   + width*3*j    ] = D == B ? D : E;
 				outputBuffer[3*i   + width*(3*j+1)] = (D == B && E != C) || (B == F && E != A) ? B : E;
@@ -188,21 +177,21 @@ static void scale3x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, in
 	}
 }
 
-static void scale4x ( uint32* inputBuffer, uint32* outputBuffer, int inWidth, int inHeight )
+static void scale4x ( uint32_t* inputBuffer, uint32_t* outputBuffer, int inWidth, int inHeight )
 {
 	int width = 2* inWidth;
 	int height = 2 * inHeight;
-	uint32 * buffer2x = new uint32[width*height];
+	uint32_t * buffer2x = new uint32_t[width*height];
 
-	scale2x ( reinterpret_cast<uint32*> ( inputBuffer ), reinterpret_cast<uint32*> ( buffer2x ), inWidth, inHeight );
+	scale2x ( reinterpret_cast<uint32_t*> ( inputBuffer ), reinterpret_cast<uint32_t*> ( buffer2x ), inWidth, inHeight );
 	width *= 2;
 	height *= 2;
-	scale2x ( reinterpret_cast<uint32*> ( buffer2x ), reinterpret_cast<uint32*> ( outputBuffer ), 2*inWidth, 2*inHeight );
+	scale2x ( reinterpret_cast<uint32_t*> ( buffer2x ), reinterpret_cast<uint32_t*> ( outputBuffer ), 2*inWidth, 2*inHeight );
 	delete[] buffer2x;
 }
 
 
-static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32* , uint32* , int , int),
+static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32_t* , uint32_t* , int , int),
 							  const int N,
 							  unsigned char *inputBuffer,
 							  const int inWidth,
@@ -214,7 +203,7 @@ static unsigned char *scaleNxHelper( void (*scaleNxFunction) ( uint32* , uint32*
 	outHeight = N *inHeight;
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
 
-	scaleNxFunction ( reinterpret_cast<uint32*> ( inputBuffer ), reinterpret_cast<uint32*> ( newBuffer ), inWidth, inHeight );
+	scaleNxFunction ( reinterpret_cast<uint32_t*> ( inputBuffer ), reinterpret_cast<uint32_t*> ( newBuffer ), inWidth, inHeight );
 	delete[] inputBuffer;
 	return newBuffer;
 }
@@ -289,7 +278,6 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 
 	unsigned char * newBuffer = new unsigned char[outWidth*outHeight*4];
 	
-#ifdef GZ_USE_LIBDISPATCH
 	const int thresholdWidth  = gl_texture_hqresize_mt_width;
 	const int thresholdHeight = gl_texture_hqresize_mt_height;
 	
@@ -297,16 +285,13 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 		&& inWidth  > thresholdWidth
 		&& inHeight > thresholdHeight)
 	{
-		const dispatch_queue_t queue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0);
-		
-		dispatch_apply(inHeight / thresholdHeight + 1, queue, ^(size_t sliceY)
+		parallel_for(inHeight, thresholdHeight, [=](int sliceY)
 		{
 			xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-				inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), sliceY * thresholdHeight, (sliceY + 1) * thresholdHeight);
+				inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
 		});
 	}
 	else
-#endif // GZ_USE_LIBDISPATCH
 	{
 		xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
 			inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());

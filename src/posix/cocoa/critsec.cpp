@@ -33,9 +33,25 @@
 
 #include "critsec.h"
 
+#include <pthread.h>
+
+class FInternalCriticalSection
+{
+public:
+	FInternalCriticalSection();
+	~FInternalCriticalSection();
+
+	void Enter();
+	void Leave();
+
+private:
+	pthread_mutex_t m_mutex;
+
+};
+
 // TODO: add error handling
 
-FCriticalSection::FCriticalSection()
+FInternalCriticalSection::FInternalCriticalSection()
 {
 	pthread_mutexattr_t attributes;
 	pthread_mutexattr_init(&attributes);
@@ -46,17 +62,38 @@ FCriticalSection::FCriticalSection()
 	pthread_mutexattr_destroy(&attributes);
 }
 
-FCriticalSection::~FCriticalSection()
+FInternalCriticalSection::~FInternalCriticalSection()
 {
 	pthread_mutex_destroy(&m_mutex);
 }
 
-void FCriticalSection::Enter()
+void FInternalCriticalSection::Enter()
 {
 	pthread_mutex_lock(&m_mutex);
 }
 
-void FCriticalSection::Leave()
+void FInternalCriticalSection::Leave()
 {
 	pthread_mutex_unlock(&m_mutex);
+}
+
+
+FInternalCriticalSection *CreateCriticalSection()
+{
+	return new FInternalCriticalSection();
+}
+
+void DeleteCriticalSection(FInternalCriticalSection *c)
+{
+	delete c;
+}
+
+void EnterCriticalSection(FInternalCriticalSection *c)
+{
+	c->Enter();
+}
+
+void LeaveCriticalSection(FInternalCriticalSection *c)
+{
+	c->Leave();
 }

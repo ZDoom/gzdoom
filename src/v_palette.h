@@ -37,8 +37,8 @@
 #include "doomtype.h"
 #include "c_cvars.h"
 
-#define MAKERGB(r,g,b)		DWORD(((r)<<16)|((g)<<8)|(b))
-#define MAKEARGB(a,r,g,b)	DWORD(((a)<<24)|((r)<<16)|((g)<<8)|(b))
+#define MAKERGB(r,g,b)		uint32_t(((r)<<16)|((g)<<8)|(b))
+#define MAKEARGB(a,r,g,b)	uint32_t(((a)<<24)|((r)<<16)|((g)<<8)|(b))
 
 #define APART(c)			(((c)>>24)&0xff)
 #define RPART(c)			(((c)>>16)&0xff)
@@ -48,21 +48,21 @@
 struct FPalette
 {
 	FPalette ();
-	FPalette (const BYTE *colors);
+	FPalette (const uint8_t *colors);
 
-	void SetPalette (const BYTE *colors);
+	void SetPalette (const uint8_t *colors);
 
 	void MakeGoodRemap ();
 
 	PalEntry	BaseColors[256];	// non-gamma corrected palette
-	BYTE		Remap[256];			// remap original palette indices to in-game indices
+	uint8_t		Remap[256];			// remap original palette indices to in-game indices
 
-	BYTE		WhiteIndex;			// white in original palette index
-	BYTE		BlackIndex;			// black in original palette index
+	uint8_t		WhiteIndex;			// white in original palette index
+	uint8_t		BlackIndex;			// black in original palette index
 
 	// Given an array of colors, fills in remap with values to remap the
 	// passed array of colors to this palette.
-	void MakeRemap (const DWORD *colors, BYTE *remap, const BYTE *useful, int numcolors) const;
+	void MakeRemap (const uint32_t *colors, uint8_t *remap, const uint8_t *useful, int numcolors) const;
 };
 
 extern FPalette GPalette;
@@ -70,9 +70,10 @@ extern FPalette GPalette;
 // The color overlay to use for depleted items
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 
-int BestColor (const uint32 *pal, int r, int g, int b, int first=1, int num=255);
+int BestColor (const uint32_t *pal, int r, int g, int b, int first=1, int num=255);
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
+void ReadPalette(int lumpnum, uint8_t *buffer);
 void InitPalette ();
 
 // V_SetBlend()

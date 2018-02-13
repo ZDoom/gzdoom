@@ -34,15 +34,16 @@
 **
 */
 
-#ifdef WIN32
+#ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <intrin.h>
 
-#define USE_WINDOWS_DWORD
 #elif defined __APPLE__
 #include <sys/sysctl.h>
 #endif
+
+#include <inttypes.h>
 
 #include "i_system.h"
 #include "g_level.h"
@@ -53,7 +54,7 @@
 #include "g_levellocals.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
-
+#include "i_time.h"
 
 glcycle_t RenderWall,SetupWall,ClipWall;
 glcycle_t RenderFlat,SetupFlat;
@@ -76,7 +77,7 @@ double		gl_MillisecPerCycle = 1e-5;		// 100 MHz
 
 void gl_CalculateCPUSpeed ()
 {
-	#ifdef WIN32
+	#ifdef _WIN32
 		LARGE_INTEGER freq;
 
 		QueryPerformanceFrequency (&freq);
@@ -85,7 +86,7 @@ void gl_CalculateCPUSpeed ()
 		{
 			LARGE_INTEGER count1, count2;
 			unsigned minDiff;
-			long long ClockCalibration = 0;
+			int64_t ClockCalibration = 0;
 
 			// Count cycles for at least 55 milliseconds.
 			// The performance counter is very low resolution compared to CPU
@@ -104,7 +105,7 @@ void gl_CalculateCPUSpeed ()
 			do
 			{
 				QueryPerformanceCounter (&count2);
-			} while ((DWORD)((unsigned __int64)count2.QuadPart - (unsigned __int64)count1.QuadPart) < minDiff);
+			} while ((uint32_t)((uint64_t)count2.QuadPart - (uint64_t)count1.QuadPart) < minDiff);
 			ClockCalibration = __rdtsc() - ClockCalibration;
 			QueryPerformanceCounter (&count2);
 			SetPriorityClass (GetCurrentProcess (), NORMAL_PRIORITY_CLASS);
@@ -188,8 +189,8 @@ static void AppendLightStats(FString &out)
 ADD_STAT(rendertimes)
 {
 	static FString buff;
-	static int lasttime=0;
-	int t=I_FPSTime();
+	static int64_t lasttime=0;
+	int64_t t=I_msTime();
 	if (t-lasttime>1000) 
 	{
 		buff.Truncate(0);
@@ -218,7 +219,7 @@ void AppendMissingTextureStats(FString &out);
 
 static int printstats;
 static bool switchfps;
-static unsigned int waitstart;
+static uint64_t waitstart;
 EXTERN_CVAR(Bool, vid_fps)
 
 void CheckBench()
@@ -227,18 +228,18 @@ void CheckBench()
 	{
 		// if we started the FPS counter ourselves or ran from the console 
 		// we need to wait for it to stabilize before using it.
-		if (waitstart > 0 && I_MSTime() < waitstart + 5000) return;
+		if (waitstart > 0 && I_msTime() - waitstart < 5000) return;
 
 		FString compose;
 
 		compose.Format("Map %s: \"%s\",\nx = %1.4f, y = %1.4f, z = %1.4f, angle = %1.4f, pitch = %1.4f\n",
-			level.MapName.GetChars(), level.LevelName.GetChars(), ViewPos.X, ViewPos.Y, ViewPos.Z, ViewAngle.Degrees, ViewPitch.Degrees);
+			level.MapName.GetChars(), level.LevelName.GetChars(), r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw.Degrees, r_viewpoint.Angles.Pitch.Degrees);
 		
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);
 		AppendMissingTextureStats(compose);
-		compose.AppendFormat("%d fps\n\n", screen->GetLastFPS());
+		compose.AppendFormat("%" PRIu64 " fps\n\n", screen->GetLastFPS());
 
 		FILE *f = fopen("benchmarks.txt", "at");
 		if (f != NULL)
@@ -258,12 +259,12 @@ CCMD(bench)
 	if (vid_fps == 0) 
 	{
 		vid_fps = 1;
-		waitstart = I_MSTime();
+		waitstart = I_msTime();
 		switchfps = true;
 	}
 	else
 	{
-		if (ConsoleState == c_up) waitstart = I_MSTime();
+		if (ConsoleState == c_up) waitstart = I_msTime();
 		switchfps = false;
 	}
 	C_HideConsole ();

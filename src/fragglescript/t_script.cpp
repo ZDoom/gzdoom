@@ -31,19 +31,6 @@
 //
 //---------------------------------------------------------------------------
 //
-// FraggleScript is from SMMU which is under the GPL. Technically, 
-// therefore, combining the FraggleScript code with the non-free 
-// ZDoom code is a violation of the GPL.
-//
-// As this may be a problem for you, I hereby grant an exception to my 
-// copyright on the SMMU source (including FraggleScript). You may use 
-// any code from SMMU in (G)ZDoom, provided that:
-//
-//    * For any binary release of the port, the source code is also made 
-//      available.
-//    * The copyright notice is kept on any file containing my code.
-//
-//
 
 #include "t_script.h"
 #include "p_lnspec.h"
@@ -388,7 +375,7 @@ IMPLEMENT_POINTERS_START(DFraggleThinker)
 	IMPLEMENT_POINTER(LevelScript)
 IMPLEMENT_POINTERS_END
 
-TObjPtr<DFraggleThinker> DFraggleThinker::ActiveThinker;
+TObjPtr<DFraggleThinker*> DFraggleThinker::ActiveThinker;
 
 //==========================================================================
 //
@@ -406,8 +393,8 @@ DFraggleThinker::DFraggleThinker()
 	else
 	{
 		ActiveThinker = this;
-		RunningScripts = new DRunningScript;
-		LevelScript = new DFsScript;
+		RunningScripts = Create<DRunningScript>();
+		LevelScript = Create<DFsScript>();
 		LevelScript->parent = global_script;
 		GC::WriteBarrier(this, RunningScripts);
 		GC::WriteBarrier(this, LevelScript);
@@ -669,7 +656,7 @@ bool T_RunScript(int snum, AActor * t_trigger)
 		DFsScript *script = th->LevelScript->children[snum];
 		if(!script)	return false;
 	
-		DRunningScript *runscr = new DRunningScript(t_trigger, script, 0);
+		DRunningScript *runscr = Create<DRunningScript>(t_trigger, script, 0);
 		// hook into chain at start
 		th->AddRunningScript(runscr);
 		return true;
@@ -699,7 +686,7 @@ void T_Init()
 
 	if (global_script == NULL)
 	{
-		global_script = new DFsScript;
+		global_script = Create<DFsScript>();
 		GC::AddSoftRoot(global_script);
 		init_functions();
 	}

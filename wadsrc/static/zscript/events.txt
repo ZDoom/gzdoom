@@ -1,6 +1,5 @@
-class BaseEvent native { } // just a base class. it doesn't inherit from Object on the scripting side so you can't call Destroy() on it and break everything.
 
-class RenderEvent : BaseEvent native
+struct RenderEvent native ui version("2.4")
 {
     native readonly Vector3 ViewPos;
     native readonly double ViewAngle;
@@ -10,7 +9,7 @@ class RenderEvent : BaseEvent native
     native readonly Actor Camera;
 }
 
-class WorldEvent : BaseEvent native
+struct WorldEvent native play version("2.4")
 {
     // for loaded/unloaded
     native readonly bool IsSaveGame;
@@ -28,7 +27,7 @@ class WorldEvent : BaseEvent native
     native readonly double DamageAngle;
 }
 
-class PlayerEvent : BaseEvent native
+struct PlayerEvent native play version("2.4")
 {
     // this is the player number that caused the event.
     // note: you can get player struct from this by using players[e.PlayerNumber]
@@ -37,7 +36,7 @@ class PlayerEvent : BaseEvent native
     native readonly bool IsReturn;
 }
 
-class UiEvent : BaseEvent native
+struct UiEvent native ui version("2.4")
 {
     // d_gui.h
     enum EGUIEvent
@@ -121,7 +120,7 @@ class UiEvent : BaseEvent native
     native readonly bool IsAlt;
 }
 
-class InputEvent : BaseEvent native
+struct InputEvent native play version("2.4")
 {
     enum EGenericEvent
     {
@@ -270,25 +269,23 @@ class InputEvent : BaseEvent native
     native readonly int MouseY;
 }
 
-class ConsoleEvent : BaseEvent native
+struct ConsoleEvent native version("2.4")
 {
     // for net events, this will be the activator.
     // for UI events, this is always -1, and you need to check if level is loaded and use players[consoleplayer].
     native readonly int Player;
+    // this is the name and args as specified in SendNetworkEvent or event/netevent CCMDs
     native readonly String Name;
     native readonly int Args[3];
+    // this will be true if the event is fired from the console by event/netevent CCMD
+    native readonly bool IsManual;
 }
 
-class StaticEventHandler : Object native
+class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
     // unlike EventHandler.Create that will not create them.
-    protected static native StaticEventHandler Create(class<StaticEventHandler> type);
-    protected static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
-    protected static native StaticEventHandler Find(Class<StaticEventHandler> type); // just for convenience. who knows.
-    
-    protected static native bool Register(StaticEventHandler handler);
-    protected static native bool Unregister(StaticEventHandler handler);
+    clearscope static native StaticEventHandler Find(Class<StaticEventHandler> type); // just for convenience. who knows.
     
     // these are called when the handler gets registered or unregistered
     // you can set Order/IsUiProcessor here.
@@ -304,11 +301,11 @@ class StaticEventHandler : Object native
     virtual native void WorldThingDamaged(WorldEvent e);
     virtual native void WorldThingDestroyed(WorldEvent e);
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
-    virtual native void WorldTick(WorldEvent e);
+    virtual native void WorldTick();
 
     //
-    virtual native void RenderFrame(RenderEvent e);
-    virtual native void RenderOverlay(RenderEvent e);
+    //virtual native ui void RenderFrame(RenderEvent e);
+    virtual native ui void RenderOverlay(RenderEvent e);
     
     //
     virtual native void PlayerEntered(PlayerEvent e);
@@ -317,11 +314,13 @@ class StaticEventHandler : Object native
     virtual native void PlayerDisconnected(PlayerEvent e);
     
     //
-    virtual native bool UiProcess(UiEvent e);
-    virtual native bool InputProcess(InputEvent e);
+    virtual native ui bool UiProcess(UiEvent e);
+    virtual native ui bool InputProcess(InputEvent e);
+    virtual native ui void UiTick();
     
     //
-    virtual native void ConsoleProcess(ConsoleEvent e);
+    virtual native ui void ConsoleProcess(ConsoleEvent e);
+    virtual native void NetworkProcess(ConsoleEvent e);
     
     // this value will be queried on Register() to decide the relative order of this handler to every other.
     // this is most useful in UI systems.
@@ -334,12 +333,8 @@ class StaticEventHandler : Object native
     native bool RequireMouse;
 }
 
-class EventHandler : StaticEventHandler native
+class EventHandler : StaticEventHandler native version("2.4")
 {
-    static native StaticEventHandler Create(class<StaticEventHandler> type);
-    static native StaticEventHandler CreateOnce(class<StaticEventHandler> type);
-    static native StaticEventHandler Find(class<StaticEventHandler> type);
-
-    static native bool Register(StaticEventHandler handler);
-    static native bool Unregister(StaticEventHandler handler);
+    clearscope static native StaticEventHandler Find(class<StaticEventHandler> type);
+    clearscope static native void SendNetworkEvent(String name, int arg1 = 0, int arg2 = 0, int arg3 = 0);
 }

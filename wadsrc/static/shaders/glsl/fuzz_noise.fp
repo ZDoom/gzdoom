@@ -5,7 +5,7 @@ vec4 ProcessTexel()
 {
 	vec2 texCoord = vTexCoord.st;
 	vec4 basicColor = getTexel(texCoord);
-	ivec2 texSize = textureSize(tex, 0);
+	vec2 texSize = vec2(textureSize(tex, 0));
 
 	texCoord.x = float( int(texCoord.x * texSize.x) ) / texSize.x;
 	texCoord.y = float( int(texCoord.y * texSize.y) ) / texSize.y;

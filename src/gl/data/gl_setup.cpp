@@ -67,7 +67,7 @@ static void DoSetMapSection(subsector_t *sub, int num)
 	for (unsigned a = 0; a < MapSectionCollector.Size(); a++)
 	{
 		sub = MapSectionCollector[a];
-		for (DWORD i = 0; i < sub->numlines; i++)
+		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
 			seg_t * seg = sub->firstline + i;
 
@@ -115,7 +115,7 @@ static int MergeMapSections(int num)
 	TArray<bool> sectvalid;
 	sectmap.Resize(num);
 	sectvalid.Resize(num);
-	for(int i=0;i<num;i++) 
+	for (int i = 0; i < num; i++)
 	{
 		sectmap[i] = -1;
 		sectvalid[i] = true;
@@ -126,53 +126,51 @@ static int MergeMapSections(int num)
 	cvertex_t vt;
 
 	// first step: Set mapsection for all vertex positions.
-	for(DWORD i=0;i<(DWORD)numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t * seg = &segs[i];
-		int section = seg->Subsector->mapsection;
-		for(int j=0;j<2;j++)
+		int section = seg.Subsector->mapsection;
+		for (int j = 0; j < 2; j++)
 		{
-			vt = j==0? seg->v1:seg->v2;
+			vt = j == 0 ? seg.v1 : seg.v2;
 			vmap[vt] = section;
 		}
 	}
 
 	// second step: Check if any seg references more than one mapsection, either by subsector or by vertex
-	for(DWORD i=0;i<(DWORD)numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t * seg = &segs[i];
-		int section = seg->Subsector->mapsection;
-		for(int j=0;j<2;j++)
+		int section = seg.Subsector->mapsection;
+		for (int j = 0; j < 2; j++)
 		{
-			vt = j==0? seg->v1:seg->v2;
+			vt = j == 0 ? seg.v1 : seg.v2;
 			int vsection = vmap[vt];
 
 			if (vsection != section)
 			{
 				// These 2 sections should be merged
-				for(int k=0;k<numsubsectors;k++)
+				for (auto &sub : level.subsectors)
 				{
-					if (subsectors[k].mapsection == vsection) subsectors[k].mapsection = section;
+					if (sub.mapsection == vsection) sub.mapsection = section;
 				}
 				FSectionVertexMap::Iterator it(vmap);
 				while (it.NextPair(pair))
 				{
 					if (pair->Value == vsection) pair->Value = section;
 				}
-				sectvalid[vsection-1] = false;
+				sectvalid[vsection - 1] = false;
 			}
 		}
 	}
-	for(int i=0;i<num;i++)
+	for (int i = 0; i < num; i++)
 	{
 		if (sectvalid[i]) sectmap[i] = mergecount++;
 	}
-	for(int i=0;i<numsubsectors;i++)
+	for (auto &sub : level.subsectors)
 	{
-		subsectors[i].mapsection = sectmap[subsectors[i].mapsection-1];
-		assert(subsectors[i].mapsection!=-1);
+		sub.mapsection = sectmap[sub.mapsection - 1];
+		assert(sub.mapsection != -1);
 	}
-	return mergecount-1;
+	return mergecount - 1;
 }
 
 //==========================================================================
@@ -188,12 +186,12 @@ static void SetMapSections()
 	do
 	{
 		set = false;
-		for(int i=0; i<numsubsectors; i++)
+		for (auto &sub : level.subsectors)
 		{
-			if (subsectors[i].mapsection == 0)
+			if (sub.mapsection == 0)
 			{
 				num++;
-				DoSetMapSection(&subsectors[i], num);
+				DoSetMapSection(&sub, num);
 				set = true;
 				break;
 			}
@@ -219,7 +217,7 @@ static void SetMapSections()
 static void SpreadHackedFlag(subsector_t * sub)
 {
 	// The subsector pointer hasn't been set yet!
-	for(DWORD i=0;i<sub->numlines;i++)
+	for(uint32_t i=0;i<sub->numlines;i++)
 	{
 		seg_t * seg = sub->firstline + i;
 
@@ -246,16 +244,14 @@ static void SpreadHackedFlag(subsector_t * sub)
 
 static void PrepareSectorData()
 {
-	int 				i;
 	TArray<subsector_t *> undetermined;
-	subsector_t *		ss;
 
 	// now group the subsectors by sector
-	subsector_t ** subsectorbuffer = new subsector_t * [numsubsectors];
+	subsector_t ** subsectorbuffer = new subsector_t * [level.subsectors.Size()];
 
-	for(i=0, ss=subsectors; i<numsubsectors; i++, ss++)
+	for (auto &sub : level.subsectors)
 	{
-		ss->render_sector->subsectorcount++;
+		sub.render_sector->subsectorcount++;
 	}
 
 	for (auto &sec : level.sectors) 
@@ -265,28 +261,28 @@ static void PrepareSectorData()
 		sec.subsectorcount = 0;
 	}
 	
-	for(i=0, ss = subsectors; i<numsubsectors; i++, ss++)
+	for (auto &sub : level.subsectors)
 	{
-		ss->render_sector->subsectors[ss->render_sector->subsectorcount++]=ss;
+		sub.render_sector->subsectors[sub.render_sector->subsectorcount++] = &sub;
 	}
 
 	// marks all malformed subsectors so rendering tricks using them can be handled more easily
-	for (i = 0; i < numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		if (subsectors[i].sector == subsectors[i].render_sector)
+		if (sub.sector == sub.render_sector)
 		{
-			seg_t * seg = subsectors[i].firstline;
-			for(DWORD j=0;j<subsectors[i].numlines;j++)
+			seg_t * seg = sub.firstline;
+			for(uint32_t j=0;j<sub.numlines;j++)
 			{
-				if (!(subsectors[i].hacked&1) && seg[j].linedef==0 && 
+				if (!(sub.hacked&1) && seg[j].linedef==0 && 
 						seg[j].PartnerSeg!=NULL && 
-						subsectors[i].render_sector != seg[j].PartnerSeg->Subsector->render_sector)
+						sub.render_sector != seg[j].PartnerSeg->Subsector->render_sector)
 				{
 					DPrintf(DMSG_NOTIFY, "Found hack: (%f,%f) (%f,%f)\n", seg[j].v1->fX(), seg[j].v1->fY(), seg[j].v2->fX(), seg[j].v2->fY());
-					subsectors[i].hacked|=5;
-					SpreadHackedFlag(&subsectors[i]);
+					sub.hacked|=5;
+					SpreadHackedFlag(&sub);
 				}
-				if (seg[j].PartnerSeg==NULL) subsectors[i].hacked|=2;	// used for quick termination checks
+				if (seg[j].PartnerSeg==NULL) sub.hacked|=2;	// used for quick termination checks
 			}
 		}
 	}
@@ -424,7 +420,7 @@ static void InitVertexData()
 
 	for(unsigned i = 0; i < level.vertexes.Size(); ++i)
 	{
-		auto vert = level.vertexes[i];
+		auto &vert = level.vertexes[i];
 		int cnt = vt_sectorlists[i].Size();
 
 		vert.dirty = true;
@@ -488,31 +484,23 @@ static void PrepareSegs()
 	int *segcount = new int[numsides];
 	int realsegs = 0;
 
-	// Get floatng point coordinates of vertices
-	for(auto &v : level.vertexes)
-	{
-		v.dirty = true;
-	}
-
 	// count the segs
 	memset(segcount, 0, numsides * sizeof(int));
 
-	for(int i=0;i<numsegs;i++)
+	for(auto &seg : level.segs)
 	{
-		seg_t *seg = &segs[i];
-
-		if (seg->sidedef == NULL) continue;	// miniseg
-		int sidenum = seg->sidedef->Index();
+		if (seg.sidedef == NULL) continue;	// miniseg
+		int sidenum = seg.sidedef->Index();
 
 		realsegs++;
 		segcount[sidenum]++;
-		DVector2 sidestart, sideend, segend = seg->v2->fPos();
+		DVector2 sidestart, sideend, segend = seg.v2->fPos();
 		GetSideVertices(sidenum, &sidestart, &sideend);
 
 		sideend -=sidestart;
 		segend -= sidestart;
 
-		seg->sidefrac = float(segend.Length() / sideend.Length());
+		seg.sidefrac = float(segend.Length() / sideend.Length());
 	}
 
 	// allocate memory
@@ -527,10 +515,9 @@ static void PrepareSegs()
 	delete [] segcount;
 
 	// assign the segs
-	for(int i=0;i<numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t *seg = &segs[i];
-		if (seg->sidedef != NULL) seg->sidedef->segs[seg->sidedef->numsegs++] = seg;
+		if (seg.sidedef != NULL) seg.sidedef->segs[seg.sidedef->numsegs++] = &seg;
 	}
 
 	// sort the segs
@@ -545,7 +532,6 @@ static void PrepareSegs()
 // Initialize the level data for the GL renderer
 //
 //==========================================================================
-extern int restart;
 
 void gl_PreprocessLevel()
 {
@@ -628,22 +614,22 @@ void gl_CleanLevelData()
 		delete [] level.sectors[0].subsectors;
 		level.sectors[0].subsectors = nullptr;
 	}
-	for (int i=0;i<numsubsectors;i++)
+	for (auto &sub : level.subsectors)
 	{
 		for(int j=0;j<2;j++)
 		{
-			if (subsectors[i].portalcoverage[j].subsectors != NULL)
+			if (sub.portalcoverage[j].subsectors != NULL)
 			{
-				delete [] subsectors[i].portalcoverage[j].subsectors;
-				subsectors[i].portalcoverage[j].subsectors = NULL;
+				delete [] sub.portalcoverage[j].subsectors;
+				sub.portalcoverage[j].subsectors = NULL;
 			}
 		}
 	}
-	for(unsigned i=0;i<portals.Size(); i++)
+	for(unsigned i=0;i<glSectorPortals.Size(); i++)
 	{
-		delete portals[i];
+		delete glSectorPortals[i];
 	}
-	portals.Clear();
+	glSectorPortals.Clear();
 }
 
 
@@ -655,13 +641,13 @@ void gl_CleanLevelData()
 
 CCMD(listmapsections)
 {
-	for(int i=0;i<100;i++)
+	for (int i = 0; i < 100; i++)
 	{
-		for (int j=0;j<numsubsectors;j++)
+		for (auto &sub : level.subsectors)
 		{
-			if (subsectors[j].mapsection == i)
+			if (sub.mapsection == i)
 			{
-				Printf("Mapsection %d, sector %d, line %d\n", i, subsectors[j].render_sector->Index(), subsectors[j].firstline->linedef->Index());
+				Printf("Mapsection %d, sector %d, line %d\n", i, sub.render_sector->Index(), sub.firstline->linedef->Index());
 				break;
 			}
 		}

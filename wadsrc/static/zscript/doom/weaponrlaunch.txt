@@ -55,6 +55,7 @@ class Rocket : Actor
 		+RANDOMIZE
 		+DEHEXPLOSION
 		+ROCKETTRAIL
+		+ZDOOMTRANS
 		SeeSound "weapons/rocklf";
 		DeathSound "weapons/rocklx";
 		Obituary "$OB_MPROCKET";

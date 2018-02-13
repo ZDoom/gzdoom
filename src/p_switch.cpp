@@ -49,6 +49,9 @@
 #include "serializer.h"
 #include "p_maputl.h"
 #include "p_spec.h"
+#include "textures.h"
+#include "actor.h"
+#include "actorinlines.h"
 
 #include "gi.h"
 
@@ -65,12 +68,12 @@ public:
 	void Tick ();
 
 	side_t			*m_Side;
-	SBYTE			m_Part;
+	int8_t			m_Part;
 	bool			bFlippable;
 	bool			bReturning;
 	FSwitchDef		*m_SwitchDef;
-	SDWORD			m_Frame;
-	DWORD			m_Timer;
+	int32_t			m_Frame;
+	uint32_t			m_Timer;
 	DVector2		m_Pos;
 
 protected:
@@ -100,7 +103,7 @@ static bool P_StartButton (side_t *side, int Where, FSwitchDef *Switch, const DV
 		}
 	}
 
-	new DActiveButton (side, Where, Switch, pos, useagain);
+	Create<DActiveButton> (side, Where, Switch, pos, useagain);
 	return true;
 }
 
@@ -245,7 +248,7 @@ bool P_CheckSwitchRange(AActor *user, line_t *line, int sideno, const DVector3 *
 //
 //==========================================================================
 
-bool P_ChangeSwitchTexture (side_t *side, int useAgain, BYTE special, bool *quest)
+bool P_ChangeSwitchTexture (side_t *side, int useAgain, uint8_t special, bool *quest)
 {
 	int texture;
 	int sound;
@@ -338,7 +341,7 @@ DActiveButton::DActiveButton (side_t *side, int Where, FSwitchDef *Switch,
 							  const DVector2 &pos, bool useagain)
 {
 	m_Side = side;
-	m_Part = SBYTE(Where);
+	m_Part = int8_t(Where);
 	m_Pos = pos;
 	bFlippable = useagain;
 	bReturning = false;

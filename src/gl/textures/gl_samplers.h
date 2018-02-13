@@ -16,7 +16,7 @@ public:
 	FSamplerManager();
 	~FSamplerManager();
 
-	BYTE Bind(int texunit, int num, int lastval);
+	uint8_t Bind(int texunit, int num, int lastval);
 	void SetTextureFilterMode();
 
 

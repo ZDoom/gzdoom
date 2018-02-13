@@ -37,7 +37,6 @@
 #include <windows.h>
 #include <lmcons.h>
 #include <shlobj.h>
-#define USE_WINDOWS_DWORD
 
 #include "cmdlib.h"
 #include "m_misc.h"
@@ -156,6 +155,33 @@ bool GetKnownFolder(int shell_folder, REFKNOWNFOLDERID known_folder, bool create
 
 //===========================================================================
 //
+// M_GetAppDataPath													Windows
+//
+// Returns the path for the AppData folder.
+//
+//===========================================================================
+
+FString M_GetAppDataPath(bool create)
+{
+	FString path;
+
+	if (!GetKnownFolder(CSIDL_LOCAL_APPDATA, FOLDERID_LocalAppData, create, path))
+	{ // Failed (e.g. On Win9x): use program directory
+		path = progdir;
+	}
+	// Don't use GAME_DIR and such so that ZDoom and its child ports can
+	// share the node cache.
+	path += "/" GAMENAMELOWERCASE;
+	path.Substitute("//", "/");	// needed because progdir ends with a slash.
+	if (create)
+	{
+		CreatePath(path);
+	}
+	return path;
+}
+
+//===========================================================================
+//
 // M_GetCachePath													Windows
 //
 // Returns the path for cache GL nodes.
@@ -174,6 +200,10 @@ FString M_GetCachePath(bool create)
 	// share the node cache.
 	path += "/zdoom/cache";
 	path.Substitute("//", "/");	// needed because progdir ends with a slash.
+	if (create)
+	{
+		CreatePath(path);
+	}
 	return path;
 }
 
@@ -335,6 +365,44 @@ FString M_GetSavegamesPath()
 	else if (GetKnownFolder(-1, FOLDERID_SavedGames, true, path))
 	{
 		path << "/" GAMENAME;
+	}
+	// Try defacto My Documents/My Games folder
+	else if (GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true, path))
+	{
+		// I assume since this isn't a standard folder, it doesn't have
+		// a localized name either.
+		path << "/My Games/" GAMENAME;
+		CreatePath(path);
+	}
+	else
+	{
+		path = progdir;
+	}
+	return path;
+}
+
+//===========================================================================
+//
+// M_GetDocumentsPath												Windows
+//
+// Returns the path to the default documents directory.
+//
+//===========================================================================
+
+FString M_GetDocumentsPath()
+{
+	FString path;
+
+	// A portable INI means that this storage location should also be portable.
+	path.Format("%s" GAMENAME "_portable.ini", progdir.GetChars());
+	if (FileExists(path))
+	{
+		return progdir;
+	}
+
+	if (!UseKnownFolders())
+	{
+		return progdir;
 	}
 	// Try defacto My Documents/My Games folder
 	else if (GetKnownFolder(CSIDL_PERSONAL, FOLDERID_Documents, true, path))

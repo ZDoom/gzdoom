@@ -13,6 +13,7 @@ class Mana1 : Ammo
 		+FLOATBOB
 		Inventory.Icon "MAN1I0";
 		Inventory.PickupMessage "$TXT_MANA_1";
+		Tag "$AMMO_MANA1";
 	}
 	States
 	{
@@ -37,6 +38,7 @@ class Mana2 : Ammo
 		+FLOATBOB
 		Inventory.Icon "MAN2G0";
 		Inventory.PickupMessage "$TXT_MANA_2";
+		Tag "$AMMO_MANA2";
 	}
 	States
 	{

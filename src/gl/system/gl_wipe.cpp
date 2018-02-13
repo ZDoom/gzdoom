@@ -25,7 +25,6 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "files.h"
 #include "f_wipe.h"
 #include "m_random.h"
 #include "w_wad.h"
@@ -47,18 +46,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_2ddrawer.h"
 
-#ifndef _WIN32
-struct POINT {
-  SDWORD x; 
-  SDWORD y; 
-};
-struct RECT {
-  SDWORD left; 
-  SDWORD top; 
-  SDWORD right; 
-  SDWORD bottom; 
-}; 
-#endif
 
 //===========================================================================
 // 
@@ -99,7 +86,7 @@ public:
 
 private:
 	static const int WIDTH = 64, HEIGHT = 64;
-	BYTE BurnArray[WIDTH * (HEIGHT + 5)];
+	uint8_t BurnArray[WIDTH * (HEIGHT + 5)];
 	FHardwareTexture *BurnTexture;
 	int Density;
 	int BurnTime;
@@ -143,17 +130,26 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 	glFinish();
 	wipestartscreen->Bind(0, false, false);
 
+	const auto copyPixels = [&viewport]()
+	{
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
+	};
+
 	if (FGLRenderBuffers::IsEnabled())
 	{
 		GLRenderer->mBuffers->BindCurrentFB();
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
+		copyPixels();
+	}
+	else if (gl.legacyMode)
+	{
+		copyPixels();
 	}
 	else
 	{
 		GLint readbuffer = 0;
 		glGetIntegerv(GL_READ_BUFFER, &readbuffer);
 		glReadBuffer(GL_FRONT);
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
+		copyPixels();
 		glReadBuffer(readbuffer);
 	}
 
@@ -405,10 +401,19 @@ int OpenGLFrameBuffer::Wiper_Melt::MakeVBO(int ticks, OpenGLFrameBuffer *fb, boo
 			}
 			if (ticks == 0)
 			{
+				struct {
+					int32_t x;
+					int32_t y;
+				} dpt;
+				struct {
+					int32_t left;
+					int32_t top;
+					int32_t right;
+					int32_t bottom;
+				} rect;
+
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
-				RECT rect;
-				POINT dpt;
 
 				dpt.x = i * fb->Width / WIDTH;
 				dpt.y = MAX(0, y[i] * fb->Height / HEIGHT);
@@ -518,15 +523,15 @@ bool OpenGLFrameBuffer::Wiper_Burn::Run(int ticks, OpenGLFrameBuffer *fb)
 	BurnTexture = new FHardwareTexture(WIDTH, HEIGHT, true);
 
 	// Update the burn texture with the new burn data
-	BYTE rgb_buffer[WIDTH*HEIGHT*4];
+	uint8_t rgb_buffer[WIDTH*HEIGHT*4];
 
-	const BYTE *src = BurnArray;
-	DWORD *dest = (DWORD *)rgb_buffer;
+	const uint8_t *src = BurnArray;
+	uint32_t *dest = (uint32_t *)rgb_buffer;
 	for (int y = HEIGHT; y != 0; --y)
 	{
 		for (int x = WIDTH; x != 0; --x)
 		{
-			BYTE s = clamp<int>((*src++)*2, 0, 255);
+			uint8_t s = clamp<int>((*src++)*2, 0, 255);
 			*dest++ = MAKEARGB(s,255,255,255);
 		}
 	}

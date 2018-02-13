@@ -75,6 +75,7 @@ class BeastBall : Actor
 		-NOBLOCKMAP
 		+WINDTHRUST
 		+SPAWNSOUNDSOURCE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		SeeSound "beast/attack";
 	}
@@ -104,6 +105,7 @@ class Puffy : Actor
 		+MISSILE
 		+NOTELEPORT
 		+DONTSPLASH
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States

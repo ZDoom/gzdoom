@@ -39,7 +39,9 @@
 
 #include "tarray.h"
 #include "dobject.h"
-#include "thingdef.h"
+#include "vm.h"
+#include "types.h"
+
 // We need one specific type for each of the 7 integral VM types and instantiate the needed functions for each of them.
 // Dynamic arrays cannot hold structs because for every type there'd need to be an internal implementation which is impossible.
 
@@ -49,6 +51,7 @@ typedef TArray<uint32_t> FDynArray_I32;
 typedef TArray<float> FDynArray_F32;
 typedef TArray<double> FDynArray_F64;
 typedef TArray<void*> FDynArray_Ptr;
+typedef TArray<DObject*> FDynArray_Obj;
 typedef TArray<FString> FDynArray_String;
 
 //-----------------------------------------------------
@@ -97,7 +100,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I8, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -200,7 +203,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I16, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -303,7 +306,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_I32, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -406,7 +409,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_F32, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -509,7 +512,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_F64, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -612,7 +615,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -672,6 +675,112 @@ DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Clear)
 
 //-----------------------------------------------------
 //
+// Object array
+//
+//-----------------------------------------------------
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Copy)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_POINTER(other, FDynArray_Obj);
+	*self = *other;
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Move)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_POINTER(other, FDynArray_Obj);
+	*self = std::move(*other);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Find)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_OBJECT(val, DObject);
+	ACTION_RETURN_INT(self->Find(val));
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Push)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_OBJECT(val, DObject);
+	GC::WriteBarrier(val);
+	ACTION_RETURN_INT(self->Push(val));
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Pop)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	ACTION_RETURN_BOOL(self->Pop());
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Delete)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_INT(index);
+	PARAM_INT_DEF(count);
+	self->Delete(index, count);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Insert)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_INT(index);
+	PARAM_OBJECT(val, DObject);
+	GC::WriteBarrier(val);
+	self->Insert(index, val);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, ShrinkToFit)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	self->ShrinkToFit();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Grow)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_INT(count);
+	self->Grow(count);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Resize)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_INT(count);
+	self->Resize(count);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Reserve)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_INT(count);
+	ACTION_RETURN_INT(self->Reserve(count));
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Max)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	ACTION_RETURN_INT(self->Max());
+}
+
+DEFINE_ACTION_FUNCTION(FDynArray_Obj, Clear)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	self->Clear();
+	return 0;
+}
+
+
+//-----------------------------------------------------
+//
 // String array
 //
 //-----------------------------------------------------
@@ -716,7 +825,7 @@ DEFINE_ACTION_FUNCTION(FDynArray_String, Delete)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_String);
 	PARAM_INT(index);
-	PARAM_INT(count);
+	PARAM_INT_DEF(count);
 	self->Delete(index, count);
 	return 0;
 }
@@ -779,4 +888,5 @@ DEFINE_FIELD_NAMED_X(DynArray_I32, FArray, Count, Size)
 DEFINE_FIELD_NAMED_X(DynArray_F32, FArray, Count, Size)		
 DEFINE_FIELD_NAMED_X(DynArray_F64, FArray, Count, Size)		
 DEFINE_FIELD_NAMED_X(DynArray_Ptr, FArray, Count, Size)	
+DEFINE_FIELD_NAMED_X(DynArray_Obj, FArray, Count, Size)
 DEFINE_FIELD_NAMED_X(DynArray_String, FArray, Count, Size)

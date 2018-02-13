@@ -1,19 +1,59 @@
+/*
+** music_midi_base.cpp
+**
+**---------------------------------------------------------------------------
+** Copyright 1998-2010 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+#include "i_midi_win32.h"
+
+
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
 #include "i_music.h"
 #include "i_system.h"
+#include "gameconfigfile.h"
+#include "cmdlib.h"
+#include "m_misc.h"
+#include "s_sound.h"
 
 #include "templates.h"
 #include "v_text.h"
 #include "menu/menu.h"
 
-static DWORD	nummididevices;
+static uint32_t	nummididevices;
 static bool		nummididevicesset;
 
 #ifdef HAVE_FLUIDSYNTH
-#define NUM_DEF_DEVICES 6
-#else
 #define NUM_DEF_DEVICES 5
+#else
+#define NUM_DEF_DEVICES 4
 #endif
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
@@ -35,25 +75,35 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 	pair[p+2].Value = -2.0;
 	pair[p+3].Text = "WildMidi";
 	pair[p+3].Value = -6.0;
-	pair[p+4].Text = "Sound System";
-	pair[p+4].Value = -1.0;
 
 }
 
-static void MIDIDeviceChanged(int newdev)
+extern MusPlayingInfo mus_playing;
+
+void MIDIDeviceChanged(int newdev, bool force)
 {
 	static int oldmididev = INT_MIN;
 
 	// If a song is playing, move it to the new device.
-	if (oldmididev != newdev)
+	if (oldmididev != newdev || force)
 	{
 		if (currSong != NULL && currSong->IsMIDI())
 		{
 			MusInfo *song = currSong;
 			if (song->m_Status == MusInfo::STATE_Playing)
 			{
-				song->Stop();
-				song->Start(song->m_Looping);
+				if (song->GetDeviceType() == MDEV_FLUIDSYNTH && force)
+				{
+					// FluidSynth must reload the song to change the patch set.
+					auto mi = mus_playing;
+					S_StopMusic(true);
+					S_ChangeMusic(mi.name, mi.baseorder, mi.loop);
+				}
+				else
+				{
+					song->Stop();
+					song->Start(song->m_Looping);
+				}
 			}
 		}
 		else
@@ -61,13 +111,20 @@ static void MIDIDeviceChanged(int newdev)
 			S_MIDIDeviceChanged();
 		}
 	}
-	oldmididev = newdev;
+	// 'force' 
+	if (!force) oldmididev = newdev;
 }
 
-#ifdef _WIN32
-UINT mididevice;
+#ifdef HAVE_FLUIDSYNTH 
+#define DEF_MIDIDEV -5
+#else
+#define DEF_MIDIDEV -3
+#endif
 
-CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+#ifdef _WIN32
+unsigned mididevice;
+
+CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (!nummididevicesset)
 		return;
@@ -78,10 +135,11 @@ CUSTOM_CVAR (Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		if (self != 0)
 		{
 			Printf("ID out of range. Using default device.\n");
-			self = 0;
+			self = DEF_MIDIDEV;
 		}
 		return;
 	}
+	else if (self == -1) self = DEF_MIDIDEV;
 	mididevice = MAX<UINT>(0, self);
 	MIDIDeviceChanged(self);
 }
@@ -93,28 +151,11 @@ void I_InitMusicWin32 ()
 	snd_mididevice.Callback ();
 }
 
-void I_ShutdownMusicWin32 ()
-{
-	// Ancient bug a saw on NT 4.0 and an old version of FMOD 3: If waveout
-	// is used for sound and a MIDI is also played, then when I quit, the OS
-	// tells me a free block was modified after being freed. This is
-	// apparently a synchronization issue between two threads, because if I
-	// put this Sleep here after stopping the music but before shutting down
-	// the entire sound system, the error does not happen. Observed with a
-	// Vortex 2 (may Aureal rest in peace) and an Audigy (damn you, Creative!).
-	// I no longer have a system with NT4 drivers, so I don't know if this
-	// workaround is still needed or not.
-	if (OSPlatform == os_WinNT4)
-	{
-		Sleep(50);
-	}
-}
-
 void I_BuildMIDIMenuList (FOptionValues *opt)
 {
 	AddDefaultMidiDevices(opt);
 
-	for (DWORD id = 0; id < nummididevices; ++id)
+	for (uint32_t id = 0; id < nummididevices; ++id)
 	{
 		MIDIOUTCAPS caps;
 		MMRESULT res;
@@ -130,7 +171,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 	}
 }
 
-static void PrintMidiDevice (int id, const char *name, WORD tech, DWORD support)
+static void PrintMidiDevice (int id, const char *name, uint16_t tech, uint32_t support)
 {
 	if (id == snd_mididevice)
 	{
@@ -139,13 +180,13 @@ static void PrintMidiDevice (int id, const char *name, WORD tech, DWORD support)
 	Printf ("% 2d. %s : ", id, name);
 	switch (tech)
 	{
-	case MOD_MIDIPORT:		Printf ("MIDIPORT");		break;
-	case MOD_SYNTH:			Printf ("SYNTH");			break;
-	case MOD_SQSYNTH:		Printf ("SQSYNTH");			break;
-	case MOD_FMSYNTH:		Printf ("FMSYNTH");			break;
-	case MOD_MAPPER:		Printf ("MAPPER");			break;
-	case MOD_WAVETABLE:		Printf ("WAVETABLE");		break;
-	case MOD_SWSYNTH:		Printf ("SWSYNTH");			break;
+	case MIDIDEV_MIDIPORT:		Printf ("MIDIPORT");		break;
+	case MIDIDEV_SYNTH:			Printf ("SYNTH");			break;
+	case MIDIDEV_SQSYNTH:		Printf ("SQSYNTH");			break;
+	case MIDIDEV_FMSYNTH:		Printf ("FMSYNTH");			break;
+	case MIDIDEV_MAPPER:		Printf ("MAPPER");			break;
+	case MIDIDEV_WAVETABLE:		Printf ("WAVETABLE");		break;
+	case MIDIDEV_SWSYNTH:		Printf ("SWSYNTH");			break;
 	}
 	if (support & MIDICAPS_CACHE)
 	{
@@ -172,14 +213,13 @@ CCMD (snd_listmididevices)
 	MIDIOUTCAPS caps;
 	MMRESULT res;
 
-	PrintMidiDevice (-6, "WildMidi", MOD_SWSYNTH, 0);
+	PrintMidiDevice (-6, "WildMidi", MIDIDEV_SWSYNTH, 0);
 #ifdef HAVE_FLUIDSYNTH
-	PrintMidiDevice (-5, "FluidSynth", MOD_SWSYNTH, 0);
+	PrintMidiDevice (-5, "FluidSynth", MIDIDEV_SWSYNTH, 0);
 #endif
-	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MOD_SWSYNTH, 0);
-	PrintMidiDevice (-3, "Emulated OPL FM Synth", MOD_FMSYNTH, 0);
-	PrintMidiDevice (-2, "TiMidity++", MOD_SWSYNTH, 0);
-	PrintMidiDevice (-1, "Sound System", 0, 0);
+	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MIDIDEV_SWSYNTH, 0);
+	PrintMidiDevice (-3, "Emulated OPL FM Synth", MIDIDEV_FMSYNTH, 0);
+	PrintMidiDevice (-2, "TiMidity++", MIDIDEV_SWSYNTH, 0);
 	if (nummididevices != 0)
 	{
 		for (id = 0; id < nummididevices; ++id)
@@ -201,12 +241,12 @@ CCMD (snd_listmididevices)
 
 // Everything but Windows uses this code.
 
-CUSTOM_CVAR(Int, snd_mididevice, -1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (self < -6)
 		self = -6;
-	else if (self > -1)
-		self = -1;
+	else if (self > -2)
+		self = -2;
 	else
 		MIDIDeviceChanged(self);
 }
@@ -225,6 +265,5 @@ CCMD (snd_listmididevices)
 	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-1. Sound System\n", -1 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 }
 #endif

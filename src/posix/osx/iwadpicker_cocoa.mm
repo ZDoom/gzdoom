@@ -50,10 +50,6 @@
 #include <wordexp.h>
 #include <unistd.h>
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-// Missing type definition for 10.4 and earlier
-typedef unsigned int NSUInteger;
-#endif // prior to 10.5
 
 CVAR(String, osx_additional_parameters, "", CVAR_ARCHIVE | CVAR_NOSET | CVAR_GLOBALCONFIG);
 
@@ -68,10 +64,7 @@ enum
 static const char* const tableHeaders[NUM_COLUMNS] = { "IWAD", "Game" };
 
 // Class to convert the IWAD data into a form that Cocoa can use.
-@interface IWADTableData : NSObject
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-	<NSTableViewDataSource>
-#endif
+@interface IWADTableData : NSObject<NSTableViewDataSource>
 {
 	NSMutableArray *data;
 }
@@ -388,18 +381,14 @@ static NSString* GetArchitectureString()
 	return @"i386";
 #elif defined __x86_64__
 	return @"x86_64";
-#elif defined __ppc__
-	return @"ppc";
-#elif defined __ppc64__
-	return @"ppc64";
 #endif
 }
 
-static void RestartWithParameters(const char* iwadPath, NSString* parameters)
+static void RestartWithParameters(const WadStuff& wad, NSString* parameters)
 {
 	assert(nil != parameters);
 
-	defaultiwad = ExtractFileBase(iwadPath);
+	defaultiwad = wad.Name;
 
 	GameConfig->DoGameSetup("Doom");
 	M_SaveDefaults(NULL);
@@ -425,9 +414,8 @@ static void RestartWithParameters(const char* iwadPath, NSString* parameters)
 			executablePath = @"/usr/bin/arch";
 		}
 
-		[arguments addObject:@"-wad_picker_restart"];
 		[arguments addObject:@"-iwad"];
-		[arguments addObject:[NSString stringWithUTF8String:iwadPath]];
+		[arguments addObject:[NSString stringWithUTF8String:wad.Path]];
 
 		for (int i = 1, count = Args->NumArgs(); i < count; ++i)
 		{
@@ -477,7 +465,7 @@ int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad
 	{
 		if (0 != [parametersToAppend length])
 		{
-			RestartWithParameters(wads[ret].Path, parametersToAppend);
+			RestartWithParameters(wads[ret], parametersToAppend);
 		}
 	}
 

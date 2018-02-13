@@ -206,12 +206,3 @@ bool gl_GetWallGlow(sector_t *sector, float *topglowcolor, float *bottomglowcolo
 	return ret;
 }
 
-#include "c_dispatch.h"
-#include "d_player.h"
-
-CCMD(setglow)
-{
-	auto s = players[0].mo->Sector;
-	s->planes[sector_t::floor].GlowHeight = 128;
-	s->planes[sector_t::floor].GlowColor = 0xff0000;
-}

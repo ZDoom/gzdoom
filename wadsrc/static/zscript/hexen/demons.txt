@@ -205,6 +205,7 @@ class Demon1FX1 : Actor
 		DamageType "Fire";
 		Projectile;
 		+SPAWNSOUNDSOURCE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		SeeSound "DemonMissileFire";
 		DeathSound "DemonMissileExplode";
@@ -392,6 +393,7 @@ class Demon2FX1 : Actor
 		DamageType "Fire";
 		Projectile;
 		+SPAWNSOUNDSOURCE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		SeeSound "DemonMissileFire";
 		DeathSound "DemonMissileExplode";

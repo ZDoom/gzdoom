@@ -74,6 +74,7 @@
 #include "info.h"
 #include "v_text.h"
 #include "backend/vmbuilder.h"
+#include "types.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -129,8 +130,8 @@ static TArray<PClassActor *> InfoNames;
 struct BitName
 {
 	char Name[20];
-	BYTE Bit;
-	BYTE WhichFlags;
+	uint8_t Bit;
+	uint8_t WhichFlags;
 };
 
 static TArray<BitName> BitNames;
@@ -139,7 +140,7 @@ static TArray<BitName> BitNames;
 struct StyleName
 {
 	char Name[20];
-	BYTE Num;
+	uint8_t Num;
 };
 
 static TArray<StyleName> StyleNames;
@@ -160,7 +161,7 @@ struct CodePointerAlias
 {
 	FName name;
 	char alias[20];
-	BYTE params;
+	uint8_t params;
 };
 static TArray<CodePointerAlias> MBFCodePointers;
 
@@ -212,6 +213,7 @@ DehInfo deh =
 	40,		// BFG cells per shot
 };
 
+DEFINE_GLOBAL(deh)
 DEFINE_FIELD_X(DehInfo, DehInfo, MaxSoulsphere)
 DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionStyle)
 DEFINE_FIELD_X(DehInfo, DehInfo, ExplosionAlpha)
@@ -391,7 +393,7 @@ static bool HandleKey (const struct Key *keys, void *structure, const char *key,
 		keys++;
 
 	if (keys->name) {
-		*((int *)(((BYTE *)structure) + keys->offset)) = value;
+		*((int *)(((uint8_t *)structure) + keys->offset)) = value;
 		return false;
 	}
 
@@ -401,11 +403,11 @@ static bool HandleKey (const struct Key *keys, void *structure, const char *key,
 static int FindSprite (const char *sprname)
 {
 	int i;
-	DWORD nameint = *((DWORD *)sprname);
+	uint32_t nameint = *((uint32_t *)sprname);
 
 	for (i = 0; i < NumUnchangedSprites; ++i)
 	{
-		if (*((DWORD *)&UnchangedSpriteNames[i*4]) == nameint)
+		if (*((uint32_t *)&UnchangedSpriteNames[i*4]) == nameint)
 		{
 			return i;
 		}
@@ -670,7 +672,7 @@ static int CreateSpawnFunc(VMFunctionBuilder &buildit, int value1, int value2)
 		I_Error("No class found for dehackednum %d!\n", value1+1);
 		return 0;
 	}
-	int typereg = buildit.GetConstantAddress(InfoNames[value1-1], ATAG_OBJECT);
+	int typereg = buildit.GetConstantAddress(InfoNames[value1-1]);
 	int heightreg = buildit.GetConstantFloat(value2);
 
 	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, typereg);	// itemtype
@@ -723,7 +725,7 @@ static int CreatePlaySoundFunc(VMFunctionBuilder &buildit, int value1, int value
 // misc1 = state, misc2 = probability
 static int CreateRandomJumpFunc(VMFunctionBuilder &buildit, int value1, int value2)
 { // A_Jump
-	int statereg = buildit.GetConstantAddress(FindState(value1), ATAG_STATE);
+	int statereg = buildit.GetConstantAddress(FindState(value1));
 
 	buildit.EmitParamInt(value2);									// maxchance
 	buildit.Emit(OP_PARAM, 0, REGT_POINTER | REGT_KONST, statereg);	// jumpto
@@ -790,7 +792,7 @@ void SetDehParams(FState *state, int codepointer)
 	
 	// Let's identify the codepointer we're dealing with.
 	PFunction *sym;
-	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(FName(MBFCodePointers[codepointer].name), true));
+	sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(FName(MBFCodePointers[codepointer].name), true));
 	if (sym == NULL) return;
 
 	if (codepointer < 0 || (unsigned)codepointer >= countof(MBFCodePointerFactories))
@@ -812,7 +814,7 @@ void SetDehParams(FState *state, int codepointer)
 		}
 		// Emit code for action parameters.
 		int argcount = MBFCodePointerFactories[codepointer](buildit, value1, value2);
-		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation, ATAG_OBJECT), numargs + argcount, 0);
+		buildit.Emit(OP_TAIL_K, buildit.GetConstantAddress(sym->Variants[0].Implementation), numargs + argcount, 0);
 		// Attach it to the state.
 		VMScriptFunction *sfunc = new VMScriptFunction;
 		buildit.MakeFunction(sfunc);
@@ -842,7 +844,7 @@ static int PatchThing (int thingy)
 
 	int result;
 	AActor *info;
-	BYTE dummy[sizeof(AActor)];
+	uint8_t dummy[sizeof(AActor)];
 	bool hadHeight = false;
 	bool hadTranslucency = false;
 	bool hadStyle = false;
@@ -850,7 +852,7 @@ static int PatchThing (int thingy)
 	bool patchedStates = false;
 	ActorFlags oldflags;
 	PClassActor *type;
-	SWORD *ednum, dummyed;
+	int16_t *ednum, dummyed;
 
 	type = NULL;
 	info = (AActor *)&dummy;
@@ -875,7 +877,7 @@ static int PatchThing (int thingy)
 			else
 			{
 				info = GetDefaultByType (type);
-				ednum = &type->DoomEdNum;
+				ednum = &type->ActorInfo()->DoomEdNum;
 			}
 		}
 	}
@@ -898,7 +900,7 @@ static int PatchThing (int thingy)
 		}
 		else if (linelen == 11 && stricmp (Line1, "Pain chance") == 0)
 		{
-			info->PainChance = (SWORD)val;
+			info->PainChance = (int16_t)val;
 		}
 		else if (linelen == 12 && stricmp (Line1, "Translucency") == 0)
 		{
@@ -1049,7 +1051,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "Bits") == 0)
 			{
-				DWORD value[4] = { 0, 0, 0 };
+				uint32_t value[4] = { 0, 0, 0 };
 				bool vchanged[4] = { false, false, false };
 				// ZDoom used to block the upper range of bits to force use of mnemonics for extra flags.
 				// MBF also defined extra flags in the same range, but without forcing mnemonics. For MBF
@@ -1244,7 +1246,7 @@ static int PatchThing (int thingy)
 			}
 			else if (stricmp (Line1, "ID #") == 0)
 			{
-				*ednum = (SWORD)val;
+				*ednum = (int16_t)val;
 			}
 		}
 		else Printf (unknown_str, Line1, "Thing", thingy);
@@ -1605,7 +1607,7 @@ static int PatchWeapon (int weapNum)
 {
 	int result;
 	PClassActor *type = NULL;
-	BYTE dummy[sizeof(AWeapon)];
+	uint8_t dummy[sizeof(AWeapon)];
 	AWeapon *info = (AWeapon *)&dummy;
 	bool patchedStates = false;
 	FStateDefinitions statedef;
@@ -1917,7 +1919,7 @@ static int PatchMisc (int dummy)
 					else if (a > 0)
 					{
 						GetDefaultByName (types[i])->ColorVar(NAME_BlendColor) = PalEntry(
-							BYTE(clamp(a,0.f,1.f)*255.f),
+							uint8_t(clamp(a,0.f,1.f)*255.f),
 							clamp(r,0,255),
 							clamp(g,0,255),
 							clamp(b,0,255));
@@ -1942,13 +1944,13 @@ static int PatchMisc (int dummy)
 	if (armor!=NULL)
 	{
 		armor->IntVar(NAME_SaveAmount) = 100 * deh.GreenAC;
-		armor->FloatVar(NAME_SavePercent) = deh.GreenAC == 1 ? 0.33335 : 0.5;
+		armor->FloatVar(NAME_SavePercent) = deh.GreenAC == 1 ? 33.335 : 50;
 	}
 	armor = GetDefaultByName ("BlueArmor");
 	if (armor!=NULL)
 	{
 		armor->IntVar(NAME_SaveAmount) = 100 * deh.BlueAC;
-		armor->FloatVar(NAME_SavePercent) = deh.BlueAC == 1 ? 0.33335 : 0.5;
+		armor->FloatVar(NAME_SavePercent) = deh.BlueAC == 1 ? 33.335 : 50;
 	}
 
 	auto barmor = GetDefaultByName ("ArmorBonus");
@@ -1983,7 +1985,7 @@ static int PatchMisc (int dummy)
 		player->health = deh.StartHealth;
 
 		// Hm... I'm not sure that this is the right way to change this info...
-		FDropItem *di = PClass::FindActor(NAME_DoomPlayer)->DropItems;
+		FDropItem *di = PClass::FindActor(NAME_DoomPlayer)->ActorInfo()->DropItems;
 		while (di != NULL)
 		{
 			if (di->Name == NAME_Clip)
@@ -2025,7 +2027,20 @@ static int PatchPars (int dummy)
 		if (stricmp ("par", Line1))
 			return result;
 
-		space = strchr (Line2, ' ');
+		const auto FindSpace = [](char* str) -> char*
+		{
+			while ('\0' != *str)
+			{
+				if (isspace((unsigned char)*str))
+				{
+					return str;
+				}
+				++str;
+			}
+			return nullptr;
+		};
+
+		space = FindSpace (Line2);
 
 		if (!space) {
 			Printf ("Need data after par.\n");
@@ -2037,7 +2052,7 @@ static int PatchPars (int dummy)
 		while (*space && isspace(*space))
 			space++;
 
-		moredata = strchr (space, ' ');
+		moredata = FindSpace (space);
 
 		if (moredata) {
 			// At least 3 items on this line, must be E?M? format
@@ -2104,14 +2119,14 @@ static int PatchCodePtrs (int dummy)
 
 				// This skips the action table and goes directly to the internal symbol table
 				// DEH compatible functions are easy to recognize.
-				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(symname, true));
+				PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(symname, true));
 				if (sym == NULL)
 				{
 					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
 				else
 				{
-					TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+					TArray<uint32_t> &args = sym->Variants[0].ArgFlags;
 					unsigned numargs = sym->GetImplicitArgs();
 					if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 					{
@@ -2408,16 +2423,29 @@ static bool isDehFile(int lumpnum)
 		&& (0 == stricmp(extension, ".deh") || 0 == stricmp(extension, ".bex"));
 }
 
-int D_LoadDehLumps()
+int D_LoadDehLumps(DehLumpSource source)
 {
 	int lastlump = 0, lumpnum, count = 0;
 
 	while ((lumpnum = Wads.FindLump("DEHACKED", &lastlump)) >= 0)
 	{
+		const int filenum = Wads.GetLumpFile(lumpnum);
+		
+		if (FromIWAD == source && filenum > Wads.GetIwadNum())
+		{
+			// No more DEHACKED lumps in IWAD
+			break;
+		}
+		else if (FromPWADs == source && filenum <= Wads.GetIwadNum())
+		{
+			// Skip DEHACKED lumps from IWAD
+			continue;
+		}
+
 		count += D_LoadDehLump(lumpnum);
 	}
 
-	if (0 == PatchSize && dehload > 0)
+	if (FromPWADs == source && 0 == PatchSize && dehload > 0)
 	{
 		// No DEH/BEX patch is loaded yet, try to find lump(s) with specific extensions
 
@@ -2460,17 +2488,16 @@ bool D_LoadDehLump(int lumpnum)
 
 bool D_LoadDehFile(const char *patchfile)
 {
-	FILE *deh;
+	FileReader fr;
 
-	deh = fopen(patchfile, "rb");
-	if (deh != NULL)
+	if (fr.Open(patchfile))
 	{
-		PatchSize = Q_filelength(deh);
+		PatchSize = fr.GetLength();
 
 		PatchName = copystring(patchfile);
 		PatchFile = new char[PatchSize + 1];
-		fread(PatchFile, 1, PatchSize, deh);
-		fclose(deh);
+		fr.Read(PatchFile, PatchSize);
+		fr.Close();
 		PatchFile[PatchSize] = '\0';		// terminate with a '\0' character
 		return DoDehPatch();
 	}
@@ -2592,9 +2619,9 @@ static bool DoDehPatch()
 	return true;
 }
 
-static inline bool CompareLabel (const char *want, const BYTE *have)
+static inline bool CompareLabel (const char *want, const uint8_t *have)
 {
-	return *(DWORD *)want == *(DWORD *)have;
+	return *(uint32_t *)want == *(uint32_t *)have;
 }
 
 static int DehUseCount;
@@ -2717,14 +2744,14 @@ static bool LoadDehSupp ()
 						// or AActor so this will find all of them.
 						FString name = "A_";
 						name << sc.String;
-						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(name, true));
+						PFunction *sym = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(name, true));
 						if (sym == NULL)
 						{
 							sc.ScriptError("Unknown code pointer '%s'", sc.String);
 						}
 						else
 						{
-							TArray<DWORD> &args = sym->Variants[0].ArgFlags;
+							TArray<uint32_t> &args = sym->Variants[0].ArgFlags;
 							unsigned numargs = sym->GetImplicitArgs();
 							if ((sym->Variants[0].Flags & VARF_Virtual || (args.Size() > numargs && !(args[numargs] & VARF_Optional))))
 							{
@@ -2800,7 +2827,7 @@ static bool LoadDehSupp ()
 					{
 						sc.ScriptError ("Can't find type %s", sc.String);
 					}
-					else if (!type->IsKindOf(RUNTIME_CLASS(PClassActor)))
+					else if (!type->IsDescendantOf(RUNTIME_CLASS(AActor)))
 					{
 						sc.ScriptError ("%s is not an actor", sc.String);
 					}
@@ -2816,7 +2843,7 @@ static bool LoadDehSupp ()
 
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
-					if (s.State == NULL || s.State + sc.Number > actortype->OwnedStates + actortype->NumOwnedStates)
+					if (s.State == NULL || sc.Number < 1 || !actortype->OwnsState(s.State + sc.Number - 1))
 					{
 						sc.ScriptError("Invalid state range in '%s'", type->TypeName.GetChars());
 					}
@@ -3007,7 +3034,8 @@ void FinishDehPatch ()
 			subclass = static_cast<PClassActor *>(dehtype->CreateDerivedClass(typeNameBuilder, dehtype->Size));
 		} 
 		while (subclass == nullptr);
-		
+		NewClassType(subclass);	// This needs a VM type to work as intended.
+
 		AActor *defaults2 = GetDefaultByType (subclass);
 		memcpy ((void *)defaults2, (void *)defaults1, sizeof(AActor));
 
@@ -3018,21 +3046,21 @@ void FinishDehPatch ()
 		if (!type->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 		{
 			// If this is a hacked non-inventory item we must also copy AInventory's special states
-			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->StateList);
+			statedef.AddStateDefines(RUNTIME_CLASS(AInventory)->GetStateLabels());
 		}
 		statedef.InstallStates(subclass, defaults2);
 
 		// Use the DECORATE replacement feature to redirect all spawns
 		// of the original class to the new one.
-		PClassActor *old_replacement = type->Replacement;
+		PClassActor *old_replacement = type->ActorInfo()->Replacement;
 
-		type->Replacement = subclass;
-		subclass->Replacee = type;
+		type->ActorInfo()->Replacement = subclass;
+		subclass->ActorInfo()->Replacee = type;
 		// If this actor was already replaced by another actor, copy that
 		// replacement over to this item.
 		if (old_replacement != NULL)
 		{
-			subclass->Replacement = old_replacement;
+			subclass->ActorInfo()->Replacement = old_replacement;
 		}
 
 		DPrintf (DMSG_NOTIFY, "%s replaces %s\n", subclass->TypeName.GetChars(), type->TypeName.GetChars());
@@ -3089,7 +3117,7 @@ void FinishDehPatch ()
 				{
 					if (AmmoPerAttacks[j].ptr == nullptr)
 					{
-						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->Symbols.FindSymbol(AmmoPerAttacks[j].func, true));
+						auto p = dyn_cast<PFunction>(RUNTIME_CLASS(AWeapon)->FindSymbol(AmmoPerAttacks[j].func, true));
 						if (p != nullptr) AmmoPerAttacks[j].ptr = p->Variants[0].Implementation;
 					}
 					if (state->ActionFunc == AmmoPerAttacks[j].ptr)
@@ -3125,7 +3153,7 @@ DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 		int lex = memcmp (DehSpriteMappings[mid].Sprite, sprites[self->sprite].name, 4);
 		if (lex == 0)
 		{
-			ACTION_RETURN_OBJECT(PClass::FindActor(DehSpriteMappings[mid].ClassName));
+			ACTION_RETURN_POINTER(PClass::FindActor(DehSpriteMappings[mid].ClassName));
 		}
 		else if (lex < 0)
 		{
@@ -3136,6 +3164,6 @@ DEFINE_ACTION_FUNCTION(ADehackedPickup, DetermineType)
 			max = mid - 1;
 		}
 	}
-	ACTION_RETURN_OBJECT(nullptr);
+	ACTION_RETURN_POINTER(nullptr);
 }
 

@@ -173,7 +173,7 @@ void DBaseDecal::GetXY (side_t *wall, double &ox, double &oy) const
 	oy = v1->fY() + LeftDistance * dy;
 }
 
-void DBaseDecal::SetShade (DWORD rgb)
+void DBaseDecal::SetShade (uint32_t rgb)
 {
 	PalEntry *entry = (PalEntry *)&rgb;
 	AlphaColor = rgb | (ColorMatcher.Pick (entry->r, entry->g, entry->b) << 24);
@@ -522,7 +522,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 
 DBaseDecal *DBaseDecal::CloneSelf (const FDecalTemplate *tpl, double ix, double iy, double iz, side_t *wall, F3DFloor * ffloor) const
 {
-	DBaseDecal *decal = new DBaseDecal(iz);
+	DBaseDecal *decal = Create<DBaseDecal>(iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
@@ -615,7 +615,7 @@ DImpactDecal *DImpactDecal::StaticCreate (const FDecalTemplate *tpl, const DVect
 			StaticCreate (tpl_low, pos, wall, ffloor, lowercolor);
 		}
 		DImpactDecal::CheckMax();
-		decal = new DImpactDecal (pos.Z);
+		decal = Create<DImpactDecal>(pos.Z);
 		if (decal == NULL)
 		{
 			return NULL;
@@ -651,7 +651,7 @@ DBaseDecal *DImpactDecal::CloneSelf (const FDecalTemplate *tpl, double ix, doubl
 	}
 
 	DImpactDecal::CheckMax();
-	DImpactDecal *decal = new DImpactDecal(iz);
+	DImpactDecal *decal = Create<DImpactDecal>(iz);
 	if (decal != NULL)
 	{
 		if (decal->StickToWall (wall, ix, iy, ffloor).isValid())
@@ -704,6 +704,24 @@ CCMD (spray)
 	Net_WriteString (argv[1]);
 }
 
+void SprayDecal(AActor *shooter, const char *name, double distance)
+{
+	FTraceResults trace;
+
+	DAngle ang = shooter->Angles.Yaw;
+	DAngle pitch = shooter->Angles.Pitch;
+	double c = pitch.Cos();
+	DVector3 vec(c * ang.Cos(), c * ang.Sin(), -pitch.Sin());
+
+	if (Trace(shooter->PosPlusZ(shooter->Height / 2), shooter->Sector, vec, distance, 0, ML_BLOCKEVERYTHING, shooter, trace, TRACE_NoSky))
+	{
+		if (trace.HitType == TRACE_HitWall)
+		{
+			DImpactDecal::StaticCreate(name, trace.HitPos, trace.Line->sidedef[trace.Side], NULL);
+		}
+	}
+}
+
 DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent)
 {
 	if (tpl == NULL || (tpl = tpl->GetDecal()) == NULL)
@@ -721,7 +739,7 @@ DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *
 	{
 		if (permanent)
 		{
-			decal = new DBaseDecal(trace.HitPos.Z);
+			decal = Create<DBaseDecal>(trace.HitPos.Z);
 			wall = trace.Line->sidedef[trace.Side];
 			decal->StickToWall(wall, trace.HitPos.X, trace.HitPos.Y, trace.ffloor);
 			tpl->ApplyToDecal(decal, wall);
@@ -751,14 +769,23 @@ IMPLEMENT_CLASS(ADecal, false, false)
 
 void ADecal::BeginPlay ()
 {
-	const FDecalTemplate *tpl;
+	const FDecalTemplate *tpl = nullptr;
 
 	Super::BeginPlay ();
 
-	int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+	if (args[0] < 0)
+	{
+		FName name = ENamedName(-args[0]);
+		tpl = DecalLibrary.GetDecalByName(name.GetChars());
+	}
+	else
+	{
+		int decalid = args[0] + (args[1] << 8); // [KS] High byte for decals.
+		tpl = DecalLibrary.GetDecalByNum(decalid);
+	}
 
 	// If no decal is specified, don't try to create one.
-	if (decalid != 0 && (tpl = DecalLibrary.GetDecalByNum (decalid)) != 0)
+	if (tpl != nullptr)
 	{
 		if (!tpl->PicNum.Exists())
 		{

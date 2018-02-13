@@ -1,20 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1998-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Boom secnodes
@@ -26,6 +29,7 @@
 #include "p_maputl.h"
 #include "p_blockmap.h"
 #include "memarena.h"
+#include "actor.h"
 
 //=============================================================================
 // phares 3/21/98
@@ -387,11 +391,11 @@ void AActor::UpdateRenderSectorList()
 		ClearRenderLineList();
 		if (PortalBlockmap.containsLines && Pos().XY() != OldRenderPos.XY())
 		{
-			int bx = GetBlockX(X());
-			int by = GetBlockY(Y());
+			int bx = level.blockmap.GetBlockX(X());
+			int by = level.blockmap.GetBlockY(Y());
 			FBoundingBox bb(X(), Y(), MIN(radius*1.5, 128.));	// Don't go further than 128 map units, even for large actors
 			// Are there any portals near the actor's position?
-			if (bx >= 0 && by >= 0 && bx < bmapwidth && by < bmapheight && PortalBlockmap(bx, by).neighborContainsLines)
+			if (level.blockmap.isValidBlock(bx, by) && PortalBlockmap(bx, by).neighborContainsLines)
 			{
 				// Go through the entire list. In most cases this is faster than setting up a blockmap iterator
 				for (auto &p : linePortals)

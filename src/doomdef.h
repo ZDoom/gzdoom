@@ -1,18 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //	Internally used data structures for virtually everything,
@@ -52,19 +57,24 @@ typedef enum
 #endif
 #endif
 
-// The maximum number of players, multiplayer/networking.
-#define MAXPLAYERS		8
+// Global constants that were defines.
+enum
+{
+	// The maximum number of players, multiplayer/networking.
+	MAXPLAYERS = 8,
 
-// State updates, number of tics / second.
-#define TICRATE 		35
+	// State updates, number of tics / second.
+	TICRATE = 35,
 
-// Amount of damage done by a telefrag.
-#define TELEFRAG_DAMAGE	1000000
+	// Amount of damage done by a telefrag.
+	TELEFRAG_DAMAGE = 1000000
+};
+
 
 // The current state of the game: whether we are
 // playing, gazing at the intermission screen,
 // the game final animation, or a demo. 
-typedef enum
+enum gamestate_t : int
 {
 	GS_LEVEL,
 	GS_INTERMISSION,
@@ -79,7 +89,7 @@ typedef enum
 	GS_FORCEWIPEFADE = -2,
 	GS_FORCEWIPEBURN = -3,
 	GS_FORCEWIPEMELT = -4
-} gamestate_t;
+};
 
 extern	gamestate_t 	gamestate;
 
@@ -109,6 +119,7 @@ enum ESkillLevels
 // DOOM keyboard definition. Everything below 0x100 matches
 // a mode 1 keyboard scan code.
 //
+
 #define KEY_PAUSE				0xc5	// DIK_PAUSE
 #define KEY_RIGHTARROW			0xcd	// DIK_RIGHT
 #define KEY_LEFTARROW			0xcb	// DIK_LEFT
@@ -359,6 +370,7 @@ enum
 	BCOMPATF_LINKFROZENPROPS	= 1 << 6,	// Clearing PROP_TOTALLYFROZEN or PROP_FROZEN also clears the other
 	BCOMPATF_FLOATBOB			= 1 << 8,	// Use Hexen's original method of preventing floatbobbing items from falling down
 	BCOMPATF_NOSLOPEID			= 1 << 9,	// disable line IDs on slopes.
+	BCOMPATF_CLIPMIDTEX		= 1 << 10,	// Always Clip midtex's in the software renderer (required to run certain GZDoom maps)
 };
 
 // phares 3/20/98:
@@ -377,9 +389,9 @@ enum
 #define BLINKTHRESHOLD (4*32)
 
 #ifndef __BIG_ENDIAN__
-#define MAKE_ID(a,b,c,d)	((DWORD)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
+#define MAKE_ID(a,b,c,d)	((uint32_t)((a)|((b)<<8)|((c)<<16)|((d)<<24)))
 #else
-#define MAKE_ID(a,b,c,d)	((DWORD)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
+#define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
 #endif
 
 #endif	// __DOOMDEF_H__

@@ -5,53 +5,53 @@
 // FZipCentralInfo
 struct FZipEndOfCentralDirectory
 {
-	DWORD	Magic;
-	WORD	DiskNumber;
-	WORD	FirstDisk;
-	WORD	NumEntries;
-	WORD	NumEntriesOnAllDisks;
-	DWORD	DirectorySize;
-	DWORD	DirectoryOffset;
-	WORD	ZipCommentLength;
+	uint32_t	Magic;
+	uint16_t	DiskNumber;
+	uint16_t	FirstDisk;
+	uint16_t	NumEntries;
+	uint16_t	NumEntriesOnAllDisks;
+	uint32_t	DirectorySize;
+	uint32_t	DirectoryOffset;
+	uint16_t	ZipCommentLength;
 } FORCE_PACKED;
 
 // FZipFileInfo
 struct FZipCentralDirectoryInfo
 {
-	DWORD	Magic;
-	BYTE	VersionMadeBy[2];
-	BYTE	VersionToExtract[2];
-	WORD	Flags;
-	WORD	Method;
-	WORD	ModTime;
-	WORD	ModDate;
-	DWORD	CRC32;
-	DWORD	CompressedSize;
-	DWORD	UncompressedSize;
-	WORD	NameLength;
-	WORD	ExtraLength;
-	WORD	CommentLength;
-	WORD	StartingDiskNumber;
-	WORD	InternalAttributes;
-	DWORD	ExternalAttributes;
-	DWORD	LocalHeaderOffset;
+	uint32_t	Magic;
+	uint8_t	VersionMadeBy[2];
+	uint8_t	VersionToExtract[2];
+	uint16_t	Flags;
+	uint16_t	Method;
+	uint16_t	ModTime;
+	uint16_t	ModDate;
+	uint32_t	CRC32;
+	uint32_t	CompressedSize;
+	uint32_t	UncompressedSize;
+	uint16_t	NameLength;
+	uint16_t	ExtraLength;
+	uint16_t	CommentLength;
+	uint16_t	StartingDiskNumber;
+	uint16_t	InternalAttributes;
+	uint32_t	ExternalAttributes;
+	uint32_t	LocalHeaderOffset;
 	// file name and other variable length info follows
 } FORCE_PACKED;
 
 // FZipLocalHeader
 struct FZipLocalFileHeader
 {
-	DWORD	Magic;
-	BYTE	VersionToExtract[2];
-	WORD	Flags;
-	WORD	Method;
-	WORD	ModTime;
-	WORD	ModDate;
-	DWORD	CRC32;
-	DWORD	CompressedSize;
-	DWORD	UncompressedSize;
-	WORD	NameLength;
-	WORD	ExtraLength;
+	uint32_t	Magic;
+	uint8_t	VersionToExtract[2];
+	uint16_t	Flags;
+	uint16_t	Method;
+	uint16_t	ModTime;
+	uint16_t	ModDate;
+	uint32_t	CRC32;
+	uint32_t	CompressedSize;
+	uint32_t	UncompressedSize;
+	uint16_t	NameLength;
+	uint16_t	ExtraLength;
 	// file name and other variable length info follows
 } FORCE_PACKED;
 

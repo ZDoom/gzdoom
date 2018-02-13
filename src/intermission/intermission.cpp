@@ -68,6 +68,7 @@ IMPLEMENT_POINTERS_END
 
 extern int		NoWipe;
 
+CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //==========================================================================
 //
 //
@@ -123,12 +124,13 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	if (desc->mPalette.IsNotEmpty() && (lumpnum = Wads.CheckNumForFullName(desc->mPalette, true)) > 0)
 	{
 		PalEntry *palette;
-		const BYTE *orgpal;
+		uint8_t palbuffer[768];
+		const uint8_t *orgpal;
 		FMemLump lump;
 		int i;
 
-		lump = Wads.ReadLump (lumpnum);
-		orgpal = (BYTE *)lump.GetMem();
+		ReadPalette(lumpnum, palbuffer);
+		orgpal = (uint8_t *)palbuffer;
 		palette = screen->GetPalette ();
 		for (i = 256; i > 0; i--, orgpal += 3)
 		{
@@ -593,7 +595,7 @@ void DIntermissionScreenCast::Drawer ()
 		if (!(mDefaults->flags4 & MF4_NOSKIN) &&
 			mDefaults->SpawnState != NULL && caststate->sprite == mDefaults->SpawnState->sprite &&
 			mClass->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)) &&
-			skins != NULL)
+			Skins.Size() > 0)
 		{
 			// Only use the skin sprite if this class has not been removed from the
 			// PlayerClasses list.
@@ -601,7 +603,7 @@ void DIntermissionScreenCast::Drawer ()
 			{
 				if (PlayerClasses[i].Type == mClass)
 				{
-					FPlayerSkin *skin = &skins[players[consoleplayer].userinfo.GetSkin()];
+					FPlayerSkin *skin = &Skins[players[consoleplayer].userinfo.GetSkin()];
 					castsprite = skin->sprite;
 
 					if (!(mDefaults->flags4 & MF4_NOSKIN))
@@ -647,7 +649,7 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 int DIntermissionScreenScroller::Responder (event_t *ev)
 {
 	int res = Super::Responder(ev);
-	if (res == -1)
+	if (res == -1 && !nointerscrollabort)
 	{
 		mBackground = mSecondPic;
 		mTicker = mScrollDelay + mScrollTime;
@@ -720,7 +722,7 @@ void DIntermissionScreenScroller::Drawer ()
 
 DIntermissionController *DIntermissionController::CurrentIntermission;
 
-DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, BYTE state)
+DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, bool DeleteDesc, uint8_t state)
 {
 	mDesc = Desc;
 	mDeleteDesc = DeleteDesc;
@@ -730,10 +732,6 @@ DIntermissionController::DIntermissionController(FIntermissionDescriptor *Desc, 
 	mScreen = NULL;
 	mFirst = true;
 	mGameState = state;
-
-	// If the intermission finishes straight away then cancel the wipe.
-	if(!NextPage())
-		wipegamestate = GS_FINALE;
 }
 
 bool DIntermissionController::NextPage ()
@@ -882,7 +880,7 @@ void DIntermissionController::OnDestroy ()
 //
 //==========================================================================
 
-void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE state)
+void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, uint8_t state)
 {
 	if (DIntermissionController::CurrentIntermission != NULL)
 	{
@@ -895,7 +893,14 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE stat
 	if (state == FSTATE_InLevel) wipegamestate = GS_FINALE;	// don't wipe when within a level.
 	viewactive = false;
 	automapactive = false;
-	DIntermissionController::CurrentIntermission = new DIntermissionController(desc, deleteme, state);
+	DIntermissionController::CurrentIntermission = Create<DIntermissionController>(desc, deleteme, state);
+
+	// If the intermission finishes straight away then cancel the wipe.
+	if (!DIntermissionController::CurrentIntermission->NextPage())
+	{
+		wipegamestate = GS_FINALE;
+	}
+
 	GC::WriteBarrier(DIntermissionController::CurrentIntermission);
 }
 
@@ -906,7 +911,7 @@ void F_StartIntermission(FIntermissionDescriptor *desc, bool deleteme, BYTE stat
 //
 //==========================================================================
 
-void F_StartIntermission(FName seq, BYTE state)
+void F_StartIntermission(FName seq, uint8_t state)
 {
 	FIntermissionDescriptor **pdesc = IntermissionDescriptors.CheckKey(seq);
 	if (pdesc != NULL)

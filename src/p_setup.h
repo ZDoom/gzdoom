@@ -1,18 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //	 Setup a game, startup stuff.
@@ -82,7 +87,7 @@ struct MapData
 		}
 	}
 
-	DWORD Size(unsigned int lumpindex)
+	uint32_t Size(unsigned int lumpindex)
 	{
 		if (lumpindex<countof(MapLumps) && MapLumps[lumpindex].Reader)
 		{
@@ -91,7 +96,7 @@ struct MapData
 		return 0;
 	}
 
-	void GetChecksum(BYTE cksum[16]);
+	void GetChecksum(uint8_t cksum[16]);
 };
 
 MapData * P_OpenMapData(const char * mapname, bool justcheck);
@@ -137,13 +142,13 @@ struct sidei_t	// [RH] Only keep BOOM sidedef init stuff around for init
 		{
 			short tag, special;
 			short alpha;
-			DWORD map;
+			uint32_t map;
 		} a;
 
 		// Used when grouping sidedefs into loops.
 		struct
 		{
-			DWORD first, next;
+			uint32_t first, next;
 			char lineside;
 		} b;
 	};

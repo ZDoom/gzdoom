@@ -52,6 +52,7 @@ void V_OutputResized (int width, int height);
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
 
 class FTexture;
+struct FColormap;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.
@@ -59,15 +60,15 @@ class FTexture;
 // Think of TagItems as an array of the following structure:
 //
 // struct TagItem {
-//     DWORD ti_Tag;
-//     DWORD ti_Data;
+//     uint32_t ti_Tag;
+//     uint32_t ti_Data;
 // };
 
 #define TAG_DONE	(0)  /* Used to indicate the end of the Tag list */
 #define TAG_END		(0)  /* Ditto									*/
 						 /* list pointed to in ti_Data 				*/
 
-#define TAG_USER	((DWORD)(1u<<30))
+#define TAG_USER	((uint32_t)(1u<<30))
 
 enum
 {
@@ -104,7 +105,7 @@ enum
 	DTA_HUDRulesC,		// only used internally for marking HUD_HorizCenter
 	DTA_KeepRatio,		// doesn't adjust screen size for DTA_Virtual* if the aspect ratio is not 4:3
 	DTA_RenderStyle,	// same as render style for actors
-	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
+	DTA_ColorOverlay,	// uint32_t: ARGB to overlay on top of image; limited to black for software
 	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
 	DTA_SpecialColormap,// pointer to FSpecialColormapParameters (likely to be forever hardware-only)
 	DTA_ColormapStyle,	// pointer to FColormapStyle (hardware-only)
@@ -124,6 +125,9 @@ enum
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
+
+	// New additions. 
+	DTA_Color,
 };
 
 enum
@@ -136,7 +140,7 @@ enum
 class FFont;
 struct FRemapTable;
 class player_t;
-typedef uint32 angle_t;
+typedef uint32_t angle_t;
 
 struct DrawParms
 {
@@ -157,12 +161,13 @@ struct DrawParms
 	double top;
 	double left;
 	float Alpha;
-	uint32 fillcolor;
+	uint32_t fillcolor;
 	FRemapTable *remap;
-	uint32 colorOverlay;
+	uint32_t colorOverlay;
+	PalEntry color;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
-	float shadowAlpha;
+	//float shadowAlpha;
 	int shadowColor;
 	INTBOOL keepratio;
 	INTBOOL masked;
@@ -193,18 +198,18 @@ struct VMVa_List
 //
 // [RH] Made screens more implementation-independant:
 //
-class DCanvas : public DObject
+class DCanvas
 {
-	DECLARE_ABSTRACT_CLASS (DCanvas, DObject)
 public:
-	DCanvas (int width, int height);
+	DCanvas (int width, int height, bool bgra);
 	virtual ~DCanvas ();
 
 	// Member variable access
-	inline BYTE *GetBuffer () const { return Buffer; }
+	inline uint8_t *GetBuffer () const { return Buffer; }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
+	inline bool IsBgra() const { return Bgra; }
 
 	virtual bool IsValid ();
 
@@ -214,16 +219,17 @@ public:
 	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
 	// Draw a linear block of pixels into the canvas
-	virtual void DrawBlock (int x, int y, int width, int height, const BYTE *src) const;
+	virtual void DrawBlock (int x, int y, int width, int height, const uint8_t *src) const;
 
 	// Reads a linear block of pixels into the view buffer.
-	virtual void GetBlock (int x, int y, int width, int height, BYTE *dest) const;
+	virtual void GetBlock (int x, int y, int width, int height, uint8_t *dest) const;
 
 	// Dim the entire canvas for the menus
 	virtual void Dim (PalEntry color = 0);
 
 	// Dim part of the canvas
-	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h);
+	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h) final;
+	virtual void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h);
 
 	// Fill an area with a texture
 	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
@@ -231,25 +237,26 @@ public:
 	// Fill a simple polygon with a texture
 	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley, DAngle rotation,
-		struct FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
+		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
 	// Set an area to a specified color
-	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32 color);
+	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color) final;
+	virtual void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
 
 	// Draws a line
-	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32 realcolor);
+	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
 
 	// Draws a single pixel
-	virtual void DrawPixel(int x, int y, int palcolor, uint32 rgbcolor);
+	virtual void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
 
 	// Calculate gamma table
-	void CalcGamma (float gamma, BYTE gammalookup[256]);
+	void CalcGamma (float gamma, uint8_t gammalookup[256]);
 
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
-	virtual void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
+	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma);
 
 	// Releases the screenshot buffer.
 	virtual void ReleaseScreenshotBuffer();
@@ -257,6 +264,10 @@ public:
 	// Text drawing functions -----------------------------------------------
 
 	// 2D Texture drawing
+	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
+	void SetClipRect(int x, int y, int w, int h);
+	void GetClipRect(int *x, int *y, int *w, int *h);
+
 	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
 	void DrawTexture (FTexture *img, double x, double y, int tags, ...);
 	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
@@ -264,7 +275,6 @@ public:
 	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
 
 	// Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
-	void VirtualToRealCoordsFixed(fixed_t &x, fixed_t &y, fixed_t &w, fixed_t &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
 
 #ifdef DrawText
@@ -277,20 +287,22 @@ public:
 	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 
 protected:
-	BYTE *Buffer;
+	uint8_t *Buffer;
 	int Width;
 	int Height;
 	int Pitch;
 	int LockCount;
+	bool Bgra;
+	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
-	bool ClipBox (int &left, int &top, int &width, int &height, const BYTE *&src, const int srcpitch) const;
-	void DrawTextureV(FTexture *img, double x, double y, uint32 tag, va_list tags) = delete;
+	bool ClipBox (int &left, int &top, int &width, int &height, const uint8_t *&src, const int srcpitch) const;
+	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
 
 	template<class T>
-	bool ParseDrawTextureTags(FTexture *img, double x, double y, DWORD tag, T& tags, DrawParms *parms, bool fortext) const;
+	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 
 	DCanvas() {}
 
@@ -298,17 +310,15 @@ private:
 	// Keep track of canvases, for automatic destruction at exit
 	DCanvas *Next;
 	static DCanvas *CanvasChain;
-
-	void PUTTRANSDOT (int xx, int yy, int basecolor, int level);
 };
 
 // A canvas in system memory.
 
 class DSimpleCanvas : public DCanvas
 {
-	DECLARE_CLASS (DSimpleCanvas, DCanvas)
+	typedef DCanvas Super;
 public:
-	DSimpleCanvas (int width, int height);
+	DSimpleCanvas (int width, int height, bool bgra);
 	~DSimpleCanvas ();
 
 	bool IsValid ();
@@ -318,7 +328,7 @@ public:
 protected:
 	void Resize(int width, int height);
 
-	BYTE *MemBuffer;
+	uint8_t *MemBuffer;
 
 	DSimpleCanvas() {}
 };
@@ -346,9 +356,9 @@ public:
 
 class DFrameBuffer : public DSimpleCanvas
 {
-	DECLARE_ABSTRACT_CLASS (DFrameBuffer, DSimpleCanvas)
+	typedef DSimpleCanvas Super;
 public:
-	DFrameBuffer (int width, int height);
+	DFrameBuffer (int width, int height, bool bgra);
 
 	// Force the surface to use buffered output if true is passed.
 	virtual bool Lock (bool buffered) = 0;
@@ -402,6 +412,10 @@ public:
 	// avoid copying the software buffer to the screen.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
 	virtual bool Begin2D(bool copy3d);
+	void End2D() { isIn2D = false; }
+
+	// Returns true if Begin2D has been called and 2D drawing is now active
+	bool HasBegun2D() { return isIn2D; }
 
 	// DrawTexture calls after Begin2D use native textures.
 
@@ -426,9 +440,9 @@ public:
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 
-	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y) {}
+	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y) {}
 
-	uint32 GetLastFPS() const { return LastCount; }
+	uint64_t GetLastFPS() const { return LastCount; }
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
@@ -439,15 +453,18 @@ public:
 	// The original size of the framebuffer as selected in the video menu.
 	int VideoWidth = 0;
 	int VideoHeight = 0;
+	uint64_t FrameTime = 0;
 
 protected:
 	void DrawRateStuff ();
-	void CopyFromBuff (BYTE *src, int srcPitch, int width, int height, BYTE *dest);
+	void CopyFromBuff (uint8_t *src, int srcPitch, int width, int height, uint8_t *dest);
+	void CopyWithGammaBgra(void *output, int pitch, const uint8_t *gammared, const uint8_t *gammagreen, const uint8_t *gammablue, PalEntry flash, int flash_amount);
 
 	DFrameBuffer () {}
 
 private:
-	uint32 LastMS, LastSec, FrameCount, LastCount, LastTic;
+	uint64_t LastMS, LastSec, FrameCount, LastCount, LastTic;
+	bool isIn2D = false;
 };
 
 
@@ -467,39 +484,39 @@ EXTERN_CVAR (Float, Gamma)
 // Use a union so we can "overflow" without warnings.
 // Otherwise, we get stuff like this from Clang (when compiled
 // with -fsanitize=bounds) while running:
-//   src/v_video.cpp:390:12: runtime error: index 1068 out of bounds for type 'BYTE [32]'
-//   src/r_draw.cpp:273:11: runtime error: index 1057 out of bounds for type 'BYTE [32]'
+//   src/v_video.cpp:390:12: runtime error: index 1068 out of bounds for type 'uint8_t [32]'
+//   src/r_draw.cpp:273:11: runtime error: index 1057 out of bounds for type 'uint8_t [32]'
 union ColorTable32k
 {
-	BYTE RGB[32][32][32];
-	BYTE All[32 *32 *32];
+	uint8_t RGB[32][32][32];
+	uint8_t All[32 *32 *32];
 };
-extern "C" ColorTable32k RGB32k;
+extern ColorTable32k RGB32k;
 
 // [SP] RGB666 support
 union ColorTable256k
 {
-	BYTE RGB[64][64][64];
-	BYTE All[64 *64 *64];
+	uint8_t RGB[64][64][64];
+	uint8_t All[64 *64 *64];
 };
-extern "C" ColorTable256k RGB256k;
+extern ColorTable256k RGB256k;
 
 // Col2RGB8 is a pre-multiplied palette for color lookup. It is stored in a
 // special R10B10G10 format for efficient blending computation.
 //		--RRRRRrrr--BBBBBbbb--GGGGGggg--   at level 64
 //		--------rrrr------bbbb------gggg   at level 1
-extern "C" DWORD Col2RGB8[65][256];
+extern uint32_t Col2RGB8[65][256];
 
 // Col2RGB8_LessPrecision is the same as Col2RGB8, but the LSB for red
 // and blue are forced to zero, so if the blend overflows, it won't spill
 // over into the next component's value.
 //		--RRRRRrrr-#BBBBBbbb-#GGGGGggg--  at level 64
 //      --------rrr#------bbb#------gggg  at level 1
-extern "C" DWORD *Col2RGB8_LessPrecision[65];
+extern uint32_t *Col2RGB8_LessPrecision[65];
 
 // Col2RGB8_Inverse is the same as Col2RGB8_LessPrecision, except the source
 // palette has been inverted.
-extern "C" DWORD Col2RGB8_Inverse[65][256];
+extern uint32_t Col2RGB8_Inverse[65][256];
 
 // "Magic" numbers used during the blending:
 //		--000001111100000111110000011111	= 0x01f07c1f
@@ -517,19 +534,18 @@ void V_Init2 ();
 
 void V_Shutdown ();
 
-void V_MarkRect (int x, int y, int width, int height);
-
 class FScanner;
+struct FScriptPosition;
 // Returns the closest color to the one desired. String
 // should be of the form "rr gg bb".
-int V_GetColorFromString (const DWORD *palette, const char *colorstring, FScriptPosition *sc = nullptr);
+int V_GetColorFromString (const uint32_t *palette, const char *colorstring, FScriptPosition *sc = nullptr);
 // Scans through the X11R6RGB lump for a matching color
 // and returns a color string suitable for V_GetColorFromString.
 FString V_GetColorStringByName (const char *name, FScriptPosition *sc = nullptr);
 
 // Tries to get color by name, then by string
-int V_GetColor (const DWORD *palette, const char *str, FScriptPosition *sc = nullptr);
-int V_GetColor(const DWORD *palette, FScanner &sc);
+int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc = nullptr);
+int V_GetColor(const uint32_t *palette, FScanner &sc);
 void V_DrawFrame (int left, int top, int width, int height);
 
 // If the view size is not full screen, draws a border around it.
@@ -550,7 +566,23 @@ int AspectBaseHeight(float aspect);
 double AspectPspriteOffset(float aspect);
 int AspectMultiplier(float aspect);
 bool AspectTallerThanWide(float aspect);
+void ScaleWithAspect(int &w, int &h, int Width, int Height);
+
+int GetUIScale(int altval);
 
 EXTERN_CVAR(Int, uiscale);
+EXTERN_CVAR(Int, con_scaletext);
+EXTERN_CVAR(Int, con_scale);
+
+inline int active_con_scaletext()
+{
+	return GetUIScale(con_scaletext);
+}
+
+inline int active_con_scale()
+{
+	return GetUIScale(con_scale);
+}
+
 
 #endif // __V_VIDEO_H__

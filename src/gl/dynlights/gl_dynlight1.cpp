@@ -31,6 +31,8 @@
 #include "vectors.h"
 #include "gl/gl_functions.h"
 #include "g_level.h"
+#include "actorinlines.h"
+#include "a_dynlight.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
@@ -49,16 +51,12 @@
 //
 //==========================================================================
 
-CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self) gl_RecreateAllAttachedLights();
-	else gl_DeleteAllAttachedLights();
-}
-
-CVAR (Bool, gl_attachedlights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+
+CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 
 //==========================================================================
 //
@@ -67,13 +65,11 @@ CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 //==========================================================================
 bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata)
 {
-	int i = 0;
-
 	DVector3 pos = light->PosRelative(group);
-	
-	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
 	float radius = (light->GetRadius());
-	
+
+	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
+
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
 	if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
@@ -81,6 +77,21 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		return false;
 	}
 
+	gl_AddLightToList(group, light, ldata);
+	return true;
+}
+
+//==========================================================================
+//
+// Add one dynamic light to the light data list
+//
+//==========================================================================
+void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
+{
+	int i = 0;
+
+	DVector3 pos = light->PosRelative(group);
+	float radius = light->GetRadius();
 
 	float cs;
 	if (light->IsAdditive()) 
@@ -99,16 +110,44 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 
 	if (light->IsSubtractive())
 	{
-		Vector v;
+		DVector3 v(r, g, b);
+		float length = (float)v.Length();
 		
-		v.Set(r, g, b);
-		r = v.Length() - r;
-		g = v.Length() - g;
-		b = v.Length() - b;
+		r = length - r;
+		g = length - g;
+		b = length - b;
 		i = 1;
 	}
 
-	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(8)];
+	// Store attenuate flag in the sign bit of the float.
+	float shadowIndex = GLRenderer->mShadowMap.ShadowMapIndex(light) + 1.0f;
+	bool attenuate;
+
+	if (gl_attenuate == -1) attenuate = !!(light->lightflags & LF_ATTENUATE);
+	else attenuate = !!gl_attenuate;
+
+	if (attenuate) shadowIndex = -shadowIndex;
+
+	float lightType = 0.0f;
+	float spotInnerAngle = 0.0f;
+	float spotOuterAngle = 0.0f;
+	float spotDirX = 0.0f;
+	float spotDirY = 0.0f;
+	float spotDirZ = 0.0f;
+	if (light->IsSpot())
+	{
+		lightType = 1.0f;
+		spotInnerAngle = light->SpotInnerAngle.Cos();
+		spotOuterAngle = light->SpotOuterAngle.Cos();
+
+		DAngle negPitch = -light->Angles.Pitch;
+		double xzLen = negPitch.Cos();
+		spotDirX = -light->Angles.Yaw.Cos() * xzLen;
+		spotDirY = -negPitch.Sin();
+		spotDirZ = -light->Angles.Yaw.Sin() * xzLen;
+	}
+
+	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(16)];
 	data[0] = pos.X;
 	data[1] = pos.Z;
 	data[2] = pos.Y;
@@ -116,7 +155,14 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 	data[4] = r;
 	data[5] = g;
 	data[6] = b;
-	data[7] = !!(light->flags4 & MF4_ATTENUATE);
-	return true;
+	data[7] = shadowIndex;
+	data[8] = spotDirX;
+	data[9] = spotDirY;
+	data[10] = spotDirZ;
+	data[11] = lightType;
+	data[12] = spotInnerAngle;
+	data[13] = spotOuterAngle;
+	data[14] = 0.0f; // unused
+	data[15] = 0.0f; // unused
 }
 

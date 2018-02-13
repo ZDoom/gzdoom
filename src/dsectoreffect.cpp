@@ -1,20 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Base class for effects on sectors.
@@ -31,6 +34,7 @@
 #include "statnums.h"
 #include "serializer.h"
 #include "doomstat.h"
+#include "vm.h"
 
 IMPLEMENT_CLASS(DSectorEffect, false, false)
 
@@ -72,15 +76,14 @@ void DSectorEffect::Serialize(FSerializer &arc)
 	arc("sector", m_Sector);
 }
 
-IMPLEMENT_CLASS(DMover, false, true)
+DEFINE_FIELD(DSectorEffect, m_Sector)
+
+
+IMPLEMENT_CLASS(DMover, true, true)
 
 IMPLEMENT_POINTERS_START(DMover)
 	IMPLEMENT_POINTER(interpolation)
 IMPLEMENT_POINTERS_END
-
-DMover::DMover ()
-{
-}
 
 DMover::DMover (sector_t *sector)
 	: DSectorEffect (sector)
@@ -109,11 +112,8 @@ void DMover::StopInterpolation(bool force)
 	}
 }
 
-IMPLEMENT_CLASS(DMovingFloor, false, false)
+IMPLEMENT_CLASS(DMovingFloor, true, false)
 
-DMovingFloor::DMovingFloor ()
-{
-}
 
 DMovingFloor::DMovingFloor (sector_t *sector)
 	: DMover (sector)
@@ -122,11 +122,8 @@ DMovingFloor::DMovingFloor (sector_t *sector)
 	interpolation = sector->SetInterpolation(sector_t::FloorMove, true);
 }
 
-IMPLEMENT_CLASS(DMovingCeiling, false, false)
+IMPLEMENT_CLASS(DMovingCeiling, true, false)
 
-DMovingCeiling::DMovingCeiling ()
-{
-}
 
 DMovingCeiling::DMovingCeiling (sector_t *sector, bool interpolate)
 	: DMover (sector)

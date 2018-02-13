@@ -12,19 +12,15 @@ class FHardwareTexture;
 class FSimpleVertexBuffer;
 class FGLDebug;
 
-extern long gl_frameMS;
-extern long gl_frameCount;
 #ifdef _WIN32
 class OpenGLFrameBuffer : public Win32GLFrameBuffer
 {
 	typedef Win32GLFrameBuffer Super;
-	DECLARE_CLASS(OpenGLFrameBuffer, Win32GLFrameBuffer)
 #else
 #include "sdlglvideo.h"
 class OpenGLFrameBuffer : public SDLGLFB
 {
-//	typedef SDLGLFB Super;	//[C]commented, DECLARE_CLASS defines this in linux
-	DECLARE_CLASS(OpenGLFrameBuffer, SDLGLFB)
+	typedef SDLGLFB Super;	//[C]commented, DECLARE_CLASS defines this in linux
 #endif
 
 
@@ -55,23 +51,23 @@ public:
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
-	virtual void GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type);
+	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) override;
 
 	// Releases the screenshot buffer.
 	virtual void ReleaseScreenshotBuffer();
 
 	// 2D drawing
 	void DrawTextureParms(FTexture *img, DrawParms &parms);
-	void DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32 color);
-	void DrawPixel(int x1, int y1, int palcolor, uint32 color);
-	void Clear(int left, int top, int right, int bottom, int palcolor, uint32 color);
+	void DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color);
+	void DrawPixel(int x1, int y1, int palcolor, uint32_t color);
+	void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
 	void Dim(PalEntry color=0);
-	void Dim (PalEntry color, float damount, int x1, int y1, int w, int h);
+	void DoDim (PalEntry color, float damount, int x1, int y1, int w, int h);
 	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
 
 	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
+		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
 
 	FNativePalette *CreatePalette(FRemapTable *remap);
 
@@ -83,18 +79,16 @@ public:
 	bool Is8BitMode() { return false; }
 	bool IsHWGammaActive() const { return HWGammaActive; }
 
+	void SetVSync(bool vsync);
+
+	void ScaleCoordsFromWindow(int16_t &x, int16_t &y) override;
+
+	bool HWGammaActive = false;			// Are we using hardware or software gamma?
+	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 private:
-	PalEntry Flash;
-
-	// Texture creation info
-	int cm;
-	int translation;
-	bool iscomplex;
-	bool needsetgamma;
-	bool swapped;
-
-	PalEntry SourcePalette[256];
-	BYTE *ScreenshotBuffer;
+	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
+	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
+	uint8_t *ScreenshotBuffer;			// What the name says. This must be maintained because the software renderer can return a locked canvas surface which the caller cannot release.
 
 	class Wiper
 	{
@@ -118,13 +112,8 @@ private:
 	FHardwareTexture *wipestartscreen;
 	FHardwareTexture *wipeendscreen;
 
-	bool HWGammaActive = false;
-
-	std::shared_ptr<FGLDebug> mDebug;
 
 public:
-	AActor * LastCamera;
-	int palette_brightness;
 };
 
 

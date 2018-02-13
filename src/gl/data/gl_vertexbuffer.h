@@ -26,11 +26,13 @@
 #include "tarray.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/system/gl_interface.h"
+#include "r_data/models/models.h"
 
 struct vertex_t;
 struct secplane_t;
 struct subsector_t;
 struct sector_t;
+class FMaterial;
 
 enum
 {
@@ -265,37 +267,7 @@ public:
 
 };
 
-#define VSO ((FSkyVertex*)NULL)
-
-struct FModelVertex
-{
-	float x, y, z;	// world position
-	float u, v;		// texture coordinates
-	unsigned packedNormal;	// normal vector as GL_INT_2_10_10_10_REV.
-
-	void Set(float xx, float yy, float zz, float uu, float vv)
-	{
-		x = xx;
-		y = yy;
-		z = zz;
-		u = uu;
-		v = vv;
-	}
-
-	void SetNormal(float nx, float ny, float nz)
-	{
-	/*
-		int inx = int(nx * 512);
-		int iny = int(ny * 512);
-		int inz = int(nz * 512);
-		packedNormal = 0x40000000 | ((inx & 1023) << 20) | ((iny & 1023) << 10) | (inz & 1023);
-	*/
-		packedNormal = 0;	// Per-pixel lighting for models isn't implemented yet so leave this at 0 for now.
-	}
-};
-
-
-class FModelVertexBuffer : public FVertexBuffer
+class FModelVertexBuffer : public FVertexBuffer, public IModelVertexBuffer
 {
 	int mIndexFrame[2];
 	FModelVertex *vbo_ptr;
@@ -306,17 +278,16 @@ public:
 	FModelVertexBuffer(bool needindex, bool singleframe);
 	~FModelVertexBuffer();
 
-	FModelVertex *LockVertexBuffer(unsigned int size);
-	void UnlockVertexBuffer();
+	FModelVertex *LockVertexBuffer(unsigned int size) override;
+	void UnlockVertexBuffer() override;
 
-	unsigned int *LockIndexBuffer(unsigned int size);
-	void UnlockIndexBuffer();
+	unsigned int *LockIndexBuffer(unsigned int size) override;
+	void UnlockIndexBuffer() override;
 
-	unsigned int SetupFrame(unsigned int frame1, unsigned int frame2, unsigned int size);
-	void BindVBO();
+	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
+	void BindVBO() override;
 };
 
-#define VMO ((FModelVertex*)NULL)
-
+#define VSO ((FSkyVertex*)NULL)
 
 #endif

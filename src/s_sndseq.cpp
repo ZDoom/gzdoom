@@ -1,13 +1,24 @@
-//**************************************************************************
-//**
-//** sn_sonix.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile: sn_sonix.c,v $
-//** $Revision: 1.17 $
-//** $Date: 95/10/05 18:25:44 $
-//** $Author: paul $
-//**
-//**************************************************************************
+//-----------------------------------------------------------------------------
+//
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
 
 #include <string.h>
 #include <stdio.h>
@@ -30,12 +41,13 @@
 #include "serializer.h"
 #include "d_player.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 
 #define GetCommand(a)		((a) & 255)
-#define GetData(a)			(SDWORD(a) >> 8 )
-#define GetFloatData(a)		float((SDWORD(a) >> 8 )/65536.f)
+#define GetData(a)			(int32_t(a) >> 8 )
+#define GetFloatData(a)		float((int32_t(a) >> 8 )/65536.f)
 #define MakeCommand(a,b)	((a) | ((b) << 8))
 #define HexenPlatSeq(a)		(a)
 #define HexenDoorSeq(a)		((a) | 0x40)
@@ -97,7 +109,7 @@ typedef enum
 struct hexenseq_t
 {
 	ENamedName	Name;
-	BYTE		Seqs[4];
+	uint8_t		Seqs[4];
 };
 
 class DSeqActorNode : public DSeqNode
@@ -126,7 +138,7 @@ public:
 	}
 private:
 	DSeqActorNode() {}
-	TObjPtr<AActor> m_Actor;
+	TObjPtr<AActor*> m_Actor;
 };
 
 class DSeqPolyNode : public DSeqNode
@@ -203,7 +215,7 @@ struct FSoundSequencePtrArray : public TArray<FSoundSequence *>
 
 static void AssignTranslations (FScanner &sc, int seq, seqtype_t type);
 static void AssignHexenTranslations (void);
-static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp);
+static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<uint32_t> &ScriptTemp);
 static int FindSequence (const char *searchname);
 static int FindSequence (FName seqname);
 static bool TwiddleSeqNum (int &sequence, seqtype_t type);
@@ -559,7 +571,7 @@ void S_ClearSndSeq()
 
 void S_ParseSndSeq (int levellump)
 {
-	TArray<DWORD> ScriptTemp;
+	TArray<uint32_t> ScriptTemp;
 	int lastlump, lump;
 	char seqtype = ':';
 	FName seqname;
@@ -785,13 +797,13 @@ void S_ParseSndSeq (int levellump)
 		AssignHexenTranslations ();
 }
 
-static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<DWORD> &ScriptTemp)
+static void AddSequence (int curseq, FName seqname, FName slot, int stopsound, const TArray<uint32_t> &ScriptTemp)
 {
-	Sequences[curseq] = (FSoundSequence *)M_Malloc (sizeof(FSoundSequence) + sizeof(DWORD)*ScriptTemp.Size());
+	Sequences[curseq] = (FSoundSequence *)M_Malloc (sizeof(FSoundSequence) + sizeof(uint32_t)*ScriptTemp.Size());
 	Sequences[curseq]->SeqName = seqname;
 	Sequences[curseq]->Slot = slot;
 	Sequences[curseq]->StopSound = FSoundID(stopsound);
-	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(DWORD)*ScriptTemp.Size());
+	memcpy (Sequences[curseq]->Script, &ScriptTemp[0], sizeof(uint32_t)*ScriptTemp.Size());
 	Sequences[curseq]->Script[ScriptTemp.Size()] = MakeCommand(SS_CMD_END, 0);
 }
 
@@ -880,7 +892,7 @@ DSeqNode *SN_StartSequence (AActor *actor, int sequence, seqtype_t type, int mod
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
-		return new DSeqActorNode (actor, sequence, modenum);
+		return Create<DSeqActorNode> (actor, sequence, modenum);
 	}
 	return NULL;
 }
@@ -903,7 +915,7 @@ DSeqNode *SN_StartSequence (sector_t *sector, int chan, int sequence, seqtype_t 
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
-		return new DSeqSectorNode (sector, chan, sequence, modenum);
+		return Create<DSeqSectorNode>(sector, chan, sequence, modenum);
 	}
 	return NULL;
 }
@@ -927,7 +939,7 @@ DSeqNode *SN_StartSequence (FPolyObj *poly, int sequence, seqtype_t type, int mo
 	}
 	if (TwiddleSeqNum (sequence, type))
 	{
-		return new DSeqPolyNode (poly, sequence, modenum);
+		return Create<DSeqPolyNode>(poly, sequence, modenum);
 	}
 	return NULL;
 }
@@ -1390,7 +1402,7 @@ void SN_StopAllSequences (void)
 //
 //==========================================================================
 
-ptrdiff_t SN_GetSequenceOffset (int sequence, SDWORD *sequencePtr)
+ptrdiff_t SN_GetSequenceOffset (int sequence, int32_t *sequencePtr)
 {
 	return sequencePtr - Sequences[sequence]->Script;
 }

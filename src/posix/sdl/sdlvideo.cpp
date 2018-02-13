@@ -1,3 +1,35 @@
+/*
+** sdlvideo.cpp
+**
+**---------------------------------------------------------------------------
+** Copyright 2005-2016 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -11,7 +43,7 @@
 #include "stats.h"
 #include "v_palette.h"
 #include "sdlvideo.h"
-#include "r_swrenderer.h"
+#include "swrenderer/r_swrenderer.h"
 #include "version.h"
 
 #include <SDL.h>
@@ -24,66 +56,9 @@
 
 // TYPES -------------------------------------------------------------------
 
-class SDLFB : public DFrameBuffer
-{
-	DECLARE_CLASS(SDLFB, DFrameBuffer)
-public:
-	SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin);
-	~SDLFB ();
-
-	bool Lock (bool buffer);
-	void Unlock ();
-	bool Relock ();
-	void ForceBuffering (bool force);
-	bool IsValid ();
-	void Update ();
-	PalEntry *GetPalette ();
-	void GetFlashedPalette (PalEntry pal[256]);
-	void UpdatePalette ();
-	bool SetGamma (float gamma);
-	bool SetFlash (PalEntry rgb, int amount);
-	void GetFlash (PalEntry &rgb, int &amount);
-	void SetFullscreen (bool fullscreen);
-	int GetPageCount ();
-	bool IsFullscreen ();
-
-	friend class SDLVideo;
-
-	virtual void SetVSync (bool vsync);
-	virtual void ScaleCoordsFromWindow(SWORD &x, SWORD &y);
-
-private:
-	PalEntry SourcePalette[256];
-	BYTE GammaTable[3][256];
-	PalEntry Flash;
-	int FlashAmount;
-	float Gamma;
-	bool UpdatePending;
-
-	SDL_Window *Screen;
-	SDL_Renderer *Renderer;
-	union
-	{
-		SDL_Texture *Texture;
-		SDL_Surface *Surface;
-	};
-
-	bool UsingRenderer;
-	bool NeedPalUpdate;
-	bool NeedGammaUpdate;
-	bool NotPaletted;
-
-	void UpdateColors ();
-	void ResetSDLRenderer ();
-
-	SDLFB () {}
-};
-
-IMPLEMENT_CLASS(SDLFB, false, false)
-
 struct MiniModeInfo
 {
-	WORD Width, Height;
+	uint16_t Width, Height;
 };
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -132,227 +107,15 @@ CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// Dummy screen sizes to pass when windowed
-static MiniModeInfo WinModes[] =
-{
-	{ 320, 200 },
-	{ 320, 240 },
-	{ 400, 225 },	// 16:9
-	{ 400, 300 },
-	{ 480, 270 },	// 16:9
-	{ 480, 360 },
-	{ 512, 288 },	// 16:9
-	{ 512, 384 },
-	{ 640, 360 },	// 16:9
-	{ 640, 400 },
-	{ 640, 480 },
-	{ 720, 480 },	// 16:10
-	{ 720, 540 },
-	{ 800, 450 },	// 16:9
-	{ 800, 480 },
-	{ 800, 500 },	// 16:10
-	{ 800, 600 },
-	{ 848, 480 },	// 16:9
-	{ 960, 600 },	// 16:10
-	{ 960, 720 },
-	{ 1024, 576 },	// 16:9
-	{ 1024, 600 },	// 17:10
-	{ 1024, 640 },	// 16:10
-	{ 1024, 768 },
-	{ 1088, 612 },	// 16:9
-	{ 1152, 648 },	// 16:9
-	{ 1152, 720 },	// 16:10
-	{ 1152, 864 },
-	{ 1280, 540 },	// 21:9
-	{ 1280, 720 },	// 16:9
-	{ 1280, 854 },
-	{ 1280, 800 },	// 16:10
-	{ 1280, 960 },
-	{ 1280, 1024 },	// 5:4
-	{ 1360, 768 },	// 16:9
-	{ 1366, 768 },
-	{ 1400, 787 },	// 16:9
-	{ 1400, 875 },	// 16:10
-	{ 1400, 1050 },
-	{ 1440, 900 },
-	{ 1440, 960 },
-	{ 1440, 1080 },
-	{ 1600, 900 },	// 16:9
-	{ 1600, 1000 },	// 16:10
-	{ 1600, 1200 },
-	{ 1680, 1050 },	// 16:10
-	{ 1920, 1080 },
-	{ 1920, 1200 },
-	{ 2048, 1536 },
-	{ 2560, 1080 }, // 21:9
-	{ 2560, 1440 },
-	{ 2560, 1600 },
-	{ 2560, 2048 },
-	{ 2880, 1800 },
-	{ 3200, 1800 },
-	{ 3440, 1440 }, // 21:9
-	{ 3840, 2160 },
-	{ 3840, 2400 },
-	{ 4096, 2160 },
-	{ 5120, 2160 }, // 21:9
-	{ 5120, 2880 }
-};
-
 static cycle_t BlitCycles;
 static cycle_t SDLFlipCycles;
 
 // CODE --------------------------------------------------------------------
 
-void ScaleWithAspect (int &w, int &h, int Width, int Height)
-{
-	int resRatio = CheckRatio (Width, Height);
-	int screenRatio;
-	CheckRatio (w, h, &screenRatio);
-	if (resRatio == screenRatio)
-		return;
-
-	double yratio;
-	switch(resRatio)
-	{
-		case 0: yratio = 4./3.; break;
-		case 1: yratio = 16./9.; break;
-		case 2: yratio = 16./10.; break;
-		case 3: yratio = 17./10.; break;
-		case 4: yratio = 5./4.; break;
-		default: return;
-	}
-	double y = w/yratio;
-	if (y > h)
-		w = h*yratio;
-	else
-		h = y;
-}
-
-SDLVideo::SDLVideo (int parm)
-{
-	IteratorBits = 0;
-}
-
-SDLVideo::~SDLVideo ()
-{
-}
-
-void SDLVideo::StartModeIterator (int bits, bool fs)
-{
-	IteratorMode = 0;
-	IteratorBits = bits;
-}
-
-bool SDLVideo::NextMode (int *width, int *height, bool *letterbox)
-{
-	if (IteratorBits != 8)
-		return false;
-
-	if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
-	{
-		*width = WinModes[IteratorMode].Width;
-		*height = WinModes[IteratorMode].Height;
-		++IteratorMode;
-		return true;
-	}
-	return false;
-}
-
-DFrameBuffer *SDLVideo::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
-{
-	static int retry = 0;
-	static int owidth, oheight;
-	
-	PalEntry flashColor;
-	int flashAmount;
-
-	SDL_Window *oldwin = NULL;
-
-	if (old != NULL)
-	{ // Reuse the old framebuffer if its attributes are the same
-		SDLFB *fb = static_cast<SDLFB *> (old);
-		if (fb->Width == width &&
-			fb->Height == height)
-		{
-			bool fsnow = (SDL_GetWindowFlags (fb->Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-	
-			if (fsnow != fullscreen)
-			{
-				fb->SetFullscreen (fullscreen);
-			}
-			return old;
-		}
-
-		oldwin = fb->Screen;
-		fb->Screen = NULL;
-
-		old->GetFlash (flashColor, flashAmount);
-		old->ObjectFlags |= OF_YesReallyDelete;
-		if (screen == old) screen = NULL;
-		delete old;
-	}
-	else
-	{
-		flashColor = 0;
-		flashAmount = 0;
-	}
-	
-	SDLFB *fb = new SDLFB (width, height, fullscreen, oldwin);
-	
-	// If we could not create the framebuffer, try again with slightly
-	// different parameters in this order:
-	// 1. Try with the closest size
-	// 2. Try in the opposite screen mode with the original size
-	// 3. Try in the opposite screen mode with the closest size
-	// This is a somewhat confusing mass of recursion here.
-
-	while (fb == NULL || !fb->IsValid ())
-	{
-		if (fb != NULL)
-		{
-			delete fb;
-		}
-
-		switch (retry)
-		{
-		case 0:
-			owidth = width;
-			oheight = height;
-		case 2:
-			// Try a different resolution. Hopefully that will work.
-			I_ClosestResolution (&width, &height, 8);
-			break;
-
-		case 1:
-			// Try changing fullscreen mode. Maybe that will work.
-			width = owidth;
-			height = oheight;
-			fullscreen = !fullscreen;
-			break;
-
-		default:
-			// I give up!
-			I_FatalError ("Could not create new screen (%d x %d)", owidth, oheight);
-		}
-
-		++retry;
-		fb = static_cast<SDLFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
-	}
-	retry = 0;
-
-	fb->SetFlash (flashColor, flashAmount);
-
-	return fb;
-}
-
-void SDLVideo::SetWindowedScale (float scale)
-{
-}
-
 // FrameBuffer implementation -----------------------------------------------
 
-SDLFB::SDLFB (int width, int height, bool fullscreen, SDL_Window *oldwin)
-	: DFrameBuffer (width, height)
+SDLFB::SDLFB (int width, int height, bool bgra, bool fullscreen, SDL_Window *oldwin)
+	: SDLBaseFB (width, height, bgra)
 {
 	int i;
 	
@@ -464,7 +227,7 @@ void SDLFB::Update ()
 
 	DrawRateStuff ();
 
-#ifndef __APPLE__
+#if !defined(__APPLE__) && !defined(__OpenBSD__)
 	if(vid_maxfps && !cl_capfps)
 	{
 		SEMAPHORE_WAIT(FPSLimitSemaphore)
@@ -495,7 +258,11 @@ void SDLFB::Update ()
 		pitch = Surface->pitch;
 	}
 
-	if (NotPaletted)
+	if (Bgra)
+	{
+		CopyWithGammaBgra(pixels, pitch, GammaTable[0], GammaTable[1], GammaTable[2], Flash, FlashAmount);
+	}
+	else if (NotPaletted)
 	{
 		GPfx.Convert (MemBuffer, Pitch,
 			pixels, pitch, Width, Height,
@@ -511,7 +278,7 @@ void SDLFB::Update ()
 		{
 			for (int y = 0; y < Height; ++y)
 			{
-				memcpy ((BYTE *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
+				memcpy ((uint8_t *)pixels+y*pitch, MemBuffer+y*Pitch, Width);
 			}
 		}
 	}
@@ -675,13 +442,20 @@ void SDLFB::ResetSDLRenderer ()
 		SDL_SetRenderDrawColor(Renderer, 0, 0, 0, 255);
 
 		Uint32 fmt;
-		switch(vid_displaybits)
+		if (Bgra)
 		{
-			default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
-			case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
-			case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
-			case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
-			case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+			fmt = SDL_PIXELFORMAT_ARGB8888;
+		}
+		else
+		{
+			switch (vid_displaybits)
+			{
+				default: fmt = SDL_PIXELFORMAT_ARGB8888; break;
+				case 30: fmt = SDL_PIXELFORMAT_ARGB2101010; break;
+				case 24: fmt = SDL_PIXELFORMAT_RGB888; break;
+				case 16: fmt = SDL_PIXELFORMAT_RGB565; break;
+				case 15: fmt = SDL_PIXELFORMAT_ARGB1555; break;
+			}
 		}
 		Texture = SDL_CreateTexture (Renderer, fmt, SDL_TEXTUREACCESS_STREAMING, Width, Height);
 
@@ -727,14 +501,6 @@ void SDLFB::SetVSync (bool vsync)
 	if (CGLContextObj context = CGLGetCurrentContext())
 	{
 		// Apply vsync for native backend only (where OpenGL context is set)
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < 1050
-		// Inconsistency between 10.4 and 10.5 SDKs:
-		// third argument of CGLSetParameter() is const long* on 10.4 and const GLint* on 10.5
-		// So, GLint typedef'ed to long instead of int to workaround this issue
-		typedef long GLint;
-#endif // prior to 10.5
-
 		const GLint value = vsync ? 1 : 0;
 		CGLSetParameter(context, kCGLCPSwapInterval, &value);
 	}
@@ -743,7 +509,7 @@ void SDLFB::SetVSync (bool vsync)
 #endif // __APPLE__
 }
 
-void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
+void SDLFB::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 {
 	int w, h;
 	SDL_GetWindowSize (Screen, &w, &h);
@@ -773,8 +539,8 @@ void SDLFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
 	}
 	else
 	{
-		x = (SWORD)(x*Width/w);
-		y = (SWORD)(y*Height/h);
+		x = (int16_t)(x*Width/w);
+		y = (int16_t)(y*Height/h);
 	}
 }
 
@@ -785,3 +551,18 @@ ADD_STAT (blit)
 		BlitCycles.TimeMS(), SDLFlipCycles.TimeMS());
 	return out;
 }
+
+// each platform has its own specific version of this function.
+void I_SetWindowTitle(const char* caption)
+{
+	auto Screen = static_cast<SDLFB *>(screen)->GetSDLWindow();
+	if (caption)
+		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), caption);
+	else
+	{
+		FString default_caption;
+		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), default_caption);
+	}
+}
+

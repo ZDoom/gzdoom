@@ -10,6 +10,7 @@ class Clip : Ammo
 		Ammo.BackpackAmount 10;
 		Ammo.BackpackMaxAmount 400;
 		Inventory.Icon "CLIPA0";
+		Tag "$AMMO_CLIP";
 	}
 	States
 	{
@@ -48,6 +49,7 @@ class RocketAmmo : Ammo
 		Ammo.BackpackAmount 1;
 		Ammo.BackpackMaxAmount 100;
 		Inventory.Icon "ROCKA0";
+		Tag "$AMMO_ROCKETS";
 	}
 	States
 	{
@@ -86,6 +88,7 @@ class Cell : Ammo
 		Ammo.BackpackAmount 20;
 		Ammo.BackpackMaxAmount 600;
 		Inventory.Icon "CELLA0";
+		Tag "$AMMO_CELLS";
 	}
 	States
 	{
@@ -124,6 +127,7 @@ class Shell : Ammo
 		Ammo.BackpackAmount 4;
 		Ammo.BackpackMaxAmount 100;
 		Inventory.Icon "SHELA0";
+		Tag "$AMMO_SHELLS";
 	}
 	States
 	{

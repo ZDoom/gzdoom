@@ -1,25 +1,39 @@
-// Emacs style mode select	 -*- C++ -*- 
-//-----------------------------------------------------------------------------
-//
-// $Id:$
-//
-// Copyright (C) 1993-1996 by id Software, Inc.
-//
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
-//
-// $Log:$
-//
+/*
+**
+**
+**---------------------------------------------------------------------------
+** Copyright 1999-2016 Randy Heit
+** Copyright 2005-2016 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 // DESCRIPTION:
 //		Cheat sequence checking.
 //
-//-----------------------------------------------------------------------------
 
 
 #include <stdlib.h>
@@ -48,12 +62,29 @@
 #include "r_utility.h"
 #include "a_morph.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
 #include "events.h"
+#include "p_acs.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code
 // later calls us.
+
+void cht_DoMDK(player_t *player, const char *mod)
+{
+	if (player->mo == NULL)
+	{
+		Printf("What do you want to kill outside of a game?\n");
+	}
+	else if (!deathmatch)
+	{
+		// Don't allow this in deathmatch even with cheats enabled, because it's
+		// a very very cheap kill.
+		P_LineAttack(player->mo, player->mo->Angles.Yaw, PLAYERMISSILERANGE,
+			P_AimLineAttack(player->mo, player->mo->Angles.Yaw, PLAYERMISSILERANGE), TELEFRAG_DAMAGE,
+			mod, NAME_BulletPuff);
+	}
+}
 
 void cht_DoCheat (player_t *player, int cheat)
 {
@@ -92,7 +123,6 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_DQDON");
 		else
 			msg = GStrings("STSTR_DQDOFF");
-		ST_SetNeedRefresh();
 		break;
 
 	case CHT_BUDDHA:
@@ -109,7 +139,6 @@ void cht_DoCheat (player_t *player, int cheat)
 			msg = GStrings("STSTR_DQD2ON");
 		else
 			msg = GStrings("STSTR_DQD2OFF");
-		ST_SetNeedRefresh();
 		break;
 
 	case CHT_BUDDHA2:
@@ -292,11 +321,13 @@ void cht_DoCheat (player_t *player, int cheat)
 		break;
 
 	case CHT_MASSACRE:
+	case CHT_MASSACRE2:
 		{
-			int killcount = P_Massacre ();
+			int killcount = P_Massacre (cheat == CHT_MASSACRE2);
 			// killough 3/22/98: make more intelligent about plural
 			// Ty 03/27/98 - string(s) *not* externalized
-			mysnprintf (msgbuild, countof(msgbuild), "%d Monster%s Killed", killcount, killcount==1 ? "" : "s");
+			mysnprintf (msgbuild, countof(msgbuild), "%d %s%s Killed", killcount,
+				cheat==CHT_MASSACRE2 ? "Baddie" : "Monster", killcount==1 ? "" : "s");
 			msg = msgbuild;
 		}
 		break;
@@ -324,35 +355,7 @@ void cht_DoCheat (player_t *player, int cheat)
 			}
 			else
 			{
-				player->mo->Revive();
-				player->playerstate = PST_LIVE;
-				player->health = player->mo->health = player->mo->GetDefault()->health;
-				player->viewheight = ((APlayerPawn *)player->mo->GetDefault())->ViewHeight;
-				player->mo->renderflags &= ~RF_INVISIBLE;
-				player->mo->Height = player->mo->GetDefault()->Height;
-				player->mo->radius = player->mo->GetDefault()->radius;
-				player->mo->special1 = 0;	// required for the Hexen fighter's fist attack. 
-											// This gets set by AActor::Die as flag for the wimpy death and must be reset here.
-				player->mo->SetState (player->mo->SpawnState);
-				if (!(player->mo->flags2 & MF2_DONTTRANSLATE))
-				{
-					player->mo->Translation = TRANSLATION(TRANSLATION_Players, BYTE(player-players));
-				}
-				if (player->ReadyWeapon != nullptr)
-				{
-					P_SetPsprite(player, PSP_WEAPON, player->ReadyWeapon->GetUpState());
-				}
-
-				if (player->morphTics)
-				{
-					P_UndoPlayerMorph(player, player);
-				}
-
-				// player is now alive.
-				// fire E_PlayerRespawned and start the ACS SCRIPT_Respawn.
-				E_PlayerRespawned(player - players);
-				//
-				FBehavior::StaticStartTypedScripts(SCRIPT_Respawn, player->mo, true);
+				player->Resurrect();
 
 			}
 		}
@@ -492,7 +495,7 @@ void cht_DoCheat (player_t *player, int cheat)
 				VMReturn ret;
 				int oldpieces = 1;
 				ret.IntAt(&oldpieces);
-				GlobalVMStack.Call(gsp, params, 1, &ret, 1, nullptr);
+				VMCall(gsp, params, 1, &ret, 1);
 				item = player->mo->FindInventory(NAME_Sigil);
 
 				if (item != NULL)
@@ -585,14 +588,39 @@ const char *cht_Morph (player_t *player, PClassActor *morphclass, bool quickundo
 	return "";
 }
 
+void cht_SetInv(player_t *player, const char *string, int amount, bool beyond)
+{
+	if (!stricmp(string, "health"))
+	{
+		if (amount <= 0)
+		{
+			cht_Suicide(player);
+			return;
+		}
+		if (!beyond) amount = MIN(amount, player->mo->GetMaxHealth(true));
+		player->health = player->mo->health = amount;
+	}
+	else
+	{
+		auto item = PClass::FindActor(string);
+		if (item != nullptr && item->IsDescendantOf(RUNTIME_CLASS(AInventory)))
+		{
+			player->mo->SetInventory(item, amount, beyond);
+			return;
+		}
+		Printf("Unknown item \"%s\"\n", string);
+	}
+}
+
 void cht_Give (player_t *player, const char *name, int amount)
 {
 	if (player->mo == nullptr)	return;
 
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatGive)
 	{
-		VMValue params[3] = { player->mo, FString(name), amount };
-		GlobalVMStack.Call(func, params, 3, nullptr, 0);
+		FString namestr = name;
+		VMValue params[3] = { player->mo, &namestr, amount };
+		VMCall(func, params, 3, nullptr, 0);
 	}
 }
 
@@ -602,8 +630,9 @@ void cht_Take (player_t *player, const char *name, int amount)
 
 	IFVIRTUALPTR(player->mo, APlayerPawn, CheatTake)
 	{
-		VMValue params[3] = { player->mo, FString(name), amount };
-		GlobalVMStack.Call(func, params, 3, nullptr, 0);
+		FString namestr = name;
+		VMValue params[3] = { player->mo, &namestr, amount };
+		VMCall(func, params, 3, nullptr, 0);
 	}
 }
 
@@ -612,7 +641,7 @@ class DSuicider : public DThinker
 	DECLARE_CLASS(DSuicider, DThinker)
 	HAS_OBJECT_POINTERS;
 public:
-	TObjPtr<APlayerPawn> Pawn;
+	TObjPtr<APlayerPawn*> Pawn;
 
 	void Tick()
 	{
@@ -653,7 +682,7 @@ void cht_Suicide (player_t *plyr)
 	// the initial tick.
 	if (plyr->mo != NULL)
 	{
-		DSuicider *suicide = new DSuicider;
+		DSuicider *suicide = Create<DSuicider>();
 		suicide->Pawn = plyr->mo;
 		GC::WriteBarrier(suicide, suicide->Pawn);
 	}
@@ -671,6 +700,7 @@ CCMD (mdk)
 	if (CheckCheatmode ())
 		return;
 
-	Net_WriteByte (DEM_GENERICCHEAT);
-	Net_WriteByte (CHT_MDK);
+	const char *name = argv.argc() > 1 ? argv[1] : "";
+	Net_WriteByte (DEM_MDK);
+	Net_WriteString(name);
 }

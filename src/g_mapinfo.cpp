@@ -273,6 +273,13 @@ void level_info_t::Reset()
 	SndSeq = "";
 	BorderTexture = "";
 	teamdamage = 0.f;
+	hazardcolor = 0xff004200;
+	hazardflash = 0xff00ff00;
+	fogdensity = 0;
+	outsidefogdensity = 0;
+	skyfog = 0;
+	pixelstretch = 1.2f;
+
 	specialactions.Clear();
 	DefaultEnvironment = 0;
 	PrecacheSounds.Clear();
@@ -600,21 +607,97 @@ bool FMapInfoParser::ParseLookupName(FString &dest)
 //
 //==========================================================================
 
-/*
-void FMapInfoParser::ParseLumpOrTextureName(char *name)
-{
-	sc.MustGetString();
-	uppercopy(name, sc.String);
-	name[8]=0;
-}
-*/
-
 void FMapInfoParser::ParseLumpOrTextureName(FString &name)
 {
 	sc.MustGetString();
 	name = sc.String;
 }
 
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseExitText(FName formap, level_info_t *info)
+{
+	FString nexttext;
+	bool nextlookup = ParseLookupName(nexttext);
+
+	auto def = info->ExitMapTexts.CheckKey(formap);
+	if (def != nullptr)
+	{
+		def->mText = nexttext;
+		if (nextlookup) def->mDefined |= FExitText::DEF_LOOKUP;
+		else def->mDefined &= ~FExitText::DEF_LOOKUP;
+		def->mDefined |= FExitText::DEF_TEXT;
+	}
+	else
+	{
+		FExitText def;
+		def.mText = nexttext;
+		if (nextlookup) def.mDefined |= FExitText::DEF_LOOKUP;
+		def.mDefined |= FExitText::DEF_TEXT;
+		info->ExitMapTexts.Insert(formap, def);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseExitMusic(FName formap, level_info_t *info)
+{
+	FString music;
+	int order;
+	ParseMusic(music, order);
+
+	auto def = info->ExitMapTexts.CheckKey(formap);
+	if (def != nullptr)
+	{
+		def->mMusic = music;
+		def->mOrder = order;
+		def->mDefined |= FExitText::DEF_MUSIC;
+	}
+	else
+	{
+		FExitText def;
+		def.mMusic = music;
+		def.mOrder = order;
+		def.mDefined |= FExitText::DEF_MUSIC;
+		info->ExitMapTexts.Insert(formap, def);
+	}
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FMapInfoParser::ParseExitBackdrop(FName formap, level_info_t *info, bool ispic)
+{
+	FString drop;
+	ParseLumpOrTextureName(drop);
+
+	auto def = info->ExitMapTexts.CheckKey(formap);
+	if (def != nullptr)
+	{
+		def->mBackdrop = drop;
+		def->mDefined |= FExitText::DEF_BACKDROP;
+		if (ispic) def->mDefined |= FExitText::DEF_PIC;
+		else def->mDefined &= ~FExitText::DEF_PIC;
+	}
+	else
+	{
+		FExitText def;
+		def.mBackdrop = drop;
+		def.mDefined |= FExitText::DEF_BACKDROP;
+		def.mDefined |= FExitText::DEF_MUSIC;
+		if (ispic) def.mDefined |= FExitText::DEF_PIC;
+		info->ExitMapTexts.Insert(formap, def);
+	}
+}
 
 //==========================================================================
 //
@@ -915,6 +998,18 @@ DEFINE_MAP_OPTION(intermusic, true)
 	parse.ParseMusic(info->InterMusic, info->intermusicorder);
 }
 
+DEFINE_MAP_OPTION(mapintermusic, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FString mapname = parse.sc.String;
+	FString music;
+	int order;
+	parse.ParseComma();
+	parse.ParseMusic(music, order);
+	info->MapInterMusic[FName(mapname)] = std::make_pair(music, order);
+}
+
 DEFINE_MAP_OPTION(fadetable, true)
 {
 	parse.ParseAssign();
@@ -951,14 +1046,14 @@ DEFINE_MAP_OPTION(vertwallshade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
-	info->WallVertLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
+	info->WallVertLight = (int8_t)clamp (parse.sc.Number / 2, -128, 127);
 }
 
 DEFINE_MAP_OPTION(horizwallshade, true)
 {
 	parse.ParseAssign();
 	parse.sc.MustGetNumber();
-	info->WallHorizLight = (SBYTE)clamp (parse.sc.Number / 2, -128, 127);
+	info->WallHorizLight = (int8_t)clamp (parse.sc.Number / 2, -128, 127);
 }
 
 DEFINE_MAP_OPTION(gravity, true)
@@ -1158,6 +1253,42 @@ DEFINE_MAP_OPTION(mapbackground, true)
 	parse.ParseLumpOrTextureName(info->MapBackground);
 }
 
+DEFINE_MAP_OPTION(exittext, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitText(nextmap, info);
+}
+
+DEFINE_MAP_OPTION(textmusic, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitMusic(nextmap, info);
+}
+
+DEFINE_MAP_OPTION(textflat, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitBackdrop(nextmap, info, false);
+}
+
+DEFINE_MAP_OPTION(textpic, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	FName nextmap = parse.sc.String;
+	parse.ParseComma();
+	parse.ParseExitBackdrop(nextmap, info, true);
+}
+
 DEFINE_MAP_OPTION(defaultenvironment, false)
 {
 	int id;
@@ -1188,6 +1319,48 @@ DEFINE_MAP_OPTION(defaultenvironment, false)
 	info->DefaultEnvironment = id;
 }
 
+DEFINE_MAP_OPTION(hazardcolor, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->hazardcolor = V_GetColor(NULL, parse.sc);
+}
+
+DEFINE_MAP_OPTION(hazardflash, true)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetString();
+	info->hazardflash = V_GetColor(NULL, parse.sc);
+}
+
+DEFINE_MAP_OPTION(fogdensity, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->fogdensity = clamp(parse.sc.Number, 0, 512) >> 1;
+}
+
+DEFINE_MAP_OPTION(outsidefogdensity, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->outsidefogdensity = clamp(parse.sc.Number, 0, 512) >> 1;
+}
+
+DEFINE_MAP_OPTION(skyfog, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->skyfog = parse.sc.Number;
+}
+
+DEFINE_MAP_OPTION(pixelratio, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	info->pixelstretch = (float)parse.sc.Float;
+}
+
 
 //==========================================================================
 //
@@ -1215,7 +1388,7 @@ struct MapInfoFlagHandler
 {
 	const char *name;
 	EMIType type;
-	DWORD data1, data2;
+	uint32_t data1, data2;
 }
 MapFlagHandlers[] =
 {
@@ -1265,6 +1438,7 @@ MapFlagHandlers[] =
 	{ "laxmonsteractivation",			MITYPE_SETFLAG2,	LEVEL2_LAXMONSTERACTIVATION, LEVEL2_LAXACTIVATIONMAPINFO },
 	{ "additive_scrollers",				MITYPE_COMPATFLAG, COMPATF_BOOMSCROLL, 0 },
 	{ "keepfullinventory",				MITYPE_SETFLAG2,	LEVEL2_KEEPFULLINVENTORY, 0 },
+	{ "resetitems",						MITYPE_SETFLAG3,	LEVEL3_REMOVEITEMS, 0 },
 	{ "monsterfallingdamage",			MITYPE_SETFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
 	{ "nomonsterfallingdamage",			MITYPE_CLRFLAG2,	LEVEL2_MONSTERFALLINGDAMAGE, 0 },
 	{ "clipmidtextures",				MITYPE_SETFLAG2,	LEVEL2_CLIPMIDTEX, 0 },
@@ -1294,6 +1468,8 @@ MapFlagHandlers[] =
 	{ "unfreezesingleplayerconversations",MITYPE_SETFLAG2,	LEVEL2_CONV_SINGLE_UNFREEZE, 0 },
 	{ "spawnwithweaponraised",			MITYPE_SETFLAG2,	LEVEL2_PRERAISEWEAPON, 0 },
 	{ "forcefakecontrast",				MITYPE_SETFLAG3,	LEVEL3_FORCEFAKECONTRAST, 0 },
+	{ "nolightfade",					MITYPE_SETFLAG3,	LEVEL3_NOLIGHTFADE, 0 },
+	{ "nocoloredspritelighting",		MITYPE_SETFLAG3,	LEVEL3_NOCOLOREDSPRITELIGHTING, 0 },
 	{ "nobotnodes",						MITYPE_IGNORE,	0, 0 },		// Skulltag option: nobotnodes
 	{ "compat_shorttex",				MITYPE_COMPATFLAG, COMPATF_SHORTTEX, 0 },
 	{ "compat_stairs",					MITYPE_COMPATFLAG, COMPATF_STAIRINDEX, 0 },
@@ -1368,7 +1544,16 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				break;
 
 			case MITYPE_SETFLAG:
-				info.flags |= handler->data1;
+				if (!CheckAssign())
+				{
+					info.flags |= handler->data1;
+				}
+				else
+				{
+					sc.MustGetNumber();
+					if (sc.Number) info.flags |= handler->data1;
+					else info.flags &= ~handler->data1;
+				}
 				info.flags |= handler->data2;
 				break;
 
@@ -1382,7 +1567,16 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				break;
 
 			case MITYPE_SETFLAG2:
-				info.flags2 |= handler->data1;
+				if (!CheckAssign())
+				{
+					info.flags2 |= handler->data1;
+				}
+				else
+				{
+					sc.MustGetNumber();
+					if (sc.Number) info.flags2 |= handler->data1;
+					else info.flags2 &= ~handler->data1;
+				}
 				info.flags2 |= handler->data2;
 				break;
 
@@ -1396,7 +1590,16 @@ void FMapInfoParser::ParseMapDefinition(level_info_t &info)
 				break;
 
 			case MITYPE_SETFLAG3:
-				info.flags3 |= handler->data1;
+				if (!CheckAssign())
+				{
+					info.flags3 |= handler->data1;
+				}
+				else
+				{
+					sc.MustGetNumber();
+					if (sc.Number) info.flags3 |= handler->data1;
+					else info.flags3 &= ~handler->data1;
+				}
 				info.flags3 |= handler->data2;
 				break;
 
@@ -1970,6 +2173,7 @@ static void ClearMapinfo()
 	DefaultSkill = -1;
 	DeinitIntermissions();
 	level.info = NULL;
+	level.F1Pic = "";
 }
 
 //==========================================================================
@@ -2002,7 +2206,7 @@ void G_ParseMapInfo (FString basemapinfo)
 		parse.ParseMapInfo(baselump, gamedefaults, defaultinfo);
 	}
 
-	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", NULL };
+	static const char *mapinfonames[] = { "MAPINFO", "ZMAPINFO", "UMAPINFO", NULL };
 	int nindex;
 
 	// Parse any extra MAPINFOs.
@@ -2018,10 +2222,28 @@ void G_ParseMapInfo (FString basemapinfo)
 
 			if (altlump >= 0) continue;
 		}
-		FMapInfoParser parse(nindex == 1? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
-		level_info_t defaultinfo;
-		parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
+		else if (nindex == 2)
+		{
+			// MAPINFO and ZMAPINFO will override UMAPINFO if in the same WAD.
+			int wad = Wads.GetLumpFile(lump);
+			int altlump = Wads.CheckNumForName("ZMAPINFO", ns_global, wad, true);
+			if (altlump >= 0) continue;
+			altlump = Wads.CheckNumForName("MAPINFO", ns_global, wad, true);
+			if (altlump >= 0) continue;
+		}
+		if (nindex != 2)
+		{
+			CommitUMapinfo(&gamedefaults);	// UMAPINFOs are collected until a regular MAPINFO is found so that they properly use the base settings.
+			FMapInfoParser parse(nindex == 1 ? FMapInfoParser::FMT_New : FMapInfoParser::FMT_Unknown);
+			level_info_t defaultinfo;
+			parse.ParseMapInfo(lump, gamedefaults, defaultinfo);
+		}
+		else
+		{
+			ParseUMapInfo(lump);
+		}
 	}
+	CommitUMapinfo(&gamedefaults);	// commit remaining UMPAINFOs.
 
 	if (AllEpisodes.Size() == 0)
 	{

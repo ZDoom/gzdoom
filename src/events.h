@@ -5,6 +5,7 @@
 #include "serializer.h"
 #include "d_event.h"
 #include "d_gui.h"
+#include "sbar.h"
 
 class DStaticEventHandler;
 
@@ -41,12 +42,14 @@ void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int d
 void E_WorldThingDestroyed(AActor* actor);
 // same as ACS SCRIPT_Lightning
 void E_WorldLightning();
-// this executes on every tick, before everything
+// this executes on every tick, before everything, only when in valid level and not paused
 void E_WorldTick();
+// this executes on every tick on UI side, always
+void E_UiTick();
 // called on each render frame once.
 void E_RenderFrame();
 // called after everything's been rendered, but before console/menus
-void E_RenderOverlay();
+void E_RenderOverlay(EHudState state);
 // this executes when a player enters the level (once). PlayerEnter+inhub = RETURN
 void E_PlayerEntered(int num, bool fromhub);
 // this executes when a player respawns. includes resurrect cheat.
@@ -56,9 +59,12 @@ void E_PlayerDied(int num);
 // this executes when a player leaves the game
 void E_PlayerDisconnected(int num);
 // this executes on events.
-bool E_Responder(event_t* ev); // splits events into InputProcess and UiProcess
+bool E_Responder(const event_t* ev); // splits events into InputProcess and UiProcess
 // this executes on console/net events.
-void E_Console(int player, FString name, int arg1, int arg2, int arg3);
+void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
+
+// send networked event. unified function.
+bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
 
 // check if there is anything that should receive GUI events
 bool E_CheckUiProcessors();
@@ -76,7 +82,8 @@ void E_SerializeEvents(FSerializer& arc);
 
 class DStaticEventHandler : public DObject // make it a part of normal GC process
 {
-	DECLARE_CLASS(DStaticEventHandler, DObject)
+	DECLARE_CLASS(DStaticEventHandler, DObject);
+	HAS_OBJECT_POINTERS
 public:
 	DStaticEventHandler()
 	{
@@ -99,6 +106,7 @@ public:
 	void Serialize(FSerializer& arc) override
 	{
 		Super::Serialize(arc);
+		/*
 		if (arc.isReading())
 		{
 			Printf("DStaticEventHandler::Serialize: reading object %s\n", GetClass()->TypeName.GetChars());
@@ -107,6 +115,7 @@ public:
 		{
 			Printf("DStaticEventHandler::Serialize: store object %s\n", GetClass()->TypeName.GetChars());
 		}
+		*/
 
 		arc("Order", Order);
 		arc("IsUiProcessor", IsUiProcessor);
@@ -133,7 +142,7 @@ public:
 
 	//
 	void RenderFrame();
-	void RenderOverlay();
+	void RenderOverlay(EHudState state);
 
 	//
 	void PlayerEntered(int num, bool fromhub);
@@ -142,11 +151,12 @@ public:
 	void PlayerDisconnected(int num);
 
 	// return true if handled.
-	bool InputProcess(event_t* ev);
-	bool UiProcess(event_t* ev);
+	bool InputProcess(const event_t* ev);
+	bool UiProcess(const event_t* ev);
+	void UiTick();
 	
 	// 
-	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3);
+	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);
 };
 class DEventHandler : public DStaticEventHandler
 {
@@ -155,77 +165,37 @@ public:
 	bool IsStatic() override { return false; }
 };
 extern DStaticEventHandler* E_FirstEventHandler;
+extern DStaticEventHandler* E_LastEventHandler;
 
-// we cannot call this DEvent because in ZScript, 'event' is a keyword
-class DBaseEvent : public DObject
+struct FRenderEvent
 {
-	DECLARE_CLASS(DBaseEvent, DObject)
-public:
-
-	DBaseEvent()
-	{
-		// each type of event is created only once to avoid new/delete hell
-		// since from what I remember object creation and deletion results in a lot of GC processing
-		// (and we aren't supposed to pass event objects around anyway)
-		this->ObjectFlags |= OF_Fixed;
-		// we don't want to store events into the savegames because they are global.
-		this->ObjectFlags |= OF_Transient;
-	}
-};
-
-class DRenderEvent : public DBaseEvent
-{
-	DECLARE_CLASS(DRenderEvent, DBaseEvent)
-public:
 	// these are for all render events
 	DVector3 ViewPos;
 	DAngle ViewAngle;
 	DAngle ViewPitch;
 	DAngle ViewRoll;
-	double FracTic; // 0..1 value that describes where we are inside the current gametic, render-wise.
-	AActor* Camera;
-
-	DRenderEvent()
-	{
-		FracTic = 0;
-		Camera = nullptr;
-	}
+	double FracTic = 0; // 0..1 value that describes where we are inside the current gametic, render-wise.
+	AActor* Camera = nullptr;
+	int HudState;
 };
 
-class DWorldEvent : public DBaseEvent
+struct FWorldEvent
 {
-	DECLARE_CLASS(DWorldEvent, DBaseEvent)
-public:
 	// for loaded/unloaded
-	bool IsSaveGame;
-	bool IsReopen;
+	bool IsSaveGame = false;
+	bool IsReopen = false;
 	// for thingspawned, thingdied, thingdestroyed
-	AActor* Thing;
-	// for thingdied
-	AActor* Inflictor; // can be null
-	// for damagemobj
-	int Damage;
-	AActor* DamageSource; // can be null
+	AActor* Thing = nullptr; // for thingdied
+	AActor* Inflictor = nullptr; // can be null - for damagemobj
+	AActor* DamageSource = nullptr; // can be null
+	int Damage = 0;
 	FName DamageType;
-	int DamageFlags;
+	int DamageFlags = 0;
 	DAngle DamageAngle;
-
-	DWorldEvent()
-	{
-		IsSaveGame = false;
-		IsReopen = false;
-		Thing = nullptr;
-		Inflictor = nullptr;
-		Damage = 0;
-		DamageSource = nullptr;
-		DamageFlags = 0;
-	}
 };
 
-class DPlayerEvent : public DBaseEvent
+struct FPlayerEvent
 {
-	DECLARE_CLASS(DPlayerEvent, DBaseEvent)
-public:
 	// we currently have only one member: player index
 	// in ZScript, we have global players[] array from which we can
 	//  get both the player itself and player's body,
@@ -233,18 +203,10 @@ public:
 	int PlayerNumber;
 	// we set this to true if level was reopened (RETURN scripts)
 	bool IsReturn;
-
-	DPlayerEvent()
-	{
-		PlayerNumber = -1;
-		IsReturn = false;
-	}
 };
 
-class DUiEvent : public DBaseEvent
+struct FUiEvent
 {
-	DECLARE_CLASS(DUiEvent, DBaseEvent)
-public:
 	// this essentially translates event_t UI events to ZScript.
 	EGUIEvent Type;
 	// for keys/chars/whatever
@@ -258,18 +220,13 @@ public:
 	bool IsCtrl;
 	bool IsAlt;
 
-	DUiEvent()
-	{
-		Type = EV_GUI_None;
-	}
+	FUiEvent(const event_t *ev);
 };
 
-class DInputEvent : public DBaseEvent
+struct FInputEvent
 {
-	DECLARE_CLASS(DInputEvent, DBaseEvent)
-public:
 	// this translates regular event_t events to ZScript (not UI, UI events are sent via DUiEvent and only if requested!)
-	EGenericEvent Type;
+	EGenericEvent Type = EV_None;
 	// for keys
 	int KeyScan;
 	FString KeyString;
@@ -278,26 +235,18 @@ public:
 	int MouseX;
 	int MouseY;
 
-	DInputEvent()
-	{
-		Type = EV_None;
-	}
+	FInputEvent(const event_t *ev);
 };
 
-class DConsoleEvent : public DBaseEvent
+struct FConsoleEvent 
 {
-	DECLARE_CLASS(DConsoleEvent, DBaseEvent)
-public:
 	// player that activated this event. note that it's always -1 for non-playsim events (i.e. these not called with netevent)
 	int Player;
 	//
 	FString Name;
 	int Args[3];
-
-	DConsoleEvent()
-	{
-		Player = -1;
-	}
+	//
+	bool IsManual;
 };
 
 #endif

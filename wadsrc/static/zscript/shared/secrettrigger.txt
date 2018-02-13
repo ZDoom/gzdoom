@@ -17,7 +17,7 @@ class SecretTrigger : Actor
 
 	override void Activate (Actor activator)
 	{
-		activator.GiveSecret(args[0] <= 1, (args[0] == 0 || args[0] == 2));
+		Level.GiveSecret(activator, args[0] <= 1, (args[0] == 0 || args[0] == 2));
 		Destroy ();
 	}
 

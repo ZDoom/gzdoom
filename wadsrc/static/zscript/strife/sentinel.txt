@@ -97,6 +97,7 @@ class SentinelFX1 : Actor
 		DamageType "Disintegrate";
 		Projectile;
 		+STRIFEDAMAGE
+		+ZDOOMTRANS
 		MaxStepHeight 4;
 		RenderStyle "Add";
 	}

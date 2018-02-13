@@ -18,9 +18,9 @@
 // the dec offsetof macro doesnt work very well...
 #define myoffsetof(type,identifier) ((size_t)&((type *)alignof(type))->identifier - alignof(type))
 
-int		Q_filelength (FILE *f);
 bool FileExists (const char *filename);
-bool DirEntryExists (const char *pathname);
+bool DirExists(const char *filename);
+bool DirEntryExists (const char *pathname, bool *isdir = nullptr);
 
 extern	FString progdir;
 
@@ -38,7 +38,6 @@ int		ParseHex(const char *str, FScriptPosition *sc = nullptr);
 bool	IsNum (const char *str);		// [RH] added
 
 char	*copystring(const char *s);
-char	*ncopystring(const char *s);
 void	ReplaceString (char **ptr, const char *str);
 
 bool CheckWildcards (const char *pattern, const char *text);
@@ -65,23 +64,9 @@ struct FFileList
 void ScanDirectory(TArray<FFileList> &list, const char *dirpath);
 
 
-//==========================================================================
-//
-// Functions to compensate for a tic being a bit short.
-// Since ZDoom uses a milliseconds timer for game timing
-// 35 tics are actually only 0.98 seconds.
-// For real time display this needs to be adjusted
-//
-//==========================================================================
-
-inline int AdjustTics(int tics)
-{
-	return Scale(tics, 98, 100);
-}
-
 inline int Tics2Seconds(int tics)
 {
-	return Scale(tics, 98, (100 * TICRATE));
+	return tics / TICRATE;
 }
 
 

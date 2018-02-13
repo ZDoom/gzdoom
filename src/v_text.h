@@ -68,6 +68,10 @@ struct FBrokenLines
 #define TEXTCOLOR_PURPLE		"\034T"
 #define TEXTCOLOR_DARKGRAY		"\034U"
 #define TEXTCOLOR_CYAN			"\034V"
+#define TEXTCOLOR_ICE			"\034W"
+#define TEXTCOLOR_FIRE			"\034X"
+#define TEXTCOLOR_SAPPHIRE		"\034Y"
+#define TEXTCOLOR_TEAL			"\034Z"
 
 #define TEXTCOLOR_NORMAL		"\034-"
 #define TEXTCOLOR_BOLD			"\034+"
@@ -75,11 +79,13 @@ struct FBrokenLines
 #define TEXTCOLOR_CHAT			"\034*"
 #define TEXTCOLOR_TEAMCHAT		"\034!"
 
-FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *str, bool preservecolor = false, unsigned int *count = nullptr);
+FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const uint8_t *str, bool preservecolor = false, unsigned int *count = nullptr);
 void V_FreeBrokenLines (FBrokenLines *lines);
 inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const char *str, bool preservecolor = false, unsigned int *count = nullptr)
- { return V_BreakLines (font, maxwidth, (const BYTE *)str, preservecolor, count); }
+ { return V_BreakLines (font, maxwidth, (const uint8_t *)str, preservecolor, count); }
 inline FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const FString &str, bool preservecolor = false, unsigned int *count = nullptr)
- { return V_BreakLines (font, maxwidth, (const BYTE *)str.GetChars(), preservecolor, count); }
+ { return V_BreakLines (font, maxwidth, (const uint8_t *)str.GetChars(), preservecolor, count); }
+
+int GetCharFromString(const uint8_t *&string);
 
 #endif //__V_TEXT_H__

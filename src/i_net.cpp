@@ -1,18 +1,22 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id: i_net.c,v 1.2 1997/12/29 19:50:54 pekangas Exp $
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Low-level networking code. Uses BSD sockets for UDP networking.
@@ -37,7 +41,6 @@
 #	define WIN32_LEAN_AND_MEAN
 #	include <windows.h>
 #	include <winsock.h>
-#define USE_WINDOWS_DWORD
 #else
 #	include <sys/socket.h>
 #	include <netinet/in.h>
@@ -99,7 +102,7 @@ typedef int socklen_t;
 static u_short DOOMPORT = (IPPORT_USERRESERVED + 29);
 static SOCKET mysocket = INVALID_SOCKET;
 static sockaddr_in sendaddress[MAXNETNODES];
-static BYTE sendplayer[MAXNETNODES];
+static uint8_t sendplayer[MAXNETNODES];
 
 #ifdef __WIN32__
 const char *neterror (void);
@@ -125,24 +128,24 @@ enum
 
 struct PreGamePacket
 {
-	BYTE Fake;
-	BYTE Message;
-	BYTE NumNodes;
+	uint8_t Fake;
+	uint8_t Message;
+	uint8_t NumNodes;
 	union
 	{
-		BYTE ConsoleNum;
-		BYTE NumPresent;
+		uint8_t ConsoleNum;
+		uint8_t NumPresent;
 	};
 	struct
 	{
-		DWORD	address;
-		WORD	port;
-		BYTE	player;
-		BYTE	pad;
+		uint32_t address;
+		uint16_t port;
+		uint8_t	player;
+		uint8_t	pad;
 	} machines[MAXNETNODES];
 };
 
-BYTE TransmitBuffer[TRANSMIT_SIZE];
+uint8_t TransmitBuffer[TRANSMIT_SIZE];
 
 //
 // UDPsocket
@@ -452,7 +455,7 @@ void StartNetwork (bool autoPort)
 
 void SendAbort (void)
 {
-	BYTE dis[2] = { PRE_FAKE, PRE_DISCONNECT };
+	uint8_t dis[2] = { PRE_FAKE, PRE_DISCONNECT };
 	int i, j;
 
 	if (doomcom.numnodes > 1)
@@ -515,7 +518,7 @@ bool Host_CheckForConnects (void *userdata)
 			{
 				if (node == -1)
 				{
-					const BYTE *s_addr_bytes = (const BYTE *)&from->sin_addr;
+					const uint8_t *s_addr_bytes = (const uint8_t *)&from->sin_addr;
 					StartScreen->NetMessage ("Got extra connect from %d.%d.%d.%d:%d",
 						s_addr_bytes[0], s_addr_bytes[1], s_addr_bytes[2], s_addr_bytes[3],
 						from->sin_port);

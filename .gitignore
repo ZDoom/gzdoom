@@ -46,4 +46,11 @@
 /build_vc2015
 /build_vc2015-32
 /build_vc2015-64
+/build_vc2017-64
 /build
+/llvm
+/src/r_drawersasm.obj
+/src/r_drawersasm.o
+.vs
+/src/gl/unused
+/mapfiles_release/*.map

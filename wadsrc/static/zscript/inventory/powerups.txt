@@ -7,6 +7,10 @@ class PowerupGiver : Inventory
 	Name Mode;			// Meaning depends on powerup - used for Invulnerability and Invisibility
 	double Strength;	// Meaning depends on powerup - currently used only by Invisibility
 	
+	property prefix: Powerup;
+	property Strength: Strength;
+	property Mode: Mode;
+	
 	Default
 	{
 		Inventory.DefMaxAmount;
@@ -67,6 +71,9 @@ class Powerup : Inventory
 	int Colormap;
 	const SPECIALCOLORMAP_MASK =  0x00b60000;
 
+	property Strength: Strength;
+	property Mode: Mode;
+	
 	// Note, that while this is an inventory flag, it only has meaning on an active powerup.
 	override bool GetNoTeleportFreeze() 
 	{ 
@@ -86,7 +93,7 @@ class Powerup : Inventory
 		{
 			Destroy ();
 		}
-		if (EffectTics > 0 && --EffectTics == 0)
+		if (EffectTics == 0 || (EffectTics > 0 && --EffectTics == 0))
 		{
 			Destroy ();
 		}
@@ -174,7 +181,7 @@ class Powerup : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
 		return NULL;
 	}
@@ -262,21 +269,15 @@ class Powerup : Inventory
 
 	//===========================================================================
 	//
-	// APowerup :: DrawPowerup
+	// AInventory :: GetPowerupIcon
+	//
+	// Returns the icon that should be drawn for an active powerup.
 	//
 	//===========================================================================
 
-	override bool DrawPowerup (int x, int y)
+	virtual clearscope version("2.5") TextureID GetPowerupIcon() const
 	{
-		if (!Icon.isValid())
-		{
-			return false;
-		}
-		if (!isBlinking())
-		{
-			screen.DrawHUDTexture(Icon, x, y);
-		}
-		return true;
+		return Icon;
 	}
 
 	//===========================================================================
@@ -285,7 +286,7 @@ class Powerup : Inventory
 	//
 	//===========================================================================
 
-	virtual bool isBlinking()
+	virtual clearscope bool isBlinking() const
 	{
 		return (EffectTics <= BLINKTHRESHOLD && (EffectTics & 8) && !bNoScreenBlink);
 	}
@@ -934,7 +935,7 @@ class PowerFlight : Powerup
 		+INVENTORY.HUBPOWER
 	}
 
-	bool HitCenterFrame;
+	clearscope bool HitCenterFrame;
 
 	//===========================================================================
 	//
@@ -1004,50 +1005,46 @@ class PowerFlight : Powerup
 	//
 	//===========================================================================
 
-	override bool DrawPowerup (int x, int y)
+	override TextureID GetPowerupIcon ()
 	{
 		// If this item got a valid icon use that instead of the default spinning wings.
 		if (Icon.isValid())
 		{
-			return Super.DrawPowerup(x, y);
+			return Icon;
 		}
 
-		if (EffectTics > BLINKTHRESHOLD || !(EffectTics & 16))
-		{
-			TextureID picnum = TexMan.CheckForTexture ("SPFLY0", TexMan.Type_MiscPatch);
-			int frame = (level.time/3) & 15;
+		TextureID picnum = TexMan.CheckForTexture ("SPFLY0", TexMan.Type_MiscPatch);
+		int frame = (level.time/3) & 15;
 
-			if (!picnum.isValid())
+		if (!picnum.isValid())
+		{
+			return picnum;
+		}
+		if (Owner.bNoGravity)
+		{
+			if (HitCenterFrame && (frame != 15 && frame != 0))
 			{
-				return false;
-			}
-			if (Owner.bNoGravity)
-			{
-				if (HitCenterFrame && (frame != 15 && frame != 0))
-				{
-					screen.DrawHUDTexture (picnum + 15, x, y);
-				}
-				else
-				{
-					screen.DrawHUDTexture (picnum + frame, x, y);
-					HitCenterFrame = false;
-				}
+				return picnum + 15;
 			}
 			else
 			{
-				if (!HitCenterFrame && (frame != 15 && frame != 0))
-				{
-					screen.DrawHUDTexture (picnum + frame, x, y);
-					HitCenterFrame = false;
-				}
-				else
-				{
-					screen.DrawHUDTexture (picnum+15, x, y);
-					HitCenterFrame = true;
-				}
+				HitCenterFrame = false;
+				return picnum + frame;
 			}
 		}
-		return true;
+		else
+		{
+			if (!HitCenterFrame && (frame != 15 && frame != 0))
+			{
+				HitCenterFrame = false;
+				return picnum + frame;
+			}
+			else
+			{
+				HitCenterFrame = true;
+				return picnum+15;
+			}
+		}
 	}
 
 	
@@ -1298,6 +1295,9 @@ class PowerTargeter : Powerup
 		InitEffect ();
 	}
 
+	const POS_X = 160 - 3;
+	const POS_Y = 100 - 3;
+
 	override void InitEffect ()
 	{
 		// Why is this called when the inventory isn't even attached yet
@@ -1321,10 +1321,10 @@ class PowerTargeter : Powerup
 			player.SetPsprite(PSprite.TARGETRIGHT, stat + 2);
 		}
 
-		player.GetPSprite(PSprite.TARGETCENTER).x = (160-3);
-		player.GetPSprite(PSprite.TARGETCENTER).y =
-			player.GetPSprite(PSprite.TARGETLEFT).y =
-			player.GetPSprite(PSprite.TARGETRIGHT).y = (100-3);
+		PSprite center = player.GetPSprite(PSprite.TARGETCENTER);
+		center.x = POS_X;
+		center.y = POS_Y;
+
 		PositionAccuracy ();
 	}
 
@@ -1400,8 +1400,13 @@ class PowerTargeter : Powerup
 
 		if (player != null)
 		{
-			player.GetPSprite(PSprite.TARGETLEFT).x = (160-3) - ((100 - player.mo.accuracy));
-			player.GetPSprite(PSprite.TARGETRIGHT).x = (160-3)+ ((100 - player.mo.accuracy));
+			PSprite left = player.GetPSprite(PSprite.TARGETLEFT);
+			left.x = POS_X - (100 - player.mo.accuracy);
+			left.y = POS_Y;
+
+			PSprite right = player.GetPSprite(PSprite.TARGETRIGHT);
+			right.x = POS_X + (100 - player.mo.accuracy);
+			right.y = POS_Y;
 		}
 	}
 	
@@ -1452,26 +1457,6 @@ class PowerBuddha : Powerup
 	Default
 	{
 		Powerup.Duration -60;
-	}
-
-	override void InitEffect ()
-	{
-		Super.InitEffect();
-
-		if (Owner== null || Owner.player == null)
-			return;
-
-		Owner.player.cheats |= CF_BUDDHA;
-	}
-
-	override void EndEffect ()
-	{
-		Super.EndEffect();
-
-		if (Owner== null || Owner.player == null)
-			return;
-
-		Owner.player.cheats &= ~CF_BUDDHA;
 	}
 }
 
@@ -1767,7 +1752,7 @@ class PowerProtection : Powerup
 	{
 		if (passive && damage > 0)
 		{
-			newdamage = max(1, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
+			newdamage = max(0, ApplyDamageFactors(GetClass(), damageType, damage, damage / 4));
 			if (Owner != null && newdamage < damage) Owner.A_PlaySound(ActiveSound, CHAN_AUTO, 1.0, false, ATTN_NONE);
 		}
 	}
@@ -1783,32 +1768,9 @@ class PowerDrain : Powerup
 {
 	Default
 	{
+		Powerup.Strength 0.5;
 		Powerup.Duration -60;
 	}
-	
-	override void InitEffect()
-	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player the power to drain life from opponents when he damages them.
-			Owner.player.cheats |= CF_DRAIN;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the drain power.
-			Owner.player.cheats &= ~CF_DRAIN;
-		}
-	}
-	
 }
 
 //===========================================================================
@@ -1846,27 +1808,9 @@ class PowerRegeneration : Powerup
 
 class PowerHighJump : Powerup
 {
-	override void InitEffect()
+	Default
 	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player the power to jump much higher.
-			Owner.player.cheats |= CF_HIGHJUMP;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the high jump power.
-			Owner.player.cheats &= ~CF_HIGHJUMP;
-		}
+		Powerup.Strength 2;
 	}
 }
 
@@ -1878,27 +1822,9 @@ class PowerHighJump : Powerup
 
 class PowerDoubleFiringSpeed : Powerup
 {
-	override void InitEffect()
+	Default
 	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player the power to shoot twice as fast.
-			Owner.player.cheats |= CF_DOUBLEFIRINGSPEED;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the shooting twice as fast power.
-			Owner.player.cheats &= ~CF_DOUBLEFIRINGSPEED;
-		}
+		Powerup.Duration -40;
 	}
 }
 
@@ -1914,28 +1840,25 @@ class PowerInfiniteAmmo : Powerup
 	{
 		Powerup.Duration -30;
 	}
+}
+
+
+//===========================================================================
+//
+// InfiniteAmmo
+//
+//===========================================================================
+
+class PowerReflection : Powerup
+{
+	// if 1, reflects the damage type as well.
+	bool ReflectType;
+	property ReflectType : ReflectType;
 	
-	override void InitEffect()
+	Default
 	{
-		Super.InitEffect();
-
-		if (Owner!= null && Owner.player != null)
-		{
-			// Give the player infinite ammo
-			Owner.player.cheats |= CF_INFINITEAMMO;
-		}
-	}
-
-	override void EndEffect()
-	{
-		Super.EndEffect();
-
-		// Nothing to do if there's no owner.
-		if (Owner!= null && Owner.player != null)
-		{
-			// Take away the limitless ammo
-			Owner.player.cheats &= ~CF_INFINITEAMMO;
-		}
+		Powerup.Duration -60;
+		DamageFactor 0.5;
 	}
 }
 

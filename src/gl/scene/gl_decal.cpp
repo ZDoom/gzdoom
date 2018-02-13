@@ -29,6 +29,7 @@
 #include "gl/system/gl_system.h"
 #include "a_sharedglobal.h"
 #include "r_utility.h"
+#include "g_levellocals.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/data/gl_data.h"
@@ -37,6 +38,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
@@ -160,7 +162,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	
 	FColormap p = Colormap;
 	
-	if (glset.nocoloredspritelighting)
+	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 	{
 		p.Decolorize();
 	}
@@ -282,12 +284,12 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	}
 
 	// calculate dynamic light effect.
-	if (gl_lights && GLRenderer->mLightCount && !gl_fixedcolormap && gl_light_sprites)
+	if (gl_lights && GLRenderer->mLightCount && !mDrawer->FixedColormap && gl_light_sprites)
 	{
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;
 		decal->GetXY(seg->sidedef, x, y);
-		gl_SetDynSpriteLight(NULL, x, y, zpos, sub);
+		gl_SetDynSpriteLight(nullptr, x, y, zpos - decalheight * 0.5f, sub);
 	}
 
 	// alpha color only has an effect when using an alpha texture.
@@ -308,7 +310,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	else gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
 
 
-	gl_SetColor(light, rel, p, a);
+	mDrawer->SetColor(light, rel, p, a);
 	// for additively drawn decals we must temporarily set the fog color to black.
 	PalEntry fc = gl_RenderState.GetFogColor();
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -344,9 +346,9 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 				FColormap thiscm;
 				thiscm.FadeColor = Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&(*lightlist)[k]);
-				gl_SetColor(thisll, rel, thiscm, a);
-				if (glset.nocoloredspritelighting) thiscm.Decolorize();
-				gl_SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
+				mDrawer->SetColor(thisll, rel, thiscm, a);
+				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
+				mDrawer->SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
 				gl_RenderState.SetSplitPlanes((*lightlist)[k].plane, lowplane);
 
 				gl_RenderState.Apply();
@@ -378,7 +380,7 @@ void GLWall::DoDrawDecals()
 		}
 		else
 		{
-			gl_SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
+			mDrawer->SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
 		}
 
 		DBaseDecal *decal = seg->sidedef->AttachedDecals;

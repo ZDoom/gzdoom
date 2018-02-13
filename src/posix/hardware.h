@@ -74,7 +74,7 @@ class IVideo
 	virtual EDisplayType GetDisplayType () = 0;
 	virtual void SetWindowedScale (float scale) = 0;
 
-	virtual DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old) = 0;
+	virtual DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old) = 0;
 
 	virtual void StartModeIterator (int bits, bool fs) = 0;
 	virtual bool NextMode (int *width, int *height, bool *letterbox) = 0;

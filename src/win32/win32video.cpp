@@ -55,7 +55,6 @@
 #include <stdio.h>
 #include <ctype.h>
 
-#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 
 #include "c_dispatch.h"
@@ -69,18 +68,17 @@
 #include "m_argv.h"
 #include "r_defs.h"
 #include "v_text.h"
-#include "r_swrenderer.h"
+#include "swrenderer/r_swrenderer.h"
 #include "version.h"
 
 #include "win32iface.h"
+#include "win32swiface.h"
 
 #include "optwin32.h"
 
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
-
-IMPLEMENT_CLASS(BaseWinFB, true, false)
 
 typedef IDirect3D9 *(WINAPI *DIRECT3DCREATE9FUNC)(UINT SDKVersion);
 typedef HRESULT (WINAPI *DIRECTDRAWCREATEFUNC)(GUID FAR *lpGUID, LPDIRECTDRAW FAR *lplpDD, IUnknown FAR *pUnkOuter);
@@ -189,6 +187,7 @@ bool Win32Video::InitD3D9 ()
 	// Load the Direct3D 9 library.
 	if ((D3D9_dll = LoadLibraryA ("d3d9.dll")) == NULL)
 	{
+		Printf("Unable to load d3d9.dll! Falling back to DirectDraw...\n");
 		return false;
 	}
 
@@ -223,8 +222,8 @@ bool Win32Video::InitD3D9 ()
 
 	// Enumerate available display modes.
 	FreeModes ();
-	AddD3DModes (m_Adapter, D3DFMT_X8R8G8B8);
-	AddD3DModes (m_Adapter, D3DFMT_R5G6B5);
+	AddD3DModes (m_Adapter);
+	AddD3DModes (m_Adapter);
 	if (Args->CheckParm ("-2"))
 	{ // Force all modes to be pixel-doubled.
 		ScaleModes (1);
@@ -250,7 +249,14 @@ d3drelease:
 	D3D = NULL;
 closelib:
 	FreeLibrary (D3D9_dll);
+	Printf("Direct3D acceleration failed! Falling back to DirectDraw...\n");
 	return false;
+}
+
+static HRESULT WINAPI EnumDDModesCB(LPDDSURFACEDESC desc, void *data)
+{
+	((Win32Video *)data)->AddMode(desc->dwWidth, desc->dwHeight, 8, desc->dwHeight, 0);
+	return DDENUMRET_OK;
 }
 
 void Win32Video::InitDDraw ()
@@ -278,7 +284,9 @@ void Win32Video::InitDDraw ()
 	if (FAILED(dderr))
 		I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
 
-	dderr = ddraw1->QueryInterface (IID_IDirectDraw2, (LPVOID*)&DDraw);
+	static const GUID IDIRECTDRAW2_GUID = { 0xB3A6F3E0, 0x2B43, 0x11CF, 0xA2, 0xDE, 0x00, 0xAA, 0x00, 0xB9, 0x33, 0x56 };
+
+	dderr = ddraw1->QueryInterface (IDIRECTDRAW2_GUID, (LPVOID*)&DDraw);
 	if (FAILED(dderr))
 	{
 		ddraw1->Release ();
@@ -317,13 +325,6 @@ void Win32Video::InitDDraw ()
 	}
 	else
 	{
-		if (OSPlatform == os_Win95)
-		{
-			// Windows 95 will let us use Mode X. If we didn't find any linear
-			// modes in the loop above, add the Mode X modes here.
-			AddMode (320, 200, 8, 200, 0);
-			AddMode (320, 240, 8, 240, 0);
-		}
 		AddLowResModes ();
 	}
 	AddLetterboxModes ();
@@ -436,23 +437,20 @@ void Win32Video::DumpAdapters()
 
 // Mode enumeration --------------------------------------------------------
 
-HRESULT WINAPI Win32Video::EnumDDModesCB (LPDDSURFACEDESC desc, void *data)
+void Win32Video::AddD3DModes (unsigned adapter)
 {
-	((Win32Video *)data)->AddMode (desc->dwWidth, desc->dwHeight, 8, desc->dwHeight, 0);
-	return DDENUMRET_OK;
-}
-
-void Win32Video::AddD3DModes (UINT adapter, D3DFORMAT format)
-{
-	UINT modecount, i;
-	D3DDISPLAYMODE mode;
-
-	modecount = D3D->GetAdapterModeCount (adapter, format);
-	for (i = 0; i < modecount; ++i)
+	for (D3DFORMAT format : { D3DFMT_X8R8G8B8, D3DFMT_R5G6B5})
 	{
-		if (D3D_OK == D3D->EnumAdapterModes (adapter, format, i, &mode))
+		UINT modecount, i;
+		D3DDISPLAYMODE mode;
+
+		modecount = D3D->GetAdapterModeCount(adapter, format);
+		for (i = 0; i < modecount; ++i)
 		{
-			AddMode (mode.Width, mode.Height, 8, mode.Height, 0);
+			if (D3D_OK == D3D->EnumAdapterModes(adapter, format, i, &mode))
+			{
+				AddMode(mode.Width, mode.Height, 8, mode.Height, 0);
+			}
 		}
 	}
 }
@@ -632,7 +630,7 @@ bool Win32Video::NextMode (int *width, int *height, bool *letterbox)
 	return false;
 }
 
-DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscreen, DFrameBuffer *old)
+DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
 {
 	static int retry = 0;
 	static int owidth, oheight;
@@ -653,13 +651,13 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		BaseWinFB *fb = static_cast<BaseWinFB *> (old);
 		if (fb->Width == width &&
 			fb->Height == height &&
-			fb->Windowed == !fullscreen)
+			fb->Windowed == !fullscreen &&
+			fb->Bgra == bgra)
 		{
 			return old;
 		}
 		old->GetFlash (flashColor, flashAmount);
-		old->ObjectFlags |= OF_YesReallyDelete;
-		if (old == screen) screen = NULL;
+		if (old == screen) screen = nullptr;
 		delete old;
 	}
 	else
@@ -670,12 +668,13 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 
 	if (D3D != NULL)
 	{
-		fb = new D3DFB (m_Adapter, width, height, fullscreen);
+		fb = new D3DFB (m_Adapter, width, height, bgra, fullscreen);
 	}
 	else
 	{
 		fb = new DDrawFB (width, height, fullscreen);
 	}
+
 	LOG1 ("New fb created @ %p\n", fb);
 
 	// If we could not create the framebuffer, try again with slightly
@@ -695,7 +694,6 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 			{
 				hr = fb->GetHR ();
 			}
-			fb->ObjectFlags |= OF_YesReallyDelete;
 			delete fb;
 
 			LOG1 ("fb is bad: %08lx\n", hr);
@@ -734,7 +732,7 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool fullscr
 		}
 
 		++retry;
-		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, fullscreen, NULL));
+		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, bgra, fullscreen, NULL));
 	}
 	retry = 0;
 
@@ -756,15 +754,15 @@ void Win32Video::SetWindowedScale (float scale)
 //
 //==========================================================================
 
-void BaseWinFB::ScaleCoordsFromWindow(SWORD &x, SWORD &y)
+void BaseWinFB::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 {
 	RECT rect;
 
 	int TrueHeight = GetTrueHeight();
 	if (GetClientRect(Window, &rect))
 	{
-		x = SWORD(x * Width / (rect.right - rect.left));
-		y = SWORD(y * TrueHeight / (rect.bottom - rect.top));
+		x = int16_t(x * Width / (rect.right - rect.left));
+		y = int16_t(y * TrueHeight / (rect.bottom - rect.top));
 	}
 	// Subtract letterboxing borders
 	y -= (TrueHeight - Height) / 2;
@@ -822,7 +820,7 @@ void I_SetFPSLimit(int limit)
 		{
 			CloseHandle(FPSLimitEvent);
 			FPSLimitEvent = NULL;
-			Printf("Failed to create FPS limitter timer\n");
+			Printf("Failed to create FPS limiter timer\n");
 			return;
 		}
 		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", period);
@@ -840,4 +838,12 @@ void I_SetFPSLimit(int limit)
 static void StopFPSLimit()
 {
 	I_SetFPSLimit(0);
+}
+
+void I_FPSLimit()
+{
+	if (FPSLimitEvent != NULL)
+	{
+		WaitForSingleObject(FPSLimitEvent, 1000);
+	}
 }

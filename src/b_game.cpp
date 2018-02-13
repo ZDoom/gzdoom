@@ -1,3 +1,37 @@
+/*
+**
+**
+**---------------------------------------------------------------------------
+** Copyright 1999 Martin Colberg
+** Copyright 1999-2016 Randy Heit
+** Copyright 2005-2016 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 /*******************************************
 * B_game.h                                 *
 * Description:                             *
@@ -62,6 +96,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 #include "d_player.h"
 #include "doomerrors.h"
 #include "events.h"
+#include "vm.h"
 
 static FRandom pr_botspawn ("BotSpawn");
 
@@ -309,7 +344,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	return true;
 }
 
-void FCajunMaster::TryAddBot (BYTE **stream, int player)
+void FCajunMaster::TryAddBot (uint8_t **stream, int player)
 {
 	int botshift = ReadByte (stream);
 	char *info = ReadString (stream);
@@ -332,7 +367,7 @@ void FCajunMaster::TryAddBot (BYTE **stream, int player)
 		}
 	}
 
-	if (DoAddBot ((BYTE *)info, skill))
+	if (DoAddBot ((uint8_t *)info, skill))
 	{
 		//Increment this.
 		botnum++;
@@ -353,7 +388,7 @@ void FCajunMaster::TryAddBot (BYTE **stream, int player)
 	delete[] info;
 }
 
-bool FCajunMaster::DoAddBot (BYTE *info, botskill_t skill)
+bool FCajunMaster::DoAddBot (uint8_t *info, botskill_t skill)
 {
 	int bnum;
 
@@ -374,7 +409,7 @@ bool FCajunMaster::DoAddBot (BYTE *info, botskill_t skill)
 	D_ReadUserInfoStrings (bnum, &info, false);
 
 	multiplayer = true; //Prevents cheating and so on; emulates real netgame (almost).
-	players[bnum].Bot = new DBot;
+	players[bnum].Bot = Create<DBot>();
 	players[bnum].Bot->player = &players[bnum];
 	players[bnum].Bot->skill = skill;
 	playeringame[bnum] = true;
@@ -387,11 +422,6 @@ bool FCajunMaster::DoAddBot (BYTE *info, botskill_t skill)
 		Printf ("%s joined the game\n", players[bnum].userinfo.GetName());
 
 	G_DoReborn (bnum, true);
-	if (StatusBar != NULL)
-	{
-		StatusBar->MultiplayerChanged ();
-	}
-
 	return true;
 }
 
@@ -502,13 +532,9 @@ bool FCajunMaster::LoadBots ()
 		DPrintf (DMSG_ERROR, "No " BOTFILENAME ", so no bots\n");
 		return false;
 	}
-	try
+	if (!sc.OpenFile(tmp))
 	{
-		sc.OpenFile(tmp);
-	}
-	catch (CRecoverableError &err)
-	{
-		Printf("%s. So no bots\n", err.GetMessage());
+		Printf("Unable to open %s. So no bots\n", tmp.GetChars());
 		return false;
 	}
 
@@ -564,7 +590,7 @@ bool FCajunMaster::LoadBots ()
 			case BOTCFG_TEAM:
 				{
 					char teamstr[16];
-					BYTE teamnum;
+					uint8_t teamnum;
 
 					sc.MustGetString ();
 					if (IsNum (sc.String))
@@ -631,4 +657,12 @@ ADD_STAT (bots)
 		BotThinkCycles.TimeMS(), BotSupportCycles.TimeMS(),
 		BotWTG);
 	return out;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, RemoveAllBots)
+{
+	PARAM_PROLOGUE;
+	PARAM_BOOL(fromlist);
+	bglobal.RemoveAllBots(fromlist);
+	return 0;
 }

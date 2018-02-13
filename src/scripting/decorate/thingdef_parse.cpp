@@ -52,7 +52,6 @@
 #include "backend/codegen.h"
 #include "w_wad.h"
 #include "v_video.h"
-#include "version.h"
 #include "v_text.h"
 #include "m_argv.h"
 
@@ -70,6 +69,10 @@ EXTERN_CVAR(Bool, strictdecorate);
 
 PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FName typeName)
 {
+	if (parent->VMType->mVersion > MakeVersion(2, 0))
+	{
+		sc.Message(MSG_ERROR, "Parent class %s of %s not accessible to DECORATE", parent->TypeName.GetChars(), typeName.GetChars());
+	}
 	PClassActor *type = static_cast<PClassActor *>(parent->CreateDerivedClass(typeName, parent->Size));
 	if (type == nullptr)
 	{
@@ -94,6 +97,14 @@ PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FN
 			sc.Message(MSG_FATAL, "Tried to define class '%s' more than twice in the same file.", typeName.GetChars());
 		}
 	}
+	
+	if (type != nullptr)
+	{
+		// [ZZ] DECORATE classes are always play
+		auto vmtype = type->VMType;
+		vmtype->ScopeFlags = FScopeBarrier::ChangeSideInObjectFlags(vmtype->ScopeFlags, FScopeBarrier::Side_Play);
+	}
+
 	return type;
 }
 
@@ -192,7 +203,7 @@ FxExpression *ParseParameter(FScanner &sc, PClassActor *cls, PType *type)
 			x = new FxRuntimeStateIndex(ParseExpression(sc, cls));
 		}
 	}
-	else if (type->GetClass() == RUNTIME_CLASS(PClassPointer))
+	else if (type->isClassPointer())
 	{	// Actor name
 		sc.SetEscape(true);
 		sc.MustGetString();
@@ -244,12 +255,12 @@ static void ParseConstant (FScanner &sc, PSymbolTable *symt, PClassActor *cls, P
 			PSymbolConstNumeric *sym;
 			if (type == TK_Int)
 			{
-				sym = new PSymbolConstNumeric(symname, TypeSInt32);
+				sym = Create<PSymbolConstNumeric>(symname, TypeSInt32);
 				sym->Value = val.GetInt();
 			}
 			else
 			{
-				sym = new PSymbolConstNumeric(symname, TypeFloat64);
+				sym = Create<PSymbolConstNumeric>(symname, TypeFloat64);
 				sym->Float = val.GetFloat();
 			}
 			if (symt->AddSymbol (sym) == NULL)
@@ -307,7 +318,7 @@ static void ParseEnum (FScanner &sc, PSymbolTable *symt, PClassActor *cls, PName
 				FScriptPosition::ErrorCounter++;
 			}
 		}
-		PSymbolConstNumeric *sym = new PSymbolConstNumeric(symname, TypeSInt32);
+		PSymbolConstNumeric *sym = Create<PSymbolConstNumeric>(symname, TypeSInt32);
 		sym->Value = currvalue;
 		if (symt->AddSymbol (sym) == NULL)
 		{
@@ -572,7 +583,7 @@ static FState *CheckState(FScanner &sc, PClass *type)
 			FState *state = NULL;
 			sc.MustGetString();
 
-			PClassActor *info = dyn_cast<PClassActor>(type->ParentClass);
+			PClassActor *info = ValidateActor(type->ParentClass);
 
 			if (info != NULL)
 			{
@@ -828,7 +839,7 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 		if (i > 0) sc.MustGetStringName(",");
 		if (f->Flags & VARF_Meta)
 		{
-			addr = ((char*)bag.Info) + f->Offset;
+			addr = ((char*)bag.Info->Meta) + f->Offset;
 		}
 		else
 		{
@@ -855,36 +866,44 @@ static void DispatchScriptProperty(FScanner &sc, PProperty *prop, AActor *defaul
 			if (sc.CheckNumber()) *(int*)addr = sc.Number;
 			else *(PalEntry*)addr = V_GetColor(nullptr, sc);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PInt)))
+		else if (f->Type->isIntCompatible())
 		{
 			sc.MustGetNumber();
 			static_cast<PInt*>(f->Type)->SetValue(addr, sc.Number);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PFloat)))
+		else if (f->Type->isFloat())
 		{
 			sc.MustGetFloat();
 			static_cast<PFloat*>(f->Type)->SetValue(addr, sc.Float);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PString)))
+		else if (f->Type == TypeString)
 		{
 			sc.MustGetString();
-			*(FString*)addr = sc.String;
+			*(FString*)addr = strbin1(sc.String);
 		}
-		else if (f->Type->IsKindOf(RUNTIME_CLASS(PClassPointer)))
+		else if (f->Type->isClassPointer())
 		{
 			sc.MustGetString();
-			auto cls = PClass::FindClass(sc.String);
-			*(PClass**)addr = cls;
-			if (cls == nullptr)
+
+			if (*sc.String == 0 || !stricmp(sc.String, "none"))
 			{
-				cls = static_cast<PClassPointer*>(f->Type)->ClassRestriction->FindClassTentative(sc.String);
+				*(PClass**)addr = nullptr;
 			}
-			else if (!cls->IsDescendantOf(static_cast<PClassPointer*>(f->Type)->ClassRestriction))
+			else
 			{
-				sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, static_cast<PClassPointer*>(f->Type)->ClassRestriction->TypeName.GetChars());
-				FScriptPosition::ErrorCounter++;
+				auto cls = PClass::FindClass(sc.String);
+				auto cp = static_cast<PClassPointer*>(f->Type);
+				if (cls == nullptr)
+				{
+					cls = cp->ClassRestriction->FindClassTentative(sc.String);
+				}
+				else if (!cls->IsDescendantOf(cp->ClassRestriction))
+				{
+					sc.ScriptMessage("class %s is not compatible with property type %s", sc.String, cp->ClassRestriction->TypeName.GetChars());
+					FScriptPosition::ErrorCounter++;
+				}
+				*(PClass**)addr = cls;
 			}
-			*(PClass**)addr = cls;
 		}
 		else
 		{
@@ -947,7 +966,7 @@ static void ParseActorProperty(FScanner &sc, Baggage &bag)
 		FName name(propname, true);
 		if (name != NAME_None)
 		{
-			auto propp = dyn_cast<PProperty>(bag.Info->Symbols.FindSymbol(name, true));
+			auto propp = dyn_cast<PProperty>(bag.Info->FindSymbol(name, true));
 			if (propp != nullptr)
 			{
 				DispatchScriptProperty(sc, propp, (AActor *)bag.Info->Defaults, bag);
@@ -982,7 +1001,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 				sc.Message(MSG_ERROR, "'%s' inherits from a class with the same name", typeName.GetChars());
 				break;
 			}
-			p = dyn_cast<PClassActor>(p->ParentClass);
+			p = ValidateActor(p->ParentClass);
 		}
 
 		if (parent == NULL)
@@ -999,8 +1018,7 @@ PClassActor *CreateNewActor(const FScriptPosition &sc, FName typeName, FName par
 	ti = DecoDerivedClass(sc, parent, typeName);
 	ti->bDecorateClass = true;	// we only set this for 'modern' DECORATE. The original stuff  is so limited that it cannot do anything that may require flagging.
 
-	ti->Replacee = ti->Replacement = NULL;
-	ti->DoomEdNum = -1;
+	ti->ActorInfo()->DoomEdNum = -1;
 	return ti;
 }
 
@@ -1092,7 +1110,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 	try
 	{
 		PClassActor *info = CreateNewActor(sc, typeName, parentName);
-		info->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
+		info->ActorInfo()->DoomEdNum = DoomEdNum > 0 ? DoomEdNum : -1;
 		info->SourceLumpName = Wads.GetLumpFullPath(sc.LumpNum);
 
 		if (!info->SetReplacement(replaceName))
@@ -1100,7 +1118,7 @@ static PClassActor *ParseActorHeader(FScanner &sc, Baggage *bag)
 			sc.ScriptMessage("Replaced type '%s' not found for %s", replaceName.GetChars(), info->TypeName.GetChars());
 		}
 
-		ResetBaggage (bag, info == RUNTIME_CLASS(AActor) ? NULL : static_cast<PClassActor *>(info->ParentClass));
+		ResetBaggage (bag, ValidateActor(info->ParentClass));
 		bag->Info = info;
 		bag->Lumpnum = sc.LumpNum;
 #ifdef _DEBUG
@@ -1126,6 +1144,7 @@ static void ParseActor(FScanner &sc, PNamespace *ns)
 	Baggage bag;
 
 	bag.Namespace = ns;
+	bag.Version = { 2, 0, 0 };	
 	bag.fromDecorate = true;
 	info = ParseActorHeader(sc, &bag);
 	sc.MustGetToken('{');
@@ -1134,15 +1153,15 @@ static void ParseActor(FScanner &sc, PNamespace *ns)
 		switch (sc.TokenType)
 		{
 		case TK_Const:
-			ParseConstant (sc, &info->Symbols, info, ns);
+			ParseConstant (sc, &info->VMType->Symbols, info, ns);
 			break;
 
 		case TK_Enum:
-			ParseEnum (sc, &info->Symbols, info, ns);
+			ParseEnum (sc, &info->VMType->Symbols, info, ns);
 			break;
 
 		case TK_Var:
-			ParseUserVariable (sc, &info->Symbols, info, ns);
+			ParseUserVariable (sc, &info->VMType->Symbols, info, ns);
 			break;
 
 		case TK_Identifier:

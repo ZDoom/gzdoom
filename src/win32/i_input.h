@@ -37,13 +37,8 @@
 #include "doomtype.h"
 #include "doomdef.h"
 
-void I_SetMouseCapture();
-void I_ReleaseMouseCapture();
-
 bool I_InitInput (void *hwnd);
 void I_ShutdownInput ();
-void I_PutInClipboard (const char *str);
-FString I_GetFromClipboard (bool windows_has_no_selection_clipboard);
 
 void I_GetEvent();
 
@@ -56,10 +51,11 @@ enum
 };
 
 
-#ifdef USE_WINDOWS_DWORD
+#ifdef _WIN32
 #include "m_joy.h"
 
 // Don't make these definitions available to the main body of the source code.
+
 
 struct tagRAWINPUT;
 
@@ -89,7 +85,7 @@ protected:
 
 	int WheelMove[2];
 	int LastX, LastY;	// for m_filter
-	WORD ButtonState;	// bit mask of current button states (1=down, 0=up)
+	int ButtonState;	// bit mask of current button states (1=down, 0=up)
 };
 
 class FKeyboard : public FInputDevice
@@ -101,7 +97,7 @@ public:
 	void AllKeysUp();
 
 protected:
-	BYTE KeyStates[256/8];
+	uint8_t KeyStates[256/8];
 
 	int CheckKey(int keynum) const
 	{

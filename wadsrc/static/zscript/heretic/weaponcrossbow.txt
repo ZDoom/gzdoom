@@ -129,6 +129,7 @@ class CrossbowFX1 : Actor
 		SeeSound "weapons/bowshoot";
 		DeathSound "weapons/bowhit";
 		Obituary "$OB_MPCROSSBOW";
+		+ZDOOMTRANS
 	}
 
 	States

@@ -4,6 +4,7 @@
 #include "tarray.h"
 #include "r_defs.h"
 #include "m_bbox.h"
+#include "dthinker.h"
 
 class DPolyAction : public DThinker
 {
@@ -22,7 +23,7 @@ protected:
 	int m_PolyObj;
 	double m_Speed;
 	double m_Dist;
-	TObjPtr<DInterpolation> m_Interpolation;
+	TObjPtr<DInterpolation*> m_Interpolation;
 
 	void SetInterpolation();
 };
@@ -83,12 +84,12 @@ struct FPolyObj
 	int			crush; 			// should the polyobj attempt to crush mobjs?
 	bool		bHurtOnTouch;	// should the polyobj hurt anything it touches?
 	bool		bBlocked;
-	BYTE		bHasPortals;	// 1 for any portal, 2 for a linked portal (2 must block rotations.)
+	uint8_t		bHasPortals;	// 1 for any portal, 2 for a linked portal (2 must block rotations.)
 	int			seqType;
 	double		Size;			// polyobj size (area of POLY_AREAUNIT == size of FRACUNIT)
 	FPolyNode	*subsectorlinks;
-	TObjPtr<DPolyAction> specialdata;	// pointer to a thinker, if the poly is moving
-	TObjPtr<DInterpolation> interpolation;
+	TObjPtr<DPolyAction*> specialdata;	// pointer to a thinker, if the poly is moving
+	TObjPtr<DInterpolation*> interpolation;
 
 	FPolyObj();
 	DInterpolation *SetInterpolation();

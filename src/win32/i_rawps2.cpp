@@ -1,3 +1,36 @@
+/*
+**
+**
+**---------------------------------------------------------------------------
+** Copyright 2005-2016 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
@@ -6,7 +39,6 @@
 #include <malloc.h>
 #include <limits.h>
 
-#define USE_WINDOWS_DWORD
 #include "i_input.h"
 #include "i_system.h"
 #include "d_event.h"
@@ -101,7 +133,7 @@ protected:
 		float DeadZone;
 		float Multiplier;
 		EJoyAxis GameAxis;
-		BYTE ButtonValue;
+		uint8_t ButtonValue;
 	};
 	struct DefaultAxisConfig
 	{
@@ -126,7 +158,7 @@ protected:
 	float Multiplier;
 	AxisInfo Axes[NUM_AXES];
 	static DefaultAxisConfig DefaultAxes[NUM_AXES];
-	WORD LastButtons;
+	int LastButtons;
 	bool Connected;
 	bool Marked;
 	bool Active;
@@ -167,22 +199,22 @@ protected:
 struct PS2Descriptor
 {
 	const char *AdapterName;
-	 BYTE PacketSize;
-	SBYTE ControllerNumber;
-	SBYTE ControllerStatus;
-	 BYTE LeftX;
-	 BYTE LeftY;
-	 BYTE RightX;
-	 BYTE RightY;
-	SBYTE DPadHat;
-	 BYTE DPadButtonsNibble:1;
-	SBYTE DPadButtons:7;		// up, right, down, left
-	 BYTE ButtonSet1:7;			// triangle, circle, cross, square
-	 BYTE ButtonSet1Nibble:1;
-	 BYTE ButtonSet2:7;			// L2, R2, L1, R1
-	 BYTE ButtonSet2Nibble:1;
-	 BYTE ButtonSet3:7;			// select, start, lthumb, rthumb
-	 BYTE ButtonSet3Nibble:1;
+	 uint8_t PacketSize;
+	int8_t ControllerNumber;
+	int8_t ControllerStatus;
+	 uint8_t LeftX;
+	 uint8_t LeftY;
+	 uint8_t RightX;
+	 uint8_t RightY;
+	int8_t DPadHat;
+	 uint8_t DPadButtonsNibble:1;
+	int8_t DPadButtons:7;		// up, right, down, left
+	 uint8_t ButtonSet1:7;			// triangle, circle, cross, square
+	 uint8_t ButtonSet1Nibble:1;
+	 uint8_t ButtonSet2:7;			// L2, R2, L1, R1
+	 uint8_t ButtonSet2Nibble:1;
+	 uint8_t ButtonSet3:7;			// select, start, lthumb, rthumb
+	 uint8_t ButtonSet3Nibble:1;
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -229,7 +261,7 @@ static const int ButtonKeys[16] =
 	KEY_PAD_RTHUMB
 };
 
-static const BYTE HatButtons[16] =
+static const uint8_t HatButtons[16] =
 {
 	1, 1+2, 2, 2+4, 4, 4+8, 8, 8+1,
 	0, 0, 0, 0, 0, 0, 0, 0
@@ -390,9 +422,9 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 	// w32api has an incompatible definition of bRawData.
 	// (But the version that comes with MinGW64 is fine.)
 #if defined(__GNUC__) && !defined(__MINGW64_VERSION_MAJOR)
-	BYTE *rawdata = &raw->bRawData;
+	uint8_t *rawdata = &raw->bRawData;
 #else
-	BYTE *rawdata = raw->bRawData;
+	uint8_t *rawdata = raw->bRawData;
 #endif
 	const PS2Descriptor *desc = &Descriptors[Type];
 	bool digital;
@@ -481,7 +513,7 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 	}
 
 	// Generate events for buttons that have changed.
-	WORD buttons = 0;
+	int buttons = 0;
 	
 	// If we know we are digital, ignore the D-Pad.
 	if (!digital)
@@ -515,7 +547,7 @@ bool FRawPS2Controller::ProcessInput(RAWHID *raw, int code)
 
 void FRawPS2Controller::ProcessThumbstick(int value1, AxisInfo *axis1, int value2, AxisInfo *axis2, int base)
 {
-	BYTE buttonstate;
+	uint8_t buttonstate;
 	double axisval1, axisval2;
 	
 	axisval1 = value1 * (2.0 / 255) - 1.0;

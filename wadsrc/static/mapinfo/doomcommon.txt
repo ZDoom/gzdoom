@@ -21,12 +21,12 @@ gameinfo
 	defkickback = 100
 	skyflatname = "F_SKY1"
 	translator = "xlat/doom.txt"
-	mapinfo = "mapinfo/doom2.txt"
 	defaultbloodcolor = "68 00 00"
 	defaultbloodparticlecolor = "ff 00 00"
 	backpacktype = "Backpack"
 	armoricons = "ARM1A0", 0.5, "ARM2A0"
-	statusbar = "sbarinfo/doom.txt"
+	//statusbar = "sbarinfo/doom.txt"
+	statusbarclass = "DoomStatusBar"
 	intermissionmusic = "$MUSIC_DM2INT"
 	intermissioncounter = true
 	weaponslot = 1, "Fist", "Chainsaw"
@@ -38,6 +38,8 @@ gameinfo
 	weaponslot = 7, "BFG9000"
 	dimcolor = "ff d7 00"
 	dimamount = 0.2
+	bluramount = 0.0
+	menuslidercolor = "Orange"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -65,6 +67,10 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedpatch = "WIF"
 	statscreen_enteringpatch = "WIENTER"
+	statscreen_coop = "CoopStatusScreen"
+	statscreen_dm = "DeathmatchStatusScreen"
+	statscreen_single = "DoomStatusScreen"
+	messageboxclass = "MessageBoxMenu"
 }
 
 spawnnums

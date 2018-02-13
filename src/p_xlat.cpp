@@ -45,6 +45,7 @@
 #include "sc_man.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "xlat/xlat.h"
 
 // define names for the TriggerType field of the general linedefs
@@ -63,13 +64,13 @@ typedef enum
 
 void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 {
-	unsigned short special = (unsigned short) LittleShort(mld->special);
-	short tag = LittleShort(mld->tag);
-	DWORD flags = LittleShort(mld->flags);
+	uint32_t special = mld->special;
+	short tag = mld->tag;
+	uint32_t flags =mld->flags;
 	INTBOOL passthrough = 0;
 
-	DWORD flags1 = flags;
-	DWORD newflags = 0;
+	uint32_t flags1 = flags;
+	uint32_t newflags = 0;
 
 	for(int i=0;i<16;i++)
 	{
@@ -223,7 +224,7 @@ void P_TranslateLineDef (line_t *ld, maplinedef_t *mld, int lineindexforid)
 				FBoomArg *arg = &b->Args[j];
 				int *destp;
 				int flagtemp;
-				BYTE val = 0;	// quiet, GCC
+				uint8_t val = 0;	// quiet, GCC
 				bool found;
 
 				if (arg->ArgNum < 4)

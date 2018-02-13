@@ -23,9 +23,21 @@ class Inventory : Actor native
 	native bool bPickupGood;
 	native bool bCreateCopyMoved;
 	native bool bInitEffectFailed;
-	native meta String PickupMsg;
-	native /*meta*/ int GiveQuest;
+	meta String PickupMsg;
+	meta int GiveQuest;
+	meta array<class<Actor> > ForbiddenToPlayerClass;
+	meta array<class<Actor> > RestrictedToPlayerClass;
 	
+	property PickupMessage: PickupMsg;
+	property GiveQuest: GiveQuest;
+	property Amount: Amount;
+	property InterHubAmount: InterHubAmount;
+	property MaxAmount: MaxAmount;
+	property PickupFlash: PickupFlash;
+	property PickupSound: PickupSound;
+	property UseSound: UseSound;
+	property RespawnTics: RespawnTics;
+		
 	Default
 	{
 		Inventory.Amount 1;
@@ -36,14 +48,13 @@ class Inventory : Actor native
 		Inventory.PickupMessage "$TXT_DEFAULTPICKUPMSG";
 	}
 	
-	native bool CanPickup(Actor toucher);
 	native bool DoRespawn();
 	native void BecomeItem();
 	native void BecomePickup();
 	native void ModifyDropAmount(int dropamount);
 	native static void PrintPickupMessage (bool localview, String str);
 
-	States(Actor, Overlay, Weapon, Item)
+	States(Actor)
 	{
 	HideDoomish:
 		TNT1 A 1050;
@@ -255,7 +266,7 @@ class Inventory : Actor native
 			if (copy.bInitEffectFailed)
 			{
 				if (copy != self) copy.Destroy();
-				else bInitEffectFailed;
+				else bInitEffectFailed = false;
 				return false;
 			}
 			// Handle owner-changing powerups
@@ -318,6 +329,36 @@ class Inventory : Actor native
 				toucher.GiveInventoryType (type);
 			}
 		}
+	}
+
+	//===========================================================================
+	//
+	// AInventory :: CanPickup
+	//
+	//===========================================================================
+	
+	virtual bool CanPickup(Actor toucher)
+	{
+		if (toucher == null) return false;
+
+		int rsize = RestrictedToPlayerClass.Size();
+		if (rsize > 0)
+		{
+			for (int i=0; i < rsize; i++)
+			{
+				if (toucher is RestrictedToPlayerClass[i]) return true;
+			}
+			return false;
+		}
+		rsize = ForbiddenToPlayerClass.Size();
+		if (rsize > 0)
+		{
+			for (int i=0; i < rsize; i++)
+			{
+				if (toucher is ForbiddenToPlayerClass[i]) return false;
+			}
+		}
+		return true;
 	}
 
 	//===========================================================================
@@ -440,7 +481,7 @@ class Inventory : Actor native
 	//
 	//===========================================================================
 
-	virtual Inventory CreateTossable ()
+	virtual Inventory CreateTossable (int amt = -1)
 	{
 		// If self actor lacks a SpawnState, don't drop it. (e.g. A base weapon
 		// like the fist can't be dropped because you'll never see it.)
@@ -448,7 +489,7 @@ class Inventory : Actor native
 		{
 			return NULL;
 		}
-		if (bUndroppable || bUntossable || Owner == NULL || Amount <= 0)
+		if (bUndroppable || bUntossable || Owner == NULL || Amount <= 0 || amt == 0)
 		{
 			return NULL;
 		}
@@ -462,11 +503,13 @@ class Inventory : Actor native
 		let copy = Inventory(Spawn (GetClass(), Owner.Pos, NO_REPLACE));
 		if (copy != NULL)
 		{
+			amt = clamp(amt, 1, Amount);
+			
 			copy.MaxAmount = MaxAmount;
-			copy.Amount = 1;
+			copy.Amount = amt;
 			copy.DropTime = 30;
 			copy.bSpecial = copy.bSolid = false;
-			Amount--;
+			Amount -= amt;
 		}
 		return copy;
 	}
@@ -746,7 +789,7 @@ class Inventory : Actor native
 	virtual bool Use (bool pickup) { return false; }
 	virtual double GetSpeedFactor() { return 1; }
 	virtual bool GetNoTeleportFreeze() { return false; }
-	virtual void AlterWeaponSprite(VisStyle vis, in out int changed) {}
+	virtual version("2.4") ui void AlterWeaponSprite(VisStyle vis, in out int changed) {}
 	virtual void OwnerDied() {}
 	virtual Color GetBlend () { return 0; }
 
@@ -808,12 +851,12 @@ class Inventory : Actor native
 	//
 	// AInventory :: DrawPowerup
 	//
-	// Gives self item a chance to draw a special status indicator on the screen.
-	// Returns false if it didn't draw anything.
+	// This has been deprecated because it is not how this should be done
+	// Use GetPowerupIcon instead!
 	//
 	//===========================================================================
 
-	virtual bool DrawPowerup(int x, int y) { return false; }
+	virtual ui version("2.4") bool DrawPowerup(int x, int y) { return false; }
 
 	//===========================================================================
 	//
@@ -841,6 +884,25 @@ class Inventory : Actor native
 	virtual bool SpecialDropAction (Actor dropper)
 	{
 		return false;
+	}
+
+	//===========================================================================
+	//
+	// AInventory :: NextInv
+	//
+	// Returns the next item with IF_INVBAR set.
+	//
+	//===========================================================================
+
+	clearscope Inventory NextInv () const
+	{
+		Inventory item = Inv;
+
+		while (item != NULL && !item.bInvBar)
+		{
+			item = item.Inv;
+		}
+		return item;
 	}
 
 	

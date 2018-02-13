@@ -32,22 +32,14 @@
 **
 */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <mmsystem.h>
-#else
+#ifndef _WIN32
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
-#include <wordexp.h>
-#include <stdio.h>
 #include "mus2midi.h"
-#define FALSE 0
-#define TRUE 1
 extern void ChildSigHandler (int signum);
 #endif
 
@@ -67,10 +59,10 @@ extern void ChildSigHandler (int signum);
 #include "s_sound.h"
 #include "m_swap.h"
 #include "i_cd.h"
-#include "tempfiles.h"
 #include "templates.h"
 #include "stats.h"
 #include "timidity/timidity.h"
+#include "vm.h"
 
 #define GZIP_ID1		31
 #define GZIP_ID2		139
@@ -92,14 +84,14 @@ enum EMIDIType
 	MIDI_MUS
 };
 
-extern int MUSHeaderSearch(const BYTE *head, int len);
+extern int MUSHeaderSearch(const uint8_t *head, int len);
 
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Int, snd_mididevice)
 
 static bool MusicDown = true;
 
-static bool ungzip(BYTE *data, int size, TArray<BYTE> &newdata);
+static bool ungzip(uint8_t *data, int size, TArray<uint8_t> &newdata);
 
 MusInfo *currSong;
 int		nomusic = 0;
@@ -190,9 +182,6 @@ void I_ShutdownMusic(bool onexit)
 	}
 	Timidity::FreeAll();
 	if (onexit) WildMidi_Shutdown();
-#ifdef _WIN32
-	I_ShutdownMusicWin32();
-#endif // _WIN32
 }
 
 void I_ShutdownMusicExit()
@@ -279,6 +268,10 @@ void MusInfo::TimidityVolumeChanged()
 {
 }
 
+void MusInfo::GMEDepthChanged(float val)
+{
+}
+
 void MusInfo::FluidSettingInt(const char *, int)
 {
 }
@@ -343,11 +336,11 @@ static MIDIStreamer *CreateMIDIStreamer(FileReader &reader, EMidiDevice devtype,
 //
 //==========================================================================
 
-static EMIDIType IdentifyMIDIType(DWORD *id, int size)
+static EMIDIType IdentifyMIDIType(uint32_t *id, int size)
 {
 	// Check for MUS format
 	// Tolerate sloppy wads by searching up to 32 bytes for the header
-	if (MUSHeaderSearch((BYTE*)id, size) >= 0)
+	if (MUSHeaderSearch((uint8_t*)id, size) >= 0)
 	{
 		return MIDI_MUS;
 	}
@@ -396,7 +389,7 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 {
 	MusInfo *info = NULL;
 	const char *fmt;
-	DWORD id[32/4];
+	uint32_t id[32/4];
 
 	if (nomusic)
 	{
@@ -416,7 +409,7 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 	if ((id[0] & MAKE_ID(255, 255, 255, 0)) == GZIP_ID)
 	{
 		int len = reader->GetLength();
-		BYTE *gzipped = new BYTE[len];
+		uint8_t *gzipped = new uint8_t[len];
 		if (reader->Read(gzipped, len) != len)
 		{
 			delete[] gzipped;
@@ -477,7 +470,7 @@ retry_as_sndsys:
 	else if (
 		(id[0] == MAKE_ID('R','A','W','A') && id[1] == MAKE_ID('D','A','T','A')) ||		// Rdos Raw OPL
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
-		(id[0] == MAKE_ID('A','D','L','I') && *((BYTE *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
+		(id[0] == MAKE_ID('A','D','L','I') && *((uint8_t *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
 		info = new OPLMUSSong (*reader, device != NULL? device->args.GetChars() : "");
 	}
@@ -491,13 +484,18 @@ retry_as_sndsys:
 	{
 		info = MOD_OpenSong(*reader);
 	}
+	if (info == nullptr)
+	{
+		info = SndFile_OpenSong(*reader);
+		if (info != nullptr) reader = nullptr;
+	}
 
     if (info == NULL)
     {
         // Check for CDDA "format"
         if (id[0] == (('R')|(('I')<<8)|(('F')<<16)|(('F')<<24)))
         {
-            DWORD subid;
+            uint32_t subid;
 
             reader->Seek(8, SEEK_CUR);
             if (reader->Read (&subid, 4) != 4)
@@ -560,25 +558,6 @@ MusInfo *I_RegisterCDSong (int track, int id)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-MusInfo *I_RegisterURLSong (const char *url)
-{
-	StreamSong *song;
-
-	song = new StreamSong(url);
-	if (song->IsValid())
-	{
-		return song;
-	}
-	delete song;
-	return NULL;
-}
-
-//==========================================================================
-//
 // ungzip
 //
 // VGZ files are compressed with gzip, so we need to uncompress them before
@@ -586,11 +565,11 @@ MusInfo *I_RegisterURLSong (const char *url)
 //
 //==========================================================================
 
-static bool ungzip(BYTE *data, int complen, TArray<BYTE> &newdata)
+static bool ungzip(uint8_t *data, int complen, TArray<uint8_t> &newdata)
 {
-	const BYTE *max = data + complen - 8;
-	const BYTE *compstart = data + 10;
-	BYTE flags = data[3];
+	const uint8_t *max = data + complen - 8;
+	const uint8_t *compstart = data + 10;
+	uint8_t flags = data[3];
 	unsigned isize;
 	z_stream stream;
 	int err;
@@ -598,7 +577,7 @@ static bool ungzip(BYTE *data, int complen, TArray<BYTE> &newdata)
 	// Find start of compressed data stream
 	if (flags & GZIP_FEXTRA)
 	{
-		compstart += 2 + LittleShort(*(WORD *)(data + 10));
+		compstart += 2 + LittleShort(*(uint16_t *)(data + 10));
 	}
 	if (flags & GZIP_FNAME)
 	{
@@ -624,7 +603,7 @@ static bool ungzip(BYTE *data, int complen, TArray<BYTE> &newdata)
 	}
 
 	// Decompress
-	isize = LittleLong(*(DWORD *)(data + complen - 4));
+	isize = LittleLong(*(uint32_t *)(data + complen - 4));
     newdata.Resize(isize);
 
 	stream.next_in = (Bytef *)compstart;
@@ -729,7 +708,7 @@ ADD_STAT(music)
 //
 //==========================================================================
 
-CCMD (writeopl)
+UNSAFE_CCMD (writeopl)
 {
 	if (argv.argc() == 2)
 	{
@@ -767,7 +746,7 @@ CCMD (writeopl)
 //
 //==========================================================================
 
-CCMD (writewave)
+UNSAFE_CCMD (writewave)
 {
 	if (argv.argc() >= 2 && argv.argc() <= 3)
 	{
@@ -805,7 +784,7 @@ CCMD (writewave)
 //
 //==========================================================================
 
-CCMD (writemidi)
+UNSAFE_CCMD (writemidi)
 {
 	if (argv.argc() != 2)
 	{
@@ -823,19 +802,18 @@ CCMD (writemidi)
 		return;
 	}
 
-	TArray<BYTE> midi;
-	FILE *f;
+	TArray<uint8_t> midi;
 	bool success;
 
 	static_cast<MIDIStreamer *>(currSong)->CreateSMF(midi, 1);
-	f = fopen(argv[1], "wb");
+	auto f = FileWriter::Open(argv[1]);
 	if (f == NULL)
 	{
 		Printf("Could not open %s.\n", argv[1]);
 		return;
 	}
-	success = (fwrite(&midi[0], 1, midi.Size(), f) == (size_t)midi.Size());
-	fclose (f);
+	success = (f->Write(&midi[0], midi.Size()) == (size_t)midi.Size());
+	delete f;
 
 	if (!success)
 	{

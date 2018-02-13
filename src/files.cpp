@@ -33,9 +33,7 @@
 **
 */
 
-#ifdef _WIN32
-#define USE_WINDOWS_DWORD
-#endif
+// This also pulls in windows.h
 #include "LzmaDec.h"
 
 #include "files.h"
@@ -51,6 +49,11 @@
 // reads data from an uncompressed file or part of it
 //
 //==========================================================================
+
+FILE *FileReader::openfd(const char *filename)
+{
+	return fopen(filename, "rb");
+}
 
 FileReader::FileReader ()
 : File(NULL), Length(0), StartPos(0), FilePos(0), CloseOnDestruct(false)
@@ -84,18 +87,23 @@ FileReader::FileReader (FILE *file, long length)
 	FilePos = StartPos = ftell (file);
 }
 
-FileReader::~FileReader ()
+FileReader::~FileReader()
+{
+	Close();
+}
+
+void FileReader::Close()
 {
 	if (CloseOnDestruct && File != NULL)
 	{
 		fclose (File);
-		File = NULL;
 	}
+	File = NULL;
 }
 
 bool FileReader::Open (const char *filename)
 {
-	File = fopen (filename, "rb");
+	File = openfd (filename);
 	if (File == NULL) return false;
 	FilePos = 0;
 	StartPos = 0;
@@ -385,14 +393,14 @@ struct FileReaderLZMA::StreamPointer
 	CLzmaDec Stream;
 };
 
-static void *SzAlloc(void *, size_t size) { return malloc(size); }
-static void SzFree(void *, void *address) { free(address); }
+static void *SzAlloc(ISzAllocPtr, size_t size) { return malloc(size); }
+static void SzFree(ISzAllocPtr, void *address) { free(address); }
 ISzAlloc g_Alloc = { SzAlloc, SzFree };
 
 FileReaderLZMA::FileReaderLZMA (FileReader &file, size_t uncompressed_size, bool zip)
 : File(file), SawEOF(false)
 {
-	BYTE header[4 + LZMA_PROPS_SIZE];
+	uint8_t header[4 + LZMA_PROPS_SIZE];
 	int err;
 
 	assert(zip == true);
@@ -629,6 +637,30 @@ size_t FileWriter::Write(const void *buffer, size_t len)
 	if (File != NULL)
 	{
 		return fwrite(buffer, 1, len, File);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+long FileWriter::Tell()
+{
+	if (File != NULL)
+	{
+		return ftell(File);
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+long FileWriter::Seek(long offset, int mode)
+{
+	if (File != NULL)
+	{
+		return fseek(File, offset, mode);
 	}
 	else
 	{

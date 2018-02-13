@@ -38,11 +38,10 @@
 #include "dobject.h"
 #include "v_collection.h"
 #include "v_text.h"
+#include "r_data/renderstyle.h"
 
 class player_t;
 struct FRemapTable;
-
-extern int SB_state;
 
 enum EHudState
 {
@@ -54,8 +53,6 @@ enum EHudState
 };
 
 class AWeapon;
-
-void ST_SetNeedRefresh();
 
 bool ST_IsTimeVisible();
 bool ST_IsLatencyVisible();
@@ -69,7 +66,7 @@ class DHUDMessage : public DObject
 public:
 	DHUDMessage (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime);
-	virtual ~DHUDMessage ();
+	virtual void OnDestroy () override;
 
 	virtual void Serialize(FSerializer &arc);
 
@@ -133,8 +130,8 @@ protected:
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
-	TObjPtr<DHUDMessage> Next;
-	DWORD SBarID;
+	TObjPtr<DHUDMessage*> Next;
+	uint32_t SBarID;
 	char *SourceText;
 
 	friend class DBaseStatusBar;
@@ -225,11 +222,11 @@ struct FMugShotFrame
 
 struct FMugShotState
 {
-	BYTE bUsesLevels:1;
-	BYTE bHealth2:1;		// Health level is the 2nd character from the end.
-	BYTE bHealthSpecial:1;	// Like health2 only the 2nd frame gets the normal health type.
-	BYTE bDirectional:1;	// Faces direction of damage.
-	BYTE bFinished:1;
+	uint8_t bUsesLevels:1;
+	uint8_t bHealth2:1;		// Health level is the 2nd character from the end.
+	uint8_t bHealthSpecial:1;	// Like health2 only the 2nd frame gets the normal health type.
+	uint8_t bDirectional:1;	// Faces direction of damage.
+	uint8_t bFinished:1;
 
 	unsigned int Position;
 	int Time;
@@ -340,12 +337,32 @@ public:
 		ST_DEADFACE			= ST_GODFACE + 1
 	};
 
-	DBaseStatusBar (int reltop, int hres=320, int vres=200);
+
+	enum EAlign
+	{
+		TOP = 0,
+		VCENTER = 1,
+		BOTTOM = 2,
+		VOFFSET = 3,
+		VMASK = 3,
+
+		LEFT = 0,
+		HCENTER = 4,
+		RIGHT = 8,
+		HOFFSET = 12,
+		HMASK = 12,
+
+		CENTER = VCENTER | HCENTER,
+		CENTER_BOTTOM = BOTTOM | HCENTER
+	};
+
+	DBaseStatusBar ();
+	void SetSize(int reltop = 32, int hres = 320, int vres = 200, int hhres = -1, int hvres = -1);
 	void OnDestroy() override;
 
-	void AttachMessage (DHUDMessage *msg, uint32 id=0, int layer=HUDMSGLayer_Default);
+	void AttachMessage (DHUDMessage *msg, uint32_t id=0, int layer=HUDMSGLayer_Default);
 	DHUDMessage *DetachMessage (DHUDMessage *msg);
-	DHUDMessage *DetachMessage (uint32 id);
+	DHUDMessage *DetachMessage (uint32_t id);
 	void DetachAllMessages ();
 	void ShowPlayerName ();
 	double GetDisplacement() { return Displacement; }
@@ -356,84 +373,102 @@ public:
 	// do not make this a DObject Serialize function because it's not used like one!
 	void SerializeMessages(FSerializer &arc);
 
-	virtual void SetScaled(bool scale, bool force = false);
+	void SetScale();
 	virtual void Tick ();
+	void CallTick();
 	virtual void Draw (EHudState state);
+	void CallDraw(EHudState state);
 			void DrawBottomStuff (EHudState state);
 			void DrawTopStuff (EHudState state);
-	virtual void FlashItem (const PClass *itemtype);
-	virtual void AttachToPlayer (player_t *player);
+	void FlashItem (const PClass *itemtype);
+	void AttachToPlayer(player_t *player);
+	DVector2 GetHUDScale() const;
 	virtual void FlashCrosshair ();
 	virtual void BlendView (float blend[4]);
-	virtual void NewGame ();
+	void NewGame ();
 	virtual void ScreenSizeChanged ();
-	virtual void MultiplayerChanged ();
-	virtual void SetInteger (int pname, int param);
-	virtual void ShowPop (int popnum);
-	virtual void ReceivedWeapon (AWeapon *weapon);
+	void CallScreenSizeChanged();
+	void ShowPop (int popnum);
 	virtual bool MustDrawLog(EHudState state);
 	virtual void SetMugShotState (const char *state_name, bool wait_till_done=false, bool reset=false);
 	void DrawLog();
+	uint32_t GetTranslation() const;
 
-	void GetCoords(int &x, int &y)
+	void DrawGraphic(FTextureID texture, double x, double y, int flags, double Alpha, double boxwidth, double boxheight, double scaleX, double scaleY);
+	void DrawString(FFont *font, const FString &cstring, double x, double y, int flags, double Alpha, int translation, int spacing, bool monospaced, int shadowX, int shadowY);
+	void TransformRect(double &x, double &y, double &w, double &h, int flags = 0);
+	void Fill(PalEntry color, double x, double y, double w, double h, int flags = 0);
+	void SetClipRect(double x, double y, double w, double h, int flags = 0);
+
+	void BeginStatusBar(int resW, int resH, int relTop, bool forceScaled);
+	void BeginHUD(int resW, int resH, double Alpha, bool forceScaled = false);
+	bool ForceHUDScale(bool on) { std::swap(ForcedScale, on); return on; }	// This is for SBARINFO which should not use BeginStatusBar or BeginHUD.
+	void StatusbarToRealCoords(double &x, double &y, double &w, double &h) const;
+	int GetTopOfStatusbar() const
 	{
-		x = ST_X;
-		y = ST_Y;
+		return SBarTop;
 	}
 
-
-protected:
+//protected:
 	void DrawPowerups ();
 
 	
 	void RefreshBackground () const;
 
-	void GetCurrentAmmo (AInventory *&ammo1, AInventory *&ammo2, int &ammocount1, int &ammocount2) const;
-
 public:
+
 	AInventory *ValidateInvFirst (int numVisible) const;
 	void DrawCrosshair ();
 
-	int ST_X, ST_Y;
+	// Sizing info for ths status bar.
+	int ST_X;
+	int ST_Y;
+	int SBarTop;
+	DVector2 SBarScale;
 	int RelTop;
 	int HorizontalResolution, VerticalResolution;
-	bool Scaled;
+	bool Scaled;							// This needs to go away.
+	DVector2 defaultScale;					// factor for fully scaled fullscreen display.
+	bool ForcedScale = false;
+
 	bool Centering;
 	bool FixedOrigin;
 	bool CompleteBorder;
 	double CrosshairSize;
 	double Displacement;
-
-	enum
-	{
-		imgLAME = 0,
-		imgNEGATIVE = 1,
-		imgINumbers = 2,
-		imgBNEGATIVE = 12,
-		imgBNumbers = 13,
-		imgSmNumbers = 23,
-		NUM_BASESB_IMAGES = 33
-	};
-	FImageCollection Images;
+	bool ShowLog;
+	int artiflashTick = 0;
+	double itemflashFade = 0.75;
 
 	player_t *CPlayer;
 
+	double Alpha = 1.;
+	DVector2 drawOffset = { 0,0 };			// can be set by subclasses to offset drawing operations
+	double drawClip[4] = { 0,0,0,0 };		// defines a clipping rectangle (not used yet)
+	bool fullscreenOffsets = false;			// current screen is displayed with fullscreen behavior.
+	FMugShot mugshot;
+
 private:
-	DBaseStatusBar() {}
 	bool RepositionCoords (int &x, int &y, int xo, int yo, const int w, const int h) const;
 	void DrawMessages (int layer, int bottom);
 	void DrawConsistancy () const;
 	void DrawWaiting () const;
+	void SetDrawSize(int reltop, int hres, int vres);
 
-	TObjPtr<DHUDMessage> Messages[NUM_HUDMSGLAYERS];
-	bool ShowLog;
+	TObjPtr<DHUDMessage*> Messages[NUM_HUDMSGLAYERS];
+
+	int BaseRelTop;
+	int BaseSBarHorizontalResolution;
+	int BaseSBarVerticalResolution;
+	int BaseHUDHorizontalResolution;
+	int BaseHUDVerticalResolution;
+
 };
 
 extern DBaseStatusBar *StatusBar;
 
 // Status bar factories -----------------------------------------------------
 
-DBaseStatusBar *CreateStrifeStatusBar();
 DBaseStatusBar *CreateCustomStatusBar(int script=0);
 
 // Crosshair stuff ----------------------------------------------------------
@@ -441,9 +476,11 @@ DBaseStatusBar *CreateCustomStatusBar(int script=0);
 void ST_FormatMapName(FString &mapname, const char *mapnamecolor = "");
 void ST_LoadCrosshair(bool alwaysload=false);
 void ST_Clear();
+void ST_CreateStatusBar(bool bTitleLevel);
 extern FTexture *CrosshairImage;
 
-FTextureID GetInventoryIcon(AInventory *item, DWORD flags, bool *applyscale);
+FTextureID GetInventoryIcon(AInventory *item, uint32_t flags, bool *applyscale);
+
 
 enum DI_Flags
 {
@@ -452,11 +489,74 @@ enum DI_Flags
 	DI_SKIPSPAWN = 0x4,
 	DI_SKIPREADY = 0x8,
 	DI_ALTICONFIRST = 0x10,
-	
-	DI_DRAWINBOX = 0x20, // Set when either width or height is not zero
-	
+	DI_TRANSLATABLE = 0x20,
 	DI_FORCESCALE = 0x40,
-	DI_ALTERNATEONFAIL = 0x80
+	DI_DIM = 0x80,
+	DI_DRAWCURSORFIRST = 0x100,	// only for DrawInventoryBar.
+	DI_ALWAYSSHOWCOUNT = 0x200,	// only for DrawInventoryBar.
+	DI_DIMDEPLETED = 0x400,
+	DI_DONTANIMATE = 0x800,		// do not animate the texture
+		
+	DI_SCREEN_AUTO = 0,					// decide based on given offsets.
+	DI_SCREEN_MANUAL_ALIGN = 0x4000,	// If this is on, the following flags will have an effect
+		
+	DI_SCREEN_TOP = DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_VCENTER = 0x8000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_BOTTOM = 0x10000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_VOFFSET = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_VMASK = 0x18000 | DI_SCREEN_MANUAL_ALIGN,
+		
+	DI_SCREEN_LEFT = DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_HCENTER = 0x20000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_RIGHT = 0x40000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_HOFFSET = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+	DI_SCREEN_HMASK = 0x60000 | DI_SCREEN_MANUAL_ALIGN,
+		
+	DI_SCREEN_LEFT_TOP = DI_SCREEN_TOP|DI_SCREEN_LEFT,
+	DI_SCREEN_RIGHT_TOP = DI_SCREEN_TOP|DI_SCREEN_RIGHT,
+	DI_SCREEN_LEFT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_LEFT,
+	DI_SCREEN_RIGHT_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_RIGHT,
+	DI_SCREEN_CENTER = DI_SCREEN_VCENTER|DI_SCREEN_HCENTER,
+	DI_SCREEN_CENTER_BOTTOM = DI_SCREEN_BOTTOM|DI_SCREEN_HCENTER,
+	DI_SCREEN_OFFSETS = DI_SCREEN_HOFFSET|DI_SCREEN_VOFFSET,
+		
+	DI_ITEM_AUTO = 0,		// equivalent with bottom center, which is the default alignment.
+		
+	DI_ITEM_TOP = 0x80000,
+	DI_ITEM_VCENTER = 0x100000,
+	DI_ITEM_BOTTOM = 0,		// this is the default vertical alignment
+	DI_ITEM_VOFFSET = 0x180000,
+	DI_ITEM_VMASK = 0x180000,
+		
+	DI_ITEM_LEFT = 0x200000,
+	DI_ITEM_HCENTER = 0,	// this is the deafault horizontal alignment
+	DI_ITEM_RIGHT = 0x400000,
+	DI_ITEM_HOFFSET = 0x600000,
+	DI_ITEM_HMASK = 0x600000,
+		
+	DI_ITEM_LEFT_TOP = DI_ITEM_TOP|DI_ITEM_LEFT,
+	DI_ITEM_RIGHT_TOP = DI_ITEM_TOP|DI_ITEM_RIGHT,
+	DI_ITEM_LEFT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_LEFT,
+	DI_ITEM_RIGHT_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_RIGHT,
+	DI_ITEM_CENTER = DI_ITEM_VCENTER|DI_ITEM_HCENTER,
+	DI_ITEM_CENTER_BOTTOM = DI_ITEM_BOTTOM|DI_ITEM_HCENTER,
+	DI_ITEM_OFFSETS = DI_ITEM_HOFFSET|DI_ITEM_VOFFSET,
+		
+	DI_TEXT_ALIGN_LEFT = 0,
+	DI_TEXT_ALIGN_RIGHT = 0x800000,
+	DI_TEXT_ALIGN_CENTER = 0x1000000,
+	DI_TEXT_ALIGN = 0x1800000,
+
+	DI_ALPHAMAPPED = 0x2000000,
+	DI_NOSHADOW = 0x4000000,
+	DI_ALWAYSSHOWCOUNTERS = 0x8000000,
+	DI_ARTIFLASH = 0x10000000,
+	DI_FORCEFILL = 0x20000000,
+
+	// These 2 flags are only used by SBARINFO so these duplicate other flags not used by SBARINFO
+	DI_DRAWINBOX = DI_TEXT_ALIGN_RIGHT,
+	DI_ALTERNATEONFAIL = DI_TEXT_ALIGN_CENTER,
+
 };
 
 #endif /* __SBAR_H__ */

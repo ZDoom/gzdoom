@@ -42,10 +42,6 @@
 
 // externally settable lighting properties
 static float distfogtable[2][256];	// light to fog conversion table for black fog
-static PalEntry outsidefogcolor;
-int fogdensity;
-int outsidefogdensity;
-int skyfog;
 
 CVAR(Int, gl_weaponlight, 8, CVAR_ARCHIVE);
 CUSTOM_CVAR(Bool, gl_enhanced_nightvision, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
@@ -59,7 +55,6 @@ CUSTOM_CVAR(Bool, gl_enhanced_nightvision, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
 }
 CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE);
 CVAR(Bool, gl_lightadditivesurfaces, false, CVAR_ARCHIVE);
-CVAR(Bool, gl_attenuate, false, CVAR_ARCHIVE);
 
 
 
@@ -168,23 +163,6 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 
 //==========================================================================
 //
-// Set fog parameters for the level
-//
-//==========================================================================
-void gl_SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog)
-{
-	fogdensity=_fogdensity;
-	outsidefogcolor=_outsidefogcolor;
-	outsidefogdensity=_outsidefogdensity;
-	skyfog=_skyfog;
-
-	outsidefogdensity>>=1;
-	fogdensity>>=1;
-}
-
-
-//==========================================================================
-//
 // Get current light level
 //
 //==========================================================================
@@ -253,7 +231,7 @@ static PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor)
 		g = (mixlight + pe.g * blendfactor) / 255;
 		b = (mixlight + pe.b * blendfactor) / 255;
 	}
-	return PalEntry(255, BYTE(r), BYTE(g), BYTE(b));
+	return PalEntry(255, uint8_t(r), uint8_t(g), uint8_t(b));
 }
 
 //==========================================================================
@@ -261,9 +239,9 @@ static PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor)
 // set current light color
 //
 //==========================================================================
-void gl_SetColor(int sectorlightlevel, int rellight, const FColormap &cm, float alpha, bool weapon)
+void gl_SetColor(int sectorlightlevel, int rellight, bool fullbright, const FColormap &cm, float alpha, bool weapon)
 { 
-	if (gl_fixedcolormap != CM_DEFAULT)
+	if (fullbright)
 	{
 		gl_RenderState.SetColorAlpha(0xffffff, alpha, 0);
 		gl_RenderState.SetSoftLightLevel(255);
@@ -271,8 +249,8 @@ void gl_SetColor(int sectorlightlevel, int rellight, const FColormap &cm, float 
 	else
 	{
 		int hwlightlevel = gl_CalcLightLevel(sectorlightlevel, rellight, weapon);
-		PalEntry pe = gl_CalcLightColor(hwlightlevel, cm.LightColor, cm.blendfactor);
-		gl_RenderState.SetColorAlpha(pe, alpha, cm.desaturation);
+		PalEntry pe = gl_CalcLightColor(hwlightlevel, cm.LightColor, cm.BlendFactor);
+		gl_RenderState.SetColorAlpha(pe, alpha, cm.Desaturation);
 		gl_RenderState.SetSoftLightLevel(gl_ClampLight(sectorlightlevel + rellight));
 	}
 }
@@ -302,7 +280,7 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 	if (glset.lightmode & 4)
 	{
 		// uses approximations of Legacy's default settings.
-		density = fogdensity ? fogdensity : 18;
+		density = level.fogdensity ? level.fogdensity : 18;
 	}
 	else if (sectorfogdensity != 0)
 	{
@@ -312,7 +290,7 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 2: black fog
-		if (glset.lightmode != 8 && !glset.nolightfade)
+		if (glset.lightmode != 8 && !(level.flags3 & LEVEL3_NOLIGHTFADE))
 		{
 			density = distfogtable[glset.lightmode != 0][gl_ClampLight(lightlevel)];
 		}
@@ -321,15 +299,15 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 			density = 0;
 		}
 	}
-	else if (outsidefogdensity != 0 && outsidefogcolor.a != 0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
+	else if (level.outsidefogdensity != 0 && APART(level.info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (level.info->outsidefog & 0xffffff))
 	{
 		// case 3. outsidefogdensity has already been set as needed
-		density = outsidefogdensity;
+		density = level.outsidefogdensity;
 	}
-	else  if (fogdensity != 0)
+	else  if (level.fogdensity != 0)
 	{
 		// case 4: level has fog density set
-		density = fogdensity;
+		density = level.fogdensity;
 	}
 	else if (lightlevel < 248)
 	{
@@ -346,40 +324,6 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 
 //==========================================================================
 //
-// Check fog by current lighting info
-//
-//==========================================================================
-
-bool gl_CheckFog(FColormap *cm, int lightlevel)
-{
-	// Check for fog boundaries. This needs a few more checks for the sectors
-	bool frontfog;
-
-	PalEntry fogcolor = cm->FadeColor;
-
-	if ((fogcolor.d & 0xffffff) == 0)
-	{
-		frontfog = false;
-	}
-	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
-	{
-		frontfog = true;
-	}
-	else  if (fogdensity!=0 || (glset.lightmode & 4))
-	{
-		// case 3: level has fog density set
-		frontfog = true;
-	}
-	else 
-	{
-		// case 4: use light level
-		frontfog = lightlevel < 248;
-	}
-	return frontfog;
-}
-
-//==========================================================================
-//
 // Check if the current linedef is a candidate for a fog boundary
 //
 // Requirements for a fog boundary:
@@ -391,21 +335,23 @@ bool gl_CheckFog(FColormap *cm, int lightlevel)
 
 bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 {
-	if (gl_fixedcolormap) return false;
 	if (frontsector == backsector) return false;	// there can't be a boundary if both sides are in the same sector.
 
 	// Check for fog boundaries. This needs a few more checks for the sectors
 
-	PalEntry fogcolor = frontsector->ColorMap->Fade;
+	PalEntry fogcolor = frontsector->Colormap.FadeColor;
 
 	if ((fogcolor.d & 0xffffff) == 0)
 	{
 		return false;
 	}
-	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
+	else if (fogcolor.a != 0)
 	{
 	}
-	else  if (fogdensity!=0 || (glset.lightmode & 4))
+	else if (level.outsidefogdensity != 0 && APART(level.info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (level.info->outsidefog & 0xffffff))
+	{
+	}
+	else  if (level.fogdensity!=0 || (glset.lightmode & 4))
 	{
 		// case 3: level has fog density set
 	}
@@ -415,16 +361,16 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 		if (frontsector->lightlevel >= 248) return false;
 	}
 
-	fogcolor = backsector->ColorMap->Fade;
+	fogcolor = backsector->Colormap.FadeColor;
 
 	if ((fogcolor.d & 0xffffff) == 0)
 	{
 	}
-	else if (outsidefogdensity != 0 && outsidefogcolor.a!=0xff && (fogcolor.d & 0xffffff) == (outsidefogcolor.d & 0xffffff))
+	else if (level.outsidefogdensity != 0 && APART(level.info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (level.info->outsidefog & 0xffffff))
 	{
 		return false;
 	}
-	else  if (fogdensity!=0 || (glset.lightmode & 4))
+	else  if (level.fogdensity!=0 || (glset.lightmode & 4))
 	{
 		// case 3: level has fog density set
 		return false;
@@ -480,7 +426,7 @@ void gl_SetShaderLight(float level, float olight)
 //
 //==========================================================================
 
-void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
+void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cmap, bool isadditive)
 {
 	PalEntry fogcolor;
 	float fogdensity;
@@ -490,10 +436,10 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		fogdensity=70;
 		fogcolor=0x808080;
 	}
-	else if (cmap != NULL && gl_fixedcolormap == 0)
+	else if (cmap != NULL && !fullbright)
 	{
 		fogcolor = cmap->FadeColor;
-		fogdensity = gl_GetFogDensity(lightlevel, fogcolor, cmap->fogdensity);
+		fogdensity = gl_GetFogDensity(lightlevel, fogcolor, cmap->FogDensity);
 		fogcolor.a=0;
 	}
 	else
@@ -541,18 +487,3 @@ void gl_SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isaddit
 		}
 	}
 }
-
-
-//==========================================================================
-//
-// For testing sky fog sheets
-//
-//==========================================================================
-CCMD(skyfog)
-{
-	if (argv.argc()>1)
-	{
-		skyfog = MAX(0, (int)strtoull(argv[1], NULL, 0));
-	}
-}
-

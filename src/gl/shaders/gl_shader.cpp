@@ -36,16 +36,19 @@
 #include "v_palette.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "vm.h"
+#include "d_player.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "gl/data/gl_data.h"
-#include "gl/data/gl_matrix.h"
+#include "r_data/matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_shaderprogram.h"
+#include "gl/shaders/gl_postprocessshader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
@@ -85,8 +88,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		// This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
-		if (gl.glslversion < 1.4f)
+		if (gl.es)
+		{
+			vp_comb.Format("#version 300 es\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+		}
+		else if (gl.glslversion < 1.4f) // This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
 		{
 			vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
@@ -97,12 +103,21 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	}
 	else
 	{
-		vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+		// This differentiation is for Intel which do not seem to expose the full extension, even if marked as required.
+		if (gl.glslversion < 4.3f)
+			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+		else
+			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
 	}
 
 	if (gl.buffermethod == BM_DEFERRED)
 	{
 		vp_comb << "#define USE_QUAD_DRAWER\n";
+	}
+
+	if (!!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	{
+		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}
 
 	vp_comb << defines << i_data.GetString().GetChars();
@@ -215,6 +230,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muDesaturation.Init(hShader, "uDesaturationFactor");
 	muFogEnabled.Init(hShader, "uFogEnabled");
 	muPalLightLevels.Init(hShader, "uPalLightLevels");
+	muGlobVis.Init(hShader, "uGlobVis");
 	muTextureMode.Init(hShader, "uTextureMode");
 	muCameraPos.Init(hShader, "uCameraPos");
 	muLightParms.Init(hShader, "uLightAttr");
@@ -238,6 +254,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muClipHeight.Init(hShader, "uClipHeight");
 	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
+	muViewHeight.Init(hShader, "uViewHeight");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
@@ -269,6 +286,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		int tempindex = glGetUniformLocation(hShader, stringbuf);
 		if (tempindex > 0) glUniform1i(tempindex, i - 1);
 	}
+
+	int shadowmapindex = glGetUniformLocation(hShader, "ShadowMap");
+	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
 
 	glUseProgram(0);
 	return !!linked;
@@ -373,6 +393,7 @@ static const FDefaultShader defaultshaders[]=
 	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp"},
 	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp"},
 	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp"},
+	{"Software Fuzz", "shaders/glsl/fuzz_software.fp"},
 	{NULL,NULL}
 };
 
@@ -399,8 +420,15 @@ FShaderManager::FShaderManager()
 {
 	if (!gl.legacyMode)
 	{
-		for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
-			mPassShaders.Push(new FShaderCollection((EPassType)passType));
+		if (gl.es) // OpenGL ES does not support multiple fragment shader outputs. As a result, no GBUFFER passes are possible.
+		{
+			mPassShaders.Push(new FShaderCollection(NORMAL_PASS));
+		}
+		else
+		{
+			for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
+				mPassShaders.Push(new FShaderCollection((EPassType)passType));
+		}
 	}
 }
 
@@ -649,61 +677,279 @@ void gl_DestroyUserShaders()
 
 void gl_ParseHardwareShader(FScanner &sc, int deflump)
 {
-	int type = FTexture::TEX_Any;
-	bool disable_fullbright=false;
-	bool thiswad = false;
-	bool iwad = false;
-	int maplump = -1;
-	FString maplumpname;
-	float speed = 1.f;
-
 	sc.MustGetString();
-	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
-	else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
-	else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
-	else sc.UnGet();
-
-	sc.MustGetString();
-	FTextureID no = TexMan.CheckForTexture(sc.String, type);
-	FTexture *tex = TexMan[no];
-
-	sc.MustGetToken('{');
-	while (!sc.CheckToken('}'))
+	if (sc.Compare("postprocess"))
 	{
 		sc.MustGetString();
-		if (sc.Compare("shader"))
+
+		PostProcessShader shaderdesc;
+		shaderdesc.Target = sc.String;
+		shaderdesc.Target.ToLower();
+
+		bool validTarget = false;
+		if (sc.Compare("beforebloom")) validTarget = true;
+		if (sc.Compare("scene")) validTarget = true;
+		if (sc.Compare("screen")) validTarget = true;		
+		if (!validTarget)
+			sc.ScriptError("Invalid target '%s' for postprocess shader",sc.String);
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
 		{
 			sc.MustGetString();
-			maplumpname = sc.String;
-		}
-		else if (sc.Compare("speed"))
-		{
-			sc.MustGetFloat();
-			speed = float(sc.Float);
-		}
-	}
-	if (!tex)
-	{
-		return;
-	}
-
-	if (maplumpname.IsNotEmpty())
-	{
-		if (tex->bWarped != 0)
-		{
-			Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
-			return;
-		}
-		tex->gl_info.shaderspeed = speed; 
-		for(unsigned i=0;i<usershaders.Size();i++)
-		{
-			if (!usershaders[i].CompareNoCase(maplumpname))
+			if (sc.Compare("shader"))
 			{
-				tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
-				return;
+				sc.MustGetString();
+				shaderdesc.ShaderLumpName = sc.String;
+
+				sc.MustGetNumber();
+				shaderdesc.ShaderVersion = sc.Number;
+				if (sc.Number > 450 || sc.Number < 330)
+					sc.ScriptError("Shader version must be in range 330 to 450!");
+			}
+			else if (sc.Compare("name"))
+			{
+				sc.MustGetString();
+				shaderdesc.Name = sc.String;
+			}
+			else if (sc.Compare("uniform"))
+			{
+				sc.MustGetString();
+				FString uniformType = sc.String;
+				uniformType.ToLower();
+
+				sc.MustGetString();
+				FString uniformName = sc.String;
+
+				PostProcessUniformType parsedType = PostProcessUniformType::Undefined;
+
+				if (uniformType.Compare("int") == 0)
+					parsedType = PostProcessUniformType::Int;
+				else if (uniformType.Compare("float") == 0)
+					parsedType = PostProcessUniformType::Float;
+				else if (uniformType.Compare("vec2") == 0)
+					parsedType = PostProcessUniformType::Vec2;
+				else if (uniformType.Compare("vec3") == 0)
+					parsedType = PostProcessUniformType::Vec3;
+				else
+					sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
+
+				if (parsedType != PostProcessUniformType::Undefined)
+					shaderdesc.Uniforms[uniformName].Type = parsedType;
+			}
+			else if (sc.Compare("texture"))
+			{
+				sc.MustGetString();
+				FString textureName = sc.String;
+
+				sc.MustGetString();
+				FString textureSource = sc.String;
+
+				shaderdesc.Textures[textureName] = textureSource;
+			}
+			else if (sc.Compare("enabled"))
+			{
+				shaderdesc.Enabled = true;
+			}
+			else
+			{
+				sc.ScriptError("Unknown keyword '%s'", sc.String);
 			}
 		}
-		tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
-	}	
+
+		PostProcessShaders.Push(shaderdesc);
+	}
+	else
+	{
+		int type = FTexture::TEX_Any;
+
+		if (sc.Compare("texture")) type = FTexture::TEX_Wall;
+		else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
+		else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
+		else sc.UnGet();
+
+		bool disable_fullbright = false;
+		bool thiswad = false;
+		bool iwad = false;
+		int maplump = -1;
+		FString maplumpname;
+		float speed = 1.f;
+
+		sc.MustGetString();
+		FTextureID no = TexMan.CheckForTexture(sc.String, type);
+		FTexture *tex = TexMan[no];
+
+		sc.MustGetToken('{');
+		while (!sc.CheckToken('}'))
+		{
+			sc.MustGetString();
+			if (sc.Compare("shader"))
+			{
+				sc.MustGetString();
+				maplumpname = sc.String;
+			}
+			else if (sc.Compare("speed"))
+			{
+				sc.MustGetFloat();
+				speed = float(sc.Float);
+			}
+		}
+		if (!tex)
+		{
+			return;
+		}
+
+		if (maplumpname.IsNotEmpty())
+		{
+			if (tex->bWarped != 0)
+			{
+				Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
+				return;
+			}
+			tex->gl_info.shaderspeed = speed;
+			for (unsigned i = 0; i < usershaders.Size(); i++)
+			{
+				if (!usershaders[i].CompareNoCase(maplumpname))
+				{
+					tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
+					return;
+				}
+			}
+			tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
+		}
+	}
 }
 
+static bool IsConsolePlayer(player_t *player)
+{
+	AActor *activator = player ? player->mo : nullptr;
+	if (activator == nullptr || activator->player == nullptr)
+		return false;
+	return int(activator->player - players) == consoleplayer;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_BOOL_DEF(value);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+				shader.Enabled = value;
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(value);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = value;
+				vec4[1] = 0.0;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform2f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = x;
+				vec4[1] = y;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform3f)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_FLOAT_DEF(x);
+	PARAM_FLOAT_DEF(y);
+	PARAM_FLOAT_DEF(z);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = x;
+				vec4[1] = y;
+				vec4[2] = z;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
+{
+	PARAM_PROLOGUE;
+	PARAM_POINTER_DEF(player, player_t);
+	PARAM_STRING(shaderName);
+	PARAM_STRING(uniformName);
+	PARAM_INT_DEF(value);
+
+	if (IsConsolePlayer(player))
+	{
+		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
+		{
+			PostProcessShader &shader = PostProcessShaders[i];
+			if (shader.Name == shaderName)
+			{
+				double *vec4 = shader.Uniforms[uniformName].Values;
+				vec4[0] = (double)value;
+				vec4[1] = 0.0;
+				vec4[2] = 0.0;
+				vec4[3] = 1.0;
+			}
+		}
+	}
+	return 0;
+}

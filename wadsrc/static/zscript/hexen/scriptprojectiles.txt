@@ -11,6 +11,7 @@ class FireBall : Actor
 		DamageType "Fire";
 		+NOBLOCKMAP +NOGRAVITY +DROPOFF +MISSILE
 		+NOTELEPORT
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		DeathSound "Fireball";
 	}

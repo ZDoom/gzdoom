@@ -40,13 +40,21 @@ class PunchDagger : StrifeWeapon
 	action void A_JabDagger ()
 	{
 		FTranslatedLineTarget t;
-
-		int power = MIN(10, stamina / 10);
-		int damage = (random[JabDagger]() % (power + 8)) * (power + 2);
-
-		if (FindInventory("PowerStrength"))
+		int damage;
+		
+		if (FindInventory("SVETalismanPowerup"))
 		{
-			damage *= 10;
+			damage = 1000;
+		}
+		else
+		{
+			int power = MIN(10, stamina / 10);
+			damage = (random[JabDagger]() % (power + 8)) * (power + 2);
+
+			if (FindInventory("PowerStrength"))
+			{
+				damage *= 10;
+			}
 		}
 
 		double angle = angle + random2[JabDagger]() * (5.625 / 256);

@@ -1,6 +1,7 @@
 #ifndef __SECTORE_H
 #define __SECTORE_H
 
+#include "r_data/colormaps.h"
 
 // 3D floor flags. Most are the same as in Legacy but I added some for EDGE's and Vavoom's features as well.
 typedef enum
@@ -37,11 +38,7 @@ typedef enum
 } ffloortype_e;
 
 // This is for the purpose of Sector_SetContents:
-#ifdef _MSC_VER
-enum : unsigned int // MSVC is apparently the only compiler that supports this syntax
-#else
-enum
-#endif
+enum : unsigned int
 {
 	VC_EMPTY = 0, // Here's the original values of the color shifts in Vavoom, and in ARGB:
 	VC_WATER	 = 0x80825032,	// 130, 80, 50, 128		-> 80.82.50.32 (was 0x101080)
@@ -60,7 +57,9 @@ enum
 
 struct secplane_t;
 struct FDynamicColormap;
-
+struct line_t;
+struct sector_t;
+class AActor;
 
 struct F3DFloor
 {
@@ -95,13 +94,8 @@ struct F3DFloor
 	int					lastlight;
 	int					alpha;
 
-	// kg3D - for software
-	short	*floorclip;
-	short	*ceilingclip;
-	int	validcount;
-
-	FDynamicColormap *GetColormap();
-	void UpdateColormap(FDynamicColormap *&map);
+	FColormap GetColormap();
+	void UpdateColormap(FColormap &map);
 	PalEntry GetBlend();
 };
 
@@ -111,7 +105,7 @@ struct lightlist_t
 {
 	secplane_t				plane;
 	short *					p_lightlevel;
-	FDynamicColormap *		extra_colormap;
+	FColormap				extra_colormap;
 	PalEntry				blend;
 	int						flags;
 	F3DFloor*				lightsource;
@@ -120,7 +114,7 @@ struct lightlist_t
 
 
 
-class player_s;
+class player_t;
 void P_PlayerOnSpecial3DFloor(player_t* player);
 
 bool P_CheckFor3DFloorHit(AActor * mo, double z);

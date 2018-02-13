@@ -1,14 +1,25 @@
-//**************************************************************************
-//**
-//** p_sight.cpp : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile: p_sight.c,v $
-//** $Revision: 1.1 $
-//** $Date: 95/05/11 00:22:50 $
-//** $Author: bgokey $
-//**
-//**************************************************************************
-
+//-----------------------------------------------------------------------------
+//
+// Copyright 1993-1994 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
 #include <assert.h>
 
 #include "doomdef.h"
@@ -24,12 +35,14 @@
 #include "r_utility.h"
 #include "b_bot.h"
 #include "p_spec.h"
+#include "vm.h"
 
 // State.
 #include "r_state.h"
 
 #include "stats.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 static FRandom pr_botchecksight ("BotCheckSight");
 static FRandom pr_checksight ("CheckSight");
@@ -107,6 +120,7 @@ class SightCheck
 	bool P_SightCheckLine (line_t *ld);
 	int P_SightBlockLinesIterator (int x, int y);
 	bool P_SightTraverseIntercepts ();
+	bool LineBlocksSight(line_t *ld);
 
 public:
 	bool P_SightPathTraverse ();
@@ -211,11 +225,18 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 
 	double trX = Trace.x + Trace.dx * in->frac;
 	double trY = Trace.y + Trace.dy * in->frac;
-	P_SightOpening (open, li, trX, trY);
+
+	P_SightOpening(open, li, trX, trY);
+	if (LineBlocksSight(in->d.line))
+	{
+		// This may not skip P_SightOpening, but only reduce the open range to 0.
+		open.range = 0;
+		open.bottom = open.top;
+	}
 
 	FLinePortal *lport = li->getPortal();
 
-	if (open.range == 0 && open.portalflags == 0 && (lport == NULL || lport->mType != PORTT_LINKED))		// quick test for totally closed doors (must be delayed if portal checks are needed, though)
+	if (open.range == 0 && open.portalflags == 0 && (lport == nullptr || lport->mType != PORTT_LINKED))		// quick test for totally closed doors (must be delayed if portal checks are needed, though)
 		return false;		// stop
 
 	if (in->frac == 0)
@@ -263,7 +284,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 			portals.Push({ in->frac, topslope, bottomslope, sector_t::floor, backsec->GetOppositePortalGroup(sector_t::floor) });
 		}
 	}
-	if (lport)
+	if (lport != nullptr && lport->mDestination != nullptr)
 	{
 		portals.Push({ in->frac, topslope, bottomslope, portaldir, lport->mDestination->frontsector->PortalGroup });
 		return false;
@@ -362,6 +383,42 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 }
 
 
+// performs trivial visibility checks.
+bool SightCheck::LineBlocksSight(line_t *ld)
+{
+	// try to early out the check
+	if (!ld->backsector || !(ld->flags & ML_TWOSIDED) || (ld->flags & ML_BLOCKSIGHT))
+		return true;	// stop checking
+
+						// [RH] don't see past block everything lines
+	if (ld->flags & ML_BLOCKEVERYTHING)
+	{
+		if (!(Flags & SF_SEEPASTBLOCKEVERYTHING))
+		{
+			return true;
+		}
+		// Pretend the other side is invisible if this is not an impact line
+		// that runs a script on the current map. Used to prevent monsters
+		// from trying to attack through a block everything line unless
+		// there's a chance their attack will make it nonblocking.
+		if (!(Flags & SF_SEEPASTSHOOTABLELINES))
+		{
+			if (!(ld->activation & SPAC_Impact))
+			{
+				return true;
+			}
+			if (ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways)
+			{
+				return true;
+			}
+			if (ld->args[1] != 0 && ld->args[1] != level.levelnum)
+			{
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 /*
 ==================
@@ -392,36 +449,9 @@ bool SightCheck::P_SightCheckLine (line_t *ld)
 		return true;		// line isn't crossed
 	}
 
-	// try to early out the check
-	if (!ld->backsector || !(ld->flags & ML_TWOSIDED) || (ld->flags & ML_BLOCKSIGHT))
-		return false;	// stop checking
-
-	// [RH] don't see past block everything lines
-	if (ld->flags & ML_BLOCKEVERYTHING)
+	if (!portalfound)	// when portals come into play, the quick-outs here may not be performed
 	{
-		if (!(Flags & SF_SEEPASTBLOCKEVERYTHING))
-		{
-			return false;
-		}
-		// Pretend the other side is invisible if this is not an impact line
-		// that runs a script on the current map. Used to prevent monsters
-		// from trying to attack through a block everything line unless
-		// there's a chance their attack will make it nonblocking.
-		if (!(Flags & SF_SEEPASTSHOOTABLELINES))
-		{
-			if (!(ld->activation & SPAC_Impact))
-			{
-				return false;
-			}
-			if (ld->special != ACS_Execute && ld->special != ACS_ExecuteAlways)
-			{
-				return false;
-			}
-			if (ld->args[1] != 0 && ld->args[1] != level.levelnum)
-			{
-				return false;
-			}
-		}
+		if (LineBlocksSight(ld)) return false;
 	}
 
 	sightcounts[3]++;
@@ -452,7 +482,7 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 	unsigned int i;
 	extern polyblock_t **PolyBlockMap;
 
-	offset = y*bmapwidth+x;
+	offset = y*level.blockmap.bmapwidth+x;
 
 	// if any of the previous blocks may contain a portal we may abort the collection of lines here, but we may not abort the sight check.
 	// (We still try to delay activating this for as long as possible.)
@@ -480,9 +510,7 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 		polyLink = polyLink->next;
 	}
 
-	offset = *(blockmap + offset);
-
-	for (list = blockmaplump + offset + 1; *list != -1; list++)
+	for (list = level.blockmap.GetLines(x, y); *list != -1; list++)
 	{
 		if (!P_SightCheckLine (&level.lines[*list]))
 		{
@@ -637,15 +665,15 @@ bool SightCheck::P_SightPathTraverse ()
 		portals.Push({ 0, topslope, bottomslope, sector_t::floor, lastsector->GetOppositePortalGroup(sector_t::floor) });
 	}
 
-	x1 -= bmaporgx;
-	y1 -= bmaporgy;
-	xt1 = x1 / MAPBLOCKUNITS;
-	yt1 = y1 / MAPBLOCKUNITS;
+	x1 -= level.blockmap.bmaporgx;
+	y1 -= level.blockmap.bmaporgy;
+	xt1 = x1 / FBlockmap::MAPBLOCKUNITS;
+	yt1 = y1 / FBlockmap::MAPBLOCKUNITS;
 
-	x2 -= bmaporgx;
-	y2 -= bmaporgy;
-	xt2 = x2 / MAPBLOCKUNITS;
-	yt2 = y2 / MAPBLOCKUNITS;
+	x2 -= level.blockmap.bmaporgx;
+	y2 -= level.blockmap.bmaporgy;
+	xt2 = x2 / FBlockmap::MAPBLOCKUNITS;
+	yt2 = y2 / FBlockmap::MAPBLOCKUNITS;
 
 	mapx = xs_FloorToInt(xt1);
 	mapy = xs_FloorToInt(yt1);
@@ -718,12 +746,12 @@ bool SightCheck::P_SightPathTraverse ()
 // step through map blocks
 // Count is present to prevent a round off error from skipping the break
 
-	int itres;
+	int itres = -1;
 	for (count = 0 ; count < 1000 ; count++)
 	{
 		// end traversing when reaching the end of the blockmap
 		// an early out is not possible because with portals a trace can easily land outside the map's bounds.
-		if (mapx < 0 || mapx >= bmapwidth || mapy < 0 || mapy >= bmapheight)
+		if (!level.blockmap.isValidBlock(mapx, mapy))
 		{
 			break;
 		}
@@ -829,8 +857,8 @@ bool P_CheckSight (AActor *t1, AActor *t2, int flags)
 //
 // check for trivial rejection
 //
-	if (rejectmatrix != NULL &&
-		(rejectmatrix[pnum>>3] & (1 << (pnum & 7))))
+	if (level.rejectmatrix.Size() > 0 &&
+		(level.rejectmatrix[pnum>>3] & (1 << (pnum & 7))))
 	{
 sightcounts[0]++;
 		res = false;			// can't possibly be connected

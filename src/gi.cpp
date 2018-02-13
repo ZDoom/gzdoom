@@ -42,14 +42,28 @@
 #include "i_system.h"
 #include "v_video.h"
 #include "g_level.h"
+#include "vm.h"
 
 gameinfo_t gameinfo;
 
+DEFINE_GLOBAL(gameinfo)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, backpacktype)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, Armor2Percent)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon1)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, ArmorIcon2)
 DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gametype)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, norandomplayerclass)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, infoPages)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mBackButton)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenMapNameFont)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenEnteringFont)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mStatscreenFinishedFont)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, gibfactor)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, intermissioncounter)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_single)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_coop)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, statusscreen_dm)
+DEFINE_FIELD_X(GameInfoStruct, gameinfo_t, mSliderColor)
 
 
 const char *GameNames[17] =
@@ -118,12 +132,35 @@ const char* GameInfoBorders[] =
 		} \
 		while (sc.CheckToken(',')); \
 	}
+#define GAMEINFOKEY_SOUNDARRAY(key, variable, length, clear) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		if (clear) gameinfo.key.Clear(); \
+		do \
+		{ \
+			sc.MustGetToken(TK_StringConst); \
+			if(length > 0 && strlen(sc.String) > length) \
+			{ \
+				sc.ScriptError("Value for '%s' can not be longer than %d characters.", #key, length); \
+			} \
+			gameinfo.key[gameinfo.key.Reserve(1)] = FSoundID(sc.String); \
+		} \
+		while (sc.CheckToken(',')); \
+	}
 
 #define GAMEINFOKEY_STRING(key, variable) \
 	else if(nextKey.CompareNoCase(variable) == 0) \
 	{ \
 		sc.MustGetToken(TK_StringConst); \
 		gameinfo.key = sc.String; \
+	}
+
+#define GAMEINFOKEY_STRING_STAMPED(key, variable, stampvar) \
+	else if(nextKey.CompareNoCase(variable) == 0) \
+	{ \
+		sc.MustGetToken(TK_StringConst); \
+		gameinfo.key = sc.String; \
+		gameinfo.stampvar = Wads.GetLumpFile(sc.LumpNum); \
 	}
 
 #define GAMEINFOKEY_INT(key, variable) \
@@ -316,9 +353,9 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_STRINGARRAY(infoPages, "infoPage", 8, true)
 		GAMEINFOKEY_STRINGARRAY(PrecachedClasses, "precacheclasses", 0, false)
 		GAMEINFOKEY_STRINGARRAY(PrecachedTextures, "precachetextures", 0, false)
-		GAMEINFOKEY_STRINGARRAY(PrecachedSounds, "precachesounds", 0, false)
-		GAMEINFOKEY_STRINGARRAY(EventHandlers, "addeventhandlers", 0, true)
-		GAMEINFOKEY_STRINGARRAY(EventHandlers, "eventhandlers", 0, false)
+		GAMEINFOKEY_SOUNDARRAY(PrecachedSounds, "precachesounds", 0, false)
+		GAMEINFOKEY_STRINGARRAY(EventHandlers, "addeventhandlers", 0, false)
+		GAMEINFOKEY_STRINGARRAY(EventHandlers, "eventhandlers", 0, true)
 		GAMEINFOKEY_STRING(PauseSign, "pausesign")
 		GAMEINFOKEY_STRING(quitSound, "quitSound")
 		GAMEINFOKEY_STRING(BorderFlat, "borderFlat")
@@ -331,19 +368,23 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_COLOR(defaultbloodcolor, "defaultbloodcolor")
 		GAMEINFOKEY_COLOR(defaultbloodparticlecolor, "defaultbloodparticlecolor")
 		GAMEINFOKEY_STRING(backpacktype, "backpacktype")
-		GAMEINFOKEY_STRING(statusbar, "statusbar")
+		GAMEINFOKEY_STRING_STAMPED(statusbar, "statusbar", statusbarfile)
+		GAMEINFOKEY_STRING_STAMPED(statusbarclass, "statusbarclass", statusbarclassfile)
 		GAMEINFOKEY_MUSIC(intermissionMusic, intermissionOrder, "intermissionMusic")
 		GAMEINFOKEY_STRING(CursorPic, "CursorPic")
+		GAMEINFOKEY_STRING(MessageBoxClass, "MessageBoxClass")
 		GAMEINFOKEY_BOOL(noloopfinalemusic, "noloopfinalemusic")
 		GAMEINFOKEY_BOOL(drawreadthis, "drawreadthis")
 		GAMEINFOKEY_BOOL(swapmenu, "swapmenu")
 		GAMEINFOKEY_BOOL(dontcrunchcorpses, "dontcrunchcorpses")
+		GAMEINFOKEY_BOOL(correctprintbold, "correctprintbold")
 		GAMEINFOKEY_BOOL(intermissioncounter, "intermissioncounter")
 		GAMEINFOKEY_BOOL(nightmarefast, "nightmarefast")
 		GAMEINFOKEY_COLOR(dimcolor, "dimcolor")
 		GAMEINFOKEY_FLOAT(dimamount, "dimamount")
+		GAMEINFOKEY_FLOAT(bluramount, "bluramount")
+		GAMEINFOKEY_STRING(mSliderColor, "menuslidercolor")
 		GAMEINFOKEY_INT(definventorymaxamount, "definventorymaxamount")
-		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 		GAMEINFOKEY_INT(defaultrespawntime, "defaultrespawntime")
 		GAMEINFOKEY_INT(defaultdropstyle, "defaultdropstyle")
 		GAMEINFOKEY_STRING(Endoom, "endoom")
@@ -360,6 +401,7 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_INT(TextScreenX, "textscreenx")
 		GAMEINFOKEY_INT(TextScreenY, "textscreeny")
 		GAMEINFOKEY_STRING(DefaultEndSequence, "defaultendsequence")
+		GAMEINFOKEY_STRING(DefaultConversationMenuClass, "defaultconversationmenuclass")
 		GAMEINFOKEY_FONT(mStatscreenMapNameFont, "statscreen_mapnamefont")
 		GAMEINFOKEY_FONT(mStatscreenFinishedFont, "statscreen_finishedfont")
 		GAMEINFOKEY_FONT(mStatscreenEnteringFont, "statscreen_enteringfont")
@@ -367,9 +409,15 @@ void FMapInfoParser::ParseGameInfo()
 		GAMEINFOKEY_PATCH(mStatscreenEnteringFont, "statscreen_enteringpatch")
 		GAMEINFOKEY_BOOL(norandomplayerclass, "norandomplayerclass")
 		GAMEINFOKEY_BOOL(forcekillscripts, "forcekillscripts") // [JM] Force kill scripts on thing death. (MF7_NOKILLSCRIPTS overrides.)
+		GAMEINFOKEY_STRING(Dialogue, "dialogue")
+		GAMEINFOKEY_STRING(statusscreen_single, "statscreen_single")
+		GAMEINFOKEY_STRING(statusscreen_coop, "statscreen_coop")
+		GAMEINFOKEY_STRING(statusscreen_dm, "statscreen_dm")
 
 		else
 		{
+			DPrintf(DMSG_ERROR, "Unknown GAMEINFO key \"%s\" found in %s:%i\n", nextKey.GetChars(), sc.ScriptName.GetChars(), sc.Line);
+
 			// ignore unkown keys.
 			sc.UnGet();
 			SkipToNext();

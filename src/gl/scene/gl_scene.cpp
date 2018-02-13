@@ -26,6 +26,7 @@
 */
 
 #include "gl/system/gl_system.h"
+#include "i_time.h"
 #include "gi.h"
 #include "m_png.h"
 #include "m_random.h"
@@ -60,12 +61,11 @@
 #include "gl/scene/gl_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
-#include "gl/textures/gl_skyboxtexture.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_convert.h"
 #include "gl/utility/gl_templates.h"
@@ -84,36 +84,33 @@ CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, r_deathcamera)
 EXTERN_CVAR (Float, underwater_fade_scalar)
+EXTERN_CVAR (Float, r_visibility)
+EXTERN_CVAR (Bool, gl_legacy_mode)
+EXTERN_CVAR (Bool, r_drawvoxels)
 
-
-extern int viewpitch;
 extern bool NoInterpolateView;
-extern bool r_showviewer;
 
-int			gl_fixedcolormap;
 area_t			in_area;
-TArray<BYTE> currentmapsection;
+TArray<uint8_t> currentmapsection;
 int camtexcount;
-
-void gl_ParseDefs();
 
 //-----------------------------------------------------------------------------
 //
 // R_FrustumAngle
 //
 //-----------------------------------------------------------------------------
-angle_t FGLRenderer::FrustumAngle()
+angle_t GLSceneDrawer::FrustumAngle()
 {
-	float tilt= fabs(mAngles.Pitch.Degrees);
+	float tilt = fabs(GLRenderer->mAngles.Pitch.Degrees);
 
 	// If the pitch is larger than this you can look all around at a FOV of 90°
-	if (tilt>46.0f) return 0xffffffff;
+	if (tilt > 46.0f) return 0xffffffff;
 
 	// ok, this is a gross hack that barely works...
 	// but at least it doesn't overestimate too much...
-	double floatangle=2.0+(45.0+((tilt/1.9)))*mCurrentFoV*48.0/AspectMultiplier(WidescreenRatio)/90.0;
+	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*GLRenderer->mCurrentFoV*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
 	angle_t a1 = DAngle(floatangle).BAMs();
-	if (a1>=ANGLE_180) return 0xffffffff;
+	if (a1 >= ANGLE_180) return 0xffffffff;
 	return a1;
 }
 
@@ -122,17 +119,17 @@ angle_t FGLRenderer::FrustumAngle()
 // Sets the area the camera is in
 //
 //-----------------------------------------------------------------------------
-void FGLRenderer::SetViewArea()
+void GLSceneDrawer::SetViewArea()
 {
 	// The render_sector is better suited to represent the current position in GL
-	viewsector = R_PointInSubsector(ViewPos)->render_sector;
+	r_viewpoint.sector = R_PointInSubsector(r_viewpoint.Pos)->render_sector;
 
 	// Get the heightsec state from the render sector, not the current one!
-	if (viewsector->heightsec && !(viewsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (r_viewpoint.sector->heightsec && !(r_viewpoint.sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{
-		in_area = ViewPos.Z <= viewsector->heightsec->floorplane.ZatPoint(ViewPos) ? area_below :
-				(ViewPos.Z > viewsector->heightsec->ceilingplane.ZatPoint(ViewPos) &&
-				!(viewsector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? area_above : area_normal;
+		in_area = r_viewpoint.Pos.Z <= r_viewpoint.sector->heightsec->floorplane.ZatPoint(r_viewpoint.Pos) ? area_below :
+				(r_viewpoint.Pos.Z > r_viewpoint.sector->heightsec->ceilingplane.ZatPoint(r_viewpoint.Pos) &&
+				!(r_viewpoint.sector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? area_above : area_normal;
 	}
 	else
 	{
@@ -146,9 +143,9 @@ void FGLRenderer::SetViewArea()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Reset3DViewport()
+void GLSceneDrawer::Reset3DViewport()
 {
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+	glViewport(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.top, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height);
 }
 
 //-----------------------------------------------------------------------------
@@ -157,12 +154,12 @@ void FGLRenderer::Reset3DViewport()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Set3DViewport(bool mainview)
+void GLSceneDrawer::Set3DViewport(bool mainview)
 {
-	if (mainview && mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
+	if (mainview && GLRenderer->mBuffers->Setup(GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mSceneViewport.width, GLRenderer->mSceneViewport.height))
 	{
 		bool useSSAO = (gl_ssao != 0);
-		mBuffers->BindSceneFB(useSSAO);
+		GLRenderer->mBuffers->BindSceneFB(useSSAO);
 		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
@@ -172,10 +169,10 @@ void FGLRenderer::Set3DViewport(bool mainview)
 	// This is faster on newer hardware because it allows the GPU to skip
 	// reading from slower memory where the full buffers are stored.
 	glDisable(GL_SCISSOR_TEST);
-	glClearColor(mSceneClearColor[0], mSceneClearColor[1], mSceneClearColor[2], 1.0f);
+	glClearColor(GLRenderer->mSceneClearColor[0], GLRenderer->mSceneClearColor[1], GLRenderer->mSceneClearColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	const auto &bounds = mSceneViewport;
+	const auto &bounds = GLRenderer->mSceneViewport;
 	glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 	glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
 
@@ -194,14 +191,14 @@ void FGLRenderer::Set3DViewport(bool mainview)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetViewAngle(DAngle viewangle)
+void GLSceneDrawer::SetViewAngle(DAngle viewangle)
 {
-	mAngles.Yaw = float(270.0-viewangle.Degrees);
-	DVector2 v = ViewAngle.ToVector();
-	mViewVector.X = v.X;
-	mViewVector.Y = v.Y;
+	GLRenderer->mAngles.Yaw = float(270.0-viewangle.Degrees);
+	DVector2 v = r_viewpoint.Angles.Yaw.ToVector();
+	GLRenderer->mViewVector.X = v.X;
+	GLRenderer->mViewVector.Y = v.Y;
 
-	R_SetViewAngle();
+	R_SetViewAngle(r_viewpoint, r_viewwindow);
 }
 	
 
@@ -212,15 +209,7 @@ void FGLRenderer::SetViewAngle(DAngle viewangle)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetProjection(float fov, float ratio, float fovratio)
-{
-
-	float fovy = 2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovratio));
-	gl_RenderState.mProjectionMatrix.perspective(fovy, ratio, GetZNear(), GetZFar());
-}
-
-// raw matrix input from stereo 3d modes
-void FGLRenderer::SetProjection(VSMatrix matrix)
+void GLSceneDrawer::SetProjection(VSMatrix matrix)
 {
 	gl_RenderState.mProjectionMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
@@ -232,10 +221,10 @@ void FGLRenderer::SetProjection(VSMatrix matrix)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror)
+void GLSceneDrawer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	float mult = mirror? -1:1;
-	float planemult = planemirror? -glset.pixelstretch : glset.pixelstretch;
+	float planemult = planemirror? -level.info->pixelstretch : level.info->pixelstretch;
 
 	gl_RenderState.mViewMatrix.loadIdentity();
 	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
@@ -252,7 +241,7 @@ void FGLRenderer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool 
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void FGLRenderer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
+void GLSceneDrawer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
 {
 	SetViewAngle(va);
 	SetViewMatrix(vx, vy, vz, mirror, planemirror);
@@ -267,8 +256,11 @@ void FGLRenderer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::CreateScene()
+void GLSceneDrawer::CreateScene()
 {
+	angle_t a1 = FrustumAngle();
+	InitClipper(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
+
 	// reset the portal manager
 	GLPortal::StartFrame();
 	PO_LinkToSubsectors();
@@ -276,13 +268,13 @@ void FGLRenderer::CreateScene()
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
-	for(unsigned i=0;i<portals.Size(); i++) portals[i]->glportal = NULL;
-	gl_spriteindex=0;
+	for(unsigned i=0;i<glSectorPortals.Size(); i++) glSectorPortals[i]->glportal = NULL;
+	GLRenderer->gl_spriteindex=0;
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
-	R_SetView();
+	SetView();
 	validcount++;	// used for processing sidedefs only once by the renderer.
-	gl_RenderBSPNode (nodes + numnodes - 1);
+	RenderBSPNode (level.HeadNode());
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached();
 	Bsp.Unclock();
 
@@ -305,14 +297,14 @@ void FGLRenderer::CreateScene()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::RenderScene(int recursion)
+void GLSceneDrawer::RenderScene(int recursion)
 {
 	RenderAll.Clock();
 
 	glDepthMask(true);
 	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion);
 
-	gl_RenderState.SetCameraPos(ViewPos.X, ViewPos.Y, ViewPos.Z);
+	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
@@ -328,7 +320,7 @@ void FGLRenderer::RenderScene(int recursion)
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	bool haslights = mLightCount > 0 && gl_fixedcolormap == CM_DEFAULT && gl_lights;
+	bool haslights = GLRenderer->mLightCount > 0 && FixedColormap == CM_DEFAULT && gl_lights;
 	if (gl.lightmethod == LM_DEFERRED && haslights)
 	{
 		GLRenderer->mLights->Begin();
@@ -357,7 +349,7 @@ void FGLRenderer::RenderScene(int recursion)
 	{
 		pass = GLPASS_ALL;
 	}
-	else
+	else // GL 2.x legacy mode
 	{
 		// process everything that needs to handle textured dynamic lights.
 		if (haslights) RenderMultipassStuff();
@@ -444,12 +436,12 @@ void FGLRenderer::RenderScene(int recursion)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::RenderTranslucent()
+void GLSceneDrawer::RenderTranslucent()
 {
 	RenderAll.Clock();
 
 	glDepthMask(false);
-	gl_RenderState.SetCameraPos(ViewPos.X, ViewPos.Y, ViewPos.Z);
+	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
 
 	// final pass: translucent stuff
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
@@ -470,13 +462,13 @@ void FGLRenderer::RenderTranslucent()
 //-----------------------------------------------------------------------------
 //
 // gl_drawscene - this function renders the scene from the current
-// viewpoint, including mirrors and skyboxes and other portals
+// viewpoint, including mirrors and skyboxes and other glSectorPortals
 // It is assumed that the GLPortal::EndFrame returns with the 
 // stencil, z-buffer and the projection matrix intact!
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::DrawScene(int drawmode)
+void GLSceneDrawer::DrawScene(int drawmode)
 {
 	static int recursion=0;
 	static int ssao_portals_available = 0;
@@ -491,17 +483,17 @@ void FGLRenderer::DrawScene(int drawmode)
 	{
 		ssao_portals_available = 0;
 	}
-	else if (ssao_portals_available > 0)
+	else if (drawmode == DM_PORTAL && ssao_portals_available > 0)
 	{
 		applySSAO = true;
 		ssao_portals_available--;
 	}
 
-	if (camera != nullptr)
+	if (r_viewpoint.camera != nullptr)
 	{
-		ActorRenderFlags savedflags = camera->renderflags;
+		ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
 		CreateScene();
-		camera->renderflags = savedflags;
+		r_viewpoint.camera->renderflags = savedflags;
 	}
 	else
 	{
@@ -514,14 +506,14 @@ void FGLRenderer::DrawScene(int drawmode)
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
-		AmbientOccludeScene();
-		mBuffers->BindSceneFB(true);
+		GLRenderer->AmbientOccludeScene();
+		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
 		gl_RenderState.ApplyMatrices();
 	}
 
-	// Handle all portals after rendering the opaque objects but before
+	// Handle all glSectorPortals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
 	GLPortal::EndFrame();
@@ -544,7 +536,7 @@ void gl_FillScreen()
 // Draws a blend over the entire view
 //
 //==========================================================================
-void FGLRenderer::DrawBlend(sector_t * viewsector)
+void GLSceneDrawer::DrawBlend(sector_t * viewsector)
 {
 	float blend[4]={0,0,0,0};
 	PalEntry blendv=0;
@@ -559,7 +551,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 	}
 
 	// don't draw sector based blends when an invulnerability colormap is active
-	if (!gl_fixedcolormap)
+	if (!FixedColormap)
 	{
 		if (!viewsector->e->XFloor.ffloors.Size())
 		{
@@ -582,16 +574,16 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 			{
 				double lightbottom;
 				if (i < lightlist.Size() - 1)
-					lightbottom = lightlist[i + 1].plane.ZatPoint(ViewPos);
+					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
 				else
-					lightbottom = viewsector->floorplane.ZatPoint(ViewPos);
+					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
 
-				if (lightbottom < ViewPos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
+				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
 				{
 					// 3d floor 'fog' is rendered as a blending value
 					blendv = lightlist[i].blend;
 					// If this is the same as the sector's it doesn't apply!
-					if (blendv == viewsector->ColorMap->Fade) blendv = 0;
+					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
 					// a little hack to make this work for Legacy maps.
 					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
 					break;
@@ -602,14 +594,6 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 		if (blendv.a == 0)
 		{
 			blendv = R_BlendForColormap(blendv);
-			if (blendv.a == 255)
-			{
-				// The calculated average is too dark so brighten it according to the palettes's overall brightness
-				int maxcol = MAX<int>(MAX<int>(framebuffer->palette_brightness, blendv.r), MAX<int>(blendv.g, blendv.b));
-				blendv.r = blendv.r * 255 / maxcol;
-				blendv.g = blendv.g * 255 / maxcol;
-				blendv.b = blendv.b * 255 / maxcol;
-			}
 		}
 
 		if (blendv.a == 255)
@@ -676,7 +660,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector)
 //-----------------------------------------------------------------------------
 
 
-void FGLRenderer::EndDrawScene(sector_t * viewsector)
+void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 {
 	gl_RenderState.EnableFog(false);
 
@@ -693,14 +677,33 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 
 	glDisable(GL_STENCIL_TEST);
 
-	framebuffer->Begin2D(false);
+	GLRenderer->framebuffer->Begin2D(false);
 
 	Reset3DViewport();
 
-	// [BB] Only draw the sprites if we didn't render a HUD model before.
-	if ( renderHUDModel == false )
+	// Delay drawing psprites until after bloom has been applied, if enabled.
+	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom || FixedColormap != CM_DEFAULT)
 	{
-		DrawPlayerSprites (viewsector, false);
+		DrawEndScene2D(viewsector);
+	}
+	else
+	{
+		// Restore standard rendering state
+		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		gl_RenderState.ResetColor();
+		gl_RenderState.EnableTexture(true);
+		glDisable(GL_SCISSOR_TEST);
+	}
+}
+
+void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
+{
+	const bool renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+
+	// [BB] Only draw the sprites if we didn't render a HUD model before.
+	if (renderHUDModel == false)
+	{
+		DrawPlayerSprites(viewsector, false);
 	}
 	if (gl.legacyMode)
 	{
@@ -722,20 +725,19 @@ void FGLRenderer::EndDrawScene(sector_t * viewsector)
 	glDisable(GL_SCISSOR_TEST);
 }
 
-
 //-----------------------------------------------------------------------------
 //
 // R_RenderView - renders one view - either the screen or a camera texture
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::ProcessScene(bool toscreen)
+void GLSceneDrawer::ProcessScene(bool toscreen)
 {
-	FDrawInfo::StartDrawInfo();
+	FDrawInfo::StartDrawInfo(this);
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	GLPortal::BeginScene();
 
-	int mapsection = R_PointInSubsector(ViewPos)->mapsection;
+	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
 	memset(&currentmapsection[0], 0, currentmapsection.Size());
 	currentmapsection[mapsection>>3] |= 1 << (mapsection & 7);
 	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
@@ -749,9 +751,9 @@ void FGLRenderer::ProcessScene(bool toscreen)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::SetFixedColormap (player_t *player)
+void GLSceneDrawer::SetFixedColormap (player_t *player)
 {
-	gl_fixedcolormap=CM_DEFAULT;
+	FixedColormap=CM_DEFAULT;
 
 	// check for special colormaps
 	player_t * cplayer = player->camera->player;
@@ -759,12 +761,12 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 	{
 		if (cplayer->extralight == INT_MIN)
 		{
-			gl_fixedcolormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
-			extralight=0;
+			FixedColormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
+			r_viewpoint.extralight=0;
 		}
 		else if (cplayer->fixedcolormap != NOFIXEDCOLORMAP)
 		{
-			gl_fixedcolormap = CM_FIRSTSPECIALCOLORMAP + cplayer->fixedcolormap;
+			FixedColormap = CM_FIRSTSPECIALCOLORMAP + cplayer->fixedcolormap;
 		}
 		else if (cplayer->fixedlightlevel != -1)
 		{
@@ -777,16 +779,16 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 				// Need special handling for light amplifiers 
 				if (in->IsKindOf(torchtype))
 				{
-					gl_fixedcolormap = cplayer->fixedlightlevel + CM_TORCH;
+					FixedColormap = cplayer->fixedlightlevel + CM_TORCH;
 				}
 				else if (in->IsKindOf(litetype))
 				{
-					gl_fixedcolormap = CM_LITE;
+					FixedColormap = CM_LITE;
 				}
 			}
 		}
 	}
-	gl_RenderState.SetFixedColormap(gl_fixedcolormap);
+	gl_RenderState.SetFixedColormap(FixedColormap);
 }
 
 //-----------------------------------------------------------------------------
@@ -795,42 +797,44 @@ void FGLRenderer::SetFixedColormap (player_t *player)
 //
 //-----------------------------------------------------------------------------
 
-sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
+sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
 	sector_t * lviewsector;
-	mSceneClearColor[0] = 0.0f;
-	mSceneClearColor[1] = 0.0f;
-	mSceneClearColor[2] = 0.0f;
-	R_SetupFrame (camera);
+	GLRenderer->mSceneClearColor[0] = 0.0f;
+	GLRenderer->mSceneClearColor[1] = 0.0f;
+	GLRenderer->mSceneClearColor[2] = 0.0f;
+	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
 	SetViewArea();
 
+	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
+
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = ViewPitch.Normalized180().Radians();
+	double radPitch = r_viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
-	double angy = sin(radPitch) * glset.pixelstretch;
+	double angy = sin(radPitch) * level.info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 
-	mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
-	mAngles.Roll.Degrees = ViewRoll.Degrees;
+	GLRenderer->mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
+	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
 
 	// Scroll the sky
-	mSky1Pos = (float)fmod(gl_frameMS * level.skyspeed1, 1024.f) * 90.f/256.f;
-	mSky2Pos = (float)fmod(gl_frameMS * level.skyspeed2, 1024.f) * 90.f/256.f;
+	GLRenderer->mSky1Pos = (double)fmod((double)screen->FrameTime * (double)level.skyspeed1, 1024.f) * 90./256.;
+	GLRenderer->mSky2Pos = (double)fmod((double)screen->FrameTime * (double)level.skyspeed2, 1024.f) * 90./256.;
 
 
 
 	if (camera->player && camera->player-players==consoleplayer &&
 		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera==camera->player->mo)
 	{
-		mViewActor=NULL;
+		GLRenderer->mViewActor=NULL;
 	}
 	else
 	{
-		mViewActor=camera;
+		GLRenderer->mViewActor=camera;
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
-	lviewsector = viewsector;
+	lviewsector = r_viewpoint.sector;
 
 	// Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
@@ -838,53 +842,50 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 	stereo3dMode.SetUp();
 	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
 	{
+		if (eye_ix > 0 && camera->player)
+			SetFixedColormap(camera->player); // reiterate color map for each eye, so night vision goggles work in both eyes
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
-		SetOutputViewport(bounds);
+		GLRenderer->SetOutputViewport(bounds);
 		Set3DViewport(mainview);
-		mDrawingScene2D = true;
-		mCurrentFoV = fov;
+		GLRenderer->mDrawingScene2D = true;
+		GLRenderer->mCurrentFoV = fov;
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
-		SetViewAngle(ViewAngle);
+		SetViewAngle(r_viewpoint.Angles.Yaw);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
 		s3d::ScopedViewShifter viewShifter(viewShift);
-		SetViewMatrix(ViewPos.X, ViewPos.Y, ViewPos.Z, false, false);
+		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
-
-		clipper.Clear();
-		angle_t a1 = FrustumAngle();
-		clipper.SafeAddClipRangeRealAngles(ViewAngle.BAMs() + a1, ViewAngle.BAMs() - a1);
 
 		ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			PostProcessScene();
+			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(lviewsector); });
 
 			// This should be done after postprocessing, not before.
-			mBuffers->BindCurrentFB();
-			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+			GLRenderer->mBuffers->BindCurrentFB();
+			glViewport(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.top, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height);
 
 			if (!toscreen)
 			{
 				gl_RenderState.mViewMatrix.loadIdentity();
-				gl_RenderState.mProjectionMatrix.ortho(mScreenViewport.left, mScreenViewport.width, mScreenViewport.height, mScreenViewport.top, -1.0f, 1.0f);
+				gl_RenderState.mProjectionMatrix.ortho(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mScreenViewport.top, -1.0f, 1.0f);
 				gl_RenderState.ApplyMatrices();
 			}
 
 			DrawBlend(lviewsector);
 		}
-		mDrawingScene2D = false;
+		GLRenderer->mDrawingScene2D = false;
 		if (!stereo3dMode.IsMono() && FGLRenderBuffers::IsEnabled())
-			mBuffers->BlitToEyeTexture(eye_ix);
+			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
 		eye->TearDown();
 	}
 	stereo3dMode.TearDown();
 
-	gl_frameCount++;	// This counter must be increased right before the interpolations are restored.
 	interpolator.RestoreInterpolations ();
 	return lviewsector;
 }
@@ -897,32 +898,21 @@ sector_t * FGLRenderer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, flo
 
 void FGLRenderer::RenderView (player_t* player)
 {
-	OpenGLFrameBuffer* GLTarget = static_cast<OpenGLFrameBuffer*>(screen);
-	AActor *&LastCamera = GLTarget->LastCamera;
-
 	checkBenchActive();
-	if (player->camera != LastCamera)
-	{
-		// If the camera changed don't interpolate
-		// Otherwise there will be some not so nice effects.
-		R_ResetViewInterpolation();
-		LastCamera=player->camera;
-	}
 
 	gl_RenderState.SetVertexBuffer(mVBO);
-	GLRenderer->mVBO->Reset();
+	mVBO->Reset();
 
 	// reset statistics counters
 	ResetProfilingData();
 
 	// Get this before everything else
-	if (cl_capfps || r_NoInterpolate) r_TicFracF = 1.;
-	else r_TicFracF = I_GetTimeFrac (&r_FrameTime);
-	gl_frameMS = I_MSTime();
+	if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
+	else r_viewpoint.TicFrac = I_GetTimeFrac ();
 
 	P_FindParticleSubsectors ();
 
-	if (!gl.legacyMode) GLRenderer->mLights->Clear();
+	if (!gl.legacyMode) mLights->Clear();
 
 	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 	bool saved_niv = NoInterpolateView;
@@ -934,8 +924,8 @@ void FGLRenderer::RenderView (player_t* player)
 
 	// now render the main view
 	float fovratio;
-	float ratio = WidescreenRatio;
-	if (WidescreenRatio >= 1.3f)
+	float ratio = r_viewwindow.WidescreenRatio;
+	if (r_viewwindow.WidescreenRatio >= 1.3f)
 	{
 		fovratio = 1.333333f;
 	}
@@ -943,14 +933,16 @@ void FGLRenderer::RenderView (player_t* player)
 	{
 		fovratio = ratio;
 	}
+	GLSceneDrawer drawer;
 
-	SetFixedColormap (player);
+	drawer.SetFixedColormap (player);
 
 	// Check if there's some lights. If not some code can be skipped.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	GLRenderer->mLightCount = ((it.Next()) != NULL);
+	mLightCount = ((it.Next()) != NULL);
 
-	sector_t * viewsector = RenderViewpoint(player->camera, NULL, FieldOfView.Degrees, ratio, fovratio, true, true);
+	mShadowMap.Update();
+	sector_t * viewsector = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 
 	All.Unclock();
 }
@@ -961,17 +953,18 @@ void FGLRenderer::RenderView (player_t* player)
 //
 //===========================================================================
 
-void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
+void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
 	GL_IRECT bounds;
 
+	P_FindParticleSubsectors();	// make sure that all recently spawned particles have a valid subsector.
 	bounds.left=0;
 	bounds.top=0;
 	bounds.width=width;
 	bounds.height=height;
 	glFlush();
 	SetFixedColormap(player);
-	gl_RenderState.SetVertexBuffer(mVBO);
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	GLRenderer->mVBO->Reset();
 	if (!gl.legacyMode) GLRenderer->mLights->Clear();
 
@@ -979,8 +972,8 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 	GLRenderer->mLightCount = ((it.Next()) != NULL);
 
-	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, 
-								FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds,
+								r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
@@ -989,12 +982,12 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 	{
 		DrawBlend(viewsector);
 	}
-	CopyToBackbuffer(&bounds, false);
+	GLRenderer->CopyToBackbuffer(&bounds, false);
 	glFlush();
 
-	byte * scr = (byte *)M_Malloc(width * height * 3);
+	uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
 	glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
-	M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width*3);
+	M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width * 3, Gamma);
 	M_Free(scr);
 }
 
@@ -1007,231 +1000,32 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 
 struct FGLInterface : public FRenderer
 {
-	bool UsesColormap() const override;
-	void PrecacheTexture(FTexture *tex, int cache);
-	void PrecacheSprite(FTexture *tex, SpriteHits &hits);
-	void Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
+	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 	void RenderView(player_t *player) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
-	void StateChanged(AActor *actor) override;
 	void StartSerialize(FSerializer &arc) override;
 	void EndSerialize(FSerializer &arc) override;
-	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, int fov) override;
-	sector_t *FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back) override;
-	void SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog) override;
+	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, double fov) override;
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
 	bool RequireGLNodes() override;
 
 	int GetMaxViewPitch(bool down) override;
-	void ClearBuffer(int color) override;
+	void SetClearColor(int color) override;
 	void Init() override;
+	uint32_t GetCaps() override;
 };
-
-//===========================================================================
-//
-// The GL renderer has no use for colormaps so let's
-// not create them and save us some time.
-//
-//===========================================================================
-
-bool FGLInterface::UsesColormap() const
-{
-	return false;
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: PrecacheTexture
-//
-//==========================================================================
-
-void FGLInterface::PrecacheTexture(FTexture *tex, int cache)
-{
-	if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
-	{
-		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
-		if (gltex) gltex->Precache();
-	}
-	else
-	{
-		// make sure that software pixel buffers do not stick around for unneeded textures.
-		tex->Unload();
-	}
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: PrecacheSprite
-//
-//==========================================================================
-
-void FGLInterface::PrecacheSprite(FTexture *tex, SpriteHits &hits)
-{
-	FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
-	if (gltex) gltex->PrecacheList(hits);
-}
 
 //==========================================================================
 //
 // DFrameBuffer :: Precache
 //
 //==========================================================================
+void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
-void FGLInterface::Precache(BYTE *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
-{
-	SpriteHits *spritelist = new SpriteHits[sprites.Size()];
-	SpriteHits **spritehitlist = new SpriteHits*[TexMan.NumTextures()];
-	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
-	TMap<PClassActor*, bool>::Pair *pair;
-	BYTE *modellist = new BYTE[Models.Size()];
-	memset(modellist, 0, Models.Size());
-	memset(spritehitlist, 0, sizeof(SpriteHits**) * TexMan.NumTextures());
-
-	// this isn't done by the main code so it needs to be done here first:
-	// check skybox textures and mark the separate faces as used
-	for (int i = 0; i<TexMan.NumTextures(); i++)
-	{
-		// HIT_Wall must be checked for MBF-style sky transfers. 
-		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
-		{
-			FTexture *tex = TexMan.ByIndex(i);
-			if (tex->gl_info.bSkybox)
-			{
-				FSkyBox *sb = static_cast<FSkyBox*>(tex);
-				for (int i = 0; i<6; i++)
-				{
-					if (sb->faces[i])
-					{
-						int index = sb->faces[i]->id.GetIndex();
-						texhitlist[index] |= FTextureManager::HIT_Flat;
-					}
-				}
-			}
-		}
-	}
-
-	// Check all used actors.
-	// 1. mark all sprites associated with its states
-	// 2. mark all model data and skins associated with its states
-	while (it.NextPair(pair))
-	{
-		PClassActor *cls = pair->Key;
-		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
-
-		for (int i = 0; i < cls->NumOwnedStates; i++)
-		{
-			spritelist[cls->OwnedStates[i].sprite].Insert(gltrans, true);
-			FSpriteModelFrame * smf = gl_FindModelFrame(cls, cls->OwnedStates[i].sprite, cls->OwnedStates[i].Frame, false);
-			if (smf != NULL)
-			{
-				for (int i = 0; i < MAX_MODELS_PER_FRAME; i++)
-				{
-					if (smf->skinIDs[i].isValid())
-					{
-						texhitlist[smf->skinIDs[i].GetIndex()] |= FTexture::TEX_Flat;
-					}
-					else if (smf->modelIDs[i] != -1)
-					{
-						Models[smf->modelIDs[i]]->PushSpriteMDLFrame(smf, i);
-						Models[smf->modelIDs[i]]->AddSkins(texhitlist);
-					}
-					if (smf->modelIDs[i] != -1)
-					{
-						modellist[smf->modelIDs[i]] = 1;
-					}
-				}
-			}
-		}
-	}
-
-	// mark all sprite textures belonging to the marked sprites.
-	for (int i = (int)(sprites.Size() - 1); i >= 0; i--)
-	{
-		if (spritelist[i].CountUsed())
-		{
-			int j, k;
-			for (j = 0; j < sprites[i].numframes; j++)
-			{
-				const spriteframe_t *frame = &SpriteFrames[sprites[i].spriteframes + j];
-
-				for (k = 0; k < 16; k++)
-				{
-					FTextureID pic = frame->Texture[k];
-					if (pic.isValid())
-					{
-						spritehitlist[pic.GetIndex()] = &spritelist[i];
-					}
-				}
-			}
-		}
-	}
-
-	// delete everything unused before creating any new resources to avoid memory usage peaks.
-
-	// delete unused models
-	for (unsigned i = 0; i < Models.Size(); i++)
-	{
-		if (!modellist[i]) Models[i]->DestroyVertexBuffer();
-	}
-
-	// delete unused textures
-	int cnt = TexMan.NumTextures();
-	for (int i = cnt - 1; i >= 0; i--)
-	{
-		FTexture *tex = TexMan.ByIndex(i);
-		if (tex != nullptr)
-		{
-			if (!texhitlist[i])
-			{
-				if (tex->gl_info.Material[0]) tex->gl_info.Material[0]->Clean(true);
-			}
-			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
-			{
-				if (tex->gl_info.Material[1]) tex->gl_info.Material[1]->Clean(true);
-			}
-		}
-	}
-
-	if (gl_precache)
-	{
-		// cache all used textures
-		for (int i = cnt - 1; i >= 0; i--)
-		{
-			FTexture *tex = TexMan.ByIndex(i);
-			if (tex != nullptr)
-			{
-				PrecacheTexture(tex, texhitlist[i]);
-				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
-				{
-					PrecacheSprite(tex, *spritehitlist[i]);
-				}
-			}
-		}
-
-		// cache all used models
-		for (unsigned i = 0; i < Models.Size(); i++)
-		{
-			if (modellist[i]) 
-				Models[i]->BuildVertexBuffer();
-		}
-	}
-
-	delete[] spritehitlist;
-	delete[] spritelist;
-	delete[] modellist;
-}
-
-
-//==========================================================================
-//
-// DFrameBuffer :: StateChanged
-//
-//==========================================================================
-
-void FGLInterface::StateChanged(AActor *actor)
-{
-	gl_SetActorLights(actor);
+void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
+{	
+	gl_PrecacheTexture(texhitlist, actorhitlist);
 }
 
 //===========================================================================
@@ -1242,20 +1036,13 @@ void FGLInterface::StateChanged(AActor *actor)
 
 void FGLInterface::StartSerialize(FSerializer &arc)
 {
-	if (arc.BeginObject("glinfo"))
-	{
-		arc("fogdensity", fogdensity)
-			("outsidefogdensity", outsidefogdensity)
-			("skyfog", skyfog)
-			.EndObject();
-	}
 }
 
 void FGLInterface::EndSerialize(FSerializer &arc)
 {
 	if (arc.isReading())
 	{
-		gl_RecreateAllAttachedLights();
+		// The portal data needs to be recreated after reading a savegame.
 		gl_InitPortals();
 	}
 }
@@ -1279,7 +1066,7 @@ int FGLInterface::GetMaxViewPitch(bool down)
 //
 //===========================================================================
 
-void FGLInterface::ClearBuffer(int color)
+void FGLInterface::SetClearColor(int color)
 {
 	PalEntry pe = GPalette.BaseColors[color];
 	GLRenderer->mSceneClearColor[0] = pe.r / 255.f;
@@ -1295,7 +1082,8 @@ void FGLInterface::ClearBuffer(int color)
 
 void FGLInterface::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	GLRenderer->WriteSavePic(player, file, width, height);
+	GLSceneDrawer drawer;
+	drawer.WriteSavePic(player, file, width, height);
 }
 
 //===========================================================================
@@ -1317,7 +1105,6 @@ void FGLInterface::RenderView(player_t *player)
 
 void FGLInterface::Init()
 {
-	gl_ParseDefs();
 	gl_InitData();
 }
 
@@ -1329,15 +1116,12 @@ void FGLInterface::Init()
 CVAR(Bool, gl_usefb, false , CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 extern TexFilter_s TexFilter[];
 
-void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, int FOV)
+void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
 
 	int width = gltex->TextureWidth();
 	int height = gltex->TextureHeight();
-
-	gl_fixedcolormap=CM_DEFAULT;
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 
 	if (gl.legacyMode)
 	{
@@ -1356,7 +1140,10 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	bounds.width=FHardwareTexture::GetTexDimension(gltex->GetWidth());
 	bounds.height=FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
-	GLRenderer->RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
+	GLSceneDrawer drawer;
+	drawer.FixedColormap = CM_DEFAULT;
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width/height, (float)width/height, false, false);
 
 	if (gl.legacyMode)
 	{
@@ -1373,35 +1160,11 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, in
 	camtexcount++;
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-sector_t *FGLInterface::FakeFlat(sector_t *sec, sector_t *tempsec, int *floorlightlevel, int *ceilinglightlevel, bool back)
-{
-	if (floorlightlevel != NULL)
-	{
-		*floorlightlevel = sec->GetFloorLight ();
-	}
-	if (ceilinglightlevel != NULL)
-	{
-		*ceilinglightlevel = sec->GetCeilingLight ();
-	}
-	return gl_FakeFlat(sec, tempsec, back);
-}
-
 //===========================================================================
 //
 // 
 //
 //===========================================================================
-
-void FGLInterface::SetFogParams(int _fogdensity, PalEntry _outsidefogcolor, int _outsidefogdensity, int _skyfog)
-{
-	gl_SetFogParams(_fogdensity, _outsidefogcolor, _outsidefogdensity, _skyfog);
-}
 
 void FGLInterface::PreprocessLevel() 
 {
@@ -1418,6 +1181,31 @@ bool FGLInterface::RequireGLNodes()
 	return true; 
 }
 
+uint32_t FGLInterface::GetCaps()
+{
+	// describe our basic feature set
+	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
+		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL;
+	if (r_drawvoxels)
+		FlagSet |= RFF_VOXELS;
+	if (gl_legacy_mode)
+	{
+		// legacy mode always has truecolor because palette tonemap is not available
+		FlagSet |= RFF_TRUECOLOR;
+	}
+	else if (!(FGLRenderBuffers::IsEnabled()))
+	{
+		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
+		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;
+	}
+	else
+	{
+		if (gl_tonemap != 5) // not running palette tonemap shader
+			FlagSet |= RFF_TRUECOLOR;
+		FlagSet |= RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
+	}
+	return (uint32_t)FlagSet;
+}
 //===========================================================================
 //
 // 

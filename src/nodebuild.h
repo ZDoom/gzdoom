@@ -1,3 +1,40 @@
+/*
+** nodebuild.cpp
+**
+**---------------------------------------------------------------------------
+** Copyright 2002-2016 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+** 4. When not used as part of ZDoom or a ZDoom derivative, this code will be
+**    covered by the terms of the GNU General Public License as published by
+**    the Free Software Foundation; either version 2 of the License, or (at
+**    your option) any later version.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 #include "doomdata.h"
 #include "tarray.h"
 #include "r_defs.h"
@@ -5,11 +42,12 @@
 
 struct FPolySeg;
 struct FMiniBSP;
+struct FLevelLocals;
 
 struct FEventInfo
 {
 	int Vertex;
-	DWORD FrontSeg;
+	uint32_t FrontSeg;
 };
 
 struct FEvent
@@ -53,22 +91,6 @@ struct FSimpleVert
 	fixed_t x, y;
 };
 
-extern "C"
-{
-	int ClassifyLine2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-#ifndef DISABLE_SSE
-	int ClassifyLineSSE1 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-	int ClassifyLineSSE2 (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-#ifdef BACKPATCH
-#ifdef __GNUC__
-	int ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]) __attribute__((noinline));
-#else
-	int __declspec(noinline) ClassifyLineBackpatch (node_t &node, const FSimpleVert *v1, const FSimpleVert *v2, int sidev[2]);
-#endif
-#endif
-#endif
-}
-
 class FNodeBuilder
 {
 	struct FPrivSeg
@@ -78,12 +100,12 @@ class FNodeBuilder
 		int linedef;
 		sector_t *frontsector;
 		sector_t *backsector;
-		DWORD next;
-		DWORD nextforvert;
-		DWORD nextforvert2;
+		uint32_t next;
+		uint32_t nextforvert;
+		uint32_t nextforvert2;
 		int loopnum;		// loop number for split avoidance (0 means splitting is okay)
-		DWORD partner;		// seg on back side
-		DWORD storedseg;	// seg # in the GL_SEGS lump
+		uint32_t partner;		// seg on back side
+		uint32_t storedseg;	// seg # in the GL_SEGS lump
 
 		int planenum;
 		bool planefront;
@@ -91,8 +113,8 @@ class FNodeBuilder
 	};
 	struct FPrivVert : FSimpleVert
 	{
-		DWORD segs;		// segs that use this vertex as v1
-		DWORD segs2;	// segs that use this vertex as v2
+		uint32_t segs;		// segs that use this vertex as v1
+		uint32_t segs2;	// segs that use this vertex as v2
 
 		bool operator== (const FPrivVert &other)
 		{
@@ -105,19 +127,19 @@ class FNodeBuilder
 	};
 	union USegPtr
 	{
-		DWORD SegNum;
+		uint32_t SegNum;
 		FPrivSeg *SegPtr;
 	};
 	struct FSplitSharer
 	{
 		double Distance;
-		DWORD Seg;
+		uint32_t Seg;
 		bool Forward;
 	};
 
 	struct glseg_t : public seg_t
 	{
-		DWORD Partner;
+		uint32_t Partner;
 	};
 
 
@@ -209,10 +231,7 @@ public:
 		bool makeGLNodes);
 	~FNodeBuilder ();
 
-	void Extract(node_t *&nodes, int &nodeCount,
-		seg_t *&segs, int &segCount,
-		subsector_t *&ssecs, int &subCount,
-		TStaticArray<vertex_t> &vertexes);
+	void Extract(FLevelLocals &level);
 	const int *GetOldVertexTable();
 
 	// These are used for building sub-BSP trees for polyobjects.
@@ -236,11 +255,11 @@ private:
 
 	TArray<node_t> Nodes;
 	TArray<subsector_t> Subsectors;
-	TArray<DWORD> SubsectorSets;
+	TArray<uint32_t> SubsectorSets;
 	TArray<FPrivSeg> Segs;
 	TArray<FPrivVert> Vertices;
 	TArray<USegPtr> SegList;
-	TArray<BYTE> PlaneChecked;
+	TArray<uint8_t> PlaneChecked;
 	TArray<FSimpleLine> Planes;
 
 	TArray<int> Touched;	// Loops a splitter touches on a vertex
@@ -249,8 +268,8 @@ private:
 
 	TArray<FSplitSharer> SplitSharers;	// Segs colinear with the current splitter
 
-	DWORD HackSeg;			// Seg to force to back of splitter
-	DWORD HackMate;			// Seg to use in front of hack seg
+	uint32_t HackSeg;			// Seg to force to back of splitter
+	uint32_t HackMate;			// Seg to use in front of hack seg
 	FLevel &Level;
 	bool GLNodes;			// Add minisegs to make GL nodes?
 
@@ -265,37 +284,37 @@ private:
 	void GroupSegPlanesSimple ();
 	void FindPolyContainers (TArray<FPolyStart> &spots, TArray<FPolyStart> &anchors);
 	bool GetPolyExtents (int polynum, fixed_t bbox[4]);
-	int MarkLoop (DWORD firstseg, int loopnum);
+	int MarkLoop (uint32_t firstseg, int loopnum);
 	void AddSegToBBox (fixed_t bbox[4], const FPrivSeg *seg);
-	int CreateNode (DWORD set, unsigned int count, fixed_t bbox[4]);
-	int CreateSubsector (DWORD set, fixed_t bbox[4]);
+	int CreateNode (uint32_t set, unsigned int count, fixed_t bbox[4]);
+	int CreateSubsector (uint32_t set, fixed_t bbox[4]);
 	void CreateSubsectorsForReal ();
-	bool CheckSubsector (DWORD set, node_t &node, DWORD &splitseg);
-	bool CheckSubsectorOverlappingSegs (DWORD set, node_t &node, DWORD &splitseg);
-	bool ShoveSegBehind (DWORD set, node_t &node, DWORD seg, DWORD mate);	int SelectSplitter (DWORD set, node_t &node, DWORD &splitseg, int step, bool nosplit);
-	void SplitSegs (DWORD set, node_t &node, DWORD splitseg, DWORD &outset0, DWORD &outset1, unsigned int &count0, unsigned int &count1);
-	DWORD SplitSeg (DWORD segnum, int splitvert, int v1InFront);
-	int Heuristic (node_t &node, DWORD set, bool honorNoSplit);
+	bool CheckSubsector (uint32_t set, node_t &node, uint32_t &splitseg);
+	bool CheckSubsectorOverlappingSegs (uint32_t set, node_t &node, uint32_t &splitseg);
+	bool ShoveSegBehind (uint32_t set, node_t &node, uint32_t seg, uint32_t mate);	int SelectSplitter (uint32_t set, node_t &node, uint32_t &splitseg, int step, bool nosplit);
+	void SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uint32_t &outset0, uint32_t &outset1, unsigned int &count0, unsigned int &count1);
+	uint32_t SplitSeg (uint32_t segnum, int splitvert, int v1InFront);
+	int Heuristic (node_t &node, uint32_t set, bool honorNoSplit);
 
 	// Returns:
 	//	0 = seg is in front
 	//  1 = seg is in back
 	// -1 = seg cuts the node
 
-	inline int ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2]);
+	int ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2]);
 
 	void FixSplitSharers (const node_t &node);
 	double AddIntersection (const node_t &node, int vertex);
-	void AddMinisegs (const node_t &node, DWORD splitseg, DWORD &fset, DWORD &rset);
-	DWORD CheckLoopStart (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
-	DWORD CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex2);
-	void RemoveSegFromVert1 (DWORD segnum, int vertnum);
-	void RemoveSegFromVert2 (DWORD segnum, int vertnum);
-	DWORD AddMiniseg (int v1, int v2, DWORD partner, DWORD seg1, DWORD splitseg);
+	void AddMinisegs (const node_t &node, uint32_t splitseg, uint32_t &fset, uint32_t &rset);
+	uint32_t CheckLoopStart (fixed_t dx, fixed_t dy, int vertex1, int vertex2);
+	uint32_t CheckLoopEnd (fixed_t dx, fixed_t dy, int vertex2);
+	void RemoveSegFromVert1 (uint32_t segnum, int vertnum);
+	void RemoveSegFromVert2 (uint32_t segnum, int vertnum);
+	uint32_t AddMiniseg (int v1, int v2, uint32_t partner, uint32_t seg1, uint32_t splitseg);
 	void SetNodeFromSeg (node_t &node, const FPrivSeg *pseg) const;
 
 	int CloseSubsector (TArray<glseg_t> &segs, int subsector, vertex_t *outVerts);
-	DWORD PushGLSeg (TArray<glseg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts);
+	uint32_t PushGLSeg (TArray<glseg_t> &segs, const FPrivSeg *seg, vertex_t *outVerts);
 	void PushConnectingGLSeg (int subsector, TArray<glseg_t> &segs, vertex_t *v1, vertex_t *v2);
 	int OutputDegenerateSubsector (TArray<glseg_t> &segs, int subsector, bool bForward, double lastdot, FPrivSeg *&prev, vertex_t *outVerts);
 
@@ -303,7 +322,7 @@ private:
 
 	double InterceptVector (const node_t &splitter, const FPrivSeg &seg);
 
-	void PrintSet (int l, DWORD set);
+	void PrintSet (int l, uint32_t set);
 
 	FNodeBuilder &operator= (const FNodeBuilder &) { return *this; }
 };
@@ -340,29 +359,4 @@ inline int FNodeBuilder::PointOnSide (int x, int y, int x1, int y1, int dx, int 
 		}
 	}
 	return s_num > 0.0 ? -1 : 1;
-}
-
-inline int FNodeBuilder::ClassifyLine (node_t &node, const FPrivVert *v1, const FPrivVert *v2, int sidev[2])
-{
-#ifdef DISABLE_SSE
-	return ClassifyLine2 (node, v1, v2, sidev);
-#else
-#if defined(__SSE2__) || defined(_M_X64)
-	// If compiling with SSE2 support everywhere, just use the SSE2 version.
-	return ClassifyLineSSE2 (node, v1, v2, sidev);
-#elif defined(_MSC_VER) && _MSC_VER < 1300
-	// VC 6 does not support SSE optimizations.
-	return ClassifyLine2 (node, v1, v2, sidev);
-#else
-	// Select the routine based on our flag.
-#ifdef BACKPATCH
-	return ClassifyLineBackpatch (node, v1, v2, sidev);
-#else
-	if (CPU.bSSE2)
-		return ClassifyLineSSE2 (node, v1, v2, sidev);
-	else
-		return ClassifyLine2 (node, v1, v2, sidev);
-#endif
-#endif
-#endif
 }

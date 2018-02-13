@@ -55,6 +55,7 @@
 #include "d_main.h"
 #include "serializer.h"
 #include "menu/menu.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -64,7 +65,7 @@ class DWaitingCommand : public DThinker
 {
 	DECLARE_CLASS (DWaitingCommand, DThinker)
 public:
-	DWaitingCommand (const char *cmd, int tics);
+	DWaitingCommand (const char *cmd, int tics, bool unsafe);
 	~DWaitingCommand ();
 	void Serialize(FSerializer &arc);
 	void Tick ();
@@ -74,6 +75,7 @@ private:
 
 	char *Command;
 	int TicsLeft;
+	bool IsUnsafe;
 };
 
 class DStoredCommand : public DThinker
@@ -125,7 +127,24 @@ FButtonStatus Button_Mlook, Button_Klook, Button_Use, Button_AltAttack,
 	Button_AM_PanLeft, Button_AM_PanRight, Button_AM_PanDown, Button_AM_PanUp,
 	Button_AM_ZoomIn, Button_AM_ZoomOut;
 
-bool ParsingKeyConf;
+bool ParsingKeyConf, UnsafeExecutionContext;
+
+class UnsafeExecutionScope
+{
+	const bool wasEnabled;
+
+public:
+	explicit UnsafeExecutionScope(const bool enable = true)
+	: wasEnabled(UnsafeExecutionContext)
+	{
+		UnsafeExecutionContext = enable;
+	}
+
+	~UnsafeExecutionScope()
+	{
+		UnsafeExecutionContext = wasEnabled;
+	}
+};
 
 // To add new actions, go to the console and type "key <action name>".
 // This will give you the key value to use in the first column. Then
@@ -194,19 +213,22 @@ void DWaitingCommand::Serialize(FSerializer &arc)
 {
 	Super::Serialize (arc);
 	arc("command", Command)
-		("ticsleft", TicsLeft);
+		("ticsleft", TicsLeft)
+		("unsafe", IsUnsafe);
 }
 
 DWaitingCommand::DWaitingCommand ()
 {
 	Command = NULL;
 	TicsLeft = 1;
+	IsUnsafe = false;
 }
 
-DWaitingCommand::DWaitingCommand (const char *cmd, int tics)
+DWaitingCommand::DWaitingCommand (const char *cmd, int tics, bool unsafe)
 {
 	Command = copystring (cmd);
 	TicsLeft = tics+1;
+	IsUnsafe = unsafe;
 }
 
 DWaitingCommand::~DWaitingCommand ()
@@ -221,6 +243,7 @@ void DWaitingCommand::Tick ()
 {
 	if (--TicsLeft == 0)
 	{
+		UnsafeExecutionScope scope;
 		AddCommandString (Command);
 		Destroy ();
 	}
@@ -293,17 +316,17 @@ static int ListActionCommands (const char *pattern)
 #undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__) \
   || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
-#define get16bits(d) (*((const WORD *) (d)))
+#define get16bits(d) (*((const uint16_t *) (d)))
 #endif
 
 #if !defined (get16bits)
-#define get16bits(d) ((((DWORD)(((const BYTE *)(d))[1])) << 8)\
-                       +(DWORD)(((const BYTE *)(d))[0]) )
+#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)(((const uint8_t *)(d))[0]) )
 #endif
 
-DWORD SuperFastHash (const char *data, size_t len)
+uint32_t SuperFastHash (const char *data, size_t len)
 {
-	DWORD hash = 0, tmp;
+	uint32_t hash = 0, tmp;
 	size_t rem;
 
 	if (len == 0 || data == NULL) return 0;
@@ -317,7 +340,7 @@ DWORD SuperFastHash (const char *data, size_t len)
 		hash  += get16bits (data);
 		tmp    = (get16bits (data+2) << 11) ^ hash;
 		hash   = (hash << 16) ^ tmp;
-		data  += 2*sizeof (WORD);
+		data  += 2*sizeof (uint16_t);
 		hash  += hash >> 11;
 	}
 
@@ -326,7 +349,7 @@ DWORD SuperFastHash (const char *data, size_t len)
 	{
 		case 3:	hash += get16bits (data);
 				hash ^= hash << 16;
-				hash ^= data[sizeof (WORD)] << 18;
+				hash ^= data[sizeof (uint16_t)] << 18;
 				hash += hash >> 11;
 				break;
 		case 2:	hash += get16bits (data);
@@ -352,12 +375,12 @@ DWORD SuperFastHash (const char *data, size_t len)
 /* A modified version to do a case-insensitive hash */
 
 #undef get16bits
-#define get16bits(d) ((((DWORD)tolower(((const BYTE *)(d))[1])) << 8)\
-                       +(DWORD)tolower(((const BYTE *)(d))[0]) )
+#define get16bits(d) ((((uint32_t)tolower(((const uint8_t *)(d))[1])) << 8)\
+                       +(uint32_t)tolower(((const uint8_t *)(d))[0]) )
 
-DWORD SuperFastHashI (const char *data, size_t len)
+uint32_t SuperFastHashI (const char *data, size_t len)
 {
-	DWORD hash = 0, tmp;
+	uint32_t hash = 0, tmp;
 	size_t rem;
 
 	if (len <= 0 || data == NULL) return 0;
@@ -371,7 +394,7 @@ DWORD SuperFastHashI (const char *data, size_t len)
 		hash  += get16bits (data);
 		tmp    = (get16bits (data+2) << 11) ^ hash;
 		hash   = (hash << 16) ^ tmp;
-		data  += 2*sizeof (WORD);
+		data  += 2*sizeof (uint16_t);
 		hash  += hash >> 11;
 	}
 
@@ -380,7 +403,7 @@ DWORD SuperFastHashI (const char *data, size_t len)
 	{
 		case 3:	hash += get16bits (data);
 				hash ^= hash << 16;
-				hash ^= tolower(data[sizeof (WORD)]) << 18;
+				hash ^= tolower(data[sizeof (uint16_t)]) << 18;
 				hash += hash >> 11;
 				break;
 		case 2:	hash += get16bits (data);
@@ -467,7 +490,7 @@ bool FButtonStatus::PressKey (int keynum)
 		}
 		Keys[open] = keynum;
 	}
-	BYTE wasdown = bDown;
+	uint8_t wasdown = bDown;
 	bDown = bWentDown = true;
 	// Returns true if this key caused the button to go down.
 	return !wasdown;
@@ -476,7 +499,7 @@ bool FButtonStatus::PressKey (int keynum)
 bool FButtonStatus::ReleaseKey (int keynum)
 {
 	int i, numdown, match;
-	BYTE wasdown = bDown;
+	uint8_t wasdown = bDown;
 
 	keynum &= KEY_DBLCLICKED-1;
 
@@ -635,7 +658,7 @@ void C_DoCommand (const char *cmd, int keynum)
 			}
 			else
 			{
-				new DStoredCommand (com, beg);
+				Create<DStoredCommand> (com, beg);
 			}
 		}
 	}
@@ -666,9 +689,11 @@ void C_DoCommand (const char *cmd, int keynum)
 // This is only accessible to the special menu item to run CCMDs.
 DEFINE_ACTION_FUNCTION(DOptionMenuItemCommand, DoCommand)
 {
-	if (DMenu::CurrentMenu == nullptr) return 0;
+	if (CurrentMenu == nullptr) return 0;
 	PARAM_PROLOGUE;
 	PARAM_STRING(cmd);
+	PARAM_BOOL(unsafe);
+	UnsafeExecutionScope scope(unsafe);
 	C_DoCommand(cmd);
 	return 0;
 }
@@ -729,7 +754,7 @@ void AddCommandString (char *cmd, int keynum)
 						  // Note that deferred commands lose track of which key
 						  // (if any) they were pressed from.
 							*brkpt = ';';
-							new DWaitingCommand (brkpt, tics);
+							Create<DWaitingCommand> (brkpt, tics, UnsafeExecutionContext);
 						}
 						return;
 					}
@@ -1019,6 +1044,17 @@ FConsoleCommand::~FConsoleCommand ()
 void FConsoleCommand::Run (FCommandLine &argv, APlayerPawn *who, int key)
 {
 	m_RunFunc (argv, who, key);
+}
+
+void FUnsafeConsoleCommand::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+{
+	if (UnsafeExecutionContext)
+	{
+		Printf(TEXTCOLOR_RED "Cannot execute unsafe command " TEXTCOLOR_GOLD "%s\n", m_Name);
+		return;
+	}
+
+	FConsoleCommand::Run (args, instigator, key);
 }
 
 FConsoleAlias::FConsoleAlias (const char *name, const char *command, bool noSave)
@@ -1341,9 +1377,13 @@ CCMD (alias)
 					alias = NULL;
 				}
 			}
+			else if (ParsingKeyConf)
+			{
+				new FUnsafeConsoleAlias (argv[1], argv[2]);
+			}
 			else
 			{
-				new FConsoleAlias (argv[1], argv[2], ParsingKeyConf);
+				new FConsoleAlias (argv[1], argv[2], false);
 			}
 		}
 	}
@@ -1479,6 +1519,12 @@ void FConsoleAlias::SafeDelete ()
 	{
 		bKill = true;
 	}
+}
+
+void FUnsafeConsoleAlias::Run (FCommandLine &args, APlayerPawn *instigator, int key)
+{
+	UnsafeExecutionScope scope;
+	FConsoleAlias::Run(args, instigator, key);
 }
 
 void FExecList::AddCommand(const char *cmd, const char *file)

@@ -1,3 +1,44 @@
+/*
+** thingdef.h
+**
+** Actor definitions
+**
+**---------------------------------------------------------------------------
+** Copyright 2002-2008 Christoph Oelckers
+** Copyright 2004-2008 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+** 4. When not used as part of ZDoom or a ZDoom derivative, this code will be
+**    covered by the terms of the GNU General Public License as published by
+**    the Free Software Foundation; either version 2 of the License, or (at
+**    your option) any later version.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+
 #ifndef __THINGDEF_H
 #define __THINGDEF_H
 
@@ -6,6 +47,7 @@
 #include "s_sound.h"
 #include "sc_man.h"
 #include "cmdlib.h"
+#include "vm.h"
 
 
 class FScanner;
@@ -52,7 +94,7 @@ struct FStateDefine
 	FName Label;
 	TArray<FStateDefine> Children;
 	FState *State;
-	BYTE DefineFlags;
+	uint8_t DefineFlags;
 };
 
 class FStateDefinitions
@@ -71,9 +113,9 @@ class FStateDefinitions
 	FStateDefine *FindStateAddress(const char *name);
 	FState *FindState(const char *name);
 
-	FState *ResolveGotoLabel(AActor *actor, PClassActor *mytype, char *name);
+	FState *ResolveGotoLabel(PClassActor *mytype, char *name);
 	static void FixStatePointers(PClassActor *actor, TArray<FStateDefine> & list);
-	void ResolveGotoLabels(PClassActor *actor, AActor *defaults, TArray<FStateDefine> & list);
+	void ResolveGotoLabels(PClassActor *actor, TArray<FStateDefine> & list);
 public:
 
 	FStateDefinitions()
@@ -83,11 +125,11 @@ public:
 		lastlabel = -1;
 	}
 
-	void SetStateLabel(const char *statename, FState *state, BYTE defflags = SDF_STATE);
+	void SetStateLabel(const char *statename, FState *state, uint8_t defflags = SDF_STATE);
 	void AddStateLabel(const char *statename);
 	int GetStateLabelIndex (FName statename);
 	void InstallStates(PClassActor *info, AActor *defaults);
-	int FinishStates(PClassActor *actor, AActor *defaults);
+	int FinishStates(PClassActor *actor);
 
 	void MakeStateDefines(const PClassActor *cls);
 	void AddStateDefines(const FStateLabels *list);
@@ -124,6 +166,7 @@ struct Baggage
 	bool fromDecorate;
 	int CurrentState;
 	int Lumpnum;
+	VersionInfo Version;
 	FStateDefinitions statedef;
 
 	FDropItem *DropItemList;
@@ -147,8 +190,8 @@ inline void ResetBaggage (Baggage *bag, PClassActor *stateclass)
 //
 //==========================================================================
 
-AFuncDesc *FindFunction(PStruct *cls, const char * string);
-FieldDesc *FindField(PStruct *cls, const char * string);
+AFuncDesc *FindFunction(PContainerType *cls, const char * string);
+FieldDesc *FindField(PContainerType *cls, const char * string);
 
 
 FxExpression *ParseExpression(FScanner &sc, PClassActor *cls, PNamespace *resolvenspc = nullptr);
@@ -158,10 +201,10 @@ void ParseFunctionParameters(FScanner &sc, PClassActor *cls, TArray<FxExpression
 FxExpression *ParseActions(FScanner &sc, FState state, FString statestring, Baggage &bag, bool &endswithret);
 class FxVMFunctionCall *ParseAction(FScanner &sc, FState state, FString statestring, Baggage &bag);
 FName CheckCastKludges(FName in);
-void SetImplicitArgs(TArray<PType *> *args, TArray<DWORD> *argflags, TArray<FName> *argnames, PStruct *cls, DWORD funcflags, int useflags);
-PFunction *CreateAnonymousFunction(PClass *containingclass, PType *returntype, int flags);
-PFunction *FindClassMemberFunction(PStruct *cls, PStruct *funccls, FName name, FScriptPosition &sc, bool *error);
-void CreateDamageFunction(PNamespace *ns, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
+void SetImplicitArgs(TArray<PType *> *args, TArray<uint32_t> *argflags, TArray<FName> *argnames, PContainerType *cls, uint32_t funcflags, int useflags);
+PFunction *CreateAnonymousFunction(PContainerType *containingclass, PType *returntype, int flags);
+PFunction *FindClassMemberFunction(PContainerType *cls, PContainerType *funccls, FName name, FScriptPosition &sc, bool *error);
+void CreateDamageFunction(PNamespace *ns, const VersionInfo &ver, PClassActor *info, AActor *defaults, FxExpression *id, bool fromDecorate, int lumpnum);
 
 //==========================================================================
 //

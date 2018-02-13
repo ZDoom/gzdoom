@@ -154,6 +154,7 @@ class CentaurFX : Actor
 		Damage 4;
 		Projectile;
 		+SPAWNSOUNDSOURCE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		SeeSound "CentaurLeaderAttack";
 		DeathSound "CentaurMissileExplode";

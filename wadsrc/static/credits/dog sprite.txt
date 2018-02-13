@@ -1,0 +1,9 @@
+German Shepherd Dog Sprite
+
+Modeled from scratch and rendered in Blender by Nash Muhandes.
+
+Copyright © 2017 Nash Muhandes. All Rights Reserved.
+
+Forum thread - https://forum.zdoom.org/viewtopic.php?f=59&t=58035
+
+Released under CC-BY - https://creativecommons.org/licenses/by/3.0/

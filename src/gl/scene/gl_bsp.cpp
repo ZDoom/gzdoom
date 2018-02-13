@@ -33,35 +33,31 @@
 #include "p_effect.h"
 #include "po_man.h"
 #include "doomdata.h"
+#include "g_levellocals.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/scene/gl_clipper.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_wall.h"
 #include "gl/utility/gl_clock.h"
 
 EXTERN_CVAR(Bool, gl_render_segs)
 
-Clipper clipper;
-
-
 CVAR(Bool, gl_render_things, true, 0)
 CVAR(Bool, gl_render_walls, true, 0)
 CVAR(Bool, gl_render_flats, true, 0)
 
-extern fixed_t viewx, viewy;
-
-static void UnclipSubsector(subsector_t *sub)
+void GLSceneDrawer::UnclipSubsector(subsector_t *sub)
 {
 	int count = sub->numlines;
 	seg_t * seg = sub->firstline;
 
 	while (count--)
 	{
-		angle_t startAngle = seg->v2->GetClipAngle();
-		angle_t endAngle = seg->v1->GetClipAngle();
+		angle_t startAngle = clipper.GetClipAngle(seg->v2);
+		angle_t endAngle = clipper.GetClipAngle(seg->v1);
 
 		// Back side, i.e. backface culling	- read: endAngle >= startAngle!
 		if (startAngle-endAngle >= ANGLE_180)  
@@ -81,11 +77,7 @@ static void UnclipSubsector(subsector_t *sub)
 //
 //==========================================================================
 
-// making these 2 variables global instead of passing them as function parameters is faster.
-static subsector_t *currentsubsector;
-static sector_t *currentsector;
-
-static void AddLine (seg_t *seg, bool portalclip)
+void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
 {
 #ifdef _DEBUG
 	if (seg->linedef->Index() == 38)
@@ -94,7 +86,6 @@ static void AddLine (seg_t *seg, bool portalclip)
 	}
 #endif
 
-	angle_t startAngle, endAngle;
 	sector_t * backsector = NULL;
 	sector_t bs;
 
@@ -104,8 +95,8 @@ static void AddLine (seg_t *seg, bool portalclip)
 		if (clipres == GLPortal::PClip_InFront) return;
 	}
 
-	startAngle = seg->v2->GetClipAngle();
-	endAngle = seg->v1->GetClipAngle();
+	angle_t startAngle = clipper.GetClipAngle(seg->v2);
+	angle_t endAngle = clipper.GetClipAngle(seg->v1);
 
 	// Back side, i.e. backface culling	- read: endAngle >= startAngle!
 	if (startAngle-endAngle<ANGLE_180)  
@@ -131,7 +122,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 	}
 	currentsubsector->flags |= SSECF_DRAWN;
 
-	BYTE ispoly = BYTE(seg->sidedef->Flags & WALLF_POLYOBJ);
+	uint8_t ispoly = uint8_t(seg->sidedef->Flags & WALLF_POLYOBJ);
 
 	if (!seg->backsector)
 	{
@@ -156,9 +147,9 @@ static void AddLine (seg_t *seg, bool portalclip)
 		else
 		{
 			// clipping checks are only needed when the backsector is not the same as the front sector
-			gl_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
+			CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
 
-			backsector = gl_FakeFlat(seg->backsector, &bs, true);
+			backsector = gl_FakeFlat(seg->backsector, &bs, in_area, true);
 
 			if (gl_CheckClip(seg->sidedef, currentsector, backsector))
 			{
@@ -182,7 +173,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 		{
 			SetupWall.Clock();
 
-			GLWall wall;
+			GLWall wall(this);
 			wall.sub = currentsubsector;
 			wall.Process(seg, currentsector, backsector);
 			rendered_lines++;
@@ -201,7 +192,7 @@ static void AddLine (seg_t *seg, bool portalclip)
 //
 //==========================================================================
 
-static void PolySubsector(subsector_t * sub)
+void GLSceneDrawer::PolySubsector(subsector_t * sub)
 {
 	int count = sub->numlines;
 	seg_t * line = sub->firstline;
@@ -225,7 +216,7 @@ static void PolySubsector(subsector_t * sub)
 //
 //==========================================================================
 
-static void RenderPolyBSPNode (void *node)
+void GLSceneDrawer::RenderPolyBSPNode (void *node)
 {
 	while (!((size_t)node & 1))  // Keep going until found a subsector
 	{
@@ -248,7 +239,7 @@ static void RenderPolyBSPNode (void *node)
 
 		node = bsp->children[side];
 	}
-	PolySubsector ((subsector_t *)((BYTE *)node - 1));
+	PolySubsector ((subsector_t *)((uint8_t *)node - 1));
 }
 
 //==========================================================================
@@ -258,7 +249,7 @@ static void RenderPolyBSPNode (void *node)
 //
 //==========================================================================
 
-static void AddPolyobjs(subsector_t *sub)
+void GLSceneDrawer::AddPolyobjs(subsector_t *sub)
 {
 	if (sub->BSP == NULL || sub->BSP->bDirty)
 	{
@@ -286,7 +277,7 @@ static void AddPolyobjs(subsector_t *sub)
 //
 //==========================================================================
 
-static inline void AddLines(subsector_t * sub, sector_t * sector)
+void GLSceneDrawer::AddLines(subsector_t * sub, sector_t * sector)
 {
 	currentsector = sector;
 	currentsubsector = sub;
@@ -330,7 +321,7 @@ inline bool PointOnLine(const DVector2 &pos, const line_t *line)
 	return fabs(v) <= EQUAL_EPSILON;
 }
 
-static inline void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line)
+void GLSceneDrawer::AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line)
 {
 	currentsector = sector;
 	currentsubsector = sub;
@@ -358,9 +349,8 @@ static inline void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, l
 //
 //==========================================================================
 
-static inline void RenderThings(subsector_t * sub, sector_t * sector)
+void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 {
-
 	SetupSprite.Clock();
 	sector_t * sec=sub->sector;
 	// Handle all things in sector.
@@ -370,10 +360,10 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 		if (thing->validcount == validcount) continue;
 		thing->validcount = validcount;
 
-		FIntCVar *cvar = thing->GetClass()->distancecheck;
+		FIntCVar *cvar = thing->GetInfo()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{
-			double dist = (thing->Pos() - ViewPos).LengthSquared();
+			double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
 			double check = (double)**cvar;
 			if (dist >= check * check)
 			{
@@ -381,16 +371,17 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 			}
 		}
 
-		GLRenderer->ProcessSprite(thing, sector, false);
+		GLSprite sprite(this);
+		sprite.Process(thing, sector, false);
 	}
 	
 	for (msecnode_t *node = sec->sectorportal_thinglist; node; node = node->m_snext)
 	{
 		AActor *thing = node->m_thing;
-		FIntCVar *cvar = thing->GetClass()->distancecheck;
+		FIntCVar *cvar = thing->GetInfo()->distancecheck;
 		if (cvar != NULL && *cvar >= 0)
 		{
-			double dist = (thing->Pos() - ViewPos).LengthSquared();
+			double dist = (thing->Pos() - r_viewpoint.Pos).LengthSquared();
 			double check = (double)**cvar;
 			if (dist >= check * check)
 			{
@@ -398,7 +389,8 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 			}
 		}
 
-		GLRenderer->ProcessSprite(thing, sector, true);
+		GLSprite sprite(this);
+		sprite.Process(thing, sector, true);
 	}
 	SetupSprite.Unclock();
 }
@@ -413,7 +405,7 @@ static inline void RenderThings(subsector_t * sub, sector_t * sector)
 //
 //==========================================================================
 
-static void DoSubsector(subsector_t * sub)
+void GLSceneDrawer::DoSubsector(subsector_t * sub)
 {
 	unsigned int i;
 	sector_t * sector;
@@ -434,7 +426,7 @@ static void DoSubsector(subsector_t * sub)
 	if (!(currentmapsection[sub->mapsection>>3] & (1 << (sub->mapsection & 7)))) return;
 	if (sub->flags & SSECF_POLYORG) return;	// never render polyobject origin subsectors because their vertices no longer are where one may expect.
 
-	if (gl_drawinfo->ss_renderflags[sub-subsectors] & SSRF_SEEN)
+	if (gl_drawinfo->ss_renderflags[sub->Index()] & SSRF_SEEN)
 	{
 		// This means that we have reached a subsector in a portal that has been marked 'seen'
 		// from the other side of the portal. This means we must clear the clipper for the
@@ -443,7 +435,7 @@ static void DoSubsector(subsector_t * sub)
 	}
 	if (clipper.IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
 
-	fakesector=gl_FakeFlat(sector, &fake, false);
+	fakesector=gl_FakeFlat(sector, &fake, in_area, false);
 
 	if (GLRenderer->mClipPortal)
 	{
@@ -468,9 +460,10 @@ static void DoSubsector(subsector_t * sub)
 	{
 		SetupSprite.Clock();
 
-		for (i = ParticlesInSubsec[DWORD(sub-subsectors)]; i != NO_PARTICLE; i = Particles[i].snext)
+		for (i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
-			GLRenderer->ProcessParticle(&Particles[i], fakesector);
+			GLSprite sprite(this);
+			sprite.ProcessParticle(&Particles[i], fakesector);
 		}
 		SetupSprite.Unclock();
 	}
@@ -509,20 +502,21 @@ static void DoSubsector(subsector_t * sub)
 					sector = sub->render_sector;
 					// the planes of this subsector are faked to belong to another sector
 					// This means we need the heightsec parts and light info of the render sector, not the actual one.
-					fakesector = gl_FakeFlat(sector, &fake, false);
+					fakesector = gl_FakeFlat(sector, &fake, in_area, false);
 				}
 
-				BYTE &srf = gl_drawinfo->sectorrenderflags[sub->render_sector->sectornum];
+				uint8_t &srf = gl_drawinfo->sectorrenderflags[sub->render_sector->sectornum];
 				if (!(srf & SSRF_PROCESSED))
 				{
 					srf |= SSRF_PROCESSED;
 
 					SetupFlat.Clock();
-					GLRenderer->ProcessSector(fakesector);
+					GLFlat flat(this);
+					flat.ProcessSector(fakesector);
 					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.
-				gl_drawinfo->ss_renderflags[sub-subsectors] = 
+				gl_drawinfo->ss_renderflags[sub->Index()] = 
 					(sub->numlines > 2) ? SSRF_PROCESSED|SSRF_RENDERALL : SSRF_PROCESSED;
 				if (sub->hacked & 1) gl_drawinfo->AddHackedSubsector(sub);
 
@@ -558,11 +552,11 @@ static void DoSubsector(subsector_t * sub)
 //
 //==========================================================================
 
-void gl_RenderBSPNode (void *node)
+void GLSceneDrawer::RenderBSPNode (void *node)
 {
-	if (numnodes == 0)
+	if (level.nodes.Size() == 0)
 	{
-		DoSubsector (subsectors);
+		DoSubsector (&level.subsectors[0]);
 		return;
 	}
 	while (!((size_t)node & 1))  // Keep going until found a subsector
@@ -573,7 +567,7 @@ void gl_RenderBSPNode (void *node)
 		int side = R_PointOnSide(viewx, viewy, bsp);
 
 		// Recursively divide front space (toward the viewer).
-		gl_RenderBSPNode (bsp->children[side]);
+		RenderBSPNode (bsp->children[side]);
 
 		// Possibly divide back space (away from the viewer).
 		side ^= 1;
@@ -581,13 +575,13 @@ void gl_RenderBSPNode (void *node)
 		// It is not necessary to use the slower precise version here
 		if (!clipper.CheckBox(bsp->bbox[side]))
 		{
-			if (!(gl_drawinfo->no_renderflags[bsp-nodes] & SSRF_SEEN))
+			if (!(gl_drawinfo->no_renderflags[bsp->Index()] & SSRF_SEEN))
 				return;
 		}
 
 		node = bsp->children[side];
 	}
-	DoSubsector ((subsector_t *)((BYTE *)node - 1));
+	DoSubsector ((subsector_t *)((uint8_t *)node - 1));
 }
 
 

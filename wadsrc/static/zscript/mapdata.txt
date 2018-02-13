@@ -1,5 +1,5 @@
 
-struct SectorPortal native
+struct SectorPortal native play
 {
 	enum EType
 	{
@@ -31,12 +31,12 @@ struct SectorPortal native
 };
 
 
-struct Vertex native
+struct Vertex native play
 {
 	native readonly Vector2 p;
 }
 
-struct Side native
+struct Side native play
 {
 	enum ETexpart
 	{
@@ -100,7 +100,7 @@ struct Side native
 	
 };
 
-struct Line native
+struct Line native play
 {
 	enum ELineFlags
 	{
@@ -143,7 +143,7 @@ struct Line native
 	native int						special;
 	native int						args[5];	// <--- hexen-style arguments (expanded to ZDoom's full width)
 	native double					alpha;		// <--- translucency (0=invisibile, FRACUNIT=opaque)
-	native Side						sidedef[2];
+	native readonly Side			sidedef[2];
 	native readonly double			bbox[4];	// bounding box, for the extent of the LineDef.
 	native readonly Sector			frontsector, backsector;
 	native int 						validcount;	// if == validcount, already checked
@@ -171,25 +171,25 @@ struct Line native
 	}
 }
 
-struct SecPlane native
+struct SecPlane native play
 {
 	native Vector3 Normal;
 	native double D;
 	native double negiC;
 	
-	native bool isSlope();
-	native int PointOnSide(Vector3 pos);
-	native double ZatPoint (Vector2 v);
-	native double ZatPointDist(Vector2 v, double dist);
-	native bool isEqual(Secplane other);
+	native bool isSlope() const;
+	native int PointOnSide(Vector3 pos) const;
+	native double ZatPoint (Vector2 v) const;
+	native double ZatPointDist(Vector2 v, double dist) const;
+	native bool isEqual(Secplane other) const;
 	native void ChangeHeight(double hdiff);
-	native double GetChangedHeight(double hdiff);
-	native double HeightDiff(double oldd, double newd = 0.0);
-	native double PointToDist(Vector2 xy, double z);
+	native double GetChangedHeight(double hdiff) const;
+	native double HeightDiff(double oldd, double newd = 0.0) const;
+	native double PointToDist(Vector2 xy, double z) const;
 }
 
 // This encapsulates all info Doom's original 'special' field contained - for saving and transferring.
-struct SecSpecial
+struct SecSpecial play
 {
 	Name damagetype;
 	int damageamount;
@@ -199,10 +199,20 @@ struct SecSpecial
 	int Flags;
 }
 
-struct Sector native
+struct FColormap
 {
-	//secplane_t	floorplane, ceilingplane;	// defined internally
-	//FDynamicColormap *ColorMap;
+	Color		LightColor;
+	Color		FadeColor;
+	uint8		Desaturation;
+	uint8		BlendFactor;
+	uint16		FogDensity;
+}
+
+struct Sector native play
+{
+
+	native readonly FColormap 	ColorMap;
+	native readonly Color		SpecialColors[5];
 
 	native Actor 		SoundTarget;
 
@@ -228,7 +238,11 @@ struct Sector native
 	enum EPlane
 	{
 		floor,
-		ceiling
+		ceiling,
+		// only used for specialcolors array
+		walltop,
+		wallbottom,
+		sprites
 	};
 	
 	enum EInterpolationType
@@ -245,8 +259,11 @@ struct Sector native
 	native int 			prevsec;
 	native int	 		nextsec;
 
-	//TStaticPointedArray<line_t *> Lines; // this is defined internally to avoid exposing some overly complicated type to the parser
+	native readonly Array<Line> lines;
 
+	native readonly @secplane floorplane;
+	native readonly @secplane ceilingplane;
+	
 	native readonly Sector		heightsec;
 
 	native uint			bottommap, midmap, topmap;
@@ -321,8 +338,6 @@ struct Sector native
 
 	native void RemoveForceField();
 	native static Sector PointInSector(Vector2 pt);
-	native void SetColor(color c, int desat = 0);
-	native void SetFade(color c);
 
 	native bool PlaneMoving(int pos);
 	native int GetFloorLight();
@@ -357,6 +372,15 @@ struct Sector native
 	native void ChangeFlags(int pos, int And, int Or);
 	native int GetPlaneLight(int pos);
 	native void SetPlaneLight(int pos, int level);
+	native void SetColor(color c, int desat = 0);
+	native void SetFade(color c);
+	native void SetFogDensity(int dens);
+	native double GetGlowHeight(int pos);
+	native color GetGlowColor(int pos);
+	native void SetGlowHeight(int pos, double height);
+	native void SetGlowColor(int pos, color color);
+	native void SetSpecialColor(int pos, color color);
+	
 	native TextureID GetTexture(int pos);
 	native void SetTexture(int pos, TextureID tex, bool floorclip = true);
 	native double GetPlaneTexZ(int pos);
@@ -439,4 +463,17 @@ struct Sector native
 		return Level.GetUDMFString(LevelLocals.UDMF_Sector, Index(), nm);
 	}
 	 
+}
+
+class SectorTagIterator : Object native
+{
+	native static SectorTagIterator Create(int tag, line defline = null);
+	native int Next();
+	native int NextCompat(bool compat, int secnum);
+}
+
+class LineIdIterator : Object native
+{
+	native static LineIdIterator Create(int tag);
+	native int Next();
 }

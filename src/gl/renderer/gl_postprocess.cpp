@@ -62,8 +62,10 @@
 #include "gl/shaders/gl_lensshader.h"
 #include "gl/shaders/gl_fxaashader.h"
 #include "gl/shaders/gl_presentshader.h"
+#include "gl/shaders/gl_postprocessshader.h"
 #include "gl/renderer/gl_2ddrawer.h"
 #include "gl/stereo3d/gl_stereo3d.h"
+#include "r_videoscale.h"
 
 //==========================================================================
 //
@@ -113,7 +115,7 @@ CUSTOM_CVAR(Int, gl_ssao, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		self = 0;
 }
 
-CUSTOM_CVAR(Int, gl_ssao_portals, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, gl_ssao_portals, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0)
 		self = 0;
@@ -145,10 +147,12 @@ CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITC
 		GLRenderer->ClearTonemapPalette();
 }
 
+CVAR(Float, gl_menu_blur, -1.0f, CVAR_ARCHIVE)
 
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
-
+EXTERN_CVAR(Float, vid_saturation)
+EXTERN_CVAR(Int, gl_satformula)
 
 void FGLRenderer::RenderScreenQuad()
 {
@@ -157,15 +161,18 @@ void FGLRenderer::RenderScreenQuad()
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::PRESENT_INDEX, 4);
 }
 
-void FGLRenderer::PostProcessScene()
+void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
 {
 	mBuffers->BlitSceneToTexture();
 	UpdateCameraExposure();
-	BloomScene();
+	mCustomPostProcessShaders->Run("beforebloom");
+	BloomScene(fixedcm);
+	afterBloomDrawEndScene2D();
 	TonemapScene();
-	ColormapScene();
+	ColormapScene(fixedcm);
 	LensDistortScene();
 	ApplyFXAA();
+	mCustomPostProcessShaders->Run("scene");
 }
 
 //-----------------------------------------------------------------------------
@@ -382,10 +389,10 @@ void FGLRenderer::UpdateCameraExposure()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::BloomScene()
+void FGLRenderer::BloomScene(int fixedcm)
 {
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || gl_fixedcolormap != CM_DEFAULT || gl_ssao_debug)
+	if (!gl_bloom || fixedcm != CM_DEFAULT || gl_ssao_debug)
 		return;
 
 	FGLDebug::PushGroup("BloomScene");
@@ -469,6 +476,86 @@ void FGLRenderer::BloomScene()
 
 //-----------------------------------------------------------------------------
 //
+// Blur the scene
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::BlurScene(float gameinfobluramount)
+{
+	// first, respect the CVar
+	float blurAmount = gl_menu_blur;
+
+	// if CVar is negative, use the gameinfo entry
+	if (gl_menu_blur < 0)
+		blurAmount = gameinfobluramount;
+
+	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
+	if ((blurAmount <= 0.0) || !FGLRenderBuffers::IsEnabled())
+		return;
+
+	FGLDebug::PushGroup("BlurScene");
+
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(2);
+
+	int sampleCount = 9;
+	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
+	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);
+
+	const auto &viewport = mScreenViewport; // The area we want to blur. Could also be mSceneViewport if only the scene area is to be blured
+
+	const auto &level0 = mBuffers->BloomLevels[0];
+
+	// Grab the area we want to bloom:
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, mBuffers->GetCurrentFB());
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, level0.VFramebuffer);
+	glBlitFramebuffer(viewport.left, viewport.top, viewport.width, viewport.height, 0, 0, level0.Width, level0.Height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	// Blur and downscale:
+	for (int i = 0; i < numLevels - 1; i++)
+	{
+		const auto &level = mBuffers->BloomLevels[i];
+		const auto &next = mBuffers->BloomLevels[i + 1];
+		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
+	}
+
+	// Blur and upscale:
+	for (int i = numLevels - 1; i > 0; i--)
+	{
+		const auto &level = mBuffers->BloomLevels[i];
+		const auto &next = mBuffers->BloomLevels[i - 1];
+
+		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
+		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
+
+		// Linear upscale:
+		glBindFramebuffer(GL_FRAMEBUFFER, next.VFramebuffer);
+		glViewport(0, 0, next.Width, next.Height);
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, level.VTexture);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		mBloomCombineShader->Bind();
+		mBloomCombineShader->BloomTexture.Set(0);
+		RenderScreenQuad();
+	}
+
+	mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
+	mBlurShader->BlurVertical(this, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
+
+	// Copy blur back to scene texture:
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, level0.VFramebuffer);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, mBuffers->GetCurrentFB());
+	glBlitFramebuffer(0, 0, level0.Width, level0.Height, viewport.left, viewport.top, viewport.width, viewport.height, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	FGLDebug::PopGroup();
+}
+
+//-----------------------------------------------------------------------------
+//
 // Tonemap scene texture and place the result in the HUD/2D texture
 //
 //-----------------------------------------------------------------------------
@@ -529,11 +616,11 @@ void FGLRenderer::CreateTonemapPalette()
 			{
 				for (int b = 0; b < 64; b++)
 				{
-					PalEntry color = GPalette.BaseColors[(BYTE)PTM_BestColor((uint32 *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 0, 256)];
+					PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 0, 256)];
 					int index = ((r * 64 + g) * 64 + b) * 4;
-					lut[index] = color.r;
+					lut[index] = color.b;
 					lut[index + 1] = color.g;
-					lut[index + 2] = color.b;
+					lut[index + 2] = color.r;
 					lut[index + 3] = 255;
 				}
 			}
@@ -559,9 +646,9 @@ void FGLRenderer::ClearTonemapPalette()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::ColormapScene()
+void FGLRenderer::ColormapScene(int fixedcm)
 {
-	if (gl_fixedcolormap < CM_FIRSTSPECIALCOLORMAP || gl_fixedcolormap >= CM_MAXCOLORMAP)
+	if (fixedcm < CM_FIRSTSPECIALCOLORMAP || fixedcm >= CM_MAXCOLORMAP)
 		return;
 
 	FGLDebug::PushGroup("ColormapScene");
@@ -572,7 +659,7 @@ void FGLRenderer::ColormapScene()
 	mBuffers->BindCurrentTexture(0);
 	mColormapShader->Bind();
 	
-	FSpecialColormap *scm = &SpecialColormaps[gl_fixedcolormap - CM_FIRSTSPECIALCOLORMAP];
+	FSpecialColormap *scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
 	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
 		scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 
@@ -734,6 +821,8 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 	m2DDrawer->Draw();	// draw all pending 2D stuff before copying the buffer
 	m2DDrawer->Clear();
 
+	mCustomPostProcessShaders->Run("screen");
+
 	FGLDebug::PushGroup("CopyToBackbuffer");
 	if (FGLRenderBuffers::IsEnabled())
 	{
@@ -767,8 +856,16 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 	glViewport(box.left, box.top, box.width, box.height);
 
 	glActiveTexture(GL_TEXTURE0);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	if (ViewportLinearScale())
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+	else
+	{
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	}
 
 	mPresentShader->Bind();
 	mPresentShader->InputTexture.Set(0);
@@ -777,12 +874,15 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 		mPresentShader->InvGamma.Set(1.0f);
 		mPresentShader->Contrast.Set(1.0f);
 		mPresentShader->Brightness.Set(0.0f);
+		mPresentShader->Saturation.Set(1.0f);
 	}
 	else
 	{
 		mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
 		mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
 		mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
+		mPresentShader->Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.f));
+		mPresentShader->GrayFormula.Set(static_cast<int>(gl_satformula));
 	}
 	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
 	RenderScreenQuad();
@@ -832,15 +932,15 @@ void FGLRenderer::ClearBorders()
 
 // [SP] Re-implemented BestColor for more precision rather than speed. This function is only ever called once until the game palette is changed.
 
-int FGLRenderer::PTM_BestColor (const uint32 *pal_in, int r, int g, int b, int first, int num)
+int FGLRenderer::PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
 {
 	const PalEntry *pal = (const PalEntry *)pal_in;
 	static double powtable[256];
 	static bool firstTime = true;
 	static float trackpowtable = 0.;
 
-	double fbestdist, fdist;
-	int bestcolor;
+	double fbestdist = DBL_MAX, fdist;
+	int bestcolor = 0;
 
 	if (firstTime || trackpowtable != gl_paltonemap_powtable)
 	{

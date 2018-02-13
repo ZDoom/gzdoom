@@ -72,6 +72,7 @@ class ArachnotronPlasma : Actor
 		Damage 5;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 0.75;
 		SeeSound "baby/attack";

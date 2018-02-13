@@ -51,7 +51,6 @@
 
 #include <stdio.h>
 
-#define USE_WINDOWS_DWORD
 #include "doomtype.h"
 
 #include "c_dispatch.h"
@@ -63,16 +62,18 @@
 #include "v_pfx.h"
 #include "stats.h"
 #include "doomerrors.h"
-#include "r_main.h"
 #include "r_data/r_translate.h"
 #include "f_wipe.h"
 #include "sbar.h"
 #include "win32iface.h"
+#include "win32swiface.h"
 #include "doomstat.h"
 #include "v_palette.h"
 #include "w_wad.h"
+#include "textures.h"
 #include "r_data/colormaps.h"
 #include "SkylineBinPack.h"
+#include "swrenderer/scene/r_light.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -90,8 +91,6 @@
 #define DEF_ATLAS_HEIGHT	512
 
 // TYPES -------------------------------------------------------------------
-
-IMPLEMENT_CLASS(D3DFB, false, false)
 
 struct D3DFB::PackedTexture
 {
@@ -227,7 +226,6 @@ const char *const D3DFB::ShaderNames[D3DFB::NUM_SHADERS] =
 CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
 {
 	V_SetBorderNeedRefresh();
-	ST_SetNeedRefresh();
 }
 
 CVAR(Bool, d3d_antilag, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -242,8 +240,8 @@ CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-D3DFB::D3DFB (UINT adapter, int width, int height, bool fullscreen)
-	: BaseWinFB (width, height)
+D3DFB::D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen)
+	: BaseWinFB (width, height, bgra)
 {
 	D3DPRESENT_PARAMETERS d3dpp;
 
@@ -765,14 +763,16 @@ void D3DFB::KillNativeTexs()
 
 bool D3DFB::CreateFBTexture ()
 {
-	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+	FBFormat = IsBgra() ? D3DFMT_A8R8G8B8 : D3DFMT_L8;
+
+	if (FAILED(D3DDevice->CreateTexture(Width, Height, 1, D3DUSAGE_DYNAMIC, FBFormat, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 	{
 		int pow2width, pow2height, i;
 
 		for (i = 1; i < Width; i <<= 1) {} pow2width = i;
 		for (i = 1; i < Height; i <<= 1) {} pow2height = i;
 
-		if (FAILED(D3DDevice->CreateTexture(pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, D3DFMT_L8, D3DPOOL_DEFAULT, &FBTexture, NULL)))
+		if (FAILED(D3DDevice->CreateTexture(pow2width, pow2height, 1, D3DUSAGE_DYNAMIC, FBFormat, D3DPOOL_DEFAULT, &FBTexture, NULL)))
 		{
 			return false;
 		}
@@ -877,7 +877,7 @@ bool D3DFB::CreateVertexes ()
 	{
 		return false;
 	}
-	if (FAILED(D3DDevice->CreateIndexBuffer(sizeof(WORD)*NUM_INDEXES,
+	if (FAILED(D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*NUM_INDEXES,
 		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &IndexBuffer, NULL)))
 	{
 		return false;
@@ -1208,10 +1208,7 @@ void D3DFB::Flip()
 		}
 	}
 	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
-	if (FPSLimitEvent != NULL)
-	{
-		WaitForSingleObject(FPSLimitEvent, 1000);
-	}
+	I_FPSLimit();
 	D3DDevice->Present(NULL, NULL, NULL, NULL);
 	InScene = false;
 
@@ -1226,7 +1223,7 @@ void D3DFB::Flip()
 	{
 		RECT box;
 		GetClientRect(Window, &box);
-		if (box.right > 0 && box.right > 0 && (Width != box.right || Height != box.bottom))
+		if (box.right > 0 && box.bottom > 0 && (Width != box.right || Height != box.bottom))
 		{
 			Resize(box.right, box.bottom);
 
@@ -1323,20 +1320,45 @@ void D3DFB::Draw3DPart(bool copy3d)
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, NULL, D3DLOCK_DISCARD))) ||
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, &texrect, 0)))
 		{
-			if (lockrect.Pitch == Pitch && Pitch == Width)
+			if (IsBgra() && FBFormat == D3DFMT_A8R8G8B8)
 			{
-				memcpy (lockrect.pBits, MemBuffer, Width * Height);
+				if (lockrect.Pitch == Pitch * sizeof(uint32_t) && Pitch == Width)
+				{
+					memcpy(lockrect.pBits, MemBuffer, Width * Height * sizeof(uint32_t));
+				}
+				else
+				{
+					uint32_t *dest = (uint32_t *)lockrect.pBits;
+					uint32_t *src = (uint32_t*)MemBuffer;
+					for (int y = 0; y < Height; y++)
+					{
+						memcpy(dest, src, Width * sizeof(uint32_t));
+						dest = reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(dest) + lockrect.Pitch);
+						src += Pitch;
+					}
+				}
+			}
+			else if (!IsBgra() && FBFormat == D3DFMT_L8)
+			{
+				if (lockrect.Pitch == Pitch && Pitch == Width)
+				{
+					memcpy(lockrect.pBits, MemBuffer, Width * Height);
+				}
+				else
+				{
+					uint8_t *dest = (uint8_t *)lockrect.pBits;
+					uint8_t *src = (uint8_t *)MemBuffer;
+					for (int y = 0; y < Height; y++)
+					{
+						memcpy(dest, src, Width);
+						dest = reinterpret_cast<uint8_t*>(reinterpret_cast<uint8_t*>(dest) + lockrect.Pitch);
+						src += Pitch;
+					}
+				}
 			}
 			else
 			{
-				BYTE *dest = (BYTE *)lockrect.pBits;
-				BYTE *src = MemBuffer;
-				for (int y = 0; y < Height; y++)
-				{
-					memcpy (dest, src, Width);
-					dest += lockrect.Pitch;
-					src += Pitch;
-				}
+				memset(lockrect.pBits, 0, lockrect.Pitch * Height);
 			}
 			FBTexture->UnlockRect (0);
 		}
@@ -1368,14 +1390,17 @@ void D3DFB::Draw3DPart(bool copy3d)
 	memset(Constant, 0, sizeof(Constant));
 	SetAlphaBlend(D3DBLENDOP(0));
 	EnableAlphaTest(FALSE);
-	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+	if (IsBgra())
+		SetPixelShader(Shaders[SHADER_NormalColor]);
+	else
+		SetPixelShader(Shaders[SHADER_NormalColorPal]);
 	if (copy3d)
 	{
 		FBVERTEX verts[4];
 		D3DCOLOR color0, color1;
 		if (Accel2D)
 		{
-			auto &map = swrenderer::realfixedcolormap;
+			auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 			if (map == NULL)
 			{
 				color0 = 0;
@@ -1383,9 +1408,12 @@ void D3DFB::Draw3DPart(bool copy3d)
 			}
 			else
 			{
-				color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
-				color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
-				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
+				color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0]/2, map->ColorizeStart[1]/2, map->ColorizeStart[2]/2, 0);
+				color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0]/2, map->ColorizeEnd[1]/2, map->ColorizeEnd[2]/2, 1);
+				if (IsBgra())
+					SetPixelShader(Shaders[SHADER_SpecialColormap]);
+				else
+					SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
 			}
 		}
 		else
@@ -1396,7 +1424,10 @@ void D3DFB::Draw3DPart(bool copy3d)
 		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
-	SetPixelShader(Shaders[SHADER_NormalColorPal]);
+	if (IsBgra())
+		SetPixelShader(Shaders[SHADER_NormalColor]);
+	else
+		SetPixelShader(Shaders[SHADER_NormalColorPal]);
 }
 
 //==========================================================================
@@ -1473,10 +1504,10 @@ void D3DFB::UpdateGammaTexture(float igamma)
 
 	if (GammaTexture != NULL && SUCCEEDED(GammaTexture->LockRect(0, &lockrect, NULL, 0)))
 	{
-		BYTE *pix = (BYTE *)lockrect.pBits;
+		uint8_t *pix = (uint8_t *)lockrect.pBits;
 		for (int i = 0; i <= 128; ++i)
 		{
-			pix[i*4+2] = pix[i*4+1] = pix[i*4] = BYTE(255.f * powf(i / 128.f, igamma));
+			pix[i*4+2] = pix[i*4+1] = pix[i*4] = uint8_t(255.f * powf(i / 128.f, igamma));
 			pix[i*4+3] = 255;
 		}
 		GammaTexture->UnlockRect(0);
@@ -1520,7 +1551,7 @@ void D3DFB::DoOffByOneCheck ()
 	// Create an easily recognizable R3G3B2 palette.
 	if (SUCCEEDED(PaletteTexture->LockRect(0, &lockrect, NULL, 0)))
 	{
-		BYTE *pal = (BYTE *)(lockrect.pBits);
+		uint8_t *pal = (uint8_t *)(lockrect.pBits);
 		for (i = 0; i < 256; ++i)
 		{
 			pal[i*4+0] = (i & 0x03) << 6;		// blue
@@ -1539,7 +1570,7 @@ void D3DFB::DoOffByOneCheck ()
 	{
 		for (i = 0; i < 256; ++i)
 		{
-			((BYTE *)lockrect.pBits)[i] = i;
+			((uint8_t *)lockrect.pBits)[i] = i;
 		}
 		FBTexture->UnlockRect(0);
 	}
@@ -1582,7 +1613,7 @@ void D3DFB::DoOffByOneCheck ()
 	if (SUCCEEDED(D3DDevice->GetRenderTargetData(testsurf, readsurf)) &&
 		SUCCEEDED(readsurf->LockRect(&lockrect, &testrect, D3DLOCK_READONLY)))
 	{
-		const BYTE *pix = (const BYTE *)lockrect.pBits;
+		const uint8_t *pix = (const uint8_t *)lockrect.pBits;
 		for (i = 0; i < 256; ++i, pix += 4)
 		{
 			c = (pix[0] >> 6) |					// blue
@@ -1617,7 +1648,7 @@ void D3DFB::UploadPalette ()
 	}
 	if (SUCCEEDED(PaletteTexture->LockRect(0, &lockrect, NULL, 0)))
 	{
-		BYTE *pix = (BYTE *)lockrect.pBits;
+		uint8_t *pix = (uint8_t *)lockrect.pBits;
 		int i;
 
 		for (i = 0; i < SkipAt; ++i, pix += 4)
@@ -1724,13 +1755,13 @@ void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)
 //
 //==========================================================================
 
-void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_type)
+void D3DFB::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
 {
 	D3DLOCKED_RECT lrect;
 
 	if (!Accel2D)
 	{
-		Super::GetScreenshotBuffer(buffer, pitch, color_type);
+		Super::GetScreenshotBuffer(buffer, pitch, color_type, gamma);
 		return;
 	}
 	buffer = NULL;
@@ -1750,9 +1781,10 @@ void D3DFB::GetScreenshotBuffer(const BYTE *&buffer, int &pitch, ESSType &color_
 		}
 		else
 		{
-			buffer = (const BYTE *)lrect.pBits;
+			buffer = (const uint8_t *)lrect.pBits;
 			pitch = lrect.Pitch;
 			color_type = SS_BGRA;
+			gamma = Gamma;
 		}
 	}
 }
@@ -2285,7 +2317,7 @@ bool D3DTex::Update()
 	D3DSURFACE_DESC desc;
 	D3DLOCKED_RECT lrect;
 	RECT rect;
-	BYTE *dest;
+	uint8_t *dest;
 
 	assert(Box != NULL);
 	assert(Box->Owner != NULL);
@@ -2301,7 +2333,7 @@ bool D3DTex::Update()
 	{
 		return false;
 	}
-	dest = (BYTE *)lrect.pBits;
+	dest = (uint8_t *)lrect.pBits;
 	if (Box->Padded)
 	{
 		dest += lrect.Pitch + (desc.Format == D3DFMT_L8 ? 1 : 4);
@@ -2310,7 +2342,7 @@ bool D3DTex::Update()
 	if (Box->Padded)
 	{
 		// Clear top padding row.
-		dest = (BYTE *)lrect.pBits;
+		dest = (uint8_t *)lrect.pBits;
 		int numbytes = GameTex->GetWidth() + 2;
 		if (desc.Format != D3DFMT_L8)
 		{
@@ -2524,6 +2556,7 @@ bool D3DPal::Update()
 
 bool D3DFB::Begin2D(bool copy3d)
 {
+	Super::Begin2D(copy3d);
 	if (!Accel2D)
 	{
 		return false;
@@ -2602,11 +2635,11 @@ FNativePalette *D3DFB::CreatePalette(FRemapTable *remap)
 //
 //==========================================================================
 
-void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint32 color)
+void D3DFB::DoClear (int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{
-		Super::Clear(left, top, right, bottom, palcolor, color);
+		Super::DoClear(left, top, right, bottom, palcolor, color);
 		return;
 	}
 	if (!InScene)
@@ -2631,7 +2664,7 @@ void D3DFB::Clear (int left, int top, int right, int bottom, int palcolor, uint3
 //
 //==========================================================================
 
-void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
+void D3DFB::DoDim (PalEntry color, float amount, int x1, int y1, int w, int h)
 {
 	if (amount <= 0)
 	{
@@ -2639,7 +2672,7 @@ void D3DFB::Dim (PalEntry color, float amount, int x1, int y1, int w, int h)
 	}
 	if (In2D < 2)
 	{
-		Super::Dim(color, amount, x1, y1, w, h);
+		Super::DoDim(color, amount, x1, y1, w, h);
 		return;
 	}
 	if (!InScene)
@@ -2701,7 +2734,7 @@ void D3DFB::EndLineBatch()
 //
 //==========================================================================
 
-void D3DFB::DrawLine(int x0, int y0, int x1, int y1, int palcolor, uint32 color)
+void D3DFB::DrawLine(int x0, int y0, int x1, int y1, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{
@@ -2749,7 +2782,7 @@ void D3DFB::DrawLine(int x0, int y0, int x1, int y1, int palcolor, uint32 color)
 //
 //==========================================================================
 
-void D3DFB::DrawPixel(int x, int y, int palcolor, uint32 color)
+void D3DFB::DrawPixel(int x, int y, int palcolor, uint32_t color)
 {
 	if (In2D < 2)
 	{
@@ -2907,6 +2940,12 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 #endif
 
 	vert = &VertexData[VertexPos];
+
+	{
+		PalEntry color = color1;
+		color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
+		color1 = color; 
+	}
 
 	// Fill the vertex buffer.
 	vert[0].x = float(x0);
@@ -3091,10 +3130,10 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 
 void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley,
-	DAngle rotation, FDynamicColormap *colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
+	DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
 {
 	// Use an equation similar to player sprites to determine shade
-	double fadelevel = clamp((LIGHT2SHADE(lightlevel)/65536. - 12) / NUMCOLORMAPS, 0.0, 1.0);
+	double fadelevel = clamp((swrenderer::LightVisibility::LightLevelToShade(lightlevel, true)/65536. - 12) / NUMCOLORMAPS, 0.0, 1.0);
 	
 	BufferedTris *quad;
 	FBVERTEX *verts;
@@ -3140,20 +3179,17 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	{
 		quad->Flags = BQF_WrapUV | BQF_GamePalette | BQF_DisableAlphaTest;
 		quad->ShaderNum = BQS_PalTex;
-		if (colormap != NULL)
+		if (colormap.Desaturation != 0)
 		{
-			if (colormap->Desaturate != 0)
-			{
-				quad->Flags |= BQF_Desaturated;
-			}
-			quad->ShaderNum = BQS_InGameColormap;
-			quad->Desat = colormap->Desaturate;
-			color0 = D3DCOLOR_ARGB(255, colormap->Color.r, colormap->Color.g, colormap->Color.b);
-			color1 = D3DCOLOR_ARGB(DWORD((1 - fadelevel) * 255),
-				DWORD(colormap->Fade.r * fadelevel),
-				DWORD(colormap->Fade.g * fadelevel),
-				DWORD(colormap->Fade.b * fadelevel));
+			quad->Flags |= BQF_Desaturated;
 		}
+		quad->ShaderNum = BQS_InGameColormap;
+		quad->Desat = colormap.Desaturation;
+		color0 = D3DCOLOR_ARGB(255, colormap.LightColor.r, colormap.LightColor.g, colormap.LightColor.b);
+		color1 = D3DCOLOR_ARGB(DWORD((1 - fadelevel) * 255),
+			DWORD(colormap.FadeColor.r * fadelevel),
+			DWORD(colormap.FadeColor.g * fadelevel),
+			DWORD(colormap.FadeColor.b * fadelevel));
 	}
 	else
 	{

@@ -72,6 +72,8 @@ class Megasphere : CustomInventory
 	{
 		+COUNTITEM
 		+INVENTORY.ALWAYSPICKUP
+		+INVENTORY.ISHEALTH
+		+INVENTORY.ISARMOR
 		Inventory.PickupMessage "$GOTMSPHERE";
 		Inventory.PickupSound "misc/p_pkup";
 	}
@@ -95,6 +97,7 @@ class BlurSphere : PowerupGiver
 	{
 		+COUNTITEM
 		+VISIBILITYPULSE
+		+ZDOOMTRANS
 		+INVENTORY.AUTOACTIVATE
 		+INVENTORY.ALWAYSPICKUP
 		+INVENTORY.BIGPOWERUP
@@ -183,6 +186,7 @@ class Berserk : CustomInventory
 	{
 		+COUNTITEM
 		+INVENTORY.ALWAYSPICKUP
+		+INVENTORY.ISHEALTH
 		Inventory.PickupMessage "$GOTBERSERK";
 		Inventory.PickupSound "misc/p_pkup";
 	}

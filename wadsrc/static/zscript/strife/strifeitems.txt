@@ -807,7 +807,7 @@ class SlideshowStarter : DummyStrifeItem
 {
 	override bool TryPickup (in out Actor toucher)
 	{
-		gameaction = ga_slideshow;
+		Level.StartSlideshow();
 		if (level.levelnum == 10)
 		{
 			toucher.GiveInventoryType ("QuestItem17");

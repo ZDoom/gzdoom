@@ -52,12 +52,12 @@ public:
 	FRawPageTexture (int lumpnum);
 	~FRawPageTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 
 protected:
-	BYTE *Pixels;
+	uint8_t *Pixels;
 	static const Span DummySpans[2];
 
 	void MakeTexture ();
@@ -97,8 +97,8 @@ static bool CheckIfRaw(FileReader & data)
 
 		for (x = 0; x < width; ++x)
 		{
-			DWORD ofs = LittleLong(foo->columnofs[x]);
-			if (ofs == (DWORD)width * 4 + 8)
+			uint32_t ofs = LittleLong(foo->columnofs[x]);
+			if (ofs == (uint32_t)width * 4 + 8)
 			{
 				gapAtStart = false;
 			}
@@ -110,7 +110,7 @@ static bool CheckIfRaw(FileReader & data)
 			else
 			{
 				// Ensure this column does not extend beyond the end of the patch
-				const BYTE *foo2 = (const BYTE *)foo;
+				const uint8_t *foo2 = (const uint8_t *)foo;
 				while (ofs < 64000)
 				{
 					if (foo2[ofs] == 255)
@@ -206,6 +206,7 @@ void FRawPageTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -214,7 +215,7 @@ void FRawPageTexture::Unload ()
 //
 //==========================================================================
 
-const BYTE *FRawPageTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FRawPageTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{
@@ -237,7 +238,7 @@ const BYTE *FRawPageTexture::GetColumn (unsigned int column, const Span **spans_
 //
 //==========================================================================
 
-const BYTE *FRawPageTexture::GetPixels ()
+const uint8_t *FRawPageTexture::GetPixels ()
 {
 	if (Pixels == NULL)
 	{
@@ -255,11 +256,11 @@ const BYTE *FRawPageTexture::GetPixels ()
 void FRawPageTexture::MakeTexture ()
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
-	const BYTE *source = (const BYTE *)lump.GetMem();
-	const BYTE *source_p = source;
-	BYTE *dest_p;
+	const uint8_t *source = (const uint8_t *)lump.GetMem();
+	const uint8_t *source_p = source;
+	uint8_t *dest_p;
 
-	Pixels = new BYTE[Width*Height];
+	Pixels = new uint8_t[Width*Height];
 	dest_p = Pixels;
 
 	// Convert the source image from row-major to column-major format

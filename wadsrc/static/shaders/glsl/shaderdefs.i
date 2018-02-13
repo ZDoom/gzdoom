@@ -43,9 +43,13 @@ uniform vec4 uLightAttr;
 #define uLightDist uLightAttr.r
 uniform int uFogEnabled;
 uniform int uPalLightLevels;
+uniform float uGlobVis; // uGlobVis = R_GetGlobVis(r_visibility) / 32.0
 
 // dynamic lights
 uniform int uLightIndex;
+
+// Software fuzz scaling
+uniform int uViewHeight;
 
 // quad drawer stuff
 #ifdef USE_QUAD_DRAWER

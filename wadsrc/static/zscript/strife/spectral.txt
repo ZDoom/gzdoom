@@ -112,6 +112,7 @@ class SpectralLightningBase : Actor
 		+ACTIVATEIMPACT
 		+ACTIVATEPCROSS
 		+STRIFEDAMAGE
+		+ZDOOMTRANS
 		MaxStepHeight 4;
 		RenderStyle "Add";
 		SeeSound "weapons/sigil";
@@ -257,6 +258,7 @@ class SpectralLightningHTail : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+DROPOFF
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States

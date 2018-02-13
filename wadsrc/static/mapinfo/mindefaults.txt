@@ -27,6 +27,8 @@ gameinfo
 	intermissioncounter = true
 	dimcolor = "6f 00 6b"
 	dimamount = 0.8
+	bluramount = 0.0
+	menuslidercolor = "Orange"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -53,6 +55,7 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedpatch = "WIF"
 	statscreen_enteringpatch = "WIENTER"
+	messageboxclass = "MessageBoxMenu"
 }
 
 DoomEdNums

@@ -120,6 +120,7 @@ class SpawnFire : Actor
 		Height 78;
 		+NOBLOCKMAP
 		+NOGRAVITY
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States
@@ -204,7 +205,11 @@ extend class Actor
 					if (mo.health > 0 && mo.bBossSpawned)
 					{
 						mo.DamageMobj(self, self, mo.health, "None", DMG_NO_ARMOR|DMG_FORCED|DMG_THRUSTLESS|DMG_NO_FACTOR);
-						count++;
+
+						// [Blue Shadow] If 'mo' is a RandomSpawner or another actor which can't be killed,
+						// it could cause this code to loop indefinitely. So only let it trigger a loop if it
+						// has been actually killed.
+						if (mo.bKilled) count++;
 					}
 				}
 			} while (count != 0);
@@ -317,11 +322,12 @@ extend class Actor
 			{
 				if (di.Name != 'None')
 				{
-					if (di.Amount < 0)
+					int amt = di.Amount;
+					if (amt < 0)
 					{
-						di.Amount = 1; // default value is -1, we need a positive value.
+						amt = 1; // default value is -1, we need a positive value.
 					}
-					n += di.Amount; // this is how we can weight the list.
+					n += amt; // this is how we can weight the list.
 				}
 			}
 			di = drop;
@@ -330,7 +336,12 @@ extend class Actor
 			{
 				if (di.Name != 'none')
 				{
-					n -= di.Amount; // logically, none of the -1 values have survived by now.
+					int amt = di.Amount;
+					if (amt < 0)
+					{
+						amt = 1;
+					}
+					n -= amt;
 				}
 				if ((di.Next != null) && (n >= 0))
 				{

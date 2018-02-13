@@ -1,24 +1,24 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
-//
-// DESCRIPTION:  none
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
 //
 //-----------------------------------------------------------------------------
+//
 
 
 
@@ -32,6 +32,7 @@
 #include <CoreServices/CoreServices.h>
 #endif
 
+#include "i_time.h"
 #include "templates.h"
 #include "version.h"
 #include "doomdef.h" 
@@ -45,7 +46,6 @@
 #include "m_random.h"
 #include "m_crc32.h"
 #include "i_system.h"
-#include "i_input.h"
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "d_main.h"
@@ -86,12 +86,14 @@
 #include "serializer.h"
 #include "w_zip.h"
 #include "resourcefiles/resourcefile.h"
+#include "vm.h"
 
 #include <zlib.h>
 
 #include "g_hub.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "d_main.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -148,6 +150,7 @@ CVAR(Int, nametagcolor, CR_GOLD, CVAR_ARCHIVE)
 
 gameaction_t	gameaction;
 gamestate_t 	gamestate = GS_STARTUP;
+FName			SelectedSlideshow;		// what to start when ga_slideshow
 
 int 			paused;
 bool			pauseext;
@@ -180,13 +183,13 @@ bool 			demorecording;
 bool 			demoplayback;
 bool			demonew;				// [RH] Only used around G_InitNew for demos
 int				demover;
-BYTE*			demobuffer;
-BYTE*			demo_p;
-BYTE*			democompspot;
-BYTE*			demobodyspot;
+uint8_t*			demobuffer;
+uint8_t*			demo_p;
+uint8_t*			democompspot;
+uint8_t*			demobodyspot;
 size_t			maxdemosize;
-BYTE*			zdemformend;			// end of FORM ZDEM chunk
-BYTE*			zdembodyend;			// end of ZDEM BODY chunk
+uint8_t*			zdemformend;			// end of FORM ZDEM chunk
+uint8_t*			zdembodyend;			// end of ZDEM BODY chunk
 bool 			singledemo; 			// quit after playing a demo from cmdline 
  
 bool 			precache = true;		// if true, load all graphics at start 
@@ -226,7 +229,7 @@ int 			mousex;
 int 			mousey; 		
 
 FString			savegamefile;
-char			savedescription[SAVESTRINGSIZE];
+FString			savedescription;
 
 // [RH] Name of screenshot file to generate (usually NULL)
 FString			shotfile;
@@ -234,13 +237,12 @@ FString			shotfile;
 AActor* 		bodyque[BODYQUESIZE]; 
 int 			bodyqueslot; 
 
-void R_ExecuteSetViewSize (void);
-
 FString savename;
 FString BackupSaveName;
 
 bool SendLand;
 const AInventory *SendItemUse, *SendItemDrop;
+int SendItemDropAmount;
 
 EXTERN_CVAR (Int, team)
 
@@ -343,8 +345,12 @@ CCMD (weapnext)
 	// [BC] Option to display the name of the weapon being cycled to.
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
-		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
+		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, SendItemUse->GetTag(),
 			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+	}
+	if (SendItemUse != players[consoleplayer].ReadyWeapon)
+	{
+		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -354,8 +360,12 @@ CCMD (weapprev)
 	// [BC] Option to display the name of the weapon being cycled to.
 	if ((displaynametags & 2) && StatusBar && SmallFont && SendItemUse)
 	{
-		StatusBar->AttachMessage(new DHUDMessageFadeOut(SmallFont, SendItemUse->GetTag(),
+		StatusBar->AttachMessage(Create<DHUDMessageFadeOut>(SmallFont, SendItemUse->GetTag(),
 			1.5f, 0.90f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID( 'W', 'E', 'P', 'N' ));
+	}
+	if (SendItemUse != players[consoleplayer].ReadyWeapon)
+	{
+		S_Sound(CHAN_AUTO, "misc/weaponchange", 1.0, ATTN_NONE);
 	}
 }
 
@@ -366,6 +376,7 @@ CCMD (invnext)
 	if (who == NULL)
 		return;
 
+	auto old = who->InvSel;
 	if (who->InvSel != NULL)
 	{
 		if ((next = who->InvSel->NextInv()) != NULL)
@@ -385,10 +396,14 @@ CCMD (invnext)
 			}
 		}
 		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
-			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
+			StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, who->InvSel->GetTag(),
 			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
+	if (old != who->InvSel)
+	{
+		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
+	}
 }
 
 CCMD (invprev)
@@ -398,6 +413,7 @@ CCMD (invprev)
 	if (who == NULL)
 		return;
 
+	auto old = who->InvSel;
 	if (who->InvSel != NULL)
 	{
 		if ((item = who->InvSel->PrevInv()) != NULL)
@@ -415,10 +431,14 @@ CCMD (invprev)
 			who->InvSel = item;
 		}
 		if ((displaynametags & 1) && StatusBar && SmallFont && who->InvSel)
-			StatusBar->AttachMessage (new DHUDMessageFadeOut (SmallFont, who->InvSel->GetTag(), 
+			StatusBar->AttachMessage (Create<DHUDMessageFadeOut> (SmallFont, who->InvSel->GetTag(),
 			1.5f, 0.80f, 0, 0, (EColorRange)*nametagcolor, 2.f, 0.35f), MAKE_ID('S','I','N','V'));
 	}
 	who->player->inventorytics = 5*TICRATE;
+	if (old != who->InvSel)
+	{
+		S_Sound(CHAN_AUTO, "misc/invchange", 1.0, ATTN_NONE);
+	}
 }
 
 CCMD (invuseall)
@@ -457,12 +477,14 @@ CCMD (invdrop)
 	if (players[consoleplayer].mo)
 	{
 		SendItemDrop = players[consoleplayer].mo->InvSel;
+		SendItemDropAmount = -1;
 	}
 }
 
 CCMD (weapdrop)
 {
 	SendItemDrop = players[consoleplayer].ReadyWeapon;
+	SendItemDropAmount = -1;
 }
 
 CCMD (drop)
@@ -470,6 +492,7 @@ CCMD (drop)
 	if (argv.argc() > 1 && who != NULL)
 	{
 		SendItemDrop = who->FindInventory(argv[1]);
+		SendItemDropAmount = argv.argc() > 2 ? atoi(argv[2]) : -1;
 	}
 }
 
@@ -587,24 +610,20 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		if (Button_Right.bDown)
 		{
 			G_AddViewAngle (angleturn[tspeed]);
-			LocalKeyboardTurner = true;
 		}
 		if (Button_Left.bDown)
 		{
 			G_AddViewAngle (-angleturn[tspeed]);
-			LocalKeyboardTurner = true;
 		}
 	}
 
 	if (Button_LookUp.bDown)
 	{
 		G_AddViewPitch (lookspeed[speed]);
-		LocalKeyboardTurner = true;
 	}
 	if (Button_LookDown.bDown)
 	{
 		G_AddViewPitch (-lookspeed[speed]);
-		LocalKeyboardTurner = true;
 	}
 
 	if (Button_MoveUp.bDown)
@@ -680,12 +699,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (joyaxes[JOYAXIS_Pitch] != 0)
 	{
 		G_AddViewPitch(joyint(joyaxes[JOYAXIS_Pitch] * 2048));
-		LocalKeyboardTurner = true;
 	}
 	if (joyaxes[JOYAXIS_Yaw] != 0)
 	{
 		G_AddViewAngle(joyint(-1280 * joyaxes[JOYAXIS_Yaw]));
-		LocalKeyboardTurner = true;
 	}
 
 	side -= joyint(sidemove[speed] * joyaxes[JOYAXIS_Side]);
@@ -762,6 +779,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	{
 		Net_WriteByte (DEM_INVDROP);
 		Net_WriteLong (SendItemDrop->InventoryID);
+		Net_WriteLong(SendItemDropAmount);
 		SendItemDrop = NULL;
 	}
 
@@ -772,7 +790,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 //[Graf Zahl] This really helps if the mouse update rate can't be increased!
 CVAR (Bool,		smooth_mouse,	false,	CVAR_GLOBALCONFIG|CVAR_ARCHIVE)
 
-void G_AddViewPitch (int look)
+void G_AddViewPitch (int look, bool mouse)
 {
 	if (gamestate == GS_TITLELEVEL)
 	{
@@ -815,11 +833,11 @@ void G_AddViewPitch (int look)
 	}
 	if (look != 0)
 	{
-		LocalKeyboardTurner = smooth_mouse;
+		LocalKeyboardTurner = (!mouse || smooth_mouse);
 	}
 }
 
-void G_AddViewAngle (int yaw)
+void G_AddViewAngle (int yaw, bool mouse)
 {
 	if (gamestate == GS_TITLELEVEL)
 	{
@@ -835,7 +853,7 @@ void G_AddViewAngle (int yaw)
 	LocalViewAngle -= yaw;
 	if (yaw != 0)
 	{
-		LocalKeyboardTurner = smooth_mouse;
+		LocalKeyboardTurner = (!mouse || smooth_mouse);
 	}
 }
 
@@ -1081,7 +1099,7 @@ void G_Ticker ()
 			G_DoSaveGame (true, savegamefile, savedescription);
 			gameaction = ga_nothing;
 			savegamefile = "";
-			savedescription[0] = '\0';
+			savedescription = "";
 			break;
 		case ga_autosave:
 			G_DoAutoSave ();
@@ -1097,7 +1115,7 @@ void G_Ticker ()
 			G_DoCompleted ();
 			break;
 		case ga_slideshow:
-			if (gamestate == GS_LEVEL) F_StartIntermission(level.info->slideshow, FSTATE_InLevel);
+			if (gamestate == GS_LEVEL) F_StartIntermission(SelectedSlideshow, FSTATE_InLevel);
 			break;
 		case ga_worlddone:
 			G_DoWorldDone ();
@@ -1139,7 +1157,7 @@ void G_Ticker ()
 
 	// [RH] Include some random seeds and player stuff in the consistancy
 	// check, not just the player's x position like BOOM.
-	DWORD rngsum = FRandom::StaticSumSeeds ();
+	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
 	//Added by MC: For some of that bot stuff. The main bot function.
 	bglobal.Main ();
@@ -1173,7 +1191,7 @@ void G_Ticker ()
 			}
 
 			// check for turbo cheats
-			if (turbo > 100.f && cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
+			if (multiplayer && turbo > 100.f && cmd->ucmd.forwardmove > TURBOTHRESHOLD &&
 				!(gametic&31) && ((gametic>>5)&(MAXPLAYERS-1)) == i )
 			{
 				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
@@ -1188,7 +1206,7 @@ void G_Ticker ()
 				}
 				if (players[i].mo)
 				{
-					DWORD sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
+					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
 					consistancy[i][buf] = sum;
 				}
@@ -1199,6 +1217,9 @@ void G_Ticker ()
 			}
 		}
 	}
+
+	// [ZZ] also tick the UI part of the events
+	E_UiTick();
 
 	// do main actions
 	switch (gamestate)
@@ -1320,12 +1341,24 @@ void G_PlayerFinishLevel (int player, EFinishLevelType mode, int flags)
 
 	if (mode == FINISH_NoHub && !(level.flags2 & LEVEL2_KEEPFULLINVENTORY))
 	{ // Reduce all owned (visible) inventory to defined maximum interhub amount
+		TArray<AInventory*> todelete;
 		for (item = p->mo->Inventory; item != NULL; item = item->Inventory)
 		{
 			// If the player is carrying more samples of an item than allowed, reduce amount accordingly
 			if (item->ItemFlags & IF_INVBAR && item->Amount > item->InterHubAmount)
 			{
 				item->Amount = item->InterHubAmount;
+				if ((level.flags3 & LEVEL3_REMOVEITEMS) && !(item->ItemFlags & IF_UNDROPPABLE))
+				{
+					todelete.Push(item);
+				}
+			}
+		}
+		for (auto it : todelete)
+		{
+			if (!(it->ObjectFlags & OF_EuthanizeMe))
+			{
+				it->DepleteOrDestroy();
 			}
 		}
 	}
@@ -1359,7 +1392,7 @@ void G_PlayerReborn (int player)
 	int 		itemcount;
 	int 		secretcount;
 	int			chasecam;
-	BYTE		currclass;
+	uint8_t		currclass;
 	userinfo_t  userinfo;	// [RH] Save userinfo
 	APlayerPawn *actor;
 	PClassActor *cls;
@@ -1508,12 +1541,12 @@ static FPlayerStart *SelectFarthestDeathmatchSpot (size_t selections)
 
 	for (i = 0; i < selections; i++)
 	{
-		double distance = PlayersRangeFromSpot (&deathmatchstarts[i]);
+		double distance = PlayersRangeFromSpot (&level.deathmatchstarts[i]);
 
 		if (distance > bestdistance)
 		{
 			bestdistance = distance;
-			bestspot = &deathmatchstarts[i];
+			bestspot = &level.deathmatchstarts[i];
 		}
 	}
 
@@ -1528,20 +1561,20 @@ static FPlayerStart *SelectRandomDeathmatchSpot (int playernum, unsigned int sel
 	for (j = 0; j < 20; j++)
 	{
 		i = pr_dmspawn() % selections;
-		if (G_CheckSpot (playernum, &deathmatchstarts[i]) )
+		if (G_CheckSpot (playernum, &level.deathmatchstarts[i]) )
 		{
-			return &deathmatchstarts[i];
+			return &level.deathmatchstarts[i];
 		}
 	}
 
 	// [RH] return a spot anyway, since we allow telefragging when a player spawns
-	return &deathmatchstarts[i];
+	return &level.deathmatchstarts[i];
 }
 
 DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 {
 	PARAM_PROLOGUE;
-	unsigned int selections = deathmatchstarts.Size();
+	unsigned int selections = level.deathmatchstarts.Size();
 	DVector3 pos;
 	int angle;
 	if (selections == 0)
@@ -1552,8 +1585,8 @@ DEFINE_ACTION_FUNCTION(DObject, G_PickDeathmatchStart)
 	else
 	{
 		unsigned int i = pr_dmspawn() % selections;
-		angle = deathmatchstarts[i].angle;
-		pos = deathmatchstarts[i].pos;
+		angle = level.deathmatchstarts[i].angle;
+		pos = level.deathmatchstarts[i].pos;
 	}
 
 	if (numret > 1)
@@ -1573,7 +1606,7 @@ void G_DeathMatchSpawnPlayer (int playernum)
 	unsigned int selections;
 	FPlayerStart *spot;
 
-	selections = deathmatchstarts.Size ();
+	selections = level.deathmatchstarts.Size ();
 	// [RH] We can get by with just 1 deathmatch start
 	if (selections < 1)
 		I_Error ("No deathmatch starts");
@@ -1597,10 +1630,10 @@ void G_DeathMatchSpawnPlayer (int playernum)
 			spot = SelectRandomDeathmatchSpot(playernum, selections);
 			if (spot == NULL)
 			{ // We have a player 1 start, right?
-				spot = &playerstarts[0];
+				spot = &level.playerstarts[0];
 				if (spot->type == 0)
 				{ // Fine, whatever.
-					spot = &deathmatchstarts[0];
+					spot = &level.deathmatchstarts[0];
 				}
 			}
 		}
@@ -1615,13 +1648,13 @@ void G_DeathMatchSpawnPlayer (int playernum)
 //
 FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 {
-	if (AllPlayerStarts.Size() == 0) // No starts to pick
+	if (level.AllPlayerStarts.Size() == 0) // No starts to pick
 	{
 		return NULL;
 	}
 
 	if ((level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) || (flags & PPS_FORCERANDOM) ||
-		playerstarts[playernum].type == 0)
+		level.playerstarts[playernum].type == 0)
 	{
 		if (!(flags & PPS_NOBLOCKINGCHECK))
 		{
@@ -1629,11 +1662,11 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 			unsigned int i;
 
 			// Find all unblocked player starts.
-			for (i = 0; i < AllPlayerStarts.Size(); ++i)
+			for (i = 0; i < level.AllPlayerStarts.Size(); ++i)
 			{
-				if (G_CheckSpot(playernum, &AllPlayerStarts[i]))
+				if (G_CheckSpot(playernum, &level.AllPlayerStarts[i]))
 				{
-					good_starts.Push(&AllPlayerStarts[i]);
+					good_starts.Push(&level.AllPlayerStarts[i]);
 				}
 			}
 			if (good_starts.Size() > 0)
@@ -1642,9 +1675,9 @@ FPlayerStart *G_PickPlayerStart(int playernum, int flags)
 			}
 		}
 		// Pick a spot at random, whether it's open or not.
-		return &AllPlayerStarts[pr_pspawn(AllPlayerStarts.Size())];
+		return &level.AllPlayerStarts[pr_pspawn(level.AllPlayerStarts.Size())];
 	}
-	return &playerstarts[playernum];
+	return &level.playerstarts[playernum];
 }
 
 DEFINE_ACTION_FUNCTION(DObject, G_PickPlayerStart)
@@ -1695,7 +1728,7 @@ static void G_QueueBody (AActor *body)
 	{
 		// Apply skin's scale to actor's scale, it will be lost otherwise
 		const AActor *const defaultActor = body->GetDefault();
-		const FPlayerSkin &skin = skins[skinidx];
+		const FPlayerSkin &skin = Skins[skinidx];
 
 		body->Scale.X *= skin.Scale.X / defaultActor->Scale.X;
 		body->Scale.Y *= skin.Scale.Y / defaultActor->Scale.Y;
@@ -1710,7 +1743,8 @@ static void G_QueueBody (AActor *body)
 EXTERN_CVAR(Bool, sv_singleplayerrespawn)
 void G_DoReborn (int playernum, bool freshbot)
 {
-	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn)
+	if (!multiplayer && !(level.flags2 & LEVEL2_ALLOWRESPAWN) && !sv_singleplayerrespawn &&
+		!G_SkillProperty(SKILLP_PlayerRespawn))
 	{
 		if (BackupSaveName.Len() > 0 && FileExists (BackupSaveName.GetChars()))
 		{ // Load game from the last point it was saved
@@ -1728,6 +1762,8 @@ void G_DoReborn (int playernum, bool freshbot)
 	}
 	else
 	{
+		bool isUnfriendly = players[playernum].mo && !(players[playernum].mo->flags & MF_FRIENDLY);
+
 		// respawn at the start
 		// first disassociate the corpse
 		if (players[playernum].mo)
@@ -1737,17 +1773,17 @@ void G_DoReborn (int playernum, bool freshbot)
 		}
 
 		// spawn at random spot if in deathmatch
-		if (deathmatch)
+		if ((deathmatch || isUnfriendly) && (level.deathmatchstarts.Size () > 0))
 		{
 			G_DeathMatchSpawnPlayer (playernum);
 			return;
 		}
 
 		if (!(level.flags2 & LEVEL2_RANDOMPLAYERSTARTS) &&
-			playerstarts[playernum].type != 0 &&
-			G_CheckSpot (playernum, &playerstarts[playernum]))
+			level.playerstarts[playernum].type != 0 &&
+			G_CheckSpot (playernum, &level.playerstarts[playernum]))
 		{
-			AActor *mo = P_SpawnPlayer(&playerstarts[playernum], playernum);
+			AActor *mo = P_SpawnPlayer(&level.playerstarts[playernum], playernum);
 			if (mo != NULL) P_PlayerStartStomp(mo, true);
 		}
 		else
@@ -1999,11 +2035,11 @@ void G_DoLoadGame ()
 	arc("importantcvars", cvar);
 	if (!cvar.IsEmpty())
 	{
-		BYTE *vars_p = (BYTE *)cvar.GetChars();
+		uint8_t *vars_p = (uint8_t *)cvar.GetChars();
 		C_ReadCVars(&vars_p);
 	}
 
-	DWORD time[2] = { 1,0 };
+	uint32_t time[2] = { 1,0 };
 
 	arc("ticrate", time[0])
 		("leveltime", time[1]);
@@ -2068,8 +2104,7 @@ void G_SaveGame (const char *filename, const char *description)
 	else
 	{
 		savegamefile = filename;
-		strncpy (savedescription, description, sizeof(savedescription)-1);
-		savedescription[sizeof(savedescription)-1] = '\0';
+		savedescription = description;
 		sendsave = true;
 	}
 }
@@ -2119,7 +2154,7 @@ extern void P_CalcHeight (player_t *);
 
 void G_DoAutoSave ()
 {
-	char description[SAVESTRINGSIZE];
+	FString description;
 	FString file;
 	// Keep up to four autosaves at a time
 	UCVarValue num;
@@ -2147,10 +2182,7 @@ void G_DoAutoSave ()
 	}
 
 	readableTime = myasctime ();
-	strcpy (description, "Autosave ");
-	strncpy (description+9, readableTime+4, 12);
-	description[9+12] = 0;
-
+	description.Format("Autosave %.12s", readableTime + 4);
 	G_DoSaveGame (false, file, description);
 }
 
@@ -2160,11 +2192,11 @@ static void PutSaveWads (FSerializer &arc)
 	const char *name;
 
 	// Name of IWAD
-	name = Wads.GetWadName (FWadCollection::IWAD_FILENUM);
+	name = Wads.GetWadName (Wads.GetIwadNum());
 	arc.AddString("Game WAD", name);
 
 	// Name of wad the map resides in
-	if (Wads.GetLumpFile (level.lumpnum) > 1)
+	if (Wads.GetLumpFile (level.lumpnum) > Wads.GetIwadNum())
 	{
 		name = Wads.GetWadName (Wads.GetLumpFile (level.lumpnum));
 		arc.AddString("Map WAD", name);
@@ -2175,7 +2207,7 @@ static void PutSaveComment (FSerializer &arc)
 {
 	char comment[256];
 	const char *readableTime;
-	WORD len;
+	uint16_t len;
 	int levelTime;
 
 	// Get the current date and time
@@ -2191,7 +2223,7 @@ static void PutSaveComment (FSerializer &arc)
 	// Get level name
 	//strcpy (comment, level.level_name);
 	mysnprintf(comment, countof(comment), "%s - %s", level.MapName.GetChars(), level.LevelName.GetChars());
-	len = (WORD)strlen (comment);
+	len = (uint16_t)strlen (comment);
 	comment[len] = '\n';
 
 	// Append elapsed time
@@ -2239,7 +2271,29 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 		I_FreezeTime(true);
 
 	insave = true;
-	G_SnapshotLevel ();
+	try
+	{
+		G_SnapshotLevel();
+	}
+	catch(CRecoverableError &err)
+	{
+		// delete the snapshot. Since the save failed it is broken.
+		insave = false;
+		level.info->Snapshot.Clean();
+		Printf(PRINT_HIGH, "Save failed\n");
+		Printf(PRINT_HIGH, "%s\n", err.GetMessage());
+		// The time freeze must be reset if the save fails.
+		if (cl_waitforsave)
+			I_FreezeTime(false);
+		return;
+	}
+	catch (...)
+	{
+		insave = false;
+		if (cl_waitforsave)
+			I_FreezeTime(false);
+		throw;
+	}
 
 	BufferWriter savepic;
 	FSerializer savegameinfo;		// this is for displayable info about the savegame
@@ -2310,7 +2364,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 
 	WriteZip(filename, savegame_filenames, savegame_content);
 
-	savegameManager.NotifyNewSave (filename.GetChars(), description, okForQuicksave);
+	savegameManager.NotifyNewSave (filename, description, okForQuicksave);
 
 	// delete the JSON buffers we created just above. Everything else will
 	// either still be needed or taken care of automatically.
@@ -2376,7 +2430,7 @@ void G_ReadDemoTiccmd (ticcmd_t *cmd, int player)
 
 		case DEM_DROPPLAYER:
 			{
-				BYTE i = ReadByte (&demo_p);
+				uint8_t i = ReadByte (&demo_p);
 				if (i < MAXPLAYERS)
 				{
 					playeringame[i] = false;
@@ -2398,11 +2452,11 @@ CCMD (stop)
 	stoprecording = true;
 }
 
-extern BYTE *lenspot;
+extern uint8_t *lenspot;
 
 void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 {
-	BYTE *specdata;
+	uint8_t *specdata;
 	int speclen;
 
 	if (stoprecording)
@@ -2435,7 +2489,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 		ptrdiff_t body = demobodyspot - demobuffer;
 		// [RH] Allocate more space for the demo
 		maxdemosize += 0x20000;
-		demobuffer = (BYTE *)M_Realloc (demobuffer, maxdemosize);
+		demobuffer = (uint8_t *)M_Realloc (demobuffer, maxdemosize);
 		demo_p = demobuffer + pos;
 		lenspot = demobuffer + spot;
 		democompspot = demobuffer + comp;
@@ -2455,7 +2509,7 @@ void G_RecordDemo (const char* name)
 	FixPathSeperator (demoname);
 	DefaultExtension (demoname, ".lmp");
 	maxdemosize = 0x20000;
-	demobuffer = (BYTE *)M_Malloc (maxdemosize);
+	demobuffer = (uint8_t *)M_Malloc (maxdemosize);
 	demorecording = true; 
 }
 
@@ -2496,7 +2550,7 @@ void G_BeginRecording (const char *startmap)
 		if (playeringame[i])
 		{
 			StartChunk (UINF_ID, &demo_p);
-			WriteByte ((BYTE)i, &demo_p);
+			WriteByte ((uint8_t)i, &demo_p);
 			D_WriteUserInfoStrings (i, &demo_p);
 			FinishChunk (&demo_p);
 		}
@@ -2545,7 +2599,7 @@ void G_DeferedPlayDemo (const char *name)
 	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
 }
 
-CCMD (playdemo)
+UNSAFE_CCMD (playdemo)
 {
 	if (netgame)
 	{
@@ -2564,7 +2618,7 @@ CCMD (playdemo)
 	}
 }
 
-CCMD (timedemo)
+UNSAFE_CCMD (timedemo)
 {
 	if (argv.argc() > 1)
 	{
@@ -2582,7 +2636,7 @@ bool G_ProcessIFFDemo (FString &mapname)
 	int numPlayers = 0;
 	int id, len, i;
 	uLong uncompSize = 0;
-	BYTE *nextchunk;
+	uint8_t *nextchunk;
 
 	demoplayback = true;
 
@@ -2710,7 +2764,7 @@ bool G_ProcessIFFDemo (FString &mapname)
 
 	if (uncompSize > 0)
 	{
-		BYTE *uncompressed = (BYTE*)M_Malloc(uncompSize);
+		uint8_t *uncompressed = (uint8_t*)M_Malloc(uncompSize);
 		int r = uncompress (uncompressed, &uncompSize, demo_p, uLong(zdembodyend - demo_p));
 		if (r != Z_OK)
 		{
@@ -2738,14 +2792,24 @@ void G_DoPlayDemo (void)
 	if (demolump >= 0)
 	{
 		int demolen = Wads.LumpLength (demolump);
-		demobuffer = (BYTE *)M_Malloc(demolen);
+		demobuffer = (uint8_t *)M_Malloc(demolen);
 		Wads.ReadLump (demolump, demobuffer);
 	}
 	else
 	{
 		FixPathSeperator (defdemoname);
 		DefaultExtension (defdemoname, ".lmp");
-		M_ReadFileMalloc (defdemoname, &demobuffer);
+		FileReader fr;
+		if (!fr.Open(defdemoname))
+		{
+			I_Error("Unable to open demo '%s'", defdemoname.GetChars());
+		}
+		auto len = fr.GetLength();
+		demobuffer = (uint8_t*)M_Malloc(len);
+		if (fr.Read(demobuffer, len) != len)
+		{
+			I_Error("Unable to read demo '%s'", defdemoname.GetChars());
+		}
 	}
 	demo_p = demobuffer;
 
@@ -2836,7 +2900,7 @@ bool G_CheckDemoStatus (void)
 		int endtime = 0;
 
 		if (timingdemo)
-			endtime = I_GetTime (false) - starttime;
+			endtime = I_GetTime () - starttime;
 
 		C_RestoreCVars ();		// [RH] Restore cvars demo might have changed
 		M_Free (demobuffer);
@@ -2884,7 +2948,7 @@ bool G_CheckDemoStatus (void)
 
 	if (demorecording)
 	{
-		BYTE *formlen;
+		uint8_t *formlen;
 
 		WriteByte (DEM_STOP, &demo_p);
 
@@ -2911,7 +2975,15 @@ bool G_CheckDemoStatus (void)
 		formlen = demobuffer + 4;
 		WriteLong (int(demo_p - demobuffer - 8), &formlen);
 
-		bool saved = M_WriteFile (demoname, demobuffer, int(demo_p - demobuffer)); 
+		auto fw = FileWriter::Open(demoname);
+		bool saved = false;
+		if (fw != nullptr)
+		{
+			const size_t size = demo_p - demobuffer;
+			saved = fw->Write(demobuffer, size) == size;
+			delete fw;
+			if (!saved) remove(demoname);
+		}
 		M_Free (demobuffer); 
 		demorecording = false;
 		stoprecording = false;
@@ -2927,3 +2999,34 @@ bool G_CheckDemoStatus (void)
 
 	return false; 
 }
+
+void G_StartSlideshow(FName whichone)
+{
+	gameaction = ga_slideshow;
+	SelectedSlideshow = whichone == NAME_None ? level.info->slideshow : whichone;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, StartSlideshow)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME_DEF(whichone);
+	G_StartSlideshow(whichone);
+	return 0;
+}
+
+DEFINE_GLOBAL(players)
+DEFINE_GLOBAL(playeringame)
+DEFINE_GLOBAL(PlayerClasses)
+DEFINE_GLOBAL_NAMED(Skins, PlayerSkins)
+DEFINE_GLOBAL(consoleplayer)
+DEFINE_GLOBAL_NAMED(PClassActor::AllActorClasses, AllActorClasses)
+DEFINE_GLOBAL(validcount)
+DEFINE_GLOBAL(multiplayer)
+DEFINE_GLOBAL(gameaction)
+DEFINE_GLOBAL(gamestate)
+DEFINE_GLOBAL(skyflatnum)
+DEFINE_GLOBAL_NAMED(bglobal.freeze, globalfreeze)
+DEFINE_GLOBAL(gametic)
+DEFINE_GLOBAL(demoplayback)
+DEFINE_GLOBAL(automapactive);
+DEFINE_GLOBAL(Net_Arbitrator);

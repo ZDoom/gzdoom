@@ -1,24 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
-//
-// DESCRIPTION:
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
 //
 //-----------------------------------------------------------------------------
+//
 
 
 #include <stdlib.h>
@@ -80,16 +79,14 @@ extern "C"
 #ifndef NO_GTK
 bool I_GtkAvailable ();
 int I_PickIWad_Gtk (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
+void I_FatalError_Gtk(const char* errortext);
 #elif defined(__APPLE__)
 int I_PickIWad_Cocoa (WadStuff *wads, int numwads, bool showwin, int defaultiwad);
 #endif
 
-DWORD LanguageIDs[4];
+double PerfToSec, PerfToMillisec;
+uint32_t LanguageIDs[4];
 	
-int (*I_GetTime) (bool saveMS);
-int (*I_WaitForTic) (int);
-void (*I_FreezeTime) (bool frozen);
-
 void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
 }
@@ -109,13 +106,6 @@ void I_EndRead(void)
 }
 
 
-void I_WaitVBL (int count)
-{
-    // I_WaitVBL is never used to actually synchronize to the
-    // vertical blank. Instead, it's used for delay purposes.
-    usleep (1000000 * count / 70);
-}
-
 //
 // SetLanguageIDs
 //
@@ -123,15 +113,12 @@ void SetLanguageIDs ()
 {
 	size_t langlen = strlen(language);
 
-	DWORD lang = (langlen < 2 || langlen > 3) ?
+	uint32_t lang = (langlen < 2 || langlen > 3) ?
 		MAKE_ID('e','n','u','\0') :
 		MAKE_ID(language[0],language[1],language[2],'\0');
 
 	LanguageIDs[3] = LanguageIDs[2] = LanguageIDs[1] = LanguageIDs[0] = lang;
 }
-
-void I_InitTimer ();
-void I_ShutdownTimer ();
 
 //
 // I_Init
@@ -143,7 +130,6 @@ void I_Init (void)
 
 	atterm (I_ShutdownSound);
     I_InitSound ();
-	I_InitTimer ();
 }
 
 //
@@ -159,8 +145,6 @@ void I_Quit (void)
 		G_CheckDemoStatus();
 
 	C_DeinitConsole();
-
-	I_ShutdownTimer();
 }
 
 
@@ -172,6 +156,37 @@ bool gameisdead;
 
 #ifdef __APPLE__
 void Mac_I_FatalError(const char* errortext);
+#endif
+
+#ifdef __linux__
+void Linux_I_FatalError(const char* errortext)
+{
+	// Close window or exit fullscreen and release mouse capture
+	SDL_Quit();
+
+	const char *str;
+	if((str=getenv("KDE_FULL_SESSION")) && strcmp(str, "true") == 0)
+	{
+		FString cmd;
+		cmd << "kdialog --title \"" GAMESIG " ";
+		cmd << GetVersionString() << ": No IWAD found\" ";
+		cmd << "--msgbox \"" << errortext << "\"";
+		popen(cmd, "r");
+	}
+#ifndef NO_GTK
+	else if (I_GtkAvailable())
+	{
+		I_FatalError_Gtk(errortext);
+	}
+#endif
+	else
+	{
+		FString message;
+		message << GAMESIG " ";
+		message << GetVersionString() << ": No IWAD found";
+		SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, message, errortext, NULL);
+	}
+}
 #endif
 
 void I_FatalError (const char *error, ...)
@@ -192,6 +207,10 @@ void I_FatalError (const char *error, ...)
 #ifdef __APPLE__
 		Mac_I_FatalError(errortext);
 #endif // __APPLE__		
+
+#ifdef __linux__
+		Linux_I_FatalError(errortext);
+#endif
 		
 		// Record error to log (if logging)
 		if (Logfile)
@@ -414,15 +433,16 @@ int I_FindClose (void *handle)
 	return 0;
 }
 
-int I_FindAttr (findstate_t *fileinfo)
+int I_FindAttr(findstate_t* const fileinfo)
 {
-	dirent *ent = fileinfo->namelist[fileinfo->current];
-	struct stat buf;
+	dirent* const ent = fileinfo->namelist[fileinfo->current];
+	bool isdir;
 
-	if (stat(ent->d_name, &buf) == 0)
+	if (DirEntryExists(ent->d_name, &isdir))
 	{
-		return S_ISDIR(buf.st_mode) ? FA_DIREC : 0;
+		return isdir ? FA_DIREC : 0;
 	}
+
 	return 0;
 }
 

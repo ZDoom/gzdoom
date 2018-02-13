@@ -95,7 +95,7 @@ class Programmer : Actor
 		A_PlaySound("programmer/clank", CHAN_WEAPON);
 
 		int damage = ((random[Programmer]() % 10) + 1) * 6;
-		int newdam = DamageMobj (self, self, damage, 'Melee');
+		int newdam = target.DamageMobj (self, self, damage, 'Melee');
 		target.TraceBleed (newdam > 0 ? newdam : damage, self);
 	}
 

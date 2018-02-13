@@ -226,8 +226,8 @@ int copy_zip_file(FILE *zip, file_entry_t *file, FILE *ozip, CentralDirectoryEnt
 
 // PRIVATE FUNCTION PROTOTYPES ---------------------------------------------
 
-static void *SzAlloc(void *p, size_t size) { p = p; return malloc(size); }
-static void SzFree(void *p, void *address) { p = p; free(address); }
+static void *SzAlloc(ISzAllocPtr p, size_t size) { p = p; return malloc(size); }
+static void SzFree(ISzAllocPtr p, void *address) { p = p; free(address); }
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 

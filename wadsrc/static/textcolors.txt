@@ -140,7 +140,8 @@ Flat:
 
 Cream
 {
-	#CF8353  #FFD7BB
+	#6B4727  #BF7B4B    0 94
+	#BF7B4B  #FFBF9B   95 256
 Console:
 	#2B230F  #BF7B4B    0 127
 	#FFB383  #FFFFFF  128 256
@@ -150,7 +151,7 @@ Flat:
 
 Olive
 {
-	#2F371F  #7B7F50
+	#171F07  #7B7F50
 Console:
 	#373F27  #7B7F63    0 127
 	#676B4F  #D1D8A8  128 256
@@ -216,4 +217,48 @@ Console:
 	#00FFFF #FEFFFF   128 256
 Flat:
 	#00DDDD
+}
+
+Ice
+{
+	#343450  #7C7C98    0 94
+	#7C7C98  #E0E0E0   95 256
+Console:
+	#343450  #7C7C98    0 127
+	#7C7C98  #E0E0E0  128 256
+Flat:
+	#7C7C98
+}
+
+Fire
+{
+	#660000  #D57604   0 104
+	#D57604  #FFFF00   105 256
+Console:
+	#6F0000  #D57604    0 127
+	#D57604  #FFFF00  128 256
+Flat:
+	#D57604
+}
+
+Sapphire
+{
+	#000468  #506CFC    0 94
+	#506CFC  #50ECFC   95 256
+Console:
+	#000468  #506CFC    0 127
+	#506CFC  #50ECFC  128 256
+Flat:
+	#506CFC
+}
+
+Teal
+{
+	#001F1F  #236773    0 90
+	#236773  #7BB3C3   91 256
+Console:
+	#001F1F  #236773    0 127
+	#236773  #7BB3C3  128 256
+Flat:
+	#236773
 }

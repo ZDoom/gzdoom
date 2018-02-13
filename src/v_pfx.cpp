@@ -37,13 +37,10 @@
 #include "v_palette.h"
 #include "v_pfx.h"
 
-extern "C"
-{
-	PfxUnion GPfxPal;
-	PfxState GPfx;
-}
+PfxUnion GPfxPal;
+PfxState GPfx;
 
-static bool AnalyzeMask (DWORD mask, BYTE *shift);
+static bool AnalyzeMask (uint32_t mask, uint8_t *shift);
 
 static void Palette16Generic (const PalEntry *pal);
 static void Palette16R5G5B5 (const PalEntry *pal);
@@ -52,23 +49,23 @@ static void Palette32Generic (const PalEntry *pal);
 static void Palette32RGB (const PalEntry *pal);
 static void Palette32BGR (const PalEntry *pal);
 
-static void Scale8 (BYTE *src, int srcpitch,
+static void Scale8 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
-static void Convert8 (BYTE *src, int srcpitch,
+static void Convert8 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
-static void Convert16 (BYTE *src, int srcpitch,
+static void Convert16 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
-static void Convert24 (BYTE *src, int srcpitch,
+static void Convert24 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
-static void Convert32 (BYTE *src, int srcpitch,
+static void Convert32 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac);
 
-void PfxState::SetFormat (int bits, uint32 redMask, uint32 greenMask, uint32 blueMask)
+void PfxState::SetFormat (int bits, uint32_t redMask, uint32_t greenMask, uint32_t blueMask)
 {
 	switch (bits)
 	{
@@ -96,9 +93,9 @@ void PfxState::SetFormat (int bits, uint32 redMask, uint32 greenMask, uint32 blu
 			SetPalette = Palette16Generic;
 		}
 		Convert = Convert16;
-		Masks.Bits16.Red = (WORD)redMask;
-		Masks.Bits16.Green = (WORD)greenMask;
-		Masks.Bits16.Blue = (WORD)blueMask;
+		Masks.Bits16.Red = (uint16_t)redMask;
+		Masks.Bits16.Green = (uint16_t)greenMask;
+		Masks.Bits16.Blue = (uint16_t)blueMask;
 		break;
 
 	case 24:
@@ -148,9 +145,9 @@ void PfxState::SetFormat (int bits, uint32 redMask, uint32 greenMask, uint32 blu
 	}
 }
 
-static bool AnalyzeMask (DWORD mask, BYTE *shiftout)
+static bool AnalyzeMask (uint32_t mask, uint8_t *shiftout)
 {
-	BYTE shift = 0;
+	uint8_t shift = 0;
 
 	if (mask >= 0xff)
 	{
@@ -178,12 +175,12 @@ static bool AnalyzeMask (DWORD mask, BYTE *shiftout)
 
 static void Palette16Generic (const PalEntry *pal)
 {
-	WORD *p16;
+	uint16_t *p16;
 	int i;
 
 	for (p16 = GPfxPal.Pal16, i = 256; i != 0; i--, pal++, p16++)
 	{
-		WORD rpart, gpart, bpart;
+		uint16_t rpart, gpart, bpart;
 
 		if (GPfx.RedLeft)	rpart = pal->r << GPfx.RedShift;
 		else				rpart = pal->r >> GPfx.RedShift;
@@ -202,7 +199,7 @@ static void Palette16Generic (const PalEntry *pal)
 
 static void Palette16R5G5B5 (const PalEntry *pal)
 {
-	WORD *p16;
+	uint16_t *p16;
 	int i;
 
 	for (p16 = GPfxPal.Pal16, i = 256; i != 0; i--, pal++, p16++)
@@ -215,7 +212,7 @@ static void Palette16R5G5B5 (const PalEntry *pal)
 
 static void Palette16R5G6B5 (const PalEntry *pal)
 {
-	WORD *p16;
+	uint16_t *p16;
 	int i;
 
 	for (p16 = GPfxPal.Pal16, i = 256; i != 0; i--, pal++, p16++)
@@ -228,12 +225,12 @@ static void Palette16R5G6B5 (const PalEntry *pal)
 
 static void Palette32Generic (const PalEntry *pal)
 {
-	DWORD *p32;
+	uint32_t *p32;
 	int i;
 
 	for (p32 = GPfxPal.Pal32, i = 256; i != 0; i--, pal++, p32++)
 	{
-		DWORD rpart, gpart, bpart;
+		uint32_t rpart, gpart, bpart;
 
 		if (GPfx.RedLeft)	rpart = pal->r << GPfx.RedShift;
 		else				rpart = pal->r >> GPfx.RedShift;
@@ -257,7 +254,7 @@ static void Palette32RGB (const PalEntry *pal)
 
 static void Palette32BGR (const PalEntry *pal)
 {
-	DWORD *p32;
+	uint32_t *p32;
 	int i;
 
 	for (p32 = GPfxPal.Pal32, i = 256; i != 0; i--, pal++, p32++)
@@ -268,7 +265,7 @@ static void Palette32BGR (const PalEntry *pal)
 
 // Bitmap converters -------------------------------------------------------
 
-static void Scale8 (BYTE *src, int srcpitch,
+static void Scale8 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac)
 {
@@ -278,7 +275,7 @@ static void Scale8 (BYTE *src, int srcpitch,
 	}
 
 	int x, y, savedx;
-	BYTE *dest = (BYTE *)destin;
+	uint8_t *dest = (uint8_t *)destin;
 
 	if (xstep == FRACUNIT && ystep == FRACUNIT)
 	{
@@ -291,14 +288,14 @@ static void Scale8 (BYTE *src, int srcpitch,
 	}
 	else if (xstep == FRACUNIT/2 && ystep == FRACUNIT/2)
 	{
-		BYTE *dest2 = dest + destpitch;
+		uint8_t *dest2 = dest + destpitch;
 		destpitch = destpitch * 2 - destwidth;
 		srcpitch -= destwidth / 2;
 		for (y = destheight / 2; y != 0; --y)
 		{
 			for (x = destwidth / 2; x != 0; --x)
 			{
-				BYTE foo = src[0];
+				uint8_t foo = src[0];
 				dest[0] = foo;
 				dest[1] = foo;
 				dest2[0] = foo;
@@ -318,9 +315,9 @@ static void Scale8 (BYTE *src, int srcpitch,
 		srcpitch -= destwidth / 4;
 		for (y = destheight / 4; y != 0; --y)
 		{
-			for (BYTE *end = dest + destpitch; dest != end; dest += 4)
+			for (uint8_t *end = dest + destpitch; dest != end; dest += 4)
 			{
-				BYTE foo = src[0];
+				uint8_t foo = src[0];
 				dest[0] = foo;
 				dest[1] = foo;
 				dest[2] = foo;
@@ -358,7 +355,7 @@ static void Scale8 (BYTE *src, int srcpitch,
 			}
 			for (savedx = x, x >>= 2; x != 0; x--)
 			{
-				DWORD work;
+				uint32_t work;
 
 #ifdef __BIG_ENDIAN__
 				work  = src[xf >> FRACBITS] << 24;	xf += xstep;
@@ -371,7 +368,7 @@ static void Scale8 (BYTE *src, int srcpitch,
 				work |= src[xf >> FRACBITS] << 16;	xf += xstep;
 				work |= src[xf >> FRACBITS] << 24;	xf += xstep;
 #endif
-				*(DWORD *)dest = work;
+				*(uint32_t *)dest = work;
 				dest += 4;
 			}
 			for (savedx &= 3; savedx != 0; savedx--, xf += xstep)
@@ -389,7 +386,7 @@ static void Scale8 (BYTE *src, int srcpitch,
 	}
 }
 
-static void Convert8 (BYTE *src, int srcpitch,
+static void Convert8 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac)
 {
@@ -399,7 +396,7 @@ static void Convert8 (BYTE *src, int srcpitch,
 	}
 
 	int x, y, savedx;
-	BYTE *dest = (BYTE *)destin;
+	uint8_t *dest = (uint8_t *)destin;
 
 	destpitch -= destwidth;
 	if (xstep == FRACUNIT && ystep == FRACUNIT)
@@ -415,7 +412,7 @@ static void Convert8 (BYTE *src, int srcpitch,
 			}
 			for (savedx = x, x >>= 2; x != 0; x--)
 			{
-				*(DWORD *)dest =
+				*(uint32_t *)dest =
 #ifdef __BIG_ENDIAN__
 					(GPfxPal.Pal8[src[0]] << 24) |
 					(GPfxPal.Pal8[src[1]] << 16) |
@@ -452,7 +449,7 @@ static void Convert8 (BYTE *src, int srcpitch,
 			}
 			for (savedx = x, x >>= 2; x != 0; x--)
 			{
-				DWORD work;
+				uint32_t work;
 
 #ifdef __BIG_ENDIAN__
 				work  = GPfxPal.Pal8[src[xf >> FRACBITS]] << 24;	xf += xstep;
@@ -465,7 +462,7 @@ static void Convert8 (BYTE *src, int srcpitch,
 				work |= GPfxPal.Pal8[src[xf >> FRACBITS]] << 16;	xf += xstep;
 				work |= GPfxPal.Pal8[src[xf >> FRACBITS]] << 24;	xf += xstep;
 #endif
-				*(DWORD *)dest = work;
+				*(uint32_t *)dest = work;
 				dest += 4;
 			}
 			for (savedx &= 3; savedx != 0; savedx--, xf += xstep)
@@ -483,7 +480,7 @@ static void Convert8 (BYTE *src, int srcpitch,
 	}
 }
 
-static void Convert16 (BYTE *src, int srcpitch,
+static void Convert16 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac)
 {
@@ -493,7 +490,7 @@ static void Convert16 (BYTE *src, int srcpitch,
 	}
 
 	int x, y, savedx;
-	WORD *dest = (WORD *)destin;
+	uint16_t *dest = (uint16_t *)destin;
 
 	destpitch = (destpitch >> 1) - destwidth;
 	if (xstep == FRACUNIT && ystep == FRACUNIT)
@@ -509,7 +506,7 @@ static void Convert16 (BYTE *src, int srcpitch,
 			}
 			for (savedx = x, x >>= 1; x != 0; x--)
 			{
-				*(DWORD *)dest =
+				*(uint32_t *)dest =
 #ifdef __BIG_ENDIAN__
 					(GPfxPal.Pal16[src[0]] << 16) |
 					(GPfxPal.Pal16[src[1]]);
@@ -542,7 +539,7 @@ static void Convert16 (BYTE *src, int srcpitch,
 			}
 			for (savedx = x, x >>= 1; x != 0; x--)
 			{
-				DWORD work;
+				uint32_t work;
 
 #ifdef __BIG_ENDIAN__
 				work  = GPfxPal.Pal16[src[xf >> FRACBITS]] << 16;	xf += xstep;
@@ -551,7 +548,7 @@ static void Convert16 (BYTE *src, int srcpitch,
 				work  = GPfxPal.Pal16[src[xf >> FRACBITS]];			xf += xstep;
 				work |= GPfxPal.Pal16[src[xf >> FRACBITS]] << 16;	xf += xstep;
 #endif
-				*(DWORD *)dest = work;
+				*(uint32_t *)dest = work;
 				dest += 2;
 			}
 			if (savedx & 1)
@@ -569,7 +566,7 @@ static void Convert16 (BYTE *src, int srcpitch,
 	}
 }
 
-static void Convert24 (BYTE *src, int srcpitch,
+static void Convert24 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac)
 {
@@ -579,7 +576,7 @@ static void Convert24 (BYTE *src, int srcpitch,
 	}
 
 	int x, y;
-	BYTE *dest = (BYTE *)destin;
+	uint8_t *dest = (uint8_t *)destin;
 
 	destpitch = destpitch - destwidth*3;
 	if (xstep == FRACUNIT && ystep == FRACUNIT)
@@ -589,7 +586,7 @@ static void Convert24 (BYTE *src, int srcpitch,
 		{
 			for (x = destwidth; x != 0; x--)
 			{
-				BYTE *pe = GPfxPal.Pal24[src[0]];
+				uint8_t *pe = GPfxPal.Pal24[src[0]];
 				dest[0] = pe[0];
 				dest[1] = pe[1];
 				dest[2] = pe[2];
@@ -607,7 +604,7 @@ static void Convert24 (BYTE *src, int srcpitch,
 			fixed_t xf = xfrac;
 			for (x = destwidth; x != 0; x--)
 			{
-				BYTE *pe = GPfxPal.Pal24[src[xf >> FRACBITS]];
+				uint8_t *pe = GPfxPal.Pal24[src[xf >> FRACBITS]];
 				dest[0] = pe[0];
 				dest[1] = pe[1];
 				dest[2] = pe[2];
@@ -625,7 +622,7 @@ static void Convert24 (BYTE *src, int srcpitch,
 	}
 }
 
-static void Convert32 (BYTE *src, int srcpitch,
+static void Convert32 (uint8_t *src, int srcpitch,
 	void *destin, int destpitch, int destwidth, int destheight,
 	fixed_t xstep, fixed_t ystep, fixed_t xfrac, fixed_t yfrac)
 {
@@ -635,7 +632,7 @@ static void Convert32 (BYTE *src, int srcpitch,
 	}
 
 	int x, y, savedx;
-	DWORD *dest = (DWORD *)destin;
+	uint32_t *dest = (uint32_t *)destin;
 
 	destpitch = (destpitch >> 2) - destwidth;
 	if (xstep == FRACUNIT && ystep == FRACUNIT)

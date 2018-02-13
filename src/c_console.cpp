@@ -48,7 +48,7 @@
 #include "hu_stuff.h"
 #include "i_system.h"
 #include "i_video.h"
-#include "i_input.h"
+#include "g_input.h"
 #include "m_swap.h"
 #include "v_palette.h"
 #include "v_video.h"
@@ -68,6 +68,8 @@
 #include "gstrings.h"
 #include "c_consolebuffer.h"
 #include "g_levellocals.h"
+#include "vm.h"
+#include "i_time.h"
 
 FString FStringFormat(VM_ARGS); // extern from thingdef_data.cpp
 
@@ -94,7 +96,7 @@ CVAR(Bool, con_notablist, false, CVAR_ARCHIVE)
 
 
 static FTextureID conback;
-static DWORD conshade;
+static uint32_t conshade;
 static bool conline;
 
 extern int		gametic;
@@ -146,41 +148,14 @@ static int worklen = 0;
 
 CVAR(Float, con_notifytime, 3.f, CVAR_ARCHIVE)
 CVAR(Bool, con_centernotify, false, CVAR_ARCHIVE)
-CUSTOM_CVAR(Int, con_scaletext, 1, CVAR_ARCHIVE)		// Scale notify text at high resolutions?
+CUSTOM_CVAR(Int, con_scaletext, 0, CVAR_ARCHIVE)		// Scale notify text at high resolutions?
 {
 	if (self < 0) self = 0;
-	if (self > 3) self = 3;
 }
 
 CUSTOM_CVAR(Int, con_scale, 0, CVAR_ARCHIVE)
 {
 	if (self < 0) self = 0;
-}
-
-int active_con_scale()
-{
-	int scale = con_scale;
-	if (scale <= 0)
-	{
-		scale = CleanXfac - 1;
-		if (scale <= 0)
-		{
-			scale = 1;
-		}
-	}
-	return scale;
-}
-
-int active_con_scaletext()
-{
-	switch (con_scaletext)
-	{
-	default:
-	case 0: return 1;
-	case 1: return uiscale;
-	case 2: return 2;
-	case 3: return 4;
-	}
 }
 
 CUSTOM_CVAR(Float, con_alpha, 0.75f, CVAR_ARCHIVE)
@@ -205,6 +180,9 @@ struct FCommandBuffer
 	FString Text;	// The actual command line text
 	unsigned CursorPos;
 	unsigned StartPos;	// First character to display
+
+	FString YankBuffer;	// Deleted text buffer
+	bool AppendToYankBuffer;	// Append consecutive deletes to buffer
 
 	FCommandBuffer()
 	{
@@ -278,6 +256,30 @@ struct FCommandBuffer
 		StartPos = MAX(0, n);
 	}
 
+	unsigned WordBoundaryRight()
+	{
+		unsigned index = CursorPos;
+		while (index < Text.Len() && Text[index] == ' ') {
+			index++;
+		}
+		while (index < Text.Len() && Text[index] != ' ') {
+			index++;
+		}
+		return index;
+	}
+
+	unsigned WordBoundaryLeft()
+	{
+		int index = CursorPos - 1;
+		while (index > -1 && Text[index] == ' ') {
+			index--;
+		}
+		while (index > -1 && Text[index] != ' ') {
+			index--;
+		}
+		return (unsigned)index + 1;
+	}
+
 	void CursorStart()
 	{
 		CursorPos = 0;
@@ -309,6 +311,18 @@ struct FCommandBuffer
 		}
 	}
 
+	void CursorWordLeft()
+	{
+		CursorPos = WordBoundaryLeft();
+		MakeStartPosGood();
+	}
+
+	void CursorWordRight()
+	{
+		CursorPos = WordBoundaryRight();
+		MakeStartPosGood();
+	}
+
 	void DeleteLeft()
 	{
 		if (CursorPos > 0)
@@ -325,6 +339,50 @@ struct FCommandBuffer
 		{
 			Text.Remove(CursorPos, 1);
 			MakeStartPosGood();
+		}
+	}
+
+	void DeleteWordLeft()
+	{
+		if (CursorPos > 0)
+		{
+			unsigned index = WordBoundaryLeft();
+			if (AppendToYankBuffer) {
+				YankBuffer = FString(&Text[index], CursorPos - index) + YankBuffer;
+			} else {
+				YankBuffer = FString(&Text[index], CursorPos - index);
+			}
+			Text.Remove(index, CursorPos - index);
+			CursorPos = index;
+			MakeStartPosGood();
+		}
+	}
+
+	void DeleteLineLeft()
+	{
+		if (CursorPos > 0)
+		{
+			if (AppendToYankBuffer) {
+				YankBuffer = FString(&Text[0], CursorPos) + YankBuffer;
+			} else {
+				YankBuffer = FString(&Text[0], CursorPos);
+			}
+			Text.Remove(0, CursorPos);
+			CursorStart();
+		}
+	}
+
+	void DeleteLineRight()
+	{
+		if (CursorPos < Text.Len())
+		{
+			if (AppendToYankBuffer) {
+				YankBuffer += FString(&Text[CursorPos], Text.Len() - CursorPos);
+			} else {
+				YankBuffer = FString(&Text[CursorPos], Text.Len() - CursorPos);
+			}
+			Text.Truncate(CursorPos);
+			CursorEnd();
 		}
 	}
 
@@ -471,7 +529,7 @@ static void maybedrawnow (bool tick, bool force)
 		|| gamestate == GS_STARTUP))
 	{
 		static size_t lastprinttime = 0;
-		size_t nowtime = I_GetTime(false);
+		size_t nowtime = I_GetTime();
 
 		if (nowtime - lastprinttime > 1 || force)
 		{
@@ -569,7 +627,7 @@ void C_InitConsole (int width, int height, bool ingame)
 //
 //==========================================================================
 
-CCMD (atexit)
+UNSAFE_CCMD (atexit)
 {
 	if (argv.argc() == 1)
 	{
@@ -724,14 +782,7 @@ void FNotifyBuffer::AddString(int printlevel, FString source)
 		return;
 	}
 
-	if (active_con_scaletext() == 0)
-	{
-		width = DisplayWidth / CleanXfac;
-	}
-	else
-	{
-		width = DisplayWidth / active_con_scaletext();
-	}
+	width = DisplayWidth / active_con_scaletext();
 
 	if (AddType == APPENDLINE && Text.Size() > 0 && Text[Text.Size() - 1].PrintLevel == printlevel)
 	{
@@ -974,10 +1025,6 @@ void FNotifyBuffer::Draw()
 	canskip = true;
 
 	lineadv = SmallFont->GetHeight ();
-	if (active_con_scaletext() == 0)
-	{
-		lineadv *= CleanYfac;
-	}
 
 	BorderTopRefresh = screen->GetPageCount ();
 
@@ -1001,45 +1048,21 @@ void FNotifyBuffer::Draw()
 			else
 				color = PrintColors[notify.PrintLevel];
 
-			if (active_con_scaletext() == 0)
-			{
-				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_CleanNoMove, true, DTA_Alpha, alpha, TAG_DONE);
-				else
-					screen->DrawText (SmallFont, color, (SCREENWIDTH -
-						SmallFont->StringWidth (notify.Text)*CleanXfac)/2,
-						line, notify.Text, DTA_CleanNoMove, true,
-						DTA_Alpha, alpha, TAG_DONE);
-			}
-			else if (active_con_scaletext() == 1)
-			{
-				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_Alpha, alpha, TAG_DONE);
-				else
-					screen->DrawText (SmallFont, color, (SCREENWIDTH -
-						SmallFont->StringWidth (notify.Text))/2,
-						line, notify.Text,
-						DTA_Alpha, alpha, TAG_DONE);
-			}
+			int scale = active_con_scaletext();
+			if (!center)
+				screen->DrawText (SmallFont, color, 0, line, notify.Text,
+					DTA_VirtualWidth, screen->GetWidth() / scale,
+					DTA_VirtualHeight, screen->GetHeight() / scale,
+					DTA_KeepRatio, true,
+					DTA_Alpha, alpha, TAG_DONE);
 			else
-			{
-				if (!center)
-					screen->DrawText (SmallFont, color, 0, line, notify.Text,
-						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
-						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
-						DTA_KeepRatio, true,
-						DTA_Alpha, alpha, TAG_DONE);
-				else
-					screen->DrawText (SmallFont, color, (screen->GetWidth() -
-						SmallFont->StringWidth (notify.Text) * active_con_scaletext()) / 2 / active_con_scaletext(),
-						line, notify.Text,
-						DTA_VirtualWidth, screen->GetWidth() / active_con_scaletext(),
-						DTA_VirtualHeight, screen->GetHeight() / active_con_scaletext(),
-						DTA_KeepRatio, true,
-						DTA_Alpha, alpha, TAG_DONE);
-			}
+				screen->DrawText (SmallFont, color, (screen->GetWidth() -
+					SmallFont->StringWidth (notify.Text) * scale) / 2 / scale,
+					line, notify.Text,
+					DTA_VirtualWidth, screen->GetWidth() / scale,
+					DTA_VirtualHeight, screen->GetHeight() / scale,
+					DTA_KeepRatio, true,
+					DTA_Alpha, alpha, TAG_DONE);
 			line += lineadv;
 			canskip = false;
 		}
@@ -1180,7 +1203,7 @@ void C_DrawConsole (bool hw2d)
 						DTA_KeepRatio, true, TAG_DONE);
 
 				// Draw the marker
-				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (SDWORD)(tickend - tickbegin)*8, TickerMax);
+				i = LEFTMARGIN+5+tickbegin*8 + Scale (TickerAt, (int32_t)(tickend - tickbegin)*8, TickerMax);
 				if (textScale == 1)
 					screen->DrawChar (ConFont, CR_ORANGE, (int)i, tickerY, 0x13, TAG_DONE);
 				else
@@ -1209,7 +1232,6 @@ void C_DrawConsole (bool hw2d)
 			{
 				screen->Dim (PalEntry ((unsigned char)(player->BlendR*255), (unsigned char)(player->BlendG*255), (unsigned char)(player->BlendB*255)),
 					player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);
-				ST_SetNeedRefresh();
 				V_SetBorderNeedRefresh();
 			}
 		}
@@ -1345,6 +1367,7 @@ DEFINE_ACTION_FUNCTION(_Console, Printf)
 static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 {
 	int data1 = ev->data1;
+	bool keepappending = false;
 
 	switch (ev->subtype)
 	{
@@ -1352,8 +1375,22 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		return false;
 
 	case EV_GUI_Char:
+		if (ev->data2)
+		{
+			// Bash-style shortcuts
+			if (data1 == 'b')
+			{
+				buffer.CursorWordLeft();
+				break;
+			}
+			else if (data1 == 'f')
+			{
+				buffer.CursorWordRight();
+				break;
+			}
+		}
 		// Add keypress to command line
-		buffer.AddChar(ev->data1);
+		buffer.AddChar(data1);
 		HistPos = NULL;
 		TabbedLast = false;
 		TabbedList = false;
@@ -1654,6 +1691,56 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 				break;
 			}
 			break;
+
+		// Bash-style shortcuts
+		case 'A':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.CursorStart();
+			}
+			break;
+		case 'E':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.CursorEnd();
+			}
+			break;
+		case 'W':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.DeleteWordLeft();
+				keepappending = true;
+				TabbedLast = false;
+				TabbedList = false;
+			}
+			break;
+		case 'U':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.DeleteLineLeft();
+				keepappending = true;
+				TabbedLast = false;
+				TabbedList = false;
+			}
+			break;
+		case 'K':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.DeleteLineRight();
+				keepappending = true;
+				TabbedLast = false;
+				TabbedList = false;
+			}
+			break;
+		case 'Y':
+			if (ev->data3 & GKM_CTRL)
+			{
+				buffer.AddString(buffer.YankBuffer);
+				TabbedLast = false;
+				TabbedList = false;
+				HistPos = NULL;
+			}
+			break;
 		}
 		break;
 
@@ -1664,6 +1751,9 @@ static bool C_HandleKey (event_t *ev, FCommandBuffer &buffer)
 		break;
 #endif
 	}
+
+	buffer.AppendToYankBuffer = keepappending;
+
 	// Ensure that the cursor is always visible while typing
 	CursorTicker = C_BLINKRATE;
 	cursoron = 1;
@@ -1720,7 +1810,6 @@ static const char bar2[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36
 						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_GREEN "\n";
 static const char bar3[] = TEXTCOLOR_RED "\n\35\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36\36"
 						  "\36\36\36\36\36\36\36\36\36\36\36\36\37" TEXTCOLOR_NORMAL "\n";
-static const char logbar[] = "\n<------------------------------->\n";
 
 void C_MidPrint (FFont *font, const char *msg)
 {
@@ -1733,7 +1822,7 @@ void C_MidPrint (FFont *font, const char *msg)
 		AddToConsole (-1, msg);
 		AddToConsole (-1, bar3);
 
-		StatusBar->AttachMessage (new DHUDMessage (font, msg, 1.5f, 0.375f, 0, 0,
+		StatusBar->AttachMessage (Create<DHUDMessage>(font, msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS], con_midtime), MAKE_ID('C','N','T','R'));
 	}
 	else
@@ -1750,7 +1839,7 @@ void C_MidPrintBold (FFont *font, const char *msg)
 		AddToConsole (-1, msg);
 		AddToConsole (-1, bar3);
 
-		StatusBar->AttachMessage (new DHUDMessage (font, msg, 1.5f, 0.375f, 0, 0,
+		StatusBar->AttachMessage (Create<DHUDMessage> (font, msg, 1.5f, 0.375f, 0, 0,
 			(EColorRange)PrintColors[PRINTLEVELS+1], con_midtime), MAKE_ID('C','N','T','R'));
 	}
 	else

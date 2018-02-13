@@ -53,6 +53,9 @@
 #include "m_joy.h"
 #include "sbar.h"
 #include "hardware.h"
+#include "vm.h"
+#include "r_videoscale.h"
+#include "i_time.h"
 
 /*=======================================
  *
@@ -72,12 +75,11 @@ EXTERN_CVAR (Int, vid_defwidth)
 EXTERN_CVAR (Int, vid_defheight)
 EXTERN_CVAR (Int, vid_defbits)
 EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Bool, vid_tft)		// Defined below
 
 int testingmode;		// Holds time to revert to old mode
 int OldWidth, OldHeight, OldBits;
 static FIntCVar DummyDepthCvar (NULL, 0, 0);
-static BYTE BitTranslate[32];
+static uint8_t BitTranslate[32];
 
 CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 {
@@ -85,41 +87,10 @@ CUSTOM_CVAR (Int, menu_screenratios, -1, CVAR_ARCHIVE)
 	{
 		self = -1;
 	}
-	else if (self == 4 && !vid_tft)
-	{
-		self = 0;
-	}
 	else
 	{
 		BuildModesList (screen->VideoWidth, screen->VideoHeight, DisplayBits);
 	}
-}
-
-CUSTOM_CVAR (Bool, vid_tft, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	const int OptionMenuItemOptionBase_OP_VALUES = 0x11001;
-
-	DOptionMenuDescriptor *opt = GetVideoModeMenu();
-	if (opt != NULL)
-	{
-		DMenuItemBase *it = opt->GetItem("menu_screenratios");
-		if (it != NULL)
-		{
-			if (self)
-			{
-				it->SetString(OptionMenuItemOptionBase_OP_VALUES, "RatiosTFT");
-			}
-			else
-			{
-				it->SetString(OptionMenuItemOptionBase_OP_VALUES, "Ratios");
-			}
-		}
-	}
-	setsizeneeded = true;
-	if (StatusBar != NULL)
-	{
-		StatusBar->ScreenSizeChanged();
-	}	
 }
 
 
@@ -276,7 +247,6 @@ void M_InitVideoModesMenu ()
 	size_t currval = 0;
 
 	M_RefreshModesList();
-	vid_tft.Callback();
 
 	for (unsigned int i = 1; i <= 32 && currval < countof(BitTranslate); i++)
 	{
@@ -343,7 +313,7 @@ DEFINE_ACTION_FUNCTION(DVideoModeMenu, SetSelectedSize)
 		OldBits = DisplayBits;
 		NewBits = BitTranslate[DummyDepthCvar];
 		setmodeneeded = true;
-		testingmode = I_GetTime(false) + 5 * TICRATE;
+		testingmode = I_GetTime() + 5 * TICRATE;
 		SetModesMenu (NewWidth, NewHeight, NewBits);
 		ACTION_RETURN_BOOL(true);
 	}

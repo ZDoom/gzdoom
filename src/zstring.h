@@ -1,3 +1,4 @@
+#pragma once
 /*
 ** zstring.h
 **
@@ -31,8 +32,6 @@
 **
 */
 
-#ifndef ZSTRING_H
-#define ZSTRING_H
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -47,16 +46,10 @@
 #define PRINTFISH(x)
 #endif
 
-#ifdef __clang__
+#ifdef __GNUC__
 #define IGNORE_FORMAT_PRE \
 	_Pragma("GCC diagnostic push") \
-	_Pragma("GCC diagnostic ignored \"-Wformat-invalid-specifier\"") \
-	_Pragma("GCC diagnostic ignored \"-Wformat-extra-args\"")
-#define IGNORE_FORMAT_POST _Pragma("GCC diagnostic pop")
-#elif defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && (__GNUC_MINOR__ >= 6)))
-#define IGNORE_FORMAT_PRE \
-	_Pragma("GCC diagnostic push") \
-	_Pragma("GCC diagnostic ignored \"-Wformat=\"") \
+	_Pragma("GCC diagnostic ignored \"-Wformat\"") \
 	_Pragma("GCC diagnostic ignored \"-Wformat-extra-args\"")
 #define IGNORE_FORMAT_POST _Pragma("GCC diagnostic pop")
 #else
@@ -127,10 +120,11 @@ enum ELumpNum
 class FString
 {
 public:
-	FString () : Chars(&NullString.Nothing[0]) { NullString.RefCount++; }
+	FString () { ResetToNull(); }
 
 	// Copy constructors
 	FString (const FString &other) { AttachToOther (other); }
+	FString (FString &&other) : Chars(other.Chars) { other.ResetToNull(); }
 	FString (const char *copyStr);
 	FString (const char *copyStr, size_t copyLen);
 	FString (char oneChar);
@@ -172,6 +166,7 @@ public:
 	const char &operator[] (unsigned long long index) const { return Chars[index]; }
 
 	FString &operator = (const FString &other);
+	FString &operator = (FString &&other);
 	FString &operator = (const char *copyStr);
 
 	FString operator + (const FString &tail) const;
@@ -191,6 +186,9 @@ public:
 	FString &operator << (const char *tail) { return *this += tail; }
 	FString &operator << (char tail) { return *this += tail; }
 	FString &operator << (const FName &name) { return *this += name.GetChars(); }
+
+	const char &Front() const { assert(IsNotEmpty()); return Chars[0]; }
+	const char &Back() const { assert(IsNotEmpty()); return Chars[Len() - 1]; }
 
 	FString Left (size_t numChars) const;
 	FString Right (size_t numChars) const;
@@ -314,9 +312,26 @@ public:
 	int CompareNoCase(const FString &other, int len) const { return strnicmp(Chars, other.Chars, len); }
 	int CompareNoCase(const char *other, int len) const { return strnicmp(Chars, other, len); }
 
+	enum EmptyTokenType
+	{
+		TOK_SKIPEMPTY = 0,
+		TOK_KEEPEMPTY = 1,
+	};
+
+	TArray<FString> Split(const FString &delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
+	TArray<FString> Split(const char *delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
+	void Split(TArray<FString>& tokens, const FString &delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
+	void Split(TArray<FString>& tokens, const char *delimiter, EmptyTokenType keepEmpty = TOK_KEEPEMPTY) const;
+
 protected:
 	const FStringData *Data() const { return (FStringData *)Chars - 1; }
 	FStringData *Data() { return (FStringData *)Chars - 1; }
+
+	void ResetToNull()
+	{
+		NullString.RefCount++;
+		Chars = &NullString.Nothing[0];
+	}
 
 	void AttachToOther (const FString &other);
 	void AllocBuffer (size_t len);
@@ -450,13 +465,3 @@ template<> struct THashTraits<FString>
 	int Compare(const FString &left, const FString &right) { return left.Compare(right); }
 };
 
-class FStringNoInit
-{
-	char mem[sizeof(FString)];
-	operator FString&() 
-	{
-		return *reinterpret_cast<FString*>(&mem);
-	}
-};
-
-#endif

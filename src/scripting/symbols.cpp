@@ -36,6 +36,10 @@
 #include <float.h>
 #include "dobject.h"
 #include "i_system.h"
+#include "templates.h"
+#include "serializer.h"
+#include "types.h"
+#include "vm.h"
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -43,7 +47,6 @@ FNamespaceManager Namespaces;
 
 // Symbol tables ------------------------------------------------------------
 
-IMPLEMENT_CLASS(PTypeBase, true, false);
 IMPLEMENT_CLASS(PSymbol, true, false);
 IMPLEMENT_CLASS(PSymbolConst, false, false);
 IMPLEMENT_CLASS(PSymbolConstNumeric, false, false);
@@ -52,12 +55,6 @@ IMPLEMENT_CLASS(PSymbolTreeNode, false, false)
 IMPLEMENT_CLASS(PSymbolType, false, false)
 IMPLEMENT_CLASS(PSymbolVMFunction, false, false)
 IMPLEMENT_CLASS(PFunction, false, false)
-IMPLEMENT_CLASS(PNamespace, false, true)
-
-IMPLEMENT_POINTERS_START(PNamespace)
-IMPLEMENT_POINTER(Parent)
-IMPLEMENT_POINTERS_END
-
 
 //==========================================================================
 //
@@ -79,7 +76,7 @@ PSymbolConstString::PSymbolConstString(FName name, const FString &str)
 //
 //==========================================================================
 
-unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags)
+unsigned PFunction::AddVariant(PPrototype *proto, TArray<uint32_t> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags)
 {
 	Variant variant;
 
@@ -100,9 +97,9 @@ unsigned PFunction::AddVariant(PPrototype *proto, TArray<DWORD> &argflags, TArra
 	if (flags & VARF_Method)
 	{
 		assert(proto->ArgumentTypes.Size() > 0);
-		auto selftypeptr = dyn_cast<PPointer>(proto->ArgumentTypes[0]);
+		auto selftypeptr = proto->ArgumentTypes[0]->toPointer();
 		assert(selftypeptr != nullptr);
-		variant.SelfClass = dyn_cast<PStruct>(selftypeptr->PointedType);
+		variant.SelfClass = selftypeptr->PointedType->toContainer();
 		assert(variant.SelfClass != nullptr);
 	}
 	else
@@ -124,6 +121,80 @@ int PFunction::GetImplicitArgs()
 	if (Variants[0].Flags & VARF_Action) return 3;
 	else if (Variants[0].Flags & VARF_Method) return 1;
 	return 0;
+}
+
+/* PField *****************************************************************/
+
+IMPLEMENT_CLASS(PField, false, false)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PField::PField()
+: PSymbol(NAME_None), Offset(0), Type(nullptr), Flags(0)
+{
+}
+
+
+PField::PField(FName name, PType *type, uint32_t flags, size_t offset, int bitvalue)
+	: PSymbol(name), Offset(offset), Type(type), Flags(flags)
+{
+	if (bitvalue != 0)
+	{
+		BitValue = 0;
+		unsigned val = bitvalue;
+		while ((val >>= 1)) BitValue++;
+
+		if (type->isInt() && unsigned(BitValue) < 8u * type->Size)
+		{
+			// map to the single bytes in the actual variable. The internal bit instructions operate on 8 bit values.
+#ifndef __BIG_ENDIAN__
+			Offset += BitValue / 8;
+#else
+			Offset += type->Size - 1 - BitValue / 8;
+#endif
+			BitValue &= 7;
+			Type = TypeBool;
+		}
+		else
+		{
+			// Just abort. Bit fields should only be defined internally.
+			I_Error("Trying to create an invalid bit field element: %s", name.GetChars());
+		}
+	}
+	else BitValue = -1;
+}
+
+VersionInfo PField::GetVersion()
+{
+	VersionInfo Highest = { 0,0,0 };
+	if (!(Flags & VARF_Deprecated)) Highest = mVersion;
+	if (Type->mVersion > Highest) Highest = Type->mVersion;
+	return Highest;
+}
+
+/* PProperty *****************************************************************/
+
+IMPLEMENT_CLASS(PProperty, false, false)
+
+//==========================================================================
+//
+// PField - Default Constructor
+//
+//==========================================================================
+
+PProperty::PProperty()
+	: PSymbol(NAME_None)
+{
+}
+
+PProperty::PProperty(FName name, TArray<PField *> &fields)
+	: PSymbol(name)
+{
+	Variables = std::move(fields);
 }
 
 //==========================================================================
@@ -238,6 +309,123 @@ PSymbol *PSymbolTable::AddSymbol (PSymbol *sym)
 //
 //==========================================================================
 
+PField *PSymbolTable::AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align)
+{
+	PField *field = Create<PField>(name, type, flags);
+
+	// The new field is added to the end of this struct, alignment permitting.
+	field->Offset = (Size + (type->Align - 1)) & ~(type->Align - 1);
+
+	// Enlarge this struct to enclose the new field.
+	Size = unsigned(field->Offset + type->Size);
+
+	// This struct's alignment is the same as the largest alignment of any of
+	// its fields.
+	if (Align != nullptr)
+	{
+		*Align = MAX(*Align, type->Align);
+	}
+
+	if (AddSymbol(field) == nullptr)
+	{ // name is already in use
+		field->Destroy();
+		return nullptr;
+	}
+	return field;
+}
+
+//==========================================================================
+//
+// PStruct :: AddField
+//
+// Appends a new native field to the struct. Returns either the new field
+// or nullptr if a symbol by that name already exists.
+//
+//==========================================================================
+
+PField *PSymbolTable::AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue)
+{
+	PField *field = Create<PField>(name, type, flags | VARF_Native | VARF_Transient, address, bitvalue);
+
+	if (AddSymbol(field) == nullptr)
+	{ // name is already in use
+		field->Destroy();
+		return nullptr;
+	}
+	return field;
+}
+
+//==========================================================================
+//
+// PClass :: WriteFields
+//
+//==========================================================================
+
+void PSymbolTable::WriteFields(FSerializer &ar, const void *addr, const void *def) const
+{
+	auto it = MapType::ConstIterator(Symbols);
+	MapType::ConstPair *pair;
+
+	while (it.NextPair(pair))
+	{
+		const PField *field = dyn_cast<PField>(pair->Value);
+		// Skip fields without or with native serialization
+		if (field && !(field->Flags & (VARF_Transient | VARF_Meta | VARF_Static)))
+		{
+			// todo: handle defaults in WriteValue
+			//auto defp = def == nullptr ? nullptr : (const uint8_t *)def + field->Offset;
+			field->Type->WriteValue(ar, field->SymbolName.GetChars(), (const uint8_t *)addr + field->Offset);
+		}
+	}
+}
+
+
+//==========================================================================
+//
+// PClass :: ReadFields
+//
+//==========================================================================
+
+bool PSymbolTable::ReadFields(FSerializer &ar, void *addr, const char *TypeName) const
+{
+	bool readsomething = false;
+	bool foundsomething = false;
+	const char *label;
+	while ((label = ar.GetKey()))
+	{
+		foundsomething = true;
+
+		const PSymbol *sym = FindSymbol(FName(label, true), false);
+		if (sym == nullptr)
+		{
+			DPrintf(DMSG_ERROR, "Cannot find field %s in %s\n",
+				label, TypeName);
+		}
+		else if (!sym->IsKindOf(RUNTIME_CLASS(PField)))
+		{
+			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a field\n",
+				label, TypeName);
+		}
+		else if ((static_cast<const PField *>(sym)->Flags & (VARF_Transient | VARF_Meta)))
+		{
+			DPrintf(DMSG_ERROR, "Symbol %s in %s is not a serializable field\n",
+				label, TypeName);
+		}
+		else
+		{
+			readsomething |= static_cast<const PField *>(sym)->Type->ReadValue(ar, nullptr,
+				(uint8_t *)addr + static_cast<const PField *>(sym)->Offset);
+		}
+	}
+	return readsomething || !foundsomething;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 void PSymbolTable::RemoveSymbol(PSymbol *sym)
 {
 	auto mysym = Symbols.CheckKey(sym->SymbolName);
@@ -324,28 +512,16 @@ PNamespace *FNamespaceManager::NewNamespace(int filenum)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-size_t FNamespaceManager::MarkSymbols()
-{
-	for (auto ns : AllNamespaces)
-	{
-		GC::Mark(ns);
-	}
-	return AllNamespaces.Size();
-}
-
-//==========================================================================
-//
-//
+// Deallocate the entire namespace manager.
 //
 //==========================================================================
 
 void FNamespaceManager::ReleaseSymbols()
 {
-	RemoveSymbols();
+	for (auto ns : AllNamespaces)
+	{
+		delete ns;
+	}
 	GlobalNamespace = nullptr;
 	AllNamespaces.Clear();
 }
@@ -377,7 +553,6 @@ int FNamespaceManager::RemoveSymbols()
 
 void RemoveUnusedSymbols()
 {
-	// Global symbols are not needed anymore after running the compiler.
 	int count = Namespaces.RemoveSymbols();
 
 	// We do not need any non-field and non-function symbols in structs and classes anymore.
@@ -387,7 +562,7 @@ void RemoveUnusedSymbols()
 	{
 		for (PType *ty = TypeTable.TypeHash[i]; ty != nullptr; ty = ty->HashNext)
 		{
-			if (ty->IsKindOf(RUNTIME_CLASS(PStruct)))
+			if (ty->isContainer())
 			{
 				auto it = ty->Symbols.GetIterator();
 				PSymbolTable::MapType::Pair *pair;

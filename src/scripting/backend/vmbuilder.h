@@ -2,6 +2,7 @@
 #define VMUTIL_H
 
 #include "dobject.h"
+#include "vmintern.h"
 
 class VMFunctionBuilder;
 class FxExpression;
@@ -51,12 +52,12 @@ public:
 	// Returns the constant register holding the value.
 	unsigned GetConstantInt(int val);
 	unsigned GetConstantFloat(double val);
-	unsigned GetConstantAddress(void *ptr, VM_ATAG tag);
+	unsigned GetConstantAddress(void *ptr);
 	unsigned GetConstantString(FString str);
 
 	unsigned AllocConstantsInt(unsigned int count, int *values);
 	unsigned AllocConstantsFloat(unsigned int count, double *values);
-	unsigned AllocConstantsAddress(unsigned int count, void **ptrs, VM_ATAG tag);
+	unsigned AllocConstantsAddress(unsigned int count, void **ptrs);
 	unsigned AllocConstantsString(unsigned int count, FString *ptrs);
 
 
@@ -79,7 +80,7 @@ public:
 	// Write out complete constant tables.
 	void FillIntConstants(int *konst);
 	void FillFloatConstants(double *konst);
-	void FillAddressConstants(FVoidObj *konst, VM_ATAG *tags);
+	void FillAddressConstants(FVoidObj *konst);
 	void FillStringConstants(FString *strings);
 
 	// PARAM increases ActiveParam; CALL decreases it.
@@ -96,24 +97,17 @@ public:
 	TArray<FxLocalVariableDeclaration *> ConstructedStructs;
 
 private:
-	struct AddrKonst
-	{
-		unsigned KonstNum;
-		VM_ATAG Tag;
-	};
-
 	TArray<FStatementInfo> LineNumbers;
 	TArray<FxExpression *> StatementStack;
 
 	TArray<int> IntConstantList;
 	TArray<double> FloatConstantList;
 	TArray<void *> AddressConstantList;
-	TArray<VM_ATAG> AtagConstantList;
 	TArray<FString> StringConstantList;
 	// These map from the constant value to its position in the constant table.
 	TMap<int, unsigned> IntConstantMap;
 	TMap<double, unsigned> FloatConstantMap;
-	TMap<void *, AddrKonst> AddressConstantMap;
+	TMap<void *, unsigned> AddressConstantMap;
 	TMap<FString, unsigned> StringConstantMap;
 
 	int MaxParam;
@@ -146,13 +140,14 @@ class FFunctionBuildList
 		int StateIndex;
 		int StateCount;
 		int Lump;
+		VersionInfo Version;
 		bool FromDecorate;
 	};
 
 	TArray<Item> mItems;
 
 public:
-	VMFunction *AddFunction(PNamespace *curglobals, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
+	VMFunction *AddFunction(PNamespace *curglobals, const VersionInfo &ver, PFunction *func, FxExpression *code, const FString &name, bool fromdecorate, int currentstate, int statecnt, int lumpnum);
 	void Build();
 };
 

@@ -32,6 +32,7 @@
 #include "gl/stereo3d/gl_sidebyside3d.h"
 #include "gl/stereo3d/gl_interleaved3d.h"
 #include "gl/system/gl_cvars.h"
+#include "version.h"
 
 // Set up 3D-specific console variables:
 CVAR(Int, vr_mode, 0, CVAR_GLOBALCONFIG)
@@ -42,7 +43,10 @@ CVAR(Bool, vr_swap_eyes, false, CVAR_GLOBALCONFIG)
 // For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
 // Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
 // but makes it possible for subsequent "vr_mode 7" to invoke quad-buffered stereo
-CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
+}
 
 // intraocular distance in meters
 CVAR(Float, vr_ipd, 0.062f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // METERS
@@ -67,6 +71,8 @@ void Stereo3DMode::setCurrentMode(const Stereo3DMode& mode) {
 /* static */
 const Stereo3DMode& Stereo3DMode::getCurrentMode() 
 {
+	if (gl.legacyMode) vr_mode = 0;	// GL 2 does not support this feature.
+
 	// NOTE: Ensure that these vr_mode values correspond to the ones in wadsrc/static/menudef.z
 	switch (vr_mode)
 	{

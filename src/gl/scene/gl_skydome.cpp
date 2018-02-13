@@ -61,6 +61,7 @@
 #include "r_state.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "textures/skyboxtexture.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
@@ -68,11 +69,10 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_bitmap.h"
 #include "gl/textures/gl_texture.h"
-#include "gl/textures/gl_skyboxtexture.h"
 #include "gl/textures/gl_material.h"
 
 
@@ -84,8 +84,6 @@
 //-----------------------------------------------------------------------------
 
 CVAR(Float, skyoffset, 0, 0)	// for testing
-
-extern int skyfog;
 
 //-----------------------------------------------------------------------------
 //
@@ -519,7 +517,7 @@ void GLSkyPortal::DrawContents()
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
-	GLRenderer->SetupView(0, 0, 0, ViewAngle, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	drawer->SetupView(0, 0, 0, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
@@ -544,10 +542,10 @@ void GLSkyPortal::DrawContents()
 			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
 		}
 
-		if (skyfog>0 && gl_fixedcolormap == CM_DEFAULT && (origin->fadecolor & 0xffffff) != 0)
+		if (::level.skyfog>0 && drawer->FixedColormap == CM_DEFAULT && (origin->fadecolor & 0xffffff) != 0)
 		{
 			PalEntry FadeColor = origin->fadecolor;
-			FadeColor.a = clamp<int>(skyfog, 0, 255);
+			FadeColor.a = clamp<int>(::level.skyfog, 0, 255);
 
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.SetObjectColor(FadeColor);

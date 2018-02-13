@@ -51,12 +51,12 @@ public:
 	FFlatTexture (int lumpnum);
 	~FFlatTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 
 protected:
-	BYTE *Pixels;
+	uint8_t *Pixels;
 	Span DummySpans[2];
 
 
@@ -138,6 +138,7 @@ void FFlatTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -146,7 +147,7 @@ void FFlatTexture::Unload ()
 //
 //==========================================================================
 
-const BYTE *FFlatTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FFlatTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{
@@ -176,7 +177,7 @@ const BYTE *FFlatTexture::GetColumn (unsigned int column, const Span **spans_out
 //
 //==========================================================================
 
-const BYTE *FFlatTexture::GetPixels ()
+const uint8_t *FFlatTexture::GetPixels ()
 {
 	if (Pixels == NULL)
 	{
@@ -194,7 +195,7 @@ const BYTE *FFlatTexture::GetPixels ()
 void FFlatTexture::MakeTexture ()
 {
 	FWadLump lump = Wads.OpenLumpNum (SourceLump);
-	Pixels = new BYTE[Width*Height];
+	Pixels = new uint8_t[Width*Height];
 	long numread = lump.Read (Pixels, Width*Height);
 	if (numread < Width*Height)
 	{

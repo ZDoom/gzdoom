@@ -214,20 +214,23 @@ enum ESelectWeaponFlags
 // Morph constants
 enum EMorphFlags
 {
-	MRF_ADDSTAMINA = 1,
-	MRF_FULLHEALTH = 2,
-	MRF_UNDOBYTOMEOFPOWER = 4,
-	MRF_UNDOBYCHAOSDEVICE = 8,
-	MRF_FAILNOTELEFRAG = 16,
-	MRF_FAILNOLAUGH = 32,
-	MRF_WHENINVULNERABLE = 64,
-	MRF_LOSEACTUALWEAPON = 128,
-	MRF_NEWTIDBEHAVIOUR = 256,
-	MRF_UNDOBYDEATH = 512,
-	MRF_UNDOBYDEATHFORCED = 1024,
-	MRF_UNDOBYDEATHSAVES = 2048,
-	MRF_UNDOALWAYS = 4096,
-	MRF_TRANSFERTRANSLATION = 8192,
+	MRF_OLDEFFECTS			= 0x00000000,
+	MRF_ADDSTAMINA			= 0x00000001,
+	MRF_FULLHEALTH			= 0x00000002,
+	MRF_UNDOBYTOMEOFPOWER	= 0x00000004,
+	MRF_UNDOBYCHAOSDEVICE	= 0x00000008,
+	MRF_FAILNOTELEFRAG		= 0x00000010,
+	MRF_FAILNOLAUGH			= 0x00000020,
+	MRF_WHENINVULNERABLE	= 0x00000040,
+	MRF_LOSEACTUALWEAPON	= 0x00000080,
+	MRF_NEWTIDBEHAVIOUR		= 0x00000100,
+	MRF_UNDOBYDEATH			= 0x00000200,
+	MRF_UNDOBYDEATHFORCED	= 0x00000400,
+	MRF_UNDOBYDEATHSAVES	= 0x00000800,
+	MRF_UNDOBYTIMEOUT		= 0x00001000,
+	MRF_UNDOALWAYS			= 0x00002000,
+	MRF_TRANSFERTRANSLATION = 0x00004000,
+	MRF_STANDARDUNDOING	= MRF_UNDOBYTOMEOFPOWER | MRF_UNDOBYCHAOSDEVICE | MRF_UNDOBYTIMEOUT,
 };
 
 // Flags for A_RailAttack and A_CustomRailgun
@@ -513,6 +516,15 @@ enum EWarpFlags
 	WARPF_COPYPITCH = 0x8000,
 };
 
+// Flags for Actor.CheckMove()
+
+enum ECheckMoveFlags
+{
+	PCM_DROPOFF  = 1,
+	PCM_NOACTORS = 1 << 1,
+	PCM_NOLINES  = 1 << 2,
+};
+
 // flags for A_SetPitch/SetAngle/SetRoll
 enum EAngleFlags
 {
@@ -718,7 +730,12 @@ enum EPSpriteFlags
 	PSPF_ADDBOB		= 1 << 1,
 	PSPF_POWDOUBLE	= 1 << 2,
 	PSPF_CVARFAST	= 1 << 3,
+	PSPF_ALPHA		= 1 << 4,
+	PSPF_RENDERSTYLE= 1 << 5,
 	PSPF_FLIP		= 1 << 6,
+	PSPF_FORCEALPHA	= 1 << 7,
+	PSPF_FORCESTYLE	= 1 << 8,
+	PSPF_MIRROR		= 1 << 9,
 };
 
 // Default psprite layers
@@ -870,10 +887,26 @@ enum EAimFlags
 
 enum ELineAttackFlags
 {
-	LAF_ISMELEEATTACK = 1,
-	LAF_NORANDOMPUFFZ = 2,
-	LAF_NOIMPACTDECAL = 4,
-	LAF_NOINTERACT =	8,
+	LAF_ISMELEEATTACK  = 1,
+	LAF_NORANDOMPUFFZ  = 1 << 1,
+	LAF_NOIMPACTDECAL  = 1 << 2,
+	LAF_NOINTERACT     = 1 << 3,
+	LAF_TARGETISSOURCE = 1 << 4,
+	LAF_OVERRIDEZ      = 1 << 5,
+	LAF_ABSOFFSET      = 1 << 6,
+	LAF_ABSPOSITION    = 1 << 7,
+}
+
+enum ELineTraceFlags
+{
+	TRF_ABSPOSITION = 1,
+	TRF_ABSOFFSET = 2,
+	TRF_THRUSPECIES = 4,
+	TRF_THRUACTORS = 8,
+	TRF_THRUBLOCK = 16,
+	TRF_THRUHITSCAN = 32,
+	TRF_NOSKY = 64,
+	TRF_ALLACTORS = 128,
 }
 
 const DEFMELEERANGE = 64;
@@ -901,6 +934,7 @@ enum EDmgFlags
 	DMG_FOILBUDDHA = 128,
 	DMG_NO_PROTECT = 256,
 	DMG_USEANGLE = 512,
+	DMG_NO_PAIN = 1024,
 }
 
 enum EReplace
@@ -949,6 +983,7 @@ enum ESkillProperty
 	SKILLP_EasyKey,
 	SKILLP_SlowMonsters,
 	SKILLP_Infight,
+	SKILLP_PlayerRespawn,
 };
 enum EFSkillProperty	// floating point properties
 {
@@ -996,6 +1031,19 @@ enum EFindFloorCeiling
 	FFCF_NODROPOFF = 256,			// Caller does not need a dropoff (saves some time when checking portals)
 };
 
+enum ERaise
+{
+	RF_TRANSFERFRIENDLINESS = 1,
+	RF_NOCHECKPOSITION = 2
+}
+
+enum eFogParm
+{
+	FOGP_DENSITY = 0,
+	FOGP_OUTSIDEDENSITY = 1,
+	FOGP_SKYFOG = 2,
+}
+
 enum ETeleport
 {
 	TELF_DESTFOG			= 1,
@@ -1028,6 +1076,18 @@ enum PaletteFlashFlags
 	PF_ICE				= 4,
 	PF_HAZARD			= 8,
 };
+
+enum EGameState
+{
+	GS_LEVEL,
+	GS_INTERMISSION,
+	GS_FINALE,
+	GS_DEMOSCREEN,
+	GS_FULLCONSOLE,
+	GS_HIDECONSOLE,
+	GS_STARTUP,
+	GS_TITLELEVEL,
+}
 
 enum EGameAction
 {
@@ -1076,17 +1136,21 @@ enum EPlayerCheats
 	CF_TOTALLYFROZEN	= 1 << 12,		// [RH] All players can do is press +use
 	CF_PREDICTING		= 1 << 13,		// [RH] Player movement is being predicted
 	CF_INTERPVIEW		= 1 << 14,		// [RH] view was changed outside of input, so interpolate one frame
-	CF_DRAIN			= 1 << 16,		// Player owns a drain powerup
-	CF_HIGHJUMP			= 1 << 18,		// more Skulltag flags. Implementation not guaranteed though. ;)
-	CF_REFLECTION		= 1 << 19,
-	CF_PROSPERITY		= 1 << 20,
-	CF_DOUBLEFIRINGSPEED= 1 << 21,		// Player owns a double firing speed artifact
+
 	CF_EXTREMELYDEAD	= 1 << 22,		// [RH] Reliably let the status bar know about extreme deaths.
-	CF_INFINITEAMMO		= 1 << 23,		// Player owns an infinite ammo artifact
+
 	CF_BUDDHA2			= 1 << 24,		// [MC] Absolute buddha. No voodoo can kill it either.
 	CF_GODMODE2			= 1 << 25,		// [MC] Absolute godmode. No voodoo can kill it either.
 	CF_BUDDHA			= 1 << 27,		// [SP] Buddha mode - take damage, but don't die
 	CF_NOCLIP2			= 1 << 30,		// [RH] More Quake-like noclip
+
+	// These flags no longer exist, but keep the names for some stray mod that might have used them. 
+	CF_DRAIN			= 0,
+	CF_HIGHJUMP			= 0,
+	CF_REFLECTION		= 0,
+	CF_PROSPERITY		= 0,
+	CF_DOUBLEFIRINGSPEED= 0,
+	CF_INFINITEAMMO		= 0,
 };
 
 const TEXTCOLOR_BRICK			= "\034A";
@@ -1112,9 +1176,49 @@ const TEXTCOLOR_DARKBROWN		= "\034S";
 const TEXTCOLOR_PURPLE			= "\034T";
 const TEXTCOLOR_DARKGRAY		= "\034U";
 const TEXTCOLOR_CYAN			= "\034V";
+const TEXTCOLOR_ICE				= "\034W";
+const TEXTCOLOR_FIRE			= "\034X";
+const TEXTCOLOR_SAPPHIRE		= "\034Y";
+const TEXTCOLOR_TEAL			= "\034Z";
 
 const TEXTCOLOR_NORMAL			= "\034-";
 const TEXTCOLOR_BOLD			= "\034+";
 
 const TEXTCOLOR_CHAT			= "\034*";
 const TEXTCOLOR_TEAMCHAT		= "\034!";
+
+enum EWeaponState
+{
+	WF_WEAPONREADY		= 1 << 0,		// [RH] Weapon is in the ready state and can fire its primary attack
+	WF_WEAPONBOBBING	= 1 << 1,		// [HW] Bob weapon while the player is moving
+	WF_WEAPONREADYALT	= 1 << 2,		// Weapon can fire its secondary attack
+	WF_WEAPONSWITCHOK	= 1 << 3,		// It is okay to switch away from this weapon
+	WF_DISABLESWITCH	= 1 << 4,		// Disable weapon switching completely
+	WF_WEAPONRELOADOK	= 1 << 5,		// [XA] Okay to reload this weapon.
+	WF_WEAPONZOOMOK		= 1 << 6,		// [XA] Okay to use weapon zoom function.
+	WF_REFIRESWITCHOK	= 1 << 7,		// Mirror WF_WEAPONSWITCHOK for A_ReFire
+	WF_USER1OK			= 1 << 8,		// [MC] Allow pushing of custom state buttons 1-4
+	WF_USER2OK			= 1 << 9,
+	WF_USER3OK			= 1 << 10,
+	WF_USER4OK			= 1 << 11,
+};
+
+// these flags are for filtering actor visibility based on certain conditions of the renderer's feature support.
+// currently, no renderer supports every single one of these features.
+enum ActorRenderFeatureFlag
+{
+	RFF_FLATSPRITES		= 1<<0, // flat sprites
+	RFF_MODELS			= 1<<1, // 3d models
+	RFF_SLOPE3DFLOORS	= 1<<2, // sloped 3d floor support
+	RFF_TILTPITCH		= 1<<3, // full free-look
+	RFF_ROLLSPRITES		= 1<<4, // roll sprites
+	RFF_UNCLIPPEDTEX	= 1<<5, // midtex and sprite can render "into" flats and walls
+	RFF_MATSHADER		= 1<<6, // material shaders
+	RFF_POSTSHADER		= 1<<7, // post-process shaders (renderbuffers)
+	RFF_BRIGHTMAP		= 1<<8, // brightmaps
+	RFF_COLORMAP		= 1<<9, // custom colormaps (incl. ability to fullbright certain ranges, ala Strife)
+	RFF_POLYGONAL		= 1<<10, // uses polygons instead of wallscans/visplanes (i.e. softpoly and hardware opengl)
+	RFF_TRUECOLOR		= 1<<11, // renderer is currently truecolor
+	RFF_VOXELS		= 1<<12, // renderer is capable of voxels
+};
+

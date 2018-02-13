@@ -21,7 +21,6 @@
 //
 
 #include "gl/system/gl_system.h"
-#include "files.h"
 #include "m_swap.h"
 #include "v_video.h"
 #include "gl/gl_functions.h"
@@ -39,7 +38,7 @@ void FLinearDepthShader::Bind()
 
 	if (!mShader)
 	{
-		mShader = std::make_unique<FShaderProgram>();
+		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", multisample ? "#define MULTISAMPLE\n" : "", 330);
 		mShader->SetFragDataLocation(0, "FragColor");
@@ -67,7 +66,7 @@ void FSSAOShader::Bind()
 
 	if (!mShader)
 	{
-		mShader = std::make_unique<FShaderProgram>();
+		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", GetDefines(gl_ssao, multisample), 330);
 		mShader->SetFragDataLocation(0, "FragColor");
@@ -143,7 +142,7 @@ void FSSAOCombineShader::Bind()
 
 	if (!mShader)
 	{
-		mShader = std::make_unique<FShaderProgram>();
+		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", multisample ? "#define MULTISAMPLE\n" : "", 330);
 		mShader->SetFragDataLocation(0, "FragColor");

@@ -39,6 +39,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/textures/gl_material.h"
@@ -299,7 +300,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLWall * ws=&walls[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > ViewPos.Z;
+	bool ceiling = fh->z > r_viewpoint.Pos.Z;
 
 	if ((ws->ztop[0] > fh->z || ws->ztop[1] > fh->z) && (ws->zbottom[0] < fh->z || ws->zbottom[1] < fh->z))
 	{
@@ -362,7 +363,7 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
 	GLFlat * fh=&flats[drawitems[head->itemindex].index];
 	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > ViewPos.Z;
+	bool ceiling = fh->z > r_viewpoint.Pos.Z;
 
 	if ((ss->z1>fh->z && ss->z2<fh->z) || ss->modelframe)
 	{
@@ -770,7 +771,7 @@ void GLDrawList::DoDrawSorted(SortNode * head)
 	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
 	{
 		z = flats[drawitems[head->itemindex].index].z;
-		relation = z > ViewPos.Z ? 1 : -1;
+		relation = z > r_viewpoint.Pos.Z ? 1 : -1;
 	}
 
 
@@ -1034,9 +1035,10 @@ FDrawInfo::~FDrawInfo()
 // Sets up a new drawinfo struct
 //
 //==========================================================================
-void FDrawInfo::StartDrawInfo()
+void FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
+	di->mDrawer = drawer;
 	di->StartScene();
 }
 
@@ -1045,12 +1047,12 @@ void FDrawInfo::StartScene()
 	ClearBuffers();
 
 	sectorrenderflags.Resize(level.sectors.Size());
-	ss_renderflags.Resize(numsubsectors);
-	no_renderflags.Resize(numsubsectors);
+	ss_renderflags.Resize(level.subsectors.Size());
+	no_renderflags.Resize(level.subsectors.Size());
 
 	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
-	memset(&ss_renderflags[0], 0, numsubsectors * sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, numnodes * sizeof(no_renderflags[0]));
+	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
+	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
 
 	next = gl_drawinfo;
 	gl_drawinfo = this;
@@ -1165,30 +1167,30 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 	if (!gltexture) return;
 
-	if (gl_fixedcolormap) 
+	if (mDrawer->FixedColormap) 
 	{
 		Colormap.Clear();
 		lightlevel=255;
 	}
 	else
 	{
-		Colormap=sec->ColorMap;
+		Colormap = sec->Colormap;
 		if (gltexture->tex->isFullbright())
 		{
-			Colormap.LightColor.r = Colormap.LightColor.g = Colormap.LightColor.b = 0xff;
+			Colormap.MakeWhite();
 			lightlevel=255;
 		}
 		else lightlevel=abs(ceiling? sec->GetCeilingLight() : sec->GetFloorLight());
 	}
 
 	int rel = getExtraLight();
-	gl_SetColor(lightlevel, rel, Colormap, 1.0f);
-	gl_SetFog(lightlevel, rel, &Colormap, false);
+	mDrawer->SetColor(lightlevel, rel, Colormap, 1.0f);
+	mDrawer->SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
-	float fviewx = ViewPos.X;
-	float fviewy = ViewPos.Y;
-	float fviewz = ViewPos.Z;
+	float fviewx = r_viewpoint.Pos.X;
+	float fviewy = r_viewpoint.Pos.Y;
+	float fviewz = r_viewpoint.Pos.Z;
 
 	gl_SetPlaneTextureRotation(&plane, gltexture);
 	gl_RenderState.Apply();
@@ -1228,8 +1230,8 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, true);
-	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, false);
+	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
+	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -1239,7 +1241,7 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 	double frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
 
 	if (fakebsector->GetTexture(sector_t::ceiling)==skyflatnum) return;
-	if (backz < ViewPos.Z) return;
+	if (backz < r_viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -1280,8 +1282,8 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, true);
-	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, false);
+	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
+	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -1292,7 +1294,7 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;
-	if (fakebsector->GetPlaneTexZ(sector_t::floor) > ViewPos.Z) return;
+	if (fakebsector->GetPlaneTexZ(sector_t::floor) > r_viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{

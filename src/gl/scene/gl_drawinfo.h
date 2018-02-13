@@ -203,12 +203,14 @@ struct FDrawInfo
 	struct SubsectorHackInfo
 	{
 		subsector_t * sub;
-		BYTE flags;
+		uint8_t flags;
 	};
 
-	TArray<BYTE> sectorrenderflags;
-	TArray<BYTE> ss_renderflags;
-	TArray<BYTE> no_renderflags;
+	GLSceneDrawer *mDrawer;
+
+	TArray<uint8_t> sectorrenderflags;
+	TArray<uint8_t> ss_renderflags;
+	TArray<uint8_t> no_renderflags;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -266,7 +268,7 @@ struct FDrawInfo
 	void FloodUpperGap(seg_t * seg);
 	void FloodLowerGap(seg_t * seg);
 
-	static void StartDrawInfo();
+	static void StartDrawInfo(GLSceneDrawer *drawer);
 	static void EndDrawInfo();
 
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)

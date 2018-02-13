@@ -1125,6 +1125,7 @@ class SorcSpark1 : Actor
 		+NOBLOCKMAP
 		+DROPOFF
 		+NOTELEPORT
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States

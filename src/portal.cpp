@@ -52,6 +52,7 @@
 #include "p_checkposition.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 // simulation recurions maximum
 CVAR(Int, sv_portal_recursions, 4, CVAR_ARCHIVE|CVAR_SERVERINFO)
@@ -81,7 +82,7 @@ DEFINE_FIELD(FSectorPortal, mSkybox);
 
 struct FPortalBits
 {
-	TArray<DWORD> data;
+	TArray<uint32_t> data;
 
 	void setSize(int num)
 	{
@@ -91,7 +92,7 @@ struct FPortalBits
 
 	void clear()
 	{
-		memset(&data[0], 0, data.Size()*sizeof(DWORD));
+		memset(&data[0], 0, data.Size()*sizeof(uint32_t));
 	}
 
 	void setBit(int group)
@@ -113,14 +114,16 @@ struct FPortalBits
 
 static void BuildBlockmap()
 {
+	auto bmapwidth = level.blockmap.bmapwidth;
+	auto bmapheight = level.blockmap.bmapheight;
+
 	PortalBlockmap.Clear();
 	PortalBlockmap.Create(bmapwidth, bmapheight);
 	for (int y = 0; y < bmapheight; y++)
 	{
 		for (int x = 0; x < bmapwidth; x++)
 		{
-			int offset = y*bmapwidth + x;
-			int *list = blockmaplump + *(blockmap + offset) + 1;
+			int *list = level.blockmap.GetLines(x, y);
 			FPortalBlock &block = PortalBlockmap(x, y);
 
 			while (*list != -1)
@@ -165,7 +168,7 @@ static void BuildBlockmap()
 
 void FLinePortalTraverse::AddLineIntercepts(int bx, int by)
 {
-	if (by < 0 || by >= bmapheight || bx < 0 || bx >= bmapwidth) return;
+	if (by < 0 || by >= PortalBlockmap.dy || bx < 0 || bx >= PortalBlockmap.dx) return;
 
 	FPortalBlock &block = PortalBlockmap(bx, by);
 
@@ -287,7 +290,7 @@ void P_SpawnLinePortal(line_t* line)
 		memset(port, 0, sizeof(FLinePortal));
 		port->mOrigin = line;
 		port->mDestination = dst;
-		port->mType = BYTE(line->args[2]);	// range check is done above.
+		port->mType = uint8_t(line->args[2]);	// range check is done above.
 
 		if (port->mType == PORTT_LINKED)
 		{
@@ -296,7 +299,7 @@ void P_SpawnLinePortal(line_t* line)
 		}
 		else
 		{
-			port->mAlign = BYTE(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
+			port->mAlign = uint8_t(line->args[3] >= PORG_ABSOLUTE && line->args[3] <= PORG_CEILING ? line->args[3] : PORG_ABSOLUTE);
 			if (port->mType == PORTT_INTERACTIVE && port->mAlign != PORG_ABSOLUTE)
 			{
 				// Due to the way z is often handled, these pose a major issue for parts of the code that needs to transparently handle interactive portals.
@@ -304,10 +307,9 @@ void P_SpawnLinePortal(line_t* line)
 				port->mType = PORTT_TELEPORT;
 			}
 		}
-		if (port->mDestination != nullptr)
-		{
-			port->mDefFlags = port->mType == PORTT_VISUAL ? PORTF_VISIBLE : port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT : PORTF_TYPEINTERACTIVE;
-		}
+		port->mDefFlags = port->mType == PORTT_VISUAL   ? PORTF_VISIBLE :
+		                  port->mType == PORTT_TELEPORT ? PORTF_TYPETELEPORT :
+		                                                  PORTF_TYPEINTERACTIVE;
 	}
 	else if (line->args[2] == PORTT_LINKEDEE && line->args[0] == 0)
 	{
@@ -357,6 +359,13 @@ void P_SpawnLinePortal(line_t* line)
 
 void P_UpdatePortal(FLinePortal *port)
 {
+	if (port->mType != PORTT_VISUAL && port->mOrigin->backsector == nullptr && !(port->mOrigin->sidedef[0]->Flags & WALLF_POLYOBJ))
+	{
+		Printf(TEXTCOLOR_RED "Warning: Traversable portals must have a back-sector and empty space behind them (or be on a polyobject)! Changing line %d to visual-portal!\n", port->mOrigin->Index());
+		port->mType = PORTT_VISUAL;
+		port->mDefFlags &= ~(PORTF_PASSABLE | PORTF_SOUNDTRAVERSE | PORTF_INTERACTIVE);
+	}
+
 	if (port->mDestination == nullptr)
 	{
 		// Portal has no destination: switch it off
@@ -371,6 +380,7 @@ void P_UpdatePortal(FLinePortal *port)
 			// this is illegal. Demote the type to TELEPORT
 			port->mType = PORTT_TELEPORT;
 			port->mDefFlags &= ~PORTF_INTERACTIVE;
+			Printf(TEXTCOLOR_RED "Warning: linked portal did not have matching reverse portal. Changing line %d to teleport-portal!\n", port->mOrigin->Index());
 		}
 	}
 	else
@@ -462,6 +472,10 @@ static bool ChangePortalLine(line_t *line, int destid)
 			port->mFlags = port->mDefFlags;
 		}
 		SetRotation(portd);
+	}
+	else
+	{
+		port->mFlags = port->mDefFlags;
 	}
 	SetRotation(port);
 	return true;
@@ -743,9 +757,9 @@ DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy)
 		// Try some easily discoverable early-out first. If we know that the trace cannot possibly find a portal, this saves us from calling the traverser completely for vast parts of the map.
 		if (dx < 128 && dy < 128)
 		{
-			int blockx = GetBlockX(actx);
-			int blocky = GetBlockY(acty);
-			if (blockx < 0 || blocky < 0 || blockx >= bmapwidth || blocky >= bmapheight || !PortalBlockmap(blockx, blocky).neighborContainsLines) return dest;
+			int blockx = level.blockmap.GetBlockX(actx);
+			int blocky = level.blockmap.GetBlockY(acty);
+			if (blockx < 0 || blocky < 0 || blockx >= PortalBlockmap.dx || blocky >= PortalBlockmap.dy || !PortalBlockmap(blockx, blocky).neighborContainsLines) return dest;
 		}
 
 		bool repeat;
@@ -923,7 +937,7 @@ static void AddDisplacementForPortal(FLinePortal *portal)
 static bool ConnectGroups()
 {
 	// Now 
-	BYTE indirect = 1;
+	uint8_t indirect = 1;
 	bool bogus = false;
 	bool changed;
 	do
@@ -1024,8 +1038,17 @@ void P_CreateLinkedPortals()
 	{
 		if (linePortals[i].mType == PORTT_LINKED)
 		{
-			if (CollectSectors(id, linePortals[i].mOrigin->frontsector)) id++;
-			if (CollectSectors(id, linePortals[i].mDestination->frontsector)) id++;
+			if (linePortals[i].mDestination == nullptr)
+			{
+				Printf("Linked portal on line %d is unconnected and will be disabled\n", linePortals[i].mOrigin->Index());
+				linePortals[i].mOrigin->portalindex = UINT_MAX;
+				linePortals[i].mType = PORTT_VISUAL;
+			}
+			else
+			{
+				if (CollectSectors(id, linePortals[i].mOrigin->frontsector)) id++;
+				if (CollectSectors(id, linePortals[i].mDestination->frontsector)) id++;
+			}
 		}
 	}
 
@@ -1098,10 +1121,9 @@ void P_CreateLinkedPortals()
 	}
 
 	// reject would just get in the way when checking sight through portals.
-	if (Displacements.size > 1 && rejectmatrix != nullptr)
+	if (Displacements.size > 1)
 	{
-		delete[] rejectmatrix;
-		rejectmatrix = nullptr;
+		level.rejectmatrix.Reset();
 	}
 	// finally we must flag all planes which are obstructed by the sector's own ceiling or floor.
 	for (auto &sec : level.sectors)
@@ -1235,6 +1257,7 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 		{
 			int othergroup = wsec->GetOppositePortalGroup(sector_t::ceiling);
 			DVector2 pos = Displacements.getOffset(startgroup, othergroup) + position;
+			if (processMask.getBit(othergroup)) break;
 			processMask.setBit(othergroup);
 			out.Add(othergroup | FPortalGroupArray::UPPER);
 			wsec = P_PointInSector(pos);	// get upper sector at the exact spot we want to check and repeat
@@ -1245,6 +1268,7 @@ bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double u
 		{
 			int othergroup = wsec->GetOppositePortalGroup(sector_t::floor);
 			DVector2 pos = Displacements.getOffset(startgroup, othergroup) + position;
+			if (processMask.getBit(othergroup)) break;
 			processMask.setBit(othergroup);
 			out.Add(othergroup | FPortalGroupArray::LOWER);
 			wsec = P_PointInSector(pos);	// get lower sector at the exact spot we want to check and repeat

@@ -1,3 +1,37 @@
+/*
+**
+**
+**---------------------------------------------------------------------------
+** Copyright 1999 Martin Colberg
+** Copyright 1999-2016 Randy Heit
+** Copyright 2005-2016 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 /********************************
 * B_Think.c                     *
 * Description:                  *
@@ -21,6 +55,7 @@
 #include "d_event.h"
 #include "d_player.h"
 #include "vectors.h"
+#include "actorinlines.h"
 
 static FRandom pr_botmove ("BotMove");
 
@@ -312,12 +347,13 @@ void DBot::ThinkForMove (ticcmd_t *cmd)
 	old = player->mo->Pos();
 }
 
+int P_GetRealMaxHealth(APlayerPawn *actor, int max);
+
 //BOT_WhatToGet
 //
 //Determines if the bot will roam after an item or not.
 void DBot::WhatToGet (AActor *item)
 {
-#define typeis(x) item->IsKindOf (PClass::FindClass (#x))
 	if ((item->renderflags & RF_INVISIBLE) //Under respawn and away.
 		|| item == prev)
 	{
@@ -349,17 +385,26 @@ void DBot::WhatToGet (AActor *item)
 	{
 		auto ac = PClass::FindActor(NAME_Ammo);
 		auto parent = item->GetClass();
-		while (parent->ParentClass != ac) parent = (PClassActor*)(parent->ParentClass);
+		while (parent->ParentClass != ac) parent = static_cast<PClassActor*>(parent->ParentClass);
 		AInventory *holdingammo = player->mo->FindInventory(parent);
 		if (holdingammo != NULL && holdingammo->Amount >= holdingammo->MaxAmount)
 		{
 			return;
 		}
 	}
-	else if ((typeis (Megasphere) || typeis (Soulsphere) || typeis (HealthBonus)) && player->mo->health >= deh.MaxSoulsphere)
-		return;
-	else if (item->IsKindOf (PClass::FindActor(NAME_Health)) && player->mo->health >= player->mo->GetMaxHealth() + player->mo->stamina)
-		return;
+	else if (item->GetClass()->TypeName == NAME_Megasphere || item->IsKindOf(NAME_Health))
+	{
+		// do the test with the health item that's actually given.
+		AActor* const testItem = NAME_Megasphere == item->GetClass()->TypeName
+			? GetDefaultByName("MegasphereHealth")
+			: item;
+		if (nullptr != testItem)
+		{
+			const int maxhealth = P_GetRealMaxHealth(player->mo, testItem->IntVar(NAME_MaxAmount));
+			if (player->mo->health >= maxhealth)
+				return;
+		}
+	}
 
 	if ((dest == NULL ||
 		!(dest->flags & MF_SPECIAL)/* ||

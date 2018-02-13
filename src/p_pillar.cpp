@@ -238,7 +238,7 @@ bool EV_DoPillar (DPillar::EPillar type, line_t *line, int tag,
 			continue;
 
 		rtn = true;
-		new DPillar (sec, type, speed, height, height2, crush, hexencrush);
+		Create<DPillar> (sec, type, speed, height, height2, crush, hexencrush);
 	}
 	return rtn;
 }

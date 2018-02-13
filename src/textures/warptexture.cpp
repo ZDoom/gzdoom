@@ -39,10 +39,12 @@
 #include "r_utility.h"
 #include "textures/textures.h"
 #include "warpbuffer.h"
+#include "v_palette.h"
+#include "v_video.h"
 
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
-: GenTime (0), Speed (1.f), SourcePic (source), Pixels (0), Spans (0)
+: GenTime (0), GenTimeBgra(0), Speed (1.f), SourcePic (source), Pixels (0), Spans (0)
 {
 	CopyInfo(source);
 	if (warptype == 2) SetupMultipliers(256, 128); 
@@ -74,16 +76,17 @@ void FWarpTexture::Unload ()
 		Spans = NULL;
 	}
 	SourcePic->Unload ();
+	FTexture::Unload();
 }
 
 bool FWarpTexture::CheckModified ()
 {
-	return r_FrameTime != GenTime;
+	return screen->FrameTime != GenTime;
 }
 
-const BYTE *FWarpTexture::GetPixels ()
+const uint8_t *FWarpTexture::GetPixels ()
 {
-	DWORD time = r_FrameTime;
+	uint64_t time = screen->FrameTime;
 
 	if (Pixels == NULL || time != GenTime)
 	{
@@ -92,9 +95,31 @@ const BYTE *FWarpTexture::GetPixels ()
 	return Pixels;
 }
 
-const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint32_t *FWarpTexture::GetPixelsBgra()
 {
-	DWORD time = r_FrameTime;
+	uint64_t time = screen->FrameTime;
+	if (Pixels == NULL || time != GenTime)
+		MakeTexture(time);
+
+	if (PixelsBgra.empty() || time != GenTimeBgra)
+	{
+		CreatePixelsBgraWithMipmaps();
+		for (int i = 0; i < Width * Height; i++)
+		{
+			if (Pixels[i] != 0)
+				PixelsBgra[i] = 0xff000000 | GPalette.BaseColors[Pixels[i]].d;
+			else
+				PixelsBgra[i] = 0;
+		}
+		GenerateBgraMipmapsFast();
+		GenTimeBgra = time;
+	}
+	return PixelsBgra.data();
+}
+
+const uint8_t *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
+{
+	uint64_t time =screen->FrameTime;
 
 	if (Pixels == NULL || time != GenTime)
 	{
@@ -123,13 +148,13 @@ const BYTE *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out
 }
 
 
-void FWarpTexture::MakeTexture(DWORD time)
+void FWarpTexture::MakeTexture(uint64_t time)
 {
-	const BYTE *otherpix = SourcePic->GetPixels();
+	const uint8_t *otherpix = SourcePic->GetPixels();
 
 	if (Pixels == NULL)
 	{
-		Pixels = new BYTE[Width * Height];
+		Pixels = new uint8_t[Width * Height];
 	}
 	if (Spans != NULL)
 	{

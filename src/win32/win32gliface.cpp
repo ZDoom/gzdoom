@@ -1,3 +1,37 @@
+/*
+**
+**
+**---------------------------------------------------------------------------
+** Copyright 2003-2005 Tim Stump
+** Copyright 2005-2016 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 //#include "gl/system/gl_system.h"
 
 #define WIN32_LEAN_AND_MEAN
@@ -5,7 +39,6 @@
 #include <GL/gl.h>
 #include "wglext.h"
 
-#define USE_WINDOWS_DWORD
 #include "win32iface.h"
 #include "win32gliface.h"
 //#include "gl/gl_intern.h"
@@ -25,6 +58,10 @@
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_swframebuffer.h"
+
+extern HWND			Window;
+extern BOOL AppActive;
 
 extern "C" {
     _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
@@ -50,6 +87,77 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 EXTERN_CVAR(Bool, vr_enable_quadbuffered)
 EXTERN_CVAR(Int, vid_refreshrate)
 
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+class Win32GLVideo : public IVideo
+{
+public:
+	Win32GLVideo(int parm);
+	virtual ~Win32GLVideo();
+
+	EDisplayType GetDisplayType() { return DISPLAY_Both; }
+	void SetWindowedScale(float scale);
+	void StartModeIterator(int bits, bool fs);
+	bool NextMode(int *width, int *height, bool *letterbox);
+	bool GoFullscreen(bool yes);
+	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
+	virtual bool SetResolution(int width, int height, int bits);
+	void DumpAdapters();
+	bool InitHardware(HWND Window, int multisample);
+	void Shutdown();
+	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
+
+	HDC m_hDC;
+
+protected:
+	struct ModeInfo
+	{
+		ModeInfo(int inX, int inY, int inBits, int inRealY, int inRefresh)
+			: next(NULL),
+			width(inX),
+			height(inY),
+			bits(inBits),
+			refreshHz(inRefresh),
+			realheight(inRealY)
+		{}
+		ModeInfo *next;
+		int width, height, bits, refreshHz, realheight;
+	} *m_Modes;
+
+	ModeInfo *m_IteratorMode;
+	int m_IteratorBits;
+	bool m_IteratorFS;
+	bool m_IsFullscreen;
+	int m_trueHeight;
+	int m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz;
+	HMODULE hmRender;
+
+	char m_DisplayDeviceBuffer[CCHDEVICENAME];
+	char *m_DisplayDeviceName;
+	HMONITOR m_hMonitor;
+
+	HWND m_Window;
+	HGLRC m_hRC;
+
+	HWND InitDummy();
+	void ShutdownDummy(HWND dummy);
+	bool SetPixelFormat();
+	bool SetupPixelFormat(int multisample);
+
+	void GetDisplayDeviceName();
+	void MakeModesList();
+	void AddMode(int x, int y, int bits, int baseHeight, int refreshHz);
+	void FreeModes();
+public:
+	int GetTrueHeight() { return m_trueHeight; }
+
+};
+
 //==========================================================================
 //
 // 
@@ -59,7 +167,7 @@ EXTERN_CVAR(Int, vid_refreshrate)
 Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
 {
 	#ifdef _WIN32
-		 if (CPU.bRDTSC) gl_CalculateCPUSpeed();
+		 gl_CalculateCPUSpeed();
 	#endif
 	I_SetWndProc();
 	m_DisplayWidth = vid_defwidth;
@@ -348,7 +456,8 @@ bool Win32GLVideo::GoFullscreen(bool yes)
 //
 //==========================================================================
 
-DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DFrameBuffer *old)
+
+DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer *old)
 {
 	Win32GLFrameBuffer *fb;
 
@@ -384,14 +493,18 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool fs, DF
 			fb->m_Height == m_DisplayHeight &&
 			fb->m_Bits == m_DisplayBits &&
 			fb->m_RefreshHz == m_DisplayHz &&
-			fb->m_Fullscreen == fs)
+			fb->m_Fullscreen == fs &&
+			fb->m_Bgra == bgra)
 		{
 			return old;
 		}
 		//old->GetFlash(flashColor, flashAmount);
 		delete old;
 	}
-	fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+	if (vid_renderer == 1)
+		fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+	else
+		fb = new OpenGLSWFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs, bgra);
 	return fb;
 }
 
@@ -638,6 +751,7 @@ bool Win32GLVideo::SetupPixelFormat(int multisample)
 
 	if (myWglChoosePixelFormatARB)
 	{
+	again:
 		attributes[0]	=	WGL_RED_BITS_ARB; //bits
 		attributes[1]	=	8;
 		attributes[2]	=	WGL_GREEN_BITS_ARB; //bits
@@ -693,6 +807,12 @@ bool Win32GLVideo::SetupPixelFormat(int multisample)
 	
 		if (numFormats == 0)
 		{
+			if (vr_enable_quadbuffered)
+			{
+				Printf("R_OPENGL: No valid pixel formats found for VR quadbuffering. Retrying without this feature\n");
+				vr_enable_quadbuffered = false;
+				goto again;
+			}
 			Printf("R_OPENGL: No valid pixel formats found. Retrying in compatibility mode\n");
 			goto oldmethod;
 		}
@@ -757,7 +877,7 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 	int prof = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
 	const char *version = Args->CheckValue("-glversion");
 
-	if (version != nullptr && strcmp(version, "3.0") < 0) prof = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+	if (version != nullptr && strtod(version, nullptr) < 3.0) prof = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
 
 	for (; prof <= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB; prof++)
 	{
@@ -859,21 +979,20 @@ bool Win32GLVideo::SetFullscreen(const char *devicename, int w, int h, int bits,
 //
 //==========================================================================
 
-IMPLEMENT_CLASS(Win32GLFrameBuffer, true, false)
-
 //==========================================================================
 //
 // 
 //
 //==========================================================================
 
-Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : BaseWinFB(width, height) 
+Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : BaseWinFB(width, height, bgra) 
 {
 	m_Width = width;
 	m_Height = height;
 	m_Bits = bits;
 	m_RefreshHz = refreshHz;
 	m_Fullscreen = fullscreen;
+	m_Bgra = bgra;
 	m_Lock=0;
 
 	RECT r;
@@ -1011,7 +1130,7 @@ void Win32GLFrameBuffer::InitializeState()
 
 bool Win32GLFrameBuffer::CanUpdate()
 {
-	if (!AppActive) return false;
+	if (!AppActive && IsFullscreen()) return false;
 	return true;
 }
 
@@ -1031,7 +1150,7 @@ void Win32GLFrameBuffer::ResetGammaTable()
 	}
 }
 
-void Win32GLFrameBuffer::SetGammaTable(WORD *tbl)
+void Win32GLFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)
 	{
@@ -1066,7 +1185,7 @@ void Win32GLFrameBuffer::Unlock ()
 
 bool Win32GLFrameBuffer::IsLocked () 
 { 
-	return m_Lock>0;// true;
+	return m_Lock > 0;
 }
 
 //==========================================================================
@@ -1126,10 +1245,7 @@ void Win32GLFrameBuffer::SetVSync (bool vsync)
 void Win32GLFrameBuffer::SwapBuffers()
 {
 	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
-	if (FPSLimitEvent != NULL)
-	{
-		WaitForSingleObject(FPSLimitEvent, 1000);
-	}
+	I_FPSLimit();
 	::SwapBuffers(static_cast<Win32GLVideo *>(Video)->m_hDC);
 }
 
@@ -1144,8 +1260,8 @@ void Win32GLFrameBuffer::NewRefreshRate ()
 	if (m_Fullscreen)
 	{
 		setmodeneeded = true;
-		NewWidth = screen->GetWidth();
-		NewHeight = screen->GetHeight();
+		NewWidth = screen->VideoWidth;
+		NewHeight = screen->VideoHeight;
 		NewBits = DisplayBits;
 	}
 }
@@ -1162,6 +1278,11 @@ int Win32GLFrameBuffer::GetClientHeight()
 	RECT rect = { 0 };
 	GetClientRect(Window, &rect);
 	return rect.bottom - rect.top;
+}
+
+int Win32GLFrameBuffer::GetTrueHeight() 
+{ 
+	return static_cast<Win32GLVideo *>(Video)->GetTrueHeight(); 
 }
 
 IVideo *gl_CreateVideo()

@@ -260,6 +260,7 @@ class FShader
 	FBufferedUniform1f muDesaturation;
 	FBufferedUniform1i muFogEnabled;
 	FBufferedUniform1i muPalLightLevels;
+	FBufferedUniform1f muGlobVis;
 	FBufferedUniform1i muTextureMode;
 	FBufferedUniform4f muCameraPos;
 	FBufferedUniform4f muLightParms;
@@ -283,6 +284,7 @@ class FShader
 	FBufferedUniform1f muClipHeight;
 	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
+	FBufferedUniform1i muViewHeight;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;
@@ -396,7 +398,7 @@ public:
 	}
 };
 
-#define FIRST_USER_SHADER 12
+#define FIRST_USER_SHADER 13
 
 enum
 {

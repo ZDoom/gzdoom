@@ -57,7 +57,7 @@ class FGLTexture
 public:
 	FTexture * tex;
 	FTexture * hirestexture;
-	char bIsTransparent;
+	int8_t bIsTransparent;
 	int HiresLump;
 
 private:
@@ -65,7 +65,7 @@ private:
 
 	bool bHasColorkey;		// only for hires
 	bool bExpandFlag;
-	BYTE lastSampler;
+	uint8_t lastSampler;
 	int lastTranslation;
 
 	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);

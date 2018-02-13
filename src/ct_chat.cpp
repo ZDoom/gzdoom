@@ -1,14 +1,25 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
 
-//**************************************************************************
-//**
-//** ct_chat.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile: ct_chat.c,v $
-//** $Revision: 1.12 $
-//** $Date: 96/01/16 10:35:26 $
-//** $Author: bgokey $
-//**
-//**************************************************************************
 
 #include <string.h>
 #include <ctype.h>
@@ -27,10 +38,11 @@
 #include "v_video.h"
 #include "gi.h"
 #include "d_gui.h"
-#include "i_input.h"
+#include "g_input.h"
 #include "templates.h"
 #include "d_net.h"
 #include "d_event.h"
+#include "sbar.h"
 
 #define QUEUESIZE		128
 #define MESSAGESIZE		128
@@ -61,11 +73,11 @@ int chatmodeon;
 static void CT_ClearChatMessage ();
 static void CT_AddChar (char c);
 static void CT_BackSpace ();
-static void ShoveChatStr (const char *str, BYTE who);
+static void ShoveChatStr (const char *str, uint8_t who);
 static bool DoSubstitution (FString &out, const char *in);
 
 static int len;
-static BYTE ChatQueue[QUEUESIZE];
+static uint8_t ChatQueue[QUEUESIZE];
 
 CVAR (String, chatmacro1, "I'm ready to kick butt!", CVAR_ARCHIVE)
 CVAR (String, chatmacro2, "I'm OK.", CVAR_ARCHIVE)
@@ -226,29 +238,12 @@ void CT_Drawer (void)
 		int i, x, scalex, y, promptwidth;
 
 		y = (viewactive || gamestate != GS_LEVEL) ? -10 : -30;
-		if (active_con_scaletext() == 0)
-		{
-			scalex = CleanXfac;
-			y *= CleanYfac;
-		}
-		else
-		{
-			scalex = 1;
-		}
 
-		int screen_width, screen_height, st_y;
-		if (active_con_scaletext() == 0)
-		{
-			screen_width = SCREENWIDTH;
-			screen_height = SCREENHEIGHT;
-			st_y = gST_Y;
-		}
-		else
-		{
-			screen_width = SCREENWIDTH / active_con_scaletext();
-			screen_height = SCREENHEIGHT / active_con_scaletext();
-			st_y = gST_Y / active_con_scaletext();
-		}
+		scalex = 1;
+		int scale = active_con_scaletext();
+		int screen_width = SCREENWIDTH / scale;
+		int screen_height= SCREENHEIGHT / scale;
+		int st_y = StatusBar->GetTopOfStatusbar() / scale;
 
 		y += ((SCREENHEIGHT == viewheight && viewactive) || gamestate != GS_LEVEL) ? screen_height : st_y;
 
@@ -274,18 +269,10 @@ void CT_Drawer (void)
 		// draw the prompt, text, and cursor
 		ChatQueue[len] = SmallFont->GetCursor();
 		ChatQueue[len+1] = '\0';
-		if (active_con_scaletext() < 2)
-		{
-			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, DTA_CleanNoMove, active_con_scaletext() == 0, TAG_DONE);
-			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), DTA_CleanNoMove, active_con_scaletext() == 0, TAG_DONE);
-		}
-		else
-		{
-			screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, 
-				DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-			screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), 
-				DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
-		}
+		screen->DrawText (SmallFont, CR_GREEN, 0, y, prompt, 
+			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
+		screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), 
+			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 		ChatQueue[len] = '\0';
 
 		BorderTopRefresh = screen->GetPageCount ();
@@ -353,7 +340,7 @@ static void CT_ClearChatMessage ()
 //
 //===========================================================================
 
-static void ShoveChatStr (const char *str, BYTE who)
+static void ShoveChatStr (const char *str, uint8_t who)
 {
 	// Don't send empty messages
 	if (str == NULL || str[0] == '\0')

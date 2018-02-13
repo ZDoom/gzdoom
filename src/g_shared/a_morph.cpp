@@ -1,3 +1,26 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+// Copyright 2005-2008 Martin Howe
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
+
 #include "info.h"
 #include "a_pickups.h"
 #include "gstrings.h"
@@ -15,7 +38,8 @@
 #include "d_player.h"
 #include "r_data/sprites.h"
 #include "g_levellocals.h"
-#include "virtual.h"
+#include "vm.h"
+#include "vm.h"
 
 static FRandom pr_morphmonst ("MorphMonster");
 
@@ -243,6 +267,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 	mo->Vel.X = mo->Vel.Y = 0;
 	player->Vel.Zero();
 	mo->Vel.Z = pmo->Vel.Z;
+	mo->floorz = pmo->floorz;
 	if (!(pmo->special2 & MF_JUSTHIT))
 	{
 		mo->renderflags &= ~RF_INVISIBLE;
@@ -298,7 +323,7 @@ bool P_UndoPlayerMorph (player_t *activator, player_t *player, int unmorphflag, 
 			// If a custom skin was in use, then reload it
 			// or else the base skin for the player class.
 			if ((unsigned int)player->userinfo.GetSkin() >= PlayerClasses.Size () &&
-				(size_t)player->userinfo.GetSkin() < numskins)
+				(unsigned)player->userinfo.GetSkin() < Skins.Size())
 			{
 
 				skinindex = player->userinfo.GetSkin();
@@ -612,8 +637,7 @@ void EndAllPowerupEffects(AInventory *item)
 			IFVIRTUALPTRNAME(item, NAME_Powerup, EndEffect)
 			{
 				VMValue params[1] = { item };
-				VMFrameStack stack;
-				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				VMCall(func, params, 1, nullptr, 0);
 			}
 		}
 		item = item->Inventory;
@@ -635,11 +659,10 @@ void InitAllPowerupEffects(AInventory *item)
 	{
 		if (item->IsKindOf(ptype))
 		{
-			IFVIRTUALPTRNAME(item, NAME_Powerup, EndEffect)
+			IFVIRTUALPTRNAME(item, NAME_Powerup, InitEffect)
 			{
 				VMValue params[1] = { item };
-				VMFrameStack stack;
-				GlobalVMStack.Call(func, params, 1, nullptr, 0, nullptr);
+				VMCall(func, params, 1, nullptr, 0);
 			}
 		}
 		item = item->Inventory;
@@ -700,4 +723,31 @@ void AMorphedMonster::Tick ()
 	{
 		Super::Tick ();
 	}
+}
+
+
+DEFINE_ACTION_FUNCTION(AActor, A_Morph)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_CLASS(type, AActor);
+	PARAM_INT_DEF(duration);
+	PARAM_INT_DEF(flags);
+	PARAM_CLASS_DEF(enter_flash, AActor);
+	PARAM_CLASS_DEF(exit_flash, AActor);
+	bool res = false;
+	if (self->player)
+	{
+		if (type->IsDescendantOf(RUNTIME_CLASS(APlayerPawn)))
+		{
+			res = P_MorphPlayer(self->player, self->player, type, duration, flags, enter_flash, exit_flash);
+		}
+	}
+	else
+	{
+		if (type->IsDescendantOf(RUNTIME_CLASS(AMorphedMonster)))
+		{
+			res = P_MorphMonster(self, type, duration, flags, enter_flash, exit_flash);
+		}
+	}
+	ACTION_RETURN_BOOL(res);
 }

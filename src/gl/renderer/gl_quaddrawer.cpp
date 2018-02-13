@@ -25,7 +25,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_quaddrawer.h"
-#include "gl/data/gl_matrix.h"
+#include "r_data/matrix.h"
 
 /*
 ** For handling of dynamically created quads when no persistently mapped

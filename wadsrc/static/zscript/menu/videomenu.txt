@@ -57,9 +57,9 @@ class VideoModeMenu : OptionMenu
 		return Super.MenuEvent(mkey, fromcontroller);
 	}
 
-	override bool Responder(InputEventData ev)
+	override bool OnUIEvent(UIEvent ev)
 	{
-		if (ev.type == InputEventData.GUI_Event && ev.subtype == InputEventData.GUI_KeyDown && (ev.data1 == 0x54 || ev.data1 == 0x74))
+		if (ev.Type == UIEvent.Type_KeyDown && (ev.KeyChar == 0x54 || ev.KeyChar == 0x74))
 		{
 			if (SetSelectedSize())
 			{
@@ -67,7 +67,7 @@ class VideoModeMenu : OptionMenu
 				return true;
 			}
 		}
-		return Super.Responder(ev);
+		return Super.OnUIEvent(ev);
 	}
 }
 

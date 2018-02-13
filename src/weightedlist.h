@@ -44,11 +44,11 @@ class TWeightedList
 	template<class U>
 	struct Choice
 	{
-		Choice(WORD w, U v) : Next(NULL), Weight(w), RandomVal(0), Value(v) {}
+		Choice(uint16_t w, U v) : Next(NULL), Weight(w), RandomVal(0), Value(v) {}
 
 		Choice<U> *Next;
-		WORD Weight;
-		BYTE RandomVal;	// 0 (never) - 255 (always)
+		uint16_t Weight;
+		uint8_t RandomVal;	// 0 (never) - 255 (always)
 		T Value;
 	};
 
@@ -65,7 +65,7 @@ class TWeightedList
 			}
 		}
 
-		void AddEntry (T value, WORD weight);
+		void AddEntry (T value, uint16_t weight);
 		T PickEntry () const;
 		void ReplaceValues (T oldval, T newval);
 
@@ -79,7 +79,7 @@ class TWeightedList
 };
 
 template<class T> 
-void TWeightedList<T>::AddEntry (T value, WORD weight)
+void TWeightedList<T>::AddEntry (T value, uint16_t weight)
 {
 	if (weight == 0)
 	{ // If the weight is 0, don't bother adding it,
@@ -104,7 +104,7 @@ void TWeightedList<T>::AddEntry (T value, WORD weight)
 template<class T>
 T TWeightedList<T>::PickEntry () const
 {
-	BYTE randomnum = RandomClass();
+	uint8_t randomnum = RandomClass();
 	Choice<T> *choice = Choices;
 
 	while (choice != NULL && randomnum > choice->RandomVal)
@@ -147,7 +147,7 @@ void TWeightedList<T>::RecalcRandomVals ()
 	for (choice = Choices; choice->Next != NULL; choice = choice->Next)
 	{
 		randVal += (double)choice->Weight * weightDenom;
-		choice->RandomVal = (BYTE)(randVal * 255.0);
+		choice->RandomVal = (uint8_t)(randVal * 255.0);
 	}
 }
 

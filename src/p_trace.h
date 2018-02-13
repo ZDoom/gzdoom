@@ -77,8 +77,8 @@ struct FTraceResults
 	AActor *Actor;		// valid if hit an actor
 
 	line_t *Line;		// valid if hit a line
-	BYTE Side;
-	BYTE Tier;
+	uint8_t Side;
+	uint8_t Tier;
 	bool unlinked;		// passed through a portal without static offset.
 	ETraceResult HitType;
 	F3DFloor *ffloor;
@@ -109,7 +109,17 @@ enum ETraceStatus
 };
 
 bool Trace(const DVector3 &start, sector_t *sector, const DVector3 &direction, double maxDist,
-	ActorFlags ActorMask, DWORD WallMask, AActor *ignore, FTraceResults &res, DWORD traceFlags = 0,
+	ActorFlags ActorMask, uint32_t WallMask, AActor *ignore, FTraceResults &res, uint32_t traceFlags = 0,
 	ETraceStatus(*callback)(FTraceResults &res, void *) = NULL, void *callbackdata = NULL);
+
+// [ZZ] this is the object that's used for ZScript
+class DLineTracer : public DObject
+{
+	DECLARE_CLASS(DLineTracer, DObject)
+public:
+	FTraceResults Results;
+	static ETraceStatus TraceCallback(FTraceResults& res, void* pthis);
+	ETraceStatus CallZScriptCallback();
+};
 
 #endif //__P_TRACE_H__

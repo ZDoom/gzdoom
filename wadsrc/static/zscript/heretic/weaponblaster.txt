@@ -244,6 +244,7 @@ class BlasterPuff : Actor
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+PUFFONACTORS
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		SeeSound "weapons/blasterhit";
 	}

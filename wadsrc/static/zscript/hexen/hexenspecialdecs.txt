@@ -458,7 +458,7 @@ class LeafSpawner : Actor
 
 			if (mo)
 			{
-				mo.Thrust(random[LeafSpawn]() / 128. + 3);
+				mo.Thrust(random[LeafSpawn]() / 128. + 3, angle);
 				mo.target = self;
 				mo.special1 = 0;
 			}
@@ -882,7 +882,7 @@ class ZBell : Actor
 	
 	override void Activate (Actor activator)
 	{
-		if (health > 0) A_Die();
+		if (health > 0)
 		{
 			DamageMobj (activator, activator, 10, 'Melee', DMG_THRUSTLESS); // 'ring' the bell
 		}
@@ -898,11 +898,6 @@ class ZBell : Actor
 	{
 		bNoGravity = true;
 		Height = Default.Height;
-		if (special)
-		{ // Initiate death action
-			A_CallSpecial(special, args[0], args[1], args[2], args[3], args[4]);
-			special = 0;
-		}
 	}
 
 	//===========================================================================

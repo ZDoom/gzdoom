@@ -1,3 +1,26 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+
+
 #include "actor.h"
 #include "p_conversation.h"
 #include "p_lnspec.h"
@@ -11,6 +34,7 @@
 #include "templates.h"
 #include "serializer.h"
 #include "r_data/r_translate.h"
+#include "vm.h"
 
 //----------------------------------------------------------------------------
 //
@@ -84,10 +108,11 @@ class DCorpsePointer : public DThinker
 	HAS_OBJECT_POINTERS
 public:
 	DCorpsePointer (AActor *ptr);
+	void Queue();
 	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
-	TObjPtr<AActor> Corpse;
-	DWORD Count;	// Only the first corpse pointer's count is valid.
+	TObjPtr<AActor*> Corpse;
+	uint32_t Count;	// Only the first corpse pointer's count is valid.
 private:
 	DCorpsePointer () {}
 };
@@ -104,7 +129,7 @@ CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 	{
 		TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
 		DCorpsePointer *first = iterator.Next ();
-		while (first != NULL && first->Count > (DWORD)self)
+		while (first != NULL && first->Count > (uint32_t)self)
 		{
 			DCorpsePointer *next = iterator.Next ();
 			first->Destroy ();
@@ -114,26 +139,32 @@ CUSTOM_CVAR(Int, sv_corpsequeuesize, 64, CVAR_ARCHIVE|CVAR_SERVERINFO)
 }
 
 
-DCorpsePointer::DCorpsePointer (AActor *ptr)
-: DThinker (STAT_CORPSEPOINTER), Corpse (ptr)
+DCorpsePointer::DCorpsePointer(AActor *ptr)
+	: DThinker(STAT_CORPSEPOINTER), Corpse(ptr)
 {
 	Count = 0;
+}
 
+void DCorpsePointer::Queue()
+{
 	// Thinkers are added to the end of their respective lists, so
 	// the first thinker in the list is the oldest one.
 	TThinkerIterator<DCorpsePointer> iterator (STAT_CORPSEPOINTER);
 	DCorpsePointer *first = iterator.Next ();
 
-	if (first != this)
+	if (first != nullptr)
 	{
-		if (first->Count >= (DWORD)sv_corpsequeuesize)
+		if (first != this)
 		{
-			DCorpsePointer *next = iterator.Next ();
-			first->Destroy ();
-			first = next;
+			if (first->Count >= (uint32_t)sv_corpsequeuesize)
+			{
+				DCorpsePointer *next = iterator.Next();
+				first->Destroy();
+				first = next;
+			}
 		}
+		++first->Count;
 	}
-	++first->Count;
 }
 
 void DCorpsePointer::OnDestroy ()
@@ -180,7 +211,8 @@ DEFINE_ACTION_FUNCTION(AActor, A_QueueCorpse)
 
 	if (sv_corpsequeuesize > 0)
 	{
-		new DCorpsePointer (self);
+		auto p = Create<DCorpsePointer> (self);
+		p->Queue();
 	}
 	return 0;
 }

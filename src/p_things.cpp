@@ -52,6 +52,8 @@
 #include "math/cmath.h"
 #include "actorptrselect.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
+#include "vm.h"
 
 // Set of spawnable things for the Thing_Spawn and Thing_Projectile specials.
 FClassMap SpawnableThings;
@@ -406,7 +408,7 @@ void P_RemoveThing(AActor * actor)
 
 }
 
-bool P_Thing_Raise(AActor *thing, AActor *raiser)
+bool P_Thing_Raise(AActor *thing, AActor *raiser, int nocheck)
 {
 	FState * RaiseState = thing->GetRaiseState();
 	if (RaiseState == NULL)
@@ -426,7 +428,7 @@ bool P_Thing_Raise(AActor *thing, AActor *raiser)
 	thing->flags |= MF_SOLID;
 	thing->Height = info->Height;	// [RH] Use real height
 	thing->radius = info->radius;	// [RH] Use real radius
-	if (!P_CheckPosition (thing, thing->Pos()))
+	if (!nocheck && !P_CheckPosition (thing, thing->Pos()))
 	{
 		thing->flags = oldflags;
 		thing->radius = oldradius;
@@ -525,7 +527,7 @@ DEFINE_ACTION_FUNCTION(AActor, GetSpawnableType)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(num);
-	ACTION_RETURN_OBJECT(P_GetSpawnableType(num));
+	ACTION_RETURN_POINTER(P_GetSpawnableType(num));
 }
 
 struct MapinfoSpawnItem
@@ -754,6 +756,16 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 			if ((flags & CPXF_CHECKSIGHT) && !(P_CheckSight(mo, ref, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY)))
 				continue;
 
+			if (mo->flags6 & MF6_KILLED)
+			{
+				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
+					continue;
+			}
+			else
+			{
+				if (flags & CPXF_DEADONLY)
+					continue;
+			}
 			if (ptrWillChange)
 			{
 				current = ref->Distance2D(mo);
@@ -770,16 +782,6 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 				}
 				else if (!dist)
 					dist = mo; // Just get the first one and call it quits if there's nothing selected.
-			}
-			if (mo->flags6 & MF6_KILLED)
-			{
-				if (!(flags & (CPXF_COUNTDEAD | CPXF_DEADONLY)))
-					continue;
-			}
-			else
-			{
-				if (flags & CPXF_DEADONLY)
-					continue;
 			}
 			counter++;
 
@@ -942,4 +944,26 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 	}
 	caller->SetOrigin(old, true);
 	return false;
+}
+
+//==========================================================================
+//
+// A_Warp
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, Warp)
+{
+	PARAM_SELF_PROLOGUE(AActor)
+	PARAM_OBJECT_DEF(destination, AActor)
+	PARAM_FLOAT_DEF(xofs)				
+	PARAM_FLOAT_DEF(yofs)				
+	PARAM_FLOAT_DEF(zofs)				
+	PARAM_ANGLE_DEF(angle)				
+	PARAM_INT_DEF(flags)				
+	PARAM_FLOAT_DEF(heightoffset)		
+	PARAM_FLOAT_DEF(radiusoffset)		
+	PARAM_ANGLE_DEF(pitch)				
+
+	ACTION_RETURN_INT(!!P_Thing_Warp(self, destination, xofs, yofs, zofs, angle, flags, heightoffset, radiusoffset, pitch));
 }

@@ -299,7 +299,7 @@ bool FIntermissionActionTextscreen::ParseKey(FScanner &sc)
 		else
 		{
 			// only print an error if coming from a PWAD
-			if (Wads.GetLumpFile(sc.LumpNum) > 1)
+			if (Wads.GetLumpFile(sc.LumpNum) > Wads.GetIwadNum())
 				sc.ScriptMessage("Unknown text lump '%s'", sc.String);
 			mText.Format("Unknown text lump '%s'", sc.String);
 		}
@@ -382,10 +382,10 @@ bool FIntermissionActionCast::ParseKey(FScanner &sc)
 		FCastSound *cs = &mCastSounds[mCastSounds.Reserve(1)];
 		sc.MustGetToken('=');
 		sc.MustGetToken(TK_StringConst);
-		cs->mSequence = (BYTE)sc.MatchString(seqs);
+		cs->mSequence = (uint8_t)sc.MatchString(seqs);
 		sc.MustGetToken(',');
 		sc.MustGetToken(TK_IntConst);
-		cs->mIndex = (BYTE)sc.Number;
+		cs->mIndex = (uint8_t)sc.Number;
 		sc.MustGetToken(',');
 		sc.MustGetToken(TK_StringConst);
 		cs->mSound = sc.String;
@@ -573,7 +573,7 @@ void FMapInfoParser::ParseIntermission()
 
 struct EndSequence
 {
-	SBYTE EndType;
+	int8_t EndType;
 	bool MusicLooping;
 	bool PlayTheEnd;
 	FString PicName;
@@ -724,6 +724,18 @@ FName FMapInfoParser::ParseEndGame()
 //
 //==========================================================================
 
+FName MakeEndPic(const char *string)
+{
+	FString seqname;
+	seqname << "@EndPic_" << string;
+	FIntermissionDescriptor *desc = new FIntermissionDescriptor;
+	FIntermissionAction *action = new FIntermissionAction;
+	action->mBackground = string;
+	desc->mActions.Push(action);
+	ReplaceIntermission(seqname, desc);
+	return FName(seqname);
+}
+
 FName FMapInfoParser::CheckEndSequence()
 {
 	const char *seqname = NULL;
@@ -756,14 +768,7 @@ FName FMapInfoParser::CheckEndSequence()
 	{
 		ParseComma();
 		sc.MustGetString ();
-		FString seqname;
-		seqname << "@EndPic_" << sc.String;
-		FIntermissionDescriptor *desc = new FIntermissionDescriptor;
-		FIntermissionAction *action = new FIntermissionAction;
-		action->mBackground = sc.String;
-		desc->mActions.Push(action);
-		ReplaceIntermission(seqname, desc);
-		return FName(seqname);
+		return MakeEndPic(sc.String);
 	}
 	else if (sc.Compare("endbunny"))
 	{

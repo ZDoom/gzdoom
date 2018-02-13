@@ -3,6 +3,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright -2016 Randy Heit
+** Copyright 2016-2017 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -35,12 +36,13 @@
 #include "codegen.h"
 #include "info.h"
 #include "m_argv.h"
-#include "thingdef.h"
+//#include "thingdef.h"
 #include "doomerrors.h"
+#include "vmintern.h"
 
 struct VMRemap
 {
-	BYTE altOp, kReg, kType;
+	uint8_t altOp, kReg, kType;
 };
 
 
@@ -126,7 +128,7 @@ void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 	}
 	if (AddressConstantList.Size() > 0)
 	{
-		FillAddressConstants(func->KonstA, func->KonstATags());
+		FillAddressConstants(func->KonstA);
 	}
 	if (StringConstantList.Size() > 0)
 	{
@@ -139,6 +141,7 @@ void VMFunctionBuilder::MakeFunction(VMScriptFunction *func)
 	func->NumRegA = Registers[REGT_POINTER].MostUsed;
 	func->NumRegS = Registers[REGT_STRING].MostUsed;
 	func->MaxParam = MaxParam;
+	func->StackSize = VMFrame::FrameSize(func->NumRegD, func->NumRegF, func->NumRegS, func->NumRegA, func->MaxParam, func->ExtraSpace);
 
 	// Technically, there's no reason why we can't end the function with
 	// entries on the parameter stack, but it means the caller probably
@@ -174,10 +177,9 @@ void VMFunctionBuilder::FillFloatConstants(double *konst)
 //
 //==========================================================================
 
-void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst, VM_ATAG *tags)
+void VMFunctionBuilder::FillAddressConstants(FVoidObj *konst)
 {
 	memcpy(konst, &AddressConstantList[0], sizeof(void*) * AddressConstantList.Size());
-	memcpy(tags, &AtagConstantList[0], sizeof(VM_ATAG) * AtagConstantList.Size());
 }
 
 //==========================================================================
@@ -257,7 +259,7 @@ unsigned VMFunctionBuilder::GetConstantString(FString val)
 	}
 	else
 	{
-		int loc = StringConstantList.Push(val);
+		unsigned loc = StringConstantList.Push(val);
 		StringConstantMap.Insert(val, loc);
 		return loc;
 	}
@@ -272,27 +274,18 @@ unsigned VMFunctionBuilder::GetConstantString(FString val)
 //
 //==========================================================================
 
-unsigned VMFunctionBuilder::GetConstantAddress(void *ptr, VM_ATAG tag)
+unsigned VMFunctionBuilder::GetConstantAddress(void *ptr)
 {
-	if (ptr == NULL)
-	{ // Make all NULL pointers generic. (Or should we allow typed NULLs?)
-		tag = ATAG_GENERIC;
-	}
-	AddrKonst *locp = AddressConstantMap.CheckKey(ptr);
+	unsigned *locp = AddressConstantMap.CheckKey(ptr);
 	if (locp != NULL)
 	{
-		// There should only be one tag associated with a memory location. Exceptions are made for null pointers that got allocated through constant arrays.
-		assert(ptr == nullptr || locp->Tag == tag);
-		return locp->KonstNum;
+		return *locp;
 	}
 	else
 	{
-		unsigned locc = AddressConstantList.Push(ptr);
-		AtagConstantList.Push(tag);
-
-		AddrKonst loc = { locc, tag };
+		unsigned loc = AddressConstantList.Push(ptr);
 		AddressConstantMap.Insert(ptr, loc);
-		return loc.KonstNum;
+		return loc;
 	}
 }
 
@@ -326,16 +319,13 @@ unsigned VMFunctionBuilder::AllocConstantsFloat(unsigned count, double *values)
 	return addr;
 }
 
-unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs, VM_ATAG tag)
+unsigned VMFunctionBuilder::AllocConstantsAddress(unsigned count, void **ptrs)
 {
 	unsigned addr = AddressConstantList.Reserve(count);
-	AtagConstantList.Reserve(count);
 	memcpy(&AddressConstantList[addr], ptrs, count * sizeof(void *));
 	for (unsigned i = 0; i < count; i++)
 	{
-		AtagConstantList[addr + i] = tag;
-		AddrKonst loc = { addr+i, tag };
-		AddressConstantMap.Insert(ptrs[i], loc);
+		AddressConstantMap.Insert(ptrs[i], addr+i);
 	}
 	return addr;
 }
@@ -563,13 +553,12 @@ size_t VMFunctionBuilder::GetAddress()
 
 size_t VMFunctionBuilder::Emit(int opcode, int opa, int opb, int opc)
 {
-	static BYTE opcodes[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
+	static uint8_t opcodes[] = { OP_LK, OP_LKF, OP_LKS, OP_LKP };
 
 	assert(opcode >= 0 && opcode < NUM_OPS);
 	assert(opa >= 0);
 	assert(opb >= 0);
 	assert(opc >= 0);
-
 
 	// The following were just asserts, meaning this would silently create broken code if there was an overflow
 	// if this happened in a release build. Not good.
@@ -802,12 +791,14 @@ void VMFunctionBuilder::BackpatchListToHere(TArray<size_t> &locs)
 //==========================================================================
 FFunctionBuildList FunctionBuildList;
 
-VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
+VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, const VersionInfo &ver, PFunction *functype, FxExpression *code, const FString &name, bool fromdecorate, int stateindex, int statecount, int lumpnum)
 {
-	auto func = code->GetDirectFunction();
+	auto func = code->GetDirectFunction(functype, ver);
 	if (func != nullptr)
 	{
 		delete code;
+
+
 		return func;
 	}
 
@@ -828,6 +819,7 @@ VMFunction *FFunctionBuildList::AddFunction(PNamespace *gnspc, PFunction *functy
 	it.StateIndex = stateindex;
 	it.StateCount = statecount;
 	it.Lump = lumpnum;
+	it.Version = ver;
 	assert(it.Func->Variants.Size() == 1);
 	it.Func->Variants[0].Implementation = it.Function;
 
@@ -846,6 +838,7 @@ void FFunctionBuildList::Build()
 {
 	int errorcount = 0;
 	int codesize = 0;
+	int datasize = 0;
 	FILE *dump = nullptr;
 
 	if (Args->CheckParm("-dumpdisasm")) dump = fopen("disasm.txt", "w");
@@ -855,7 +848,7 @@ void FFunctionBuildList::Build()
 		assert(item.Code != NULL);
 
 		// We don't know the return type in advance for anonymous functions.
-		FCompileContext ctx(item.CurGlobals, item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate, item.StateIndex, item.StateCount, item.Lump);
+		FCompileContext ctx(item.CurGlobals, item.Func, item.Func->SymbolName == NAME_None ? nullptr : item.Func->Variants[0].Proto, item.FromDecorate, item.StateIndex, item.StateCount, item.Lump, item.Version);
 
 		// Allocate registers for the function's arguments and create local variable nodes before starting to resolve it.
 		VMFunctionBuilder buildit(item.Func->GetImplicitArgs());
@@ -927,6 +920,8 @@ void FFunctionBuildList::Build()
 				{
 					DumpFunction(dump, sfunc, item.PrintableName.GetChars(), (int)item.PrintableName.Len());
 					codesize += sfunc->CodeSize;
+					datasize += sfunc->LineInfoCount * sizeof(FStatementInfo) + sfunc->ExtraSpace + sfunc->NumKonstD * sizeof(int) +
+						sfunc->NumKonstA * sizeof(void*) + sfunc->NumKonstF * sizeof(double) + sfunc->NumKonstS * sizeof(FString);
 				}
 				sfunc->Unsafe = ctx.Unsafe;
 			}
@@ -944,10 +939,11 @@ void FFunctionBuildList::Build()
 	}
 	if (dump != nullptr)
 	{
-		fprintf(dump, "\n*************************************************************************\n%i code bytes\n", codesize * 4);
+		fprintf(dump, "\n*************************************************************************\n%i code bytes\n%i data bytes", codesize * 4, datasize);
 		fclose(dump);
 	}
 	FScriptPosition::StrictErrors = false;
 	mItems.Clear();
+	mItems.ShrinkToFit();
 	FxAlloc.FreeAllBlocks();
 }

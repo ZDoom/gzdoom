@@ -67,8 +67,8 @@
 /** 128-bit data structure */
 union w128_t {
     vector unsigned int s;
-    DWORD u[4];
-	QWORD u64[2];
+    uint32_t u[4];
+	uint64_t u64[2];
 };
 
 #elif defined(HAVE_SSE2)
@@ -77,16 +77,16 @@ union w128_t {
 /** 128-bit data structure */
 union w128_t {
     __m128i si;
-    DWORD u[4];
-	QWORD u64[2];
+    uint32_t u[4];
+	uint64_t u64[2];
 };
 
 #else
 
 /** 128-bit data structure */
 union w128_t {
-    DWORD u[4];
-	QWORD u64[2];
+    uint32_t u[4];
+	uint64_t u64[2];
 };
 
 #endif

@@ -34,15 +34,15 @@ namespace s3d {
 ScopedViewShifter::ScopedViewShifter(float dxyz[3]) // in meters
 {
 	// save original values
-	cachedView = ViewPos;
+	cachedView = r_viewpoint.Pos;
 	// modify values
-	ViewPos += DVector3(dxyz[0], dxyz[1], dxyz[2]);
+	r_viewpoint.Pos += DVector3(dxyz[0], dxyz[1], dxyz[2]);
 }
 
 ScopedViewShifter::~ScopedViewShifter()
 {
 	// restore original values
-	ViewPos = cachedView;
+	r_viewpoint.Pos = cachedView;
 }
 
 }

@@ -32,6 +32,7 @@
  */
 
 #include "i_common.h"
+#include "s_sound.h"
 
 #include <sys/sysctl.h>
 #include <unistd.h>
@@ -59,6 +60,7 @@
 // ---------------------------------------------------------------------------
 
 
+CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 EXTERN_CVAR(Int,  vid_defwidth )
 EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, vid_vsync    )
@@ -125,6 +127,7 @@ void popterm()
 void Mac_I_FatalError(const char* const message)
 {
 	I_SetMainWindowVisible(false);
+	S_StopMusic(true);
 
 	FConsoleWindow::GetInstance().ShowFatalError(message);
 }
@@ -154,6 +157,7 @@ static void I_DetectOS()
 		case 10: name = "OS X Yosemite";         break;
 		case 11: name = "OS X El Capitan";       break;
 		case 12: name = "macOS Sierra";          break;
+		case 13: name = "macOS High Sierra";     break;
 	}
 
 	char release[16] = "unknown";
@@ -165,19 +169,17 @@ static void I_DetectOS()
 		"32-bit Intel";
 #elif defined __x86_64__
 		"64-bit Intel";
-#elif defined __ppc__
-		"32-bit PowerPC";
-#elif defined __ppc64__
-		"64-bit PowerPC";
 #else
 		"Unknown";
 #endif
 	
-	Printf("OS: %s %d.%d.%d (%s) %s\n", name, majorVersion, minorVersion, bugFixVersion, release, architecture);
+	Printf("OS: %s %d.%d.%d (%s) %s\n", name, 
+		int(majorVersion), int(minorVersion), int(bugFixVersion),
+		release, architecture);
 }
 
 
-DArgs* Args; // command line arguments
+FArgs* Args; // command line arguments
 
 
 // Newer versions of GCC than 4.2 have a bug with C++ exceptions in Objective-C++ code.
@@ -186,7 +188,7 @@ DArgs* Args; // command line arguments
 void OriginalMainExcept(int argc, char** argv);
 void OriginalMainTry(int argc, char** argv)
 {
-	Args = new DArgs(argc, argv);
+	Args = new FArgs(argc, argv);
 
 	/*
 	 killough 1/98:
@@ -220,14 +222,7 @@ void OriginalMainTry(int argc, char** argv)
 namespace
 {
 
-const int ARGC_MAX = 64;
-
-int   s_argc;
-char* s_argv[ARGC_MAX];
-
-TArray<FString> s_argvStorage;
-
-bool s_restartedFromWADPicker;
+TArray<FString> s_argv;
 
 
 void NewFailure()
@@ -268,10 +263,7 @@ int OriginalMain(int argc, char** argv)
 // ---------------------------------------------------------------------------
 
 
-@interface ApplicationController : NSResponder
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-	<NSApplicationDelegate>
-#endif
+@interface ApplicationController : NSResponder<NSApplicationDelegate>
 {
 }
 
@@ -321,7 +313,7 @@ ApplicationController* appCtrl;
 {
 	ZD_UNUSED(aNotification);
 	
-	S_SetSoundPaused(0);
+	S_SetSoundPaused((!!i_soundinbackground) || 0);
 }
 
 
@@ -345,7 +337,17 @@ ApplicationController* appCtrl;
 	FConsoleWindow::CreateInstance();
 	atterm(FConsoleWindow::DeleteInstance);
 
-	exit(OriginalMain(s_argc, s_argv));
+	const size_t argc = s_argv.Size();
+	TArray<char*> argv(argc + 1, true);
+
+	for (size_t i = 0; i < argc; ++i)
+	{
+		argv[i] = s_argv[i].LockBuffer();
+	}
+
+	argv[argc] = nullptr;
+
+	exit(OriginalMain(argc, &argv[0]));
 }
 
 
@@ -353,20 +355,13 @@ ApplicationController* appCtrl;
 {
 	ZD_UNUSED(theApplication);
 
-	if (s_restartedFromWADPicker
-		|| 0 == [filename length]
-		|| s_argc + 2 >= ARGC_MAX)
-	{
-		return FALSE;
-	}
-
 	// Some parameters from command line are passed to this function
 	// These parameters need to be skipped to avoid duplication
 	// Note: SDL has different approach to fix this issue, see the same method in SDLMain.m
 
 	const char* const charFileName = [filename UTF8String];
 
-	for (int i = 0; i < s_argc; ++i)
+	for (size_t i = 0, count = s_argv.Size(); i < count; ++i)
 	{
 		if (0 == strcmp(s_argv[i], charFileName))
 		{
@@ -374,11 +369,8 @@ ApplicationController* appCtrl;
 		}
 	}
 
-	s_argvStorage.Push("-file");
-	s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
-
-	s_argvStorage.Push([filename UTF8String]);
-	s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
+	s_argv.Push("-file");
+	s_argv.Push([filename UTF8String]);
 
 	return TRUE;
 }
@@ -536,24 +528,22 @@ void ReleaseApplicationController()
 
 int main(int argc, char** argv)
 {
-	for (int i = 0; i <= argc; ++i)
+	for (int i = 0; i < argc; ++i)
 	{
 		const char* const argument = argv[i];
 
-		if (NULL == argument || '\0' == argument[0])
+#if _DEBUG
+		if (0 == strcmp(argument, "-wait_for_debugger"))
 		{
-			continue;
+			NSAlert* alert = [[NSAlert alloc] init];
+			[alert setMessageText:@GAMENAME];
+			[alert setInformativeText:@"Waiting for debugger..."];
+			[alert addButtonWithTitle:@"Continue"];
+			[alert runModal];
 		}
+#endif // _DEBUG
 
-		if (0 == strcmp(argument, "-wad_picker_restart"))
-		{
-			s_restartedFromWADPicker = true;
-		}
-		else
-		{
-			s_argvStorage.Push(argument);
-			s_argv[s_argc++] = s_argvStorage.Last().LockBuffer();
-		}
+		s_argv.Push(argument);
 	}
 
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];

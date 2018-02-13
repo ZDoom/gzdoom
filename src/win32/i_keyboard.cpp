@@ -1,3 +1,36 @@
+/*
+**
+**
+**---------------------------------------------------------------------------
+** Copyright 2005-2016 Randy Heit
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
 // HEADER FILES ------------------------------------------------------------
 
 #define WIN32_LEAN_AND_MEAN
@@ -6,7 +39,6 @@
 #include <windows.h>
 #include <dinput.h>
 
-#define USE_WINDOWS_DWORD
 #include "i_input.h"
 #include "i_system.h"
 #include "d_event.h"
@@ -70,7 +102,7 @@ extern bool GUICapture;
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // Convert DIK_* code to ASCII using Qwerty keymap
-static const BYTE Convert[256] =
+static const uint8_t Convert[256] =
 {
   //  0    1    2    3    4    5    6    7    8    9    A    B    C    D    E    F
 	  0,  27, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=',   8,   9, // 0
@@ -133,8 +165,8 @@ FKeyboard::~FKeyboard()
 
 bool FKeyboard::CheckAndSetKey(int keynum, INTBOOL down)
 {
-	BYTE *statebyte = &KeyStates[keynum >> 3];
-	BYTE mask = 1 << (keynum & 7);
+	uint8_t *statebyte = &KeyStates[keynum >> 3];
+	uint8_t mask = 1 << (keynum & 7);
 	if (down)
 	{
 		if (*statebyte & mask)
@@ -172,7 +204,7 @@ void FKeyboard::AllKeysUp()
 	{
 		if (KeyStates[i] != 0)
 		{
-			BYTE states = KeyStates[i];
+			uint8_t states = KeyStates[i];
 			int j = 0;
 			KeyStates[i] = 0;
 			do
@@ -469,7 +501,7 @@ bool FRawKeyboard::ProcessRawInput(RAWINPUT *raw, int code)
 	  // useful key from the message.
 		if (raw->data.keyboard.VKey >= VK_BROWSER_BACK && raw->data.keyboard.VKey <= VK_LAUNCH_APP2)
 		{
-			static const BYTE MediaKeys[VK_LAUNCH_APP2 - VK_BROWSER_BACK + 1] =
+			static const uint8_t MediaKeys[VK_LAUNCH_APP2 - VK_BROWSER_BACK + 1] =
 			{
 				DIK_WEBBACK, DIK_WEBFORWARD, DIK_WEBREFRESH, DIK_WEBSTOP,
 				DIK_WEBSEARCH, DIK_WEBFAVORITES, DIK_WEBHOME,

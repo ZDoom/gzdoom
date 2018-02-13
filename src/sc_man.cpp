@@ -1,14 +1,60 @@
+/* For code that originates from ZDoom the following applies:
+**
+**---------------------------------------------------------------------------
+** Copyright 2005-2016 Randy Heit
+** Copyright 2005-2016 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
-//**************************************************************************
-//**
-//** sc_man.c : Heretic 2 : Raven Software, Corp.
-//**
-//** $RCSfile: sc_man.c,v $
-//** $Revision: 1.3 $
-//** $Date: 96/01/06 03:23:43 $
-//** $Author: bgokey $
-//**
-//**************************************************************************
+// This file contains some code by Raven Software, licensed under:
+
+//-----------------------------------------------------------------------------
+//
+// Copyright 1994-1996 Raven Software
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
+
+
+
 
 // HEADER FILES ------------------------------------------------------------
 
@@ -41,6 +87,31 @@
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
+
+void VersionInfo::operator=(const char *string)
+{
+	char *endp;
+	major = (int16_t)clamp<unsigned long long>(strtoull(string, &endp, 10), 0, USHRT_MAX);
+	if (*endp == '.')
+	{
+		minor = (int16_t)clamp<unsigned long long>(strtoull(endp + 1, &endp, 10), 0, USHRT_MAX);
+		if (*endp == '.')
+		{
+			revision = (int16_t)clamp<unsigned long long>(strtoull(endp + 1, &endp, 10), 0, USHRT_MAX);
+			if (*endp != 0) major = USHRT_MAX;
+		}
+		else if (*endp == 0)
+		{
+			revision = 0;
+		}
+		else major = USHRT_MAX;
+	}
+	else if (*endp == 0)
+	{
+		minor = revision = 0;
+	}
+	else major = USHRT_MAX;
+}
 
 //==========================================================================
 //
@@ -173,18 +244,25 @@ void FScanner::Open (const char *name)
 //
 //==========================================================================
 
-void FScanner::OpenFile (const char *name)
+bool FScanner::OpenFile (const char *name)
 {
-	BYTE *filebuf;
-	int filesize;
-
 	Close ();
-	filesize = M_ReadFile (name, &filebuf);
+
+	FileReader fr(name);
+	if (!fr.Open(name)) return false;
+	auto filesize = fr.GetLength();
+	auto filebuf = new uint8_t[filesize];
+	if (fr.Read(filebuf, filesize) != filesize)
+	{
+		delete[] filebuf;
+		return false;
+	}
 	ScriptBuffer = FString((const char *)filebuf, filesize);
 	delete[] filebuf;
 	ScriptName = name;	// This is used for error messages so the full file name is preferable
 	LumpNum = -1;
 	PrepareScript ();
+	return true;
 }
 
 //==========================================================================
@@ -250,11 +328,11 @@ void FScanner::PrepareScript ()
 {
 	// The scanner requires the file to end with a '\n', so add one if
 	// it doesn't already.
-	if (ScriptBuffer.Len() == 0 || ScriptBuffer[ScriptBuffer.Len() - 1] != '\n')
+	if (ScriptBuffer.Len() == 0 || ScriptBuffer.Back() != '\n')
 	{
 		// If the last character in the buffer is a null character, change
 		// it to a newline. Otherwise, append a newline to the end.
-		if (ScriptBuffer.Len() > 0 && ScriptBuffer[ScriptBuffer.Len() - 1] == '\0')
+		if (ScriptBuffer.Len() > 0 && ScriptBuffer.Back() == '\0')
 		{
 			ScriptBuffer.LockBuffer()[ScriptBuffer.Len() - 1] = '\n';
 			ScriptBuffer.UnlockBuffer();
@@ -876,6 +954,76 @@ int FScanner::MustMatchString (const char * const *strings, size_t stride)
 bool FScanner::Compare (const char *text)
 {
 	return (stricmp (text, String) == 0);
+}
+
+
+//==========================================================================
+//
+// Convenience helpers that parse an entire number including a leading minus or plus sign
+//
+//==========================================================================
+
+bool FScanner::ScanValue(bool allowfloat)
+{
+	bool neg = false;
+	if (!GetToken()) 
+	{
+		return false;
+	}
+	if (TokenType == '-' || TokenType == '+')
+	{
+		neg = TokenType == '-';
+		if (!GetToken())
+		{
+			return false;
+		}
+	}
+	if (TokenType != TK_IntConst && (TokenType != TK_FloatConst || !allowfloat)) 
+	{
+		return false;
+	}
+	if (neg)
+	{
+		Number = -Number;
+		Float = -Float;
+	}
+	return true;
+}
+
+bool FScanner::CheckValue(bool allowfloat) 
+{ 
+	auto savedstate = SavePos();
+	bool res = ScanValue(allowfloat);
+	if (!res) RestorePos(savedstate);
+	return res;
+}
+
+void FScanner::MustGetValue(bool allowfloat)
+{
+	if (!ScanValue(allowfloat)) ScriptError(allowfloat ? "Numeric constant expected" : "Integer constant expected");
+}
+
+bool FScanner::CheckBoolToken()
+{
+	if (CheckToken(TK_True))
+	{
+		Number = 1;
+		Float = 1;
+		return true;
+	}
+	if (CheckToken(TK_False))
+	{
+		Number = 0;
+		Float = 0;
+		return true;
+	}
+	return false;
+}
+
+void FScanner::MustGetBoolToken()
+{
+	if (!CheckBoolToken())
+		ScriptError("Expected true or false");
 }
 
 //==========================================================================

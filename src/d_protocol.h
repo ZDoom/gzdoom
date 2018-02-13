@@ -52,18 +52,18 @@
 
 
 struct zdemoheader_s {
-	BYTE	demovermajor;
-	BYTE	demoverminor;
-	BYTE	minvermajor;
-	BYTE	minverminor;
-	BYTE	map[8];
+	uint8_t	demovermajor;
+	uint8_t	demoverminor;
+	uint8_t	minvermajor;
+	uint8_t	minverminor;
+	uint8_t	map[8];
 	unsigned int rngseed;
-	BYTE	consoleplayer;
+	uint8_t	consoleplayer;
 };
 
 struct usercmd_t
 {
-	DWORD	buttons;
+	uint32_t	buttons;
 	short	pitch;			// up/down
 	short	yaw;			// left/right
 	short	roll;			// "tilt"
@@ -116,8 +116,8 @@ enum EDemoCommand
 	DEM_UNDONE5,		// 24
 	DEM_UNDONE6,		// 25
 	DEM_SUMMON,			// 26 String: Thing to fabricate
-	DEM_FOV,			// 27 Byte: New FOV for all players
-	DEM_MYFOV,			// 28 Byte: New FOV for this player
+	DEM_FOV,			// 27 Float: New FOV for all players
+	DEM_MYFOV,			// 28 Float: New FOV for this player
 	DEM_CHANGEMAP2,		// 29 Byte: Position in new map, String: name of new map
 	DEM_UNDONE7,		// 30
 	DEM_UNDONE8,		// 31
@@ -141,7 +141,7 @@ enum EDemoCommand
 	DEM_DELCONTROLLER,	// 49 Player to remove from the controller list.
 	DEM_KILLCLASSCHEAT,	// 50 String: Class to kill.
 	DEM_UNDONE11,		// 51
-	DEM_SUMMON2,		// 52 String: Thing to fabricate, WORD: angle offset
+	DEM_SUMMON2,		// 52 String: Thing to fabricate, uint16_t: angle offset
 	DEM_SUMMONFRIEND2,	// 53
 	DEM_SUMMONFOE2,		// 54
 	DEM_ADDSLOTDEFAULT,	// 55
@@ -159,7 +159,9 @@ enum EDemoCommand
 	DEM_SETSLOTPNUM,	// 67 Byte: player number, the rest is the same as DEM_SETSLOT
 	DEM_REMOVE,			// 68
 	DEM_FINISHGAME,		// 69
-	DEM_NETEVENT		// 70 String: Event name, Byte: Arg count; each arg is a 4-byte int
+	DEM_NETEVENT,		// 70 String: Event name, Byte: Arg count; each arg is a 4-byte int
+	DEM_MDK,			// 71 String: Damage type
+	DEM_SETINV,			// 72 SetInventory
 };
 
 // The following are implemented by cht_DoCheat in m_cheat.cpp
@@ -217,33 +219,42 @@ enum ECheatCommand
 	CHT_BUDDHA,
 	CHT_NOCLIP2,
 	CHT_BUDDHA2,
-	CHT_GOD2
+	CHT_GOD2,
+	CHT_MASSACRE2
 };
 
-void StartChunk (int id, BYTE **stream);
-void FinishChunk (BYTE **stream);
-void SkipChunk (BYTE **stream);
+void StartChunk (int id, uint8_t **stream);
+void FinishChunk (uint8_t **stream);
+void SkipChunk (uint8_t **stream);
 
-int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
-int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
-int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, BYTE **stream);
+int UnpackUserCmd (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
+int PackUserCmd (const usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
+int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stream);
 
-struct ticcmd_t;
+// The data sampled per tick (single player)
+// and transmitted to other peers (multiplayer).
+// Mainly movements/button commands per game tick,
+// plus a checksum for internal state consistency.
+struct ticcmd_t
+{
+	usercmd_t	ucmd;
+	int16_t		consistancy;	// checks for net game
+};
 
-int SkipTicCmd (BYTE **stream, int count);
-void ReadTicCmd (BYTE **stream, int player, int tic);
+int SkipTicCmd (uint8_t **stream, int count);
+void ReadTicCmd (uint8_t **stream, int player, int tic);
 void RunNetSpecs (int player, int buf);
 
-int ReadByte (BYTE **stream);
-int ReadWord (BYTE **stream);
-int ReadLong (BYTE **stream);
-float ReadFloat (BYTE **stream);
-char *ReadString (BYTE **stream);
-const char *ReadStringConst(BYTE **stream);
-void WriteByte (BYTE val, BYTE **stream);
-void WriteWord (short val, BYTE **stream);
-void WriteLong (int val, BYTE **stream);
-void WriteFloat (float val, BYTE **stream);
-void WriteString (const char *string, BYTE **stream);
+int ReadByte (uint8_t **stream);
+int ReadWord (uint8_t **stream);
+int ReadLong (uint8_t **stream);
+float ReadFloat (uint8_t **stream);
+char *ReadString (uint8_t **stream);
+const char *ReadStringConst(uint8_t **stream);
+void WriteByte (uint8_t val, uint8_t **stream);
+void WriteWord (short val, uint8_t **stream);
+void WriteLong (int val, uint8_t **stream);
+void WriteFloat (float val, uint8_t **stream);
+void WriteString (const char *string, uint8_t **stream);
 
 #endif //__D_PROTOCOL_H__

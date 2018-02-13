@@ -1,20 +1,24 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Handle Sector base lighting effects.
@@ -152,14 +156,16 @@ class DPhased : public DLighting
 public:
 	DPhased(sector_t *sector);
 	DPhased(sector_t *sector, int baselevel, int phase);
+	// These are for internal use only but the Create template needs access to them.
+	DPhased();
+	DPhased(sector_t *sector, int baselevel);
+
 	void		Serialize(FSerializer &arc);
 	void		Tick();
 protected:
-	BYTE		m_BaseLevel;
-	BYTE		m_Phase;
+	uint8_t		m_BaseLevel;
+	uint8_t		m_Phase;
 private:
-	DPhased();
-	DPhased(sector_t *sector, int baselevel);
 	int PhaseHelper(sector_t *sector, int index, int light, sector_t *prev);
 };
 
@@ -325,7 +331,7 @@ void EV_StartLightFlickering (int tag, int upper, int lower)
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
 	{
-		new DFlicker (&level.sectors[secnum], upper, lower);
+		Create<DFlicker> (&level.sectors[secnum], upper, lower);
 	}
 }
 
@@ -506,7 +512,7 @@ void EV_StartLightStrobing (int tag, int upper, int lower, int utics, int ltics)
 		if (sec->lightingdata)
 			continue;
 		
-		new DStrobe (sec, upper, lower, utics, ltics);
+		Create<DStrobe> (sec, upper, lower, utics, ltics);
 	}
 }
 
@@ -520,7 +526,7 @@ void EV_StartLightStrobing (int tag, int utics, int ltics)
 		if (sec->lightingdata)
 			continue;
 		
-		new DStrobe (sec, utics, ltics, false);
+		Create<DStrobe> (sec, utics, ltics, false);
 	}
 }
 
@@ -826,7 +832,7 @@ void EV_StartLightGlowing (int tag, int upper, int lower, int tics)
 		if (sec->lightingdata)
 			continue;
 		
-		new DGlow2 (sec, upper, lower, tics, false);
+		Create<DGlow2> (sec, upper, lower, tics, false);
 	}
 }
 
@@ -856,7 +862,7 @@ void EV_StartLightFading (int tag, int value, int tics)
 			if (sec->lightlevel == value)
 				continue;
 
-			new DGlow2 (sec, sec->lightlevel, value, tics, true);
+			Create<DGlow2> (sec, sec->lightlevel, value, tics, true);
 		}
 	}
 }
@@ -930,7 +936,7 @@ int DPhased::PhaseHelper (sector_t *sector, int index, int light, sector_t *prev
 			m_BaseLevel = baselevel;
 		}
 		else
-			l = new DPhased (sector, baselevel);
+			l = Create<DPhased> (sector, baselevel);
 
 		int numsteps = PhaseHelper (sector->NextSpecialSector (
 				sector->special == LightSequenceSpecial1 ?
@@ -998,52 +1004,52 @@ void P_SpawnLights(sector_t *sector)
 	switch (sector->special)
 	{
 	case Light_Phased:
-		new DPhased(sector, 48, 63 - (sector->lightlevel & 63));
+		Create<DPhased>(sector, 48, 63 - (sector->lightlevel & 63));
 		break;
 
 		// [RH] Hexen-like phased lighting
 	case LightSequenceStart:
-		new DPhased(sector);
+		Create<DPhased>(sector);
 		break;
 
 	case dLight_Flicker:
-		new DLightFlash(sector);
+		Create<DLightFlash>(sector);
 		break;
 
 	case dLight_StrobeFast:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_StrobeSlow:
-		new DStrobe(sector, STROBEBRIGHT, SLOWDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, false);
 		break;
 
 	case dLight_Strobe_Hurt:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case dLight_Glow:
-		new DGlow(sector);
+		Create<DGlow>(sector);
 		break;
 
 	case dLight_StrobeSlowSync:
-		new DStrobe(sector, STROBEBRIGHT, SLOWDARK, true);
+		Create<DStrobe>(sector, STROBEBRIGHT, SLOWDARK, true);
 		break;
 
 	case dLight_StrobeFastSync:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, true);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, true);
 		break;
 
 	case dLight_FireFlicker:
-		new DFireFlicker(sector);
+		Create<DFireFlicker>(sector);
 		break;
 
 	case dScroll_EastLavaDamage:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	case sLight_Strobe_Hurt:
-		new DStrobe(sector, STROBEBRIGHT, FASTDARK, false);
+		Create<DStrobe>(sector, STROBEBRIGHT, FASTDARK, false);
 		break;
 
 	default:

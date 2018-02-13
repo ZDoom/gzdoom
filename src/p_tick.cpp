@@ -1,20 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Ticker.
@@ -37,6 +40,7 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "actorinlines.h"
 
 extern gamestate_t wipegamestate;
 
@@ -116,6 +120,15 @@ void P_Ticker (void)
 	P_ResetSightCounters (false);
 	R_ClearInterpolationPath();
 
+	// Reset all actor interpolations for all actors before the current thinking turn so that indirect actor movement gets properly interpolated.
+	TThinkerIterator<AActor> it;
+	AActor *ac;
+
+	while ((ac = it.Next()))
+	{
+		ac->ClearInterpolation();
+	}
+
 	// Since things will be moving, it's okay to interpolate them in the renderer.
 	r_NoInterpolate = false;
 
@@ -128,7 +141,7 @@ void P_Ticker (void)
 
 	// [ZZ] call the WorldTick hook
 	E_WorldTick();
-	StatusBar->Tick ();		// [RH] moved this here
+	StatusBar->CallTick ();		// [RH] moved this here
 	level.Tick ();			// [RH] let the level tick
 	DThinker::RunThinkers ();
 

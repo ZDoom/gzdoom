@@ -6,6 +6,7 @@ class TeleportFog : Actor
 		+NOBLOCKMAP
 		+NOTELEPORT
 		+NOGRAVITY
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 	States

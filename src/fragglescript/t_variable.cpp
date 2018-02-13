@@ -38,19 +38,6 @@
 //
 //---------------------------------------------------------------------------
 //
-// FraggleScript is from SMMU which is under the GPL. Technically, 
-// therefore, combining the FraggleScript code with the non-free 
-// ZDoom code is a violation of the GPL.
-//
-// As this may be a problem for you, I hereby grant an exception to my 
-// copyright on the SMMU source (including FraggleScript). You may use 
-// any code from SMMU in (G)ZDoom, provided that:
-//
-//    * For any binary release of the port, the source code is also made 
-//      available.
-//    * The copyright notice is kept on any file containing my code.
-//
-//
 
 #include "t_script.h"
 #include "a_pickups.h"
@@ -153,7 +140,7 @@ AActor* actorvalue(const svalue_t &svalue)
 	}
 	else
 	{
-		TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+		auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 		// this requires some creativity. We use the intvalue
 		// as the thing number of a thing in the level.
 		intval = intvalue(svalue);
@@ -334,7 +321,7 @@ void DFsVariable::Serialize(FSerializer & ar)
 
 DFsVariable *DFsScript::NewVariable(const char *name, int vtype)
 {
-	DFsVariable *newvar = new DFsVariable(name);
+	DFsVariable *newvar = Create<DFsVariable>(name);
 	newvar->type = vtype;
 	
 	int n = variable_hash(name);

@@ -1,24 +1,27 @@
 // Note: This must not be included by anything but dobject.h!
 #pragma once
 
-#ifndef __DOBJECT_H__
-#error You must #include "dobject.h" to get symbols.h
-#endif
-
 
 class VMFunction;
 class PType;
 class PPrototype;
 struct ZCC_TreeNode;
-class PStruct;
+class PContainerType;
 
 // Symbol information -------------------------------------------------------
 
-class PTypeBase : public DObject
+class PTypeBase
 {
-	DECLARE_ABSTRACT_CLASS(PTypeBase, DObject)
-
 public:
+	// Allocate everything on the global memory arena because all subtypes of this 
+	// will live until the end of the game.
+	void *operator new(size_t size)
+	{
+		return ClassDataAllocator.Alloc(size);
+	}
+
+	void operator delete(void *)
+	{}
 };
 
 class PSymbol : public DObject
@@ -26,6 +29,7 @@ class PSymbol : public DObject
 	DECLARE_ABSTRACT_CLASS(PSymbol, DObject);
 public:
 	FName SymbolName;
+	VersionInfo mVersion = { 0,0,0 };
 
 protected:
 	PSymbol(FName name) { SymbolName = name; }
@@ -76,6 +80,7 @@ class PField : public PSymbol
 	HAS_OBJECT_POINTERS
 public:
 	PField(FName name, PType *type, uint32_t flags = 0, size_t offset = 0, int bitvalue = 0);
+	VersionInfo GetVersion();
 
 	size_t Offset;
 	PType *Type;
@@ -173,15 +178,15 @@ public:
 		TArray<FName> ArgNames;		// we need the names to access them later when the function gets compiled.
 		uint32_t Flags;
 		int UseFlags;
-		PStruct *SelfClass;
+		PContainerType *SelfClass;
 	};
 	TArray<Variant> Variants;
-	PStruct *OwningClass = nullptr;
+	PContainerType *OwningClass = nullptr;
 
 	unsigned AddVariant(PPrototype *proto, TArray<uint32_t> &argflags, TArray<FName> &argnames, VMFunction *impl, int flags, int useflags);
 	int GetImplicitArgs();
 
-	PFunction(PStruct *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
+	PFunction(PContainerType *owner = nullptr, FName name = NAME_None) : PSymbol(name), OwningClass(owner) {}
 };
 
 // A symbol table -----------------------------------------------------------
@@ -213,6 +218,10 @@ struct PSymbolTable
 	// a symbol with the same name is already in the table. This symbol is
 	// not copied and will be freed when the symbol table is destroyed.
 	PSymbol *AddSymbol (PSymbol *sym);
+	PField *AddField(FName name, PType *type, uint32_t flags, unsigned &Size, unsigned *Align = nullptr);
+	PField *AddNativeField(FName name, PType *type, size_t address, uint32_t flags, int bitvalue);
+	bool ReadFields(FSerializer &ar, void *addr, const char *TypeName) const;
+	void WriteFields(FSerializer &ar, const void *addr, const void *def = nullptr) const;
 
 	// Similar to AddSymbol but always succeeds. Returns the symbol that used
 	// to be in the table with this name, if any.
@@ -243,15 +252,11 @@ private:
 
 class PNamespace : public PTypeBase
 {
-	DECLARE_CLASS(PNamespace, PTypeBase)
-	HAS_OBJECT_POINTERS;
-
 public:
 	PSymbolTable Symbols;
 	PNamespace *Parent;
 	int FileNum;	// This is for blocking DECORATE access to later files.
 
-	PNamespace() {}
 	PNamespace(int filenum, PNamespace *parent);
 };
 
@@ -262,11 +267,9 @@ struct FNamespaceManager
 
 	FNamespaceManager();
 	PNamespace *NewNamespace(int filenum);
-	size_t MarkSymbols();
 	void ReleaseSymbols();
 	int RemoveSymbols();
 };
 
 extern FNamespaceManager Namespaces;
-
-
+void RemoveUnusedSymbols();

@@ -52,7 +52,7 @@ class SDLGLFB : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SDLGLFB(void *hMonitor, int width, int height, int, int, bool fullscreen);
+	SDLGLFB(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
 	~SDLGLFB();
 
 	virtual bool Lock(bool buffered = true);
@@ -65,16 +65,17 @@ public:
 	int GetClientWidth();
 	int GetClientHeight();
 
+	virtual int GetTrueHeight() { return GetClientHeight(); }
 protected:
-	int                 m_lock;
-	bool                m_isUpdatePending;
+	int                 m_Lock;
+	bool                UpdatePending;
 
 	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
 	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
 	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
 
 	bool				m_supportsGamma;
-	WORD				m_originalGamma[GAMMA_TABLE_SIZE];
+	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
 
 	SDLGLFB();
 
@@ -83,7 +84,7 @@ protected:
 	bool CanUpdate();
 	void SwapBuffers();
 
-	void SetGammaTable(WORD* table);
+	void SetGammaTable(uint16_t* table);
 	void ResetGammaTable();
 };
 

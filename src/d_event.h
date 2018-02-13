@@ -1,22 +1,22 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// DESCRIPTION:
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
 //
-//	  
 //-----------------------------------------------------------------------------
 
 
@@ -45,17 +45,17 @@ enum EGenericEvent
 // Event structure.
 struct event_t
 {
-	BYTE		type;
-	BYTE		subtype;
-	SWORD 		data1;		// keys / mouse/joystick buttons
-	SWORD		data2;
-	SWORD		data3;
+	uint8_t		type;
+	uint8_t		subtype;
+	int16_t 		data1;		// keys / mouse/joystick buttons
+	int16_t		data2;
+	int16_t		data3;
 	int 		x;			// mouse/joystick x move
 	int 		y;			// mouse/joystick y move
 };
 
  
-typedef enum
+enum gameaction_t : int
 {
 	ga_nothing,
 	ga_loadlevel,
@@ -75,7 +75,7 @@ typedef enum
 	ga_screenshot,
 	ga_togglemap,
 	ga_fullconsole,
-} gameaction_t;
+};
 
 
 

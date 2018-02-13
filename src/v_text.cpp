@@ -47,8 +47,81 @@
 #include "doomstat.h"
 #include "templates.h"
 #include "gstrings.h"
+#include "vm.h"
 
 int ListGetInt(VMVa_List &tags);
+
+//==========================================================================
+//
+// reads one character from the string.
+// This can handle both ISO 8859-1 and UTF-8, as well as mixed strings
+// between both encodings, which may happen if inconsistent encoding is 
+// used between different files in a mod.
+//
+//==========================================================================
+
+int GetCharFromString(const uint8_t *&string)
+{
+	int z, y, x;
+
+	z = *string++;
+
+	if (z < 192)
+	{
+		return z;
+	}
+	else if (z <= 223)
+	{
+		y = *string++;
+		if (y < 128 || y >= 192)
+		{
+			// not an UTF-8 sequence so return the first byte unchanged
+			string--;
+		}
+		else
+		{
+			z = (z - 192) * 64 + (y - 128);
+		}
+	}
+	else if (z >= 224 && z <= 239)
+	{
+		y = *string++;
+		if (y < 128 || y >= 192)
+		{
+			// not an UTF-8 sequence so return the first byte unchanged
+			string--;
+		}
+		else
+		{
+			x = *string++;
+			if (x < 128 || x >= 192)
+			{
+				// not an UTF-8 sequence so return the first byte unchanged
+				string -= 2;
+			}
+			else
+			{
+				z = (z - 224) * 4096 + (y - 128) * 64 + (x - 128);
+			}
+		}
+	}
+	else if (z >= 240)
+	{
+		y = *string++;
+		if (y < 128 || y >= 192)
+		{
+			// not an UTF-8 sequence so return the first byte unchanged
+			string--;
+		}
+		else
+		{
+			// we do not support 4-Byte UTF-8 here
+			string += 2;
+			return '?';
+		}
+	}
+	return z;
+}
 
 //==========================================================================
 //
@@ -80,7 +153,9 @@ void DCanvas::DrawChar (FFont *font, int normalcolor, double x, double y, int ch
 		{
 			return;
 		}
-		parms.remap = font->GetColorTranslation((EColorRange)normalcolor);
+		PalEntry color = 0xffffffff;
+		parms.remap = font->GetColorTranslation((EColorRange)normalcolor, &color);
+		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		DrawTextureParms(pic, parms);
 	}
 }
@@ -102,7 +177,9 @@ void DCanvas::DrawChar(FFont *font, int normalcolor, double x, double y, int cha
 		uint32_t tag = ListGetInt(args);
 		bool res = ParseDrawTextureTags(pic, x, y, tag, args, &parms, false);
 		if (!res) return;
-		parms.remap = font->GetColorTranslation((EColorRange)normalcolor);
+		PalEntry color = 0xffffffff;
+		parms.remap = font->GetColorTranslation((EColorRange)normalcolor, &color);
+		parms.color = PalEntry((color.a * parms.color.a) / 255, (color.r * parms.color.r) / 255, (color.g * parms.color.g) / 255, (color.b * parms.color.b) / 255);
 		DrawTextureParms(pic, parms);
 	}
 }
@@ -116,6 +193,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawChar)
 	PARAM_FLOAT(y);
 	PARAM_INT(chr);
 
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	VMVa_List args = { param + 5, 0, numparam - 5 };
 	screen->DrawChar(font, cr, x, y, chr, args);
 	return 0;
@@ -132,7 +210,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawChar)
 void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms)
 {
 	int 		w;
-	const BYTE *ch;
+	const uint8_t *ch;
 	int 		c;
 	double 		cx;
 	double 		cy;
@@ -150,18 +228,21 @@ void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, c
 		normalcolor = CR_UNTRANSLATED;
 	boldcolor = normalcolor ? normalcolor - 1 : NumTextColors - 1;
 
-	range = font->GetColorTranslation((EColorRange)normalcolor);
+	PalEntry colorparm = parms.color;
+	PalEntry color = 0xffffffff;
+	range = font->GetColorTranslation((EColorRange)normalcolor, &color);
+	parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 
 	kerning = font->GetDefaultKerning();
 
-	ch = (const BYTE *)string;
+	ch = (const uint8_t *)string;
 	cx = x;
 	cy = y;
 
 
 	while ((const char *)ch - string < parms.maxstrlen)
 	{
-		c = *ch++;
+		c = GetCharFromString(ch);
 		if (!c)
 			break;
 
@@ -170,7 +251,8 @@ void DCanvas::DrawTextCommon(FFont *font, int normalcolor, double x, double y, c
 			EColorRange newcolor = V_ParseFontColor(ch, normalcolor, boldcolor);
 			if (newcolor != CR_UNDEFINED)
 			{
-				range = font->GetColorTranslation(newcolor);
+				range = font->GetColorTranslation(newcolor, &color);
+				parms.color = PalEntry(colorparm.a, (color.r * colorparm.r) / 255, (color.g * colorparm.g) / 255, (color.b * colorparm.b) / 255);
 			}
 			continue;
 		}
@@ -241,6 +323,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawText)
 	PARAM_FLOAT(y);
 	PARAM_STRING(chr);
 
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
 	VMVa_List args = { param + 5, 0, numparam - 5 };
 	const char *txt = chr[0] == '$' ? GStrings(&chr[1]) : chr.GetChars();
 	screen->DrawText(font, cr, x, y, txt, args);
@@ -254,7 +337,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawText)
 //
 //==========================================================================
 
-static void breakit (FBrokenLines *line, FFont *font, const BYTE *start, const BYTE *stop, FString &linecolor)
+static void breakit (FBrokenLines *line, FFont *font, const uint8_t *start, const uint8_t *stop, FString &linecolor)
 {
 	if (!linecolor.IsEmpty())
 	{
@@ -265,11 +348,11 @@ static void breakit (FBrokenLines *line, FFont *font, const BYTE *start, const B
 	line->Width = font->StringWidth (line->Text);
 }
 
-FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string, bool preservecolor, unsigned int *count)
+FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const uint8_t *string, bool preservecolor, unsigned int *count)
 {
 	TArray<FBrokenLines> Lines(128);
 
-	const BYTE *space = NULL, *start = string;
+	const uint8_t *space = NULL, *start = string;
 	int c, w, nw;
 	FString lastcolor, linecolor;
 	bool lastWasSpace = false;
@@ -277,7 +360,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string, bool 
 
 	w = 0;
 
-	while ( (c = *string++) )
+	while ( (c = GetCharFromString(string)) )
 	{
 		if (c == TEXTCOLOR_ESCAPE)
 		{
@@ -285,7 +368,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string, bool 
 			{
 				if (*string == '[')
 				{
-					const BYTE *start = string;
+					const uint8_t *start = string;
 					while (*string != ']' && *string != '\0')
 					{
 						string++;
@@ -355,7 +438,7 @@ FBrokenLines *V_BreakLines (FFont *font, int maxwidth, const BYTE *string, bool 
 	// String here is pointing one character after the '\0'
 	if (--string - start >= 1)
 	{
-		const BYTE *s = start;
+		const uint8_t *s = start;
 
 		while (s < string)
 		{
@@ -443,5 +526,5 @@ DEFINE_ACTION_FUNCTION(FFont, BreakLines)
 
 	unsigned int count;
 	FBrokenLines *broken = V_BreakLines(self, maxwidth, text, true, &count);
-	ACTION_RETURN_OBJECT(new DBrokenLines(broken, count));
+	ACTION_RETURN_OBJECT(Create<DBrokenLines>(broken, count));
 }

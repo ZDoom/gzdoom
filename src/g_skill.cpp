@@ -44,6 +44,7 @@
 #include "m_fixed.h"
 #include "gstrings.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 TArray<FSkillInfo> AllSkills;
 int DefaultSkill = -1;
@@ -60,12 +61,14 @@ void FMapInfoParser::ParseSkill ()
 	bool thisisdefault = false;
 	bool acsreturnisset = false;
 
+	skill.NoMenu = false;
 	skill.AmmoFactor = 1.;
 	skill.DoubleAmmoFactor = 2.;
 	skill.DropAmmoFactor = -1.;
 	skill.DamageFactor = 1.;
 	skill.ArmorFactor = 1.;
 	skill.HealthFactor = 1.;
+	skill.KickbackFactor = 1.;
 	skill.FastMonsters = false;
 	skill.SlowMonsters = false;
 	skill.DisableCheats = false;
@@ -86,6 +89,7 @@ void FMapInfoParser::ParseSkill ()
 	skill.FriendlyHealth = 1.;
 	skill.NoPain = false;
 	skill.Infighting = 0;
+	skill.PlayerRespawn = false;
 
 	sc.MustGetString();
 	skill.Name = sc.String;
@@ -118,6 +122,12 @@ void FMapInfoParser::ParseSkill ()
 			sc.MustGetFloat ();
 			skill.DamageFactor = sc.Float;
 		}
+		else if (sc.Compare("kickbackfactor"))
+		{
+			ParseAssign();
+			sc.MustGetFloat();
+			skill.KickbackFactor = sc.Float;
+		}
 		else if (sc.Compare ("fastmonsters"))
 		{
 			skill.FastMonsters = true;
@@ -141,6 +151,14 @@ void FMapInfoParser::ParseSkill ()
 		else if (sc.Compare("autousehealth"))
 		{
 			skill.AutoUseHealth = true;
+		}
+		else if (sc.Compare("nomenu"))
+		{
+			skill.NoMenu = true;
+		}
+		else if (sc.Compare ("playerrespawn"))
+		{
+			skill.PlayerRespawn = true;
 		}
 		else if (sc.Compare("respawntime"))
 		{
@@ -384,6 +402,9 @@ int G_SkillProperty(ESkillProperty prop)
 			if (AllSkills[gameskill].Infighting == LEVEL2_TOTALINFIGHTING) return 1;
 			if (AllSkills[gameskill].Infighting == LEVEL2_NOINFIGHTING) return -1;
 			return infighting;
+
+		case SKILLP_PlayerRespawn:
+			return AllSkills[gameskill].PlayerRespawn;
 		}
 	}
 	return 0;
@@ -436,6 +457,9 @@ double G_SkillProperty(EFSkillProperty prop)
 		case SKILLP_FriendlyHealth:
 			return AllSkills[gameskill].FriendlyHealth;
 
+		case SKILLP_KickbackFactor:
+			return AllSkills[gameskill].KickbackFactor;
+
 		}
 	}
 	return 0;
@@ -461,7 +485,7 @@ const char * G_SkillName()
 	const char *name = AllSkills[gameskill].MenuName;
 
 	player_t *player = &players[consoleplayer];
-	const char *playerclass = player->mo->GetClass()->DisplayName;
+	const char *playerclass = player->mo->GetInfo()->DisplayName;
 
 	if (playerclass != NULL)
 	{
@@ -473,6 +497,11 @@ const char * G_SkillName()
 	return name;
 }
 
+DEFINE_ACTION_FUNCTION(DObject, G_SkillName)
+{
+	PARAM_PROLOGUE;
+	ACTION_RETURN_STRING(G_SkillName());
+}
 
 //==========================================================================
 //
@@ -498,9 +527,11 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 {
 	Name = other.Name;
 	AmmoFactor = other.AmmoFactor;
+	NoMenu = other.NoMenu;
 	DoubleAmmoFactor = other.DoubleAmmoFactor;
 	DropAmmoFactor = other.DropAmmoFactor;
 	DamageFactor = other.DamageFactor;
+	KickbackFactor = other.KickbackFactor;
 	FastMonsters = other.FastMonsters;
 	SlowMonsters = other.SlowMonsters;
 	DisableCheats = other.DisableCheats;
@@ -527,6 +558,7 @@ FSkillInfo &FSkillInfo::operator=(const FSkillInfo &other)
 	Infighting = other.Infighting;
 	ArmorFactor = other.ArmorFactor;
 	HealthFactor = other.HealthFactor;
+	PlayerRespawn = other.PlayerRespawn;
 	return *this;
 }
 
@@ -542,7 +574,7 @@ int FSkillInfo::GetTextColor() const
 	{
 		return CR_UNTRANSLATED;
 	}
-	const BYTE *cp = (const BYTE *)TextColor.GetChars();
+	const uint8_t *cp = (const uint8_t *)TextColor.GetChars();
 	int color = V_ParseFontColor(cp, 0, 0);
 	if (color == CR_UNDEFINED)
 	{

@@ -45,6 +45,9 @@
 #include "d_event.h"
 #include "w_wad.h"
 #include "templates.h"
+#include "dobject.h"
+#include "vm.h"
+#include "i_time.h"
 
 #include <math.h>
 #include <stdlib.h>
@@ -157,8 +160,11 @@ FKeyBindings Bindings;
 FKeyBindings DoubleBindings;
 FKeyBindings AutomapBindings;
 
+DEFINE_GLOBAL(Bindings)
+DEFINE_GLOBAL(AutomapBindings)
+
 static unsigned int DClickTime[NUM_KEYS];
-static BYTE DClicked[(NUM_KEYS+7)/8];
+static uint8_t DClicked[(NUM_KEYS+7)/8];
 
 //=============================================================================
 //
@@ -476,7 +482,7 @@ DEFINE_ACTION_FUNCTION(FKeyBindings, GetKeysForCommand)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FKeyBindings);
 	PARAM_STRING(cmd);
-	int k1, k2, c;
+	int k1, k2;
 	self->GetKeysForCommand(cmd.GetChars(), &k1, &k2);
 	if (numret > 0) ret[0].SetInt(k1);
 	if (numret > 1) ret[1].SetInt(k2);
@@ -552,7 +558,7 @@ void C_UnbindAll ()
 	AutomapBindings.UnbindAll();
 }
 
-CCMD (unbindall)
+UNSAFE_CCMD (unbindall)
 {
 	C_UnbindAll ();
 }
@@ -724,7 +730,7 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	FString binding;
 	bool dclick;
 	int dclickspot;
-	BYTE dclickmask;
+	uint8_t dclickmask;
 	unsigned int nowtime;
 
 	if (ev->type != EV_KeyDown && ev->type != EV_KeyUp)
@@ -738,8 +744,8 @@ bool C_DoKey (event_t *ev, FKeyBindings *binds, FKeyBindings *doublebinds)
 	dclick = false;
 
 	// This used level.time which didn't work outside a level.
-	nowtime = I_MSTime();
-	if (doublebinds != NULL && DClickTime[ev->data1] > nowtime && ev->type == EV_KeyDown)
+	nowtime = (unsigned)I_msTime();
+	if (doublebinds != NULL && int(DClickTime[ev->data1] - nowtime) > 0 && ev->type == EV_KeyDown)
 	{
 		// Key pressed for a double click
 		binding = doublebinds->GetBinding(ev->data1);

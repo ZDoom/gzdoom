@@ -40,16 +40,15 @@
 //
 // MISC
 //
-class DArgs : public DObject
+class FArgs
 {
-	DECLARE_CLASS(DArgs, DObject)
 public:
-	DArgs();
-	DArgs(const DArgs &args);
-	DArgs(int argc, char **argv);
-	DArgs(int argc, FString *argv);
+	FArgs();
+	FArgs(const FArgs &args);
+	FArgs(int argc, char **argv);
+	FArgs(int argc, FString *argv);
 
-	DArgs &operator=(const DArgs &other);
+	FArgs &operator=(const FArgs &other);
 
 	void AppendArg(FString arg);
 	void AppendArgs(int argc, const FString *argv);
@@ -57,7 +56,7 @@ public:
 	void RemoveArgs(const char *check);
 	void SetArgs(int argc, char **argv);
 	void CollectFiles(const char *param, const char *extension);
-	DArgs *GatherFiles(const char *param) const;
+	FArgs *GatherFiles(const char *param) const;
 	void SetArg(int argnum, const char *arg);
 
 	int CheckParm(const char *check, int start=1) const;	// Returns the position of the given parameter in the arg list (0 if not found).
@@ -73,6 +72,6 @@ private:
 	TArray<FString> Argv;
 };
 
-extern DArgs *Args;
+extern FArgs *Args;
 
 #endif //__M_ARGV_H__

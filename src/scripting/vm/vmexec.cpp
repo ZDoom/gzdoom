@@ -40,12 +40,16 @@
 #include "textures/textures.h"
 #include "math/cmath.h"
 #include "stats.h"
+#include "vmintern.h"
+#include "types.h"
 
 extern cycle_t VMCycles[10];
 extern int VMCalls[10];
 
 // intentionally implemented in a different source file to prevent inlining.
+#if 0
 void ThrowVMException(VMException *x);
+#endif
 
 #define IMPLEMENT_VMEXEC
 
@@ -82,7 +86,6 @@ void ThrowVMException(VMException *x);
 #define ASSERTF(x)		assert((unsigned)(x) < f->NumRegF)
 #define ASSERTA(x)		assert((unsigned)(x) < f->NumRegA)
 #define ASSERTS(x)		assert((unsigned)(x) < f->NumRegS)
-#define ASSERTO(x)		assert((unsigned)(x) < f->NumRegA && reg.atag[x] == ATAG_OBJECT)
 
 #define ASSERTKD(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstD)
 #define ASSERTKF(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstF)
@@ -98,16 +101,8 @@ void ThrowVMException(VMException *x);
 	}
 
 #define GETADDR(a,o,x) \
-	if (a == NULL) { ThrowAbortException(x, nullptr); } \
+	if (a == NULL) { ThrowAbortException(x, nullptr); return 0; } \
 	ptr = (VM_SBYTE *)a + o
-
-static const VM_UWORD ZapTable[16] =
-{
-	0x00000000, 0x000000FF, 0x0000FF00, 0x0000FFFF,
-	0x00FF0000, 0x00FF00FF, 0x00FFFF00, 0x00FFFFFF,
-	0xFF000000, 0xFF0000FF, 0xFF00FF00, 0xFF00FFFF,
-	0xFFFF0000, 0xFFFF00FF, 0xFFFFFF00, 0xFFFFFFFF
-};
 
 #ifdef NDEBUG
 #define WAS_NDEBUG 1
@@ -201,7 +196,7 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 	VMScriptFunction *calleefunc = static_cast<VMScriptFunction *>(callee->Func);
 	const VMRegisters calleereg(callee);
 
-	assert(calleefunc != NULL && !calleefunc->Native);
+	assert(calleefunc != NULL && !(calleefunc->VarFlags & VARF_Native));
 	assert(numparam == calleefunc->NumArgs || ((int)calleefunc->DefaultArgs.Size() == calleefunc->NumArgs));
 	assert(REGT_INT == 0 && REGT_FLOAT == 1 && REGT_STRING == 2 && REGT_POINTER == 3);
 
@@ -228,10 +223,29 @@ void VMFillParams(VMValue *params, VMFrame *callee, int numparam)
 		else
 		{
 			assert(p.Type == REGT_POINTER);
-			calleereg.a[rega] = p.a;
-			calleereg.atag[rega++] = p.atag;
+			calleereg.a[rega++] = p.a;
 		}
 	}
 }
 
 
+#ifndef NDEBUG
+bool AssertObject(void * ob)
+{
+	auto obj = (DObject*)ob;
+	if (obj == nullptr) return true;
+#ifdef _MSC_VER
+	__try
+	{
+		return obj->MagicID == DObject::MAGIC_ID;
+	}
+	__except (1)
+	{
+		return false;
+	}
+#else
+	// No SEH on non-Microsoft compilers. :(
+	return obj->MagicID == DObject::MAGIC_ID;
+#endif
+}
+#endif

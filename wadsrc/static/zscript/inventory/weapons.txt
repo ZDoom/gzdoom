@@ -33,8 +33,31 @@ class Weapon : StateProvider native
 	native float FOVScale;
 	native int Crosshair;							// 0 to use player's crosshair
 	native bool GivenAsMorphWeapon;
-	native bool bAltFire;							// Set when self weapon's alternate fire is used.
+	native bool bAltFire;							// Set when this weapon's alternate fire is used.
 	native readonly bool bDehAmmo;
+	native readonly int SlotNumber;
+	
+	property AmmoGive: AmmoGive1;
+	property AmmoGive1: AmmoGive1;
+	property AmmoGive2: AmmoGive2;
+	property AmmoUse: AmmoUse1;
+	property AmmoUse1: AmmoUse1;
+	property AmmoUse2: AmmoUse2;
+	property AmmoType: AmmoType1;
+	property AmmoType1: AmmoType1;
+	property AmmoType2: AmmoType2;
+	property Kickback: Kickback;
+	property ReadySound: ReadySound;
+	property SelectionOrder: SelectionOrder;
+	property MinSelectionAmmo1: MinSelAmmo1;
+	property MinSelectionAmmo2: MinSelAmmo2;
+	property SisterWeapon: SisterWeaponType;
+	property UpSound: UpSound;
+	property YAdjust: YAdjust;
+	property BobSpeed: BobSpeed;
+	property BobRangeX: BobRangeX;
+	property BobRangeY: BobRangeY;
+	property SlotNumber: SlotNumber;
 
 	Default
 	{
@@ -55,8 +78,8 @@ class Weapon : StateProvider native
 		Stop;
 	}
 	
-	native bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
-	native bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
+	native virtual bool CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo = false, int ammocount = -1);
+	native virtual bool DepleteAmmo(bool altFire, bool checkEnough = true, int ammouse = -1);
 	
 	virtual State GetReadyState ()
 	{
@@ -89,6 +112,12 @@ class Weapon : StateProvider native
 		return s;
 	}
 	
+	override String GetObituary(Actor victim, Actor inflictor, Name mod, bool playerattack)
+	{
+		// Weapons may never return HitObituary by default. Override this if it is needed.
+		return Obituary;
+	}
+	
 	action void A_GunFlash(statelabel flashlabel = null, int flags = 0)
 	{
 		let player = player;
@@ -101,18 +130,26 @@ class Weapon : StateProvider native
 		{
 			player.mo.PlayAttacking2 ();
 		}
+
+		Weapon weapon = player.ReadyWeapon;
+		state flashstate = null;
+
 		if (flashlabel == null)
 		{
-			if (player.ReadyWeapon.bAltFire)
+			if (weapon.bAltFire)
 			{
-				flashlabel = 'AltFlash';
+				flashstate = weapon.FindState('AltFlash');
 			}
-			if (flashlabel == null)
+			if (flashstate == null)
 			{
-				flashlabel = 'Flash';
+				flashstate = weapon.FindState('Flash');
 			}
 		}
-		player.SetPsprite(PSP_FLASH, player.ReadyWeapon.FindState(flashlabel));
+		else
+		{
+			flashstate = weapon.FindState(flashlabel);
+		}
+		player.SetPsprite(PSP_FLASH, flashstate);
 	}
 	
 	//---------------------------------------------------------------------------
@@ -435,7 +472,7 @@ class Weapon : StateProvider native
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amt)
 	{
 		// Only drop the weapon that is meant to be placed in a level. That is,
 		// only drop the weapon that normally gives you ammo.
@@ -443,9 +480,9 @@ class Weapon : StateProvider native
 			Default.AmmoGive1 == 0 && Default.AmmoGive2 == 0 &&
 			(SisterWeapon.Default.AmmoGive1 > 0 || SisterWeapon.Default.AmmoGive2 > 0))
 		{
-			return SisterWeapon.CreateTossable ();
+			return SisterWeapon.CreateTossable (amt);
 		}
-		let copy = Weapon(Super.CreateTossable ());
+		let copy = Weapon(Super.CreateTossable (-1));
 
 		if (copy != NULL)
 		{

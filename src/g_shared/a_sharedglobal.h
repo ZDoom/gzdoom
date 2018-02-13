@@ -11,6 +11,7 @@ struct F3DFloor;
 class DBaseDecal;
 
 class DBaseDecal *ShootDecal(const FDecalTemplate *tpl, AActor *basisactor, sector_t *sec, double x, double y, double z, DAngle angle, double tracedist, bool permanent);
+void SprayDecal(AActor *shooter, const char *name,double distance = 172.);
 
 class DBaseDecal : public DThinker
 {
@@ -27,7 +28,7 @@ public:
 	void OnDestroy() override;
 	FTextureID StickToWall(side_t *wall, double x, double y, F3DFloor * ffloor);
 	double GetRealZ (const side_t *wall) const;
-	void SetShade (DWORD rgb);
+	void SetShade (uint32_t rgb);
 	void SetShade (int r, int g, int b);
 	void Spread (const FDecalTemplate *tpl, side_t *wall, double x, double y, double z, F3DFloor * ffloor);
 	void GetXY (side_t *side, double &x, double &y) const;
@@ -38,10 +39,10 @@ public:
 	double Z;
 	double ScaleX, ScaleY;
 	double Alpha;
-	DWORD AlphaColor;
+	uint32_t AlphaColor;
 	int Translation;
 	FTextureID PicNum;
-	DWORD RenderFlags;
+	uint32_t RenderFlags;
 	FRenderStyle RenderStyle;
 	side_t *Side;
 	sector_t *Sector;
@@ -83,19 +84,20 @@ class DFlashFader : public DThinker
 public:
 	DFlashFader (float r1, float g1, float b1, float a1,
 				 float r2, float g2, float b2, float a2,
-				 float time, AActor *who);
+				 float time, AActor *who, bool terminate = false);
 	void OnDestroy() override;
 	void Serialize(FSerializer &arc);
 	void Tick ();
 	AActor *WhoFor() { return ForWho; }
 	void Cancel ();
+	
 
 protected:
 	float Blends[2][4];
 	int TotalTics;
 	int StartTic;
-	TObjPtr<AActor> ForWho;
-
+	TObjPtr<AActor*> ForWho;
+	bool Terminate;
 	void SetBlend (float time);
 	DFlashFader ();
 };
@@ -130,7 +132,7 @@ public:
 
 	void Serialize(FSerializer &arc);
 	void Tick ();
-	TObjPtr<AActor> m_Spot;
+	TObjPtr<AActor*> m_Spot;
 	double m_TremorRadius, m_DamageRadius;
 	int m_Countdown;
 	int m_CountdownStart;
@@ -163,7 +165,7 @@ public:
 	void Die (AActor *source, AActor *inflictor, int dmgflags);
 	void OnDestroy() override;
 
-	TObjPtr<AActor> UnmorphedMe;
+	TObjPtr<AActor*> UnmorphedMe;
 	int UnmorphTime, MorphStyle;
 	PClassActor *MorphExitFlash;
 	ActorFlags FlagsSave;

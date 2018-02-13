@@ -3,50 +3,23 @@
 
 #include <stdint.h>
 
-typedef int8_t					SBYTE;
-typedef uint8_t					BYTE;
-typedef int16_t					SWORD;
-typedef uint16_t				WORD;
-typedef int32_t					SDWORD;
-typedef uint32_t				uint32;
-typedef int64_t					SQWORD;
-typedef uint64_t				QWORD;
-
-// windef.h, included by windows.h, has its own incompatible definition
-// of DWORD as a long. In files that mix Doom and Windows code, you
-// must define USE_WINDOWS_DWORD before including doomtype.h so that
-// you are aware that those files have a different DWORD than the rest
-// of the source.
-
-#ifndef USE_WINDOWS_DWORD
-typedef uint32					DWORD;
-#endif
-typedef uint32					BITFIELD;
+typedef uint32_t				BITFIELD;
 typedef int						INTBOOL;
-
-// a 64-bit constant
-#ifdef __GNUC__
-#define CONST64(v) (v##LL)
-#define UCONST64(v) (v##ULL)
-#else
-#define CONST64(v) ((SQWORD)(v))
-#define UCONST64(v) ((QWORD)(v))
-#endif
 
 #if !defined(GUID_DEFINED)
 #define GUID_DEFINED
 typedef struct _GUID
 {
-    DWORD	Data1;
-    WORD	Data2;
-    WORD	Data3;
-    BYTE	Data4[8];
+    uint32_t Data1;
+    uint16_t Data2;
+	uint16_t Data3;
+    uint8_t	Data4[8];
 } GUID;
 #endif
 
 union QWORD_UNION
 {
-	QWORD AsOne;
+	uint64_t AsOne;
 	struct
 	{
 #ifdef __BIG_ENDIAN__
@@ -63,14 +36,13 @@ union QWORD_UNION
 #define FRACBITS						16
 #define FRACUNIT						(1<<FRACBITS)
 
-typedef SDWORD							fixed_t;
-typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
+typedef int32_t							fixed_t;
 
 #define FIXED_MAX						(signed)(0x7fffffff)
 #define FIXED_MIN						(signed)(0x80000000)
 
-#define DWORD_MIN						((uint32)0)
-#define DWORD_MAX						((uint32)0xffffffff)
+#define DWORD_MIN						((uint32_t)0)
+#define DWORD_MAX						((uint32_t)0xffffffff)
 
 // the last remnants of tables.h
 #define ANGLE_90		(0x40000000)
@@ -78,7 +50,7 @@ typedef DWORD							dsfixed_t;				// fixedpt used by span drawer
 #define ANGLE_270		(0xc0000000)
 #define ANGLE_MAX		(0xffffffff)
 
-typedef uint32			angle_t;
+typedef uint32_t			angle_t;
 
 
 #ifdef __GNUC__

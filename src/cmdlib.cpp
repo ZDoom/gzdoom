@@ -1,3 +1,25 @@
+//-----------------------------------------------------------------------------
+//
+// Copyright 1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
+
 // cmdlib.c (mostly borrowed from the Q2 source)
 
 #ifdef _WIN32
@@ -95,23 +117,6 @@ char *copystring (const char *s)
 	return b;
 }
 
-//============================================================================
-//
-// ncopystring
-//
-// If the string has no content, returns NULL. Otherwise, returns a copy.
-//
-//============================================================================
-
-char *ncopystring (const char *string)
-{
-	if (string == NULL || string[0] == 0)
-	{
-		return NULL;
-	}
-	return copystring (string);
-}
-
 //==========================================================================
 //
 // ReplaceString
@@ -142,26 +147,6 @@ void ReplaceString (char **ptr, const char *str)
 
 //==========================================================================
 //
-// Q_filelength
-//
-//==========================================================================
-
-int Q_filelength (FILE *f)
-{
-	int		pos;
-	int		end;
-
-	pos = ftell (f);
-	fseek (f, 0, SEEK_END);
-	end = ftell (f);
-	fseek (f, pos, SEEK_SET);
-
-	return end;
-}
-
-
-//==========================================================================
-//
 // FileExists
 //
 // Returns true if the given path exists and is a readable file.
@@ -170,13 +155,24 @@ int Q_filelength (FILE *f)
 
 bool FileExists (const char *filename)
 {
-	struct stat buff;
+	bool isdir;
+	bool res = DirEntryExists(filename, &isdir);
+	return res && !isdir;
+}
 
-	// [RH] Empty filenames are never there
-	if (filename == NULL || *filename == 0)
-		return false;
+//==========================================================================
+//
+// DirExists
+//
+// Returns true if the given path exists and is a directory.
+//
+//==========================================================================
 
-	return stat(filename, &buff) == 0 && !(buff.st_mode & S_IFDIR);
+bool DirExists(const char *filename)
+{
+	bool isdir;
+	bool res = DirEntryExists(filename, &isdir);
+	return res && isdir;
 }
 
 //==========================================================================
@@ -187,13 +183,16 @@ bool FileExists (const char *filename)
 //
 //==========================================================================
 
-bool DirEntryExists(const char *pathname)
+bool DirEntryExists(const char *pathname, bool *isdir)
 {
+	if (isdir) *isdir = false;
 	if (pathname == NULL || *pathname == 0)
 		return false;
 
 	struct stat info;
-	return stat(pathname, &info) == 0;
+	bool res = stat(pathname, &info) == 0;
+	if (isdir) *isdir = !!(info.st_mode & S_IFDIR);
+	return res;
 }
 
 //==========================================================================
@@ -429,7 +428,7 @@ bool CheckWildcards (const char *pattern, const char *text)
 void FormatGUID (char *buffer, size_t buffsize, const GUID &guid)
 {
 	mysnprintf (buffer, buffsize, "{%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
-		(uint32)guid.Data1, guid.Data2, guid.Data3,
+		(uint32_t)guid.Data1, guid.Data2, guid.Data3,
 		guid.Data4[0], guid.Data4[1],
 		guid.Data4[2], guid.Data4[3],
 		guid.Data4[4], guid.Data4[5],
@@ -472,16 +471,45 @@ const char *myasctime ()
 void DoCreatePath(const char *fn)
 {
 	char drive[_MAX_DRIVE];
-	char path[PATH_MAX];
-	char p[PATH_MAX];
-	int i;
+	char dir[_MAX_DIR];
+	_splitpath_s(fn, drive, sizeof drive, dir, sizeof dir, nullptr, 0, nullptr, 0);
 
-	_splitpath(fn,drive,path,NULL,NULL);
-	_makepath(p,drive,path,NULL,NULL);
-	i=(int)strlen(p);
-	if (p[i-1]=='/' || p[i-1]=='\\') p[i-1]=0;
-	if (*path) DoCreatePath(p);
-	_mkdir(p);
+	if ('\0' == *dir)
+	{
+		// Root/current/parent directory always exists
+		return;
+	}
+
+	char path[PATH_MAX];
+	_makepath_s(path, sizeof path, drive, dir, nullptr, nullptr);
+
+	if ('\0' == *path)
+	{
+		// No need to process empty relative path
+		return;
+	}
+
+	// Remove trailing path separator(s)
+	for (size_t i = strlen(path); 0 != i; --i)
+	{
+		char& lastchar = path[i - 1];
+
+		if ('/' == lastchar || '\\' == lastchar)
+		{
+			lastchar = '\0';
+		}
+		else
+		{
+			break;
+		}
+	}
+
+	// Create all directories for given path
+	if ('\0' != *path)
+	{
+		DoCreatePath(path);
+		_mkdir(path);
+	}
 }
 
 void CreatePath(const char *fn)
@@ -516,18 +544,13 @@ void CreatePath(const char *fn)
 		{
 			*p = '\0';
 		}
-		struct stat info;
-		if (stat(copy, &info) == 0)
+		if (!DirEntryExists(copy) && mkdir(copy, 0755) == -1)
 		{
-			if (info.st_mode & S_IFDIR)
-				goto exists;
-		}
-		if (mkdir(copy, 0755) == -1)
-		{ // failed
+			// failed
 			free(copy);
 			return;
 		}
-exists:	if (p != NULL)
+		if (p != NULL)
 		{
 			*p = '/';
 		}
@@ -613,7 +636,7 @@ int strbin (char *str)
 				case '5':
 				case '6':
 				case '7':
-					c = 0;
+					c = *p - '0';
 					for (i = 0; i < 2; i++)
 					{
 						p++;
@@ -716,7 +739,7 @@ FString strbin1 (const char *start)
 				case '5':
 				case '6':
 				case '7':
-					c = 0;
+					c = *p - '0';
 					for (i = 0; i < 2; i++)
 					{
 						p++;
@@ -976,10 +999,7 @@ void ScanDirectory(TArray<FFileList> &list, const char *dirpath)
 		FFileList *fl = &list[list.Reserve(1)];
 		fl->Filename << dirpath << file->d_name;
 
-		struct stat fileStat;
-		stat(fl->Filename, &fileStat);
-		fl->isDirectory = S_ISDIR(fileStat.st_mode);
-
+		fl->isDirectory = DirExists(fl->Filename);
 		if(fl->isDirectory)
 		{
 			FString newdir = fl->Filename;

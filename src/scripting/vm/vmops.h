@@ -23,7 +23,8 @@ xx(LKF_R,	lk,		RFRII8,		NOP,	0, 0),		// load float constant indexed
 xx(LKS_R,	lk,		RSRII8,		NOP,	0, 0),		// load string constant indexed
 xx(LKP_R,	lk,		RPRII8,		NOP,	0, 0),		// load pointer constant indexed
 xx(LFP,		lf,		LFP,		NOP,	0, 0),		// load frame pointer
-xx(META,	meta,	RPRP,		NOP,	0, 0),		// load a class's meta class address
+xx(META,	meta,	RPRP,		NOP,	0, 0),		// load a class's meta data address
+xx(CLSS,	clss,	RPRP,		NOP,	0, 0),		// load a class's descriptor address
 
 // Load from memory. rA = *(rB + rkC)
 xx(LB,		lb,		RIRPKI,		LB_R,	4, REGT_INT),	// load byte
@@ -44,14 +45,14 @@ xx(LS,		ls,		RSRPKI,		LS_R,	4, REGT_INT),	// load string
 xx(LS_R,	ls,		RSRPRI,		NOP,	0, 0),
 xx(LO,		lo,		RPRPKI,		LO_R,	4, REGT_INT),	// load object
 xx(LO_R,	lo,		RPRPRI,		NOP,	0, 0),
-xx(LOS,		los,	RPRPKI,		LOS_R,	4, REGT_INT),	// load object (stack version without read barrier)
-xx(LOS_R,	lo,		RPRPRI,		NOP,	0, 0),
 xx(LP,		lp,		RPRPKI,		LP_R,	4, REGT_INT),	// load pointer
 xx(LP_R,	lp,		RPRPRI,		NOP,	0, 0),
 xx(LV2,		lv2,	RVRPKI,		LV2_R,	4, REGT_INT),	// load vector2
 xx(LV2_R,	lv2,	RVRPRI,		NOP,	0, 0),
 xx(LV3,		lv3,	RVRPKI,		LV3_R,	4, REGT_INT),	// load vector3
 xx(LV3_R,	lv3,	RVRPRI,		NOP,	0, 0),
+xx(LCS,		lcs,	RSRPKI,		LCS_R,	4, REGT_INT),	// load string from char ptr.
+xx(LCS_R,	lcs,	RSRPRI,		NOP,	0, 0),
 
 xx(LBIT,	lbit,	RIRPI8,		NOP,	0, 0),	// rA = !!(*rB & C)  -- *rB is a byte
 
@@ -103,26 +104,27 @@ xx(PARAMI,	parami,	I24,		NOP,	0, 0),		// push immediate, signed integer for func
 xx(CALL,	call,	RPI8I8,		NOP,	0, 0),	// Call function pkA with parameter count B and expected result count C
 xx(CALL_K,	call,	KPI8I8,		CALL,	1, REGT_POINTER),
 xx(VTBL,	vtbl,	RPRPI8,		NOP,	0, 0),	// dereferences a virtual method table.
+xx(SCOPE,	scope,	RPI8,		NOP,	0, 0),		// Scope check at runtime.
 xx(TAIL,	tail,	RPI8,		NOP,	0, 0),		// Call+Ret in a single instruction
 xx(TAIL_K,	tail,	KPI8,		TAIL,	1, REGT_POINTER),
 xx(RESULT,	result,	__BCP,		NOP,	0, 0),		// Result should go in register encoded in BC (in caller, after CALL)
 xx(RET,		ret,	I8BCP,		NOP,	0, 0),		// Copy value from register encoded in BC to return value A, possibly returning
 xx(RETI,	reti,	I8I16,		NOP,	0, 0),		// Copy immediate from BC to return value A, possibly returning
-xx(NEW,		new,	RPRP,		NOP,	0, 0),
+xx(NEW,		new,	RPRPI8,		NOP,	0, 0),
 xx(NEW_K,	new,	RPKP,		NOP,	0, 0),
-xx(TRY,		try,	I24,		NOP,	0, 0),		// When an exception is thrown, start searching for a handler at pc + ABC
-xx(UNTRY,	untry,	I8,			NOP,	0, 0),		// Pop A entries off the exception stack
+//xx(TRY,		try,	I24,		NOP,	0, 0),		// When an exception is thrown, start searching for a handler at pc + ABC
+//xx(UNTRY,	untry,	I8,			NOP,	0, 0),		// Pop A entries off the exception stack
 xx(THROW,	throw,	THROW,		NOP,	0, 0),		// A == 0: Throw exception object pB
 												// A == 1: Throw exception object pkB
 												// A >= 2: Throw VM exception of type BC
-xx(CATCH,	catch,	CATCH,		NOP,	0, 0),		// A == 0: continue search on next try
+//xx(CATCH,	catch,	CATCH,		NOP,	0, 0),		// A == 0: continue search on next try
 												// A == 1: continue execution at instruction immediately following CATCH (catches any exception)
 												// A == 2: (pB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 												// A == 3: (pkB == <type of exception thrown>) then pc++ ; next instruction must JMP to another CATCH
 												// for A > 0, exception is stored in pC
-xx(BOUND,	bound,	RII16,		NOP,	0, 0),		// if rA >= BC, throw exception
-xx(BOUND_K,	bound,	LKI,		NOP,	0, 0),		// if rA >= const[BC], throw exception
-xx(BOUND_R,	bound,	RIRI,		NOP,	0, 0),		// if rA >= rB, throw exception
+xx(BOUND,	bound,	RII16,		NOP,	0, 0),		// if rA < 0 or rA >= BC, throw exception
+xx(BOUND_K,	bound,	LKI,		NOP,	0, 0),		// if rA < 0 or rA >= const[BC], throw exception
+xx(BOUND_R,	bound,	RIRI,		NOP,	0, 0),		// if rA < 0 or rA >= rB, throw exception
 
 // String instructions.
 xx(CONCAT,		concat,	RSRSRS,		NOP,	0, 0),		// sA = sB..sC
@@ -172,11 +174,6 @@ xx(MAX_RK,		max,	RIRIKI,		MAX_RR,	4, REGT_INT),
 xx(ABS,			abs,	RIRI,		NOP,	0, 0),			// dA = abs(dB)
 xx(NEG,			neg,	RIRI,		NOP,	0, 0),			// dA = -dB
 xx(NOT,			not,	RIRI,		NOP,	0, 0),			// dA = ~dB
-xx(SEXT,		sext,	RIRII8,		NOP,	0, 0),		// dA = dB, sign extended by shifting left then right by C
-xx(ZAP_R,		zap,	RIRIRI,		NOP,	0, 0),		// dA = dB, with bytes zeroed where bits in C/dC are one
-xx(ZAP_I,		zap,	RIRII8,		NOP,	0, 0),
-xx(ZAPNOT_R,	zapnot,	RIRIRI,		NOP,	0, 0),		// dA = dB, with bytes zeroed where bits in C/dC are zero
-xx(ZAPNOT_I,	zapnot,	RIRII8,		NOP,	0, 0),
 xx(EQ_R,		beq,	CIRR,		NOP,	0, 0),			// if ((dB == dkC) != A) then pc++
 xx(EQ_K,		beq,	CIRK,		EQ_R,	4, REGT_INT),
 xx(LT_RR,		blt,	CIRR,		NOP,	0, 0),			// if ((dkB < dkC) != A) then pc++
@@ -253,7 +250,7 @@ xx(EQV3_K,		beqv3,	CVRK,		NOP,	0, 0),			// this will never be used.
 
 // Pointer math.
 xx(ADDA_RR,		add,	RPRPRI,		NOP,	0, 0),		// pA = pB + dkC
-xx(ADDA_RK,		add,	RPRPKI,		ADDA_RR,4, REGT_POINTER),
+xx(ADDA_RK,		add,	RPRPKI,		ADDA_RR,4, REGT_INT),
 xx(SUBA,		sub,	RIRPRP,		NOP,	0, 0),		// dA = pB - pC
 xx(EQA_R,		beq,	CPRR,		NOP,	0, 0),			// if ((pB == pkC) != A) then pc++
 xx(EQA_K,		beq,	CPRK,		EQA_R,	4, REGT_POINTER),

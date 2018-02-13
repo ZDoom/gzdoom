@@ -79,7 +79,7 @@ class Coin : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amt)
 	{
 		Coin tossed;
 
@@ -87,17 +87,20 @@ class Coin : Inventory
 		{
 			return NULL;
 		}
-		if (Amount >= 50)
+		if (amt == -1) amt = Amount >= 50? 50 : Amount >= 25? 25 : Amount >= 10? 10 : 1;
+		else if (amt > Amount) amt = Amount;
+		if (amt > 25)
 		{
-			Amount -= 50;
+			Amount -= amt;
 			tossed = Coin(Spawn("Gold50"));
+			tossed.Amount = amt;
 		}
-		else if (Amount >= 25)
+		else if (amt > 10)
 		{
 			Amount -= 25;
 			tossed = Coin(Spawn("Gold25"));
 		}
-		else if (Amount >= 10)
+		else if (amt > 1)
 		{
 			Amount -= 10;
 			tossed = Coin(Spawn("Gold10"));

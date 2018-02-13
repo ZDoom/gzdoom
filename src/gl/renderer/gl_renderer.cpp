@@ -50,6 +50,7 @@
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_ambientshader.h"
 #include "gl/shaders/gl_bloomshader.h"
@@ -60,6 +61,8 @@
 #include "gl/shaders/gl_fxaashader.h"
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/shaders/gl_present3dRowshader.h"
+#include "gl/shaders/gl_shadowmapshader.h"
+#include "gl/shaders/gl_postprocessshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_translate.h"
@@ -69,6 +72,7 @@
 #include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
 
@@ -125,6 +129,8 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mSSAOCombineShader = nullptr;
 	mFXAAShader = nullptr;
 	mFXAALumaShader = nullptr;
+	mShadowMapShader = nullptr;
+	mCustomPostProcessShaders = nullptr;
 }
 
 void gl_LoadModels();
@@ -153,6 +159,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresent3dCheckerShader = new FPresent3DCheckerShader();
 	mPresent3dColumnShader = new FPresent3DColumnShader();
 	mPresent3dRowShader = new FPresent3DRowShader();
+	mShadowMapShader = new FShadowMapShader();
+	mCustomPostProcessShaders = new FCustomPostProcessShaders();
 	m2DDrawer = new F2DDrawer;
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
@@ -181,12 +189,16 @@ void FGLRenderer::Initialize(int width, int height)
 	mShaderManager = new FShaderManager;
 	mSamplerManager = new FSamplerManager;
 	gl_LoadModels();
+
+	GLPortal::Initialize();
 }
 
 FGLRenderer::~FGLRenderer() 
 {
+	GLPortal::Shutdown();
+
 	gl_FlushModels();
-	gl_DeleteAllAttachedLights();
+	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
 	if (m2DDrawer != nullptr) delete m2DDrawer;
 	if (mShaderManager != NULL) delete mShaderManager;
@@ -223,6 +235,8 @@ FGLRenderer::~FGLRenderer()
 	if (mTonemapPalette) delete mTonemapPalette;
 	if (mColormapShader) delete mColormapShader;
 	if (mLensShader) delete mLensShader;
+	if (mShadowMapShader) delete mShadowMapShader;
+	delete mCustomPostProcessShaders;
 	delete mFXAAShader;
 	delete mFXAALumaShader;
 }
@@ -268,9 +282,19 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	}
 	int screenWidth = framebuffer->GetWidth();
 	int screenHeight = framebuffer->GetHeight();
-	float scale = MIN(clientWidth / (float)screenWidth, clientHeight / (float)screenHeight);
-	mOutputLetterbox.width = (int)round(screenWidth * scale);
-	mOutputLetterbox.height = (int)round(screenHeight * scale);
+	float scaleX, scaleY;
+	if (ViewportIsScaled43())
+	{
+		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (screenHeight * 1.2f));
+		scaleY = scaleX * 1.2f;
+	}
+	else
+	{
+		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (float)screenHeight);
+		scaleY = scaleX;
+	}
+	mOutputLetterbox.width = (int)round(screenWidth * scaleX);
+	mOutputLetterbox.height = (int)round(screenHeight * scaleY);
 	mOutputLetterbox.left = (clientWidth - mOutputLetterbox.width) / 2;
 	mOutputLetterbox.top = (clientHeight - mOutputLetterbox.height) / 2;
 
@@ -287,14 +311,17 @@ void FGLRenderer::SetOutputViewport(GL_IRECT *bounds)
 	mSceneViewport.height = height;
 
 	// Scale viewports to fit letterbox
-	if ((gl_scale_viewport && !framebuffer->IsFullscreen()) || !FGLRenderBuffers::IsEnabled())
+	bool notScaled = ((mScreenViewport.width == ViewportScaledWidth(mScreenViewport.width, mScreenViewport.height)) &&
+		(mScreenViewport.width == ViewportScaledHeight(mScreenViewport.width, mScreenViewport.height)) &&
+		!ViewportIsScaled43());
+	if ((gl_scale_viewport && !framebuffer->IsFullscreen() && notScaled) || !FGLRenderBuffers::IsEnabled())
 	{
 		mScreenViewport.width = mOutputLetterbox.width;
 		mScreenViewport.height = mOutputLetterbox.height;
-		mSceneViewport.left = (int)round(mSceneViewport.left * scale);
-		mSceneViewport.top = (int)round(mSceneViewport.top * scale);
-		mSceneViewport.width = (int)round(mSceneViewport.width * scale);
-		mSceneViewport.height = (int)round(mSceneViewport.height * scale);
+		mSceneViewport.left = (int)round(mSceneViewport.left * scaleX);
+		mSceneViewport.top = (int)round(mSceneViewport.top * scaleY);
+		mSceneViewport.width = (int)round(mSceneViewport.width * scaleX);
+		mSceneViewport.height = (int)round(mSceneViewport.height * scaleY);
 
 		// Without render buffers we have to render directly to the letterbox
 		if (!FGLRenderBuffers::IsEnabled())
@@ -349,55 +376,6 @@ void FGLRenderer::Begin2D()
 	glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
 	gl_RenderState.EnableFog(false);
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * backsector)
-{
-	GLWall wall;
-	wall.ProcessLowerMiniseg(seg, frontsector, backsector);
-	rendered_lines++;
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::ProcessSprite(AActor *thing, sector_t *sector, bool thruportal)
-{
-	GLSprite glsprite;
-	glsprite.Process(thing, sector, thruportal);
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::ProcessParticle(particle_t *part, sector_t *sector)
-{
-	GLSprite glsprite;
-	glsprite.ProcessParticle(part, sector);//, 0, 0);
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::ProcessSector(sector_t *fakesector)
-{
-	GLFlat glflat;
-	glflat.ProcessSector(fakesector);
 }
 
 //===========================================================================

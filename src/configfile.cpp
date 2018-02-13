@@ -644,8 +644,12 @@ bool FConfigFile::ReadConfig (void *file)
 			continue;
 		}
 		// Do not process tail of long line
-		const bool longline = 255 == strlen(readbuf) && '\n' != readbuf[254];
-		if (!longline)
+		const bool longline = (READBUFFERSIZE - 1) == strlen(readbuf) && '\n' != readbuf[READBUFFERSIZE - 2];
+		if (longline)
+		{
+			endpt = start + READBUFFERSIZE - 2;
+		}
+		else
 		{
 			// Remove white space at end of line
 			endpt = start + strlen (start) - 1;
@@ -859,7 +863,7 @@ const char *FConfigFile::GenerateEndTag(const char *value)
 	// isn't in the value. We create the sequences by generating two
 	// 64-bit random numbers and Base64 encoding the first 15 bytes
 	// from them.
-	union { QWORD rand_num[2]; BYTE rand_bytes[16]; };
+	union { uint64_t rand_num[2]; uint8_t rand_bytes[16]; };
 	do
 	{
 		rand_num[0] = pr_endtag.GenRand64();
@@ -867,7 +871,7 @@ const char *FConfigFile::GenerateEndTag(const char *value)
 
 		for (int i = 0; i < 5; ++i)
 		{
-			//DWORD three_bytes = (rand_bytes[i*3] << 16) | (rand_bytes[i*3+1] << 8) | (rand_bytes[i*3+2]); // ???
+			//uint32_t three_bytes = (rand_bytes[i*3] << 16) | (rand_bytes[i*3+1] << 8) | (rand_bytes[i*3+2]); // ???
 			EndTag[4+i*4  ] = Base64Table[rand_bytes[i*3] >> 2];
 			EndTag[4+i*4+1] = Base64Table[((rand_bytes[i*3] & 3) << 4) | (rand_bytes[i*3+1] >> 4)];
 			EndTag[4+i*4+2] = Base64Table[((rand_bytes[i*3+1] & 15) << 2) | (rand_bytes[i*3+2] >> 6)];

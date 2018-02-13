@@ -123,23 +123,23 @@ bool FCompressedBuffer::Decompress(char *destbuffer)
 //
 //-----------------------------------------------------------------------
 
-static DWORD Zip_FindCentralDir(FileReader * fin)
+static uint32_t Zip_FindCentralDir(FileReader * fin)
 {
 	unsigned char buf[BUFREADCOMMENT + 4];
-	DWORD FileSize;
-	DWORD uBackRead;
-	DWORD uMaxBack; // maximum size of global comment
-	DWORD uPosFound=0;
+	uint32_t FileSize;
+	uint32_t uBackRead;
+	uint32_t uMaxBack; // maximum size of global comment
+	uint32_t uPosFound=0;
 
 	fin->Seek(0, SEEK_END);
 
 	FileSize = fin->Tell();
-	uMaxBack = MIN<DWORD>(0xffff, FileSize);
+	uMaxBack = MIN<uint32_t>(0xffff, FileSize);
 
 	uBackRead = 4;
 	while (uBackRead < uMaxBack)
 	{
-		DWORD uReadSize, uReadPos;
+		uint32_t uReadSize, uReadPos;
 		int i;
 		if (uBackRead + BUFREADCOMMENT > uMaxBack) 
 			uBackRead = uMaxBack;
@@ -147,11 +147,11 @@ static DWORD Zip_FindCentralDir(FileReader * fin)
 			uBackRead += BUFREADCOMMENT;
 		uReadPos = FileSize - uBackRead;
 
-		uReadSize = MIN<DWORD>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
+		uReadSize = MIN<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
 
 		if (fin->Seek(uReadPos, SEEK_SET) != 0) break;
 
-		if (fin->Read(buf, (SDWORD)uReadSize) != (SDWORD)uReadSize) break;
+		if (fin->Read(buf, (int32_t)uReadSize) != (int32_t)uReadSize) break;
 
 		for (i = (int)uReadSize - 3; (i--) > 0;)
 		{
@@ -182,7 +182,7 @@ FZipFile::FZipFile(const char * filename, FileReader *file)
 
 bool FZipFile::Open(bool quiet)
 {
-	DWORD centraldir = Zip_FindCentralDir(Reader);
+	uint32_t centraldir = Zip_FindCentralDir(Reader);
 	FZipEndOfCentralDirectory info;
 	int skipped = 0;
 
@@ -217,12 +217,88 @@ bool FZipFile::Open(bool quiet)
 
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
-	for (DWORD i = 0; i < NumLumps; i++)
+
+	FString name0;
+	bool foundspeciallump = false;
+
+	// Check if all files have the same prefix so that this can be stripped out.
+	// This will only be done if there is either a MAPINFO, ZMAPINFO or GAMEINFO lump in the subdirectory, denoting a ZDoom mod.
+	if (NumLumps > 1) for (uint32_t i = 0; i < NumLumps; i++)
 	{
 		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
 
 		int len = LittleShort(zip_fh->NameLength);
 		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
+
+		dirptr += sizeof(FZipCentralDirectoryInfo) +
+			LittleShort(zip_fh->NameLength) +
+			LittleShort(zip_fh->ExtraLength) +
+			LittleShort(zip_fh->CommentLength);
+
+		if (dirptr > ((char*)directory) + dirsize)	// This directory entry goes beyond the end of the file.
+		{
+			free(directory);
+			if (!quiet) Printf(TEXTCOLOR_RED "\n%s: Central directory corrupted.", Filename);
+			return false;
+		}
+
+		name.ToLower();
+		if (i == 0)
+		{
+			// check for special names, if one of these gets found this must be treated as a normal zip.
+			bool isspecial = !name.Compare("flats/") ||
+				name.IndexOf("/") < 0 ||
+				!name.Compare("textures/") ||
+				!name.Compare("hires/") ||
+				!name.Compare("sprites/") ||
+				!name.Compare("voxels/") ||
+				!name.Compare("colormaps/") ||
+				!name.Compare("acs/") ||
+				!name.Compare("maps/") ||
+				!name.Compare("voices/") ||
+				!name.Compare("patches/") ||
+				!name.Compare("graphics/") ||
+				!name.Compare("sounds/") ||
+				!name.Compare("music/");
+			if (isspecial) break;
+			name0 = name;
+		}
+		else
+		{
+			if (name.IndexOf(name0) != 0)
+			{
+				name0 = "";
+				break;
+			}
+			else if (!foundspeciallump)
+			{
+				// at least one of the more common definition lumps must be present.
+				if (name.IndexOf(name0 + "mapinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "zmapinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "gameinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "sndinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "sbarinfo") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "menudef") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "gldefs") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "animdefs") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "decorate.") == 0) foundspeciallump = true;	// DECORATE is a common subdirectory name, so the check needs to be a bit different.
+				else if (name.Compare(name0 + "decorate") == 0) foundspeciallump = true;
+				else if (name.IndexOf(name0 + "zscript.") == 0) foundspeciallump = true;	// same here.
+				else if (name.Compare(name0 + "zscript") == 0) foundspeciallump = true;
+				else if (name.Compare(name0 + "maps/") == 0) foundspeciallump = true;
+			}
+		}
+	}
+
+	dirptr = (char*)directory;
+	lump_p = Lumps;
+	for (uint32_t i = 0; i < NumLumps; i++)
+	{
+		FZipCentralDirectoryInfo *zip_fh = (FZipCentralDirectoryInfo *)dirptr;
+
+		int len = LittleShort(zip_fh->NameLength);
+		FString name(dirptr + sizeof(FZipCentralDirectoryInfo), len);
+		if (name0.IsNotEmpty()) name = name.Mid(name0.Len());
 		dirptr += sizeof(FZipCentralDirectoryInfo) + 
 				  LittleShort(zip_fh->NameLength) + 
 				  LittleShort(zip_fh->ExtraLength) + 
@@ -236,7 +312,7 @@ bool FZipFile::Open(bool quiet)
 		}
 		
 		// skip Directories
-		if (name[len - 1] == '/' && LittleLong(zip_fh->UncompressedSize) == 0) 
+		if (name.IsEmpty() || (name.Back() == '/' && LittleLong(zip_fh->UncompressedSize) == 0))
 		{
 			skipped++;
 			continue;
@@ -272,7 +348,7 @@ bool FZipFile::Open(bool quiet)
 		lump_p->Owner = this;
 		// The start of the Reader will be determined the first time it is accessed.
 		lump_p->Flags = LUMPF_ZIPFILE | LUMPFZIP_NEEDFILESTART;
-		lump_p->Method = BYTE(zip_fh->Method);
+		lump_p->Method = uint8_t(zip_fh->Method);
 		lump_p->GPFlags = zip_fh->Flags;
 		lump_p->CRC32 = zip_fh->CRC32;
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
@@ -466,7 +542,7 @@ static void time_to_dos(struct tm *time, unsigned short *dosdate, unsigned short
 //
 //==========================================================================
 
-int AppendToZip(FILE *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time)
+int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time)
 {
 	FZipLocalFileHeader local;
 	int position;
@@ -486,12 +562,12 @@ int AppendToZip(FILE *zip_file, const char *filename, FCompressedBuffer &content
 
 	// Fill in local directory header.
 
-	position = (int)ftell(zip_file);
+	position = (int)zip_file->Tell();
 
 	// Write out the header, file name, and file data.
-	if (fwrite(&local, sizeof(local), 1, zip_file) != 1 ||
-		fwrite(filename, strlen(filename), 1, zip_file) != 1 ||
-		fwrite(content.mBuffer, 1, content.mCompressedSize, zip_file) != content.mCompressedSize)
+	if (zip_file->Write(&local, sizeof(local)) != sizeof(local) ||
+		zip_file->Write(filename, strlen(filename)) != strlen(filename) ||
+		zip_file->Write(content.mBuffer, content.mCompressedSize) != content.mCompressedSize)
 	{
 		return -1;
 	}
@@ -507,7 +583,7 @@ int AppendToZip(FILE *zip_file, const char *filename, FCompressedBuffer &content
 //
 //==========================================================================
 
-int AppendCentralDirectory(FILE *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time, int position)
+int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time, int position)
 {
 	FZipCentralDirectoryInfo dir;
 
@@ -531,8 +607,8 @@ int AppendCentralDirectory(FILE *zip_file, const char *filename, FCompressedBuff
 	dir.ExternalAttributes = 0;
 	dir.LocalHeaderOffset = LittleLong(position);
 
-	if (fwrite(&dir, sizeof(dir), 1, zip_file) != 1 ||
-		fwrite(filename,  strlen(filename), 1, zip_file) != 1)
+	if (zip_file->Write(&dir, sizeof(dir)) != sizeof(dir) ||
+		zip_file->Write(filename,  strlen(filename)) != strlen(filename))
 	{
 		return -1;
 	}
@@ -553,7 +629,7 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 
 	if (filenames.Size() != content.Size()) return false;
 
-	FILE *f = fopen(filename, "wb");
+	auto f = FileWriter::Open(filename);
 	if (f != nullptr)
 	{
 		for (unsigned i = 0; i < filenames.Size(); i++)
@@ -561,19 +637,19 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 			int pos = AppendToZip(f, filenames[i], content[i], mydate, mytime);
 			if (pos == -1)
 			{
-				fclose(f);
+				delete f;
 				remove(filename);
 				return false;
 			}
 			positions.Push(pos);
 		}
 
-		int dirofs = (int)ftell(f);
+		int dirofs = (int)f->Tell();
 		for (unsigned i = 0; i < filenames.Size(); i++)
 		{
 			if (AppendCentralDirectory(f, filenames[i], content[i], mydate, mytime, positions[i]) < 0)
 			{
-				fclose(f);
+				delete f;
 				remove(filename);
 				return false;
 			}
@@ -586,15 +662,15 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		dirend.FirstDisk = 0;
 		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(filenames.Size());
 		dirend.DirectoryOffset = LittleLong(dirofs);
-		dirend.DirectorySize = LittleLong(ftell(f) - dirofs);
+		dirend.DirectorySize = LittleLong(f->Tell() - dirofs);
 		dirend.ZipCommentLength = 0;
-		if (fwrite(&dirend, sizeof(dirend), 1, f) != 1)
+		if (f->Write(&dirend, sizeof(dirend)) != sizeof(dirend))
 		{
-			fclose(f);
+			delete f;
 			remove(filename);
 			return false;
 		}
-		fclose(f);
+		delete f;
 		return true;
 	}
 	return false;

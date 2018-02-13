@@ -115,7 +115,8 @@ class Sorcerer1 : Actor
 
 	void A_Srcr1Attack ()
 	{
-		if (!target)
+		let targ = target;
+		if (!targ)
 		{
 			return;
 		}
@@ -123,18 +124,18 @@ class Sorcerer1 : Actor
 		if (CheckMeleeRange ())
 		{
 			int damage = random[Srcr1Attack](1,8) * 8;
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			return;
 		}
 
 		if (health > (SpawnHealth()/3)*2)
 		{ // Spit one fireball
-			SpawnMissileZ (pos.z + 48, target, "SorcererFX1");
+			SpawnMissileZ (pos.z + 48, targ, "SorcererFX1");
 		}
 		else
 		{ // Spit three fireballs
-			Actor mo = SpawnMissileZ (pos.z + 48, target, "SorcererFX1");
+			Actor mo = SpawnMissileZ (pos.z + 48, targ, "SorcererFX1");
 			if (mo != null)
 			{
 				double ang = mo.angle;
@@ -192,6 +193,7 @@ class SorcererFX1 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -342,7 +344,8 @@ class Sorcerer2 : Actor
 
 	void A_Srcr2Attack ()
 	{
-		if (!target)
+		let targ = target;
+		if (!targ)
 		{
 			return;
 		}
@@ -350,8 +353,8 @@ class Sorcerer2 : Actor
 		if (CheckMeleeRange())
 		{
 			int damage = random[Srcr2Atk](1, 8) * 20;
-			int newdam = target.DamageMobj (self, self, damage, 'Melee');
-			target.TraceBleed (newdam > 0 ? newdam : damage, self);
+			int newdam = targ.DamageMobj (self, self, damage, 'Melee');
+			targ.TraceBleed (newdam > 0 ? newdam : damage, self);
 			return;
 		}
 		int chance = health < SpawnHealth()/2 ? 96 : 48;
@@ -363,7 +366,7 @@ class Sorcerer2 : Actor
 		}
 		else
 		{ // Blue bolt
-			SpawnMissile (target, "Sorcerer2FX1");
+			SpawnMissile (targ, "Sorcerer2FX1");
 		}
 	}
 
@@ -410,6 +413,7 @@ class Sorcerer2FX1 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -457,6 +461,7 @@ class Sorcerer2FXSpark : Actor
 		+NOGRAVITY
 		+NOTELEPORT
 		+CANNOTPUSH
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 
@@ -481,6 +486,7 @@ class Sorcerer2FX2 : Actor
 		Projectile;
 		-ACTIVATEIMPACT
 		-ACTIVATEPCROSS
+		+ZDOOMTRANS
 		RenderStyle "Add";
 	}
 

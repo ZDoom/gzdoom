@@ -31,7 +31,7 @@
 #include "a_sharedglobal.h"
 #include "r_sky.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_clipper.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/data/gl_data.h"
 
 
@@ -160,7 +160,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 //
 //==========================================================================
 
-void gl_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
+void GLSceneDrawer::CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
 	if (in_area == area_default &&
 		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&
@@ -245,7 +245,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		{
 			if (in_area==area_below)
 			{
-				dest->ColorMap=s->ColorMap;
+				dest->CopyColors(s);
 				if (!(s->MoreFlags & SECF_NOFAKELIGHT))
 				{
 					dest->lightlevel  = s->lightlevel;
@@ -291,7 +291,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 
 	if (in_area==area_below)
 	{
-		dest->ColorMap=s->ColorMap;
+		dest->CopyColors(s);
 		dest->SetPlaneTexZ(sector_t::floor, sec->GetPlaneTexZ(sector_t::floor));
 		dest->SetPlaneTexZ(sector_t::ceiling, s->GetPlaneTexZ(sector_t::floor));
 		dest->floorplane=sec->floorplane;
@@ -344,7 +344,7 @@ sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	}
 	else if (in_area == area_above)
 	{
-		dest->ColorMap = s->ColorMap;
+		dest->CopyColors(s);
 		dest->SetPlaneTexZ(sector_t::ceiling, sec->GetPlaneTexZ(sector_t::ceiling));
 		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
 		dest->ceilingplane = sec->ceilingplane;

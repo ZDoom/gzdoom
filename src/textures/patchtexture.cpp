@@ -44,8 +44,8 @@
 // posts are runs of non masked source pixels
 struct column_t
 {
-	BYTE		topdelta;		// -1 is the last post in a column
-	BYTE		length; 		// length data bytes follows
+	uint8_t		topdelta;		// -1 is the last post in a column
+	uint8_t		length; 		// length data bytes follows
 };
 
 
@@ -61,12 +61,12 @@ public:
 	FPatchTexture (int lumpnum, patch_t *header);
 	~FPatchTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 
 protected:
-	BYTE *Pixels;
+	uint8_t *Pixels;
 	Span **Spans;
 	bool hackflag;
 
@@ -85,7 +85,7 @@ static bool CheckIfPatch(FileReader & file)
 {
 	if (file.GetLength() < 13) return false;	// minimum length of a valid Doom patch
 	
-	BYTE *data = new BYTE[file.GetLength()];
+	uint8_t *data = new uint8_t[file.GetLength()];
 	file.Seek(0, SEEK_SET);
 	file.Read(data, file.GetLength());
 	
@@ -105,12 +105,12 @@ static bool CheckIfPatch(FileReader & file)
 	
 		for (x = 0; x < width; ++x)
 		{
-			DWORD ofs = LittleLong(foo->columnofs[x]);
-			if (ofs == (DWORD)width * 4 + 8)
+			uint32_t ofs = LittleLong(foo->columnofs[x]);
+			if (ofs == (uint32_t)width * 4 + 8)
 			{
 				gapAtStart = false;
 			}
-			else if (ofs >= (DWORD)(file.GetLength()))	// Need one byte for an empty column (but there's patches that don't know that!)
+			else if (ofs >= (uint32_t)(file.GetLength()))	// Need one byte for an empty column (but there's patches that don't know that!)
 			{
 				delete [] data;
 				return false;
@@ -184,6 +184,7 @@ void FPatchTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -192,7 +193,7 @@ void FPatchTexture::Unload ()
 //
 //==========================================================================
 
-const BYTE *FPatchTexture::GetPixels ()
+const uint8_t *FPatchTexture::GetPixels ()
 {
 	if (Pixels == NULL)
 	{
@@ -207,7 +208,7 @@ const BYTE *FPatchTexture::GetPixels ()
 //
 //==========================================================================
 
-const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FPatchTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{
@@ -244,7 +245,7 @@ const BYTE *FPatchTexture::GetColumn (unsigned int column, const Span **spans_ou
 
 void FPatchTexture::MakeTexture ()
 {
-	BYTE *remap, remaptable[256];
+	uint8_t *remap, remaptable[256];
 	int numspans;
 	const column_t *maxcol;
 	int x;
@@ -252,7 +253,7 @@ void FPatchTexture::MakeTexture ()
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const patch_t *patch = (const patch_t *)lump.GetMem();
 
-	maxcol = (const column_t *)((const BYTE *)patch + Wads.LumpLength (SourceLump) - 3);
+	maxcol = (const column_t *)((const uint8_t *)patch + Wads.LumpLength (SourceLump) - 3);
 
 	// Check for badly-sized patches
 #if 0	// Such textures won't be created so there's no need to check here
@@ -284,13 +285,13 @@ void FPatchTexture::MakeTexture ()
 
 	if (hackflag)
 	{
-		Pixels = new BYTE[Width * Height];
-		BYTE *out;
+		Pixels = new uint8_t[Width * Height];
+		uint8_t *out;
 
 		// Draw the image to the buffer
 		for (x = 0, out = Pixels; x < Width; ++x)
 		{
-			const BYTE *in = (const BYTE *)patch + LittleLong(patch->columnofs[x]) + 3;
+			const uint8_t *in = (const uint8_t *)patch + LittleLong(patch->columnofs[x]) + 3;
 
 			for (int y = Height; y > 0; --y)
 			{
@@ -307,14 +308,14 @@ void FPatchTexture::MakeTexture ()
 
 	numspans = Width;
 
-	Pixels = new BYTE[numpix];
+	Pixels = new uint8_t[numpix];
 	memset (Pixels, 0, numpix);
 
 	// Draw the image to the buffer
 	for (x = 0; x < Width; ++x)
 	{
-		BYTE *outtop = Pixels + x*Height;
-		const column_t *column = (const column_t *)((const BYTE *)patch + LittleLong(patch->columnofs[x]));
+		uint8_t *outtop = Pixels + x*Height;
+		const column_t *column = (const column_t *)((const uint8_t *)patch + LittleLong(patch->columnofs[x]));
 		int top = -1;
 
 		while (column < maxcol && column->topdelta != 0xFF)
@@ -329,7 +330,7 @@ void FPatchTexture::MakeTexture ()
 			}
 
 			int len = column->length;
-			BYTE *out = outtop + top;
+			uint8_t *out = outtop + top;
 
 			if (len != 0)
 			{
@@ -341,14 +342,14 @@ void FPatchTexture::MakeTexture ()
 				{
 					numspans++;
 
-					const BYTE *in = (const BYTE *)column + 3;
+					const uint8_t *in = (const uint8_t *)column + 3;
 					for (int i = 0; i < len; ++i)
 					{
 						out[i] = remap[in[i]];
 					}
 				}
 			}
-			column = (const column_t *)((const BYTE *)column + column->length + 4);
+			column = (const column_t *)((const uint8_t *)column + column->length + 4);
 		}
 	}
 }
@@ -367,19 +368,19 @@ void FPatchTexture::HackHack (int newheight)
 	// one post, where each post has a supposed length of 0.
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const patch_t *realpatch = (patch_t *)lump.GetMem();
-	const DWORD *cofs = realpatch->columnofs;
+	const uint32_t *cofs = realpatch->columnofs;
 	int x, x2 = LittleShort(realpatch->width);
 
 	if (LittleShort(realpatch->height) == 256)
 	{
 		for (x = 0; x < x2; ++x)
 		{
-			const column_t *col = (column_t*)((BYTE*)realpatch+LittleLong(cofs[x]));
+			const column_t *col = (column_t*)((uint8_t*)realpatch+LittleLong(cofs[x]));
 			if (col->topdelta != 0 || col->length != 0)
 			{
 				break;	// It's not bad!
 			}
-			col = (column_t *)((BYTE *)col + 256 + 4);
+			col = (column_t *)((uint8_t *)col + 256 + 4);
 			if (col->topdelta != 0xFF)
 			{
 				break;	// More than one post in a column!

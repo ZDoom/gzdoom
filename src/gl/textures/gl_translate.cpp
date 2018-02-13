@@ -46,7 +46,7 @@ bool GLTranslationPalette::Update()
 
 	memset(pd.pe, 0, sizeof(pd.pe));
 	memcpy(pd.pe, remap->Palette, remap->NumEntries * sizeof(*remap->Palette));
-	pd.crc32 = CalcCRC32((BYTE*)pd.pe, sizeof(pd.pe));
+	pd.crc32 = CalcCRC32((uint8_t*)pd.pe, sizeof(pd.pe));
 	for(unsigned int i=0;i< AllPalettes.Size(); i++)
 	{
 		if (pd.crc32 == AllPalettes[i].crc32)

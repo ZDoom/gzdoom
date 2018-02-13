@@ -21,25 +21,35 @@ class SDLGLVideo : public IVideo
 	EDisplayType GetDisplayType () { return DISPLAY_Both; }
 	void SetWindowedScale (float scale);
 
-	DFrameBuffer *CreateFrameBuffer (int width, int height, bool fs, DFrameBuffer *old);
+	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
 
 	void StartModeIterator (int bits, bool fs);
 	bool NextMode (int *width, int *height, bool *letterbox);
 	bool SetResolution (int width, int height, int bits);
 
-	bool SetupPixelFormat(bool allowsoftware, int multisample);
-	bool InitHardware (bool allowsoftware, int multisample);
+	void SetupPixelFormat(bool allowsoftware, int multisample, const int *glver);
 
 private:
 	int IteratorMode;
 	int IteratorBits;
 };
-class SDLGLFB : public DFrameBuffer
+
+class SDLBaseFB : public DFrameBuffer
 {
-	DECLARE_CLASS(SDLGLFB, DFrameBuffer)
+	typedef DFrameBuffer Super;
+public:
+	using DFrameBuffer::DFrameBuffer;
+	virtual SDL_Window *GetSDLWindow() = 0;
+	
+	friend class SDLGLVideo;
+};
+
+class SDLGLFB : public SDLBaseFB
+{
+	typedef SDLBaseFB Super;
 public:
 	// this must have the same parameters as the Windows version, even if they are not used!
-	SDLGLFB (void *hMonitor, int width, int height, int, int, bool fullscreen); 
+	SDLGLFB (void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra); 
 	~SDLGLFB ();
 
 	void ForceBuffering (bool force);
@@ -61,14 +71,19 @@ public:
 	int GetClientWidth();
 	int GetClientHeight();
 
+	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
+
+	SDL_Window *GetSDLWindow() override { return Screen; }
+
+	virtual int GetTrueHeight() { return GetClientHeight(); }
 protected:
 	bool CanUpdate();
-	void SetGammaTable(WORD *tbl);
+	void SetGammaTable(uint16_t *tbl);
 	void ResetGammaTable();
 	void InitializeState();
 
 	SDLGLFB () {}
-	BYTE GammaTable[3][256];
+	uint8_t GammaTable[3][256];
 	bool UpdatePending;
 
 	SDL_Window *Screen;

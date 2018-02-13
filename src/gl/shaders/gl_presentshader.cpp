@@ -26,7 +26,6 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "files.h"
 #include "m_swap.h"
 #include "v_video.h"
 #include "gl/gl_functions.h"
@@ -47,6 +46,8 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	InvGamma.Init(mShader, "InvGamma");
 	Contrast.Init(mShader, "Contrast");
 	Brightness.Init(mShader, "Brightness");
+	Saturation.Init(mShader, "Saturation");
+	GrayFormula.Init(mShader, "GrayFormula");
 	Scale.Init(mShader, "UVScale");
 }
 

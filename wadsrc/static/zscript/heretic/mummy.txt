@@ -135,6 +135,7 @@ class MummyFX1 : Actor
 		-ACTIVATEPCROSS
 		-ACTIVATEIMPACT
 		+SEEKERMISSILE
+		+ZDOOMTRANS
 	}
 	States
 	{

@@ -436,6 +436,7 @@ class FireDemonMissile : Actor
 		Projectile;
 		RenderStyle "Add";
 		DeathSound "FireDemonMissileHit";
+		+ZDOOMTRANS
 	}
 	States
 	{

@@ -68,13 +68,14 @@
 #include "r_utility.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
+#include "i_time.h"
 
 void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TArray<FNodeBuilder::FPolyStart> &anchors);
 
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-void P_LoadZNodes (FileReader &dalump, DWORD id);
+void P_LoadZNodes (FileReader &dalump, uint32_t id);
 static bool CheckCachedNodes(MapData *map);
 static void CreateCachedNodes(MapData *map);
 
@@ -82,40 +83,40 @@ static void CreateCachedNodes(MapData *map);
 // fixed 32 bit gl_vert format v2.0+ (glBsp 1.91)
 struct mapglvertex_t
 {
-	SDWORD x,y;
+	int32_t x,y;
 };
 
 struct gl3_mapsubsector_t
 {
-	SDWORD numsegs;
-	SDWORD firstseg;    // Index of first one; segs are stored sequentially.
+	int32_t numsegs;
+	int32_t firstseg;    // Index of first one; segs are stored sequentially.
 };
 
 struct glseg_t
 {
-	WORD	v1;		 // start vertex		(16 bit)
-	WORD	v2;		 // end vertex			(16 bit)
-	WORD	linedef; // linedef, or -1 for minisegs
-	WORD	side;	 // side on linedef: 0 for right, 1 for left
-	WORD	partner; // corresponding partner seg, or 0xffff on one-sided walls
+	uint16_t	v1;		 // start vertex		(16 bit)
+	uint16_t	v2;		 // end vertex			(16 bit)
+	uint16_t	linedef; // linedef, or -1 for minisegs
+	uint16_t	side;	 // side on linedef: 0 for right, 1 for left
+	uint16_t	partner; // corresponding partner seg, or 0xffff on one-sided walls
 };
 
 struct glseg3_t
 {
-	SDWORD			v1;
-	SDWORD			v2;
-	WORD			linedef;
-	WORD			side;
-	SDWORD			partner;
+	int32_t			v1;
+	int32_t			v2;
+	uint16_t			linedef;
+	uint16_t			side;
+	int32_t			partner;
 };
 
 struct gl5_mapnode_t
 {
-	SWORD 	x,y,dx,dy;	// partition line
-	SWORD 	bbox[2][4];	// bounding box for each child
+	int16_t 	x,y,dx,dy;	// partition line
+	int16_t 	bbox[2][4];	// bounding box for each child
 	// If NF_SUBSECTOR is or'ed in, it's a subsector,
 	// else it's a node of another subtree.
-	DWORD children[2];
+	uint32_t children[2];
 };
 
 
@@ -135,25 +136,23 @@ static int CheckForMissingSegs()
 	int missing = 0;
 
 	memset(added_seglen, 0, sizeof(double)*numsides);
-	for(int i=0;i<numsegs;i++)
+	for (auto &seg : level.segs)
 	{
-		seg_t * seg = &segs[i];
-
-		if (seg->sidedef!=NULL)
+		if (seg.sidedef != nullptr)
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
-			DVector2 vec1(seg->v2->fX() - seg->v1->fX(), seg->v2->fY() - seg->v1->fY());
-			added_seglen[seg->sidedef->Index()] += vec1.Length();
+			DVector2 vec1(seg.v2->fX() - seg.v1->fX(), seg.v2->fY() - seg.v1->fY());
+			added_seglen[seg.sidedef->Index()] += vec1.Length();
 		}
 	}
 
-	for(unsigned i=0;i<numsides;i++)
+	for (unsigned i = 0; i < numsides; i++)
 	{
 		double linelen = level.sides[i].linedef->Delta().Length();
 		missing += (added_seglen[i] < linelen - 1.);
 	}
 
-	delete [] added_seglen;
+	delete[] added_seglen;
 	return missing;
 }
 
@@ -165,13 +164,10 @@ static int CheckForMissingSegs()
 
 bool P_CheckForGLNodes()
 {
-	int i;
-
-	for(i=0;i<numsubsectors;i++)
+	for(auto &sub : level.subsectors)
 	{
-		subsector_t * sub = &subsectors[i];
-		seg_t * firstseg = sub->firstline;
-		seg_t * lastseg = sub->firstline + sub->numlines - 1;
+		seg_t * firstseg = sub.firstline;
+		seg_t * lastseg = sub.firstline + sub.numlines - 1;
 
 		if (firstseg->v1 != lastseg->v2)
 		{
@@ -181,9 +177,9 @@ bool P_CheckForGLNodes()
 		}
 		else
 		{
-			for(DWORD j=0;j<sub->numlines;j++)
+			for(uint32_t j=0;j<sub.numlines;j++)
 			{
-				if (segs[j].linedef==NULL)	// miniseg
+				if (level.segs[j].linedef==NULL)	// miniseg
 				{
 					// We already have GL nodes. Great!
 					return true;
@@ -221,14 +217,14 @@ static bool format5;
 
 static bool LoadGLVertexes(FileReader * lump)
 {
-	BYTE *gldata;
+	uint8_t *gldata;
 	int                 i;
 
 	firstglvertex = level.vertexes.Size();
 	
 	int gllen=lump->GetLength();
 
-	gldata = new BYTE[gllen];
+	gldata = new uint8_t[gllen];
 	lump->Seek(0, SEEK_SET);
 	lump->Read(gldata, gllen);
 
@@ -252,15 +248,14 @@ static bool LoadGLVertexes(FileReader * lump)
 	mapglvertex_t*	mgl = (mapglvertex_t *)(gldata + GL_VERT_OFFSET);
 	unsigned numvertexes = firstglvertex +  (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
 
-	TStaticArray<vertex_t> oldvertexes = std::move(level.vertexes);
-	level.vertexes.Alloc(numvertexes);
+	auto oldvertexes = &level.vertexes[0];
+	level.vertexes.Resize(numvertexes);
 
-	memcpy(&level.vertexes[0], &oldvertexes[0], firstglvertex * sizeof(vertex_t));
 	for(auto &line : level.lines)
 	{
 		// Remap vertex pointers in linedefs
-		line.v1 = &level.vertexes[line.v1 - &oldvertexes[0]];
-		line.v2 = &level.vertexes[line.v2 - &oldvertexes[0]];
+		line.v1 = &level.vertexes[line.v1 - oldvertexes];
+		line.v2 = &level.vertexes[line.v2 - oldvertexes];
 	}
 
 	for (i = firstglvertex; i < (int)numvertexes; i++)
@@ -304,11 +299,11 @@ static bool LoadGLSegs(FileReader * lump)
 	int			i;
 	line_t		*ldef=NULL;
 	
-	numsegs = lump->GetLength();
+	int numsegs = lump->GetLength();
 	data= new char[numsegs];
 	lump->Seek(0, SEEK_SET);
 	lump->Read(data, numsegs);
-	segs=NULL;
+	auto &segs = level.segs;
 
 #ifdef _MSC_VER
 	__try
@@ -317,12 +312,13 @@ static bool LoadGLSegs(FileReader * lump)
 		if (!format5 && memcmp(data, "gNd3", 4))
 		{
 			numsegs/=sizeof(glseg_t);
-			segs = new seg_t[numsegs];
-			memset(segs,0,sizeof(seg_t)*numsegs);
+			level.segs.Alloc(numsegs);
+			memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 			glseg_t * ml = (glseg_t*)data;
 			for(i = 0; i < numsegs; i++)
-			{							// check for gl-vertices
+			{		
+				// check for gl-vertices
 				segs[i].v1 = &level.vertexes[checkGLVertex(LittleShort(ml->v1))];
 				segs[i].v2 = &level.vertexes[checkGLVertex(LittleShort(ml->v2))];
 				segs[i].PartnerSeg = ml->partner == 0xFFFF ? nullptr : &segs[LittleShort(ml->partner)];
@@ -368,8 +364,8 @@ static bool LoadGLSegs(FileReader * lump)
 		{
 			if (!format5) numsegs-=4;
 			numsegs/=sizeof(glseg3_t);
-			segs = new seg_t[numsegs];
-			memset(segs,0,sizeof(seg_t)*numsegs);
+			level.segs.Alloc(numsegs);
+			memset(&segs[0],0,sizeof(seg_t)*numsegs);
 			
 			glseg3_t * ml = (glseg3_t*)(data+ (format5? 0:4));
 			for(i = 0; i < numsegs; i++)
@@ -377,7 +373,7 @@ static bool LoadGLSegs(FileReader * lump)
 				segs[i].v1 = &level.vertexes[checkGLVertex3(LittleLong(ml->v1))];
 				segs[i].v2 = &level.vertexes[checkGLVertex3(LittleLong(ml->v2))];
 
-				const DWORD partner = LittleLong(ml->partner);
+				const uint32_t partner = LittleLong(ml->partner);
 				segs[i].PartnerSeg = DWORD_MAX == partner ? nullptr : &segs[partner];
 	
 				if(ml->linedef != 0xffff) // skip minisegs 
@@ -428,8 +424,7 @@ static bool LoadGLSegs(FileReader * lump)
 		// (at least under MSVC. GCC can't do SEH even for Windows... :( )
 		Printf("Invalid GL segs. The BSP will have to be rebuilt.\n");
 		delete [] data;
-		delete [] segs;
-		segs = NULL;
+		level.segs.Clear();
 		return false;
 	}
 #endif
@@ -447,7 +442,7 @@ static bool LoadGLSubsectors(FileReader * lump)
 	char * datab;
 	int  i;
 	
-	numsubsectors = lump->GetLength();
+	auto numsubsectors = lump->GetLength();
 	datab = new char[numsubsectors];
 	lump->Seek(0, SEEK_SET);
 	lump->Read(datab, numsubsectors);
@@ -462,13 +457,14 @@ static bool LoadGLSubsectors(FileReader * lump)
 	{
 		mapsubsector_t * data = (mapsubsector_t*) datab;
 		numsubsectors /= sizeof(mapsubsector_t);
-		subsectors = new subsector_t[numsubsectors];
-		memset(subsectors,0,numsubsectors * sizeof(subsector_t));
+		level.subsectors.Alloc(numsubsectors);
+		auto &subsectors = level.subsectors;
+		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
 	
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleShort(data[i].numsegs );
-			subsectors[i].firstline = segs + LittleShort(data[i].firstseg);
+			subsectors[i].firstline = &level.segs[LittleShort(data[i].firstseg)];
 
 			if (subsectors[i].numlines == 0)
 			{
@@ -481,13 +477,14 @@ static bool LoadGLSubsectors(FileReader * lump)
 	{
 		gl3_mapsubsector_t * data = (gl3_mapsubsector_t*) (datab+(format5? 0:4));
 		numsubsectors /= sizeof(gl3_mapsubsector_t);
-		subsectors = new subsector_t[numsubsectors];
-		memset(subsectors,0,numsubsectors * sizeof(subsector_t));
+		level.subsectors.Alloc(numsubsectors);
+		auto &subsectors = level.subsectors;
+		memset(&subsectors[0],0,numsubsectors * sizeof(subsector_t));
 	
 		for (i=0; i<numsubsectors; i++)
 		{
 			subsectors[i].numlines  = LittleLong(data[i].numsegs );
-			subsectors[i].firstline = segs + LittleLong(data[i].firstseg);
+			subsectors[i].firstline = &level.segs[LittleLong(data[i].firstseg)];
 
 			if (subsectors[i].numlines == 0)
 			{
@@ -497,15 +494,15 @@ static bool LoadGLSubsectors(FileReader * lump)
 		}
 	}
 
-	for (i=0; i<numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		for(unsigned j=0;j<subsectors[i].numlines;j++)
+		for(unsigned j=0;j<sub.numlines;j++)
 		{
-			seg_t * seg = subsectors[i].firstline + j;
-			if (seg->linedef==NULL) seg->frontsector = seg->backsector = subsectors[i].firstline->frontsector;
+			seg_t * seg = sub.firstline + j;
+			if (seg->linedef==NULL) seg->frontsector = seg->backsector = sub.firstline->frontsector;
 		}
-		seg_t *firstseg = subsectors[i].firstline;
-		seg_t *lastseg = subsectors[i].firstline + subsectors[i].numlines - 1;
+		seg_t *firstseg = sub.firstline;
+		seg_t *lastseg = sub.firstline + sub.numlines - 1;
 		// The subsector must be closed. If it isn't we can't use these nodes and have to do a rebuild.
 		if (lastseg->v2 != firstseg->v1)
 		{
@@ -529,31 +526,30 @@ static bool LoadNodes (FileReader * lump)
 	const int NF_SUBSECTOR = 0x8000;
 	const int GL5_NF_SUBSECTOR = (1 << 31);
 
-	int 		i;
 	int 		j;
 	int 		k;
 	node_t* 	no;
-	WORD*		used;
+	uint16_t*		used;
 
 	if (!format5)
 	{
 		mapnode_t*	mn, * basemn;
-		numnodes = lump->GetLength() / sizeof(mapnode_t);
+		unsigned numnodes = unsigned(lump->GetLength() / sizeof(mapnode_t));
 
 		if (numnodes == 0) return false;
 
-		nodes = new node_t[numnodes];		
+		level.nodes.Alloc(numnodes);
 		lump->Seek(0, SEEK_SET);
 
 		basemn = mn = new mapnode_t[numnodes];
 		lump->Read(mn, lump->GetLength());
 
-		used = (WORD *)alloca (sizeof(WORD)*numnodes);
-		memset (used, 0, sizeof(WORD)*numnodes);
+		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
+		memset (used, 0, sizeof(uint16_t)*numnodes);
 
-		no = nodes;
+		no = &level.nodes[0];
 
-		for (i = 0; i < numnodes; i++, no++, mn++)
+		for (unsigned i = 0; i < numnodes; i++, no++, mn++)
 		{
 			no->x = LittleShort(mn->x)<<FRACBITS;
 			no->y = LittleShort(mn->y)<<FRACBITS;
@@ -561,16 +557,16 @@ static bool LoadNodes (FileReader * lump)
 			no->dy = LittleShort(mn->dy)<<FRACBITS;
 			for (j = 0; j < 2; j++)
 			{
-				WORD child = LittleShort(mn->children[j]);
+				uint16_t child = LittleShort(mn->children[j]);
 				if (child & NF_SUBSECTOR)
 				{
 					child &= ~NF_SUBSECTOR;
-					if (child >= numsubsectors)
+					if (child >= level.subsectors.Size())
 					{
 						delete [] basemn;
 						return false;
 					}
-					no->children[j] = (BYTE *)&subsectors[child] + 1;
+					no->children[j] = (uint8_t *)&level.subsectors[child] + 1;
 				}
 				else if (child >= numnodes)
 				{
@@ -584,7 +580,7 @@ static bool LoadNodes (FileReader * lump)
 				}
 				else
 				{
-					no->children[j] = &nodes[child];
+					no->children[j] = &level.nodes[child];
 					used[child] = j + 1;
 				}
 				for (k = 0; k < 4; k++)
@@ -598,22 +594,22 @@ static bool LoadNodes (FileReader * lump)
 	else
 	{
 		gl5_mapnode_t*	mn, * basemn;
-		numnodes = lump->GetLength() / sizeof(gl5_mapnode_t);
+		auto numnodes = unsigned(lump->GetLength() / sizeof(gl5_mapnode_t));
 
 		if (numnodes == 0) return false;
 
-		nodes = new node_t[numnodes];		
+		level.nodes.Alloc(numnodes);
 		lump->Seek(0, SEEK_SET);
 
 		basemn = mn = new gl5_mapnode_t[numnodes];
 		lump->Read(mn, lump->GetLength());
 
-		used = (WORD *)alloca (sizeof(WORD)*numnodes);
-		memset (used, 0, sizeof(WORD)*numnodes);
+		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
+		memset (used, 0, sizeof(uint16_t)*numnodes);
 
-		no = nodes;
+		no = &level.nodes[0];
 
-		for (i = 0; i < numnodes; i++, no++, mn++)
+		for (unsigned i = 0; i < numnodes; i++, no++, mn++)
 		{
 			no->x = LittleShort(mn->x)<<FRACBITS;
 			no->y = LittleShort(mn->y)<<FRACBITS;
@@ -621,18 +617,18 @@ static bool LoadNodes (FileReader * lump)
 			no->dy = LittleShort(mn->dy)<<FRACBITS;
 			for (j = 0; j < 2; j++)
 			{
-				SDWORD child = LittleLong(mn->children[j]);
+				int32_t child = LittleLong(mn->children[j]);
 				if (child & GL5_NF_SUBSECTOR)
 				{
 					child &= ~GL5_NF_SUBSECTOR;
-					if (child >= numsubsectors)
+					if ((unsigned)child >= level.subsectors.Size())
 					{
 						delete [] basemn;
 						return false;
 					}
-					no->children[j] = (BYTE *)&subsectors[child] + 1;
+					no->children[j] = (uint8_t *)&level.subsectors[child] + 1;
 				}
-				else if (child >= numnodes)
+				else if ((unsigned)child >= numnodes)
 				{
 					delete [] basemn;
 					return false;
@@ -644,7 +640,7 @@ static bool LoadNodes (FileReader * lump)
 				}
 				else
 				{
-					no->children[j] = &nodes[child];
+					no->children[j] = &level.nodes[child];
 					used[child] = j + 1;
 				}
 				for (k = 0; k < 4; k++)
@@ -666,61 +662,42 @@ static bool LoadNodes (FileReader * lump)
 
 static bool DoLoadGLNodes(FileReader ** lumps)
 {
-	if (!LoadGLVertexes(lumps[0]))
+	int missing = 0;
+
+	if (!LoadGLVertexes(lumps[0]) ||
+		!LoadGLSegs(lumps[1]) ||
+		!LoadGLSubsectors(lumps[2]) ||
+		!LoadNodes(lumps[3]))
 	{
-		return false;
-	}
-	if (!LoadGLSegs(lumps[1]))
-	{
-		delete [] segs;
-		segs = NULL;
-		return false;
-	}
-	if (!LoadGLSubsectors(lumps[2]))
-	{
-		delete [] subsectors;
-		subsectors = NULL;
-		delete [] segs;
-		segs = NULL;
-		return false;
-	}
-	if (!LoadNodes(lumps[3]))
-	{
-		delete [] nodes;
-		nodes = NULL;
-		delete [] subsectors;
-		subsectors = NULL;
-		delete [] segs;
-		segs = NULL;
-		return false;
+		goto fail;
 	}
 
 	// Quick check for the validity of the nodes
 	// For invalid nodes there is a high chance that this test will fail
 
-	for (int i = 0; i < numsubsectors; i++)
+	for (auto &sub : level.subsectors)
 	{
-		seg_t * seg = subsectors[i].firstline;
+		seg_t * seg = sub.firstline;
 		if (!seg->sidedef) 
 		{
 			Printf("GL nodes contain invalid data. The BSP has to be rebuilt.\n");
-			delete [] nodes;
-			nodes = NULL;
-			delete [] subsectors;
-			subsectors = NULL;
-			delete [] segs;
-			segs = NULL;
-			return false;
+			goto fail;
 		}
 	}
 
 	// check whether the BSP covers all sidedefs completely.
-	int missing = CheckForMissingSegs();
+	missing = CheckForMissingSegs();
 	if (missing > 0)
 	{
 		Printf("%d missing segs counted in GL nodes.\nThe BSP has to be rebuilt.\n", missing);
 	}
 	return missing == 0;
+
+fail:
+	level.nodes.Clear();
+	level.subsectors.Clear();
+	level.segs.Clear();
+	return false;
 }
 
 
@@ -808,7 +785,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 
 	FString glheader;
 	bool mustcheck=false;
-	DWORD numentries = f->LumpCount();
+	uint32_t numentries = f->LumpCount();
 
 	glheader.Format("GL_%.8s", label);
 	if (glheader.Len()>8)
@@ -819,7 +796,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 
 	if (numentries > 4)
 	{
-		for(DWORD i=0;i<numentries-4;i++)
+		for(uint32_t i=0;i<numentries-4;i++)
 		{
 			if (!strnicmp(f->GetLump(i)->Name, glheader, 8))
 			{
@@ -863,29 +840,17 @@ bool P_LoadGLNodes(MapData * map)
 		{
 			try
 			{
-				subsectors = NULL;
-				segs = NULL;
-				nodes = NULL;
+				level.subsectors.Clear();
+				level.segs.Clear();
+				level.nodes.Clear();
 				P_LoadZNodes (*map->file, id);
 				return true;
 			}
 			catch (CRecoverableError &)
 			{
-				if (subsectors != NULL)
-				{
-					delete[] subsectors;
-					subsectors = NULL;
-				}
-				if (segs != NULL)
-				{
-					delete[] segs;
-					segs = NULL;
-				}
-				if (nodes != NULL)
-				{
-					delete[] nodes;
-					nodes = NULL;
-				}
+				level.subsectors.Clear();
+				level.segs.Clear();
+				level.nodes.Clear();
 			}
 		}
 	}
@@ -975,27 +940,24 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 	if (!rebuilt && !P_CheckForGLNodes())
 	{
 		ret = true;	// we are not using the level's original nodes if we get here.
-		for (int i = 0; i < numsubsectors; i++)
+		for (auto &sub : level.subsectors)
 		{
-			gamesubsectors[i].sector = gamesubsectors[i].firstline->sidedef->sector;
+			sub.sector = sub.firstline->sidedef->sector;
 		}
 
-		nodes = NULL;
-		numnodes = 0;
-		subsectors = NULL;
-		numsubsectors = 0;
-		if (segs) delete [] segs;
-		segs = NULL;
-		numsegs = 0;
+		// The nodes and subsectors need to be preserved for gameplay related purposes.
+		level.gamenodes = std::move(level.nodes);
+		level.gamesubsectors = std::move(level.subsectors);
+		level.segs.Clear();
 
 		// Try to load GL nodes (cached or GWA)
 		loaded = P_LoadGLNodes(map);
 		if (!loaded)
 		{
 			// none found - we have to build new ones!
-			unsigned int startTime, endTime;
+			uint64_t startTime, endTime;
 
-			startTime = I_FPSTime ();
+			startTime = I_msTime ();
 			TArray<FNodeBuilder::FPolyStart> polyspots, anchors;
 			P_GetPolySpots (map, polyspots, anchors);
 			FNodeBuilder::FLevel leveldata =
@@ -1008,13 +970,10 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			leveldata.FindMapBounds ();
 			FNodeBuilder builder (leveldata, polyspots, anchors, true);
 			
-			builder.Extract (nodes, numnodes,
-				segs, numsegs,
-				subsectors, numsubsectors,
-				level.vertexes);
-			endTime = I_FPSTime ();
-			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%d segs)\n", (endTime - startTime) * 0.001, numsegs);
-			buildtime = endTime - startTime;
+			builder.Extract (level);
+			endTime = I_msTime ();
+			DPrintf (DMSG_NOTIFY, "BSP generation took %.3f sec (%u segs)\n", (endTime - startTime) * 0.001, level.segs.Size());
+			buildtime = (int32_t)(endTime - startTime);
 		}
 	}
 
@@ -1034,14 +993,6 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 			DPrintf(DMSG_NOTIFY, "Not caching nodes (time = %f)\n", buildtime/1000.f);
 		}
 	}
-
-	if (!gamenodes)
-	{
-		gamenodes = nodes;
-		numgamenodes = numnodes;
-		gamesubsectors = subsectors;
-		numgamesubsectors = numsubsectors;
-	}
 	return ret;
 }
 
@@ -1051,7 +1002,7 @@ bool P_CheckNodes(MapData * map, bool rebuilt, int buildtime)
 //
 //==========================================================================
 
-typedef TArray<BYTE> MemFile;
+typedef TArray<uint8_t> MemFile;
 
 
 static FString CreateCacheName(MapData *map, bool create)
@@ -1063,29 +1014,30 @@ static FString CreateCacheName(MapData *map, bool create)
 	if (create) CreatePath(path);
 
 	lumpname.ReplaceChars('/', '%');
+	lumpname.ReplaceChars(':', '$');
 	path << '/' << lumpname.Right(lumpname.Len() - separator - 1) << ".gzc";
 	return path;
 }
 
-static void WriteByte(MemFile &f, BYTE b)
+static void WriteByte(MemFile &f, uint8_t b)
 {
 	f.Push(b);
 }
 
-static void WriteWord(MemFile &f, WORD b)
+static void WriteWord(MemFile &f, uint16_t b)
 {
 	int v = f.Reserve(2);
-	f[v] = (BYTE)b;
-	f[v+1] = (BYTE)(b>>8);
+	f[v] = (uint8_t)b;
+	f[v+1] = (uint8_t)(b>>8);
 }
 
-static void WriteLong(MemFile &f, DWORD b)
+static void WriteLong(MemFile &f, uint32_t b)
 {
 	int v = f.Reserve(4);
-	f[v] = (BYTE)b;
-	f[v+1] = (BYTE)(b>>8);
-	f[v+2] = (BYTE)(b>>16);
-	f[v+3] = (BYTE)(b>>24);
+	f[v] = (uint8_t)b;
+	f[v+1] = (uint8_t)(b>>8);
+	f[v+2] = (uint8_t)(b>>16);
+	f[v+3] = (uint8_t)(b>>24);
 }
 
 static void CreateCachedNodes(MapData *map)
@@ -1100,21 +1052,21 @@ static void CreateCachedNodes(MapData *map)
 		WriteLong(ZNodes, vert.fixY());
 	}
 
-	WriteLong(ZNodes, numsubsectors);
-	for(int i=0;i<numsubsectors;i++)
+	WriteLong(ZNodes, level.subsectors.Size());
+	for (auto &sub : level.subsectors)
 	{
-		WriteLong(ZNodes, subsectors[i].numlines);
+		WriteLong(ZNodes, sub.numlines);
 	}
 
-	WriteLong(ZNodes, numsegs);
-	for(int i=0;i<numsegs;i++)
+	WriteLong(ZNodes, level.segs.Size());
+	for(auto &seg : level.segs)
 	{
-		WriteLong(ZNodes, segs[i].v1->Index());
-		WriteLong(ZNodes, segs[i].PartnerSeg == nullptr? 0xffffffffu : DWORD(segs[i].PartnerSeg - segs));
-		if (segs[i].linedef)
+		WriteLong(ZNodes, seg.v1->Index());
+		WriteLong(ZNodes, seg.PartnerSeg == nullptr? 0xffffffffu : uint32_t(seg.PartnerSeg->Index()));
+		if (seg.linedef)
 		{
-			WriteLong(ZNodes, DWORD(segs[i].linedef->Index()));
-			WriteByte(ZNodes, segs[i].sidedef == segs[i].linedef->sidedef[0]? 0:1);
+			WriteLong(ZNodes, uint32_t(seg.linedef->Index()));
+			WriteByte(ZNodes, seg.sidedef == seg.linedef->sidedef[0]? 0:1);
 		}
 		else
 		{
@@ -1123,38 +1075,38 @@ static void CreateCachedNodes(MapData *map)
 		}
 	}
 
-	WriteLong(ZNodes, numnodes);
-	for(int i=0;i<numnodes;i++)
+	WriteLong(ZNodes, level.nodes.Size());
+	for(auto &node : level.nodes)
 	{
-		WriteLong(ZNodes, nodes[i].x);
-		WriteLong(ZNodes, nodes[i].y);
-		WriteLong(ZNodes, nodes[i].dx);
-		WriteLong(ZNodes, nodes[i].dy);
+		WriteLong(ZNodes, node.x);
+		WriteLong(ZNodes, node.y);
+		WriteLong(ZNodes, node.dx);
+		WriteLong(ZNodes, node.dy);
 		for (int j = 0; j < 2; ++j)
 		{
 			for (int k = 0; k < 4; ++k)
 			{
-				WriteWord(ZNodes, (short)nodes[i].bbox[j][k]);
+				WriteWord(ZNodes, (short)node.bbox[j][k]);
 			}
 		}
 
 		for (int j = 0; j < 2; ++j)
 		{
-			DWORD child;
-			if ((size_t)nodes[i].children[j] & 1)
+			uint32_t child;
+			if ((size_t)node.children[j] & 1)
 			{
-				child = 0x80000000 | DWORD((subsector_t *)((BYTE *)nodes[i].children[j] - 1) - subsectors);
+				child = 0x80000000 | uint32_t(((subsector_t *)((uint8_t *)node.children[j] - 1))->Index());
 			}
 			else
 			{
-				child = DWORD((node_t *)nodes[i].children[j] - nodes);
+				child = ((node_t *)node.children[j])->Index();
 			}
 			WriteLong(ZNodes, child);
 		}
 	}
 
 	uLongf outlen = ZNodes.Size();
-	BYTE *compressed;
+	uint8_t *compressed;
 	int offset = level.lines.Size() * 8 + 12 + 16;
 	int r;
 	do
@@ -1170,27 +1122,27 @@ static void CreateCachedNodes(MapData *map)
 	while (r == Z_BUF_ERROR);
 
 	memcpy(compressed, "CACH", 4);
-	DWORD len = LittleLong(level.lines.Size());
+	uint32_t len = LittleLong(level.lines.Size());
 	memcpy(compressed+4, &len, 4);
 	map->GetChecksum(compressed+8);
 	for (unsigned i = 0; i < level.lines.Size(); i++)
 	{
-		DWORD ndx[2] = { LittleLong(DWORD(level.lines[i].v1->Index())), LittleLong(DWORD(level.lines[i].v2->Index())) };
+		uint32_t ndx[2] = { LittleLong(uint32_t(level.lines[i].v1->Index())), LittleLong(uint32_t(level.lines[i].v2->Index())) };
 		memcpy(compressed + 8 + 16 + 8 * i, ndx, 8);
 	}
 	memcpy(compressed + offset - 4, "ZGL3", 4);
 
 	FString path = CreateCacheName(map, true);
-	FILE *f = fopen(path, "wb");
+	FileWriter *fw = FileWriter::Open(path);
 
-	if (f != NULL)
+	if (fw != nullptr)
 	{
-		if (fwrite(compressed, outlen+offset, 1, f) != 1)
+		const size_t length = outlen + offset;
+		if (fw->Write(compressed, length) != length)
 		{
 			Printf("Error saving nodes to file %s\n", path.GetChars());
 		}
-
-		fclose(f);
+		delete fw;
 	}
 	else
 	{
@@ -1204,59 +1156,45 @@ static void CreateCachedNodes(MapData *map)
 static bool CheckCachedNodes(MapData *map)
 {
 	char magic[4] = {0,0,0,0};
-	BYTE md5[16];
-	BYTE md5map[16];
-	DWORD numlin;
-	DWORD *verts = NULL;
+	uint8_t md5[16];
+	uint8_t md5map[16];
+	uint32_t numlin;
+	uint32_t *verts = NULL;
 
 	FString path = CreateCacheName(map, false);
-	FILE *f = fopen(path, "rb");
-	if (f == NULL) return false;
+	FileReader fr;
 
-	if (fread(magic, 1, 4, f) != 4) goto errorout;
+	if (!fr.Open(path)) return false;
+
+	if (fr.Read(magic, 4) != 4) goto errorout;
 	if (memcmp(magic, "CACH", 4))  goto errorout;
 
-	if (fread(&numlin, 4, 1, f) != 1) goto errorout; 
+	if (fr.Read(&numlin, 4) != 4) goto errorout; 
 	numlin = LittleLong(numlin);
 	if (numlin != level.lines.Size()) goto errorout;
 
-	if (fread(md5, 1, 16, f) != 16) goto errorout;
+	if (fr.Read(md5, 16) != 16) goto errorout;
 	map->GetChecksum(md5map);
 	if (memcmp(md5, md5map, 16)) goto errorout;
 
-	verts = new DWORD[numlin * 8];
-	if (fread(verts, 8, numlin, f) != numlin) goto errorout;
+	verts = new uint32_t[numlin * 8];
+	if (fr.Read(verts, 8 * numlin) != 8 * numlin) goto errorout;
 
-	if (fread(magic, 1, 4, f) != 4) goto errorout;
+	if (fr.Read(magic, 4) != 4) goto errorout;
 	if (memcmp(magic, "ZGL2", 4) && memcmp(magic, "ZGL3", 4))  goto errorout;
 
 
 	try
 	{
-		long pos = ftell(f);
-		FileReader fr(f);
-		fr.Seek(pos, SEEK_SET);
 		P_LoadZNodes (fr, MAKE_ID(magic[0],magic[1],magic[2],magic[3]));
 	}
 	catch (CRecoverableError &error)
 	{
 		Printf ("Error loading nodes: %s\n", error.GetMessage());
 
-		if (subsectors != NULL)
-		{
-			delete[] subsectors;
-			subsectors = NULL;
-		}
-		if (segs != NULL)
-		{
-			delete[] segs;
-			segs = NULL;
-		}
-		if (nodes != NULL)
-		{
-			delete[] nodes;
-			nodes = NULL;
-		}
+		level.subsectors.Clear();
+		level.segs.Clear();
+		level.nodes.Clear();
 		goto errorout;
 	}
 
@@ -1268,7 +1206,6 @@ static bool CheckCachedNodes(MapData *map)
 	}
 	delete [] verts;
 
-	fclose(f);
 	return true;
 
 errorout:
@@ -1276,11 +1213,10 @@ errorout:
 	{
 		delete[] verts;
 	}
-	fclose(f);
 	return false;
 }
 
-CCMD(clearnodecache)
+UNSAFE_CCMD(clearnodecache)
 {
 	TArray<FFileList> list;
 	FString path = M_GetCachePath(false);
@@ -1326,35 +1262,6 @@ CCMD(clearnodecache)
 //
 //==========================================================================
 
-
-//==========================================================================
-//
-// P_PointInSubsector
-//
-//==========================================================================
-
-subsector_t *P_PointInSubsector (double x, double y)
-{
-	node_t *node;
-	int side;
-
-	// single subsector is a special case
-	if (numgamenodes == 0)
-		return gamesubsectors;
-				
-	node = gamenodes + numgamenodes - 1;
-
-	fixed_t xx = FLOAT2FIXED(x);
-	fixed_t yy = FLOAT2FIXED(y);
-	do
-	{
-		side = R_PointOnSide (xx, yy, node);
-		node = (node_t *)node->children[side];
-	}
-	while (!((size_t)node & 1));
-		
-	return (subsector_t *)((BYTE *)node - 1);
-}
 
 //==========================================================================
 //
@@ -1406,7 +1313,7 @@ static bool PointOnLine (int x, int y, int x1, int y1, int dx, int dy)
 void P_SetRenderSector()
 {
 	int 				i;
-	DWORD 				j;
+	uint32_t 				j;
 	TArray<subsector_t *> undetermined;
 	subsector_t *		ss;
 
@@ -1438,67 +1345,66 @@ void P_SetRenderSector()
 
 	// Check for incorrect partner seg info so that the following code does not crash.
 
-	for (i = 0; i < numsegs; i++)
+	for (auto &seg : level.segs)
 	{
-		auto p = segs[i].PartnerSeg;
+		auto p = seg.PartnerSeg;
 		if (p != nullptr)
 		{
-			int partner = (int)(p - segs);
+			int partner = p->Index();
 
-			if (partner < 0 || partner >= numsegs || &segs[partner] != p)
+			if (partner < 0 || partner >= (int)level.segs.Size() || &level.segs[partner] != p)
 			{
-				segs[i].PartnerSeg = nullptr;
+				seg.PartnerSeg = nullptr;
 			}
 
 			// glbsp creates such incorrect references for Strife.
-			if (segs[i].linedef && segs[i].PartnerSeg != nullptr && !segs[i].PartnerSeg->linedef)
+			if (seg.linedef && seg.PartnerSeg != nullptr && !seg.PartnerSeg->linedef)
 			{
-				segs[i].PartnerSeg = segs[i].PartnerSeg->PartnerSeg = nullptr;
+				seg.PartnerSeg = seg.PartnerSeg->PartnerSeg = nullptr;
 			}
 		}
 	}
-	for (i = 0; i < numsegs; i++)
+	for (auto &seg : level.segs)
 	{
-		if (segs[i].PartnerSeg != nullptr && segs[i].PartnerSeg->PartnerSeg != &segs[i])
+		if (seg.PartnerSeg != nullptr && seg.PartnerSeg->PartnerSeg != &seg)
 		{
-			segs[i].PartnerSeg = nullptr;
+			seg.PartnerSeg = nullptr;
 		}
 	}
 
 	// look up sector number for each subsector
-	for (i = 0; i < numsubsectors; i++)
+	for (auto &ss : level.subsectors)
 	{
 		// For rendering pick the sector from the first seg that is a sector boundary
 		// this takes care of self-referencing sectors
-		ss = &subsectors[i];
-		seg_t *seg = ss->firstline;
+		seg_t *seg = ss.firstline;
 
 		// Check for one-dimensional subsectors. These should be ignored when
 		// being processed for automap drawing etc.
-		ss->flags |= SSECF_DEGENERATE;
-		for(j=2; j<ss->numlines; j++)
+		ss.flags |= SSECF_DEGENERATE;
+		for(j=2; j<ss.numlines; j++)
 		{
 			if (!PointOnLine(seg[j].v1->fixX(), seg[j].v1->fixY(), seg->v1->fixX(), seg->v1->fixY(), seg->v2->fixX() -seg->v1->fixX(), seg->v2->fixY() -seg->v1->fixY()))
 			{
 				// Not on the same line
-				ss->flags &= ~SSECF_DEGENERATE;
+				ss.flags &= ~SSECF_DEGENERATE;
 				break;
 			}
 		}
 
-		seg = ss->firstline;
-		for(j=0; j<ss->numlines; j++)
+		seg = ss.firstline;
+		for(j=0; j<ss.numlines; j++)
 		{
 			if(seg->sidedef && (seg->PartnerSeg == nullptr || (seg->PartnerSeg->sidedef != nullptr && seg->sidedef->sector!=seg->PartnerSeg->sidedef->sector)))
 			{
-				ss->render_sector = seg->sidedef->sector;
+				ss.render_sector = seg->sidedef->sector;
 				break;
 			}
 			seg++;
 		}
-		if(ss->render_sector == NULL) 
+		if(ss.render_sector == NULL) 
 		{
-			undetermined.Push(ss);
+			undetermined.Push(&ss);
 		}
 	}
 

@@ -36,7 +36,8 @@ class SecurityCamera : Actor
 		if (args[1])
 			Delta /= 2;
 		Acc = 0.;
-		Pitch = clamp(args[0], -89, 89);
+		int arg = (args[0] << 24) >> 24;	// make sure the value has the intended sign.
+		Pitch = clamp(arg, -89, 89);
 		Range = args[1];
 	}
 

@@ -10,6 +10,7 @@
  ******************************************************************************/
 
 height 38;
+protrusion 0.0, 12, 0.85, 28;
 monospacefonts true, "0", center;
 
 statusbar fullscreen, fullscreenoffsets

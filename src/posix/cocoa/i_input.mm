@@ -109,7 +109,7 @@ void CheckGUICapture()
 	}
 }
 
-void CenterCursor()
+void SetCursorPosition(const NSPoint position)
 {
 	NSWindow* window = [NSApp keyWindow];
 	if (nil == window)
@@ -118,15 +118,14 @@ void CenterCursor()
 	}
 
 	const NSRect  displayRect = [[window screen] frame];
-	const NSRect   windowRect = [window frame];
-	const CGPoint centerPoint = CGPointMake(NSMidX(windowRect), displayRect.size.height - NSMidY(windowRect));
+	const CGPoint eventPoint = CGPointMake(position.x, displayRect.size.height - position.y);
 
 	CGEventSourceRef eventSource = CGEventSourceCreate(kCGEventSourceStateCombinedSessionState);
 
 	if (NULL != eventSource)
 	{
 		CGEventRef mouseMoveEvent = CGEventCreateMouseEvent(eventSource,
-			kCGEventMouseMoved, centerPoint, kCGMouseButtonLeft);
+			kCGEventMouseMoved, eventPoint, kCGMouseButtonLeft);
 
 		if (NULL != mouseMoveEvent)
 		{
@@ -141,6 +140,20 @@ void CenterCursor()
 	s_skipMouseMoves = 2;
 }
 
+void CenterCursor()
+{
+	NSWindow* window = [NSApp keyWindow];
+	if (nil == window)
+	{
+		return;
+	}
+
+	const NSRect  displayRect = [[window screen] frame];
+	const NSRect   windowRect = [window frame];
+	const NSPoint centerPoint = { NSMidX(windowRect), NSMidY(windowRect) };
+
+	SetCursorPosition(centerPoint);
+}
 
 bool IsInGame()
 {
@@ -227,6 +240,7 @@ void I_ReleaseMouseCapture()
 void I_SetNativeMouse(bool wantNative)
 {
 	static bool nativeMouse = true;
+	static NSPoint mouseLocation;
 
 	if (wantNative != nativeMouse)
 	{
@@ -234,6 +248,7 @@ void I_SetNativeMouse(bool wantNative)
 
 		if (!wantNative)
 		{
+			mouseLocation = [NSEvent mouseLocation];
 			CenterCursor();
 		}
 
@@ -241,6 +256,8 @@ void I_SetNativeMouse(bool wantNative)
 
 		if (wantNative)
 		{
+			SetCursorPosition(mouseLocation);
+
 			[NSCursor unhide];
 		}
 		else
@@ -317,7 +334,7 @@ uint8_t ModifierToDIK(const uint32_t modifier)
 	return 0;
 }
 
-SWORD ModifierFlagsToGUIKeyModifiers(NSEvent* theEvent)
+int16_t ModifierFlagsToGUIKeyModifiers(NSEvent* theEvent)
 {
 	const NSUInteger modifiers([theEvent modifierFlags] & NSDeviceIndependentModifierFlagsMask);
 	return ((modifiers & NSShiftKeyMask    ) ? GKM_SHIFT : 0)
@@ -462,12 +479,9 @@ void NSEventToGameMousePosition(NSEvent* inEvent, event_t* outEvent)
 	const NSView*     view = [window contentView];
 
 	const NSPoint screenPos = [NSEvent mouseLocation];
-	const NSPoint windowPos = [window convertScreenToBase:screenPos];
-
-	const NSPoint   viewPos = I_IsHiDPISupported()
-		? [view convertPointToBacking:windowPos]
-		: [view convertPoint:windowPos fromView:nil];
-
+	const NSRect screenRect = NSMakeRect(screenPos.x, screenPos.y, 0, 0);
+	const NSRect windowRect = [window convertRectFromScreen:screenRect];
+	const NSPoint   viewPos = [view convertPointToBacking:windowRect.origin];
 	const CGFloat frameHeight = I_GetContentViewSize(window).height;
 
 	const CGFloat posX = (              viewPos.x - rbOpts.shiftX) / rbOpts.pixelScale;
@@ -492,19 +506,6 @@ void ProcessMouseMoveInMenu(NSEvent* theEvent)
 
 void ProcessMouseMoveInGame(NSEvent* theEvent)
 {
-	if (!use_mouse)
-	{
-		return;
-	}
-
-	// TODO: remove this magic!
-
-	if (s_skipMouseMoves > 0)
-	{
-		--s_skipMouseMoves;
-		return;
-	}
-
 	int x([theEvent deltaX]);
 	int y(-[theEvent deltaY]);
 
@@ -587,6 +588,12 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 
 void ProcessKeyboardFlagsEvent(NSEvent* theEvent)
 {
+	if (GUICapture)
+	{
+		// Ignore events from modifier keys in menu/console/chat
+		return;
+	}
+
 	static const uint32_t FLAGS_MASK =
 		NSDeviceIndependentModifierFlagsMask & ~NSNumericPadKeyMask;
 
@@ -600,23 +607,15 @@ void ProcessKeyboardFlagsEvent(NSEvent* theEvent)
 	}
 
 	event_t event = {};
-
 	event.type  = modifiers > oldModifiers ? EV_KeyDown : EV_KeyUp;
 	event.data1 = ModifierToDIK(deltaModifiers);
 
 	oldModifiers = modifiers;
 
-	// Caps Lock is a modifier key which generates one event per state change
-	// but not per actual key press or release. So treat any event as key down
-	// Also its event should be not be posted in menu and console
-
 	if (DIK_CAPITAL == event.data1)
 	{
-		if (GUICapture)
-		{
-			return;
-		}
-
+		// Caps Lock is a modifier key which generates one event per state change
+		// but not per actual key press or release. So treat any event as key down
 		event.type = EV_KeyDown;
 	}
 
@@ -626,6 +625,17 @@ void ProcessKeyboardFlagsEvent(NSEvent* theEvent)
 
 void ProcessMouseMoveEvent(NSEvent* theEvent)
 {
+	if (!use_mouse)
+	{
+		return;
+	}
+
+	if (s_skipMouseMoves > 0)
+	{
+		--s_skipMouseMoves;
+		return;
+	}
+
 	if (GUICapture)
 	{
 		ProcessMouseMoveInMenu(theEvent);
@@ -638,6 +648,11 @@ void ProcessMouseMoveEvent(NSEvent* theEvent)
 
 void ProcessMouseButtonEvent(NSEvent* theEvent)
 {
+	if (!use_mouse)
+	{
+		return;
+	}
+
 	event_t event = {};
 
 	const NSEventType cocoaEventType = [theEvent type];
@@ -690,7 +705,12 @@ void ProcessMouseButtonEvent(NSEvent* theEvent)
 
 void ProcessMouseWheelEvent(NSEvent* theEvent)
 {
-	const SWORD modifiers = ModifierFlagsToGUIKeyModifiers(theEvent);
+	if (!use_mouse)
+	{
+		return;
+	}
+
+	const int16_t modifiers = ModifierFlagsToGUIKeyModifiers(theEvent);
 	const CGFloat delta   = (modifiers & GKM_SHIFT)
 		? [theEvent deltaX]
 		: [theEvent deltaY];

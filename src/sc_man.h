@@ -19,11 +19,15 @@ public:
 	FScanner &operator=(const FScanner &other);
 
 	void Open(const char *lumpname);
-	void OpenFile(const char *filename);
+	bool OpenFile(const char *filename);
 	void OpenMem(const char *name, const char *buffer, int size);
 	void OpenString(const char *name, FString buffer);
 	void OpenLumpNum(int lump);
 	void Close();
+	void SetParseVersion(VersionInfo ver)
+	{
+		ParseVersion = ver;
+	}
 
 	void SetCMode(bool cmode);
 	void SetEscape(bool esc);
@@ -53,6 +57,12 @@ public:
 	bool GetFloat();
 	void MustGetFloat();
 	bool CheckFloat();
+	
+	// Token based variant
+	bool CheckValue(bool allowfloat);
+	void MustGetValue(bool allowfloat);
+	bool CheckBoolToken();
+	void MustGetBoolToken();
 
 	void UnGet();
 
@@ -99,9 +109,13 @@ protected:
 	const char *LastGotPtr;
 	int LastGotLine;
 	bool CMode;
-	BYTE StateMode;
+	uint8_t StateMode;
 	bool StateOptions;
 	bool Escape;
+	VersionInfo ParseVersion = { 0, 0, 0 };	// no ZScript extensions by default
+
+
+	bool ScanValue(bool allowfloat);
 };
 
 enum

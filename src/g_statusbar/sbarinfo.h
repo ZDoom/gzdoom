@@ -101,16 +101,15 @@ struct SBarInfo
 	bool completeBorder;
 	bool lowerHealthCap;
 	char spacingCharacter;
+	TArray<std::pair<double, int>> protrusions;
 	MonospaceAlignment spacingAlignment;
 	int interpolationSpeed;
 	int armorInterpolationSpeed;
 	int height;
 	int gameType;
-	FMugShot MugShot;
-	int resW;
-	int resH;
-	int cleanX;
-	int cleanY;
+
+	int _resW;
+	int _resH;
 
 	int GetGameType() { return gameType; }
 	void ParseSBarInfo(int lump);
@@ -128,28 +127,5 @@ struct SBarInfo
 #define SCRIPT_CUSTOM	0
 #define SCRIPT_DEFAULT	1
 extern SBarInfo *SBarInfoScript[2];
-
-class DSBarInfoWrapper : public DBaseStatusBar
-{
-	DSBarInfo *core;
-	DECLARE_CLASS(DSBarInfoWrapper, DBaseStatusBar)
-public:
-	DSBarInfoWrapper() : DBaseStatusBar(10, 10, 10) { core = nullptr; }
-	DSBarInfoWrapper(SBarInfo *script);
-	void OnDestroy() override;
-	void SetScaled(bool scale, bool force);
-	void AttachToPlayer(player_t *player) override;
-
-	void ScreenSizeChanged() override;
-	void Draw(EHudState state) override;
-	void NewGame() override;
-	bool MustDrawLog(EHudState state) override;
-	void SetMugShotState(const char *state_name, bool wait_till_done, bool reset) override;
-	void Tick() override;
-	void ReceivedWeapon(AWeapon *weapon) override;
-	void FlashItem(const PClass *itemtype) override;
-	void ShowPop(int popnum) override;
-};
-
 
 #endif //__SBarInfo_SBAR_H__

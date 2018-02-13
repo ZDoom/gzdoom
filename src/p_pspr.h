@@ -1,19 +1,26 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
+//
+
 // DESCRIPTION:
 //	Sprite animation.
 //
@@ -23,6 +30,8 @@
 #ifndef __P_PSPR_H__
 #define __P_PSPR_H__
 
+#include "r_data/renderstyle.h"
+
 // Basic data types.
 // Needs fixed point, and BAM angles.
 
@@ -31,6 +40,7 @@
 #define WEAPONTOP				32.
 #define WEAPON_FUDGE_Y			0.375
 class AInventory;
+struct FTranslatedLineTarget;
 
 //
 // Overlay psprites are scaled shapes
@@ -49,11 +59,16 @@ enum PSPLayers
 
 enum PSPFlags
 {
-	PSPF_ADDWEAPON	= 1 << 0,
-	PSPF_ADDBOB		= 1 << 1,
-	PSPF_POWDOUBLE	= 1 << 2,
-	PSPF_CVARFAST	= 1 << 3,
-	PSPF_FLIP		= 1 << 6,
+	PSPF_ADDWEAPON		= 1 << 0,
+	PSPF_ADDBOB			= 1 << 1,
+	PSPF_POWDOUBLE		= 1 << 2,
+	PSPF_CVARFAST		= 1 << 3,
+	PSPF_ALPHA			= 1 << 4,
+	PSPF_RENDERSTYLE	= 1 << 5,
+	PSPF_FLIP			= 1 << 6,
+	PSPF_FORCEALPHA		= 1 << 7,
+	PSPF_FORCESTYLE		= 1 << 8,
+	PSPF_MIRROR			= 1 << 9,
 };
 
 class DPSprite : public DObject
@@ -76,22 +91,23 @@ public:
 	void		SetCaller(AActor *newcaller) { Caller = newcaller; }
 	void		ResetInterpolation() { oldx = x; oldy = y; }
 	void OnDestroy() override;
+	std::pair<FRenderStyle, float> GetRenderStyle(FRenderStyle ownerstyle, double owneralpha);
 
-	double x, y;
+	double x, y, alpha;
 	double oldx, oldy;
 	bool firstTic;
 	int Tics;
 	int Flags;
+	FRenderStyle Renderstyle;
 
 private:
 	DPSprite () {}
 
 	void Serialize(FSerializer &arc);
-	void Tick();
 
 public:	// must be public to be able to generate the field export tables. Grrr...
-	TObjPtr<AActor> Caller;
-	TObjPtr<DPSprite> Next;
+	TObjPtr<AActor*> Caller;
+	TObjPtr<DPSprite*> Next;
 	player_t *Owner;
 	FState *State;
 	int Sprite;
@@ -113,7 +129,6 @@ void P_BobWeapon (player_t *player, float *x, float *y, double ticfrac);
 DAngle P_BulletSlope (AActor *mo, FTranslatedLineTarget *pLineTarget = NULL, int aimflags = 0);
 AActor *P_AimTarget(AActor *mo);
 
-void DoReadyWeapon(AActor *self);
 void DoReadyWeaponToBob(AActor *self);
 void DoReadyWeaponToFire(AActor *self, bool primary = true, bool secondary = true);
 void DoReadyWeaponToSwitch(AActor *self, bool switchable = true);

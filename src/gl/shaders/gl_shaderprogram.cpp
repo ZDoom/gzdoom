@@ -26,7 +26,6 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "files.h"
 #include "m_swap.h"
 #include "v_video.h"
 #include "gl/gl_functions.h"
@@ -217,7 +216,10 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 	FString patchedCode;
 
 	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
-	patchedCode.AppendFormat("#version %d\n", shaderVersion);
+	if (gl.es)
+		patchedCode.AppendFormat("#version %d es\n", shaderVersion);
+	else
+		patchedCode.AppendFormat("#version %d\n", shaderVersion);
 
 	// TODO: Find some way to add extension requirements to the patching
 	//

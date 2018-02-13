@@ -29,7 +29,7 @@
 #endif
 
 /** a parity check vector which certificate the period of 2^{MEXP} */
-static const DWORD parity[4] = { PARITY1, PARITY2, PARITY3, PARITY4 };
+static const uint32_t parity[4] = { PARITY1, PARITY2, PARITY3, PARITY4 };
 
 /*----------------
 STATIC FUNCTIONS
@@ -37,8 +37,8 @@ STATIC FUNCTIONS
 inline static int idxof(int i);
 inline static void rshift128(w128_t *out,  w128_t const *in, int shift);
 inline static void lshift128(w128_t *out,  w128_t const *in, int shift);
-inline static DWORD func1(DWORD x);
-inline static DWORD func2(DWORD x);
+inline static uint32_t func1(uint32_t x);
+inline static uint32_t func2(uint32_t x);
 #if defined(BIG_ENDIAN64) && !defined(ONLY64)
 inline static void swap(w128_t *array, int size);
 #endif
@@ -81,33 +81,33 @@ inline static int idxof(int i) {
 */
 #ifdef ONLY64
 inline static void rshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[2] << 32) | ((QWORD)in->u[3]);
-	tl = ((QWORD)in->u[0] << 32) | ((QWORD)in->u[1]);
+	th = ((uint64_t)in->u[2] << 32) | ((uint64_t)in->u[3]);
+	tl = ((uint64_t)in->u[0] << 32) | ((uint64_t)in->u[1]);
 
 	oh = th >> (shift * 8);
 	ol = tl >> (shift * 8);
 	ol |= th << (64 - shift * 8);
-	out->u[0] = (DWORD)(ol >> 32);
-	out->u[1] = (DWORD)ol;
-	out->u[2] = (DWORD)(oh >> 32);
-	out->u[3] = (DWORD)oh;
+	out->u[0] = (uint32_t)(ol >> 32);
+	out->u[1] = (uint32_t)ol;
+	out->u[2] = (uint32_t)(oh >> 32);
+	out->u[3] = (uint32_t)oh;
 }
 #else
 inline static void rshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[3] << 32) | ((QWORD)in->u[2]);
-	tl = ((QWORD)in->u[1] << 32) | ((QWORD)in->u[0]);
+	th = ((uint64_t)in->u[3] << 32) | ((uint64_t)in->u[2]);
+	tl = ((uint64_t)in->u[1] << 32) | ((uint64_t)in->u[0]);
 
 	oh = th >> (shift * 8);
 	ol = tl >> (shift * 8);
 	ol |= th << (64 - shift * 8);
-	out->u[1] = (DWORD)(ol >> 32);
-	out->u[0] = (DWORD)ol;
-	out->u[3] = (DWORD)(oh >> 32);
-	out->u[2] = (DWORD)oh;
+	out->u[1] = (uint32_t)(ol >> 32);
+	out->u[0] = (uint32_t)ol;
+	out->u[3] = (uint32_t)(oh >> 32);
+	out->u[2] = (uint32_t)oh;
 }
 #endif
 /**
@@ -120,33 +120,33 @@ inline static void rshift128(w128_t *out, w128_t const *in, int shift) {
 */
 #ifdef ONLY64
 inline static void lshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[2] << 32) | ((QWORD)in->u[3]);
-	tl = ((QWORD)in->u[0] << 32) | ((QWORD)in->u[1]);
+	th = ((uint64_t)in->u[2] << 32) | ((uint64_t)in->u[3]);
+	tl = ((uint64_t)in->u[0] << 32) | ((uint64_t)in->u[1]);
 
 	oh = th << (shift * 8);
 	ol = tl << (shift * 8);
 	oh |= tl >> (64 - shift * 8);
-	out->u[0] = (DWORD)(ol >> 32);
-	out->u[1] = (DWORD)ol;
-	out->u[2] = (DWORD)(oh >> 32);
-	out->u[3] = (DWORD)oh;
+	out->u[0] = (uint32_t)(ol >> 32);
+	out->u[1] = (uint32_t)ol;
+	out->u[2] = (uint32_t)(oh >> 32);
+	out->u[3] = (uint32_t)oh;
 }
 #else
 inline static void lshift128(w128_t *out, w128_t const *in, int shift) {
-	QWORD th, tl, oh, ol;
+	uint64_t th, tl, oh, ol;
 
-	th = ((QWORD)in->u[3] << 32) | ((QWORD)in->u[2]);
-	tl = ((QWORD)in->u[1] << 32) | ((QWORD)in->u[0]);
+	th = ((uint64_t)in->u[3] << 32) | ((uint64_t)in->u[2]);
+	tl = ((uint64_t)in->u[1] << 32) | ((uint64_t)in->u[0]);
 
 	oh = th << (shift * 8);
 	ol = tl << (shift * 8);
 	oh |= tl >> (64 - shift * 8);
-	out->u[1] = (DWORD)(ol >> 32);
-	out->u[0] = (DWORD)ol;
-	out->u[3] = (DWORD)(oh >> 32);
-	out->u[2] = (DWORD)oh;
+	out->u[1] = (uint32_t)(ol >> 32);
+	out->u[0] = (uint32_t)ol;
+	out->u[3] = (uint32_t)(oh >> 32);
+	out->u[2] = (uint32_t)oh;
 }
 #endif
 
@@ -264,7 +264,7 @@ void FRandom::GenRandArray(w128_t *array, int size)
 #if defined(BIG_ENDIAN64) && !defined(ONLY64) && !defined(HAVE_ALTIVEC)
 inline static void swap(w128_t *array, int size) {
 	int i;
-	DWORD x, y;
+	uint32_t x, y;
 
 	for (i = 0; i < size; i++) {
 		x = array[i].u[0];
@@ -282,9 +282,9 @@ inline static void swap(w128_t *array, int size) {
 * @param x 32-bit integer
 * @return 32-bit integer
 */
-static DWORD func1(DWORD x)
+static uint32_t func1(uint32_t x)
 {
-	return (x ^ (x >> 27)) * (DWORD)1664525UL;
+	return (x ^ (x >> 27)) * (uint32_t)1664525UL;
 }
 
 /**
@@ -293,9 +293,9 @@ static DWORD func1(DWORD x)
 * @param x 32-bit integer
 * @return 32-bit integer
 */
-static DWORD func2(DWORD x)
+static uint32_t func2(uint32_t x)
 {
-	return (x ^ (x >> 27)) * (DWORD)1566083941UL;
+	return (x ^ (x >> 27)) * (uint32_t)1566083941UL;
 }
 
 /**
@@ -305,7 +305,7 @@ void FRandom::PeriodCertification()
 {
 	int inner = 0;
 	int i, j;
-	DWORD work;
+	uint32_t work;
 
 	for (i = 0; i < 4; i++)
 		inner ^= sfmt.u[idxof(i)] & parity[i];
@@ -360,7 +360,7 @@ int FRandom::GetMinArraySize64()
 */
 unsigned int FRandom::GenRand32()
 {
-	DWORD r;
+	uint32_t r;
 
 	assert(initialized);
 	if (idx >= SFMT::N32)
@@ -379,12 +379,12 @@ unsigned int FRandom::GenRand32()
 * unless an initialization is again executed. 
 * @return 64-bit pseudorandom number
 */
-QWORD FRandom::GenRand64()
+uint64_t FRandom::GenRand64()
 {
 #if defined(BIG_ENDIAN64) && !defined(ONLY64)
-	DWORD r1, r2;
+	uint32_t r1, r2;
 #else
-	QWORD r;
+	uint64_t r;
 #endif
 
 	assert(initialized);
@@ -399,7 +399,7 @@ QWORD FRandom::GenRand64()
 	r1 = sfmt.u[idx];
 	r2 = sfmt.u[idx + 1];
 	idx += 2;
-	return ((QWORD)r2 << 32) | r1;
+	return ((uint64_t)r2 << 32) | r1;
 #else
 	r = sfmt.u64[idx / 2];
 	idx += 2;
@@ -433,7 +433,7 @@ QWORD FRandom::GenRand64()
 * memory. Mac OSX doesn't have these functions, but \b malloc of OSX
 * returns the pointer to the aligned memory block.
 */
-void FRandom::FillArray32(DWORD *array, int size)
+void FRandom::FillArray32(uint32_t *array, int size)
 {
 	assert(initialized);
 	assert(idx == SFMT::N32);
@@ -470,7 +470,7 @@ void FRandom::FillArray32(DWORD *array, int size)
 * memory. Mac OSX doesn't have these functions, but \b malloc of OSX
 * returns the pointer to the aligned memory block.
 */
-void FRandom::FillArray64(QWORD *array, int size)
+void FRandom::FillArray64(uint64_t *array, int size)
 {
 	assert(initialized);
 	assert(idx == SFMT::N32);
@@ -491,7 +491,7 @@ void FRandom::FillArray64(QWORD *array, int size)
 *
 * @param seed a 32-bit integer used as the seed.
 */
-void FRandom::InitGenRand(DWORD seed)
+void FRandom::InitGenRand(uint32_t seed)
 {
 	int i;
 
@@ -515,10 +515,10 @@ void FRandom::InitGenRand(DWORD seed)
 * @param init_key the array of 32-bit integers, used as a seed.
 * @param key_length the length of init_key.
 */
-void FRandom::InitByArray(DWORD *init_key, int key_length)
+void FRandom::InitByArray(uint32_t *init_key, int key_length)
 {
 	int i, j, count;
-	DWORD r;
+	uint32_t r;
 	int lag;
 	int mid;
 	int size = SFMT::N * 4;

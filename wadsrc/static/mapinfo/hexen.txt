@@ -27,7 +27,8 @@ gameinfo
 	defaultbloodcolor = "68 00 00"
 	defaultbloodparticlecolor = "ff 00 00"
 	backpacktype = "BagOfHolding"	// Hexen doesn't have a backpack so use Heretic's.
-	statusbar = "sbarinfo/hexen.txt"
+	//statusbar = "sbarinfo/hexen.txt"
+	statusbarclass = "HexenStatusBar"
 	intermissionmusic = "hub"
 	intermissioncounter = false
 	weaponslot = 1, "FWeapFist", "CWeapMace", "MWeapWand"
@@ -36,6 +37,8 @@ gameinfo
 	weaponslot = 4, "FWeapQuietus", "CWeapWraithverge", "MWeapBloodscourge"
 	dimcolor = "00 00 ff"
 	dimamount = 0.2
+	bluramount = 0.0
+	menuslidercolor = "Orange"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -61,6 +64,10 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedfont = "SmallFont"
 	statscreen_enteringfont = "SmallFont"
+	statscreen_coop = "CoopStatusScreen"
+	statscreen_dm = "DeathmatchStatusScreen"
+	statscreen_single = "RavenStatusScreen"
+	messageboxclass = "MessageBoxMenu"
 }
 
 DoomEdNums

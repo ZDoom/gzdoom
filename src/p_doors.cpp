@@ -1,20 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION: Door animation code (opening/closing)
 //		[RH] Removed sliding door code and simplified for Hexen-ish specials
@@ -485,7 +488,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			}
 			return false;
 		}
-		if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
+		if (Create<DDoor> (sec, type, speed, delay, lightTag, topcountdown))
 			rtn = true;
 	}
 	else
@@ -499,7 +502,7 @@ bool EV_DoDoor (DDoor::EVlDoor type, line_t *line, AActor *thing,
 			if (sec->PlaneMoving(sector_t::ceiling))
 				continue;
 
-			if (new DDoor (sec, type, speed, delay, lightTag, topcountdown))
+			if (Create<DDoor>(sec, type, speed, delay, lightTag, topcountdown))
 				rtn = true;
 		}
 				
@@ -538,7 +541,8 @@ void DAnimatedDoor::Serialize(FSerializer &arc)
 		("delay", m_Delay)
 		("dooranim", m_DoorAnim)
 		("setblock1", m_SetBlocking1)
-		("setblock2", m_SetBlocking2);
+		("setblock2", m_SetBlocking2)
+		("type", m_Type);
 }
 
 //============================================================================
@@ -631,7 +635,7 @@ void DAnimatedDoor::Tick ()
 
 	case Waiting:
 		// IF DOOR IS DONE WAITING...
-		if (!m_Timer--)
+		if (m_Type == adClose || !m_Timer--)
 		{
 			if (!StartClosing())
 			{
@@ -683,7 +687,7 @@ void DAnimatedDoor::Tick ()
 //
 //============================================================================
 
-DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim)
+DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay, FDoorAnimation *anim, DAnimatedDoor::EADType type)
 	: DMovingCeiling (sec, false)
 {
 	double topdist;
@@ -707,9 +711,13 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 	}
 
 
-	picnum = m_Line1->sidedef[0]->GetTexture(side_t::top);
-	m_Line1->sidedef[0]->SetTexture(side_t::mid, picnum);
-	m_Line2->sidedef[0]->SetTexture(side_t::mid, picnum);
+	auto &tex1 = m_Line1->sidedef[0]->textures;
+	tex1[side_t::mid].InitFrom(tex1[side_t::top]);
+
+	auto &tex2 = m_Line2->sidedef[0]->textures;
+	tex2[side_t::mid].InitFrom(tex2[side_t::top]);
+
+	picnum = tex1[side_t::top].texture;
 
 	// don't forget texture scaling here!
 	FTexture *tex = TexMan[picnum];
@@ -717,7 +725,8 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 
 	topdist = m_Sector->ceilingplane.fD() - topdist * m_Sector->ceilingplane.fC();
 
-	m_Status = Opening;
+	m_Type = type;
+	m_Status = type == adClose? Waiting : Opening;
 	m_Speed = speed;
 	m_Delay = delay;
 	m_Timer = m_Speed;
@@ -728,9 +737,12 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 	m_Line2->flags |= ML_BLOCKING;
 	m_BotDist = m_Sector->ceilingplane.fD();
 	m_Sector->MoveCeiling (2048., topdist, 1);
-	if (m_DoorAnim->OpenSound != NAME_None)
+	if (type == adOpenClose)
 	{
-		SN_StartSequence (m_Sector, CHAN_INTERIOR, m_DoorAnim->OpenSound, 1);
+		if (m_DoorAnim->OpenSound != NAME_None)
+		{
+			SN_StartSequence(m_Sector, CHAN_INTERIOR, m_DoorAnim->OpenSound, 1);
+		}
 	}
 }
 
@@ -741,7 +753,7 @@ DAnimatedDoor::DAnimatedDoor (sector_t *sec, line_t *line, int speed, int delay,
 //
 //============================================================================
 
-bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
+bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay, DAnimatedDoor::EADType type)
 {
 	sector_t *sec;
 	int secnum;
@@ -756,7 +768,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 		sec = line->backsector;
 
 		// Make sure door isn't already being animated
-		if (sec->ceilingdata != NULL)
+		if (sec->ceilingdata != NULL )
 		{
 			if (actor->player == NULL)
 				return false;
@@ -774,7 +786,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 		FDoorAnimation *anim = TexMan.FindAnimatedDoor (line->sidedef[0]->GetTexture(side_t::top));
 		if (anim != NULL)
 		{
-			new DAnimatedDoor (sec, line, speed, delay, anim);
+			Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 			return true;
 		}
 		return false;
@@ -799,7 +811,7 @@ bool EV_SlidingDoor (line_t *line, AActor *actor, int tag, int speed, int delay)
 			if (anim != NULL)
 			{
 				rtn = true;
-				new DAnimatedDoor (sec, line, speed, delay, anim);
+				Create<DAnimatedDoor>(sec, line, speed, delay, anim, type);
 				break;
 			}
 		}

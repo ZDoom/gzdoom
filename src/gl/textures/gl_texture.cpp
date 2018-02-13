@@ -31,17 +31,23 @@
 #include "colormatcher.h"
 #include "r_data/r_translate.h"
 #include "c_dispatch.h"
+#include "r_state.h"
+#include "actor.h"
+#include "cmdlib.h"
 #ifdef _WIN32
 #include "win32gliface.h"
 #endif
 #include "v_palette.h"
 #include "sc_man.h"
+#include "textures/skyboxtexture.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
+#include "gl/textures/gl_translate.h"
+#include "gl/models/gl_models.h"
 
 //==========================================================================
 //
@@ -128,9 +134,11 @@ void gl_GenerateGlobalBrightmapFromColormap()
 	if (lump == -1) lump = Wads.CheckNumForName("COLORMAP", ns_colormaps);
 	if (lump == -1) return;
 	FMemLump cmap = Wads.ReadLump(lump);
-	FMemLump palette = Wads.ReadLump("PLAYPAL");
+	uint8_t palbuffer[768];
+	ReadPalette(Wads.CheckNumForName("PLAYPAL"), palbuffer);
+
 	const unsigned char *cmapdata = (const unsigned char *)cmap.GetMem();
-	const unsigned char *paldata = (const unsigned char *)palette.GetMem();
+	const uint8_t *paldata = palbuffer;
 
 	const int black = 0;
 	const int white = ColorMatcher.Pick(255,255,255);
@@ -158,50 +166,6 @@ void gl_GenerateGlobalBrightmapFromColormap()
 		if (GlobalBrightmap.Remap[i] == white) DPrintf(DMSG_NOTIFY, "Marked color %d as fullbright\n",i);
 	}
 }
-
-//===========================================================================
-//
-// averageColor
-//  input is RGBA8 pixel format.
-//	The resulting RGB color can be scaled uniformly so that the highest 
-//	component becomes one.
-//
-//===========================================================================
-static PalEntry averageColor(const DWORD *data, int size, int maxout)
-{
-	int				i;
-	unsigned int	r, g, b;
-
-
-
-	// First clear them.
-	r = g = b = 0;
-	if (size==0) 
-	{
-		return PalEntry(255,255,255);
-	}
-	for(i = 0; i < size; i++)
-	{
-		r += BPART(data[i]);
-		g += GPART(data[i]);
-		b += RPART(data[i]);
-	}
-
-	r = r/size;
-	g = g/size;
-	b = b/size;
-
-	int maxv=MAX(MAX(r,g),b);
-
-	if(maxv && maxout)
-	{
-		r = Scale(r, maxout, maxv);
-		g = Scale(g, maxout, maxv);
-		b = Scale(b, maxout, maxv);
-	}
-	return PalEntry(255,r,g,b);
-}
-
 
 
 //==========================================================================
@@ -267,7 +231,7 @@ void FTexture::CreateDefaultBrightmap()
 			) 
 		{
 			// May have one - let's check when we use this texture
-			const BYTE *texbuf = GetPixels();
+			const uint8_t *texbuf = GetPixels();
 			const int white = ColorMatcher.Pick(255,255,255);
 
 			int size = GetWidth() * GetHeight();
@@ -311,7 +275,7 @@ void FTexture::GetGlowColor(float *data)
 
 		if (buffer)
 		{
-			gl_info.GlowColor = averageColor((DWORD *) buffer, w*h, 153);
+			gl_info.GlowColor = averageColor((uint32_t *) buffer, w*h, 153);
 			delete[] buffer;
 		}
 
@@ -426,10 +390,10 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 		gl_info.mIsTransparent = trans;
 		if (trans == -1)
 		{
-			DWORD * dwbuf = (DWORD*)buffer;
+			uint32_t * dwbuf = (uint32_t*)buffer;
 			for(int i=0;i<size;i++)
 			{
-				DWORD alpha = dwbuf[i]>>24;
+				uint32_t alpha = dwbuf[i]>>24;
 
 				if (alpha != 0xff && alpha != 0)
 				{
@@ -457,7 +421,7 @@ void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
 #define SOME_MASK 0x00ffffff
 #endif
 
-#define CHKPIX(ofs) (l1[(ofs)*4+MSB]==255 ? (( ((DWORD*)l1)[0] = ((DWORD*)l1)[ofs]&SOME_MASK), trans=true ) : false)
+#define CHKPIX(ofs) (l1[(ofs)*4+MSB]==255 ? (( ((uint32_t*)l1)[0] = ((uint32_t*)l1)[ofs]&SOME_MASK), trans=true ) : false)
 
 bool FTexture::SmoothEdges(unsigned char * buffer,int w, int h)
 {
@@ -556,13 +520,13 @@ FBrightmapTexture::~FBrightmapTexture ()
 {
 }
 
-const BYTE *FBrightmapTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FBrightmapTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	// not needed
 	return NULL;
 }
 
-const BYTE *FBrightmapTexture::GetPixels ()
+const uint8_t *FBrightmapTexture::GetPixels ()
 {
 	// not needed
 	return NULL;
@@ -574,7 +538,7 @@ void FBrightmapTexture::Unload ()
 
 int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
-	SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, &GlobalBrightmap);
+	SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, GlobalBrightmap.Palette);
 	return 0;
 }
 
@@ -600,7 +564,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 	else sc.UnGet();
 
 	sc.MustGetString();
-	FTextureID no = TexMan.CheckForTexture(sc.String, type);
+	FTextureID no = TexMan.CheckForTexture(sc.String, type, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_Overridable);
 	FTexture *tex = TexMan[no];
 
 	sc.MustGetToken('{');
@@ -650,7 +614,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 		if (lumpnum != -1)
 		{
-			if (iwad && Wads.GetLumpFile(lumpnum) <= FWadCollection::IWAD_FILENUM) useme = true;
+			if (iwad && Wads.GetLumpFile(lumpnum) <= Wads.GetIwadNum()) useme = true;
 			if (thiswad && Wads.GetLumpFile(lumpnum) == deflump) useme = true;
 		}
 		if (!useme) return;
@@ -658,16 +622,45 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 	if (bmtex != NULL)
 	{
+		/* I do not think this is needed any longer
 		if (tex->bWarped != 0)
 		{
 			Printf("Cannot combine warping with brightmap on texture '%s'\n", tex->Name.GetChars());
 			return;
 		}
+		*/
 
 		bmtex->bMasked = false;
 		tex->gl_info.Brightmap = bmtex;
 	}	
 	tex->gl_info.bDisableFullbright = disable_fullbright;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void AddAutoBrightmaps()
+{
+	int num = Wads.GetNumLumps();
+	for (int i = 0; i < num; i++)
+	{
+		const char *name = Wads.GetLumpFullName(i);
+		if (strstr(name, "brightmaps/auto/") == name)
+		{
+			TArray<FTextureID> list;
+			FString texname = ExtractFileBase(name, false);
+			TexMan.ListTextures(texname, list);
+			auto bmtex = TexMan.FindTexture(name, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+			for (auto texid : list)
+			{
+				bmtex->bMasked = false;
+				TexMan[texid]->gl_info.Brightmap = bmtex;
+			}
+		}
+	}
 }
 
 //==========================================================================
@@ -723,6 +716,191 @@ void gl_ParseDetailTexture(FScanner &sc)
 			}
 		}
 	}
+}
+
+
+//==========================================================================
+//
+// DFrameBuffer :: PrecacheTexture
+//
+//==========================================================================
+
+static void PrecacheTexture(FTexture *tex, int cache)
+{
+	if (cache & (FTextureManager::HIT_Wall | FTextureManager::HIT_Flat | FTextureManager::HIT_Sky))
+	{
+		FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
+		if (gltex) gltex->Precache();
+	}
+	else
+	{
+		// make sure that software pixel buffers do not stick around for unneeded textures.
+		tex->Unload();
+	}
+}
+
+//==========================================================================
+//
+// DFrameBuffer :: PrecacheSprite
+//
+//==========================================================================
+
+static void PrecacheSprite(FTexture *tex, SpriteHits &hits)
+{
+	FMaterial * gltex = FMaterial::ValidateTexture(tex, true);
+	if (gltex) gltex->PrecacheList(hits);
+}
+
+//==========================================================================
+//
+// DFrameBuffer :: Precache
+//
+//==========================================================================
+
+void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
+{
+	SpriteHits *spritelist = new SpriteHits[sprites.Size()];
+	SpriteHits **spritehitlist = new SpriteHits*[TexMan.NumTextures()];
+	TMap<PClassActor*, bool>::Iterator it(actorhitlist);
+	TMap<PClassActor*, bool>::Pair *pair;
+	uint8_t *modellist = new uint8_t[Models.Size()];
+	memset(modellist, 0, Models.Size());
+	memset(spritehitlist, 0, sizeof(SpriteHits**) * TexMan.NumTextures());
+
+	// this isn't done by the main code so it needs to be done here first:
+	// check skybox textures and mark the separate faces as used
+	for (int i = 0; i<TexMan.NumTextures(); i++)
+	{
+		// HIT_Wall must be checked for MBF-style sky transfers. 
+		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
+		{
+			FTexture *tex = TexMan.ByIndex(i);
+			if (tex->gl_info.bSkybox)
+			{
+				FSkyBox *sb = static_cast<FSkyBox*>(tex);
+				for (int i = 0; i<6; i++)
+				{
+					if (sb->faces[i])
+					{
+						int index = sb->faces[i]->id.GetIndex();
+						texhitlist[index] |= FTextureManager::HIT_Flat;
+					}
+				}
+			}
+		}
+	}
+
+	// Check all used actors.
+	// 1. mark all sprites associated with its states
+	// 2. mark all model data and skins associated with its states
+	while (it.NextPair(pair))
+	{
+		PClassActor *cls = pair->Key;
+		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
+
+		for (unsigned i = 0; i < cls->GetStateCount(); i++)
+		{
+			auto &state = cls->GetStates()[i];
+			spritelist[state.sprite].Insert(gltrans, true);
+			FSpriteModelFrame * smf = gl_FindModelFrame(cls, state.sprite, state.Frame, false);
+			if (smf != NULL)
+			{
+				for (int i = 0; i < MAX_MODELS_PER_FRAME; i++)
+				{
+					if (smf->skinIDs[i].isValid())
+					{
+						texhitlist[smf->skinIDs[i].GetIndex()] |= FTexture::TEX_Flat;
+					}
+					else if (smf->modelIDs[i] != -1)
+					{
+						Models[smf->modelIDs[i]]->PushSpriteMDLFrame(smf, i);
+						Models[smf->modelIDs[i]]->AddSkins(texhitlist);
+					}
+					if (smf->modelIDs[i] != -1)
+					{
+						modellist[smf->modelIDs[i]] = 1;
+					}
+				}
+			}
+		}
+	}
+
+	// mark all sprite textures belonging to the marked sprites.
+	for (int i = (int)(sprites.Size() - 1); i >= 0; i--)
+	{
+		if (spritelist[i].CountUsed())
+		{
+			int j, k;
+			for (j = 0; j < sprites[i].numframes; j++)
+			{
+				const spriteframe_t *frame = &SpriteFrames[sprites[i].spriteframes + j];
+
+				for (k = 0; k < 16; k++)
+				{
+					FTextureID pic = frame->Texture[k];
+					if (pic.isValid())
+					{
+						spritehitlist[pic.GetIndex()] = &spritelist[i];
+					}
+				}
+			}
+		}
+	}
+
+	// delete everything unused before creating any new resources to avoid memory usage peaks.
+
+	// delete unused models
+	for (unsigned i = 0; i < Models.Size(); i++)
+	{
+		if (!modellist[i]) Models[i]->DestroyVertexBuffer();
+	}
+
+	// delete unused textures
+	int cnt = TexMan.NumTextures();
+	for (int i = cnt - 1; i >= 0; i--)
+	{
+		FTexture *tex = TexMan.ByIndex(i);
+		if (tex != nullptr)
+		{
+			if (!texhitlist[i])
+			{
+				if (tex->gl_info.Material[0]) tex->gl_info.Material[0]->Clean(true);
+			}
+			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
+			{
+				if (tex->gl_info.Material[1]) tex->gl_info.Material[1]->Clean(true);
+			}
+		}
+	}
+
+	if (gl_precache)
+	{
+		// cache all used textures
+		for (int i = cnt - 1; i >= 0; i--)
+		{
+			FTexture *tex = TexMan.ByIndex(i);
+			if (tex != nullptr)
+			{
+				PrecacheTexture(tex, texhitlist[i]);
+				if (spritehitlist[i] != nullptr && (*spritehitlist[i]).CountUsed() > 0)
+				{
+					PrecacheSprite(tex, *spritehitlist[i]);
+				}
+			}
+		}
+
+		// cache all used models
+		FGLModelRenderer renderer;
+		for (unsigned i = 0; i < Models.Size(); i++)
+		{
+			if (modellist[i]) 
+				Models[i]->BuildVertexBuffer(&renderer);
+		}
+	}
+
+	delete[] spritehitlist;
+	delete[] spritelist;
+	delete[] modellist;
 }
 
 

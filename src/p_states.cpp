@@ -41,6 +41,7 @@
 #include "v_text.h"
 #include "thingdef.h"
 #include "r_state.h"
+#include "vm.h"
 
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.
@@ -74,9 +75,9 @@ DEFINE_ACTION_FUNCTION(FState, GetSpriteTexture)
 	}
 	else
 	{
-		sprframe = &SpriteFrames[sprites[skins[skin].sprite].spriteframes + self->GetFrame()];
-		scalex = skins[skin].Scale.X;
-		scaley = skins[skin].Scale.Y;
+		sprframe = &SpriteFrames[sprites[Skins[skin].sprite].spriteframes + self->GetFrame()];
+		scalex = Skins[skin].Scale.X;
+		scaley = Skins[skin].Scale.Y;
 	}
 	if (numret > 0) ret[0].SetInt(sprframe->Texture[rotation].GetIndex());
 	if (numret > 1) ret[1].SetInt(!!(sprframe->Flip & (1 << rotation)));
@@ -96,8 +97,7 @@ PClassActor *FState::StaticFindStateOwner (const FState *state)
 	for (unsigned int i = 0; i < PClassActor::AllActorClasses.Size(); ++i)
 	{
 		PClassActor *info = PClassActor::AllActorClasses[i];
-		if (state >= info->OwnedStates &&
-			state <  info->OwnedStates + info->NumOwnedStates)
+		if (info->OwnsState(state))
 		{
 			return info;
 		}
@@ -117,16 +117,25 @@ PClassActor *FState::StaticFindStateOwner (const FState *state, PClassActor *inf
 {
 	while (info != NULL)
 	{
-		if (state >= info->OwnedStates &&
-			state <  info->OwnedStates + info->NumOwnedStates)
+		if (info->OwnsState(state))
 		{
 			return info;
 		}
-		info = dyn_cast<PClassActor>(info->ParentClass);
+		info = ValidateActor(info->ParentClass);
 	}
 	return NULL;
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
+FString FState::StaticGetStateName(const FState *state)
+{
+	auto so = FState::StaticFindStateOwner(state);
+	return FStringf("%s.%d", so->TypeName.GetChars(), int(state - so->GetStates()));
+}
 
 //==========================================================================
 //
@@ -145,7 +154,7 @@ void FStateLabels::Destroy ()
 		if (Labels[i].Children != NULL)
 		{
 			Labels[i].Children->Destroy();
-			free(Labels[i].Children);	// These are malloc'd, not new'd!
+			M_Free(Labels[i].Children);	// These are malloc'd, not new'd!
 			Labels[i].Children = NULL;
 		}
 	}
@@ -164,9 +173,9 @@ bool AActor::HasSpecialDeathStates () const
 {
 	const PClassActor *info = static_cast<PClassActor *>(GetClass());
 
-	if (info->StateList != NULL)
+	if (info->GetStateLabels() != NULL)
 	{
-		FStateLabel *slabel = info->StateList->FindLabel (NAME_Death);
+		FStateLabel *slabel = info->GetStateLabels()->FindLabel (NAME_Death);
 		if (slabel != NULL && slabel->Children != NULL)
 		{
 			for(int i = 0; i < slabel->Children->NumLabels; i++)
@@ -249,7 +258,7 @@ TArray<FName> &MakeStateNameList(const char * fname)
 //===========================================================================
 FState *PClassActor::FindState(int numnames, FName *names, bool exact) const
 {
-	FStateLabels *labels = StateList;
+	FStateLabels *labels = GetStateLabels();
 	FState *best = NULL;
 
 	if (labels != NULL)
@@ -327,7 +336,7 @@ static bool VerifyJumpTarget(PClassActor *cls, FState *CallingState, int index)
 
 FState *FStateLabelStorage::GetState(int pos, PClassActor *cls, bool exact)
 {
-	if (pos > 0x10000000)
+	if (pos >= 0x10000000)
 	{
 		return cls? cls->FindState(ENamedName(pos - 0x10000000)) : nullptr;
 	}
@@ -439,7 +448,7 @@ FStateDefine *FStateDefinitions::FindStateAddress(const char *name)
 //
 //==========================================================================
 
-void FStateDefinitions::SetStateLabel(const char *statename, FState *state, BYTE defflags)
+void FStateDefinitions::SetStateLabel(const char *statename, FState *state, uint8_t defflags)
 {
 	FStateDefine *std = FindStateAddress(statename);
 	std->State = state;
@@ -573,12 +582,13 @@ void FStateDefinitions::InstallStates(PClassActor *info, AActor *defaults)
 		SetStateLabel("Spawn", GetDefault<AActor>()->SpawnState);
 	}
 
-	if (info->StateList != NULL) 
+	auto &sl = info->ActorInfo()->StateList;
+	if (sl != NULL) 
 	{
-		info->StateList->Destroy();
-		M_Free(info->StateList);
+		sl->Destroy();
+		M_Free(sl);
 	}
-	info->StateList = CreateStateLabelList(StateLabels);
+	sl = CreateStateLabelList(StateLabels);
 
 	// Cache these states as member veriables.
 	defaults->SpawnState = info->FindState(NAME_Spawn);
@@ -623,9 +633,9 @@ void FStateDefinitions::MakeStateDefines(const PClassActor *cls)
 	laststatebeforelabel = NULL;
 	lastlabel = -1;
 
-	if (cls != NULL && cls->StateList != NULL)
+	if (cls != NULL && cls->GetStateLabels() != NULL)
 	{
-		MakeStateList(cls->StateList, StateLabels);
+		MakeStateList(cls->GetStateLabels(), StateLabels);
 	}
 	else
 	{
@@ -711,7 +721,7 @@ void FStateDefinitions::RetargetStates (intptr_t count, const char *target)
 //
 //==========================================================================
 
-FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype, char *name)
+FState *FStateDefinitions::ResolveGotoLabel (PClassActor *mytype, char *name)
 {
 	PClassActor *type = mytype;
 	FState *state;
@@ -730,8 +740,7 @@ FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype,
 		// superclass, or it may be the name of any class that this one derives from.
 		if (stricmp (classname, "Super") == 0)
 		{
-			type = dyn_cast<PClassActor>(type->ParentClass);
-			actor = GetDefaultByType(type);
+			type = ValidateActor(type->ParentClass);
 		}
 		else
 		{
@@ -753,7 +762,6 @@ FState *FStateDefinitions::ResolveGotoLabel (AActor *actor, PClassActor *mytype,
 			if (type != stype)
 			{
 				type = static_cast<PClassActor *>(stype);
-				actor = GetDefaultByType (type);
 			}
 		}
 	}
@@ -808,7 +816,7 @@ void FStateDefinitions::FixStatePointers (PClassActor *actor, TArray<FStateDefin
 		if (list[i].DefineFlags == SDF_INDEX)
 		{
 			size_t v = (size_t)list[i].State;
-			list[i].State = actor->OwnedStates + v - 1;
+			list[i].State = actor->GetStates() + v - 1;
 			list[i].DefineFlags = SDF_STATE;
 		}
 		if (list[i].Children.Size() > 0)
@@ -826,16 +834,16 @@ void FStateDefinitions::FixStatePointers (PClassActor *actor, TArray<FStateDefin
 //
 //==========================================================================
 
-void FStateDefinitions::ResolveGotoLabels (PClassActor *actor, AActor *defaults, TArray<FStateDefine> & list)
+void FStateDefinitions::ResolveGotoLabels (PClassActor *actor, TArray<FStateDefine> & list)
 {
 	for (unsigned i = 0; i < list.Size(); i++)
 	{
 		if (list[i].State != NULL && list[i].DefineFlags == SDF_LABEL)
 		{ // It's not a valid state, so it must be a label string. Resolve it.
-			list[i].State = ResolveGotoLabel (defaults, actor, (char *)list[i].State);
+			list[i].State = ResolveGotoLabel (actor, (char *)list[i].State);
 			list[i].DefineFlags = SDF_STATE;
 		}
-		if (list[i].Children.Size() > 0) ResolveGotoLabels(actor, defaults, list[i].Children);
+		if (list[i].Children.Size() > 0) ResolveGotoLabels(actor, list[i].Children);
 	}
 }
 
@@ -994,18 +1002,18 @@ int FStateDefinitions::AddStates(FState *state, const char *framechars, const FS
 //
 //==========================================================================
 
-int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
+int FStateDefinitions::FinishStates(PClassActor *actor)
 {
 	int count = StateArray.Size();
 
 	if (count > 0)
 	{
-		FState *realstates = new FState[count];
+		FState *realstates = (FState*)ClassDataAllocator.Alloc(count * sizeof(FState));
 		int i;
 
 		memcpy(realstates, &StateArray[0], count*sizeof(FState));
-		actor->OwnedStates = realstates;
-		actor->NumOwnedStates = count;
+		actor->ActorInfo()->OwnedStates = realstates;
+		actor->ActorInfo()->NumOwnedStates = count;
 		SaveStateSourceLines(realstates, SourceLines);
 
 		// adjust the state pointers
@@ -1013,7 +1021,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 		FixStatePointers(actor, StateLabels);
 
 		// Fix state pointers that are gotos
-		ResolveGotoLabels(actor, defaults, StateLabels);
+		ResolveGotoLabels(actor, StateLabels);
 
 		for (i = 0; i < count; i++)
 		{
@@ -1037,7 +1045,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 				break;
 
 			case SDF_LABEL:
-				realstates[i].NextState = ResolveGotoLabel(defaults, actor, (char *)realstates[i].NextState);
+				realstates[i].NextState = ResolveGotoLabel(actor, (char *)realstates[i].NextState);
 				break;
 			}
 		}
@@ -1045,7 +1053,7 @@ int FStateDefinitions::FinishStates(PClassActor *actor, AActor *defaults)
 	else
 	{
 		// Fix state pointers that are gotos
-		ResolveGotoLabels(actor, defaults, StateLabels);
+		ResolveGotoLabels(actor, StateLabels);
 	}
 	return count;
 }
@@ -1071,8 +1079,7 @@ void DumpStateHelper(FStateLabels *StateList, const FString &prefix)
 			}
 			else
 			{
-				Printf(PRINT_LOG, "%s%s: %s.%d\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(),
-					owner->TypeName.GetChars(), int(StateList->Labels[i].State - owner->OwnedStates));
+				Printf(PRINT_LOG, "%s%s: %s\n", prefix.GetChars(), StateList->Labels[i].Label.GetChars(), FState::StaticGetStateName(StateList->Labels[i].State).GetChars());
 			}
 		}
 		if (StateList->Labels[i].Children != NULL)
@@ -1088,7 +1095,7 @@ CCMD(dumpstates)
 	{
 		PClassActor *info = PClassActor::AllActorClasses[i];
 		Printf(PRINT_LOG, "State labels for %s\n", info->TypeName.GetChars());
-		DumpStateHelper(info->StateList, "");
+		DumpStateHelper(info->GetStateLabels(), "");
 		Printf(PRINT_LOG, "----------------------------\n");
 	}
 }
@@ -1124,7 +1131,7 @@ DEFINE_ACTION_FUNCTION(FState, DistanceTo)
 	{
 		// Safely calculate the distance between two states.
 		auto o1 = FState::StaticFindStateOwner(self);
-		if (other >= o1->OwnedStates && other < o1->OwnedStates + o1->NumOwnedStates) retv = int(other - self);
+		if (o1->OwnsState(other)) retv = int(other - self);
 	}
 	ACTION_RETURN_INT(retv);
 }

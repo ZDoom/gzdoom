@@ -1,18 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Refresh/render internal state variables (global).
@@ -33,43 +38,22 @@
 //	for rendering.
 //
 
-extern "C" int			viewwidth;
-extern "C" int			viewheight;
+extern int				viewwindowx;
+extern int				viewwindowy;
+extern int				viewwidth;
+extern int				viewheight;
 
 //
 // Lookup tables for map data.
 //
 extern TArray<spritedef_t> sprites;
-extern DWORD NumStdSprites;
+extern uint32_t NumStdSprites;
 
 extern TArray<vertexdata_t> vertexdatas;
-
-extern int				numsegs;
-extern seg_t*			segs;
-
-extern int				numsubsectors;
-extern subsector_t* 	subsectors;
-
-extern int				numnodes;
-extern node_t*			nodes;
-
-extern TArray<zone_t>	Zones;
-
-extern node_t * 		gamenodes;
-extern int 				numgamenodes;
-
-extern subsector_t * 	gamesubsectors;
-extern int 				numgamesubsectors;
-
 
 //
 // POV data.
 //
-extern AActor*			camera;		// [RH] camera instead of viewplayer
-extern sector_t*		viewsector;	// [RH] keep track of sector viewing from
-
-namespace swrenderer { extern angle_t			xtoviewangle[MAXWIDTH+1]; }
-extern DAngle			FieldOfView;
 
 int R_FindSkin (const char *name, int pclass);	// [RH] Find a skin
 

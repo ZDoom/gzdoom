@@ -86,7 +86,7 @@ static const char *RenderStyles[] =
 	"STYLE_Translucent",
 	"STYLE_Add",
 	//"STYLE_Shaded",
-	NULL
+	nullptr
 };
 
 // CODE --------------------------------------------------------------------
@@ -119,18 +119,17 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	bag.Namespace = ns;
 	bag.Info = type;
 	bag.fromDecorate = true;
+	bag.Version = { 2, 0, 0 };
 #ifdef _DEBUG
 	bag.ClassName = type->TypeName;
 #endif
 
-	type->GameFilter = GAME_Any;
 	sc.MustGetStringName("{");
 
 	memset (&extra, 0, sizeof(extra));
 	ParseInsideDecoration (bag, (AActor *)(type->Defaults), extra, def, sc, StateArray, SourceLines);
 
-	bag.Info->NumOwnedStates = StateArray.Size();
-	if (bag.Info->NumOwnedStates == 0)
+	if (StateArray.Size() == 0)
 	{
 		sc.ScriptError ("%s does not define any animation frames", typeName.GetChars() );
 	}
@@ -154,17 +153,17 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		FScriptPosition icepos = SourceLines[extra.IceDeathEnd - 1];
 		StateArray.Push (icecopy);
 		SourceLines.Push(icepos);
-		type->NumOwnedStates += 1;
 	}
 
-	type->OwnedStates = new FState[type->NumOwnedStates];
-	SaveStateSourceLines(type->OwnedStates, SourceLines);
-	memcpy (type->OwnedStates, &StateArray[0], type->NumOwnedStates * sizeof(type->OwnedStates[0]));
-	if (type->NumOwnedStates == 1)
+	FState *states;
+	states = (FState*)ClassDataAllocator.Alloc(StateArray.Size() * sizeof(FState));
+	SaveStateSourceLines(states, SourceLines);
+	memcpy (states, &StateArray[0], StateArray.Size() * sizeof(states[0]));
+	if (StateArray.Size() == 1)
 	{
-		type->OwnedStates->Tics = -1;
-		type->OwnedStates->TicRange = 0;
-		type->OwnedStates->Misc1 = 0;
+		states->Tics = -1;
+		states->TicRange = 0;
+		states->Misc1 = 0;
 	}
 	else
 	{
@@ -173,59 +172,60 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		// Spawn states loop endlessly
 		for (i = extra.SpawnStart; i < extra.SpawnEnd-1; ++i)
 		{
-			type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+			states[i].NextState = &states[i+1];
 		}
-		type->OwnedStates[i].NextState = &type->OwnedStates[extra.SpawnStart];
+		states[i].NextState = &states[extra.SpawnStart];
 
 		// Death states are one-shot and freeze on the final state
 		if (extra.DeathEnd != 0)
 		{
 			for (i = extra.DeathStart; i < extra.DeathEnd-1; ++i)
 			{
-				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+				states[i].NextState = &states[i+1];
 			}
+			FState *state = &states[i];
 			if (extra.bDiesAway || def == DEF_Projectile)
 			{
-				type->OwnedStates[i].NextState = NULL;
+				state->NextState = nullptr;
 			}
 			else
 			{
-				type->OwnedStates[i].Tics = -1;
-				type->OwnedStates[i].TicRange = 0;
-				type->OwnedStates[i].Misc1 = 0;
+				state->Tics = -1;
+				state->TicRange = 0;
+				state->Misc1 = 0;
 			}
 
 			if (def == DEF_Projectile)
 			{
 				if (extra.bExplosive)
 				{
-					type->OwnedStates[extra.DeathStart].SetAction("A_Explode");
+					states[extra.DeathStart].SetAction("A_Explode");
 				}
 			}
 			else
 			{
 				// The first frame plays the death sound and
 				// the second frame makes it nonsolid.
-				type->OwnedStates[extra.DeathStart].SetAction("A_Scream");
+				states[extra.DeathStart].SetAction("A_Scream");
 				if (extra.bSolidOnDeath)
 				{
 				}
 				else if (extra.DeathStart + 1 < extra.DeathEnd)
 				{
-					type->OwnedStates[extra.DeathStart+1].SetAction("A_NoBlocking");
+					states[extra.DeathStart+1].SetAction("A_NoBlocking");
 				}
 				else
 				{
-					type->OwnedStates[extra.DeathStart].SetAction("A_ScreamAndUnblock");
+					states[extra.DeathStart].SetAction("A_ScreamAndUnblock");
 				}
 
 				if (extra.DeathHeight == 0)
 				{
 					extra.DeathHeight = ((AActor*)(type->Defaults))->Height;
 				}
-				type->DeathHeight = extra.DeathHeight;
+				((AActor*)(type->Defaults))->FloatVar("DeathHeight") = extra.DeathHeight;
 			}
-			bag.statedef.SetStateLabel("Death", &type->OwnedStates[extra.DeathStart]);
+			bag.statedef.SetStateLabel("Death", &states[extra.DeathStart]);
 		}
 
 		// Burn states are the same as death states, except they can optionally terminate
@@ -233,38 +233,39 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		{
 			for (i = extra.FireDeathStart; i < extra.FireDeathEnd-1; ++i)
 			{
-				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+				states[i].NextState = &states[i+1];
 			}
+			FState *state = &states[i];
 			if (extra.bBurnAway)
 			{
-				type->OwnedStates[i].NextState = NULL;
+				state->NextState = nullptr;
 			}
 			else
 			{
-				type->OwnedStates[i].Tics = -1;
-				type->OwnedStates[i].TicRange = 0;
-				type->OwnedStates[i].Misc1 = 0;
+				state->Tics = -1;
+				state->TicRange = 0;
+				state->Misc1 = 0;
 			}
 
 			// The first frame plays the burn sound and
 			// the second frame makes it nonsolid.
-			type->OwnedStates[extra.FireDeathStart].SetAction("A_ActiveSound");
+			states[extra.FireDeathStart].SetAction("A_ActiveSound");
 			if (extra.bSolidOnBurn)
 			{
 			}
 			else if (extra.FireDeathStart + 1 < extra.FireDeathEnd)
 			{
-				type->OwnedStates[extra.FireDeathStart+1].SetAction("A_NoBlocking");
+				states[extra.FireDeathStart+1].SetAction("A_NoBlocking");
 			}
 			else
 			{
-				type->OwnedStates[extra.FireDeathStart].SetAction("A_ActiveAndUnblock");
+				states[extra.FireDeathStart].SetAction("A_ActiveAndUnblock");
 			}
 
 			if (extra.BurnHeight == 0) extra.BurnHeight = ((AActor*)(type->Defaults))->Height;
-			type->BurnHeight = extra.BurnHeight;
+			((AActor*)(type->Defaults))->FloatVar("BurnHeight") = extra.BurnHeight;
 
-			bag.statedef.SetStateLabel("Burn", &type->OwnedStates[extra.FireDeathStart]);
+			bag.statedef.SetStateLabel("Burn", &states[extra.FireDeathStart]);
 		}
 
 		// Ice states are similar to burn and death, except their final frame enters
@@ -273,21 +274,22 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 		{
 			for (i = extra.IceDeathStart; i < extra.IceDeathEnd-1; ++i)
 			{
-				type->OwnedStates[i].NextState = &type->OwnedStates[i+1];
+				states[i].NextState = &states[i+1];
 			}
-			type->OwnedStates[i].NextState = &type->OwnedStates[type->NumOwnedStates-1];
-			type->OwnedStates[i].Tics = 5;
-			type->OwnedStates[i].TicRange = 0;
-			type->OwnedStates[i].Misc1 = 0;
-			type->OwnedStates[i].SetAction("A_FreezeDeath");
+			FState *state = &states[i];
+			state->NextState = &states[StateArray.Size() - 1];
+			state->Tics = 5;
+			state->TicRange = 0;
+			state->Misc1 = 0;
+			state->SetAction("A_FreezeDeath");
 
-			i = type->NumOwnedStates - 1;
-			type->OwnedStates[i].NextState = &type->OwnedStates[i];
-			type->OwnedStates[i].Tics = 1;
-			type->OwnedStates[i].TicRange = 0;
-			type->OwnedStates[i].Misc1 = 0;
-			type->OwnedStates[i].SetAction("A_FreezeDeathChunks");
-			bag.statedef.SetStateLabel("Ice", &type->OwnedStates[extra.IceDeathStart]);
+			i = StateArray.Size() - 1;
+			state->NextState = &states[i];
+			state->Tics = 1;
+			state->TicRange = 0;
+			state->Misc1 = 0;
+			state->SetAction("A_FreezeDeathChunks");
+			bag.statedef.SetStateLabel("Ice", &states[extra.IceDeathStart]);
 		}
 		else if (extra.bGenericIceDeath)
 		{
@@ -302,8 +304,10 @@ void ParseOldDecoration(FScanner &sc, EDefinitionType def, PNamespace *ns)
 	{
 		((AActor *)(type->Defaults))->flags |= MF_DROPOFF|MF_MISSILE;
 	}
-	bag.statedef.SetStateLabel("Spawn", &type->OwnedStates[extra.SpawnStart]);
+	bag.statedef.SetStateLabel("Spawn", &states[extra.SpawnStart]);
 	bag.statedef.InstallStates (type, ((AActor *)(type->Defaults)));
+	bag.Info->ActorInfo()->OwnedStates = states;
+	bag.Info->ActorInfo()->NumOwnedStates = StateArray.Size();
 }
 
 //==========================================================================
@@ -330,7 +334,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			{
 				sc.ScriptError ("DoomEdNum must be in the range [-1,32767]");
 			}
-			bag.Info->DoomEdNum = (SWORD)sc.Number;
+			bag.Info->ActorInfo()->DoomEdNum = (int16_t)sc.Number;
 		}
 		else if (sc.Compare ("SpawnNum"))
 		{
@@ -339,7 +343,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 			{
 				sc.ScriptError ("SpawnNum must be in the range [0,255]");
 			}
-			bag.Info->SpawnID = (BYTE)sc.Number;
+			bag.Info->ActorInfo()->SpawnID = (uint8_t)sc.Number;
 		}
 		else if (sc.Compare ("Sprite") || (
 			(def == DEF_BreakableDecoration || def == DEF_Projectile) &&
@@ -445,18 +449,18 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionRadius"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->ExplosionRadius = sc.Number;
+			defaults->IntVar(NAME_ExplosionRadius) = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("ExplosionDamage"))
 		{
 			sc.MustGetNumber ();
-			bag.Info->ExplosionDamage = sc.Number;
+			defaults->IntVar(NAME_ExplosionDamage) = sc.Number;
 			extra.bExplosive = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("DoNotHurtShooter"))
 		{
-			bag.Info->DontHurtShooter = true;
+			defaults->BoolVar(NAME_DontHurtShooter) = true;
 		}
 		else if (def == DEF_Projectile && sc.Compare ("Damage"))
 		{
@@ -483,7 +487,7 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (sc.Compare ("Mass"))
 		{
 			sc.MustGetFloat ();
-			defaults->Mass = SDWORD(sc.Float);
+			defaults->Mass = int32_t(sc.Float);
 		}
 		else if (sc.Compare ("Translation1"))
 		{
@@ -541,11 +545,11 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		else if (def == DEF_Pickup && sc.Compare ("PickupMessage"))
 		{
 			sc.MustGetString ();
-			bag.Info->PickupMsg = sc.String;
+			inv->StringVar(NAME_PickupMsg) = sc.String;
 		}
 		else if (def == DEF_Pickup && sc.Compare ("Respawns"))
 		{
-			inv->BoolVar("Respawnable") = true;
+			inv->BoolVar(NAME_Respawnable) = true;
 		}
 		else if (def == DEF_BreakableDecoration && sc.Compare ("SolidOnDeath"))
 		{
@@ -557,11 +561,11 @@ static void ParseInsideDecoration (Baggage &bag, AActor *defaults,
 		}
 		else if (sc.String[0] != '*')
 		{
-			HandleActorFlag(sc, bag, sc.String, NULL, '+');
+			HandleActorFlag(sc, bag, sc.String, nullptr, '+');
 		}
 		else
 		{
-			sc.ScriptError (NULL);
+			sc.ScriptError (nullptr);
 		}
 		sc.MustGetString ();
 	}
@@ -618,9 +622,9 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 	char *token = strtok (sc.String, ",\t\n\r");
 
 	memset (&state, 0, sizeof(state));
-	state.UseFlags = info->DefaultStateUsage;
+	state.UseFlags = info->ActorInfo()->DefaultStateUsage;
 
-	while (token != NULL)
+	while (token != nullptr)
 	{
 		// Skip leading white space
 		while (*token == ' ')
@@ -630,7 +634,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 		bool firstState = true;
 		char *colon = strchr (token, ':');
 
-		if (colon != NULL)
+		if (colon != nullptr)
 		{
 			char *stop;
 
@@ -681,7 +685,7 @@ static void ParseSpriteFrames (PClassActor *info, TArray<FState> &states, TArray
 			SourceLines.Push(sc);
 		}
 
-		token = strtok (NULL, ",\t\n\r");
+		token = strtok (nullptr, ",\t\n\r");
 	}
 }
 

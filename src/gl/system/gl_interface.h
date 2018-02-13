@@ -66,6 +66,7 @@ struct RenderContext
 	int max_texturesize;
 	char * vendorstring;
 	bool legacyMode;
+	bool es;
 
 	int MaxLights() const
 	{

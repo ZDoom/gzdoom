@@ -61,7 +61,6 @@
 #include <stdarg.h>
 #include <math.h>
 
-#define USE_WINDOWS_DWORD
 #include "doomerrors.h"
 #include "hardware.h"
 
@@ -82,6 +81,7 @@
 #include "doomstat.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "s_sound.h"
 
 #include "stats.h"
 #include "st_start.h"
@@ -109,7 +109,7 @@
 LRESULT CALLBACK WndProc (HWND, UINT, WPARAM, LPARAM);
 void CreateCrashLog (char *custominfo, DWORD customsize, HWND richedit);
 void DisplayCrashLog ();
-extern BYTE *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
+extern uint8_t *ST_Util_BitsForBitmap (BITMAPINFO *bitmap_info);
 void I_FlushBufferedConsoleStuff();
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -125,7 +125,7 @@ extern UINT TimerPeriod;
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 // The command line arguments.
-DArgs *Args;
+FArgs *Args;
 
 HINSTANCE		g_hInst;
 DWORD			SessionID;
@@ -821,6 +821,13 @@ void ShowErrorPane(const char *text)
 	}
 }
 
+void PeekThreadedErrorPane()
+{
+	// Allow SendMessage from another thread to call its message handler so that it can display the crash dialog
+	MSG msg;
+	PeekMessage(&msg, 0, 0, 0, PM_NOREMOVE);
+}
+
 //==========================================================================
 //
 // DoMain
@@ -841,7 +848,7 @@ void DoMain (HINSTANCE hInstance)
 		_set_new_handler (NewFailure);
 #endif
 
-		Args = new DArgs(__argc, __argv);
+		Args = new FArgs(__argc, __argv);
 
 		// Load Win32 modules
 		Kernel32Module.Load({"kernel32.dll"});
@@ -1061,6 +1068,7 @@ void DoMain (HINSTANCE hInstance)
 	{
 		I_ShutdownGraphics ();
 		RestoreConView ();
+		S_StopMusic(true);
 		I_FlushBufferedConsoleStuff();
 		if (error.GetMessage ())
 		{
@@ -1113,10 +1121,10 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 		}
 		else
 		{
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", ViewPos.X);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", ViewPos.Y);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", ViewPos.Z);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", ViewAngle);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", r_viewpoint.Pos.X);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", r_viewpoint.Pos.Y);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", r_viewpoint.Pos.Z);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", r_viewpoint.Angles.Yaw);
 		}
 	}
 	*buffer++ = '\r';
@@ -1223,7 +1231,11 @@ LONG WINAPI CatchAllExceptions (LPEXCEPTION_POINTERS info)
 	// Otherwise, put the crashing thread to sleep and signal the main thread to clean up.
 	if (GetCurrentThreadId() == MainThreadID)
 	{
+#ifdef _M_X64
 		*info->ContextRecord = MainThreadContext;
+#else
+		info->ContextRecord->Eip = (DWORD_PTR)ExitFatally;
+#endif // _M_X64
 	}
 	else
 	{
@@ -1316,6 +1328,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	{
 		SetUnhandledExceptionFilter (CatchAllExceptions);
 
+#ifdef _M_X64
 		static bool setJumpResult = false;
 		RtlCaptureContext(&MainThreadContext);
 		if (setJumpResult)
@@ -1324,6 +1337,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 			return 0;
 		}
 		setJumpResult = true;
+#endif // _M_X64
 	}
 #endif
 
@@ -1345,4 +1359,17 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	CloseHandle (MainThread);
 	MainThread = INVALID_HANDLE_VALUE;
 	return 0;
+}
+
+// each platform has its own specific version of this function.
+void I_SetWindowTitle(const char* caption)
+{
+	if (caption)
+		SetWindowText(Window, (LPCTSTR)caption);
+	else
+	{
+		char default_caption[100];
+		mysnprintf(default_caption, countof(default_caption), "" GAMESIG " %s " X64 " (%s)", GetVersionString(), GetGitTime());
+		SetWindowText(Window, default_caption);
+	}
 }

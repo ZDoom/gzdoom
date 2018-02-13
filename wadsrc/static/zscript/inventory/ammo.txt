@@ -37,7 +37,7 @@ class Ammo : Inventory
 {
 	int BackpackAmount;
 	int BackpackMaxAmount;
-	/*meta*/ int DropAmount;
+	meta int DropAmount;
 	
 	property BackpackAmount: BackpackAmount;
 	property BackpackMaxAmount: BackpackMaxAmount;
@@ -173,9 +173,9 @@ class Ammo : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable()
+	override Inventory CreateTossable(int amt)
 	{
-		Inventory copy = Super.CreateTossable();
+		Inventory copy = Super.CreateTossable(amt);
 		if (copy != null)
 		{ // Do not increase ammo by dropping it and picking it back up at
 		  // certain skill levels.
@@ -306,9 +306,9 @@ class BackpackItem : Inventory
 	//
 	//===========================================================================
 
-	override Inventory CreateTossable ()
+	override Inventory CreateTossable (int amount)
 	{
-		let pack = BackpackItem(Super.CreateTossable());
+		let pack = BackpackItem(Super.CreateTossable(-1));
 		if (pack != NULL)
 		{
 			pack.bDepleted = true;

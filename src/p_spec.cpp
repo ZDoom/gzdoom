@@ -1,20 +1,25 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Implements special effects:
@@ -30,6 +35,35 @@
 //
 //-----------------------------------------------------------------------------
 
+/* For code that originates from ZDoom the following applies:
+**
+**---------------------------------------------------------------------------
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include <stdlib.h>
 
@@ -72,9 +106,11 @@
 #include "p_maputl.h"
 #include "p_blockmap.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
+#include "vm.h"
 
 // State.
 #include "r_state.h"
@@ -146,7 +182,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	int lineActivation;
 	INTBOOL repeat;
 	INTBOOL buttonSuccess;
-	BYTE special;
+	uint8_t special;
 
 	if (!P_TestActivateLine (line, mo, side, activationType, optpos))
 	{
@@ -336,7 +372,7 @@ bool P_PredictLine(line_t *line, AActor *mo, int side, int activationType)
 {
 	int lineActivation;
 	INTBOOL buttonSuccess;
-	BYTE special;
+	uint8_t special;
 
 	// Only predict a very specifc section of specials
 	if (line->special != Teleport_Line &&
@@ -466,7 +502,8 @@ static void DoSectorDamage(AActor *actor, sector_t *sec, int amount, FName type,
 			return;
 	}
 
-	P_DamageMobj (actor, NULL, NULL, amount, type);
+	int dflags = (flags & DAMAGE_NO_ARMOR) ? DMG_NO_ARMOR : 0;
+	P_DamageMobj (actor, NULL, NULL, amount, type, dflags);
 }
 
 void P_SectorDamage(int tag, int amount, FName type, PClassActor *protectClass, int flags)
@@ -559,9 +596,19 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornu
 DEFINE_ACTION_FUNCTION(AActor, GiveSecret)
 {
 	PARAM_SELF_PROLOGUE(AActor);
-	PARAM_BOOL(printmessage);
-	PARAM_BOOL(playsound);
+	PARAM_BOOL_DEF(printmessage);
+	PARAM_BOOL_DEF(playsound);
 	P_GiveSecret(self, printmessage, playsound, -1);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, GiveSecret)
+{
+	PARAM_PROLOGUE;
+	PARAM_OBJECT(activator, AActor);
+	PARAM_BOOL_DEF(printmessage);
+	PARAM_BOOL_DEF(playsound);
+	P_GiveSecret(activator, printmessage, playsound, -1);
 	return 0;
 }
 
@@ -748,17 +795,17 @@ class DWallLightTransfer : public DThinker
 	DECLARE_CLASS (DWallLightTransfer, DThinker)
 	DWallLightTransfer() {}
 public:
-	DWallLightTransfer (sector_t *srcSec, int target, BYTE flags);
+	DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags);
 	void Serialize(FSerializer &arc);
 	void Tick ();
 
 protected:
-	static void DoTransfer (short level, int target, BYTE flags);
+	static void DoTransfer (short level, int target, uint8_t flags);
 
 	sector_t *Source;
 	int TargetID;
 	short LastLight;
-	BYTE Flags;
+	uint8_t Flags;
 };
 
 IMPLEMENT_CLASS(DWallLightTransfer, false, false)
@@ -772,7 +819,7 @@ void DWallLightTransfer::Serialize(FSerializer &arc)
 		("flags", Flags);
 }
 
-DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, BYTE flags)
+DWallLightTransfer::DWallLightTransfer (sector_t *srcSec, int target, uint8_t flags)
 {
 	int linenum;
 	int wallflags;
@@ -818,7 +865,7 @@ void DWallLightTransfer::Tick ()
 	}
 }
 
-void DWallLightTransfer::DoTransfer (short lightlevel, int target, BYTE flags)
+void DWallLightTransfer::DoTransfer (short lightlevel, int target, uint8_t flags)
 {
 	int linenum;
 
@@ -1130,7 +1177,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorCloseIn30:
-		new DDoor(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
+		Create<DDoor>(sector, DDoor::doorWaitClose, 2, 0, 0, 30 * TICRATE);
 		break;
 			
 	case dDamage_End:
@@ -1138,7 +1185,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dSector_DoorRaiseIn5Mins:
-		new DDoor (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
+		Create<DDoor> (sector, DDoor::doorWaitRaise, 2, TICRATE*30/7, 0, 5*60*TICRATE);
 		break;
 
 	case dFriction_Low:
@@ -1152,15 +1199,15 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case dDamage_LavaWimpy:
-		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		P_SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
 		break;
 
 	case dDamage_LavaHefty:
-		P_SetupSectorDamage(sector, 8, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		P_SetupSectorDamage(sector, 8, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
 		break;
 
 	case dScroll_EastLavaDamage:
-		P_SetupSectorDamage(sector, 5, 32, 256, NAME_Fire, SECF_DMGTERRAINFX);
+		P_SetupSectorDamage(sector, 5, 16, 256, NAME_Fire, SECF_DMGTERRAINFX);
 		P_CreateScroller(EScroll::sc_floor, -4., 0, -1, sector->Index(), 0);
 		keepspecial = true;
 		break;
@@ -1203,7 +1250,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		if (sector->special >= Scroll_North_Slow &&
 			sector->special <= Scroll_SouthWest_Fast)
 		{ // Hexen scroll special
-			static const SBYTE hexenScrollies[24][2] =
+			static const int8_t hexenScrollies[24][2] =
 			{
 				{  0,  1 }, {  0,  2 }, {  0,  4 },
 				{ -1,  0 }, { -2,  0 }, { -4,  0 },
@@ -1319,19 +1366,19 @@ void P_SpawnSpecials (void)
 		// killough 3/16/98: Add support for setting
 		// floor lighting independently (e.g. lava)
 		case Transfer_FloorLight:
-			new DLightTransfer (line.frontsector, line.args[0], true);
+			Create<DLightTransfer> (line.frontsector, line.args[0], true);
 			break;
 
 		// killough 4/11/98: Add support for setting
 		// ceiling lighting independently
 		case Transfer_CeilingLight:
-			new DLightTransfer (line.frontsector, line.args[0], false);
+			Create<DLightTransfer> (line.frontsector, line.args[0], false);
 			break;
 
 		// [Graf Zahl] Add support for setting lighting
 		// per wall independently
 		case Transfer_WallLight:
-			new DWallLightTransfer (line.frontsector, line.args[0], line.args[1]);
+			Create<DWallLightTransfer> (line.frontsector, line.args[0], line.args[1]);
 			break;
 
 		case Sector_Attach3dMidtex:

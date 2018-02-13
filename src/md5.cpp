@@ -20,14 +20,15 @@
 #include "doomtype.h"
 #include "md5.h"
 #include "templates.h"
+#include "files.h"
 
 #ifdef __BIG_ENDIAN__
-void byteSwap(DWORD *buf, unsigned words)
+void byteSwap(uint32_t *buf, unsigned words)
 {
-	BYTE *p = (BYTE *)buf;
+	uint8_t *p = (uint8_t *)buf;
 
 	do {
-		*buf++ = (DWORD)((unsigned)p[3] << 8 | p[2]) << 16 |
+		*buf++ = (uint32_t)((unsigned)p[3] << 8 | p[2]) << 16 |
 			((unsigned)p[1] << 8 | p[0]);
 		p += 4;
 	} while (--words);
@@ -55,9 +56,9 @@ void MD5Context::Init()
  * Update context to reflect the concatenation of another buffer full
  * of bytes.
  */
-void MD5Context::Update(const BYTE *buf, unsigned len)
+void MD5Context::Update(const uint8_t *buf, unsigned len)
 {
-	DWORD t;
+	uint32_t t;
 
 	/* Update byte count */
 
@@ -67,13 +68,13 @@ void MD5Context::Update(const BYTE *buf, unsigned len)
 
 	t = 64 - (t & 0x3f);	/* Space available in ctx->in (at least 1) */
 	if (t > len) {
-		memcpy((BYTE *)in + 64 - t, buf, len);
+		memcpy((uint8_t *)in + 64 - t, buf, len);
 		return;
 	}
 	/* First chunk is an odd size */
 	if (t < 64)
 	{
-		memcpy((BYTE *)in + 64 - t, buf, t);
+		memcpy((uint8_t *)in + 64 - t, buf, t);
 		byteSwap(in, 16);
 		MD5Transform(this->buf, in);
 		buf += t;
@@ -96,7 +97,7 @@ void MD5Context::Update(const BYTE *buf, unsigned len)
 
 void MD5Context::Update(FileReader *file, unsigned len)
 {
-	BYTE readbuf[8192];
+	uint8_t readbuf[8192];
 	long t;
 
 	while (len != 0)
@@ -112,10 +113,10 @@ void MD5Context::Update(FileReader *file, unsigned len)
  * Final wrapup - pad to 64-byte boundary with the bit pattern 
  * 1 0* (64-bit count of bits processed, MSB-first)
  */
-void MD5Context::Final(BYTE digest[16])
+void MD5Context::Final(uint8_t digest[16])
 {
 	int count = bytes[0] & 0x3f;	/* Number of bytes in ctx->in */
-	BYTE *p = (BYTE *)in + count;
+	uint8_t *p = (uint8_t *)in + count;
 
 	/* Set the first char of padding to 0x80.  There is always room. */
 	*p++ = 0x80;
@@ -128,7 +129,7 @@ void MD5Context::Final(BYTE digest[16])
 		memset(p, 0, count + 8);
 		byteSwap(in, 16);
 		MD5Transform(buf, in);
-		p = (BYTE *)in;
+		p = (uint8_t *)in;
 		count = 56;
 	}
 	memset(p, 0, count);
@@ -164,9 +165,9 @@ void MD5Context::Final(BYTE digest[16])
  * the data and converts bytes into longwords for this routine.
  */
 void
-MD5Transform(DWORD buf[4], const DWORD in[16])
+MD5Transform(uint32_t buf[4], const uint32_t in[16])
 {
-	DWORD a, b, c, d;
+	uint32_t a, b, c, d;
 
 	a = buf[0];
 	b = buf[1];
@@ -268,18 +269,18 @@ CCMD (md5sum)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		FILE *file = fopen(argv[i], "rb");
-		if (file == NULL)
+		FileReader fr;
+		if (!fr.Open(argv[i]))
 		{
 			Printf("%s: %s\n", argv[i], strerror(errno));
 		}
 		else
 		{
 			MD5Context md5;
-			BYTE readbuf[8192];
+			uint8_t readbuf[8192];
 			size_t len;
 
-			while ((len = fread(readbuf, 1, sizeof(readbuf), file)) > 0)
+			while ((len = fr.Read(readbuf, sizeof(readbuf))) > 0)
 			{
 				md5.Update(readbuf, (unsigned int)len);
 			}
@@ -289,7 +290,6 @@ CCMD (md5sum)
 				Printf("%02x", readbuf[j]);
 			}
 			Printf(" *%s\n", argv[i]);
-			fclose (file);
 		}
 	}
 }

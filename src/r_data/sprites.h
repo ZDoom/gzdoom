@@ -19,7 +19,7 @@ struct spriteframe_t
 {
 	struct FVoxelDef *Voxel;// voxel to use for this frame
 	FTextureID Texture[16];	// texture to use for view angles 0-15
-	WORD Flip;				// flip (1 = flip) to use for view angles 0-15.
+	uint16_t Flip;		// flip (1 = flip) to use for view angles 0-15.
 };
 
 //
@@ -32,10 +32,12 @@ struct spritedef_t
 	union
 	{
 		char name[5];
-		DWORD dwName;
+		uint32_t dwName;
 	};
-	BYTE numframes;
-	WORD spriteframes;
+	uint8_t numframes;
+	uint16_t spriteframes;
+
+	FTextureID GetSpriteFrame(int frame, int rot, DAngle ang, bool *mirror, bool flipagain = false);
 };
 
 extern TArray<spriteframe_t> SpriteFrames;
@@ -47,25 +49,23 @@ extern TArray<spriteframe_t> SpriteFrames;
 class FPlayerSkin
 {
 public:
-	char		name[17];	// 16 chars + NULL
-	char		face[4];	// 3 chars ([MH] + NULL so can use as a C string)
-	BYTE		gender;		// This skin's gender (not really used)
-	BYTE		range0start;
-	BYTE		range0end;
-	bool		othergame;	// [GRB]
-	DVector2	Scale;
-	int			sprite;
-	int			crouchsprite;
-	int			namespc;	// namespace for this skin
+	FString		Name;
+	FString		Face;
+	uint8_t		gender = 0;		// This skin's gender (not really used)
+	uint8_t		range0start = 0;
+	uint8_t		range0end = 0;
+	bool		othergame = 0;	// [GRB]
+	DVector2	Scale = { 1, 1 };
+	int			sprite = 0;
+	int			crouchsprite = 0;
+	int			namespc = 0;	// namespace for this skin
 };
 
-extern size_t			numskins;	// [RH]
-extern FPlayerSkin	*	skins;		// [RH]
+extern TArray<FPlayerSkin> Skins;
 
-extern BYTE				OtherGameSkinRemap[256];
+extern uint8_t				OtherGameSkinRemap[256];
 extern PalEntry			OtherGameSkinPalette[256];
 
 void R_InitSprites ();
-void R_DeinitSpriteData ();
 
 #endif

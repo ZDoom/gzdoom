@@ -33,19 +33,6 @@
 //
 //---------------------------------------------------------------------------
 //
-// FraggleScript is from SMMU which is under the GPL. Technically, 
-// therefore, combining the FraggleScript code with the non-free 
-// ZDoom code is a violation of the GPL.
-//
-// As this may be a problem for you, I hereby grant an exception to my 
-// copyright on the SMMU source (including FraggleScript). You may use 
-// any code from SMMU in (G)ZDoom, provided that:
-//
-//    * For any binary release of the port, the source code is also made 
-//      available.
-//    * The copyright notice is kept on any file containing my code.
-//
-//
 
 #include "templates.h"
 #include "p_local.h"
@@ -71,6 +58,7 @@
 #include "r_utility.h"
 #include "math/cmath.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 static FRandom pr_script("FScript");
 
@@ -362,7 +350,7 @@ static PClassActor * T_GetAmmo(const svalue_t &t)
 		p=DefAmmo[ammonum];
 	}
 	auto am = PClass::FindActor(p);
-	if (am == NULL || !am->IsKindOf(PClass::FindClass(NAME_Ammo)))
+	if (am == NULL || !am->IsDescendantOf(PClass::FindClass(NAME_Ammo)))
 	{
 		script_error("unknown ammo type : %s", p);
 		return NULL;
@@ -479,7 +467,7 @@ DFsSection *FParser::looping_section()
 	int n;
 	
 	// check thru all the hashchains
-	SDWORD rover_index = Script->MakeIndex(Rover);
+	int32_t rover_index = Script->MakeIndex(Rover);
 	
 	for(n=0; n<SECTIONSLOTS; n++)
 	{
@@ -1218,7 +1206,7 @@ void FParser::SF_ObjFlag(void)
 			
 			if(mo && flagnum<26)          // nullptr check
 			{
-				DWORD tempflags = mo->flags;
+				uint32_t tempflags = mo->flags;
 
 				// remove old bit
 				tempflags &= ~(1 << flagnum);
@@ -1872,7 +1860,7 @@ void FParser::SF_FadeLight(void)
 		FSectorTagIterator it(sectag);
 		while ((i = it.Next()) >= 0)
 		{
-			if (!level.sectors[i].lightingdata) new DLightLevel(&level.sectors[i],destlevel,speed);
+			if (!level.sectors[i].lightingdata) Create<DLightLevel>(&level.sectors[i],destlevel,speed);
 		}
 	}
 }
@@ -1953,7 +1941,7 @@ void FParser::SF_SectorColormap(void)
 
 	if (t_argv[1].type==svt_string)
 	{
-		DWORD cm = R_ColormapNumForName(t_argv[1].value.s);
+		uint32_t cm = R_ColormapNumForName(t_argv[1].value.s);
 
 		FSSectorTagIterator itr(tagnum);
 		while ((i = itr.Next()) >= 0)
@@ -2435,7 +2423,7 @@ static void FS_GiveInventory (AActor *actor, const char * type, int amount)
 		type = "BasicArmorPickup";
 	}
 	auto info = PClass::FindActor (type);
-	if (info == NULL || !info->IsKindOf(RUNTIME_CLASS(AInventory)))
+	if (info == NULL || !info->IsDescendantOf(RUNTIME_CLASS(AInventory)))
 	{
 		Printf ("Unknown inventory item: %s\n", type);
 		return;
@@ -2922,11 +2910,14 @@ void FParser::SF_MoveCamera(void)
 
 			DAngle targetangle = floatvalue(t_argv[4]);
 			DAngle anglespeed = floatvalue(t_argv[5]);
-			DAngle diffangle = deltaangle(cam->Angles.Yaw, targetangle);
 
 			if (movespeed > 0 && anglespeed == 0.)
 			{
-				if (!finished) targetangle = diffangle * movespeed / movelen;
+				if (!finished)
+				{
+					const DAngle diffangle = targetangle - cam->Angles.Yaw;
+					targetangle = cam->Angles.Yaw + diffangle * movespeed / movelen;
+				}
 			}
 			else
 			{
@@ -2936,6 +2927,7 @@ void FParser::SF_MoveCamera(void)
 			cam->radius = 1 / 8192.;
 			cam->Height = 1 / 8192.;
 			cam->SetOrigin(movepos, true);
+			cam->SetAngle(targetangle, false);
 			t_return.value.i = 1;
 		}
 		else
@@ -3257,7 +3249,7 @@ void FParser::SF_SpawnMissile()
 
 void FParser::SF_MapThingNumExist()
 {
-	TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 
 	int intval;
 
@@ -3295,7 +3287,7 @@ void FParser::SF_MapThingNumExist()
 
 void FParser::SF_MapThings()
 {
-	TArray<TObjPtr<AActor> > &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
+	auto &SpawnedThings = DFraggleThinker::ActiveThinker->SpawnedThings;
 
 	t_return.type = svt_int;
 	t_return.value.i = SpawnedThings.Size();
@@ -3884,15 +3876,17 @@ void FParser::SF_SetColor(void)
 		while ((i = itr.Next()) >= 0)
 		{
 			if (!DFraggleThinker::ActiveThinker->setcolormaterial)
-				level.sectors[i].ColorMap = GetSpecialLights(color, level.sectors[i].ColorMap->Fade, 0);
+			{
+				level.sectors[i].SetColor(color.r, color.g, color.b, 0);
+			}
 			else
 			{
 				// little hack for testing the D64 color stuff.
-				for (int j = 0; j < 4; j++) level.sectors[i].SpecialColors[j] = color;
+				for (int j = 0; j < 4; j++) level.sectors[i].SetSpecialColor(j, color);
 				// simulates 'nocoloredspritelighting' settings.
 				int v = (color.r + color.g + color.b) / 3;
 				v = (255 + v + v) / 3;
-				level.sectors[i].SpecialColors[sector_t::sprites] = PalEntry(255, v, v, v);
+				level.sectors[i].SetSpecialColor(sector_t::sprites, v, v, v);
 			}
 		}
 	}
@@ -4033,7 +4027,7 @@ DRunningScript *FParser::SaveCurrentScript()
 	DFraggleThinker *th = DFraggleThinker::ActiveThinker;
 	if (th)
 	{
-		DRunningScript *runscr = new DRunningScript(Script->trigger, Script, Script->MakeIndex(Rover));
+		DRunningScript *runscr = Create<DRunningScript>(Script->trigger, Script, Script->MakeIndex(Rover));
 
 		// hook into chain at start
 		th->AddRunningScript(runscr);
@@ -4167,7 +4161,7 @@ void FParser::SF_StartScript()
 			script_error("script %i not defined\n", snum);
 		}
 		
-		DRunningScript *runscr = new DRunningScript(Script->trigger, script, 0);
+		DRunningScript *runscr = Create<DRunningScript>(Script->trigger, script, 0);
 		// hook into chain at start
 		th->AddRunningScript(runscr);
 	}

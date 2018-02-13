@@ -7,7 +7,7 @@
 // Unfortunately, the Scale function still gets badly handled on 32 bit x86 platforms so it's the last remaining piece of inline assembly 
 
 // GCC inlines
-#if defined(__GNUC__) && defined(__i386__) && !defined(__clang__)
+#if defined(__GNUC__) && defined(__i386__) && !defined(__clang__) && !defined(__PIC__)
 #ifndef alloca
 // MinGW does not seem to come with alloca defined.
 #define alloca __builtin_alloca
@@ -70,9 +70,9 @@ __forceinline int32_t DivScale6(int32_t a, int32_t b) { return (int32_t)(((int64
 __forceinline int32_t DivScale21(int32_t a, int32_t b) { return (int32_t)(((int64_t)a << 21) / b); } // only used by R_DrawVoxel
 __forceinline int32_t DivScale30(int32_t a, int32_t b) { return (int32_t)(((int64_t)a << 30) / b); } // only used once in the node builder
 
-__forceinline void fillshort(void *buff, unsigned int count, WORD clear)
+__forceinline void fillshort(void *buff, unsigned int count, uint16_t clear)
 {
-	SWORD *b2 = (SWORD *)buff;
+	int16_t *b2 = (int16_t *)buff;
 	for (unsigned int i = 0; i != count; ++i)
 	{
 		b2[i] = clear;

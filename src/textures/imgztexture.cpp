@@ -51,26 +51,26 @@ class FIMGZTexture : public FTexture
 {
 	struct ImageHeader
 	{
-		BYTE Magic[4];
-		WORD Width;
-		WORD Height;
-		SWORD LeftOffset;
-		SWORD TopOffset;
-		BYTE Compression;
-		BYTE Reserved[11];
+		uint8_t Magic[4];
+		uint16_t Width;
+		uint16_t Height;
+		int16_t LeftOffset;
+		int16_t TopOffset;
+		uint8_t Compression;
+		uint8_t Reserved[11];
 	};
 
 public:
-	FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t);
+	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t);
 	~FIMGZTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 
 protected:
 
-	BYTE *Pixels;
+	uint8_t *Pixels;
 	Span **Spans;
 
 	void MakeTexture ();
@@ -85,9 +85,9 @@ protected:
 
 FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 {
-	DWORD magic = 0;
-	WORD w, h;
-	SWORD l, t;
+	uint32_t magic = 0;
+	uint16_t w, h;
+	int16_t l, t;
 
 	file.Seek(0, SEEK_SET);
 	if (file.Read(&magic, 4) != 4) return NULL;
@@ -102,7 +102,7 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-FIMGZTexture::FIMGZTexture (int lumpnum, WORD w, WORD h, SWORD l, SWORD t)
+FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t)
 	: FTexture(NULL, lumpnum), Pixels(0), Spans(0)
 {
 	Wads.GetLumpName (Name, lumpnum);
@@ -142,6 +142,7 @@ void FIMGZTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -150,7 +151,7 @@ void FIMGZTexture::Unload ()
 //
 //==========================================================================
 
-const BYTE *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{
@@ -184,7 +185,7 @@ const BYTE *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out
 //
 //==========================================================================
 
-const BYTE *FIMGZTexture::GetPixels ()
+const uint8_t *FIMGZTexture::GetPixels ()
 {
 	if (Pixels == NULL)
 	{
@@ -203,7 +204,7 @@ void FIMGZTexture::MakeTexture ()
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
-	const BYTE *data = (const BYTE *)&imgz[1];
+	const uint8_t *data = (const uint8_t *)&imgz[1];
 
 	if (Width != 0xFFFF)
 	{
@@ -213,12 +214,12 @@ void FIMGZTexture::MakeTexture ()
 		TopOffset = LittleShort(imgz->TopOffset);
 	}
 
-	BYTE *dest_p;
+	uint8_t *dest_p;
 	int dest_adv = Height;
 	int dest_rew = Width * Height - 1;
 
 	CalcBitSize ();
-	Pixels = new BYTE[Width*Height];
+	Pixels = new uint8_t[Width*Height];
 	dest_p = Pixels;
 
 	// Convert the source image from row-major to column-major format
@@ -239,7 +240,7 @@ void FIMGZTexture::MakeTexture ()
 	{
 		// IMGZ compression is the same RLE used by IFF ILBM files
 		int runlen = 0, setlen = 0;
-		BYTE setval = 0;  // Shut up, GCC
+		uint8_t setval = 0;  // Shut up, GCC
 
 		for (int y = Height; y != 0; --y)
 		{
@@ -247,7 +248,7 @@ void FIMGZTexture::MakeTexture ()
 			{
 				if (runlen != 0)
 				{
-					BYTE color = *data;
+					uint8_t color = *data;
 					*dest_p = color;
 					dest_p += dest_adv;
 					data++;
@@ -263,7 +264,7 @@ void FIMGZTexture::MakeTexture ()
 				}
 				else
 				{
-					SBYTE code = *data++;
+					int8_t code = *data++;
 					if (code >= 0)
 					{
 						runlen = code + 1;

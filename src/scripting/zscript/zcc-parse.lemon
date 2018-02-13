@@ -1,3 +1,41 @@
+/*
+** zcc-parse.lemon
+** ZScript parser grammar
+**
+**---------------------------------------------------------------------------
+** Copyright -2016 Randy Heit
+** Copyright 2016-2017 Christoph Oelckers
+** All rights reserved.
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
+
+
+%stack_size 0
+
 %include
 {
 // Allocates a new AST node off the parse state's arena.
@@ -40,6 +78,7 @@ static void SetNodeLine(ZCC_TreeNode *name, int line)
 	struct ClassFlagsBlock {
 		VM_UWORD Flags;
 		ZCC_Identifier *Replaces;
+		VersionInfo Version;
 	};
 
 	struct StateOpts {
@@ -188,6 +227,7 @@ class_head(X) ::= EXTEND CLASS(T) IDENTIFIER(A).
 	head->ParentName = nullptr;
 	head->Flags =  ZCC_Extension;
 	head->Replaces = nullptr;
+	head->Version = {0, 0};
 	head->Type = nullptr;
 	head->Symbol = nullptr;
 	X = head;
@@ -200,6 +240,7 @@ class_head(X) ::= CLASS(T) IDENTIFIER(A) class_ancestry(B) class_flags(C).
 	head->ParentName = B;
 	head->Flags = C.Flags;
 	head->Replaces = C.Replaces;
+	head->Version = C.Version;
 	head->Type = nullptr;
 	head->Symbol = nullptr;
 	X = head;
@@ -210,10 +251,13 @@ class_ancestry(X) ::= .						{ X = NULL; }
 class_ancestry(X) ::= COLON dottable_id(A).	{ X = A; /*X-overwrites-A*/ }
 
 %type class_flags{ClassFlagsBlock}
-class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; }
+class_flags(X) ::= .										{ X.Flags = 0; X.Replaces = NULL; X.Version = {0,0}; }
 class_flags(X) ::= class_flags(A) ABSTRACT.					{ X.Flags = A.Flags | ZCC_Abstract; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; X.Replaces = A.Replaces; }
+class_flags(X) ::= class_flags(A) PLAY.						{ X.Flags = A.Flags | ZCC_Play; X.Replaces = A.Replaces; }
 class_flags(X) ::= class_flags(A) REPLACES dottable_id(B).	{ X.Flags = A.Flags; X.Replaces = B; }
+class_flags(X) ::= class_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Replaces = A.Replaces; X.Version = C.String->GetChars(); }
 
 /*----- Dottable Identifier -----*/
 // This can be either a single identifier or two identifiers connected by a .
@@ -281,6 +325,8 @@ class_member(X) ::= states_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= default_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= const_def(A).						{ X = A; /*X-overwrites-A*/ }
 class_member(X) ::= property_def(A).					{ X = A; /*X-overwrites-A*/ }
+class_member(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
+
 
 /*----- Struct Definition -----*/
 /* Structs can define variables and enums. */
@@ -320,13 +366,18 @@ struct_def(X) ::= STRUCT(T) IDENTIFIER(A) struct_flags(S) LBRACE opt_struct_body
 	def->Body = B;
 	def->Type = nullptr;
 	def->Symbol = nullptr;
+	def->Version = S.Version;
 	def->Flags = S.Flags;
 	X = def;
 }
 
 %type struct_flags{ClassFlagsBlock}
-struct_flags(X) ::= .										{ X.Flags = 0; }
-struct_flags(X) ::= NATIVE.									{ X.Flags = ZCC_Native; }
+struct_flags(X) ::= .										{ X.Flags = 0; X.Version = {0, 0}; }
+struct_flags(X) ::= struct_flags(A) UI.						{ X.Flags = A.Flags | ZCC_UIFlag; }
+struct_flags(X) ::= struct_flags(A) PLAY.					{ X.Flags = A.Flags | ZCC_Play; }
+struct_flags(X) ::= struct_flags(A) CLEARSCOPE.				{ X.Flags = A.Flags | ZCC_ClearScope; }
+struct_flags(X) ::= struct_flags(A) NATIVE.					{ X.Flags = A.Flags | ZCC_Native; }
+struct_flags(X) ::= struct_flags(A) VERSION LPAREN STRCONST(C) RPAREN.	{ X.Flags = A.Flags | ZCC_Version; X.Version = C.String->GetChars(); }
 
 opt_struct_body(X) ::= .								{ X = NULL; }
 opt_struct_body(X) ::= struct_body(X).
@@ -390,7 +441,7 @@ enum_def(X) ::= ENUM(T) IDENTIFIER(A) enum_type(B) LBRACE opt_enum_list(C) RBRAC
 			// Compute implicit values by adding one to the preceding value.
 			assert(prev->Value != NULL);
 			// If the preceding node is a constant, then we can do this now.
-			if (prev->Value->Operation == PEX_ConstValue && prev->Value->Type->IsA(RUNTIME_CLASS(PInt)))
+			if (prev->Value->Operation == PEX_ConstValue && prev->Value->Type->isInt())
 			{
 				NEW_INTCONST_NODE(cval, prev->Value->Type, static_cast<ZCC_ExprConstant *>(prev->Value)->IntVal + 1, node);
 				node->Value = cval;
@@ -753,11 +804,34 @@ type_name(X) ::= IDENTIFIER(A).			/* User-defined type (struct, enum, or class) 
 	id->Id = A.Name();
 	X = type;
 }
+
+type_name(X) ::= ATSIGN IDENTIFIER(A).
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_NativeType;
+	type->UserType = id;
+	type->isconst = false;
+	id->Id = A.Name();
+	X = type;
+}
+
 type_name(X) ::= READONLY LT IDENTIFIER(A) GT.
 {
 	NEW_AST_NODE(BasicType, type, A);
 	NEW_AST_NODE(Identifier, id, A);
 	type->Type = ZCC_UserType;
+	type->UserType = id;
+	type->isconst = true;
+	id->Id = A.Name();
+	X = type;
+}
+
+type_name(X) ::= READONLY LT ATSIGN IDENTIFIER(A) GT.
+{
+	NEW_AST_NODE(BasicType, type, A);
+	NEW_AST_NODE(Identifier, id, A);
+	type->Type = ZCC_NativeType;
 	type->UserType = id;
 	type->isconst = true;
 	id->Id = A.Name();
@@ -862,6 +936,9 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		decl->Name = C.FuncName;
 		decl->UseFlags = A == nullptr? nullptr : A->Id;
 		decl->Flags = (A == nullptr? 0 : A->Flags) | C.FuncFlags;
+		if (A == nullptr) decl->Version = {0,0,0};
+		else decl->Version = A->Version;
+
 		decl->Body = C.FuncBody;
 		X = decl;
 	}
@@ -870,7 +947,16 @@ declarator(X) ::= decl_flags(A) type_list_or_void(B) variables_or_function(C).
 		NEW_AST_NODE(VarDeclarator, decl, A == nullptr? B->SourceLoc : A->SourceLoc);
 		decl->Type = B;
 		decl->Names = C.VarNames;
-		decl->Flags = (A == nullptr? 0 : A->Flags);
+		if (A == nullptr)
+		{
+			decl->Flags = 0;
+			decl->Version = {0,0,0};
+		}
+		else
+		{
+			decl->Flags = A->Flags;
+			decl->Version = A->Version;
+		}
 		X = decl;
 	}
 	else
@@ -961,6 +1047,7 @@ decl_flags(X) ::= decl_flags(F) decl_flag(A).
 		X = nil_f;
 		X->Id = nullptr;
 		X->Flags = A.Int;
+		X->Version = { 0, 0 };
 	}
 	else
 	{
@@ -977,6 +1064,8 @@ decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
 		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
 		X = nil_f;
 		X->Flags = ZCC_Action;
+		X->Id = nullptr;
+		X->Version = { 0, 0 };
 	}
 	else
 	{
@@ -984,6 +1073,42 @@ decl_flags(X) ::= decl_flags(F) ACTION(B) states_opts(A).
 		X->Flags |= ZCC_Action;
 	}
 	X->Id = A;
+}
+
+decl_flags(X) ::= decl_flags(F) DEPRECATED(B) LPAREN STRCONST(A) RPAREN.	
+{ 
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
+		X = nil_f;
+		X->Flags = ZCC_Deprecated;
+		X->Id = nullptr;
+		X->Version = { 0, 0 };
+	}
+	else
+	{
+		X = F;
+		X->Flags |= ZCC_Deprecated;
+	}
+	X->Version = A.String->GetChars();
+}
+
+decl_flags(X) ::= decl_flags(F) VERSION(B) LPAREN STRCONST(A) RPAREN.	
+{ 
+	if (F == nullptr)
+	{
+		NEW_AST_NODE(DeclFlags,nil_f,B.SourceLoc);
+		X = nil_f;
+		X->Flags = ZCC_Version;
+		X->Id = nullptr;
+		X->Version = { 0, 0 };
+	}
+	else
+	{
+		X = F;
+		X->Flags |= ZCC_Version;
+	}
+	X->Version = A.String->GetChars();
 }
 
 decl_flag(X) ::= NATIVE(T).		{ X.Int = ZCC_Native; X.SourceLoc =  T.SourceLoc; }
@@ -995,10 +1120,13 @@ decl_flag(X) ::= FINAL(T).		{ X.Int = ZCC_Final; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= META(T).		{ X.Int = ZCC_Meta; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= TRANSIENT(T).	{ X.Int = ZCC_Transient; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc; }
-decl_flag(X) ::= DEPRECATED(T).	{ X.Int = ZCC_Deprecated; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VARARG(T).     { X.Int = ZCC_VarArg; X.SourceLoc = T.SourceLoc; }
+decl_flag(X) ::= UI(T).			{ X.Int = ZCC_UIFlag; X.SourceLoc = T.SourceLoc; }
+decl_flag(X) ::= PLAY(T).		{ X.Int = ZCC_Play; X.SourceLoc = T.SourceLoc; }
+decl_flag(X) ::= CLEARSCOPE(T). { X.Int = ZCC_ClearScope; X.SourceLoc = T.SourceLoc; }
+decl_flag(X) ::= VIRTUALSCOPE(T). { X.Int = ZCC_VirtualScope; X.SourceLoc = T.SourceLoc; }
 
 func_const(X) ::= .							{ X.Int = 0; X.SourceLoc = stat->sc->GetMessageLine(); }
 func_const(X) ::= CONST(T).					{ X.Int = ZCC_FuncConst; X.SourceLoc = T.SourceLoc; }
@@ -1166,9 +1294,9 @@ unary_expr(X) ::= primary(X).
 unary_expr(X) ::= SUB unary_expr(A). [UNARY]
 {
 	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
-	if (A->Operation == PEX_ConstValue && (con->Type->IsA(RUNTIME_CLASS(PInt)) || con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	if (A->Operation == PEX_ConstValue && (con->Type->isInt() || con->Type->isFloat()))
 	{ // For constants, manipulate the child node directly, and don't create a new node.
-		if (con->Type->IsA(RUNTIME_CLASS(PInt)))
+		if (con->Type->isInt())
 		{
 			con->IntVal = -con->IntVal;
 		}
@@ -1190,7 +1318,7 @@ unary_expr(X) ::= ADD unary_expr(A). [UNARY]
 	// it so we can type check that it is being applied to something numeric.
 	// But we can do that right now for constant numerals.
 	ZCC_ExprConstant *con = static_cast<ZCC_ExprConstant *>(A);
-	if (A->Operation != PEX_ConstValue || (!con->Type->IsA(RUNTIME_CLASS(PInt)) && !con->Type->IsA(RUNTIME_CLASS(PFloat))))
+	if (A->Operation != PEX_ConstValue || (!con->Type->isInt() && !con->Type->isFloat()))
 	{
 		UNARY_EXPR(A,PEX_AntiNegate);
 		X = expr1;
@@ -1604,7 +1732,7 @@ statement(X) ::= staticarray_statement(A).			{ X = A; /*X-overwrites-A*/ }
 
 %type staticarray_statement{ZCC_StaticArrayStatement *}
 
-staticarray_statement(X) ::= STATIC CONST type(A) IDENTIFIER(B) LBRACKET RBRACKET EQ LBRACE expr_list(C) RBRACE.
+staticarray_statement(X) ::= STATICCONST type(A) IDENTIFIER(B) LBRACKET RBRACKET EQ LBRACE expr_list(C) RBRACE SEMICOLON.
 {
 	NEW_AST_NODE(StaticArrayStatement, stmt, A);
 	stmt->Type = A;
@@ -1613,7 +1741,7 @@ staticarray_statement(X) ::= STATIC CONST type(A) IDENTIFIER(B) LBRACKET RBRACKE
 	X = stmt;
 }
 
-staticarray_statement(X) ::= STATIC CONST type(A) LBRACKET RBRACKET IDENTIFIER(B)  EQ LBRACE expr_list(C) RBRACE.
+staticarray_statement(X) ::= STATICCONST type(A) LBRACKET RBRACKET IDENTIFIER(B)  EQ LBRACE expr_list(C) RBRACE SEMICOLON.
 {
 	NEW_AST_NODE(StaticArrayStatement, stmt, A);
 	stmt->Type = A;
@@ -1769,6 +1897,7 @@ for_init(X) ::= for_bump(A).						{ X = A /*X-overwrites-A*/; }
 %type for_bump{ZCC_Statement *}
 for_bump(X) ::= .									{ X = NULL; }
 for_bump(X) ::= expression_statement(A).			{ X = A; /*X-overwrites-A*/ }
+for_bump(X) ::= for_bump(A) COMMA expression_statement(B). { X = A; /*X-overwrites-A*/ AppendTreeNodeSibling(X, B); }
 
 /*----- If Statements -----*/
 

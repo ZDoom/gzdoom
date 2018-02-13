@@ -42,6 +42,7 @@
 #include "d_main.h"
 #include "zstring.h"
 #include "sc_man.h"
+#include "cmdlib.h"
 
 static void PSR_FindEndBlock(FScanner &sc)
 {
@@ -122,27 +123,28 @@ static TArray<FString> ParseSteamRegistry(const char* path)
 
 	// Read registry data
 	FScanner sc;
-	sc.OpenFile(path);
-	sc.SetCMode(true);
-
-	// Find the SteamApps listing
-	if(PSR_FindAndEnterBlock(sc, "InstallConfigStore"))
+	if (sc.OpenFile(path))
 	{
-		if(PSR_FindAndEnterBlock(sc, "Software"))
+		sc.SetCMode(true);
+
+		// Find the SteamApps listing
+		if (PSR_FindAndEnterBlock(sc, "InstallConfigStore"))
 		{
-			if(PSR_FindAndEnterBlock(sc, "Valve"))
+			if (PSR_FindAndEnterBlock(sc, "Software"))
 			{
-				if(PSR_FindAndEnterBlock(sc, "Steam"))
+				if (PSR_FindAndEnterBlock(sc, "Valve"))
 				{
-					dirs = PSR_ReadBaseInstalls(sc);
+					if (PSR_FindAndEnterBlock(sc, "Steam"))
+					{
+						dirs = PSR_ReadBaseInstalls(sc);
+					}
+					PSR_FindEndBlock(sc);
 				}
 				PSR_FindEndBlock(sc);
 			}
 			PSR_FindEndBlock(sc);
 		}
-		PSR_FindEndBlock(sc);
 	}
-
 	return dirs;
 }
 
@@ -223,7 +225,7 @@ TArray<FString> I_GetSteamPath()
 		{
 			struct stat st;
 			FString candidate(SteamInstallFolders[i] + "/" + AppInfo[app].BasePath);
-			if(stat(candidate, &st) == 0 && S_ISDIR(st.st_mode))
+			if(DirExists(candidate))
 				result.Push(candidate);
 		}
 	}

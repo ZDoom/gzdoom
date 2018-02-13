@@ -51,6 +51,7 @@ class PlasmaBall : Actor
 		Damage 5;
 		Projectile;
 		+RANDOMIZE
+		+ZDOOMTRANS
 		RenderStyle "Add";
 		Alpha 0.75;
 		SeeSound "weapons/plasmaf";

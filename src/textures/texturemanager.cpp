@@ -53,6 +53,7 @@
 #include "r_renderer.h"
 #include "r_sky.h"
 #include "textures/textures.h"
+#include "vm.h"
 
 FTextureManager TexMan;
 
@@ -698,9 +699,9 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 						is32bit = !!sc.Compare("force32bit");
 						if (!is32bit) sc.UnGet();
 
-						sc.GetNumber();
+						sc.MustGetNumber();
 						width = sc.Number;
-						sc.GetNumber();
+						sc.MustGetNumber();
 						height = sc.Number;
 
 						if (lumpnum>=0)
@@ -764,7 +765,7 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 void FTextureManager::AddPatches (int lumpnum)
 {
 	FWadLump *file = Wads.ReopenLumpNum (lumpnum);
-	DWORD numpatches, i;
+	uint32_t numpatches, i;
 	char name[9];
 
 	*file >> numpatches;
@@ -977,6 +978,7 @@ void FTextureManager::SortTexturesByType(int start, int end)
 //
 //==========================================================================
 FTexture *GetBackdropTexture();
+FTexture *CreateShaderTexture(bool, bool);
 
 void FTextureManager::Init()
 {
@@ -988,7 +990,12 @@ void FTextureManager::Init()
 
 	// Texture 0 is a dummy texture used to indicate "no texture"
 	AddTexture (new FDummyTexture);
+	// some special textures used in the game.
 	AddTexture(GetBackdropTexture());
+	AddTexture(CreateShaderTexture(false, false));
+	AddTexture(CreateShaderTexture(false, true));
+	AddTexture(CreateShaderTexture(true, false));
+	AddTexture(CreateShaderTexture(true, true));
 
 	int wadcnt = Wads.GetNumWads();
 	for(int i = 0; i< wadcnt; i++)
@@ -1181,7 +1188,7 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	if (lumpnum >= 0)
 	{
 		FWadLump file = Wads.OpenLumpNum (lumpnum); 
-		DWORD numtex;
+		uint32_t numtex;
 
 		file >> numtex;
 		return int(numtex) >= 0 ? numtex : 0;
@@ -1195,11 +1202,38 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 //
 //==========================================================================
 
+DEFINE_ACTION_FUNCTION(_TexMan, GetName)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan.ByIndex(texid);
+	FString retval;
+
+	if (tex != nullptr)
+	{
+		if (tex->Name.IsNotEmpty()) retval = tex->Name;
+		else
+		{
+			// Textures for full path names do not have their own name, they merely link to the source lump.
+			auto lump = tex->GetSourceLump();
+			if (Wads.GetLinkedTexture(lump) == tex)
+				retval = Wads.GetLumpFullName(lump);
+		}
+	}
+	ACTION_RETURN_STRING(retval);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
 DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
-	auto tex = TexMan[FSetTextureID(texid)];
+	auto tex = TexMan.ByIndex(texid);
 	int x, y;
 	if (tex != nullptr)
 	{
@@ -1208,20 +1242,62 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetSize)
 	}
 	else x = y = -1;
 	if (numret > 0) ret[0].SetInt(x);
-	if (numret > 1) ret[1].SetInt(x);
+	if (numret > 1) ret[1].SetInt(y);
 	return MIN(numret, 2);
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
 
 DEFINE_ACTION_FUNCTION(_TexMan, GetScaledSize)
 {
 	PARAM_PROLOGUE;
 	PARAM_INT(texid);
-	auto tex = TexMan[FSetTextureID(texid)];
+	auto tex = TexMan.ByIndex(texid);
 	if (tex != nullptr)
 	{
 		ACTION_RETURN_VEC2(DVector2(tex->GetScaledWidthDouble(), tex->GetScaledHeightDouble()));
 	}
 	ACTION_RETURN_VEC2(DVector2(-1, -1));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_TexMan, GetScaledOffset)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan.ByIndex(texid);
+	if (tex != nullptr)
+	{
+		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(), tex->GetScaledTopOffsetDouble()));
+	}
+	ACTION_RETURN_VEC2(DVector2(-1, -1));
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(_TexMan, CheckRealHeight)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	auto tex = TexMan.ByIndex(texid);
+	if (tex != nullptr)
+	{
+		ACTION_RETURN_INT(tex->CheckRealHeight());
+	}
+	ACTION_RETURN_INT(-1);
 }
 
 //==========================================================================

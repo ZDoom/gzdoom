@@ -52,11 +52,7 @@
 #include "g_level.h"
 #include "d_net.h"
 #include "serializer.h"
-#include "thingdef.h"
-#include "virtual.h"
-
-
-extern FFlagDef WeaponFlagDefs[];
+#include "vm.h"
 
 IMPLEMENT_CLASS(AWeapon, false, true)
 
@@ -66,7 +62,6 @@ IMPLEMENT_POINTERS_START(AWeapon)
 	IMPLEMENT_POINTER(SisterWeapon)
 IMPLEMENT_POINTERS_END
 
-DEFINE_FIELD(AWeapon, WeaponFlags)
 DEFINE_FIELD(AWeapon, AmmoType1)
 DEFINE_FIELD(AWeapon, AmmoType2)	
 DEFINE_FIELD(AWeapon, AmmoGive1)
@@ -98,6 +93,8 @@ DEFINE_FIELD(AWeapon, FOVScale)
 DEFINE_FIELD(AWeapon, Crosshair)					
 DEFINE_FIELD(AWeapon, GivenAsMorphWeapon)
 DEFINE_FIELD(AWeapon, bAltFire)
+DEFINE_FIELD(AWeapon, SlotNumber)
+DEFINE_FIELD(AWeapon, WeaponFlags)
 DEFINE_FIELD_BIT(AWeapon, WeaponFlags, bDehAmmo, WIF_DEHAMMO)
 
 //===========================================================================
@@ -223,14 +220,28 @@ void AWeapon::MarkPrecacheSounds() const
 //
 //===========================================================================
 
-bool AWeapon::CheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
+bool AWeapon::CheckAmmo(int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
+{
+	IFVIRTUAL(AWeapon, CheckAmmo)
+	{
+		VMValue params[] = { (DObject*)this, fireMode, autoSwitch, requireAmmo, ammocount };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		VMCall(func, params, 5, &ret, 1);
+		return !!retval;
+	}
+	return DoCheckAmmo(fireMode, autoSwitch, requireAmmo, ammocount);
+}
+
+bool AWeapon::DoCheckAmmo (int fireMode, bool autoSwitch, bool requireAmmo, int ammocount)
 {
 	int altFire;
 	int count1, count2;
 	int enough, enoughmask;
 	int lAmmoUse1;
 
-	if ((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO))
+	if ((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr))
 	{
 		return true;
 	}
@@ -296,7 +307,7 @@ DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
 	PARAM_BOOL(autoswitch);
 	PARAM_BOOL_DEF(require);
 	PARAM_INT_DEF(ammocnt);
-	ACTION_RETURN_BOOL(self->CheckAmmo(mode, autoswitch, require, ammocnt));
+	ACTION_RETURN_BOOL(self->DoCheckAmmo(mode, autoswitch, require, ammocnt));
 }
 
 //===========================================================================
@@ -309,9 +320,23 @@ DEFINE_ACTION_FUNCTION(AWeapon, CheckAmmo)
 //
 //===========================================================================
 
-bool AWeapon::DepleteAmmo (bool altFire, bool checkEnough, int ammouse)
+bool AWeapon::DepleteAmmo(bool altFire, bool checkEnough, int ammouse)
 {
-	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->player->cheats & CF_INFINITEAMMO)))
+	IFVIRTUAL(AWeapon, DepleteAmmo)
+	{
+		VMValue params[] = { (DObject*)this, altFire, checkEnough, ammouse };
+		VMReturn ret;
+		int retval;
+		ret.IntAt(&retval);
+		VMCall(func, params, 4, &ret, 1);
+		return !!retval;
+	}
+	return DoDepleteAmmo(altFire, checkEnough, ammouse);
+}
+
+bool AWeapon::DoDepleteAmmo (bool altFire, bool checkEnough, int ammouse)
+{
+	if (!((dmflags & DF_INFINITE_AMMO) || (Owner->FindInventory (PClass::FindActor(NAME_PowerInfiniteAmmo), true) != nullptr)))
 	{
 		if (checkEnough && !CheckAmmo (altFire ? AltFire : PrimaryFire, false, false, ammouse))
 		{
@@ -360,7 +385,7 @@ DEFINE_ACTION_FUNCTION(AWeapon, DepleteAmmo)
 	PARAM_BOOL(altfire);
 	PARAM_BOOL_DEF(checkenough);
 	PARAM_INT_DEF(ammouse);
-	ACTION_RETURN_BOOL(self->DepleteAmmo(altfire, checkenough, ammouse));
+	ACTION_RETURN_BOOL(self->DoDepleteAmmo(altfire, checkenough, ammouse));
 }
 
 
@@ -403,7 +428,7 @@ FState *AWeapon::GetUpState ()
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
+		VMCall(func, params, 1, &ret, 1);
 		return retval;
 	}
 	return nullptr;
@@ -423,7 +448,7 @@ FState *AWeapon::GetDownState ()
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
+		VMCall(func, params, 1, &ret, 1);
 		return retval;
 	}
 	return nullptr;
@@ -443,47 +468,7 @@ FState *AWeapon::GetReadyState ()
 		VMReturn ret;
 		FState *retval;
 		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 1, &ret, 1, nullptr);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
-// AWeapon :: GetAtkState
-//
-//===========================================================================
-
-FState *AWeapon::GetAtkState (bool hold)
-{
-	IFVIRTUAL(AWeapon, GetAtkState)
-	{
-		VMValue params[2] = { (DObject*)this, hold };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
-		return retval;
-	}
-	return nullptr;
-}
-
-//===========================================================================
-//
-// AWeapon :: GetAtkState
-//
-//===========================================================================
-
-FState *AWeapon::GetAltAtkState (bool hold)
-{
-	IFVIRTUAL(AWeapon, GetAltAtkState)
-	{
-		VMValue params[2] = { (DObject*)this, hold };
-		VMReturn ret;
-		FState *retval;
-		ret.PointerAt((void**)&retval);
-		GlobalVMStack.Call(func, params, 2, &ret, 1, nullptr);
+		VMCall(func, params, 1, &ret, 1);
 		return retval;
 	}
 	return nullptr;
@@ -513,7 +498,7 @@ FState *AWeapon::GetStateForButtonName (FName button)
 
 bool FWeaponSlot::AddWeapon(const char *type)
 {
-	return AddWeapon(static_cast<PClassActor *>(PClass::FindClass(type)));
+	return AddWeapon(PClass::FindActor(type));
 }
 
 bool FWeaponSlot::AddWeapon(PClassActor *type)
@@ -984,8 +969,9 @@ void FWeaponSlots::AddExtraWeapons()
 			continue;
 		}
 		auto weapdef = ((AWeapon*)GetDefaultByType(cls));
-		if ((cls->GameFilter == GAME_Any || (cls->GameFilter & gameinfo.gametype)) &&
-			cls->Replacement == nullptr &&		// Replaced weapons don't get slotted.
+		auto gf = cls->ActorInfo()->GameFilter;
+		if ((gf == GAME_Any || (gf & gameinfo.gametype)) &&
+			cls->ActorInfo()->Replacement == nullptr &&		// Replaced weapons don't get slotted.
 			!(weapdef->WeaponFlags & WIF_POWERED_UP) &&
 			!LocateWeapon(cls, nullptr, nullptr)		// Don't duplicate it if it's already present.
 			)
@@ -1267,7 +1253,7 @@ CCMD (setslot)
 		Net_WriteByte(argv.argc()-2);
 		for (int i = 2; i < argv.argc(); i++)
 		{
-			Net_WriteWeapon(dyn_cast<PClassActor>(PClass::FindClass(argv[i])));
+			Net_WriteWeapon(PClass::FindActor(argv[i]));
 		}
 	}
 }
@@ -1296,7 +1282,7 @@ CCMD (addslot)
 		return;
 	}
 
-	PClassActor *type= dyn_cast<PClassActor>(PClass::FindClass(argv[2]));
+	PClassActor *type= PClass::FindActor(argv[2]);
 	if (type == nullptr)
 	{
 		Printf("%s is not a weapon\n", argv[2]);
@@ -1372,7 +1358,7 @@ CCMD (addslotdefault)
 		return;
 	}
 
-	type = dyn_cast<PClassActor>(PClass::FindClass(argv[2]));
+	type = PClass::FindActor(argv[2]);
 	if (type == nullptr)
 	{
 		Printf ("%s is not a weapon\n", argv[2]);
@@ -1441,7 +1427,7 @@ void P_SetupWeapons_ntohton()
 
 		if (cls->IsDescendantOf(NAME_Weapon))
 		{
-			Weapons_ntoh.Push(static_cast<PClassActor *>(cls));
+			Weapons_ntoh.Push(cls);
 		}
 	}
 	qsort(&Weapons_ntoh[1], Weapons_ntoh.Size() - 1, sizeof(Weapons_ntoh[0]), ntoh_cmp);
@@ -1469,8 +1455,8 @@ static int ntoh_cmp(const void *a, const void *b)
 {
 	PClassActor *c1 = *(PClassActor **)a;
 	PClassActor *c2 = *(PClassActor **)b;
-	int g1 = c1->GameFilter == GAME_Any ? 1 : (c1->GameFilter & gameinfo.gametype) ? 0 : 2;
-	int g2 = c2->GameFilter == GAME_Any ? 1 : (c2->GameFilter & gameinfo.gametype) ? 0 : 2;
+	int g1 = c1->ActorInfo()->GameFilter == GAME_Any ? 1 : (c1->ActorInfo()->GameFilter & gameinfo.gametype) ? 0 : 2;
+	int g2 = c2->ActorInfo()->GameFilter == GAME_Any ? 1 : (c2->ActorInfo()->GameFilter & gameinfo.gametype) ? 0 : 2;
 	if (g1 != g2)
 	{
 		return g1 - g2;
@@ -1487,7 +1473,7 @@ static int ntoh_cmp(const void *a, const void *b)
 //
 //===========================================================================
 
-void P_WriteDemoWeaponsChunk(BYTE **demo)
+void P_WriteDemoWeaponsChunk(uint8_t **demo)
 {
 	WriteWord(Weapons_ntoh.Size(), demo);
 	for (unsigned int i = 1; i < Weapons_ntoh.Size(); ++i)
@@ -1505,7 +1491,7 @@ void P_WriteDemoWeaponsChunk(BYTE **demo)
 //
 //===========================================================================
 
-void P_ReadDemoWeaponsChunk(BYTE **demo)
+void P_ReadDemoWeaponsChunk(uint8_t **demo)
 {
 	int count, i;
 	PClassActor *type;
@@ -1521,7 +1507,7 @@ void P_ReadDemoWeaponsChunk(BYTE **demo)
 	for (i = 1; i < count; ++i)
 	{
 		s = ReadStringConst(demo);
-		type = dyn_cast<PClassActor>(PClass::FindClass(s));
+		type = PClass::FindActor(s);
 		// If a demo was recorded with a weapon that is no longer present,
 		// should we report it?
 		Weapons_ntoh[i] = type;
@@ -1570,7 +1556,7 @@ void Net_WriteWeapon(PClassActor *type)
 //
 //===========================================================================
 
-PClassActor *Net_ReadWeapon(BYTE **stream)
+PClassActor *Net_ReadWeapon(uint8_t **stream)
 {
 	int index;
 

@@ -1,20 +1,23 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2016 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Initializes and implements BOOM linedef triggers for
@@ -22,6 +25,35 @@
 //
 //-----------------------------------------------------------------------------
 
+/* For code that originates from ZDoom the following applies:
+**
+**---------------------------------------------------------------------------
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include <stdlib.h>
 #include "actor.h"
@@ -66,7 +98,7 @@ protected:
 	double m_vdx, m_vdy;	// Accumulated velocity if accelerative
 	int m_Accel;			// Whether it's accelerative
 	EScrollPos m_Parts;			// Which parts of a sidedef are being scrolled?
-	TObjPtr<DInterpolation> m_Interpolations[3];
+	TObjPtr<DInterpolation*> m_Interpolations[3];
 
 private:
 	DScroller ()
@@ -224,6 +256,11 @@ void DScroller::Tick ()
 		case EScroll::sc_carry:
 			level.Scrolls[m_Affectee].X += dx;
 			level.Scrolls[m_Affectee].Y += dy;
+			// mark all potentially affected things here so that the very expensive calculation loop in AActor::Tick does not need to run for actors which do not touch a scrolling sector.
+			for (auto n = level.sectors[m_Affectee].touching_thinglist; n; n = n->m_snext)
+			{
+				n->m_thing->flags8 |= MF8_INSCROLLSEC;
+			}
 			break;
 
 		case EScroll::sc_carry_ceiling:       // to be added later
@@ -470,7 +507,7 @@ void P_SpawnScrollers(void)
 			FSectorTagIterator itr(l->args[0]);
 			while ((s = itr.Next()) >= 0)
 			{
-				new DScroller(EScroll::sc_ceiling, -dx, dy, control, s, accel);
+				Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, s, accel);
 			}
 			for (unsigned j = 0; j < copyscrollers.Size(); j++)
 			{
@@ -478,7 +515,7 @@ void P_SpawnScrollers(void)
 
 				if (line->args[0] == l->args[0] && (line->args[1] & 1))
 				{
-					new DScroller(EScroll::sc_ceiling, -dx, dy, control, line->frontsector->Index(), accel);
+					Create<DScroller>(EScroll::sc_ceiling, -dx, dy, control, line->frontsector->Index(), accel);
 				}
 			}
 			break;
@@ -490,7 +527,7 @@ void P_SpawnScrollers(void)
 				FSectorTagIterator itr(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					new DScroller (EScroll::sc_floor, -dx, dy, control, s, accel);
+					Create<DScroller> (EScroll::sc_floor, -dx, dy, control, s, accel);
 				}
 				for(unsigned j = 0;j < copyscrollers.Size(); j++)
 				{
@@ -498,7 +535,7 @@ void P_SpawnScrollers(void)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 2))
 					{
-						new DScroller(EScroll::sc_floor, -dx, dy, control, line->frontsector->Index(), accel);
+						Create<DScroller>(EScroll::sc_floor, -dx, dy, control, line->frontsector->Index(), accel);
 					}
 				}
 			}
@@ -508,7 +545,7 @@ void P_SpawnScrollers(void)
 				FSectorTagIterator itr(l->args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
-					new DScroller (EScroll::sc_carry, dx, dy, control, s, accel);
+					Create<DScroller> (EScroll::sc_carry, dx, dy, control, s, accel);
 				}
 				for(unsigned j = 0;j < copyscrollers.Size(); j++)
 				{
@@ -516,7 +553,7 @@ void P_SpawnScrollers(void)
 
 					if (line->args[0] == l->args[0] && (line->args[1] & 4))
 					{
-						new DScroller (EScroll::sc_carry, dx, dy, control, line->frontsector->Index(), accel);
+						Create<DScroller> (EScroll::sc_carry, dx, dy, control, line->frontsector->Index(), accel);
 					}
 				}
 			}
@@ -530,7 +567,7 @@ void P_SpawnScrollers(void)
 			while ((s = itr.Next()) >= 0)
 			{
 				if (s != (int)i)
-					new DScroller(dx, dy, &level.lines[s], control, accel);
+					Create<DScroller>(dx, dy, &level.lines[s], control, accel);
 			}
 			break;
 		}
@@ -538,35 +575,35 @@ void P_SpawnScrollers(void)
 		case Scroll_Texture_Offsets:
 			// killough 3/2/98: scroll according to sidedef offsets
 			s = level.lines[i].sidedef[0]->Index();
-			new DScroller (EScroll::sc_side, -level.sides[s].GetTextureXOffset(side_t::mid),
+			Create<DScroller> (EScroll::sc_side, -level.sides[s].GetTextureXOffset(side_t::mid),
 				level.sides[s].GetTextureYOffset(side_t::mid), -1, s, accel, SCROLLTYPE(l->args[0]));
 			break;
 
 		case Scroll_Texture_Left:
 			l->special = special;	// Restore the special, for compat_useblocking's benefit.
 			s = level.lines[i].sidedef[0]->Index();
-			new DScroller (EScroll::sc_side, l->args[0] / 64., 0,
+			Create<DScroller> (EScroll::sc_side, l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Right:
 			l->special = special;
 			s = level.lines[i].sidedef[0]->Index();
-			new DScroller (EScroll::sc_side, -l->args[0] / 64., 0,
+			Create<DScroller> (EScroll::sc_side, -l->args[0] / 64., 0,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Up:
 			l->special = special;
 			s = level.lines[i].sidedef[0]->Index();
-			new DScroller (EScroll::sc_side, 0, l->args[0] / 64.,
+			Create<DScroller> (EScroll::sc_side, 0, l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
 		case Scroll_Texture_Down:
 			l->special = special;
 			s = level.lines[i].sidedef[0]->Index();
-			new DScroller (EScroll::sc_side, 0, -l->args[0] / 64.,
+			Create<DScroller> (EScroll::sc_side, 0, -l->args[0] / 64.,
 						   -1, s, accel, SCROLLTYPE(l->args[1]));
 			break;
 
@@ -575,7 +612,7 @@ void P_SpawnScrollers(void)
 			if (l->args[0] == 0) {
 				dx = (l->args[1] - l->args[2]) / 64.;
 				dy = (l->args[4] - l->args[3]) / 64.;
-				new DScroller (EScroll::sc_side, dx, dy, -1, s, accel);
+				Create<DScroller> (EScroll::sc_side, dx, dy, -1, s, accel);
 			}
 			break;
 
@@ -656,7 +693,7 @@ void SetWallScroller (int id, int sidechoice, double dx, double dy, EScrollPos W
 				}
 				if (i == numcollected)
 				{
-					new DScroller (EScroll::sc_side, dx, dy, -1, sidenum, 0, Where);
+					Create<DScroller> (EScroll::sc_side, dx, dy, -1, sidenum, 0, Where);
 				}
 			}
 		}
@@ -696,11 +733,11 @@ void SetScroller (int tag, EScroll type, double dx, double dy)
 	FSectorTagIterator itr(tag);
 	while ((i = itr.Next()) >= 0)
 	{
-		new DScroller (type, dx, dy, -1, i, 0);
+		Create<DScroller> (type, dx, dy, -1, i, 0);
 	}
 }
 
 void P_CreateScroller(EScroll type, double dx, double dy, int control, int affectee, int accel, EScrollPos scrollpos)
 {
-	new DScroller(type, dx, dy, control, affectee, accel, scrollpos);
+	Create<DScroller>(type, dx, dy, control, affectee, accel, scrollpos);
 }

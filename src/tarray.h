@@ -1,3 +1,4 @@
+#pragma once
 /*
 ** tarray.h
 ** Templated, automatically resizing array
@@ -32,14 +33,13 @@
 **
 */
 
-#ifndef __TARRAY_H__
-#define __TARRAY_H__
 
 #include <stdlib.h>
 #include <assert.h>
 #include <string.h>
 #include <new>
 #include <utility>
+#include <iterator>
 
 #if !defined(_WIN32)
 #include <inttypes.h>		// for intptr_t
@@ -49,13 +49,37 @@
 
 #include "m_alloc.h"
 
-template<typename T> class TIterator
+template<typename T> class TIterator : public std::iterator<std::random_access_iterator_tag, T>
 {
 public:
+	typedef typename TIterator::value_type value_type;
+	typedef typename TIterator::difference_type difference_type;
+	typedef typename TIterator::pointer pointer;
+	typedef typename TIterator::reference reference;
+	typedef typename TIterator::iterator_category iterator_category;
+
 	TIterator(T* ptr = nullptr) { m_ptr = ptr; }
-	bool operator==(const TIterator<T>& other) const { return (m_ptr == other.m_ptr); }
-	bool operator!=(const TIterator<T>& other) const { return (m_ptr != other.m_ptr); }
-	TIterator<T> &operator++() { ++m_ptr; return (*this); }
+
+	// Comparison operators
+	bool operator==(const TIterator &other) const { return m_ptr == other.m_ptr; }
+	bool operator!=(const TIterator &other) const { return m_ptr != other.m_ptr; }
+	bool operator< (const TIterator &other) const { return m_ptr <  other.m_ptr; }
+	bool operator<=(const TIterator &other) const { return m_ptr <= other.m_ptr; }
+	bool operator> (const TIterator &other) const { return m_ptr >  other.m_ptr; }
+	bool operator>=(const TIterator &other) const { return m_ptr >= other.m_ptr; }
+
+	// Arithmetic operators
+	TIterator &operator++() { ++m_ptr; return *this; }
+	TIterator operator++(int) { pointer tmp = m_ptr; ++*this; return TIterator(tmp); }
+	TIterator &operator--() { --m_ptr; return *this; }
+	TIterator operator--(int) { pointer tmp = m_ptr; --*this; return TIterator(tmp); }
+	TIterator &operator+=(difference_type offset) { m_ptr += offset; return *this; }
+	TIterator operator+(difference_type offset) const { return TIterator(m_ptr + offset); }
+	friend TIterator operator+(difference_type offset, const TIterator &other) { return TIterator(offset + other.m_ptr); }
+	TIterator &operator-=(difference_type offset) { m_ptr -= offset; return *this; }
+	TIterator operator-(difference_type offset) const { return TIterator(m_ptr - offset); }
+	difference_type operator-(const TIterator &other) const { return m_ptr - other.m_ptr; }
+
 	T &operator*() { return *m_ptr; }
 	const T &operator*() const { return *m_ptr; }
 	T* operator->() { return m_ptr; }
@@ -133,10 +157,10 @@ public:
 		Count = 0;
 		Array = NULL;
 	}
-	TArray (int max)
+	TArray (int max, bool reserve = false)
 	{
 		Most = max;
-		Count = 0;
+		Count = reserve? max : 0;
 		Array = (T *)M_Malloc (sizeof(T)*max);
 	}
 	TArray (const TArray<T,TT> &other)
@@ -243,6 +267,15 @@ public:
 		::new((void*)&Array[Count]) T(item);
 		return Count++;
 	}
+	void Append(const TArray<T> &item)
+	{
+		unsigned start = Reserve(item.Size());
+		for (unsigned i = 0; i < item.Size(); i++)
+		{
+			Array[start + i] = item[i];
+		}
+	}
+
 	bool Pop ()
 	{
 		if (Count > 0)
@@ -367,6 +400,14 @@ public:
 		}
 		Count = amount;
 	}
+	void Alloc(unsigned int amount)
+	{
+		// first destroys all content and then rebuilds the array.
+		if (Count > 0) DoDelete(0, Count - 1);
+		Count = 0;
+		Resize(amount);
+		ShrinkToFit();
+	}
 	// Reserves amount entries at the end of the array, but does nothing
 	// with them.
 	unsigned int Reserve (unsigned int amount)
@@ -395,6 +436,11 @@ public:
 			DoDelete (0, Count-1);
 			Count = 0;
 		}
+	}
+	void Reset()
+	{
+		Clear();
+		ShrinkToFit();
 	}
 private:
 	T *Array;
@@ -467,13 +513,9 @@ public:
 	}
 };
 
-// A non-resizable array
-// This is meant for data that can be replaced but is otherwise static as long as it exists.
-// The reason for it is to replace any global pointer/counter pairs with something that can
-// be reliably accessed by the scripting VM and which can use 'for' iterator syntax.
+// This is not a real dynamic array but just a wrapper around a pointer reference.
+// Used for wrapping some memory allocated elsewhere into a VM compatible data structure.
 
-// This is split into two, so that it also can be used to wrap arrays that are not directly allocated.
-// This first class only gets a reference to some data but won't own it.
 template <class T>
 class TStaticPointedArray
 {
@@ -526,77 +568,6 @@ public:
 	T *Array;
 	unsigned int Count;
 };
-
-// This second type owns its data, it can delete and reallocate it, but it cannot
-// resize the array or repurpose its old contents if new ones are about to be created.
-template <class T>
-class TStaticArray : public TStaticPointedArray<T>
-{
-public:
-
-	////////
-	// This is a dummy constructor that does nothing. The purpose of this
-	// is so you can create a global TArray in the data segment that gets
-	// used by code before startup without worrying about the constructor
-	// resetting it after it's already been used. You MUST NOT use it for
-	// heap- or stack-allocated TArrays.
-	enum ENoInit
-	{
-		NoInit
-	};
-	TStaticArray(ENoInit dummy)
-	{
-	}
-	////////
-	TStaticArray()
-	{
-		this->Count = 0;
-		this->Array = NULL;
-	}
-	TStaticArray(TStaticArray<T> &&other)
-	{
-		this->Array = other.Array;
-		this->Count = other.Count;
-		other.Array = nullptr;
-		other.Count = 0;
-	}
-	// This is not supposed to be copyable.
-	TStaticArray(const TStaticArray<T> &other) = delete;
-
-	~TStaticArray()
-	{
-		Clear();
-	}
-	void Clear()
-	{
-		if (this->Array) delete[] this->Array;
-		this->Count = 0;
-		this->Array = nullptr;
-	}
-	void Alloc(unsigned int amount)
-	{
-		// intentionally first deletes and then reallocates.
-		if (this->Array) delete[] this->Array;
-		this->Array = new T[amount];
-		this->Count = amount;
-	}
-	TStaticArray &operator=(const TStaticArray &other)
-	{
-		Alloc(other.Size());
-		memcpy(this->Array, other.Array, this->Count * sizeof(T));
-		return *this;
-	}
-	TStaticArray &operator=(TStaticArray &&other)
-	{
-		if (this->Array) delete[] this->Array;
-		this->Array = other.Array;
-		this->Count = other.Count;
-		other.Array = nullptr;
-		other.Count = 0;
-		return *this;
-	}
-};
-
 
 // TAutoGrowArray -----------------------------------------------------------
 // An array with accessors that automatically grow the array as needed.
@@ -1250,4 +1221,3 @@ protected:
 	hash_t Position;
 };
 
-#endif //__TARRAY_H__

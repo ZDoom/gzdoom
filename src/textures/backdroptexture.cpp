@@ -273,26 +273,26 @@ void FBackdropTexture::Render()
 
 	int x, y;
 
-	const DWORD a1add = DEGREES(0.5);
-	const DWORD a2add = DEGREES(359);
-	const DWORD a3add = DEGREES(5 / 7.f);
-	const DWORD a4add = DEGREES(358.66666);
+	const uint32_t a1add = DEGREES(0.5);
+	const uint32_t a2add = DEGREES(359);
+	const uint32_t a3add = DEGREES(5 / 7.f);
+	const uint32_t a4add = DEGREES(358.66666);
 
-	const DWORD t1add = DEGREES(358);
-	const DWORD t2add = DEGREES(357.16666);
-	const DWORD t3add = DEGREES(2.285);
-	const DWORD t4add = DEGREES(359.33333);
-	const DWORD x1add = 5 * 524288;
-	const DWORD x2add = 0u - 13 * 524288;
-	const DWORD z1add = 3 * 524288;
-	const DWORD z2add = 4 * 524288;
+	const uint32_t t1add = DEGREES(358);
+	const uint32_t t2add = DEGREES(357.16666);
+	const uint32_t t3add = DEGREES(2.285);
+	const uint32_t t4add = DEGREES(359.33333);
+	const uint32_t x1add = 5 * 524288;
+	const uint32_t x2add = 0u - 13 * 524288;
+	const uint32_t z1add = 3 * 524288;
+	const uint32_t z2add = 4 * 524288;
 
 
-	DWORD a1, a2, a3, a4;
-	SDWORD c1, c2, c3, c4;
-	DWORD tx, ty, tc, ts;
-	DWORD ux, uy, uc, us;
-	DWORD ltx, lty, lux, luy;
+	uint32_t a1, a2, a3, a4;
+	int32_t c1, c2, c3, c4;
+	uint32_t tx, ty, tc, ts;
+	uint32_t ux, uy, uc, us;
+	uint32_t ltx, lty, lux, luy;
 
 	from = Pixels;
 
@@ -302,10 +302,10 @@ void FBackdropTexture::Render()
 	double z1 = (cos(TORAD(z2ang)) / 4 + 0.5) * (0x8000000);
 	double z2 = (cos(TORAD(z1ang)) / 4 + 0.75) * (0x8000000);
 
-	tc = SDWORD(cos(TORAD(t1ang)) * z1);
-	ts = SDWORD(sin(TORAD(t1ang)) * z1);
-	uc = SDWORD(cos(TORAD(t2ang)) * z2);
-	us = SDWORD(sin(TORAD(t2ang)) * z2);
+	tc = int32_t(cos(TORAD(t1ang)) * z1);
+	ts = int32_t(sin(TORAD(t1ang)) * z1);
+	uc = int32_t(cos(TORAD(t2ang)) * z2);
+	us = int32_t(sin(TORAD(t2ang)) * z2);
 	
 	ltx = -width / 2 * tc;
 	lty = -width / 2 * ts;
@@ -316,8 +316,8 @@ void FBackdropTexture::Render()
 	{
 		a1 = time1;
 		a2 = time2;
-		c3 = SDWORD(cos(TORAD(a3)) * 65536.0);
-		c4 = SDWORD(cos(TORAD(a4)) * 65536.0);
+		c3 = int32_t(cos(TORAD(a3)) * 65536.0);
+		c4 = int32_t(cos(TORAD(a4)) * 65536.0);
 		tx = ltx - (y - height / 2)*ts;
 		ty = lty + (y - height / 2)*tc;
 		ux = lux - (y - height / 2)*us;

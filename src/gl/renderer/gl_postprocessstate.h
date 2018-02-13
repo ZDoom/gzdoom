@@ -4,7 +4,7 @@
 #include <string.h>
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_data.h"
-#include "gl/data/gl_matrix.h"
+#include "r_data/matrix.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 

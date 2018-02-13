@@ -38,6 +38,8 @@ gameinfo
 	weaponslot = 7, "LAZDevice"
 	dimcolor = "ff d7 00"
 	dimamount = 0.2
+	bluramount = 0.0
+	menuslidercolor = "Orange"
 	definventorymaxamount = 25
 	defaultrespawntime = 12
 	defaultdropstyle = 1
@@ -65,6 +67,10 @@ gameinfo
 	statscreen_mapnamefont = "BigFont"
 	statscreen_finishedpatch = "WIF"
 	statscreen_enteringpatch = "WIENTER"
+	statscreen_coop = "CoopStatusScreen"
+	statscreen_dm = "DeathmatchStatusScreen"
+	statscreen_single = "DoomStatusScreen"
+	messageboxclass = "MessageBoxMenu"
 }
 
 DoomEdNums

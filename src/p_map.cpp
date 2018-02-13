@@ -1,26 +1,61 @@
-// Emacs style mode select	 -*- C++ -*- 
 //-----------------------------------------------------------------------------
 //
-// $Id:$
+// Copyright 1993-1996 id Software
+// Copyright 1994-1996 Raven Software
+// Copyright 1998-1998 Chi Hoang, Lee Killough, Jim Flynn, Rand Phares, Ty Halderman
+// Copyright 1999-2016 Randy Heit
+// Copyright 2002-2017 Christoph Oelckers
 //
-// Copyright (C) 1993-1996 by id Software, Inc.
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
 //
-// This source is available for distribution and/or modification
-// only under the terms of the DOOM Source Code License as
-// published by id Software. All rights reserved.
-//
-// The source is distributed in the hope that it will be useful,
+// This program is distributed in the hope that it will be useful,
 // but WITHOUT ANY WARRANTY; without even the implied warranty of
-// FITNESS FOR A PARTICULAR PURPOSE. See the DOOM Source Code License
-// for more details.
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
 //
-// $Log:$
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see http://www.gnu.org/licenses/
+//
+//-----------------------------------------------------------------------------
 //
 // DESCRIPTION:
 //		Movement, collision handling.
 //		Shooting and aiming.
 //
 //-----------------------------------------------------------------------------
+
+/* For code that originates from ZDoom the following applies:
+**
+**---------------------------------------------------------------------------
+**
+** Redistribution and use in source and binary forms, with or without
+** modification, are permitted provided that the following conditions
+** are met:
+**
+** 1. Redistributions of source code must retain the above copyright
+**    notice, this list of conditions and the following disclaimer.
+** 2. Redistributions in binary form must reproduce the above copyright
+**    notice, this list of conditions and the following disclaimer in the
+**    documentation and/or other materials provided with the distribution.
+** 3. The name of the author may not be used to endorse or promote products
+**    derived from this software without specific prior written permission.
+**
+** THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+** IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+** OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+** IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+** INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+** NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+** DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+** THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+** (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+** THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+**---------------------------------------------------------------------------
+**
+*/
 
 #include <stdlib.h>
 #include <math.h>
@@ -44,10 +79,11 @@
 #include "p_terrain.h"
 #include "p_trace.h"
 #include "p_checkposition.h"
+#include "p_linetracedata.h"
 #include "r_utility.h"
 #include "p_blockmap.h"
 #include "p_3dmidtex.h"
-#include "virtual.h"
+#include "vm.h"
 
 #include "s_sound.h"
 #include "decallib.h"
@@ -64,6 +100,7 @@
 #include "g_level.h"
 #include "r_sky.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 
 CVAR(Bool, cl_bloodsplats, true, CVAR_ARCHIVE)
 CVAR(Int, sv_smartaim, 0, CVAR_ARCHIVE | CVAR_SERVERINFO)
@@ -125,6 +162,7 @@ DEFINE_FIELD_X(FCheckPosition, FCheckPosition, ceilingline);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, stepthing);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, DoRipping);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalstep);
+DEFINE_FIELD_X(FCheckPosition, FCheckPosition, portalgroup);
 DEFINE_FIELD_X(FCheckPosition, FCheckPosition, PushTime);
 
 //==========================================================================
@@ -153,7 +191,7 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 	VMFunction *func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
 	if (func != nullptr)
 	{
-		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		VMCall(func, params, 3, &ret, 1);
 		if (!retval) return false;
 	}
 	std::swap(params[0].a, params[1].a);
@@ -164,7 +202,7 @@ bool P_CanCollideWith(AActor *tmthing, AActor *thing)
 	func = clss->Virtuals.Size() > VIndex ? clss->Virtuals[VIndex] : nullptr;
 	if (func != nullptr)
 	{
-		GlobalVMStack.Call(func, params, 3, &ret, 1, nullptr);
+		VMCall(func, params, 3, &ret, 1);
 		if (!retval) return false;
 	}
 	return true;
@@ -252,6 +290,7 @@ static bool PIT_FindFloorCeiling(FMultiBlockLinesIterator &mit, FMultiBlockLines
 		}
 	}
 
+	// If we are stepping through a portal the line's opening must be checked, regardless of the NOFLOOR flag
 	if (!(flags & FFCF_NOFLOOR))
 	{
 		if (open.bottom > tmf.floorz)
@@ -818,7 +857,7 @@ static int LineIsBelow(line_t *line, AActor *actor)
 //==========================================================================
 
 static // killough 3/26/98: make static
-bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm)
+bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::CheckResult &cres, const FBoundingBox &box, FCheckPosition &tm, const bool wasfit)
 {
 	line_t *ld = cres.line;
 	bool rail = false;
@@ -864,11 +903,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			double portz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
 			if (tm.thing->Z() < portz && tm.thing->Z() + tm.thing->MaxStepHeight >= portz && tm.floorz < portz)
 			{
-				tm.floorz = portz;
-				tm.floorsector = cres.line->frontsector;
-				tm.floorpic = cres.line->sidedef[0]->GetTexture(side_t::mid);
-				tm.floorterrain = 0;
-				tm.portalstep = true;
+				if (wasfit)
+				{
+					tm.floorz = portz;
+					tm.floorsector = cres.line->frontsector;
+					tm.floorpic = cres.line->sidedef[0]->GetTexture(side_t::mid);
+					tm.floorterrain = 0;
+					tm.portalstep = true;
+					tm.portalgroup = cres.line->frontsector->GetOppositePortalGroup(sector_t::ceiling);
+				}
 				return true;
 			}
 		}
@@ -877,7 +920,10 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		{
 			P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 		}
-		tm.thing->BlockingLine = ld;
+		if (wasfit)
+		{
+			tm.thing->BlockingLine = ld;
+		}
 		CheckForPushSpecial(ld, 0, tm.thing);
 		return false;
 	}
@@ -909,12 +955,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == -1) return true;
 				if (state == 1)
 				{
-					// the line should not block but we should set the ceilingz to the portal boundary so that we can't float up into that line.
-					double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::floor);
-					if (portalz < tm.ceilingz)
+					if (wasfit)
 					{
-						tm.ceilingz = portalz;
-						tm.ceilingsector = cres.line->frontsector;
+						// the line should not block but we should set the ceilingz to the portal boundary so that we can't float up into that line.
+						double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::floor);
+						if (portalz < tm.ceilingz)
+						{
+							tm.ceilingz = portalz;
+							tm.ceilingsector = cres.line->frontsector;
+						}
 					}
 					return true;
 				}
@@ -926,12 +975,15 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				if (state == -1) return true;
 				if (state == 1)
 				{
-					double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
-					if (portalz > tm.floorz)
+					if (wasfit)
 					{
-						tm.floorz = portalz;
-						tm.floorsector = cres.line->frontsector;
-						tm.floorterrain = 0;
+						double portalz = cres.line->frontsector->GetPortalPlaneZ(sector_t::ceiling);
+						if (portalz > tm.floorz)
+						{
+							tm.floorz = portalz;
+							tm.floorsector = cres.line->frontsector;
+							tm.floorterrain = 0;
+						}
 					}
 					return true;
 				}
@@ -942,7 +994,10 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 				{
 					P_DamageMobj(tm.thing, NULL, NULL, tm.thing->Mass >> 5, NAME_Melee);
 				}
-				tm.thing->BlockingLine = ld;
+				if (wasfit)
+				{
+					tm.thing->BlockingLine = ld;
+				}
 				// Calculate line side based on the actor's original position, not the new one.
 				CheckForPushSpecial(ld, P_PointOnLineSide(cres.Position, ld), tm.thing);
 				return false;
@@ -961,8 +1016,12 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 			double portz = tm.thing->Sector->GetPortalPlaneZ(sector_t::ceiling);
 			if (tm.thing->Z() < portz && tm.thing->Z() + tm.thing->MaxStepHeight >= portz && tm.floorz < portz)
 			{
-				// Actor is stepping through a portal.
-				tm.portalstep = true;
+				if (wasfit)
+				{
+					// Actor is stepping through a portal.
+					tm.portalstep = true;
+					tm.portalgroup = tm.thing->Sector->GetOppositePortalGroup(sector_t::ceiling);
+				}
 				return true;
 			}
 		}
@@ -1002,40 +1061,44 @@ bool PIT_CheckLine(FMultiBlockLinesIterator &mit, FMultiBlockLinesIterator::Chec
 		open.bottom += 32;
 	}
 
-	// adjust floor / ceiling heights
-	if (!(cres.portalflags & FFCF_NOCEILING))
+	if (wasfit)
 	{
-		if (open.top < tm.ceilingz)
+		// adjust floor / ceiling heights
+		if (!(cres.portalflags & FFCF_NOCEILING))
 		{
-			tm.ceilingz = open.top;
-			tm.ceilingsector = open.topsec;
-			tm.ceilingpic = open.ceilingpic;
-			tm.ceilingline = ld;
-			tm.thing->BlockingLine = ld;
-		}
-	}
-
-	if (!(cres.portalflags & FFCF_NOFLOOR))
-	{
-		if (open.bottom > tm.floorz)
-		{
-			tm.floorz = open.bottom;
-			tm.floorsector = open.bottomsec;
-			tm.floorpic = open.floorpic;
-			tm.floorterrain = open.floorterrain;
-			tm.touchmidtex = open.touchmidtex;
-			tm.abovemidtex = open.abovemidtex;
-			tm.thing->BlockingLine = ld;
-		}
-		else if (open.bottom == tm.floorz)
-		{
-			tm.touchmidtex |= open.touchmidtex;
-			tm.abovemidtex |= open.abovemidtex;
+			if (open.top < tm.ceilingz)
+			{
+				tm.ceilingz = open.top;
+				tm.ceilingsector = open.topsec;
+				tm.ceilingpic = open.ceilingpic;
+				tm.ceilingline = ld;
+				tm.thing->BlockingLine = ld;
+			}
 		}
 
-		if (open.lowfloor < tm.dropoffz)
+		// If we are stepping through a portal the line's opening must be checked, regardless of the NOFLOOR flag
+		if (!(cres.portalflags & FFCF_NOFLOOR) || (tm.portalstep && open.bottomsec->PortalGroup == tm.portalgroup))
 		{
-			tm.dropoffz = open.lowfloor;
+			if (open.bottom > tm.floorz)
+			{
+				tm.floorz = open.bottom;
+				tm.floorsector = open.bottomsec;
+				tm.floorpic = open.floorpic;
+				tm.floorterrain = open.floorterrain;
+				tm.touchmidtex = open.touchmidtex;
+				tm.abovemidtex = open.abovemidtex;
+				tm.thing->BlockingLine = ld;
+			}
+			else if (open.bottom == tm.floorz)
+			{
+				tm.touchmidtex |= open.touchmidtex;
+				tm.abovemidtex |= open.abovemidtex;
+			}
+
+			if (open.lowfloor < tm.dropoffz)
+			{
+				tm.dropoffz = open.lowfloor;
+			}
 		}
 	}
 
@@ -1177,6 +1240,7 @@ static bool CanAttackHurt(AActor *victim, AActor *shooter)
 	if (!victim->player && !shooter->player)
 	{
 		int infight = G_SkillProperty(SKILLP_Infight);
+		if (infight < 0 && (victim->flags7 & MF7_FORCEINFIGHTING)) infight = 0;	// This must override the 'no infight' setting to take effect.
 
 		if (infight < 0)
 		{
@@ -1839,7 +1903,7 @@ bool P_CheckPosition(AActor *thing, const DVector2 &pos, FCheckPosition &tm, boo
 
 	while (it.Next(&lcres))
 	{
-		bool thisresult = PIT_CheckLine(it, lcres, it.Box(), tm);
+		bool thisresult = PIT_CheckLine(it, lcres, it.Box(), tm, good);
 		good &= thisresult;
 		if (thisresult)
 		{
@@ -2052,7 +2116,7 @@ DEFINE_ACTION_FUNCTION(AActor, TestMobjZ)
 	if (numret > 1)
 	{
 		numret = 2;
-		ret[1].SetPointer(on, ATAG_OBJECT);
+		ret[1].SetObject(on);
 	}
 	if (numret > 0)
 	{
@@ -2280,9 +2344,9 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			}
 #endif
 		}
-		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
+		if (!(thing->flags & MF_TELEPORT) && (!(thing->flags3 & MF3_FLOORHUGGER) || thing->flags5 & MF5_NODROPOFF))
 		{
-			if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > thing->Z())
+			if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > thing->Z() && !(thing->flags3 & MF3_FLOORHUGGER))
 			{ // [RH] Don't let normal missiles climb steps
 				goto pushline;
 			}
@@ -2721,12 +2785,15 @@ DEFINE_ACTION_FUNCTION(AActor, TryMove)
 //
 //==========================================================================
 
-bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
+static bool P_CheckMove(AActor *thing, const DVector2 &pos, FCheckPosition& tm, int flags)
 {
-	FCheckPosition tm;
 	double		newz = thing->Z();
 
-	if (!P_CheckPosition(thing, pos, tm))
+	auto f1 = thing->flags & MF_PICKUP;
+	thing->flags &= ~MF_PICKUP;
+	auto res = P_CheckPosition(thing, pos, tm);
+	thing->flags |= f1;
+	if (!res)
 	{
 		// Ignore PCM_DROPOFF. Not necessary here: a little later it is.
 		if (!flags || (!(flags & PCM_NOACTORS) && !(flags & PCM_NOLINES)))
@@ -2771,13 +2838,13 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 			if (thing->Top() > tm.ceilingz)
 				return false;
 		}
-		if (!(thing->flags & MF_TELEPORT) && !(thing->flags3 & MF3_FLOORHUGGER))
+		if (!(thing->flags & MF_TELEPORT) && (!(thing->flags3 & MF3_FLOORHUGGER) || thing->flags5 & MF5_NODROPOFF))
 		{
 			if (tm.floorz - newz > thing->MaxStepHeight)
 			{ // too big a step up
 				return false;
 			}
-			else if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > newz)
+			else if ((thing->flags & MF_MISSILE) && !(thing->flags6 & MF6_STEPMISSILE) && tm.floorz > newz && !(thing->flags3 & MF3_FLOORHUGGER))
 			{ // [RH] Don't let normal missiles climb steps
 				return false;
 			}
@@ -2812,6 +2879,28 @@ bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
 	return true;
 }
 
+bool P_CheckMove(AActor *thing, const DVector2 &pos, int flags)
+{
+	FCheckPosition tm;
+	return P_CheckMove(thing, pos, tm, flags);
+}
+
+DEFINE_ACTION_FUNCTION(AActor, CheckMove)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_INT_DEF(flags);
+	PARAM_POINTER_DEF(tm, FCheckPosition);
+	if (tm == nullptr)
+	{
+		ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), flags));
+	}
+	else
+	{
+		ACTION_RETURN_BOOL(P_CheckMove(self, DVector2(x, y), *tm, flags));
+	}
+}
 
 
 //==========================================================================
@@ -3535,6 +3624,11 @@ bool P_BounceActor(AActor *mo, AActor *BlockingMobj, bool ontop)
 		// Rippers should not bounce off shootable actors, since they rip through them.
 		if ((mo->flags & MF_MISSILE) && (mo->flags2 & MF2_RIP) && BlockingMobj->flags & MF_SHOOTABLE)
 			return true;
+
+		if (BlockingMobj->flags & MF_SHOOTABLE && mo->BounceFlags & BOUNCE_NotOnShootables)
+		{
+			mo->bouncecount = 1;	// let it explode now.
+		}
 
 		if (mo->bouncecount>0 && --mo->bouncecount == 0)
 		{
@@ -4344,7 +4438,8 @@ static ETraceStatus CheckForActor(FTraceResults &res, void *userdata)
 //==========================================================================
 
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
-	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage)
+	DAngle pitch, int damage, FName damageType, PClassActor *pufftype, int flags, FTranslatedLineTarget*victim, int *actualdamage, 
+	double sz, double offsetforward, double offsetside)
 {
 	bool nointeract = !!(flags & LAF_NOINTERACT);
 	DVector3 direction;
@@ -4388,6 +4483,12 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	{
 		shootz += 8;
 	}
+
+	// [MC] If overriding, set it to the base of the actor.
+	// Offset by the amount specified.
+	if (flags & LAF_OVERRIDEZ)
+		shootz = t1->Z();
+	shootz += sz;
 
 	// We need to check the defaults of the replacement here
 	AActor *puffDefaults = GetDefaultByType(pufftype->GetReplacement());
@@ -4439,7 +4540,34 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	if (nointeract || (puffDefaults && puffDefaults->flags6 & MF6_NOTRIGGER)) tflags = TRACE_NoSky;
 	else tflags = TRACE_NoSky | TRACE_Impact;
 
-	if (!Trace(t1->PosAtZ(shootz), t1->Sector, direction, distance, MF_SHOOTABLE, 
+	// [MC] Check the flags and set the position according to what is desired.
+	// LAF_ABSPOSITION: Treat the offset parameters as direct coordinates.
+	// LAF_ABSOFFSET: Ignore the angle.
+
+	DVector3 tempos;
+
+	if (flags & LAF_ABSPOSITION)
+	{
+		tempos = DVector3(offsetforward, offsetside, sz);
+	}
+	else if (flags & LAF_ABSOFFSET)
+	{
+		tempos = t1->Vec2OffsetZ(offsetforward, offsetside, shootz);
+	}
+	else if (0.0 == offsetforward && 0.0 == offsetside)
+	{
+		// Default case so exact comparison is enough
+		tempos = t1->PosAtZ(shootz);
+	}
+	else
+	{
+		const double s = angle.Sin();
+		const double c = angle.Cos();
+		tempos = t1->Vec2OffsetZ(offsetforward * c + offsetside * s, offsetforward * s - offsetside * c, shootz);
+	}
+
+	// Perform the trace.
+	if (!Trace(tempos, t1->Sector, direction, distance, MF_SHOOTABLE, 
 		ML_BLOCKEVERYTHING | ML_BLOCKHITSCAN, t1, trace, tflags, CheckForActor, &TData))
 	{ // hit nothing
 		if (!nointeract && puffDefaults && puffDefaults->ActiveSound)
@@ -4645,7 +4773,8 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 }
 
 AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
-	DAngle pitch, int damage, FName damageType, FName pufftype, int flags, FTranslatedLineTarget *victim, int *actualdamage)
+	DAngle pitch, int damage, FName damageType, FName pufftype, int flags, FTranslatedLineTarget *victim, int *actualdamage, 
+	double sz, double offsetforward, double offsetside)
 {
 	PClassActor *type = PClass::FindActor(pufftype);
 	if (type == NULL)
@@ -4659,7 +4788,7 @@ AActor *P_LineAttack(AActor *t1, DAngle angle, double distance,
 	}
 	else
 	{
-		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, flags, victim, actualdamage);
+		return P_LineAttack(t1, angle, distance, pitch, damage, damageType, type, flags, victim, actualdamage, sz, offsetforward, offsetside);
 	}
 }
 
@@ -4674,13 +4803,169 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 	PARAM_CLASS(puffType, AActor);
 	PARAM_INT_DEF(flags);
 	PARAM_POINTER_DEF(victim, FTranslatedLineTarget);
+	PARAM_FLOAT_DEF(offsetz);
+	PARAM_FLOAT_DEF(offsetforward);
+	PARAM_FLOAT_DEF(offsetside);
 
 	int acdmg;
 	if (puffType == nullptr) puffType = PClass::FindActor("BulletPuff");	// P_LineAttack does not work without a puff to take info from.
-	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg);
-	if (numret > 0) ret[0].SetPointer(puff, ATAG_OBJECT);
+	auto puff = P_LineAttack(self, angle, distance, pitch, damage, damageType, puffType, flags, victim, &acdmg, offsetz, offsetforward, offsetside);
+	if (numret > 0) ret[0].SetObject(puff);
 	if (numret > 1) ret[1].SetInt(acdmg), numret = 2;
 	return numret;
+}
+
+//==========================================================================
+//
+// P_LineTrace
+//
+//==========================================================================
+struct CheckLineData
+{
+	AActor *Caller;
+	bool ThruSpecies;
+	bool ThruActors;
+	int NumPortals;
+};
+
+static ETraceStatus CheckLineTrace(FTraceResults &res, void *userdata)
+{
+	CheckLineData *TData = (CheckLineData *)userdata;
+	if ( res.HitType == TRACE_CrossingPortal )
+	{
+		TData->NumPortals++;
+		return TRACE_Skip;
+	}
+	if ( res.HitType != TRACE_HitActor )
+	{
+		return TRACE_Stop;
+	}
+	if ( (TData->ThruActors) || (TData->ThruSpecies && res.Actor->GetSpecies() == TData->Caller->GetSpecies()) )
+	{
+		return TRACE_Skip;
+	}
+	return TRACE_Stop;
+}
+
+bool P_LineTrace(AActor *t1, DAngle angle, double distance,
+	DAngle pitch, int flags, double sz, double offsetforward,
+	double offsetside, FLineTraceData *outdata)
+{
+	FTraceResults trace;
+	CheckLineData TData;
+	TData.Caller = t1;
+	TData.ThruSpecies = !!(flags & TRF_THRUSPECIES);
+	TData.ThruActors = !!(flags & TRF_THRUACTORS);
+	TData.NumPortals = 0;
+	DVector3 direction;
+	double pc = pitch.Cos();
+	direction = { pc * angle.Cos(), pc * angle.Sin(), -pitch.Sin() };
+	DVector3 startpos;
+	double startz = t1->Z() - t1->Floorclip;
+	startz += sz;
+	if ( flags & TRF_ABSPOSITION )
+	{
+		startpos = DVector3(offsetforward, offsetside, sz);
+	}
+	else if ( flags & TRF_ABSOFFSET )
+	{
+		startpos = t1->Vec2OffsetZ(offsetforward, offsetside, startz);
+	}
+	else if ( (offsetforward == 0.0) && (offsetside == 0.0) )
+	{
+		startpos = t1->PosAtZ(startz);
+	}
+	else
+	{
+		const double s = angle.Sin();
+		const double c = angle.Cos();
+		startpos = t1->Vec2OffsetZ(offsetforward * c + offsetside * s, offsetforward * s - offsetside * c, startz);
+	}
+
+	ActorFlags aflags = (flags & TRF_ALLACTORS) ? ActorFlags::FromInt(0xFFFFFFFF) : MF_SHOOTABLE;
+	int lflags = 0;
+	if ( !(lflags & TRF_THRUBLOCK) ) lflags |= ML_BLOCKEVERYTHING;
+	if ( !(lflags & TRF_THRUHITSCAN) ) lflags |= ML_BLOCKHITSCAN;
+	int tflags = TRACE_ReportPortals;
+	if ( flags & TRF_NOSKY ) tflags |= TRACE_NoSky;
+
+	// Do trace
+	bool ret = Trace(startpos, t1->Sector, direction, distance, aflags, lflags, t1, trace, tflags, CheckLineTrace, &TData);
+	if ( outdata )
+	{
+		memset(outdata,0,sizeof(*outdata));
+		outdata->HitActor = trace.Actor;
+		outdata->HitLine = trace.Line;
+		outdata->HitSector = trace.Sector;
+		outdata->Hit3DFloor = trace.ffloor;
+		switch ( trace.HitType )
+		{
+		case TRACE_HitFloor:
+			outdata->SectorPlane = 0;
+			outdata->HitTexture = trace.Sector->planes[0].Texture;
+			break;
+		case TRACE_HitCeiling:
+			outdata->SectorPlane = 1;
+			outdata->HitTexture = trace.Sector->planes[1].Texture;
+			break;
+		case TRACE_HitWall:
+			outdata->LineSide = trace.Side;
+			int txpart;
+			switch ( trace.Tier )
+			{
+			case TIER_Middle:
+				outdata->LinePart = 1;
+				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[1].texture;
+				break;
+			case TIER_Upper:
+				outdata->LinePart = 0;
+				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[0].texture;
+				break;
+			case TIER_Lower:
+				outdata->LinePart = 2;
+				outdata->HitTexture = trace.Line->sidedef[trace.Side]->textures[2].texture;
+				break;
+			case TIER_FFloor:
+				txpart = (trace.ffloor->flags & FF_UPPERTEXTURE) ? 0 : (trace.ffloor->flags & FF_LOWERTEXTURE) ? 2 : 1;
+				outdata->HitTexture = trace.ffloor->master->sidedef[0]->textures[txpart].texture;
+				break;
+			}
+		default:
+			break;
+		}
+		outdata->HitLocation = trace.HitPos;
+		outdata->Distance = trace.Distance;
+		outdata->NumPortals = TData.NumPortals;
+		outdata->HitType = trace.HitType;
+	}
+	return ret;
+}
+
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitActor);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLine);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitSector);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Hit3DFloor);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitTexture);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitLocation);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, Distance);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, NumPortals);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LineSide);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, LinePart);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, SectorPlane);
+DEFINE_FIELD_X(FLineTraceData, FLineTraceData, HitType);
+
+DEFINE_ACTION_FUNCTION(AActor, LineTrace)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT(distance);
+	PARAM_ANGLE(pitch);
+	PARAM_INT_DEF(flags);
+	PARAM_FLOAT_DEF(offsetz);
+	PARAM_FLOAT_DEF(offsetforward);
+	PARAM_FLOAT_DEF(offsetside);
+	PARAM_POINTER_DEF(data, FLineTraceData);
+	ACTION_RETURN_BOOL(P_LineTrace(self,angle,distance,pitch,flags,offsetz,offsetforward,offsetside,data));
 }
 
 //==========================================================================
@@ -4689,7 +4974,7 @@ DEFINE_ACTION_FUNCTION(AActor, LineAttack)
 //
 //==========================================================================
 
-AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, DWORD wallMask) 
+AActor *P_LinePickActor(AActor *t1, DAngle angle, double distance, DAngle pitch, ActorFlags actorMask, uint32_t wallMask) 
 {
 	DVector3 direction;
 	double shootz;
@@ -4797,7 +5082,7 @@ void P_TraceBleed(int damage, const DVector3 &pos, AActor *actor, DAngle angle, 
 		{
 			if (bleedtrace.HitType == TRACE_HitWall)
 			{
-				PalEntry bloodcolor = actor->GetBloodColor();
+				PalEntry bloodcolor = actor->BloodColor;
 				if (bloodcolor != 0)
 				{
 					bloodcolor.r >>= 1;	// the full color is too bright for blood decals
@@ -5129,7 +5414,8 @@ void P_RailAttack(FRailParams *p)
 			if (puffDefaults->flags3 & MF3_FOILINVUL) dmgFlagPass |= DMG_FOILINVUL;
 			if (puffDefaults->flags7 & MF7_FOILBUDDHA) dmgFlagPass |= DMG_FOILBUDDHA;
 		}
-		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, p->damage, damagetype, dmgFlagPass|DMG_USEANGLE, hitangle);
+		// [RK] If the attack source is a player, send the DMG_PLAYERATTACK flag.
+		int newdam = P_DamageMobj(hitactor, thepuff ? thepuff : source, source, p->damage, damagetype, dmgFlagPass | DMG_USEANGLE | (source->player ? DMG_PLAYERATTACK : 0), hitangle);
 
 		if (bleed)
 		{
@@ -5276,23 +5562,25 @@ bool P_UseTraverse(AActor *usething, const DVector2 &start, const DVector2 &end,
 		// [RH] Check for things to talk with or use a puzzle item on
 		if (!in->isaline)
 		{
-			if (usething == in->d.thing)
+			AActor * const mobj = in->d.thing;
+
+			if (mobj == usething)
 				continue;
 			// Check thing
 
 			// Check for puzzle item use or USESPECIAL flag
 			// Extended to use the same activationtype mechanism as BUMPSPECIAL does
-			if (in->d.thing->flags5 & MF5_USESPECIAL || in->d.thing->special == UsePuzzleItem)
+			if (mobj->flags5 & MF5_USESPECIAL || mobj->special == UsePuzzleItem)
 			{
-				if (P_ActivateThingSpecial(in->d.thing, usething))
+				if (P_ActivateThingSpecial(mobj, usething))
 					return true;
 			}
-			IFVIRTUALPTR(usething, AActor, Used)
+			IFVIRTUALPTR(mobj, AActor, Used)
 			{
-				VMValue params[] = { usething, in->d.thing };
+				VMValue params[] = { mobj, usething };
 				int ret;
 				VMReturn vret(&ret);
-				GlobalVMStack.Call(func, params, 2, &vret, 1);
+				VMCall(func, params, 2, &vret, 1);
 				if (ret) return true;
 			}
 			continue;
@@ -5563,6 +5851,168 @@ CUSTOM_CVAR(Float, splashfactor, 1.f, CVAR_SERVERINFO)
 
 //==========================================================================
 //
+// P_GetRadiusDamage
+// 
+// Part of P_RadiusAttack, separated so the GetRadiusAttack function can
+// exist without needing to maintain more than one function.
+// 
+// Used by anything without OLDRADIUSDMG flag
+//==========================================================================
+
+static double P_GetRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance, bool thingbombsource)
+{
+	// [RH] New code. The bounding box only covers the
+	// height of the thing and not the height of the map.
+	double points;
+	double len;
+	double dx, dy;
+	double boxradius;
+
+	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
+	double bombdamagefloat = (double)bombdamage;
+
+	DVector2 vec = bombspot->Vec2To(thing);
+	dx = fabs(vec.X);
+	dy = fabs(vec.Y);
+	boxradius = thing->radius;
+
+	// The damage pattern is square, not circular.
+	len = double(dx > dy ? dx : dy);
+
+	if (bombspot->Z() < thing->Z() || bombspot->Z() >= thing->Top())
+	{
+		double dz;
+
+		if (bombspot->Z() > thing->Z())
+		{
+			dz = double(bombspot->Z() - thing->Top());
+		}
+		else
+		{
+			dz = double(thing->Z() - bombspot->Z());
+		}
+		if (len <= boxradius)
+		{
+			len = dz;
+		}
+		else
+		{
+			len -= boxradius;
+			len = g_sqrt(len*len + dz*dz);
+		}
+	}
+	else
+	{
+		len -= boxradius;
+		if (len < 0.f)
+			len = 0.f;
+	}
+	len = clamp<double>(len - (double)fulldamagedistance, 0, len);
+	points = bombdamagefloat * (1. - len * bombdistancefloat);
+
+	// Calculate the splash and radius damage factor if called by P_RadiusAttack.
+	// Otherwise, just get the raw damage. This allows modders to manipulate it
+	// however they want.
+	if (!fromaction)
+	{
+		if (thingbombsource) //thing is bomb source
+		{
+			points = points * splashfactor;
+		}
+		points *= thing->RadiusDamageFactor;
+	}
+
+	return points;
+}
+
+//==========================================================================
+//
+// P_GetOldRadiusDamage
+// 
+// Part of P_RadiusAttack, separated so the GetRadiusAttack function can
+// exist without needing to maintain more than one function.
+// 
+// Used by barrels (OLDRADIUSDMG flag). Returns calculated damage 
+// based on XY distance.
+//==========================================================================
+
+static int P_GetOldRadiusDamage(bool fromaction, AActor *bombspot, AActor *thing, int bombdamage, int bombdistance, int fulldamagedistance)
+{
+	const int ret = fromaction ? 0 : -1; // -1 is specifically for P_RadiusAttack; continue onto another actor.
+	double dx, dy, dist;
+
+	DVector2 vec = bombspot->Vec2To(thing);
+	dx = fabs(vec.X);
+	dy = fabs(vec.Y);
+
+	dist = dx>dy ? dx : dy;
+	dist -= thing->radius;
+
+	if (dist < 0)
+		dist = 0;
+
+	if (dist >= bombdistance)
+		return ret;  // out of range
+
+	// When called from the action function, ignore the sight check.
+	if (fromaction || P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+	{
+		dist = clamp<double>(dist - fulldamagedistance, 0, dist);
+		int damage = Scale(bombdamage, bombdistance - int(dist), bombdistance);
+
+		if (!fromaction)
+		{
+			double factor = splashfactor * thing->RadiusDamageFactor;
+			damage = int(damage * factor);
+		}
+
+		return damage;
+	}
+
+	return ret;	// Not in sight.
+}
+
+//==========================================================================
+//
+// GetRadiusDamage
+//
+// Returns the falloff damage from an A_Explode attack without doing any
+// damage and not taking into account any damage reduction.
+//==========================================================================
+
+DEFINE_ACTION_FUNCTION(AActor, GetRadiusDamage)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT(thing, AActor);
+	PARAM_INT(damage);
+	PARAM_INT(distance);
+	PARAM_INT_DEF(fulldmgdistance);
+	PARAM_BOOL_DEF(oldradiusdmg);
+
+	if (!thing)
+	{
+		ACTION_RETURN_INT(0);
+	}
+	else if (thing == self)
+	{	// No point in calculating falloff in this case since it is the bomb spot.
+		ACTION_RETURN_INT(damage);
+	}
+
+	fulldmgdistance = clamp<int>(fulldmgdistance, 0, distance - 1);
+
+	// Mirroring A_Explode's behavior.
+	if (distance <= 0)
+		distance = damage;
+
+	const int newdam = oldradiusdmg
+		? P_GetOldRadiusDamage(true, self, thing, damage, distance, fulldmgdistance)
+		: int(P_GetRadiusDamage(true, self, thing, damage, distance, fulldmgdistance, false));
+
+	ACTION_RETURN_INT(newdam);
+}
+
+//==========================================================================
+//
 // P_RadiusAttack
 // Source is the creature that caused the explosion at spot.
 //
@@ -5574,9 +6024,6 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 	if (bombdistance <= 0)
 		return 0;
 	fulldamagedistance = clamp<int>(fulldamagedistance, 0, bombdistance - 1);
-
-	double bombdistancefloat = 1. / (double)(bombdistance - fulldamagedistance);
-	double bombdamagefloat = (double)bombdamage;
 
 	FPortalGroupArray grouplist(FPortalGroupArray::PGA_Full3d);
 	FMultiBlockThingsIterator it(grouplist, bombspot->X(), bombspot->Y(), bombspot->Z() - bombdistance, bombspot->Height + bombdistance*2, bombdistance, false, bombspot->Sector);
@@ -5623,59 +6070,10 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		// which can make them near impossible to hit with the new code.
 		if ((flags & RADF_NODAMAGE) || !((bombspot->flags5 | thing->flags5) & MF5_OLDRADIUSDMG))
 		{
-			// [RH] New code. The bounding box only covers the
-			// height of the thing and not the height of the map.
-			double points;
-			double len;
-			double dx, dy;
-			double boxradius;
-
-			DVector2 vec = bombspot->Vec2To(thing);
-			dx = fabs(vec.X);
-			dy = fabs(vec.Y);
-			boxradius = thing->radius;
-
-			// The damage pattern is square, not circular.
-			len = double(dx > dy ? dx : dy);
-
-			if (bombspot->Z() < thing->Z() || bombspot->Z() >= thing->Top())
-			{
-				double dz;
-
-				if (bombspot->Z() > thing->Z())
-				{
-					dz = double(bombspot->Z() - thing->Top());
-				}
-				else
-				{
-					dz = double(thing->Z() - bombspot->Z());
-				}
-				if (len <= boxradius)
-				{
-					len = dz;
-				}
-				else
-				{
-					len -= boxradius;
-					len = g_sqrt(len*len + dz*dz);
-				}
-			}
-			else
-			{
-				len -= boxradius;
-				if (len < 0.f)
-					len = 0.f;
-			}
-			len = clamp<double>(len - (double)fulldamagedistance, 0, len);
-			points = bombdamagefloat * (1. - len * bombdistancefloat);
-			if (thing == bombsource)
-			{
-				points = points * splashfactor;
-			}
-			points *= thing->GetClass()->RDFactor;
-
+			double points = P_GetRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance, bombsource == thing);
+			double check = int(points) * bombdamage;
 			// points and bombdamage should be the same sign (the double cast of 'points' is needed to prevent overflows and incorrect values slipping through.)
-			if ((((double)int(points) * bombdamage) > 0) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+			if ((check > 0 || (check == 0 && bombspot->flags7 & MF7_FORCEZERORADIUSDMG)) && P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
 			{ // OK to damage; target is in direct path
 				double vz;
 				double thrust;
@@ -5730,36 +6128,17 @@ int P_RadiusAttack(AActor *bombspot, AActor *bombsource, int bombdamage, int bom
 		else
 		{
 			// [RH] Old code just for barrels
-			double dx, dy, dist;
+			int damage = P_GetOldRadiusDamage(false, bombspot, thing, bombdamage, bombdistance, fulldamagedistance);
 
-			DVector2 vec = bombspot->Vec2To(thing);
-			dx = fabs(vec.X);
-			dy = fabs(vec.Y);
-
-			dist = dx>dy ? dx : dy;
-			dist -= thing->radius;
-
-			if (dist < 0)
-				dist = 0;
-
-			if (dist >= bombdistance)
-				continue;  // out of range
-
-			if (P_CheckSight(thing, bombspot, SF_IGNOREVISIBILITY | SF_IGNOREWATERBOUNDARY))
+			if (damage < 0)
+				continue;		// Sight check failed.
+			else if (damage > 0 || (bombspot->flags7 & MF7_FORCEZERORADIUSDMG))
 			{ // OK to damage; target is in direct path
-				dist = clamp<double>(dist - fulldamagedistance, 0, dist);
-				int damage = Scale(bombdamage, bombdistance - int(dist), bombdistance);
-
-				double factor = splashfactor * thing->GetClass()->RDFactor;
-				damage = int(damage * factor);
-				if (damage > 0)
-				{
-					//[MC] Don't count actors saved by buddha if already at 1 health.
-					int prehealth = thing->health;
-					int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
-					P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
-					if (thing->health < prehealth)	count++;
-				}
+				//[MC] Don't count actors saved by buddha if already at 1 health.
+				int prehealth = thing->health;
+				int newdam = P_DamageMobj(thing, bombspot, bombsource, damage, bombmod);
+				P_TraceBleed(newdam > 0 ? newdam : damage, thing, bombspot);
+				if (thing->health < prehealth)	count++;
 			}
 		}
 	}
@@ -5985,7 +6364,6 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 		{
 			if (!(thing->flags&MF_NOBLOOD))
 			{
-				PalEntry bloodcolor = thing->GetBloodColor();
 				PClassActor *bloodcls = thing->GetBloodType();
 				
 				P_TraceBleed (newdam > 0 ? newdam : cpos->crushchange, thing);
@@ -5997,9 +6375,9 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 
 					mo->Vel.X = pr_crunch.Random2() / 16.;
 					mo->Vel.Y = pr_crunch.Random2() / 16.;
-					if (bloodcolor != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
+					if (thing->BloodTranslation != 0 && !(mo->flags2 & MF2_DONTTRANSLATE))
 					{
-						mo->Translation = TRANSLATION(TRANSLATION_Blood, bloodcolor.a);
+						mo->Translation = thing->BloodTranslation;
 					}
 
 					if (!(cl_bloodtype <= 1)) mo->renderflags |= RF_INVISIBLE;
@@ -6008,7 +6386,7 @@ void P_DoCrunch(AActor *thing, FChangePosition *cpos)
 				DAngle an = (M_Random() - 128) * (360./256);
 				if (cl_bloodtype >= 1)
 				{
-					P_DrawSplash2(32,  thing->PosPlusZ(thing->Height/2), an, 2, bloodcolor);
+					P_DrawSplash2(32,  thing->PosPlusZ(thing->Height/2), an, 2, thing->BloodColor);
 				}
 			}
 			if (thing->CrushPainSound != 0 && !S_GetSoundPlayingInfo(thing, thing->CrushPainSound))
@@ -6640,7 +7018,8 @@ bool P_ActivateThingSpecial(AActor * thing, AActor * trigger, bool death)
 			false, thing->args[0], thing->args[1], thing->args[2], thing->args[3], thing->args[4]);
 
 		// Clears the special if it was run on thing's death or if flag is set.
-		if (death || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
+		// Note that Hexen originally did not clear the special which some original maps depend on (e.g. the bell in HEXDD.)
+		if ((death && !(level.flags2 & LEVEL2_HEXENHACK)) || (thing->activationtype & THINGSPEC_ClearSpecial && res)) thing->special = 0;
 	}
 
 	// Returns the result

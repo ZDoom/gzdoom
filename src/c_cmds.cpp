@@ -364,11 +364,14 @@ CCMD (changemap)
 
 	if (argv.argc() > 1)
 	{
+		const char *mapname = argv[1];
+		if (!strcmp(mapname, "*")) mapname = level.MapName.GetChars();
+
 		try
 		{
-			if (!P_CheckMapData(argv[1]))
+			if (!P_CheckMapData(mapname))
 			{
-				Printf ("No map %s\n", argv[1]);
+				Printf ("No map %s\n", mapname);
 			}
 			else
 			{
@@ -381,7 +384,7 @@ CCMD (changemap)
 				{
 					Net_WriteByte (DEM_CHANGEMAP);
 				}
-				Net_WriteString (argv[1]);
+				Net_WriteString (mapname);
 			}
 		}
 		catch(CRecoverableError &error)
@@ -422,6 +425,25 @@ CCMD (take)
 		Net_WriteLong (0);
 }
 
+CCMD(setinv)
+{
+	if (CheckCheatmode() || argv.argc() < 2)
+		return;
+
+	Net_WriteByte(DEM_SETINV);
+	Net_WriteString(argv[1]);
+	if (argv.argc() > 2)
+		Net_WriteLong(atoi(argv[2]));
+	else
+		Net_WriteLong(0);
+
+	if (argv.argc() > 3)
+		Net_WriteByte(!!atoi(argv[3]));
+	else
+		Net_WriteByte(0);
+
+}
+
 CCMD (gameversion)
 {
 	Printf ("%s @ %s\nCommit %s\n", GetVersionString(), GetGitTime(), GetGitHash());
@@ -445,7 +467,7 @@ CCMD (print)
 	}
 }
 
-CCMD (exec)
+UNSAFE_CCMD (exec)
 {
 	if (argv.argc() < 2)
 		return;
@@ -473,7 +495,7 @@ void execLogfile(const char *fn, bool append)
 	}
 }
 
-CCMD (logfile)
+UNSAFE_CCMD (logfile)
 {
 
 	if (Logfile)
@@ -629,7 +651,7 @@ CCMD (error)
 	}
 }
 
-CCMD (error_fatal)
+UNSAFE_CCMD (error_fatal)
 {
 	if (argv.argc() > 1)
 	{
@@ -652,14 +674,14 @@ CCMD (error_fatal)
 //==========================================================================
 
 #if !defined(_WIN32) || !defined(_DEBUG)
-CCMD (crashout)
+UNSAFE_CCMD (crashout)
 {
 	*(volatile int *)0 = 0;
 }
 #endif
 
 
-CCMD (dir)
+UNSAFE_CCMD (dir)
 {
 	FString dir, path;
 	char curdir[256];
@@ -732,34 +754,6 @@ CCMD (dir)
 	chdir (curdir);
 }
 
-CCMD (fov)
-{
-	player_t *player = who ? who->player : &players[consoleplayer];
-
-	if (argv.argc() != 2)
-	{
-		Printf ("fov is %g\n", player->DesiredFOV);
-		return;
-	}
-	else if (dmflags & DF_NO_FOV)
-	{
-		if (consoleplayer == Net_Arbitrator)
-		{
-			Net_WriteByte (DEM_FOV);
-		}
-		else
-		{
-			Printf ("A setting controller has disabled FOV changes.\n");
-			return;
-		}
-	}
-	else
-	{
-		Net_WriteByte (DEM_MYFOV);
-	}
-	Net_WriteByte (clamp (atoi (argv[1]), 5, 179));
-}
-
 //==========================================================================
 //
 // CCMD warp
@@ -800,7 +794,7 @@ CCMD (warp)
 //
 //==========================================================================
 
-CCMD (load)
+UNSAFE_CCMD (load)
 {
     if (argv.argc() != 2)
 	{
@@ -825,7 +819,7 @@ CCMD (load)
 //
 //==========================================================================
 
-CCMD (save)
+UNSAFE_CCMD (save)
 {
     if (argv.argc() < 2 || argv.argc() > 3)
 	{
@@ -880,7 +874,7 @@ CCMD(linetarget)
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
 	C_AimLine(&t, false);
 	if (t.linetarget)
-		C_PrintInfo(t.linetarget);
+		C_PrintInfo(t.linetarget, argv.argc() > 1 && atoi(argv[1]) != 0);
 	else
 		Printf("No target found\n");
 }
@@ -893,7 +887,7 @@ CCMD(info)
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
 	C_AimLine(&t, true);
 	if (t.linetarget)
-		C_PrintInfo(t.linetarget);
+		C_PrintInfo(t.linetarget, !(argv.argc() > 1 && atoi(argv[1]) == 0));
 	else
 		Printf("No target found. Info cannot find actors that have "
 				"the NOBLOCKMAP flag or have height/radius of 0.\n");
@@ -902,7 +896,7 @@ CCMD(info)
 CCMD(myinfo)
 {
 	if (CheckCheatmode () || players[consoleplayer].mo == NULL) return;
-	C_PrintInfo(players[consoleplayer].mo);
+	C_PrintInfo(players[consoleplayer].mo, true);
 }
 
 typedef bool (*ActorTypeChecker) (AActor *);
@@ -937,14 +931,20 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	AActor *mo;
 	const PClass *FilterClass = NULL;
 	int counter = 0;
+	int tid = 0;
 
 	if (FilterName != NULL)
 	{
 		FilterClass = PClass::FindActor(FilterName);
 		if (FilterClass == NULL)
 		{
-			Printf("%s is not an actor class.\n", FilterName);
-			return;
+			char *endp;
+			tid = (int)strtol(FilterName, &endp, 10);
+			if (*endp != 0)
+			{
+				Printf("%s is not an actor class.\n", FilterName);
+				return;
+			}
 		}
 	}
 	TThinkerIterator<AActor> it;
@@ -953,10 +953,18 @@ static void PrintFilteredActorList(const ActorTypeChecker IsActorType, const cha
 	{
 		if ((FilterClass == NULL || mo->IsA(FilterClass)) && IsActorType(mo))
 		{
-			counter++;
-			if (!countOnly)
-				Printf ("%s at (%f,%f,%f)\n",
-					mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
+			if (tid == 0 || tid == mo->tid)
+			{
+				counter++;
+				if (!countOnly)
+				{
+					Printf("%s at (%f,%f,%f)",
+						mo->GetClass()->TypeName.GetChars(), mo->X(), mo->Y(), mo->Z());
+					if (mo->tid)
+						Printf(" (TID:%d)", mo->tid);
+					Printf("\n");
+				}
+			}
 		}
 	}
 	Printf("%i match(s) found.\n", counter);
@@ -1149,34 +1157,6 @@ CCMD(currentpos)
 
 //-----------------------------------------------------------------------------
 //
-//
-//
-//-----------------------------------------------------------------------------
-CCMD(vmengine)
-{
-	if (argv.argc() == 2)
-	{
-		if (stricmp(argv[1], "default") == 0)
-		{
-			VMSelectEngine(VMEngine_Default);
-			return;
-		}
-		else if (stricmp(argv[1], "checked") == 0)
-		{
-			VMSelectEngine(VMEngine_Checked);
-			return;
-		}
-		else if (stricmp(argv[1], "unchecked") == 0)
-		{
-			VMSelectEngine(VMEngine_Unchecked);
-			return;
-		}
-	}
-	Printf("Usage: vmengine <default|checked|unchecked>\n");
-}
-
-//-----------------------------------------------------------------------------
-//
 // Print secret info (submitted by Karl Murks)
 //
 //-----------------------------------------------------------------------------
@@ -1303,4 +1283,24 @@ CCMD(angleconvtest)
 		Printf("Angle = %.5f: xs_RoundToInt = %08x, unsigned cast = %08x, signed cast = %08x\n",
 			ang, ang1, ang2, ang3);
 	}
+}
+
+extern uint32_t r_renderercaps;
+#define PRINT_CAP(X, Y) Printf("  %-18s: %s (%s)\n", #Y, !!(r_renderercaps & Y) ? "Yes" : "No ", X);
+CCMD(r_showcaps)
+{
+	Printf("Renderer capabilities:\n");
+	PRINT_CAP("Flat Sprites", RFF_FLATSPRITES)
+	PRINT_CAP("3D Models", RFF_MODELS)
+	PRINT_CAP("Sloped 3D floors", RFF_SLOPE3DFLOORS)
+	PRINT_CAP("Full Freelook", RFF_TILTPITCH)	
+	PRINT_CAP("Roll Sprites", RFF_ROLLSPRITES)
+	PRINT_CAP("Unclipped Sprites", RFF_UNCLIPPEDTEX)
+	PRINT_CAP("Material Shaders", RFF_MATSHADER)
+	PRINT_CAP("Post-processing Shaders", RFF_POSTSHADER)
+	PRINT_CAP("Brightmaps", RFF_BRIGHTMAP)
+	PRINT_CAP("Custom COLORMAP lumps", RFF_COLORMAP)
+	PRINT_CAP("Uses Polygon rendering", RFF_POLYGONAL)
+	PRINT_CAP("Truecolor Enabled", RFF_TRUECOLOR)
+	PRINT_CAP("Voxels", RFF_VOXELS)
 }

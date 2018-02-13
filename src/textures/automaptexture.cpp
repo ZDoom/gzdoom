@@ -51,15 +51,15 @@ class FAutomapTexture : public FTexture
 public:
 	~FAutomapTexture ();
 
-	const BYTE *GetColumn (unsigned int column, const Span **spans_out);
-	const BYTE *GetPixels ();
+	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels ();
 	void Unload ();
 	void MakeTexture ();
 
 	FAutomapTexture (int lumpnum);
 
 private:
-	BYTE *Pixels;
+	uint8_t *Pixels;
 	Span DummySpan[2];
 };
 
@@ -89,7 +89,7 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 : FTexture(NULL, lumpnum), Pixels(NULL)
 {
 	Width = 320;
-	Height = WORD(Wads.LumpLength(lumpnum) / 320);
+	Height = uint16_t(Wads.LumpLength(lumpnum) / 320);
 	CalcBitSize ();
 
 	DummySpan[0].TopOffset = 0;
@@ -122,6 +122,7 @@ void FAutomapTexture::Unload ()
 		delete[] Pixels;
 		Pixels = NULL;
 	}
+	FTexture::Unload();
 }
 
 //==========================================================================
@@ -134,9 +135,9 @@ void FAutomapTexture::MakeTexture ()
 {
 	int x, y;
 	FMemLump data = Wads.ReadLump (SourceLump);
-	const BYTE *indata = (const BYTE *)data.GetMem();
+	const uint8_t *indata = (const uint8_t *)data.GetMem();
 
-	Pixels = new BYTE[Width * Height];
+	Pixels = new uint8_t[Width * Height];
 
 	for (x = 0; x < Width; ++x)
 	{
@@ -153,7 +154,7 @@ void FAutomapTexture::MakeTexture ()
 //
 //==========================================================================
 
-const BYTE *FAutomapTexture::GetPixels ()
+const uint8_t *FAutomapTexture::GetPixels ()
 {
 	if (Pixels == NULL)
 	{
@@ -168,7 +169,7 @@ const BYTE *FAutomapTexture::GetPixels ()
 //
 //==========================================================================
 
-const BYTE *FAutomapTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FAutomapTexture::GetColumn (unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{

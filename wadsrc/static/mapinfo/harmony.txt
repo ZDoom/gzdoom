@@ -1,0 +1,8 @@
+include "mapinfo/doom2.txt"
+
+gameinfo
+{
+	cursorpic = "cursor"
+	statusbarclass = "HarmonyStatusBar"
+}
+

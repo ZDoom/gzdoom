@@ -48,6 +48,7 @@ struct GLHorizonInfo
 	GLSectorPlane plane;
 	int lightlevel;
 	FColormap colormap;
+	PalEntry specialcolor;
 };
 
 struct GLSkyInfo
@@ -77,6 +78,7 @@ extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
 extern UniqueList<FGLLinePortal> UniqueLineToLines;
 struct GLEEHorizonPortal;
+class GLSceneDrawer;
 
 class GLPortal
 {
@@ -90,6 +92,7 @@ protected:
 	static int renderdepth;
 
 public:
+	static GLSceneDrawer *drawer;
 	static int PlaneMirrorMode;
 	static int inupperstack;
 	static int	instack[2];
@@ -101,14 +104,14 @@ private:
 	DVector3 savedviewpath[2];
 	DVector3 savedViewPos;
 	DVector3 savedViewActorPos;
-	DAngle savedAngle;
+	DRotator savedAngles;
 	bool savedshowviewer;
 	AActor * savedviewactor;
 	area_t savedviewarea;
 	ActorRenderFlags savedvisibility;
 	GLPortal *PrevPortal;
 	GLPortal *PrevClipPortal;
-	TArray<BYTE> savedmapsection;
+	TArray<uint8_t> savedmapsection;
 	TArray<unsigned int> mPrimIndices;
 
 protected:
@@ -164,6 +167,8 @@ public:
 		return recursion;
 	}
 
+	static bool isMirrored() { return !!((MirrorFlag ^ PlaneMirrorFlag) & 1); }
+
 	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
 	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
 	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
@@ -175,6 +180,9 @@ public:
 	static bool RenderFirstSkyPortal(int recursion);
 	static void EndFrame();
 	static GLPortal * FindPortal(const void * src);
+
+	static void Initialize();
+	static void Shutdown();
 };
 
 struct GLLinePortal : public GLPortal

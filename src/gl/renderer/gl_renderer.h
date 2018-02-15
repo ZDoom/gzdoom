@@ -133,10 +133,10 @@ public:
 
 	FShadowMap mShadowMap;
 
-	FTexture *gllight;
-	FTexture *glpart2;
-	FTexture *glpart;
-	FTexture *mirrortexture;
+	FTextureID glLight;
+	FTextureID glPart2;
+	FTextureID glPart;
+	FTextureID mirrorTexture;
 	
 	float mSky1Pos, mSky2Pos;
 

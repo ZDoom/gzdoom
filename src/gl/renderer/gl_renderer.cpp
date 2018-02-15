@@ -162,6 +162,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
 	m2DDrawer = new F2DDrawer;
 
+	GetSpecialTextures();
+
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
 	if (!gl.legacyMode)
 	{
@@ -170,11 +172,6 @@ void FGLRenderer::Initialize(int width, int height)
 		FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
 	}
 	else mVAOID = 0;
-
-	if (gl.legacyMode) glLight = TexMan.CheckForTexture("glstuff/gllight.png", FTexture::TEX_MiscPatch);
-	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", FTexture::TEX_MiscPatch);
-	glPart = TexMan.CheckForTexture("glstuff/glpart.png", FTexture::TEX_MiscPatch);
-	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", FTexture::TEX_MiscPatch);
 
 	mVBO = new FFlatVertexBuffer(width, height);
 	mSkyVBO = new FSkyVertexBuffer;
@@ -234,6 +231,16 @@ FGLRenderer::~FGLRenderer()
 	delete mCustomPostProcessShaders;
 	delete mFXAAShader;
 	delete mFXAALumaShader;
+}
+
+
+void FGLRenderer::GetSpecialTextures()
+{
+	if (gl.legacyMode) glLight = TexMan.CheckForTexture("glstuff/gllight.png", FTexture::TEX_MiscPatch);
+	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", FTexture::TEX_MiscPatch);
+	glPart = TexMan.CheckForTexture("glstuff/glpart.png", FTexture::TEX_MiscPatch);
+	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", FTexture::TEX_MiscPatch);
+
 }
 
 //==========================================================================

@@ -1127,6 +1127,33 @@ void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 #endif
 }
 
+DEFINE_ACTION_FUNCTION(_Screen, FillSimpleTriangle)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texture);
+	PARAM_FLOAT(p0x);
+	PARAM_FLOAT(p0y);
+	PARAM_FLOAT(p1x);
+	PARAM_FLOAT(p1y);
+	PARAM_FLOAT(p2x);
+	PARAM_FLOAT(p2y);
+	PARAM_FLOAT(originx);
+	PARAM_FLOAT(originy);
+	PARAM_FLOAT(scalex);
+	PARAM_FLOAT(scaley);
+	PARAM_ANGLE(rotation);
+	FColormap colormap;
+	PARAM_COLOR(flatcolor);
+	PARAM_INT(lightlevel);	
+	PARAM_INT(bottomclip);
+
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+	FTexture *tex = TexMan[FSetTextureID(texture)];
+	colormap.Clear();
+	FVector2 points[3] = { FVector2(p0x, p0y), FVector2(p1x, p1y), FVector2(p2x, p2y) };
+	screen->FillSimplePoly(tex, points, 3, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel, bottomclip);
+	return 0;
+}
 
 /********************************/
 /*								*/

@@ -668,6 +668,7 @@ file( GLOB HEADER_FILES
 	scripting/zscript/*.h
 	scripting/vm/*.h
 	sound/timidity/*.h
+	sound/timiditypp/*.h
 	sound/wildmidi/*.h
 	xlat/*.h
 	swrenderer/*.h
@@ -802,8 +803,8 @@ set( FASTMATH_SOURCES
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
 	sound/mididevices/music_timiditypp_mididevice.cpp
-	sound/timidity++/fft4g.cpp
-	sound/timidity++/reverb.cpp
+	sound/timiditypp/fft4g.cpp
+	sound/timiditypp/reverb.cpp
 	gl/utility/gl_clock.cpp
 	gl/renderer/gl_2ddrawer.cpp
 	gl/hqnx/init.cpp
@@ -835,8 +836,8 @@ set( FASTMATH_SOURCES
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 # These will be removed later.
-	sound/timidity++/timidity.cpp
-	sound/timidity++/w32_a.cpp
+	sound/timiditypp/timidity.cpp
+	sound/timiditypp/w32_a.cpp
 	
 )
 
@@ -1172,28 +1173,28 @@ set (PCH_SOURCES
 	sound/timidity/playmidi.cpp
 	sound/timidity/resample.cpp
 	sound/timidity/timidity.cpp
-	sound/timidity++/aq.cpp
-	sound/timidity++/common.cpp
-	sound/timidity++/configfile.cpp
-	sound/timidity++/effect.cpp
-	sound/timidity++/filter.cpp
-	sound/timidity++/freq.cpp
-	sound/timidity++/instrum.cpp
-	sound/timidity++/mblock.cpp
-	sound/timidity++/mix.cpp
-	sound/timidity++/output.cpp
-	sound/timidity++/playmidi.cpp
-	sound/timidity++/quantity.cpp
-	sound/timidity++/readmidi.cpp
-	sound/timidity++/readmidic.cpp
-	sound/timidity++/recache.cpp
-	sound/timidity++/resample.cpp
-	sound/timidity++/sbkconv.cpp
-	sound/timidity++/sffile.cpp
-	sound/timidity++/sfitem.cpp
-	sound/timidity++/smplfile.cpp
-	sound/timidity++/sndfont.cpp
-	sound/timidity++/tables.cpp
+	sound/timiditypp/aq.cpp
+	sound/timiditypp/common.cpp
+	sound/timiditypp/configfile.cpp
+	sound/timiditypp/effect.cpp
+	sound/timiditypp/filter.cpp
+	sound/timiditypp/freq.cpp
+	sound/timiditypp/instrum.cpp
+	sound/timiditypp/mblock.cpp
+	sound/timiditypp/mix.cpp
+	sound/timiditypp/output.cpp
+	sound/timiditypp/playmidi.cpp
+	sound/timiditypp/quantity.cpp
+	sound/timiditypp/readmidi.cpp
+	sound/timiditypp/readmidic.cpp
+	sound/timiditypp/recache.cpp
+	sound/timiditypp/resample.cpp
+	sound/timiditypp/sbkconv.cpp
+	sound/timiditypp/sffile.cpp
+	sound/timiditypp/sfitem.cpp
+	sound/timiditypp/smplfile.cpp
+	sound/timiditypp/sndfont.cpp
+	sound/timiditypp/tables.cpp
 	sound/wildmidi/file_io.cpp
 	sound/wildmidi/gus_pat.cpp
 	sound/wildmidi/reverb.cpp
@@ -1357,6 +1358,7 @@ source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/soun
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cpp sound/oplsynth/dosbox/opl.h)
 source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timidity/.+")
+source_group("Audio Files\\Timiditypp" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timiditypp/.+")
 source_group("Audio Files\\WildMidi" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/wildmidi/.+")
 source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/mididevices/.+")
 source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")

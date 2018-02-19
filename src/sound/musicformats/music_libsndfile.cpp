@@ -97,79 +97,170 @@ CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 //==========================================================================
 //
-// try to find the LOOP_START/LOOP_END tags
+// Try to find the LOOP_START/LOOP_END tags in a Vorbis Comment block
 //
-// This is a brute force implementation, thanks in no snall part
-// that no decent documentation of Ogg headers seems to exist and
-// all available tag libraries are horrendously bloated.
-// So if we want to do this without any new third party dependencies,
-// thanks to the lack of anything that would help to do this properly,
-// this was the only solution.
+// We have to parse through the FLAC or Ogg headers manually, since sndfile
+// doesn't provide proper access to the comments and we'd rather not require
+// using libFLAC and libvorbisfile directly.
 //
 //==========================================================================
 
-void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
+static void ParseVorbisComments(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
 {
-	unsigned char testbuf[256];
+	uint8_t vc_data[4];
 
-	fr->Seek(0, SEEK_SET);
-	long got = fr->Read(testbuf, 256);
-	auto eqp = testbuf - 1;
-	int count;
-	while(true)
-	{
-		unsigned char *c = (unsigned char *)memchr(eqp + 1, '=', 256 - (eqp + 1 - testbuf));
-		if (c == nullptr) return;	// If there is no '=' in the first 256 bytes there's also no metadata.
+	// The VC block starts with a 32LE integer for the vendor string length,
+	// followed by the vendor string
+	if(fr->Read(vc_data, 4) != 4)
+		return;
+	uint32_t vndr_len = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
 
-		eqp = c;
-		while (*c >= 32 && *c < 127) c--;
-		if (*c != 0)
-		{
-			// doesn't look like a valid tag, so try again
-			continue;
-		}
-		c -= 3;
-		int len = c[0] + 256*c[1] + 65536*c[2];
-		if (c[3] || len > 1000000 || len < (eqp - c - 3))
-		{
-			// length looks fishy so retry with the next '='
-			continue;
-		}
-		c -= 4;
-		count = c[0] + 256 * c[1];
-		if (c[2] || c[3] || count <= 0 || count > 1000)
-		{
-			// very unlikely to have 1000 tags
-			continue;
-		}
-		c += 4;
-		fr->Seek(long(c - testbuf), SEEK_SET);
-		break;	// looks like we found something.
-	}
-	for (int i = 0; i < count; i++)
+	// Skip vendor string
+	if(fr->Seek(vndr_len, SEEK_CUR) == -1)
+		return;
+
+	// Following the vendor string is a 32LE integer for the number of
+	// comments, followed by each comment.
+	if(fr->Read(vc_data, 4) != 4)
+		return;
+	size_t count = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
+
+	for(size_t i = 0; i < count; i++)
 	{
-		int length = 0;
-		fr->Read(&length, 4);
-		length = LittleLong(length);
-		if (length == 0 || length > 1000000) return;	// looks like we lost it...
-		if (length > 25)
+		// Each comment is a 32LE integer for the comment length, followed by
+		// the comment text (not null terminated!)
+		if(fr->Read(vc_data, 4) != 4)
+			return;
+		uint32_t length = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
+
+		if(length >= 128)
 		{
-			// This tag is too long to be a valid time stamp so don't even bother.
-			fr->Seek(length, SEEK_CUR);
+			// If the comment is "big", skip it
+			if(fr->Seek(length, SEEK_CUR) == -1)
+				return;
 			continue;
 		}
-		fr->Read(testbuf, length);
-		testbuf[length] = 0;
-		if (strnicmp((char*)testbuf, "LOOP_START=", 11) == 0)
-		{
-			S_ParseTimeTag((char*)testbuf + 11, startass, start);
-		}
-		else if (strnicmp((char*)testbuf, "LOOP_END=", 9) == 0)
-		{
-			S_ParseTimeTag((char*)testbuf + 9, endass, end);
-		}
+
+		char strdat[128];
+		if(fr->Read(strdat, length) != (long)length)
+			return;
+		strdat[length] = 0;
+
+		if(strnicmp(strdat, "LOOP_START=", 11) == 0)
+			S_ParseTimeTag(strdat + 11, startass, start);
+		else if(strnicmp(strdat, "LOOP_END=", 9) == 0)
+			S_ParseTimeTag(strdat + 9, endass, end);
 	}
 }
+
+static void FindFlacComments(FileReader *fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
+{
+	// Already verified the fLaC marker, so we're 4 bytes into the file
+	bool lastblock = false;
+	uint8_t header[4];
+
+	while(!lastblock && fr->Read(header, 4) == 4)
+	{
+		// The first byte of the block header contains the type and a flag
+		// indicating the last metadata block
+		char blocktype = header[0]&0x7f;
+		lastblock = !!(header[0]&0x80);
+		// Following the type is a 24BE integer for the size of the block
+		uint32_t blocksize = (header[1]<<16) | (header[2]<<8) | header[3];
+
+		// FLAC__METADATA_TYPE_VORBIS_COMMENT is 4
+		if(blocktype == 4)
+		{
+			ParseVorbisComments(fr, loop_start, startass, loop_end, endass);
+			return;
+		}
+
+		if(fr->Seek(blocksize, SEEK_CUR) == -1)
+			break;
+	}
+}
+
+static void FindOggComments(FileReader *fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
+{
+	uint8_t ogghead[27];
+
+	// We already read and verified the OggS marker, so skip the first 4 bytes
+	// of the Ogg page header.
+	while(fr->Read(ogghead+4, 23) == 23)
+	{
+		// The 19th byte of the Ogg header is a 32LE integer for the page
+		// number, and the 27th is a uint8 for the number of segments in the
+		// page.
+		uint32_t ogg_pagenum = ogghead[18] | (ogghead[19]<<8) | (ogghead[20]<<16) |
+		                       (ogghead[21]<<24);
+		uint8_t ogg_segments = ogghead[26];
+
+		// Following the Ogg page header is a series of uint8s for the length of
+		// each segment in the page. The page segment data follows contiguously
+		// after.
+		uint8_t segsizes[256];
+		if(fr->Read(segsizes, ogg_segments) != ogg_segments)
+			break;
+
+		// Find the segment with the Vorbis Comment packet (type 3)
+		for(int i = 0; i < ogg_segments; ++i)
+		{
+			uint8_t segsize = segsizes[i];
+
+			if(segsize > 16)
+			{
+				uint8_t vorbhead[7];
+				if(fr->Read(vorbhead, 7) != 7)
+					return;
+
+				if(vorbhead[0] == 3 && memcmp(vorbhead+1, "vorbis", 6) == 0)
+				{
+					// If the packet is 'laced', it spans multiple segments (a
+					// segment size of 255 indicates the next segment continues
+					// the packet, ending with a size less than 255). Vorbis
+					// packets always start and end on segment boundaries. A
+					// packet that's an exact multiple of 255 ends with a
+					// segment of 0 size.
+					while(segsize == 255 && ++i < ogg_segments)
+						segsize = segsizes[i];
+
+					// TODO: A Vorbis packet can theoretically span multiple
+					// Ogg pages (e.g. start in the last segment of one page
+					// and end in the first segment of a following page). That
+					// will require extra logic to decode as the VC block will
+					// be broken up with non-Vorbis data in-between. For now,
+					// just handle the common case where it's all in one page.
+					if(i < ogg_segments)
+						ParseVorbisComments(fr, loop_start, startass, loop_end, endass);
+					return;
+				}
+
+				segsize -= 7;
+			}
+			if(fr->Seek(segsize, SEEK_CUR) == -1)
+				return;
+		}
+
+		// Don't keep looking after the third page
+		if(ogg_pagenum >= 2)
+			break;
+
+		if(fr->Read(ogghead, 4) != 4 || memcmp(ogghead, "OggS", 4) != 0)
+			break;
+	}
+}
+
+void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
+{
+	uint8_t signature[4];
+
+	fr->Read(signature, 4);
+	if(memcmp(signature, "fLaC", 4) == 0)
+		FindFlacComments(fr, start, startass, end, endass);
+	else if(memcmp(signature, "OggS", 4) == 0)
+		FindOggComments(fr, start, startass, end, endass);
+}
+
 
 //==========================================================================
 //
@@ -179,18 +270,12 @@ void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end
 
 MusInfo *SndFile_OpenSong(FileReader &fr)
 {
-	uint8_t signature[4];
-	
 	fr.Seek(0, SEEK_SET);
-	fr.Read(signature, 4);
+
 	uint32_t loop_start = 0, loop_end = ~0u;
 	bool startass = false, endass = false;
-	
-	if (!memcmp(signature, "OggS", 4) || !memcmp(signature, "fLaC", 4))
-	{
-		// Todo: Read loop points from metadata
-		FindLoopTags(&fr, &loop_start, &startass, &loop_end, &endass);
-	}
+	FindLoopTags(&fr, &loop_start, &startass, &loop_end, &endass);
+
 	fr.Seek(0, SEEK_SET);
 	auto decoder = SoundRenderer::CreateDecoder(&fr);
 	if (decoder == nullptr) return nullptr;

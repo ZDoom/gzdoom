@@ -169,10 +169,6 @@ static void I_DetectOS()
 		"32-bit Intel";
 #elif defined __x86_64__
 		"64-bit Intel";
-#elif defined __ppc__
-		"32-bit PowerPC";
-#elif defined __ppc64__
-		"64-bit PowerPC";
 #else
 		"Unknown";
 #endif

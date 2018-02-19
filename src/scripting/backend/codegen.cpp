@@ -5945,7 +5945,7 @@ FxRandomSeed::~FxRandomSeed()
 FxExpression *FxRandomSeed::Resolve(FCompileContext &ctx)
 {
 	CHECKRESOLVED();
-	RESOLVE(seed, ctx);
+	SAFE_RESOLVE(seed, ctx);
 	return this;
 };
 

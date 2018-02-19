@@ -97,7 +97,6 @@ static PROC WinGetProcAddress(const char *name)
 	#endif
 #endif
 
-int ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
 int ogl_ext_ARB_buffer_storage = ogl_LOAD_FAILED;
 int ogl_ext_ARB_shader_storage_buffer_object = ogl_LOAD_FAILED;
 int ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
@@ -108,7 +107,6 @@ int ogl_ext_EXT_texture_filter_anisotropic = ogl_LOAD_FAILED;
 int ogl_ext_EXT_texture_sRGB = ogl_LOAD_FAILED;
 int ogl_ext_KHR_debug = ogl_LOAD_FAILED;
 int ogl_ext_ARB_invalidate_subdata = ogl_LOAD_FAILED;
-int ogl_ext_EXT_abgr = ogl_LOAD_FAILED;
 
 void (CODEGEN_FUNCPTR *_ptrc_glBufferStorage)(GLenum target, GLsizeiptr size, const void * data, GLbitfield flags) = NULL;
 
@@ -2388,8 +2386,7 @@ typedef struct ogl_StrToExtMap_s
 	PFN_LOADFUNCPOINTERS LoadExtension;
 } ogl_StrToExtMap;
 
-static ogl_StrToExtMap ExtensionMap[12] = {
-	{"GL_APPLE_client_storage", &ogl_ext_APPLE_client_storage, NULL},
+static ogl_StrToExtMap ExtensionMap[10] = {
 	{"GL_ARB_buffer_storage", &ogl_ext_ARB_buffer_storage, Load_ARB_buffer_storage},
 	{"GL_ARB_shader_storage_buffer_object", &ogl_ext_ARB_shader_storage_buffer_object, Load_ARB_shader_storage_buffer_object},
 	{"GL_ARB_texture_compression", &ogl_ext_ARB_texture_compression, Load_ARB_texture_compression},
@@ -2400,10 +2397,9 @@ static ogl_StrToExtMap ExtensionMap[12] = {
 	{"GL_EXT_texture_sRGB", &ogl_ext_EXT_texture_sRGB, NULL},
 	{"GL_KHR_debug", &ogl_ext_KHR_debug, Load_KHR_debug},
 	{"GL_ARB_invalidate_subdata", &ogl_ext_ARB_invalidate_subdata, Load_ARB_invalidate_subdata},
-	{"GL_EXT_abgr", &ogl_ext_EXT_abgr, NULL},
 };
 
-static int g_extensionMapSize = 12;
+static int g_extensionMapSize = 10;
 
 static ogl_StrToExtMap *FindExtEntry(const char *extensionName)
 {
@@ -2420,7 +2416,6 @@ static ogl_StrToExtMap *FindExtEntry(const char *extensionName)
 
 static void ClearExtensionVars(void)
 {
-	ogl_ext_APPLE_client_storage = ogl_LOAD_FAILED;
 	ogl_ext_ARB_buffer_storage = ogl_LOAD_FAILED;
 	ogl_ext_ARB_shader_storage_buffer_object = ogl_LOAD_FAILED;
 	ogl_ext_ARB_texture_compression = ogl_LOAD_FAILED;
@@ -2431,7 +2426,6 @@ static void ClearExtensionVars(void)
 	ogl_ext_EXT_texture_sRGB = ogl_LOAD_FAILED;
 	ogl_ext_KHR_debug = ogl_LOAD_FAILED;
 	ogl_ext_ARB_invalidate_subdata = ogl_LOAD_FAILED;
-	ogl_ext_EXT_abgr = ogl_LOAD_FAILED;
 }
 
 

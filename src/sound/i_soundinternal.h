@@ -112,6 +112,9 @@ struct FISoundChannel
 };
 
 
+void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
+
+
 enum SampleType
 {
     SampleType_UInt8,

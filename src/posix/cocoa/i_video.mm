@@ -112,13 +112,7 @@ EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
 
-#if defined __ppc__ || defined __ppc64__
-static const bool TRUECOLOR_DEFAULT = false;
-#else // other than PowerPC
-static const bool TRUECOLOR_DEFAULT = true;
-#endif // PowerPC
-
-CUSTOM_CVAR(Bool, swtruecolor, TRUECOLOR_DEFAULT, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, swtruecolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	// Strictly speaking this doesn't require a mode switch, but it is the easiest
 	// way to force a CreateFramebuffer call without a lot of refactoring.
@@ -892,7 +886,6 @@ CocoaFrameBuffer::CocoaFrameBuffer(int width, int height, bool bgra, bool fullsc
 
 	glGenTextures(1, &m_texture);
 	glBindTexture(GL_TEXTURE_RECTANGLE_ARB, m_texture);
-	glPixelStorei(GL_UNPACK_CLIENT_STORAGE_APPLE, GL_TRUE);
 
 	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_RECTANGLE_ARB, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1103,16 +1096,8 @@ void CocoaFrameBuffer::Flip()
 		rbOpts.dirty = false;
 	}
 
-#ifdef __LITTLE_ENDIAN__
-	static const GLenum format = GL_RGBA;
-#else // __BIG_ENDIAN__
-	static const GLenum format = GL_ABGR_EXT;
-#endif // __LITTLE_ENDIAN__
-
-	if (IsBgra())
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, GL_BGRA, GL_UNSIGNED_BYTE, m_pixelBuffer);
-	else
-		glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
+	const GLenum format = IsBgra() ? GL_BGRA : GL_RGBA;
+	glTexImage2D(GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA8, Width, Height, 0, format, GL_UNSIGNED_BYTE, m_pixelBuffer);
 
 	glBegin(GL_QUADS);
 	glColor4f(1.0f, 1.0f, 1.0f, 1.0f);

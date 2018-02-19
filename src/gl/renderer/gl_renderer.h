@@ -133,10 +133,10 @@ public:
 
 	FShadowMap mShadowMap;
 
-	FTexture *gllight;
-	FTexture *glpart2;
-	FTexture *glpart;
-	FTexture *mirrortexture;
+	FTextureID glLight;
+	FTextureID glPart2;
+	FTextureID glPart;
+	FTextureID mirrorTexture;
 	
 	float mSky1Pos, mSky2Pos;
 
@@ -190,6 +190,7 @@ public:
 	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();
+	void GetSpecialTextures();
 
 
 	bool StartOffscreen();

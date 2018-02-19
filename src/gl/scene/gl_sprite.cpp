@@ -1185,19 +1185,20 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	// [BB] Load the texture for round or smooth particles
 	if (gl_particles_style)
 	{
-		FTexture *lump = NULL;
+		FTextureID lump;
 		if (gl_particles_style == 1)
 		{
-			lump = GLRenderer->glpart2;
+			lump = GLRenderer->glPart2;
 		}
 		else if (gl_particles_style == 2)
 		{
-			lump = GLRenderer->glpart;
+			lump = GLRenderer->glPart;
 		}
+		else lump.SetNull();
 
-		if (lump != NULL)
+		if (lump.isValid())
 		{
-			gltexture = FMaterial::ValidateTexture(lump, true);
+			gltexture = FMaterial::ValidateTexture(lump, true, false);
 			translation = 0;
 
 			ul = gltexture->GetUL();

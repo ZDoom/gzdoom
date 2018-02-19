@@ -104,7 +104,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mSkyVBO = nullptr;
 	gl_spriteindex = 0;
 	mShaderManager = nullptr;
-	gllight = glpart2 = glpart = mirrortexture = nullptr;
 	mLights = nullptr;
 	m2DDrawer = nullptr;
 	mTonemapPalette = nullptr;
@@ -163,6 +162,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
 	m2DDrawer = new F2DDrawer;
 
+	GetSpecialTextures();
+
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
 	if (!gl.legacyMode)
 	{
@@ -171,11 +172,6 @@ void FGLRenderer::Initialize(int width, int height)
 		FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
 	}
 	else mVAOID = 0;
-
-	if (gl.legacyMode) gllight = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/gllight.png"), FTexture::TEX_MiscPatch);
-	glpart2 = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart2.png"), FTexture::TEX_MiscPatch);
-	glpart = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/glpart.png"), FTexture::TEX_MiscPatch);
-	mirrortexture = FTexture::CreateTexture(Wads.GetNumForFullName("glstuff/mirror.png"), FTexture::TEX_MiscPatch);
 
 	mVBO = new FFlatVertexBuffer(width, height);
 	mSkyVBO = new FSkyVertexBuffer;
@@ -206,10 +202,6 @@ FGLRenderer::~FGLRenderer()
 	if (mVBO != NULL) delete mVBO;
 	if (mSkyVBO != NULL) delete mSkyVBO;
 	if (mLights != NULL) delete mLights;
-	if (glpart2) delete glpart2;
-	if (glpart) delete glpart;
-	if (gllight) delete gllight;
-	if (mirrortexture) delete mirrortexture;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 	if (mVAOID != 0)
 	{
@@ -239,6 +231,16 @@ FGLRenderer::~FGLRenderer()
 	delete mCustomPostProcessShaders;
 	delete mFXAAShader;
 	delete mFXAALumaShader;
+}
+
+
+void FGLRenderer::GetSpecialTextures()
+{
+	if (gl.legacyMode) glLight = TexMan.CheckForTexture("glstuff/gllight.png", FTexture::TEX_MiscPatch);
+	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", FTexture::TEX_MiscPatch);
+	glPart = TexMan.CheckForTexture("glstuff/glpart.png", FTexture::TEX_MiscPatch);
+	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", FTexture::TEX_MiscPatch);
+
 }
 
 //==========================================================================

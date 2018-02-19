@@ -107,7 +107,6 @@ typedef unsigned int GLhandleARB;
 extern "C" {
 #endif /*__cplusplus*/
 
-extern int ogl_ext_APPLE_client_storage;
 extern int ogl_ext_ARB_buffer_storage;
 extern int ogl_ext_ARB_shader_storage_buffer_object;
 extern int ogl_ext_ARB_texture_compression;
@@ -118,9 +117,6 @@ extern int ogl_ext_EXT_texture_filter_anisotropic;
 extern int ogl_ext_EXT_texture_sRGB;
 extern int ogl_ext_KHR_debug;
 extern int ogl_ext_ARB_invalidate_subdata;
-extern int ogl_ext_EXT_abgr;
-
-#define GL_UNPACK_CLIENT_STORAGE_APPLE 0x85B2
 
 #define GL_BUFFER_IMMUTABLE_STORAGE 0x821F
 #define GL_BUFFER_STORAGE_FLAGS 0x8220
@@ -285,8 +281,6 @@ extern int ogl_ext_EXT_abgr;
 #define GL_STACK_OVERFLOW 0x0503
 #define GL_STACK_UNDERFLOW 0x0504
 #define GL_VERTEX_ARRAY 0x8074
-
-#define GL_ABGR_EXT 0x8000
 
 #define GL_2D 0x0600
 #define GL_2_BYTES 0x1407

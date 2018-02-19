@@ -134,7 +134,7 @@ static FString RemoveLegacyUserUniforms(FString code)
 	return code;
 }
 
-bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * defines)
+bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {
 	static char buffer[10000];
 	FString error;
@@ -346,6 +346,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		}
 	}
 
+	if (light_fragprog)
+	{
+		int pp_lump = Wads.CheckNumForFullName(light_fragprog);
+		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog);
+		FMemLump pp_data = Wads.ReadLump(pp_lump);
+		fp_comb << pp_data.GetString().GetChars() << "\n";
+	}
+
 	if (gl.flags & RFL_NO_CLIP_PLANES)
 	{
 		// On ATI's GL3 drivers we have to disable gl_ClipDistance because it's hopelessly broken.
@@ -514,7 +522,7 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, const char *shaderdefines, bool usediscard, EPassType passType)
+FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType)
 {
 	FString defines;
 	defines += shaderdefines;
@@ -527,7 +535,7 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 	try
 	{
 		shader = new FShader(ShaderName);
-		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, defines.GetChars()))
+		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, LightModePath, defines.GetChars()))
 		{
 			I_FatalError("Unable to load shader %s\n", ShaderName);
 		}
@@ -564,30 +572,31 @@ struct FDefaultShader
 {
 	const char * ShaderName;
 	const char * gettexelfunc;
+	const char * lightfunc;
 	const char * Defines;
 };
 
 // Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
 static const FDefaultShader defaultshaders[]=
 {	
-	{"Default",	"shaders/glsl/func_normal.fp", ""},
-	{"Warp 1",	"shaders/glsl/func_warp1.fp", ""},
-	{"Warp 2",	"shaders/glsl/func_warp2.fp", ""},
-	{"Brightmap","shaders/glsl/func_brightmap.fp", ""},
-	{"Specular","shaders/glsl/func_normal.fp", "#define SPECULAR\n"},
-	{"SpecularBrightmap","shaders/glsl/func_brightmap.fp", "#define SPECULAR\n"},
-	{"PBR","shaders/glsl/func_normal.fp", "#define PBR\n"},
-	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "#define PBR\n"},
-	{"No Texture", "shaders/glsl/func_notexture.fp", ""},
-	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", ""},
-	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", ""},
-	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp", ""},
-	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp", ""},
-	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp", ""},
-	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", ""},
-	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", ""},
-	{"Software Fuzz", "shaders/glsl/fuzz_software.fp", ""},
-	{NULL,NULL,NULL}
+	{"Default",	"shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Warp 1",	"shaders/glsl/func_warp1.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Warp 2",	"shaders/glsl/func_warp2.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Brightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Specular", "shaders/glsl/func_normal.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
+	{"SpecularBrightmap", "shaders/glsl/func_brightmap.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
+	{"PBR","shaders/glsl/func_normal.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"No Texture", "shaders/glsl/func_notexture.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Software Fuzz", "shaders/glsl/fuzz_software.fp", "shaders/glsl/material_normal.fp", ""},
+	{nullptr,nullptr,nullptr,nullptr}
 };
 
 static TArray<FString> usershaders;
@@ -598,15 +607,16 @@ struct FEffectShader
 	const char *vp;
 	const char *fp1;
 	const char *fp2;
+	const char *fp3;
 	const char *defines;
 };
 
 static const FEffectShader effectshaders[]=
 {
-	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "#define NO_ALPHATEST\n" },
-	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
-	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
-	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", nullptr, nullptr, "#define NO_ALPHATEST\n" },
+	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
+	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 };
 
 FShaderManager::FShaderManager()
@@ -726,11 +736,11 @@ void FShaderCollection::CompileShaders(EPassType passType)
 
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].Defines, true, passType);
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, passType);
 		mMaterialShaders.Push(shc);
 		if (i < SHADER_NoTexture)
 		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].Defines, false, passType);
+			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, passType);
 			mMaterialShadersNAT.Push(shc);
 		}
 	}
@@ -740,7 +750,7 @@ void FShaderCollection::CompileShaders(EPassType passType)
 		FString name = ExtractFileBase(usershaders[i]);
 		FName sfn = name;
 
-		FShader *shc = Compile(sfn, usershaders[i], "", true, passType);
+		FShader *shc = Compile(sfn, usershaders[i], "shaders/glsl/material_normal.fp", "", true, passType);
 		mMaterialShaders.Push(shc);
 	}
 
@@ -748,7 +758,7 @@ void FShaderCollection::CompileShaders(EPassType passType)
 	{
 		FShader *eff = new FShader(effectshaders[i].ShaderName);
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
-						effectshaders[i].fp2, effectshaders[i].defines))
+						effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines))
 		{
 			delete eff;
 		}

@@ -802,6 +802,8 @@ set( FASTMATH_SOURCES
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
 	sound/mididevices/music_timiditypp_mididevice.cpp
+	sound/timidity++/fft4g.cpp
+	sound/timidity++/reverb.cpp
 	gl/utility/gl_clock.cpp
 	gl/renderer/gl_2ddrawer.cpp
 	gl/hqnx/init.cpp
@@ -832,6 +834,10 @@ set( FASTMATH_SOURCES
 	gl/models/gl_models.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
+# These will be removed later.
+	sound/timidity++/timidity.cpp
+	sound/timidity++/w32_a.cpp
+	
 )
 
 set (PCH_SOURCES
@@ -1166,6 +1172,28 @@ set (PCH_SOURCES
 	sound/timidity/playmidi.cpp
 	sound/timidity/resample.cpp
 	sound/timidity/timidity.cpp
+	sound/timidity++/aq.cpp
+	sound/timidity++/common.cpp
+	sound/timidity++/configfile.cpp
+	sound/timidity++/effect.cpp
+	sound/timidity++/filter.cpp
+	sound/timidity++/freq.cpp
+	sound/timidity++/instrum.cpp
+	sound/timidity++/mblock.cpp
+	sound/timidity++/mix.cpp
+	sound/timidity++/output.cpp
+	sound/timidity++/playmidi.cpp
+	sound/timidity++/quantity.cpp
+	sound/timidity++/readmidi.cpp
+	sound/timidity++/readmidic.cpp
+	sound/timidity++/recache.cpp
+	sound/timidity++/resample.cpp
+	sound/timidity++/sbkconv.cpp
+	sound/timidity++/sffile.cpp
+	sound/timidity++/sfitem.cpp
+	sound/timidity++/smplfile.cpp
+	sound/timidity++/sndfont.cpp
+	sound/timidity++/tables.cpp
 	sound/wildmidi/file_io.cpp
 	sound/wildmidi/gus_pat.cpp
 	sound/wildmidi/reverb.cpp

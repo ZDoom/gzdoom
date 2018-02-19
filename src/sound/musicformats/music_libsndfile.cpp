@@ -113,7 +113,7 @@ static void ParseVorbisComments(FileReader *fr, uint32_t *start, bool *startass,
 	// followed by the vendor string
 	if(fr->Read(vc_data, 4) != 4)
 		return;
-	size_t vndr_len = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
+	uint32_t vndr_len = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
 
 	// Skip vendor string
 	if(fr->Seek(vndr_len, SEEK_CUR) == -1)
@@ -131,7 +131,7 @@ static void ParseVorbisComments(FileReader *fr, uint32_t *start, bool *startass,
 		// the comment text (not null terminated!)
 		if(fr->Read(vc_data, 4) != 4)
 			return;
-		size_t length = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
+		uint32_t length = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
 
 		if(length >= 128)
 		{
@@ -164,9 +164,9 @@ static void FindFlacComments(FileReader *fr, uint32_t *loop_start, bool *startas
 		// The first byte of the block header contains the type and a flag
 		// indicating the last metadata block
 		char blocktype = header[0]&0x7f;
-		lastblock = header[0]&0x80;
+		lastblock = !!(header[0]&0x80);
 		// Following the type is a 24BE integer for the size of the block
-		size_t blocksize = (header[1]<<16) | (header[2]<<8) | header[3];
+		uint32_t blocksize = (header[1]<<16) | (header[2]<<8) | header[3];
 
 		// FLAC__METADATA_TYPE_VORBIS_COMMENT is 4
 		if(blocktype == 4)
@@ -205,7 +205,7 @@ static void FindOggComments(FileReader *fr, uint32_t *loop_start, bool *startass
 		// Find the segment with the Vorbis Comment packet (type 3)
 		for(int i = 0; i < ogg_segments; ++i)
 		{
-			size_t segsize = segsizes[i];
+			uint8_t segsize = segsizes[i];
 
 			if(segsize > 16)
 			{

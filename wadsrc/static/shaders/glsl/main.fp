@@ -221,39 +221,26 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 #endif
 }
 
-#endif
-
-//===========================================================================
-//
-// Standard lambertian diffuse light calculation
-//
-//===========================================================================
-
-float diffuseContribution(vec3 lightDirection, vec3 normal)
+float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
-	return max(dot(normal, lightDirection), 0.0f);
+	float shadowIndex = abs(lightcolorA) - 1.0;
+	return shadowmapAttenuation(lightpos, shadowIndex);
 }
 
-//===========================================================================
-//
-// Blinn specular light calculation
-//
-//===========================================================================
+#else
 
-float blinnSpecularContribution(float diffuseContribution, vec3 lightDirection, vec3 faceNormal, float glossiness, float specularLevel)
+float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
-	if (diffuseContribution > 0.0f)
-	{
-		vec3 viewDir = normalize(uCameraPos.xyz - pixelpos.xyz);
-		vec3 halfDir = normalize(lightDirection + viewDir);
-		float specAngle = max(dot(halfDir, faceNormal), 0.0f);
-		float phExp = glossiness * 4.0f;
-		return specularLevel * pow(specAngle, phExp);
-	}
-	else
-	{
-		return 0.0f;
-	}
+	return 1.0;
+}
+
+#endif
+
+float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle, float lightCosOuterAngle)
+{
+	vec3 lightDirection = normalize(lightpos.xyz - pixelpos.xyz);
+	float cosDir = dot(lightDirection, spotdir);
+	return smoothstep(lightCosOuterAngle, lightCosInnerAngle, cosDir);
 }
 
 //===========================================================================
@@ -262,7 +249,7 @@ float blinnSpecularContribution(float diffuseContribution, vec3 lightDirection, 
 //
 //===========================================================================
 
-#if defined(SPECULAR) || defined(PBR)
+#if defined(SPECULAR) || defined(PBR) // To do: create define for when normal map is present
 mat3 cotangent_frame(vec3 n, vec3 p, vec2 uv)
 {
 	// get edge vectors of the pixel triangle
@@ -313,46 +300,118 @@ vec3 ApplyNormalMap()
 #endif
 
 //===========================================================================
+// Dynamic light material modes begin
 //
-// Calculates the brightness of a dynamic point light
-//
+// To do: move each of the following #if blocks needs to its own file
 //===========================================================================
 
-vec2 pointLightAttenuation(vec4 lightpos, float lightcolorA)
+#if !defined(NUM_UBO_LIGHTS) && !defined(SHADER_STORAGE_LIGHTS) // Legacy light mode (no lights[] array)
+
+vec3 ApplyDynLights(vec3 material, vec3 color)
 {
-	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-	if (attenuation == 0.0) return vec2(0.0);
-#ifdef SUPPORTS_SHADOWMAPS
-	float shadowIndex = abs(lightcolorA) - 1.0;
-	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
-#endif
-	if (lightcolorA >= 0.0) // Sign bit is the attenuated light flag
+	return material * clamp(color + desaturate(uDynLightColor).rgb, 0.0, 1.4);
+}
+
+#elif defined(SPECULAR) // Specular light mode
+
+vec2 lightAttenuation(int i, vec3 normal, vec3 viewdir, float lightcolorA)
+{
+	vec4 lightpos = lights[i];
+	vec4 lightspot1 = lights[i+2];
+	vec4 lightspot2 = lights[i+3];
+
+	float lightdistance = distance(lightpos.xyz, pixelpos.xyz);
+	if (lightpos.w < lightdistance)
+		return vec2(0.0); // Early out lights touching surface but not this fragment
+	
+	float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
+
+	if (lightspot1.w == 1.0)
+		attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
+
+	vec3 lightdir = normalize(lightpos.xyz - pixelpos.xyz);
+
+	if (lightcolorA < 0.0) // Sign bit is the attenuated light flag
+		attenuation *= clamp(dot(normal, lightdir), 0.0, 1.0);
+
+	if (attenuation > 0.0) // Skip shadow map test if possible
+		attenuation *= shadowAttenuation(lightpos, lightcolorA);
+
+	if (attenuation <= 0.0)
+		return vec2(0.0);
+
+	float glossiness = uSpecularMaterial.x;
+	float specularLevel = uSpecularMaterial.y;
+
+	vec3 halfdir = normalize(viewdir + lightdir);
+	float specAngle = clamp(dot(halfdir, normal), 0.0f, 1.0f);
+	float phExp = glossiness * 4.0f;
+	return vec2(attenuation, attenuation * specularLevel * pow(specAngle, phExp));
+}
+
+vec3 ApplyDynLights(vec3 material, vec3 color)
+{
+	if (uLightIndex >= 0)
 	{
-		return vec2(attenuation, 0.0);
+		vec4 dynlight = uDynLightColor;
+		vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+		vec3 normal = ApplyNormalMap();
+		vec3 viewdir = normalize(uCameraPos.xyz - pixelpos.xyz);
+
+		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
+
+		if (lightRange.z > lightRange.x)
+		{
+			// modulated lights
+			for(int i=lightRange.x; i<lightRange.y; i+=4)
+			{
+				vec4 lightcolor = lights[i+1];
+				vec2 attenuation = lightAttenuation(i, normal, viewdir, lightcolor.a);
+				dynlight.rgb += lightcolor.rgb * attenuation.x;
+				specular.rgb += lightcolor.rgb * attenuation.y;
+			}
+
+			// subtractive lights
+			for(int i=lightRange.y; i<lightRange.z; i+=4)
+			{
+				vec4 lightcolor = lights[i+1];
+				vec2 attenuation = lightAttenuation(i, normal, viewdir, lightcolor.a);
+				dynlight.rgb -= lightcolor.rgb * attenuation.x;
+				specular.rgb -= lightcolor.rgb * attenuation.y;
+			}
+		}
+
+		dynlight.rgb = clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+		specular.rgb = clamp(desaturate(specular).rgb, 0.0, 1.4);
+
+		vec4 materialSpec = texture(speculartexture, vTexCoord.st);
+		vec3 frag = material * dynlight.rgb + materialSpec.rgb * specular.rgb;
+
+		if (lightRange.w > lightRange.z)
+		{
+			vec4 addlight = vec4(0.0,0.0,0.0,0.0);
+				
+			// additive lights
+			for(int i=lightRange.z; i<lightRange.w; i+=4)
+			{
+				vec4 lightcolor = lights[i+1];
+				vec2 attenuation = lightAttenuation(i, normal, viewdir, lightcolor.a);
+				addlight.rgb += lightcolor.rgb * attenuation.x;
+			}
+
+			frag = clamp(frag + desaturate(addlight).rgb, 0.0, 1.0);
+		}
+
+		return frag;
 	}
 	else
 	{
-		vec3 lightDirection = normalize(lightpos.xyz - pixelpos.xyz);
-		vec3 pixelnormal = ApplyNormalMap();
-		float diffuseAmount = diffuseContribution(lightDirection, pixelnormal);
-
-#if defined(SPECULAR)
-		float specularAmount = blinnSpecularContribution(diffuseAmount, lightDirection, pixelnormal, uSpecularMaterial.x, uSpecularMaterial.y);
-		return vec2(diffuseAmount, specularAmount) * attenuation;
-#else
-		return vec2(attenuation * diffuseAmount, 0.0);
-#endif
+		return material * clamp(color + desaturate(uDynLightColor).rgb, 0.0, 1.4);
 	}
 }
 
-float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle, float lightCosOuterAngle)
-{
-	vec3 lightDirection = normalize(lightpos.xyz - pixelpos.xyz);
-	float cosDir = dot(lightDirection, spotdir);
-	return smoothstep(lightCosOuterAngle, lightCosInnerAngle, cosDir);
-}
-
-#if defined(PBR)
+#elif defined(PBR) // Physically-based-rendering light mode
 
 const float PI = 3.14159265359;
 
@@ -411,17 +470,7 @@ float quadraticDistanceAttenuation(vec4 lightpos)
 	return attenuation;
 }
 
-float shadowAttenuation(vec4 lightpos, float lightcolorA)
-{
-#ifdef SUPPORTS_SHADOWMAPS
-	float shadowIndex = abs(lightcolorA) - 1.0;
-	return shadowmapAttenuation(lightpos, shadowIndex);
-#else
-	return 1.0;
-#endif
-}
-
-vec3 applyLight(vec3 albedo, vec3 ambientLight)
+vec3 ApplyDynLights(vec3 albedo, vec3 ambientLight)
 {
 	vec3 worldpos = pixelpos.xyz;
 
@@ -439,7 +488,6 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 
 	vec3 Lo = uDynLightColor.rgb;
 
-#if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
 	if (uLightIndex >= 0)
 	{
 		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
@@ -458,7 +506,7 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 				vec3 L = normalize(lightpos.xyz - worldpos);
 				vec3 H = normalize(V + L);
 
-				float attenuation = quadraticDistanceAttenuation(lightpos) * shadowAttenuation(lightpos, lightcolor.a);
+				float attenuation = quadraticDistanceAttenuation(lightpos);
 				if (lightspot1.w == 1.0)
 					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
 				if (lightcolor.a < 0.0)
@@ -498,7 +546,7 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 				vec3 L = normalize(lightpos.xyz - worldpos);
 				vec3 H = normalize(V + L);
 
-				float attenuation = quadraticDistanceAttenuation(lightpos) * shadowAttenuation(lightpos, lightcolor.a);
+				float attenuation = quadraticDistanceAttenuation(lightpos);
 				if (lightspot1.w == 1.0)
 					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
 				if (lightcolor.a < 0.0)
@@ -527,7 +575,6 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 			}
 		}
 	}
-#endif
 
 	// Pretend we sampled the sector light level from an irradiance map
 
@@ -555,7 +602,93 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 	return pow(color, vec3(1.0 / 2.2));
 }
 
+#else // Normal dynlight mode
+
+vec3 lightContribution(int i, vec3 normal)
+{
+	vec4 lightpos = lights[i];
+	vec4 lightcolor = lights[i+1];
+	vec4 lightspot1 = lights[i+2];
+	vec4 lightspot2 = lights[i+3];
+
+	float lightdistance = distance(lightpos.xyz, pixelpos.xyz);
+	if (lightpos.w < lightdistance)
+		return vec3(0.0); // Early out lights touching surface but not this fragment
+	
+	float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
+
+	if (lightspot1.w == 1.0)
+		attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
+
+	if (lightcolor.a < 0.0) // Sign bit is the attenuated light flag
+	{
+		vec3 lightdir = normalize(lightpos.xyz - pixelpos.xyz);
+		attenuation *= clamp(dot(normal, lightdir), 0.0, 1.0);
+	}
+
+	if (attenuation > 0.0) // Skip shadow map test if possible
+	{
+		attenuation *= shadowAttenuation(lightpos, lightcolor.a);
+		return lightcolor.rgb * attenuation;
+	}
+	else
+	{
+		return vec3(0.0);
+	}
+}
+
+vec3 ApplyDynLights(vec3 material, vec3 color)
+{
+	if (uLightIndex >= 0)
+	{
+		vec4 dynlight = uDynLightColor;
+		vec3 normal = ApplyNormalMap();
+
+		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
+
+		if (lightRange.z > lightRange.x)
+		{
+			// modulated lights
+			for(int i=lightRange.x; i<lightRange.y; i+=4)
+			{
+				dynlight.rgb += lightContribution(i, normal);
+			}
+
+			// subtractive lights
+			for(int i=lightRange.y; i<lightRange.z; i+=4)
+			{
+				dynlight.rgb -= lightContribution(i, normal);
+			}
+		}
+
+		vec3 frag = material * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+
+		if (lightRange.w > lightRange.z)
+		{
+			vec4 addlight = vec4(0.0,0.0,0.0,0.0);
+				
+			// additive lights
+			for(int i=lightRange.z; i<lightRange.w; i+=4)
+			{
+				addlight.rgb += lightContribution(i, normal);
+			}
+
+			frag = clamp(frag + desaturate(addlight).rgb, 0.0, 1.0);
+		}
+
+		return frag;
+	}
+	else
+	{
+		return material * clamp(color + desaturate(uDynLightColor).rgb, 0.0, 1.4);
+	}
+}
+
 #endif
+
+//===========================================================================
+// Dynamic light material modes end
+//===========================================================================
 
 //===========================================================================
 //
@@ -571,7 +704,7 @@ vec3 applyLight(vec3 albedo, vec3 ambientLight)
 //
 //===========================================================================
 
-vec4 getLightColor(vec4 material, vec4 materialSpec, float fogdist, float fogfactor)
+vec4 getLightColor(vec4 material, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
 	
@@ -612,63 +745,10 @@ vec4 getLightColor(vec4 material, vec4 materialSpec, float fogdist, float fogfac
 	//
 	color = ProcessLight(color);
 
-#if defined(PBR)
-	return vec4(applyLight(material.rgb, color.rgb), color.a * vColor.a);
-#else
 	//
-	// apply dynamic lights (except additive)
+	// apply dynamic lights
 	//
-	
-	vec4 dynlight = uDynLightColor;
-	vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
-
-#if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
-	if (uLightIndex >= 0)
-	{
-		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
-		if (lightRange.z > lightRange.x)
-		{
-			//
-			// modulated lights
-			//
-			for(int i=lightRange.x; i<lightRange.y; i+=4)
-			{
-				vec4 lightpos = lights[i];
-				vec4 lightcolor = lights[i+1];
-				vec4 lightspot1 = lights[i+2];
-				vec4 lightspot2 = lights[i+3];
-				
-				vec2 attenuation = pointLightAttenuation(lightpos, lightcolor.a);
-				if (lightspot1.w == 1.0)
-					attenuation.xy *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-				dynlight.rgb += lightcolor.rgb * attenuation.x;
-				specular.rgb += lightcolor.rgb * attenuation.y;
-			}
-			//
-			// subtractive lights
-			//
-			for(int i=lightRange.y; i<lightRange.z; i+=4)
-			{
-				vec4 lightpos = lights[i];
-				vec4 lightcolor = lights[i+1];
-				vec4 lightspot1 = lights[i+2];
-				vec4 lightspot2 = lights[i+3];
-				
-				vec2 attenuation = pointLightAttenuation(lightpos, lightcolor.a);
-				if (lightspot1.w == 1.0)
-					attenuation.xy *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-				dynlight.rgb -= lightcolor.rgb * attenuation.x;
-				specular.rgb -= lightcolor.rgb * attenuation.y;
-			}
-		}
-	}
-#endif
-	color.rgb = clamp(color.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
-	specular.rgb = clamp(specular.rgb + desaturate(specular).rgb, 0.0, 1.4);
-
-	// prevent any unintentional messing around with the alpha.
-	return vec4(material.rgb * color.rgb + materialSpec.rgb * specular.rgb, material.a * vColor.a);
-#endif
+	return vec4(ApplyDynLights(material.rgb, color.rgb), material.a * vColor.a);
 }
 
 //===========================================================================
@@ -748,42 +828,7 @@ void main()
 				fogfactor = exp2 (uFogDensity * fogdist);
 			}
 			
-#if defined(SPECULAR)
-			vec4 materialSpec = texture(speculartexture, vTexCoord.st);
-#else
-			vec4 materialSpec = vec4(0.0);
-#endif
-
-			frag = getLightColor(frag, materialSpec, fogdist, fogfactor);
-			
-#if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
-			if (uLightIndex >= 0)
-			{
-				ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
-				if (lightRange.w > lightRange.z)
-				{
-					vec4 addlight = vec4(0.0,0.0,0.0,0.0);
-				
-					//
-					// additive lights - these can be done after the alpha test.
-					//
-					for(int i=lightRange.z; i<lightRange.w; i+=4)
-					{
-						vec4 lightpos = lights[i];
-						vec4 lightcolor = lights[i+1];
-						vec4 lightspot1 = lights[i+2];
-						vec4 lightspot2 = lights[i+3];
-						
-						float attenuation = pointLightAttenuation(lightpos, lightcolor.a).x;
-						if (lightspot1.w == 1.0)
-							attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-						lightcolor.rgb *= attenuation;
-						addlight.rgb += lightcolor.rgb;
-					}
-					frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
-				}
-			}
-#endif
+			frag = getLightColor(frag, fogdist, fogfactor);
 
 			//
 			// colored fog

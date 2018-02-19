@@ -546,7 +546,7 @@ public:
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 
 
-	int read_config_file(const char *name, int self, int allow_missing_file);
+	int read_config_file(const char *name, int self, int allow_missing_file, bool ismainfile = false);
 
 	void set_default_instrument()
 	{

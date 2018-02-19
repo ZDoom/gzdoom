@@ -617,7 +617,7 @@ char *Instruments::expand_variables(char *string, MBlockList *varbuf, const char
 }
 
 
-int Instruments::read_config_file(const char *name, int self, int allow_missing_file)
+int Instruments::read_config_file(const char *name, int self, int allow_missing_file, bool ismainfile)
 {
 	struct timidity_file *tf;
 	char buf[1024], *tmp, *w[MAXWORDS + 1], *cp;
@@ -637,7 +637,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		return READ_CONFIG_RECURSION;
 	}
 
-	tf = open_file(name, 1, allow_missing_file ? OF_NORMAL : OF_VERBOSE, pathlist);
+	tf = open_file(name, ismainfile, pathlist);
 	if (tf == NULL)
 		return allow_missing_file ? READ_CONFIG_FILE_NOT_FOUND :
 		READ_CONFIG_ERROR;

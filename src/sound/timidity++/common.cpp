@@ -30,9 +30,13 @@
 #include <ctype.h>
 #include "m_random.h"
 #include "common.h"
+#include "pathexpander.h"
+#include "cmdlib.h"
 
 namespace TimidityPlus
 {
+
+static PathExpander tppPathExpander;
 
 
 /* This'll allocate memory or die. */
@@ -174,17 +178,50 @@ int PathList::pathcmp(const char *p1, const char *p2, int ignore_case)
 	return c1 - c2;
 }
 
-std::pair<FileReader *, std::string> PathList::openFile(const char *name)
+FileReader *PathList::tryOpenPath(const char *name, bool ismain)
+{
+	FileReader *fp;
+	int lumpnum;
+
+	if (ismain)
+	{
+		tppPathExpander.openmode = PathExpander::OM_FILEORLUMP;
+		tppPathExpander.clearPathlist();
+#ifdef _WIN32
+		tppPathExpander.addToPathlist("C:\\TIMIDITY");
+		tppPathExpander.addToPathlist("\\TIMIDITY");
+		tppPathExpander.addToPathlist(progdir);
+#else
+		tppPathExpander.addToPathlist("/usr/local/lib/timidity");
+		tppPathExpander.addToPathlist("/etc/timidity");
+		tppPathExpander.addToPathlist("/etc");
+#endif
+	}
+
+	if (!(fp = tppPathExpander.openFileReader(name, &lumpnum)))
+		return NULL;
+
+	if (ismain)
+	{
+		if (lumpnum > 0)
+		{
+			tppPathExpander.openmode = PathExpander::OM_LUMP;
+			tppPathExpander.clearPathlist();	// when reading from a PK3 we don't want to use any external path
+		}
+		else
+		{
+			tppPathExpander.openmode = PathExpander::OM_FILE;
+		}
+	}
+	return fp;
+}
+
+std::pair<FileReader *, std::string> PathList::openFile(const char *name, bool ismainfile)
 {
 
 	if (name && *name)
 	{
 		/* First try the given name */
-		FileReader *fr = new FileReader;
-		if (fr->Open(name))
-		{
-			return std::make_pair(fr, std::string(name));
-		}
 
 		if (!isAbsPath(name))
 		{
@@ -197,10 +234,20 @@ std::pair<FileReader *, std::string> PathList::openFile(const char *name)
 					s += '/';
 				}
 				s += name;
-				if (fr->Open(s.c_str())) return std::make_pair(fr, s);
+				auto fr = tryOpenPath(name, ismainfile);
+				if (fr!= nullptr) return std::make_pair(fr, s);
 			}
 		}
-		delete fr;
+		else
+		{
+			// an absolute path is never looked up.
+			FileReader *fr = new FileReader;
+			if (fr->Open(name))
+			{
+				return std::make_pair(fr, std::string(name));
+			}
+			delete fr;
+		}
 	}
 	return std::make_pair(nullptr, std::string());
 }
@@ -218,9 +265,10 @@ int PathList::isAbsPath(const char *name)
 	return 0;
 }
 
-struct timidity_file *open_file(const char *name, int decompress, int noise_mode, PathList &pathList)
+
+struct timidity_file *open_file(const char *name, bool ismainfile, PathList &pathList)
 {
-	auto file = pathList.openFile(name);
+	auto file = pathList.openFile(name, ismainfile);
 	if (!file.first) return nullptr;
 	auto tf = new timidity_file;
 	tf->url = file.first;

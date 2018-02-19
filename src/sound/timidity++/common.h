@@ -37,6 +37,7 @@ class PathList
 	std::vector<std::string> paths;
 
 	int isAbsPath(const char *name);
+	FileReader *tryOpenPath(const char *name, bool ismain);
 
 public:
 	PathList();
@@ -47,7 +48,7 @@ public:
 		paths.resize(1);
 	}
 	static int pathcmp(const char *p1, const char *p2, int ignore_case);
-	std::pair<FileReader *, std::string> openFile(const char *name);
+	std::pair<FileReader *, std::string> openFile(const char *name, bool ismainfile);
 
 };
 
@@ -66,7 +67,7 @@ enum
 };
 
 
-extern struct timidity_file *open_file(const char *name, int decompress, int noise_mode, PathList &);
+extern struct timidity_file *open_file(const char *name, bool, PathList &);
 extern void close_file(struct timidity_file *tf);
 extern void skip(struct timidity_file *tf, size_t len);
 extern char *tf_gets(char *buff, int n, struct timidity_file *tf);

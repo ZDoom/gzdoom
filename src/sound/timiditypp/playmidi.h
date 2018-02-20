@@ -523,7 +523,11 @@ public:
 	ChannelBitMask drumchannel_mask;
 	ChannelBitMask drumchannels;
 	double *vol_table;
+	int playback_rate;
+	int control_ratio;
 
+	// make this private later
+	Instruments *instruments;
 private:
 	Recache *recache;
 	Mixer *mixer;
@@ -701,7 +705,7 @@ private:
 
 
 public:
-	Player();
+	Player(int freq, Instruments *);
 	~Player();
 
 	bool ISDRUMCHANNEL(int c)

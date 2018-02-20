@@ -48,6 +48,7 @@
 
 #include "timiditypp/timidity.h"
 #include "timiditypp/instrum.h"
+#include "timiditypp/playmidi.h"
 
 class TimidityPPMIDIDevice : public SoftSynthMIDIDevice
 {
@@ -65,7 +66,7 @@ public:
 	void TimidityVolumeChanged();
 
 protected:
-	//TimidityPlus::Player *Renderer;
+	TimidityPlus::Player *Renderer;
 
 	void HandleEvent(int status, int parm1, int parm2);
 	void HandleLongEvent(const uint8_t *data, int len);
@@ -118,7 +119,7 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	}
 	if (instruments != nullptr)
 	{
-		//Renderer = new TimidityPlus::Player(timidity_frequency, instruments);
+		Renderer = new TimidityPlus::Player(timidity_frequency, instruments);
 	}
 }
 
@@ -148,7 +149,7 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 
 namespace TimidityPlus
 {
-	int load_midi_file(FileReader *fr, TimidityPlus::Instruments *inst);
+	int load_midi_file(FileReader *fr, TimidityPlus::Player *p);
 	void run_midi(int samples);
 	void timidity_close();
 }
@@ -158,7 +159,7 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 	// Write MIDI song to temporary file
 	song->CreateSMF(midi, looping ? 0 : 1);
 	MemoryReader fr((char*)&midi[0], midi.Size());
-	return !TimidityPlus::load_midi_file(&fr, instruments);
+	return !TimidityPlus::load_midi_file(&fr, Renderer);
 }
 
 //==========================================================================
@@ -230,10 +231,8 @@ void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	Printf("Committing slice\n");
 	TimidityPlus::run_midi(len / 8); // bytes to samples
 	memset(buffer, len, 0);	// to do
-	Printf("Done\n");
 
 	//Renderer->ComputeOutput(buffer, len);
 }

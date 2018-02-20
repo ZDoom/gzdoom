@@ -63,8 +63,6 @@ typedef struct Quantity_ {
 } Quantity;
 
 extern const char *string_to_quantity(const char *string, Quantity *quantity, uint16_t type);
-extern void int_to_quantity(int32_t number, Quantity *quantity, uint16_t type);
-extern void float_to_quantity(double number, Quantity *quantity, uint16_t type);
 extern int32_t quantity_to_int(const Quantity *quantity, int32_t param);
 extern double quantity_to_float(const Quantity *quantity, int32_t param);
 

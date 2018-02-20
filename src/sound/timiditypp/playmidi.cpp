@@ -38,25 +38,6 @@
 #include "c_cvars.h"
 #include "tables.h"
 
-namespace TimidityPlus
-{
-	int32_t control_ratio = 44;
-}
-
-// CVARs may not be placed in namespaces (but the above variable needs to.)
-CUSTOM_CVAR(Int, playback_rate, 44100, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	const int CONTROLS_PER_SECOND = 1000;
-	const int MAX_CONTROL_RATIO = 255;
-
-	TimidityPlus::control_ratio = playback_rate / CONTROLS_PER_SECOND;
-	if (TimidityPlus::control_ratio < 1)
-		TimidityPlus::control_ratio = 1;
-	else if (TimidityPlus::control_ratio > MAX_CONTROL_RATIO)
-		TimidityPlus::control_ratio = MAX_CONTROL_RATIO;
-}
-
-
 CVAR(Bool, opt_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, opt_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, opt_nrpn_vibrato, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -109,8 +90,9 @@ CUSTOM_CVAR(Float, tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 namespace TimidityPlus
 {
 
-
-extern Instruments *instruments;
+// These two variables need to remain global or things will get messy because they get accessed from non-class code.
+int32_t control_ratio = 44;
+int32_t playback_rate = 44100;
 
 #define PLAY_INTERLEAVE_SEC			1.0
 #define PORTAMENTO_TIME_TUNING		(1.0 / 5000.0)
@@ -123,13 +105,25 @@ extern Instruments *instruments;
 #define DEFAULT_AMPLIFICATION 		70
 #define VIBRATO_DEPTH_MAX 384	/* 600 cent */
 
-Player::Player()
+Player::Player(int freq, Instruments *instr)
 {
+	const int CONTROLS_PER_SECOND = 1000;
+	const int MAX_CONTROL_RATIO = 255;
+
+	memset(this, 0, sizeof(*this));
+
+	playback_rate = freq;
+	control_ratio = playback_rate / CONTROLS_PER_SECOND;
+	if (control_ratio < 1)
+		control_ratio = 1;
+	else if (control_ratio > MAX_CONTROL_RATIO)
+		control_ratio = MAX_CONTROL_RATIO;
+
 	// init one-time global stuff - this should go to the device class once it exists.
+	instruments = instr;
 	initialize_resampler_coeffs();
 	init_tables();
 
-	memset(this, 0, sizeof(*this));
 	new_midi_file_info();
 	init_mblock(&playmidi_pool);
 

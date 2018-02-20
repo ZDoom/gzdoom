@@ -69,7 +69,6 @@ static MBlockList mempool;
 static int current_read_track;
 static int karaoke_format, karaoke_title_flag;
 static MidiEvent timesig[256];
-extern Instruments *instruments;
 
 
 extern void free_readmidi(void);
@@ -388,7 +387,7 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 			current_set[j] = 0;
 		else
 		{
-			if (instruments->toneBank(newbank) == NULL)
+			if (gplayer->instruments->toneBank(newbank) == NULL)
 			{
 				if (warn_tonebank[newbank] == 0)
 				{
@@ -403,7 +402,7 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 		bank_lsb[j] = bank_msb[j] = 0;
 		if (play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
 			bank_msb[j] = 127; /* Use MSB=127 for XG */
-		current_program[j] = instruments->defaultProgram(j);
+		current_program[j] = gplayer->instruments->defaultProgram(j);
 	}
 
 	memset(warn_drumset, 0, sizeof(warn_drumset));
@@ -454,13 +453,13 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 					else
 						current_set[j] = default_tonebank;
 
-					if (instruments->toneBank(current_set[j]) == NULL)
+					if (gplayer->instruments->toneBank(current_set[j]) == NULL)
 						current_set[j] = 0;
 				}
 				bank_lsb[j] = bank_msb[j] = 0;
 				if (play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
 					bank_msb[j] = 127; /* Use MSB=127 for XG */
-				current_program[j] = instruments->defaultProgram(j);
+				current_program[j] = gplayer->instruments->defaultProgram(j);
 			}
 			break;
 
@@ -572,9 +571,9 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 			{
 				newbank = current_set[ch];
 				newprog = meep->event.a;
-				instruments->instrument_map(mapID[ch], &newbank, &newprog);
+				gplayer->instruments->instrument_map(mapID[ch], &newbank, &newprog);
 
-				if (!instruments->drumSet(newbank)) /* Is this a defined drumset? */
+				if (!gplayer->instruments->drumSet(newbank)) /* Is this a defined drumset? */
 				{
 					if (warn_drumset[newbank] == 0)
 					{
@@ -586,7 +585,7 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 				}
 
 				/* Mark this instrument to be loaded */
-				instruments->mark_drumset(newbank, newprog);
+				gplayer->instruments->mark_drumset(newbank, newprog);
 			}
 			else
 			{
@@ -594,8 +593,8 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 					break;
 				newbank = current_set[ch];
 				newprog = current_program[ch];
-				instruments->instrument_map(mapID[ch], &newbank, &newprog);
-				if (instruments->toneBank(newbank) == NULL)
+				gplayer->instruments->instrument_map(mapID[ch], &newbank, &newprog);
+				if (gplayer->instruments->toneBank(newbank) == NULL)
 				{
 					if (warn_tonebank[newbank] == 0)
 					{
@@ -607,7 +606,7 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 				}
 
 				/* Mark this instrument to be loaded */
-				instruments->mark_instrument(newbank, newprog);
+				gplayer->instruments->mark_instrument(newbank, newprog);
 			}
 			break;
 
@@ -769,8 +768,8 @@ static void insert_note_steps(void)
 static void free_readmidi(void)
 {
 	reuse_mblock(&mempool);
-	instruments->free_userdrum();
-	instruments->free_userinst();
+	gplayer->instruments->free_userdrum();
+	gplayer->instruments->free_userinst();
 }
 
 ///////////////////////////////////////////////////////////////////
@@ -882,12 +881,12 @@ static int read_sysex_event(int32_t at, int me, int32_t len,
 		reuse_mblock(&tmpbuffer);
 		return -1;
 	}
-	if (sc.parse_sysex_event(val, len, &ev, instruments))
+	if (sc.parse_sysex_event(val, len, &ev, gplayer->instruments))
 	{
 		ev.time = at;
 		readmidi_add_event(&ev);
 	}
-	if ((ne = sc.parse_sysex_event_multi(val, len, evm, instruments)))
+	if ((ne = sc.parse_sysex_event_multi(val, len, evm, gplayer->instruments)))
 	{
 		for (i = 0; i < ne; i++) {
 			evm[i].time = at;
@@ -1509,17 +1508,17 @@ static int play_midi_load_file(FileReader *fr,
 		//if (!opt_realtime_playing)
 		{
 			rc = RC_OK;
-			instruments->load_missing_instruments(&rc);
+			gplayer->instruments->load_missing_instruments(&rc);
 			if (RC_IS_SKIP_FILE(rc))
 			{
 				/* Instrument loading is terminated */
-				instruments->clear_magic_instruments();
+				gplayer->instruments->clear_magic_instruments();
 				return rc;
 			}
 		}
 	}
 	else
-		instruments->clear_magic_instruments();	/* Clear load markers */
+		gplayer->instruments->clear_magic_instruments();	/* Clear load markers */
 
 	return RC_OK;
 }
@@ -1530,7 +1529,7 @@ Instruments *instruments;
 CRITICAL_SECTION critSect;
 
 
-int load_midi_file(FileReader *fr, TimidityPlus::Instruments *inst)
+int load_midi_file(FileReader *fr, TimidityPlus::Player *p)
 {
 	int rc;
 	static int last_rc = RC_OK;
@@ -1538,15 +1537,12 @@ int load_midi_file(FileReader *fr, TimidityPlus::Instruments *inst)
 	int32_t nsamples;
 
 
+	gplayer = p;
 	InitializeCriticalSection(&critSect);
 	if (play_mode->open_output() < 0)
 	{
 		return RC_ERROR;
 	}
-
-	instruments = inst;
-	gplayer = new Player;
-
 
 	/* Set current file information */
 	auto current_file_info = gplayer->get_midi_file_info("zdoom", 1);
@@ -1578,7 +1574,6 @@ void run_midi(int msec)
 
 void timidity_close()
 {
-	delete gplayer;
 	play_mode->close_output();
 	DeleteCriticalSection(&critSect);
 	free_global_mblock();

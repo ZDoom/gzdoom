@@ -38,16 +38,8 @@
 #endif
 
 
-EXTERN_CVAR(Int, playback_rate)
 EXTERN_CVAR(Int, key_adjust)
 EXTERN_CVAR(Float, tempo_adjust)
-
-namespace TimidityPlus
-{
-	extern int32_t control_ratio;	// derived from playback_rate
-}
-
-
 EXTERN_CVAR(Bool, opt_modulation_wheel)
 EXTERN_CVAR(Bool, opt_portamento)
 EXTERN_CVAR(Bool, opt_nrpn_vibrato)
@@ -145,6 +137,8 @@ EXTERN_CVAR(Bool, opt_modulation_envelope)
 
 namespace TimidityPlus
 {
+extern int32_t playback_rate;
+extern int32_t control_ratio;	// derived from playback_rate
 
 enum play_system_modes
 {

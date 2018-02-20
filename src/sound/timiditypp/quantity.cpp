@@ -268,28 +268,6 @@ const char *string_to_quantity(const char *string, Quantity *quantity, uint16_t 
 	return number_to_quantity(number_i, suffix_i, number_f, suffix_f, quantity, type);
 }
 
-void int_to_quantity(int32_t number, Quantity *quantity, uint16_t type)
-{
-	/* pass suffix_f NULL to warn if unit type is float type */
-	if (number_to_quantity(number, "", number, NULL, quantity, type) != NULL)	/* error */
-	{
-		quantity->type = QUANTITY_UNIT_TYPE(DIRECT_INT);
-		quantity->unit = QUANTITY_UNIT_NAME(DIRECT_INT_NUM);
-		quantity->value.i = 0;
-	}
-}
-
-void float_to_quantity(double number, Quantity *quantity, uint16_t type)
-{
-	/* pass suffix_i NULL to warn if unit type is integer type */
-	if (number_to_quantity(number, NULL, number, "", quantity, type) != NULL)	/* error */
-	{
-		quantity->type = QUANTITY_UNIT_TYPE(DIRECT_FLOAT);
-		quantity->unit = QUANTITY_UNIT_NAME(DIRECT_FLOAT_NUM);
-		quantity->value.f = 0;
-	}
-}
-
 static int GetQuantityConvertProc(const Quantity *quantity, QuantityConvertProc *proc)
 {
 	QuantityHint		units[MAX_QUANTITY_UNITS_PER_UNIT_TYPES], *unit;

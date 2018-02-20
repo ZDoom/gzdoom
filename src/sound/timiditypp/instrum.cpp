@@ -54,7 +54,7 @@ Instruments::Instruments()
 
 bool Instruments::load(const char *config)
 {
-	if (read_config_file(config, 0, 0, true))
+	if (read_config_file(config, 0, 0, true) == RC_OK)
 	{
 		init_load_soundfont();
 		set_default_instrument();
@@ -617,13 +617,10 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		}
 	/* Open patch file */
 	if (!(tf = open_file(name, false, pathlist))) {
-#ifdef PATCH_EXT_LIST
 		int name_len, ext_len;
-		static const char *patch_ext[] = PATCH_EXT_LIST;
-#endif
+		static const char *patch_ext[] = { ".pat", 0 };
 
 		noluck = 1;
-#ifdef PATCH_EXT_LIST
 		name_len = (int)strlen(name);
 		/* Try with various extensions */
 		for (i = 0; patch_ext[i]; i++) {
@@ -641,7 +638,6 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 				}
 			}
 		}
-#endif
 	}
 	if (noluck) {
 		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,

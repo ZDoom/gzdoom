@@ -134,7 +134,6 @@ double flt_rand()
 
 PathList::PathList()
 {
-	paths.push_back("./");
 }
 
 /* This adds a directory to the path list */
@@ -234,9 +233,11 @@ std::pair<FileReader *, std::string> PathList::openFile(const char *name, bool i
 					s += '/';
 				}
 				s += name;
-				auto fr = tryOpenPath(name, ismainfile);
+				auto fr = tryOpenPath(s.c_str(), ismainfile);
 				if (fr!= nullptr) return std::make_pair(fr, s);
 			}
+			auto fr = tryOpenPath(name, ismainfile);
+			if (fr != nullptr) return std::make_pair(fr, name);
 		}
 		else
 		{
@@ -254,13 +255,11 @@ std::pair<FileReader *, std::string> PathList::openFile(const char *name, bool i
 
 int PathList::isAbsPath(const char *name)
 {
-	if (name[0] == '/')
-		return 1;
+	if (name[0] == '/') return 1;
 
 #ifdef _WIN32
 	/* [A-Za-z]: (for Windows) */
-	if (isalpha(name[0]) && name[1] == ':')
-		return 1;
+	if (isalpha(name[0]) && name[1] == ':')	return 1;
 #endif /* _WIN32 */
 	return 0;
 }

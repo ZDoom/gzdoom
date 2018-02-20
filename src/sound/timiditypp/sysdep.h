@@ -71,19 +71,6 @@ typedef struct _ChannelBitMask
 #  define TIM_FSCALENEG(a,b) ((a) * (1.0 / (double)(1<<(b))))
 
 
-#ifdef _WIN32
-#undef PATCH_EXT_LIST
-#define PATCH_EXT_LIST { ".pat", 0 }
-
-#endif
-
-
-#define PATH_SEP '/'
-#define PATH_STRING "/"
-#define IS_PATH_SEP(c) ((c) == PATH_SEP)
-#define NLS "\n"
-
-
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif /* M_PI */

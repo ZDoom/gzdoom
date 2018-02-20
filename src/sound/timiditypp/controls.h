@@ -51,27 +51,8 @@ inline bool RC_IS_SKIP_FILE(int rc)
 	return ((rc) == RC_QUIT || (rc) == RC_ERROR || (rc) == RC_STOP || (rc) == RC_TUNE_END);
 }
 
-inline void ctl_cmsg(int type, int verbosity_level, const char *fmt, ...)
-{
-	/* todo:
-	 CMSG_ERROR: I_Error(...)
-	 CMSG_WARNING, VERB_NORMAL:  Printf(TEXTCOLOR_YELLOW
-	 CMSG_WARNING, VERB_VERBOSE: DPrintf(DMSG_SPAMMY
 
-
-	 CMSG_INFO, VERB_DEBUG/VERB_NOISY: ignore
-
-/*
-#ifdef _WIN32
-			char buf[1024];
-			va_list args;
-			va_start(args, fmt);
-			vsprintf(buf, fmt, args);
-			va_end(args);
-			I_DebugPrint(buf);
-#endif
-*/
-}
+void ctl_cmsg(int type, int verbosity_level, const char *fmt, ...);
 
 
 }

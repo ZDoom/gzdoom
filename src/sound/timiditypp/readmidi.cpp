@@ -1562,7 +1562,7 @@ int load_midi_file(FileReader *fr, TimidityPlus::Instruments *inst)
 void Player::run_midi(int samples)
 {
 	auto time = current_event->time + samples;
-	while (current_event->time < samples)
+	while (current_event->time < time)
 	{
 		if (play_event(current_event) != RC_OK)
 			return;

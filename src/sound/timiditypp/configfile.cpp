@@ -29,6 +29,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "common.h"
 #include "instrum.h"
 #include "quantity.h"
+#include "cmdlib.h"
 
 
 
@@ -646,6 +647,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 	if (!self)
 	{
 		basedir = strdup_mblock(&varbuf, tf->filename.c_str());
+		FixPathSeperator((char*)basedir);
 		sep = (char*)strrchr(basedir, '/');
 	}
 	else

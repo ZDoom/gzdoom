@@ -44,11 +44,15 @@
 #include "version.h"
 #include "tmpfileplus.h"
 #include "m_misc.h"
+#include "v_text.h"
+
+#include "timiditypp/timidity.h"
+#include "timiditypp/instrum.h"
 
 class TimidityPPMIDIDevice : public SoftSynthMIDIDevice
 {
 	TArray<uint8_t> midi;
-	FString CurrentConfig;
+	static TimidityPlus::Instruments *instruments;
 public:
 	TimidityPPMIDIDevice(const char *args);
 	~TimidityPPMIDIDevice();
@@ -67,9 +71,10 @@ protected:
 	void HandleLongEvent(const uint8_t *data, int len);
 	void ComputeOutput(float *buffer, int len);
 };
+TimidityPlus::Instruments *TimidityPPMIDIDevice::instruments;
 
 // Config file to use
-CVAR(String, timidity_config, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(String, timidity_config, "timidity.cfg", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 // added because Timidity's output is rather loud.
 CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -101,14 +106,19 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 {
 	if (args == NULL || *args == 0) args = timidity_config;
 
-	if (CurrentConfig.CompareNoCase(args) != 0)
+	if (instruments != nullptr && !instruments->checkConfig(args))
 	{
-		// reload instruments
-		// if (!reload_inst()) CurrentConfig = "";
+		delete instruments;
 	}
-	if (CurrentConfig.IsNotEmpty())
+	instruments = new TimidityPlus::Instruments;
+	if (!instruments->load(args))
 	{
-		//Renderer = new TimidityPlus::Player(timidity_frequency, args);
+		delete instruments;
+		instruments = nullptr;
+	}
+	if (instruments != nullptr)
+	{
+		//Renderer = new TimidityPlus::Player(timidity_frequency, instruments);
 	}
 }
 
@@ -136,11 +146,19 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 //
 //==========================================================================
 
+namespace TimidityPlus
+{
+	int load_midi_file(FileReader *fr, TimidityPlus::Instruments *inst);
+	void run_midi(int samples);
+	void timidity_close();
+}
+
 bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 {
 	// Write MIDI song to temporary file
 	song->CreateSMF(midi, looping ? 0 : 1);
-	return midi.Size() > 0;
+	MemoryReader fr((char*)&midi[0], midi.Size());
+	return !TimidityPlus::load_midi_file(&fr, instruments);
 }
 
 //==========================================================================
@@ -148,21 +166,16 @@ bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
 // TimidityPPMIDIDevice :: Open
 //
 //==========================================================================
-namespace TimidityPlus
-{
-	int load_midi_file(FileReader *fr);
-	void run_midi(int samples);
-	void timidity_close();
-}
 
 int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
+	// No instruments loaded means we cannot play...
+	if (instruments == nullptr) return 0;
+
 	int ret = OpenStream(2, 0, callback, userdata);
 	if (ret == 0)
 	{
 		//Renderer->Reset();
-		MemoryReader fr((char*)&midi[0], midi.Size());
-		return !TimidityPlus::load_midi_file(&fr);
 	}
 	return ret;
 }
@@ -217,8 +230,10 @@ void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 {
+	Printf("Committing slice\n");
 	TimidityPlus::run_midi(len / 8); // bytes to samples
 	memset(buffer, len, 0);	// to do
+	Printf("Done\n");
 
 	//Renderer->ComputeOutput(buffer, len);
 }
@@ -241,4 +256,31 @@ void TimidityPPMIDIDevice::TimidityVolumeChanged()
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args)
 {
 	return new TimidityPPMIDIDevice(args);
+}
+
+
+void TimidityPlus::ctl_cmsg(int type, int verbosity_level, const char *fmt, ...)
+{
+	if (verbosity_level >= VERB_DEBUG) return;	// Don't waste time on diagnostics.
+
+	va_list args;
+	va_start(args, fmt);
+	FString msg;
+	msg.VFormat(fmt, args);
+	va_end(args);
+
+	switch (type)
+	{
+	case CMSG_ERROR:
+		Printf(TEXTCOLOR_RED "%s\n", msg.GetChars());
+		break;
+
+	case CMSG_WARNING:
+		Printf(TEXTCOLOR_YELLOW "%s\n", msg.GetChars());
+		break;
+
+	case CMSG_INFO:
+		DPrintf(DMSG_SPAMMY, "%s\n", msg.GetChars());
+		break;
+	}
 }

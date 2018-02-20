@@ -1855,6 +1855,7 @@ void Player::finish_note(int i)
 void Player::set_envelope_time(int ch, int val, int stage)
 {
 	val = val & 0x7F;
+#if 0
 	switch(stage) {
 	case EG_ATTACK:	/* Attack */
 		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Attack Time (CH:%d VALUE:%d)", ch, val);
@@ -1868,6 +1869,7 @@ void Player::set_envelope_time(int ch, int val, int stage)
 	default:
 		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"? Time (CH:%d VALUE:%d)", ch, val);
 	}
+#endif
 	channel[ch].envelope_rate[stage] = val;
 }
 
@@ -3382,8 +3384,8 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x23:	/* Insertion Effect ON/OFF */
 			if(!opt_insertion_effect) {break;}
 			if(channel[ch].insertion_effect != val) {
-				if(val) {//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX ON (CH:%d)",ch);}
-				else {//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX OFF (CH:%d)",ch);}
+				//if(val) {//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX ON (CH:%d)",ch);}
+				//else {//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX OFF (CH:%d)",ch);}
 			}
 			channel[ch].insertion_effect = val;
 			break;

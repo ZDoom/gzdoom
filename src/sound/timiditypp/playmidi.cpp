@@ -37,6 +37,7 @@
 #include "quantity.h"
 #include "c_cvars.h"
 #include "tables.h"
+#include "effect.h"
 
 CVAR(Bool, opt_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, opt_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -129,10 +130,12 @@ Player::Player(int freq, Instruments *instr)
 
 	reverb = new Reverb;
 	reverb->init_effect_status(play_system_mode);
+	effect = new Effect(reverb);
+
 
 	mixer = new Mixer(this);
 	recache = new Recache(this);
-	aq = new AudioQueue(play_mode, audio_buffer_size, reverb);
+	aq = new AudioQueue(play_mode, AUDIO_BUFFER_SIZE, reverb);
 	aq->setup();
 
 	for (int i = 0; i < MAX_CHANNELS; i++)
@@ -191,6 +194,7 @@ Player::~Player()
 	delete aq;
 	delete mixer;
 	delete recache;
+	delete effect;
 	delete reverb;
 }
 
@@ -5017,101 +5021,23 @@ void Player::do_compute_data(int32_t count)
 	current_sample += count;
 }
 
-int Player::check_midi_play_end(MidiEvent *e, int len)
+int Player::send_output(int32_t *samples, int32_t count)
 {
-    int i, type;
-
-    for(i = 0; i < len; i++)
-    {
-	type = e[i].type;
-	if(type == ME_NOTEON || type == ME_LAST || type == ME_WRD || type == ME_SHERRY)
-	    return 0;
-	if(type == ME_EOT)
-	    return i + 1;
-    }
-    return 0;
-}
-
-int Player::midi_play_end(void)
-{
-    int i, rc = RC_TUNE_END;
-
-    check_eot_flag = 0;
-
-    if(opt_realtime_playing && current_sample == 0)
-    {
-	reset_voices();
-	return RC_TUNE_END;
-    }
-
-    if(upper_voices > 0)
-    {
-	int fadeout_cnt;
-
-	rc = compute_data(playback_rate);
-	if(RC_IS_SKIP_FILE(rc))
-	    goto midi_end;
-
-	for(i = 0; i < upper_voices; i++)
-	    if(voice[i].status & (VOICE_ON | VOICE_SUSTAINED))
-		finish_note(i);
-	if(opt_realtime_playing)
-	    fadeout_cnt = 3;
-	else
-	    fadeout_cnt = 6;
-	for(i = 0; i < fadeout_cnt && upper_voices > 0; i++)
+	aq->add(samples, count);
+	/*
+	effect->do_effect(samples, count);
+	// pass to caller
+	for (int i = 0; i < count && output_len > 0; i++)
 	{
-	    rc = compute_data(playback_rate / 2);
-	    if(RC_IS_SKIP_FILE(rc))
-		goto midi_end;
+		*output_buffer++ = (*samples++)*(1.f / 0x80000000u);
+		*output_buffer++ = (*samples++)*(1.f / 0x80000000u);
+		output_len--;
 	}
-
-	/* kill voices */
-	kill_all_voices();
-	rc = compute_data(MAX_DIE_TIME);
-	if(RC_IS_SKIP_FILE(rc))
-	    goto midi_end;
-	upper_voices = 0;
-    }
-
-    /* clear reverb echo sound */
-    reverb->init_reverb();
-    for(i = 0; i < MAX_CHANNELS; i++)
-    {
-	channel[i].reverb_level = -1;
-	channel[i].reverb_id = -1;
-	make_rvid_flag = 1;
-    }
-
-    /* output null sound */
-    if(opt_realtime_playing)
-	rc = compute_data((int32_t)(playback_rate * PLAY_INTERLEAVE_SEC/2));
-    else
-	rc = compute_data((int32_t)(playback_rate * PLAY_INTERLEAVE_SEC));
-    if(RC_IS_SKIP_FILE(rc))
-	goto midi_end;
-
-    compute_data(0); /* flush buffer to device */
-
-	rc = aq->softFlush();
-
-  midi_end:
-    if(RC_IS_SKIP_FILE(rc))
-	aq->flush(1);
-
-    ctl_cmsg(CMSG_INFO, VERB_VERBOSE, "Playing time: ~%d seconds",
-	      current_sample/playback_rate+2);
-    ctl_cmsg(CMSG_INFO, VERB_VERBOSE, "Notes cut: %d",
-	      cut_notes);
-    ctl_cmsg(CMSG_INFO, VERB_VERBOSE, "Notes lost totally: %d",
-	      lost_notes);
-    if(RC_IS_SKIP_FILE(rc))
-	return rc;
-    return RC_TUNE_END;
+	*/
+	memset(output_buffer, 0, output_len * 8);
+	return RC_OK;
 }
 
-/* count=0 means flush remaining buffered data to output device, then
-   flush the device itself */
 int Player::compute_data(int32_t count)
 {
 	if (!count)
@@ -5126,29 +5052,19 @@ int Player::compute_data(int32_t count)
 		return RC_OK;
 	}
 
-	while ((count + buffered_count) >= audio_buffer_size)
+	while ((count + buffered_count) >= AUDIO_BUFFER_SIZE)
 	{
 		int i;
 
-		do_compute_data(audio_buffer_size - buffered_count);
-		count -= audio_buffer_size - buffered_count;
+		do_compute_data(AUDIO_BUFFER_SIZE - buffered_count);
+		count -= AUDIO_BUFFER_SIZE - buffered_count;
 
-		if (aq->add(common_buffer, audio_buffer_size) == -1)
+		if (aq->add(common_buffer, AUDIO_BUFFER_SIZE) == -1)
 			return RC_ERROR;
 
 		buffer_pointer = common_buffer;
 		buffered_count = 0;
 
-		/* check break signals */
-
-		if (upper_voices == 0 && check_eot_flag &&
-			(i = check_midi_play_end(current_event, EOT_PRESEARCH_LEN)) > 0)
-		{
-			if (i > 1)
-				ctl_cmsg(CMSG_INFO, VERB_VERBOSE,
-					"Last %d MIDI events are ignored", i - 1);
-			return midi_play_end();
-		}
 	}
 	if (count > 0)
 	{
@@ -5755,7 +5671,7 @@ int Player::play_event(MidiEvent *ev)
 				break;
 
 			case ME_EOT:
-				return midi_play_end();
+				break;
 			}
 #ifndef SUPPRESS_CHANNEL_LAYER
 		}
@@ -6101,8 +6017,7 @@ Instrument *Player::play_midi_load_instrument(int dr, int bk, int prog)
 	bool load_success;
 	// The inner workings of this function which alters the instrument data has been put into the Instruments class.
 	auto instr = instruments->play_midi_load_instrument(dr, bk, prog, &load_success);
-	if (load_success)
-		aq->add(NULL, 0);	/* Update software buffer */
+	//if (load_success) send_output(NULL, 0);	/* Update software buffer */
 	return instr;
 }
 
@@ -6148,6 +6063,13 @@ void Player::init_channel_layer(int ch)
 	CLEAR_CHANNELMASK(channel[ch].channel_layer);
 	SET_CHANNELMASK(channel[ch].channel_layer, ch);
 	channel[ch].port_select = ch >> 4;
+}
+
+void Player::get_output(float *buffer, int len)
+{
+	output_buffer = buffer;
+	output_len = len;
+	//compute_data(len);
 }
 
 }

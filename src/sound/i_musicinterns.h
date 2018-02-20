@@ -92,6 +92,7 @@ MIDIDevice *CreateWinMIDIDevice(int mididevice);
 MIDIDevice *CreateAudioToolboxMIDIDevice();
 #endif
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args);
+void TimidityPP_Shutdown();
 
 // Base class for pseudo-MIDI devices ---------------------------------------
 

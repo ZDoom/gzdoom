@@ -181,7 +181,11 @@ void I_ShutdownMusic(bool onexit)
 		assert (currSong == NULL);
 	}
 	Timidity::FreeAll();
-	if (onexit) WildMidi_Shutdown();
+	if (onexit)
+	{
+		WildMidi_Shutdown();
+		TimidityPP_Shutdown();
+	}
 }
 
 void I_ShutdownMusicExit()

@@ -73,10 +73,10 @@ void Effect::effect_left_right_delay(int32_t *buff, int32_t count)
 		return;
 	if (backoff > count)
 		backoff = count;
-	if (count < audio_buffer_size * 2)
+	if (count < AUDIO_BUFFER_SIZE * 2)
 	{
-		memset(buff + count, 0, 4 * (audio_buffer_size * 2 - count));
-		count = audio_buffer_size * 2;
+		memset(buff + count, 0, 4 * (AUDIO_BUFFER_SIZE * 2 - count));
+		count = AUDIO_BUFFER_SIZE * 2;
 	}
 	memcpy(save, buff, 4 * count);
 	pi = count - backoff;

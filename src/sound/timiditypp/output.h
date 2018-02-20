@@ -76,8 +76,6 @@ struct PlayMode {
 };
 
 extern PlayMode *play_mode_list[], *play_mode;
-extern int audio_buffer_bits;
-#define audio_buffer_size	(1<<audio_buffer_bits)
 
 /* 16-bit */
 extern void s32tos16(int32_t *lp, int32_t c);

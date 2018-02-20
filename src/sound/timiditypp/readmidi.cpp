@@ -1566,11 +1566,6 @@ void Player::run_midi(int samples)
 	}
 }
 
-void run_midi(int msec)
-{
-	gplayer->run_midi(msec);
-}
-
 
 void timidity_close()
 {

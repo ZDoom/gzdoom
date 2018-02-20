@@ -45,6 +45,7 @@
 #include "tmpfileplus.h"
 #include "m_misc.h"
 #include "v_text.h"
+#include "i_system.h"
 
 #include "timiditypp/timidity.h"
 #include "timiditypp/instrum.h"
@@ -64,6 +65,11 @@ public:
 	int GetDeviceType() const override { return MDEV_TIMIDITY; }
 	bool Preprocess(MIDIStreamer *song, bool looping);
 	void TimidityVolumeChanged();
+	static void ClearInstruments()
+	{
+		if (instruments != nullptr) delete instruments;
+		instruments = nullptr;
+	}
 
 protected:
 	TimidityPlus::Player *Renderer;
@@ -132,13 +138,10 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 {
 	Close();
-	/*
 	if (Renderer != nullptr)
 	{
 		delete Renderer;
 	}
-	*/
-
 }
 
 //==========================================================================
@@ -176,7 +179,7 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 	int ret = OpenStream(2, 0, callback, userdata);
 	if (ret == 0)
 	{
-		//Renderer->Reset();
+		//Renderer->playmidi_stream_init();
 	}
 	return ret;
 }
@@ -192,13 +195,9 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 //
 //==========================================================================
 
-void TimidityPPMIDIDevice::PrecacheInstruments(const uint16_t *instruments, int count)
+void TimidityPPMIDIDevice::PrecacheInstruments(const uint16_t *instrumentlist, int count)
 {
-	for (int i = 0; i < count; ++i)
-	{
-		//Renderer->MarkInstrument((instruments[i] >> 7) & 127, instruments[i] >> 14, instruments[i] & 127);
-	}
-	//Renderer->load_missing_instruments();
+	instruments->PrecacheInstruments(instrumentlist, count);
 }
 
 //==========================================================================
@@ -231,10 +230,9 @@ void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	TimidityPlus::run_midi(len / 8); // bytes to samples
+	Renderer->run_midi(len);
 	memset(buffer, len, 0);	// to do
-
-	//Renderer->ComputeOutput(buffer, len);
+	Renderer->get_output(buffer, len);
 }
 
 //==========================================================================
@@ -255,6 +253,11 @@ void TimidityPPMIDIDevice::TimidityVolumeChanged()
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args)
 {
 	return new TimidityPPMIDIDevice(args);
+}
+
+void TimidityPP_Shutdown()
+{
+	TimidityPPMIDIDevice::ClearInstruments();
 }
 
 

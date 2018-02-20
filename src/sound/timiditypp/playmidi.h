@@ -511,6 +511,7 @@ struct midi_file_info
 class Recache;
 class Mixer;
 class Reverb;
+class Effect;
 class AudioQueue;
 
 class Player
@@ -532,6 +533,7 @@ private:
 	Recache *recache;
 	Mixer *mixer;
 	Reverb *reverb;
+	Effect *effect;
 	AudioQueue *aq;
 
 
@@ -559,6 +561,8 @@ private:
 	int current_freq_table;
 	int current_temper_freq_table;
 	int master_tuning;
+	float *output_buffer;
+	int output_len;
 
 	int make_rvid_flag; /* For reverb optimization */
 
@@ -666,6 +670,7 @@ private:
 	void update_legato_controls(int ch);
 	void set_master_tuning(int tune);
 	struct midi_file_info *new_midi_file_info();
+	int send_output(int32_t *samples, int32_t count);
 
 
 	void adjust_amplification(void);
@@ -734,6 +739,7 @@ public:
 	void recompute_freq(int v);
 	int get_default_mapID(int ch);
 	void init_channel_layer(int ch);
+	void get_output(float *buffer, int len);
 
 	// Only until streaming works.
 	void skip_to(int32_t until_time, MidiEvent *evt_start);

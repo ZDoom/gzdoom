@@ -733,6 +733,8 @@ public:
 
 	// Only until streaming works.
 	void skip_to(int32_t until_time, MidiEvent *evt_start);
+	int start_midi(MidiEvent *eventlist, int32_t samples);
+	void run_midi(int);
 	int play_midi(MidiEvent *eventlist, int32_t samples);
 	friend MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp);
 

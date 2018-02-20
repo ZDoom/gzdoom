@@ -18,6 +18,7 @@
     Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 */
 
+#include <windows.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -28,6 +29,7 @@
 #include "tables.h"
 #include "reverb.h"
 #include "aq.h"
+#include "tarray.h"
 #include <math.h>
 
 namespace TimidityPlus
@@ -124,10 +126,9 @@ void Player::skip_to(int32_t until_time, MidiEvent *evt_start)
 }
 
 
-int Player::play_midi(MidiEvent *eventlist, int32_t samples)
+int Player::start_midi(MidiEvent *eventlist, int32_t samples)
 {
 	int rc;
-	static int play_count = 0;
 	int i, j;
 
 	sample_count = samples;
@@ -155,28 +156,8 @@ int Player::play_midi(MidiEvent *eventlist, int32_t samples)
 
 	skip_to(0, eventlist);
 
-	rc = RC_OK;
-	for (;;)
-	{
-		rc = play_event(current_event);
-		if (rc != RC_OK)
-			break;
-		current_event++;
-	}
-
-	if (play_count++ > 3)
-	{
-		int cnt;
-		play_count = 0;
-		cnt = free_global_mblock();	/* free unused memory */
-		if (cnt > 0)
-			ctl_cmsg(CMSG_INFO, VERB_VERBOSE,
-				"%d memory blocks are free", cnt);
-	}
-	return rc;
+	return RC_OK;
 }
-
-
 
 static MidiEventList *alloc_midi_event()
 {
@@ -1491,23 +1472,7 @@ static MidiEvent *read_midi_file(struct timidity_file *tf, int32_t *count, int32
 
 //////////////////////////////////////// MID file player
 
-// temporary crutch
-static struct timidity_file *open_file(char *name, int decompress, int noise_mode)
-{
-	FileReader *fr = new FileReader;
-	if (!fr->Open(name))
-	{
-		delete fr;
-		return nullptr;
-	}
-	auto tf = new timidity_file;
-	tf->url = fr;
-	tf->filename = name;
-	return tf;
-}
-
-
-static int play_midi_load_file(char *fn,
+static int play_midi_load_file(FileReader *fr,
 	MidiEvent **event,
 	int32_t *nsamples)
 {
@@ -1517,16 +1482,14 @@ static int play_midi_load_file(char *fn,
 
 	*event = NULL;
 
-	ctl_cmsg(CMSG_INFO, VERB_VERBOSE, "MIDI file: %s", fn);
-	if ((tf = open_file(fn, 1, OF_VERBOSE)) == NULL)
-	{
-		return RC_ERROR;
-	}
+	tf = new timidity_file;
+	tf->filename = "zdoom";
+	tf->url = fr;
 
 	*event = NULL;
 	rc = RC_OK;
 
-	*event = read_midi_file(tf, &nevents, nsamples, fn);
+	*event = read_midi_file(tf, &nevents, nsamples, "zdoom");
 	close_file(tf);
 
 	if (*event == NULL)
@@ -1564,15 +1527,35 @@ static int play_midi_load_file(char *fn,
 }
 
 
-int play_midi_file(char *fn)
+
+Instruments *instruments;
+CRITICAL_SECTION critSect;
+
+
+int load_midi_file(FileReader *fr)
 {
 	int rc;
 	static int last_rc = RC_OK;
 	MidiEvent *event;
 	int32_t nsamples;
 
+	InitializeCriticalSection(&critSect);
+	if (play_mode->open_output() < 0)
+	{
+		return RC_ERROR;
+	}
+
+	instruments = new Instruments;
+	if (instruments->load("timidity.cfg"))
+	{
+		return RC_ERROR;
+	}
+
+	gplayer = new Player;
+
+
 	/* Set current file information */
-	auto current_file_info = gplayer->get_midi_file_info(fn, 1);
+	auto current_file_info = gplayer->get_midi_file_info("zdoom", 1);
 
 	rc = RC_OK;
 
@@ -1581,31 +1564,39 @@ int play_midi_file(char *fn)
 	midi_restart_time = 0;
 
 
-	rc = play_midi_load_file(fn, &event, &nsamples);
+	rc = play_midi_load_file(fr, &event, &nsamples);
 	if (RC_IS_SKIP_FILE(rc))
-		goto play_end; /* skip playing */
+		return RC_ERROR; /* skip playing */
 
-	rc = gplayer->play_midi(event, nsamples);
-
-play_end:
-
-	instruments->free_special_patch(-1);
-
-	if (event != NULL)
-		free(event);
-
-	last_rc = rc;
-	return rc;
+	return gplayer->start_midi(event, nsamples);
 }
 
-int dumb_pass_playing_list(int number_of_files, char *list_of_files[])
+
+void Player::run_midi(int samples)
 {
-	gplayer = new Player;
-	for (;;)
+	auto time = current_event->time + samples;
+	while (current_event->time < samples)
 	{
-		if (play_midi_file(list_of_files[0]) == RC_QUIT) return 0;
+		if (play_event(current_event) != RC_OK)
+			return;
+		current_event++;
 	}
-	delete gplayer;
 }
+
+void run_midi(int msec)
+{
+	gplayer->run_midi(msec);
+}
+
+
+void timidity_close()
+{
+	delete gplayer;
+	delete instruments;
+	play_mode->close_output();
+	DeleteCriticalSection(&critSect);
+	free_global_mblock();
+}
+
 
 }

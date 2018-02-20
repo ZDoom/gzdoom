@@ -1857,16 +1857,16 @@ void Player::set_envelope_time(int ch, int val, int stage)
 	val = val & 0x7F;
 	switch(stage) {
 	case EG_ATTACK:	/* Attack */
-		ctl_cmsg(CMSG_INFO,VERB_NOISY,"Attack Time (CH:%d VALUE:%d)", ch, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Attack Time (CH:%d VALUE:%d)", ch, val);
 		break;
 	case EG_DECAY: /* Decay */
-		ctl_cmsg(CMSG_INFO,VERB_NOISY,"Decay Time (CH:%d VALUE:%d)", ch, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Decay Time (CH:%d VALUE:%d)", ch, val);
 		break;
 	case EG_RELEASE:	/* Release */
-		ctl_cmsg(CMSG_INFO,VERB_NOISY,"Release Time (CH:%d VALUE:%d)", ch, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Release Time (CH:%d VALUE:%d)", ch, val);
 		break;
 	default:
-		ctl_cmsg(CMSG_INFO,VERB_NOISY,"? Time (CH:%d VALUE:%d)", ch, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"? Time (CH:%d VALUE:%d)", ch, val);
 	}
 	channel[ch].envelope_rate[stage] = val;
 }
@@ -2687,8 +2687,7 @@ void Player::add_channel_layer(int to_ch, int from_ch)
 	/* add a channel layer */
 	UNSET_CHANNELMASK(channel[to_ch].channel_layer, to_ch);
 	SET_CHANNELMASK(channel[to_ch].channel_layer, from_ch);
-	ctl_cmsg(CMSG_INFO, VERB_NOISY,
-		"Channel Layer (CH:%d -> CH:%d)", from_ch, to_ch);
+	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Channel Layer (CH:%d -> CH:%d)", from_ch, to_ch);
 }
 
 /*! remove all layers for this channel. */
@@ -2731,293 +2730,293 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			if(val > 0x58) {val = 0x58;}
 			else if(val < 0x28) {val = 0x28;}
 			channel[ch].caf.pitch = val - 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf Pitch Control (CH:%d %d semitones)", ch, channel[ch].caf.pitch);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf Pitch Control (CH:%d %d semitones)", ch, channel[ch].caf.pitch);
 			break;
 		case 0x01:	/* CAf Filter Cutoff Control */
 			channel[ch].caf.cutoff = (val - 64) * 150;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].caf.cutoff);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].caf.cutoff);
 			break;
 		case 0x02:	/* CAf Amplitude Control */
 			channel[ch].caf.amp = (float)val / 64.0f - 1.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf Amplitude Control (CH:%d %.2f)", ch, channel[ch].caf.amp);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf Amplitude Control (CH:%d %.2f)", ch, channel[ch].caf.amp);
 			break;
 		case 0x03:	/* CAf LFO1 Rate Control */
 			channel[ch].caf.lfo1_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].caf.lfo1_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].caf.lfo1_rate);
 			break;
 		case 0x04:	/* CAf LFO1 Pitch Depth */
 			channel[ch].caf.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_pitch_depth); 
 			break;
 		case 0x05:	/* CAf LFO1 Filter Depth */
 			channel[ch].caf.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo1_tvf_depth); 
 			break;
 		case 0x06:	/* CAf LFO1 Amplitude Depth */
 			channel[ch].caf.lfo1_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo1_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo1_tva_depth); 
 			break;
 		case 0x07:	/* CAf LFO2 Rate Control */
 			channel[ch].caf.lfo2_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].caf.lfo2_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].caf.lfo2_rate);
 			break;
 		case 0x08:	/* CAf LFO2 Pitch Depth */
 			channel[ch].caf.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_pitch_depth); 
 			break;
 		case 0x09:	/* CAf LFO2 Filter Depth */
 			channel[ch].caf.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].caf.lfo2_tvf_depth); 
 			break;
 		case 0x0A:	/* CAf LFO2 Amplitude Depth */
 			channel[ch].caf.lfo2_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo2_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].caf.lfo2_tva_depth); 
 			break;
 		case 0x0B:	/* PAf Pitch Control */
 			if(val > 0x58) {val = 0x58;}
 			else if(val < 0x28) {val = 0x28;}
 			channel[ch].paf.pitch = val - 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf Pitch Control (CH:%d %d semitones)", ch, channel[ch].paf.pitch);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf Pitch Control (CH:%d %d semitones)", ch, channel[ch].paf.pitch);
 			break;
 		case 0x0C:	/* PAf Filter Cutoff Control */
 			channel[ch].paf.cutoff = (val - 64) * 150;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].paf.cutoff);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].paf.cutoff);
 			break;
 		case 0x0D:	/* PAf Amplitude Control */
 			channel[ch].paf.amp = (float)val / 64.0f - 1.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf Amplitude Control (CH:%d %.2f)", ch, channel[ch].paf.amp);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf Amplitude Control (CH:%d %.2f)", ch, channel[ch].paf.amp);
 			break;
 		case 0x0E:	/* PAf LFO1 Rate Control */
 			channel[ch].paf.lfo1_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].paf.lfo1_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].paf.lfo1_rate);
 			break;
 		case 0x0F:	/* PAf LFO1 Pitch Depth */
 			channel[ch].paf.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_pitch_depth); 
 			break;
 		case 0x10:	/* PAf LFO1 Filter Depth */
 			channel[ch].paf.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo1_tvf_depth); 
 			break;
 		case 0x11:	/* PAf LFO1 Amplitude Depth */
 			channel[ch].paf.lfo1_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo1_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo1_tva_depth); 
 			break;
 		case 0x12:	/* PAf LFO2 Rate Control */
 			channel[ch].paf.lfo2_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].paf.lfo2_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].paf.lfo2_rate);
 			break;
 		case 0x13:	/* PAf LFO2 Pitch Depth */
 			channel[ch].paf.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_pitch_depth); 
 			break;
 		case 0x14:	/* PAf LFO2 Filter Depth */
 			channel[ch].paf.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].paf.lfo2_tvf_depth); 
 			break;
 		case 0x15:	/* PAf LFO2 Amplitude Depth */
 			channel[ch].paf.lfo2_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "PAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo2_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"PAf LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].paf.lfo2_tva_depth); 
 			break;
 		case 0x16:	/* MOD Pitch Control */
 			if(val > 0x58) {val = 0x58;}
 			else if(val < 0x28) {val = 0x28;}
 			channel[ch].mod.pitch = val - 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD Pitch Control (CH:%d %d semitones)", ch, channel[ch].mod.pitch);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD Pitch Control (CH:%d %d semitones)", ch, channel[ch].mod.pitch);
 			break;
 		case 0x17:	/* MOD Filter Cutoff Control */
 			channel[ch].mod.cutoff = (val - 64) * 150;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].mod.cutoff);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].mod.cutoff);
 			break;
 		case 0x18:	/* MOD Amplitude Control */
 			channel[ch].mod.amp = (float)val / 64.0f - 1.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD Amplitude Control (CH:%d %.2f)", ch, channel[ch].mod.amp);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD Amplitude Control (CH:%d %.2f)", ch, channel[ch].mod.amp);
 			break;
 		case 0x19:	/* MOD LFO1 Rate Control */
 			channel[ch].mod.lfo1_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].mod.lfo1_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].mod.lfo1_rate);
 			break;
 		case 0x1A:	/* MOD LFO1 Pitch Depth */
 			channel[ch].mod.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_pitch_depth); 
 			break;
 		case 0x1B:	/* MOD LFO1 Filter Depth */
 			channel[ch].mod.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo1_tvf_depth); 
 			break;
 		case 0x1C:	/* MOD LFO1 Amplitude Depth */
 			channel[ch].mod.lfo1_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo1_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo1_tva_depth); 
 			break;
 		case 0x1D:	/* MOD LFO2 Rate Control */
 			channel[ch].mod.lfo2_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].mod.lfo2_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].mod.lfo2_rate);
 			break;
 		case 0x1E:	/* MOD LFO2 Pitch Depth */
 			channel[ch].mod.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_pitch_depth); 
 			break;
 		case 0x1F:	/* MOD LFO2 Filter Depth */
 			channel[ch].mod.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].mod.lfo2_tvf_depth); 
 			break;
 		case 0x20:	/* MOD LFO2 Amplitude Depth */
 			channel[ch].mod.lfo2_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MOD LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo2_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MOD LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].mod.lfo2_tva_depth); 
 			break;
 		case 0x21:	/* BEND Pitch Control */
 			if(val > 0x58) {val = 0x58;}
 			else if(val < 0x28) {val = 0x28;}
 			channel[ch].bend.pitch = val - 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND Pitch Control (CH:%d %d semitones)", ch, channel[ch].bend.pitch);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND Pitch Control (CH:%d %d semitones)", ch, channel[ch].bend.pitch);
 			break;
 		case 0x22:	/* BEND Filter Cutoff Control */
 			channel[ch].bend.cutoff = (val - 64) * 150;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].bend.cutoff);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].bend.cutoff);
 			break;
 		case 0x23:	/* BEND Amplitude Control */
 			channel[ch].bend.amp = (float)val / 64.0f - 1.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND Amplitude Control (CH:%d %.2f)", ch, channel[ch].bend.amp);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND Amplitude Control (CH:%d %.2f)", ch, channel[ch].bend.amp);
 			break;
 		case 0x24:	/* BEND LFO1 Rate Control */
 			channel[ch].bend.lfo1_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].bend.lfo1_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].bend.lfo1_rate);
 			break;
 		case 0x25:	/* BEND LFO1 Pitch Depth */
 			channel[ch].bend.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_pitch_depth); 
 			break;
 		case 0x26:	/* BEND LFO1 Filter Depth */
 			channel[ch].bend.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo1_tvf_depth); 
 			break;
 		case 0x27:	/* BEND LFO1 Amplitude Depth */
 			channel[ch].bend.lfo1_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo1_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo1_tva_depth); 
 			break;
 		case 0x28:	/* BEND LFO2 Rate Control */
 			channel[ch].bend.lfo2_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].bend.lfo2_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].bend.lfo2_rate);
 			break;
 		case 0x29:	/* BEND LFO2 Pitch Depth */
 			channel[ch].bend.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_pitch_depth); 
 			break;
 		case 0x2A:	/* BEND LFO2 Filter Depth */
 			channel[ch].bend.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].bend.lfo2_tvf_depth); 
 			break;
 		case 0x2B:	/* BEND LFO2 Amplitude Depth */
 			channel[ch].bend.lfo2_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo2_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].bend.lfo2_tva_depth); 
 			break;
 		case 0x2C:	/* CC1 Pitch Control */
 			if(val > 0x58) {val = 0x58;}
 			else if(val < 0x28) {val = 0x28;}
 			channel[ch].cc1.pitch = val - 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 Pitch Control (CH:%d %d semitones)", ch, channel[ch].cc1.pitch);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 Pitch Control (CH:%d %d semitones)", ch, channel[ch].cc1.pitch);
 			break;
 		case 0x2D:	/* CC1 Filter Cutoff Control */
 			channel[ch].cc1.cutoff = (val - 64) * 150;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].cc1.cutoff);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].cc1.cutoff);
 			break;
 		case 0x2E:	/* CC1 Amplitude Control */
 			channel[ch].cc1.amp = (float)val / 64.0f - 1.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 Amplitude Control (CH:%d %.2f)", ch, channel[ch].cc1.amp);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 Amplitude Control (CH:%d %.2f)", ch, channel[ch].cc1.amp);
 			break;
 		case 0x2F:	/* CC1 LFO1 Rate Control */
 			channel[ch].cc1.lfo1_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc1.lfo1_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc1.lfo1_rate);
 			break;
 		case 0x30:	/* CC1 LFO1 Pitch Depth */
 			channel[ch].cc1.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_pitch_depth); 
 			break;
 		case 0x31:	/* CC1 LFO1 Filter Depth */
 			channel[ch].cc1.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo1_tvf_depth); 
 			break;
 		case 0x32:	/* CC1 LFO1 Amplitude Depth */
 			channel[ch].cc1.lfo1_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo1_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo1_tva_depth); 
 			break;
 		case 0x33:	/* CC1 LFO2 Rate Control */
 			channel[ch].cc1.lfo2_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc1.lfo2_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc1.lfo2_rate);
 			break;
 		case 0x34:	/* CC1 LFO2 Pitch Depth */
 			channel[ch].cc1.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_pitch_depth); 
 			break;
 		case 0x35:	/* CC1 LFO2 Filter Depth */
 			channel[ch].cc1.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc1.lfo2_tvf_depth); 
 			break;
 		case 0x36:	/* CC1 LFO2 Amplitude Depth */
 			channel[ch].cc1.lfo2_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo2_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc1.lfo2_tva_depth); 
 			break;
 		case 0x37:	/* CC2 Pitch Control */
 			if(val > 0x58) {val = 0x58;}
 			else if(val < 0x28) {val = 0x28;}
 			channel[ch].cc2.pitch = val - 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 Pitch Control (CH:%d %d semitones)", ch, channel[ch].cc2.pitch);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 Pitch Control (CH:%d %d semitones)", ch, channel[ch].cc2.pitch);
 			break;
 		case 0x38:	/* CC2 Filter Cutoff Control */
 			channel[ch].cc2.cutoff = (val - 64) * 150;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].cc2.cutoff);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 Filter Cutoff Control (CH:%d %d cents)", ch, channel[ch].cc2.cutoff);
 			break;
 		case 0x39:	/* CC2 Amplitude Control */
 			channel[ch].cc2.amp = (float)val / 64.0f - 1.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 Amplitude Control (CH:%d %.2f)", ch, channel[ch].cc2.amp);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 Amplitude Control (CH:%d %.2f)", ch, channel[ch].cc2.amp);
 			break;
 		case 0x3A:	/* CC2 LFO1 Rate Control */
 			channel[ch].cc2.lfo1_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc2.lfo1_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO1 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc2.lfo1_rate);
 			break;
 		case 0x3B:	/* CC2 LFO1 Pitch Depth */
 			channel[ch].cc2.lfo1_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO1 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_pitch_depth); 
 			break;
 		case 0x3C:	/* CC2 LFO1 Filter Depth */
 			channel[ch].cc2.lfo1_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO1 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo1_tvf_depth); 
 			break;
 		case 0x3D:	/* CC2 LFO1 Amplitude Depth */
 			channel[ch].cc2.lfo1_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo1_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO1 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo1_tva_depth); 
 			break;
 		case 0x3E:	/* CC2 LFO2 Rate Control */
 			channel[ch].cc2.lfo2_rate = (float)(val - 64) / 6.4f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc2.lfo2_rate);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO2 Rate Control (CH:%d %.1f Hz)", ch, channel[ch].cc2.lfo2_rate);
 			break;
 		case 0x3F:	/* CC2 LFO2 Pitch Depth */
 			channel[ch].cc2.lfo2_pitch_depth = conv_lfo_pitch_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_pitch_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO2 Pitch Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_pitch_depth); 
 			break;
 		case 0x40:	/* CC2 LFO2 Filter Depth */
 			channel[ch].cc2.lfo2_tvf_depth = conv_lfo_filter_depth(val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_tvf_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO2 Filter Depth (CH:%d %d cents)", ch, channel[ch].cc2.lfo2_tvf_depth); 
 			break;
 		case 0x41:	/* CC2 LFO2 Amplitude Depth */
 			channel[ch].cc2.lfo2_tva_depth = (float)val / 127.0f;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo2_tva_depth); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 LFO2 Amplitude Depth (CH:%d %.2f)", ch, channel[ch].cc2.lfo2_tva_depth); 
 			break;
 		case 0x42:	/* Note Limit Low */
 			channel[ch].note_limit_low = val;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Note Limit Low (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Note Limit Low (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x43:	/* Note Limit High */
 			channel[ch].note_limit_high = val;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Note Limit High (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Note Limit High (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x44:	/* Velocity Limit Low */
 			channel[ch].vel_limit_low = val;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Velocity Limit Low (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity Limit Low (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x45:	/* Velocity Limit High */
 			channel[ch].vel_limit_high = val;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Velocity Limit High (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity Limit High (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x46:	/* Rx. Note Off */
 			if (channel[ch].drums[note] == NULL)
@@ -3037,86 +3036,86 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x48:	/* Rx. Pitch Bend */
 			set_rx(ch, RX_PITCH_BEND, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Pitch Bend (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Pitch Bend (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x49:	/* Rx. Channel Pressure */
 			set_rx(ch, RX_CH_PRESSURE, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Channel Pressure (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Channel Pressure (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x4A:	/* Rx. Program Change */
 			set_rx(ch, RX_PROGRAM_CHANGE, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Program Change (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Program Change (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x4B:	/* Rx. Control Change */
 			set_rx(ch, RX_CONTROL_CHANGE, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Control Change (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Control Change (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x4C:	/* Rx. Poly Pressure */
 			set_rx(ch, RX_POLY_PRESSURE, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Poly Pressure (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Poly Pressure (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x4D:	/* Rx. Note Message */
 			set_rx(ch, RX_NOTE_MESSAGE, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Note Message (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Note Message (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x4E:	/* Rx. RPN */
 			set_rx(ch, RX_RPN, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. RPN (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. RPN (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x4F:	/* Rx. NRPN */
 			set_rx(ch, RX_NRPN, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. NRPN (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. NRPN (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x50:	/* Rx. Modulation */
 			set_rx(ch, RX_MODULATION, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Modulation (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Modulation (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x51:	/* Rx. Volume */
 			set_rx(ch, RX_VOLUME, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Volume (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Volume (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x52:	/* Rx. Panpot */
 			set_rx(ch, RX_PANPOT, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Panpot (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Panpot (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x53:	/* Rx. Expression */
 			set_rx(ch, RX_EXPRESSION, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Expression (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Expression (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x54:	/* Rx. Hold1 */
 			set_rx(ch, RX_HOLD1, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Hold1 (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Hold1 (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x55:	/* Rx. Portamento */
 			set_rx(ch, RX_PORTAMENTO, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Portamento (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Portamento (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x56:	/* Rx. Sostenuto */
 			set_rx(ch, RX_SOSTENUTO, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Sostenuto (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Sostenuto (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x57:	/* Rx. Soft */
 			set_rx(ch, RX_SOFT, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Soft (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Soft (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x58:	/* Rx. Bank Select */
 			set_rx(ch, RX_BANK_SELECT, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Bank Select (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Bank Select (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x59:	/* Rx. Bank Select LSB */
 			set_rx(ch, RX_BANK_SELECT_LSB, val);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Rx. Bank Select LSB (CH:%d VAL:%d)", ch, val); 
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Rx. Bank Select LSB (CH:%d VAL:%d)", ch, val); 
 			break;
 		case 0x60:	/* Reverb Type (GM2) */
 			if (val > 8) {val = 8;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Reverb Type (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Type (%d)", val);
 			reverb->set_reverb_macro_gm2(val);
 			reverb->recompute_reverb_status_gs();
 			reverb->init_reverb();
 			break;
 		case 0x61:	/* Chorus Type (GM2) */
 			if (val > 5) {val = 5;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Type (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Type (%d)", val);
 			reverb->set_chorus_macro_gs(val);
 			reverb->recompute_chorus_status_gs();
 			reverb->init_ch_chorus();
@@ -3157,14 +3156,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x05:	/* Reverb Macro */
 			if (val > 7) {val = 7;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Macro (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Macro (%d)",val);
 			reverb->set_reverb_macro_gs(val);
 			reverb->recompute_reverb_status_gs();
 			reverb->init_reverb();
 			break;
 		case 0x06:	/* Reverb Character */
 			if (val > 7) {val = 7;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Character (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Character (%d)",val);
 			if (reverb->reverb_status_gs.character != val) {
 				reverb->reverb_status_gs.character = val;
 				reverb->recompute_reverb_status_gs();
@@ -3173,14 +3172,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x07:	/* Reverb Pre-LPF */
 			if (val > 7) {val = 7;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Pre-LPF (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Pre-LPF (%d)",val);
 			if(reverb->reverb_status_gs.pre_lpf != val) {
 				reverb->reverb_status_gs.pre_lpf = val;
 				reverb->recompute_reverb_status_gs();
 			}
 			break;
 		case 0x08:	/* Reverb Level */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Level (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Level (%d)",val);
 			if(reverb->reverb_status_gs.level != val) {
 				reverb->reverb_status_gs.level = val;
 				reverb->recompute_reverb_status_gs();
@@ -3188,7 +3187,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x09:	/* Reverb Time */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Time (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Time (%d)",val);
 			if(reverb->reverb_status_gs.time != val) {
 				reverb->reverb_status_gs.time = val;
 				reverb->recompute_reverb_status_gs();
@@ -3196,7 +3195,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x0A:	/* Reverb Delay Feedback */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Delay Feedback (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Delay Feedback (%d)",val);
 			if(reverb->reverb_status_gs.delay_feedback != val) {
 				reverb->reverb_status_gs.delay_feedback = val;
 				reverb->recompute_reverb_status_gs();
@@ -3204,7 +3203,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x0C:	/* Reverb Predelay Time */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Predelay Time (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Predelay Time (%d)",val);
 			if(reverb->reverb_status_gs.pre_delay_time != val) {
 				reverb->reverb_status_gs.pre_delay_time = val;
 				reverb->recompute_reverb_status_gs();
@@ -3213,21 +3212,21 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x0D:	/* Chorus Macro */
 			if (val > 7) {val = 7;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Macro (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Macro (%d)",val);
 			reverb->set_chorus_macro_gs(val);
 			reverb->recompute_chorus_status_gs();
 			reverb->init_ch_chorus();
 			break;
 		case 0x0E:	/* Chorus Pre-LPF */
 			if (val > 7) {val = 7;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Pre-LPF (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Pre-LPF (%d)",val);
 			if (reverb->chorus_status_gs.pre_lpf != val) {
 				reverb->chorus_status_gs.pre_lpf = val;
 				reverb->recompute_chorus_status_gs();
 			}
 			break;
 		case 0x0F:	/* Chorus Level */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Level (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Level (%d)",val);
 			if (reverb->chorus_status_gs.level != val) {
 				reverb->chorus_status_gs.level = val;
 				reverb->recompute_chorus_status_gs();
@@ -3235,7 +3234,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x10:	/* Chorus Feedback */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Feedback (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Feedback (%d)",val);
 			if (reverb->chorus_status_gs.feedback != val) {
 				reverb->chorus_status_gs.feedback = val;
 				reverb->recompute_chorus_status_gs();
@@ -3243,7 +3242,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x11:	/* Chorus Delay */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Delay (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Delay (%d)",val);
 			if (reverb->chorus_status_gs.delay != val) {
 				reverb->chorus_status_gs.delay = val;
 				reverb->recompute_chorus_status_gs();
@@ -3251,7 +3250,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x12:	/* Chorus Rate */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Rate (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Rate (%d)",val);
 			if (reverb->chorus_status_gs.rate != val) {
 				reverb->chorus_status_gs.rate = val;
 				reverb->recompute_chorus_status_gs();
@@ -3259,7 +3258,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x13:	/* Chorus Depth */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Depth (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Depth (%d)",val);
 			if (reverb->chorus_status_gs.depth != val) {
 				reverb->chorus_status_gs.depth = val;
 				reverb->recompute_chorus_status_gs();
@@ -3267,7 +3266,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x14:	/* Chorus Send Level to Reverb */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Send Level to Reverb (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Send Level to Reverb (%d)",val);
 			if (reverb->chorus_status_gs.send_reverb != val) {
 				reverb->chorus_status_gs.send_reverb = val;
 				reverb->recompute_chorus_status_gs();
@@ -3275,7 +3274,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x15:	/* Chorus Send Level to Delay */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Send Level to Delay (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Send Level to Delay (%d)",val);
 			if (reverb->chorus_status_gs.send_delay != val) {
 				reverb->chorus_status_gs.send_delay = val;
 				reverb->recompute_chorus_status_gs();
@@ -3284,14 +3283,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x16:	/* Delay Macro */
 			if (val > 7) {val = 7;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Macro (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Macro (%d)",val);
 			reverb->set_delay_macro_gs(val);
 			reverb->recompute_delay_status_gs();
 			reverb->init_ch_delay();
 			break;
 		case 0x17:	/* Delay Pre-LPF */
 			if (val > 7) {val = 7;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Pre-LPF (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Pre-LPF (%d)",val);
 			val &= 0x7;
 			if (reverb->delay_status_gs.pre_lpf != val) {
 				reverb->delay_status_gs.pre_lpf = val;
@@ -3299,7 +3298,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x18:	/* Delay Time Center */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Time Center (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Time Center (%d)",val);
 			if (reverb->delay_status_gs.time_c != val) {
 				reverb->delay_status_gs.time_c = val;
 				reverb->recompute_delay_status_gs();
@@ -3307,7 +3306,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x19:	/* Delay Time Ratio Left */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Time Ratio Left (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Time Ratio Left (%d)",val);
 			if (val == 0) {val = 1;}
 			if (reverb->delay_status_gs.time_l != val) {
 				reverb->delay_status_gs.time_l = val;
@@ -3316,7 +3315,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x1A:	/* Delay Time Ratio Right */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Time Ratio Right (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Time Ratio Right (%d)",val);
 			if (val == 0) {val = 1;}
 			if (reverb->delay_status_gs.time_r != val) {
 				reverb->delay_status_gs.time_r = val;
@@ -3325,7 +3324,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x1B:	/* Delay Level Center */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level Center (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level Center (%d)",val);
 			if (reverb->delay_status_gs.level_center != val) {
 				reverb->delay_status_gs.level_center = val;
 				reverb->recompute_delay_status_gs();
@@ -3333,7 +3332,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x1C:	/* Delay Level Left */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level Left (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level Left (%d)",val);
 			if (reverb->delay_status_gs.level_left != val) {
 				reverb->delay_status_gs.level_left = val;
 				reverb->recompute_delay_status_gs();
@@ -3341,7 +3340,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x1D:	/* Delay Level Right */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level Right (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level Right (%d)",val);
 			if (reverb->delay_status_gs.level_right != val) {
 				reverb->delay_status_gs.level_right = val;
 				reverb->recompute_delay_status_gs();
@@ -3349,7 +3348,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x1E:	/* Delay Level */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Level (%d)",val);
 			if (reverb->delay_status_gs.level != val) {
 				reverb->delay_status_gs.level = val;
 				reverb->recompute_delay_status_gs();
@@ -3357,7 +3356,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x1F:	/* Delay Feedback */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Feedback (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Feedback (%d)",val);
 			if (reverb->delay_status_gs.feedback != val) {
 				reverb->delay_status_gs.feedback = val;
 				reverb->recompute_delay_status_gs();
@@ -3365,7 +3364,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			}
 			break;
 		case 0x20:	/* Delay Send Level to Reverb */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Send Level to Reverb (%d)",val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Send Level to Reverb (%d)",val);
 			if (reverb->delay_status_gs.send_reverb != val) {
 				reverb->delay_status_gs.send_reverb = val;
 				reverb->recompute_delay_status_gs();
@@ -3374,37 +3373,37 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x21:	/* Velocity Sense Depth */
 			channel[ch].velocity_sense_depth = val;
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity Sense Depth (CH:%d VAL:%d)",ch,val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity Sense Depth (CH:%d VAL:%d)",ch,val);
 			break;
 		case 0x22:	/* Velocity Sense Offset */
 			channel[ch].velocity_sense_offset = val;
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity Sense Offset (CH:%d VAL:%d)",ch,val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity Sense Offset (CH:%d VAL:%d)",ch,val);
 			break;
 		case 0x23:	/* Insertion Effect ON/OFF */
 			if(!opt_insertion_effect) {break;}
 			if(channel[ch].insertion_effect != val) {
-				if(val) {ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX ON (CH:%d)",ch);}
-				else {ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX OFF (CH:%d)",ch);}
+				if(val) {//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX ON (CH:%d)",ch);}
+				else {//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EFX OFF (CH:%d)",ch);}
 			}
 			channel[ch].insertion_effect = val;
 			break;
 		case 0x24:	/* Assign Mode */
 			channel[ch].assign_mode = val;
 			if(val == 0) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"Assign Mode: Single (CH:%d)",ch);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Assign Mode: Single (CH:%d)",ch);
 			} else if(val == 1) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"Assign Mode: Limited-Multi (CH:%d)",ch);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Assign Mode: Limited-Multi (CH:%d)",ch);
 			} else if(val == 2) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"Assign Mode: Full-Multi (CH:%d)",ch);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Assign Mode: Full-Multi (CH:%d)",ch);
 			}
 			break;
 		case 0x25:	/* TONE MAP-0 NUMBER */
 			channel[ch].tone_map0_number = val;
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Tone Map-0 Number (CH:%d VAL:%d)",ch,val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Tone Map-0 Number (CH:%d VAL:%d)",ch,val);
 			break;
 		case 0x26:	/* Pitch Offset Fine */
 			channel[ch].pitch_offset_fine = (double)((((int32_t)val << 4) | (int32_t)val) - 0x80) / 10.0;
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Pitch Offset Fine (CH:%d %3fHz)",ch,channel[ch].pitch_offset_fine);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Pitch Offset Fine (CH:%d %3fHz)",ch,channel[ch].pitch_offset_fine);
 			break;
 		case 0x27:	/* Insertion Effect Parameter */
 			if(!opt_insertion_effect) {break;}
@@ -3576,14 +3575,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		{
 		case 0x00:	/* Insertion Effect Type MSB */
 			if (reverb->insertion_effect_xg[note].type_msb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Insertion Effect Type MSB (%d %02X)", note, val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Insertion Effect Type MSB (%d %02X)", note, val);
 				reverb->insertion_effect_xg[note].type_msb = val;
 				reverb->realloc_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x01:	/* Insertion Effect Type LSB */
 			if (reverb->insertion_effect_xg[note].type_lsb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Insertion Effect Type LSB (%d %02X)", note, val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Insertion Effect Type LSB (%d %02X)", note, val);
 				reverb->insertion_effect_xg[note].type_lsb = val;
 				reverb->realloc_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
@@ -3600,63 +3599,63 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x0B:
 			if (reverb->insertion_effect_xg[note].use_msb) {break;}
 			temp = b - 0x02;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Insertion Effect Parameter %d (%d %d)", temp + 1, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Insertion Effect Parameter %d (%d %d)", temp + 1, note, val);
 			if (reverb->insertion_effect_xg[note].param_lsb[temp] != val) {
 				reverb->insertion_effect_xg[note].param_lsb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x0C:	/* Insertion Effect Part */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Insertion Effect Part (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Insertion Effect Part (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].part != val) {
 				reverb->insertion_effect_xg[note].part = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x0D:	/* MW Insertion Control Depth */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MW Insertion Control Depth (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MW Insertion Control Depth (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].mw_depth != val) {
 				reverb->insertion_effect_xg[note].mw_depth = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x0E:	/* BEND Insertion Control Depth */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND Insertion Control Depth (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND Insertion Control Depth (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].bend_depth != val) {
 				reverb->insertion_effect_xg[note].bend_depth = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x0F:	/* CAT Insertion Control Depth */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAT Insertion Control Depth (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAT Insertion Control Depth (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].cat_depth != val) {
 				reverb->insertion_effect_xg[note].cat_depth = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x10:	/* AC1 Insertion Control Depth */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "AC1 Insertion Control Depth (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"AC1 Insertion Control Depth (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].ac1_depth != val) {
 				reverb->insertion_effect_xg[note].ac1_depth = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x11:	/* AC2 Insertion Control Depth */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "AC2 Insertion Control Depth (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"AC2 Insertion Control Depth (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].ac2_depth != val) {
 				reverb->insertion_effect_xg[note].ac2_depth = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x12:	/* CBC1 Insertion Control Depth */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CBC1 Insertion Control Depth (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CBC1 Insertion Control Depth (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].cbc1_depth != val) {
 				reverb->insertion_effect_xg[note].cbc1_depth = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
 			}
 			break;
 		case 0x13:	/* CBC2 Insertion Control Depth */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CBC2 Insertion Control Depth (%d %d)", note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CBC2 Insertion Control Depth (%d %d)", note, val);
 			if (reverb->insertion_effect_xg[note].cbc2_depth != val) {
 				reverb->insertion_effect_xg[note].cbc2_depth = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
@@ -3669,7 +3668,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x24:
 		case 0x25:
 			temp = b - 0x20 + 10;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Insertion Effect Parameter %d (%d %d)", temp + 1, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Insertion Effect Parameter %d (%d %d)", temp + 1, note, val);
 			if (reverb->insertion_effect_xg[note].param_lsb[temp] != val) {
 				reverb->insertion_effect_xg[note].param_lsb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
@@ -3687,7 +3686,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x42:
 			if (!reverb->insertion_effect_xg[note].use_msb) {break;}
 			temp = (b - 0x30) / 2;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Insertion Effect Parameter %d MSB (%d %d)", temp + 1, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Insertion Effect Parameter %d MSB (%d %d)", temp + 1, note, val);
 			if (reverb->insertion_effect_xg[note].param_msb[temp] != val) {
 				reverb->insertion_effect_xg[note].param_msb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
@@ -3705,7 +3704,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x43:
 			if (!reverb->insertion_effect_xg[note].use_msb) {break;}
 			temp = (b - 0x31) / 2;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Insertion Effect Parameter %d LSB (%d %d)", temp + 1, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Insertion Effect Parameter %d LSB (%d %d)", temp + 1, note, val);
 			if (reverb->insertion_effect_xg[note].param_lsb[temp] != val) {
 				reverb->insertion_effect_xg[note].param_lsb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->insertion_effect_xg[note]);
@@ -3720,14 +3719,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		{
 		case 0x00:	/* Reverb Type MSB */
 			if (reverb->reverb_status_xg.type_msb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Reverb Type MSB (%02X)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Type MSB (%02X)", val);
 				reverb->reverb_status_xg.type_msb = val;
 				reverb->realloc_effect_xg(&reverb->reverb_status_xg);
 			}
 			break;
 		case 0x01:	/* Reverb Type LSB */
 			if (reverb->reverb_status_xg.type_lsb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Reverb Type LSB (%02X)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Type LSB (%02X)", val);
 				reverb->reverb_status_xg.type_lsb = val;
 				reverb->realloc_effect_xg(&reverb->reverb_status_xg);
 			}
@@ -3742,7 +3741,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x09:
 		case 0x0A:
 		case 0x0B:
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Reverb Parameter %d (%d)", b - 0x02 + 1, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Parameter %d (%d)", b - 0x02 + 1, val);
 			if (reverb->reverb_status_xg.param_lsb[b - 0x02] != val) {
 				reverb->reverb_status_xg.param_lsb[b - 0x02] = val;
 				reverb->recompute_effect_xg(&reverb->reverb_status_xg);
@@ -3750,13 +3749,13 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x0C:	/* Reverb Return */
 #if 0	/* XG specific reverb is not currently implemented */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Reverb Return (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Return (%d)", val);
 			if (reverb->reverb_status_xg.ret != val) {
 				reverb->reverb_status_xg.ret = val;
 				reverb->recompute_effect_xg(&reverb->reverb_status_xg);
 			}
 #else	/* use GS reverb instead */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Return (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Return (%d)", val);
 			if (reverb->reverb_status_gs.level != val) {
 				reverb->reverb_status_gs.level = val;
 				reverb->recompute_reverb_status_gs();
@@ -3765,7 +3764,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 #endif
 			break;
 		case 0x0D:	/* Reverb Pan */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Reverb Pan (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Pan (%d)", val);
 			if (reverb->reverb_status_xg.pan != val) {
 				reverb->reverb_status_xg.pan = val;
 				reverb->recompute_effect_xg(&reverb->reverb_status_xg);
@@ -3778,7 +3777,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x14:
 		case 0x15:
 			temp = b - 0x10 + 10;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Reverb Parameter %d (%d)", temp + 1, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Reverb Parameter %d (%d)", temp + 1, val);
 			if (reverb->reverb_status_xg.param_lsb[temp] != val) {
 				reverb->reverb_status_xg.param_lsb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->reverb_status_xg);
@@ -3786,14 +3785,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x20:	/* Chorus Type MSB */
 			if (reverb->chorus_status_xg.type_msb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Type MSB (%02X)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Type MSB (%02X)", val);
 				reverb->chorus_status_xg.type_msb = val;
 				reverb->realloc_effect_xg(&reverb->chorus_status_xg);
 			}
 			break;
 		case 0x21:	/* Chorus Type LSB */
 			if (reverb->chorus_status_xg.type_lsb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Type LSB (%02X)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Type LSB (%02X)", val);
 				reverb->chorus_status_xg.type_lsb = val;
 				reverb->realloc_effect_xg(&reverb->chorus_status_xg);
 			}
@@ -3808,7 +3807,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x29:
 		case 0x2A:
 		case 0x2B:
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Parameter %d (%d)", b - 0x22 + 1, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Parameter %d (%d)", b - 0x22 + 1, val);
 			if (reverb->chorus_status_xg.param_lsb[b - 0x22] != val) {
 				reverb->chorus_status_xg.param_lsb[b - 0x22] = val;
 				reverb->recompute_effect_xg(&reverb->chorus_status_xg);
@@ -3816,13 +3815,13 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x2C:	/* Chorus Return */
 #if 0	/* XG specific chorus is not currently implemented */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Return (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Return (%d)", val);
 			if (reverb->chorus_status_xg.ret != val) {
 				reverb->chorus_status_xg.ret = val;
 				reverb->recompute_effect_xg(&reverb->chorus_status_xg);
 			}
 #else	/* use GS chorus instead */
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Return (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Return (%d)", val);
 			if (reverb->chorus_status_gs.level != val) {
 				reverb->chorus_status_gs.level = val;
 				reverb->recompute_chorus_status_gs();
@@ -3831,14 +3830,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 #endif
 			break;
 		case 0x2D:	/* Chorus Pan */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Pan (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Pan (%d)", val);
 			if (reverb->chorus_status_xg.pan != val) {
 				reverb->chorus_status_xg.pan = val;
 				reverb->recompute_effect_xg(&reverb->chorus_status_xg);
 			}
 			break;
 		case 0x2E:	/* Send Chorus To Reverb */
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Send Chorus To Reverb (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Send Chorus To Reverb (%d)", val);
 			if (reverb->chorus_status_xg.send_reverb != val) {
 				reverb->chorus_status_xg.send_reverb = val;
 				reverb->recompute_effect_xg(&reverb->chorus_status_xg);
@@ -3851,7 +3850,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x34:
 		case 0x35:
 			temp = b - 0x30 + 10;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Parameter %d (%d)", temp + 1, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Parameter %d (%d)", temp + 1, val);
 			if (reverb->chorus_status_xg.param_lsb[temp] != val) {
 				reverb->chorus_status_xg.param_lsb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->chorus_status_xg);
@@ -3860,7 +3859,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x40:	/* Variation Type MSB */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
 			if (reverb->variation_effect_xg[note].type_msb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Type MSB (%02X)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Type MSB (%02X)", val);
 				reverb->variation_effect_xg[note].type_msb = val;
 				reverb->realloc_effect_xg(&reverb->variation_effect_xg[note]);
 			}
@@ -3868,7 +3867,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x41:	/* Variation Type LSB */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
 			if (reverb->variation_effect_xg[note].type_lsb != val) {
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Type LSB (%02X)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Type LSB (%02X)", val);
 				reverb->variation_effect_xg[note].type_lsb = val;
 				reverb->realloc_effect_xg(&reverb->variation_effect_xg[note]);
 			}
@@ -3885,7 +3884,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x54:
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
 			temp = (b - 0x42) / 2;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Parameter %d MSB (%d)", temp, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Parameter %d MSB (%d)", temp, val);
 			if (reverb->variation_effect_xg[note].param_msb[temp] != val) {
 				reverb->variation_effect_xg[note].param_msb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3903,7 +3902,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x55:
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
 			temp = (b - 0x43) / 2;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Parameter %d LSB (%d)", temp, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Parameter %d LSB (%d)", temp, val);
 			if (reverb->variation_effect_xg[note].param_lsb[temp] != val) {
 				reverb->variation_effect_xg[note].param_lsb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3911,7 +3910,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x56:	/* Variation Return */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Return (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Return (%d)", val);
 			if (reverb->variation_effect_xg[note].ret != val) {
 				reverb->variation_effect_xg[note].ret = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3919,7 +3918,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x57:	/* Variation Pan */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Pan (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Pan (%d)", val);
 			if (reverb->variation_effect_xg[note].pan != val) {
 				reverb->variation_effect_xg[note].pan = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3927,7 +3926,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x58:	/* Send Variation To Reverb */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Send Variation To Reverb (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Send Variation To Reverb (%d)", val);
 			if (reverb->variation_effect_xg[note].send_reverb != val) {
 				reverb->variation_effect_xg[note].send_reverb = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3935,7 +3934,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x59:	/* Send Variation To Chorus */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Send Variation To Chorus (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Send Variation To Chorus (%d)", val);
 			if (reverb->variation_effect_xg[note].send_chorus != val) {
 				reverb->variation_effect_xg[note].send_chorus = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3943,7 +3942,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x5A:	/* Variation Connection */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Connection (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Connection (%d)", val);
 			if (reverb->variation_effect_xg[note].connection != val) {
 				reverb->variation_effect_xg[note].connection = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3951,7 +3950,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x5B:	/* Variation Part */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Part (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Part (%d)", val);
 			if (reverb->variation_effect_xg[note].part != val) {
 				reverb->variation_effect_xg[note].part = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3959,7 +3958,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x5C:	/* MW Variation Control Depth */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MW Variation Control Depth (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MW Variation Control Depth (%d)", val);
 			if (reverb->variation_effect_xg[note].mw_depth != val) {
 				reverb->variation_effect_xg[note].mw_depth = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3967,7 +3966,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x5D:	/* BEND Variation Control Depth */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "BEND Variation Control Depth (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"BEND Variation Control Depth (%d)", val);
 			if (reverb->variation_effect_xg[note].bend_depth != val) {
 				reverb->variation_effect_xg[note].bend_depth = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3975,7 +3974,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x5E:	/* CAT Variation Control Depth */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CAT Variation Control Depth (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CAT Variation Control Depth (%d)", val);
 			if (reverb->variation_effect_xg[note].cat_depth != val) {
 				reverb->variation_effect_xg[note].cat_depth = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3983,7 +3982,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x5F:	/* AC1 Variation Control Depth */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "AC1 Variation Control Depth (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"AC1 Variation Control Depth (%d)", val);
 			if (reverb->variation_effect_xg[note].ac1_depth != val) {
 				reverb->variation_effect_xg[note].ac1_depth = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3991,7 +3990,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x60:	/* AC2 Variation Control Depth */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "AC2 Variation Control Depth (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"AC2 Variation Control Depth (%d)", val);
 			if (reverb->variation_effect_xg[note].ac2_depth != val) {
 				reverb->variation_effect_xg[note].ac2_depth = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -3999,7 +3998,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x61:	/* CBC1 Variation Control Depth */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CBC1 Variation Control Depth (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CBC1 Variation Control Depth (%d)", val);
 			if (reverb->variation_effect_xg[note].cbc1_depth != val) {
 				reverb->variation_effect_xg[note].cbc1_depth = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -4007,7 +4006,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			break;
 		case 0x62:	/* CBC2 Variation Control Depth */
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "CBC2 Variation Control Depth (%d)", val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CBC2 Variation Control Depth (%d)", val);
 			if (reverb->variation_effect_xg[note].cbc2_depth != val) {
 				reverb->variation_effect_xg[note].cbc2_depth = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -4021,7 +4020,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x75:
 			temp = b - 0x70 + 10;
 			if (note >= XG_VARIATION_EFFECT_NUM || note < 0) {break;}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Parameter %d (%d)", temp + 1, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Parameter %d (%d)", temp + 1, val);
 			if (reverb->variation_effect_xg[note].param_lsb[temp] != val) {
 				reverb->variation_effect_xg[note].param_lsb[temp] = val;
 				reverb->recompute_effect_xg(&reverb->variation_effect_xg[note]);
@@ -4035,7 +4034,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		{
 		case 0x00:	/* EQ type */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ type (%d)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ type (%d)", val);
 				reverb->multi_eq_xg.type = val;
 				reverb->set_multi_eq_type_xg(val);
 				reverb->recompute_multi_eq_xg();
@@ -4045,7 +4044,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			if(opt_eq_control) {
 				if(val > 0x4C) {val = 0x4C;}
 				else if(val < 0x34) {val = 0x34;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain1 (%d dB)", val - 0x40);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain1 (%d dB)", val - 0x40);
 				reverb->multi_eq_xg.gain1 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4053,21 +4052,21 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x02:	/* EQ frequency1 */
 			if(opt_eq_control) {
 				if(val > 60) {val = 60;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency1 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency1 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
 				reverb->multi_eq_xg.freq1 = val;
 				reverb->recompute_multi_eq_xg();
 			}
 			break;
 		case 0x03:	/* EQ Q1 */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q1 (%f)", (double)val / 10.0);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q1 (%f)", (double)val / 10.0);
 				reverb->multi_eq_xg.q1 = val;
 				reverb->recompute_multi_eq_xg();
 			}
 			break;
 		case 0x04:	/* EQ shape1 */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ shape1 (%d)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ shape1 (%d)", val);
 				reverb->multi_eq_xg.shape1 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4076,7 +4075,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			if(opt_eq_control) {
 				if(val > 0x4C) {val = 0x4C;}
 				else if(val < 0x34) {val = 0x34;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain2 (%d dB)", val - 0x40);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain2 (%d dB)", val - 0x40);
 				reverb->multi_eq_xg.gain2 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4084,14 +4083,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x06:	/* EQ frequency2 */
 			if(opt_eq_control) {
 				if(val > 60) {val = 60;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency2 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency2 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
 				reverb->multi_eq_xg.freq2 = val;
 				reverb->recompute_multi_eq_xg();
 			}
 			break;
 		case 0x07:	/* EQ Q2 */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q2 (%f)", (double)val / 10.0);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q2 (%f)", (double)val / 10.0);
 				reverb->multi_eq_xg.q2 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4100,7 +4099,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			if(opt_eq_control) {
 				if(val > 0x4C) {val = 0x4C;}
 				else if(val < 0x34) {val = 0x34;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain3 (%d dB)", val - 0x40);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain3 (%d dB)", val - 0x40);
 				reverb->multi_eq_xg.gain3 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4108,14 +4107,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x0A:	/* EQ frequency3 */
 			if(opt_eq_control) {
 				if(val > 60) {val = 60;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency3 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency3 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
 				reverb->multi_eq_xg.freq3 = val;
 				reverb->recompute_multi_eq_xg();
 			}
 			break;
 		case 0x0B:	/* EQ Q3 */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q3 (%f)", (double)val / 10.0);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q3 (%f)", (double)val / 10.0);
 				reverb->multi_eq_xg.q3 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4124,7 +4123,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			if(opt_eq_control) {
 				if(val > 0x4C) {val = 0x4C;}
 				else if(val < 0x34) {val = 0x34;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain4 (%d dB)", val - 0x40);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain4 (%d dB)", val - 0x40);
 				reverb->multi_eq_xg.gain4 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4132,14 +4131,14 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x0E:	/* EQ frequency4 */
 			if(opt_eq_control) {
 				if(val > 60) {val = 60;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency4 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency4 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
 				reverb->multi_eq_xg.freq4 = val;
 				reverb->recompute_multi_eq_xg();
 			}
 			break;
 		case 0x0F:	/* EQ Q4 */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q4 (%f)", (double)val / 10.0);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q4 (%f)", (double)val / 10.0);
 				reverb->multi_eq_xg.q4 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4148,7 +4147,7 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 			if(opt_eq_control) {
 				if(val > 0x4C) {val = 0x4C;}
 				else if(val < 0x34) {val = 0x34;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain5 (%d dB)", val - 0x40);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ gain5 (%d dB)", val - 0x40);
 				reverb->multi_eq_xg.gain5 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4156,21 +4155,21 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x12:	/* EQ frequency5 */
 			if(opt_eq_control) {
 				if(val > 60) {val = 60;}
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency5 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ frequency5 (%d Hz)", (int32_t)eq_freq_table_xg[val]);
 				reverb->multi_eq_xg.freq5 = val;
 				reverb->recompute_multi_eq_xg();
 			}
 			break;
 		case 0x13:	/* EQ Q5 */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q5 (%f)", (double)val / 10.0);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ Q5 (%f)", (double)val / 10.0);
 				reverb->multi_eq_xg.q5 = val;
 				reverb->recompute_multi_eq_xg();
 			}
 			break;
 		case 0x14:	/* EQ shape5 */
 			if(opt_eq_control) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ shape5 (%d)", val);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ shape5 (%d)", val);
 				reverb->multi_eq_xg.shape5 = val;
 				reverb->recompute_multi_eq_xg();
 			}
@@ -4196,17 +4195,17 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x06:	/* Same Note Number Key On Assign */
 			if(val == 0) {
 				channel[ch].assign_mode = 0;
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"Same Note Number Key On Assign: Single (CH:%d)",ch);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Same Note Number Key On Assign: Single (CH:%d)",ch);
 			} else if(val == 1) {
 				channel[ch].assign_mode = 2;
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"Same Note Number Key On Assign: Multi (CH:%d)",ch);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Same Note Number Key On Assign: Multi (CH:%d)",ch);
 			} else if(val == 2) {
-				ctl_cmsg(CMSG_INFO,VERB_NOISY,"Same Note Number Key On Assign: Inst is not supported. (CH:%d)",ch);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Same Note Number Key On Assign: Inst is not supported. (CH:%d)",ch);
 			}
 			break;
 		case 0x11:	/* Dry Level */
 			channel[ch].dry_level = val;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Dry Level (CH:%d VAL:%d)", ch, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Dry Level (CH:%d VAL:%d)", ch, val);
 			break;
 		}
 		} else if ((note & 0xF0) == 0x30) {	/* Drum Setup */
@@ -4216,17 +4215,13 @@ void Player::process_sysex_event(int ev, int ch, int val, int b)
 		case 0x0E:	/* EG Decay1 */
 			if (channel[ch].drums[note] == NULL)
 				play_midi_setup_drums(ch, note);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,
-				"Drum Instrument EG Decay1 (CH:%d NOTE:%d VAL:%d)",
-				ch, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument EG Decay1 (CH:%d NOTE:%d VAL:%d)", ch, note, val);
 			channel[ch].drums[note]->drum_envelope_rate[EG_DECAY1] = val;
 			break;
 		case 0x0F:	/* EG Decay2 */
 			if (channel[ch].drums[note] == NULL)
 				play_midi_setup_drums(ch, note);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,
-				"Drum Instrument EG Decay2 (CH:%d NOTE:%d VAL:%d)",
-				ch, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument EG Decay2 (CH:%d NOTE:%d VAL:%d)", ch, note, val);
 			channel[ch].drums[note]->drum_envelope_rate[EG_DECAY2] = val;
 			break;
 		default:
@@ -4350,8 +4345,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 	switch (addr) {
 	case NRPN_ADDR_0108:	/* Vibrato Rate */
 		if (opt_nrpn_vibrato) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,
-					"Vibrato Rate (CH:%d VAL:%d)", ch, val - 64);
+			ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Vibrato Rate (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].vibrato_ratio = gs_cnv_vib_rate(val);
 		}
 		if (update_now)
@@ -4359,8 +4353,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		break;
 	case NRPN_ADDR_0109:	/* Vibrato Depth */
 		if (opt_nrpn_vibrato) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,
-					"Vibrato Depth (CH:%d VAL:%d)", ch, val - 64);
+			ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Vibrato Depth (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].vibrato_depth = gs_cnv_vib_depth(val);
 		}
 		if (update_now)
@@ -4368,8 +4361,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		break;
 	case NRPN_ADDR_010A:	/* Vibrato Delay */
 		if (opt_nrpn_vibrato) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,
-					"Vibrato Delay (CH:%d VAL:%d)", ch, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Vibrato Delay (CH:%d VAL:%d)", ch, val);
 			channel[ch].vibrato_delay = gs_cnv_vib_delay(val);
 		}
 		if (update_now)
@@ -4377,28 +4369,26 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		break;
 	case NRPN_ADDR_0120:	/* Filter Cutoff Frequency */
 		if (opt_lpf_def) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,
-					"Filter Cutoff (CH:%d VAL:%d)", ch, val - 64);
+			ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Filter Cutoff (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].param_cutoff_freq = val - 64;
 		}
 		break;
 	case NRPN_ADDR_0121:	/* Filter Resonance */
 		if (opt_lpf_def) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,
-					"Filter Resonance (CH:%d VAL:%d)", ch, val - 64);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Filter Resonance (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].param_resonance = val - 64;
 		}
 		break;
 	case NRPN_ADDR_0130:	/* EQ BASS */
 		if (opt_eq_control) {
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ BASS (CH:%d %.2f dB)", ch, 0.19 * (double)(val - 0x40));
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ BASS (CH:%d %.2f dB)", ch, 0.19 * (double)(val - 0x40));
 			channel[ch].eq_xg.bass = val;
 			recompute_part_eq_xg(&(channel[ch].eq_xg));
 		}
 		break;
 	case NRPN_ADDR_0131:	/* EQ TREBLE */
 		if (opt_eq_control) {
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ TREBLE (CH:%d %.2f dB)", ch, 0.19 * (double)(val - 0x40));
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ TREBLE (CH:%d %.2f dB)", ch, 0.19 * (double)(val - 0x40));
 			channel[ch].eq_xg.treble = val;
 			recompute_part_eq_xg(&(channel[ch].eq_xg));
 		}
@@ -4407,7 +4397,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		if (opt_eq_control) {
 			if(val < 4) {val = 4;}
 			else if(val > 40) {val = 40;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ BASS frequency (CH:%d %d Hz)", ch, (int32_t)eq_freq_table_xg[val]);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ BASS frequency (CH:%d %d Hz)", ch, (int32_t)eq_freq_table_xg[val]);
 			channel[ch].eq_xg.bass_freq = val;
 			recompute_part_eq_xg(&(channel[ch].eq_xg));
 		}
@@ -4416,7 +4406,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		if (opt_eq_control) {
 			if(val < 28) {val = 28;}
 			else if(val > 58) {val = 58;}
-			ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ TREBLE frequency (CH:%d %d Hz)", ch, (int32_t)eq_freq_table_xg[val]);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"EQ TREBLE frequency (CH:%d %d Hz)", ch, (int32_t)eq_freq_table_xg[val]);
 			channel[ch].eq_xg.treble_freq = val;
 			recompute_part_eq_xg(&(channel[ch].eq_xg));
 		}
@@ -4435,7 +4425,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		note = channel[ch].lastlrpn;
 		if (channel[ch].drums[note] == NULL)
 			play_midi_setup_drums(ch, note);
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "Drum Instrument Filter Cutoff (CH:%d NOTE:%d VAL:%d)", ch, note, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument Filter Cutoff (CH:%d NOTE:%d VAL:%d)", ch, note, val);
 		channel[ch].drums[note]->drum_cutoff_freq = val - 64;
 		break;
 	case NRPN_ADDR_1500:	/* Drum Filter Resonance (XG) */
@@ -4443,7 +4433,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		note = channel[ch].lastlrpn;
 		if (channel[ch].drums[note] == NULL)
 			play_midi_setup_drums(ch, note);
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "Drum Instrument Filter Resonance (CH:%d NOTE:%d VAL:%d)", ch, note, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument Filter Resonance (CH:%d NOTE:%d VAL:%d)", ch, note, val);
 		channel[ch].drums[note]->drum_resonance = val - 64;
 		break;
 	case NRPN_ADDR_1600:	/* Drum EG Attack Time (XG) */
@@ -4454,7 +4444,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 			if (channel[ch].drums[note] == NULL)
 				play_midi_setup_drums(ch, note);
 			val	-= 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Drum Instrument Attack Time (CH:%d NOTE:%d VAL:%d)", ch, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument Attack Time (CH:%d NOTE:%d VAL:%d)", ch, note, val);
 			channel[ch].drums[note]->drum_envelope_rate[EG_ATTACK] = val;
 		}
 		break;
@@ -4466,7 +4456,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 			if (channel[ch].drums[note] == NULL)
 				play_midi_setup_drums(ch, note);
 			val	-= 64;
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Drum Instrument Decay Time (CH:%d NOTE:%d VAL:%d)", ch, note, val);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument Decay Time (CH:%d NOTE:%d VAL:%d)", ch, note, val);
 			channel[ch].drums[note]->drum_envelope_rate[EG_DECAY1] =
 				channel[ch].drums[note]->drum_envelope_rate[EG_DECAY2] = val;
 		}
@@ -4477,7 +4467,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		if (channel[ch].drums[note] == NULL)
 			play_midi_setup_drums(ch, note);
 		channel[ch].drums[note]->coarse = val - 64;
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "Drum Instrument Pitch Coarse (CH:%d NOTE:%d VAL:%d)", ch, note, channel[ch].drums[note]->coarse);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument Pitch Coarse (CH:%d NOTE:%d VAL:%d)", ch, note, channel[ch].drums[note]->coarse);
 		channel[ch].pitchfactor = 0;
 		break;
 	case NRPN_ADDR_1900:	/* Fine Pitch of Drum (XG) */
@@ -4494,7 +4484,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		note = channel[ch].lastlrpn;
 		if (channel[ch].drums[note] == NULL)
 			play_midi_setup_drums(ch, note);
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "Drum Instrument TVA Level (CH:%d NOTE:%d VAL:%d)", ch, note, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Drum Instrument TVA Level (CH:%d NOTE:%d VAL:%d)", ch, note, val);
 		channel[ch].drums[note]->drum_level =
 				calc_drum_tva_level(ch, note, val);
 		break;
@@ -4541,7 +4531,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		note = channel[ch].lastlrpn;
 		if (channel[ch].drums[note] == NULL)
 			play_midi_setup_drums(ch, note);
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "Delay Send Level of Drum (CH:%d NOTE:%d VALUE:%d)", ch, note, val);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Send Level of Drum (CH:%d NOTE:%d VALUE:%d)", ch, note, val);
 		if (channel[ch].drums[note]->delay_level != val) {
 			channel[ch].drum_effect_flag = 0;
 		}
@@ -4604,7 +4594,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		break;
 	case RPN_ADDR_0005:		/* GM2: Modulation Depth Range */
 		channel[ch].mod.lfo1_pitch_depth = (((int32_t)channel[ch].rpnmap[RPN_ADDR_0005] << 7) | channel[ch].rpnmap_lsb[RPN_ADDR_0005]) * 100 / 128;
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "Modulation Depth Range (CH:%d VALUE:%d)", ch, channel[ch].rpnmap[RPN_ADDR_0005]);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Modulation Depth Range (CH:%d VALUE:%d)", ch, channel[ch].rpnmap[RPN_ADDR_0005]);
 		break;
 	case RPN_ADDR_7F7F:		/* RPN reset */
 		channel[ch].rpn_7f7f_flag = 1;
@@ -5265,7 +5255,6 @@ void Player::update_legato_controls(int ch)
 
 int Player::play_event(MidiEvent *ev)
 {
-	//printf("Event type %03d, channel %03d, a %03d, b %03d, time %d\n", ev->type, ev->channel, ev->a, ev->b, ev->time);
 	int32_t i, j, cet;
 	int k, l, ch, orig_ch, port_ch, offset, layered;
 
@@ -5421,21 +5410,21 @@ int Player::play_event(MidiEvent *ev)
 			case ME_SOFT_PEDAL:
 				if (opt_lpf_def) {
 					channel[ch].soft_pedal = ev->a;
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Soft Pedal (CH:%d VAL:%d)", ch, channel[ch].soft_pedal);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Soft Pedal (CH:%d VAL:%d)", ch, channel[ch].soft_pedal);
 				}
 				break;
 
 			case ME_HARMONIC_CONTENT:
 				if (opt_lpf_def) {
 					channel[ch].param_resonance = ev->a - 64;
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Harmonic Content (CH:%d VAL:%d)", ch, channel[ch].param_resonance);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Harmonic Content (CH:%d VAL:%d)", ch, channel[ch].param_resonance);
 				}
 				break;
 
 			case ME_BRIGHTNESS:
 				if (opt_lpf_def) {
 					channel[ch].param_cutoff_freq = ev->a - 64;
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Brightness (CH:%d VAL:%d)", ch, channel[ch].param_cutoff_freq);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Brightness (CH:%d VAL:%d)", ch, channel[ch].param_cutoff_freq);
 				}
 				break;
 
@@ -5476,13 +5465,13 @@ int Player::play_event(MidiEvent *ev)
 						channel[ch].chorus_level = -opt_chorus_control;
 					}
 					if (ev->a) {
-						ctl_cmsg(CMSG_INFO, VERB_NOISY, "Chorus Send (CH:%d LEVEL:%d)", ch, ev->a);
+						//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Send (CH:%d LEVEL:%d)", ch, ev->a);
 					}
 				}
 				break;
 
 			case ME_TREMOLO_EFFECT:
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Tremolo Send (CH:%d LEVEL:%d)", ch, ev->a);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Tremolo Send (CH:%d LEVEL:%d)", ch, ev->a);
 				break;
 
 			case ME_CELESTE_EFFECT:
@@ -5490,10 +5479,10 @@ int Player::play_event(MidiEvent *ev)
 					if (ISDRUMCHANNEL(ch) && channel[ch].delay_level != ev->a) { channel[ch].drum_effect_flag = 0; }
 					channel[ch].delay_level = ev->a;
 					if (play_system_mode == XG_SYSTEM_MODE) {
-						ctl_cmsg(CMSG_INFO, VERB_NOISY, "Variation Send (CH:%d LEVEL:%d)", ch, ev->a);
+						//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Variation Send (CH:%d LEVEL:%d)", ch, ev->a);
 					}
 					else {
-						ctl_cmsg(CMSG_INFO, VERB_NOISY, "Delay Send (CH:%d LEVEL:%d)", ch, ev->a);
+						//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Delay Send (CH:%d LEVEL:%d)", ch, ev->a);
 					}
 				}
 				break;
@@ -5509,7 +5498,7 @@ int Player::play_event(MidiEvent *ev)
 				break;
 
 			case ME_PHASER_EFFECT:
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Phaser Send (CH:%d LEVEL:%d)", ch, ev->a);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Phaser Send (CH:%d LEVEL:%d)", ch, ev->a);
 				break;
 
 			case ME_RPN_INC:

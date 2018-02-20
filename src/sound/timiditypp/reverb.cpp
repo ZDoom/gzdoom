@@ -2117,7 +2117,7 @@ void Reverb::alloc_effect(EffectList *ef)
 	ef->info = safe_malloc(ef->engine->info_size);
 	memset(ef->info, 0, ef->engine->info_size);
 
-/*	ctl_cmsg(CMSG_INFO, VERB_NOISY, "Effect Engine: %s", ef->engine->name); */
+/*	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Effect Engine: %s", ef->engine->name); */
 }
 
 /*! allocate new effect item and add it into the tail of effect list.
@@ -4153,7 +4153,7 @@ void Reverb::set_effect_param_xg(struct effect_xg_t *st, int type_msb, int type_
 			for (j = 0; j < 10; j++) {
 				st->param_msb[j] = effect_parameter_xg[i].param_msb[j];
 			}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "XG EFX: %s", effect_parameter_xg[i].name);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"XG EFX: %s", effect_parameter_xg[i].name);
 			return;
 		}
 	}
@@ -4167,7 +4167,7 @@ void Reverb::set_effect_param_xg(struct effect_xg_t *st, int type_msb, int type_
 				for (j = 0; j < 10; j++) {
 					st->param_msb[j] = effect_parameter_xg[i].param_msb[j];
 				}
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "XG EFX: %s", effect_parameter_xg[i].name);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"XG EFX: %s", effect_parameter_xg[i].name);
 				return;
 			}
 		}
@@ -4346,7 +4346,7 @@ void Reverb::set_effect_param_gs(struct insertion_effect_gs_t *st, int msb, int 
 			for (j = 0; j < 20; j++) {
 				st->parameter[j] = effect_parameter_gs[i].param[j];
 			}
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "GS EFX: %s", effect_parameter_gs[i].name);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"GS EFX: %s", effect_parameter_gs[i].name);
 			break;
 		}
 	}

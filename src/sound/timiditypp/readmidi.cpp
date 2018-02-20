@@ -70,7 +70,6 @@ static int current_read_track;
 static int karaoke_format, karaoke_title_flag;
 static MidiEvent timesig[256];
 extern Instruments *instruments;
-static int32_t midi_restart_time = 0;
 
 
 extern void free_readmidi(void);
@@ -439,8 +438,7 @@ MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp)
 			break;
 		case ME_RESET:
 			gplayer->change_system_mode(meep->event.a);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "MIDI reset at %d sec",
-				(int)((double)st / playback_rate + 0.5));
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"MIDI reset at %d sec", (int)((double)st / playback_rate + 0.5));
 			for (j = 0; j < MAX_CHANNELS; j++)
 			{
 				if (play_system_mode == XG_SYSTEM_MODE && j % 16 == 9)
@@ -1532,12 +1530,13 @@ Instruments *instruments;
 CRITICAL_SECTION critSect;
 
 
-int load_midi_file(FileReader *fr)
+int load_midi_file(FileReader *fr, TimidityPlus::Instruments *inst)
 {
 	int rc;
 	static int last_rc = RC_OK;
 	MidiEvent *event;
 	int32_t nsamples;
+
 
 	InitializeCriticalSection(&critSect);
 	if (play_mode->open_output() < 0)
@@ -1545,24 +1544,12 @@ int load_midi_file(FileReader *fr)
 		return RC_ERROR;
 	}
 
-	instruments = new Instruments;
-	if (instruments->load("timidity.cfg"))
-	{
-		return RC_ERROR;
-	}
-
+	instruments = inst;
 	gplayer = new Player;
 
 
 	/* Set current file information */
 	auto current_file_info = gplayer->get_midi_file_info("zdoom", 1);
-
-	rc = RC_OK;
-
-
-	/* Reset restart offset */
-	midi_restart_time = 0;
-
 
 	rc = play_midi_load_file(fr, &event, &nsamples);
 	if (RC_IS_SKIP_FILE(rc))
@@ -1592,7 +1579,6 @@ void run_midi(int msec)
 void timidity_close()
 {
 	delete gplayer;
-	delete instruments;
 	play_mode->close_output();
 	DeleteCriticalSection(&critSect);
 	free_global_mblock();

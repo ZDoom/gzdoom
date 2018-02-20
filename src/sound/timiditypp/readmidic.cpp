@@ -117,7 +117,7 @@ static int set_xg_reverb_type(int msb, int lsb)
 		(msb >= 0x05 && msb <= 0x0F) ||
 		(msb >= 0x14))			/* NO EFFECT */
 	{
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "XG Set Reverb Type (NO EFFECT %d %d)", msb, lsb);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"XG Set Reverb Type (NO EFFECT %d %d)", msb, lsb);
 		return -1;
 	}
 
@@ -159,7 +159,7 @@ static int set_xg_reverb_type(int msb, int lsb)
 	if (lsb == 0x02 && msb == 0x02)
 		type = 2;				/* Room 3 */
 
-	ctl_cmsg(CMSG_INFO, VERB_NOISY, "XG Set Reverb Type (%d)", type);
+	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"XG Set Reverb Type (%d)", type);
 	return type;
 }
 
@@ -173,7 +173,7 @@ static int set_xg_chorus_type(int msb, int lsb)
 		(msb >= 0x45 && msb <= 0x47) ||
 		(msb >= 0x49))			/* NO EFFECT */
 	{
-		ctl_cmsg(CMSG_INFO, VERB_NOISY, "XG Set Chorus Type (NO EFFECT %d %d)", msb, lsb);
+		//ctl_cmsg(CMSG_INFO,VERB_NOISY,"XG Set Chorus Type (NO EFFECT %d %d)", msb, lsb);
 		return -1;
 	}
 
@@ -235,7 +235,7 @@ static int set_xg_chorus_type(int msb, int lsb)
 		}
 	}
 
-	ctl_cmsg(CMSG_INFO, VERB_NOISY, "XG Set Chorus Type (%d)", type);
+	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"XG Set Chorus Type (%d)", type);
 	return type;
 }
 
@@ -555,7 +555,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 		for (ent = addlow; body <= body_end; body++, ent++) {
 			switch (ent) {
 			case 0x00:	/* Element Reserve */
-						/*			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Element Reserve is not supported. (CH:%d VAL:%d)", p, *body); */
+						/*			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Element Reserve is not supported. (CH:%d VAL:%d)", p, *body); */
 				break;
 
 			case 0x01:	/* bank select MSB */
@@ -941,7 +941,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				break;
 
 			case 0x59:	/* AC1 Controller Number */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "AC1 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"AC1 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x5A:	/* AC1 Pitch Control */
@@ -975,7 +975,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				break;
 
 			case 0x60:	/* AC2 Controller Number */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "AC2 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"AC2 Controller Number is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x61:	/* AC2 Pitch Control */
@@ -1017,19 +1017,19 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				num_events++;
 
 			case 0x69:	/* Pitch EG Initial Level */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Initial Level is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Pitch EG Initial Level is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x6A:	/* Pitch EG Attack Time */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Attack Time is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Pitch EG Attack Time is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x6B:	/* Pitch EG Release Level */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Level is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Pitch EG Release Level is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x6C:	/* Pitch EG Release Time */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Pitch EG Release Time is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Pitch EG Release Time is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x6D:	/* Velocity Limit Low */
@@ -1043,11 +1043,11 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				break;
 
 			case 0x70:	/* Bend Pitch Low Control */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Bend Pitch Low Control is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Bend Pitch Low Control is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x71:	/* Filter EG Depth */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Filter EG Depth is not supported. (CH:%d VAL:%d)", p, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Filter EG Depth is not supported. (CH:%d VAL:%d)", p, *body);
 				break;
 
 			case 0x72:	/* EQ BASS */
@@ -1079,7 +1079,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				break;
 
 			default:
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)", addhigh, addlow, ent, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)", addhigh, addlow, ent, *body);
 				continue;
 				break;
 			}
@@ -1144,7 +1144,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				num_events += 3;
 				break;
 			case 0x03:	/* Alternate Group */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Alternate Group is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Alternate Group is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 				break;
 			case 0x04:	/* Pan */
 				SETMIDIEVENT(evm[num_events], 0, ME_NRPN_MSB, dp, 0x1C, SYSEX_TAG);
@@ -1171,7 +1171,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				num_events += 3;
 				break;
 			case 0x08:	/* Key Assign */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Key Assign is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Key Assign is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 				break;
 			case 0x09:	/* Rcv Note Off */
 				SETMIDIEVENT(evm[num_events], 0, ME_SYSEX_MSB, dp, note, 0);
@@ -1234,16 +1234,16 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				num_events += 3;
 				break;
 			case 0x50:	/* High Pass Filter Cutoff Frequency */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "High Pass Filter Cutoff Frequency is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"High Pass Filter Cutoff Frequency is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 				break;
 			case 0x60:	/* Velocity Pitch Sense */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Velocity Pitch Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity Pitch Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 				break;
 			case 0x61:	/* Velocity LPF Cutoff Sense */
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Velocity LPF Cutoff Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Velocity LPF Cutoff Sense is not supported. (CH:%d NOTE:%d VAL:%d)", dp, note, *body);
 				break;
 			default:
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)", addhigh, addmid, ent, *body);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported XG Bulk Dump SysEx. (ADDR:%02X %02X %02X VAL:%02X)", addhigh, addmid, ent, *body);
 				break;
 			}
 		}
@@ -1276,7 +1276,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 			checksum += val[i];
 		}
 		if (((128 - (checksum & 0x7F)) & 0x7F) != val[gslen - 1]) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "GS SysEx: Checksum Error.");
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"GS SysEx: Checksum Error.");
 			return num_events;
 		}
 
@@ -1439,10 +1439,10 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 					num_events++;
 					break;
 				case 0x1F:	/* CC1 Controller Number */
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC1 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC1 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
 					break;
 				case 0x20:	/* CC2 Controller Number */
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "CC2 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"CC2 Controller Number is not supported. (CH:%d VAL:%d)", p, val[7]);
 					break;
 				case 0x21:	/* Chorus Send Level */
 					SETMIDIEVENT(evm[0], 0, ME_CHORUS_EFFECT, p, val[7], SYSEX_TAG);
@@ -1527,7 +1527,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 					num_events += 12;
 					break;
 				default:
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 					break;
 				}
 			}
@@ -1801,7 +1801,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 					num_events++;
 					break;
 				default:
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 					break;
 				}
 			}
@@ -1918,7 +1918,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 					num_events++;
 					break;
 				default:
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 					break;
 				}
 			}
@@ -1941,7 +1941,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 					num_events++;
 					break;
 				default:
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 					break;
 				}
 			}
@@ -2065,7 +2065,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 					num_events++;
 					break;
 				default:
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 					break;
 				}
 			}
@@ -2088,7 +2088,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 					num_events++;
 					break;
 				default:
-					ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 					break;
 				}
 			}
@@ -2141,7 +2141,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				num_events += 3;
 				break;
 			default:
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 				break;
 			}
 			break;
@@ -2216,7 +2216,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 				break;
 #endif
 			default:
-				ctl_cmsg(CMSG_INFO, VERB_NOISY, "Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
+				//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Unsupported GS SysEx. (ADDR:%02X %02X %02X VAL:%02X %02X)", addr_h, addr_m, addr_l, val[7], val[8]);
 				break;
 			}
 			break;

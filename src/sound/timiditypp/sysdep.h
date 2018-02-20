@@ -44,11 +44,10 @@ namespace TimidityPlus
 #define BE_LONG(x) BigLong(x)
 
 	   /* max_channels is defined in "timidity.h" */
-#if MAX_CHANNELS <= 32
-	typedef struct _ChannelBitMask
-	{
-		uint32_t b; /* 32-bit bitvector */
-	} ChannelBitMask;
+typedef struct _ChannelBitMask
+{
+	uint32_t b; /* 32-bit bitvector */
+} ChannelBitMask;
 #define CLEAR_CHANNELMASK(bits)		((bits).b = 0)
 #define FILL_CHANNELMASK(bits)		((bits).b = ~0)
 #define IS_SET_CHANNELMASK(bits, c) ((bits).b &   (1u << (c)))
@@ -58,7 +57,6 @@ namespace TimidityPlus
 #define COPY_CHANNELMASK(dest, src)	((dest).b = (src).b)
 #define REVERSE_CHANNELMASK(bits)	((bits).b = ~(bits).b)
 #define COMPARE_CHANNELMASK(bitsA, bitsB)	((bitsA).b == (bitsB).b)
-#endif
 
 	typedef int16_t sample_t;
 	typedef int32_t final_volume_t;

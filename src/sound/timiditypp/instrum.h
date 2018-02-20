@@ -24,6 +24,7 @@
 #ifndef ___INSTRUM_H_
 #define ___INSTRUM_H_
 
+#include <string>
 #include "common.h"
 #include "sysdep.h"
 #include "sffile.h"
@@ -230,6 +231,7 @@ struct  SampleImporter;
 
 class Instruments
 {
+	std::string configFileName;
 	PathList pathlist;
 
 	ToneBank standard_tonebank, standard_drumset;
@@ -551,6 +553,11 @@ public:
 	void set_default_instrument()
 	{
 		if (def_instr_name) set_default_instrument(def_instr_name);
+	}
+
+	bool checkConfig(const char *filename)
+	{
+		return configFileName.compare(filename) == 0;
 	}
 
 };

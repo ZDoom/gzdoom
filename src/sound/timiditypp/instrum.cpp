@@ -58,6 +58,7 @@ bool Instruments::load(const char *config)
 	{
 		init_load_soundfont();
 		set_default_instrument();
+		configFileName = config;
 		return true;
 	}
 	return false;

@@ -317,7 +317,7 @@ int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 		close_file(tf);
 		return 1;
 	}
-	ctl_cmsg(CMSG_INFO, VERB_NOISY, "Loading WAV: %s", sample_file);
+	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Loading WAV: %s", sample_file);
 	state = chunk_flags = 0;
 	type_index = 4, type_size = 8;
 	for(;;) {
@@ -349,8 +349,7 @@ int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 			frames = chunk_size / format.wBlockAlign;
 			inst->samples = samples = format.wChannels;
 			inst->sample = (Sample *)safe_malloc(sizeof(Sample) * samples);
-			ctl_cmsg(CMSG_INFO, VERB_NOISY, "Format: %d-bits %dHz %dch, %d frames",
-					format.wBitsPerSample, format.dwSamplesPerSec, samples, frames);
+			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Format: %d-bits %dHz %dch, %d frames",	format.wBitsPerSample, format.dwSamplesPerSec, samples, frames);
 			initialize_sample(inst, frames, format.wBitsPerSample, format.dwSamplesPerSec);
 			/* load waveform data */
 			for(i = 0; i < samples; i++)
@@ -489,8 +488,7 @@ static int read_WAVSamplerChunk(struct timidity_file *tf, WAVSamplerChunk *smpl,
 		ctl_cmsg(CMSG_WARNING, VERB_NOISY, "Bad sampler chunk length");
 	if (tf_seek(tf, psize, SEEK_CUR) == -1)
 		goto fail;
-	ctl_cmsg(CMSG_INFO, VERB_NOISY, "Sampler: %dns/frame, note=%d, loops=%d",
-				smpl->dwSamplePeriod, smpl->dwMIDIUnityNote, loopCount);
+	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Sampler: %dns/frame, note=%d, loops=%d", smpl->dwSamplePeriod, smpl->dwMIDIUnityNote, loopCount);
 	return 1;
 	fail:
 		ctl_cmsg(CMSG_WARNING, VERB_VERBOSE, "Unable to read sampler chunk");
@@ -603,7 +601,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 		return 1;
 	}
 	compressed = buf[8 + 3] == 'C';
-	ctl_cmsg(CMSG_INFO, VERB_NOISY, "Loading AIFF: %s", sample_file);
+	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Loading AIFF: %s", sample_file);
 	type_index = 4, type_size = 8;
 	chunk_flags = 0;
 	sound.inst = inst;
@@ -750,8 +748,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 		goto fail;
 	comm->sampleRate = ConvertFromIeeeExtended(sampleRate);
 	csize -= 8 + 10;
-	ctl_cmsg(CMSG_INFO, VERB_NOISY, "Format: %d-bits %dHz %dch, %d frames",
-			comm->sampleSize, (int)comm->sampleRate, comm->numChannels, comm->numSampleFrames);
+	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Format: %d-bits %dHz %dch, %d frames", comm->sampleSize, (int)comm->sampleRate, comm->numChannels, comm->numSampleFrames);
 	if (compressed)
 	{
 		READ_LONG_BE(compressionType);

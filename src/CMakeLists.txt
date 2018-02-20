@@ -836,7 +836,6 @@ set( FASTMATH_SOURCES
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 # These will be removed later.
-	sound/timiditypp/timidity.cpp
 	sound/timiditypp/w32_a.cpp
 	
 )

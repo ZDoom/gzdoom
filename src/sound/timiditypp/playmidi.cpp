@@ -1312,9 +1312,7 @@ int Player::find_samples(MidiEvent *e, int *vlist)
 	ch = e->channel;
 	if (channel[ch].special_sample > 0) {
 		if ((s = instruments->specialPatch(channel[ch].special_sample)) == NULL) {
-			ctl_cmsg(CMSG_WARNING, VERB_VERBOSE,
-					"Strange: Special patch %d is not installed",
-					channel[ch].special_sample);
+			ctl_cmsg(CMSG_WARNING, VERB_VERBOSE,"Strange: Special patch %d is not installed",channel[ch].special_sample);
 			return 0;
 		}
 		note = e->a + channel[ch].key_shift + note_key_offset;
@@ -1327,10 +1325,7 @@ int Player::find_samples(MidiEvent *e, int *vlist)
 		instruments->instrument_map(channel[ch].mapID, &bank, &note);
 		if (! (ip = play_midi_load_instrument(1, bank, note)))
 			return 0;	/* No instrument? Then we can't play. */
-		/* if (ip->type == INST_GUS && ip->samples != 1)
-			ctl_cmsg(CMSG_WARNING, VERB_VERBOSE,
-					"Strange: percussion instrument with %d samples!",
-					ip->samples); */
+
 		/* "keynum" of SF2, and patch option "note=" */
 		if (ip->sample->note_to_use)
 			note = ip->sample->note_to_use;
@@ -5022,6 +5017,7 @@ int Player::compute_data(float *buffer, int32_t count)
 	if (count == 0) return RC_OK;
 
 	buffer_pointer = common_buffer;
+	computed_samples += count;
 
 	while (count > 0)
 	{
@@ -5517,7 +5513,7 @@ int Player::play_event(MidiEvent *ev)
 				break;
 
 			case ME_SCALE_TUNING:
-				recache->resamp_cache_refer_alloff(ch, current_event->time);
+				recache->resamp_cache_refer_alloff(ch, computed_samples);
 				channel[ch].scale_tuning[current_event->a] = current_event->b;
 				adjust_pitch(ch);
 				break;
@@ -6078,11 +6074,10 @@ int Player::convert_midi_control_change(int chn, int type, int val, MidiEvent *e
 }
 
 
-int Player::send_event(int sampletime, int status, int parm1, int parm2)
+int Player::send_event(int status, int parm1, int parm2)
 {
 	MidiEvent ev;
 
-	ev.time = sampletime;
 	ev.type = ME_NONE;
 	ev.channel = status & 0x0000000f;
 	//ev.channel = ev.channel + port * 16;
@@ -6130,7 +6125,7 @@ int Player::send_event(int sampletime, int status, int parm1, int parm2)
 	return 0;
 }
 
-void Player::send_long_event(int sampletime, const uint8_t *sysexbuffer, int exlen) 
+void Player::send_long_event(const uint8_t *sysexbuffer, int exlen) 
 {
 	int i, ne;
 	MidiEvent ev;

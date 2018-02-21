@@ -639,9 +639,9 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			}
 		}
 	}
-	if (noluck) {
-		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
-			"Instrument `%s' can't be found.", name);
+	if (noluck) 
+	{
+		ctl_cmsg(CMSG_ERROR, VERB_DEBUG, "Instrument `%s' can't be found.", name);
 		return 0;
 	}
 	/* Read some headers and do cursory sanity checks. There are loads

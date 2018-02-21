@@ -193,7 +193,7 @@ void TimidityPPMIDIDevice::PrecacheInstruments(const uint16_t *instrumentlist, i
 void TimidityPPMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 {
 	if (Renderer != nullptr)
-		Renderer->send_event(sampletime, status, parm1, parm2);
+		Renderer->send_event(status, parm1, parm2);
 }
 
 //==========================================================================
@@ -205,7 +205,7 @@ void TimidityPPMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 {
 	if (Renderer != nullptr)
-		Renderer->send_long_event(sampletime, data, len);
+		Renderer->send_long_event(data, len);
 }
 
 //==========================================================================
@@ -218,7 +218,6 @@ void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 {
 	if (Renderer != nullptr)
 		Renderer->compute_data(buffer, len);
-	sampletime += len;
 }
 
 //==========================================================================

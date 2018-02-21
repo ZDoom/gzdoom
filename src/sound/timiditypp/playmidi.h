@@ -31,7 +31,6 @@ struct AlternateAssign;
 
 struct MidiEvent 
 {
-  int32_t time;
   uint8_t type, channel, a, b;
 };
 
@@ -539,6 +538,7 @@ private:
 	int32_t sample_count;	/* Length of event_list */
 	int32_t current_sample;		/* Number of calclated samples */
 	double midi_time_ratio;	/* For speed up/down */
+	int computed_samples;
 
 	int note_key_offset = 0;		/* For key up/down */
 	ChannelBitMask channel_mute;	/* For channel mute */
@@ -583,11 +583,6 @@ private:
 	int MIDI_EVENT_NOTE(MidiEvent *ep)
 	{
 		return (ISDRUMCHANNEL((ep)->channel) ? (ep)->a : (((int)(ep)->a + note_key_offset + channel[ep->channel].key_shift) & 0x7f));
-	}
-
-	int32_t MIDI_EVENT_TIME(MidiEvent *ep)
-	{
-		return ((int32_t)((ep)->time * midi_time_ratio + 0.5));
 	}
 
 	int16_t conv_lfo_pitch_depth(float val)
@@ -733,8 +728,8 @@ public:
 	int get_default_mapID(int ch);
 	void init_channel_layer(int ch);
 	int compute_data(float *buffer, int32_t count);
-	int send_event(int time, int status, int parm1, int parm2);
-	void send_long_event(int sampletime, const uint8_t *sysexbuffer, int exlen);
+	int send_event(int status, int parm1, int parm2);
+	void send_long_event(const uint8_t *sysexbuffer, int exlen);
 };
 
 class SysexConvert

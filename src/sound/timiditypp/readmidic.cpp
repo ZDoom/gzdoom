@@ -31,9 +31,8 @@ namespace TimidityPlus
 {
 
 
-inline void SETMIDIEVENT(MidiEvent &e, int32_t at, uint32_t t, uint32_t ch, uint32_t pa, uint32_t pb)
+inline void SETMIDIEVENT(MidiEvent &e, int32_t /*time, not needed anymore*/, uint32_t t, uint32_t ch, uint32_t pa, uint32_t pb)
 {
-	(e).time = (at);
 	(e).type = (t);
 	(e).channel = (uint8_t)(ch);
 	(e).a = (uint8_t)(pa);

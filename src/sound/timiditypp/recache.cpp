@@ -206,7 +206,6 @@ void Recache::resamp_cache_create(void)
 		cache_hash_table[i] = q;
 	}
 	if (n == 0) {
-		ctl_cmsg(CMSG_INFO, VERB_VERBOSE, "No pre-resampling cache hit");
 		return;
 	}
 	array = (struct cache_hash **) new_segment(&hash_entry_pool,

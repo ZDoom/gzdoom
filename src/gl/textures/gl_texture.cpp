@@ -780,12 +780,13 @@ struct AutoTextureSearchPath
 
 static AutoTextureSearchPath autosearchpaths[] =
 {
-	{ "brightmaps/auto/", offsetof(FTexture::MiscGLInfo, Brightmap) },
-	{ "normalmaps/auto/", offsetof(FTexture::MiscGLInfo, Normal) },
-	{ "specular/auto/", offsetof(FTexture::MiscGLInfo, Specular) },
-	{ "metallic/auto/", offsetof(FTexture::MiscGLInfo, Metallic) },
-	{ "roughness/auto/", offsetof(FTexture::MiscGLInfo, Roughness) },
-	{ "ao/auto/", offsetof(FTexture::MiscGLInfo, AmbientOcclusion) }
+	{ "brightmaps/auto/", offsetof(FTexture::MiscGLInfo, Brightmap) }, // For backwards compatibility
+	{ "materials/brightmaps/auto/", offsetof(FTexture::MiscGLInfo, Brightmap) },
+	{ "materials/normalmaps/auto/", offsetof(FTexture::MiscGLInfo, Normal) },
+	{ "materials/specular/auto/", offsetof(FTexture::MiscGLInfo, Specular) },
+	{ "materials/metallic/auto/", offsetof(FTexture::MiscGLInfo, Metallic) },
+	{ "materials/roughness/auto/", offsetof(FTexture::MiscGLInfo, Roughness) },
+	{ "materials/ao/auto/", offsetof(FTexture::MiscGLInfo, AmbientOcclusion) }
 };
 
 void AddAutoMaterials()

@@ -512,7 +512,6 @@ class Recache;
 class Mixer;
 class Reverb;
 class Effect;
-class AudioQueue;
 
 class Player
 {
@@ -534,7 +533,6 @@ private:
 	Mixer *mixer;
 	Reverb *reverb;
 	Effect *effect;
-	AudioQueue *aq;
 
 
 	MidiEvent *current_event;
@@ -561,8 +559,6 @@ private:
 	int current_freq_table;
 	int current_temper_freq_table;
 	int master_tuning;
-	float *output_buffer;
-	int output_len;
 
 	int make_rvid_flag; /* For reverb optimization */
 
@@ -577,7 +573,6 @@ private:
 	int32_t lost_notes, cut_notes;
 	int32_t common_buffer[AUDIO_BUFFER_SIZE * 2], *buffer_pointer; /* stereo samples */
 	int16_t wav_buffer[AUDIO_BUFFER_SIZE * 2];
-	int32_t buffered_count;
 
 	int32_t insertion_effect_buffer[AUDIO_BUFFER_SIZE * 2];
 
@@ -663,15 +658,12 @@ private:
 	void do_compute_data(int32_t count);
 	int check_midi_play_end(MidiEvent *e, int len);
 	int midi_play_end(void);
-	int compute_data(int32_t count);
 	void update_modulation_wheel(int ch);
 	void drop_portamento(int ch);
 	void update_portamento_time(int ch);
 	void update_legato_controls(int ch);
 	void set_master_tuning(int tune);
 	struct midi_file_info *new_midi_file_info();
-	int send_output(int32_t *samples, int32_t count);
-
 
 	void adjust_amplification(void);
 	void init_freq_table_user(void);
@@ -740,7 +732,7 @@ public:
 	void recompute_freq(int v);
 	int get_default_mapID(int ch);
 	void init_channel_layer(int ch);
-	void get_output(float *buffer, int len);
+	int compute_data(float *buffer, int32_t count);
 	int send_event(int time, int status, int parm1, int parm2);
 	void send_long_event(int sampletime, const uint8_t *sysexbuffer, int exlen);
 };

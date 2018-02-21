@@ -835,9 +835,7 @@ set( FASTMATH_SOURCES
 	gl/models/gl_models.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
-# These will be removed later.
-	sound/timiditypp/w32_a.cpp
-	
+
 )
 
 set (PCH_SOURCES
@@ -1172,7 +1170,6 @@ set (PCH_SOURCES
 	sound/timidity/playmidi.cpp
 	sound/timidity/resample.cpp
 	sound/timidity/timidity.cpp
-	sound/timiditypp/aq.cpp
 	sound/timiditypp/common.cpp
 	sound/timiditypp/configfile.cpp
 	sound/timiditypp/effect.cpp
@@ -1181,7 +1178,6 @@ set (PCH_SOURCES
 	sound/timiditypp/instrum.cpp
 	sound/timiditypp/mblock.cpp
 	sound/timiditypp/mix.cpp
-	sound/timiditypp/output.cpp
 	sound/timiditypp/playmidi.cpp
 	sound/timiditypp/quantity.cpp
 	sound/timiditypp/readmidic.cpp

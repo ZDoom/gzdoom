@@ -253,20 +253,9 @@ void initialize_resampler_coeffs(void)
 
 	initialize_newton_coeffs();
 	initialize_gauss_table(gauss_n);
-	/* we don't have to initialize newton table any more */
 
-	/* bounds checking values for the appropriate sample types */
-	/* this is as good a place as any to initialize them */
-	if (play_mode->encoding & PE_24BIT)
-	{
-		sample_bounds_min = -8388608;
-		sample_bounds_max = 8388607;
-	}
-	else /* 16-bit */
-	{
-		sample_bounds_min = -32768;
-		sample_bounds_max = 32767;
-	}
+	sample_bounds_min = -32768;
+	sample_bounds_max = 32767;
 }
 
 

@@ -32,7 +32,6 @@
 #include "mix.h"
 #include "recache.h"
 #include "reverb.h"
-#include "aq.h"
 #include "freq.h"
 #include "quantity.h"
 #include "c_cvars.h"
@@ -135,8 +134,6 @@ Player::Player(int freq, Instruments *instr)
 
 	mixer = new Mixer(this);
 	recache = new Recache(this);
-	aq = new AudioQueue(play_mode, AUDIO_BUFFER_SIZE, reverb);
-	aq->setup();
 
 	for (int i = 0; i < MAX_CHANNELS; i++)
 		init_channel_layer(i);
@@ -190,8 +187,6 @@ Player::~Player()
 	reuse_mblock(&playmidi_pool);
 	if (reverb_buffer != nullptr) free(reverb_buffer);
 	for (int i = 0; i < MAX_CHANNELS; i++) free_drum_effect(i);
-	aq->flush(1);
-	delete aq;
 	delete mixer;
 	delete recache;
 	delete effect;
@@ -2670,7 +2665,8 @@ void Player::midi_program_change(int ch, int prog)
 		channel[ch].program = (instruments->defaultProgram(ch) == SPECIAL_PROGRAM)
 				? SPECIAL_PROGRAM : prog;
 		channel[ch].altassign = NULL;
-		if (opt_realtime_playing && (play_mode->flag & PF_PCM_STREAM)) {
+		if (opt_realtime_playing) 
+		{
 			b = channel[ch].bank, p = prog;
 			instruments->instrument_map(channel[ch].mapID, &b, &p);
 			play_midi_load_instrument(0, b, p);
@@ -5021,46 +5017,24 @@ void Player::do_compute_data(int32_t count)
 	current_sample += count;
 }
 
-int Player::send_output(int32_t *samples, int32_t count)
-{
-	aq->add(samples, count);
-	/*
-	effect->do_effect(samples, count);
-	// pass to caller
-	for (int i = 0; i < count && output_len > 0; i++)
-	{
-		*output_buffer++ = (*samples++)*(1.f / 0x80000000u);
-		*output_buffer++ = (*samples++)*(1.f / 0x80000000u);
-		output_len--;
-	}
-	*/
-	memset(output_buffer, 0, output_len * 8);
-	return RC_OK;
-}
-
-int Player::compute_data(int32_t count)
+int Player::compute_data(float *buffer, int32_t count)
 {
 	if (count == 0) return RC_OK;
 
-	if (!buffered_count) buffer_pointer = common_buffer;
+	buffer_pointer = common_buffer;
 
-	while ((count + buffered_count) >= AUDIO_BUFFER_SIZE)
+	while (count > 0)
 	{
-		do_compute_data(AUDIO_BUFFER_SIZE - buffered_count);
-		count -= AUDIO_BUFFER_SIZE - buffered_count;
+		int process = std::min(count, AUDIO_BUFFER_SIZE);
+		do_compute_data(process);
+		count -= process;
 
-		if (aq->add(common_buffer, AUDIO_BUFFER_SIZE) == -1)
-			return RC_ERROR;
-
-		buffer_pointer = common_buffer;
-		buffered_count = 0;
-
-	}
-	if (count > 0)
-	{
-		do_compute_data(count);
-		buffered_count += count;
-		buffer_pointer += count * 2;
+		effect->do_effect(common_buffer, process);
+		// pass to caller
+		for (int i = 0; i < process*2; i++)
+		{
+			*buffer++ = (common_buffer[i])*(5.f / 0x80000000u);
+		}
 	}
 	return RC_OK;
 }
@@ -5157,31 +5131,10 @@ void Player::update_legato_controls(int ch)
 
 int Player::play_event(MidiEvent *ev)
 {
-	int32_t i, j, cet;
+	int32_t i, j;
 	int k, l, ch, orig_ch, port_ch, offset, layered;
 
-	//current_event = ev;
-	cet = MIDI_EVENT_TIME(ev);
-
-	if (cet > current_sample)
-	{
-		int rc = RC_OK;
-
-		if (midi_streaming != 0 && (cet - current_sample) * 1000 / playback_rate > stream_max_compute)
-		{
-			kill_all_voices();
-			current_sample = cet;
-		}
-
-		//Printf("Computing %d samples\n", cet - current_sample);
-
-		rc = compute_data(cet - current_sample);
-		if (rc != RC_OK)
-			return rc;
-	}
 	current_event = ev;
-
-	//Printf("Playing event %d, time %d\n", ev->type, ev->time);
 
 #ifndef SUPPRESS_CHANNEL_LAYER
 	orig_ch = ev->channel;
@@ -5896,9 +5849,7 @@ void Player::playmidi_tmr_reset(void)
 {
     int i;
 
-    aq->flush(0);
     current_sample = 0;
-    buffered_count = 0;
     buffer_pointer = common_buffer;
     for(i = 0; i < MAX_CHANNELS; i++)
 	channel[i].lasttime = 0;
@@ -6059,14 +6010,6 @@ void Player::init_channel_layer(int ch)
 	CLEAR_CHANNELMASK(channel[ch].channel_layer);
 	SET_CHANNELMASK(channel[ch].channel_layer, ch);
 	channel[ch].port_select = ch >> 4;
-}
-
-void Player::get_output(float *buffer, int len)
-{
-	output_buffer = buffer;
-	output_len = len;
-	//Printf("Not Computing %d samples\n", len);
-	//compute_data(len);
 }
 
 

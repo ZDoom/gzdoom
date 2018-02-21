@@ -214,7 +214,7 @@ void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 {
 	if (Renderer != nullptr)
-		Renderer->get_output(buffer, len);
+		Renderer->compute_data(buffer, len);
 	sampletime += len;
 }
 

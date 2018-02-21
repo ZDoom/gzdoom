@@ -219,14 +219,6 @@ void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 	if (Renderer != nullptr)
 		Renderer->compute_data(buffer, len);
 	sampletime += len;
-
-	for (int i = 0; i < len * 2; i++)
-	{
-		if (buffer[i] < test[0]) test[0] = buffer[i];
-		if (buffer[i] > test[1]) test[1] = buffer[i];
-		test[2] += fabs(buffer[i]);
-	}
-	Printf("Min = %f, Max = %f, Avg = %f\n", test[0], test[1], test[2] / sampletime);
 }
 
 //==========================================================================

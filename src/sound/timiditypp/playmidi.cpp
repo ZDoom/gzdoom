@@ -5040,17 +5040,9 @@ int Player::send_output(int32_t *samples, int32_t count)
 
 int Player::compute_data(int32_t count)
 {
-	if (!count)
-	{
-		if (buffered_count)
-		{
-			if (aq->add(common_buffer, buffered_count) == -1)
-				return RC_ERROR;
-		}
-		buffer_pointer = common_buffer;
-		buffered_count = 0;
-		return RC_OK;
-	}
+	if (count == 0) return RC_OK;
+
+	if (!buffered_count) buffer_pointer = common_buffer;
 
 	while ((count + buffered_count) >= AUDIO_BUFFER_SIZE)
 	{
@@ -5170,12 +5162,12 @@ int Player::play_event(MidiEvent *ev)
 	int32_t i, j, cet;
 	int k, l, ch, orig_ch, port_ch, offset, layered;
 
-	current_event = ev;
+	//current_event = ev;
 	cet = MIDI_EVENT_TIME(ev);
 
 	if (cet > current_sample)
 	{
-		int rc;
+		int rc = RC_OK;
 
 		if (midi_streaming != 0 && (cet - current_sample) * 1000 / playback_rate > stream_max_compute)
 		{
@@ -5183,10 +5175,15 @@ int Player::play_event(MidiEvent *ev)
 			current_sample = cet;
 		}
 
+		//Printf("Computing %d samples\n", cet - current_sample);
+
 		rc = compute_data(cet - current_sample);
 		if (rc != RC_OK)
 			return rc;
 	}
+	current_event = ev;
+
+	//Printf("Playing event %d, time %d\n", ev->type, ev->time);
 
 #ifndef SUPPRESS_CHANNEL_LAYER
 	orig_ch = ev->channel;
@@ -6069,7 +6066,60 @@ void Player::get_output(float *buffer, int len)
 {
 	output_buffer = buffer;
 	output_len = len;
+	//Printf("Not Computing %d samples\n", len);
 	//compute_data(len);
+}
+
+int Player::send_event(int sampletime, int status, int parm1, int parm2)
+{
+	MidiEvent ev;
+
+	ev.time = sampletime;
+	ev.type = ME_NONE;
+	ev.channel = status & 0x0000000f;
+	//ev.channel = ev.channel + port * 16;
+	ev.a = (uint8_t)parm1;
+	ev.b = (uint8_t)parm2;
+	switch ((int)(status & 0x000000f0)) 
+	{
+	case 0x80:
+		ev.type = ME_NOTEOFF;
+		break;
+	case 0x90:
+		ev.type = (ev.b) ? ME_NOTEON : ME_NOTEOFF;
+		break;
+	case 0xa0:
+		ev.type = ME_KEYPRESSURE;
+		break;
+	case 0xb0:
+		if (!convert_midi_control_change(ev.channel, ev.a, ev.b, &ev))
+			ev.type = ME_NONE;
+		break;
+	case 0xc0:
+		ev.type = ME_PROGRAM;
+		break;
+	case 0xd0:
+		ev.type = ME_CHANNEL_PRESSURE;
+		break;
+	case 0xe0:
+		ev.type = ME_PITCHWHEEL;
+		break;
+	/*
+	case 0xf0:
+		if ((status & 0x000000ff) == 0xf2) 
+		{
+			ev.type = ME_PROGRAM;
+		}
+		break;
+	*/
+	default:
+		break;
+	}
+	if (ev.type != ME_NONE) 
+	{
+		play_event(&ev);
+	}
+	return 0;
 }
 
 }

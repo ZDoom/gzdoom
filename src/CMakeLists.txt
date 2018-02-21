@@ -1184,7 +1184,6 @@ set (PCH_SOURCES
 	sound/timiditypp/output.cpp
 	sound/timiditypp/playmidi.cpp
 	sound/timiditypp/quantity.cpp
-	sound/timiditypp/readmidi.cpp
 	sound/timiditypp/readmidic.cpp
 	sound/timiditypp/recache.cpp
 	sound/timiditypp/resample.cpp

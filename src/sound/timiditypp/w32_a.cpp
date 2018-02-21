@@ -118,6 +118,8 @@ PlayMode dpm =
 };
 
 /*****************************************************************************************************************************/
+CRITICAL_SECTION critSect;
+
 
 static int open_output(void)
 {
@@ -129,7 +131,9 @@ static int open_output(void)
     MMRESULT        Result;
     UINT            DeviceID;
 	int ret;
-	
+
+	InitializeCriticalSection(&critSect);
+
 	if( dpm.name != NULL)
 		ret = sscanf(dpm.name, "%d", &opt_wmme_device_id);
 	if ( dpm.name == NULL || ret == 0 || ret == EOF)

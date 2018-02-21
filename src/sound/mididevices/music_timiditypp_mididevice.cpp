@@ -53,8 +53,8 @@
 
 class TimidityPPMIDIDevice : public SoftSynthMIDIDevice
 {
-	TArray<uint8_t> midi;
 	static TimidityPlus::Instruments *instruments;
+	int sampletime;
 public:
 	TimidityPPMIDIDevice(const char *args);
 	~TimidityPPMIDIDevice();
@@ -63,7 +63,6 @@ public:
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	//FString GetStats();
 	int GetDeviceType() const override { return MDEV_TIMIDITY; }
-	bool Preprocess(MIDIStreamer *song, bool looping);
 	void TimidityVolumeChanged();
 	static void ClearInstruments()
 	{
@@ -127,6 +126,7 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	{
 		Renderer = new TimidityPlus::Player(timidity_frequency, instruments);
 	}
+	sampletime = 0;
 }
 
 //==========================================================================
@@ -146,27 +146,6 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 
 //==========================================================================
 //
-// TimidityPPMIDIDevice :: Preprocess
-//
-//==========================================================================
-
-namespace TimidityPlus
-{
-	int load_midi_file(FileReader *fr, TimidityPlus::Player *p);
-	void run_midi(int samples);
-	void timidity_close();
-}
-
-bool TimidityPPMIDIDevice::Preprocess(MIDIStreamer *song, bool looping)
-{
-	// Write MIDI song to temporary file
-	song->CreateSMF(midi, looping ? 0 : 1);
-	MemoryReader fr((char*)&midi[0], midi.Size());
-	return !TimidityPlus::load_midi_file(&fr, Renderer);
-}
-
-//==========================================================================
-//
 // TimidityPPMIDIDevice :: Open
 //
 //==========================================================================
@@ -179,7 +158,7 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 	int ret = OpenStream(2, 0, callback, userdata);
 	if (ret == 0)
 	{
-		//Renderer->playmidi_stream_init();
+		Renderer->playmidi_stream_init();
 	}
 	return ret;
 }
@@ -208,7 +187,7 @@ void TimidityPPMIDIDevice::PrecacheInstruments(const uint16_t *instrumentlist, i
 
 void TimidityPPMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 {
-	//Renderer->HandleEvent(status, parm1, parm2);
+	Renderer->send_event(sampletime, status, parm1, parm2);
 }
 
 //==========================================================================
@@ -230,9 +209,8 @@ void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	Renderer->run_midi(len);
-	memset(buffer, len, 0);	// to do
 	Renderer->get_output(buffer, len);
+	sampletime += len;
 }
 
 //==========================================================================
@@ -258,6 +236,7 @@ MIDIDevice *CreateTimidityPPMIDIDevice(const char *args)
 void TimidityPP_Shutdown()
 {
 	TimidityPPMIDIDevice::ClearInstruments();
+	TimidityPlus::free_global_mblock();
 }
 
 

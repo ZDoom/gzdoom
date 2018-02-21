@@ -740,6 +740,7 @@ public:
 	int get_default_mapID(int ch);
 	void init_channel_layer(int ch);
 	void get_output(float *buffer, int len);
+	int send_event(int time, int status, int parm1, int parm2);
 
 	// Only until streaming works.
 	void skip_to(int32_t until_time, MidiEvent *evt_start);

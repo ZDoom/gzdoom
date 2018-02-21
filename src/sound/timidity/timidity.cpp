@@ -67,6 +67,8 @@ static int read_config_file(const char *name, bool ismain)
 	if (!(fp = pathExpander.openFileReader(name, &lumpnum)))
 		return -1;
 
+	FreeAll();
+
 	if (ismain)
 	{
 		if (lumpnum > 0)
@@ -516,6 +518,8 @@ void FreeAll()
 	}
 }
 
+static FString currentConfig;
+
 int LoadConfig(const char *filename)
 {
 	/* !!! FIXME: This may be ugly, but slightly less so than requiring the
@@ -525,6 +529,8 @@ int LoadConfig(const char *filename)
 	 *			  file itself since that file should contain any other directory
 	 *			  that needs to be added to the search path.
 	 */
+	if (currentConfig.CompareNoCase(filename) == 0) return 0;
+	currentConfig = filename;
 	pathExpander.clearPathlist();
 #ifdef _WIN32
 	pathExpander.addToPathlist("C:\\TIMIDITY");
@@ -560,12 +566,17 @@ int LoadConfig()
 
 int LoadDMXGUS()
 {
+	if (currentConfig.CompareNoCase("DMXGUS") == 0) return 0;
+
 	int lump = Wads.CheckNumForName("DMXGUS");
 	if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
 	if (lump == -1) return LoadConfig(midi_config);
 
 	FWadLump data = Wads.OpenLumpNum(lump);
 	if (data.GetLength() == 0) return LoadConfig(midi_config);
+
+	currentConfig = "DMXGUS";
+	FreeAll();
 
 	// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
 	FString ultradir = getenv("ULTRADIR");
@@ -684,7 +695,13 @@ void FreeDLS(DLS_Data *data);
 
 Renderer::Renderer(float sample_rate, const char *args)
 {
-	// 'args' should be used to load a custom config or DMXGUS, but since setup currently requires a snd_reset call, this will need some refactoring first
+	// Load explicitly stated sound font if so desired.
+	if (args != nullptr)
+	{
+		if (!stricmp(args, "DMXGUS")) LoadDMXGUS();
+		LoadConfig(args);
+	}
+
 	rate = sample_rate;
 	patches = NULL;
 	resample_buffer_size = 0;

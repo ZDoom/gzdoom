@@ -319,6 +319,7 @@ class Instruments
 	UserDrumset *userdrum_first = (UserDrumset *)NULL;
 	UserDrumset *userdrum_last = (UserDrumset *)NULL;
 
+	AlternateAssign alt[2];
 
 	/* Some functions get aggravated if not even the standard banks are available. */
 	ToneBank

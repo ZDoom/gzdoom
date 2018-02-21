@@ -5779,11 +5779,6 @@ struct midi_file_info *Player::new_midi_file_info()
 	return p;
 }
 
-struct midi_file_info *Player::get_midi_file_info(const char *filename, int newp)
-{
-	return &midifileinfo;
-}
-
 
 
 /*
@@ -5799,21 +5794,18 @@ void Player::playmidi_stream_init(void)
     CLEAR_CHANNELMASK(channel_mute);
 	if (temper_type_mute & 1)
 		FILL_CHANNELMASK(channel_mute);
-    if(first)
-    {
-	first = 0;
-        init_mblock(&playmidi_pool);
-	current_file_info = get_midi_file_info("TiMidity", 1);
-    midi_streaming=1;
-    }
+	if (first)
+	{
+		first = 0;
+		init_mblock(&playmidi_pool);
+		midi_streaming = 1;
+	}
     else
         reuse_mblock(&playmidi_pool);
 
     /* Fill in current_file_info */
-	current_file_info = get_midi_file_info("", 0);
+	current_file_info = &midifileinfo;
     current_file_info->readflag = 1;
-    current_file_info->seq_name = safe_strdup("TiMidity server");
-    current_file_info->karaoke_title = current_file_info->first_text = NULL;
     current_file_info->hdrsiz = 0;
     current_file_info->format = 0;
     current_file_info->tracks = 0;

@@ -490,9 +490,6 @@ enum {
 struct midi_file_info
 {
 	int readflag;
-	char *seq_name;
-	char *karaoke_title;
-	char *first_text;
 	int16_t hdrsiz;
 	int16_t format;
 	int16_t tracks;
@@ -723,7 +720,6 @@ public:
 
 	void free_drum_effect(int);
 	void change_system_mode(int mode);
-	struct midi_file_info *get_midi_file_info(const char *filename, int newp);
 	void recompute_freq(int v);
 	int get_default_mapID(int ch);
 	void init_channel_layer(int ch);

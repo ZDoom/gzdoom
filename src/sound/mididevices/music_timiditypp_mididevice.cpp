@@ -118,8 +118,12 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	if (instruments != nullptr && !instruments->checkConfig(args))
 	{
 		delete instruments;
+		instruments = nullptr;
 	}
-	instruments = new TimidityPlus::Instruments;
+	if (instruments == nullptr)
+	{
+		instruments = new TimidityPlus::Instruments;
+	}
 	if (!instruments->load(args))
 	{
 		delete instruments;

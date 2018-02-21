@@ -1867,15 +1867,13 @@ Instrument *Instruments::play_midi_load_instrument(int dr, int bk, int prog, boo
 void Instruments::init_userdrum()
 {
 	int i;
-	AlternateAssign *alt;
 
 	free_userdrum();
 
 	for (i = 0; i<2; i++) {	/* allocate alternative assign */
-		alt = (AlternateAssign *)safe_malloc(sizeof(AlternateAssign));
-		memset(alt, 0, sizeof(AlternateAssign));
+		memset(&alt[i], 0, sizeof(AlternateAssign));
 		alloc_instrument_bank(1, 64 + i);
-		drumset[64 + i]->alt = alt;
+		drumset[64 + i]->alt = &alt[i];
 	}
 }
 

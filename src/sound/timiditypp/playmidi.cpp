@@ -230,7 +230,7 @@ double Player::cnv_Hz_to_vib_ratio(double freq)
 
 void Player::adjust_amplification(void)
 {
-	static const double compensation_ratio = 1.0;
+	static const double compensation_ratio = 5.0;
     /* compensate master volume */
     master_volume = (double)(amplification) / 100.0 *
 	((double)master_volume_ratio * (compensation_ratio/0xFFFF));
@@ -5033,7 +5033,7 @@ int Player::compute_data(float *buffer, int32_t count)
 		// pass to caller
 		for (int i = 0; i < process*2; i++)
 		{
-			*buffer++ = (common_buffer[i])*(5.f / 0x80000000u);
+			*buffer++ = (common_buffer[i])*(1.f / 0x80000000u);
 		}
 	}
 	return RC_OK;

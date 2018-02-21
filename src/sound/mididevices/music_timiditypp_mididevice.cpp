@@ -243,6 +243,7 @@ MIDIDevice *CreateTimidityPPMIDIDevice(const char *args)
 void TimidityPP_Shutdown()
 {
 	TimidityPPMIDIDevice::ClearInstruments();
+	TimidityPlus::free_gauss_table();
 	TimidityPlus::free_global_mblock();
 }
 

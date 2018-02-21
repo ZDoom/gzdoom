@@ -641,7 +641,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 	}
 	if (noluck) 
 	{
-		ctl_cmsg(CMSG_ERROR, VERB_DEBUG, "Instrument `%s' can't be found.", name);
+		ctl_cmsg(CMSG_INFO, VERB_DEBUG, "Instrument `%s' can't be found.", name);
 		return 0;
 	}
 	/* Read some headers and do cursory sanity checks. There are loads
@@ -1099,8 +1099,8 @@ int Instruments::fill_bank(int dr, int b, int *rc)
 				bank->tone[i].instrument = load_instrument(dr, b, i);
 				if (bank->tone[i].instrument == NULL)
 				{
-					ctl_cmsg(CMSG_WARNING,
-						(b != 0) ? VERB_VERBOSE : VERB_NORMAL,
+					// This would be too annoying on 'warning' level.
+					ctl_cmsg(CMSG_WARNING, VERB_DEBUG,
 						"No instrument mapped to %s %d, program %d%s",
 						dr ? "drum set" : "tone bank",
 						dr ? b + progbase : b,

@@ -743,6 +743,8 @@ public:
 	int parse_sysex_event(const uint8_t *val, int32_t len, MidiEvent *ev, Instruments *instruments);
 };
 
+void free_gauss_table(void);
+
 
 }
 

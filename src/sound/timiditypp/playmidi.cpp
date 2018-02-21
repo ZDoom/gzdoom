@@ -1312,7 +1312,6 @@ int Player::find_samples(MidiEvent *e, int *vlist)
 	ch = e->channel;
 	if (channel[ch].special_sample > 0) {
 		if ((s = instruments->specialPatch(channel[ch].special_sample)) == NULL) {
-			ctl_cmsg(CMSG_WARNING, VERB_VERBOSE,"Strange: Special patch %d is not installed",channel[ch].special_sample);
 			return 0;
 		}
 		note = e->a + channel[ch].key_shift + note_key_offset;

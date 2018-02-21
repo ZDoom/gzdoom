@@ -177,9 +177,7 @@ int Instruments::load_soundfont(SFInfo *sf, struct timidity_file *fd)
 				break;
 		}
 		else {
-			ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
-				"%s: *** illegal id in level 0: %4.4s %4d",
-				fd->filename.c_str(), chunk.id, chunk.size);
+			ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 0: %4.4s %4d",	fd->filename.c_str(), chunk.id, chunk.size);
 			FSKIP(chunk.size, fd);
 		}
 	}
@@ -290,9 +288,7 @@ int Instruments::process_list(int size, SFInfo *sf, struct timidity_file *fd)
 	case PDTA_ID:
 		return process_pdta(size, sf, fd);
 	default:
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
-			"%s: *** illegal id in level 1: %4.4s",
-			fd->filename.c_str(), chunk.id);
+		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 1: %4.4s",	fd->filename.c_str(), chunk.id);
 		FSKIP(size, fd); /* skip it */
 		return 0;
 	}
@@ -441,9 +437,7 @@ void Instruments::load_sample_names(int size, SFInfo *sf, struct timidity_file *
 {
 	int i, nsamples;
 	if (sf->version > 1) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
-			"%s: *** version 2 has obsolete format??",
-			fd->filename.c_str());
+		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** version 2 has obsolete format??",fd->filename.c_str());
 		FSKIP(size, fd);
 		return;
 	}
@@ -455,9 +449,7 @@ void Instruments::load_sample_names(int size, SFInfo *sf, struct timidity_file *
 		sf->sample = NEW(SFSampleInfo, sf->nsamples);
 	}
 	else if (sf->nsamples != nsamples) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
-			"%s: *** different # of samples ?? (%d : %d)\n",
-			fd->filename.c_str(), sf->nsamples, nsamples);
+		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** different # of samples ?? (%d : %d)\n",fd->filename.c_str(), sf->nsamples, nsamples);
 		FSKIP(size, fd);
 		return;
 	}
@@ -624,8 +616,7 @@ void Instruments::convert_layers(SFInfo *sf)
 
 	if (prbags.bag == NULL || prbags.gen == NULL ||
 		inbags.bag == NULL || inbags.gen == NULL) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
-			"%s: *** illegal bags / gens", sf->sf_name);
+		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal bags / gens", sf->sf_name);
 		return;
 	}
 
@@ -653,9 +644,7 @@ void Instruments::generate_layers(SFHeader *hdr, SFHeader *next, SFBags *bags)
 
 	hdr->nlayers = next->bagNdx - hdr->bagNdx;
 	if (hdr->nlayers < 0) {
-		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
-			"%s: illegal layer numbers %d",
-			"", hdr->nlayers);
+		ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: illegal layer numbers %d",	"", hdr->nlayers);
 		return;
 	}
 	if (hdr->nlayers == 0)
@@ -666,9 +655,7 @@ void Instruments::generate_layers(SFHeader *hdr, SFHeader *next, SFBags *bags)
 		int genNdx = bags->bag[i];
 		layp->nlists = bags->bag[i + 1] - genNdx;
 		if (layp->nlists < 0) {
-			ctl_cmsg(CMSG_WARNING, VERB_NORMAL,
-				"%s: illegal list numbers %d",
-				"", layp->nlists);
+			ctl_cmsg(CMSG_WARNING, VERB_NORMAL, "%s: illegal list numbers %d", "", layp->nlists);
 			return;
 		}
 		layp->list = (SFGenRec*)safe_malloc(sizeof(SFGenRec) * layp->nlists);

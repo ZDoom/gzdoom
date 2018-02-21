@@ -281,6 +281,7 @@ void close_file(struct timidity_file *tf)
 	if (tf->url != NULL)
 	{
 		tf->url->Close();
+		delete tf->url;
 	}
 	delete tf;
 }

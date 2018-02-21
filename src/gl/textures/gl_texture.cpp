@@ -763,26 +763,50 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 
 //==========================================================================
 //
-//
+// Search auto paths for extra material textures
 //
 //==========================================================================
 
-void AddAutoBrightmaps()
+struct AutoTextureSearchPath
+{
+	const char *path;
+	ptrdiff_t offset;
+
+	void SetTexture(FTexture *material, FTexture *texture) const
+	{
+		*reinterpret_cast<FTexture**>(reinterpret_cast<uint8_t*>(&material->gl_info) + offset) = texture;
+	}
+};
+
+static AutoTextureSearchPath autosearchpaths[] =
+{
+	{ "brightmaps/auto/", offsetof(FTexture::MiscGLInfo, Brightmap) },
+	{ "normalmaps/auto/", offsetof(FTexture::MiscGLInfo, Normal) },
+	{ "specular/auto/", offsetof(FTexture::MiscGLInfo, Specular) },
+	{ "metallic/auto/", offsetof(FTexture::MiscGLInfo, Metallic) },
+	{ "roughness/auto/", offsetof(FTexture::MiscGLInfo, Roughness) },
+	{ "ao/auto/", offsetof(FTexture::MiscGLInfo, AmbientOcclusion) }
+};
+
+void AddAutoMaterials()
 {
 	int num = Wads.GetNumLumps();
 	for (int i = 0; i < num; i++)
 	{
 		const char *name = Wads.GetLumpFullName(i);
-		if (strstr(name, "brightmaps/auto/") == name)
+		for (const AutoTextureSearchPath &searchpath : autosearchpaths)
 		{
-			TArray<FTextureID> list;
-			FString texname = ExtractFileBase(name, false);
-			TexMan.ListTextures(texname, list);
-			auto bmtex = TexMan.FindTexture(name, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
-			for (auto texid : list)
+			if (strstr(name, searchpath.path) == name)
 			{
-				bmtex->bMasked = false;
-				TexMan[texid]->gl_info.Brightmap = bmtex;
+				TArray<FTextureID> list;
+				FString texname = ExtractFileBase(name, false);
+				TexMan.ListTextures(texname, list);
+				auto bmtex = TexMan.FindTexture(name, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+				for (auto texid : list)
+				{
+					bmtex->bMasked = false;
+					searchpath.SetTexture(TexMan[texid], bmtex);
+				}
 			}
 		}
 	}

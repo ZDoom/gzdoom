@@ -43,71 +43,6 @@ inline void SETMIDIEVENT(MidiEvent &e, int32_t at, uint32_t t, uint32_t ch, uint
 #define MERGE_CHANNEL_PORT(ch) ((int)(ch) | (midi_port_number << 4))
 #define MERGE_CHANNEL_PORT2(ch, port) ((int)(ch) | ((int)port << 4))
 
-
-static const struct ctl_chg_types {
-	unsigned char mtype;
-	int ttype;
-} ctl_chg_list[] = {
-	{ 0, ME_TONE_BANK_MSB },
-{ 1, ME_MODULATION_WHEEL },
-{ 2, ME_BREATH },
-{ 4, ME_FOOT },
-{ 5, ME_PORTAMENTO_TIME_MSB },
-{ 6, ME_DATA_ENTRY_MSB },
-{ 7, ME_MAINVOLUME },
-{ 8, ME_BALANCE },
-{ 10, ME_PAN },
-{ 11, ME_EXPRESSION },
-{ 32, ME_TONE_BANK_LSB },
-{ 37, ME_PORTAMENTO_TIME_LSB },
-{ 38, ME_DATA_ENTRY_LSB },
-{ 64, ME_SUSTAIN },
-{ 65, ME_PORTAMENTO },
-{ 66, ME_SOSTENUTO },
-{ 67, ME_SOFT_PEDAL },
-{ 68, ME_LEGATO_FOOTSWITCH },
-{ 69, ME_HOLD2 },
-{ 71, ME_HARMONIC_CONTENT },
-{ 72, ME_RELEASE_TIME },
-{ 73, ME_ATTACK_TIME },
-{ 74, ME_BRIGHTNESS },
-{ 84, ME_PORTAMENTO_CONTROL },
-{ 91, ME_REVERB_EFFECT },
-{ 92, ME_TREMOLO_EFFECT },
-{ 93, ME_CHORUS_EFFECT },
-{ 94, ME_CELESTE_EFFECT },
-{ 95, ME_PHASER_EFFECT },
-{ 96, ME_RPN_INC },
-{ 97, ME_RPN_DEC },
-{ 98, ME_NRPN_LSB },
-{ 99, ME_NRPN_MSB },
-{ 100, ME_RPN_LSB },
-{ 101, ME_RPN_MSB },
-{ 120, ME_ALL_SOUNDS_OFF },
-{ 121, ME_RESET_CONTROLLERS },
-{ 123, ME_ALL_NOTES_OFF },
-{ 126, ME_MONO },
-{ 127, ME_POLY },
-};
-
-int convert_midi_control_change(int chn, int type, int val, MidiEvent *ev_ret)
-{
-	int etype = -1;
-	for (auto &t : ctl_chg_list) 
-	{
-		if (t.mtype == type) 
-		{
-			if (val > 127) val = 127;
-			ev_ret->type = t.ttype;
-			ev_ret->channel = chn;
-			ev_ret->a = val;
-			ev_ret->b = 0;
-			return 1;
-		}
-	}
-	return 0;
-}
-
 /* Map XG types onto GS types.  XG should eventually have its own tables */
 static int set_xg_reverb_type(int msb, int lsb)
 {
@@ -272,7 +207,7 @@ static uint16_t gm_convert_master_vol(uint16_t v1, uint16_t v2)
 * This function provides basic support for XG Bulk Dump and Parameter
 * Change SysEx events
 */
-int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *evm, Instruments *instruments)
+int SysexConvert::parse_sysex_event_multi(const uint8_t *val, int32_t len, MidiEvent *evm, Instruments *instruments)
 {
 	int num_events = 0;				/* Number of events added */
 
@@ -289,9 +224,9 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 		(val[1] >= 0x10 && val[3] == 0x02)))	/* Parameter Change */
 	{
 		uint8_t addhigh, addmid, addlow;		/* Addresses */
-		uint8_t *body;				/* SysEx body */
+		const uint8_t *body;				/* SysEx body */
 		int ent, v;				/* Entry # of sub-event */
-		uint8_t *body_end;			/* End of SysEx body */
+		const uint8_t *body_end;			/* End of SysEx body */
 
 		if (val[1] < 0x10)	/* Bulk Dump */
 		{
@@ -484,9 +419,9 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 		(val[1] >= 0x10 && val[3] == 0x03)))	/* Parameter Change */
 	{
 		uint8_t addhigh, addmid, addlow;		/* Addresses */
-		uint8_t *body;				/* SysEx body */
+		const uint8_t *body;				/* SysEx body */
 		int ent;				/* Entry # of sub-event */
-		uint8_t *body_end;			/* End of SysEx body */
+		const uint8_t *body_end;			/* End of SysEx body */
 
 		if (val[1] < 0x10)	/* Bulk Dump */
 		{
@@ -524,10 +459,10 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 			(val[1] >= 0x10 && val[3] == 0x08)))	/* Parameter Change */
 	{
 		uint8_t addhigh, addmid, addlow;		/* Addresses */
-		uint8_t *body;				/* SysEx body */
+		const uint8_t *body;				/* SysEx body */
 		uint8_t p;				/* Channel part number [0..15] */
 		int ent;				/* Entry # of sub-event */
-		uint8_t *body_end;			/* End of SysEx body */
+		const uint8_t *body_end;			/* End of SysEx body */
 
 		if (val[1] < 0x10)	/* Bulk Dump */
 		{
@@ -1094,10 +1029,10 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 		(val[1] >= 0x10 && (val[3] & 0xF0) == 0x30)))	/* Parameter Change */
 	{
 		uint8_t addhigh, addmid, addlow;		/* Addresses */
-		uint8_t *body;				/* SysEx body */
+		const uint8_t *body;				/* SysEx body */
 		uint8_t dp, note;				/* Channel part number [0..15] */
 		int ent;				/* Entry # of sub-event */
-		uint8_t *body_end;			/* End of SysEx body */
+		const uint8_t *body_end;			/* End of SysEx body */
 
 		if (val[1] < 0x10)	/* Bulk Dump */
 		{
@@ -2410,7 +2345,7 @@ int SysexConvert::parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *
 }
 
 
-int SysexConvert::parse_sysex_event(uint8_t *val, int32_t len, MidiEvent *ev, Instruments *instruments)
+int SysexConvert::parse_sysex_event(const uint8_t *val, int32_t len, MidiEvent *ev, Instruments *instruments)
 {
 	uint16_t vol;
 
@@ -2430,7 +2365,7 @@ int SysexConvert::parse_sysex_event(uint8_t *val, int32_t len, MidiEvent *ev, In
 		*/
 
 		int32_t addr, checksum, i;		/* SysEx address */
-		uint8_t *body;		/* SysEx body */
+		const uint8_t *body;		/* SysEx body */
 		uint8_t p, gslen;		/* Channel part number [0..15] */
 
 								/* check Checksum */

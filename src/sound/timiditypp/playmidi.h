@@ -707,6 +707,7 @@ private:
 	void init_rx_drum(struct DrumParts *);
 	void set_rx_drum(struct DrumParts *, int32_t, int);
 	int32_t get_rx_drum(struct DrumParts *, int32_t);
+	int convert_midi_control_change(int chn, int type, int val, MidiEvent *ev_ret);
 
 
 public:
@@ -741,15 +742,7 @@ public:
 	void init_channel_layer(int ch);
 	void get_output(float *buffer, int len);
 	int send_event(int time, int status, int parm1, int parm2);
-
-	// Only until streaming works.
-	void skip_to(int32_t until_time, MidiEvent *evt_start);
-	int start_midi(MidiEvent *eventlist, int32_t samples);
-	void run_midi(int);
-	int play_midi(MidiEvent *eventlist, int32_t samples);
-	friend MidiEvent *groom_list(int32_t divisions, int32_t *eventsp, int32_t *samplesp);
-
-
+	void send_long_event(int sampletime, const uint8_t *sysexbuffer, int exlen);
 };
 
 class SysexConvert
@@ -759,12 +752,9 @@ class SysexConvert
 	uint8_t drum_setup_xg[16] = { 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9 };	/* for XG */
 
 public:
-	int parse_sysex_event_multi(uint8_t *val, int32_t len, MidiEvent *evm, Instruments *instruments);
-	int parse_sysex_event(uint8_t *val, int32_t len, MidiEvent *ev, Instruments *instruments);
+	int parse_sysex_event_multi(const uint8_t *val, int32_t len, MidiEvent *evm, Instruments *instruments);
+	int parse_sysex_event(const uint8_t *val, int32_t len, MidiEvent *ev, Instruments *instruments);
 };
-
-// really extern!
-int convert_midi_control_change(int chn, int type, int val, MidiEvent *ev_ret);
 
 
 }

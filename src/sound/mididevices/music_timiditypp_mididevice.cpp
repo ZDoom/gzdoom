@@ -112,6 +112,7 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 {
 	if (args == NULL || *args == 0) args = timidity_config;
 
+	Renderer = nullptr;
 	if (instruments != nullptr && !instruments->checkConfig(args))
 	{
 		delete instruments;
@@ -152,14 +153,14 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 
 int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
-	// No instruments loaded means we cannot play...
-	if (instruments == nullptr) return 0;
 
 	int ret = OpenStream(2, 0, callback, userdata);
-	if (ret == 0)
+	if (ret == 0 && Renderer != nullptr)
 	{
 		Renderer->playmidi_stream_init();
 	}
+	// No instruments loaded means we cannot play...
+	if (instruments == nullptr) return 0;
 	return ret;
 }
 
@@ -176,7 +177,8 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 
 void TimidityPPMIDIDevice::PrecacheInstruments(const uint16_t *instrumentlist, int count)
 {
-	instruments->PrecacheInstruments(instrumentlist, count);
+	if (instruments != nullptr)
+		instruments->PrecacheInstruments(instrumentlist, count);
 }
 
 //==========================================================================
@@ -187,7 +189,8 @@ void TimidityPPMIDIDevice::PrecacheInstruments(const uint16_t *instrumentlist, i
 
 void TimidityPPMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 {
-	Renderer->send_event(sampletime, status, parm1, parm2);
+	if (Renderer != nullptr)
+		Renderer->send_event(sampletime, status, parm1, parm2);
 }
 
 //==========================================================================
@@ -198,7 +201,8 @@ void TimidityPPMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 
 void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 {
-	//Renderer->HandleLongMessage(data, len);
+	if (Renderer != nullptr)
+		Renderer->send_long_event(sampletime, data, len);
 }
 
 //==========================================================================
@@ -209,7 +213,8 @@ void TimidityPPMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	Renderer->get_output(buffer, len);
+	if (Renderer != nullptr)
+		Renderer->get_output(buffer, len);
 	sampletime += len;
 }
 

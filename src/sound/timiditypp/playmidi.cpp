@@ -5046,8 +5046,6 @@ int Player::compute_data(int32_t count)
 
 	while ((count + buffered_count) >= AUDIO_BUFFER_SIZE)
 	{
-		int i;
-
 		do_compute_data(AUDIO_BUFFER_SIZE - buffered_count);
 		count -= AUDIO_BUFFER_SIZE - buffered_count;
 
@@ -5864,6 +5862,7 @@ void Player::playmidi_stream_init(void)
         reuse_mblock(&playmidi_pool);
 
     /* Fill in current_file_info */
+	current_file_info = get_midi_file_info("", 0);
     current_file_info->readflag = 1;
     current_file_info->seq_name = safe_strdup("TiMidity server");
     current_file_info->karaoke_title = current_file_info->first_text = NULL;
@@ -6070,6 +6069,72 @@ void Player::get_output(float *buffer, int len)
 	//compute_data(len);
 }
 
+
+static const struct ctl_chg_types {
+	unsigned char mtype;
+	int ttype;
+} ctl_chg_list[] = {
+	{ 0, ME_TONE_BANK_MSB },
+{ 1, ME_MODULATION_WHEEL },
+{ 2, ME_BREATH },
+{ 4, ME_FOOT },
+{ 5, ME_PORTAMENTO_TIME_MSB },
+{ 6, ME_DATA_ENTRY_MSB },
+{ 7, ME_MAINVOLUME },
+{ 8, ME_BALANCE },
+{ 10, ME_PAN },
+{ 11, ME_EXPRESSION },
+{ 32, ME_TONE_BANK_LSB },
+{ 37, ME_PORTAMENTO_TIME_LSB },
+{ 38, ME_DATA_ENTRY_LSB },
+{ 64, ME_SUSTAIN },
+{ 65, ME_PORTAMENTO },
+{ 66, ME_SOSTENUTO },
+{ 67, ME_SOFT_PEDAL },
+{ 68, ME_LEGATO_FOOTSWITCH },
+{ 69, ME_HOLD2 },
+{ 71, ME_HARMONIC_CONTENT },
+{ 72, ME_RELEASE_TIME },
+{ 73, ME_ATTACK_TIME },
+{ 74, ME_BRIGHTNESS },
+{ 84, ME_PORTAMENTO_CONTROL },
+{ 91, ME_REVERB_EFFECT },
+{ 92, ME_TREMOLO_EFFECT },
+{ 93, ME_CHORUS_EFFECT },
+{ 94, ME_CELESTE_EFFECT },
+{ 95, ME_PHASER_EFFECT },
+{ 96, ME_RPN_INC },
+{ 97, ME_RPN_DEC },
+{ 98, ME_NRPN_LSB },
+{ 99, ME_NRPN_MSB },
+{ 100, ME_RPN_LSB },
+{ 101, ME_RPN_MSB },
+{ 120, ME_ALL_SOUNDS_OFF },
+{ 121, ME_RESET_CONTROLLERS },
+{ 123, ME_ALL_NOTES_OFF },
+{ 126, ME_MONO },
+{ 127, ME_POLY },
+};
+
+int Player::convert_midi_control_change(int chn, int type, int val, MidiEvent *ev_ret)
+{
+	int etype = -1;
+	for (auto &t : ctl_chg_list)
+	{
+		if (t.mtype == type)
+		{
+			if (val > 127) val = 127;
+			ev_ret->type = t.ttype;
+			ev_ret->channel = chn;
+			ev_ret->a = val;
+			ev_ret->b = 0;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+
 int Player::send_event(int sampletime, int status, int parm1, int parm2)
 {
 	MidiEvent ev;
@@ -6121,5 +6186,41 @@ int Player::send_event(int sampletime, int status, int parm1, int parm2)
 	}
 	return 0;
 }
+
+void Player::send_long_event(int sampletime, const uint8_t *sysexbuffer, int exlen) 
+{
+	int i, ne;
+	MidiEvent ev;
+	MidiEvent evm[260];
+	SysexConvert sc;
+
+	if ((sysexbuffer[0] != '\xf0') && (sysexbuffer[0] != '\xf7')) return;
+	
+	if (sc.parse_sysex_event(sysexbuffer + 1, exlen - 1, &ev, instruments)) 
+	{
+		if (ev.type == ME_RESET)
+		{
+			kill_all_voices();
+			for (int i = 0; i < MAX_CHANNELS; i++)
+				init_channel_layer(i);
+
+			/* initialize effect status */
+			reverb->init_effect_status(play_system_mode);
+			instruments->init_userdrum();
+			instruments->init_userinst();
+			playmidi_stream_init();
+		}
+		play_event(&ev);
+	}
+	if (ne = sc.parse_sysex_event_multi(sysexbuffer + 1, exlen - 1, evm, instruments)) 
+	{
+		for (i = 0; i < ne; i++) 
+		{
+			play_event(&evm[i]);
+		}
+	}
+}
+
+
 
 }

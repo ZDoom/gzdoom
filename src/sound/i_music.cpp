@@ -60,6 +60,7 @@ extern void ChildSigHandler (int signum);
 #include "m_swap.h"
 #include "i_cd.h"
 #include "templates.h"
+#include "m_misc.h"
 #include "stats.h"
 #include "timidity/timidity.h"
 #include "vm.h"
@@ -661,6 +662,43 @@ void I_SetMusicVolume (float factor)
 	factor = clamp<float>(factor, 0, 2.0f);
 	relative_volume = saved_relative_volume * factor;
 	snd_musicvolume.Callback();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void I_CollectSoundfonts()
+{
+	FString path = M_GetDocumentsPath();
+	TArray<FString> sffiles;
+	const char *match;
+	findstate_t c_file;
+	void *file;
+
+	path << "/soundfonts/*";
+
+	if ((file = I_FindFirst(path, &c_file)) == ((void *)(-1)))
+	{
+		return;
+	}
+	path.StripRight("*");
+	do
+	{
+		if (!I_FindAttr(&c_file) & FA_DIREC)
+		{
+			FStringf name("%s%s", path.GetChars(), I_FindName(&c_file));
+			sffiles.Push(name);
+		}
+	} while (I_FindNext(file, &c_file) == 0);
+	I_FindClose(file);
+
+	auto soundfonts = new FWadCollection;
+	soundfonts->InitMultipleFiles(sffiles);
+
+
 }
 
 DEFINE_ACTION_FUNCTION(DObject, SetMusicVolume)

@@ -16,7 +16,8 @@ public:
 	{
 		OM_FILEORLUMP = 0,
 		OM_LUMP,
-		OM_FILE
+		OM_FILE,
+		OM_ARCHIVE
 	};
 	
 	PathExpander(int om = OM_FILEORLUMP)

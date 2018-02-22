@@ -1541,7 +1541,7 @@ void ParseCVarInfo()
 	{
 		GameConfig->DoModSetup (gameinfo.ConfigName);
 	}
-}
+}	
 
 //==========================================================================
 //

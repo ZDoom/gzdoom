@@ -27,9 +27,6 @@ struct FSoundFontInfo
 class FSoundFontReader
 {
 protected:
-    FWadCollection *collection;
-    FString mMainConfigForSF2;
-    int mFindInfile;
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
     bool mAllowAbsolutePaths = false;
     // This has only meaning if being run on a platform with a case sensitive file system and loose files.
@@ -37,21 +34,14 @@ protected:
     bool mCaseSensitivePaths = false;
     TArray<FString> mPaths;
     
-    
-    FSoundFontReader()
-    {
-        collection = nullptr;
-        mFindInfile = -1;
-    }
-    
+  
     int pathcmp(const char *p1, const char *p2);
    
-    
+   
 public:
     
-    FSoundFontReader(FWadCollection *coll, const FSoundFontInfo *sfi);
-    virtual FileReader *OpenMainConfigFile();    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
-    virtual FileReader *OpenFile(const char *name);
+    virtual FileReader *OpenMainConfigFile() = 0;    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
+    virtual FileReader *OpenFile(const char *name) = 0;
     std::pair<FileReader *, FString> LookupFile(const char *name);
     void AddPath(const char *str);
 	virtual FString basePath() const
@@ -68,9 +58,11 @@ public:
 
 class FSF2Reader : public FSoundFontReader
 {
-    FString mFilename;
+	FString mMainConfigForSF2;
+	FString mFilename;
 public:
     FSF2Reader(const char *filename);
+	virtual FileReader *FSF2Reader::OpenMainConfigFile() override;
     virtual FileReader *OpenFile(const char *name) override;
 };
 
@@ -126,6 +118,7 @@ class FPatchSetReader : public FSoundFontReader
 	FString mFullPathToConfig;
 
 public:
+	FPatchSetReader();
 	FPatchSetReader(const char *filename);
 	~FPatchSetReader();
 	virtual FileReader *OpenMainConfigFile() override;
@@ -145,10 +138,8 @@ public:
 class FSoundFontManager
 {
     TArray<FSoundFontInfo> soundfonts;
-    FWadCollection soundfontcollection;
     
-    
-    void ProcessOneFile(const FString & fn, TArray<FString> &sffiles);
+    void ProcessOneFile(const FString & fn);
     
 public:
     void CollectSoundfonts();

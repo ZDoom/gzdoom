@@ -42,6 +42,7 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <memory>
 
 #include "common.h"
 #include "wm_error.h"
@@ -2942,7 +2943,7 @@ void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)
 	}
 	for (; buffer < newbuf; ++buffer)
 	{
-		*(float *)buffer = (float)*buffer * (2. / 32768.f);	// boost the volume because Wildmidi is far more quiet than the other synths and therefore hard to balance.
+		*(float *)buffer = (float)*buffer * (2.f / 32768.f);	// boost the volume because Wildmidi is far more quiet than the other synths and therefore hard to balance.
 	}
 }
 

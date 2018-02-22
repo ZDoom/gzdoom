@@ -34,6 +34,7 @@
 */
 
 #include <errno.h>
+#include <memory>
 
 #include "files.h"
 #include "wm_error.h"

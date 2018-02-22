@@ -46,90 +46,13 @@ FSoundFontManager sfmanager;
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-FSoundFontReader::FSoundFontReader(FWadCollection *coll, const FSoundFontInfo *sfi)
-{
-	collection = coll;
-	if (sfi->type == SF_SF2)
-	{
-		mMainConfigForSF2.Format("soundfont %s", sfi->mFilename.GetChars());
-	}
-	if (coll != nullptr)
-	{
-		auto num = coll->GetNumWads();
-		for(int i = 0; i < num; i++)
-		{
-			auto wadname = ExtractFileBase(coll->GetWadFullName(i), false);
-			if (sfi->mName.CompareNoCase(wadname) == 0)
-			{
-				// For the given sound font we may only read from this file and no other.
-				// This is to avoid conflicts with duplicate patches between patch sets.
-				// For SF2 fonts it's just an added precaution in cause some zipped patch set
-				// contains extraneous data that gets in the way.
-				mFindInfile = i;
-				break;
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FileReader *FSoundFontReader::OpenMainConfigFile()
-{
-	if (mMainConfigForSF2.IsNotEmpty())
-	{
-		return new MemoryReader(mMainConfigForSF2.GetChars(), (long)mMainConfigForSF2.Len());
-	}
-	else
-	{
-		auto lump = collection->CheckNumForFullName("timidity.cfg", mFindInfile);
-		return lump < 0? nullptr : collection->ReopenLumpNum(lump);
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FileReader *FSoundFontReader::OpenFile(const char *name)
-{
-	auto lump = collection->CheckNumForFullName(name, mFindInfile);
-	if (lump >= 0)
-	{
-		// For SF2 files return a streaming reader to avoid loading the entire file into memory.
-		if (collection->GetLumpCount(mFindInfile) == 1)
-		{
-			return collection->ReopenLumpNumNewFile(lump);
-		}
-		return collection->ReopenLumpNum(lump);
-	}
-	return nullptr;
-}
-
-//==========================================================================
-//
 // returns both a file reader and the full name of the looked up file
 //
 //==========================================================================
 
 std::pair<FileReader *, FString> FSoundFontReader::LookupFile(const char *name)
 {
-	if (IsAbsPath(name))
-	{
-		auto fr = OpenFile(name);
-		if (fr != nullptr) return std::make_pair(fr, name);
-	}
-	else
+	if (!IsAbsPath(name))
 	{
 		for(int i = mPaths.Size()-1; i>=0; i--)
 		{
@@ -138,6 +61,8 @@ std::pair<FileReader *, FString> FSoundFontReader::LookupFile(const char *name)
 			if (fr != nullptr) return std::make_pair(fr, fullname);
 		}
 	}
+	auto fr = OpenFile(name);
+	if (fr != nullptr) return std::make_pair(fr, name);
 	return std::make_pair(nullptr, FString());
 }
 
@@ -182,8 +107,23 @@ int FSoundFontReader::pathcmp(const char *p1, const char *p2)
 
 FSF2Reader::FSF2Reader(const char *fn)
 {
-	mMainConfigForSF2.Format("soundfont %s", fn);
+	mMainConfigForSF2.Format("soundfont %s\n", fn);
 	mFilename = fn;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FileReader *FSF2Reader::OpenMainConfigFile()
+{
+	if (mMainConfigForSF2.IsNotEmpty())
+	{
+		return new MemoryReader(mMainConfigForSF2.GetChars(), (long)mMainConfigForSF2.Len());
+	}
+	return nullptr;
 }
 
 FileReader *FSF2Reader::OpenFile(const char *name)
@@ -278,6 +218,12 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	}
 }
 
+FPatchSetReader::FPatchSetReader()
+{
+	// This constructor is for reading DMXGUS
+	mAllowAbsolutePaths = true;
+}
+
 FileReader *FPatchSetReader::OpenMainConfigFile()
 {
 	auto fr = new FileReader;
@@ -339,7 +285,7 @@ FileReader *FLumpPatchSetReader::OpenFile(const char *name)
 //
 //==========================================================================
 
-void FSoundFontManager::ProcessOneFile(const FString &fn, TArray<FString> &sffiles)
+void FSoundFontManager::ProcessOneFile(const FString &fn)
 {
 	auto fb = ExtractFileBase(fn, false);
 	auto fbe = ExtractFileBase(fn, true);
@@ -357,7 +303,6 @@ void FSoundFontManager::ProcessOneFile(const FString &fn, TArray<FString> &sffil
 		fr.Read(head, 16);
 		if (!memcmp(head, "RIFF", 4) && !memcmp(head+8, "sfbkLIST", 8))
 		{
-			sffiles.Push(fn);
 			FSoundFontInfo sft = { fb, fbe, fn, SF_SF2 };
 			soundfonts.Push(sft);
 		}
@@ -372,7 +317,6 @@ void FSoundFontManager::ProcessOneFile(const FString &fn, TArray<FString> &sffil
 					if (zipl != nullptr)
 					{
 						// It seems like this is what we are looking for
-						sffiles.Push(fn);
 						FSoundFontInfo sft = { fb, fbe, fn, SF_GUS };
 						soundfonts.Push(sft);
 					}
@@ -393,7 +337,6 @@ void FSoundFontManager::CollectSoundfonts()
 {
 	findstate_t c_file;
 	void *file;
-	TArray<FString> sffiles;
 	
 	
 	if (GameConfig != NULL && GameConfig->SetSection ("FileSearch.Directories"))
@@ -420,7 +363,7 @@ void FSoundFontManager::CollectSoundfonts()
 							if (!(I_FindAttr(&c_file) & FA_DIREC))
 							{
 								FStringf name("%s%s", path.GetChars(), I_FindName(&c_file));
-								ProcessOneFile(name, sffiles);
+								ProcessOneFile(name);
 							}
 						} while (I_FindNext(file, &c_file) == 0);
 						I_FindClose(file);
@@ -429,10 +372,6 @@ void FSoundFontManager::CollectSoundfonts()
 			}
 		}
 	}
-
-
-	if (sffiles.Size() > 0)
-		soundfontcollection.InitMultipleFiles(sffiles);
 }
 
 //==========================================================================
@@ -478,7 +417,8 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	auto sfi = FindSoundFont(name, allowed);
 	if (sfi != nullptr)
 	{
-		return new FSoundFontReader(&soundfontcollection, sfi);
+		if (sfi->type == SF_SF2) return new FSF2Reader(sfi->mFilename);
+		else return new FZipPatReader(sfi->mFilename);
 	}
 	// The sound font collection did not yield any good results.
 	// Next check if the file is a .sf file

@@ -2,6 +2,7 @@
 #include <string.h>
 #include <errno.h>
 #include <math.h>
+#include <memory>
 
 #include "doomdef.h"
 #include "m_swap.h"
@@ -9,6 +10,12 @@
 #include "timidity.h"
 #include "sf2.h"
 #include "files.h"
+#include "i_soundfont.h"
+
+namespace Timidity
+{
+	extern std::unique_ptr<FSoundFontReader> gus_sfreader;
+}
 
 using namespace Timidity;
 
@@ -1501,7 +1508,7 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 
 void SFFile::LoadSample(SFSample *sample)
 {
-	FileReader *fp = pathExpander.openFileReader(Filename, NULL);
+	FileReader *fp = gus_sfreader->LookupFile(Filename).first;
 	uint32_t i;
 
 	if (fp == NULL)

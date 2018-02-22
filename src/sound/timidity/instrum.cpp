@@ -27,15 +27,20 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <memory>
 
 #include "timidity.h"
 #include "m_swap.h"
 #include "files.h"
 #include "templates.h"
 #include "gf1patch.h"
+#include "i_soundfont.h"
 
 namespace Timidity
 {
+
+	extern std::unique_ptr<FSoundFontReader> gus_sfreader;
+
 
 extern Instrument *load_instrument_dls(Renderer *song, int drum, int bank, int instrument);
 
@@ -159,16 +164,19 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 	if (!name) return 0;
 
 	/* Open patch file */
-	if ((fp = pathExpander.openFileReader(name, NULL)) == NULL)
+	fp = gus_sfreader->LookupFile(name).first;
+	if (fp == NULL)
 	{
 		/* Try with various extensions */
 		FString tmp = name;
 		tmp += ".pat";
-		if ((fp = pathExpander.openFileReader(tmp, NULL)) == NULL)
+		fp = gus_sfreader->LookupFile(tmp).first;
+		if (fp == NULL)
 		{
 #ifdef __unix__			// Windows isn't case-sensitive.
 			tmp.ToUpper();
-			if ((fp = pathExpander.openFileReader(tmp, NULL)) == NULL)
+			fp = gus_sfreader->LookupFile(tmp).first;
+			if (fp == NULL)
 #endif
 			{
 				noluck = true;

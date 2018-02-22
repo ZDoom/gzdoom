@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <memory>
 
 #include "timidity.h"
 #include "templates.h"
@@ -32,21 +33,52 @@
 #include "files.h"
 #include "w_wad.h"
 #include "i_soundfont.h"
+#include "i_musicinterns.h"
+#include "v_text.h"
 
-// Unlike the other softsynths, this one cannot change its config data at run time. 
-CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	Timidity::FreeAll();
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_GUS)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 CVAR(Int, midi_voices, 32, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(String, gus_patchdir, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Bool, midi_dmxgus, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, midi_dmxgus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)	// This was 'true' but since it requires special setup that's not such a good idea.
+{
+	Timidity::FreeAll();
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_GUS)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 CVAR(Int, gus_memsize, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 namespace Timidity
 {
 
-PathExpander pathExpander;
 ToneBank *tonebank[MAXBANK], *drumset[MAXBANK];
 
 static FString def_instr_name;
+std::unique_ptr<FSoundFontReader> gus_sfreader;
+
+static bool InitReader(const char *config_file)
+{
+	auto reader = sfmanager.OpenSoundFont(config_file, SF_GUS|SF_SF2);
+	if (reader == nullptr)
+	{
+		Printf(TEXTCOLOR_RED "%s: Unable to load sound font", config_file);
+		return false;	// No sound font could be opened.
+	}
+	gus_sfreader.reset(reader);
+	//config_name = config_file;
+	return true;
+}
+
 
 static int read_config_file(const char *name, bool ismain)
 {
@@ -55,32 +87,25 @@ static int read_config_file(const char *name, bool ismain)
 	ToneBank *bank = NULL;
 	int i, j, k, line = 0, words;
 	static int rcf_count = 0;
-	int lumpnum;
 
 	if (rcf_count > 50)
 	{
 		Printf("Timidity: Probable source loop in configuration files\n");
 		return (-1);
 	}
-
-	if (ismain) pathExpander.openmode = PathExpander::OM_FILEORLUMP;
-
-	if (!(fp = pathExpander.openFileReader(name, &lumpnum)))
-		return -1;
-
-	FreeAll();
-
 	if (ismain)
 	{
-		if (lumpnum > 0)
-		{
-			pathExpander.openmode = PathExpander::OM_LUMP;
-			pathExpander.clearPathlist();	// when reading from a PK3 we don't want to use any external path
-		}
-		else
-		{
-			pathExpander.openmode = PathExpander::OM_FILE;
-		}
+		if (!InitReader(name)) return -1;
+		fp = gus_sfreader->OpenMainConfigFile();
+		FreeAll();
+	}
+	else
+	{
+		fp = gus_sfreader->LookupFile(name).first;
+	}
+	if (fp == nullptr)
+	{
+		return -1;
 	}
 
 	while (fp->Gets(tmp, sizeof(tmp)))
@@ -291,7 +316,10 @@ static int read_config_file(const char *name, bool ismain)
 				return -2;
 			}
 			for (i = 1; i < words; i++)
-				pathExpander.addToPathlist(w[i]);
+			{
+				// Q: How does this deal with relative paths? In this form it just does not work.
+				gus_sfreader->AddPath(w[i]);
+			}
 		}
 		else if (!strcmp(w[0], "source"))
 		{
@@ -531,17 +559,6 @@ int LoadConfig(const char *filename)
 	 *			  that needs to be added to the search path.
 	 */
 	if (currentConfig.CompareNoCase(filename) == 0) return 0;
-	currentConfig = filename;
-	pathExpander.clearPathlist();
-#ifdef _WIN32
-	pathExpander.addToPathlist("C:\\TIMIDITY");
-	pathExpander.addToPathlist("\\TIMIDITY");
-	pathExpander.addToPathlist(progdir);
-#else
-	pathExpander.addToPathlist("/usr/local/lib/timidity");
-	pathExpander.addToPathlist("/etc/timidity");
-	pathExpander.addToPathlist("/etc");
-#endif
 
 	/* Some functions get aggravated if not even the standard banks are available. */
 	if (tonebank[0] == NULL)
@@ -576,18 +593,24 @@ int LoadDMXGUS()
 	FWadLump data = Wads.OpenLumpNum(lump);
 	if (data.GetLength() == 0) return LoadConfig(midi_config);
 
+	// Check if we got some GUS data before using it.
+	FString ultradir = getenv("ULTRADIR");
+	if (ultradir.IsEmpty() && *(*gus_patchdir) == 0) return LoadConfig(midi_config);
+
 	currentConfig = "DMXGUS";
 	FreeAll();
 
+	auto psreader = new FPatchSetReader;
+
 	// The GUS put its patches in %ULTRADIR%/MIDI so we can try that
-	FString ultradir = getenv("ULTRADIR");
 	if (ultradir.IsNotEmpty())
 	{
 		ultradir += "/midi";
-		pathExpander.addToPathlist(ultradir.GetChars());
+		psreader->AddPath(ultradir);
 	}
 	// Load DMXGUS lump and patches from gus_patchdir
-	pathExpander.addToPathlist(gus_patchdir);
+	if (*(*gus_patchdir) != 0) psreader->AddPath(gus_patchdir);
+	gus_sfreader.reset(psreader);
 
 	char readbuffer[1024];
 	long size = data.GetLength();
@@ -700,16 +723,15 @@ Renderer::Renderer(float sample_rate, const char *args)
 	// Load explicitly stated sound font if so desired.
 	if (args != nullptr && *args != 0)
 	{
-		int ret;
-		FreeAll();
-		if (!stricmp(args, "DMXGUS")) ret = LoadDMXGUS();
-		ret = LoadConfig(args);
-		if (ret != 0)
-		{
-		}
+		if (!stricmp(args, "DMXGUS")) LoadDMXGUS();
+		LoadConfig(args);
+	}
+	else if (tonebank[0] == nullptr)
+	{
+		LoadConfig();
 	}
 
-	// 
+	// These can be left empty here if an error occured during sound font initialization.
 	if (tonebank[0] == NULL)
 	{
 		tonebank[0] = new ToneBank;

@@ -608,7 +608,6 @@ int LoadConfig(const char *filename);
 int LoadDMXGUS();
 extern int LoadConfig();
 extern void FreeAll();
-extern PathExpander pathExpander;
 
 extern ToneBank *tonebank[MAXBANK];
 extern ToneBank *drumset[MAXBANK];

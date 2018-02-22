@@ -50,6 +50,8 @@
 #include "gus_pat.h"
 #include "wildmidi_lib.h"
 #include "critsec.h"
+#include "files.h"
+#include "i_soundfont.h"
 
 #define IS_DIR_SEPARATOR(c)	((c) == '/' || (c) == '\\')
 #ifdef _WIN32
@@ -89,6 +91,7 @@ static int auto_amp = 0;
 static int auto_amp_with_amp = 0;
 
 static FCriticalSection patch_lock;
+extern std::unique_ptr<FSoundFontReader> wm_sfreader;
 
 struct _channel {
 	unsigned char bank;
@@ -659,7 +662,7 @@ static char** WM_LC_Tokenize_Line(char *line_data)
 	return token_data;
 }
 
-static int WM_LoadConfig(const char *config_file) {
+static int WM_LoadConfig(const char *config_file, bool main) {
 	unsigned long int config_size = 0;
 	char *config_buffer = NULL;
 	const char *dir_end = NULL;
@@ -670,13 +673,23 @@ static int WM_LoadConfig(const char *config_file) {
 	struct _patch * tmp_patch;
 	char **line_tokens = NULL;
 	int token_count = 0;
+	auto config_parm = config_file;
 
-	config_buffer = (char *) _WM_BufferFile(config_file, &config_size, true);
+	FileReader *fr = nullptr;
+	if (main)
+	{
+		if (!_WM_InitReader(config_file)) return -1;	// unable to open this as a config file.
+		config_parm = nullptr;
+	}
+
+	config_buffer = (char *)_WM_BufferFile(config_parm, &config_size);
 	if (!config_buffer) {
 		WM_FreePatches();
 		return -1;
 	}
 
+	FString bp = wm_sfreader->basePath();
+	if (config_parm == nullptr) config_file = bp.GetChars();	// Re-get the base path because for archives this is empty.
 
 	// This part was rewritten because the original depended on a header that was GPL'd.
 	dir_end = strrchr(config_file, '/');
@@ -780,7 +793,7 @@ static int WM_LoadConfig(const char *config_file) {
 								return -1;
 							}
 						}
-						if (WM_LoadConfig(new_config) == -1) {
+						if (WM_LoadConfig(new_config, false) == -1) {
 							free(new_config);
 							free(line_tokens);
 							free(config_buffer);
@@ -2558,7 +2571,7 @@ WM_SYMBOL int WildMidi_Init(const char * config_file, unsigned short int rate,
 		return -1;
 	}
 	WM_InitPatches();
-	if (WM_LoadConfig(config_file) == -1) {
+	if (WM_LoadConfig(config_file, true) == -1) {
 		return -1;
 	}
 
@@ -2929,7 +2942,7 @@ void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)
 	}
 	for (; buffer < newbuf; ++buffer)
 	{
-		*(float *)buffer = (float)*buffer / 32768.f;
+		*(float *)buffer = (float)*buffer * (2. / 32768.f);	// boost the volume because Wildmidi is far more quiet than the other synths and therefore hard to balance.
 	}
 }
 

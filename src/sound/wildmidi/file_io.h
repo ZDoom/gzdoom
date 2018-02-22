@@ -28,6 +28,7 @@
 #define __FILE_IO_H
 
 #define WM_MAXFILESIZE 0x1fffffff
-extern unsigned char *_WM_BufferFile (const char *filename, unsigned long int *size, bool mainfile = false);
+extern unsigned char *_WM_BufferFile (const char *filename, unsigned long int *size);
+extern bool _WM_InitReader(const char *config_name);
 
 #endif /* __FILE_IO_H */

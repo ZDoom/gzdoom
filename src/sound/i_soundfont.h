@@ -45,7 +45,7 @@ protected:
     }
     
     int pathcmp(const char *p1, const char *p2);
-    
+   
     
 public:
     
@@ -54,6 +54,10 @@ public:
     virtual FileReader *OpenFile(const char *name);
     std::pair<FileReader *, FString> LookupFile(const char *name);
     void AddPath(const char *str);
+	virtual FString basePath() const
+	{
+		return "";	// archived patch sets do not use paths
+	}
 };
 
 //==========================================================================
@@ -62,7 +66,7 @@ public:
 //
 //==========================================================================
 
-class FSF2Reader : FSoundFontReader
+class FSF2Reader : public FSoundFontReader
 {
     FString mFilename;
 public:
@@ -76,13 +80,38 @@ public:
 //
 //==========================================================================
 
-class FZipPatReader : FSoundFontReader
+class FZipPatReader : public FSoundFontReader
 {
     FResourceFile *resf;
 public:
     FZipPatReader(const char *filename);
     ~FZipPatReader();
+	virtual FileReader *OpenMainConfigFile() override;
+	virtual FileReader *OpenFile(const char *name) override;
+	bool isOk() { return resf != nullptr; }
+};
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+class FLumpPatchSetReader : public FSoundFontReader
+{
+	int mLumpIndex;;
+	FString mBasePath;
+
+public:
+    FLumpPatchSetReader(const char *filename);
+    ~FLumpPatchSetReader();
+    virtual FileReader *OpenMainConfigFile() override;
     virtual FileReader *OpenFile(const char *name) override;
+	virtual FString basePath() const override
+	{
+		return mBasePath;
+	}
+
 };
 
 //==========================================================================
@@ -91,16 +120,20 @@ public:
 //
 //==========================================================================
 
-class FPatchSetReader : FSoundFontReader
+class FPatchSetReader : public FSoundFontReader
 {
-    FString mBasePath;
-    FString mFullPathToConfig;
-    
+	FString mBasePath;
+	FString mFullPathToConfig;
+
 public:
-    FPatchSetReader(const char *filename);
-    ~FPatchSetReader();
-    virtual FileReader *OpenMainConfigFile() override;
-    virtual FileReader *OpenFile(const char *name) override;
+	FPatchSetReader(const char *filename);
+	~FPatchSetReader();
+	virtual FileReader *OpenMainConfigFile() override;
+	virtual FileReader *OpenFile(const char *name) override;
+	virtual FString basePath() const override
+	{
+		return mBasePath;
+	}
 };
 
 //==========================================================================

@@ -106,13 +106,10 @@ FileReader *FSoundFontReader::OpenFile(const char *name)
 	auto lump = collection->CheckNumForFullName(name, mFindInfile);
 	if (lump >= 0)
 	{
-		// For SF2 files return the backing file reader to avoid reopening the file.
-		// Note that there is no possibility of a non-SF2 resource file having only one lump due to the check in the init code.
+		// For SF2 files return a streaming reader to avoid loading the entire file into memory.
 		if (collection->GetLumpCount(mFindInfile) == 1)
 		{
-			auto fr = collection->GetFileReader(mFindInfile);
-			fr->Seek(0, SEEK_SET);
-			return fr;
+			return collection->ReopenLumpNumNewFile(lump);
 		}
 		return collection->ReopenLumpNum(lump);
 	}
@@ -216,6 +213,11 @@ FZipPatReader::~FZipPatReader()
 	if (resf != nullptr) delete resf;
 }
 
+FileReader *FZipPatReader::OpenMainConfigFile()
+{
+	return OpenFile("timidity.cfg");
+}
+
 FileReader *FZipPatReader::OpenFile(const char *name)
 {
 	if (resf != nullptr)
@@ -279,7 +281,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 FileReader *FPatchSetReader::OpenMainConfigFile()
 {
 	auto fr = new FileReader;
-	if (fr->Open(mBasePath)) return fr;
+	if (fr->Open(mFullPathToConfig)) return fr;
 	delete fr;
 	return nullptr;
 }
@@ -293,6 +295,38 @@ FileReader *FPatchSetReader::OpenFile(const char *name)
 	if (fr->Open(path)) return fr;
 	delete fr;
 	return nullptr;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
+{
+	mLumpIndex = Wads.CheckNumForFullName(filename);
+	FileReader *fr = new FileReader;
+
+	mBasePath = filename;
+	FixPathSeperator(mBasePath);
+	mBasePath = ExtractFilePath(mBasePath);
+	if (mBasePath.Len() > 0 && mBasePath.Back() != '/') mBasePath += '/';
+}
+
+FileReader *FLumpPatchSetReader::OpenMainConfigFile()
+{
+	return Wads.ReopenLumpNum(mLumpIndex);
+}
+
+FileReader *FLumpPatchSetReader::OpenFile(const char *name)
+{
+	FString path;
+	if (IsAbsPath(name)) return nullptr;	// no absolute paths in the lump directory.
+	path = mBasePath + name;
+	auto index = Wads.CheckNumForFullName(path);
+	if (index < 0) return nullptr;
+	return Wads.ReopenLumpNum(index);
 }
 
 //==========================================================================
@@ -428,6 +462,19 @@ const FSoundFontInfo *FSoundFontManager::FindSoundFont(const char *name, int all
 
 FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed)
 {
+
+	// First check if the given name is inside the loaded resources.
+	// To avoid clashes this will only be done if the name has the '.cfg' extension.
+	// Sound fonts cannot be loaded this way.
+	if (name != nullptr)
+	{
+		const char *p = name + strlen(name) - 4;
+		if (p > name && !stricmp(p, ".cfg") && Wads.CheckNumForFullName(name) >= 0)
+		{
+			return new FLumpPatchSetReader(name);
+		}
+	}
+
 	auto sfi = FindSoundFont(name, allowed);
 	if (sfi != nullptr)
 	{
@@ -442,13 +489,34 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 		{
 			char head[16] = { 0};
 			fr.Read(head, 16);
+			fr.Close();
 			if (!memcmp(head, "RIFF", 4) && !memcmp(head+8, "sfbkLIST", 8))
 			{
-				FString fname = name;
-				FSoundFontInfo sft = { fname, fname, fname, SF_SF2 };
-				soundfonts.Push(sft);
+				return new FSF2Reader(name);
 			}
+		}
+	}
+	if (allowed & SF_GUS)
+	{
+		FileReader fr;
+		if (fr.Open(name))
+		{
+			char head[16] = { 0 };
+			fr.Read(head, 2);
+			fr.Close();
+			if (!memcmp(head, "PK", 2))	// The only reason for this check is to block non-Zips. The actual validation will be done by FZipFile.
+			{
+				auto r = new FZipPatReader(name);
+				if (r->isOk()) return r;
+				delete r;
+			}
+		}
 
+		// Config files are only accepted if they are named '.cfg', because they are impossible to validate.
+		const char *p = name + strlen(name) - 4;
+		if (p > name && !stricmp(p, ".cfg") && FileExists(name))
+		{
+			return new FPatchSetReader(name);
 		}
 	}
 	return nullptr;

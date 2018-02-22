@@ -664,6 +664,7 @@ int LoadDMXGUS()
 		readbuffer[i-1] = 0;
 	}
 
+	/* Some functions get aggravated if not even the standard banks are available. */
 	if (tonebank[0] == NULL)
 	{
 		tonebank[0] = new ToneBank;
@@ -697,11 +698,24 @@ void FreeDLS(DLS_Data *data);
 Renderer::Renderer(float sample_rate, const char *args)
 {
 	// Load explicitly stated sound font if so desired.
-	if (args != nullptr)
+	if (args != nullptr && *args != 0)
 	{
-		if (!stricmp(args, "DMXGUS")) LoadDMXGUS();
-		LoadConfig(args);
+		int ret;
+		FreeAll();
+		if (!stricmp(args, "DMXGUS")) ret = LoadDMXGUS();
+		ret = LoadConfig(args);
+		if (ret != 0)
+		{
+		}
 	}
+
+	// 
+	if (tonebank[0] == NULL)
+	{
+		tonebank[0] = new ToneBank;
+		drumset[0] = new ToneBank;
+	}
+
 
 	rate = sample_rate;
 	patches = NULL;

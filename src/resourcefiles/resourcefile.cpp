@@ -716,3 +716,24 @@ int FExternalLump::FillCache()
 	return 1;
 }
 
+
+bool FMemoryFile::Open(bool quiet)
+{
+    FString name(ExtractFileBase(Filename));
+    FString fname(ExtractFileBase(Filename, true));
+    
+    Lumps = new FUncompressedLump[1];    // must use array allocator
+    uppercopy(Lumps->Name, name);
+    Lumps->Name[8] = 0;
+    Lumps->FullName = fname;
+    Lumps->Owner = this;
+    Lumps->Position = 0;
+    Lumps->LumpSize = Reader->GetLength();
+    Lumps->Namespace = ns_global;
+    Lumps->Flags = 0;
+    Lumps->FullName = NULL;
+    NumLumps = 1;
+    return true;
+}
+
+

@@ -45,6 +45,7 @@
 #include "v_text.h"
 #include "version.h"
 #include "cmdlib.h"
+#include "i_soundfont.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -325,6 +326,11 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 	{
 		return;
 	}
+	if (LoadPatchSets(nullptr))
+	{
+		return;
+	}
+	// The following will only be used if no soundfont at all is provided, i.e. even the standard one coming with GZDoom is missing.
 #ifdef __unix__
 	// This is the standard location on Ubuntu.
 	if (LoadPatchSets("/usr/share/sounds/sf2/FluidR3_GS.sf2:/usr/share/sounds/sf2/FluidR3_GM.sf2"))
@@ -352,12 +358,6 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 	}
 
 #endif
-	// Last try the base sound font which should be provided by the GZDoom binary package.
-	auto wad = BaseFileSearch(BASESF, NULL, true);
-	if (wad != NULL && 	LoadPatchSets(wad))
-	{
-		return;
-	}
 
 	Printf("Failed to load any MIDI patches.\n");
 	delete_fluid_synth(FluidSynth);
@@ -495,6 +495,9 @@ void FluidSynthMIDIDevice::ComputeOutput(float *buffer, int len)
 
 int FluidSynthMIDIDevice::LoadPatchSets(const char *patches)
 {
+	auto info = sfmanager.FindSoundFont(patches, SF_SF2);
+	if (info != nullptr) patches = info->mFilename.GetChars();
+
 	int count;
 	char *wpatches = strdup(patches);
 	char *tok;

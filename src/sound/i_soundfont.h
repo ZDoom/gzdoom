@@ -13,7 +13,8 @@ enum
 struct FSoundFontInfo
 {
     FString mName;        // This is what the sounfont is identified with. It's the extension-less base file name
-    FString mFilename;    // Full path to the backing file - this is needed by FluidSynth to load the sound font.
+	FString mNameExt;     // Same with extension. Used for comparing with input names so they can be done with or without extension.
+	FString mFilename;    // Full path to the backing file - this is needed by FluidSynth to load the sound font.
     int type;
 };
 
@@ -125,3 +126,4 @@ public:
 };
 
 
+extern FSoundFontManager sfmanager;

@@ -86,7 +86,7 @@ FileReader *FSoundFontReader::OpenMainConfigFile()
 {
 	if (mMainConfigForSF2.IsNotEmpty())
 	{
-		return new MemoryReader(mMainConfigForSF2.GetChars(), mMainConfigForSF2.Len());
+		return new MemoryReader(mMainConfigForSF2.GetChars(), (long)mMainConfigForSF2.Len());
 	}
 	else
 	{
@@ -208,7 +208,7 @@ FileReader *FSF2Reader::OpenFile(const char *name)
 
 FZipPatReader::FZipPatReader(const char *filename)
 {
-	resf = FResourceFile::OpenResourceFile(filename, nullptr);
+	resf = FResourceFile::OpenResourceFile(filename, nullptr, true);
 }
 
 FZipPatReader::~FZipPatReader()
@@ -308,6 +308,7 @@ FileReader *FPatchSetReader::OpenFile(const char *name)
 void FSoundFontManager::ProcessOneFile(const FString &fn, TArray<FString> &sffiles)
 {
 	auto fb = ExtractFileBase(fn, false);
+	auto fbe = ExtractFileBase(fn, true);
 	for (auto &sfi : soundfonts)
 	{
 		// We already got a soundfont with this name. Do not add again.
@@ -323,12 +324,12 @@ void FSoundFontManager::ProcessOneFile(const FString &fn, TArray<FString> &sffil
 		if (!memcmp(head, "RIFF", 4) && !memcmp(head+8, "sfbkLIST", 8))
 		{
 			sffiles.Push(fn);
-			FSoundFontInfo sft = { fb, fn, SF_SF2 };
+			FSoundFontInfo sft = { fb, fbe, fn, SF_SF2 };
 			soundfonts.Push(sft);
 		}
 		else if (!memcmp(head, "PK", 2))
 		{
-			auto zip = FResourceFile::OpenResourceFile(fn, nullptr);
+			auto zip = FResourceFile::OpenResourceFile(fn, nullptr, true);
 			if (zip != nullptr)
 			{
 				if (zip->LumpCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code
@@ -338,7 +339,7 @@ void FSoundFontManager::ProcessOneFile(const FString &fn, TArray<FString> &sffil
 					{
 						// It seems like this is what we are looking for
 						sffiles.Push(fn);
-						FSoundFontInfo sft = { fb, fn, SF_GUS };
+						FSoundFontInfo sft = { fb, fbe, fn, SF_GUS };
 						soundfonts.Push(sft);
 					}
 				}
@@ -394,6 +395,8 @@ void FSoundFontManager::CollectSoundfonts()
 			}
 		}
 	}
+
+
 	if (sffiles.Size() > 0)
 		soundfontcollection.InitMultipleFiles(sffiles);
 }
@@ -408,7 +411,8 @@ const FSoundFontInfo *FSoundFontManager::FindSoundFont(const char *name, int all
 {
 	for(auto &sfi : soundfonts)
 	{
-		if (allowed & sfi.type && !sfi.mFilename.CompareNoCase(name))
+		// an empty name will pick the first one in a compatible format.
+		if (allowed & sfi.type && (name == nullptr || *name == 0 || !sfi.mName.CompareNoCase(name) || !sfi.mNameExt.CompareNoCase(name)))
 		{
 			return &sfi;
 		}
@@ -440,7 +444,8 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 			fr.Read(head, 16);
 			if (!memcmp(head, "RIFF", 4) && !memcmp(head+8, "sfbkLIST", 8))
 			{
-				FSoundFontInfo sft = { name, name, SF_SF2 };
+				FString fname = name;
+				FSoundFontInfo sft = { fname, fname, fname, SF_SF2 };
 				soundfonts.Push(sft);
 			}
 

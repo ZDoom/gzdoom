@@ -87,6 +87,7 @@ enum EMIDIType
 };
 
 extern int MUSHeaderSearch(const uint8_t *head, int len);
+void I_InitSoundFonts();
 
 EXTERN_CVAR (Int, snd_samplerate)
 EXTERN_CVAR (Int, snd_mididevice)
@@ -143,7 +144,7 @@ void I_InitMusic (void)
 {
 	static bool setatterm = false;
 
-	Timidity::LoadConfig();
+    I_InitSoundFonts();
 
 	snd_musicvolume.Callback ();
 

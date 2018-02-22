@@ -42,6 +42,7 @@
 #include "gameconfigfile.h"
 #include "resourcefiles/resourcefile.h"
 
+FSoundFontManager sfmanager;
 
 //==========================================================================
 //
@@ -327,16 +328,19 @@ void FSoundFontManager::ProcessOneFile(const FString &fn, TArray<FString> &sffil
 		}
 		else if (!memcmp(head, "PK", 2))
 		{
-			auto zip = FResourceFile::OpenResourceFile(fn, &fr);
-			if (zip != nullptr && zip->LumpCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code
+			auto zip = FResourceFile::OpenResourceFile(fn, nullptr);
+			if (zip != nullptr)
 			{
-				auto zipl = zip->FindLump("timidity.cfg");
-				if (zipl != nullptr)
+				if (zip->LumpCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code
 				{
-					// It seems like this is what we are looking for
-					sffiles.Push(fn);
-					FSoundFontInfo sft = { fb, fn, SF_GUS };
-					soundfonts.Push(sft);
+					auto zipl = zip->FindLump("timidity.cfg");
+					if (zipl != nullptr)
+					{
+						// It seems like this is what we are looking for
+						sffiles.Push(fn);
+						FSoundFontInfo sft = { fb, fn, SF_GUS };
+						soundfonts.Push(sft);
+					}
 				}
 				delete zip;
 			}
@@ -372,8 +376,9 @@ void FSoundFontManager::CollectSoundfonts()
 				if (dir.IsNotEmpty())
 				{
 					if (dir.Back() != '/') dir += '/';
-					FString path = dir + '*';
-					if ((file = I_FindFirst(path, &c_file)) != ((void *)(-1)))
+					FString path = dir + "soundfonts/";
+					FString mask = path + '*';
+					if ((file = I_FindFirst(mask, &c_file)) != ((void *)(-1)))
 					{
 						do
 						{
@@ -389,7 +394,8 @@ void FSoundFontManager::CollectSoundfonts()
 			}
 		}
 	}
-	soundfontcollection.InitMultipleFiles(sffiles);
+	if (sffiles.Size() > 0)
+		soundfontcollection.InitMultipleFiles(sffiles);
 }
 
 //==========================================================================
@@ -442,6 +448,11 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	}
 	return nullptr;
 
+}
+
+void I_InitSoundFonts()
+{
+	sfmanager.CollectSoundfonts();
 }
 
 

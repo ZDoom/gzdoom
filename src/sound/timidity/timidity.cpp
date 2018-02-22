@@ -31,6 +31,7 @@
 #include "i_system.h"
 #include "files.h"
 #include "w_wad.h"
+#include "i_soundfont.h"
 
 // Unlike the other softsynths, this one cannot change its config data at run time. 
 CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

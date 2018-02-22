@@ -1196,6 +1196,10 @@ static int PatchThing (int thingy)
 						// triggering line effects and can teleport when the missile flag is removed.
 						info->flags2 &= ~MF2_NOTELEPORT;
 					}
+					if (thingy == 1) // [SP] special handling for players - always be friendly!
+					{
+						value[0] |= MF_FRIENDLY;
+					}
 					info->flags = ActorFlags::FromInt (value[0]);
 				}
 				if (vchanged[1])

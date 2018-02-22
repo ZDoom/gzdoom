@@ -40,7 +40,6 @@
 #include <signal.h>
 #include <unistd.h>
 #include "mus2midi.h"
-extern void ChildSigHandler (int signum);
 #endif
 
 #include <ctype.h>
@@ -159,9 +158,6 @@ void I_InitMusic (void)
 		setatterm = true;
 		atterm (I_ShutdownMusicExit);
 	
-#ifndef _WIN32
-		signal (SIGCHLD, ChildSigHandler);
-#endif
 	}
 	MusicDown = false;
 }

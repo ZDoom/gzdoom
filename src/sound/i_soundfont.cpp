@@ -37,6 +37,10 @@
 #include <stdio.h>
 #include "i_soundfont.h"
 #include "cmdlib.h"
+#include "w_wad.h"
+#include "i_system.h"
+#include "gameconfigfile.h"
+#include "resourcefiles/resourcefile.h"
 
 
 //==========================================================================

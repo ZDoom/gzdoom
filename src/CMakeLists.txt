@@ -1137,6 +1137,7 @@ set (PCH_SOURCES
 	sfmt/SFMT.cpp
 	sound/i_music.cpp
 	sound/i_sound.cpp
+	sound/i_soundfont.cpp
 	sound/mididevices/music_opldumper_mididevice.cpp
 	sound/mididevices/music_opl_mididevice.cpp
 	sound/mididevices/music_pseudo_mididevice.cpp

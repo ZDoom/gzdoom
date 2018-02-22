@@ -1425,6 +1425,22 @@ int FWadCollection::GetLastLump (int wadnum) const
 
 //==========================================================================
 //
+//
+//==========================================================================
+
+int FWadCollection::GetLumpCount (int wadnum) const
+{
+	if ((uint32_t)wadnum >= Files.Size())
+	{
+		return 0;
+	}
+	
+	return Files[wadnum]->LumpCount();
+}
+
+
+//==========================================================================
+//
 // W_GetWadFullName
 //
 // Returns the name of the given wad, including any path

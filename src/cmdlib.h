@@ -62,6 +62,7 @@ struct FFileList
 };
 
 void ScanDirectory(TArray<FFileList> &list, const char *dirpath);
+bool IsAbsPath(const char*);
 
 
 inline int Tics2Seconds(int tics)

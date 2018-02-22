@@ -36,7 +36,6 @@ class PathList
 {
 	std::vector<std::string> paths;
 
-	int isAbsPath(const char *name);
 	FileReader *tryOpenPath(const char *name, bool ismain);
 
 public:

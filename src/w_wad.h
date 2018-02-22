@@ -146,6 +146,7 @@ public:
 
 	int GetFirstLump(int wadnum) const;
 	int GetLastLump(int wadnum) const;
+    int GetLumpCount(int wadnum) const;
 
 	int CheckNumForName (const char *name, int namespc);
 	int CheckNumForName (const char *name, int namespc, int wadfile, bool exact = true);

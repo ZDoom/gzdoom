@@ -222,7 +222,7 @@ std::pair<FileReader *, std::string> PathList::openFile(const char *name, bool i
 	{
 		/* First try the given name */
 
-		if (!isAbsPath(name))
+		if (!IsAbsPath(name))
 		{
 			for (int i = (int)paths.size() - 1; i >= 0; i--)
 			{
@@ -252,18 +252,6 @@ std::pair<FileReader *, std::string> PathList::openFile(const char *name, bool i
 	}
 	return std::make_pair(nullptr, std::string());
 }
-
-int PathList::isAbsPath(const char *name)
-{
-	if (name[0] == '/') return 1;
-
-#ifdef _WIN32
-	/* [A-Za-z]: (for Windows) */
-	if (isalpha(name[0]) && name[1] == ':')	return 1;
-#endif /* _WIN32 */
-	return 0;
-}
-
 
 struct timidity_file *open_file(const char *name, bool ismainfile, PathList &pathList)
 {

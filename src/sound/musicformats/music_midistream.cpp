@@ -213,6 +213,8 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 		return new FluidSynthMIDIDevice(Args);
 
 	case MDEV_OPL:
+		return new ADLMIDIDevice(Args);
+		/*
 		try
 		{
 			return new OPLMIDIDevice(Args);
@@ -223,6 +225,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 			Printf("Unable to create OPL MIDI device: %s\nFalling back to default playback", err.GetMessage());
 			return new FluidSynthMIDIDevice(nullptr);
 		}
+		*/
 
 	case MDEV_TIMIDITY:
 		return CreateTimidityPPMIDIDevice(Args);

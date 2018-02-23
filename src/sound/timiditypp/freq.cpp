@@ -310,11 +310,11 @@ int Freq::freq_initialize_fft_arrays(Sample *sp)
 float Freq::freq_fourier(Sample *sp, int *chord)
 {
 
-	uint32_t length, length0;
+	int32_t length, length0;
 	int32_t maxoffset, minoffset, minoffset1, minoffset2;
 	int32_t minbin, maxbin;
 	int32_t bin;
-	uint32_t i;
+	int32_t i;
 	int32_t j, n, total;
 	unsigned int rate;
 	int pitch, bestpitch, minpitch, maxpitch, maxpitch2;
@@ -340,7 +340,7 @@ float Freq::freq_fourier(Sample *sp, int *chord)
 
 	/* get maximum amplitude */
 	maxamp = -1;
-	for (uint32_t i = 0; i < length0; i++)
+	for (int32_t i = 0; i < length0; i++)
 	{
 		amp = abs(origdata[i]);
 		if (amp >= maxamp)
@@ -422,7 +422,7 @@ float Freq::freq_fourier(Sample *sp, int *chord)
 
 	/* lower bound on the detected frequency */
 	maxoffset = rate / pitch_freq_lb_table[LOWEST_PITCH] + 0.5;
-	if ((uint32_t)maxoffset > (length >> 1))
+	if (maxoffset > (length >> 1))
 		maxoffset = (length >> 1);
 	min_guessfreq = (float)rate / maxoffset;
 
@@ -550,7 +550,7 @@ float Freq::freq_fourier(Sample *sp, int *chord)
 	if (!minbin)
 		minbin = 1;
 	maxbin = ceil(maxfreq / f0);
-	if ((uint32_t)maxbin >= (length >> 1))
+	if (maxbin >= (length >> 1))
 		maxbin = (length >> 1) - 1;
 
 	/* filter out all "noise" from magnitude array */
@@ -667,7 +667,7 @@ float Freq::freq_fourier(Sample *sp, int *chord)
 		minbin = minfreq2 * f0_inv;
 		if (!minbin) minbin = 1;
 		maxbin = ceil(maxfreq2 * f0_inv);
-		if ((uint32_t)maxbin >= (length >> 1))
+		if (maxbin >= (length >> 1))
 			maxbin = (length >> 1) - 1;
 
 		for (bin = minbin; bin <= maxbin; bin++)

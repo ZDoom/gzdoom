@@ -58,13 +58,13 @@ typedef struct {
 #endif
 
 /*! LFO */
-typedef struct {
+struct lfo {
 	int32_t buf[SINE_CYCLE_LENGTH];
 	int32_t count, cycle;	/* in samples */
 	int32_t icycle;	/* proportional to (SINE_CYCLE_LENGTH / cycle) */
 	int type;	/* current content of its buffer */
 	double freq;	/* in Hz */
-} lfo;
+};
 
 enum {
 	LFO_NONE = 0,

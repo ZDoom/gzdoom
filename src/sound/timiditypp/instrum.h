@@ -553,7 +553,7 @@ public:
 
 	void set_default_instrument()
 	{
-		if (def_instr_name) set_default_instrument(def_instr_name);
+		set_default_instrument(def_instr_name);
 	}
 
 	bool checkConfig(const char *filename)

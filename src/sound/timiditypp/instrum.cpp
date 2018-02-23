@@ -837,11 +837,8 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 		/* Then read the sample data */
 		sp->data = (sample_t *)safe_malloc(sp->data_length + 4);
 		sp->data_alloced = 1;
-		if ((j = tf_read(sp->data, 1, sp->data_length, tf))
-			!= sp->data_length) {
-			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
-				"Too small this patch length: %d < %d",
-				j, sp->data_length);
+		if ((j = tf_read(sp->data, 1, sp->data_length, tf))	!= (int)sp->data_length) {
+			ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "Too small this patch length: %d < %d", j, sp->data_length);
 			goto fail;
 		}
 		if (!(sp->modes & MODES_16BIT)) {	/* convert to 16-bit data */

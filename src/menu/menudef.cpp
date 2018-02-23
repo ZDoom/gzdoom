@@ -55,6 +55,7 @@
 #include "types.h"
 #include "gameconfigfile.h"
 #include "m_argv.h"
+#include "i_soundfont.h"
 
 
 
@@ -1537,6 +1538,27 @@ void M_CreateMenus()
 	{
 		I_BuildALResamplersList(*opt);
 	}
+	opt = OptionValues.CheckKey(NAME_GUSConfig);
+	if (opt != nullptr)
+	{
+		I_BuildSoundFontList(*opt, SF_GUS|SF_SF2);
+	}
+	opt = OptionValues.CheckKey(NAME_TimidityConfig);
+	if (opt != nullptr)
+	{
+		I_BuildSoundFontList(*opt, SF_GUS | SF_SF2);
+	}
+	opt = OptionValues.CheckKey(NAME_WildmidiConfig);
+	if (opt != nullptr)
+	{
+		I_BuildSoundFontList(*opt, SF_GUS);
+	}
+	opt = OptionValues.CheckKey(NAME_FluidConfig);
+	if (opt != nullptr)
+	{
+		I_BuildSoundFontList(*opt, SF_SF2);
+	}
+
 }
 
 //=============================================================================

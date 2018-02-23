@@ -946,3 +946,9 @@ xx(snd_output)
 xx(snd_output_format)
 xx(snd_speakermode)
 xx(snd_resampler)
+
+// soundfont options
+xx(GUSConfig)
+xx(FluidConfig)
+xx(TimidityConfig)
+xx(WildmidiConfig)

@@ -150,3 +150,5 @@ public:
 
 
 extern FSoundFontManager sfmanager;
+struct FOptionValues;
+void I_BuildSoundFontList(FOptionValues *opt, int allowed);

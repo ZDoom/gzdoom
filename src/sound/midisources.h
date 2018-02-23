@@ -52,6 +52,7 @@ public:
 		isLooping = looped;
 	}
 	
+	bool isValid() const { return Division > 0; }
 	int getDivision() const { return Division; }
 	int getInitialTempo() const { return InitialTempo; }
 	int getTempo() const { return Tempo; }

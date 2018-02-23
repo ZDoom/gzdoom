@@ -146,7 +146,7 @@ bool MIDIStreamer::IsMIDI() const
 
 bool MIDIStreamer::IsValid() const
 {
-	return source != nullptr && source->getDivision() != 0;
+	return source != nullptr && source->isValid();
 }
 
 

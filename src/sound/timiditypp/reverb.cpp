@@ -55,7 +55,7 @@ const double freeverb_offsetroom = 0.7;
 /*              */
 
 
-void Reverb::set_dry_signal(register int32_t *buf, int32_t n)
+void Reverb::set_dry_signal(int32_t *buf, int32_t n)
 {
     int32_t i;
 	int32_t *dbuf = direct_buffer;
@@ -66,10 +66,10 @@ void Reverb::set_dry_signal(register int32_t *buf, int32_t n)
     }
 }
 
-void Reverb::set_dry_signal_xg(register int32_t *sbuffer, int32_t n, int32_t level)
+void Reverb::set_dry_signal_xg(int32_t *sbuffer, int32_t n, int32_t level)
 {
-    register int32_t i;
-    register int32_t count = n;
+    int32_t i;
+    int32_t count = n;
 	if(!level) {return;}
     double send_level = (double)level / 127.0;
 
@@ -784,9 +784,9 @@ float Reverb::get_pink_noise_light(pink_noise *p)
 #define REV_VAL3        21.0
 
 
-void Reverb::set_ch_reverb(register int32_t *sbuffer, int32_t n, int32_t level)
+void Reverb::set_ch_reverb(int32_t *sbuffer, int32_t n, int32_t level)
 {
-    register int32_t  i;
+    int32_t  i;
 	if(!level) {return;}
     double send_level = (double)level / 127.0 * REV_INP_LEV;
 	
@@ -1673,9 +1673,9 @@ void Reverb::do_ch_delay(int32_t *buf, int32_t count)
 	}
 }
 
-void Reverb::set_ch_delay(register int32_t *sbuffer, int32_t n, int32_t level)
+void Reverb::set_ch_delay(int32_t *sbuffer, int32_t n, int32_t level)
 {
-    register int32_t i;
+    int32_t i;
 	if(!level) {return;}
     double send_level = (double)level / 127.0;
 
@@ -1937,10 +1937,10 @@ void Reverb::init_ch_chorus(void)
 	memset(chorus_effect_buffer, 0, sizeof(chorus_effect_buffer));
 }
 
-void Reverb::set_ch_chorus(register int32_t *sbuffer,int32_t n, int32_t level)
+void Reverb::set_ch_chorus(int32_t *sbuffer,int32_t n, int32_t level)
 {
-    register int32_t i;
-    register int32_t count = n;
+    int32_t i;
+    int32_t count = n;
 	if(!level) {return;}
     double send_level = (double)level / 127.0;
 
@@ -1974,7 +1974,7 @@ void Reverb::init_eq_gs()
 
 void Reverb::do_ch_eq_gs(int32_t* buf, int32_t count)
 {
-	register int32_t i;
+	int32_t i;
 
 	do_shelving_filter_stereo(eq_buffer, count, &(eq_status_gs.lsf));
 	do_shelving_filter_stereo(eq_buffer, count, &(eq_status_gs.hsf));
@@ -2022,9 +2022,9 @@ void Reverb::do_multi_eq_xg(int32_t* buf, int32_t count)
 	}
 }
 
-void Reverb::set_ch_eq_gs(register int32_t *sbuffer, int32_t n)
+void Reverb::set_ch_eq_gs(int32_t *sbuffer, int32_t n)
 {
-    register int32_t  i;
+    int32_t  i;
     
 	for(i = 0; i < n; i++)
     {

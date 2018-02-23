@@ -32,8 +32,6 @@
 **
 */
 
-#ifdef HAVE_FLUIDSYNTH
-
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
@@ -760,5 +758,4 @@ void FluidSynthMIDIDevice::UnloadFluidSynth()
 
 #endif
 
-#endif
 

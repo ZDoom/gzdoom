@@ -50,31 +50,22 @@
 static uint32_t	nummididevices;
 static bool		nummididevicesset;
 
-#ifdef HAVE_FLUIDSYNTH
 #define NUM_DEF_DEVICES 5
-#else
-#define NUM_DEF_DEVICES 4
-#endif
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
 {
 	int p;
 	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
-#ifdef HAVE_FLUIDSYNTH
 	pair[0].Text = "FluidSynth";
 	pair[0].Value = -5.0;
-	p = 1;
-#else
-	p = 0;
-#endif
-	pair[p].Text = "GUS";
-	pair[p].Value = -4.0;
-	pair[p+1].Text = "OPL Synth Emulation";
-	pair[p+1].Value = -3.0;
-	pair[p+2].Text = "TiMidity++";
-	pair[p+2].Value = -2.0;
-	pair[p+3].Text = "WildMidi";
-	pair[p+3].Value = -6.0;
+	pair[1].Text = "GUS";
+	pair[1].Value = -4.0;
+	pair[2].Text = "OPL Synth Emulation";
+	pair[2].Value = -3.0;
+	pair[3].Text = "TiMidity++";
+	pair[3].Value = -2.0;
+	pair[4].Text = "WildMidi";
+	pair[4].Value = -6.0;
 
 }
 
@@ -115,11 +106,7 @@ void MIDIDeviceChanged(int newdev, bool force)
 	if (!force) oldmididev = newdev;
 }
 
-#ifdef HAVE_FLUIDSYNTH 
 #define DEF_MIDIDEV -5
-#else
-#define DEF_MIDIDEV -3
-#endif
 
 #ifdef _WIN32
 unsigned mididevice;
@@ -214,9 +201,7 @@ CCMD (snd_listmididevices)
 	MMRESULT res;
 
 	PrintMidiDevice (-6, "WildMidi", MIDIDEV_SWSYNTH, 0);
-#ifdef HAVE_FLUIDSYNTH
 	PrintMidiDevice (-5, "FluidSynth", MIDIDEV_SWSYNTH, 0);
-#endif
 	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MIDIDEV_SWSYNTH, 0);
 	PrintMidiDevice (-3, "Emulated OPL FM Synth", MIDIDEV_FMSYNTH, 0);
 	PrintMidiDevice (-2, "TiMidity++", MIDIDEV_SWSYNTH, 0);
@@ -259,9 +244,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 CCMD (snd_listmididevices)
 {
 	Printf("%s-6. WildMidi\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-#ifdef HAVE_FLUIDSYNTH
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-#endif
 	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-3. Emulated OPL FM Synth\n", -3 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-2. TiMidity++\n", -2 == snd_mididevice ? TEXTCOLOR_BOLD : "");

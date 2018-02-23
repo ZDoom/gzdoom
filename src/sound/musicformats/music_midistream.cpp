@@ -171,9 +171,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 	case -2:		return MDEV_TIMIDITY;
 	case -3:		return MDEV_OPL;
 	case -4:		return MDEV_GUS;
-#ifdef HAVE_FLUIDSYNTH
 	case -5:		return MDEV_FLUIDSYNTH;
-#endif
 	case -6:		return MDEV_WILDMIDI;
 	default:
 		#ifdef _WIN32
@@ -192,28 +190,23 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 
 MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 {
+	// fixme: This should check up front if the device can be started.
+	// Checks to ensure that a device finds a compatible sound font are entirely missing here.
+
 	switch (devtype)
 	{
-	case MDEV_MMAPI:
-#ifdef _WIN32
-		return CreateWinMIDIDevice(mididevice);
-#endif
-		assert(0);
-		// Intentional fall-through for non-Windows systems.
-
 	case MDEV_GUS:
 		return new TimidityMIDIDevice(Args);
+			
+	case MDEV_MMAPI:
+#ifdef _WIN32
+			return CreateWinMIDIDevice(mididevice);
+#endif
+			// Intentional fall-through for non-Windows systems.
 
-#ifdef HAVE_FLUIDSYNTH
 	case MDEV_FLUIDSYNTH:
-		return new FluidSynthMIDIDevice(Args);
-#endif
-
 	case MDEV_SNDSYS:
-#ifdef HAVE_FLUIDSYNTH
-		return new FluidSynthMIDIDevice(nullptr);
-#endif
-		// if no FluidSynth, fall through to OPL.
+		return new FluidSynthMIDIDevice(Args);
 
 	case MDEV_OPL:
 		try
@@ -224,12 +217,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 		{
 			// The creation of an OPL MIDI device can abort with an error if no GENMIDI lump can be found.
 			Printf("Unable to create OPL MIDI device: %s\nFalling back to default playback", err.GetMessage());
-#ifdef HAVE_FLUIDSYNTH
 			return new FluidSynthMIDIDevice(nullptr);
-#else
-			// Someone dared to compile GZDoom without FluidSynth support and then started an IWAD without GENMIDI support. Ugh...
-			return nullptr;
-#endif
 		}
 
 	case MDEV_TIMIDITY:

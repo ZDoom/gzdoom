@@ -234,7 +234,6 @@ protected:
 
 // FluidSynth implementation of a MIDI device -------------------------------
 
-#ifdef HAVE_FLUIDSYNTH
 #ifndef DYN_FLUIDSYNTH
 #include <fluidsynth.h>
 #else
@@ -302,7 +301,6 @@ protected:
 	void UnloadFluidSynth();
 #endif
 };
-#endif
 
 // Base class for streaming MUS and MIDI files ------------------------------
 

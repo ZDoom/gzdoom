@@ -1143,14 +1143,15 @@ set (PCH_SOURCES
 	sound/mididevices/music_softsynth_mididevice.cpp
 	sound/mididevices/music_timidity_mididevice.cpp
 	sound/mididevices/music_wildmidi_mididevice.cpp
+	sound/midisources/midisource.cpp
+	sound/midisources/midisource_mus.cpp
+	sound/midisources/midisource_smf.cpp
+	sound/midisources/midisource_hmi.cpp
+	sound/midisources/midisource_xmi.cpp
 	sound/musicformats/music_cd.cpp
 	sound/musicformats/music_dumb.cpp
 	sound/musicformats/music_gme.cpp
 	sound/musicformats/music_libsndfile.cpp
-	sound/musicformats/music_mus_midiout.cpp
-	sound/musicformats/music_smf_midiout.cpp
-	sound/musicformats/music_hmi_midiout.cpp
-	sound/musicformats/music_xmi_midiout.cpp
 	sound/musicformats/music_midistream.cpp
 	sound/musicformats/music_opl.cpp
 	sound/musicformats/music_stream.cpp
@@ -1354,6 +1355,7 @@ source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE
 source_group("Audio Files\\Timiditypp" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timiditypp/.+")
 source_group("Audio Files\\WildMidi" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/wildmidi/.+")
 source_group("Audio Files\\MIDI Devices" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/mididevices/.+")
+source_group("Audio Files\\MIDI Sources" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/midisources/.+")
 source_group("Audio Files\\Music formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/musicformats/.+")
 source_group("External\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/math/.+")
 source_group("External\\RapidJSON" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/rapidjson/.+")

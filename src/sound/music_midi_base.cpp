@@ -54,7 +54,6 @@ static bool		nummididevicesset;
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
 {
-	int p;
 	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
 	pair[0].Text = "FluidSynth";
 	pair[0].Value = -5.0;

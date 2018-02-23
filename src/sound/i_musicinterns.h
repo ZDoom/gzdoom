@@ -7,7 +7,7 @@
 #include "s_sound.h"
 #include "files.h"
 #include "wildmidi/wildmidi_lib.h"
-#include "midisources.h"
+#include "midisources/midisource.h"
 
 void I_InitMusicWin32 ();
 

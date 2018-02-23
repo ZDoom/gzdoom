@@ -39,7 +39,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "files.h"
-#include "midisources.h"
+#include "midisource.h"
 
 // MACROS ------------------------------------------------------------------
 

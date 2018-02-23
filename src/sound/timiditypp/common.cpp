@@ -132,134 +132,26 @@ double flt_rand()
 	return (int)pr_rnd.GenRand_Real1();
 }
 
-PathList::PathList()
+struct timidity_file *open_file(const char *name, FSoundFontReader *sfreader)
 {
-}
-
-/* This adds a directory to the path list */
-void PathList::addPath(const char *str)
-{
-	if (*str == 0) return;
-	for (size_t i = 0; i < paths.size(); i++)
-	{
-		if (pathcmp(paths[i].c_str(), str, 0) == 0)
-		{
-			// move string to the back.
-			std::string ss = paths[i];
-			paths.erase(paths.begin() + i);
-			paths.push_back(ss);
-			return;
-		}
-	}
-	paths.push_back(str);
-}
-
-int PathList::pathcmp(const char *p1, const char *p2, int ignore_case)
-{
-	int c1, c2;
-
-#ifdef _WIN32
-	ignore_case = 1;	/* Always ignore the case */
-#endif
-
-	do {
-		c1 = *p1++ & 0xff;
-		c2 = *p2++ & 0xff;
-		if (ignore_case)
-		{
-			c1 = tolower(c1);
-			c2 = tolower(c2);
-		}
-		if (c1 == '/') c1 = *p1 ? 0x100 : 0;
-		if (c1 == '/') c2 = *p2 ? 0x100 : 0;
-	} while (c1 == c2 && c1 /* && c2 */);
-
-	return c1 - c2;
-}
-
-FileReader *PathList::tryOpenPath(const char *name, bool ismain)
-{
-	FileReader *fp;
-	int lumpnum;
-
-	if (ismain)
-	{
-		tppPathExpander.openmode = PathExpander::OM_FILEORLUMP;
-		tppPathExpander.clearPathlist();
-#ifdef _WIN32
-		tppPathExpander.addToPathlist("C:\\TIMIDITY");
-		tppPathExpander.addToPathlist("\\TIMIDITY");
-		tppPathExpander.addToPathlist(progdir);
-#else
-		tppPathExpander.addToPathlist("/usr/local/lib/timidity");
-		tppPathExpander.addToPathlist("/etc/timidity");
-		tppPathExpander.addToPathlist("/etc");
-#endif
-	}
-
-	if (!(fp = tppPathExpander.openFileReader(name, &lumpnum)))
-		return NULL;
-
-	if (ismain)
-	{
-		if (lumpnum > 0)
-		{
-			tppPathExpander.openmode = PathExpander::OM_LUMP;
-			tppPathExpander.clearPathlist();	// when reading from a PK3 we don't want to use any external path
-		}
-		else
-		{
-			tppPathExpander.openmode = PathExpander::OM_FILE;
-		}
-	}
-	return fp;
-}
-
-std::pair<FileReader *, std::string> PathList::openFile(const char *name, bool ismainfile)
-{
-
-	if (name && *name)
-	{
-		/* First try the given name */
-
-		if (!IsAbsPath(name))
-		{
-			for (int i = (int)paths.size() - 1; i >= 0; i--)
-			{
-				std::string s = paths[i];
-				auto c = s.at(s.length() - 1);
-				if (c != '/' && c != '#' && name[0] != '#')
-				{
-					s += '/';
-				}
-				s += name;
-				auto fr = tryOpenPath(s.c_str(), ismainfile);
-				if (fr!= nullptr) return std::make_pair(fr, s);
-			}
-			auto fr = tryOpenPath(name, ismainfile);
-			if (fr != nullptr) return std::make_pair(fr, name);
-		}
-		else
-		{
-			// an absolute path is never looked up.
-			FileReader *fr = new FileReader;
-			if (fr->Open(name))
-			{
-				return std::make_pair(fr, std::string(name));
-			}
-			delete fr;
-		}
-	}
-	return std::make_pair(nullptr, std::string());
-}
-
-struct timidity_file *open_file(const char *name, bool ismainfile, PathList &pathList)
-{
-	auto file = pathList.openFile(name, ismainfile);
-	if (!file.first) return nullptr;
+    FileReader *fr;
+    FString filename;
+    if (name == nullptr)
+    {
+        fr = sfreader->OpenMainConfigFile();
+        filename = sfreader->basePath() + "timidity.cfg";
+    }
+    else
+    {
+        auto res = sfreader->LookupFile(name);
+        fr = res.first;
+        filename = res.second;
+    }
+    if (fr == nullptr) return nullptr;
+    
 	auto tf = new timidity_file;
-	tf->url = file.first;
-	tf->filename = file.second;
+	tf->url = fr;
+	tf->filename = filename.GetChars();
 	return tf;
 }
 

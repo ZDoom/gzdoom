@@ -30,7 +30,7 @@ protected:
     // This is only doable for loose config files that get set as sound fonts. All other cases read from a contained environment where this does not apply.
     bool mAllowAbsolutePaths = false;
     // This has only meaning if being run on a platform with a case sensitive file system and loose files.
-    // When reading from an archive it will always be case insensitive, just like the lump manager (since it repurposes the same implementation.)
+    // When reading from an archive it will always be case insensitive, just like the lump manager.
     bool mCaseSensitivePaths = false;
     TArray<FString> mPaths;
     
@@ -62,7 +62,7 @@ class FSF2Reader : public FSoundFontReader
 	FString mFilename;
 public:
     FSF2Reader(const char *filename);
-	virtual FileReader *FSF2Reader::OpenMainConfigFile() override;
+	virtual FileReader *OpenMainConfigFile() override;
     virtual FileReader *OpenFile(const char *name) override;
 };
 
@@ -108,7 +108,7 @@ public:
 
 //==========================================================================
 //
-// This one gets ugly...
+//
 //
 //==========================================================================
 

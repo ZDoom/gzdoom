@@ -265,7 +265,7 @@ void Instruments::init_sf(SFInsts *rec)
 	SFInfo sfinfo;
 	int i;
 
-	if ((rec->tf = open_file(rec->fname, false, pathlist)) == NULL) {
+	if ((rec->tf = open_file(rec->fname, sfreader)) == NULL) {
 		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
 			  "Can't open soundfont file %s", rec->fname);
 		end_soundfont(rec);
@@ -362,7 +362,7 @@ Instrument *Instruments::try_load_soundfont(SFInsts *rec, int order, int bank,in
 	if (rec->tf == NULL) {
 		if (rec->fname == NULL)
 			return NULL;
-		if ((rec->tf = open_file(rec->fname, false, pathlist)) == NULL) 
+		if ((rec->tf = open_file(rec->fname, sfreader)) == NULL)
 		{
 			ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
 				  "Can't open soundfont file %s", rec->fname);

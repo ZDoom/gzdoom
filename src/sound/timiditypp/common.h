@@ -28,28 +28,10 @@
 #include <vector>
 #include <stdint.h>
 #include "files.h"
+#include "i_soundfont.h"
 
 namespace TimidityPlus
 {
-
-class PathList
-{
-	std::vector<std::string> paths;
-
-	FileReader *tryOpenPath(const char *name, bool ismain);
-
-public:
-	PathList();
-
-	void addPath(const char *str);
-	void clear()
-	{
-		paths.resize(1);
-	}
-	static int pathcmp(const char *p1, const char *p2, int ignore_case);
-	std::pair<FileReader *, std::string> openFile(const char *name, bool ismainfile);
-
-};
 
 struct timidity_file
 {
@@ -57,16 +39,7 @@ struct timidity_file
 	std::string filename;
 };
 
-/* Noise modes for open_file */
-enum
-{
-	OF_SILENT = 0,
-	OF_NORMAL = 1,
-	OF_VERBOSE = 2,
-};
-
-
-extern struct timidity_file *open_file(const char *name, bool, PathList &);
+extern struct timidity_file *open_file(const char *name, FSoundFontReader *);
 extern void close_file(struct timidity_file *tf);
 extern void skip(struct timidity_file *tf, size_t len);
 extern char *tf_gets(char *buff, int n, struct timidity_file *tf);
@@ -76,7 +49,6 @@ extern long tf_seek(struct timidity_file *tf, long offset, int whence);
 extern long tf_tell(struct timidity_file *tf);
 extern int int_rand(int n);	/* random [0..n-1] */
 double flt_rand();
-extern int check_file_extension(char *filename, char *ext, int decompress);
 
 extern void *safe_malloc(size_t count);
 extern void *safe_realloc(void *old_ptr, size_t new_size);

@@ -30,6 +30,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include "instrum.h"
 #include "quantity.h"
 #include "cmdlib.h"
+#include "i_soundfont.h"
 
 
 
@@ -618,7 +619,7 @@ char *Instruments::expand_variables(char *string, MBlockList *varbuf, const char
 }
 
 
-int Instruments::read_config_file(const char *name, int self, int allow_missing_file, bool ismainfile)
+int Instruments::read_config_file(const char *name, int self, int allow_missing_file)
 {
 	struct timidity_file *tf;
 	char buf[1024], *tmp, *w[MAXWORDS + 1], *cp;
@@ -638,7 +639,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		return READ_CONFIG_RECURSION;
 	}
 
-	tf = open_file(name, ismainfile, pathlist);
+	tf = open_file(name, sfreader);
 	if (tf == NULL)
 		return allow_missing_file ? READ_CONFIG_FILE_NOT_FOUND :
 		READ_CONFIG_ERROR;
@@ -1401,7 +1402,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 				continue;
 			}
 			for (i = 1; i < words; i++)
-				pathlist.addPath(w[i]);
+                sfreader->AddPath(w[i]);
 		}
 		else if (!strcmp(w[0], "source") || !strcmp(w[0], "trysource"))
 		{

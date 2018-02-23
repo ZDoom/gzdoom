@@ -36,6 +36,7 @@
 #include "filter.h"
 #include "quantity.h"
 #include "freq.h"
+#include "i_soundfont.h"
 
 namespace TimidityPlus
 {
@@ -54,7 +55,10 @@ Instruments::Instruments()
 
 bool Instruments::load(const char *config)
 {
-	if (read_config_file(config, 0, 0, true) == RC_OK)
+    sfreader = sfmanager.OpenSoundFont(config, SF_SF2 | SF_GUS);
+    if (sfreader == nullptr) return false;
+    
+	if (read_config_file(nullptr, 0, 0) == RC_OK)
 	{
 		init_load_soundfont();
 		set_default_instrument();
@@ -616,7 +620,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			return ip;
 		}
 	/* Open patch file */
-	if (!(tf = open_file(name, false, pathlist))) {
+	if (!(tf = open_file(name, sfreader))) {
 		int name_len, ext_len;
 		static const char *patch_ext[] = { ".pat", 0 };
 
@@ -631,7 +635,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 					continue;	/* duplicated ext. */
 				strcpy((char *)tmp, name);
 				strcat((char *)tmp, patch_ext[i]);
-				if ((tf = open_file((char *)tmp, false, pathlist))) 
+				if ((tf = open_file((char *)tmp, sfreader)))
 				{
 					noluck = 0;
 					break;

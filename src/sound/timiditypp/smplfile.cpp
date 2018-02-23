@@ -752,7 +752,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 	if (compressed)
 	{
 		READ_LONG_BE(compressionType);
-		if (compressionType != BE_LONG(0x4E4F4E45) /* NONE */)
+		if (compressionType != (uint32_t)BE_LONG(0x4E4F4E45) /* NONE */)
 		{
 			char		compressionName[256];
 			uint8_t		compressionNameLength;
@@ -789,9 +789,10 @@ int Instruments::read_AIFFSoundDataChunk(struct timidity_file *tf, AIFFSoundData
 		if (mode == 0)		/* read both information and data */
 			return read_AIFFSoundData(tf, sound->inst, sound->common);
 		/* read information only */
-		if ((sound->position = tf_tell(tf)) == -1)
+        auto pos = tf_tell(tf);
+		if (pos == -1)
 			goto fail;
-		sound->position += offset;
+		sound->position = pos + offset;
 		csize -= 8;
 		if (tf_seek(tf, csize, SEEK_CUR) == -1)
 			goto fail;

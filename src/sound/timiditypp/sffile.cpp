@@ -257,9 +257,7 @@ int Instruments::chunkid(char *id)
 		{"ICMT", ICMT_ID},
 	};
 
-	int i;
-
-	for (i = 0; i < sizeof(idlist) / sizeof(idlist[0]); i++) {
+	for (unsigned i = 0; i < sizeof(idlist) / sizeof(idlist[0]); i++) {
 		if (strncmp(id, idlist[i].str, 4) == 0)
 			return idlist[i].id;
 	}

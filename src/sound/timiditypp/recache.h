@@ -64,11 +64,11 @@ class Recache
 		struct cache_hash *cache[128];
 	};
 
-	CNote channel_note_table[MAX_CHANNELS] = { 0 };
-	sample_t *cache_data = NULL;
-	splen_t cache_data_len = 0;
-	struct cache_hash *cache_hash_table[HASH_TABLE_SIZE] = { 0 };
-	MBlockList hash_entry_pool = { nullptr, 0 };
+	CNote channel_note_table[MAX_CHANNELS];
+	sample_t *cache_data;
+	splen_t cache_data_len;
+	struct cache_hash *cache_hash_table[HASH_TABLE_SIZE];
+	MBlockList hash_entry_pool;
 
 
 	void free_cache_data(void);
@@ -82,6 +82,7 @@ public:
 
 	Recache(Player *p)
 	{
+        memset(this, 0, sizeof(*this));
 		player = p;
 		resamp_cache_reset();
 	}

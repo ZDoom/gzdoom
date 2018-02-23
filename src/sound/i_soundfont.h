@@ -40,6 +40,7 @@ protected:
    
 public:
     
+    virtual ~FSoundFontReader() {}
     virtual FileReader *OpenMainConfigFile() = 0;    // this is special because it needs to be synthesized for .sf files and set some restrictions for patch sets
     virtual FileReader *OpenFile(const char *name) = 0;
     std::pair<FileReader *, FString> LookupFile(const char *name);
@@ -96,7 +97,6 @@ class FLumpPatchSetReader : public FSoundFontReader
 
 public:
     FLumpPatchSetReader(const char *filename);
-    ~FLumpPatchSetReader();
     virtual FileReader *OpenMainConfigFile() override;
     virtual FileReader *OpenFile(const char *name) override;
 	virtual FString basePath() const override
@@ -120,7 +120,6 @@ class FPatchSetReader : public FSoundFontReader
 public:
 	FPatchSetReader();
 	FPatchSetReader(const char *filename);
-	~FPatchSetReader();
 	virtual FileReader *OpenMainConfigFile() override;
 	virtual FileReader *OpenFile(const char *name) override;
 	virtual FString basePath() const override

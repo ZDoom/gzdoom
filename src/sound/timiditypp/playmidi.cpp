@@ -2467,8 +2467,6 @@ void Player::make_drum_effect(int ch)
 	struct DrumParts *drum;
 	struct DrumPartEffect *de;
 
-	if (channel[ch].drums == NULL) {return;}
-
 	if (channel[ch].drum_effect_flag == 0) {
 		free_drum_effect(ch);
 		memset(note_table, 0, sizeof(int8_t) * 128);
@@ -4489,8 +4487,7 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 		} else
 			channel[ch].drums[note]->pan_random = 0;
 		channel[ch].drums[note]->drum_panning = val;
-		if (update_now && adjust_panning_immediately
-				&& ! channel[ch].pan_random)
+		if (update_now && adjust_panning_immediately && ! channel[ch].pan_random)
 			adjust_drum_panning(ch, note);
 		break;
 	case NRPN_ADDR_1D00:	/* Reverb Send Level of Drum */
@@ -6123,7 +6120,7 @@ void Player::send_long_event(const uint8_t *sysexbuffer, int exlen)
 	MidiEvent evm[260];
 	SysexConvert sc;
 
-	if ((sysexbuffer[0] != '\xf0') && (sysexbuffer[0] != '\xf7')) return;
+	if ((sysexbuffer[0] != 0xf0) && (sysexbuffer[0] != 0xf7)) return;
 	
 	if (sc.parse_sysex_event(sysexbuffer + 1, exlen - 1, &ev, instruments)) 
 	{
@@ -6141,7 +6138,7 @@ void Player::send_long_event(const uint8_t *sysexbuffer, int exlen)
 		}
 		play_event(&ev);
 	}
-	if (ne = sc.parse_sysex_event_multi(sysexbuffer + 1, exlen - 1, evm, instruments)) 
+	if ((ne = sc.parse_sysex_event_multi(sysexbuffer + 1, exlen - 1, evm, instruments)))
 	{
 		for (i = 0; i < ne; i++) 
 		{

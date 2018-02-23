@@ -39,6 +39,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "files.h"
+#include "midisources.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -128,8 +129,7 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-HMISong::HMISong (FileReader &reader, EMidiDevice type, const char *args)
-: MIDIStreamer(type, args), MusHeader(0), Tracks(0)
+HMISong::HMISong (FileReader &reader)
 {
     int len = reader.GetLength();
 	if (len < 0x100)
@@ -195,7 +195,7 @@ void HMISong::SetupForHMI(int len)
 	// notably Quarantines, have identical values for some reason, so it's safer to
 	// use the quarter value and multiply it by four than to trust the full value.
 	Division = GetShort(MusHeader + HMI_DIVISION_OFFSET) << 2;
-	InitialTempo = 4000000;
+	Tempo = InitialTempo = 4000000;
 
 	Tracks = new TrackInfo[NumTracks + 1];
 	int track_dir = GetInt(MusHeader + HMI_TRACK_DIR_PTR_OFFSET);
@@ -296,7 +296,7 @@ void HMISong::SetupForHMP(int len)
 
 	// The division is the number of pulses per quarter note (PPQN).
 	Division = GetInt(MusHeader + HMP_DIVISION_OFFSET);
-	InitialTempo = 1000000;
+	Tempo = InitialTempo = 1000000;
 
 	Tracks = new TrackInfo[NumTracks + 1];
 
@@ -651,7 +651,7 @@ uint32_t *HMISong::SendCommand (uint32_t *events, TrackInfo *track, uint32_t del
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = ReadVarLen(track);
-			if (len >= (MAX_EVENTS-1)*3*4)
+			if (len >= (MAX_MIDI_EVENTS-1)*3*4)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}
@@ -1013,52 +1013,3 @@ HMISong::TrackInfo *HMISong::FindNextDue ()
 	return track;
 }
 
-
-//==========================================================================
-//
-// HMISong :: GetOPLDumper
-//
-//==========================================================================
-
-MusInfo *HMISong::GetOPLDumper(const char *filename)
-{
-	return new HMISong(this, filename, MDEV_OPL);
-}
-
-//==========================================================================
-//
-// HMISong :: GetWaveDumper
-//
-//==========================================================================
-
-MusInfo *HMISong::GetWaveDumper(const char *filename, int rate)
-{
-	return new HMISong(this, filename, MDEV_GUS);
-}
-
-//==========================================================================
-//
-// HMISong File Dumping Constructor
-//
-//==========================================================================
-
-HMISong::HMISong(const HMISong *original, const char *filename, EMidiDevice type)
-: MIDIStreamer(filename, type)
-{
-	SongLen = original->SongLen;
-	MusHeader = new uint8_t[original->SongLen];
-	memcpy(MusHeader, original->MusHeader, original->SongLen);
-	NumTracks = original->NumTracks;
-	Division = original->Division;
-	Tempo = InitialTempo = original->InitialTempo;
-	Tracks = new TrackInfo[NumTracks];
-	for (int i = 0; i < NumTracks; ++i)
-	{
-		TrackInfo *newtrack = &Tracks[i];
-		const TrackInfo *oldtrack = &original->Tracks[i];
-
-		newtrack->TrackBegin = MusHeader + (oldtrack->TrackBegin - original->MusHeader);
-		newtrack->TrackP = 0;
-		newtrack->MaxTrackP = oldtrack->MaxTrackP;
-	}
-}

@@ -315,23 +315,27 @@ MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 
 static MIDIStreamer *CreateMIDIStreamer(FileReader &reader, EMidiDevice devtype, EMIDIType miditype, const char *args)
 {
+	MIDISource *source = nullptr;
 	switch (miditype)
 	{
 	case MIDI_MUS:
-		return new MUSSong2(reader, devtype, args);
+		source = new MUSSong2(reader);
 
 	case MIDI_MIDI:
-		return new MIDISong2(reader, devtype, args);
+		source = new MIDISong2(reader);
 
 	case MIDI_HMI:
-		return new HMISong(reader, devtype, args);
+		source = new HMISong(reader);
 
 	case MIDI_XMI:
-		return new XMISong(reader, devtype, args);
+		source = new XMISong(reader);
 
 	default:
 		return NULL;
 	}
+	auto streamer = new MIDIStreamer(devtype, args);
+	streamer->SetMIDISource(source);
+
 }
 
 //==========================================================================

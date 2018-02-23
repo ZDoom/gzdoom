@@ -92,7 +92,7 @@ static const uint8_t StaticMIDIhead[] =
 
 MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 :
-  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), Args(args)
+  MIDI(0), DeviceType(type), Args(args)
 {
 	memset(Buffer, 0, sizeof(Buffer));
 }
@@ -105,7 +105,7 @@ MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 
 MIDIStreamer::MIDIStreamer(const char *dumpname, EMidiDevice type)
 :
-  MIDI(0), Division(0), InitialTempo(500000), DeviceType(type), DumpFilename(dumpname)
+  MIDI(0), DeviceType(type), DumpFilename(dumpname)
 {
 	memset(Buffer, 0, sizeof(Buffer));
 }
@@ -146,21 +146,9 @@ bool MIDIStreamer::IsMIDI() const
 
 bool MIDIStreamer::IsValid() const
 {
-	return Division != 0;
+	return source != nullptr && source->getDivision() != 0;
 }
 
-//==========================================================================
-//
-// MIDIStreamer :: CheckCaps
-//
-// Called immediately after the device is opened in case a subclass should
-// want to alter its behavior depending on which device it got.
-//
-//==========================================================================
-
-void MIDIStreamer::CheckCaps(int tech)
-{
-}
 
 //==========================================================================
 //
@@ -286,9 +274,15 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	VolumeChanged = false;
 	Restarting = true;
 	InitialPlayback = true;
+	if (source == nullptr) return;	// We have nothing to play so abort.
 
 	assert(MIDI == NULL);
+	
+	// fixme: The device should be attached by the controlling code to allow more flexibility.
+	// It should also separate the softsynth device from the playback engines.
+	// The approach here pretty much prevents the implementation of a generic WAVE writer because no generic dumper device class can be created.
 	devtype = SelectMIDIDevice(DeviceType);
+
 	if (DumpFilename.IsNotEmpty())
 	{
 		if (devtype == MDEV_OPL)
@@ -316,8 +310,8 @@ void MIDIStreamer::Play(bool looping, int subsong)
 		return;
 	}
 
-	SetMIDISubsong(subsong);
-	CheckCaps(MIDI->GetTechnology());
+	source->SetMIDISubsong(subsong);
+	source->CheckCaps(MIDI->GetTechnology());
 
 	if (MIDI->Preprocess(this, looping))
 	{
@@ -347,12 +341,13 @@ void MIDIStreamer::Play(bool looping, int subsong)
 
 void MIDIStreamer::StartPlayback()
 {
-	Precache();
-	LoopLimit = 0;
-
+	auto data = source->PrecacheData();
+	MIDI->PrecacheInstruments(&data[0], data.Size());
+	source->StartPlayback(m_Looping);
+	
 	// Set time division and tempo.
-	if (0 != MIDI->SetTimeDiv(Division) ||
-		0 != MIDI->SetTempo(Tempo = InitialTempo))
+	if (0 != MIDI->SetTimeDiv(source->getDivision()) ||
+		0 != MIDI->SetTempo(source->getInitialTempo()))
 	{
 		Printf(PRINT_BOLD, "Setting MIDI stream speed failed\n");
 		MIDI->Close();
@@ -368,7 +363,7 @@ void MIDIStreamer::StartPlayback()
 	BufferNum = 0;
 	do
 	{
-		int res = FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME);
+		int res = FillBuffer(BufferNum, MAX_MIDI_EVENTS, MAX_TIME);
 		if (res == SONG_MORE)
 		{
 			if (0 != MIDI->StreamOutSync(&Buffer[BufferNum]))
@@ -503,6 +498,7 @@ void MIDIStreamer::MusicVolumeChanged()
 	{
 		Volume = 0xFFFF;
 	}
+	source->setVolume(Volume);
 	if (m_Status == STATE_Playing)
 	{
 		OutputVolume(Volume);
@@ -600,24 +596,6 @@ void MIDIStreamer::OutputVolume (uint32_t volume)
 
 //==========================================================================
 //
-// MIDIStreamer :: VolumeControllerChange
-//
-// Some devices don't support master volume
-// (e.g. the Audigy's software MIDI synth--but not its two hardware ones),
-// so assume none of them do and scale channel volumes manually.
-//
-//==========================================================================
-
-int MIDIStreamer::VolumeControllerChange(int channel, int volume)
-{
-	ChannelVolumes[channel] = volume;
-	// If loops are limited, we can assume we're exporting this MIDI file,
-	// so we should not adjust the volume level.
-	return LoopLimit != 0 ? volume : ((volume + 1) * Volume) >> 16;
-}
-
-//==========================================================================
-//
 // MIDIStreamer :: Callback											Static
 //
 //==========================================================================
@@ -680,7 +658,7 @@ fill:
 	}
 	else
 	{
-		res = FillBuffer(BufferNum, MAX_EVENTS, MAX_TIME);
+		res = FillBuffer(BufferNum, MAX_MIDI_EVENTS, MAX_TIME);
 	}
 	switch (res & 3)
 	{
@@ -729,7 +707,7 @@ fill:
 
 int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 {
-	if (!Restarting && CheckDone())
+	if (!Restarting && source->CheckDone())
 	{
 		return SONG_DONE;
 	}
@@ -752,7 +730,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 		events[3] = MAKE_ID(0xf0,0x7f,0x7f,0x04);	// dwParms[0]
 		events[4] = MAKE_ID(0x01,0x7f,0x7f,0xf7);	// dwParms[1]
 		events += 5;
-		DoInitialSetup();
+		source->DoInitialSetup();
 	}
 
 	// If the volume has changed, stick those events at the start of this buffer.
@@ -761,7 +739,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 		VolumeChanged = false;
 		for (i = 0; i < 16; ++i)
 		{
-			uint8_t courseVol = (uint8_t)(((ChannelVolumes[i]+1) * NewVolume) >> 16);
+			uint8_t courseVol = (uint8_t)(((source->getChannelVolume(i)+1) * NewVolume) >> 16);
 			events[0] = 0;				// dwDeltaTime
 			events[1] = 0;				// dwStreamID
 			events[2] = MIDI_CTRLCHANGE | i | (7<<8) | (courseVol<<16);
@@ -774,7 +752,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 	{
 		// Be more responsive when unpausing by only playing each buffer
 		// for a third of the maximum time.
-		events[0] = MAX<uint32_t>(1, (max_time / 3) * Division / Tempo);
+		events[0] = MAX<uint32_t>(1, (max_time / 3) * source->getDivision() / source->getTempo());
 		events[1] = 0;
 		events[2] = MEVENT_NOP << 24;
 		events += 3;
@@ -787,13 +765,13 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 			// Reset the tempo to the inital value.
 			events[0] = 0;									// dwDeltaTime
 			events[1] = 0;									// dwStreamID
-			events[2] = (MEVENT_TEMPO << 24) | InitialTempo;	// dwEvent
+			events[2] = (MEVENT_TEMPO << 24) | source->getInitialTempo();	// dwEvent
 			events += 3;
 			// Stop all notes in case any were left hanging.
 			events = WriteStopNotes(events);
-			DoRestart();
+			source->DoRestart();
 		}
-		events = MakeEvents(events, max_event_p, max_time);
+		events = source->MakeEvents(events, max_event_p, max_time);
 	}
 	memset(&Buffer[buffer_num], 0, sizeof(MidiHeader));
 	Buffer[buffer_num].lpData = (uint8_t *)Events[buffer_num];
@@ -864,105 +842,14 @@ uint32_t *MIDIStreamer::WriteStopNotes(uint32_t *events)
 
 //==========================================================================
 //
-// MIDIStreamer :: Precache
 //
-// Generates a list of instruments this song uses and passes them to the
-// MIDI device for precaching. The default implementation here pretends to
-// play the song and watches for program change events on normal channels
-// and note on events on channel 10.
 //
 //==========================================================================
 
-void MIDIStreamer::Precache()
+void MIDIStreamer::SetMIDISource(MIDISource *_source)
 {
-	uint8_t found_instruments[256] = { 0, };
-	uint8_t found_banks[256] = { 0, };
-	bool multiple_banks = false;
-
-	LoopLimit = 1;
-	DoRestart();
-	found_banks[0] = true;		// Bank 0 is always used.
-	found_banks[128] = true;
-
-	// Simulate playback to pick out used instruments.
-	while (!CheckDone())
-	{
-		uint32_t *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
-		for (uint32_t *event = Events[0]; event < event_end; )
-		{
-			if (MEVENT_EVENTTYPE(event[2]) == 0)
-			{
-				int command = (event[2] & 0x70);
-				int channel = (event[2] & 0x0f);
-				int data1 = (event[2] >> 8) & 0x7f;
-				int data2 = (event[2] >> 16) & 0x7f;
-
-				if (channel != 9 && command == (MIDI_PRGMCHANGE & 0x70))
-				{
-					found_instruments[data1] = true;
-				}
-				else if (channel == 9 && command == (MIDI_PRGMCHANGE & 0x70) && data1 != 0)
-				{ // On a percussion channel, program change also serves as bank select.
-					multiple_banks = true;
-					found_banks[data1 | 128] = true;
-				}
-				else if (channel == 9 && command == (MIDI_NOTEON & 0x70) && data2 != 0)
-				{
-					found_instruments[data1 | 128] = true;
-				}
-				else if (command == (MIDI_CTRLCHANGE & 0x70) && data1 == 0 && data2 != 0)
-				{
-					multiple_banks = true;
-					if (channel == 9)
-					{
-						found_banks[data2 | 128] = true;
-					}
-					else
-					{
-						found_banks[data2] = true;
-					}
-				}
-			}
-			// Advance to next event
-			if (event[2] < 0x80000000)
-			{ // short message
-				event += 3;
-			}
-			else
-			{ // long message
-				event += 3 + ((MEVENT_EVENTPARM(event[2]) + 3) >> 2);
-			}
-		}
-	}
-	DoRestart();
-
-	// Now pack everything into a contiguous region for the PrecacheInstruments call().
-	TArray<uint16_t> packed;
-
-	for (int i = 0; i < 256; ++i)
-	{
-		if (found_instruments[i])
-		{
-			uint16_t packnum = (i & 127) | ((i & 128) << 7);
-			if (!multiple_banks)
-			{
-				packed.Push(packnum);
-			}
-			else
-			{ // In order to avoid having to multiplex tracks in a type 1 file,
-			  // precache every used instrument in every used bank, even if not
-			  // all combinations are actually used.
-				for (int j = 0; j < 128; ++j)
-				{
-					if (found_banks[j + (i & 128)])
-					{
-						packed.Push(packnum | (j << 7));
-					}
-				}
-			}
-		}
-	}
-	MIDI->PrecacheInstruments(&packed[0], packed.Size());
+	source = _source;
+	source->setTempoCallback([=](int tempo) { return MIDI->SetTempo(tempo); } );
 }
 
 //==========================================================================
@@ -979,10 +866,13 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 	uint8_t running_status = 255;
 
 	// Always create songs aimed at GM devices.
-	CheckCaps(MIDIDEV_MIDIPORT);
+	if (source == nullptr) return;
+	source->CheckCaps(MIDIDEV_MIDIPORT);
 	LoopLimit = looplimit <= 0 ? EXPORT_LOOP_LIMIT : looplimit;
-	DoRestart();
-	Tempo = InitialTempo;
+	source->DoRestart();
+	source->StartPlayback(false, LoopLimit);
+	auto InitialTempo = source->getInitialTempo();
+	auto Division = source->getDivision();
 
 	file.Reserve(sizeof(StaticMIDIhead));
 	memcpy(&file[0], StaticMIDIhead, sizeof(StaticMIDIhead));
@@ -992,9 +882,9 @@ void MIDIStreamer::CreateSMF(TArray<uint8_t> &file, int looplimit)
 	file[27] = InitialTempo >> 8;
 	file[28] = InitialTempo;
 
-	while (!CheckDone())
+	while (!source->CheckDone())
 	{
-		uint32_t *event_end = MakeEvents(Events[0], &Events[0][MAX_EVENTS*3], 1000000*600);
+		uint32_t *event_end = source->MakeEvents(Events[0], &Events[0][MAX_MIDI_EVENTS*3], 1000000*600);
 		for (uint32_t *event = Events[0]; event < event_end; )
 		{
 			delay += event[0];
@@ -1106,57 +996,6 @@ static void WriteVarLen (TArray<uint8_t> &file, uint32_t value)
    }
 }
 
-//==========================================================================
-//
-// MIDIStreamer :: SetTempo
-//
-// Sets the tempo from a track's initial meta events. Later tempo changes
-// create MEVENT_TEMPO events instead.
-//
-//==========================================================================
-
-void MIDIStreamer::SetTempo(int new_tempo)
-{
-	InitialTempo = new_tempo;
-	if (NULL != MIDI && 0 == MIDI->SetTempo(new_tempo))
-	{
-		Tempo = new_tempo;
-	}
-}
-
-
-//==========================================================================
-//
-// MIDIStreamer :: ClampLoopCount
-//
-// We use the XMIDI interpretation of loop count here, where 1 means it
-// plays that section once (in other words, no loop) rather than the EMIDI
-// interpretation where 1 means to loop it once.
-//
-// If LoopLimit is 1, we limit all loops, since this pass over the song is
-// used to determine instruments for precaching.
-//
-// If LoopLimit is higher, we only limit infinite loops, since this song is
-// being exported.
-//
-//==========================================================================
-
-int MIDIStreamer::ClampLoopCount(int loopcount)
-{
-	if (LoopLimit == 0)
-	{
-		return loopcount;
-	}
-	if (LoopLimit == 1)
-	{
-		return 1;
-	}
-	if (loopcount == 0)
-	{
-		return LoopLimit;
-	}
-	return loopcount;
-}
 
 //==========================================================================
 //
@@ -1183,7 +1022,7 @@ FString MIDIStreamer::GetStats()
 
 bool MIDIStreamer::SetSubsong(int subsong)
 {
-	if (SetMIDISubsong(subsong))
+	if (source->SetMIDISubsong(subsong))
 	{
 		Stop();
 		Play(m_Looping, subsong);
@@ -1192,18 +1031,6 @@ bool MIDIStreamer::SetSubsong(int subsong)
 	return false;
 }
 
-//==========================================================================
-//
-// MIDIStreamer :: SetMIDISubsong
-//
-// Selects which subsong to play. This is private.
-//
-//==========================================================================
-
-bool MIDIStreamer::SetMIDISubsong(int subsong)
-{
-	return subsong == 0;
-}
 
 //==========================================================================
 //

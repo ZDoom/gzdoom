@@ -108,8 +108,8 @@ extern char MIDI_CommonLengths[15];
 //
 //==========================================================================
 
-XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
-: MIDIStreamer(type, args), MusHeader(0), Songs(0)
+XMISong::XMISong (FileReader &reader)
+: MusHeader(0), Songs(0)
 {
 	SongLen = reader.GetLength();
 	MusHeader = new uint8_t[SongLen];
@@ -131,7 +131,7 @@ XMISong::XMISong (FileReader &reader, EMidiDevice type, const char *args)
 	// We can use any combination of Division and Tempo values that work out
 	// to be 120 Hz.
 	Division = 60;
-	InitialTempo = 500000;
+	Tempo = InitialTempo = 500000;
 
 	Songs = new TrackInfo[NumSongs];
 	memset(Songs, 0, sizeof(*Songs) * NumSongs);
@@ -478,7 +478,7 @@ uint32_t *XMISong::SendCommand (uint32_t *events, EventSource due, uint32_t dela
 					int depth = track->ForDepth - 1;
 					if (depth < MAX_FOR_DEPTH)
 					{
-						if (data2 < 64 || (track->ForLoops[depth].LoopCount == 0 && !m_Looping))
+						if (data2 < 64 || (track->ForLoops[depth].LoopCount == 0 && !isLooping))
 						{ // throw away this loop.
 							track->ForLoops[depth].LoopCount = 1;
 						}
@@ -522,7 +522,7 @@ uint32_t *XMISong::SendCommand (uint32_t *events, EventSource due, uint32_t dela
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_EVENTS-1)*3*4)
+			if (len >= (MAX_MIDI_EVENTS-1)*3*4)
 			{ // This message will never fit. Throw it away.
 				track->EventP += len;
 			}
@@ -698,53 +698,3 @@ XMISong::EventSource XMISong::FindNextDue()
 }
 
 
-//==========================================================================
-//
-// XMISong :: GetOPLDumper
-//
-//==========================================================================
-
-MusInfo *XMISong::GetOPLDumper(const char *filename)
-{
-	return new XMISong(this, filename, MDEV_OPL);
-}
-
-//==========================================================================
-//
-// XMISong :: GetWaveDumper
-//
-//==========================================================================
-
-MusInfo *XMISong::GetWaveDumper(const char *filename, int rate)
-{
-	return new XMISong(this, filename, MDEV_GUS);
-}
-
-//==========================================================================
-//
-// XMISong File Dumping Constructor
-//
-//==========================================================================
-
-XMISong::XMISong(const XMISong *original, const char *filename, EMidiDevice type)
-: MIDIStreamer(filename, type)
-{
-	SongLen = original->SongLen;
-	MusHeader = new uint8_t[original->SongLen];
-	memcpy(MusHeader, original->MusHeader, original->SongLen);
-	NumSongs = original->NumSongs;
-	Tempo = InitialTempo = original->InitialTempo;
-	Songs = new TrackInfo[NumSongs];
-	for (int i = 0; i < NumSongs; ++i)
-	{
-		TrackInfo *newtrack = &Songs[i];
-		const TrackInfo *oldtrack = &original->Songs[i];
-
-		newtrack->EventChunk = MusHeader + (oldtrack->EventChunk - original->MusHeader);
-		newtrack->EventLen = oldtrack->EventLen;
-		newtrack->EventP = 0;
-
-		newtrack->TimbreChunk = MusHeader + (oldtrack->TimbreChunk - original->MusHeader);
-		newtrack->TimbreLen = oldtrack->TimbreLen;
-	}
-}

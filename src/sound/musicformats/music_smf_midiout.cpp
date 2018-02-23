@@ -102,8 +102,8 @@ char MIDI_CommonLengths[15] = { 0, 1, 2, 1, 0, 0, 0, 0,  0, 0, 0, 0, 0, 0, 0 };
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FileReader &reader, EMidiDevice type, const char *args)
-: MIDIStreamer(type, args), MusHeader(0), Tracks(0)
+MIDISong2::MIDISong2 (FileReader &reader)
+: MusHeader(0), Tracks(0)
 {
 	int p;
 	int i;
@@ -518,7 +518,7 @@ uint32_t *MIDISong2::SendCommand (uint32_t *events, TrackInfo *track, uint32_t d
 			case 117:	// EMIDI Loop End
 				if (track->LoopCount >= 0 && data2 == 127)
 				{
-					if (track->LoopCount == 0 && !m_Looping)
+					if (track->LoopCount == 0 && !isLooping)
 					{
 						track->Finished = true;
 					}
@@ -560,7 +560,7 @@ uint32_t *MIDISong2::SendCommand (uint32_t *events, TrackInfo *track, uint32_t d
 					{
 						if (Tracks[i].LoopCount >= 0)
 						{
-							if (Tracks[i].LoopCount == 0 && !m_Looping)
+							if (Tracks[i].LoopCount == 0 && !isLooping)
 							{
 								Tracks[i].Finished = true;
 							}
@@ -592,7 +592,7 @@ uint32_t *MIDISong2::SendCommand (uint32_t *events, TrackInfo *track, uint32_t d
 		if (event == MIDI_SYSEX || event == MIDI_SYSEXEND)
 		{
 			len = track->ReadVarLen();
-			if (len >= (MAX_EVENTS-1)*3*4)
+			if (len >= (MAX_MIDI_EVENTS-1)*3*4)
 			{ // This message will never fit. Throw it away.
 				track->TrackP += len;
 			}
@@ -807,53 +807,3 @@ MIDISong2::TrackInfo *MIDISong2::FindNextDue ()
 }
 
 
-//==========================================================================
-//
-// MIDISong2 :: GetOPLDumper
-//
-//==========================================================================
-
-MusInfo *MIDISong2::GetOPLDumper(const char *filename)
-{
-	return new MIDISong2(this, filename, MDEV_OPL);
-}
-
-//==========================================================================
-//
-// MIDISong2 :: GetWaveDumper
-//
-//==========================================================================
-
-MusInfo *MIDISong2::GetWaveDumper(const char *filename, int rate)
-{
-	return new MIDISong2(this, filename, MDEV_GUS);
-}
-
-//==========================================================================
-//
-// MIDISong2 File Dumping Constructor
-//
-//==========================================================================
-
-MIDISong2::MIDISong2(const MIDISong2 *original, const char *filename, EMidiDevice type)
-: MIDIStreamer(filename, type)
-{
-	SongLen = original->SongLen;
-	MusHeader = new uint8_t[original->SongLen];
-	memcpy(MusHeader, original->MusHeader, original->SongLen);
-	Format = original->Format;
-	NumTracks = original->NumTracks;
-	DesignationMask = 0;
-	Division = original->Division;
-	Tempo = InitialTempo = original->InitialTempo;
-	Tracks = new TrackInfo[NumTracks];
-	for (int i = 0; i < NumTracks; ++i)
-	{
-		TrackInfo *newtrack = &Tracks[i];
-		const TrackInfo *oldtrack = &original->Tracks[i];
-
-		newtrack->TrackBegin = MusHeader + (oldtrack->TrackBegin - original->MusHeader);
-		newtrack->TrackP = 0;
-		newtrack->MaxTrackP = oldtrack->MaxTrackP;
-	}
-}

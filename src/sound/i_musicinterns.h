@@ -7,10 +7,12 @@
 #include "s_sound.h"
 #include "files.h"
 #include "wildmidi/wildmidi_lib.h"
+#include "midisources.h"
 
 void I_InitMusicWin32 ();
 
 extern float relative_volume;
+class MIDISource;
 
 EXTERN_CVAR (Float, timidity_mastervolume)
 
@@ -304,6 +306,11 @@ protected:
 
 // Base class for streaming MUS and MIDI files ------------------------------
 
+enum
+{
+	MAX_MIDI_EVENTS = 128
+};
+
 class MIDIStreamer : public MusInfo
 {
 public:
@@ -328,12 +335,19 @@ public:
 	void WildMidiSetOption(int opt, int set);
 	void CreateSMF(TArray<uint8_t> &file, int looplimit=0);
 	int ServiceEvent();
+	void SetMIDISource(MIDISource *_source);
+
 	int GetDeviceType() const override
 	{
 		return nullptr == MIDI
 			? MusInfo::GetDeviceType()
 			: MIDI->GetDeviceType();
 	}
+	
+	// Must be redone later when the rest is properly rebuilt
+	//MusInfo *GetOPLDumper(const char *filename);
+	//MusInfo *GetWaveDumper(const char *filename, int rate);
+
 
 protected:
 	MIDIStreamer(const char *dumpname, EMidiDevice type);
@@ -343,27 +357,17 @@ protected:
 	int FillStopBuffer(int buffer_num);
 	uint32_t *WriteStopNotes(uint32_t *events);
 	int VolumeControllerChange(int channel, int volume);
-	int ClampLoopCount(int loopcount);
 	void SetTempo(int new_tempo);
+	void Precache();
+	void StartPlayback();
+
+	//void SetMidiSynth(MIDIDevice *synth);
+	
+	
 	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
 	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype);
 
 	static void Callback(void *userdata);
-
-	// Virtuals for subclasses to override
-	virtual void StartPlayback();
-	virtual void CheckCaps(int tech);
-	virtual void DoInitialSetup() = 0;
-	virtual void DoRestart() = 0;
-	virtual bool CheckDone() = 0;
-	virtual void Precache();
-	virtual bool SetMIDISubsong(int subsong);
-	virtual uint32_t *MakeEvents(uint32_t *events, uint32_t *max_event_p, uint32_t max_time) = 0;
-
-	enum
-	{
-		MAX_EVENTS = 128
-	};
 
 	enum
 	{
@@ -373,7 +377,7 @@ protected:
 	};
 
 	MIDIDevice *MIDI;
-	uint32_t Events[2][MAX_EVENTS*3];
+	uint32_t Events[2][MAX_MIDI_EVENTS*3];
 	MidiHeader Buffer[2];
 	int BufferNum;
 	int EndQueued;
@@ -381,181 +385,14 @@ protected:
 	bool Restarting;
 	bool InitialPlayback;
 	uint32_t NewVolume;
-	int Division;
-	int Tempo;
-	int InitialTempo;
-	uint8_t ChannelVolumes[16];
 	uint32_t Volume;
 	EMidiDevice DeviceType;
 	bool CallbackIsThreaded;
 	int LoopLimit;
 	FString DumpFilename;
 	FString Args;
-};
+	MIDISource *source;
 
-// MUS file played with a MIDI stream ---------------------------------------
-
-class MUSSong2 : public MIDIStreamer
-{
-public:
-	MUSSong2(FileReader &reader, EMidiDevice type, const char *args);
-	~MUSSong2();
-
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
-
-protected:
-	MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice type);	// file dump constructor
-
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	void Precache();
-	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
-
-	MUSHeader *MusHeader;
-	uint8_t *MusBuffer;
-	uint8_t LastVelocity[16];
-	size_t MusP, MaxMusP;
-};
-
-// MIDI file played with a MIDI stream --------------------------------------
-
-class MIDISong2 : public MIDIStreamer
-{
-public:
-	MIDISong2(FileReader &reader, EMidiDevice type, const char *args);
-	~MIDISong2();
-
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
-
-protected:
-	MIDISong2(const MIDISong2 *original, const char *filename, EMidiDevice type);	// file dump constructor
-
-	void CheckCaps(int tech);
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
-	void AdvanceTracks(uint32_t time);
-
-	struct TrackInfo;
-
-	void ProcessInitialMetaEvents ();
-	uint32_t *SendCommand (uint32_t *event, TrackInfo *track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
-	TrackInfo *FindNextDue ();
-
-	uint8_t *MusHeader;
-	int SongLen;
-	TrackInfo *Tracks;
-	TrackInfo *TrackDue;
-	int NumTracks;
-	int Format;
-	uint16_t DesignationMask;
-};
-
-// HMI file played with a MIDI stream ---------------------------------------
-
-struct AutoNoteOff
-{
-	uint32_t Delay;
-	uint8_t Channel, Key;
-};
-// Sorry, std::priority_queue, but I want to be able to modify the contents of the heap.
-class NoteOffQueue : public TArray<AutoNoteOff>
-{
-public:
-	void AddNoteOff(uint32_t delay, uint8_t channel, uint8_t key);
-	void AdvanceTime(uint32_t time);
-	bool Pop(AutoNoteOff &item);
-
-protected:
-	void Heapify();
-
-	unsigned int Parent(unsigned int i) const { return (i + 1u) / 2u - 1u; }
-	unsigned int Left(unsigned int i) const { return (i + 1u) * 2u - 1u; }
-	unsigned int Right(unsigned int i) const { return (i + 1u) * 2u; }
-};
-
-class HMISong : public MIDIStreamer
-{
-public:
-	HMISong(FileReader &reader, EMidiDevice type, const char *args);
-	~HMISong();
-
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
-
-protected:
-	HMISong(const HMISong *original, const char *filename, EMidiDevice type);	// file dump constructor
-
-	void SetupForHMI(int len);
-	void SetupForHMP(int len);
-	void CheckCaps(int tech);
-
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
-	void AdvanceTracks(uint32_t time);
-
-	struct TrackInfo;
-
-	void ProcessInitialMetaEvents ();
-	uint32_t *SendCommand (uint32_t *event, TrackInfo *track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
-	TrackInfo *FindNextDue ();
-
-	static uint32_t ReadVarLenHMI(TrackInfo *);
-	static uint32_t ReadVarLenHMP(TrackInfo *);
-
-	uint8_t *MusHeader;
-	int SongLen;
-	int NumTracks;
-	TrackInfo *Tracks;
-	TrackInfo *TrackDue;
-	TrackInfo *FakeTrack;
-	uint32_t (*ReadVarLen)(TrackInfo *);
-	NoteOffQueue NoteOffs;
-};
-
-// XMI file played with a MIDI stream ---------------------------------------
-
-class XMISong : public MIDIStreamer
-{
-public:
-	XMISong(FileReader &reader, EMidiDevice type, const char *args);
-	~XMISong();
-
-	MusInfo *GetOPLDumper(const char *filename);
-	MusInfo *GetWaveDumper(const char *filename, int rate);
-
-protected:
-	struct TrackInfo;
-	enum EventSource { EVENT_None, EVENT_Real, EVENT_Fake };
-
-	XMISong(const XMISong *original, const char *filename, EMidiDevice type);	// file dump constructor
-
-	int FindXMIDforms(const uint8_t *chunk, int len, TrackInfo *songs) const;
-	void FoundXMID(const uint8_t *chunk, int len, TrackInfo *song) const;
-	bool SetMIDISubsong(int subsong);
-	void DoInitialSetup();
-	void DoRestart();
-	bool CheckDone();
-	uint32_t *MakeEvents(uint32_t *events, uint32_t *max_events_p, uint32_t max_time);
-	void AdvanceSong(uint32_t time);
-
-	void ProcessInitialMetaEvents();
-	uint32_t *SendCommand (uint32_t *event, EventSource track, uint32_t delay, ptrdiff_t room, bool &sysex_noroom);
-	EventSource FindNextDue();
-
-	uint8_t *MusHeader;
-	int SongLen;		// length of the entire file
-	int NumSongs;
-	TrackInfo *Songs;
-	TrackInfo *CurrSong;
-	NoteOffQueue NoteOffs;
-	EventSource EventDue;
 };
 
 // Anything supported by the sound system out of the box --------------------

@@ -93,8 +93,8 @@ static const uint8_t CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
-: MIDIStreamer(type, args), MusHeader(0), MusBuffer(0)
+MUSSong2::MUSSong2 (FileReader &reader)
+: MusHeader(0), MusBuffer(0)
 {
 	uint8_t front[32];
 	int start;
@@ -136,7 +136,7 @@ MUSSong2::MUSSong2 (FileReader &reader, EMidiDevice type, const char *args)
 	MusBuffer = (uint8_t *)MusHeader + LittleShort(MusHeader->SongStart);
 	MaxMusP = MIN<int>(LittleShort(MusHeader->SongLen), len - LittleShort(MusHeader->SongStart));
 	Division = 140;
-	InitialTempo = 1000000;
+	Tempo = InitialTempo = 1000000;
 }
 
 //==========================================================================
@@ -202,7 +202,7 @@ bool MUSSong2::CheckDone()
 //
 //==========================================================================
 
-void MUSSong2::Precache()
+TArray<uint16_t> MUSSong2::PrecacheData()
 {
 	TArray<uint16_t> work(LittleShort(MusHeader->NumInstruments));
 	const uint8_t *used = (uint8_t *)MusHeader + sizeof(MUSHeader) / sizeof(uint8_t);
@@ -241,7 +241,7 @@ void MUSSong2::Precache()
 			work.Push(val);
 		}
 	}
-	MIDI->PrecacheInstruments(&work[0], work.Size());
+	return work;
 }
 
 //==========================================================================
@@ -367,46 +367,6 @@ end:
 		events += 3;
 	}
 	return events;
-}
-
-//==========================================================================
-//
-// MUSSong2 :: GetOPLDumper
-//
-//==========================================================================
-
-MusInfo *MUSSong2::GetOPLDumper(const char *filename)
-{
-	return new MUSSong2(this, filename, MDEV_OPL);
-}
-
-//==========================================================================
-//
-// MUSSong2 :: GetWaveDumper
-//
-//==========================================================================
-
-MusInfo *MUSSong2::GetWaveDumper(const char *filename, int rate)
-{
-	return new MUSSong2(this, filename, MDEV_GUS);
-}
-
-//==========================================================================
-//
-// MUSSong2 OPL Dumping Constructor
-//
-//==========================================================================
-
-MUSSong2::MUSSong2(const MUSSong2 *original, const char *filename, EMidiDevice type)
-: MIDIStreamer(filename, type)
-{
-	int songstart = LittleShort(original->MusHeader->SongStart);
-	MaxMusP = original->MaxMusP;
-	MusHeader = (MUSHeader *)new uint8_t[songstart + MaxMusP];
-	memcpy(MusHeader, original->MusHeader, songstart + MaxMusP);
-	MusBuffer = (uint8_t *)MusHeader + songstart;
-	Division = 140;
-	InitialTempo = 1000000;
 }
 
 //==========================================================================

@@ -64,6 +64,7 @@ enum
 	CVAR_MOD			= 8192,	// cvar was defined by a mod
 	CVAR_IGNORE			= 16384,// do not send cvar across the network/inaccesible from ACS (dummy mod cvar)
 	CVAR_CHEAT			= 32768,// can be set only when sv_cheats is enabled
+	CVAR_UNSAFECONTEXT	= 65536,// cvar value came from unsafe context
 };
 
 union UCVarValue
@@ -110,6 +111,7 @@ public:
 	void SetGenericRep (UCVarValue value, ECVarType type);
 	void ResetToDefault ();
 	void SetArchiveBit () { Flags |= CVAR_ARCHIVE; }
+	void MarkUnsafe();
 
 	virtual ECVarType GetRealType () const = 0;
 
@@ -132,7 +134,6 @@ public:
 	static void ListVars (const char *filter, bool plain);
 
 protected:
-	FBaseCVar () {}
 	virtual void DoSet (UCVarValue value, ECVarType type) = 0;
 
 	static bool ToBool (UCVarValue value, ECVarType type);
@@ -147,10 +148,11 @@ protected:
 	static UCVarValue FromGUID (const GUID &value, ECVarType type);
 
 	char *Name;
+	FString SafeValue;
 	uint32_t Flags;
 
 private:
-	FBaseCVar (const FBaseCVar &var);
+	FBaseCVar (const FBaseCVar &var) = delete;
 	FBaseCVar (const char *name, uint32_t flags);
 
 	void (*m_Callback)(FBaseCVar &);

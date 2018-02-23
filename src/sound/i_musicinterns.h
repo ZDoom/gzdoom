@@ -94,41 +94,6 @@ MIDIDevice *CreateAudioToolboxMIDIDevice();
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args);
 void TimidityPP_Shutdown();
 
-// Base class for pseudo-MIDI devices ---------------------------------------
-
-class PseudoMIDIDevice : public MIDIDevice
-{
-public:
-	PseudoMIDIDevice();
-	~PseudoMIDIDevice();
-
-	void Close();
-	bool IsOpen() const;
-	int GetTechnology() const;
-	bool Pause(bool paused);
-	int Resume();
-	void Stop();
-	int StreamOut(MidiHeader *data);
-	int StreamOutSync(MidiHeader *data);
-	int SetTempo(int tempo);
-	int SetTimeDiv(int timediv);
-	FString GetStats();
-
-protected:
-	SoundStream *Stream;
-	bool Started;
-	bool bLooping;
-};
-
-// Sound System pseudo-MIDI device ------------------------------------------
-
-class SndSysMIDIDevice : public PseudoMIDIDevice
-{
-public:
-	int Open(MidiCallback, void *userdata);
-	bool Preprocess(MIDIStreamer *song, bool looping);
-};
-
 // Base class for software synthesizer MIDI output devices ------------------
 
 class SoftSynthMIDIDevice : public MIDIDevice

@@ -39,7 +39,6 @@
 #include "files.h"
 #include "wm_error.h"
 #include "file_io.h"
-#include "pathexpander.h"
 #include "cmdlib.h"
 #include "i_soundfont.h"
 

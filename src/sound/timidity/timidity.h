@@ -21,7 +21,6 @@
 #define TIMIDITY_H
 
 #include "doomtype.h"
-#include "pathexpander.h"
 
 class FileReader;
 

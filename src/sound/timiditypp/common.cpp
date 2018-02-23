@@ -30,14 +30,10 @@
 #include <ctype.h>
 #include "m_random.h"
 #include "common.h"
-#include "pathexpander.h"
 #include "cmdlib.h"
 
 namespace TimidityPlus
 {
-
-static PathExpander tppPathExpander;
-
 
 /* This'll allocate memory or die. */
 void *safe_malloc(size_t count)

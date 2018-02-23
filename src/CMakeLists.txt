@@ -52,16 +52,16 @@ if( WIN32 )
 		set( WIN_TYPE Win32 )
 		set( XBITS x86 )
 	endif()
-	
+
 	add_definitions( -D_WIN32 )
-	
-	
+
+
 	if( ( MSVC14 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" ) OR	# For VS 2015.
 		( MSVC15 AND NOT CMAKE_GENERATOR_TOOLSET STREQUAL "v141_xp" ) )		# For VS 2017.
 		# for modern Windows SDKs the DirectX headers should be available by default.
 		set( DX_dinput8_LIBRARY dinput8 )
 	else()
-		
+
 		find_path( D3D_INCLUDE_DIR d3d9.h
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Include )
@@ -76,7 +76,7 @@ if( WIN32 )
 		else()
 			include_directories( ${D3D_INCLUDE_DIR} )
 		endif()
-		
+
 		find_path( XINPUT_INCLUDE_DIR xinput.h
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Include )
@@ -161,7 +161,7 @@ else()
 			endif()
 		endif()
 	endif()
-	
+
 	if( NO_GTK )
 		add_definitions( -DNO_GTK )
 	elseif( DYN_GTK )
@@ -537,7 +537,7 @@ if( WIN32 )
 	set( SYSTEM_SOURCES_DIR win32 )
 	set( SYSTEM_SOURCES ${PLAT_WIN32_SOURCES} )
 	set( OTHER_SYSTEM_SOURCES ${PLAT_POSIX_SOURCES} ${PLAT_SDL_SOURCES} ${PLAT_OSX_SOURCES} ${PLAT_COCOA_SOURCES} ${PLAT_UNIX_SOURCES} )
-	
+
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES} win32/zdoom.rc )
 elseif( APPLE )
 	if( OSX_COCOA_BACKEND )
@@ -910,7 +910,6 @@ set (PCH_SOURCES
 	nodebuild_extract.cpp
 	nodebuild_gl.cpp
 	nodebuild_utility.cpp
-	pathexpander.cpp
 	p_3dfloors.cpp
 	p_3dmidtex.cpp
 	p_acs.cpp
@@ -1140,7 +1139,6 @@ set (PCH_SOURCES
 	sound/i_soundfont.cpp
 	sound/mididevices/music_opldumper_mididevice.cpp
 	sound/mididevices/music_opl_mididevice.cpp
-	sound/mididevices/music_pseudo_mididevice.cpp
 	sound/mididevices/music_fluidsynth_mididevice.cpp
 	sound/mididevices/music_softsynth_mididevice.cpp
 	sound/mididevices/music_timidity_mididevice.cpp

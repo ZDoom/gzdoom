@@ -11,6 +11,9 @@
 #include <stdint.h>
 #include <functional>
 
+extern char MIDI_EventLengths[7];
+extern char MIDI_CommonLengths[15];
+
 // base class for the different MIDI sources --------------------------------------
 
 class MIDISource
@@ -63,6 +66,9 @@ public:
 	{
 		TempoCallback = cb;
 	}
+	
+	void CreateSMF(TArray<uint8_t> &file, int looplimit);
+
 };
 
 // MUS file played with a MIDI stream ---------------------------------------

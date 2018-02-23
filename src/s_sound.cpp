@@ -3154,3 +3154,15 @@ CCMD(listsoundchannels)
 	}
 	Printf("%d sounds playing\n", count);
 }
+
+CCMD(currentmusic)
+{
+	if (mus_playing.name.IsNotEmpty())
+	{
+		Printf("Currently playing music '%s'\n", mus_playing.name.GetChars());
+	}
+	else
+	{
+		Printf("Currently no music playing\n");
+	}
+}

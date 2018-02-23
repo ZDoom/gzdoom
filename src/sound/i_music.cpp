@@ -787,38 +787,57 @@ UNSAFE_CCMD (writewave)
 //
 // CCMD writemidi
 //
-// If the currently playing song is a MIDI variant, write it to disk.
-// If successful, the current song will restart, since MIDI file generation
-// involves a simulated playthrough of the song.
+// Writes a given MIDI song to disk. This does not affect playback anymore,
+// like older versions did.
 //
 //==========================================================================
+extern MusPlayingInfo mus_playing;
+
 
 UNSAFE_CCMD (writemidi)
 {
-	if (argv.argc() != 2)
+	if (argv.argc() != 3)
 	{
-		Printf("Usage: writemidi <filename>");
+		Printf("Usage: writemidi <midisong> <filename> - use '*' as song name to dump the currently playing song");
 		return;
 	}
-	if (currSong == NULL)
+	FString src = argv[1];
+	if (src.Compare("*") == 0) src= mus_playing.name;
+	
+	auto lump = Wads.CheckNumForName(src, ns_music);
+	if (lump < 0) lump = Wads.CheckNumForFullName(src);
+	if (lump < 0)
 	{
-		Printf("No song is currently playing.\n");
+		Printf("Cannot find MIDI lump %s.\n", src.GetChars());
 		return;
 	}
-	if (!currSong->IsMIDI())
+	
+	FWadLump wlump = Wads.OpenLumpNum(lump);
+	uint32_t id[32/4];
+
+	if(wlump.Read(id, 32) != 32 || wlump.Seek(-32, SEEK_CUR) != 0)
 	{
-		Printf("Current song is not MIDI-based.\n");
+		Printf("Unable to read lump %s\n", src.GetChars());
+		return;
+	}
+
+	auto type = IdentifyMIDIType(id, 32);
+	auto source = CreateMIDISource(wlump, type);
+	
+	if (source == nullptr)
+	{
+		Printf("%s is not MIDI-based.\n", src.GetChars());
 		return;
 	}
 
 	TArray<uint8_t> midi;
 	bool success;
 
-	static_cast<MIDIStreamer *>(currSong)->CreateSMF(midi, 1);
-	auto f = FileWriter::Open(argv[1]);
+	source->CreateSMF(midi, 1);
+	auto f = FileWriter::Open(argv[2]);
 	if (f == NULL)
 	{
-		Printf("Could not open %s.\n", argv[1]);
+		Printf("Could not open %s.\n", argv[2]);
 		return;
 	}
 	success = (f->Write(&midi[0], midi.Size()) == (size_t)midi.Size());
@@ -826,6 +845,6 @@ UNSAFE_CCMD (writemidi)
 
 	if (!success)
 	{
-		Printf("Could not write to music file.\n");
+		Printf("Could not write to music file %s.\n", argv[2]);
 	}
 }

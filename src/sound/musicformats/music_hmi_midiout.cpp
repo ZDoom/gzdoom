@@ -112,9 +112,6 @@ struct HMISong::TrackInfo
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
-extern char MIDI_EventLengths[7];
-extern char MIDI_CommonLengths[15];
-
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------

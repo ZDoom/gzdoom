@@ -14,8 +14,6 @@ void I_InitMusicWin32 ();
 extern float relative_volume;
 class MIDISource;
 
-EXTERN_CVAR (Float, timidity_mastervolume)
-
 
 // A device that provides a WinMM-like MIDI streaming interface -------------
 

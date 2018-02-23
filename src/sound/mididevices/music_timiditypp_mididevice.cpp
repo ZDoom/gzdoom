@@ -85,16 +85,6 @@ TimidityPlus::Instruments *TimidityPPMIDIDevice::instruments;
 CVAR(String, timidity_config, "timidity.cfg", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 // added because Timidity's output is rather loud.
-CUSTOM_CVAR (Float, timidity_mastervolume, 1.0f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 0.f)
-		self = 0.f;
-	else if (self > 4.f)
-		self = 4.f;
-	if (currSong != NULL)
-		currSong->TimidityVolumeChanged();
-}
-
 
 CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 { // Clamp frequency to Timidity's limits
@@ -226,18 +216,9 @@ void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 
 //==========================================================================
 //
-// TimidityPPMIDIDevice :: TimidityVolumeChanged
+//
 //
 //==========================================================================
-
-void TimidityPPMIDIDevice::TimidityVolumeChanged()
-{
-	if (Stream != NULL)
-	{
-		Stream->SetVolume(timidity_mastervolume);
-	}
-}
-
 
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args)
 {

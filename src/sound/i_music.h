@@ -66,7 +66,6 @@ public:
 	MusInfo ();
 	virtual ~MusInfo ();
 	virtual void MusicVolumeChanged();		// snd_musicvolume changed
-	virtual void TimidityVolumeChanged();	// timidity_mastervolume changed
 	virtual void Play (bool looping, int subsong) = 0;
 	virtual void Pause () = 0;
 	virtual void Resume () = 0;

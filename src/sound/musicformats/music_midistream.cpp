@@ -108,6 +108,10 @@ MIDIStreamer::~MIDIStreamer()
 	{
 		delete MIDI;
 	}
+	if (source != nullptr)
+	{
+		delete source;
+	}
 }
 
 //==========================================================================

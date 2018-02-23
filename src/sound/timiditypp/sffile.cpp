@@ -69,7 +69,6 @@ static int READCHUNK(SFChunk *vp, struct timidity_file *tf)
 	if (tf_read(vp, 8, 1, tf) != 1)
 		return -1;
 	vp->size = LE_LONG(vp->size);
-	Printf("%.4s %d, %d\n", vp->id, vp->size, tf_tell(tf));
 	return 1;
 }
 

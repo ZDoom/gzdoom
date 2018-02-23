@@ -533,19 +533,6 @@ retry_as_sndsys:
                 info = new CDDAFile (*reader);
             }
         }
-
-        // no support in sound system => no modules/streams
-        // 1024 bytes is an arbitrary restriction. It's assumed that anything
-        // smaller than this can't possibly be a valid music file if it hasn't
-        // been identified already, so don't even bother trying to load it.
-        // Of course MIDIs shorter than 1024 bytes should pass.
-        if (info == NULL && (reader->GetLength() >= 1024 || id[0] == MAKE_ID('M','T','h','d')))
-        {
-            // Let the sound system figure out what it is.
-            info = new StreamSong (reader);
-			// Assumed ownership
-			reader = NULL;
-        }
     }
 
 	if (reader != NULL) delete reader;

@@ -620,22 +620,27 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			return ip;
 		}
 	/* Open patch file */
-	if (!(tf = open_file(name, sfreader))) {
+	tf = open_file(name, sfreader);
+	if (!tf) 
+	{
 		int name_len, ext_len;
 		static const char *patch_ext[] = { ".pat", 0 };
 
 		noluck = 1;
 		name_len = (int)strlen(name);
 		/* Try with various extensions */
-		for (i = 0; patch_ext[i]; i++) {
+		for (i = 0; patch_ext[i]; i++) 
+		{
 			ext_len = (int)strlen(patch_ext[i]);
-			if (name_len + ext_len < 1024) {
+			if (name_len + ext_len < 1024) 
+			{
 				if (name_len >= ext_len && strcmp(name + name_len - ext_len,
 					patch_ext[i]) == 0)
 					continue;	/* duplicated ext. */
 				strcpy((char *)tmp, name);
 				strcat((char *)tmp, patch_ext[i]);
-				if ((tf = open_file((char *)tmp, sfreader)))
+				tf = open_file((char *)tmp, sfreader);
+				if (tf)
 				{
 					noluck = 0;
 					break;

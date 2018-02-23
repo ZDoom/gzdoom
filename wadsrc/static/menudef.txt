@@ -1694,7 +1694,6 @@ OptionMenu AdvSoundOptions protected
 	SubMenu "$ADVSNDMNU_SELCONFIG",		"TimidityConfigMenu"
 	Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "OnOff"
 	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
-	Slider "$ADVSNDMNU_TIMIDITYVOLUME",		"timidity_mastervolume", 0, 4, 0.2, 1
 	StaticText " "
 	StaticText "$ADVSNDMNU_WILDMIDI",	1
 	TextField "$ADVSNDMNU_WILDMIDICONFIG", 	"wildmidi_config"

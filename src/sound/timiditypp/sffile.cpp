@@ -69,6 +69,7 @@ static int READCHUNK(SFChunk *vp, struct timidity_file *tf)
 	if (tf_read(vp, 8, 1, tf) != 1)
 		return -1;
 	vp->size = LE_LONG(vp->size);
+	Printf("%.4s %d, %d\n", vp->id, vp->size, tf_tell(tf));
 	return 1;
 }
 
@@ -177,8 +178,10 @@ int Instruments::load_soundfont(SFInfo *sf, struct timidity_file *fd)
 				break;
 		}
 		else {
-			ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 0: %4.4s %4d",	fd->filename.c_str(), chunk.id, chunk.size);
+			ctl_cmsg(CMSG_WARNING, VERB_NORMAL,	"%s: *** illegal id in level 0: %4.4s %4d",	fd->filename.c_str(), chunk.id, chunk.size);			
 			FSKIP(chunk.size, fd);
+			// Not aborting here will inevitably crash.
+			return -1;
 		}
 	}
 
@@ -332,6 +335,7 @@ int Instruments::process_info(int size, SFInfo *sf, struct timidity_file *fd)
 			break;
 
 		default:
+			FSKIP(chunk.size, fd);
 			break;
 		}
 		size -= chunk.size;

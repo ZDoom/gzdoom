@@ -63,7 +63,6 @@ public:
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	//FString GetStats();
 	int GetDeviceType() const override { return MDEV_TIMIDITY; }
-	void TimidityVolumeChanged();
 	static void ClearInstruments()
 	{
 		if (instruments != nullptr) delete instruments;
@@ -82,9 +81,14 @@ protected:
 TimidityPlus::Instruments *TimidityPPMIDIDevice::instruments;
 
 // Config file to use
-CVAR(String, timidity_config, "timidity.cfg", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, timidity_config, "timidity.cfg", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
 
-// added because Timidity's output is rather loud.
 
 CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 { // Clamp frequency to Timidity's limits
@@ -113,11 +117,11 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	if (instruments == nullptr)
 	{
 		instruments = new TimidityPlus::Instruments;
-	}
-	if (!instruments->load(args))
-	{
-		delete instruments;
-		instruments = nullptr;
+		if (!instruments->load(args))
+		{
+			delete instruments;
+			instruments = nullptr;
+		}
 	}
 	if (instruments != nullptr)
 	{
@@ -157,7 +161,6 @@ int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 	}
 	// No instruments loaded means we cannot play...
 	if (instruments == nullptr) return 0;
-	TimidityVolumeChanged();
 	return ret;
 }
 

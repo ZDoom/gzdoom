@@ -75,7 +75,6 @@ public:
 	virtual void InitPlayback();
 	virtual bool Update();
 	virtual void PrecacheInstruments(const uint16_t *instruments, int count);
-	virtual void TimidityVolumeChanged();
 	virtual void FluidSettingInt(const char *setting, int value);
 	virtual void FluidSettingNum(const char *setting, double value);
 	virtual void FluidSettingStr(const char *setting, const char *value);
@@ -314,7 +313,6 @@ public:
 	~MIDIStreamer();
 
 	void MusicVolumeChanged() override;
-	void TimidityVolumeChanged() override;
 	void Play(bool looping, int subsong) override;
 	void Pause() override;
 	void Resume() override;

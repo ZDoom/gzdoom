@@ -480,20 +480,6 @@ void MIDIStreamer::MusicVolumeChanged()
 
 //==========================================================================
 //
-// MIDIStreamer :: TimidityVolumeChanged
-//
-//==========================================================================
-
-void MIDIStreamer::TimidityVolumeChanged()
-{
-	if (MIDI != NULL)
-	{
-		MIDI->TimidityVolumeChanged();
-	}
-}
-
-//==========================================================================
-//
 // MIDIStreamer :: FluidSettingInt
 //
 //==========================================================================
@@ -969,16 +955,6 @@ void MIDIDevice::InitPlayback()
 bool MIDIDevice::Update()
 {
 	return true;
-}
-
-//==========================================================================
-//
-// MIDIDevice :: TimidityVolumeChanged
-//
-//==========================================================================
-
-void MIDIDevice::TimidityVolumeChanged()
-{
 }
 
 //==========================================================================

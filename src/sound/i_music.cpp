@@ -268,10 +268,6 @@ void MusInfo::MusicVolumeChanged()
 {
 }
 
-void MusInfo::TimidityVolumeChanged()
-{
-}
-
 void MusInfo::GMEDepthChanged(float val)
 {
 }

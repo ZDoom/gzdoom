@@ -363,7 +363,8 @@ public:
 	}
 
 	bool DumpWave(const char *filename, int subsong, int samplerate);
-	
+	bool DumpOPL(const char *filename, int subsong);
+
 
 protected:
 	MIDIStreamer(const char *dumpname, EMidiDevice type);
@@ -376,6 +377,7 @@ protected:
 	void SetTempo(int new_tempo);
 	void Precache();
 	void StartPlayback();
+	bool InitPlayback();
 
 	//void SetMidiSynth(MIDIDevice *synth);
 	

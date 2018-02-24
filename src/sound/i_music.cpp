@@ -763,29 +763,26 @@ static MIDISource *GetMIDISource(const char *fn)
 
 UNSAFE_CCMD (writeopl)
 {
-	if (argv.argc() == 2)
+	if (argv.argc() >= 3 && argv.argc() <= 7)
 	{
-		if (currSong == nullptr)
-		{
-			Printf ("No song is currently playing.\n");
-		}
-		else
-		{
-			MusInfo *dumper = currSong->GetOPLDumper(argv[1]);
-			if (dumper == nullptr)
-			{
-				Printf ("Current song cannot be saved as OPL data.\n");
-			}
-			else
-			{
-				dumper->Play(false, 0);		// FIXME: Remember subsong.
-				delete dumper;
-			}
-		}
+		auto source = GetMIDISource(argv[1]);
+		if (source == nullptr) return;
+
+		// We must stop the currently playing music to avoid interference between two synths. 
+		auto savedsong = mus_playing;
+		S_StopMusic(true);
+		auto streamer = new MIDIStreamer(MDEV_OPL, nullptr);
+		streamer->SetMIDISource(source);
+		streamer->DumpOPL(argv[2], argv.argc() <4 ? 0 : (int)strtol(argv[3], nullptr, 10));
+		delete streamer;
+		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
+
 	}
 	else
 	{
-		Printf ("Usage: writeopl <filename>\n");
+		Printf("Usage: writeopl <midi> <filename> [subsong]\n"
+			" - use '*' as song name to dump the currently playing song\n"
+			" - use 0 for subsong to play the default\n");
 	}
 }
 
@@ -824,7 +821,7 @@ UNSAFE_CCMD (writewave)
 		// We must stop the currently playing music to avoid interference between two synths. 
 		auto savedsong = mus_playing;
 		S_StopMusic(true);
-		if (snd_mididevice >= 0) dev = MDEV_FLUIDSYNTH;	// The Windows system synth cannot dump a wave.
+		if (dev == MDEV_DEFAULT && snd_mididevice >= 0) dev = MDEV_FLUIDSYNTH;	// The Windows system synth cannot dump a wave.
 		auto streamer = new MIDIStreamer(dev, argv.argc() < 6 ? nullptr : argv[6]);
 		streamer->SetMIDISource(source);
 		streamer->DumpWave(argv[2], argv.argc() <4? 0: (int)strtol(argv[3], nullptr, 10), argv.argc() <5 ? 0 : (int)strtol(argv[4], nullptr, 10));

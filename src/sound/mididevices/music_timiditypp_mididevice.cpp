@@ -68,6 +68,10 @@ public:
 		if (instruments != nullptr) delete instruments;
 		instruments = nullptr;
 	}
+	virtual void SetSampleRate(int rate) 
+	{ 
+		if (rate >= 4000 && SampleRate < rate) SampleRate = rate; 
+	}
 
 	double test[3] = { 0, 0, 0 };
 

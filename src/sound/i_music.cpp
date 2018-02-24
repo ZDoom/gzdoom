@@ -715,6 +715,45 @@ ADD_STAT(music)
 
 //==========================================================================
 //
+// Common loader for the dumpers.
+//
+//==========================================================================
+extern MusPlayingInfo mus_playing;
+
+static MIDISource *GetMIDISource(const char *fn)
+{
+	FString src = fn;
+	if (src.Compare("*") == 0) src = mus_playing.name;
+
+	auto lump = Wads.CheckNumForName(src, ns_music);
+	if (lump < 0) lump = Wads.CheckNumForFullName(src);
+	if (lump < 0)
+	{
+		Printf("Cannot find MIDI lump %s.\n", src.GetChars());
+		return nullptr;
+	}
+
+	FWadLump wlump = Wads.OpenLumpNum(lump);
+	uint32_t id[32 / 4];
+
+	if (wlump.Read(id, 32) != 32 || wlump.Seek(-32, SEEK_CUR) != 0)
+	{
+		Printf("Unable to read lump %s\n", src.GetChars());
+		return nullptr;
+	}
+
+	auto type = IdentifyMIDIType(id, 32);
+	auto source = CreateMIDISource(wlump, type);
+
+	if (source == nullptr)
+	{
+		Printf("%s is not MIDI-based.\n", src.GetChars());
+		return nullptr;
+	}
+	return source;
+}
+//==========================================================================
+//
 // CCMD writeopl
 //
 // If the current song can be played with OPL instruments, dump it to
@@ -762,29 +801,42 @@ UNSAFE_CCMD (writeopl)
 
 UNSAFE_CCMD (writewave)
 {
-	if (argv.argc() >= 2 && argv.argc() <= 3)
+	if (argv.argc() >= 3 && argv.argc() <= 7)
 	{
-		if (currSong == nullptr)
+		auto source = GetMIDISource(argv[1]);
+		if (source == nullptr) return;
+
+		EMidiDevice dev = MDEV_DEFAULT;
+
+		if (argv.argc() >= 6)
 		{
-			Printf ("No song is currently playing.\n");
-		}
-		else
-		{
-			MusInfo *dumper = currSong->GetWaveDumper(argv[1], argv.argc() == 3 ? atoi(argv[2]) : 0);
-			if (dumper == nullptr)
-			{
-				Printf ("Current song cannot be saved as wave data.\n");
-			}
+			if (!stricmp(argv[5], "WildMidi")) dev = MDEV_WILDMIDI;
+			else if (!stricmp(argv[5], "GUS")) dev = MDEV_GUS;
+			else if (!stricmp(argv[5], "Timidity") || !stricmp(argv[5], "Timidity++")) dev = MDEV_TIMIDITY;
+			else if (!stricmp(argv[5], "FluidSynth")) dev = MDEV_FLUIDSYNTH;
+			else if (!stricmp(argv[5], "OPL")) dev = MDEV_OPL;
 			else
 			{
-				dumper->Play(false, 0);		// FIXME: Remember subsong
-				delete dumper;
+				Printf("%s: Unknown MIDI device\n", argv[5]);
+				return;
 			}
 		}
+		// We must stop the currently playing music to avoid interference between two synths. 
+		auto savedsong = mus_playing;
+		S_StopMusic(true);
+		if (snd_mididevice >= 0) dev = MDEV_FLUIDSYNTH;	// The Windows system synth cannot dump a wave.
+		auto streamer = new MIDIStreamer(dev, argv.argc() < 6 ? nullptr : argv[6]);
+		streamer->SetMIDISource(source);
+		streamer->DumpWave(argv[2], argv.argc() <4? 0: (int)strtol(argv[3], nullptr, 10), argv.argc() <5 ? 0 : (int)strtol(argv[4], nullptr, 10));
+		delete streamer;
+		S_ChangeMusic(savedsong.name, savedsong.baseorder, savedsong.loop, true);
+
 	}
 	else
 	{
-		Printf ("Usage: writewave <filename> [sample rate]");
+		Printf ("Usage: writewave <midi> <filename> [subsong] [sample rate] [synth] [soundfont]\n"
+		" - use '*' as song name to dump the currently playing song\n"
+		" - use 0 for subsong and sample rate to play the default\n");
 	}
 }
 
@@ -796,44 +848,16 @@ UNSAFE_CCMD (writewave)
 // like older versions did.
 //
 //==========================================================================
-extern MusPlayingInfo mus_playing;
 
-
-UNSAFE_CCMD (writemidi)
+UNSAFE_CCMD(writemidi)
 {
 	if (argv.argc() != 3)
 	{
-		Printf("Usage: writemidi <midisong> <filename> - use '*' as song name to dump the currently playing song");
+		Printf("Usage: writemidi <midisong> <filename> - use '*' as song name to dump the currently playing song\n");
 		return;
 	}
-	FString src = argv[1];
-	if (src.Compare("*") == 0) src= mus_playing.name;
-	
-	auto lump = Wads.CheckNumForName(src, ns_music);
-	if (lump < 0) lump = Wads.CheckNumForFullName(src);
-	if (lump < 0)
-	{
-		Printf("Cannot find MIDI lump %s.\n", src.GetChars());
-		return;
-	}
-	
-	FWadLump wlump = Wads.OpenLumpNum(lump);
-	uint32_t id[32/4];
-
-	if(wlump.Read(id, 32) != 32 || wlump.Seek(-32, SEEK_CUR) != 0)
-	{
-		Printf("Unable to read lump %s\n", src.GetChars());
-		return;
-	}
-
-	auto type = IdentifyMIDIType(id, 32);
-	auto source = CreateMIDISource(wlump, type);
-	
-	if (source == nullptr)
-	{
-		Printf("%s is not MIDI-based.\n", src.GetChars());
-		return;
-	}
+	auto source = GetMIDISource(argv[1]);
+	if (source == nullptr) return;
 
 	TArray<uint8_t> midi;
 	bool success;

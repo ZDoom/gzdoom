@@ -89,7 +89,7 @@ static bool opt_eq_control = false;
 static bool op_nrpn_vibrato = true;
 static bool opt_tva_attack = false;
 static bool opt_tva_decay = false;
-static bool ppt_tva_release = false;
+static bool opt_tva_release = false;
 static bool opt_insertion_effect = false;
 static bool opt_delay_control = false;
 

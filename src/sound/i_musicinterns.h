@@ -87,8 +87,6 @@ public:
 
 #ifdef _WIN32
 MIDIDevice *CreateWinMIDIDevice(int mididevice);
-#elif defined __APPLE__
-MIDIDevice *CreateAudioToolboxMIDIDevice();
 #endif
 MIDIDevice *CreateTimidityPPMIDIDevice(const char *args);
 void TimidityPP_Shutdown();
@@ -97,6 +95,7 @@ void TimidityPP_Shutdown();
 
 class SoftSynthMIDIDevice : public MIDIDevice
 {
+	friend class MIDIWaveWriter;
 public:
 	SoftSynthMIDIDevice();
 	~SoftSynthMIDIDevice();
@@ -132,6 +131,11 @@ protected:
 	int OpenStream(int chunks, int flags, MidiCallback, void *userdata);
 	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
 	virtual bool ServiceStream (void *buff, int numbytes);
+	virtual void SetSampleRate(int rate) 
+	{ 
+		if (rate > 11025) { SampleRate = rate; } 
+	}
+	int GetSampleRate() const { return SampleRate; }
 
 	virtual void HandleEvent(int status, int parm1, int parm2) = 0;
 	virtual void HandleLongEvent(const uint8_t *data, int len) = 0;
@@ -148,6 +152,7 @@ public:
 	void Close();
 	int GetTechnology() const;
 	FString GetStats();
+	virtual void SetSampleRate(int rate) { } // cannot be changed.
 
 protected:
 	void CalcTickRate();
@@ -184,6 +189,7 @@ public:
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 	int GetDeviceType() const override { return MDEV_GUS; }
+	virtual void SetSampleRate(int rate) { if (rate >= 11025 && rate < 65535) SampleRate = rate; }
 
 protected:
 	Timidity::Renderer *Renderer;
@@ -193,18 +199,35 @@ protected:
 	void ComputeOutput(float *buffer, int len);
 };
 
-// Internal TiMidity disk writing version of a MIDI device ------------------
+// Internal disk writing version of a MIDI device ------------------
 
-class TimidityWaveWriterMIDIDevice : public TimidityMIDIDevice
+class MIDIWaveWriter : public SoftSynthMIDIDevice
 {
 public:
-	TimidityWaveWriterMIDIDevice(const char *filename, int rate);
-	~TimidityWaveWriterMIDIDevice();
+	MIDIWaveWriter(const char *filename, MIDIDevice *devtouse, int rate);
+	~MIDIWaveWriter();
 	int Resume();
+	int Open(MidiCallback cb, void *userdata)
+	{
+		return playDevice->Open(cb, userdata);
+	}
 	void Stop();
+	void HandleEvent(int status, int parm1, int parm2) { playDevice->HandleEvent(status, parm1, parm2);  }
+	void HandleLongEvent(const uint8_t *data, int len) { playDevice->HandleLongEvent(data, len);  }
+	void ComputeOutput(float *buffer, int len) { playDevice->ComputeOutput(buffer, len);  }
+	int StreamOutSync(MidiHeader *data) { return playDevice->StreamOutSync(data); }
+	int StreamOut(MidiHeader *data) { return playDevice->StreamOut(data); }
+	int GetDeviceType() const override { return playDevice->GetDeviceType(); }
+	bool ServiceStream (void *buff, int numbytes) { return playDevice->ServiceStream(buff, numbytes); }
+	int GetTechnology() const { return playDevice->GetTechnology(); }
+	int SetTempo(int tempo) { return playDevice->SetTempo(tempo); }
+	int SetTimeDiv(int timediv) { return playDevice->SetTimeDiv(timediv); }
+	bool IsOpen() const { return playDevice->IsOpen(); }
+	void CalcTickRate() { playDevice->CalcTickRate(); }
 
 protected:
 	FileWriter *File;
+	SoftSynthMIDIDevice *playDevice;
 };
 
 // WildMidi implementation of a MIDI device ---------------------------------
@@ -219,6 +242,7 @@ public:
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 	int GetDeviceType() const override { return MDEV_WILDMIDI; }
+	virtual void SetSampleRate(int rate) { if (rate >= 11025 && SampleRate < rate) SampleRate = rate; }
 
 protected:
 	WildMidi_Renderer *Renderer;
@@ -253,6 +277,7 @@ public:
 	void FluidSettingNum(const char *setting, double value);
 	void FluidSettingStr(const char *setting, const char *value);
 	int GetDeviceType() const override { return MDEV_FLUIDSYNTH; }
+	virtual void SetSampleRate(int rate) { if (rate >= 22050 && rate <= 96000) SampleRate = rate; }
 
 protected:
 	void HandleEvent(int status, int parm1, int parm2);
@@ -336,11 +361,9 @@ public:
 			? MusInfo::GetDeviceType()
 			: MIDI->GetDeviceType();
 	}
-	
-	// Must be redone later when the rest is properly rebuilt
-	//MusInfo *GetOPLDumper(const char *filename);
-	//MusInfo *GetWaveDumper(const char *filename, int rate);
 
+	bool DumpWave(const char *filename, int subsong, int samplerate);
+	
 
 protected:
 	MIDIStreamer(const char *dumpname, EMidiDevice type);
@@ -382,7 +405,6 @@ protected:
 	EMidiDevice DeviceType;
 	bool CallbackIsThreaded;
 	int LoopLimit;
-	FString DumpFilename;
 	FString Args;
 	MIDISource *source;
 

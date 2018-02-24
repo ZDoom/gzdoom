@@ -245,10 +245,10 @@ FString TimidityMIDIDevice::GetStats()
 //
 //==========================================================================
 
-TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename, int rate)
-	:TimidityMIDIDevice(nullptr)
+MIDIWaveWriter::MIDIWaveWriter(const char *filename, MIDIDevice *playdevice, int rate)
 {
 	File = FileWriter::Open(filename);
+	playDevice = (SoftSynthMIDIDevice*) playdevice;
 	if (File != nullptr)
 	{ // Write wave header
 		uint32_t work[3];
@@ -259,12 +259,16 @@ TimidityWaveWriterMIDIDevice::TimidityWaveWriterMIDIDevice(const char *filename,
 		work[2] = MAKE_ID('W','A','V','E');
 		if (4*3 != File->Write(work, 4 * 3)) goto fail;
 
+
+		playDevice->SetSampleRate(rate);
+		playDevice->CalcTickRate();
+		rate = playDevice->GetSampleRate();	// read back what the device made of it.
 		fmt.ChunkID = MAKE_ID('f','m','t',' ');
 		fmt.ChunkLen = LittleLong(uint32_t(sizeof(fmt) - 8));
 		fmt.FormatTag = LittleShort(0xFFFE);		// WAVE_FORMAT_EXTENSIBLE
 		fmt.Channels = LittleShort(2);
-		fmt.SamplesPerSec = LittleLong((int)Renderer->rate);
-		fmt.AvgBytesPerSec = LittleLong((int)Renderer->rate * 8);
+		fmt.SamplesPerSec = LittleLong(rate);
+		fmt.AvgBytesPerSec = LittleLong(rate * 8);
 		fmt.BlockAlign = LittleShort(8);
 		fmt.BitsPerSample = LittleShort(32);
 		fmt.ExtensionSize = LittleShort(2 + 4 + 16);
@@ -301,7 +305,7 @@ fail:
 //
 //==========================================================================
 
-TimidityWaveWriterMIDIDevice::~TimidityWaveWriterMIDIDevice()
+MIDIWaveWriter::~MIDIWaveWriter()
 {
 	if (File != nullptr)
 	{
@@ -317,7 +321,7 @@ TimidityWaveWriterMIDIDevice::~TimidityWaveWriterMIDIDevice()
 				size = LittleLong(uint32_t(pos - 12 - sizeof(FmtChunk) - 8));
 				if (0 == File->Seek(4 + sizeof(FmtChunk) + 4, SEEK_CUR))
 				{
-					if (1 == File->Write(&size, 4))
+					if (4 == File->Write(&size, 4))
 					{
 						delete File;
 						return;
@@ -336,7 +340,7 @@ TimidityWaveWriterMIDIDevice::~TimidityWaveWriterMIDIDevice()
 //
 //==========================================================================
 
-int TimidityWaveWriterMIDIDevice::Resume()
+int MIDIWaveWriter::Resume()
 {
 	float writebuffer[4096];
 
@@ -357,6 +361,6 @@ int TimidityWaveWriterMIDIDevice::Resume()
 //
 //==========================================================================
 
-void TimidityWaveWriterMIDIDevice::Stop()
+void MIDIWaveWriter::Stop()
 {
 }

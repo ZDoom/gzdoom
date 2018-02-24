@@ -84,19 +84,6 @@ MIDIStreamer::MIDIStreamer(EMidiDevice type, const char *args)
 
 //==========================================================================
 //
-// MIDIStreamer OPL Dumping Constructor
-//
-//==========================================================================
-
-MIDIStreamer::MIDIStreamer(const char *dumpname, EMidiDevice type)
-:
-  MIDI(0), DeviceType(type), DumpFilename(dumpname)
-{
-	memset(Buffer, 0, sizeof(Buffer));
-}
-
-//==========================================================================
-//
 // MIDIStreamer Destructor
 //
 //==========================================================================
@@ -254,28 +241,18 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	if (source == nullptr) return;	// We have nothing to play so abort.
 
 	assert(MIDI == NULL);
-	
-	// fixme: The device should be attached by the controlling code to allow more flexibility.
-	// It should also separate the softsynth device from the playback engines.
-	// The approach here pretty much prevents the implementation of a generic WAVE writer because no generic dumper device class can be created.
 	devtype = SelectMIDIDevice(DeviceType);
-
+	/*
 	if (DumpFilename.IsNotEmpty())
 	{
-		if (devtype == MDEV_OPL)
+		if (DeviceType == MDEV_OPLDUMP)
 		{
 			MIDI = new OPLDumperMIDIDevice(DumpFilename);
 		}
-		else if (devtype == MDEV_GUS)
-		{
-			MIDI = new TimidityWaveWriterMIDIDevice(DumpFilename, 0);
-		}
 	}
-	else
-	{
-		MIDI = CreateMIDIDevice(devtype);
-	}
-	
+	*/
+	MIDI = CreateMIDIDevice(devtype);
+
 	if (MIDI == NULL || 0 != MIDI->Open(Callback, this))
 	{
 		Printf(PRINT_BOLD, "Could not open MIDI out device\n");
@@ -364,6 +341,58 @@ void MIDIStreamer::StartPlayback()
 		}
 	}
 	while (BufferNum != 0);
+}
+
+bool MIDIStreamer::DumpWave(const char *filename, int subsong, int samplerate)
+{
+	EMidiDevice devtype;
+
+	m_Status = STATE_Stopped;
+	m_Looping = false;
+	EndQueued = 0;
+	VolumeChanged = false;
+	Restarting = true;
+	InitialPlayback = true;
+	if (source == nullptr) return false;	// We have nothing to play so abort.
+
+	assert(MIDI == NULL);
+	devtype = SelectMIDIDevice(DeviceType);
+	MIDI = CreateMIDIDevice(devtype);
+	MIDI = new MIDIWaveWriter(filename, MIDI, samplerate);
+
+	if (MIDI == NULL || 0 != MIDI->Open(Callback, this))
+	{
+		Printf(PRINT_BOLD, "Could not open MIDI out device\n");
+		if (MIDI != NULL)
+		{
+			delete MIDI;
+			MIDI = NULL;
+		}
+		return false;
+	}
+
+	source->SetMIDISubsong(subsong);
+	source->CheckCaps(MIDI->GetTechnology());
+
+	if (MIDI->Preprocess(this, false))
+	{
+		StartPlayback();
+		if (MIDI == NULL)
+		{ // The MIDI file had no content and has been automatically closed.
+			return false;
+		}
+	}
+
+	if (0 != MIDI->Resume())
+	{
+		Printf("Starting MIDI playback failed\n");
+		Stop();
+		return false;
+	}
+	else
+	{
+		return true;
+	}
 }
 
 //==========================================================================

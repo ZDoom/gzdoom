@@ -8131,14 +8131,16 @@ DEFINE_ACTION_FUNCTION(AActor, Distance2D)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_FLOAT(self->Distance2D(other));
+	PARAM_BOOL_DEF(squared);
+	ACTION_RETURN_FLOAT(squared ? self->Distance2DSquared(other) : self->Distance2D(other));
 }
 
 DEFINE_ACTION_FUNCTION(AActor, Distance3D)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(other, AActor);
-	ACTION_RETURN_FLOAT(self->Distance3D(other));
+	PARAM_BOOL_DEF(squared);
+	ACTION_RETURN_FLOAT(squared ? self->Distance3DSquared(other) : self->Distance3D(other));
 }
 
 DEFINE_ACTION_FUNCTION(AActor, AddZ)

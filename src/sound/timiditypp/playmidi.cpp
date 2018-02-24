@@ -52,7 +52,11 @@ CVAR(Bool, opt_nrpn_vibrato, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 * reverb=4     "global" new reverb       4
 * reverb=4,n   set reverb level to n   (-1 to -127) - 384
 */
-CVAR(Int, opt_reverb_control, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+static bool mustinitreverb;
+CUSTOM_CVAR(Int, opt_reverb_control, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	mustinitreverb = true;	// this needs to reallocate some buffers
+}
 CVAR(Int, opt_chorus_control, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, opt_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, opt_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -110,6 +114,7 @@ Player::Player(int freq, Instruments *instr)
 	const int CONTROLS_PER_SECOND = 1000;
 	const int MAX_CONTROL_RATIO = 255;
 
+	mustinitreverb = false;
 	memset(this, 0, sizeof(*this));
 
 	playback_rate = freq;
@@ -5011,6 +5016,13 @@ void Player::do_compute_data(int32_t count)
 int Player::compute_data(float *buffer, int32_t count)
 {
 	if (count == 0) return RC_OK;
+	if (mustinitreverb)
+	{
+		// If the reverb mode has changed some buffers need to be reallocated before doing any sound generation.
+		reverb->free_effect_buffers();
+		reverb->init_reverb();
+		mustinitreverb = false;
+	}
 
 	buffer_pointer = common_buffer;
 	computed_samples += count;

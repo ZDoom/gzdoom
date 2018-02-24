@@ -886,6 +886,12 @@ public:
 
 
 	// a full 3D version of the above
+	double Distance3DSquared(AActor *other, bool absolute = false)
+	{
+		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		return (Pos() - otherpos).LengthSquared();
+	}
+
 	double Distance3D(AActor *other, bool absolute = false)
 	{
 		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);

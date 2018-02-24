@@ -8127,6 +8127,20 @@ DEFINE_ACTION_FUNCTION(AActor, absangle)	// should this be global?
 	ACTION_RETURN_FLOAT(absangle(DAngle(a1), DAngle(a2)).Degrees);
 }
 
+DEFINE_ACTION_FUNCTION(AActor, Distance2DSquared)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_FLOAT(self->Distance2DSquared(other));
+}
+
+DEFINE_ACTION_FUNCTION(AActor, Distance3DSquared)
+{
+	PARAM_SELF_PROLOGUE(AActor);
+	PARAM_OBJECT_NOT_NULL(other, AActor);
+	ACTION_RETURN_FLOAT(self->Distance3DSquared(other));
+}
+
 DEFINE_ACTION_FUNCTION(AActor, Distance2D)
 {
 	PARAM_SELF_PROLOGUE(AActor);

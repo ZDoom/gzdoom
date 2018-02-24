@@ -183,27 +183,27 @@ void Effect::effect_left_right_delay(int32_t *buff, int32_t count)
 void Effect::do_effect(int32_t *buf, int32_t count)
 {
 	int32_t nsamples = count * 2;
-	int reverb_level = (opt_reverb_control < 0)
-		? -opt_reverb_control & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
+	int reverb_level = (timidity_reverb < 0)
+		? -timidity_reverb & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
 
 	/* for static reverb / chorus level */
-	if (opt_reverb_control == 2 || opt_reverb_control == 4
-		|| (opt_reverb_control < 0 && !(opt_reverb_control & 0x80))
-		|| opt_chorus_control < 0)
+	if (timidity_reverb == 2 || timidity_reverb == 4
+		|| (timidity_reverb < 0 && !(timidity_reverb & 0x80))
+		|| timidity_chorus < 0)
 	{
 		reverb->set_dry_signal(buf, nsamples);
 		/* chorus sounds horrible
 			* if applied globally on top of channel chorus
 			*/
-		if (opt_reverb_control == 2 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && !(opt_reverb_control & 0x80)))
+		if (timidity_reverb == 2 || timidity_reverb == 4
+			|| (timidity_reverb < 0 && !(timidity_reverb & 0x80)))
 			reverb->set_ch_reverb(buf, nsamples, reverb_level);
 		reverb->mix_dry_signal(buf, nsamples);
 		/* chorus sounds horrible
 			* if applied globally on top of channel chorus
 			*/
-		if (opt_reverb_control == 2 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && !(opt_reverb_control & 0x80)))
+		if (timidity_reverb == 2 || timidity_reverb == 4
+			|| (timidity_reverb < 0 && !(timidity_reverb & 0x80)))
 			reverb->do_ch_reverb(buf, nsamples);
 	}
 	/* L/R Delay */

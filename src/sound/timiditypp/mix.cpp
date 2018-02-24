@@ -83,7 +83,7 @@ void Mixer::mix_voice(int32_t *buf, int v, int32_t c)
 				vp->delay -= c;
 				if (vp->tremolo_phase_increment)
 					update_tremolo(v);
-				if (opt_modulation_envelope && vp->sample->modes & MODES_ENVELOPE)
+				if (timidity_modulation_envelope && vp->sample->modes & MODES_ENVELOPE)
 					update_modulation_envelope(v);
 				return;
 			}
@@ -1052,7 +1052,7 @@ int Mixer::update_signal(int v)
 		return 1;
 	if (vp->tremolo_phase_increment)
 		update_tremolo(v);
-	if (opt_modulation_envelope && vp->sample->modes & MODES_ENVELOPE)
+	if (timidity_modulation_envelope && vp->sample->modes & MODES_ENVELOPE)
 		update_modulation_envelope(v);
 	return apply_envelope_to_amp(v);
 }
@@ -1481,7 +1481,7 @@ int Mixer::apply_modulation_envelope(int v)
 {
 	Voice *vp = &player->voice[v];
 
-	if(!opt_modulation_envelope) {return 0;}
+	if(!timidity_modulation_envelope) {return 0;}
 
 	if (vp->sample->modes & MODES_ENVELOPE) {
 		vp->last_modenv_volume = modenv_vol_table[vp->modenv_volume >> 20];
@@ -1574,7 +1574,7 @@ int Mixer::recompute_modulation_envelope(int v)
 	int32_t modenv_width;
 	Voice *vp = &player->voice[v];
 
-	if(!opt_modulation_envelope) {return 0;}
+	if(!timidity_modulation_envelope) {return 0;}
 
 	stage = vp->modenv_stage;
 	if (stage > EG_GUS_RELEASE3) {return 1;}

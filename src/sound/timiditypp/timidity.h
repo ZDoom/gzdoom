@@ -37,18 +37,15 @@
 #endif
 
 
-EXTERN_CVAR(Int, key_adjust)
-EXTERN_CVAR(Float, tempo_adjust)
-EXTERN_CVAR(Bool, opt_modulation_wheel)
-EXTERN_CVAR(Bool, opt_portamento)
-EXTERN_CVAR(Bool, opt_nrpn_vibrato)
-EXTERN_CVAR(Int, opt_reverb_control)
-EXTERN_CVAR(Int, opt_chorus_control)
-EXTERN_CVAR(Bool, opt_surround_chorus)
-EXTERN_CVAR(Bool, opt_channel_pressure)
-EXTERN_CVAR(Int, opt_lpf_def)
-EXTERN_CVAR(Bool, opt_temper_control)
-EXTERN_CVAR(Bool, opt_modulation_envelope)
+EXTERN_CVAR(Bool, timidity_modulation_wheel)
+EXTERN_CVAR(Bool, timidity_portamento)
+EXTERN_CVAR(Int, timidity_reverb)
+EXTERN_CVAR(Int, timidity_chorus)
+EXTERN_CVAR(Bool, timidity_surround_chorus)
+EXTERN_CVAR(Bool, timidity_channel_pressure)
+EXTERN_CVAR(Int, timidity_lpf_def)
+EXTERN_CVAR(Bool, timidity_temper_control)
+EXTERN_CVAR(Bool, timidity_modulation_envelope)
 
 
 /* 

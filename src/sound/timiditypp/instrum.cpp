@@ -948,7 +948,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			pre_resample(sp);
 
 		/* do pitch detection on drums if surround chorus is used */
-		if (dr && opt_surround_chorus)
+		if (dr && timidity_surround_chorus)
 		{
 			Freq freq;
 			sp->chord = -1;

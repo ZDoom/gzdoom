@@ -1582,8 +1582,8 @@ void Reverb::init_reverb(void)
 	init_filter_lowpass1(&(reverb_status_gs.lpf));
 	/* Only initialize freeverb if stereo output */
 	/* Old non-freeverb must be initialized for mono reverb not to crash */
-	if ( (opt_reverb_control == 3 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x100)))) {
+	if ( (timidity_reverb == 3 || timidity_reverb == 4
+			|| (timidity_reverb < 0 && ! (timidity_reverb & 0x100)))) {
 		switch(reverb_status_gs.character) {	/* select reverb algorithm */
 		case 5:	/* Plate Reverb */
 			do_ch_plate_reverb(NULL, MAGIC_INIT_EFFECT_INFO, &(reverb_status_gs.info_plate_reverb));
@@ -1613,12 +1613,12 @@ void Reverb::init_reverb(void)
 void Reverb::do_ch_reverb(int32_t *buf, int32_t count)
 {
 #ifdef SYS_EFFECT_PRE_LPF
-	if ((opt_reverb_control == 3 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x100))) && reverb_status_gs.pre_lpf)
+	if ((timidity_reverb == 3 || timidity_reverb == 4
+			|| (timidity_reverb < 0 && ! (timidity_reverb & 0x100))) && reverb_status_gs.pre_lpf)
 		do_filter_lowpass1_stereo(reverb_effect_buffer, count, &(reverb_status_gs.lpf));
 #endif /* SYS_EFFECT_PRE_LPF */
-	if (opt_reverb_control == 3 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x100))) {
+	if (timidity_reverb == 3 || timidity_reverb == 4
+			|| (timidity_reverb < 0 && ! (timidity_reverb & 0x100))) {
 		switch(reverb_status_gs.character) {	/* select reverb algorithm */
 		case 5:	/* Plate Reverb */
 			do_ch_plate_reverb(buf, count, &(reverb_status_gs.info_plate_reverb));
@@ -1656,8 +1656,8 @@ void Reverb::init_ch_delay(void)
 void Reverb::do_ch_delay(int32_t *buf, int32_t count)
 {
 #ifdef SYS_EFFECT_PRE_LPF
-	if ((opt_reverb_control == 3 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x100))) && delay_status_gs.pre_lpf)
+	if ((timidity_reverb == 3 || timidity_reverb == 4
+			|| (timidity_reverb < 0 && ! (timidity_reverb & 0x100))) && delay_status_gs.pre_lpf)
 		do_filter_lowpass1_stereo(delay_effect_buffer, count, &(delay_status_gs.lpf));
 #endif /* SYS_EFFECT_PRE_LPF */
 	switch (delay_status_gs.type) {
@@ -1953,8 +1953,8 @@ void Reverb::set_ch_chorus(int32_t *sbuffer,int32_t n, int32_t level)
 void Reverb::do_ch_chorus(int32_t *buf, int32_t count)
 {
 #ifdef SYS_EFFECT_PRE_LPF
-	if ((opt_reverb_control == 3 || opt_reverb_control == 4
-			|| (opt_reverb_control < 0 && ! (opt_reverb_control & 0x100))) && chorus_status_gs.pre_lpf)
+	if ((timidity_reverb == 3 || timidity_reverb == 4
+			|| (timidity_reverb < 0 && ! (timidity_reverb & 0x100))) && chorus_status_gs.pre_lpf)
 		do_filter_lowpass1_stereo(chorus_effect_buffer, count, &(chorus_status_gs.lpf));
 #endif /* SYS_EFFECT_PRE_LPF */
 

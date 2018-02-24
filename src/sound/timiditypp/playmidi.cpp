@@ -71,13 +71,13 @@ CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /
 	if (self < 0) self = 0;
 	else if (self > MAX_AMPLIFICATION/100.f) self = MAX_AMPLIFICATION/100.f;
 }
-CUSTOM_CVAR(Int, key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < -24) self = -24;
 	else if (self > 24) self = 24;
 }
 // For testing mainly.
-CUSTOM_CVAR(Float, tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.25) self = 0.25;
 	else if (self > 10) self = 10;
@@ -5508,8 +5508,8 @@ int Player::play_event(MidiEvent *ev)
 						i += (i > 0) ? -5 : 7, j++;
 					while (abs(j - note_key_offset) > 7)
 						j += (j > note_key_offset) ? -12 : 12;
-					if (abs(j - key_adjust) >= 12)
-						j += (j > key_adjust) ? -12 : 12;
+					if (abs(j - timidity_key_adjust) >= 12)
+						j += (j > timidity_key_adjust) ? -12 : 12;
 					note_key_offset = j;
 					kill_all_voices();
 				}
@@ -5803,8 +5803,8 @@ void Player::playmidi_stream_init(void)
     int i;
     static int first = 1;
 
-    note_key_offset = key_adjust;
-    midi_time_ratio = tempo_adjust;
+    note_key_offset = timidity_key_adjust;
+    midi_time_ratio = timidity_tempo_adjust;
     CLEAR_CHANNELMASK(channel_mute);
 	if (temper_type_mute & 1)
 		FILL_CHANNELMASK(channel_mute);

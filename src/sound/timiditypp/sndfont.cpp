@@ -580,7 +580,7 @@ Instrument *Instruments::load_from_file(SFInsts *rec, InstList *ip)
 			pre_resample(sample);
 
 		/* do pitch detection on drums if surround chorus is used */
-		if (ip->pat.bank == 128 && opt_surround_chorus)
+		if (ip->pat.bank == 128 && timidity_surround_chorus)
 		{
 			Freq freq;
 		    sample->chord = -1;
@@ -1299,7 +1299,7 @@ void Instruments::set_init_info(SFInfo *sf, SampleList *vp, LayerTable *tbl)
     val = (int)tbl->val[SF_initialFilterFc];
 	val = abscent_to_Hz(val);
 
-	if(!opt_modulation_envelope) {
+	if(!timidity_modulation_envelope) {
 		if(tbl->set[SF_env1ToFilterFc] && (int)tbl->val[SF_env1ToFilterFc] > 0)
 		{
 			val = int( val * pow(2.0,(double)tbl->val[SF_env1ToFilterFc] / 1200.0f));

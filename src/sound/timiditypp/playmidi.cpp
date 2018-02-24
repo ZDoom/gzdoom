@@ -6132,11 +6132,13 @@ void Player::send_long_event(const uint8_t *sysexbuffer, int exlen)
 
 			/* initialize effect status */
 			reverb->init_effect_status(play_system_mode);
+			effect->init_effect();
 			instruments->init_userdrum();
 			instruments->init_userinst();
 			playmidi_stream_init();
 		}
 		play_event(&ev);
+		return;
 	}
 	if ((ne = sc.parse_sysex_event_multi(sysexbuffer + 1, exlen - 1, evm, instruments)))
 	{

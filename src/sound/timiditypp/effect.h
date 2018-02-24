@@ -29,6 +29,7 @@ public:
 	Effect(Reverb *_reverb)
 	{
 		reverb = _reverb;
+		init_effect();
 	}
 
 	void init_effect();

@@ -26,9 +26,12 @@ class Effect
 	Reverb *reverb;
 
 public:
-	Effect(Reverb *_reverb)
+	int timidity_chorus;
+
+	Effect(Reverb *_reverb, int chorus)
 	{
 		reverb = _reverb;
+		timidity_chorus = chorus;
 		init_effect();
 	}
 

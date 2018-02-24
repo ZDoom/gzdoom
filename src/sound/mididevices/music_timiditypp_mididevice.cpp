@@ -102,6 +102,24 @@ CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		self = 65000;
 }
 
+// These two need a music restart.
+CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+
 //==========================================================================
 //
 // TimidityPPMIDIDevice Constructor

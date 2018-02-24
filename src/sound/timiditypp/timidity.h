@@ -28,6 +28,7 @@
 #ifndef TIMIDITY_H_INCLUDED
 #define TIMIDITY_H_INCLUDED 1
 
+#include <stdint.h>
 #include "c_cvars.h"
 #include "controls.h"
 #include "mblock.h"
@@ -36,16 +37,9 @@
 #pragma warning(disable:4244)	// double->float truncation occurs so often in here that it's pointless to fix it all.
 #endif
 
-
-EXTERN_CVAR(Bool, timidity_modulation_wheel)
-EXTERN_CVAR(Bool, timidity_portamento)
-EXTERN_CVAR(Int, timidity_reverb)
-EXTERN_CVAR(Int, timidity_chorus)
 EXTERN_CVAR(Bool, timidity_surround_chorus)
-EXTERN_CVAR(Bool, timidity_channel_pressure)
-EXTERN_CVAR(Int, timidity_lpf_def)
-EXTERN_CVAR(Bool, timidity_temper_control)
 EXTERN_CVAR(Bool, timidity_modulation_envelope)
+
 
 
 /* 

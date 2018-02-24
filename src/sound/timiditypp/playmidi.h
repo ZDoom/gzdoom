@@ -512,6 +512,24 @@ class Effect;
 class Player
 {
 public:
+
+	bool timidity_modulation_wheel = true;
+	bool timidity_portamento = true;
+	int timidity_reverb = 0;
+	int timidity_chorus = 0;
+	bool timidity_surround_chorus = false;
+	bool timidity_channel_pressure = false;
+	bool timidity_temper_control = true;
+	bool timidity_modulation_envelope = true;
+	bool timidity_overlap_voice_allow = true;
+	bool timidity_drum_effect = false;
+	bool timidity_pan_delay = false;
+	int timidity_lpf_def = true;
+	float timidity_drum_power = 1.0;
+	int timidity_key_adjust = 0;
+	float timidity_tempo_adjust = 1;
+
+
 	Channel channel[MAX_CHANNELS];
 	Voice voice[max_voices];
 	ChannelBitMask default_drumchannel_mask;

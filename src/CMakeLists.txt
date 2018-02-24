@@ -802,7 +802,6 @@ set( FASTMATH_SOURCES
 	sound/music_midi_base.cpp
 	sound/oalsound.cpp
 	sound/sndfile_decoder.cpp
-	sound/mididevices/music_timiditypp_mididevice.cpp
 	sound/timiditypp/fft4g.cpp
 	sound/timiditypp/reverb.cpp
 	gl/utility/gl_clock.cpp
@@ -1139,10 +1138,12 @@ set (PCH_SOURCES
 	sound/i_soundfont.cpp
 	sound/mididevices/music_opldumper_mididevice.cpp
 	sound/mididevices/music_opl_mididevice.cpp
+	sound/mididevices/music_timiditypp_mididevice.cpp
 	sound/mididevices/music_fluidsynth_mididevice.cpp
 	sound/mididevices/music_softsynth_mididevice.cpp
 	sound/mididevices/music_timidity_mididevice.cpp
 	sound/mididevices/music_wildmidi_mididevice.cpp
+	sound/mididevices/music_wavewriter_mididevice.cpp
 	sound/midisources/midisource.cpp
 	sound/midisources/midisource_mus.cpp
 	sound/midisources/midisource_smf.cpp

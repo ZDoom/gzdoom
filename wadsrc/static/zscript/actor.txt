@@ -578,8 +578,8 @@ class Actor : Thinker native
 	native void RestoreDamage();
 	native clearscope int SpawnHealth() const;
 	native void SetDamage(int dmg);
-	native clearscope double Distance2D(Actor other) const;
-	native clearscope double Distance3D(Actor other) const;
+	native clearscope double Distance2D(Actor other, bool squared = false) const;
+	native clearscope double Distance3D(Actor other, bool squared = false) const;
 	native void SetOrigin(vector3 newpos, bool moving);
 	native void SetXYZ(vector3 newpos);
 	native Actor GetPointer(int aaptr);

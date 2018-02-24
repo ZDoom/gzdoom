@@ -1177,7 +1177,7 @@ class Actor : Thinker native
 	{
 		return ACS_LockedExecuteDoor(-int(script), mapnum, arg1, arg2, lock);
 	}
-	int ACS_NamedExecuteWithResult(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0)
+	int ACS_ScriptCall(name script, int arg1=0, int arg2=0, int arg3=0, int arg4=0)
 	{
 		return ACS_ExecuteWithResult(-int(script), arg1, arg2, arg3, arg4);
 	}

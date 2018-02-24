@@ -1198,7 +1198,6 @@ set (PCH_SOURCES
 	events.cpp
 	GuillotineBinPack.cpp
 	SkylineBinPack.cpp
-	tmpfileplus.cpp
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )

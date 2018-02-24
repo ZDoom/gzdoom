@@ -38,9 +38,8 @@
 #include "tables.h"
 #include "effect.h"
 
-CVAR(Bool, opt_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_nrpn_vibrato, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 /*
 * reverb=0     no reverb                 0
 * reverb=1     old reverb                1
@@ -53,30 +52,24 @@ CVAR(Bool, opt_nrpn_vibrato, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 * reverb=4,n   set reverb level to n   (-1 to -127) - 384
 */
 static bool mustinitreverb;
-CUSTOM_CVAR(Int, opt_reverb_control, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	mustinitreverb = true;	// this needs to reallocate some buffers
 }
-CVAR(Int, opt_chorus_control, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, opt_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_delay_control, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_eq_control, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_tva_attack, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_tva_decay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_tva_release, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_insertion_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, opt_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
-CUSTOM_CVAR(Int, opt_drum_power, 100, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /* coef. of drum amplitude */
+CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /* coef. of drum amplitude */
 {
 	if (self < 0) self = 0;
-	else if (self > MAX_AMPLIFICATION) self = MAX_AMPLIFICATION;
+	else if (self > MAX_AMPLIFICATION/100.f) self = MAX_AMPLIFICATION/100.f;
 }
 CUSTOM_CVAR(Int, key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -89,6 +82,18 @@ CUSTOM_CVAR(Float, tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	if (self < 0.25) self = 0.25;
 	else if (self > 10) self = 10;
 }
+
+// The following options have no generic use and are only meaningful for some SYSEX events not normally found in common MIDIs.
+// For now they are kept as unchanging global variables
+static bool opt_eq_control = false;
+static bool op_nrpn_vibrato = true;
+static bool opt_tva_attack = false;
+static bool opt_tva_decay = false;
+static bool ppt_tva_release = false;
+static bool opt_insertion_effect = false;
+static bool opt_delay_control = false;
+
+
 
 
 namespace TimidityPlus
@@ -245,7 +250,7 @@ int Player::new_vidq(int ch, int note)
 {
     int i;
 
-    if(opt_overlap_voice_allow)
+    if(timidity_overlap_voice_allow)
     {
 	i = ch * 128 + note;
 	return vidq_head[i]++;
@@ -257,7 +262,7 @@ int Player::last_vidq(int ch, int note)
 {
     int i;
 
-    if(opt_overlap_voice_allow)
+    if(timidity_overlap_voice_allow)
     {
 	i = ch * 128 + note;
 	if(vidq_head[i] == vidq_tail[i])
@@ -431,10 +436,10 @@ void Player::reset_controllers(int c)
 	for (j = 0; j < 6; j++) { channel[c].envelope_rate[j] = -1; }
 	update_portamento_controls(c);
 	set_reverb_level(c, -1);
-	if (opt_chorus_control == 1)
+	if (timidity_chorus == 1)
 		channel[c].chorus_level = 0;
 	else
-		channel[c].chorus_level = -opt_chorus_control;
+		channel[c].chorus_level = -timidity_chorus;
 	channel[c].mono = 0;
 	channel[c].delay_level = 0;
 }
@@ -521,9 +526,9 @@ void Player::recompute_freq(int v)
 
 	if (! voice[v].sample->sample_rate)
 		return;
-	if (! opt_modulation_wheel)
+	if (! timidity_modulation_wheel)
 		channel[ch].mod.val = 0;
-	if (! opt_portamento)
+	if (! timidity_portamento)
 		voice[v].porta_control_ratio = 0;
 	voice[v].vibrato_control_ratio = voice[v].orig_vibrato_control_ratio;
 	if (voice[v].vibrato_control_ratio || channel[ch].mod.val > 0) {
@@ -532,7 +537,7 @@ void Player::recompute_freq(int v)
 		 */
 
 		/* MIDI controllers LFO pitch depth */
-		if (opt_channel_pressure || opt_modulation_wheel) {
+		if (timidity_channel_pressure || timidity_modulation_wheel) {
 			vp->vibrato_depth = vp->sample->vibrato_depth + channel[ch].vibrato_depth;
 			vp->vibrato_depth += get_midi_controller_pitch_depth(&(channel[ch].mod))
 				+ get_midi_controller_pitch_depth(&(channel[ch].bend))
@@ -576,7 +581,7 @@ void Player::recompute_freq(int v)
 				+ channel[ch].drums[note]->coarse * 64) << 7;
 	}
 	/* MIDI controllers pitch control */
-	if (opt_channel_pressure) {
+	if (timidity_channel_pressure) {
 		tuning += get_midi_controller_pitch(&(channel[ch].mod))
 			+ get_midi_controller_pitch(&(channel[ch].bend))
 			+ get_midi_controller_pitch(&(channel[ch].caf))
@@ -584,7 +589,7 @@ void Player::recompute_freq(int v)
 			+ get_midi_controller_pitch(&(channel[ch].cc1))
 			+ get_midi_controller_pitch(&(channel[ch].cc2));
 	}
-	if (opt_modulation_envelope) {
+	if (timidity_modulation_envelope) {
 		if (voice[v].sample->tremolo_to_pitch) {
 			tuning += lookup_triangular(voice[v].tremolo_phase >> RATE_SHIFT)
 					* (voice[v].sample->tremolo_to_pitch << 13) / 100.0 + 0.5;
@@ -605,7 +610,7 @@ void Player::recompute_freq(int v)
 		}
 	}
 	if (! opt_pure_intonation
-			&& opt_temper_control && voice[v].temper_instant) {
+			&& timidity_temper_control && voice[v].temper_instant) {
 		switch (tt) {
 		case 0:
 			f = freq_table_tuning[tp][note];
@@ -748,7 +753,7 @@ void Player::recompute_amp(int v)
 	 * so that it must be reduced in advance.
 	 */
 	if (
-		(opt_reverb_control || opt_chorus_control || opt_delay_control
+		(timidity_reverb || timidity_chorus || opt_delay_control
 			|| (opt_eq_control && (reverb->eq_status_gs.low_gain != 0x40
 				|| reverb->eq_status_gs.high_gain != 0x40))
 			|| opt_insertion_effect))
@@ -782,11 +787,11 @@ void Player::recompute_amp(int v)
 		if (channel[ch].drums[voice[v].note] != NULL) {
 			tempamp *= channel[ch].drums[voice[v].note]->drum_level;
 		}
-		tempamp *= (double)opt_drum_power * 0.01f;	/* global drum power */
+		tempamp *= (double)timidity_drum_power;	/* global drum power */
 	}
 
 	/* MIDI controllers amplitude control */
-	if (opt_channel_pressure) {
+	if (timidity_channel_pressure) {
 		tempamp *= get_midi_controller_amp(&(channel[ch].mod))
 			* get_midi_controller_amp(&(channel[ch].bend))
 			* get_midi_controller_amp(&(channel[ch].caf))
@@ -873,14 +878,14 @@ void Player::recompute_channel_filter(int ch, int note)
 void Player::init_voice_filter(int i)
 {
   memset(&(voice[i].fc), 0, sizeof(FilterCoefficients));
-  if(opt_lpf_def && voice[i].sample->cutoff_freq) {
+  if(timidity_lpf_def && voice[i].sample->cutoff_freq) {
 	  voice[i].fc.orig_freq = voice[i].sample->cutoff_freq;
 	  voice[i].fc.orig_reso_dB = (double)voice[i].sample->resonance / 10.0f - 3.01f;
 	  if (voice[i].fc.orig_reso_dB < 0.0f) {voice[i].fc.orig_reso_dB = 0.0f;}
-	  if (opt_lpf_def == 2) {
+	  if (timidity_lpf_def == 2) {
 		  voice[i].fc.gain = 1.0;
 		  voice[i].fc.type = 2;
-	  } else if(opt_lpf_def == 1) {
+	  } else if(timidity_lpf_def == 1) {
 		  voice[i].fc.gain = pow(10.0f, -voice[i].fc.orig_reso_dB / 2.0f / 20.0f);
 		  voice[i].fc.type = 1;
 	  }
@@ -910,7 +915,7 @@ void Player::recompute_voice_filter(int v)
 	}
 
 	/* MIDI controllers filter cutoff control and LFO filter depth */
-	if(opt_channel_pressure) {
+	if(timidity_channel_pressure) {
 		cent += get_midi_controller_filter_cutoff(&(channel[ch].mod))
 			+ get_midi_controller_filter_cutoff(&(channel[ch].bend))
 			+ get_midi_controller_filter_cutoff(&(channel[ch].caf))
@@ -938,7 +943,7 @@ void Player::recompute_voice_filter(int v)
 		cent += sp->key_to_fc * (double)(voice[v].note - sp->key_to_fc_bpo);
 	}
 
-	if(opt_modulation_envelope) {
+	if(timidity_modulation_envelope) {
 		if(voice[v].sample->tremolo_to_fc + (int16_t)depth_cent) {
 			cent += ((double)voice[v].sample->tremolo_to_fc + depth_cent) * lookup_triangular(voice[v].tremolo_phase >> RATE_SHIFT);
 		}
@@ -1381,7 +1386,7 @@ int Player::select_play_sample(Sample *splist, int nsp, int *note, int *vlist, M
 				f = freq_table_pureint[current_freq_table][*note];
 			else
 				f = freq_table_pureint[current_freq_table + 12][*note];
-		} else if (opt_temper_control)
+		} else if (timidity_temper_control)
 			switch (tt) {
 			case 0:
 				f = freq_table_tuning[tp][*note];
@@ -1424,7 +1429,7 @@ int Player::select_play_sample(Sample *splist, int nsp, int *note, int *vlist, M
 			}
 		else
 			f = freq_table[*note];
-		if (! opt_pure_intonation && opt_temper_control
+		if (! opt_pure_intonation && timidity_temper_control
 				&& tt == 0 && f != freq_table[*note]) {
 			*note = log(f / 440000.0) / log(2) * 12 + 69.5;
 			*note = (*note < 0) ? 0 : ((*note > 127) ? 127 : *note);
@@ -1553,7 +1558,7 @@ int Player::find_voice(MidiEvent *e)
 	AlternateAssign *altassign;
 	int i, lowest = -1;
 	
-	status_check = (opt_overlap_voice_allow)
+	status_check = (timidity_overlap_voice_allow)
 			? (VOICE_OFF | VOICE_SUSTAINED) : 0xff;
 	mono_check = channel[ch].mono;
 	altassign = instruments->find_altassign(channel[ch].altassign, note);
@@ -1613,7 +1618,7 @@ void Player::init_voice_vibrato(int v)
 	double ratio;
 
 	/* if NRPN vibrato is set, it's believed that there must be vibrato. */
-	nrpn_vib_flag = opt_nrpn_vibrato
+	nrpn_vib_flag = op_nrpn_vibrato
 		&& (channel[ch].vibrato_ratio != 1.0 || channel[ch].vibrato_depth != 0);
 	
 	/* vibrato sweep */
@@ -1669,7 +1674,7 @@ void Player::init_voice_pan_delay(int v)
 		vp->pan_delay_buf = NULL;
 	}
 	vp->pan_delay_rpt = 0;
-	if (opt_pan_delay && channel[ch].insertion_effect == 0 && !opt_surround_chorus) {
+	if (timidity_pan_delay && channel[ch].insertion_effect == 0 && !timidity_surround_chorus) {
 		if (vp->panning == 64) {vp->delay += pan_delay_table[64] * playback_rate / 1000;}
 		else {
 			if(pan_delay_table[vp->panning] > pan_delay_table[127 - vp->panning]) {
@@ -2103,7 +2108,7 @@ void Player::note_on(MidiEvent *e)
 	voice[v].old_left_mix = voice[v].old_right_mix =
 	voice[v].left_mix_inc = voice[v].left_mix_offset =
 	voice[v].right_mix_inc = voice[v].right_mix_offset = 0;
-	if(opt_surround_chorus)
+	if(timidity_surround_chorus)
 	    new_chorus_voice_alternate(v, 0);
     }
 
@@ -2246,7 +2251,7 @@ void Player::adjust_pressure(MidiEvent *e)
     int i, uv = upper_voices;
     int note, ch;
 
-    if(opt_channel_pressure)
+    if(timidity_channel_pressure)
     {
 	ch = e->channel;
     note = MIDI_EVENT_NOTE(e);
@@ -2269,7 +2274,7 @@ void Player::adjust_pressure(MidiEvent *e)
 /*! adjust channel pressure (channel aftertouch, CAf, CAT) */
 void Player::adjust_channel_pressure(MidiEvent *e)
 {
-    if(opt_channel_pressure)
+    if(timidity_channel_pressure)
     {
 	int i, uv = upper_voices;
 	int ch;
@@ -2303,7 +2308,7 @@ void Player::adjust_panning(int c)
             pan = get_panning(c, voice[i].note, i);
 
 	    /* Hack to handle -EFchorus=2 in a "reasonable" way */
-	    if(opt_surround_chorus && voice[i].chorus_link != i)
+	    if(timidity_surround_chorus && voice[i].chorus_link != i)
 	    {
 		int v1, v2;
 
@@ -2316,7 +2321,7 @@ void Player::adjust_panning(int c)
 		v1 = i;				/* base voice */
 		v2 = voice[i].chorus_link;	/* sub voice (detuned) */
 
-		if(opt_surround_chorus) /* Surround chorus mode by Eric. */
+		if(timidity_surround_chorus) /* Surround chorus mode by Eric. */
 		{
 		    int panlevel;
 
@@ -2419,8 +2424,8 @@ void Player::set_reverb_level(int ch, int level)
 {
 	if (level == -1) {
 		channel[ch].reverb_level = channel[ch].reverb_id =
-				(opt_reverb_control < 0)
-				? -opt_reverb_control & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
+				(timidity_reverb < 0)
+				? -timidity_reverb & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
 		make_rvid_flag = 1;
 		return;
 	}
@@ -2431,8 +2436,8 @@ void Player::set_reverb_level(int ch, int level)
 int Player::get_reverb_level(int ch)
 {
 	if (channel[ch].reverb_level == -1)
-		return (opt_reverb_control < 0)
-			? -opt_reverb_control & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
+		return (timidity_reverb < 0)
+			? -timidity_reverb & 0x7f : DEFAULT_REVERB_SEND_LEVEL;
 	return channel[ch].reverb_level;
 }
 
@@ -2442,9 +2447,9 @@ int Player::get_chorus_level(int ch)
     if(ISDRUMCHANNEL(ch))
 	return 0; /* Not supported drum channel chorus */
 #endif
-    if(opt_chorus_control == 1)
+    if(timidity_chorus == 1)
 	return channel[ch].chorus_level;
-    return -opt_chorus_control;
+    return -timidity_chorus;
 }
 
 
@@ -4337,23 +4342,23 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 	drumflag = 0;
 	switch (addr) {
 	case NRPN_ADDR_0108:	/* Vibrato Rate */
-		if (opt_nrpn_vibrato) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Vibrato Rate (CH:%d VAL:%d)", ch, val - 64);
+		if (op_nrpn_vibrato) {
+			//ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Vibrato Rate (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].vibrato_ratio = gs_cnv_vib_rate(val);
 		}
 		if (update_now)
 			adjust_pitch(ch);
 		break;
 	case NRPN_ADDR_0109:	/* Vibrato Depth */
-		if (opt_nrpn_vibrato) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Vibrato Depth (CH:%d VAL:%d)", ch, val - 64);
+		if (op_nrpn_vibrato) {
+			//ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Vibrato Depth (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].vibrato_depth = gs_cnv_vib_depth(val);
 		}
 		if (update_now)
 			adjust_pitch(ch);
 		break;
 	case NRPN_ADDR_010A:	/* Vibrato Delay */
-		if (opt_nrpn_vibrato) {
+		if (op_nrpn_vibrato) {
 			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Vibrato Delay (CH:%d VAL:%d)", ch, val);
 			channel[ch].vibrato_delay = gs_cnv_vib_delay(val);
 		}
@@ -4361,13 +4366,13 @@ void Player::update_rpn_map(int ch, int addr, int update_now)
 			adjust_pitch(ch);
 		break;
 	case NRPN_ADDR_0120:	/* Filter Cutoff Frequency */
-		if (opt_lpf_def) {
-			ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Filter Cutoff (CH:%d VAL:%d)", ch, val - 64);
+		if (timidity_lpf_def) {
+			//ctl_cmsg(CMSG_INFO, VERB_NOISY,	"Filter Cutoff (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].param_cutoff_freq = val - 64;
 		}
 		break;
 	case NRPN_ADDR_0121:	/* Filter Resonance */
-		if (opt_lpf_def) {
+		if (timidity_lpf_def) {
 			//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Filter Resonance (CH:%d VAL:%d)", ch, val - 64);
 			channel[ch].param_resonance = val - 64;
 		}
@@ -4777,17 +4782,17 @@ void Player::do_compute_data(int32_t count)
 	memset(buffer_pointer, 0, n);
 	memset(insertion_effect_buffer, 0, n);
 
-	if (opt_reverb_control == 3) {
+	if (timidity_reverb == 3) {
 		rev_max_delay_out = 0x7fffffff;	/* disable */
 	} else {
 		rev_max_delay_out = REVERB_MAX_DELAY_OUT;
 	}
 
 	/* are effects valid? / don't supported in mono */
-	channel_reverb = (stereo && (opt_reverb_control == 1
-			|| opt_reverb_control == 3
-			|| (opt_reverb_control < 0 && opt_reverb_control & 0x80)));
-	channel_chorus = (stereo && opt_chorus_control && !opt_surround_chorus);
+	channel_reverb = (stereo && (timidity_reverb == 1
+			|| timidity_reverb == 3
+			|| (timidity_reverb < 0 && timidity_reverb & 0x80)));
+	channel_chorus = (stereo && timidity_chorus && !timidity_surround_chorus);
 	channel_delay = 0;
 
 	/* is EQ valid? */
@@ -4819,7 +4824,7 @@ void Player::do_compute_data(int32_t count)
 					|| channel[i].chorus_level > 0 || channel[i].delay_level > 0
 					|| channel[i].eq_xg.valid
 					|| channel[i].dry_level != 127
-					|| (opt_drum_effect && ISDRUMCHANNEL(i))
+					|| (timidity_drum_effect && ISDRUMCHANNEL(i))
 					|| is_insertion_effect_xg(i)) {
 				vpblist[i] = (int32_t*)(reverb_buffer + buf_index);
 				buf_index += n;
@@ -4827,7 +4832,7 @@ void Player::do_compute_data(int32_t count)
 				vpblist[i] = buffer_pointer;
 			}
 			/* clear buffers of drum-part effect */
-			if (opt_drum_effect && ISDRUMCHANNEL(i)) {
+			if (timidity_drum_effect && ISDRUMCHANNEL(i)) {
 				for (j = 0; j < channel[i].drum_effect_num; j++) {
 					if (channel[i].drum_effect[j].buf != NULL) {
 						memset(channel[i].drum_effect[j].buf, 0, n);
@@ -4847,7 +4852,7 @@ void Player::do_compute_data(int32_t count)
 			if (channel_effect) {
 				flag = 0;
 				ch = voice[i].channel;
-				if (opt_drum_effect && ISDRUMCHANNEL(ch)) {
+				if (timidity_drum_effect && ISDRUMCHANNEL(ch)) {
 					make_drum_effect(ch);
 					note = voice[i].note;
 					for (j = 0; j < channel[ch].drum_effect_num; j++) {
@@ -4896,7 +4901,7 @@ void Player::do_compute_data(int32_t count)
 			int32_t *p;
 			p = vpblist[i];
 			if(p != buffer_pointer) {
-				if (opt_drum_effect && ISDRUMCHANNEL(i)) {
+				if (timidity_drum_effect && ISDRUMCHANNEL(i)) {
 					for (j = 0; j < channel[i].drum_effect_num; j++) {
 						de = &(channel[i].drum_effect[j]);
 						if (de->reverb_send > 0) {
@@ -4963,7 +4968,7 @@ void Player::do_compute_data(int32_t count)
 			int32_t *p;	
 			p = vpblist[i];
 			if(p != buffer_pointer && p != insertion_effect_buffer) {
-				if (opt_drum_effect && ISDRUMCHANNEL(i)) {
+				if (timidity_drum_effect && ISDRUMCHANNEL(i)) {
 					for (j = 0; j < channel[i].drum_effect_num; j++) {
 						de = &(channel[i].drum_effect[j]);
 						if (de->reverb_send > 0) {
@@ -5272,21 +5277,21 @@ int Player::play_event(MidiEvent *ev)
 				break;
 
 			case ME_SOFT_PEDAL:
-				if (opt_lpf_def) {
+				if (timidity_lpf_def) {
 					channel[ch].soft_pedal = ev->a;
 					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Soft Pedal (CH:%d VAL:%d)", ch, channel[ch].soft_pedal);
 				}
 				break;
 
 			case ME_HARMONIC_CONTENT:
-				if (opt_lpf_def) {
+				if (timidity_lpf_def) {
 					channel[ch].param_resonance = ev->a - 64;
 					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Harmonic Content (CH:%d VAL:%d)", ch, channel[ch].param_resonance);
 				}
 				break;
 
 			case ME_BRIGHTNESS:
-				if (opt_lpf_def) {
+				if (timidity_lpf_def) {
 					channel[ch].param_cutoff_freq = ev->a - 64;
 					//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Brightness (CH:%d VAL:%d)", ch, channel[ch].param_cutoff_freq);
 				}
@@ -5312,21 +5317,21 @@ int Player::play_event(MidiEvent *ev)
 				break;
 
 			case ME_REVERB_EFFECT:
-				if (opt_reverb_control) {
+				if (timidity_reverb) {
 					if (ISDRUMCHANNEL(ch) && get_reverb_level(ch) != ev->a) { channel[ch].drum_effect_flag = 0; }
 					set_reverb_level(ch, ev->a);
 				}
 				break;
 
 			case ME_CHORUS_EFFECT:
-				if (opt_chorus_control)
+				if (timidity_chorus)
 				{
-					if (opt_chorus_control == 1) {
+					if (timidity_chorus == 1) {
 						if (ISDRUMCHANNEL(ch) && channel[ch].chorus_level != ev->a) { channel[ch].drum_effect_flag = 0; }
 						channel[ch].chorus_level = ev->a;
 					}
 					else {
-						channel[ch].chorus_level = -opt_chorus_control;
+						channel[ch].chorus_level = -timidity_chorus;
 					}
 					if (ev->a) {
 						//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Chorus Send (CH:%d LEVEL:%d)", ch, ev->a);

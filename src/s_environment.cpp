@@ -677,7 +677,7 @@ void S_UnloadReverbDef ()
 	Environments = &Off;
 }
 
-CUSTOM_CVAR(Bool, eaxedit_test, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Bool, eaxedit_test, false, CVAR_NOINITCALL)
 {
 	if (self)
 	{

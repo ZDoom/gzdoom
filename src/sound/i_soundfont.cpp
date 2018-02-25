@@ -340,7 +340,7 @@ void FSoundFontManager::CollectSoundfonts()
 	void *file;
 	
 	
-	if (GameConfig != NULL && GameConfig->SetSection ("FileSearch.Directories"))
+	if (GameConfig != NULL && GameConfig->SetSection ("SoundfontSearch.Directories"))
 	{
 		const char *key;
 		const char *value;
@@ -352,18 +352,18 @@ void FSoundFontManager::CollectSoundfonts()
 				FString dir;
 				
 				dir = NicePath(value);
+				FixPathSeperator(dir);
 				if (dir.IsNotEmpty())
 				{
 					if (dir.Back() != '/') dir += '/';
-					FString path = dir + "soundfonts/";
-					FString mask = path + '*';
+					FString mask = dir + '*';
 					if ((file = I_FindFirst(mask, &c_file)) != ((void *)(-1)))
 					{
 						do
 						{
 							if (!(I_FindAttr(&c_file) & FA_DIREC))
 							{
-								FStringf name("%s%s", path.GetChars(), I_FindName(&c_file));
+								FStringf name("%s%s", dir.GetChars(), I_FindName(&c_file));
 								ProcessOneFile(name);
 							}
 						} while (I_FindNext(file, &c_file) == 0);

@@ -86,4 +86,7 @@ void EnterCriticalSection(FInternalCriticalSection *c)
 void LeaveCriticalSection(FInternalCriticalSection *c)
 {
 	c->Leave();
+
+	MemoryBarrier();
+	MemoryFence();
 }

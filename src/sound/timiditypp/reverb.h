@@ -464,7 +464,7 @@ typedef struct {
 	int8_t lfo_depth, drive;
 	double resonance, lfo_freq, offset_freq, dry, wet;
 	int32_t dryi, weti, fil_count, fil_cycle;
-	lfo lfo;
+	struct lfo lfo;
 	filter_moog_dist fil0, fil1;
 } InfoXGAutoWah;
 

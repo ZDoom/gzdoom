@@ -24,7 +24,6 @@
 #include <stdlib.h>
 #include <memory>
 
-#include "timidity.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "c_cvars.h"
@@ -35,6 +34,7 @@
 #include "i_soundfont.h"
 #include "i_musicinterns.h"
 #include "v_text.h"
+#include "timidity.h"
 
 CUSTOM_CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {

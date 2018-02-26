@@ -2451,7 +2451,7 @@ OPTSTR_SPLINE				= "Spline";
 OPTSTR_OPENAL				= "OpenAL";
 
 
-
+NOTSET				= "Not set";
 SAFEMESSAGE			= "Do you really want to do this?";
 MNU_COLORPICKER		= "SELECT COLOR";
 

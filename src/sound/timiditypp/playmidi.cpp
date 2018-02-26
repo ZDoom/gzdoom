@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <atomic>
 
 #include <string.h>
 #include <math.h>
@@ -5027,11 +5028,13 @@ int Player::compute_data(float *buffer, int32_t count)
 	timidity_drum_power = ::timidity_drum_power;
 	timidity_key_adjust = ::timidity_key_adjust;
 	timidity_tempo_adjust = ::timidity_tempo_adjust;
+	std::atomic_thread_fence(std::memory_order_acq_rel);
 	effect->timidity_chorus = timidity_chorus;
 
 	if (::timidity_reverb != timidity_reverb)
 	{
 		timidity_reverb = ::timidity_reverb;
+		std::atomic_thread_fence(std::memory_order_acq_rel);
 		reverb->timidity_reverb = timidity_reverb;
 
 		// If the reverb mode has changed some buffers need to be reallocated before doing any sound generation.

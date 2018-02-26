@@ -120,6 +120,34 @@ class OptionMenuItemSubmenu : OptionMenuItem
 
 //=============================================================================
 //
+// opens a submenu, command is a submenu name
+//
+//=============================================================================
+
+class OptionMenuItemLabeledSubmenu : OptionMenuItemSubmenu
+{
+	CVar mLabelCVar;
+	OptionMenuItemSubmenu Init(String label, CVar labelcvar, Name command, int param = 0)
+	{
+		Super.init(label, command, false);
+		mLabelCVar = labelcvar;
+		return self;
+	}
+
+	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
+	{
+		drawLabel(indent, y, selected? OptionMenuSettings.mFontColorSelection : OptionMenuSettings.mFontColor);
+		
+		String text = mLabelCVar.GetString();
+		if (text.Length() == 0) text = Stringtable.Localize("$notset");
+		screen.DrawText (SmallFont, OptionMenuSettings.mFontColorValue, indent + CursorSpace(), y, text, DTA_CleanNoMove_1, true);
+		
+		return indent;
+	}
+}
+
+//=============================================================================
+//
 // Executes a CCMD, command is a CCMD name
 //
 //=============================================================================

@@ -41,7 +41,6 @@
 #include "i_system.h"
 #include "gameconfigfile.h"
 #include "resourcefiles/resourcefile.h"
-#include "menu/menu.h"
 
 FSoundFontManager sfmanager;
 
@@ -469,25 +468,4 @@ void I_InitSoundFonts()
 	sfmanager.CollectSoundfonts();
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
 
-void I_BuildSoundFontList(FOptionValues *opt, int allowed)
-{
-	auto &list = sfmanager.GetList();
-	for (auto &entry : list)
-	{
-		if (entry.type & allowed)
-		{
-			FString display = entry.mName;
-			display.ReplaceChars("_", ' ');
-			FOptionValues::Pair pair;
-			pair.Text = display;
-			pair.TextValue = entry.mName;
-			opt->mValues.Push(pair);
-		}
-	}
-}

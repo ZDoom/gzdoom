@@ -992,16 +992,18 @@ DEFINE_ACTION_FUNCTION(DLineTracer, Trace)
 	PARAM_FLOAT(direction_y);
 	PARAM_FLOAT(direction_z);
 	PARAM_FLOAT(maxDist);
-	// actor flags and wall flags are not supported due to how flags are implemented on the ZScript side.
+	// actor flags are not supported due to how flags are implemented on the ZScript side.
 	// say thanks to oversimplifying the user API.
 	PARAM_INT(traceFlags);
+	// line flags ARE supported, actually -- Marisa
+	PARAM_INT(lineFlags);
 
 	// these are internal hacks.
 	traceFlags &= ~(TRACE_PCross | TRACE_Impact);
 
-	// Trace(vector3 start, Sector sector, vector3 direction, double maxDist, ETraceFlags traceFlags)
+	// Trace(vector3 start, Sector sector, vector3 direction, double maxDist, ETraceFlags traceFlags, uint lineFlags)
 	bool res = Trace(DVector3(start_x, start_y, start_z), sector, DVector3(direction_x, direction_y, direction_z), maxDist,
-					 (ActorFlag)0xFFFFFFFF, 0xFFFFFFFF, nullptr, self->Results, traceFlags, &DLineTracer::TraceCallback, self);
+					 (ActorFlag)0xFFFFFFFF, lineFlags, nullptr, self->Results, traceFlags, &DLineTracer::TraceCallback, self);
 	ACTION_RETURN_BOOL(res);
 }
 

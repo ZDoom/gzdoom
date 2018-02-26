@@ -525,6 +525,7 @@ public:
 	// make this private later
 	Instruments *instruments;
 private:
+	int last_reverb_setting;
 	Recache *recache;
 	Mixer *mixer;
 	Reverb *reverb;

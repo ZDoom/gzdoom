@@ -37,16 +37,6 @@
 #endif
 
 
-EXTERN_CVAR(Bool, timidity_modulation_wheel)
-EXTERN_CVAR(Bool, timidity_portamento)
-EXTERN_CVAR(Int, timidity_reverb)
-EXTERN_CVAR(Int, timidity_chorus)
-EXTERN_CVAR(Bool, timidity_surround_chorus)
-EXTERN_CVAR(Bool, timidity_channel_pressure)
-EXTERN_CVAR(Int, timidity_lpf_def)
-EXTERN_CVAR(Bool, timidity_temper_control)
-EXTERN_CVAR(Bool, timidity_modulation_envelope)
-
 
 /* 
    Table of contents:
@@ -133,6 +123,23 @@ EXTERN_CVAR(Bool, timidity_modulation_envelope)
 
 namespace TimidityPlus
 {
+
+extern bool timidity_modulation_wheel;
+extern bool timidity_portamento;
+extern int timidity_reverb;
+extern int  timidity_chorus;
+extern bool timidity_surround_chorus;
+extern bool timidity_channel_pressure;
+extern int timidity_lpf_de;
+extern bool timidity_temper_control;
+extern bool timidity_modulation_envelope;
+extern bool timidity_overlap_voice_allow;
+extern bool timidity_drum_effect;
+extern bool timidity_pan_delay;
+extern float timidity_drum_power;
+extern int timidity_key_adjust;
+extern float timidity_tempo_adjust;
+
 extern int32_t playback_rate;
 extern int32_t control_ratio;	// derived from playback_rate
 

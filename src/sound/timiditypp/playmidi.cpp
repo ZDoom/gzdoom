@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <atomic>
 
 #include <string.h>
 #include <math.h>
@@ -38,9 +37,56 @@
 #include "c_cvars.h"
 #include "tables.h"
 #include "effect.h"
+#include "critsec.h"
+#include "i_musicinterns.h"
 
-CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+namespace TimidityPlus
+{
+	FCriticalSection CvarCritSec;
+	bool timidity_modulation_wheel = true;
+	bool timidity_portamento = false;
+	int timidity_reverb = 0;
+	int  timidity_chorus = 0;
+	bool timidity_surround_chorus = false;	// requires restart!
+	bool timidity_channel_pressure = false;
+	int timidity_lpf_def = true;
+	bool timidity_temper_control = true;
+	bool timidity_modulation_envelope = true;
+	bool timidity_overlap_voice_allow = true;
+	bool timidity_drum_effect = false;
+	bool timidity_pan_delay = false;
+	float timidity_drum_power = 1.f;
+	int timidity_key_adjust = 0;
+	float timidity_tempo_adjust = 1.f;
+
+	// The following options have no generic use and are only meaningful for some SYSEX events not normally found in common MIDIs.
+	// For now they are kept as unchanging global variables
+	static bool opt_eq_control = false;
+	static bool op_nrpn_vibrato = true;
+	static bool opt_tva_attack = false;
+	static bool opt_tva_decay = false;
+	static bool opt_tva_release = false;
+	static bool opt_insertion_effect = false;
+	static bool opt_delay_control = false;
+}
+
+template<class T> void ChangeVarSync(T&var, T value)
+{
+	TimidityPlus::CvarCritSec.Enter();
+	var = value;
+	TimidityPlus::CvarCritSec.Leave();
+}
+
+CUSTOM_CVAR(Bool, timidity_modulation_wheel, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_modulation_wheel, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_portamento, *self);
+}
 /*
 * reverb=0     no reverb                 0
 * reverb=1     old reverb                1
@@ -52,49 +98,83 @@ CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 * reverb=4     "global" new reverb       4
 * reverb=4,n   set reverb level to n   (-1 to -127) - 384
 */
-static bool mustinitreverb;
 CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	mustinitreverb = true;	// this needs to reallocate some buffers
+	ChangeVarSync(TimidityPlus::timidity_reverb, *self);
 }
-CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_chorus, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_channel_pressure, *self);
+}
+
+CUSTOM_CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_lpf_def, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_temper_control, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_modulation_envelope, *self);
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_overlap_voice_allow, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_drum_effect, *self);
+}
+
+CUSTOM_CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	ChangeVarSync(TimidityPlus::timidity_pan_delay, *self);
+}
 
 CUSTOM_CVAR(Float, timidity_drum_power, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG) /* coef. of drum amplitude */
 {
 	if (self < 0) self = 0;
 	else if (self > MAX_AMPLIFICATION/100.f) self = MAX_AMPLIFICATION/100.f;
+	ChangeVarSync(TimidityPlus::timidity_drum_power, *self);
 }
 CUSTOM_CVAR(Int, timidity_key_adjust, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < -24) self = -24;
 	else if (self > 24) self = 24;
+	ChangeVarSync(TimidityPlus::timidity_key_adjust, *self);
 }
 // For testing mainly.
 CUSTOM_CVAR(Float, timidity_tempo_adjust, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (self < 0.25) self = 0.25;
 	else if (self > 10) self = 10;
+	ChangeVarSync(TimidityPlus::timidity_tempo_adjust, *self);
 }
-
-// The following options have no generic use and are only meaningful for some SYSEX events not normally found in common MIDIs.
-// For now they are kept as unchanging global variables
-static bool opt_eq_control = false;
-static bool op_nrpn_vibrato = true;
-static bool opt_tva_attack = false;
-static bool opt_tva_decay = false;
-static bool opt_tva_release = false;
-static bool opt_insertion_effect = false;
-static bool opt_delay_control = false;
-
-
 
 
 namespace TimidityPlus
@@ -120,7 +200,7 @@ Player::Player(int freq, Instruments *instr)
 	const int CONTROLS_PER_SECOND = 1000;
 	const int MAX_CONTROL_RATIO = 255;
 
-	mustinitreverb = false;
+	last_reverb_setting = timidity_reverb;
 	memset(this, 0, sizeof(*this));
 
 	playback_rate = freq;
@@ -5022,12 +5102,15 @@ void Player::do_compute_data(int32_t count)
 int Player::compute_data(float *buffer, int32_t count)
 {
 	if (count == 0) return RC_OK;
-	if (mustinitreverb)
+
+	CvarCritSec.Enter();
+
+	if (last_reverb_setting != timidity_reverb)
 	{
 		// If the reverb mode has changed some buffers need to be reallocated before doing any sound generation.
 		reverb->free_effect_buffers();
 		reverb->init_reverb();
-		mustinitreverb = false;
+		last_reverb_setting = timidity_reverb;
 	}
 
 	buffer_pointer = common_buffer;
@@ -5046,6 +5129,7 @@ int Player::compute_data(float *buffer, int32_t count)
 			*buffer++ = (common_buffer[i])*(5.f / 0x80000000u);
 		}
 	}
+	CvarCritSec.Leave();
 	return RC_OK;
 }
 

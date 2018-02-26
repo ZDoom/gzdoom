@@ -335,7 +335,7 @@ class Instruments
 	int progbase = 0;
 	int32_t modify_release = 0;
 	bool opt_sf_close_each_file = true;
-	char def_instr_name[256] = "";
+	char def_instr_name[256] = { '\0' };
 	SFInsts *sfrecs = nullptr;
 	SFInsts *current_sfrec = nullptr;
 

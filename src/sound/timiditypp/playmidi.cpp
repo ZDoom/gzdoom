@@ -52,11 +52,17 @@ CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 * reverb=4     "global" new reverb       4
 * reverb=4,n   set reverb level to n   (-1 to -127) - 384
 */
-CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+static bool mustinitreverb;
+CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	mustinitreverb = true;	// this needs to reallocate some buffers
+}
 CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, timidity_lpf_def, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, timidity_temper_control, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, timidity_modulation_envelope, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, timidity_overlap_voice_allow, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, timidity_drum_effect, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, timidity_pan_delay, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -114,6 +120,7 @@ Player::Player(int freq, Instruments *instr)
 	const int CONTROLS_PER_SECOND = 1000;
 	const int MAX_CONTROL_RATIO = 255;
 
+	mustinitreverb = false;
 	memset(this, 0, sizeof(*this));
 
 	playback_rate = freq;
@@ -131,9 +138,9 @@ Player::Player(int freq, Instruments *instr)
 	new_midi_file_info();
 	init_mblock(&playmidi_pool);
 
-	reverb = new Reverb(timidity_reverb);
+	reverb = new Reverb;
 	reverb->init_effect_status(play_system_mode);
-	effect = new Effect(reverb, timidity_chorus);
+	effect = new Effect(reverb);
 
 
 	mixer = new Mixer(this);
@@ -5015,31 +5022,12 @@ void Player::do_compute_data(int32_t count)
 int Player::compute_data(float *buffer, int32_t count)
 {
 	if (count == 0) return RC_OK;
-
-	timidity_modulation_wheel = ::timidity_modulation_wheel;
-	timidity_portamento = ::timidity_portamento;
-	timidity_chorus = ::timidity_chorus;
-	timidity_channel_pressure = ::timidity_chorus;
-	timidity_lpf_def = ::timidity_lpf_def;
-	timidity_temper_control = ::timidity_temper_control;
-	timidity_overlap_voice_allow = ::timidity_overlap_voice_allow;
-	timidity_drum_effect = ::timidity_drum_effect;
-	timidity_pan_delay = ::timidity_pan_delay;
-	timidity_drum_power = ::timidity_drum_power;
-	timidity_key_adjust = ::timidity_key_adjust;
-	timidity_tempo_adjust = ::timidity_tempo_adjust;
-	std::atomic_thread_fence(std::memory_order_acq_rel);
-	effect->timidity_chorus = timidity_chorus;
-
-	if (::timidity_reverb != timidity_reverb)
+	if (mustinitreverb)
 	{
-		timidity_reverb = ::timidity_reverb;
-		std::atomic_thread_fence(std::memory_order_acq_rel);
-		reverb->timidity_reverb = timidity_reverb;
-
 		// If the reverb mode has changed some buffers need to be reallocated before doing any sound generation.
 		reverb->free_effect_buffers();
 		reverb->init_reverb();
+		mustinitreverb = false;
 	}
 
 	buffer_pointer = common_buffer;

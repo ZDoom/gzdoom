@@ -692,16 +692,13 @@ class Reverb
 	void do_xg_auto_wah_od(int32_t *buf, int32_t count, EffectList *ef);
 
 public:
-	int timidity_reverb;
-
-	Reverb(int reverb)
+	Reverb()
 	{
 		// Make sure that this starts out with all zeros.
 		memset(this, 0, sizeof(*this));
 		REV_INP_LEV = 1.0;
 		direct_bufsize = sizeof(direct_buffer);
 		reverb_effect_bufsize = sizeof(reverb_effect_buffer);
-		timidity_reverb = reverb;
 
 	}
 

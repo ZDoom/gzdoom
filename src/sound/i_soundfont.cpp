@@ -390,6 +390,14 @@ const FSoundFontInfo *FSoundFontManager::FindSoundFont(const char *name, int all
 			return &sfi;
 		}
 	}
+	// We did not find what we were looking for. Let's just return the first valid item that works with the given device.
+	for (auto &sfi : soundfonts)
+	{
+		if (allowed & sfi.type)
+		{
+			return &sfi;
+		}
+	}
 	return nullptr;
 }
 

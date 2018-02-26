@@ -161,7 +161,7 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 	int i, j;
 	bool noluck = false;
 
-	if (!name) return 0;
+	if (!name || gus_sfreader == nullptr) return nullptr;
 
 	/* Open patch file */
 	fp = gus_sfreader->LookupFile(name).first;

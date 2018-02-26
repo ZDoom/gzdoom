@@ -720,15 +720,21 @@ void FreeDLS(DLS_Data *data);
 
 Renderer::Renderer(float sample_rate, const char *args)
 {
+	int res = 0;
 	// Load explicitly stated sound font if so desired.
 	if (args != nullptr && *args != 0)
 	{
-		if (!stricmp(args, "DMXGUS")) LoadDMXGUS();
-		LoadConfig(args);
+		if (!stricmp(args, "DMXGUS")) res = LoadDMXGUS();
+		res = LoadConfig(args);
 	}
 	else if (tonebank[0] == nullptr)
 	{
-		LoadConfig();
+		res = LoadConfig();
+	}
+
+	if (res < 0)
+	{
+		I_Error("Failed to load any MIDI patches");
 	}
 
 	// These can be left empty here if an error occured during sound font initialization.

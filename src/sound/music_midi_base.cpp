@@ -126,7 +126,7 @@ CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 		return;
 	}
 	else if (self == -1) self = DEF_MIDIDEV;
-	mididevice = MAX<UINT>(0, self);
+	mididevice = MAX<int>(0, self);
 	MIDIDeviceChanged(self);
 }
 

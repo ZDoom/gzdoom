@@ -183,42 +183,60 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 {
 	// fixme: This should check up front if the device can be started.
 	// Checks to ensure that a device finds a compatible sound font are entirely missing here.
+	bool checked[MDEV_COUNT] = { false };
 
-	switch (devtype)
+	if (devtype == MDEV_SNDSYS) devtype = MDEV_FLUIDSYNTH;
+	while (true)
 	{
-	case MDEV_GUS:
-		return new TimidityMIDIDevice(Args);
-			
-	case MDEV_MMAPI:
-#ifdef _WIN32
-			return CreateWinMIDIDevice(mididevice);
-#endif
-			// Intentional fall-through for non-Windows systems.
-
-	case MDEV_FLUIDSYNTH:
-	case MDEV_SNDSYS:
-		return new FluidSynthMIDIDevice(Args);
-
-	case MDEV_OPL:
 		try
 		{
-			return new OPLMIDIDevice(Args);
+			switch (devtype)
+			{
+			case MDEV_GUS:
+				return new TimidityMIDIDevice(Args);
+
+			case MDEV_MMAPI:
+#ifdef _WIN32
+				return CreateWinMIDIDevice(mididevice);
+#endif
+				// Intentional fall-through for non-Windows systems.
+
+			case MDEV_FLUIDSYNTH:
+				return new FluidSynthMIDIDevice(Args);
+
+			case MDEV_OPL:
+				return new OPLMIDIDevice(Args);
+
+			case MDEV_TIMIDITY:
+				return CreateTimidityPPMIDIDevice(Args);
+
+			case MDEV_WILDMIDI:
+				return new WildMIDIDevice(Args);
+
+			default:
+				break;
+			}
 		}
 		catch (CRecoverableError &err)
 		{
-			// The creation of an OPL MIDI device can abort with an error if no GENMIDI lump can be found.
-			Printf("Unable to create OPL MIDI device: %s\nFalling back to default playback", err.GetMessage());
-			return new FluidSynthMIDIDevice(nullptr);
+			checked[devtype] = true;
+			devtype = MDEV_DEFAULT;
+			// Opening the requested device did not work out so choose another one.
+			if (!checked[MDEV_FLUIDSYNTH]) devtype = MDEV_FLUIDSYNTH;
+			else if (!checked[MDEV_TIMIDITY]) devtype = MDEV_TIMIDITY;
+			else if (!checked[MDEV_WILDMIDI]) devtype = MDEV_WILDMIDI;
+			else if (!checked[MDEV_GUS]) devtype = MDEV_GUS;
+#ifdef _WIN32
+			else if (!checked[MDEV_MMAPI]) devtype = MDEV_MMAPI;
+#endif
+			else if (!checked[MDEV_OPL]) devtype = MDEV_OPL;
+
+			if (devtype == MDEV_DEFAULT)
+			{
+				Printf("Failed to play music: Unable to open any MIDI Device.");
+				return nullptr;
+			}
 		}
-
-	case MDEV_TIMIDITY:
-		return CreateTimidityPPMIDIDevice(Args);
-
-	case MDEV_WILDMIDI:
-		return new WildMIDIDevice(Args);
-
-	default:
-		return NULL;
 	}
 }
 

@@ -32,8 +32,6 @@
 **
 */
 
-#include "i_midi_win32.h"
-
 #include <string>
 #include <vector>
 
@@ -129,6 +127,10 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	if (instruments != nullptr)
 	{
 		Renderer = new TimidityPlus::Player(timidity_frequency, instruments);
+	}
+	else
+	{
+		I_Error("Failed to load any MIDI patches");
 	}
 	sampletime = 0;
 }

@@ -42,6 +42,7 @@
 #include "templates.h"
 #include "doomdef.h"
 #include "m_swap.h"
+#include "i_system.h"
 
 #ifndef __GNUC__
 #include <mmdeviceapi.h>
@@ -682,7 +683,7 @@ MIDIDevice *CreateWinMIDIDevice(int mididevice)
 	if (d->BufferDoneEvent == nullptr || d->ExitEvent == nullptr)
 	{
 		delete d;
-		return nullptr;
+		I_Error("failed to create MIDI events");
 	}
 	return d;
 }

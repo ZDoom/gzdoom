@@ -357,9 +357,9 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 
 #endif
 
-	Printf("Failed to load any MIDI patches.\n");
 	delete_fluid_synth(FluidSynth);
 	FluidSynth = NULL;
+	I_Error("Failed to load any MIDI patches.\n");
 
 }
 

@@ -40,6 +40,7 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "v_text.h"
+#include "i_system.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -122,6 +123,10 @@ WildMIDIDevice::WildMIDIDevice(const char *args)
 		if (wildmidi_enhanced_resampling) flags |= WM_MO_ENHANCED_RESAMPLING;
 		if (wildmidi_reverb) flags |= WM_MO_REVERB;
 		Renderer->SetOption(WM_MO_ENHANCED_RESAMPLING | WM_MO_REVERB, flags);
+	}
+	else
+	{
+		I_Error("Failed to load any MIDI patches");
 	}
 }
 

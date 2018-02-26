@@ -829,7 +829,7 @@ uint32_t *MIDIStreamer::WriteStopNotes(uint32_t *events)
 void MIDIStreamer::SetMIDISource(MIDISource *_source)
 {
 	source = _source;
-	source->setTempoCallback([=](int tempo) { return MIDI->SetTempo(tempo); } );
+	source->setTempoCallback([=](int tempo) { return !!MIDI->SetTempo(tempo); } );
 }
 
 

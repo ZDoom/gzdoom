@@ -7758,6 +7758,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	}
 	else
 	{
+		// This alias is needed because Actor has a Teleport function.
+		if (MethodName == NAME_TeleportSpecial) MethodName = NAME_Teleport;
 		special = P_FindLineSpecial(MethodName.GetChars(), &min, &max);
 	}
 	if (special != 0 && min >= 0)

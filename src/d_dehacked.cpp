@@ -2840,14 +2840,14 @@ static bool LoadDehSupp ()
 					sc.MustGetString();
 					PClassActor *actortype = static_cast<PClassActor *>(type);
 					s.State = actortype->FindState(sc.String);
-					if (s.State == NULL)
+					if (s.State == NULL && addit)
 					{
 						sc.ScriptError("Invalid state '%s' in '%s'", sc.String, type->TypeName.GetChars());
 					}
 
 					sc.MustGetStringName(",");
 					sc.MustGetNumber();
-					if (s.State == NULL || sc.Number < 1 || !actortype->OwnsState(s.State + sc.Number - 1))
+					if (addit && (s.State == NULL || sc.Number < 1 || !actortype->OwnsState(s.State + sc.Number - 1)))
 					{
 						sc.ScriptError("Invalid state range in '%s'", type->TypeName.GetChars());
 					}

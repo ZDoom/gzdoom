@@ -814,8 +814,8 @@ void FNodeBuilder::SplitSegs (uint32_t set, node_t &node, uint32_t splitseg, uin
 			frac = InterceptVector (node, *seg);
 			newvert.x = Vertices[seg->v1].x;
 			newvert.y = Vertices[seg->v1].y;
-			newvert.x += fixed_t(frac * double(Vertices[seg->v2].x - newvert.x));
-			newvert.y += fixed_t(frac * double(Vertices[seg->v2].y - newvert.y));
+			newvert.x += fixed_t(frac * (double(Vertices[seg->v2].x) - newvert.x));
+			newvert.y += fixed_t(frac * (double(Vertices[seg->v2].y) - newvert.y));
 			vertnum = VertexMap->SelectVertexClose (newvert);
 
 			if (vertnum != (unsigned int)seg->v1 && vertnum != (unsigned int)seg->v2)

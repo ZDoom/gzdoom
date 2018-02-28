@@ -745,6 +745,14 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 	if (InitialPlayback)
 	{
 		InitialPlayback = false;
+		// Send the GS System Reset SysEx message.
+		events[0] = 0;								// dwDeltaTime
+		events[1] = 0;								// dwStreamID
+		events[2] = (MEVENT_LONGMSG << 24) | 6;		// dwEvent
+		events[3] = MAKE_ID(0xf0, 0x7e, 0x7f, 0x09);	// dwParms[0]
+		events[4] = MAKE_ID(0x01, 0xf7, 0x00, 0x00);	// dwParms[1]
+		events += 5;
+
 		// Send the full master volume SysEx message.
 		events[0] = 0;								// dwDeltaTime
 		events[1] = 0;								// dwStreamID
@@ -752,6 +760,7 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 		events[3] = MAKE_ID(0xf0,0x7f,0x7f,0x04);	// dwParms[0]
 		events[4] = MAKE_ID(0x01,0x7f,0x7f,0xf7);	// dwParms[1]
 		events += 5;
+
 		DoInitialSetup();
 	}
 

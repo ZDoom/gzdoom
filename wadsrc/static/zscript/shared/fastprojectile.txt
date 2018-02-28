@@ -66,7 +66,7 @@ class FastProjectile : Actor
 		int count = 8;
 		if (radius > 0)
 		{
-			while ( abs(Vel.X) > radius * count || abs(Vel.Y) > radius * count)
+			while ( abs(Vel.X) >= radius * count || abs(Vel.Y) >= radius * count || abs(Vel.Z) >= height * count)
 			{
 				// we need to take smaller steps.
 				count += count;

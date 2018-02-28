@@ -7,11 +7,31 @@
 
 struct ZCCToken
 {
+	template <typename... Ts>
+	struct TLargest;
+
+	template <typename T>
+	struct TLargest<T>
+	{
+		using Type = T;
+	};
+
+	template <typename T, typename U, typename... Ts>
+	struct TLargest<T, U, Ts...>
+	{
+		using Type = typename TLargest<
+			typename std::conditional<
+				(sizeof(T) > sizeof(U)), T, U
+			>::type, Ts...
+		>::Type;
+	};
+
 	union
 	{
 		int Int;
 		double Float;
 		FString *String;
+		TLargest<decltype(Int), decltype(Float), decltype(String)>::Type Largest;
 	};
 	int SourceLoc;
 

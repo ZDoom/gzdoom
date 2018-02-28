@@ -692,6 +692,10 @@ bool TimidityPPMIDIDevice::FillStream(SoundStream *stream, void *buff, int len, 
 			}
 			break;
 		}
+		else if (r == 0 && errno != 0)
+		{
+			break;
+		}
 		got += r;
 	} while(got < len);
 	if(got < len)

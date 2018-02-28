@@ -1968,7 +1968,10 @@ void PDynArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *spe
 void PDynArray::WriteValue(FSerializer &ar, const char *key, const void *addr) const
 {
 	FArray *aray = (FArray*)addr;
-	if (aray->Count > 0)
+	// We may skip an empty array only if it gets stored under a named key.
+	// If no name is given, i.e. it's part of an outer array's element list, even empty arrays must be stored,
+	// because otherwise the array would lose its entry.
+	if (aray->Count > 0 || key == nullptr)	
 	{
 		if (ar.BeginArray(key))
 		{

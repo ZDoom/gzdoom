@@ -1931,22 +1931,6 @@ class PowerMorph : Powerup
 
 		int savedMorphTics = MorphedPlayer.morphTics;
 		MorphedPlayer.UndoPlayerMorph (MorphedPlayer, 0, !!(MorphedPlayer.MorphStyle & MRF_UNDOALWAYS));
-
-		// Abort if unmorph failed; in that case,
-		// set the usual retry timer and return.
-		if (MorphedPlayer != null && MorphedPlayer.morphTics)
-		{
-			// Transfer retry timeout
-			// to the powerup's timer.
-			EffectTics = MorphedPlayer.morphTics;
-			// Reload negative morph tics;
-			// use actual value; it may
-			// be in use for animation.
-			MorphedPlayer.morphTics = savedMorphTics;
-			// Try again some time later
-			return;
-		}
-		// Unmorph suceeded
 		MorphedPlayer = null;
 	}
 

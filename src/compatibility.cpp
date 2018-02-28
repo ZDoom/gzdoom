@@ -92,6 +92,7 @@ enum
 	CP_SETTHINGSKILLS,
 	CP_SETSECTORTEXTURE,
 	CP_SETSECTORLIGHT,
+	CP_SETLINESECTORREF,
 };
 
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
@@ -282,6 +283,18 @@ void ParseCompatibility()
 					sc.MustGetNumber();
 					CompatParams.Push(sc.Number);
 				}
+			}
+			else if (sc.Compare("setlinesectorref"))
+			{
+				if (flags.ExtCommandIndex == ~0u) flags.ExtCommandIndex = CompatParams.Size();
+				CompatParams.Push(CP_SETLINESECTORREF);
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				sc.MustGetString();
+				CompatParams.Push(sc.MustMatchString(LineSides));
+				sc.MustGetNumber();
+				CompatParams.Push(sc.Number);
+				flags.CompatFlags[SLOT_BCOMPAT] |= BCOMPATF_REBUILDNODES;
 			}
 			else if (sc.Compare("clearlinespecial"))
 			{
@@ -719,6 +732,22 @@ void SetCompatibilityParams()
 					i += 3;
 					break;
 				}
+				case CP_SETLINESECTORREF:
+				{
+					if ((unsigned)CompatParams[i + 1] < level.lines.Size())
+					{
+						line_t *line = &level.lines[CompatParams[i + 1]];
+						assert(line != nullptr);
+						side_t *side = line->sidedef[CompatParams[i + 2]];
+						if (side != nullptr && (unsigned)CompatParams[i + 3] < level.sectors.Size())
+						{
+							side->sector = &level.sectors[CompatParams[i + 3]];
+						}
+					}
+					i += 4;
+					break;
+				}
+
 			}
 		}
 	}

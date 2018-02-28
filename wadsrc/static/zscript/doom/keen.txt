@@ -70,8 +70,13 @@ extend class Actor
 		{
 			if (mo.health > 0 && mo != self)
 			{
-				// other Keen not dead
-				return;
+				// Added check for Dehacked and repurposed inventory items.
+				let inv = Inventory(mo);
+				if (inv == null || inv.Owner == null)
+				{
+					// other Keen not dead
+					return;
+				}
 			}
 		}
 		Door_Open(doortag, 16);

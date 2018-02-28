@@ -4138,15 +4138,18 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// [SP] move unfriendly players around
 	// horribly hacky - yes, this needs rewritten.
-	for (i = 0; i < MAXPLAYERS; ++i)
+	if (level.deathmatchstarts.Size () > 0)
 	{
-		if (playeringame[i] && players[i].mo != NULL)
+		for (i = 0; i < MAXPLAYERS; ++i)
 		{
-			if (!(players[i].mo->flags & MF_FRIENDLY))
+			if (playeringame[i] && players[i].mo != NULL)
 			{
-				AActor * oldSpawn = players[i].mo;
-				G_DeathMatchSpawnPlayer (i);
-				oldSpawn->Destroy();
+				if (!(players[i].mo->flags & MF_FRIENDLY))
+				{
+					AActor * oldSpawn = players[i].mo;
+					G_DeathMatchSpawnPlayer (i);
+					oldSpawn->Destroy();
+				}
 			}
 		}
 	}

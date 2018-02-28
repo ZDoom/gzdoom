@@ -1222,4 +1222,3 @@ enum ActorRenderFeatureFlag
 	RFF_TRUECOLOR		= 1<<11, // renderer is currently truecolor
 	RFF_VOXELS		= 1<<12, // renderer is capable of voxels
 };
-

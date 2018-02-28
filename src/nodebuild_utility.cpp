@@ -641,8 +641,8 @@ FNodeBuilder::FVertexMap::FVertexMap (FNodeBuilder &builder,
 	MinY = miny;
 	BlocksWide = int(((double(maxx) - minx + 1) + (BLOCK_SIZE - 1)) / BLOCK_SIZE);
 	BlocksTall = int(((double(maxy) - miny + 1) + (BLOCK_SIZE - 1)) / BLOCK_SIZE);
-	MaxX = MinX + BlocksWide * BLOCK_SIZE - 1;
-	MaxY = MinY + BlocksTall * BLOCK_SIZE - 1;
+	MaxX = MinX + fixed64_t(BlocksWide) * BLOCK_SIZE - 1;
+	MaxY = MinY + fixed64_t(BlocksTall) * BLOCK_SIZE - 1;
 	VertexGrid = new TArray<int>[BlocksWide * BlocksTall];
 }
 
@@ -703,10 +703,10 @@ int FNodeBuilder::FVertexMap::InsertVertex (FNodeBuilder::FPrivVert &vert)
 	// If a vertex is near a block boundary, then it will be inserted on
 	// both sides of the boundary so that SelectVertexClose can find
 	// it by checking in only one block.
-	fixed_t minx = MAX (MinX, vert.x - VERTEX_EPSILON);
-	fixed_t maxx = MIN (MaxX, vert.x + VERTEX_EPSILON);
-	fixed_t miny = MAX (MinY, vert.y - VERTEX_EPSILON);
-	fixed_t maxy = MIN (MaxY, vert.y + VERTEX_EPSILON);
+	fixed64_t minx = MAX (MinX, fixed64_t(vert.x) - VERTEX_EPSILON);
+	fixed64_t maxx = MIN (MaxX, fixed64_t(vert.x) + VERTEX_EPSILON);
+	fixed64_t miny = MAX (MinY, fixed64_t(vert.y) - VERTEX_EPSILON);
+	fixed64_t maxy = MIN (MaxY, fixed64_t(vert.y) + VERTEX_EPSILON);
 
 	int blk[4] =
 	{

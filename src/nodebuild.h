@@ -91,6 +91,8 @@ struct FSimpleVert
 	fixed_t x, y;
 };
 
+typedef int64_t fixed64_t;
+
 class FNodeBuilder
 {
 	struct FPrivSeg
@@ -167,14 +169,14 @@ class FNodeBuilder
 		FNodeBuilder &MyBuilder;
 		TArray<int> *VertexGrid;
 
-		fixed_t MinX, MinY, MaxX, MaxY;
+		fixed64_t MinX, MinY, MaxX, MaxY;
 		int BlocksWide, BlocksTall;
 
 		enum { BLOCK_SHIFT = 8 + FRACBITS };
 		enum { BLOCK_SIZE = 1 << BLOCK_SHIFT };
 
 		int InsertVertex (FPrivVert &vert);
-		inline int GetBlock (fixed_t x, fixed_t y)
+		inline int GetBlock (fixed64_t x, fixed64_t y)
 		{
 			assert (x >= MinX);
 			assert (y >= MinY);

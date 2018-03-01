@@ -405,7 +405,6 @@ void F2DDrawer::Draw()
 
 			gl_SetRenderStyle(dt->mRenderStyle, !dt->mMasked, false);
 			gl_RenderState.SetMaterial(dt->mTexture, CLAMP_XY_NOMIP, dt->mTranslation, -1, dt->mAlphaTexture);
-			if (dt->mTexture->tex->bHasCanvas) gl_RenderState.SetTextureMode(TM_OPAQUE);
 
 			glEnable(GL_SCISSOR_TEST);
 			glScissor(dt->mScissor[0], dt->mScissor[1], dt->mScissor[2], dt->mScissor[3]);

@@ -99,7 +99,6 @@ public:
 	//(b_func.cpp)
 	void StartTravel ();
 	void FinishTravel ();
-	void BotTick(AActor *mo);
 
 	//(b_move.cpp)
 

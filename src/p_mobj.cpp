@@ -4269,12 +4269,6 @@ void AActor::Tick ()
 			}
 		}
 
-		if (bglobal.botnum && !demoplayback &&
-			((flags & (MF_SPECIAL|MF_MISSILE)) || (flags3 & MF3_ISMONSTER)))
-		{
-			bglobal.BotTick(this);
-		}
-
 		// [RH] Consider carrying sectors here
 		DVector2 cumm(0, 0);
 

@@ -48,12 +48,6 @@
 #include "d_player.h"
 #include "vm.h"
 
-
-void FBotInfo::BotTick(AActor *mo)
-{
-}
-
-
 void FBotInfo::StartTravel ()
 {
 	for (int i = 0; i < MAXPLAYERS; ++i)

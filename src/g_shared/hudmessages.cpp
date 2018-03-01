@@ -43,11 +43,13 @@
 
 EXTERN_CVAR(Int, con_scaletext)
 
-IMPLEMENT_CLASS(DHUDMessage, false, true)
-
-IMPLEMENT_POINTERS_START(DHUDMessage)
-	IMPLEMENT_POINTER(Next)
+IMPLEMENT_CLASS(DHUDMessageBase, true, true)
+IMPLEMENT_POINTERS_START(DHUDMessageBase)
+IMPLEMENT_POINTER(Next)
 IMPLEMENT_POINTERS_END
+
+
+IMPLEMENT_CLASS(DHUDMessage, false, false)
 
 IMPLEMENT_CLASS(DHUDMessageFadeOut, false, false)
 IMPLEMENT_CLASS(DHUDMessageFadeInOut, false, false)
@@ -56,6 +58,13 @@ IMPLEMENT_CLASS(DHUDMessageTypeOnFadeOut, false, false)
 /*************************************************************************
  * Basic HUD message. Appears and disappears without any special effects *
  *************************************************************************/
+
+void DHUDMessageBase::Serialize(FSerializer &arc)
+{
+	Super::Serialize(arc);
+	arc("next", Next)
+		("sbarid", SBarID);
+}
 
 //============================================================================
 //
@@ -130,7 +139,6 @@ DHUDMessage::DHUDMessage (FFont *font, const char *text, float x, float y, int h
 	WrapWidth = 0;
 	HandleAspect = true;
 	Top = y;
-	Next = NULL;
 	Lines = NULL;
 	HoldTics = (int)(holdTime * TICRATE);
 	Tics = 0;
@@ -184,10 +192,8 @@ void DHUDMessage::Serialize(FSerializer &arc)
 		("tics", Tics)
 		("state", State)
 		.Enum("textcolor", TextColor)
-		("sbarid", SBarID)
 		("sourcetext", SourceText)
 		("font", Font)
-		("next", Next)
 		("hudwidth", HUDWidth)
 		("hudheight", HUDHeight)
 		("nowrap", NoWrap)

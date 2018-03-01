@@ -40,6 +40,7 @@
 #include "cmdlib.h"
 #include "doomstat.h"
 #include "serializer.h"
+#include "vm.h"
 
 EXTERN_CVAR(Int, con_scaletext)
 
@@ -64,6 +65,61 @@ void DHUDMessageBase::Serialize(FSerializer &arc)
 	Super::Serialize(arc);
 	arc("next", Next)
 		("sbarid", SBarID);
+}
+
+DEFINE_ACTION_FUNCTION(DHUDMessageBase, Tick)
+{
+	PARAM_SELF_PROLOGUE(DHUDMessageBase);
+	ACTION_RETURN_BOOL(self->Tick());
+}
+
+DEFINE_ACTION_FUNCTION(DHUDMessageBase, ScreenSizeChanged)
+{
+	PARAM_SELF_PROLOGUE(DHUDMessageBase);
+	self->ScreenSizeChanged();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DHUDMessageBase, Draw)
+{
+	PARAM_SELF_PROLOGUE(DHUDMessageBase);
+	PARAM_INT(bottom);
+	PARAM_INT(visibility);
+	self->Draw(bottom, visibility);
+	return 0;
+}
+
+bool DHUDMessageBase::CallTick()
+{
+	IFVIRTUAL(DHUDMessageBase, Tick)
+	{
+		VMValue params[] = { (DObject*)this };
+		int retval;
+		VMReturn ret; ret.IntAt(&retval);
+		VMCall(func, params, countof(params), &ret, 1);
+		return !!retval;
+	}
+	return Tick();
+}
+
+void DHUDMessageBase::CallScreenSizeChanged()
+{
+	IFVIRTUAL(DHUDMessageBase, ScreenSizeChanged)
+	{
+		VMValue params[] = { (DObject*)this };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
+	else ScreenSizeChanged();
+}
+
+void DHUDMessageBase::CallDraw(int bottom, int visibility)
+{
+	IFVIRTUAL(DHUDMessageBase, Draw)
+	{
+		VMValue params[] = { (DObject*)this, bottom, visibility };
+		VMCall(func, params, countof(params), nullptr, 0);
+	}
+	else Draw(bottom, visibility);
 }
 
 //============================================================================

@@ -601,7 +601,7 @@ void DBaseStatusBar::Tick ()
 		{
 			DHUDMessageBase *next = msg->Next;
 
-			if (msg->Tick ())
+			if (msg->CallTick ())
 			{
 				*prev = next;
 				msg->Destroy();
@@ -697,6 +697,16 @@ void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer
 	GC::WriteBarrier(container, msg);
 }
 
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, AttachMessage)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_OBJECT(msg, DHUDMessageBase);
+	PARAM_UINT(id);
+	PARAM_INT(layer);
+	self->AttachMessage(msg, id, layer);
+	return 0;
+}
+
 //---------------------------------------------------------------------------
 //
 // PROC DetachMessage
@@ -725,6 +735,14 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (DHUDMessageBase *msg)
 	return NULL;
 }
 
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DetachMessage)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_OBJECT(msg, DHUDMessageBase);
+	ACTION_RETURN_OBJECT(self->DetachMessage(msg));
+}
+
+
 DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 {
 	for (size_t i = 0; i < countof(Messages); ++i)
@@ -745,6 +763,13 @@ DHUDMessageBase *DBaseStatusBar::DetachMessage (uint32_t id)
 		}
 	}
 	return NULL;
+}
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DetachMessageID)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	PARAM_INT(id);
+	ACTION_RETURN_OBJECT(self->DetachMessage(id));
 }
 
 //---------------------------------------------------------------------------
@@ -768,6 +793,14 @@ void DBaseStatusBar::DetachAllMessages ()
 		}
 	}
 }
+
+DEFINE_ACTION_FUNCTION(DBaseStatusBar, DetachAllMessages)
+{
+	PARAM_SELF_PROLOGUE(DBaseStatusBar);
+	self->DetachAllMessages();
+	return 0;
+}
+
 
 //---------------------------------------------------------------------------
 //
@@ -954,7 +987,7 @@ void DBaseStatusBar::DrawMessages (int layer, int bottom)
 	while (msg)
 	{
 		DHUDMessageBase *next = msg->Next;
-		msg->Draw (bottom, visibility);
+		msg->CallDraw (bottom, visibility);
 		msg = next;
 	}
 }
@@ -1310,7 +1343,7 @@ void DBaseStatusBar::ScreenSizeChanged ()
 		DHUDMessageBase *message = Messages[i];
 		while (message != NULL)
 		{
-			message->ScreenSizeChanged ();
+			message->CallScreenSizeChanged ();
 			message = message->Next;
 		}
 	}

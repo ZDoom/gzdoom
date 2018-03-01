@@ -71,6 +71,10 @@ public:
 	virtual void ScreenSizeChanged() {}
 	virtual void Draw(int bottom, int visibility) {}
 
+	bool CallTick();	// Returns true to indicate time for removal
+	void CallScreenSizeChanged();
+	void CallDraw(int bottom, int visibility);
+
 private:
 	TObjPtr<DHUDMessageBase*> Next = nullptr;
 	uint32_t SBarID = 0;

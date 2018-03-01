@@ -101,6 +101,12 @@ class InventoryBarState ui
 	
 }
 
+class HUDMessageBase native ui
+{
+	virtual native bool Tick();
+	virtual native void ScreenSizeChanged();
+	virtual native void Draw(int bottom, int visibility);
+}
 
 class BaseStatusBar native ui
 {
@@ -291,6 +297,10 @@ class BaseStatusBar native ui
 	
 	private HUDFont mSmallFont;
 	
+	native void AttachMessage(HUDMessageBase msg);
+	native HUDMessageBase DetachMessage(HUDMessageBase msg);
+	native HUDMessageBase DetachMessageID(uint msgid);
+	native void DetachAllMessages();
 	
 	native void SetSize(int height, int vwidth, int vheight, int hwidth = -1, int hheight = -1);
 	native Vector2 GetHUDScale();

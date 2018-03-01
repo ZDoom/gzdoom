@@ -344,7 +344,7 @@ public:
 	bool OwnsState(const FState *state)
 	{
 		auto i = ActorInfo();
-		return state >= i->OwnedStates && state < i->OwnedStates + i->NumOwnedStates;
+		return i != nullptr && state >= i->OwnedStates && state < i->OwnedStates + i->NumOwnedStates;
 	}
 
 	PClassActor *GetReplacement(bool lookskill=true);

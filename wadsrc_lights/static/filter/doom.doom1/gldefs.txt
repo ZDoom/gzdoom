@@ -559,6 +559,21 @@ object SoulSphere
     frame SOUL { light SOULSPHERE }
 }
 
+pulselight MEGASPHERE
+{
+    color 0.5 0.5 0.4
+    size 60
+    secondarySize 63
+    interval 2.0
+    offset 0 16 0
+	attenuate 1
+}
+
+object MegaSphere
+{
+    frame MEGA { light MEGASPHERE }
+}
+
 // Invulnerability Sphere
 pulselight INVULN
 {

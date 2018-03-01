@@ -190,32 +190,32 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 	{
 		try
 		{
-			switch (devtype)
-			{
+	switch (devtype)
+	{
 			case MDEV_GUS:
 				return new TimidityMIDIDevice(Args);
 
-			case MDEV_MMAPI:
+	case MDEV_MMAPI:
 #ifdef _WIN32
-				return CreateWinMIDIDevice(mididevice);
+		return CreateWinMIDIDevice(mididevice);
 #endif
-				// Intentional fall-through for non-Windows systems.
+		// Intentional fall-through for non-Windows systems.
 
-			case MDEV_FLUIDSYNTH:
-				return new FluidSynthMIDIDevice(Args);
+	case MDEV_FLUIDSYNTH:
+		return new FluidSynthMIDIDevice(Args);
 
-			case MDEV_OPL:
-				return new OPLMIDIDevice(Args);
+	case MDEV_OPL:
+			return new OPLMIDIDevice(Args);
 
-			case MDEV_TIMIDITY:
-				return CreateTimidityPPMIDIDevice(Args);
+	case MDEV_TIMIDITY:
+		return CreateTimidityPPMIDIDevice(Args);
 
-			case MDEV_WILDMIDI:
-				return new WildMIDIDevice(Args);
+	case MDEV_WILDMIDI:
+		return new WildMIDIDevice(Args);
 
-			default:
+	default:
 				break;
-			}
+	}
 		}
 		catch (CRecoverableError &err)
 		{
@@ -721,6 +721,14 @@ int MIDIStreamer::FillBuffer(int buffer_num, int max_events, uint32_t max_time)
 	if (InitialPlayback)
 	{
 		InitialPlayback = false;
+		// Send the GS System Reset SysEx message.
+		events[0] = 0;								// dwDeltaTime
+		events[1] = 0;								// dwStreamID
+		events[2] = (MEVENT_LONGMSG << 24) | 6;		// dwEvent
+		events[3] = MAKE_ID(0xf0, 0x7e, 0x7f, 0x09);	// dwParms[0]
+		events[4] = MAKE_ID(0x01, 0xf7, 0x00, 0x00);	// dwParms[1]
+		events += 5;
+
 		// Send the full master volume SysEx message.
 		events[0] = 0;								// dwDeltaTime
 		events[1] = 0;								// dwStreamID

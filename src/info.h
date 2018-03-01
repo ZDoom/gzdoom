@@ -244,6 +244,7 @@ struct FActorInfo
 	PClassActor *Replacee = nullptr;
 	FState *OwnedStates = nullptr;
 	int NumOwnedStates = 0;
+	bool SkipSuperSet = false;
 	uint8_t GameFilter = GAME_Any;
 	uint16_t SpawnID = 0;
 	uint16_t ConversationID = 0;
@@ -287,7 +288,7 @@ struct FActorInfo
 };
 
 // This is now merely a wrapper that adds actor-specific functionality to PClass.
-// No objects of this type will be created ever - its only use is to static_casr
+// No objects of this type will be created ever - its only use is to static_cast
 // PClass to it.
 class PClassActor : public PClass
 {
@@ -343,7 +344,7 @@ public:
 	bool OwnsState(const FState *state)
 	{
 		auto i = ActorInfo();
-		return state >= i->OwnedStates && state < i->OwnedStates + i->NumOwnedStates;
+		return i != nullptr && state >= i->OwnedStates && state < i->OwnedStates + i->NumOwnedStates;
 	}
 
 	PClassActor *GetReplacement(bool lookskill=true);

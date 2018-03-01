@@ -868,3 +868,17 @@ CA3773ED313E8899311F3DD0CA195A68 // e3m6
 {
 	shorttex
 }
+
+FCCA97FC851F6473EAA069F74247B317 // pg-raw.wad map31
+{
+	setlinesectorref 331 front 74
+	setlinesectorref 326 front 74
+	setlinesectorref 497 front 74
+	setlinesectorref 474 front 74
+	setlinesectorref 471 front 74
+	setlinesectorref 327 front 74
+	setlinesectorref 328 front 74
+	setlinesectorref 329 front 74
+	setsectortag 74 4
+	setlinespecial 357 Transfer_Heights 4 2 0 0 0 
+}

@@ -2872,7 +2872,18 @@ void ZCCCompiler::CompileStates()
 
 		FString statename;	// The state builder wants the label as one complete string, not separated into tokens.
 		FStateDefinitions statedef;
-		statedef.MakeStateDefines(ValidateActor(c->ClassType()->ParentClass));
+
+		if (static_cast<PClassActor*>(c->ClassType())->ActorInfo()->SkipSuperSet)
+		{
+			// SKIP_SUPER'ed actors only get the base states from AActor.
+			statedef.MakeStateDefines(RUNTIME_CLASS(AActor));
+		}
+		else
+		{
+			statedef.MakeStateDefines(ValidateActor(c->ClassType()->ParentClass));
+		}
+
+
 		int numframes = 0;
 
 		for (auto s : c->States)

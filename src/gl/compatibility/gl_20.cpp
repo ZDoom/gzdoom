@@ -209,9 +209,10 @@ static bool currentModelMatrixState;
 
 void FRenderState::ApplyFixedFunction()
 {
-	if (mTextureMode != ffTextureMode)
+	int thistm = mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
+	if (thistm != ffTextureMode)
 	{
-		ffTextureMode = mTextureMode;
+		ffTextureMode = thistm;
 		if (ffTextureMode == TM_CLAMPY) ffTextureMode = TM_MODULATE;	// this cannot be replicated. Too bad if it creates visual artifacts
 		gl_SetTextureMode(ffTextureMode);
 	}

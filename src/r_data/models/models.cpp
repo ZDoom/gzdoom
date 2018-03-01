@@ -125,9 +125,17 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	// Applying model transformations:
 	// 1) Applying actor angle, pitch and roll to the model
+	if (smf->flags & MDL_USEROTATIONCENTER)
+	{
+		objectToWorldMatrix.translate(smf->rotationCenterX, smf->rotationCenterZ, smf->rotationCenterY);
+	}
 	objectToWorldMatrix.rotate(-angle, 0, 1, 0);
 	objectToWorldMatrix.rotate(pitch, 0, 0, 1);
 	objectToWorldMatrix.rotate(-roll, 1, 0, 0);
+	if (smf->flags & MDL_USEROTATIONCENTER)
+	{
+		objectToWorldMatrix.translate(-smf->rotationCenterX, -smf->rotationCenterZ, -smf->rotationCenterY);
+	}
 
 	// 2) Applying Doomsday like rotation of the weapon pickup models
 	// The rotation angle is based on the elapsed time.
@@ -788,6 +796,13 @@ void gl_InitModels()
 					else if (sc.Compare("dontcullbackfaces"))
 					{
 						smf.flags |= MDL_DONTCULLBACKFACES;
+					}
+					else if (sc.Compare("userotationcenter"))
+					{
+						smf.flags |= MDL_USEROTATIONCENTER;
+						smf.rotationCenterX = 0.;
+						smf.rotationCenterY = 0.;
+						smf.rotationCenterZ = 0.;
 					}
 					else
 					{

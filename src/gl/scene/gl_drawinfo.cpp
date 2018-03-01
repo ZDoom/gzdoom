@@ -358,42 +358,46 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 //
 //
 //==========================================================================
-void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
+void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 {
-	GLFlat * fh=&flats[drawitems[head->itemindex].index];
-	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
+	GLFlat * fh = &flats[drawitems[head->itemindex].index];
+	GLSprite * ss = &sprites[drawitems[sort->itemindex].index];
 
 	bool ceiling = fh->z > r_viewpoint.Pos.Z;
 
-	if ((ss->z1>fh->z && ss->z2<fh->z) || ss->modelframe)
+	auto hiz = ss->z1 > ss->z2 ? ss->z1 : ss->z2;
+	auto loz = ss->z1 < ss->z2 ? ss->z1 : ss->z2;
+
+	if ((hiz > fh->z && loz < fh->z) || ss->modelframe)
 	{
 		// We have to split this sprite
-		GLSprite s=*ss;
+		GLSprite s = *ss;
 		AddSprite(&s);	// add a copy to avoid reallocation issues.
-	
-		// Splitting is done in the shader with clip planes, if available
+
+		// Splitting is done in the shader with clip planes, if available.
+		// The fallback here only really works for non-y-billboarded sprites.
 		if (gl.flags & RFL_NO_CLIP_PLANES)
 		{
 			GLSprite * ss1;
-			ss1=&sprites[sprites.Size()-1];
-			ss=&sprites[drawitems[sort->itemindex].index];	// may have been reallocated!
-			float newtexv=ss->vt + ((ss->vb-ss->vt)/(ss->z2-ss->z1))*(fh->z-ss->z1);
+			ss1 = &sprites[sprites.Size() - 1];
+			ss = &sprites[drawitems[sort->itemindex].index];	// may have been reallocated!
+			float newtexv = ss->vt + ((ss->vb - ss->vt) / (ss->z2 - ss->z1))*(fh->z - ss->z1);
 
 			if (!ceiling)
 			{
-				ss->z1=ss1->z2=fh->z;
-				ss->vt=ss1->vb=newtexv;
+				ss->z1 = ss1->z2 = fh->z;
+				ss->vt = ss1->vb = newtexv;
 			}
 			else
 			{
-				ss1->z1=ss->z2=fh->z;
-				ss1->vt=ss->vb=newtexv;
+				ss1->z1 = ss->z2 = fh->z;
+				ss1->vt = ss->vb = newtexv;
 			}
 		}
 
-		SortNode * sort2=SortNodes.GetNew();
-		memset(sort2,0,sizeof(SortNode));
-		sort2->itemindex=drawitems.Size()-1;
+		SortNode * sort2 = SortNodes.GetNew();
+		memset(sort2, 0, sizeof(SortNode));
+		sort2->itemindex = drawitems.Size() - 1;
 
 		head->AddToLeft(sort);
 		head->AddToRight(sort2);
@@ -406,7 +410,6 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head,SortNode * sort)
 	{
 		head->AddToRight(sort);
 	}
-
 }
 
 

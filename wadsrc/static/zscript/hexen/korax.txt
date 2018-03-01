@@ -244,6 +244,11 @@ class Korax : Actor
 
 	void A_KoraxMissile()
 	{
+		if (!target)
+		{
+			return;
+		}
+
 		static const class<Actor> choices[] =
 		{
 			"WraithFX1", "Demon1FX1", "Demon2FX1", "FireDemonMissile", "CentaurFX", "SerpentFX"
@@ -282,6 +287,11 @@ class Korax : Actor
 
 	void KoraxFire (Class<Actor> type, int arm)
 	{
+		if (!target)
+		{
+			return;
+		}
+
 		static const int extension[] =
 		{
 			KORAX_ARM_EXTENSION_SHORT,

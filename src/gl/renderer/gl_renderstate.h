@@ -112,6 +112,7 @@ class FRenderState
 
 	int mEffectState;
 	int mColormapState;
+	int mTempTM = TM_MODULATE;
 
 	float stAlphaThreshold;
 	int stSrcBlend, stDstBlend;
@@ -149,6 +150,14 @@ public:
 		if (alphatexture)
 		{
 			if (mat->tex->UseBasePalette() || gl.legacyMode) translation = TRANSLATION(TRANSLATION_Standard, 8);
+		}
+		if (mat->tex->bHasCanvas)
+		{
+			mTempTM = TM_OPAQUE;
+		}
+		else
+		{
+			mTempTM = TM_MODULATE;
 		}
 		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
 		mShaderTimer = mat->tex->gl_info.shaderspeed;

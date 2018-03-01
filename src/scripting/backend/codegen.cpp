@@ -2304,6 +2304,7 @@ ExpEmit FxPreIncrDecr::Emit(VMFunctionBuilder *build)
 	}
 
 	pointer.Free(build);
+	value.Target = false;	// This is for 'unrequesting' the address of a register variable. If not done here, passing a preincrement expression to a function will generate bad code.
 	return value;
 }
 
@@ -7406,7 +7407,16 @@ ExpEmit FxArrayElement::Emit(VMFunctionBuilder *build)
 	
 	if (arrayispointer)
 	{
-		arraytype = static_cast<PArray*>(Array->ValueType->toPointer()->PointedType);
+		auto ptr = Array->ValueType->toPointer();
+		if (ptr != nullptr)
+		{
+			arraytype = static_cast<PArray*>(ptr->PointedType);
+		}
+		else
+		{
+			ScriptPosition.Message(MSG_ERROR, "Internal error when generating code for array access");
+			return ExpEmit();
+		}
 	}
 	else
 	{
@@ -7758,6 +7768,8 @@ FxExpression *FxFunctionCall::Resolve(FCompileContext& ctx)
 	}
 	else
 	{
+		// This alias is needed because Actor has a Teleport function.
+		if (MethodName == NAME_TeleportSpecial) MethodName = NAME_Teleport;
 		special = P_FindLineSpecial(MethodName.GetChars(), &min, &max);
 	}
 	if (special != 0 && min >= 0)

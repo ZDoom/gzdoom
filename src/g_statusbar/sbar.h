@@ -59,10 +59,34 @@ bool ST_IsLatencyVisible();
 
 // HUD Message base object --------------------------------------------------
 
-class DHUDMessage : public DObject
+// This is a mo-op base class to allow derived ZScript message types that can be managed by the status bar.
+class DHUDMessageBase : public DObject
 {
-	DECLARE_CLASS (DHUDMessage, DObject)
+	DECLARE_CLASS(DHUDMessageBase, DObject)
 	HAS_OBJECT_POINTERS
+
+public:
+	virtual void Serialize(FSerializer &arc);
+	virtual bool Tick() { return true; }	// Returns true to indicate time for removal
+	virtual void ScreenSizeChanged() {}
+	virtual void Draw(int bottom, int visibility) {}
+
+	bool CallTick();	// Returns true to indicate time for removal
+	void CallScreenSizeChanged();
+	void CallDraw(int bottom, int visibility);
+
+private:
+	TObjPtr<DHUDMessageBase*> Next = nullptr;
+	uint32_t SBarID = 0;
+	friend class DBaseStatusBar;
+
+};
+
+// HUD Message  --------------------------------------------------
+
+class DHUDMessage : public DHUDMessageBase
+{
+	DECLARE_CLASS (DHUDMessage, DHUDMessageBase)
 public:
 	DHUDMessage (FFont *font, const char *text, float x, float y, int hudwidth, int hudheight,
 		EColorRange textColor, float holdTime);
@@ -70,12 +94,12 @@ public:
 
 	virtual void Serialize(FSerializer &arc);
 
-	void Draw (int bottom, int visibility);
+	virtual void Draw (int bottom, int visibility) override;
 	virtual void ResetText (const char *text);
 	virtual void DrawSetup ();
 	virtual void DoDraw (int linenum, int x, int y, bool clean, int hudheight);
-	virtual bool Tick ();	// Returns true to indicate time for removal
-	virtual void ScreenSizeChanged ();
+	virtual bool Tick () override;
+	virtual void ScreenSizeChanged () override;
 
 	void SetVisibility(int vis)
 	{
@@ -130,11 +154,8 @@ protected:
 	DHUDMessage () : SourceText(NULL) {}
 
 private:
-	TObjPtr<DHUDMessage*> Next;
-	uint32_t SBarID;
 	char *SourceText;
 
-	friend class DBaseStatusBar;
 };
 
 // HUD message visibility flags
@@ -360,9 +381,9 @@ public:
 	void SetSize(int reltop = 32, int hres = 320, int vres = 200, int hhres = -1, int hvres = -1);
 	void OnDestroy() override;
 
-	void AttachMessage (DHUDMessage *msg, uint32_t id=0, int layer=HUDMSGLayer_Default);
-	DHUDMessage *DetachMessage (DHUDMessage *msg);
-	DHUDMessage *DetachMessage (uint32_t id);
+	void AttachMessage (DHUDMessageBase *msg, uint32_t id=0, int layer=HUDMSGLayer_Default);
+	DHUDMessageBase *DetachMessage (DHUDMessageBase *msg);
+	DHUDMessageBase *DetachMessage (uint32_t id);
 	void DetachAllMessages ();
 	void ShowPlayerName ();
 	double GetDisplacement() { return Displacement; }
@@ -455,7 +476,7 @@ private:
 	void DrawWaiting () const;
 	void SetDrawSize(int reltop, int hres, int vres);
 
-	TObjPtr<DHUDMessage*> Messages[NUM_HUDMSGLAYERS];
+	TObjPtr<DHUDMessageBase*> Messages[NUM_HUDMSGLAYERS];
 
 	int BaseRelTop;
 	int BaseSBarHorizontalResolution;

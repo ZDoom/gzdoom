@@ -402,7 +402,7 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 		head->AddToLeft(sort);
 		head->AddToRight(sort2);
 	}
-	else if ((hiz < fh->z && !ceiling) || (loz > fh->z && ceiling))	// completely on the left side
+	else if ((ss->z2<fh->z && !ceiling) || (ss->z1>fh->z && ceiling))	// completely on the left side
 	{
 		head->AddToLeft(sort);
 	}

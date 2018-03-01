@@ -59,7 +59,6 @@
 #include "vm.h"
 
 extern void LoadActors ();
-extern void InitBotStuff();
 extern void ClearStrifeTypes();
 
 TArray<PClassActor *> PClassActor::AllActorClasses;
@@ -261,7 +260,6 @@ void PClassActor::StaticInit()
 	if (!batchrun) Printf ("LoadActors: Load actor definitions.\n");
 	ClearStrifeTypes();
 	LoadActors ();
-	InitBotStuff();
 
 	// reinit GLOBAL static stuff from gameinfo, once classes are loaded.
 	E_InitStaticHandlers(false);

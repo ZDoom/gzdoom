@@ -449,6 +449,21 @@ CCMD (gameversion)
 	Printf ("%s @ %s\nCommit %s\n", GetVersionString(), GetGitTime(), GetGitHash());
 }
 
+CCMD (freeze)
+{
+	if (CheckCheatmode ())
+		return;
+
+	if (netgame && !players[consoleplayer].settings_controller)
+	{
+		Printf ("Only setting controllers can use freeze mode\n");
+		return;
+	}
+
+	Net_WriteByte (DEM_GENERICCHEAT);
+	Net_WriteByte (CHT_FREEZE);
+}
+
 CCMD (print)
 {
 	if (argv.argc() != 2)

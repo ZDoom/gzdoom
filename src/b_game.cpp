@@ -101,7 +101,7 @@ Everything that is changed is marked (maybe commented) with "Added by MC"
 static FRandom pr_botspawn ("BotSpawn");
 
 //Externs
-FCajunMaster bglobal;
+FBotInfo bglobal;
 
 cycle_t BotThinkCycles, BotSupportCycles;
 int BotWTG;
@@ -127,13 +127,13 @@ enum
 	BOTCFG_TEAM
 };
 
-FCajunMaster::~FCajunMaster()
+FBotInfo::~FBotInfo()
 {
 	ForgetBots();
 }
 
 //This function is called every tick (from g_game.c).
-void FCajunMaster::Main ()
+void FBotInfo::Main ()
 {
 	BotThinkCycles.Reset();
 
@@ -175,7 +175,7 @@ void FCajunMaster::Main ()
 	}
 }
 
-void FCajunMaster::Init ()
+void FBotInfo::Init ()
 {
 	botnum = 0;
 	firstthing = NULL;
@@ -207,7 +207,7 @@ void FCajunMaster::Init ()
 }
 
 //Called on each level exit (from g_game.c).
-void FCajunMaster::End ()
+void FBotInfo::End ()
 {
 	int i;
 
@@ -240,7 +240,7 @@ void FCajunMaster::End ()
 //The color parameter overides bots
 //individual colors if not = NOCOLOR.
 
-bool FCajunMaster::SpawnBot (const char *name, int color)
+bool FBotInfo::SpawnBot (const char *name, int color)
 {
 	//COLORS
 	static const char colors[11][17] =
@@ -344,7 +344,7 @@ bool FCajunMaster::SpawnBot (const char *name, int color)
 	return true;
 }
 
-void FCajunMaster::TryAddBot (uint8_t **stream, int player)
+void FBotInfo::TryAddBot (uint8_t **stream, int player)
 {
 	int botshift = ReadByte (stream);
 	char *info = ReadString (stream);
@@ -388,7 +388,7 @@ void FCajunMaster::TryAddBot (uint8_t **stream, int player)
 	delete[] info;
 }
 
-bool FCajunMaster::DoAddBot (uint8_t *info, botskill_t skill)
+bool FBotInfo::DoAddBot (uint8_t *info, botskill_t skill)
 {
 	int bnum;
 
@@ -425,7 +425,7 @@ bool FCajunMaster::DoAddBot (uint8_t *info, botskill_t skill)
 	return true;
 }
 
-void FCajunMaster::RemoveAllBots (bool fromlist)
+void FBotInfo::RemoveAllBots (bool fromlist)
 {
 	int i, j;
 
@@ -502,7 +502,7 @@ static void appendinfo (char *&front, const char *back)
 	front = newstr;
 }
 
-void FCajunMaster::ForgetBots ()
+void FBotInfo::ForgetBots ()
 {
 	botinfo_t *thebot = botinfo;
 
@@ -518,7 +518,7 @@ void FCajunMaster::ForgetBots ()
 	botinfo = NULL;
 }
 
-bool FCajunMaster::LoadBots ()
+bool FBotInfo::LoadBots ()
 {
 	FScanner sc;
 	FString tmp;

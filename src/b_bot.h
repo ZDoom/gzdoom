@@ -79,10 +79,10 @@ struct botinfo_t
 };
 
 //Used to keep all the globally needed variables in nice order.
-class FCajunMaster
+class FBotInfo
 {
 public:
-	~FCajunMaster();
+	~FBotInfo();
 
 	void ClearPlayer (int playernum, bool keepTeam);
 
@@ -99,15 +99,9 @@ public:
 	//(b_func.cpp)
 	void StartTravel ();
 	void FinishTravel ();
-	bool IsLeader (player_t *player);
-	void SetBodyAt (const DVector3 &pos, int hostnum);
-	double FakeFire (AActor *source, AActor *dest, ticcmd_t *cmd);
-	bool SafeCheckPosition (AActor *actor, double x, double y, FCheckPosition &tm);
 	void BotTick(AActor *mo);
 
 	//(b_move.cpp)
-	bool CleanAhead (AActor *thing, double x, double y, ticcmd_t *cmd);
-	bool IsDangerous (sector_t *sec);
 
 	TArray<FString> getspawned; //Array of bots (their names) which should be spawned when starting a game.
 	uint8_t freeze;			//Game in freeze mode.
@@ -184,30 +178,11 @@ public:
 	DVector2	old;
 
 private:
-	//(b_think.cpp)
-	void Think ();
-	void ThinkForMove (ticcmd_t *cmd);
-	void Set_enemy ();
-
-	//(b_func.cpp)
-	bool Reachable (AActor *target);
-	void Dofire (ticcmd_t *cmd);
-	AActor *Choose_Mate ();
-	AActor *Find_enemy ();
-	DAngle FireRox (AActor *enemy, ticcmd_t *cmd);
-
-	//(b_move.cpp)
-	void Roam (ticcmd_t *cmd);
-	bool Move (ticcmd_t *cmd);
-	bool TryWalk (ticcmd_t *cmd);
-	void NewChaseDir (ticcmd_t *cmd);
-	void TurnToAng ();
-	void Pitch (AActor *target);
 };
 
 
 //Externs
-extern FCajunMaster bglobal;
+extern FBotInfo bglobal;
 extern cycle_t BotThinkCycles, BotSupportCycles;
 
 EXTERN_CVAR (Float, bot_flag_return_time)

@@ -840,8 +840,6 @@ set (PCH_SOURCES
 	b_bot.cpp
 	b_func.cpp
 	b_game.cpp
-	b_move.cpp
-	b_think.cpp
 	bbannouncer.cpp
 	c_bind.cpp
 	c_cmds.cpp

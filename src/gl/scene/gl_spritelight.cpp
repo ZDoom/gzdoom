@@ -198,13 +198,21 @@ void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callba
 		BSPNodeWalkCircle(level.HeadNode(), x, y, radiusSquared, callback);
 }
 
-void gl_SetDynModelLight(AActor *self)
+int gl_SetDynModelLight(AActor *self, int dynlightindex)
 {
-	// Legacy and deferred render paths gets the old flat model light
-	if (gl.lightmethod != LM_DIRECT)
+	// For deferred light mode this function gets called twice. First time for list upload, and second for draw.
+	if (gl.lightmethod == LM_DEFERRED && dynlightindex != -1)
+	{
+		gl_RenderState.SetDynLight(0, 0, 0);
+		modellightindex = dynlightindex;
+		return dynlightindex;
+	}
+
+	// Legacy render path gets the old flat model light
+	if (gl.lightmethod == LM_LEGACY)
 	{
 		gl_SetDynSpriteLight(self, nullptr);
-		return;
+		return -1;
 	}
 
 	modellightdata.Clear();
@@ -249,6 +257,12 @@ void gl_SetDynModelLight(AActor *self)
 		});
 	}
 
-	gl_RenderState.SetDynLight(0, 0, 0);
-	modellightindex = GLRenderer->mLights->UploadLights(modellightdata);
+	dynlightindex = GLRenderer->mLights->UploadLights(modellightdata);
+
+	if (gl.lightmethod != LM_DEFERRED)
+	{
+		gl_RenderState.SetDynLight(0, 0, 0);
+		modellightindex = dynlightindex;
+	}
+	return dynlightindex;
 }

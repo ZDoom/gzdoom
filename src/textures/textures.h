@@ -328,6 +328,11 @@ protected:
 		Rotations = other->Rotations;
 		gl_info = other->gl_info;
 		gl_info.Brightmap = NULL;
+		gl_info.Normal = NULL;
+		gl_info.Specular = NULL;
+		gl_info.Metallic = NULL;
+		gl_info.Roughness = NULL;
+		gl_info.AmbientOcclusion = NULL;
 		gl_info.areas = NULL;
 	}
 
@@ -362,6 +367,13 @@ public:
 		FMaterial *Material[2];
 		FGLTexture *SystemTexture[2];
 		FTexture *Brightmap;
+		FTexture *Normal;						// Normal map texture
+		FTexture *Specular;						// Specular light texture for the diffuse+normal+specular light model
+		FTexture *Metallic;						// Metalness texture for the physically based rendering (PBR) light model
+		FTexture *Roughness;					// Roughness texture for PBR
+		FTexture *AmbientOcclusion;				// Ambient occlusion texture for PBR
+		float Glossiness;
+		float SpecularLevel;
 		PalEntry GlowColor;
 		int GlowHeight;
 		FloatRect *areas;

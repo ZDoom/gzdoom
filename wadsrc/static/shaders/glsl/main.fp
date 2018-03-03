@@ -12,26 +12,10 @@ out vec4 FragFog;
 out vec4 FragNormal;
 #endif
 
-#ifdef SHADER_STORAGE_LIGHTS
-	layout(std430, binding = 1) buffer LightBufferSSO
-	{
-		vec4 lights[];
-	};
-#elif defined NUM_UBO_LIGHTS
-	/*layout(std140)*/ uniform LightBufferUBO
-	{
-		vec4 lights[NUM_UBO_LIGHTS];
-	};
-#endif
-
-
-uniform sampler2D tex;
-uniform sampler2D ShadowMap;
-
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
 vec4 ProcessLight(vec4 color);
-
+vec3 ProcessMaterial(vec3 material, vec3 color);
 
 //===========================================================================
 //
@@ -237,46 +221,20 @@ float shadowmapAttenuation(vec4 lightpos, float shadowIndex)
 #endif
 }
 
-#endif
-
-//===========================================================================
-//
-// Standard lambertian diffuse light calculation
-//
-//===========================================================================
-
-float diffuseContribution(vec3 lightDirection, vec3 normal)
+float shadowAttenuation(vec4 lightpos, float lightcolorA)
 {
-	return max(dot(normal, lightDirection), 0.0f);
-}
-
-//===========================================================================
-//
-// Calculates the brightness of a dynamic point light
-// Todo: Find a better way to define which lighting model to use.
-// (Specular mode has been removed for now.)
-//
-//===========================================================================
-
-float pointLightAttenuation(vec4 lightpos, float lightcolorA)
-{
-	float attenuation = max(lightpos.w - distance(pixelpos.xyz, lightpos.xyz),0.0) / lightpos.w;
-	if (attenuation == 0.0) return 0.0;
-#ifdef SUPPORTS_SHADOWMAPS
 	float shadowIndex = abs(lightcolorA) - 1.0;
-	attenuation *= shadowmapAttenuation(lightpos, shadowIndex);
-#endif
-	if (lightcolorA >= 0.0) // Sign bit is the attenuated light flag
-	{
-		return attenuation;
-	}
-	else
-	{
-		vec3 lightDirection = normalize(lightpos.xyz - pixelpos.xyz);
-		float diffuseAmount = diffuseContribution(lightDirection, normalize(vWorldNormal.xyz));
-		return attenuation * diffuseAmount;
-	}
+	return shadowmapAttenuation(lightpos, shadowIndex);
 }
+
+#else
+
+float shadowAttenuation(vec4 lightpos, float lightcolorA)
+{
+	return 1.0;
+}
+
+#endif
 
 float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle, float lightCosOuterAngle)
 {
@@ -284,6 +242,62 @@ float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle
 	float cosDir = dot(lightDirection, spotdir);
 	return smoothstep(lightCosOuterAngle, lightCosInnerAngle, cosDir);
 }
+
+//===========================================================================
+//
+// Adjust normal vector according to the normal map
+//
+//===========================================================================
+
+#if defined(NORMALMAP)
+mat3 cotangent_frame(vec3 n, vec3 p, vec2 uv)
+{
+	// get edge vectors of the pixel triangle
+	vec3 dp1 = dFdx(p);
+	vec3 dp2 = dFdy(p);
+	vec2 duv1 = dFdx(uv);
+	vec2 duv2 = dFdy(uv);
+
+	// solve the linear system
+	vec3 dp2perp = cross(n, dp2); // cross(dp2, n);
+	vec3 dp1perp = cross(dp1, n); // cross(n, dp1);
+	vec3 t = dp2perp * duv1.x + dp1perp * duv2.x;
+	vec3 b = dp2perp * duv1.y + dp1perp * duv2.y;
+
+	// construct a scale-invariant frame
+	float invmax = inversesqrt(max(dot(t,t), dot(b,b)));
+	return mat3(t * invmax, b * invmax, n);
+}
+
+vec3 ApplyNormalMap()
+{
+	#define WITH_NORMALMAP_UNSIGNED
+	#define WITH_NORMALMAP_GREEN_UP
+	//#define WITH_NORMALMAP_2CHANNEL
+
+	vec3 interpolatedNormal = normalize(vWorldNormal.xyz);
+
+	vec3 map = texture(normaltexture, vTexCoord.st).xyz;
+	#if defined(WITH_NORMALMAP_UNSIGNED)
+	map = map * 255./127. - 128./127.; // Math so "odd" because 0.5 cannot be precisely described in an unsigned format
+	#endif
+	#if defined(WITH_NORMALMAP_2CHANNEL)
+	map.z = sqrt(1 - dot(map.xy, map.xy));
+	#endif
+	#if defined(WITH_NORMALMAP_GREEN_UP)
+	map.y = -map.y;
+	#endif
+
+	mat3 tbn = cotangent_frame(interpolatedNormal, pixelpos.xyz, vTexCoord.st);
+	vec3 bumpedNormal = normalize(tbn * map);
+	return bumpedNormal;
+}
+#else
+vec3 ApplyNormalMap()
+{
+	return normalize(vWorldNormal.xyz);
+}
+#endif
 
 //===========================================================================
 //
@@ -299,7 +313,7 @@ float spotLightAttenuation(vec4 lightpos, vec3 spotdir, float lightCosInnerAngle
 //
 //===========================================================================
 
-vec4 getLightColor(float fogdist, float fogfactor)
+vec4 getLightColor(vec4 material, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
 	
@@ -341,56 +355,9 @@ vec4 getLightColor(float fogdist, float fogfactor)
 	color = ProcessLight(color);
 
 	//
-	// apply dynamic lights (except additive)
+	// apply dynamic lights
 	//
-	
-	vec4 dynlight = uDynLightColor;
-
-#if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
-	if (uLightIndex >= 0)
-	{
-		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
-		if (lightRange.z > lightRange.x)
-		{
-			//
-			// modulated lights
-			//
-			for(int i=lightRange.x; i<lightRange.y; i+=4)
-			{
-				vec4 lightpos = lights[i];
-				vec4 lightcolor = lights[i+1];
-				vec4 lightspot1 = lights[i+2];
-				vec4 lightspot2 = lights[i+3];
-				
-				float attenuation = pointLightAttenuation(lightpos, lightcolor.a);
-				if (lightspot1.w == 1.0)
-					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-				lightcolor.rgb *= attenuation;
-				dynlight.rgb += lightcolor.rgb;
-			}
-			//
-			// subtractive lights
-			//
-			for(int i=lightRange.y; i<lightRange.z; i+=4)
-			{
-				vec4 lightpos = lights[i];
-				vec4 lightcolor = lights[i+1];
-				vec4 lightspot1 = lights[i+2];
-				vec4 lightspot2 = lights[i+3];
-				
-				float attenuation = pointLightAttenuation(lightpos, lightcolor.a);
-				if (lightspot1.w == 1.0)
-					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-				lightcolor.rgb *= attenuation;
-				dynlight.rgb -= lightcolor.rgb;
-			}
-		}
-	}
-#endif
-	color.rgb = clamp(color.rgb + desaturate(dynlight).rgb, 0.0, 1.4);
-	
-	// prevent any unintentional messing around with the alpha.
-	return vec4(color.rgb, vColor.a);
+	return vec4(ProcessMaterial(material.rgb, color.rgb), material.a * vColor.a);
 }
 
 //===========================================================================
@@ -470,37 +437,7 @@ void main()
 				fogfactor = exp2 (uFogDensity * fogdist);
 			}
 			
-			
-			frag *= getLightColor(fogdist, fogfactor);
-			
-#if defined NUM_UBO_LIGHTS || defined SHADER_STORAGE_LIGHTS
-			if (uLightIndex >= 0)
-			{
-				ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
-				if (lightRange.w > lightRange.z)
-				{
-					vec4 addlight = vec4(0.0,0.0,0.0,0.0);
-				
-					//
-					// additive lights - these can be done after the alpha test.
-					//
-					for(int i=lightRange.z; i<lightRange.w; i+=4)
-					{
-						vec4 lightpos = lights[i];
-						vec4 lightcolor = lights[i+1];
-						vec4 lightspot1 = lights[i+2];
-						vec4 lightspot2 = lights[i+3];
-						
-						float attenuation = pointLightAttenuation(lightpos, lightcolor.a);
-						if (lightspot1.w == 1.0)
-							attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-						lightcolor.rgb *= attenuation;
-						addlight.rgb += lightcolor.rgb;
-					}
-					frag.rgb = clamp(frag.rgb + desaturate(addlight).rgb, 0.0, 1.0);
-				}
-			}
-#endif
+			frag = getLightColor(frag, fogdist, fogfactor);
 
 			//
 			// colored fog

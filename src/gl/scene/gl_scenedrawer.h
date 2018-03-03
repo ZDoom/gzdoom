@@ -14,6 +14,10 @@ class GLSceneDrawer
 	subsector_t *currentsubsector;	// used by the line processing code.
 	sector_t *currentsector;
 
+	TMap<DPSprite*, int> weapondynlightindex;
+
+	void SetupWeaponLight();
+
 	void RenderMultipassStuff();
 	
 	void UnclipSubsector(subsector_t *sub);

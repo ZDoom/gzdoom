@@ -331,6 +331,8 @@ void GLSceneDrawer::RenderScene(int recursion)
 		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].Draw(GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].Draw(GLPASS_LIGHTSONLY, true);
+		gl_drawinfo->drawlists[GLDL_MODELS].Draw(GLPASS_LIGHTSONLY);
+		SetupWeaponLight();
 		GLRenderer->mLights->Finish();
 	}
 

@@ -285,6 +285,7 @@ class FShader
 	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform1i muViewHeight;
+	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;
@@ -316,7 +317,7 @@ public:
 
 	~FShader();
 
-	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char *defines);
+	bool Load(const char * name, const char * vert_prog_lump, const char * fragprog, const char * fragprog2, const char * light_fragprog, const char *defines);
 
 	void SetColormapColor(float r, float g, float b, float r1, float g1, float b1);
 	void SetGlowParams(float *topcolors, float topheight, float *bottomcolors, float bottomheight);
@@ -356,8 +357,8 @@ private:
 
 class FShaderCollection
 {
-	TArray<FShader*> mTextureEffects;
-	TArray<FShader*> mTextureEffectsNAT;
+	TArray<FShader*> mMaterialShaders;
+	TArray<FShader*> mMaterialShadersNAT;
 	FShader *mEffectShaders[MAX_EFFECTS];
 
 	void Clean();
@@ -366,20 +367,20 @@ class FShaderCollection
 public:
 	FShaderCollection(EPassType passType);
 	~FShaderCollection();
-	FShader *Compile(const char *ShaderName, const char *ShaderPath, bool usediscard, EPassType passType);
+	FShader *Compile(const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
 
 	void ResetFixedColormap()
 	{
-		for (unsigned i = 0; i < mTextureEffects.Size(); i++)
+		for (unsigned i = 0; i < mMaterialShaders.Size(); i++)
 		{
-			mTextureEffects[i]->currentfixedcolormap = -1;
+			mMaterialShaders[i]->currentfixedcolormap = -1;
 		}
-		for (unsigned i = 0; i < mTextureEffectsNAT.Size(); i++)
+		for (unsigned i = 0; i < mMaterialShadersNAT.Size(); i++)
 		{
-			mTextureEffectsNAT[i]->currentfixedcolormap = -1;
+			mMaterialShadersNAT[i]->currentfixedcolormap = -1;
 		}
 	}
 
@@ -388,17 +389,37 @@ public:
 		// indices 0-2 match the warping modes, 3 is brightmap, 4 no texture, the following are custom
 		if (!alphateston && eff <= 3)
 		{
-			return mTextureEffectsNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
+			return mMaterialShadersNAT[eff];	// Non-alphatest shaders are only created for default, warp1+2 and brightmap. The rest won't get used anyway
 		}
-		if (eff < mTextureEffects.Size())
+		if (eff < mMaterialShaders.Size())
 		{
-			return mTextureEffects[eff];
+			return mMaterialShaders[eff];
 		}
 		return NULL;
 	}
 };
 
-#define FIRST_USER_SHADER 13
+enum MaterialShaderIndex
+{
+	SHADER_Default,
+	SHADER_Warp1,
+	SHADER_Warp2,
+	SHADER_Brightmap,
+	SHADER_Specular,
+	SHADER_SpecularBrightmap,
+	SHADER_PBR,
+	SHADER_PBRBrightmap,
+	SHADER_NoTexture,
+	SHADER_BasicFuzz,
+	SHADER_SmoothFuzz,
+	SHADER_SwirlyFuzz,
+	SHADER_TranslucentFuzz,
+	SHADER_JaggedFuzz,
+	SHADER_NoiseFuzz,
+	SHADER_SmoothNoiseFuzz,
+	SHADER_SoftwareFuzz,
+	FIRST_USER_SHADER
+};
 
 enum
 {

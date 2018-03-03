@@ -1,5 +1,4 @@
 // Fuzz effect as rendered by the software renderer
-uniform float timer;
 
 #define FUZZTABLE 50
 #define FUZZ_RANDOM_X_SIZE 100

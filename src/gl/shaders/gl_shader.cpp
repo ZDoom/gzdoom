@@ -52,20 +52,202 @@
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
+static bool IsGlslWhitespace(char c)
+{
+	switch (c)
+	{
+	case ' ':
+	case '\r':
+	case '\n':
+	case '\t':
+	case '\f':
+		return true;
+	default:
+		return false;
+	}
+}
 
-bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * defines)
+static FString NextGlslToken(const char *chars, long len, long &pos)
+{
+	// Eat whitespace
+	long tokenStart = pos;
+	while (tokenStart != len && IsGlslWhitespace(chars[tokenStart]))
+		tokenStart++;
+
+	// Find token end
+	long tokenEnd = tokenStart;
+	while (tokenEnd != len && !IsGlslWhitespace(chars[tokenEnd]) && chars[tokenEnd] != ';')
+		tokenEnd++;
+
+	pos = tokenEnd;
+	return FString(chars + tokenStart, tokenEnd - tokenStart);
+}
+
+static FString RemoveLegacyUserUniforms(FString code)
+{
+	// User shaders must declare their uniforms via the GLDEFS file.
+	// The following code searches for legacy uniform declarations in the shader itself and replaces them with whitespace.
+
+	long len = (long)code.Len();
+	char *chars = code.LockBuffer();
+
+	long startIndex = 0;
+	while (true)
+	{
+		long matchIndex = code.IndexOf("uniform", startIndex);
+		if (matchIndex == -1)
+			break;
+
+		bool isLegacyUniformName = false;
+
+		bool isKeywordStart = matchIndex == 0 || IsGlslWhitespace(chars[matchIndex - 1]);
+		bool isKeywordEnd = matchIndex + 7 == len || IsGlslWhitespace(chars[matchIndex + 7]);
+		if (isKeywordStart && isKeywordEnd)
+		{
+			long pos = matchIndex + 7;
+			FString type = NextGlslToken(chars, len, pos);
+			FString identifier = NextGlslToken(chars, len, pos);
+
+			isLegacyUniformName = type.Compare("float") == 0 && identifier.Compare("timer") == 0;
+		}
+
+		if (isLegacyUniformName)
+		{
+			long statementEndIndex = code.IndexOf(';', matchIndex + 7);
+			if (statementEndIndex == -1)
+				statementEndIndex = len;
+			for (long i = matchIndex; i <= statementEndIndex; i++)
+			{
+				if (!IsGlslWhitespace(chars[i]))
+					chars[i] = ' ';
+			}
+			startIndex = statementEndIndex;
+		}
+		else
+		{
+			startIndex = matchIndex + 7;
+		}
+	}
+
+	code.UnlockBuffer();
+
+	return code;
+}
+
+bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {
 	static char buffer[10000];
 	FString error;
 
-	int i_lump = Wads.CheckNumForFullName("shaders/glsl/shaderdefs.i", 0);
-	if (i_lump == -1) I_Error("Unable to load 'shaders/glsl/shaderdefs.i'");
-	FMemLump i_data = Wads.ReadLump(i_lump);
+	FString i_data;
+	
+	// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
+	i_data += "precision highp int;\n";
+	i_data += "precision highp float;\n";
+
+	i_data += "uniform vec4 uCameraPos;\n";
+	i_data += "uniform int uTextureMode;\n";
+	i_data += "uniform float uClipHeight;\n";
+	i_data += "uniform float uClipHeightDirection;\n";
+	i_data += "uniform vec2 uClipSplit;\n";
+	i_data += "uniform vec4 uClipLine;\n";
+	i_data += "uniform float uAlphaThreshold;\n";
+
+	// colors
+	i_data += "uniform vec4 uObjectColor;\n";
+	i_data += "uniform vec4 uObjectColor2;\n";
+	i_data += "uniform vec4 uDynLightColor;\n";
+	i_data += "uniform vec4 uFogColor;\n";
+	i_data += "uniform float uDesaturationFactor;\n";
+	i_data += "uniform float uInterpolationFactor;\n";
+
+	// Fixed colormap stuff
+	i_data += "uniform int uFixedColormap;\n"; // 0, when no fixed colormap, 1 for a light value, 2 for a color blend, 3 for a fog layer
+	i_data += "uniform vec4 uFixedColormapStart;\n";
+	i_data += "uniform vec4 uFixedColormapRange;\n";
+
+	// Glowing walls stuff
+	i_data += "uniform vec4 uGlowTopPlane;\n";
+	i_data += "uniform vec4 uGlowTopColor;\n";
+	i_data += "uniform vec4 uGlowBottomPlane;\n";
+	i_data += "uniform vec4 uGlowBottomColor;\n";
+
+	i_data += "uniform vec4 uSplitTopPlane;\n";
+	i_data += "uniform vec4 uSplitBottomPlane;\n";
+
+	// Lighting + Fog
+	i_data += "uniform vec4 uLightAttr;\n";
+	i_data += "#define uLightLevel uLightAttr.a\n";
+	i_data += "#define uFogDensity uLightAttr.b\n";
+	i_data += "#define uLightFactor uLightAttr.g\n";
+	i_data += "#define uLightDist uLightAttr.r\n";
+	i_data += "uniform int uFogEnabled;\n";
+	i_data += "uniform int uPalLightLevels;\n";
+	i_data += "uniform float uGlobVis;\n"; // uGlobVis = R_GetGlobVis(r_visibility) / 32.0
+
+	// dynamic lights
+	i_data += "uniform int uLightIndex;\n";
+
+	// Software fuzz scaling
+	i_data += "uniform int uViewHeight;\n";
+
+	// Blinn glossiness and specular level
+	i_data += "uniform vec2 uSpecularMaterial;\n";
+
+	// quad drawer stuff
+	i_data += "#ifdef USE_QUAD_DRAWER\n";
+	i_data += "uniform mat4 uQuadVertices;\n";
+	i_data += "uniform mat4 uQuadTexCoords;\n";
+	i_data += "uniform int uQuadMode;\n";
+	i_data += "#endif\n";
+
+	// matrices
+	i_data += "uniform mat4 ProjectionMatrix;\n";
+	i_data += "uniform mat4 ViewMatrix;\n";
+	i_data += "uniform mat4 ModelMatrix;\n";
+	i_data += "uniform mat4 NormalViewMatrix;\n";
+	i_data += "uniform mat4 NormalModelMatrix;\n";
+	i_data += "uniform mat4 TextureMatrix;\n";
+
+	// light buffers
+	i_data += "#ifdef SHADER_STORAGE_LIGHTS\n";
+	i_data += "layout(std430, binding = 1) buffer LightBufferSSO\n";
+	i_data += "{\n";
+	i_data += "    vec4 lights[];\n";
+	i_data += "};\n";
+	i_data += "#elif defined NUM_UBO_LIGHTS\n";
+	i_data += "uniform LightBufferUBO\n";
+	i_data += "{\n";
+	i_data += "    vec4 lights[NUM_UBO_LIGHTS];\n";
+	i_data += "};\n";
+	i_data += "#endif\n";
+
+	// textures
+	i_data += "uniform sampler2D tex;\n";
+	i_data += "uniform sampler2D ShadowMap;\n";
+	i_data += "uniform sampler2D texture2;\n";
+	i_data += "uniform sampler2D texture3;\n";
+	i_data += "uniform sampler2D texture4;\n";
+	i_data += "uniform sampler2D texture5;\n";
+	i_data += "uniform sampler2D texture6;\n";
+
+	// timer data
+	i_data += "uniform float timer;\n"; // To do: we must search user shaders for this declaration and remove it
+
+	// material types
+	i_data += "#if defined(SPECULAR)\n";
+	i_data += "#define normaltexture texture2\n";
+	i_data += "#define speculartexture texture3\n";
+	i_data += "#define brighttexture texture4\n";
+	i_data += "#elif defined(PBR)\n";
+	i_data += "#define normaltexture texture2\n";
+	i_data += "#define metallictexture texture3\n";
+	i_data += "#define roughnesstexture texture4\n";
+	i_data += "#define aotexture texture5\n";
+	i_data += "#define brighttexture texture6\n";
+	i_data += "#else\n";
+	i_data += "#define brighttexture texture2\n";
+	i_data += "#endif\n";
 
 	int vp_lump = Wads.CheckNumForFullName(vert_prog_lump, 0);
 	if (vp_lump == -1) I_Error("Unable to load '%s'", vert_prog_lump);
@@ -120,14 +302,19 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}
 
-	vp_comb << defines << i_data.GetString().GetChars();
+	vp_comb << defines << i_data.GetChars();
 	FString fp_comb = vp_comb;
+
+	vp_comb << "#line 1\n";
+	fp_comb << "#line 1\n";
 
 	vp_comb << vp_data.GetString().GetChars() << "\n";
 	fp_comb << fp_data.GetString().GetChars() << "\n";
 
 	if (proc_prog_lump != NULL)
 	{
+		fp_comb << "#line 1\n";
+
 		if (*proc_prog_lump != '#')
 		{
 			int pp_lump = Wads.CheckNumForFullName(proc_prog_lump);
@@ -141,7 +328,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 				fp_comb.Substitute("vec4 frag = ProcessTexel();", "vec4 frag = Process(vec4(1.0));");
 			}
-			fp_comb << pp_data.GetString().GetChars();
+			fp_comb << RemoveLegacyUserUniforms(pp_data.GetString()).GetChars();
 			fp_comb.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
 
 			if (pp_data.GetString().IndexOf("ProcessLight") < 0)
@@ -157,6 +344,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			// Proc_prog_lump is not a lump name but the source itself (from generated shaders)
 			fp_comb << proc_prog_lump + 1;
 		}
+	}
+
+	if (light_fragprog)
+	{
+		int pp_lump = Wads.CheckNumForFullName(light_fragprog);
+		if (pp_lump == -1) I_Error("Unable to load '%s'", light_fragprog);
+		FMemLump pp_data = Wads.ReadLump(pp_lump);
+		fp_comb << pp_data.GetString().GetChars() << "\n";
 	}
 
 	if (gl.flags & RFL_NO_CLIP_PLANES)
@@ -254,6 +449,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muClipHeight.Init(hShader, "uClipHeight");
 	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
+	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muViewHeight.Init(hShader, "uViewHeight");
 	muTimer.Init(hShader, "timer");
 
@@ -326,9 +522,10 @@ bool FShader::Bind()
 //
 //==========================================================================
 
-FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, bool usediscard, EPassType passType)
+FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType)
 {
 	FString defines;
+	defines += shaderdefines;
 	// this can't be in the shader code due to ATI strangeness.
 	if (gl.MaxLights() == 128) defines += "#define MAXLIGHTS128\n";
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
@@ -338,7 +535,7 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 	try
 	{
 		shader = new FShader(ShaderName);
-		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, defines.GetChars()))
+		if (!shader->Load(ShaderName, "shaders/glsl/main.vp", "shaders/glsl/main.fp", ShaderPath, LightModePath, defines.GetChars()))
 		{
 			I_FatalError("Unable to load shader %s\n", ShaderName);
 		}
@@ -375,26 +572,31 @@ struct FDefaultShader
 {
 	const char * ShaderName;
 	const char * gettexelfunc;
+	const char * lightfunc;
+	const char * Defines;
 };
 
-// Note: the FIRST_USER_SHADER constant in gl_shader.h needs 
-// to be updated whenever the size of this array is modified.
+// Note: the MaterialShaderIndex enum in gl_shader.h needs to be updated whenever this array is modified.
 static const FDefaultShader defaultshaders[]=
 {	
-	{"Default",	"shaders/glsl/func_normal.fp"},
-	{"Warp 1",	"shaders/glsl/func_warp1.fp"},
-	{"Warp 2",	"shaders/glsl/func_warp2.fp"},
-	{"Brightmap","shaders/glsl/func_brightmap.fp"},
-	{"No Texture", "shaders/glsl/func_notexture.fp"},
-	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp"},
-	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp"},
-	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp"},
-	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp"},
-	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp"},
-	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp"},
-	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp"},
-	{"Software Fuzz", "shaders/glsl/fuzz_software.fp"},
-	{NULL,NULL}
+	{"Default",	"shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Warp 1",	"shaders/glsl/func_warp1.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Warp 2",	"shaders/glsl/func_warp2.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Brightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Specular", "shaders/glsl/func_normal.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
+	{"SpecularBrightmap", "shaders/glsl/func_brightmap.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
+	{"PBR","shaders/glsl/func_normal.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"No Texture", "shaders/glsl/func_notexture.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Swirly Fuzz", "shaders/glsl/fuzz_swirly.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Translucent Fuzz", "shaders/glsl/fuzz_smoothtranslucent.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Jagged Fuzz", "shaders/glsl/fuzz_jagged.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Noise Fuzz", "shaders/glsl/fuzz_noise.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Smooth Noise Fuzz", "shaders/glsl/fuzz_smoothnoise.fp", "shaders/glsl/material_normal.fp", ""},
+	{"Software Fuzz", "shaders/glsl/fuzz_software.fp", "shaders/glsl/material_normal.fp", ""},
+	{nullptr,nullptr,nullptr,nullptr}
 };
 
 static TArray<FString> usershaders;
@@ -405,15 +607,16 @@ struct FEffectShader
 	const char *vp;
 	const char *fp1;
 	const char *fp2;
+	const char *fp3;
 	const char *defines;
 };
 
 static const FEffectShader effectshaders[]=
 {
-	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", NULL, "#define NO_ALPHATEST\n" },
-	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
-	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
-	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", NULL, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "fogboundary", "shaders/glsl/main.vp", "shaders/glsl/fogboundary.fp", nullptr, nullptr, "#define NO_ALPHATEST\n" },
+	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
+	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 };
 
 FShaderManager::FShaderManager()
@@ -524,8 +727,8 @@ FShaderCollection::~FShaderCollection()
 
 void FShaderCollection::CompileShaders(EPassType passType)
 {
-	mTextureEffects.Clear();
-	mTextureEffectsNAT.Clear();
+	mMaterialShaders.Clear();
+	mMaterialShadersNAT.Clear();
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		mEffectShaders[i] = NULL;
@@ -533,12 +736,12 @@ void FShaderCollection::CompileShaders(EPassType passType)
 
 	for(int i=0;defaultshaders[i].ShaderName != NULL;i++)
 	{
-		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, true, passType);
-		mTextureEffects.Push(shc);
-		if (i <= 3)
+		FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, true, passType);
+		mMaterialShaders.Push(shc);
+		if (i < SHADER_NoTexture)
 		{
-			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, false, passType);
-			mTextureEffectsNAT.Push(shc);
+			FShader *shc = Compile(defaultshaders[i].ShaderName, defaultshaders[i].gettexelfunc, defaultshaders[i].lightfunc, defaultshaders[i].Defines, false, passType);
+			mMaterialShadersNAT.Push(shc);
 		}
 	}
 
@@ -547,15 +750,15 @@ void FShaderCollection::CompileShaders(EPassType passType)
 		FString name = ExtractFileBase(usershaders[i]);
 		FName sfn = name;
 
-		FShader *shc = Compile(sfn, usershaders[i], true, passType);
-		mTextureEffects.Push(shc);
+		FShader *shc = Compile(sfn, usershaders[i], "shaders/glsl/material_normal.fp", "", true, passType);
+		mMaterialShaders.Push(shc);
 	}
 
 	for(int i=0;i<MAX_EFFECTS;i++)
 	{
 		FShader *eff = new FShader(effectshaders[i].ShaderName);
 		if (!eff->Load(effectshaders[i].ShaderName, effectshaders[i].vp, effectshaders[i].fp1,
-						effectshaders[i].fp2, effectshaders[i].defines))
+						effectshaders[i].fp2, effectshaders[i].fp3, effectshaders[i].defines))
 		{
 			delete eff;
 		}
@@ -571,21 +774,21 @@ void FShaderCollection::CompileShaders(EPassType passType)
 
 void FShaderCollection::Clean()
 {
-	for (unsigned int i = 0; i < mTextureEffectsNAT.Size(); i++)
+	for (unsigned int i = 0; i < mMaterialShadersNAT.Size(); i++)
 	{
-		if (mTextureEffectsNAT[i] != NULL) delete mTextureEffectsNAT[i];
+		if (mMaterialShadersNAT[i] != NULL) delete mMaterialShadersNAT[i];
 	}
-	for (unsigned int i = 0; i < mTextureEffects.Size(); i++)
+	for (unsigned int i = 0; i < mMaterialShaders.Size(); i++)
 	{
-		if (mTextureEffects[i] != NULL) delete mTextureEffects[i];
+		if (mMaterialShaders[i] != NULL) delete mMaterialShaders[i];
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
 		if (mEffectShaders[i] != NULL) delete mEffectShaders[i];
 		mEffectShaders[i] = NULL;
 	}
-	mTextureEffects.Clear();
-	mTextureEffectsNAT.Clear();
+	mMaterialShaders.Clear();
+	mMaterialShadersNAT.Clear();
 }
 
 //==========================================================================
@@ -598,9 +801,9 @@ int FShaderCollection::Find(const char * shn)
 {
 	FName sfn = shn;
 
-	for(unsigned int i=0;i<mTextureEffects.Size();i++)
+	for(unsigned int i=0;i<mMaterialShaders.Size();i++)
 	{
-		if (mTextureEffects[i]->mName == sfn)
+		if (mMaterialShaders[i]->mName == sfn)
 		{
 			return i;
 		}
@@ -638,19 +841,19 @@ void FShaderCollection::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 	VSMatrix norm;
 	norm.computeNormalMatrix(*view);
 
-	for (int i = 0; i < 4; i++)
+	for (int i = 0; i < SHADER_NoTexture; i++)
 	{
-		mTextureEffects[i]->ApplyMatrices(proj, view, &norm);
-		mTextureEffectsNAT[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShadersNAT[i]->ApplyMatrices(proj, view, &norm);
 	}
-	mTextureEffects[4]->ApplyMatrices(proj, view, &norm);
+	mMaterialShaders[SHADER_NoTexture]->ApplyMatrices(proj, view, &norm);
 	if (gl_fuzztype != 0)
 	{
-		mTextureEffects[4 + gl_fuzztype]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[SHADER_NoTexture + gl_fuzztype]->ApplyMatrices(proj, view, &norm);
 	}
-	for (unsigned i = 12; i < mTextureEffects.Size(); i++)
+	for (unsigned i = FIRST_USER_SHADER; i < mMaterialShaders.Size(); i++)
 	{
-		mTextureEffects[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[i]->ApplyMatrices(proj, view, &norm);
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{

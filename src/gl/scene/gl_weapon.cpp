@@ -183,6 +183,39 @@ static bool isBright(DPSprite *psp)
 	return false;
 }
 
+void GLSceneDrawer::SetupWeaponLight()
+{
+	weapondynlightindex.Clear();
+
+	AActor *camera = r_viewpoint.camera;
+	AActor * playermo = players[consoleplayer].camera;
+	player_t * player = playermo->player;
+
+	// this is the same as in DrawPlayerSprites below
+	if (!player ||
+		!r_drawplayersprites ||
+		!camera->player ||
+		(player->cheats & CF_CHASECAM) ||
+		(r_deathcamera && camera->health <= 0))
+		return;
+
+	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
+	{
+		if (psp->GetState() != nullptr)
+		{
+			// set the lighting parameters
+			if (gl_lights && GLRenderer->mLightCount && FixedColormap == CM_DEFAULT && gl_light_sprites)
+			{
+				FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
+				if (smf)
+				{
+					weapondynlightindex[psp] = gl_SetDynModelLight(playermo, -1);
+				}
+			}
+		}
+	}
+}
+
 //==========================================================================
 //
 // R_DrawPlayerSprites
@@ -355,7 +388,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 			{
 				// Todo: implement shader selection here
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				OverrideShader = gl_fuzztype + 4;
+				OverrideShader = SHADER_NoTexture + gl_fuzztype;
 				trans = 0.99f;	// trans may not be 1 here
 			}
 			else
@@ -422,7 +455,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				{
 					FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
 					if (smf)
-						gl_SetDynModelLight(playermo);
+						gl_SetDynModelLight(playermo, weapondynlightindex[psp]);
 					else
 						gl_SetDynSpriteLight(playermo, NULL);
 				}

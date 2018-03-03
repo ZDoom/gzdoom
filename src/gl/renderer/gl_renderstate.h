@@ -94,6 +94,7 @@ class FRenderState
 	bool mLastDepthClamp;
 	float mInterpolationFactor;
 	float mClipHeight, mClipHeightDirection;
+	float mGlossiness, mSpecularLevel;
 	float mShaderTimer;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
@@ -161,6 +162,7 @@ public:
 		}
 		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
 		mShaderTimer = mat->tex->gl_info.shaderspeed;
+		SetSpecular(mat->tex->gl_info.Glossiness, mat->tex->gl_info.SpecularLevel);
 		mat->Bind(clampmode, translation);
 	}
 
@@ -393,6 +395,12 @@ public:
 	void SetObjectColor2(PalEntry pe)
 	{
 		mObjectColor2 = pe;
+	}
+
+	void SetSpecular(float glossiness, float specularLevel)
+	{
+		mGlossiness = glossiness;
+		mSpecularLevel = specularLevel;
 	}
 
 	void SetFog(PalEntry c, float d)

@@ -324,10 +324,7 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 	{
 		return;
 	}
-	if (LoadPatchSets(nullptr))
-	{
-		return;
-	}
+
 	// The following will only be used if no soundfont at all is provided, i.e. even the standard one coming with GZDoom is missing.
 #ifdef __unix__
 	// This is the standard location on Ubuntu.

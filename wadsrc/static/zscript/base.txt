@@ -796,7 +796,7 @@ class SectorEffect : Thinker native
 {
 	native protected Sector m_Sector;
 
-	native clearscope Sector GetSector();
+	native Sector GetSector();
 }
 
 class Mover : SectorEffect native

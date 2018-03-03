@@ -461,7 +461,6 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 			return 0;
 		}
 		
-		// fixme: device and streamer need to be handled individually.
 		EMidiDevice devtype = device == nullptr? MDEV_DEFAULT : (EMidiDevice)device->device;
 #ifndef _WIN32
 		// non-Windows platforms don't support MDEV_MMAPI so map to MDEV_SNDSYS
@@ -469,24 +468,11 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 			devtype = MDEV_SNDSYS;
 #endif
 
-		MIDIStreamer *streamer = nullptr;
-retry_as_sndsys:
-		streamer = CreateMIDIStreamer(devtype, device != nullptr? device->args.GetChars() : "");
-
-		if (streamer == nullptr && devtype != MDEV_SNDSYS && snd_mididevice < 0)
-		{
-			devtype = MDEV_SNDSYS;
-			goto retry_as_sndsys;
-		}
-#ifdef _WIN32
-		if (streamer == nullptr && devtype != MDEV_MMAPI && snd_mididevice >= 0)
-		{
-			 streamer = CreateMIDIStreamer(MDEV_MMAPI, "");
-		}
-#endif
+		MIDIStreamer *streamer = CreateMIDIStreamer(devtype, device != nullptr? device->args.GetChars() : "");
 		if (streamer == nullptr)
 		{
 			delete reader;
+			delete source;
 			return 0;
 		}
 		streamer->SetMIDISource(source);

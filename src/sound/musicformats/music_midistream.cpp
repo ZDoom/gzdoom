@@ -40,6 +40,7 @@
 #include "doomdef.h"
 #include "m_swap.h"
 #include "doomerrors.h"
+#include "v_text.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -179,46 +180,56 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 //
 //==========================================================================
 
+static EMidiDevice lastRequestedDevice, lastSelectedDevice;
+
 MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 {
-	// fixme: This should check up front if the device can be started.
-	// Checks to ensure that a device finds a compatible sound font are entirely missing here.
 	bool checked[MDEV_COUNT] = { false };
 
+	MIDIDevice *dev = nullptr;
 	if (devtype == MDEV_SNDSYS) devtype = MDEV_FLUIDSYNTH;
-	while (true)
+	EMidiDevice requestedDevice = devtype, selectedDevice;
+	while (dev == nullptr)
 	{
+		selectedDevice = devtype;
 		try
 		{
-	switch (devtype)
-	{
+			switch (devtype)
+			{
 			case MDEV_GUS:
-				return new TimidityMIDIDevice(Args);
-
-	case MDEV_MMAPI:
-#ifdef _WIN32
-		return CreateWinMIDIDevice(mididevice);
-#endif
-		// Intentional fall-through for non-Windows systems.
-
-	case MDEV_FLUIDSYNTH:
-		return new FluidSynthMIDIDevice(Args);
-
-	case MDEV_OPL:
-			return new OPLMIDIDevice(Args);
-
-	case MDEV_TIMIDITY:
-		return CreateTimidityPPMIDIDevice(Args);
-
-	case MDEV_WILDMIDI:
-		return new WildMIDIDevice(Args);
-
-	default:
+				dev = new TimidityMIDIDevice(Args);
 				break;
-	}
+
+			case MDEV_MMAPI:
+		#ifdef _WIN32
+				dev = CreateWinMIDIDevice(mididevice);
+				break;
+#endif
+				// Intentional fall-through for non-Windows systems.
+
+			case MDEV_FLUIDSYNTH:
+				dev = new FluidSynthMIDIDevice(Args);
+				break;
+
+			case MDEV_OPL:
+				dev = new OPLMIDIDevice(Args);
+				break;
+
+			case MDEV_TIMIDITY:
+				dev = CreateTimidityPPMIDIDevice(Args);
+				break;
+
+			case MDEV_WILDMIDI:
+				dev = new WildMIDIDevice(Args);
+				break;
+
+			default:
+				break;
+			}
 		}
 		catch (CRecoverableError &err)
 		{
+			DPrintf(DMSG_WARNING, "%s\n", err.GetMessage());
 			checked[devtype] = true;
 			devtype = MDEV_DEFAULT;
 			// Opening the requested device did not work out so choose another one.
@@ -238,6 +249,23 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 			}
 		}
 	}
+	if (selectedDevice != requestedDevice && (selectedDevice != lastSelectedDevice || requestedDevice != lastRequestedDevice))
+	{
+		static const char *devnames[] = {
+			"Windows Default",
+			"OPL",
+			"",
+			"Timidity++",
+			"FluidSynth",
+			"GUS",
+			"WildMidi"
+		};
+
+		lastRequestedDevice = requestedDevice;
+		lastSelectedDevice = selectedDevice;
+		Printf(TEXTCOLOR_RED "Unable to create " TEXTCOLOR_ORANGE "%s" TEXTCOLOR_RED " MIDI device. Falling back to " TEXTCOLOR_ORANGE "%s\n", devnames[requestedDevice], devnames[selectedDevice]);
+	}
+	return dev;
 }
 
 //==========================================================================

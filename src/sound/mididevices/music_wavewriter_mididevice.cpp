@@ -1,6 +1,6 @@
 /*
 ** music_wavewriter_mididevice.cpp
-** Dumos a MIDI to a wave file by using one of the other software synths.
+** Dumps a MIDI to a wave file by using one of the other software synths.
 **
 **---------------------------------------------------------------------------
 ** Copyright 2008 Randy Heit

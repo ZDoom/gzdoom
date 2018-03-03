@@ -155,7 +155,7 @@ CCMD (addmenukey)
 
 void D_LoadWadSettings ()
 {
-	char cmd[4096];
+	TArray<char> command;
 	int lump, lastlump = 0;
 
 	ParsingKeyConf = true;
@@ -173,16 +173,17 @@ void D_LoadWadSettings ()
 			size_t i;
 
 			// Fetch a line to execute
+			command.Clear();
 			for (i = 0; conf + i < eof && conf[i] != '\n'; ++i)
 			{
-				cmd[i] = conf[i];
+				command.Push(conf[i]);
 			}
 			if (i == 0)
 			{
 				conf++;
 				continue;
 			}
-			cmd[i] = 0;
+			command.Push(0);
 			conf += i;
 			if (*conf == '\n')
 			{
@@ -190,8 +191,8 @@ void D_LoadWadSettings ()
 			}
 
 			// Comments begin with //
-			char *stop = cmd + i - 1;
-			char *comment = cmd;
+			char *stop = &command[i - 1];
+			char *comment = &command[0];
 			int inQuote = 0;
 
 			if (*stop == '\r')
@@ -209,7 +210,7 @@ void D_LoadWadSettings ()
 				}
 				comment++;
 			}
-			if (comment == cmd)
+			if (comment == &command[0])
 			{ // Comment at line beginning
 				continue;
 			}
@@ -218,7 +219,7 @@ void D_LoadWadSettings ()
 				*comment = 0;
 			}
 
-			AddCommandString (cmd);
+			AddCommandString (&command[0]);
 		}
 	}
 	ParsingKeyConf = false;

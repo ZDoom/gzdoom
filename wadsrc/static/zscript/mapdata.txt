@@ -80,8 +80,8 @@ struct Side native play
 	//native DInterpolation *SetInterpolation(int position);
 	//native void StopInterpolation(int position);
 
-	native Vertex V1();
-	native Vertex V2();
+	native clearscope Vertex V1();
+	native clearscope Vertex V2();
 
 	native int Index();
 	
@@ -179,7 +179,7 @@ struct SecPlane native play
 	
 	native bool isSlope() const;
 	native int PointOnSide(Vector3 pos) const;
-	native double ZatPoint (Vector2 v) const;
+	native clearscope double ZatPoint (Vector2 v) const;
 	native double ZatPointDist(Vector2 v, double dist) const;
 	native bool isEqual(Secplane other) const;
 	native void ChangeHeight(double hdiff);

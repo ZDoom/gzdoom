@@ -36,11 +36,6 @@
 
 #include <SDL.h>
 
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <netdb.h>
-
 #include "doomerrors.h"
 #include <math.h>
 
@@ -74,8 +69,6 @@
 #include "g_level.h"
 
 EXTERN_CVAR (String, language)
-EXTERN_CVAR(String, sys_statshost)
-EXTERN_CVAR(Int, sys_statsport)
 
 extern "C"
 {
@@ -495,61 +488,5 @@ TArray<FString> I_GetGogPaths()
 {
 	// GOG's Doom games are Windows only at the moment
 	return TArray<FString>();
-}
-
-bool I_HTTPRequest(const char* request)
-{
-	if (sys_statshost.GetHumanString() == NULL || sys_statshost.GetHumanString()[0] == 0)
-		return false; // no host, disable
-
-	int sockfd, portno, n;
-		struct sockaddr_in serv_addr;
-		struct hostent *server;
-
-		portno = sys_statsport;
-		sockfd = socket(AF_INET, SOCK_STREAM, 0);
-
-	if (sockfd < 0)
-	{
-		DPrintf(DMSG_ERROR, "Error opening TCP socket.\n");
-		return false;
-	}
-
-	server = gethostbyname(sys_statshost.GetHumanString());
-		if (server == NULL)
-		{
-			DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
-			return false;
-		}
-		bzero((char*) &serv_addr, sizeof(serv_addr));
-		serv_addr.sin_family = AF_INET;
-		bcopy((char *)server->h_addr,
-			  (char *)&serv_addr.sin_addr.s_addr,
-			  server->h_length);
-		serv_addr.sin_port = htons(portno);
-
-		DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", sys_statshost.GetHumanString());
-		if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
-	{
-		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", sys_statshost.GetHumanString());
-		return false;
-	}
-
-	char buffer[1024];
-	sprintf(buffer, "%s", request);
-	Printf("Buffer: %s", buffer);
-	n = write(sockfd, (char*)buffer, (int)strlen(request));
-	if (n<0)
-	{
-		DPrintf(DMSG_ERROR, "Error writing to socket.\n");
-		close(sockfd);
-		return false;
-	}
-	bzero(buffer, 1024);
-
-	n = read(sockfd, buffer, 1023);
-	close(sockfd);
-	DPrintf(DMSG_NOTIFY, "Stats send successful.\n");
-	return true;
 }
 

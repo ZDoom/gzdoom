@@ -73,6 +73,38 @@ FGameConfigFile::FGameConfigFile ()
 {
 #ifdef __APPLE__
 	FString user_docs, user_app_support, local_app_support;
+	{
+		char cpath[PATH_MAX];
+		FSRef folder;
+
+		if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			user_docs << cpath << "/" GAME_DIR;
+		}
+		else
+		{
+			user_docs = "~/" GAME_DIR;
+		}
+		if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			user_app_support << cpath << "/" GAME_DIR;
+		}
+		else
+		{
+			user_app_support = "~/Library/Application Support/" GAME_DIR;
+		}
+		if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
+			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+		{
+			local_app_support << cpath << "/" GAME_DIR;
+		}
+		else
+		{
+			local_app_support = "Library/Application Support/" GAME_DIR;
+		}
+	}
 #endif
 	FString pathname;
 
@@ -95,32 +127,10 @@ FGameConfigFile::FGameConfigFile ()
 		SetValueForKey ("Path", ".", true);
 		SetValueForKey ("Path", "$DOOMWADDIR", true);
 #ifdef __APPLE__
-		char cpath[PATH_MAX];
-		FSRef folder;
-		
-		if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-		{
-			user_docs << cpath << "/" GAME_DIR;
-			SetValueForKey("Path", user_docs, true);
-		}
-		else
-		{
-			SetValueForKey("Path", "~/" GAME_DIR, true);
-		}
-		if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-		{
-			user_app_support << cpath << "/" GAME_DIR;
-			SetValueForKey("Path", user_app_support, true);
-		}
+		SetValueForKey ("Path", user_docs, true);
+		SetValueForKey ("Path", user_app_support, true);
 		SetValueForKey ("Path", "$PROGDIR", true);
-		if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-		{
-			local_app_support << cpath << "/" GAME_DIR;
-			SetValueForKey("Path", local_app_support, true);
-		}
+		SetValueForKey ("Path", local_app_support, true);
 #elif !defined(__unix__)
 		SetValueForKey ("Path", "$HOME", true);
 		SetValueForKey ("Path", "$PROGDIR", true);

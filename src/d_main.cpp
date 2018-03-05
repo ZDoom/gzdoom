@@ -118,6 +118,7 @@
 #include "vm.h"
 #include "types.h"
 #include "r_data/r_vanillatrans.h"
+#include "d_stats.cpp"
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
@@ -2743,6 +2744,8 @@ void D_DoomMain (void)
 			D_StartTitle ();				// start up intro loop
 			setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 		}
+
+		D_DoAnonStats();
 
 		if (I_FriendlyWindowTitle)
 			I_SetWindowTitle(DoomStartupInfo.Name.GetChars());

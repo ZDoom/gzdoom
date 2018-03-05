@@ -107,7 +107,7 @@ int FSoundFontReader::pathcmp(const char *p1, const char *p2)
 
 FSF2Reader::FSF2Reader(const char *fn)
 {
-	mMainConfigForSF2.Format("soundfont %s\n", fn);
+	mMainConfigForSF2.Format("soundfont \"%s\"\n", fn);
 	mFilename = fn;
 }
 
@@ -371,6 +371,11 @@ void FSoundFontManager::CollectSoundfonts()
 				}
 			}
 		}
+	}
+
+	if (soundfonts.Size() == 0)
+	{
+		ProcessOneFile(NicePath("$PROGDIR/soundfonts/gzdoom.sf2"));
 	}
 }
 

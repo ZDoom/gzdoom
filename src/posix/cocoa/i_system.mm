@@ -387,7 +387,3 @@ TArray<FString> I_GetGogPaths()
 	return TArray<FString>();
 }
 
-bool I_HTTPRequest(const char* request)
-{
-	// todo
-}

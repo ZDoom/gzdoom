@@ -36,6 +36,11 @@
 
 #include <SDL.h>
 
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <netdb.h>
+
 #include "doomerrors.h"
 #include <math.h>
 
@@ -69,6 +74,8 @@
 #include "g_level.h"
 
 EXTERN_CVAR (String, language)
+EXTERN_CVAR(String, sys_statshost)
+EXTERN_CVAR(Int, sys_statsport)
 
 extern "C"
 {
@@ -94,7 +101,7 @@ void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 ticcmd_t emptycmd;
 ticcmd_t *I_BaseTiccmd(void)
 {
-    return &emptycmd;
+	return &emptycmd;
 }
 
 void I_BeginRead(void)
@@ -129,7 +136,7 @@ void I_Init (void)
 	DumpCPUInfo (&CPU);
 
 	atterm (I_ShutdownSound);
-    I_InitSound ();
+	I_InitSound ();
 }
 
 //
@@ -139,9 +146,9 @@ static int has_exited;
 
 void I_Quit (void)
 {
-    has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
+	has_exited = 1;		/* Prevent infinitely recursive exits -- killough */
 
-    if (demorecording)
+	if (demorecording)
 		G_CheckDemoStatus();
 
 	C_DeinitConsole();
@@ -191,11 +198,11 @@ void Linux_I_FatalError(const char* errortext)
 
 void I_FatalError (const char *error, ...)
 {
-    static bool alreadyThrown = false;
-    gameisdead = true;
+	static bool alreadyThrown = false;
+	gameisdead = true;
 
-    if (!alreadyThrown)		// ignore all but the first message -- killough
-    {
+	if (!alreadyThrown)		// ignore all but the first message -- killough
+	{
 		alreadyThrown = true;
 		char errortext[MAX_ERRORTEXT];
 		int index;
@@ -221,25 +228,25 @@ void I_FatalError (const char *error, ...)
 //		throw CFatalError (errortext);
 		fprintf (stderr, "%s\n", errortext);
 		exit (-1);
-    }
+	}
 
-    if (!has_exited)	// If it hasn't exited yet, exit now -- killough
-    {
+	if (!has_exited)	// If it hasn't exited yet, exit now -- killough
+	{
 		has_exited = 1;	// Prevent infinitely recursive exits -- killough
 		exit(-1);
-    }
+	}
 }
 
 void I_Error (const char *error, ...)
 {
-    va_list argptr;
-    char errortext[MAX_ERRORTEXT];
+	va_list argptr;
+	char errortext[MAX_ERRORTEXT];
 
-    va_start (argptr, error);
-    vsprintf (errortext, error, argptr);
-    va_end (argptr);
+	va_start (argptr, error);
+	vsprintf (errortext, error, argptr);
+	va_end (argptr);
 
-    throw CRecoverableError (errortext);
+	throw CRecoverableError (errortext);
 }
 
 void I_SetIWADInfo ()
@@ -291,8 +298,8 @@ int I_PickIWad (WadStuff *wads, int numwads, bool showwin, int defaultiwad)
 	{
 		FString cmd("kdialog --title \"" GAMESIG " ");
 		cmd << GetVersionString() << ": Select an IWAD to use\""
-		            " --menu \"" GAMENAME " found more than one IWAD\n"
-		            "Select from the list below to determine which one to use:\"";
+					" --menu \"" GAMENAME " found more than one IWAD\n"
+					"Select from the list below to determine which one to use:\"";
 
 		for(i = 0; i < numwads; ++i)
 		{
@@ -380,7 +387,7 @@ static int matchfile (struct dirent *ent)
 static int matchfile (const struct dirent *ent)
 #endif
 {
-    return fnmatch (pattern, ent->d_name, FNM_NOESCAPE) == 0;
+	return fnmatch (pattern, ent->d_name, FNM_NOESCAPE) == 0;
 }
 
 void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
@@ -399,22 +406,22 @@ void *I_FindFirst (const char *filespec, findstate_t *fileinfo)
 		dir = ".";
 	}
 
-    fileinfo->current = 0;
-    fileinfo->count = scandir (dir.GetChars(), &fileinfo->namelist,
+	fileinfo->current = 0;
+	fileinfo->count = scandir (dir.GetChars(), &fileinfo->namelist,
 							   matchfile, alphasort);
-    if (fileinfo->count > 0)
-    {
+	if (fileinfo->count > 0)
+	{
 		return fileinfo;
-    }
-    return (void*)-1;
+	}
+	return (void*)-1;
 }
 
 int I_FindNext (void *handle, findstate_t *fileinfo)
 {
-    findstate_t *state = (findstate_t *)handle;
-    if (state->current < fileinfo->count)
-    {
-	    return ++state->current < fileinfo->count ? 0 : -1;
+	findstate_t *state = (findstate_t *)handle;
+	if (state->current < fileinfo->count)
+	{
+		return ++state->current < fileinfo->count ? 0 : -1;
 	}
 	return -1;
 }
@@ -486,12 +493,63 @@ unsigned int I_MakeRNGSeed()
 
 TArray<FString> I_GetGogPaths()
 {
-    // GOG's Doom games are Windows only at the moment
-    return TArray<FString>();
+	// GOG's Doom games are Windows only at the moment
+	return TArray<FString>();
 }
-
 
 bool I_HTTPRequest(const char* request)
 {
-	// todo
+	if (sys_statshost.GetHumanString() == NULL || sys_statshost.GetHumanString()[0] == 0)
+		return false; // no host, disable
+
+	int sockfd, portno, n;
+		struct sockaddr_in serv_addr;
+		struct hostent *server;
+
+		portno = sys_statsport;
+		sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+	if (sockfd < 0)
+	{
+		DPrintf(DMSG_ERROR, "Error opening TCP socket.\n");
+		return false;
+	}
+
+	server = gethostbyname(sys_statshost.GetHumanString());
+		if (server == NULL)
+		{
+			DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
+			return false;
+		}
+		bzero((char*) &serv_addr, sizeof(serv_addr));
+		serv_addr.sin_family = AF_INET;
+		bcopy((char *)server->h_addr,
+			  (char *)&serv_addr.sin_addr.s_addr,
+			  server->h_length);
+		serv_addr.sin_port = htons(portno);
+
+		DPrintf(DMSG_NOTIFY, "Connecting to host %s\n", sys_statshost.GetHumanString());
+		if (connect(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) < 0)
+	{
+		DPrintf(DMSG_ERROR, "Connection to host %s failed!\n", sys_statshost.GetHumanString());
+		return false;
+	}
+
+	char buffer[1024];
+	sprintf(buffer, "%s", request);
+	Printf("Buffer: %s", buffer);
+	n = write(sockfd, (char*)buffer, (int)strlen(request));
+	if (n<0)
+	{
+		DPrintf(DMSG_ERROR, "Error writing to socket.\n");
+		close(sockfd);
+		return false;
+	}
+	bzero(buffer, 1024);
+
+	n = read(sockfd, buffer, 1023);
+	close(sockfd);
+	DPrintf(DMSG_NOTIFY, "Stats send successful.\n");
+	return true;
 }
+

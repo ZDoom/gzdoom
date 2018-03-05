@@ -58,8 +58,12 @@ static int GetOSVersion()
 
 #else
 
-	// Todo: PPC + ARM
-
+// fall-through linux stuff here
+#ifdef __arm__
+	return 10;
+#elif __ppc__
+	return 9;
+#else
 	if (sizeof(void*) == 4)	// 32 bit
 	{
 		return 11;
@@ -68,6 +72,7 @@ static int GetOSVersion()
 	{
 		return 12;
 	}
+#endif
 
 
 #endif
@@ -123,7 +128,8 @@ void D_DoAnonStats()
 	if (currentrenderer == 0 && sentstats_swr) return;
 	if (currentrenderer == 1 && sentstats_hwr) return;
 
-	FStringf requeststring("GET /stats.php?render=%i&cores=%i&os=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
+	static char requeststring[1024];
+	sprintf(requeststring, "GET /stats.php?render=%i&cores=%i&os=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
 		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);

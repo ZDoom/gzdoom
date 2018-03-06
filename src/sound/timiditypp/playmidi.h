@@ -519,8 +519,6 @@ public:
 	ChannelBitMask drumchannel_mask;
 	ChannelBitMask drumchannels;
 	double *vol_table;
-	int playback_rate;
-	int control_ratio;
 
 	// make this private later
 	Instruments *instruments;
@@ -696,7 +694,7 @@ private:
 
 
 public:
-	Player(int freq, Instruments *);
+	Player(Instruments *);
 	~Player();
 
 	bool ISDRUMCHANNEL(int c)
@@ -741,6 +739,7 @@ public:
 };
 
 void free_gauss_table(void);
+void set_playback_rate(int freq);
 
 
 }

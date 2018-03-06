@@ -181,8 +181,8 @@ namespace TimidityPlus
 {
 
 // These two variables need to remain global or things will get messy because they get accessed from non-class code.
-int32_t control_ratio = 44;
-int32_t playback_rate = 44100;
+int32_t control_ratio = 22;
+int32_t playback_rate = 22050;
 
 #define PLAY_INTERLEAVE_SEC			1.0
 #define PORTAMENTO_TIME_TUNING		(1.0 / 5000.0)
@@ -195,13 +195,10 @@ int32_t playback_rate = 44100;
 #define DEFAULT_AMPLIFICATION 		70
 #define VIBRATO_DEPTH_MAX 384	/* 600 cent */
 
-Player::Player(int freq, Instruments *instr)
+void set_playback_rate(int freq)
 {
 	const int CONTROLS_PER_SECOND = 1000;
 	const int MAX_CONTROL_RATIO = 255;
-
-	last_reverb_setting = timidity_reverb;
-	memset(this, 0, sizeof(*this));
 
 	playback_rate = freq;
 	control_ratio = playback_rate / CONTROLS_PER_SECOND;
@@ -209,6 +206,13 @@ Player::Player(int freq, Instruments *instr)
 		control_ratio = 1;
 	else if (control_ratio > MAX_CONTROL_RATIO)
 		control_ratio = MAX_CONTROL_RATIO;
+}
+
+
+Player::Player(Instruments *instr)
+{
+	last_reverb_setting = timidity_reverb;
+	memset(this, 0, sizeof(*this));
 
 	// init one-time global stuff - this should go to the device class once it exists.
 	instruments = instr;

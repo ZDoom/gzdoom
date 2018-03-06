@@ -115,6 +115,8 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 		delete instruments;
 		instruments = nullptr;
 	}
+	TimidityPlus::set_playback_rate(timidity_frequency);
+	SampleRate = timidity_frequency;
 	if (instruments == nullptr)
 	{
 		instruments = new TimidityPlus::Instruments;
@@ -126,7 +128,7 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 	}
 	if (instruments != nullptr)
 	{
-		Renderer = new TimidityPlus::Player(timidity_frequency, instruments);
+		Renderer = new TimidityPlus::Player(instruments);
 	}
 	else
 	{
@@ -158,7 +160,6 @@ TimidityPPMIDIDevice::~TimidityPPMIDIDevice ()
 
 int TimidityPPMIDIDevice::Open(MidiCallback callback, void *userdata)
 {
-
 	int ret = OpenStream(2, 0, callback, userdata);
 	if (ret == 0 && Renderer != nullptr)
 	{

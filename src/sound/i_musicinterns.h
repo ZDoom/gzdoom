@@ -88,7 +88,7 @@ public:
 #ifdef _WIN32
 MIDIDevice *CreateWinMIDIDevice(int mididevice);
 #endif
-MIDIDevice *CreateTimidityPPMIDIDevice(const char *args);
+MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate);
 void TimidityPP_Shutdown();
 
 // Base class for software synthesizer MIDI output devices ------------------
@@ -97,7 +97,7 @@ class SoftSynthMIDIDevice : public MIDIDevice
 {
 	friend class MIDIWaveWriter;
 public:
-	SoftSynthMIDIDevice();
+	SoftSynthMIDIDevice(int samplerate, int minrate = 1, int maxrate = 1000000 /* something higher than any valid value */);
 	~SoftSynthMIDIDevice();
 
 	void Close();
@@ -131,10 +131,6 @@ protected:
 	int OpenStream(int chunks, int flags, MidiCallback, void *userdata);
 	static bool FillStream(SoundStream *stream, void *buff, int len, void *userdata);
 	virtual bool ServiceStream (void *buff, int numbytes);
-	virtual void SetSampleRate(int rate) 
-	{ 
-		if (rate > 11025) { SampleRate = rate; } 
-	}
 	int GetSampleRate() const { return SampleRate; }
 
 	virtual void HandleEvent(int status, int parm1, int parm2) = 0;
@@ -152,7 +148,6 @@ public:
 	void Close();
 	int GetTechnology() const;
 	FString GetStats();
-	virtual void SetSampleRate(int rate) { } // cannot be changed.
 
 protected:
 	void CalcTickRate();
@@ -182,14 +177,13 @@ namespace Timidity { struct Renderer; }
 class TimidityMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	TimidityMIDIDevice(const char *args);
+	TimidityMIDIDevice(const char *args, int samplerate);
 	~TimidityMIDIDevice();
 
 	int Open(MidiCallback, void *userdata);
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 	int GetDeviceType() const override { return MDEV_GUS; }
-	virtual void SetSampleRate(int rate) { if (rate >= 11025 && rate < 65535) SampleRate = rate; }
 
 protected:
 	Timidity::Renderer *Renderer;
@@ -204,7 +198,7 @@ protected:
 class MIDIWaveWriter : public SoftSynthMIDIDevice
 {
 public:
-	MIDIWaveWriter(const char *filename, MIDIDevice *devtouse, int rate);
+	MIDIWaveWriter(const char *filename, MIDIDevice *devtouse);
 	~MIDIWaveWriter();
 	int Resume();
 	int Open(MidiCallback cb, void *userdata)
@@ -235,14 +229,13 @@ protected:
 class WildMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	WildMIDIDevice(const char *args);
+	WildMIDIDevice(const char *args, int samplerate);
 	~WildMIDIDevice();
 
 	int Open(MidiCallback, void *userdata);
 	void PrecacheInstruments(const uint16_t *instruments, int count);
 	FString GetStats();
 	int GetDeviceType() const override { return MDEV_WILDMIDI; }
-	virtual void SetSampleRate(int rate) { if (rate >= 11025 && SampleRate < rate) SampleRate = rate; }
 
 protected:
 	WildMidi_Renderer *Renderer;
@@ -268,7 +261,7 @@ struct fluid_synth_t;
 class FluidSynthMIDIDevice : public SoftSynthMIDIDevice
 {
 public:
-	FluidSynthMIDIDevice(const char *args);
+	FluidSynthMIDIDevice(const char *args, int samplerate);
 	~FluidSynthMIDIDevice();
 
 	int Open(MidiCallback, void *userdata);
@@ -277,7 +270,6 @@ public:
 	void FluidSettingNum(const char *setting, double value);
 	void FluidSettingStr(const char *setting, const char *value);
 	int GetDeviceType() const override { return MDEV_FLUIDSYNTH; }
-	virtual void SetSampleRate(int rate) { if (rate >= 22050 && rate <= 96000) SampleRate = rate; }
 
 protected:
 	void HandleEvent(int status, int parm1, int parm2);
@@ -382,7 +374,7 @@ protected:
 	
 	
 	static EMidiDevice SelectMIDIDevice(EMidiDevice devtype);
-	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype);
+	MIDIDevice *CreateMIDIDevice(EMidiDevice devtype, int samplerate);
 
 	static void Callback(void *userdata);
 

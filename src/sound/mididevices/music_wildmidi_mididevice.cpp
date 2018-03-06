@@ -89,18 +89,10 @@ CUSTOM_CVAR(Bool, wildmidi_enhanced_resampling, true, CVAR_ARCHIVE | CVAR_GLOBAL
 //
 //==========================================================================
 
-WildMIDIDevice::WildMIDIDevice(const char *args)
+WildMIDIDevice::WildMIDIDevice(const char *args, int samplerate)
+	:SoftSynthMIDIDevice(samplerate <= 0? wildmidi_frequency : samplerate, 11025, 65535)
 {
 	Renderer = NULL;
-
-	if (wildmidi_frequency > 0)
-	{
-		SampleRate = clamp(*wildmidi_frequency, 11025, 65535);
-	}
-	else
-	{ // If nothing is set, use the active device's output rate.
-		SampleRate = (int)GSnd->GetOutputRate();
-	}
 
 	if (args == NULL || *args == 0) args = wildmidi_config;
 

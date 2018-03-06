@@ -66,9 +66,9 @@
 //
 //==========================================================================
 
-TimidityMIDIDevice::TimidityMIDIDevice(const char *args)
+TimidityMIDIDevice::TimidityMIDIDevice(const char *args, int samplerate)
+	: SoftSynthMIDIDevice(samplerate, 11025, 65535)
 {
-	Renderer = nullptr;
 	Renderer = new Timidity::Renderer((float)SampleRate, args);
 }
 

@@ -79,6 +79,7 @@ CVAR(Bool, opl_fullpan, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
 //==========================================================================
 
 OPLMIDIDevice::OPLMIDIDevice(const char *args)
+	: SoftSynthMIDIDevice((int)OPL_SAMPLE_RATE)
 {
 	OPL_SetCore(args);
 	FullPan = opl_fullpan;
@@ -88,7 +89,6 @@ OPLMIDIDevice::OPLMIDIDevice(const char *args)
 	data.Read(filehdr, 8);
 	if (memcmp(filehdr, "#OPL_II#", 8)) I_Error("Corrupt GENMIDI lump");
 	data.Read(OPLinstruments, sizeof(GenMidiInstrument) * GENMIDI_NUM_TOTAL);
-	SampleRate = (int)OPL_SAMPLE_RATE;
 }
 
 //==========================================================================

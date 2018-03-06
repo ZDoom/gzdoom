@@ -87,7 +87,8 @@ struct FmtChunk
 //
 //==========================================================================
 
-MIDIWaveWriter::MIDIWaveWriter(const char *filename, MIDIDevice *playdevice, int rate)
+MIDIWaveWriter::MIDIWaveWriter(const char *filename, MIDIDevice *playdevice)
+	: SoftSynthMIDIDevice(playDevice->GetSampleRate())
 {
 	File = FileWriter::Open(filename);
 	playDevice = (SoftSynthMIDIDevice*) playdevice;
@@ -102,15 +103,13 @@ MIDIWaveWriter::MIDIWaveWriter(const char *filename, MIDIDevice *playdevice, int
 		if (4*3 != File->Write(work, 4 * 3)) goto fail;
 
 
-		playDevice->SetSampleRate(rate);
 		playDevice->CalcTickRate();
-		rate = playDevice->GetSampleRate();	// read back what the device made of it.
 		fmt.ChunkID = MAKE_ID('f','m','t',' ');
 		fmt.ChunkLen = LittleLong(uint32_t(sizeof(fmt) - 8));
 		fmt.FormatTag = LittleShort(0xFFFE);		// WAVE_FORMAT_EXTENSIBLE
 		fmt.Channels = LittleShort(2);
-		fmt.SamplesPerSec = LittleLong(rate);
-		fmt.AvgBytesPerSec = LittleLong(rate * 8);
+		fmt.SamplesPerSec = LittleLong(SampleRate);
+		fmt.AvgBytesPerSec = LittleLong(SampleRate * 8);
 		fmt.BlockAlign = LittleShort(8);
 		fmt.BitsPerSample = LittleShort(32);
 		fmt.ExtensionSize = LittleShort(2 + 4 + 16);

@@ -68,14 +68,15 @@ CVAR(Bool, synth_watch, false, 0)
 //
 //==========================================================================
 
-SoftSynthMIDIDevice::SoftSynthMIDIDevice()
+SoftSynthMIDIDevice::SoftSynthMIDIDevice(int samplerate, int minrate, int maxrate)
 {
 	Stream = NULL;
 	Tempo = 0;
 	Division = 0;
 	Events = NULL;
 	Started = false;
-	SampleRate = GSnd != NULL ? (int)GSnd->GetOutputRate() : 44100;
+	SampleRate = samplerate;
+	if (SampleRate < minrate || SampleRate > maxrate) SampleRate = GSnd != NULL ? clamp((int)GSnd->GetOutputRate(), minrate, maxrate) : 44100;
 }
 
 //==========================================================================

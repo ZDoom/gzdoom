@@ -53,7 +53,7 @@ class TimidityPPMIDIDevice : public SoftSynthMIDIDevice
 	static TimidityPlus::Instruments *instruments;
 	int sampletime;
 public:
-	TimidityPPMIDIDevice(const char *args);
+	TimidityPPMIDIDevice(const char *args, int samplerate);
 	~TimidityPPMIDIDevice();
 
 	int Open(MidiCallback, void *userdata);
@@ -64,10 +64,6 @@ public:
 	{
 		if (instruments != nullptr) delete instruments;
 		instruments = nullptr;
-	}
-	virtual void SetSampleRate(int rate) 
-	{ 
-		if (rate >= 4000 && SampleRate < rate) SampleRate = rate; 
 	}
 
 	double test[3] = { 0, 0, 0 };
@@ -91,13 +87,7 @@ CUSTOM_CVAR(String, timidity_config, "timidity.cfg", CVAR_ARCHIVE | CVAR_GLOBALC
 }
 
 
-CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{ // Clamp frequency to Timidity's limits
-	if (self < 4000)
-		self = 4000;
-	else if (self > 65000)
-		self = 65000;
-}
+CVAR (Int, timidity_frequency, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 //==========================================================================
 //
@@ -105,7 +95,8 @@ CUSTOM_CVAR (Int, timidity_frequency, 44100, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args) 
+TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args, int samplerate) 
+	:SoftSynthMIDIDevice(samplerate <= 0? timidity_frequency : samplerate, 4000, 65000)
 {
 	if (args == NULL || *args == 0) args = timidity_config;
 
@@ -115,8 +106,8 @@ TimidityPPMIDIDevice::TimidityPPMIDIDevice(const char *args)
 		delete instruments;
 		instruments = nullptr;
 	}
-	TimidityPlus::set_playback_rate(timidity_frequency);
-	SampleRate = timidity_frequency;
+	TimidityPlus::set_playback_rate(SampleRate);
+
 	if (instruments == nullptr)
 	{
 		instruments = new TimidityPlus::Instruments;
@@ -229,9 +220,9 @@ void TimidityPPMIDIDevice::ComputeOutput(float *buffer, int len)
 //
 //==========================================================================
 
-MIDIDevice *CreateTimidityPPMIDIDevice(const char *args)
+MIDIDevice *CreateTimidityPPMIDIDevice(const char *args, int samplerate)
 {
-	return new TimidityPPMIDIDevice(args);
+	return new TimidityPPMIDIDevice(args, samplerate);
 }
 
 void TimidityPP_Shutdown()

@@ -274,7 +274,8 @@ CUSTOM_CVAR(Int, fluid_chorus_type, FLUID_CHORUS_DEFAULT_TYPE, CVAR_ARCHIVE|CVAR
 //
 //==========================================================================
 
-FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
+FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args, int samplerate)
+	: SoftSynthMIDIDevice(samplerate <= 0? fluid_samplerate : samplerate, 22050, 96000)
 {
 	FluidSynth = NULL;
 	FluidSettings = NULL;
@@ -289,11 +290,6 @@ FluidSynthMIDIDevice::FluidSynthMIDIDevice(const char *args)
 	{
 		printf("Failed to create FluidSettings.\n");
 		return;
-	}
-	SampleRate = fluid_samplerate;
-	if (SampleRate < 22050 || SampleRate > 96000)
-	{ // Match sample rate to SFX rate
-		SampleRate = clamp((int)GSnd->GetOutputRate(), 22050, 96000);
 	}
 	fluid_settings_setnum(FluidSettings, "synth.sample-rate", SampleRate);
 	fluid_settings_setnum(FluidSettings, "synth.gain", fluid_gain);

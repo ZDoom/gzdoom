@@ -182,7 +182,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 
 static EMidiDevice lastRequestedDevice, lastSelectedDevice;
 
-MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
+MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 {
 	bool checked[MDEV_COUNT] = { false };
 
@@ -197,7 +197,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 			switch (devtype)
 			{
 			case MDEV_GUS:
-				dev = new TimidityMIDIDevice(Args);
+				dev = new TimidityMIDIDevice(Args, samplerate);
 				break;
 
 			case MDEV_MMAPI:
@@ -208,7 +208,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 				// Intentional fall-through for non-Windows systems.
 
 			case MDEV_FLUIDSYNTH:
-				dev = new FluidSynthMIDIDevice(Args);
+				dev = new FluidSynthMIDIDevice(Args, samplerate);
 				break;
 
 			case MDEV_OPL:
@@ -216,11 +216,11 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype)
 				break;
 
 			case MDEV_TIMIDITY:
-				dev = CreateTimidityPPMIDIDevice(Args);
+				dev = CreateTimidityPPMIDIDevice(Args, samplerate);
 				break;
 
 			case MDEV_WILDMIDI:
-				dev = new WildMIDIDevice(Args);
+				dev = new WildMIDIDevice(Args, samplerate);
 				break;
 
 			default:
@@ -284,7 +284,7 @@ void MIDIStreamer::Play(bool looping, int subsong)
 	m_Looping = looping;
 	source->SetMIDISubsong(subsong);
 	devtype = SelectMIDIDevice(DeviceType);
-	MIDI = CreateMIDIDevice(devtype);
+	MIDI = CreateMIDIDevice(devtype, 0);
 	InitPlayback();
 }
 
@@ -319,8 +319,8 @@ bool MIDIStreamer::DumpWave(const char *filename, int subsong, int samplerate)
 
 	assert(MIDI == NULL);
 	auto devtype = SelectMIDIDevice(DeviceType);
-	MIDI = CreateMIDIDevice(devtype);
-	MIDI = new MIDIWaveWriter(filename, MIDI, samplerate);
+	MIDI = CreateMIDIDevice(devtype, samplerate);
+	MIDI = new MIDIWaveWriter(filename, MIDI);
 	return InitPlayback();
 }
 

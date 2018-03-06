@@ -297,7 +297,7 @@ class BaseStatusBar native ui
 	
 	private HUDFont mSmallFont;
 	
-	native void AttachMessage(HUDMessageBase msg);
+	native void AttachMessage(HUDMessageBase msg, uint id, int layer);
 	native HUDMessageBase DetachMessage(HUDMessageBase msg);
 	native HUDMessageBase DetachMessageID(uint msgid);
 	native void DetachAllMessages();

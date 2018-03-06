@@ -1712,7 +1712,10 @@ void C_ArchiveCVars (FConfigFile *f, uint32_t filter)
 			(CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_MOD|CVAR_AUTO|CVAR_USERINFO|CVAR_SERVERINFO|CVAR_NOSAVE))
 			== filter)
 		{
-			f->SetValueForKey(cvar->GetName(), cvar->SafeValue);
+			const char *const value = (cvar->Flags & CVAR_ISDEFAULT)
+				? cvar->GetGenericRep(CVAR_String).String
+				: cvar->SafeValue.GetChars();
+			f->SetValueForKey(cvar->GetName(), value);
 		}
 		cvar = cvar->m_Next;
 	}

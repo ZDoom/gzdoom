@@ -604,7 +604,7 @@ class FxIntCast : public FxExpression
 
 public:
 
-	FxIntCast(FxExpression *x, bool nowarn, bool explicitly = false);
+	FxIntCast(FxExpression *x, bool nowarn, bool explicitly = false, bool isunsigned = false);
 	~FxIntCast();
 	FxExpression *Resolve(FCompileContext&);
 

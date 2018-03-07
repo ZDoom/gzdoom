@@ -411,6 +411,7 @@ bool AssertObject(void * ob);
 #define PARAM_EXISTS(p)					((p) < numparam)
 
 #define PARAM_INT_DEF_AT(p,x)			int x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
+#define PARAM_UINT_DEF_AT(p,x)			unsigned x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = param[p].i; } else { ASSERTINT(defaultparam[p]); x = defaultparam[p].i; }
 #define PARAM_BOOL_DEF_AT(p,x)			bool x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = !!param[p].i; } else { ASSERTINT(defaultparam[p]); x = !!defaultparam[p].i; }
 #define PARAM_NAME_DEF_AT(p,x)			FName x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = ENamedName(param[p].i); } else { ASSERTINT(defaultparam[p]); x = ENamedName(defaultparam[p].i); }
 #define PARAM_SOUND_DEF_AT(p,x)			FSoundID x; if (PARAM_EXISTS(p)) { ASSERTINT(param[p]); x = FSoundID(param[p].i); } else { ASSERTINT(defaultparam[p]); x = FSoundID(defaultparam[p].i); }
@@ -449,6 +450,7 @@ bool AssertObject(void * ob);
 #define PARAM_CLASS_NOT_NULL(x,base)		++paramnum; PARAM_CLASS_NOT_NULL_AT(paramnum,x,base)
 
 #define PARAM_INT_DEF(x)			++paramnum; PARAM_INT_DEF_AT(paramnum,x)
+#define PARAM_UINT_DEF(x)			++paramnum; PARAM_UINT_DEF_AT(paramnum,x)
 #define PARAM_BOOL_DEF(x)			++paramnum; PARAM_BOOL_DEF_AT(paramnum,x)
 #define PARAM_NAME_DEF(x)			++paramnum; PARAM_NAME_DEF_AT(paramnum,x)
 #define PARAM_SOUND_DEF(x)			++paramnum; PARAM_SOUND_DEF_AT(paramnum,x)

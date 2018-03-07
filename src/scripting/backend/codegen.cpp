@@ -924,11 +924,11 @@ void FxBoolCast::EmitCompare(VMFunctionBuilder *build, bool invert, TArray<size_
 //
 //==========================================================================
 
-FxIntCast::FxIntCast(FxExpression *x, bool nowarn, bool explicitly)
+FxIntCast::FxIntCast(FxExpression *x, bool nowarn, bool explicitly, bool isunsigned)
 : FxExpression(EFX_IntCast, x->ScriptPosition)
 {
 	basex=x;
-	ValueType = TypeSInt32;
+	ValueType = isunsigned ? TypeUInt32 : TypeSInt32;
 	NoWarn = nowarn;
 	Explicit = explicitly;
 }
@@ -1632,7 +1632,7 @@ FxExpression *FxTypeCast::Resolve(FCompileContext &ctx)
 	else if (ValueType->isInt())
 	{
 		// This is only for casting to actual ints. Subtypes representing an int will be handled elsewhere.
-		FxExpression *x = new FxIntCast(basex, NoWarn, Explicit);
+		FxExpression *x = new FxIntCast(basex, NoWarn, Explicit, static_cast<PInt*>(ValueType)->Unsigned);
 		x = x->Resolve(ctx);
 		basex = nullptr;
 		delete this;

@@ -54,6 +54,14 @@ enum
 	ME_PITCHWHEEL = 0xE0
 };
 
+CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 //==========================================================================
 //
 // ADLMIDIDevice Constructor
@@ -61,6 +69,7 @@ enum
 //==========================================================================
 
 ADLMIDIDevice::ADLMIDIDevice(const char *args)
+	:SoftSynthMIDIDevice(44100)
 {
 	Renderer = adl_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
@@ -163,18 +172,11 @@ void ADLMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void ADLMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	if (shortbuffer.Size() < len*2) shortbuffer.Resize(len*2);
-	auto result = adl_generate(Renderer, len, &shortbuffer[0]);
-	for(int i=0; i<result*2; i++)
+	if ((int)shortbuffer.Size() < len*2) shortbuffer.Resize(len*2);
+	auto result = adl_generate(Renderer, len*2, &shortbuffer[0]);
+	for(int i=0; i<result; i++)
 	{
-		buffer[i] = shortbuffer[i] * (1.f/32768.f);
+		buffer[i] = shortbuffer[i] * (5.f/32768.f);
 	}
-	/*
-	for (int i = result; i < len; i++) // The backend cannot deal with gaps.
-	{
-		buffer[i*2] = shortbuffer[(result-1)*2] * (1.f / 32768.f);
-		buffer[i * 2+1] = shortbuffer[(result - 1) * 2+1] * (1.f / 32768.f);
-	}
-	*/
 }
 

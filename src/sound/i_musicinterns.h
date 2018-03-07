@@ -325,7 +325,7 @@ public:
 	~ADLMIDIDevice();
 
 	int Open(MidiCallback, void *userdata);
-	int GetDeviceType() const override { return MDEV_OPL; }
+	int GetDeviceType() const override { return MDEV_ADL; }
 
 protected:
 

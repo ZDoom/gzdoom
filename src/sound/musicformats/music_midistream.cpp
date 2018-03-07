@@ -165,6 +165,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 	case -4:		return MDEV_GUS;
 	case -5:		return MDEV_FLUIDSYNTH;
 	case -6:		return MDEV_WILDMIDI;
+	case -7:		return MDEV_ADL;
 	default:
 		#ifdef _WIN32
 					return MDEV_MMAPI;
@@ -194,39 +195,43 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 		selectedDevice = devtype;
 		try
 		{
-	switch (devtype)
-	{
-	case MDEV_GUS:
+			switch (devtype)
+			{
+			case MDEV_GUS:
 				dev = new TimidityMIDIDevice(Args, samplerate);
 				break;
 
-	case MDEV_MMAPI:
-		#ifdef _WIN32
+			case MDEV_ADL:
+				dev = new ADLMIDIDevice(Args);
+				break;
+
+			case MDEV_MMAPI:
+
+#ifdef _WIN32
 				dev = CreateWinMIDIDevice(mididevice);
 				break;
 #endif
-			// Intentional fall-through for non-Windows systems.
+				// Intentional fall-through for non-Windows systems.
 
-	case MDEV_FLUIDSYNTH:
+			case MDEV_FLUIDSYNTH:
 				dev = new FluidSynthMIDIDevice(Args, samplerate);
 				break;
 
-	case MDEV_OPL:
+			case MDEV_OPL:
 				dev = new OPLMIDIDevice(Args);
 				break;
-		*/
 
-	case MDEV_TIMIDITY:
+			case MDEV_TIMIDITY:
 				dev = CreateTimidityPPMIDIDevice(Args, samplerate);
 				break;
 
-	case MDEV_WILDMIDI:
+			case MDEV_WILDMIDI:
 				dev = new WildMIDIDevice(Args, samplerate);
 				break;
 
-	default:
+			default:
 				break;
-	}
+			}
 		}
 		catch (CRecoverableError &err)
 		{

@@ -62,10 +62,8 @@ namespace swrenderer
 
 		VisibleSprite *spr = this;
 
-		int i;
 		int x1, x2;
 		short topclip, botclip;
-		short *clip1, *clip2;
 		FSWColormap *colormap = spr->Light.BaseColormap;
 		int colormapnum = spr->Light.ColormapNum;
 		F3DFloor *rover;
@@ -108,7 +106,7 @@ namespace swrenderer
 			}
 			sector_t *sec = nullptr;
 			FDynamicColormap *mybasecolormap = nullptr;
-			for (i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+			for (int i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
 				if (clip3d->sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0())
 				{
@@ -281,14 +279,16 @@ namespace swrenderer
 			return;
 		}
 
-		i = x2 - x1;
-		clip1 = clipbot + x1;
-		clip2 = cliptop + x1;
-		do
 		{
-			*clip1++ = botclip;
-			*clip2++ = topclip;
-		} while (--i);
+			int i = x2 - x1;
+			short *clip1 = clipbot + x1;
+			short *clip2 = cliptop + x1;
+			do
+			{
+				*clip1++ = botclip;
+				*clip2++ = topclip;
+			} while (--i);
+		}
 
 		// Scan drawsegs from end to start for obscuring segs.
 		// The first drawseg that is closer than the sprite is the clip seg.
@@ -338,9 +338,9 @@ namespace swrenderer
 				int r2 = MIN<int>(group.x2, x2);
 
 				// Clip bottom
-				clip1 = clipbot + r1;
-				clip2 = group.sprbottomclip + r1 - group.x1;
-				i = r2 - r1;
+				short *clip1 = clipbot + r1;
+				const short *clip2 = group.sprbottomclip + r1 - group.x1;
+				int i = r2 - r1;
 				do
 				{
 					if (*clip1 > *clip2)
@@ -398,9 +398,9 @@ namespace swrenderer
 
 					if (ds->silhouette & SIL_BOTTOM) //bottom sil
 					{
-						clip1 = clipbot + r1;
-						clip2 = ds->sprbottomclip + r1 - ds->x1;
-						i = r2 - r1;
+						short *clip1 = clipbot + r1;
+						const short *clip2 = ds->sprbottomclip + r1 - ds->x1;
+						int i = r2 - r1;
 						do
 						{
 							if (*clip1 > *clip2)
@@ -412,9 +412,9 @@ namespace swrenderer
 
 					if (ds->silhouette & SIL_TOP)   // top sil
 					{
-						clip1 = cliptop + r1;
-						clip2 = ds->sprtopclip + r1 - ds->x1;
-						i = r2 - r1;
+						short *clip1 = cliptop + r1;
+						const short *clip2 = ds->sprtopclip + r1 - ds->x1;
+						int i = r2 - r1;
 						do
 						{
 							if (*clip1 < *clip2)
@@ -438,6 +438,7 @@ namespace swrenderer
 			// If it is completely clipped away, don't bother drawing it.
 			if (cliptop[x2] >= clipbot[x2])
 			{
+				int i;
 				for (i = x1; i < x2; ++i)
 				{
 					if (cliptop[i] < clipbot[i])

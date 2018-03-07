@@ -130,8 +130,8 @@ namespace swrenderer
 		bool notrelevant = false;
 		if (ds->bFogBoundary)
 		{
-			short *mfloorclip = ds->sprbottomclip - ds->x1;
-			short *mceilingclip = ds->sprtopclip - ds->x1;
+			const short *mfloorclip = ds->sprbottomclip - ds->x1;
+			const short *mceilingclip = ds->sprtopclip - ds->x1;
 
 			RenderFogBoundary renderfog;
 			renderfog.Render(Thread, x1, x2, mceilingclip, mfloorclip, wallshade, rw_light, rw_lightstep, basecolormap);
@@ -179,8 +179,8 @@ namespace swrenderer
 			tex = tex->GetRawTexture();
 		}
 
-		short *mfloorclip = ds->sprbottomclip - ds->x1;
-		short *mceilingclip = ds->sprtopclip - ds->x1;
+		const short *mfloorclip = ds->sprbottomclip - ds->x1;
+		const short *mceilingclip = ds->sprtopclip - ds->x1;
 
 		float *MaskedSWall = ds->swall - ds->x1;
 		float MaskedScaleY = ds->yscale;
@@ -428,8 +428,8 @@ namespace swrenderer
 		rw_lightstep = ds->lightstep;
 		rw_light = ds->light + (x1 - ds->x1) * rw_lightstep;
 
-		short *mfloorclip = ds->sprbottomclip - ds->x1;
-		short *mceilingclip = ds->sprtopclip - ds->x1;
+		const short *mfloorclip = ds->sprbottomclip - ds->x1;
+		const short *mceilingclip = ds->sprtopclip - ds->x1;
 
 		//double spryscale = ds->iscale + ds->iscalestep * (x1 - ds->x1);
 		float *MaskedSWall = ds->swall - ds->x1;

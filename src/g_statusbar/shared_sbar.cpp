@@ -701,8 +701,8 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, AttachMessage)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_OBJECT(msg, DHUDMessageBase);
-	PARAM_UINT(id);
-	PARAM_INT(layer);
+	PARAM_UINT_DEF(id);
+	PARAM_INT_DEF(layer);
 	self->AttachMessage(msg, id, layer);
 	return 0;
 }

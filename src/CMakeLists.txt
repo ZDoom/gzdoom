@@ -834,6 +834,14 @@ set( FASTMATH_SOURCES
 	gl/models/gl_models.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
+	sound/adlmidi/adldata.cpp
+	sound/adlmidi/adlmidi.cpp
+	sound/adlmidi/adlmidi_load.cpp
+	sound/adlmidi/adlmidi_midiplay.cpp
+	sound/adlmidi/adlmidi_opl3.cpp
+	sound/adlmidi/adlmidi_private.cpp
+	sound/adlmidi/dbopl.cpp
+	sound/adlmidi/nukedopl3.c
 
 )
 
@@ -1136,6 +1144,7 @@ set (PCH_SOURCES
 	sound/i_music.cpp
 	sound/i_sound.cpp
 	sound/i_soundfont.cpp
+	sound/mididevices/music_adlmidi_mididevice.cpp
 	sound/mididevices/music_opldumper_mididevice.cpp
 	sound/mididevices/music_opl_mididevice.cpp
 	sound/mididevices/music_timiditypp_mididevice.cpp
@@ -1349,6 +1358,7 @@ install(TARGETS zdoom
 		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
+source_group("Audio Files\\ADL MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound//.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cpp sound/oplsynth/dosbox/opl.h)
 source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timidity/.+")

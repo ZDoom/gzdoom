@@ -146,7 +146,17 @@ class BaseStatusBar native ui
 
 		HUD_AltHud // Used for passing through popups to the alt hud
 	}
-	
+
+	enum EHUDMSGLayer
+	{
+		HUDMSGLayer_OverHUD,
+		HUDMSGLayer_UnderHUD,
+		HUDMSGLayer_OverMap,
+
+		NUM_HUDMSGLAYERS,
+		HUDMSGLayer_Default = HUDMSGLayer_OverHUD,
+	};
+
 	enum DI_Flags
 	{
 		DI_SKIPICON = 0x1,

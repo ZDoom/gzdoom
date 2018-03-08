@@ -131,7 +131,7 @@ namespace swrenderer
 		return false;
 	}
 
-	void RenderTranslucentPass::DrawMaskedSingle(bool renew)
+	void RenderTranslucentPass::DrawMaskedSingle(bool renew, Fake3DTranslucent clip3DFloor)
 	{
 		RenderPortal *renderportal = Thread->Portal.get();
 		DrawSegmentList *drawseglist = Thread->DrawSegments.get();
@@ -143,7 +143,7 @@ namespace swrenderer
 
 			if (sprite->IsCurrentPortalUniq(renderportal->CurrentPortalUniq))
 			{
-				sprite->Render(Thread);
+				sprite->Render(Thread, clip3DFloor);
 			}
 		}
 
@@ -159,7 +159,7 @@ namespace swrenderer
 			if (ds->maskedtexturecol || ds->bFogBoundary)
 			{
 				RenderDrawSegment renderer(Thread);
-				renderer.Render(ds, ds->x1, ds->x2);
+				renderer.Render(ds, ds->x1, ds->x2, clip3DFloor);
 				if (renew && ds->bFogBoundary) // don't draw fogboundary again
 					ds->bFogBoundary = false;
 
@@ -184,48 +184,58 @@ namespace swrenderer
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		if (clip3d->height_top == nullptr)
 		{ // kg3D - no visible 3D floors, normal rendering
-			DrawMaskedSingle(false);
+			Fake3DTranslucent clip3DFloor;
+			DrawMaskedSingle(false, clip3DFloor);
 		}
 		else
 		{ // kg3D - correct sorting
 			// ceilings
 			for (HeightLevel *hl = clip3d->height_cur; hl != nullptr && hl->height >= Thread->Viewport->viewpoint.Pos.Z; hl = hl->prev)
 			{
+				Fake3DTranslucent clip3DFloor;
 				if (hl->next)
 				{
-					clip3d->fake3D = FAKE3D_CLIPBOTTOM | FAKE3D_CLIPTOP;
-					clip3d->sclipTop = hl->next->height;
+					clip3DFloor.clipBottom = true;
+					clip3DFloor.clipTop = true;
+					clip3DFloor.sclipTop = hl->next->height;
 				}
 				else
 				{
-					clip3d->fake3D = FAKE3D_CLIPBOTTOM;
+					clip3DFloor.clipBottom = true;
 				}
-				clip3d->sclipBottom = hl->height;
-				DrawMaskedSingle(true);
+				clip3DFloor.sclipBottom = hl->height;
+				DrawMaskedSingle(true, clip3DFloor);
 				Thread->PlaneList->RenderHeight(hl->height);
 			}
 
 			// floors
-			clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP;
-			clip3d->sclipTop = clip3d->height_top->height;
-			DrawMaskedSingle(true);
+			{
+				Fake3DTranslucent clip3DFloor;
+				clip3DFloor.clipTop = true;
+				clip3DFloor.down2Up = true;
+				clip3DFloor.sclipTop = clip3d->height_top->height;
+				DrawMaskedSingle(true, clip3DFloor);
+			}
+
 			for (HeightLevel *hl = clip3d->height_top; hl != nullptr && hl->height < Thread->Viewport->viewpoint.Pos.Z; hl = hl->next)
 			{
 				Thread->PlaneList->RenderHeight(hl->height);
+				Fake3DTranslucent clip3DFloor;
 				if (hl->next)
 				{
-					clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPTOP | FAKE3D_CLIPBOTTOM;
-					clip3d->sclipTop = hl->next->height;
+					clip3DFloor.clipBottom = true;
+					clip3DFloor.clipTop = true;
+					clip3DFloor.down2Up = true;
+					clip3DFloor.sclipTop = hl->next->height;
 				}
 				else
 				{
-					clip3d->fake3D = FAKE3D_DOWN2UP | FAKE3D_CLIPBOTTOM;
+					clip3DFloor.clipBottom = true;
 				}
-				clip3d->sclipBottom = hl->height;
-				DrawMaskedSingle(true);
+				clip3DFloor.sclipBottom = hl->height;
+				DrawMaskedSingle(true, clip3DFloor);
 			}
 			clip3d->DeleteHeights();
-			clip3d->fake3D = 0;
 		}
 
 		if (Thread->MainThread)

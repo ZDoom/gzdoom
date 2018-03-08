@@ -14,10 +14,10 @@ namespace swrenderer
 
 	protected:
 		bool IsParticle() const override { return true; }
-		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) override;
+		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor) override;
 
 	private:
-		void DrawMaskedSegsBehindParticle(RenderThread *thread);
+		void DrawMaskedSegsBehindParticle(RenderThread *thread, const Fake3DTranslucent &clip3DFloor);
 
 		fixed_t xscale = 0;
 		fixed_t	startfrac = 0; // horizontal position of x1

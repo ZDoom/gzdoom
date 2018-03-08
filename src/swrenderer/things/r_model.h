@@ -40,7 +40,7 @@ namespace swrenderer
 		static void Project(RenderThread *thread, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor);
 
 	protected:
-		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) override;
+		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor) override;
 		bool IsModel() const override { return true; }
 
 	private:

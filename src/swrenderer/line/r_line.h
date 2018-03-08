@@ -25,6 +25,7 @@
 #include "vectors.h"
 #include "r_wallsetup.h"
 #include "swrenderer/segments/r_clipsegment.h"
+#include "swrenderer/scene/r_3dfloors.h"
 
 struct seg_t;
 struct subsector_t;
@@ -71,7 +72,7 @@ namespace swrenderer
 	{
 	public:
 		SWRenderLine(RenderThread *thread);
-		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
+		void Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque fake3DOpaque);
 
 		RenderThread *Thread = nullptr;
 
@@ -109,6 +110,7 @@ namespace swrenderer
 		VisiblePlane *mFloorPlane;
 		VisiblePlane *mCeilingPlane;
 		seg_t *mLineSegment;
+		Fake3DOpaque m3DFloor;
 
 		double mBackCeilingZ1;
 		double mBackCeilingZ2;

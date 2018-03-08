@@ -303,7 +303,7 @@ namespace swrenderer
 		thread->SpriteList->Push(vis);
 	}
 
-	void RenderSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int)
+	void RenderSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int, Fake3DTranslucent)
 	{
 		auto vis = this;
 

@@ -205,7 +205,7 @@ namespace swrenderer
 		thread->SpriteList->Push(vis);
 	}
 
-	void RenderVoxel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
+	void RenderVoxel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
 		auto spr = this;
 		auto viewport = thread->Viewport.get();

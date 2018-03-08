@@ -99,7 +99,7 @@ namespace swrenderer
 		}
 	}
 
-	VisiblePlane *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap)
+	VisiblePlane *VisiblePlaneList::FindPlane(const secplane_t &height, FTextureID picnum, int lightlevel, double Alpha, bool additive, const FTransform &xxform, int sky, FSectorPortal *portal, FDynamicColormap *basecolormap, Fake3DOpaque::Type fakeFloorType, fixed_t fakeAlpha)
 	{
 		secplane_t plane;
 		VisiblePlane *check;
@@ -140,8 +140,7 @@ namespace swrenderer
 			// kg3D - hack, store alpha in sky
 			// i know there is ->alpha, but this also allows to identify fake plane
 			// and ->alpha is for stacked sectors
-			Clip3DFloors *clip3d = Thread->Clip3D.get();
-			if (clip3d->fake3D & (FAKE3D_FAKEFLOOR | FAKE3D_FAKECEILING)) sky = 0x80000000 | clip3d->fakeAlpha;
+			if (fakeFloorType == Fake3DOpaque::FakeFloor || fakeFloorType == Fake3DOpaque::FakeCeiling) sky = 0x80000000 | fakeAlpha;
 			else sky = 0;	// not skyflatnum so it can't be a sky
 			portal = nullptr;
 			alpha = OPAQUE;

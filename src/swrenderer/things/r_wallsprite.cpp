@@ -145,7 +145,7 @@ namespace swrenderer
 		thread->SpriteList->Push(vis);
 	}
 
-	void RenderWallSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int)
+	void RenderWallSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int, Fake3DTranslucent)
 	{
 		auto spr = this;
 

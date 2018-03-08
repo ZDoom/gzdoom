@@ -64,7 +64,7 @@ namespace swrenderer
 		this->idepth = idepth;
 	}
 
-	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
+	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
 		SWModelRenderer renderer(thread);
 		renderer.RenderModel(x, y, z, smf, actor);

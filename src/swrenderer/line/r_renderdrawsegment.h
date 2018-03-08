@@ -32,7 +32,7 @@ namespace swrenderer
 	{
 	public:
 		RenderDrawSegment(RenderThread *thread);
-		void Render(DrawSegment *ds, int x1, int x2);
+		void Render(DrawSegment *ds, int x1, int x2, Fake3DTranslucent clip3DFloor);
 
 		RenderThread *Thread = nullptr;
 
@@ -47,6 +47,7 @@ namespace swrenderer
 		sector_t *backsector = nullptr;
 
 		seg_t *curline = nullptr;
+		Fake3DTranslucent m3DFloor;
 
 		FWallCoords WallC;
 		FWallTmapVals WallT;

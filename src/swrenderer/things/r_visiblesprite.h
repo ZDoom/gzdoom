@@ -38,7 +38,7 @@ namespace swrenderer
 		VisibleSprite() { RenderStyle = STYLE_Normal; }
 		virtual ~VisibleSprite() { }
 		
-		void Render(RenderThread *thread);
+		void Render(RenderThread *thread, Fake3DTranslucent clip3DFloor);
 
 		bool IsCurrentPortalUniq(int portalUniq) const { return CurrentPortalUniq == portalUniq; }
 		const FVector3 &WorldPos() const { return gpos; }
@@ -54,7 +54,7 @@ namespace swrenderer
 		virtual bool IsWallSprite() const { return false; }
 		virtual bool IsModel() const { return false; }
 
-		virtual void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) = 0;
+		virtual void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor) = 0;
 
 		FTexture *pic = nullptr;
 

@@ -123,8 +123,6 @@ namespace swrenderer
 			}
 		}
 
-		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
-
 		// [RH] Draw fog partition
 		bool renderwall = true;
 		bool notrelevant = false;
@@ -145,7 +143,7 @@ namespace swrenderer
 		}
 
 		if (renderwall)
-			notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade, wrap);
+			notrelevant = RenderWall(ds, x1, x2, walldrawerargs, columndrawerargs, visible, basecolormap, wallshade);
 
 		if (ds->Has3DFloorFrontSectorWalls() || ds->Has3DFloorBackSectorWalls())
 		{
@@ -153,22 +151,12 @@ namespace swrenderer
 		}
 		if (!notrelevant)
 		{
-			if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
-			{
-				if (!wrap)
-				{
-					assert(ds->bkup != nullptr);
-					memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * 2);
-				}
-			}
-			else
-			{
-				fillshort(ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
-			}
+			ds->sprclipped = true;
+			fillshort(ds->sprtopclip - ds->x1 + x1, x2 - x1, viewheight);
 		}
 	}
 
-	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade, bool wrap)
+	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade)
 	{
 		auto viewport = Thread->Viewport.get();
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
@@ -220,6 +208,7 @@ namespace swrenderer
 
 		double rowoffset = curline->sidedef->GetTextureYOffset(side_t::mid);
 
+		bool wrap = (curline->linedef->flags & ML_WRAP_MIDTEX) || (curline->sidedef->Flags & WALLF_WRAP_MIDTEX);
 		if (!wrap)
 		{ // Texture does not wrap vertically.
 			double textop;

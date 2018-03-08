@@ -1055,7 +1055,7 @@ namespace swrenderer
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		// kg3D - fake planes clipping
-		if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
+		if (clip3d->fake3D & FAKE3D_FAKEBACK)
 		{
 			auto ceilingclip = Thread->OpaquePass->ceilingclip;
 			auto floorclip = Thread->OpaquePass->floorclip;

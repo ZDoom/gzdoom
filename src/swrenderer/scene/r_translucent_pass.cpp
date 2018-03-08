@@ -149,11 +149,6 @@ namespace swrenderer
 
 		// render any remaining masked mid textures
 
-		if (renew)
-		{
-			Thread->Clip3D->fake3D |= FAKE3D_REFRESHCLIP;
-		}
-
 		for (unsigned int index = 0; index != drawseglist->SegmentsCount(); index++)
 		{
 			DrawSegment *ds = drawseglist->Segment(index);
@@ -161,12 +156,18 @@ namespace swrenderer
 			// [ZZ] the same as above
 			if (ds->CurrentPortalUniq != renderportal->CurrentPortalUniq)
 				continue;
-			if (ds->maskedtexturecol != nullptr || ds->bFogBoundary)
+			if (ds->maskedtexturecol || ds->bFogBoundary)
 			{
 				RenderDrawSegment renderer(Thread);
 				renderer.Render(ds, ds->x1, ds->x2);
 				if (renew && ds->bFogBoundary) // don't draw fogboundary again
 					ds->bFogBoundary = false;
+
+				if (renew && ds->sprclipped)
+				{
+					memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * sizeof(short));
+					ds->sprclipped = false;
+				}
 			}
 		}
 	}

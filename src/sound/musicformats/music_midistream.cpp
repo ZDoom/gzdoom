@@ -319,8 +319,13 @@ bool MIDIStreamer::DumpWave(const char *filename, int subsong, int samplerate)
 
 	assert(MIDI == NULL);
 	auto devtype = SelectMIDIDevice(DeviceType);
+	if (devtype == MDEV_MMAPI)
+	{
+		Printf("MMAPI device is not supported");
+		return false;
+	}
 	MIDI = CreateMIDIDevice(devtype, samplerate);
-	MIDI = new MIDIWaveWriter(filename, MIDI);
+	MIDI = new MIDIWaveWriter(filename, reinterpret_cast<SoftSynthMIDIDevice *>(MIDI));
 	return InitPlayback();
 }
 

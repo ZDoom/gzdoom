@@ -87,11 +87,11 @@ struct FmtChunk
 //
 //==========================================================================
 
-MIDIWaveWriter::MIDIWaveWriter(const char *filename, MIDIDevice *playdevice)
-	: SoftSynthMIDIDevice(playDevice->GetSampleRate())
+MIDIWaveWriter::MIDIWaveWriter(const char *filename, SoftSynthMIDIDevice *playdevice)
+	: SoftSynthMIDIDevice(playdevice->GetSampleRate())
 {
 	File = FileWriter::Open(filename);
-	playDevice = (SoftSynthMIDIDevice*) playdevice;
+	playDevice = playdevice;
 	if (File != nullptr)
 	{ // Write wave header
 		uint32_t work[3];

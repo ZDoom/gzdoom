@@ -198,7 +198,7 @@ protected:
 class MIDIWaveWriter : public SoftSynthMIDIDevice
 {
 public:
-	MIDIWaveWriter(const char *filename, MIDIDevice *devtouse);
+	MIDIWaveWriter(const char *filename, SoftSynthMIDIDevice *devtouse);
 	~MIDIWaveWriter();
 	int Resume();
 	int Open(MidiCallback cb, void *userdata)

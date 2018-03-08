@@ -155,11 +155,8 @@ namespace swrenderer
 		{
 			if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
 			{
-				if (!wrap)
-				{
-					assert(ds->bkup != nullptr);
-					memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * 2);
-				}
+				assert(ds->bkup != nullptr);
+				memcpy(ds->sprtopclip, ds->bkup, (ds->x2 - ds->x1) * 2);
 			}
 			else
 			{

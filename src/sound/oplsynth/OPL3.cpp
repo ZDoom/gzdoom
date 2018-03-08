@@ -55,6 +55,9 @@ static FRandom pr_opl3;
 
 #define VOLUME_MUL		0.3333
 
+namespace JavaOPL3
+{
+
 class Operator;
 
 static inline double StripIntPart(double num)
@@ -1862,7 +1865,9 @@ void OPL3::SetPanning(int c, float left, float right)
 	}
 }
 
+} // JavaOPL3
+
 OPLEmul *JavaOPLCreate(bool stereo)
 {
-	return new OPL3(stereo);
+	return new JavaOPL3::OPL3(stereo);
 }

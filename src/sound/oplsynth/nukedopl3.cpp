@@ -62,7 +62,7 @@
 // Envelope generator
 //
 
-namespace OPL3
+namespace NukedOPL3
 {
 
 typedef Bit16s(*envelope_sinfunc)(Bit16u phase, Bit16u envelope);
@@ -1020,8 +1020,8 @@ NukedOPL3::NukedOPL3(bool stereo) {
 	Reset();
 }
 
-} // namespace OPL3
+} // namespace NukedOPL3
 
 OPLEmul *NukedOPL3Create(bool stereo) {
-	return new OPL3::NukedOPL3(stereo);
+	return new NukedOPL3::NukedOPL3(stereo);
 }

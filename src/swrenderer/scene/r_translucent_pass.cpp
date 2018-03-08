@@ -195,14 +195,10 @@ namespace swrenderer
 				Fake3DTranslucent clip3DFloor;
 				if (hl->next)
 				{
-					clip3DFloor.clipBottom = true;
 					clip3DFloor.clipTop = true;
 					clip3DFloor.sclipTop = hl->next->height;
 				}
-				else
-				{
-					clip3DFloor.clipBottom = true;
-				}
+				clip3DFloor.clipBottom = true;
 				clip3DFloor.sclipBottom = hl->height;
 				DrawMaskedSingle(true, clip3DFloor);
 				Thread->PlaneList->RenderHeight(hl->height);
@@ -212,27 +208,22 @@ namespace swrenderer
 			{
 				Fake3DTranslucent clip3DFloor;
 				clip3DFloor.clipTop = true;
-				clip3DFloor.down2Up = true;
 				clip3DFloor.sclipTop = clip3d->height_top->height;
+				clip3DFloor.down2Up = true;
 				DrawMaskedSingle(true, clip3DFloor);
 			}
-
 			for (HeightLevel *hl = clip3d->height_top; hl != nullptr && hl->height < Thread->Viewport->viewpoint.Pos.Z; hl = hl->next)
 			{
 				Thread->PlaneList->RenderHeight(hl->height);
 				Fake3DTranslucent clip3DFloor;
 				if (hl->next)
 				{
-					clip3DFloor.clipBottom = true;
 					clip3DFloor.clipTop = true;
-					clip3DFloor.down2Up = true;
 					clip3DFloor.sclipTop = hl->next->height;
 				}
-				else
-				{
-					clip3DFloor.clipBottom = true;
-				}
+				clip3DFloor.clipBottom = true;
 				clip3DFloor.sclipBottom = hl->height;
+				clip3DFloor.down2Up = true;
 				DrawMaskedSingle(true, clip3DFloor);
 			}
 			clip3d->DeleteHeights();

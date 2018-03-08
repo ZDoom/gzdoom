@@ -650,6 +650,7 @@ file( GLOB HEADER_FILES
 	g_inventory/*.h
 	intermission/*.h
 	menu/*.h
+	sound/adlmidi/*.h*
 	sound/oplsynth/*.h
 	sound/oplsynth/dosbox/*.h
 	posix/*.h
@@ -842,7 +843,6 @@ set( FASTMATH_SOURCES
 	sound/adlmidi/adlmidi_private.cpp
 	sound/adlmidi/dbopl.cpp
 	sound/adlmidi/nukedopl3.c
-
 )
 
 set (PCH_SOURCES
@@ -1358,7 +1358,7 @@ install(TARGETS zdoom
 		COMPONENT "Game executable")
 
 source_group("Audio Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/.+")
-source_group("Audio Files\\ADL MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound//.+")
+source_group("Audio Files\\ADL MIDI" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/adlmidi/.+")
 source_group("Audio Files\\OPL Synth" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/oplsynth/.+")
 source_group("Audio Files\\OPL Synth\\DOSBox" FILES sound/oplsynth/dosbox/opl.cpp sound/oplsynth/dosbox/opl.h)
 source_group("Audio Files\\Timidity" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/sound/timidity/.+")

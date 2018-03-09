@@ -98,7 +98,7 @@ script:
   - echo ${TRAVIS_BUILD_DIR}
   - mkdir build
   - cd build
-  - cmake ${CMAKE_OPTIONS} ..
+  - cmake ${CMAKE_OPTIONS} -DPK3_QUIET_ZIPDIR=YES ..
   - make -j2
 
 notifications:

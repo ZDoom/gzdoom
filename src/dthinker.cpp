@@ -462,7 +462,7 @@ void DThinker::DestroyThinkersInList (FThinkerList &list)
 //
 //
 //==========================================================================
-CVAR(Bool, profilethinkers, false, 0)
+CVAR(Int, profilethinkers, 0, 0)
 
 struct ProfileInfo
 {
@@ -526,12 +526,48 @@ void DThinker::RunThinkers ()
 				count += ProfileThinkers(&FreshThinkers[i], &Thinkers[i]);
 			}
 		} while (count != 0);
+
+		struct SortedProfileInfo
+		{
+			const char* className;
+			int numcalls;
+			double time;
+		};
+
+		TArray<SortedProfileInfo> sorted;
+		sorted.Grow(Profiles.CountUsed());
+
 		auto it = TMap<FName, ProfileInfo>::Iterator(Profiles);
 		TMap<FName, ProfileInfo>::Pair *pair;
 		while (it.NextPair(pair))
 		{
-			Printf("%s, %dx, %fms\n", pair->Key.GetChars(), pair->Value.numcalls, pair->Value.timer.TimeMS());
+			sorted.Push({ pair->Key.GetChars(), pair->Value.numcalls, pair->Value.timer.TimeMS() });
 		}
+
+		std::sort(sorted.begin(), sorted.end(), [](const SortedProfileInfo& left, const SortedProfileInfo& right)
+		{
+			switch (profilethinkers)
+			{
+			case 1: // by name, from A to Z
+				return stricmp(left.className, right.className) < 0;
+			case 2: // by name, from Z to A
+				return stricmp(right.className, left.className) < 0;
+			case 3: // number of calls, ascending
+				return left.numcalls < right.numcalls;
+			case 4: // number of calls, descending
+				return right.numcalls < left.numcalls;
+			case 5: // total time, ascending
+				return left.time < right.time;
+			default: // total time, descending
+				return right.time < left.time;
+			}
+		});
+
+		for (const SortedProfileInfo& info : sorted)
+		{
+			Printf("%s, %dx, %fms\n", info.className, info.numcalls, info.time);
+		}
+
 		profilethinkers = false;
 	}
 

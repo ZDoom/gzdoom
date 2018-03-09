@@ -509,6 +509,7 @@ DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
 DEFINE_EVENT_LOOPER(UiTick)
+DEFINE_EVENT_LOOPER(PostUiTick)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, true);
@@ -640,6 +641,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiTick);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, PostUiTick);
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
@@ -1015,6 +1017,18 @@ void DStaticEventHandler::UiTick()
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_UiTick_VMPtr)
+			return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		VMCall(func, params, 1, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::PostUiTick()
+{
+	IFVIRTUAL(DStaticEventHandler, PostUiTick)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_PostUiTick_VMPtr)
 			return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);

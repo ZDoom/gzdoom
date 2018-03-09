@@ -46,6 +46,8 @@ void E_WorldLightning();
 void E_WorldTick();
 // this executes on every tick on UI side, always
 void E_UiTick();
+// this executes on every tick on UI side, always AND immediately after everything else
+void E_PostUiTick();
 // called on each render frame once.
 void E_RenderFrame();
 // called after everything's been rendered, but before console/menus
@@ -154,6 +156,7 @@ public:
 	bool InputProcess(const event_t* ev);
 	bool UiProcess(const event_t* ev);
 	void UiTick();
+	void PostUiTick();
 	
 	// 
 	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);

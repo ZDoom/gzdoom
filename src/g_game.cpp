@@ -1256,6 +1256,9 @@ void G_Ticker ()
 	default:
 		break;
 	}
+
+	// [MK] Additional ticker for UI events right after all others
+	E_PostUiTick();
 }
 
 

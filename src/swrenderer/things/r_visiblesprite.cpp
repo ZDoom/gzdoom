@@ -100,20 +100,22 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (!cameraLight->FixedColormap() && cameraLight->FixedLightLevel() < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size())
 		{
-			if (!clip3DFloor.clipTop)
-			{
-				clip3DFloor.sclipTop = spr->sector->ceilingplane.ZatPoint(thread->Viewport->viewpoint.Pos);
-			}
+			double clipTop;
+			if (clip3DFloor.clipTop)
+				clipTop = clip3DFloor.clipTop;
+			else
+				clipTop = spr->sector->ceilingplane.ZatPoint(thread->Viewport->viewpoint.Pos);
+
 			sector_t *sec = nullptr;
 			FDynamicColormap *mybasecolormap = nullptr;
 			for (int i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
-				if (clip3DFloor.sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0())
+				if (clipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0())
 				{
 					rover = spr->sector->e->XFloor.lightlist[i].caster;
 					if (rover)
 					{
-						if (rover->flags & FF_DOUBLESHADOW && clip3DFloor.sclipTop <= rover->bottom.plane->Zat0())
+						if (rover->flags & FF_DOUBLESHADOW && clipTop <= rover->bottom.plane->Zat0())
 						{
 							break;
 						}

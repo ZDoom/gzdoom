@@ -39,7 +39,7 @@ namespace swrenderer
 	private:
 		bool RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade);
 		void ClipMidtex(int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
+		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap, double clipTop, double clipBottom);
 		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 

@@ -103,17 +103,13 @@ namespace swrenderer
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
-		if (!(m3DFloor.clipTop))
-		{
-			m3DFloor.sclipTop = sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
-		}
-
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() < 0)
 		{
+			double clipTop = m3DFloor.clipTop ? m3DFloor.sclipTop : sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
 			for (int i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
-				if (m3DFloor.sclipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
+				if (clipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())
 				{
 					lightlist_t *lit = &frontsector->e->XFloor.lightlist[i];
 					basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
@@ -267,13 +263,18 @@ namespace swrenderer
 			WallC.sx1 = ds->sx1;
 			WallC.sx2 = ds->sx2;
 
+			double top, bot;
+			GetMaskedWallTopBottom(ds, top, bot);
+			top -= Thread->Viewport->viewpoint.Pos.Z;
+			bot -= Thread->Viewport->viewpoint.Pos.Z;
+
 			if (m3DFloor.clipTop)
 			{
 				wallupper.Project(Thread->Viewport.get(), textop < m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z ? textop : m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 			}
 			else
 			{
-				wallupper.Project(Thread->Viewport.get(), textop, &WallC);
+				wallupper.Project(Thread->Viewport.get(), MIN(textop, top), &WallC);
 			}
 			if (m3DFloor.clipBottom)
 			{
@@ -281,7 +282,7 @@ namespace swrenderer
 			}
 			else
 			{
-				walllower.Project(Thread->Viewport.get(), textop - texheight, &WallC);
+				walllower.Project(Thread->Viewport.get(), MAX(textop - texheight, bot), &WallC);
 			}
 
 			for (int i = x1; i < x2; i++)
@@ -402,7 +403,7 @@ namespace swrenderer
 	}
 
 	// kg3D - render one fake wall
-	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap)
+	void RenderDrawSegment::RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap, double clipTop, double clipBottom)
 	{
 		int i;
 		double xscale;
@@ -485,8 +486,8 @@ namespace swrenderer
 		WallT = ds->tmapvals;
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
-		wallupper.Project(Thread->Viewport.get(), m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
-		walllower.Project(Thread->Viewport.get(), m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
+		wallupper.Project(Thread->Viewport.get(), clipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
+		walllower.Project(Thread->Viewport.get(), clipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
 
 		for (i = x1; i < x2; i++)
 		{
@@ -542,13 +543,12 @@ namespace swrenderer
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
-		// maybe fix clipheights
-		if (!m3DFloor.clipBottom) m3DFloor.sclipBottom = floorHeight;
-		if (!m3DFloor.clipTop) m3DFloor.sclipTop = ceilingHeight;
+		double clipTop = m3DFloor.clipTop ? m3DFloor.sclipTop : ceilingHeight;
+		double clipBottom = m3DFloor.clipBottom ? m3DFloor.sclipBottom : floorHeight;
 
 		// maybe not visible
-		if (m3DFloor.sclipBottom >= frontsector->CenterCeiling()) return;
-		if (m3DFloor.sclipTop <= frontsector->CenterFloor()) return;
+		if (clipBottom >= frontsector->CenterCeiling()) return;
+		if (clipTop <= frontsector->CenterFloor()) return;
 
 		if (m3DFloor.down2Up)
 		{ // bottom to viewz
@@ -561,7 +561,7 @@ namespace swrenderer
 				// visible?
 				passed = 0;
 				if (!(rover->flags & FF_RENDERSIDES) || rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
-					rover->top.plane->Zat0() <= m3DFloor.sclipBottom ||
+					rover->top.plane->Zat0() <= clipBottom ||
 					rover->bottom.plane->Zat0() >= ceilingHeight ||
 					rover->top.plane->Zat0() <= floorHeight)
 				{
@@ -576,7 +576,7 @@ namespace swrenderer
 				}
 
 				rw_pic = nullptr;
-				if (rover->bottom.plane->Zat0() >= m3DFloor.sclipTop || passed)
+				if (rover->bottom.plane->Zat0() >= clipTop || passed)
 				{
 					if (last)
 					{
@@ -598,8 +598,8 @@ namespace swrenderer
 						if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 						// visible?
-						if (fover->top.plane->Zat0() <= m3DFloor.sclipBottom) continue; // no
-						if (fover->bottom.plane->Zat0() >= m3DFloor.sclipTop)
+						if (fover->top.plane->Zat0() <= clipBottom) continue; // no
+						if (fover->bottom.plane->Zat0() >= clipTop)
 						{ // no, last possible
 							fover = nullptr;
 							break;
@@ -651,8 +651,8 @@ namespace swrenderer
 						if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 						// visible?
-						if (fover->top.plane->Zat0() <= m3DFloor.sclipBottom) continue; // no
-						if (fover->bottom.plane->Zat0() >= m3DFloor.sclipTop)
+						if (fover->top.plane->Zat0() <= clipBottom) continue; // no
+						if (fover->bottom.plane->Zat0() >= clipTop)
 						{ // visible, last possible
 							fover = nullptr;
 							break;
@@ -703,7 +703,7 @@ namespace swrenderer
 					{
 						for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						{
-							if (m3DFloor.sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
+							if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
@@ -717,7 +717,7 @@ namespace swrenderer
 					{
 						for (j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						{
-							if (m3DFloor.sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
+							if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
@@ -732,7 +732,7 @@ namespace swrenderer
 
 				if (rw_pic != DONT_DRAW)
 				{
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap, clipTop, clipBottom);
 				}
 				else rw_pic = nullptr;
 				break;
@@ -749,7 +749,7 @@ namespace swrenderer
 				passed = 0;
 				if (!(rover->flags & FF_RENDERSIDES) ||
 					rover->top.plane->isSlope() || rover->bottom.plane->isSlope() ||
-					rover->bottom.plane->Zat0() >= m3DFloor.sclipTop ||
+					rover->bottom.plane->Zat0() >= clipTop ||
 					rover->top.plane->Zat0() <= floorHeight ||
 					rover->bottom.plane->Zat0() >= ceilingHeight)
 				{
@@ -763,7 +763,7 @@ namespace swrenderer
 					}
 				}
 				rw_pic = nullptr;
-				if (rover->top.plane->Zat0() <= m3DFloor.sclipBottom || passed)
+				if (rover->top.plane->Zat0() <= clipBottom || passed)
 				{ // maybe wall from inside rendering?
 					fover = nullptr;
 					for (j = 0; j < (int)frontsector->e->XFloor.ffloors.Size(); j++)
@@ -780,8 +780,8 @@ namespace swrenderer
 						if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 						// visible?
-						if (fover->bottom.plane->Zat0() >= m3DFloor.sclipTop) continue; // no
-						if (fover->top.plane->Zat0() <= m3DFloor.sclipBottom)
+						if (fover->bottom.plane->Zat0() >= clipTop) continue; // no
+						if (fover->top.plane->Zat0() <= clipBottom)
 						{ // no, last possible
 							fover = nullptr;
 							break;
@@ -832,8 +832,8 @@ namespace swrenderer
 						if (fover->top.plane->isSlope() || fover->bottom.plane->isSlope()) continue;
 
 						// visible?
-						if (fover->bottom.plane->Zat0() >= m3DFloor.sclipTop) continue; // no
-						if (fover->top.plane->Zat0() <= m3DFloor.sclipBottom)
+						if (fover->bottom.plane->Zat0() >= clipTop) continue; // no
+						if (fover->top.plane->Zat0() <= clipBottom)
 						{ // visible, last possible
 							fover = nullptr;
 							break;
@@ -882,7 +882,7 @@ namespace swrenderer
 					{
 						for (j = backsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						{
-							if (m3DFloor.sclipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
+							if (clipTop <= backsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &backsector->e->XFloor.lightlist[j];
 								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
@@ -896,7 +896,7 @@ namespace swrenderer
 					{
 						for (j = frontsector->e->XFloor.lightlist.Size() - 1; j >= 0; j--)
 						{
-							if (m3DFloor.sclipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
+							if (clipTop <= frontsector->e->XFloor.lightlist[j].plane.Zat0())
 							{
 								lightlist_t *lit = &frontsector->e->XFloor.lightlist[j];
 								basecolormap = GetColorTable(lit->extra_colormap, frontsector->SpecialColors[sector_t::walltop]);
@@ -911,7 +911,7 @@ namespace swrenderer
 
 				if (rw_pic != DONT_DRAW)
 				{
-					RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap);
+					RenderFakeWall(ds, x1, x2, fover ? fover : rover, wallshade, basecolormap, clipTop, clipBottom);
 				}
 				else
 				{
@@ -952,7 +952,6 @@ namespace swrenderer
 		top = MAX(frontcz1, frontcz2);
 		bot = MIN(frontfz1, frontfz2);
 
-		Clip3DFloors *clip3d = Thread->Clip3D.get();
 		if (m3DFloor.clipTop)
 		{
 			top = MIN(top, m3DFloor.sclipTop);

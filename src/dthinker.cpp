@@ -530,7 +530,7 @@ void DThinker::RunThinkers ()
 		TMap<FName, ProfileInfo>::Pair *pair;
 		while (it.NextPair(pair))
 		{
-			Printf("%s, %dx, %fms\n", pair->Key.GetChars(), pair->Value.numcalls, pair->Value.timer.TimeMS());
+			Printf("%fms, %dx, %s\n", pair->Value.timer.TimeMS(), pair->Value.numcalls, pair->Key.GetChars());
 		}
 		profilethinkers = false;
 	}

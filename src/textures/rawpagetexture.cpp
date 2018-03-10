@@ -70,7 +70,7 @@ protected:
 //
 //==========================================================================
 
-static bool CheckIfRaw(FileReader & data)
+static bool CheckIfRaw(FileRdr & data)
 {
 	if (data.GetLength() != 64000) return false;
 
@@ -80,7 +80,7 @@ static bool CheckIfRaw(FileReader & data)
 	int width;
 
 	foo = (patch_t *)M_Malloc (data.GetLength());
-	data.Seek (0, SEEK_SET);
+	data.Seek (0, FileRdr::SeekSet);
 	data.Read (foo, data.GetLength());
 
 	height = LittleShort(foo->height);
@@ -148,7 +148,7 @@ static bool CheckIfRaw(FileReader & data)
 //
 //==========================================================================
 
-FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
+FTexture *RawPageTexture_TryCreate(FileRdr & file, int lumpnum)
 {
 	if (!CheckIfRaw(file)) return NULL;
 	return new FRawPageTexture(lumpnum);

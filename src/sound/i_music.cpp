@@ -398,7 +398,7 @@ static EMIDIType IdentifyMIDIType(uint32_t *id, int size)
 //
 //==========================================================================
 
-MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
+MusInfo *I_RegisterSong (FileRdr &reader, MidiDeviceSetting *device)
 {
 	MusInfo *info = nullptr;
 	const char *fmt;
@@ -406,14 +406,12 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 
 	if (nomusic)
 	{
-		delete reader;
-		return 0;
+		return nullptr;
 	}
 
-	if(reader->Read(id, 32) != 32 || reader->Seek(-32, SEEK_CUR) != 0)
+	if(reader.Read(id, 32) != 32 || reader.Seek(-32, FileRdr::SeekCur) != 0)
 	{
-		delete reader;
-		return 0;
+		return nullptr;
 	}
 
     // Check for gzip compression. Some formats are expected to have players
@@ -421,47 +419,38 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
     // gzippable.
 	if ((id[0] & MAKE_ID(255, 255, 255, 0)) == GZIP_ID)
 	{
-		int len = reader->GetLength();
-		uint8_t *gzipped = new uint8_t[len];
-		if (reader->Read(gzipped, len) != len)
+
+		if (!reader.OpenMemoryArray([&reader](TArray<uint8_t> &array)
 		{
+			bool res = false;
+			auto len = reader.GetLength();
+			uint8_t *gzipped = new uint8_t[len];
+			if (reader.Read(gzipped, len) == len)
+			{
+				res = ungzip(gzipped, (int)len, array);
+			}
 			delete[] gzipped;
-			delete reader;
+			return res;
+		}))
+		{
 			return nullptr;
 		}
-		delete reader;
 
-		MemoryArrayReader *memreader = new MemoryArrayReader(nullptr, 0);
-		if (!ungzip(gzipped, len, memreader->GetArray()))
+		if (reader.Read(id, 32) != 32 || reader.Seek(-32, FileRdr::SeekCur) != 0)
 		{
-			delete[] gzipped;
-			delete memreader;
-			return 0;
+			return nullptr;
 		}
-		delete[] gzipped;
-		memreader->UpdateLength();
-
-		if (memreader->Read(id, 32) != 32 || memreader->Seek(-32, SEEK_CUR) != 0)
-		{
-			delete memreader;
-			return 0;
-		}
-		reader = memreader;
 	}
 
 	EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
 	if (miditype != MIDI_NOTMIDI)
 	{
-		// temporary hack so we can test before converting more.
-		FileRdr rdr(reader);
-		reader = nullptr;
-
-		auto source = CreateMIDISource(rdr, miditype);
-		if (source == nullptr) return 0;
+		auto source = CreateMIDISource(reader, miditype);
+		if (source == nullptr) return nullptr;
 		if (!source->isValid())
 		{
 			delete source;
-			return 0;
+			return nullptr;
 		}
 		
 		EMidiDevice devtype = device == nullptr? MDEV_DEFAULT : (EMidiDevice)device->device;
@@ -474,9 +463,8 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 		MIDIStreamer *streamer = CreateMIDIStreamer(devtype, device != nullptr? device->args.GetChars() : "");
 		if (streamer == nullptr)
 		{
-			delete reader;
 			delete source;
-			return 0;
+			return nullptr;
 		}
 		streamer->SetMIDISource(source);
 		info = streamer;
@@ -488,22 +476,21 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 		(id[0] == MAKE_ID('D','B','R','A') && id[1] == MAKE_ID('W','O','P','L')) ||		// DosBox Raw OPL
 		(id[0] == MAKE_ID('A','D','L','I') && *((uint8_t *)id + 4) == 'B'))		// Martin Fernandez's modified IMF
 	{
-		info = new OPLMUSSong (*reader, device != nullptr? device->args.GetChars() : "");
+		info = new OPLMUSSong (reader, device != nullptr? device->args.GetChars() : "");
 	}
 	// Check for game music
 	else if ((fmt = GME_CheckFormat(id[0])) != nullptr && fmt[0] != '\0')
 	{
-		info = GME_OpenSong(*reader, fmt);
+		info = GME_OpenSong(reader, fmt);
 	}
 	// Check for module formats
 	else
 	{
-		info = MOD_OpenSong(*reader);
+		info = MOD_OpenSong(reader);
 	}
 	if (info == nullptr)
 	{
-		info = SndFile_OpenSong(*reader);
-		if (info != nullptr) reader = nullptr;
+		info = SndFile_OpenSong(reader);
 	}
 
     if (info == nullptr)
@@ -513,23 +500,20 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
         {
             uint32_t subid;
 
-            reader->Seek(8, SEEK_CUR);
-            if (reader->Read (&subid, 4) != 4)
+            reader.Seek(8, FileRdr::SeekCur);
+            if (reader.Read (&subid, 4) != 4)
             {
-                delete reader;
-                return 0;
+                return nullptr;
             }
-            reader->Seek(-12, SEEK_CUR);
+            reader.Seek(-12, FileRdr::SeekCur);
 
             if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
             {
                 // This is a CDDA file
-                info = new CDDAFile (*reader);
+                info = new CDDAFile (reader);
             }
         }
     }
-
-	if (reader != nullptr) delete reader;
 
 	if (info && !info->IsValid ())
 	{

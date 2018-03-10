@@ -563,10 +563,13 @@ char *MemoryReader::Gets(char *strbuf, int len)
 
 MemoryArrayReader::MemoryArrayReader (const char *buffer, long length)
 {
-    buf.Resize(length);
-    memcpy(&buf[0], buffer, length);
-    Length=length;
-    FilePos=0;
+	if (length > 0)
+	{
+		buf.Resize(length);
+		memcpy(&buf[0], buffer, length);
+	}
+	Length = length;
+	FilePos=0;
 }
 
 MemoryArrayReader::~MemoryArrayReader ()
@@ -696,22 +699,42 @@ size_t BufferWriter::Write(const void *buffer, size_t len)
 
 bool FileRdr::OpenFile(const char *filename)
 {
-	mReader = new FileReader;
-	if (mReader->Open(filename)) return true;
-	delete mReader;
-	mReader = nullptr;
-	return false;
+	auto reader = new FileReader;
+	if (!reader->Open(filename)) return false;
+	Close();
+	mReader = reader;
+	return true;
 }
 
 bool FileRdr::OpenMemory(const void *mem, FileRdr::Size length)
 {
+	Close();
 	mReader = new MemoryReader((const char *)mem, (long)length);
 	return true;
 }
 
 bool FileRdr::OpenMemoryArray(const void *mem, FileRdr::Size length)
 {
+	Close();
 	mReader = new MemoryArrayReader((const char *)mem, (long)length);
 	return true;
+}
+
+bool FileRdr::OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter)
+{
+	auto reader = new MemoryArrayReader(nullptr, 0);
+	if (getter(reader->GetArray()))
+	{
+		Close();
+		reader->UpdateLength();
+		mReader = reader;
+		return true;
+	}
+	else
+	{
+		// This will keep the old
+		delete reader;
+		return false;
+	}
 }
 

@@ -74,7 +74,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
+FTexture *FlatTexture_TryCreate(FileRdr & file, int lumpnum)
 {
 	return new FFlatTexture(lumpnum);
 }
@@ -194,9 +194,9 @@ const uint8_t *FFlatTexture::GetPixels ()
 
 void FFlatTexture::MakeTexture ()
 {
-	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	auto lump = Wads.OpenLumpReader (SourceLump);
 	Pixels = new uint8_t[Width*Height];
-	long numread = lump.Read (Pixels, Width*Height);
+	auto numread = lump.Read (Pixels, Width*Height);
 	if (numread < Width*Height)
 	{
 		memset (Pixels + numread, 0xBB, Width*Height - numread);

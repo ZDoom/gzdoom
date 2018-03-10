@@ -48,7 +48,7 @@
 #include "v_palette.h"
 
 typedef bool (*CheckFunc)(FileReader & file);
-typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
+typedef FTexture * (*CreateFunc)(FileRdr & file, int lumpnum);
 
 struct TexCreateInfo
 {
@@ -66,17 +66,17 @@ void FTexture::InitGrayMap()
 	}
 }
 
-FTexture *IMGZTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *PNGTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *JPEGTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *DDSTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *PCXTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *TGATexture_TryCreate(FileReader &, int lumpnum);
-FTexture *RawPageTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *FlatTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *PatchTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *EmptyTexture_TryCreate(FileReader &, int lumpnum);
-FTexture *AutomapTexture_TryCreate(FileReader &, int lumpnum);
+FTexture *IMGZTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *PNGTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *JPEGTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *DDSTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *PCXTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *TGATexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *RawPageTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *FlatTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *PatchTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *EmptyTexture_TryCreate(FileRdr &, int lumpnum);
+FTexture *AutomapTexture_TryCreate(FileRdr &, int lumpnum);
 
 
 // Examines the lump contents to decide what type of texture to create,
@@ -99,7 +99,7 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 
 	if (lumpnum == -1) return NULL;
 
-	FWadLump data = Wads.OpenLumpNum (lumpnum);
+	auto data = Wads.OpenLumpReader (lumpnum);
 
 	for(size_t i = 0; i < countof(CreateInfo); i++)
 	{

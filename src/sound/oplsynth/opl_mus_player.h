@@ -1,7 +1,7 @@
 #include "critsec.h"
 #include "musicblock.h"
 
-class FileReader;
+class FileRdr;
 
 class OPLmusicBlock : public musicBlock
 {
@@ -34,7 +34,7 @@ protected:
 class OPLmusicFile : public OPLmusicBlock
 {
 public:
-	OPLmusicFile(FileReader *reader);
+	OPLmusicFile(FileRdr &reader);
 	OPLmusicFile(const OPLmusicFile *source, const char *filename);
 	virtual ~OPLmusicFile();
 

@@ -2500,17 +2500,17 @@ static void P_LoopSidedefs (bool firstloop)
 
 int P_DetermineTranslucency (int lumpnum)
 {
-	FWadLump tranmap = Wads.OpenLumpNum (lumpnum);
+	auto tranmap = Wads.OpenLumpReader (lumpnum);
 	uint8_t index;
 	PalEntry newcolor;
 	PalEntry newcolor2;
 
-	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, SEEK_SET);
+	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, FileRdr::SeekSet);
 	tranmap.Read (&index, 1);
 
 	newcolor = GPalette.BaseColors[GPalette.Remap[index]];
 
-	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, SEEK_SET);
+	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, FileRdr::SeekSet);
 	tranmap.Read (&index, 1);
 	newcolor2 = GPalette.BaseColors[GPalette.Remap[index]];
 	if (newcolor2.r == 255)	// if black on white results in white it's either

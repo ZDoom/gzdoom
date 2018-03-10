@@ -550,7 +550,7 @@ static DUMBFILE_SYSTEM mem_dfs = {
 //
 //==========================================================================
 
-DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, FileReader &reader, int lenhave, int lenfull)
+DUMBFILE *dumb_read_allfile(dumbfile_mem_status *filestate, uint8_t *start, FileRdr &reader, int lenhave, int lenfull)
 {
 	filestate->size = lenfull;
 	filestate->offset = 0;
@@ -765,7 +765,7 @@ static void MOD_SetAutoChip(DUH *duh)
 //
 //==========================================================================
 
-MusInfo *MOD_OpenSong(FileReader &reader)
+MusInfo *MOD_OpenSong(FileRdr &reader)
 {
 	DUH *duh = 0;
 	int headsize;
@@ -776,7 +776,6 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	};
 	dumbfile_mem_status filestate;
 	DUMBFILE *f = NULL;
-	long fpos = 0;
 	input_mod *state = NULL;
 
 	bool is_it = false;
@@ -784,8 +783,8 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 
 	atterm(dumb_exit);
 
-    int size = reader.GetLength();
-    fpos = reader.Tell();
+    int size = (int)reader.GetLength();
+	auto fpos = reader.Tell();
 
 	filestate.ptr = start;
 	filestate.offset = 0;
@@ -903,7 +902,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 		{
 			if (!(f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 			{
-                reader.Seek(fpos, SEEK_SET);
+                reader.Seek(fpos, FileRdr::SeekSet);
 				return NULL;
 			}
 		}
@@ -944,7 +943,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	else
 	{
 		// Reposition file pointer for other codecs to do their checks.
-        reader.Seek(fpos, SEEK_SET);
+        reader.Seek(fpos, FileRdr::SeekSet);
 	}
 	if (filestate.ptr != (uint8_t *)start)
 	{

@@ -366,7 +366,7 @@ void SetDefaultColormap (const char *name)
 		}
 		else
 		{
-			FWadLump lumpr = Wads.OpenLumpNum (lump);
+			auto lumpr = Wads.OpenLumpReader (lump);
 
 			// [RH] The colormap may not have been designed for the specific
 			// palette we are using, so remap it to match the current palette.
@@ -427,7 +427,7 @@ static void InitBoomColormaps ()
 			if (Wads.LumpLength (fakecmaps[j].lump) >= (NUMCOLORMAPS+1)*256)
 			{
 				int k, r;
-				FWadLump lump = Wads.OpenLumpNum (fakecmaps[j].lump);
+				auto lump = Wads.OpenLumpReader (fakecmaps[j].lump);
 				uint8_t *const map = realcolormaps.Maps + NUMCOLORMAPS*256*j;
 
 				for (k = 0; k < NUMCOLORMAPS; ++k)

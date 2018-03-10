@@ -83,13 +83,13 @@ protected:
 //
 //==========================================================================
 
-FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
+FTexture *IMGZTexture_TryCreate(FileRdr & file, int lumpnum)
 {
 	uint32_t magic = 0;
 	uint16_t w, h;
 	int16_t l, t;
 
-	file.Seek(0, SEEK_SET);
+	file.Seek(0, FileRdr::SeekSet);
 	if (file.Read(&magic, 4) != 4) return NULL;
 	if (magic != MAKE_ID('I','M','G','Z')) return NULL;
 	file >> w >> h >> l >> t;

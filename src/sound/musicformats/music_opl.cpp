@@ -69,12 +69,12 @@ void OPL_SetCore(const char *args)
 	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
 }
 
-OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
+OPLMUSSong::OPLMUSSong (FileRdr &reader, const char *args)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
 
 	OPL_SetCore(args);
-	Music = new OPLmusicFile (&reader);
+	Music = new OPLmusicFile (reader);
 
 	m_Stream = GSnd->CreateStream (FillStream, samples*4,
 		(current_opl_core == 0 ? SoundStream::Mono : 0) | SoundStream::Float, int(OPL_SAMPLE_RATE), this);

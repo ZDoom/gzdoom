@@ -72,7 +72,7 @@ private:
 //
 //==========================================================================
 
-FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
+FTexture *AutomapTexture_TryCreate(FileRdr &data, int lumpnum)
 {
 	if (data.GetLength() < 320) return NULL;
 	if (!Wads.CheckLumpName(lumpnum, "AUTOPAGE")) return NULL;

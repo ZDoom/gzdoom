@@ -321,7 +321,7 @@ FFont *V_GetFont(const char *name)
 		{
 			uint32_t head;
 			{
-				FWadLump lumpy = Wads.OpenLumpNum (lump);
+				auto lumpy = Wads.OpenLumpReader (lump);
 				lumpy.Read (&head, 4);
 			}
 			if ((head & MAKE_ID(255,255,255,0)) == MAKE_ID('F','O','N',0) ||
@@ -1855,7 +1855,7 @@ void FFontChar2::SetSourceRemap(const uint8_t *sourceremap)
 
 void FFontChar2::MakeTexture ()
 {
-	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	auto lump = Wads.OpenLumpReader (SourceLump);
 	int destSize = Width * Height;
 	uint8_t max = 255;
 	bool rle = true;
@@ -1868,18 +1868,18 @@ void FFontChar2::MakeTexture ()
 		{
 			lump.Read (buff, 7);
 			max = buff[6];
-			lump.Seek (SourcePos - 11, SEEK_CUR);
+			lump.Seek (SourcePos - 11, FileRdr::SeekCur);
 		}
 		else if (buff[3] == 0x1A)
 		{
 			lump.Read(buff, 13);
 			max = buff[12] - 1;
-			lump.Seek (SourcePos - 17, SEEK_CUR);
+			lump.Seek (SourcePos - 17, FileRdr::SeekCur);
 			rle = false;
 		}
 		else
 		{
-			lump.Seek (SourcePos - 4, SEEK_CUR);
+			lump.Seek (SourcePos - 4, FileRdr::SeekCur);
 		}
 	}
 

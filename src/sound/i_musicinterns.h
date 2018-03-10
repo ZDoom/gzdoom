@@ -408,7 +408,7 @@ protected:
 class StreamSong : public MusInfo
 {
 public:
-    StreamSong (FileReader *reader);
+    StreamSong (FileRdr &reader);
 	~StreamSong ();
 	void Play (bool looping, int subsong);
 	void Pause ();
@@ -431,7 +431,7 @@ protected:
 class OPLMUSSong : public StreamSong
 {
 public:
-	OPLMUSSong (FileReader &reader, const char *args);
+	OPLMUSSong (FileRdr &reader, const char *args);
 	~OPLMUSSong ();
 	void Play (bool looping, int subsong);
 	bool IsPlaying ();
@@ -480,18 +480,18 @@ protected:
 class CDDAFile : public CDSong
 {
 public:
-	CDDAFile (FileReader &reader);
+	CDDAFile (FileRdr &reader);
 };
 
 // Module played via foo_dumb -----------------------------------------------
 
-MusInfo *MOD_OpenSong(FileReader &reader);
+MusInfo *MOD_OpenSong(FileRdr &reader);
 
 // Music played via Game Music Emu ------------------------------------------
 
 const char *GME_CheckFormat(uint32_t header);
-MusInfo *GME_OpenSong(FileReader &reader, const char *fmt);
-MusInfo *SndFile_OpenSong(FileReader &fr);
+MusInfo *GME_OpenSong(FileRdr &reader, const char *fmt);
+MusInfo *SndFile_OpenSong(FileRdr &fr);
 
 // --------------------------------------------------------------------------
 

@@ -94,7 +94,7 @@ protected:
 	uint8_t *Pixels;
 	Span **Spans;
 
-	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
+	void ReadCompressed(FileRdr &lump, uint8_t * buffer, int bytesperpixel);
 
 	virtual void MakeTexture ();
 
@@ -107,13 +107,13 @@ protected:
 //
 //==========================================================================
 
-FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
+FTexture *TGATexture_TryCreate(FileRdr & file, int lumpnum)
 {
 	TGAHeader hdr;
 
 	if (file.GetLength() < (long)sizeof(hdr)) return NULL;
 	
-	file.Seek(0, SEEK_SET);
+	file.Seek(0, FileRdr::SeekSet);
 	file.Read(&hdr, sizeof(hdr));
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
@@ -127,7 +127,7 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 	if (hdr.img_type >=4  && hdr.img_type <= 8) return NULL;
 	if ((hdr.img_desc & 16) != 0) return NULL;
 
-	file.Seek(0, SEEK_SET);
+	file.Seek(0, FileRdr::SeekSet);
 	file.Read(&hdr, sizeof(hdr));
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
@@ -250,7 +250,7 @@ const uint8_t *FTGATexture::GetPixels ()
 //
 //==========================================================================
 
-void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel)
+void FTGATexture::ReadCompressed(FileRdr &lump, uint8_t * buffer, int bytesperpixel)
 {
 	uint8_t b;
 	uint8_t data[4];
@@ -290,7 +290,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 void FTGATexture::MakeTexture ()
 {
 	uint8_t PaletteMap[256];
-	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	auto lump = Wads.OpenLumpReader (SourceLump);
 	TGAHeader hdr;
 	uint16_t w;
 	uint8_t r,g,b,a;
@@ -298,7 +298,7 @@ void FTGATexture::MakeTexture ()
 
 	Pixels = new uint8_t[Width*Height];
 	lump.Read(&hdr, sizeof(hdr));
-	lump.Seek(hdr.id_len, SEEK_CUR);
+	lump.Seek(hdr.id_len, FileRdr::SeekCur);
 	
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
@@ -491,7 +491,7 @@ void FTGATexture::MakeTexture ()
 int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	PalEntry pe[256];
-	FWadLump lump = Wads.OpenLumpNum (SourceLump);
+	auto lump = Wads.OpenLumpReader (SourceLump);
 	TGAHeader hdr;
 	uint16_t w;
 	uint8_t r,g,b,a;
@@ -499,7 +499,7 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	int transval = 0;
 
 	lump.Read(&hdr, sizeof(hdr));
-	lump.Seek(hdr.id_len, SEEK_CUR);
+	lump.Seek(hdr.id_len, FileRdr::SeekCur);
 	
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);

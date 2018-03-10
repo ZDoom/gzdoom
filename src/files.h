@@ -38,6 +38,7 @@
 
 #include <stdio.h>
 #include <zlib.h>
+#include <functional>
 #include "bzlib.h"
 #include "doomtype.h"
 #include "m_swap.h"
@@ -498,8 +499,8 @@ class FileRdr	// this is just a temporary name, until the old FileReader hierarc
 {
 	FileReader *mReader = nullptr;
 
-	FileRdr() {}
 	FileRdr(const FileRdr &r) = delete;
+	FileRdr &operator=(const FileRdr &r) = delete;
 public:
 	enum ESeek
 	{
@@ -510,9 +511,18 @@ public:
 
 	typedef ptrdiff_t Size;	// let's not use 'long' here.
 
+	FileRdr() {}
+
+	// These two functions are only needed as long as the FileReader has not been fully replaced throughout the code.
 	FileRdr(FileReader *r)
 	{
 		mReader = r;
+	}
+	FileReader *Reader()
+	{
+		auto r = mReader;
+		mReader = nullptr;
+		return r;
 	}
 
 	FileRdr(FileRdr &&r)
@@ -521,7 +531,21 @@ public:
 		r.mReader = nullptr;
 	}
 
+	FileRdr& operator =(FileRdr &&r)
+	{
+		Close();
+		mReader = r.mReader;
+		r.mReader = nullptr;
+		return *this;
+	}
+
+
 	~FileRdr()
+	{
+		Close();
+	}
+
+	void Close()
 	{
 		if (mReader != nullptr) delete mReader;
 		mReader = nullptr;
@@ -531,6 +555,7 @@ public:
 	bool OpenFilePart(FileReader *parent, Size start, Size length); // later
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
+	bool OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
 
 	Size Tell() const
 	{

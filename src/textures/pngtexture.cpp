@@ -90,7 +90,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
+FTexture *PNGTexture_TryCreate(FileRdr & data, int lumpnum)
 {
 	union
 	{
@@ -106,7 +106,7 @@ FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
 	// first 4 bytes match, but later bytes don't, we assume it's
 	// a corrupt PNG.)
 
-	data.Seek(0, SEEK_SET);
+	data.Seek(0, FileRdr::SeekSet);
 	if (data.Read (first4bytes.b, 4) != 4) return NULL;
 	if (first4bytes.dw != MAKE_ID(137,'P','N','G'))	return NULL;
 	if (data.Read (first4bytes.b, 4) != 4) return NULL;
@@ -136,7 +136,7 @@ FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
 	}
 
 	// Just for completeness, make sure the PNG has something more than an IHDR.
-	data.Seek (4, SEEK_CUR);
+	data.Seek (4, FileRdr::SeekSet);
 	data.Read (first4bytes.b, 4);
 	if (first4bytes.dw == 0)
 	{
@@ -147,7 +147,7 @@ FTexture *PNGTexture_TryCreate(FileReader & data, int lumpnum)
 		}
 	}
 
-	return new FPNGTexture (data, lumpnum, FString(), BigLong((int)width), BigLong((int)height),
+	return new FPNGTexture (*data.Reader(), lumpnum, FString(), BigLong((int)width), BigLong((int)height),
 		bitdepth, colortype, interlace);
 }
 

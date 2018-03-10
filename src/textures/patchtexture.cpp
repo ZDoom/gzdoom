@@ -81,12 +81,12 @@ protected:
 //
 //==========================================================================
 
-static bool CheckIfPatch(FileReader & file)
+static bool CheckIfPatch(FileRdr & file)
 {
 	if (file.GetLength() < 13) return false;	// minimum length of a valid Doom patch
 	
 	uint8_t *data = new uint8_t[file.GetLength()];
-	file.Seek(0, SEEK_SET);
+	file.Seek(0, FileRdr::SeekSet);
 	file.Read(data, file.GetLength());
 	
 	const patch_t *foo = (const patch_t *)data;
@@ -129,12 +129,12 @@ static bool CheckIfPatch(FileReader & file)
 //
 //==========================================================================
 
-FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
+FTexture *PatchTexture_TryCreate(FileRdr & file, int lumpnum)
 {
 	patch_t header;
 
 	if (!CheckIfPatch(file)) return NULL;
-	file.Seek(0, SEEK_SET);
+	file.Seek(0, FileRdr::SeekSet);
 	file >> header.width >> header.height >> header.leftoffset >> header.topoffset;
 	return new FPatchTexture(lumpnum, &header);
 }

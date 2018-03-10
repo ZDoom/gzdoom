@@ -514,7 +514,7 @@ public:
 	FileRdr() {}
 
 	// These two functions are only needed as long as the FileReader has not been fully replaced throughout the code.
-	FileRdr(FileReader *r)
+	explicit FileRdr(FileReader *r)
 	{
 		mReader = r;
 	}

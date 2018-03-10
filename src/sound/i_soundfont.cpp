@@ -119,11 +119,12 @@ FSF2Reader::FSF2Reader(const char *fn)
 
 FileRdr FSF2Reader::OpenMainConfigFile()
 {
+	FileRdr fr;
 	if (mMainConfigForSF2.IsNotEmpty())
 	{
-		return new MemoryReader(mMainConfigForSF2.GetChars(), (long)mMainConfigForSF2.Len());
+		fr.OpenMemory(mMainConfigForSF2.GetChars(), mMainConfigForSF2.Len());
 	}
-	return nullptr;
+	return fr;
 }
 
 FileRdr FSF2Reader::OpenFile(const char *name)
@@ -159,15 +160,16 @@ FileRdr FZipPatReader::OpenMainConfigFile()
 
 FileRdr FZipPatReader::OpenFile(const char *name)
 {
+	FileRdr fr;
 	if (resf != nullptr)
 	{
 		auto lump = resf->FindLump(name);
 		if (lump != nullptr)
 		{
-			return lump->NewReader();
+			return FileRdr(lump->NewReader());	// temporary workaround
 		}
 	}
-	return nullptr;
+	return fr;
 }
 
 //==========================================================================
@@ -258,7 +260,7 @@ FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 
 FileRdr FLumpPatchSetReader::OpenMainConfigFile()
 {
-	return Wads.ReopenLumpNum(mLumpIndex);
+	return Wads.ReopenLumpReader(mLumpIndex);
 }
 
 FileRdr FLumpPatchSetReader::OpenFile(const char *name)

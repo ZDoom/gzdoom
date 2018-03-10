@@ -50,7 +50,7 @@ FSoundFontManager sfmanager;
 //
 //==========================================================================
 
-std::pair<FileReader *, FString> FSoundFontReader::LookupFile(const char *name)
+std::pair<FileRdr, FString> FSoundFontReader::LookupFile(const char *name)
 {
 	if (!IsAbsPath(name))
 	{
@@ -58,12 +58,12 @@ std::pair<FileReader *, FString> FSoundFontReader::LookupFile(const char *name)
 		{
 			FString fullname = mPaths[i] + name;
 			auto fr = OpenFile(fullname);
-			if (fr != nullptr) return std::make_pair(fr, fullname);
+			if (fr.isOpen()) return std::make_pair(std::move(fr), fullname);
 		}
 	}
 	auto fr = OpenFile(name);
-	if (fr != nullptr) return std::make_pair(fr, name);
-	return std::make_pair(nullptr, FString());
+	if (!fr.isOpen()) name = "";
+	return std::make_pair(std::move(fr), name);
 }
 
 //==========================================================================
@@ -117,7 +117,7 @@ FSF2Reader::FSF2Reader(const char *fn)
 //
 //==========================================================================
 
-FileReader *FSF2Reader::OpenMainConfigFile()
+FileRdr FSF2Reader::OpenMainConfigFile()
 {
 	if (mMainConfigForSF2.IsNotEmpty())
 	{
@@ -126,15 +126,14 @@ FileReader *FSF2Reader::OpenMainConfigFile()
 	return nullptr;
 }
 
-FileReader *FSF2Reader::OpenFile(const char *name)
+FileRdr FSF2Reader::OpenFile(const char *name)
 {
+	FileRdr fr;
 	if (mFilename.CompareNoCase(name) == 0)
 	{
-		auto fr = new FileReader;
-		if (fr->Open(name)) return fr;
-		delete fr;
+		fr.OpenFile(name);
 	}
-	return nullptr;
+	return fr;
 }
 
 //==========================================================================
@@ -153,12 +152,12 @@ FZipPatReader::~FZipPatReader()
 	if (resf != nullptr) delete resf;
 }
 
-FileReader *FZipPatReader::OpenMainConfigFile()
+FileRdr FZipPatReader::OpenMainConfigFile()
 {
 	return OpenFile("timidity.cfg");
 }
 
-FileReader *FZipPatReader::OpenFile(const char *name)
+FileRdr FZipPatReader::OpenFile(const char *name)
 {
 	if (resf != nullptr)
 	{
@@ -194,8 +193,8 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	};
 #endif
 	mAllowAbsolutePaths = true;
-	FileReader *fr = new FileReader;
-	if (fr->Open(filename))
+	FileRdr fr;
+	if (fr.OpenFile(filename))
 	{
 		mFullPathToConfig = filename;
 	}
@@ -204,7 +203,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 		for(auto c : paths)
 		{
 			FStringf fullname("%s/%s", c, filename);
-			if (fr->Open(fullname))
+			if (fr.OpenFile(fullname))
 			{
 				mFullPathToConfig = fullname;
 			}
@@ -224,23 +223,21 @@ FPatchSetReader::FPatchSetReader()
 	mAllowAbsolutePaths = true;
 }
 
-FileReader *FPatchSetReader::OpenMainConfigFile()
+FileRdr FPatchSetReader::OpenMainConfigFile()
 {
-	auto fr = new FileReader;
-	if (fr->Open(mFullPathToConfig)) return fr;
-	delete fr;
-	return nullptr;
+	FileRdr fr;
+	fr.OpenFile(mFullPathToConfig);
+	return fr;
 }
 
-FileReader *FPatchSetReader::OpenFile(const char *name)
+FileRdr FPatchSetReader::OpenFile(const char *name)
 {
 	FString path;
 	if (IsAbsPath(name)) path = name;
 	else path = mBasePath + name;
-	auto fr = new FileReader;
-	if (fr->Open(path)) return fr;
-	delete fr;
-	return nullptr;
+	FileRdr fr;
+	fr.OpenFile(path);
+	return fr;
 }
 
 //==========================================================================
@@ -252,7 +249,6 @@ FileReader *FPatchSetReader::OpenFile(const char *name)
 FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 {
 	mLumpIndex = Wads.CheckNumForFullName(filename);
-	FileReader *fr = new FileReader;
 
 	mBasePath = filename;
 	FixPathSeperator(mBasePath);
@@ -260,19 +256,19 @@ FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 	if (mBasePath.Len() > 0 && mBasePath.Back() != '/') mBasePath += '/';
 }
 
-FileReader *FLumpPatchSetReader::OpenMainConfigFile()
+FileRdr FLumpPatchSetReader::OpenMainConfigFile()
 {
 	return Wads.ReopenLumpNum(mLumpIndex);
 }
 
-FileReader *FLumpPatchSetReader::OpenFile(const char *name)
+FileRdr FLumpPatchSetReader::OpenFile(const char *name)
 {
 	FString path;
-	if (IsAbsPath(name)) return nullptr;	// no absolute paths in the lump directory.
+	if (IsAbsPath(name)) return FileRdr();	// no absolute paths in the lump directory.
 	path = mBasePath + name;
 	auto index = Wads.CheckNumForFullName(path);
-	if (index < 0) return nullptr;
-	return Wads.ReopenLumpNum(index);
+	if (index < 0) return FileRdr();
+	return Wads.ReopenLumpReader(index);
 }
 
 //==========================================================================

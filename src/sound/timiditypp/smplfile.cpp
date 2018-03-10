@@ -283,10 +283,10 @@ int Instruments::import_wave_discriminant(char *sample_file)
 	if (tf_read(buf, 12, 1, tf) != 1
 			|| memcmp(&buf[0], "RIFF", 4) != 0 || memcmp(&buf[8], "WAVE", 4) != 0)
 	{
-		close_file(tf);
+		tf_close(tf);
 		return 1;
 	}
-	close_file(tf);
+	tf_close(tf);
 	return 0;
 }
 
@@ -314,7 +314,7 @@ int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 	if (tf_read(buf, 12, 1, tf) != 1
 			|| memcmp(&buf[0], "RIFF", 4) != 0 || memcmp(&buf[8], "WAVE", 4) != 0)
 	{
-		close_file(tf);
+		tf_close(tf);
 		return 1;
 	}
 	//ctl_cmsg(CMSG_INFO,VERB_NOISY,"Loading WAV: %s", sample_file);
@@ -378,7 +378,7 @@ int Instruments::import_wave_load(char *sample_file, Instrument *inst)
 		type_index = 4 - (chunk_size & 1);
 		type_size = 8 + (chunk_size & 1);
 	}
-	close_file(tf);
+	tf_close(tf);
 	if (chunk_flags & WAVE_CHUNKFLAG_SAMPLER)
 	{
 		uint8_t		modes;
@@ -557,10 +557,10 @@ int Instruments::import_aiff_discriminant(char *sample_file)
 			|| memcmp(&buf[0], "FORM", 4) != 0 || memcmp(&buf[8], "AIF", 3) != 0
 			|| (buf[8 + 3] != 'F' && buf[8 + 3] != 'C'))
 	{
-		close_file(tf);
+		tf_close(tf);
 		return 1;
 	}
-	close_file(tf);
+	tf_close(tf);
 	return 0;
 }
 
@@ -597,7 +597,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 			|| memcmp(&buf[0], "FORM", 4) != 0 || memcmp(&buf[8], "AIF", 3) != 0
 			|| (buf[8 + 3] != 'F' && buf[8 + 3] != 'C'))
 	{
-		close_file(tf);
+		tf_close(tf);
 		return 1;
 	}
 	compressed = buf[8 + 3] == 'C';
@@ -684,7 +684,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 	{
 		if (marker_data != NULL)
 			free(marker_data);
-		close_file(tf);
+		tf_close(tf);
 		return -1;
 	}
 	if (!(chunk_flags & AIFF_CHUNKFLAG_SOUNDREAD))
@@ -693,7 +693,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 		{
 			if (marker_data != NULL)
 				free(marker_data);
-			close_file(tf);
+			tf_close(tf);
 			return 1;
 		}
 	}
@@ -729,7 +729,7 @@ int Instruments::import_aiff_load(char *sample_file, Instrument *inst)
 	}
 	if (marker_data != NULL)
 		free(marker_data);
-	close_file(tf);
+	tf_close(tf);
 	return 0;
 }
 

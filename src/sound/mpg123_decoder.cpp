@@ -145,7 +145,8 @@ bool MPG123Decoder::open(FileRdr &reader)
         MPG123 = 0;
     }
 
-    return false;
+	reader = std::move(Reader);	// need to give it back.
+	return false;
 }
 
 void MPG123Decoder::getInfo(int *samplerate, ChannelConfig *chans, SampleType *type)

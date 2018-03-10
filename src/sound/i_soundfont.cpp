@@ -291,8 +291,8 @@ void FSoundFontManager::ProcessOneFile(const FString &fn)
 		if (!sfi.mName.CompareNoCase(fb)) return;
 	}
 	
-	FileReader fr;
-	if (fr.Open(fn))
+	FileRdr fr;
+	if (fr.OpenFile(fn))
 	{
 		// Try to identify. We only accept .sf2 and .zip by content. All other archives are intentionally ignored.
 		char head[16] = { 0};
@@ -433,8 +433,8 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	// Next check if the file is a .sf file
 	if (allowed & SF_SF2)
 	{
-		FileReader fr;
-		if (fr.Open(name))
+		FileRdr fr;
+		if (fr.OpenFile(name))
 		{
 			char head[16] = { 0};
 			fr.Read(head, 16);
@@ -447,8 +447,8 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	}
 	if (allowed & SF_GUS)
 	{
-		FileReader fr;
-		if (fr.Open(name))
+		FileRdr fr;
+		if (fr.OpenFile(name))
 		{
 			char head[16] = { 0 };
 			fr.Read(head, 2);

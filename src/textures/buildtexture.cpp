@@ -306,14 +306,14 @@ int FTextureManager::CountBuildTiles ()
 			FString artpath = rffpath;
 			artpath += artfile;
 
-			FileReader fr;
+			FileRdr fr;
 
-			if (!fr.Open(artpath))
+			if (!fr.OpenFile(artpath))
 			{
 				break;
 			}
 
-			long len = fr.GetLength();
+			auto len = fr.GetLength();
 			uint8_t *art = new uint8_t[len];
 			if (fr.Read (art, len) != len || (numtiles = CountTiles(art)) == 0)
 			{

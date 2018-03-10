@@ -2801,8 +2801,8 @@ void G_DoPlayDemo (void)
 	{
 		FixPathSeperator (defdemoname);
 		DefaultExtension (defdemoname, ".lmp");
-		FileReader fr;
-		if (!fr.Open(defdemoname))
+		FileRdr fr;
+		if (!fr.OpenFile(defdemoname))
 		{
 			I_Error("Unable to open demo '%s'", defdemoname.GetChars());
 		}

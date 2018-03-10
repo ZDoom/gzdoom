@@ -2492,11 +2492,11 @@ bool D_LoadDehLump(int lumpnum)
 
 bool D_LoadDehFile(const char *patchfile)
 {
-	FileReader fr;
+	FileRdr fr;
 
-	if (fr.Open(patchfile))
+	if (fr.OpenFile(patchfile))
 	{
-		PatchSize = fr.GetLength();
+		PatchSize = (int)fr.GetLength();
 
 		PatchName = copystring(patchfile);
 		PatchFile = new char[PatchSize + 1];

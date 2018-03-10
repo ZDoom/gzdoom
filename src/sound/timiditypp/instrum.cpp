@@ -75,6 +75,8 @@ Instruments::~Instruments()
 
 	free_tone_bank();
 	free_instrument_map();
+
+	if (sfreader != nullptr) delete sfreader;
 }
 
 void Instruments::free_instrument(Instrument *ip)

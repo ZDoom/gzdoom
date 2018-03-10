@@ -127,7 +127,8 @@ bool SndFileDecoder::open(FileRdr &reader)
 		sf_close(SndFile);
 		SndFile = 0;
 	}
-    return false;
+	reader = std::move(Reader);	// need to give it back.
+	return false;
 }
 
 void SndFileDecoder::getInfo(int *samplerate, ChannelConfig *chans, SampleType *type)

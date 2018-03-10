@@ -545,6 +545,11 @@ public:
 		Close();
 	}
 
+	bool isOpen() const
+	{
+		return mReader != nullptr;
+	}
+
 	void Close()
 	{
 		if (mReader != nullptr) delete mReader;

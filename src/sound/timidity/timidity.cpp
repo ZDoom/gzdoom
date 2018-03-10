@@ -590,7 +590,7 @@ int LoadDMXGUS()
 	if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
 	if (lump == -1) return LoadConfig(midi_config);
 
-	FWadLump data = Wads.OpenLumpNum(lump);
+	auto data = Wads.OpenLumpReader(lump);
 	if (data.GetLength() == 0) return LoadConfig(midi_config);
 
 	// Check if we got some GUS data before using it.
@@ -613,7 +613,7 @@ int LoadDMXGUS()
 	gus_sfreader.reset(psreader);
 
 	char readbuffer[1024];
-	long size = data.GetLength();
+	auto size = data.GetLength();
 	long read = 0;
 	uint8_t remap[256];
 
@@ -624,7 +624,7 @@ int LoadDMXGUS()
 	int status = -1;
 	int gusbank = (gus_memsize >= 1 && gus_memsize <= 4) ? gus_memsize : -1;
 
-	data.Seek(0, SEEK_SET);
+	data.Seek(0, FileRdr::SeekSet);
 
 	while (data.Gets(readbuffer, 1024) && read < size)
 	{

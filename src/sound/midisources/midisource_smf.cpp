@@ -99,13 +99,13 @@ struct MIDISong2::TrackInfo
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FileReader &reader)
+MIDISong2::MIDISong2 (FileRdr &reader)
 : MusHeader(0), Tracks(0)
 {
 	int p;
 	int i;
 
-	SongLen = reader.GetLength();
+	SongLen = (int)reader.GetLength();
 	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)
 		return;

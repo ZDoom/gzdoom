@@ -105,10 +105,10 @@ struct XMISong::TrackInfo
 //
 //==========================================================================
 
-XMISong::XMISong (FileReader &reader)
+XMISong::XMISong (FileRdr &reader)
 : MusHeader(0), Songs(0)
 {
-	SongLen = reader.GetLength();
+	SongLen = (int)reader.GetLength();
 	MusHeader = new uint8_t[SongLen];
 	if (reader.Read(MusHeader, SongLen) != SongLen)
 		return;

@@ -177,13 +177,13 @@ public:
 	FMemLump ReadLump (int lump);
 	FMemLump ReadLump (const char *name) { return ReadLump (GetNumForName (name)); }
 
+	FileRdr OpenLumpReader(int lump);		// opens a reader that redirects to the containing file's one.
+	FileRdr ReopenLumpReader(int lump, bool alwayscache = false);		// opens an independent reader.
+
 	FWadLump OpenLumpNum (int lump);
-	FWadLump OpenLumpName (const char *name) { return OpenLumpNum (GetNumForName (name)); }
 	FWadLump *ReopenLumpNum (int lump);	// Opens a new, independent FILE
 	FWadLump *ReopenLumpNumNewFile (int lump);	// Opens a new, independent FILE
 	
-	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
-
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
 	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name
@@ -237,6 +237,7 @@ private:
 	void RenameNerve();
 	void FixMacHexen();
 	void DeleteAll();
+	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };
 
 extern FWadCollection Wads;

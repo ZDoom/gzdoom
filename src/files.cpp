@@ -687,3 +687,31 @@ size_t BufferWriter::Write(const void *buffer, size_t len)
 	return len;
 }
 
+
+//////////////////////////////////////
+//
+// The new wrapper
+//
+//////////////////////////////////////
+
+bool FileRdr::OpenFile(const char *filename)
+{
+	mReader = new FileReader;
+	if (mReader->Open(filename)) return true;
+	delete mReader;
+	mReader = nullptr;
+	return false;
+}
+
+bool FileRdr::OpenMemory(const void *mem, FileRdr::Size length)
+{
+	mReader = new MemoryReader((const char *)mem, (long)length);
+	return true;
+}
+
+bool FileRdr::OpenMemoryArray(const void *mem, FileRdr::Size length)
+{
+	mReader = new MemoryArrayReader((const char *)mem, (long)length);
+	return true;
+}
+

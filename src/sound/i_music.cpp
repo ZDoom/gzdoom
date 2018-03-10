@@ -309,7 +309,7 @@ MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-static MIDISource *CreateMIDISource(FileReader &reader, EMIDIType miditype)
+static MIDISource *CreateMIDISource(FileRdr &reader, EMIDIType miditype)
 {
 	MIDISource *source = nullptr;
 	switch (miditype)
@@ -452,11 +452,14 @@ MusInfo *I_RegisterSong (FileReader *reader, MidiDeviceSetting *device)
 	EMIDIType miditype = IdentifyMIDIType(id, sizeof(id));
 	if (miditype != MIDI_NOTMIDI)
 	{
-		auto source = CreateMIDISource(*reader, miditype);
+		// temporary hack so we can test before converting more.
+		FileRdr rdr(reader);
+		reader = nullptr;
+
+		auto source = CreateMIDISource(rdr, miditype);
 		if (source == nullptr) return 0;
 		if (!source->isValid())
 		{
-			delete reader;
 			delete source;
 			return 0;
 		}
@@ -719,10 +722,10 @@ static MIDISource *GetMIDISource(const char *fn)
 		return nullptr;
 	}
 
-	FWadLump wlump = Wads.OpenLumpNum(lump);
+	auto wlump = Wads.OpenLumpReader(lump);
 	uint32_t id[32 / 4];
 
-	if (wlump.Read(id, 32) != 32 || wlump.Seek(-32, SEEK_CUR) != 0)
+	if (wlump.Read(id, 32) != 32 || wlump.Seek(-32, FileRdr::SeekCur) != 0)
 	{
 		Printf("Unable to read lump %s\n", src.GetChars());
 		return nullptr;

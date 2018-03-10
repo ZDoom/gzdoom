@@ -167,6 +167,61 @@ protected:
 	bool CloseOnDestruct;
 };
 
+// This will need a cleaner implementation once the outer interface is done.
+// As a first step this only needs to work properly in the non-error case.
+class FileReaderRedirect : public FileReader
+{
+	FileReader *mReader;
+public:
+	FileReaderRedirect(FileReader *parent, long start, long length)
+	{
+		mReader = parent;
+		StartPos = start;
+		Length = length;
+	}
+
+	virtual long Tell() const
+	{
+		auto l = mReader->Tell() - StartPos;
+		if (l < StartPos || l >= StartPos + Length) return -1;	// out of scope
+		return l - StartPos;
+	}
+
+	virtual long Seek(long offset, int origin)
+	{
+		switch (origin)
+		{
+		case SEEK_SET:
+			offset += StartPos;
+			break;
+
+		case SEEK_END:
+			offset += StartPos + Length;
+			break;
+
+		case SEEK_CUR:
+			offset += mReader->Tell();
+			break;
+		}
+		if (offset < StartPos || offset >= StartPos + Length) return -1;	// out of scope
+		return mReader->Seek(offset, SEEK_SET);
+	}
+
+	virtual long Read(void *buffer, long len)
+	{
+		// This still needs better range checks
+		return mReader->Read(buffer, len);
+	}
+	virtual char *Gets(char *strbuf, int len)
+	{
+		return mReader->Gets(strbuf, len);
+	}
+
+	long GetLength() const { return Length; }
+};
+
+
+
 // Wraps around a FileReader to decompress a zlib stream
 class FileReaderZ : public FileReaderBase
 {
@@ -435,6 +490,108 @@ public:
 	TArray<unsigned char> *GetBuffer() { return &mBuffer; }
 };
 
+
+
+
+
+class FileRdr	// this is just a temporary name, until the old FileReader hierarchy can be made private.
+{
+	FileReader *mReader = nullptr;
+
+	FileRdr() {}
+	FileRdr(const FileRdr &r) = delete;
+public:
+	enum ESeek
+	{
+		SeekSet = SEEK_SET,
+		SeekCur = SEEK_CUR,
+		SeekEnd = SEEK_END
+	};
+
+	typedef ptrdiff_t Size;	// let's not use 'long' here.
+
+	FileRdr(FileReader *r)
+	{
+		mReader = r;
+	}
+
+	FileRdr(FileRdr &&r)
+	{
+		mReader = r.mReader;
+		r.mReader = nullptr;
+	}
+
+	~FileRdr()
+	{
+		if (mReader != nullptr) delete mReader;
+		mReader = nullptr;
+	}
+
+	bool OpenFile(const char *filename);
+	bool OpenFilePart(FileReader *parent, Size start, Size length); // later
+	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
+	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
+
+	Size Tell() const
+	{
+		return mReader->Tell();
+	}
+
+	Size Seek(Size offset, ESeek origin)
+	{
+		return mReader->Seek((long)offset, origin);
+	}
+
+	Size Read(void *buffer, Size len)
+	{
+		return mReader->Read(buffer, (long)len);
+	}
+
+	char *Gets(char *strbuf, Size len)
+	{
+		return mReader->Gets(strbuf, (int)len);
+	}
+
+	Size GetLength() const 
+	{ 
+		return mReader->GetLength();
+	}
+
+	FileRdr &operator>> (uint8_t &v)
+	{
+		mReader->Read(&v, 1);
+		return *this;
+	}
+
+	FileRdr &operator>> (int8_t &v)
+	{
+		mReader->Read(&v, 1);
+		return *this;
+	}
+
+	FileRdr &operator>> (uint16_t &v)
+	{
+		mReader->Read(&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileRdr &operator>> (int16_t &v)
+	{
+		mReader->Read(&v, 2);
+		v = LittleShort(v);
+		return *this;
+	}
+
+	FileRdr &operator>> (uint32_t &v)
+	{
+		mReader->Read(&v, 4);
+		v = LittleLong(v);
+		return *this;
+	}
+
+	friend class FWadCollection;
+};
 
 
 

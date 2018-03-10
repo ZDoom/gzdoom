@@ -1352,6 +1352,34 @@ FWadLump *FWadCollection::ReopenLumpNumNewFile (int lump)
 	return new FWadLump(lump, LumpInfo[lump].lump);
 }
 
+//==========================================================================
+//
+// OpenLumpReader
+//
+// uses a more abstract interface to allow for easier low level optimization later
+//
+//==========================================================================
+
+
+FileRdr FWadCollection::OpenLumpReader(int lump)
+{
+	FileRdr rdr;
+
+	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
+	{
+		I_Error("W_OpenLumpNum: %u >= NumLumps", lump);
+	}
+
+	rdr.mReader = new FWadLump(LumpInfo[lump].lump);
+	return rdr;
+}
+
+FileRdr FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
+{
+	FileRdr rdr;
+	rdr.mReader = alwayscache ? ReopenLumpNumNewFile(lump) : ReopenLumpNum(lump);
+	return rdr;
+}
 
 //==========================================================================
 //

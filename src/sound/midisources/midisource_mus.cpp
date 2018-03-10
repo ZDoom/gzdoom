@@ -33,11 +33,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if !defined(__FreeBSD__) && !defined(__APPLE__) && !defined(__OpenBSD__)
-#include <malloc.h>
-#else
-#include <stdlib.h>
-#endif
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"
@@ -93,7 +88,7 @@ static const uint8_t CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FileReader &reader)
+MUSSong2::MUSSong2 (FileRdr &reader)
 : MusHeader(0), MusBuffer(0)
 {
 	uint8_t front[32];

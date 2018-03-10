@@ -83,7 +83,9 @@ OPLMIDIDevice::OPLMIDIDevice(const char *args)
 {
 	OPL_SetCore(args);
 	FullPan = opl_fullpan;
-	FWadLump data = Wads.OpenLumpName("GENMIDI");
+	auto lump = Wads.CheckNumForName("GENMIDI", ns_global);
+	if (lump < 0) I_Error("No GENMIDI lump found");
+	auto data = Wads.OpenLumpReader(lump);
 
 	uint8_t filehdr[8];
 	data.Read(filehdr, 8);

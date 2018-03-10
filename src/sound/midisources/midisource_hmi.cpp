@@ -126,9 +126,9 @@ struct HMISong::TrackInfo
 //
 //==========================================================================
 
-HMISong::HMISong (FileReader &reader)
+HMISong::HMISong (FileRdr &reader)
 {
-    int len = reader.GetLength();
+    auto len = reader.GetLength();
 	if (len < 0x100)
 	{ // Way too small to be HMI.
 		return;

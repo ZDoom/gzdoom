@@ -1157,6 +1157,7 @@ OptionMenu MapColorMenu protected
 	ColorPicker "$MAPCOLORMNU_INTRALEVELCOLOR",			"am_intralevelcolor"	
 	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_interlevelcolor"	
 	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_secretsectorcolor"	
+	ColorPicker "$MAPCOLORMNU_UNEXPLOREDSECRETCOLOR",	"am_unexploredsecretcolor"	
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_specialwallcolor"
 	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_portalcolor"
 	StaticText " "

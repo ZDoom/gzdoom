@@ -1979,6 +1979,7 @@ MAPCOLORMNU_LOCKEDCOLOR 				= "Locked doors";
 MAPCOLORMNU_INTRALEVELCOLOR				= "Teleporter to the same map";
 MAPCOLORMNU_INTERLEVELCOLOR 			= "Teleporter to a different map";
 MAPCOLORMNU_SECRETSECTORCOLOR 			= "Secret sector";
+MAPCOLORMNU_UNEXPLOREDSECRETCOLOR 		= "Unexplored secret";
 MAPCOLORMNU_SPECIALWALLCOLOR			= "Special trigger lines";
 MAPCOLORMNU_CHEATMODE					= "Cheat Mode";
 MAPCOLORMNU_TSWALLCOLOR					= "Invisible 2-sided walls";	

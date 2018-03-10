@@ -18,7 +18,7 @@
 #ifndef MD5_H
 #define MD5_H
 
-class FileReader;
+class FileRdr;
 
 struct MD5Context
 {
@@ -26,7 +26,7 @@ struct MD5Context
 
 	void Init();
 	void Update(const uint8_t *buf, unsigned len);
-	void Update(FileReader *file, unsigned len);
+	void Update(FileRdr &file, unsigned len);
 	void Final(uint8_t digest[16]);
 
 private:

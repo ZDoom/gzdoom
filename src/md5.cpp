@@ -95,16 +95,16 @@ void MD5Context::Update(const uint8_t *buf, unsigned len)
 	memcpy(in, buf, len);
 }
 
-void MD5Context::Update(FileReader *file, unsigned len)
+void MD5Context::Update(FileRdr &file, unsigned len)
 {
 	uint8_t readbuf[8192];
 	long t;
 
-	while (len != 0)
+	while (len > 0)
 	{
 		t = MIN<long>(len, sizeof(readbuf));
 		len -= t;
-		t = file->Read(readbuf, t);
+		t = (long)file.Read(readbuf, t);
 		Update(readbuf, t);
 	}
 }

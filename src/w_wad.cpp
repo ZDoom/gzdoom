@@ -309,7 +309,8 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 			{
 				MD5Context md5;
 				reader->Seek(0, SEEK_SET);
-				md5.Update(reader, reader->GetLength());
+#pragma message("This does not work!");
+				//md5.Update(FileRdr(reader), reader->GetLength());
 				md5.Final(cksum);
 
 				for (size_t j = 0; j < sizeof(cksum); ++j)
@@ -329,10 +330,8 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 
 				if (!(lump->Flags & LUMPF_EMBEDDED))
 				{
-					reader = lump->NewReader();
-
 					MD5Context md5;
-					md5.Update(reader, lump->LumpSize);
+					md5.Update(FileRdr(lump->NewReader()), lump->LumpSize);
 					md5.Final(cksum);
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)
@@ -343,8 +342,6 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadinfo)
 					fprintf(hashfile, "file: %s, lump: %s, hash: %s, size: %d\n", filename,
 						lump->FullName.IsNotEmpty() ? lump->FullName.GetChars() : lump->Name,
 						cksumout, lump->LumpSize);
-
-					delete reader;
 				}
 			}
 		}
@@ -942,7 +939,8 @@ void FWadCollection::RenameNerve ()
 		}
 		fr->Seek(0, SEEK_SET);
 		MD5Context md5;
-		md5.Update(fr, fr->GetLength());
+#pragma message("This does not work yet!");
+		//md5.Update(fr, fr->GetLength());
 		md5.Final(cksum);
 		if (memcmp(nerve, cksum, 16) == 0)
 		{
@@ -1008,7 +1006,9 @@ void FWadCollection::FixMacHexen()
 
 	uint8_t checksum[16];
 	MD5Context md5;
-	md5.Update(reader, iwadSize);
+
+#pragma message("This does not work yet!");
+	//md5.Update(reader, iwadSize);
 	md5.Final(checksum);
 
 	static const uint8_t HEXEN_DEMO_MD5[16] =

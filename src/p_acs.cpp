@@ -2116,7 +2116,7 @@ void FBehavior::StaticLoadDefaultModules ()
 	}
 }
 
-FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileReader *fr, int len)
+FBehavior *FBehavior::StaticLoadModule (int lumpnum, FileRdr *fr, int len)
 {
 	if (lumpnum == -1 && fr == NULL) return NULL;
 
@@ -2392,7 +2392,7 @@ FBehavior::FBehavior()
 }
 	
 	
-bool FBehavior::Init(int lumpnum, FileReader * fr, int len)
+bool FBehavior::Init(int lumpnum, FileRdr * fr, int len)
 {
 	uint8_t *object;
 	int i;

@@ -281,7 +281,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
+				map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -292,7 +292,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
+			map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
 			strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(lump_name), 8);
 			map->Encrypted = Wads.IsEncryptedFile(lump_name);
 			map->InWad = true;
@@ -335,14 +335,14 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 					// The next lump is not part of this map anymore
 					if (index < 0) break;
 
-					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
 			else
 			{
 				map->isText = true;
-				map->MapLumps[1].Reader = Wads.ReopenLumpNum(lump_name + 1);
+				map->MapLumps[1].Reader = Wads.ReopenLumpReader(lump_name + 1);
 				for(int i = 2;; i++)
 				{
 					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
@@ -378,7 +378,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						break;
 					}
 					else continue;
-					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -412,7 +412,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		char maplabel[9]="";
 		int index=0;
 
-		map->MapLumps[0].Reader = map->resource->GetLump(0)->NewReader();
+		map->MapLumps[0].Reader = FileRdr(map->resource->GetLump(0)->NewReader());
 		strncpy(map->MapLumps[0].Name, map->resource->GetLump(0)->Name, 8);
 
 		for(uint32_t i = 1; i < map->resource->LumpCount(); i++)
@@ -422,7 +422,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
 			{
 				map->isText = true;
-				map->MapLumps[ML_TEXTMAP].Reader = map->resource->GetLump(i)->NewReader();
+				map->MapLumps[ML_TEXTMAP].Reader = FileRdr(map->resource->GetLump(i)->NewReader());
 				strncpy(map->MapLumps[ML_TEXTMAP].Name, lumpname, 8);
 				for(int i = 2;; i++)
 				{
@@ -454,7 +454,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						return map;
 					}
 					else continue;
-					map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
+					map->MapLumps[index].Reader = FileRdr(map->resource->GetLump(i)->NewReader());
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -486,7 +486,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				maplabel[8]=0;
 			}
 
-			map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
+			map->MapLumps[index].Reader = FileRdr(map->resource->GetLump(i)->NewReader());
 			strncpy(map->MapLumps[index].Name, lumpname, 8);
 		}
 	}
@@ -526,29 +526,19 @@ void MapData::GetChecksum(uint8_t cksum[16])
 
 	if (isText)
 	{
-		Seek(ML_TEXTMAP);
-		if (file != NULL) md5.Update(file, Size(ML_TEXTMAP));
+		md5.Update(Reader(ML_TEXTMAP), Size(ML_TEXTMAP));
 	}
 	else
 	{
-		if (Size(ML_LABEL) != 0)
-		{
-			Seek(ML_LABEL);
-			if (file != NULL) md5.Update(file, Size(ML_LABEL));
-		}
-		Seek(ML_THINGS);
-		if (file != NULL) md5.Update(file, Size(ML_THINGS));
-		Seek(ML_LINEDEFS);
-		if (file != NULL) md5.Update(file, Size(ML_LINEDEFS));
-		Seek(ML_SIDEDEFS);
-		if (file != NULL) md5.Update(file, Size(ML_SIDEDEFS));
-		Seek(ML_SECTORS);
-		if (file != NULL) md5.Update(file, Size(ML_SECTORS));
+		md5.Update(Reader(ML_LABEL), Size(ML_LABEL));
+		md5.Update(Reader(ML_THINGS), Size(ML_THINGS));
+		md5.Update(Reader(ML_LINEDEFS), Size(ML_LINEDEFS));
+		md5.Update(Reader(ML_SIDEDEFS), Size(ML_SIDEDEFS));
+		md5.Update(Reader(ML_SECTORS), Size(ML_SECTORS));
 	}
 	if (HasBehavior)
 	{
-		Seek(ML_BEHAVIOR);
-		if (file != NULL) md5.Update(file, Size(ML_BEHAVIOR));
+		md5.Update(Reader(ML_BEHAVIOR), Size(ML_BEHAVIOR));
 	}
 	md5.Final(cksum);
 }
@@ -847,14 +837,14 @@ void P_LoadVertexes (MapData * map)
 	level.vertexes.Alloc(numvertexes);
 	vertexdatas.Clear();
 
-	map->Seek(ML_VERTEXES);
+	auto &fr = map->Reader(ML_VERTEXES);
 		
 	// Copy and convert vertex coordinates, internal representation as fixed.
 	for (auto &v : level.vertexes)
 	{
 		int16_t x, y;
 
-		(*map->file) >> x >> y;
+		fr >> x >> y;
 		v.set(double(x), double(y));
 	}
 }
@@ -1104,7 +1094,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 //
 //===========================================================================
 
-void P_LoadZNodes (FileReader &dalump, uint32_t id)
+void P_LoadZNodes (FileRdr &dalump, uint32_t id)
 {
 	int type;
 	bool compressed;
@@ -1155,14 +1145,15 @@ void P_LoadZNodes (FileReader &dalump, uint32_t id)
 		return;
 	}
 	
+	auto daptr = dalump.Reader();
 	if (compressed)
 	{
-		FileReaderZ data (dalump);
+		FileReaderZ data (*daptr);
 		LoadZNodes(data, type);
 	}
 	else
 	{
-		LoadZNodes(dalump, type);
+		LoadZNodes(*daptr, type);
 	}
 }
 
@@ -1398,7 +1389,7 @@ void P_LoadSubsectors (MapData * map)
 
 	auto &subsectors = level.subsectors;
 	subsectors.Alloc(numsubsectors);
-	map->Seek(ML_SSECTORS);
+	auto &fr = map->Reader(ML_SSECTORS);
 		
 	memset (&subsectors[0], 0, numsubsectors*sizeof(subsector_t));
 	
@@ -1406,7 +1397,7 @@ void P_LoadSubsectors (MapData * map)
 	{
 		subsectortype subd;
 
-		(*map->file) >> subd.numsegs >> subd.firstseg;
+		fr >> subd.numsegs >> subd.firstseg;
 
 		if (subd.numsegs == 0)
 		{
@@ -3311,7 +3302,7 @@ void P_LoadReject (MapData * map, bool junk)
 	const int neededsize = (level.sectors.Size() * level.sectors.Size() + 7) >> 3;
 	int rejectsize;
 
-	if (strnicmp (map->MapLumps[ML_REJECT].Name, "REJECT", 8) != 0)
+	if (!map->CheckName(ML_REJECT, "REJECT"))
 	{
 		rejectsize = 0;
 	}
@@ -3335,8 +3326,7 @@ void P_LoadReject (MapData * map, bool junk)
 		rejectsize = MIN (rejectsize, neededsize);
 		level.rejectmatrix.Alloc(rejectsize);
 
-		map->Seek(ML_REJECT);
-		map->file->Read (&level.rejectmatrix[0], rejectsize);
+		map->Read (ML_REJECT, &level.rejectmatrix[0], rejectsize);
 
 		int qwords = rejectsize / 8;
 		int i;
@@ -3375,8 +3365,7 @@ void P_LoadBehavior(MapData * map)
 {
 	if (map->Size(ML_BEHAVIOR) > 0)
 	{
-		map->Seek(ML_BEHAVIOR);
-		FBehavior::StaticLoadModule(-1, map->file, map->Size(ML_BEHAVIOR));
+		FBehavior::StaticLoadModule(-1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR));
 	}
 	if (!FBehavior::StaticCheckAllGood())
 	{
@@ -3635,8 +3624,10 @@ void P_FreeExtraLevelData()
 void P_SetupLevel (const char *lumpname, int position)
 {
 	cycle_t times[20];
+#if 0
 	FMapThing *buildthings;
 	int numbuildthings;
+#endif
 	int i;
 	bool buildmap;
 	const int *oldvertextable = NULL;
@@ -3709,16 +3700,18 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
+#if 0
+	// deactivated because broken.
 	if (map->Size(0) > 0)
 	{
 		uint8_t *mapdata = new uint8_t[map->Size(0)];
-		map->Seek(0);
-		map->file->Read(mapdata, map->Size(0));
+		map->Read(0, mapdata);
 		times[0].Clock();
 		buildmap = P_LoadBuildMap (mapdata, map->Size(0), &buildthings, &numbuildthings);
 		times[0].Unclock();
 		delete[] mapdata;
 	}
+#endif
 
 	if (!buildmap)
 	{
@@ -3858,19 +3851,19 @@ void P_SetupLevel (const char *lumpname, int position)
 	if (!ForceNodeBuild)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
-		FWadLump test;
+		FileRdr *fr;
 		uint32_t id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
 
 		if (map->Size(ML_ZNODES) != 0)
 		{
 			// Test normal nodes first
-			map->Seek(ML_ZNODES);
+			fr = &map->Reader(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 			idcheck2 = MAKE_ID('X','N','O','D');
 		}
 		else if (map->Size(ML_GLZNODES) != 0)
 		{
-			map->Seek(ML_GLZNODES);
+			fr = &map->Reader(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 			idcheck2 = MAKE_ID('Z','G','L','2');
 			idcheck3 = MAKE_ID('Z','G','L','3');
@@ -3879,12 +3872,12 @@ void P_SetupLevel (const char *lumpname, int position)
 			idcheck6 = MAKE_ID('X','G','L','3');
 		}
 
-		map->file->Read (&id, 4);
+		fr->Read (&id, 4);
 		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4 || id == idcheck5 || id == idcheck6))
 		{
 			try
 			{
-				P_LoadZNodes (*map->file, id);
+				P_LoadZNodes (*fr, id);
 			}
 			catch (CRecoverableError &error)
 			{
@@ -4067,6 +4060,7 @@ void P_SetupLevel (const char *lumpname, int position)
 			P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
 		times[15].Unclock();
 	}
+#if 0	// There is no such thing as a build map.
 	else
 	{
 		for (i = 0; i < numbuildthings; ++i)
@@ -4075,6 +4069,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 		delete[] buildthings;
 	}
+#endif
 	delete map;
 	if (oldvertextable != NULL)
 	{

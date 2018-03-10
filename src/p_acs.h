@@ -41,7 +41,7 @@
 #define NUM_MAPVARS				128
 
 class FFont;
-class FileReader;
+class FileRdr;
 struct line_t;
 
 
@@ -348,7 +348,7 @@ class FBehavior
 public:
 	FBehavior ();
 	~FBehavior ();
-	bool Init(int lumpnum, FileReader * fr = NULL, int len = 0);
+	bool Init(int lumpnum, FileRdr * fr = NULL, int len = 0);
 
 	bool IsGood ();
 	uint8_t *FindChunk (uint32_t id) const;
@@ -380,7 +380,7 @@ public:
 
 	BoundsCheckingArray<int32_t *, NUM_MAPVARS> MapVars;
 
-	static FBehavior *StaticLoadModule (int lumpnum, FileReader * fr=NULL, int len=0);
+	static FBehavior *StaticLoadModule (int lumpnum, FileRdr *fr = nullptr, int len=0);
 	static void StaticLoadDefaultModules ();
 	static void StaticUnloadModules ();
 	static bool StaticCheckAllGood ();

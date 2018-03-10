@@ -75,7 +75,7 @@ void P_GetPolySpots (MapData * lump, TArray<FNodeBuilder::FPolyStart> &spots, TA
 CVAR(Bool, gl_cachenodes, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Float, gl_cachetime, 0.6f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-void P_LoadZNodes (FileReader &dalump, uint32_t id);
+void P_LoadZNodes (FileRdr &dalump, uint32_t id);
 static bool CheckCachedNodes(MapData *map);
 static void CreateCachedNodes(MapData *map);
 
@@ -823,7 +823,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 
 bool P_LoadGLNodes(MapData * map)
 {
-	if (map->MapLumps[ML_GLZNODES].Reader && map->MapLumps[ML_GLZNODES].Reader->GetLength() != 0)
+	if (map->Size(ML_GLZNODES) != 0)
 	{
 		const int idcheck1a = MAKE_ID('Z','G','L','N');
 		const int idcheck2a = MAKE_ID('Z','G','L','2');
@@ -833,8 +833,8 @@ bool P_LoadGLNodes(MapData * map)
 		const int idcheck3b = MAKE_ID('X','G','L','3');
 		int id;
 
-		map->Seek(ML_GLZNODES);
-		map->file->Read (&id, 4);
+		auto &file = map->Reader(ML_GLZNODES);
+		file.Read (&id, 4);
 		if (id == idcheck1a || id == idcheck2a || id == idcheck3a ||
 			id == idcheck1b || id == idcheck2b || id == idcheck3b)
 		{
@@ -843,7 +843,7 @@ bool P_LoadGLNodes(MapData * map)
 				level.subsectors.Clear();
 				level.segs.Clear();
 				level.nodes.Clear();
-				P_LoadZNodes (*map->file, id);
+				P_LoadZNodes (file, id);
 				return true;
 			}
 			catch (CRecoverableError &)
@@ -1162,9 +1162,9 @@ static bool CheckCachedNodes(MapData *map)
 	uint32_t *verts = NULL;
 
 	FString path = CreateCacheName(map, false);
-	FileReader fr;
+	FileRdr fr;
 
-	if (!fr.Open(path)) return false;
+	if (!fr.OpenFile(path)) return false;
 
 	if (fr.Read(magic, 4) != 4) goto errorout;
 	if (memcmp(magic, "CACH", 4))  goto errorout;

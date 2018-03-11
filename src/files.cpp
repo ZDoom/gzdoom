@@ -51,7 +51,6 @@
 class StdFileReader : public FileReaderInterface
 {
 	FILE *File = nullptr;
-	long Length = 0;
 	long StartPos = 0;
 	long FilePos = 0;
 
@@ -76,7 +75,7 @@ public:
 		StartPos = startpos;
 		Length = CalcFileLen();
 		if (len >= 0 && len < Length) Length = len;
-		if (startpos > 0) Seek(startpos, SEEK_SET);
+		if (startpos > 0) Seek(0, SEEK_SET);
 		return true;
 	}
 
@@ -99,7 +98,7 @@ public:
 		{
 			offset += StartPos + Length;
 		}
-		if (offset < StartPos || offset >= StartPos + Length) return -1;	// out of scope
+		if (offset < StartPos || offset > StartPos + Length) return -1;	// out of scope
 
 		if (0 == fseek(File, offset, SEEK_SET))
 		{
@@ -161,7 +160,6 @@ private:
 class FileReaderRedirect : public FileReaderInterface
 {
 	FileRdr *mReader = nullptr;
-	long Length = 0;
 	long StartPos = 0;
 	long FilePos = 0;
 
@@ -196,7 +194,7 @@ public:
 			offset += (long)mReader->Tell();
 			break;
 		}
-		if (offset < StartPos || offset >= StartPos + Length) return -1;	// out of scope
+		if (offset < StartPos || offset > StartPos + Length) return -1;	// out of scope
 		if (mReader->Seek(offset, FileRdr::SeekSet) == 0)
 		{
 			FilePos = offset;

@@ -3853,7 +3853,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	if (!ForceNodeBuild)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
-		FileRdr *fr;
+		FileRdr *fr = nullptr;
 		uint32_t id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
 
 		if (map->Size(ML_ZNODES) != 0)
@@ -3874,7 +3874,7 @@ void P_SetupLevel (const char *lumpname, int position)
 			idcheck6 = MAKE_ID('X','G','L','3');
 		}
 
-		fr->Read (&id, 4);
+		if (fr != nullptr && fr->isOpen()) fr->Read (&id, 4);
 		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4 || id == idcheck5 || id == idcheck6))
 		{
 			try

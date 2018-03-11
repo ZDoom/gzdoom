@@ -43,7 +43,7 @@
 #include "doomtype.h"
 #include "m_swap.h"
 
-// Zip compression methods, extended by some internal types to be passed to FileReader::OpenDecompressor
+// Zip compression methods, extended by some internal types to be passed to OpenDecompressor
 enum
 {
 	METHOD_STORED = 0,
@@ -68,6 +68,16 @@ public:
 	virtual char *Gets(char *strbuf, int len) = 0;
 	virtual const char *GetBuffer() const { return nullptr; }
 	long GetLength () const { return Length; }
+};
+
+class DecompressorBase : public FileReaderInterface
+{
+public:
+	// These do not work but need to be defined to satisfy the FileReaderInterface.
+	// They will just error out when called.
+	long Tell() const override;
+	long Seek(long offset, int origin) override;
+	char *Gets(char *strbuf, int len) override;
 };
 
 class MemoryReader : public FileReaderInterface
@@ -95,13 +105,21 @@ public:
 };
 
 
+struct FResourceLump;
 
-class FileRdr	// this is just a temporary name, until the old FileReader hierarchy can be made private.
+class FileRdr
 {
+	friend struct FResourceLump;	// needs access to the private constructor.
+
 	FileReaderInterface *mReader = nullptr;
 
 	FileRdr(const FileRdr &r) = delete;
 	FileRdr &operator=(const FileRdr &r) = delete;
+
+	explicit FileRdr(FileReaderInterface *r)
+	{
+		mReader = r;
+	}
 
 public:
 	enum ESeek
@@ -114,12 +132,6 @@ public:
 	typedef ptrdiff_t Size;	// let's not use 'long' here.
 
 	FileRdr() {}
-
-	// These two functions are only needed as long as the FileReader has not been fully replaced throughout the code.
-	explicit FileRdr(FileReaderInterface *r)
-	{
-		mReader = r;
-	}
 
 	FileRdr(FileRdr &&r)
 	{

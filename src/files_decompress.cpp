@@ -42,26 +42,21 @@
 #include "m_misc.h"
 
 
-class DecompressorBase : public FileReaderInterface
+long DecompressorBase::Tell () const
 {
-public:
-	// These do not work but need to be defined to satisfy the FileReader interface
-	long Tell () const override
-	{
-		I_Error("Cannot get position of decompressor stream");
-		return 0;
-	}
-	virtual long Seek (long offset, int origin) override
-	{
-		I_Error("Cannot seek in decompressor stream");
-		return 0;
-	}
-	virtual char *Gets(char *strbuf, int len) override
-	{
-		I_Error("Cannot use Gets on decompressor stream");
-		return nullptr;
-	}
-};
+	I_Error("Cannot get position of decompressor stream");
+	return 0;
+}
+long DecompressorBase::Seek (long offset, int origin)
+{
+	I_Error("Cannot seek in decompressor stream");
+	return 0;
+}
+char *DecompressorBase::Gets(char *strbuf, int len)
+{
+	I_Error("Cannot use Gets on decompressor stream");
+	return nullptr;
+}
 
 //==========================================================================
 //

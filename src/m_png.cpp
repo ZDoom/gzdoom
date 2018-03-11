@@ -75,7 +75,7 @@ struct IHDR
 	uint8_t		Interlace;
 };
 
-PNGHandle::PNGHandle (FileRdr &file) : File(0), bDeleteFilePtr(true), ChunkPt(0)
+PNGHandle::PNGHandle (FileRdr &file) : bDeleteFilePtr(true), ChunkPt(0)
 {
 	File = std::move(file);
 }

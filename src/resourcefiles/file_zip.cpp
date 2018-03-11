@@ -124,9 +124,7 @@ static uint32_t Zip_FindCentralDir(FileRdr &fin)
 	uint32_t uMaxBack; // maximum size of global comment
 	uint32_t uPosFound=0;
 
-	fin.Seek(0, FileRdr::SeekEnd);
-
-	FileSize = (uint32_t)fin.Tell();
+	FileSize = (uint32_t)fin.GetLength();
 	uMaxBack = MIN<uint32_t>(0xffff, FileSize);
 
 	uBackRead = 4;

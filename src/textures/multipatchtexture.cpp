@@ -814,9 +814,8 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 	}
 
 	{
-		auto pnames = Wads.OpenLumpReader (patcheslump);
-
-		pnames >> numpatches;
+		auto pnames = Wads.OpenLumpReader(patcheslump);
+		numpatches = pnames.ReadUInt32();
 
 		// Check whether the amount of names reported is correct.
 		if ((signed)numpatches < 0)

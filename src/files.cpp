@@ -324,14 +324,17 @@ public:
 			buf.Resize(length);
 			memcpy(&buf[0], buffer, length);
 		}
-		Length = length;
-		FilePos = 0;
-		bufptr = (const char *)&buf[0];
+		UpdateBuffer();
 	}
 
 	TArray<uint8_t> &GetArray() { return buf; }
 
-	void UpdateLength() { Length = buf.Size(); }
+	void UpdateBuffer() 
+	{ 
+		bufptr = (const char*)&buf[0];
+		FilePos = 0;
+		Length = buf.Size();
+	}
 };
 
 
@@ -381,7 +384,7 @@ bool FileRdr::OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter)
 	if (getter(reader->GetArray()))
 	{
 		Close();
-		reader->UpdateLength();
+		reader->UpdateBuffer();
 		mReader = reader;
 		return true;
 	}

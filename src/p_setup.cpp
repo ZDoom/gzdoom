@@ -842,9 +842,9 @@ void P_LoadVertexes (MapData * map)
 	// Copy and convert vertex coordinates, internal representation as fixed.
 	for (auto &v : level.vertexes)
 	{
-		int16_t x, y;
+		int16_t x = fr.ReadInt16();
+		int16_t y = fr.ReadInt16();
 
-		fr >> x >> y;
 		v.set(double(x), double(y));
 	}
 }
@@ -860,11 +860,10 @@ void P_LoadZSegs (FileRdr &data)
 	for (auto &seg : level.segs)
 	{
 		line_t *ldef;
-		uint32_t v1, v2;
-		uint16_t line;
-		uint8_t side;
-
-		data >> v1 >> v2 >> line >> side;
+		uint32_t v1 = data.ReadUInt32();
+		uint32_t v2 = data.ReadUInt32();
+		uint16_t line = data.ReadUInt16();
+		uint8_t side = data.ReadUInt8();
 
 		seg.v1 = &level.vertexes[v1];
 		seg.v2 = &level.vertexes[v2];
@@ -899,22 +898,20 @@ void P_LoadGLZSegs (FileRdr &data, int type)
 		for (size_t j = 0; j < level.subsectors[i].numlines; ++j)
 		{
 			seg_t *seg;
-			uint32_t v1, partner;
+			uint32_t v1 = data.ReadUInt32();
+			uint32_t partner = data.ReadUInt32();
 			uint32_t line;
-			uint16_t lineword;
-			uint8_t side;
 
-			data >> v1 >> partner;
 			if (type >= 2)
 			{
-				data >> line;
+				line = data.ReadUInt32();
 			}
 			else
 			{
-				data >> lineword;
-				line = lineword == 0xFFFF ? 0xFFFFFFFF : lineword;
+				line = data.ReadUInt16();
+				if (line == 0xffff) line = 0xffffffff;
 			}
-			data >> side;
+			uint8_t side = data.ReadUInt8();
 
 			seg = level.subsectors[i].firstline + j;
 			seg->v1 = &level.vertexes[v1];
@@ -964,10 +961,10 @@ void P_LoadGLZSegs (FileRdr &data, int type)
 void LoadZNodes(FileRdr &data, int glnodes)
 {
 	// Read extra vertices added during node building
-	uint32_t orgVerts, newVerts;
 	unsigned int i;
 
-	data >> orgVerts >> newVerts;
+	uint32_t orgVerts = data.ReadUInt32();
+	uint32_t newVerts = data.ReadUInt32();
 	if (orgVerts > level.vertexes.Size())
 	{ // These nodes are based on a map with more vertex data than we have.
 	  // We can't use them.
@@ -980,8 +977,8 @@ void LoadZNodes(FileRdr &data, int glnodes)
 	}
 	for (i = 0; i < newVerts; ++i)
 	{
-		int32_t x, y;
-		data >> x >> y;
+		fixed_t x = data.ReadInt32();
+		fixed_t y = data.ReadInt32();
 		level.vertexes[i + orgVerts].set(x, y);
 	}
 	if (oldvertexes != &level.vertexes[0])
@@ -994,26 +991,21 @@ void LoadZNodes(FileRdr &data, int glnodes)
 	}
 
 	// Read the subsectors
-	uint32_t numSubs, currSeg;
-
-	data >> numSubs;
+	uint32_t currSeg;
+	uint32_t numSubs = data.ReadUInt32();
 	level.subsectors.Alloc(numSubs);
 	memset (&level.subsectors[0], 0, level.subsectors.Size()*sizeof(subsector_t));
 
 	for (i = currSeg = 0; i < numSubs; ++i)
 	{
-		uint32_t numsegs;
-
-		data >> numsegs;
+		uint32_t numsegs = data.ReadUInt32();
 		level.subsectors[i].firstline = (seg_t *)(size_t)currSeg;		// Oh damn. I should have stored the seg count sooner.
 		level.subsectors[i].numlines = numsegs;
 		currSeg += numsegs;
 	}
 
 	// Read the segs
-	uint32_t numSegs;
-
-	data >> numSegs;
+	uint32_t numSegs = data.ReadUInt32();
 
 	// The number of segs stored should match the number of
 	// segs used by subsectors.
@@ -1040,9 +1032,8 @@ void LoadZNodes(FileRdr &data, int glnodes)
 	}
 
 	// Read nodes
-	uint32_t numNodes;
+	uint32_t numNodes = data.ReadUInt32();
 
-	data >> numNodes;
 	auto &nodes = level.nodes;
 	nodes.Alloc(numNodes);
 	memset (&nodes[0], 0, sizeof(node_t)*numNodes);
@@ -1051,31 +1042,28 @@ void LoadZNodes(FileRdr &data, int glnodes)
 	{
 		if (glnodes < 3)
 		{
-			int16_t x, y, dx, dy;
-
-			data >> x >> y >> dx >> dy;
-			nodes[i].x = x << FRACBITS;
-			nodes[i].y = y << FRACBITS;
-			nodes[i].dx = dx << FRACBITS;
-			nodes[i].dy = dy << FRACBITS;
+			nodes[i].x = data.ReadInt16() * FRACUNIT;
+			nodes[i].y = data.ReadInt16() * FRACUNIT;
+			nodes[i].dx = data.ReadInt16() * FRACUNIT;
+			nodes[i].dy = data.ReadInt16() * FRACUNIT;
 		}
 		else
 		{
-			data >> nodes[i].x >> nodes[i].y >> nodes[i].dx >> nodes[i].dy;
+			nodes[i].x = data.ReadInt32();
+			nodes[i].y = data.ReadInt32();
+			nodes[i].dx = data.ReadInt32();
+			nodes[i].dy = data.ReadInt32();
 		}
 		for (int j = 0; j < 2; ++j)
 		{
 			for (int k = 0; k < 4; ++k)
 			{
-				int16_t coord;
-				data >> coord;
-				nodes[i].bbox[j][k] = coord;
+				nodes[i].bbox[j][k] = data.ReadInt16();
 			}
 		}
 		for (int m = 0; m < 2; ++m)
 		{
-			uint32_t child;
-			data >> child;
+			uint32_t child = data.ReadUInt32();
 			if (child & 0x80000000)
 			{
 				nodes[i].children[m] = (uint8_t *)&level.subsectors[child & 0x7FFFFFFF] + 1;
@@ -1399,7 +1387,8 @@ void P_LoadSubsectors (MapData * map)
 	{
 		subsectortype subd;
 
-		fr >> subd.numsegs >> subd.firstseg;
+		subd.numsegs = sizeof(subd.numsegs) == 2 ? fr.ReadUInt16() : fr.ReadUInt32();
+		subd.firstseg = sizeof(subd.firstseg) == 2 ? fr.ReadUInt16() : fr.ReadUInt32();
 
 		if (subd.numsegs == 0)
 		{

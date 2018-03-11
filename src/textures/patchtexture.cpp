@@ -135,7 +135,10 @@ FTexture *PatchTexture_TryCreate(FileRdr & file, int lumpnum)
 
 	if (!CheckIfPatch(file)) return NULL;
 	file.Seek(0, FileRdr::SeekSet);
-	file >> header.width >> header.height >> header.leftoffset >> header.topoffset;
+	header.width = file.ReadUInt16();
+	header.height = file.ReadUInt16();
+	header.leftoffset = file.ReadInt16();
+	header.topoffset = file.ReadInt16();
 	return new FPatchTexture(lumpnum, &header);
 }
 

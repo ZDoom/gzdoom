@@ -201,46 +201,62 @@ public:
 		return mReader->GetLength();
 	}
 
-	// Note: These need to go because they are fundamentally unsafe to use on a binary stream.
-	FileRdr &operator>> (uint8_t &v)
+	uint8_t ReadUInt8()
 	{
-		mReader->Read(&v, 1);
-		return *this;
+		uint8_t v;
+		Read(&v, 1);
+		return v;
 	}
 
-	FileRdr &operator>> (int8_t &v)
+	int8_t ReadInt8()
 	{
-		mReader->Read(&v, 1);
-		return *this;
+		int8_t v;
+		Read(&v, 1);
+		return v;
 	}
 
-	FileRdr &operator>> (uint16_t &v)
+	uint16_t ReadUInt16()
 	{
-		mReader->Read(&v, 2);
-		v = LittleShort(v);
-		return *this;
+		uint16_t v;
+		Read(&v, 2);
+		return LittleShort(v);
 	}
 
-	FileRdr &operator>> (int16_t &v)
+	int16_t ReadInt16()
 	{
-		mReader->Read(&v, 2);
-		v = LittleShort(v);
-		return *this;
+		uint16_t v;
+		Read(&v, 2);
+		return LittleShort(v);
 	}
 
-	FileRdr &operator>> (uint32_t &v)
+	uint32_t ReadUInt32()
 	{
-		mReader->Read(&v, 4);
-		v = LittleLong(v);
-		return *this;
+		uint32_t v;
+		Read(&v, 4);
+		return LittleLong(v);
 	}
 
-	FileRdr &operator>> (int32_t &v)
+	int32_t ReadInt32()
 	{
-		mReader->Read(&v, 4);
-		v = LittleLong(v);
-		return *this;
+		uint32_t v;
+		Read(&v, 4);
+		return LittleLong(v);
 	}
+
+	uint32_t ReadUInt32BE()
+	{
+		uint32_t v;
+		Read(&v, 4);
+		return BigLong(v);
+	}
+
+	int32_t ReadInt32BE()
+	{
+		uint32_t v;
+		Read(&v, 4);
+		return BigLong(v);
+	}
+
 
 	friend class FWadCollection;
 };

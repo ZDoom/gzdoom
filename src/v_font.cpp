@@ -1899,9 +1899,7 @@ void FFontChar2::MakeTexture ()
 			{
 				if (runlen != 0)
 				{
-					uint8_t color;
-
-					lump >> color;
+					uint8_t color = lump.ReadUInt8();
 					color = MIN (color, max);
 					if (SourceRemap != NULL)
 					{
@@ -1921,18 +1919,14 @@ void FFontChar2::MakeTexture ()
 				}
 				else
 				{
-					int8_t code;
-
-					lump >> code;
+					int8_t code = lump.ReadInt8();
 					if (code >= 0)
 					{
 						runlen = code + 1;
 					}
 					else if (code != -128)
 					{
-						uint8_t color;
-
-						lump >> color;
+						uint8_t color = lump.ReadUInt8();
 						setlen = (-code) + 1;
 						setval = MIN (color, max);
 						if (SourceRemap != NULL)
@@ -1951,8 +1945,7 @@ void FFontChar2::MakeTexture ()
 		{
 			for (int x = Width; x != 0; --x)
 			{
-				uint8_t color;
-				lump >> color;
+				uint8_t color = lump.ReadUInt8();
 				if (color > max)
 				{
 					color = max;

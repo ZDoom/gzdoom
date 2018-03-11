@@ -1520,8 +1520,7 @@ void SFFile::LoadSample(SFSample *sample)
 	// Load 16-bit sample data.
 	for (i = 0; i < sample->End - sample->Start; ++i)
 	{
-		int16_t samp;
-		fp >> samp;
+		int16_t samp = fp.ReadInt16();
 		sample->InMemoryData[i] = samp / 32768.f;
 	}
 	if (SampleDataLSBOffset != 0)
@@ -1529,8 +1528,7 @@ void SFFile::LoadSample(SFSample *sample)
 		fp.Seek(SampleDataLSBOffset + sample->Start, FileRdr::SeekSet);
 		for (i = 0; i < sample->End - sample->Start; ++i)
 		{
-			uint8_t samp;
-			fp >> samp;
+			uint8_t samp = fp.ReadUInt8();
 			sample->InMemoryData[i] = ((((int32_t(sample->InMemoryData[i] * 32768) << 8) | samp) << 8) >> 8) / 8388608.f;
 		}
 	}

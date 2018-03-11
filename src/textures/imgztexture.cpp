@@ -92,7 +92,10 @@ FTexture *IMGZTexture_TryCreate(FileRdr & file, int lumpnum)
 	file.Seek(0, FileRdr::SeekSet);
 	if (file.Read(&magic, 4) != 4) return NULL;
 	if (magic != MAKE_ID('I','M','G','Z')) return NULL;
-	file >> w >> h >> l >> t;
+	w = file.ReadUInt16();
+	h = file.ReadUInt16();
+	l = file.ReadInt16();
+	t = file.ReadInt16();
 	return new FIMGZTexture(lumpnum, w, h, l, t);
 }
 

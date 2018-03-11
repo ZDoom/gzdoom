@@ -768,7 +768,7 @@ void FTextureManager::AddPatches (int lumpnum)
 	uint32_t numpatches, i;
 	char name[9];
 
-	file >> numpatches;
+	numpatches = file.ReadUInt32();
 	name[8] = '\0';
 
 	for (i = 0; i < numpatches; ++i)
@@ -1186,9 +1186,8 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	if (lumpnum >= 0)
 	{
 		auto file = Wads.OpenLumpReader (lumpnum); 
-		uint32_t numtex;
+		uint32_t numtex = file.ReadUInt32();;
 
-		file >> numtex;
 		return int(numtex) >= 0 ? numtex : 0;
 	}
 	return 0;

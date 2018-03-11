@@ -99,8 +99,6 @@ FTexture *PNGTexture_TryCreate(FileRdr & data, int lumpnum)
 		uint8_t b[4];
 	} first4bytes;
 
-	uint32_t width, height;
-	uint8_t bitdepth, colortype, compression, filter, interlace;
 
 	// This is most likely a PNG, but make sure. (Note that if the
 	// first 4 bytes match, but later bytes don't, we assume it's
@@ -118,9 +116,13 @@ FTexture *PNGTexture_TryCreate(FileRdr & data, int lumpnum)
 
 	// The PNG looks valid so far. Check the IHDR to make sure it's a
 	// type of PNG we support.
-	data.Read(&width, 4);
-	data.Read(&height, 4);
-	data >> bitdepth >> colortype >> compression >> filter >> interlace;
+	int width = data.ReadInt32BE();
+	int height = data.ReadInt32BE();
+	uint8_t bitdepth = data.ReadUInt8();
+	uint8_t colortype = data.ReadUInt8();
+	uint8_t compression = data.ReadUInt8();
+	uint8_t filter = data.ReadUInt8();
+	uint8_t interlace = data.ReadUInt8();
 
 	if (compression != 0 || filter != 0 || interlace > 1)
 	{
@@ -147,8 +149,7 @@ FTexture *PNGTexture_TryCreate(FileRdr & data, int lumpnum)
 		}
 	}
 
-	return new FPNGTexture (data, lumpnum, FString(), BigLong((int)width), BigLong((int)height),
-		bitdepth, colortype, interlace);
+	return new FPNGTexture (data, lumpnum, FString(), width, height, bitdepth, colortype, interlace);
 }
 
 //==========================================================================
@@ -159,8 +160,6 @@ FTexture *PNGTexture_TryCreate(FileRdr & data, int lumpnum)
 
 FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 {
-	uint32_t width, height;
-	uint8_t bitdepth, colortype, compression, filter, interlace;
 
 	if (M_FindPNGChunk(png, MAKE_ID('I','H','D','R')) == 0)
 	{
@@ -168,9 +167,14 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 	}
 
 	// Check the IHDR to make sure it's a type of PNG we support.
-	png->File.Read(&width, 4);
-	png->File.Read(&height, 4);
-	png->File >> bitdepth >> colortype >> compression >> filter >> interlace;
+	auto &data = png->File;
+	int width = data.ReadInt32BE();
+	int height = data.ReadInt32BE();
+	uint8_t bitdepth = data.ReadUInt8();
+	uint8_t colortype = data.ReadUInt8();
+	uint8_t compression = data.ReadUInt8();
+	uint8_t filter = data.ReadUInt8();
+	uint8_t interlace = data.ReadUInt8();
 
 	if (compression != 0 || filter != 0 || interlace > 1)
 	{
@@ -185,8 +189,7 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 		return NULL;
 	}
 
-	return new FPNGTexture (png->File, -1, filename, BigLong((int)width), BigLong((int)height),
-		bitdepth, colortype, interlace);
+	return new FPNGTexture (png->File, -1, filename, width, height,	bitdepth, colortype, interlace);
 }
 
 //==========================================================================
@@ -651,7 +654,9 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		case MAKE_ID('P','L','T','E'):
 			for(int i = 0; i < PaletteSize; i++)
 			{
-				(*lump) >> pe[i].r >> pe[i].g >> pe[i].b;
+				pe[i].r = lump->ReadUInt8();
+				pe[i].g = lump->ReadUInt8();
+				pe[i].b = lump->ReadUInt8();
 			}
 			break;
 
@@ -660,7 +665,7 @@ int FPNGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 			{
 				for(uint32_t i = 0; i < len; i++)
 				{
-					(*lump) >> pe[i].a;
+					pe[i].a = lump->ReadUInt8();
 					if (pe[i].a != 0 && pe[i].a != 255)
 						transpal = true;
 				}

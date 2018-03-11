@@ -252,13 +252,12 @@ const uint8_t *FTGATexture::GetPixels ()
 
 void FTGATexture::ReadCompressed(FileRdr &lump, uint8_t * buffer, int bytesperpixel)
 {
-	uint8_t b;
 	uint8_t data[4];
 	int Size = Width * Height;
 	
 	while (Size > 0) 
 	{
-		lump >> b;
+		uint8_t b = lump.ReadUInt8();
 		if (b & 128)
 		{
 			b&=~128;
@@ -314,7 +313,7 @@ void FTGATexture::MakeTexture ()
 			{
 			case 15:
 			case 16:
-				lump >> w;
+				w = lump.ReadUInt16();
 				r = (w & 0x001F) << 3;
 				g = (w & 0x03E0) >> 2;
 				b = (w & 0x7C00) >> 7;
@@ -322,12 +321,17 @@ void FTGATexture::MakeTexture ()
 				break;
 				
 			case 24:
-				lump >> b >> g >> r;
+				b = lump.ReadUInt8();
+				g = lump.ReadUInt8();
+				r = lump.ReadUInt8();
 				a=255;
 				break;
 				
 			case 32:
-				lump >> b >> g >> r >> a;
+				b = lump.ReadUInt8();
+				g = lump.ReadUInt8();
+				r = lump.ReadUInt8();
+				a = lump.ReadUInt8();
 				if ((hdr.img_desc&15)!=8) a=255;
 				break;
 				
@@ -515,24 +519,29 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 			{
 			case 15:
 			case 16:
-				lump >> w;
+				w = lump.ReadUInt16();
 				r = (w & 0x001F) << 3;
 				g = (w & 0x03E0) >> 2;
 				b = (w & 0x7C00) >> 7;
 				a = 255;
 				break;
-				
+
 			case 24:
-				lump >> b >> g >> r;
-				a=255;
+				b = lump.ReadUInt8();
+				g = lump.ReadUInt8();
+				r = lump.ReadUInt8();
+				a = 255;
 				break;
-				
+
 			case 32:
-				lump >> b >> g >> r >> a;
-				if ((hdr.img_desc&15)!=8) a=255;
-				else if (a!=0 && a!=255) transval = true;
+				b = lump.ReadUInt8();
+				g = lump.ReadUInt8();
+				r = lump.ReadUInt8();
+				a = lump.ReadUInt8();
+				if ((hdr.img_desc & 15) != 8) a = 255;
+				else if (a != 0 && a != 255) transval = true;
 				break;
-				
+
 			default:	// should never happen
 				r=g=b=a=0;
 				break;

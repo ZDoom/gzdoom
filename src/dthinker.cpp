@@ -41,6 +41,8 @@
 #include "serializer.h"
 #include "d_player.h"
 #include "vm.h"
+#include "c_dispatch.h"
+#include "v_text.h"
 
 
 static int ThinkCount;
@@ -462,7 +464,57 @@ void DThinker::DestroyThinkersInList (FThinkerList &list)
 //
 //
 //==========================================================================
-CVAR(Int, profilethinkers, 0, 0)
+static unsigned int profilethinkers, profilelimit;
+
+CCMD(profilethinkers)
+{
+	const int argc = argv.argc();
+
+	if (argc == 2 || argc == 3)
+	{
+		const char *str = argv[1];
+		bool ascend = true;
+
+		if (*str == '+')
+		{
+			++str;
+		}
+		else if (*str == '-')
+		{
+			ascend = false;
+			++str;
+		}
+
+		int mode = 0;
+
+		switch (*str)
+		{
+		case 't': mode = ascend ? 7 : 8; break;
+		case 'a': mode = ascend ? 5 : 6; break;
+		case '#': mode = ascend ? 3 : 4; break;
+		case 'c': mode = ascend ? 1 : 2; break;
+		default: mode = atoi(str); break;
+		}
+
+		profilethinkers = mode;
+		profilelimit = argc == 3 ? atoi(argv[2]) : 0;
+	}
+	else
+	{
+		Printf(
+			"Usage: profilethinkers [+|-][t|a|#|c] [limit]\n"
+			"       profilethinkers [1..8] [limit]\n\n"
+			"Sorting modes:\n"
+			TEXTCOLOR_YELLOW "c +c 1  " TEXTCOLOR_NORMAL "actor class, ascending\n"
+			TEXTCOLOR_YELLOW "  -c 2  " TEXTCOLOR_NORMAL "actor class, descending\n"
+			TEXTCOLOR_YELLOW "# +# 3  " TEXTCOLOR_NORMAL "number of calls, ascending\n"
+			TEXTCOLOR_YELLOW "  -# 4  " TEXTCOLOR_NORMAL "number of calls, descending\n"
+			TEXTCOLOR_YELLOW "a +a 5  " TEXTCOLOR_NORMAL "average time, ascending\n"
+			TEXTCOLOR_YELLOW "  -a 6  " TEXTCOLOR_NORMAL "average time, descending\n"
+			TEXTCOLOR_YELLOW "t +t 7  " TEXTCOLOR_NORMAL "total time, ascending\n"
+			TEXTCOLOR_YELLOW "  -t 8  " TEXTCOLOR_NORMAL "total time, descending\n");
+	}
+}
 
 struct ProfileInfo
 {
@@ -556,19 +608,33 @@ void DThinker::RunThinkers ()
 				return left.numcalls < right.numcalls;
 			case 4: // number of calls, descending
 				return right.numcalls < left.numcalls;
-			case 5: // total time, ascending
+			case 5: // average time, ascending
+				return left.time / left.numcalls < right.time / right.numcalls;
+			case 6: // average time, descending
+				return right.time / right.numcalls < left.time / left.numcalls;
+			case 7: // total time, ascending
 				return left.time < right.time;
 			default: // total time, descending
 				return right.time < left.time;
 			}
 		});
 
-		for (const SortedProfileInfo& info : sorted)
+		Printf(TEXTCOLOR_YELLOW "Total, ms   Averg, ms   Calls   Actor class\n");
+		Printf(TEXTCOLOR_YELLOW "----------  ----------  ------  --------------------\n");
+
+		const unsigned count = MIN(profilelimit > 0 ? profilelimit : UINT_MAX, sorted.Size());
+
+		for (unsigned i = 0; i < count; ++i)
 		{
-			Printf("%s, %dx, %fms\n", info.className, info.numcalls, info.time);
+			const SortedProfileInfo& info = sorted[i];
+			Printf("%s%10.6f  %s%10.6f  %s%6d  %s%s\n",
+				profilethinkers >= 7 ? TEXTCOLOR_YELLOW : TEXTCOLOR_WHITE, info.time,
+				profilethinkers == 5 || profilethinkers == 6 ? TEXTCOLOR_YELLOW : TEXTCOLOR_WHITE, info.time / info.numcalls,
+				profilethinkers == 3 || profilethinkers == 4 ? TEXTCOLOR_YELLOW : TEXTCOLOR_WHITE, info.numcalls,
+				profilethinkers == 1 || profilethinkers == 2 ? TEXTCOLOR_YELLOW : TEXTCOLOR_WHITE, info.className);
 		}
 
-		profilethinkers = false;
+		profilethinkers = 0;
 	}
 
 	ThinkCycles.Unclock();

@@ -90,7 +90,7 @@ public:
 //==========================================================================
 
 FDirectory::FDirectory(const char * directory)
-: FResourceFile(NULL, FileReader())
+: FResourceFile(NULL)
 {
 	FString dirname;
 

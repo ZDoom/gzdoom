@@ -154,7 +154,7 @@ struct FExternalLump : public FResourceLump
 struct FMemoryFile : public FUncompressedFile
 {
 	FMemoryFile(const char *_filename, const void *sdata, int length)
-		: FUncompressedFile(_filename, FileReader())
+		: FUncompressedFile(_filename)
 	{
 		Reader.OpenMemoryArray(sdata, length);
 	}

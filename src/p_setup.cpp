@@ -396,7 +396,8 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				return NULL;
 			}
 			map->lumpnum = lump_wad;
-			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), Wads.ReopenLumpReader(lump_wad), true);
+			auto reader = Wads.ReopenLumpReader(lump_wad);
+			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), reader, true);
 			wadReader = map->resource->GetReader();
 		}
 	}

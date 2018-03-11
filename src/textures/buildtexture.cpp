@@ -306,7 +306,7 @@ int FTextureManager::CountBuildTiles ()
 			FString artpath = rffpath;
 			artpath += artfile;
 
-			FileRdr fr;
+			FileReader fr;
 
 			if (!fr.OpenFile(artpath))
 			{

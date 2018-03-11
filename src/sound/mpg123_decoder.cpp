@@ -87,7 +87,7 @@ off_t MPG123Decoder::file_lseek(void *handle, off_t offset, int whence)
             return -1;
     }
 
-    if(reader.Seek(offset, (FileRdr::ESeek)whence) != 0)
+    if(reader.Seek(offset, (FileReader::ESeek)whence) != 0)
         return -1;
     return (off_t)reader.Tell();
 }
@@ -109,7 +109,7 @@ MPG123Decoder::~MPG123Decoder()
     }
 }
 
-bool MPG123Decoder::open(FileRdr &reader)
+bool MPG123Decoder::open(FileReader &reader)
 {
     if(!inited)
     {
@@ -215,7 +215,7 @@ bool MPG123Decoder::seek(size_t ms_offset, bool ms, bool mayrestart)
 			mpg123_delete(MPG123);
 			MPG123 = 0;
 		}
-		Reader.Seek(0, FileRdr::SeekSet);
+		Reader.Seek(0, FileReader::SeekSet);
 		// Do not call open with our own reader variable, that would be catastrophic.
 		auto reader = std::move(Reader);
 		return open(reader);

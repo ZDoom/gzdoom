@@ -228,7 +228,7 @@ class OpenALSoundStream : public SoundStream
 	ALfloat Volume;
 
 
-	FileRdr Reader;
+	FileReader Reader;
 	SoundDecoder *Decoder;
 	static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
 	{
@@ -603,7 +603,7 @@ public:
 		return true;
 	}
 
-	bool Init(FileRdr &reader, bool loop)
+	bool Init(FileReader &reader, bool loop)
 	{
 		if(!SetupSource())
 		{
@@ -1276,7 +1276,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, 
 std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *pBuffer)
 {
 	SoundHandle retval = { NULL };
-	FileRdr reader;
+	FileReader reader;
 	ALenum format = AL_NONE;
 	ChannelConfig chans;
 	SampleType type;
@@ -1291,7 +1291,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 
 	FindLoopTags(reader, &loop_start, &startass, &loop_end, &endass);
 
-	reader.Seek(0, FileRdr::SeekSet);
+	reader.Seek(0, FileReader::SeekSet);
 	std::unique_ptr<SoundDecoder> decoder(CreateDecoder(reader));
 	if (!decoder) return std::make_pair(retval, true);
 
@@ -1529,7 +1529,7 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 	return stream;
 }
 
-SoundStream *OpenALSoundRenderer::OpenStream(FileRdr &reader, int flags)
+SoundStream *OpenALSoundRenderer::OpenStream(FileReader &reader, int flags)
 {
 	if(StreamThread.get_id() == std::thread::id())
 		StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);

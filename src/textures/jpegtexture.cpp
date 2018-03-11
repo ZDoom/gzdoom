@@ -50,11 +50,11 @@ extern "C"
 
 struct FLumpSourceMgr : public jpeg_source_mgr
 {
-	FileRdr *Lump;
+	FileReader *Lump;
 	JOCTET Buffer[4096];
 	bool StartOfFile;
 
-	FLumpSourceMgr (FileRdr *lump, j_decompress_ptr cinfo);
+	FLumpSourceMgr (FileReader *lump, j_decompress_ptr cinfo);
 	static void InitSource (j_decompress_ptr cinfo);
 	static boolean FillInputBuffer (j_decompress_ptr cinfo);
 	static void SkipInputData (j_decompress_ptr cinfo, long num_bytes);
@@ -113,7 +113,7 @@ void FLumpSourceMgr::SkipInputData (j_decompress_ptr cinfo, long num_bytes)
 	else
 	{
 		num_bytes -= (long)me->bytes_in_buffer;
-		me->Lump->Seek (num_bytes, FileRdr::SeekCur);
+		me->Lump->Seek (num_bytes, FileReader::SeekCur);
 		FillInputBuffer (cinfo);
 	}
 }
@@ -134,7 +134,7 @@ void FLumpSourceMgr::TermSource (j_decompress_ptr cinfo)
 //
 //==========================================================================
 
-FLumpSourceMgr::FLumpSourceMgr (FileRdr *lump, j_decompress_ptr cinfo)
+FLumpSourceMgr::FLumpSourceMgr (FileReader *lump, j_decompress_ptr cinfo)
 : Lump (lump)
 {
 	cinfo->src = this;
@@ -208,7 +208,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *JPEGTexture_TryCreate(FileRdr & data, int lumpnum)
+FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 {
 	union
 	{
@@ -217,7 +217,7 @@ FTexture *JPEGTexture_TryCreate(FileRdr & data, int lumpnum)
 		uint8_t b[4];
 	} first4bytes;
 
-	data.Seek(0, FileRdr::SeekSet);
+	data.Seek(0, FileReader::SeekSet);
 	if (data.Read(&first4bytes, 4) < 4) return NULL;
 
 	if (first4bytes.b[0] != 0xFF || first4bytes.b[1] != 0xD8 || first4bytes.b[2] != 0xFF)
@@ -231,7 +231,7 @@ FTexture *JPEGTexture_TryCreate(FileRdr & data, int lumpnum)
 		{
 			return NULL;
 		}
-		data.Seek (BigShort(first4bytes.w[0]) - 2, FileRdr::SeekCur);
+		data.Seek (BigShort(first4bytes.w[0]) - 2, FileReader::SeekCur);
 		if (data.Read (first4bytes.b + 2, 2) != 2 || first4bytes.b[2] != 0xFF)
 		{
 			return NULL;

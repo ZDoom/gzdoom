@@ -112,7 +112,7 @@ bool CDSong::IsPlaying ()
 	return m_Status != STATE_Stopped;
 }
 
-CDDAFile::CDDAFile (FileRdr &reader)
+CDDAFile::CDDAFile (FileReader &reader)
 	: CDSong ()
 {
 	uint32_t chunk;
@@ -122,7 +122,7 @@ CDDAFile::CDDAFile (FileRdr &reader)
 
 	// I_RegisterSong already identified this as a CDDA file, so we
 	// just need to check the contents we're interested in.
-	reader.Seek(12, FileRdr::SeekCur);
+	reader.Seek(12, FileReader::SeekCur);
 
 	while (reader.Tell() < endpos)
 	{
@@ -130,11 +130,11 @@ CDDAFile::CDDAFile (FileRdr &reader)
 		if (chunk != (('f')|(('m')<<8)|(('t')<<16)|((' ')<<24)))
 		{
             reader.Read(&chunk, 4);
-            reader.Seek(chunk, FileRdr::SeekCur);
+            reader.Seek(chunk, FileReader::SeekCur);
 		}
 		else
 		{
-            reader.Seek(6, FileRdr::SeekCur);
+            reader.Seek(6, FileReader::SeekCur);
             reader.Read(&track, 2);
             reader.Read(&discid, 4);
 

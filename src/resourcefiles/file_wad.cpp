@@ -55,11 +55,11 @@ public:
 	int	Position;
 
 	int GetFileOffset() { return Position; }
-	FileRdr *GetReader()
+	FileReader *GetReader()
 	{
 		if(!Compressed)
 		{
-			Owner->Reader.Seek(Position, FileRdr::SeekSet);
+			Owner->Reader.Seek(Position, FileReader::SeekSet);
 			return &Owner->Reader;
 		}
 		return NULL;
@@ -79,12 +79,12 @@ public:
 			}
 		}
 
-		Owner->Reader.Seek(Position, FileRdr::SeekSet);
+		Owner->Reader.Seek(Position, FileReader::SeekSet);
 		Cache = new char[LumpSize];
 
 		if(Compressed)
 		{
-			FileRdr lzss;
+			FileReader lzss;
 			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false))
 			{
 				lzss.Read(Cache, LumpSize);
@@ -113,7 +113,7 @@ class FWadFile : public FResourceFile
 	void SkinHack ();
 
 public:
-	FWadFile(const char * filename, FileRdr &file);
+	FWadFile(const char * filename, FileReader &file);
 	~FWadFile();
 	void FindStrifeTeaserVoices ();
 	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
@@ -129,7 +129,7 @@ public:
 //
 //==========================================================================
 
-FWadFile::FWadFile(const char *filename, FileRdr &file) 
+FWadFile::FWadFile(const char *filename, FileReader &file) 
 	: FResourceFile(filename, file)
 {
 	Lumps = NULL;
@@ -173,7 +173,7 @@ bool FWadFile::Open(bool quiet)
 	}
 
 	wadlump_t *fileinfo = new wadlump_t[NumLumps];
-	Reader.Seek (InfoTableOfs, FileRdr::SeekSet);
+	Reader.Seek (InfoTableOfs, FileReader::SeekSet);
 	Reader.Read (fileinfo, NumLumps * sizeof(wadlump_t));
 
 	Lumps = new FWadFileLump[NumLumps];
@@ -475,15 +475,15 @@ void FWadFile::FindStrifeTeaserVoices ()
 //
 //==========================================================================
 
-FResourceFile *CheckWad(const char *filename, FileRdr &file, bool quiet)
+FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
 	if (file.GetLength() >= 12)
 	{
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		file.Read(&head, 4);
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
 			FResourceFile *rf = new FWadFile(filename, file);

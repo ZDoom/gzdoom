@@ -35,7 +35,7 @@ namespace TimidityPlus
 
 struct timidity_file
 {
-    FileRdr url;
+    FileReader url;
 	std::string filename;
 };
 

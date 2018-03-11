@@ -60,7 +60,7 @@ bool _WM_InitReader(const char *config_file)
 
 unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size) 
 {
-	FileRdr fp;
+	FileReader fp;
 
 	if (filename == nullptr)
 	{

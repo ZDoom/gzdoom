@@ -69,7 +69,7 @@ void OPL_SetCore(const char *args)
 	if (args != NULL && *args >= '0' && *args < '4') current_opl_core = *args - '0';
 }
 
-OPLMUSSong::OPLMUSSong (FileRdr &reader, const char *args)
+OPLMUSSong::OPLMUSSong (FileReader &reader, const char *args)
 {
 	int samples = int(OPL_SAMPLE_RATE / 14);
 

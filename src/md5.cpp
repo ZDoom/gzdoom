@@ -95,7 +95,7 @@ void MD5Context::Update(const uint8_t *buf, unsigned len)
 	memcpy(in, buf, len);
 }
 
-void MD5Context::Update(FileRdr &file, unsigned len)
+void MD5Context::Update(FileReader &file, unsigned len)
 {
 	uint8_t readbuf[8192];
 	long t;
@@ -269,7 +269,7 @@ CCMD (md5sum)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		FileRdr fr;
+		FileReader fr;
 		if (!fr.OpenFile(argv[i]))
 		{
 			Printf("%s: %s\n", argv[i], strerror(errno));

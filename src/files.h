@@ -107,16 +107,16 @@ public:
 
 struct FResourceLump;
 
-class FileRdr
+class FileReader
 {
 	friend struct FResourceLump;	// needs access to the private constructor.
 
 	FileReaderInterface *mReader = nullptr;
 
-	FileRdr(const FileRdr &r) = delete;
-	FileRdr &operator=(const FileRdr &r) = delete;
+	FileReader(const FileReader &r) = delete;
+	FileReader &operator=(const FileReader &r) = delete;
 
-	explicit FileRdr(FileReaderInterface *r)
+	explicit FileReader(FileReaderInterface *r)
 	{
 		mReader = r;
 	}
@@ -131,15 +131,15 @@ public:
 
 	typedef ptrdiff_t Size;	// let's not use 'long' here.
 
-	FileRdr() {}
+	FileReader() {}
 
-	FileRdr(FileRdr &&r)
+	FileReader(FileReader &&r)
 	{
 		mReader = r.mReader;
 		r.mReader = nullptr;
 	}
 
-	FileRdr& operator =(FileRdr &&r)
+	FileReader& operator =(FileReader &&r)
 	{
 		Close();
 		mReader = r.mReader;
@@ -148,7 +148,7 @@ public:
 	}
 
 
-	~FileRdr()
+	~FileReader()
 	{
 		Close();
 	}
@@ -165,11 +165,11 @@ public:
 	}
 
 	bool OpenFile(const char *filename, Size start = 0, Size length = -1);
-	bool OpenFilePart(FileRdr &parent, Size start, Size length);
+	bool OpenFilePart(FileReader &parent, Size start, Size length);
 	bool OpenMemory(const void *mem, Size length);	// read directly from the buffer
 	bool OpenMemoryArray(const void *mem, Size length);	// read from a copy of the buffer.
 	bool OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter);	// read contents to a buffer and return a reader to it
-	bool OpenDecompressor(FileRdr &parent, Size length, int method, bool seekable);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
+	bool OpenDecompressor(FileReader &parent, Size length, int method, bool seekable);	// creates a decompressor stream. 'seekable' uses a buffered version so that the Seek and Tell methods can be used.
 
 	Size Tell() const
 	{

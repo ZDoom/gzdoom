@@ -37,7 +37,7 @@
 #include "doomdef.h"
 #include "i_soundinternal.h"
 
-class FileRdr;
+class FileReader;
 struct FOptionValues;
 
 //
@@ -55,7 +55,7 @@ void I_SetMusicVolume (float volume);
 // Registers a song handle to song data.
 class MusInfo;
 struct MidiDeviceSetting;
-MusInfo *I_RegisterSong (FileRdr &reader, MidiDeviceSetting *device);
+MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device);
 MusInfo *I_RegisterCDSong (int track, int cdid = 0);
 
 // The base music class. Everything is derived from this --------------------

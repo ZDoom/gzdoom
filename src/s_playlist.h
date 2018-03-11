@@ -34,7 +34,7 @@
 #ifndef __S_PLAYLIST_H__
 #define __S_PLAYLIST_H__
 
-class FileRdr;
+class FileReader;
 
 class FPlayList
 {
@@ -53,7 +53,7 @@ public:
 	const char *GetSong (int position) const;
 
 private:
-	static FString NextLine (FileRdr &file);
+	static FString NextLine (FileReader &file);
 
 	unsigned int Position;
 	TArray<FString> Songs;

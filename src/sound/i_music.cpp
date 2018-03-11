@@ -309,7 +309,7 @@ MusInfo *MusInfo::GetWaveDumper(const char *filename, int rate)
 //
 //==========================================================================
 
-static MIDISource *CreateMIDISource(FileRdr &reader, EMIDIType miditype)
+static MIDISource *CreateMIDISource(FileReader &reader, EMIDIType miditype)
 {
 	MIDISource *source = nullptr;
 	switch (miditype)
@@ -398,7 +398,7 @@ static EMIDIType IdentifyMIDIType(uint32_t *id, int size)
 //
 //==========================================================================
 
-MusInfo *I_RegisterSong (FileRdr &reader, MidiDeviceSetting *device)
+MusInfo *I_RegisterSong (FileReader &reader, MidiDeviceSetting *device)
 {
 	MusInfo *info = nullptr;
 	const char *fmt;
@@ -409,7 +409,7 @@ MusInfo *I_RegisterSong (FileRdr &reader, MidiDeviceSetting *device)
 		return nullptr;
 	}
 
-	if(reader.Read(id, 32) != 32 || reader.Seek(-32, FileRdr::SeekCur) != 0)
+	if(reader.Read(id, 32) != 32 || reader.Seek(-32, FileReader::SeekCur) != 0)
 	{
 		return nullptr;
 	}
@@ -436,7 +436,7 @@ MusInfo *I_RegisterSong (FileRdr &reader, MidiDeviceSetting *device)
 			return nullptr;
 		}
 
-		if (reader.Read(id, 32) != 32 || reader.Seek(-32, FileRdr::SeekCur) != 0)
+		if (reader.Read(id, 32) != 32 || reader.Seek(-32, FileReader::SeekCur) != 0)
 		{
 			return nullptr;
 		}
@@ -500,12 +500,12 @@ MusInfo *I_RegisterSong (FileRdr &reader, MidiDeviceSetting *device)
         {
             uint32_t subid;
 
-            reader.Seek(8, FileRdr::SeekCur);
+            reader.Seek(8, FileReader::SeekCur);
             if (reader.Read (&subid, 4) != 4)
             {
                 return nullptr;
             }
-            reader.Seek(-12, FileRdr::SeekCur);
+            reader.Seek(-12, FileReader::SeekCur);
 
             if (subid == (('C')|(('D')<<8)|(('D')<<16)|(('A')<<24)))
             {
@@ -709,7 +709,7 @@ static MIDISource *GetMIDISource(const char *fn)
 	auto wlump = Wads.OpenLumpReader(lump);
 	uint32_t id[32 / 4];
 
-	if (wlump.Read(id, 32) != 32 || wlump.Seek(-32, FileRdr::SeekCur) != 0)
+	if (wlump.Read(id, 32) != 32 || wlump.Seek(-32, FileReader::SeekCur) != 0)
 	{
 		Printf("Unable to read lump %s\n", src.GetChars());
 		return nullptr;

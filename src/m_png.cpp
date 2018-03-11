@@ -75,7 +75,7 @@ struct IHDR
 	uint8_t		Interlace;
 };
 
-PNGHandle::PNGHandle (FileRdr &file) : bDeleteFilePtr(true), ChunkPt(0)
+PNGHandle::PNGHandle (FileReader &file) : bDeleteFilePtr(true), ChunkPt(0)
 {
 	File = std::move(file);
 }
@@ -304,7 +304,7 @@ unsigned int M_NextPNGChunk (PNGHandle *png, uint32_t id)
 	{
 		if (png->Chunks[png->ChunkPt].ID == id)
 		{ // Found the chunk
-			png->File.Seek (png->Chunks[png->ChunkPt++].Offset, FileRdr::SeekSet);
+			png->File.Seek (png->Chunks[png->ChunkPt++].Offset, FileReader::SeekSet);
 			return png->Chunks[png->ChunkPt - 1].Size;
 		}
 	}
@@ -369,7 +369,7 @@ bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buf
 //
 //==========================================================================
 
-PNGHandle *M_VerifyPNG (FileRdr &filer)
+PNGHandle *M_VerifyPNG (FileReader &filer)
 {
 	PNGHandle::Chunk chunk;
 	PNGHandle *png;
@@ -400,9 +400,9 @@ PNGHandle *M_VerifyPNG (FileRdr &filer)
 	chunk.Offset = 16;
 	chunk.Size = BigLong((unsigned int)data[0]);
 	png->Chunks.Push (chunk);
-	png->File.Seek (16, FileRdr::SeekSet);
+	png->File.Seek (16, FileReader::SeekSet);
 
-	while (png->File.Seek (chunk.Size + 4, FileRdr::SeekCur) == 0)
+	while (png->File.Seek (chunk.Size + 4, FileReader::SeekCur) == 0)
 	{
 		// If the file ended before an IEND was encountered, it's not a PNG.
 		if (png->File.Read (&data, 8) != 8)
@@ -470,7 +470,7 @@ void M_FreePNG (PNGHandle *png)
 //
 //==========================================================================
 
-bool M_ReadIDAT (FileRdr &file, uint8_t *buffer, int width, int height, int pitch,
+bool M_ReadIDAT (FileReader &file, uint8_t *buffer, int width, int height, int pitch,
 				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, unsigned int chunklen)
 {
 	// Uninterlaced images are treated as a conceptual eighth pass by these tables.

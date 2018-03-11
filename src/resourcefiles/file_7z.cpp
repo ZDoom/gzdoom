@@ -58,9 +58,9 @@ extern ISzAlloc g_Alloc;
 struct CZDFileInStream
 {
 	ISeekInStream s;
-	FileRdr &File;
+	FileReader &File;
 
-	CZDFileInStream(FileRdr &_file) 
+	CZDFileInStream(FileReader &_file) 
 		: File(_file)
 	{
 		s.Read = Read;
@@ -83,19 +83,19 @@ struct CZDFileInStream
 	static SRes Seek(const ISeekInStream *pp, Int64 *pos, ESzSeek origin)
 	{
 		CZDFileInStream *p = (CZDFileInStream *)pp;
-		FileRdr::ESeek move_method;
+		FileReader::ESeek move_method;
 		int res;
 		if (origin == SZ_SEEK_SET)
 		{
-			move_method = FileRdr::SeekSet;
+			move_method = FileReader::SeekSet;
 		}
 		else if (origin == SZ_SEEK_CUR)
 		{
-			move_method = FileRdr::SeekCur;
+			move_method = FileReader::SeekCur;
 		}
 		else if (origin == SZ_SEEK_END)
 		{
-			move_method = FileRdr::SeekEnd;
+			move_method = FileReader::SeekEnd;
 		}
 		else
 		{
@@ -117,13 +117,13 @@ struct C7zArchive
 	Byte *OutBuffer;
 	size_t OutBufferSize;
 
-	C7zArchive(FileRdr &file) : ArchiveStream(file)
+	C7zArchive(FileReader &file) : ArchiveStream(file)
 	{
 		if (g_CrcTable[1] == 0)
 		{
 			CrcGenerateTable();
 		}
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		LookToRead2_CreateVTable(&LookStream, false);
 		LookStream.realStream = &ArchiveStream.s;
 		LookToRead2_Init(&LookStream);
@@ -192,7 +192,7 @@ class F7ZFile : public FResourceFile
 	C7zArchive *Archive;
 
 public:
-	F7ZFile(const char * filename, FileRdr &filer);
+	F7ZFile(const char * filename, FileReader &filer);
 	bool Open(bool quiet);
 	virtual ~F7ZFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
@@ -206,7 +206,7 @@ public:
 //
 //==========================================================================
 
-F7ZFile::F7ZFile(const char * filename, FileRdr &filer)
+F7ZFile::F7ZFile(const char * filename, FileReader &filer)
 	: FResourceFile(filename, filer) 
 {
 	Lumps = NULL;
@@ -361,15 +361,15 @@ int F7ZLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *Check7Z(const char *filename, FileRdr &file, bool quiet)
+FResourceFile *Check7Z(const char *filename, FileReader &file, bool quiet)
 {
 	char head[k7zSignatureSize];
 
 	if (file.GetLength() >= k7zSignatureSize)
 	{
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		file.Read(&head, k7zSignatureSize);
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, k7zSignature, k7zSignatureSize))
 		{
 			FResourceFile *rf = new F7ZFile(filename, file);

@@ -94,7 +94,7 @@ protected:
 	uint8_t *Pixels;
 	Span **Spans;
 
-	void ReadCompressed(FileRdr &lump, uint8_t * buffer, int bytesperpixel);
+	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
 
 	virtual void MakeTexture ();
 
@@ -107,13 +107,13 @@ protected:
 //
 //==========================================================================
 
-FTexture *TGATexture_TryCreate(FileRdr & file, int lumpnum)
+FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 {
 	TGAHeader hdr;
 
 	if (file.GetLength() < (long)sizeof(hdr)) return NULL;
 	
-	file.Seek(0, FileRdr::SeekSet);
+	file.Seek(0, FileReader::SeekSet);
 	file.Read(&hdr, sizeof(hdr));
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
@@ -127,7 +127,7 @@ FTexture *TGATexture_TryCreate(FileRdr & file, int lumpnum)
 	if (hdr.img_type >=4  && hdr.img_type <= 8) return NULL;
 	if ((hdr.img_desc & 16) != 0) return NULL;
 
-	file.Seek(0, FileRdr::SeekSet);
+	file.Seek(0, FileReader::SeekSet);
 	file.Read(&hdr, sizeof(hdr));
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
@@ -250,7 +250,7 @@ const uint8_t *FTGATexture::GetPixels ()
 //
 //==========================================================================
 
-void FTGATexture::ReadCompressed(FileRdr &lump, uint8_t * buffer, int bytesperpixel)
+void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel)
 {
 	uint8_t data[4];
 	int Size = Width * Height;
@@ -297,7 +297,7 @@ void FTGATexture::MakeTexture ()
 
 	Pixels = new uint8_t[Width*Height];
 	lump.Read(&hdr, sizeof(hdr));
-	lump.Seek(hdr.id_len, FileRdr::SeekCur);
+	lump.Seek(hdr.id_len, FileReader::SeekCur);
 	
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);
@@ -503,7 +503,7 @@ int FTGATexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 	int transval = 0;
 
 	lump.Read(&hdr, sizeof(hdr));
-	lump.Seek(hdr.id_len, FileRdr::SeekCur);
+	lump.Seek(hdr.id_len, FileReader::SeekCur);
 	
 	hdr.width = LittleShort(hdr.width);
 	hdr.height = LittleShort(hdr.height);

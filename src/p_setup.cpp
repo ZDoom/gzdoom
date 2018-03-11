@@ -240,7 +240,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 MapData *P_OpenMapData(const char * mapname, bool justcheck)
 {
 	MapData * map = new MapData;
-	FileRdr * wadReader = nullptr;
+	FileReader * wadReader = nullptr;
 	bool externalfile = !strnicmp(mapname, "file:", 5);
 	
 	if (externalfile)
@@ -404,7 +404,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 	// Although we're using the resource system, we still want to be sure we're
 	// reading from a wad file.
-	wadReader->Seek(0, FileRdr::SeekSet);
+	wadReader->Seek(0, FileReader::SeekSet);
 	wadReader->Read(&id, sizeof(id));
 	
 	if (id == IWAD_ID || id == PWAD_ID)
@@ -855,7 +855,7 @@ void P_LoadVertexes (MapData * map)
 //
 //===========================================================================
 
-void P_LoadZSegs (FileRdr &data)
+void P_LoadZSegs (FileReader &data)
 {
 	for (auto &seg : level.segs)
 	{
@@ -890,7 +890,7 @@ void P_LoadZSegs (FileRdr &data)
 //
 //===========================================================================
 
-void P_LoadGLZSegs (FileRdr &data, int type)
+void P_LoadGLZSegs (FileReader &data, int type)
 {
 	for (unsigned i = 0; i < level.subsectors.Size(); ++i)
 	{
@@ -958,7 +958,7 @@ void P_LoadGLZSegs (FileRdr &data, int type)
 //
 //===========================================================================
 
-void LoadZNodes(FileRdr &data, int glnodes)
+void LoadZNodes(FileReader &data, int glnodes)
 {
 	// Read extra vertices added during node building
 	unsigned int i;
@@ -1082,7 +1082,7 @@ void LoadZNodes(FileRdr &data, int glnodes)
 //
 //===========================================================================
 
-void P_LoadZNodes (FileRdr &dalump, uint32_t id)
+void P_LoadZNodes (FileReader &dalump, uint32_t id)
 {
 	int type;
 	bool compressed;
@@ -1135,7 +1135,7 @@ void P_LoadZNodes (FileRdr &dalump, uint32_t id)
 	
 	if (compressed)
 	{
-		FileRdr zip;
+		FileReader zip;
 		if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false))
 		{
 			LoadZNodes(zip, type);
@@ -2487,12 +2487,12 @@ int P_DetermineTranslucency (int lumpnum)
 	PalEntry newcolor;
 	PalEntry newcolor2;
 
-	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, FileRdr::SeekSet);
+	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, FileReader::SeekSet);
 	tranmap.Read (&index, 1);
 
 	newcolor = GPalette.BaseColors[GPalette.Remap[index]];
 
-	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, FileRdr::SeekSet);
+	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, FileReader::SeekSet);
 	tranmap.Read (&index, 1);
 	newcolor2 = GPalette.BaseColors[GPalette.Remap[index]];
 	if (newcolor2.r == 255)	// if black on white results in white it's either
@@ -3842,7 +3842,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	if (!ForceNodeBuild)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
-		FileRdr *fr = nullptr;
+		FileReader *fr = nullptr;
 		uint32_t id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
 
 		if (map->Size(ML_ZNODES) != 0)
@@ -4280,3 +4280,4 @@ CCMD (lineloc)
 		lines[linenum].v2->fY());
 }
 #endif
+

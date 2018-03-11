@@ -2609,7 +2609,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			musicname += 7;
 		}
 
-		FileRdr reader;
+		FileReader reader;
 		if (!FileExists (musicname))
 		{
 			if ((lumpnum = Wads.CheckNumForFullName (musicname, true, ns_music)) == -1)

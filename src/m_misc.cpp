@@ -121,7 +121,7 @@ void M_FindResponseFile (void)
 			if (added_stuff < limit)
 			{
 				// READ THE RESPONSE FILE INTO MEMORY
-				FileRdr fr;
+				FileReader fr;
 				if (!fr.OpenFile(Args->GetArg(i) + 1))
 				{ // [RH] Make this a warning, not an error.
 					Printf ("No such response file (%s)!\n", Args->GetArg(i) + 1);

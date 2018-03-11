@@ -84,7 +84,7 @@ void OPLmusicBlock::Restart()
 	LastOffset = 0;
 }
 
-OPLmusicFile::OPLmusicFile (FileRdr &reader)
+OPLmusicFile::OPLmusicFile (FileReader &reader)
 	: ScoreLen ((int)reader.GetLength())
 {
 	if (io == NULL)

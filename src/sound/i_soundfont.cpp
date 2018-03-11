@@ -50,7 +50,7 @@ FSoundFontManager sfmanager;
 //
 //==========================================================================
 
-std::pair<FileRdr, FString> FSoundFontReader::LookupFile(const char *name)
+std::pair<FileReader, FString> FSoundFontReader::LookupFile(const char *name)
 {
 	if (!IsAbsPath(name))
 	{
@@ -117,9 +117,9 @@ FSF2Reader::FSF2Reader(const char *fn)
 //
 //==========================================================================
 
-FileRdr FSF2Reader::OpenMainConfigFile()
+FileReader FSF2Reader::OpenMainConfigFile()
 {
-	FileRdr fr;
+	FileReader fr;
 	if (mMainConfigForSF2.IsNotEmpty())
 	{
 		fr.OpenMemory(mMainConfigForSF2.GetChars(), mMainConfigForSF2.Len());
@@ -127,9 +127,9 @@ FileRdr FSF2Reader::OpenMainConfigFile()
 	return fr;
 }
 
-FileRdr FSF2Reader::OpenFile(const char *name)
+FileReader FSF2Reader::OpenFile(const char *name)
 {
-	FileRdr fr;
+	FileReader fr;
 	if (mFilename.CompareNoCase(name) == 0)
 	{
 		fr.OpenFile(name);
@@ -153,14 +153,14 @@ FZipPatReader::~FZipPatReader()
 	if (resf != nullptr) delete resf;
 }
 
-FileRdr FZipPatReader::OpenMainConfigFile()
+FileReader FZipPatReader::OpenMainConfigFile()
 {
 	return OpenFile("timidity.cfg");
 }
 
-FileRdr FZipPatReader::OpenFile(const char *name)
+FileReader FZipPatReader::OpenFile(const char *name)
 {
-	FileRdr fr;
+	FileReader fr;
 	if (resf != nullptr)
 	{
 		auto lump = resf->FindLump(name);
@@ -195,7 +195,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	};
 #endif
 	mAllowAbsolutePaths = true;
-	FileRdr fr;
+	FileReader fr;
 	if (fr.OpenFile(filename))
 	{
 		mFullPathToConfig = filename;
@@ -225,19 +225,19 @@ FPatchSetReader::FPatchSetReader()
 	mAllowAbsolutePaths = true;
 }
 
-FileRdr FPatchSetReader::OpenMainConfigFile()
+FileReader FPatchSetReader::OpenMainConfigFile()
 {
-	FileRdr fr;
+	FileReader fr;
 	fr.OpenFile(mFullPathToConfig);
 	return fr;
 }
 
-FileRdr FPatchSetReader::OpenFile(const char *name)
+FileReader FPatchSetReader::OpenFile(const char *name)
 {
 	FString path;
 	if (IsAbsPath(name)) path = name;
 	else path = mBasePath + name;
-	FileRdr fr;
+	FileReader fr;
 	fr.OpenFile(path);
 	return fr;
 }
@@ -258,18 +258,18 @@ FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 	if (mBasePath.Len() > 0 && mBasePath.Back() != '/') mBasePath += '/';
 }
 
-FileRdr FLumpPatchSetReader::OpenMainConfigFile()
+FileReader FLumpPatchSetReader::OpenMainConfigFile()
 {
 	return Wads.ReopenLumpReader(mLumpIndex);
 }
 
-FileRdr FLumpPatchSetReader::OpenFile(const char *name)
+FileReader FLumpPatchSetReader::OpenFile(const char *name)
 {
 	FString path;
-	if (IsAbsPath(name)) return FileRdr();	// no absolute paths in the lump directory.
+	if (IsAbsPath(name)) return FileReader();	// no absolute paths in the lump directory.
 	path = mBasePath + name;
 	auto index = Wads.CheckNumForFullName(path);
-	if (index < 0) return FileRdr();
+	if (index < 0) return FileReader();
 	return Wads.ReopenLumpReader(index);
 }
 
@@ -293,7 +293,7 @@ void FSoundFontManager::ProcessOneFile(const FString &fn)
 		if (!sfi.mName.CompareNoCase(fb)) return;
 	}
 	
-	FileRdr fr;
+	FileReader fr;
 	if (fr.OpenFile(fn))
 	{
 		// Try to identify. We only accept .sf2 and .zip by content. All other archives are intentionally ignored.
@@ -435,7 +435,7 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	// Next check if the file is a .sf file
 	if (allowed & SF_SF2)
 	{
-		FileRdr fr;
+		FileReader fr;
 		if (fr.OpenFile(name))
 		{
 			char head[16] = { 0};
@@ -449,7 +449,7 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	}
 	if (allowed & SF_GUS)
 	{
-		FileRdr fr;
+		FileReader fr;
 		if (fr.OpenFile(name))
 		{
 			char head[16] = { 0 };

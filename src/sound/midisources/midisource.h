@@ -76,7 +76,7 @@ public:
 class MUSSong2 : public MIDISource
 {
 public:
-	MUSSong2(FileRdr &reader);
+	MUSSong2(FileReader &reader);
 	~MUSSong2();
 	
 protected:
@@ -99,7 +99,7 @@ private:
 class MIDISong2 : public MIDISource
 {
 public:
-	MIDISong2(FileRdr &reader);
+	MIDISong2(FileReader &reader);
 	~MIDISong2();
 	
 protected:
@@ -153,7 +153,7 @@ protected:
 class HMISong : public MIDISource
 {
 public:
-	HMISong(FileRdr &reader);
+	HMISong(FileReader &reader);
 	~HMISong();
 	
 protected:
@@ -193,7 +193,7 @@ private:
 class XMISong : public MIDISource
 {
 public:
-	XMISong(FileRdr &reader);
+	XMISong(FileReader &reader);
 	~XMISong();
 	
 protected:

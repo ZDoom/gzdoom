@@ -116,9 +116,9 @@ static int ConversationMenuY;
 static int ConversationPauseTic;
 static int StaticLastReply;
 
-static bool LoadScriptFile(int lumpnum, FileRdr &lump, int numnodes, bool include, int type);
-static FStrifeDialogueNode *ReadRetailNode (FileRdr &lump, uint32_t &prevSpeakerType);
-static FStrifeDialogueNode *ReadTeaserNode (FileRdr &lump, uint32_t &prevSpeakerType);
+static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool include, int type);
+static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpeakerType);
+static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
@@ -232,13 +232,13 @@ bool LoadScriptFile (const char *name, bool include, int type)
 	{
 		return false;
 	}
-	FileRdr lump = Wads.ReopenLumpReader (lumpnum);
+	FileReader lump = Wads.ReopenLumpReader (lumpnum);
 
 	bool res = LoadScriptFile(lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
 	return res;
 }
 
-static bool LoadScriptFile(int lumpnum, FileRdr &lump, int numnodes, bool include, int type)
+static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool include, int type)
 {
 	int i;
 	uint32_t prevSpeakerType;
@@ -246,7 +246,7 @@ static bool LoadScriptFile(int lumpnum, FileRdr &lump, int numnodes, bool includ
 	char buffer[4];
 
 	lump.Read(buffer, 4);
-	lump.Seek(-4, FileRdr::SeekCur);
+	lump.Seek(-4, FileReader::SeekCur);
 
 	// The binary format is so primitive that this check is enough to detect it.
 	bool isbinary = (buffer[0] == 0 || buffer[1] == 0 || buffer[2] == 0 || buffer[3] == 0);
@@ -315,7 +315,7 @@ static bool LoadScriptFile(int lumpnum, FileRdr &lump, int numnodes, bool includ
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadRetailNode (FileRdr &lump, uint32_t &prevSpeakerType)
+static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	Speech speech;
@@ -391,7 +391,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileRdr &lump, uint32_t &prevSpeaker
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadTeaserNode (FileRdr &lump, uint32_t &prevSpeakerType)
+static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;

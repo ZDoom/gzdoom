@@ -159,7 +159,7 @@ public:
 	{
 		return NULL;
 	}
-	SoundStream *OpenStream (FileRdr &reader, int flags)
+	SoundStream *OpenStream (FileReader &reader, int flags)
 	{
 		return NULL;
 	}
@@ -370,7 +370,7 @@ FString SoundRenderer::GatherStats ()
 
 short *SoundRenderer::DecodeSample(int outlen, const void *coded, int sizebytes, ECodecType ctype)
 {
-	FileRdr reader;
+	FileReader reader;
     short *samples = (short*)calloc(1, outlen);
     ChannelConfig chans;
     SampleType type;
@@ -578,7 +578,7 @@ std::pair<SoundHandle, bool> SoundRenderer::LoadSoundBuffered(FSoundLoadBuffer *
 	return std::make_pair(retval, true);
 }
 
-SoundDecoder *SoundRenderer::CreateDecoder(FileRdr &reader)
+SoundDecoder *SoundRenderer::CreateDecoder(FileReader &reader)
 {
     SoundDecoder *decoder = NULL;
     auto pos = reader.Tell();
@@ -587,7 +587,7 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileRdr &reader)
 		decoder = new SndFileDecoder;
 		if (decoder->open(reader))
 			return decoder;
-		reader.Seek(pos, FileRdr::SeekSet);
+		reader.Seek(pos, FileReader::SeekSet);
 
 		delete decoder;
 		decoder = NULL;
@@ -596,7 +596,7 @@ SoundDecoder *SoundRenderer::CreateDecoder(FileRdr &reader)
 		decoder = new MPG123Decoder;
 		if (decoder->open(reader))
 			return decoder;
-		reader.Seek(pos, FileRdr::SeekSet);
+		reader.Seek(pos, FileReader::SeekSet);
 
 		delete decoder;
 		decoder = NULL;

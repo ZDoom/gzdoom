@@ -51,7 +51,7 @@
 //
 //==========================================================================
 
-static bool UncompressZipLump(char *Cache, FileRdr &Reader, int Method, int LumpSize, int CompressedSize, int GPFlags)
+static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int LumpSize, int CompressedSize, int GPFlags)
 {
 	try
 	{
@@ -67,7 +67,7 @@ static bool UncompressZipLump(char *Cache, FileRdr &Reader, int Method, int Lump
 		case METHOD_BZIP2:
 		case METHOD_LZMA:
 		{
-			FileRdr frz;
+			FileReader frz;
 			if (frz.OpenDecompressor(Reader, LumpSize, Method, false))
 			{
 				frz.Read(Cache, LumpSize);
@@ -104,7 +104,7 @@ static bool UncompressZipLump(char *Cache, FileRdr &Reader, int Method, int Lump
 
 bool FCompressedBuffer::Decompress(char *destbuffer)
 {
-	FileRdr mr;
+	FileReader mr;
 	mr.OpenMemory(mBuffer, mCompressedSize);
 	return UncompressZipLump(destbuffer, mr, mMethod, mSize, mCompressedSize, mZipFlags);
 }
@@ -116,7 +116,7 @@ bool FCompressedBuffer::Decompress(char *destbuffer)
 //
 //-----------------------------------------------------------------------
 
-static uint32_t Zip_FindCentralDir(FileRdr &fin)
+static uint32_t Zip_FindCentralDir(FileReader &fin)
 {
 	unsigned char buf[BUFREADCOMMENT + 4];
 	uint32_t FileSize;
@@ -140,7 +140,7 @@ static uint32_t Zip_FindCentralDir(FileRdr &fin)
 
 		uReadSize = MIN<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
 
-		if (fin.Seek(uReadPos, FileRdr::SeekSet) != 0) break;
+		if (fin.Seek(uReadPos, FileReader::SeekSet) != 0) break;
 
 		if (fin.Read(buf, (int32_t)uReadSize) != (int32_t)uReadSize) break;
 
@@ -165,7 +165,7 @@ static uint32_t Zip_FindCentralDir(FileRdr &fin)
 //
 //==========================================================================
 
-FZipFile::FZipFile(const char * filename, FileRdr &file)
+FZipFile::FZipFile(const char * filename, FileReader &file)
 : FResourceFile(filename, file)
 {
 	Lumps = NULL;
@@ -186,7 +186,7 @@ bool FZipFile::Open(bool quiet)
 	}
 
 	// Read the central directory info.
-	Reader.Seek(centraldir, FileRdr::SeekSet);
+	Reader.Seek(centraldir, FileReader::SeekSet);
 	Reader.Read(&info, sizeof(FZipEndOfCentralDirectory));
 
 	// No multi-disk zips!
@@ -203,7 +203,7 @@ bool FZipFile::Open(bool quiet)
 	// Load the entire central directory. Too bad that this contains variable length entries...
 	int dirsize = LittleLong(info.DirectorySize);
 	void *directory = malloc(dirsize);
-	Reader.Seek(LittleLong(info.DirectoryOffset), FileRdr::SeekSet);
+	Reader.Seek(LittleLong(info.DirectoryOffset), FileReader::SeekSet);
 	Reader.Read(directory, dirsize);
 
 	char *dirptr = (char*)directory;
@@ -386,7 +386,7 @@ FCompressedBuffer FZipLump::GetRawData()
 {
 	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)CompressedSize, Method, GPFlags, CRC32, new char[CompressedSize] };
 	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
-	Owner->Reader.Seek(Position, FileRdr::SeekSet);
+	Owner->Reader.Seek(Position, FileReader::SeekSet);
 	Owner->Reader.Read(cbuf.mBuffer, CompressedSize);
 	return cbuf;
 }
@@ -405,7 +405,7 @@ void FZipLump::SetLumpAddress()
 	FZipLocalFileHeader localHeader;
 	int skiplen;
 
-	Owner->Reader.Seek(Position, FileRdr::SeekSet);
+	Owner->Reader.Seek(Position, FileReader::SeekSet);
 	Owner->Reader.Read(&localHeader, sizeof(localHeader));
 	skiplen = LittleShort(localHeader.NameLength) + LittleShort(localHeader.ExtraLength);
 	Position += sizeof(localHeader) + skiplen;
@@ -418,14 +418,14 @@ void FZipLump::SetLumpAddress()
 //
 //==========================================================================
 
-FileRdr *FZipLump::GetReader()
+FileReader *FZipLump::GetReader()
 {
 	// Don't return the reader if this lump is encrypted
 	// In that case always force caching of the lump
 	if (Method == METHOD_STORED)
 	{
 		if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
-		Owner->Reader.Seek(Position, FileRdr::SeekSet);
+		Owner->Reader.Seek(Position, FileReader::SeekSet);
 		return &Owner->Reader;
 	}
 	else return NULL;	
@@ -450,7 +450,7 @@ int FZipLump::FillCache()
 		return -1;
 	}
 
-	Owner->Reader.Seek(Position, FileRdr::SeekSet);
+	Owner->Reader.Seek(Position, FileReader::SeekSet);
 	Cache = new char[LumpSize];
 	UncompressZipLump(Cache, Owner->Reader, Method, LumpSize, CompressedSize, GPFlags);
 	RefCount = 1;
@@ -476,15 +476,15 @@ int FZipLump::GetFileOffset()
 //
 //==========================================================================
 
-FResourceFile *CheckZip(const char *filename, FileRdr &file, bool quiet)
+FResourceFile *CheckZip(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
 	if (file.GetLength() >= (long)sizeof(FZipLocalFileHeader))
 	{
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		file.Read(&head, 4);
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PK\x3\x4", 4))
 		{
 			FResourceFile *rf = new FZipFile(filename, file);

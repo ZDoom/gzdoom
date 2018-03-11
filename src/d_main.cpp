@@ -1959,7 +1959,7 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 		if (!isdir)
 		{
-			FileRdr fr;
+			FileReader fr;
 			if (!fr.OpenFile(filename))
 			{ 
 				// Didn't find file

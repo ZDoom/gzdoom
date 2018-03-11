@@ -38,9 +38,9 @@ private:
 	struct MapLump
 	{
 		char Name[8] = { 0 };
-		FileRdr Reader;
+		FileReader Reader;
 	} MapLumps[ML_MAX];
-	FileRdr nofile;
+	FileReader nofile;
 public:
 	bool HasBehavior = false;
 	bool Encrypted = false;
@@ -61,17 +61,17 @@ public:
 		if (lumpindex<countof(MapLumps))
 		{
 			file = &MapLumps[lumpindex].Reader;
-			file->Seek(0, FileRdr::SeekSet);
+			file->Seek(0, FileReader::SeekSet);
 		}
 	}
 	*/
 
-	FileRdr &Reader(unsigned int lumpindex)
+	FileReader &Reader(unsigned int lumpindex)
 	{
 		if (lumpindex < countof(MapLumps))
 		{
 			auto &file = MapLumps[lumpindex].Reader;
-			file.Seek(0, FileRdr::SeekSet);
+			file.Seek(0, FileReader::SeekSet);
 			return file;
 		}
 		return nofile;
@@ -85,7 +85,7 @@ public:
 			if (size > 0)
 			{
 				auto &file = MapLumps[lumpindex].Reader;
-				file.Seek(0, FileRdr::SeekSet);
+				file.Seek(0, FileReader::SeekSet);
 				file.Read(buffer, size);
 			}
 		}

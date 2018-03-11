@@ -112,7 +112,7 @@ public:
 	void SetIwadNum(int x) { IwadIndex = x; }
 
 	void InitMultipleFiles (TArray<FString> &filenames);
-	void AddFile (const char *filename, FileRdr *wadinfo = NULL);
+	void AddFile (const char *filename, FileReader *wadinfo = NULL);
 	int CheckIfWadLoaded (const char *name);
 
 	const char *GetWadName (int wadnum) const;
@@ -151,8 +151,8 @@ public:
 	FMemLump ReadLump (int lump);
 	FMemLump ReadLump (const char *name) { return ReadLump (GetNumForName (name)); }
 
-	FileRdr OpenLumpReader(int lump);		// opens a reader that redirects to the containing file's one.
-	FileRdr ReopenLumpReader(int lump, bool alwayscache = false);		// opens an independent reader.
+	FileReader OpenLumpReader(int lump);		// opens a reader that redirects to the containing file's one.
+	FileReader ReopenLumpReader(int lump, bool alwayscache = false);		// opens an independent reader.
 
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
@@ -206,7 +206,7 @@ private:
 	void RenameNerve();
 	void FixMacHexen();
 	void DeleteAll();
-	FileRdr * GetFileReader(int wadnum);	// Gets a FileRdr object to the entire WAD
+	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
 };
 
 extern FWadCollection Wads;

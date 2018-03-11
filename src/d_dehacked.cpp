@@ -2492,7 +2492,7 @@ bool D_LoadDehLump(int lumpnum)
 
 bool D_LoadDehFile(const char *patchfile)
 {
-	FileRdr fr;
+	FileReader fr;
 
 	if (fr.OpenFile(patchfile))
 	{

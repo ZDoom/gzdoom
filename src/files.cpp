@@ -159,12 +159,12 @@ private:
 
 class FileReaderRedirect : public FileReaderInterface
 {
-	FileRdr *mReader = nullptr;
+	FileReader *mReader = nullptr;
 	long StartPos = 0;
 	long FilePos = 0;
 
 public:
-	FileReaderRedirect(FileRdr &parent, long start, long length)
+	FileReaderRedirect(FileReader &parent, long start, long length)
 	{
 		mReader = &parent;
 		FilePos = start;
@@ -195,7 +195,7 @@ public:
 			break;
 		}
 		if (offset < StartPos || offset > StartPos + Length) return -1;	// out of scope
-		if (mReader->Seek(offset, FileRdr::SeekSet) == 0)
+		if (mReader->Seek(offset, FileReader::SeekSet) == 0)
 		{
 			FilePos = offset;
 			return 0;
@@ -347,7 +347,7 @@ public:
 //
 //==========================================================================
 
-bool FileRdr::OpenFile(const char *filename, FileRdr::Size start, FileRdr::Size length)
+bool FileReader::OpenFile(const char *filename, FileReader::Size start, FileReader::Size length)
 {
 	auto reader = new StdFileReader;
 	if (!reader->Open(filename, (long)start, (long)length)) return false;
@@ -356,7 +356,7 @@ bool FileRdr::OpenFile(const char *filename, FileRdr::Size start, FileRdr::Size 
 	return true;
 }
 
-bool FileRdr::OpenFilePart(FileRdr &parent, FileRdr::Size start, FileRdr::Size length)
+bool FileReader::OpenFilePart(FileReader &parent, FileReader::Size start, FileReader::Size length)
 {
 	auto reader = new FileReaderRedirect(parent, (long)start, (long)length);
 	Close();
@@ -364,21 +364,21 @@ bool FileRdr::OpenFilePart(FileRdr &parent, FileRdr::Size start, FileRdr::Size l
 	return true;
 }
 
-bool FileRdr::OpenMemory(const void *mem, FileRdr::Size length)
+bool FileReader::OpenMemory(const void *mem, FileReader::Size length)
 {
 	Close();
 	mReader = new MemoryReader((const char *)mem, (long)length);
 	return true;
 }
 
-bool FileRdr::OpenMemoryArray(const void *mem, FileRdr::Size length)
+bool FileReader::OpenMemoryArray(const void *mem, FileReader::Size length)
 {
 	Close();
 	mReader = new MemoryArrayReader((const char *)mem, (long)length);
 	return true;
 }
 
-bool FileRdr::OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter)
+bool FileReader::OpenMemoryArray(std::function<bool(TArray<uint8_t>&)> getter)
 {
 	auto reader = new MemoryArrayReader(nullptr, 0);
 	if (getter(reader->GetArray()))

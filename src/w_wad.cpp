@@ -225,11 +225,11 @@ int FWadCollection::AddExternalFile(const char *filename)
 // [RH] Removed reload hack
 //==========================================================================
 
-void FWadCollection::AddFile (const char *filename, FileRdr *wadr)
+void FWadCollection::AddFile (const char *filename, FileReader *wadr)
 {
 	int startlump;
 	bool isdir = false;
-	FileRdr wadreader;
+	FileReader wadreader;
 
 	if (wadr == nullptr)
 	{
@@ -304,7 +304,7 @@ void FWadCollection::AddFile (const char *filename, FileRdr *wadr)
 			if (wadreader.isOpen())
 			{
 				MD5Context md5;
-				wadreader.Seek(0, FileRdr::SeekSet);
+				wadreader.Seek(0, FileReader::SeekSet);
 				md5.Update(wadreader, (unsigned)wadreader.GetLength());
 				md5.Final(cksum);
 
@@ -932,7 +932,7 @@ void FWadCollection::RenameNerve ()
 			// cheaper way to know this is not the file
 			continue;
 		}
-		fr->Seek(0, FileRdr::SeekSet);
+		fr->Seek(0, FileReader::SeekSet);
 		MD5Context md5;
 		md5.Update(*fr, (unsigned)fr->GetLength());
 		md5.Final(cksum);
@@ -982,7 +982,7 @@ void FWadCollection::FixMacHexen()
 		return;
 	}
 
-	FileRdr *reader = GetFileReader(GetIwadNum());
+	FileReader *reader = GetFileReader(GetIwadNum());
 	auto iwadSize = reader->GetLength();
 
 	static const long DEMO_SIZE = 13596228;
@@ -996,7 +996,7 @@ void FWadCollection::FixMacHexen()
 		return;
 	}
 
-	reader->Seek(0, FileRdr::SeekSet);
+	reader->Seek(0, FileReader::SeekSet);
 
 	uint8_t checksum[16];
 	MD5Context md5;
@@ -1305,7 +1305,7 @@ DEFINE_ACTION_FUNCTION(_Wads, ReadLump)
 //==========================================================================
 
 
-FileRdr FWadCollection::OpenLumpReader(int lump)
+FileReader FWadCollection::OpenLumpReader(int lump)
 {
 	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
 	{
@@ -1317,14 +1317,14 @@ FileRdr FWadCollection::OpenLumpReader(int lump)
 
 	if (rl->RefCount == 0 && rd != nullptr && !rd->GetBuffer() && !(rl->Flags & (LUMPF_BLOODCRYPT | LUMPF_COMPRESSED)))
 	{
-		FileRdr rdr;
+		FileReader rdr;
 		rdr.OpenFilePart(*rd, rl->GetFileOffset(), rl->LumpSize);
 		return rdr;
 	}
 	return rl->NewReader();	// This always gets a reader to the cache
 }
 
-FileRdr FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
+FileReader FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
 {
 	if ((unsigned)lump >= (unsigned)LumpInfo.Size())
 	{
@@ -1338,7 +1338,7 @@ FileRdr FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
 	{
 		int fileno = Wads.GetLumpFile(lump);
 		const char *filename = Wads.GetWadFullName(fileno);
-		FileRdr fr;
+		FileReader fr;
 		if (fr.OpenFile(filename, rl->GetFileOffset(), rl->LumpSize))
 		{
 			return fr;
@@ -1356,7 +1356,7 @@ FileRdr FWadCollection::ReopenLumpReader(int lump, bool alwayscache)
 //
 //==========================================================================
 
-FileRdr *FWadCollection::GetFileReader(int wadnum)
+FileReader *FWadCollection::GetFileReader(int wadnum)
 {
 	if ((uint32_t)wadnum >= Files.Size())
 	{

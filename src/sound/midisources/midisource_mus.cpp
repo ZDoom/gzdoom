@@ -88,7 +88,7 @@ static const uint8_t CtrlTranslate[15] =
 //
 //==========================================================================
 
-MUSSong2::MUSSong2 (FileRdr &reader)
+MUSSong2::MUSSong2 (FileReader &reader)
 : MusHeader(0), MusBuffer(0)
 {
 	uint8_t front[32];

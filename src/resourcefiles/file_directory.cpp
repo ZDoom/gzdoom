@@ -55,7 +55,7 @@
 
 struct FDirectoryLump : public FResourceLump
 {
-	virtual FileRdr NewReader();
+	virtual FileReader NewReader();
 	virtual int FillCache();
 
 	FString mFullPath;
@@ -90,7 +90,7 @@ public:
 //==========================================================================
 
 FDirectory::FDirectory(const char * directory)
-: FResourceFile(NULL, FileRdr())
+: FResourceFile(NULL, FileReader())
 {
 	FString dirname;
 
@@ -287,9 +287,9 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 //
 //==========================================================================
 
-FileRdr FDirectoryLump::NewReader()
+FileReader FDirectoryLump::NewReader()
 {
-	FileRdr fr;
+	FileReader fr;
 	fr.OpenFile(mFullPath);
 	return fr;
 }
@@ -302,7 +302,7 @@ FileRdr FDirectoryLump::NewReader()
 
 int FDirectoryLump::FillCache()
 {
-	FileRdr fr;
+	FileReader fr;
 	Cache = new char[LumpSize];
 	if (!fr.OpenFile(mFullPath))
 	{

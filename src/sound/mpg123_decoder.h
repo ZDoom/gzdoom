@@ -30,13 +30,13 @@ struct MPG123Decoder : public SoundDecoder
     virtual ~MPG123Decoder();
 
 protected:
-    virtual bool open(FileRdr &reader);
+    virtual bool open(FileReader &reader);
 
 private:
     mpg123_handle *MPG123;
     bool Done;
 
-    FileRdr Reader;
+    FileReader Reader;
     static off_t file_lseek(void *handle, off_t offset, int whence);
     static ssize_t file_read(void *handle, void *buffer, size_t bytes);
 

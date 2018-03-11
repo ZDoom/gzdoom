@@ -82,7 +82,7 @@ static bool InitReader(const char *config_file)
 
 static int read_config_file(const char *name, bool ismain)
 {
-	FileRdr fp;
+	FileReader fp;
 	char tmp[1024], *cp;
 	ToneBank *bank = NULL;
 	int i, j, k, line = 0, words;
@@ -596,7 +596,7 @@ int LoadDMXGUS()
 	int status = -1;
 	int gusbank = (gus_memsize >= 1 && gus_memsize <= 4) ? gus_memsize : -1;
 
-	data.Seek(0, FileRdr::SeekSet);
+	data.Seek(0, FileReader::SeekSet);
 
 	while (data.Gets(readbuffer, 1024) && read < size)
 	{

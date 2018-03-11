@@ -66,7 +66,7 @@ struct dpackheader_t
 class FPakFile : public FUncompressedFile
 {
 public:
-	FPakFile(const char * filename, FileRdr &file);
+	FPakFile(const char * filename, FileReader &file);
 	bool Open(bool quiet);
 };
 
@@ -79,7 +79,7 @@ public:
 //
 //==========================================================================
 
-FPakFile::FPakFile(const char *filename, FileRdr &file) 
+FPakFile::FPakFile(const char *filename, FileReader &file) 
 	: FUncompressedFile(filename, file)
 {
 	Lumps = NULL;
@@ -100,7 +100,7 @@ bool FPakFile::Open(bool quiet)
 	header.dirofs = LittleLong(header.dirofs);
 	
 	dpackfile_t *fileinfo = new dpackfile_t[NumLumps];
-	Reader.Seek (header.dirofs, FileRdr::SeekSet);
+	Reader.Seek (header.dirofs, FileReader::SeekSet);
 	Reader.Read (fileinfo, NumLumps * sizeof(dpackfile_t));
 
 	Lumps = new FUncompressedLump[NumLumps];
@@ -127,15 +127,15 @@ bool FPakFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckPak(const char *filename, FileRdr &file, bool quiet)
+FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
 	if (file.GetLength() >= 12)
 	{
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		file.Read(&head, 4);
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PACK", 4))
 		{
 			FResourceFile *rf = new FPakFile(filename, file);

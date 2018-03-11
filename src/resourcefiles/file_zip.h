@@ -22,7 +22,7 @@ struct FZipLump : public FResourceLump
 	int		Position;
 	unsigned CRC32;
 
-	virtual FileRdr *GetReader();
+	virtual FileReader *GetReader();
 	virtual int FillCache();
 
 private:
@@ -43,7 +43,7 @@ class FZipFile : public FResourceFile
 	FZipLump *Lumps;
 
 public:
-	FZipFile(const char * filename, FileRdr &file);
+	FZipFile(const char * filename, FileReader &file);
 	virtual ~FZipFile();
 	bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }

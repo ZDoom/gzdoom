@@ -967,7 +967,7 @@ FStrifeStartupScreen::FStrifeStartupScreen(int max_progress, HRESULT &hr)
 	// Fill bitmap with the startup image.
 	memset (ST_Util_BitsForBitmap(StartupBitmap), 0xF0, 64000);
 	auto lumpr = Wads.OpenLumpReader (startup_lump);
-	lumpr.Seek (57 * 320, FileRdr::SeekSet);
+	lumpr.Seek (57 * 320, FileReader::SeekSet);
 	lumpr.Read (ST_Util_BitsForBitmap(StartupBitmap) + 41 * 320, 95 * 320);
 
 	// Load the animated overlays.

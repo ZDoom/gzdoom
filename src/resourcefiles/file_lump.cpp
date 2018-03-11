@@ -46,7 +46,7 @@
 class FLumpFile : public FUncompressedFile
 {
 public:
-	FLumpFile(const char * filename, FileRdr &file);
+	FLumpFile(const char * filename, FileReader &file);
 	bool Open(bool quiet);
 };
 
@@ -57,7 +57,7 @@ public:
 //
 //==========================================================================
 
-FLumpFile::FLumpFile(const char *filename, FileRdr &file) 
+FLumpFile::FLumpFile(const char *filename, FileReader &file) 
 	: FUncompressedFile(filename, file)
 {
 }
@@ -95,7 +95,7 @@ bool FLumpFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckLump(const char *filename, FileRdr &file, bool quiet)
+FResourceFile *CheckLump(const char *filename, FileReader &file, bool quiet)
 {
 	// always succeeds
 	FResourceFile *rf = new FLumpFile(filename, file);

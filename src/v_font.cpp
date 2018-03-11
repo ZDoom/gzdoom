@@ -1868,18 +1868,18 @@ void FFontChar2::MakeTexture ()
 		{
 			lump.Read (buff, 7);
 			max = buff[6];
-			lump.Seek (SourcePos - 11, FileRdr::SeekCur);
+			lump.Seek (SourcePos - 11, FileReader::SeekCur);
 		}
 		else if (buff[3] == 0x1A)
 		{
 			lump.Read(buff, 13);
 			max = buff[12] - 1;
-			lump.Seek (SourcePos - 17, FileRdr::SeekCur);
+			lump.Seek (SourcePos - 17, FileReader::SeekCur);
 			rle = false;
 		}
 		else
 		{
-			lump.Seek (SourcePos - 4, FileRdr::SeekCur);
+			lump.Seek (SourcePos - 4, FileReader::SeekCur);
 		}
 	}
 

@@ -248,7 +248,7 @@ bool FScanner::OpenFile (const char *name)
 {
 	Close ();
 
-	FileRdr fr;
+	FileReader fr;
 	if (!fr.OpenFile(name)) return false;
 	auto filesize = fr.GetLength();
 	auto filebuf = new uint8_t[filesize];

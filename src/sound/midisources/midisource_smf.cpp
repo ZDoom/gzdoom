@@ -99,7 +99,7 @@ struct MIDISong2::TrackInfo
 //
 //==========================================================================
 
-MIDISong2::MIDISong2 (FileRdr &reader)
+MIDISong2::MIDISong2 (FileReader &reader)
 : MusHeader(0), Tracks(0)
 {
 	int p;

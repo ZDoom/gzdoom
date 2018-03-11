@@ -17,7 +17,7 @@ namespace Timidity
 FontFile *Fonts;
 extern std::unique_ptr<FSoundFontReader> gus_sfreader;
 
-FontFile *ReadDLS(const char *filename, FileRdr &f)
+FontFile *ReadDLS(const char *filename, FileReader &f)
 {
 	return NULL;
 }
@@ -57,7 +57,7 @@ void font_add(const char *filename, int load_order)
 	}
 	else
 	{
-		FileRdr fp = gus_sfreader->LookupFile(filename).first;
+		FileReader fp = gus_sfreader->LookupFile(filename).first;
 
 		if (fp.isOpen())
 		{

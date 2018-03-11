@@ -236,7 +236,7 @@ void FSavegameManager::ReadSaveStrings()
 				}
 				else // check for old formats.
 				{
-					FileRdr file;
+					FileReader file;
 					if (file.OpenFile(filepath))
 					{
 						PNGHandle *png;
@@ -272,7 +272,7 @@ void FSavegameManager::ReadSaveStrings()
 						}
 						else
 						{
-							file.Seek(0, FileRdr::SeekSet);
+							file.Seek(0, FileReader::SeekSet);
 							if (file.Read(sig, 16) == 16)
 							{
 
@@ -496,7 +496,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			FResourceLump *pic = resf->FindLump("savepic.png");
 			if (pic != nullptr)
 			{
-				FileRdr picreader;
+				FileReader picreader;
 
 				picreader.OpenMemoryArray([=](TArray<uint8_t> &array)
 				{

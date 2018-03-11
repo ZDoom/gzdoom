@@ -156,7 +156,7 @@ struct DDSFileHeader
 class FDDSTexture : public FTexture
 {
 public:
-	FDDSTexture (FileRdr &lump, int lumpnum, void *surfdesc);
+	FDDSTexture (FileReader &lump, int lumpnum, void *surfdesc);
 	~FDDSTexture ();
 
 	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
@@ -181,10 +181,10 @@ protected:
 	static void CalcBitShift (uint32_t mask, uint8_t *lshift, uint8_t *rshift);
 
 	void MakeTexture ();
-	void ReadRGB (FileRdr &lump, uint8_t *tcbuf = NULL);
-	void DecompressDXT1 (FileRdr &lump, uint8_t *tcbuf = NULL);
-	void DecompressDXT3 (FileRdr &lump, bool premultiplied, uint8_t *tcbuf = NULL);
-	void DecompressDXT5 (FileRdr &lump, bool premultiplied, uint8_t *tcbuf = NULL);
+	void ReadRGB (FileReader &lump, uint8_t *tcbuf = NULL);
+	void DecompressDXT1 (FileReader &lump, uint8_t *tcbuf = NULL);
+	void DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t *tcbuf = NULL);
+	void DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *tcbuf = NULL);
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
 	bool UseBasePalette();
@@ -199,11 +199,11 @@ protected:
 //
 //==========================================================================
 
-static bool CheckDDS (FileRdr &file)
+static bool CheckDDS (FileReader &file)
 {
 	DDSFileHeader Header;
 
-	file.Seek(0, FileRdr::SeekSet);
+	file.Seek(0, FileReader::SeekSet);
 	if (file.Read (&Header, sizeof(Header)) != sizeof(Header))
 	{
 		return false;
@@ -222,7 +222,7 @@ static bool CheckDDS (FileRdr &file)
 //
 //==========================================================================
 
-FTexture *DDSTexture_TryCreate (FileRdr &data, int lumpnum)
+FTexture *DDSTexture_TryCreate (FileReader &data, int lumpnum)
 {
 	union
 	{
@@ -232,7 +232,7 @@ FTexture *DDSTexture_TryCreate (FileRdr &data, int lumpnum)
 
 	if (!CheckDDS(data)) return NULL;
 
-	data.Seek(4, FileRdr::SeekSet);
+	data.Seek(4, FileReader::SeekSet);
 	data.Read (&surfdesc, sizeof(surfdesc));
 
 #ifdef __BIG_ENDIAN__
@@ -286,7 +286,7 @@ FTexture *DDSTexture_TryCreate (FileRdr &data, int lumpnum)
 //
 //==========================================================================
 
-FDDSTexture::FDDSTexture (FileRdr &lump, int lumpnum, void *vsurfdesc)
+FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
 : FTexture(NULL, lumpnum), Pixels(0), Spans(0)
 {
 	DDSURFACEDESC2 *surf = (DDSURFACEDESC2 *)vsurfdesc;
@@ -492,7 +492,7 @@ void FDDSTexture::MakeTexture ()
 
 	Pixels = new uint8_t[Width*Height];
 
-	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileRdr::SeekSet);
+	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 
 	if (Format >= 1 && Format <= 4)		// RGB: Format is # of bytes per pixel
 	{
@@ -518,7 +518,7 @@ void FDDSTexture::MakeTexture ()
 //
 //==========================================================================
 
-void FDDSTexture::ReadRGB (FileRdr &lump, uint8_t *tcbuf)
+void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *tcbuf)
 {
 	uint32_t x, y;
 	uint32_t amask = AMask == 0 ? 0 : 0x80000000 >> AShiftL;
@@ -587,7 +587,7 @@ void FDDSTexture::ReadRGB (FileRdr &lump, uint8_t *tcbuf)
 //
 //==========================================================================
 
-void FDDSTexture::DecompressDXT1 (FileRdr &lump, uint8_t *tcbuf)
+void FDDSTexture::DecompressDXT1 (FileReader &lump, uint8_t *tcbuf)
 {
 	const long blocklinelen = ((Width + 3) >> 2) << 3;
 	uint8_t *blockbuff = new uint8_t[blocklinelen];
@@ -685,7 +685,7 @@ void FDDSTexture::DecompressDXT1 (FileRdr &lump, uint8_t *tcbuf)
 //
 //==========================================================================
 
-void FDDSTexture::DecompressDXT3 (FileRdr &lump, bool premultiplied, uint8_t *tcbuf)
+void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t *tcbuf)
 {
 	const long blocklinelen = ((Width + 3) >> 2) << 4;
 	uint8_t *blockbuff = new uint8_t[blocklinelen];
@@ -767,7 +767,7 @@ void FDDSTexture::DecompressDXT3 (FileRdr &lump, bool premultiplied, uint8_t *tc
 //
 //==========================================================================
 
-void FDDSTexture::DecompressDXT5 (FileRdr &lump, bool premultiplied, uint8_t *tcbuf)
+void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t *tcbuf)
 {
 	const long blocklinelen = ((Width + 3) >> 2) << 4;
 	uint8_t *blockbuff = new uint8_t[blocklinelen];
@@ -885,7 +885,7 @@ int FDDSTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 
 	uint8_t *TexBuffer = new uint8_t[4*Width*Height];
 
-	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileRdr::SeekSet);
+	lump.Seek (sizeof(DDSURFACEDESC2) + 4, FileReader::SeekSet);
 
 	if (Format >= 1 && Format <= 4)		// RGB: Format is # of bytes per pixel
 	{

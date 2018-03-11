@@ -62,8 +62,8 @@ struct FResourceLump
 	}
 
 	virtual ~FResourceLump();
-	virtual FileRdr *GetReader();
-	virtual FileRdr NewReader();
+	virtual FileReader *GetReader();
+	virtual FileReader NewReader();
 	virtual int GetFileOffset() { return -1; }
 	virtual int GetIndexNum() const { return 0; }
 	void LumpNameSetup(FString iname);
@@ -81,12 +81,12 @@ protected:
 class FResourceFile
 {
 public:
-	FileRdr Reader;
+	FileReader Reader;
 	const char *Filename;
 protected:
 	uint32_t NumLumps;
 
-	FResourceFile(const char *filename, FileRdr &r);
+	FResourceFile(const char *filename, FileReader &r);
 
 	// for archives that can contain directories
 	void PostProcessArchive(void *lumps, size_t lumpsize);
@@ -98,14 +98,14 @@ private:
 	int FilterLumpsByGameType(int gametype, void *lumps, size_t lumpsize, uint32_t max);
 	bool FindPrefixRange(FString filter, void *lumps, size_t lumpsize, uint32_t max, uint32_t &start, uint32_t &end);
 	void JunkLeftoverFilters(void *lumps, size_t lumpsize, uint32_t max);
-	static FResourceFile *DoOpenResourceFile(const char *filename, FileRdr &file, bool quiet, bool containeronly);
+	static FResourceFile *DoOpenResourceFile(const char *filename, FileReader &file, bool quiet, bool containeronly);
 
 public:
-	static FResourceFile *OpenResourceFile(const char *filename, FileRdr &file, bool quiet = false, bool containeronly = false);
+	static FResourceFile *OpenResourceFile(const char *filename, FileReader &file, bool quiet = false, bool containeronly = false);
 	static FResourceFile *OpenResourceFile(const char *filename, bool quiet = false, bool containeronly = false);
 	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false);
 	virtual ~FResourceFile();
-	FileRdr *GetReader() { return &Reader; }
+	FileReader *GetReader() { return &Reader; }
 	uint32_t LumpCount() const { return NumLumps; }
 	uint32_t GetFirstLump() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }
@@ -120,7 +120,7 @@ struct FUncompressedLump : public FResourceLump
 {
 	int				Position;
 
-	virtual FileRdr *GetReader();
+	virtual FileReader *GetReader();
 	virtual int FillCache();
 	virtual int GetFileOffset() { return Position; }
 
@@ -134,7 +134,7 @@ protected:
 	FUncompressedLump * Lumps;
 
 
-	FUncompressedFile(const char *filename, FileRdr &r);
+	FUncompressedFile(const char *filename, FileReader &r);
 	virtual ~FUncompressedFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
 
@@ -155,7 +155,7 @@ struct FExternalLump : public FResourceLump
 struct FMemoryFile : public FUncompressedFile
 {
 	FMemoryFile(const char *_filename, const void *sdata, int length)
-		: FUncompressedFile(_filename, FileRdr())
+		: FUncompressedFile(_filename, FileReader())
 	{
 		Reader.OpenMemoryArray(sdata, length);
 	}

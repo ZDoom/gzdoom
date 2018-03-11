@@ -74,7 +74,7 @@ protected:
 //
 //==========================================================================
 
-FTexture *FlatTexture_TryCreate(FileRdr & file, int lumpnum)
+FTexture *FlatTexture_TryCreate(FileReader & file, int lumpnum)
 {
 	return new FFlatTexture(lumpnum);
 }

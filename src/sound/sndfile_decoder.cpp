@@ -80,7 +80,7 @@ sf_count_t SndFileDecoder::file_seek(sf_count_t offset, int whence, void *user_d
 {
 	auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
 
-    if(reader.Seek((long)offset, (FileRdr::ESeek)whence) != 0)
+    if(reader.Seek((long)offset, (FileReader::ESeek)whence) != 0)
         return -1;
     return reader.Tell();
 }
@@ -110,7 +110,7 @@ SndFileDecoder::~SndFileDecoder()
     SndFile = 0;
 }
 
-bool SndFileDecoder::open(FileRdr &reader)
+bool SndFileDecoder::open(FileReader &reader)
 {
 	if (!IsSndFilePresent()) return false;
 	

@@ -75,7 +75,7 @@ struct RFFLump
 
 struct FRFFLump : public FUncompressedLump
 {
-	virtual FileRdr *GetReader();
+	virtual FileReader *GetReader();
 	virtual int FillCache();
 
 	uint32_t		IndexNum;
@@ -111,7 +111,7 @@ class FRFFFile : public FResourceFile
 	FRFFLump *Lumps;
 
 public:
-	FRFFFile(const char * filename, FileRdr &file);
+	FRFFFile(const char * filename, FileReader &file);
 	virtual ~FRFFFile();
 	virtual bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
@@ -124,7 +124,7 @@ public:
 //
 //==========================================================================
 
-FRFFFile::FRFFFile(const char *filename, FileRdr &file)
+FRFFFile::FRFFFile(const char *filename, FileReader &file)
 : FResourceFile(filename, file)
 {
 	Lumps = NULL;
@@ -146,7 +146,7 @@ bool FRFFFile::Open(bool quiet)
 	NumLumps = LittleLong(header.NumLumps);
 	header.DirOfs = LittleLong(header.DirOfs);
 	lumps = new RFFLump[header.NumLumps];
-	Reader.Seek (header.DirOfs, FileRdr::SeekSet);
+	Reader.Seek (header.DirOfs, FileReader::SeekSet);
 	Reader.Read (lumps, header.NumLumps * sizeof(RFFLump));
 	BloodCrypt (lumps, header.DirOfs, header.NumLumps * sizeof(RFFLump));
 
@@ -203,7 +203,7 @@ FRFFFile::~FRFFFile()
 //
 //==========================================================================
 
-FileRdr *FRFFLump::GetReader()
+FileReader *FRFFLump::GetReader()
 {
 	// Don't return the reader if this lump is encrypted
 	// In that case always force caching of the lump
@@ -247,15 +247,15 @@ int FRFFLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckRFF(const char *filename, FileRdr &file, bool quiet)
+FResourceFile *CheckRFF(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
 	if (file.GetLength() >= 16)
 	{
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		file.Read(&head, 4);
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
 			FResourceFile *rf = new FRFFFile(filename, file);

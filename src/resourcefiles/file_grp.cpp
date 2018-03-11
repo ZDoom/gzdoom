@@ -73,7 +73,7 @@ struct GrpLump
 class FGrpFile : public FUncompressedFile
 {
 public:
-	FGrpFile(const char * filename, FileRdr &file);
+	FGrpFile(const char * filename, FileReader &file);
 	bool Open(bool quiet);
 };
 
@@ -84,7 +84,7 @@ public:
 //
 //==========================================================================
 
-FGrpFile::FGrpFile(const char *filename, FileRdr &file)
+FGrpFile::FGrpFile(const char *filename, FileReader &file)
 : FUncompressedFile(filename, file)
 {
 	Lumps = NULL;
@@ -134,15 +134,15 @@ bool FGrpFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckGRP(const char *filename, FileRdr &file, bool quiet)
+FResourceFile *CheckGRP(const char *filename, FileReader &file, bool quiet)
 {
 	char head[12];
 
 	if (file.GetLength() >= 12)
 	{
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		file.Read(&head, 12);
-		file.Seek(0, FileRdr::SeekSet);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "KenSilverman", 12))
 		{
 			FResourceFile *rf = new FGrpFile(filename, file);

@@ -54,7 +54,7 @@ bool FPlayList::ChangeList (const char *path)
 {
 	FString playlistdir;
 	FString song;
-	FileRdr fr;
+	FileReader fr;
 	bool first;
 	bool pls;
 	int i;
@@ -133,7 +133,7 @@ bool FPlayList::ChangeList (const char *path)
 	return Songs.Size() != 0;
 }
 
-FString FPlayList::NextLine (FileRdr &file)
+FString FPlayList::NextLine (FileReader &file)
 {
 	char buffer[512];
 	char *skipper;

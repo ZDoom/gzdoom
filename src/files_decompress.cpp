@@ -71,13 +71,13 @@ class DecompressorZ : public DecompressorBase
 {
 	enum { BUFF_SIZE = 4096 };
 
-	FileRdr &File;
+	FileReader &File;
 	bool SawEOF;
 	z_stream Stream;
 	uint8_t InBuff[BUFF_SIZE];
 	
 public:
-	DecompressorZ (FileRdr &file, bool zip)
+	DecompressorZ (FileReader &file, bool zip)
 	: File(file), SawEOF(false)
 	{
 		int err;
@@ -157,13 +157,13 @@ class DecompressorBZ2 : public DecompressorBase
 {
 	enum { BUFF_SIZE = 4096 };
 
-	FileRdr &File;
+	FileReader &File;
 	bool SawEOF;
 	bz_stream Stream;
 	uint8_t InBuff[BUFF_SIZE];
 	
 public:
-	DecompressorBZ2 (FileRdr &file)
+	DecompressorBZ2 (FileReader &file)
 	: File(file), SawEOF(false)
 	{
 		int err;
@@ -261,7 +261,7 @@ class DecompressorLZMA : public DecompressorBase
 {
 	enum { BUFF_SIZE = 4096 };
 
-	FileRdr &File;
+	FileReader &File;
 	bool SawEOF;
 	CLzmaDec Stream;
 	size_t Size;
@@ -271,7 +271,7 @@ class DecompressorLZMA : public DecompressorBase
 
 public:
 
-	DecompressorLZMA (FileRdr &file, size_t uncompressed_size)
+	DecompressorLZMA (FileReader &file, size_t uncompressed_size)
 	: File(file), SawEOF(false)
 	{
 		uint8_t header[4 + LZMA_PROPS_SIZE];
@@ -380,7 +380,7 @@ class DecompressorLZSS : public DecompressorBase
 {
 	enum { BUFF_SIZE = 4096, WINDOW_SIZE = 4096, INTERNAL_BUFFER_SIZE = 128 };
 
-	FileRdr &File;
+	FileReader &File;
 	bool SawEOF;
 	uint8_t InBuff[BUFF_SIZE];
 
@@ -498,7 +498,7 @@ class DecompressorLZSS : public DecompressorBase
 	}
 
 public:
-	DecompressorLZSS(FileRdr &file) : File(file), SawEOF(false)
+	DecompressorLZSS(FileReader &file) : File(file), SawEOF(false)
 	{
 		Stream.State = STREAM_EMPTY;
 		Stream.WindowData = Stream.InternalBuffer = Stream.Window+WINDOW_SIZE;
@@ -560,7 +560,7 @@ public:
 };
 
 
-bool FileRdr::OpenDecompressor(FileRdr &parent, Size length, int method, bool seekable)
+bool FileReader::OpenDecompressor(FileReader &parent, Size length, int method, bool seekable)
 {
 	DecompressorBase *dec = nullptr;
 	switch (method)

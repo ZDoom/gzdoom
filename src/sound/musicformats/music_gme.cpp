@@ -113,7 +113,7 @@ const char *GME_CheckFormat(uint32_t id)
 //
 //==========================================================================
 
-MusInfo *GME_OpenSong(FileRdr &reader, const char *fmt)
+MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
 {
 	gme_type_t type;
 	gme_err_t err;
@@ -140,7 +140,7 @@ MusInfo *GME_OpenSong(FileRdr &reader, const char *fmt)
     {
         delete[] song;
         gme_delete(emu);
-        reader.Seek(fpos, FileRdr::SeekSet);
+        reader.Seek(fpos, FileReader::SeekSet);
         return nullptr;
     }
 
@@ -151,7 +151,7 @@ MusInfo *GME_OpenSong(FileRdr &reader, const char *fmt)
 	{
 		Printf("Failed loading song: %s\n", err);
 		gme_delete(emu);
-        reader.Seek(fpos, FileRdr::SeekSet);
+        reader.Seek(fpos, FileReader::SeekSet);
 		return nullptr;
 	}
 	gme_set_stereo_depth(emu, clamp(*gme_stereodepth, 0.f, 1.f));

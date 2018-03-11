@@ -259,7 +259,7 @@ int FZipExploder::DecodeSF(TArray<HuffNode> &decoder, int numvals)
 }
 
 int FZipExploder::Explode(unsigned char *out, unsigned int outsize,
-						  FileRdr &in, unsigned int insize,
+						  FileReader &in, unsigned int insize,
 						  int flags)
 {
 	int c, i, minMatchLen = 3, len, dist;
@@ -337,9 +337,9 @@ int FZipExploder::Explode(unsigned char *out, unsigned int outsize,
 #define FREE_CODE  HSIZE         /* 0x2000 (code is unused or was cleared) */
 #define HAS_CHILD  (HSIZE << 1)  /* 0x4000 (code has a child--do not clear) */
 
-int ShrinkLoop(unsigned char *out, unsigned int outsize, FileRdr &_In, unsigned int InLeft)
+int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader &_In, unsigned int InLeft)
 {
-	FileRdr *In = &_In;
+	FileReader *In = &_In;
 	unsigned char ReadBuf[256];
 	unsigned short Parent[HSIZE];
 	unsigned char Value[HSIZE], Stack[HSIZE];

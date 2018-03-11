@@ -660,8 +660,6 @@ file( GLOB HEADER_FILES
 	g_inventory/*.h
 	intermission/*.h
 	menu/*.h
-	sound/oplsynth/*.h
-	sound/oplsynth/dosbox/*.h
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
@@ -677,6 +675,9 @@ file( GLOB HEADER_FILES
 	scripting/decorate/*.h
 	scripting/zscript/*.h
 	scripting/vm/*.h
+	sound/midisources/*.h
+	sound/oplsynth/*.h
+	sound/oplsynth/dosbox/*.h
 	sound/timidity/*.h
 	sound/timiditypp/*.h
 	sound/wildmidi/*.h

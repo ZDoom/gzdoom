@@ -48,7 +48,7 @@
 class SndFileSong : public StreamSong
 {
 public:
-	SndFileSong(FileRdr &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass);
+	SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass);
 	~SndFileSong();
 	bool SetSubsong(int subsong);
 	void Play(bool looping, int subsong);
@@ -56,7 +56,7 @@ public:
 	
 protected:
 	FCriticalSection CritSec;
-	FileRdr Reader;
+	FileReader Reader;
 	SoundDecoder *Decoder;
 	int Channels;
 	int SampleRate;
@@ -105,7 +105,7 @@ CUSTOM_CVAR(Int, snd_streambuffersize, 64, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 //
 //==========================================================================
 
-static void ParseVorbisComments(FileRdr &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
+static void ParseVorbisComments(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
 {
 	uint8_t vc_data[4];
 
@@ -116,7 +116,7 @@ static void ParseVorbisComments(FileRdr &fr, uint32_t *start, bool *startass, ui
 	uint32_t vndr_len = vc_data[0] | (vc_data[1]<<8) | (vc_data[2]<<16) | (vc_data[3]<<24);
 
 	// Skip vendor string
-	if(fr.Seek(vndr_len, FileRdr::SeekCur) == -1)
+	if(fr.Seek(vndr_len, FileReader::SeekCur) == -1)
 		return;
 
 	// Following the vendor string is a 32LE integer for the number of
@@ -136,7 +136,7 @@ static void ParseVorbisComments(FileRdr &fr, uint32_t *start, bool *startass, ui
 		if(length >= 128)
 		{
 			// If the comment is "big", skip it
-			if(fr.Seek(length, FileRdr::SeekCur) == -1)
+			if(fr.Seek(length, FileReader::SeekCur) == -1)
 				return;
 			continue;
 		}
@@ -153,7 +153,7 @@ static void ParseVorbisComments(FileRdr &fr, uint32_t *start, bool *startass, ui
 	}
 }
 
-static void FindFlacComments(FileRdr &fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
+static void FindFlacComments(FileReader &fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
 {
 	// Already verified the fLaC marker, so we're 4 bytes into the file
 	bool lastblock = false;
@@ -175,12 +175,12 @@ static void FindFlacComments(FileRdr &fr, uint32_t *loop_start, bool *startass, 
 			return;
 		}
 
-		if(fr.Seek(blocksize, FileRdr::SeekCur) == -1)
+		if(fr.Seek(blocksize, FileReader::SeekCur) == -1)
 			break;
 	}
 }
 
-static void FindOggComments(FileRdr &fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
+static void FindOggComments(FileReader &fr, uint32_t *loop_start, bool *startass, uint32_t *loop_end, bool *endass)
 {
 	uint8_t ogghead[27];
 
@@ -237,7 +237,7 @@ static void FindOggComments(FileRdr &fr, uint32_t *loop_start, bool *startass, u
 
 				segsize -= 7;
 			}
-			if(fr.Seek(segsize, FileRdr::SeekCur) == -1)
+			if(fr.Seek(segsize, FileReader::SeekCur) == -1)
 				return;
 		}
 
@@ -250,7 +250,7 @@ static void FindOggComments(FileRdr &fr, uint32_t *loop_start, bool *startass, u
 	}
 }
 
-void FindLoopTags(FileRdr &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
+void FindLoopTags(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass)
 {
 	uint8_t signature[4];
 
@@ -268,15 +268,15 @@ void FindLoopTags(FileRdr &fr, uint32_t *start, bool *startass, uint32_t *end, b
 //
 //==========================================================================
 
-MusInfo *SndFile_OpenSong(FileRdr &fr)
+MusInfo *SndFile_OpenSong(FileReader &fr)
 {
-	fr.Seek(0, FileRdr::SeekSet);
+	fr.Seek(0, FileReader::SeekSet);
 
 	uint32_t loop_start = 0, loop_end = ~0u;
 	bool startass = false, endass = false;
 	FindLoopTags(fr, &loop_start, &startass, &loop_end, &endass);
 
-	fr.Seek(0, FileRdr::SeekSet);
+	fr.Seek(0, FileReader::SeekSet);
 	auto decoder = SoundRenderer::CreateDecoder(fr);
 	if (decoder == nullptr) return nullptr;
 	return new SndFileSong(fr, decoder, loop_start, loop_end, startass, endass);
@@ -288,7 +288,7 @@ MusInfo *SndFile_OpenSong(FileRdr &fr)
 //
 //==========================================================================
 
-SndFileSong::SndFileSong(FileRdr &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass)
+SndFileSong::SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loop_start, uint32_t loop_end, bool startass, bool endass)
 {
 	ChannelConfig iChannels;
 	SampleType Type;

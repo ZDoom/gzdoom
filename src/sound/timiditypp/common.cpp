@@ -130,7 +130,7 @@ double flt_rand()
 
 struct timidity_file *open_file(const char *name, FSoundFontReader *sfreader)
 {
-    FileRdr fr;
+    FileReader fr;
     FString filename;
     if (name == nullptr)
     {
@@ -161,7 +161,7 @@ void tf_close(struct timidity_file *tf)
 /* This is meant for skipping a few bytes. */
 void skip(struct timidity_file *tf, size_t len)
 {
-	tf->url.Seek((long)len, FileRdr::SeekCur);
+	tf->url.Seek((long)len, FileReader::SeekCur);
 }
 
 char *tf_gets(char *buff, int n, struct timidity_file *tf)
@@ -184,7 +184,7 @@ long tf_read(void *buff, int32_t size, int32_t nitems, struct timidity_file *tf)
 long tf_seek(struct timidity_file *tf, long offset, int whence)
 {
 
-	return (long)tf->url.Seek(offset, (FileRdr::ESeek)whence);
+	return (long)tf->url.Seek(offset, (FileReader::ESeek)whence);
 }
 
 long tf_tell(struct timidity_file *tf)

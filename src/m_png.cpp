@@ -264,7 +264,7 @@ bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 		{
 			crc = AddCRC32 (crc, (uint8_t *)text, len);
 		}
-		crc = BigLong((unsigned int)crc);
+		crc = BigLong(crc);
 		return file->Write (&crc, 4) == 4;
 	}
 	return false;

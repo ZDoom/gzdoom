@@ -507,17 +507,19 @@ FResourceFile *CheckZip(const char *filename, FileRdr &file, bool quiet)
 //
 //==========================================================================
 
-static void time_to_dos(struct tm *time, unsigned short *dosdate, unsigned short *dostime)
+static std::pair<uint16_t, uint16_t> time_to_dos(struct tm *time)
 {
+	std::pair<uint16_t, uint16_t> val;
 	if (time == NULL || time->tm_year < 80)
 	{
-		*dosdate = *dostime = 0;
+		val.first = val.second = 0;
 	}
 	else
 	{
-		*dosdate = LittleShort((time->tm_year - 80) * 512 + (time->tm_mon + 1) * 32 + time->tm_mday);
-		*dostime = LittleShort(time->tm_hour * 2048 + time->tm_min * 32 + time->tm_sec / 2);
+		val.first = (time->tm_year - 80) * 512 + (time->tm_mon + 1) * 32 + time->tm_mday;
+		val.second= time->tm_hour * 2048 + time->tm_min * 32 + time->tm_sec / 2;
 	}
+	return val;
 }
 
 //==========================================================================
@@ -532,7 +534,7 @@ static void time_to_dos(struct tm *time, unsigned short *dosdate, unsigned short
 //
 //==========================================================================
 
-int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time)
+int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime)
 {
 	FZipLocalFileHeader local;
 	int position;
@@ -540,10 +542,10 @@ int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &c
 	local.Magic = ZIP_LOCALFILE;
 	local.VersionToExtract[0] = 20;
 	local.VersionToExtract[1] = 0;
-	local.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort(2) : LittleShort((uint16_t)content.mZipFlags);
-	local.Method = LittleShort(content.mMethod);
-	local.ModDate = date;
-	local.ModTime = time;
+	local.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort((uint16_t)2) : LittleShort((uint16_t)content.mZipFlags);
+	local.Method = LittleShort((uint16_t)content.mMethod);
+	local.ModDate = LittleShort(dostime.first);
+	local.ModTime = LittleShort(dostime.second);
 	local.CRC32 = content.mCRC32;
 	local.UncompressedSize = LittleLong(content.mSize);
 	local.CompressedSize = LittleLong(content.mCompressedSize);
@@ -573,7 +575,7 @@ int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &c
 //
 //==========================================================================
 
-int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time, int position)
+int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime, int position)
 {
 	FZipCentralDirectoryInfo dir;
 
@@ -582,10 +584,10 @@ int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompress
 	dir.VersionMadeBy[1] = 0;
 	dir.VersionToExtract[0] = 20;
 	dir.VersionToExtract[1] = 0;
-	dir.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort(2) : LittleShort((uint16_t)content.mZipFlags);
-	dir.Method = LittleShort(content.mMethod);
-	dir.ModTime = time;
-	dir.ModDate = date;
+	dir.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort((uint16_t)2) : LittleShort((uint16_t)content.mZipFlags);
+	dir.Method = LittleShort((uint16_t)content.mMethod);
+	dir.ModTime = LittleShort(dostime.first);
+	dir.ModDate = LittleShort(dostime.second);
 	dir.CRC32 = content.mCRC32;
 	dir.CompressedSize = LittleLong(content.mCompressedSize);
 	dir.UncompressedSize = LittleLong(content.mSize);
@@ -610,10 +612,9 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 	// try to determine local time
 	struct tm *ltime;
 	time_t ttime;
-	uint16_t mydate, mytime;
 	ttime = time(nullptr);
 	ltime = localtime(&ttime);
-	time_to_dos(ltime, &mydate, &mytime);
+	auto dostime = time_to_dos(ltime);
 
 	TArray<int> positions;
 
@@ -624,7 +625,7 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 	{
 		for (unsigned i = 0; i < filenames.Size(); i++)
 		{
-			int pos = AppendToZip(f, filenames[i], content[i], mydate, mytime);
+			int pos = AppendToZip(f, filenames[i], content[i], dostime);
 			if (pos == -1)
 			{
 				delete f;
@@ -637,7 +638,7 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		int dirofs = (int)f->Tell();
 		for (unsigned i = 0; i < filenames.Size(); i++)
 		{
-			if (AppendCentralDirectory(f, filenames[i], content[i], mydate, mytime, positions[i]) < 0)
+			if (AppendCentralDirectory(f, filenames[i], content[i], dostime, positions[i]) < 0)
 			{
 				delete f;
 				remove(filename);
@@ -650,9 +651,9 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		dirend.Magic = ZIP_ENDOFDIR;
 		dirend.DiskNumber = 0;
 		dirend.FirstDisk = 0;
-		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(filenames.Size());
+		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort((uint16_t)filenames.Size());
 		dirend.DirectoryOffset = LittleLong(dirofs);
-		dirend.DirectorySize = LittleLong(f->Tell() - dirofs);
+		dirend.DirectorySize = LittleLong((uint32_t)(f->Tell() - dirofs));
 		dirend.ZipCommentLength = 0;
 		if (f->Write(&dirend, sizeof(dirend)) != sizeof(dirend))
 		{

@@ -106,18 +106,18 @@ MIDIWaveWriter::MIDIWaveWriter(const char *filename, SoftSynthMIDIDevice *playde
 		playDevice->CalcTickRate();
 		fmt.ChunkID = MAKE_ID('f','m','t',' ');
 		fmt.ChunkLen = LittleLong(uint32_t(sizeof(fmt) - 8));
-		fmt.FormatTag = LittleShort(0xFFFE);		// WAVE_FORMAT_EXTENSIBLE
-		fmt.Channels = LittleShort(2);
+		fmt.FormatTag = LittleShort((uint16_t)0xFFFE);		// WAVE_FORMAT_EXTENSIBLE
+		fmt.Channels = LittleShort((uint16_t)2);
 		fmt.SamplesPerSec = LittleLong(SampleRate);
 		fmt.AvgBytesPerSec = LittleLong(SampleRate * 8);
-		fmt.BlockAlign = LittleShort(8);
-		fmt.BitsPerSample = LittleShort(32);
-		fmt.ExtensionSize = LittleShort(2 + 4 + 16);
-		fmt.ValidBitsPerSample = LittleShort(32);
+		fmt.BlockAlign = LittleShort((uint16_t)8);
+		fmt.BitsPerSample = LittleShort((uint16_t)32);
+		fmt.ExtensionSize = LittleShort((uint16_t)(2 + 4 + 16));
+		fmt.ValidBitsPerSample = LittleShort((uint16_t)32);
 		fmt.ChannelMask = LittleLong(3);
 		fmt.SubFormatA = LittleLong(0x00000003);	// Set subformat to KSDATAFORMAT_SUBTYPE_IEEE_FLOAT
-		fmt.SubFormatB = LittleShort(0x0000);
-		fmt.SubFormatC = LittleShort(0x0010);
+		fmt.SubFormatB = 0x0000;
+		fmt.SubFormatC = LittleShort((uint16_t)0x0010);
 		fmt.SubFormatD[0] = 0x80;
 		fmt.SubFormatD[1] = 0x00;
 		fmt.SubFormatD[2] = 0x00;

@@ -886,6 +886,7 @@ set (PCH_SOURCES
 	edata.cpp
 	f_wipe.cpp
 	files.cpp
+	files_decompress.cpp
 	g_doomedmap.cpp
 	g_game.cpp
 	g_hub.cpp

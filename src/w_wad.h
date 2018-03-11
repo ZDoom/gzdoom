@@ -68,43 +68,17 @@ typedef enum {
 
 enum ELumpFlags
 {
-	LUMPF_MAYBEFLAT=1,
-	LUMPF_ZIPFILE=2,
-	LUMPF_EMBEDDED=4,
-	LUMPF_BLOODCRYPT = 8,
+	LUMPF_MAYBEFLAT=1,		// might be a flat outside F_START/END
+	LUMPF_ZIPFILE=2,		// contains a full path
+	LUMPF_EMBEDDED=4,		// from an embedded WAD
+	LUMPF_BLOODCRYPT = 8,	// encrypted
+	LUMPF_COMPRESSED = 16,	// compressed
+	LUMPF_SEQUENTIAL = 32,	// compressed but a sequential reader can be retrieved.
 };
 
 
 // [RH] Copy an 8-char string and uppercase it.
 void uppercopy (char *to, const char *from);
-
-// A very loose reference to a lump on disk. This is really just a wrapper
-// around the main wad's FILE object with a different length recorded. Since
-// two lumps from the same wad share the same FILE, you cannot read from
-// both of them independantly.
-class FWadLump : public FileReader
-{
-public:
-	FWadLump ();
-	FWadLump (const FWadLump &copy);
-#ifdef _DEBUG
-	FWadLump & operator= (const FWadLump &copy);
-#endif
-	~FWadLump();
-
-	long Seek (long offset, int origin);
-	long Read (void *buffer, long len);
-	char *Gets(char *strbuf, int len);
-
-private:
-	FWadLump (FResourceLump *Lump, bool alwayscache = false);
-	FWadLump(int lumpnum, FResourceLump *lump);
-
-	FResourceLump *Lump;
-
-	friend class FWadCollection;
-};
-
 
 // A lump in memory.
 class FMemLump
@@ -138,7 +112,7 @@ public:
 	void SetIwadNum(int x) { IwadIndex = x; }
 
 	void InitMultipleFiles (TArray<FString> &filenames);
-	void AddFile (const char *filename, FileReader *wadinfo = NULL);
+	void AddFile (const char *filename, FileRdr *wadinfo = NULL);
 	int CheckIfWadLoaded (const char *name);
 
 	const char *GetWadName (int wadnum) const;
@@ -180,10 +154,6 @@ public:
 	FileRdr OpenLumpReader(int lump);		// opens a reader that redirects to the containing file's one.
 	FileRdr ReopenLumpReader(int lump, bool alwayscache = false);		// opens an independent reader.
 
-	FWadLump OpenLumpNum (int lump);
-	FWadLump *ReopenLumpNum (int lump);	// Opens a new, independent FILE
-	FWadLump *ReopenLumpNumNewFile (int lump);	// Opens a new, independent FILE
-	
 	int FindLump (const char *name, int *lastlump, bool anyns=false);		// [RH] Find lumps with duplication
 	int FindLumpMulti (const char **names, int *lastlump, bool anyns = false, int *nameindex = NULL); // same with multiple possible names
 	bool CheckLumpName (int lump, const char *name);	// [RH] True if lump's name == name
@@ -202,7 +172,6 @@ public:
 	int GetLumpIndexNum (int lump) const;			// Returns the RFF index number for this lump
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 
-	bool IsUncompressedFile(int lump) const;
 	bool IsEncryptedFile(int lump) const;
 
 	int GetNumLumps () const;
@@ -237,7 +206,7 @@ private:
 	void RenameNerve();
 	void FixMacHexen();
 	void DeleteAll();
-	FileReader * GetFileReader(int wadnum);	// Gets a FileReader object to the entire WAD
+	FileRdr * GetFileReader(int wadnum);	// Gets a FileRdr object to the entire WAD
 };
 
 extern FWadCollection Wads;

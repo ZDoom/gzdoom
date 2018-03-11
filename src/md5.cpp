@@ -269,8 +269,8 @@ CCMD (md5sum)
 	}
 	for (int i = 1; i < argv.argc(); ++i)
 	{
-		FileReader fr;
-		if (!fr.Open(argv[i]))
+		FileRdr fr;
+		if (!fr.OpenFile(argv[i]))
 		{
 			Printf("%s: %s\n", argv[i], strerror(errno));
 		}

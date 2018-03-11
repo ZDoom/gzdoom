@@ -215,18 +215,18 @@ bool P_CheckForGLNodes()
 static int firstglvertex;
 static bool format5;
 
-static bool LoadGLVertexes(FileReader * lump)
+static bool LoadGLVertexes(FileRdr &lump)
 {
 	uint8_t *gldata;
 	int                 i;
 
 	firstglvertex = level.vertexes.Size();
 	
-	int gllen=lump->GetLength();
+	auto gllen=lump.GetLength();
 
 	gldata = new uint8_t[gllen];
-	lump->Seek(0, SEEK_SET);
-	lump->Read(gldata, gllen);
+	lump.Seek(0, FileRdr::SeekSet);
+	lump.Read(gldata, gllen);
 
 	if (*(int *)gldata == gNd5) 
 	{
@@ -246,7 +246,7 @@ static bool LoadGLVertexes(FileReader * lump)
 	else format5=false;
 
 	mapglvertex_t*	mgl = (mapglvertex_t *)(gldata + GL_VERT_OFFSET);
-	unsigned numvertexes = firstglvertex +  (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t);
+	unsigned numvertexes = (unsigned)(firstglvertex +  (gllen - GL_VERT_OFFSET)/sizeof(mapglvertex_t));
 
 	auto oldvertexes = &level.vertexes[0];
 	level.vertexes.Resize(numvertexes);
@@ -293,16 +293,16 @@ static inline int checkGLVertex3(int num)
 //
 //==========================================================================
 
-static bool LoadGLSegs(FileReader * lump)
+static bool LoadGLSegs(FileRdr &lump)
 {
 	char		*data;
 	int			i;
 	line_t		*ldef=NULL;
 	
-	int numsegs = lump->GetLength();
+	int numsegs = (int)lump.GetLength();
 	data= new char[numsegs];
-	lump->Seek(0, SEEK_SET);
-	lump->Read(data, numsegs);
+	lump.Seek(0, FileRdr::SeekSet);
+	lump.Read(data, numsegs);
 	auto &segs = level.segs;
 
 #ifdef _MSC_VER
@@ -437,15 +437,15 @@ static bool LoadGLSegs(FileReader * lump)
 //
 //==========================================================================
 
-static bool LoadGLSubsectors(FileReader * lump)
+static bool LoadGLSubsectors(FileRdr &lump)
 {
 	char * datab;
 	int  i;
 	
-	auto numsubsectors = lump->GetLength();
+	int numsubsectors = (int)lump.GetLength();
 	datab = new char[numsubsectors];
-	lump->Seek(0, SEEK_SET);
-	lump->Read(datab, numsubsectors);
+	lump.Seek(0, FileRdr::SeekSet);
+	lump.Read(datab, numsubsectors);
 	
 	if (numsubsectors == 0)
 	{
@@ -521,7 +521,7 @@ static bool LoadGLSubsectors(FileReader * lump)
 //
 //==========================================================================
 
-static bool LoadNodes (FileReader * lump)
+static bool LoadNodes (FileRdr &lump)
 {
 	const int NF_SUBSECTOR = 0x8000;
 	const int GL5_NF_SUBSECTOR = (1 << 31);
@@ -534,15 +534,15 @@ static bool LoadNodes (FileReader * lump)
 	if (!format5)
 	{
 		mapnode_t*	mn, * basemn;
-		unsigned numnodes = unsigned(lump->GetLength() / sizeof(mapnode_t));
+		unsigned numnodes = unsigned(lump.GetLength() / sizeof(mapnode_t));
 
 		if (numnodes == 0) return false;
 
 		level.nodes.Alloc(numnodes);
-		lump->Seek(0, SEEK_SET);
+		lump.Seek(0, FileRdr::SeekSet);
 
 		basemn = mn = new mapnode_t[numnodes];
-		lump->Read(mn, lump->GetLength());
+		lump.Read(mn, lump.GetLength());
 
 		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
 		memset (used, 0, sizeof(uint16_t)*numnodes);
@@ -594,15 +594,15 @@ static bool LoadNodes (FileReader * lump)
 	else
 	{
 		gl5_mapnode_t*	mn, * basemn;
-		auto numnodes = unsigned(lump->GetLength() / sizeof(gl5_mapnode_t));
+		auto numnodes = unsigned(lump.GetLength() / sizeof(gl5_mapnode_t));
 
 		if (numnodes == 0) return false;
 
 		level.nodes.Alloc(numnodes);
-		lump->Seek(0, SEEK_SET);
+		lump.Seek(0, FileRdr::SeekSet);
 
 		basemn = mn = new gl5_mapnode_t[numnodes];
-		lump->Read(mn, lump->GetLength());
+		lump.Read(mn, lump.GetLength());
 
 		used = (uint16_t *)alloca (sizeof(uint16_t)*numnodes);
 		memset (used, 0, sizeof(uint16_t)*numnodes);
@@ -660,7 +660,7 @@ static bool LoadNodes (FileReader * lump)
 //
 //==========================================================================
 
-static bool DoLoadGLNodes(FileReader ** lumps)
+static bool DoLoadGLNodes(FileRdr * lumps)
 {
 	int missing = 0;
 
@@ -803,7 +803,7 @@ static int FindGLNodesInFile(FResourceFile * f, const char * label)
 				if (mustcheck)
 				{
 					char check[16]={0};
-					FileReader *fr = f->GetLump(i)->GetReader();
+					auto fr = f->GetLump(i)->GetReader();
 					fr->Read(check, 16);
 					if (MatchHeader(label, check)) return i;
 				}
@@ -857,7 +857,7 @@ bool P_LoadGLNodes(MapData * map)
 
 	if (!CheckCachedNodes(map))
 	{
-		FileReader *gwalumps[4] = { NULL, NULL, NULL, NULL };
+		FileRdr gwalumps[4];
 		char path[256];
 		int li;
 		int lumpfile = Wads.GetLumpFile(map->lumpnum);
@@ -875,7 +875,7 @@ bool P_LoadGLNodes(MapData * map)
 				// GL nodes are loaded with a WAD
 				for(int i=0;i<4;i++)
 				{
-					gwalumps[i]=Wads.ReopenLumpNum(li+i+1);
+					gwalumps[i]=Wads.ReopenLumpReader(li+i+1);
 				}
 				return DoLoadGLNodes(gwalumps);
 			}
@@ -889,7 +889,7 @@ bool P_LoadGLNodes(MapData * map)
 					strcpy(ext, ".gwa");
 					// Todo: Compare file dates
 
-					f_gwa = FResourceFile::OpenResourceFile(path, NULL, true);
+					f_gwa = FResourceFile::OpenResourceFile(path, true);
 					if (f_gwa==NULL) return false;
 
 					strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(map->lumpnum), 8);
@@ -918,8 +918,6 @@ bool P_LoadGLNodes(MapData * map)
 
 		if (f_gwa != map->resource)
 			delete f_gwa;
-		for(unsigned int i = 0;i < 4;++i)
-			delete gwalumps[i];
 		return result;
 	}
 	else return true;

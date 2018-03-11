@@ -77,7 +77,7 @@ void P_ResumeConversation ();
 
 void P_ConversationCommand (int netcode, int player, uint8_t **stream);
 
-class FileReader;
+class FileRdr;
 bool P_ParseUSDF(int lumpnum, FileRdr &lump, int lumplen);
 
 

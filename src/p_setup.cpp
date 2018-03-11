@@ -240,7 +240,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 MapData *P_OpenMapData(const char * mapname, bool justcheck)
 {
 	MapData * map = new MapData;
-	FileReader * wadReader = NULL;
+	FileRdr * wadReader = nullptr;
 	bool externalfile = !strnicmp(mapname, "file:", 5);
 	
 	if (externalfile)
@@ -251,7 +251,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			delete map;
 			return NULL;
 		}
-		map->resource = FResourceFile::OpenResourceFile(mapname, NULL, true);
+		map->resource = FResourceFile::OpenResourceFile(mapname, true);
 		wadReader = map->resource->GetReader();
 	}
 	else
@@ -396,7 +396,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				return NULL;
 			}
 			map->lumpnum = lump_wad;
-			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), Wads.ReopenLumpNum(lump_wad), true);
+			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), Wads.ReopenLumpReader(lump_wad), true);
 			wadReader = map->resource->GetReader();
 		}
 	}
@@ -404,7 +404,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 	// Although we're using the resource system, we still want to be sure we're
 	// reading from a wad file.
-	wadReader->Seek(0, SEEK_SET);
+	wadReader->Seek(0, FileRdr::SeekSet);
 	wadReader->Read(&id, sizeof(id));
 	
 	if (id == IWAD_ID || id == PWAD_ID)
@@ -412,7 +412,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 		char maplabel[9]="";
 		int index=0;
 
-		map->MapLumps[0].Reader = FileRdr(map->resource->GetLump(0)->NewReader());
+		map->MapLumps[0].Reader = map->resource->GetLump(0)->NewReader();
 		strncpy(map->MapLumps[0].Name, map->resource->GetLump(0)->Name, 8);
 
 		for(uint32_t i = 1; i < map->resource->LumpCount(); i++)
@@ -422,7 +422,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			if (i == 1 && !strnicmp(lumpname, "TEXTMAP", 8))
 			{
 				map->isText = true;
-				map->MapLumps[ML_TEXTMAP].Reader = FileRdr(map->resource->GetLump(i)->NewReader());
+				map->MapLumps[ML_TEXTMAP].Reader = map->resource->GetLump(i)->NewReader();
 				strncpy(map->MapLumps[ML_TEXTMAP].Name, lumpname, 8);
 				for(int i = 2;; i++)
 				{
@@ -454,7 +454,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						return map;
 					}
 					else continue;
-					map->MapLumps[index].Reader = FileRdr(map->resource->GetLump(i)->NewReader());
+					map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -486,7 +486,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				maplabel[8]=0;
 			}
 
-			map->MapLumps[index].Reader = FileRdr(map->resource->GetLump(i)->NewReader());
+			map->MapLumps[index].Reader = map->resource->GetLump(i)->NewReader();
 			strncpy(map->MapLumps[index].Name, lumpname, 8);
 		}
 	}
@@ -855,7 +855,7 @@ void P_LoadVertexes (MapData * map)
 //
 //===========================================================================
 
-void P_LoadZSegs (FileReaderBase &data)
+void P_LoadZSegs (FileRdr &data)
 {
 	for (auto &seg : level.segs)
 	{
@@ -891,7 +891,7 @@ void P_LoadZSegs (FileReaderBase &data)
 //
 //===========================================================================
 
-void P_LoadGLZSegs (FileReaderBase &data, int type)
+void P_LoadGLZSegs (FileRdr &data, int type)
 {
 	for (unsigned i = 0; i < level.subsectors.Size(); ++i)
 	{
@@ -961,7 +961,7 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 //
 //===========================================================================
 
-void LoadZNodes(FileReaderBase &data, int glnodes)
+void LoadZNodes(FileRdr &data, int glnodes)
 {
 	// Read extra vertices added during node building
 	uint32_t orgVerts, newVerts;
@@ -980,7 +980,7 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	for (i = 0; i < newVerts; ++i)
 	{
-		fixed_t x, y;
+		int32_t x, y;
 		data >> x >> y;
 		level.vertexes[i + orgVerts].set(x, y);
 	}
@@ -1145,15 +1145,17 @@ void P_LoadZNodes (FileRdr &dalump, uint32_t id)
 		return;
 	}
 	
-	auto daptr = dalump.Reader();
 	if (compressed)
 	{
-		FileReaderZ data (*daptr);
-		LoadZNodes(data, type);
+		FileRdr zip;
+		if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false))
+		{
+			LoadZNodes(zip, type);
+		}
 	}
 	else
 	{
-		LoadZNodes(*daptr, type);
+		LoadZNodes(dalump, type);
 	}
 }
 

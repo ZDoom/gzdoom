@@ -145,7 +145,7 @@ FileRdr FSF2Reader::OpenFile(const char *name)
 
 FZipPatReader::FZipPatReader(const char *filename)
 {
-	resf = FResourceFile::OpenResourceFile(filename, nullptr, true);
+	resf = FResourceFile::OpenResourceFile(filename, true);
 }
 
 FZipPatReader::~FZipPatReader()
@@ -166,7 +166,7 @@ FileRdr FZipPatReader::OpenFile(const char *name)
 		auto lump = resf->FindLump(name);
 		if (lump != nullptr)
 		{
-			return FileRdr(lump->NewReader());	// temporary workaround
+			return lump->NewReader();
 		}
 	}
 	return fr;
@@ -306,7 +306,7 @@ void FSoundFontManager::ProcessOneFile(const FString &fn)
 		}
 		else if (!memcmp(head, "PK", 2))
 		{
-			auto zip = FResourceFile::OpenResourceFile(fn, nullptr, true);
+			auto zip = FResourceFile::OpenResourceFile(fn, true);
 			if (zip != nullptr)
 			{
 				if (zip->LumpCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code

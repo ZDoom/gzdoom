@@ -174,7 +174,7 @@ void FSavegameManager::ReadSaveStrings()
 				// I_FindName only returns the file's name and not its full path
 				FString filepath = G_BuildSaveName(I_FindName(&c_file), -1);
 
-				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, nullptr, true, true);
+				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, true, true);
 				if (savegame != nullptr)
 				{
 					bool oldVer = false;
@@ -469,7 +469,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 		(node = SaveGames[index]) &&
 		!node->Filename.IsEmpty() &&
 		!node->bOldVersion &&
-		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), nullptr, true)) != nullptr)
+		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
 	{
 		FResourceLump *info = resf->FindLump("info.json");
 		if (info == nullptr)

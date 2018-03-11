@@ -47,7 +47,6 @@
 #include "textures/textures.h"
 #include "v_palette.h"
 
-typedef bool (*CheckFunc)(FileReader & file);
 typedef FTexture * (*CreateFunc)(FileRdr & file, int lumpnum);
 
 struct TexCreateInfo

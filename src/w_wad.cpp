@@ -313,7 +313,7 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr)
 					sprintf(cksumout + (j * 2), "%02X", cksum[j]);
 				}
 
-				fprintf(hashfile, "file: %s, hash: %s, size: %lld\n", filename, cksumout, (int64_t)wadreader.GetLength());
+				fprintf(hashfile, "file: %s, hash: %s, size: %d\n", filename, cksumout, (int)wadreader.GetLength());
 			}
 
 			else
@@ -326,7 +326,8 @@ void FWadCollection::AddFile (const char *filename, FileReader *wadr)
 				if (!(lump->Flags & LUMPF_EMBEDDED))
 				{
 					MD5Context md5;
-					md5.Update(lump->NewReader(), lump->LumpSize);
+					auto reader = lump->NewReader();
+					md5.Update(reader, lump->LumpSize);
 					md5.Final(cksum);
 
 					for (size_t j = 0; j < sizeof(cksum); ++j)

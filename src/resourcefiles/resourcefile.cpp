@@ -323,13 +323,17 @@ FResourceFile *FResourceFile::OpenDirectory(const char *filename, bool quiet)
 //
 //==========================================================================
 
-FResourceFile::FResourceFile(const char *filename, FileReader &r)
+FResourceFile::FResourceFile(const char *filename)
 {
 	if (filename != NULL) Filename = copystring(filename);
 	else Filename = NULL;
-	Reader = std::move(r);
 }
 
+FResourceFile::FResourceFile(const char *filename, FileReader &r)
+	: FResourceFile(filename)
+{
+	Reader = std::move(r);
+}
 
 FResourceFile::~FResourceFile()
 {
@@ -642,11 +646,13 @@ int FUncompressedLump::FillCache()
 //
 //==========================================================================
 
+FUncompressedFile::FUncompressedFile(const char *filename)
+: FResourceFile(filename)
+{}
+
 FUncompressedFile::FUncompressedFile(const char *filename, FileReader &r)
-: FResourceFile(filename, r)
-{
-	Lumps = NULL;
-}
+	: FResourceFile(filename, r)
+{}
 
 FUncompressedFile::~FUncompressedFile()
 {

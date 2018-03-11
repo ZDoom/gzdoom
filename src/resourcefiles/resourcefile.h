@@ -86,6 +86,7 @@ public:
 protected:
 	uint32_t NumLumps;
 
+	FResourceFile(const char *filename);
 	FResourceFile(const char *filename, FileReader &r);
 
 	// for archives that can contain directories
@@ -131,14 +132,12 @@ struct FUncompressedLump : public FResourceLump
 class FUncompressedFile : public FResourceFile
 {
 protected:
-	FUncompressedLump * Lumps;
+	FUncompressedLump * Lumps = nullptr;
 
-
+	FUncompressedFile(const char *filename);
 	FUncompressedFile(const char *filename, FileReader &r);
 	virtual ~FUncompressedFile();
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
-
-public:
 };
 
 

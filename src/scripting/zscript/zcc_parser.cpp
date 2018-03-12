@@ -484,7 +484,7 @@ static void DoParse(int lumpnum)
 	else if (FScriptPosition::WarnCounter > 0)
 	{
 		// If we got warnings, but no errors, print the information but continue.
-		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s", FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
+		Printf(TEXTCOLOR_ORANGE "%d warnings while compiling %s\n", FScriptPosition::WarnCounter, Wads.GetLumpFullPath(lumpnum).GetChars());
 	}
 
 }

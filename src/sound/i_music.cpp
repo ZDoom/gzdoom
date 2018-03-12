@@ -45,6 +45,7 @@
 #include <ctype.h>
 #include <assert.h>
 #include <stdio.h>
+#include <zlib.h>
 
 #include "i_musicinterns.h"
 #include "doomtype.h"

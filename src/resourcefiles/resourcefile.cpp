@@ -34,6 +34,7 @@
 **
 */
 
+#include <zlib.h>
 #include "resourcefile.h"
 #include "cmdlib.h"
 #include "w_wad.h"

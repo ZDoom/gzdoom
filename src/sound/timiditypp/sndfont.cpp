@@ -223,7 +223,8 @@ void Instruments::free_soundfonts()
 	SFInsts *sf, *next;
 	
 	for (sf = sfrecs; sf != NULL; sf = next) {
-		tf_close(sf->tf);
+		if (sf->tf != nullptr) tf_close(sf->tf);
+		sf->tf = nullptr;
 		reuse_mblock(&sf->pool);
 		next = sf->next;
 		free(sf);

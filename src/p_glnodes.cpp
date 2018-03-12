@@ -45,6 +45,7 @@
 
 #endif
 
+#include <zlib.h>
 #include "templates.h"
 #include "m_alloc.h"
 #include "m_argv.h"

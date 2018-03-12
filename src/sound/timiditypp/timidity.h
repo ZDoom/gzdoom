@@ -28,7 +28,6 @@
 #ifndef TIMIDITY_H_INCLUDED
 #define TIMIDITY_H_INCLUDED 1
 
-#include "c_cvars.h"
 #include "controls.h"
 #include "mblock.h"
 

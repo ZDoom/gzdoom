@@ -35,6 +35,8 @@
 
 // This also pulls in windows.h
 #include "LzmaDec.h"
+#include <zlib.h>
+#include <bzlib.h>
 
 #include "files.h"
 #include "i_system.h"

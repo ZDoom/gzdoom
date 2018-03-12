@@ -37,9 +37,7 @@
 #define FILES_H
 
 #include <stdio.h>
-#include <zlib.h>
 #include <functional>
-#include "bzlib.h"
 #include "doomtype.h"
 #include "m_swap.h"
 

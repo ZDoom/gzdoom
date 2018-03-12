@@ -106,7 +106,8 @@ public:
 	static FResourceFile *OpenResourceFile(const char *filename, bool quiet = false, bool containeronly = false);
 	static FResourceFile *OpenDirectory(const char *filename, bool quiet = false);
 	virtual ~FResourceFile();
-	FileReader *GetReader() { return &Reader; }
+    // If this FResourceFile represents a directory, the Reader object is not usable so don't return it.
+    FileReader *GetReader() { return Reader.isOpen()? &Reader : nullptr; }
 	uint32_t LumpCount() const { return NumLumps; }
 	uint32_t GetFirstLump() const { return FirstLump; }
 	void SetFirstLump(uint32_t f) { FirstLump = f; }

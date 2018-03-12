@@ -761,6 +761,7 @@ DEFINE_PROPERTY(translation, L, Actor)
 	else 
 	{
 		FRemapTable CurrentTranslation;
+		bool success = true;
 
 		CurrentTranslation.MakeIdentity();
 		for(int i = 1; i < PROP_PARM_COUNT; i++)
@@ -774,10 +775,15 @@ DEFINE_PROPERTY(translation, L, Actor)
 			}
 			else
 			{
-				CurrentTranslation.AddToTranslation(str);
+				// parse all ranges to get a complete list of errors, if more than one range fails.
+				success |= CurrentTranslation.AddToTranslation(str);
 			}
 		}
 		defaults->Translation = CurrentTranslation.StoreTranslation (TRANSLATION_Decorate);
+		if (!success)
+		{
+			bag.ScriptPosition.Message(MSG_WARNING, "Failed to parse translation");
+		}
 	}
 }
 

@@ -2742,7 +2742,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						// Defaults must be identical to parent class
 						if (parentfunc->Variants[0].Implementation->DefaultArgs.Size() > 0)
 						{
-							Printf("Copying defaults from %s to %s\n", parentfunc->Variants[0].Implementation->PrintableName.GetChars(), sym->Variants[0].Implementation->PrintableName.GetChars());
 							sym->Variants[0].Implementation->DefaultArgs = parentfunc->Variants[0].Implementation->DefaultArgs;
 						}
 					}

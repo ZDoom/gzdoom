@@ -1363,7 +1363,10 @@ FileReader *FWadCollection::GetFileReader(int wadnum)
 	{
 		return NULL;
 	}
-	return Files[wadnum]->GetReader();
+
+	// Return reader for real files only and nullptr otherwise
+	FileReader* const reader = Files[wadnum]->GetReader();
+	return reader->isOpen() ? reader : nullptr;
 }
 
 //==========================================================================

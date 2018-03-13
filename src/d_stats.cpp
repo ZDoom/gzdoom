@@ -185,12 +185,49 @@ static int GetOSVersion()
 #endif
 }
 
+
+#ifdef _WIN32
+
+static int  GetCoreInfo()
+{
+	PSYSTEM_LOGICAL_PROCESSOR_INFORMATION buffer = NULL;
+	PSYSTEM_LOGICAL_PROCESSOR_INFORMATION ptr = NULL;
+	DWORD returnLength = 0;
+	int cores = 0;
+	uint32_t byteOffset = 0;
+
+	auto rc = GetLogicalProcessorInformation(buffer, &returnLength);
+
+	if (GetLastError() == ERROR_INSUFFICIENT_BUFFER)
+	{
+		buffer = (PSYSTEM_LOGICAL_PROCESSOR_INFORMATION)malloc(returnLength);
+		if (!GetLogicalProcessorInformation(buffer, &returnLength)) return 0;
+	}
+	else
+	{
+		return 0;
+	}
+
+	ptr = buffer;
+
+	while (byteOffset + sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION) <= returnLength)
+	{
+		if (ptr->Relationship == RelationProcessorCore) cores++;
+		byteOffset += sizeof(SYSTEM_LOGICAL_PROCESSOR_INFORMATION);
+		ptr++;
+	}
+	free(buffer);
+	return cores < 2 ? 0 : cores < 4 ? 1 : cores < 6 ? 2 : cores < 8 ? 3 : 4;
+}
+
+#else
 static int GetCoreInfo()
 {
 	int cores = std::thread::hardware_concurrency();
 	if (CPU.HyperThreading) cores /= 2;
 	return cores < 2? 0 : cores < 4? 1 : cores < 6? 2 : cores < 8? 3 : 4;
 }
+#endif
 
 static int GetRenderInfo()
 {

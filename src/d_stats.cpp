@@ -139,7 +139,7 @@ static int GetOSVersion()
 	if (sizeof(void*) == 4)	// 32 bit
 	{
 		BOOL res;
-		if (IsWow64Process(GetCurrentProcess(), &res))
+		if (IsWow64Process(GetCurrentProcess(), &res) && res)
 		{
 			return 6;
 		}

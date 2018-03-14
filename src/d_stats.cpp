@@ -273,8 +273,8 @@ void D_DoAnonStats()
 	if (currentrenderer == 1 && sentstats_hwr_done >= CHECKVERSION) return;
 
 	static char requeststring[1024];
-	sprintf(requeststring, "GET /stats.php?render=%i&cores=%i&os=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
+	sprintf(requeststring, "GET /stats.php?render=%i&cores=%i&os=%i&renderconfig=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
+		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), currentrenderer, sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();

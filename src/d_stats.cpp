@@ -113,18 +113,15 @@ bool I_HTTPRequest(const char* request)
 		return false;
 	}
 
-	char buffer[1024];
-	sprintf(buffer, "%s", request);
-	Printf("Buffer: %s", buffer);
-	n = write(sockfd, (char*)buffer, (int)strlen(request));
+	n = write(sockfd, request, strlen(request));
 	if (n<0)
 	{
 		DPrintf(DMSG_ERROR, "Error writing to socket.\n");
 		close(sockfd);
 		return false;
 	}
-	bzero(buffer, 1024);
 
+	char buffer[1024] = {};
 	n = read(sockfd, buffer, 1023);
 	close(sockfd);
 	DPrintf(DMSG_NOTIFY, "Stats send successful.\n");
@@ -273,7 +270,7 @@ void D_DoAnonStats()
 	if (currentrenderer == 1 && sentstats_hwr_done >= CHECKVERSION) return;
 
 	static char requeststring[1024];
-	sprintf(requeststring, "GET /stats.php?render=%i&cores=%i&os=%i&renderconfig=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats.php?render=%i&cores=%i&os=%i&renderconfig=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
 		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), currentrenderer, sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);

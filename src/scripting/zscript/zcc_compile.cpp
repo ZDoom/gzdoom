@@ -2743,6 +2743,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						if (parentfunc->Variants[0].Implementation->DefaultArgs.Size() > 0)
 						{
 							sym->Variants[0].Implementation->DefaultArgs = parentfunc->Variants[0].Implementation->DefaultArgs;
+							sym->Variants[0].ArgFlags = parentfunc->Variants[0].ArgFlags;
 						}
 					}
 				}

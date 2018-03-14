@@ -20,6 +20,8 @@ extern int sys_ostype;
 
 EXTERN_CVAR(Bool, vid_glswfb)
 extern int currentrenderer;
+
+CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 
@@ -264,6 +266,11 @@ static void D_DoHTTPRequest(const char *request)
 
 void D_DoAnonStats()
 {
+	if (sys_statsenabled != 1)
+	{
+		return;
+	}
+
 	static bool done = false;	// do this only once per session.
 	if (done) return;
 	done = true;
@@ -278,4 +285,27 @@ void D_DoAnonStats()
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
+}
+
+void D_ConfirmSendStats()
+{
+	if (sys_statsenabled >= 0)
+	{
+		return;
+	}
+
+	// TODO: texts
+	static const char *const MESSAGE_TEXT = "send stats?";
+	static const char *const TITLE_TEXT = GAMENAME;
+
+	UCVarValue enabled = { 0 };
+
+#ifdef _WIN32
+	extern HWND Window;
+	enabled = { MessageBox(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES };
+#else
+	// TODO
+#endif
+
+	sys_statsenabled.ForceSet(enabled, CVAR_Int);
 }

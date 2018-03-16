@@ -1,3 +1,12 @@
+
+#ifdef NO_SEND_STATS
+
+void D_DoAnonStats()
+{
+}
+
+#else // !NO_SEND_STATS
+
 #if defined(_WIN32)
 #define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
@@ -276,3 +285,5 @@ void D_DoAnonStats()
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
 }
+
+#endif // NO_SEND_STATS

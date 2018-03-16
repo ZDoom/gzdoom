@@ -69,8 +69,8 @@ void RenderPolyScene::RenderSectors()
 {
 	PolyRenderThread *mainthread = PolyRenderer::Instance()->Threads.MainThread();
 
-	int totalcount = (int)Cull.PvsSectors.size();
-	auto subsectors = Cull.PvsSectors.data();
+	int totalcount = (int)Cull.PvsSubsectors.size();
+	uint32_t *subsectors = Cull.PvsSubsectors.data();
 
 	TranslucentObjects.resize(PolyRenderer::Instance()->Threads.NumThreads());
 
@@ -82,7 +82,7 @@ void RenderPolyScene::RenderSectors()
 		int end = thread->End;
 		for (int i = start; i < end; i++)
 		{
-			RenderSubsector(thread, subsectors[i], i);
+			RenderSubsector(thread, &level.subsectors[subsectors[i]], i);
 		}
 	}, [&](PolyRenderThread *thread)
 	{
@@ -372,8 +372,9 @@ void RenderPolyScene::RenderTranslucent(int portalDepth)
 	}
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	for (sector_t *sector : Cull.SeenSectors)
+	for (uint32_t sectorIndex : Cull.SeenSectors)
 	{
+		sector_t *sector = &level.sectors[sectorIndex];
 		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
 		{
 			DVector2 left, right;

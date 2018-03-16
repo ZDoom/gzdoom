@@ -33,26 +33,15 @@ void PolyCull::CullScene(const PolyClipPlane &portalClipPlane)
 	ClearSolidSegments();
 	MarkViewFrustum();
 
-	if (level.LevelName != lastLevelName) // Is this the best way to detect a level change?
-	{
-		lastLevelName = level.LevelName;
-		SubsectorDepths.clear();
-		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
-		SectorSeen.clear();
-		SectorSeen.resize(level.sectors.Size());
-	}
-	else
-	{
-		for (const auto &sub : PvsSectors)
-			SubsectorDepths[sub->Index()] = 0xffffffff;
-		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+	for (uint32_t sub : PvsSubsectors)
+		SubsectorDepths[sub] = 0xffffffff;
+	SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
 
-		for (const auto &sector : SeenSectors)
-			SectorSeen[sector->Index()] = false;
-		SectorSeen.resize(level.sectors.Size());
-	}
+	for (uint32_t sector : SeenSectors)
+		SectorSeen[sector] = false;
+	SectorSeen.resize(level.sectors.Size());
 
-	PvsSectors.clear();
+	PvsSubsectors.clear();
 	SeenSectors.clear();
 
 	NextPvsLineStart = 0;
@@ -125,10 +114,10 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		FirstSkyHeight = false;
 	}
 
-	uint32_t subsectorDepth = (uint32_t)PvsSectors.size();
+	uint32_t subsectorDepth = (uint32_t)PvsSubsectors.size();
 
 	// Mark that we need to render this
-	PvsSectors.push_back(sub);
+	PvsSubsectors.push_back(sub->Index());
 	PvsLineStart.push_back(NextPvsLineStart);
 
 	DVector3 viewpos = PolyRenderer::Instance()->Viewpoint.Pos;
@@ -169,7 +158,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 	if (!SectorSeen[sub->sector->Index()])
 	{
 		SectorSeen[sub->sector->Index()] = true;
-		SeenSectors.push_back(sub->sector);
+		SeenSectors.push_back(sub->sector->Index());
 	}
 
 	SubsectorDepths[sub->Index()] = subsectorDepth;

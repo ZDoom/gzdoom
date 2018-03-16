@@ -2273,13 +2273,6 @@ int OpenGLSWFrameBuffer::OpenGLTex::GetTexFormat()
 	case TEX_Pal:	return GL_R8;
 	case TEX_Gray:	IsGray = true; return GL_R8;
 	case TEX_RGB:	return GL_RGBA8;
-#if 0
-	case TEX_DXT1:	return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
-	case TEX_DXT2:	return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
-	case TEX_DXT3:	return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
-	case TEX_DXT4:	return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; // Doesn't exist in OpenGL. Closest match is DXT5.
-	case TEX_DXT5:	return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
-#endif
 	default:		I_FatalError("GameTex->GetFormat() returned invalid format.");
 	}
 	return GL_R8;

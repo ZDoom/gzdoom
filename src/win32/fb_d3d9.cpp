@@ -86,44 +86,7 @@
 // The number of quads we can batch together.
 #define MAX_QUAD_BATCH	(NUM_INDEXES / 6)
 
-// The default size for a texture atlas.
-#define DEF_ATLAS_WIDTH		512
-#define DEF_ATLAS_HEIGHT	512
-
 // TYPES -------------------------------------------------------------------
-
-struct D3DFB::PackedTexture
-{
-	D3DFB::Atlas *Owner;
-
-	PackedTexture **Prev, *Next;
-
-	// Pixels this image covers
-	RECT Area;
-
-	// Texture coordinates for this image
-	float Left, Top, Right, Bottom;
-
-	// Texture has extra space on the border?
-	bool Padded;
-};
-
-struct D3DFB::Atlas
-{
-	Atlas(D3DFB *fb, int width, int height, D3DFORMAT format);
-	~Atlas();
-
-	PackedTexture *AllocateImage(const Rect &rect, bool padded);
-	void FreeBox(PackedTexture *box);
-
-	SkylineBinPack Packer;
-	Atlas *Next;
-	IDirect3DTexture9 *Tex;
-	D3DFORMAT Format;
-	PackedTexture *UsedList;	// Boxes that contain images
-	int Width, Height;
-	bool OneUse;
-};
 
 class D3DTex : public FNativeTexture
 {
@@ -131,7 +94,11 @@ public:
 	D3DTex(FTexture *tex, FTextureFormat fmt, D3DFB *fb, bool wrapping);
 	~D3DTex();
 
-	D3DFB::PackedTexture *Box;
+	//D3DFB::PackedTexture *Box;
+
+	IDirect3DTexture9 *Tex;
+	D3DFORMAT Format;
+
 
 	D3DTex **Prev;
 	D3DTex *Next;
@@ -600,12 +567,6 @@ void D3DFB::ReleaseResources ()
 		delete ScreenWipe;
 		ScreenWipe = NULL;
 	}
-	Atlas *pack, *next;
-	for (pack = Atlases; pack != NULL; pack = next)
-	{
-		next = pack->Next;
-		delete pack;
-	}
 	GatheringWipeScreen = false;
 }
 
@@ -1048,7 +1009,6 @@ void D3DFB::Update ()
 		if (InScene)
 		{
 			DrawRateStuff();
-			DrawPackedTextures(d3d_showpacks);
 			EndBatch();		// Make sure all batched primitives are drawn.
 			In2D = 0;
 			Flip();
@@ -1469,7 +1429,7 @@ void D3DFB::UploadPalette ()
 		uint8_t *pix = (uint8_t *)lockrect.pBits;
 		int i;
 
-		for (i = 0; i < SkipAt; ++i, pix += 4)
+		for (i = 0; i < 256; ++i, pix += 4)
 		{
 			pix[0] = SourcePalette[i].b;
 			pix[1] = SourcePalette[i].g;
@@ -1682,335 +1642,6 @@ IDirect3DTexture9 *D3DFB::GetCurrentScreen(D3DPOOL pool)
 /*                                  2D Stuff                              */
 /**************************************************************************/
 
-//==========================================================================
-//
-// D3DFB :: DrawPackedTextures
-//
-// DEBUG: Draws the texture atlases to the screen, starting with the
-// 1-based packnum. Ignores atlases that are flagged for use by one
-// texture only.
-//
-//==========================================================================
-
-void D3DFB::DrawPackedTextures(int packnum)
-{
-	D3DCOLOR empty_colors[8] =
-	{
-		0x50FF0000, 0x5000FF00, 0x500000FF, 0x50FFFF00,
-		0x50FF00FF, 0x5000FFFF, 0x50FF8000, 0x500080FF
-	};
-	Atlas *pack;
-	int x = 8, y = 8;
-
-	if (packnum <= 0)
-	{
-		return;
-	}
-	pack = Atlases;
-	// Find the first texture atlas that is an actual atlas.
-	while (pack != NULL && pack->OneUse)
-	{ // Skip textures that aren't used as atlases
-		pack = pack->Next;
-	}
-	// Skip however many atlases we would have otherwise drawn
-	// until we've skipped <packnum> of them.
-	while (pack != NULL && packnum != 1)
-	{
-		if (!pack->OneUse)
-		{ // Skip textures that aren't used as atlases
-			packnum--;
-		}
-		pack = pack->Next;
-	}
-	// Draw atlases until we run out of room on the screen.
-	while (pack != NULL)
-	{
-		if (pack->OneUse)
-		{ // Skip textures that aren't used as atlases
-			pack = pack->Next;
-			continue;
-		}
-
-		AddColorOnlyRect(x-1, y-1-LBOffsetI, 258, 258, D3DCOLOR_XRGB(255,255,0));
-		int back = 0;
-		for (PackedTexture *box = pack->UsedList; box != NULL; box = box->Next)
-		{
-			AddColorOnlyQuad(
-				x + box->Area.left * 256 / pack->Width,
-				y + box->Area.top * 256 / pack->Height,
-				(box->Area.right - box->Area.left) * 256 / pack->Width,
-				(box->Area.bottom - box->Area.top) * 256 / pack->Height, empty_colors[back]);
-			back = (back + 1) & 7;
-		}
-//		AddColorOnlyQuad(x, y-LBOffsetI, 256, 256, D3DCOLOR_ARGB(180,0,0,0));
-
-		CheckQuadBatch();
-
-		BufferedTris *quad = &QuadExtra[QuadBatchPos];
-		FBVERTEX *vert = &VertexData[VertexPos];
-
-		quad->Group1 = 0;
-		if (pack->Format == D3DFMT_L8/* && !tex->IsGray*/)
-		{
-			quad->Flags = BQF_WrapUV | BQF_GamePalette/* | BQF_DisableAlphaTest*/;
-			quad->ShaderNum = BQS_PalTex;
-		}
-		else
-		{
-			quad->Flags = BQF_WrapUV/* | BQF_DisableAlphaTest*/;
-			quad->ShaderNum = BQS_Plain;
-		}
-		quad->Palette = NULL;
-		quad->Texture = pack->Tex;
-		quad->NumVerts = 4;
-		quad->NumTris = 2;
-
-		float x0 = float(x) - 0.5f;
-		float y0 = float(y) - 0.5f;
-		float x1 = x0 + 256.f;
-		float y1 = y0 + 256.f;
-
-		vert[0].x = x0;
-		vert[0].y = y0;
-		vert[0].z = 0;
-		vert[0].rhw = 1;
-		vert[0].color0 = 0;
-		vert[0].color1 = 0xFFFFFFFF;
-		vert[0].tu = 0;
-		vert[0].tv = 0;
-
-		vert[1].x = x1;
-		vert[1].y = y0;
-		vert[1].z = 0;
-		vert[1].rhw = 1;
-		vert[1].color0 = 0;
-		vert[1].color1 = 0xFFFFFFFF;
-		vert[1].tu = 1;
-		vert[1].tv = 0;
-
-		vert[2].x = x1;
-		vert[2].y = y1;
-		vert[2].z = 0;
-		vert[2].rhw = 1;
-		vert[2].color0 = 0;
-		vert[2].color1 = 0xFFFFFFFF;
-		vert[2].tu = 1;
-		vert[2].tv = 1;
-
-		vert[3].x = x0;
-		vert[3].y = y1;
-		vert[3].z = 0;
-		vert[3].rhw = 1;
-		vert[3].color0 = 0;
-		vert[3].color1 = 0xFFFFFFFF;
-		vert[3].tu = 0;
-		vert[3].tv = 1;
-
-		IndexData[IndexPos    ] = VertexPos;
-		IndexData[IndexPos + 1] = VertexPos + 1;
-		IndexData[IndexPos + 2] = VertexPos + 2;
-		IndexData[IndexPos + 3] = VertexPos;
-		IndexData[IndexPos + 4] = VertexPos + 2;
-		IndexData[IndexPos + 5] = VertexPos + 3;
-
-		QuadBatchPos++;
-		VertexPos += 4;
-		IndexPos += 6;
-
-		x += 256 + 8;
-		if (x > Width - 256)
-		{
-			x = 8;
-			y += 256 + 8;
-			if (y > TrueHeight - 256)
-			{
-				return;
-			}
-		}
-		pack = pack->Next;
-	}
-}
-
-//==========================================================================
-//
-// D3DFB :: AllocPackedTexture
-//
-// Finds space to pack an image inside a texture atlas and returns it.
-// Large images and those that need to wrap always get their own textures.
-//
-//==========================================================================
-
-D3DFB::PackedTexture *D3DFB::AllocPackedTexture(int w, int h, bool wrapping, D3DFORMAT format)
-{
-	Atlas *pack;
-	Rect box;
-	bool padded;
-
-	// The - 2 to account for padding
-	if (w > 256 - 2 || h > 256 - 2 || wrapping)
-	{ // Create a new texture atlas.
-		pack = new Atlas(this, w, h, format);
-		pack->OneUse = true;
-		box = pack->Packer.Insert(w, h);
-		padded = false;
-	}
-	else
-	{ // Try to find space in an existing texture atlas.
-		w += 2; // Add padding
-		h += 2;
-		for (pack = Atlases; pack != NULL; pack = pack->Next)
-		{
-			// Use the first atlas it fits in.
-			if (pack->Format == format)
-			{
-				box = pack->Packer.Insert(w, h);
-				if (box.width != 0)
-				{
-					break;
-				}
-			}
-		}
-		if (pack == NULL)
-		{ // Create a new texture atlas.
-			pack = new Atlas(this, DEF_ATLAS_WIDTH, DEF_ATLAS_HEIGHT, format);
-			box = pack->Packer.Insert(w, h);
-		}
-		padded = true;
-	}
-	assert(box.width != 0 && box.height != 0);
-	return pack->AllocateImage(box, padded);
-}
-
-//==========================================================================
-//
-// Atlas Constructor
-//
-//==========================================================================
-
-D3DFB::Atlas::Atlas(D3DFB *fb, int w, int h, D3DFORMAT format)
-	: Packer(w, h, true)
-{
-	Tex = NULL;
-	Format = format;
-	UsedList = NULL;
-	OneUse = false;
-	Width = 0;
-	Height = 0;
-	Next = NULL;
-
-	// Attach to the end of the atlas list
-	Atlas **prev = &fb->Atlases;
-	while (*prev != NULL)
-	{
-		prev = &((*prev)->Next);
-	}
-	*prev = this;
-
-#if 1
-	if (FAILED(fb->D3DDevice->CreateTexture(w, h, 1, 0, format, D3DPOOL_MANAGED, &Tex, NULL)))
-#endif
-	{ // Try again, using power-of-2 sizes
-		int i;
-
-		for (i = 1; i < w; i <<= 1) {} w = i;
-		for (i = 1; i < h; i <<= 1) {} h = i;
-		if (FAILED(fb->D3DDevice->CreateTexture(w, h, 1, 0, format, D3DPOOL_MANAGED, &Tex, NULL)))
-		{
-			return;
-		}
-	}
-	Width = w;
-	Height = h;
-}
-
-//==========================================================================
-//
-// Atlas Destructor
-//
-//==========================================================================
-
-D3DFB::Atlas::~Atlas()
-{
-	PackedTexture *box, *next;
-
-	SAFE_RELEASE( Tex );
-	for (box = UsedList; box != NULL; box = next)
-	{
-		next = box->Next;
-		delete box;
-	}
-}
-
-//==========================================================================
-//
-// Atlas :: AllocateImage
-//
-// Moves the box from the empty list to the used list, sizing it to the
-// requested dimensions and adding additional boxes to the empty list if
-// needed.
-//
-// The passed box *MUST* be in this texture atlas's empty list.
-//
-//==========================================================================
-
-D3DFB::PackedTexture *D3DFB::Atlas::AllocateImage(const Rect &rect, bool padded)
-{
-	PackedTexture *box = new PackedTexture;
-
-	box->Owner = this;
-	box->Area.left = rect.x;
-	box->Area.top = rect.y;
-	box->Area.right = rect.x + rect.width;
-	box->Area.bottom = rect.y + rect.height;
-
-	box->Left = float(box->Area.left + padded) / Width;
-	box->Right = float(box->Area.right - padded) / Width;
-	box->Top = float(box->Area.top + padded) / Height;
-	box->Bottom = float(box->Area.bottom - padded) / Height;
-
-	box->Padded = padded;
-
-	// Add it to the used list.
-	box->Next = UsedList;
-	if (box->Next != NULL)
-	{
-		box->Next->Prev = &box->Next;
-	}
-	UsedList = box;
-	box->Prev = &UsedList;
-
-	return box;
-}
-
-//==========================================================================
-//
-// Atlas :: FreeBox
-//
-// Removes a box from the used list and deletes it. Space is returned to the
-// waste list. Once all boxes for this atlas are freed, the entire bin
-// packer is reinitialized for maximum efficiency.
-//
-//==========================================================================
-
-void D3DFB::Atlas::FreeBox(D3DFB::PackedTexture *box)
-{
-	*(box->Prev) = box->Next;
-	if (box->Next != NULL)
-	{
-		box->Next->Prev = box->Prev;
-	}
-	Rect waste;
-	waste.x = box->Area.left;
-	waste.y = box->Area.top;
-	waste.width = box->Area.right - box->Area.left;
-	waste.height = box->Area.bottom - box->Area.top;
-	box->Owner->Packer.AddWaste(waste);
-	delete box;
-	if (UsedList == NULL)
-	{
-		Packer.Init(Width, Height, true);
-	}
-}
 
 //==========================================================================
 //
@@ -2030,8 +1661,8 @@ D3DTex::D3DTex(FTexture *tex, FTextureFormat fmt, D3DFB *fb, bool wrapping)
 	Prev = &fb->Textures;
 	fb->Textures = this;
 
-	Box = NULL;
 	IsGray = false;
+	Format = GetTexFormat();
 
 	Create(fb, wrapping);
 }
@@ -2044,17 +1675,14 @@ D3DTex::D3DTex(FTexture *tex, FTextureFormat fmt, D3DFB *fb, bool wrapping)
 
 D3DTex::~D3DTex()
 {
-	if (Box != NULL)
-	{
-		Box->Owner->FreeBox(Box);
-		Box = NULL;
-	}
 	// Detach from the texture list
 	*Prev = Next;
 	if (Next != NULL)
 	{
 		Next->Prev = Prev;
 	}
+	SAFE_RELEASE(Tex);
+
 }
 
 //==========================================================================
@@ -2068,13 +1696,7 @@ D3DTex::~D3DTex()
 
 bool D3DTex::CheckWrapping(bool wrapping)
 {
-	 // If it doesn't need to wrap, then it works.
-	if (!wrapping)
-	{
-		return true;
-	}
-	// If it needs to wrap, then it can't be packed inside another texture.
-	return Box->Owner->OneUse;
+	return true;	// we no longer use atlases
 }
 
 //==========================================================================
@@ -2088,25 +1710,11 @@ bool D3DTex::CheckWrapping(bool wrapping)
 
 bool D3DTex::Create(D3DFB *fb, bool wrapping)
 {
-	assert(Box == NULL);
-	if (Box != NULL)
+	if (SUCCEEDED(fb->D3DDevice->CreateTexture(GameTex->GetWidth(), GameTex->GetHeight(), 1, 0, Format, D3DPOOL_MANAGED, &Tex, NULL)))
 	{
-		Box->Owner->FreeBox(Box);
+		return Update();
 	}
-
-	Box = fb->AllocPackedTexture(mGameTex->GetWidth(), mGameTex->GetHeight(), wrapping, GetTexFormat());
-
-	if (Box == NULL)
-	{
-		return false;
-	}
-	if (!Update())
-	{
-		Box->Owner->FreeBox(Box);
-		Box = NULL;
-		return false;
-	}
-	return true;
+	return false;
 }
 
 //==========================================================================
@@ -2124,60 +1732,21 @@ bool D3DTex::Update()
 	RECT rect;
 	uint8_t *dest;
 
-	assert(Box != NULL);
-	assert(Box->Owner != NULL);
-	assert(Box->Owner->Tex != NULL);
 	assert(mGameTex != NULL);
 
-	if (FAILED(Box->Owner->Tex->GetLevelDesc(0, &desc)))
+	if (FAILED(Tex->GetLevelDesc(0, &desc)))
 	{
 		return false;
 	}
-	rect = Box->Area;
-	if (FAILED(Box->Owner->Tex->LockRect(0, &lrect, &rect, 0)))
+	rect = { 0, 0, (LONG)desc.Width, (LONG)desc.Height };
+	if (FAILED(Tex->LockRect(0, &lrect, &rect, 0)))
 	{
 		return false;
 	}
 	dest = (uint8_t *)lrect.pBits;
-	if (Box->Padded)
-	{
-		dest += lrect.Pitch + (desc.Format == D3DFMT_L8 ? 1 : 4);
-	}
+
 	mGameTex->FillBuffer(dest, lrect.Pitch, mGameTex->GetHeight(), mFormat);
-	if (Box->Padded)
-	{
-		// Clear top padding row.
-		dest = (uint8_t *)lrect.pBits;
-		int numbytes = mGameTex->GetWidth() + 2;
-		if (desc.Format != D3DFMT_L8)
-		{
-			numbytes <<= 2;
-		}
-		memset(dest, 0, numbytes);
-		dest += lrect.Pitch;
-		// Clear left and right padding columns.
-		if (desc.Format == D3DFMT_L8)
-		{
-			for (int y = Box->Area.bottom - Box->Area.top - 2; y > 0; --y)
-			{
-				dest[0] = 0;
-				dest[numbytes-1] = 0;
-				dest += lrect.Pitch;
-			}
-		}
-		else
-		{
-			for (int y = Box->Area.bottom - Box->Area.top - 2; y > 0; --y)
-			{
-				*(DWORD *)dest = 0;
-				*(DWORD *)(dest + numbytes - 4) = 0;
-				dest += lrect.Pitch;
-			}
-		}
-		// Clear bottom padding row.
-		memset(dest, 0, numbytes);
-	}
-	Box->Owner->Tex->UnlockRect(0);
+	Tex->UnlockRect(0);
 	return true;
 }
 
@@ -2198,16 +1767,9 @@ D3DFORMAT D3DTex::GetTexFormat()
 	case TEX_Pal:	return D3DFMT_L8;
 	case TEX_Gray:	IsGray = true; return D3DFMT_L8;
 	case TEX_RGB:	return D3DFMT_A8R8G8B8;
-#if 0
-	case TEX_DXT1:	return D3DFMT_DXT1;
-	case TEX_DXT2:	return D3DFMT_DXT2;
-	case TEX_DXT3:	return D3DFMT_DXT3;
-	case TEX_DXT4:	return D3DFMT_DXT4;
-	case TEX_DXT5:	return D3DFMT_DXT5;
-#endif
 	default:		I_FatalError ("GameTex->GetFormat() returned invalid format.");
 	}
-	return D3DFMT_L8;
+	return D3DFMT_A8R8G8B8;
 }
 
 //==========================================================================
@@ -2282,9 +1844,6 @@ D3DPal::~D3DPal()
 bool D3DPal::Update()
 {
 	D3DLOCKED_RECT lrect;
-	D3DCOLOR *buff;
-	const PalEntry *pal;
-	int skipat, i;
 
 	assert(Tex != NULL);
 
@@ -2292,21 +1851,16 @@ bool D3DPal::Update()
 	{
 		return false;
 	}
-	buff = (D3DCOLOR *)lrect.pBits;
-	pal = Remap->Palette;
+	auto buff = (D3DCOLOR *)lrect.pBits;
+	auto pal = Remap->Palette;
 
-	// See explanation in UploadPalette() for skipat rationale.
-	skipat = MIN(Remap->NumEntries, 256);
+	auto maxidx = MIN(Remap->NumEntries, 256);
 
-	for (i = 0; i < skipat; ++i)
+	for (int i = 0; i < maxidx; ++i)
 	{
 		buff[i] = D3DCOLOR_ARGB(pal[i].a, pal[i].r, pal[i].g, pal[i].b);
 	}
-	for (++i; i < Remap->NumEntries; ++i)
-	{
-		buff[i] = D3DCOLOR_ARGB(pal[i].a, pal[i-1].r, pal[i-1].g, pal[i-1].b);
-	}
-	BorderColor = D3DCOLOR_ARGB(pal[i].a, pal[i-1].r, pal[i-1].g, pal[i-1].b);
+	BorderColor = D3DCOLOR_ARGB(pal[maxidx].a, pal[maxidx-1].r, pal[maxidx-1].g, pal[maxidx-1].b);
 
 	Tex->UnlockRect(0);
 	return true;
@@ -2367,11 +1921,6 @@ void D3DFB::DrawBlendingRect()
 FNativeTexture *D3DFB::CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping)
 {
 	D3DTex *tex = new D3DTex(gametex, fmt, this, wrapping);
-	if (tex->Box == NULL)
-	{
-		delete tex;
-		return NULL;
-	}
 	return tex;
 }
 
@@ -2612,11 +2161,11 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 	double y0 = parms.y - parms.top * yscale;
 	double x1 = x0 + parms.destwidth;
 	double y1 = y0 + parms.destheight;
-	float u0 = tex->Box->Left;
-	float v0 = tex->Box->Top;
-	float u1 = tex->Box->Right;
-	float v1 = tex->Box->Bottom;
-	double uscale = 1.f / tex->Box->Owner->Width;
+	float u0 = 0;
+	float v0 = 0;
+	float u1 = 1;
+	float v1 = 1;
+	double uscale = 1.f;
 	bool scissoring = false;
 	FBVERTEX *vert;
 	float yoffs;
@@ -2634,32 +2183,9 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 		u1 = float(u1 - (parms.texwidth - wi) * uscale);
 	}
 
-#if 0
-	float vscale = 1.f / tex->Box->Owner->Height / yscale;
-	if (y0 < parms.uclip)
-	{
-		v0 += (float(parms.uclip) - y0) * vscale;
-		y0 = float(parms.uclip);
-	}
-	if (y1 > parms.dclip)
-	{
-		v1 -= (y1 - float(parms.dclip)) * vscale;
-		y1 = float(parms.dclip);
-	}
-	if (x0 < parms.lclip)
-	{
-		u0 += float(parms.lclip - x0) * uscale / xscale * 2;
-		x0 = float(parms.lclip);
-	}
-	if (x1 > parms.rclip)
-	{
-		u1 -= (x1 - parms.rclip) * uscale / xscale * 2;
-		x1 = float(parms.rclip);
-	}
-#else
 	// Use a scissor test because the math above introduces some jitter
-	// that is noticeable at low resolutions. Unfortunately, this means this
-	// quad has to be in a batch by itself.
+	// that is noticeable at low resolutions.
+
 	if (y0 < parms.uclip || y1 > parms.dclip || x0 < parms.lclip || x1 > parms.rclip)
 	{
 		scissoring = true;
@@ -2675,7 +2201,7 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 		D3DDevice->SetScissorRect(&scissor);
 		D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
 	}
-#endif
+
 	parms.bilinear = false;
 
 	D3DCOLOR color0, color1;
@@ -2686,7 +2212,7 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 		goto done;
 	}
 
-	quad->Texture = tex->Box->Owner->Tex;
+	quad->Texture = tex->Tex;
 	if (parms.bilinear)
 	{
 		quad->Flags |= BQF_Bilinear;
@@ -2696,20 +2222,10 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 
 	yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
 
-#if 0
-	// Coordinates are truncated to integers, because that's effectively
-	// what the software renderer does. The hardware will instead round
-	// to nearest, it seems.
-	x0 = floorf(x0) - 0.5f;
-	y0 = floorf(y0) - yoffs;
-	x1 = floorf(x1) - 0.5f;
-	y1 = floorf(y1) - yoffs;
-#else
 	x0 = x0 - 0.5f;
 	y0 = y0 - yoffs;
 	x1 = x1 - 0.5f;
 	y1 = y1 - yoffs;
-#endif
 
 	vert = &VertexData[VertexPos];
 
@@ -2836,7 +2352,7 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = NULL;
-	quad->Texture = tex->Box->Owner->Tex;
+	quad->Texture = tex->Tex;
 	quad->NumVerts = 4;
 	quad->NumTris = 2;
 
@@ -2971,7 +2487,7 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = NULL;
-	quad->Texture = tex->Box->Owner->Tex;
+	quad->Texture = tex->Tex;
 	quad->NumVerts = npoints;
 	quad->NumTris = npoints - 2;
 
@@ -3229,13 +2745,6 @@ void D3DFB::EndQuadBatch()
 			assert(quad->Palette != NULL);
 			SetPaletteTexture(quad->Palette->Tex, quad->Palette->RoundedPaletteSize, quad->Palette->BorderColor);
 		}
-#if 0
-		// Set paletted bilinear filtering (IF IT WORKED RIGHT!)
-		if ((quad->Flags & (BQF_Paletted | BQF_Bilinear)) == (BQF_Paletted | BQF_Bilinear))
-		{
-			SetPalTexBilinearConstants(quad->Texture);
-		}
-#endif
 
 		// Set the alpha blending
 		SetAlphaBlend(D3DBLENDOP(quad->BlendOp), D3DBLEND(quad->SrcBlend), D3DBLEND(quad->DestBlend));
@@ -3664,6 +3173,3 @@ void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR bo
 	SetTexture(1, texture);
 }
 
-void D3DFB::SetPalTexBilinearConstants(Atlas *tex)
-{
-}

@@ -159,13 +159,7 @@ enum FTextureFormat : uint32_t
 	TEX_Pal,
 	TEX_Gray,
 	TEX_RGB,		// Actually ARGB
-	/*
-	TEX_DXT1,
-	TEX_DXT2,
-	TEX_DXT3,
-	TEX_DXT4,
-	TEX_DXT5,
-	*/
+
 	TEX_Count
 };
 

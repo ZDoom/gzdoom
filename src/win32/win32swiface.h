@@ -159,7 +159,6 @@ private:
 	void KillNativePals();
 	void KillNativeTexs();
 	PackedTexture *AllocPackedTexture(int width, int height, bool wrapping, D3DFORMAT format);
-	void DrawPackedTextures(int packnum);
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
 	bool SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedTris &quad);
@@ -185,7 +184,6 @@ private:
 	void SetPixelShader(IDirect3DPixelShader9 *shader);
 	void SetTexture(int tnum, IDirect3DTexture9 *texture);
 	void SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR border_color);
-	void SetPalTexBilinearConstants(Atlas *texture);
 
 	BOOL AlphaTestEnabled;
 	BOOL AlphaBlendEnabled;

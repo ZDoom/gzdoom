@@ -97,7 +97,6 @@ class Win32Video : public IVideo
 	void AddLetterboxModes ();
 	void ScaleModes (int doubling);
 
-	friend class DDrawFB;
 	friend class D3DFB;
 };
 

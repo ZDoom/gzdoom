@@ -107,7 +107,7 @@ CUSTOM_CVAR (Float, bgamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static cycle_t BlitCycles;
+extern cycle_t BlitCycles;
 static cycle_t SDLFlipCycles;
 
 // CODE --------------------------------------------------------------------

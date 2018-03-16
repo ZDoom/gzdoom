@@ -95,7 +95,7 @@ EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
 
 #ifdef WIN32
-extern cycle_t BlitCycles;
+cycle_t BlitCycles;
 #endif
 
 void gl_LoadExtensions();

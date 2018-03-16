@@ -672,69 +672,10 @@ DFrameBuffer *Win32Video::CreateFrameBuffer (int width, int height, bool bgra, b
 	}
 	else
 	{
-		fb = new DDrawFB (width, height, fullscreen);
+		I_FatalError("Unable to create framebuffer. Direct3D not found");
 	}
 
 	LOG1 ("New fb created @ %p\n", fb);
-
-	// If we could not create the framebuffer, try again with slightly
-	// different parameters in this order:
-	// 1. Try with the closest size
-	// 2. Try in the opposite screen mode with the original size
-	// 3. Try in the opposite screen mode with the closest size
-	// This is a somewhat confusing mass of recursion here.
-
-	while (fb == NULL || !fb->IsValid ())
-	{
-		static HRESULT hr;
-
-		if (fb != NULL)
-		{
-			if (retry == 0)
-			{
-				hr = fb->GetHR ();
-			}
-			delete fb;
-
-			LOG1 ("fb is bad: %08lx\n", hr);
-		}
-		else
-		{
-			LOG ("Could not create fb at all\n");
-		}
-		screen = NULL;
-
-		LOG1 ("Retry number %d\n", retry);
-
-		switch (retry)
-		{
-		case 0:
-			owidth = width;
-			oheight = height;
-		case 2:
-			// Try a different resolution. Hopefully that will work.
-			I_ClosestResolution (&width, &height, 8);
-			LOG2 ("Retry with size %d,%d\n", width, height);
-			break;
-
-		case 1:
-			// Try changing fullscreen mode. Maybe that will work.
-			width = owidth;
-			height = oheight;
-			fullscreen = !fullscreen;
-			LOG1 ("Retry with fullscreen %d\n", fullscreen);
-			break;
-
-		default:
-			// I give up!
-			LOG3 ("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
-			I_FatalError ("Could not create new screen (%d x %d): %08lx", owidth, oheight, hr);
-		}
-
-		++retry;
-		fb = static_cast<DDrawFB *>(CreateFrameBuffer (width, height, bgra, fullscreen, NULL));
-	}
-	retry = 0;
 
 	fb->SetFlash (flashColor, flashAmount);
 	return fb;

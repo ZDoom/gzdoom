@@ -638,18 +638,8 @@ bool D3DFB::Wiper_Burn::Run(int ticks, D3DFB *fb)
 	fb->SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
 	fb->SetPixelShader(fb->Shaders[SHADER_BurnWipe]);
 	fb->D3DDevice->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
-	if (fb->SM14)
-	{
-		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
-		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
-	}
 	fb->D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(BURNVERTEX));
 	fb->D3DDevice->SetSamplerState(1, D3DSAMP_MAGFILTER, D3DTEXF_POINT);
-	if (fb->SM14)
-	{
-		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-		fb->D3DDevice->SetSamplerState(1, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
-	}
 	fb->D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 
 	// The fire may not always stabilize, so the wipe is forced to end

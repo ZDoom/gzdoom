@@ -2312,7 +2312,6 @@ OpenGLSWFrameBuffer::OpenGLPal::OpenGLPal(FRemapTable *remap, OpenGLSWFrameBuffe
 	{
 	}
 	count = pow2count;
-	DoColorSkip = false;
 
 	BorderColor = 0;
 	RoundedPaletteSize = count;
@@ -2392,7 +2391,7 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 	pal = Remap->Palette;
 
 	// See explanation in UploadPalette() for skipat rationale.
-	skipat = MIN(numEntries, DoColorSkip ? 256 - 8 : 256);
+	skipat = MIN(numEntries, 256);
 
 #ifndef NO_SSE
 	// Manual SSE vectorized version here to workaround a bug in GCC's auto-vectorizer

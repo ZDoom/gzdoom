@@ -155,7 +155,6 @@ public:
 
 	IDirect3DTexture9 *Tex;
 	D3DCOLOR BorderColor;
-	bool DoColorSkip;
 
 	bool Update();
 
@@ -416,8 +415,8 @@ void D3DFB::SetInitialState()
 	for (unsigned i = 0; i < countof(Texture); ++i)
 	{
 		Texture[i] = NULL;
-		D3DDevice->SetSamplerState(i, D3DSAMP_ADDRESSU, (i == 1 && SM14) ? D3DTADDRESS_BORDER : D3DTADDRESS_CLAMP);
-		D3DDevice->SetSamplerState(i, D3DSAMP_ADDRESSV, (i == 1 && SM14) ? D3DTADDRESS_BORDER : D3DTADDRESS_CLAMP);
+		D3DDevice->SetSamplerState(i, D3DSAMP_ADDRESSU, D3DTADDRESS_CLAMP);
+		D3DDevice->SetSamplerState(i, D3DSAMP_ADDRESSV, D3DTADDRESS_CLAMP);
 		if (i > 1)
 		{
 			// Set linear filtering for the SM14 gamma texture.
@@ -428,24 +427,6 @@ void D3DFB::SetInitialState()
 	NeedGammaUpdate = true;
 	NeedPalUpdate = true;
 	OldRenderTarget = NULL;
-
-	if (!Windowed && SM14)
-	{
-		// Fix for Radeon 9000, possibly other R200s: When the device is
-		// reset, it resets the gamma ramp, but the driver apparently keeps a
-		// cached copy of the ramp that it doesn't update, so when
-		// SetGammaRamp is called later to handle the NeedGammaUpdate flag,
-		// it doesn't do anything, because the gamma ramp is the same as the
-		// one passed in the last call, even though the visible gamma ramp 
-		// actually has changed.
-		//
-		// So here we force the gamma ramp to something absolutely horrible and
-		// trust that we will be able to properly set the gamma later when
-		// NeedGammaUpdate is handled.
-		D3DGAMMARAMP ramp;
-		memset(&ramp, 0, sizeof(ramp));
-		D3DDevice->SetGammaRamp(0, 0, &ramp);
-	}
 
 	// This constant is used for grayscaling weights (.xyz) and color inversion (.w)
 	float weights[4] = { 77/256.f, 143/256.f, 37/256.f, 1 };
@@ -540,7 +521,6 @@ bool D3DFB::CreateResources()
 	{
 		return false;
 	}
-	CreateGammaTexture();
 	CreateBlockSurfaces();
 	return true;
 }
@@ -556,7 +536,7 @@ bool D3DFB::CreateResources()
 
 bool D3DFB::LoadShaders()
 {
-	static const char models[][4] = { "30/", "20/", "14/" };
+	static const char models[][4] = { "30/", "20/" };
 	FString shaderdir, shaderpath;
 	unsigned model, i;
 	int lump;
@@ -584,7 +564,6 @@ bool D3DFB::LoadShaders()
 		}
 		if (i == NUM_SHADERS)
 		{ // Success!
-			SM14 = (model == countof(models) - 1);
 			return true;
 		}
 		// Failure. Release whatever managed to load (which is probably nothing.)
@@ -837,25 +816,6 @@ bool D3DFB::CreatePaletteTexture ()
 		return false;
 	}
 	return true;
-}
-
-//==========================================================================
-//
-// D3DFB :: CreateGammaTexture
-//
-//==========================================================================
-
-bool D3DFB::CreateGammaTexture ()
-{
-	// If this fails, you just won't get gamma correction in a window
-	// on SM14 cards.
-	assert(GammaTexture == NULL);
-	if (SM14)
-	{
-		return SUCCEEDED(D3DDevice->CreateTexture(256, 1, 1, 0, D3DFMT_A8R8G8B8,
-			D3DPOOL_MANAGED, &GammaTexture, NULL));
-	}
-	return false;
 }
 
 //==========================================================================
@@ -1466,23 +1426,11 @@ void D3DFB::DoWindowedGamma()
 		D3DDevice->SetFVF(D3DFVF_FBVERTEX);
 		SetTexture(0, TempRenderTexture);
 		SetPixelShader(Windowed && GammaShader ? GammaShader : Shaders[SHADER_NormalColor]);
-		if (SM14 && Windowed && GammaShader)
-		{
-			SetTexture(2, GammaTexture);
-			SetTexture(3, GammaTexture);
-			SetTexture(4, GammaTexture);
-		}
 		SetAlphaBlend(D3DBLENDOP(0));
 		EnableAlphaTest(FALSE);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 		OldRenderTarget->Release();
 		OldRenderTarget = NULL;
-		if (SM14 && Windowed && GammaShader)
-		{
-//			SetTexture(0, GammaTexture);
-//			SetPixelShader(Shaders[SHADER_NormalColor]);
-//			D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
-		}
 	}
 }
 
@@ -1512,138 +1460,10 @@ void D3DFB::UpdateGammaTexture(float igamma)
 	}
 }
 
-//==========================================================================
-//
-// D3DFB :: DoOffByOneCheck
-//
-// Pixel Shader 1.x does not have enough precision to properly map a "color"
-// from the source texture to an index in the palette texture. The best we
-// can do is use 255 pixels of the palette and get the 256th from the
-// texture border color. This routine determines which pixel of the texture
-// is skipped so that we don't use it for palette data.
-//
-//==========================================================================
-
-void D3DFB::DoOffByOneCheck ()
-{
-	IDirect3DSurface9 *savedrendertarget;
-	IDirect3DSurface9 *testsurf, *readsurf;
-	D3DLOCKED_RECT lockrect;
-	RECT testrect = { 0, 0, 256, 1 };
-	float texright = 256.f / float(FBWidth);
-	float texbot = 1.f / float(FBHeight);
-	FBVERTEX verts[4] =
-	{
-		{ -0.5f,  -0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255),      0.f,    0.f },
-		{ 255.5f, -0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255), texright,    0.f },
-		{ 255.5f,  0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255), texright, texbot },
-		{ -0.5f,   0.5f, 0.5f, 1.f, D3DCOLOR_RGBA(0,0,0,0), D3DCOLOR_RGBA(255,255,255,255),      0.f, texbot }
-	};
-	int i, c;
-
-	if (SkipAt >= 0)
-	{
-		return;
-	}
-
-	// Create an easily recognizable R3G3B2 palette.
-	if (SUCCEEDED(PaletteTexture->LockRect(0, &lockrect, NULL, 0)))
-	{
-		uint8_t *pal = (uint8_t *)(lockrect.pBits);
-		for (i = 0; i < 256; ++i)
-		{
-			pal[i*4+0] = (i & 0x03) << 6;		// blue
-			pal[i*4+1] = (i & 0x1C) << 3;		// green
-			pal[i*4+2] = (i & 0xE0);			// red;
-			pal[i*4+3] = 255;
-		}
-		PaletteTexture->UnlockRect (0);
-	}
-	else
-	{
-		return;
-	}
-	// Prepare a texture with values 0-256.
-	if (SUCCEEDED(FBTexture->LockRect(0, &lockrect, &testrect, 0)))
-	{
-		for (i = 0; i < 256; ++i)
-		{
-			((uint8_t *)lockrect.pBits)[i] = i;
-		}
-		FBTexture->UnlockRect(0);
-	}
-	else
-	{
-		return;
-	}
-	// Create a render target that we can draw it to.
-	if (FAILED(D3DDevice->GetRenderTarget(0, &savedrendertarget)))
-	{
-		return;
-	}
-	if (FAILED(D3DDevice->CreateRenderTarget(256, 1, D3DFMT_A8R8G8B8, D3DMULTISAMPLE_NONE, 0, FALSE, &testsurf, NULL)))
-	{
-		return;
-	}
-	if (FAILED(D3DDevice->CreateOffscreenPlainSurface(256, 1, D3DFMT_A8R8G8B8, D3DPOOL_SYSTEMMEM, &readsurf, NULL)))
-	{
-		testsurf->Release();
-		return;
-	}
-	if (FAILED(D3DDevice->SetRenderTarget(0, testsurf)))
-	{
-		testsurf->Release();
-		readsurf->Release();
-		return;
-	}
-	// Write it to the render target using the pixel shader.
-	D3DDevice->BeginScene();
-	D3DDevice->SetTexture(0, FBTexture);
-	D3DDevice->SetTexture(1, PaletteTexture);
-	D3DDevice->SetFVF(D3DFVF_FBVERTEX);
-	D3DDevice->SetPixelShader(Shaders[SHADER_NormalColorPal]);
-	SetConstant(PSCONST_PaletteMod, 1.f, 0.5f / 256.f, 0, 0);
-	D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
-	D3DDevice->EndScene();
-	D3DDevice->SetRenderTarget(0, savedrendertarget);
-	savedrendertarget->Release();
-	// Now read it back and see where it skips an entry
-	if (SUCCEEDED(D3DDevice->GetRenderTargetData(testsurf, readsurf)) &&
-		SUCCEEDED(readsurf->LockRect(&lockrect, &testrect, D3DLOCK_READONLY)))
-	{
-		const uint8_t *pix = (const uint8_t *)lockrect.pBits;
-		for (i = 0; i < 256; ++i, pix += 4)
-		{
-			c = (pix[0] >> 6) |					// blue
-				((pix[1] >> 5) << 2) |			// green
-				((pix[2] >> 5) << 5);			// red
-			if (c != i)
-			{
-				break;
-			}
-		}
-	}
-	readsurf->UnlockRect();
-	readsurf->Release();
-	testsurf->Release();
-	SkipAt = i;
-}
-
 void D3DFB::UploadPalette ()
 {
 	D3DLOCKED_RECT lockrect;
 
-	if (SkipAt < 0)
-	{
-		if (SM14)
-		{
-			DoOffByOneCheck();
-		}
-		else
-		{
-			SkipAt = 256;
-		}
-	}
 	if (SUCCEEDED(PaletteTexture->LockRect(0, &lockrect, NULL, 0)))
 	{
 		uint8_t *pix = (uint8_t *)lockrect.pBits;
@@ -1656,14 +1476,6 @@ void D3DFB::UploadPalette ()
 			pix[2] = SourcePalette[i].r;
 			pix[3] = (i == 0 ? 0 : 255);
 			// To let masked textures work, the first palette entry's alpha is 0.
-		}
-		pix += 4;
-		for (; i < 255; ++i, pix += 4)
-		{
-			pix[0] = SourcePalette[i].b;
-			pix[1] = SourcePalette[i].g;
-			pix[2] = SourcePalette[i].r;
-			pix[3] = 255;
 		}
 		PaletteTexture->UnlockRect(0);
 		BorderColor = D3DCOLOR_XRGB(SourcePalette[255].r, SourcePalette[255].g, SourcePalette[255].b);
@@ -2418,24 +2230,12 @@ D3DPal::D3DPal(FRemapTable *remap, D3DFB *fb)
 	Prev = &fb->Palettes;
 	fb->Palettes = this;
 
-	// Palette textures must be 256 entries for Shader Model 1.4
-	if (fb->SM14)
-	{
-		count = 256;
-		// If the palette isn't big enough, then we don't need to
-		// worry about setting the gamma ramp.
-		DoColorSkip = (remap->NumEntries >= 256 - 8);
-	}
-	else
-	{
-		int pow2count;
+	int pow2count;
 
-		// Round up to the nearest power of 2.
-		for (pow2count = 1; pow2count < remap->NumEntries; pow2count <<= 1)
-		{ }
-		count = pow2count;
-		DoColorSkip = false;
-	}
+	// Round up to the nearest power of 2.
+	for (pow2count = 1; pow2count < remap->NumEntries; pow2count <<= 1)
+	{ }
+	count = pow2count;
 	BorderColor = 0;
 	RoundedPaletteSize = count;
 	if (SUCCEEDED(fb->D3DDevice->CreateTexture(count, 1, 1, 0, 
@@ -2496,7 +2296,7 @@ bool D3DPal::Update()
 	pal = Remap->Palette;
 
 	// See explanation in UploadPalette() for skipat rationale.
-	skipat = MIN(Remap->NumEntries, DoColorSkip ? 256 - 8 : 256);
+	skipat = MIN(Remap->NumEntries, 256);
 
 	for (i = 0; i < skipat; ++i)
 	{
@@ -3848,55 +3648,22 @@ void D3DFB::SetTexture(int tnum, IDirect3DTexture9 *texture)
 
 void D3DFB::SetPaletteTexture(IDirect3DTexture9 *texture, int count, D3DCOLOR border_color)
 {
-	if (SM14)
-	{
-		// Shader Model 1.4 only uses 256-color palettes.
-		SetConstant(PSCONST_PaletteMod, 1.f, 0.5f / 256.f, 0, 0);
-		if (border_color != 0 && CurBorderColor != border_color)
-		{
-			CurBorderColor = border_color;
-			D3DDevice->SetSamplerState(1, D3DSAMP_BORDERCOLOR, border_color);
-		}
-	}
-	else
-	{
-		// The pixel shader receives color indexes in the range [0.0,1.0].
-		// The palette texture is also addressed in the range [0.0,1.0],
-		// HOWEVER the coordinate 1.0 is the right edge of the texture and
-		// not actually the texture itself. We need to scale and shift
-		// the palette indexes so they lie exactly in the center of each
-		// texel. For a normal palette with 256 entries, that means the
-		// range we use should be [0.5,255.5], adjusted so the coordinate
-		// is still within [0.0,1.0].
-		//
-		// The constant register c2 is used to hold the multiplier in the
-		// x part and the adder in the y part.
-		float fcount = 1 / float(count);
-		SetConstant(PSCONST_PaletteMod, 255 * fcount, 0.5f * fcount, 0, 0);
-	}
+	// The pixel shader receives color indexes in the range [0.0,1.0].
+	// The palette texture is also addressed in the range [0.0,1.0],
+	// HOWEVER the coordinate 1.0 is the right edge of the texture and
+	// not actually the texture itself. We need to scale and shift
+	// the palette indexes so they lie exactly in the center of each
+	// texel. For a normal palette with 256 entries, that means the
+	// range we use should be [0.5,255.5], adjusted so the coordinate
+	// is still within [0.0,1.0].
+	//
+	// The constant register c2 is used to hold the multiplier in the
+	// x part and the adder in the y part.
+	float fcount = 1 / float(count);
+	SetConstant(PSCONST_PaletteMod, 255 * fcount, 0.5f * fcount, 0, 0);
 	SetTexture(1, texture);
 }
 
 void D3DFB::SetPalTexBilinearConstants(Atlas *tex)
 {
-#if 0
-	float con[8];
-
-	// Don't bother doing anything if the constants won't be used.
-	if (PalTexShader == PalTexBilinearShader)
-	{
-		return;
-	}
-
-	con[0] = float(tex->Width);
-	con[1] = float(tex->Height);
-	con[2] = 0;
-	con[3] = 1 / con[0];
-	con[4] = 0;
-	con[5] = 1 / con[1];
-	con[6] = con[5];
-	con[7] = con[3];
-
-	D3DDevice->SetPixelShaderConstantF(3, con, 2);
-#endif
 }

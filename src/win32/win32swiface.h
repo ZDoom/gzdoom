@@ -66,7 +66,6 @@ public:
 	HRESULT GetHR ();
 	bool Is8BitMode() { return false; }
     virtual int GetTrueHeight() { return TrueHeight; }
-	virtual bool LegacyHardware() const { return SM14; }
 
 private:
 	friend class D3DTex;
@@ -150,7 +149,6 @@ private:
 	bool CreatePaletteTexture();
 	bool CreateGammaTexture();
 	bool CreateVertexes();
-	void DoOffByOneCheck();
 	void UploadPalette();
 	void UpdateGammaTexture(float igamma);
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
@@ -221,7 +219,6 @@ private:
 	RECT BlendingRect;
 	int In2D;
 	bool InScene;
-	bool SM14;
 	bool GatheringWipeScreen;
 	bool AALines;
 	uint8_t BlockNum;

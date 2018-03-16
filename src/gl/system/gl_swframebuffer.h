@@ -293,7 +293,6 @@ private:
 
 		std::unique_ptr<HWTexture> Tex;
 		uint32_t BorderColor;
-		bool DoColorSkip;
 
 		bool Update();
 

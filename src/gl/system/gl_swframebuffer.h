@@ -227,49 +227,15 @@ private:
 
 	// TYPES -------------------------------------------------------------------
 
-	struct Atlas;
-
-	struct PackedTexture
-	{
-		Atlas *Owner;
-
-		PackedTexture **Prev, *Next;
-
-		// Pixels this image covers
-		LTRBRect Area;
-
-		// Texture coordinates for this image
-		float Left, Top, Right, Bottom;
-
-		// Texture has extra space on the border?
-		bool Padded;
-	};
-
-	struct Atlas
-	{
-		Atlas(OpenGLSWFrameBuffer *fb, int width, int height, int format);
-		~Atlas();
-
-		PackedTexture *AllocateImage(const Rect &rect, bool padded);
-		void FreeBox(PackedTexture *box);
-
-		SkylineBinPack Packer;
-		Atlas *Next;
-		std::unique_ptr<HWTexture> Tex;
-		int Format;
-		PackedTexture *UsedList;	// Boxes that contain images
-		int Width, Height;
-		bool OneUse;
-	};
-
 	class OpenGLTex : public FNativeTexture
 	{
 	public:
 		OpenGLTex(FTexture *tex, FTextureFormat fmt, OpenGLSWFrameBuffer *fb, bool wrapping);
 		~OpenGLTex();
 
+		std::unique_ptr<HWTexture> Tex;
+
 		FTexture *GameTex;
-		PackedTexture *Box;
 
 		OpenGLTex **Prev;
 		OpenGLTex *Next;
@@ -399,8 +365,6 @@ private:
 	void ReleaseDefaultPoolItems();
 	void KillNativePals();
 	void KillNativeTexs();
-	PackedTexture *AllocPackedTexture(int width, int height, bool wrapping, int format);
-	void DrawPackedTextures(int packnum);
 	void DrawLetterbox(int x, int y, int width, int height);
 	void Draw3DPart(bool copy3d);
 	bool SetStyle(OpenGLTex *tex, DrawParms &parms, uint32_t &color0, uint32_t &color1, BufferedTris &quad);
@@ -466,7 +430,6 @@ private:
 	uint8_t BlockNum;
 	OpenGLPal *Palettes = nullptr;
 	OpenGLTex *Textures = nullptr;
-	Atlas *Atlases = nullptr;
 
 	std::unique_ptr<HWTexture> FBTexture;
 	std::unique_ptr<HWTexture> PaletteTexture;

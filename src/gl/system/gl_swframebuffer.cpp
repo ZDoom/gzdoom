@@ -94,9 +94,7 @@ EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, vid_refreshrate)
 
-#ifdef WIN32
 cycle_t BlitCycles;
-#endif
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
@@ -165,7 +163,6 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	InScene = false;
 	QuadExtra = new BufferedTris[MAX_QUAD_BATCH];
 	memset(QuadExtra, 0, sizeof(BufferedTris) * MAX_QUAD_BATCH);
-	Atlases = nullptr;
 	PixelDoubling = 0;
 
 	Gamma = 1.0;
@@ -827,7 +824,6 @@ void OpenGLSWFrameBuffer::SetInitialState()
 
 bool OpenGLSWFrameBuffer::CreateResources()
 {
-	Atlases = nullptr;
 	if (!LoadShaders())
 		return false;
 
@@ -923,12 +919,6 @@ void OpenGLSWFrameBuffer::ReleaseResources()
 	{
 		delete ScreenWipe;
 		ScreenWipe = nullptr;
-	}
-	Atlas *pack, *next;
-	for (pack = Atlases; pack != nullptr; pack = next)
-	{
-		next = pack->Next;
-		delete pack;
 	}
 	GatheringWipeScreen = false;
 }
@@ -1216,7 +1206,6 @@ void OpenGLSWFrameBuffer::Update()
 		if (InScene)
 		{
 			DrawRateStuff();
-			DrawPackedTextures(gl_showpacks);
 			EndBatch();		// Make sure all batched primitives are drawn.
 			Flip();
 		}
@@ -1729,323 +1718,6 @@ void OpenGLSWFrameBuffer::ReleaseScreenshotBuffer()
 
 //==========================================================================
 //
-// OpenGLSWFrameBuffer :: DrawPackedTextures
-//
-// DEBUG: Draws the texture atlases to the screen, starting with the
-// 1-based packnum. Ignores atlases that are flagged for use by one
-// texture only.
-//
-//==========================================================================
-
-void OpenGLSWFrameBuffer::DrawPackedTextures(int packnum)
-{
-	uint32_t empty_colors[8] =
-	{
-		0x50FF0000, 0x5000FF00, 0x500000FF, 0x50FFFF00,
-		0x50FF00FF, 0x5000FFFF, 0x50FF8000, 0x500080FF
-	};
-	Atlas *pack;
-	int x = 8, y = 8;
-
-	if (packnum <= 0)
-	{
-		return;
-	}
-	pack = Atlases;
-	// Find the first texture atlas that is an actual atlas.
-	while (pack != nullptr && pack->OneUse)
-	{ // Skip textures that aren't used as atlases
-		pack = pack->Next;
-	}
-	// Skip however many atlases we would have otherwise drawn
-	// until we've skipped <packnum> of them.
-	while (pack != nullptr && packnum != 1)
-	{
-		if (!pack->OneUse)
-		{ // Skip textures that aren't used as atlases
-			packnum--;
-		}
-		pack = pack->Next;
-	}
-	// Draw atlases until we run out of room on the screen.
-	while (pack != nullptr)
-	{
-		if (pack->OneUse)
-		{ // Skip textures that aren't used as atlases
-			pack = pack->Next;
-			continue;
-		}
-
-		AddColorOnlyRect(x - 1, y - 1, 258, 258, ColorXRGB(255, 255, 0));
-		int back = 0;
-		for (PackedTexture *box = pack->UsedList; box != nullptr; box = box->Next)
-		{
-			AddColorOnlyQuad(
-				x + box->Area.left * 256 / pack->Width,
-				y + box->Area.top * 256 / pack->Height,
-				(box->Area.right - box->Area.left) * 256 / pack->Width,
-				(box->Area.bottom - box->Area.top) * 256 / pack->Height, empty_colors[back]);
-			back = (back + 1) & 7;
-		}
-		//		AddColorOnlyQuad(x, y-LBOffsetI, 256, 256, ColorARGB(180,0,0,0));
-
-		CheckQuadBatch();
-
-		BufferedTris *quad = &QuadExtra[QuadBatchPos];
-		FBVERTEX *vert = &VertexData[VertexPos];
-
-		quad->ClearSetup();
-		if (pack->Format == GL_R8/* && !tex->IsGray*/)
-		{
-			quad->Flags = BQF_WrapUV | BQF_GamePalette/* | BQF_DisableAlphaTest*/;
-			quad->ShaderNum = BQS_PalTex;
-		}
-		else
-		{
-			quad->Flags = BQF_WrapUV/* | BQF_DisableAlphaTest*/;
-			quad->ShaderNum = BQS_Plain;
-		}
-		quad->Palette = nullptr;
-		quad->Texture = pack->Tex.get();
-		quad->NumVerts = 4;
-		quad->NumTris = 2;
-
-		float x0 = float(x);
-		float y0 = float(y);
-		float x1 = x0 + 256.f;
-		float y1 = y0 + 256.f;
-
-		vert[0].x = x0;
-		vert[0].y = y0;
-		vert[0].z = 0;
-		vert[0].rhw = 1;
-		vert[0].color0 = 0;
-		vert[0].color1 = 0xFFFFFFFF;
-		vert[0].tu = 0;
-		vert[0].tv = 0;
-
-		vert[1].x = x1;
-		vert[1].y = y0;
-		vert[1].z = 0;
-		vert[1].rhw = 1;
-		vert[1].color0 = 0;
-		vert[1].color1 = 0xFFFFFFFF;
-		vert[1].tu = 1;
-		vert[1].tv = 0;
-
-		vert[2].x = x1;
-		vert[2].y = y1;
-		vert[2].z = 0;
-		vert[2].rhw = 1;
-		vert[2].color0 = 0;
-		vert[2].color1 = 0xFFFFFFFF;
-		vert[2].tu = 1;
-		vert[2].tv = 1;
-
-		vert[3].x = x0;
-		vert[3].y = y1;
-		vert[3].z = 0;
-		vert[3].rhw = 1;
-		vert[3].color0 = 0;
-		vert[3].color1 = 0xFFFFFFFF;
-		vert[3].tu = 0;
-		vert[3].tv = 1;
-
-		IndexData[IndexPos] = VertexPos;
-		IndexData[IndexPos + 1] = VertexPos + 1;
-		IndexData[IndexPos + 2] = VertexPos + 2;
-		IndexData[IndexPos + 3] = VertexPos;
-		IndexData[IndexPos + 4] = VertexPos + 2;
-		IndexData[IndexPos + 5] = VertexPos + 3;
-
-		QuadBatchPos++;
-		VertexPos += 4;
-		IndexPos += 6;
-
-		x += 256 + 8;
-		if (x > Width - 256)
-		{
-			x = 8;
-			y += 256 + 8;
-			if (y > Height - 256)
-			{
-				return;
-			}
-		}
-		pack = pack->Next;
-	}
-}
-
-//==========================================================================
-//
-// OpenGLSWFrameBuffer :: AllocPackedTexture
-//
-// Finds space to pack an image inside a texture atlas and returns it.
-// Large images and those that need to wrap always get their own textures.
-//
-//==========================================================================
-
-OpenGLSWFrameBuffer::PackedTexture *OpenGLSWFrameBuffer::AllocPackedTexture(int w, int h, bool wrapping, int format)
-{
-	Atlas *pack;
-	Rect box;
-	bool padded;
-
-	// The - 2 to account for padding
-	if (w > 256 - 2 || h > 256 - 2 || wrapping)
-	{ // Create a new texture atlas.
-		pack = new Atlas(this, w, h, format);
-		pack->OneUse = true;
-		box = pack->Packer.Insert(w, h);
-		padded = false;
-	}
-	else
-	{ // Try to find space in an existing texture atlas.
-		w += 2; // Add padding
-		h += 2;
-		for (pack = Atlases; pack != nullptr; pack = pack->Next)
-		{
-			// Use the first atlas it fits in.
-			if (pack->Format == format)
-			{
-				box = pack->Packer.Insert(w, h);
-				if (box.width != 0)
-				{
-					break;
-				}
-			}
-		}
-		if (pack == nullptr)
-		{ // Create a new texture atlas.
-			pack = new Atlas(this, DEF_ATLAS_WIDTH, DEF_ATLAS_HEIGHT, format);
-			box = pack->Packer.Insert(w, h);
-		}
-		padded = true;
-	}
-	assert(box.width != 0 && box.height != 0);
-	return pack->AllocateImage(box, padded);
-}
-
-//==========================================================================
-//
-// Atlas Constructor
-//
-//==========================================================================
-
-OpenGLSWFrameBuffer::Atlas::Atlas(OpenGLSWFrameBuffer *fb, int w, int h, int format)
-	: Packer(w, h, true)
-{
-	Format = format;
-	UsedList = nullptr;
-	OneUse = false;
-	Width = 0;
-	Height = 0;
-	Next = nullptr;
-
-	// Attach to the end of the atlas list
-	Atlas **prev = &fb->Atlases;
-	while (*prev != nullptr)
-	{
-		prev = &((*prev)->Next);
-	}
-	*prev = this;
-
-	Tex = fb->CreateTexture("Atlas", w, h, 1, format);
-	Width = w;
-	Height = h;
-}
-
-//==========================================================================
-//
-// Atlas Destructor
-//
-//==========================================================================
-
-OpenGLSWFrameBuffer::Atlas::~Atlas()
-{
-	PackedTexture *box, *next;
-
-	Tex.reset();
-	for (box = UsedList; box != nullptr; box = next)
-	{
-		next = box->Next;
-		delete box;
-	}
-}
-
-//==========================================================================
-//
-// Atlas :: AllocateImage
-//
-// Moves the box from the empty list to the used list, sizing it to the
-// requested dimensions and adding additional boxes to the empty list if
-// needed.
-//
-// The passed box *MUST* be in this texture atlas's empty list.
-//
-//==========================================================================
-
-OpenGLSWFrameBuffer::PackedTexture *OpenGLSWFrameBuffer::Atlas::AllocateImage(const Rect &rect, bool padded)
-{
-	PackedTexture *box = new PackedTexture;
-
-	box->Owner = this;
-	box->Area.left = rect.x;
-	box->Area.top = rect.y;
-	box->Area.right = rect.x + rect.width;
-	box->Area.bottom = rect.y + rect.height;
-
-	box->Left = float(box->Area.left + padded) / Width;
-	box->Right = float(box->Area.right - padded) / Width;
-	box->Top = float(box->Area.top + padded) / Height;
-	box->Bottom = float(box->Area.bottom - padded) / Height;
-
-	box->Padded = padded;
-
-	// Add it to the used list.
-	box->Next = UsedList;
-	if (box->Next != nullptr)
-	{
-		box->Next->Prev = &box->Next;
-	}
-	UsedList = box;
-	box->Prev = &UsedList;
-
-	return box;
-}
-
-//==========================================================================
-//
-// Atlas :: FreeBox
-//
-// Removes a box from the used list and deletes it. Space is returned to the
-// waste list. Once all boxes for this atlas are freed, the entire bin
-// packer is reinitialized for maximum efficiency.
-//
-//==========================================================================
-
-void OpenGLSWFrameBuffer::Atlas::FreeBox(OpenGLSWFrameBuffer::PackedTexture *box)
-{
-	*(box->Prev) = box->Next;
-	if (box->Next != nullptr)
-	{
-		box->Next->Prev = box->Prev;
-	}
-	Rect waste;
-	waste.x = box->Area.left;
-	waste.y = box->Area.top;
-	waste.width = box->Area.right - box->Area.left;
-	waste.height = box->Area.bottom - box->Area.top;
-	box->Owner->Packer.AddWaste(waste);
-	delete box;
-	if (UsedList == nullptr)
-	{
-		Packer.Init(Width, Height, true);
-	}
-}
-
-//==========================================================================
-//
 // OpenGLTex Constructor
 //
 //==========================================================================
@@ -2063,7 +1735,6 @@ OpenGLSWFrameBuffer::OpenGLTex::OpenGLTex(FTexture *tex, FTextureFormat fmt, Ope
 	fb->Textures = this;
 
 	GameTex = tex;
-	Box = nullptr;
 	IsGray = false;
 
 	Create(fb, wrapping);
@@ -2077,11 +1748,6 @@ OpenGLSWFrameBuffer::OpenGLTex::OpenGLTex(FTexture *tex, FTextureFormat fmt, Ope
 
 OpenGLSWFrameBuffer::OpenGLTex::~OpenGLTex()
 {
-	if (Box != nullptr)
-	{
-		Box->Owner->FreeBox(Box);
-		Box = nullptr;
-	}
 	// Detach from the texture list
 	*Prev = Next;
 	if (Next != nullptr)
@@ -2106,13 +1772,7 @@ OpenGLSWFrameBuffer::OpenGLTex::~OpenGLTex()
 
 bool OpenGLSWFrameBuffer::OpenGLTex::CheckWrapping(bool wrapping)
 {
-	// If it doesn't need to wrap, then it works.
-	if (!wrapping)
-	{
-		return true;
-	}
-	// If it needs to wrap, then it can't be packed inside another texture.
-	return Box->Owner->OneUse;
+	return true;
 }
 
 //==========================================================================
@@ -2126,25 +1786,8 @@ bool OpenGLSWFrameBuffer::OpenGLTex::CheckWrapping(bool wrapping)
 
 bool OpenGLSWFrameBuffer::OpenGLTex::Create(OpenGLSWFrameBuffer *fb, bool wrapping)
 {
-	assert(Box == nullptr);
-	if (Box != nullptr)
-	{
-		Box->Owner->FreeBox(Box);
-	}
-
-	Box = fb->AllocPackedTexture(GameTex->GetWidth(), GameTex->GetHeight(), wrapping, GetTexFormat());
-
-	if (Box == nullptr)
-	{
-		return false;
-	}
-	if (!Update())
-	{
-		Box->Owner->FreeBox(Box);
-		Box = nullptr;
-		return false;
-	}
-	return true;
+	Tex = fb->CreateTexture("Atlas", GameTex->GetWidth(), GameTex->GetHeight(), 1, GetTexFormat());
+	return Update();
 }
 
 //==========================================================================
@@ -2160,17 +1803,14 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	LTRBRect rect;
 	uint8_t *dest;
 
-	assert(Box != nullptr);
-	assert(Box->Owner != nullptr);
-	assert(Box->Owner->Tex != nullptr);
 	assert(GameTex != nullptr);
 
-	int format = Box->Owner->Tex->Format;
+	int format = Tex->Format;
 
-	rect = Box->Area;
+	rect = { 0, 0, GameTex->GetWidth(), GameTex->GetHeight() };
 
-	if (Box->Owner->Tex->Buffers[0] == 0)
-		glGenBuffers(2, (GLuint*)Box->Owner->Tex->Buffers);
+	if (Tex->Buffers[0] == 0)
+		glGenBuffers(2, (GLuint*)Tex->Buffers);
 
 	int bytesPerPixel = 4;
 	switch (format)
@@ -2181,9 +1821,9 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	}
 
 	int buffersize = (rect.right - rect.left) * (rect.bottom - rect.top) * bytesPerPixel;
-	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Box->Owner->Tex->Buffers[Box->Owner->Tex->CurrentBuffer]);
+	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, Tex->Buffers[Tex->CurrentBuffer]);
 	glBufferData(GL_PIXEL_UNPACK_BUFFER, buffersize, nullptr, GL_STREAM_DRAW);
-	Box->Owner->Tex->CurrentBuffer = (Box->Owner->Tex->CurrentBuffer + 1) & 1;
+	Tex->CurrentBuffer ^= 1;
 	
 	static std::vector<uint8_t> tempbuffer;
 	if (gl.es)
@@ -2196,44 +1836,7 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	{
 		return false;
 	}
-	if (Box->Padded)
-	{
-		dest += pitch + (format == GL_R8 ? 1 : 4);
-	}
 	GameTex->FillBuffer(dest, pitch, GameTex->GetHeight(), mFormat);
-	if (Box->Padded)
-	{
-		// Clear top padding row.
-		dest = bits;
-		int numbytes = GameTex->GetWidth() + 2;
-		if (format != GL_R8)
-		{
-			numbytes <<= 2;
-		}
-		memset(dest, 0, numbytes);
-		dest += pitch;
-		// Clear left and right padding columns.
-		if (format == GL_R8)
-		{
-			for (int y = Box->Area.bottom - Box->Area.top - 2; y > 0; --y)
-			{
-				dest[0] = 0;
-				dest[numbytes - 1] = 0;
-				dest += pitch;
-			}
-		}
-		else
-		{
-			for (int y = Box->Area.bottom - Box->Area.top - 2; y > 0; --y)
-			{
-				*(uint32_t *)dest = 0;
-				*(uint32_t *)(dest + numbytes - 4) = 0;
-				dest += pitch;
-			}
-		}
-		// Clear bottom padding row.
-		memset(dest, 0, numbytes);
-	}
 	
 	if (gl.es && format == GL_RGBA8)
 	{
@@ -2246,7 +1849,7 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
 	GLint oldBinding = 0;
 	glGetIntegerv(GL_TEXTURE_BINDING_2D, &oldBinding);
-	glBindTexture(GL_TEXTURE_2D, Box->Owner->Tex->Texture);
+	glBindTexture(GL_TEXTURE_2D, Tex->Texture);
 	if (format == GL_RGBA8)
 		glTexSubImage2D(GL_TEXTURE_2D, 0, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, gl.es ? GL_RGBA : GL_BGRA, GL_UNSIGNED_BYTE, 0);
 	else
@@ -2511,11 +2114,6 @@ void OpenGLSWFrameBuffer::DrawBlendingRect()
 FNativeTexture *OpenGLSWFrameBuffer::CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping)
 {
 	OpenGLTex *tex = new OpenGLTex(gametex, fmt, this, wrapping);
-	if (tex->Box == nullptr)
-	{
-		delete tex;
-		return nullptr;
-	}
 	return tex;
 }
 
@@ -2756,11 +2354,11 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 	double y0 = parms.y - parms.top * yscale;
 	double x1 = x0 + parms.destwidth;
 	double y1 = y0 + parms.destheight;
-	float u0 = tex->Box->Left;
-	float v0 = tex->Box->Top;
-	float u1 = tex->Box->Right;
-	float v1 = tex->Box->Bottom;
-	double uscale = 1.f / tex->Box->Owner->Width;
+	float u0 = 0;
+	float v0 = 0;
+	float u1 = 1;
+	float v1 = 1;
+	double uscale = 1.f;
 	bool scissoring = false;
 	FBVERTEX *vert;
 
@@ -2777,32 +2375,8 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 		u1 = float(u1 - (parms.texwidth - wi) * uscale);
 	}
 
-#if 0
-	float vscale = 1.f / tex->Box->Owner->Height / yscale;
-	if (y0 < parms.uclip)
-	{
-		v0 += (float(parms.uclip) - y0) * vscale;
-		y0 = float(parms.uclip);
-	}
-	if (y1 > parms.dclip)
-	{
-		v1 -= (y1 - float(parms.dclip)) * vscale;
-		y1 = float(parms.dclip);
-	}
-	if (x0 < parms.lclip)
-	{
-		u0 += float(parms.lclip - x0) * uscale / xscale * 2;
-		x0 = float(parms.lclip);
-	}
-	if (x1 > parms.rclip)
-	{
-		u1 -= (x1 - parms.rclip) * uscale / xscale * 2;
-		x1 = float(parms.rclip);
-	}
-#else
 	// Use a scissor test because the math above introduces some jitter
-	// that is noticeable at low resolutions. Unfortunately, this means this
-	// quad has to be in a batch by itself.
+	// that is noticeable at low resolutions. 
 	if (y0 < parms.uclip || y1 > parms.dclip || x0 < parms.lclip || x1 > parms.rclip)
 	{
 		scissoring = true;
@@ -2814,7 +2388,6 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 		glEnable(GL_SCISSOR_TEST);
 		glScissor(parms.lclip, parms.uclip, parms.rclip - parms.lclip, parms.dclip - parms.uclip);
 	}
-#endif
 	parms.bilinear = false;
 
 	uint32_t color0, color1;
@@ -2825,7 +2398,7 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 		goto done;
 	}
 
-	quad->Texture = tex->Box->Owner->Tex.get();
+	quad->Texture = tex->Tex.get();
 	if (parms.bilinear)
 	{
 		quad->Flags |= BQF_Bilinear;
@@ -2952,7 +2525,7 @@ void OpenGLSWFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTe
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = nullptr;
-	quad->Texture = tex->Box->Owner->Tex.get();
+	quad->Texture = tex->Tex.get();
 	quad->NumVerts = 4;
 	quad->NumTris = 2;
 
@@ -3081,7 +2654,7 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 		quad->ShaderNum = BQS_Plain;
 	}
 	quad->Palette = nullptr;
-	quad->Texture = tex->Box->Owner->Tex.get();
+	quad->Texture = tex->Tex.get();
 	quad->NumVerts = npoints;
 	quad->NumTris = npoints - 2;
 

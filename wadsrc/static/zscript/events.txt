@@ -25,6 +25,8 @@ struct WorldEvent native play version("2.4")
     native readonly Name DamageType;
     native readonly EDmgFlags DamageFlags;
     native readonly double DamageAngle;
+    // for lineactivated
+    native readonly Line ActivatedLine;
 }
 
 struct PlayerEvent native play version("2.4")
@@ -300,6 +302,7 @@ class StaticEventHandler : Object native play version("2.4")
     virtual native void WorldThingRevived(WorldEvent e);
     virtual native void WorldThingDamaged(WorldEvent e);
     virtual native void WorldThingDestroyed(WorldEvent e);
+    virtual native void WorldLineActivated(WorldEvent e);
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.
     virtual native void WorldTick();
 

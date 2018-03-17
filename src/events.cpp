@@ -413,6 +413,12 @@ void E_WorldThingDestroyed(AActor* actor)
 		handler->WorldThingDestroyed(actor);
 }
 
+void E_WorldLineActivated(line_t* line, AActor* actor)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldLineActivated(line, actor);
+}
+
 void E_PlayerEntered(int num, bool fromhub)
 {
 	// this event can happen during savegamerestore. make sure that local handlers don't receive it.
@@ -540,6 +546,7 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageSource);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageType);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageFlags);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageAngle);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivatedLine);
 
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, IsReturn);
@@ -626,6 +633,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingRevived)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDamaged)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLineActivated)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
 
@@ -781,6 +789,21 @@ void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
 			return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldLineActivated)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldLineActivated_VMPtr)
+			return;
+		FWorldEvent e = E_SetupWorldEvent();
+		e.Thing = actor;
+		e.ActivatedLine = line;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}

@@ -57,6 +57,11 @@ bool I_HTTPRequest(const char* request)
 	SOCKET Socket = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	struct hostent *host;
 	host = gethostbyname(sys_statshost.GetHumanString());
+	if (host == nullptr)
+	{
+		DPrintf(DMSG_ERROR, "Error looking up hostname.\n");
+		return false;
+	}
 	SOCKADDR_IN SockAddr;
 	SockAddr.sin_port = htons(sys_statsport);
 	SockAddr.sin_family = AF_INET;

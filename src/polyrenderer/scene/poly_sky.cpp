@@ -121,7 +121,7 @@ void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args
 	uint8_t palsolid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
 
 	args.SetColor(solid, palsolid);
-	args.SetStyle(TriBlendMode::FillOpaque);
+	args.SetStyle(TriBlendMode::Fill);
 	args.DrawArray(thread->DrawQueue, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
 }
 

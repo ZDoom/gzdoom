@@ -146,7 +146,7 @@ void PolyModelRenderer::DrawArrays(int start, int count)
 	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
-	args.SetStyle(TriBlendMode::TextureOpaque);
+	args.SetStyle(TriBlendMode::Opaque);
 	args.SetTexture(SkinTexture, DefaultRenderStyle());
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);
@@ -169,7 +169,7 @@ void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
-	args.SetStyle(TriBlendMode::TextureOpaque);
+	args.SetStyle(TriBlendMode::Opaque);
 	args.SetTexture(SkinTexture, DefaultRenderStyle());
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);

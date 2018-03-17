@@ -79,7 +79,7 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyTransferH
 		args.SetStencilTestValue(stencilValue);
 		args.SetWriteStencil(true, stencilValue + 1);
 		args.SetTexture(tex, DefaultRenderStyle());
-		args.SetStyle(TriBlendMode::TextureOpaque);
+		args.SetStyle(TriBlendMode::Opaque);
 		args.DrawArray(thread->DrawQueue, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 	}
 	else
@@ -546,13 +546,11 @@ void Render3DFloorPlane::Render(PolyRenderThread *thread)
 	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
 	if (!Masked)
 	{
-		args.SetStyle(TriBlendMode::TextureOpaque);
+		args.SetStyle(TriBlendMode::Opaque);
 	}
 	else
 	{
-		double srcalpha = MIN(Alpha, 1.0);
-		double destalpha = Additive ? 1.0 : 1.0 - srcalpha;
-		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
+		args.SetStyle(Additive ? TriBlendMode::Add : TriBlendMode::Normal, MIN(Alpha, 1.0));
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 	}

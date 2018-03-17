@@ -349,14 +349,12 @@ void RenderPolyWall::Render(PolyRenderThread *thread)
 	{
 		args.SetStencilTestValue(StencilValue);
 		args.SetWriteStencil(true, StencilValue + 1);
-		args.SetStyle(TriBlendMode::TextureOpaque);
+		args.SetStyle(TriBlendMode::Opaque);
 		DrawStripes(thread, args, vertices);
 	}
 	else
 	{
-		double srcalpha = MIN(Alpha, 1.0);
-		double destalpha = Additive ? 1.0 : 1.0 - srcalpha;
-		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
+		args.SetStyle(Additive ? TriBlendMode::Add : TriBlendMode::Normal, MIN(Alpha, 1.0));
 		args.SetStencilTestValue(StencilValue + 1);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);

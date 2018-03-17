@@ -346,7 +346,7 @@ void RenderPolyScene::RenderPortals()
 	{
 		bool foggy = false;
 		args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(foggy), true);
-		args.SetStyle(TriBlendMode::FillOpaque);
+		args.SetStyle(TriBlendMode::Fill);
 		args.SetColor(0, 0);
 	}
 

@@ -81,7 +81,7 @@ void RenderPolyParticle::Render(PolyRenderThread *thread, particle_t *particle, 
 	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.ParticleGlobVis(foggy), fullbrightSprite);
 	args.SetDepthTest(true);
 	args.SetColor(particle->color | 0xff000000, particle->color >> 24);
-	args.SetStyle(TriBlendMode::Shaded, particle->alpha, 1.0 - particle->alpha);
+	args.SetStyle(TriBlendMode::Shaded, particle->alpha);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);

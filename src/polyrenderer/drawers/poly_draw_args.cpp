@@ -152,59 +152,61 @@ void PolyDrawArgs::DrawElements(const DrawerCommandQueuePtr &queue, const TriVer
 void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *tex, bool fullbright)
 {
 	SetTexture(tex, translationID, renderstyle);
-
+	SetColor(0xff000000 | fillcolor, fillcolor >> 24);
+	
 	if (renderstyle == LegacyRenderStyles[STYLE_Normal] || (r_drawfuzz == 0 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 1.0, 0.0);
+		SetStyle(Translation() ? TriBlendMode::NormalTranslated : TriBlendMode::Normal, alpha);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Add] && fullbright && alpha == 1.0 && !Translation())
 	{
-		SetStyle(TriBlendMode::TextureAddSrcColor, 1.0, 1.0);
-	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_Add])
-	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, alpha, 1.0);
-	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_Subtract])
-	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedRevSub : TriBlendMode::TextureRevSub, alpha, 1.0);
+		SetStyle(TriBlendMode::SrcColor, alpha);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_SoulTrans])
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, transsouls, 1.0 - transsouls);
+		SetStyle(Translation() ? TriBlendMode::AddTranslated : TriBlendMode::Add, transsouls);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Fuzzy] || (r_drawfuzz == 1 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
 		SetColor(0xff000000, 0);
-		SetStyle(TriBlendMode::Fuzz);
+		SetStyle(TriBlendMode::Fuzzy);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Shadow] || (r_drawfuzz == 2 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
+		SetColor(0xff000000, 0);
+		SetStyle(Translation() ? TriBlendMode::TranslucentStencilTranslated : TriBlendMode::TranslucentStencil, 1.0 - 160 / 255.0);
 	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_TranslucentStencil])
+	else if (renderstyle == LegacyRenderStyles[STYLE_Stencil])
 	{
-		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::Stencil, alpha, 1.0 - alpha);
+		SetStyle(Translation() ? TriBlendMode::StencilTranslated : TriBlendMode::Stencil, alpha);
 	}
-	else if (renderstyle == LegacyRenderStyles[STYLE_AddStencil])
+	else if (renderstyle == LegacyRenderStyles[STYLE_Translucent])
 	{
-		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::AddStencil, alpha, 1.0);
+		SetStyle(Translation() ? TriBlendMode::TranslucentTranslated : TriBlendMode::Translucent, alpha);
+	}
+	else if (renderstyle == LegacyRenderStyles[STYLE_Add])
+	{
+		SetStyle(Translation() ? TriBlendMode::AddTranslated : TriBlendMode::Add, alpha);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Shaded])
 	{
-		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::Shaded, alpha, 1.0 - alpha);
+		SetStyle(Translation() ? TriBlendMode::ShadedTranslated : TriBlendMode::Shaded, alpha);
+	}
+	else if (renderstyle == LegacyRenderStyles[STYLE_TranslucentStencil])
+	{
+		SetStyle(Translation() ? TriBlendMode::TranslucentStencilTranslated : TriBlendMode::TranslucentStencil, alpha);
+	}
+	else if (renderstyle == LegacyRenderStyles[STYLE_Subtract])
+	{
+		SetStyle(Translation() ? TriBlendMode::SubtractTranslated : TriBlendMode::Subtract, alpha);
+	}
+	else if (renderstyle == LegacyRenderStyles[STYLE_AddStencil])
+	{
+		SetStyle(Translation() ? TriBlendMode::AddStencilTranslated : TriBlendMode::AddStencil, alpha);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_AddShaded])
 	{
-		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::AddShaded, alpha, 1.0);
-	}
-	else
-	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, alpha, 1.0 - alpha);
+		SetStyle(Translation() ? TriBlendMode::AddShadedTranslated : TriBlendMode::AddShaded, alpha);
 	}
 }
 
@@ -303,55 +305,55 @@ void RectDrawArgs::SetStyle(FRenderStyle renderstyle, double alpha, uint32_t fil
 
 	if (renderstyle == LegacyRenderStyles[STYLE_Normal] || (r_drawfuzz == 0 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 1.0, 0.0);
+		SetStyle(Translation() ? RectBlendMode::TranslatedAdd : RectBlendMode::TextureAdd, 1.0, 0.0);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Add] && fullbright && alpha == 1.0 && !Translation())
 	{
-		SetStyle(TriBlendMode::TextureAddSrcColor, 1.0, 1.0);
+		SetStyle(RectBlendMode::TextureAddSrcColor, 1.0, 1.0);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Add])
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, alpha, 1.0);
+		SetStyle(Translation() ? RectBlendMode::TranslatedAdd : RectBlendMode::TextureAdd, alpha, 1.0);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Subtract])
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedRevSub : TriBlendMode::TextureRevSub, alpha, 1.0);
+		SetStyle(Translation() ? RectBlendMode::TranslatedRevSub : RectBlendMode::TextureRevSub, alpha, 1.0);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_SoulTrans])
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, transsouls, 1.0 - transsouls);
+		SetStyle(Translation() ? RectBlendMode::TranslatedAdd : RectBlendMode::TextureAdd, transsouls, 1.0 - transsouls);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Fuzzy] || (r_drawfuzz == 1 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
 		SetColor(0xff000000, 0);
-		SetStyle(TriBlendMode::Fuzz);
+		SetStyle(RectBlendMode::Fuzz);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Shadow] || (r_drawfuzz == 2 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, 0.0, 160 / 255.0);
+		SetStyle(Translation() ? RectBlendMode::TranslatedAdd : RectBlendMode::TextureAdd, 0.0, 160 / 255.0);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_TranslucentStencil])
 	{
 		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::Stencil, alpha, 1.0 - alpha);
+		SetStyle(RectBlendMode::Stencil, alpha, 1.0 - alpha);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_AddStencil])
 	{
 		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::AddStencil, alpha, 1.0);
+		SetStyle(RectBlendMode::AddStencil, alpha, 1.0);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_Shaded])
 	{
 		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::Shaded, alpha, 1.0 - alpha);
+		SetStyle(RectBlendMode::Shaded, alpha, 1.0 - alpha);
 	}
 	else if (renderstyle == LegacyRenderStyles[STYLE_AddShaded])
 	{
 		SetColor(0xff000000 | fillcolor, fillcolor >> 24);
-		SetStyle(TriBlendMode::AddShaded, alpha, 1.0);
+		SetStyle(RectBlendMode::AddShaded, alpha, 1.0);
 	}
 	else
 	{
-		SetStyle(Translation() ? TriBlendMode::TranslatedAdd : TriBlendMode::TextureAdd, alpha, 1.0 - alpha);
+		SetStyle(Translation() ? RectBlendMode::TranslatedAdd : RectBlendMode::TextureAdd, alpha, 1.0 - alpha);
 	}
 }

@@ -91,7 +91,7 @@ void FWorldTexture::Unload ()
 //
 //==========================================================================
 
-const uint8_t *FWorldTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FWorldTexture::GetColumn(unsigned int column, const Span **spans_out)
 {
 	GetPixels();
 	if ((unsigned)column >= (unsigned)Width)
@@ -124,6 +124,10 @@ const uint8_t *FWorldTexture::GetColumn (unsigned int column, const Span **spans
 
 const uint8_t *FWorldTexture::GetPixels ()
 {
+	if (CheckModified())
+	{
+		Unload();
+	}
 	if (Pixeldata[0] == nullptr)
 	{
 		Pixeldata[0] = MakeTexture (LegacyRenderStyles[STYLE_Normal]);

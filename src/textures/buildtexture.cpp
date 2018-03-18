@@ -48,18 +48,14 @@
 //
 //==========================================================================
 
-class FBuildTexture : public FTexture
+class FBuildTexture : public FWorldTexture
 {
 public:
 	FBuildTexture (int tilenum, const uint8_t *pixels, int width, int height, int left, int top);
-	~FBuildTexture ();
-
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
+	uint8_t *MakeTexture(FRenderStyle style) override { return const_cast<uint8_t*>(Pixels); }	// This is only to make it compile for now and will be changed later.
 
 protected:
 	const uint8_t *Pixels;
-	Span **Spans;
 };
 
 
@@ -70,8 +66,9 @@ protected:
 //==========================================================================
 
 FBuildTexture::FBuildTexture (int tilenum, const uint8_t *pixels, int width, int height, int left, int top)
-: Pixels (pixels), Spans (NULL)
+: Pixels (pixels)
 {
+	PixelsAreStatic = 3;
 	Width = width;
 	Height = height;
 	LeftOffset = left;
@@ -79,62 +76,6 @@ FBuildTexture::FBuildTexture (int tilenum, const uint8_t *pixels, int width, int
 	CalcBitSize ();
 	Name.Format("BTIL%04d", tilenum);
 	UseType = TEX_Build;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FBuildTexture::~FBuildTexture ()
-{
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FBuildTexture::GetPixels ()
-{
-	return Pixels;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FBuildTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	if (column >= Width)
-	{
-		if (WidthMask + 1 == Width)
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= Width;
-		}
-	}
-	if (spans_out != NULL)
-	{
-		if (Spans == NULL)
-		{
-			Spans = CreateSpans (Pixels);
-		}
-		*spans_out = Spans[column];
-	}
-	return Pixels + column*Height;
 }
 
 //===========================================================================

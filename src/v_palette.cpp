@@ -377,32 +377,16 @@ void InitPalette ()
 	bool usingBuild = false;
 	int lump;
 
-	if ((lump = Wads.CheckNumForFullName ("palette.dat")) >= 0 && Wads.LumpLength (lump) >= 768)
-	{
-		usingBuild = FixBuildPalette (pal, lump, false);
-	}
-	else if ((lump = Wads.CheckNumForFullName ("blood.pal")) >= 0 && Wads.LumpLength (lump) >= 768)
-	{
-		usingBuild = FixBuildPalette (pal, lump, true);
-	}
-
-	if (!usingBuild)
-	{
-		ReadPalette(Wads.CheckNumForName("PLAYPAL"), pal);
-	}
+	ReadPalette(Wads.CheckNumForName("PLAYPAL"), pal);
 
 	GPalette.SetPalette (pal);
 	GPalette.MakeGoodRemap ();
 	ColorMatcher.SetPalette ((uint32_t *)GPalette.BaseColors);
 
-	// The BUILD engine already has a transparent color, so it doesn't need any remapping.
-	if (!usingBuild)
-	{
-		if (GPalette.Remap[0] == 0)
-		{ // No duplicates, so settle for something close to color 0
-			GPalette.Remap[0] = BestColor ((uint32_t *)GPalette.BaseColors,
-				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
-		}
+	if (GPalette.Remap[0] == 0)
+	{ // No duplicates, so settle for something close to color 0
+		GPalette.Remap[0] = BestColor ((uint32_t *)GPalette.BaseColors,
+			GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 	}
 
 	// Colormaps have to be initialized before actors are loaded,

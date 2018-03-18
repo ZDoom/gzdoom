@@ -85,7 +85,6 @@ class FPCXTexture : public FWorldTexture
 {
 public:
 	FPCXTexture (int lumpnum, PCXHeader &);
-	~FPCXTexture ();
 
 	FTextureFormat GetFormat () override;
 

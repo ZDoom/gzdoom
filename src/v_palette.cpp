@@ -374,9 +374,7 @@ static bool FixBuildPalette (uint8_t *opal, int lump, bool blood)
 void InitPalette ()
 {
 	uint8_t pal[768];
-	bool usingBuild = false;
-	int lump;
-
+	
 	ReadPalette(Wads.CheckNumForName("PLAYPAL"), pal);
 
 	GPalette.SetPalette (pal);

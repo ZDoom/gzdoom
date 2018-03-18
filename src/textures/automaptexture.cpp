@@ -51,7 +51,6 @@ class FAutomapTexture : public FWorldTexture
 {
 public:
 	FAutomapTexture(int lumpnum);
-	~FAutomapTexture ();
 	uint8_t *MakeTexture (FRenderStyle style);
 };
 

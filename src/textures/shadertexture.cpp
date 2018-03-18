@@ -134,6 +134,7 @@ public:
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override
 	{
 		bmp->CopyPixelData(x, y, Pixels, Width, Height, Height, 1, rotate, translationtables[TRANSLATION_Standard][8]->Palette, inf);
+		return 0;
 	}
 
 	bool UseBasePalette() override

@@ -133,7 +133,6 @@ union FRenderStyle
 	uint32_t AsDWORD;
 
 	inline FRenderStyle &operator= (ERenderStyle legacy);
-	operator uint32_t() const { return AsDWORD; }
 	bool operator==(const FRenderStyle &o) const { return AsDWORD == o.AsDWORD; }
 	void CheckFuzz();
 	bool IsVisible(double alpha) const throw();

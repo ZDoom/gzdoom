@@ -183,7 +183,6 @@ class FJPEGTexture : public FWorldTexture
 {
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
-	~FJPEGTexture ();
 
 	FTextureFormat GetFormat () override;
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;

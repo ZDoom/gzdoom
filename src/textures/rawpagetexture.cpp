@@ -50,7 +50,6 @@ class FRawPageTexture : public FWorldTexture
 {
 public:
 	FRawPageTexture (int lumpnum);
-	~FRawPageTexture ();
 	uint8_t *MakeTexture (FRenderStyle style) override;
 };
 

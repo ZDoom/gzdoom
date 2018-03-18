@@ -37,6 +37,7 @@
 
 #include "doomtype.h"
 #include "vectors.h"
+#include "r_data/renderstyle.h"
 #include <vector>
 
 struct FloatRect
@@ -225,13 +226,15 @@ public:
 	};
 
 	// Returns a single column of the texture
-	virtual const uint8_t *GetColumn (unsigned int column, const Span **spans_out) = 0;
+	virtual const uint8_t *GetColumn(unsigned int column, const Span **spans_out) = 0;// delete;
+	//virtual const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out) = 0;
 
 	// Returns a single column of the texture, in BGRA8 format
 	virtual const uint32_t *GetColumnBgra(unsigned int column, const Span **spans_out);
 
 	// Returns the whole texture, stored in column-major order
-	virtual const uint8_t *GetPixels () = 0;
+	virtual const uint8_t *GetPixels() = 0;// delete;
+	//virtual const uint8_t *GetPixels(FRenderStyle style) = 0;
 
 	// Returns the whole texture, stored in column-major order, in BGRA8 format
 	virtual const uint32_t *GetPixelsBgra();
@@ -277,12 +280,7 @@ public:
 
 	virtual void SetFrontSkyLayer();
 
-	void CopyToBlock (uint8_t *dest, int dwidth, int dheight, int x, int y, const uint8_t *translation=NULL)
-	{
-		CopyToBlock(dest, dwidth, dheight, x, y, 0, translation);
-	}
-
-	void CopyToBlock (uint8_t *dest, int dwidth, int dheight, int x, int y, int rotate, const uint8_t *translation=NULL);
+	void CopyToBlock (uint8_t *dest, int dwidth, int dheight, int x, int y, int rotate, const uint8_t *translation, FRenderStyle style);
 
 	// Returns true if the next call to GetPixels() will return an image different from the
 	// last call to GetPixels(). This should be considered valid only if a call to CheckModified()
@@ -306,8 +304,6 @@ public:
 	void SetScaledSize(int fitwidth, int fitheight);
 	PalEntry GetSkyCapColor(bool bottom);
 	static PalEntry averageColor(const uint32_t *data, int size, int maxout);
-
-	virtual void HackHack (int newheight);	// called by FMultipatchTexture to discover corrupt patches.
 
 protected:
 	uint16_t Width, Height, WidthMask;
@@ -583,6 +579,24 @@ public:
 	{
 		SINMASK = 2047
 	};
+};
+
+// base class for everything that can be used as a world texture. 
+// This intermediate class encapsulates the buffers for the software renderer.
+class FWorldTexture : public FTexture
+{
+protected:
+	uint8_t *Pixeldata[2] = { nullptr, nullptr };
+	Span **Spandata[2] = { nullptr, nullptr };
+
+	FWorldTexture(const char *name = nullptr, int lumpnum = -1);
+	~FWorldTexture();
+	// These should not be overridden. If that is needed, a class should inherit from something else
+	const uint8_t *GetColumn(unsigned int column, const Span **spans_out) override final;
+	const uint8_t *GetPixels() override final;
+	void Unload() override final; // should be removed after refactoring.
+	virtual void MakeTexture() = delete;
+	virtual uint8_t *MakeTexture(FRenderStyle style) = 0;
 };
 
 // A texture that doesn't really exist

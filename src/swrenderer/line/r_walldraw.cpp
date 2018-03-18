@@ -330,7 +330,6 @@ namespace swrenderer
 		if (rw_pic->UseType == FTexture::TEX_Null)
 			return;
 
-		rw_pic->GetHeight(); // To ensure that rw_pic->HeightBits has been set
 		int fracbits = 32 - rw_pic->HeightBits;
 		if (fracbits == 32)
 		{ // Hack for one pixel tall textures

@@ -48,24 +48,21 @@
 //
 //==========================================================================
 
-class FPNGTexture : public FTexture
+class FPNGTexture : public FWorldTexture
 {
 public:
 	FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height, uint8_t bitdepth, uint8_t colortype, uint8_t interlace);
-	~FPNGTexture ();
+	~FPNGTexture();
 
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
-	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
-	bool UseBasePalette();
+	FTextureFormat GetFormat () override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	bool UseBasePalette() override;
+	uint8_t *MakeTexture(FRenderStyle style) override;
 
 protected:
+	void ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap);
 
 	FString SourceFile;
-	uint8_t *Pixels;
-	Span **Spans;
 	FileReader fr;
 
 	uint8_t BitDepth;
@@ -74,13 +71,10 @@ protected:
 	bool HaveTrans;
 	uint16_t NonPaletteTrans[3];
 
-	uint8_t *PaletteMap;
-	int PaletteSize;
-	uint32_t StartOfIDAT;
-
-	void MakeTexture ();
-
-	friend class FTexture;
+	uint8_t *PaletteMap = nullptr;
+	int PaletteSize = 0;
+	uint32_t StartOfIDAT = 0;
+	uint32_t StartOfPalette = 0;
 };
 
 
@@ -200,9 +194,8 @@ FTexture *PNGTexture_CreateFromFile(PNGHandle *png, const FString &filename)
 
 FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename, int width, int height,
 						  uint8_t depth, uint8_t colortype, uint8_t interlace)
-: FTexture(NULL, lumpnum), SourceFile(filename), Pixels(0), Spans(0),
-  BitDepth(depth), ColorType(colortype), Interlace(interlace), HaveTrans(false),
-  PaletteMap(0), PaletteSize(0), StartOfIDAT(0)
+: FWorldTexture(NULL, lumpnum), SourceFile(filename),
+  BitDepth(depth), ColorType(colortype), Interlace(interlace), HaveTrans(false)
 {
 	union
 	{
@@ -265,6 +258,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 
 		case MAKE_ID('P','L','T','E'):
 			PaletteSize = MIN<int> (len / 3, 256);
+			StartOfPalette = (uint32_t)lump.Tell();
 			lump.Read (p.pngpal, PaletteSize * 3);
 			if (PaletteSize * 3 != (int)len)
 			{
@@ -284,11 +278,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 			NonPaletteTrans[1] = uint16_t(trans[2] * 256 + trans[3]);
 			NonPaletteTrans[2] = uint16_t(trans[4] * 256 + trans[5]);
 			break;
-
-		case MAKE_ID('a','l','P','h'):
-			bAlphaTexture = true;
-			bMasked = true;
-			break;
 		}
 		lump.Seek(4, FileReader::SeekCur);		// Skip CRC
 		lump.Read(&len, 4);
@@ -304,20 +293,17 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 		// intentional fall-through
 
 	case 0:		// Grayscale
-		if (!bAlphaTexture)
+		if (colortype == 0 && HaveTrans && NonPaletteTrans[0] < 256)
 		{
-			if (colortype == 0 && HaveTrans && NonPaletteTrans[0] < 256)
-			{
-				bMasked = true;
-				PaletteSize = 256;
-				PaletteMap = new uint8_t[256];
-				memcpy (PaletteMap, GrayMap, 256);
-				PaletteMap[NonPaletteTrans[0]] = 0;
-			}
-			else
-			{
-				PaletteMap = GrayMap;
-			}
+			bMasked = true;
+			PaletteSize = 256;
+			PaletteMap = new uint8_t[256];
+			memcpy (PaletteMap, GrayMap, 256);
+			PaletteMap[NonPaletteTrans[0]] = 0;
+		}
+		else
+		{
+			PaletteMap = GrayMap;
 		}
 		break;
 
@@ -354,30 +340,11 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 
 FPNGTexture::~FPNGTexture ()
 {
-	Unload ();
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
-	if (PaletteMap != NULL && PaletteMap != GrayMap)
+	if (PaletteMap != nullptr && PaletteMap != FTexture::GrayMap)
 	{
 		delete[] PaletteMap;
-		PaletteMap = NULL;
+		PaletteMap = nullptr;
 	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FPNGTexture::Unload ()
-{
-	delete[] Pixels;
-	Pixels = NULL;
-	FTexture::Unload();
 }
 
 //==========================================================================
@@ -407,32 +374,18 @@ FTextureFormat FPNGTexture::GetFormat()
 //
 //==========================================================================
 
-const uint8_t *FPNGTexture::GetColumn (unsigned int column, const Span **spans_out)
+void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 {
-	if (Pixels == NULL)
+	auto p = lump->Tell();
+	lump->Seek(StartOfPalette, FileReader::SeekSet);
+	for (int i = 0; i < PaletteSize; i++)
 	{
-		MakeTexture ();
+		uint8_t r = lump->ReadUInt8();
+		lump->ReadUInt8(); // Skip g and b.
+		lump->ReadUInt8();	
+		alpharemap[i] = PaletteMap[i] == 0? 0 : r;
 	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		if (WidthMask + 1 == Width)
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= Width;
-		}
-	}
-	if (spans_out != NULL)
-	{
-		if (Spans == NULL)
-		{
-			Spans = CreateSpans (Pixels);
-		}
-		*spans_out = Spans[column];
-	}
-	return Pixels + column*Height;
+	lump->Seek(p, FileReader::SeekSet);
 }
 
 //==========================================================================
@@ -441,26 +394,11 @@ const uint8_t *FPNGTexture::GetColumn (unsigned int column, const Span **spans_o
 //
 //==========================================================================
 
-const uint8_t *FPNGTexture::GetPixels ()
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FPNGTexture::MakeTexture ()
+uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
 {
 	FileReader *lump;
 	FileReader lfr;
+	bool alphatex = !!(style.Flags & STYLEF_RedIsAlpha);
 
 	if (SourceLump >= 0)
 	{
@@ -472,7 +410,7 @@ void FPNGTexture::MakeTexture ()
 		lump = &fr;
 	}
 
-	Pixels = new uint8_t[Width*Height];
+	auto Pixels = new uint8_t[Width*Height];
 	if (StartOfIDAT == 0)
 	{
 		memset (Pixels, 0x99, Width*Height);
@@ -490,25 +428,37 @@ void FPNGTexture::MakeTexture ()
 
 			if (Width == Height)
 			{
-				if (PaletteMap != NULL)
+				if (!alphatex)
 				{
-					FlipSquareBlockRemap (Pixels, Width, Height, PaletteMap);
+					FTexture::FlipSquareBlockRemap (Pixels, Width, Height, PaletteMap);
+				}
+				else if (ColorType == 0)
+				{
+					FTexture::FlipSquareBlock (Pixels, Width, Height);
 				}
 				else
 				{
-					FlipSquareBlock (Pixels, Width, Height);
+					uint8_t alpharemap[256];
+					ReadAlphaRemap(lump, alpharemap);
+					FTexture::FlipSquareBlockRemap(Pixels, Width, Height, alpharemap);
 				}
 			}
 			else
 			{
 				uint8_t *newpix = new uint8_t[Width*Height];
-				if (PaletteMap != NULL)
+				if (!alphatex)
 				{
-					FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, Width, PaletteMap);
+					FTexture::FlipNonSquareBlockRemap (newpix, Pixels, Width, Height, Width, PaletteMap);
+				}
+				else if (ColorType == 0)
+				{
+					FTexture::FlipNonSquareBlock (newpix, Pixels, Width, Height, Width);
 				}
 				else
 				{
-					FlipNonSquareBlock (newpix, Pixels, Width, Height, Width);
+					uint8_t alpharemap[256];
+					ReadAlphaRemap(lump, alpharemap);
+					FTexture::FlipNonSquareBlockRemap(newpix, Pixels, Width, Height, Width, alpharemap);
 				}
 				uint8_t *oldpix = Pixels;
 				Pixels = newpix;
@@ -537,22 +487,13 @@ void FPNGTexture::MakeTexture ()
 				{
 					for (y = Height; y > 0; --y)
 					{
-						if (!HaveTrans)
+						if (HaveTrans && in[0] == NonPaletteTrans[0] && in[1] == NonPaletteTrans[1] && in[2] == NonPaletteTrans[2])
 						{
-							*out++ = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+							*out++ = 0;
 						}
 						else
 						{
-							if (in[0] == NonPaletteTrans[0] &&
-								in[1] == NonPaletteTrans[1] &&
-								in[2] == NonPaletteTrans[2])
-							{
-								*out++ = 0;
-							}
-							else
-							{
-								*out++ = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
-							}
+							*out++ = alphatex? in[0] : RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
 						}
 						in += pitch;
 					}
@@ -563,29 +504,14 @@ void FPNGTexture::MakeTexture ()
 			case 4:		// Grayscale + Alpha
 				pitch = Width * 2;
 				backstep = Height * pitch - 2;
-				if (PaletteMap != NULL)
+				for (x = Width; x > 0; --x)
 				{
-					for (x = Width; x > 0; --x)
+					for (y = Height; y > 0; --y)
 					{
-						for (y = Height; y > 0; --y)
-						{
-							*out++ = in[1] < 128 ? 0 : PaletteMap[in[0]];
-							in += pitch;
-						}
-						in -= backstep;
+						*out++ = alphatex? ((in[0] * in[1]) >> 8) : in[1] < 128 ? 0 : PaletteMap[in[0]];
+						in += pitch;
 					}
-				}
-				else
-				{
-					for (x = Width; x > 0; --x)
-					{
-						for (y = Height; y > 0; --y)
-						{
-							*out++ = in[1] < 128 ? 0 : in[0];
-							in += pitch;
-						}
-						in -= backstep;
-					}
+					in -= backstep;
 				}
 				break;
 
@@ -596,7 +522,7 @@ void FPNGTexture::MakeTexture ()
 				{
 					for (y = Height; y > 0; --y)
 					{
-						*out++ = in[3] < 128 ? 0 : RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+						*out++ = alphatex? ((in[0] * in[3]) >> 8) : in[3] < 128 ? 0 : RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
 						in += pitch;
 					}
 					in -= backstep;
@@ -606,6 +532,7 @@ void FPNGTexture::MakeTexture ()
 			delete[] tempix;
 		}
 	}
+	return Pixels;
 }
 
 //===========================================================================

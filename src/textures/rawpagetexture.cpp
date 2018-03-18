@@ -46,21 +46,12 @@
 //
 //==========================================================================
 
-class FRawPageTexture : public FTexture
+class FRawPageTexture : public FWorldTexture
 {
 public:
 	FRawPageTexture (int lumpnum);
 	~FRawPageTexture ();
-
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
-
-protected:
-	uint8_t *Pixels;
-	static const Span DummySpans[2];
-
-	void MakeTexture ();
+	uint8_t *MakeTexture (FRenderStyle style) override;
 };
 
 //==========================================================================
@@ -161,19 +152,8 @@ FTexture *RawPageTexture_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-const FTexture::Span FRawPageTexture::DummySpans[2] =
-{
-	{ 0, 200 }, { 0, 0 }
-};
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FRawPageTexture::FRawPageTexture (int lumpnum)
-: FTexture(NULL, lumpnum), Pixels(0)
+: FWorldTexture(NULL, lumpnum)
 {
 	Width = 320;
 	Height = 200;
@@ -188,79 +168,14 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 //
 //==========================================================================
 
-FRawPageTexture::~FRawPageTexture ()
-{
-	Unload ();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FRawPageTexture::Unload ()
-{
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-	FTexture::Unload();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FRawPageTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		column %= 320;
-	}
-	if (spans_out != NULL)
-	{
-		*spans_out = DummySpans;
-	}
-	return Pixels + column*Height;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FRawPageTexture::GetPixels ()
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FRawPageTexture::MakeTexture ()
+uint8_t *FRawPageTexture::MakeTexture (FRenderStyle style)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const uint8_t *source = (const uint8_t *)lump.GetMem();
 	const uint8_t *source_p = source;
 	uint8_t *dest_p;
 
-	Pixels = new uint8_t[Width*Height];
+	auto Pixels = new uint8_t[Width*Height];
 	dest_p = Pixels;
 
 	// Convert the source image from row-major to column-major format
@@ -268,11 +183,12 @@ void FRawPageTexture::MakeTexture ()
 	{
 		for (int x = 320; x != 0; --x)
 		{
-			*dest_p = GPalette.Remap[*source_p];
+			*dest_p = (style.Flags & STYLEF_RedIsAlpha)? *source_p : GPalette.Remap[*source_p];
 			dest_p += 200;
 			source_p++;
 		}
 		dest_p -= 200*320-1;
 	}
+	return Pixels;
 }
 

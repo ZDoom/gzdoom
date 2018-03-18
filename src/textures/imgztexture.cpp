@@ -36,6 +36,7 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
+#include "v_palette.h"
 #include "textures/textures.h"
 
 
@@ -47,7 +48,7 @@
 //
 //==========================================================================
 
-class FIMGZTexture : public FTexture
+class FIMGZTexture : public FWorldTexture
 {
 	struct ImageHeader
 	{
@@ -62,18 +63,7 @@ class FIMGZTexture : public FTexture
 
 public:
 	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t);
-	~FIMGZTexture ();
-
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
-
-protected:
-
-	uint8_t *Pixels;
-	Span **Spans;
-
-	void MakeTexture ();
+	uint8_t *MakeTexture (FRenderStyle style) override;
 };
 
 
@@ -106,7 +96,7 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t)
-	: FTexture(NULL, lumpnum), Pixels(0), Spans(0)
+	: FWorldTexture(NULL, lumpnum)
 {
 	Wads.GetLumpName (Name, lumpnum);
 	Width = w;
@@ -122,88 +112,7 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 //
 //==========================================================================
 
-FIMGZTexture::~FIMGZTexture ()
-{
-	Unload ();
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FIMGZTexture::Unload ()
-{
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-	FTexture::Unload();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FIMGZTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		if (WidthMask + 1 == Width)
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= Width;
-		}
-	}
-	if (spans_out != NULL)
-	{
-		if (Spans == NULL)
-		{
-			Spans = CreateSpans (Pixels);
-		}
-		*spans_out = Spans[column];
-	}
-	return Pixels + column*Height;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FIMGZTexture::GetPixels ()
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FIMGZTexture::MakeTexture ()
+uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 {
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
@@ -222,7 +131,7 @@ void FIMGZTexture::MakeTexture ()
 	int dest_rew = Width * Height - 1;
 
 	CalcBitSize ();
-	Pixels = new uint8_t[Width*Height];
+	auto Pixels = new uint8_t[Width*Height];
 	dest_p = Pixels;
 
 	// Convert the source image from row-major to column-major format
@@ -232,7 +141,8 @@ void FIMGZTexture::MakeTexture ()
 		{
 			for (int x = Width; x != 0; --x)
 			{
-				*dest_p = *data;
+				auto p = *data;
+				*dest_p = (style.Flags & STYLEF_RedIsAlpha) ? p : GPalette.Remap[p];
 				dest_p += dest_adv;
 				data++;
 			}
@@ -251,8 +161,8 @@ void FIMGZTexture::MakeTexture ()
 			{
 				if (runlen != 0)
 				{
-					uint8_t color = *data;
-					*dest_p = color;
+					auto p = *data;
+					*dest_p = (style.Flags & STYLEF_RedIsAlpha) ? p : GPalette.Remap[p];
 					dest_p += dest_adv;
 					data++;
 					x--;
@@ -282,5 +192,6 @@ void FIMGZTexture::MakeTexture ()
 			dest_p -= dest_rew;
 		}
 	}
+	return Pixels;
 }
 

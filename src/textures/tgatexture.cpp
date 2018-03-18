@@ -76,29 +76,18 @@ struct TGAHeader
 //
 //==========================================================================
 
-class FTGATexture : public FTexture
+class FTGATexture : public FWorldTexture
 {
 public:
 	FTGATexture (int lumpnum, TGAHeader *);
-	~FTGATexture ();
 
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
-	FTextureFormat GetFormat ();
-
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
-	bool UseBasePalette();
+	FTextureFormat GetFormat () override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	bool UseBasePalette() override;
 
 protected:
-	uint8_t *Pixels;
-	Span **Spans;
-
 	void ReadCompressed(FileReader &lump, uint8_t * buffer, int bytesperpixel);
-
-	virtual void MakeTexture ();
-
-	friend class FTexture;
+	uint8_t *MakeTexture (FRenderStyle style) override;
 };
 
 //==========================================================================
@@ -142,7 +131,7 @@ FTexture *TGATexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
-: FTexture(NULL, lumpnum), Pixels(0), Spans(0)
+: FWorldTexture(NULL, lumpnum)
 {
 	Wads.GetLumpName (Name, lumpnum);
 	Width = hdr->width;
@@ -158,90 +147,9 @@ FTGATexture::FTGATexture (int lumpnum, TGAHeader * hdr)
 //
 //==========================================================================
 
-FTGATexture::~FTGATexture ()
-{
-	Unload ();
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FTGATexture::Unload ()
-{
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-	FTexture::Unload();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
 FTextureFormat FTGATexture::GetFormat()
 {
 	return TEX_RGB;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FTGATexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		if (WidthMask + 1 == Width)
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= Width;
-		}
-	}
-	if (spans_out != NULL)
-	{
-		if (Spans == NULL)
-		{
-			Spans = CreateSpans (Pixels);
-		}
-		*spans_out = Spans[column];
-	}
-	return Pixels + column*Height;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FTGATexture::GetPixels ()
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
 }
 
 //==========================================================================
@@ -286,7 +194,7 @@ void FTGATexture::ReadCompressed(FileReader &lump, uint8_t * buffer, int bytespe
 //
 //==========================================================================
 
-void FTGATexture::MakeTexture ()
+uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 {
 	uint8_t PaletteMap[256];
 	auto lump = Wads.OpenLumpReader (SourceLump);
@@ -294,8 +202,9 @@ void FTGATexture::MakeTexture ()
 	uint16_t w;
 	uint8_t r,g,b,a;
 	uint8_t * buffer;
+	bool alphatex = !!(style.Flags & STYLEF_RedIsAlpha);
 
-	Pixels = new uint8_t[Width*Height];
+	auto Pixels = new uint8_t[Width*Height];
 	lump.Read(&hdr, sizeof(hdr));
 	lump.Seek(hdr.id_len, FileReader::SeekCur);
 	
@@ -339,7 +248,7 @@ void FTGATexture::MakeTexture ()
 				r=g=b=a=0;
 				break;
 			}
-			PaletteMap[i] = a>=128? ColorMatcher.Pick(r, g, b) : 0;
+			PaletteMap[i] = !alphatex? (a>=128? ColorMatcher.Pick(r, g, b) : 0) : (r * a) >> 8;
 		}
     }
     
@@ -397,8 +306,8 @@ void FTGATexture::MakeTexture ()
 				uint16_t * p = (uint16_t*)(ptr + y * Pitch);
 				for(int x=0;x<Width;x++)
 				{
-					int v = LittleLong(*p);
-					Pixels[x*Height+y] = RGB256k.RGB[((v>>10) & 0x1f)*2][((v>>5) & 0x1f)*2][(v & 0x1f)*2];
+					int v = LittleShort(*p);
+					Pixels[x*Height + y] = !alphatex ? RGB256k.RGB[((v >> 10) & 0x1f) * 2][((v >> 5) & 0x1f) * 2][(v & 0x1f) * 2] : ((v >> 10) & 0x1f) * 8;
 					p+=step_x;
 				}
 			}
@@ -410,7 +319,7 @@ void FTGATexture::MakeTexture ()
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height+y] = RGB256k.RGB[p[2]>>2][p[1]>>2][p[0]>>2];
+					Pixels[x*Height + y] = !alphatex ? RGB256k.RGB[p[2] >> 2][p[1] >> 2][p[0] >> 2] : p[2];
 					p+=step_x;
 				}
 			}
@@ -424,7 +333,7 @@ void FTGATexture::MakeTexture ()
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height+y] = RGB256k.RGB[p[2]>>2][p[1]>>2][p[0]>>2];
+						Pixels[x*Height + y] = !alphatex ? RGB256k.RGB[p[2] >> 2][p[1] >> 2][p[0] >> 2] : p[2];
 						p+=step_x;
 					}
 				}
@@ -436,7 +345,7 @@ void FTGATexture::MakeTexture ()
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height+y] = p[3] >= 128? RGB256k.RGB[p[2]>>2][p[1]>>2][p[0]>>2] : 0;
+						Pixels[x*Height + y] = !alphatex ? (p[3] >= 128 ? RGB256k.RGB[p[2] >> 2][p[1] >> 2][p[0] >> 2] : 0) : (p[2] * p[3]) >> 8;
 						p+=step_x;
 					}
 				}
@@ -457,7 +366,7 @@ void FTGATexture::MakeTexture ()
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height+y] = GrayMap[*p];
+					Pixels[x*Height+y] = !alphatex? FTexture::GrayMap[*p] : *p;
 					p+=step_x;
 				}
 			}
@@ -469,7 +378,7 @@ void FTGATexture::MakeTexture ()
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height+y] = GrayMap[p[1]];	// only use the high byte
+					Pixels[x*Height+y] = !alphatex ? FTexture::GrayMap[p[1]] : p[1];	// only use the high byte
 					p+=step_x;
 				}
 			}
@@ -484,6 +393,7 @@ void FTGATexture::MakeTexture ()
 		break;
     }
 	delete [] buffer;
+	return Pixels;
 }	
 
 //===========================================================================

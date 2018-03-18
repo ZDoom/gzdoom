@@ -1110,6 +1110,7 @@ set (PCH_SOURCES
 	textures/tgatexture.cpp
 	textures/warptexture.cpp
 	textures/skyboxtexture.cpp
+	textures/worldtexture.cpp
 	xlat/parse_xlat.cpp
 	fragglescript/t_func.cpp
 	fragglescript/t_load.cpp

@@ -523,24 +523,11 @@ FBrightmapTexture::FBrightmapTexture (FTexture *source)
 	SourceLump = -1;
 }
 
-FBrightmapTexture::~FBrightmapTexture ()
+uint8_t *FBrightmapTexture::MakeTexture(FRenderStyle style)
 {
-}
-
-const uint8_t *FBrightmapTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	// not needed
-	return NULL;
-}
-
-const uint8_t *FBrightmapTexture::GetPixels ()
-{
-	// not needed
-	return NULL;
-}
-
-void FBrightmapTexture::Unload ()
-{
+	// This function is only necessary to satisfy the parent class's interface.
+	// This will never be called.
+	return nullptr;
 }
 
 int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)

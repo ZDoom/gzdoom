@@ -248,10 +248,6 @@ void FTexture::CalcBitSize ()
 	HeightBits = i;
 }
 
-void FTexture::HackHack (int newheight)
-{
-}
-
 FTexture::Span **FTexture::CreateSpans (const uint8_t *pixels) const
 {
 	Span **spans, *span;
@@ -554,14 +550,15 @@ void FTexture::GenerateBgraMipmapsFast()
 	}
 }
 
-void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation)
+void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation, FRenderStyle style)
 {
-	const uint8_t *pixels = GetPixels();
+	const uint8_t *pixels = GetPixels(/*style*/);
 	int srcwidth = Width;
 	int srcheight = Height;
 	int step_x = Height;
 	int step_y = 1;
 	FClipRect cr = {0, 0, dwidth, dheight};
+	if (style.Flags & STYLEF_RedIsAlpha) translation = nullptr;	// do not apply translations to alpha textures.
 
 	if (ClipCopyPixelRect(&cr, xpos, ypos, pixels, srcwidth, srcheight, step_x, step_y, rotate))
 	{

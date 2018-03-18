@@ -1,7 +1,8 @@
 /*
-** flattexture.cpp
+** emptytexture.cpp
 ** Texture class for empty placeholder textures
 ** (essentially patches with dimensions and offsets of (0,0) )
+** These need special treatment because a texture size of 0 is illegal
 **
 **---------------------------------------------------------------------------
 ** Copyright 2009 Christoph Oelckers
@@ -41,30 +42,21 @@
 
 //==========================================================================
 //
-// A texture defined between F_START and F_END markers
+// 
 //
 //==========================================================================
 
-class FEmptyTexture : public FTexture
+class FEmptyTexture : public FWorldTexture
 {
+	uint8_t Pixel = 0;
 public:
 	FEmptyTexture (int lumpnum);
-
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload() {}
-
-protected:
-	uint8_t Pixels[1];
-	Span DummySpans[1];
+	uint8_t *MakeTexture(FRenderStyle style) override;
 };
-
-
 
 //==========================================================================
 //
-// Since there is no way to detect the validity of a flat
-// they can't be used anywhere else but between F_START and F_END
+// 
 //
 //==========================================================================
 
@@ -86,15 +78,13 @@ FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
 //==========================================================================
 
 FEmptyTexture::FEmptyTexture (int lumpnum)
-: FTexture(NULL, lumpnum)
+: FWorldTexture(NULL, lumpnum)
 {
 	bMasked = true;
 	WidthBits = HeightBits = 1;
 	Width = Height = 1;
 	WidthMask = 0;
-	DummySpans[0].TopOffset = 0;
-	DummySpans[0].Length = 0;
-	Pixels[0] = 0;
+	PixelsAreStatic = 3;
 }
 
 //==========================================================================
@@ -103,23 +93,8 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 //
 //==========================================================================
 
-const uint8_t *FEmptyTexture::GetColumn (unsigned int column, const Span **spans_out)
+uint8_t *FEmptyTexture::MakeTexture(FRenderStyle style)
 {
-	if (spans_out != NULL)
-	{
-		*spans_out = DummySpans;
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FEmptyTexture::GetPixels ()
-{
-	return Pixels;
+	return &Pixel;
 }
 

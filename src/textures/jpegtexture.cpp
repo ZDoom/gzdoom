@@ -179,27 +179,16 @@ void JPEG_OutputMessage (j_common_ptr cinfo)
 //
 //==========================================================================
 
-class FJPEGTexture : public FTexture
+class FJPEGTexture : public FWorldTexture
 {
 public:
 	FJPEGTexture (int lumpnum, int width, int height);
 	~FJPEGTexture ();
 
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
-	FTextureFormat GetFormat ();
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL);
-	bool UseBasePalette();
-
-protected:
-
-	uint8_t *Pixels;
-	Span DummySpans[2];
-
-	void MakeTexture ();
-
-	friend class FTexture;
+	FTextureFormat GetFormat () override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	bool UseBasePalette() override;
+	uint8_t *MakeTexture (FRenderStyle style) override;
 };
 
 //==========================================================================
@@ -259,7 +248,7 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 //==========================================================================
 
 FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
-: FTexture(NULL, lumpnum), Pixels(0)
+: FWorldTexture(NULL, lumpnum)
 {
 	UseType = TEX_MiscPatch;
 	LeftOffset = 0;
@@ -269,35 +258,6 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 	Width = width;
 	Height = height;
 	CalcBitSize ();
-
-	DummySpans[0].TopOffset = 0;
-	DummySpans[0].Length = Height;
-	DummySpans[1].TopOffset = 0;
-	DummySpans[1].Length = 0;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-FJPEGTexture::~FJPEGTexture ()
-{
-	Unload ();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FJPEGTexture::Unload ()
-{
-	delete[] Pixels;
-	Pixels = NULL;
-	FTexture::Unload();
 }
 
 //==========================================================================
@@ -317,142 +277,123 @@ FTextureFormat FJPEGTexture::GetFormat()
 //
 //==========================================================================
 
-const uint8_t *FJPEGTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		if (WidthMask + 1 == Width)
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= Width;
-		}
-	}
-	if (spans_out != NULL)
-	{
-		*spans_out = DummySpans;
-	}
-	return Pixels + column*Height;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FJPEGTexture::GetPixels ()
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FJPEGTexture::MakeTexture ()
+uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 {
 	auto lump = Wads.OpenLumpReader (SourceLump);
 	JSAMPLE *buff = NULL;
+	bool doalpha = !!(style.Flags & STYLEF_RedIsAlpha);
 
 	jpeg_decompress_struct cinfo;
 	jpeg_error_mgr jerr;
 
-	Pixels = new uint8_t[Width * Height];
+	auto Pixels = new uint8_t[Width * Height];
 	memset (Pixels, 0xBA, Width * Height);
 
 	cinfo.err = jpeg_std_error(&jerr);
 	cinfo.err->output_message = JPEG_OutputMessage;
 	cinfo.err->error_exit = JPEG_ErrorExit;
 	jpeg_create_decompress(&cinfo);
+
+	FLumpSourceMgr sourcemgr(&lump, &cinfo);
 	try
 	{
-		FLumpSourceMgr sourcemgr(&lump, &cinfo);
 		jpeg_read_header(&cinfo, TRUE);
 		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
-			  (cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
-			  (cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
+			(cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
+			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
+			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf (TEXTCOLOR_ORANGE "Unsupported color format\n");
-			throw -1;
+			Printf(TEXTCOLOR_ORANGE, "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 		}
-
-		jpeg_start_decompress(&cinfo);
-
-		int y = 0;
-		buff = new uint8_t[cinfo.output_width * cinfo.output_components];
-
-		while (cinfo.output_scanline < cinfo.output_height)
+		else
 		{
-			int num_scanlines = jpeg_read_scanlines(&cinfo, &buff, 1);
-			uint8_t *in = buff;
-			uint8_t *out = Pixels + y;
-			switch (cinfo.out_color_space)
+			jpeg_start_decompress(&cinfo);
+
+			int y = 0;
+			buff = new uint8_t[cinfo.output_width * cinfo.output_components];
+
+			while (cinfo.output_scanline < cinfo.output_height)
 			{
-			case JCS_RGB:
-				for (int x = Width; x > 0; --x)
+				int num_scanlines = jpeg_read_scanlines(&cinfo, &buff, 1);
+				uint8_t *in = buff;
+				uint8_t *out = Pixels + y;
+				switch (cinfo.out_color_space)
 				{
-					*out = RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
-					out += Height;
-					in += 3;
-				}
-				break;
+				case JCS_RGB:
+					for (int x = Width; x > 0; --x)
+					{
+						*out = !doalpha? RGB256k.RGB[in[0] >> 2][in[1] >> 2][in[2] >> 2] : in[0];
+						out += Height;
+						in += 3;
+					}
+					break;
 
-			case JCS_GRAYSCALE:
-				for (int x = Width; x > 0; --x)
-				{
-					*out = GrayMap[in[0]];
-					out += Height;
-					in += 1;
-				}
-				break;
+				case JCS_GRAYSCALE:
+					for (int x = Width; x > 0; --x)
+					{
+						*out = !doalpha ? FTexture::GrayMap[in[0]] : in[0];
+						out += Height;
+						in += 1;
+					}
+					break;
 
-			case JCS_CMYK:
-				// What are you doing using a CMYK image? :)
-				for (int x = Width; x > 0; --x)
-				{
-					// To be precise, these calculations should use 255, but
-					// 256 is much faster and virtually indistinguishable.
-					int r = in[3] - (((256-in[0])*in[3]) >> 8);
-					int g = in[3] - (((256-in[1])*in[3]) >> 8);
-					int b = in[3] - (((256-in[2])*in[3]) >> 8);
-					*out = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
-					out += Height;
-					in += 4;
-				}
-				break;
+				case JCS_CMYK:
+					// What are you doing using a CMYK image? :)
+					for (int x = Width; x > 0; --x)
+					{
+						// To be precise, these calculations should use 255, but
+						// 256 is much faster and virtually indistinguishable.
+						int r = in[3] - (((256 - in[0])*in[3]) >> 8);
+						if (!doalpha)
+						{
+							int g = in[3] - (((256 - in[1])*in[3]) >> 8);
+							int b = in[3] - (((256 - in[2])*in[3]) >> 8);
+							*out = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
+						}
+						else *out = (uint8_t)r;
+						out += Height;
+						in += 4;
+					}
+					break;
 
-			default:
-				// The other colorspaces were considered above and discarded,
-				// but GCC will complain without a default for them here.
-				break;
+				case JCS_YCbCr:
+					// Probably useless but since I had the formula available...
+					for (int x = Width; x > 0; --x)
+					{
+						double Y = in[0], Cb = in[1], Cr = in[2];
+						int r = clamp((int)(Y + 1.40200 * (Cr - 0x80)), 0, 255);
+						if (!doalpha)
+						{
+							int g = clamp((int)(Y - 0.34414 * (Cb - 0x80) - 0.71414 * (Cr - 0x80)), 0, 255);
+							int b = clamp((int)(Y + 1.77200 * (Cb - 0x80)), 0, 255);
+							*out = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
+						}
+						else *out = (uint8_t)r;
+						out += Height;
+						in += 4;
+					}
+					break;
+
+				default:
+					// The other colorspaces were considered above and discarded,
+					// but GCC will complain without a default for them here.
+					break;
+				}
+				y++;
 			}
-			y++;
+			jpeg_finish_decompress(&cinfo);
 		}
-		jpeg_finish_decompress(&cinfo);
-		jpeg_destroy_decompress(&cinfo);
 	}
 	catch (int)
 	{
-		Printf (TEXTCOLOR_ORANGE "   in texture %s\n", Name.GetChars());
-		jpeg_destroy_decompress(&cinfo);
+		Printf(TEXTCOLOR_ORANGE, "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 	}
+	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL)
 	{
 		delete[] buff;
 	}
+	return Pixels;
 }
 
 
@@ -479,58 +420,66 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 	cinfo.err->error_exit = JPEG_ErrorExit;
 	jpeg_create_decompress(&cinfo);
 
+	FLumpSourceMgr sourcemgr(&lump, &cinfo);
 	try
 	{
-		FLumpSourceMgr sourcemgr(&lump, &cinfo);
 		jpeg_read_header(&cinfo, TRUE);
 
 		if (!((cinfo.out_color_space == JCS_RGB && cinfo.num_components == 3) ||
-			  (cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
-			  (cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
+			(cinfo.out_color_space == JCS_CMYK && cinfo.num_components == 4) ||
+			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
+			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf (TEXTCOLOR_ORANGE "Unsupported color format\n");
-			throw -1;
+			Printf(TEXTCOLOR_ORANGE, "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 		}
-		jpeg_start_decompress(&cinfo);
-
-		int yc = 0;
-		buff = new uint8_t[cinfo.output_height * cinfo.output_width * cinfo.output_components];
-
-
-		while (cinfo.output_scanline < cinfo.output_height)
+		else
 		{
-			uint8_t * ptr = buff + cinfo.output_width * cinfo.output_components * yc;
-			jpeg_read_scanlines(&cinfo, &ptr, 1);
-			yc++;
+			jpeg_start_decompress(&cinfo);
+
+			int yc = 0;
+			buff = new uint8_t[cinfo.output_height * cinfo.output_width * cinfo.output_components];
+
+
+			while (cinfo.output_scanline < cinfo.output_height)
+			{
+				uint8_t * ptr = buff + cinfo.output_width * cinfo.output_components * yc;
+				jpeg_read_scanlines(&cinfo, &ptr, 1);
+				yc++;
+			}
+
+			switch (cinfo.out_color_space)
+			{
+			case JCS_RGB:
+				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
+					3, cinfo.output_width * cinfo.output_components, rotate, CF_RGB, inf);
+				break;
+
+			case JCS_GRAYSCALE:
+				for (int i = 0; i < 256; i++) pe[i] = PalEntry(255, i, i, i);	// default to a gray map
+				bmp->CopyPixelData(x, y, buff, cinfo.output_width, cinfo.output_height,
+					1, cinfo.output_width, rotate, pe, inf);
+				break;
+
+			case JCS_CMYK:
+				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
+					4, cinfo.output_width * cinfo.output_components, rotate, CF_CMYK, inf);
+				break;
+
+			case JCS_YCbCr:
+				bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height,
+					4, cinfo.output_width * cinfo.output_components, rotate, CF_YCbCr, inf);
+				break;
+
+			default:
+				assert(0);
+				break;
+			}
+			jpeg_finish_decompress(&cinfo);
 		}
-
-		switch (cinfo.out_color_space)
-		{
-		case JCS_RGB:
-			bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height, 
-				3, cinfo.output_width * cinfo.output_components, rotate, CF_RGB, inf);
-			break;
-
-		case JCS_GRAYSCALE:
-			for(int i=0;i<256;i++) pe[i]=PalEntry(255,i,i,i);	// default to a gray map
-			bmp->CopyPixelData(x, y, buff, cinfo.output_width, cinfo.output_height, 
-				1, cinfo.output_width, rotate, pe, inf);
-			break;
-
-		case JCS_CMYK:
-			bmp->CopyPixelDataRGB(x, y, buff, cinfo.output_width, cinfo.output_height, 
-				4, cinfo.output_width * cinfo.output_components, rotate, CF_CMYK, inf);
-			break;
-
-		default:
-			assert(0);
-			break;
-		}
-		jpeg_finish_decompress(&cinfo);
 	}
-	catch(int)
+	catch (int)
 	{
-		Printf (TEXTCOLOR_ORANGE "   in JPEG texture %s\n", Name.GetChars());
+		Printf(TEXTCOLOR_ORANGE, "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL) delete [] buff;

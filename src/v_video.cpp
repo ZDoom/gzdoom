@@ -1008,7 +1008,7 @@ void FPaletteTester::SetTranslation(int num)
 //
 //==========================================================================
 
-const uint8_t *FPaletteTester::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FPaletteTester::GetColumn(unsigned int column, const Span **spans_out)
 {
 	if (CurTranslation != WantTranslation)
 	{

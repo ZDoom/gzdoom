@@ -961,15 +961,9 @@ void FDummyTexture::SetSize (int width, int height)
 }
 
 // This must never be called
-const uint8_t *FDummyTexture::GetColumn (unsigned int column, const Span **spans_out)
+uint8_t *FDummyTexture::MakeTexture (FRenderStyle)
 {
-	return NULL;
-}
-
-// And this also must never be called
-const uint8_t *FDummyTexture::GetPixels ()
-{
-	return NULL;
+	return nullptr;
 }
 
 //==========================================================================
@@ -996,7 +990,7 @@ CCMD (printspans)
 	{
 		const FTexture::Span *spans;
 		Printf ("%4d:", x);
-		tex->GetColumn (x, &spans);
+		tex->GetColumn(x, &spans);
 		while (spans->Length != 0)
 		{
 			Printf (" (%4d,%4d)", spans->TopOffset, spans->TopOffset+spans->Length-1);

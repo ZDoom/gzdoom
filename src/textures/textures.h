@@ -601,12 +601,11 @@ protected:
 };
 
 // A texture that doesn't really exist
-class FDummyTexture : public FTexture
+class FDummyTexture : public FWorldTexture
 {
 public:
 	FDummyTexture ();
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
+	uint8_t *MakeTexture(FRenderStyle);
 	void SetSize (int width, int height);
 };
 
@@ -618,7 +617,7 @@ public:
 	~FWarpTexture ();
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
 	const uint8_t *GetPixels ();
 	const uint32_t *GetPixelsBgra() override;
 	void Unload ();
@@ -653,7 +652,7 @@ public:
 	FCanvasTexture (const char *name, int width, int height);
 	~FCanvasTexture ();
 
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
+	const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
 	const uint8_t *GetPixels ();
 	const uint32_t *GetPixelsBgra() override;
 	void Unload ();

@@ -65,7 +65,7 @@ FCanvasTexture::~FCanvasTexture ()
 	Unload ();
 }
 
-const uint8_t *FCanvasTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FCanvasTexture::GetColumn(unsigned int column, const Span **spans_out)
 {
 	bNeedsUpdate = true;
 	if (Canvas == NULL)

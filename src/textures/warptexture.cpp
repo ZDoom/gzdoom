@@ -117,7 +117,7 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 	return PixelsBgra.data();
 }
 
-const uint8_t *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FWarpTexture::GetColumn(unsigned int column, const Span **spans_out)
 {
 	uint64_t time =screen->FrameTime;
 

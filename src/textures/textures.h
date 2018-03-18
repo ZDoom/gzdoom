@@ -226,15 +226,15 @@ public:
 	};
 
 	// Returns a single column of the texture
-	virtual const uint8_t *GetColumn(unsigned int column, const Span **spans_out) = 0;// delete;
-	//virtual const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out) = 0;
+	virtual const uint8_t *GetColumn(unsigned int column, const Span **spans_out) = delete;
+	virtual const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out) = 0;
 
 	// Returns a single column of the texture, in BGRA8 format
 	virtual const uint32_t *GetColumnBgra(unsigned int column, const Span **spans_out);
 
 	// Returns the whole texture, stored in column-major order
-	virtual const uint8_t *GetPixels() = 0;// delete;
-	//virtual const uint8_t *GetPixels(FRenderStyle style) = 0;
+	virtual const uint8_t *GetPixels() = delete;
+	virtual const uint8_t *GetPixels(FRenderStyle style) = 0;
 
 	// Returns the whole texture, stored in column-major order, in BGRA8 format
 	virtual const uint32_t *GetPixelsBgra();
@@ -285,7 +285,7 @@ public:
 	// Returns true if the next call to GetPixels() will return an image different from the
 	// last call to GetPixels(). This should be considered valid only if a call to CheckModified()
 	// is immediately followed by a call to GetPixels().
-	virtual bool CheckModified ();
+	virtual bool CheckModified (FRenderStyle style);
 
 	static void InitGrayMap();
 
@@ -592,52 +592,50 @@ protected:
 
 	FWorldTexture(const char *name = nullptr, int lumpnum = -1);
 	~FWorldTexture();
-	// These should not be overridden. If that is needed, a class should inherit from something else
-	const uint8_t *GetColumn(unsigned int column, const Span **spans_out) override final;
-	const uint8_t *GetPixels() override final;
-	void Unload() override final; // should be removed after refactoring.
+
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out) override;
+	const uint8_t *GetPixels(FRenderStyle style) override;
+	void Unload() override;
 	virtual void MakeTexture() = delete;
 	virtual uint8_t *MakeTexture(FRenderStyle style) = 0;
+	void FreeAllSpans();
 };
 
 // A texture that doesn't really exist
-class FDummyTexture : public FWorldTexture
+class FDummyTexture : public FTexture
 {
 public:
 	FDummyTexture ();
-	uint8_t *MakeTexture(FRenderStyle);
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out) override;
+	const uint8_t *GetPixels(FRenderStyle style) override;
 	void SetSize (int width, int height);
 };
 
 // A texture that returns a wiggly version of another texture.
-class FWarpTexture : public FTexture
+class FWarpTexture : public FWorldTexture
 {
 public:
 	FWarpTexture (FTexture *source, int warptype);
 	~FWarpTexture ();
+	void Unload() override;
 
-	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
-	const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
+	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL) override;
 	const uint32_t *GetPixelsBgra() override;
-	void Unload ();
-	bool CheckModified ();
+	bool CheckModified (FRenderStyle) override;
 
 	float GetSpeed() const { return Speed; }
 	int GetSourceLump() { return SourcePic->GetSourceLump(); }
 	void SetSpeed(float fac) { Speed = fac; }
 	FTexture *GetRedirect(bool wantwarped);
 
-	uint64_t GenTime;
-	uint64_t GenTimeBgra;
-	float Speed;
+	uint64_t GenTime[2] = { 0, 0 };
+	uint64_t GenTimeBgra = 0;
+	float Speed = 1.f;
 	int WidthOffsetMultiplier, HeightOffsetMultiplier;  // [mxd]
 protected:
 	FTexture *SourcePic;
-	uint8_t *Pixels;
-	Span **Spans;
 
-	virtual void MakeTexture (uint64_t time);
+	uint8_t *MakeTexture (FRenderStyle style) override;
 	int NextPo2 (int v); // [mxd]
 	void SetupMultipliers (int width, int height); // [mxd]
 };
@@ -652,17 +650,17 @@ public:
 	FCanvasTexture (const char *name, int width, int height);
 	~FCanvasTexture ();
 
-	const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels (FRenderStyle style);
 	const uint32_t *GetPixelsBgra() override;
 	void Unload ();
-	bool CheckModified ();
+	bool CheckModified (FRenderStyle) override;
 	void NeedUpdate() { bNeedsUpdate=true; }
 	void SetUpdated() { bNeedsUpdate = false; bDidUpdate = true; bFirstUpdate = false; }
 	DSimpleCanvas *GetCanvas() { return Canvas; }
 	DSimpleCanvas *GetCanvasBgra() { return CanvasBgra; }
 	bool Mipmapped() override { return false; }
-	void MakeTexture ();
+	void MakeTexture (FRenderStyle style);
 	void MakeTextureBgra ();
 
 protected:

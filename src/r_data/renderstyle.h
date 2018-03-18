@@ -145,6 +145,16 @@ private:
 
 extern FRenderStyle LegacyRenderStyles[STYLE_Count];
 
+inline FRenderStyle DefaultRenderStyle()
+{
+	return LegacyRenderStyles[STYLE_Normal];
+}
+
+inline FRenderStyle BadRenderStyle()	// This is just a marker to find places where work is still needed.
+{
+	return LegacyRenderStyles[STYLE_Normal];
+}
+
 inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 {
 	if (legacy < STYLE_None || legacy >= STYLE_Count)

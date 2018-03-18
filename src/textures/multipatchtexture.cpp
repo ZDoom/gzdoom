@@ -195,10 +195,16 @@ protected:
 	int NumParts;
 	TexPart *Parts;
 	TexInit *Inits;
-	bool bRedirect:1;
-	bool bTranslucentPatches:1;
+	bool bRedirect;
+	bool bTranslucentPatches;
 
 	uint8_t *MakeTexture (FRenderStyle style);
+
+	// The getters must optionally redirect if it's a simple one-patch texture.
+	const uint8_t *GetPixels(FRenderStyle style) override { return bRedirect ? Parts->Texture->GetPixels(style) : FWorldTexture::GetPixels(style); }
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int col, const Span **out) override
+		{ return bRedirect ? Parts->Texture->GetColumn(style, col, out) : FWorldTexture::GetColumn(style, col, out); }
+
 
 private:
 	void CheckForHacks ();

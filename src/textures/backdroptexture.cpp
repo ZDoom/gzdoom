@@ -77,7 +77,7 @@ class FBackdropTexture : public FWorldTexture
 public:
 	FBackdropTexture();
 
-	bool CheckModified() override;
+	bool CheckModified(FRenderStyle style) override;
 	uint8_t *MakeTexture(FRenderStyle style) override;
 
 protected:
@@ -204,7 +204,7 @@ FBackdropTexture::FBackdropTexture()
 //
 //=============================================================================
 
-bool FBackdropTexture::CheckModified()
+bool FBackdropTexture::CheckModified(FRenderStyle)
 {
 	return LastRenderTic != gametic;
 }

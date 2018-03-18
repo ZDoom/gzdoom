@@ -199,7 +199,7 @@ namespace swrenderer
 		if (Thread->Viewport->RenderTarget->IsBgra())
 			args.SetTexture((const uint8_t *)SkinTexture->GetPixelsBgra(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 		else
-			args.SetTexture(SkinTexture->GetPixels(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
+			args.SetTexture(SkinTexture->GetPixels(DefaultRenderStyle()), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
@@ -237,7 +237,7 @@ namespace swrenderer
 		if (Thread->Viewport->RenderTarget->IsBgra())
 			args.SetTexture((const uint8_t *)SkinTexture->GetPixelsBgra(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 		else
-			args.SetTexture(SkinTexture->GetPixels(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
+			args.SetTexture(SkinTexture->GetPixels(DefaultRenderStyle()), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);

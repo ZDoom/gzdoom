@@ -155,6 +155,7 @@ namespace swrenderer
 
 	bool RenderDrawSegment::RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade)
 	{
+		auto renderstyle = DefaultRenderStyle();
 		auto viewport = Thread->Viewport.get();
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
@@ -314,7 +315,7 @@ namespace swrenderer
 			// draw the columns one at a time
 			if (visible)
 			{
-				Thread->PrepareTexture(tex);
+				Thread->PrepareTexture(tex, renderstyle);
 				for (int x = x1; x < x2; ++x)
 				{
 					if (cameraLight->FixedColormap() == nullptr && cameraLight->FixedLightLevel() < 0)
@@ -329,7 +330,7 @@ namespace swrenderer
 					else
 						sprtopscreen = viewport->CenterY - texturemid * spryscale;
 
-					columndrawerargs.DrawMaskedColumn(Thread, x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+					columndrawerargs.DrawMaskedColumn(Thread, x, iscale, tex, maskedtexturecol[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, renderstyle);
 
 					rw_light += rw_lightstep;
 					spryscale += rw_scalestep;

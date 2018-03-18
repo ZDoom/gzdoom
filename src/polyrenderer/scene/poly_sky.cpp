@@ -91,7 +91,7 @@ void PolySkyDome::Render(PolyRenderThread *thread, const TriMatrix &worldToClip)
 	RenderCapColorRow(thread, args, mCurrentSetup.frontskytex, 0, false);
 	RenderCapColorRow(thread, args, mCurrentSetup.frontskytex, rc, true);
 
-	args.SetTexture(mCurrentSetup.frontskytex);
+	args.SetTexture(mCurrentSetup.frontskytex, DefaultRenderStyle());
 
 	uint32_t topcapcolor = mCurrentSetup.frontskytex->GetSkyCapColor(false);
 	uint32_t bottomcapcolor = mCurrentSetup.frontskytex->GetSkyCapColor(true);

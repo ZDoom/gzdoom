@@ -238,7 +238,7 @@ void FTexture::CreateDefaultBrightmap()
 			) 
 		{
 			// May have one - let's check when we use this texture
-			const uint8_t *texbuf = GetPixels();
+			const uint8_t *texbuf = GetPixels(DefaultRenderStyle());
 			const int white = ColorMatcher.Pick(255,255,255);
 
 			int size = GetWidth() * GetHeight();

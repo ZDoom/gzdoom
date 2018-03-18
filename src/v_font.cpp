@@ -177,8 +177,8 @@ class FFontChar1 : public FTexture
 {
 public:
    FFontChar1 (FTexture *sourcelump);
-   const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
-   const uint8_t *GetPixels ();
+   const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
+   const uint8_t *GetPixels (FRenderStyle style);
    void SetSourceRemap(const uint8_t *sourceremap);
    void Unload ();
    ~FFontChar1 ();
@@ -198,8 +198,8 @@ public:
 	FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs=0, int topofs=0);
 	~FFontChar2 ();
 
-	const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels (FRenderStyle style);
 	void SetSourceRemap(const uint8_t *sourceremap);
 	void Unload ();
 
@@ -559,7 +559,7 @@ void RecordTextureColors (FTexture *pic, uint8_t *usedcolors)
 	for (x = pic->GetWidth() - 1; x >= 0; x--)
 	{
 		const FTexture::Span *spans;
-		const uint8_t *column = pic->GetColumn(x, &spans);
+		const uint8_t *column = pic->GetColumn(DefaultRenderStyle(), x, &spans);	// This shouldn't use the spans...
 
 		while (spans->Length != 0)
 		{
@@ -1649,9 +1649,11 @@ FFontChar1::FFontChar1 (FTexture *sourcelump)
 //
 // FFontChar1 :: GetPixels
 //
+// Render style is not relevant for fonts. This must not use it!
+//
 //==========================================================================
 
-const uint8_t *FFontChar1::GetPixels ()
+const uint8_t *FFontChar1::GetPixels (FRenderStyle)
 {
 	if (Pixels == NULL)
 	{
@@ -1666,12 +1668,12 @@ const uint8_t *FFontChar1::GetPixels ()
 //
 //==========================================================================
 
-void FFontChar1::MakeTexture ()
+void FFontChar1::MakeTexture ()	
 {
 	// Make the texture as normal, then remap it so that all the colors
 	// are at the low end of the palette
 	Pixels = new uint8_t[Width*Height];
-	const uint8_t *pix = BaseTexture->GetPixels();
+	const uint8_t *pix = BaseTexture->GetPixels(DefaultRenderStyle());
 
 	if (!SourceRemap)
 	{
@@ -1692,14 +1694,14 @@ void FFontChar1::MakeTexture ()
 //
 //==========================================================================
 
-const uint8_t *FFontChar1::GetColumn(unsigned int column, const Span **spans_out)
+const uint8_t *FFontChar1::GetColumn(FRenderStyle, unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{
 		MakeTexture ();
 	}
 
-	BaseTexture->GetColumn(column, spans_out);
+	BaseTexture->GetColumn(DefaultRenderStyle(), column, spans_out);
 	return Pixels + column*Height;
 }
 
@@ -1797,9 +1799,11 @@ void FFontChar2::Unload ()
 //
 // FFontChar2 :: GetPixels
 //
+// Like for FontChar1, the render style has no relevance here as well.
+//
 //==========================================================================
 
-const uint8_t *FFontChar2::GetPixels ()
+const uint8_t *FFontChar2::GetPixels (FRenderStyle)
 {
 	if (Pixels == NULL)
 	{
@@ -1814,7 +1818,7 @@ const uint8_t *FFontChar2::GetPixels ()
 //
 //==========================================================================
 
-const uint8_t *FFontChar2::GetColumn(unsigned int column, const Span **spans_out)
+const uint8_t *FFontChar2::GetColumn(FRenderStyle, unsigned int column, const Span **spans_out)
 {
 	if (Pixels == NULL)
 	{

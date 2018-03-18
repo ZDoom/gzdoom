@@ -97,7 +97,7 @@ namespace swrenderer
 				col = width + (col % width);
 			}
 
-			source = texture->GetColumn(col, nullptr);
+			source = texture->GetColumn(DefaultRenderStyle(), col, nullptr);
 			source2 = nullptr;
 			texturefracx = 0;
 		}
@@ -530,7 +530,7 @@ namespace swrenderer
 		this->rw_pic = pic;
 		this->mask = mask;
 
-		Thread->PrepareTexture(pic);
+		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 
 		if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 		{

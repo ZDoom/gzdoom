@@ -361,11 +361,11 @@ namespace swrenderer
 			{
 				RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
-				thread->PrepareTexture(tex);
+				thread->PrepareTexture(tex, vis->RenderStyle);
 				while (x < x2)
 				{
 					if (!translucentPass->ClipSpriteColumnWithPortals(x, vis))
-						drawerargs.DrawMaskedColumn(thread, x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+						drawerargs.DrawMaskedColumn(thread, x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, vis->RenderStyle, false);
 					x++;
 					frac += xiscale;
 				}

@@ -183,19 +183,20 @@ void FTexture::Unload()
 const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_out)
 {
 	const uint32_t *pixels = GetPixelsBgra();
+	if (pixels == nullptr) return nullptr;
 
 	column %= Width;
 
 	if (spans_out != nullptr)
-		GetColumn(column, spans_out);
+		GetColumn(DefaultRenderStyle(), column, spans_out);	// This isn't the right way to create the spans.
 	return pixels + column * Height;
 }
 
 const uint32_t *FTexture::GetPixelsBgra()
 {
-	if (PixelsBgra.empty() || CheckModified())
+	if (PixelsBgra.empty() || CheckModified(DefaultRenderStyle()))
 	{
-		if (!GetColumn(0, nullptr))
+		if (!GetColumn(DefaultRenderStyle(), 0, nullptr))
 			return nullptr;
 
 		FBitmap bitmap;
@@ -206,7 +207,7 @@ const uint32_t *FTexture::GetPixelsBgra()
 	return PixelsBgra.data();
 }
 
-bool FTexture::CheckModified ()
+bool FTexture::CheckModified (FRenderStyle)
 {
 	return false;
 }
@@ -282,6 +283,7 @@ FTexture::Span **FTexture::CreateSpans (const uint8_t *pixels) const
 			newspan = true;
 			for (y = numrows; y > 0; --y)
 			{
+
 				if (*data_p++ == 0)
 				{
 					if (!newspan)
@@ -552,7 +554,7 @@ void FTexture::GenerateBgraMipmapsFast()
 
 void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation, FRenderStyle style)
 {
-	const uint8_t *pixels = GetPixels(/*style*/);
+	const uint8_t *pixels = GetPixels(style);
 	int srcwidth = Width;
 	int srcheight = Height;
 	int step_x = Height;
@@ -720,7 +722,7 @@ FNativeTexture *FTexture::GetNative(bool wrapping)
 		}
 		else
 		{
-			if (CheckModified())
+			if (CheckModified(DefaultRenderStyle()))
 			{
 				Native->Update();
 			}
@@ -740,12 +742,6 @@ void FTexture::KillNative()
 	}
 }
 
-// For this generic implementation, we just call GetPixels and copy that data
-// to the buffer. Texture formats that can do better than paletted images
-// should provide their own implementation that may preserve the original
-// color data. Note that the buffer expects row-major data, since that's
-// generally more convenient for any non-Doom image formats, and it doesn't
-// need to be used by any of Doom's column drawing routines.
 void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat fmt)
 {
 	const uint8_t *pix;
@@ -758,7 +754,7 @@ void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat f
 	{
 	case TEX_Pal:
 	case TEX_Gray:
-		pix = GetPixels();
+		pix = GetPixels(DefaultRenderStyle());
 		stride = pitch - w;
 		for (y = 0; y < h; ++y)
 		{
@@ -802,14 +798,14 @@ int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyI
 {
 	PalEntry *palette = screen->GetPalette();
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
-	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, palette, inf);
+	bmp->CopyPixelData(x, y, GetPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, palette, inf);
 	for(int i=1;i<256;i++) palette[i].a = 0;
 	return 0;
 }
 
 int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf)
 {
-	bmp->CopyPixelData(x, y, GetPixels(), Width, Height, Height, 1, rotate, remap, inf);
+	bmp->CopyPixelData(x, y, GetPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, remap, inf);
 	return 0;
 }
 
@@ -920,7 +916,7 @@ int FTexture::CheckRealHeight()
 
 	for (int i = 0; i < GetWidth(); ++i)
 	{
-		GetColumn(i, &span);
+		GetColumn(DefaultRenderStyle(), i, &span);
 		while (span->Length != 0)
 		{
 			if (span->TopOffset < miny)
@@ -960,8 +956,13 @@ void FDummyTexture::SetSize (int width, int height)
 	CalcBitSize ();
 }
 
-// This must never be called
-uint8_t *FDummyTexture::MakeTexture (FRenderStyle)
+// These only get called from the texture precacher which discards the result.
+const uint8_t *FDummyTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
+{
+	return nullptr;
+}
+
+const uint8_t *FDummyTexture::GetPixels(FRenderStyle style)
 {
 	return nullptr;
 }
@@ -990,7 +991,7 @@ CCMD (printspans)
 	{
 		const FTexture::Span *spans;
 		Printf ("%4d:", x);
-		tex->GetColumn(x, &spans);
+		tex->GetColumn(DefaultRenderStyle(), x, &spans);
 		while (spans->Length != 0)
 		{
 			Printf (" (%4d,%4d)", spans->TopOffset, spans->TopOffset+spans->Length-1);

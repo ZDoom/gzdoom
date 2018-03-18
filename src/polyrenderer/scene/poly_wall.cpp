@@ -327,7 +327,7 @@ void RenderPolyWall::Render(PolyRenderThread *thread, const TriMatrix &worldToCl
 	args.SetStencilTestValue(StencilValue);
 	args.SetWriteStencil(true, StencilValue + 1);
 	if (Texture && !Polyportal)
-		args.SetTexture(Texture);
+		args.SetTexture(Texture, DefaultRenderStyle());
 	args.SetClipPlane(0, clipPlane);
 
 	SetDynLights(thread, args);

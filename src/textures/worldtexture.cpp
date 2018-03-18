@@ -56,6 +56,17 @@ FWorldTexture::FWorldTexture(const char *name, int lumpnum)
 FWorldTexture::~FWorldTexture()
 {
 	Unload();
+	FreeAllSpans();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FWorldTexture::FreeAllSpans()
+{
 	for(int i = 0; i < 2; i++)
 	{
 		if (Spandata[i] != nullptr)
@@ -91,9 +102,10 @@ void FWorldTexture::Unload ()
 //
 //==========================================================================
 
-const uint8_t *FWorldTexture::GetColumn(unsigned int column, const Span **spans_out)
+const uint8_t *FWorldTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
 {
-	GetPixels();
+	int index = !!(style.Flags & STYLEF_RedIsAlpha);
+	GetPixels(style);
 	if ((unsigned)column >= (unsigned)Width)
 	{
 		if (WidthMask + 1 == Width)
@@ -107,13 +119,13 @@ const uint8_t *FWorldTexture::GetColumn(unsigned int column, const Span **spans_
 	}
 	if (spans_out != nullptr)
 	{
-		if (Spandata[0] == nullptr)
+		if (Spandata[index] == nullptr)
 		{
-			Spandata[0] = CreateSpans (Pixeldata[0]);
+			Spandata[index] = CreateSpans (Pixeldata[index]);
 		}
-		*spans_out = Spandata[0][column];
+		*spans_out = Spandata[index][column];
 	}
-	return Pixeldata[0] + column*Height;
+	return Pixeldata[index] + column*Height;
 }
 
 //==========================================================================
@@ -122,16 +134,17 @@ const uint8_t *FWorldTexture::GetColumn(unsigned int column, const Span **spans_
 //
 //==========================================================================
 
-const uint8_t *FWorldTexture::GetPixels ()
+const uint8_t *FWorldTexture::GetPixels (FRenderStyle style)
 {
-	if (CheckModified())
+	if (CheckModified(style))
 	{
 		Unload();
 	}
-	if (Pixeldata[0] == nullptr)
+	int index = !!(style.Flags & STYLEF_RedIsAlpha);
+	if (Pixeldata[index] == nullptr)
 	{
-		Pixeldata[0] = MakeTexture (LegacyRenderStyles[STYLE_Normal]);
+		Pixeldata[index] = MakeTexture (style);
 	}
-	return Pixeldata[0];
+	return Pixeldata[index];
 }
 

@@ -588,6 +588,7 @@ class FWorldTexture : public FTexture
 protected:
 	uint8_t *Pixeldata[2] = { nullptr, nullptr };
 	Span **Spandata[2] = { nullptr, nullptr };
+	uint8_t PixelsAreStatic = 0;	// can be set by subclasses which provide static pixel buffers.
 
 	FWorldTexture(const char *name = nullptr, int lumpnum = -1);
 	~FWorldTexture();

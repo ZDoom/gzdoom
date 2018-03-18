@@ -139,10 +139,9 @@ union FRenderStyle
 	bool IsVisible(double alpha) const throw();
 private:
 	// Code that compares an actor's render style with a legacy render
-	// style value should be updated. Making these conversion operators
-	// private will catch those cases.
-	operator ERenderStyle() const { return STYLE_Normal; }
-	operator int() const { return STYLE_Normal; }
+	// style value should be updated.
+	operator ERenderStyle() = delete;
+	operator int() const = delete;
 };
 
 extern FRenderStyle LegacyRenderStyles[STYLE_Count];

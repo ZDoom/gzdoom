@@ -143,6 +143,7 @@ void FTextureManager::AddTiles (const FString &pathprefix, const void *tiles, in
 
 		tex = new FBuildTexture (pathprefix, i, tiledata, translation, width, height, xoffs, yoffs);
 		texnum = AddTexture (tex);
+		tiledata += size;
 
 		// reactivate only if the texture counter works here.
 		//StartScreen->Progress();

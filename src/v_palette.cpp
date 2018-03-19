@@ -340,37 +340,6 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 	}
 }
 
-static bool FixBuildPalette (uint8_t *opal, int lump, bool blood)
-{
-	if (Wads.LumpLength (lump) < 768)
-	{
-		return false;
-	}
-
-	FMemLump data = Wads.ReadLump (lump);
-	const uint8_t *ipal = (const uint8_t *)data.GetMem();
-	
-	// Reverse the palette because BUILD used entry 255 as
-	// transparent, but we use 0 as transparent.
-
-	for (int c = 0; c < 768; c += 3)
-	{
-		if (!blood)
-		{
-			opal[c] =	(ipal[765-c] << 2) | (ipal[765-c] >> 4);
-			opal[c+1] = (ipal[766-c] << 2) | (ipal[766-c] >> 4);
-			opal[c+2] = (ipal[767-c] << 2) | (ipal[767-c] >> 4);
-		}
-		else
-		{
-			opal[c] = ipal[765-c];
-			opal[c+1] = ipal[766-c];
-			opal[c+2] = ipal[767-c];
-		}
-	}
-	return true;
-}
-
 void InitPalette ()
 {
 	uint8_t pal[768];

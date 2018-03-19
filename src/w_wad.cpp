@@ -1257,6 +1257,19 @@ int FWadCollection::GetLumpFile (int lump) const
 
 //==========================================================================
 //
+// W_GetLumpFile
+//
+//==========================================================================
+
+FResourceLump *FWadCollection::GetLumpRecord(int lump) const
+{
+	if ((size_t)lump >= LumpInfo.Size())
+		return nullptr;
+	return LumpInfo[lump].lump;
+}
+
+//==========================================================================
+//
 // W_ReadLump
 //
 // Loads the lump into the given buffer, which must be >= W_LumpLength().

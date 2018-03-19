@@ -207,7 +207,6 @@ public:
 		TEX_Flat,
 		TEX_Sprite,
 		TEX_WallPatch,
-		TEX_Build,
 		TEX_SkinSprite,
 		TEX_Decal,
 		TEX_MiscPatch,
@@ -524,9 +523,8 @@ private:
 	int CountLumpTextures (int lumpnum);
 
 	// Build tiles
-	void AddTiles (void *tiles);
-	int CountTiles (void *tiles);
-	int CountBuildTiles ();
+	void AddTiles (const FString &pathprefix, const void *, int translation);
+	//int CountBuildTiles ();
 	void InitBuildTiles ();
 
 	// Animation stuff
@@ -568,11 +566,12 @@ private:
 	FTextureID DefaultTexture;
 	TArray<int> FirstTextureForFile;
 	TMap<int,int> PalettedVersions;		// maps from normal -> paletted version
+	TArray<TArray<uint8_t> > BuildTileData;
 
 	TArray<FAnimDef *> mAnimations;
 	TArray<FSwitchDef *> mSwitchDefs;
 	TArray<FDoorAnimation> mAnimatedDoors;
-	TArray<uint8_t *> BuildTileFiles;
+
 public:
 	short sintable[2048];	// for texture warping
 	enum

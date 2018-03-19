@@ -170,6 +170,7 @@ public:
 	int GetLumpFile (int lump) const;				// [RH] Returns wadnum for a specified lump
 	int GetLumpNamespace (int lump) const;			// [RH] Returns the namespace a lump belongs to
 	int GetLumpIndexNum (int lump) const;			// Returns the RFF index number for this lump
+	FResourceLump *GetLumpRecord(int lump) const;	// Returns the FResourceLump, in case the caller wants to have direct access to the lump cache.
 	bool CheckLumpName (int lump, const char *name) const;	// [RH] Returns true if the names match
 
 	bool IsEncryptedFile(int lump) const;

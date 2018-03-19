@@ -39,8 +39,13 @@
 #include "templates.h"
 #include "cmdlib.h"
 #include "st_start.h"
+#include "colormatcher.h"
+#include "bitmap.h"
 #include "textures/textures.h"
 #include "r_data/sprites.h"
+#include "r_data/r_translate.h"
+#include "resourcefiles/resourcefile.h"
+
 
 //==========================================================================
 //
@@ -51,11 +56,15 @@
 class FBuildTexture : public FWorldTexture
 {
 public:
-	FBuildTexture (int tilenum, const uint8_t *pixels, int width, int height, int left, int top);
-	uint8_t *MakeTexture(FRenderStyle style) override { return const_cast<uint8_t*>(Pixels); }	// This is only to make it compile for now and will be changed later.
+	FBuildTexture (const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top);
+	uint8_t *MakeTexture(FRenderStyle style) override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
+	bool UseBasePalette() override { return false; }
+	FTextureFormat GetFormat() override { return TEX_RGB; }
 
 protected:
-	const uint8_t *Pixels;
+	const uint8_t *RawPixels;
+	int Translation;
 };
 
 
@@ -65,8 +74,8 @@ protected:
 //
 //==========================================================================
 
-FBuildTexture::FBuildTexture (int tilenum, const uint8_t *pixels, int width, int height, int left, int top)
-: Pixels (pixels)
+FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8_t *pixels, int translation, int width, int height, int left, int top)
+: RawPixels (pixels), Translation(translation)
 {
 	PixelsAreStatic = 3;
 	Width = width;
@@ -74,8 +83,29 @@ FBuildTexture::FBuildTexture (int tilenum, const uint8_t *pixels, int width, int
 	LeftOffset = left;
 	TopOffset = top;
 	CalcBitSize ();
-	Name.Format("BTIL%04d", tilenum);
-	UseType = TEX_Build;
+	Name.Format("%sBTIL%04d", pathprefix.GetChars(), tilenum);
+	UseType = TEX_Override;
+	PixelsAreStatic = 3;	// test
+}
+
+uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
+{
+	auto Pixels = new uint8_t[Width * Height];
+	auto Remap = translationtables[TRANSLATION_Standard][Translation];
+	for (int i = 0; i < Width*Height; i++)
+	{
+		auto c = RawPixels[i];
+		Pixels[i] = c;// (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].r : Remap->Remap[c];
+	}
+	return (uint8_t*)RawPixels;
+}
+
+int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+{
+	auto Remap = translationtables[TRANSLATION_Standard][Translation]->Palette;
+	bmp->CopyPixelData(x, y, RawPixels, Width, Height, Height, 1, rotate, Remap, inf);
+	return 0;
+
 }
 
 //===========================================================================
@@ -86,15 +116,16 @@ FBuildTexture::FBuildTexture (int tilenum, const uint8_t *pixels, int width, int
 //
 //===========================================================================
 
-void FTextureManager::AddTiles (void *tiles)
+void FTextureManager::AddTiles (const FString &pathprefix, const void *tiles, int translation)
 {
+
 //	int numtiles = LittleLong(((uint32_t *)tiles)[1]);	// This value is not reliable
 	int tilestart = LittleLong(((uint32_t *)tiles)[2]);
 	int tileend = LittleLong(((uint32_t *)tiles)[3]);
 	const uint16_t *tilesizx = &((const uint16_t *)tiles)[8];
 	const uint16_t *tilesizy = &tilesizx[tileend - tilestart + 1];
 	const uint32_t *picanm = (const uint32_t *)&tilesizy[tileend - tilestart + 1];
-	uint8_t *tiledata = (uint8_t *)&picanm[tileend - tilestart + 1];
+	const uint8_t *tiledata = (const uint8_t *)&picanm[tileend - tilestart + 1];
 
 	for (int i = tilestart; i <= tileend; ++i)
 	{
@@ -110,15 +141,11 @@ void FTextureManager::AddTiles (void *tiles)
 
 		if (width <= 0 || height <= 0) continue;
 
-		tex = new FBuildTexture (i, tiledata, width, height, xoffs, yoffs);
+		tex = new FBuildTexture (pathprefix, i, tiledata, translation, width, height, xoffs, yoffs);
 		texnum = AddTexture (tex);
-		while (size > 0)
-		{
-			*tiledata = 255 - *tiledata;
-			tiledata++;
-			size--;
-		}
-		StartScreen->Progress();
+
+		// reactivate only if the texture counter works here.
+		//StartScreen->Progress();
 
 		if ((picanm[pic] & 63) && (picanm[pic] & 192))
 		{
@@ -192,7 +219,7 @@ void FTextureManager::AddTiles (void *tiles)
 //
 //===========================================================================
 
-int FTextureManager::CountTiles (void *tiles)
+static int CountTiles (const void *tiles)
 {
 	int version = LittleLong(*(uint32_t *)tiles);
 	if (version != 1)
@@ -208,6 +235,60 @@ int FTextureManager::CountTiles (void *tiles)
 
 //===========================================================================
 //
+// Create palette data and remap table for the tile set's palette
+//
+//===========================================================================
+
+static int BuildPaletteTranslation(int lump)
+{
+	if (Wads.LumpLength(lump) < 768)
+	{
+		return false;
+	}
+
+	FMemLump data = Wads.ReadLump(lump);
+	const uint8_t *ipal = (const uint8_t *)data.GetMem();
+	FRemapTable opal;
+
+	bool blood = false;
+	for (int c = 0; c < 765; c++)	// Build used VGA palettes (color values 0..63), Blood used full palettes (0..255) Let's hope this doesn't screw up...
+	{
+		if (ipal[c] >= 64)
+		{
+			blood = true;
+			break;
+		}
+	}
+
+	for (int c = 0; c < 255; c++)
+	{
+		int r, g, b;
+		if (!blood)
+		{
+			r = (ipal[3*c    ] << 2) | (ipal[3 * c    ] >> 4);
+			g = (ipal[3*c + 1] << 2) | (ipal[3 * c + 1] >> 4);
+			b = (ipal[3*c + 2] << 2) | (ipal[3 * c + 2] >> 4);
+		}
+		else
+		{
+			r = ipal[3 * c] << 2;
+			g = ipal[3 * c + 1] << 2;
+			b = ipal[3 * c + 2] << 2;
+		}
+		opal.Palette[c] = PalEntry(r, g, b, 255);
+		opal.Remap[c] = ColorMatcher.Pick(r, g, b);
+	}
+	// The last entry is transparent.
+	opal.Palette[255] = 0;
+	opal.Remap[255] = 0;
+	// Store the remap table in the translation manager so that we do not need to keep track of it ourselves. 
+	// Slot 0 for internal translations is a convenient location because normally it only contains a small number of translations.
+	return GetTranslationType(opal.StoreTranslation(TRANSLATION_Standard));
+}
+
+
+//===========================================================================
+//
 // R_CountBuildTiles
 //
 // Returns the number of tiles found. Also loads all the data for
@@ -215,98 +296,59 @@ int FTextureManager::CountTiles (void *tiles)
 //
 //===========================================================================
 
-int FTextureManager::CountBuildTiles ()
+void FTextureManager::InitBuildTiles()
 {
-	int numartfiles = 0;
-	char artfile[] = "tilesXXX.art";
 	int lumpnum;
 	int numtiles;
 	int totaltiles = 0;
 
-	lumpnum = Wads.CheckNumForFullName ("blood.pal");
-	if (lumpnum >= 0)
+	// The search rules are as follows: 
+	// - scan the entire lump directory for palette.dat files.
+	// - if one is found, process the directory for .ART files and add textures for them.
+	// - once all have been found, process all directories that may contain Build data.
+	// - the root is not excluded which allows to read this from .GRP files as well.
+	// - Blood support has been removed because it is not useful for modding to have loose .ART files.
+	//
+	// Unfortunately neither the palettes nor the .ART files contain any usable identifying marker
+	// so this can only go by the file names.
+
+	int numlumps = Wads.GetNumLumps();
+	for (int i = 0; i < numlumps; i++)
 	{
-		// Blood's tiles are external resources. (Why did they do it like that?)
-		FString rffpath = Wads.GetWadFullName (Wads.GetLumpFile (lumpnum));
-		int slashat = rffpath.LastIndexOf ('/');
-		if (slashat >= 0)
+		const char *name = Wads.GetLumpFullName(i);
+		if (Wads.CheckNumForFullName(name) != i) continue;	// This palette is hidden by a later one. Do not process
+		FString base = ExtractFileBase(name, true);
+		base.ToLower();
+		if (base.Compare("palette.dat") == 0 && Wads.LumpLength(i) >= 768)	// must be a valid palette, i.e. at least 256 colors.
 		{
-			rffpath.Truncate (slashat + 1);
-		}
-		else
-		{
-			rffpath += '/';
-		}
+			FString path = ExtractFilePath(name);
+			if (path.IsNotEmpty() && path.Back() != '/') path += '/';
 
-		for (; numartfiles < 1000; numartfiles++)
-		{
-			artfile[5] = numartfiles / 100 + '0';
-			artfile[6] = numartfiles / 10 % 10 + '0';
-			artfile[7] = numartfiles % 10 + '0';
-
-			FString artpath = rffpath;
-			artpath += artfile;
-
-			FileReader fr;
-
-			if (!fr.OpenFile(artpath))
+			int translation = BuildPaletteTranslation(i);
+			for (int numartfiles = 0; numartfiles < 1000; numartfiles++)
 			{
-				break;
-			}
+				FStringf artpath("%stiles%03d.art", path.GetChars(), numartfiles);
+				// only read from the same source as the palette.
+				// The entire format here is just too volatile to allow liberal mixing.
+				// An .ART set must be treated as one unit.
+				lumpnum = Wads.CheckNumForFullName(artpath, Wads.GetLumpFile(i));	
+				if (lumpnum < 0)
+				{
+					break;
+				}
 
-			auto len = fr.GetLength();
-			uint8_t *art = new uint8_t[len];
-			if (fr.Read (art, len) != len || (numtiles = CountTiles(art)) == 0)
-			{
-				delete[] art;
-			}
-			else
-			{
-				BuildTileFiles.Push (art);
-				totaltiles += numtiles;
+				BuildTileData.Reserve(1);
+				auto &artdata = BuildTileData.Last();
+				artdata.Resize(Wads.LumpLength(lumpnum));
+				Wads.ReadLump(lumpnum, &artdata[0]);
+
+				if ((numtiles = CountTiles(&artdata[0])) > 0)
+				{
+					AddTiles(path, &artdata[0], translation);
+					totaltiles += numtiles;
+				}
 			}
 		}
-	}
-
-	for (; numartfiles < 1000; numartfiles++)
-	{
-		artfile[5] = numartfiles / 100 + '0';
-		artfile[6] = numartfiles / 10 % 10 + '0';
-		artfile[7] = numartfiles % 10 + '0';
-		lumpnum = Wads.CheckNumForFullName (artfile);
-		if (lumpnum < 0)
-		{
-			break;
-		}
-
-		uint8_t *art = new uint8_t[Wads.LumpLength (lumpnum)];
-		Wads.ReadLump (lumpnum, art);
-
-		if ((numtiles = CountTiles(art)) == 0)
-		{
-			delete[] art;
-		}
-		else
-		{
-			BuildTileFiles.Push (art);
-			totaltiles += numtiles;
-		}
-	}
-	return totaltiles;
-}
-
-//===========================================================================
-//
-// R_InitBuildTiles
-//
-// [RH] Support Build tiles!
-//
-//===========================================================================
-
-void FTextureManager::InitBuildTiles ()
-{
-	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
-	{
-		AddTiles (BuildTileFiles[i]);
 	}
 }
+

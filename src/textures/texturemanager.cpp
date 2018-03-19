@@ -137,12 +137,7 @@ void FTextureManager::DeleteAll()
 		}
 	}
 	mAnimatedDoors.Clear();
-
-	for (unsigned int i = 0; i < BuildTileFiles.Size(); ++i)
-	{
-		delete[] BuildTileFiles[i];
-	}
-	BuildTileFiles.Clear();
+	BuildTileData.Clear();
 }
 
 //==========================================================================
@@ -982,8 +977,7 @@ void FTextureManager::Init()
 {
 	DeleteAll();
 	SpriteFrames.Clear();
-	// Init Build Tile data if it hasn't been done already
-	if (BuildTileFiles.Size() == 0) CountBuildTiles ();
+	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 	FTexture::InitGrayMap();
 
 	// Texture 0 is a dummy texture used to indicate "no texture"
@@ -1131,7 +1125,7 @@ int FTextureManager::GuesstimateNumTextures ()
 		}
 	}
 
-	numtex += CountBuildTiles ();
+	//numtex += CountBuildTiles (); // this cannot be done with a lot of overhead so just leave it out.
 	numtex += CountTexturesX ();
 	return numtex;
 }

@@ -280,6 +280,8 @@ bool FZipFile::Open(bool quiet)
 			}
 		}
 	}
+	// If it ran through the list without finding anything it should not attempt any path remapping.
+	if (!foundspeciallump) name0 = "";
 
 	dirptr = (char*)directory;
 	lump_p = Lumps;

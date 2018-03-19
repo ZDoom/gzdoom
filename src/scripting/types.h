@@ -200,6 +200,7 @@ public:
 	bool isStruct() const { return TypeTableType == NAME_Struct; }
 	bool isClass() const { return TypeTableType == NAME_Object; }
 	bool isPrototype() const { return TypeTableType == NAME_Prototype; }
+	bool isString() const { return TypeTableType == NAME_String; }
 
 	PContainerType *toContainer() { return isContainer() ? (PContainerType*)this : nullptr; }
 	PPointer *toPointer() { return isPointer() ? (PPointer*)this : nullptr; }

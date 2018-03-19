@@ -1,9 +1,10 @@
 /*
 ** buildtexture.cpp
-** Handling Build textures
+** Handling Build textures (now as a usable editing feature!)
 **
 **---------------------------------------------------------------------------
 ** Copyright 2004-2006 Randy Heit
+** Copyright 2018 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without

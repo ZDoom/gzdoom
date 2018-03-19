@@ -5065,10 +5065,10 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 	}
 	addr = baddr;
 	// We don't want Int subclasses like Name or Color to be accessible here.
-	if (!type->isInt() && !type->isFloat() && type != TypeBool)
+	if (!type->isInt() && !type->isFloat() && type != TypeBool && type != TypeString)
 	{
-		// For reading, we also support Name and String types.
-		if (readonly && (type == TypeName || type == TypeString))
+		// For reading, we also support Name types.
+		if (readonly && (type == TypeName))
 		{
 			return true;
 		}
@@ -5084,13 +5084,18 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 
 	if (GetVarAddrType(self, varname, index, addr, type, false))
 	{
-		if (!type->isFloat())
+		if (type == TypeString)
 		{
-			type->SetValue(addr, value);
+			FString str = FBehavior::StaticLookupString(value);
+			type->InitializeValue(addr, &str);
+		}
+		else if (type->isFloat())
+		{
+			type->SetValue(addr, ACSToDouble(value));
 		}
 		else
 		{
-			type->SetValue(addr, ACSToDouble(value));
+			type->SetValue(addr, value);
 		}
 	}
 }

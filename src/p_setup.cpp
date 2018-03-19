@@ -1658,7 +1658,7 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 		else
 		{ // Set the value of the specified user variable.
 			void *addr = reinterpret_cast<uint8_t *>(actor) + var->Offset;
-			if (var->Type->isString())
+			if (var->Type == TypeString)
 			{
 				var->Type->InitializeValue(addr, &MapThingsUserData[udi].StringVal);
 			}
@@ -1666,7 +1666,7 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 			{
 				var->Type->SetValue(addr, MapThingsUserData[udi].FloatVal);
 			}
-			else if (var->Type->isIntCompatible())
+			else if (var->Type->isInt() || var->Type == TypeBool)
 			{
 				var->Type->SetValue(addr, MapThingsUserData[udi].IntVal);
 			}

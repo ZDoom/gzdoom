@@ -85,24 +85,23 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	CalcBitSize ();
 	Name.Format("%sBTIL%04d", pathprefix.GetChars(), tilenum);
 	UseType = TEX_Override;
-	PixelsAreStatic = 3;	// test
 }
 
 uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
 {
 	auto Pixels = new uint8_t[Width * Height];
-	auto Remap = translationtables[TRANSLATION_Standard][Translation];
+	FRemapTable *Remap = translationtables[TRANSLATION_Standard][Translation];
 	for (int i = 0; i < Width*Height; i++)
 	{
 		auto c = RawPixels[i];
-		Pixels[i] = c;// (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].r : Remap->Remap[c];
+		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].r : Remap->Remap[c];
 	}
 	return (uint8_t*)RawPixels;
 }
 
 int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
-	auto Remap = translationtables[TRANSLATION_Standard][Translation]->Palette;
+	PalEntry *Remap = translationtables[TRANSLATION_Standard][Translation]->Palette;
 	bmp->CopyPixelData(x, y, RawPixels, Width, Height, Height, 1, rotate, Remap, inf);
 	return 0;
 
@@ -276,7 +275,7 @@ static int BuildPaletteTranslation(int lump)
 			g = ipal[3 * c + 1] << 2;
 			b = ipal[3 * c + 2] << 2;
 		}
-		opal.Palette[c] = PalEntry(r, g, b, 255);
+		opal.Palette[c] = PalEntry(255, r, g, b);
 		opal.Remap[c] = ColorMatcher.Pick(r, g, b);
 	}
 	// The last entry is transparent.
@@ -284,7 +283,7 @@ static int BuildPaletteTranslation(int lump)
 	opal.Remap[255] = 0;
 	// Store the remap table in the translation manager so that we do not need to keep track of it ourselves. 
 	// Slot 0 for internal translations is a convenient location because normally it only contains a small number of translations.
-	return GetTranslationType(opal.StoreTranslation(TRANSLATION_Standard));
+	return GetTranslationIndex(opal.StoreTranslation(TRANSLATION_Standard));
 }
 
 

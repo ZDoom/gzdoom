@@ -167,7 +167,7 @@ bool			hasglnodes;
 
 TArray<FMapThing> MapThingsConverted;
 TMap<unsigned,unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
-TArray<FMapThingUserData> MapThingsUserData;
+TArray<FUDMFKey> MapThingsUserData;
 
 int sidecount;
 sidei_t *sidetemp;
@@ -1645,23 +1645,34 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 	{
 		return;
 	}
-	while (MapThingsUserData[udi].Property != NAME_None)
+	while (MapThingsUserData[udi].Key != NAME_None)
 	{
-		FName varname = MapThingsUserData[udi].Property;
-		int value = MapThingsUserData[udi].Value;
+		FName varname = MapThingsUserData[udi].Key;
 		PField *var = dyn_cast<PField>(actor->GetClass()->FindSymbol(varname, true));
-
-		udi++;
 
 		if (var == NULL || (var->Flags & (VARF_Native|VARF_Private|VARF_Protected|VARF_Static)) || !var->Type->isScalar())
 		{
-			DPrintf(DMSG_WARNING, "%s is not a user variable in class %s\n", varname.GetChars(),
+			DPrintf(DMSG_WARNING, "%s is not a writable user variable in class %s\n", varname.GetChars(),
 				actor->GetClass()->TypeName.GetChars());
 		}
 		else
 		{ // Set the value of the specified user variable.
-			var->Type->SetValue(reinterpret_cast<uint8_t *>(actor) + var->Offset, value);
+			void *addr = reinterpret_cast<uint8_t *>(actor) + var->Offset;
+			if (var->Type->isString())
+			{
+				var->Type->InitializeValue(addr, &MapThingsUserData[udi].StringVal);
+			}
+			else if (var->Type->isFloat())
+			{
+				var->Type->SetValue(addr, MapThingsUserData[udi].FloatVal);
+			}
+			else if (var->Type->isIntCompatible())
+			{
+				var->Type->SetValue(addr, MapThingsUserData[udi].IntVal);
+			}
 		}
+
+		udi++;
 	}
 }
 

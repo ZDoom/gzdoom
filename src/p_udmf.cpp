@@ -476,38 +476,7 @@ public:
 		fogMap = normMap = NULL;
 	}
 
-	void AddUserKey(FName key, int kind, int index)
-	{
-		FUDMFKeys &keyarray = UDMFKeys[kind][index];
-
-		for(unsigned i=0; i < keyarray.Size(); i++)
-		{
-			if (keyarray[i].Key == key)
-			{
-				switch (sc.TokenType)
-				{
-				case TK_IntConst:
-					keyarray[i] = sc.Number;
-					break;
-				case TK_FloatConst:
-					keyarray[i] = sc.Float;
-					break;
-				default:
-				case TK_StringConst:
-					keyarray[i] = parsedString;
-					break;
-				case TK_True:
-					keyarray[i] = 1;
-					break;
-				case TK_False:
-					keyarray[i] = 0;
-					break;
-				}
-				return;
-			}
-		}
-		FUDMFKey ukey;
-		ukey.Key = key;
+  void ReadUserKey(FUDMFKey &ukey) {
 		switch (sc.TokenType)
 		{
 		case TK_IntConst:
@@ -527,6 +496,22 @@ public:
 			ukey = 0;
 			break;
 		}
+  }
+	void AddUserKey(FName key, int kind, int index)
+	{
+		FUDMFKeys &keyarray = UDMFKeys[kind][index];
+
+		for(unsigned i=0; i < keyarray.Size(); i++)
+		{
+			if (keyarray[i].Key == key)
+			{
+				ReadUserKey(keyarray[i]);
+				return;
+			}
+		}
+		FUDMFKey ukey;
+		ukey.Key = key;
+		ReadUserKey(ukey);
 		keyarray.Push(ukey);
 	}
 
@@ -809,10 +794,10 @@ public:
 				CHECK_N(Zd | Zdt)
 				if (0 == strnicmp("user_", key.GetChars(), 5))
 				{ // Custom user key - Sets an actor's user variable directly
-					FMapThingUserData ud;
-					ud.Property = key;
-					ud.Value = CheckInt(key);
-					MapThingsUserData.Push(ud);
+					FUDMFKey ukey;
+					ukey.Key = key;
+					ReadUserKey(ukey);
+					MapThingsUserData.Push(ukey);
 				}
 				break;
 			}
@@ -2111,10 +2096,10 @@ public:
 				{ // User data added
 					MapThingsUserDataIndex[MapThingsConverted.Size()-1] = userdatastart;
 					// Mark end of the user data for this map thing
-					FMapThingUserData ud;
-					ud.Property = NAME_None;
-					ud.Value = 0;
-					MapThingsUserData.Push(ud);
+					FUDMFKey ukey;
+					ukey.Key = NAME_None;
+					ukey = 0;
+					MapThingsUserData.Push(ukey);
 				}
 			}
 			else if (sc.Compare("linedef"))

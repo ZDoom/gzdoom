@@ -30,6 +30,7 @@
 
 #include "resourcefiles/resourcefile.h"
 #include "doomdata.h"
+#include "r_defs.h"
 
 
 struct MapData
@@ -180,14 +181,8 @@ struct FMissingCount
 };
 typedef TMap<FString,FMissingCount> FMissingTextureTracker;
 
-// Record of user data for UDMF maps
-struct FMapThingUserData
-{
-	FName Property;
-	int Value;
-};
 extern TMap<unsigned,unsigned> MapThingsUserDataIndex;	// from mapthing idx -> user data idx
-extern TArray<FMapThingUserData> MapThingsUserData;
+extern TArray<FUDMFKey> MapThingsUserData;
 
 
 #endif

@@ -2536,7 +2536,7 @@ static bool DoDehPatch()
 	cont = 0;
 	if (0 == strncmp (PatchFile, "Patch File for DeHackEd v", 25))
 	{
-		if (PatchFile[25] < '3' && PatchFile[25] != '2' && PatchFile[27] != '3')
+		if (PatchFile[25] < '3' && (PatchFile[25] < '2' || PatchFile[27] < '3'))
 		{
 			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchName);
 			delete[] PatchName;

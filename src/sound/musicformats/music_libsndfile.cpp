@@ -298,8 +298,9 @@ SndFileSong::SndFileSong(FileReader &reader, SoundDecoder *decoder, uint32_t loo
 	if (!startass) loop_start = Scale(loop_start, SampleRate, 1000);
 	if (!endass) loop_end = Scale(loop_end, SampleRate, 1000);
 
+	const uint32_t sampleLength = (uint32_t)decoder->getSampleLength();
 	Loop_Start = loop_start;
-	Loop_End = clamp<uint32_t>(loop_end, 0, (uint32_t)decoder->getSampleLength());
+	Loop_End = sampleLength == 0 ? loop_end : clamp<uint32_t>(loop_end, 0, sampleLength);
 	Reader = std::move(reader);
 	Decoder = decoder;
 	Channels = iChannels == ChannelConfig_Stereo? 2:1;

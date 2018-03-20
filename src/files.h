@@ -201,56 +201,56 @@ public:
 
 	uint8_t ReadUInt8()
 	{
-		uint8_t v;
+		uint8_t v = 0;
 		Read(&v, 1);
 		return v;
 	}
 
 	int8_t ReadInt8()
 	{
-		int8_t v;
+		int8_t v = 0;
 		Read(&v, 1);
 		return v;
 	}
 
 	uint16_t ReadUInt16()
 	{
-		uint16_t v;
+		uint16_t v = 0;
 		Read(&v, 2);
 		return LittleShort(v);
 	}
 
 	int16_t ReadInt16()
 	{
-		uint16_t v;
+		uint16_t v = 0;
 		Read(&v, 2);
 		return LittleShort(v);
 	}
 
 	uint32_t ReadUInt32()
 	{
-		uint32_t v;
+		uint32_t v = 0;
 		Read(&v, 4);
 		return LittleLong(v);
 	}
 
 	int32_t ReadInt32()
 	{
-		uint32_t v;
+		uint32_t v = 0;
 		Read(&v, 4);
 		return LittleLong(v);
 	}
 
 	uint32_t ReadUInt32BE()
 	{
-		uint32_t v;
+		uint32_t v = 0;
 		Read(&v, 4);
 		return BigLong(v);
 	}
 
 	int32_t ReadInt32BE()
 	{
-		uint32_t v;
+		uint32_t v = 0;
 		Read(&v, 4);
 		return BigLong(v);
 	}

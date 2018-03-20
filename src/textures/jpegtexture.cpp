@@ -302,7 +302,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE, "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 		}
 		else
 		{
@@ -385,7 +385,7 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE, "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL)
@@ -429,7 +429,7 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 			(cinfo.out_color_space == JCS_YCbCr && cinfo.num_components == 3) ||
 			(cinfo.out_color_space == JCS_GRAYSCALE && cinfo.num_components == 1)))
 		{
-			Printf(TEXTCOLOR_ORANGE, "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+			Printf(TEXTCOLOR_ORANGE "Unsupported color format in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 		}
 		else
 		{
@@ -478,7 +478,7 @@ int FJPEGTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FC
 	}
 	catch (int)
 	{
-		Printf(TEXTCOLOR_ORANGE, "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
+		Printf(TEXTCOLOR_ORANGE "JPEG error in %s\n", Wads.GetLumpFullPath(SourceLump).GetChars());
 	}
 	jpeg_destroy_decompress(&cinfo);
 	if (buff != NULL) delete [] buff;

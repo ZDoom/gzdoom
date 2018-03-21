@@ -5,6 +5,10 @@ void D_DoAnonStats()
 {
 }
 
+void D_ConfirmSendStats()
+{
+}
+
 #else // !NO_SEND_STATS
 
 #if defined(_WIN32)
@@ -14,6 +18,11 @@ void D_DoAnonStats()
 #include <winsock2.h>
 extern int sys_ostype;
 #else
+#ifdef __APPLE__
+#include <CoreFoundation/CoreFoundation.h>
+#else // !__APPLE__
+#include <SDL.h>
+#endif // __APPLE__
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -296,6 +305,57 @@ void D_DoAnonStats()
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
+}
+
+void D_ConfirmSendStats()
+{
+	if (sys_statsenabled >= 0)
+	{
+		return;
+	}
+
+	// TODO: texts
+	static const char *const MESSAGE_TEXT = "send stats?";
+	static const char *const TITLE_TEXT = GAMENAME;
+
+	UCVarValue enabled = { 0 };
+
+#ifdef _WIN32
+	extern HWND Window;
+	enabled.Int = MessageBox(Window, MESSAGE_TEXT, TITLE_TEXT, MB_ICONQUESTION | MB_YESNO) == IDYES;
+#elif defined __APPLE__
+	const CFStringRef messageString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, MESSAGE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
+	const CFStringRef titleString = CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, TITLE_TEXT, kCFStringEncodingASCII, kCFAllocatorNull);
+	if (messageString != nullptr && titleString != nullptr)
+	{
+		CFOptionFlags response;
+		const SInt32 result = CFUserNotificationDisplayAlert(0, kCFUserNotificationNoteAlertLevel, nullptr, nullptr, nullptr,
+			titleString, messageString, CFSTR("Yes"), CFSTR("No"), nullptr, &response);
+		enabled.Int = result == 0 && (response & 3) == kCFUserNotificationDefaultResponse;
+		CFRelease(titleString);
+		CFRelease(messageString);
+	}
+#else // !__APPLE__
+	const SDL_MessageBoxButtonData buttons[] =
+	{
+		{ SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "Yes" },
+		{ SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 1, "No" },
+	};
+	const SDL_MessageBoxData messageboxdata =
+	{
+		SDL_MESSAGEBOX_INFORMATION,
+		nullptr,
+		TITLE_TEXT,
+		MESSAGE_TEXT,
+		SDL_arraysize(buttons),
+		buttons,
+		nullptr
+	};
+	int buttonid;
+	enabled.Int = SDL_ShowMessageBox(&messageboxdata, &buttonid) == 0 && buttonid == 0;
+#endif // _WIN32
+
+	sys_statsenabled.ForceSet(enabled, CVAR_Int);
 }
 
 #endif // NO_SEND_STATS

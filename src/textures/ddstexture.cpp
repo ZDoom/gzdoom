@@ -474,7 +474,8 @@ void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *buffer, int pixelmode)
 					uint32_t r = (c & RMask) << RShiftL; r |= r >> RShiftR;
 					uint32_t g = (c & GMask) << GShiftL; g |= g >> GShiftR;
 					uint32_t b = (c & BMask) << BShiftL; b |= b >> BShiftR;
-					*pixelp = RGBToPalette(pixelmode == PIX_Palette, r >> 24, g >> 24, b >> 24);
+					uint32_t a = (c & AMask) << AShiftL; a |= a >> AShiftR;
+					*pixelp = RGBToPalette(pixelmode == PIX_Palette, r >> 24, g >> 24, b >> 24, a >> 24);
 				}
 				else
 				{
@@ -658,10 +659,16 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 					{
 						break;
 					}
-					if (pixelmode != PIX_ARGB)
+					if (pixelmode == PIX_Palette)
 					{
 						buffer[oy + y + (ox + x) * Height] = ((yalphaslice >> (x*4)) & 15) < 8 ?
 							(bMasked = true, 0) : palcol[(yslice >> (x + x)) & 3];
+					}
+					else if (pixelmode == PIX_Alphatex)
+					{
+						int alphaval = ((yalphaslice >> (x * 4)) & 15);
+						int palval = palcol[(yslice >> (x + x)) & 3];
+						buffer[oy + y + (ox + x) * Height] = palval * alphaval / 15;
 					}
 					else
 					{
@@ -670,7 +677,7 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 						tcp[0] = color[c].r;
 						tcp[1] = color[c].g;
 						tcp[2] = color[c].b;
-						tcp[3] = color[c].a;
+						tcp[3] = ((yalphaslice >> (x * 4)) & 15) * 0x11;
 					}
 				}
 			}

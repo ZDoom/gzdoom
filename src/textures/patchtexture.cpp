@@ -119,7 +119,7 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 		{
 			// only check this if the texture passed validation.
 			// Here is a good point because we already have a valid buffer of the lump's data.
-			isalpha = checkPatchForAlpha(data, file.GetLength());
+			isalpha = checkPatchForAlpha(data, (uint32_t)file.GetLength());
 		}
 		return !gapAtStart;
 	}
@@ -183,19 +183,13 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 
 	maxcol = (const column_t *)((const uint8_t *)patch + Wads.LumpLength (SourceLump) - 3);
 
-	if (style.Flags & STYLEF_RedIsAlpha)
-	{
-		remap = translationtables[TRANSLATION_Standard][isalpha? STD_Gray : STD_Grayscale]->Remap;
-	}
-	else if (bNoRemap0)
+	remap = GetRemap(style, isalpha);
+	// Special case for skies
+	if (bNoRemap0 && remap == GPalette.Remap)
 	{
 		memcpy(remaptable, GPalette.Remap, 256);
 		remaptable[0] = 0;
 		remap = remaptable;
-	}
-	else
-	{
-		remap = isalpha? GrayMap : GPalette.Remap;
 	}
 
 	if (badflag)

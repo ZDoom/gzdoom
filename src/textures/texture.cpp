@@ -754,7 +754,7 @@ void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat f
 	{
 	case TEX_Pal:
 	case TEX_Gray:
-		pix = GetPixels(DefaultRenderStyle());
+		pix = GetPixels(fmt == TEX_Pal? DefaultRenderStyle() : LegacyRenderStyles[STYLE_Shaded]);
 		stride = pitch - w;
 		for (y = 0; y < h; ++y)
 		{

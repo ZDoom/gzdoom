@@ -472,16 +472,9 @@ void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *buffer, int pixelmode)
 				if (amask == 0 || (c & amask))
 				{
 					uint32_t r = (c & RMask) << RShiftL; r |= r >> RShiftR;
-					if (pixelmode == PIX_Palette)
-					{
-						uint32_t g = (c & GMask) << GShiftL; g |= g >> GShiftR;
-						uint32_t b = (c & BMask) << BShiftL; b |= b >> BShiftR;
-						*pixelp = RGB256k.RGB[r >> 26][g >> 26][b >> 26];
-					}
-					else
-					{
-						*pixelp = uint8_t(r >> 24);
-					}
+					uint32_t g = (c & GMask) << GShiftL; g |= g >> GShiftR;
+					uint32_t b = (c & BMask) << BShiftL; b |= b >> BShiftR;
+					*pixelp = RGBToPalette(pixelmode == PIX_Palette, r >> 24, g >> 24, b >> 24);
 				}
 				else
 				{
@@ -567,10 +560,7 @@ void FDDSTexture::DecompressDXT1 (FileReader &lump, uint8_t *buffer, int pixelmo
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				if (pixelmode == PIX_Palette)
-					palcol[i] = color[i].a ? RGB256k.RGB[color[i].r >> 2][color[i].g >> 2][color[i].b >> 2] : 0;
-				else
-					palcol[i] = (color[i].a * color[i].r) / 255;	// use the same logic as the hardware renderer.
+				palcol[i] = RGBToPalette(pixelmode == PIX_Palette, color[i]);
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)
@@ -650,10 +640,7 @@ void FDDSTexture::DecompressDXT3 (FileReader &lump, bool premultiplied, uint8_t 
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				if (pixelmode == PIX_Palette)
-					palcol[i] = color[i].a ? RGB256k.RGB[color[i].r >> 2][color[i].g >> 2][color[i].b >> 2] : 0;
-				else
-					palcol[i] = (color[i].a * color[i].r) / 255;	// use the same logic as the hardware renderer.
+				palcol[i] = RGBToPalette(pixelmode == PIX_Palette, color[i], false);
 			}
 
 			// Now decode this 4x4 block to the pixel buffer.
@@ -759,10 +746,7 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 			// Pick colors from the palette for each of the four colors.
 			if (pixelmode != PIX_ARGB) for (i = 3; i >= 0; --i)
 			{
-				if (pixelmode == PIX_Palette)
-					palcol[i] = color[i].a ? RGB256k.RGB[color[i].r >> 2][color[i].g >> 2][color[i].b >> 2] : 0;
-				else
-					palcol[i] = (color[i].a * color[i].r) / 255;	// use the same logic as the hardware renderer.
+				palcol[i] = RGBToPalette(pixelmode == PIX_Palette, color[i], false);
 			}
 			// Now decode this 4x4 block to the pixel buffer.
 			for (y = 0; y < 4; ++y)
@@ -787,10 +771,16 @@ void FDDSTexture::DecompressDXT5 (FileReader &lump, bool premultiplied, uint8_t 
 					{
 						break;
 					}
-					if (pixelmode == 8)
+					if (pixelmode == PIX_Palette)
 					{
 						buffer[oy + y + (ox + x) * Height] = alpha[((yalphaslice >> (x*3)) & 7)] < 128 ?
 							(bMasked = true, 0) : palcol[(yslice >> (x + x)) & 3];
+					}
+					else if (pixelmode == PIX_Alphatex)
+					{
+						int alphaval = alpha[((yalphaslice >> (x * 3)) & 7)];
+						int palval = palcol[(yslice >> (x + x)) & 3];
+						buffer[oy + y + (ox + x) * Height] = palval * alphaval / 255;
 					}
 					else
 					{

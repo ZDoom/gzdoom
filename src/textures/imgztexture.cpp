@@ -37,8 +37,12 @@
 #include "files.h"
 #include "w_wad.h"
 #include "v_palette.h"
+#include "v_video.h"
+#include "bitmap.h"
 #include "textures/textures.h"
+#include "r_data/r_translate.h"
 
+bool checkIMGZPalette(FileReader &file);
 
 //==========================================================================
 //
@@ -61,9 +65,15 @@ class FIMGZTexture : public FWorldTexture
 		uint8_t Reserved[11];
 	};
 
+	bool isalpha = true;
+
 public:
-	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t);
+	FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool isalpha);
 	uint8_t *MakeTexture (FRenderStyle style) override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+
+	bool UseBasePalette() override { return !isalpha; }
+	FTextureFormat GetFormat() override { return isalpha ? TEX_RGB : TEX_Pal; } // should be TEX_Gray instead of TEX_RGB. Maybe later when all is working.
 };
 
 
@@ -78,6 +88,7 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 	uint32_t magic = 0;
 	uint16_t w, h;
 	int16_t l, t;
+	bool ispalette;
 
 	file.Seek(0, FileReader::SeekSet);
 	if (file.Read(&magic, 4) != 4) return NULL;
@@ -86,7 +97,8 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 	h = file.ReadUInt16();
 	l = file.ReadInt16();
 	t = file.ReadInt16();
-	return new FIMGZTexture(lumpnum, w, h, l, t);
+	ispalette = checkIMGZPalette(file);
+	return new FIMGZTexture(lumpnum, w, h, l, t, !ispalette);
 }
 
 //==========================================================================
@@ -95,7 +107,7 @@ FTexture *IMGZTexture_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t)
+FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int16_t t, bool _isalpha)
 	: FWorldTexture(NULL, lumpnum)
 {
 	Wads.GetLumpName (Name, lumpnum);
@@ -103,6 +115,7 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 	Height = h;
 	LeftOffset = l;
 	TopOffset = t;
+	isalpha = _isalpha;
 	CalcBitSize ();
 }
 
@@ -134,15 +147,16 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 	auto Pixels = new uint8_t[Width*Height];
 	dest_p = Pixels;
 
-	// Convert the source image from row-major to column-major format
+	const uint8_t *remap = GetRemap(style, isalpha);
+
+	// Convert the source image from row-major to column-major format and remap it
 	if (!imgz->Compression)
 	{
 		for (int y = Height; y != 0; --y)
 		{
 			for (int x = Width; x != 0; --x)
 			{
-				auto p = *data;
-				*dest_p = (style.Flags & STYLEF_RedIsAlpha) ? p : GPalette.Remap[p];
+				*dest_p = remap[*data];
 				dest_p += dest_adv;
 				data++;
 			}
@@ -161,8 +175,7 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 			{
 				if (runlen != 0)
 				{
-					auto p = *data;
-					*dest_p = (style.Flags & STYLEF_RedIsAlpha) ? p : GPalette.Remap[p];
+					*dest_p = remap[*data];
 					dest_p += dest_adv;
 					data++;
 					x--;
@@ -185,7 +198,7 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 					else if (code != -128)
 					{
 						setlen = (-code) + 1;
-						setval = *data++;
+						setval = remap[*data++];
 					}
 				}
 			}
@@ -193,5 +206,17 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 		}
 	}
 	return Pixels;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int FIMGZTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+{
+	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
+	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][isalpha ? STD_Gray : STD_Grayscale]->Palette, inf);
 }
 

@@ -389,10 +389,9 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 	{
 		if (bitcount < 8)
 		{
-			for (int i=0;i<16;i++)
+			for (int i = 0; i < 16; i++)
 			{
-				if (!alphatex) PaletteMap[i] = ColorMatcher.Pick(header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
-				else PaletteMap[i] = header.palette[i * 3];
+				PaletteMap[i] = RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
 			}
 
 			switch (bitcount)
@@ -418,7 +417,7 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 				uint8_t r = lump.ReadUInt8();
 				uint8_t g = lump.ReadUInt8();
 				uint8_t b = lump.ReadUInt8();
-				PaletteMap[i] = !alphatex? ColorMatcher.Pick(r,g,b) : r;
+				PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b);
 			}
 			lump.Seek(sizeof(header), FileReader::SeekSet);
 			ReadPCX8bits (Pixels, lump, &header);
@@ -445,7 +444,7 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 		{
 			for(int x=0; x < Width; x++)
 			{
-				Pixels[y + Height * x] = !alphatex? RGB256k.RGB[row[0] >> 2][row[1] >> 2][row[2] >> 2] : row[0];
+				Pixels[y + Height * x] = RGBToPalette(alphatex, row[0], row[1], row[2]);
 				row+=3;
 			}
 		}

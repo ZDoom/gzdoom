@@ -128,6 +128,11 @@ struct PalEntry
 			return other;
 		}
 	}
+	int Luminance() const 
+	{
+		return (r * 77 + g * 143 + b * 37) >> 8;
+	}
+
 	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
 	{
 		int v = (r + g + b);
@@ -167,6 +172,12 @@ struct PalEntry
 	};
 #endif
 };
+
+inline int Luminance(int r, int g, int b)
+{
+	return (r * 77 + g * 143 + b * 37) >> 8;
+}
+
 
 class FTextureID
 {

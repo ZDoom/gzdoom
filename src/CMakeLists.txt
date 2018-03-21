@@ -1097,6 +1097,7 @@ set (PCH_SOURCES
 	textures/flattexture.cpp
 	textures/imgztexture.cpp
 	textures/jpegtexture.cpp
+	textures/md5check.cpp
 	textures/multipatchtexture.cpp
 	textures/patchtexture.cpp
 	textures/pcxtexture.cpp

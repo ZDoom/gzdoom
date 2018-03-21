@@ -95,7 +95,7 @@ uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
 	for (int i = 0; i < Width*Height; i++)
 	{
 		auto c = RawPixels[i];
-		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].r : Remap->Remap[c];
+		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].Luminance() : Remap->Remap[c];
 	}
 	return (uint8_t*)RawPixels;
 }

@@ -321,21 +321,23 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 				case JCS_RGB:
 					for (int x = Width; x > 0; --x)
 					{
-						*out = !doalpha? RGB256k.RGB[in[0] >> 2][in[1] >> 2][in[2] >> 2] : in[0];
+						*out = RGBToPalette(doalpha, in[0], in[1], in[2]);
 						out += Height;
 						in += 3;
 					}
 					break;
 
 				case JCS_GRAYSCALE:
+				{
+					auto remap = GetRemap(style, true);
 					for (int x = Width; x > 0; --x)
 					{
-						*out = !doalpha ? FTexture::GrayMap[in[0]] : in[0];
+						*out = remap[in[0]];
 						out += Height;
 						in += 1;
 					}
 					break;
-
+				}
 				case JCS_CMYK:
 					// What are you doing using a CMYK image? :)
 					for (int x = Width; x > 0; --x)
@@ -343,13 +345,9 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 						// To be precise, these calculations should use 255, but
 						// 256 is much faster and virtually indistinguishable.
 						int r = in[3] - (((256 - in[0])*in[3]) >> 8);
-						if (!doalpha)
-						{
-							int g = in[3] - (((256 - in[1])*in[3]) >> 8);
-							int b = in[3] - (((256 - in[2])*in[3]) >> 8);
-							*out = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
-						}
-						else *out = (uint8_t)r;
+						int g = in[3] - (((256 - in[1])*in[3]) >> 8);
+						int b = in[3] - (((256 - in[2])*in[3]) >> 8);
+						*out = RGBToPalette(doalpha, r, g, b);
 						out += Height;
 						in += 4;
 					}
@@ -361,13 +359,9 @@ uint8_t *FJPEGTexture::MakeTexture (FRenderStyle style)
 					{
 						double Y = in[0], Cb = in[1], Cr = in[2];
 						int r = clamp((int)(Y + 1.40200 * (Cr - 0x80)), 0, 255);
-						if (!doalpha)
-						{
-							int g = clamp((int)(Y - 0.34414 * (Cb - 0x80) - 0.71414 * (Cr - 0x80)), 0, 255);
-							int b = clamp((int)(Y + 1.77200 * (Cb - 0x80)), 0, 255);
-							*out = RGB256k.RGB[r >> 2][g >> 2][b >> 2];
-						}
-						else *out = (uint8_t)r;
+						int g = clamp((int)(Y - 0.34414 * (Cb - 0x80) - 0.71414 * (Cr - 0x80)), 0, 255);
+						int b = clamp((int)(Y + 1.77200 * (Cb - 0x80)), 0, 255);
+						*out = RGBToPalette(doalpha, r, g, b);
 						out += Height;
 						in += 4;
 					}

@@ -38,6 +38,8 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "v_palette.h"
+#include "v_video.h"
+#include "bitmap.h"
 #include "textures/textures.h"
 #include "r_data/r_translate.h"
 
@@ -49,6 +51,7 @@ struct column_t
 	uint8_t		length; 		// length data bytes follows
 };
 
+bool checkPatchForAlpha(const void *buffer, uint32_t length);
 
 //==========================================================================
 //
@@ -59,10 +62,15 @@ struct column_t
 class FPatchTexture : public FWorldTexture
 {
 	bool badflag = false;
+	bool isalpha = false;
 public:
-	FPatchTexture (int lumpnum, patch_t *header);
+	FPatchTexture (int lumpnum, patch_t *header, bool isalphatex);
 	uint8_t *MakeTexture (FRenderStyle style) override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
 	void DetectBadPatches();
+
+	bool UseBasePalette() override { return !isalpha; }
+	FTextureFormat GetFormat() override { return isalpha ? TEX_RGB : TEX_Pal; } // should be TEX_Gray instead of TEX_RGB. Maybe later when all is working.
 };
 
 //==========================================================================
@@ -71,7 +79,7 @@ public:
 //
 //==========================================================================
 
-static bool CheckIfPatch(FileReader & file)
+static bool CheckIfPatch(FileReader & file, bool &isalpha)
 {
 	if (file.GetLength() < 13) return false;	// minimum length of a valid Doom patch
 	
@@ -107,6 +115,12 @@ static bool CheckIfPatch(FileReader & file)
 			}
 		}
 		delete [] data;
+		if (!gapAtStart)
+		{
+			// only check this if the texture passed validation.
+			// Here is a good point because we already have a valid buffer of the lump's data.
+			isalpha = checkPatchForAlpha(data, file.GetLength());
+		}
 		return !gapAtStart;
 	}
 	delete [] data;
@@ -122,14 +136,15 @@ static bool CheckIfPatch(FileReader & file)
 FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 {
 	patch_t header;
+	bool isalpha;
 
-	if (!CheckIfPatch(file)) return NULL;
+	if (!CheckIfPatch(file, isalpha)) return NULL;
 	file.Seek(0, FileReader::SeekSet);
 	header.width = file.ReadUInt16();
 	header.height = file.ReadUInt16();
 	header.leftoffset = file.ReadInt16();
 	header.topoffset = file.ReadInt16();
-	return new FPatchTexture(lumpnum, &header);
+	return new FPatchTexture(lumpnum, &header, isalpha);
 }
 
 //==========================================================================
@@ -138,9 +153,10 @@ FTexture *PatchTexture_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-FPatchTexture::FPatchTexture (int lumpnum, patch_t * header)
+FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
 : FWorldTexture(NULL, lumpnum)
 {
+	isalpha = isalphatex;
 	Width = header->width;
 	Height = header->height;
 	LeftOffset = header->leftoffset;
@@ -169,19 +185,18 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 
 	if (style.Flags & STYLEF_RedIsAlpha)
 	{
-		remap = translationtables[TRANSLATION_Standard][8]->Remap;
+		remap = translationtables[TRANSLATION_Standard][isalpha? STD_Gray : STD_Grayscale]->Remap;
 	}
 	else if (bNoRemap0)
 	{
-		memcpy (remaptable, GPalette.Remap, 256);
+		memcpy(remaptable, GPalette.Remap, 256);
 		remaptable[0] = 0;
 		remap = remaptable;
 	}
 	else
 	{
-		remap = GPalette.Remap;
+		remap = isalpha? GrayMap : GPalette.Remap;
 	}
-
 
 	if (badflag)
 	{
@@ -255,6 +270,17 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 	return Pixels;
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+int FPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+{
+	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
+	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][isalpha ? STD_Gray : STD_Grayscale]->Palette, inf);
+}
 
 //==========================================================================
 //

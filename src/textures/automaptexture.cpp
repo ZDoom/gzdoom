@@ -98,12 +98,13 @@ uint8_t *FAutomapTexture::MakeTexture (FRenderStyle style)
 
 	auto Pixels = new uint8_t[Width * Height];
 
+	const uint8_t *remap = GetRemap(style);
 	for (x = 0; x < Width; ++x)
 	{
 		for (y = 0; y < Height; ++y)
 		{
 			auto p = indata[x + 320 * y];
-			Pixels[x*Height + y] = (style.Flags & STYLEF_RedIsAlpha) ? p : GPalette.Remap[p];
+			Pixels[x*Height + y] = remap[p];
 		}
 	}
 	return Pixels;

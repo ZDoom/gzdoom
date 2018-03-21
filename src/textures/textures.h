@@ -37,7 +37,11 @@
 
 #include "doomtype.h"
 #include "vectors.h"
+#include "v_palette.h"
+#include "v_video.h"
+#include "colormatcher.h"
 #include "r_data/renderstyle.h"
+#include "r_data/r_translate.h"
 #include <vector>
 
 struct FloatRect
@@ -308,6 +312,52 @@ protected:
 	uint16_t Width, Height, WidthMask;
 	static uint8_t GrayMap[256];
 	FNativeTexture *Native;
+	uint8_t *GetRemap(FRenderStyle style, bool srcisgrayscale = false)
+	{
+		if (style.Flags & STYLEF_RedIsAlpha)
+		{
+			return translationtables[TRANSLATION_Standard][srcisgrayscale ? STD_Gray : STD_Grayscale]->Remap;
+		}
+		else
+		{
+			return srcisgrayscale ? GrayMap : GPalette.Remap;
+		}
+	}
+
+	uint8_t RGBToPalettePrecise(bool wantluminance, int r, int g, int b, int a = 255)
+	{
+		if (wantluminance)
+		{
+			return (uint8_t)Luminance(r, g, b) * a / 255;
+		}
+		else
+		{
+			return ColorMatcher.Pick(r, g, b);
+		}
+	}
+
+	uint8_t RGBToPalette(bool wantluminance, int r, int g, int b, int a = 255)
+	{
+		if (wantluminance)
+		{
+			// This is the same formula the OpenGL renderer uses for grayscale textures with an alpha channel.
+			return (uint8_t)(Luminance(r, g, b) * a / 255);
+		}
+		else
+		{
+			return a < 128? 0 : RGB256k.RGB[r >> 2][g >> 2][b >> 2];
+		}
+	}
+
+	uint8_t RGBToPalette(bool wantluminance, PalEntry pe, bool hasalpha = true)
+	{
+		return RGBToPalette(wantluminance, pe.r, pe.g, pe.b, hasalpha? pe.a : 255);
+	}
+
+	uint8_t RGBToPalette(FRenderStyle style, int r, int g, int b, int a = 255)
+	{
+		return RGBToPalette(!!(style.Flags & STYLEF_RedIsAlpha), r, g, b, a);
+	}
 
 	FTexture (const char *name = NULL, int lumpnum = -1);
 

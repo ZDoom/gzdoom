@@ -416,13 +416,6 @@ uint8_t *FMultiPatchTexture::MakeTexture (FRenderStyle style)
 
 	if (style.Flags & STYLEF_RedIsAlpha)
 	{
-		// The rules here are as follows:
-		// A texture uses its palette index as alpha only if it reports to use the base palette.
-		// In summary this means:
-		// If a texture is marked 'complex', it will use the red channel.
-		// If a texture uses non-base-palette patches, it will use the red channel for all pixels, even those coming from a base palette patch.
-		// If a texture only uses base-palette patches and no compositing effects it will use the palette index.
-		//
 		buildrgb = !UseBasePalette();
 	}
 	else
@@ -449,8 +442,7 @@ uint8_t *FMultiPatchTexture::MakeTexture (FRenderStyle style)
 				{
 					trans = GetBlendMap(Parts[i].Blend, blendwork);
 				}
-				Parts[i].Texture->CopyToBlock (Pixels, Width, Height,
-					Parts[i].OriginX, Parts[i].OriginY, Parts[i].Rotate, trans, style);
+				Parts[i].Texture->CopyToBlock (Pixels, Width, Height, Parts[i].OriginX, Parts[i].OriginY, Parts[i].Rotate, trans, style);
 			}
 		}
 	}
@@ -469,7 +461,7 @@ uint8_t *FMultiPatchTexture::MakeTexture (FRenderStyle style)
 			{
 				if (*out == 0 && in[3] != 0)
 				{
-					*out = (style.Flags & STYLEF_RedIsAlpha)? in[2]*in[3] : RGB256k.RGB[in[2]>>2][in[1]>>2][in[0]>>2];
+					*out = RGBToPalette(style, in[2], in[1], in[0]);
 				}
 				out += Height;
 				in += 4;

@@ -177,12 +177,14 @@ uint8_t *FRawPageTexture::MakeTexture (FRenderStyle style)
 	auto Pixels = new uint8_t[Width*Height];
 	dest_p = Pixels;
 
+	const uint8_t *remap = GetRemap(style);
+
 	// Convert the source image from row-major to column-major format
 	for (int y = 200; y != 0; --y)
 	{
 		for (int x = 320; x != 0; --x)
 		{
-			*dest_p = (style.Flags & STYLEF_RedIsAlpha)? *source_p : GPalette.Remap[*source_p];
+			*dest_p = remap[*source_p];
 			dest_p += 200;
 			source_p++;
 		}

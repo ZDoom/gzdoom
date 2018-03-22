@@ -446,7 +446,7 @@ void FDDSTexture::ReadRGB (FileReader &lump, uint8_t *buffer, int pixelmode)
 	for (y = Height; y > 0; --y)
 	{
 		uint8_t *buffp = linebuff;
-		uint8_t *pixelp = pixelmode == PIX_ARGB? buffer + 4*y*Height : buffer + y;
+		uint8_t *pixelp = pixelmode == PIX_ARGB ? buffer + 4 * (y - 1)*Width : buffer + y - 1;
 		lump.Read (linebuff, Pitch);
 		for (x = Width; x > 0; --x)
 		{

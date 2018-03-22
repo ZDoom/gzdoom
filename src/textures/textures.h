@@ -211,6 +211,7 @@ public:
 		TEX_Flat,
 		TEX_Sprite,
 		TEX_WallPatch,
+		TEX_Build,		// no longer used but needs to remain for ZScript
 		TEX_SkinSprite,
 		TEX_Decal,
 		TEX_MiscPatch,

@@ -64,7 +64,8 @@ vec4 getTexel(vec2 st)
 			break;
 			
 		case 4:	// TM_REDTOALPHA
-			texel = vec4(1.0, 1.0, 1.0, texel.r*texel.a);
+			float gray = (texel.r * 0.3 + texel.g * 0.56 + texel.b * 0.14);	
+			texel = vec4(1.0, 1.0, 1.0, gray*texel.a);
 			break;
 			
 		case 5:	// TM_CLAMPY

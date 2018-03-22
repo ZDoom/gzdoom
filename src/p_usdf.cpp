@@ -474,10 +474,10 @@ class USDFParser : public UDMFParserBase
 	//===========================================================================
 
 public:
-	bool Parse(int lumpnum, FileReader *lump, int lumplen)
+	bool Parse(int lumpnum, FileReader &lump, int lumplen)
 	{
 		char *buffer = new char[lumplen];
-		lump->Read(buffer, lumplen);
+		lump.Read(buffer, lumplen);
 		sc.OpenMem(Wads.GetLumpFullName(lumpnum), buffer, lumplen);
 		delete [] buffer;
 		sc.SetCMode(true);
@@ -532,7 +532,7 @@ public:
 
 
 
-bool P_ParseUSDF(int lumpnum, FileReader *lump, int lumplen)
+bool P_ParseUSDF(int lumpnum, FileReader &lump, int lumplen)
 {
 	USDFParser parse;
 

@@ -20,6 +20,7 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 
 #include <stdio.h>
 #include <string.h>
+#include <stdint.h>
 
 #include <time.h>
 
@@ -43,7 +44,7 @@ namespace TimidityPlus
     ctl_cmsg(CMSG_ERROR, VERB_NORMAL, \
       "Too many errors... Give up read %s", name); \
     reuse_mblock(&varbuf); \
-    close_file(tf); return 1; }
+    tf_close(tf); return 1; }
 
 
 typedef struct {
@@ -1427,7 +1428,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 					continue;
 				case READ_CONFIG_RECURSION:
 					reuse_mblock(&varbuf);
-					close_file(tf);
+					tf_close(tf);
 					return READ_CONFIG_RECURSION;
 				case READ_CONFIG_FILE_NOT_FOUND:
 					break;
@@ -1610,7 +1611,7 @@ int Instruments::read_config_file(const char *name, int self, int allow_missing_
 		}
 	}
 	reuse_mblock(&varbuf);
-	close_file(tf);
+	tf_close(tf);
 	return (errcnt == 0) ? READ_CONFIG_SUCCESS : READ_CONFIG_ERROR;
 }
 

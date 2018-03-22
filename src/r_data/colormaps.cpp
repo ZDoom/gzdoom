@@ -232,7 +232,7 @@ void R_InitColormaps ()
 			if (Wads.LumpLength (fakecmaps[j].lump) >= 256)
 			{
 				int k, r, g, b;
-				FWadLump lump = Wads.OpenLumpNum (fakecmaps[j].lump);
+				auto lump = Wads.OpenLumpReader (fakecmaps[j].lump);
 				lump.Read(map, 256);
 				r = g = b = 0;
 

@@ -118,7 +118,7 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream (SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata) = 0;
-    virtual SoundStream *OpenStream (FileReader *reader, int flags) = 0;
+    virtual SoundStream *OpenStream (FileReader &reader, int flags) = 0;
 
 	// Starts a sound.
 	virtual FISoundChannel *StartSound (SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan) = 0;
@@ -168,7 +168,7 @@ public:
 
 	virtual void DrawWaveDebug(int mode);
 
-    static SoundDecoder *CreateDecoder(FileReader *reader);
+    static SoundDecoder *CreateDecoder(FileReader &reader);
 };
 
 extern SoundRenderer *GSnd;

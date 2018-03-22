@@ -105,7 +105,7 @@ void RenderPolyWallSprite::Render(PolyRenderThread *thread, const TriMatrix &wor
 	args.SetTransform(&worldToClip);
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
-	args.SetTexture(tex);
+	args.SetTexture(tex, thing->RenderStyle);
 	args.SetClipPlane(0, clipPlane);
 	args.SetDepthTest(true);
 	args.SetWriteDepth(false);

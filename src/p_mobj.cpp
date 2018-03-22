@@ -8516,5 +8516,7 @@ void PrintMiscActorInfo(AActor *query)
 			query->Speed, query->Vel.X, query->Vel.Y, query->Vel.Z, query->Vel.Length());
 		Printf("Scale: x:%f, y:%f\n", query->Scale.X, query->Scale.Y);
 		Printf("FriendlySeeBlocks: %d\n", query->friendlyseeblocks);
+		Printf("Target: %s\n", query->target ? query->target->GetClass()->TypeName.GetChars() : "-");
+		Printf("Last enemy: %s\n", query->lastenemy ? query->lastenemy->GetClass()->TypeName.GetChars() : "-");
 	}
 }

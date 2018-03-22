@@ -66,7 +66,7 @@ struct dpackheader_t
 class FPakFile : public FUncompressedFile
 {
 public:
-	FPakFile(const char * filename, FileReader *file);
+	FPakFile(const char * filename, FileReader &file);
 	bool Open(bool quiet);
 };
 
@@ -79,7 +79,8 @@ public:
 //
 //==========================================================================
 
-FPakFile::FPakFile(const char *filename, FileReader *file) : FUncompressedFile(filename, file)
+FPakFile::FPakFile(const char *filename, FileReader &file) 
+	: FUncompressedFile(filename, file)
 {
 	Lumps = NULL;
 }
@@ -94,13 +95,13 @@ bool FPakFile::Open(bool quiet)
 {
 	dpackheader_t header;
 
-	Reader->Read(&header, sizeof(header));
+	Reader.Read(&header, sizeof(header));
 	NumLumps = LittleLong(header.dirlen) / sizeof(dpackfile_t);
 	header.dirofs = LittleLong(header.dirofs);
 	
 	dpackfile_t *fileinfo = new dpackfile_t[NumLumps];
-	Reader->Seek (header.dirofs, SEEK_SET);
-	Reader->Read (fileinfo, NumLumps * sizeof(dpackfile_t));
+	Reader.Seek (header.dirofs, FileReader::SeekSet);
+	Reader.Read (fileinfo, NumLumps * sizeof(dpackfile_t));
 
 	Lumps = new FUncompressedLump[NumLumps];
 
@@ -126,21 +127,21 @@ bool FPakFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckPak(const char *filename, FileReader *file, bool quiet)
+FResourceFile *CheckPak(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
-	if (file->GetLength() >= 12)
+	if (file.GetLength() >= 12)
 	{
-		file->Seek(0, SEEK_SET);
-		file->Read(&head, 4);
-		file->Seek(0, SEEK_SET);
+		file.Seek(0, FileReader::SeekSet);
+		file.Read(&head, 4);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PACK", 4))
 		{
 			FResourceFile *rf = new FPakFile(filename, file);
 			if (rf->Open(quiet)) return rf;
 
-			rf->Reader = NULL; // to avoid destruction of reader
+			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;
 		}
 	}

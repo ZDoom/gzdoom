@@ -70,15 +70,15 @@ matrix:
     - os: linux
       compiler: clang
       env:
-        - CLANG_VERSION=5.0
+        - CLANG_VERSION=6.0
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DDYN_OPENAL=NO -DDYN_SNDFILE=NO -DDYN_MPG123=NO -DDYN_FLUIDSYNTH=NO"
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-5.0
+            - llvm-toolchain-trusty-6.0
           packages:
-            - clang-5.0
+            - clang-6.0
             - libstdc++-5-dev
             - libsdl2-dev
             - libgme-dev
@@ -98,8 +98,8 @@ script:
   - echo ${TRAVIS_BUILD_DIR}
   - mkdir build
   - cd build
-  - cmake ${CMAKE_OPTIONS} ..
-  - make -j2
+  - cmake ${CMAKE_OPTIONS} -DPK3_QUIET_ZIPDIR=YES ..
+  - make -j2 -k
 
 notifications:
   email: false

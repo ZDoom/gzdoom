@@ -405,6 +405,7 @@ public:
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
 	bool Accel2D;	// If true, 2D drawing can be accelerated.
+	virtual bool LegacyHardware() const { return false; }	// only for reporting SM1.4 support to the stat collector
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end
 	// the scene, and it doesn't present the image yet. If you are going to

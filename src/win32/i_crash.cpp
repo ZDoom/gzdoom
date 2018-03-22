@@ -166,49 +166,49 @@ namespace zip
 #pragma pack(push,1)
 	struct LocalFileHeader
 	{
-		DWORD	Magic;						// 0
+		uint32_t	Magic;						// 0
 		uint8_t	VersionToExtract[2];		// 4
 		uint16_t	Flags;						// 6
 		uint16_t	Method;						// 8
 		uint16_t	ModTime;					// 10
 		uint16_t	ModDate;					// 12
-		DWORD	CRC32;						// 14
-		DWORD	CompressedSize;				// 18
-		DWORD	UncompressedSize;			// 22
+		uint32_t	CRC32;						// 14
+		uint32_t	CompressedSize;				// 18
+		uint32_t	UncompressedSize;			// 22
 		uint16_t	NameLength;					// 26
 		uint16_t	ExtraLength;				// 28
 	};
 
 	struct CentralDirectoryEntry
 	{
-		DWORD	Magic;
-		uint8_t	VersionMadeBy[2];
-		uint8_t	VersionToExtract[2];
+		uint32_t	Magic;
+		uint8_t		VersionMadeBy[2];
+		uint8_t		VersionToExtract[2];
 		uint16_t	Flags;
 		uint16_t	Method;
 		uint16_t	ModTime;
 		uint16_t	ModDate;
-		DWORD	CRC32;
-		DWORD	CompressedSize;
-		DWORD	UncompressedSize;
+		uint32_t	CRC32;
+		uint32_t	CompressedSize;
+		uint32_t	UncompressedSize;
 		uint16_t	NameLength;
 		uint16_t	ExtraLength;
 		uint16_t	CommentLength;
 		uint16_t	StartingDiskNumber;
 		uint16_t	InternalAttributes;
-		DWORD	ExternalAttributes;
-		DWORD	LocalHeaderOffset;
+		uint32_t	ExternalAttributes;
+		uint32_t	LocalHeaderOffset;
 	};
 
 	struct EndOfCentralDirectory
 	{
-		DWORD	Magic;
+		uint32_t	Magic;
 		uint16_t	DiskNumber;
 		uint16_t	FirstDisk;
 		uint16_t	NumEntries;
 		uint16_t	NumEntriesOnAllDisks;
-		DWORD	DirectorySize;
-		DWORD	DirectoryOffset;
+		uint32_t	DirectorySize;
+		uint32_t	DirectoryOffset;
 		uint16_t	ZipCommentLength;
 	};
 #pragma pack(pop)
@@ -219,9 +219,9 @@ struct TarFile
 	HANDLE		File;
 	const char *Filename;
 	int			ZipOffset;
-	DWORD		UncompressedSize;
-	DWORD		CompressedSize;
-	DWORD		CRC32;
+	uint32_t	UncompressedSize;
+	uint32_t	CompressedSize;
+	uint32_t	CRC32;
 	bool		Deflated;
 };
 
@@ -1513,7 +1513,8 @@ static HANDLE MakeZip ()
 	struct tm *nowtm;
 	int i, numfiles;
 	HANDLE file;
-	DWORD len, dirsize;
+	DWORD len;
+	uint32_t dirsize;
 	size_t namelen;
 
 	if (NumFiles == 0)
@@ -1553,7 +1554,7 @@ static HANDLE MakeZip ()
 	central.ModTime = dostime;
 	central.ModDate = dosdate;
 
-	dirend.DirectoryOffset = LittleLong(SetFilePointer (file, 0, NULL, FILE_CURRENT));
+	dirend.DirectoryOffset = LittleLong((uint32_t)SetFilePointer (file, 0, NULL, FILE_CURRENT));
 
 	for (i = 0, numfiles = 0, dirsize = 0; i < NumFiles; ++i)
 	{
@@ -1565,8 +1566,8 @@ static HANDLE MakeZip ()
 		numfiles++;
 		if (TarFiles[i].Deflated)
 		{
-			central.Flags = LittleShort(2);
-			central.Method = LittleShort(8);
+			central.Flags = LittleShort((uint16_t)2);
+			central.Method = LittleShort((uint16_t)8);
 		}
 		else
 		{
@@ -1577,7 +1578,7 @@ static HANDLE MakeZip ()
 		central.InternalAttributes = 0;
 		if (namelen > 4 && stricmp(TarFiles[i].Filename - 4, ".txt") == 0)
 		{ // Bit 0 set indicates this is probably a text file. But do any tools use it?
-			central.InternalAttributes = LittleShort(1);
+			central.InternalAttributes = LittleShort((uint16_t)1);
 		}
 		central.CRC32 = LittleLong(TarFiles[i].CRC32);
 		central.CompressedSize = LittleLong(TarFiles[i].CompressedSize);
@@ -1590,7 +1591,7 @@ static HANDLE MakeZip ()
 	}
 
 	// Write the directory terminator
-	dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(numfiles);
+	dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort((uint16_t)numfiles);
 	dirend.DirectorySize = LittleLong(dirsize);
 	WriteFile (file, &dirend, sizeof(dirend), &len, NULL);
 
@@ -1635,7 +1636,7 @@ static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, sho
 
 	if (gzip)
 	{
-		local.Method = LittleShort(8);
+		local.Method = LittleShort((uint16_t)8);
 		whichfile->Deflated = true;
 		stream.next_out = outbuf;
 		stream.avail_out = sizeof(outbuf);
@@ -1643,7 +1644,7 @@ static void AddZipFile (HANDLE ziphandle, TarFile *whichfile, short dosdate, sho
 
 	// Write out the header and filename.
 	local.VersionToExtract[0] = 20;
-	local.Flags = gzip ? LittleShort(2) : 0;
+	local.Flags = gzip ? LittleShort((uint16_t)2) : 0;
 	local.ModTime = dostime;
 	local.ModDate = dosdate;
 	local.UncompressedSize = LittleLong(whichfile->UncompressedSize);

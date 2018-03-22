@@ -23,6 +23,7 @@
 #include <tuple>
 #include <vector>
 #include <utility>
+#include <functional>
 
 // These two headers get included nearly everywhere so it doesn't matter if changing them forces a few more recompiles.
 // The overall savings from PCHing them are more significant.

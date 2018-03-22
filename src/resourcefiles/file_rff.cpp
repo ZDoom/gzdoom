@@ -111,7 +111,7 @@ class FRFFFile : public FResourceFile
 	FRFFLump *Lumps;
 
 public:
-	FRFFFile(const char * filename, FileReader *file);
+	FRFFFile(const char * filename, FileReader &file);
 	virtual ~FRFFFile();
 	virtual bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }
@@ -124,7 +124,7 @@ public:
 //
 //==========================================================================
 
-FRFFFile::FRFFFile(const char *filename, FileReader *file)
+FRFFFile::FRFFFile(const char *filename, FileReader &file)
 : FResourceFile(filename, file)
 {
 	Lumps = NULL;
@@ -141,13 +141,13 @@ bool FRFFFile::Open(bool quiet)
 	RFFLump *lumps;
 	RFFInfo header;
 
-	Reader->Read(&header, sizeof(header));
+	Reader.Read(&header, sizeof(header));
 
 	NumLumps = LittleLong(header.NumLumps);
 	header.DirOfs = LittleLong(header.DirOfs);
 	lumps = new RFFLump[header.NumLumps];
-	Reader->Seek (header.DirOfs, SEEK_SET);
-	Reader->Read (lumps, header.NumLumps * sizeof(RFFLump));
+	Reader.Seek (header.DirOfs, FileReader::SeekSet);
+	Reader.Read (lumps, header.NumLumps * sizeof(RFFLump));
 	BloodCrypt (lumps, header.DirOfs, header.NumLumps * sizeof(RFFLump));
 
 	Lumps = new FRFFLump[NumLumps];
@@ -247,21 +247,21 @@ int FRFFLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckRFF(const char *filename, FileReader *file, bool quiet)
+FResourceFile *CheckRFF(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
-	if (file->GetLength() >= 16)
+	if (file.GetLength() >= 16)
 	{
-		file->Seek(0, SEEK_SET);
-		file->Read(&head, 4);
-		file->Seek(0, SEEK_SET);
+		file.Seek(0, FileReader::SeekSet);
+		file.Read(&head, 4);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "RFF\x1a", 4))
 		{
 			FResourceFile *rf = new FRFFFile(filename, file);
 			if (rf->Open(quiet)) return rf;
 
-			rf->Reader = NULL; // to avoid destruction of reader
+			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;
 		}
 	}

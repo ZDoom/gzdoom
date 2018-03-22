@@ -180,6 +180,11 @@ static void RemapVoxelSlabs(kvxslab_t *dest, int size, const uint8_t *remap)
 //
 //==========================================================================
 
+#if defined __GNUC__ && !defined __clang__
+#pragma GCC push_options
+#pragma GCC optimize ("-fno-tree-loop-vectorize")
+#endif // __GNUC__ && !__clang__
+
 FVoxel *R_LoadKVX(int lumpnum)
 {
 	const kvxslab_t *slabs[MAXVOXMIPS];
@@ -319,6 +324,10 @@ FVoxel *R_LoadKVX(int lumpnum)
 
 	return voxel;
 }
+
+#if defined __GNUC__ && !defined __clang__
+#pragma GCC pop_options
+#endif // __GNUC__ && !__clang__
 
 //==========================================================================
 //

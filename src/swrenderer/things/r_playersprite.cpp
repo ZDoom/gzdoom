@@ -545,10 +545,10 @@ namespace swrenderer
 		short *mceilingclip = zeroarray;
 
 		fixed_t frac = startfrac;
-		thread->PrepareTexture(pic);
+		thread->PrepareTexture(pic, RenderStyle);
 		for (int x = x1; x < x2; x++)
 		{
-			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac + xiscale / 2, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+			drawerargs.DrawMaskedColumn(thread, x, iscale, pic, frac + xiscale / 2, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, RenderStyle, false);
 			frac += xiscale;
 		}
 

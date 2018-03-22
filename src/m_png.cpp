@@ -75,21 +75,16 @@ struct IHDR
 	uint8_t		Interlace;
 };
 
-PNGHandle::PNGHandle (FILE *file) : File(0), bDeleteFilePtr(true), ChunkPt(0)
+PNGHandle::PNGHandle (FileReader &file) : bDeleteFilePtr(true), ChunkPt(0)
 {
-	File = new FileReader(file);
+	File = std::move(file);
 }
 
-PNGHandle::PNGHandle (FileReader *file, bool takereader) : File(file), bDeleteFilePtr(takereader), ChunkPt(0) {}
 PNGHandle::~PNGHandle ()
 {
 	for (unsigned int i = 0; i < TextChunks.Size(); ++i)
 	{
 		delete[] TextChunks[i];
-	}
-	if (bDeleteFilePtr)
-	{
-		delete File;
 	}
 }
 
@@ -269,7 +264,7 @@ bool M_AppendPNGText (FileWriter *file, const char *keyword, const char *text)
 		{
 			crc = AddCRC32 (crc, (uint8_t *)text, len);
 		}
-		crc = BigLong((unsigned int)crc);
+		crc = BigLong(crc);
 		return file->Write (&crc, 4) == 4;
 	}
 	return false;
@@ -309,7 +304,7 @@ unsigned int M_NextPNGChunk (PNGHandle *png, uint32_t id)
 	{
 		if (png->Chunks[png->ChunkPt].ID == id)
 		{ // Found the chunk
-			png->File->Seek (png->Chunks[png->ChunkPt++].Offset, SEEK_SET);
+			png->File.Seek (png->Chunks[png->ChunkPt++].Offset, FileReader::SeekSet);
 			return png->Chunks[png->ChunkPt - 1].Size;
 		}
 	}
@@ -374,46 +369,43 @@ bool M_GetPNGText (PNGHandle *png, const char *keyword, char *buffer, size_t buf
 //
 //==========================================================================
 
-PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
+PNGHandle *M_VerifyPNG (FileReader &filer)
 {
 	PNGHandle::Chunk chunk;
 	PNGHandle *png;
 	uint32_t data[2];
 	bool sawIDAT = false;
 
-	if (filer->Read(&data, 8) != 8)
+	if (filer.Read(&data, 8) != 8)
 	{
-		if (takereader) delete filer;
 		return NULL;
 	}
 	if (data[0] != MAKE_ID(137,'P','N','G') || data[1] != MAKE_ID(13,10,26,10))
 	{ // Does not have PNG signature
-		if (takereader) delete filer;
 		return NULL;
 	}
-	if (filer->Read (&data, 8) != 8)
+	if (filer.Read (&data, 8) != 8)
 	{
-		if (takereader) delete filer;
 		return NULL;
 	}
 	if (data[1] != MAKE_ID('I','H','D','R'))
 	{ // IHDR must be the first chunk
-		if (takereader) delete filer;
 		return NULL;
 	}
 
 	// It looks like a PNG so far, so start creating a PNGHandle for it
-	png = new PNGHandle (filer, takereader);
+	png = new PNGHandle (filer);
+	// filer is no longer valid after the above line!
 	chunk.ID = data[1];
 	chunk.Offset = 16;
 	chunk.Size = BigLong((unsigned int)data[0]);
 	png->Chunks.Push (chunk);
-	filer->Seek (16, SEEK_SET);
+	png->File.Seek (16, FileReader::SeekSet);
 
-	while (filer->Seek (chunk.Size + 4, SEEK_CUR) == 0)
+	while (png->File.Seek (chunk.Size + 4, FileReader::SeekCur) == 0)
 	{
 		// If the file ended before an IEND was encountered, it's not a PNG.
-		if (filer->Read (&data, 8) != 8)
+		if (png->File.Read (&data, 8) != 8)
 		{
 			break;
 		}
@@ -432,7 +424,7 @@ PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 			sawIDAT = true;
 		}
 		chunk.ID = data[1];
-		chunk.Offset = filer->Tell();
+		chunk.Offset = (uint32_t)png->File.Tell();
 		chunk.Size = BigLong((unsigned int)data[0]);
 		png->Chunks.Push (chunk);
 
@@ -441,7 +433,7 @@ PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 		{
 			char *str = new char[chunk.Size + 1];
 
-			if (filer->Read (str, chunk.Size) != (long)chunk.Size)
+			if (png->File.Read (str, chunk.Size) != chunk.Size)
 			{
 				delete[] str;
 				break;
@@ -452,6 +444,7 @@ PNGHandle *M_VerifyPNG (FileReader *filer, bool takereader)
 		}
 	}
 
+	filer = std::move(png->File);	// need to get the reader back if this function failed.
 	delete png;
 	return NULL;
 }
@@ -477,7 +470,7 @@ void M_FreePNG (PNGHandle *png)
 //
 //==========================================================================
 
-bool M_ReadIDAT (FileReader *file, uint8_t *buffer, int width, int height, int pitch,
+bool M_ReadIDAT (FileReader &file, uint8_t *buffer, int width, int height, int pitch,
 				 uint8_t bitdepth, uint8_t colortype, uint8_t interlace, unsigned int chunklen)
 {
 	// Uninterlaced images are treated as a conceptual eighth pass by these tables.
@@ -574,7 +567,7 @@ bool M_ReadIDAT (FileReader *file, uint8_t *buffer, int width, int height, int p
 		if (stream.avail_in == 0 && chunklen > 0)
 		{
 			stream.next_in = chunkbuffer;
-			stream.avail_in = (uInt)file->Read (chunkbuffer, MIN<uint32_t>(chunklen,sizeof(chunkbuffer)));
+			stream.avail_in = (uInt)file.Read (chunkbuffer, MIN<uint32_t>(chunklen,sizeof(chunkbuffer)));
 			chunklen -= stream.avail_in;
 		}
 
@@ -666,7 +659,7 @@ bool M_ReadIDAT (FileReader *file, uint8_t *buffer, int width, int height, int p
 		{
 			uint32_t x[3];
 
-			if (file->Read (x, 12) != 12)
+			if (file.Read (x, 12) != 12)
 			{
 				lastIDAT = true;
 			}

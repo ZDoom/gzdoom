@@ -2,6 +2,7 @@
 #define MPG123_DECODER_H
 
 #include "i_soundinternal.h"
+#include "files.h"
 
 #ifdef HAVE_MPG123
 
@@ -29,13 +30,13 @@ struct MPG123Decoder : public SoundDecoder
     virtual ~MPG123Decoder();
 
 protected:
-    virtual bool open(FileReader *reader);
+    virtual bool open(FileReader &reader);
 
 private:
     mpg123_handle *MPG123;
     bool Done;
 
-    FileReader *Reader;
+    FileReader Reader;
     static off_t file_lseek(void *handle, off_t offset, int whence);
     static ssize_t file_read(void *handle, void *buffer, size_t bytes);
 

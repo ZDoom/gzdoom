@@ -97,7 +97,7 @@ namespace swrenderer
 				col = width + (col % width);
 			}
 
-			source = texture->GetColumn(col, nullptr);
+			source = texture->GetColumn(DefaultRenderStyle(), col, nullptr);
 			source2 = nullptr;
 			texturefracx = 0;
 		}
@@ -330,7 +330,6 @@ namespace swrenderer
 		if (rw_pic->UseType == FTexture::TEX_Null)
 			return;
 
-		rw_pic->GetHeight(); // To ensure that rw_pic->HeightBits has been set
 		int fracbits = 32 - rw_pic->HeightBits;
 		if (fracbits == 32)
 		{ // Hack for one pixel tall textures
@@ -531,7 +530,7 @@ namespace swrenderer
 		this->rw_pic = pic;
 		this->mask = mask;
 
-		Thread->PrepareTexture(pic);
+		Thread->PrepareTexture(pic, DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 
 		if (rw_pic->GetHeight() != 1 << rw_pic->HeightBits)
 		{

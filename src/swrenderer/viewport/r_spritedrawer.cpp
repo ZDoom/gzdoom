@@ -43,7 +43,7 @@ namespace swrenderer
 		colfunc = &SWPixelFormatDrawers::DrawColumn;
 	}
 
-	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, bool unmasked)
+	void SpriteDrawerArgs::DrawMaskedColumn(RenderThread *thread, int x, fixed_t iscale, FTexture *tex, fixed_t col, double spryscale, double sprtopscreen, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style, bool unmasked)
 	{
 		if (x < thread->X1 || x >= thread->X2)
 			return;
@@ -67,7 +67,7 @@ namespace swrenderer
 		if (viewport->RenderTarget->IsBgra() && !drawer_needs_pal_input)
 			column = (const uint8_t *)tex->GetColumnBgra(col >> FRACBITS, &span);
 		else
-			column = tex->GetColumn(col >> FRACBITS, &span);
+			column = tex->GetColumn(style, col >> FRACBITS, &span);
 
 		FTexture::Span unmaskedSpan[2];
 		if (unmasked)

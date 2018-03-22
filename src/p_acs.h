@@ -380,7 +380,7 @@ public:
 
 	BoundsCheckingArray<int32_t *, NUM_MAPVARS> MapVars;
 
-	static FBehavior *StaticLoadModule (int lumpnum, FileReader * fr=NULL, int len=0);
+	static FBehavior *StaticLoadModule (int lumpnum, FileReader *fr = nullptr, int len=0);
 	static void StaticLoadDefaultModules ();
 	static void StaticUnloadModules ();
 	static bool StaticCheckAllGood ();

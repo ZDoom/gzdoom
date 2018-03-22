@@ -2494,6 +2494,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		bool hasoptionals = false;
 		if (p != nullptr)
 		{
+            bool overridemsg = false;
 			do
 			{
 				int elementcount = 1;
@@ -2528,6 +2529,22 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					{
 						flags |= VARF_Optional;
 						hasoptionals = true;
+						
+						if ((varflags & VARF_Override) && !overridemsg)
+						{
+							// This is illegal, but in older compilers wasn't checked, so there it has to be demoted to a warning.
+							// Virtual calls always need to get their defaults from the base virtual method.
+							if (mVersion >= MakeVersion(3, 3))
+							{
+								Error(p, "Default values for parameter of virtual override not allowed");
+							}
+							else
+							{
+								Warn(p, "Default values for parameter of virtual override will be ignored!");
+							}
+							overridemsg = true;
+						}
+
 
 						FxExpression *x = new FxTypeCast(ConvertNode(p->Default), type, false);
 						FCompileContext ctx(OutNamespace, c->Type(), false);
@@ -2721,6 +2738,13 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 						clstype->Virtuals[vindex] = sym->Variants[0].Implementation;
 						sym->Variants[0].Implementation->VirtualIndex = vindex;
 						sym->Variants[0].Implementation->VarFlags = sym->Variants[0].Flags;
+						
+						// Defaults must be identical to parent class
+						if (parentfunc->Variants[0].Implementation->DefaultArgs.Size() > 0)
+						{
+							sym->Variants[0].Implementation->DefaultArgs = parentfunc->Variants[0].Implementation->DefaultArgs;
+							sym->Variants[0].ArgFlags = parentfunc->Variants[0].ArgFlags;
+						}
 					}
 				}
 				else

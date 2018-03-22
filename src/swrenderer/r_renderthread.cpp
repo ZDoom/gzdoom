@@ -89,7 +89,7 @@ namespace swrenderer
 			return pal_drawers.get();
 	}
 
-	void RenderThread::PrepareTexture(FTexture *texture)
+	void RenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
 	{
 		if (texture == nullptr)
 			return;
@@ -106,9 +106,9 @@ namespace swrenderer
 
 		std::unique_lock<std::mutex> lock(loadmutex);
 
-		texture->GetPixels();
+		texture->GetPixels(style);
 		const FTexture::Span *spans;
-		texture->GetColumn(0, &spans);
+		texture->GetColumn(style, 0, &spans);
 		if (Viewport->RenderTarget->IsBgra())
 		{
 			texture->GetPixelsBgra();

@@ -44,7 +44,7 @@
 
 
 FWarpTexture::FWarpTexture (FTexture *source, int warptype)
-: GenTime (0), GenTimeBgra(0), Speed (1.f), SourcePic (source), Pixels (0), Spans (0)
+	: SourcePic (source)
 {
 	CopyInfo(source);
 	if (warptype == 2) SetupMultipliers(256, 128); 
@@ -55,53 +55,25 @@ FWarpTexture::FWarpTexture (FTexture *source, int warptype)
 FWarpTexture::~FWarpTexture ()
 {
 	Unload ();
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
 	delete SourcePic;
 }
 
 void FWarpTexture::Unload ()
 {
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-	if (Spans != NULL)
-	{
-		FreeSpans (Spans);
-		Spans = NULL;
-	}
 	SourcePic->Unload ();
-	FTexture::Unload();
+	FWorldTexture::Unload();
+	FreeAllSpans();
 }
 
-bool FWarpTexture::CheckModified ()
+bool FWarpTexture::CheckModified (FRenderStyle style)
 {
-	return screen->FrameTime != GenTime;
-}
-
-const uint8_t *FWarpTexture::GetPixels ()
-{
-	uint64_t time = screen->FrameTime;
-
-	if (Pixels == NULL || time != GenTime)
-	{
-		MakeTexture (time);
-	}
-	return Pixels;
+	return screen->FrameTime != GenTime[!!(style.Flags & STYLEF_RedIsAlpha)];
 }
 
 const uint32_t *FWarpTexture::GetPixelsBgra()
 {
-	uint64_t time = screen->FrameTime;
-	if (Pixels == NULL || time != GenTime)
-		MakeTexture(time);
-
-	if (PixelsBgra.empty() || time != GenTimeBgra)
+	auto Pixels = GetPixels(DefaultRenderStyle());
+	if (PixelsBgra.empty() || GenTime[0] != GenTimeBgra)
 	{
 		CreatePixelsBgraWithMipmaps();
 		for (int i = 0; i < Width * Height; i++)
@@ -112,58 +84,21 @@ const uint32_t *FWarpTexture::GetPixelsBgra()
 				PixelsBgra[i] = 0;
 		}
 		GenerateBgraMipmapsFast();
-		GenTimeBgra = time;
+		GenTimeBgra = GenTime[0];
 	}
 	return PixelsBgra.data();
 }
 
-const uint8_t *FWarpTexture::GetColumn (unsigned int column, const Span **spans_out)
+
+uint8_t *FWarpTexture::MakeTexture(FRenderStyle style)
 {
-	uint64_t time =screen->FrameTime;
-
-	if (Pixels == NULL || time != GenTime)
-	{
-		MakeTexture (time);
-	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		if (WidthMask + 1 == Width)
-		{
-			column &= WidthMask;
-		}
-		else
-		{
-			column %= Width;
-		}
-	}
-	if (spans_out != NULL)
-	{
-		if (Spans == NULL)
-		{
-			Spans = CreateSpans (Pixels);
-		}
-		*spans_out = Spans[column];
-	}
-	return Pixels + column*Height;
-}
-
-
-void FWarpTexture::MakeTexture(uint64_t time)
-{
-	const uint8_t *otherpix = SourcePic->GetPixels();
-
-	if (Pixels == NULL)
-	{
-		Pixels = new uint8_t[Width * Height];
-	}
-	if (Spans != NULL)
-	{
-		FreeSpans(Spans);
-		Spans = NULL;
-	}
-
-	GenTime = time;
+	uint64_t time = screen->FrameTime;
+	const uint8_t *otherpix = SourcePic->GetPixels(style);
+	auto Pixels = new uint8_t[Width * Height];
 	WarpBuffer(Pixels, otherpix, Width, Height, WidthOffsetMultiplier, HeightOffsetMultiplier, time, Speed, bWarped);
+	FreeAllSpans();
+	GenTime[!!(style.Flags & STYLEF_RedIsAlpha)] = time;
+	return Pixels;
 }
 
 // [mxd] Non power of 2 textures need different offset multipliers, otherwise warp animation won't sync across texture

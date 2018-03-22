@@ -81,7 +81,7 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const TriMatrix &wo
 		args.SetStencilTestValue(stencilValue);
 		args.SetWriteStencil(true, stencilValue + 1);
 		args.SetClipPlane(0, clipPlane);
-		args.SetTexture(tex);
+		args.SetTexture(tex, DefaultRenderStyle());
 		args.SetStyle(TriBlendMode::TextureOpaque);
 		args.DrawArray(thread, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 	}
@@ -572,7 +572,7 @@ void Render3DFloorPlane::Render(PolyRenderThread *thread, const TriMatrix &world
 	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
-	args.SetTexture(tex);
+	args.SetTexture(tex, DefaultRenderStyle());
 	args.SetClipPlane(0, clipPlane);
 	args.DrawArray(thread, vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }

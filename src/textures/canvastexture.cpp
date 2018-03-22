@@ -65,12 +65,12 @@ FCanvasTexture::~FCanvasTexture ()
 	Unload ();
 }
 
-const uint8_t *FCanvasTexture::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FCanvasTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
 {
 	bNeedsUpdate = true;
 	if (Canvas == NULL)
 	{
-		MakeTexture ();
+		MakeTexture (style);
 	}
 	if ((unsigned)column >= (unsigned)Width)
 	{
@@ -90,12 +90,12 @@ const uint8_t *FCanvasTexture::GetColumn (unsigned int column, const Span **span
 	return Pixels + column*Height;
 }
 
-const uint8_t *FCanvasTexture::GetPixels ()
+const uint8_t *FCanvasTexture::GetPixels (FRenderStyle style)
 {
 	bNeedsUpdate = true;
 	if (Canvas == NULL)
 	{
-		MakeTexture ();
+		MakeTexture (style);
 	}
 	return Pixels;
 }
@@ -110,7 +110,7 @@ const uint32_t *FCanvasTexture::GetPixelsBgra()
 	return PixelsBgra;
 }
 
-void FCanvasTexture::MakeTexture ()
+void FCanvasTexture::MakeTexture (FRenderStyle)	// This ignores the render style because making it work as alpha texture is impractical.
 {
 	Canvas = new DSimpleCanvas (Width, Height, false);
 	Canvas->Lock ();
@@ -183,7 +183,7 @@ void FCanvasTexture::Unload ()
 	FTexture::Unload();
 }
 
-bool FCanvasTexture::CheckModified ()
+bool FCanvasTexture::CheckModified (FRenderStyle)
 {
 	if (bDidUpdate)
 	{

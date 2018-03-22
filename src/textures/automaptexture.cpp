@@ -38,6 +38,7 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
+#include "v_palette.h"
 #include "textures/textures.h"
 
 //==========================================================================
@@ -46,21 +47,11 @@
 //
 //==========================================================================
 
-class FAutomapTexture : public FTexture
+class FAutomapTexture : public FWorldTexture
 {
 public:
-	~FAutomapTexture ();
-
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
-	void MakeTexture ();
-
-	FAutomapTexture (int lumpnum);
-
-private:
-	uint8_t *Pixels;
-	Span DummySpan[2];
+	FAutomapTexture(int lumpnum);
+	uint8_t *MakeTexture (FRenderStyle style);
 };
 
 
@@ -86,16 +77,11 @@ FTexture *AutomapTexture_TryCreate(FileReader &data, int lumpnum)
 //==========================================================================
 
 FAutomapTexture::FAutomapTexture (int lumpnum)
-: FTexture(NULL, lumpnum), Pixels(NULL)
+: FWorldTexture(NULL, lumpnum)
 {
 	Width = 320;
 	Height = uint16_t(Wads.LumpLength(lumpnum) / 320);
 	CalcBitSize ();
-
-	DummySpan[0].TopOffset = 0;
-	DummySpan[0].Length = Height;
-	DummySpan[1].TopOffset = 0;
-	DummySpan[1].Length = 0;
 }
 
 //==========================================================================
@@ -104,84 +90,22 @@ FAutomapTexture::FAutomapTexture (int lumpnum)
 //
 //==========================================================================
 
-FAutomapTexture::~FAutomapTexture ()
-{
-	Unload ();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FAutomapTexture::Unload ()
-{
-	if (Pixels != NULL)
-	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
-	FTexture::Unload();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FAutomapTexture::MakeTexture ()
+uint8_t *FAutomapTexture::MakeTexture (FRenderStyle style)
 {
 	int x, y;
 	FMemLump data = Wads.ReadLump (SourceLump);
 	const uint8_t *indata = (const uint8_t *)data.GetMem();
 
-	Pixels = new uint8_t[Width * Height];
+	auto Pixels = new uint8_t[Width * Height];
 
 	for (x = 0; x < Width; ++x)
 	{
 		for (y = 0; y < Height; ++y)
 		{
-			Pixels[x*Height+y] = indata[x+320*y];
+			auto p = indata[x + 320 * y];
+			Pixels[x*Height + y] = (style.Flags & STYLEF_RedIsAlpha) ? p : GPalette.Remap[p];
 		}
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FAutomapTexture::GetPixels ()
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
 	}
 	return Pixels;
 }
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-const uint8_t *FAutomapTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	if (Pixels == NULL)
-	{
-		MakeTexture ();
-	}
-	if ((unsigned)column >= (unsigned)Width)
-	{
-		column %= Width;
-	}
-	if (spans_out != NULL)
-	{
-		*spans_out = DummySpan;
-	}
-	return Pixels + column*Height;
-}

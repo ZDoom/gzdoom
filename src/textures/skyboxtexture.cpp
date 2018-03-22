@@ -59,9 +59,9 @@ FSkyBox::~FSkyBox()
 //
 //-----------------------------------------------------------------------------
 
-const uint8_t *FSkyBox::GetColumn (unsigned int column, const Span **spans_out)
+const uint8_t *FSkyBox::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
 {
-	if (faces[0]) return faces[0]->GetColumn(column, spans_out);
+	if (faces[0]) return faces[0]->GetColumn(style, column, spans_out);
 	return NULL;
 }
 
@@ -71,9 +71,9 @@ const uint8_t *FSkyBox::GetColumn (unsigned int column, const Span **spans_out)
 //
 //-----------------------------------------------------------------------------
 
-const uint8_t *FSkyBox::GetPixels ()
+const uint8_t *FSkyBox::GetPixels (FRenderStyle style)
 {
-	if (faces[0]) return faces[0]->GetPixels();
+	if (faces[0]) return faces[0]->GetPixels(style);
 	return NULL;
 }
 

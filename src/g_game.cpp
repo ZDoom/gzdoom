@@ -1930,7 +1930,7 @@ void G_DoLoadGame ()
 	hidecon = gameaction == ga_loadgamehidecon;
 	gameaction = ga_nothing;
 
-	std::unique_ptr<FResourceFile> resfile(FResourceFile::OpenResourceFile(savename.GetChars(), nullptr, true, true));
+	std::unique_ptr<FResourceFile> resfile(FResourceFile::OpenResourceFile(savename.GetChars(), true, true));
 	if (resfile == nullptr)
 	{
 		Printf ("Could not read savegame '%s'\n", savename.GetChars());
@@ -2372,7 +2372,7 @@ void G_DoSaveGame (bool okForQuicksave, FString filename, const char *descriptio
 	savegame_content[2].Clean();
 
 	// Check whether the file is ok by trying to open it.
-	FResourceFile *test = FResourceFile::OpenResourceFile(filename, nullptr, true);
+	FResourceFile *test = FResourceFile::OpenResourceFile(filename, true);
 	if (test != nullptr)
 	{
 		delete test;
@@ -2802,7 +2802,7 @@ void G_DoPlayDemo (void)
 		FixPathSeperator (defdemoname);
 		DefaultExtension (defdemoname, ".lmp");
 		FileReader fr;
-		if (!fr.Open(defdemoname))
+		if (!fr.OpenFile(defdemoname))
 		{
 			I_Error("Unable to open demo '%s'", defdemoname.GetChars());
 		}

@@ -147,6 +147,7 @@ public:
 	HRESULT GetHR ();
 	bool Is8BitMode() { return false; }
     virtual int GetTrueHeight() { return TrueHeight; }
+	virtual bool LegacyHardware() const { return SM14; }
 
 private:
 	friend class D3DTex;

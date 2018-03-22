@@ -84,8 +84,8 @@ void OPLmusicBlock::Restart()
 	LastOffset = 0;
 }
 
-OPLmusicFile::OPLmusicFile (FileReader *reader)
-	: ScoreLen (reader->GetLength())
+OPLmusicFile::OPLmusicFile (FileReader &reader)
+	: ScoreLen ((int)reader.GetLength())
 {
 	if (io == NULL)
 	{
@@ -94,7 +94,7 @@ OPLmusicFile::OPLmusicFile (FileReader *reader)
 
 	scoredata = new uint8_t[ScoreLen];
 
-    if (reader->Read(scoredata, ScoreLen) != ScoreLen)
+    if (reader.Read(scoredata, ScoreLen) != ScoreLen)
     {
 fail:	delete[] scoredata;
         scoredata = NULL;

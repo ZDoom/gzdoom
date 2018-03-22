@@ -174,7 +174,7 @@ void FSavegameManager::ReadSaveStrings()
 				// I_FindName only returns the file's name and not its full path
 				FString filepath = G_BuildSaveName(I_FindName(&c_file), -1);
 
-				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, nullptr, true, true);
+				FResourceFile *savegame = FResourceFile::OpenResourceFile(filepath, true, true);
 				if (savegame != nullptr)
 				{
 					bool oldVer = false;
@@ -237,7 +237,7 @@ void FSavegameManager::ReadSaveStrings()
 				else // check for old formats.
 				{
 					FileReader file;
-					if (file.Open(filepath))
+					if (file.OpenFile(filepath))
 					{
 						PNGHandle *png;
 						char sig[16];
@@ -255,7 +255,7 @@ void FSavegameManager::ReadSaveStrings()
 
 						title[OLDSAVESTRINGSIZE] = 0;
 
-						if (nullptr != (png = M_VerifyPNG(&file, false)))
+						if (nullptr != (png = M_VerifyPNG(file)))
 						{
 							char *ver = M_GetPNGText(png, "ZDoom Save Version");
 							if (ver != nullptr)
@@ -272,7 +272,7 @@ void FSavegameManager::ReadSaveStrings()
 						}
 						else
 						{
-							file.Seek(0, SEEK_SET);
+							file.Seek(0, FileReader::SeekSet);
 							if (file.Read(sig, 16) == 16)
 							{
 
@@ -469,7 +469,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 		(node = SaveGames[index]) &&
 		!node->Filename.IsEmpty() &&
 		!node->bOldVersion &&
-		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), nullptr, true)) != nullptr)
+		(resf = FResourceFile::OpenResourceFile(node->Filename.GetChars(), true)) != nullptr)
 	{
 		FResourceLump *info = resf->FindLump("info.json");
 		if (info == nullptr)
@@ -496,29 +496,26 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			FResourceLump *pic = resf->FindLump("savepic.png");
 			if (pic != nullptr)
 			{
-				FileReader *reader = pic->NewReader();
-				if (reader != nullptr)
+				FileReader picreader;
+
+				picreader.OpenMemoryArray([=](TArray<uint8_t> &array)
 				{
-					// copy to a memory buffer which gets accessed through a memory reader and PNGHandle.
-					// We cannot use the actual lump as backing for the texture because that requires keeping the
-					// savegame file open.
-					SavePicData.Resize(pic->LumpSize);
-					reader->Read(&SavePicData[0], pic->LumpSize);
-					reader = new MemoryReader(&SavePicData[0], SavePicData.Size());
-					PNGHandle *png = M_VerifyPNG(reader);
-					if (png != nullptr)
+					auto cache = pic->CacheLump();
+					array.Resize(pic->LumpSize);
+					memcpy(&array[0], cache, pic->LumpSize);
+					pic->ReleaseCache();
+					return true;
+				});
+				PNGHandle *png = M_VerifyPNG(picreader);
+				if (png != nullptr)
+				{
+					SavePic = PNGTexture_CreateFromFile(png, node->Filename);
+					delete png;
+					if (SavePic->GetWidth() == 1 && SavePic->GetHeight() == 1)
 					{
-						SavePic = PNGTexture_CreateFromFile(png, node->Filename);
-						currentSavePic = reader;	// must be kept so that the texture can read from it.
-						delete png;
-						if (SavePic->GetWidth() == 1 && SavePic->GetHeight() == 1)
-						{
-							delete SavePic;
-							SavePic = nullptr;
-							delete currentSavePic;
-							currentSavePic = nullptr;
-							SavePicData.Clear();
-						}
+						delete SavePic;
+						SavePic = nullptr;
+						SavePicData.Clear();
 					}
 				}
 			}
@@ -551,14 +548,9 @@ void FSavegameManager::UnloadSaveData()
 	{
 		V_FreeBrokenLines(SaveComment);
 	}
-	if (currentSavePic != nullptr)
-	{
-		delete currentSavePic;
-	}
 
 	SavePic = nullptr;
 	SaveComment = nullptr;
-	currentSavePic = nullptr;
 	SavePicData.Clear();
 }
 

@@ -28,9 +28,9 @@
 #ifndef TIMIDITY_H_INCLUDED
 #define TIMIDITY_H_INCLUDED 1
 
-#include "c_cvars.h"
 #include "controls.h"
 #include "mblock.h"
+#include <stdint.h>
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)	// double->float truncation occurs so often in here that it's pointless to fix it all.

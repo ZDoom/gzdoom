@@ -36,16 +36,15 @@ vec2 lightAttenuation(int i, vec3 normal, vec3 viewdir, float lightcolorA)
 
 vec3 ProcessMaterial(vec3 material, vec3 color)
 {
+	vec4 dynlight = uDynLightColor;
+	vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
+
+	vec3 normal = ApplyNormalMap();
+	vec3 viewdir = normalize(uCameraPos.xyz - pixelpos.xyz);
+
 	if (uLightIndex >= 0)
 	{
-		vec4 dynlight = uDynLightColor;
-		vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
-
-		vec3 normal = ApplyNormalMap();
-		vec3 viewdir = normalize(uCameraPos.xyz - pixelpos.xyz);
-
 		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
-
 		if (lightRange.z > lightRange.x)
 		{
 			// modulated lights
@@ -66,17 +65,21 @@ vec3 ProcessMaterial(vec3 material, vec3 color)
 				specular.rgb -= lightcolor.rgb * attenuation.y;
 			}
 		}
+	}
 
-		dynlight.rgb = clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
-		specular.rgb = clamp(desaturate(specular).rgb, 0.0, 1.4);
+	dynlight.rgb = clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+	specular.rgb = clamp(desaturate(specular).rgb, 0.0, 1.4);
 
-		vec4 materialSpec = texture(speculartexture, vTexCoord.st);
-		vec3 frag = material * dynlight.rgb + materialSpec.rgb * specular.rgb;
+	vec4 materialSpec = texture(speculartexture, vTexCoord.st);
+	vec3 frag = material * dynlight.rgb + materialSpec.rgb * specular.rgb;
 
+	if (uLightIndex >= 0)
+	{
+		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
 		if (lightRange.w > lightRange.z)
 		{
 			vec4 addlight = vec4(0.0,0.0,0.0,0.0);
-				
+
 			// additive lights
 			for(int i=lightRange.z; i<lightRange.w; i+=4)
 			{
@@ -87,11 +90,7 @@ vec3 ProcessMaterial(vec3 material, vec3 color)
 
 			frag = clamp(frag + desaturate(addlight).rgb, 0.0, 1.0);
 		}
+	}
 
-		return frag;
-	}
-	else
-	{
-		return material * clamp(color + desaturate(uDynLightColor).rgb, 0.0, 1.4);
-	}
+	return frag;
 }

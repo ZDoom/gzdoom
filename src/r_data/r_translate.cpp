@@ -51,6 +51,7 @@
 #include "r_data/sprites.h"
 #include "r_state.h"
 #include "vm.h"
+#include "v_text.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -84,7 +85,7 @@ static bool IndexOutOfRange(const int color)
 
 	if (outOfRange)
 	{
-		Printf("Palette index %i is out of range [0..255]\n", color);
+		Printf(TEXTCOLOR_ORANGE "Palette index %i is out of range [0..255]\n", color);
 	}
 
 	return outOfRange;
@@ -370,11 +371,11 @@ FNativePalette *FRemapTable::GetNative()
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
+bool FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 {
 	if (IndexOutOfRange(start, end, pal1, pal2))
 	{
-		return;
+		return false;
 	}
 
 	double palcol, palstep;
@@ -391,7 +392,7 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 		Remap[start] = pal1;
 		Palette[start] = GPalette.BaseColors[pal1];
 		Palette[start].a = start == 0 ? 0 : 255;
-		return;
+		return true;
 	}
 	palcol = pal1;
 	palstep = (pal2 - palcol) / (end - start);
@@ -402,6 +403,7 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 		Palette[j] = GPalette.BaseColors[k];
 		Palette[j].a = j == 0 ? 0 : 255;
 	}
+	return true;
 }
 
 //----------------------------------------------------------------------------
@@ -410,11 +412,11 @@ void FRemapTable::AddIndexRange(int start, int end, int pal1, int pal2)
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, int _r2, int _g2, int _b2)
+bool FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, int _r2, int _g2, int _b2)
 {
 	if (IndexOutOfRange(start, end))
 	{
-		return;
+		return false;
 	}
 
 	double r1 = _r1;
@@ -466,6 +468,7 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 			b += bs;
 		}
 	}
+	return true;
 }
 
 //----------------------------------------------------------------------------
@@ -474,11 +477,11 @@ void FRemapTable::AddColorRange(int start, int end, int _r1,int _g1, int _b1, in
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2)
+bool FRemapTable::AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2)
 {
 	if (IndexOutOfRange(start, end))
 	{
-		return;
+		return false;
 	}
 
 	r1 = clamp(r1, 0.0, 2.0);
@@ -519,6 +522,7 @@ void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, doub
 		Palette[cc] = pe;
 		Palette[cc].a = cc == 0 ? 0:255;
 	}
+	return true;
 }
 
 //----------------------------------------------------------------------------
@@ -527,11 +531,11 @@ void FRemapTable::AddDesaturation(int start, int end, double r1, double g1, doub
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
+bool FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
 {
 	if (IndexOutOfRange(start, end))
 	{
-		return;
+		return false;
 	}
 
 	for (int i = start; i < end; ++i)
@@ -549,6 +553,7 @@ void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
 		Palette[j] = PalEntry(j == 0 ? 0 : 255, int(br), int(bg), int(bb));
 		Remap[j] = ColorMatcher.Pick(Palette[j]);
 	}
+	return true;
 }
 
 //----------------------------------------------------------------------------
@@ -557,11 +562,11 @@ void FRemapTable::AddColourisation(int start, int end, int r, int g, int b)
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddTint(int start, int end, int r, int g, int b, int amount)
+bool FRemapTable::AddTint(int start, int end, int r, int g, int b, int amount)
 {
 	if (IndexOutOfRange(start, end))
 	{
-		return;
+		return false;
 	}
 
 	for (int i = start; i < end; ++i)
@@ -579,6 +584,7 @@ void FRemapTable::AddTint(int start, int end, int r, int g, int b, int amount)
 		Palette[j] = PalEntry(j == 0 ? 0 : 255, int(br), int(bg), int(bb));
 		Remap[j] = ColorMatcher.Pick(Palette[j]);
 	}
+	return true;
 }
 
 //----------------------------------------------------------------------------
@@ -587,7 +593,7 @@ void FRemapTable::AddTint(int start, int end, int r, int g, int b, int amount)
 //
 //----------------------------------------------------------------------------
 
-void FRemapTable::AddToTranslation(const char *range)
+bool FRemapTable::AddToTranslation(const char *range)
 {
 	int start,end;
 	bool desaturated = false;
@@ -607,7 +613,7 @@ void FRemapTable::AddToTranslation(const char *range)
 		if (start < 0 || start > 255 || end < 0 || end > 255)
 		{
 			sc.ScriptError("Palette index out of range");
-			return;
+			return false;
 		}
 
 		sc.MustGetAnyToken();
@@ -643,7 +649,7 @@ void FRemapTable::AddToTranslation(const char *range)
 			b2 = sc.Number;
 			sc.MustGetToken(']');
 
-			AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
+			return AddColorRange(start, end, r1, g1, b1, r2, g2, b2);
 		}
 		else if (sc.TokenType == '%')
 		{
@@ -683,7 +689,7 @@ void FRemapTable::AddToTranslation(const char *range)
 			b2 = sc.Float;
 			sc.MustGetToken(']');
 
-			AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);
+			return AddDesaturation(start, end, r1, g1, b1, r2, g2, b2);
 		}
 		else if (sc.TokenType == '#')
 		{
@@ -700,7 +706,7 @@ void FRemapTable::AddToTranslation(const char *range)
 			b = sc.Number;
 			sc.MustGetToken(']');
 
-			AddColourisation(start, end, r, g, b);
+			return AddColourisation(start, end, r, g, b);
 		}
 		else if (sc.TokenType == '@')
 		{
@@ -720,7 +726,7 @@ void FRemapTable::AddToTranslation(const char *range)
 			b = sc.Number;
 			sc.MustGetToken(']');
 
-			AddTint(start, end, r, g, b, a);
+			return AddTint(start, end, r, g, b, a);
 		}
 		else
 		{
@@ -731,12 +737,13 @@ void FRemapTable::AddToTranslation(const char *range)
 			sc.MustGetToken(':');
 			sc.MustGetToken(TK_IntConst);
 			pal2 = sc.Number;
-			AddIndexRange(start, end, pal1, pal2);
+			return AddIndexRange(start, end, pal1, pal2);
 		}
 	}
 	catch (CRecoverableError &err)
 	{
 		Printf("Error in translation '%s':\n%s\n", range, err.GetMessage());
+		return false;
 	}
 }
 

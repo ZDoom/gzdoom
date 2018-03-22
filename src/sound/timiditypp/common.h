@@ -35,12 +35,12 @@ namespace TimidityPlus
 
 struct timidity_file
 {
-    FileReader *url;
+    FileReader url;
 	std::string filename;
 };
 
 extern struct timidity_file *open_file(const char *name, FSoundFontReader *);
-extern void close_file(struct timidity_file *tf);
+extern void tf_close(struct timidity_file *tf);
 extern void skip(struct timidity_file *tf, size_t len);
 extern char *tf_gets(char *buff, int n, struct timidity_file *tf);
 int tf_getc(struct timidity_file *tf);

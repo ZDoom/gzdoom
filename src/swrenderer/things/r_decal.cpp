@@ -312,14 +312,14 @@ namespace swrenderer
 
 			if (visible)
 			{
-				thread->PrepareTexture(WallSpriteTile);
+				thread->PrepareTexture(WallSpriteTile, decal->RenderStyle);
 				while (x < x2)
 				{
 					if (calclighting)
 					{ // calculate lighting
 						drawerargs.SetLight(usecolormap, light, wallshade);
 					}
-					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, decal->RenderStyle);
 					light += lightstep;
 					x++;
 				}
@@ -333,7 +333,7 @@ namespace swrenderer
 		} while (needrepeat--);
 	}
 
-	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderDecal::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
 	{
 		auto viewport = thread->Viewport.get();
 		
@@ -345,6 +345,6 @@ namespace swrenderer
 		else
 			sprtopscreen = viewport->CenterY - texturemid * spryscale;
 
-		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
 	}
 }

@@ -55,23 +55,24 @@ function( assort_pk3_source_folder FOLDER_NAME PK3_DIR )
 	endforeach()
 endfunction()
 
+option( PK3_QUIET_ZIPDIR "Do not list files processed by zipdir" NO )
+if( PK3_QUIET_ZIPDIR )
+	set( PK3_ZIPDIR_OPTIONS "-q" )
+endif()
+
 # Simplify pk3 building, add_pk3(filename srcdirectory)
 function( add_pk3 PK3_NAME PK3_DIR )
-	# message(STATUS "Creating build rule for PK3 ${PK3_NAME} ${PK3_DIR}")
 	# Generate target name. Just use "pk3" for main pk3 target.
 	string( REPLACE "." "_" PK3_TARGET ${PK3_NAME} )
-	if( ${PK3_TARGET} STREQUAL "zdoom_pk3" )
-		set( PK3_TARGET "pk3" )
-	endif()
 
 	if( NOT ZDOOM_OUTPUT_OLDSTYLE )
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
-			COMMAND zipdir -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
+			COMMAND zipdir -udf ${PK3_ZIPDIR_OPTIONS} ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
 			COMMAND ${CMAKE_COMMAND} -E copy_if_different ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} $<TARGET_FILE_DIR:zdoom>/${PK3_NAME}
 			DEPENDS zipdir )
 	else()
 		add_custom_command( OUTPUT ${ZDOOM_OUTPUT_DIR}/${PK3_NAME}
-			COMMAND zipdir -udf ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
+			COMMAND zipdir -udf ${PK3_ZIPDIR_OPTIONS} ${ZDOOM_OUTPUT_DIR}/${PK3_NAME} ${PK3_DIR}
 			DEPENDS zipdir )
 	endif()
 	# Create a list of source files for this PK3, for use in the IDE

@@ -64,7 +64,7 @@ namespace swrenderer
 
 	protected:
 		bool IsVoxel() const override { return true; }
-		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ) override;
+		void Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor) override;
 
 	private:
 		struct posang

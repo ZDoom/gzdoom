@@ -49,11 +49,11 @@ EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor);
 
 namespace swrenderer
 {
-	void VisibleSprite::Render(RenderThread *thread)
+	void VisibleSprite::Render(RenderThread *thread, Fake3DTranslucent clip3DFloor)
 	{
 		if (IsModel())
 		{
-			Render(thread, nullptr, nullptr, 0, 0);
+			Render(thread, nullptr, nullptr, 0, 0, clip3DFloor);
 			return;
 		}
 
@@ -62,10 +62,8 @@ namespace swrenderer
 
 		VisibleSprite *spr = this;
 
-		int i;
 		int x1, x2;
 		short topclip, botclip;
-		short *clip1, *clip2;
 		FSWColormap *colormap = spr->Light.BaseColormap;
 		int colormapnum = spr->Light.ColormapNum;
 		F3DFloor *rover;
@@ -76,10 +74,10 @@ namespace swrenderer
 		if (spr->IsParticle())
 		{
 			// kg3D - reject invisible parts
-			if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && spr->gpos.Z <= clip3d->sclipBottom) return;
-			if ((clip3d->fake3D & FAKE3D_CLIPTOP) && spr->gpos.Z >= clip3d->sclipTop) return;
+			if (clip3DFloor.clipBottom && spr->gpos.Z <= clip3DFloor.sclipBottom) return;
+			if (clip3DFloor.clipTop && spr->gpos.Z >= clip3DFloor.sclipTop) return;
 
-			spr->Render(thread, nullptr, nullptr, 0, 0);
+			spr->Render(thread, nullptr, nullptr, 0, 0, clip3DFloor);
 			return;
 		}
 
@@ -95,27 +93,29 @@ namespace swrenderer
 			return;
 
 		// kg3D - reject invisible parts
-		if ((clip3d->fake3D & FAKE3D_CLIPBOTTOM) && spr->gzt <= clip3d->sclipBottom) return;
-		if ((clip3d->fake3D & FAKE3D_CLIPTOP) && spr->gzb >= clip3d->sclipTop) return;
+		if (clip3DFloor.clipBottom && spr->gzt <= clip3DFloor.sclipBottom) return;
+		if (clip3DFloor.clipTop && spr->gzb >= clip3DFloor.sclipTop) return;
 
 		// kg3D - correct colors now
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (!cameraLight->FixedColormap() && cameraLight->FixedLightLevel() < 0 && spr->sector->e && spr->sector->e->XFloor.lightlist.Size())
 		{
-			if (!(clip3d->fake3D & FAKE3D_CLIPTOP))
-			{
-				clip3d->sclipTop = spr->sector->ceilingplane.ZatPoint(thread->Viewport->viewpoint.Pos);
-			}
+			double clipTop;
+			if (clip3DFloor.clipTop)
+				clipTop = clip3DFloor.clipTop;
+			else
+				clipTop = spr->sector->ceilingplane.ZatPoint(thread->Viewport->viewpoint.Pos);
+
 			sector_t *sec = nullptr;
 			FDynamicColormap *mybasecolormap = nullptr;
-			for (i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
+			for (int i = spr->sector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
-				if (clip3d->sclipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0())
+				if (clipTop <= spr->sector->e->XFloor.lightlist[i].plane.Zat0())
 				{
 					rover = spr->sector->e->XFloor.lightlist[i].caster;
 					if (rover)
 					{
-						if (rover->flags & FF_DOUBLESHADOW && clip3d->sclipTop <= rover->bottom.plane->Zat0())
+						if (rover->flags & FF_DOUBLESHADOW && clipTop <= rover->bottom.plane->Zat0())
 						{
 							break;
 						}
@@ -231,15 +231,15 @@ namespace swrenderer
 			}
 		}
 
-		if (clip3d->fake3D & FAKE3D_CLIPBOTTOM)
+		if (clip3DFloor.clipBottom)
 		{
 			if (!spr->IsVoxel())
 			{
-				double hz = clip3d->sclipBottom;
+				double hz = clip3DFloor.sclipBottom;
 				if (spr->fakefloor)
 				{
 					double floorz = spr->fakefloor->top.plane->Zat0();
-					if (viewport->viewpoint.Pos.Z > floorz && floorz == clip3d->sclipBottom)
+					if (viewport->viewpoint.Pos.Z > floorz && floorz == clip3DFloor.sclipBottom)
 					{
 						hz = spr->fakefloor->bottom.plane->Zat0();
 					}
@@ -250,17 +250,17 @@ namespace swrenderer
 					botclip = MAX<short>(0, h);
 				}
 			}
-			hzb = MAX(hzb, clip3d->sclipBottom);
+			hzb = MAX(hzb, clip3DFloor.sclipBottom);
 		}
-		if (clip3d->fake3D & FAKE3D_CLIPTOP)
+		if (clip3DFloor.clipTop)
 		{
 			if (!spr->IsVoxel())
 			{
-				double hz = clip3d->sclipTop;
+				double hz = clip3DFloor.sclipTop;
 				if (spr->fakeceiling != nullptr)
 				{
 					double ceilingZ = spr->fakeceiling->bottom.plane->Zat0();
-					if (viewport->viewpoint.Pos.Z < ceilingZ && ceilingZ == clip3d->sclipTop)
+					if (viewport->viewpoint.Pos.Z < ceilingZ && ceilingZ == clip3DFloor.sclipTop)
 					{
 						hz = spr->fakeceiling->top.plane->Zat0();
 					}
@@ -271,7 +271,7 @@ namespace swrenderer
 					topclip = short(MIN(h, viewheight));
 				}
 			}
-			hzt = MIN(hzt, clip3d->sclipTop);
+			hzt = MIN(hzt, clip3DFloor.sclipTop);
 		}
 
 		if (topclip >= botclip)
@@ -281,14 +281,16 @@ namespace swrenderer
 			return;
 		}
 
-		i = x2 - x1;
-		clip1 = clipbot + x1;
-		clip2 = cliptop + x1;
-		do
 		{
-			*clip1++ = botclip;
-			*clip2++ = topclip;
-		} while (--i);
+			int i = x2 - x1;
+			short *clip1 = clipbot + x1;
+			short *clip2 = cliptop + x1;
+			do
+			{
+				*clip1++ = botclip;
+				*clip2++ = topclip;
+			} while (--i);
+		}
 
 		// Scan drawsegs from end to start for obscuring segs.
 		// The first drawseg that is closer than the sprite is the clip seg.
@@ -320,7 +322,7 @@ namespace swrenderer
 					int r2 = MIN<int>(ds->x2, x2);
 
 					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, r1, r2);
+					renderer.Render(ds, r1, r2, clip3DFloor);
 				}
 			}
 		}
@@ -338,9 +340,9 @@ namespace swrenderer
 				int r2 = MIN<int>(group.x2, x2);
 
 				// Clip bottom
-				clip1 = clipbot + r1;
-				clip2 = group.sprbottomclip + r1 - group.x1;
-				i = r2 - r1;
+				short *clip1 = clipbot + r1;
+				const short *clip2 = group.sprbottomclip + r1 - group.x1;
+				int i = r2 - r1;
 				do
 				{
 					if (*clip1 > *clip2)
@@ -398,9 +400,9 @@ namespace swrenderer
 
 					if (ds->silhouette & SIL_BOTTOM) //bottom sil
 					{
-						clip1 = clipbot + r1;
-						clip2 = ds->sprbottomclip + r1 - ds->x1;
-						i = r2 - r1;
+						short *clip1 = clipbot + r1;
+						const short *clip2 = ds->sprbottomclip + r1 - ds->x1;
+						int i = r2 - r1;
 						do
 						{
 							if (*clip1 > *clip2)
@@ -412,9 +414,9 @@ namespace swrenderer
 
 					if (ds->silhouette & SIL_TOP)   // top sil
 					{
-						clip1 = cliptop + r1;
-						clip2 = ds->sprtopclip + r1 - ds->x1;
-						i = r2 - r1;
+						short *clip1 = cliptop + r1;
+						const short *clip2 = ds->sprtopclip + r1 - ds->x1;
+						int i = r2 - r1;
 						do
 						{
 							if (*clip1 < *clip2)
@@ -431,13 +433,14 @@ namespace swrenderer
 
 		if (!spr->IsVoxel())
 		{
-			spr->Render(thread, clipbot, cliptop, 0, 0);
+			spr->Render(thread, clipbot, cliptop, 0, 0, clip3DFloor);
 		}
 		else
 		{
 			// If it is completely clipped away, don't bother drawing it.
 			if (cliptop[x2] >= clipbot[x2])
 			{
+				int i;
 				for (i = x1; i < x2; ++i)
 				{
 					if (cliptop[i] < clipbot[i])
@@ -464,7 +467,7 @@ namespace swrenderer
 			}
 			int minvoxely = spr->gzt <= hzt ? 0 : xs_RoundToInt((spr->gzt - hzt) / spr->yscale);
 			int maxvoxely = spr->gzb > hzb ? INT_MAX : xs_RoundToInt((spr->gzt - hzb) / spr->yscale);
-			spr->Render(thread, cliptop, clipbot, minvoxely, maxvoxely);
+			spr->Render(thread, cliptop, clipbot, minvoxely, maxvoxely, clip3DFloor);
 		}
 		spr->Light.BaseColormap = colormap;
 		spr->Light.ColormapNum = colormapnum;

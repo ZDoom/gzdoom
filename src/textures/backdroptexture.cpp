@@ -56,7 +56,7 @@
 //
 //=============================================================================
 
-struct FBackdropTexture : public FTexture
+class FBackdropTexture : public FWorldTexture
 {
 	enum
 	{
@@ -77,15 +77,12 @@ struct FBackdropTexture : public FTexture
 public:
 	FBackdropTexture();
 
-	const uint8_t *GetColumn(unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels();
-	void Unload();
-	bool CheckModified();
+	bool CheckModified(FRenderStyle style) override;
+	uint8_t *MakeTexture(FRenderStyle style) override;
 
 protected:
 	uint32_t costab[COS_SIZE];
-	uint8_t *Pixels;
-	static const Span DummySpan[2];
+	uint8_t Pixels[160*144];
 	int LastRenderTic;
 
 	uint32_t time1, time2, time3, time4;
@@ -170,8 +167,6 @@ static uint8_t pattern2[1024] =
 	  7, 7, 0, 5, 1, 6, 7, 9,12, 9,12,21,22,25,24,22,23,25,24,18,24,22,17,13,10, 9,10, 9, 6,11, 6, 5,
 };
 
-const FTexture::Span FBackdropTexture::DummySpan[2] = { { 0, 160 }, { 0, 0 } };
-
 //=============================================================================
 //
 //
@@ -180,7 +175,7 @@ const FTexture::Span FBackdropTexture::DummySpan[2] = { { 0, 160 }, { 0, 0 } };
 
 FBackdropTexture::FBackdropTexture()
 {
-	Pixels = nullptr;
+	PixelsAreStatic = 3;
 	Width = 144;
 	Height = 160;
 	WidthBits = 8;
@@ -209,44 +204,19 @@ FBackdropTexture::FBackdropTexture()
 //
 //=============================================================================
 
-bool FBackdropTexture::CheckModified()
+bool FBackdropTexture::CheckModified(FRenderStyle)
 {
 	return LastRenderTic != gametic;
 }
 
-void FBackdropTexture::Unload()
-{
-	if (Pixels != nullptr) delete[] Pixels;
-	Pixels = nullptr;
-}
-
 //=============================================================================
 //
-//
+// There's no point making this work as a regular texture as it is made to
+// work with special translations. As an alpha texture it should be fine.
 //
 //=============================================================================
 
-const uint8_t *FBackdropTexture::GetColumn(unsigned int column, const Span **spans_out)
-{
-	if (LastRenderTic != gametic)
-	{
-		Render();
-	}
-	column = clamp(column, 0u, 143u);
-	if (spans_out != nullptr)
-	{
-		*spans_out = DummySpan;
-	}
-	return Pixels + column*160;
-}
-
-//=============================================================================
-//
-//
-//
-//=============================================================================
-
-const uint8_t *FBackdropTexture::GetPixels()
+uint8_t *FBackdropTexture::MakeTexture(FRenderStyle style)
 {
 	if (LastRenderTic != gametic)
 	{
@@ -266,7 +236,6 @@ void FBackdropTexture::Render()
 	uint8_t *from;
 	int width, height, pitch;
 
-	if (Pixels == nullptr) Pixels = new uint8_t[160 * 144];
 	width = 160;
 	height = 144;
 	pitch = width;

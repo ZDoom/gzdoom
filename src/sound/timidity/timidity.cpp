@@ -82,7 +82,7 @@ static bool InitReader(const char *config_file)
 
 static int read_config_file(const char *name, bool ismain)
 {
-	FileReader *fp;
+	FileReader fp;
 	char tmp[1024], *cp;
 	ToneBank *bank = NULL;
 	int i, j, k, line = 0, words;
@@ -103,12 +103,12 @@ static int read_config_file(const char *name, bool ismain)
 	{
 		fp = gus_sfreader->LookupFile(name).first;
 	}
-	if (fp == nullptr)
+	if (!fp .isOpen())
 	{
 		return -1;
 	}
 
-	while (fp->Gets(tmp, sizeof(tmp)))
+	while (fp.Gets(tmp, sizeof(tmp)))
 	{
 		line++;
 		FCommandLine w(tmp, true);
@@ -207,7 +207,6 @@ static int read_config_file(const char *name, bool ismain)
 			if (words < 2)
 			{
 				Printf("%s: line %d: No soundfont given\n", name, line);
-				delete fp;
 				return -2;
 			}
 			if (words > 2 && !strcmp(w[2], "remove"))
@@ -223,7 +222,6 @@ static int read_config_file(const char *name, bool ismain)
 					if (!(cp = strchr(w[i], '=')))
 					{
 						Printf("%s: line %d: bad soundfont option %s\n", name, line, w[i]);
-						delete fp;
 						return -2;
 					}
 				}
@@ -241,7 +239,6 @@ static int read_config_file(const char *name, bool ismain)
 			if (words < 3)
 			{
 				Printf("%s: line %d: syntax error\n", name, line);
-				delete fp;
 				return -2;
 			}
 
@@ -258,7 +255,6 @@ static int read_config_file(const char *name, bool ismain)
 			else
 			{
 				Printf("%s: line %d: font subcommand must be 'order' or 'exclude'\n", name, line);
-				delete fp;
 				return -2;
 			}
 			if (i < words)
@@ -312,7 +308,6 @@ static int read_config_file(const char *name, bool ismain)
 			if (words < 2)
 			{
 				Printf("%s: line %d: No directory given\n", name, line);
-				delete fp;
 				return -2;
 			}
 			for (i = 1; i < words; i++)
@@ -340,7 +335,6 @@ static int read_config_file(const char *name, bool ismain)
 			if (words != 2)
 			{
 				Printf("%s: line %d: Must specify exactly one patch name\n", name, line);
-				delete fp;
 				return -2;
 			}
 			def_instr_name = w[1];
@@ -350,14 +344,12 @@ static int read_config_file(const char *name, bool ismain)
 			if (words < 2)
 			{
 				Printf("%s: line %d: No drum set number given\n", name, line);
-				delete fp;
 				return -2;
 			}
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
 				Printf("%s: line %d: Drum set must be between 0 and 127\n", name, line);
-				delete fp;
 				return -2;
 			}
 			if (drumset[i] == NULL)
@@ -371,14 +363,12 @@ static int read_config_file(const char *name, bool ismain)
 			if (words < 2)
 			{
 				Printf("%s: line %d: No bank number given\n", name, line);
-				delete fp;
 				return -2;
 			}
 			i = atoi(w[1]);
 			if (i < 0 || i > 127)
 			{
 				Printf("%s: line %d: Tone bank must be between 0 and 127\n", name, line);
-				delete fp;
 				return -2;
 			}
 			if (tonebank[i] == NULL)
@@ -392,20 +382,17 @@ static int read_config_file(const char *name, bool ismain)
 			if ((words < 2) || (*w[0] < '0' || *w[0] > '9'))
 			{
 				Printf("%s: line %d: syntax error\n", name, line);
-				delete fp;
 				return -2;
 			}
 			i = atoi(w[0]);
 			if (i < 0 || i > 127)
 			{
 				Printf("%s: line %d: Program must be between 0 and 127\n", name, line);
-				delete fp;
 				return -2;
 			}
 			if (bank == NULL)
 			{
 				Printf("%s: line %d: Must specify tone bank or drum set before assignment\n", name, line);
-				delete fp;
 				return -2;
 			}
 			bank->tone[i].note = bank->tone[i].pan =
@@ -440,7 +427,6 @@ static int read_config_file(const char *name, bool ismain)
 				if (!(cp=strchr(w[j], '=')))
 				{
 					Printf("%s: line %d: bad patch option %s\n", name, line, w[j]);
-					delete fp;
 					return -2;
 				}
 				*cp++ = 0;
@@ -454,7 +440,6 @@ static int read_config_file(const char *name, bool ismain)
 					if ((k < 0 || k > 127) || (*cp < '0' || *cp > '9'))
 					{
 						Printf("%s: line %d: note must be between 0 and 127\n", name, line);
-						delete fp;
 						return -2;
 					}
 					bank->tone[i].note = k;
@@ -474,7 +459,6 @@ static int read_config_file(const char *name, bool ismain)
 					{
 						Printf("%s: line %d: panning must be left, right, "
 							"center, or between -100 and 100\n", name, line);
-						delete fp;
 						return -2;
 					}
 					bank->tone[i].pan = k;
@@ -488,7 +472,6 @@ static int read_config_file(const char *name, bool ismain)
 					else
 					{
 						Printf("%s: line %d: keep must be env or loop\n", name, line);
-						delete fp;
 						return -2;
 					}
 				}
@@ -503,28 +486,17 @@ static int read_config_file(const char *name, bool ismain)
 					else
 					{
 						Printf("%s: line %d: strip must be env, loop, or tail\n", name, line);
-						delete fp;
 						return -2;
 					}
 				}
 				else
 				{
 					Printf("%s: line %d: bad patch option %s\n", name, line, w[j]);
-					delete fp;
 					return -2;
 				}
 			}
 		}
 	}
-	/*
-	if (ferror(fp))
-	{
-		Printf("Can't read %s: %s\n", name, strerror(errno));
-		close_file(fp);
-		return -2;
-	}
-	*/
-	delete fp;
 	return 0;
 }
 
@@ -590,7 +562,7 @@ int LoadDMXGUS()
 	if (lump == -1) lump = Wads.CheckNumForName("DMXGUSC");
 	if (lump == -1) return LoadConfig(midi_config);
 
-	FWadLump data = Wads.OpenLumpNum(lump);
+	auto data = Wads.OpenLumpReader(lump);
 	if (data.GetLength() == 0) return LoadConfig(midi_config);
 
 	// Check if we got some GUS data before using it.
@@ -613,7 +585,7 @@ int LoadDMXGUS()
 	gus_sfreader.reset(psreader);
 
 	char readbuffer[1024];
-	long size = data.GetLength();
+	auto size = data.GetLength();
 	long read = 0;
 	uint8_t remap[256];
 
@@ -624,7 +596,7 @@ int LoadDMXGUS()
 	int status = -1;
 	int gusbank = (gus_memsize >= 1 && gus_memsize <= 4) ? gus_memsize : -1;
 
-	data.Seek(0, SEEK_SET);
+	data.Seek(0, FileReader::SeekSet);
 
 	while (data.Gets(readbuffer, 1024) && read < size)
 	{

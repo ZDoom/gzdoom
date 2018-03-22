@@ -67,8 +67,8 @@ class PolyDrawArgs
 public:
 	void SetClipPlane(int index, const PolyClipPlane &plane) { mClipPlane[index] = plane; }
 	void SetTexture(const uint8_t *texels, int width, int height);
-	void SetTexture(FTexture *texture);
-	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false);
+	void SetTexture(FTexture *texture, FRenderStyle style);
+	void SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel, double globVis, bool fixed);
 	void SetDepthTest(bool enable) { mDepthTest = enable; }
 	void SetStencilTestValue(uint8_t stencilTestValue) { mStencilTestValue = stencilTestValue; }
@@ -186,11 +186,11 @@ class RectDrawArgs
 {
 public:
 	void SetTexture(const uint8_t *texels, int width, int height);
-	void SetTexture(FTexture *texture);
-	void SetTexture(FTexture *texture, uint32_t translationID, bool forcePal = false);
+	void SetTexture(FTexture *texture, FRenderStyle style);
+	void SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel);
 	void SetStyle(TriBlendMode blendmode, double srcalpha = 1.0, double destalpha = 1.0) { mBlendMode = blendmode; mSrcAlpha = (uint32_t)(srcalpha * 256.0 + 0.5); mDestAlpha = (uint32_t)(destalpha * 256.0 + 0.5); }
-	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
+	void SetStyle(FRenderStyle renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void Draw(PolyRenderThread *thread, double x0, double x1, double y0, double y1, double u0, double u1, double v0, double v1);
 

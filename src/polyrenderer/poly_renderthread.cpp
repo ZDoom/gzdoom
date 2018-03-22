@@ -74,7 +74,7 @@ void PolyRenderThread::FlushDrawQueue()
 	}
 }
 
-void PolyRenderThread::PrepareTexture(FTexture *texture)
+void PolyRenderThread::PrepareTexture(FTexture *texture, FRenderStyle style)
 {
 	if (texture == nullptr)
 		return;
@@ -91,9 +91,9 @@ void PolyRenderThread::PrepareTexture(FTexture *texture)
 
 	std::unique_lock<std::mutex> lock(loadmutex);
 
-	texture->GetPixels();
+	texture->GetPixels(style);
 	const FTexture::Span *spans;
-	texture->GetColumn(0, &spans);
+	texture->GetColumn(style, 0, &spans);
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
 	{
 		texture->GetPixelsBgra();

@@ -62,14 +62,6 @@ struct FZipLocalFileHeader
 #define ZIP_CENTRALFILE	MAKE_ID('P','K',1,2)
 #define ZIP_ENDOFDIR	MAKE_ID('P','K',5,6)
 
-#define METHOD_STORED	0
-#define METHOD_SHRINK	1
-#define METHOD_IMPLODE	6
-#define METHOD_DEFLATE	8
-#define METHOD_BZIP2	12
-#define METHOD_LZMA		14
-#define METHOD_PPMD		98
-
 // File header flags.
 #define ZF_ENCRYPTED			0x1
 

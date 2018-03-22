@@ -193,13 +193,14 @@ typedef void (*CopyFunc)(uint8_t *pout, const uint8_t *pin, int count, int step,
 		iCopyColors<cRGBA, cBGRA, op>, \
 		iCopyColors<cIA, cBGRA, op>, \
 		iCopyColors<cCMYK, cBGRA, op>, \
+		iCopyColors<cYCbCr, cBGRA, op>, \
 		iCopyColors<cBGR, cBGRA, op>, \
 		iCopyColors<cBGRA, cBGRA, op>, \
 		iCopyColors<cI16, cBGRA, op>, \
 		iCopyColors<cRGB555, cBGRA, op>, \
 		iCopyColors<cPalEntry, cBGRA, op> \
 	}
-static const CopyFunc copyfuncs[][10]={
+static const CopyFunc copyfuncs[][11]={
 	COPY_FUNCS(bCopy),
 	COPY_FUNCS(bBlend),
 	COPY_FUNCS(bAdd),

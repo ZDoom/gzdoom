@@ -116,9 +116,9 @@ static int ConversationMenuY;
 static int ConversationPauseTic;
 static int StaticLastReply;
 
-static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type);
-static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpeakerType);
-static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, uint32_t &prevSpeakerType);
+static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool include, int type);
+static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpeakerType);
+static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpeakerType);
 static void ParseReplies (FStrifeDialogueReply **replyptr, Response *responses);
 static bool DrawConversationMenu ();
 static void PickConversationReply (int replyindex);
@@ -190,8 +190,7 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 	P_FreeStrifeConversations ();
 	if (map->Size(ML_CONVERSATION) > 0)
 	{
-		map->Seek(ML_CONVERSATION);
-		LoadScriptFile (map->lumpnum, map->file, map->Size(ML_CONVERSATION), false, 0);
+		LoadScriptFile (map->lumpnum, map->Reader(ML_CONVERSATION), map->Size(ML_CONVERSATION), false, 0);
 	}
 	else
 	{
@@ -228,28 +227,26 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 bool LoadScriptFile (const char *name, bool include, int type)
 {
 	int lumpnum = Wads.CheckNumForName (name);
-	FileReader *lump;
 
 	if (lumpnum < 0)
 	{
 		return false;
 	}
-	lump = Wads.ReopenLumpNum (lumpnum);
+	FileReader lump = Wads.ReopenLumpReader (lumpnum);
 
 	bool res = LoadScriptFile(lumpnum, lump, Wads.LumpLength(lumpnum), include, type);
-	delete lump;
 	return res;
 }
 
-static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool include, int type)
+static bool LoadScriptFile(int lumpnum, FileReader &lump, int numnodes, bool include, int type)
 {
 	int i;
 	uint32_t prevSpeakerType;
 	FStrifeDialogueNode *node;
 	char buffer[4];
 
-	lump->Read(buffer, 4);
-	lump->Seek(-4, SEEK_CUR);
+	lump.Read(buffer, 4);
+	lump.Seek(-4, FileReader::SeekCur);
 
 	// The binary format is so primitive that this check is enough to detect it.
 	bool isbinary = (buffer[0] == 0 || buffer[1] == 0 || buffer[2] == 0 || buffer[3] == 0);
@@ -318,7 +315,7 @@ static bool LoadScriptFile(int lumpnum, FileReader *lump, int numnodes, bool inc
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpeakerType)
+static FStrifeDialogueNode *ReadRetailNode (FileReader &lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	Speech speech;
@@ -328,7 +325,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpea
 
 	node = new FStrifeDialogueNode;
 
-	lump->Read (&speech, sizeof(speech));
+	lump.Read (&speech, sizeof(speech));
 
 	// Byte swap all the ints in the original data
 	speech.SpeakerType = LittleLong(speech.SpeakerType);
@@ -394,7 +391,7 @@ static FStrifeDialogueNode *ReadRetailNode (FileReader *lump, uint32_t &prevSpea
 //
 //============================================================================
 
-static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, uint32_t &prevSpeakerType)
+static FStrifeDialogueNode *ReadTeaserNode (FileReader &lump, uint32_t &prevSpeakerType)
 {
 	FStrifeDialogueNode *node;
 	TeaserSpeech speech;
@@ -404,7 +401,7 @@ static FStrifeDialogueNode *ReadTeaserNode (FileReader *lump, uint32_t &prevSpea
 
 	node = new FStrifeDialogueNode;
 
-	lump->Read (&speech, sizeof(speech));
+	lump.Read (&speech, sizeof(speech));
 
 	// Byte swap all the ints in the original data
 	speech.SpeakerType = LittleLong(speech.SpeakerType);

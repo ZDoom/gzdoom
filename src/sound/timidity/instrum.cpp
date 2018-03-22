@@ -153,7 +153,6 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 {
 	Instrument *ip;
 	Sample *sp;
-	FileReader *fp;
 	GF1PatchHeader header;
 	GF1InstrumentData idata;
 	GF1LayerData layer_data;
@@ -164,19 +163,19 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 	if (!name || gus_sfreader == nullptr) return nullptr;
 
 	/* Open patch file */
-	fp = gus_sfreader->LookupFile(name).first;
-	if (fp == NULL)
+	auto fp = gus_sfreader->LookupFile(name).first;
+	if (!fp.isOpen())
 	{
 		/* Try with various extensions */
 		FString tmp = name;
 		tmp += ".pat";
 		fp = gus_sfreader->LookupFile(tmp).first;
-		if (fp == NULL)
+		if (!fp.isOpen())
 		{
 #ifdef __unix__			// Windows isn't case-sensitive.
 			tmp.ToUpper();
 			fp = gus_sfreader->LookupFile(tmp).first;
-			if (fp == NULL)
+			if (!fp.isOpen())
 #endif
 			{
 				noluck = true;
@@ -194,26 +193,23 @@ static Instrument *load_instrument(Renderer *song, const char *name, int percuss
 
 	/* Read some headers and do cursory sanity checks. */
 
-	if (sizeof(header) != fp->Read(&header, sizeof(header)))
+	if (sizeof(header) != fp.Read(&header, sizeof(header)))
 	{
 failread:
 		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Error reading instrument.\n", name);
-		delete fp;
 		return 0;
 	}
 	if (strncmp(header.Header, GF1_HEADER_TEXT, HEADER_SIZE - 4) != 0)
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Not an instrument.\n", name);
-		delete fp;
 		return 0;
 	}
 	if (strcmp(header.Header + 8, "110") < 0)
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "%s: Is an old and unsupported patch version.\n", name);
-		delete fp;
 		return 0;
 	}
-	if (sizeof(idata) != fp->Read(&idata, sizeof(idata)))
+	if (sizeof(idata) != fp.Read(&idata, sizeof(idata)))
 	{
 		goto failread;
 	}
@@ -226,18 +222,16 @@ failread:
 	if (header.Instruments != 1 && header.Instruments != 0) /* instruments. To some patch makers, 0 means 1 */
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle patches with %d instruments.\n", header.Instruments);
-		delete fp;
 		return 0;
 	}
 
 	if (idata.Layers != 1 && idata.Layers != 0) /* layers. What's a layer? */
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Can't handle instruments with %d layers.\n", idata.Layers);
-		delete fp;
 		return 0;
 	}
 
-	if (sizeof(layer_data) != fp->Read(&layer_data, sizeof(layer_data)))
+	if (sizeof(layer_data) != fp.Read(&layer_data, sizeof(layer_data)))
 	{
 		goto failread;
 	}
@@ -245,7 +239,6 @@ failread:
 	if (layer_data.Samples == 0)
 	{
 		cmsg(CMSG_ERROR, VERB_NORMAL, "Instrument has 0 samples.\n");
-		delete fp;
 		return 0;
 	}
 
@@ -255,12 +248,11 @@ failread:
 	memset(ip->sample, 0, sizeof(Sample) * layer_data.Samples);
 	for (i = 0; i < layer_data.Samples; ++i)
 	{
-		if (sizeof(patch_data) != fp->Read(&patch_data, sizeof(patch_data)))
+		if (sizeof(patch_data) != fp.Read(&patch_data, sizeof(patch_data)))
 		{
 fail:
 			cmsg(CMSG_ERROR, VERB_NORMAL, "Error reading sample %d.\n", i);
 			delete ip;
-			delete fp;
 			return 0;
 		}
 
@@ -422,7 +414,7 @@ fail:
 		}
 		sp->data = (sample_t *)safe_malloc(sp->data_length);
 
-		if (sp->data_length != fp->Read(sp->data, sp->data_length))
+		if (sp->data_length != fp.Read(sp->data, sp->data_length))
 			goto fail;
 
 		convert_sample_data(sp, sp->data);
@@ -469,7 +461,6 @@ fail:
 			sp->data_length = sp->loop_end;
 		}
 	}
-	delete fp;
 	return ip;
 }
 

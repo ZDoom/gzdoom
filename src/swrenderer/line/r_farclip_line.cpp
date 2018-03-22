@@ -65,13 +65,14 @@ namespace swrenderer
 		Thread = thread;
 	}
 
-	void FarClipLine::Render(seg_t *line, subsector_t *subsector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane)
+	void FarClipLine::Render(seg_t *line, subsector_t *subsector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, Fake3DOpaque opaque3dfloor)
 	{
 		mSubsector = subsector;
 		mFrontSector = mSubsector->sector;
 		mLineSegment = line;
 		mFloorPlane = linefloorplane;
 		mCeilingPlane = lineceilingplane;
+		m3DFloor = opaque3dfloor;
 
 		DVector2 pt1 = line->v1->fPos() - Thread->Viewport->viewpoint.Pos;
 		DVector2 pt2 = line->v2->fPos() - Thread->Viewport->viewpoint.Pos;
@@ -153,7 +154,7 @@ namespace swrenderer
 
 			for (int x = x1; x < x2; ++x)
 			{
-				short top = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKECEILING) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
+				short top = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeCeiling) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
 				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
 				if (top < bottom)
 				{
@@ -177,7 +178,7 @@ namespace swrenderer
 			for (int x = x1; x < x2; ++x)
 			{
 				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
-				short bottom = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKEFLOOR) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
+				short bottom = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeFloor) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{
 					assert(bottom <= viewheight);

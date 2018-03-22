@@ -1,11 +1,9 @@
 /*
-** emptytexture.cpp
-** Texture class for empty placeholder textures
-** (essentially patches with dimensions and offsets of (0,0) )
-** These need special treatment because a texture size of 0 is illegal
+** worldtexture.cpp
+** Intermediate class for some common code for several classes
 **
 **---------------------------------------------------------------------------
-** Copyright 2009 Christoph Oelckers
+** Copyright 2018 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -35,40 +33,18 @@
 **
 */
 
-#include "doomtype.h"
-#include "files.h"
-#include "w_wad.h"
-#include "textures/textures.h"
+#include "textures.h"
+
 
 //==========================================================================
 //
-// 
+//
 //
 //==========================================================================
 
-class FEmptyTexture : public FWorldTexture
+FWorldTexture::FWorldTexture(const char *name, int lumpnum)
+ : FTexture(name, lumpnum)
 {
-	uint8_t Pixel = 0;
-public:
-	FEmptyTexture (int lumpnum);
-	uint8_t *MakeTexture(FRenderStyle style) override;
-};
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
-{
-	char check[8];
-	if (file.GetLength() != 8) return NULL;
-	file.Seek(0, FileReader::SeekSet);
-	if (file.Read(check, 8) != 8) return NULL;
-	if (memcmp(check, "\0\0\0\0\0\0\0\0", 8)) return NULL;
-
-	return new FEmptyTexture(lumpnum);
 }
 
 //==========================================================================
@@ -77,14 +53,10 @@ FTexture *EmptyTexture_TryCreate(FileReader & file, int lumpnum)
 //
 //==========================================================================
 
-FEmptyTexture::FEmptyTexture (int lumpnum)
-: FWorldTexture(NULL, lumpnum)
+FWorldTexture::~FWorldTexture()
 {
-	bMasked = true;
-	WidthBits = HeightBits = 1;
-	Width = Height = 1;
-	WidthMask = 0;
-	PixelsAreStatic = 3;
+	Unload();
+	FreeAllSpans();
 }
 
 //==========================================================================
@@ -93,8 +65,86 @@ FEmptyTexture::FEmptyTexture (int lumpnum)
 //
 //==========================================================================
 
-uint8_t *FEmptyTexture::MakeTexture(FRenderStyle style)
+void FWorldTexture::FreeAllSpans()
 {
-	return &Pixel;
+	for(int i = 0; i < 2; i++)
+	{
+		if (Spandata[i] != nullptr)
+		{
+			FreeSpans (Spandata[i]);
+			Spandata[i] = nullptr;
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FWorldTexture::Unload ()
+{
+	for(int i = 0; i < 2; i++)
+	{
+		if (!(PixelsAreStatic & (1 << i)))
+		{
+			delete[] Pixeldata[i];
+		}
+		Pixeldata[i] = nullptr;
+	}
+	FTexture::Unload();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+const uint8_t *FWorldTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
+{
+	int index = !!(style.Flags & STYLEF_RedIsAlpha);
+	GetPixels(style);
+	if ((unsigned)column >= (unsigned)Width)
+	{
+		if (WidthMask + 1 == Width)
+		{
+			column &= WidthMask;
+		}
+		else
+		{
+			column %= Width;
+		}
+	}
+	if (spans_out != nullptr)
+	{
+		if (Spandata[index] == nullptr)
+		{
+			Spandata[index] = CreateSpans (Pixeldata[index]);
+		}
+		*spans_out = Spandata[index][column];
+	}
+	return Pixeldata[index] + column*Height;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+const uint8_t *FWorldTexture::GetPixels (FRenderStyle style)
+{
+	if (CheckModified(style))
+	{
+		Unload();
+	}
+	int index = !!(style.Flags & STYLEF_RedIsAlpha);
+	if (Pixeldata[index] == nullptr)
+	{
+		Pixeldata[index] = MakeTexture (style);
+	}
+	return Pixeldata[index];
 }
 

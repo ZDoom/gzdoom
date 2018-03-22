@@ -67,7 +67,6 @@ namespace swrenderer
 		FakeFloors.clear();
 
 		fakeActive = false;
-		fake3D = 0;
 		while (CurrentSkybox)
 		{
 			DeleteHeights();

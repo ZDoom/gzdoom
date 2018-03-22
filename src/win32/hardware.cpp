@@ -509,4 +509,3 @@ CCMD (vid_currentmode)
 {
 	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }
-

@@ -4,23 +4,17 @@
 #include "r_defs.h"
 #include "textures/textures.h"
 
-class FBrightmapTexture : public FTexture
+class FBrightmapTexture : public FWorldTexture
 {
 public:
 	FBrightmapTexture (FTexture *source);
-	~FBrightmapTexture ();
 
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
-
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
-	bool UseBasePalette() { return false; }
+	uint8_t *MakeTexture(FRenderStyle style) override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	bool UseBasePalette() override { return false; }
 
 protected:
 	FTexture *SourcePic;
-	//uint8_t *Pixels;
-	//Span **Spans;
 };
 
 

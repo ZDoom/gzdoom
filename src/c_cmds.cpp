@@ -1224,7 +1224,7 @@ CCMD(secret)
 	int lumpno=Wads.CheckNumForName("SECRETS");
 	if (lumpno < 0) return;
 
-	FWadLump lump = Wads.OpenLumpNum(lumpno);
+	auto lump = Wads.OpenLumpReader(lumpno);
 	FString maphdr;
 	maphdr.Format("[%s]", mapname);
 

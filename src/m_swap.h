@@ -46,16 +46,6 @@ inline unsigned int LittleLong(unsigned int x)
 	return OSSwapLittleToHostInt32(x);
 }
 
-inline int LittleLong(long x)
-{
-	return OSSwapLittleToHostInt32((uint32_t)x);
-}
-
-inline unsigned int LittleLong(unsigned long x)
-{
-	return OSSwapLittleToHostInt32((uint32_t)x);
-}
-
 inline short BigShort(short x)
 {
 	return (short)OSSwapBigToHostInt16((uint16_t)x);
@@ -76,8 +66,7 @@ inline unsigned int BigLong(unsigned int x)
 	return OSSwapBigToHostInt32(x);
 }
 
-#else
-#ifdef __BIG_ENDIAN__
+#elif defined __BIG_ENDIAN__
 
 // Swap 16bit, that is, MSB and LSB byte.
 // No masking with 0xFF should be necessary. 
@@ -120,42 +109,66 @@ inline int LittleLong (int x)
 		| (((unsigned int)x)<<24));
 }
 
-inline unsigned int LittleLong(unsigned long x)
+inline short BigShort(short x)
 {
-	return LittleLong((unsigned int)x);
+	return x;
 }
 
-inline int LittleLong(long x)
+inline unsigned short BigShort(unsigned short x)
 {
-	return LittleLong((int)x);
+	return x;
 }
 
-#define BigShort(x)		(x)
-#define BigLong(x)		(x)
+inline unsigned int BigLong(unsigned int &x)
+{
+	return x;
+}
+
+inline int BigLong(int &x)
+{
+	return x;
+}
 
 #else
 
-#define LittleShort(x)		(x)
-#define LittleLong(x) 		(x)
+inline short LittleShort(short x)
+{
+	return x;
+}
 
-#if defined(_MSC_VER)
+inline unsigned short LittleShort(unsigned short x)
+{
+	return x;
+}
 
-inline short BigShort (short x)
+inline unsigned int LittleLong(unsigned int x)
+{
+	return x;
+}
+
+inline int LittleLong(int x)
+{
+	return x;
+}
+
+#ifdef _MSC_VER
+
+inline short BigShort(short x)
 {
 	return (short)_byteswap_ushort((unsigned short)x);
 }
 
-inline unsigned short BigShort (unsigned short x)
+inline unsigned short BigShort(unsigned short x)
 {
 	return _byteswap_ushort(x);
 }
 
-inline int BigLong (int x)
+inline int BigLong(int x)
 {
 	return (int)_byteswap_ulong((unsigned long)x);
 }
 
-inline unsigned int BigLong (unsigned int x)
+inline unsigned int BigLong(unsigned int x)
 {
 	return (unsigned int)_byteswap_ulong((unsigned long)x);
 }
@@ -190,10 +203,16 @@ inline int BigLong (int x)
 		| ((((unsigned int)x)<<8) & 0xff0000)
 		| (((unsigned int)x)<<24));
 }
+
 #endif
 
 #endif // __BIG_ENDIAN__
-#endif // __APPLE__
+
+// These may be destructive so they should create errors
+unsigned long BigLong(unsigned long) = delete;
+long BigLong(long) = delete;
+unsigned long LittleLong(unsigned long) = delete;
+long LittleLong(long) = delete;
 
 
 // Data accessors, since some data is highly likely to be unaligned.
@@ -206,10 +225,6 @@ inline int GetInt(const unsigned char *foo)
 {
 	return *(const int *)foo;
 }
-inline int GetBigInt(const unsigned char *foo)
-{
-	return BigLong(GetInt(foo));
-}
 #else
 inline int GetShort(const unsigned char *foo)
 {
@@ -219,11 +234,12 @@ inline int GetInt(const unsigned char *foo)
 {
 	return int(foo[0] | (foo[1] << 8) | (foo[2] << 16) | (foo[3] << 24));
 }
+#endif
 inline int GetBigInt(const unsigned char *foo)
 {
 	return int((foo[0] << 24) | (foo[1] << 16) | (foo[2] << 8) | foo[3]);
 }
-#endif
+
 #ifdef __BIG_ENDIAN__
 inline int GetNativeInt(const unsigned char *foo)
 {

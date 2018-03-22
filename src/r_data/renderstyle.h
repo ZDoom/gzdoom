@@ -133,19 +133,27 @@ union FRenderStyle
 	uint32_t AsDWORD;
 
 	inline FRenderStyle &operator= (ERenderStyle legacy);
-	operator uint32_t() const { return AsDWORD; }
 	bool operator==(const FRenderStyle &o) const { return AsDWORD == o.AsDWORD; }
 	void CheckFuzz();
 	bool IsVisible(double alpha) const throw();
 private:
 	// Code that compares an actor's render style with a legacy render
-	// style value should be updated. Making these conversion operators
-	// private will catch those cases.
-	operator ERenderStyle() const { return STYLE_Normal; }
-	operator int() const { return STYLE_Normal; }
+	// style value should be updated.
+	operator ERenderStyle() = delete;
+	operator int() const = delete;
 };
 
 extern FRenderStyle LegacyRenderStyles[STYLE_Count];
+
+inline FRenderStyle DefaultRenderStyle()
+{
+	return LegacyRenderStyles[STYLE_Normal];
+}
+
+inline FRenderStyle BadRenderStyle()	// This is just a marker to find places where work is still needed.
+{
+	return LegacyRenderStyles[STYLE_Normal];
+}
 
 inline FRenderStyle &FRenderStyle::operator= (ERenderStyle legacy)
 {

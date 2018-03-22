@@ -340,69 +340,20 @@ void ReadPalette(int lumpnum, uint8_t *buffer)
 	}
 }
 
-static bool FixBuildPalette (uint8_t *opal, int lump, bool blood)
-{
-	if (Wads.LumpLength (lump) < 768)
-	{
-		return false;
-	}
-
-	FMemLump data = Wads.ReadLump (lump);
-	const uint8_t *ipal = (const uint8_t *)data.GetMem();
-	
-	// Reverse the palette because BUILD used entry 255 as
-	// transparent, but we use 0 as transparent.
-
-	for (int c = 0; c < 768; c += 3)
-	{
-		if (!blood)
-		{
-			opal[c] =	(ipal[765-c] << 2) | (ipal[765-c] >> 4);
-			opal[c+1] = (ipal[766-c] << 2) | (ipal[766-c] >> 4);
-			opal[c+2] = (ipal[767-c] << 2) | (ipal[767-c] >> 4);
-		}
-		else
-		{
-			opal[c] = ipal[765-c];
-			opal[c+1] = ipal[766-c];
-			opal[c+2] = ipal[767-c];
-		}
-	}
-	return true;
-}
-
 void InitPalette ()
 {
 	uint8_t pal[768];
-	bool usingBuild = false;
-	int lump;
-
-	if ((lump = Wads.CheckNumForFullName ("palette.dat")) >= 0 && Wads.LumpLength (lump) >= 768)
-	{
-		usingBuild = FixBuildPalette (pal, lump, false);
-	}
-	else if ((lump = Wads.CheckNumForFullName ("blood.pal")) >= 0 && Wads.LumpLength (lump) >= 768)
-	{
-		usingBuild = FixBuildPalette (pal, lump, true);
-	}
-
-	if (!usingBuild)
-	{
-		ReadPalette(Wads.CheckNumForName("PLAYPAL"), pal);
-	}
+	
+	ReadPalette(Wads.CheckNumForName("PLAYPAL"), pal);
 
 	GPalette.SetPalette (pal);
 	GPalette.MakeGoodRemap ();
 	ColorMatcher.SetPalette ((uint32_t *)GPalette.BaseColors);
 
-	// The BUILD engine already has a transparent color, so it doesn't need any remapping.
-	if (!usingBuild)
-	{
-		if (GPalette.Remap[0] == 0)
-		{ // No duplicates, so settle for something close to color 0
-			GPalette.Remap[0] = BestColor ((uint32_t *)GPalette.BaseColors,
-				GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
-		}
+	if (GPalette.Remap[0] == 0)
+	{ // No duplicates, so settle for something close to color 0
+		GPalette.Remap[0] = BestColor ((uint32_t *)GPalette.BaseColors,
+			GPalette.BaseColors[0].r, GPalette.BaseColors[0].g, GPalette.BaseColors[0].b, 1, 255);
 	}
 
 	// Colormaps have to be initialized before actors are loaded,

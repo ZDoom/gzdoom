@@ -55,7 +55,7 @@
 
 struct FDirectoryLump : public FResourceLump
 {
-	virtual FileReader *NewReader();
+	virtual FileReader NewReader();
 	virtual int FillCache();
 
 	FString mFullPath;
@@ -90,7 +90,7 @@ public:
 //==========================================================================
 
 FDirectory::FDirectory(const char * directory)
-: FResourceFile(NULL, NULL)
+: FResourceFile(NULL)
 {
 	FString dirname;
 
@@ -287,16 +287,11 @@ void FDirectory::AddEntry(const char *fullpath, int size)
 //
 //==========================================================================
 
-FileReader *FDirectoryLump::NewReader()
+FileReader FDirectoryLump::NewReader()
 {
-	try
-	{
-		return new FileReader(mFullPath);
-	}
-	catch (CRecoverableError &)
-	{
-		return NULL;
-	}
+	FileReader fr;
+	fr.OpenFile(mFullPath);
+	return fr;
 }
 
 //==========================================================================
@@ -307,15 +302,14 @@ FileReader *FDirectoryLump::NewReader()
 
 int FDirectoryLump::FillCache()
 {
+	FileReader fr;
 	Cache = new char[LumpSize];
-	FileReader *reader = NewReader();
-	if (reader == NULL)
+	if (!fr.OpenFile(mFullPath))
 	{
 		memset(Cache, 0, LumpSize);
 		return 0;
 	}
-	reader->Read(Cache, LumpSize);
-	delete reader;
+	fr.Read(Cache, LumpSize);
 	RefCount = 1;
 	return 1;
 }
@@ -326,7 +320,7 @@ int FDirectoryLump::FillCache()
 //
 //==========================================================================
 
-FResourceFile *CheckDir(const char *filename, FileReader *file, bool quiet)
+FResourceFile *CheckDir(const char *filename, bool quiet)
 {
 	FResourceFile *rf = new FDirectory(filename);
 	if (rf->Open(quiet)) return rf;

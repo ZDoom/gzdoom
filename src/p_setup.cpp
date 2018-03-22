@@ -240,7 +240,7 @@ static int GetMapIndex(const char *mapname, int lastindex, const char *lumpname,
 MapData *P_OpenMapData(const char * mapname, bool justcheck)
 {
 	MapData * map = new MapData;
-	FileReader * wadReader = NULL;
+	FileReader * wadReader = nullptr;
 	bool externalfile = !strnicmp(mapname, "file:", 5);
 	
 	if (externalfile)
@@ -251,7 +251,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			delete map;
 			return NULL;
 		}
-		map->resource = FResourceFile::OpenResourceFile(mapname, NULL, true);
+		map->resource = FResourceFile::OpenResourceFile(mapname, true);
 		wadReader = map->resource->GetReader();
 	}
 	else
@@ -281,7 +281,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 			{
 				// The following lump is from a different file so whatever this is,
 				// it is not a multi-lump Doom level so let's assume it is a Build map.
-				map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
+				map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
 				if (!P_IsBuildMap(map))
 				{
 					delete map;
@@ -292,7 +292,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 			// This case can only happen if the lump is inside a real WAD file.
 			// As such any special handling for other types of lumps is skipped.
-			map->MapLumps[0].Reader = map->file = Wads.ReopenLumpNum(lump_name);
+			map->MapLumps[0].Reader = Wads.ReopenLumpReader(lump_name);
 			strncpy(map->MapLumps[0].Name, Wads.GetLumpFullName(lump_name), 8);
 			map->Encrypted = Wads.IsEncryptedFile(lump_name);
 			map->InWad = true;
@@ -335,14 +335,14 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 					// The next lump is not part of this map anymore
 					if (index < 0) break;
 
-					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
 			else
 			{
 				map->isText = true;
-				map->MapLumps[1].Reader = Wads.ReopenLumpNum(lump_name + 1);
+				map->MapLumps[1].Reader = Wads.ReopenLumpReader(lump_name + 1);
 				for(int i = 2;; i++)
 				{
 					const char * lumpname = Wads.GetLumpFullName(lump_name + i);
@@ -378,7 +378,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 						break;
 					}
 					else continue;
-					map->MapLumps[index].Reader = Wads.ReopenLumpNum(lump_name + i);
+					map->MapLumps[index].Reader = Wads.ReopenLumpReader(lump_name + i);
 					strncpy(map->MapLumps[index].Name, lumpname, 8);
 				}
 			}
@@ -396,7 +396,8 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 				return NULL;
 			}
 			map->lumpnum = lump_wad;
-			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), Wads.ReopenLumpNum(lump_wad), true);
+			auto reader = Wads.ReopenLumpReader(lump_wad);
+			map->resource = FResourceFile::OpenResourceFile(Wads.GetLumpFullName(lump_wad), reader, true);
 			wadReader = map->resource->GetReader();
 		}
 	}
@@ -404,7 +405,7 @@ MapData *P_OpenMapData(const char * mapname, bool justcheck)
 
 	// Although we're using the resource system, we still want to be sure we're
 	// reading from a wad file.
-	wadReader->Seek(0, SEEK_SET);
+	wadReader->Seek(0, FileReader::SeekSet);
 	wadReader->Read(&id, sizeof(id));
 	
 	if (id == IWAD_ID || id == PWAD_ID)
@@ -526,29 +527,19 @@ void MapData::GetChecksum(uint8_t cksum[16])
 
 	if (isText)
 	{
-		Seek(ML_TEXTMAP);
-		if (file != NULL) md5.Update(file, Size(ML_TEXTMAP));
+		md5.Update(Reader(ML_TEXTMAP), Size(ML_TEXTMAP));
 	}
 	else
 	{
-		if (Size(ML_LABEL) != 0)
-		{
-			Seek(ML_LABEL);
-			if (file != NULL) md5.Update(file, Size(ML_LABEL));
-		}
-		Seek(ML_THINGS);
-		if (file != NULL) md5.Update(file, Size(ML_THINGS));
-		Seek(ML_LINEDEFS);
-		if (file != NULL) md5.Update(file, Size(ML_LINEDEFS));
-		Seek(ML_SIDEDEFS);
-		if (file != NULL) md5.Update(file, Size(ML_SIDEDEFS));
-		Seek(ML_SECTORS);
-		if (file != NULL) md5.Update(file, Size(ML_SECTORS));
+		md5.Update(Reader(ML_LABEL), Size(ML_LABEL));
+		md5.Update(Reader(ML_THINGS), Size(ML_THINGS));
+		md5.Update(Reader(ML_LINEDEFS), Size(ML_LINEDEFS));
+		md5.Update(Reader(ML_SIDEDEFS), Size(ML_SIDEDEFS));
+		md5.Update(Reader(ML_SECTORS), Size(ML_SECTORS));
 	}
 	if (HasBehavior)
 	{
-		Seek(ML_BEHAVIOR);
-		if (file != NULL) md5.Update(file, Size(ML_BEHAVIOR));
+		md5.Update(Reader(ML_BEHAVIOR), Size(ML_BEHAVIOR));
 	}
 	md5.Final(cksum);
 }
@@ -847,14 +838,14 @@ void P_LoadVertexes (MapData * map)
 	level.vertexes.Alloc(numvertexes);
 	vertexdatas.Clear();
 
-	map->Seek(ML_VERTEXES);
+	auto &fr = map->Reader(ML_VERTEXES);
 		
 	// Copy and convert vertex coordinates, internal representation as fixed.
 	for (auto &v : level.vertexes)
 	{
-		int16_t x, y;
+		int16_t x = fr.ReadInt16();
+		int16_t y = fr.ReadInt16();
 
-		(*map->file) >> x >> y;
 		v.set(double(x), double(y));
 	}
 }
@@ -865,16 +856,15 @@ void P_LoadVertexes (MapData * map)
 //
 //===========================================================================
 
-void P_LoadZSegs (FileReaderBase &data)
+void P_LoadZSegs (FileReader &data)
 {
 	for (auto &seg : level.segs)
 	{
 		line_t *ldef;
-		uint32_t v1, v2;
-		uint16_t line;
-		uint8_t side;
-
-		data >> v1 >> v2 >> line >> side;
+		uint32_t v1 = data.ReadUInt32();
+		uint32_t v2 = data.ReadUInt32();
+		uint16_t line = data.ReadUInt16();
+		uint8_t side = data.ReadUInt8();
 
 		seg.v1 = &level.vertexes[v1];
 		seg.v2 = &level.vertexes[v2];
@@ -901,7 +891,7 @@ void P_LoadZSegs (FileReaderBase &data)
 //
 //===========================================================================
 
-void P_LoadGLZSegs (FileReaderBase &data, int type)
+void P_LoadGLZSegs (FileReader &data, int type)
 {
 	for (unsigned i = 0; i < level.subsectors.Size(); ++i)
 	{
@@ -909,22 +899,20 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 		for (size_t j = 0; j < level.subsectors[i].numlines; ++j)
 		{
 			seg_t *seg;
-			uint32_t v1, partner;
+			uint32_t v1 = data.ReadUInt32();
+			uint32_t partner = data.ReadUInt32();
 			uint32_t line;
-			uint16_t lineword;
-			uint8_t side;
 
-			data >> v1 >> partner;
 			if (type >= 2)
 			{
-				data >> line;
+				line = data.ReadUInt32();
 			}
 			else
 			{
-				data >> lineword;
-				line = lineword == 0xFFFF ? 0xFFFFFFFF : lineword;
+				line = data.ReadUInt16();
+				if (line == 0xffff) line = 0xffffffff;
 			}
-			data >> side;
+			uint8_t side = data.ReadUInt8();
 
 			seg = level.subsectors[i].firstline + j;
 			seg->v1 = &level.vertexes[v1];
@@ -971,13 +959,13 @@ void P_LoadGLZSegs (FileReaderBase &data, int type)
 //
 //===========================================================================
 
-void LoadZNodes(FileReaderBase &data, int glnodes)
+void LoadZNodes(FileReader &data, int glnodes)
 {
 	// Read extra vertices added during node building
-	uint32_t orgVerts, newVerts;
 	unsigned int i;
 
-	data >> orgVerts >> newVerts;
+	uint32_t orgVerts = data.ReadUInt32();
+	uint32_t newVerts = data.ReadUInt32();
 	if (orgVerts > level.vertexes.Size())
 	{ // These nodes are based on a map with more vertex data than we have.
 	  // We can't use them.
@@ -990,8 +978,8 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 	for (i = 0; i < newVerts; ++i)
 	{
-		fixed_t x, y;
-		data >> x >> y;
+		fixed_t x = data.ReadInt32();
+		fixed_t y = data.ReadInt32();
 		level.vertexes[i + orgVerts].set(x, y);
 	}
 	if (oldvertexes != &level.vertexes[0])
@@ -1004,26 +992,21 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 
 	// Read the subsectors
-	uint32_t numSubs, currSeg;
-
-	data >> numSubs;
+	uint32_t currSeg;
+	uint32_t numSubs = data.ReadUInt32();
 	level.subsectors.Alloc(numSubs);
 	memset (&level.subsectors[0], 0, level.subsectors.Size()*sizeof(subsector_t));
 
 	for (i = currSeg = 0; i < numSubs; ++i)
 	{
-		uint32_t numsegs;
-
-		data >> numsegs;
+		uint32_t numsegs = data.ReadUInt32();
 		level.subsectors[i].firstline = (seg_t *)(size_t)currSeg;		// Oh damn. I should have stored the seg count sooner.
 		level.subsectors[i].numlines = numsegs;
 		currSeg += numsegs;
 	}
 
 	// Read the segs
-	uint32_t numSegs;
-
-	data >> numSegs;
+	uint32_t numSegs = data.ReadUInt32();
 
 	// The number of segs stored should match the number of
 	// segs used by subsectors.
@@ -1050,9 +1033,8 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	}
 
 	// Read nodes
-	uint32_t numNodes;
+	uint32_t numNodes = data.ReadUInt32();
 
-	data >> numNodes;
 	auto &nodes = level.nodes;
 	nodes.Alloc(numNodes);
 	memset (&nodes[0], 0, sizeof(node_t)*numNodes);
@@ -1061,31 +1043,28 @@ void LoadZNodes(FileReaderBase &data, int glnodes)
 	{
 		if (glnodes < 3)
 		{
-			int16_t x, y, dx, dy;
-
-			data >> x >> y >> dx >> dy;
-			nodes[i].x = x << FRACBITS;
-			nodes[i].y = y << FRACBITS;
-			nodes[i].dx = dx << FRACBITS;
-			nodes[i].dy = dy << FRACBITS;
+			nodes[i].x = data.ReadInt16() * FRACUNIT;
+			nodes[i].y = data.ReadInt16() * FRACUNIT;
+			nodes[i].dx = data.ReadInt16() * FRACUNIT;
+			nodes[i].dy = data.ReadInt16() * FRACUNIT;
 		}
 		else
 		{
-			data >> nodes[i].x >> nodes[i].y >> nodes[i].dx >> nodes[i].dy;
+			nodes[i].x = data.ReadInt32();
+			nodes[i].y = data.ReadInt32();
+			nodes[i].dx = data.ReadInt32();
+			nodes[i].dy = data.ReadInt32();
 		}
 		for (int j = 0; j < 2; ++j)
 		{
 			for (int k = 0; k < 4; ++k)
 			{
-				int16_t coord;
-				data >> coord;
-				nodes[i].bbox[j][k] = coord;
+				nodes[i].bbox[j][k] = data.ReadInt16();
 			}
 		}
 		for (int m = 0; m < 2; ++m)
 		{
-			uint32_t child;
-			data >> child;
+			uint32_t child = data.ReadUInt32();
 			if (child & 0x80000000)
 			{
 				nodes[i].children[m] = (uint8_t *)&level.subsectors[child & 0x7FFFFFFF] + 1;
@@ -1157,8 +1136,11 @@ void P_LoadZNodes (FileReader &dalump, uint32_t id)
 	
 	if (compressed)
 	{
-		FileReaderZ data (dalump);
-		LoadZNodes(data, type);
+		FileReader zip;
+		if (zip.OpenDecompressor(dalump, -1, METHOD_ZLIB, false))
+		{
+			LoadZNodes(zip, type);
+		}
 	}
 	else
 	{
@@ -1398,7 +1380,7 @@ void P_LoadSubsectors (MapData * map)
 
 	auto &subsectors = level.subsectors;
 	subsectors.Alloc(numsubsectors);
-	map->Seek(ML_SSECTORS);
+	auto &fr = map->Reader(ML_SSECTORS);
 		
 	memset (&subsectors[0], 0, numsubsectors*sizeof(subsector_t));
 	
@@ -1406,7 +1388,8 @@ void P_LoadSubsectors (MapData * map)
 	{
 		subsectortype subd;
 
-		(*map->file) >> subd.numsegs >> subd.firstseg;
+		subd.numsegs = sizeof(subd.numsegs) == 2 ? fr.ReadUInt16() : fr.ReadUInt32();
+		subd.firstseg = sizeof(subd.firstseg) == 2 ? fr.ReadUInt16() : fr.ReadUInt32();
 
 		if (subd.numsegs == 0)
 		{
@@ -2500,17 +2483,17 @@ static void P_LoopSidedefs (bool firstloop)
 
 int P_DetermineTranslucency (int lumpnum)
 {
-	FWadLump tranmap = Wads.OpenLumpNum (lumpnum);
+	auto tranmap = Wads.OpenLumpReader (lumpnum);
 	uint8_t index;
 	PalEntry newcolor;
 	PalEntry newcolor2;
 
-	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, SEEK_SET);
+	tranmap.Seek (GPalette.BlackIndex * 256 + GPalette.WhiteIndex, FileReader::SeekSet);
 	tranmap.Read (&index, 1);
 
 	newcolor = GPalette.BaseColors[GPalette.Remap[index]];
 
-	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, SEEK_SET);
+	tranmap.Seek (GPalette.WhiteIndex * 256 + GPalette.BlackIndex, FileReader::SeekSet);
 	tranmap.Read (&index, 1);
 	newcolor2 = GPalette.BaseColors[GPalette.Remap[index]];
 	if (newcolor2.r == 255)	// if black on white results in white it's either
@@ -3311,7 +3294,7 @@ void P_LoadReject (MapData * map, bool junk)
 	const int neededsize = (level.sectors.Size() * level.sectors.Size() + 7) >> 3;
 	int rejectsize;
 
-	if (strnicmp (map->MapLumps[ML_REJECT].Name, "REJECT", 8) != 0)
+	if (!map->CheckName(ML_REJECT, "REJECT"))
 	{
 		rejectsize = 0;
 	}
@@ -3335,8 +3318,7 @@ void P_LoadReject (MapData * map, bool junk)
 		rejectsize = MIN (rejectsize, neededsize);
 		level.rejectmatrix.Alloc(rejectsize);
 
-		map->Seek(ML_REJECT);
-		map->file->Read (&level.rejectmatrix[0], rejectsize);
+		map->Read (ML_REJECT, &level.rejectmatrix[0], rejectsize);
 
 		int qwords = rejectsize / 8;
 		int i;
@@ -3375,8 +3357,7 @@ void P_LoadBehavior(MapData * map)
 {
 	if (map->Size(ML_BEHAVIOR) > 0)
 	{
-		map->Seek(ML_BEHAVIOR);
-		FBehavior::StaticLoadModule(-1, map->file, map->Size(ML_BEHAVIOR));
+		FBehavior::StaticLoadModule(-1, &map->Reader(ML_BEHAVIOR), map->Size(ML_BEHAVIOR));
 	}
 	if (!FBehavior::StaticCheckAllGood())
 	{
@@ -3635,8 +3616,10 @@ void P_FreeExtraLevelData()
 void P_SetupLevel (const char *lumpname, int position)
 {
 	cycle_t times[20];
+#if 0
 	FMapThing *buildthings;
 	int numbuildthings;
+#endif
 	int i;
 	bool buildmap;
 	const int *oldvertextable = NULL;
@@ -3709,16 +3692,18 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// [RH] Support loading Build maps (because I felt like it. :-)
 	buildmap = false;
+#if 0
+	// deactivated because broken.
 	if (map->Size(0) > 0)
 	{
 		uint8_t *mapdata = new uint8_t[map->Size(0)];
-		map->Seek(0);
-		map->file->Read(mapdata, map->Size(0));
+		map->Read(0, mapdata);
 		times[0].Clock();
 		buildmap = P_LoadBuildMap (mapdata, map->Size(0), &buildthings, &numbuildthings);
 		times[0].Unclock();
 		delete[] mapdata;
 	}
+#endif
 
 	if (!buildmap)
 	{
@@ -3858,19 +3843,19 @@ void P_SetupLevel (const char *lumpname, int position)
 	if (!ForceNodeBuild)
 	{
 		// Check for compressed nodes first, then uncompressed nodes
-		FWadLump test;
+		FileReader *fr = nullptr;
 		uint32_t id = MAKE_ID('X','x','X','x'), idcheck = 0, idcheck2 = 0, idcheck3 = 0, idcheck4 = 0, idcheck5 = 0, idcheck6 = 0;
 
 		if (map->Size(ML_ZNODES) != 0)
 		{
 			// Test normal nodes first
-			map->Seek(ML_ZNODES);
+			fr = &map->Reader(ML_ZNODES);
 			idcheck = MAKE_ID('Z','N','O','D');
 			idcheck2 = MAKE_ID('X','N','O','D');
 		}
 		else if (map->Size(ML_GLZNODES) != 0)
 		{
-			map->Seek(ML_GLZNODES);
+			fr = &map->Reader(ML_GLZNODES);
 			idcheck = MAKE_ID('Z','G','L','N');
 			idcheck2 = MAKE_ID('Z','G','L','2');
 			idcheck3 = MAKE_ID('Z','G','L','3');
@@ -3879,12 +3864,12 @@ void P_SetupLevel (const char *lumpname, int position)
 			idcheck6 = MAKE_ID('X','G','L','3');
 		}
 
-		map->file->Read (&id, 4);
+		if (fr != nullptr && fr->isOpen()) fr->Read (&id, 4);
 		if (id != 0 && (id == idcheck || id == idcheck2 || id == idcheck3 || id == idcheck4 || id == idcheck5 || id == idcheck6))
 		{
 			try
 			{
-				P_LoadZNodes (*map->file, id);
+				P_LoadZNodes (*fr, id);
 			}
 			catch (CRecoverableError &error)
 			{
@@ -4067,6 +4052,7 @@ void P_SetupLevel (const char *lumpname, int position)
 			P_TranslateTeleportThings ();	// [RH] Assign teleport destination TIDs
 		times[15].Unclock();
 	}
+#if 0	// There is no such thing as a build map.
 	else
 	{
 		for (i = 0; i < numbuildthings; ++i)
@@ -4075,6 +4061,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		}
 		delete[] buildthings;
 	}
+#endif
 	delete map;
 	if (oldvertextable != NULL)
 	{
@@ -4294,3 +4281,4 @@ CCMD (lineloc)
 		lines[linenum].v2->fY());
 }
 #endif
+

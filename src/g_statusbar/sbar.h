@@ -517,6 +517,7 @@ enum DI_Flags
 	DI_ALWAYSSHOWCOUNT = 0x200,	// only for DrawInventoryBar.
 	DI_DIMDEPLETED = 0x400,
 	DI_DONTANIMATE = 0x800,		// do not animate the texture
+	DI_MIRROR = 0x1000,		// flip the texture horizontally, like a mirror
 		
 	DI_SCREEN_AUTO = 0,					// decide based on given offsets.
 	DI_SCREEN_MANUAL_ALIGN = 0x4000,	// If this is on, the following flags will have an effect

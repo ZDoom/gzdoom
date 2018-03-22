@@ -126,7 +126,6 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 	if (hdr.version != 0 && hdr.version != 2 && hdr.version != 3 && hdr.version != 4 && hdr.version != 5) return NULL;
 	if (hdr.bitsPerPixel != 1 && hdr.bitsPerPixel != 8 && hdr.bitsPerPixel != 4) return NULL; 
 	if (hdr.bitsPerPixel == 1 && hdr.numColorPlanes !=1 && hdr.numColorPlanes != 4) return NULL;
-	if (hdr.bitsPerPixel == 4 && hdr.numColorPlanes != 1) return NULL;
 	if (hdr.bitsPerPixel == 8 && hdr.bytesPerScanLine != ((hdr.xmax - hdr.xmin + 2)&~1)) return NULL;
 
 	for (int i = 0; i < 54; i++) 

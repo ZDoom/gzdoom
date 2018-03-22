@@ -213,30 +213,26 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 	FBitmap bmp(buffer, W*4, W, H);
 
-	if (translation <= 0)
+	if (translation <= 0 || alphatrans)
 	{
-		// Q: Is this special treatment still needed? Needs to be checked.
-		if (tex->bComplex)
+		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
+		tex->CheckTrans(buffer, W*H, trans);
+		isTransparent = tex->gl_info.mIsTransparent;
+		if (bIsTransparent == -1) bIsTransparent = isTransparent;
+		// alpha texture for legacy mode
+		if (alphatrans)
 		{
-			FBitmap imgCreate;
-
-			// The texture contains special processing so it must be fully composited before being converted as a whole.
-			if (imgCreate.Create(W, H))
+			for (int i = 0; i < W*H; i++)
 			{
-				memset(imgCreate.GetPixels(), 0, W * H * 4);
-				int trans = tex->CopyTrueColorPixels(&imgCreate, exx, exx);
-				bmp.CopyPixelDataRGB(0, 0, imgCreate.GetPixels(), W, H, 4, W * 4, 0, CF_BGRA);
-				tex->CheckTrans(buffer, W*H, trans);
-				isTransparent = tex->gl_info.mIsTransparent;
-				if (bIsTransparent == -1) bIsTransparent = isTransparent;
+				int b = buffer[4 * i];
+				int g = buffer[4 * i + 1];
+				int r = buffer[4 * i + 2];
+				int gray = Luminance(r, g, b);
+				buffer[4 * i] = 255;
+				buffer[4 * i + 1] = 255;
+				buffer[4 * i + 2] = 255;
+				buffer[4 * i + 3] = (buffer[4 * i + 3] * gray) >> 8;
 			}
-		}
-		else
-		{
-			int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
-			tex->CheckTrans(buffer, W*H, trans);
-			isTransparent = tex->gl_info.mIsTransparent;
-			if (bIsTransparent == -1) bIsTransparent = isTransparent;
 		}
 	}
 	else
@@ -282,13 +278,18 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, FTexture *hirescheck)
 {
 	int usebright = false;
-	bool alphatrans = false;
+	bool alphatrans = translation == INT_MAX;	// This is only needed for legacy mode because no texture combine setting allows using the color as alpha.
 
-	if (translation <= 0) translation = -translation;
-	else
+	if (!alphatrans)
 	{
-		alphatrans = (gl.legacyMode && uint32_t(translation) == TRANSLATION(TRANSLATION_Standard, 8));
-		translation = GLTranslationPalette::GetInternalTranslation(translation);
+		if (translation <= 0)
+		{
+			translation = -translation;
+		}
+		else
+		{
+			translation = GLTranslationPalette::GetInternalTranslation(translation);
+		}
 	}
 
 	bool needmipmap = (clampmode <= CLAMP_XY);

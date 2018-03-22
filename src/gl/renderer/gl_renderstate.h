@@ -145,7 +145,7 @@ public:
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
 	{
 		// alpha textures need special treatment in the legacy renderer because withouz shaders they need a different texture.
-		if (alphatexture &&  gl.legacyMode) translation = TRANSLATION(TRANSLATION_Standard, 8);
+		if (alphatexture &&  gl.legacyMode) translation = INT_MAX;
 		
 		if (mat->tex->bHasCanvas)
 		{

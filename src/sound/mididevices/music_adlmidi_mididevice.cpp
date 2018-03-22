@@ -75,6 +75,8 @@ ADLMIDIDevice::ADLMIDIDevice(const char *args)
 	if (Renderer != nullptr)
 	{
 		adl_setBank(Renderer, 14);
+		//! Set 16'th channel be percussive (XG way)
+		adl_rt_bankChange(Renderer, 0x0F, 0x7F00);
 	}
 }
 
@@ -107,6 +109,8 @@ int ADLMIDIDevice::Open(MidiCallback callback, void *userdata)
 	if (ret == 0)
 	{
 		adl_rt_resetState(Renderer);
+		//! Set 16'th channel be percussive (XG way)
+		adl_rt_bankChange(Renderer, 0x0F, 0x7F00);
 	}
 	return ret;
 }
@@ -141,7 +145,7 @@ void ADLMIDIDevice::HandleEvent(int status, int parm1, int parm2)
 		break;
 
 	case ME_PROGRAM:
-		adl_rt_bankChange(Renderer, chan, parm1);
+		adl_rt_patchChange(Renderer, chan, parm1);
 		break;
 
 	case ME_CHANNELPRESSURE:

@@ -17,8 +17,8 @@ public:
 
 	FSkyBox();
 	~FSkyBox();
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
+	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
+	const uint8_t *GetPixels (FRenderStyle style);
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
 	bool UseBasePalette();
 	void Unload ();

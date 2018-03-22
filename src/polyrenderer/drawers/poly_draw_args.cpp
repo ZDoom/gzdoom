@@ -46,20 +46,21 @@ void PolyDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
 	mTranslation = nullptr;
 }
 
-void PolyDrawArgs::SetTexture(FTexture *texture)
+void PolyDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 {
 	mTextureWidth = texture->GetWidth();
 	mTextureHeight = texture->GetHeight();
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
 		mTexturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
-		mTexturePixels = texture->GetPixels();
+		mTexturePixels = texture->GetPixels(style);
 	mTranslation = nullptr;
 }
 
-void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool forcePal)
+void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style)
 {
-	if (translationID != 0xffffffff && translationID != 0)
+	// Alphatexture overrides translations.
+	if (translationID != 0xffffffff && translationID != 0 && !(style.Flags & STYLEF_RedIsAlpha))
 	{
 		FRemapTable *table = TranslationToTable(translationID);
 		if (table != nullptr && !table->Inactive)
@@ -71,20 +72,20 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool fo
 
 			mTextureWidth = texture->GetWidth();
 			mTextureHeight = texture->GetHeight();
-			mTexturePixels = texture->GetPixels();
+			mTexturePixels = texture->GetPixels(style);
 			return;
 		}
 	}
 	
-	if (forcePal)
+	if (style.Flags & STYLEF_RedIsAlpha)
 	{
 		mTextureWidth = texture->GetWidth();
 		mTextureHeight = texture->GetHeight();
-		mTexturePixels = texture->GetPixels();
+		mTexturePixels = texture->GetPixels(style);
 	}
 	else
 	{
-		SetTexture(texture);
+		SetTexture(texture, style);
 	}
 }
 
@@ -164,8 +165,7 @@ void PolyDrawArgs::DrawElements(PolyRenderThread *thread, const TriVertex *verti
 
 void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *tex, bool fullbright)
 {
-	bool forcePal = (renderstyle == LegacyRenderStyles[STYLE_Shaded] || renderstyle == LegacyRenderStyles[STYLE_AddShaded]);
-	SetTexture(tex, translationID, forcePal);
+	SetTexture(tex, translationID, renderstyle);
 
 	if (renderstyle == LegacyRenderStyles[STYLE_Normal] || (r_drawfuzz == 0 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{
@@ -232,20 +232,20 @@ void RectDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
 	mTranslation = nullptr;
 }
 
-void RectDrawArgs::SetTexture(FTexture *texture)
+void RectDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 {
 	mTextureWidth = texture->GetWidth();
 	mTextureHeight = texture->GetHeight();
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
 		mTexturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
-		mTexturePixels = texture->GetPixels();
+		mTexturePixels = texture->GetPixels(style);
 	mTranslation = nullptr;
 }
 
-void RectDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool forcePal)
+void RectDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style)
 {
-	if (translationID != 0xffffffff && translationID != 0)
+	if (translationID != 0xffffffff && translationID != 0 && !(style.Flags & STYLEF_RedIsAlpha))
 	{
 		FRemapTable *table = TranslationToTable(translationID);
 		if (table != nullptr && !table->Inactive)
@@ -257,20 +257,20 @@ void RectDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, bool fo
 
 			mTextureWidth = texture->GetWidth();
 			mTextureHeight = texture->GetHeight();
-			mTexturePixels = texture->GetPixels();
+			mTexturePixels = texture->GetPixels(style);
 			return;
 		}
 	}
 
-	if (forcePal)
+	if (style.Flags & STYLEF_RedIsAlpha)
 	{
 		mTextureWidth = texture->GetWidth();
 		mTextureHeight = texture->GetHeight();
-		mTexturePixels = texture->GetPixels();
+		mTexturePixels = texture->GetPixels(style);
 	}
 	else
 	{
-		SetTexture(texture);
+		SetTexture(texture, style);
 	}
 }
 
@@ -315,10 +315,9 @@ void RectDrawArgs::Draw(PolyRenderThread *thread, double x0, double x1, double y
 	thread->DrawQueue->Push<DrawRectCommand>(*this);
 }
 
-void RectDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *tex, bool fullbright)
+void RectDrawArgs::SetStyle(FRenderStyle renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *tex, bool fullbright)
 {
-	bool forcePal = (renderstyle == LegacyRenderStyles[STYLE_Shaded] || renderstyle == LegacyRenderStyles[STYLE_AddShaded]);
-	SetTexture(tex, translationID, forcePal);
+	SetTexture(tex, translationID, renderstyle);
 
 	if (renderstyle == LegacyRenderStyles[STYLE_Normal] || (r_drawfuzz == 0 && renderstyle == LegacyRenderStyles[STYLE_OptFuzzy]))
 	{

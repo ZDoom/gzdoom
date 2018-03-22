@@ -73,7 +73,7 @@ struct GrpLump
 class FGrpFile : public FUncompressedFile
 {
 public:
-	FGrpFile(const char * filename, FileReader *file);
+	FGrpFile(const char * filename, FileReader &file);
 	bool Open(bool quiet);
 };
 
@@ -84,7 +84,7 @@ public:
 //
 //==========================================================================
 
-FGrpFile::FGrpFile(const char *filename, FileReader *file)
+FGrpFile::FGrpFile(const char *filename, FileReader &file)
 : FUncompressedFile(filename, file)
 {
 	Lumps = NULL;
@@ -100,11 +100,11 @@ bool FGrpFile::Open(bool quiet)
 {
 	GrpInfo header;
 
-	Reader->Read(&header, sizeof(header));
+	Reader.Read(&header, sizeof(header));
 	NumLumps = LittleLong(header.NumLumps);
 	
 	GrpLump *fileinfo = new GrpLump[NumLumps];
-	Reader->Read (fileinfo, NumLumps * sizeof(GrpLump));
+	Reader.Read (fileinfo, NumLumps * sizeof(GrpLump));
 
 	Lumps = new FUncompressedLump[NumLumps];
 
@@ -134,21 +134,21 @@ bool FGrpFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckGRP(const char *filename, FileReader *file, bool quiet)
+FResourceFile *CheckGRP(const char *filename, FileReader &file, bool quiet)
 {
 	char head[12];
 
-	if (file->GetLength() >= 12)
+	if (file.GetLength() >= 12)
 	{
-		file->Seek(0, SEEK_SET);
-		file->Read(&head, 12);
-		file->Seek(0, SEEK_SET);
+		file.Seek(0, FileReader::SeekSet);
+		file.Read(&head, 12);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "KenSilverman", 12))
 		{
 			FResourceFile *rf = new FGrpFile(filename, file);
 			if (rf->Open(quiet)) return rf;
 
-			rf->Reader = NULL; // to avoid destruction of reader
+			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;
 		}
 	}

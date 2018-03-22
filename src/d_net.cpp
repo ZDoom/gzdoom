@@ -1914,6 +1914,10 @@ void TryRunTics (void)
 		// Check possible stall conditions
 		Net_CheckLastReceived (counts);
 
+		// Update time returned by I_GetTime, but only if we are stuck in this loop
+		if (lowtic < gametic + counts)
+			I_SetFrameTime();
+
 		// don't stay in here forever -- give the menu a chance to work
 		if (I_GetTime () - entertic >= 1)
 		{

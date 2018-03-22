@@ -36,11 +36,11 @@ public:
 		return PvsLineVisible[PvsLineStart[subsectorDepth] + lineIndex];
 	}
 
-	std::vector<subsector_t *> PvsSectors;
+	std::vector<uint32_t> PvsSubsectors;
 	double MaxCeilingHeight = 0.0;
 	double MinFloorHeight = 0.0;
 
-	std::vector<sector_t *> SeenSectors;
+	std::vector<uint32_t> SeenSectors;
 	std::vector<bool> SectorSeen;
 	std::vector<uint32_t> SubsectorDepths;
 

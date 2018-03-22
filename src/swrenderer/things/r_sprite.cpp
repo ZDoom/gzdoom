@@ -303,7 +303,7 @@ namespace swrenderer
 		thread->SpriteList->Push(vis);
 	}
 
-	void RenderSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int)
+	void RenderSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int, Fake3DTranslucent)
 	{
 		auto vis = this;
 
@@ -361,11 +361,11 @@ namespace swrenderer
 			{
 				RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
-				thread->PrepareTexture(tex);
+				thread->PrepareTexture(tex, vis->RenderStyle);
 				while (x < x2)
 				{
 					if (!translucentPass->ClipSpriteColumnWithPortals(x, vis))
-						drawerargs.DrawMaskedColumn(thread, x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, false);
+						drawerargs.DrawMaskedColumn(thread, x, iscale, tex, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, vis->RenderStyle, false);
 					x++;
 					frac += xiscale;
 				}

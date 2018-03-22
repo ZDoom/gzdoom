@@ -32,14 +32,14 @@ namespace swrenderer
 	{
 	public:
 		RenderDrawSegment(RenderThread *thread);
-		void Render(DrawSegment *ds, int x1, int x2);
+		void Render(DrawSegment *ds, int x1, int x2, Fake3DTranslucent clip3DFloor);
 
 		RenderThread *Thread = nullptr;
 
 	private:
-		bool RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade, bool wrap);
+		bool RenderWall(DrawSegment *ds, int x1, int x2, WallDrawerArgs &walldrawerargs, SpriteDrawerArgs &columndrawerargs, bool visible, FDynamicColormap *basecolormap, int wallshade);
 		void ClipMidtex(int x1, int x2);
-		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap);
+		void RenderFakeWall(DrawSegment *ds, int x1, int x2, F3DFloor *rover, int wallshade, FDynamicColormap *basecolormap, double clipTop, double clipBottom);
 		void RenderFakeWallRange(DrawSegment *ds, int x1, int x2, int wallshade);
 		void GetMaskedWallTopBottom(DrawSegment *ds, double &top, double &bot);
 
@@ -47,6 +47,7 @@ namespace swrenderer
 		sector_t *backsector = nullptr;
 
 		seg_t *curline = nullptr;
+		Fake3DTranslucent m3DFloor;
 
 		FWallCoords WallC;
 		FWallTmapVals WallT;

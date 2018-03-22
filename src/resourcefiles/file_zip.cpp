@@ -51,7 +51,7 @@
 //
 //==========================================================================
 
-static bool UncompressZipLump(char *Cache, FileReader *Reader, int Method, int LumpSize, int CompressedSize, int GPFlags)
+static bool UncompressZipLump(char *Cache, FileReader &Reader, int Method, int LumpSize, int CompressedSize, int GPFlags)
 {
 	try
 	{
@@ -59,31 +59,23 @@ static bool UncompressZipLump(char *Cache, FileReader *Reader, int Method, int L
 		{
 		case METHOD_STORED:
 		{
-			Reader->Read(Cache, LumpSize);
+			Reader.Read(Cache, LumpSize);
 			break;
 		}
 
 		case METHOD_DEFLATE:
-		{
-			FileReaderZ frz(*Reader, true);
-			frz.Read(Cache, LumpSize);
-			break;
-		}
-
 		case METHOD_BZIP2:
-		{
-			FileReaderBZ2 frz(*Reader);
-			frz.Read(Cache, LumpSize);
-			break;
-		}
-
 		case METHOD_LZMA:
 		{
-			FileReaderLZMA frz(*Reader, LumpSize, true);
-			frz.Read(Cache, LumpSize);
+			FileReader frz;
+			if (frz.OpenDecompressor(Reader, LumpSize, Method, false))
+			{
+				frz.Read(Cache, LumpSize);
+			}
 			break;
 		}
 
+		// Fixme: These should also use a stream
 		case METHOD_IMPLODE:
 		{
 			FZipExploder exploder;
@@ -112,8 +104,9 @@ static bool UncompressZipLump(char *Cache, FileReader *Reader, int Method, int L
 
 bool FCompressedBuffer::Decompress(char *destbuffer)
 {
-	MemoryReader mr(mBuffer, mCompressedSize);
-	return UncompressZipLump(destbuffer, &mr, mMethod, mSize, mCompressedSize, mZipFlags);
+	FileReader mr;
+	mr.OpenMemory(mBuffer, mCompressedSize);
+	return UncompressZipLump(destbuffer, mr, mMethod, mSize, mCompressedSize, mZipFlags);
 }
 
 //-----------------------------------------------------------------------
@@ -123,7 +116,7 @@ bool FCompressedBuffer::Decompress(char *destbuffer)
 //
 //-----------------------------------------------------------------------
 
-static uint32_t Zip_FindCentralDir(FileReader * fin)
+static uint32_t Zip_FindCentralDir(FileReader &fin)
 {
 	unsigned char buf[BUFREADCOMMENT + 4];
 	uint32_t FileSize;
@@ -131,9 +124,7 @@ static uint32_t Zip_FindCentralDir(FileReader * fin)
 	uint32_t uMaxBack; // maximum size of global comment
 	uint32_t uPosFound=0;
 
-	fin->Seek(0, SEEK_END);
-
-	FileSize = fin->Tell();
+	FileSize = (uint32_t)fin.GetLength();
 	uMaxBack = MIN<uint32_t>(0xffff, FileSize);
 
 	uBackRead = 4;
@@ -149,9 +140,9 @@ static uint32_t Zip_FindCentralDir(FileReader * fin)
 
 		uReadSize = MIN<uint32_t>((BUFREADCOMMENT + 4), (FileSize - uReadPos));
 
-		if (fin->Seek(uReadPos, SEEK_SET) != 0) break;
+		if (fin.Seek(uReadPos, FileReader::SeekSet) != 0) break;
 
-		if (fin->Read(buf, (int32_t)uReadSize) != (int32_t)uReadSize) break;
+		if (fin.Read(buf, (int32_t)uReadSize) != (int32_t)uReadSize) break;
 
 		for (i = (int)uReadSize - 3; (i--) > 0;)
 		{
@@ -174,7 +165,7 @@ static uint32_t Zip_FindCentralDir(FileReader * fin)
 //
 //==========================================================================
 
-FZipFile::FZipFile(const char * filename, FileReader *file)
+FZipFile::FZipFile(const char * filename, FileReader &file)
 : FResourceFile(filename, file)
 {
 	Lumps = NULL;
@@ -195,8 +186,8 @@ bool FZipFile::Open(bool quiet)
 	}
 
 	// Read the central directory info.
-	Reader->Seek(centraldir, SEEK_SET);
-	Reader->Read(&info, sizeof(FZipEndOfCentralDirectory));
+	Reader.Seek(centraldir, FileReader::SeekSet);
+	Reader.Read(&info, sizeof(FZipEndOfCentralDirectory));
 
 	// No multi-disk zips!
 	if (info.NumEntries != info.NumEntriesOnAllDisks ||
@@ -212,8 +203,8 @@ bool FZipFile::Open(bool quiet)
 	// Load the entire central directory. Too bad that this contains variable length entries...
 	int dirsize = LittleLong(info.DirectorySize);
 	void *directory = malloc(dirsize);
-	Reader->Seek(LittleLong(info.DirectoryOffset), SEEK_SET);
-	Reader->Read(directory, dirsize);
+	Reader.Seek(LittleLong(info.DirectoryOffset), FileReader::SeekSet);
+	Reader.Read(directory, dirsize);
 
 	char *dirptr = (char*)directory;
 	FZipLump *lump_p = Lumps;
@@ -289,6 +280,8 @@ bool FZipFile::Open(bool quiet)
 			}
 		}
 	}
+	// If it ran through the list without finding anything it should not attempt any path remapping.
+	if (!foundspeciallump) name0 = "";
 
 	dirptr = (char*)directory;
 	lump_p = Lumps;
@@ -349,6 +342,7 @@ bool FZipFile::Open(bool quiet)
 		// The start of the Reader will be determined the first time it is accessed.
 		lump_p->Flags = LUMPF_ZIPFILE | LUMPFZIP_NEEDFILESTART;
 		lump_p->Method = uint8_t(zip_fh->Method);
+		if (lump_p->Method != METHOD_STORED) lump_p->Flags |= LUMPF_COMPRESSED;
 		lump_p->GPFlags = zip_fh->Flags;
 		lump_p->CRC32 = zip_fh->CRC32;
 		lump_p->CompressedSize = LittleLong(zip_fh->CompressedSize);
@@ -394,8 +388,8 @@ FCompressedBuffer FZipLump::GetRawData()
 {
 	FCompressedBuffer cbuf = { (unsigned)LumpSize, (unsigned)CompressedSize, Method, GPFlags, CRC32, new char[CompressedSize] };
 	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
-	Owner->Reader->Seek(Position, SEEK_SET);
-	Owner->Reader->Read(cbuf.mBuffer, CompressedSize);
+	Owner->Reader.Seek(Position, FileReader::SeekSet);
+	Owner->Reader.Read(cbuf.mBuffer, CompressedSize);
 	return cbuf;
 }
 
@@ -413,10 +407,8 @@ void FZipLump::SetLumpAddress()
 	FZipLocalFileHeader localHeader;
 	int skiplen;
 
-	FileReader *file = Owner->Reader;
-
-	file->Seek(Position, SEEK_SET);
-	file->Read(&localHeader, sizeof(localHeader));
+	Owner->Reader.Seek(Position, FileReader::SeekSet);
+	Owner->Reader.Read(&localHeader, sizeof(localHeader));
 	skiplen = LittleShort(localHeader.NameLength) + LittleShort(localHeader.ExtraLength);
 	Position += sizeof(localHeader) + skiplen;
 	Flags &= ~LUMPFZIP_NEEDFILESTART;
@@ -435,8 +427,8 @@ FileReader *FZipLump::GetReader()
 	if (Method == METHOD_STORED)
 	{
 		if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
-		Owner->Reader->Seek(Position, SEEK_SET);
-		return Owner->Reader;
+		Owner->Reader.Seek(Position, FileReader::SeekSet);
+		return &Owner->Reader;
 	}
 	else return NULL;	
 }
@@ -452,7 +444,7 @@ int FZipLump::FillCache()
 	if (Flags & LUMPFZIP_NEEDFILESTART) SetLumpAddress();
 	const char *buffer;
 
-	if (Method == METHOD_STORED && (buffer = Owner->Reader->GetBuffer()) != NULL)
+	if (Method == METHOD_STORED && (buffer = Owner->Reader.GetBuffer()) != NULL)
 	{
 		// This is an in-memory file so the cache can point directly to the file's data.
 		Cache = const_cast<char*>(buffer) + Position;
@@ -460,7 +452,7 @@ int FZipLump::FillCache()
 		return -1;
 	}
 
-	Owner->Reader->Seek(Position, SEEK_SET);
+	Owner->Reader.Seek(Position, FileReader::SeekSet);
 	Cache = new char[LumpSize];
 	UncompressZipLump(Cache, Owner->Reader, Method, LumpSize, CompressedSize, GPFlags);
 	RefCount = 1;
@@ -486,21 +478,21 @@ int FZipLump::GetFileOffset()
 //
 //==========================================================================
 
-FResourceFile *CheckZip(const char *filename, FileReader *file, bool quiet)
+FResourceFile *CheckZip(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
-	if (file->GetLength() >= (long)sizeof(FZipLocalFileHeader))
+	if (file.GetLength() >= (long)sizeof(FZipLocalFileHeader))
 	{
-		file->Seek(0, SEEK_SET);
-		file->Read(&head, 4);
-		file->Seek(0, SEEK_SET);
+		file.Seek(0, FileReader::SeekSet);
+		file.Read(&head, 4);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "PK\x3\x4", 4))
 		{
 			FResourceFile *rf = new FZipFile(filename, file);
 			if (rf->Open(quiet)) return rf;
 
-			rf->Reader = NULL; // to avoid destruction of reader
+			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;
 		}
 	}
@@ -517,17 +509,19 @@ FResourceFile *CheckZip(const char *filename, FileReader *file, bool quiet)
 //
 //==========================================================================
 
-static void time_to_dos(struct tm *time, unsigned short *dosdate, unsigned short *dostime)
+static std::pair<uint16_t, uint16_t> time_to_dos(struct tm *time)
 {
+	std::pair<uint16_t, uint16_t> val;
 	if (time == NULL || time->tm_year < 80)
 	{
-		*dosdate = *dostime = 0;
+		val.first = val.second = 0;
 	}
 	else
 	{
-		*dosdate = LittleShort((time->tm_year - 80) * 512 + (time->tm_mon + 1) * 32 + time->tm_mday);
-		*dostime = LittleShort(time->tm_hour * 2048 + time->tm_min * 32 + time->tm_sec / 2);
+		val.first = (time->tm_year - 80) * 512 + (time->tm_mon + 1) * 32 + time->tm_mday;
+		val.second= time->tm_hour * 2048 + time->tm_min * 32 + time->tm_sec / 2;
 	}
+	return val;
 }
 
 //==========================================================================
@@ -542,7 +536,7 @@ static void time_to_dos(struct tm *time, unsigned short *dosdate, unsigned short
 //
 //==========================================================================
 
-int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time)
+int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime)
 {
 	FZipLocalFileHeader local;
 	int position;
@@ -550,10 +544,10 @@ int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &c
 	local.Magic = ZIP_LOCALFILE;
 	local.VersionToExtract[0] = 20;
 	local.VersionToExtract[1] = 0;
-	local.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort(2) : LittleShort((uint16_t)content.mZipFlags);
-	local.Method = LittleShort(content.mMethod);
-	local.ModDate = date;
-	local.ModTime = time;
+	local.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort((uint16_t)2) : LittleShort((uint16_t)content.mZipFlags);
+	local.Method = LittleShort((uint16_t)content.mMethod);
+	local.ModDate = LittleShort(dostime.first);
+	local.ModTime = LittleShort(dostime.second);
 	local.CRC32 = content.mCRC32;
 	local.UncompressedSize = LittleLong(content.mSize);
 	local.CompressedSize = LittleLong(content.mCompressedSize);
@@ -583,7 +577,7 @@ int AppendToZip(FileWriter *zip_file, const char *filename, FCompressedBuffer &c
 //
 //==========================================================================
 
-int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, uint16_t date, uint16_t time, int position)
+int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompressedBuffer &content, std::pair<uint16_t, uint16_t> &dostime, int position)
 {
 	FZipCentralDirectoryInfo dir;
 
@@ -592,10 +586,10 @@ int AppendCentralDirectory(FileWriter *zip_file, const char *filename, FCompress
 	dir.VersionMadeBy[1] = 0;
 	dir.VersionToExtract[0] = 20;
 	dir.VersionToExtract[1] = 0;
-	dir.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort(2) : LittleShort((uint16_t)content.mZipFlags);
-	dir.Method = LittleShort(content.mMethod);
-	dir.ModTime = time;
-	dir.ModDate = date;
+	dir.Flags = content.mMethod == METHOD_DEFLATE ? LittleShort((uint16_t)2) : LittleShort((uint16_t)content.mZipFlags);
+	dir.Method = LittleShort((uint16_t)content.mMethod);
+	dir.ModTime = LittleShort(dostime.first);
+	dir.ModDate = LittleShort(dostime.second);
 	dir.CRC32 = content.mCRC32;
 	dir.CompressedSize = LittleLong(content.mCompressedSize);
 	dir.UncompressedSize = LittleLong(content.mSize);
@@ -620,10 +614,9 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 	// try to determine local time
 	struct tm *ltime;
 	time_t ttime;
-	uint16_t mydate, mytime;
 	ttime = time(nullptr);
 	ltime = localtime(&ttime);
-	time_to_dos(ltime, &mydate, &mytime);
+	auto dostime = time_to_dos(ltime);
 
 	TArray<int> positions;
 
@@ -634,7 +627,7 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 	{
 		for (unsigned i = 0; i < filenames.Size(); i++)
 		{
-			int pos = AppendToZip(f, filenames[i], content[i], mydate, mytime);
+			int pos = AppendToZip(f, filenames[i], content[i], dostime);
 			if (pos == -1)
 			{
 				delete f;
@@ -647,7 +640,7 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		int dirofs = (int)f->Tell();
 		for (unsigned i = 0; i < filenames.Size(); i++)
 		{
-			if (AppendCentralDirectory(f, filenames[i], content[i], mydate, mytime, positions[i]) < 0)
+			if (AppendCentralDirectory(f, filenames[i], content[i], dostime, positions[i]) < 0)
 			{
 				delete f;
 				remove(filename);
@@ -660,9 +653,9 @@ bool WriteZip(const char *filename, TArray<FString> &filenames, TArray<FCompress
 		dirend.Magic = ZIP_ENDOFDIR;
 		dirend.DiskNumber = 0;
 		dirend.FirstDisk = 0;
-		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort(filenames.Size());
+		dirend.NumEntriesOnAllDisks = dirend.NumEntries = LittleShort((uint16_t)filenames.Size());
 		dirend.DirectoryOffset = LittleLong(dirofs);
-		dirend.DirectorySize = LittleLong(f->Tell() - dirofs);
+		dirend.DirectorySize = LittleLong((uint32_t)(f->Tell() - dirofs));
 		dirend.ZipCommentLength = 0;
 		if (f->Write(&dirend, sizeof(dirend)) != sizeof(dirend))
 		{

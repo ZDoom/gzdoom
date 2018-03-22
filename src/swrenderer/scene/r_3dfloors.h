@@ -33,24 +33,33 @@ namespace swrenderer
 		ClipStack *next;
 	};
 
-	enum Fake3DOpaque
+	// BSP stage
+	struct Fake3DOpaque
 	{
-		// BSP stage:
-		FAKE3D_FAKEFLOOR    = 1,  // fake floor, mark seg as FAKE
-		FAKE3D_FAKECEILING  = 2,  // fake ceiling, mark seg as FAKE
-		FAKE3D_FAKEBACK     = 4,  // RenderLine with fake backsector, mark seg as FAKE
-		FAKE3D_FAKEMASK     = 7,
-		FAKE3D_CLIPBOTFRONT = 8,  // use front sector clipping info (bottom)
-		FAKE3D_CLIPTOPFRONT = 16, // use front sector clipping info (top)
+		enum Type
+		{
+			Normal,       // Not a 3D floor
+			FakeFloor,    // fake floor, mark seg as FAKE
+			FakeCeiling,  // fake ceiling, mark seg as FAKE
+			FakeBack      // RenderLine with fake backsector, mark seg as FAKE
+		};
+		Type type = Normal;
+
+		bool clipBotFront = false; // use front sector clipping info (bottom)
+		bool clipTopFront = false; // use front sector clipping info (top)
+
+		Fake3DOpaque() { }
+		Fake3DOpaque(Type type) : type(type) { }
 	};
 
-	enum Fake3DTranslucent
+	// Drawing stage
+	struct Fake3DTranslucent
 	{
-		// sorting stage:
-		FAKE3D_CLIPBOTTOM   = 1,  // clip bottom
-		FAKE3D_CLIPTOP      = 2,  // clip top
-		FAKE3D_REFRESHCLIP  = 4,  // refresh clip info
-		FAKE3D_DOWN2UP      = 8,  // rendering from down to up (floors)
+		bool clipBottom = false;
+		bool clipTop = false;
+		bool down2Up = false; // rendering from down to up (floors)
+		double sclipBottom = 0;
+		double sclipTop = 0;
 	};
 
 	class FakeFloorClip
@@ -82,13 +91,8 @@ namespace swrenderer
 
 		RenderThread *Thread = nullptr;
 
-		int fake3D = 0;
-
 		FakeFloorClip *fakeFloor = nullptr;
-		fixed_t fakeAlpha = 0;
 		bool fakeActive = false;
-		double sclipBottom = 0;
-		double sclipTop = 0;
 		HeightLevel *height_top = nullptr;
 		HeightLevel *height_cur = nullptr;
 		int CurrentSkybox = 0;

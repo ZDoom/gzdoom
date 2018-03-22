@@ -40,191 +40,7 @@
 #include "w_wad.h"
 #include "gi.h"
 #include "i_system.h"
-
-// Console Doom LZSS wrapper.
-class FileReaderLZSS : public FileReaderBase
-{
-private:
-	enum { BUFF_SIZE = 4096, WINDOW_SIZE = 4096, INTERNAL_BUFFER_SIZE = 128 };
-
-	FileReader &File;
-	bool SawEOF;
-	uint8_t InBuff[BUFF_SIZE];
-
-	enum StreamState
-	{
-		STREAM_EMPTY,
-		STREAM_BITS,
-		STREAM_FLUSH,
-		STREAM_FINAL
-	};
-	struct
-	{
-		StreamState State;
-
-		uint8_t *In;
-		unsigned int AvailIn;
-		unsigned int InternalOut;
-
-		uint8_t CFlags, Bits;
-
-		uint8_t Window[WINDOW_SIZE+INTERNAL_BUFFER_SIZE];
-		const uint8_t *WindowData;
-		uint8_t *InternalBuffer;
-	} Stream;
-
-	void FillBuffer()
-	{
-		if(Stream.AvailIn)
-			memmove(InBuff, Stream.In, Stream.AvailIn);
-
-		long numread = File.Read(InBuff+Stream.AvailIn, BUFF_SIZE-Stream.AvailIn);
-
-		if (numread < BUFF_SIZE)
-		{
-			SawEOF = true;
-		}
-		Stream.In = InBuff;
-		Stream.AvailIn = numread+Stream.AvailIn;
-	}
-
-	// Reads a flag byte.
-	void PrepareBlocks()
-	{
-		assert(Stream.InternalBuffer == Stream.WindowData);
-		Stream.CFlags = *Stream.In++;
-		--Stream.AvailIn;
-		Stream.Bits = 0xFF;
-		Stream.State = STREAM_BITS;
-	}
-
-	// Reads the next chunk in the block. Returns true if successful and
-	// returns false if it ran out of input data.
-	bool UncompressBlock()
-	{
-		if(Stream.CFlags & 1)
-		{
-			// Check to see if we have enough input
-			if(Stream.AvailIn < 2)
-				return false;
-			Stream.AvailIn -= 2;
-
-			uint16_t pos = BigShort(*(uint16_t*)Stream.In);
-			uint8_t len = (pos & 0xF)+1;
-			pos >>= 4;
-			Stream.In += 2;
-			if(len == 1)
-			{
-				// We've reached the end of the stream.
-				Stream.State = STREAM_FINAL;
-				return true;
-			}
-
-			const uint8_t* copyStart = Stream.InternalBuffer-pos-1;
-
-			// Complete overlap: Single byte repeated
-			if(pos == 0)
-				memset(Stream.InternalBuffer, *copyStart, len);
-			// No overlap: One copy
-			else if(pos >= len)
-				memcpy(Stream.InternalBuffer, copyStart, len);
-			else
-			{
-				// Partial overlap: Copy in 2 or 3 chunks.
-				do
-				{
-					unsigned int copy = MIN<unsigned int>(len, pos+1);
-					memcpy(Stream.InternalBuffer, copyStart, copy);
-					Stream.InternalBuffer += copy;
-					Stream.InternalOut += copy;
-					len -= copy;
-					pos += copy; // Increase our position since we can copy twice as much the next round.
-				}
-				while(len);
-			}
-
-			Stream.InternalOut += len;
-			Stream.InternalBuffer += len;
-		}
-		else
-		{
-			// Uncompressed byte.
-			*Stream.InternalBuffer++ = *Stream.In++;
-			--Stream.AvailIn;
-			++Stream.InternalOut;
-		}
-
-		Stream.CFlags >>= 1;
-		Stream.Bits >>= 1;
-
-		// If we're done with this block, flush the output
-		if(Stream.Bits == 0)
-			Stream.State = STREAM_FLUSH;
-
-		return true;
-	}
-
-public:
-	FileReaderLZSS(FileReader &file) : File(file), SawEOF(false)
-	{
-		Stream.State = STREAM_EMPTY;
-		Stream.WindowData = Stream.InternalBuffer = Stream.Window+WINDOW_SIZE;
-		Stream.InternalOut = 0;
-		Stream.AvailIn = 0;
-
-		FillBuffer();
-	}
-
-	~FileReaderLZSS()
-	{
-	}
-
-	long Read(void *buffer, long len)
-	{
-
-		uint8_t *Out = (uint8_t*)buffer;
-		long AvailOut = len;
-
-		do
-		{
-			while(Stream.AvailIn)
-			{
-				if(Stream.State == STREAM_EMPTY)
-					PrepareBlocks();
-				else if(Stream.State == STREAM_BITS && !UncompressBlock())
-					break;
-				else
-					break;
-			}
-
-			unsigned int copy = MIN<unsigned int>(Stream.InternalOut, AvailOut);
-			if(copy > 0)
-			{
-				memcpy(Out, Stream.WindowData, copy);
-				Out += copy;
-				AvailOut -= copy;
-
-				// Slide our window
-				memmove(Stream.Window, Stream.Window+copy, WINDOW_SIZE+INTERNAL_BUFFER_SIZE-copy);
-				Stream.InternalBuffer -= copy;
-				Stream.InternalOut -= copy;
-			}
-
-			if(Stream.State == STREAM_FINAL)
-				break;
-
-			if(Stream.InternalOut == 0 && Stream.State == STREAM_FLUSH)
-				Stream.State = STREAM_EMPTY;
-
-			if(Stream.AvailIn < 2)
-				FillBuffer();
-		}
-		while(AvailOut && Stream.State != STREAM_FINAL);
-
-		assert(AvailOut == 0);
-		return (long)(Out - (uint8_t*)buffer);
-	}
-};
+#include "w_zip.h"
 
 //==========================================================================
 //
@@ -243,8 +59,8 @@ public:
 	{
 		if(!Compressed)
 		{
-			Owner->Reader->Seek(Position, SEEK_SET);
-			return Owner->Reader;
+			Owner->Reader.Seek(Position, FileReader::SeekSet);
+			return &Owner->Reader;
 		}
 		return NULL;
 	}
@@ -252,7 +68,7 @@ public:
 	{
 		if(!Compressed)
 		{
-			const char * buffer = Owner->Reader->GetBuffer();
+			const char * buffer = Owner->Reader.GetBuffer();
 
 			if (buffer != NULL)
 			{
@@ -263,16 +79,19 @@ public:
 			}
 		}
 
-		Owner->Reader->Seek(Position, SEEK_SET);
+		Owner->Reader.Seek(Position, FileReader::SeekSet);
 		Cache = new char[LumpSize];
 
 		if(Compressed)
 		{
-			FileReaderLZSS lzss(*Owner->Reader);
-			lzss.Read(Cache, LumpSize);
+			FileReader lzss;
+			if (lzss.OpenDecompressor(Owner->Reader, LumpSize, METHOD_LZSS, false))
+			{
+				lzss.Read(Cache, LumpSize);
+			}
 		}
 		else
-			Owner->Reader->Read(Cache, LumpSize);
+			Owner->Reader.Read(Cache, LumpSize);
 
 		RefCount = 1;
 		return 1;
@@ -294,7 +113,7 @@ class FWadFile : public FResourceFile
 	void SkinHack ();
 
 public:
-	FWadFile(const char * filename, FileReader *file);
+	FWadFile(const char * filename, FileReader &file);
 	~FWadFile();
 	void FindStrifeTeaserVoices ();
 	FResourceLump *GetLump(int lump) { return &Lumps[lump]; }
@@ -310,7 +129,8 @@ public:
 //
 //==========================================================================
 
-FWadFile::FWadFile(const char *filename, FileReader *file) : FResourceFile(filename, file)
+FWadFile::FWadFile(const char *filename, FileReader &file) 
+	: FResourceFile(filename, file)
 {
 	Lumps = NULL;
 }
@@ -331,9 +151,9 @@ bool FWadFile::Open(bool quiet)
 	wadinfo_t header;
 	uint32_t InfoTableOfs;
 	bool isBigEndian = false; // Little endian is assumed until proven otherwise
-	const long wadSize = Reader->GetLength();
+	auto wadSize = Reader.GetLength();
 
-	Reader->Read(&header, sizeof(header));
+	Reader.Read(&header, sizeof(header));
 	NumLumps = LittleLong(header.NumLumps);
 	InfoTableOfs = LittleLong(header.InfoTableOfs);
 
@@ -353,8 +173,8 @@ bool FWadFile::Open(bool quiet)
 	}
 
 	wadlump_t *fileinfo = new wadlump_t[NumLumps];
-	Reader->Seek (InfoTableOfs, SEEK_SET);
-	Reader->Read (fileinfo, NumLumps * sizeof(wadlump_t));
+	Reader.Seek (InfoTableOfs, FileReader::SeekSet);
+	Reader.Read (fileinfo, NumLumps * sizeof(wadlump_t));
 
 	Lumps = new FWadFileLump[NumLumps];
 
@@ -369,7 +189,7 @@ bool FWadFile::Open(bool quiet)
 		Lumps[i].Position = isBigEndian ? BigLong(fileinfo[i].FilePos) : LittleLong(fileinfo[i].FilePos);
 		Lumps[i].LumpSize = isBigEndian ? BigLong(fileinfo[i].Size) : LittleLong(fileinfo[i].Size);
 		Lumps[i].Namespace = ns_global;
-		Lumps[i].Flags = 0;
+		Lumps[i].Flags = Lumps[i].Compressed? LUMPF_COMPRESSED : 0;
 		Lumps[i].FullName = NULL;
 	}
 
@@ -655,21 +475,21 @@ void FWadFile::FindStrifeTeaserVoices ()
 //
 //==========================================================================
 
-FResourceFile *CheckWad(const char *filename, FileReader *file, bool quiet)
+FResourceFile *CheckWad(const char *filename, FileReader &file, bool quiet)
 {
 	char head[4];
 
-	if (file->GetLength() >= 12)
+	if (file.GetLength() >= 12)
 	{
-		file->Seek(0, SEEK_SET);
-		file->Read(&head, 4);
-		file->Seek(0, SEEK_SET);
+		file.Seek(0, FileReader::SeekSet);
+		file.Read(&head, 4);
+		file.Seek(0, FileReader::SeekSet);
 		if (!memcmp(head, "IWAD", 4) || !memcmp(head, "PWAD", 4))
 		{
 			FResourceFile *rf = new FWadFile(filename, file);
 			if (rf->Open(quiet)) return rf;
 
-			rf->Reader = NULL; // to avoid destruction of reader
+			file = std::move(rf->Reader); // to avoid destruction of reader
 			delete rf;
 		}
 	}

@@ -225,7 +225,7 @@ namespace swrenderer
 		thread->SpriteList->Push(vis);
 	}
 
-	void RenderParticle::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
+	void RenderParticle::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
 		auto vis = this;
 
@@ -239,7 +239,7 @@ namespace swrenderer
 		if (ycount <= 0 || countbase <= 0)
 			return;
 
-		DrawMaskedSegsBehindParticle(thread);
+		DrawMaskedSegsBehindParticle(thread, clip3DFloor);
 
 		uint32_t fg = LightBgra::shade_pal_index_simple(color, LightBgra::calc_light_multiplier(LIGHTSCALE(0, vis->Light.ColormapNum << FRACBITS)));
 
@@ -278,7 +278,7 @@ namespace swrenderer
 		}
 	}
 
-	void RenderParticle::DrawMaskedSegsBehindParticle(RenderThread *thread)
+	void RenderParticle::DrawMaskedSegsBehindParticle(RenderThread *thread, const Fake3DTranslucent &clip3DFloor)
 	{
 		// Draw any masked textures behind this particle so that when the
 		// particle is drawn, it will be in front of them.
@@ -297,7 +297,7 @@ namespace swrenderer
 				if (ds->CurrentPortalUniq == CurrentPortalUniq)
 				{
 					RenderDrawSegment renderer(thread);
-					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2));
+					renderer.Render(ds, MAX<int>(ds->x1, x1), MIN<int>(ds->x2, x2), clip3DFloor);
 				}
 			}
 		}

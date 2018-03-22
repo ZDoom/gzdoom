@@ -20,6 +20,7 @@ struct CPUInfo	// 92 bytes
 	uint8_t Model;
 	uint8_t Family;
 	uint8_t Type;
+	uint8_t HyperThreading;
 
 	union
 	{

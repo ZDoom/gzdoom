@@ -29,6 +29,7 @@
  */
 
 #include <string.h>
+#include <stdint.h>
 #include "timidity.h"
 #include "tables.h"
 #include "common.h"

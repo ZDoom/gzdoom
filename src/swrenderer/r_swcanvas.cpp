@@ -196,7 +196,7 @@ void SWCanvas::DrawTexture(DCanvas *canvas, FTexture *img, DrawParms &parms)
 
 		while (x < x2_i)
 		{
-			drawerargs.DrawMaskedColumn(&thread, x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, !parms.masked);
+			drawerargs.DrawMaskedColumn(&thread, x, iscale, img, frac, spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, parms.style, !parms.masked);
 			x++;
 			frac += xiscale_i;
 		}

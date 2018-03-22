@@ -16,6 +16,7 @@ class Inventory : Actor native
 	native int InterHubAmount;				// Amount of item that can be kept between hubs or levels
 	native int RespawnTics;					// Tics from pickup time to respawn time
 	native TextureID Icon;					// Icon to show on status bar or HUD
+	native TextureID AltHUDIcon;
 	native int DropTime;					// Countdown after dropping
 	native Class<Actor> SpawnPointClass;	// For respawning like Heretic's mace
 	native Class<Actor> PickupFlash;		// actor to spawn as pickup flash

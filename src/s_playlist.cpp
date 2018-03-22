@@ -62,7 +62,7 @@ bool FPlayList::ChangeList (const char *path)
 	Songs.Clear();
 	Position = 0;
 
-	if (!fr.Open(path))
+	if (!fr.OpenFile(path))
 	{
 		Printf ("Could not open " TEXTCOLOR_BOLD "%s" TEXTCOLOR_NORMAL ": %s\n", path, strerror(errno));
 		return false;
@@ -71,7 +71,7 @@ bool FPlayList::ChangeList (const char *path)
 	first = true;
 	pls = false;
 	playlistdir = ExtractFilePath(path);
-	while ((song = NextLine(&fr)).IsNotEmpty())
+	while ((song = NextLine(fr)).IsNotEmpty())
 	{
 		if (first)
 		{
@@ -133,14 +133,14 @@ bool FPlayList::ChangeList (const char *path)
 	return Songs.Size() != 0;
 }
 
-FString FPlayList::NextLine (FileReader *file)
+FString FPlayList::NextLine (FileReader &file)
 {
 	char buffer[512];
 	char *skipper;
 
 	do
 	{
-		if (NULL == file->Gets (buffer, countof(buffer)))
+		if (nullptr == file.Gets (buffer, countof(buffer)))
 			return "";
 
 		for (skipper = buffer; *skipper != 0 && *skipper <= ' '; skipper++)

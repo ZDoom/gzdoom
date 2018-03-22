@@ -28,7 +28,7 @@ namespace swrenderer
 	{
 	public:
 		FarClipLine(RenderThread *thread);
-		void Render(seg_t *line, subsector_t *subsector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane);
+		void Render(seg_t *line, subsector_t *subsector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, Fake3DOpaque opaque3dfloor);
 
 		RenderThread *Thread = nullptr;
 
@@ -44,6 +44,7 @@ namespace swrenderer
 		seg_t *mLineSegment;
 		VisiblePlane *mFloorPlane;
 		VisiblePlane *mCeilingPlane;
+		Fake3DOpaque m3DFloor;
 
 		double mFrontCeilingZ1;
 		double mFrontCeilingZ2;

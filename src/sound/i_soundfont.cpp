@@ -50,7 +50,7 @@ FSoundFontManager sfmanager;
 //
 //==========================================================================
 
-std::pair<FileReader *, FString> FSoundFontReader::LookupFile(const char *name)
+std::pair<FileReader, FString> FSoundFontReader::LookupFile(const char *name)
 {
 	if (!IsAbsPath(name))
 	{
@@ -58,12 +58,12 @@ std::pair<FileReader *, FString> FSoundFontReader::LookupFile(const char *name)
 		{
 			FString fullname = mPaths[i] + name;
 			auto fr = OpenFile(fullname);
-			if (fr != nullptr) return std::make_pair(fr, fullname);
+			if (fr.isOpen()) return std::make_pair(std::move(fr), fullname);
 		}
 	}
 	auto fr = OpenFile(name);
-	if (fr != nullptr) return std::make_pair(fr, name);
-	return std::make_pair(nullptr, FString());
+	if (!fr.isOpen()) name = "";
+	return std::make_pair(std::move(fr), name);
 }
 
 //==========================================================================
@@ -117,24 +117,24 @@ FSF2Reader::FSF2Reader(const char *fn)
 //
 //==========================================================================
 
-FileReader *FSF2Reader::OpenMainConfigFile()
+FileReader FSF2Reader::OpenMainConfigFile()
 {
+	FileReader fr;
 	if (mMainConfigForSF2.IsNotEmpty())
 	{
-		return new MemoryReader(mMainConfigForSF2.GetChars(), (long)mMainConfigForSF2.Len());
+		fr.OpenMemory(mMainConfigForSF2.GetChars(), mMainConfigForSF2.Len());
 	}
-	return nullptr;
+	return fr;
 }
 
-FileReader *FSF2Reader::OpenFile(const char *name)
+FileReader FSF2Reader::OpenFile(const char *name)
 {
+	FileReader fr;
 	if (mFilename.CompareNoCase(name) == 0)
 	{
-		auto fr = new FileReader;
-		if (fr->Open(name)) return fr;
-		delete fr;
+		fr.OpenFile(name);
 	}
-	return nullptr;
+	return fr;
 }
 
 //==========================================================================
@@ -145,7 +145,7 @@ FileReader *FSF2Reader::OpenFile(const char *name)
 
 FZipPatReader::FZipPatReader(const char *filename)
 {
-	resf = FResourceFile::OpenResourceFile(filename, nullptr, true);
+	resf = FResourceFile::OpenResourceFile(filename, true);
 }
 
 FZipPatReader::~FZipPatReader()
@@ -153,13 +153,14 @@ FZipPatReader::~FZipPatReader()
 	if (resf != nullptr) delete resf;
 }
 
-FileReader *FZipPatReader::OpenMainConfigFile()
+FileReader FZipPatReader::OpenMainConfigFile()
 {
 	return OpenFile("timidity.cfg");
 }
 
-FileReader *FZipPatReader::OpenFile(const char *name)
+FileReader FZipPatReader::OpenFile(const char *name)
 {
+	FileReader fr;
 	if (resf != nullptr)
 	{
 		auto lump = resf->FindLump(name);
@@ -168,7 +169,7 @@ FileReader *FZipPatReader::OpenFile(const char *name)
 			return lump->NewReader();
 		}
 	}
-	return nullptr;
+	return fr;
 }
 
 //==========================================================================
@@ -194,8 +195,8 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 	};
 #endif
 	mAllowAbsolutePaths = true;
-	FileReader *fr = new FileReader;
-	if (fr->Open(filename))
+	FileReader fr;
+	if (fr.OpenFile(filename))
 	{
 		mFullPathToConfig = filename;
 	}
@@ -204,7 +205,7 @@ FPatchSetReader::FPatchSetReader(const char *filename)
 		for(auto c : paths)
 		{
 			FStringf fullname("%s/%s", c, filename);
-			if (fr->Open(fullname))
+			if (fr.OpenFile(fullname))
 			{
 				mFullPathToConfig = fullname;
 			}
@@ -224,23 +225,21 @@ FPatchSetReader::FPatchSetReader()
 	mAllowAbsolutePaths = true;
 }
 
-FileReader *FPatchSetReader::OpenMainConfigFile()
+FileReader FPatchSetReader::OpenMainConfigFile()
 {
-	auto fr = new FileReader;
-	if (fr->Open(mFullPathToConfig)) return fr;
-	delete fr;
-	return nullptr;
+	FileReader fr;
+	fr.OpenFile(mFullPathToConfig);
+	return fr;
 }
 
-FileReader *FPatchSetReader::OpenFile(const char *name)
+FileReader FPatchSetReader::OpenFile(const char *name)
 {
 	FString path;
 	if (IsAbsPath(name)) path = name;
 	else path = mBasePath + name;
-	auto fr = new FileReader;
-	if (fr->Open(path)) return fr;
-	delete fr;
-	return nullptr;
+	FileReader fr;
+	fr.OpenFile(path);
+	return fr;
 }
 
 //==========================================================================
@@ -252,7 +251,6 @@ FileReader *FPatchSetReader::OpenFile(const char *name)
 FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 {
 	mLumpIndex = Wads.CheckNumForFullName(filename);
-	FileReader *fr = new FileReader;
 
 	mBasePath = filename;
 	FixPathSeperator(mBasePath);
@@ -260,19 +258,19 @@ FLumpPatchSetReader::FLumpPatchSetReader(const char *filename)
 	if (mBasePath.Len() > 0 && mBasePath.Back() != '/') mBasePath += '/';
 }
 
-FileReader *FLumpPatchSetReader::OpenMainConfigFile()
+FileReader FLumpPatchSetReader::OpenMainConfigFile()
 {
-	return Wads.ReopenLumpNum(mLumpIndex);
+	return Wads.ReopenLumpReader(mLumpIndex);
 }
 
-FileReader *FLumpPatchSetReader::OpenFile(const char *name)
+FileReader FLumpPatchSetReader::OpenFile(const char *name)
 {
 	FString path;
-	if (IsAbsPath(name)) return nullptr;	// no absolute paths in the lump directory.
+	if (IsAbsPath(name)) return FileReader();	// no absolute paths in the lump directory.
 	path = mBasePath + name;
 	auto index = Wads.CheckNumForFullName(path);
-	if (index < 0) return nullptr;
-	return Wads.ReopenLumpNum(index);
+	if (index < 0) return FileReader();
+	return Wads.ReopenLumpReader(index);
 }
 
 //==========================================================================
@@ -296,7 +294,7 @@ void FSoundFontManager::ProcessOneFile(const FString &fn)
 	}
 	
 	FileReader fr;
-	if (fr.Open(fn))
+	if (fr.OpenFile(fn))
 	{
 		// Try to identify. We only accept .sf2 and .zip by content. All other archives are intentionally ignored.
 		char head[16] = { 0};
@@ -308,7 +306,7 @@ void FSoundFontManager::ProcessOneFile(const FString &fn)
 		}
 		else if (!memcmp(head, "PK", 2))
 		{
-			auto zip = FResourceFile::OpenResourceFile(fn, nullptr, true);
+			auto zip = FResourceFile::OpenResourceFile(fn, true);
 			if (zip != nullptr)
 			{
 				if (zip->LumpCount() > 1)	// Anything with just one lump cannot possibly be a packed GUS patch set so skip it right away and simplify the lookup code
@@ -438,7 +436,7 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	if (allowed & SF_SF2)
 	{
 		FileReader fr;
-		if (fr.Open(name))
+		if (fr.OpenFile(name))
 		{
 			char head[16] = { 0};
 			fr.Read(head, 16);
@@ -452,7 +450,7 @@ FSoundFontReader *FSoundFontManager::OpenSoundFont(const char *name, int allowed
 	if (allowed & SF_GUS)
 	{
 		FileReader fr;
-		if (fr.Open(name))
+		if (fr.OpenFile(name))
 		{
 			char head[16] = { 0 };
 			fr.Read(head, 2);

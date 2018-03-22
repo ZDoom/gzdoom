@@ -105,14 +105,14 @@ void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 			if (isbgra)
 				tex->GetColumnBgra(0, &spanp);
 			else
-				tex->GetColumn(0, &spanp);
+				tex->GetColumn(DefaultRenderStyle(), 0, &spanp);
 		}
 		else if (cache != 0)
 		{
 			if (isbgra)
 				tex->GetPixelsBgra();
 			else
-				tex->GetPixels ();
+				tex->GetPixels (DefaultRenderStyle());
 		}
 		else
 		{
@@ -282,7 +282,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	cameraViewpoint = r_viewpoint;
 	cameraViewwindow = r_viewwindow;
 	
-	uint8_t *Pixels = renderTarget->IsBgra() ? (uint8_t*)tex->GetPixelsBgra() : (uint8_t*)tex->GetPixels();
+	uint8_t *Pixels = renderTarget->IsBgra() ? (uint8_t*)tex->GetPixelsBgra() : (uint8_t*)tex->GetPixels(DefaultRenderStyle());
 	DSimpleCanvas *Canvas = renderTarget->IsBgra() ? tex->GetCanvasBgra() : tex->GetCanvas();
 
 	// curse Doom's overuse of global variables in the renderer.
@@ -328,7 +328,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 		// We need to make sure that both pixel buffers contain data:
 		int width = tex->GetWidth();
 		int height = tex->GetHeight();
-		uint8_t *palbuffer = (uint8_t *)tex->GetPixels();
+		uint8_t *palbuffer = (uint8_t *)tex->GetPixels(DefaultRenderStyle());
 		uint32_t *bgrabuffer = (uint32_t*)tex->GetPixelsBgra();
 		for (int x = 0; x < width; x++)
 		{

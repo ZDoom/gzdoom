@@ -2,6 +2,7 @@
 #define SNDFILE_DECODER_H
 
 #include "i_soundinternal.h"
+#include "files.h"
 
 #ifdef HAVE_SNDFILE
 
@@ -25,13 +26,13 @@ struct SndFileDecoder : public SoundDecoder
     virtual ~SndFileDecoder();
 
 protected:
-    virtual bool open(FileReader *reader);
+    virtual bool open(FileReader &reader);
 
 private:
     SNDFILE *SndFile;
     SF_INFO SndInfo;
 
-    FileReader *Reader;
+    FileReader Reader;
     static sf_count_t file_get_filelen(void *user_data);
     static sf_count_t file_seek(sf_count_t offset, int whence, void *user_data);
     static sf_count_t file_read(void *ptr, sf_count_t count, void *user_data);

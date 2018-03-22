@@ -228,7 +228,7 @@ class OpenALSoundStream : public SoundStream
 	ALfloat Volume;
 
 
-	FileReader *Reader;
+	FileReader Reader;
 	SoundDecoder *Decoder;
 	static bool DecoderCallback(SoundStream *_sstream, void *ptr, int length, void *user)
 	{
@@ -290,7 +290,7 @@ class OpenALSoundStream : public SoundStream
 
 public:
 	OpenALSoundStream(OpenALSoundRenderer *renderer)
-	  : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f), Reader(NULL), Decoder(NULL)
+	  : Renderer(renderer), Source(0), Playing(false), Looping(false), Volume(1.0f), Decoder(NULL)
 	{
 		memset(Buffers, 0, sizeof(Buffers));
 		Renderer->AddStream(this);
@@ -317,7 +317,6 @@ public:
 		getALError();
 
 		delete Decoder;
-		delete Reader;
 	}
 
 
@@ -604,17 +603,15 @@ public:
 		return true;
 	}
 
-	bool Init(FileReader *reader, bool loop)
+	bool Init(FileReader &reader, bool loop)
 	{
 		if(!SetupSource())
 		{
-			delete reader;
 			return false;
 		}
 
 		if(Decoder) delete Decoder;
-		if(Reader) delete Reader;
-		Reader = reader;
+		Reader = std::move(reader);
 		Decoder = Renderer->CreateDecoder(Reader);
 		if(!Decoder) return false;
 
@@ -1279,7 +1276,7 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSoundRaw(uint8_t *sfxdata, 
 std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int length, bool monoize, FSoundLoadBuffer *pBuffer)
 {
 	SoundHandle retval = { NULL };
-	MemoryReader reader((const char*)sfxdata, length);
+	FileReader reader;
 	ALenum format = AL_NONE;
 	ChannelConfig chans;
 	SampleType type;
@@ -1290,10 +1287,12 @@ std::pair<SoundHandle,bool> OpenALSoundRenderer::LoadSound(uint8_t *sfxdata, int
 	/* Only downmix to mono if we can't spatialize multi-channel sounds. */
 	monoize = monoize && !AL.SOFT_source_spatialize;
 
-	FindLoopTags(&reader, &loop_start, &startass, &loop_end, &endass);
+	reader.OpenMemory(sfxdata, length);
 
-	reader.Seek(0, SEEK_SET);
-	std::unique_ptr<SoundDecoder> decoder(CreateDecoder(&reader));
+	FindLoopTags(reader, &loop_start, &startass, &loop_end, &endass);
+
+	reader.Seek(0, FileReader::SeekSet);
+	std::unique_ptr<SoundDecoder> decoder(CreateDecoder(reader));
 	if (!decoder) return std::make_pair(retval, true);
 
 	decoder->getInfo(&srate, &chans, &type);
@@ -1530,7 +1529,7 @@ SoundStream *OpenALSoundRenderer::CreateStream(SoundStreamCallback callback, int
 	return stream;
 }
 
-SoundStream *OpenALSoundRenderer::OpenStream(FileReader *reader, int flags)
+SoundStream *OpenALSoundRenderer::OpenStream(FileReader &reader, int flags)
 {
 	if(StreamThread.get_id() == std::thread::id())
 		StreamThread = std::thread(std::mem_fn(&OpenALSoundRenderer::BackgroundProc), this);

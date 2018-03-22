@@ -64,7 +64,7 @@ namespace swrenderer
 		this->idepth = idepth;
 	}
 
-	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ)
+	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
 		SWModelRenderer renderer(thread);
 		renderer.RenderModel(x, y, z, smf, actor);
@@ -199,7 +199,7 @@ namespace swrenderer
 		if (Thread->Viewport->RenderTarget->IsBgra())
 			args.SetTexture((const uint8_t *)SkinTexture->GetPixelsBgra(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 		else
-			args.SetTexture(SkinTexture->GetPixels(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
+			args.SetTexture(SkinTexture->GetPixels(DefaultRenderStyle()), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
@@ -237,7 +237,7 @@ namespace swrenderer
 		if (Thread->Viewport->RenderTarget->IsBgra())
 			args.SetTexture((const uint8_t *)SkinTexture->GetPixelsBgra(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 		else
-			args.SetTexture(SkinTexture->GetPixels(), SkinTexture->GetWidth(), SkinTexture->GetHeight());
+			args.SetTexture(SkinTexture->GetPixels(DefaultRenderStyle()), SkinTexture->GetWidth(), SkinTexture->GetHeight());
 
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);

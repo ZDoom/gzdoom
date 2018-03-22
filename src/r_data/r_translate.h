@@ -39,12 +39,12 @@ struct FRemapTable
 	bool IsIdentity() const;
 	void Serialize(FSerializer &arc);
 	static void StaticSerializeTranslations(FSerializer &arc);
-	void AddIndexRange(int start, int end, int pal1, int pal2);
-	void AddColorRange(int start, int end, int r1,int g1, int b1, int r2, int g2, int b2);
-	void AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2);
-	void AddColourisation(int start, int end, int r, int g, int b);
-	void AddTint(int start, int end, int r, int g, int b, int amount);
-	void AddToTranslation(const char * range);
+	bool AddIndexRange(int start, int end, int pal1, int pal2);
+	bool AddColorRange(int start, int end, int r1,int g1, int b1, int r2, int g2, int b2);
+	bool AddDesaturation(int start, int end, double r1, double g1, double b1, double r2, double g2, double b2);
+	bool AddColourisation(int start, int end, int r, int g, int b);
+	bool AddTint(int start, int end, int r, int g, int b, int amount);
+	bool AddToTranslation(const char * range);
 	int StoreTranslation(int slot);
 
 	uint8_t *Remap;				// For the software renderer

@@ -75,6 +75,8 @@ Instruments::~Instruments()
 
 	free_tone_bank();
 	free_instrument_map();
+
+	if (sfreader != nullptr) delete sfreader;
 }
 
 void Instruments::free_instrument(Instrument *ip)
@@ -667,20 +669,20 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			&& memcmp(tmp, "GF1PATCH100\0ID#000002", 22))) {
 		/* don't know what the differences are */
 		ctl_cmsg(CMSG_ERROR, VERB_NORMAL, "%s: not an instrument", name);
-		close_file(tf);
+		tf_close(tf);
 		return 0;
 	}
 	/* instruments.  To some patch makers, 0 means 1 */
 	if (tmp[82] != 1 && tmp[82] != 0) {
 		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
 			"Can't handle patches with %d instruments", tmp[82]);
-		close_file(tf);
+		tf_close(tf);
 		return 0;
 	}
 	if (tmp[151] != 1 && tmp[151] != 0) {	/* layers.  What's a layer? */
 		ctl_cmsg(CMSG_ERROR, VERB_NORMAL,
 			"Can't handle instruments with %d layers", tmp[151]);
-		close_file(tf);
+		tf_close(tf);
 		return 0;
 	}
 	ip = (Instrument *)safe_malloc(sizeof(Instrument));
@@ -697,7 +699,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 				free(ip->sample[j].data);
 			free(ip->sample);
 			free(ip);
-			close_file(tf);
+			tf_close(tf);
 			return 0;
 		}
 		sp = &(ip->sample[i]);
@@ -964,7 +966,7 @@ Instrument *Instruments::load_gus_instrument(char *name, ToneBank *bank, int dr,
 			ctl_cmsg(CMSG_INFO, VERB_DEBUG, " - Stripping tail");
 		}
 	}
-	close_file(tf);
+	tf_close(tf);
 	store_instrument_cache(ip, name, panning, amp, note_to_use,
 		strip_loop, strip_envelope, strip_tail);
 	return ip;

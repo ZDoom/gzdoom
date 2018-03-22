@@ -6,6 +6,7 @@ class HereticStatusBar : BaseStatusBar
 	HUDFont mBigFont;
 	InventoryBarState diparms;
 	InventoryBarState diparms_sbar;
+	private int wiggle;
 	
 
 	override void Init()
@@ -40,6 +41,12 @@ class HereticStatusBar : BaseStatusBar
 	{
 		Super.Tick();
 		mHealthInterpolator.Update(CPlayer.health);
+
+		// wiggle the chain if it moves
+		if (level.time & 1)
+		{
+			wiggle = (mHealthInterpolator.GetValue() != CPlayer.health) && Random[ChainWiggle](0, 1);
+		}
 	}
 
 	override void Draw (int state, double TicFrac)
@@ -73,7 +80,6 @@ class HereticStatusBar : BaseStatusBar
 		DrawImage("CHAINCAC", (0, 190), DI_ITEM_OFFSETS);
 		// wiggle the chain if it moves
 		int inthealth =  mHealthInterpolator.GetValue();
-		int wiggle = (inthealth != CPlayer.health) && Random[ChainWiggle](0, 1);
 		DrawGem("CHAIN", "LIFEGEM2",inthealth, CPlayer.mo.GetMaxHealth(true), (2, 191 + wiggle), 15, 25, 16, (multiplayer? DI_TRANSLATABLE : 0) | DI_ITEM_LEFT_TOP); 
 		DrawImage("LTFACE", (0, 190), DI_ITEM_OFFSETS);
 		DrawImage("RTFACE", (276, 190), DI_ITEM_OFFSETS);

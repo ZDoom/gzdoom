@@ -46,7 +46,7 @@
 class FLumpFile : public FUncompressedFile
 {
 public:
-	FLumpFile(const char * filename, FileReader *file);
+	FLumpFile(const char * filename, FileReader &file);
 	bool Open(bool quiet);
 };
 
@@ -57,7 +57,8 @@ public:
 //
 //==========================================================================
 
-FLumpFile::FLumpFile(const char *filename, FileReader *file) : FUncompressedFile(filename, file)
+FLumpFile::FLumpFile(const char *filename, FileReader &file) 
+	: FUncompressedFile(filename, file)
 {
 }
 
@@ -76,7 +77,7 @@ bool FLumpFile::Open(bool quiet)
 	Lumps->Name[8] = 0;
 	Lumps->Owner = this;
 	Lumps->Position = 0;
-	Lumps->LumpSize = Reader->GetLength();
+	Lumps->LumpSize = (int)Reader.GetLength();
 	Lumps->Namespace = ns_global;
 	Lumps->Flags = 0;
 	Lumps->FullName = NULL;
@@ -94,11 +95,12 @@ bool FLumpFile::Open(bool quiet)
 //
 //==========================================================================
 
-FResourceFile *CheckLump(const char *filename, FileReader *file, bool quiet)
+FResourceFile *CheckLump(const char *filename, FileReader &file, bool quiet)
 {
 	// always succeeds
 	FResourceFile *rf = new FLumpFile(filename, file);
 	if (rf->Open(quiet)) return rf;
+	file = std::move(rf->Reader); // to avoid destruction of reader
 	delete rf;
 	return NULL;
 }

@@ -223,10 +223,8 @@ void Instruments::free_soundfonts()
 	SFInsts *sf, *next;
 	
 	for (sf = sfrecs; sf != NULL; sf = next) {
-		if ((sf->tf != NULL) && (sf->tf->url != NULL))
-			free(sf->tf->url);
-		if (sf->tf != NULL)
-			free(sf->tf);
+		if (sf->tf != nullptr) tf_close(sf->tf);
+		sf->tf = nullptr;
 		reuse_mblock(&sf->pool);
 		next = sf->next;
 		free(sf);
@@ -308,7 +306,7 @@ void Instruments::init_sf(SFInsts *rec)
 	free_soundfont(&sfinfo);
 
 	if (opt_sf_close_each_file) {
-		close_file(rec->tf);
+		tf_close(rec->tf);
 		rec->tf = NULL;
 	}
 }
@@ -324,7 +322,7 @@ void Instruments::init_load_soundfont(void)
 void Instruments::end_soundfont(SFInsts *rec)
 {
 	if (rec->tf) {
-		close_file(rec->tf);
+		tf_close(rec->tf);
 		rec->tf = NULL;
 	}
 
@@ -383,7 +381,7 @@ Instrument *Instruments::try_load_soundfont(SFInsts *rec, int order, int bank,in
 		inst = load_from_file(rec, ip);
 
 	if (opt_sf_close_each_file) {
-		close_file(rec->tf);
+		tf_close(rec->tf);
 		rec->tf = NULL;
 	}
 

@@ -315,4 +315,4 @@ struct SFFile : public Timidity::FontFile
 	int			 NumSamples;
 };
 
-SFFile *ReadSF2(const char *filename, FileReader *f);
+SFFile *ReadSF2(const char *filename, FileReader &f);

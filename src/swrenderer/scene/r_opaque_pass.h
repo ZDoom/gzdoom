@@ -82,7 +82,7 @@ namespace swrenderer
 
 		bool CheckBBox(float *bspcoord);
 		void AddPolyobjs(subsector_t *sub);
-		void FakeDrawLoop(subsector_t *sub, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap);
+		void FakeDrawLoop(subsector_t *sub, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque opaque3dfloor);
 
 		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap);
 

@@ -31,6 +31,7 @@
 #include "r_utility.h"
 #include "templates.h"
 #include "sc_man.h"
+#include "r_data/renderstyle.h"
 #include "colormatcher.h"
 #include "textures/warpbuffer.h"
 #include "textures/bitmap.h"
@@ -297,7 +298,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 	if (hwtex)
 	{
 		// Texture has become invalid
-		if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified())
+		if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified(DefaultRenderStyle()))
 		{
 			Clean(true);
 			hwtex = CreateHwTexture();
@@ -323,7 +324,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 					WarpBuffer((uint32_t*)warpbuffer, (const uint32_t*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, screen->FrameTime, wt->Speed, tex->bWarped);
 					delete[] buffer;
 					buffer = warpbuffer;
-					wt->GenTime = screen->FrameTime;
+					wt->GenTime[0] = screen->FrameTime;
 				}
 				tex->ProcessData(buffer, w, h, false);
 			}

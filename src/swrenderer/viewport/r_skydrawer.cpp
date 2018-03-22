@@ -56,7 +56,7 @@ namespace swrenderer
 		}
 		else
 		{
-			dc_source = texture->GetColumn(column, nullptr);
+			dc_source = texture->GetColumn(DefaultRenderStyle(), column, nullptr);
 			dc_sourceheight = texture->GetHeight();
 		}
 	}
@@ -75,7 +75,7 @@ namespace swrenderer
 		}
 		else
 		{
-			dc_source2 = texture->GetColumn(column, nullptr);
+			dc_source2 = texture->GetColumn(DefaultRenderStyle(), column, nullptr);
 			dc_sourceheight2 = texture->GetHeight();
 		}
 	}

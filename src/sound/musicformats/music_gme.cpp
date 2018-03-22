@@ -128,31 +128,31 @@ MusInfo *GME_OpenSong(FileReader &reader, const char *fmt)
 	}
 	sample_rate = (int)GSnd->GetOutputRate();
 	emu = gme_new_emu(type, sample_rate);
-	if (emu == NULL)
+	if (emu == nullptr)
 	{
-		return NULL;
+		return nullptr;
 	}
 
-    int fpos = reader.Tell();
-    int len = reader.GetLength();
+    auto fpos = reader.Tell();
+	auto len = reader.GetLength();
     song = new uint8_t[len];
     if (reader.Read(song, len) != len)
     {
         delete[] song;
         gme_delete(emu);
-        reader.Seek(fpos, SEEK_SET);
-        return NULL;
+        reader.Seek(fpos, FileReader::SeekSet);
+        return nullptr;
     }
 
-	err = gme_load_data(emu, song, len);
+	err = gme_load_data(emu, song, (long)len);
     delete[] song;
 
-	if (err != NULL)
+	if (err != nullptr)
 	{
 		Printf("Failed loading song: %s\n", err);
 		gme_delete(emu);
-        reader.Seek(fpos, SEEK_SET);
-		return NULL;
+        reader.Seek(fpos, FileReader::SeekSet);
+		return nullptr;
 	}
 	gme_set_stereo_depth(emu, clamp(*gme_stereodepth, 0.f, 1.f));
 	return new GMESong(emu, sample_rate);

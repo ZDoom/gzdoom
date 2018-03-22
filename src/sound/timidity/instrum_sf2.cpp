@@ -28,7 +28,7 @@ class CBadVer {};
 struct ListHandler
 {
 	uint32_t ID;
-	void (*Parser)(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+	void (*Parser)(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
 };
 
 enum
@@ -162,15 +162,15 @@ static const SFGenComposite DefaultGenerators =
 	-1				// overridingRootKey
 };
 
-static void ParseIfil(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParseSmpl(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParseSm24(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParsePhdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParseBag(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParseMod(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParseGen(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParseInst(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
-static void ParseShdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen);
+static void ParseIfil(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParseSmpl(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParseSm24(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParsePhdr(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParseBag(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParseMod(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParseGen(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParseInst(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
+static void ParseShdr(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen);
 
 ListHandler INFOHandlers[] =
 {
@@ -225,87 +225,87 @@ static int32_t calc_rate(Renderer *song, int diff, double sec)
 }
 
 
-static inline uint32_t read_id(FileReader *f)
+static inline uint32_t read_id(FileReader &f)
 {
 	uint32_t id;
-	if (f->Read(&id, 4) != 4)
+	if (f.Read(&id, 4) != 4)
 	{
 		throw CIOErr();
 	}
 	return id;
 }
 
-static inline int read_byte(FileReader *f)
+static inline int read_byte(FileReader &f)
 {
 	uint8_t x;
-	if (f->Read(&x, 1) != 1)
+	if (f.Read(&x, 1) != 1)
 	{
 		throw CIOErr();
 	}
 	return x;
 }
 
-static inline int read_char(FileReader *f)
+static inline int read_char(FileReader &f)
 {
 	int8_t x;
-	if (f->Read(&x, 1) != 1)
+	if (f.Read(&x, 1) != 1)
 	{
 		throw CIOErr();
 	}
 	return x;
 }
 
-static inline int read_uword(FileReader *f)
+static inline int read_uword(FileReader &f)
 {
 	uint16_t x;
-	if (f->Read(&x, 2) != 2)
+	if (f.Read(&x, 2) != 2)
 	{
 		throw CIOErr();
 	}
 	return LittleShort(x);
 }
 
-static inline int read_sword(FileReader *f)
+static inline int read_sword(FileReader &f)
 {
 	int16_t x;
-	if (f->Read(&x, 2) != 2)
+	if (f.Read(&x, 2) != 2)
 	{
 		throw CIOErr();
 	}
 	return LittleShort(x);
 }
 
-static inline uint32_t read_dword(FileReader *f)
+static inline uint32_t read_dword(FileReader &f)
 {
 	uint32_t x;
-	if (f->Read(&x, 4) != 4)
+	if (f.Read(&x, 4) != 4)
 	{
 		throw CIOErr();
 	}
 	return LittleLong(x);
 }
 
-static inline void read_name(FileReader *f, char name[21])
+static inline void read_name(FileReader &f, char name[21])
 {
-	if (f->Read(name, 20) != 20)
+	if (f.Read(name, 20) != 20)
 	{
 		throw CIOErr();
 	}
 	name[20] = 0;
 }
 
-static inline void skip_chunk(FileReader *f, uint32_t len)
+static inline void skip_chunk(FileReader &f, uint32_t len)
 {
 	// RIFF, like IFF, adds an extra pad byte to the end of
 	// odd-sized chunks so that new chunks are always on even
 	// byte boundaries.
-	if (f->Seek(len + (len & 1), SEEK_CUR) != 0)
+	if (f.Seek(len + (len & 1), FileReader::SeekCur) != 0)
 	{
 		throw CIOErr();
 	}
 }
 
-static void check_list(FileReader *f, uint32_t id, uint32_t filelen, uint32_t &chunklen)
+static void check_list(FileReader &f, uint32_t id, uint32_t filelen, uint32_t &chunklen)
 {
 	if (read_id(f) != ID_LIST)
 	{
@@ -322,7 +322,7 @@ static void check_list(FileReader *f, uint32_t id, uint32_t filelen, uint32_t &c
 	}
 }
 
-static void ParseIfil(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseIfil(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	uint16_t major, minor;
 
@@ -341,7 +341,7 @@ static void ParseIfil(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chu
 	sf2->MinorVersion = minor;
 }
 
-static void ParseLIST(SFFile *sf2, FileReader *f, uint32_t chunklen, ListHandler *handlers)
+static void ParseLIST(SFFile *sf2, FileReader &f, uint32_t chunklen, ListHandler *handlers)
 {
 	ListHandler *handler;
 	uint32_t id;
@@ -375,7 +375,7 @@ static void ParseLIST(SFFile *sf2, FileReader *f, uint32_t chunklen, ListHandler
 	}
 }
 
-static void ParseINFO(SFFile *sf2, FileReader *f, uint32_t chunklen)
+static void ParseINFO(SFFile *sf2, FileReader &f, uint32_t chunklen)
 {
 	sf2->MinorVersion = -1;
 
@@ -387,7 +387,7 @@ static void ParseINFO(SFFile *sf2, FileReader *f, uint32_t chunklen)
 	}
 }
 
-static void ParseSdta(SFFile *sf2, FileReader *f, uint32_t chunklen)
+static void ParseSdta(SFFile *sf2, FileReader &f, uint32_t chunklen)
 {
 	ParseLIST(sf2, f, chunklen, SdtaHandlers);
 	if (sf2->SampleDataOffset == 0)
@@ -404,7 +404,7 @@ static void ParseSdta(SFFile *sf2, FileReader *f, uint32_t chunklen)
 	}
 }
 
-static void ParseSmpl(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseSmpl(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	// Only use the first smpl chunk. (Or should we reject files with more than one?)
 	if (sf2->SampleDataOffset == 0)
@@ -413,13 +413,13 @@ static void ParseSmpl(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chu
 		{ // Chunk must be an even number of bytes.
 			throw CBadForm();
 		}
-		sf2->SampleDataOffset = f->Tell();
+		sf2->SampleDataOffset = (uint32_t)f.Tell();
 		sf2->SizeSampleData = chunklen >> 1;
 	}
 	skip_chunk(f, chunklen);
 }
 
-static void ParseSm24(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseSm24(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	// The sm24 chunk is ignored if the file version is < 2.04
 	if (sf2->MinorVersion >= 4)
@@ -427,19 +427,19 @@ static void ParseSm24(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chu
 		// Only use the first sm24 chunk. (Or should we reject files with more than one?)
 		if (sf2->SampleDataLSBOffset == 0)
 		{
-			sf2->SampleDataLSBOffset = f->Tell();
+			sf2->SampleDataLSBOffset = (uint32_t)f.Tell();
 			sf2->SizeSampleDataLSB = chunklen;
 		}
 	}
 	skip_chunk(f, chunklen);
 }
 
-static void ParsePdta(SFFile *sf2, FileReader *f, uint32_t chunklen)
+static void ParsePdta(SFFile *sf2, FileReader &f, uint32_t chunklen)
 {
 	ParseLIST(sf2, f, chunklen, PdtaHandlers);
 }
 
-static void ParsePhdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParsePhdr(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	SFPreset *preset;
 
@@ -477,7 +477,7 @@ static void ParsePhdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chu
 	}
 }
 
-static void ParseBag(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseBag(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	SFBag *bags, *bag;
 	uint16_t prev_mod = 0;
@@ -539,7 +539,7 @@ static void ParseBag(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chun
 	}
 }
 
-static void ParseMod(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseMod(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	// Section 7.4, page 23:
 	//		It [the PMOD sub-chunk] is always a multiple of ten bytes in length,
@@ -552,7 +552,7 @@ static void ParseMod(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chun
 	skip_chunk(f, chunklen);
 }
 
-static void ParseGen(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseGen(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	SFGenList *gens, *gen;
 	int numgens;
@@ -604,7 +604,7 @@ static void ParseGen(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chun
 	}
 }
 
-static void ParseInst(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseInst(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	int i;
 	SFInst *inst;
@@ -639,7 +639,7 @@ static void ParseInst(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chu
 	}
 }
 
-static void ParseShdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chunklen)
+static void ParseShdr(SFFile *sf2, FileReader &f, uint32_t chunkid, uint32_t chunklen)
 {
 	int i;
 	SFSample *sample;
@@ -698,7 +698,7 @@ static void ParseShdr(SFFile *sf2, FileReader *f, uint32_t chunkid, uint32_t chu
 }
 
 
-SFFile *ReadSF2(const char *filename, FileReader *f)
+SFFile *ReadSF2(const char *filename, FileReader &f)
 {
 	SFFile *sf2 = NULL;
 	uint32_t filelen;
@@ -1508,33 +1508,30 @@ void SFFile::ApplyGeneratorsToRegion(SFGenComposite *gen, SFSample *sfsamp, Rend
 
 void SFFile::LoadSample(SFSample *sample)
 {
-	FileReader *fp = gus_sfreader->LookupFile(Filename).first;
+	FileReader fp = gus_sfreader->LookupFile(Filename).first;
 	uint32_t i;
 
-	if (fp == NULL)
+	if (!fp.isOpen())
 	{
 		return;
 	}
 	sample->InMemoryData = new float[sample->End - sample->Start + 1];
-	fp->Seek(SampleDataOffset + sample->Start * 2, SEEK_SET);
+	fp.Seek(SampleDataOffset + sample->Start * 2, FileReader::SeekSet);
 	// Load 16-bit sample data.
 	for (i = 0; i < sample->End - sample->Start; ++i)
 	{
-		int16_t samp;
-		*fp >> samp;
+		int16_t samp = fp.ReadInt16();
 		sample->InMemoryData[i] = samp / 32768.f;
 	}
 	if (SampleDataLSBOffset != 0)
 	{ // Load lower 8 bits of 24-bit sample data.
-		fp->Seek(SampleDataLSBOffset + sample->Start, SEEK_SET);
+		fp.Seek(SampleDataLSBOffset + sample->Start, FileReader::SeekSet);
 		for (i = 0; i < sample->End - sample->Start; ++i)
 		{
-			uint8_t samp;
-			*fp >> samp;
+			uint8_t samp = fp.ReadUInt8();
 			sample->InMemoryData[i] = ((((int32_t(sample->InMemoryData[i] * 32768) << 8) | samp) << 8) >> 8) / 8388608.f;
 		}
 	}
 	// Final 0 byte is for interpolation.
 	sample->InMemoryData[i] = 0;
-	delete fp;
 }

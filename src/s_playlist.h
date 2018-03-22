@@ -53,7 +53,7 @@ public:
 	const char *GetSong (int position) const;
 
 private:
-	static FString NextLine (FileReader *file);
+	static FString NextLine (FileReader &file);
 
 	unsigned int Position;
 	TArray<FString> Songs;

@@ -130,7 +130,7 @@ double flt_rand()
 
 struct timidity_file *open_file(const char *name, FSoundFontReader *sfreader)
 {
-    FileReader *fr;
+    FileReader fr;
     FString filename;
     if (name == nullptr)
     {
@@ -140,60 +140,56 @@ struct timidity_file *open_file(const char *name, FSoundFontReader *sfreader)
     else
     {
         auto res = sfreader->LookupFile(name);
-        fr = res.first;
+        fr = std::move(res.first);
         filename = res.second;
     }
-    if (fr == nullptr) return nullptr;
+    if (!fr.isOpen()) return nullptr;
     
 	auto tf = new timidity_file;
-	tf->url = fr;
+	tf->url = std::move(fr);
 	tf->filename = filename.GetChars();
 	return tf;
 }
 
 /* This closes files opened with open_file */
-void close_file(struct timidity_file *tf)
+void tf_close(struct timidity_file *tf)
 {
-	if (tf->url != NULL)
-	{
-		tf->url->Close();
-		delete tf->url;
-	}
+	tf->url.Close();
 	delete tf;
 }
 
 /* This is meant for skipping a few bytes. */
 void skip(struct timidity_file *tf, size_t len)
 {
-	tf->url->Seek((long)len, SEEK_CUR);
+	tf->url.Seek((long)len, FileReader::SeekCur);
 }
 
 char *tf_gets(char *buff, int n, struct timidity_file *tf)
 {
-	return tf->url->Gets(buff, n);
+	return tf->url.Gets(buff, n);
 }
 
 int tf_getc(struct timidity_file *tf)
 {
 	unsigned char c;
-	auto read = tf->url->Read(&c, 1);
+	auto read = tf->url.Read(&c, 1);
 	return read == 0 ? EOF : c;
 }
 
 long tf_read(void *buff, int32_t size, int32_t nitems, struct timidity_file *tf)
 {
-	return tf->url->Read(buff, size * nitems) / size;
+	return (long)tf->url.Read(buff, size * nitems) / size;
 }
 
 long tf_seek(struct timidity_file *tf, long offset, int whence)
 {
 
-	return tf->url->Seek(offset, whence);
+	return (long)tf->url.Seek(offset, (FileReader::ESeek)whence);
 }
 
 long tf_tell(struct timidity_file *tf)
 {
-	return tf->url->Tell();
+	return (long)tf->url.Tell();
 }
 
 }

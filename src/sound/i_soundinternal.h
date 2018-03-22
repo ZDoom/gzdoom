@@ -112,7 +112,7 @@ struct FISoundChannel
 };
 
 
-void FindLoopTags(FileReader *fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
+void FindLoopTags(FileReader &fr, uint32_t *start, bool *startass, uint32_t *end, bool *endass);
 
 
 enum SampleType
@@ -143,7 +143,7 @@ struct SoundDecoder
     virtual ~SoundDecoder() { }
 
 protected:
-    virtual bool open(FileReader *reader) = 0;
+    virtual bool open(FileReader &reader) = 0;
     friend class SoundRenderer;
 
 private:

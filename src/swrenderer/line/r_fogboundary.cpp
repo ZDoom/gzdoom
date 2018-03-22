@@ -54,7 +54,7 @@
 
 namespace swrenderer
 {
-	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, short *uclip, short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap)
+	void RenderFogBoundary::Render(RenderThread *thread, int x1, int x2, const short *uclip, const short *dclip, int wallshade, float lightleft, float lightstep, FDynamicColormap *basecolormap)
 	{
 		// This is essentially the same as R_MapVisPlane but with an extra step
 		// to create new horizontal spans whenever the light changes enough that

@@ -49,9 +49,11 @@
 #include "r_defs.h"
 #include "r_state.h"
 #include "r_data/r_translate.h"
+#include "r_data/renderstyle.h"
+#include "bitmap.h"
 
 
-class FBarShader : public FTexture
+class FBarShader : public FWorldTexture
 {
 public:
 	FBarShader(bool vertical, bool reverse)
@@ -62,6 +64,7 @@ public:
 		Width = vertical ? 2 : 256;
 		Height = vertical ? 256 : 2;
 		CalcBitSize();
+		PixelsAreStatic = 2;	// The alpha buffer is static, but if this gets used as a regular texture, a separate buffer needs to be made.
 
 		// Fill the column/row with shading values.
 		// Vertical shaders have have minimum alpha at the top
@@ -106,24 +109,42 @@ public:
 				}
 			}
 		}
-		DummySpan[0].TopOffset = 0;
-		DummySpan[0].Length = vertical ? 256 : 2;
-		DummySpan[1].TopOffset = 0;
-		DummySpan[1].Length = 0;
 	}
-	const uint8_t *GetColumn(unsigned int column, const Span **spans_out)
+
+	uint8_t *MakeTexture(FRenderStyle style) override
 	{
-		if (spans_out != NULL)
+		if (style.Flags & STYLEF_RedIsAlpha)
 		{
-			*spans_out = DummySpan;
+			return Pixels;
 		}
-		return Pixels + ((column & WidthMask) << HeightBits);
+		else
+		{
+			// Since this presents itself to the game as a regular named texture
+			// it can easily be used on walls and flats and should work as such, 
+			// even if it makes little sense.
+			auto Pix = new uint8_t[512];
+			for (int i = 0; i < 512; i++)
+			{
+				Pix[i] = GrayMap[Pixels[i]];
+			}
+			return Pix;
+		}
 	}
-	const uint8_t *GetPixels() { return Pixels; }
-	void Unload() {}
+
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override
+	{
+		bmp->CopyPixelData(x, y, Pixels, Width, Height, Height, 1, rotate, translationtables[TRANSLATION_Standard][8]->Palette, inf);
+		return 0;
+	}
+
+	bool UseBasePalette() override
+	{
+		return false;
+	}
+
+
 private:
 	uint8_t Pixels[512];
-	Span DummySpan[2];
 };
 
 

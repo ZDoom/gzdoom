@@ -676,7 +676,7 @@ static int WM_LoadConfig(const char *config_file, bool main) {
 	int token_count = 0;
 	auto config_parm = config_file;
 
-	FileReader *fr = nullptr;
+	FileReader fr;
 	if (main)
 	{
 		if (!_WM_InitReader(config_file)) return -1;	// unable to open this as a config file.

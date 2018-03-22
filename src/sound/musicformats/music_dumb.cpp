@@ -776,7 +776,6 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	};
 	dumbfile_mem_status filestate;
 	DUMBFILE *f = NULL;
-	long fpos = 0;
 	input_mod *state = NULL;
 
 	bool is_it = false;
@@ -784,8 +783,8 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 
 	atterm(dumb_exit);
 
-    int size = reader.GetLength();
-    fpos = reader.Tell();
+    int size = (int)reader.GetLength();
+	auto fpos = reader.Tell();
 
 	filestate.ptr = start;
 	filestate.offset = 0;
@@ -903,7 +902,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 		{
 			if (!(f = dumb_read_allfile(&filestate, start, reader, headsize, size)))
 			{
-                reader.Seek(fpos, SEEK_SET);
+                reader.Seek(fpos, FileReader::SeekSet);
 				return NULL;
 			}
 		}
@@ -944,7 +943,7 @@ MusInfo *MOD_OpenSong(FileReader &reader)
 	else
 	{
 		// Reposition file pointer for other codecs to do their checks.
-        reader.Seek(fpos, SEEK_SET);
+        reader.Seek(fpos, FileReader::SeekSet);
 	}
 	if (filestate.ptr != (uint8_t *)start)
 	{

@@ -136,7 +136,7 @@ public:
 
 	// Streaming sounds.
 	virtual SoundStream *CreateStream(SoundStreamCallback callback, int buffbytes, int flags, int samplerate, void *userdata);
-	virtual SoundStream *OpenStream(FileReader *reader, int flags);
+	virtual SoundStream *OpenStream(FileReader &reader, int flags);
 
 	// Starts a sound.
 	virtual FISoundChannel *StartSound(SoundHandle sfx, float vol, int pitch, int chanflags, FISoundChannel *reuse_chan);

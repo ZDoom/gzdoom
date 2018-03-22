@@ -26,7 +26,7 @@ struct MD5Context
 
 	void Init();
 	void Update(const uint8_t *buf, unsigned len);
-	void Update(FileReader *file, unsigned len);
+	void Update(FileReader &file, unsigned len);
 	void Final(uint8_t digest[16]);
 
 private:

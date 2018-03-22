@@ -1430,7 +1430,7 @@ sfxinfo_t *S_LoadSound(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 		int size = Wads.LumpLength(sfx->lumpnum);
 		if (size > 0)
 		{
-			FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
+			auto wlump = Wads.OpenLumpReader(sfx->lumpnum);
 			uint8_t *sfxdata = new uint8_t[size];
 			wlump.Read(sfxdata, size);
 			int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
@@ -1498,7 +1498,7 @@ static void S_LoadSound3D(sfxinfo_t *sfx, FSoundLoadBuffer *pBuffer)
 		int size = Wads.LumpLength(sfx->lumpnum);
 		if (size <= 0) return;
 
-		FWadLump wlump = Wads.OpenLumpNum(sfx->lumpnum);
+		auto wlump = Wads.OpenLumpReader(sfx->lumpnum);
 		uint8_t *sfxdata = new uint8_t[size];
 		wlump.Read(sfxdata, size);
 		int32_t dmxlen = LittleLong(((int32_t *)sfxdata)[1]);
@@ -2609,7 +2609,7 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			musicname += 7;
 		}
 
-		FileReader *reader = NULL;
+		FileReader reader;
 		if (!FileExists (musicname))
 		{
 			if ((lumpnum = Wads.CheckNumForFullName (musicname, true, ns_music)) == -1)
@@ -2623,17 +2623,16 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 				{
 					return false;
 				}
-				reader = Wads.ReopenLumpNumNewFile(lumpnum);
-				if (reader == NULL)
-				{
-					return false;
-				}
+				reader = Wads.ReopenLumpReader(lumpnum);
 			}
 		}
 		else
 		{
 			// Load an external file.
-			reader = new FileReader(musicname);
+			if (!reader.OpenFile(musicname))
+			{
+				return false;
+			}
 		}
 
 		// shutdown old music
@@ -2646,7 +2645,6 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 			mus_playing.name = musicname;
 			mus_playing.baseorder = order;
 			LastSong = musicname;
-			delete reader;
 			return true;
 		}
 
@@ -2654,7 +2652,6 @@ bool S_ChangeMusic (const char *musicname, int order, bool looping, bool force)
 		if (handle != NULL)
 		{
 			mus_playing.handle = handle;
-			delete reader;
 		}
 		else
 		{

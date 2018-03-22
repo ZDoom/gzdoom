@@ -34,13 +34,12 @@ vec3 lightContribution(int i, vec3 normal)
 
 vec3 ProcessMaterial(vec3 material, vec3 color)
 {
+	vec4 dynlight = uDynLightColor;
+	vec3 normal = ApplyNormalMap();
+
 	if (uLightIndex >= 0)
 	{
-		vec4 dynlight = uDynLightColor;
-		vec3 normal = ApplyNormalMap();
-
 		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
-
 		if (lightRange.z > lightRange.x)
 		{
 			// modulated lights
@@ -55,9 +54,13 @@ vec3 ProcessMaterial(vec3 material, vec3 color)
 				dynlight.rgb -= lightContribution(i, normal);
 			}
 		}
+	}
 
-		vec3 frag = material * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+	vec3 frag = material * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
 
+	if (uLightIndex >= 0)
+	{
+		ivec4 lightRange = ivec4(lights[uLightIndex]) + ivec4(uLightIndex + 1);
 		if (lightRange.w > lightRange.z)
 		{
 			vec4 addlight = vec4(0.0,0.0,0.0,0.0);
@@ -70,11 +73,7 @@ vec3 ProcessMaterial(vec3 material, vec3 color)
 
 			frag = clamp(frag + desaturate(addlight).rgb, 0.0, 1.0);
 		}
+	}
 
-		return frag;
-	}
-	else
-	{
-		return material * clamp(color + desaturate(uDynLightColor).rgb, 0.0, 1.4);
-	}
+	return frag;
 }

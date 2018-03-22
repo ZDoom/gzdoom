@@ -243,7 +243,7 @@ void FIWadManager::ParseIWadInfo(const char *fn, const char *data, int datasize,
 
 FIWadManager::FIWadManager(const char *fn)
 {
-	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, NULL, true);
+	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, true);
 	if (resfile != NULL)
 	{
 		uint32_t cnt = resfile->LumpCount();
@@ -276,7 +276,7 @@ FIWadManager::FIWadManager(const char *fn)
 
 int FIWadManager::ScanIWAD (const char *iwad)
 {
-	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, NULL, true);
+	FResourceFile *iwadfile = FResourceFile::OpenResourceFile(iwad, true);
 
 	mLumpsFound.Resize(mIWadInfos.Size());
 
@@ -332,7 +332,7 @@ int FIWadManager::ScanIWAD (const char *iwad)
 
 int FIWadManager::CheckIWADInfo(const char *fn)
 {
-	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, NULL, true);
+	FResourceFile *resfile = FResourceFile::OpenResourceFile(fn, true);
 	if (resfile != NULL)
 	{
 		uint32_t cnt = resfile->LumpCount();

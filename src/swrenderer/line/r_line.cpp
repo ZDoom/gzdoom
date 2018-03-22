@@ -71,7 +71,7 @@ namespace swrenderer
 		Thread = thread;
 	}
 
-	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, bool infog, FDynamicColormap *colormap)
+	void SWRenderLine::Render(seg_t *line, subsector_t *subsector, sector_t *sector, sector_t *fakebacksector, VisiblePlane *linefloorplane, VisiblePlane *lineceilingplane, bool infog, FDynamicColormap *colormap, Fake3DOpaque opaque3dfloor)
 	{
 		mSubsector = subsector;
 		mFrontSector = sector;
@@ -81,6 +81,7 @@ namespace swrenderer
 		foggy = infog;
 		basecolormap = colormap;
 		mLineSegment = line;
+		m3DFloor = opaque3dfloor;
 
 		DVector2 pt1 = line->v1->fPos() - Thread->Viewport->viewpoint.Pos;
 		DVector2 pt2 = line->v2->fPos() - Thread->Viewport->viewpoint.Pos;
@@ -133,7 +134,7 @@ namespace swrenderer
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
-		if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
+		if (m3DFloor.type != Fake3DOpaque::FakeBack)
 		{
 			mBackSector = line->backsector;
 		}
@@ -141,7 +142,7 @@ namespace swrenderer
 		if (mBackSector)
 		{
 			// kg3D - its fake, no transfer_heights
-			if (!(clip3d->fake3D & FAKE3D_FAKEBACK))
+			if (m3DFloor.type != Fake3DOpaque::FakeBack)
 			{ // killough 3/8/98, 4/4/98: hack for invisible ceilings / deep water
 				mBackSector = Thread->OpaquePass->FakeFlat(mBackSector, &tempsec, nullptr, nullptr, mLineSegment, WallC.sx1, WallC.sx2, mFrontCeilingZ1, mFrontCeilingZ2);
 			}
@@ -151,15 +152,15 @@ namespace swrenderer
 			mBackCeilingZ2 = mBackSector->ceilingplane.ZatPoint(line->v2);
 			mBackFloorZ2 = mBackSector->floorplane.ZatPoint(line->v2);
 
-			if (clip3d->fake3D & FAKE3D_FAKEBACK)
+			if (m3DFloor.type == Fake3DOpaque::FakeBack)
 			{
 				if (mFrontFloorZ1 >= mBackFloorZ1 && mFrontFloorZ2 >= mBackFloorZ2)
 				{
-					clip3d->fake3D |= FAKE3D_CLIPBOTFRONT;
+					m3DFloor.clipBotFront = true;
 				}
 				if (mFrontCeilingZ1 <= mBackCeilingZ1 && mFrontCeilingZ2 <= mBackCeilingZ2)
 				{
-					clip3d->fake3D |= FAKE3D_CLIPTOPFRONT;
+					m3DFloor.clipTopFront = true;
 				}
 			}
 		}
@@ -325,7 +326,7 @@ namespace swrenderer
 
 		// 3D floors code abuses the line render code to update plane clipping
 		// lists but doesn't actually draw anything.
-		bool onlyUpdatePlaneClip = (clip3d->fake3D & FAKE3D_FAKEMASK) ? true : false;
+		bool onlyUpdatePlaneClip = (m3DFloor.type != Fake3DOpaque::Normal);
 		if (!onlyUpdatePlaneClip)
 			Thread->DrawSegments->Push(draw_segment);
 
@@ -516,9 +517,9 @@ namespace swrenderer
 		MarkFloorPlane(start, stop);
 		Mark3DFloors(start, stop);
 
-		if (clip3d->fake3D & FAKE3D_FAKEMASK)
+		if (m3DFloor.type != Fake3DOpaque::Normal)
 		{
-			return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
+			return false;
 		}
 
 		MarkOpaquePassClip(start, stop);
@@ -557,7 +558,7 @@ namespace swrenderer
 			Thread->Portal->AddLinePortal(mLineSegment->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
 		}
 
-		return (clip3d->fake3D & FAKE3D_FAKEMASK) == 0;
+		return m3DFloor.type == Fake3DOpaque::Normal;
 	}
 
 	bool SWRenderLine::ShouldMarkFloor() const
@@ -1015,7 +1016,7 @@ namespace swrenderer
 
 			for (int x = x1; x < x2; ++x)
 			{
-				short top = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKECEILING) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
+				short top = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeCeiling) ? clip3d->fakeFloor->ceilingclip[x] : ceilingclip[x];
 				short bottom = MIN(walltop.ScreenY[x], floorclip[x]);
 				if (top < bottom)
 				{
@@ -1039,7 +1040,7 @@ namespace swrenderer
 			for (int x = x1; x < x2; ++x)
 			{
 				short top = MAX(wallbottom.ScreenY[x], ceilingclip[x]);
-				short bottom = (clip3d->fakeFloor && clip3d->fake3D & FAKE3D_FAKEFLOOR) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
+				short bottom = (clip3d->fakeFloor && m3DFloor.type == Fake3DOpaque::FakeFloor) ? clip3d->fakeFloor->floorclip[x] : floorclip[x];
 				if (top < bottom)
 				{
 					assert(bottom <= viewheight);
@@ -1055,12 +1056,12 @@ namespace swrenderer
 		Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 		// kg3D - fake planes clipping
-		if (clip3d->fake3D & FAKE3D_REFRESHCLIP)
+		if (m3DFloor.type == Fake3DOpaque::FakeBack)
 		{
 			auto ceilingclip = Thread->OpaquePass->ceilingclip;
 			auto floorclip = Thread->OpaquePass->floorclip;
 
-			if (clip3d->fake3D & FAKE3D_CLIPBOTFRONT)
+			if (m3DFloor.clipBotFront)
 			{
 				memcpy(clip3d->fakeFloor->floorclip + x1, wallbottom.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
@@ -1072,7 +1073,7 @@ namespace swrenderer
 				}
 				memcpy(clip3d->fakeFloor->floorclip + x1, walllower.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
-			if (clip3d->fake3D & FAKE3D_CLIPTOPFRONT)
+			if (m3DFloor.clipTopFront)
 			{
 				memcpy(clip3d->fakeFloor->ceilingclip + x1, walltop.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}

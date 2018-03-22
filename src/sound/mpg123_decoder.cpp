@@ -74,28 +74,28 @@ static bool inited = false;
 
 off_t MPG123Decoder::file_lseek(void *handle, off_t offset, int whence)
 {
-    FileReader *reader = reinterpret_cast<MPG123Decoder*>(handle)->Reader;
+    auto &reader = reinterpret_cast<MPG123Decoder*>(handle)->Reader;
 
     if(whence == SEEK_CUR)
     {
-        if(offset < 0 && reader->Tell()+offset < 0)
+        if(offset < 0 && reader.Tell()+offset < 0)
             return -1;
     }
     else if(whence == SEEK_END)
     {
-        if(offset < 0 && reader->GetLength()+offset < 0)
+        if(offset < 0 && reader.GetLength()+offset < 0)
             return -1;
     }
 
-    if(reader->Seek(offset, whence) != 0)
+    if(reader.Seek(offset, (FileReader::ESeek)whence) != 0)
         return -1;
-    return reader->Tell();
+    return (off_t)reader.Tell();
 }
 
 ssize_t MPG123Decoder::file_read(void *handle, void *buffer, size_t bytes)
 {
-    FileReader *reader = reinterpret_cast<MPG123Decoder*>(handle)->Reader;
-    return (ssize_t)reader->Read(buffer, (long)bytes);
+    auto &reader = reinterpret_cast<MPG123Decoder*>(handle)->Reader;
+    return (ssize_t)reader.Read(buffer, (long)bytes);
 }
 
 
@@ -109,7 +109,7 @@ MPG123Decoder::~MPG123Decoder()
     }
 }
 
-bool MPG123Decoder::open(FileReader *reader)
+bool MPG123Decoder::open(FileReader &reader)
 {
     if(!inited)
     {
@@ -118,7 +118,7 @@ bool MPG123Decoder::open(FileReader *reader)
 		inited = true;
     }
 
-    Reader = reader;
+	Reader = std::move(reader);
 
     {
         MPG123 = mpg123_new(NULL, NULL);
@@ -145,7 +145,8 @@ bool MPG123Decoder::open(FileReader *reader)
         MPG123 = 0;
     }
 
-    return false;
+	reader = std::move(Reader);	// need to give it back.
+	return false;
 }
 
 void MPG123Decoder::getInfo(int *samplerate, ChannelConfig *chans, SampleType *type)
@@ -214,8 +215,10 @@ bool MPG123Decoder::seek(size_t ms_offset, bool ms, bool mayrestart)
 			mpg123_delete(MPG123);
 			MPG123 = 0;
 		}
-		Reader->Seek(0, SEEK_SET);
-		return open(Reader);
+		Reader.Seek(0, FileReader::SeekSet);
+		// Do not call open with our own reader variable, that would be catastrophic.
+		auto reader = std::move(Reader);
+		return open(reader);
 	}
 }
 size_t MPG123Decoder::getSampleOffset()

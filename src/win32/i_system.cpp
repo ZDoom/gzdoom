@@ -154,6 +154,7 @@ uint32_t LanguageIDs[4];
 UINT TimerPeriod;
 
 bool gameisdead;
+int sys_ostype = 0;
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
@@ -229,10 +230,12 @@ void I_DetectOS(void)
 			if (info.dwMinorVersion == 1)
 			{
 				osname = "XP";
+				sys_ostype = 1; // legacy OS
 			}
 			else if (info.dwMinorVersion == 2)
 			{
 				osname = "Server 2003";
+				sys_ostype = 1; // legacy OS
 			}
 		}
 		else if (info.dwMajorVersion == 6)
@@ -240,10 +243,12 @@ void I_DetectOS(void)
 			if (info.dwMinorVersion == 0)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "Vista" : "Server 2008";
+				sys_ostype = 2; // legacy OS
 			}
 			else if (info.dwMinorVersion == 1)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "7" : "Server 2008 R2";
+				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 2)	
 			{
@@ -251,15 +256,22 @@ void I_DetectOS(void)
 				// the highest version of Windows you support, which will also be the
 				// highest version of Windows this function returns.
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8" : "Server 2012";
+				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 3)
 			{
 				osname = (info.wProductType == VER_NT_WORKSTATION) ? "8.1" : "Server 2012 R2";
+				sys_ostype = 2; // supported OS
 			}
 			else if (info.dwMinorVersion == 4)
 			{
-				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 10 (or higher)";
+				osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (beta)" : "Server 10 (beta)";
 			}
+		}
+		else if (info.dwMajorVersion == 10)
+		{
+			osname = (info.wProductType == VER_NT_WORKSTATION) ? "10 (or higher)" : "Server 10 (or higher)";
+			sys_ostype = 3; // modern OS
 		}
 		break;
 

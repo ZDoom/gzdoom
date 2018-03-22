@@ -49,7 +49,7 @@ namespace swrenderer
 
 	private:
 		void CollectPortals();
-		void DrawMaskedSingle(bool renew);
+		void DrawMaskedSingle(bool renew, Fake3DTranslucent clip3DFloor);
 
 		TArray<DrawSegment *> portaldrawsegs;
 	};

@@ -32,7 +32,7 @@ namespace swrenderer
 
 	void SpanDrawerArgs::SetTexture(RenderThread *thread, FTexture *tex)
 	{
-		thread->PrepareTexture(tex);
+		thread->PrepareTexture(tex, DefaultRenderStyle());
 
 		ds_texwidth = tex->GetWidth();
 		ds_texheight = tex->GetHeight();
@@ -47,7 +47,7 @@ namespace swrenderer
 			ds_ybits--;
 		}
 
-		ds_source = thread->Viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels();
+		ds_source = thread->Viewport->RenderTarget->IsBgra() ? (const uint8_t*)tex->GetPixelsBgra() : tex->GetPixels(DefaultRenderStyle()); // Get correct render style? Shaded won't get here.
 		ds_source_mipmapped = tex->Mipmapped() && tex->GetWidth() > 1 && tex->GetHeight() > 1;
 	}
 

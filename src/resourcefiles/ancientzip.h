@@ -38,7 +38,7 @@ class FZipExploder
 	int DecodeSFValue(const TArray<HuffNode> &currentTree);
 	int DecodeSF(TArray<HuffNode> &decoder, int numvals);
 public:
-	int Explode(unsigned char *out, unsigned int outsize, FileReader *in, unsigned int insize, int flags);
+	int Explode(unsigned char *out, unsigned int outsize, FileReader &in, unsigned int insize, int flags);
 };
 
 class CExplosionError : CRecoverableError
@@ -47,4 +47,4 @@ public:
 	CExplosionError(const char *message) : CRecoverableError(message) {}
 };
 
-int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader *in, unsigned int insize);
+int ShrinkLoop(unsigned char *out, unsigned int outsize, FileReader &in, unsigned int insize);

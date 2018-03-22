@@ -121,6 +121,8 @@
 
 EXTERN_CVAR(Bool, hud_althud)
 void DrawHUD();
+void D_DoAnonStats();
+
 
 // MACROS ------------------------------------------------------------------
 
@@ -1947,7 +1949,6 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 	for(int i=pwads.Size()-1; i>=0; i--)
 	{
 		bool isdir = false;
-		FileReader *wadinfo;
 		FResourceFile *resfile;
 		const char *filename = pwads[i];
 
@@ -1960,16 +1961,13 @@ static FString CheckGameInfo(TArray<FString> & pwads)
 
 		if (!isdir)
 		{
-			try
-			{
-				wadinfo = new FileReader(filename);
-			}
-			catch (CRecoverableError &)
+			FileReader fr;
+			if (!fr.OpenFile(filename))
 			{ 
 				// Didn't find file
 				continue;
 			}
-			resfile = FResourceFile::OpenResourceFile(filename, wadinfo, true);
+			resfile = FResourceFile::OpenResourceFile(filename, fr, true);
 		}
 		else
 			resfile = FResourceFile::OpenDirectory(filename, true);
@@ -2353,6 +2351,9 @@ void D_DoomMain (void)
 	if (!batchrun) Printf(PRINT_LOG, "%s version %s\n", GAMENAME, GetVersionString());
 
 	D_DoomInit();
+
+	extern void D_ConfirmSendStats();
+	D_ConfirmSendStats();
 
 	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
@@ -2747,6 +2748,8 @@ void D_DoomMain (void)
 			D_StartTitle ();				// start up intro loop
 			setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 		}
+
+		D_DoAnonStats();
 
 		if (I_FriendlyWindowTitle)
 			I_SetWindowTitle(DoomStartupInfo.Name.GetChars());

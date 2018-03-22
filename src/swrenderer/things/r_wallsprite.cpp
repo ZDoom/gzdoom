@@ -145,7 +145,7 @@ namespace swrenderer
 		thread->SpriteList->Push(vis);
 	}
 
-	void RenderWallSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int)
+	void RenderWallSprite::Render(RenderThread *thread, short *mfloorclip, short *mceilingclip, int, int, Fake3DTranslucent)
 	{
 		auto spr = this;
 
@@ -239,7 +239,7 @@ namespace swrenderer
 		{
 			RenderTranslucentPass *translucentPass = thread->TranslucentPass.get();
 
-			thread->PrepareTexture(WallSpriteTile);
+			thread->PrepareTexture(WallSpriteTile, spr->RenderStyle);
 			while (x < x2)
 			{
 				if (calclighting)
@@ -247,14 +247,14 @@ namespace swrenderer
 					drawerargs.SetLight(usecolormap, light, shade);
 				}
 				if (!translucentPass->ClipSpriteColumnWithPortals(x, spr))
-					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip);
+					DrawColumn(thread, drawerargs, x, WallSpriteTile, walltexcoords, texturemid, maskedScaleY, sprflipvert, mfloorclip, mceilingclip, spr->RenderStyle);
 				light += lightstep;
 				x++;
 			}
 		}
 	}
 
-	void RenderWallSprite::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip)
+	void RenderWallSprite::DrawColumn(RenderThread *thread, SpriteDrawerArgs &drawerargs, int x, FTexture *WallSpriteTile, const ProjectedWallTexcoords &walltexcoords, double texturemid, float maskedScaleY, bool sprflipvert, const short *mfloorclip, const short *mceilingclip, FRenderStyle style)
 	{
 		auto viewport = thread->Viewport.get();
 		
@@ -266,6 +266,6 @@ namespace swrenderer
 		else
 			sprtopscreen = viewport->CenterY - texturemid * spryscale;
 
-		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip);
+		drawerargs.DrawMaskedColumn(thread, x, FLOAT2FIXED(iscale), WallSpriteTile, walltexcoords.UPos[x], spryscale, sprtopscreen, sprflipvert, mfloorclip, mceilingclip, style);
 	}
 }

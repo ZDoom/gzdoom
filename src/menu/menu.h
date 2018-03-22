@@ -71,7 +71,6 @@ private:
 	FSaveGameNode NewSaveNode;
 	int LastSaved = -1;
 	int LastAccessed = -1;
-	FileReader *currentSavePic = nullptr;
 	TArray<char> SavePicData;
 	FTexture *SavePic = nullptr;
 	FBrokenLines *SaveComment = nullptr;

@@ -47,6 +47,7 @@ namespace swrenderer
 		fixed_t *maskedtexturecol = nullptr;
 		float *swall = nullptr;
 		short *bkup = nullptr; // sprtopclip backup, for mid and fake textures
+		bool sprclipped = false; // True if draw segment was used for clipping sprites
 		
 		FWallTmapVals tmapvals;
 		

@@ -85,7 +85,7 @@ StreamSong::~StreamSong ()
 	}
 }
 
-StreamSong::StreamSong (FileReader *reader)
+StreamSong::StreamSong (FileReader &reader)
 {
     m_Stream = GSnd->OpenStream (reader, SoundStream::Loop);
 }

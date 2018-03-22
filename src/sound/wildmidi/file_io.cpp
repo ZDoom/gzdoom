@@ -60,7 +60,7 @@ bool _WM_InitReader(const char *config_file)
 
 unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size) 
 {
-	FileReader *fp;
+	FileReader fp;
 
 	if (filename == nullptr)
 	{
@@ -72,13 +72,13 @@ unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size)
 		fp = wm_sfreader->OpenFile(filename);
 	}
 
-	if (fp == NULL)
+	if (!fp.isOpen())
 	{
 		_WM_ERROR(__FUNCTION__, __LINE__, WM_ERR_LOAD, filename, errno);
 		return NULL;
 	}
 
-	long fsize = fp->GetLength();
+	auto fsize = fp.GetLength();
 
 	if (fsize > WM_MAXFILESIZE) 
 	{
@@ -95,9 +95,8 @@ unsigned char *_WM_BufferFile(const char *filename, unsigned long int *size)
 		return NULL;
 	}
 
-	fp->Read(data, fsize);
-	delete fp;
+	fp.Read(data, fsize);
 	data[fsize] = 0;
-	*size = fsize;
+	*size = (long)fsize;
 	return data;
 }

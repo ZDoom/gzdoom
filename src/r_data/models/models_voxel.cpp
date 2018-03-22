@@ -53,23 +53,17 @@
 //
 //===========================================================================
 
-class FVoxelTexture : public FTexture
+class FVoxelTexture : public FWorldTexture
 {
 public:
-
 	FVoxelTexture(FVoxel *voxel);
-	~FVoxelTexture();
-	const uint8_t *GetColumn (unsigned int column, const Span **spans_out);
-	const uint8_t *GetPixels ();
-	void Unload ();
 
-	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf);
-	bool UseBasePalette() { return false; }
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
+	bool UseBasePalette() override { return false; }
+	uint8_t *MakeTexture(FRenderStyle style) override;
 
 protected:
 	FVoxel *SourceVox;
-	uint8_t *Pixels;
-
 };
 
 //===========================================================================
@@ -86,7 +80,6 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 	WidthBits = 4;
 	HeightBits = 4;
 	WidthMask = 15;
-	Pixels = NULL;
 	gl_info.bNoFilter = true;
 	gl_info.bNoCompress = true;
 }
@@ -97,54 +90,32 @@ FVoxelTexture::FVoxelTexture(FVoxel *vox)
 //
 //===========================================================================
 
-FVoxelTexture::~FVoxelTexture()
-{
-}
-
-const uint8_t *FVoxelTexture::GetColumn (unsigned int column, const Span **spans_out)
-{
-	// not needed
-	return NULL;
-}
-
-const uint8_t *FVoxelTexture::GetPixels ()
+uint8_t *FVoxelTexture::MakeTexture (FRenderStyle style)
 {
 	// GetPixels gets called when a translated palette is used so we still need to implement it here.
-	if (Pixels == NULL)
+	auto Pixels = new uint8_t[256];
+	uint8_t *pp = SourceVox->Palette;
+
+	if(pp != NULL)
 	{
-		Pixels = new uint8_t[256];
-
-		uint8_t *pp = SourceVox->Palette;
-
-		if(pp != NULL)
+		for(int i=0;i<256;i++, pp+=3)
 		{
-			for(int i=0;i<256;i++, pp+=3)
-			{
-				PalEntry pe;
-				pe.r = (pp[0] << 2) | (pp[0] >> 4);
-				pe.g = (pp[1] << 2) | (pp[1] >> 4);
-				pe.b = (pp[2] << 2) | (pp[2] >> 4);
-				Pixels[i] = ColorMatcher.Pick(pe);
-			}
+			PalEntry pe;
+			pe.r = (pp[0] << 2) | (pp[0] >> 4);
+			pe.g = (pp[1] << 2) | (pp[1] >> 4);
+			pe.b = (pp[2] << 2) | (pp[2] >> 4);
+			// Alphatexture handling is just for completeness, but rather unlikely to be used ever.
+			Pixels[i] = (style.Flags & STYLEF_RedIsAlpha)? pe.r : ColorMatcher.Pick(pe);
 		}
-		else 
-		{
-			for(int i=0;i<256;i++, pp+=3)
-			{
-				Pixels[i] = (uint8_t)i;
-			}
-		}  
 	}
-	return Pixels;
-}
-
-void FVoxelTexture::Unload ()
-{
-	if (Pixels != NULL)
+	else 
 	{
-		delete[] Pixels;
-		Pixels = NULL;
-	}
+		for(int i=0;i<256;i++, pp+=3)
+		{
+			Pixels[i] = (uint8_t)i;
+		}
+	}  
+	return Pixels;
 }
 
 //===========================================================================

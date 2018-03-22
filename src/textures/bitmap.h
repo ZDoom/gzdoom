@@ -235,6 +235,15 @@ struct cCMYK
 	static __forceinline int Gray(const unsigned char * p) { return (R(p)*77 + G(p)*143 + B(p)*36)>>8; }
 };
 
+struct cYCbCr
+{
+	static __forceinline unsigned char R(const unsigned char * p) { return clamp((int)(p[0] + 1.40200 * (int(p[2]) - 0x80)), 0, 255); }
+	static __forceinline unsigned char G(const unsigned char * p) { return clamp((int)(p[0] - 0.34414 * (int(p[1] - 0x80)) - 0.71414 * (int(p[2]) - 0x80)), 0, 255); }
+	static __forceinline unsigned char B(const unsigned char * p) { return clamp((int)(p[0] + 1.77200 * (int(p[1]) - 0x80)), 0, 255); }
+	static __forceinline unsigned char A(const unsigned char * p, uint8_t x, uint8_t y, uint8_t z) { return 255; }
+	static __forceinline int Gray(const unsigned char * p) { return (R(p) * 77 + G(p) * 143 + B(p) * 36) >> 8; }
+};
+
 struct cBGR
 {
 	static __forceinline unsigned char R(const unsigned char * p) { return p[2]; }
@@ -310,6 +319,7 @@ enum ColorType
 	CF_RGBA,
 	CF_IA,
 	CF_CMYK,
+	CF_YCbCr,
 	CF_BGR,
 	CF_BGRA,
 	CF_I16,

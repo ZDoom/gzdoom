@@ -72,23 +72,23 @@ bool IsSndFilePresent()
 
 sf_count_t SndFileDecoder::file_get_filelen(void *user_data)
 {
-    FileReader *reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
-    return reader->GetLength();
+    auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
+    return reader.GetLength();
 }
 
 sf_count_t SndFileDecoder::file_seek(sf_count_t offset, int whence, void *user_data)
 {
-    FileReader *reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
+	auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
 
-    if(reader->Seek((long)offset, whence) != 0)
+    if(reader.Seek((long)offset, (FileReader::ESeek)whence) != 0)
         return -1;
-    return reader->Tell();
+    return reader.Tell();
 }
 
 sf_count_t SndFileDecoder::file_read(void *ptr, sf_count_t count, void *user_data)
 {
-    FileReader *reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
-    return reader->Read(ptr, (long)count);
+	auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
+	return reader.Read(ptr, (long)count);
 }
 
 sf_count_t SndFileDecoder::file_write(const void *ptr, sf_count_t count, void *user_data)
@@ -98,8 +98,8 @@ sf_count_t SndFileDecoder::file_write(const void *ptr, sf_count_t count, void *u
 
 sf_count_t SndFileDecoder::file_tell(void *user_data)
 {
-    FileReader *reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
-    return reader->Tell();
+	auto &reader = reinterpret_cast<SndFileDecoder*>(user_data)->Reader;
+	return reader.Tell();
 }
 
 
@@ -110,13 +110,13 @@ SndFileDecoder::~SndFileDecoder()
     SndFile = 0;
 }
 
-bool SndFileDecoder::open(FileReader *reader)
+bool SndFileDecoder::open(FileReader &reader)
 {
 	if (!IsSndFilePresent()) return false;
 	
 	SF_VIRTUAL_IO sfio = { file_get_filelen, file_seek, file_read, file_write, file_tell };
 
-	Reader = reader;
+	Reader = std::move(reader);
 	SndInfo.format = 0;
 	SndFile = sf_open_virtual(&sfio, SFM_READ, &SndInfo, this);
 	if (SndFile)
@@ -127,7 +127,8 @@ bool SndFileDecoder::open(FileReader *reader)
 		sf_close(SndFile);
 		SndFile = 0;
 	}
-    return false;
+	reader = std::move(Reader);	// need to give it back.
+	return false;
 }
 
 void SndFileDecoder::getInfo(int *samplerate, ChannelConfig *chans, SampleType *type)

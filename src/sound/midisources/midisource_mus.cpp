@@ -33,11 +33,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#if !defined(__FreeBSD__) && !defined(__APPLE__) && !defined(__OpenBSD__)
-#include <malloc.h>
-#else
-#include <stdlib.h>
-#endif
 #include "i_musicinterns.h"
 #include "templates.h"
 #include "doomdef.h"

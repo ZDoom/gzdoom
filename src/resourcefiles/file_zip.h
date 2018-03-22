@@ -43,7 +43,7 @@ class FZipFile : public FResourceFile
 	FZipLump *Lumps;
 
 public:
-	FZipFile(const char * filename, FileReader *file);
+	FZipFile(const char * filename, FileReader &file);
 	virtual ~FZipFile();
 	bool Open(bool quiet);
 	virtual FResourceLump *GetLump(int no) { return ((unsigned)no < NumLumps)? &Lumps[no] : NULL; }

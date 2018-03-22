@@ -114,13 +114,13 @@ static bool CheckIfPatch(FileReader & file, bool &isalpha)
 				return false;
 			}
 		}
-		delete [] data;
 		if (!gapAtStart)
 		{
 			// only check this if the texture passed validation.
 			// Here is a good point because we already have a valid buffer of the lump's data.
 			isalpha = checkPatchForAlpha(data, (uint32_t)file.GetLength());
 		}
+		delete[] data;
 		return !gapAtStart;
 	}
 	delete [] data;
@@ -273,7 +273,7 @@ uint8_t *FPatchTexture::MakeTexture (FRenderStyle style)
 int FPatchTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][isalpha ? STD_Gray : STD_Grayscale]->Palette, inf);
+	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette, inf);
 }
 
 //==========================================================================

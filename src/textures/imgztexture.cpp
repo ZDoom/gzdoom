@@ -217,6 +217,6 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 int FIMGZTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	if (!isalpha) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
-	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][isalpha ? STD_Gray : STD_Grayscale]->Palette, inf);
+	else return CopyTrueColorTranslated(bmp, x, y, rotate, translationtables[TRANSLATION_Standard][STD_Grayscale]->Palette, inf);
 }
 

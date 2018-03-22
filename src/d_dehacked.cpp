@@ -564,6 +564,8 @@ static void stripwhite (char *str)
 
 static char *igets (void)
 {
+	assert(PatchPt != nullptr);
+
 	char *line;
 
 	if (*PatchPt == '\0' || PatchPt >= PatchFile + PatchSize )
@@ -2536,7 +2538,7 @@ static bool DoDehPatch()
 	cont = 0;
 	if (0 == strncmp (PatchFile, "Patch File for DeHackEd v", 25))
 	{
-		if (PatchFile[25] < '3' && PatchFile[25] != '2' && PatchFile[27] != '3')
+		if (PatchFile[25] < '3' && (PatchFile[25] < '2' || PatchFile[27] < '3'))
 		{
 			Printf (PRINT_BOLD, "\"%s\" is an old and unsupported DeHackEd patch\n", PatchName);
 			delete[] PatchName;
@@ -2550,16 +2552,16 @@ static bool DoDehPatch()
 		}
 
 		PatchPt = strchr (PatchFile, '\n');
-		while ((cont = GetLine()) == 1)
+		while (PatchPt != nullptr && (cont = GetLine()) == 1)
 		{
 				 CHECKKEY ("Doom version", dversion)
 			else CHECKKEY ("Patch format", pversion)
 		}
 		if (!cont || dversion == -1 || pversion == -1)
 		{
+			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", PatchName);
 			delete[] PatchName;
 			delete[] PatchFile;
-			Printf (PRINT_BOLD, "\"%s\" is not a DeHackEd patch file\n", PatchFile);
 			return false;
 		}
 	}

@@ -420,12 +420,17 @@ bool SndFileSong::Read(SoundStream *stream, void *vbuff, int ilen, void *userdat
 		// This looks a bit more complicated than necessary because libmpg123 will not read the full requested length for the last block in the file.
 		if (currentpos + framestoread > song->Loop_End)
 		{
-			size_t endblock = (song->Loop_End - currentpos) * song->Channels * 2;
-			size_t endlen = song->Decoder->read(buff, endblock);
+			// Loop can be very short, make sure the current position doesn't exceed it
+			if (currentpos < song->Loop_End)
+			{
+				size_t endblock = (song->Loop_End - currentpos) * song->Channels * 2;
+				size_t endlen = song->Decoder->read(buff, endblock);
 
-			// Even if zero bytes was read give it a chance to start from the beginning
-			buff = buff + endlen;
-			len -= endlen;
+				// Even if zero bytes was read give it a chance to start from the beginning
+				buff += endlen;
+				len -= endlen;
+			}
+
 			song->Decoder->seek(song->Loop_Start, false, true);
 		}
 		while (len > 0)

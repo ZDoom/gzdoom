@@ -2352,6 +2352,9 @@ void D_DoomMain (void)
 
 	D_DoomInit();
 
+	extern void D_ConfirmSendStats();
+	D_ConfirmSendStats();
+
 	// [RH] Make sure zdoom.pk3 is always loaded,
 	// as it contains magic stuff we need.
 	wad = BaseFileSearch (BASEWAD, NULL, true);

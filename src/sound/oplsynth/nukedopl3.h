@@ -32,6 +32,9 @@
 #include "opl.h"
 #include "musicblock.h"
 
+namespace NukedOPL3
+{
+
 typedef uintptr_t	Bitu;
 typedef intptr_t	Bits;
 typedef uint32_t	Bit32u;
@@ -233,3 +236,5 @@ public:
 
 	NukedOPL3(bool stereo);
 };
+
+} // namespace NukedOPL3

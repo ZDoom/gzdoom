@@ -1161,10 +1161,12 @@ void DFrameBuffer::DrawBlendingRect()
 // DFrameBuffer :: CreateTexture
 //
 // Creates a native texture for a game texture, if supported.
+// The hardware renderer does not use this interface because it is 
+// far too limited
 //
 //==========================================================================
 
-FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex, bool wrapping)
+FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping)
 {
 	return NULL;
 }
@@ -1261,6 +1263,12 @@ FNativePalette::~FNativePalette()
 
 FNativeTexture::~FNativeTexture()
 {
+	// Remove link from the game texture
+	if (mGameTex != nullptr)
+	{
+		mGameTex->Native[mFormat] = nullptr;
+	}
+
 }
 
 bool FNativeTexture::CheckWrapping(bool wrapping)

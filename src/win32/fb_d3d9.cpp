@@ -128,10 +128,9 @@ struct D3DFB::Atlas
 class D3DTex : public FNativeTexture
 {
 public:
-	D3DTex(FTexture *tex, D3DFB *fb, bool wrapping);
+	D3DTex(FTexture *tex, FTextureFormat fmt, D3DFB *fb, bool wrapping);
 	~D3DTex();
 
-	FTexture *GameTex;
 	D3DFB::PackedTexture *Box;
 
 	D3DTex **Prev;
@@ -143,7 +142,6 @@ public:
 	bool Update();
 	bool CheckWrapping(bool wrapping);
 	D3DFORMAT GetTexFormat();
-	FTextureFormat ToTexFmt(D3DFORMAT fmt);
 };
 
 class D3DPal : public FNativePalette
@@ -2208,7 +2206,8 @@ void D3DFB::Atlas::FreeBox(D3DFB::PackedTexture *box)
 //
 //==========================================================================
 
-D3DTex::D3DTex(FTexture *tex, D3DFB *fb, bool wrapping)
+D3DTex::D3DTex(FTexture *tex, FTextureFormat fmt, D3DFB *fb, bool wrapping)
+	: FNativeTexture(tex, fmt)
 {
 	// Attach to the texture list for the D3DFB
 	Next = fb->Textures;
@@ -2219,7 +2218,6 @@ D3DTex::D3DTex(FTexture *tex, D3DFB *fb, bool wrapping)
 	Prev = &fb->Textures;
 	fb->Textures = this;
 
-	GameTex = tex;
 	Box = NULL;
 	IsGray = false;
 
@@ -2244,11 +2242,6 @@ D3DTex::~D3DTex()
 	if (Next != NULL)
 	{
 		Next->Prev = Prev;
-	}
-	// Remove link from the game texture
-	if (GameTex != NULL)
-	{
-		GameTex->Native = NULL;
 	}
 }
 
@@ -2289,7 +2282,7 @@ bool D3DTex::Create(D3DFB *fb, bool wrapping)
 		Box->Owner->FreeBox(Box);
 	}
 
-	Box = fb->AllocPackedTexture(GameTex->GetWidth(), GameTex->GetHeight(), wrapping, GetTexFormat());
+	Box = fb->AllocPackedTexture(mGameTex->GetWidth(), mGameTex->GetHeight(), wrapping, GetTexFormat());
 
 	if (Box == NULL)
 	{
@@ -2322,7 +2315,7 @@ bool D3DTex::Update()
 	assert(Box != NULL);
 	assert(Box->Owner != NULL);
 	assert(Box->Owner->Tex != NULL);
-	assert(GameTex != NULL);
+	assert(mGameTex != NULL);
 
 	if (FAILED(Box->Owner->Tex->GetLevelDesc(0, &desc)))
 	{
@@ -2338,12 +2331,12 @@ bool D3DTex::Update()
 	{
 		dest += lrect.Pitch + (desc.Format == D3DFMT_L8 ? 1 : 4);
 	}
-	GameTex->FillBuffer(dest, lrect.Pitch, GameTex->GetHeight(), ToTexFmt(desc.Format));
+	mGameTex->FillBuffer(dest, lrect.Pitch, mGameTex->GetHeight(), mFormat);
 	if (Box->Padded)
 	{
 		// Clear top padding row.
 		dest = (uint8_t *)lrect.pBits;
-		int numbytes = GameTex->GetWidth() + 2;
+		int numbytes = mGameTex->GetWidth() + 2;
 		if (desc.Format != D3DFMT_L8)
 		{
 			numbytes <<= 2;
@@ -2386,49 +2379,23 @@ bool D3DTex::Update()
 
 D3DFORMAT D3DTex::GetTexFormat()
 {
-	FTextureFormat fmt = GameTex->GetFormat();
-
 	IsGray = false;
 
-	switch (fmt)
+	switch (mFormat)
 	{
 	case TEX_Pal:	return D3DFMT_L8;
 	case TEX_Gray:	IsGray = true; return D3DFMT_L8;
 	case TEX_RGB:	return D3DFMT_A8R8G8B8;
+#if 0
 	case TEX_DXT1:	return D3DFMT_DXT1;
 	case TEX_DXT2:	return D3DFMT_DXT2;
 	case TEX_DXT3:	return D3DFMT_DXT3;
 	case TEX_DXT4:	return D3DFMT_DXT4;
 	case TEX_DXT5:	return D3DFMT_DXT5;
+#endif
 	default:		I_FatalError ("GameTex->GetFormat() returned invalid format.");
 	}
 	return D3DFMT_L8;
-}
-
-//==========================================================================
-//
-// D3DTex :: ToTexFmt
-//
-// Converts a D3DFORMAT constant to something the FTexture system
-// understands.
-//
-//==========================================================================
-
-FTextureFormat D3DTex::ToTexFmt(D3DFORMAT fmt)
-{
-	switch (fmt)
-	{
-	case D3DFMT_L8:			return IsGray ? TEX_Gray : TEX_Pal;
-	case D3DFMT_A8R8G8B8:	return TEX_RGB;
-	case D3DFMT_DXT1:		return TEX_DXT1;
-	case D3DFMT_DXT2:		return TEX_DXT2;
-	case D3DFMT_DXT3:		return TEX_DXT3;
-	case D3DFMT_DXT4:		return TEX_DXT4;
-	case D3DFMT_DXT5:		return TEX_DXT5;
-	default:
-		assert(0);	// LOL WUT?
-		return TEX_Pal;
-	}
 }
 
 //==========================================================================
@@ -2597,9 +2564,9 @@ void D3DFB::DrawBlendingRect()
 //
 //==========================================================================
 
-FNativeTexture *D3DFB::CreateTexture(FTexture *gametex, bool wrapping)
+FNativeTexture *D3DFB::CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping)
 {
-	D3DTex *tex = new D3DTex(gametex, this, wrapping);
+	D3DTex *tex = new D3DTex(gametex, fmt, this, wrapping);
 	if (tex->Box == NULL)
 	{
 		delete tex;
@@ -2824,7 +2791,12 @@ void D3DFB::DrawTextureParms (FTexture *img, DrawParms &parms)
 		return;
 	}
 
-	D3DTex *tex = static_cast<D3DTex *>(img->GetNative(false));
+	FTextureFormat fmt;
+	if (parms.style.Flags & STYLEF_RedIsAlpha) fmt = TEX_Gray;
+	else if (parms.remap != nullptr) fmt = TEX_Pal;
+	else fmt = img->GetFormat();
+
+	D3DTex *tex = static_cast<D3DTex *>(img->GetNative(fmt, false));
 
 	if (tex == NULL)
 	{
@@ -3023,7 +2995,8 @@ void D3DFB::FlatFill(int left, int top, int right, int bottom, FTexture *src, bo
 	{
 		return;
 	}
-	D3DTex *tex = static_cast<D3DTex *>(src->GetNative(true));
+
+	D3DTex *tex = static_cast<D3DTex *>(src->GetNative(src->GetFormat(), true));
 	if (tex == NULL)
 	{
 		return;
@@ -3158,7 +3131,8 @@ void D3DFB::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 	{
 		return;
 	}
-	tex = static_cast<D3DTex *>(texture->GetNative(true));
+
+	tex = static_cast<D3DTex *>(texture->GetNative(texture->GetFormat(), true));
 	if (tex == NULL)
 	{
 		return;

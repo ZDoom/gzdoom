@@ -150,7 +150,7 @@ FTexture::FTexture (const char *name, int lumpnum)
   WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
   UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false),
-  Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0), Native(NULL)
+	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0)
 {
 	id.SetInvalid();
 	if (name != NULL)
@@ -711,34 +711,37 @@ void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x,
 	}
 }
 
-FNativeTexture *FTexture::GetNative(bool wrapping)
+FNativeTexture *FTexture::GetNative(FTextureFormat fmt, bool wrapping)
 {
-	if (Native != NULL)
+	if (Native[fmt] != NULL)
 	{
-		if (!Native->CheckWrapping(wrapping))
+		if (!Native[fmt]->CheckWrapping(wrapping))
 		{ // Texture's wrapping mode is not compatible.
 		  // Destroy it and get a new one.
-			delete Native;
+			delete Native[fmt];
 		}
 		else
 		{
 			if (CheckModified(DefaultRenderStyle()))
 			{
-				Native->Update();
+				Native[fmt]->Update();
 			}
-			return Native;
+			return Native[fmt];
 		}
 	}
-	Native = screen->CreateTexture(this, wrapping);
-	return Native;
+	Native[fmt] = screen->CreateTexture(this, fmt, wrapping);
+	return Native[fmt];
 }
 
 void FTexture::KillNative()
 {
-	if (Native != NULL)
+	for (auto &nat : Native)
 	{
-		delete Native;
-		Native = NULL;
+		if (nat != nullptr)
+		{
+			delete nat;
+			nat = nullptr;
+		}
 	}
 }
 
@@ -1000,4 +1003,7 @@ CCMD (printspans)
 		Printf ("\n");
 	}
 }
+
 #endif
+
+

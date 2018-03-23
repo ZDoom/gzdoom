@@ -159,14 +159,19 @@ enum FTextureFormat
 	TEX_Pal,
 	TEX_Gray,
 	TEX_RGB,		// Actually ARGB
+	/*
 	TEX_DXT1,
 	TEX_DXT2,
 	TEX_DXT3,
 	TEX_DXT4,
 	TEX_DXT5,
+	*/
+	TEX_Count
 };
 
 class FNativeTexture;
+
+
 
 // Base texture class
 class FTexture
@@ -257,7 +262,7 @@ public:
 	virtual FTextureFormat GetFormat();
 
 	// Returns a native 3D representation of the texture
-	FNativeTexture *GetNative(bool wrapping);
+	FNativeTexture *GetNative(FTextureFormat fmt, bool wrapping);
 
 	// Frees the native 3D representation of the texture
 	void KillNative();
@@ -310,7 +315,7 @@ public:
 protected:
 	uint16_t Width, Height, WidthMask;
 	static uint8_t GrayMap[256];
-	FNativeTexture *Native;
+	FNativeTexture *Native[TEX_Count] = { nullptr };	// keep a slot for each type, because some render modes do not work with the base texture
 	uint8_t *GetRemap(FRenderStyle style, bool srcisgrayscale = false)
 	{
 		if (style.Flags & STYLEF_RedIsAlpha)
@@ -399,7 +404,7 @@ public:
 	static void FlipNonSquareBlockBgra (uint32_t *blockto, const uint32_t *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockRemap (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch, const uint8_t *remap);
 
-	friend class D3DTex;
+	friend class FNativeTexture;
 	friend class OpenGLSWFrameBuffer;
 
 public:

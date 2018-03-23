@@ -973,6 +973,9 @@ void FFont::LoadTranslations()
 // means all the characters of a font have a better chance of being packed
 // into the same hardware texture.
 //
+// (Note that this is a rather dumb implementation. The atlasing should
+// occur at a higher level, independently of the renderer being used.)
+//
 //==========================================================================
 
 void FFont::Preload() const
@@ -989,7 +992,7 @@ void FFont::Preload() const
 		FTexture *pic = GetChar(i, &foo);
 		if (pic != NULL)
 		{
-			pic->GetNative(false);
+			pic->GetNative(pic->GetFormat(), false);
 		}
 	}
 }

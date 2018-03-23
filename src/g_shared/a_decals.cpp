@@ -700,8 +700,8 @@ CCMD (spray)
 		return;
 	}
 
-	Net_WriteByte (DEM_SPRAY);
-	Net_WriteString (argv[1]);
+	network.Net_WriteByte (DEM_SPRAY);
+	network.Net_WriteString (argv[1]);
 }
 
 void SprayDecal(AActor *shooter, const char *name, double distance)

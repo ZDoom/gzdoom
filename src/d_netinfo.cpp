@@ -549,8 +549,8 @@ void D_UserInfoChanged (FBaseCVar *cvar)
 
 	mysnprintf (foo, countof(foo), "\\%s\\%s", cvar->GetName(), escaped_val.GetChars());
 
-	Net_WriteByte (DEM_UINFCHANGED);
-	Net_WriteString (foo);
+	network.Net_WriteByte (DEM_UINFCHANGED);
+	network.Net_WriteString (foo);
 }
 
 static const char *SetServerVar (char *name, ECVarType type, uint8_t **stream, bool singlebit)
@@ -633,15 +633,15 @@ void D_SendServerInfoChange (const FBaseCVar *cvar, UCVarValue value, ECVarType 
 
 	namelen = strlen (cvar->GetName ());
 
-	Net_WriteByte (DEM_SINFCHANGED);
-	Net_WriteByte ((uint8_t)(namelen | (type << 6)));
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), (int)namelen);
+	network.Net_WriteByte (DEM_SINFCHANGED);
+	network.Net_WriteByte ((uint8_t)(namelen | (type << 6)));
+	network.Net_WriteBytes ((uint8_t *)cvar->GetName (), (int)namelen);
 	switch (type)
 	{
-	case CVAR_Bool:		Net_WriteByte (value.Bool);		break;
-	case CVAR_Int:		Net_WriteLong (value.Int);		break;
-	case CVAR_Float:	Net_WriteFloat (value.Float);	break;
-	case CVAR_String:	Net_WriteString (value.String);	break;
+	case CVAR_Bool:		network.Net_WriteByte (value.Bool);		break;
+	case CVAR_Int:		network.Net_WriteLong (value.Int);		break;
+	case CVAR_Float:	network.Net_WriteFloat (value.Float);	break;
+	case CVAR_String:	network.Net_WriteString (value.String);	break;
 	default: break; // Silence GCC
 	}
 }
@@ -652,10 +652,10 @@ void D_SendServerFlagChange (const FBaseCVar *cvar, int bitnum, bool set)
 
 	namelen = (int)strlen (cvar->GetName ());
 
-	Net_WriteByte (DEM_SINFCHANGEDXOR);
-	Net_WriteByte ((uint8_t)namelen);
-	Net_WriteBytes ((uint8_t *)cvar->GetName (), namelen);
-	Net_WriteByte (uint8_t(bitnum | (set << 5)));
+	network.Net_WriteByte (DEM_SINFCHANGEDXOR);
+	network.Net_WriteByte ((uint8_t)namelen);
+	network.Net_WriteBytes ((uint8_t *)cvar->GetName (), namelen);
+	network.Net_WriteByte (uint8_t(bitnum | (set << 5)));
 }
 
 void D_DoServerInfoChange (uint8_t **stream, bool singlebit)

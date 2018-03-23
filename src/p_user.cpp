@@ -602,7 +602,7 @@ void player_t::SetFOV(float fov)
 		{
 			if (consoleplayer == Net_Arbitrator)
 			{
-				Net_WriteByte(DEM_MYFOV);
+				network.Net_WriteByte(DEM_MYFOV);
 			}
 			else
 			{
@@ -612,9 +612,9 @@ void player_t::SetFOV(float fov)
 		}
 		else
 		{
-			Net_WriteByte(DEM_MYFOV);
+			network.Net_WriteByte(DEM_MYFOV);
 		}
-		Net_WriteFloat(clamp<float>(fov, 5.f, 179.f));
+		network.Net_WriteFloat(clamp<float>(fov, 5.f, 179.f));
 	}
 }
 
@@ -734,9 +734,9 @@ void player_t::SendPitchLimits() const
 {
 	if (this - players == consoleplayer)
 	{
-		Net_WriteByte(DEM_SETPITCHLIMIT);
-		Net_WriteByte(Renderer->GetMaxViewPitch(false));	// up
-		Net_WriteByte(Renderer->GetMaxViewPitch(true));		// down
+		network.Net_WriteByte(DEM_SETPITCHLIMIT);
+		network.Net_WriteByte(Renderer->GetMaxViewPitch(false));	// up
+		network.Net_WriteByte(Renderer->GetMaxViewPitch(true));		// down
 	}
 }
 
@@ -2453,7 +2453,7 @@ void P_PredictPlayer (player_t *player)
 		return;
 	}
 
-	maxtic = maketic;
+	maxtic = network.maketic;
 
 	if (gametic == maxtic)
 	{
@@ -2504,13 +2504,13 @@ void P_PredictPlayer (player_t *player)
 	act->BlockNode = NULL;
 
 	// Values too small to be usable for lerping can be considered "off".
-	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
+	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (network.ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		if (!NoInterpolateOld)
 			R_RebuildViewInterpolation(player);
 
-		player->cmd = localcmds[i % LOCALCMDTICS];
+		player->cmd = network.localcmds[i % LOCALCMDTICS];
 		P_PlayerThink (player);
 		player->mo->Tick ();
 

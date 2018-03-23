@@ -177,11 +177,6 @@ void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
 #ifndef NO_SWRENDER
 	SWCanvas::DrawTexture(this, img, parms);
 #endif
-
-	if (ticdup != 0 && menuactive == MENU_Off)
-	{
-		NetUpdate();
-	}
 }
 
 void DCanvas::SetClipRect(int x, int y, int w, int h)

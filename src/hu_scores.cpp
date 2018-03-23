@@ -437,11 +437,11 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	int avgdelay = 0;
 	for (int i = 0; i < BACKUPTICS; i++)
 	{
-		avgdelay += netdelay[nodeforplayer[(int)(player - players)]][i];
+		avgdelay += network.netdelay[network.nodeforplayer[(int)(player - players)]][i];
 	}
 	avgdelay /= BACKUPTICS;
 
-	mysnprintf(str, countof(str), "%d", (avgdelay * ticdup) * (1000 / TICRATE));
+	mysnprintf(str, countof(str), "%d", (avgdelay * network.ticdup) * (1000 / TICRATE));
 
 	screen->DrawText(SmallFont, color, col5, y + ypadding, str,
 		DTA_CleanNoMove, true, TAG_DONE);

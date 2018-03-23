@@ -809,7 +809,7 @@ bool DIntermissionController::Responder (event_t *ev)
 		int res = mScreen->Responder(ev);
 		if (res == -1 && !mSentAdvance)
 		{
-			Net_WriteByte(DEM_ADVANCEINTER);
+			network.Net_WriteByte(DEM_ADVANCEINTER);
 			mSentAdvance = true;
 		}
 		return !!res;

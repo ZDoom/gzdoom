@@ -63,7 +63,7 @@ static FRandom pr_botmove ("BotMove");
 //so this is what the bot does.
 void DBot::Think ()
 {
-	ticcmd_t *cmd = &netcmds[player - players][((gametic + 1)/ticdup)%BACKUPTICS];
+	ticcmd_t *cmd = &network.netcmds[player - players][((gametic + 1)/ network.ticdup)%BACKUPTICS];
 
 	memset (cmd, 0, sizeof(*cmd));
 
@@ -83,13 +83,13 @@ void DBot::Think ()
 		ThinkForMove (cmd);
 		TurnToAng ();
 
-		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / ticdup;
+		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / network.ticdup;
 		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
 		if (cmd->ucmd.pitch == -32768)
 			cmd->ucmd.pitch = -32767;
-		cmd->ucmd.pitch /= ticdup;
-		actor->Angles.Yaw = oldyaw + DAngle(cmd->ucmd.yaw * ticdup * (360 / 65536.f));
-		actor->Angles.Pitch = oldpitch - DAngle(cmd->ucmd.pitch * ticdup * (360 / 65536.f));
+		cmd->ucmd.pitch /= network.ticdup;
+		actor->Angles.Yaw = oldyaw + DAngle(cmd->ucmd.yaw * network.ticdup * (360 / 65536.f));
+		actor->Angles.Pitch = oldpitch - DAngle(cmd->ucmd.pitch * network.ticdup * (360 / 65536.f));
 	}
 
 	if (t_active)	t_active--;

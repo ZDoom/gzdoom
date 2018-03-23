@@ -72,7 +72,7 @@ public:
 	virtual void NetProgress(int count);
 	virtual void NetMessage(const char *format, ...);
 	virtual void NetDone();
-	virtual bool NetLoop(bool (*timerCallback)(void*), void* userData);
+	virtual bool NetLoop(std::function<bool()> callback);
 };
 
 
@@ -154,11 +154,11 @@ void FBasicStartupScreen::NetDone()
 	FConsoleWindow::GetInstance().NetDone();
 }
 
-bool FBasicStartupScreen::NetLoop(bool (*timerCallback)(void*), void* const userData)
+bool FBasicStartupScreen::NetLoop(std::function<bool()> callback)
 {
 	while (true)
 	{
-		if (timerCallback(userData))
+		if (callback())
 		{
 			break;
 		}

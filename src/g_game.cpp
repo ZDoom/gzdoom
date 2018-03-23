@@ -196,9 +196,6 @@ bool 			precache = true;		// if true, load all graphics at start
  
 wbstartstruct_t wminfo; 				// parms for world map / intermission 
  
-short			consistancy[MAXPLAYERS][BACKUPTICS];
- 
- 
 #define MAXPLMOVE				(forwardmove[1]) 
  
 #define TURBOTHRESHOLD	12800
@@ -316,12 +313,12 @@ CCMD (slot)
 
 CCMD (centerview)
 {
-	Net_WriteByte (DEM_CENTERVIEW);
+	network.Net_WriteByte (DEM_CENTERVIEW);
 }
 
 CCMD(crouch)
 {
-	Net_WriteByte(DEM_CROUCH);
+	network.Net_WriteByte(DEM_CROUCH);
 }
 
 CCMD (land)
@@ -577,7 +574,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	base = I_BaseTiccmd (); 			// empty, or external driver
 	*cmd = *base;
 
-	cmd->consistancy = consistancy[consoleplayer][(maketic/ticdup)%BACKUPTICS];
+	cmd->consistancy = network.consistancy[consoleplayer][(network.maketic/network.ticdup)%BACKUPTICS];
 
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
@@ -588,7 +585,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	//		and not the joystick, since we treat the joystick as
 	//		the analog device it is.
 	if (Button_Left.bDown || Button_Right.bDown)
-		turnheld += ticdup;
+		turnheld += network.ticdup;
 	else
 		turnheld = 0;
 
@@ -754,32 +751,32 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (sendpause)
 	{
 		sendpause = false;
-		Net_WriteByte (DEM_PAUSE);
+		network.Net_WriteByte (DEM_PAUSE);
 	}
 	if (sendsave)
 	{
 		sendsave = false;
-		Net_WriteByte (DEM_SAVEGAME);
-		Net_WriteString (savegamefile);
-		Net_WriteString (savedescription);
+		network.Net_WriteByte (DEM_SAVEGAME);
+		network.Net_WriteString (savegamefile);
+		network.Net_WriteString (savedescription);
 		savegamefile = "";
 	}
 	if (SendItemUse == (const AInventory *)1)
 	{
-		Net_WriteByte (DEM_INVUSEALL);
+		network.Net_WriteByte (DEM_INVUSEALL);
 		SendItemUse = NULL;
 	}
 	else if (SendItemUse != NULL)
 	{
-		Net_WriteByte (DEM_INVUSE);
-		Net_WriteLong (SendItemUse->InventoryID);
+		network.Net_WriteByte (DEM_INVUSE);
+		network.Net_WriteLong (SendItemUse->InventoryID);
 		SendItemUse = NULL;
 	}
 	if (SendItemDrop != NULL)
 	{
-		Net_WriteByte (DEM_INVDROP);
-		Net_WriteLong (SendItemDrop->InventoryID);
-		Net_WriteLong(SendItemDropAmount);
+		network.Net_WriteByte (DEM_INVDROP);
+		network.Net_WriteLong (SendItemDrop->InventoryID);
+		network.Net_WriteLong(SendItemDropAmount);
 		SendItemDrop = NULL;
 	}
 
@@ -883,7 +880,7 @@ static void ChangeSpy (int changespy)
 		// has done this for you, since it could desync otherwise.
 		if (!demoplayback)
 		{
-			Net_WriteByte(DEM_REVERTCAMERA);
+			network.Net_WriteByte(DEM_REVERTCAMERA);
 		}
 		return;
 	}
@@ -1153,7 +1150,7 @@ void G_Ticker ()
 	}
 
 	// get commands, check consistancy, and build new consistancy check
-	int buf = (gametic/ticdup)%BACKUPTICS;
+	int buf = (gametic/network.ticdup)%BACKUPTICS;
 
 	// [RH] Include some random seeds and player stuff in the consistancy
 	// check, not just the player's x position like BOOM.
@@ -1167,9 +1164,9 @@ void G_Ticker ()
 		if (playeringame[i])
 		{
 			ticcmd_t *cmd = &players[i].cmd;
-			ticcmd_t *newcmd = &netcmds[i][buf];
+			ticcmd_t *newcmd = &network.netcmds[i][buf];
 
-			if ((gametic % ticdup) == 0)
+			if ((gametic % network.ticdup) == 0)
 			{
 				RunNetSpecs (i, buf);
 			}
@@ -1197,22 +1194,22 @@ void G_Ticker ()
 				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
 			}
 
-			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%ticdup) == 0)
+			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%network.ticdup) == 0)
 			{
 				//players[i].inconsistant = 0;
-				if (gametic > BACKUPTICS*ticdup && consistancy[i][buf] != cmd->consistancy)
+				if (gametic > BACKUPTICS*network.ticdup && network.consistancy[i][buf] != cmd->consistancy)
 				{
-					players[i].inconsistant = gametic - BACKUPTICS*ticdup;
+					players[i].inconsistant = gametic - BACKUPTICS*network.ticdup;
 				}
 				if (players[i].mo)
 				{
 					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
-					consistancy[i][buf] = sum;
+					network.consistancy[i][buf] = sum;
 				}
 				else
 				{
-					consistancy[i][buf] = rngsum;
+					network.consistancy[i][buf] = rngsum;
 				}
 			}
 		}
@@ -2472,11 +2469,11 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	if ((specdata = NetSpecs[player][buf].GetData (&speclen)) && gametic % ticdup == 0)
+	if ((specdata = network.NetSpecs[player][buf].GetData (&speclen)) && gametic % network.ticdup == 0)
 	{
 		memcpy (demo_p, specdata, speclen);
 		demo_p += speclen;
-		NetSpecs[player][buf].SetData (NULL, 0);
+		network.NetSpecs[player][buf].SetData (NULL, 0);
 	}
 
 	// [RH] Now write out a "normal" ticcmd.

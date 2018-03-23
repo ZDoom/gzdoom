@@ -701,6 +701,6 @@ CCMD (mdk)
 		return;
 
 	const char *name = argv.argc() > 1 ? argv[1] : "";
-	Net_WriteByte (DEM_MDK);
-	Net_WriteString(name);
+	network.Net_WriteByte (DEM_MDK);
+	network.Net_WriteString(name);
 }

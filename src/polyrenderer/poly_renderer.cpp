@@ -111,8 +111,6 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 
 void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 {
-	NetUpdate();
-	
 	DontMapLines = dontmaplines;
 	
 	R_SetupFrame(Viewpoint, Viewwindow, actor);
@@ -147,8 +145,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 
 	Viewpoint.camera->renderflags = savedflags;
 	interpolator.RestoreInterpolations ();
-	
-	NetUpdate();
 }
 
 void PolyRenderer::RenderRemainingPlayerSprites()

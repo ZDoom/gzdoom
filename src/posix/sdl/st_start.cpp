@@ -59,7 +59,7 @@ class FTTYStartupScreen : public FStartupScreen
 		void NetProgress(int count);
 		void NetMessage(const char *format, ...);	// cover for printf
 		void NetDone();
-		bool NetLoop(bool (*timer_callback)(void *), void *userdata);
+		bool NetLoop(std::function<bool()> callback);
 	protected:
 		bool DidNetInit;
 		int NetMaxPos, NetCurPos;
@@ -305,7 +305,7 @@ void FTTYStartupScreen::NetProgress(int count)
 //
 //===========================================================================
 
-bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
+bool FTTYStartupScreen::NetLoop(std::function<bool()> callback)
 {
 	fd_set rfds;
 	struct timeval tv;
@@ -329,7 +329,7 @@ bool FTTYStartupScreen::NetLoop(bool (*timer_callback)(void *), void *userdata)
 		}
 		else if (retval == 0)
 		{
-			if (timer_callback (userdata))
+			if (callback())
 			{
 				fputc ('\n', stderr);
 				return true;

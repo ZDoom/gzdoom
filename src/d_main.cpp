@@ -143,7 +143,6 @@ const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const c
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
-void D_CheckNetGame ();
 void D_ProcessEvents ();
 void G_BuildTiccmd (ticcmd_t* cmd);
 void D_DoAdvanceDemo ();
@@ -399,14 +398,14 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 
 	if (self & DF_NO_FREELOOK)
 	{
-		Net_WriteByte (DEM_CENTERVIEW);
+		network.Net_WriteByte (DEM_CENTERVIEW);
 	}
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
 	{
 		float fov;
 
-		Net_WriteByte (DEM_FOV);
+		network.Net_WriteByte (DEM_FOV);
 
 		// If the game is started with DF_NO_FOV set, the arbitrator's
 		// DesiredFOV will not be set when this callback is run, so
@@ -416,7 +415,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 		{
 			fov = 90;
 		}
-		Net_WriteFloat (fov);
+		network.Net_WriteFloat (fov);
 	}
 }
 
@@ -937,7 +936,7 @@ void D_Display ()
 
 	if (!wipe || NoWipe < 0)
 	{
-		NetUpdate ();			// send out any new accumulation
+		network.NetUpdate ();			// send out any new accumulation
 		// normal update
 		// draw ZScript UI stuff
 		C_DrawConsole (hw2d);	// draw console
@@ -956,7 +955,7 @@ void D_Display ()
 		screen->WipeEndScreen ();
 
 		wipestart = I_msTime();
-		NetUpdate();		// send out any new accumulation
+		network.NetUpdate();		// send out any new accumulation
 
 		do
 		{
@@ -971,7 +970,7 @@ void D_Display ()
 			C_DrawConsole (hw2d);	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
 			screen->Update ();		// page flip or blit buffer
-			NetUpdate ();			// [RH] not sure this is needed anymore
+			network.NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
 		screen->WipeCleanup();
 		I_FreezeTime(false);
@@ -994,10 +993,10 @@ void D_ErrorCleanup ()
 	savegamerestore = false;
 	screen->Unlock ();
 	bglobal.RemoveAllBots (true);
-	D_QuitNetGame ();
+	network.D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
-	Net_ClearBuffers ();
+	network.Net_ClearBuffers ();
 	G_NewInit ();
 	M_ClearMenus ();
 	singletics = false;
@@ -1048,7 +1047,7 @@ void D_DoomLoop ()
 			{
 				I_StartTic ();
 				D_ProcessEvents ();
-				G_BuildTiccmd (&netcmds[consoleplayer][maketic%BACKUPTICS]);
+				G_BuildTiccmd (&network.netcmds[consoleplayer][network.maketic%BACKUPTICS]);
 				if (advancedemo)
 					D_DoAdvanceDemo ();
 				C_Ticker ();
@@ -1057,13 +1056,13 @@ void D_DoomLoop ()
 				// [RH] Use the consoleplayer's camera to update sounds
 				S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
 				gametic++;
-				maketic++;
+				network.maketic++;
 				GC::CheckGC ();
-				Net_NewMakeTic ();
+				network.Net_NewMakeTic ();
 			}
 			else
 			{
-				TryRunTics (); // will run at least one tic
+				network.TryRunTics (); // will run at least one tic
 			}
 			// Update display, next frame, with current state.
 			I_StartTic ();
@@ -2635,7 +2634,7 @@ void D_DoomMain (void)
 		{
 			if (!batchrun) Printf ("D_CheckNetGame: Checking network game status.\n");
 			StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
-			D_CheckNetGame ();
+			network.D_CheckNetGame ();
 		}
 
 		// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now
@@ -2650,7 +2649,7 @@ void D_DoomMain (void)
 
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;
-		Net_NewMakeTic ();
+		network.Net_NewMakeTic ();
 		DThinker::RunThinkers ();
 		gamestate = GS_STARTUP;
 
@@ -2733,7 +2732,7 @@ void D_DoomMain (void)
 						G_BeginRecording(NULL);
 					}
 
-					atterm(D_QuitNetGame);		// killough
+					atterm([] { network.D_QuitNetGame(); });		// killough
 				}
 			}
 		}
@@ -2903,7 +2902,7 @@ void FStartupScreen::NetInit(char const *,int) {}
 void FStartupScreen::NetProgress(int) {}
 void FStartupScreen::NetMessage(char const *,...) {}
 void FStartupScreen::NetDone(void) {}
-bool FStartupScreen::NetLoop(bool (*)(void *),void *) { return false; }
+bool FStartupScreen::NetLoop(std::function<bool()> callback) { return false; }
 
 DEFINE_FIELD_X(InputEventData, event_t, type)
 DEFINE_FIELD_X(InputEventData, event_t, subtype)

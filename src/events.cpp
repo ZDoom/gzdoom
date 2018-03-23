@@ -154,13 +154,13 @@ bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual)
 	if (gamestate != GS_LEVEL)
 		return false;
 
-	Net_WriteByte(DEM_NETEVENT);
-	Net_WriteString(name);
-	Net_WriteByte(3);
-	Net_WriteLong(arg1);
-	Net_WriteLong(arg2);
-	Net_WriteLong(arg3);
-	Net_WriteByte(manual);
+	network.Net_WriteByte(DEM_NETEVENT);
+	network.Net_WriteString(name);
+	network.Net_WriteByte(3);
+	network.Net_WriteLong(arg1);
+	network.Net_WriteLong(arg2);
+	network.Net_WriteLong(arg3);
+	network.Net_WriteByte(manual);
 
 	return true;
 }

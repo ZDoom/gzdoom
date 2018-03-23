@@ -1981,8 +1981,8 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			Net_WriteByte (DEM_GENERICCHEAT);
-			Net_WriteByte (CHT_MASSACRE);
+			network.Net_WriteByte (DEM_GENERICCHEAT);
+			network.Net_WriteByte (CHT_MASSACRE);
 		}
 		else if (!stricmp (argv[1], "baddies"))
 		{
@@ -1990,13 +1990,13 @@ CCMD (kill)
 			if (CheckCheatmode ())
 				return;
 
-			Net_WriteByte (DEM_GENERICCHEAT);
-			Net_WriteByte (CHT_MASSACRE2);
+			network.Net_WriteByte (DEM_GENERICCHEAT);
+			network.Net_WriteByte (CHT_MASSACRE2);
 		}
 		else
 		{
-			Net_WriteByte (DEM_KILLCLASSCHEAT);
-			Net_WriteString (argv[1]);
+			network.Net_WriteByte (DEM_KILLCLASSCHEAT);
+			network.Net_WriteString (argv[1]);
 		}
 	}
 	else
@@ -2006,7 +2006,7 @@ CCMD (kill)
 			return;
 
 		// Kill the player
-		Net_WriteByte (DEM_SUICIDE);
+		network.Net_WriteByte (DEM_SUICIDE);
 	}
 	C_HideConsole ();
 }
@@ -2018,8 +2018,8 @@ CCMD(remove)
 		if (CheckCheatmode())
 			return;
 
-		Net_WriteByte(DEM_REMOVE);
-		Net_WriteString(argv[1]);
+		network.Net_WriteByte(DEM_REMOVE);
+		network.Net_WriteString(argv[1]);
 		C_HideConsole();
 	}
 	else
@@ -2027,5 +2027,4 @@ CCMD(remove)
 		Printf("Usage: remove <actor class name>\n");
 		return;
 	}
-	
 }

@@ -409,7 +409,6 @@ int SkipTicCmd (uint8_t **stream, int count)
 }
 
 #include <assert.h>
-extern short consistancy[MAXPLAYERS][BACKUPTICS];
 void ReadTicCmd (uint8_t **stream, int player, int tic)
 {
 	int type;
@@ -418,7 +417,7 @@ void ReadTicCmd (uint8_t **stream, int player, int tic)
 
 	int ticmod = tic % BACKUPTICS;
 
-	tcmd = &netcmds[player][ticmod];
+	tcmd = &network.netcmds[player][ticmod];
 	tcmd->consistancy = ReadWord (stream);
 
 	start = *stream;
@@ -426,18 +425,18 @@ void ReadTicCmd (uint8_t **stream, int player, int tic)
 	while ((type = ReadByte (stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
 		Net_SkipCommand (type, stream);
 
-	NetSpecs[player][ticmod].SetData (start, int(*stream - start - 1));
+	network.NetSpecs[player][ticmod].SetData (start, int(*stream - start - 1));
 
 	if (type == DEM_USERCMD)
 	{
 		UnpackUserCmd (&tcmd->ucmd,
-			tic ? &netcmds[player][(tic-1)%BACKUPTICS].ucmd : NULL, stream);
+			tic ? &network.netcmds[player][(tic-1)%BACKUPTICS].ucmd : NULL, stream);
 	}
 	else
 	{
 		if (tic)
 		{
-			memcpy (&tcmd->ucmd, &netcmds[player][(tic-1)%BACKUPTICS].ucmd, sizeof(tcmd->ucmd));
+			memcpy (&tcmd->ucmd, &network.netcmds[player][(tic-1)%BACKUPTICS].ucmd, sizeof(tcmd->ucmd));
 		}
 		else
 		{
@@ -446,7 +445,7 @@ void ReadTicCmd (uint8_t **stream, int player, int tic)
 	}
 
 	if (player==consoleplayer&&tic>BACKUPTICS)
-		assert(consistancy[player][ticmod] == tcmd->consistancy);
+		assert(network.consistancy[player][ticmod] == tcmd->consistancy);
 }
 
 void RunNetSpecs (int player, int buf)
@@ -454,9 +453,9 @@ void RunNetSpecs (int player, int buf)
 	uint8_t *stream;
 	int len;
 
-	if (gametic % ticdup == 0)
+	if (gametic % network.ticdup == 0)
 	{
-		stream = NetSpecs[player][buf].GetData (&len);
+		stream = network.NetSpecs[player][buf].GetData (&len);
 		if (stream)
 		{
 			uint8_t *end = stream + len;
@@ -466,7 +465,7 @@ void RunNetSpecs (int player, int buf)
 				Net_DoCommand (type, &stream, player);
 			}
 			if (!demorecording)
-				NetSpecs[player][buf].SetData (NULL, 0);
+				network.NetSpecs[player][buf].SetData (NULL, 0);
 		}
 	}
 }

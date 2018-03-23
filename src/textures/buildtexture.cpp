@@ -97,7 +97,7 @@ uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
 		auto c = RawPixels[i];
 		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].Luminance() : Remap->Remap[c];
 	}
-	return (uint8_t*)RawPixels;
+	return (uint8_t*)Pixels;
 }
 
 int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)

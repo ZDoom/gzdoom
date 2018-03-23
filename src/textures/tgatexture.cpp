@@ -248,7 +248,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				r=g=b=a=0;
 				break;
 			}
-			PaletteMap[i] = RGBToPalettePrecise(r, g, b, a);
+			PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b, a);
 		}
     }
     
@@ -307,7 +307,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				for(int x=0;x<Width;x++)
 				{
 					int v = LittleShort(*p);
-					Pixels[x*Height + y] = RGBToPalette(((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
+					Pixels[x*Height + y] = RGBToPalette(alphatex, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
 					p+=step_x;
 				}
 			}
@@ -319,7 +319,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height + y] = RGBToPalette(p[2], p[1], p[0]);
+					Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
 					p+=step_x;
 				}
 			}
@@ -333,7 +333,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = RGBToPalette(p[2], p[1], p[0]);
+						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
 						p+=step_x;
 					}
 				}
@@ -345,7 +345,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = RGBToPalette(p[2], p[1], p[0], p[3]);
+						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0], p[3]);
 						p+=step_x;
 					}
 				}

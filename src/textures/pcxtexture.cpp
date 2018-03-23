@@ -392,19 +392,20 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 	{
 		if (bitcount < 8)
 		{
-			for (int i = 0; i < 16; i++)
-			{
-				PaletteMap[i] = RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
-			}
-
 			switch (bitcount)
 			{
 			default:
 			case 1:
+				PaletteMap[0] = alphatex? 0 : GrayMap[0];
+				PaletteMap[1] = alphatex? 255 : GrayMap[255];
 				ReadPCX1bit (Pixels, lump, &header);
 				break;
 
 			case 4:
+				for (int i = 0; i < 16; i++)
+				{
+					PaletteMap[i] = RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
+				}
 				ReadPCX4bits (Pixels, lump, &header);
 				break;
 			}

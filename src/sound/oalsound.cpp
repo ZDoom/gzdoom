@@ -62,12 +62,20 @@ CVAR (String, snd_alresampler, "Default", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 #ifdef _WIN32
 #define OPENALLIB "openal32.dll"
-#elif defined(__APPLE__)
-#define OPENALLIB "OpenAL.framework/OpenAL"
 #elif defined(__OpenBSD__)
 #define OPENALLIB "libopenal.so"
 #else
 #define OPENALLIB "libopenal.so.1"
+#endif
+
+#ifdef __APPLE__
+// User's library (like OpenAL Soft installed manually or via Homebrew) has precedence
+// over Apple's OpenAL framework which lacks several important features
+#define OPENALLIB1 "libopenal.1.dylib"
+#define OPENALLIB2 "OpenAL.framework/OpenAL"
+#else // !__APPLE__
+#define OPENALLIB1 NicePath("$PROGDIR/" OPENALLIB)
+#define OPENALLIB2 OPENALLIB
 #endif
 
 bool IsOpenALPresent()
@@ -83,7 +91,7 @@ bool IsOpenALPresent()
 	if (!done)
 	{
 		done = true;
-		cached_result = OpenALModule.Load({NicePath("$PROGDIR/" OPENALLIB), OPENALLIB});
+		cached_result = OpenALModule.Load({OPENALLIB1, OPENALLIB2});
 	}
 	return cached_result;
 #endif

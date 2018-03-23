@@ -574,7 +574,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	base = I_BaseTiccmd (); 			// empty, or external driver
 	*cmd = *base;
 
-	cmd->consistancy = network.consistancy[consoleplayer][(network.maketic/network.ticdup)%BACKUPTICS];
+	cmd->consistency = network.consistency[consoleplayer][(network.maketic/network.ticdup)%BACKUPTICS];
 
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
@@ -1149,10 +1149,10 @@ void G_Ticker ()
 		}
 	}
 
-	// get commands, check consistancy, and build new consistancy check
+	// get commands, check consistency, and build new consistency check
 	int buf = (gametic/network.ticdup)%BACKUPTICS;
 
-	// [RH] Include some random seeds and player stuff in the consistancy
+	// [RH] Include some random seeds and player stuff in the consistency
 	// check, not just the player's x position like BOOM.
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
 
@@ -1197,7 +1197,7 @@ void G_Ticker ()
 			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%network.ticdup) == 0)
 			{
 				//players[i].inconsistant = 0;
-				if (gametic > BACKUPTICS*network.ticdup && network.consistancy[i][buf] != cmd->consistancy)
+				if (gametic > BACKUPTICS*network.ticdup && network.consistency[i][buf] != cmd->consistency)
 				{
 					players[i].inconsistant = gametic - BACKUPTICS*network.ticdup;
 				}
@@ -1205,11 +1205,11 @@ void G_Ticker ()
 				{
 					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
-					network.consistancy[i][buf] = sum;
+					network.consistency[i][buf] = sum;
 				}
 				else
 				{
-					network.consistancy[i][buf] = rngsum;
+					network.consistency[i][buf] = rngsum;
 				}
 			}
 		}

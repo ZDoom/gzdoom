@@ -238,7 +238,7 @@ int WriteUserCmdMessage (usercmd_t *ucmd, const usercmd_t *basis, uint8_t **stre
 struct ticcmd_t
 {
 	usercmd_t	ucmd;
-	int16_t		consistancy;	// checks for net game
+	int16_t		consistency;	// checks for net game
 };
 
 int SkipTicCmd (uint8_t **stream, int count);

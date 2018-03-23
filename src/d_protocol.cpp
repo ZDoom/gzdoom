@@ -291,7 +291,7 @@ FSerializer &Serialize(FSerializer &arc, const char *key, ticcmd_t &cmd, ticcmd_
 {
 	if (arc.BeginObject(key))
 	{
-		arc("consistency", cmd.consistancy)
+		arc("consistency", cmd.consistency)
 			("ucmd", cmd.ucmd)
 			.EndObject();
 	}
@@ -361,7 +361,7 @@ int SkipTicCmd (uint8_t **stream, int count)
 	{
 		bool moreticdata = true;
 
-		flow += 2;		// Skip consistancy marker
+		flow += 2;		// Skip consistency marker
 		while (moreticdata)
 		{
 			uint8_t type = *flow++;
@@ -418,7 +418,7 @@ void ReadTicCmd (uint8_t **stream, int player, int tic)
 	int ticmod = tic % BACKUPTICS;
 
 	tcmd = &network.netcmds[player][ticmod];
-	tcmd->consistancy = ReadWord (stream);
+	tcmd->consistency = ReadWord (stream);
 
 	start = *stream;
 
@@ -445,7 +445,7 @@ void ReadTicCmd (uint8_t **stream, int player, int tic)
 	}
 
 	if (player==consoleplayer&&tic>BACKUPTICS)
-		assert(network.consistancy[player][ticmod] == tcmd->consistancy);
+		assert(network.consistency[player][ticmod] == tcmd->consistency);
 }
 
 void RunNetSpecs (int player, int buf)

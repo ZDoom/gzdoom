@@ -407,7 +407,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	{
 		// The teamplay mode uses colors to show teams, so we need some
 		// other way to do highlighting. And it may as well be used for
-		// all modes for the sake of consistancy.
+		// all modes for the sake of consistency.
 		screen->Dim(MAKERGB(200,245,255), 0.125f, col1 - 12*CleanXfac, y - 1, col5 + (maxnamewidth + 24)*CleanXfac, height + 2);
 	}
 

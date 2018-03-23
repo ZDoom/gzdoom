@@ -270,7 +270,7 @@ void FRandom::Init(uint32_t seed)
 //
 // FRandom :: StaticSumSeeds
 //
-// This function produces a uint32_t that can be used to check the consistancy
+// This function produces a uint32_t that can be used to check the consistency
 // of network games between different machines. Only a select few RNGs are
 // used for the sum, because not all RNGs are important to network sync.
 //

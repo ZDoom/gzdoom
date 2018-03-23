@@ -102,7 +102,7 @@ public:
 	void Net_WriteString(const char *it);
 	void Net_WriteBytes(const uint8_t *block, int len);
 
-	short consistancy[MAXPLAYERS][BACKUPTICS];
+	short consistency[MAXPLAYERS][BACKUPTICS];
 
 	FDynamicBuffer NetSpecs[MAXPLAYERS][BACKUPTICS];
 	ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
@@ -185,7 +185,7 @@ void Net_SkipCommand (int type, uint8_t **stream);
 //     - The first player's consolenum is not included in this list, because it always matches the sender
 //
 // For each tic:
-//  Two bytes with consistancy check, followed by tic data
+//  Two bytes with consistency check, followed by tic data
 //
 // Setup packets are different, and are described just before D_ArbitrateNetStart().
 

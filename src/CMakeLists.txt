@@ -645,6 +645,9 @@ if( NOT SEND_ANON_STATS )
 	add_definitions( -DNO_SEND_STATS )
 endif()
 
+# OPLMIDI needs for USE_LEGACY_EMULATOR macro to be correctly built
+add_definitions(-DUSE_LEGACY_EMULATOR)
+
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
 if( WIN32 )
@@ -667,6 +670,7 @@ file( GLOB HEADER_FILES
 	intermission/*.h
 	menu/*.h
 	sound/adlmidi/*.h*
+	sound/opnmidi/*.h*
 	sound/oplsynth/*.h
 	sound/oplsynth/dosbox/*.h
 	posix/*.h
@@ -863,6 +867,14 @@ set( FASTMATH_SOURCES
 	sound/adlmidi/adlmidi_private.cpp
 	sound/adlmidi/dbopl.cpp
 	sound/adlmidi/nukedopl3.c
+	sound/opnmidi/opnmidi.cpp
+	sound/opnmidi/opnmidi_load.cpp
+	sound/opnmidi/opnmidi_midiplay.cpp
+	sound/opnmidi/opnmidi_opn2.cpp
+	sound/opnmidi/opnmidi_private.cpp
+	sound/opnmidi/opnmidi_mus2mid.c
+	sound/opnmidi/opnmidi_xmi2mid.c
+	sound/opnmidi/Ym2612_ChipEmu.cpp
 )
 
 set (PCH_SOURCES
@@ -1171,6 +1183,7 @@ set (PCH_SOURCES
 	sound/mididevices/music_adlmidi_mididevice.cpp
 	sound/mididevices/music_opldumper_mididevice.cpp
 	sound/mididevices/music_opl_mididevice.cpp
+	sound/mididevices/music_opnmidi_mididevice.cpp
 	sound/mididevices/music_timiditypp_mididevice.cpp
 	sound/mididevices/music_fluidsynth_mididevice.cpp
 	sound/mididevices/music_softsynth_mididevice.cpp

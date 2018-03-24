@@ -75,7 +75,6 @@ typedef int32_t ssize_t;
 #include <vector>
 #include <list>
 #include <string>
-#include <sstream>
 //#ifdef __WATCOMC__
 //#include <myset.h> //TODO: Implemnet a workaround for OpenWatcom to fix a crash while using those containers
 //#include <mymap.h>
@@ -104,6 +103,13 @@ typedef int32_t ssize_t;
 
 #include <deque>
 #include <algorithm>
+
+#ifdef _MSC_VER
+#pragma warning(disable:4319)
+#pragma warning(disable:4267)
+#pragma warning(disable:4244)
+#pragma warning(disable:4146)
+#endif
 
 #include "fraction.hpp"
 

@@ -107,7 +107,7 @@ ADLMIDI_EXPORT int adl_setBank(ADL_MIDIPlayer *device, int bank)
     MIDIplay *play = reinterpret_cast<MIDIplay *>(device->adl_midiPlayer);
     if(static_cast<uint32_t>(bankno) >= NumBanks)
     {
-        #ifndef __WATCOMC__
+        #if 0 //ndef __WATCOMC__
         std::stringstream s;
         s << "bank number may only be 0.." << (NumBanks - 1) << ".\n";
         play->setErrorString(s.str());
@@ -142,7 +142,7 @@ ADLMIDI_EXPORT int adl_setNumFourOpsChn(ADL_MIDIPlayer *device, int ops4)
     MIDIplay *play = reinterpret_cast<MIDIplay *>(device->adl_midiPlayer);
     if((unsigned int)ops4 > 6 * play->m_setup.NumCards)
     {
-        #ifndef __WATCOMC__
+        #if 0 //ndef __WATCOMC__
         std::stringstream s;
         s << "number of four-op channels may only be 0.." << (6 * (play->m_setup.NumCards)) << " when " << play->m_setup.NumCards << " OPL3 cards are used.\n";
         play->setErrorString(s.str());

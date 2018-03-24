@@ -53,7 +53,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 
 class FTexture;
 struct FColormap;
-enum FTextureFormat;
+enum FTextureFormat : uint32_t;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.

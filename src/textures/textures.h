@@ -154,7 +154,7 @@ struct patch_t
 
 // All FTextures present their data to the world in 8-bit format, but if
 // the source data is something else, this is it.
-enum FTextureFormat
+enum FTextureFormat : uint32_t
 {
 	TEX_Pal,
 	TEX_Gray,

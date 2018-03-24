@@ -809,9 +809,17 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	}
 	attribs.Clear();
 
+	const ALchar *const version = alGetString(AL_VERSION);
+
+	if (strstr(version, "ALSOFT") == nullptr)
+	{
+		Printf(TEXTCOLOR_RED "  You are using an unsupported OpenAL implementation\n"
+			"  Install OpenAL Soft library for a better experience\n");
+	}
+
 	DPrintf(DMSG_SPAMMY, "  Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
 	DPrintf(DMSG_SPAMMY, "  Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
-	DPrintf(DMSG_SPAMMY, "  Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
+	DPrintf(DMSG_SPAMMY, "  Version: " TEXTCOLOR_ORANGE"%s\n", version);
 	DPrintf(DMSG_SPAMMY, "  Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
 	AL.EXT_source_distance_model = !!alIsExtensionPresent("AL_EXT_source_distance_model");

@@ -49,6 +49,10 @@ typedef __int32 ssize_t;
 #   include <windows.h>
 #endif
 
+#ifdef USE_LEGACY_EMULATOR // Kept for a backward compatibility
+#define OPNMIDI_USE_LEGACY_EMULATOR
+#endif
+
 #include <vector>
 #include <list>
 #include <string>
@@ -75,7 +79,7 @@ typedef __int32 ssize_t;
 #include <algorithm>
 
 #include "fraction.hpp"
-#ifdef USE_LEGACY_EMULATOR
+#ifdef OPNMIDI_USE_LEGACY_EMULATOR
 #include "Ym2612_ChipEmu.h"
 #else
 #include "ym3438.h"
@@ -131,7 +135,7 @@ public:
     friend class OPNMIDIplay;
     uint32_t NumChannels;
     char ____padding[4];
-#ifdef USE_LEGACY_EMULATOR
+#ifdef OPNMIDI_USE_LEGACY_EMULATOR
     std::vector<OPNMIDI_Ym2612_Emu*> cardsOP2;
 #else
     std::vector<ym3438_t*> cardsOP2;
@@ -508,6 +512,7 @@ public:
         void AddAge(int64_t ms);
     };
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     /**
      * @brief MIDI Event utility container
      */
@@ -632,6 +637,7 @@ public:
         PositionNew(): began(false), wait(0.0), absTimePosition(0.0), track()
         {}
     };
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
     struct Setup
     {
@@ -675,6 +681,8 @@ private:
     std::map<uint64_t /*track*/, uint64_t /*channel begin index*/> current_device;
 
     std::vector<OpnChannel> ch;
+
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     std::vector<std::vector<uint8_t> > TrackData;
 
     PositionNew CurrentPositionNew, LoopBeginPositionNew, trackBeginPositionNew;
@@ -688,13 +696,16 @@ private:
     double loopStartTime;
     //! Loop end time
     double loopEndTime;
+#endif
     //! Local error string
     std::string errorString;
     //! Local error string
     std::string errorStringOut;
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     //! Pre-processed track data storage
     std::vector<MidiTrackQueue > trackDataNew;
+#endif
 
     //! Missing instruments catches
     std::set<uint8_t> caugh_missing_instruments;
@@ -703,6 +714,7 @@ private:
     //! Missing percussion banks catches
     std::set<uint16_t> caugh_missing_banks_percussion;
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     /**
      * @brief Build MIDI track data from the raw track data storage
      * @return true if everything successfully processed, or false on any error
@@ -717,12 +729,14 @@ private:
      * @return Parsed MIDI event entry
      */
     MidiEvent parseEvent(uint8_t **ptr, uint8_t *end, int &status);
+#endif
 
 public:
 
     const std::string &getErrorString();
     void setErrorString(const std::string &err);
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     std::string musTitle;
     std::string musCopyright;
     std::vector<std::string> musTrackTitles;
@@ -736,6 +750,7 @@ public:
             loopEnd,
             invalidLoop; /*Loop points are invalid (loopStart after loopEnd or loopStart and loopEnd are on same place)*/
     char ____padding2[2];
+#endif
     OPN2 opn;
 
     int16_t outBuf[1024];
@@ -764,6 +779,7 @@ public:
     bool LoadBank(const void *data, size_t size);
     bool LoadBank(fileReader &fr);
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     bool LoadMIDI(const std::string &filename);
     bool LoadMIDI(const void *data, size_t size);
     bool LoadMIDI(fileReader &fr);
@@ -775,6 +791,7 @@ public:
      * @return desired number of seconds until next call
      */
     double Tick(double s, double granularity);
+#endif
 
     /**
      * @brief Process extra iterators like vibrato or arpeggio
@@ -782,6 +799,7 @@ public:
      */
     void   TickIteratos(double s);
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     /**
      * @brief Change current position to specified time position in seconds
      * @param seconds Absolute time position in seconds
@@ -822,6 +840,7 @@ public:
      * @param tempo Tempo multiplier: 1.0 - original tempo. >1 - faster, <1 - slower
      */
     void    setTempo(double tempo);
+#endif
 
     /* RealTime event triggers */
     void realTime_ResetState();
@@ -860,8 +879,11 @@ private:
                     MIDIchannel::activenoteiterator i,
                     unsigned props_mask,
                     int32_t select_adlchn = -1);
+
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     bool ProcessEventsNew(bool isSeek = false);
     void HandleEvent(size_t tk, const MidiEvent &evt, int &status);
+#endif
 
     // Determine how good a candidate this adlchannel
     // would be for playing a note from this instrument.

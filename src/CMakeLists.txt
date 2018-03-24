@@ -646,10 +646,11 @@ if( NOT SEND_ANON_STATS )
 endif()
 
 # OPLMIDI needs for USE_LEGACY_EMULATOR macro to be correctly built
-add_definitions(-DUSE_LEGACY_EMULATOR)
+add_definitions(-DOPNMIDI_USE_LEGACY_EMULATOR)
 
-# Disable ADLMIDI's MIDI Sequencer, MUS and XMI converters
+# Disable ADLMIDI's and OPNMIDI's MIDI Sequencer, MUS and XMI converters
 add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
+add_definitions(-DOPNMIDI_DISABLE_MUS_SUPPORT -DOPNMIDI_DISABLE_XMI_SUPPORT -DOPNMIDI_DISABLE_MIDI_SEQUENCER)
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed

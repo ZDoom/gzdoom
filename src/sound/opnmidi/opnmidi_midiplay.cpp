@@ -93,6 +93,8 @@ void OPNMIDIplay::OpnChannel::AddAge(int64_t ms)
     }
 }
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
+
 OPNMIDIplay::MidiEvent::MidiEvent() :
     type(T_UNKNOWN),
     subtype(T_UNKNOWN),
@@ -211,7 +213,9 @@ void OPNMIDIplay::MidiTrackRow::sortEvents(bool *noteStates)
     events.insert(events.end(), controllers.begin(), controllers.end());
     events.insert(events.end(), anyOther.begin(), anyOther.end());
 }
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
 bool OPNMIDIplay::buildTrackData()
 {
     fullSongTimeLength = 0.0;
@@ -648,12 +652,12 @@ bool OPNMIDIplay::buildTrackData()
 
     return true;
 }
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
 
-
-OPNMIDIplay::OPNMIDIplay(unsigned long sampleRate):
-    //cmf_percussion_mode(false),
-    fullSongTimeLength(0.0),
+OPNMIDIplay::OPNMIDIplay(unsigned long sampleRate)
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
+    : fullSongTimeLength(0.0),
     postSongWaitDelay(1.0),
     loopStartTime(-1.0),
     loopEndTime(-1.0),
@@ -662,6 +666,7 @@ OPNMIDIplay::OPNMIDIplay(unsigned long sampleRate):
     loopStart(false),
     loopEnd(false),
     invalidLoop(false)
+#endif
 {
     devices.clear();
 
@@ -735,7 +740,7 @@ uint64_t OPNMIDIplay::ReadVarLenEx(uint8_t **ptr, uint8_t *end, bool &ok)
     return result;
 }
 
-
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
 double OPNMIDIplay::Tick(double s, double granularity)
 {
     s *= tempoMultiplier;
@@ -770,6 +775,7 @@ double OPNMIDIplay::Tick(double s, double granularity)
 
     return CurrentPositionNew.wait;
 }
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
 void OPNMIDIplay::TickIteratos(double s)
 {
@@ -779,6 +785,7 @@ void OPNMIDIplay::TickIteratos(double s)
     UpdateArpeggio(s);
 }
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
 void OPNMIDIplay::seek(double seconds)
 {
     if(seconds < 0.0)
@@ -884,6 +891,7 @@ void OPNMIDIplay::setTempo(double tempo)
 {
     tempoMultiplier = tempo;
 }
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
 void OPNMIDIplay::realTime_ResetState()
 {
@@ -1534,7 +1542,7 @@ void OPNMIDIplay::NoteUpdate(uint16_t MidCh,
         Ch[MidCh].activenotes.erase(i);
 }
 
-
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
 bool OPNMIDIplay::ProcessEventsNew(bool isSeek)
 {
     if(CurrentPositionNew.track.size() == 0)
@@ -1646,7 +1654,9 @@ bool OPNMIDIplay::ProcessEventsNew(bool isSeek)
 
     return true;//Has events in queue
 }
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
 OPNMIDIplay::MidiEvent OPNMIDIplay::parseEvent(uint8_t **pptr, uint8_t *end, int &status)
 {
     uint8_t *&ptr = *pptr;
@@ -1850,6 +1860,7 @@ OPNMIDIplay::MidiEvent OPNMIDIplay::parseEvent(uint8_t **pptr, uint8_t *end, int
 
     return evt;
 }
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
 const std::string &OPNMIDIplay::getErrorString()
 {
@@ -1861,7 +1872,7 @@ void OPNMIDIplay::setErrorString(const std::string &err)
     errorStringOut = err;
 }
 
-
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
 void OPNMIDIplay::HandleEvent(size_t tk, const OPNMIDIplay::MidiEvent &evt, int &status)
 {
     if(hooks.onEvent)
@@ -2018,6 +2029,7 @@ void OPNMIDIplay::HandleEvent(size_t tk, const OPNMIDIplay::MidiEvent &evt, int 
     }
     }
 }
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
 long OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, uint16_t ins, uint16_t) const
 {

@@ -160,6 +160,7 @@ OPNMIDI_EXPORT int opn2_openFile(OPN2_MIDIPlayer *device, const char *filePath)
     if(device && device->opn2_midiPlayer)
     {
         OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
         play->m_setup.tick_skip_samples_delay = 0;
         if(!play->LoadMIDI(filePath))
         {
@@ -169,6 +170,11 @@ OPNMIDI_EXPORT int opn2_openFile(OPN2_MIDIPlayer *device, const char *filePath)
             return -1;
         }
         else return 0;
+#else
+        (void)filePath;
+        play->setErrorString("OPNMIDI: MIDI Sequencer is not supported in this build of library!");
+        return -1;
+#endif
     }
 
     OPN2MIDI_ErrorString = "Can't load file: OPN2 MIDI is not initialized";
@@ -180,6 +186,7 @@ OPNMIDI_EXPORT int opn2_openData(OPN2_MIDIPlayer *device, const void *mem, unsig
     if(device && device->opn2_midiPlayer)
     {
         OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
         play->m_setup.tick_skip_samples_delay = 0;
         if(!play->LoadMIDI(mem, static_cast<size_t>(size)))
         {
@@ -189,6 +196,11 @@ OPNMIDI_EXPORT int opn2_openData(OPN2_MIDIPlayer *device, const void *mem, unsig
             return -1;
         }
         else return 0;
+#else
+        (void)mem;(void)size;
+        play->setErrorString("OPNMIDI: MIDI Sequencer is not supported in this build of library!");
+        return -1;
+#endif
     }
 
     OPN2MIDI_ErrorString = "Can't load file: OPN2 MIDI is not initialized";
@@ -197,7 +209,7 @@ OPNMIDI_EXPORT int opn2_openData(OPN2_MIDIPlayer *device, const void *mem, unsig
 
 OPNMIDI_EXPORT const char *opn2_emulatorName()
 {
-    #ifdef USE_LEGACY_EMULATOR
+    #ifdef OPNMIDI_USE_LEGACY_EMULATOR
     return "GENS 2.10 YM2612";
     #else
     return "Nuked OPN2 YM3438";
@@ -233,10 +245,14 @@ OPNMIDI_EXPORT const char *opn2_getMusicTitle(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return "";
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(!play)
         return "";
     return play->musTitle.c_str();
+#else
+    return "";
+#endif
 }
 
 OPNMIDI_EXPORT void opn2_close(OPN2_MIDIPlayer *device)
@@ -263,10 +279,12 @@ OPNMIDI_EXPORT double opn2_totalTimeLength(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return -1.0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->timeLength();
     else
+#endif
         return -1.0;
 }
 
@@ -274,10 +292,12 @@ OPNMIDI_EXPORT double opn2_loopStartTime(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return -1.0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->getLoopStart();
     else
+#endif
         return -1.0;
 }
 
@@ -285,10 +305,12 @@ OPNMIDI_EXPORT double opn2_loopEndTime(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return -1.0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->getLoopEnd();
     else
+#endif
         return -1.0;
 }
 
@@ -296,10 +318,12 @@ OPNMIDI_EXPORT double opn2_positionTell(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return -1.0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->tell();
     else
+#endif
         return -1.0;
 }
 
@@ -307,27 +331,35 @@ OPNMIDI_EXPORT void opn2_positionSeek(struct OPN2_MIDIPlayer *device, double sec
 {
     if(!device)
         return;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
-        return play->seek(seconds);
+        play->seek(seconds);
+#else
+    (void)seconds;
+#endif
 }
 
 OPNMIDI_EXPORT void opn2_positionRewind(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
-        return play->rewind();
+        play->rewind();
+#endif
 }
 
 OPNMIDI_EXPORT void opn2_setTempo(struct OPN2_MIDIPlayer *device, double tempo)
 {
     if(!device || (tempo <= 0.0))
         return;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
-        return play->setTempo(tempo);
+        play->setTempo(tempo);
+#endif
 }
 
 
@@ -336,10 +368,12 @@ OPNMIDI_EXPORT const char *opn2_metaMusicTitle(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return "";
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->musTitle.c_str();
     else
+#endif
         return "";
 }
 
@@ -348,10 +382,12 @@ OPNMIDI_EXPORT const char *opn2_metaMusicCopyright(struct OPN2_MIDIPlayer *devic
 {
     if(!device)
         return "";
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->musCopyright.c_str();
     else
+#endif
         return "";
 }
 
@@ -359,10 +395,12 @@ OPNMIDI_EXPORT size_t opn2_metaTrackTitleCount(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return 0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->musTrackTitles.size();
     else
+#endif
         return 0;
 }
 
@@ -370,10 +408,15 @@ OPNMIDI_EXPORT const char *opn2_metaTrackTitle(struct OPN2_MIDIPlayer *device, s
 {
     if(!device)
         return 0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(index >= play->musTrackTitles.size())
         return "INVALID";
     return play->musTrackTitles[index].c_str();
+#else
+    (void)index;
+    return "NOT SUPPORTED";
+#endif
 }
 
 
@@ -381,16 +424,19 @@ OPNMIDI_EXPORT size_t opn2_metaMarkerCount(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return 0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(play)
         return play->musMarkers.size();
     else
+#endif
         return 0;
 }
 
 OPNMIDI_EXPORT Opn2_MarkerEntry opn2_metaMarker(struct OPN2_MIDIPlayer *device, size_t index)
 {
     struct Opn2_MarkerEntry marker;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(!device || !play || (index >= play->musMarkers.size()))
     {
@@ -406,6 +452,12 @@ OPNMIDI_EXPORT Opn2_MarkerEntry opn2_metaMarker(struct OPN2_MIDIPlayer *device, 
         marker.pos_time = mk.pos_time;
         marker.pos_ticks = (unsigned long)mk.pos_ticks;
     }
+#else
+    (void)device; (void)index;
+    marker.label = "NOT SUPPORTED";
+    marker.pos_time = 0.0;
+    marker.pos_ticks = 0;
+#endif
     return marker;
 }
 
@@ -458,6 +510,7 @@ inline static void SendStereoAudio(int      &samples_requested,
 
 OPNMIDI_EXPORT int opn2_play(OPN2_MIDIPlayer *device, int sampleCount, short *out)
 {
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     sampleCount -= sampleCount % 2; //Avoid even sample requests
     if(sampleCount < 0)
         return 0;
@@ -514,7 +567,7 @@ OPNMIDI_EXPORT int opn2_play(OPN2_MIDIPlayer *device, int sampleCount, short *ou
                 unsigned int chips = player->opn.NumCards;
                 if(chips == 1)
                 {
-                    #ifdef USE_LEGACY_EMULATOR
+                    #ifdef OPNMIDI_USE_LEGACY_EMULATOR
                     player->opn.cardsOP2[0]->run(int(in_generatedStereo), out_buf);
                     #else
                     OPN2_GenerateStream(player->opn.cardsOP2[0], out_buf, (Bit32u)in_generatedStereo);
@@ -525,7 +578,7 @@ OPNMIDI_EXPORT int opn2_play(OPN2_MIDIPlayer *device, int sampleCount, short *ou
                     /* Generate data from every chip and mix result */
                     for(unsigned card = 0; card < chips; ++card)
                     {
-                        #ifdef USE_LEGACY_EMULATOR
+                        #ifdef OPNMIDI_USE_LEGACY_EMULATOR
                         player->opn.cardsOP2[card]->run(int(in_generatedStereo), out_buf);
                         #else
                         OPN2_GenerateStreamMix(player->opn.cardsOP2[card], out_buf, (Bit32u)in_generatedStereo);
@@ -549,6 +602,9 @@ OPNMIDI_EXPORT int opn2_play(OPN2_MIDIPlayer *device, int sampleCount, short *ou
     }
 
     return static_cast<int>(gotten_len);
+#else
+    return 0;
+#endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 }
 
 
@@ -593,7 +649,7 @@ OPNMIDI_EXPORT int opn2_generate(struct OPN2_MIDIPlayer *device, int sampleCount
                 unsigned int chips = player->opn.NumCards;
                 if(chips == 1)
                 {
-                    #ifdef USE_LEGACY_EMULATOR
+                    #ifdef OPNMIDI_USE_LEGACY_EMULATOR
                     player->opn.cardsOP2[0]->run(int(in_generatedStereo), out_buf);
                     #else
                     OPN2_GenerateStream(player->opn.cardsOP2[0], out_buf, (Bit32u)in_generatedStereo);
@@ -604,7 +660,7 @@ OPNMIDI_EXPORT int opn2_generate(struct OPN2_MIDIPlayer *device, int sampleCount
                     /* Generate data from every chip and mix result */
                     for(unsigned card = 0; card < chips; ++card)
                     {
-                        #ifdef USE_LEGACY_EMULATOR
+                        #ifdef OPNMIDI_USE_LEGACY_EMULATOR
                         player->opn.cardsOP2[card]->run(int(in_generatedStereo), out_buf);
                         #else
                         OPN2_GenerateStreamMix(player->opn.cardsOP2[card], out_buf, (Bit32u)in_generatedStereo);
@@ -629,20 +685,29 @@ OPNMIDI_EXPORT double opn2_tickEvents(struct OPN2_MIDIPlayer *device, double sec
 {
     if(!device)
         return -1.0;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *player = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(!player)
         return -1.0;
     return player->Tick(seconds, granuality);
+#else
+    (void)seconds; (void)granuality;
+    return -1.0;
+#endif
 }
 
 OPNMIDI_EXPORT int opn2_atEnd(struct OPN2_MIDIPlayer *device)
 {
     if(!device)
         return 1;
+#ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     OPNMIDIplay *player = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     if(!player)
         return 1;
     return (int)player->atEnd;
+#else
+    return 1;
+#endif
 }
 
 OPNMIDI_EXPORT void opn2_panic(struct OPN2_MIDIPlayer *device)

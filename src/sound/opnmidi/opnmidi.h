@@ -30,7 +30,7 @@ extern "C" {
 
 #define OPNMIDI_VERSION_MAJOR       1
 #define OPNMIDI_VERSION_MINOR       1
-#define OPNMIDI_VERSION_PATCHLEVEL  0
+#define OPNMIDI_VERSION_PATCHLEVEL  1
 
 #define OPNMIDI_TOSTR(s) #s
 #define OPNMIDI_VERSION \

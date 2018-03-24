@@ -75,6 +75,7 @@ typedef int32_t ssize_t;
 #include <vector>
 #include <list>
 #include <string>
+#include <sstream>
 //#ifdef __WATCOMC__
 //#include <myset.h> //TODO: Implemnet a workaround for OpenWatcom to fix a crash while using those containers
 //#include <mymap.h>
@@ -103,13 +104,6 @@ typedef int32_t ssize_t;
 
 #include <deque>
 #include <algorithm>
-
-#ifdef _MSC_VER
-#pragma warning(disable:4319)
-#pragma warning(disable:4267)
-#pragma warning(disable:4244)
-#pragma warning(disable:4146)
-#endif
 
 #include "fraction.hpp"
 
@@ -583,6 +577,7 @@ public:
         void AddAge(int64_t ms);
     };
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     /**
      * @brief MIDI Event utility container
      */
@@ -707,6 +702,7 @@ public:
         PositionNew(): began(false), wait(0.0), absTimePosition(0.0), track()
         {}
     };
+#endif//ADLMIDI_DISABLE_MIDI_SEQUENCER
 
     struct Setup
     {
@@ -757,6 +753,8 @@ private:
     char ____padding[7];
 
     std::vector<AdlChannel> ch;
+
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     std::vector<std::vector<uint8_t> > TrackData;
 
     PositionNew CurrentPositionNew, LoopBeginPositionNew, trackBeginPositionNew;
@@ -770,13 +768,16 @@ private:
     double loopStartTime;
     //! Loop end time
     double loopEndTime;
+#endif
     //! Local error string
     std::string errorString;
     //! Local error string
     std::string errorStringOut;
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     //! Pre-processed track data storage
     std::vector<MidiTrackQueue > trackDataNew;
+#endif
 
     //! Missing instruments catches
     std::set<uint8_t> caugh_missing_instruments;
@@ -785,6 +786,7 @@ private:
     //! Missing percussion banks catches
     std::set<uint16_t> caugh_missing_banks_percussion;
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     /**
      * @brief Build MIDI track data from the raw track data storage
      * @return true if everything successfully processed, or false on any error
@@ -799,12 +801,14 @@ private:
      * @return Parsed MIDI event entry
      */
     MidiEvent parseEvent(uint8_t **ptr, uint8_t *end, int &status);
+#endif//ADLMIDI_DISABLE_MIDI_SEQUENCER
 
 public:
 
     const std::string &getErrorString();
     void setErrorString(const std::string &err);
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     std::string musTitle;
     std::string musCopyright;
     std::vector<std::string> musTrackTitles;
@@ -818,6 +822,7 @@ public:
             loopEnd,
             invalidLoop; /*Loop points are invalid (loopStart after loopEnd or loopStart and loopEnd are on same place)*/
     char ____padding2[2];
+#endif
     OPL3 opl;
 
     int16_t outBuf[1024];
@@ -846,6 +851,7 @@ public:
     bool LoadBank(const void *data, size_t size);
     bool LoadBank(fileReader &fr);
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     bool LoadMIDI(const std::string &filename);
     bool LoadMIDI(const void *data, size_t size);
     bool LoadMIDI(fileReader &fr);
@@ -857,6 +863,7 @@ public:
      * @return desired number of seconds until next call
      */
     double Tick(double s, double granularity);
+#endif
 
     /**
      * @brief Process extra iterators like vibrato or arpeggio
@@ -864,6 +871,7 @@ public:
      */
     void   TickIteratos(double s);
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     /**
      * @brief Change current position to specified time position in seconds
      * @param seconds Absolute time position in seconds
@@ -904,6 +912,7 @@ public:
      * @param tempo Tempo multiplier: 1.0 - original tempo. >1 - faster, <1 - slower
      */
     void    setTempo(double tempo);
+#endif//ADLMIDI_DISABLE_MIDI_SEQUENCER
 
     /* RealTime event triggers */
     void realTime_ResetState();
@@ -942,8 +951,11 @@ private:
                     MIDIchannel::activenoteiterator i,
                     unsigned props_mask,
                     int32_t select_adlchn = -1);
+
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
     bool ProcessEventsNew(bool isSeek = false);
     void HandleEvent(size_t tk, const MidiEvent &evt, int &status);
+#endif
 
     // Determine how good a candidate this adlchannel
     // would be for playing a note from this instrument.

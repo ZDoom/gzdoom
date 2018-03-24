@@ -133,6 +133,8 @@ void MIDIplay::AdlChannel::AddAge(int64_t ms)
     }
 }
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
+
 MIDIplay::MidiEvent::MidiEvent() :
     type(T_UNKNOWN),
     subtype(T_UNKNOWN),
@@ -250,7 +252,9 @@ void MIDIplay::MidiTrackRow::sortEvents(bool *noteStates)
     events.insert(events.end(), controllers.begin(), controllers.end());
     events.insert(events.end(), anyOther.begin(), anyOther.end());
 }
+#endif //ADLMIDI_DISABLE_MIDI_SEQUENCER
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
 bool MIDIplay::buildTrackData()
 {
     fullSongTimeLength = 0.0;
@@ -687,10 +691,13 @@ bool MIDIplay::buildTrackData()
 
     return true;
 }
+#endif
+
 
 MIDIplay::MIDIplay(unsigned long sampleRate):
-    cmf_percussion_mode(false),
-    fullSongTimeLength(0.0),
+    cmf_percussion_mode(false)
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
+    , fullSongTimeLength(0.0),
     postSongWaitDelay(1.0),
     loopStartTime(-1.0),
     loopEndTime(-1.0),
@@ -699,6 +706,7 @@ MIDIplay::MIDIplay(unsigned long sampleRate):
     loopStart(false),
     loopEnd(false),
     invalidLoop(false)
+#endif
 {
     devices.clear();
 
@@ -781,7 +789,7 @@ uint64_t MIDIplay::ReadVarLenEx(uint8_t **ptr, uint8_t *end, bool &ok)
     return result;
 }
 
-
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
 double MIDIplay::Tick(double s, double granularity)
 {
     s *= tempoMultiplier;
@@ -816,6 +824,7 @@ double MIDIplay::Tick(double s, double granularity)
 
     return CurrentPositionNew.wait;
 }
+#endif
 
 void MIDIplay::TickIteratos(double s)
 {
@@ -824,6 +833,8 @@ void MIDIplay::TickIteratos(double s)
     UpdateVibrato(s);
     UpdateArpeggio(s);
 }
+
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
 
 void MIDIplay::seek(double seconds)
 {
@@ -930,6 +941,7 @@ void MIDIplay::setTempo(double tempo)
 {
     tempoMultiplier = tempo;
 }
+#endif
 
 void MIDIplay::realTime_ResetState()
 {
@@ -1608,7 +1620,7 @@ void MIDIplay::NoteUpdate(uint16_t MidCh,
         Ch[MidCh].activenotes.erase(i);
 }
 
-
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
 bool MIDIplay::ProcessEventsNew(bool isSeek)
 {
     if(CurrentPositionNew.track.size() == 0)
@@ -1720,7 +1732,9 @@ bool MIDIplay::ProcessEventsNew(bool isSeek)
 
     return true;//Has events in queue
 }
+#endif
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
 MIDIplay::MidiEvent MIDIplay::parseEvent(uint8_t **pptr, uint8_t *end, int &status)
 {
     uint8_t *&ptr = *pptr;
@@ -1924,6 +1938,7 @@ MIDIplay::MidiEvent MIDIplay::parseEvent(uint8_t **pptr, uint8_t *end, int &stat
 
     return evt;
 }
+#endif
 
 const std::string &MIDIplay::getErrorString()
 {
@@ -1935,7 +1950,7 @@ void MIDIplay::setErrorString(const std::string &err)
     errorStringOut = err;
 }
 
-
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
 void MIDIplay::HandleEvent(size_t tk, const MIDIplay::MidiEvent &evt, int &status)
 {
     if(hooks.onEvent)
@@ -2092,6 +2107,7 @@ void MIDIplay::HandleEvent(size_t tk, const MIDIplay::MidiEvent &evt, int &statu
     }
     }
 }
+#endif
 
 long MIDIplay::CalculateAdlChannelGoodness(unsigned c, const MIDIchannel::NoteInfo::Phys &ins, uint16_t) const
 {

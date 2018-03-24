@@ -23,8 +23,14 @@
 
 #include "adlmidi_private.hpp"
 
-#include "adlmidi_mus2mid.h"
-#include "adlmidi_xmi2mid.h"
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
+#   ifndef ADLMIDI_DISABLE_MUS_SUPPORT
+#       include "adlmidi_mus2mid.h"
+#   endif//MUS
+#   ifndef ADLMIDI_DISABLE_XMI_SUPPORT
+#       include "adlmidi_xmi2mid.h"
+#   endif//XMI
+#endif //ADLMIDI_DISABLE_MIDI_SEQUENCER
 
 uint64_t MIDIplay::ReadBEint(const void *buffer, size_t nbytes)
 {
@@ -339,6 +345,7 @@ tryAgain:
     return true;
 }
 
+#ifndef ADLMIDI_DISABLE_MIDI_SEQUENCER
 bool MIDIplay::LoadMIDI(const std::string &filename)
 {
     fileReader file;
@@ -412,6 +419,80 @@ riffskip:
         fr.seek(7 - static_cast<long>(HeaderSize), SEEK_CUR);
         is_GMF = true;
     }
+    #ifndef ADLMIDI_DISABLE_MUS_SUPPORT
+    else if(std::memcmp(HeaderBuf, "MUS\x1A", 4) == 0)
+    {
+        // MUS/DMX files (Doom)
+        fr.seek(0, SEEK_END);
+        size_t mus_len = fr.tell();
+        fr.seek(0, SEEK_SET);
+        uint8_t *mus = (uint8_t *)malloc(mus_len);
+        if(!mus)
+        {
+            errorStringOut = "Out of memory!";
+            return false;
+        }
+        fr.read(mus, 1, mus_len);
+        //Close source stream
+        fr.close();
+
+        uint8_t *mid = NULL;
+        uint32_t mid_len = 0;
+        int m2mret = AdlMidi_mus2midi(mus, static_cast<uint32_t>(mus_len),
+                                      &mid, &mid_len, 0);
+        if(mus) free(mus);
+        if(m2mret < 0)
+        {
+            errorStringOut = "Invalid MUS/DMX data format!";
+            return false;
+        }
+        cvt_buf.reset(mid);
+        //Open converted MIDI file
+        fr.openData(mid, static_cast<size_t>(mid_len));
+        //Re-Read header again!
+        goto riffskip;
+    }
+    #endif //ADLMIDI_DISABLE_MUS_SUPPORT
+    #ifndef ADLMIDI_DISABLE_XMI_SUPPORT
+    else if(std::memcmp(HeaderBuf, "FORM", 4) == 0)
+    {
+        if(std::memcmp(HeaderBuf + 8, "XDIR", 4) != 0)
+        {
+            fr.close();
+            errorStringOut = fr._fileName + ": Invalid format\n";
+            return false;
+        }
+
+        fr.seek(0, SEEK_END);
+        size_t mus_len = fr.tell();
+        fr.seek(0, SEEK_SET);
+        uint8_t *mus = (uint8_t*)malloc(mus_len);
+        if(!mus)
+        {
+            errorStringOut = "Out of memory!";
+            return false;
+        }
+        fr.read(mus, 1, mus_len);
+        //Close source stream
+        fr.close();
+
+        uint8_t *mid = NULL;
+        uint32_t mid_len = 0;
+        int m2mret = AdlMidi_xmi2midi(mus, static_cast<uint32_t>(mus_len),
+                                      &mid, &mid_len, XMIDI_CONVERT_NOCONVERSION);
+        if(mus) free(mus);
+        if(m2mret < 0)
+        {
+            errorStringOut = "Invalid XMI data format!";
+            return false;
+        }
+        cvt_buf.reset(mid);
+        //Open converted MIDI file
+        fr.openData(mid, static_cast<size_t>(mid_len));
+        //Re-Read header again!
+        goto riffskip;
+    }
+    #endif //ADLMIDI_DISABLE_XMI_SUPPORT
     else if(std::memcmp(HeaderBuf, "CTMF", 4) == 0)
     {
         opl.dynamic_instruments.clear();
@@ -691,3 +772,4 @@ riffskip:
     ch.resize(opl.NumChannels);
     return true;
 }
+#endif //ADLMIDI_DISABLE_MIDI_SEQUENCER

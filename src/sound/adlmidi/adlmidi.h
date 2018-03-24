@@ -30,7 +30,7 @@ extern "C" {
 
 #define ADLMIDI_VERSION_MAJOR       1
 #define ADLMIDI_VERSION_MINOR       3
-#define ADLMIDI_VERSION_PATCHLEVEL  1
+#define ADLMIDI_VERSION_PATCHLEVEL  2
 
 #define ADLMIDI_TOSTR(s) #s
 #define ADLMIDI_VERSION \

@@ -283,6 +283,7 @@ ADLMIDI_EXPORT int adl_openFile(ADL_MIDIPlayer *device, const char *filePath)
         }
         else return 0;
 #else
+        (void)filePath;
         play->setErrorString("ADLMIDI: MIDI Sequencer is not supported in this build of library!");
         return -1;
 #endif //ADLMIDI_DISABLE_MIDI_SEQUENCER
@@ -308,6 +309,7 @@ ADLMIDI_EXPORT int adl_openData(ADL_MIDIPlayer *device, const void *mem, unsigne
         }
         else return 0;
 #else
+        (void)mem;(void)size;
         play->setErrorString("ADLMIDI: MIDI Sequencer is not supported in this build of library!");
         return -1;
 #endif //ADLMIDI_DISABLE_MIDI_SEQUENCER

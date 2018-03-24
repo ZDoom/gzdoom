@@ -166,6 +166,7 @@ EMidiDevice MIDIStreamer::SelectMIDIDevice(EMidiDevice device)
 	case -5:		return MDEV_FLUIDSYNTH;
 	case -6:		return MDEV_WILDMIDI;
 	case -7:		return MDEV_ADL;
+	case -8:		return MDEV_OPN;
 	default:
 		#ifdef _WIN32
 					return MDEV_MMAPI;
@@ -203,6 +204,10 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 
 			case MDEV_ADL:
 				dev = new ADLMIDIDevice(Args);
+				break;
+
+			case MDEV_OPN:
+				dev = new OPNMIDIDevice(Args);
 				break;
 
 			case MDEV_MMAPI:

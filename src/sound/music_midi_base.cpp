@@ -50,7 +50,7 @@
 static uint32_t	nummididevices;
 static bool		nummididevicesset;
 
-#define NUM_DEF_DEVICES 6
+#define NUM_DEF_DEVICES 7
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
 {
@@ -67,6 +67,8 @@ static void AddDefaultMidiDevices(FOptionValues *opt)
 	pair[4].Value = -3.0;
 	pair[5].Text = "libADL";
 	pair[5].Value = -7.0;
+	pair[6].Text = "libOPN";
+	pair[6].Value = -8.0;
 
 }
 
@@ -201,6 +203,7 @@ CCMD (snd_listmididevices)
 	MIDIOUTCAPS caps;
 	MMRESULT res;
 
+	PrintMidiDevice(-8, "libOPN", MIDIDEV_FMSYNTH, 0);
 	PrintMidiDevice(-7, "libADL", MIDIDEV_FMSYNTH, 0);
 	PrintMidiDevice (-6, "WildMidi", MIDIDEV_SWSYNTH, 0);
 	PrintMidiDevice (-5, "FluidSynth", MIDIDEV_SWSYNTH, 0);
@@ -230,8 +233,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -7)
-		self = -7;
+	if (self < -8)
+		self = -8;
 	else if (self > -2)
 		self = -2;
 	else
@@ -245,6 +248,7 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 
 CCMD (snd_listmididevices)
 {
+	Printf("%s-8. libOPN\n", -7 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-7. libADL\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-6. WildMidi\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");

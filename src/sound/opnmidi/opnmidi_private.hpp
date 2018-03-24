@@ -94,7 +94,6 @@ typedef __int32 ssize_t;
 #include "opnbank.h"
 #include "opnmidi.h"
 
-
 #define ADL_UNUSED(x) (void)x
 
 extern std::string OPN2MIDI_ErrorString;
@@ -894,7 +893,7 @@ private:
 
     // Determine how good a candidate this adlchannel
     // would be for playing a note from this instrument.
-    long CalculateAdlChannelGoodness(size_t c, uint16_t ins, uint16_t /*MidCh*/) const;
+    int64_t CalculateAdlChannelGoodness(size_t c, uint16_t ins, uint16_t /*MidCh*/) const;
 
     // A new note will be played on this channel using this instrument.
     // Kill existing notes on this channel (or don't, if we do arpeggio)

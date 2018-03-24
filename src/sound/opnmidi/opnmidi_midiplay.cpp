@@ -2031,9 +2031,9 @@ void OPNMIDIplay::HandleEvent(size_t tk, const OPNMIDIplay::MidiEvent &evt, int 
 }
 #endif //OPNMIDI_DISABLE_MIDI_SEQUENCER
 
-long OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, uint16_t ins, uint16_t) const
+int64_t OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, uint16_t ins, uint16_t) const
 {
-    long s = -ch[c].koff_time_until_neglible;
+    int64_t s = -ch[c].koff_time_until_neglible;
 
     // Same midi-instrument = some stability
     //if(c == MidCh) s += 4;
@@ -2045,9 +2045,9 @@ long OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, uint16_t ins, uint16_t) 
         s -= 4000;
 
         if(!j->second.sustained)
-            s -= (long)j->second.kon_time_until_neglible;
+            s -= j->second.kon_time_until_neglible;
         else
-            s -= (long)(j->second.kon_time_until_neglible / 2);
+            s -= (j->second.kon_time_until_neglible / 2);
 
         MIDIchannel::activenotemap_t::const_iterator
         k = Ch[j->first.MidCh].activenotes.find(j->first.note);
@@ -2065,7 +2065,7 @@ long OPNMIDIplay::CalculateAdlChannelGoodness(size_t c, uint16_t ins, uint16_t) 
             }
 
             // Percussion is inferior to melody
-            s += 50 * (k->second.midiins / 128);
+            s += 50 * (int64_t)(k->second.midiins / 128);
             /*
                     if(k->second.midiins >= 25
                     && k->second.midiins < 40

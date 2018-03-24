@@ -2109,9 +2109,9 @@ void MIDIplay::HandleEvent(size_t tk, const MIDIplay::MidiEvent &evt, int &statu
 }
 #endif
 
-long MIDIplay::CalculateAdlChannelGoodness(unsigned c, const MIDIchannel::NoteInfo::Phys &ins, uint16_t) const
+int64_t MIDIplay::CalculateAdlChannelGoodness(unsigned c, const MIDIchannel::NoteInfo::Phys &ins, uint16_t) const
 {
-    long s = -ch[c].koff_time_until_neglible;
+    int64_t s = -ch[c].koff_time_until_neglible;
 
     // Same midi-instrument = some stability
     //if(c == MidCh) s += 4;
@@ -2123,9 +2123,9 @@ long MIDIplay::CalculateAdlChannelGoodness(unsigned c, const MIDIchannel::NoteIn
         s -= 4000;
 
         if(!j->second.sustained)
-            s -= (long)j->second.kon_time_until_neglible;
+            s -= j->second.kon_time_until_neglible;
         else
-            s -= (long)(j->second.kon_time_until_neglible / 2);
+            s -= (j->second.kon_time_until_neglible / 2);
 
         MIDIchannel::activenotemap_t::const_iterator
         k = Ch[j->first.MidCh].activenotes.find(j->first.note);
@@ -2143,7 +2143,7 @@ long MIDIplay::CalculateAdlChannelGoodness(unsigned c, const MIDIchannel::NoteIn
             }
 
             // Percussion is inferior to melody
-            s += 50 * (k->second.midiins / 128);
+            s += 50 * (int64_t)(k->second.midiins / 128);
             /*
                     if(k->second.midiins >= 25
                     && k->second.midiins < 40
@@ -2178,7 +2178,7 @@ long MIDIplay::CalculateAdlChannelGoodness(unsigned c, const MIDIchannel::NoteIn
             }
         }
 
-        s += n_evacuation_stations * 4;
+        s += (int64_t)n_evacuation_stations * 4;
     }
 
     return s;

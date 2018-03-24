@@ -2510,7 +2510,7 @@ void P_PredictPlayer (player_t *player)
 		if (!NoInterpolateOld)
 			R_RebuildViewInterpolation(player);
 
-		player->cmd = network.localcmds[i % LOCALCMDTICS];
+		player->cmd = network.GetLocalCommand(i);
 		P_PlayerThink (player);
 		player->mo->Tick ();
 

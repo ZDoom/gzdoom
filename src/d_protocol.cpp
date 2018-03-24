@@ -408,68 +408,6 @@ int SkipTicCmd (uint8_t **stream, int count)
 	return skip;
 }
 
-#include <assert.h>
-void ReadTicCmd (uint8_t **stream, int player, int tic)
-{
-	int type;
-	uint8_t *start;
-	ticcmd_t *tcmd;
-
-	int ticmod = tic % BACKUPTICS;
-
-	tcmd = &network.netcmds[player][ticmod];
-	tcmd->consistency = ReadWord (stream);
-
-	start = *stream;
-
-	while ((type = ReadByte (stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
-		Net_SkipCommand (type, stream);
-
-	network.NetSpecs[player][ticmod].SetData (start, int(*stream - start - 1));
-
-	if (type == DEM_USERCMD)
-	{
-		UnpackUserCmd (&tcmd->ucmd,
-			tic ? &network.netcmds[player][(tic-1)%BACKUPTICS].ucmd : NULL, stream);
-	}
-	else
-	{
-		if (tic)
-		{
-			memcpy (&tcmd->ucmd, &network.netcmds[player][(tic-1)%BACKUPTICS].ucmd, sizeof(tcmd->ucmd));
-		}
-		else
-		{
-			memset (&tcmd->ucmd, 0, sizeof(tcmd->ucmd));
-		}
-	}
-
-	if (player==consoleplayer&&tic>BACKUPTICS)
-		assert(network.consistency[player][ticmod] == tcmd->consistency);
-}
-
-void RunNetSpecs (int player, int buf)
-{
-	uint8_t *stream;
-	int len;
-
-	if (gametic % network.ticdup == 0)
-	{
-		stream = network.NetSpecs[player][buf].GetData (&len);
-		if (stream)
-		{
-			uint8_t *end = stream + len;
-			while (stream < end)
-			{
-				int type = ReadByte (&stream);
-				Net_DoCommand (type, &stream, player);
-			}
-			if (!demorecording)
-				network.NetSpecs[player][buf].SetData (NULL, 0);
-		}
-	}
-}
-
 uint8_t *lenspot;
 
 // Write the header of an IFF chunk and leave space

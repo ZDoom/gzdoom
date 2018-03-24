@@ -86,15 +86,17 @@ struct ArbitrateData
 struct Network
 {
 public:
+	void TryRunTics();
+	void NetUpdate();
+
 	void D_CheckNetGame();
+	void Net_ClearBuffers();
+	void D_QuitNetGame();
+
 	void ListPingTimes();
 	void Network_Controller(int playernum, bool add);
-	void Net_ClearBuffers();
-	void NetUpdate();
-	void D_QuitNetGame();
-	void TryRunTics();
-	void Net_NewMakeTic();
 
+	void Net_NewMakeTic(); // Only public because DoomMain calls it. Really really shouldn't be public.
 	void Net_WriteByte(uint8_t it);
 	void Net_WriteWord(short it);
 	void Net_WriteLong(int it);
@@ -102,17 +104,25 @@ public:
 	void Net_WriteString(const char *it);
 	void Net_WriteBytes(const uint8_t *block, int len);
 
-	short consistency[MAXPLAYERS][BACKUPTICS];
+	size_t CopySpecData(int player, uint8_t *dest, size_t dest_size);
 
-	FDynamicBuffer NetSpecs[MAXPLAYERS][BACKUPTICS];
-	ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
-	ticcmd_t localcmds[LOCALCMDTICS];
+	void SetBotCommand(int player, const ticcmd_t &cmd);
+	ticcmd_t GetPlayerCommand(int player) const;
+
+	bool IsInconsistent(int player, int16_t checkvalue) const;
+	void SetConsistency(int player, int16_t checkvalue);
+	int16_t GetConsoleConsistency() const;
+
+	void RunNetSpecs(int player);
+
+	ticcmd_t GetLocalCommand(int tic) const { return localcmds[tic % LOCALCMDTICS]; }
+
+	int GetPing(int player) const;
+	int GetServerPing() const;
+	int GetHighPingThreshold() const;
 
 	int maketic;
 	int ticdup; // 1 = no duplication, 2-5 = dup for slow nets
-
-	int nodeforplayer[MAXPLAYERS];
-	int netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
 
 private:
 	int NetbufferSize();
@@ -127,8 +137,18 @@ private:
 
 	void SendSetup(uint32_t playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len);
 
+	void ReadTicCmd(uint8_t **stream, int player, int tic);
+
 	std::unique_ptr<doomcom_t> doomcom;
 	NetPacket netbuffer;
+
+	int nodeforplayer[MAXPLAYERS];
+	int netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
+
+	short consistency[MAXPLAYERS][BACKUPTICS];
+	ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
+	FDynamicBuffer NetSpecs[MAXPLAYERS][BACKUPTICS];
+	ticcmd_t localcmds[LOCALCMDTICS];
 
 	int gametime;
 

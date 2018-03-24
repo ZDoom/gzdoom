@@ -1053,11 +1053,8 @@ static void DrawLatency()
 	{
 		return;
 	}
-	int i, localdelay = 0, arbitratordelay = 0;
-	for (i = 0; i < BACKUPTICS; i++) localdelay += network.netdelay[0][i];
-	for (i = 0; i < BACKUPTICS; i++) arbitratordelay += network.netdelay[network.nodeforplayer[Net_Arbitrator]][i];
-	localdelay = ((localdelay / BACKUPTICS) * network.ticdup) * (1000 / TICRATE);
-	arbitratordelay = ((arbitratordelay / BACKUPTICS) * network.ticdup) * (1000 / TICRATE);
+	int localdelay = network.GetPing(0);
+	int arbitratordelay = network.GetServerPing();
 	int color = CR_GREEN;
 	if (MAX(localdelay, arbitratordelay) > 200)
 	{
@@ -1067,7 +1064,7 @@ static void DrawLatency()
 	{
 		color = CR_ORANGE;
 	}
-	if (MAX(localdelay, arbitratordelay) >= ((BACKUPTICS / 2 - 1) * network.ticdup) * (1000 / TICRATE))
+	if (MAX(localdelay, arbitratordelay) >= network.GetHighPingThreshold())
 	{
 		color = CR_RED;
 	}

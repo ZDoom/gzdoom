@@ -96,7 +96,7 @@ extern FString	savegamefile;
 #define PL_DRONE		0x80	// bit flag in doomdata->player
 
 void D_ProcessEvents (void); 
-void G_BuildTiccmd (ticcmd_t *cmd); 
+ticcmd_t G_BuildTiccmd ();
 void D_DoAdvanceDemo (void);
 
 static void RunScript(uint8_t **stream, APlayerPawn *pawn, int snum, int argn, int always);
@@ -831,24 +831,96 @@ void Network::GetPackets()
 
 		// update command store from the packet
 		{
-			uint8_t *start;
-			int i, tics;
 			remoteresend[netnode] = false;
 
-			start = &netbuffer[k];
+			uint8_t *start = &netbuffer[k];
 
-			for (i = 0; i < numplayers; ++i)
+			for (int i = 0; i < numplayers; ++i)
 			{
 				int node = nodeforplayer[playerbytes[i]];
 
 				SkipTicCmd (&start, nettics[node] - realstart);
-				for (tics = nettics[node]; tics < realend; tics++)
-					ReadTicCmd (&start, playerbytes[i], tics);
+
+				for (int tic = nettics[node]; tic < realend; tic++)
+				{
+					ReadTicCmd(&start, playerbytes[i], tic);
+				}
 
 				nettics[nodeforplayer[playerbytes[i]]] = realend;
 			}
 		}
 	}
+}
+
+void Network::ReadTicCmd(uint8_t **stream, int player, int tic)
+{
+	int type;
+	uint8_t *start;
+	ticcmd_t *tcmd;
+
+	int ticmod = tic % BACKUPTICS;
+
+	tcmd = &netcmds[player][ticmod];
+	tcmd->consistency = ReadWord(stream);
+
+	start = *stream;
+
+	while ((type = ReadByte(stream)) != DEM_USERCMD && type != DEM_EMPTYUSERCMD)
+		Net_SkipCommand(type, stream);
+
+	NetSpecs[player][ticmod].SetData(start, int(*stream - start - 1));
+
+	if (type == DEM_USERCMD)
+	{
+		UnpackUserCmd(&tcmd->ucmd, tic ? &netcmds[player][(tic - 1) % BACKUPTICS].ucmd : NULL, stream);
+	}
+	else
+	{
+		if (tic)
+		{
+			memcpy(&tcmd->ucmd, &netcmds[player][(tic - 1) % BACKUPTICS].ucmd, sizeof(tcmd->ucmd));
+		}
+		else
+		{
+			memset(&tcmd->ucmd, 0, sizeof(tcmd->ucmd));
+		}
+	}
+
+	if (player == consoleplayer && tic>BACKUPTICS)
+		assert(consistency[player][ticmod] == tcmd->consistency);
+}
+
+void Network::RunNetSpecs(int player)
+{
+	if (gametic % ticdup == 0)
+	{
+		int buf = (gametic / network.ticdup) % BACKUPTICS;
+
+		int len = 0;
+		uint8_t *stream = NetSpecs[player][buf].GetData(&len);
+		if (stream)
+		{
+			uint8_t *end = stream + len;
+			while (stream < end)
+			{
+				int type = ReadByte(&stream);
+				Net_DoCommand(type, &stream, player);
+			}
+			if (!demorecording)
+				NetSpecs[player][buf].SetData(nullptr, 0);
+		}
+	}
+}
+
+void Network::SetBotCommand(int player, const ticcmd_t &cmd)
+{
+	netcmds[player][((gametic + 1) / network.ticdup) % BACKUPTICS] = cmd;
+}
+
+ticcmd_t Network::GetPlayerCommand(int player) const
+{
+	int buf = (gametic / network.ticdup) % BACKUPTICS;
+	return netcmds[player][buf];
 }
 
 // Builds ticcmds for console player, sends out a packet
@@ -900,7 +972,7 @@ void Network::NetUpdate()
 			break;			// can't hold any more
 		
 		//Printf ("mk:%i ",maketic);
-		G_BuildTiccmd (&localcmds[maketic % LOCALCMDTICS]);
+		localcmds[maketic % LOCALCMDTICS] = G_BuildTiccmd();
 		maketic++;
 
 		if (ticdup == 1 || maketic == 0)
@@ -1711,6 +1783,25 @@ void Network::TryRunTics()
 	int 		counts;
 	int 		numplaying;
 
+	if (singletics)
+	{
+		I_StartTic();
+		D_ProcessEvents();
+		netcmds[consoleplayer][maketic%BACKUPTICS] = G_BuildTiccmd();
+		if (advancedemo)
+			D_DoAdvanceDemo();
+		C_Ticker();
+		M_Ticker();
+		G_Ticker();
+		// [RH] Use the consoleplayer's camera to update sounds
+		S_UpdateSounds(players[consoleplayer].camera);	// move positional sounds
+		gametic++;
+		maketic++;
+		GC::CheckGC();
+		Net_NewMakeTic();
+		return;
+	}
+
 	// If paused, do not eat more CPU time than we need, because it
 	// will all be wasted anyway.
 	if (pauseext) 
@@ -1927,6 +2018,62 @@ void Network::Net_WriteBytes(const uint8_t *block, int len)
 {
 	while (len--)
 		specials << *block++;
+}
+
+bool Network::IsInconsistent(int player, int16_t checkvalue) const
+{
+	int buf = (gametic / ticdup) % BACKUPTICS;
+	return gametic > BACKUPTICS*ticdup && consistency[player][buf] != checkvalue;
+}
+
+void Network::SetConsistency(int player, int16_t checkvalue)
+{
+	int buf = (gametic / ticdup) % BACKUPTICS;
+	consistency[player][buf] = checkvalue;
+}
+
+int16_t Network::GetConsoleConsistency() const
+{
+	return consistency[consoleplayer][(maketic / ticdup) % BACKUPTICS];
+}
+
+size_t Network::CopySpecData(int player, uint8_t *dest, size_t dest_size)
+{
+	if (gametic % ticdup != 0)
+		return 0;
+
+	int buf = (gametic / ticdup) % BACKUPTICS;
+
+	int speclen = 0;
+	uint8_t *specdata = NetSpecs[player][buf].GetData(&speclen);
+	if (!specdata)
+		return 0;
+
+	if (dest_size < speclen)
+		I_FatalError("Demo buffer too small for CopySpecData");
+
+	memcpy(dest, specdata, speclen);
+	NetSpecs[player][buf].SetData(nullptr, 0); // Why is this needed?
+	return speclen;
+}
+
+int Network::GetPing(int player) const
+{
+	int node = nodeforplayer[player];
+	int avgdelay = 0;
+	for (int i = 0; i < BACKUPTICS; i++)
+		avgdelay += netdelay[node][i];
+	return avgdelay * ticdup * 1000 / TICRATE / BACKUPTICS;
+}
+
+int Network::GetServerPing() const
+{
+	return GetPing(Net_Arbitrator);
+}
+
+int Network::GetHighPingThreshold() const
+{
+	return ((BACKUPTICS / 2 - 1) * ticdup) * (1000 / TICRATE);
 }
 
 //==========================================================================

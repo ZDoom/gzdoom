@@ -91,12 +91,6 @@ void I_Tactile (int /*on*/, int /*off*/, int /*total*/)
 {
 }
 
-ticcmd_t emptycmd;
-ticcmd_t *I_BaseTiccmd(void)
-{
-	return &emptycmd;
-}
-
 void I_BeginRead(void)
 {
 }

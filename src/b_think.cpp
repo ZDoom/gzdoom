@@ -63,9 +63,7 @@ static FRandom pr_botmove ("BotMove");
 //so this is what the bot does.
 void DBot::Think ()
 {
-	ticcmd_t *cmd = &network.netcmds[player - players][((gametic + 1)/ network.ticdup)%BACKUPTICS];
-
-	memset (cmd, 0, sizeof(*cmd));
+	ticcmd_t cmd;
 
 	if (enemy && enemy->health <= 0)
 		enemy = NULL;
@@ -80,16 +78,16 @@ void DBot::Think ()
 		DAngle oldpitch = actor->Angles.Pitch;
 
 		Set_enemy ();
-		ThinkForMove (cmd);
+		ThinkForMove (&cmd);
 		TurnToAng ();
 
-		cmd->ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / network.ticdup;
-		cmd->ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
-		if (cmd->ucmd.pitch == -32768)
-			cmd->ucmd.pitch = -32767;
-		cmd->ucmd.pitch /= network.ticdup;
-		actor->Angles.Yaw = oldyaw + DAngle(cmd->ucmd.yaw * network.ticdup * (360 / 65536.f));
-		actor->Angles.Pitch = oldpitch - DAngle(cmd->ucmd.pitch * network.ticdup * (360 / 65536.f));
+		cmd.ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / network.ticdup;
+		cmd.ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
+		if (cmd.ucmd.pitch == -32768)
+			cmd.ucmd.pitch = -32767;
+		cmd.ucmd.pitch /= network.ticdup;
+		actor->Angles.Yaw = oldyaw + DAngle(cmd.ucmd.yaw * network.ticdup * (360 / 65536.f));
+		actor->Angles.Pitch = oldpitch - DAngle(cmd.ucmd.pitch * network.ticdup * (360 / 65536.f));
 	}
 
 	if (t_active)	t_active--;
@@ -106,8 +104,10 @@ void DBot::Think ()
 	}
 	else if (player->mo->health <= 0)
 	{ // Time to respawn
-		cmd->ucmd.buttons |= BT_USE;
+		cmd.ucmd.buttons |= BT_USE;
 	}
+
+	network.SetBotCommand((int)(player - players), cmd);
 }
 
 #define THINKDISTSQ (50000.*50000./(65536.*65536.))

@@ -144,7 +144,7 @@ const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const c
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void D_ProcessEvents ();
-void G_BuildTiccmd (ticcmd_t* cmd);
+ticcmd_t G_BuildTiccmd ();
 void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
@@ -1042,28 +1042,8 @@ void D_DoomLoop ()
 			}
 			I_SetFrameTime();
 
-			// process one or more tics
-			if (singletics)
-			{
-				I_StartTic ();
-				D_ProcessEvents ();
-				G_BuildTiccmd (&network.netcmds[consoleplayer][network.maketic%BACKUPTICS]);
-				if (advancedemo)
-					D_DoAdvanceDemo ();
-				C_Ticker ();
-				M_Ticker ();
-				G_Ticker ();
-				// [RH] Use the consoleplayer's camera to update sounds
-				S_UpdateSounds (players[consoleplayer].camera);	// move positional sounds
-				gametic++;
-				network.maketic++;
-				GC::CheckGC ();
-				network.Net_NewMakeTic ();
-			}
-			else
-			{
-				network.TryRunTics (); // will run at least one tic
-			}
+			network.TryRunTics();
+
 			// Update display, next frame, with current state.
 			I_StartTic ();
 			D_Display ();

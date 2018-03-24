@@ -104,7 +104,7 @@ const int SAVEPICHEIGHT = 162;
 
 bool	G_CheckDemoStatus (void);
 void	G_ReadDemoTiccmd (ticcmd_t *cmd, int player);
-void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf);
+void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player);
 void	G_PlayerReborn (int player);
 
 void	G_DoNewGame (void);
@@ -561,7 +561,7 @@ static inline int joyint(double val)
 // or reads it from the demo buffer.
 // If recording a demo, write it out
 //
-void G_BuildTiccmd (ticcmd_t *cmd)
+ticcmd_t G_BuildTiccmd ()
 {
 	int 		strafe;
 	int 		speed;
@@ -569,12 +569,9 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	int 		side;
 	int			fly;
 
-	ticcmd_t	*base;
+	ticcmd_t cmd;
 
-	base = I_BaseTiccmd (); 			// empty, or external driver
-	*cmd = *base;
-
-	cmd->consistency = network.consistency[consoleplayer][(network.maketic/network.ticdup)%BACKUPTICS];
+	cmd.consistency = network.GetConsoleConsistency();
 
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
@@ -649,32 +646,32 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		side -= sidemove[speed];
 
 	// buttons
-	if (Button_Attack.bDown)		cmd->ucmd.buttons |= BT_ATTACK;
-	if (Button_AltAttack.bDown)		cmd->ucmd.buttons |= BT_ALTATTACK;
-	if (Button_Use.bDown)			cmd->ucmd.buttons |= BT_USE;
-	if (Button_Jump.bDown)			cmd->ucmd.buttons |= BT_JUMP;
-	if (Button_Crouch.bDown)		cmd->ucmd.buttons |= BT_CROUCH;
-	if (Button_Zoom.bDown)			cmd->ucmd.buttons |= BT_ZOOM;
-	if (Button_Reload.bDown)		cmd->ucmd.buttons |= BT_RELOAD;
+	if (Button_Attack.bDown)		cmd.ucmd.buttons |= BT_ATTACK;
+	if (Button_AltAttack.bDown)		cmd.ucmd.buttons |= BT_ALTATTACK;
+	if (Button_Use.bDown)			cmd.ucmd.buttons |= BT_USE;
+	if (Button_Jump.bDown)			cmd.ucmd.buttons |= BT_JUMP;
+	if (Button_Crouch.bDown)		cmd.ucmd.buttons |= BT_CROUCH;
+	if (Button_Zoom.bDown)			cmd.ucmd.buttons |= BT_ZOOM;
+	if (Button_Reload.bDown)		cmd.ucmd.buttons |= BT_RELOAD;
 
-	if (Button_User1.bDown)			cmd->ucmd.buttons |= BT_USER1;
-	if (Button_User2.bDown)			cmd->ucmd.buttons |= BT_USER2;
-	if (Button_User3.bDown)			cmd->ucmd.buttons |= BT_USER3;
-	if (Button_User4.bDown)			cmd->ucmd.buttons |= BT_USER4;
+	if (Button_User1.bDown)			cmd.ucmd.buttons |= BT_USER1;
+	if (Button_User2.bDown)			cmd.ucmd.buttons |= BT_USER2;
+	if (Button_User3.bDown)			cmd.ucmd.buttons |= BT_USER3;
+	if (Button_User4.bDown)			cmd.ucmd.buttons |= BT_USER4;
 
-	if (Button_Speed.bDown)			cmd->ucmd.buttons |= BT_SPEED;
-	if (Button_Strafe.bDown)		cmd->ucmd.buttons |= BT_STRAFE;
-	if (Button_MoveRight.bDown)		cmd->ucmd.buttons |= BT_MOVERIGHT;
-	if (Button_MoveLeft.bDown)		cmd->ucmd.buttons |= BT_MOVELEFT;
-	if (Button_LookDown.bDown)		cmd->ucmd.buttons |= BT_LOOKDOWN;
-	if (Button_LookUp.bDown)		cmd->ucmd.buttons |= BT_LOOKUP;
-	if (Button_Back.bDown)			cmd->ucmd.buttons |= BT_BACK;
-	if (Button_Forward.bDown)		cmd->ucmd.buttons |= BT_FORWARD;
-	if (Button_Right.bDown)			cmd->ucmd.buttons |= BT_RIGHT;
-	if (Button_Left.bDown)			cmd->ucmd.buttons |= BT_LEFT;
-	if (Button_MoveDown.bDown)		cmd->ucmd.buttons |= BT_MOVEDOWN;
-	if (Button_MoveUp.bDown)		cmd->ucmd.buttons |= BT_MOVEUP;
-	if (Button_ShowScores.bDown)	cmd->ucmd.buttons |= BT_SHOWSCORES;
+	if (Button_Speed.bDown)			cmd.ucmd.buttons |= BT_SPEED;
+	if (Button_Strafe.bDown)		cmd.ucmd.buttons |= BT_STRAFE;
+	if (Button_MoveRight.bDown)		cmd.ucmd.buttons |= BT_MOVERIGHT;
+	if (Button_MoveLeft.bDown)		cmd.ucmd.buttons |= BT_MOVELEFT;
+	if (Button_LookDown.bDown)		cmd.ucmd.buttons |= BT_LOOKDOWN;
+	if (Button_LookUp.bDown)		cmd.ucmd.buttons |= BT_LOOKUP;
+	if (Button_Back.bDown)			cmd.ucmd.buttons |= BT_BACK;
+	if (Button_Forward.bDown)		cmd.ucmd.buttons |= BT_FORWARD;
+	if (Button_Right.bDown)			cmd.ucmd.buttons |= BT_RIGHT;
+	if (Button_Left.bDown)			cmd.ucmd.buttons |= BT_LEFT;
+	if (Button_MoveDown.bDown)		cmd.ucmd.buttons |= BT_MOVEDOWN;
+	if (Button_MoveUp.bDown)		cmd.ucmd.buttons |= BT_MOVEUP;
+	if (Button_ShowScores.bDown)	cmd.ucmd.buttons |= BT_SHOWSCORES;
 
 	// Handle joysticks/game controllers.
 	float joyaxes[NUM_JOYAXIS];
@@ -712,7 +709,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		forward += (int)((float)mousey * m_forward);
 	}
 
-	cmd->ucmd.pitch = LocalViewPitch >> 16;
+	cmd.ucmd.pitch = LocalViewPitch >> 16;
 
 	if (SendLand)
 	{
@@ -735,10 +732,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	else if (side < -MAXPLMOVE)
 		side = -MAXPLMOVE;
 
-	cmd->ucmd.forwardmove += forward;
-	cmd->ucmd.sidemove += side;
-	cmd->ucmd.yaw = LocalViewAngle >> 16;
-	cmd->ucmd.upmove = fly;
+	cmd.ucmd.forwardmove += forward;
+	cmd.ucmd.sidemove += side;
+	cmd.ucmd.yaw = LocalViewAngle >> 16;
+	cmd.ucmd.upmove = fly;
 	LocalViewAngle = 0;
 	LocalViewPitch = 0;
 
@@ -746,7 +743,7 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 	if (sendturn180)
 	{
 		sendturn180 = false;
-		cmd->ucmd.buttons |= BT_TURN180;
+		cmd.ucmd.buttons |= BT_TURN180;
 	}
 	if (sendpause)
 	{
@@ -780,8 +777,10 @@ void G_BuildTiccmd (ticcmd_t *cmd)
 		SendItemDrop = NULL;
 	}
 
-	cmd->ucmd.forwardmove <<= 8;
-	cmd->ucmd.sidemove <<= 8;
+	cmd.ucmd.forwardmove <<= 8;
+	cmd.ucmd.sidemove <<= 8;
+
+	return cmd;
 }
 
 //[Graf Zahl] This really helps if the mouse update rate can't be increased!
@@ -1149,9 +1148,6 @@ void G_Ticker ()
 		}
 	}
 
-	// get commands, check consistency, and build new consistency check
-	int buf = (gametic/network.ticdup)%BACKUPTICS;
-
 	// [RH] Include some random seeds and player stuff in the consistency
 	// check, not just the player's x position like BOOM.
 	uint32_t rngsum = FRandom::StaticSumSeeds ();
@@ -1164,15 +1160,13 @@ void G_Ticker ()
 		if (playeringame[i])
 		{
 			ticcmd_t *cmd = &players[i].cmd;
-			ticcmd_t *newcmd = &network.netcmds[i][buf];
+			ticcmd_t newcmd = network.GetPlayerCommand(i);
 
-			if ((gametic % network.ticdup) == 0)
-			{
-				RunNetSpecs (i, buf);
-			}
+			network.RunNetSpecs(i);
+
 			if (demorecording)
 			{
-				G_WriteDemoTiccmd (newcmd, i, buf);
+				G_WriteDemoTiccmd (&newcmd, i);
 			}
 			players[i].oldbuttons = cmd->ucmd.buttons;
 			// If the user alt-tabbed away, paused gets set to -1. In this case,
@@ -1184,7 +1178,7 @@ void G_Ticker ()
 			}
 			else
 			{
-				memcpy(cmd, newcmd, sizeof(ticcmd_t));
+				*cmd = newcmd;
 			}
 
 			// check for turbo cheats
@@ -1196,8 +1190,7 @@ void G_Ticker ()
 
 			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%network.ticdup) == 0)
 			{
-				//players[i].inconsistant = 0;
-				if (gametic > BACKUPTICS*network.ticdup && network.consistency[i][buf] != cmd->consistency)
+				if (network.IsInconsistent(i, cmd->consistency))
 				{
 					players[i].inconsistant = gametic - BACKUPTICS*network.ticdup;
 				}
@@ -1205,11 +1198,11 @@ void G_Ticker ()
 				{
 					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
-					network.consistency[i][buf] = sum;
+					network.SetConsistency(i, sum);
 				}
 				else
 				{
-					network.consistency[i][buf] = rngsum;
+					network.SetConsistency(i, rngsum);
 				}
 			}
 		}
@@ -2453,11 +2446,8 @@ CCMD (stop)
 
 extern uint8_t *lenspot;
 
-void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
+void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 {
-	uint8_t *specdata;
-	int speclen;
-
 	if (stoprecording)
 	{ // use "stop" console command to end demo recording
 		G_CheckDemoStatus ();
@@ -2469,12 +2459,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	if ((specdata = network.NetSpecs[player][buf].GetData (&speclen)) && gametic % network.ticdup == 0)
-	{
-		memcpy (demo_p, specdata, speclen);
-		demo_p += speclen;
-		network.NetSpecs[player][buf].SetData (NULL, 0);
-	}
+	demo_p += network.CopySpecData(player, demo_p, maxdemosize - (demo_p - demobuffer));
 
 	// [RH] Now write out a "normal" ticcmd.
 	WriteUserCmdMessage (&cmd->ucmd, &players[player].cmd.ucmd, &demo_p);

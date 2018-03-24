@@ -40,6 +40,8 @@ void E_WorldThingRevived(AActor* actor);
 void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
 // called before AActor::Destroy of each actor.
 void E_WorldThingDestroyed(AActor* actor);
+// called in P_ActivateLine before executing special, set shouldactivate to false to prevent activation.
+void E_WorldLinePreActivated(line_t* line, AActor* actor, bool* shouldactivate);
 // called in P_ActivateLine after successful special execution.
 void E_WorldLineActivated(line_t* line, AActor* actor);
 // same as ACS SCRIPT_Lightning
@@ -141,6 +143,7 @@ public:
 	void WorldThingRevived(AActor*);
 	void WorldThingDamaged(AActor*, AActor*, AActor*, int, FName, int, DAngle);
 	void WorldThingDestroyed(AActor*);
+	void WorldLinePreActivated(line_t*, AActor*, bool*);
 	void WorldLineActivated(line_t*, AActor*);
 	void WorldLightning();
 	void WorldTick();
@@ -198,8 +201,9 @@ struct FWorldEvent
 	FName DamageType;
 	int DamageFlags = 0;
 	DAngle DamageAngle;
-	// for lineactivated
+	// for line(pre)activated
 	line_t* ActivatedLine = nullptr;
+	bool ShouldActivate = true;
 };
 
 struct FPlayerEvent

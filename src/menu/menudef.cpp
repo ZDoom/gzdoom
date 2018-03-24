@@ -1381,6 +1381,8 @@ static void InitCrosshairsList()
 // Initialize the music configuration submenus
 //
 //=============================================================================
+extern const char* const banknames[74];
+
 static void InitMusicMenus()
 {
 	DMenuDescriptor **advmenu = MenuDescriptors.CheckKey("AdvSoundOptions");
@@ -1415,6 +1417,21 @@ static void InitMusicMenus()
 				auto d = static_cast<DOptionMenuDescriptor*>(*advmenu);
 				auto it = d->GetItem(std::get<0>(p));
 				if (it != nullptr) d->mItems.Delete(d->mItems.Find(it));
+			}
+		}
+	}
+
+	DMenuDescriptor **menu = MenuDescriptors.CheckKey("ADLBankMenu");
+
+	if (menu != nullptr)
+	{
+		if (soundfonts.Size() > 0)
+		{
+			for(int i=0;i<74;i++)
+			{
+				auto it = CreateOptionMenuItemCommand(banknames[i], FStringf("adl_bank %d", i), true);
+				static_cast<DOptionMenuDescriptor*>(*menu)->mItems.Push(it);
+				i++;
 			}
 		}
 	}

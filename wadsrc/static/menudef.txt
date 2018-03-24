@@ -1687,6 +1687,11 @@ OptionMenu FluidPatchsetMenu protected
 	Title "$ADVSNDMNU_SELCONFIG"
 }
 
+OptionMenu ADLBankMenu protected
+{
+	Title "$ADVSNDMNU_OPLBANK"
+}
+
 /*=======================================
  *
  * Module Replayer Options Menu
@@ -1811,8 +1816,7 @@ OptionMenu ModReplayerOptions protected
  OptionMenu ADLOptions protected
  {
  	Title "$ADVSNDMNU_ADLMIDI"
-	StaticText "$ADVSNDMNU_OPLBANK", 1
-	// todo: fill in from internal data
+	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
  }
 
 /*=======================================

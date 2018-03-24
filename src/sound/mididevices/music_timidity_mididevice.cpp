@@ -156,6 +156,7 @@ void TimidityMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 void TimidityMIDIDevice::ComputeOutput(float *buffer, int len)
 {
 	Renderer->ComputeOutput(buffer, len);
+	for (int i = 0; i < len * 2; i++) buffer[i] *= 0.7f;
 }
 
 //==========================================================================

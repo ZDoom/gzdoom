@@ -176,7 +176,7 @@ void ADLMIDIDevice::ComputeOutput(float *buffer, int len)
 	auto result = adl_generate(Renderer, len*2, &shortbuffer[0]);
 	for(int i=0; i<result; i++)
 	{
-		buffer[i] = shortbuffer[i] * (5.f/32768.f);
+		buffer[i] = shortbuffer[i] * (3.5f/32768.f);
 	}
 }
 

@@ -40,8 +40,8 @@
 #include "m_swap.h"
 #include "w_wad.h"
 #include "v_text.h"
+#include "i_system.h"
 #include "opnmidi/opnmidi.h"
-#include "opnmidi/default_bank/xg_opn_bank.h"
 #include <errno.h>
 
 enum
@@ -67,7 +67,13 @@ OPNMIDIDevice::OPNMIDIDevice(const char *args)
 	Renderer = opn2_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
-		opn2_openBankData(Renderer, g_gm_opn2_bank, sizeof(g_gm_opn2_bank));
+		int lump = Wads.CheckNumForFullName("xg.wopn");
+		if (lump < 0)
+		{
+			I_Error("No OPL bank found");
+		}
+		FMemLump data = Wads.ReadLump(lump);
+		opn2_openBankData(Renderer, data.GetMem(), data.GetSize());
 	}
 }
 
@@ -169,7 +175,7 @@ void OPNMIDIDevice::ComputeOutput(float *buffer, int len)
 	auto result = opn2_generate(Renderer, len*2, &shortbuffer[0]);
 	for(int i=0; i<result; i++)
 	{
-		buffer[i] = shortbuffer[i] * (5.f/32768.f);
+		buffer[i] = shortbuffer[i] * (1.f/32768.f);
 	}
 }
 

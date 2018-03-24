@@ -119,7 +119,7 @@ CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -7))
+	if ((self >= (signed)nummididevices) || (self < -8))
 	{
 		// Don't do repeated message spam if there is no valid device.
 		if (self != 0)

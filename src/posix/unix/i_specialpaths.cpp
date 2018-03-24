@@ -40,6 +40,7 @@
 
 #include "version.h"	// for GAMENAME
 
+#include <iostream>
 
 FString GetUserFile (const char *file)
 {
@@ -53,17 +54,26 @@ FString GetUserFile (const char *file)
 		struct stat extrainfo;
 
 		// Sanity check for $HOME/.config
-		FString configPath = NicePath("$HOME/.config/");
+		FString pathString;
+		if (getenv("XDG_CONFIG_HOME")) {
+			pathString = "$XDG_CONFIG_HOME";
+			std::cout << "XDG_CONFIG_HOME was defined" << std::endl;
+		}
+		else {
+			pathString = "$HOME/.config/";
+		}
+		FString configPath = NicePath(pathString);
+		std::cout << "actual configPath: " << configPath.GetChars() << std::endl;
 		if (stat (configPath, &extrainfo) == -1)
 		{
 			if (mkdir (configPath, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 			{
-				I_FatalError ("Failed to create $HOME/.config directory:\n%s", strerror(errno));
+				I_FatalError ("Failed to create %s directory:\n%s", configPath.GetChars(), strerror(errno));
 			}
 		}
 		else if (!S_ISDIR(extrainfo.st_mode))
 		{
-			I_FatalError ("$HOME/.config must be a directory");
+			I_FatalError ("%s must be a directory", configPath.GetChars());
 		}
 
 		// This can be removed after a release or two
@@ -80,7 +90,6 @@ FString GetUserFile (const char *file)
 			else
 				moved = true;
 		}
-
 		if (!moved && mkdir (path, S_IRUSR | S_IWUSR | S_IXUSR) == -1)
 		{
 			I_FatalError ("Failed to create %s directory:\n%s",
@@ -110,7 +119,14 @@ FString M_GetAppDataPath(bool create)
 {
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
-	FString path = NicePath("$HOME/.config/" GAMENAMELOWERCASE);
+	FString pathString;
+	if (getenv("XDG_CONFIG_HOME")) {
+		pathString = FString("$XDG_CONFIG_HOME/zdoom/cache/GAMENAMELOWERCASE");
+	}
+	else {
+		pathString = "$HOME/.config/zdoom/cache/GAMENAMELOWERCASE";
+	}
+	FString path = NicePath(pathString);
 	if (create)
 	{
 		CreatePath(path);
@@ -130,7 +146,14 @@ FString M_GetCachePath(bool create)
 {
 	// Don't use GAME_DIR and such so that ZDoom and its child ports can
 	// share the node cache.
-	FString path = NicePath("$HOME/.config/zdoom/cache");
+	FString pathString;
+	if (getenv("XDG_CONFIG_HOME")) {
+		pathString = "$XDG_CONFIG_HOME/zdoom/cache";
+	}
+	else {
+		pathString = "$HOME/.config/zdoom/cache";
+	}
+	FString path = NicePath(pathString);
 	if (create)
 	{
 		CreatePath(path);
@@ -202,8 +225,15 @@ FString M_GetConfigPath(bool for_reading)
 //===========================================================================
 
 FString M_GetScreenshotsPath()
-{
-	return NicePath("$HOME/" GAME_DIR "/screenshots/");
+{	
+	FString pathString;
+	if (getenv("XDG_CONFIG_HOME")) {
+		pathString = "$XDG_CONFIG_HOME";
+	}
+	else {
+		pathString = FString("$HOME/" GAME_DIR);
+	}
+	return NicePath(pathString + "/screenshots/");
 }
 
 //===========================================================================
@@ -216,12 +246,19 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	return NicePath("$HOME/" GAME_DIR);
+		FString pathString;
+	if (getenv("XDG_CONFIG_HOME")) {
+		pathString = "$XDG_CONFIG_HOME";
+	}
+	else {
+		pathString = FString("$HOME/" GAME_DIR);
+	}
+	return NicePath(pathString);
 }
 
 //===========================================================================
 //
-// M_GetDocumentsPath												Unix
+// M_GetDocumentsPath													Unix
 //
 // Returns the path to the default documents directory.
 //
@@ -229,5 +266,12 @@ FString M_GetSavegamesPath()
 
 FString M_GetDocumentsPath()
 {
-	return NicePath("$HOME/" GAME_DIR);
+		FString pathString;
+	if (getenv("XDG_CONFIG_HOME")) {
+		pathString = "$XDG_CONFIG_HOME";
+	}
+	else {
+		pathString = FString("$HOME/" GAME_DIR);
+	}
+	return NicePath(pathString);
 }

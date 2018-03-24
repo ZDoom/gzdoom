@@ -768,8 +768,8 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	ALCint major=0, minor=0;
 	alcGetIntegerv(Device, ALC_MAJOR_VERSION, 1, &major);
 	alcGetIntegerv(Device, ALC_MINOR_VERSION, 1, &minor);
-	DPrintf(DMSG_SPAMMY, "	ALC Version: " TEXTCOLOR_BLUE"%d.%d\n", major, minor);
-	DPrintf(DMSG_SPAMMY, "	ALC Extensions: " TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_EXTENSIONS));
+	DPrintf(DMSG_SPAMMY, "  ALC Version: " TEXTCOLOR_BLUE"%d.%d\n", major, minor);
+	DPrintf(DMSG_SPAMMY, "  ALC Extensions: " TEXTCOLOR_ORANGE"%s\n", alcGetString(Device, ALC_EXTENSIONS));
 
 	TArray<ALCint> attribs;
 	if(*snd_samplerate > 0)
@@ -809,10 +809,18 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 	}
 	attribs.Clear();
 
-	DPrintf(DMSG_SPAMMY, "	Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
-	DPrintf(DMSG_SPAMMY, "	Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
-	DPrintf(DMSG_SPAMMY, "	Version: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VERSION));
-	DPrintf(DMSG_SPAMMY, "	Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
+	const ALchar *const version = alGetString(AL_VERSION);
+
+	if (strstr(version, "ALSOFT") == nullptr)
+	{
+		Printf(TEXTCOLOR_RED "  You are using an unsupported OpenAL implementation\n"
+			"  Install OpenAL Soft library for a better experience\n");
+	}
+
+	DPrintf(DMSG_SPAMMY, "  Vendor: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_VENDOR));
+	DPrintf(DMSG_SPAMMY, "  Renderer: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_RENDERER));
+	DPrintf(DMSG_SPAMMY, "  Version: " TEXTCOLOR_ORANGE"%s\n", version);
+	DPrintf(DMSG_SPAMMY, "  Extensions: " TEXTCOLOR_ORANGE"%s\n", alGetString(AL_EXTENSIONS));
 
 	AL.EXT_source_distance_model = !!alIsExtensionPresent("AL_EXT_source_distance_model");
 	AL.EXT_SOURCE_RADIUS = !!alIsExtensionPresent("AL_EXT_SOURCE_RADIUS");
@@ -912,7 +920,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 		return;
 	}
 	FreeSfx = Sources;
-	DPrintf(DMSG_NOTIFY, "	Allocated " TEXTCOLOR_BLUE"%u" TEXTCOLOR_NORMAL" sources\n", Sources.Size());
+	DPrintf(DMSG_NOTIFY, "  Allocated " TEXTCOLOR_BLUE"%u" TEXTCOLOR_NORMAL" sources\n", Sources.Size());
 
 	WasInWater = false;
 	if(*snd_efx && ALC.EXT_EFX)
@@ -961,10 +969,10 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 			{
 				alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_EAXREVERB);
 				if(alGetError() == AL_NO_ERROR)
-					DPrintf(DMSG_SPAMMY, "	EAX Reverb found\n");
+					DPrintf(DMSG_SPAMMY, "  EAX Reverb found\n");
 				alEffecti(envReverb, AL_EFFECT_TYPE, AL_EFFECT_REVERB);
 				if(alGetError() == AL_NO_ERROR)
-					DPrintf(DMSG_SPAMMY, "	Standard Reverb found\n");
+					DPrintf(DMSG_SPAMMY, "  Standard Reverb found\n");
 
 				alDeleteEffects(1, &envReverb);
 				getALError();
@@ -977,7 +985,7 @@ OpenALSoundRenderer::OpenALSoundRenderer()
 				alFilteri(EnvFilters[0], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 				alFilteri(EnvFilters[1], AL_FILTER_TYPE, AL_FILTER_LOWPASS);
 				if(getALError() == AL_NO_ERROR)
-					DPrintf(DMSG_SPAMMY, "	Lowpass found\n");
+					DPrintf(DMSG_SPAMMY, "  Lowpass found\n");
 				else
 				{
 					alDeleteFilters(2, EnvFilters);

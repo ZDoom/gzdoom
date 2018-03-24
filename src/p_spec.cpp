@@ -189,6 +189,11 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 		return false;
 	}
 
+	// [MK] Use WorldLinePreActivated to decide if activation should continue
+	bool shouldactivate = true;
+	E_WorldLinePreActivated(line, mo, &shouldactivate);
+	if ( !shouldactivate ) return false;
+
 	bool remote = (line->special != 7 && line->special != 8 && (line->special < 11 || line->special > 14));
 	if (line->locknumber > 0 && !P_CheckKeys (mo, line->locknumber, remote)) return false;
 

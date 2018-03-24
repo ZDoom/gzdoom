@@ -2143,6 +2143,7 @@ SNDMNU_OPENAL			= "OpenAL options";
 SNDMNU_RESTART			= "Restart sound";
 SNDMNU_ADVANCED			= "Advanced options";
 SNDMNU_MODREPLAYER		= "Module replayer options";
+SNDMNU_MIDIPLAYER		= "Midi player options";
 
 // OpenAL Options
 OPENALMNU_TITLE				= "OPENAL OPTIONS";
@@ -2167,14 +2168,22 @@ ADVSNDMNU_FLUIDSYNTH		= "FluidSynth";
 ADVSNDMNU_FLUIDPATCHSET		= "Patch set";
 ADVSNDMNU_FLUIDGAIN			= "Gain";
 ADVSNDMNU_REVERB			= "Reverb";
+ADVSNDMNU_REVERB_LEVEL		= "Reverb Level";
 ADVSNDMNU_CHORUS			= "Chorus";
 ADVSNDMNU_TIMIDITY			= "Timidity++";
+ADVSNDMNU_ADLMIDI			= "ADLMidi";
+ADVSNDMNU_OPNMIDI			= "OPNMidi";
 ADVSNDMNU_TIMIDITYEXE		= "Path for executable";
 ADVSNDMNU_TIMIDITYCONFIG	= "Timidity config file";
 ADVSNDMNU_TIMIDITYVOLUME	= "Relative volume";
 ADVSNDMNU_WILDMIDI			= "WildMidi";
 ADVSNDMNU_WILDMIDICONFIG	= "WildMidi config file";
 ADVSNDMNU_SELCONFIG			= "Select configuration";
+ADVSNDMNU_GLOBAL			= "Global";
+ADVSNDMNU_FREEVERB			= "Freeverb";
+ADVSNDMNU_GLOBAL_FREEVERB	= "Global Freeverb";
+ADVSNDMNU_ADVRESAMPLING		= "Advanced Resampling";
+ADVSNDMNU_OPLBANK			= "OPL Bank";
 
 // Module Replayer Options
 MODMNU_TITLE			= "MODULE REPLAYER OPTIONS";

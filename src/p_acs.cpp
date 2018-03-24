@@ -6689,7 +6689,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		break;
 
 		case ACSF_SetMusicVolume:
-			I_SetMusicVolume(ACSToFloat(args[0]));
+			level.SetMusicVolume(ACSToFloat(args[0]));
 			break;
 
 		case ACSF_CheckProximity:

@@ -886,7 +886,7 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 		{
 			// let's try to get the best version possible. Some drivers only give us the version we request
 			// which breaks all version checks for feature support. The highest used features we use are from version 4.4, and 3.0 is a requirement.
-			static int versions[] = { 45, 44, 43, 42, 41, 40, 33, 32, 31, 30, -1 };
+			static int versions[] = { 46, 45, 44, 43, 42, 41, 40, 33, 32, 31, 30, -1 };
 
 			for (int i = 0; versions[i] > 0; i++)
 			{

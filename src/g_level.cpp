@@ -87,6 +87,7 @@
 #include "vm.h"
 #include "events.h"
 #include "dobjgc.h"
+#include "i_music.h"
 
 #include "gi.h"
 
@@ -600,6 +601,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 
 	startpos = position;
 	gameaction = ga_completed;
+	level.SetMusicVolume(1.0);
 		
 	if (nextinfo != NULL) 
 	{
@@ -1469,6 +1471,7 @@ void G_InitLevelLocals ()
 	level.levelnum = info->levelnum;
 	level.Music = info->Music;
 	level.musicorder = info->musicorder;
+	level.MusicVolume = 1.f;
 
 	level.LevelName = level.info->LookupLevelName();
 	level.NextMap = info->NextMap;
@@ -1953,6 +1956,17 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, SetInterMusic)
 	PARAM_STRING(map);
 	self->SetInterMusic(map);
 	return 0;
+}
+
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FLevelLocals::SetMusicVolume(float f)
+{
+	MusicVolume = f;
+	I_SetMusicVolume(f);
 }
 
 //==========================================================================

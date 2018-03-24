@@ -3651,6 +3651,7 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	if (!savegamerestore)
 	{
+		level.SetMusicVolume(level.MusicVolume);
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
 			players[i].killcount = players[i].secretcount 

@@ -53,7 +53,23 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 
 class FTexture;
 struct FColormap;
-enum FTextureFormat;
+
+// All FTextures present their data to the world in 8-bit format, but if
+// the source data is something else, this is it.
+enum FTextureFormat
+{
+	TEX_Pal,
+	TEX_Gray,
+	TEX_RGB,		// Actually ARGB
+	/*
+	TEX_DXT1,
+	TEX_DXT2,
+	TEX_DXT3,
+	TEX_DXT4,
+	TEX_DXT5,
+	*/
+	TEX_Count
+};
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.
@@ -127,7 +143,7 @@ enum
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
 
-	// New additions. 
+	// New additions.
 	DTA_Color,
 };
 
@@ -436,7 +452,7 @@ public:
 	virtual FNativePalette *CreatePalette(FRemapTable *remap);
 
 	// Precaches or unloads a texture
-	
+
 	// Report a game restart
 	virtual void GameRestart();
 

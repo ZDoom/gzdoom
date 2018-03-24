@@ -143,30 +143,13 @@ struct FDoorAnimation
 // Patches are used for sprites and all masked pictures, and we compose
 // textures from the TEXTURE1/2 lists of patches.
 struct patch_t
-{ 
-	int16_t			width;			// bounding box size 
-	int16_t			height; 
-	int16_t			leftoffset; 	// pixels to the left of origin 
-	int16_t			topoffset;		// pixels below the origin 
-	uint32_t 			columnofs[];	// only [width] used
-	// the [0] is &columnofs[width] 
-};
-
-// All FTextures present their data to the world in 8-bit format, but if
-// the source data is something else, this is it.
-enum FTextureFormat
 {
-	TEX_Pal,
-	TEX_Gray,
-	TEX_RGB,		// Actually ARGB
-	/*
-	TEX_DXT1,
-	TEX_DXT2,
-	TEX_DXT3,
-	TEX_DXT4,
-	TEX_DXT5,
-	*/
-	TEX_Count
+	int16_t			width;			// bounding box size
+	int16_t			height;
+	int16_t			leftoffset; 	// pixels to the left of origin
+	int16_t			topoffset;		// pixels below the origin
+	uint32_t 			columnofs[];	// only [width] used
+	// the [0] is &columnofs[width]
 };
 
 class FNativeTexture;
@@ -634,7 +617,7 @@ public:
 	};
 };
 
-// base class for everything that can be used as a world texture. 
+// base class for everything that can be used as a world texture.
 // This intermediate class encapsulates the buffers for the software renderer.
 class FWorldTexture : public FTexture
 {

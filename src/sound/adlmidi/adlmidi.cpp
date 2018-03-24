@@ -107,13 +107,9 @@ ADLMIDI_EXPORT int adl_setBank(ADL_MIDIPlayer *device, int bank)
     MIDIplay *play = reinterpret_cast<MIDIplay *>(device->adl_midiPlayer);
     if(static_cast<uint32_t>(bankno) >= NumBanks)
     {
-        #ifndef __WATCOMC__
-        std::stringstream s;
-        s << "bank number may only be 0.." << (NumBanks - 1) << ".\n";
-        play->setErrorString(s.str());
-        #else
-        play->setErrorString("Selected embedded bank is not exists!\n");
-        #endif
+        char errBuf[150];
+        std::snprintf(errBuf, 150, "Embedded bank number may only be 0..%u!\n", (NumBanks - 1));
+        play->setErrorString(errBuf);
         return -1;
     }
 
@@ -142,14 +138,9 @@ ADLMIDI_EXPORT int adl_setNumFourOpsChn(ADL_MIDIPlayer *device, int ops4)
     MIDIplay *play = reinterpret_cast<MIDIplay *>(device->adl_midiPlayer);
     if((unsigned int)ops4 > 6 * play->m_setup.NumCards)
     {
-        #ifndef __WATCOMC__
-        std::stringstream s;
-        s << "number of four-op channels may only be 0.." << (6 * (play->m_setup.NumCards)) << " when " << play->m_setup.NumCards << " OPL3 cards are used.\n";
-        play->setErrorString(s.str());
-        #else
-        play->setErrorString("number of four-op channels may not be more than 6 channels per each OPL3 chip!\n");
-        #endif
-
+        char errBuff[250];
+        std::snprintf(errBuff, 250, "number of four-op channels may only be 0..%u when %u OPL3 cards are used.\n", (6 * (play->m_setup.NumCards)), play->m_setup.NumCards);
+        play->setErrorString(errBuff);
         return -1;
     }
 

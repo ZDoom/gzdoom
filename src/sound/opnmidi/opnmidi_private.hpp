@@ -52,7 +52,7 @@ typedef __int32 ssize_t;
 #include <vector>
 #include <list>
 #include <string>
-#include <sstream>
+//#include <sstream>
 #include <map>
 #include <set>
 #include <cstdlib>
@@ -74,6 +74,13 @@ typedef __int32 ssize_t;
 #include <deque>
 #include <algorithm>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#pragma warning(disable:4267)
+#pragma warning(disable:4146)
+#endif
+
+
 #include "fraction.hpp"
 #ifdef USE_LEGACY_EMULATOR
 #include "Ym2612_ChipEmu.h"
@@ -83,6 +90,7 @@ typedef __int32 ssize_t;
 
 #include "opnbank.h"
 #include "opnmidi.h"
+
 
 #define ADL_UNUSED(x) (void)x
 

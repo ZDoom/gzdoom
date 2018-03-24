@@ -1630,6 +1630,7 @@ OptionMenu SoundOptions protected
 
 	StaticText " "
 	Submenu "$SNDMNU_ADVANCED",			"AdvSoundOptions"
+	Submenu "$SNDMNU_MIDIPLAYER",		"MidiPlayerOptions"
 	Submenu "$SNDMNU_MODREPLAYER",		"ModReplayerOptions"
 	StaticText " "
 	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
@@ -1664,36 +1665,6 @@ OptionMenu AdvSoundOptions protected
 	Title "$ADVSNDMNU_TITLE"
 	Option "$ADVSNDMNU_SAMPLERATE",			"snd_samplerate", "SampleRates"
 	Option "$ADVSNDMNU_HRTF",				"snd_hrtf", "AutoOffOn"
-	StaticText " "
-	StaticText "$ADVSNDMNU_OPLSYNTHESIS",	1
-	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
-	Option "$ADVSNDMNU_OPLFULLPAN",			"opl_fullpan", "OnOff"
-	Option "$ADVSNDMNU_OPLCORES", 			"opl_core", "OplCores"
-	StaticText " "
-	StaticText "$ADVSNDMNU_GUSEMULATION",	1
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"midi_config", "GusConfigMenu"
-	Slider "$ADVSNDMNU_MIDIVOICES",			"midi_voices", 16, 256, 4, 0
-	Option "$ADVSNDMNU_DMXGUS", 			"midi_dmxgus", "OnOff"
-	Option "$ADVSNDMNU_GUSMEMSIZE", 		"gus_memsize", "GusMemory"
-	StaticText " "
-	StaticText "$ADVSNDMNU_FLUIDSYNTH",	1
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"fluid_patchset", "FluidPatchsetMenu"
-	Slider "$ADVSNDMNU_FLUIDGAIN",			"fluid_gain", 0, 10, 0.5, 1
-	Option "$ADVSNDMNU_REVERB", 			"fluid_reverb", "OnOff"
-	Option "$ADVSNDMNU_CHORUS", 			"fluid_chorus", "OnOff"
-	Slider "$ADVSNDMNU_MIDIVOICES", 		"fluid_voices", 16, 4096, 16, 0
-	// Leaving out the more advanced stuff for now.
-	StaticText " "
-	StaticText "$ADVSNDMNU_TIMIDITY",	1
-
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"timidity_config", "TimidityConfigMenu"
-	// This one needs reworking
-	//Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "OnOff"
-	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
-	StaticText " "
-	StaticText "$ADVSNDMNU_WILDMIDI",	1
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"wildmidi_config", "WildMidiConfigMenu"
-	Option "$ADVSNDMNU_REVERB", 			"wildmidi_reverb", "OnOff"
 }
 
 OptionMenu GusConfigMenu protected
@@ -1714,6 +1685,11 @@ OptionMenu TimidityConfigMenu protected
 OptionMenu FluidPatchsetMenu protected
 {
 	Title "$ADVSNDMNU_SELCONFIG"
+}
+
+OptionMenu ADLBankMenu protected
+{
+	Title "$ADVSNDMNU_OPLBANK"
 }
 
 /*=======================================
@@ -1750,6 +1726,7 @@ OptionValue ModVolumeRamps
 }
 
 
+
 OptionMenu ModReplayerOptions protected
 {
 	Title "$MODMNU_TITLE"
@@ -1763,6 +1740,84 @@ OptionMenu ModReplayerOptions protected
 	// mechanism to edit the chip-o-matic settings like you can with
 	// the foo_dumb preferences in foobar2000.
 }
+
+/*=======================================
+ *
+ * MIDI player
+ *
+ *=======================================*/
+ 
+ OptionValue TimidityReverb
+ {
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_STANDARD"
+	2, "$ADVSNDMNU_GLOBAL"
+	3, "$ADVSNDMNU_FREEVERB"
+	4, "$ADVSNDMNU_GLOBAL_FREEVERB"
+ }
+ 
+  OptionMenu MidiPlayerOptions protected
+ {
+	Title "$SNDMNU_MIDIPLAYER"
+	Submenu "$ADVSNDMNU_FLUIDSYNTH", "FluidsynthOptions", 0, 1
+	Submenu "$ADVSNDMNU_TIMIDITY", "TimidityOptions", 0, 1
+	Submenu "$ADVSNDMNU_GUSEMULATION", "GUSOptions", 0, 1
+	Submenu "$ADVSNDMNU_WILDMIDI", "WildMidiOptions", 0, 1
+	Submenu "$ADVSNDMNU_OPLSYNTHESIS", "OPLOptions", 0, 1
+	Submenu "$ADVSNDMNU_ADLMIDI", "ADLOptions", 0, 1
+ }
+
+ OptionMenu FluidsynthOptions protected
+ {
+	Title "$ADVSNDMNU_FLUIDSYNTH"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"fluid_patchset", "FluidPatchsetMenu"
+	Slider "$ADVSNDMNU_FLUIDGAIN",			"fluid_gain", 0, 10, 0.5, 1
+	Option "$ADVSNDMNU_REVERB", 			"fluid_reverb", "OnOff"
+	Option "$ADVSNDMNU_CHORUS", 			"fluid_chorus", "OnOff"
+	Slider "$ADVSNDMNU_MIDIVOICES", 		"fluid_voices", 16, 4096, 16, 0
+	// other CVARs need to be revieved for usefulness
+ }
+ 
+ OptionMenu TimidityOptions protected
+ {
+	Title "$ADVSNDMNU_TIMIDITY"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"timidity_config", "TimidityConfigMenu"
+	Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "TimidityReverb"
+	Slider "$ADVSNDMNU_REVERB_LEVEL", 		"timidity_reverb_level", 9, 127, 1, 0
+	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
+	// other CVARs need to be revieved for usefulness
+ }
+
+ OptionMenu GUSOptions protected
+ {
+	Title "$ADVSNDMNU_GUSEMULATION"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"midi_config", "GusConfigMenu"
+	Slider "$ADVSNDMNU_MIDIVOICES",			"midi_voices", 16, 256, 4, 0
+	Option "$ADVSNDMNU_DMXGUS", 			"midi_dmxgus", "OnOff"
+	Option "$ADVSNDMNU_GUSMEMSIZE", 		"gus_memsize", "GusMemory"
+ }
+ 
+  OptionMenu WildMidiOptions protected
+ {
+	Title "$ADVSNDMNU_WILDMIDI"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"wildmidi_config", "WildMidiConfigMenu"
+	Option "$ADVSNDMNU_REVERB", 			"wildmidi_reverb", "OnOff"
+	Option "$ADVSNDMNU_ADVRESAMPLING",		"wildmidi_enhanced_resampling", "OnOff"
+ }
+ 
+ OptionMenu OPLOptions protected
+ {
+ 	Title "$ADVSNDMNU_OPLSYNTHESIS"
+	Option "$ADVSNDMNU_OPLCORES", 			"opl_core", "OplCores"
+	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
+	Option "$ADVSNDMNU_OPLFULLPAN",			"opl_fullpan", "OnOff"
+}
+
+ OptionMenu ADLOptions protected
+ {
+ 	Title "$ADVSNDMNU_ADLMIDI"
+	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
+ }
 
 /*=======================================
  *

@@ -796,6 +796,7 @@ ADLMIDI_EXPORT double adl_tickEvents(struct ADL_MIDIPlayer *device, double secon
         return -1.0;
     return player->Tick(seconds, granuality);
 #else
+    (void)seconds; (void)granuality;
     return -1.0;
 #endif
 }

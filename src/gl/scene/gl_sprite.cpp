@@ -819,7 +819,10 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
 		{
-			patch = thing->picnum;
+			// Animate picnum overrides.
+			auto tex = TexMan(thing->picnum);
+			if (tex == nullptr) return;
+			patch =  tex->id;
 			mirror = false;
 		}
 		else

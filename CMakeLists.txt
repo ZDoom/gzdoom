@@ -11,7 +11,6 @@ if( COMMAND cmake_policy )
 endif()
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
-include( CreateLaunchers )
 include( FindPackageHandleStandardArgs )
 
 # Produce a warning if XP support will be missing when building a 32 bit target for MSVC.

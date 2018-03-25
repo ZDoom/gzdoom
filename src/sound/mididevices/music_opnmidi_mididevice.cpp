@@ -55,6 +55,14 @@ enum
 	ME_PITCHWHEEL = 0xE0
 };
 
+CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 //==========================================================================
 //
 // OPNMIDIDevice Constructor
@@ -73,7 +81,8 @@ OPNMIDIDevice::OPNMIDIDevice(const char *args)
 			I_Error("No OPN bank found");
 		}
 		FMemLump data = Wads.ReadLump(lump);
-		opn2_openBankData(Renderer, data.GetMem(), data.GetSize());
+		opn2_openBankData(Renderer, data.GetMem(), (long)data.GetSize());
+		opn2_setNumChips(Renderer, opn_chips_count);
 	}
 }
 

@@ -119,16 +119,12 @@ typedef enum
 // Called by IO functions when input is detected.
 void D_PostEvent (const event_t* ev);
 void D_RemoveNextCharEvent();
-
+void D_AddPostedEvents();
 
 //
 // GLOBAL VARIABLES
 //
 #define MAXEVENTS		128
-
-extern	event_t 		events[MAXEVENTS];
-extern	int 			eventhead;
-extern	int 			eventtail;
 
 extern	gameaction_t	gameaction;
 

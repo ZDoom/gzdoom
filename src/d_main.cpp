@@ -144,7 +144,6 @@ const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const c
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
 void D_ProcessEvents ();
-ticcmd_t G_BuildTiccmd ();
 void D_DoAdvanceDemo ();
 void D_AddWildFile (TArray<FString> &wadfiles, const char *pattern);
 void D_LoadWadSettings ();
@@ -237,9 +236,10 @@ FString StoredWarp;
 bool advancedemo;
 FILE *debugfile;
 FILE *hashfile;
-event_t events[MAXEVENTS];
-int eventhead;
-int eventtail;
+static TArray<event_t> FrameStartInputEvents;
+static event_t events[MAXEVENTS];
+static int eventhead;
+static int eventtail;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
 FTexture *Page;
@@ -319,33 +319,46 @@ void D_ProcessEvents (void)
 
 void D_PostEvent (const event_t *ev)
 {
-	// Do not post duplicate consecutive EV_DeviceChange events.
-	if (ev->type == EV_DeviceChange && events[eventhead].type == EV_DeviceChange)
+	FrameStartInputEvents.Push(*ev);
+}
+
+void D_AddPostedEvents()
+{
+	unsigned int c = FrameStartInputEvents.Size();
+	for (unsigned int i = 0; i < c; i++)
 	{
-		return;
+		const event_t *ev = &FrameStartInputEvents[i];
+
+		// Do not post duplicate consecutive EV_DeviceChange events.
+		if (ev->type == EV_DeviceChange && events[eventhead].type == EV_DeviceChange)
+		{
+			continue;
+		}
+		events[eventhead] = *ev;
+		if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_Responder(ev) && !paused)
+		{
+			if (Button_Mlook.bDown || freelook)
+			{
+				int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
+				if (invertmouse)
+					look = -look;
+				G_AddViewPitch(look, true);
+				events[eventhead].y = 0;
+			}
+			if (!Button_Strafe.bDown && !lookstrafe)
+			{
+				G_AddViewAngle(int(ev->x * m_yaw * mouse_sensitivity * 8.0), true);
+				events[eventhead].x = 0;
+			}
+			if ((events[eventhead].x | events[eventhead].y) == 0)
+			{
+				continue;
+			}
+		}
+		eventhead = (eventhead + 1)&(MAXEVENTS - 1);
 	}
-	events[eventhead] = *ev;
-	if (ev->type == EV_Mouse && menuactive == MENU_Off && ConsoleState != c_down && ConsoleState != c_falling && !E_Responder(ev) && !paused)
-	{
-		if (Button_Mlook.bDown || freelook)
-		{
-			int look = int(ev->y * m_pitch * mouse_sensitivity * 16.0);
-			if (invertmouse)
-				look = -look;
-			G_AddViewPitch (look, true);
-			events[eventhead].y = 0;
-		}
-		if (!Button_Strafe.bDown && !lookstrafe)
-		{
-			G_AddViewAngle (int(ev->x * m_yaw * mouse_sensitivity * 8.0), true);
-			events[eventhead].x = 0;
-		}
-		if ((events[eventhead].x | events[eventhead].y) == 0)
-		{
-			return;
-		}
-	}
-	eventhead = (eventhead+1)&(MAXEVENTS-1);
+
+	FrameStartInputEvents.Clear();
 }
 
 //==========================================================================
@@ -1042,11 +1055,19 @@ void D_DoomLoop ()
 			}
 			I_SetFrameTime();
 
+			// Grab input events at the beginning of the frame.
+			// This ensures the mouse movement matches I_GetTimeFrac precisely.
+			I_StartTic();
+
+			// Tick the playsim
 			network.TryRunTics();
 
-			// Update display, next frame, with current state.
-			I_StartTic ();
+			// Apply the events we recorded in I_StartTic as the events for the next frame.
+			D_AddPostedEvents();
+
+			// Render frame and present
 			D_Display ();
+
 			if (wantToRestart)
 			{
 				wantToRestart = false;

@@ -3359,7 +3359,7 @@ namespace
 	bool __declspec(thread) DrawerExceptionSetJumpResult;
 	CONTEXT __declspec(thread) DrawerExceptionSetJumpContext;
 	PVOID __declspec(thread) DrawerExceptionHandlerHandle;
-	char __declspec(thread) *DrawerExceptionReason;
+	const char __declspec(thread) *DrawerExceptionReason;
 	bool __declspec(thread) DrawerExceptionFatal;
 
 	LONG WINAPI DrawerExceptionHandler(_EXCEPTION_POINTERS *exceptionInfo)

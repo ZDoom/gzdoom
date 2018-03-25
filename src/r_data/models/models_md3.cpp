@@ -305,7 +305,7 @@ void FMD3Model::AddSkins(uint8_t *hitlist)
 	{
 		if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 		{
-			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].GetIndex()] |= FTexture::TEX_Flat;
+			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].GetIndex()] |= FTextureManager::HIT_Flat;
 		}
 
 		MD3Surface * surf = &surfaces[i];
@@ -313,7 +313,7 @@ void FMD3Model::AddSkins(uint8_t *hitlist)
 		{
 			if (surf->skins[j].isValid())
 			{
-				hitlist[surf->skins[j].GetIndex()] |= FTexture::TEX_Flat;
+				hitlist[surf->skins[j].GetIndex()] |= FTextureManager::HIT_Flat;
 			}
 		}
 	}

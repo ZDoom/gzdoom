@@ -152,7 +152,7 @@ class FMultiPatchTexture : public FWorldTexture
 {
 public:
 	FMultiPatchTexture (const void *texdef, FPatchLookup *patchlookup, int maxpatchnum, bool strife, int deflump);
-	FMultiPatchTexture (FScanner &sc, int usetype);
+	FMultiPatchTexture (FScanner &sc, ETextureType usetype);
 	~FMultiPatchTexture ();
 
 	FTextureFormat GetFormat() override;
@@ -185,7 +185,7 @@ protected:
 	struct TexInit
 	{
 		FString TexName;
-		int UseType = TEX_Null;
+		ETextureType UseType = ETextureType::Null;
 		bool Silent = false;
 		bool HasLine = false;
 		bool UseOffsets = false;
@@ -253,7 +253,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 		I_FatalError ("Bad texture directory");
 	}
 
-	UseType = FTexture::TEX_Wall;
+	UseType = ETextureType::Wall;
 	Parts = NumParts > 0 ? new TexPart[NumParts] : nullptr;
 	Inits = NumParts > 0 ? new TexInit[NumParts] : nullptr;
 	Width = SAFESHORT(mtexture.d->width);
@@ -289,7 +289,7 @@ FMultiPatchTexture::FMultiPatchTexture (const void *texdef, FPatchLookup *patchl
 		Parts[i].OriginY = LittleShort(mpatch.d->originy);
 		Parts[i].Texture = nullptr;
 		Inits[i].TexName = patchlookup[LittleShort(mpatch.d->patch)].Name;
-		Inits[i].UseType = TEX_WallPatch;
+		Inits[i].UseType = ETextureType::WallPatch;
 		if (strife)
 			mpatch.s++;
 		else
@@ -847,7 +847,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 			FMultiPatchTexture *tex = new FMultiPatchTexture ((const uint8_t *)maptex + offset, patchlookup, numpatches, isStrife, deflumpnum);
 			if (i == 1 && texture1)
 			{
-				tex->UseType = FTexture::TEX_FirstDefined;
+				tex->UseType = ETextureType::FirstDefined;
 			}
 			TexMan.AddTexture (tex);
 			StartScreen->Progress();
@@ -1067,7 +1067,7 @@ void FMultiPatchTexture::ParsePatch(FScanner &sc, TexPart & part, TexInit &init)
 //
 //==========================================================================
 
-FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
+FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, ETextureType usetype)
 : Pixels (0), Spans(0), Parts(0), bRedirect(false), bTranslucentPatches(false)
 {
 	TArray<TexPart> parts;
@@ -1123,7 +1123,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 			}
 			else if (sc.Compare("NullTexture"))
 			{
-				UseType = FTexture::TEX_Null;
+				UseType = ETextureType::Null;
 			}
 			else if (sc.Compare("NoDecals"))
 			{
@@ -1137,7 +1137,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 				if (init.TexName.IsNotEmpty())
 				{
 					parts.Push(part);
-					init.UseType = TEX_WallPatch;
+					init.UseType = ETextureType::WallPatch;
 					init.Silent = bSilent;
 					init.HasLine = true;
 					init.sc = sc;
@@ -1154,7 +1154,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 				if (init.TexName.IsNotEmpty())
 				{
 					parts.Push(part);
-					init.UseType = TEX_Sprite;
+					init.UseType = ETextureType::Sprite;
 					init.Silent = bSilent;
 					init.HasLine = true;
 					init.sc = sc;
@@ -1171,7 +1171,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 				if (init.TexName.IsNotEmpty())
 				{
 					parts.Push(part);
-					init.UseType = TEX_MiscPatch;
+					init.UseType = ETextureType::MiscPatch;
 					init.Silent = bSilent;
 					init.HasLine = true;
 					init.sc = sc;
@@ -1206,7 +1206,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, int usetype)
 	
 	if (Width <= 0 || Height <= 0)
 	{
-		UseType = FTexture::TEX_Null;
+		UseType = ETextureType::Null;
 		Printf("Texture %s has invalid dimensions (%d, %d)\n", Name.GetChars(), Width, Height);
 		Width = Height = 1;
 	}
@@ -1301,7 +1301,7 @@ void FMultiPatchTexture::ResolvePatches()
 }
 
 
-void FTextureManager::ParseXTexture(FScanner &sc, int usetype)
+void FTextureManager::ParseXTexture(FScanner &sc, ETextureType usetype)
 {
 	FTexture *tex = new FMultiPatchTexture(sc, usetype);
 	TexMan.AddTexture (tex);

@@ -964,11 +964,11 @@ void gl_ParseHardwareShader(FScanner &sc, int deflump)
 	}
 	else
 	{
-		int type = FTexture::TEX_Any;
+		ETextureType type = ETextureType::Any;
 
-		if (sc.Compare("texture")) type = FTexture::TEX_Wall;
-		else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
-		else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
+		if (sc.Compare("texture")) type = ETextureType::Wall;
+		else if (sc.Compare("flat")) type = ETextureType::Flat;
+		else if (sc.Compare("sprite")) type = ETextureType::Sprite;
 		else sc.UnGet();
 
 		bool disable_fullbright = false;

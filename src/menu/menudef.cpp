@@ -161,7 +161,7 @@ void DeinitMenus()
 
 static FTextureID GetMenuTexture(const char* const name)
 {
-	const FTextureID texture = TexMan.CheckForTexture(name, FTexture::TEX_MiscPatch);
+	const FTextureID texture = TexMan.CheckForTexture(name, ETextureType::MiscPatch);
 
 	if (!texture.Exists() && mustPrintErrors)
 	{
@@ -417,7 +417,7 @@ static void ParseListMenuBody(FScanner &sc, DListMenuDescriptor *desc)
 						}
 						else if (args[i] == TypeTextureID)
 						{
-							auto f = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+							auto f = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
 							if (!f.Exists())
 							{
 								sc.ScriptMessage("Unknown texture %s", sc.String);

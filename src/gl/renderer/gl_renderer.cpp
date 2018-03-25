@@ -236,10 +236,10 @@ FGLRenderer::~FGLRenderer()
 
 void FGLRenderer::GetSpecialTextures()
 {
-	if (gl.legacyMode) glLight = TexMan.CheckForTexture("glstuff/gllight.png", FTexture::TEX_MiscPatch);
-	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", FTexture::TEX_MiscPatch);
-	glPart = TexMan.CheckForTexture("glstuff/glpart.png", FTexture::TEX_MiscPatch);
-	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", FTexture::TEX_MiscPatch);
+	if (gl.legacyMode) glLight = TexMan.CheckForTexture("glstuff/gllight.png", ETextureType::MiscPatch);
+	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", ETextureType::MiscPatch);
+	glPart = TexMan.CheckForTexture("glstuff/glpart.png", ETextureType::MiscPatch);
+	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", ETextureType::MiscPatch);
 
 }
 

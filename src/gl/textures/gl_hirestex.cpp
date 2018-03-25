@@ -111,14 +111,14 @@ int CheckDDPK3(FTexture *tex)
 
 	FString checkName;
 	const char ** checklist;
-	uint8_t useType=tex->UseType;
+	ETextureType useType=tex->UseType;
 
-	if (useType==FTexture::TEX_SkinSprite || useType==FTexture::TEX_Decal || useType==FTexture::TEX_FontChar)
+	if (useType==ETextureType::SkinSprite || useType==ETextureType::Decal || useType==ETextureType::FontChar)
 	{
 		return -3;
 	}
 
-	bool ispatch = (useType==FTexture::TEX_MiscPatch || useType==FTexture::TEX_Sprite) ;
+	bool ispatch = (useType==ETextureType::MiscPatch || useType==ETextureType::Sprite) ;
 
 	// for patches this doesn't work yet
 	if (ispatch) return -3;
@@ -127,34 +127,34 @@ int CheckDDPK3(FTexture *tex)
 	{
 		if (!(gameinfo.flags & GI_MAPxx))
 		{
-			checklist = useType==FTexture::TEX_Flat? doomflatpath : doom1texpath;
+			checklist = useType==ETextureType::Flat? doomflatpath : doom1texpath;
 		}
 		else
 		{
 			SetDoom2Wad();
 			if (Doom2Wad == 1)
-				checklist = useType==FTexture::TEX_Flat? doomflatpath : pluttexpath;
+				checklist = useType==ETextureType::Flat? doomflatpath : pluttexpath;
 			else if (Doom2Wad == 2)
-				checklist = useType==FTexture::TEX_Flat? doomflatpath : tnttexpath;
+				checklist = useType==ETextureType::Flat? doomflatpath : tnttexpath;
 			else
-				checklist = useType==FTexture::TEX_Flat? doomflatpath : doom2texpath;
+				checklist = useType==ETextureType::Flat? doomflatpath : doom2texpath;
 		}
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Heretic"))
 	{
-		checklist = useType==FTexture::TEX_Flat? hereticflatpath : heretictexpath;
+		checklist = useType==ETextureType::Flat? hereticflatpath : heretictexpath;
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Hexen"))
 	{
-		checklist = useType==FTexture::TEX_Flat? hexenflatpath : hexentexpath;
+		checklist = useType==ETextureType::Flat? hexenflatpath : hexentexpath;
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Strife"))
 	{
-		checklist = useType==FTexture::TEX_Flat? strifeflatpath : strifetexpath;
+		checklist = useType==ETextureType::Flat? strifeflatpath : strifetexpath;
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Chex"))
 	{
-		checklist = useType==FTexture::TEX_Flat? chexflatpath : chextexpath;
+		checklist = useType==ETextureType::Flat? chexflatpath : chextexpath;
 	}
 	else
 		return -3;
@@ -292,14 +292,14 @@ int CheckExternalFile(FTexture *tex, bool & hascolorkey)
 
 	FString checkName;
 	const char ** checklist;
-	uint8_t useType=tex->UseType;
+	ETextureType useType = tex->UseType;
 
-	if (useType==FTexture::TEX_SkinSprite || useType==FTexture::TEX_Decal || useType==FTexture::TEX_FontChar)
+	if (useType == ETextureType::SkinSprite || useType == ETextureType::Decal || useType == ETextureType::FontChar)
 	{
 		return -3;
 	}
 
-	bool ispatch = (useType==FTexture::TEX_MiscPatch || useType==FTexture::TEX_Sprite) ;
+	bool ispatch = (useType==ETextureType::MiscPatch || useType==ETextureType::Sprite) ;
 
 	// for patches this doesn't work yet
 	if (ispatch) return -3;
@@ -308,34 +308,34 @@ int CheckExternalFile(FTexture *tex, bool & hascolorkey)
 	{
 		if (!(gameinfo.flags & GI_MAPxx))
 		{
-			checklist = ispatch ? doom1patchpath : useType==FTexture::TEX_Flat? doom1flatpath : doom1texpath;
+			checklist = ispatch ? doom1patchpath : useType==ETextureType::Flat? doom1flatpath : doom1texpath;
 		}
 		else
 		{
 			SetDoom2Wad();
 			if (Doom2Wad == 1)
-				checklist = ispatch ? plutpatchpath : useType==FTexture::TEX_Flat? plutflatpath : pluttexpath;
+				checklist = ispatch ? plutpatchpath : useType==ETextureType::Flat? plutflatpath : pluttexpath;
 			else if (Doom2Wad == 2)
-				checklist = ispatch ? tntpatchpath : useType==FTexture::TEX_Flat? tntflatpath : tnttexpath;
+				checklist = ispatch ? tntpatchpath : useType==ETextureType::Flat? tntflatpath : tnttexpath;
 			else
-				checklist = ispatch ? doom2patchpath : useType==FTexture::TEX_Flat? doom2flatpath : doom2texpath;
+				checklist = ispatch ? doom2patchpath : useType==ETextureType::Flat? doom2flatpath : doom2texpath;
 		}
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Heretic"))
 	{
-		checklist = ispatch ? hereticpatchpath : useType==FTexture::TEX_Flat? hereticflatpath : heretictexpath;
+		checklist = ispatch ? hereticpatchpath : useType==ETextureType::Flat? hereticflatpath : heretictexpath;
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Hexen"))
 	{
-		checklist = ispatch ? hexenpatchpath : useType==FTexture::TEX_Flat? hexenflatpath : hexentexpath;
+		checklist = ispatch ? hexenpatchpath : useType==ETextureType::Flat? hexenflatpath : hexentexpath;
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Strife"))
 	{
-		checklist = ispatch ?strifepatchpath : useType==FTexture::TEX_Flat? strifeflatpath : strifetexpath;
+		checklist = ispatch ?strifepatchpath : useType==ETextureType::Flat? strifeflatpath : strifetexpath;
 	}
 	else if (!gameinfo.ConfigName.CompareNoCase("Chex"))
 	{
-		checklist = ispatch ?chexpatchpath : useType==FTexture::TEX_Flat? chexflatpath : chextexpath;
+		checklist = ispatch ?chexpatchpath : useType==ETextureType::Flat? chexflatpath : chextexpath;
 	}
 	else
 		return -3;

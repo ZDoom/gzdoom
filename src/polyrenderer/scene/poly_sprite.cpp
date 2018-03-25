@@ -104,7 +104,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const TriMatrix &worldTo
 
 	bool flipTextureX = false;
 	FTexture *tex = GetSpriteTexture(thing, flipTextureX);
-	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
+	if (tex == nullptr || tex->UseType == ETextureType::Null)
 		return;
 
 	double thingyscalemul = thing->Scale.Y / tex->Scale.Y;
@@ -315,7 +315,7 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 	if (thing->picnum.isValid())
 	{
 		FTexture *tex = TexMan(thing->picnum);
-		if (tex->UseType == FTexture::TEX_Null)
+		if (tex->UseType == ETextureType::Null)
 		{
 			return nullptr;
 		}

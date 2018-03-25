@@ -342,7 +342,7 @@ void PolySkySetup::Update()
 		}
 
 		frontskytex = TexMan(s->GetTexture(pos), true);
-		if (frontskytex == nullptr || frontskytex->UseType == FTexture::TEX_Null)
+		if (frontskytex == nullptr || frontskytex->UseType == ETextureType::Null)
 		{ // [RH] The blank texture: Use normal sky instead.
 			goto sky1;
 		}

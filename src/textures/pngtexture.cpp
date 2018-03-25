@@ -206,7 +206,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	uint32_t len, id;
 	int i;
 
-	UseType = TEX_MiscPatch;
+	UseType = ETextureType::MiscPatch;
 	LeftOffset = 0;
 	TopOffset = 0;
 	bMasked = false;

@@ -1462,7 +1462,7 @@ bool I_SetCursor(FTexture* cursorpic)
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 	NSCursor* cursor = nil;
 
-	if (NULL != cursorpic && FTexture::TEX_Null != cursorpic->UseType)
+	if (NULL != cursorpic && ETextureType::Null != cursorpic->UseType)
 	{
 		// Create bitmap image representation
 

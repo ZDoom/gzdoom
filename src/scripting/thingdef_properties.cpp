@@ -1147,7 +1147,7 @@ static void SetIcon(FTextureID &icon, Baggage &bag, const char *i)
 	}
 	else
 	{
-		icon = TexMan.CheckForTexture(i, FTexture::TEX_MiscPatch);
+		icon = TexMan.CheckForTexture(i, ETextureType::MiscPatch);
 		if (!icon.isValid())
 		{
 			// Don't print warnings if the item is for another game or if this is a shareware IWAD. 
@@ -1609,7 +1609,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, sidemove, F_f, PlayerPawn)
 DEFINE_CLASS_PROPERTY_PREFIX(player, scoreicon, S, PlayerPawn)
 {
 	PROP_STRING_PARM(z, 0);
-	defaults->ScoreIcon = TexMan.CheckForTexture(z, FTexture::TEX_MiscPatch);
+	defaults->ScoreIcon = TexMan.CheckForTexture(z, ETextureType::MiscPatch);
 	if (!defaults->ScoreIcon.isValid())
 	{
 		bag.ScriptPosition.Message(MSG_WARNING,

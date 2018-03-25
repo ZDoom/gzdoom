@@ -224,7 +224,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 	flip = sprframe->Flip & 1;
 	tex = TexMan(picnum);
 
-	if (tex->UseType == FTexture::TEX_Null)
+	if (tex->UseType == ETextureType::Null)
 		return;
 
 	if (pspr->firstTic)

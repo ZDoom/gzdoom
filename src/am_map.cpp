@@ -952,7 +952,7 @@ void AM_StaticInit()
 	for (int i = 0; i < 10; i++)
 	{
 		mysnprintf (namebuf, countof(namebuf), "AMMNUM%d", i);
-		marknums[i] = TexMan.CheckForTexture (namebuf, FTexture::TEX_MiscPatch);
+		marknums[i] = TexMan.CheckForTexture (namebuf, ETextureType::MiscPatch);
 	}
 	markpointnum = 0;
 	mapback.SetInvalid();
@@ -1356,11 +1356,11 @@ void AM_LevelInit ()
 {
 	if (level.info->MapBackground.Len() == 0)
 	{
-		mapback = TexMan.CheckForTexture("AUTOPAGE", FTexture::TEX_MiscPatch);
+		mapback = TexMan.CheckForTexture("AUTOPAGE", ETextureType::MiscPatch);
 	}
 	else
 	{
-		mapback = TexMan.CheckForTexture(level.info->MapBackground, FTexture::TEX_MiscPatch);
+		mapback = TexMan.CheckForTexture(level.info->MapBackground, ETextureType::MiscPatch);
 	}
 
 	AM_clearMarks();
@@ -2195,7 +2195,7 @@ void AM_drawSubsectors()
 
 		// Draw the polygon.
 		FTexture *pic = TexMan(maptex);
-		if (pic != NULL && pic->UseType != FTexture::TEX_Null)
+		if (pic != NULL && pic->UseType != ETextureType::Null)
 		{
 			screen->FillSimplePoly(TexMan(maptex),
 				&points[0], points.Size(),
@@ -3069,7 +3069,7 @@ void AM_drawThings ()
 static void DrawMarker (FTexture *tex, double x, double y, int yadjust,
 	INTBOOL flip, double xscale, double yscale, int translation, double alpha, uint32_t fillcolor, FRenderStyle renderstyle)
 {
-	if (tex == NULL || tex->UseType == FTexture::TEX_Null)
+	if (tex == NULL || tex->UseType == ETextureType::Null)
 	{
 		return;
 	}

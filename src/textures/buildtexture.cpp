@@ -85,7 +85,7 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	TopOffset = top;
 	CalcBitSize ();
 	Name.Format("%sBTIL%04d", pathprefix.GetChars(), tilenum);
-	UseType = TEX_Override;
+	UseType = ETextureType::Override;
 }
 
 uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)

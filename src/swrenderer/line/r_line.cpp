@@ -424,7 +424,7 @@ namespace swrenderer
 			if (!onlyUpdatePlaneClip)
 				// allocate space for masked texture tables, if needed
 				// [RH] Don't just allocate the space; fill it in too.
-				if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != FTexture::TEX_Null || draw_segment->Has3DFloorWalls() || IsFogBoundary(mFrontSector, mBackSector)) &&
+				if ((TexMan(sidedef->GetTexture(side_t::mid), true)->UseType != ETextureType::Null || draw_segment->Has3DFloorWalls() || IsFogBoundary(mFrontSector, mBackSector)) &&
 					(mCeilingClipped != ProjectedWallCull::OutsideBelow || !sidedef->GetTexture(side_t::top).isValid()) &&
 					(mFloorClipped != ProjectedWallCull::OutsideAbove || !sidedef->GetTexture(side_t::bottom).isValid()) &&
 					(WallC.sz1 >= TOO_CLOSE_Z && WallC.sz2 >= TOO_CLOSE_Z))
@@ -1100,7 +1100,7 @@ namespace swrenderer
 		}
 		else
 		{ // two sided line
-			if (mTopPart.Texture != NULL && mTopPart.Texture->UseType != FTexture::TEX_Null)
+			if (mTopPart.Texture != NULL && mTopPart.Texture->UseType != ETextureType::Null)
 			{ // top wall
 				for (int x = x1; x < x2; ++x)
 				{
@@ -1113,7 +1113,7 @@ namespace swrenderer
 				memcpy(ceilingclip + x1, walltop.ScreenY + x1, (x2 - x1) * sizeof(short));
 			}
 
-			if (mBottomPart.Texture != NULL && mBottomPart.Texture->UseType != FTexture::TEX_Null)
+			if (mBottomPart.Texture != NULL && mBottomPart.Texture->UseType != ETextureType::Null)
 			{ // bottom wall
 				for (int x = x1; x < x2; ++x)
 				{
@@ -1131,7 +1131,7 @@ namespace swrenderer
 	void SWRenderLine::RenderTopTexture(int x1, int x2)
 	{
 		if (mMiddlePart.Texture) return;
-		if (!mTopPart.Texture || mTopPart.Texture->UseType == FTexture::TEX_Null) return;
+		if (!mTopPart.Texture || mTopPart.Texture->UseType == ETextureType::Null) return;
 		if (!viewactive) return;
 
 		FTexture *rw_pic = mTopPart.Texture;
@@ -1178,7 +1178,7 @@ namespace swrenderer
 
 	void SWRenderLine::RenderMiddleTexture(int x1, int x2)
 	{
-		if (!mMiddlePart.Texture || mMiddlePart.Texture->UseType == FTexture::TEX_Null) return;
+		if (!mMiddlePart.Texture || mMiddlePart.Texture->UseType == ETextureType::Null) return;
 		if (!viewactive) return;
 
 		FTexture *rw_pic = mMiddlePart.Texture;
@@ -1226,7 +1226,7 @@ namespace swrenderer
 	void SWRenderLine::RenderBottomTexture(int x1, int x2)
 	{
 		if (mMiddlePart.Texture) return;
-		if (!mBottomPart.Texture || mBottomPart.Texture->UseType == FTexture::TEX_Null) return;
+		if (!mBottomPart.Texture || mBottomPart.Texture->UseType == ETextureType::Null) return;
 		if (!viewactive) return;
 
 		FTexture *rw_pic = mBottomPart.Texture;

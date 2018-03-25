@@ -233,7 +233,7 @@ void FTexture::CreateDefaultBrightmap()
 	{
 		// Check for brightmaps
 		if (UseBasePalette() && HasGlobalBrightmap &&
-			UseType != TEX_Decal && UseType != TEX_MiscPatch && UseType != TEX_FontChar &&
+			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
 			gl_info.Brightmap == NULL && bWarped == 0
 			) 
 		{
@@ -312,7 +312,7 @@ bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
 
 	// already done!
 	if (gl_info.areacount) return false;
-	if (UseType == TEX_Flat) return false;	// flats don't have transparent parts
+	if (UseType == ETextureType::Flat) return false;	// flats don't have transparent parts
 	gl_info.areacount=-1;	//whatever happens next, it shouldn't be done twice!
 
 	// large textures are excluded for performance reasons
@@ -544,7 +544,7 @@ int FBrightmapTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotat
 
 void gl_ParseMaterial(FScanner &sc, int deflump)
 {
-	int type = FTexture::TEX_Any;
+	ETextureType type = ETextureType::Any;
 	bool disable_fullbright = false;
 	bool disable_fullbright_specified = false;
 	bool thiswad = false;
@@ -556,9 +556,9 @@ void gl_ParseMaterial(FScanner &sc, int deflump)
 	memset(textures, 0, sizeof(textures));
 
 	sc.MustGetString();
-	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
-	else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
-	else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
+	if (sc.Compare("texture")) type = ETextureType::Wall;
+	else if (sc.Compare("flat")) type = ETextureType::Flat;
+	else if (sc.Compare("sprite")) type = ETextureType::Sprite;
 	else sc.UnGet();
 
 	sc.MustGetString();
@@ -608,7 +608,7 @@ void gl_ParseMaterial(FScanner &sc, int deflump)
 					sc.MustGetString();
 					if (textures[i])
 						Printf("Multiple %s definitions in texture %s\n", keywords[i], tex? tex->Name.GetChars() : "(null)");
-					textures[i] = TexMan.FindTexture(sc.String, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+					textures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 					if (!textures[i])
 						Printf("%s '%s' not found in texture '%s'\n", notFound[i], sc.String, tex? tex->Name.GetChars() : "(null)");
 					break;
@@ -663,16 +663,16 @@ void gl_ParseMaterial(FScanner &sc, int deflump)
 
 void gl_ParseBrightmap(FScanner &sc, int deflump)
 {
-	int type = FTexture::TEX_Any;
+	ETextureType type = ETextureType::Any;
 	bool disable_fullbright=false;
 	bool thiswad = false;
 	bool iwad = false;
 	FTexture *bmtex = NULL;
 
 	sc.MustGetString();
-	if (sc.Compare("texture")) type = FTexture::TEX_Wall;
-	else if (sc.Compare("flat")) type = FTexture::TEX_Flat;
-	else if (sc.Compare("sprite")) type = FTexture::TEX_Sprite;
+	if (sc.Compare("texture")) type = ETextureType::Wall;
+	else if (sc.Compare("flat")) type = ETextureType::Flat;
+	else if (sc.Compare("sprite")) type = ETextureType::Sprite;
 	else sc.UnGet();
 
 	sc.MustGetString();
@@ -709,7 +709,7 @@ void gl_ParseBrightmap(FScanner &sc, int deflump)
 				Printf("Multiple brightmap definitions in texture %s\n", tex? tex->Name.GetChars() : "(null)");
 			}
 
-			bmtex = TexMan.FindTexture(sc.String, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+			bmtex = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 
 			if (bmtex == NULL) 
 				Printf("Brightmap '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
@@ -789,7 +789,7 @@ void AddAutoMaterials()
 				TArray<FTextureID> list;
 				FString texname = ExtractFileBase(name, false);
 				TexMan.ListTextures(texname, list);
-				auto bmtex = TexMan.FindTexture(name, FTexture::TEX_Any, FTextureManager::TEXMAN_TryAny);
+				auto bmtex = TexMan.FindTexture(name, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
 				for (auto texid : list)
 				{
 					bmtex->bMasked = false;
@@ -946,7 +946,7 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 				{
 					if (smf->skinIDs[i].isValid())
 					{
-						texhitlist[smf->skinIDs[i].GetIndex()] |= FTexture::TEX_Flat;
+						texhitlist[smf->skinIDs[i].GetIndex()] |= FTextureManager::HIT_Flat;
 					}
 					else if (smf->modelIDs[i] != -1)
 					{

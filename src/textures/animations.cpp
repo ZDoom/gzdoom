@@ -206,8 +206,8 @@ void FTextureManager::InitAnimated (void)
 			if (*anim_p /* .istexture */ & 1)
 			{
 				// different episode ?
-				if (!(pic1 = CheckForTexture ((const char*)(anim_p + 10) /* .startname */, FTexture::TEX_Wall, texflags)).Exists() ||
-					!(pic2 = CheckForTexture ((const char*)(anim_p + 1) /* .endname */, FTexture::TEX_Wall, texflags)).Exists())
+				if (!(pic1 = CheckForTexture ((const char*)(anim_p + 10) /* .startname */, ETextureType::Wall, texflags)).Exists() ||
+					!(pic2 = CheckForTexture ((const char*)(anim_p + 1) /* .endname */, ETextureType::Wall, texflags)).Exists())
 					continue;		
 
 				// [RH] Bit 1 set means allow decals on walls with this texture
@@ -215,8 +215,8 @@ void FTextureManager::InitAnimated (void)
 			}
 			else
 			{
-				if (!(pic1 = CheckForTexture ((const char*)(anim_p + 10) /* .startname */, FTexture::TEX_Flat, texflags)).Exists() ||
-					!(pic2 = CheckForTexture ((const char*)(anim_p + 1) /* .startname */, FTexture::TEX_Flat, texflags)).Exists())
+				if (!(pic1 = CheckForTexture ((const char*)(anim_p + 10) /* .startname */, ETextureType::Flat, texflags)).Exists() ||
+					!(pic2 = CheckForTexture ((const char*)(anim_p + 1) /* .startname */, ETextureType::Flat, texflags)).Exists())
 					continue;
 			}
 
@@ -291,11 +291,11 @@ void FTextureManager::InitAnimDefs ()
 		{
 			if (sc.Compare ("flat"))
 			{
-				ParseAnim (sc, FTexture::TEX_Flat);
+				ParseAnim (sc, ETextureType::Flat);
 			}
 			else if (sc.Compare ("texture"))
 			{
-				ParseAnim (sc, FTexture::TEX_Wall);
+				ParseAnim (sc, ETextureType::Wall);
 			}
 			else if (sc.Compare ("switch"))
 			{
@@ -317,7 +317,7 @@ void FTextureManager::InitAnimDefs ()
 			else if (sc.Compare("skyoffset"))
 			{
 				sc.MustGetString ();
-				FTextureID picnum = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+				FTextureID picnum = CheckForTexture (sc.String, ETextureType::Wall, texflags);
 				sc.MustGetNumber();
 				if (picnum.Exists())
 				{
@@ -341,7 +341,7 @@ void FTextureManager::InitAnimDefs ()
 //
 //==========================================================================
 
-void FTextureManager::ParseAnim (FScanner &sc, int usetype)
+void FTextureManager::ParseAnim (FScanner &sc, ETextureType usetype)
 {
 	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
 	TArray<FAnimDef::FAnimFrame> frames (32);
@@ -463,7 +463,7 @@ void FTextureManager::ParseAnim (FScanner &sc, int usetype)
 //
 //==========================================================================
 
-FAnimDef *FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing)
+FAnimDef *FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing)
 {
 	int type;
 	FTextureID framenum;
@@ -504,7 +504,7 @@ FAnimDef *FTextureManager::ParseRangeAnim (FScanner &sc, FTextureID picnum, int 
 //
 //==========================================================================
 
-void FTextureManager::ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
+void FTextureManager::ParsePicAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames)
 {
 	FTextureID framenum;
 	uint32_t min = 1, max = 1;
@@ -532,7 +532,7 @@ void FTextureManager::ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype
 //
 //==========================================================================
 
-FTextureID FTextureManager::ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing)
+FTextureID FTextureManager::ParseFramenum (FScanner &sc, FTextureID basepicnum, ETextureType usetype, bool allowMissing)
 {
 	const BITFIELD texflags = TEXMAN_Overridable | TEXMAN_TryAny;
 	FTextureID framenum;
@@ -611,7 +611,7 @@ void FTextureManager::ParseWarp(FScanner &sc)
 	{
 		sc.ScriptError (NULL);
 	}
-	FTextureID picnum = CheckForTexture (sc.String, isflat ? FTexture::TEX_Flat : FTexture::TEX_Wall, texflags);
+	FTextureID picnum = CheckForTexture (sc.String, isflat ? ETextureType::Flat : ETextureType::Wall, texflags);
 	if (picnum.isValid())
 	{
 
@@ -675,7 +675,7 @@ void FTextureManager::ParseCameraTexture(FScanner &sc)
 	width = sc.Number;
 	sc.MustGetNumber ();
 	height = sc.Number;
-	FTextureID picnum = CheckForTexture (picname, FTexture::TEX_Flat, texflags);
+	FTextureID picnum = CheckForTexture (picname, ETextureType::Flat, texflags);
 	FTexture *viewer = new FCanvasTexture (picname, width, height);
 	if (picnum.Exists())
 	{
@@ -690,7 +690,7 @@ void FTextureManager::ParseCameraTexture(FScanner &sc)
 		fitwidth = width;
 		fitheight = height;
 		// [GRB] No need for oldtex
-		viewer->UseType = FTexture::TEX_Wall;
+		viewer->UseType = ETextureType::Wall;
 		AddTexture (viewer);
 	}
 	if (sc.GetString())
@@ -791,7 +791,7 @@ void FTextureManager::ParseAnimatedDoor(FScanner &sc)
 	FTextureID v;
 
 	sc.MustGetString();
-	anim.BaseTexture = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+	anim.BaseTexture = CheckForTexture (sc.String, ETextureType::Wall, texflags);
 
 	if (!anim.BaseTexture.Exists())
 	{
@@ -822,7 +822,7 @@ void FTextureManager::ParseAnimatedDoor(FScanner &sc)
 			}
 			else
 			{
-				v = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+				v = CheckForTexture (sc.String, ETextureType::Wall, texflags);
 				if (!v.Exists() && anim.BaseTexture.Exists() && !error)
 				{
 					sc.ScriptError ("Unknown texture %s", sc.String);

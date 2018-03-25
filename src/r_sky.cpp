@@ -84,11 +84,11 @@ void R_InitSkyMap ()
 	// Do not allow the null texture which has no bitmap and will crash.
 	if (sky1texture.isNull())
 	{
-		sky1texture = TexMan.CheckForTexture("-noflat-", FTexture::TEX_Any);
+		sky1texture = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
 	if (sky2texture.isNull())
 	{
-		sky2texture = TexMan.CheckForTexture("-noflat-", FTexture::TEX_Any);
+		sky2texture = TexMan.CheckForTexture("-noflat-", ETextureType::Any);
 	}
 
 	skytex1 = TexMan(sky1texture, true);

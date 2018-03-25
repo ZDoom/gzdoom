@@ -337,7 +337,7 @@ void R_InitSpriteDefs ()
 	for (i = 0; i < smax; ++i)
 	{
 		FTexture *tex = TexMan.ByIndex(i);
-		if (tex->UseType == FTexture::TEX_Sprite && strlen(tex->Name) >= 6)
+		if (tex->UseType == ETextureType::Sprite && strlen(tex->Name) >= 6)
 		{
 			size_t bucket = TEX_DWNAME(tex) % smax;
 			hashes[i].Next = hashes[bucket].Head;
@@ -856,7 +856,7 @@ void R_InitSkins (void)
 					memcpy(&lnameint, lname, 4);
 					if (lnameint == intname)
 					{
-						FTextureID picnum = TexMan.CreateTexture(k, FTexture::TEX_SkinSprite);
+						FTextureID picnum = TexMan.CreateTexture(k, ETextureType::SkinSprite);
 						bool res = R_InstallSpriteLump (picnum, lname[4] - 'A', lname[5], false, sprtemp, maxframe);
 
 						if (lname[6] && res)

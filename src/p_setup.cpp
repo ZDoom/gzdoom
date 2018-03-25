@@ -568,7 +568,7 @@ static void SetTexture (side_t *side, int position, const char *name, FMissingTe
 	static const char *positionnames[] = { "top", "middle", "bottom" };
 	static const char *sidenames[] = { "first", "second" };
 
-	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
+	FTextureID texture = TexMan.CheckForTexture (name, ETextureType::Wall,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 
 	if (!texture.Exists())
@@ -614,7 +614,7 @@ void SetTexture (sector_t *sector, int index, int position, const char *name, FM
 		name = name8;
 	}
 
-	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Flat,
+	FTextureID texture = TexMan.CheckForTexture (name, ETextureType::Flat,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 
 	if (!texture.Exists())
@@ -668,7 +668,7 @@ static void SetTexture (side_t *side, int position, uint32_t *blend, const char 
 	FTextureID texture;
 	if ((*blend = R_ColormapNumForName (name)) == 0)
 	{
-		texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
+		texture = TexMan.CheckForTexture (name, ETextureType::Wall,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 		if (!texture.Exists())
 		{
@@ -701,7 +701,7 @@ static void SetTextureNoErr (side_t *side, int position, uint32_t *color, const 
 {
 	FTextureID texture;
 	*validcolor = false;
-	texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,	
+	texture = TexMan.CheckForTexture (name, ETextureType::Wall,	
 		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 	if (!texture.Exists())
 	{
@@ -3482,12 +3482,12 @@ static void P_PrecacheLevel()
 
 	for (auto n : gameinfo.PrecachedTextures)
 	{
-		FTextureID tex = TexMan.CheckForTexture(n, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		FTextureID tex = TexMan.CheckForTexture(n, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
 		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
 	{
-		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
 		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 

@@ -298,7 +298,7 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 			{
 				// If there's a texture abort
 				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::top)];
-				if (!tex || tex->UseType == FTexture::TEX_Null) continue;
+				if (!tex || tex->UseType == ETextureType::Null) continue;
 				else return false;
 			}
 		}
@@ -356,7 +356,7 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 			{
 				// If there's a texture abort
 				FTexture * tex = TexMan[seg->sidedef->GetTexture(side_t::bottom)];
-				if (!tex || tex->UseType == FTexture::TEX_Null) continue;
+				if (!tex || tex->UseType == ETextureType::Null) continue;
 				else return false;
 			}
 		}

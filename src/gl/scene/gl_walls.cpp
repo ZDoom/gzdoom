@@ -822,7 +822,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		//
 		//
 		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::top));
-		if (!tex || tex->UseType==FTexture::TEX_Null)
+		if (!tex || tex->UseType==ETextureType::Null)
 		{
 			if (front->GetTexture(sector_t::ceiling) == skyflatnum &&
 				back->GetTexture(sector_t::ceiling) == skyflatnum)
@@ -858,7 +858,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		//
 		//
 		tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
-		if (!tex || tex->UseType==FTexture::TEX_Null)
+		if (!tex || tex->UseType==ETextureType::Null)
 		{
 			// texture is missing - use the lower plane
 			bottomleft = MIN(bfh1,ffh1);

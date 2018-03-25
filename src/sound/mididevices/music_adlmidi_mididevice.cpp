@@ -54,7 +54,23 @@ enum
 	ME_PITCHWHEEL = 0xE0
 };
 
+CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Int, adl_volume_model, ADLMIDI_VolumeModel_DMX, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
 	{
@@ -74,7 +90,9 @@ ADLMIDIDevice::ADLMIDIDevice(const char *args)
 	Renderer = adl_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
-		adl_setBank(Renderer, 14);
+		adl_setBank(Renderer, (int)adl_bank);
+		adl_setNumChips(Renderer, (int)adl_chips_count);
+		adl_setVolumeRangeModel(Renderer, (int)adl_volume_model);
 	}
 }
 

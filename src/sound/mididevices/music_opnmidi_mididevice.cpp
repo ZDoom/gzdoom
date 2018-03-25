@@ -70,7 +70,7 @@ OPNMIDIDevice::OPNMIDIDevice(const char *args)
 		int lump = Wads.CheckNumForFullName("xg.wopn");
 		if (lump < 0)
 		{
-			I_Error("No OPL bank found");
+			I_Error("No OPN bank found");
 		}
 		FMemLump data = Wads.ReadLump(lump);
 		opn2_openBankData(Renderer, data.GetMem(), data.GetSize());

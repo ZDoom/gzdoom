@@ -131,11 +131,11 @@ CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
 	{
 		MIDIDeviceChanged(-1, true);
 	}
+	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
 }
 
 CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

@@ -1381,7 +1381,11 @@ static void InitCrosshairsList()
 // Initialize the music configuration submenus
 //
 //=============================================================================
-extern const char* const banknames[74];
+extern "C"
+{
+	extern int adl_getBanksCount();
+	extern const char *const *adl_getBankNames();
+}
 
 static void InitMusicMenus()
 {
@@ -1427,11 +1431,12 @@ static void InitMusicMenus()
 	{
 		if (soundfonts.Size() > 0)
 		{
-			for(int i=0;i<74;i++)
+			int adl_banks_count = adl_getBanksCount();
+			const char *const *adl_bank_names = adl_getBankNames();
+			for(int i=0; i < adl_banks_count; i++)
 			{
-				auto it = CreateOptionMenuItemCommand(banknames[i], FStringf("adl_bank %d", i), true);
+				auto it = CreateOptionMenuItemCommand(adl_bank_names[i], FStringf("adl_bank %d", i), true);
 				static_cast<DOptionMenuDescriptor*>(*menu)->mItems.Push(it);
-				i++;
 			}
 		}
 	}

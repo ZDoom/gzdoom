@@ -49,7 +49,7 @@ public:
 	void SetBlendingRect(int x1, int y1, int x2, int y2) override;
 	bool Begin2D(bool copy3d) override;
 	void DrawBlendingRect() override;
-	FNativeTexture *CreateTexture(FTexture *gametex, bool wrapping) override;
+	FNativeTexture *CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping) override;
 	FNativePalette *CreatePalette(FRemapTable *remap) override;
 	void DrawTextureParms(FTexture *img, DrawParms &parms) override;
 	void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color) override;
@@ -265,7 +265,7 @@ private:
 	class OpenGLTex : public FNativeTexture
 	{
 	public:
-		OpenGLTex(FTexture *tex, OpenGLSWFrameBuffer *fb, bool wrapping);
+		OpenGLTex(FTexture *tex, FTextureFormat fmt, OpenGLSWFrameBuffer *fb, bool wrapping);
 		~OpenGLTex();
 
 		FTexture *GameTex;
@@ -280,7 +280,6 @@ private:
 		bool Update();
 		bool CheckWrapping(bool wrapping);
 		int GetTexFormat();
-		FTextureFormat ToTexFmt(int fmt);
 	};
 
 	class OpenGLPal : public FNativePalette

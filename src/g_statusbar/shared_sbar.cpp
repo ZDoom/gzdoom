@@ -214,14 +214,14 @@ void ST_LoadCrosshair(bool alwaysload)
 	size = (SCREENWIDTH < 640) ? 'S' : 'B';
 
 	mysnprintf (name, countof(name), "XHAIR%c%d", size, num);
-	FTextureID texid = TexMan.CheckForTexture(name, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
+	FTextureID texid = TexMan.CheckForTexture(name, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
 	if (!texid.isValid())
 	{
 		mysnprintf (name, countof(name), "XHAIR%c1", size);
-		texid = TexMan.CheckForTexture(name, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
+		texid = TexMan.CheckForTexture(name, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
 		if (!texid.isValid())
 		{
-			texid = TexMan.CheckForTexture("XHAIRS1", FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
+			texid = TexMan.CheckForTexture("XHAIRS1", ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ShortNameOnly);
 		}
 	}
 	CrosshairNum = num;
@@ -1635,6 +1635,7 @@ void DBaseStatusBar::DrawGraphic(FTextureID texture, double x, double y, int fla
 		DTA_Alpha, Alpha,
 		DTA_AlphaChannel, !!(flags & DI_ALPHAMAPPED),
 		DTA_FillColor, (flags & DI_ALPHAMAPPED) ? 0 : -1,
+		DTA_FlipX, !!(flags & DI_MIRROR),
 		TAG_DONE);
 }
 
@@ -1669,7 +1670,7 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawImage)
 	PARAM_FLOAT_DEF(scaleX);
 	PARAM_FLOAT_DEF(scaleY);
 	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
-	self->DrawGraphic(TexMan.CheckForTexture(texid, FTexture::TEX_Any), x, y, flags, alpha, w, h, scaleX, scaleY);
+	self->DrawGraphic(TexMan.CheckForTexture(texid, ETextureType::Any), x, y, flags, alpha, w, h, scaleX, scaleY);
 	return 0;
 }
 

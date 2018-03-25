@@ -2050,7 +2050,8 @@ void OpenGLSWFrameBuffer::Atlas::FreeBox(OpenGLSWFrameBuffer::PackedTexture *box
 //
 //==========================================================================
 
-OpenGLSWFrameBuffer::OpenGLTex::OpenGLTex(FTexture *tex, OpenGLSWFrameBuffer *fb, bool wrapping)
+OpenGLSWFrameBuffer::OpenGLTex::OpenGLTex(FTexture *tex, FTextureFormat fmt, OpenGLSWFrameBuffer *fb, bool wrapping)
+	: FNativeTexture(tex, fmt)
 {
 	// Attach to the texture list for the OpenGLSWFrameBuffer
 	Next = fb->Textures;
@@ -2090,7 +2091,7 @@ OpenGLSWFrameBuffer::OpenGLTex::~OpenGLTex()
 	// Remove link from the game texture
 	if (GameTex != nullptr)
 	{
-		GameTex->Native = nullptr;
+		mGameTex->Native[mFormat] = nullptr;
 	}
 }
 
@@ -2199,7 +2200,7 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 	{
 		dest += pitch + (format == GL_R8 ? 1 : 4);
 	}
-	GameTex->FillBuffer(dest, pitch, GameTex->GetHeight(), ToTexFmt(format));
+	GameTex->FillBuffer(dest, pitch, GameTex->GetHeight(), mFormat);
 	if (Box->Padded)
 	{
 		// Clear top padding row.
@@ -2265,48 +2266,23 @@ bool OpenGLSWFrameBuffer::OpenGLTex::Update()
 
 int OpenGLSWFrameBuffer::OpenGLTex::GetTexFormat()
 {
-	FTextureFormat fmt = GameTex->GetFormat();
-
 	IsGray = false;
 
-	switch (fmt)
+	switch (mFormat)
 	{
 	case TEX_Pal:	return GL_R8;
 	case TEX_Gray:	IsGray = true; return GL_R8;
 	case TEX_RGB:	return GL_RGBA8;
+#if 0
 	case TEX_DXT1:	return GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
 	case TEX_DXT2:	return GL_COMPRESSED_RGBA_S3TC_DXT1_EXT;
 	case TEX_DXT3:	return GL_COMPRESSED_RGBA_S3TC_DXT3_EXT;
 	case TEX_DXT4:	return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT; // Doesn't exist in OpenGL. Closest match is DXT5.
 	case TEX_DXT5:	return GL_COMPRESSED_RGBA_S3TC_DXT5_EXT;
+#endif
 	default:		I_FatalError("GameTex->GetFormat() returned invalid format.");
 	}
 	return GL_R8;
-}
-
-//==========================================================================
-//
-// OpenGLTex :: ToTexFmt
-//
-// Converts an OpenGL internal format constant to something the FTexture system
-// understands.
-//
-//==========================================================================
-
-FTextureFormat OpenGLSWFrameBuffer::OpenGLTex::ToTexFmt(int fmt)
-{
-	switch (fmt)
-	{
-	case GL_R8:									return IsGray ? TEX_Gray : TEX_Pal;
-	case GL_RGBA8:								return TEX_RGB;
-	case GL_COMPRESSED_RGB_S3TC_DXT1_EXT:		return TEX_DXT1;
-	case GL_COMPRESSED_RGBA_S3TC_DXT1_EXT:		return TEX_DXT2;
-	case GL_COMPRESSED_RGBA_S3TC_DXT3_EXT:		return TEX_DXT3;
-	case GL_COMPRESSED_RGBA_S3TC_DXT5_EXT:		return TEX_DXT5;
-	default:
-		assert(0);	// LOL WUT?
-		return TEX_Pal;
-	}
 }
 
 //==========================================================================
@@ -2540,9 +2516,9 @@ void OpenGLSWFrameBuffer::DrawBlendingRect()
 //
 //==========================================================================
 
-FNativeTexture *OpenGLSWFrameBuffer::CreateTexture(FTexture *gametex, bool wrapping)
+FNativeTexture *OpenGLSWFrameBuffer::CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping)
 {
-	OpenGLTex *tex = new OpenGLTex(gametex, this, wrapping);
+	OpenGLTex *tex = new OpenGLTex(gametex, fmt, this, wrapping);
 	if (tex->Box == nullptr)
 	{
 		delete tex;
@@ -2767,7 +2743,12 @@ void OpenGLSWFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 		return;
 	}
 
-	OpenGLTex *tex = static_cast<OpenGLTex *>(img->GetNative(false));
+	FTextureFormat fmt;
+	if (parms.style.Flags & STYLEF_RedIsAlpha) fmt = TEX_Gray;
+	else if (parms.remap != nullptr) fmt = TEX_Pal;
+	else fmt = img->GetFormat();
+
+	OpenGLTex *tex = static_cast<OpenGLTex *>(img->GetNative(fmt, false));
 
 	if (tex == nullptr)
 	{
@@ -2944,7 +2925,7 @@ void OpenGLSWFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTe
 	{
 		return;
 	}
-	OpenGLTex *tex = static_cast<OpenGLTex *>(src->GetNative(true));
+	OpenGLTex *tex = static_cast<OpenGLTex *>(src->GetNative(src->GetFormat(), true));
 	if (tex == nullptr)
 	{
 		return;
@@ -3069,7 +3050,7 @@ void OpenGLSWFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, in
 	{
 		return;
 	}
-	tex = static_cast<OpenGLTex *>(texture->GetNative(true));
+	tex = static_cast<OpenGLTex *>(texture->GetNative(texture->GetFormat(), true));
 	if (tex == nullptr)
 	{
 		return;

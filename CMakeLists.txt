@@ -11,18 +11,20 @@ if( COMMAND cmake_policy )
 endif()
 
 list( APPEND CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake )
-include( CreateLaunchers )
 include( FindPackageHandleStandardArgs )
 
-# Produce a warning if XP support will be missing.
+# Produce a warning if XP support will be missing when building a 32 bit target for MSVC.
 if( MSVC )
-	list( APPEND WINXP_TOOLSETS v140_xp v141_xp)
-	list( FIND WINXP_TOOLSETS "${CMAKE_GENERATOR_TOOLSET}" HAVE_WINXP_SUPPORT)
+	if(NOT "${CMAKE_GENERATOR}" MATCHES "(Win64|IA64)")
 
-	if( HAVE_WINXP_SUPPORT EQUAL -1 )
-		string( REPLACE ";" " or " WINXP_TOOLSETS_STR "${WINXP_TOOLSETS}" )
-		message( WARNING "This project supports Windows XP but you must set the optional toolset to ${WINXP_TOOLSETS_STR} manually to have it in your build!\n"
-			"Assign toolset's name to CMAKE_GENERATOR_TOOLSET variable or use -T <toolset> from the command prompt." )
+		list( APPEND WINXP_TOOLSETS v140_xp v141_xp)
+		list( FIND WINXP_TOOLSETS "${CMAKE_GENERATOR_TOOLSET}" HAVE_WINXP_SUPPORT)
+
+		if( HAVE_WINXP_SUPPORT EQUAL -1 )
+			string( REPLACE ";" " or " WINXP_TOOLSETS_STR "${WINXP_TOOLSETS}" )
+			message( WARNING "This project supports Windows XP but you must set the optional toolset to ${WINXP_TOOLSETS_STR} manually to have it in your build!\n"
+				"Assign toolset's name to CMAKE_GENERATOR_TOOLSET variable or use -T <toolset> from the command prompt." )
+		endif()
 	endif()
 endif()
 

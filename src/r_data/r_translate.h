@@ -24,6 +24,13 @@ enum
 	NUM_TRANSLATION_TABLES
 };
 
+enum EStandardTranslations
+{
+	STD_Ice = 7,
+	STD_Gray = 8,		// a 0-255 gray ramp
+	STD_Grayscale = 9,	// desaturated version of the palette.
+};
+
 struct FRemapTable
 {
 	FRemapTable(int count=256);

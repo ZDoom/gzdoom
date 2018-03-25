@@ -98,9 +98,30 @@ CUSTOM_CVAR(Bool, timidity_portamento, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 * reverb=4     "global" new reverb       4
 * reverb=4,n   set reverb level to n   (-1 to -127) - 384
 */
+EXTERN_CVAR(Int, timidity_reverb_level)
+EXTERN_CVAR(Int, timidity_reverb)
+
+static void SetReverb()
+{
+	int value = 0;
+	int mode = timidity_reverb;
+	int level = timidity_reverb_level;
+
+	if (mode == 0 || level == 0) value = mode;
+	else value = (mode - 1) * -128 - level;
+	ChangeVarSync(TimidityPlus::timidity_reverb, value);
+}
+
 CUSTOM_CVAR(Int, timidity_reverb, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	ChangeVarSync(TimidityPlus::timidity_reverb, *self);
+	if (self < 0 || self > 4) self = 0;
+	else SetReverb();
+}
+
+CUSTOM_CVAR(Int, timidity_reverb_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 0 || self > 127) self = 0;
+	else SetReverb();
 }
 
 CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -110,11 +131,11 @@ CUSTOM_CVAR(Int, timidity_chorus, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, timidity_surround_chorus, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
 	{
 		MIDIDeviceChanged(-1, true);
 	}
+	ChangeVarSync(TimidityPlus::timidity_surround_chorus, *self);
 }
 
 CUSTOM_CVAR(Bool, timidity_channel_pressure, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

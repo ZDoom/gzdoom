@@ -315,6 +315,45 @@ protected:
 #endif
 };
 
+
+class ADLMIDIDevice : public SoftSynthMIDIDevice
+{
+	struct ADL_MIDIPlayer *Renderer;
+	TArray<int16_t> shortbuffer;
+public:
+	ADLMIDIDevice(const char *args);
+	~ADLMIDIDevice();
+
+	int Open(MidiCallback, void *userdata);
+	int GetDeviceType() const override { return MDEV_ADL; }
+
+protected:
+
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const uint8_t *data, int len);
+	void ComputeOutput(float *buffer, int len);
+};
+
+
+class OPNMIDIDevice : public SoftSynthMIDIDevice
+{
+	struct OPN2_MIDIPlayer *Renderer;
+	TArray<int16_t> shortbuffer;
+public:
+	OPNMIDIDevice(const char *args);
+	~OPNMIDIDevice();
+
+	int Open(MidiCallback, void *userdata);
+	int GetDeviceType() const override { return MDEV_OPN; }
+
+protected:
+
+	void HandleEvent(int status, int parm1, int parm2);
+	void HandleLongEvent(const uint8_t *data, int len);
+	void ComputeOutput(float *buffer, int len);
+};
+
+
 // Base class for streaming MUS and MIDI files ------------------------------
 
 enum

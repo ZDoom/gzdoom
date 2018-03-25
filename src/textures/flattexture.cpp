@@ -112,8 +112,7 @@ uint8_t *FFlatTexture::MakeTexture (FRenderStyle style)
 	{
 		memset (Pixels + numread, 0xBB, Width*Height - numread);
 	}
-	if (!(style.Flags & STYLEF_RedIsAlpha)) FTexture::FlipSquareBlockRemap (Pixels, Width, Height, GPalette.Remap);
-	else FTexture::FlipSquareBlock(Pixels, Width, Height);
+	FTexture::FlipSquareBlockRemap(Pixels, Width, Height, GetRemap(style));
 	return Pixels;
 }
 

@@ -813,6 +813,49 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 
 //==========================================================================
 //
+// ValidatePosVel
+//
+//==========================================================================
+
+inline bool Validate(const float value)
+{
+	return value >= -32768.f && value <= 32768.f;
+}
+
+static bool Validate(const FVector3 &value, const char *const name, const AActor *const actor)
+{
+	const bool valid = Validate(value.X) && Validate(value.Y) && Validate(value.Z);
+
+	if (!valid)
+	{
+		Printf(TEXTCOLOR_RED "Invalid sound %s " TEXTCOLOR_WHITE "(%f, %f, %f)", name, value.X, value.Y, value.Z);
+
+		if (actor == nullptr)
+		{
+			Printf("\n");
+		}
+		else
+		{
+			Printf(TEXTCOLOR_RED " for actor of class " TEXTCOLOR_WHITE "%s\n", actor->GetClass()->TypeName.GetChars());
+		}
+	}
+
+	return valid;
+}
+
+static bool ValidatePosVel(const AActor *actor, const FVector3 &pos, const FVector3 &vel)
+{
+	const bool valid = Validate(pos, "position", actor);
+	return Validate(vel, "velocity", actor) && valid;
+}
+
+static bool ValidatePosVel(const FSoundChan *const chan, const FVector3 &pos, const FVector3 &vel)
+{
+	return ValidatePosVel(chan->SourceType == SOURCE_Actor ? chan->Actor : nullptr, pos, vel);
+}
+
+//==========================================================================
+//
 // CalcSectorSoundOrg
 //
 // Returns the perceived sound origin for a sector. If the listener is
@@ -941,6 +984,11 @@ static FSoundChan *S_StartSound(AActor *actor, const sector_t *sec, const FPolyO
 	channel &= 7;
 
 	CalcPosVel(type, actor, sec, poly, &pt->X, channel, chanflags, &pos, &vel);
+
+	if (!ValidatePosVel(type == SOURCE_Actor ? actor : nullptr, pos, vel))
+	{
+		return nullptr;
+	}
 
 	if (i_compatflags & COMPATF_MAGICSILENCE)
 	{ // For people who just can't play without a silent BFG.
@@ -1243,6 +1291,11 @@ void S_RestartSound(FSoundChan *chan)
 		FVector3 pos, vel;
 
 		CalcPosVel(chan, &pos, &vel);
+
+		if (!ValidatePosVel(chan, pos, vel))
+		{
+			return;
+		}
 
 		// If this sound doesn't like playing near itself, don't play it if
 		// that's what would happen.
@@ -2116,7 +2169,11 @@ void S_UpdateSounds (AActor *listenactor)
 		if ((chan->ChanFlags & (CHAN_EVICTED | CHAN_IS3D)) == CHAN_IS3D)
 		{
 			CalcPosVel(chan, &pos, &vel);
-			GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
+
+			if (ValidatePosVel(chan, pos, vel))
+			{
+				GSnd->UpdateSoundParams3D(&listener, chan, !!(chan->ChanFlags & CHAN_AREA), pos, vel);
+			}
 		}
 		chan->ChanFlags &= ~CHAN_JUSTSTARTED;
 	}

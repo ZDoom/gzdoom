@@ -248,7 +248,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				r=g=b=a=0;
 				break;
 			}
-			PaletteMap[i] = !alphatex? (a>=128? ColorMatcher.Pick(r, g, b) : 0) : (r * a) >> 8;
+			PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b, a);
 		}
     }
     
@@ -307,7 +307,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				for(int x=0;x<Width;x++)
 				{
 					int v = LittleShort(*p);
-					Pixels[x*Height + y] = !alphatex ? RGB256k.RGB[((v >> 10) & 0x1f) * 2][((v >> 5) & 0x1f) * 2][(v & 0x1f) * 2] : ((v >> 10) & 0x1f) * 8;
+					Pixels[x*Height + y] = RGBToPalette(alphatex, ((v >> 10) & 0x1f) * 8, ((v >> 5) & 0x1f) * 8, (v & 0x1f) * 8);
 					p+=step_x;
 				}
 			}
@@ -319,7 +319,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 				uint8_t * p = ptr + y * Pitch;
 				for(int x=0;x<Width;x++)
 				{
-					Pixels[x*Height + y] = !alphatex ? RGB256k.RGB[p[2] >> 2][p[1] >> 2][p[0] >> 2] : p[2];
+					Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
 					p+=step_x;
 				}
 			}
@@ -333,7 +333,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = !alphatex ? RGB256k.RGB[p[2] >> 2][p[1] >> 2][p[0] >> 2] : p[2];
+						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0]);
 						p+=step_x;
 					}
 				}
@@ -345,7 +345,7 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 					uint8_t * p = ptr + y * Pitch;
 					for(int x=0;x<Width;x++)
 					{
-						Pixels[x*Height + y] = !alphatex ? (p[3] >= 128 ? RGB256k.RGB[p[2] >> 2][p[1] >> 2][p[0] >> 2] : 0) : (p[2] * p[3]) >> 8;
+						Pixels[x*Height + y] = RGBToPalette(alphatex, p[2], p[1], p[0], p[3]);
 						p+=step_x;
 					}
 				}
@@ -358,37 +358,39 @@ uint8_t *FTGATexture::MakeTexture (FRenderStyle style)
 		break;
 	
 	case 3:	// Grayscale
+	{
+		auto remap = GetRemap(style, true);
 		switch (hdr.bpp)
 		{
 		case 8:
-			for(int y=0;y<Height;y++)
+			for (int y = 0; y < Height; y++)
 			{
 				uint8_t * p = ptr + y * Pitch;
-				for(int x=0;x<Width;x++)
+				for (int x = 0; x < Width; x++)
 				{
-					Pixels[x*Height+y] = !alphatex? FTexture::GrayMap[*p] : *p;
-					p+=step_x;
+					Pixels[x*Height + y] = remap[*p];
+					p += step_x;
 				}
 			}
 			break;
-		
+
 		case 16:
-			for(int y=0;y<Height;y++)
+			for (int y = 0; y < Height; y++)
 			{
 				uint8_t * p = ptr + y * Pitch;
-				for(int x=0;x<Width;x++)
+				for (int x = 0; x < Width; x++)
 				{
-					Pixels[x*Height+y] = !alphatex ? FTexture::GrayMap[p[1]] : p[1];	// only use the high byte
-					p+=step_x;
+					Pixels[x*Height + y] = remap[p[1]];	// only use the high byte
+					p += step_x;
 				}
 			}
 			break;
-		
+
 		default:
 			break;
 		}
 		break;
-
+	}
 	default:
 		break;
     }

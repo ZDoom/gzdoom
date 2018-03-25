@@ -586,11 +586,11 @@ void DequeueConsoleText ()
 
 void C_InitConback()
 {
-	conback = TexMan.CheckForTexture ("CONBACK", FTexture::TEX_MiscPatch);
+	conback = TexMan.CheckForTexture ("CONBACK", ETextureType::MiscPatch);
 
 	if (!conback.isValid())
 	{
-		conback = TexMan.GetTexture (gameinfo.TitlePage, FTexture::TEX_MiscPatch);
+		conback = TexMan.GetTexture (gameinfo.TitlePage, ETextureType::MiscPatch);
 		conshade = MAKEARGB(175,0,0,0);
 		conline = true;
 	}

@@ -135,7 +135,7 @@ void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
 			if (!seg->linedef->isVisualPortal())
 			{
 				FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
-				if (!tex || tex->UseType==FTexture::TEX_Null) 
+				if (!tex || tex->UseType==ETextureType::Null) 
 				{
 					// nothing to do here!
 					seg->linedef->validcount=validcount;

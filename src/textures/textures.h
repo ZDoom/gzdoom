@@ -37,7 +37,11 @@
 
 #include "doomtype.h"
 #include "vectors.h"
+#include "v_palette.h"
+#include "v_video.h"
+#include "colormatcher.h"
 #include "r_data/renderstyle.h"
+#include "r_data/r_translate.h"
 #include <vector>
 
 struct FloatRect
@@ -150,26 +154,31 @@ struct patch_t
 
 // All FTextures present their data to the world in 8-bit format, but if
 // the source data is something else, this is it.
-enum FTextureFormat
+enum FTextureFormat : uint32_t
 {
 	TEX_Pal,
 	TEX_Gray,
 	TEX_RGB,		// Actually ARGB
+	/*
 	TEX_DXT1,
 	TEX_DXT2,
 	TEX_DXT3,
 	TEX_DXT4,
 	TEX_DXT5,
+	*/
+	TEX_Count
 };
 
 class FNativeTexture;
+
+
 
 // Base texture class
 class FTexture
 {
 public:
-	static FTexture *CreateTexture(const char *name, int lumpnum, int usetype);
-	static FTexture *CreateTexture(int lumpnum, int usetype);
+	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
+	static FTexture *CreateTexture(int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
 
 	int16_t LeftOffset, TopOffset;
@@ -182,7 +191,7 @@ public:
 	FTextureID id;
 
 	FString Name;
-	uint8_t UseType;	// This texture's primary purpose
+	ETextureType UseType;	// This texture's primary purpose
 
 	uint8_t bNoDecals:1;		// Decals should not stick to texture
 	uint8_t bNoRemap0:1;		// Do not remap color 0 (used by front layer of parallax skies)
@@ -200,23 +209,6 @@ public:
 	uint16_t Rotations;
 	int16_t SkyOffset;
 
-	enum // UseTypes
-	{
-		TEX_Any,
-		TEX_Wall,
-		TEX_Flat,
-		TEX_Sprite,
-		TEX_WallPatch,
-		TEX_SkinSprite,
-		TEX_Decal,
-		TEX_MiscPatch,
-		TEX_FontChar,
-		TEX_Override,	// For patches between TX_START/TX_END
-		TEX_Autopage,	// Automap background - used to enable the use of FAutomapTexture
-		TEX_SkinGraphic,
-		TEX_Null,
-		TEX_FirstDefined,
-	};
 
 	struct Span
 	{
@@ -252,7 +244,7 @@ public:
 	virtual FTextureFormat GetFormat();
 
 	// Returns a native 3D representation of the texture
-	FNativeTexture *GetNative(bool wrapping);
+	FNativeTexture *GetNative(FTextureFormat fmt, bool wrapping);
 
 	// Frees the native 3D representation of the texture
 	void KillNative();
@@ -305,7 +297,53 @@ public:
 protected:
 	uint16_t Width, Height, WidthMask;
 	static uint8_t GrayMap[256];
-	FNativeTexture *Native;
+	FNativeTexture *Native[TEX_Count] = { nullptr };	// keep a slot for each type, because some render modes do not work with the base texture
+	uint8_t *GetRemap(FRenderStyle style, bool srcisgrayscale = false)
+	{
+		if (style.Flags & STYLEF_RedIsAlpha)
+		{
+			return translationtables[TRANSLATION_Standard][srcisgrayscale ? STD_Gray : STD_Grayscale]->Remap;
+		}
+		else
+		{
+			return srcisgrayscale ? GrayMap : GPalette.Remap;
+		}
+	}
+
+	uint8_t RGBToPalettePrecise(bool wantluminance, int r, int g, int b, int a = 255)
+	{
+		if (wantluminance)
+		{
+			return (uint8_t)Luminance(r, g, b) * a / 255;
+		}
+		else
+		{
+			return ColorMatcher.Pick(r, g, b);
+		}
+	}
+
+	uint8_t RGBToPalette(bool wantluminance, int r, int g, int b, int a = 255)
+	{
+		if (wantluminance)
+		{
+			// This is the same formula the OpenGL renderer uses for grayscale textures with an alpha channel.
+			return (uint8_t)(Luminance(r, g, b) * a / 255);
+		}
+		else
+		{
+			return a < 128? 0 : RGB256k.RGB[r >> 2][g >> 2][b >> 2];
+		}
+	}
+
+	uint8_t RGBToPalette(bool wantluminance, PalEntry pe, bool hasalpha = true)
+	{
+		return RGBToPalette(wantluminance, pe.r, pe.g, pe.b, hasalpha? pe.a : 255);
+	}
+
+	uint8_t RGBToPalette(FRenderStyle style, int r, int g, int b, int a = 255)
+	{
+		return RGBToPalette(!!(style.Flags & STYLEF_RedIsAlpha), r, g, b, a);
+	}
 
 	FTexture (const char *name = NULL, int lumpnum = -1);
 
@@ -348,7 +386,7 @@ public:
 	static void FlipNonSquareBlockBgra (uint32_t *blockto, const uint32_t *blockfrom, int x, int y, int srcpitch);
 	static void FlipNonSquareBlockRemap (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch, const uint8_t *remap);
 
-	friend class D3DTex;
+	friend class FNativeTexture;
 	friend class OpenGLSWFrameBuffer;
 
 public:
@@ -408,6 +446,7 @@ public:
 	~FTextureManager ();
 
 	// Get texture without translation
+//private:
 	FTexture *operator[] (FTextureID texnum)
 	{
 		if ((unsigned)texnum.GetIndex() >= Textures.Size()) return NULL;
@@ -415,7 +454,7 @@ public:
 	}
 	FTexture *operator[] (const char *texname)
 	{
-		FTextureID texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
+		FTextureID texnum = GetTexture (texname, ETextureType::MiscPatch);
 		if (!texnum.Exists()) return NULL;
 		return Textures[texnum.GetIndex()].Texture;
 	}
@@ -424,7 +463,7 @@ public:
 		if (unsigned(i) >= Textures.Size()) return NULL;
 		return Textures[i].Texture;
 	}
-	FTexture *FindTexture(const char *texname, int usetype = FTexture::TEX_MiscPatch, BITFIELD flags = TEXMAN_TryAny);
+	FTexture *FindTexture(const char *texname, ETextureType usetype = ETextureType::MiscPatch, BITFIELD flags = TEXMAN_TryAny);
 
 	// Get texture with translation
 	FTexture *operator() (FTextureID texnum, bool withpalcheck=false)
@@ -439,7 +478,7 @@ public:
 	}
 	FTexture *operator() (const char *texname)
 	{
-		FTextureID texnum = GetTexture (texname, FTexture::TEX_MiscPatch);
+		FTextureID texnum = GetTexture (texname, ETextureType::MiscPatch);
 		if (texnum.texnum == -1) return NULL;
 		return Textures[Translation[texnum.texnum]].Texture;
 	}
@@ -449,6 +488,7 @@ public:
 		if (unsigned(i) >= Textures.Size()) return NULL;
 		return Textures[Translation[i]].Texture;
 	}
+//public:
 
 	FTextureID PalCheck(FTextureID tex);
 
@@ -472,21 +512,21 @@ public:
 		HIT_Columnmode = HIT_Wall|HIT_Sky|HIT_Sprite
 	};
 
-	FTextureID CheckForTexture (const char *name, int usetype, BITFIELD flags=TEXMAN_TryAny);
-	FTextureID GetTexture (const char *name, int usetype, BITFIELD flags=0);
+	FTextureID CheckForTexture (const char *name, ETextureType usetype, BITFIELD flags=TEXMAN_TryAny);
+	FTextureID GetTexture (const char *name, ETextureType usetype, BITFIELD flags=0);
 	int ListTextures (const char *name, TArray<FTextureID> &list, bool listall = false);
 
 	void AddTexturesLump (const void *lumpdata, int lumpsize, int deflumpnum, int patcheslump, int firstdup=0, bool texture1=false);
 	void AddTexturesLumps (int lump1, int lump2, int patcheslump);
-	void AddGroup(int wadnum, int ns, int usetype);
+	void AddGroup(int wadnum, int ns, ETextureType usetype);
 	void AddPatches (int lumpnum);
 	void AddHiresTextures (int wadnum);
 	void LoadTextureDefs(int wadnum, const char *lumpname);
-	void ParseXTexture(FScanner &sc, int usetype);
+	void ParseXTexture(FScanner &sc, ETextureType usetype);
 	void SortTexturesByType(int start, int end);
 	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);
 
-	FTextureID CreateTexture (int lumpnum, int usetype=FTexture::TEX_Any);	// Also calls AddTexture
+	FTextureID CreateTexture (int lumpnum, ETextureType usetype=ETextureType::Any);	// Also calls AddTexture
 	FTextureID AddTexture (FTexture *texture);
 	FTextureID GetDefaultTexture() const { return DefaultTexture; }
 
@@ -532,12 +572,12 @@ private:
 	void InitAnimDefs ();
 	FAnimDef *AddSimpleAnim (FTextureID picnum, int animcount, uint32_t speedmin, uint32_t speedrange=0);
 	FAnimDef *AddComplexAnim (FTextureID picnum, const TArray<FAnimDef::FAnimFrame> &frames);
-	void ParseAnim (FScanner &sc, int usetype);
-	FAnimDef *ParseRangeAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing);
-	void ParsePicAnim (FScanner &sc, FTextureID picnum, int usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
+	void ParseAnim (FScanner &sc, ETextureType usetype);
+	FAnimDef *ParseRangeAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing);
+	void ParsePicAnim (FScanner &sc, FTextureID picnum, ETextureType usetype, bool missing, TArray<FAnimDef::FAnimFrame> &frames);
 	void ParseWarp(FScanner &sc);
 	void ParseCameraTexture(FScanner &sc);
-	FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, int usetype, bool allowMissing);
+	FTextureID ParseFramenum (FScanner &sc, FTextureID basepicnum, ETextureType usetype, bool allowMissing);
 	void ParseTime (FScanner &sc, uint32_t &min, uint32_t &max);
 	FTexture *Texture(FTextureID id) { return Textures[id.GetIndex()].Texture; }
 	void SetTranslation (FTextureID fromtexnum, FTextureID totexnum);

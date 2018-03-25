@@ -50,21 +50,25 @@
 static uint32_t	nummididevices;
 static bool		nummididevicesset;
 
-#define NUM_DEF_DEVICES 5
+#define NUM_DEF_DEVICES 7
 
 static void AddDefaultMidiDevices(FOptionValues *opt)
 {
 	FOptionValues::Pair *pair = &opt->mValues[opt->mValues.Reserve(NUM_DEF_DEVICES)];
 	pair[0].Text = "FluidSynth";
 	pair[0].Value = -5.0;
-	pair[1].Text = "GUS";
-	pair[1].Value = -4.0;
-	pair[2].Text = "OPL Synth Emulation";
-	pair[2].Value = -3.0;
-	pair[3].Text = "TiMidity++";
-	pair[3].Value = -2.0;
-	pair[4].Text = "WildMidi";
-	pair[4].Value = -6.0;
+	pair[1].Text = "TiMidity++";
+	pair[1].Value = -2.0;
+	pair[2].Text = "WildMidi";
+	pair[2].Value = -6.0;
+	pair[3].Text = "GUS";
+	pair[3].Value = -4.0;
+	pair[4].Text = "OPL Synth Emulation";
+	pair[4].Value = -3.0;
+	pair[5].Text = "libADL";
+	pair[5].Value = -7.0;
+	pair[6].Text = "libOPN";
+	pair[6].Value = -8.0;
 
 }
 
@@ -115,7 +119,7 @@ CUSTOM_CVAR (Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (!nummididevicesset)
 		return;
 
-	if ((self >= (signed)nummididevices) || (self < -6))
+	if ((self >= (signed)nummididevices) || (self < -8))
 	{
 		// Don't do repeated message spam if there is no valid device.
 		if (self != 0)
@@ -199,6 +203,8 @@ CCMD (snd_listmididevices)
 	MIDIOUTCAPS caps;
 	MMRESULT res;
 
+	PrintMidiDevice(-8, "libOPN", MIDIDEV_FMSYNTH, 0);
+	PrintMidiDevice(-7, "libADL", MIDIDEV_FMSYNTH, 0);
 	PrintMidiDevice (-6, "WildMidi", MIDIDEV_SWSYNTH, 0);
 	PrintMidiDevice (-5, "FluidSynth", MIDIDEV_SWSYNTH, 0);
 	PrintMidiDevice (-4, "Gravis Ultrasound Emulation", MIDIDEV_SWSYNTH, 0);
@@ -227,8 +233,8 @@ CCMD (snd_listmididevices)
 
 CUSTOM_CVAR(Int, snd_mididevice, DEF_MIDIDEV, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
-	if (self < -6)
-		self = -6;
+	if (self < -8)
+		self = -8;
 	else if (self > -2)
 		self = -2;
 	else
@@ -242,6 +248,8 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 
 CCMD (snd_listmididevices)
 {
+	Printf("%s-8. libOPN\n", -7 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-7. libADL\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-6. WildMidi\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");

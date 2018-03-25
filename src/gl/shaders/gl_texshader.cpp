@@ -243,7 +243,7 @@ bool FShaderLayer::ParseLayer(FScanner &sc)
 
 	if (sc.GetString())
 	{
-		texture = TexMan.CheckForTexture(sc.String, FTexture::TEX_Wall);
+		texture = TexMan.CheckForTexture(sc.String, ETextureType::Wall);
 		if (!texture.isValid())
 		{
 			sc.ScriptMessage("Unknown texture '%s'", sc.String);

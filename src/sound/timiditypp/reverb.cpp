@@ -1878,6 +1878,14 @@ void Reverb::do_ch_stereo_chorus(int32_t *buf, int32_t count, InfoStereoChorus *
 		return;
 	}
 
+	if (bufL == nullptr)
+	{
+		set_delay(&(info->delayL), info->rpt0);
+		set_delay(&(info->delayR), info->rpt0);
+		bufL = info->delayL.buf;
+		bufR = info->delayR.buf;
+	}
+
 	/* LFO */
 	f0 = imuldiv24(lfobufL[imuldiv24(lfocnt, icycle)], depth);
 	spt0 = wpt0 - pdelay - (f0 >> 8);	/* integral part of delay */

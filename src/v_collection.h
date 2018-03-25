@@ -42,12 +42,12 @@ class FTexture;
 class FImageCollection
 {
 public:
-	FImageCollection ();
-	FImageCollection (const char **patchNames, int numPatches);
+	FImageCollection();
+	FImageCollection(const char **patchNames, int numPatches);
 
-	void Init (const char **patchnames, int numPatches, int namespc=0);
-	void Add (const char **patchnames, int numPatches, int namespc=0);	
-	void Uninit ();
+	void Init(const char **patchnames, int numPatches, ETextureType namespc = ETextureType::Any);
+	void Add(const char **patchnames, int numPatches, ETextureType namespc = ETextureType::Any);
+	void Uninit();
 
 	FTexture *operator[] (int index) const;
 

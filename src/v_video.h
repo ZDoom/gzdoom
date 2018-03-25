@@ -53,6 +53,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 
 class FTexture;
 struct FColormap;
+enum FTextureFormat : uint32_t;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.
@@ -336,7 +337,11 @@ protected:
 // This class represents a native texture, as opposed to an FTexture.
 class FNativeTexture
 {
+protected:
+	FTexture * mGameTex;
+	FTextureFormat mFormat;
 public:
+	FNativeTexture(FTexture *tex, FTextureFormat fmt) : mGameTex(tex), mFormat(fmt) {}
 	virtual ~FNativeTexture();
 	virtual bool Update() = 0;
 	virtual bool CheckWrapping(bool wrapping);
@@ -425,7 +430,7 @@ public:
 	virtual void DrawBlendingRect();
 
 	// Create a native texture from a game texture.
-	virtual FNativeTexture *CreateTexture(FTexture *gametex, bool wrapping);
+	virtual FNativeTexture *CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping);
 
 	// Create a palette texture from a remap/palette table.
 	virtual FNativePalette *CreatePalette(FRemapTable *remap);

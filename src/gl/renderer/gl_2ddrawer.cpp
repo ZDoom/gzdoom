@@ -91,7 +91,9 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 
 	if (!img->bHasCanvas)
 	{
-		if (!parms.alphaChannel)
+		dg.mAlphaTexture = !!(parms.style.Flags & STYLEF_RedIsAlpha);
+
+		if (!dg.mAlphaTexture)
 		{
 			if (parms.remap != NULL && !parms.remap->Inactive)
 			{
@@ -99,7 +101,6 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 				if (pal) dg.mTranslation = -pal->GetIndex();
 			}
 		}
-		dg.mAlphaTexture = !!(parms.style.Flags & STYLEF_RedIsAlpha);
 		u1 = gltex->GetUL();
 		v1 = gltex->GetVT();
 		u2 = gltex->GetUR();

@@ -206,7 +206,7 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	uint32_t len, id;
 	int i;
 
-	UseType = TEX_MiscPatch;
+	UseType = ETextureType::MiscPatch;
 	LeftOffset = 0;
 	TopOffset = 0;
 	bMasked = false;
@@ -381,9 +381,9 @@ void FPNGTexture::ReadAlphaRemap(FileReader *lump, uint8_t *alpharemap)
 	for (int i = 0; i < PaletteSize; i++)
 	{
 		uint8_t r = lump->ReadUInt8();
-		lump->ReadUInt8(); // Skip g and b.
-		lump->ReadUInt8();	
-		alpharemap[i] = PaletteMap[i] == 0? 0 : r;
+		uint8_t g = lump->ReadUInt8();
+		uint8_t b = lump->ReadUInt8();
+		alpharemap[i] = PaletteMap[i] == 0 ? 0 : Luminance(r, g, b);
 	}
 	lump->Seek(p, FileReader::SeekSet);
 }
@@ -493,7 +493,7 @@ uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
 						}
 						else
 						{
-							*out++ = alphatex? in[0] : RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+							*out++ = RGBToPalette(alphatex, in[0], in[1], in[2]);
 						}
 						in += pitch;
 					}
@@ -508,7 +508,7 @@ uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
 				{
 					for (y = Height; y > 0; --y)
 					{
-						*out++ = alphatex? ((in[0] * in[1]) >> 8) : in[1] < 128 ? 0 : PaletteMap[in[0]];
+						*out++ = alphatex? ((in[0] * in[1]) / 255) : in[1] < 128 ? 0 : PaletteMap[in[0]];
 						in += pitch;
 					}
 					in -= backstep;
@@ -522,7 +522,7 @@ uint8_t *FPNGTexture::MakeTexture (FRenderStyle style)
 				{
 					for (y = Height; y > 0; --y)
 					{
-						*out++ = alphatex? ((in[0] * in[3]) >> 8) : in[3] < 128 ? 0 : RGB256k.RGB[in[0]>>2][in[1]>>2][in[2]>>2];
+						*out++ = RGBToPalette(alphatex, in[0], in[1], in[2], in[3]);
 						in += pitch;
 					}
 					in -= backstep;

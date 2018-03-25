@@ -67,7 +67,7 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const TriMatrix &wo
 	if (picnum != skyflatnum)
 	{
 		FTexture *tex = TexMan(picnum);
-		if (!tex || tex->UseType == FTexture::TEX_Null)
+		if (!tex || tex->UseType == ETextureType::Null)
 			return;
 
 		PolyPlaneUVTransform transform = PolyPlaneUVTransform(ceiling ? fakeflat.FrontSector->planes[sector_t::ceiling].xform : fakeflat.FrontSector->planes[sector_t::floor].xform, tex);
@@ -516,7 +516,7 @@ void Render3DFloorPlane::Render(PolyRenderThread *thread, const TriMatrix &world
 {
 	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
 	FTexture *tex = TexMan(picnum);
-	if (tex->UseType == FTexture::TEX_Null)
+	if (tex->UseType == ETextureType::Null)
 		return;
 
 	PolyCameraLight *cameraLight = PolyCameraLight::Instance();

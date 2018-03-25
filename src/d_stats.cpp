@@ -306,6 +306,8 @@ void D_DoAnonStats()
 	t1.detach();
 }
 
+
+
 void D_ConfirmSendStats()
 {
 	if (sys_statsenabled >= 0)
@@ -314,8 +316,19 @@ void D_ConfirmSendStats()
 	}
 
 	// TODO: texts
-	static const char *const MESSAGE_TEXT = "send stats?";
-	static const char *const TITLE_TEXT = GAMENAME;
+	static const char *const MESSAGE_TEXT = "In order to decide where to focus development, the GZDoom team would like to know a little bit about the hardware it is run on.\n" \
+		"For this we would like to ask you if we may send three bits of information to gzstats.drdteam.org.\n" \
+		"The three items we would like to know about are:\n" \
+		"- Operating system\n" \
+		"- Number of processor cores\n" \
+		"- Currently used renderer\n\n" \
+		"All information sent will be anonymous. We will NOT be sending this information to any third party.\n" \
+		"It will merely be used for decision-making about GZDoom's future development.\n" \
+		"Data will only be sent at most twice per system, once for the software renderer and once for the hardware renderer.\n" \
+		"If you are getting this notice more than once per renderer, please let us know on the forums. Thanks!\n\n" \
+		"May we send this data? If you click 'no', nothing will be sent and you will not be asked again.";
+
+	static const char *const TITLE_TEXT = "GZDoom needs your help!";
 
 	UCVarValue enabled = { 0 };
 

@@ -167,7 +167,7 @@ bool			hasglnodes;
 
 TArray<FMapThing> MapThingsConverted;
 TMap<unsigned,unsigned>  MapThingsUserDataIndex;	// from mapthing idx -> user data idx
-TArray<FMapThingUserData> MapThingsUserData;
+TArray<FUDMFKey> MapThingsUserData;
 
 int sidecount;
 sidei_t *sidetemp;
@@ -568,7 +568,7 @@ static void SetTexture (side_t *side, int position, const char *name, FMissingTe
 	static const char *positionnames[] = { "top", "middle", "bottom" };
 	static const char *sidenames[] = { "first", "second" };
 
-	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
+	FTextureID texture = TexMan.CheckForTexture (name, ETextureType::Wall,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 
 	if (!texture.Exists())
@@ -614,7 +614,7 @@ void SetTexture (sector_t *sector, int index, int position, const char *name, FM
 		name = name8;
 	}
 
-	FTextureID texture = TexMan.CheckForTexture (name, FTexture::TEX_Flat,
+	FTextureID texture = TexMan.CheckForTexture (name, ETextureType::Flat,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 
 	if (!texture.Exists())
@@ -668,7 +668,7 @@ static void SetTexture (side_t *side, int position, uint32_t *blend, const char 
 	FTextureID texture;
 	if ((*blend = R_ColormapNumForName (name)) == 0)
 	{
-		texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,
+		texture = TexMan.CheckForTexture (name, ETextureType::Wall,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 		if (!texture.Exists())
 		{
@@ -701,7 +701,7 @@ static void SetTextureNoErr (side_t *side, int position, uint32_t *color, const 
 {
 	FTextureID texture;
 	*validcolor = false;
-	texture = TexMan.CheckForTexture (name, FTexture::TEX_Wall,	
+	texture = TexMan.CheckForTexture (name, ETextureType::Wall,	
 		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 	if (!texture.Exists())
 	{
@@ -1645,23 +1645,34 @@ static void SetMapThingUserData(AActor *actor, unsigned udi)
 	{
 		return;
 	}
-	while (MapThingsUserData[udi].Property != NAME_None)
+	while (MapThingsUserData[udi].Key != NAME_None)
 	{
-		FName varname = MapThingsUserData[udi].Property;
-		int value = MapThingsUserData[udi].Value;
+		FName varname = MapThingsUserData[udi].Key;
 		PField *var = dyn_cast<PField>(actor->GetClass()->FindSymbol(varname, true));
-
-		udi++;
 
 		if (var == NULL || (var->Flags & (VARF_Native|VARF_Private|VARF_Protected|VARF_Static)) || !var->Type->isScalar())
 		{
-			DPrintf(DMSG_WARNING, "%s is not a user variable in class %s\n", varname.GetChars(),
+			DPrintf(DMSG_WARNING, "%s is not a writable user variable in class %s\n", varname.GetChars(),
 				actor->GetClass()->TypeName.GetChars());
 		}
 		else
 		{ // Set the value of the specified user variable.
-			var->Type->SetValue(reinterpret_cast<uint8_t *>(actor) + var->Offset, value);
+			void *addr = reinterpret_cast<uint8_t *>(actor) + var->Offset;
+			if (var->Type == TypeString)
+			{
+				var->Type->InitializeValue(addr, &MapThingsUserData[udi].StringVal);
+			}
+			else if (var->Type->isFloat())
+			{
+				var->Type->SetValue(addr, MapThingsUserData[udi].FloatVal);
+			}
+			else if (var->Type->isInt() || var->Type == TypeBool)
+			{
+				var->Type->SetValue(addr, MapThingsUserData[udi].IntVal);
+			}
 		}
+
+		udi++;
 	}
 }
 
@@ -3471,12 +3482,12 @@ static void P_PrecacheLevel()
 
 	for (auto n : gameinfo.PrecachedTextures)
 	{
-		FTextureID tex = TexMan.CheckForTexture(n, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		FTextureID tex = TexMan.CheckForTexture(n, ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
 		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 	for (unsigned i = 0; i < level.info->PrecacheTextures.Size(); i++)
 	{
-		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
+		FTextureID tex = TexMan.CheckForTexture(level.info->PrecacheTextures[i], ETextureType::Wall, FTextureManager::TEXMAN_Overridable | FTextureManager::TEXMAN_TryAny | FTextureManager::TEXMAN_ReturnFirst);
 		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 
@@ -3640,6 +3651,7 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	if (!savegamerestore)
 	{
+		level.SetMusicVolume(level.MusicVolume);
 		for (i = 0; i < MAXPLAYERS; ++i)
 		{
 			players[i].killcount = players[i].secretcount 

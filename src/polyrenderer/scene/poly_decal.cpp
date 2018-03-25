@@ -50,7 +50,7 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 		return;
 
 	FTexture *tex = TexMan(decal->PicNum, true);
-	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
+	if (tex == nullptr || tex->UseType == ETextureType::Null)
 		return;
 
 	sector_t *front, *back;

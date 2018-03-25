@@ -162,6 +162,8 @@ enum EMidiDevice
 	MDEV_FLUIDSYNTH = 4,
 	MDEV_GUS = 5,
 	MDEV_WILDMIDI = 6,
+	MDEV_ADL = 7,
+	MDEV_OPN = 8,
 
 	MDEV_COUNT
 };

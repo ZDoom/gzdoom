@@ -333,7 +333,7 @@ void FDMDModel::AddSkins(uint8_t *hitlist)
 	{
 		if (skins[i].isValid())
 		{
-			hitlist[skins[i].GetIndex()] |= FTexture::TEX_Flat;
+			hitlist[skins[i].GetIndex()] |= FTextureManager::HIT_Flat;
 		}
 	}
 }

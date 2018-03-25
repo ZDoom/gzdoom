@@ -85,7 +85,7 @@ FBuildTexture::FBuildTexture(const FString &pathprefix, int tilenum, const uint8
 	TopOffset = top;
 	CalcBitSize ();
 	Name.Format("%sBTIL%04d", pathprefix.GetChars(), tilenum);
-	UseType = TEX_Override;
+	UseType = ETextureType::Override;
 }
 
 uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
@@ -95,9 +95,9 @@ uint8_t *FBuildTexture::MakeTexture(FRenderStyle style)
 	for (int i = 0; i < Width*Height; i++)
 	{
 		auto c = RawPixels[i];
-		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].r : Remap->Remap[c];
+		Pixels[i] = (style.Flags & STYLEF_RedIsAlpha) ? Remap->Palette[c].Luminance() : Remap->Remap[c];
 	}
-	return (uint8_t*)RawPixels;
+	return (uint8_t*)Pixels;
 }
 
 int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)

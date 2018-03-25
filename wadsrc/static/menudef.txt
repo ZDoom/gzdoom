@@ -65,7 +65,7 @@ LISTMENU "MainMenu"
 		StaticPatch 278, 80, "FBULA0"
 		Position 110, 56
 	}
-	
+
 	IfGame(Doom, Strife, Chex)
 	{
 		PatchItem "M_NGAME", "n", "PlayerclassMenu"
@@ -87,7 +87,7 @@ LISTMENU "MainMenu"
 		}
 		PatchItem "M_QUITG", "q", "QuitMenu"
 	}
-	
+
 	IfGame(Heretic, Hexen)
 	{
 		TextItem "$MNU_NEWGAME", "n", "PlayerclassMenu"
@@ -399,7 +399,7 @@ ListMenu "PlayerMenu"
 		MouseWindow 0, 220
 		PlayerDisplay 220, 80, "00 07 00", "40 53 40", 1, "PlayerDisplay"
 	}
-	
+
 	ValueText "$PLYRMNU_TEAM", "Team"
 	ValueText "$PLYRMNU_PLAYERCOLOR", "Color"
 	Linespacing 10
@@ -581,7 +581,7 @@ OptionMenu "JoystickOptionsDefaults" protected
 	StaticTextSwitchable "$JOYMNU_NOCON", "$JOYMNU_CONFIG", "ConfigureMessage"
 	StaticTextSwitchable " ", "$JOYMNU_DISABLED1", "ConnectMessage1"
 	StaticTextSwitchable " ", "$JOYMNU_DISABLED2", "ConnectMessage2"
-	
+
 	// The rest will be filled in by joystick code if devices get connected or disconnected
 }
 
@@ -702,7 +702,7 @@ OptionValue GPUSwitch
 {
 	0.0, "$OPTVAL_DEFAULT"
 	1.0, "$OPTVAL_DEDICATED"
-	2.0, "$OPTVAL_INTEGRATED"	
+	2.0, "$OPTVAL_INTEGRATED"
 }
 
 
@@ -731,7 +731,7 @@ OptionMenu "SWROptions" protected
 OptionMenu "VideoOptions" protected
 {
 	Title "$DSPLYMNU_TITLE"
-	
+
 	Submenu "$DSPLYMNU_GLOPT", 			"OpenGLOptions"
 	Submenu "$DSPLYMNU_SWOPT", 			"SWROptions"
 	Submenu "$GLMNU_DYNLIGHT",			"GLLightOptions"
@@ -758,7 +758,7 @@ OptionMenu "VideoOptions" protected
 	{
 		Option	"$DSPLYMNU_SHOWENDOOM",			"showendoom", "Endoom"
 	}
-	
+
 	Option "$DSPLYMNU_DRAWFUZZ",				"r_drawfuzz", "Fuzziness"
 	Option "$DSPLYMNU_OLDTRANS",				"r_vanillatrans", "VanillaTrans"
 	Slider "$DSPLYMNU_TRANSSOUL",				"transsouls", 0.25, 1.0, 0.05, 2
@@ -791,7 +791,7 @@ OptionMenu "VideoOptions" protected
 //
 //-------------------------------------------------------------------------------------------
 
-OptionValue DisplayTagsTypes 
+OptionValue DisplayTagsTypes
 {
 	0.0, "$OPTVAL_NONE"
 	1.0, "$OPTVAL_ITEMS"
@@ -1144,44 +1144,44 @@ OptionMenu MapColorMenu protected
 	Title "$MAPCOLORMNU_TITLE"
 	SafeCommand "$MAPCOLORMNU_DEFAULTMAPCOLORS", 		"am_restorecolors"
 	StaticText " "
-	ColorPicker "$MAPCOLORMNU_BACKCOLOR",				"am_backcolor"		
-	ColorPicker "$MAPCOLORMNU_YOURCOLOR",				"am_yourcolor"		
-	ColorPicker "$MAPCOLORMNU_WALLCOLOR",				"am_wallcolor"		
-	ColorPicker "$MAPCOLORMNU_FDWALLCOLOR",				"am_fdwallcolor"		
-	ColorPicker "$MAPCOLORMNU_CDWALLCOLOR",				"am_cdwallcolor"		
-	ColorPicker "$MAPCOLORMNU_EFWALLCOLOR",				"am_efwallcolor"		
-	ColorPicker "$MAPCOLORMNU_GRIDCOLOR",				"am_gridcolor"		
-	ColorPicker "$MAPCOLORMNU_XHAIRCOLOR",				"am_xhaircolor"		
-	ColorPicker "$MAPCOLORMNU_NOTSEENCOLOR",			"am_notseencolor"		
-	ColorPicker "$MAPCOLORMNU_LOCKEDCOLOR",				"am_lockedcolor"		
-	ColorPicker "$MAPCOLORMNU_INTRALEVELCOLOR",			"am_intralevelcolor"	
-	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_interlevelcolor"	
-	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_secretsectorcolor"	
-	ColorPicker "$MAPCOLORMNU_UNEXPLOREDSECRETCOLOR",	"am_unexploredsecretcolor"	
+	ColorPicker "$MAPCOLORMNU_BACKCOLOR",				"am_backcolor"
+	ColorPicker "$MAPCOLORMNU_YOURCOLOR",				"am_yourcolor"
+	ColorPicker "$MAPCOLORMNU_WALLCOLOR",				"am_wallcolor"
+	ColorPicker "$MAPCOLORMNU_FDWALLCOLOR",				"am_fdwallcolor"
+	ColorPicker "$MAPCOLORMNU_CDWALLCOLOR",				"am_cdwallcolor"
+	ColorPicker "$MAPCOLORMNU_EFWALLCOLOR",				"am_efwallcolor"
+	ColorPicker "$MAPCOLORMNU_GRIDCOLOR",				"am_gridcolor"
+	ColorPicker "$MAPCOLORMNU_XHAIRCOLOR",				"am_xhaircolor"
+	ColorPicker "$MAPCOLORMNU_NOTSEENCOLOR",			"am_notseencolor"
+	ColorPicker "$MAPCOLORMNU_LOCKEDCOLOR",				"am_lockedcolor"
+	ColorPicker "$MAPCOLORMNU_INTRALEVELCOLOR",			"am_intralevelcolor"
+	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_interlevelcolor"
+	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_secretsectorcolor"
+	ColorPicker "$MAPCOLORMNU_UNEXPLOREDSECRETCOLOR",	"am_unexploredsecretcolor"
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_specialwallcolor"
 	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_portalcolor"
 	StaticText " "
 	StaticText "$MAPCOLORMNU_CHEATMODE", 1
-	ColorPicker "$MAPCOLORMNU_TSWALLCOLOR",				"am_tswallcolor"		
-	ColorPicker "$MAPCOLORMNU_SECRETWALLCOLOR",			"am_secretwallcolor"	
-	ColorPicker "$MAPCOLORMNU_THINGCOLOR",				"am_thingcolor"		
-	ColorPicker "$MAPCOLORMNU_MONSTERCOLOR",			"am_thingcolor_monster"		
-	ColorPicker "$MAPCOLORMNU_NONCOUNTINGMONSTERCOLOR",	"am_thingcolor_ncmonster"		
-	ColorPicker "$MAPCOLORMNU_FRIENDCOLOR",				"am_thingcolor_friend"		
-	ColorPicker "$MAPCOLORMNU_ITEMCOLOR",				"am_thingcolor_item"			
-	ColorPicker "$MAPCOLORMNU_COUNTITEMCOLOR",			"am_thingcolor_citem"			
+	ColorPicker "$MAPCOLORMNU_TSWALLCOLOR",				"am_tswallcolor"
+	ColorPicker "$MAPCOLORMNU_SECRETWALLCOLOR",			"am_secretwallcolor"
+	ColorPicker "$MAPCOLORMNU_THINGCOLOR",				"am_thingcolor"
+	ColorPicker "$MAPCOLORMNU_MONSTERCOLOR",			"am_thingcolor_monster"
+	ColorPicker "$MAPCOLORMNU_NONCOUNTINGMONSTERCOLOR",	"am_thingcolor_ncmonster"
+	ColorPicker "$MAPCOLORMNU_FRIENDCOLOR",				"am_thingcolor_friend"
+	ColorPicker "$MAPCOLORMNU_ITEMCOLOR",				"am_thingcolor_item"
+	ColorPicker "$MAPCOLORMNU_COUNTITEMCOLOR",			"am_thingcolor_citem"
 	StaticText " "
 	StaticText "$MAPCOLORMNU_OVERLAY", 1
-	ColorPicker "$MAPCOLORMNU_YOURCOLOR",				"am_ovyourcolor"		
-	ColorPicker "$MAPCOLORMNU_WALLCOLOR",				"am_ovwallcolor"		
-	ColorPicker "$MAPCOLORMNU_FDWALLCOLOR",				"am_ovfdwallcolor"		
-	ColorPicker "$MAPCOLORMNU_CDWALLCOLOR",				"am_ovcdwallcolor"		
-	ColorPicker "$MAPCOLORMNU_EFWALLCOLOR",				"am_ovefwallcolor"		
-	ColorPicker "$MAPCOLORMNU_NOTSEENCOLOR",			"am_ovunseencolor"	
+	ColorPicker "$MAPCOLORMNU_YOURCOLOR",				"am_ovyourcolor"
+	ColorPicker "$MAPCOLORMNU_WALLCOLOR",				"am_ovwallcolor"
+	ColorPicker "$MAPCOLORMNU_FDWALLCOLOR",				"am_ovfdwallcolor"
+	ColorPicker "$MAPCOLORMNU_CDWALLCOLOR",				"am_ovcdwallcolor"
+	ColorPicker "$MAPCOLORMNU_EFWALLCOLOR",				"am_ovefwallcolor"
+	ColorPicker "$MAPCOLORMNU_NOTSEENCOLOR",			"am_ovunseencolor"
 	ColorPicker "$MAPCOLORMNU_LOCKEDCOLOR",				"am_ovlockedcolor"
-	ColorPicker "$MAPCOLORMNU_INTRALEVELCOLOR",			"am_ovtelecolor"		
-	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_ovinterlevelcolor"	
-	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_ovsecretsectorcolor"	
+	ColorPicker "$MAPCOLORMNU_INTRALEVELCOLOR",			"am_ovtelecolor"
+	ColorPicker "$MAPCOLORMNU_INTERLEVELCOLOR",			"am_ovinterlevelcolor"
+	ColorPicker "$MAPCOLORMNU_SECRETSECTORCOLOR",		"am_ovsecretsectorcolor"
 	ColorPicker "$MAPCOLORMNU_SPECIALWALLCOLOR",		"am_ovspecialwallcolor"
 	ColorPicker "$MAPCOLORMNU_PORTAL",					"am_ovportalcolor"
 	StaticText " "
@@ -1190,10 +1190,10 @@ OptionMenu MapColorMenu protected
 	ColorPicker "$MAPCOLORMNU_SECRETWALLCOLOR",			"am_ovsecretwallcolor"
 	ColorPicker "$MAPCOLORMNU_THINGCOLOR",				"am_ovthingcolor"
 	ColorPicker "$MAPCOLORMNU_MONSTERCOLOR",			"am_ovthingcolor_monster"
-	ColorPicker "$MAPCOLORMNU_NONCOUNTINGMONSTERCOLOR",	"am_ovthingcolor_ncmonster"	
+	ColorPicker "$MAPCOLORMNU_NONCOUNTINGMONSTERCOLOR",	"am_ovthingcolor_ncmonster"
 	ColorPicker "$MAPCOLORMNU_FRIENDCOLOR",				"am_ovthingcolor_friend"
-	ColorPicker "$MAPCOLORMNU_ITEMCOLOR",				"am_ovthingcolor_item"	
-	ColorPicker "$MAPCOLORMNU_COUNTITEMCOLOR",			"am_ovthingcolor_citem"	
+	ColorPicker "$MAPCOLORMNU_ITEMCOLOR",				"am_ovthingcolor_item"
+	ColorPicker "$MAPCOLORMNU_COUNTITEMCOLOR",			"am_ovthingcolor_citem"
 }
 
 //-------------------------------------------------------------------------------------------
@@ -1290,7 +1290,7 @@ OptionMenu ScoreboardOptions protected
  * Gameplay Options (dmflags) Menu
  *
  *=======================================*/
- 
+
 OptionValue  SmartAim
 {
 	0.0, "$OPTVAL_OFF"
@@ -1404,10 +1404,10 @@ OptionMenu "CompatibilityOptions" protected
 {
 	Title "$CMPTMNU_TITLE"
 	Option "$CMPTMNU_MODE",							"compatmode", "CompatModes", "", 1
-	
+
 	StaticText " "
 	StaticText "$CMPTMNU_ACTORBEHAVIOR",1
-	Option "$CMPTMNU_CORPSEGIBS",					"compat_CORPSEGIBS", "YesNo"	
+	Option "$CMPTMNU_CORPSEGIBS",					"compat_CORPSEGIBS", "YesNo"
 	Option "$CMPTMNU_NOBLOCKFRIENDS",				"compat_NOBLOCKFRIENDS", "YesNo"
 	Option "$CMPTMNU_LIMITPAIN",					"compat_LIMITPAIN", "YesNo"
 	Option "$CMPTMNU_MBFMONSTERMOVE",				"compat_MBFMONSTERMOVE", "YesNo"
@@ -1416,12 +1416,12 @@ OptionMenu "CompatibilityOptions" protected
 	Option "$CMPTMNU_INVISIBILITY",					"compat_INVISIBILITY", "YesNo"
 	Option "$CMPTMNU_MINOTAUR",						"compat_MINOTAUR", "YesNo"
 	Option "$CMPTMNU_NOTOSSDROPS",					"compat_NOTOSSDROPS", "YesNo"
-	
+
 	StaticText " "
 	StaticText "$CMPTMNU_DEHACKEDBEHAVIOR",1
 	Option "$CMPTMNU_DEHHEALTH",					"compat_DEHHEALTH", "YesNo"
 	Option "$CMPTMNU_MUSHROOM",						"compat_MUSHROOM", "YesNo"
-	
+
 	StaticText " "
 	StaticText "$CMPTMNU_MAPACTIONBEHAVIOR",1
 	Option "$CMPTMNU_USEBLOCKING",					"compat_USEBLOCKING", "YesNo"
@@ -1435,7 +1435,7 @@ OptionMenu "CompatibilityOptions" protected
 	Option "$CMPTMNU_MULTIEXIT",					"compat_multiexit", "YesNo"
 	Option "$CMPTMNU_TELEPORT",						"compat_teleport", "YesNo"
 	Option "$CMPTMNU_PUSHWINDOW",					"compat_pushwindow", "YesNo"
-	
+
 	StaticText " "
 	StaticText "$CMPTMNU_PHYSICSBEHAVIOR",1
 	Option "$CMPTMNU_NOPASSOVER",					"compat_nopassover", "YesNo"
@@ -1447,13 +1447,13 @@ OptionMenu "CompatibilityOptions" protected
 	Option "$CMPTMNU_HITSCAN",						"compat_HITSCAN", "YesNo"
 	Option "$CMPTMNU_MISSILECLIP",					"compat_MISSILECLIP", "YesNo"
 
-	
+
 	StaticText " "
 	StaticText "$CMPTMNU_RENDERINGBEHAVIOR",1
 	Option "$CMPTMNU_POLYOBJ",						"compat_POLYOBJ", "YesNo"
 	Option "$CMPTMNU_MASKEDMIDTEX",					"compat_MASKEDMIDTEX", "YesNo"
 	Option "$CMPTMNU_SPRITESORT",					"compat_SPRITESORT", "YesNo"
-	
+
 	StaticText " "
 	StaticText "$CMPTMNU_SOUNDBEHAVIOR",1
 	Option "$CMPTMNU_SOUNDSLOTS",					"compat_soundslots", "YesNo"
@@ -1462,7 +1462,7 @@ OptionMenu "CompatibilityOptions" protected
 	Option "$CMPTMNU_SECTORSOUNDS",					"compat_SECTORSOUNDS", "YesNo"
 	Option "$CMPTMNU_SOUNDCUTOFF",					"compat_soundcutoff", "YesNo"
 	Option "$CMPTMNU_SOUNDTARGET",					"compat_SOUNDTARGET", "YesNo"
-	
+
 	Class "CompatibilityMenu"
 }
 
@@ -1471,7 +1471,7 @@ OptionMenu "CompatibilityOptions" protected
  * Sound Options Menu
  *
  *=======================================*/
- 
+
 OptionValue SampleRates
 {
 	0,		"$OPTVAL_DEFAULT"
@@ -1630,6 +1630,7 @@ OptionMenu SoundOptions protected
 
 	StaticText " "
 	Submenu "$SNDMNU_ADVANCED",			"AdvSoundOptions"
+	Submenu "$SNDMNU_MIDIPLAYER",		"MidiPlayerOptions"
 	Submenu "$SNDMNU_MODREPLAYER",		"ModReplayerOptions"
 	StaticText " "
 	Submenu "$OPTMNU_REVERB",			"ReverbEdit"
@@ -1664,36 +1665,6 @@ OptionMenu AdvSoundOptions protected
 	Title "$ADVSNDMNU_TITLE"
 	Option "$ADVSNDMNU_SAMPLERATE",			"snd_samplerate", "SampleRates"
 	Option "$ADVSNDMNU_HRTF",				"snd_hrtf", "AutoOffOn"
-	StaticText " "
-	StaticText "$ADVSNDMNU_OPLSYNTHESIS",	1
-	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
-	Option "$ADVSNDMNU_OPLFULLPAN",			"opl_fullpan", "OnOff"
-	Option "$ADVSNDMNU_OPLCORES", 			"opl_core", "OplCores"
-	StaticText " "
-	StaticText "$ADVSNDMNU_GUSEMULATION",	1
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"midi_config", "GusConfigMenu"
-	Slider "$ADVSNDMNU_MIDIVOICES",			"midi_voices", 16, 256, 4, 0
-	Option "$ADVSNDMNU_DMXGUS", 			"midi_dmxgus", "OnOff"
-	Option "$ADVSNDMNU_GUSMEMSIZE", 		"gus_memsize", "GusMemory"
-	StaticText " "
-	StaticText "$ADVSNDMNU_FLUIDSYNTH",	1
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"fluid_patchset", "FluidPatchsetMenu"
-	Slider "$ADVSNDMNU_FLUIDGAIN",			"fluid_gain", 0, 10, 0.5, 1
-	Option "$ADVSNDMNU_REVERB", 			"fluid_reverb", "OnOff"
-	Option "$ADVSNDMNU_CHORUS", 			"fluid_chorus", "OnOff"
-	Slider "$ADVSNDMNU_MIDIVOICES", 		"fluid_voices", 16, 4096, 16, 0
-	// Leaving out the more advanced stuff for now.
-	StaticText " "
-	StaticText "$ADVSNDMNU_TIMIDITY",	1
-
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"timidity_config", "TimidityConfigMenu"
-	// This one needs reworking
-	//Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "OnOff"
-	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
-	StaticText " "
-	StaticText "$ADVSNDMNU_WILDMIDI",	1
-	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"wildmidi_config", "WildMidiConfigMenu"
-	Option "$ADVSNDMNU_REVERB", 			"wildmidi_reverb", "OnOff"
 }
 
 OptionMenu GusConfigMenu protected
@@ -1714,6 +1685,11 @@ OptionMenu TimidityConfigMenu protected
 OptionMenu FluidPatchsetMenu protected
 {
 	Title "$ADVSNDMNU_SELCONFIG"
+}
+
+OptionMenu ADLBankMenu protected
+{
+	Title "$ADVSNDMNU_OPLBANK"
 }
 
 /*=======================================
@@ -1750,6 +1726,7 @@ OptionValue ModVolumeRamps
 }
 
 
+
 OptionMenu ModReplayerOptions protected
 {
 	Title "$MODMNU_TITLE"
@@ -1763,6 +1740,103 @@ OptionMenu ModReplayerOptions protected
 	// mechanism to edit the chip-o-matic settings like you can with
 	// the foo_dumb preferences in foobar2000.
 }
+
+/*=======================================
+ *
+ * MIDI player
+ *
+ *=======================================*/
+
+ OptionValue TimidityReverb
+ {
+	0, "$OPTVAL_OFF"
+	1, "$OPTVAL_STANDARD"
+	2, "$ADVSNDMNU_GLOBAL"
+	3, "$ADVSNDMNU_FREEVERB"
+	4, "$ADVSNDMNU_GLOBAL_FREEVERB"
+ }
+
+  OptionMenu MidiPlayerOptions protected
+ {
+	Title "$SNDMNU_MIDIPLAYER"
+	Submenu "$ADVSNDMNU_FLUIDSYNTH", "FluidsynthOptions", 0, 1
+	Submenu "$ADVSNDMNU_TIMIDITY", "TimidityOptions", 0, 1
+	Submenu "$ADVSNDMNU_GUSEMULATION", "GUSOptions", 0, 1
+	Submenu "$ADVSNDMNU_WILDMIDI", "WildMidiOptions", 0, 1
+	Submenu "$ADVSNDMNU_OPLSYNTHESIS", "OPLOptions", 0, 1
+	Submenu "$ADVSNDMNU_ADLMIDI", "ADLOptions", 0, 1
+	Submenu "$ADVSNDMNU_OPNMIDI", "OPNOptions", 0, 1
+ }
+
+ OptionMenu FluidsynthOptions protected
+ {
+	Title "$ADVSNDMNU_FLUIDSYNTH"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"fluid_patchset", "FluidPatchsetMenu"
+	Slider "$ADVSNDMNU_FLUIDGAIN",			"fluid_gain", 0, 10, 0.5, 1
+	Option "$ADVSNDMNU_REVERB", 			"fluid_reverb", "OnOff"
+	Option "$ADVSNDMNU_CHORUS", 			"fluid_chorus", "OnOff"
+	Slider "$ADVSNDMNU_MIDIVOICES", 		"fluid_voices", 16, 4096, 16, 0
+	// other CVARs need to be revieved for usefulness
+ }
+
+ OptionMenu TimidityOptions protected
+ {
+	Title "$ADVSNDMNU_TIMIDITY"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"timidity_config", "TimidityConfigMenu"
+	Option "$ADVSNDMNU_REVERB", 			"timidity_reverb", "TimidityReverb"
+	Slider "$ADVSNDMNU_REVERB_LEVEL", 		"timidity_reverb_level", 9, 127, 1, 0
+	Option "$ADVSNDMNU_CHORUS", 			"timidity_chorus", "OnOff"
+	// other CVARs need to be revieved for usefulness
+ }
+
+ OptionMenu GUSOptions protected
+ {
+	Title "$ADVSNDMNU_GUSEMULATION"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"midi_config", "GusConfigMenu"
+	Slider "$ADVSNDMNU_MIDIVOICES",			"midi_voices", 16, 256, 4, 0
+	Option "$ADVSNDMNU_DMXGUS", 			"midi_dmxgus", "OnOff"
+	Option "$ADVSNDMNU_GUSMEMSIZE", 		"gus_memsize", "GusMemory"
+ }
+
+  OptionMenu WildMidiOptions protected
+ {
+	Title "$ADVSNDMNU_WILDMIDI"
+	LabeledSubMenu "$ADVSNDMNU_SELCONFIG",		"wildmidi_config", "WildMidiConfigMenu"
+	Option "$ADVSNDMNU_REVERB", 			"wildmidi_reverb", "OnOff"
+	Option "$ADVSNDMNU_ADVRESAMPLING",		"wildmidi_enhanced_resampling", "OnOff"
+ }
+
+ OptionMenu OPLOptions protected
+ {
+ 	Title "$ADVSNDMNU_OPLSYNTHESIS"
+	Option "$ADVSNDMNU_OPLCORES", 			"opl_core", "OplCores"
+	Slider "$ADVSNDMNU_OPLNUMCHIPS", 		"opl_numchips", 1, 8, 1, 0
+	Option "$ADVSNDMNU_OPLFULLPAN",			"opl_fullpan", "OnOff"
+ }
+
+ OptionValue AdlVolumeModels
+ {
+	0, "$ADLVLMODEL_AUTO"
+	1, "$ADLVLMODEL_GENERIC"
+	2, "$ADLVLMODEL_NATIVE"
+	3, "$ADLVLMODEL_DMX"
+	4, "$ADLVLMODEL_APOGEE"
+	5, "$ADLVLMODEL_WIN9X"
+ }
+
+ OptionMenu ADLOptions protected
+ {
+ 	Title "$ADVSNDMNU_ADLMIDI"
+ 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
+ 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
+ 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+ }
+
+ OptionMenu OPNOptions protected
+ {
+ 	Title "$ADVSNDMNU_OPNMIDI"
+ 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
+ }
 
 /*=======================================
  *
@@ -1863,19 +1937,19 @@ OptionValue CropAspect
 OptionMenu VideoModeMenu protected
 {
 	Title "$VIDMNU_TITLE"
-	
+
 	Option "$VIDMNU_FULLSCREEN",		"fullscreen", "YesNo"
-	
+
 	IfOption(Mac)
 	{
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
 	}
-	
+
 	IfOption(Windows)
 	{
 		Option "$VIDMNU_BRDLSS",		"win_borderless", "YesNo"
 	}
-	
+
 	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"
@@ -1916,7 +1990,7 @@ OptionMenu NetworkOptions protected
 	StaticText "$NETMNU_HOSTOPTIONS", 1
 	Option "$NETMNU_EXTRATICS",				"net_extratic", "ExtraTicMode"
 	Option "$NETMNU_TICBALANCE",			"net_ticbalance", "OnOff"
-	
+
 }
 
 OptionValue ExtraTicMode

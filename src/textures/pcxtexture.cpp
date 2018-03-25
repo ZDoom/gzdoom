@@ -111,6 +111,7 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 {
 	PCXHeader hdr;
 
+
 	file.Seek(0, FileReader::SeekSet);
 	if (file.Read(&hdr, sizeof(hdr)) != sizeof(hdr))
 	{
@@ -123,7 +124,7 @@ FTexture * PCXTexture_TryCreate(FileReader & file, int lumpnum)
 
 	if (hdr.manufacturer != 10 || hdr.encoding != 1) return NULL;
 	if (hdr.version != 0 && hdr.version != 2 && hdr.version != 3 && hdr.version != 4 && hdr.version != 5) return NULL;
-	if (hdr.bitsPerPixel != 1 && hdr.bitsPerPixel != 8) return NULL; 
+	if (hdr.bitsPerPixel != 1 && hdr.bitsPerPixel != 8 && hdr.bitsPerPixel != 4) return NULL; 
 	if (hdr.bitsPerPixel == 1 && hdr.numColorPlanes !=1 && hdr.numColorPlanes != 4) return NULL;
 	if (hdr.bitsPerPixel == 8 && hdr.bytesPerScanLine != ((hdr.xmax - hdr.xmin + 2)&~1)) return NULL;
 
@@ -205,7 +206,9 @@ void FPCXTexture::ReadPCX1bit (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 
 			for (i = 7; i >= 0; --i, ptr ++)
 			{
-				*ptr = ((rle_value & (1 << i)) > 0);
+				// This can overflow for the last byte if not checked.
+				if (ptr < dst+Width*Height)
+					*ptr = ((rle_value & (1 << i)) > 0);
 			}
 		}
 	}
@@ -259,13 +262,13 @@ void FPCXTexture::ReadPCX4bits (uint8_t *dst, FileReader & lump, PCXHeader *hdr)
 				rle_count--;
 				*(pLine++) = rle_value;
 			}
+		}
 
-			/* compute line's color indexes */
-			for (x = 0; x < Width; ++x)
-			{
-				if (line[x / 8] & (128 >> (x % 8)))
-					ptr[x] += (1 << c);
-			}
+		/* compute line's color indexes */
+		for (x = 0; x < Width; ++x)
+		{
+			if (line[x / 8] & (128 >> (x % 8)))
+				ptr[x] += (1 << c);
 		}
 	}
 
@@ -389,20 +392,20 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 	{
 		if (bitcount < 8)
 		{
-			for (int i=0;i<16;i++)
-			{
-				if (!alphatex) PaletteMap[i] = ColorMatcher.Pick(header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
-				else PaletteMap[i] = header.palette[i * 3];
-			}
-
 			switch (bitcount)
 			{
 			default:
 			case 1:
+				PaletteMap[0] = alphatex? 0 : GrayMap[0];
+				PaletteMap[1] = alphatex? 255 : GrayMap[255];
 				ReadPCX1bit (Pixels, lump, &header);
 				break;
 
 			case 4:
+				for (int i = 0; i < 16; i++)
+				{
+					PaletteMap[i] = RGBToPalettePrecise(alphatex, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
+				}
 				ReadPCX4bits (Pixels, lump, &header);
 				break;
 			}
@@ -418,7 +421,7 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 				uint8_t r = lump.ReadUInt8();
 				uint8_t g = lump.ReadUInt8();
 				uint8_t b = lump.ReadUInt8();
-				PaletteMap[i] = !alphatex? ColorMatcher.Pick(r,g,b) : r;
+				PaletteMap[i] = RGBToPalettePrecise(alphatex, r, g, b);
 			}
 			lump.Seek(sizeof(header), FileReader::SeekSet);
 			ReadPCX8bits (Pixels, lump, &header);
@@ -445,7 +448,7 @@ uint8_t *FPCXTexture::MakeTexture(FRenderStyle style)
 		{
 			for(int x=0; x < Width; x++)
 			{
-				Pixels[y + Height * x] = !alphatex? RGB256k.RGB[row[0] >> 2][row[1] >> 2][row[2] >> 2] : row[0];
+				Pixels[y + Height * x] = RGBToPalette(alphatex, row[0], row[1], row[2]);
 				row+=3;
 			}
 		}
@@ -480,19 +483,20 @@ int FPCXTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCo
 		Pixels = new uint8_t[Width*Height];
 		if (bitcount < 8)
 		{
-			for (int i=0;i<16;i++)
-			{
-				pe[i] = PalEntry(header.palette[i*3],header.palette[i*3+1],header.palette[i*3+2]);
-			}
-
 			switch (bitcount)
 			{
 			default:
 			case 1:
+				pe[0] = PalEntry(255, 0, 0, 0);
+				pe[1] = PalEntry(255, 255, 255, 255);
 				ReadPCX1bit (Pixels, lump, &header);
 				break;
 
 			case 4:
+				for (int i = 0; i<16; i++)
+				{
+					pe[i] = PalEntry(255, header.palette[i * 3], header.palette[i * 3 + 1], header.palette[i * 3 + 2]);
+				}
 				ReadPCX4bits (Pixels, lump, &header);
 				break;
 			}

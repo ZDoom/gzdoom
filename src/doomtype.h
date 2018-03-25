@@ -128,6 +128,11 @@ struct PalEntry
 			return other;
 		}
 	}
+	int Luminance() const 
+	{
+		return (r * 77 + g * 143 + b * 37) >> 8;
+	}
+
 	void Decolorize()	// this for 'nocoloredspritelighting' and not the same as desaturation. The normal formula results in a value that's too dark.
 	{
 		int v = (r + g + b);
@@ -166,6 +171,31 @@ struct PalEntry
 		uint32_t d;
 	};
 #endif
+};
+
+inline int Luminance(int r, int g, int b)
+{
+	return (r * 77 + g * 143 + b * 37) >> 8;
+}
+
+
+enum class ETextureType : uint8_t
+{
+	Any,
+	Wall,
+	Flat,
+	Sprite,
+	WallPatch,
+	Build,		// no longer used but needs to remain for ZScript
+	SkinSprite,
+	Decal,
+	MiscPatch,
+	FontChar,
+	Override,	// For patches between TX_START/TX_END
+	Autopage,	// Automap background - used to enable the use of FAutomapTexture
+	SkinGraphic,
+	Null,
+	FirstDefined,
 };
 
 class FTextureID

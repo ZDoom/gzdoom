@@ -2943,7 +2943,7 @@ void WildMidi_Renderer::ComputeOutput(float *fbuffer, int len)
 	}
 	for (; buffer < newbuf; ++buffer)
 	{
-		*(float *)buffer = (float)*buffer * (2.f / 32768.f);	// boost the volume because Wildmidi is far more quiet than the other synths and therefore hard to balance.
+		*(float *)buffer = (float)*buffer * (1.3f / 32768.f);	// boost the volume because Wildmidi is far more quiet than the other synths and therefore hard to balance.
 	}
 }
 

@@ -631,7 +631,7 @@ static void ParseFloor (FScanner &sc)
 	bool opt = sc.CheckString("optional");
 	sc.MustGetString ();
 
-	picnum = TexMan.CheckForTexture (sc.String, FTexture::TEX_Flat,
+	picnum = TexMan.CheckForTexture (sc.String, ETextureType::Flat,
 		FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny);
 
 	if (!picnum.Exists())

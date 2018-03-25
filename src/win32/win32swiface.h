@@ -129,7 +129,7 @@ public:
 	void SetBlendingRect (int x1, int y1, int x2, int y2);
 	bool Begin2D (bool copy3d);
 	void DrawBlendingRect ();
-	FNativeTexture *CreateTexture (FTexture *gametex, bool wrapping);
+	FNativeTexture *CreateTexture (FTexture *gametex, FTextureFormat fmt, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
 	void DrawTextureParms (FTexture *img, DrawParms &parms);
 	void DoClear (int left, int top, int right, int bottom, int palcolor, uint32_t color);

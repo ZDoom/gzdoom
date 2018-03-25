@@ -3873,7 +3873,7 @@ void DLevelScript::ChangeFlat (int tag, int name, bool floorOrCeiling)
 	if (flatname == NULL)
 		return;
 
-	flat = TexMan.GetTexture (flatname, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+	flat = TexMan.GetTexture (flatname, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 
 	FSectorTagIterator it(tag);
 	while ((secnum = it.Next()) >= 0)
@@ -3905,7 +3905,7 @@ void DLevelScript::SetLineTexture (int lineid, int side, int position, int name)
 
 	side = !!side;
 
-	texture = TexMan.GetTexture (texname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+	texture = TexMan.GetTexture (texname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 
 	FLineIdIterator itr(lineid);
 	while ((linenum = itr.Next()) >= 0)
@@ -4700,7 +4700,7 @@ bool DLevelScript::DoCheckActorTexture(int tid, AActor *activator, int string, b
 	{
 		return 0;
 	}
-	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string), FTexture::TEX_Flat,
+	FTexture *tex = TexMan.FindTexture(FBehavior::StaticLookupString(string), ETextureType::Flat,
 			FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_DontCreate);
 
 	if (tex == NULL)
@@ -5065,10 +5065,10 @@ bool GetVarAddrType(AActor *self, FName varname, int index, void *&addr, PType *
 	}
 	addr = baddr;
 	// We don't want Int subclasses like Name or Color to be accessible here.
-	if (!type->isInt() && !type->isFloat() && type != TypeBool)
+	if (!type->isInt() && !type->isFloat() && type != TypeBool && type != TypeString)
 	{
-		// For reading, we also support Name and String types.
-		if (readonly && (type == TypeName || type == TypeString))
+		// For reading, we also support Name types.
+		if (readonly && (type == TypeName))
 		{
 			return true;
 		}
@@ -5084,13 +5084,18 @@ static void SetUserVariable(AActor *self, FName varname, int index, int value)
 
 	if (GetVarAddrType(self, varname, index, addr, type, false))
 	{
-		if (!type->isFloat())
+		if (type == TypeString)
 		{
-			type->SetValue(addr, value);
+			FString str = FBehavior::StaticLookupString(value);
+			type->InitializeValue(addr, &str);
+		}
+		else if (type->isFloat())
+		{
+			type->SetValue(addr, ACSToDouble(value));
 		}
 		else
 		{
-			type->SetValue(addr, ACSToDouble(value));
+			type->SetValue(addr, value);
 		}
 	}
 }
@@ -6684,7 +6689,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		break;
 
 		case ACSF_SetMusicVolume:
-			I_SetMusicVolume(ACSToFloat(args[0]));
+			level.SetMusicVolume(ACSToFloat(args[0]));
 			break;
 
 		case ACSF_CheckProximity:
@@ -10028,11 +10033,11 @@ scriptwait:
 				sky2name = FBehavior::StaticLookupString (STACK(1));
 				if (sky1name[0] != 0)
 				{
-					sky1texture = level.skytexture1 = TexMan.GetTexture (sky1name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					sky1texture = level.skytexture1 = TexMan.GetTexture (sky1name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
 				if (sky2name[0] != 0)
 				{
-					sky2texture = level.skytexture2 = TexMan.GetTexture (sky2name, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
+					sky2texture = level.skytexture2 = TexMan.GetTexture (sky2name, ETextureType::Wall, FTextureManager::TEXMAN_Overridable|FTextureManager::TEXMAN_ReturnFirst);
 				}
 				R_InitSkyMap ();
 				sp -= 2;
@@ -10056,7 +10061,7 @@ scriptwait:
 
 				if (camera != NULL)
 				{
-					FTextureID picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+					FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 					if (!picnum.Exists())
 					{
 						Printf ("SetCameraToTexture: %s is not a texture\n", picname);

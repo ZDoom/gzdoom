@@ -413,6 +413,18 @@ void E_WorldThingDestroyed(AActor* actor)
 		handler->WorldThingDestroyed(actor);
 }
 
+void E_WorldLinePreActivated(line_t* line, AActor* actor, bool* shouldactivate)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldLinePreActivated(line, actor, shouldactivate);
+}
+
+void E_WorldLineActivated(line_t* line, AActor* actor)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldLineActivated(line, actor);
+}
+
 void E_PlayerEntered(int num, bool fromhub)
 {
 	// this event can happen during savegamerestore. make sure that local handlers don't receive it.
@@ -509,6 +521,7 @@ DEFINE_EVENT_LOOPER(RenderFrame)
 DEFINE_EVENT_LOOPER(WorldLightning)
 DEFINE_EVENT_LOOPER(WorldTick)
 DEFINE_EVENT_LOOPER(UiTick)
+DEFINE_EVENT_LOOPER(PostUiTick)
 
 // declarations
 IMPLEMENT_CLASS(DStaticEventHandler, false, true);
@@ -540,6 +553,8 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageSource);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageType);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageFlags);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageAngle);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivatedLine);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, ShouldActivate);
 
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, IsReturn);
@@ -626,6 +641,8 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingRevived)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDamaged)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLinePreActivated)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLineActivated)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldTick)
 
@@ -640,6 +657,7 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, PlayerDisconnected)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, InputProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, UiTick);
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, PostUiTick);
 
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, ConsoleProcess);
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, NetworkProcess);
@@ -781,6 +799,38 @@ void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
 			return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::WorldLinePreActivated(line_t* line, AActor* actor, bool* shouldactivate)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldLinePreActivated)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldLinePreActivated_VMPtr)
+			return;
+		FWorldEvent e = E_SetupWorldEvent();
+		e.Thing = actor;
+		e.ActivatedLine = line;
+		e.ShouldActivate = *shouldactivate;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+		*shouldactivate = e.ShouldActivate;
+	}
+}
+
+void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldLineActivated)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_WorldLineActivated_VMPtr)
+			return;
+		FWorldEvent e = E_SetupWorldEvent();
+		e.Thing = actor;
+		e.ActivatedLine = line;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}
@@ -1015,6 +1065,18 @@ void DStaticEventHandler::UiTick()
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_UiTick_VMPtr)
+			return;
+		VMValue params[1] = { (DStaticEventHandler*)this };
+		VMCall(func, params, 1, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::PostUiTick()
+{
+	IFVIRTUAL(DStaticEventHandler, PostUiTick)
+	{
+		// don't create excessive DObjects if not going to be processed anyway
+		if (func == DStaticEventHandler_PostUiTick_VMPtr)
 			return;
 		VMValue params[1] = { (DStaticEventHandler*)this };
 		VMCall(func, params, 1, nullptr, 0);

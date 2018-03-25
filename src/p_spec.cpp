@@ -188,8 +188,15 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	{
 		return false;
 	}
+
+	// [MK] Use WorldLinePreActivated to decide if activation should continue
+	bool shouldactivate = true;
+	E_WorldLinePreActivated(line, mo, &shouldactivate);
+	if ( !shouldactivate ) return false;
+
 	bool remote = (line->special != 7 && line->special != 8 && (line->special < 11 || line->special > 14));
 	if (line->locknumber > 0 && !P_CheckKeys (mo, line->locknumber, remote)) return false;
+
 	lineActivation = line->activation;
 	repeat = line->flags & ML_REPEAT_SPECIAL;
 	buttonSuccess = false;
@@ -197,6 +204,9 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 					line, mo, side == 1, line->args[0],
 					line->args[1], line->args[2],
 					line->args[3], line->args[4]);
+
+	// [MK] Fire up WorldLineActivated
+	if ( buttonSuccess ) E_WorldLineActivated(line, mo);
 
 	special = line->special;
 	if (!repeat && buttonSuccess)

@@ -117,7 +117,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 	}
 	if (texname[0] != 0)
 	{
-		mBackground = TexMan.CheckForTexture(texname, FTexture::TEX_MiscPatch);
+		mBackground = TexMan.CheckForTexture(texname, ETextureType::MiscPatch);
 		mFlatfill = desc->mFlatfill;
 	}
 	S_Sound (CHAN_VOICE | CHAN_UI, desc->mSound, 1.0f, ATTN_NONE);
@@ -147,7 +147,7 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mOverlays[i].x = desc->mOverlays[i].x;
 		mOverlays[i].y = desc->mOverlays[i].y;
 		mOverlays[i].mCondition = desc->mOverlays[i].mCondition;
-		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, FTexture::TEX_MiscPatch);
+		mOverlays[i].mPic = TexMan.CheckForTexture(desc->mOverlays[i].mName, ETextureType::MiscPatch);
 	}
 	mTicker = 0;
 }
@@ -640,7 +640,7 @@ void DIntermissionScreenScroller::Init(FIntermissionAction *desc, bool first)
 {
 	Super::Init(desc, first);
 	mFirstPic = mBackground;
-	mSecondPic = TexMan.CheckForTexture(static_cast<FIntermissionActionScroller*>(desc)->mSecondPic, FTexture::TEX_MiscPatch);
+	mSecondPic = TexMan.CheckForTexture(static_cast<FIntermissionActionScroller*>(desc)->mSecondPic, ETextureType::MiscPatch);
 	mScrollDelay = static_cast<FIntermissionActionScroller*>(desc)->mScrollDelay;
 	mScrollTime = static_cast<FIntermissionActionScroller*>(desc)->mScrollTime;
 	mScrollDir = static_cast<FIntermissionActionScroller*>(desc)->mScrollDir;

@@ -792,31 +792,31 @@ OB_MPPSKULLROD = "%k poured %p hellstaff on %o.";
 OB_MPPPHOENIXROD = "%o was burned down by %k's phoenix staff.";
 OB_MPPMACE = "%o was squished by %k's giant mace sphere.";
 
-OB_MPFWEAPFIST = "%o was beaten to a pulp by %k's bare fists."; 
-OB_MPFWEAPAXE = "%o got the axe from %k."; 
-OB_MPFWEAPHAMMERM = "%o had %p head caved in by %k's hammer."; 
-OB_MPFWEAPHAMMERR = "%o's soul was forged anew by %k's hammer."; 
-OB_MPFWEAPQUIETUS = "%o was silenced by %k's mighty Quietus."; 
-OB_MPCWEAPMACE = "%o got a mace to the face from %k."; 
-OB_MPCWEAPSTAFFM = "%o was bitten by %k's serpent staff."; 
-OB_MPCWEAPSTAFFR = "%o choked on %k's serpent staff."; 
-OB_MPCWEAPFLAME = "%o was lit up by %k's flames."; 
-OB_MPCWEAPWRAITHVERGE = "%o was cleansed by %k's Wraithverge."; 
-OB_MPMWEAPWAND = "%o took one too many sapphire beams from %k."; 
-OB_MPMWEAPFROST = "%o was turned into a frosty fellow by %k."; 
-OB_MPMWEAPLIGHTNING = "%o recieved a shocking revelation from %k."; 
+OB_MPFWEAPFIST = "%o was beaten to a pulp by %k's bare fists.";
+OB_MPFWEAPAXE = "%o got the axe from %k.";
+OB_MPFWEAPHAMMERM = "%o had %p head caved in by %k's hammer.";
+OB_MPFWEAPHAMMERR = "%o's soul was forged anew by %k's hammer.";
+OB_MPFWEAPQUIETUS = "%o was silenced by %k's mighty Quietus.";
+OB_MPCWEAPMACE = "%o got a mace to the face from %k.";
+OB_MPCWEAPSTAFFM = "%o was bitten by %k's serpent staff.";
+OB_MPCWEAPSTAFFR = "%o choked on %k's serpent staff.";
+OB_MPCWEAPFLAME = "%o was lit up by %k's flames.";
+OB_MPCWEAPWRAITHVERGE = "%o was cleansed by %k's Wraithverge.";
+OB_MPMWEAPWAND = "%o took one too many sapphire beams from %k.";
+OB_MPMWEAPFROST = "%o was turned into a frosty fellow by %k.";
+OB_MPMWEAPLIGHTNING = "%o recieved a shocking revelation from %k.";
 OB_MPMWEAPBLOODSCOURGE = "%o was wiped off the face of the universe by %k's Bloodscourge.";
 
-OB_MPPUNCHDAGGER = "%o was unwittingly backstabbed by %k."; 
-OB_MPELECTRICBOLT = "%o got bolted to the wall by %k."; 
-OB_MPPOISONBOLT = "%o recieved a lethal dose of %k's wrath."; 
-OB_MPASSAULTGUN = "%o was drilled full of holes by %k's assault gun."; 
-OB_MPMINIMISSILELAUNCHER = "%o gulped down %k's missile."; 
-OB_MPSTRIFEGRENADE = "%o was inverted by %k's H-E grenade."; 
-OB_MPPHOSPHOROUSGRENADE = "%o took a flame bath in %k's phosphorous pyre."; 
-OB_MPFLAMETHROWER = "%o was barbecued by %k."; 
+OB_MPPUNCHDAGGER = "%o was unwittingly backstabbed by %k.";
+OB_MPELECTRICBOLT = "%o got bolted to the wall by %k.";
+OB_MPPOISONBOLT = "%o recieved a lethal dose of %k's wrath.";
+OB_MPASSAULTGUN = "%o was drilled full of holes by %k's assault gun.";
+OB_MPMINIMISSILELAUNCHER = "%o gulped down %k's missile.";
+OB_MPSTRIFEGRENADE = "%o was inverted by %k's H-E grenade.";
+OB_MPPHOSPHOROUSGRENADE = "%o took a flame bath in %k's phosphorous pyre.";
+OB_MPFLAMETHROWER = "%o was barbecued by %k.";
 OB_MPMAULER1 = "%o was zapped by %k.";
-OB_MPMAULER = "%o was viciously vaporized by %k."; 
+OB_MPMAULER = "%o was viciously vaporized by %k.";
 OB_MPSIGIL = "%o bowed down to the sheer power of %k's Sigil.";
 
 // Same as OB_MPTELEFRAG, but shown when a monster telefrags you
@@ -1626,13 +1626,13 @@ MNU_KNIGHT			= "KNIGHT";
 MNU_WARRIOR			= "WARRIOR";
 MNU_BERSERKER		= "BERSERKER";
 MNU_TITAN			= "TITAN";
-                                    
+
 MNU_ALTARBOY		= "ALTAR BOY";
 MNU_ACOLYTE			= "ACOLYTE";
 MNU_PRIEST			= "PRIEST";
 MNU_CARDINAL		= "CARDINAL";
 MNU_POPE			= "POPE";
-                                    
+
 MNU_APPRENTICE		= "APPRENTICE";
 MNU_ENCHANTER		= "ENCHANTER";
 MNU_SORCERER        = "SORCERER";
@@ -1968,13 +1968,13 @@ MAPCOLORMNU_TITLE 						= "CUSTOMIZE MAP COLORS";
 MAPCOLORMNU_DEFAULTMAPCOLORS			= "Restore default custom colors";
 MAPCOLORMNU_BACKCOLOR 					= "Background";
 MAPCOLORMNU_YOURCOLOR 					= "You";
-MAPCOLORMNU_WALLCOLOR 					= "1-sided walls";	
-MAPCOLORMNU_FDWALLCOLOR 				= "2-sided walls with different floors";		
+MAPCOLORMNU_WALLCOLOR 					= "1-sided walls";
+MAPCOLORMNU_FDWALLCOLOR 				= "2-sided walls with different floors";
 MAPCOLORMNU_CDWALLCOLOR 				= "2-sided walls with different ceilings";
-MAPCOLORMNU_EFWALLCOLOR 				= "2-sided walls with 3D floors";	
+MAPCOLORMNU_EFWALLCOLOR 				= "2-sided walls with 3D floors";
 MAPCOLORMNU_GRIDCOLOR 					= "Map grid";
 MAPCOLORMNU_XHAIRCOLOR 					= "Center point";
-MAPCOLORMNU_NOTSEENCOLOR 				= "Not-yet-seen walls";		
+MAPCOLORMNU_NOTSEENCOLOR 				= "Not-yet-seen walls";
 MAPCOLORMNU_LOCKEDCOLOR 				= "Locked doors";
 MAPCOLORMNU_INTRALEVELCOLOR				= "Teleporter to the same map";
 MAPCOLORMNU_INTERLEVELCOLOR 			= "Teleporter to a different map";
@@ -1982,7 +1982,7 @@ MAPCOLORMNU_SECRETSECTORCOLOR 			= "Secret sector";
 MAPCOLORMNU_UNEXPLOREDSECRETCOLOR 		= "Unexplored secret";
 MAPCOLORMNU_SPECIALWALLCOLOR			= "Special trigger lines";
 MAPCOLORMNU_CHEATMODE					= "Cheat Mode";
-MAPCOLORMNU_TSWALLCOLOR					= "Invisible 2-sided walls";	
+MAPCOLORMNU_TSWALLCOLOR					= "Invisible 2-sided walls";
 MAPCOLORMNU_SECRETWALLCOLOR				= "Secret walls";
 MAPCOLORMNU_THINGCOLOR					= "Actors";
 MAPCOLORMNU_MONSTERCOLOR				= "Monsters";
@@ -2024,7 +2024,7 @@ SCRBRDMNU_TEAMDEATHMATCH	= "Team Deathmatch Options";
 
 // Gameplay Menu
 GMPLYMNU_TITLE				= "GAMEPLAY OPTIONS";
-GMPLYMNU_TEAMPLAY			= "Teamplay";		
+GMPLYMNU_TEAMPLAY			= "Teamplay";
 GMPLYMNU_TEAMDAMAGE			= "Team damage scalar";
 GMPLYMNU_SMARTAUTOAIM		= "Smart Autoaim";
 GMPLYMNU_FALLINGDAMAGE		= "Falling damage";
@@ -2143,6 +2143,7 @@ SNDMNU_OPENAL			= "OpenAL options";
 SNDMNU_RESTART			= "Restart sound";
 SNDMNU_ADVANCED			= "Advanced options";
 SNDMNU_MODREPLAYER		= "Module replayer options";
+SNDMNU_MIDIPLAYER		= "Midi player options";
 
 // OpenAL Options
 OPENALMNU_TITLE				= "OPENAL OPTIONS";
@@ -2167,14 +2168,33 @@ ADVSNDMNU_FLUIDSYNTH		= "FluidSynth";
 ADVSNDMNU_FLUIDPATCHSET		= "Patch set";
 ADVSNDMNU_FLUIDGAIN			= "Gain";
 ADVSNDMNU_REVERB			= "Reverb";
+ADVSNDMNU_REVERB_LEVEL		= "Reverb Level";
 ADVSNDMNU_CHORUS			= "Chorus";
 ADVSNDMNU_TIMIDITY			= "Timidity++";
+ADVSNDMNU_ADLMIDI			= "ADLMidi";
+ADVSNDMNU_OPNMIDI			= "OPNMidi";
 ADVSNDMNU_TIMIDITYEXE		= "Path for executable";
 ADVSNDMNU_TIMIDITYCONFIG	= "Timidity config file";
 ADVSNDMNU_TIMIDITYVOLUME	= "Relative volume";
 ADVSNDMNU_WILDMIDI			= "WildMidi";
 ADVSNDMNU_WILDMIDICONFIG	= "WildMidi config file";
 ADVSNDMNU_SELCONFIG			= "Select configuration";
+ADVSNDMNU_GLOBAL			= "Global";
+ADVSNDMNU_FREEVERB			= "Freeverb";
+ADVSNDMNU_GLOBAL_FREEVERB	= "Global Freeverb";
+ADVSNDMNU_ADVRESAMPLING		= "Advanced Resampling";
+ADVSNDMNU_OPLBANK			= "OPL Bank";
+ADVSNDMNU_ADLNUMCHIPS		= "Number of emulated OPL chips";
+ADVSNDMNU_VLMODEL			= "Volume model";
+ADVSNDMNU_OPNNUMCHIPS		= "Number of emulated OPN chips";
+
+// ADLMIDI's volume models
+ADLVLMODEL_AUTO				= "Auto (Use setup of bank)";
+ADLVLMODEL_GENERIC			= "Generic";
+ADLVLMODEL_NATIVE			= "OPL Native";
+ADLVLMODEL_DMX				= "DMX";
+ADLVLMODEL_APOGEE			= "Apogee";
+ADLVLMODEL_WIN9X			= "Win9X-like";
 
 // Module Replayer Options
 MODMNU_TITLE			= "MODULE REPLAYER OPTIONS";
@@ -2598,8 +2618,8 @@ OB_MPLAZ_BOOM = "%o fell prey to %k's LAZ device.";
 OB_MPLAZ_SPLASH = "%o was lazzed by %k.";
 
 // Music names for Doom. These are needed in the string table only so that they can
-// be replaced by Dehacked. 
-// Note that these names are not prefixed with 'd_' because that's how Dehacked patches 
+// be replaced by Dehacked.
+// Note that these names are not prefixed with 'd_' because that's how Dehacked patches
 // expect them.
 
 MUSIC_E1M1 = "e1m1";

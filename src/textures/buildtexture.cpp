@@ -104,7 +104,7 @@ int FBuildTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, F
 {
 	PalEntry *Remap = translationtables[TRANSLATION_Standard][Translation]->Palette;
 	bmp->CopyPixelData(x, y, RawPixels, Width, Height, Height, 1, rotate, Remap, inf);
-	return 0;
+	return -1;
 
 }
 

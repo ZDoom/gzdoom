@@ -835,8 +835,8 @@ void DBaseStatusBar::RefreshBackground () const
 	{
 		if(y < SCREENHEIGHT)
 		{
-			V_DrawBorder (x+1, y, SCREENWIDTH, y+1);
-			V_DrawBorder (x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
+			screen->DrawBorder (x+1, y, SCREENWIDTH, y+1);
+			screen->DrawBorder (x+1, SCREENHEIGHT-1, SCREENWIDTH, SCREENHEIGHT);
 		}
 	}
 	else
@@ -855,8 +855,8 @@ void DBaseStatusBar::RefreshBackground () const
 			x2 = SCREENWIDTH;
 		}
 
-		V_DrawBorder (0, y, x+1, SCREENHEIGHT);
-		V_DrawBorder (x2-1, y, SCREENWIDTH, SCREENHEIGHT);
+		screen->DrawBorder (0, y, x+1, SCREENHEIGHT);
+		screen->DrawBorder (x2-1, y, SCREENWIDTH, SCREENHEIGHT);
 
 		if (setblocks >= 10)
 		{

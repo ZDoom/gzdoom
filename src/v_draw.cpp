@@ -32,8 +32,6 @@
 **
 */
 
-// #define NO_SWRENDER 	// set this if you want to exclude the software renderer. Without the software renderer software canvas drawing does nothing.
-
 #include <stdio.h>
 #include <stdarg.h>
 
@@ -43,9 +41,6 @@
 #include "r_defs.h"
 #include "r_utility.h"
 #include "r_renderer.h"
-#ifndef NO_SWRENDER
-#include "swrenderer/r_swcanvas.h"
-#endif
 #include "r_data/r_translate.h"
 #include "doomstat.h"
 #include "v_palette.h"
@@ -63,6 +58,19 @@
 #include "g_levellocals.h"
 #include "textures.h"
 #include "vm.h"
+
+CUSTOM_CVAR(Float, dimamount, -1.f, CVAR_ARCHIVE)
+{
+	if (self < 0.f && self != -1.f)
+	{
+		self = -1.f;
+	}
+	else if (self > 1.f)
+	{
+		self = 1.f;
+	}
+}
+CVAR(Color, dimcolor, 0xffd700, CVAR_ARCHIVE)
 
 CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
@@ -109,6 +117,12 @@ int CleanWidth, CleanHeight;
 int CleanXfac_1, CleanYfac_1, CleanWidth_1, CleanHeight_1;
 
 
+//==========================================================================
+//
+// ZScript wrappers for inlines
+//
+//==========================================================================
+
 DEFINE_ACTION_FUNCTION(_Screen, GetWidth)
 {
 	PARAM_PROLOGUE;
@@ -130,7 +144,13 @@ DEFINE_ACTION_FUNCTION(_Screen, PaletteColor)
 	ACTION_RETURN_INT(index);
 }
 
-void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
+//==========================================================================
+//
+// Internal texture drawing function
+//
+//==========================================================================
+
+void DFrameBuffer::DrawTexture (FTexture *img, double x, double y, int tags_first, ...)
 {
 	Va_List tags;
 	va_start(tags.list, tags_first);
@@ -145,9 +165,15 @@ void DCanvas::DrawTexture (FTexture *img, double x, double y, int tags_first, ..
 	DrawTextureParms(img, parms);
 }
 
+//==========================================================================
+//
+// ZScript texture drawing function
+//
+//==========================================================================
+
 int ListGetInt(VMVa_List &tags);
 
-void DCanvas::DrawTexture(FTexture *img, double x, double y, VMVa_List &args)
+void DFrameBuffer::DrawTexture(FTexture *img, double x, double y, VMVa_List &args)
 {
 	DrawParms parms;
 	uint32_t tag = ListGetInt(args);
@@ -172,19 +198,23 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
 	return 0;
 }
 
-void DCanvas::DrawTextureParms(FTexture *img, DrawParms &parms)
-{
-#ifndef NO_SWRENDER
-	SWCanvas::DrawTexture(this, img, parms);
-#endif
+//==========================================================================
+//
+// common drawing function
+//
+//==========================================================================
 
-	if (ticdup != 0 && menuactive == MENU_Off)
-	{
-		NetUpdate();
-	}
+void DFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
+{
 }
 
-void DCanvas::SetClipRect(int x, int y, int w, int h)
+//==========================================================================
+//
+// Clipping rect
+//
+//==========================================================================
+
+void DFrameBuffer::SetClipRect(int x, int y, int w, int h)
 {
 	clipleft = clamp(x, 0, GetWidth());
 	clipwidth = clamp(w, -1, GetWidth() - x);
@@ -210,7 +240,7 @@ DEFINE_ACTION_FUNCTION(_Screen, ClearClipRect)
 	return 0;
 }
 
-void DCanvas::GetClipRect(int *x, int *y, int *w, int *h)
+void DFrameBuffer::GetClipRect(int *x, int *y, int *w, int *h)
 {
 	if (x) *x = clipleft;
 	if (y) *y = cliptop;
@@ -240,7 +270,13 @@ DEFINE_ACTION_FUNCTION(_Screen, GetViewWindow)
 	return MIN(numret, 4);
 }
 
-bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double yy) const
+//==========================================================================
+//
+// Draw parameter parsing
+//
+//==========================================================================
+
+bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double yy) const
 {
 	if (img != NULL)
 	{
@@ -322,6 +358,12 @@ bool DCanvas::SetTextureParms(DrawParms *parms, FTexture *img, double xx, double
 	return false;
 }
 
+//==========================================================================
+//
+// template helpers
+//
+//==========================================================================
+
 static void ListEnd(Va_List &tags)
 {
 	va_end(tags.list);
@@ -387,8 +429,14 @@ static inline FColormapStyle * ListGetColormapStyle(VMVa_List &tags)
 	return nullptr;
 }
 
+//==========================================================================
+//
+// Main taglist parsing
+//
+//==========================================================================
+
 template<class T>
-bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const
+bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const
 {
 	INTBOOL boolval;
 	int intval;
@@ -836,10 +884,16 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 }
 // explicitly instantiate both versions for v_text.cpp.
 
-template bool DCanvas::ParseDrawTextureTags<Va_List>(FTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, bool fortext) const;
-template bool DCanvas::ParseDrawTextureTags<VMVa_List>(FTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, bool fortext) const;
+template bool DFrameBuffer::ParseDrawTextureTags<Va_List>(FTexture *img, double x, double y, uint32_t tag, Va_List& tags, DrawParms *parms, bool fortext) const;
+template bool DFrameBuffer::ParseDrawTextureTags<VMVa_List>(FTexture *img, double x, double y, uint32_t tag, VMVa_List& tags, DrawParms *parms, bool fortext) const;
 
-void DCanvas::VirtualToRealCoords(double &x, double &y, double &w, double &h,
+//==========================================================================
+//
+// Coordinate conversion
+//
+//==========================================================================
+
+void DFrameBuffer::VirtualToRealCoords(double &x, double &y, double &w, double &h,
 	double vwidth, double vheight, bool vbottom, bool handleaspect) const
 {
 	float myratio = handleaspect ? ActiveRatio (Width, Height) : (4.0f / 3.0f);
@@ -899,7 +953,7 @@ DEFINE_ACTION_FUNCTION(_Screen, VirtualToRealCoords)
 	return MIN(numret, 2);
 }
 
-void DCanvas::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
+void DFrameBuffer::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 	int vwidth, int vheight, bool vbottom, bool handleaspect) const
 {
 	double dx, dy, dw, dh;
@@ -915,7 +969,13 @@ void DCanvas::VirtualToRealCoordsInt(int &x, int &y, int &w, int &h,
 	h = int(dy + dh + 0.5) - y;
 }
 
-void DCanvas::FillBorder (FTexture *img)
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void DFrameBuffer::FillBorder (FTexture *img)
 {
 	float myratio = ActiveRatio (Width, Height);
 
@@ -961,11 +1021,14 @@ void DCanvas::FillBorder (FTexture *img)
 	}
 }
 
-void DCanvas::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor)
+//==========================================================================
+//
+// Draw a line
+//
+//==========================================================================
+
+void DFrameBuffer::DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor)
 {
-#ifndef NO_SWRENDER
-	SWCanvas::DrawLine(this, x0, y0, x1, y1, palColor, realcolor);
-#endif
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
@@ -981,11 +1044,14 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawLine)
 	return 0;
 }
 
-void DCanvas::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
+//==========================================================================
+//
+// Draw a single pixel
+//
+//==========================================================================
+
+void DFrameBuffer::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
 {
-#ifndef NO_SWRENDER
-	SWCanvas::DrawPixel(this, x, y, palColor, realcolor);
-#endif
 }
 
 //==========================================================================
@@ -996,21 +1062,11 @@ void DCanvas::DrawPixel(int x, int y, int palColor, uint32_t realcolor)
 //
 //==========================================================================
 
-void DCanvas::DoClear (int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void DFrameBuffer::DoClear (int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
-#ifndef NO_SWRENDER
-	if (palcolor < 0 && APART(color) != 255)
-	{
-		Dim(color, APART(color) / 255.f, left, top, right - left, bottom - top);
-	}
-	else
-	{
-		SWCanvas::Clear(this, left, top, right, bottom, palcolor, color);
-	}
-#endif
 }
 
-void DCanvas::Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void DFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
@@ -1059,14 +1115,11 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 //
 //==========================================================================
 
-void DCanvas::DoDim(PalEntry color, float damount, int x1, int y1, int w, int h)
+void DFrameBuffer::DoDim(PalEntry color, float damount, int x1, int y1, int w, int h)
 {
-#ifndef NO_SWRENDER
-	SWCanvas::Dim(this, color, damount, x1, y1, w, h);
-#endif
 }
 
-void DCanvas::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
+void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
 {
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
@@ -1118,112 +1171,84 @@ DEFINE_ACTION_FUNCTION(_Screen, Dim)
 //
 //==========================================================================
 
-void DCanvas::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
+void DFrameBuffer::FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
 	double originx, double originy, double scalex, double scaley, DAngle rotation,
 	const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
 {
-#ifndef NO_SWRENDER
-	SWCanvas::FillSimplePoly(this, tex, points, npoints, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel, bottomclip);
-#endif
 }
 
-
-/********************************/
-/*								*/
-/* Other miscellaneous routines */
-/*								*/
-/********************************/
-
-
+//==========================================================================
 //
-// V_DrawBlock
-// Draw a linear block of pixels into the view buffer.
+// DCanvas :: FlatFill
 //
-void DCanvas::DrawBlock (int x, int y, int _width, int _height, const uint8_t *src) const
+// Fill an area with a texture. If local_origin is false, then the origin
+// used for the wrapping is (0,0). Otherwise, (left,right) is used.
+//
+//==========================================================================
+
+void DFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
 {
-	if (IsBgra())
-		return;
+	int w = src->GetWidth();
+	int h = src->GetHeight();
 
-	int srcpitch = _width;
-	int destpitch;
-	uint8_t *dest;
-
-	if (ClipBox (x, y, _width, _height, src, srcpitch))
+	// Repeatedly draw the texture, left-to-right, top-to-bottom.
+	for (int y = local_origin ? top : (top / h * h); y < bottom; y += h)
 	{
-		return;		// Nothing to draw
+		for (int x = local_origin ? left : (left / w * w); x < right; x += w)
+		{
+			DrawTexture(src, x, y,
+				DTA_ClipLeft, left,
+				DTA_ClipRight, right,
+				DTA_ClipTop, top,
+				DTA_ClipBottom, bottom,
+				DTA_TopOffset, 0,
+				DTA_LeftOffset, 0,
+				TAG_DONE);
+		}
 	}
-
-	destpitch = Pitch;
-	dest = Buffer + y*Pitch + x;
-
-	do
-	{
-		memcpy (dest, src, _width);
-		src += srcpitch;
-		dest += destpitch;
-	} while (--_height);
 }
 
+//==========================================================================
 //
-// V_GetBlock
-// Gets a linear block of pixels from the view buffer.
+// DCanvas :: Dim
 //
-void DCanvas::GetBlock (int x, int y, int _width, int _height, uint8_t *dest) const
+// Applies a colored overlay to the entire screen, with the opacity
+// determined by the dimamount cvar.
+//
+//==========================================================================
+
+void DFrameBuffer::Dim(PalEntry color)
 {
-	if (IsBgra())
-		return;
+	PalEntry dimmer;
+	float amount;
 
-	const uint8_t *src;
-
-#ifdef RANGECHECK 
-	if (x<0
-		||x+_width > Width
-		|| y<0
-		|| y+_height>Height)
+	if (dimamount >= 0)
 	{
-		I_Error ("Bad V_GetBlock");
+		dimmer = PalEntry(dimcolor);
+		amount = dimamount;
 	}
-#endif
-
-	src = Buffer + y*Pitch + x;
-
-	while (_height--)
+	else
 	{
-		memcpy (dest, src, _width);
-		src += Pitch;
-		dest += _width;
+		dimmer = gameinfo.dimcolor;
+		amount = gameinfo.dimamount;
 	}
+
+	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
+	{ // On the Hexen title screen, the default dimming is not
+	  // enough to make the menus readable.
+		amount = MIN<float>(1.f, amount*2.f);
+	}
+	// Add the cvar's dimming on top of the color passed to the function
+	if (color.a != 0)
+	{
+		float dim[4] = { color.r / 255.f, color.g / 255.f, color.b / 255.f, color.a / 255.f };
+		V_AddBlend(dimmer.r / 255.f, dimmer.g / 255.f, dimmer.b / 255.f, amount, dim);
+		dimmer = PalEntry(uint8_t(dim[0] * 255), uint8_t(dim[1] * 255), uint8_t(dim[2] * 255));
+		amount = dim[3];
+	}
+	Dim(dimmer, amount, 0, 0, Width, Height);
 }
 
-// Returns true if the box was completely clipped. False otherwise.
-bool DCanvas::ClipBox (int &x, int &y, int &w, int &h, const uint8_t *&src, const int srcpitch) const
-{
-	if (x >= Width || y >= Height || x+w <= 0 || y+h <= 0)
-	{ // Completely clipped off screen
-		return true;
-	}
-	if (x < 0)				// clip left edge
-	{
-		src -= x;
-		w += x;
-		x = 0;
-	}
-	if (x+w > Width)		// clip right edge
-	{
-		w = Width - x;
-	}
-	if (y < 0)				// clip top edge
-	{
-		src -= y*srcpitch;
-		h += y;
-		y = 0;
-	}
-	if (y+h > Height)		// clip bottom edge
-	{
-		h = Height - y;
-	}
-	return false;
-}
 
 //==========================================================================
 //
@@ -1251,7 +1276,7 @@ void V_SetBorderNeedRefresh()
 //
 //==========================================================================
 
-void V_DrawFrame (int left, int top, int width, int height)
+void DFrameBuffer::DrawFrame (int left, int top, int width, int height)
 {
 	FTexture *p;
 	const gameborder_t *border = &gameinfo.Border;
@@ -1264,21 +1289,21 @@ void V_DrawFrame (int left, int top, int width, int height)
 
 	// Draw top and bottom sides.
 	p = TexMan[border->t];
-	screen->FlatFill(left, top - p->GetHeight(), right, top, p, true);
+	FlatFill(left, top - p->GetHeight(), right, top, p, true);
 	p = TexMan[border->b];
-	screen->FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
+	FlatFill(left, bottom, right, bottom + p->GetHeight(), p, true);
 
 	// Draw left and right sides.
 	p = TexMan[border->l];
-	screen->FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
+	FlatFill(left - p->GetWidth(), top, left, bottom, p, true);
 	p = TexMan[border->r];
-	screen->FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
+	FlatFill(right, top, right + p->GetWidth(), bottom, p, true);
 
 	// Draw beveled corners.
-	screen->DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
-	screen->DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
-	screen->DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
-	screen->DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
+	DrawTexture (TexMan[border->tl], left-offset, top-offset, TAG_DONE);
+	DrawTexture (TexMan[border->tr], left+width, top-offset, TAG_DONE);
+	DrawTexture (TexMan[border->bl], left-offset, top+height, TAG_DONE);
+	DrawTexture (TexMan[border->br], left+width, top+height, TAG_DONE);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
@@ -1288,17 +1313,17 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawFrame)
 	PARAM_INT(y);
 	PARAM_INT(w);
 	PARAM_INT(h);
-	V_DrawFrame(x, y, w, h);
+	screen->DrawFrame(x, y, w, h);
 	return 0;
 }
 
 //==========================================================================
 //
-// V_DrawBorder
+// screen->DrawBorder
 //
 //==========================================================================
 
-void V_DrawBorder (int x1, int y1, int x2, int y2)
+void DFrameBuffer::DrawBorder (int x1, int y1, int x2, int y2)
 {
 	FTextureID picnum;
 
@@ -1313,11 +1338,11 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
 
 	if (picnum.isValid())
 	{
-		screen->FlatFill (x1, y1, x2, y2, TexMan(picnum));
+		FlatFill (x1, y1, x2, y2, TexMan(picnum));
 	}
 	else
 	{
-		screen->Clear (x1, y1, x2, y2, 0, 0);
+		Clear (x1, y1, x2, y2, 0, 0);
 	}
 }
 
@@ -1332,19 +1357,19 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
 int BorderNeedRefresh;
 
 
-static void V_DrawViewBorder (void)
+void DFrameBuffer::DrawViewBorder (void)
 {
-	if (viewwidth == SCREENWIDTH)
+	if (viewwidth == Width)
 	{
 		return;
 	}
 
-	V_DrawBorder (0, 0, SCREENWIDTH, viewwindowy);
-	V_DrawBorder (0, viewwindowy, viewwindowx, viewheight + viewwindowy);
-	V_DrawBorder (viewwindowx + viewwidth, viewwindowy, SCREENWIDTH, viewheight + viewwindowy);
-	V_DrawBorder (0, viewwindowy + viewheight, SCREENWIDTH, StatusBar->GetTopOfStatusbar());
+	DrawBorder (0, 0, Width, viewwindowy);
+	DrawBorder (0, viewwindowy, viewwindowx, viewheight + viewwindowy);
+	DrawBorder (viewwindowx + viewwidth, viewwindowy, Width, viewheight + viewwindowy);
+	DrawBorder (0, viewwindowy + viewheight, Width, StatusBar->GetTopOfStatusbar());
 
-	V_DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
+	DrawFrame (viewwindowx, viewwindowy, viewwidth, viewheight);
 }
 
 //==========================================================================
@@ -1355,41 +1380,38 @@ static void V_DrawViewBorder (void)
 //
 //==========================================================================
 
-static void V_DrawTopBorder ()
+void DFrameBuffer::DrawTopBorder ()
 {
 	FTexture *p;
 	int offset;
 
-	if (viewwidth == SCREENWIDTH)
+	if (viewwidth == Width)
 		return;
 
 	offset = gameinfo.Border.offset;
 
 	if (viewwindowy < 34)
 	{
-		V_DrawBorder (0, 0, viewwindowx, 34);
-		V_DrawBorder (viewwindowx, 0, viewwindowx + viewwidth, viewwindowy);
-		V_DrawBorder (viewwindowx + viewwidth, 0, SCREENWIDTH, 34);
+		DrawBorder (0, 0, viewwindowx, 34);
+		DrawBorder (viewwindowx, 0, viewwindowx + viewwidth, viewwindowy);
+		DrawBorder (viewwindowx + viewwidth, 0, Width, 34);
 		p = TexMan(gameinfo.Border.t);
-		screen->FlatFill(viewwindowx, viewwindowy - p->GetHeight(),
-						 viewwindowx + viewwidth, viewwindowy, p, true);
+		FlatFill(viewwindowx, viewwindowy - p->GetHeight(), viewwindowx + viewwidth, viewwindowy, p, true);
 
 		p = TexMan(gameinfo.Border.l);
-		screen->FlatFill(viewwindowx - p->GetWidth(), viewwindowy,
-						 viewwindowx, 35, p, true);
+		FlatFill(viewwindowx - p->GetWidth(), viewwindowy, viewwindowx, 35, p, true);
 		p = TexMan(gameinfo.Border.r);
-		screen->FlatFill(viewwindowx + viewwidth, viewwindowy,
-						 viewwindowx + viewwidth + p->GetWidth(), 35, p, true);
+		FlatFill(viewwindowx + viewwidth, viewwindowy, viewwindowx + viewwidth + p->GetWidth(), 35, p, true);
 
 		p = TexMan(gameinfo.Border.tl);
-		screen->DrawTexture (p, viewwindowx - offset, viewwindowy - offset, TAG_DONE);
+		DrawTexture (p, viewwindowx - offset, viewwindowy - offset, TAG_DONE);
 
 		p = TexMan(gameinfo.Border.tr);
-		screen->DrawTexture (p, viewwindowx + viewwidth, viewwindowy - offset, TAG_DONE);
+		DrawTexture (p, viewwindowx + viewwidth, viewwindowy - offset, TAG_DONE);
 	}
 	else
 	{
-		V_DrawBorder (0, 0, SCREENWIDTH, 34);
+		DrawBorder (0, 0, Width, 34);
 	}
 }
 
@@ -1401,7 +1423,7 @@ static void V_DrawTopBorder ()
 //
 //==========================================================================
 
-void V_RefreshViewBorder ()
+void DFrameBuffer::RefreshViewBorder ()
 {
 	if (setblocks < 10)
 	{
@@ -1412,12 +1434,12 @@ void V_RefreshViewBorder ()
 			{
 				BorderTopRefresh--;
 			}
-			V_DrawViewBorder();
+			DrawViewBorder();
 		}
 		else if (BorderTopRefresh)
 		{
 			BorderTopRefresh--;
-			V_DrawTopBorder();
+			DrawTopBorder();
 		}
 	}
 }

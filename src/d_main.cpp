@@ -833,7 +833,7 @@ void D_Display ()
 			}
 			if (!automapactive || viewactive)
 			{
-				V_RefreshViewBorder ();
+				screen->RefreshViewBorder ();
 			}
 
 			// for timing the statusbar code.

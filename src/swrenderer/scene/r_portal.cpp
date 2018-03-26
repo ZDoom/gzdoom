@@ -69,7 +69,9 @@
 #include "swrenderer/r_renderthread.h"
 
 CVAR(Int, r_portal_recursions, 4, CVAR_ARCHIVE)
-CVAR(Bool, r_highlight_portals, false, CVAR_ARCHIVE)
+#if 0
+CVAR(Bool, r_highlight_portals, false, 0)
+#endif
 CVAR(Bool, r_skyboxes, true, 0)
 
 // Avoid infinite recursion with stacked sectors by limiting them.
@@ -321,8 +323,10 @@ namespace swrenderer
 				}
 			}
 
+#if 0
 			if (r_highlight_portals)
 				RenderLinePortalHighlight(pds);
+#endif
 
 			return;
 		}
@@ -462,9 +466,11 @@ namespace swrenderer
 		Thread->Clip3D->LeaveSkybox(); // pop 3D floor height map
 		CurrentPortalUniq = prevuniq2;
 
+#if 0
 		// draw a red line around a portal if it's being highlighted
 		if (r_highlight_portals)
 			RenderLinePortalHighlight(pds);
+#endif
 
 		CurrentPortal = prevpds;
 		MirrorFlags = prevmf;
@@ -474,6 +480,7 @@ namespace swrenderer
 		viewpoint.Path[1] = savedpath[1];
 	}
 
+#if 0
 	void RenderPortal::RenderLinePortalHighlight(PortalDrawseg* pds)
 	{
 		// [ZZ] NO OVERFLOW CHECKS HERE
@@ -515,6 +522,7 @@ namespace swrenderer
 			else *(pixels + Ybottom * viewport->RenderTarget->GetPitch() + x) = color;
 		}
 	}
+#endif
 	
 	void RenderPortal::CopyStackedViewParameters()
 	{

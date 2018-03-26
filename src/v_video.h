@@ -219,36 +219,6 @@ public:
 	virtual void Unlock () = 0;
 	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
 
-	// Draw a linear block of pixels into the canvas
-	virtual void DrawBlock (int x, int y, int width, int height, const uint8_t *src) const;
-
-	// Reads a linear block of pixels into the view buffer.
-	virtual void GetBlock (int x, int y, int width, int height, uint8_t *dest) const;
-
-	// Dim the entire canvas for the menus
-	virtual void Dim (PalEntry color = 0);
-
-	// Dim part of the canvas
-	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h) final;
-	virtual void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h);
-
-	// Fill an area with a texture
-	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
-
-	// Fill a simple polygon with a texture
-	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
-		double originx, double originy, double scalex, double scaley, DAngle rotation,
-		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
-
-	// Set an area to a specified color
-	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color) final;
-	virtual void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
-
-	// Draws a line
-	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
-
-	// Draws a single pixel
-	virtual void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
 
 	// Calculate gamma table
 	void CalcGamma (float gamma, uint8_t gammalookup[256]);
@@ -262,31 +232,6 @@ public:
 	// Releases the screenshot buffer.
 	virtual void ReleaseScreenshotBuffer();
 
-	// Text drawing functions -----------------------------------------------
-
-	// 2D Texture drawing
-	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
-	void SetClipRect(int x, int y, int w, int h);
-	void GetClipRect(int *x, int *y, int *w, int *h);
-
-	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
-	void DrawTexture (FTexture *img, double x, double y, int tags, ...);
-	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
-	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
-	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
-
-	// Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
-	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
-
-#ifdef DrawText
-#undef DrawText	// See WinUser.h for the definition of DrawText as a macro
-#endif
-	// 2D Text drawing
-	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...);
-	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args);
-	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
-	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
-
 protected:
 	uint8_t *Buffer;
 	int Width;
@@ -296,14 +241,6 @@ protected:
 	bool Bgra;
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
-	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
-
-	bool ClipBox (int &left, int &top, int &width, int &height, const uint8_t *&src, const int srcpitch) const;
-	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
-	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
-
-	template<class T>
-	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 
 	DCanvas() {}
 
@@ -362,6 +299,15 @@ public:
 class DFrameBuffer : public DSimpleCanvas
 {
 	typedef DSimpleCanvas Super;
+protected:
+	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
+	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
+
+	template<class T>
+	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
+	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
+
+
 public:
 	DFrameBuffer (int width, int height, bool bgra);
 
@@ -449,6 +395,63 @@ public:
 	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y) {}
 
 	uint64_t GetLastFPS() const { return LastCount; }
+
+	// 2D Texture drawing
+	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
+	void SetClipRect(int x, int y, int w, int h);
+	void GetClipRect(int *x, int *y, int *w, int *h);
+
+	// Dim the entire canvas for the menus
+	virtual void Dim(PalEntry color = 0);
+
+	// Dim part of the canvas
+	virtual void Dim(PalEntry color, float amount, int x1, int y1, int w, int h) final;
+	virtual void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h);
+
+	// Fill an area with a texture
+	virtual void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
+
+	// Fill a simple polygon with a texture
+	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
+		double originx, double originy, double scalex, double scaley, DAngle rotation,
+		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
+
+	// Set an area to a specified color
+	virtual void Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color) final;
+	virtual void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
+
+	// Draws a line
+	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
+
+	// Draws a single pixel
+	virtual void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
+
+	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
+	void DrawTexture(FTexture *img, double x, double y, int tags, ...);
+	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
+	void FillBorder(FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
+	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom = false, bool handleaspect = true) const;
+
+	// Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
+	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom = false, bool handleaspect = true) const;
+
+	// Text drawing functions -----------------------------------------------
+
+#ifdef DrawText
+#undef DrawText	// See WinUser.h for the definition of DrawText as a macro
+#endif
+	// 2D Text drawing
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...);
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
+
+	void DrawFrame(int left, int top, int width, int height);
+	void DrawBorder(int x1, int y1, int x2, int y2);
+	void DrawViewBorder();
+	void DrawTopBorder();
+	void RefreshViewBorder();
+
 
 #ifdef _WIN32
 	virtual void PaletteChanged () = 0;
@@ -552,12 +555,8 @@ FString V_GetColorStringByName (const char *name, FScriptPosition *sc = nullptr)
 // Tries to get color by name, then by string
 int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc = nullptr);
 int V_GetColor(const uint32_t *palette, FScanner &sc);
-void V_DrawFrame (int left, int top, int width, int height);
 
 // If the view size is not full screen, draws a border around it.
-void V_DrawBorder (int x1, int y1, int x2, int y2);
-void V_RefreshViewBorder ();
-
 void V_SetBorderNeedRefresh();
 
 int CheckRatio (int width, int height, int *trueratio=NULL);

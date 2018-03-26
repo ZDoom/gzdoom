@@ -69,6 +69,7 @@
 #include "doomstat.h"
 
 #include "i_net.h"
+#include "i_time.h"
 
 // As per http://support.microsoft.com/kb/q192599/ the standard
 // size for network buffers is 8k.
@@ -101,127 +102,101 @@ const char *neterror (void);
 #define neterror() strerror(errno)
 #endif
 
-enum
-{
-	PRE_CONNECT,			// Sent from guest to host for initial connection
-	PRE_KEEPALIVE,
-	PRE_DISCONNECT,			// Sent from guest that aborts the game
-	PRE_ALLHERE,			// Sent from host to guest when everybody has connected
-	PRE_CONACK,				// Sent from host to guest to acknowledge PRE_CONNECT receipt
-	PRE_ALLFULL,			// Sent from host to an unwanted guest
-	PRE_ALLHEREACK,			// Sent from guest to host to acknowledge PRE_ALLHEREACK receipt
-	PRE_GO					// Sent from host to guest to continue game startup
-};
-
-// Set PreGamePacket.fake to this so that the game rejects any pregame packets
-// after it starts. This translates to NCMD_SETUP|NCMD_MULTI.
-#define PRE_FAKE 0x30
-
-struct PreGamePacket
-{
-	uint8_t Fake;
-	uint8_t Message;
-	uint8_t NumNodes;
-	union
-	{
-		uint8_t ConsoleNum;
-		uint8_t NumPresent;
-	};
-	struct
-	{
-		uint32_t address;
-		uint16_t port;
-		uint8_t	player;
-		uint8_t	pad;
-	} machines[MAXNETNODES];
-};
-
 class DoomComImpl : public doomcom_t
 {
 public:
-	DoomComImpl();
-	~DoomComImpl() { CloseNetwork(); }
+	DoomComImpl(int port);
+	~DoomComImpl();
 
 	void PacketSend(const NetPacket &packet) override;
 	void PacketGet(NetPacket &packet) override;
 
+	int Connect(const char *name) override;
+	void Close(int node) override;
+
 private:
-	u_short DOOMPORT = (IPPORT_USERRESERVED + 29);
-	SOCKET mysocket = INVALID_SOCKET;
-	sockaddr_in sendaddress[MAXNETNODES];
-	uint8_t sendplayer[MAXNETNODES];
-
-	uint8_t TransmitBuffer[TRANSMIT_SIZE];
-
-	SOCKET UDPsocket();
-	void BindToLocalPort(SOCKET s, u_short port);
-	int FindNode(const sockaddr_in *address);
-	sockaddr_in *PreGet(void *buffer, int bufferlen, bool noabort);
-	void PreSend(const void *buffer, int bufferlen, const sockaddr_in *to);
 	void BuildAddress(sockaddr_in *address, const char *name);
-	void CloseNetwork();
-	void StartNetwork(bool autoPort);
-	void SendAbort();
-	void SendConAck(int num_connected, int num_needed);
-	bool Host_CheckForConnects();
-	bool Host_SendAllHere(int *gotack);
-	void HostGame(int i);
-	bool Guest_ContactHost();
-	bool Guest_WaitForOthers();
-	void JoinGame(int i);
+	int FindNode(const sockaddr_in *address);
 
-	static int PrivateNetOf(in_addr in);
-	bool NodesOnSameNetwork();
+	SOCKET mSocket = INVALID_SOCKET;
+
+	sockaddr_in mNodeEndpoints[MAXNETNODES];
+	uint64_t mNodeLastUpdate[MAXNETNODES];
+
+	uint8_t mTransmitBuffer[TRANSMIT_SIZE];
 };
 
-std::unique_ptr<doomcom_t> I_InitNetwork()
+std::unique_ptr<doomcom_t> I_InitNetwork(int port)
 {
-	return std::unique_ptr<doomcom_t>(new DoomComImpl());
+	return std::unique_ptr<doomcom_t>(new DoomComImpl(port));
 }
 
-SOCKET DoomComImpl::UDPsocket()
+DoomComImpl::DoomComImpl(int port)
 {
-	SOCKET s;
-		
-	// allocate a socket
-	s = socket (PF_INET, SOCK_DGRAM, IPPROTO_UDP);
-	if (s == INVALID_SOCKET)
-		I_FatalError ("can't create socket: %s", neterror ());
+	memset(mNodeEndpoints, 0, sizeof(mNodeEndpoints));
+	memset(mNodeLastUpdate, 0, sizeof(mNodeLastUpdate));
 
-	return s;
+	mSocket = socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (mSocket == INVALID_SOCKET)
+		I_FatalError("can't create socket: %s", neterror());
+
+	if (port != 0)
+	{
+		sockaddr_in address;
+		memset(&address, 0, sizeof(address));
+		address.sin_family = AF_INET;
+		address.sin_addr.s_addr = INADDR_ANY;
+		address.sin_port = htons(port);
+
+		int v = bind(mSocket, (sockaddr *)&address, sizeof(address));
+		if (v == SOCKET_ERROR)
+			I_FatalError("BindToPort: %s", neterror());
+	}
 }
 
-void DoomComImpl::BindToLocalPort(SOCKET s, u_short port)
+DoomComImpl::~DoomComImpl()
 {
-	int v;
-	sockaddr_in address;
+	if (mSocket != INVALID_SOCKET)
+	{
+		closesocket(mSocket);
+		mSocket = INVALID_SOCKET;
+	}
+}
 
-	memset (&address, 0, sizeof(address));
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(port);
-						
-	v = bind (s, (sockaddr *)&address, sizeof(address));
-	if (v == SOCKET_ERROR)
-		I_FatalError ("BindToPort: %s", neterror ());
+int DoomComImpl::Connect(const char *name)
+{
+	sockaddr_in addr;
+	BuildAddress(&addr, name);
+	return FindNode(&addr);
+}
+
+void DoomComImpl::Close(int node)
+{
+	mNodeLastUpdate[node] = 0;
 }
 
 int DoomComImpl::FindNode(const sockaddr_in *address)
 {
-	int i;
-
-	// find remote node number
-	for (i = 0; i<numnodes; i++)
-		if (address->sin_addr.s_addr == sendaddress[i].sin_addr.s_addr
-			&& address->sin_port == sendaddress[i].sin_port)
-			break;
-
-	if (i == numnodes)
+	int slot = -1;
+	for (int i = 0; i < MAXNETNODES; i++)
 	{
-		// packet is not from one of the players (new game broadcast?)
-		i = -1;
+		if (mNodeLastUpdate[i] != 0 && address->sin_addr.s_addr == mNodeEndpoints[i].sin_addr.s_addr && address->sin_port == mNodeEndpoints[i].sin_port)
+		{
+			slot = i;
+			break;
+		}
+		else if (mNodeLastUpdate[i] == 0)
+		{
+			slot = i;
+		}
 	}
-	return i;
+
+	if (slot == -1)
+		return -1;
+
+	mNodeEndpoints[slot] = *address;
+	mNodeLastUpdate[slot] = I_nsTime();
+	return slot;
 }
 
 void DoomComImpl::PacketSend(const NetPacket &packet)
@@ -240,8 +215,8 @@ void DoomComImpl::PacketSend(const NetPacket &packet)
 	uLong size = TRANSMIT_SIZE - 1;
 	if (packet.datalength >= 10)
 	{
-		TransmitBuffer[0] = packet.data[0] | NCMD_COMPRESSED;
-		c = compress2(TransmitBuffer + 1, &size, packet.data + 1, packet.datalength - 1, 9);
+		mTransmitBuffer[0] = packet.data[0] | NCMD_COMPRESSED;
+		c = compress2(mTransmitBuffer + 1, &size, packet.data + 1, packet.datalength - 1, 9);
 		size += 1;
 	}
 	else
@@ -250,8 +225,8 @@ void DoomComImpl::PacketSend(const NetPacket &packet)
 	}
 	if (c == Z_OK && size < (uLong)packet.datalength)
 	{
-//		Printf("send %lu/%d\n", size, datalength);
-		c = sendto(mysocket, (char *)TransmitBuffer, size, 0, (sockaddr *)&sendaddress[packet.remotenode], sizeof(sendaddress[packet.remotenode]));
+		//		Printf("send %lu/%d\n", size, datalength);
+		c = sendto(mSocket, (char *)mTransmitBuffer, size, 0, (sockaddr *)&mNodeEndpoints[packet.remotenode], sizeof(mNodeEndpoints[packet.remotenode]));
 	}
 	else
 	{
@@ -261,8 +236,8 @@ void DoomComImpl::PacketSend(const NetPacket &packet)
 		}
 		else
 		{
-//			Printf("send %d\n", datalength);
-			c = sendto(mysocket, (char *)packet.data, packet.datalength, 0, (sockaddr *)&sendaddress[packet.remotenode], sizeof(sendaddress[packet.remotenode]));
+			//			Printf("send %d\n", datalength);
+			c = sendto(mSocket, (char *)packet.data, packet.datalength, 0, (sockaddr *)&mNodeEndpoints[packet.remotenode], sizeof(mNodeEndpoints[packet.remotenode]));
 		}
 	}
 	//	if (c == -1)
@@ -271,106 +246,78 @@ void DoomComImpl::PacketSend(const NetPacket &packet)
 
 void DoomComImpl::PacketGet(NetPacket &packet)
 {
-	int c;
-	socklen_t fromlen;
-	sockaddr_in fromaddress;
-	int node;
-
-	fromlen = sizeof(fromaddress);
-	c = recvfrom (mysocket, (char*)TransmitBuffer, TRANSMIT_SIZE, 0, (sockaddr *)&fromaddress, &fromlen);
-	node = FindNode (&fromaddress);
-
-	if (node >= 0 && c == SOCKET_ERROR)
+	// First check if anything timed out. Treat this as a close.
+	uint64_t nowtime = I_nsTime();
+	for (int i = 0; i < MAXNETNODES; i++)
 	{
-		int err = WSAGetLastError();
-
-		if (err == WSAECONNRESET)
-		{ // The remote node aborted unexpectedly, so pretend it sent an exit packet
-
-			if (StartScreen != NULL)
-			{
-				StartScreen->NetMessage ("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.GetName());
-			}
-			else
-			{
-				Printf("The connection from %s was dropped.\n",
-					players[sendplayer[node]].userinfo.GetName());
-			}
-
-			packet.data[0] = 0x80;	// NCMD_EXIT
-			c = 1;
-		}
-		else if (err != WSAEWOULDBLOCK)
+		if (mNodeLastUpdate[i] != 0 && nowtime - mNodeLastUpdate[i] > 5'000'000'000) // 5 second timeout
 		{
-			I_Error ("GetPacket: %s", neterror ());
-		}
-		else
-		{
-			packet.remotenode = -1;		// no packet
+			Close(i);
+			packet.remotenode = i;
+			packet.datalength = 0;
 			return;
 		}
 	}
-	else if (node >= 0 && c > 0)
+
+	while (true)
 	{
-		packet.data[0] = TransmitBuffer[0] & ~NCMD_COMPRESSED;
-		if (TransmitBuffer[0] & NCMD_COMPRESSED)
+		sockaddr_in fromaddress;
+		socklen_t fromlen = sizeof(fromaddress);
+		int datalength = recvfrom(mSocket, (char*)mTransmitBuffer, TRANSMIT_SIZE, 0, (sockaddr *)&fromaddress, &fromlen);
+		if (datalength == SOCKET_ERROR)
 		{
-			uLongf msgsize = MAX_MSGLEN - 1;
-			int err = uncompress(packet.data + 1, &msgsize, TransmitBuffer + 1, c - 1);
-//			Printf("recv %d/%lu\n", c, msgsize + 1);
-			if (err != Z_OK)
+			int err = WSAGetLastError();
+
+			if (err == WSAECONNRESET) // The remote node aborted unexpectedly. Treat this as a close.
 			{
-				Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
-				// Pretend no packet
-				packet.remotenode = -1;
+				int node = FindNode(&fromaddress);
+				if (node == -1)
+					continue;
+
+				Close(node);
+				packet.remotenode = node;
+				packet.datalength = 0;
 				return;
 			}
-			c = msgsize + 1;
+			else if (err != WSAEWOULDBLOCK)
+			{
+				I_Error("GetPacket: %s", neterror());
+			}
+			else // no packet
+			{
+				packet.remotenode = -1;
+				packet.datalength = 0;
+				return;
+			}
 		}
-		else
+		else if (datalength > 0)
 		{
-//			Printf("recv %d\n", c);
-			memcpy(packet.data + 1, TransmitBuffer + 1, c - 1);
+			int node = FindNode(&fromaddress);
+			if (node == -1)
+				continue;
+
+			packet.data[0] = mTransmitBuffer[0] & ~NCMD_COMPRESSED;
+			if (mTransmitBuffer[0] & NCMD_COMPRESSED)
+			{
+				uLongf msgsize = MAX_MSGLEN - 1;
+				int err = uncompress(packet.data + 1, &msgsize, mTransmitBuffer + 1, datalength - 1);
+				if (err != Z_OK)
+				{
+					Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
+					continue;
+				}
+				datalength = msgsize + 1;
+			}
+			else
+			{
+				memcpy(packet.data + 1, mTransmitBuffer + 1, datalength - 1);
+			}
+
+			packet.remotenode = node;
+			packet.datalength = (short)datalength;
+			return;
 		}
 	}
-	else if (c > 0)
-	{	//The packet is not from any in-game node, so we might as well discard it.
-		// Don't show the message for disconnect notifications.
-		if (c != 2 || TransmitBuffer[0] != PRE_FAKE || TransmitBuffer[1] != PRE_DISCONNECT)
-		{
-			DPrintf(DMSG_WARNING, "Dropped packet: Unknown host (%s:%d)\n", inet_ntoa(fromaddress.sin_addr), fromaddress.sin_port);
-		}
-		packet.remotenode = -1;
-		return;
-	}
-
-	packet.remotenode = node;
-	packet.datalength = (short)c;
-}
-
-sockaddr_in *DoomComImpl::PreGet(void *buffer, int bufferlen, bool noabort)
-{
-	static sockaddr_in fromaddress;
-	socklen_t fromlen;
-	int c;
-
-	fromlen = sizeof(fromaddress);
-	c = recvfrom (mysocket, (char *)buffer, bufferlen, 0, (sockaddr *)&fromaddress, &fromlen);
-
-	if (c == SOCKET_ERROR)
-	{
-		int err = WSAGetLastError();
-		if (err == WSAEWOULDBLOCK || (noabort && err == WSAECONNRESET))
-			return NULL;	// no packet
-		I_Error ("PreGet: %s", neterror ());
-	}
-	return &fromaddress;
-}
-
-void DoomComImpl::PreSend(const void *buffer, int bufferlen, const sockaddr_in *to)
-{
-	sendto (mysocket, (const char *)buffer, bufferlen, 0, (const sockaddr *)to, sizeof(*to));
 }
 
 void DoomComImpl::BuildAddress(sockaddr_in *address, const char *name)
@@ -385,13 +332,13 @@ void DoomComImpl::BuildAddress(sockaddr_in *address, const char *name)
 
 	address->sin_family = AF_INET;
 
-	if ( (portpart = strchr (name, ':')) )
+	if ((portpart = strchr(name, ':')))
 	{
 		target = FString(name, portpart - name);
-		port = atoi (portpart + 1);
+		port = atoi(portpart + 1);
 		if (!port)
 		{
-			Printf ("Weird port: %s (using %d)\n", portpart + 1, DOOMPORT);
+			Printf("Weird port: %s (using %d)\n", portpart + 1, DOOMPORT);
 			port = DOOMPORT;
 		}
 	}
@@ -402,7 +349,7 @@ void DoomComImpl::BuildAddress(sockaddr_in *address, const char *name)
 	}
 	address->sin_port = htons(port);
 
-	for (curchar = 0; (c = target[curchar]) ; curchar++)
+	for (curchar = 0; (c = target[curchar]); curchar++)
 	{
 		if ((c < '0' || c > '9') && c != '.')
 		{
@@ -413,554 +360,16 @@ void DoomComImpl::BuildAddress(sockaddr_in *address, const char *name)
 
 	if (!isnamed)
 	{
-		address->sin_addr.s_addr = inet_addr (target);
-		Printf ("Node number %d, address %s\n", numnodes, target.GetChars());
+		address->sin_addr.s_addr = inet_addr(target);
+		// Printf("Node number %d, address %s\n", numnodes, target.GetChars());
 	}
 	else
 	{
-		hostentry = gethostbyname (target);
+		hostentry = gethostbyname(target);
 		if (!hostentry)
-			I_FatalError ("gethostbyname: couldn't find %s\n%s", target.GetChars(), neterror());
+			I_FatalError("gethostbyname: couldn't find %s\n%s", target.GetChars(), neterror());
 		address->sin_addr.s_addr = *(int *)hostentry->h_addr_list[0];
-		Printf ("Node number %d, hostname %s\n", numnodes, hostentry->h_name);
-	}
-}
-
-void DoomComImpl::CloseNetwork()
-{
-	if (mysocket != INVALID_SOCKET)
-	{
-		closesocket (mysocket);
-		mysocket = INVALID_SOCKET;
-	}
-#ifdef __WIN32__
-	WSACleanup ();
-#endif
-}
-
-void DoomComImpl::StartNetwork(bool autoPort)
-{
-	u_long trueval = 1;
-#ifdef __WIN32__
-	WSADATA wsad;
-
-	if (WSAStartup (0x0101, &wsad))
-	{
-		I_FatalError ("Could not initialize Windows Sockets");
-	}
-#endif
-
-	netgame = true;
-	multiplayer = true;
-	
-	// create communication socket
-	mysocket = UDPsocket ();
-	BindToLocalPort (mysocket, autoPort ? 0 : DOOMPORT);
-#ifndef __sun
-	ioctlsocket (mysocket, FIONBIO, &trueval);
-#else
-	fcntl(mysocket, F_SETFL, trueval | O_NONBLOCK);
-#endif
-}
-
-void DoomComImpl::SendAbort()
-{
-	uint8_t dis[2] = { PRE_FAKE, PRE_DISCONNECT };
-	int i, j;
-
-	if (numnodes > 1)
-	{
-		if (consoleplayer == 0)
-		{
-			// The host needs to let everyone know
-			for (i = 1; i < numnodes; ++i)
-			{
-				for (j = 4; j > 0; --j)
-				{
-					PreSend (dis, 2, &sendaddress[i]);
-				}
-			}
-		}
-		else
-		{
-			// Guests only need to let the host know.
-			for (i = 4; i > 0; --i)
-			{
-				PreSend (dis, 2, &sendaddress[1]);
-			}
-		}
-	}
-}
-
-void DoomComImpl::SendConAck (int num_connected, int num_needed)
-{
-	PreGamePacket packet;
-
-	packet.Fake = PRE_FAKE;
-	packet.Message = PRE_CONACK;
-	packet.NumNodes = num_needed;
-	packet.NumPresent = num_connected;
-	for (int node = 1; node < numnodes; ++node)
-	{
-		PreSend (&packet, 4, &sendaddress[node]);
-	}
-	StartScreen->NetProgress (numnodes);
-}
-
-bool DoomComImpl::Host_CheckForConnects()
-{
-	PreGamePacket packet;
-	sockaddr_in *from;
-	int node;
-
-	while ( (from = PreGet (&packet, sizeof(packet), false)) )
-	{
-		if (packet.Fake != PRE_FAKE)
-		{
-			continue;
-		}
-		switch (packet.Message)
-		{
-		case PRE_CONNECT:
-			node = FindNode (from);
-			if (numnodes == numplayers)
-			{
-				if (node == -1)
-				{
-					const uint8_t *s_addr_bytes = (const uint8_t *)&from->sin_addr;
-					StartScreen->NetMessage ("Got extra connect from %d.%d.%d.%d:%d",
-						s_addr_bytes[0], s_addr_bytes[1], s_addr_bytes[2], s_addr_bytes[3],
-						from->sin_port);
-					packet.Message = PRE_ALLFULL;
-					PreSend (&packet, 2, from);
-				}
-			}
-			else
-			{
-				if (node == -1)
-				{
-					node = numnodes++;
-					sendaddress[node] = *from;
-					StartScreen->NetMessage ("Got connect from node %d.", node);
-				}
-
-				// Let the new guest (and everyone else) know we got their message.
-				SendConAck (numnodes, numplayers);
-			}
-			break;
-
-		case PRE_DISCONNECT:
-			node = FindNode (from);
-			if (node >= 0)
-			{
-				StartScreen->NetMessage ("Got disconnect from node %d.", node);
-				numnodes--;
-				while (node < numnodes)
-				{
-					sendaddress[node] = sendaddress[node+1];
-					node++;
-				}
-
-				// Let remaining guests know that somebody left.
-				SendConAck (numnodes, numplayers);
-			}
-			break;
-
-		case PRE_KEEPALIVE:
-			break;
-		}
-	}
-	if (numnodes < numplayers)
-	{
-		// Send message to everyone as a keepalive
-		SendConAck(numnodes, numplayers);
-		return false;
-	}
-
-	// It's possible somebody bailed out after all players were found.
-	// Unfortunately, this isn't guaranteed to catch all of them.
-	// Oh well. Better than nothing.
-	while ( (from = PreGet (&packet, sizeof(packet), false)) )
-	{
-		if (packet.Fake == PRE_FAKE && packet.Message == PRE_DISCONNECT)
-		{
-			node = FindNode (from);
-			if (node >= 0)
-			{
-				numnodes--;
-				while (node < numnodes)
-				{
-					sendaddress[node] = sendaddress[node+1];
-					node++;
-				}
-				// Let remaining guests know that somebody left.
-				SendConAck (numnodes, numplayers);
-			}
-			break;
-		}
-	}
-	return numnodes >= numplayers;
-}
-
-bool DoomComImpl::Host_SendAllHere(int *gotack)
-{
-	PreGamePacket packet;
-	int node;
-	sockaddr_in *from;
-
-	// Send out address information to all guests. Guests that have already
-	// acknowledged receipt effectively get just a heartbeat packet.
-	packet.Fake = PRE_FAKE;
-	packet.Message = PRE_ALLHERE;
-	for (node = 1; node < numnodes; node++)
-	{
-		int machine, spot = 0;
-
-		packet.ConsoleNum = node;
-		if (!gotack[node])
-		{
-			for (spot = 0, machine = 1; machine < numnodes; machine++)
-			{
-				if (node != machine)
-				{
-					packet.machines[spot].address = sendaddress[machine].sin_addr.s_addr;
-					packet.machines[spot].port = sendaddress[machine].sin_port;
-					packet.machines[spot].player = node;
-
-					spot++;	// fixes problem of new address replacing existing address in
-							// array; it's supposed to increment the index before getting
-							// and storing in the packet the next address.
-				}
-			}
-			packet.NumNodes = numnodes - 2;
-		}
-		else
-		{
-			packet.NumNodes = 0;
-		}
-		PreSend (&packet, 4 + spot*8, &sendaddress[node]);
-	}
-
-	// Check for replies.
-	while ( (from = PreGet (&packet, sizeof(packet), false)) )
-	{
-		if (packet.Fake == PRE_FAKE && packet.Message == PRE_ALLHEREACK)
-		{
-			node = FindNode (from);
-			if (node >= 0)
-			{
-				if (!gotack[node])
-				{
-					gotack[node] = true;
-					gotack[MAXNETNODES]++;
-				}
-			}
-			PreSend (&packet, 2, from);
-		}
-	}
-
-	// If everybody has replied, then this loop can end.
-	return gotack[MAXNETNODES] == numnodes - 1;
-}
-
-void DoomComImpl::HostGame(int i)
-{
-	PreGamePacket packet;
-	int node;
-	int gotack[MAXNETNODES+1];
-
-	if ((i == Args->NumArgs() - 1) || !(numplayers = atoi (Args->GetArg(i+1))))
-	{	// No player count specified, assume 2
-		numplayers = 2;
-	}
-
-	if (numplayers > MAXNETNODES)
-	{
-		I_FatalError("You cannot host a game with %d players. The limit is currently %d.", numplayers, MAXNETNODES);
-		return;
-	}
-
-	if (numplayers == 1)
-	{ // Special case: Only 1 player, so don't bother starting the network
-		netgame = false;
-		multiplayer = true;
-		numnodes = 1;
-		consoleplayer = 0;
-		return;
-	}
-
-	StartNetwork (false);
-
-	// [JC] - this computer is starting the game, therefore it should
-	// be the Net Arbitrator.
-	consoleplayer = 0;
-	Printf ("Console player number: %d\n", consoleplayer);
-
-	numnodes = 1;
-
-	StartScreen->NetInit ("Waiting for players", numplayers);
-
-	// Wait for numplayers-1 different connections
-	if (!StartScreen->NetLoop([&] { return Host_CheckForConnects(); }))
-	{
-		SendAbort();
-		exit (0);
-	}
-
-	// Now inform everyone of all machines involved in the game
-	memset (gotack, 0, sizeof(gotack));
-	StartScreen->NetMessage ("Sending all here.");
-	StartScreen->NetInit ("Done waiting", 1);
-
-	if (!StartScreen->NetLoop([&] { return Host_SendAllHere(gotack); }))
-	{
-		SendAbort();
-		exit (0);
-	}
-
-	// Now go
-	StartScreen->NetMessage ("Go");
-	packet.Fake = PRE_FAKE;
-	packet.Message = PRE_GO;
-	for (node = 1; node < numnodes; node++)
-	{
-		// If we send the packets eight times to each guest,
-		// hopefully at least one of them will get through.
-		for (int i = 8; i != 0; --i)
-		{
-			PreSend (&packet, 2, &sendaddress[node]);
-		}
-	}
-
-	StartScreen->NetMessage ("Total players: %d", numnodes);
-
-	numplayers = numnodes;
-
-	// On the host, each player's number is the same as its node number
-	for (i = 0; i < numnodes; ++i)
-	{
-		sendplayer[i] = i;
-	}
-}
-
-// This routine is used by a guest to notify the host of its presence.
-// Once that host acknowledges receipt of the notification, this routine
-// is never called again.
-
-bool DoomComImpl::Guest_ContactHost()
-{
-	sockaddr_in *from;
-	PreGamePacket packet;
-
-	// Let the host know we are here.
-	packet.Fake = PRE_FAKE;
-	packet.Message = PRE_CONNECT;
-	PreSend (&packet, 2, &sendaddress[1]);
-
-	// Listen for a reply.
-	while ( (from = PreGet (&packet, sizeof(packet), true)) )
-	{
-		if (packet.Fake == PRE_FAKE && FindNode(from) == 1)
-		{
-			if (packet.Message == PRE_CONACK)
-			{
-				StartScreen->NetMessage ("Total players: %d", packet.NumNodes);
-				StartScreen->NetInit ("Waiting for other players", packet.NumNodes);
-				StartScreen->NetProgress (packet.NumPresent);
-				return true;
-			}
-			else if (packet.Message == PRE_DISCONNECT)
-			{
-				numnodes = 0;
-				I_FatalError ("The host cancelled the game.");
-			}
-			else if (packet.Message == PRE_ALLFULL)
-			{
-				numnodes = 0;
-				I_FatalError ("The game is full.");
-			}
-		}
-	}
-
-	// In case the progress bar could not be marqueed, bump it.
-	StartScreen->NetProgress (0);
-
-	return false;
-}
-
-bool DoomComImpl::Guest_WaitForOthers()
-{
-	sockaddr_in *from;
-	PreGamePacket packet;
-
-	while ( (from = PreGet (&packet, sizeof(packet), false)) )
-	{
-		if (packet.Fake != PRE_FAKE || FindNode(from) != 1)
-		{
-			continue;
-		}
-		switch (packet.Message)
-		{
-		case PRE_CONACK:
-			StartScreen->NetProgress (packet.NumPresent);
-			break;
-
-		case PRE_ALLHERE:
-			if (numnodes == 2)
-			{
-				int node;
-
-				numnodes = packet.NumNodes + 2;
-				sendplayer[0] = packet.ConsoleNum;	// My player number
-				consoleplayer = packet.ConsoleNum;
-				StartScreen->NetMessage ("Console player number: %d", consoleplayer);
-				for (node = 0; node < packet.NumNodes; node++)
-				{
-					sendaddress[node+2].sin_addr.s_addr = packet.machines[node].address;
-					sendaddress[node+2].sin_port = packet.machines[node].port;
-					sendplayer[node+2] = packet.machines[node].player;
-
-					// [JC] - fixes problem of games not starting due to
-					// no address family being assigned to nodes stored in
-					// sendaddress[] from the All Here packet.
-					sendaddress[node+2].sin_family = AF_INET;
-				}
-			}
-
-			StartScreen->NetMessage ("Received All Here, sending ACK.");
-			packet.Fake = PRE_FAKE;
-			packet.Message = PRE_ALLHEREACK;
-			PreSend (&packet, 2, &sendaddress[1]);
-			break;
-
-		case PRE_GO:
-			StartScreen->NetMessage ("Received \"Go.\"");
-			return true;
-
-		case PRE_DISCONNECT:
-			I_FatalError ("The host cancelled the game.");
-			break;
-		}
-	}
-
-	packet.Fake = PRE_FAKE;
-	packet.Message = PRE_KEEPALIVE;
-	PreSend(&packet, 2, &sendaddress[1]);
-
-	return false;
-}
-
-void DoomComImpl::JoinGame(int i)
-{
-	if ((i == Args->NumArgs() - 1) ||
-		(Args->GetArg(i+1)[0] == '-') ||
-		(Args->GetArg(i+1)[0] == '+'))
-		I_FatalError ("You need to specify the host machine's address");
-
-	StartNetwork (true);
-
-	// Host is always node 1
-	BuildAddress (&sendaddress[1], Args->GetArg(i+1));
-	sendplayer[1] = 0;
-	numnodes = 2;
-
-	// Let host know we are here
-	StartScreen->NetInit ("Contacting host", 0);
-
-	if (!StartScreen->NetLoop([&] { return Guest_ContactHost(); }))
-	{
-		SendAbort();
-		exit (0);
-	}
-
-	// Wait for everyone else to connect
-	if (!StartScreen->NetLoop([&] { return Guest_WaitForOthers(); }))
-	{
-		SendAbort();
-		exit (0);
-	}
-
-	StartScreen->NetMessage ("Total players: %d", numnodes);
-
-	numplayers = numnodes;
-}
-
-int DoomComImpl::PrivateNetOf(in_addr in)
-{
-	int addr = ntohl(in.s_addr);
-	if ((addr & 0xFFFF0000) == 0xC0A80000)		// 192.168.0.0
-	{
-		return 0xC0A80000;
-	}
-	else if ((addr & 0xFFF00000) == 0xAC100000)		// 172.16.0.0
-	{
-		return 0xAC100000;
-	}
-	else if ((addr & 0xFF000000) == 0x0A000000)		// 10.0.0.0
-	{
-		return 0x0A000000;
-	}
-	else if ((addr & 0xFF000000) == 0x7F000000)		// 127.0.0.0 (localhost)
-	{
-		return 0x7F000000;
-	}
-	// Not a private IP
-	return 0;
-}
-
-// The best I can really do here is check if the others are on the same private network, since that means we (probably) are too.
-bool DoomComImpl::NodesOnSameNetwork()
-{
-	int net1;
-
-	net1 = PrivateNetOf(sendaddress[1].sin_addr);
-//	Printf("net1 = %08x\n", net1);
-	if (net1 == 0)
-	{
-		return false;
-	}
-	for (int i = 2; i < numnodes; ++i)
-	{
-		int net = PrivateNetOf(sendaddress[i].sin_addr);
-//		Printf("Net[%d] = %08x\n", i, net);
-		if (net != net1)
-		{
-			return false;
-		}
-	}
-	return true;
-}
-
-DoomComImpl::DoomComImpl()
-{
-	int i;
-	const char *v;
-
-	v = Args->CheckValue ("-port");
-	if (v)
-	{
-		DOOMPORT = atoi (v);
-		Printf ("using alternate port %i\n", DOOMPORT);
-	}
-
-	// parse network game options,
-	//		player 1: -host <numplayers>
-	//		player x: -join <player 1's address>
-	if ( (i = Args->CheckParm ("-host")) )
-	{
-		HostGame (i);
-	}
-	else if ( (i = Args->CheckParm ("-join")) )
-	{
-		JoinGame (i);
-	}
-	else
-	{
-		// single player game
-		netgame = false;
-		multiplayer = false;
-		numplayers = numnodes = 1;
-		consoleplayer = 0;
+		// Printf("Node number %d, hostname %s\n", numnodes, hostentry->h_name);
 	}
 }
 

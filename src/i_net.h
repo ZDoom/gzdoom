@@ -4,6 +4,7 @@
 #include <memory>
 
 #define MAX_MSGLEN 14000
+#define DOOMPORT 5029
 
 struct NetPacket
 {
@@ -30,12 +31,8 @@ struct doomcom_t
 	virtual void PacketSend(const NetPacket &packet) = 0;
 	virtual void PacketGet(NetPacket &packet) = 0;
 
-	// info common to all nodes
-	int16_t	numnodes = 0; // console is always node 0.
-
-	// info specific to this node
-	int16_t	consoleplayer = 0;
-	int16_t	numplayers = 0;
+	virtual int Connect(const char *name) = 0;
+	virtual void Close(int node) = 0;
 };
 
-std::unique_ptr<doomcom_t> I_InitNetwork();
+std::unique_ptr<doomcom_t> I_InitNetwork(int port);

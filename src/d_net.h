@@ -78,23 +78,12 @@ public:
 	TicSpecial &operator << (const char *it);
 };
 
-struct ArbitrateData
-{
-	uint32_t playersdetected[MAXNETNODES];
-	uint8_t  gotsetup[MAXNETNODES];
-};
-
 struct Network
 {
 public:
 	void Update() { }
 	void DispatchEvents(int tic);
 	void SetPlayerCommand(int player, ticcmd_t cmd);
-
-private:
-	void TryRunTics();
-public:
-	void NetUpdate() { }
 
 	void D_CheckNetGame();
 	void Net_ClearBuffers();
@@ -133,18 +122,6 @@ public:
 	int ticdup; // 1 = no duplication, 2-5 = dup for slow nets
 
 private:
-	int NetbufferSize();
-	int ExpandTics(int low);
-	void HSendPacket(int node, int len);
-	bool HGetPacket();
-	void PlayerIsGone(int netnode, int netconsole);
-	void GetPackets();
-	bool DoArbitrate(ArbitrateData *data);
-	void D_ArbitrateNetStart();
-	void Net_CheckLastReceived(int counts);
-
-	void SendSetup(uint32_t playersdetected[MAXNETNODES], uint8_t gotsetup[MAXNETNODES], int len);
-
 	void ReadTicCmd(uint8_t **stream, int player, int tic);
 
 	std::unique_ptr<doomcom_t> doomcom;
@@ -228,3 +205,15 @@ void Net_SkipCommand (int type, uint8_t **stream);
 #define NCMD_2TICS				0x02		// packet contains 2 tics
 #define NCMD_1TICS				0x01		// packet contains 1 tic
 #define NCMD_0TICS				0x00		// packet contains 0 tics
+
+enum
+{
+	PRE_CONNECT,			// Sent from guest to host for initial connection
+	PRE_KEEPALIVE,
+	PRE_DISCONNECT,			// Sent from guest that aborts the game
+	PRE_ALLHERE,			// Sent from host to guest when everybody has connected
+	PRE_CONACK,				// Sent from host to guest to acknowledge PRE_CONNECT receipt
+	PRE_ALLFULL,			// Sent from host to an unwanted guest
+	PRE_ALLHEREACK,			// Sent from guest to host to acknowledge PRE_ALLHEREACK receipt
+	PRE_GO					// Sent from host to guest to continue game startup
+};

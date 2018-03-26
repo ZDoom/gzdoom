@@ -949,7 +949,6 @@ void D_Display ()
 
 	if (!wipe || NoWipe < 0)
 	{
-		network.NetUpdate ();			// send out any new accumulation
 		// normal update
 		// draw ZScript UI stuff
 		C_DrawConsole (hw2d);	// draw console
@@ -968,7 +967,6 @@ void D_Display ()
 		screen->WipeEndScreen ();
 
 		wipestart = I_msTime();
-		network.NetUpdate();		// send out any new accumulation
 
 		do
 		{
@@ -983,7 +981,6 @@ void D_Display ()
 			C_DrawConsole (hw2d);	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
 			screen->Update ();		// page flip or blit buffer
-			network.NetUpdate ();			// [RH] not sure this is needed anymore
 		} while (!done);
 		screen->WipeCleanup();
 		I_FreezeTime(false);
@@ -1140,6 +1137,12 @@ public:
 
 void D_DoomLoop()
 {
+	// Clamp the timer to TICRATE until the playloop has been entered.
+	r_NoInterpolate = true;
+	Page = Advisory = NULL;
+
+	vid_cursor.Callback();
+
 	while (true)
 	{
 		try
@@ -1175,66 +1178,6 @@ void D_DoomLoop()
 		}
 	}
 }
-
-#if 0
-void D_DoomLoop ()
-{
-	int lasttic = 0;
-
-	// Clamp the timer to TICRATE until the playloop has been entered.
-	r_NoInterpolate = true;
-	Page = Advisory = NULL;
-
-	vid_cursor.Callback();
-
-	for (;;)
-	{
-		try
-		{
-			// frame syncronous IO operations
-			if (gametic > lasttic)
-			{
-				lasttic = gametic;
-				I_StartFrame ();
-			}
-			I_SetFrameTime();
-
-			// Grab input events at the beginning of the frame.
-			// This ensures the mouse movement matches I_GetTimeFrac precisely.
-			I_StartTic();
-
-			// Tick the playsim
-			network.TryRunTics();
-
-			// Apply the events we recorded in I_StartTic as the events for the next frame.
-			D_AddPostedEvents();
-
-			// Render frame and present
-			D_Display ();
-
-			if (wantToRestart)
-			{
-				wantToRestart = false;
-				return;
-			}
-		}
-		catch (CRecoverableError &error)
-		{
-			if (error.GetMessage ())
-			{
-				Printf (PRINT_BOLD, "\n%s\n", error.GetMessage());
-			}
-			D_ErrorCleanup ();
-		}
-		catch (CVMAbortException &error)
-		{
-			error.MaybePrintMessage();
-			Printf("%s", error.stacktrace.GetChars());
-			D_ErrorCleanup();
-		}
-	}
-}
-#endif
 
 //==========================================================================
 //

@@ -1710,7 +1710,7 @@ bool D3DTex::CheckWrapping(bool wrapping)
 
 bool D3DTex::Create(D3DFB *fb, bool wrapping)
 {
-	if (SUCCEEDED(fb->D3DDevice->CreateTexture(GameTex->GetWidth(), GameTex->GetHeight(), 1, 0, Format, D3DPOOL_MANAGED, &Tex, NULL)))
+	if (SUCCEEDED(fb->D3DDevice->CreateTexture(mGameTex->GetWidth(), mGameTex->GetHeight(), 1, 0, Format, D3DPOOL_MANAGED, &Tex, NULL)))
 	{
 		return Update();
 	}

@@ -105,7 +105,7 @@ const char *BaseFileSearch(const char *file, const char *ext, bool lookfirstinpr
 
 CVAR(String, fluid_lib, "", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
-CUSTOM_CVAR(String, fluid_patchset, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, fluid_patchset, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_FLUIDSYNTH)
 	{

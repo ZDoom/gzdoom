@@ -86,9 +86,6 @@ config.h
 
 #define MAX_AMPLIFICATION			800
 
-/* The TiMiditiy configuration file */
-#define CONFIG_FILE	"timidity.cfg"
-
 typedef float sample_t;
 typedef float final_volume_t;
 #define FINAL_VOLUME(v)				(v)

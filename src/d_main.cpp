@@ -1033,6 +1033,150 @@ void D_ErrorCleanup ()
 //
 //==========================================================================
 
+class GameTime
+{
+public:
+	void Update()
+	{
+		LastTic = CurrentTic;
+		I_SetFrameTime();
+		CurrentTic = I_GetTime();
+	}
+
+	int TicsElapsed() const
+	{
+		return CurrentTic - LastTic;
+	}
+
+	int BaseGameTic() const
+	{
+		return LastTic;
+	}
+
+	int BaseMakeTic() const
+	{
+		return LastTic + 1;
+	}
+
+private:
+	int LastTic = 0;
+	int CurrentTic = 0;
+} gametime;
+
+class GameInput
+{
+public:
+	void Update()
+	{
+		// Not sure why the joystick can't be updated every frame..
+		bool updateJoystick = gametime.TicsElapsed() > 0;
+		if (updateJoystick)
+		{
+			I_StartFrame(); // To do: rename this silly function to I_UpdateJoystick
+		}
+
+		// Grab input events at the beginning of the frame.
+		// This ensures the mouse movement matches I_GetTimeFrac precisely.
+		I_StartTic(); // To do: rename this to I_ProcessWindowMessages
+	}
+
+	void BeforeDisplayUpdate()
+	{
+		// Apply the events we recorded in I_StartTic as the events for the next frame.
+		D_AddPostedEvents();
+	}
+
+} input;
+
+ticcmd_t G_BuildTiccmd();
+
+class PlaySim
+{
+public:
+	void Update()
+	{
+		int tics = gametime.TicsElapsed();
+		if (tics == 0)
+			return;
+
+		P_UnPredictPlayer();
+
+		D_ProcessEvents();
+
+		for (int i = 0; i < tics; i++)
+		{
+			gametic = gametime.BaseGameTic() + i;
+			network.maketic = gametime.BaseMakeTic() + i;
+			network.Net_NewMakeTic();
+			network.SetPlayerCommand(consoleplayer, G_BuildTiccmd());
+
+			if (advancedemo)
+				D_DoAdvanceDemo();
+
+			network.DispatchEvents(gametic);
+
+			C_Ticker();
+			M_Ticker();
+			G_Ticker();
+		}
+
+		P_PredictPlayer(&players[consoleplayer]);
+
+		S_UpdateSounds(players[consoleplayer].camera);	// move positional sounds
+	}
+
+} playsim;
+
+class GameDisplay
+{
+public:
+	void Update()
+	{
+		// Render frame and present
+		D_Display();
+	}
+
+} display;
+
+void D_DoomLoop()
+{
+	while (true)
+	{
+		try
+		{
+			gametime.Update();
+			network.Update();
+			input.Update();
+			playsim.Update();
+			input.BeforeDisplayUpdate();
+			display.Update();
+
+			GC::CheckGC();
+
+			if (wantToRestart)
+			{
+				wantToRestart = false;
+				return;
+			}
+		}
+		catch (CRecoverableError &error)
+		{
+			if (error.GetMessage())
+			{
+				Printf(PRINT_BOLD, "\n%s\n", error.GetMessage());
+			}
+			D_ErrorCleanup();
+		}
+		catch (CVMAbortException &error)
+		{
+			error.MaybePrintMessage();
+			Printf("%s", error.stacktrace.GetChars());
+			D_ErrorCleanup();
+		}
+	}
+}
+
+#if 0
 void D_DoomLoop ()
 {
 	int lasttic = 0;
@@ -1090,6 +1234,7 @@ void D_DoomLoop ()
 		}
 	}
 }
+#endif
 
 //==========================================================================
 //

@@ -917,12 +917,42 @@ void Network::SetBotCommand(int player, const ticcmd_t &cmd)
 	netcmds[player][((gametic + 1) / network.ticdup) % BACKUPTICS] = cmd;
 }
 
+ticcmd_t Network::GetLocalCommand(int tic) const
+{
+	int buf = tic % BACKUPTICS;
+	return netcmds[consoleplayer][buf];
+}
+
 ticcmd_t Network::GetPlayerCommand(int player) const
 {
 	int buf = (gametic / network.ticdup) % BACKUPTICS;
 	return netcmds[player][buf];
 }
 
+void Network::SetPlayerCommand(int player, ticcmd_t cmd)
+{
+	int buf = (gametic / ticdup) % BACKUPTICS;
+	netcmds[player][buf] = cmd;
+}
+
+void Network::DispatchEvents(int tic)
+{
+	int player = consoleplayer;
+	int ticmod = tic % BACKUPTICS;
+
+	if (specials.used[ticmod])
+	{
+		NetSpecs[player][ticmod].SetData(specials.streams[ticmod], (int)specials.used[ticmod]);
+		specials.used[ticmod] = 0;
+	}
+	else
+	{
+		NetSpecs[player][ticmod].SetData(nullptr, 0);
+	}
+}
+
+
+#if 0
 // Builds ticcmds for console player, sends out a packet
 void Network::NetUpdate()
 {
@@ -1357,7 +1387,7 @@ void Network::NetUpdate()
 		}
 	}
 }
-
+#endif
 
 //
 // D_ArbitrateNetStart

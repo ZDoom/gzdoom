@@ -63,6 +63,7 @@ struct TicSpecial
 	int	  lastmaketic;
 	bool  okay;
 
+public:
 	TicSpecial();
 	~TicSpecial();
 
@@ -86,8 +87,14 @@ struct ArbitrateData
 struct Network
 {
 public:
+	void Update() { }
+	void DispatchEvents(int tic);
+	void SetPlayerCommand(int player, ticcmd_t cmd);
+
+private:
 	void TryRunTics();
-	void NetUpdate();
+public:
+	void NetUpdate() { }
 
 	void D_CheckNetGame();
 	void Net_ClearBuffers();
@@ -115,7 +122,8 @@ public:
 
 	void RunNetSpecs(int player);
 
-	ticcmd_t GetLocalCommand(int tic) const { return localcmds[tic % LOCALCMDTICS]; }
+	ticcmd_t GetLocalCommand(int tic) const;
+	//ticcmd_t GetLocalCommand(int tic) const { return localcmds[tic % LOCALCMDTICS]; }
 
 	int GetPing(int player) const;
 	int GetServerPing() const;

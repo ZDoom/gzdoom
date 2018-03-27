@@ -451,12 +451,6 @@ public:
 	// Releases the screenshot buffer.
 	virtual void ReleaseScreenshotBuffer() {}
 
-#ifdef _WIN32
-	virtual void PaletteChanged () = 0;
-	virtual int QueryNewPalette () = 0;
-	virtual bool Is8BitMode() = 0;
-#endif
-
 	// The original size of the framebuffer as selected in the video menu.
 	int VideoWidth = 0;
 	int VideoHeight = 0;

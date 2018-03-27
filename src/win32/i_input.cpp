@@ -616,22 +616,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 		break;
 
-	case WM_PALETTECHANGED:
-		if ((HWND)wParam == Window)
-			break;
-		if (screen != NULL)
-		{
-			screen->PaletteChanged ();
-		}
-		return DefWindowProc (hWnd, message, wParam, lParam);
-
-	case WM_QUERYNEWPALETTE:
-		if (screen != NULL)
-		{
-			return screen->QueryNewPalette ();
-		}
-		return DefWindowProc (hWnd, message, wParam, lParam);
-
 	case WM_ERASEBKGND:
 		return true;
 

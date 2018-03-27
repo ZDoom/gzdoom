@@ -64,11 +64,8 @@ public:
 	void WipeCleanup() override;
 
 #ifdef WIN32
-	void PaletteChanged() override { }
-	int QueryNewPalette() override { return 0; }
 	void Blank() override { }
 	bool PaintToWindow() override;
-	bool Is8BitMode() override { return false; }
 	int GetTrueHeight() override { return TrueHeight; }
 #endif
 

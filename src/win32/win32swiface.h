@@ -37,8 +37,6 @@ public:
 	void GetFlash (PalEntry &rgb, int &amount);
 	int GetPageCount ();
 	bool IsFullscreen ();
-	void PaletteChanged ();
-	int QueryNewPalette ();
 	void Blank ();
 	bool PaintToWindow ();
 	void SetVSync (bool vsync);
@@ -64,7 +62,6 @@ public:
 	bool WipeDo(int ticks);
 	void WipeCleanup();
 	HRESULT GetHR ();
-	bool Is8BitMode() { return false; }
     virtual int GetTrueHeight() { return TrueHeight; }
 
 private:

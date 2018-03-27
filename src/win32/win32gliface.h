@@ -61,8 +61,6 @@ public:
 
 
 	bool IsFullscreen();
-	void PaletteChanged();
-	int QueryNewPalette();
 
 	void InitializeState();
 

@@ -76,7 +76,6 @@ public:
 	bool WipeDo(int ticks);
 	void WipeCleanup();
 	void Swap();
-	bool Is8BitMode() { return false; }
 	bool IsHWGammaActive() const { return HWGammaActive; }
 
 	void SetVSync(bool vsync);

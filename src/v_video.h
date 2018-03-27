@@ -214,11 +214,6 @@ public:
 
 	virtual bool IsValid ();
 
-	// Access control
-	virtual bool Lock (bool buffered=true) = 0;		// Returns true if the surface was lost since last time
-	virtual void Unlock () = 0;
-	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
-
 protected:
 	uint8_t *Buffer;
 	int Width;
@@ -298,8 +293,9 @@ protected:
 public:
 	DFrameBuffer (int width, int height, bool bgra);
 
-	// Force the surface to use buffered output if true is passed.
-	virtual bool Lock (bool buffered) = 0;
+	// Access control
+	virtual bool Lock(bool buffered = true) = 0;		// Returns true if the surface was lost since last time
+	virtual void Unlock() = 0;
 
 	// Make the surface visible. Also implies Unlock().
 	virtual void Update () = 0;

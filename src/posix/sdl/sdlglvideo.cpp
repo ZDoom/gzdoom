@@ -524,11 +524,6 @@ void SDLGLFB::Unlock ()
 	}
 }
 
-bool SDLGLFB::IsLocked () 
-{ 
-	return m_Lock>0;// true;
-}
-
 bool SDLGLFB::IsFullscreen ()
 {
 	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;

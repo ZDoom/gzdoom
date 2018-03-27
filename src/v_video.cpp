@@ -95,11 +95,7 @@ FRenderer *Renderer;
 EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Bool, fullscreen)
 
-#if defined(_DEBUG) && defined(_M_IX86) && !defined(__MINGW32__)
-#define DBGBREAK	{ __asm int 3 }
-#else
-#define DBGBREAK
-#endif
+#define DBGBREAK assert(0)
 
 class DDummyFrameBuffer : public DFrameBuffer
 {
@@ -111,7 +107,9 @@ public:
 		Width = width;
 		Height = height;
 	}
+	// These methods should never be called.
 	bool Lock(bool buffered) { DBGBREAK; return false; }
+	void Unlock() { DBGBREAK; }
 	void Update() { DBGBREAK; }
 	PalEntry *GetPalette() { DBGBREAK; return NULL; }
 	void GetFlashedPalette(PalEntry palette[256]) { DBGBREAK; }

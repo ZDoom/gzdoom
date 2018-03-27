@@ -57,7 +57,6 @@ public:
 
 	virtual bool Lock(bool buffered = true);
 	virtual void Unlock();
-	virtual bool IsLocked();
 
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);

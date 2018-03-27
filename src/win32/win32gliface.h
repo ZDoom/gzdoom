@@ -57,7 +57,6 @@ public:
 	bool Lock(bool buffered);
 	bool Lock ();
 	void Unlock();
-	bool IsLocked ();
 
 
 	bool IsFullscreen();

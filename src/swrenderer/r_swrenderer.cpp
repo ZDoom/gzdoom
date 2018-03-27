@@ -208,7 +208,6 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
-	pic->Lock ();
 	if (r_polyrenderer)
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
@@ -227,7 +226,6 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	}
 	screen->GetFlashedPalette (palette);
 	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch(), Gamma);
-	pic->Unlock ();
 	delete pic;
 }
 

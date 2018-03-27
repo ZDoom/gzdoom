@@ -516,31 +516,6 @@ CUSTOM_CVAR (Int, msgmidcolor2, 4, CVAR_ARCHIVE)
 	setmsgcolor (PRINTLEVELS+1, self);
 }
 
-static void maybedrawnow (bool tick, bool force)
-{
-	// FIXME: Does not work right with hw2d
-	if (ConsoleDrawing || screen == NULL || screen->IsLocked () || screen->Accel2D || ConFont == NULL)
-	{
-		return;
-	}
-
-	if (vidactive &&
-		(((tick || gameaction != ga_nothing) && ConsoleState == c_down)
-		|| gamestate == GS_STARTUP))
-	{
-		static size_t lastprinttime = 0;
-		size_t nowtime = I_GetTime();
-
-		if (nowtime - lastprinttime > 1 || force)
-		{
-			screen->Lock (false);
-			C_DrawConsole (false);
-			screen->Update ();
-			lastprinttime = nowtime;
-		}
-	}
-}
-
 struct TextQueue
 {
 	TextQueue (bool notify, int printlevel, const char *text)
@@ -857,7 +832,6 @@ int PrintString (int printlevel, const char *outline)
 		if (vidactive && screen && SmallFont)
 		{
 			NotifyStrings.AddString(printlevel, outline);
-			maybedrawnow (false, false);
 		}
 	}
 	else if (Logfile != NULL)
@@ -1088,13 +1062,11 @@ void C_InitTicker (const char *label, unsigned int max, bool showpercent)
 	TickerMax = max;
 	TickerLabel = label;
 	TickerAt = 0;
-	maybedrawnow (true, false);
 }
 
 void C_SetTicker (unsigned int at, bool forceUpdate)
 {
 	TickerAt = at > TickerMax ? TickerMax : at;
-	maybedrawnow (true, TickerVisible ? forceUpdate : false);
 }
 
 void C_DrawConsole (bool hw2d)

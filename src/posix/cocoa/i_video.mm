@@ -1171,12 +1171,6 @@ void SDLGLFB::Unlock()
 	}
 }
 
-bool SDLGLFB::IsLocked()
-{
-	return m_Lock > 0;
-}
-
-
 bool SDLGLFB::IsFullscreen()
 {
 	return CocoaVideo::IsFullscreen();

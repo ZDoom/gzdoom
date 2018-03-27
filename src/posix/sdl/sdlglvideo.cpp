@@ -93,19 +93,11 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 #ifdef __arm__
-CUSTOM_CVAR(Bool, vid_glswfb, false, CVAR_NOINITCALL)
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
 CUSTOM_CVAR(Bool, gl_es, false, CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 #else
-CUSTOM_CVAR(Bool, vid_glswfb, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
 CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
@@ -248,18 +240,9 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	{
 		fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
 	}
-	else if (vid_glswfb == 0)
-	{
-		fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
-	}
 	else
 	{
 		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
-		if (!fb->IsValid())
-		{
-			delete fb;
-			fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
-		}
 	}
 
 	retry = 0;
@@ -271,13 +254,8 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	// 3. Try in the opposite screen mode with the closest size
 	// This is a somewhat confusing mass of recursion here.
 
-	while (fb == NULL || !fb->IsValid ())
+	while (fb == NULL)
 	{
-		if (fb != NULL)
-		{
-			delete fb;
-		}
-
 		switch (retry)
 		{
 		case 0:

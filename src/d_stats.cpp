@@ -36,7 +36,9 @@ extern int sys_ostype;
 #include "version.h"
 #include "v_video.h"
 
+#ifdef _WIN32
 EXTERN_CVAR(Bool, vid_glswfb)
+#endif
 extern int currentrenderer;
 CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
@@ -254,9 +256,9 @@ static int GetRenderInfo()
 {
 	if (currentrenderer == 0)
 	{
-		if (!screen->Accel2D) return 0;
+#ifdef _WIN32
 		if (vid_glswfb) return 2;
-		if (screen->LegacyHardware()) return 6;
+#endif
 		return 1;
 	}
 	else

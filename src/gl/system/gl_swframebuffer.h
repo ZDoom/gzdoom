@@ -31,7 +31,6 @@ public:
 	OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
 	~OpenGLSWFrameBuffer();
 
-	bool IsValid() override;
 	bool Lock(bool buffered) override;
 	void Unlock() override;
 	void Update() override;

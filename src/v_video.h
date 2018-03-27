@@ -212,7 +212,6 @@ public:
 	inline int GetPitch () const { return Pitch; }
 	inline bool IsBgra() const { return Bgra; }
 
-	virtual bool IsValid ();
 
 protected:
 	uint8_t *Buffer;
@@ -227,9 +226,6 @@ protected:
 	DCanvas() {}
 
 private:
-	// Keep track of canvases, for automatic destruction at exit
-	DCanvas *Next;
-	static DCanvas *CanvasChain;
 };
 
 // A canvas in system memory.
@@ -240,10 +236,6 @@ class DSimpleCanvas : public DCanvas
 public:
 	DSimpleCanvas (int width, int height, bool bgra);
 	~DSimpleCanvas ();
-
-	bool IsValid ();
-	bool Lock (bool buffered=true);
-	void Unlock ();
 
 protected:
 	void Resize(int width, int height);
@@ -294,6 +286,7 @@ public:
 	DFrameBuffer (int width, int height, bool bgra);
 
 	// Access control
+	virtual bool IsValid() = delete;
 	virtual bool Lock(bool buffered = true) = 0;		// Returns true if the surface was lost since last time
 	virtual void Unlock() = 0;
 

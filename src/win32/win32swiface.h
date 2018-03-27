@@ -24,7 +24,6 @@ public:
 	D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen);
 	~D3DFB ();
 
-	bool IsValid ();
 	bool Lock (bool buffered);
 	void Unlock ();
 	void Update ();

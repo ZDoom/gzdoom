@@ -218,18 +218,6 @@ DCanvas::~DCanvas ()
 
 //==========================================================================
 //
-// DCanvas :: IsValid
-//
-//==========================================================================
-
-bool DCanvas::IsValid ()
-{
-	// A nun-subclassed DCanvas is never valid
-	return false;
-}
-
-//==========================================================================
-//
 // V_GetColorFromString
 //
 // Passed a string of the form "#RGB", "#RRGGBB", "R G B", or "RR GG BB",
@@ -606,48 +594,6 @@ DSimpleCanvas::~DSimpleCanvas ()
 	{
 		delete[] MemBuffer;
 		MemBuffer = NULL;
-	}
-}
-
-//==========================================================================
-//
-// DSimpleCanvas :: IsValid
-//
-//==========================================================================
-
-bool DSimpleCanvas::IsValid ()
-{
-	return (MemBuffer != NULL);
-}
-
-//==========================================================================
-//
-// DSimpleCanvas :: Lock
-//
-//==========================================================================
-
-bool DSimpleCanvas::Lock (bool)
-{
-	if (LockCount == 0)
-	{
-		Buffer = MemBuffer;
-	}
-	LockCount++;
-	return false;		// System surfaces are never lost
-}
-
-//==========================================================================
-//
-// DSimpleCanvas :: Unlock
-//
-//==========================================================================
-
-void DSimpleCanvas::Unlock ()
-{
-	if (--LockCount <= 0)
-	{
-		LockCount = 0;
-		Buffer = NULL;	// Enforce buffer access only between Lock/Unlock
 	}
 }
 

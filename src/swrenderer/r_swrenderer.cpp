@@ -37,6 +37,7 @@
 #include "swrenderer/things/r_playersprite.h"
 #include "swrenderer/scene/r_scene.h"
 #include "swrenderer/scene/r_light.h"
+#include "swrenderer/r_swcolormaps.h"
 #include "v_palette.h"
 #include "v_video.h"
 #include "m_png.h"

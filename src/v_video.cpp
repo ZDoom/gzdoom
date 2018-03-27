@@ -237,38 +237,6 @@ bool DCanvas::IsValid ()
 
 //==========================================================================
 //
-// DCanvas :: GetScreenshotBuffer
-//
-// Returns a buffer containing the most recently displayed frame. The
-// width and height of this buffer are the same as the canvas.
-//
-//==========================================================================
-
-void DCanvas::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
-{
-	Lock(true);
-	buffer = GetBuffer();
-	pitch = IsBgra() ? GetPitch() * 4 : GetPitch();
-	color_type = IsBgra() ? SS_BGRA : SS_PAL;
-	gamma = Gamma;
-}
-
-//==========================================================================
-//
-// DCanvas :: ReleaseScreenshotBuffer
-//
-// Releases the buffer obtained through GetScreenshotBuffer. These calls
-// must not be nested.
-//
-//==========================================================================
-
-void DCanvas::ReleaseScreenshotBuffer()
-{
-	Unlock();
-}
-
-//==========================================================================
-//
 // V_GetColorFromString
 //
 // Passed a string of the form "#RGB", "#RRGGBB", "R G B", or "RR GG BB",
@@ -553,7 +521,7 @@ static void BuildTransTable (const PalEntry *palette)
 //
 //==========================================================================
 
-void DCanvas::CalcGamma (float gamma, uint8_t gammalookup[256])
+void DFrameBuffer::CalcGamma (float gamma, uint8_t gammalookup[256])
 {
 	// I found this formula on the web at
 	// <http://panda.mostang.com/sane/sane-gamma.html>,

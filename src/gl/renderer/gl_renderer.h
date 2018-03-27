@@ -40,7 +40,7 @@ class FPresentShader;
 class FPresent3DCheckerShader;
 class FPresent3DColumnShader; 
 class FPresent3DRowShader;
-class F2DDrawer;
+class FGL2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
 class FCustomPostProcessShaders;
@@ -146,7 +146,7 @@ public:
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
-	F2DDrawer *m2DDrawer;
+	FGL2DDrawer *m2DDrawer;
 
 	GL_IRECT mScreenViewport;
 	GL_IRECT mSceneViewport;

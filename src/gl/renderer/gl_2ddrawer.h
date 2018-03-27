@@ -4,7 +4,7 @@
 #include "tarray.h"
 #include "gl/data/gl_vertexbuffer.h"
 
-class F2DDrawer : public FSimpleVertexBuffer
+class FGL2DDrawer : public FSimpleVertexBuffer
 {
 	enum EDrawType
 	{

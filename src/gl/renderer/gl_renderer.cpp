@@ -160,7 +160,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresent3dRowShader = new FPresent3DRowShader();
 	mShadowMapShader = new FShadowMapShader();
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
-	m2DDrawer = new F2DDrawer;
+	m2DDrawer = new FGL2DDrawer;
 
 	GetSpecialTextures();
 

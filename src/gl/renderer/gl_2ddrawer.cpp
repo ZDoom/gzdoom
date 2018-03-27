@@ -42,7 +42,7 @@
 //
 //==========================================================================
 
-int F2DDrawer::AddData(const F2DDrawer::DataGeneric *data)
+int FGL2DDrawer::AddData(const FGL2DDrawer::DataGeneric *data)
 {
 	int addr = mData.Reserve(data->mLen);
 	memcpy(&mData[addr], data, data->mLen);
@@ -56,7 +56,7 @@ int F2DDrawer::AddData(const F2DDrawer::DataGeneric *data)
 //
 //==========================================================================
 
-void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
+void FGL2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 {
 	double xscale = parms.destwidth / parms.texwidth;
 	double yscale = parms.destheight / parms.texheight;
@@ -174,7 +174,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 //
 //==========================================================================
 
-void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
+void FGL2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel)
 {
@@ -230,7 +230,7 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 //
 //===========================================================================
 
-void F2DDrawer::AddDim(PalEntry color, float damount, int x1, int y1, int w, int h)
+void FGL2DDrawer::AddDim(PalEntry color, float damount, int x1, int y1, int w, int h)
 {
 	color.a = uint8_t(damount * 255);
 	std::swap(color.r, color.b);
@@ -255,7 +255,7 @@ void F2DDrawer::AddDim(PalEntry color, float damount, int x1, int y1, int w, int
 //
 //==========================================================================
 
-void F2DDrawer::AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
+void FGL2DDrawer::AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
 {
 	PalEntry p = palcolor == -1 || color != 0 ? (PalEntry)color : GPalette.BaseColors[palcolor];
 	AddDim(p, 1.f, left, top, right - left, bottom - top);
@@ -267,7 +267,7 @@ void F2DDrawer::AddClear(int left, int top, int right, int bottom, int palcolor,
 //
 //==========================================================================
 
-void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
+void FGL2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin)
 {
 	float fU1, fU2, fV1, fV2;
 
@@ -313,7 +313,7 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 //
 //==========================================================================
 
-void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color)
+void FGL2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color)
 {
 	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
 	p.a = 255;
@@ -346,7 +346,7 @@ void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t c
 //
 //==========================================================================
 
-void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32_t color)
+void FGL2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32_t color)
 {
 	PalEntry p = color ? (PalEntry)color : GPalette.BaseColors[palcolor];
 	p.a = 255;
@@ -369,9 +369,9 @@ void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32_t color)
 //
 //==========================================================================
 
-void F2DDrawer::Draw()
+void FGL2DDrawer::Draw()
 {
-	F2DDrawer::EDrawType lasttype = DrawTypeTexture;
+	FGL2DDrawer::EDrawType lasttype = DrawTypeTexture;
 
 	if (mData.Size() == 0) return;
 	int8_t savedlightmode = glset.lightmode;
@@ -484,7 +484,7 @@ void F2DDrawer::Draw()
 	glset.lightmode = savedlightmode;
 }
 
-void F2DDrawer::Clear()
+void FGL2DDrawer::Clear()
 {
 	mVertices.Clear();
 	mData.Clear();

@@ -1115,6 +1115,7 @@ int OpenGLSWFrameBuffer::GetPageCount()
 //
 //==========================================================================
 
+#if 0
 bool OpenGLSWFrameBuffer::Lock(bool buffered)
 {
 	if (m_Lock++ > 0)
@@ -1181,6 +1182,7 @@ void OpenGLSWFrameBuffer::Unlock()
 		}
 	}
 }
+#endif
 
 //==========================================================================
 //

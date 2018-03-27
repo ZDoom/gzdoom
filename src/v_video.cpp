@@ -108,8 +108,6 @@ public:
 		Height = height;
 	}
 	// These methods should never be called.
-	bool Lock(bool buffered) { DBGBREAK; return false; }
-	void Unlock() { DBGBREAK; }
 	void Update() { DBGBREAK; }
 	PalEntry *GetPalette() { DBGBREAK; return NULL; }
 	void GetFlashedPalette(PalEntry palette[256]) { DBGBREAK; }

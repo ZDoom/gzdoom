@@ -33,8 +33,6 @@ public:
 	~OpenGLSWFrameBuffer();
 
 	virtual DCanvas *GetCanvas() { return RenderBuffer; }
-	bool Lock(bool buffered) override;
-	void Unlock() override;
 	void Update() override;
 	PalEntry *GetPalette() override;
 	void GetFlashedPalette(PalEntry palette[256]) override;

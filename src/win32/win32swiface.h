@@ -28,9 +28,6 @@ public:
 	~D3DFB ();
 	virtual DCanvas *GetCanvas() { return RenderBuffer; }
 
-
-	bool Lock (bool buffered);
-	void Unlock ();
 	void Update ();
 	void Flip ();
 	PalEntry *GetPalette ();

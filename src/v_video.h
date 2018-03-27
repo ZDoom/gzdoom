@@ -296,8 +296,8 @@ public:
 
 	// Access control
 	virtual bool IsValid() = delete;
-	virtual bool Lock(bool buffered = true) = 0;		// Returns true if the surface was lost since last time
-	virtual void Unlock() = 0;
+	virtual bool Lock(bool buffered = true) = delete;		// Returns true if the surface was lost since last time
+	virtual void Unlock() = delete;
 
 	// Make the surface visible. Also implies Unlock().
 	virtual void Update () = 0;

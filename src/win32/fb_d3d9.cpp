@@ -915,53 +915,6 @@ bool D3DFB::IsFullscreen ()
 
 //==========================================================================
 //
-// D3DFB :: Lock
-//
-//==========================================================================
-
-bool D3DFB::Lock (bool buffered)
-{
-	if (LockCount++ > 0)
-	{
-		return false;
-	}
-	assert (!In2D);
-	Accel2D = vid_hw2d;
-#if 0
-	Buffer = MemBuffer;
-#endif
-	return false;
-}
-
-//==========================================================================
-//
-// D3DFB :: Unlock
-//
-//==========================================================================
-
-void D3DFB::Unlock ()
-{
-	LOG1 ("Unlock     <%d>\n", LockCount);
-
-	if (LockCount == 0)
-	{
-		return;
-	}
-
-	if (UpdatePending && LockCount == 1)
-	{
-		Update ();
-	}
-	else if (--LockCount == 0)
-	{
-#if 0
-		Buffer = NULL;
-#endif
-	}
-}
-
-//==========================================================================
-//
 // D3DFB :: Update
 //
 // When In2D == 0: Copy buffer to screen and present

@@ -1166,29 +1166,6 @@ void Win32GLFrameBuffer::SetGammaTable(uint16_t *tbl)
 //
 //==========================================================================
 
-bool Win32GLFrameBuffer::Lock(bool buffered)
-{
-	m_Lock++;
-	//Buffer = MemBuffer;
-	return true;
-}
-
-bool Win32GLFrameBuffer::Lock () 
-{ 	
-	return Lock(false); 
-}
-
-void Win32GLFrameBuffer::Unlock () 	
-{ 
-	m_Lock--;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
 bool Win32GLFrameBuffer::IsFullscreen()
 {
 	return m_Fullscreen;

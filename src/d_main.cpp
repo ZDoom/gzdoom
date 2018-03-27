@@ -738,22 +738,17 @@ void D_Display ()
 	}
 	setmodeneeded = false;
 
-	if (screen->Lock (false))
-	{
-		V_SetBorderNeedRefresh();
-	}
+	V_SetBorderNeedRefresh();
 
 	// [RH] Allow temporarily disabling wipes
 	if (NoWipe)
 	{
-		V_SetBorderNeedRefresh();
 		NoWipe--;
 		wipe = false;
 		wipegamestate = gamestate;
 	}
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
 	{ // save the current screen if about to wipe
-		V_SetBorderNeedRefresh();
 		switch (wipegamestate)
 		{
 		default:
@@ -992,7 +987,6 @@ void D_Display ()
 void D_ErrorCleanup ()
 {
 	savegamerestore = false;
-	screen->Unlock ();
 	bglobal.RemoveAllBots (true);
 	D_QuitNetGame ();
 	if (demorecording || demoplayback)

@@ -54,10 +54,6 @@ public:
 
 	int GetTrueHeight();
 
-	bool Lock(bool buffered);
-	bool Lock ();
-	void Unlock();
-
 
 	bool IsFullscreen();
 

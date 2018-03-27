@@ -206,7 +206,8 @@ public:
 	virtual ~DCanvas ();
 
 	// Member variable access
-	inline uint8_t *GetBuffer () const { return Buffer; }
+	//inline uint8_t *GetBuffer () const { return Buffer; }
+	inline uint8_t *GetPixels () const { return PixelBuffer; }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
@@ -214,11 +215,10 @@ public:
 
 
 protected:
-	uint8_t *Buffer;
+	uint8_t *PixelBuffer;
 	int Width;
 	int Height;
 	int Pitch;
-	int LockCount;
 	bool Bgra;
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
@@ -236,11 +236,9 @@ class DSimpleCanvas : public DCanvas
 public:
 	DSimpleCanvas (int width, int height, bool bgra);
 	~DSimpleCanvas ();
-
-protected:
 	void Resize(int width, int height);
 
-	uint8_t *MemBuffer;
+private:
 
 	DSimpleCanvas() {}
 };
@@ -270,9 +268,10 @@ public:
 // for actually implementing this. Built on top of SimpleCanvas, because it
 // needs a system memory buffer when buffered output is enabled.
 
-class DFrameBuffer : public DSimpleCanvas
+class DFrameBuffer : public DCanvas
 {
 	typedef DSimpleCanvas Super;
+
 protected:
 	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
 	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
@@ -281,6 +280,7 @@ protected:
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
+	int LockCount = 0;
 
 public:
 	DFrameBuffer (int width, int height, bool bgra);
@@ -448,7 +448,6 @@ public:
 protected:
 	void DrawRateStuff ();
 	void CopyFromBuff (uint8_t *src, int srcPitch, int width, int height, uint8_t *dest);
-	void CopyWithGammaBgra(void *output, int pitch, const uint8_t *gammared, const uint8_t *gammagreen, const uint8_t *gammablue, PalEntry flash, int flash_amount);
 
 	DFrameBuffer () {}
 

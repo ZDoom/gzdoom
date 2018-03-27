@@ -225,7 +225,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
 	screen->GetFlashedPalette (palette);
-	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch(), Gamma);
+	M_CreatePNG (file, pic->GetPixels(), palette, SS_PAL, width, height, pic->GetPitch(), Gamma);
 	delete pic;
 }
 
@@ -300,24 +300,24 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 
 	if (Canvas->IsBgra())
 	{
-		if (Pixels == Canvas->GetBuffer())
+		if (Pixels == Canvas->GetPixels())
 		{
 			FTexture::FlipSquareBlockBgra((uint32_t*)Pixels, tex->GetWidth(), tex->GetHeight());
 		}
 		else
 		{
-			FTexture::FlipNonSquareBlockBgra((uint32_t*)Pixels, (const uint32_t*)Canvas->GetBuffer(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch());
+			FTexture::FlipNonSquareBlockBgra((uint32_t*)Pixels, (const uint32_t*)Canvas->GetPixels(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch());
 		}
 	}
 	else
 	{
-		if (Pixels == Canvas->GetBuffer())
+		if (Pixels == Canvas->GetPixels())
 		{
 			FTexture::FlipSquareBlockRemap(Pixels, tex->GetWidth(), tex->GetHeight(), GPalette.Remap);
 		}
 		else
 		{
-			FTexture::FlipNonSquareBlockRemap(Pixels, Canvas->GetBuffer(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch(), GPalette.Remap);
+			FTexture::FlipNonSquareBlockRemap(Pixels, Canvas->GetPixels(), tex->GetWidth(), tex->GetHeight(), Canvas->GetPitch(), GPalette.Remap);
 		}
 	}
 

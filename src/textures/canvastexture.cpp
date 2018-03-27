@@ -121,7 +121,7 @@ void FCanvasTexture::MakeTexture (FRenderStyle)	// This ignores the render style
 	}
 	else
 	{
-		Pixels = (uint8_t*)Canvas->GetBuffer();
+		Pixels = (uint8_t*)Canvas->GetPixels();
 		bPixelsAllocated = false;
 	}
 
@@ -141,7 +141,7 @@ void FCanvasTexture::MakeTextureBgra()
 	}
 	else
 	{
-		PixelsBgra = (uint32_t*)CanvasBgra->GetBuffer();
+		PixelsBgra = (uint32_t*)CanvasBgra->GetPixels();
 		bPixelsAllocatedBgra = false;
 	}
 

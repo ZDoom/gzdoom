@@ -302,7 +302,7 @@ namespace swrenderer
 
 				if (viewport->RenderTarget->IsBgra())
 				{
-					uint32_t *dest = (uint32_t*)viewport->RenderTarget->GetBuffer() + x + Ytop * spacing;
+					uint32_t *dest = (uint32_t*)viewport->RenderTarget->GetPixels() + x + Ytop * spacing;
 
 					uint32_t c = GPalette.BaseColors[color].d;
 					for (int y = Ytop; y <= Ybottom; y++)
@@ -313,7 +313,7 @@ namespace swrenderer
 				}
 				else
 				{
-					uint8_t *dest = viewport->RenderTarget->GetBuffer() + x + Ytop * spacing;
+					uint8_t *dest = viewport->RenderTarget->GetPixels() + x + Ytop * spacing;
 
 					for (int y = Ytop; y <= Ybottom; y++)
 					{

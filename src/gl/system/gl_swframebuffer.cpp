@@ -174,10 +174,7 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
 
-	if (MemBuffer == nullptr)
-	{
-		return;
-	}
+	RenderBuffer = new DSimpleCanvas(Width, Height, bgra);
 
 	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
 
@@ -780,7 +777,8 @@ void OpenGLSWFrameBuffer::Present()
 
 void OpenGLSWFrameBuffer::SetInitialState()
 {
-	if (gl.es) UseMappedMemBuffer = false;
+	//if (gl.es)  re-enable later! First the basics must work.
+		UseMappedMemBuffer = false;
 
 	AlphaBlendEnabled = false;
 	AlphaBlendOp = GL_FUNC_ADD;
@@ -1125,6 +1123,8 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 	}
 	assert(!In2D);
 	Accel2D = vid_hw2d;
+
+#if 0	// temporarily disabled. Must be fixed later
 	if (UseMappedMemBuffer)
 	{
 		if (!MappedMemBuffer)
@@ -1140,8 +1140,11 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 		Buffer = (uint8_t*)MappedMemBuffer;
 	}
 	else
+#endif
 	{
-		Buffer = MemBuffer;
+#if 0
+		//Buffer = MemBuffer;
+#endif
 	}
 	return false;
 }
@@ -1165,7 +1168,9 @@ void OpenGLSWFrameBuffer::Unlock()
 	}
 	else if (--m_Lock == 0)
 	{
+#if 0
 		Buffer = nullptr;
+#endif
 
 		if (MappedMemBuffer)
 		{
@@ -1263,7 +1268,9 @@ void OpenGLSWFrameBuffer::Update()
 	//LOG1 ("cycles = %d\n", BlitCycles);
 #endif
 
+#if 0
 	Buffer = nullptr;
+#endif
 	UpdatePending = false;
 }
 
@@ -1286,7 +1293,7 @@ void OpenGLSWFrameBuffer::Flip()
 		int clientHeight = ViewportScaledHeight(GetClientWidth(), GetClientHeight());
 		if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
 		{
-			Resize(clientWidth, clientHeight);
+			RenderBuffer->Resize(clientWidth, clientHeight);
 
 			TrueHeight = Height;
 			PixelDoubling = 0;
@@ -1375,6 +1382,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			int pixelsize = IsBgra() ? 4 : 1;
 			int size = Width * Height * pixelsize;
 
+			auto MemBuffer = RenderBuffer->GetPixels();
 			uint8_t *dest = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, size);
 			if (dest)
 			{

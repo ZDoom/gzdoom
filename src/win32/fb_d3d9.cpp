@@ -261,10 +261,8 @@ D3DFB::D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen)
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
 
-	if (MemBuffer == NULL)
-	{
-		return;
-	}
+	RenderBuffer = new DSimpleCanvas(width, height, bgra);
+	Pitch = RenderBuffer->GetPitch();	// should be removed, but still needed as long as DFrameBuffer inherits from DCanvas
 
 	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 
@@ -930,7 +928,9 @@ bool D3DFB::Lock (bool buffered)
 	}
 	assert (!In2D);
 	Accel2D = vid_hw2d;
+#if 0
 	Buffer = MemBuffer;
+#endif
 	return false;
 }
 
@@ -955,7 +955,9 @@ void D3DFB::Unlock ()
 	}
 	else if (--LockCount == 0)
 	{
+#if 0
 		Buffer = NULL;
+#endif
 	}
 }
 
@@ -1060,7 +1062,9 @@ void D3DFB::Update ()
 	BlitCycles.Unclock();
 	//LOG1 ("cycles = %d\n", BlitCycles);
 
+#if 0
 	Buffer = NULL;
+#endif
 	UpdatePending = false;
 }
 
@@ -1111,7 +1115,7 @@ void D3DFB::Flip()
 		GetClientRect(Window, &box);
 		if (box.right > 0 && box.bottom > 0 && (Width != box.right || Height != box.bottom))
 		{
-			Resize(box.right, box.bottom);
+			RenderBuffer->Resize(box.right, box.bottom);
 
 			TrueHeight = Height;
 			PixelDoubling = 0;
@@ -1208,6 +1212,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 		{
 			if (IsBgra() && FBFormat == D3DFMT_A8R8G8B8)
 			{
+				auto MemBuffer = RenderBuffer->GetPixels();
 				if (lockrect.Pitch == Pitch * sizeof(uint32_t) && Pitch == Width)
 				{
 					memcpy(lockrect.pBits, MemBuffer, Width * Height * sizeof(uint32_t));
@@ -1228,17 +1233,17 @@ void D3DFB::Draw3DPart(bool copy3d)
 			{
 				if (lockrect.Pitch == Pitch && Pitch == Width)
 				{
-					memcpy(lockrect.pBits, MemBuffer, Width * Height);
+					memcpy(lockrect.pBits, RenderBuffer->GetPixels(), Width * Height);
 				}
 				else
 				{
 					uint8_t *dest = (uint8_t *)lockrect.pBits;
-					uint8_t *src = (uint8_t *)MemBuffer;
+					uint8_t *src = RenderBuffer->GetPixels();
 					for (int y = 0; y < Height; y++)
 					{
 						memcpy(dest, src, Width);
 						dest = reinterpret_cast<uint8_t*>(reinterpret_cast<uint8_t*>(dest) + lockrect.Pitch);
-						src += Pitch;
+						src += RenderBuffer->GetPitch();
 					}
 				}
 			}

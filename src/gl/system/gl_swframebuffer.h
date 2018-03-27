@@ -24,6 +24,7 @@ class OpenGLSWFrameBuffer : public SDLGLFB
 	typedef SDLGLFB Super;	//[C]commented, DECLARE_CLASS defines this in linux
 #endif
 
+	DSimpleCanvas *RenderBuffer;
 
 public:
 

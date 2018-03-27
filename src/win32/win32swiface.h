@@ -20,6 +20,9 @@ extern HANDLE FPSLimitEvent;
 class D3DFB : public BaseWinFB
 {
 	typedef BaseWinFB Super;
+
+	DSimpleCanvas *RenderBuffer = nullptr;
+
 public:
 	D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen);
 	~D3DFB ();

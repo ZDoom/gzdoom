@@ -199,8 +199,6 @@ int		NewWidth, NewHeight, NewBits;
 DCanvas::DCanvas (int _width, int _height, bool _bgra)
 {
 	// Init member vars
-	Buffer = NULL;
-	LockCount = 0;
 	Width = _width;
 	Height = _height;
 	Bgra = _bgra;
@@ -527,7 +525,7 @@ void DFrameBuffer::CalcGamma (float gamma, uint8_t gammalookup[256])
 DSimpleCanvas::DSimpleCanvas (int width, int height, bool bgra)
 	: DCanvas (width, height, bgra)
 {
-	MemBuffer = nullptr;
+	PixelBuffer = nullptr;
 	Resize(width, height);
 }
 
@@ -536,10 +534,10 @@ void DSimpleCanvas::Resize(int width, int height)
 	Width = width;
 	Height = height;
 
-	if (MemBuffer != NULL)
+	if (PixelBuffer != NULL)
 	{
-		delete[] MemBuffer;
-		MemBuffer = NULL;
+		delete[] PixelBuffer;
+		PixelBuffer = NULL;
 	}
 
 	// Making the pitch a power of 2 is very bad for performance
@@ -578,8 +576,8 @@ void DSimpleCanvas::Resize(int width, int height)
 		}
 	}
 	int bytes_per_pixel = Bgra ? 4 : 1;
-	MemBuffer = new uint8_t[Pitch * height * bytes_per_pixel];
-	memset (MemBuffer, 0, Pitch * height * bytes_per_pixel);
+	PixelBuffer = new uint8_t[Pitch * height * bytes_per_pixel];
+	memset (PixelBuffer, 0, Pitch * height * bytes_per_pixel);
 }
 
 //==========================================================================
@@ -590,10 +588,10 @@ void DSimpleCanvas::Resize(int width, int height)
 
 DSimpleCanvas::~DSimpleCanvas ()
 {
-	if (MemBuffer != NULL)
+	if (PixelBuffer != NULL)
 	{
-		delete[] MemBuffer;
-		MemBuffer = NULL;
+		delete[] PixelBuffer;
+		PixelBuffer = NULL;
 	}
 }
 
@@ -607,7 +605,7 @@ DSimpleCanvas::~DSimpleCanvas ()
 //==========================================================================
 
 DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
-	: DSimpleCanvas (ViewportScaledWidth(width, height), ViewportScaledHeight(width, height), bgra)
+	: DCanvas (ViewportScaledWidth(width, height), ViewportScaledHeight(width, height), bgra)
 {
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
@@ -615,70 +613,6 @@ DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
 	VideoWidth = width;
 	VideoHeight = height;
 }
-
-//==========================================================================
-//
-// DFrameBuffer :: PostprocessBgra
-//
-// Copies data to destination buffer while performing gamma and flash.
-// This is only needed if a target cannot do this with shaders.
-//
-//==========================================================================
-
-void DFrameBuffer::CopyWithGammaBgra(void *output, int pitch, const uint8_t *gammared, const uint8_t *gammagreen, const uint8_t *gammablue, PalEntry flash, int flash_amount)
-{
-	const uint8_t *gammatables[3] = { gammared, gammagreen, gammablue };
-
-	if (flash_amount > 0)
-	{
-		uint16_t inv_flash_amount = 256 - flash_amount;
-		uint16_t flash_red = flash.r * flash_amount;
-		uint16_t flash_green = flash.g * flash_amount;
-		uint16_t flash_blue = flash.b * flash_amount;
-		
-		for (int y = 0; y < Height; y++)
-		{
-			uint8_t *dest = (uint8_t*)output + y * pitch;
-			uint8_t *src = MemBuffer + y * Pitch * 4;
-			for (int x = 0;  x < Width; x++)
-			{
-				uint16_t fg_red = src[2];
-				uint16_t fg_green = src[1];
-				uint16_t fg_blue = src[0];
-				uint16_t red = (fg_red * inv_flash_amount + flash_red) >> 8;
-				uint16_t green = (fg_green * inv_flash_amount + flash_green) >> 8;
-				uint16_t blue = (fg_blue * inv_flash_amount + flash_blue) >> 8;
-
-				dest[0] = gammatables[2][blue];
-				dest[1] = gammatables[1][green];
-				dest[2] = gammatables[0][red];
-				dest[3] = 0xff;
-
-				dest += 4;
-				src += 4;
-			}
-		}
-	}
-	else
-	{
-		for (int y = 0; y < Height; y++)
-		{
-			uint8_t *dest = (uint8_t*)output + y * pitch;
-			uint8_t *src = MemBuffer + y * Pitch * 4;
-			for (int x = 0;  x < Width; x++)
-			{
-				dest[0] = gammatables[2][src[0]];
-				dest[1] = gammatables[1][src[1]];
-				dest[2] = gammatables[0][src[2]];
-				dest[3] = 0xff;
-
-				dest += 4;
-				src += 4;
-			}
-		}
-	}
-}
-
 
 //==========================================================================
 //
@@ -726,38 +660,15 @@ void DFrameBuffer::DrawRateStuff ()
 	// draws little dots on the bottom of the screen
 	if (ticker)
 	{
-		int64_t i = I_GetTime();
-		int64_t tics = i - LastTic;
-		uint8_t *buffer = GetBuffer();
+		int64_t t = I_GetTime();
+		int64_t tics = t - LastTic;
 
-		LastTic = i;
+		LastTic = t;
 		if (tics > 20) tics = 20;
 
-		// Buffer can be NULL if we're doing hardware accelerated 2D
-		if (buffer != NULL)
-		{
-			if (IsBgra())
-			{
-				uint32_t *buffer32 = (uint32_t*)buffer;
-				buffer32 += (GetHeight() - 1) * GetPitch();
-
-				for (i = 0; i < tics * 2; i += 2)	buffer32[i] = 0xffffffff;
-				for (; i < 20 * 2; i += 2)			buffer32[i] = 0xff000000;
-			}
-			else
-			{
-				buffer += (GetHeight() - 1) * GetPitch();
-
-				for (i = 0; i < tics * 2; i += 2)	buffer[i] = 0xff;
-				for (; i < 20 * 2; i += 2)			buffer[i] = 0x00;
-			}
-		}
-		else
-		{
-			int i;
-			for (i = 0; i < tics*2; i += 2)		Clear(i, Height-1, i+1, Height, 255, 0);
-			for ( ; i < 20*2; i += 2)			Clear(i, Height-1, i+1, Height, 0, 0);
-		}
+		int i;
+		for (i = 0; i < tics*2; i += 2)		Clear(i, Height-1, i+1, Height, 255, 0);
+		for ( ; i < 20*2; i += 2)			Clear(i, Height-1, i+1, Height, 0, 0);
 	}
 
 	// draws the palette for debugging

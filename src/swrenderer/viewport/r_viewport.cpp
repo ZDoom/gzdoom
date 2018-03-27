@@ -162,7 +162,7 @@ namespace swrenderer
 
 		int pitch = RenderTarget->GetPitch();
 		int pixelsize = RenderTarget->IsBgra() ? 4 : 1;
-		return RenderTarget->GetBuffer() + (x + y * pitch) * pixelsize;
+		return RenderTarget->GetPixels() + (x + y * pitch) * pixelsize;
 	}
 
 	void RenderViewport::InitTextureMapping()

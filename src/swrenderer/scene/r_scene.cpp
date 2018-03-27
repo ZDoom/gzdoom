@@ -103,13 +103,13 @@ namespace swrenderer
 		{
 			if (!viewport->RenderTarget->IsBgra())
 			{
-				memset(viewport->RenderTarget->GetBuffer(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
+				memset(viewport->RenderTarget->GetPixels(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
 			}
 			else
 			{
 				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
 				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
-				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetBuffer();
+				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
 				for (int i = 0; i < size; i++)
 					dest[i] = bgracolor;
 			}
@@ -118,12 +118,14 @@ namespace swrenderer
 		RenderActorView(player->mo);
 
 		// Apply special colormap if the target cannot do it
+#if 0
 		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
 		{
 			auto queue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
 			queue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
 			DrawerThreads::Execute(queue);
 		}
+#endif
 
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();

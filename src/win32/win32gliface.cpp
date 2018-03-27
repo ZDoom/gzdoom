@@ -1169,7 +1169,7 @@ void Win32GLFrameBuffer::SetGammaTable(uint16_t *tbl)
 bool Win32GLFrameBuffer::Lock(bool buffered)
 {
 	m_Lock++;
-	Buffer = MemBuffer;
+	//Buffer = MemBuffer;
 	return true;
 }
 

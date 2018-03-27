@@ -1069,7 +1069,7 @@ void C_SetTicker (unsigned int at, bool forceUpdate)
 	TickerAt = at > TickerMax ? TickerMax : at;
 }
 
-void C_DrawConsole (bool hw2d)
+void C_DrawConsole ()
 {
 	static int oldbottom = 0;
 	int lines, left, offset;
@@ -1114,7 +1114,7 @@ void C_DrawConsole (bool hw2d)
 			DTA_DestWidth, screen->GetWidth(),
 			DTA_DestHeight, screen->GetHeight(),
 			DTA_ColorOverlay, conshade,
-			DTA_Alpha, (hw2d && gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
+			DTA_Alpha, (gamestate != GS_FULLCONSOLE) ? (double)con_alpha : 1.,
 			DTA_Masked, false,
 			TAG_DONE);
 		if (conline && visheight < screen->GetHeight())
@@ -1192,21 +1192,6 @@ void C_DrawConsole (bool hw2d)
 			}
 		}
 
-		// Apply palette blend effects
-		if (StatusBar != NULL && !hw2d)
-		{
-			player_t *player = StatusBar->CPlayer;
-			if (player->camera != NULL && player->camera->player != NULL)
-			{
-				player = player->camera->player;
-			}
-			if (player->BlendA != 0 && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
-			{
-				screen->Dim (PalEntry ((unsigned char)(player->BlendR*255), (unsigned char)(player->BlendG*255), (unsigned char)(player->BlendB*255)),
-					player->BlendA, 0, ConBottom, screen->GetWidth(), screen->GetHeight() - ConBottom);
-				V_SetBorderNeedRefresh();
-			}
-		}
 	}
 
 	if (menuactive != MENU_Off)

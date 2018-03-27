@@ -669,7 +669,6 @@ CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 void D_Display ()
 {
 	bool wipe;
-	bool hw2d;
 
 	if (nodrawers || screen == NULL)
 		return; 				// for comparative timing / profiling
@@ -774,9 +773,6 @@ void D_Display ()
 		wipe = false;
 	}
 
-	hw2d = false;
-
-
 	{
 		screen->FrameTime = I_msTimeFS();
 		TexMan.UpdateAnimations(screen->FrameTime);
@@ -785,8 +781,8 @@ void D_Display ()
 		{
 		case GS_FULLCONSOLE:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D(false);
-			C_DrawConsole (false);
+			screen->Begin2D(false);
+			C_DrawConsole ();
 			M_Drawer ();
 			screen->Update ();
 			return;
@@ -795,10 +791,7 @@ void D_Display ()
 		case GS_TITLELEVEL:
 			if (!gametic)
 			{
-				if (!screen->HasBegun2D())
-				{
-					screen->Begin2D(false);
-				}
+				screen->Begin2D(false);
 				break;
 			}
 
@@ -815,11 +808,8 @@ void D_Display ()
 			//
 			Renderer->RenderView(&players[consoleplayer]);
 
-			if ((hw2d = screen->Begin2D(viewactive)))
-			{
-				// Redraw everything every frame when using 2D accel
-				V_SetBorderNeedRefresh();
-			}
+			screen->Begin2D(viewactive);
+			V_SetBorderNeedRefresh();
 			Renderer->DrawRemainingPlayerSprites();
 			screen->DrawBlendingRect();
 			if (automapactive)
@@ -867,21 +857,21 @@ void D_Display ()
 
 		case GS_INTERMISSION:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D(false);
+			screen->Begin2D(false);
 			WI_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_FINALE:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D(false);
+			screen->Begin2D(false);
 			F_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_DEMOSCREEN:
 			screen->SetBlendingRect(0,0,0,0);
-			hw2d = screen->Begin2D(false);
+			screen->Begin2D(false);
 			D_PageDrawer ();
 			CT_Drawer ();
 			break;
@@ -935,7 +925,7 @@ void D_Display ()
 		NetUpdate ();			// send out any new accumulation
 		// normal update
 		// draw ZScript UI stuff
-		C_DrawConsole (hw2d);	// draw console
+		C_DrawConsole ();	// draw console
 		M_Drawer ();			// menu is drawn even on top of everything
 		FStat::PrintStat ();
 		screen->Update ();		// page flip or blit buffer
@@ -963,7 +953,7 @@ void D_Display ()
 			} while (diff < 1);
 			wipestart = nowtime;
 			done = screen->WipeDo (1);
-			C_DrawConsole (hw2d);	// console and
+			C_DrawConsole ();	// console and
 			M_Drawer ();			// menu are drawn even on top of wipes
 			screen->Update ();		// page flip or blit buffer
 			NetUpdate ();			// [RH] not sure this is needed anymore

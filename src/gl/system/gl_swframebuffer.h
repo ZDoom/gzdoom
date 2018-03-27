@@ -25,12 +25,16 @@ class OpenGLSWFrameBuffer : public SDLGLFB
 #endif
 
 	DSimpleCanvas *RenderBuffer;
+	DCanvas *MappedBuffer;
 
 public:
 
 	explicit OpenGLSWFrameBuffer() {}
 	OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
 	~OpenGLSWFrameBuffer();
+
+	bool LockCanvas() override;
+	void UnlockCanvas() override;
 
 	virtual DCanvas *GetCanvas() { return RenderBuffer; }
 	void Update() override;

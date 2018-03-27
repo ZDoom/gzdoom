@@ -168,8 +168,6 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	NeedGammaUpdate = false;
 	NeedPalUpdate = false;
 
-	RenderBuffer = new DSimpleCanvas(Width, Height, bgra);
-
 	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
 
 	// To do: this needs to cooperate with the same static in OpenGLFrameBuffer::InitializeState
@@ -219,12 +217,19 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	TrueHeight = height;
 
 	Valid = CreateResources();
+
+	RenderBuffer = new DSimpleCanvas(Width, Height, bgra);
+	if (UseMappedMemBuffer) MappedBuffer = new DCanvas(Width, Height, bgra);
+	else MappedBuffer = nullptr;
+
 	if (Valid)
 		SetInitialState();
 }
 
 OpenGLSWFrameBuffer::~OpenGLSWFrameBuffer()
 {
+	if (RenderBuffer) delete RenderBuffer;
+	if (MappedBuffer) delete MappedBuffer;
 	ReleaseResources();
 	delete[] QuadExtra;
 }
@@ -771,7 +776,7 @@ void OpenGLSWFrameBuffer::Present()
 
 void OpenGLSWFrameBuffer::SetInitialState()
 {
-	//if (gl.es)  re-enable later! First the basics must work.
+	if (gl.es) 
 		UseMappedMemBuffer = false;
 
 	AlphaBlendEnabled = false;
@@ -1109,16 +1114,8 @@ int OpenGLSWFrameBuffer::GetPageCount()
 //
 //==========================================================================
 
-#if 0
-bool OpenGLSWFrameBuffer::Lock(bool buffered)
+bool OpenGLSWFrameBuffer::LockCanvas()
 {
-	if (m_Lock++ > 0)
-	{
-		return false;
-	}
-	assert(!In2D);
-
-#if 0	// temporarily disabled. Must be fixed later
 	if (UseMappedMemBuffer)
 	{
 		if (!MappedMemBuffer)
@@ -1126,19 +1123,12 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 			BindFBBuffer();
 
 			MappedMemBuffer = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
-			Pitch = Width;
 			if (MappedMemBuffer == nullptr)
-				return true;
+				return false;
 			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 		}
-		Buffer = (uint8_t*)MappedMemBuffer;
-	}
-	else
-#endif
-	{
-#if 0
-		//Buffer = MemBuffer;
-#endif
+		MappedBuffer->SetBuffer(Width, Height, Width, static_cast<uint8_t*>(MappedMemBuffer));
+		return true;
 	}
 	return false;
 }
@@ -1149,33 +1139,17 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 //
 //==========================================================================
 
-void OpenGLSWFrameBuffer::Unlock()
+void OpenGLSWFrameBuffer::UnlockCanvas()
 {
-	if (m_Lock == 0)
+	if (MappedMemBuffer)
 	{
-		return;
-	}
-
-	if (UpdatePending && m_Lock == 1)
-	{
-		Update();
-	}
-	else if (--m_Lock == 0)
-	{
-#if 0
-		Buffer = nullptr;
-#endif
-
-		if (MappedMemBuffer)
-		{
-			BindFBBuffer();
-			glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-			glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-			MappedMemBuffer = nullptr;
-		}
+		BindFBBuffer();
+		glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
+		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
+		MappedMemBuffer = nullptr;
+		MappedBuffer->SetBuffer(0, 0, 0, nullptr);
 	}
 }
-#endif
 
 //==========================================================================
 //

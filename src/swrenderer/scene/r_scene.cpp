@@ -89,36 +89,42 @@ namespace swrenderer
 
 	void RenderScene::RenderView(player_t *player)
 	{
-		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen->GetCanvas();
-
-		int width = SCREENWIDTH;
-		int height = SCREENHEIGHT;
-		float trueratio;
-		ActiveRatio(width, height, &trueratio);
-		viewport->SetViewport(MainThread(), width, height, trueratio);
-
-		if (r_clearbuffer != 0)
+		if (screen->LockCanvas())
 		{
-			if (!viewport->RenderTarget->IsBgra())
+			auto viewport = MainThread()->Viewport.get();
+			viewport->RenderTarget = screen->GetCanvas();
+
+			int width = SCREENWIDTH;
+			int height = SCREENHEIGHT;
+			float trueratio;
+			ActiveRatio(width, height, &trueratio);
+			viewport->SetViewport(MainThread(), width, height, trueratio);
+
+			if (r_clearbuffer != 0)
 			{
-				memset(viewport->RenderTarget->GetPixels(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
+				if (!viewport->RenderTarget->IsBgra())
+				{
+					memset(viewport->RenderTarget->GetPixels(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
+				}
+				else
+				{
+					uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
+					int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
+					uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
+					for (int i = 0; i < size; i++)
+						dest[i] = bgracolor;
+				}
 			}
-			else
-			{
-				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
-				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
-				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
-				for (int i = 0; i < size; i++)
-					dest[i] = bgracolor;
-			}
+
+			RenderActorView(player->mo);
+
+			DrawerWaitCycles.Clock();
+			DrawerThreads::WaitForWorkers();
+			DrawerWaitCycles.Unclock();
+
+			screen->UnlockCanvas();
 		}
 
-		RenderActorView(player->mo);
-
-		DrawerWaitCycles.Clock();
-		DrawerThreads::WaitForWorkers();
-		DrawerWaitCycles.Unclock();
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)

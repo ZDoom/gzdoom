@@ -206,12 +206,27 @@ public:
 	virtual ~DCanvas ();
 
 	// Member variable access
-	//inline uint8_t *GetBuffer () const { return Buffer; }
 	inline uint8_t *GetPixels () const { return PixelBuffer; }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
 	inline bool IsBgra() const { return Bgra; }
+
+	bool SetBuffer(int width, int height, int pitch, uint8_t *buffer)
+	{
+		if (PixelBuffer == nullptr)
+		{
+			Width = width;
+			Height = height;
+			Pitch = pitch;
+			PixelBuffer = buffer;
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	}
 
 
 protected:
@@ -220,11 +235,6 @@ protected:
 	int Height;
 	int Pitch;
 	bool Bgra;
-
-
-	DCanvas() {}
-
-private:
 };
 
 // A canvas in system memory.
@@ -236,10 +246,6 @@ public:
 	DSimpleCanvas (int width, int height, bool bgra);
 	~DSimpleCanvas ();
 	void Resize(int width, int height);
-
-private:
-
-	DSimpleCanvas() {}
 };
 
 // This class represents a native texture, as opposed to an FTexture.
@@ -340,6 +346,10 @@ public:
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
 	virtual bool LegacyHardware() const { return false; }	// only for reporting SM1.4 support to the stat collector
+
+	// For FrameBuffers with a software canvas that requires special preparation before being used.
+	virtual bool LockCanvas() { return true; }
+	virtual void UnlockCanvas() {}
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end
 	// the scene, and it doesn't present the image yet. If you are going to

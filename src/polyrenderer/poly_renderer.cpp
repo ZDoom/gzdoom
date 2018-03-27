@@ -59,18 +59,22 @@ void PolyRenderer::RenderView(player_t *player)
 {
 	using namespace swrenderer;
 	
-	RenderTarget = screen->GetCanvas();
+	if (screen->LockCanvas())
+	{
+		RenderTarget = screen->GetCanvas();
 
-	int width = SCREENWIDTH;
-	int height = SCREENHEIGHT;
-	float trueratio;
-	ActiveRatio(width, height, &trueratio);
-	//viewport->SetViewport(&Thread, width, height, trueratio);
+		int width = SCREENWIDTH;
+		int height = SCREENHEIGHT;
+		float trueratio;
+		ActiveRatio(width, height, &trueratio);
+		//viewport->SetViewport(&Thread, width, height, trueratio);
 
-	RenderActorView(player->mo, false);
+		RenderActorView(player->mo, false);
 
-	Threads.MainThread()->FlushDrawQueue();
-	DrawerThreads::WaitForWorkers();
+		Threads.MainThread()->FlushDrawQueue();
+		DrawerThreads::WaitForWorkers();
+		screen->UnlockCanvas();
+	}
 }
 
 void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)

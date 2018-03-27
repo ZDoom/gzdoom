@@ -67,8 +67,6 @@ public:
 	void WipeCleanup() override;
 
 #ifdef WIN32
-	void Blank() override { }
-	bool PaintToWindow() override;
 	int GetTrueHeight() override { return TrueHeight; }
 #endif
 

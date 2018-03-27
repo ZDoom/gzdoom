@@ -50,7 +50,6 @@ class Win32Video : public IVideo
 	~Win32Video ();
 
 	bool InitD3D9();
-	void InitDDraw();
 
 	EDisplayType GetDisplayType () { return DISPLAY_Both; }
 	void SetWindowedScale (float scale);
@@ -61,7 +60,6 @@ class Win32Video : public IVideo
 	bool NextMode (int *width, int *height, bool *letterbox);
 
 	bool GoFullscreen (bool yes);
-	void BlankForGDI ();
 
 	void DumpAdapters ();
 	void AddMode(int x, int y, int bits, int baseHeight, int doubling);
@@ -107,14 +105,9 @@ public:
 	BaseWinFB(int width, int height, bool bgra) : DFrameBuffer(width, height, bgra), Windowed(true) {}
 
 	bool IsFullscreen () { return !Windowed; }
-	virtual void Blank () = 0;
-	virtual bool PaintToWindow () = 0;
-	virtual long/*HRESULT*/ GetHR () = 0;	// HRESULT is a long in Windows but this header should not be polluted with windows.h just for this single definition
 	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 
 protected:
-	virtual bool CreateResources () = 0;
-	virtual void ReleaseResources () = 0;
     virtual int GetTrueHeight() { return GetHeight(); }
 
 	bool Windowed;

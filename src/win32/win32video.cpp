@@ -103,37 +103,20 @@ extern bool VidResizing;
 EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR(Int, vid_maxfps)
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 static HMODULE D3D9_dll;
-static HMODULE DDraw_dll;
 static UINT FPSLimitTimer;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-IDirectDraw2 *DDraw;
 IDirect3D9 *D3D;
 IDirect3DDevice9 *D3Device;
 HANDLE FPSLimitEvent;
 
-CVAR (Bool, vid_forceddraw, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR (Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CUSTOM_CVAR (Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (vid_maxfps < TICRATE && vid_maxfps != 0)
-	{
-		vid_maxfps = TICRATE;
-	}
-	else if (vid_maxfps > 1000)
-	{
-		vid_maxfps = 1000;
-	}
-	else if (cl_capfps == 0)
-	{
-		I_SetFPSLimit(vid_maxfps);
-	}
-}
 
 #if VID_FILE_DEBUG
 FILE *dbg;
@@ -147,25 +130,13 @@ Win32Video::Win32Video (int parm)
   m_Adapter (D3DADAPTER_DEFAULT)
 {
 	I_SetWndProc();
-	if (!InitD3D9())
-	{
-		InitDDraw();
-	}
+	InitD3D9();
 }
 
 Win32Video::~Win32Video ()
 {
 	FreeModes ();
 
-	if (DDraw != NULL)
-	{
-		if (m_IsFullscreen)
-		{
-			DDraw->SetCooperativeLevel (NULL, DDSCL_NORMAL);
-		}
-		DDraw->Release();
-		DDraw = NULL;
-	}
 	if (D3D != NULL)
 	{
 		D3D->Release();
@@ -178,11 +149,6 @@ Win32Video::~Win32Video ()
 bool Win32Video::InitD3D9 ()
 {
 	DIRECT3DCREATE9FUNC direct3d_create_9;
-
-	if (vid_forceddraw)
-	{
-		return false;
-	}
 
 	// Load the Direct3D 9 library.
 	if ((D3D9_dll = LoadLibraryA ("d3d9.dll")) == NULL)
@@ -259,124 +225,12 @@ static HRESULT WINAPI EnumDDModesCB(LPDDSURFACEDESC desc, void *data)
 	return DDENUMRET_OK;
 }
 
-void Win32Video::InitDDraw ()
-{
-	DIRECTDRAWCREATEFUNC directdraw_create;
-	LPDIRECTDRAW ddraw1;
-	STARTLOG;
-
-	HRESULT dderr;
-
-	// Load the DirectDraw library.
-	if ((DDraw_dll = LoadLibraryA ("ddraw.dll")) == NULL)
-	{
-		I_FatalError ("Could not load ddraw.dll");
-	}
-
-	// Obtain an IDirectDraw interface.
-	if ((directdraw_create = (DIRECTDRAWCREATEFUNC)GetProcAddress (DDraw_dll, "DirectDrawCreate")) == NULL)
-	{
-		I_FatalError ("The system file ddraw.dll is missing the DirectDrawCreate export");
-	}
-
-	dderr = directdraw_create (NULL, &ddraw1, NULL);
-
-	if (FAILED(dderr))
-		I_FatalError ("Could not create DirectDraw object: %08lx", dderr);
-
-	static const GUID IDIRECTDRAW2_GUID = { 0xB3A6F3E0, 0x2B43, 0x11CF, 0xA2, 0xDE, 0x00, 0xAA, 0x00, 0xB9, 0x33, 0x56 };
-
-	dderr = ddraw1->QueryInterface (IDIRECTDRAW2_GUID, (LPVOID*)&DDraw);
-	if (FAILED(dderr))
-	{
-		ddraw1->Release ();
-		DDraw = NULL;
-		I_FatalError ("Could not initialize IDirectDraw2 interface: %08lx", dderr);
-	}
-
-	// Okay, we have the IDirectDraw2 interface now, so we can release the
-	// really old-fashioned IDirectDraw one.
-	ddraw1->Release ();
-
-	DDraw->SetCooperativeLevel (Window, DDSCL_NORMAL);
-	FreeModes ();
-	dderr = DDraw->EnumDisplayModes (0, NULL, this, EnumDDModesCB);
-	if (FAILED(dderr))
-	{
-		DDraw->Release ();
-		DDraw = NULL;
-		I_FatalError ("Could not enumerate display modes: %08lx", dderr);
-	}
-	if (m_Modes == NULL)
-	{
-		DDraw->Release ();
-		DDraw = NULL;
-		I_FatalError ("DirectDraw returned no display modes.\n\n"
-					"If you started " GAMENAME " from a fullscreen DOS box, run it from "
-					"a DOS window instead. If that does not work, you may need to reboot.");
-	}
-	if (Args->CheckParm ("-2"))
-	{ // Force all modes to be pixel-doubled.
-		ScaleModes(1);
-	}
-	else if (Args->CheckParm ("-4"))
-	{ // Force all modes to be pixel-quadrupled.
-		ScaleModes(2);
-	}
-	else
-	{
-		AddLowResModes ();
-	}
-	AddLetterboxModes ();
-}
 
 // Returns true if fullscreen, false otherwise
 bool Win32Video::GoFullscreen (bool yes)
 {
-	static const char *const yestypes[2] = { "windowed", "fullscreen" };
-	HRESULT hr[2];
-	int count;
-
 	// FIXME: Do this right for D3D.
-	if (D3D != NULL)
-	{
-		return yes;
-	}
-
-	if (m_IsFullscreen == yes)
-		return yes;
-
-	for (count = 0; count < 2; ++count)
-	{
-		LOG1 ("fullscreen: %d\n", yes);
-		hr[count] = DDraw->SetCooperativeLevel (Window, !yes ? DDSCL_NORMAL :
-			DDSCL_ALLOWMODEX | DDSCL_ALLOWREBOOT | DDSCL_EXCLUSIVE | DDSCL_FULLSCREEN);
-		if (SUCCEEDED(hr[count]))
-		{
-			if (count != 0)
-			{
-// Ack! Cannot print because the screen does not exist right now.
-//				Printf ("Setting %s mode failed. Error %08lx\n",
-//					yestypes[!yes], hr[0]);
-			}
-			m_IsFullscreen = yes;
-			return yes;
-		}
-		yes = !yes;
-	}
-
-	I_FatalError ("Could not set %s mode: %08lx\n"
-				  "Could not set %s mode: %08lx\n",
-				  yestypes[yes], hr[0], yestypes[!yes], hr[1]);
-
-	// Appease the compiler, even though we never return if we get here.
-	return false;
-}
-
-// Flips to the GDI surface and clears it
-void Win32Video::BlankForGDI ()
-{
-	static_cast<BaseWinFB *> (screen)->Blank ();
+	return yes;
 }
 
 //==========================================================================

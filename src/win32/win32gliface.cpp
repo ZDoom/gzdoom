@@ -64,7 +64,7 @@ extern HWND			Window;
 extern BOOL AppActive;
 
 extern "C" {
-    _declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
+    __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;	
 }
 
@@ -1168,29 +1168,6 @@ void Win32GLFrameBuffer::SetGammaTable(uint16_t *tbl)
 bool Win32GLFrameBuffer::IsFullscreen()
 {
 	return m_Fullscreen;
-}
-
-HRESULT Win32GLFrameBuffer::GetHR() 
-{ 
-	return 0; 
-}
-
-void Win32GLFrameBuffer::Blank () 
-{
-}
-
-bool Win32GLFrameBuffer::PaintToWindow () 
-{ 
-	return false; 
-}
-
-bool Win32GLFrameBuffer::CreateResources () 
-{ 
-	return false; 
-}
-
-void Win32GLFrameBuffer::ReleaseResources () 
-{
 }
 
 //==========================================================================

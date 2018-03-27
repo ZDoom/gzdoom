@@ -38,8 +38,6 @@ public:
 	void GetFlash (PalEntry &rgb, int &amount);
 	int GetPageCount ();
 	bool IsFullscreen ();
-	void Blank ();
-	bool PaintToWindow ();
 	void SetVSync (bool vsync);
 	void NewRefreshRate();
 	void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) override;
@@ -62,7 +60,6 @@ public:
 	void WipeEndScreen();
 	bool WipeDo(int ticks);
 	void WipeCleanup();
-	HRESULT GetHR ();
     virtual int GetTrueHeight() { return TrueHeight; }
 
 private:

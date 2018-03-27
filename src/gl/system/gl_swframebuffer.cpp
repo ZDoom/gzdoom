@@ -1263,22 +1263,6 @@ void OpenGLSWFrameBuffer::Flip()
 
 //==========================================================================
 //
-// OpenGLSWFrameBuffer :: PaintToWindow
-//
-//==========================================================================
-
-#ifdef WIN32
-
-bool OpenGLSWFrameBuffer::PaintToWindow()
-{
-	Draw3DPart(true);
-	return true;
-}
-
-#endif
-
-//==========================================================================
-//
 // OpenGLSWFrameBuffer :: Draw3DPart
 //
 // The software 3D part, to be exact.

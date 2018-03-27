@@ -886,17 +886,6 @@ int D3DFB::GetPageCount ()
 
 //==========================================================================
 //
-// D3DFB :: GetHR
-//
-//==========================================================================
-
-HRESULT D3DFB::GetHR ()
-{
-	return LastHR;
-}
-
-//==========================================================================
-//
 // D3DFB :: IsFullscreen
 //
 //==========================================================================
@@ -1095,29 +1084,6 @@ void D3DFB::CopyNextFrontBuffer()
 			backbuff->Release();
 		}
 	}
-}
-
-//==========================================================================
-//
-// D3DFB :: PaintToWindow
-//
-//==========================================================================
-
-bool D3DFB::PaintToWindow ()
-{
-	HRESULT hr;
-
-	hr = D3DDevice->TestCooperativeLevel();
-	if (FAILED(hr))
-	{
-		if (hr != D3DERR_DEVICENOTRESET || !Reset())
-		{
-			Sleep (1);
-			return false;
-		}
-	}
-	Draw3DPart(true);
-	return true;
 }
 
 //==========================================================================
@@ -1400,10 +1366,6 @@ void D3DFB::NewRefreshRate ()
 	{
 		Reset();
 	}
-}
-
-void D3DFB::Blank ()
-{
 }
 
 void D3DFB::SetBlendingRect(int x1, int y1, int x2, int y2)

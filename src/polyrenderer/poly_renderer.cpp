@@ -60,7 +60,7 @@ void PolyRenderer::RenderView(player_t *player)
 {
 	using namespace swrenderer;
 	
-	RenderTarget = screen;
+	RenderTarget = screen->GetCanvas();
 
 	int width = SCREENWIDTH;
 	int height = SCREENHEIGHT;
@@ -99,7 +99,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	Threads.MainThread()->FlushDrawQueue();
 	DrawerThreads::WaitForWorkers();
 
-	RenderTarget = screen;
+	RenderTarget = screen->GetCanvas();
 	R_ExecuteSetViewSize(Viewpoint, Viewwindow);
 	float trueratio;
 	ActiveRatio(width, height, &trueratio);
@@ -166,7 +166,7 @@ void PolyRenderer::SetSceneViewport()
 {
 	using namespace swrenderer;
 	
-	if (RenderTarget == screen) // Rendering to screen
+	if (RenderTarget == screen->GetCanvas()) // Rendering to screen
 	{
 		int height;
 		if (screenblocks >= 10)

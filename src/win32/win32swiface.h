@@ -26,6 +26,8 @@ class D3DFB : public BaseWinFB
 public:
 	D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen);
 	~D3DFB ();
+	virtual DCanvas *GetCanvas() { return RenderBuffer; }
+
 
 	bool Lock (bool buffered);
 	void Unlock ();

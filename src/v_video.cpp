@@ -605,8 +605,12 @@ DSimpleCanvas::~DSimpleCanvas ()
 //==========================================================================
 
 DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
-	: DCanvas (ViewportScaledWidth(width, height), ViewportScaledHeight(width, height), bgra)
+	//: DCanvas 
 {
+	Width = ViewportScaledWidth(width, height);
+	Height = ViewportScaledHeight(width, height);
+	Bgra = bgra;
+
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
 	Accel2D = false;
 
@@ -794,32 +798,6 @@ void FPaletteTester::MakeTexture()
 		k -= 255;
 	}
 	CurTranslation = t;
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: CopyFromBuff
-//
-// Copies pixels from main memory to video memory. This is only used by
-// DDrawFB.
-//
-//==========================================================================
-
-void DFrameBuffer::CopyFromBuff (uint8_t *src, int srcPitch, int width, int height, uint8_t *dest)
-{
-	if (Pitch == width && Pitch == Width && srcPitch == width)
-	{
-		memcpy (dest, src, Width * Height);
-	}
-	else
-	{
-		for (int y = 0; y < height; y++)
-		{
-			memcpy (dest, src, width);
-			dest += Pitch;
-			src += srcPitch;
-		}
-	}
 }
 
 //==========================================================================

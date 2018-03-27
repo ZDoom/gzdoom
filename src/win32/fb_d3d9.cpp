@@ -262,7 +262,6 @@ D3DFB::D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen)
 	NeedPalUpdate = false;
 
 	RenderBuffer = new DSimpleCanvas(width, height, bgra);
-	Pitch = RenderBuffer->GetPitch();	// should be removed, but still needed as long as DFrameBuffer inherits from DCanvas
 
 	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 
@@ -1210,9 +1209,12 @@ void D3DFB::Draw3DPart(bool copy3d)
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, NULL, D3DLOCK_DISCARD))) ||
 			SUCCEEDED(FBTexture->LockRect (0, &lockrect, &texrect, 0)))
 		{
+			auto MemBuffer = RenderBuffer->GetPixels();
+			auto Pitch = RenderBuffer->GetPitch();
+
 			if (IsBgra() && FBFormat == D3DFMT_A8R8G8B8)
 			{
-				auto MemBuffer = RenderBuffer->GetPixels();
+
 				if (lockrect.Pitch == Pitch * sizeof(uint32_t) && Pitch == Width)
 				{
 					memcpy(lockrect.pBits, MemBuffer, Width * Height * sizeof(uint32_t));
@@ -1233,7 +1235,7 @@ void D3DFB::Draw3DPart(bool copy3d)
 			{
 				if (lockrect.Pitch == Pitch && Pitch == Width)
 				{
-					memcpy(lockrect.pBits, RenderBuffer->GetPixels(), Width * Height);
+					memcpy(lockrect.pBits, MemBuffer, Width * Height);
 				}
 				else
 				{

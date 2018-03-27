@@ -91,7 +91,7 @@ namespace swrenderer
 	void RenderScene::RenderView(player_t *player)
 	{
 		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen;
+		viewport->RenderTarget = screen->GetCanvas();
 
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
@@ -369,7 +369,7 @@ namespace swrenderer
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();
 
-		viewport->RenderTarget = screen;
+		viewport->RenderTarget = screen->GetCanvas();
 
 		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
 		float trueratio;
@@ -384,7 +384,7 @@ namespace swrenderer
 	void RenderScene::ScreenResized()
 	{
 		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen;
+		viewport->RenderTarget = screen->GetCanvas();
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
 		float trueratio;

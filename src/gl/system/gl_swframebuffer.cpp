@@ -1383,6 +1383,7 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 			int size = Width * Height * pixelsize;
 
 			auto MemBuffer = RenderBuffer->GetPixels();
+			auto Pitch = RenderBuffer->GetPitch();
 			uint8_t *dest = (uint8_t*)MapBuffer(GL_PIXEL_UNPACK_BUFFER, size);
 			if (dest)
 			{

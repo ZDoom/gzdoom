@@ -220,7 +220,6 @@ protected:
 	int Height;
 	int Pitch;
 	bool Bgra;
-	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 
 	DCanvas() {}
@@ -268,7 +267,7 @@ public:
 // for actually implementing this. Built on top of SimpleCanvas, because it
 // needs a system memory buffer when buffered output is enabled.
 
-class DFrameBuffer : public DCanvas
+class DFrameBuffer
 {
 	typedef DSimpleCanvas Super;
 
@@ -281,9 +280,19 @@ protected:
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
 	int LockCount = 0;
+	int Width = 0;
+	int Height = 0;
+	bool Bgra = 0;
+	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 public:
 	DFrameBuffer (int width, int height, bool bgra);
+
+	inline int GetWidth() const { return Width; }
+	inline int GetHeight() const { return Height; }
+	inline bool IsBgra() const { return Bgra; }
+	virtual DCanvas *GetCanvas() { return nullptr; }
+
 
 	// Access control
 	virtual bool IsValid() = delete;
@@ -447,7 +456,6 @@ public:
 
 protected:
 	void DrawRateStuff ();
-	void CopyFromBuff (uint8_t *src, int srcPitch, int width, int height, uint8_t *dest);
 
 	DFrameBuffer () {}
 

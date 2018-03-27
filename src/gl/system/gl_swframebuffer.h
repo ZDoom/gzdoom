@@ -32,6 +32,7 @@ public:
 	OpenGLSWFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
 	~OpenGLSWFrameBuffer();
 
+	virtual DCanvas *GetCanvas() { return RenderBuffer; }
 	bool Lock(bool buffered) override;
 	void Unlock() override;
 	void Update() override;

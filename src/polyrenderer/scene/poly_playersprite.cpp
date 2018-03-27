@@ -288,14 +288,16 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
 
-	if (viewpoint.camera->player && (renderTarget != screen ||
+	auto screencanvas = screen->GetCanvas();
+
+	if (viewpoint.camera->player && (renderTarget != screencanvas ||
 		viewheight == renderTarget->GetHeight() ||
 		(renderTarget->GetWidth() > (BASEXCENTER * 2))))
 	{	// Adjust PSprite for fullscreen views
 		AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)
 		{
-			if (renderTarget != screen || viewheight == renderTarget->GetHeight())
+			if (renderTarget != screencanvas || viewheight == renderTarget->GetHeight())
 			{
 				vis.texturemid -= weapon->YAdjust;
 			}
@@ -416,7 +418,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
 	// fuzzy, don't draw it until after the switch to 2D mode.
-	if (!noaccel && renderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+	if (!noaccel && renderTarget == screencanvas && (DFrameBuffer *)screen->Accel2D)
 	{
 		FRenderStyle style = vis.RenderStyle;
 		style.CheckFuzz();

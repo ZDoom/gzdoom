@@ -188,7 +188,7 @@ void OpenGLFrameBuffer::Update()
 	if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
 	{
 		// Do not call Resize here because it's only for software canvases
-		Pitch = Width = clientWidth;
+		Width = clientWidth;
 		Height = clientHeight;
 		V_OutputResized(Width, Height);
 		GLRenderer->mVBO->OutputResized(Width, Height);

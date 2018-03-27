@@ -52,7 +52,7 @@ namespace swrenderer
 
 		uint8_t *GetDest(int x, int y);
 
-		bool RenderingToCanvas() const { return RenderTarget != screen; }
+		bool RenderingToCanvas() const { return RenderTarget != screen->GetCanvas(); }
 
 		DVector3 PointWorldToView(const DVector3 &worldPos) const;
 		DVector3 PointWorldToScreen(const DVector3 &worldPos) const;

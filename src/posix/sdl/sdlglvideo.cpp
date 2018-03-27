@@ -46,7 +46,6 @@
 #include "c_console.h"
 
 #include "sdlglvideo.h"
-#include "sdlvideo.h"
 #include "gl/system/gl_system.h"
 #include "r_defs.h"
 #include "gl/gl_functions.h"

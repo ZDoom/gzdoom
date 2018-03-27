@@ -78,7 +78,7 @@ protected:
 TimidityPlus::Instruments *TimidityPPMIDIDevice::instruments;
 
 // Config file to use
-CUSTOM_CVAR(String, timidity_config, "timidity.cfg", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, timidity_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_TIMIDITY)
 	{

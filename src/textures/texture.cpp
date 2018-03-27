@@ -52,7 +52,7 @@ typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
 struct TexCreateInfo
 {
 	CreateFunc TryCreate;
-	int usetype;
+	ETextureType usetype;
 };
 
 uint8_t FTexture::GrayMap[256];
@@ -80,20 +80,20 @@ FTexture *AutomapTexture_TryCreate(FileReader &, int lumpnum);
 
 // Examines the lump contents to decide what type of texture to create,
 // and creates the texture.
-FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
+FTexture * FTexture::CreateTexture (int lumpnum, ETextureType usetype)
 {
 	static TexCreateInfo CreateInfo[]={
-		{ IMGZTexture_TryCreate,		TEX_Any },
-		{ PNGTexture_TryCreate,			TEX_Any },
-		{ JPEGTexture_TryCreate,		TEX_Any },
-		{ DDSTexture_TryCreate,			TEX_Any },
-		{ PCXTexture_TryCreate,			TEX_Any },
-		{ TGATexture_TryCreate,			TEX_Any },
-		{ RawPageTexture_TryCreate,		TEX_MiscPatch },
-		{ FlatTexture_TryCreate,		TEX_Flat },
-		{ PatchTexture_TryCreate,		TEX_Any },
-		{ EmptyTexture_TryCreate,		TEX_Any },
-		{ AutomapTexture_TryCreate,		TEX_MiscPatch },
+		{ IMGZTexture_TryCreate,		ETextureType::Any },
+		{ PNGTexture_TryCreate,			ETextureType::Any },
+		{ JPEGTexture_TryCreate,		ETextureType::Any },
+		{ DDSTexture_TryCreate,			ETextureType::Any },
+		{ PCXTexture_TryCreate,			ETextureType::Any },
+		{ TGATexture_TryCreate,			ETextureType::Any },
+		{ RawPageTexture_TryCreate,		ETextureType::MiscPatch },
+		{ FlatTexture_TryCreate,		ETextureType::Flat },
+		{ PatchTexture_TryCreate,		ETextureType::Any },
+		{ EmptyTexture_TryCreate,		ETextureType::Any },
+		{ AutomapTexture_TryCreate,		ETextureType::MiscPatch },
 	};
 
 	if (lumpnum == -1) return NULL;
@@ -102,13 +102,13 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 
 	for(size_t i = 0; i < countof(CreateInfo); i++)
 	{
-		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == TEX_Any))
+		if ((CreateInfo[i].usetype == usetype || CreateInfo[i].usetype == ETextureType::Any))
 		{
 			FTexture * tex = CreateInfo[i].TryCreate(data, lumpnum);
 			if (tex != NULL) 
 			{
 				tex->UseType = usetype;
-				if (usetype == FTexture::TEX_Flat) 
+				if (usetype == ETextureType::Flat) 
 				{
 					int w = tex->GetWidth();
 					int h = tex->GetHeight();
@@ -134,7 +134,7 @@ FTexture * FTexture::CreateTexture (int lumpnum, int usetype)
 	return NULL;
 }
 
-FTexture * FTexture::CreateTexture (const char *name, int lumpnum, int usetype)
+FTexture * FTexture::CreateTexture (const char *name, int lumpnum, ETextureType usetype)
 {
 	FTexture *tex = CreateTexture(lumpnum, usetype);
 	if (tex != NULL && name != NULL) {
@@ -148,7 +148,7 @@ FTexture * FTexture::CreateTexture (const char *name, int lumpnum, int usetype)
 FTexture::FTexture (const char *name, int lumpnum)
 : LeftOffset(0), TopOffset(0),
   WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
-  UseType(TEX_Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
+  UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0)
 {
@@ -949,7 +949,7 @@ FDummyTexture::FDummyTexture ()
 	HeightBits = 6;
 	WidthBits = 6;
 	WidthMask = 63;
-	UseType = TEX_Null;
+	UseType = ETextureType::Null;
 }
 
 void FDummyTexture::SetSize (int width, int height)
@@ -983,7 +983,7 @@ CCMD (printspans)
 	if (argv.argc() != 2)
 		return;
 
-	FTextureID picnum = TexMan.CheckForTexture (argv[1], FTexture::TEX_Any);
+	FTextureID picnum = TexMan.CheckForTexture (argv[1], ETextureType::Any);
 	if (!picnum.Exists())
 	{
 		Printf ("Unknown texture %s\n", argv[1]);

@@ -918,7 +918,7 @@ void D_Display ()
 	// [RH] Draw icon, if any
 	if (D_DrawIcon)
 	{
-		FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, FTexture::TEX_MiscPatch);
+		FTextureID picnum = TexMan.CheckForTexture (D_DrawIcon, ETextureType::MiscPatch);
 
 		D_DrawIcon = NULL;
 		if (picnum.isValid())

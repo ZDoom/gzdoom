@@ -110,7 +110,7 @@ unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *heig
 
 		if (HiresLump >=0) 
 		{
-			hirestexture = FTexture::CreateTexture(HiresLump, FTexture::TEX_Any);
+			hirestexture = FTexture::CreateTexture(HiresLump, ETextureType::Any);
 		}
 	}
 	if (hirestexture != NULL)
@@ -261,7 +261,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 FHardwareTexture *FGLTexture::CreateHwTexture()
 {
-	if (tex->UseType==FTexture::TEX_Null) return NULL;		// Cannot register a NULL texture
+	if (tex->UseType==ETextureType::Null) return NULL;		// Cannot register a NULL texture
 	if (mHwTexture == NULL)
 	{
 		mHwTexture = new FHardwareTexture(tex->GetWidth() + bExpandFlag*2, tex->GetHeight() + bExpandFlag*2, tex->gl_info.bNoCompress);
@@ -418,7 +418,7 @@ float FTexCoordInfo::TextureAdjustWidth() const
 //===========================================================================
 FGLTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
 {
-	if (tex	&& tex->UseType!=FTexture::TEX_Null)
+	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
 		FGLTexture *gltex = tex->gl_info.SystemTexture[expand];
 		if (gltex == NULL) 
@@ -870,7 +870,7 @@ void FMaterial::BindToFrameBuffer()
 FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
 {
 again:
-	if (tex	&& tex->UseType!=FTexture::TEX_Null)
+	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
 		if (tex->gl_info.bNoExpand) expand = false;
 

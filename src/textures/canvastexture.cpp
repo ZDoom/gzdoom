@@ -52,7 +52,7 @@ FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 	DummySpans[0].Length = height;
 	DummySpans[1].TopOffset = 0;
 	DummySpans[1].Length = 0;
-	UseType = TEX_Wall;
+	UseType = ETextureType::Wall;
 	bNeedsUpdate = true;
 	bDidUpdate = false;
 	bHasCanvas = true;

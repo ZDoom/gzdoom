@@ -99,7 +99,7 @@ FTexture *FMugShotFrame::GetTexture(const char *default_face, const char *skin_f
 		}
 		sprite.UnlockBuffer();
 	}
-	return TexMan[TexMan.CheckForTexture(sprite, 0, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_AllowSkins)];
+	return TexMan[TexMan.CheckForTexture(sprite, ETextureType::Any, FTextureManager::TEXMAN_TryAny|FTextureManager::TEXMAN_AllowSkins)];
 }
 
 //===========================================================================

@@ -641,7 +641,7 @@ void SetCompatibilityParams()
 						if (side != NULL)
 						{
 							assert(TexNames.Size() > (unsigned int)CompatParams[i + 4]);
-							const FTextureID texID = TexMan.GetTexture(TexNames[CompatParams[i + 4]], FTexture::TEX_Any);
+							const FTextureID texID = TexMan.GetTexture(TexNames[CompatParams[i + 4]], ETextureType::Any);
 							side->SetTexture(CompatParams[i + 3], texID);
 						}
 					}
@@ -713,7 +713,7 @@ void SetCompatibilityParams()
 							? sec->floorplane 
 							: sec->ceilingplane;
 						assert(TexNames.Size() > (unsigned int)CompatParams[i + 3]);
-						const FTextureID texID = TexMan.GetTexture(TexNames[CompatParams[i + 3]], FTexture::TEX_Any);
+						const FTextureID texID = TexMan.GetTexture(TexNames[CompatParams[i + 3]], ETextureType::Any);
 
 						sec->SetTexture(CompatParams[i + 2], texID);
 					}

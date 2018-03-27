@@ -173,7 +173,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const TriMatrix &world
 			wall.FogBoundary = IsFogBoundary(frontsector, backsector);
 
 			FTexture *midtex = TexMan(line->sidedef->GetTexture(side_t::mid), true);
-			if ((midtex && midtex->UseType != FTexture::TEX_Null) || wall.FogBoundary)
+			if ((midtex && midtex->UseType != ETextureType::Null) || wall.FogBoundary)
 				translucentWallsOutput.push_back(thread->FrameMemory->NewObject<PolyTranslucentWall>(wall));
 
 			if (polyportal)
@@ -519,7 +519,7 @@ void RenderPolyWall::ClampHeight(TriVertex &v1, TriVertex &v2)
 FTexture *RenderPolyWall::GetTexture(const line_t *line, const side_t *side, side_t::ETexpart texpart)
 {
 	FTexture *tex = TexMan(side->GetTexture(texpart), true);
-	if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
+	if (tex == nullptr || tex->UseType == ETextureType::Null)
 	{
 		// Mapping error. Doom floodfills this with a plane.
 		// This code doesn't do that, but at least it uses the "right" texture..
@@ -539,7 +539,7 @@ FTexture *RenderPolyWall::GetTexture(const line_t *line, const side_t *side, sid
 				tex = TexMan(line->frontsector->GetTexture(sector_t::floor), true);
 		}
 
-		if (tex == nullptr || tex->UseType == FTexture::TEX_Null)
+		if (tex == nullptr || tex->UseType == ETextureType::Null)
 			return nullptr;
 	}
 	return tex;

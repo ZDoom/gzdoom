@@ -1890,7 +1890,7 @@ void FParser::SF_FloorTexture(void)
 		if(t_argc > 1)
 		{
 			int i = -1;
-			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
 			FSSectorTagIterator itr(tagnum);
@@ -1980,7 +1980,7 @@ void FParser::SF_CeilingTexture(void)
 		if(t_argc > 1)
 		{
 			int i = -1;
-			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, FTexture::TEX_Flat, FTextureManager::TEXMAN_Overridable);
+			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, ETextureType::Flat, FTextureManager::TEXMAN_Overridable);
 			
 			// set all sectors with tag
 			FSSectorTagIterator itr(tagnum);
@@ -2233,7 +2233,7 @@ void FParser::SF_SetLineTexture(void)
 			position=3-position;
 			
 			texture = stringvalue(t_argv[3]);
-			texturenum = TexMan.GetTexture(texture, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable);
+			texturenum = TexMan.GetTexture(texture, ETextureType::Wall, FTextureManager::TEXMAN_Overridable);
 			
 			FLineIdIterator itr(tag);
 			while ((i = itr.Next()) >= 0)
@@ -2250,7 +2250,7 @@ void FParser::SF_SetLineTexture(void)
 		}
 		else // and an improved legacy version
 		{ 
-			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, FTexture::TEX_Wall, FTextureManager::TEXMAN_Overridable); 
+			FTextureID picnum = TexMan.GetTexture(t_argv[1].string, ETextureType::Wall, FTextureManager::TEXMAN_Overridable); 
 			side = !!intvalue(t_argv[2]); 
 			int sections = intvalue(t_argv[3]); 
 			

@@ -339,12 +339,12 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 
 	switch (inputTexture->UseType)
 	{
-	case FTexture::TEX_Sprite:
-	case FTexture::TEX_SkinSprite:
+	case ETextureType::Sprite:
+	case ETextureType::SkinSprite:
 		if (!(gl_texture_hqresize_targets & 2)) return inputBuffer;
 		break;
 
-	case FTexture::TEX_FontChar:
+	case ETextureType::FontChar:
 		if (!(gl_texture_hqresize_targets & 4)) return inputBuffer;
 		break;
 

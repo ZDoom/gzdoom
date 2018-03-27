@@ -397,7 +397,7 @@ bool DCanvas::ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t t
 
 	if (!fortext)
 	{
-		if (img == NULL || img->UseType == FTexture::TEX_Null)
+		if (img == NULL || img->UseType == ETextureType::Null)
 		{
 			ListEnd(tags);
 			return false;
@@ -1304,11 +1304,11 @@ void V_DrawBorder (int x1, int y1, int x2, int y2)
 
 	if (level.info != NULL && level.info->BorderTexture.Len() != 0)
 	{
-		picnum = TexMan.CheckForTexture (level.info->BorderTexture, FTexture::TEX_Flat);
+		picnum = TexMan.CheckForTexture (level.info->BorderTexture, ETextureType::Flat);
 	}
 	else
 	{
-		picnum = TexMan.CheckForTexture (gameinfo.BorderFlat, FTexture::TEX_Flat);
+		picnum = TexMan.CheckForTexture (gameinfo.BorderFlat, ETextureType::Flat);
 	}
 
 	if (picnum.isValid())

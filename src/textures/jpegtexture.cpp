@@ -249,7 +249,7 @@ FTexture *JPEGTexture_TryCreate(FileReader & data, int lumpnum)
 FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 : FWorldTexture(NULL, lumpnum)
 {
-	UseType = TEX_MiscPatch;
+	UseType = ETextureType::MiscPatch;
 	LeftOffset = 0;
 	TopOffset = 0;
 	bMasked = false;

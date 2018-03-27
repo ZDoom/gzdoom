@@ -57,9 +57,9 @@ struct Side native play
 		WALLF_LIGHT_FOG      = 128,	// This wall's Light is used even in fog.
 	};
 
-	native Sector	sector;			// Sector the SideDef is facing.
+	native readonly Sector sector;			// Sector the SideDef is facing.
 	//DBaseDecal*	AttachedDecals;	// [RH] Decals bound to the wall
-	native Line		linedef;
+	native readonly Line linedef;
 	native int16	Light;
 	native uint8	Flags;
 

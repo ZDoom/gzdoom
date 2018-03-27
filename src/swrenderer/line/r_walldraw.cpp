@@ -327,7 +327,7 @@ namespace swrenderer
 
 	void RenderWallPart::ProcessWallWorker(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)
 	{
-		if (rw_pic->UseType == FTexture::TEX_Null)
+		if (rw_pic->UseType == ETextureType::Null)
 			return;
 
 		int fracbits = 32 - rw_pic->HeightBits;

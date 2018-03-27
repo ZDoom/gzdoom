@@ -332,7 +332,7 @@ FFont *V_GetFont(const char *name)
 		}
 		if (font == NULL)
 		{
-			FTextureID picnum = TexMan.CheckForTexture (name, FTexture::TEX_Any);
+			FTextureID picnum = TexMan.CheckForTexture (name, ETextureType::Any);
 			if (picnum.isValid())
 			{
 				font = new FSinglePicFont (name);
@@ -390,15 +390,15 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 		charlumps[i] = NULL;
 		mysnprintf (buffer, countof(buffer), nametemplate, i + start);
 
-		lump = TexMan.CheckForTexture(buffer, FTexture::TEX_MiscPatch);
+		lump = TexMan.CheckForTexture(buffer, ETextureType::MiscPatch);
 		if (doomtemplate && lump.isValid() && i + start == 121)
 		{ // HACKHACK: Don't load STCFN121 in doom(2), because
 		  // it's not really a lower-case 'y' but a '|'.
 		  // Because a lot of wads with their own font seem to foolishly
 		  // copy STCFN121 and make it a '|' themselves, wads must
 		  // provide STCFN120 (x) and STCFN122 (z) for STCFN121 to load as a 'y'.
-			if (!TexMan.CheckForTexture("STCFN120", FTexture::TEX_MiscPatch).isValid() ||
-				!TexMan.CheckForTexture("STCFN122", FTexture::TEX_MiscPatch).isValid())
+			if (!TexMan.CheckForTexture("STCFN120", ETextureType::MiscPatch).isValid() ||
+				!TexMan.CheckForTexture("STCFN122", ETextureType::MiscPatch).isValid())
 			{
 				// insert the incorrectly named '|' graphic in its correct position.
 				if (count > 124-start) charlumps[124-start] = TexMan[lump];
@@ -1572,7 +1572,7 @@ void FSingleLumpFont::FixupPalette (uint8_t *identity, double *luminosity, const
 FSinglePicFont::FSinglePicFont(const char *picname) :
 	FFont(-1) // Since lump is only needed for priority information we don't need to worry about this here.
 {
-	FTextureID picnum = TexMan.CheckForTexture (picname, FTexture::TEX_Any);
+	FTextureID picnum = TexMan.CheckForTexture (picname, ETextureType::Any);
 
 	if (!picnum.isValid())
 	{
@@ -1639,7 +1639,7 @@ int FSinglePicFont::GetCharWidth (int code) const
 FFontChar1::FFontChar1 (FTexture *sourcelump)
 : SourceRemap (NULL)
 {
-	UseType = FTexture::TEX_FontChar;
+	UseType = ETextureType::FontChar;
 	BaseTexture = sourcelump;
 
 	// now copy all the properties from the base texture
@@ -1758,7 +1758,7 @@ FFontChar1::~FFontChar1 ()
 FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, int leftofs, int topofs)
 : SourceLump (sourcelump), SourcePos (sourcepos), Pixels (0), Spans (0), SourceRemap(NULL)
 {
-	UseType = TEX_FontChar;
+	UseType = ETextureType::FontChar;
 	Width = width;
 	Height = height;
 	LeftOffset = leftofs;
@@ -2270,7 +2270,7 @@ void V_InitCustomFonts()
 					if (format == 1) goto wrong;
 					FTexture **p = &lumplist[*(unsigned char*)sc.String];
 					sc.MustGetString();
-					FTextureID texid = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+					FTextureID texid = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
 					if (texid.Exists())
 					{
 						*p = TexMan[texid];

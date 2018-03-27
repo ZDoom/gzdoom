@@ -179,6 +179,25 @@ inline int Luminance(int r, int g, int b)
 }
 
 
+enum class ETextureType : uint8_t
+{
+	Any,
+	Wall,
+	Flat,
+	Sprite,
+	WallPatch,
+	Build,		// no longer used but needs to remain for ZScript
+	SkinSprite,
+	Decal,
+	MiscPatch,
+	FontChar,
+	Override,	// For patches between TX_START/TX_END
+	Autopage,	// Automap background - used to enable the use of FAutomapTexture
+	SkinGraphic,
+	Null,
+	FirstDefined,
+};
+
 class FTextureID
 {
 	friend class FTextureManager;

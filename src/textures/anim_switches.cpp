@@ -81,13 +81,13 @@ void FTextureManager::InitSwitchList ()
 				continue;
 			}
 			// [RH] Skip this switch if its textures can't be found.
-			if (CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags).Exists() &&
-				CheckForTexture (list_p + 9 /* .name2 */, FTexture::TEX_Wall, texflags).Exists())
+			if (CheckForTexture (list_p /* .name1 */, ETextureType::Wall, texflags).Exists() &&
+				CheckForTexture (list_p + 9 /* .name2 */, ETextureType::Wall, texflags).Exists())
 			{
 				def1 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
 				def2 = (FSwitchDef *)M_Malloc (sizeof(FSwitchDef));
-				def1->PreTexture = def2->frames[0].Texture = CheckForTexture (list_p /* .name1 */, FTexture::TEX_Wall, texflags);
-				def2->PreTexture = def1->frames[0].Texture = CheckForTexture (list_p + 9, FTexture::TEX_Wall, texflags);
+				def1->PreTexture = def2->frames[0].Texture = CheckForTexture (list_p /* .name1 */, ETextureType::Wall, texflags);
+				def2->PreTexture = def1->frames[0].Texture = CheckForTexture (list_p + 9, ETextureType::Wall, texflags);
 				def1->Sound = def2->Sound = 0;
 				def1->NumFrames = def2->NumFrames = 1;
 				def1->frames[0].TimeMin = def2->frames[0].TimeMin = 0;
@@ -148,7 +148,7 @@ void FTextureManager::ProcessSwitchDef (FScanner &sc)
 	}
 
 	sc.MustGetString ();
-	picnum = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+	picnum = CheckForTexture (sc.String, ETextureType::Wall, texflags);
 	picname = sc.String;
 	while (sc.GetString ())
 	{
@@ -247,7 +247,7 @@ FSwitchDef *FTextureManager::ParseSwitchDef (FScanner &sc, bool ignoreBad)
 		else if (sc.Compare ("pic"))
 		{
 			sc.MustGetString ();
-			picnum = CheckForTexture (sc.String, FTexture::TEX_Wall, texflags);
+			picnum = CheckForTexture (sc.String, ETextureType::Wall, texflags);
 			if (!picnum.Exists() && !ignoreBad)
 			{
 				//Printf ("Unknown switch texture %s\n", sc.String);

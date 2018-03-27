@@ -300,7 +300,7 @@ class CommandDrawImage : public SBarInfoCommandFlowControl
 			
 			if (flags & DI_ALTERNATEONFAIL)
 			{
-				SetTruth(texture == NULL || texture->UseType == FTexture::TEX_Null, block, statusBar);
+				SetTruth(texture == NULL || texture->UseType == ETextureType::Null, block, statusBar);
 			}
 		}
 	protected:

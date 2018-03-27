@@ -354,7 +354,7 @@ static void DrawArmor(AInventory * barmor, AInventory * harmor, int x, int y)
 			case 3: icon[3] = '4'; break;
 			default: break;
 			}
-			DrawImageToBox(TexMan.FindTexture(icon, FTexture::TEX_Sprite), x, y, 31, 17);
+			DrawImageToBox(TexMan.FindTexture(icon, ETextureType::Sprite), x, y, 31, 17);
 		}
 		else if (barmor) DrawImageToBox(TexMan[barmor->Icon], x, y, 31, 17);
 		DrawHudNumber(HudFont, fontcolor, ap, x + 33, y + 17);
@@ -1285,13 +1285,13 @@ void HUD_InitHud()
 			if (sc.Compare("Health"))
 			{
 				sc.MustGetString();
-				FTextureID tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
 				if (tex.isValid()) healthpic = TexMan[tex];
 			}
 			else if (sc.Compare("Berserk"))
 			{
 				sc.MustGetString();
-				FTextureID tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+				FTextureID tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
 				if (tex.isValid()) berserkpic = TexMan[tex];
 			}
 			else
@@ -1311,7 +1311,7 @@ void HUD_InitHud()
 
 				if (!sc.Compare("0") && !sc.Compare("NULL") && !sc.Compare(""))
 				{
-					tex = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch);
+					tex = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch);
 				}
 				else tex.SetInvalid();
 

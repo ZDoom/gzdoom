@@ -371,7 +371,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 	// a name with a starting '$' indicates an intermission script
 	if (*lumpname != '$')
 	{
-		texture = TexMan.CheckForTexture(lumpname, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
+		texture = TexMan.CheckForTexture(lumpname, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
 	}
 	else
 	{
@@ -387,7 +387,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 				{
 				case 0:		// Background
 					sc.MustGetString();
-					texture = TexMan.CheckForTexture(sc.String, FTexture::TEX_MiscPatch, FTextureManager::TEXMAN_TryAny);
+					texture = TexMan.CheckForTexture(sc.String, ETextureType::MiscPatch, FTextureManager::TEXMAN_TryAny);
 					break;
 
 				case 1:		// Splat
@@ -525,7 +525,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 		else
 		{
 			Printf("Intermission script %s not found!\n", lumpname + 1);
-			texture = TexMan.GetTexture("INTERPIC", FTexture::TEX_MiscPatch);
+			texture = TexMan.GetTexture("INTERPIC", ETextureType::MiscPatch);
 		}
 	}
 	background = TexMan[texture];
@@ -598,7 +598,7 @@ void DInterBackground::drawBackground(int state, bool drawsplat, bool snl_pointe
 	if (background)
 	{
 		// background
-		if (background->UseType == FTexture::TEX_MiscPatch)
+		if (background->UseType == ETextureType::MiscPatch)
 		{
 			// scale all animations below to fit the size of the base pic
 			// The base pic is always scaled to fit the screen so this allows

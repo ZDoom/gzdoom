@@ -44,7 +44,7 @@ bool I_SetCursor(FTexture *cursorpic)
 	static SDL_Cursor *cursor;
 	static SDL_Surface *cursorSurface;
 
-	if (cursorpic != NULL && cursorpic->UseType != FTexture::TEX_Null)
+	if (cursorpic != NULL && cursorpic->UseType != ETextureType::Null)
 	{
 		// Must be no larger than 32x32.
 		if (cursorpic->GetWidth() > 32 || cursorpic->GetHeight() > 32)

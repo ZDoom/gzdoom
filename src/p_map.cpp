@@ -4888,8 +4888,8 @@ bool P_LineTrace(AActor *t1, DAngle angle, double distance,
 
 	ActorFlags aflags = (flags & TRF_ALLACTORS) ? ActorFlags::FromInt(0xFFFFFFFF) : MF_SHOOTABLE;
 	int lflags = 0;
-	if ( !(lflags & TRF_THRUBLOCK) ) lflags |= ML_BLOCKEVERYTHING;
-	if ( !(lflags & TRF_THRUHITSCAN) ) lflags |= ML_BLOCKHITSCAN;
+	if ( !(flags & TRF_THRUBLOCK) ) lflags |= ML_BLOCKEVERYTHING;
+	if ( !(flags & TRF_THRUHITSCAN) ) lflags |= ML_BLOCKHITSCAN;
 	int tflags = TRACE_ReportPortals;
 	if ( flags & TRF_NOSKY ) tflags |= TRACE_NoSky;
 

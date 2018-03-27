@@ -132,7 +132,7 @@ namespace swrenderer
 		FTexture *WallSpriteTile = TexMan(decal->PicNum, true);
 		flipx = (uint8_t)(decal->RenderFlags & RF_XFLIP);
 
-		if (WallSpriteTile == NULL || WallSpriteTile->UseType == FTexture::TEX_Null)
+		if (WallSpriteTile == NULL || WallSpriteTile->UseType == ETextureType::Null)
 		{
 			return;
 		}

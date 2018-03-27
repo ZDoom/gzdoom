@@ -822,7 +822,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		//
 		//
 		FTexture * tex = TexMan(seg->sidedef->GetTexture(side_t::top));
-		if (!tex || tex->UseType==FTexture::TEX_Null)
+		if (!tex || tex->UseType==ETextureType::Null)
 		{
 			if (front->GetTexture(sector_t::ceiling) == skyflatnum &&
 				back->GetTexture(sector_t::ceiling) == skyflatnum)
@@ -858,7 +858,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		//
 		//
 		tex = TexMan(seg->sidedef->GetTexture(side_t::bottom));
-		if (!tex || tex->UseType==FTexture::TEX_Null)
+		if (!tex || tex->UseType==ETextureType::Null)
 		{
 			// texture is missing - use the lower plane
 			bottomleft = MIN(bfh1,ffh1);
@@ -1391,12 +1391,6 @@ void GLWall::DoFFloorBlocks(seg_t * seg, sector_t * frontsector, sector_t * back
 			// the new section overlaps with the previous one - clip it!
 			ff_topleft = topleft;
 			ff_topright = topright;
-		}
-		if (ff_bottomleft < bottomleft && ff_bottomright < bottomright)
-		{
-			// the new section extends into the floor.
-			ff_bottomleft = bottomleft;
-			ff_bottomright = bottomright;
 		}
 
 		// do all inverse floors above the current one it there is a gap between the

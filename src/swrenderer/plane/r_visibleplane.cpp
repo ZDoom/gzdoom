@@ -115,7 +115,7 @@ namespace swrenderer
 		{
 			FTexture *tex = TexMan(picnum, true);
 
-			if (tex->UseType == FTexture::TEX_Null)
+			if (tex->UseType == ETextureType::Null)
 			{
 				return;
 			}

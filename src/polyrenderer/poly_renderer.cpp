@@ -39,7 +39,6 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_swcolormaps.h"
 
-EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Float, r_visibility)
 void InitGLRMapinfoData();

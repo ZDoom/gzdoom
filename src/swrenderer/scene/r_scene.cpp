@@ -63,7 +63,6 @@
 void PeekThreadedErrorPane();
 #endif
 
-EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
 
 CVAR(Bool, r_scene_multithreaded, false, 0);
@@ -164,13 +163,6 @@ namespace swrenderer
 
 		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
-
-		// If we don't want shadered colormaps, NULL it now so that the
-		// copy to the screen does not use a special colormap shader.
-		if (!r_shadercolormaps && !MainThread()->Viewport->RenderTarget->IsBgra())
-		{
-			CameraLight::Instance()->ClearShaderColormap();
-		}
 	}
 
 	void RenderScene::RenderPSprites()

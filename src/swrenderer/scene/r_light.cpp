@@ -42,7 +42,6 @@
 #include "swrenderer/scene/r_light.h"
 #include "swrenderer/viewport/r_viewport.h"
 
-CVAR(Bool, r_shadercolormaps, true, CVAR_ARCHIVE)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
 
 namespace swrenderer

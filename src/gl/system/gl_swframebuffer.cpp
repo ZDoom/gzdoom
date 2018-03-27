@@ -79,13 +79,8 @@
 CVAR(Int, gl_showpacks, 0, 0)
 #ifndef WIN32 // Defined in fb_d3d9 for Windows
 CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
-{
-	V_SetBorderNeedRefresh();
-}
 #else
 EXTERN_CVAR(Bool, vid_hwaalines)
-EXTERN_CVAR(Bool, vid_hw2d)
 #endif
 
 EXTERN_CVAR(Bool, fullscreen)

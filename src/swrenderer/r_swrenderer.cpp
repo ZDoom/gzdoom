@@ -60,7 +60,6 @@ CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG 
 		players[consoleplayer].SendPitchLimits();
 }
 
-EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from OpenGL Renderer
 EXTERN_CVAR(Bool, r_drawvoxels)
 

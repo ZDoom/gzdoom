@@ -34,7 +34,6 @@
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
-EXTERN_CVAR(Bool, r_shadercolormaps)
 
 void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 {
@@ -385,13 +384,6 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 				vis.Light.ColormapNum = 0;
 				noaccel = true;
 			}
-		}
-		// If we're drawing with a special colormap, but shaders for them are disabled, do
-		// not accelerate.
-		if (!r_shadercolormaps && (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
-			vis.Light.BaseColormap <= &SpecialSWColormaps.Last()))
-		{
-			noaccel = true;
 		}
 		// If drawing with a BOOM colormap, disable acceleration.
 		if (vis.Light.BaseColormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)

@@ -187,13 +187,7 @@ const char *const D3DFB::ShaderNames[D3DFB::NUM_SHADERS] =
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
-CUSTOM_CVAR(Bool, vid_hw2d, true, CVAR_NOINITCALL)
-{
-	V_SetBorderNeedRefresh();
-}
-
 CVAR(Bool, d3d_antilag, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR(Int, d3d_showpacks, 0, 0)
 CVAR(Bool, vid_hwaalines, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 // CODE --------------------------------------------------------------------

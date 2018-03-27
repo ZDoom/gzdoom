@@ -791,7 +791,6 @@ CocoaVideo* CocoaVideo::GetInstance()
 
 SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen, bool bgra)
 : DFrameBuffer(width, height, bgra)
-, m_Lock(0)
 , UpdatePending(false)
 {
 	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
@@ -818,28 +817,6 @@ SDLGLFB::~SDLGLFB()
 {
 }
 
-
-bool SDLGLFB::Lock(bool buffered)
-{
-	m_Lock++;
-
-	Buffer = MemBuffer;
-
-	return true;
-}
-
-void SDLGLFB::Unlock()
-{
-	if (UpdatePending && 1 == m_Lock)
-	{
-		Update();
-	}
-	else if (--m_Lock <= 0)
-	{
-		m_Lock = 0;
-	}
-}
-
 bool SDLGLFB::IsFullscreen()
 {
 	return CocoaVideo::IsFullscreen();
@@ -858,6 +835,7 @@ void SDLGLFB::InitializeState()
 {
 }
 
+#if 0
 bool SDLGLFB::CanUpdate()
 {
 	if (m_Lock != 1)
@@ -873,6 +851,7 @@ bool SDLGLFB::CanUpdate()
 
 	return true;
 }
+#endif
 
 void SDLGLFB::SwapBuffers()
 {

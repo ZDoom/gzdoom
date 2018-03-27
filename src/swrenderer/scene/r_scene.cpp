@@ -117,16 +117,6 @@ namespace swrenderer
 
 		RenderActorView(player->mo);
 
-		// Apply special colormap if the target cannot do it
-#if 0
-		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
-		{
-			auto queue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
-			queue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
-			DrawerThreads::Execute(queue);
-		}
-#endif
-
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();

@@ -610,7 +610,6 @@ DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
 	Bgra = bgra;
 
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
-	Accel2D = false;
 
 	VideoWidth = width;
 	VideoHeight = height;

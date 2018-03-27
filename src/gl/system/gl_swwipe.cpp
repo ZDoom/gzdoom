@@ -122,11 +122,6 @@ private:
 
 bool OpenGLSWFrameBuffer::WipeStartScreen(int type)
 {
-	if (!Accel2D)
-	{
-		return Super::WipeStartScreen(type);
-	}
-
 	switch (type)
 	{
 	case wipe_Melt:
@@ -164,12 +159,6 @@ bool OpenGLSWFrameBuffer::WipeStartScreen(int type)
 
 void OpenGLSWFrameBuffer::WipeEndScreen()
 {
-	if (!Accel2D)
-	{
-		Super::WipeEndScreen();
-		return;
-	}
-
 	// Don't do anything if there is no starting point.
 	if (InitialWipeScreen == NULL)
 	{
@@ -206,11 +195,6 @@ void OpenGLSWFrameBuffer::WipeEndScreen()
 
 bool OpenGLSWFrameBuffer::WipeDo(int ticks)
 {
-	if (!Accel2D)
-	{
-		return Super::WipeDo(ticks);
-	}
-
 	// Sanity checks.
 	if (InitialWipeScreen == NULL || FinalWipeScreen == NULL)
 	{
@@ -250,11 +234,6 @@ void OpenGLSWFrameBuffer::WipeCleanup()
 	InitialWipeScreen.reset();
 	FinalWipeScreen.reset();
 	GatheringWipeScreen = false;
-	if (!Accel2D)
-	{
-		Super::WipeCleanup();
-		return;
-	}
 }
 
 //==========================================================================

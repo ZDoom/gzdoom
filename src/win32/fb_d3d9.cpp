@@ -241,7 +241,6 @@ D3DFB::D3DFB (UINT adapter, int width, int height, bool bgra, bool fullscreen)
 	In2D = 0;
 	Palettes = NULL;
 	Textures = NULL;
-	Accel2D = true;
 	GatheringWipeScreen = false;
 	ScreenWipe = NULL;
 	InScene = false;
@@ -939,17 +938,6 @@ void D3DFB::Update ()
 		return;
 	}
 
-	if (LockCount != 1)
-	{
-		I_FatalError ("Framebuffer must have exactly 1 lock to be updated");
-		if (LockCount > 0)
-		{
-			UpdatePending = true;
-			--LockCount;
-		}
-		return;
-	}
-
 	if (In2D == 0)
 	{
 		DrawRateStuff();
@@ -998,7 +986,6 @@ void D3DFB::Update ()
 	BlitCycles.Reset();
 	BlitCycles.Clock();
 
-	LockCount = 0;
 	HRESULT hr = D3DDevice->TestCooperativeLevel();
 	if (FAILED(hr) && (hr != D3DERR_DEVICENOTRESET || !Reset()))
 	{
@@ -1126,10 +1113,6 @@ bool D3DFB::PaintToWindow ()
 {
 	HRESULT hr;
 
-	if (LockCount != 0)
-	{
-		return false;
-	}
 	hr = D3DDevice->TestCooperativeLevel();
 	if (FAILED(hr))
 	{
@@ -1244,30 +1227,22 @@ void D3DFB::Draw3DPart(bool copy3d)
 	{
 		FBVERTEX verts[4];
 		D3DCOLOR color0, color1;
-		if (Accel2D)
+		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
+		if (map == NULL)
 		{
-			auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
-			if (map == NULL)
-			{
-				color0 = 0;
-				color1 = 0xFFFFFFF;
-			}
-			else
-			{
-				color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0]/2, map->ColorizeStart[1]/2, map->ColorizeStart[2]/2, 0);
-				color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0]/2, map->ColorizeEnd[1]/2, map->ColorizeEnd[2]/2, 1);
-				if (IsBgra())
-					SetPixelShader(Shaders[SHADER_SpecialColormap]);
-				else
-					SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
-			}
+			color0 = 0;
+			color1 = 0xFFFFFFF;
 		}
 		else
 		{
-			color0 = FlashColor0;
-			color1 = FlashColor1;
+			color0 = D3DCOLOR_COLORVALUE(map->ColorizeStart[0]/2, map->ColorizeStart[1]/2, map->ColorizeStart[2]/2, 0);
+			color1 = D3DCOLOR_COLORVALUE(map->ColorizeEnd[0]/2, map->ColorizeEnd[1]/2, map->ColorizeEnd[2]/2, 1);
+			if (IsBgra())
+				SetPixelShader(Shaders[SHADER_SpecialColormap]);
+			else
+				SetPixelShader(Shaders[SHADER_SpecialColormapPal]);
 		}
-		CalcFullscreenCoords(verts, Accel2D, false, color0, color1);
+		CalcFullscreenCoords(verts, true, false, color0, color1);
 		D3DDevice->DrawPrimitiveUP(D3DPT_TRIANGLEFAN, 2, verts, sizeof(FBVERTEX));
 	}
 	if (IsBgra())
@@ -1457,11 +1432,6 @@ void D3DFB::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &col
 {
 	D3DLOCKED_RECT lrect;
 
-	if (!Accel2D)
-	{
-		Super::GetScreenshotBuffer(buffer, pitch, color_type, gamma);
-		return;
-	}
 	buffer = NULL;
 	if ((ScreenshotTexture = GetCurrentScreen()) != NULL)
 	{
@@ -1495,10 +1465,6 @@ void D3DFB::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &col
 
 void D3DFB::ReleaseScreenshotBuffer()
 {
-	if (LockCount > 0)
-	{
-		Super::ReleaseScreenshotBuffer();
-	}
 	if (ScreenshotSurface != NULL)
 	{
 		ScreenshotSurface->UnlockRect();
@@ -1806,10 +1772,6 @@ bool D3DPal::Update()
 bool D3DFB::Begin2D(bool copy3d)
 {
 	Super::Begin2D(copy3d);
-	if (!Accel2D)
-	{
-		return false;
-	}
 	if (In2D)
 	{
 		return true;
@@ -1831,10 +1793,6 @@ bool D3DFB::Begin2D(bool copy3d)
 
 void D3DFB::DrawBlendingRect()
 {
-	if (!In2D || !Accel2D)
-	{
-		return;
-	}
 	Dim(FlashColor, FlashAmount / 256.f, viewwindowx, viewwindowy, viewwidth, viewheight);
 }
 

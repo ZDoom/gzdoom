@@ -157,7 +157,6 @@ OpenGLSWFrameBuffer::OpenGLSWFrameBuffer(void *hMonitor, int width, int height, 
 	In2D = 0;
 	Palettes = nullptr;
 	Textures = nullptr;
-	Accel2D = true;
 	GatheringWipeScreen = false;
 	ScreenWipe = nullptr;
 	InScene = false;
@@ -1123,7 +1122,6 @@ bool OpenGLSWFrameBuffer::Lock(bool buffered)
 		return false;
 	}
 	assert(!In2D);
-	Accel2D = vid_hw2d;
 
 #if 0	// temporarily disabled. Must be fixed later
 	if (UseMappedMemBuffer)
@@ -1209,17 +1207,6 @@ void OpenGLSWFrameBuffer::Update()
 		return;
 	}
 
-	if (m_Lock != 1)
-	{
-		I_FatalError("Framebuffer must have exactly 1 lock to be updated");
-		if (m_Lock > 0)
-		{
-			UpdatePending = true;
-			--m_Lock;
-		}
-		return;
-	}
-
 	if (In2D == 0)
 	{
 		DrawRateStuff();
@@ -1258,7 +1245,6 @@ void OpenGLSWFrameBuffer::Update()
 	BlitCycles.Clock();
 #endif
 
-	m_Lock = 0;
 	Draw3DPart(In2D <= 1);
 	if (In2D == 0)
 	{
@@ -1316,10 +1302,6 @@ void OpenGLSWFrameBuffer::Flip()
 
 bool OpenGLSWFrameBuffer::PaintToWindow()
 {
-	if (m_Lock != 0)
-	{
-		return false;
-	}
 	Draw3DPart(true);
 	return true;
 }
@@ -1446,30 +1428,22 @@ void OpenGLSWFrameBuffer::Draw3DPart(bool copy3d)
 	{
 		FBVERTEX verts[4];
 		uint32_t color0, color1;
-		if (Accel2D)
+		auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
+		if (map == nullptr)
 		{
-			auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
-			if (map == nullptr)
-			{
-				color0 = 0;
-				color1 = 0xFFFFFFF;
-			}
-			else
-			{
-				color0 = ColorValue(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
-				color1 = ColorValue(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
-				if (IsBgra())
-					SetPixelShader(Shaders[SHADER_SpecialColormap].get());
-				else
-					SetPixelShader(Shaders[SHADER_SpecialColormapPal].get());
-			}
+			color0 = 0;
+			color1 = 0xFFFFFFF;
 		}
 		else
 		{
-			color0 = FlashColor0;
-			color1 = FlashColor1;
+			color0 = ColorValue(map->ColorizeStart[0] / 2, map->ColorizeStart[1] / 2, map->ColorizeStart[2] / 2, 0);
+			color1 = ColorValue(map->ColorizeEnd[0] / 2, map->ColorizeEnd[1] / 2, map->ColorizeEnd[2] / 2, 1);
+			if (IsBgra())
+				SetPixelShader(Shaders[SHADER_SpecialColormap].get());
+			else
+				SetPixelShader(Shaders[SHADER_SpecialColormapPal].get());
 		}
-		CalcFullscreenCoords(verts, Accel2D, color0, color1);
+		CalcFullscreenCoords(verts, true, color0, color1);
 		DrawTriangleFans(2, verts);
 	}
 	if (IsBgra())
@@ -1666,11 +1640,6 @@ void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch
 	/*
 	LockedRect lrect;
 
-	if (!Accel2D)
-	{
-		Super::GetScreenshotBuffer(buffer, pitch, color_type, gamma);
-		return;
-	}
 	buffer = nullptr;
 	if ((ScreenshotTexture = GetCurrentScreen()) != nullptr)
 	{
@@ -1705,10 +1674,6 @@ void OpenGLSWFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch
 
 void OpenGLSWFrameBuffer::ReleaseScreenshotBuffer()
 {
-	if (m_Lock > 0)
-	{
-		Super::ReleaseScreenshotBuffer();
-	}
 	ScreenshotTexture.reset();
 }
 
@@ -2071,10 +2036,6 @@ bool OpenGLSWFrameBuffer::OpenGLPal::Update()
 bool OpenGLSWFrameBuffer::Begin2D(bool copy3d)
 {
 	Super::Begin2D(copy3d);
-	if (!Accel2D)
-	{
-		return false;
-	}
 	if (In2D)
 	{
 		return true;
@@ -2096,10 +2057,6 @@ bool OpenGLSWFrameBuffer::Begin2D(bool copy3d)
 
 void OpenGLSWFrameBuffer::DrawBlendingRect()
 {
-	if (!In2D || !Accel2D)
-	{
-		return;
-	}
 	Dim(FlashColor, FlashAmount / 256.f, viewwindowx, viewwindowy, viewwidth, viewheight);
 }
 

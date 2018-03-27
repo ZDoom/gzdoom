@@ -70,15 +70,6 @@ void PolyRenderer::RenderView(player_t *player)
 
 	RenderActorView(player->mo, false);
 
-#if 0
-	// Apply special colormap if the target cannot do it
-	CameraLight *cameraLight = CameraLight::Instance();
-	if (cameraLight->ShaderColormap() && RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
-	{
-		Threads.MainThread()->DrawQueue->Push<ApplySpecialColormapRGBACommand>(cameraLight->ShaderColormap(), screen);
-	}
-#endif
-	
 	Threads.MainThread()->FlushDrawQueue();
 	DrawerThreads::WaitForWorkers();
 }

@@ -69,17 +69,10 @@ namespace swrenderer
 			if (player->fixedcolormap >= 0 && player->fixedcolormap < (int)SpecialColormaps.Size())
 			{
 				realfixedcolormap = &SpecialColormaps[player->fixedcolormap];
-				if (renderTarget == screen->GetCanvas() && (renderTarget->IsBgra() || ((DFrameBuffer *)screen->Accel2D && r_shadercolormaps)))
-				{
-					// Render everything fullbright. The copy to video memory will
-					// apply the special colormap, so it won't be restricted to the
-					// palette.
-					fixedcolormap = &realcolormaps;
-				}
-				else
-				{
-					fixedcolormap = &SpecialSWColormaps[player->fixedcolormap];
-				}
+				// Render everything fullbright. The copy to video memory will
+				// apply the special colormap, so it won't be restricted to the
+				// palette.
+				fixedcolormap = &realcolormaps;
 			}
 			else if (player->fixedlightlevel >= 0 && player->fixedlightlevel < NUMCOLORMAPS)
 			{

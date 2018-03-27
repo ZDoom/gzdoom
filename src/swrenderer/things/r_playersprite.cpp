@@ -420,7 +420,7 @@ namespace swrenderer
 
 		// Check for hardware-assisted 2D. If it's available, and this sprite is not
 		// fuzzy, don't draw it until after the switch to 2D mode.
-		if (!noaccel && viewport->RenderTarget == screencanvas && (DFrameBuffer *)screen->Accel2D)
+		if (!noaccel && viewport->RenderTarget == screencanvas)
 		{
 			FRenderStyle style = vis.RenderStyle;
 			style.CheckFuzz();

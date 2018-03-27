@@ -993,7 +993,6 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 	m_RefreshHz = refreshHz;
 	m_Fullscreen = fullscreen;
 	m_Bgra = bgra;
-	m_Lock=0;
 
 	RECT r;
 	LONG style, exStyle;

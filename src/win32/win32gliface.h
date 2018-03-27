@@ -70,7 +70,6 @@ protected:
 	bool m_supportsGamma;
 	bool m_Fullscreen, m_Bgra;
 	int m_Width, m_Height, m_Bits, m_RefreshHz;
-	int m_Lock;
 	char m_displayDeviceNameBuffer[32/*CCHDEVICENAME*/];	// do not use windows.h constants here!
 	char *m_displayDeviceName;
 	int SwapInterval;

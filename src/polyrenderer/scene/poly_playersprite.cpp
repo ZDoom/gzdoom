@@ -418,7 +418,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
 	// fuzzy, don't draw it until after the switch to 2D mode.
-	if (!noaccel && renderTarget == screencanvas && (DFrameBuffer *)screen->Accel2D)
+	if (!noaccel && renderTarget == screencanvas)
 	{
 		FRenderStyle style = vis.RenderStyle;
 		style.CheckFuzz();

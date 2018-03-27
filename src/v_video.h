@@ -279,7 +279,6 @@ protected:
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
-	int LockCount = 0;
 	int Width = 0;
 	int Height = 0;
 	bool Bgra = 0;
@@ -340,7 +339,6 @@ public:
 	// Set the rect defining the area affected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
-	bool Accel2D;	// If true, 2D drawing can be accelerated.
 	virtual bool LegacyHardware() const { return false; }	// only for reporting SM1.4 support to the stat collector
 
 	// Begin 2D drawing operations. This is like Update, but it doesn't end

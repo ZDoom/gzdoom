@@ -778,16 +778,6 @@ void M_Drawer (void)
 	AActor *camera = player->camera;
 	PalEntry fade = 0;
 
-	if (!screen->Accel2D && camera != nullptr && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
-	{
-		if (camera->player != nullptr)
-		{
-			player = camera->player;
-		}
-		fade = PalEntry (uint8_t(player->BlendA*255), uint8_t(player->BlendR*255), uint8_t(player->BlendG*255), uint8_t(player->BlendB*255));
-	}
-
-
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
 		if (GLRenderer)

@@ -55,9 +55,6 @@ public:
 	SDLGLFB(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
 	~SDLGLFB();
 
-	virtual bool Lock(bool buffered = true);
-	virtual void Unlock();
-
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
 
@@ -66,7 +63,6 @@ public:
 
 	virtual int GetTrueHeight() { return GetClientHeight(); }
 protected:
-	int                 m_Lock;
 	bool                UpdatePending;
 
 	static const uint32_t GAMMA_CHANNEL_SIZE = 256;

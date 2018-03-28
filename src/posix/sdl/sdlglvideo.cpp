@@ -45,6 +45,7 @@
 #include "version.h"
 #include "c_console.h"
 
+#include "videomodes.h"
 #include "sdlglvideo.h"
 #include "sdlvideo.h"
 #include "gl/system/gl_system.h"
@@ -62,11 +63,6 @@
 // MACROS ------------------------------------------------------------------
 
 // TYPES -------------------------------------------------------------------
-
-struct MiniModeInfo
-{
-	uint16_t Width, Height;
-};
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
 
@@ -114,67 +110,6 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-// Dummy screen sizes to pass when windowed
-static MiniModeInfo WinModes[] =
-{
-	{ 320, 200 },
-	{ 320, 240 },
-	{ 400, 225 },	// 16:9
-	{ 400, 300 },
-	{ 480, 270 },	// 16:9
-	{ 480, 360 },
-	{ 512, 288 },	// 16:9
-	{ 512, 384 },
-	{ 640, 360 },	// 16:9
-	{ 640, 400 },
-	{ 640, 480 },
-	{ 720, 480 },	// 16:10
-	{ 720, 540 },
-	{ 800, 450 },	// 16:9
-	{ 800, 480 },
-	{ 800, 500 },	// 16:10
-	{ 800, 600 },
-	{ 848, 480 },	// 16:9
-	{ 960, 600 },	// 16:10
-	{ 960, 720 },
-	{ 1024, 576 },	// 16:9
-	{ 1024, 600 },	// 17:10
-	{ 1024, 640 },	// 16:10
-	{ 1024, 768 },
-	{ 1088, 612 },	// 16:9
-	{ 1152, 648 },	// 16:9
-	{ 1152, 720 },	// 16:10
-	{ 1152, 864 },
-	{ 1280, 720 },	// 16:9
-	{ 1280, 854 },
-	{ 1280, 800 },	// 16:10
-	{ 1280, 960 },
-	{ 1280, 1024 },	// 5:4
-	{ 1360, 768 },	// 16:9
-	{ 1366, 768 },
-	{ 1400, 787 },	// 16:9
-	{ 1400, 875 },	// 16:10
-	{ 1400, 1050 },
-	{ 1440, 900 },
-	{ 1440, 960 },
-	{ 1440, 1080 },
-	{ 1600, 900 },	// 16:9
-	{ 1600, 1000 },	// 16:10
-	{ 1600, 1200 },
-	{ 1920, 1080 },
-	{ 1920, 1200 },
-	{ 2048, 1536 },
-	{ 2560, 1440 },
-	{ 2560, 1600 },
-	{ 2560, 2048 },
-	{ 2880, 1800 },
-	{ 3200, 1800 },
-	{ 3840, 2160 },
-	{ 3840, 2400 },
-	{ 4096, 2160 },
-	{ 5120, 2880 }
-};
-
 // CODE --------------------------------------------------------------------
 
 SDLGLVideo::SDLGLVideo (int parm)
@@ -202,10 +137,10 @@ bool SDLGLVideo::NextMode (int *width, int *height, bool *letterbox)
 	if (IteratorBits != 8)
 		return false;
 
-	if ((unsigned)IteratorMode < sizeof(WinModes)/sizeof(WinModes[0]))
+	if ((unsigned)IteratorMode < sizeof(VideoModes)/sizeof(VideoModes[0]))
 	{
-		*width = WinModes[IteratorMode].Width;
-		*height = WinModes[IteratorMode].Height;
+		*width = VideoModes[IteratorMode].width;
+		*height = VideoModes[IteratorMode].height;
 		++IteratorMode;
 		return true;
 	}

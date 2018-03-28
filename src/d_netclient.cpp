@@ -34,6 +34,7 @@
 #include "c_console.h"
 #include "d_netinf.h"
 #include "d_netclient.h"
+#include "d_netsingle.h"
 #include "cmdlib.h"
 #include "s_sound.h"
 #include "m_cheat.h"
@@ -65,8 +66,19 @@
 #include "events.h"
 #include "i_time.h"
 
-NetClient::NetClient()
+NetClient::NetClient(FString server)
 {
+	Printf("Connecting to %s..\n", server.GetChars());
+
+	mComm = I_InitNetwork(0);
+	mServerNode = mComm->Connect(server);
+	mStatus = NodeStatus::InPreGame;
+
+	NetPacket packet;
+	packet.node = mServerNode;
+	packet.size = 1;
+	packet[0] = (uint8_t)NetPacketType::ConnectRequest;
+	mComm->PacketSend(packet);
 }
 
 void NetClient::Update()
@@ -85,6 +97,7 @@ void NetClient::Update()
 		else if (packet.size == 0)
 		{
 			OnClose(packet);
+			break;
 		}
 		else
 		{
@@ -96,6 +109,20 @@ void NetClient::Update()
 			case NetPacketType::Disconnect: OnDisconnect(packet); break;
 			case NetPacketType::Tic: OnTic(packet); break;
 			}
+		}
+
+		if (mStatus == NodeStatus::Closed)
+		{
+			if (network.get() == this)
+			{
+				G_EndNetGame();
+				network.reset(new NetSinglePlayer());
+			}
+			else
+			{
+				netconnect.reset();
+			}
+			return;
 		}
 	}
 }
@@ -164,6 +191,15 @@ void NetClient::OnClose(const NetPacket &packet)
 	mComm->Close(mServerNode);
 	mServerNode = -1;
 	mStatus = NodeStatus::Closed;
+
+	if (network.get() == this)
+	{
+		Printf("Disconnected\n");
+	}
+	else
+	{
+		Printf("Could not connect\n");
+	}
 }
 
 void NetClient::OnConnectResponse(const NetPacket &packet)
@@ -178,17 +214,31 @@ void NetClient::OnConnectResponse(const NetPacket &packet)
 		{
 			mPlayer = packet[2];
 			mStatus = NodeStatus::InGame;
+
+			netgame = true;
+			multiplayer = true;
+			consoleplayer = mPlayer;
+			players[consoleplayer].settings_controller = true;
+			playeringame[consoleplayer] = true;
+
+			GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
+			D_SetupUserInfo();
+
+			//network->WriteByte(DEM_CHANGEMAP);
+			//network->WriteString("e1m1");
 		}
 		else // Server full
 		{
 			mComm->Close(mServerNode);
 			mServerNode = -1;
 			mStatus = NodeStatus::Closed;
+
+			Printf("Could not connect: server is full!\n");
 		}
 	}
 	else
 	{
-		I_Error("Version mismatch. Unable to connect\n");
+		Printf("Could not connect: version mismatch.\n");
 		mComm->Close(mServerNode);
 		mServerNode = -1;
 		mStatus = NodeStatus::Closed;

@@ -1147,6 +1147,8 @@ void D_DoomLoop()
 		try
 		{
 			gametime.Update();
+			if (netconnect)
+				netconnect->Update();
 			network->Update();
 			input.Update();
 			playsim.Update();

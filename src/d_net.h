@@ -114,6 +114,7 @@ public:
 };
 
 extern std::unique_ptr<Network> network;
+extern std::unique_ptr<Network> netconnect;
 
 void Net_DoCommand (int type, uint8_t **stream, int player);
 void Net_SkipCommand (int type, uint8_t **stream);

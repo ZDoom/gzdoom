@@ -2864,6 +2864,27 @@ void G_TimeDemo (const char* name)
 }
 
 
+void G_EndNetGame()
+{
+	gameaction = ga_fullconsole;
+
+	// Should we do this?
+	//C_RestoreCVars(); // Is this a good idea?
+
+	P_SetupWeapons_ntohton();
+	demoplayback = false;
+	netgame = false;
+	multiplayer = false;
+	for (int i = 1; i < MAXPLAYERS; i++)
+		playeringame[i] = 0;
+	consoleplayer = 0;
+	players[0].camera = NULL;
+	if (StatusBar != NULL)
+	{
+		StatusBar->AttachToPlayer(&players[0]);
+	}
+}
+
 /*
 ===================
 =

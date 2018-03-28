@@ -40,6 +40,8 @@
 #include "c_console.h"
 #include "d_netinf.h"
 #include "d_net.h"
+#include "d_netclient.h"
+#include "d_netserver.h"
 #include "cmdlib.h"
 #include "s_sound.h"
 #include "m_cheat.h"
@@ -75,6 +77,7 @@ EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
 
 std::unique_ptr<Network> network;
+std::unique_ptr<Network> netconnect;
 
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
@@ -1280,4 +1283,15 @@ CCMD (net_listcontrollers)
 			Printf ("- %s\n", players[i].userinfo.GetName());
 		}
 	}
+}
+
+CCMD(connect)
+{
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: connect <server>\n");
+		return;
+	}
+
+	netconnect.reset(new NetClient(argv[1]));
 }

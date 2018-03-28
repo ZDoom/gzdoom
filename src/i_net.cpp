@@ -126,8 +126,32 @@ private:
 	uint8_t mTransmitBuffer[TRANSMIT_SIZE];
 };
 
+class InitSockets
+{
+public:
+	InitSockets()
+	{
+#ifdef __WIN32__
+		WSADATA wsad;
+
+		if (WSAStartup(0x0101, &wsad))
+		{
+			I_FatalError("Could not initialize Windows Sockets");
+		}
+#endif
+	}
+
+	~InitSockets()
+	{
+#ifdef __WIN32__
+		WSACleanup();
+#endif
+	}
+};
+
 std::unique_ptr<doomcom_t> I_InitNetwork(int port)
 {
+	static InitSockets initsockets;
 	return std::unique_ptr<doomcom_t>(new DoomComImpl(port));
 }
 
@@ -152,6 +176,14 @@ DoomComImpl::DoomComImpl(int port)
 		if (v == SOCKET_ERROR)
 			I_FatalError("BindToPort: %s", neterror());
 	}
+
+#ifndef __sun
+	u_long trueval = 1;
+	ioctlsocket(mSocket, FIONBIO, &trueval);
+#else
+	u_long trueval = 1;
+	fcntl(mysocket, F_SETFL, trueval | O_NONBLOCK);
+#endif
 }
 
 DoomComImpl::~DoomComImpl()
@@ -187,7 +219,8 @@ int DoomComImpl::FindNode(const sockaddr_in *address)
 		}
 		else if (mNodeLastUpdate[i] == 0)
 		{
-			slot = i;
+			if (slot == -1)
+				slot = i;
 		}
 	}
 

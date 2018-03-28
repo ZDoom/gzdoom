@@ -26,7 +26,7 @@
 class NetClient : public Network
 {
 public:
-	NetClient();
+	NetClient(FString server);
 
 	void Update() override;
 

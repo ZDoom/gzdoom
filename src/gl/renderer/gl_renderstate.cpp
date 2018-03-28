@@ -243,7 +243,6 @@ bool FRenderState::ApplyShader()
 		}
 		else if (mColormapState == CM_SPECIAL2D)
 		{
-			activeShader->muFixedColormap.Set(2);
 			activeShader->muFixedColormap.Set(1);
 			float startr = mObjectColor.r / 255;
 			float startg = mObjectColor.g / 255;

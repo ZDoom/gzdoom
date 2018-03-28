@@ -479,7 +479,7 @@ public:
 		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(F2DDrawer::TwoDVertex), &TDiO->color0);
 		glEnableVertexAttribArray(VATTR_VERTEX);
 		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		//glEnableVertexAttribArray(VATTR_COLOR);
+		glEnableVertexAttribArray(VATTR_COLOR);
 		glDisableVertexAttribArray(VATTR_VERTEX2);
 		glDisableVertexAttribArray(VATTR_NORMAL);
 	}
@@ -504,7 +504,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	{
 		// Change from BGRA to RGBA
 		std::swap(v.color0.r, v.color0.b);
-		v.color0 = 0xffffffff;
 	}
 	auto vb = new F2DVertexBuffer;
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
@@ -604,5 +603,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	glDisable(GL_SCISSOR_TEST);
 	gl_RenderState.SetVertexBuffer(nullptr);
 	gl_RenderState.EnableTexture(true);
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.ResetColor();
 	delete vb;
 }

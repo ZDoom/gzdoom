@@ -455,8 +455,8 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color)
 	auto ptr = &mVertices[dg.mVertIndex];
 	ptr->Set(x1, y1, 0, 0, 0, color); ptr++;
 	ptr->Set(x1, y1 + h, 0, 0, 0, color); ptr++;
-	ptr->Set(x1 + w, y1 + h, 0, 0, 0, color); ptr++;
 	ptr->Set(x1 + w, y1, 0, 0, 0, color); ptr++;
+	ptr->Set(x1 + w, y1 + h, 0, 0, 0, color); ptr++;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
 	AddCommand(&dg);
 }

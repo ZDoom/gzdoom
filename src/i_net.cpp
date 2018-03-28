@@ -206,38 +206,36 @@ void DoomComImpl::PacketSend(const NetPacket &packet)
 	// FIXME: Catch this before we've overflown the buffer. With long chat
 	// text and lots of backup tics, it could conceivably happen. (Though
 	// apparently it hasn't yet, which is good.)
-	if (packet.datalength > MAX_MSGLEN)
+	if (packet.size > MAX_MSGLEN)
 	{
 		I_FatalError("Netbuffer overflow!");
 	}
 	assert(!(packet.data[0] & NCMD_COMPRESSED));
 
 	uLong size = TRANSMIT_SIZE - 1;
-	if (packet.datalength >= 10)
+	if (packet.size >= 10)
 	{
 		mTransmitBuffer[0] = packet.data[0] | NCMD_COMPRESSED;
-		c = compress2(mTransmitBuffer + 1, &size, packet.data + 1, packet.datalength - 1, 9);
+		c = compress2(mTransmitBuffer + 1, &size, packet.data + 1, packet.size - 1, 9);
 		size += 1;
 	}
 	else
 	{
 		c = -1;	// Just some random error code to avoid sending the compressed buffer.
 	}
-	if (c == Z_OK && size < (uLong)packet.datalength)
+	if (c == Z_OK && size < (uLong)packet.size)
 	{
-		//		Printf("send %lu/%d\n", size, datalength);
-		c = sendto(mSocket, (char *)mTransmitBuffer, size, 0, (sockaddr *)&mNodeEndpoints[packet.remotenode], sizeof(mNodeEndpoints[packet.remotenode]));
+		c = sendto(mSocket, (char *)mTransmitBuffer, size, 0, (sockaddr *)&mNodeEndpoints[packet.node], sizeof(mNodeEndpoints[packet.node]));
 	}
 	else
 	{
-		if (packet.datalength > TRANSMIT_SIZE)
+		if (packet.size > TRANSMIT_SIZE)
 		{
 			I_Error("Net compression failed (zlib error %d)", c);
 		}
 		else
 		{
-			//			Printf("send %d\n", datalength);
-			c = sendto(mSocket, (char *)packet.data, packet.datalength, 0, (sockaddr *)&mNodeEndpoints[packet.remotenode], sizeof(mNodeEndpoints[packet.remotenode]));
+			c = sendto(mSocket, (char *)packet.data, packet.size, 0, (sockaddr *)&mNodeEndpoints[packet.node], sizeof(mNodeEndpoints[packet.node]));
 		}
 	}
 	//	if (c == -1)
@@ -253,8 +251,8 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 		if (mNodeLastUpdate[i] != 0 && nowtime - mNodeLastUpdate[i] > 5'000'000'000) // 5 second timeout
 		{
 			Close(i);
-			packet.remotenode = i;
-			packet.datalength = 0;
+			packet.node = i;
+			packet.size = 0;
 			return;
 		}
 	}
@@ -263,8 +261,8 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 	{
 		sockaddr_in fromaddress;
 		socklen_t fromlen = sizeof(fromaddress);
-		int datalength = recvfrom(mSocket, (char*)mTransmitBuffer, TRANSMIT_SIZE, 0, (sockaddr *)&fromaddress, &fromlen);
-		if (datalength == SOCKET_ERROR)
+		int size = recvfrom(mSocket, (char*)mTransmitBuffer, TRANSMIT_SIZE, 0, (sockaddr *)&fromaddress, &fromlen);
+		if (size == SOCKET_ERROR)
 		{
 			int err = WSAGetLastError();
 
@@ -275,8 +273,8 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 					continue;
 
 				Close(node);
-				packet.remotenode = node;
-				packet.datalength = 0;
+				packet.node = node;
+				packet.size = 0;
 				return;
 			}
 			else if (err != WSAEWOULDBLOCK)
@@ -285,12 +283,12 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 			}
 			else // no packet
 			{
-				packet.remotenode = -1;
-				packet.datalength = 0;
+				packet.node = -1;
+				packet.size = 0;
 				return;
 			}
 		}
-		else if (datalength > 0)
+		else if (size > 0)
 		{
 			int node = FindNode(&fromaddress);
 			if (node == -1)
@@ -300,21 +298,21 @@ void DoomComImpl::PacketGet(NetPacket &packet)
 			if (mTransmitBuffer[0] & NCMD_COMPRESSED)
 			{
 				uLongf msgsize = MAX_MSGLEN - 1;
-				int err = uncompress(packet.data + 1, &msgsize, mTransmitBuffer + 1, datalength - 1);
+				int err = uncompress(packet.data + 1, &msgsize, mTransmitBuffer + 1, size - 1);
 				if (err != Z_OK)
 				{
 					Printf("Net decompression failed (zlib error %s)\n", M_ZLibError(err).GetChars());
 					continue;
 				}
-				datalength = msgsize + 1;
+				size = msgsize + 1;
 			}
 			else
 			{
-				memcpy(packet.data + 1, mTransmitBuffer + 1, datalength - 1);
+				memcpy(packet.data + 1, mTransmitBuffer + 1, size - 1);
 			}
 
-			packet.remotenode = node;
-			packet.datalength = (short)datalength;
+			packet.node = node;
+			packet.size = (short)size;
 			return;
 		}
 	}

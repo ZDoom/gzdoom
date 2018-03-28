@@ -434,7 +434,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	screen->DrawText (SmallFont, color, col4, y + ypadding, player->userinfo.GetName(),
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	mysnprintf(str, countof(str), "%d", network.GetPing((int)(player - players)));
+	mysnprintf(str, countof(str), "%d", network->GetPing((int)(player - players)));
 
 	screen->DrawText(SmallFont, color, col5, y + ypadding, str,
 		DTA_CleanNoMove, true, TAG_DONE);

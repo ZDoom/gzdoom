@@ -3088,7 +3088,7 @@ FUNC(LS_Autosave)
 	if (gameaction != ga_savegame)
 	{
 		level.flags2 &= ~LEVEL2_NOAUTOSAVEHINT;
-		network.Net_WriteByte (DEM_CHECKAUTOSAVE);
+		network->WriteByte (DEM_CHECKAUTOSAVE);
 	}
 	return true;
 }

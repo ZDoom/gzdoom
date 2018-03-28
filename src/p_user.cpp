@@ -602,7 +602,7 @@ void player_t::SetFOV(float fov)
 		{
 			if (consoleplayer == Net_Arbitrator)
 			{
-				network.Net_WriteByte(DEM_MYFOV);
+				network->WriteByte(DEM_MYFOV);
 			}
 			else
 			{
@@ -612,9 +612,9 @@ void player_t::SetFOV(float fov)
 		}
 		else
 		{
-			network.Net_WriteByte(DEM_MYFOV);
+			network->WriteByte(DEM_MYFOV);
 		}
-		network.Net_WriteFloat(clamp<float>(fov, 5.f, 179.f));
+		network->WriteFloat(clamp<float>(fov, 5.f, 179.f));
 	}
 }
 
@@ -734,9 +734,9 @@ void player_t::SendPitchLimits() const
 {
 	if (this - players == consoleplayer)
 	{
-		network.Net_WriteByte(DEM_SETPITCHLIMIT);
-		network.Net_WriteByte(Renderer->GetMaxViewPitch(false));	// up
-		network.Net_WriteByte(Renderer->GetMaxViewPitch(true));		// down
+		network->WriteByte(DEM_SETPITCHLIMIT);
+		network->WriteByte(Renderer->GetMaxViewPitch(false));	// up
+		network->WriteByte(Renderer->GetMaxViewPitch(true));		// down
 	}
 }
 
@@ -1025,7 +1025,7 @@ void APlayerPawn::PostBeginPlay()
 //
 // Sets up the default weapon slots for this player. If this is also the
 // local player, determines local modifications and sends those across the
-// network. Ignores voodoo dolls.
+// network-> Ignores voodoo dolls.
 //
 //===========================================================================
 
@@ -2438,8 +2438,6 @@ nodetype *RestoreNodeList(AActor *act, nodetype *head, nodetype *linktype::*othe
 
 void P_PredictPlayer (player_t *player)
 {
-	int maxtic;
-
 	if (cl_noprediction ||
 		singletics ||
 		demoplayback ||
@@ -2453,7 +2451,7 @@ void P_PredictPlayer (player_t *player)
 		return;
 	}
 
-	maxtic = network.maketic;
+	int maxtic = network->GetSendTick();
 
 	if (gametic == maxtic)
 	{
@@ -2504,13 +2502,13 @@ void P_PredictPlayer (player_t *player)
 	act->BlockNode = NULL;
 
 	// Values too small to be usable for lerping can be considered "off".
-	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (network.ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
+	bool CanLerp = (!(cl_predict_lerpscale < 0.01f) && (network->ticdup == 1)), DoLerp = false, NoInterpolateOld = R_GetViewInterpolationStatus();
 	for (int i = gametic; i < maxtic; ++i)
 	{
 		if (!NoInterpolateOld)
 			R_RebuildViewInterpolation(player);
 
-		player->cmd = network.GetLocalCommand(i);
+		player->cmd = network->GetLocalInput(i);
 		P_PlayerThink (player);
 		player->mo->Tick ();
 

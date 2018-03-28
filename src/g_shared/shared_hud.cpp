@@ -1053,8 +1053,8 @@ static void DrawLatency()
 	{
 		return;
 	}
-	int localdelay = network.GetPing(0);
-	int arbitratordelay = network.GetServerPing();
+	int localdelay = network->GetPing(0);
+	int arbitratordelay = network->GetServerPing();
 	int color = CR_GREEN;
 	if (MAX(localdelay, arbitratordelay) > 200)
 	{
@@ -1064,7 +1064,7 @@ static void DrawLatency()
 	{
 		color = CR_ORANGE;
 	}
-	if (MAX(localdelay, arbitratordelay) >= network.GetHighPingThreshold())
+	if (MAX(localdelay, arbitratordelay) >= network->GetHighPingThreshold())
 	{
 		color = CR_RED;
 	}

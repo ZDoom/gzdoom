@@ -1300,7 +1300,7 @@ void C_FullConsole ()
 {
 	if (demoplayback)
 		G_CheckDemoStatus ();
-	network.D_QuitNetGame ();
+	network->D_QuitNetGame ();
 	advancedemo = false;
 	ConsoleState = c_down;
 	HistPos = NULL;

@@ -74,7 +74,7 @@
 EXTERN_CVAR (Int, disableautosave)
 EXTERN_CVAR (Int, autosavecount)
 
-Network network;
+std::unique_ptr<Network> network;
 
 //#define SIMULATEERRORS		(RAND_MAX/3)
 #define SIMULATEERRORS			0
@@ -142,226 +142,47 @@ static TArray<PacketStore> InBuffer;
 static TArray<PacketStore> OutBuffer;
 #endif
 
-// [RH] Special "ticcmds" get stored in here
-TicSpecial::TicSpecial ()
-	{
-		int i;
-
-		lastmaketic = -1;
-		specialsize = 256;
-
-		for (i = 0; i < BACKUPTICS; i++)
-			streams[i] = NULL;
-
-		for (i = 0; i < BACKUPTICS; i++)
-		{
-			streams[i] = (uint8_t *)M_Malloc (256);
-			used[i] = 0;
-		}
-		okay = true;
-	}
-
-TicSpecial::~TicSpecial ()
+void Network::WriteByte(uint8_t it)
 {
-	int i;
-
-	for (i = 0; i < BACKUPTICS; i++)
-	{
-		if (streams[i])
-		{
-			M_Free (streams[i]);
-			streams[i] = NULL;
-			used[i] = 0;
-		}
-	}
-	okay = false;
+	WriteBytes(&it, 1);
 }
 
-// Make more room for special commands.
-void TicSpecial::GetMoreSpace (size_t needed)
+void Network::WriteWord(short it)
 {
-	int i;
-
-	specialsize = MAX(specialsize * 2, needed + 30);
-
-	DPrintf (DMSG_NOTIFY, "Expanding special size to %zu\n", specialsize);
-
-	for (i = 0; i < BACKUPTICS; i++)
-		streams[i] = (uint8_t *)M_Realloc (streams[i], specialsize);
-
-	streamptr = streams[(network.maketic/network.ticdup)%BACKUPTICS] + streamoffs;
+	uint16_t buf;
+	uint8_t *streamptr = (uint8_t*)&buf;
+	::WriteWord(it, &streamptr);
+	WriteBytes((const uint8_t*)&buf, sizeof(uint16_t));
 }
 
-void TicSpecial::CheckSpace (size_t needed)
+void Network::WriteLong(int it)
 {
-	if (streamoffs + needed >= specialsize)
-		GetMoreSpace (streamoffs + needed);
-
-	streamoffs += needed;
+	uint32_t buf;
+	uint8_t *streamptr = (uint8_t*)&buf;
+	::WriteLong(it, &streamptr);
+	WriteBytes((const uint8_t*)&buf, sizeof(uint32_t));
 }
 
-void TicSpecial::NewMakeTic ()
+void Network::WriteFloat(float it)
 {
-	int mt = network.maketic / network.ticdup;
-	if (lastmaketic != -1)
-	{
-		if (lastmaketic == mt)
-			return;
-		used[lastmaketic%BACKUPTICS] = streamoffs;
-	}
-
-	lastmaketic = mt;
-	streamptr = streams[mt%BACKUPTICS];
-	streamoffs = 0;
+	float buf;
+	uint8_t *streamptr = (uint8_t*)&buf;
+	::WriteFloat(it, &streamptr);
+	WriteBytes((const uint8_t*)&buf, sizeof(float));
 }
 
-TicSpecial &TicSpecial::operator << (uint8_t it)
+void Network::WriteString(const char *it)
 {
-	if (streamptr)
-	{
-		CheckSpace (1);
-		WriteByte (it, &streamptr);
-	}
-	return *this;
-}
-
-TicSpecial &TicSpecial::operator << (short it)
-{
-	if (streamptr)
-	{
-		CheckSpace (2);
-		WriteWord (it, &streamptr);
-	}
-	return *this;
-}
-
-TicSpecial &TicSpecial::operator << (int it)
-{
-	if (streamptr)
-	{
-		CheckSpace (4);
-		WriteLong (it, &streamptr);
-	}
-	return *this;
-}
-
-TicSpecial &TicSpecial::operator << (float it)
-{
-	if (streamptr)
-	{
-		CheckSpace (4);
-		WriteFloat (it, &streamptr);
-	}
-	return *this;
-}
-
-TicSpecial &TicSpecial::operator << (const char *it)
-{
-	if (streamptr)
-	{
-		CheckSpace (strlen (it) + 1);
-		WriteString (it, &streamptr);
-	}
-	return *this;
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-void Network::D_QuitNetGame()
-{
-}
-
-void Network::Net_NewMakeTic()
-{
-	specials.NewMakeTic();
-}
-
-void Network::Net_WriteByte(uint8_t it)
-{
-	specials << it;
-}
-
-void Network::Net_WriteWord(short it)
-{
-	specials << it;
-}
-
-void Network::Net_WriteLong(int it)
-{
-	specials << it;
-}
-
-void Network::Net_WriteFloat(float it)
-{
-	specials << it;
-}
-
-void Network::Net_WriteString(const char *it)
-{
-	specials << it;
-}
-
-void Network::Net_WriteBytes(const uint8_t *block, int len)
-{
-	while (len--)
-		specials << *block++;
-}
-
-bool Network::IsInconsistent(int player, int16_t checkvalue) const
-{
-	int buf = (gametic / ticdup) % BACKUPTICS;
-	return gametic > BACKUPTICS*ticdup && consistency[player][buf] != checkvalue;
-}
-
-void Network::SetConsistency(int player, int16_t checkvalue)
-{
-	int buf = (gametic / ticdup) % BACKUPTICS;
-	consistency[player][buf] = checkvalue;
-}
-
-int16_t Network::GetConsoleConsistency() const
-{
-	return consistency[consoleplayer][(maketic / ticdup) % BACKUPTICS];
-}
-
-size_t Network::CopySpecData(int player, uint8_t *dest, size_t dest_size)
-{
-	if (gametic % ticdup != 0)
-		return 0;
-
-	int buf = (gametic / ticdup) % BACKUPTICS;
-
-	int speclen = 0;
-	uint8_t *specdata = NetSpecs[player][buf].GetData(&speclen);
-	if (!specdata)
-		return 0;
-
-	if (dest_size < speclen)
-		I_FatalError("Demo buffer too small for CopySpecData");
-
-	memcpy(dest, specdata, speclen);
-	NetSpecs[player][buf].SetData(nullptr, 0); // Why is this needed?
-	return speclen;
-}
-
-int Network::GetPing(int player) const
-{
-	int node = nodeforplayer[player];
-	int avgdelay = 0;
-	for (int i = 0; i < BACKUPTICS; i++)
-		avgdelay += netdelay[node][i];
-	return avgdelay * ticdup * 1000 / TICRATE / BACKUPTICS;
-}
-
-int Network::GetServerPing() const
-{
-	return GetPing(Net_Arbitrator);
+	int length = (int)strlen(it);
+	WriteBytes((const uint8_t*)it, length + 1);
 }
 
 int Network::GetHighPingThreshold() const
 {
 	return ((BACKUPTICS / 2 - 1) * ticdup) * (1000 / TICRATE);
 }
+
+#if 0 // For reference. Remove when c/s migration is complete
 
 void Network::ReadTicCmd(uint8_t **stream, int player, int tic)
 {
@@ -399,98 +220,6 @@ void Network::ReadTicCmd(uint8_t **stream, int player, int tic)
 
 	if (player == consoleplayer && tic>BACKUPTICS)
 		assert(consistency[player][ticmod] == tcmd->consistency);
-}
-
-void Network::RunNetSpecs(int player)
-{
-	if (gametic % ticdup == 0)
-	{
-		int buf = (gametic / network.ticdup) % BACKUPTICS;
-
-		int len = 0;
-		uint8_t *stream = NetSpecs[player][buf].GetData(&len);
-		if (stream)
-		{
-			uint8_t *end = stream + len;
-			while (stream < end)
-			{
-				int type = ReadByte(&stream);
-				Net_DoCommand(type, &stream, player);
-			}
-			if (!demorecording)
-				NetSpecs[player][buf].SetData(nullptr, 0);
-		}
-	}
-}
-
-void Network::SetBotCommand(int player, const ticcmd_t &cmd)
-{
-	netcmds[player][((gametic + 1) / network.ticdup) % BACKUPTICS] = cmd;
-}
-
-ticcmd_t Network::GetLocalCommand(int tic) const
-{
-	int buf = tic % BACKUPTICS;
-	return netcmds[consoleplayer][buf];
-}
-
-ticcmd_t Network::GetPlayerCommand(int player) const
-{
-	int buf = (gametic / network.ticdup) % BACKUPTICS;
-	return netcmds[player][buf];
-}
-
-void Network::SetPlayerCommand(int player, ticcmd_t cmd)
-{
-	int buf = (gametic / ticdup) % BACKUPTICS;
-	netcmds[player][buf] = cmd;
-}
-
-void Network::DispatchEvents(int tic)
-{
-	int player = consoleplayer;
-	int ticmod = tic % BACKUPTICS;
-
-	if (specials.used[ticmod])
-	{
-		NetSpecs[player][ticmod].SetData(specials.streams[ticmod], (int)specials.used[ticmod]);
-		specials.used[ticmod] = 0;
-	}
-	else
-	{
-		NetSpecs[player][ticmod].SetData(nullptr, 0);
-	}
-}
-
-void Network::Net_ClearBuffers()
-{
-	memset(localcmds, 0, sizeof(localcmds));
-	memset(netcmds, 0, sizeof(netcmds));
-	memset(nettics, 0, sizeof(nettics));
-	memset(nodeingame, 0, sizeof(nodeingame));
-	memset(nodeforplayer, 0, sizeof(nodeforplayer));
-	memset(playerfornode, 0, sizeof(playerfornode));
-	memset(remoteresend, 0, sizeof(remoteresend));
-	memset(resendto, 0, sizeof(resendto));
-	memset(resendcount, 0, sizeof(resendcount));
-	memset(lastrecvtime, 0, sizeof(lastrecvtime));
-	memset(currrecvtime, 0, sizeof(currrecvtime));
-	memset(consistency, 0, sizeof(consistency));
-	nodeingame[0] = true;
-
-	for (int i = 0; i < MAXPLAYERS; i++)
-	{
-		for (int j = 0; j < BACKUPTICS; j++)
-		{
-			NetSpecs[i][j].SetData(NULL, 0);
-		}
-	}
-
-	oldentertics = entertic;
-	gametic = 0;
-	maketic = 0;
-
-	lastglobalrecvtime = 0;
 }
 
 // Works out player numbers among the net participants
@@ -622,18 +351,7 @@ void Network::D_CheckNetGame()
 		consoleplayer + 1, doomcom->numplayers, doomcom->numnodes);
 	*/
 }
-
-void Network::ListPingTimes()
-{
-	for (int i = 0; i < MAXPLAYERS; i++)
-		if (playeringame[i])
-			Printf("% 4" PRId64 " %s\n", currrecvtime[i] - lastrecvtime[i], players[i].userinfo.GetName());
-}
-
-// Implement players who have the ability to change settings in a network game.
-void Network::Network_Controller(int playernum, bool add)
-{
-}
+#endif
 
 //==========================================================================
 //
@@ -641,10 +359,13 @@ void Network::Network_Controller(int playernum, bool add)
 //
 //==========================================================================
 
-FDynamicBuffer::FDynamicBuffer ()
+FDynamicBuffer::FDynamicBuffer()
 {
-	m_Data = NULL;
-	m_Len = m_BufferLen = 0;
+}
+
+FDynamicBuffer::FDynamicBuffer(const FDynamicBuffer &src)
+{
+	SetData(src.GetData(), src.GetSize());
 }
 
 FDynamicBuffer::~FDynamicBuffer ()
@@ -652,9 +373,16 @@ FDynamicBuffer::~FDynamicBuffer ()
 	if (m_Data)
 	{
 		M_Free (m_Data);
-		m_Data = NULL;
+		m_Data = nullptr;
 	}
 	m_Len = m_BufferLen = 0;
+}
+
+FDynamicBuffer &FDynamicBuffer::operator=(const FDynamicBuffer &src)
+{
+	if (this != &src)
+		SetData(src.GetData(), src.GetSize());
+	return *this;
 }
 
 void FDynamicBuffer::SetData (const uint8_t *data, int len)
@@ -664,7 +392,7 @@ void FDynamicBuffer::SetData (const uint8_t *data, int len)
 		m_BufferLen = (len + 255) & ~255;
 		m_Data = (uint8_t *)M_Realloc (m_Data, m_BufferLen);
 	}
-	if (data != NULL)
+	if (data)
 	{
 		m_Len = len;
 		memcpy (m_Data, data, len);
@@ -675,13 +403,20 @@ void FDynamicBuffer::SetData (const uint8_t *data, int len)
 	}
 }
 
-uint8_t *FDynamicBuffer::GetData (int *len)
+void FDynamicBuffer::AppendData(const uint8_t *data, int len)
 {
-	if (len)
-		*len = m_Len;
-	return m_Len ? m_Data : NULL;
-}
+	int pos = m_Len;
+	int neededlen = m_Len + len;
 
+	if (neededlen > m_BufferLen)
+	{
+		m_BufferLen = (neededlen + 255) & ~255;
+		m_Data = (uint8_t *)M_Realloc(m_Data, m_BufferLen);
+	}
+
+	memcpy(m_Data + pos, data, len);
+	m_Len += len;
+}
 
 static int KillAll(PClassActor *cls)
 {
@@ -731,6 +466,24 @@ static int RemoveClass(const PClass *cls)
 	return removecount;
 
 }
+
+void Net_RunCommands(FDynamicBuffer &buffer, int player)
+{
+	int len = buffer.GetSize();
+	uint8_t *stream = buffer.GetData();
+	if (stream)
+	{
+		uint8_t *end = stream + len;
+		while (stream < end)
+		{
+			int type = ReadByte(&stream);
+			Net_DoCommand(type, &stream, player);
+		}
+		if (!demorecording)
+			buffer.SetData(nullptr, 0);
+	}
+}
+
 // [RH] Execute a special "ticcmd". The type byte should
 //		have already been read, and the stream is positioned
 //		at the beginning of the command's actual data.
@@ -1058,7 +811,7 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 		{
 			break;
 		}
-		network.Net_WriteByte (DEM_DOAUTOSAVE);
+		network->WriteByte (DEM_DOAUTOSAVE);
 		break;
 
 	case DEM_DOAUTOSAVE:
@@ -1470,7 +1223,7 @@ void Net_SkipCommand (int type, uint8_t **stream)
 
 CCMD (pings)
 {
-	network.ListPingTimes();
+	network->ListPingTimes();
 }
 
 CCMD (net_addcontroller)
@@ -1487,7 +1240,7 @@ CCMD (net_addcontroller)
 		return;
 	}
 
-	network.Network_Controller (atoi (argv[1]), true);
+	network->Network_Controller (atoi (argv[1]), true);
 }
 
 CCMD (net_removecontroller)
@@ -1504,7 +1257,7 @@ CCMD (net_removecontroller)
 		return;
 	}
 
-	network.Network_Controller (atoi (argv[1]), false);
+	network->Network_Controller (atoi (argv[1]), false);
 }
 
 CCMD (net_listcontrollers)

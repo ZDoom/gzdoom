@@ -3,6 +3,7 @@
 // Copyright 1993-1996 id Software
 // Copyright 1999-2016 Randy Heit
 // Copyright 2002-2016 Christoph Oelckers
+// Copyright 2018 Magnus Norddahl
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -26,14 +27,6 @@
 #include "i_net.h"
 #include <memory>
 
-//
-// Network play related stuff.
-// There is a data struct that stores network
-//	communication related stuff, and another
-//	one that defines the actual packets to
-//	be transmitted.
-//
-
 #define MAXNETNODES		8	// max computers in a game
 #define BACKUPTICS		36	// number of tics to remember
 #define MAXTICDUP		5
@@ -42,139 +35,91 @@
 class FDynamicBuffer
 {
 public:
-	FDynamicBuffer ();
-	~FDynamicBuffer ();
+	FDynamicBuffer();
+	FDynamicBuffer(const FDynamicBuffer &src);
+	~FDynamicBuffer();
 
-	void SetData (const uint8_t *data, int len);
-	uint8_t *GetData (int *len = NULL);
+	FDynamicBuffer &operator=(const FDynamicBuffer &src);
+
+	void Clear() { SetData(nullptr, 0); }
+	void SetData(const uint8_t *data, int len);
+	void AppendData(const uint8_t *data, int len);
+
+	uint8_t *GetData() { return m_Len ? m_Data : nullptr; }
+	const uint8_t *GetData() const { return m_Len ? m_Data : nullptr; }
+	int GetSize() const { return m_Len; }
 
 private:
-	uint8_t *m_Data;
-	int m_Len, m_BufferLen;
+	uint8_t *m_Data = nullptr;
+	int m_Len = 0;
+	int m_BufferLen = 0;
 };
 
-struct TicSpecial
-{
-	uint8_t *streams[BACKUPTICS];
-	size_t used[BACKUPTICS];
-	uint8_t *streamptr;
-	size_t streamoffs;
-	size_t specialsize;
-	int	  lastmaketic;
-	bool  okay;
-
-public:
-	TicSpecial();
-	~TicSpecial();
-
-	void GetMoreSpace(size_t needed);
-	void CheckSpace(size_t needed);
-	void NewMakeTic();
-
-	TicSpecial &operator << (uint8_t it);
-	TicSpecial &operator << (short it);
-	TicSpecial &operator << (int it);
-	TicSpecial &operator << (float it);
-	TicSpecial &operator << (const char *it);
-};
-
-struct Network
+class Network
 {
 public:
-	void Update() { }
-	void DispatchEvents(int tic);
-	void SetPlayerCommand(int player, ticcmd_t cmd);
+	virtual ~Network() { }
 
-	void D_CheckNetGame();
-	void Net_ClearBuffers();
-	void D_QuitNetGame();
+	// Check for incoming packets
+	virtual void Update() = 0;
 
-	void ListPingTimes();
-	void Network_Controller(int playernum, bool add);
+	// Set current tic for reading and writing
+	virtual void SetCurrentTic(int receivetic, int sendtic) = 0;
 
-	void Net_NewMakeTic(); // Only public because DoomMain calls it. Really really shouldn't be public.
-	void Net_WriteByte(uint8_t it);
-	void Net_WriteWord(short it);
-	void Net_WriteLong(int it);
-	void Net_WriteFloat(float it);
-	void Net_WriteString(const char *it);
-	void Net_WriteBytes(const uint8_t *block, int len);
+	// Send any pending outgoing data
+	virtual void EndCurrentTic() = 0;
 
-	size_t CopySpecData(int player, uint8_t *dest, size_t dest_size);
+	// Retrieve data about the current tic
+	virtual int GetSendTick() const = 0;
+	virtual ticcmd_t GetPlayerInput(int player) const = 0;
+	virtual ticcmd_t GetLocalInput(int tic) const = 0;
 
-	void SetBotCommand(int player, const ticcmd_t &cmd);
-	ticcmd_t GetPlayerCommand(int player) const;
+	// Run network commands for current the tic
+	virtual void RunCommands(int player) = 0;
 
-	bool IsInconsistent(int player, int16_t checkvalue) const;
-	void SetConsistency(int player, int16_t checkvalue);
-	int16_t GetConsoleConsistency() const;
+	// Write outgoing data for current the tic
+	virtual void WriteLocalInput(ticcmd_t cmd) = 0;
+	virtual void WriteBotInput(int player, const ticcmd_t &cmd) = 0;
+	virtual void WriteBytes(const uint8_t *block, int len) = 0;
+	void WriteByte(uint8_t it);
+	void WriteWord(short it);
+	void WriteLong(int it);
+	void WriteFloat(float it);
+	void WriteString(const char *it);
 
-	void RunNetSpecs(int player);
-
-	ticcmd_t GetLocalCommand(int tic) const;
-	//ticcmd_t GetLocalCommand(int tic) const { return localcmds[tic % LOCALCMDTICS]; }
-
-	int GetPing(int player) const;
-	int GetServerPing() const;
+	// Statistics
+	virtual int GetPing(int player) const = 0;
+	virtual int GetServerPing() const = 0;
 	int GetHighPingThreshold() const;
 
-	int maketic;
-	int ticdup; // 1 = no duplication, 2-5 = dup for slow nets
+	// CCMDs
+	virtual void ListPingTimes() = 0;
+	virtual void Network_Controller(int playernum, bool add) = 0;
 
-private:
-	void ReadTicCmd(uint8_t **stream, int player, int tic);
+	// Old init/deinit stuff
+	void Startup() { }
+	void Net_ClearBuffers() { }
+	void D_QuitNetGame() { }
 
-	std::unique_ptr<doomcom_t> doomcom;
-	NetPacket netbuffer;
+	// Demo recording
+	size_t CopySpecData(int player, uint8_t *dest, size_t dest_size) { return 0; }
 
-	int nodeforplayer[MAXPLAYERS];
-	int netdelay[MAXNETNODES][BACKUPTICS];		// Used for storing network delay times.
+	// Obsolete; only needed for p2p
+	bool IsInconsistent(int player, int16_t checkvalue) const { return false; }
+	void SetConsistency(int player, int16_t checkvalue) { }
+	int16_t GetConsoleConsistency() const { return 0; }
 
-	short consistency[MAXPLAYERS][BACKUPTICS];
-	ticcmd_t netcmds[MAXPLAYERS][BACKUPTICS];
-	FDynamicBuffer NetSpecs[MAXPLAYERS][BACKUPTICS];
-	ticcmd_t localcmds[LOCALCMDTICS];
-
-	int gametime;
-
-	enum { NET_PeerToPeer, NET_PacketServer };
-	uint8_t NetMode = NET_PeerToPeer;
-
-	int nettics[MAXNETNODES];
-	bool nodeingame[MAXNETNODES];				// set false as nodes leave game
-	bool nodejustleft[MAXNETNODES];				// set when a node just left
-	bool remoteresend[MAXNETNODES];				// set when local needs tics
-	int resendto[MAXNETNODES];					// set when remote needs tics
-	int resendcount[MAXNETNODES];
-
-	uint64_t lastrecvtime[MAXPLAYERS];				// [RH] Used for pings
-	uint64_t currrecvtime[MAXPLAYERS];
-	uint64_t lastglobalrecvtime;						// Identify the last time a packet was received.
-	bool hadlate;
-	int lastaverage;
-
-	int playerfornode[MAXNETNODES];
-
-	int skiptics;
-
-	int reboundpacket;
-	uint8_t reboundstore[MAX_MSGLEN];
-
-	int frameon;
-	int frameskip[4];
-	int oldnettics;
-	int mastertics;
-
-	int entertic;
-	int oldentertics;
-
-	TicSpecial specials;
+	// Should probably be removed.
+	int ticdup = 1;
 };
 
-extern Network network;
+extern std::unique_ptr<Network> network;
 
 void Net_DoCommand (int type, uint8_t **stream, int player);
 void Net_SkipCommand (int type, uint8_t **stream);
+void Net_RunCommands (FDynamicBuffer &buffer, int player);
+
+// Old packet format. Kept for reference. Should be removed or updated once the c/s migration is complete.
 
 // [RH]
 // New generic packet structure:

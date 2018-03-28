@@ -98,6 +98,7 @@
 #include "hardware.h"
 #include "sbarinfo.h"
 #include "d_net.h"
+#include "d_netsingle.h"
 #include "g_level.h"
 #include "d_event.h"
 #include "d_netinf.h"
@@ -411,14 +412,14 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 
 	if (self & DF_NO_FREELOOK)
 	{
-		network.Net_WriteByte (DEM_CENTERVIEW);
+		network->WriteByte (DEM_CENTERVIEW);
 	}
 	// If nofov is set, force everybody to the arbitrator's FOV.
 	if ((self & DF_NO_FOV) && consoleplayer == Net_Arbitrator)
 	{
 		float fov;
 
-		network.Net_WriteByte (DEM_FOV);
+		network->WriteByte (DEM_FOV);
 
 		// If the game is started with DF_NO_FOV set, the arbitrator's
 		// DesiredFOV will not be set when this callback is run, so
@@ -428,7 +429,7 @@ CUSTOM_CVAR (Int, dmflags, 0, CVAR_SERVERINFO)
 		{
 			fov = 90;
 		}
-		network.Net_WriteFloat (fov);
+		network->WriteFloat (fov);
 	}
 }
 
@@ -1003,10 +1004,10 @@ void D_ErrorCleanup ()
 	savegamerestore = false;
 	screen->Unlock ();
 	bglobal.RemoveAllBots (true);
-	network.D_QuitNetGame ();
+	network->D_QuitNetGame ();
 	if (demorecording || demoplayback)
 		G_CheckDemoStatus ();
-	network.Net_ClearBuffers ();
+	network->Net_ClearBuffers ();
 	G_NewInit ();
 	M_ClearMenus ();
 	singletics = false;
@@ -1102,19 +1103,17 @@ public:
 
 		for (int i = 0; i < tics; i++)
 		{
-			gametic = gametime.BaseGameTic() + i;
-			network.maketic = gametime.BaseMakeTic() + i;
-			network.Net_NewMakeTic();
-			network.SetPlayerCommand(consoleplayer, G_BuildTiccmd());
+			network->SetCurrentTic(gametime.BaseGameTic() + i, gametime.BaseMakeTic() + i);
+			network->WriteLocalInput(G_BuildTiccmd());
 
 			if (advancedemo)
 				D_DoAdvanceDemo();
 
-			network.DispatchEvents(gametic);
-
 			C_Ticker();
 			M_Ticker();
 			G_Ticker();
+
+			network->EndCurrentTic();
 		}
 
 		P_PredictPlayer(&players[consoleplayer]);
@@ -1148,7 +1147,7 @@ void D_DoomLoop()
 		try
 		{
 			gametime.Update();
-			network.Update();
+			network->Update();
 			input.Update();
 			playsim.Update();
 			input.BeforeDisplayUpdate();
@@ -2440,6 +2439,8 @@ void D_DoomMain (void)
 
 	D_DoomInit();
 
+	network.reset(new NetSinglePlayer());
+
 	extern void D_ConfirmSendStats();
 	D_ConfirmSendStats();
 
@@ -2721,9 +2722,7 @@ void D_DoomMain (void)
 
 		if (!restart)
 		{
-			if (!batchrun) Printf ("D_CheckNetGame: Checking network game status.\n");
-			StartScreen->LoadingStatus ("Checking network game status.", 0x3f);
-			network.D_CheckNetGame ();
+			D_SetupUserInfo();
 		}
 
 		// [SP] Force vanilla transparency auto-detection to re-detect our game lumps now
@@ -2738,7 +2737,7 @@ void D_DoomMain (void)
 
 		// [RH] Run any saved commands from the command line or autoexec.cfg now.
 		gamestate = GS_FULLCONSOLE;
-		network.Net_NewMakeTic ();
+		network->Startup();
 		DThinker::RunThinkers ();
 		gamestate = GS_STARTUP;
 
@@ -2821,7 +2820,7 @@ void D_DoomMain (void)
 						G_BeginRecording(NULL);
 					}
 
-					atterm([] { network.D_QuitNetGame(); });		// killough
+					atterm([] { network->D_QuitNetGame(); });		// killough
 				}
 			}
 		}

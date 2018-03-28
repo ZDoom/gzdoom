@@ -1110,15 +1110,15 @@ void FWeaponSlots::SendDifferences(int playernum, const FWeaponSlots &other)
 		// The slots differ. Send mine.
 		if (playernum == consoleplayer)
 		{
-			network.Net_WriteByte(DEM_SETSLOT);
+			network->WriteByte(DEM_SETSLOT);
 		}
 		else
 		{
-			network.Net_WriteByte(DEM_SETSLOTPNUM);
-			network.Net_WriteByte(playernum);
+			network->WriteByte(DEM_SETSLOTPNUM);
+			network->WriteByte(playernum);
 		}
-		network.Net_WriteByte(i);
-		network.Net_WriteByte(Slots[i].Size());
+		network->WriteByte(i);
+		network->WriteByte(Slots[i].Size());
 		for (j = 0; j < Slots[i].Size(); ++j)
 		{
 			Net_WriteWeapon(Slots[i].GetWeapon(j));
@@ -1248,9 +1248,9 @@ CCMD (setslot)
 			Printf ("Slot %d cleared\n", slot);
 		}
 
-		network.Net_WriteByte(DEM_SETSLOT);
-		network.Net_WriteByte(slot);
-		network.Net_WriteByte(argv.argc()-2);
+		network->WriteByte(DEM_SETSLOT);
+		network->WriteByte(slot);
+		network->WriteByte(argv.argc()-2);
 		for (int i = 2; i < argv.argc(); i++)
 		{
 			Net_WriteWeapon(PClass::FindActor(argv[i]));
@@ -1299,8 +1299,8 @@ CCMD (addslot)
 	}
 	else
 	{
-		network.Net_WriteByte(DEM_ADDSLOT);
-		network.Net_WriteByte(slot);
+		network->WriteByte(DEM_ADDSLOT);
+		network->WriteByte(slot);
 		Net_WriteWeapon(type);
 	}
 }
@@ -1375,8 +1375,8 @@ CCMD (addslotdefault)
 	}
 	else
 	{
-		network.Net_WriteByte(DEM_ADDSLOTDEFAULT);
-		network.Net_WriteByte(slot);
+		network->WriteByte(DEM_ADDSLOTDEFAULT);
+		network->WriteByte(slot);
 		Net_WriteWeapon(type);
 	}
 }
@@ -1447,7 +1447,7 @@ void P_SetupWeapons_ntohton()
 // for any game appear second, and weapons that filter for some other game
 // appear last. The idea here is to try to keep all the weapons that are
 // most likely to be used at the start of the list so that they only need
-// one byte to transmit across the network.
+// one byte to transmit across the network->
 //
 //===========================================================================
 
@@ -1541,12 +1541,12 @@ void Net_WriteWeapon(PClassActor *type)
 	assert(index >= 0 && index <= 32767);
 	if (index < 128)
 	{
-		network.Net_WriteByte(index);
+		network->WriteByte(index);
 	}
 	else
 	{
-		network.Net_WriteByte(0x80 | index);
-		network.Net_WriteByte(index >> 7);
+		network->WriteByte(0x80 | index);
+		network->WriteByte(index >> 7);
 	}
 }
 

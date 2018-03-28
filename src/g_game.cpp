@@ -313,12 +313,12 @@ CCMD (slot)
 
 CCMD (centerview)
 {
-	network.Net_WriteByte (DEM_CENTERVIEW);
+	network->WriteByte (DEM_CENTERVIEW);
 }
 
 CCMD(crouch)
 {
-	network.Net_WriteByte(DEM_CROUCH);
+	network->WriteByte(DEM_CROUCH);
 }
 
 CCMD (land)
@@ -571,7 +571,7 @@ ticcmd_t G_BuildTiccmd ()
 
 	ticcmd_t cmd;
 
-	cmd.consistency = network.GetConsoleConsistency();
+	cmd.consistency = network->GetConsoleConsistency();
 
 	strafe = Button_Strafe.bDown;
 	speed = Button_Speed.bDown ^ (int)cl_run;
@@ -582,7 +582,7 @@ ticcmd_t G_BuildTiccmd ()
 	//		and not the joystick, since we treat the joystick as
 	//		the analog device it is.
 	if (Button_Left.bDown || Button_Right.bDown)
-		turnheld += network.ticdup;
+		turnheld += network->ticdup;
 	else
 		turnheld = 0;
 
@@ -748,32 +748,32 @@ ticcmd_t G_BuildTiccmd ()
 	if (sendpause)
 	{
 		sendpause = false;
-		network.Net_WriteByte (DEM_PAUSE);
+		network->WriteByte (DEM_PAUSE);
 	}
 	if (sendsave)
 	{
 		sendsave = false;
-		network.Net_WriteByte (DEM_SAVEGAME);
-		network.Net_WriteString (savegamefile);
-		network.Net_WriteString (savedescription);
+		network->WriteByte (DEM_SAVEGAME);
+		network->WriteString (savegamefile);
+		network->WriteString (savedescription);
 		savegamefile = "";
 	}
 	if (SendItemUse == (const AInventory *)1)
 	{
-		network.Net_WriteByte (DEM_INVUSEALL);
+		network->WriteByte (DEM_INVUSEALL);
 		SendItemUse = NULL;
 	}
 	else if (SendItemUse != NULL)
 	{
-		network.Net_WriteByte (DEM_INVUSE);
-		network.Net_WriteLong (SendItemUse->InventoryID);
+		network->WriteByte (DEM_INVUSE);
+		network->WriteLong (SendItemUse->InventoryID);
 		SendItemUse = NULL;
 	}
 	if (SendItemDrop != NULL)
 	{
-		network.Net_WriteByte (DEM_INVDROP);
-		network.Net_WriteLong (SendItemDrop->InventoryID);
-		network.Net_WriteLong(SendItemDropAmount);
+		network->WriteByte (DEM_INVDROP);
+		network->WriteLong (SendItemDrop->InventoryID);
+		network->WriteLong(SendItemDropAmount);
 		SendItemDrop = NULL;
 	}
 
@@ -879,7 +879,7 @@ static void ChangeSpy (int changespy)
 		// has done this for you, since it could desync otherwise.
 		if (!demoplayback)
 		{
-			network.Net_WriteByte(DEM_REVERTCAMERA);
+			network->WriteByte(DEM_REVERTCAMERA);
 		}
 		return;
 	}
@@ -1160,9 +1160,9 @@ void G_Ticker ()
 		if (playeringame[i])
 		{
 			ticcmd_t *cmd = &players[i].cmd;
-			ticcmd_t newcmd = network.GetPlayerCommand(i);
+			ticcmd_t newcmd = network->GetPlayerInput(i);
 
-			network.RunNetSpecs(i);
+			network->RunCommands(i);
 
 			if (demorecording)
 			{
@@ -1188,21 +1188,21 @@ void G_Ticker ()
 				Printf ("%s is turbo!\n", players[i].userinfo.GetName());
 			}
 
-			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%network.ticdup) == 0)
+			if (netgame && players[i].Bot == NULL && !demoplayback && (gametic%network->ticdup) == 0)
 			{
-				if (network.IsInconsistent(i, cmd->consistency))
+				if (network->IsInconsistent(i, cmd->consistency))
 				{
-					players[i].inconsistant = gametic - BACKUPTICS*network.ticdup;
+					players[i].inconsistant = gametic - BACKUPTICS*network->ticdup;
 				}
 				if (players[i].mo)
 				{
 					uint32_t sum = rngsum + int((players[i].mo->X() + players[i].mo->Y() + players[i].mo->Z())*257) + players[i].mo->Angles.Yaw.BAMs() + players[i].mo->Angles.Pitch.BAMs();
 					sum ^= players[i].health;
-					network.SetConsistency(i, sum);
+					network->SetConsistency(i, sum);
 				}
 				else
 				{
-					network.SetConsistency(i, rngsum);
+					network->SetConsistency(i, rngsum);
 				}
 			}
 		}
@@ -2462,7 +2462,7 @@ void G_WriteDemoTiccmd (ticcmd_t *cmd, int player)
 	}
 
 	// [RH] Write any special "ticcmds" for this player to the demo
-	demo_p += network.CopySpecData(player, demo_p, maxdemosize - (demo_p - demobuffer));
+	demo_p += network->CopySpecData(player, demo_p, maxdemosize - (demo_p - demobuffer));
 
 	// [RH] Now write out a "normal" ticcmd.
 	WriteUserCmdMessage (&cmd->ucmd, &players[player].cmd.ucmd, &demo_p);

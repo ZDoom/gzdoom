@@ -892,7 +892,7 @@ IMPLEMENT_CLASS(DAutosaver, false, false)
 
 void DAutosaver::Tick ()
 {
-	network.Net_WriteByte (DEM_CHECKAUTOSAVE);
+	network->WriteByte (DEM_CHECKAUTOSAVE);
 	Destroy ();
 }
 

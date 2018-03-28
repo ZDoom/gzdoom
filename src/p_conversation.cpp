@@ -695,17 +695,17 @@ DEFINE_ACTION_FUNCTION(DConversationMenu, SendConversationReply)
 	switch (node)
 	{
 	case -1:
-		network.Net_WriteByte(DEM_CONVNULL);
+		network->WriteByte(DEM_CONVNULL);
 		break;
 
 	case -2:
-		network.Net_WriteByte(DEM_CONVCLOSE);
+		network->WriteByte(DEM_CONVCLOSE);
 		break;
 
 	default:
-		network.Net_WriteByte(DEM_CONVREPLY);
-		network.Net_WriteWord(node);
-		network.Net_WriteByte(reply);
+		network->WriteByte(DEM_CONVREPLY);
+		network->WriteWord(node);
+		network->WriteByte(reply);
 		break;
 	}
 	StaticLastReply = reply;

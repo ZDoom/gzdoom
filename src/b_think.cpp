@@ -81,13 +81,13 @@ void DBot::Think ()
 		ThinkForMove (&cmd);
 		TurnToAng ();
 
-		cmd.ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / network.ticdup;
+		cmd.ucmd.yaw = (short)((actor->Angles.Yaw - oldyaw).Degrees * (65536 / 360.f)) / network->ticdup;
 		cmd.ucmd.pitch = (short)((oldpitch - actor->Angles.Pitch).Degrees * (65536 / 360.f));
 		if (cmd.ucmd.pitch == -32768)
 			cmd.ucmd.pitch = -32767;
-		cmd.ucmd.pitch /= network.ticdup;
-		actor->Angles.Yaw = oldyaw + DAngle(cmd.ucmd.yaw * network.ticdup * (360 / 65536.f));
-		actor->Angles.Pitch = oldpitch - DAngle(cmd.ucmd.pitch * network.ticdup * (360 / 65536.f));
+		cmd.ucmd.pitch /= network->ticdup;
+		actor->Angles.Yaw = oldyaw + DAngle(cmd.ucmd.yaw * network->ticdup * (360 / 65536.f));
+		actor->Angles.Pitch = oldpitch - DAngle(cmd.ucmd.pitch * network->ticdup * (360 / 65536.f));
 	}
 
 	if (t_active)	t_active--;
@@ -107,7 +107,7 @@ void DBot::Think ()
 		cmd.ucmd.buttons |= BT_USE;
 	}
 
-	network.SetBotCommand((int)(player - players), cmd);
+	network->WriteBotInput((int)(player - players), cmd);
 }
 
 #define THINKDISTSQ (50000.*50000./(65536.*65536.))

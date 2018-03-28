@@ -623,7 +623,7 @@ void C_DoCommand (const char *cmd, int keynum)
 				button->ReleaseKey (keynum);
 				if (button == &Button_Mlook && lookspring)
 				{
-					network.Net_WriteByte (DEM_CENTERVIEW);
+					network->WriteByte (DEM_CENTERVIEW);
 				}
 			}
 			return;

@@ -14,10 +14,10 @@ struct NetPacket
 	uint8_t	data[MAX_MSGLEN];
 
 	// bytes in data to be sent
-	int16_t	datalength = 0;
+	int16_t	size = 0;
 
 	// dest for send, set by get (-1 = no packet).
-	int16_t	remotenode = 0;
+	int16_t	node = 0;
 
 	uint8_t &operator[](int i) { return data[i]; }
 	const uint8_t &operator[](int i) const { return data[i]; }

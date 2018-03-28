@@ -433,8 +433,8 @@ static bool CheatAddKey (cheatseq_t *cheat, uint8_t key, bool *eat)
 
 static bool Cht_Generic (cheatseq_t *cheat)
 {
-	network.Net_WriteByte (DEM_GENERICCHEAT);
-	network.Net_WriteByte (cheat->Args[0]);
+	network->WriteByte (DEM_GENERICCHEAT);
+	network->WriteByte (cheat->Args[0]);
 	return true;
 }
 

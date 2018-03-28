@@ -74,6 +74,10 @@ vec4 getTexel(vec2 st)
 				texel.a = 0.0;
 			}
 			break;
+			
+		case 6: // TM_OPAQUEINVERSE
+			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
+			break;
 	}
 	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
 	else texel *= mix(uObjectColor, uObjectColor2, glowdist.z);
@@ -415,7 +419,7 @@ void main()
 
 	switch (uFixedColormap)
 	{
-		case 0:
+		case 0:	// in-game rendering.
 		{
 			float fogdist = 0.0;
 			float fogfactor = 0.0;
@@ -451,7 +455,7 @@ void main()
 			break;
 		}
 		
-		case 1:
+		case 1:	// special colormap
 		{
 			float gray = (frag.r * 0.3 + frag.g * 0.56 + frag.b * 0.14);	
 			vec4 cm = uFixedColormapStart + gray * uFixedColormapRange;
@@ -459,13 +463,13 @@ void main()
 			break;
 		}
 		
-		case 2:
+		case 2:	// fullscreen tint.
 		{
 			frag = vColor * frag * uFixedColormapStart;
 			break;
 		}
 
-		case 3:
+		case 3:	// fog layer
 		{
 			float fogdist;
 			float fogfactor;
@@ -486,6 +490,20 @@ void main()
 			frag = vec4(uFogColor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * vColor.a);
 			break;
 		}
+		
+		case 4:	// simple 2D
+		{
+			frag = uObjectColor + frag * vColor;
+			break;
+		}
+		
+		case 5: // 2D with in-game lighting (for textured automap)
+		{
+			frag = frag * vColor;
+			frag.rgb = uObjectColor.rgb + frag.rgb * uObjectColor2.aaa + uObjectColor2.rgb;
+			break;
+		}
+			
 	}
 	FragColor = frag;
 #ifdef GBUFFER_PASS

@@ -473,3 +473,15 @@ void OpenGLFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 	x = int16_t((x - letterboxX) * Width / letterboxWidth);
 	y = int16_t((y - letterboxY) * Height / letterboxHeight);
 }
+
+//===========================================================================
+// 
+// 2D drawing
+//
+//===========================================================================
+
+void OpenGLFrameBuffer::Draw2D()
+{
+	//if (gl.legacyMode) Draw2DLegacy();
+	if (GLRenderer != nullptr) GLRenderer->Draw2D(&m2DDrawer);
+}

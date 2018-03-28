@@ -30,6 +30,7 @@ public:
 
 	static GLTranslationPalette *CreatePalette(FRemapTable *remap);
 	static int GetInternalTranslation(int trans);
+	static int GetInternalTranslation(FRemapTable *trans);
 	static PalEntry *GetPalette(unsigned int index)
 	{
 		return index > 0 && index <= AllPalettes.Size()? AllPalettes[index-1].pe : NULL;

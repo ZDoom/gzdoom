@@ -233,6 +233,27 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader->muFixedColormap.Set(0);
 		}
+		else if (mColormapState == CM_PLAIN2D)
+		{
+			activeShader->muFixedColormap.Set(4);
+		}
+		else if (mColormapState == CM_INGAME2D)
+		{
+			activeShader->muFixedColormap.Set(5);
+		}
+		else if (mColormapState == CM_SPECIAL2D)
+		{
+			activeShader->muFixedColormap.Set(2);
+			activeShader->muFixedColormap.Set(1);
+			float startr = mObjectColor.r / 255;
+			float startg = mObjectColor.g / 255;
+			float startb = mObjectColor.b / 255;
+			float ranger = mObjectColor2.r / 255 - startr;
+			float rangeg = mObjectColor2.g / 255 - startg;
+			float rangeb = mObjectColor2.b / 255 - startb;
+			activeShader->muColormapStart.Set(startr, startg, startb, 0.f);
+			activeShader->muColormapRange.Set(ranger, rangeg, rangeb, 0.f);
+		}
 		else if (mColormapState > CM_DEFAULT && mColormapState < CM_MAXCOLORMAP)
 		{
 			if (FGLRenderBuffers::IsEnabled())

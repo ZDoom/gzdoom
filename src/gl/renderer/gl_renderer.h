@@ -190,6 +190,7 @@ public:
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();
 	void GetSpecialTextures();
+	void Draw2D(F2DDrawer *data);
 
 
 	bool StartOffscreen();

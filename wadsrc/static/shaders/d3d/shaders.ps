@@ -37,18 +37,18 @@ float4 SampleTexture(float2 tex_coord)
 
 // Normal color calculation for most drawing modes.
 
-float4 NormalColor(float2 tex_coord : TEXCOORD0, float4 Flash : COLOR0, float4 InvFlash : COLOR1) : COLOR
+float4 NormalColor(float2 tex_coord : TEXCOORD0, float4 VertexColor : COLOR0, float4 Overlay : COLOR1) : COLOR
 {
-	return Flash + SampleTexture(tex_coord) * InvFlash;
+	return Overlay + SampleTexture(tex_coord) * VertexColor;
 }
 
-// Copy the red channel to the alpha channel. Pays no attention to palettes.
+// Copy the red channel to the alpha channel. Pays no attention to palettes and only works with grayscale textures
 
-float4 RedToAlpha(float2 tex_coord : TEXCOORD0, float4 Flash : COLOR0, float4 InvFlash : COLOR1) : COLOR
+float4 RedToAlpha(float2 tex_coord : TEXCOORD0, float4 VertexColor : COLOR0, float4 Overlay : COLOR1) : COLOR
 {
 	float4 color = Invert(tex2D(Image, tex_coord));
-	color.a = color.r;
-	return Flash + color * InvFlash;
+	color.a *= color.r;
+	return Overlay + color * VertexColor;
 }
 
 // Just return the value of c0.
@@ -87,11 +87,11 @@ float4 InGameColormap(float2 tex_coord : TEXCOORD0, float4 color : COLOR0, float
 	rgb.rgb = intensity.rgb + rgb.rgb * Desaturation.y;
 #endif
 
-	// Fade
-	rgb.rgb = rgb.rgb * fade.aaa + fade.rgb;
-
 	// Shade and Alpha
 	rgb = rgb * color;
+
+	// Fade
+	rgb.rgb = rgb.rgb * fade.aaa + fade.rgb;
 
 	return rgb;
 }

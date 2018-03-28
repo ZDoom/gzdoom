@@ -138,7 +138,6 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 	}
 	else if (style.Flags & STYLEF_InvertSource)
 	{
-		// The only place where InvertSource is used is for inverted sprites with the infrared powerup.
 		texturemode = TM_INVERSE;
 	}
 

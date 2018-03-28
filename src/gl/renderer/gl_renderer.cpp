@@ -432,3 +432,170 @@ unsigned char *FGLRenderer::GetTextureBuffer(FTexture *tex, int &w, int &h)
 	}
 	return NULL;
 }
+
+//===========================================================================
+// 
+// Vertex buffer for 2D drawer
+//
+//===========================================================================
+#define TDiO ((F2DDrawer::TwoDVertex*)NULL)
+
+class F2DVertexBuffer : public FVertexBuffer
+{
+	uint32_t ibo_id;
+
+public:
+
+	F2DVertexBuffer()
+	{
+		glGenBuffers(1, &ibo_id);
+	}
+	~F2DVertexBuffer()
+	{
+		if (ibo_id != 0)
+		{
+			glDeleteBuffers(1, &ibo_id);
+		}
+	}
+	void UploadData(F2DDrawer::TwoDVertex *vertices, int vertcount, int *indices, int indexcount)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferData(GL_ARRAY_BUFFER, vertcount * sizeof(vertices[0]), vertices, GL_STREAM_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexcount * sizeof(indices[0]), indices, GL_STREAM_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+	}
+
+	void BindVBO() override
+	{
+		// set up the vertex buffer for drawing the 2D elements.
+		glGenBuffers(1, &vbo_id);
+		glGenBuffers(1, &ibo_id);
+
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSimpleVertex), &TDiO->x);
+		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSimpleVertex), &TDiO->u);
+		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSimpleVertex), &TDiO->color0);
+		glEnableVertexAttribArray(VATTR_VERTEX);
+		glEnableVertexAttribArray(VATTR_TEXCOORD);
+		glEnableVertexAttribArray(VATTR_COLOR);
+		glDisableVertexAttribArray(VATTR_VERTEX2);
+		glDisableVertexAttribArray(VATTR_NORMAL);
+	}
+};
+
+//===========================================================================
+// 
+// Draws the 2D stuff. This is the version for OpenGL 3 and later.
+//
+//===========================================================================
+
+void FGLRenderer::Draw2D(F2DDrawer *drawer)
+{
+	F2DDrawer::EDrawType lasttype = F2DDrawer::DrawTypeTriangles;
+	auto &vertices = drawer->mVertices;
+	auto &indices = drawer->mIndices;
+	auto &commands = drawer->mData;
+
+	if (commands.Size() == 0) return;
+
+	for (auto &v : vertices)
+	{
+		// Change from BGRA to RGBA
+		std::swap(v.color0.r, v.color0.b);
+	}
+	auto vb = new F2DVertexBuffer;
+	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
+	gl_RenderState.SetVertexBuffer(vb);
+
+
+	for(auto &cmd : commands)
+	{
+		gl_RenderState.ResetColor();	// this is needed to reset the desaturation.
+		int tm, sb, db, be;
+		// The texture mode being returned here cannot be used, because the higher level code 
+		// already manipulated the data so that some cases will not be handled correctly.
+		// Since we already get a proper mode from the calling code this doesn't really matter.
+		gl_GetRenderStyle(cmd.mRenderStyle, false, false, &tm, &sb, &db, &be);
+		gl_RenderState.BlendEquation(be);
+		gl_RenderState.BlendFunc(sb, db);
+
+		// Rather than adding remapping code, let's enforce that the constants here are equal.
+		static_assert(F2DDrawer::DTM_Normal == TM_MODULATE, "DTM_Normal != TM_MODULATE");
+		static_assert(F2DDrawer::DTM_Opaque == TM_OPAQUE, "DTM_Opaque != TM_OPAQUE");
+		static_assert(F2DDrawer::DTM_Invert == TM_INVERSE, "DTM_Invert != TM_INVERSE");
+		static_assert(F2DDrawer::DTM_InvertOpaque == TM_INVERTOPAQUE, "DTM_InvertOpaque != TM_INVERTOPAQUE");
+		static_assert(F2DDrawer::DTM_Stencil == TM_MASK, "DTM_Stencil != TM_MASK");
+		static_assert(F2DDrawer::DTM_AlphaTexture == TM_REDTOALPHA, "DTM_AlphaTexture != TM_REDTOALPHA");
+		gl_RenderState.SetTextureMode(cmd.mDrawMode);
+		if (cmd.mFlags & F2DDrawer::DTF_Scissor)
+		{
+			glEnable(GL_SCISSOR_TEST);
+			// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
+			glScissor(
+				GLRenderer->ScreenToWindowX(cmd.mScissor[0]),
+				GLRenderer->ScreenToWindowX(cmd.mScissor[1]),
+				GLRenderer->ScreenToWindowX(cmd.mScissor[2] - cmd.mScissor[0]),
+				GLRenderer->ScreenToWindowX(cmd.mScissor[3] - cmd.mScissor[1]));
+		}
+		else glDisable(GL_SCISSOR_TEST);
+		gl_RenderState.SetObjectColor(cmd.mColor1);
+		gl_RenderState.SetObjectColor2(cmd.mColor2);
+
+		if (cmd.mFlags & F2DDrawer::DTF_IngameLighting)
+		{
+			gl_RenderState.SetFixedColormap(CM_INGAME2D);
+		}
+		else if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
+		{
+			gl_RenderState.SetFixedColormap(CM_SPECIAL2D);
+		}
+		else
+		{
+			gl_RenderState.SetFixedColormap(CM_PLAIN2D);
+		}
+
+		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+
+		switch (cmd.mType)
+		{
+		case F2DDrawer::DrawTypeTriangles:
+			if (cmd.mTexture != nullptr)
+			{
+				auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
+				if (mat == nullptr) continue;
+				int gltrans = GLTranslationPalette::GetInternalTranslation(cmd.mTranslation);
+				gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, gltrans, -1, false);
+				gl_RenderState.EnableTexture(true);
+			}
+			else
+			{
+				gl_RenderState.EnableTexture(false);
+			}
+			gl_RenderState.Apply();
+			glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
+			break;
+
+		case F2DDrawer::DrawTypeLines:
+			gl_RenderState.EnableTexture(false);
+			gl_RenderState.Apply();
+			glDrawArrays(GL_LINES, cmd.mVertIndex, cmd.mVertCount);
+			gl_RenderState.EnableTexture(true);
+			break;
+
+		case F2DDrawer::DrawTypePoints:
+			gl_RenderState.EnableTexture(false);
+			gl_RenderState.Apply();
+			glDrawArrays(GL_POINTS, cmd.mVertIndex, cmd.mVertCount);
+			gl_RenderState.EnableTexture(true);
+			break;
+
+		}
+	}
+	glDisable(GL_SCISSOR_TEST);
+	gl_RenderState.SetVertexBuffer(nullptr);
+	delete vb;
+}

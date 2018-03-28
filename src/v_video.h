@@ -287,9 +287,8 @@ public:
 class DFrameBuffer
 {
 	typedef DSimpleCanvas Super;
-	F2DDrawer m2DDrawer;
-
 protected:
+
 	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
 	void DrawTextureParms(FTexture *img, DrawParms &parms);
 
@@ -297,6 +296,7 @@ protected:
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 
+	F2DDrawer m2DDrawer;
 	int Width = 0;
 	int Height = 0;
 	bool Bgra = 0;

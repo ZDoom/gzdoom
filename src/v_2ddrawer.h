@@ -25,9 +25,9 @@ public:
 		DTM_Normal = 0,
 		DTM_Stencil = 1,
 		DTM_Opaque = 2,
-		DTM_AlphaTexture = 3,
-		DTM_Invert = 4,
-		DTM_InvertOpaque = 5,
+		DTM_Invert = 3,
+		DTM_AlphaTexture = 4,
+		DTM_InvertOpaque = 6,
 	};
 
 	enum ETextureFlags : uint8_t

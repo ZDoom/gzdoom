@@ -62,14 +62,17 @@ bool GLTranslationPalette::Update()
 	return true;
 }
 
+int GLTranslationPalette::GetInternalTranslation(FRemapTable *remap)
+{
+	if (remap == nullptr || remap->Inactive) return 0;
+
+	GLTranslationPalette *tpal = static_cast<GLTranslationPalette*>(remap->GetNative());
+	if (tpal == nullptr) return 0;
+	return tpal->GetIndex();
+}
+
 int GLTranslationPalette::GetInternalTranslation(int trans)
 {
 	if (trans <= 0) return 0;
-
-	FRemapTable *remap = TranslationToTable(trans);
-	if (remap == NULL || remap->Inactive) return 0;
-
-	GLTranslationPalette *tpal = static_cast<GLTranslationPalette*>(remap->GetNative());
-	if (tpal == NULL) return 0;
-	return tpal->GetIndex();
+	return GetInternalTranslation(TranslationToTable(trans));
 }

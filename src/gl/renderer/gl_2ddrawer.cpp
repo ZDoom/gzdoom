@@ -36,6 +36,7 @@
 #include "gl/textures/gl_translate.h"
 #include "vectors.h"
 
+#if 0
 //==========================================================================
 //
 //
@@ -490,3 +491,4 @@ void FGL2DDrawer::Clear()
 	mData.Clear();
 	mLastLineCmd = -1;
 }
+#endif

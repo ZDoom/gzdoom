@@ -1015,6 +1015,7 @@ set (PCH_SOURCES
 	stringtable.cpp
 	teaminfo.cpp
 	umapinfo.cpp
+	v_2ddrawer.cpp
 	v_blend.cpp
 	v_collection.cpp
 	v_draw.cpp

@@ -146,7 +146,6 @@ public:
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
-	FGL2DDrawer *m2DDrawer;
 
 	GL_IRECT mScreenViewport;
 	GL_IRECT mSceneViewport;

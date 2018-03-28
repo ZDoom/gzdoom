@@ -798,10 +798,10 @@ void FGLRenderer::Flush()
 			mBuffers->BindEyeFB(eye_ix);
 			glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 			glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-			m2DDrawer->Draw();
+			screen->Draw2D();
 			FGLDebug::PopGroup();
 		}
-		m2DDrawer->Clear();
+		screen->Clear2D();
 
 		FGLPostProcessState savedState;
 		FGLDebug::PushGroup("PresentEyes");
@@ -818,8 +818,8 @@ void FGLRenderer::Flush()
 
 void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 {
-	m2DDrawer->Draw();	// draw all pending 2D stuff before copying the buffer
-	m2DDrawer->Clear();
+	screen->Draw2D();	// draw all pending 2D stuff before copying the buffer
+	screen->Clear2D();
 
 	mCustomPostProcessShaders->Run("screen");
 

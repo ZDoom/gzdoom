@@ -155,6 +155,14 @@ enum DrawTextureTags
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
+
+	DTA_Color,
+	DTA_FlipY,			// bool: flip image vertically
+	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
+	DTA_SrcY,
+	DTA_SrcWidth,
+	DTA_SrcHeight
+
 };
 
 struct Screen native

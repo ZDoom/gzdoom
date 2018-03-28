@@ -49,7 +49,7 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"
-#include "gl/renderer/gl_2ddrawer.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 
@@ -383,100 +383,6 @@ bool OpenGLFrameBuffer::Begin2D(bool copy3d)
 			GLRenderer->Begin2D();
 	return true;
 }
-
-//==========================================================================
-//
-// Draws a texture
-//
-//==========================================================================
-
-void OpenGLFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
-{
-	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
-		GLRenderer->m2DDrawer->AddTexture(img, parms);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void OpenGLFrameBuffer::DrawLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t color)
-{
-	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr) 
-		GLRenderer->m2DDrawer->AddLine(x1, y1, x2, y2, palcolor, color);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void OpenGLFrameBuffer::DrawPixel(int x1, int y1, int palcolor, uint32_t color)
-{
-	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
-		GLRenderer->m2DDrawer->AddPixel(x1, y1, palcolor, color);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void OpenGLFrameBuffer::Dim(PalEntry)
-{
-	// Unlike in the software renderer the color is being ignored here because
-	// view blending only affects the actual view with the GL renderer.
-	Super::Dim(0);
-}
-
-void OpenGLFrameBuffer::DoDim(PalEntry color, float damount, int x1, int y1, int w, int h)
-{
-	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
-		GLRenderer->m2DDrawer->AddDim(color, damount, x1, y1, w, h);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void OpenGLFrameBuffer::FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin)
-{
-
-	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
-		GLRenderer->m2DDrawer->AddFlatFill(left, top, right, bottom, src, local_origin);
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void OpenGLFrameBuffer::DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color)
-{
-	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr)
-		GLRenderer->m2DDrawer->AddClear(left, top, right, bottom, palcolor, color);
-}
-
-//==========================================================================
-//
-// D3DFB :: FillSimplePoly
-//
-// Here, "simple" means that a simple triangle fan can draw it.
-//
-//==========================================================================
-
-void OpenGLFrameBuffer::FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
-	double originx, double originy, double scalex, double scaley,
-	DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip)
-{
-	if (GLRenderer != nullptr && GLRenderer->m2DDrawer != nullptr && npoints >= 3)
-	{
-		GLRenderer->m2DDrawer->AddPoly(texture, points, npoints, originx, originy, scalex, scaley, rotation, colormap, flatcolor, lightlevel);
-	}
-}
-
 
 //===========================================================================
 // 

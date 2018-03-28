@@ -105,7 +105,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	gl_spriteindex = 0;
 	mShaderManager = nullptr;
 	mLights = nullptr;
-	m2DDrawer = nullptr;
 	mTonemapPalette = nullptr;
 	mBuffers = nullptr;
 	mPresentShader = nullptr;
@@ -160,7 +159,6 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresent3dRowShader = new FPresent3DRowShader();
 	mShadowMapShader = new FShadowMapShader();
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
-	m2DDrawer = new FGL2DDrawer;
 
 	GetSpecialTextures();
 
@@ -196,7 +194,6 @@ FGLRenderer::~FGLRenderer()
 	gl_FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
-	if (m2DDrawer != nullptr) delete m2DDrawer;
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mSamplerManager != NULL) delete mSamplerManager;
 	if (mVBO != NULL) delete mVBO;

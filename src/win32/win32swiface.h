@@ -47,15 +47,6 @@ public:
 	void DrawBlendingRect ();
 	FNativeTexture *CreateTexture (FTexture *gametex, FTextureFormat fmt, bool wrapping);
 	FNativePalette *CreatePalette (FRemapTable *remap);
-	void DrawTextureParms (FTexture *img, DrawParms &parms);
-	void DoClear (int left, int top, int right, int bottom, int palcolor, uint32_t color);
-	void DoDim (PalEntry color, float amount, int x1, int y1, int w, int h);
-	void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin);
-	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
-	void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
-	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
-		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip) override;
 	bool WipeStartScreen(int type);
 	void WipeEndScreen();
 	bool WipeDo(int ticks);
@@ -156,12 +147,9 @@ private:
 	PackedTexture *AllocPackedTexture(int width, int height, bool wrapping, D3DFORMAT format);
 	void DrawLetterbox();
 	void Draw3DPart(bool copy3d);
-	bool SetStyle(D3DTex *tex, DrawParms &parms, D3DCOLOR &color0, D3DCOLOR &color1, BufferedTris &quad);
 	static D3DBLEND GetStyleAlpha(int type);
-	static void SetColorOverlay(DWORD color, float alpha, D3DCOLOR &color0, D3DCOLOR &color1);
 	void DoWindowedGamma();
 	void AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR color);
-	void AddColorOnlyRect(int left, int top, int width, int height, D3DCOLOR color);
 	void CheckQuadBatch(int numtris=2, int numverts=4);
 	void BeginQuadBatch();
 	void EndQuadBatch();

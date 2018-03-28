@@ -542,20 +542,28 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				GLRenderer->ScreenToWindowX(cmd.mScissor[3] - cmd.mScissor[1]));
 		}
 		else glDisable(GL_SCISSOR_TEST);
-		gl_RenderState.SetObjectColor(cmd.mColor1);
-		gl_RenderState.SetObjectColor2(cmd.mColor2);
 
-		if (cmd.mFlags & F2DDrawer::DTF_IngameLighting)
+		// Legacy mode cannot replicate the more complex effects
+		if (gl.legacyMode)
 		{
-			gl_RenderState.SetFixedColormap(CM_INGAME2D);
-		}
-		else if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
-		{
-			gl_RenderState.SetFixedColormap(CM_SPECIAL2D);
+			gl_RenderState.SetFixedColormap(CM_DEFAULT);
 		}
 		else
 		{
-			gl_RenderState.SetFixedColormap(CM_PLAIN2D);
+			gl_RenderState.SetObjectColor(cmd.mColor1);
+			gl_RenderState.SetObjectColor2(cmd.mColor2);
+			if (cmd.mFlags & F2DDrawer::DTF_IngameLighting)
+			{
+				gl_RenderState.SetFixedColormap(CM_INGAME2D);
+			}
+			else if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
+			{
+				gl_RenderState.SetFixedColormap(CM_SPECIAL2D);
+			}
+			else
+			{
+				gl_RenderState.SetFixedColormap(CM_PLAIN2D);
+			}
 		}
 
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);

@@ -472,16 +472,14 @@ public:
 	void BindVBO() override
 	{
 		// set up the vertex buffer for drawing the 2D elements.
-		glGenBuffers(1, &vbo_id);
-		glGenBuffers(1, &ibo_id);
-
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSimpleVertex), &TDiO->x);
 		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSimpleVertex), &TDiO->u);
 		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSimpleVertex), &TDiO->color0);
 		glEnableVertexAttribArray(VATTR_VERTEX);
 		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		glEnableVertexAttribArray(VATTR_COLOR);
+		//glEnableVertexAttribArray(VATTR_COLOR);
 		glDisableVertexAttribArray(VATTR_VERTEX2);
 		glDisableVertexAttribArray(VATTR_NORMAL);
 	}
@@ -506,6 +504,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	{
 		// Change from BGRA to RGBA
 		std::swap(v.color0.r, v.color0.b);
+		v.color0 = 0xffffffff;
 	}
 	auto vb = new F2DVertexBuffer;
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
@@ -514,7 +513,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 
 	for(auto &cmd : commands)
 	{
-		gl_RenderState.ResetColor();	// this is needed to reset the desaturation.
 		int tm, sb, db, be;
 		// The texture mode being returned here cannot be used, because the higher level code 
 		// already manipulated the data so that some cases will not be handled correctly.
@@ -565,6 +563,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				gl_RenderState.SetFixedColormap(CM_PLAIN2D);
 			}
 		}
+		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 
@@ -584,26 +583,26 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				gl_RenderState.EnableTexture(false);
 			}
 			gl_RenderState.Apply();
-			glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
+			glDrawArrays(GL_TRIANGLE_STRIP, cmd.mVertIndex, 4);
+			//glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
 			break;
 
 		case F2DDrawer::DrawTypeLines:
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.Apply();
 			glDrawArrays(GL_LINES, cmd.mVertIndex, cmd.mVertCount);
-			gl_RenderState.EnableTexture(true);
 			break;
 
 		case F2DDrawer::DrawTypePoints:
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.Apply();
 			glDrawArrays(GL_POINTS, cmd.mVertIndex, cmd.mVertCount);
-			gl_RenderState.EnableTexture(true);
 			break;
 
 		}
 	}
 	glDisable(GL_SCISSOR_TEST);
 	gl_RenderState.SetVertexBuffer(nullptr);
+	gl_RenderState.EnableTexture(true);
 	delete vb;
 }

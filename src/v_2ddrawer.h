@@ -46,7 +46,7 @@ public:
 		float u, v;
 		PalEntry color0;
 
-		void Set(float xx, float zz, float yy)
+		void Set(float xx, float yy, float zz)
 		{
 			x = xx;
 			z = zz;
@@ -56,7 +56,7 @@ public:
 			color0 = 0;
 		}
 
-		void Set(double xx, double zz, double yy, double uu, double vv, PalEntry col)
+		void Set(double xx, double yy, double zz, double uu, double vv, PalEntry col)
 		{
 			x = (float)xx;
 			z = (float)zz;

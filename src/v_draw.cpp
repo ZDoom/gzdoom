@@ -193,6 +193,7 @@ DEFINE_ACTION_FUNCTION(_Screen, DrawTexture)
 
 void DFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 {
+	m2DDrawer.AddTexture(img, parms);
 }
 
 //==========================================================================

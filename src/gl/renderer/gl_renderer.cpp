@@ -474,9 +474,9 @@ public:
 		// set up the vertex buffer for drawing the 2D elements.
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSimpleVertex), &TDiO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSimpleVertex), &TDiO->u);
-		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSimpleVertex), &TDiO->color0);
+		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(F2DDrawer::TwoDVertex), &TDiO->x);
+		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(F2DDrawer::TwoDVertex), &TDiO->u);
+		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(F2DDrawer::TwoDVertex), &TDiO->color0);
 		glEnableVertexAttribArray(VATTR_VERTEX);
 		glEnableVertexAttribArray(VATTR_TEXCOORD);
 		//glEnableVertexAttribArray(VATTR_COLOR);
@@ -535,9 +535,9 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
 			glScissor(
 				GLRenderer->ScreenToWindowX(cmd.mScissor[0]),
-				GLRenderer->ScreenToWindowX(cmd.mScissor[1]),
+				GLRenderer->ScreenToWindowY(cmd.mScissor[1]),
 				GLRenderer->ScreenToWindowX(cmd.mScissor[2] - cmd.mScissor[0]),
-				GLRenderer->ScreenToWindowX(cmd.mScissor[3] - cmd.mScissor[1]));
+				GLRenderer->ScreenToWindowY(cmd.mScissor[3] - cmd.mScissor[1]));
 		}
 		else glDisable(GL_SCISSOR_TEST);
 

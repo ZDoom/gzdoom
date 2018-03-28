@@ -35,7 +35,7 @@ public:
 
 	int GetSendTick() const override;
 	ticcmd_t GetPlayerInput(int player) const override;
-	ticcmd_t GetLocalInput(int tic) const override;
+	ticcmd_t GetSentInput(int tic) const override;
 
 	void RunCommands(int player) override;
 

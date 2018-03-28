@@ -2508,7 +2508,7 @@ void P_PredictPlayer (player_t *player)
 		if (!NoInterpolateOld)
 			R_RebuildViewInterpolation(player);
 
-		player->cmd = network->GetLocalInput(i);
+		player->cmd = network->GetSentInput(i);
 		P_PlayerThink (player);
 		player->mo->Tick ();
 

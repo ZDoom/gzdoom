@@ -100,7 +100,7 @@ ticcmd_t NetSinglePlayer::GetPlayerInput(int player) const
 	return mCurrentInput[player];
 }
 
-ticcmd_t NetSinglePlayer::GetLocalInput(int tic) const
+ticcmd_t NetSinglePlayer::GetSentInput(int tic) const
 {
 	return mCurrentInput[consoleplayer];
 }

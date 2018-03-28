@@ -72,12 +72,12 @@ public:
 	// Retrieve data about the current tic
 	virtual int GetSendTick() const = 0;
 	virtual ticcmd_t GetPlayerInput(int player) const = 0;
-	virtual ticcmd_t GetLocalInput(int tic) const = 0;
+	virtual ticcmd_t GetSentInput(int tic) const = 0;
 
-	// Run network commands for current the tic
+	// Run network commands for the current tic
 	virtual void RunCommands(int player) = 0;
 
-	// Write outgoing data for current the tic
+	// Write outgoing data for the current tic
 	virtual void WriteLocalInput(ticcmd_t cmd) = 0;
 	virtual void WriteBotInput(int player, const ticcmd_t &cmd) = 0;
 	virtual void WriteBytes(const uint8_t *block, int len) = 0;

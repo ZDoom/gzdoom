@@ -120,7 +120,7 @@ ticcmd_t NetClient::GetPlayerInput(int player) const
 	return ticcmd_t();
 }
 
-ticcmd_t NetClient::GetLocalInput(int tic) const
+ticcmd_t NetClient::GetSentInput(int tic) const
 {
 	return ticcmd_t();
 }

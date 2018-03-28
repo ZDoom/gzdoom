@@ -118,7 +118,7 @@ ticcmd_t NetServer::GetPlayerInput(int player) const
 	return ticcmd_t();
 }
 
-ticcmd_t NetServer::GetLocalInput(int tic) const
+ticcmd_t NetServer::GetSentInput(int tic) const
 {
 	return ticcmd_t();
 }

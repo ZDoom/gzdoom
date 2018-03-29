@@ -60,4 +60,8 @@ private:
 	int mPlayer = -1;
 	NodeStatus mStatus = NodeStatus::Closed;
 	int mSendTic = 0;
+
+	ticcmd_t mCurrentInput[MAXPLAYERS];
+	FDynamicBuffer mCurrentCommands;
+	FDynamicBuffer mSendCommands;
 };

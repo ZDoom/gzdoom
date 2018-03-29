@@ -86,4 +86,8 @@ private:
 	NetNode mNodes[MAXNETNODES];
 	int mNodeForPlayer[MAXPLAYERS];
 	int mSendTic = 0;
+
+	ticcmd_t mCurrentInput[MAXPLAYERS];
+	FDynamicBuffer mCurrentCommands;
+	FDynamicBuffer mSendCommands;
 };

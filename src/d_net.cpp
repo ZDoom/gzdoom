@@ -1295,3 +1295,9 @@ CCMD(connect)
 
 	netconnect.reset(new NetClient(argv[1]));
 }
+
+CCMD(hostgame)
+{
+	netconnect.reset();
+	network.reset(new NetServer());
+}

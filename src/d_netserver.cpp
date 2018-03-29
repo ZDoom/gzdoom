@@ -67,6 +67,20 @@
 
 NetServer::NetServer()
 {
+	Printf("Started hosting multiplayer game..\n");
+
+	mComm = I_InitNetwork(DOOMPORT);
+
+	netgame = true;
+	multiplayer = true;
+	consoleplayer = 0;
+	players[consoleplayer].settings_controller = true;
+	playeringame[consoleplayer] = true;
+
+	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
+	D_SetupUserInfo();
+
+	G_DeferedInitNew("e1m1");
 }
 
 void NetServer::Update()
@@ -106,6 +120,21 @@ void NetServer::SetCurrentTic(int receivetic, int sendtic)
 
 void NetServer::EndCurrentTic()
 {
+	for (int i = 0; i < MAXNETNODES; i++)
+	{
+		if (mNodes[i].Status == NodeStatus::InGame)
+		{
+			NetPacket packet;
+			packet.node = i;
+			packet.size = 2;
+			packet[0] = (uint8_t)NetPacketType::Tic;
+			packet[1] = gametic;
+			mComm->PacketSend(packet);
+		}
+	}
+
+	mCurrentCommands = mSendCommands;
+	mSendCommands.Clear();
 }
 
 int NetServer::GetSendTick() const
@@ -115,28 +144,35 @@ int NetServer::GetSendTick() const
 
 ticcmd_t NetServer::GetPlayerInput(int player) const
 {
-	return ticcmd_t();
+	return mCurrentInput[player];
 }
 
 ticcmd_t NetServer::GetSentInput(int tic) const
 {
-	return ticcmd_t();
+	return mCurrentInput[consoleplayer];
 }
 
 void NetServer::RunCommands(int player)
 {
+	if (player == consoleplayer)
+	{
+		Net_RunCommands(mCurrentCommands, consoleplayer);
+	}
 }
 
 void NetServer::WriteLocalInput(ticcmd_t cmd)
 {
+	mCurrentInput[consoleplayer] = cmd;
 }
 
 void NetServer::WriteBotInput(int player, const ticcmd_t &cmd)
 {
+	mCurrentInput[player] = cmd;
 }
 
 void NetServer::WriteBytes(const uint8_t *block, int len)
 {
+	mSendCommands.AppendData(block, len);
 }
 
 int NetServer::GetPing(int player) const
@@ -164,20 +200,40 @@ void NetServer::Network_Controller(int playernum, bool add)
 
 void NetServer::OnClose(NetNode &node, const NetPacket &packet)
 {
+	if (node.Status == NodeStatus::InGame)
+	{
+		Printf("Player %d left the server", node.Player);
+
+		playeringame[node.Player] = false;
+		players[node.Player].settings_controller = false;
+		node.Player = -1;
+	}
+
 	node.Status = NodeStatus::Closed;
 	mComm->Close(packet.node);
 }
 
 void NetServer::OnConnectRequest(NetNode &node, const NetPacket &packet)
 {
-	if (node.Player == -1)
+	// Search for a spot in the player list
+	if (node.Status != NodeStatus::InGame)
 	{
-		// To do: search for free player spot
-		node.Player = 1;
+		for (int i = 0; i < MAXPLAYERS; i++)
+		{
+			if (!playeringame[i])
+			{
+				node.Player = i;
+				playeringame[i] = true;
+				players[i].settings_controller = false;
+				break;
+			}
+		}
 	}
 
 	if (node.Player != -1) // Join accepted.
 	{
+		Printf("Player %d joined the server", node.Player);
+
 		mNodeForPlayer[node.Player] = packet.node;
 
 		NetPacket response;
@@ -209,6 +265,15 @@ void NetServer::OnConnectRequest(NetNode &node, const NetPacket &packet)
 
 void NetServer::OnDisconnect(NetNode &node, const NetPacket &packet)
 {
+	if (node.Status == NodeStatus::InGame)
+	{
+		Printf("Player %d left the server", node.Player);
+
+		playeringame[node.Player] = false;
+		players[node.Player].settings_controller = false;
+		node.Player = -1;
+	}
+
 	node.Status = NodeStatus::Closed;
 	mComm->Close(packet.node);
 }
@@ -217,6 +282,10 @@ void NetServer::OnTic(NetNode &node, const NetPacket &packet)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
+		if (packet.size != 2 + sizeof(usercmd_t))
+			return;
+
+		memcpy(&mCurrentInput[node.Player].ucmd, &packet[2], sizeof(usercmd_t));
 	}
 	else
 	{

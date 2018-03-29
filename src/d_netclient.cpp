@@ -115,8 +115,8 @@ void NetClient::Update()
 		{
 			if (network.get() == this)
 			{
-				G_EndNetGame();
 				network.reset(new NetSinglePlayer());
+				G_EndNetGame();
 			}
 			else
 			{
@@ -135,6 +135,16 @@ void NetClient::SetCurrentTic(int receivetic, int sendtic)
 
 void NetClient::EndCurrentTic()
 {
+	NetPacket packet;
+	packet.node = mServerNode;
+	packet.size = 2 + sizeof(usercmd_t);
+	packet[0] = (uint8_t)NetPacketType::Tic;
+	packet[1] = 0; // target gametic
+	memcpy(&packet[2], &mCurrentInput[consoleplayer].ucmd, sizeof(usercmd_t));
+	mComm->PacketSend(packet);
+
+	mCurrentCommands = mSendCommands;
+	mSendCommands.Clear();
 }
 
 int NetClient::GetSendTick() const
@@ -144,28 +154,35 @@ int NetClient::GetSendTick() const
 
 ticcmd_t NetClient::GetPlayerInput(int player) const
 {
-	return ticcmd_t();
+	return mCurrentInput[player];
 }
 
 ticcmd_t NetClient::GetSentInput(int tic) const
 {
-	return ticcmd_t();
+	return mCurrentInput[consoleplayer];
 }
 
 void NetClient::RunCommands(int player)
 {
+	if (player == consoleplayer)
+	{
+		Net_RunCommands(mCurrentCommands, consoleplayer);
+	}
 }
 
 void NetClient::WriteLocalInput(ticcmd_t cmd)
 {
+	mCurrentInput[consoleplayer] = cmd;
 }
 
 void NetClient::WriteBotInput(int player, const ticcmd_t &cmd)
 {
+	mCurrentInput[player] = cmd;
 }
 
 void NetClient::WriteBytes(const uint8_t *block, int len)
 {
+	mSendCommands.AppendData(block, len);
 }
 
 int NetClient::GetPing(int player) const
@@ -224,8 +241,9 @@ void NetClient::OnConnectResponse(const NetPacket &packet)
 			GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
 			D_SetupUserInfo();
 
-			//network->WriteByte(DEM_CHANGEMAP);
-			//network->WriteString("e1m1");
+			G_DeferedInitNew("e1m1");
+
+			network = std::move(netconnect);
 		}
 		else // Server full
 		{

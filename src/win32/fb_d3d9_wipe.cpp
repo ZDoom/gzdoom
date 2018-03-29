@@ -208,7 +208,7 @@ void D3DFB::WipeEndScreen()
 		Begin2D(true);
 	}
 
-	EndBatch();			// Make sure all batched primitives have been drawn.
+	EndQuadBatch();			// Make sure all batched primitives have been drawn.
 
 	// Don't do anything if there is no ending point.
 	if (OldRenderTarget == NULL)

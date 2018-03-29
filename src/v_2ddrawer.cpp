@@ -140,7 +140,19 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 			parms.fillcolor.r = 255 - parms.fillcolor.r;
 			parms.fillcolor.g = 255 - parms.fillcolor.g;
 			parms.fillcolor.b = 255 - parms.fillcolor.b;
+			style.Flags &= ~STYLEF_InvertSource;
 		}
+		if (parms.desaturate > 0)
+		{
+			// Desaturation can also be computed here without having to do it in the shader.
+			auto gray = parms.fillcolor.Luminance();
+			auto notgray = 255 - gray;
+			parms.fillcolor.r = uint8_t((parms.fillcolor.r * notgray + gray * 255) / 255);
+			parms.fillcolor.g = uint8_t((parms.fillcolor.g * notgray + gray * 255) / 255);
+			parms.fillcolor.b = uint8_t((parms.fillcolor.b * notgray + gray * 255) / 255);
+			parms.desaturate = 0;
+		}
+
 		// Set up the color mod to replace the color from the image data.
 		vertexcolor.r = parms.fillcolor.r;
 		vertexcolor.g = parms.fillcolor.g;
@@ -236,6 +248,8 @@ void F2DDrawer::SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcol
 
 void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 {
+	if (parms.style.BlendOp == STYLEOP_None) return;	// not supposed to be drawn.
+
 	double xscale = parms.destwidth / parms.texwidth;
 	double yscale = parms.destheight / parms.texheight;
 	double x = parms.x - parms.left * xscale;

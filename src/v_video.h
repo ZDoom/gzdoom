@@ -79,7 +79,7 @@ enum
 	DTA_DestWidth,		// width of area to draw to
 	DTA_DestHeight,		// height of area to draw to
 	DTA_Alpha,			// alpha value for translucency
-	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
+	DTA_FillColor,		// color to stencil onto the destination
 	DTA_TranslationIndex, // translation table to recolor the source
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac

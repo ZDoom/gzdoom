@@ -3,6 +3,8 @@ sampler1D Palette : register(s1);
 
 float4 Desaturation : register(c1);	// { Desat, 1 - Desat }
 float4 PaletteMod : register(c2);
+float4 Color1 : register(c3);
+float4 Color2 : register(c4);
 float4 Weights : register(c6);		// RGB->Gray weighting { 77/256.0, 143/256.0, 37/256.0, 1 }
 float4 Gamma : register(c7);
 
@@ -17,14 +19,6 @@ float4 TextureLookup(float2 tex_coord)
 #endif
 }
 
-float4 Invert(float4 rgb)
-{
-#if INVERT
-	rgb.rgb = Weights.www - rgb.xyz;
-#endif
-	return rgb;
-}
-
 float Grayscale(float4 rgb)
 {
 	return dot(rgb.rgb, Weights.rgb);
@@ -32,24 +26,35 @@ float Grayscale(float4 rgb)
 
 float4 SampleTexture(float2 tex_coord)
 {
-	return Invert(TextureLookup(tex_coord));
+	float4 texel = TextureLookup(tex_coord);
+#if INVERT
+	texel.rgb = Weights.www - texel.xyz;
+#endif
+#if OPAQUE
+	texel.a = 1.0;
+#endif
+#if STENCIL
+	texel.rgb = Weights.www;
+#endif
+#if ALPHATEX
+	texel.a *= Grayscale(texel);
+	texel.rgb = Weights.www;
+#endif
+#if DESAT
+	float3 intensity;
+	intensity.rgb = Grayscale(texel) * Desaturation.x;
+	texel.rgb = intensity.rgb + texel.rgb * Desaturation.y;
+#endif
+	return texel;
 }
 
 // Normal color calculation for most drawing modes.
 
-float4 NormalColor(float2 tex_coord : TEXCOORD0, float4 VertexColor : COLOR0, float4 Overlay : COLOR1) : COLOR
+float4 NormalColor(float2 tex_coord : TEXCOORD0, float4 VertexColor : COLOR0) : COLOR
 {
-	return Overlay + SampleTexture(tex_coord) * VertexColor;
+	return Color1 + SampleTexture(tex_coord) * VertexColor;
 }
 
-// Copy the red channel to the alpha channel. Pays no attention to palettes and only works with grayscale textures
-
-float4 RedToAlpha(float2 tex_coord : TEXCOORD0, float4 VertexColor : COLOR0, float4 Overlay : COLOR1) : COLOR
-{
-	float4 color = Invert(tex2D(Image, tex_coord));
-	color.a *= color.r;
-	return Overlay + color * VertexColor;
-}
 
 // Just return the value of c0.
 
@@ -60,41 +65,16 @@ float4 VertexColor(float4 color : COLOR0) : COLOR
 
 // Emulate one of the special colormaps. (Invulnerability, gold, etc.)
 
-float4 SpecialColormap(float2 tex_coord : TEXCOORD0, float4 start : COLOR0, float4 end : COLOR1) : COLOR
+float4 SpecialColormap(float2 tex_coord : TEXCOORD0) : COLOR
 {
 	float4 color = SampleTexture(tex_coord);
-	float4 range = end - start;
+	float4 range = Color2 - Color1;
 	// We can't store values greater than 1.0 in a color register, so we multiply
 	// the final result by 2 and expect the caller to divide the start and end by 2.
-	color.rgb = 2 * (start + Grayscale(color) * range).rgb;
-	// Duplicate alpha semantics of NormalColor.
-	color.a = start.a + color.a * end.a;
+	color.rgb = 2 * (Color1 + Grayscale(color) * range).rgb;
 	return color;
 }
 
-// In-game colormap effect: fade to a particular color and multiply by another, with 
-// optional desaturation of the original color. Desaturation is stored in c1.
-// Fade level is packed int fade.a. Fade.rgb has been premultiplied by alpha.
-// Overall alpha is in color.a.
-float4 InGameColormap(float2 tex_coord : TEXCOORD0, float4 color : COLOR0, float4 fade : COLOR1) : COLOR
-{
-	float4 rgb = SampleTexture(tex_coord);
-
-	// Desaturate
-#if DESAT
-	float3 intensity;
-	intensity.rgb = Grayscale(rgb) * Desaturation.x;
-	rgb.rgb = intensity.rgb + rgb.rgb * Desaturation.y;
-#endif
-
-	// Shade and Alpha
-	rgb = rgb * color;
-
-	// Fade
-	rgb.rgb = rgb.rgb * fade.aaa + fade.rgb;
-
-	return rgb;
-}
 
 // Windowed gamma correction.
 

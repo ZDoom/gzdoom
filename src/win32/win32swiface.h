@@ -92,32 +92,35 @@ private:
 	{
 		PSCONST_Desaturation = 1,
 		PSCONST_PaletteMod = 2,
+		PSCONST_Color1 = 3,
+		PSCONST_Color2 = 4,
+		PSCONST_BUFFERED_MAX,
 		PSCONST_Weights = 6,
 		PSCONST_Gamma = 7,
+
 	};
 	enum
 	{
 		SHADER_NormalColor,
 		SHADER_NormalColorPal,
+		SHADER_NormalColorD,
+		SHADER_NormalColorPalD,
 		SHADER_NormalColorInv,
 		SHADER_NormalColorPalInv,
+		SHADER_NormalColorOpaq,
+		SHADER_NormalColorPalOpaq,
+		SHADER_NormalColorInvOpaq,
+		SHADER_NormalColorPalInvOpaq,
 
-		SHADER_RedToAlpha,
-		SHADER_RedToAlphaInv,
+		SHADER_AlphaTex,
+		SHADER_PalAlphaTex,
+		SHADER_Stencil,
+		SHADER_PalStencil,
 
 		SHADER_VertexColor,
 
 		SHADER_SpecialColormap,
 		SHADER_SpecialColormapPal,
-
-		SHADER_InGameColormap,
-		SHADER_InGameColormapDesat,
-		SHADER_InGameColormapInv,
-		SHADER_InGameColormapInvDesat,
-		SHADER_InGameColormapPal,
-		SHADER_InGameColormapPalDesat,
-		SHADER_InGameColormapPalInv,
-		SHADER_InGameColormapPalInvDesat,
 
 		SHADER_BurnWipe,
 		SHADER_GammaCorrection,
@@ -134,7 +137,7 @@ private:
 	bool CreateFBTexture();
 	bool CreatePaletteTexture();
 	bool CreateGammaTexture();
-	bool CreateVertexes();
+	bool CreateVertexes(int numv, int numi);
 	void UploadPalette();
 	void UpdateGammaTexture(float igamma);
 	void FillPresentParameters (D3DPRESENT_PARAMETERS *pp, bool fullscreen, bool vsync);
@@ -149,14 +152,11 @@ private:
 	void Draw3DPart(bool copy3d);
 	static D3DBLEND GetStyleAlpha(int type);
 	void DoWindowedGamma();
-	void AddColorOnlyQuad(int left, int top, int width, int height, D3DCOLOR color);
 	void CheckQuadBatch(int numtris=2, int numverts=4);
 	void BeginQuadBatch();
 	void EndQuadBatch();
-	void BeginLineBatch();
-	void EndLineBatch();
-	void EndBatch();
 	void CopyNextFrontBuffer();
+	void Draw2D() override;
 
 	D3DCAPS9 DeviceCaps;
 
@@ -173,7 +173,7 @@ private:
 	D3DBLENDOP AlphaBlendOp;
 	D3DBLEND AlphaSrcBlend;
 	D3DBLEND AlphaDestBlend;
-	float Constant[3][4];
+	float Constant[PSCONST_BUFFERED_MAX][4];
 	D3DCOLOR CurBorderColor;
 	IDirect3DPixelShader9 *CurPixelShader;
 	IDirect3DTexture9 *Texture[5];
@@ -222,11 +222,16 @@ private:
 	FBVERTEX *VertexData;
 	IDirect3DIndexBuffer9 *IndexBuffer;
 	uint16_t *IndexData;
+
+	// This stuff is still needed for the Wiper (which will be refactored later)
 	BufferedTris *QuadExtra;
 	int VertexPos;
 	int IndexPos;
 	int QuadBatchPos;
 	enum { BATCH_None, BATCH_Quads, BATCH_Lines } BatchType;
+
+	unsigned int NumVertices = 0;
+	unsigned int NumIndices = 0;
 
 	IDirect3DPixelShader9 *Shaders[NUM_SHADERS];
 	IDirect3DPixelShader9 *GammaShader;

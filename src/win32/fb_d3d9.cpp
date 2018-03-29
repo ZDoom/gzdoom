@@ -161,25 +161,24 @@ const char *const D3DFB::ShaderNames[D3DFB::NUM_SHADERS] =
 {
 	"NormalColor.pso",
 	"NormalColorPal.pso",
+	"NormalColorD.pso",
+	"NormalColorPalD.pso",
 	"NormalColorInv.pso",
 	"NormalColorPalInv.pso",
+	"NormalColorOpaq.pso",
+	"NormalColorPalOpaq.pso",
+	"NormalColorInvOpaq.pso",
+	"NormalColorPalInvOpaq.pso",
 
-	"RedToAlpha.pso",
-	"RedToAlphaInv.pso",
+	"AlphaTex.pso",
+	"PalAlphaTex.pso",
+	"Stencil.pso",
+	"PalStencil.pso",
 
 	"VertexColor.pso",
 
 	"SpecialColormap.pso",
 	"SpecialColorMapPal.pso",
-
-	"InGameColormap.pso",
-	"InGameColormapDesat.pso",
-	"InGameColormapInv.pso",
-	"InGameColormapInvDesat.pso",
-	"InGameColormapPal.pso",
-	"InGameColormapPalDesat.pso",
-	"InGameColormapPalInv.pso",
-	"InGameColormapPalInvDesat.pso",
 
 	"BurnWipe.pso",
 	"GammaCorrection.pso",
@@ -474,7 +473,7 @@ bool D3DFB::CreateResources()
 	{
 		return false;
 	}
-	if (!CreateVertexes())
+	if (!CreateVertexes(NUM_VERTS, NUM_INDEXES))
 	{
 		return false;
 	}
@@ -610,7 +609,7 @@ bool D3DFB::Reset ()
 		}
 	}
 	LOG("Device was reset\n");
-	if (!CreateFBTexture() || !CreateVertexes())
+	if (!CreateFBTexture() || !CreateVertexes(NUM_VERTS, NUM_INDEXES))
 	{
 		return false;
 	}
@@ -775,19 +774,19 @@ bool D3DFB::CreatePaletteTexture ()
 //
 //==========================================================================
 
-bool D3DFB::CreateVertexes ()
+bool D3DFB::CreateVertexes (int numverts, int numindices)
 {
-	VertexPos = -1;
-	IndexPos = -1;
-	QuadBatchPos = -1;
-	BatchType = BATCH_None;
-	if (FAILED(D3DDevice->CreateVertexBuffer(sizeof(FBVERTEX)*NUM_VERTS, 
+	SAFE_RELEASE(VertexBuffer);
+	SAFE_RELEASE(IndexBuffer);
+	NumVertices = numverts;
+	NumIndices = numindices;
+	if (FAILED(D3DDevice->CreateVertexBuffer(sizeof(FBVERTEX)*numverts, 
 		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFVF_FBVERTEX, D3DPOOL_DEFAULT, &VertexBuffer, NULL)))
 	{
 		return false;
 	}
-	if (FAILED(D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*NUM_INDEXES,
-		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFMT_INDEX16, D3DPOOL_DEFAULT, &IndexBuffer, NULL)))
+	if (FAILED(D3DDevice->CreateIndexBuffer(sizeof(uint16_t)*numindices,
+		D3DUSAGE_DYNAMIC | D3DUSAGE_WRITEONLY, D3DFMT_INDEX32, D3DPOOL_DEFAULT, &IndexBuffer, NULL)))
 	{
 		return false;
 	}
@@ -913,7 +912,7 @@ void D3DFB::Update ()
 		if (InScene)
 		{
 			DrawRateStuff();
-			EndBatch();		// Make sure all batched primitives are drawn.
+			EndQuadBatch();		// Make sure all batched primitives are drawn.
 			In2D = 0;
 			Flip();
 		}
@@ -1787,75 +1786,189 @@ FNativePalette *D3DFB::CreatePalette(FRemapTable *remap)
 
 //==========================================================================
 //
-// D3DFB :: BeginLineBatch
+// D3DFB :: Draw2D
 //
 //==========================================================================
 
-void D3DFB::BeginLineBatch()
+static D3DBLENDOP OpToD3D(int op)
 {
-	if (In2D < 2 || !InScene || BatchType == BATCH_Lines)
+	switch (op)
 	{
-		return;
+		// STYLEOP_None can never get here.
+	default:
+		return D3DBLENDOP_ADD;
+	case STYLEOP_Sub:
+		return D3DBLENDOP_SUBTRACT;
+	case STYLEOP_RevSub:
+		return D3DBLENDOP_REVSUBTRACT;
 	}
-	EndQuadBatch();		// Make sure all quads have been drawn first.
-	VertexBuffer->Lock(0, 0, (void **)&VertexData, D3DLOCK_DISCARD);
-	VertexPos = 0;
-	BatchType = BATCH_Lines;
 }
 
-//==========================================================================
-//
-// D3DFB :: EndLineBatch
-//
-//==========================================================================
 
-void D3DFB::EndLineBatch()
+void D3DFB::Draw2D()
 {
-	if (In2D < 2 || !InScene || BatchType != BATCH_Lines)
+	auto &vertices = m2DDrawer.mVertices;
+	auto &indices = m2DDrawer.mIndices;
+	auto &commands = m2DDrawer.mData;
+
+	auto vc = vertices.Size();
+	auto ic = indices.Size();
+	if (vc > NumVertices || ic > NumIndices)
 	{
-		return;
+		// We got more vertices than the current buffer can take so resize it.
+		if (!CreateVertexes(MAX(vc, NumVertices), MAX(ic, NumIndices)))
+		{
+			I_FatalError("Unable to resize vertex buffer");
+		}
+	}
+	IndexBuffer->Lock(0, 0, (void **)&IndexData, D3DLOCK_DISCARD);
+	memcpy(IndexData, &indices[0], sizeof(*IndexData) * ic);
+	IndexBuffer->Unlock();
+	VertexBuffer->Lock(0, 0, (void **)&VertexData, D3DLOCK_DISCARD);
+	auto yoffs = GatheringWipeScreen ? 0.5f : 0.5f - LBOffset;
+
+	for (auto &vt : vertices)
+	{
+		VertexData->x = vt.x;
+		VertexData->y = vt.y + yoffs;
+		VertexData->z = vt.z;
+		VertexData->rhw = 1;
+		VertexData->color0 = vt.color0;
+		VertexData->color1 = 0;
+		VertexData->tu = vt.u;
+		VertexData->tv = vt.v;
 	}
 	VertexBuffer->Unlock();
-	if (VertexPos > 0)
+	D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
+	D3DDevice->SetIndices(IndexBuffer);
+
+	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
+	D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
+	bool uv_wrapped = false;
+	bool scissoring = false;
+	EnableAlphaTest(true);
+
+	for (auto &cmd : commands)
 	{
-		SetPixelShader(Shaders[SHADER_VertexColor]);
-		SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-		D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
-		D3DDevice->DrawPrimitive(D3DPT_LINELIST, 0, VertexPos / 2);
+		//Set blending mode
+		SetAlphaBlend(OpToD3D(cmd.mRenderStyle.BlendOp), GetStyleAlpha(cmd.mRenderStyle.SrcAlpha), GetStyleAlpha(cmd.mRenderStyle.DestAlpha));
+		int index = -1;
+
+		if (cmd.mTexture == nullptr)
+		{
+			index = SHADER_VertexColor;
+		}
+		else
+		{
+			// set texture wrapping
+			bool uv_should_wrap = !!(cmd.mFlags & F2DDrawer::DTF_Wrap);
+			if (uv_wrapped != uv_should_wrap)
+			{
+				DWORD mode = uv_should_wrap ? D3DTADDRESS_WRAP : D3DTADDRESS_BORDER;
+				uv_wrapped = uv_should_wrap;
+				D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, mode);
+				D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, mode);
+			}
+
+			auto textype = cmd.mTexture->GetFormat();	// This never returns TEX_Gray.
+			if (cmd.mTranslation) textype = TEX_Pal;	// Translation requires a paletted texture, regardless of the source format.
+
+			if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
+			{
+				index = textype == TEX_Pal ? SHADER_SpecialColormapPal : SHADER_SpecialColormap;
+				SetConstant(PSCONST_Color1, cmd.mColor1.r / 510.f, cmd.mColor1.g / 510.f, cmd.mColor1.b / 510.f, 0);
+				SetConstant(PSCONST_Color2, cmd.mColor1.r / 510.f, cmd.mColor1.g / 510.f, cmd.mColor1.b / 510.f, 0);
+			}
+			else
+			{
+				SetConstant(PSCONST_Desaturation, cmd.mDesaturate / 255.f, (255 - cmd.mDesaturate) / 255.f, 0, 0);
+				SetConstant(PSCONST_Color1, cmd.mColor1.r / 255.f, cmd.mColor1.g / 255.f, cmd.mColor1.b / 255.f, 0);
+				switch (cmd.mDrawMode)
+				{
+				default:
+				case F2DDrawer::DTM_Normal:
+					if (cmd.mDesaturate) index = textype == TEX_Pal ? SHADER_NormalColorPalD : SHADER_NormalColorD;
+					else  index = textype == TEX_Pal ? SHADER_NormalColorPal : SHADER_NormalColor;
+					break;
+
+				case F2DDrawer::DTM_Invert:
+					index = textype == TEX_Pal ? SHADER_NormalColorPalInv : SHADER_NormalColorInv;
+					break;
+
+				case F2DDrawer::DTM_InvertOpaque:
+					index = textype == TEX_Pal ? SHADER_NormalColorPalInvOpaq : SHADER_NormalColorInvOpaq;
+					break;
+
+				case F2DDrawer::DTM_AlphaTexture:
+					index = textype == TEX_Pal ? SHADER_PalAlphaTex : SHADER_AlphaTex;
+					break;
+
+				case F2DDrawer::DTM_Opaque:
+					index = textype == TEX_Pal ? SHADER_NormalColorPalOpaq : SHADER_NormalColorOpaq;
+					break;
+
+				case F2DDrawer::DTM_Stencil:
+					index = textype == TEX_Pal ? SHADER_PalStencil : SHADER_Stencil;
+					break;
+
+				}
+			}
+
+			auto tex = cmd.mTexture;
+			D3DTex *d3dtex = static_cast<D3DTex *>(tex->GetNative(textype, uv_should_wrap));
+			if (d3dtex == nullptr) continue;
+			SetTexture(0, d3dtex->Tex);
+
+			if (textype == TEX_Pal)
+			{
+				if (!cmd.mTranslation)
+				{
+					SetPaletteTexture(PaletteTexture, 256, BorderColor);
+				}
+				else
+				{
+					auto ptex = static_cast<D3DPal*>(cmd.mTranslation->GetNative());
+					if (ptex != nullptr)
+					{
+						SetPaletteTexture(ptex->Tex, ptex->RoundedPaletteSize, ptex->BorderColor);
+					}
+				}
+			}
+		}
+		if (index == -1) continue;
+		SetPixelShader(Shaders[index]);
+
+		if (cmd.mFlags & F2DDrawer::DTF_Scissor)
+		{
+			scissoring = true;
+			RECT scissor = { cmd.mScissor[0], cmd.mScissor[1] + LBOffsetI, cmd.mScissor[2], cmd.mScissor[3] + LBOffsetI };
+			D3DDevice->SetScissorRect(&scissor);
+			D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, TRUE);
+		}
+		else if (scissoring) D3DDevice->SetRenderState(D3DRS_SCISSORTESTENABLE, false);
+
+		switch (cmd.mType)
+		{
+		case F2DDrawer::DrawTypeTriangles:
+			D3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, cmd.mVertIndex, cmd.mVertCount);
+			break;
+
+		case F2DDrawer::DrawTypeLines:
+			D3DDevice->DrawPrimitive(D3DPT_LINELIST, cmd.mVertIndex, cmd.mVertCount);
+			break;
+
+		case F2DDrawer::DrawTypePoints:
+			D3DDevice->DrawPrimitive(D3DPT_POINTLIST, cmd.mVertIndex, cmd.mVertCount);
+			break;
+
+		}
 	}
-	VertexPos = -1;
-	BatchType = BATCH_None;
+	if (uv_wrapped)
+	{
+		D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
+		D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
+	}
 }
-
-
-//==========================================================================
-//
-// D3DFB :: DrawPixel
-//
-//==========================================================================
-
-#if 0
-void D3DFB::DrawPixel(int x, int y, int palcolor, uint32_t color)
-{
-	if (In2D < 2)
-	{
-		Super::DrawPixel(x, y, palcolor, color);
-		return;
-	}
-	if (!InScene)
-	{
-		return;
-	}
-	FBVERTEX pt =
-	{
-		float(x), float(y), 0, 1, color
-	};
-	EndBatch();		// Draw out any batched operations.
-	SetPixelShader(Shaders[SHADER_VertexColor]);
-	SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_SRCALPHA, D3DBLEND_INVSRCALPHA);
-	D3DDevice->DrawPrimitiveUP(D3DPT_POINTLIST, 1, &pt, sizeof(FBVERTEX));
-}
-#endif
 
 //==========================================================================
 //
@@ -1867,11 +1980,7 @@ void D3DFB::DrawPixel(int x, int y, int palcolor, uint32_t color)
 
 void D3DFB::CheckQuadBatch(int numtris, int numverts)
 {
-	if (BatchType == BATCH_Lines)
-	{
-		EndLineBatch();
-	}
-	else if (QuadBatchPos == MAX_QUAD_BATCH ||
+	if (QuadBatchPos == MAX_QUAD_BATCH ||
 		VertexPos + numverts > NUM_VERTS ||
 		IndexPos + numtris * 3 > NUM_INDEXES)
 	{
@@ -1897,7 +2006,6 @@ void D3DFB::BeginQuadBatch()
 	{
 		return;
 	}
-	EndLineBatch();		// Make sure all lines have been drawn first.
 	VertexBuffer->Lock(0, 0, (void **)&VertexData, D3DLOCK_DISCARD);
 	IndexBuffer->Lock(0, 0, (void **)&IndexData, D3DLOCK_DISCARD);
 	VertexPos = 0;
@@ -1911,6 +2019,7 @@ void D3DFB::BeginQuadBatch()
 // D3DFB :: EndQuadBatch
 //
 // Draws all the quads that have been batched up.
+// This is still needed by the wiper and has been stripped off everything unneeded.
 //
 //==========================================================================
 
@@ -1932,8 +2041,6 @@ void D3DFB::EndQuadBatch()
 	}
 	D3DDevice->SetStreamSource(0, VertexBuffer, 0, sizeof(FBVERTEX));
 	D3DDevice->SetIndices(IndexBuffer);
-	bool uv_wrapped = false;
-	bool uv_should_wrap;
 	int indexpos, vertpos;
 
 	indexpos = vertpos = 0;
@@ -1959,81 +2066,17 @@ void D3DFB::EndQuadBatch()
 			{
 				break;
 			}
-			if (quad->ShaderNum == BQS_InGameColormap && (quad->Flags & BQF_Desaturated) && quad->Desat != q2->Desat)
-			{
-				break;
-			}
 			indexpos += q2->NumTris * 3;
 			vertpos += q2->NumVerts;
 		}
 
-		// Set the palette (if one)
-		if ((quad->Flags & BQF_Paletted) == BQF_GamePalette)
-		{
-			SetPaletteTexture(PaletteTexture, 256, BorderColor);
-		}
-		else if ((quad->Flags & BQF_Paletted) == BQF_CustomPalette)
-		{
-			assert(quad->Palette != NULL);
-			SetPaletteTexture(quad->Palette->Tex, quad->Palette->RoundedPaletteSize, quad->Palette->BorderColor);
-		}
-
 		// Set the alpha blending
-		SetAlphaBlend(D3DBLENDOP(quad->BlendOp), D3DBLEND(quad->SrcBlend), D3DBLEND(quad->DestBlend));
+		SetAlphaBlend(D3DBLENDOP_ADD, D3DBLEND_ONE, D3DBLEND_ZERO);
 
 		// Set the alpha test
-		EnableAlphaTest(!(quad->Flags & BQF_DisableAlphaTest));
+		EnableAlphaTest(false);
 
-		// Set the pixel shader
-		if (quad->ShaderNum == BQS_PalTex)
-		{
-			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
-				SHADER_NormalColorPalInv : SHADER_NormalColorPal]);
-		}
-		else if (quad->ShaderNum == BQS_Plain)
-		{
-			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
-				SHADER_NormalColorInv : SHADER_NormalColor]);
-		}
-		else if (quad->ShaderNum == BQS_RedToAlpha)
-		{
-			SetPixelShader(Shaders[(quad->Flags & BQF_InvertSource) ?
-				SHADER_RedToAlphaInv : SHADER_RedToAlpha]);
-		}
-		else if (quad->ShaderNum == BQS_ColorOnly)
-		{
-			SetPixelShader(Shaders[SHADER_VertexColor]);
-		}
-		else if (quad->ShaderNum == BQS_SpecialColormap)
-		{
-			int select;
-
-			select = !!(quad->Flags & BQF_Paletted);
-			SetPixelShader(Shaders[SHADER_SpecialColormap + select]);
-		}
-		else if (quad->ShaderNum == BQS_InGameColormap)
-		{
-			int select;
-
-			select = !!(quad->Flags & BQF_Desaturated);
-			select |= !!(quad->Flags & BQF_InvertSource) << 1;
-			select |= !!(quad->Flags & BQF_Paletted) << 2;
-			if (quad->Flags & BQF_Desaturated)
-			{
-				SetConstant(PSCONST_Desaturation, quad->Desat / 255.f, (255 - quad->Desat) / 255.f, 0, 0);
-			}
-			SetPixelShader(Shaders[SHADER_InGameColormap + select]);
-		}
-
-		// Set the texture clamp addressing mode
-		uv_should_wrap = !!(quad->Flags & BQF_WrapUV);
-		if (uv_wrapped != uv_should_wrap)
-		{
-			DWORD mode = uv_should_wrap ? D3DTADDRESS_WRAP : D3DTADDRESS_BORDER;
-			uv_wrapped = uv_should_wrap;
-			D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, mode);
-			D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, mode);
-		}
+		SetPixelShader(Shaders[SHADER_NormalColor]);
 
 		// Set the texture
 		if (quad->Texture != NULL)
@@ -2050,11 +2093,6 @@ void D3DFB::EndQuadBatch()
 			/*4 * i, 4 * (j - i), 6 * i, 2 * (j - i)*/);
 		i = j;
 	}
-	if (uv_wrapped)
-	{
-		D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSU, D3DTADDRESS_BORDER);
-		D3DDevice->SetSamplerState(0, D3DSAMP_ADDRESSV, D3DTADDRESS_BORDER);
-	}
 	QuadBatchPos = -1;
 	VertexPos = -1;
 	IndexPos = -1;
@@ -2067,18 +2105,6 @@ void D3DFB::EndQuadBatch()
 // Draws whichever type of primitive is currently being batched.
 //
 //==========================================================================
-
-void D3DFB::EndBatch()
-{
-	if (BatchType == BATCH_Quads)
-	{
-		EndQuadBatch();
-	}
-	else if (BatchType == BATCH_Lines)
-	{
-		EndLineBatch();
-	}
-}
 
 D3DBLEND D3DFB::GetStyleAlpha(int type)
 {

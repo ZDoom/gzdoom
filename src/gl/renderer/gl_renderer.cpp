@@ -486,7 +486,6 @@ public:
 
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
-	F2DDrawer::EDrawType lasttype = F2DDrawer::DrawTypeTriangles;
 	auto &vertices = drawer->mVertices;
 	auto &indices = drawer->mIndices;
 	auto &commands = drawer->mData;

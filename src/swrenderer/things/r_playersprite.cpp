@@ -444,19 +444,12 @@ namespace swrenderer
 				{
 					accelSprite.special = CameraLight::Instance()->ShaderColormap();
 				}
-				else if (colormap_to_use->Color == PalEntry(255, 255, 255) &&
-					colormap_to_use->Desaturate == 0)
+				else 
 				{
 					accelSprite.overlay = colormap_to_use->Fade;
 					accelSprite.overlay.a = uint8_t(vis.Light.ColormapNum * 255 / NUMCOLORMAPS);
-				}
-				else
-				{
-					accelSprite.usecolormapstyle = true;
-					accelSprite.colormapstyle.Color = colormap_to_use->Color;
-					accelSprite.colormapstyle.Fade = colormap_to_use->Fade;
-					accelSprite.colormapstyle.Desaturate = colormap_to_use->Desaturate;
-					accelSprite.colormapstyle.FadeLevel = vis.Light.ColormapNum / float(NUMCOLORMAPS);
+					accelSprite.LightColor = colormap_to_use->Color;
+					accelSprite.Desaturate = (uint8_t)clamp(colormap_to_use->Desaturate, 0, 255);
 				}
 
 				AcceleratedSprites.Push(accelSprite);
@@ -489,7 +482,8 @@ namespace swrenderer
 				DTA_FillColor, sprite.FillColor,
 				DTA_SpecialColormap, sprite.special,
 				DTA_ColorOverlay, sprite.overlay.d,
-				DTA_ColormapStyle, sprite.usecolormapstyle ? &sprite.colormapstyle : nullptr,
+				DTA_Color, sprite.LightColor,
+				DTA_Desaturate, sprite.Desaturate,
 				TAG_DONE);
 		}
 

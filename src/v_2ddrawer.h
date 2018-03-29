@@ -35,7 +35,6 @@ public:
 		DTF_Wrap = 1,
 		DTF_Scissor = 2,
 		DTF_SpecialColormap = 4,
-		DTF_IngameLighting = 8
 	};
 
 
@@ -79,7 +78,6 @@ public:
 		FTexture *mTexture;
 		FRemapTable *mTranslation;
 		int mScissor[4];
-		uint32_t mColorOverlay;
 		int mDesaturate;
 		FRenderStyle mRenderStyle;
 		PalEntry mColor1, mColor2;	// Can either be the overlay color or the special colormap ramp. Both features can not be combined.
@@ -98,7 +96,6 @@ public:
 				mType == other.mType &&
 				mTranslation == other.mTranslation &&
 				!memcmp(mScissor, other.mScissor, sizeof(mScissor)) &&
-				other.mColorOverlay == 0 && mColorOverlay == 0 &&
 				mDesaturate == other.mDesaturate &&
 				mRenderStyle == other.mRenderStyle &&
 				mDrawMode == other.mDrawMode &&

@@ -110,8 +110,8 @@ enum
 	DTA_RenderStyle,	// same as render style for actors
 	DTA_ColorOverlay,	// uint32_t: ARGB to overlay on top of image; limited to black for software
 	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
-	DTA_SpecialColormap,// pointer to FSpecialColormapParameters (likely to be forever hardware-only)
-	DTA_ColormapStyle,	// pointer to FColormapStyle (hardware-only)
+	DTA_SpecialColormap,// pointer to FSpecialColormapParameters
+	DTA_Desaturate,		// explicit desaturation factor (does not do anything in Legacy OpenGL)
 	DTA_Fullscreen,		// Draw image fullscreen (same as DTA_VirtualWidth/Height with graphics size.)
 
 	// floating point duplicates of some of the above:
@@ -184,7 +184,7 @@ struct DrawParms
 	INTBOOL bilinear;
 	FRenderStyle style;
 	struct FSpecialColormap *specialcolormap;
-	struct FColormapStyle *colormapstyle;
+	int desaturate;
 	int scalex, scaley;
 	int cellx, celly;
 	int maxstrlen;

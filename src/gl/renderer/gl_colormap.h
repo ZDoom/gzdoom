@@ -10,7 +10,6 @@ struct lightlist_t;
 enum EColorManipulation
 {
 	CM_SPECIAL2D = -3,			// the special colormaps get passed as color pair from the 2D drawer so they need a different value here.
-	CM_INGAME2D = -3,			// ingame lighting mode for automap
 	CM_PLAIN2D = -2,			// regular 2D drawing.
 	CM_INVALID=-1,
 	CM_DEFAULT=0,					// untranslated

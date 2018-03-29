@@ -131,7 +131,6 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 	}
 
 	SetColorOverlay(parms.colorOverlay, alpha, vertexcolor, quad.mColor1);
-	quad.mColorOverlay = parms.colorOverlay;
 
 	if (style.Flags & STYLEF_ColorIsFixed)
 	{
@@ -186,22 +185,7 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 			quad.mColor2.g = (uint8_t)(end[1] * (255 / 2));
 			quad.mColor2.b = (uint8_t)(end[2] * (255 / 2));
 		}
-		else if (parms.colormapstyle != nullptr)
-		{ 
-			// Emulate the fading from an in-game colormap (colorized, faded, and desaturated)
-			// This only gets used to render the weapon sprite for the software renderer.
-			quad.mDesaturate = parms.colormapstyle->Desaturate;
-			vertexcolor.r = parms.colormapstyle->Color.r;
-			vertexcolor.g = parms.colormapstyle->Color.g;
-			vertexcolor.b = parms.colormapstyle->Color.b;
-
-			// fade uses premultiplied alpha. This uses mColor2 so that it can be combined with color overlays.
-			double fadelevel = parms.colormapstyle->FadeLevel;
-			quad.mColor2.r = uint8_t(parms.colormapstyle->Fade.r * fadelevel);
-			quad.mColor2.g = uint8_t(parms.colormapstyle->Fade.g * fadelevel);
-			quad.mColor2.b = uint8_t(parms.colormapstyle->Fade.b * fadelevel);
-			quad.mFlags |= DTF_IngameLighting;
-		}
+		quad.mDesaturate = parms.desaturate;
 	}
 	// apply the element's own color. This is being blended with anything that came before.
 	vertexcolor = PalEntry((vertexcolor.a * parms.color.a) / 255, (vertexcolor.r * parms.color.r) / 255, (vertexcolor.g * parms.color.g) / 255, (vertexcolor.b * parms.color.b) / 255);
@@ -347,15 +331,21 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	poly.mType = DrawTypeTriangles;
 	poly.mTexture = texture;
 	poly.mRenderStyle = DefaultRenderStyle();
-	poly.mFlags |= DTF_Wrap | DTF_IngameLighting;
+	poly.mFlags |= DTF_Wrap;
 	poly.mDesaturate = colormap.Desaturation;
 
-	PalEntry color0 = colormap.LightColor; color0.a = 255;
+	PalEntry color0; 
+	double invfade = 1. - fadelevel;
 
-	poly.mColor2.a = uint8_t((1 - fadelevel) * 255);
-	poly.mColor2.r = uint8_t(colormap.FadeColor.r * fadelevel);
-	poly.mColor2.g = uint8_t(colormap.FadeColor.g * fadelevel);
-	poly.mColor2.b = uint8_t(colormap.FadeColor.b * fadelevel);
+	color0.r = uint8_t(colormap.LightColor.r * invfade);
+	color0.g = uint8_t(colormap.LightColor.g * invfade);
+	color0.b = uint8_t(colormap.LightColor.b * invfade);
+	color0.a = 255;
+
+	poly.mColor1.a = 0;
+	poly.mColor1.r = uint8_t(colormap.FadeColor.r * fadelevel);
+	poly.mColor1.g = uint8_t(colormap.FadeColor.g * fadelevel);
+	poly.mColor1.b = uint8_t(colormap.FadeColor.b * fadelevel);
 
 	bool dorotate = rotation != 0;
 

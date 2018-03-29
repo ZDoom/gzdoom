@@ -491,16 +491,10 @@ void main()
 			break;
 		}
 		
-		case 4:	// simple 2D
-		{
-			frag = uObjectColor + frag * vColor;
-			break;
-		}
-		
-		case 5: // 2D with in-game lighting (for textured automap)
+		case 4:	// simple 2D (reuses a uniform for the special colormap for the color overlay.)
 		{
 			frag = frag * vColor;
-			frag.rgb = uObjectColor.rgb + frag.rgb * uObjectColor2.aaa + uObjectColor2.rgb;
+			frag.rgb = frag.rgb + uFixedColormapStart.rgb;
 			break;
 		}
 			

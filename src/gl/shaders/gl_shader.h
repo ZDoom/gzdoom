@@ -200,6 +200,12 @@ public:
 	{
 		glUniform4f(mIndex, a, b, c, d);
 	}
+
+	void Set(PalEntry newvalue)
+	{
+		glUniform4f(mIndex, newvalue.r / 255.f, newvalue.g / 255.f, newvalue.b / 255.f, newvalue.a / 255.f);
+	}
+
 };
 
 class FBufferedUniformPE

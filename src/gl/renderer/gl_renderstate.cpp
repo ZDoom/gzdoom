@@ -159,8 +159,6 @@ bool FRenderState::ApplyShader()
 
 	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
 	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
-	//activeShader->muObjectColor2.Set(mObjectColor2);
-	activeShader->muObjectColor2.Set(mObjectColor2);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
@@ -171,6 +169,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
+	activeShader->muObjectColor2.Set(mObjectColor2);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muClipHeight.Set(mClipHeight);
@@ -225,33 +224,34 @@ bool FRenderState::ApplyShader()
 		activeShader->currentcliplinestate = 0;
 	}
 
-	if (mColormapState != activeShader->currentfixedcolormap)
+	if (mColormapState < -1)	// 2D operations
+	{
+		if (mColormapState != CM_SPECIAL2D)
+		{
+			activeShader->muColormapStart.Set(m2DColors[0]);
+			activeShader->muFixedColormap.Set(4);
+		}
+		else
+		{
+			float startr = m2DColors[0].r / 255.f;
+			float startg = m2DColors[0].g / 255.f;
+			float startb = m2DColors[0].b / 255.f;
+			float ranger = m2DColors[1].r / 255.f - startr;
+			float rangeg = m2DColors[1].g / 255.f - startg;
+			float rangeb = m2DColors[1].b / 255.f - startb;
+			activeShader->muColormapStart.Set(startr, startg, startb, 0.f);
+			activeShader->muColormapRange.Set(ranger, rangeg, rangeb, 0.f);
+			activeShader->muFixedColormap.Set(1);
+		}
+		activeShader->currentfixedcolormap = mColormapState;
+	}
+	else if (mColormapState != activeShader->currentfixedcolormap)
 	{
 		float r, g, b;
 		activeShader->currentfixedcolormap = mColormapState;
 		if (mColormapState == CM_DEFAULT)
 		{
 			activeShader->muFixedColormap.Set(0);
-		}
-		else if (mColormapState == CM_PLAIN2D)
-		{
-			activeShader->muFixedColormap.Set(4);
-		}
-		else if (mColormapState == CM_INGAME2D)
-		{
-			activeShader->muFixedColormap.Set(5);
-		}
-		else if (mColormapState == CM_SPECIAL2D)
-		{
-			activeShader->muFixedColormap.Set(1);
-			float startr = mObjectColor.r / 255;
-			float startg = mObjectColor.g / 255;
-			float startb = mObjectColor.b / 255;
-			float ranger = mObjectColor2.r / 255 - startr;
-			float rangeg = mObjectColor2.g / 255 - startg;
-			float rangeb = mObjectColor2.b / 255 - startb;
-			activeShader->muColormapStart.Set(startr, startg, startb, 0.f);
-			activeShader->muColormapRange.Set(ranger, rangeg, rangeb, 0.f);
 		}
 		else if (mColormapState > CM_DEFAULT && mColormapState < CM_MAXCOLORMAP)
 		{

@@ -541,13 +541,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		}
 		else
 		{
-			gl_RenderState.SetObjectColor(cmd.mColor1);
-			gl_RenderState.SetObjectColor2(cmd.mColor2);
-			if (cmd.mFlags & F2DDrawer::DTF_IngameLighting)
-			{
-				gl_RenderState.SetFixedColormap(CM_INGAME2D);
-			}
-			else if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
+			gl_RenderState.Set2DColors(cmd.mColor1, cmd.mColor2);
+			if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
 			{
 				gl_RenderState.SetFixedColormap(CM_SPECIAL2D);
 			}

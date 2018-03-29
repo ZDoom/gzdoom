@@ -2191,6 +2191,11 @@ void AM_drawSubsectors()
 				(colormap.LightColor.b + 160) / 2);
 			colormap.Desaturation = 255 - (255 - colormap.Desaturation) / 4;
 		}
+		// make table based fog visible on the automap as well.
+		if (level.flags & LEVEL_HASFADETABLE)
+		{
+			colormap.FadeColor = PalEntry(0, 128, 128, 128);
+		}
 
 		// Draw the polygon.
 		FTexture *pic = TexMan(maptex);

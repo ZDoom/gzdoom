@@ -323,6 +323,8 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	ptr->Set(x, y + h, 0, u1, v2, vertexcolor); ptr++;
 	ptr->Set(x + w, y, 0, u2, v1, vertexcolor); ptr++;
 	ptr->Set(x + w, y + h, 0, u2, v2, vertexcolor); ptr++;
+	dg.mIndexIndex = mIndices.Size();
+	dg.mIndexCount += 6;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
 	AddCommand(&dg);
 }
@@ -385,6 +387,9 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		}
 		mVertices[poly.mVertIndex+i].Set(points[i].X, points[i].Y, 0, u*uscale, v*vscale, color0);
 	}
+	poly.mIndexIndex = mIndices.Size();
+	poly.mIndexCount += (npoints - 2) * 3;
+
 	for (int i = 2; i < npoints; ++i)
 	{
 		AddIndices(poly.mVertIndex, 3, 0, i - 1, i);
@@ -433,6 +438,8 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 	ptr->Set(left, bottom, 0, fU1, fV2, 0xffffffff); ptr++;
 	ptr->Set(right, top, 0, fU2, fV1, 0xffffffff); ptr++;
 	ptr->Set(right, bottom, 0, fU2, fV2, 0xffffffff); ptr++;
+	dg.mIndexIndex = mIndices.Size();
+	dg.mIndexCount += 6;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
 	AddCommand(&dg);
 }
@@ -457,6 +464,8 @@ void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color)
 	ptr->Set(x1, y1 + h, 0, 0, 0, color); ptr++;
 	ptr->Set(x1 + w, y1, 0, 0, 0, color); ptr++;
 	ptr->Set(x1 + w, y1 + h, 0, 0, 0, color); ptr++;
+	dg.mIndexIndex = mIndices.Size();
+	dg.mIndexCount += 6;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
 	AddCommand(&dg);
 }

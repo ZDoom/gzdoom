@@ -46,6 +46,7 @@ int F2DDrawer::AddCommand(const RenderCommand *data)
 	{
 		// Merge with the last command.
 		mData.Last().mIndexCount += data->mIndexCount;
+		mData.Last().mVertCount += data->mVertCount;
 		return mData.Size();
 	}
 	else
@@ -223,22 +224,23 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 
 void F2DDrawer::SetColorOverlay(PalEntry color, float alpha, PalEntry &vertexcolor, PalEntry &overlaycolor)
 {
-	if (APART(color) != 0)
+	if (color.a != 0 && (color & 0xffffff) != 0)
 	{
-		// overlay color uses premultiplied alpha. The alpha channel is what the main color gets multiplied with in the blending.
-		int a = APART(color) * 256 / 255;
+		// overlay color uses premultiplied alpha.
+		int a = color.a * 256 / 255;
 		overlaycolor.r = (color.r * a) >> 8;
 		overlaycolor.g = (color.g * a) >> 8;
 		overlaycolor.b = (color.b * a) >> 8;
-		overlaycolor.a = 255 - color.a;
-
-		vertexcolor = PalEntry(int(alpha * 255), color.a, color.a, color.a);
+		overlaycolor.a = 0;	// The overlay gets added on top of the texture data so to preserve the pixel's alpha this must be 0.
 	}
 	else
 	{
 		overlaycolor = 0;
-		vertexcolor = PalEntry(int(alpha * 255), 255, 255, 255);
 	}
+	// Vertex intensity is the inverse of the overlay so that the shader can do a simple addition to combine them.
+	uint8_t light = 255 - color.a;
+	vertexcolor = PalEntry(int(alpha * 255), light, light, light);
+
 	// The real color gets multiplied into vertexcolor later.
 }
 
@@ -257,7 +259,6 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	double w = parms.destwidth;
 	double h = parms.destheight;
 	double u1, v1, u2, v2;
-	int light = 255;
 	PalEntry vertexcolor;
 
 	RenderCommand dg;
@@ -265,13 +266,6 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	dg.mType = DrawTypeTriangles;
 	dg.mVertCount = 4;
 	dg.mTexture = img;
-
-	if (parms.colorOverlay && (parms.colorOverlay & 0xffffff) == 0)
-	{
-		// handle black overlays as reduced light.
-		light = 255 - APART(parms.colorOverlay);
-		parms.colorOverlay = 0;
-	}
 
 	dg.mTranslation = 0;
 	SetStyle(img, parms, vertexcolor, dg);
@@ -303,7 +297,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 		u2 = float(u2 - (parms.texwidth - wi) / parms.texwidth);
 	}
 
-	if (x < (double)parms.lclip || y < (double)parms.uclip || x + w >(double)parms.lclip || y + h >(double)parms.dclip)
+	if (x < (double)parms.lclip || y < (double)parms.uclip || x + w >(double)parms.rclip || y + h >(double)parms.dclip)
 	{
 		dg.mScissor[0] = parms.lclip;
 		dg.mScissor[1] = parms.uclip;
@@ -415,6 +409,7 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 	dg.mTexture = src;
 	dg.mVertCount = 4;
 	dg.mTexture = src;
+	dg.mFlags = DTF_Wrap;
 
 	// scaling is not used here.
 	if (!local_origin)
@@ -484,6 +479,7 @@ void F2DDrawer::AddLine(int x1, int y1, int x2, int y2, int palcolor, uint32_t c
 	RenderCommand dg;
 
 	dg.mType = DrawTypeLines;
+	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
 	dg.mVertCount = 2;
 	dg.mVertIndex = (int)mVertices.Reserve(2);
 	mVertices[dg.mVertIndex].Set(x1, y1, 0, 0, 0, p);
@@ -505,6 +501,7 @@ void F2DDrawer::AddPixel(int x1, int y1, int palcolor, uint32_t color)
 	RenderCommand dg;
 
 	dg.mType = DrawTypePoints;
+	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
 	dg.mVertCount = 1;
 	dg.mVertIndex = (int)mVertices.Reserve(1);
 	mVertices[dg.mVertIndex].Set(x1, y1, 0, 0, 0, p);

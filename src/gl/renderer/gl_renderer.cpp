@@ -440,9 +440,14 @@ unsigned char *FGLRenderer::GetTextureBuffer(FTexture *tex, int &w, int &h)
 //===========================================================================
 #define TDiO ((F2DDrawer::TwoDVertex*)NULL)
 
-class F2DVertexBuffer : public FVertexBuffer
+class F2DVertexBuffer : public FSimpleVertexBuffer
 {
 	uint32_t ibo_id;
+
+	// Make sure we can build upon FSimpleVertexBuffer.
+	static_assert(&VSiO->x == &TDiO->x, "x not aligned");
+	static_assert(&VSiO->u == &TDiO->u, "y not aligned");
+	static_assert(&VSiO->color == &TDiO->color0, "color not aligned");
 
 public:
 
@@ -464,24 +469,12 @@ public:
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexcount * sizeof(indices[0]), indices, GL_STREAM_DRAW);
-
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
 	}
 
 	void BindVBO() override
 	{
-		// set up the vertex buffer for drawing the 2D elements.
-		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		FSimpleVertexBuffer::BindVBO();
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(F2DDrawer::TwoDVertex), &TDiO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(F2DDrawer::TwoDVertex), &TDiO->u);
-		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(F2DDrawer::TwoDVertex), &TDiO->color0);
-		glEnableVertexAttribArray(VATTR_VERTEX);
-		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		glEnableVertexAttribArray(VATTR_COLOR);
-		glDisableVertexAttribArray(VATTR_VERTEX2);
-		glDisableVertexAttribArray(VATTR_NORMAL);
 	}
 };
 
@@ -517,7 +510,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		// already manipulated the data so that some cases will not be handled correctly.
 		// Since we already get a proper mode from the calling code this doesn't really matter.
 		gl_GetRenderStyle(cmd.mRenderStyle, false, false, &tm, &sb, &db, &be);
-		gl_RenderState.BlendEquation(be);
+		gl_RenderState.BlendEquation(be); 
 		gl_RenderState.BlendFunc(sb, db);
 
 		// Rather than adding remapping code, let's enforce that the constants here are equal.
@@ -532,11 +525,12 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		{
 			glEnable(GL_SCISSOR_TEST);
 			// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
-			glScissor(
-				GLRenderer->ScreenToWindowX(cmd.mScissor[0]),
-				GLRenderer->ScreenToWindowY(cmd.mScissor[1]),
-				GLRenderer->ScreenToWindowX(cmd.mScissor[2] - cmd.mScissor[0]),
-				GLRenderer->ScreenToWindowY(cmd.mScissor[3] - cmd.mScissor[1]));
+			// Note that the origin here is the lower left corner!
+			auto sciX = ScreenToWindowX(cmd.mScissor[0]);
+			auto sciY = ScreenToWindowY(cmd.mScissor[3]);
+			auto sciW = ScreenToWindowX(cmd.mScissor[2]) - sciX;
+			auto sciH = ScreenToWindowY(cmd.mScissor[1]) - sciY;
+			glScissor(sciX, sciY, sciW, sciH);
 		}
 		else glDisable(GL_SCISSOR_TEST);
 
@@ -574,7 +568,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
 				if (mat == nullptr) continue;
 				int gltrans = GLTranslationPalette::GetInternalTranslation(cmd.mTranslation);
-				gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, gltrans, -1, false);
+				gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, false);
 				gl_RenderState.EnableTexture(true);
 			}
 			else
@@ -582,8 +576,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				gl_RenderState.EnableTexture(false);
 			}
 			gl_RenderState.Apply();
-			glDrawArrays(GL_TRIANGLE_STRIP, cmd.mVertIndex, 4);
-			//glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
+			glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
 			break;
 
 		case F2DDrawer::DrawTypeLines:
@@ -601,9 +594,11 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		}
 	}
 	glDisable(GL_SCISSOR_TEST);
-	gl_RenderState.SetVertexBuffer(nullptr);
+
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.ResetColor();
+	gl_RenderState.Apply();
 	delete vb;
 }

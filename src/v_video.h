@@ -304,6 +304,7 @@ protected:
 
 public:
 	DFrameBuffer (int width, int height, bool bgra);
+	virtual ~DFrameBuffer() {}
 
 	inline int GetWidth() const { return Width; }
 	inline int GetHeight() const { return Height; }

@@ -70,7 +70,6 @@
 #include "v_text.h"
 #include "version.h"
 
-#include "win32iface.h"
 
 #include "optwin32.h"
 
@@ -179,26 +178,3 @@ void I_FPSLimit()
 	}
 }
 
-//==========================================================================
-//
-// BaseWinFB :: ScaleCoordsFromWindow
-//
-// Given coordinates in window space, return coordinates in what the game
-// thinks screen space is.
-//
-//==========================================================================
-extern HWND Window;
-
-void BaseWinFB::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
-{
-	RECT rect;
-
-	int TrueHeight = GetTrueHeight();
-	if (GetClientRect(Window, &rect))
-	{
-		x = int16_t(x * Width / (rect.right - rect.left));
-		y = int16_t(y * TrueHeight / (rect.bottom - rect.top));
-	}
-	// Subtract letterboxing borders
-	y -= (TrueHeight - Height) / 2;
-}

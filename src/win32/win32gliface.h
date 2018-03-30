@@ -2,7 +2,6 @@
 #define __WIN32GLIFACE_H__
 
 #include "hardware.h"
-#include "win32iface.h"
 #include "v_video.h"
 #include "tarray.h"
 
@@ -25,9 +24,9 @@ FRenderer *gl_CreateInterface();
 
 
 
-class Win32GLFrameBuffer : public BaseWinFB
+class Win32GLFrameBuffer : public DFrameBuffer
 {
-	typedef BaseWinFB Super;
+	typedef DFrameBuffer Super;
 
 public:
 	Win32GLFrameBuffer() {}

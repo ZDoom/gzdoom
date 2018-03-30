@@ -94,7 +94,7 @@
 #include "s_sound.h"
 #include "m_misc.h"
 #include "gameconfigfile.h"
-#include "win32iface.h"
+#include "hardware.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "d_event.h"

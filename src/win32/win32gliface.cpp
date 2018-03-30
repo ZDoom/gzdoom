@@ -39,14 +39,11 @@
 #include <GL/gl.h>
 #include "wglext.h"
 
-#include "win32iface.h"
 #include "win32gliface.h"
-//#include "gl/gl_intern.h"
 #include "x86.h"
 #include "templates.h"
 #include "version.h"
 #include "c_console.h"
-#include "hardware.h"
 #include "v_video.h"
 #include "i_input.h"
 #include "i_system.h"
@@ -981,7 +978,7 @@ bool Win32GLVideo::SetFullscreen(const char *devicename, int w, int h, int bits,
 //
 //==========================================================================
 
-Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : BaseWinFB(width, height, bgra) 
+Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : DFrameBuffer(width, height, bgra) 
 {
 	m_Width = width;
 	m_Height = height;

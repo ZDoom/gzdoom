@@ -546,7 +546,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			if (index < 0 || (unsigned)index >= SpecialColormaps.Size()) index = 0;	// if it isn't in the table FBitmap cannot use it. Shouldn't happen anyway.
 			if (!gl.legacyMode)
 			{ 
-				gl_RenderState.SetFixedColormap(CM_FIRSTSPECIALCOLORMAP + int(index));
+				gl_RenderState.SetFixedColormap(CM_FIRSTSPECIALCOLORMAPFORCED + int(index));
 			}
 			else
 			{

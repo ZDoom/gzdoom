@@ -253,9 +253,9 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader->muFixedColormap.Set(0);
 		}
-		else if (mColormapState > CM_DEFAULT && mColormapState < CM_MAXCOLORMAP)
+		else if ((mColormapState >= CM_FIRSTSPECIALCOLORMAP && mColormapState < CM_MAXCOLORMAPFORCED))
 		{
-			if (FGLRenderBuffers::IsEnabled())
+			if (FGLRenderBuffers::IsEnabled() && mColormapState < CM_FIRSTSPECIALCOLORMAPFORCED)
 			{
 				// When using postprocessing to apply the colormap, we must render the image fullbright here.
 				activeShader->muFixedColormap.Set(2);
@@ -263,13 +263,20 @@ bool FRenderState::ApplyShader()
 			}
 			else
 			{
-				FSpecialColormap *scm = &SpecialColormaps[mColormapState - CM_FIRSTSPECIALCOLORMAP];
-				float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
-					scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
+				if (mColormapState >= CM_FIRSTSPECIALCOLORMAPFORCED)
+				{
+					auto colormapState = mColormapState + CM_FIRSTSPECIALCOLORMAP - CM_FIRSTSPECIALCOLORMAPFORCED;
+					if (colormapState < CM_MAXCOLORMAP)
+					{
+						FSpecialColormap *scm = &SpecialColormaps[colormapState - CM_FIRSTSPECIALCOLORMAP];
+						float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
+							scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 
-				activeShader->muFixedColormap.Set(1);
-				activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
-				activeShader->muColormapRange.Set(m);
+						activeShader->muFixedColormap.Set(1);
+						activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
+						activeShader->muColormapRange.Set(m);
+					}
+				}
 			}
 		}
 		else if (mColormapState == CM_FOGLAYER)

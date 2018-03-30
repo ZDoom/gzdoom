@@ -14,6 +14,7 @@ enum EColorManipulation
 	CM_INVALID=-1,
 	CM_DEFAULT=0,					// untranslated
 	CM_FIRSTSPECIALCOLORMAP,		// first special fixed colormap
+	CM_FIRSTSPECIALCOLORMAPFORCED= 0x08000000,	// first special fixed colormap, application forced (for 2D overlays)
 
 	CM_FOGLAYER = 0x10000000,	// Sprite shaped fog layer
 
@@ -23,6 +24,7 @@ enum EColorManipulation
 };
 
 #define CM_MAXCOLORMAP int(CM_FIRSTSPECIALCOLORMAP + SpecialColormaps.Size())
+#define CM_MAXCOLORMAPFORCED int(CM_FIRSTSPECIALCOLORMAPFORCED + SpecialColormaps.Size())
 
 
 #endif

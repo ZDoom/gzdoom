@@ -280,10 +280,14 @@ bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
             size_t off = 37 + op * 7;
             std::memcpy(data.OPS[op].data, idata + off, 7);
         }
+
+        meta.flags = 0;
         if(version >= 2)
         {
             meta.ms_sound_kon   = toUint16BE(idata + 65);
             meta.ms_sound_koff  = toUint16BE(idata + 67);
+            if((meta.ms_sound_kon == 0) && (meta.ms_sound_koff == 0))
+                meta.flags |= opnInstMeta::Flag_NoSound;
         }
         else
         {
@@ -295,7 +299,6 @@ bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
         meta.opnno2 = uint16_t(opn.dynamic_instruments.size());
 
         /* Junk, delete later */
-        meta.flags = 0;
         meta.fine_tune      = 0.0;
         /* Junk, delete later */
 

@@ -319,7 +319,7 @@ bool MIDIplay::buildTrackData()
                 evtPos.delay = ReadVarLenEx(&trackPtr, end, ok);
             if(!ok)
             {
-                int len = std::sprintf(error, "buildTrackData: Can't read variable-length value at begin of track %d.\n", (int)tk);
+                int len = snprintf(error, 150, "buildTrackData: Can't read variable-length value at begin of track %d.\n", (int)tk);
                 if((len > 0) && (len < 150))
                     errorString += std::string(error, (size_t)len);
                 return false;
@@ -347,7 +347,7 @@ bool MIDIplay::buildTrackData()
             event = parseEvent(&trackPtr, end, status);
             if(!event.isValid)
             {
-                int len = std::sprintf(error, "buildTrackData: Fail to parse event in the track %d.\n", (int)tk);
+                int len = snprintf(error, 150, "buildTrackData: Fail to parse event in the track %d.\n", (int)tk);
                 if((len > 0) && (len < 150))
                     errorString += std::string(error, (size_t)len);
                 return false;
@@ -1031,7 +1031,7 @@ bool MIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
             {
                 if(!caugh_missing_banks_melodic.count(bank))
                 {
-                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Playing missing percussion bank %i (patch %i)", channel, bank, midiins);
+                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Playing missing percussion MIDI bank %i (patch %i)", channel, bank, midiins);
                     caugh_missing_banks_melodic.insert(bank);
                 }
             }
@@ -1046,7 +1046,7 @@ bool MIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
             {
                 if(!caugh_missing_banks_percussion.count(bank))
                 {
-                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Playing missing melodic bank %i (patch %i)", channel, bank, midiins);
+                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Playing missing melodic MIDI bank %i (patch %i)", channel, bank, midiins);
                     caugh_missing_banks_percussion.insert(bank);
                 }
             }
@@ -1060,29 +1060,48 @@ bool MIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
         if(midiins == 48 || midiins == 50) vol /= 4; // HACK
         */
     //if(midiins == 56) vol = vol*6/10; // HACK
-
     //int meta = banks[opl.AdlBank][midiins];
-    const size_t        meta   = opl.GetAdlMetaNumber(midiins);
-    const adlinsdata    &ains  = opl.GetAdlMetaIns(meta);
+
+    size_t              meta   = opl.GetAdlMetaNumber(midiins);
+    const adlinsdata   *ains  = &opl.GetAdlMetaIns(meta);
     int16_t tone = note;
 
-    if(ains.tone)
+    if(!isPercussion && !isXgPercussion && (bank > 0)) // For non-zero banks
+    {
+        if(ains->flags & adlinsdata::Flag_NoSound)
+        {
+            if(hooks.onDebugMessage)
+            {
+                if(!caugh_missing_instruments.count(static_cast<uint8_t>(midiins)))
+                {
+                    hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Caugh a blank instrument %i (offset %i) in the MIDI bank %u", channel, Ch[channel].patch, midiins, bank);
+                    caugh_missing_instruments.insert(static_cast<uint8_t>(midiins));
+                }
+            }
+            bank = 0;
+            midiins = Ch[channel].patch;
+            meta    = opl.GetAdlMetaNumber(midiins);
+            ains    = &opl.GetAdlMetaIns(meta);
+        }
+    }
+
+    if(ains->tone)
     {
         /*if(ains.tone < 20)
             tone += ains.tone;
         else*/
-        if(ains.tone < 128)
-            tone = ains.tone;
+        if(ains->tone < 128)
+            tone = ains->tone;
         else
-            tone -= ains.tone - 128;
+            tone -= ains->tone - 128;
     }
 
     //uint16_t i[2] = { ains.adlno1, ains.adlno2 };
-    bool pseudo_4op = ains.flags & adlinsdata::Flag_Pseudo4op;
+    bool pseudo_4op = ains->flags & adlinsdata::Flag_Pseudo4op;
     MIDIchannel::NoteInfo::Phys voices[2] =
     {
-        {ains.adlno1, false},
-        {ains.adlno2, pseudo_4op}
+        {ains->adlno1, false},
+        {ains->adlno2, pseudo_4op}
     };
 
     if((opl.AdlPercussionMode == 1) && PercussionMap[midiins & 0xFF])
@@ -1090,7 +1109,7 @@ bool MIDIplay::realTime_NoteOn(uint8_t channel, uint8_t note, uint8_t velocity)
 
     if(hooks.onDebugMessage)
     {
-        if(!caugh_missing_instruments.count(static_cast<uint8_t>(midiins)) && (ains.flags & adlinsdata::Flag_NoSound))
+        if(!caugh_missing_instruments.count(static_cast<uint8_t>(midiins)) && (ains->flags & adlinsdata::Flag_NoSound))
         {
             hooks.onDebugMessage(hooks.onDebugMessage_userData, "[%i] Playing missing instrument %i", channel, midiins);
             caugh_missing_instruments.insert(static_cast<uint8_t>(midiins));
@@ -2624,12 +2643,12 @@ ADLMIDI_EXPORT void AdlInstrumentTester::NextAdl(int offset)
         if(ains.tone)
         {
             /*if(ains.tone < 20)
-                    std::sprintf(ToneIndication, "+%-2d", ains.tone);
+                    snprintf(ToneIndication, 8, "+%-2d", ains.tone);
                 else*/
             if(ains.tone < 128)
-                std::sprintf(ToneIndication, "=%-2d", ains.tone);
+                snprintf(ToneIndication, 8, "=%-2d", ains.tone);
             else
-                std::sprintf(ToneIndication, "-%-2d", ains.tone - 128);
+                snprintf(ToneIndication, 8, "-%-2d", ains.tone - 128);
         }
         std::printf("%s%s%s%u\t",
                     ToneIndication,

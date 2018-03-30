@@ -44,16 +44,16 @@ class RandomSpawner : Actor
 		{
 			while (di != null)
 			{
-				if (di.Name != 'None')
+				bool shouldSkip = (di.Name == 'None') || (nomonsters && IsMonster(di));
+				
+				if (!shouldSkip)
 				{
-					if (!nomonsters || !IsMonster(di))
-					{
-						int amt = di.Amount;
-						if (amt < 0) amt = 1; // default value is -1, we need a positive value.
-						n += amt; // this is how we can weight the list.
-					}
-					di = di.Next;
+					int amt = di.Amount;
+					if (amt < 0) amt = 1; // default value is -1, we need a positive value.
+					n += amt; // this is how we can weight the list.
 				}
+
+				di = di.Next;
 			}
 			if (n == 0)
 			{ // Nothing left to spawn. They must have all been monsters, and monsters are disabled.

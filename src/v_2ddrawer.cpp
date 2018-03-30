@@ -180,22 +180,8 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 
 		if (parms.specialcolormap != nullptr)
 		{ // Emulate an invulnerability or similar colormap.
-			float *start, *end;
-			start = parms.specialcolormap->ColorizeStart;
-			end = parms.specialcolormap->ColorizeEnd;
-			if (quad.mDrawMode == DTM_Invert)
-			{
-				quad.mDrawMode = DTM_Normal;
-				std::swap(start, end);
-			}
-			quad.mFlags |= DTF_SpecialColormap;
-			// SpecialColormap uses the two color uniforms to set its ramp.
-			quad.mColor1.r = (uint8_t)(start[0] * (255 / 2));
-			quad.mColor1.g = (uint8_t)(start[1] * (255 / 2));
-			quad.mColor1.b = (uint8_t)(start[2] * (255 / 2));
-			quad.mColor2.r = (uint8_t)(end[0] * (255 / 2));
-			quad.mColor2.g = (uint8_t)(end[1] * (255 / 2));
-			quad.mColor2.b = (uint8_t)(end[2] * (255 / 2));
+			quad.mSpecialColormap = parms.specialcolormap;
+			quad.mColor1 = 0;	// this disables the color overlay.
 		}
 		quad.mDesaturate = parms.desaturate;
 	}

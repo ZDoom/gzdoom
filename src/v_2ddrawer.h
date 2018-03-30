@@ -34,7 +34,7 @@ public:
 	{
 		DTF_Wrap = 1,
 		DTF_Scissor = 2,
-		DTF_SpecialColormap = 4,
+		//DTF_SpecialColormap = 4,
 	};
 
 
@@ -77,10 +77,11 @@ public:
 
 		FTexture *mTexture;
 		FRemapTable *mTranslation;
+		FSpecialColormap *mSpecialColormap;
 		int mScissor[4];
 		int mDesaturate;
 		FRenderStyle mRenderStyle;
-		PalEntry mColor1, mColor2;	// Can either be the overlay color or the special colormap ramp. Both features can not be combined.
+		PalEntry mColor1;	// Overlay color
 		ETextureDrawMode mDrawMode;
 		uint8_t mFlags;
 
@@ -95,13 +96,13 @@ public:
 			return mTexture == other.mTexture &&
 				mType == other.mType &&
 				mTranslation == other.mTranslation &&
+				mSpecialColormap == other.mSpecialColormap &&
 				!memcmp(mScissor, other.mScissor, sizeof(mScissor)) &&
 				mDesaturate == other.mDesaturate &&
 				mRenderStyle == other.mRenderStyle &&
 				mDrawMode == other.mDrawMode &&
 				mFlags == other.mFlags &&
-				mColor1 == other.mColor1 &&
-				mColor2 == other.mColor2;
+				mColor1 == other.mColor1;
 
 		}
 	};

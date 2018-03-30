@@ -50,6 +50,12 @@ struct FTexCoordInfo
 //===========================================================================
 class FMaterial;
 
+enum ESpecialTranslations : uint32_t
+{
+	STRange_Min = 0x10000000,
+	STRange_Desaturate = 0x10000000,
+	STRange_Specialcolormap = 0x20000000,
+};
 
 class FGLTexture
 {

@@ -905,13 +905,14 @@ bool D3DFB::IsFullscreen ()
 //
 //==========================================================================
 
-void D3DFB::Update ()
+void D3DFB::Update()
 {
 	if (In2D == 3)
 	{
 		if (InScene)
 		{
 			DrawRateStuff();
+			Draw2D();
 			EndQuadBatch();		// Make sure all batched primitives are drawn.
 			In2D = 0;
 			Flip();
@@ -1873,11 +1874,11 @@ void D3DFB::Draw2D()
 			auto textype = cmd.mTexture->GetFormat();	// This never returns TEX_Gray.
 			if (cmd.mTranslation) textype = TEX_Pal;	// Translation requires a paletted texture, regardless of the source format.
 
-			if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
+			if (cmd.mSpecialColormap != nullptr)
 			{
 				index = textype == TEX_Pal ? SHADER_SpecialColormapPal : SHADER_SpecialColormap;
-				SetConstant(PSCONST_Color1, cmd.mColor1.r / 510.f, cmd.mColor1.g / 510.f, cmd.mColor1.b / 510.f, 0);
-				SetConstant(PSCONST_Color2, cmd.mColor1.r / 510.f, cmd.mColor1.g / 510.f, cmd.mColor1.b / 510.f, 0);
+				SetConstant(PSCONST_Color1, cmd.mSpecialColormap->ColorizeStart[0] / 2.f, cmd.mSpecialColormap->ColorizeStart[1] / 2.f, cmd.mSpecialColormap->ColorizeStart[2] / 2.f, 0);
+				SetConstant(PSCONST_Color2, cmd.mSpecialColormap->ColorizeEnd[0] / 2.f, cmd.mSpecialColormap->ColorizeEnd[1] / 2.f, cmd.mSpecialColormap->ColorizeEnd[2] / 2.f, 0);
 			}
 			else
 			{
@@ -1950,7 +1951,7 @@ void D3DFB::Draw2D()
 		switch (cmd.mType)
 		{
 		case F2DDrawer::DrawTypeTriangles:
-			D3DDevice->DrawPrimitive(D3DPT_TRIANGLELIST, cmd.mVertIndex, cmd.mVertCount);
+			D3DDevice->DrawIndexedPrimitive(D3DPT_TRIANGLELIST, 0, cmd.mVertIndex, cmd.mVertCount, cmd.mIndexIndex, cmd.mIndexCount / 3);
 			break;
 
 		case F2DDrawer::DrawTypeLines:

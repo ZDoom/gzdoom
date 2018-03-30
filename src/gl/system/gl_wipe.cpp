@@ -169,9 +169,6 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 
 void OpenGLFrameBuffer::WipeEndScreen()
 {
-	screen->Draw2D();
-	screen->Clear2D();
-
 	const auto &viewport = GLRenderer->mScreenViewport;
 	wipeendscreen = new FHardwareTexture(viewport.width, viewport.height, true);
 	wipeendscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");

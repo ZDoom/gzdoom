@@ -213,9 +213,20 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 	FBitmap bmp(buffer, W*4, W, H);
 
-	if (translation <= 0 || alphatrans)
+	if (translation <= 0 || alphatrans || translation >= STRange_Min)
 	{
-		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
+		// Allow creation of desaturated or special-colormapped textures for the legacy renderer.
+		FCopyInfo inf = { OP_COPY, BLEND_NONE, {0}, 0, 0 };
+		if (translation >= STRange_Desaturate && translation < STRange_Desaturate+31)	// there are 31 ranges of desaturations available
+		{
+			inf.blend = (EBlend)(BLEND_DESATURATE1 + translation - STRange_Desaturate);
+		}
+		else if (translation >= STRange_Specialcolormap && translation < STRange_Specialcolormap + SpecialColormaps.Size())
+		{
+			inf.blend = (EBlend)(BLEND_SPECIALCOLORMAP1 + translation - STRange_Specialcolormap);
+		}
+
+		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx, 0, translation >= STRange_Min? &inf : nullptr);
 		tex->CheckTrans(buffer, W*H, trans);
 		isTransparent = tex->gl_info.mIsTransparent;
 		if (bIsTransparent == -1) bIsTransparent = isTransparent;

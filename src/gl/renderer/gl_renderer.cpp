@@ -484,8 +484,13 @@ public:
 //
 //===========================================================================
 
+void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd);
+int LegacyDesaturation(F2DDrawer::RenderCommand &cmd);
+
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
+
+
 	auto &vertices = drawer->mVertices;
 	auto &indices = drawer->mIndices;
 	auto &commands = drawer->mData;
@@ -500,10 +505,12 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	auto vb = new F2DVertexBuffer;
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
-
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 
 	for(auto &cmd : commands)
 	{
+
+		int gltrans = -1;
 		int tm, sb, db, be;
 		// The texture mode being returned here cannot be used, because the higher level code 
 		// already manipulated the data so that some cases will not be handled correctly.
@@ -533,65 +540,90 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		}
 		else glDisable(GL_SCISSOR_TEST);
 
-		// Legacy mode cannot replicate the more complex effects
-		if (gl.legacyMode)
+		if (cmd.mSpecialColormap != nullptr)
 		{
-			gl_RenderState.SetFixedColormap(CM_DEFAULT);
-		}
-		else
-		{
-			gl_RenderState.Set2DColors(cmd.mColor1, cmd.mColor2);
-			if (cmd.mFlags & F2DDrawer::DTF_SpecialColormap)
-			{
-				gl_RenderState.SetFixedColormap(CM_SPECIAL2D);
+			auto index = cmd.mSpecialColormap - &SpecialColormaps[0];
+			if (index < 0 || (unsigned)index >= SpecialColormaps.Size()) index = 0;	// if it isn't in the table FBitmap cannot use it. Shouldn't happen anyway.
+			if (!gl.legacyMode)
+			{ 
+				gl_RenderState.SetFixedColormap(CM_FIRSTSPECIALCOLORMAP + int(index));
 			}
 			else
 			{
-				gl_RenderState.SetFixedColormap(CM_PLAIN2D);
+				// map the special colormap to a translation for the legacy renderer.
+				// This only gets used on the software renderer's weapon sprite.
+				gltrans = STRange_Specialcolormap + index;
 			}
 		}
+		else
+		{
+			if (!gl.legacyMode)
+			{
+				gl_RenderState.Set2DOverlayColor(cmd.mColor1);
+				gl_RenderState.SetFixedColormap(CM_PLAIN2D);
+			}
+			else if (cmd.mDesaturate > 0)
+			{
+				gltrans = LegacyDesaturation(cmd);
+			}
+		}
+
 		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 
+		if (cmd.mTexture != nullptr)
+		{
+			auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
+			if (mat == nullptr) continue;
+
+			if (gltrans == -1) gltrans = GLTranslationPalette::GetInternalTranslation(cmd.mTranslation);
+			gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, cmd.mDrawMode == F2DDrawer::DTM_AlphaTexture);
+			gl_RenderState.EnableTexture(true);
+
+			// Canvas textures are stored upside down
+			if (cmd.mTexture->bHasCanvas)
+			{
+				gl_RenderState.mTextureMatrix.loadIdentity();
+				gl_RenderState.mTextureMatrix.scale(1.f, -1.f, 1.f);
+				gl_RenderState.mTextureMatrix.translate(0.f, 1.f, 0.0f);
+				gl_RenderState.EnableTextureMatrix(true);
+			}
+		}
+		else
+		{
+			gl_RenderState.EnableTexture(false);
+		}
+		gl_RenderState.Apply();
+
 		switch (cmd.mType)
 		{
 		case F2DDrawer::DrawTypeTriangles:
-			if (cmd.mTexture != nullptr)
-			{
-				auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
-				if (mat == nullptr) continue;
-				int gltrans = GLTranslationPalette::GetInternalTranslation(cmd.mTranslation);
-				gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, false);
-				gl_RenderState.EnableTexture(true);
-			}
-			else
-			{
-				gl_RenderState.EnableTexture(false);
-			}
-			gl_RenderState.Apply();
 			glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
+			if (gl.legacyMode && cmd.mColor1 != 0)
+			{
+				// Draw the overlay as a separate operation.
+				LegacyColorOverlay(drawer, cmd);
+			}
 			break;
 
 		case F2DDrawer::DrawTypeLines:
-			gl_RenderState.EnableTexture(false);
-			gl_RenderState.Apply();
 			glDrawArrays(GL_LINES, cmd.mVertIndex, cmd.mVertCount);
 			break;
 
 		case F2DDrawer::DrawTypePoints:
-			gl_RenderState.EnableTexture(false);
-			gl_RenderState.Apply();
 			glDrawArrays(GL_POINTS, cmd.mVertIndex, cmd.mVertCount);
 			break;
 
 		}
+		gl_RenderState.EnableTextureMatrix(false);
 	}
 	glDisable(GL_SCISSOR_TEST);
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	delete vb;

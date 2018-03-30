@@ -1169,6 +1169,7 @@ void OpenGLSWFrameBuffer::Update()
 		if (InScene)
 		{
 			DrawRateStuff();
+			Draw2D();
 			EndBatch();		// Make sure all batched primitives are drawn.
 			Flip();
 		}

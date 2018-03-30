@@ -145,7 +145,7 @@ public:
 
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
 	{
-		// alpha textures need special treatment in the legacy renderer because without shaders they need a different texture.
+		// alpha textures need special treatment in the legacy renderer because without shaders they need a different texture. This will also override all other translations.
 		if (alphatexture &&  gl.legacyMode) translation = INT_MAX;
 		
 		if (mat->tex->bHasCanvas)
@@ -393,12 +393,10 @@ public:
 		mObjectColor2 = pe;
 	}
 
-	void Set2DColors(PalEntry pe, PalEntry pe2)
+	void Set2DOverlayColor(PalEntry pe)
 	{
 		m2DColors[0] = pe;
-		m2DColors[1] = pe2;
 	}
-
 
 	void SetSpecular(float glossiness, float specularLevel)
 	{

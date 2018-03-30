@@ -50,6 +50,7 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/textures/gl_translate.h"
 
 
 CVAR(Bool, gl_lights_additive, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -896,3 +897,77 @@ void GLSceneDrawer::RenderMultipassStuff()
 
 }
 
+
+//==========================================================================
+//
+// Draws a color overlay for Legacy OpenGL
+//
+//==========================================================================
+
+void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd)
+{
+	if (cmd.mDrawMode == F2DDrawer::DTM_Opaque || cmd.mDrawMode == F2DDrawer::DTM_InvertOpaque)
+	{
+		gl_RenderState.EnableTexture(false);
+	}
+	else
+	{
+		gl_RenderState.SetTextureMode(TM_MASK);
+	}
+	// Draw this the old fashioned way, there really is no point setting up a buffer for it.
+	glBegin(GL_TRIANGLES);
+	for (int i = 0; i < cmd.mIndexCount; i++)
+	{
+		auto &vertex = drawer->mVertices[drawer->mIndices[i + cmd.mIndexIndex]];
+		glColor4ub(cmd.mColor1.r, cmd.mColor1.g, cmd.mColor1.b, cmd.mColor1.a);
+		glTexCoord2f(vertex.u, vertex.v);
+		glVertex3f(vertex.x, vertex.y, vertex.z);
+	}
+	glEnd();
+}
+
+//==========================================================================
+//
+// Desaturation with translations.
+// Let's keep this fallback crap strictly out of the main code, 
+// including the data it creates!
+//
+//==========================================================================
+
+struct DesaturatedTranslations
+{
+	FRemapTable *tables[32] = { nullptr };
+};
+
+static TMap<FRemapTable *, DesaturatedTranslations> DesaturatedTranslationTable;
+static TDeletingArray<FRemapTable *> DesaturatedRemaps;	// This is only here to delete the remap tables without infesting other code.
+
+
+int LegacyDesaturation(F2DDrawer::RenderCommand &cmd)
+{
+	int desat = cmd.mDesaturate / 8;
+	if (desat <= 0 || desat >= 32) return -1;
+	if(cmd.mTranslation == nullptr) return desat - 1 + STRange_Desaturate;
+	// Now it gets nasty. We got a combination of translation and desaturation.
+
+	// The easy case: It was already done.
+	auto find = DesaturatedTranslationTable.CheckKey(cmd.mTranslation);
+	if (find != nullptr && find->tables[desat] != nullptr) return GLTranslationPalette::GetInternalTranslation(find->tables[desat]);
+
+	// To handle this case for the legacy renderer a desaturated variant of the translation needs to be built.
+	auto newremap = new FRemapTable(*cmd.mTranslation);
+	DesaturatedRemaps.Push(newremap);
+	for (int i = 0; i < newremap->NumEntries; i++)
+	{
+		// This is used for true color texture creation, so the remap table can be left alone.
+		auto &p = newremap->Palette[i];
+		auto gray = p.Luminance();
+
+		p.r = (p.r * (31 - desat) + gray * (1 + desat)) / 32;
+		p.g = (p.g * (31 - desat) + gray * (1 + desat)) / 32;
+		p.b = (p.b * (31 - desat) + gray * (1 + desat)) / 32;
+	}
+	auto &tbl = DesaturatedTranslationTable[cmd.mTranslation];
+	tbl.tables[desat] = newremap;
+	return GLTranslationPalette::GetInternalTranslation(newremap);
+}

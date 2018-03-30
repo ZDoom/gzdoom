@@ -145,7 +145,6 @@ void AdjustSpriteOffsets()
 						}
 						tex->LeftOffset=x;
 						tex->TopOffset=y;
-						tex->KillNative();
 					}
 				}
 			}

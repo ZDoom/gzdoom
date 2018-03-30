@@ -170,14 +170,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	}
 	
 	SDLBaseFB *fb;
-	if (vid_renderer == 1)
-	{
-		fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
-	}
-	else
-	{
-		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
-	}
+	fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
 
 	retry = 0;
 	

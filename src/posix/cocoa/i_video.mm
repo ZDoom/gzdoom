@@ -521,14 +521,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	DFrameBuffer* fb = NULL;
 
-	if (1 == currentrenderer)
- 	{
-		fb = new OpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
-	}
-	else
-	{
-		fb = CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
-		}
+	fb = new OpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
 
 	fb->SetFlash(flashColor, flashAmount);
 

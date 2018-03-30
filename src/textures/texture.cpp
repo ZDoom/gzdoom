@@ -172,7 +172,6 @@ FTexture::~FTexture ()
 {
 	FTexture *link = Wads.GetLinkedTexture(SourceLump);
 	if (link == this) Wads.SetLinkedTexture(SourceLump, NULL);
-	KillNative();
 }
 
 void FTexture::Unload()
@@ -707,40 +706,6 @@ void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x,
 		for (j = 0; j < y; ++j)
 		{
 			dst[i*y+j] = remap[src[i+j*srcpitch]];
-		}
-	}
-}
-
-FNativeTexture *FTexture::GetNative(FTextureFormat fmt, bool wrapping)
-{
-	if (Native[fmt] != NULL)
-	{
-		if (!Native[fmt]->CheckWrapping(wrapping))
-		{ // Texture's wrapping mode is not compatible.
-		  // Destroy it and get a new one.
-			delete Native[fmt];
-		}
-		else
-		{
-			if (CheckModified(DefaultRenderStyle()))
-			{
-				Native[fmt]->Update();
-			}
-			return Native[fmt];
-		}
-	}
-	Native[fmt] = screen->CreateTexture(this, fmt, wrapping);
-	return Native[fmt];
-}
-
-void FTexture::KillNative()
-{
-	for (auto &nat : Native)
-	{
-		if (nat != nullptr)
-		{
-			delete nat;
-			nat = nullptr;
 		}
 	}
 }

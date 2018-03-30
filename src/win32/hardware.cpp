@@ -178,13 +178,7 @@ void I_InitGraphics ()
 	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
-	if (currentcanvas == 0) // Software Canvas: 0 = D3D or DirectDraw, 1 = OpenGL
-		if (currentrenderer == 1)
-			Video = gl_CreateVideo();
-		else
-			Video = new Win32Video(0);
-	else
-		Video = gl_CreateVideo();
+	Video = gl_CreateVideo();
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

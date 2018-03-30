@@ -884,21 +884,6 @@ void DFrameBuffer::DrawBlendingRect()
 
 //==========================================================================
 //
-// DFrameBuffer :: CreateTexture
-//
-// Creates a native texture for a game texture, if supported.
-// The hardware renderer does not use this interface because it is 
-// far too limited
-//
-//==========================================================================
-
-FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping)
-{
-	return NULL;
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: CreatePalette
 //
 // Creates a native palette from a remap table, if supported.
@@ -983,20 +968,6 @@ FNativePalette::~FNativePalette()
 {
 }
 
-FNativeTexture::~FNativeTexture()
-{
-	// Remove link from the game texture
-	if (mGameTex != nullptr)
-	{
-		mGameTex->Native[mFormat] = nullptr;
-	}
-
-}
-
-bool FNativeTexture::CheckWrapping(bool wrapping)
-{
-	return true;
-}
 
 CCMD(clean)
 {
@@ -1017,10 +988,6 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	screen = buff;
 	screen->SetGamma (Gamma);
-
-	// Load fonts now so they can be packed into textures straight away,
-	// if D3DFB is being used for the display.
-	FFont::StaticPreloadFonts();
 
 	DisplayBits = bits;
 	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());

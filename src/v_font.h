@@ -90,11 +90,9 @@ public:
 	int GetHeight () const { return FontHeight; }
 	int GetDefaultKerning () const { return GlobalKerning; }
 	virtual void LoadTranslations();
-	void Preload() const;
 	FName GetName() const { return FontName; }
 
 	static FFont *FindFont(FName fontname);
-	static void StaticPreloadFonts();
 
 	// Return width of string in pixels (unscaled)
 	int StringWidth (const uint8_t *str) const;

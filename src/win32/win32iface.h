@@ -39,64 +39,8 @@
 
 EXTERN_CVAR (Bool, vid_vsync)
 
-class D3DTex;
-class D3DPal;
 struct FSoftwareRenderer;
 
-class Win32Video : public IVideo
-{
- public:
-	Win32Video (int parm);
-	~Win32Video ();
-
-	bool InitD3D9();
-
-	EDisplayType GetDisplayType () { return DISPLAY_Both; }
-	void SetWindowedScale (float scale);
-
-	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
-
-	void StartModeIterator (int bits, bool fs);
-	bool NextMode (int *width, int *height, bool *letterbox);
-
-	bool GoFullscreen (bool yes);
-
-	void DumpAdapters ();
-	void AddMode(int x, int y, int bits, int baseHeight, int doubling);
-
- private:
-	struct ModeInfo
-	{
-		ModeInfo (int inX, int inY, int inBits, int inRealY, int inDoubling)
-			: next (NULL),
-			  width (inX),
-			  height (inY),
-			  bits (inBits),
-			  realheight (inRealY),
-			  doubling (inDoubling)
-		{}
-
-		ModeInfo *next;
-		int width, height, bits;
-		int realheight;
-		int doubling;
-	} *m_Modes;
-
-	ModeInfo *m_IteratorMode;
-	int m_IteratorBits;
-	bool m_IteratorFS;
-	bool m_IsFullscreen;
-	unsigned int m_Adapter;
-
-	void FreeModes ();
-
-	void AddD3DModes (unsigned adapter);
-	void AddLowResModes ();
-	void AddLetterboxModes ();
-	void ScaleModes (int doubling);
-
-	friend class D3DFB;
-};
 
 class BaseWinFB : public DFrameBuffer
 {

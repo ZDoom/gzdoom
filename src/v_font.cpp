@@ -967,54 +967,6 @@ void FFont::LoadTranslations()
 
 //==========================================================================
 //
-// FFont :: Preload
-//
-// Loads most of the 7-bit ASCII characters. In the case of D3DFB, this
-// means all the characters of a font have a better chance of being packed
-// into the same hardware texture.
-//
-// (Note that this is a rather dumb implementation. The atlasing should
-// occur at a higher level, independently of the renderer being used.)
-//
-//==========================================================================
-
-void FFont::Preload() const
-{
-	// First and last char are the same? Wait until it's actually needed
-	// since nothing is gained by preloading now.
-	if (FirstChar == LastChar)
-	{
-		return;
-	}
-	for (int i = MAX(FirstChar, 0x21); i < MIN(LastChar, 0x7e); ++i)
-	{
-		int foo;
-		FTexture *pic = GetChar(i, &foo);
-		if (pic != NULL)
-		{
-			pic->GetNative(pic->GetFormat(), false);
-		}
-	}
-}
-
-//==========================================================================
-//
-// FFont :: StaticPreloadFonts
-//
-// Preloads all the defined fonts.
-//
-//==========================================================================
-
-void FFont::StaticPreloadFonts()
-{
-	for (FFont *font = FirstFont; font != NULL; font = font->Next)
-	{
-		font->Preload();
-	}
-}
-
-//==========================================================================
-//
 // FFont :: FFont - default constructor
 //
 //==========================================================================

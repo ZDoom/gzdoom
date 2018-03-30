@@ -44,7 +44,6 @@
 #include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/renderer/gl_2ddrawer.h"
 
 
 //===========================================================================

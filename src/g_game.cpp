@@ -94,6 +94,7 @@
 #include "g_levellocals.h"
 #include "events.h"
 #include "d_main.h"
+#include "gameconfigfile.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");
@@ -2863,6 +2864,35 @@ void G_TimeDemo (const char* name)
 	gameaction = (gameaction == ga_loadgame) ? ga_loadgameplaydemo : ga_playdemo;
 }
 
+void G_InitServerNetGame(const char *mapname)
+{
+	netgame = true;
+	multiplayer = true;
+	multiplayernext = true;
+	consoleplayer = 0;
+	players[consoleplayer].settings_controller = true;
+	playeringame[consoleplayer] = true;
+
+	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
+	D_SetupUserInfo();
+
+	G_DeferedInitNew(mapname);
+}
+
+void G_InitClientNetGame(int player, const char* mapname)
+{
+	netgame = true;
+	multiplayer = true;
+	multiplayernext = true;
+	consoleplayer = player;
+	players[consoleplayer].settings_controller = true;
+	playeringame[consoleplayer] = true;
+
+	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
+	D_SetupUserInfo();
+
+	G_DeferedInitNew(mapname);
+}
 
 void G_EndNetGame()
 {

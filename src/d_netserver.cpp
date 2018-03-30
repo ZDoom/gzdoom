@@ -71,16 +71,7 @@ NetServer::NetServer()
 
 	mComm = I_InitNetwork(DOOMPORT);
 
-	netgame = true;
-	multiplayer = true;
-	consoleplayer = 0;
-	players[consoleplayer].settings_controller = true;
-	playeringame[consoleplayer] = true;
-
-	GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
-	D_SetupUserInfo();
-
-	G_DeferedInitNew("e1m1");
+	G_InitServerNetGame("e1m1");
 }
 
 void NetServer::Update()
@@ -126,9 +117,28 @@ void NetServer::EndCurrentTic()
 		{
 			NetPacket packet;
 			packet.node = i;
-			packet.size = 2;
+			packet.size = 2 + sizeof(float) * 5;
 			packet[0] = (uint8_t)NetPacketType::Tic;
 			packet[1] = gametic;
+
+			int player = mNodes[i].Player;
+			if (playeringame[player] && players[player].mo)
+			{
+				*(float*)&packet[2] = (float)players[player].mo->X();
+				*(float*)&packet[6] = (float)players[player].mo->Y();
+				*(float*)&packet[10] = (float)players[player].mo->Z();
+				*(float*)&packet[14] = (float)players[player].mo->Angles.Yaw.Degrees;
+				*(float*)&packet[18] = (float)players[player].mo->Angles.Pitch.Degrees;
+			}
+			else
+			{
+				*(float*)&packet[2] = 0.0f;
+				*(float*)&packet[6] = 0.0f;
+				*(float*)&packet[10] = 0.0f;
+				*(float*)&packet[14] = 0.0f;
+				*(float*)&packet[18] = 0.0f;
+			}
+
 			mComm->PacketSend(packet);
 		}
 	}

@@ -232,16 +232,7 @@ void NetClient::OnConnectResponse(const NetPacket &packet)
 			mPlayer = packet[2];
 			mStatus = NodeStatus::InGame;
 
-			netgame = true;
-			multiplayer = true;
-			consoleplayer = mPlayer;
-			players[consoleplayer].settings_controller = true;
-			playeringame[consoleplayer] = true;
-
-			GameConfig->ReadNetVars();	// [RH] Read network ServerInfo cvars
-			D_SetupUserInfo();
-
-			G_DeferedInitNew("e1m1");
+			G_InitClientNetGame(mPlayer, "e1m1");
 
 			network = std::move(netconnect);
 		}
@@ -272,4 +263,20 @@ void NetClient::OnDisconnect(const NetPacket &packet)
 
 void NetClient::OnTic(const NetPacket &packet)
 {
+	if (packet.size != 2 + sizeof(float) * 5)
+		return;
+
+	int tic = packet[1];
+	float x = *(float*)&packet[2];
+	float y = *(float*)&packet[6];
+	float z = *(float*)&packet[10];
+	float yaw = *(float*)&packet[14];
+	float pitch = *(float*)&packet[18];
+
+	if (playeringame[consoleplayer] && players[consoleplayer].mo)
+	{
+		players[consoleplayer].mo->SetXYZ(x, y, z);
+		players[consoleplayer].mo->Angles.Yaw = yaw;
+		players[consoleplayer].mo->Angles.Pitch = pitch;
+	}
 }

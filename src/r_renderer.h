@@ -52,7 +52,6 @@ struct FRenderer
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov) = 0;
 	virtual void PreprocessLevel() {}
 	virtual void CleanLevelData() {}
-	virtual bool RequireGLNodes() { return false; }
 
 	virtual uint32_t GetCaps() { return 0; }
 };

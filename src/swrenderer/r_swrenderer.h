@@ -25,7 +25,6 @@ struct FSoftwareRenderer : public FRenderer
 	void DrawRemainingPlayerSprites() override;
 
 	int GetMaxViewPitch(bool down) override;
-	bool RequireGLNodes() override;
 
 	void OnModeSet() override;
 	void SetClearColor(int color) override;

@@ -3639,7 +3639,7 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// This is motivated as follows:
 
-	bool RequireGLNodes = Renderer->RequireGLNodes() || am_textured;
+	bool RequireGLNodes = true;	// Even the software renderer needs GL nodes now.
 
 	for (i = 0; i < (int)countof(times); ++i)
 	{

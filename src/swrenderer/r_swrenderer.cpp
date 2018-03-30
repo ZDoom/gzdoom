@@ -255,11 +255,6 @@ int FSoftwareRenderer::GetMaxViewPitch(bool down)
 	return (r_polyrenderer) ? int(maxviewpitch) : (down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE));
 }
 
-bool FSoftwareRenderer::RequireGLNodes()
-{
-	return true;
-}
-
 void FSoftwareRenderer::OnModeSet ()
 {
 	mScene.ScreenResized();

@@ -1010,7 +1010,6 @@ struct FGLInterface : public FRenderer
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, double fov) override;
 	void PreprocessLevel() override;
 	void CleanLevelData() override;
-	bool RequireGLNodes() override;
 
 	int GetMaxViewPitch(bool down) override;
 	void SetClearColor(int color) override;
@@ -1176,11 +1175,6 @@ void FGLInterface::PreprocessLevel()
 void FGLInterface::CleanLevelData() 
 {
 	gl_CleanLevelData();
-}
-
-bool FGLInterface::RequireGLNodes() 
-{ 
-	return true; 
 }
 
 uint32_t FGLInterface::GetCaps()

@@ -919,7 +919,9 @@ void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd)
 	for (int i = 0; i < cmd.mIndexCount; i++)
 	{
 		auto &vertex = drawer->mVertices[drawer->mIndices[i + cmd.mIndexIndex]];
-		glColor4ub(cmd.mColor1.r, cmd.mColor1.g, cmd.mColor1.b, cmd.mColor1.a);
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glBlendEquation(GL_FUNC_ADD);
+		glColor4ub(cmd.mColor1.r, cmd.mColor1.g, cmd.mColor1.b, vertex.color0.a);
 		glTexCoord2f(vertex.u, vertex.v);
 		glVertex3f(vertex.x, vertex.y, vertex.z);
 	}

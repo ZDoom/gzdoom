@@ -481,18 +481,18 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		}
 		else
 		{
-			if (tx->gl_info.Normal && tx->gl_info.Specular)
+			if (tx->Normal && tx->Specular)
 			{
-				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Specular })
+				for (auto &texture : { tx->Normal, tx->Specular })
 				{
 					ValidateSysTexture(texture, expanded);
 					mTextureLayers.Push({ texture, false });
 				}
 				mShaderIndex = SHADER_Specular;
 			}
-			else if (tx->gl_info.Normal && tx->gl_info.Metallic && tx->gl_info.Roughness && tx->gl_info.AmbientOcclusion)
+			else if (tx->Normal && tx->Metallic && tx->Roughness && tx->AmbientOcclusion)
 			{
-				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Metallic, tx->gl_info.Roughness, tx->gl_info.AmbientOcclusion })
+				for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 				{
 					ValidateSysTexture(texture, expanded);
 					mTextureLayers.Push({ texture, false });
@@ -501,10 +501,10 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			}
 
 			tx->CreateDefaultBrightmap();
-			if (tx->gl_info.Brightmap != NULL)
+			if (tx->Brightmap != NULL)
 			{
-				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
-				FTextureLayer layer = {tx->gl_info.Brightmap, false};
+				ValidateSysTexture(tx->Brightmap, expanded);
+				FTextureLayer layer = {tx->Brightmap, false};
 				mTextureLayers.Push(layer);
 				if (mShaderIndex == SHADER_Specular)
 					mShaderIndex = SHADER_SpecularBrightmap;
@@ -915,9 +915,9 @@ again:
 					tex->gl_info.bNoExpand = true;
 					goto again;
 				}
-				if (tex->gl_info.Brightmap != NULL &&
-					(tex->GetWidth() != tex->gl_info.Brightmap->GetWidth() ||
-					tex->GetHeight() != tex->gl_info.Brightmap->GetHeight())
+				if (tex->Brightmap != NULL &&
+					(tex->GetWidth() != tex->Brightmap->GetWidth() ||
+					tex->GetHeight() != tex->Brightmap->GetHeight())
 					)
 				{
 					// do not expand if the brightmap's size differs.

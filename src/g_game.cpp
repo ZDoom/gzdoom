@@ -170,6 +170,7 @@ bool	 		viewactive;
 bool 			netgame;				// only true if packets are broadcast 
 bool			multiplayer;
 bool			multiplayernext = false;		// [SP] Map coop/dm implementation
+bool			netclient;				// clientside playsim
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
@@ -2867,6 +2868,7 @@ void G_TimeDemo (const char* name)
 void G_InitServerNetGame(const char *mapname)
 {
 	netgame = true;
+	netclient = false;
 	multiplayer = true;
 	multiplayernext = true;
 	consoleplayer = 0;
@@ -2882,6 +2884,7 @@ void G_InitServerNetGame(const char *mapname)
 void G_InitClientNetGame(int player, const char* mapname)
 {
 	netgame = true;
+	netclient = true;
 	multiplayer = true;
 	multiplayernext = true;
 	consoleplayer = player;
@@ -2904,7 +2907,9 @@ void G_EndNetGame()
 	P_SetupWeapons_ntohton();
 	demoplayback = false;
 	netgame = false;
+	netclient = false;
 	multiplayer = false;
+	multiplayernext = false;
 	for (int i = 1; i < MAXPLAYERS; i++)
 		playeringame[i] = 0;
 	consoleplayer = 0;

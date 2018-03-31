@@ -79,6 +79,9 @@ extern	bool			multiplayer;
 // [SP] Map dm/coop implementation - invokes fake multiplayer without bots
 extern	bool			multiplayernext;
 
+// clientside playsim 
+extern bool				netclient;
+
 // Flag: true only if started as net deathmatch.
 EXTERN_CVAR (Int, deathmatch)
 

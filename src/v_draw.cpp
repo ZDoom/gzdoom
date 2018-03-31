@@ -274,11 +274,11 @@ bool DFrameBuffer::SetTextureParms(DrawParms *parms, FTexture *img, double xx, d
 		parms->texheight = img->GetScaledHeightDouble();
 		if (parms->top == INT_MAX || parms->fortext)
 		{
-			parms->top = img->GetScaledTopOffset();
+			parms->top = img->GetScaledTopOffset(0);
 		}
 		if (parms->left == INT_MAX || parms->fortext)
 		{
-			parms->left = img->GetScaledLeftOffset();
+			parms->left = img->GetScaledLeftOffset(0);
 		}
 		if (parms->destwidth == INT_MAX || parms->fortext)
 		{

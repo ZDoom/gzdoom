@@ -501,6 +501,21 @@ bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
 }
 
 //===========================================================================
+// 
+// Sprite adjust has changed.
+// This needs to alter the material's sprite rect.
+//
+//===========================================================================
+
+void FTexture::SetSpriteAdjust()
+{
+	for(auto mat : gl_info.Material)
+	{
+		if (mat != nullptr) mat->SetSpriteRect();
+	}
+}
+
+//===========================================================================
 //
 // fake brightness maps
 // These are generated for textures affected by a colormap with

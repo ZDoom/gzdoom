@@ -1100,6 +1100,7 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, ETextureType usetype)
 	Height = sc.Number;
 	UseType = usetype;
 	
+	bool offset2set = false;
 	if (sc.CheckString("{"))
 	{
 		while (!sc.CheckString("}"))
@@ -1183,10 +1184,24 @@ FMultiPatchTexture::FMultiPatchTexture (FScanner &sc, ETextureType usetype)
 			else if (sc.Compare("Offset"))
 			{
 				sc.MustGetNumber();
-				LeftOffset = sc.Number;
+				_LeftOffset[0] = sc.Number;
 				sc.MustGetStringName(",");
 				sc.MustGetNumber();
-				TopOffset = sc.Number;
+				_TopOffset[0] = sc.Number;
+				if (!offset2set)
+				{
+					_LeftOffset[1] = _LeftOffset[0];
+					_TopOffset[1] = _TopOffset[0];
+				}
+			}
+			else if (sc.Compare("Offset2"))
+			{
+				sc.MustGetNumber();
+				_LeftOffset[1] = sc.Number;
+				sc.MustGetStringName(",");
+				sc.MustGetNumber();
+				_TopOffset[1] = sc.Number;
+				offset2set = true;
 			}
 			else
 			{
@@ -1264,8 +1279,8 @@ void FMultiPatchTexture::ResolvePatches()
 				Parts[i].Texture->bKeepAround = true;
 				if (Inits[i].UseOffsets)
 				{
-					Parts[i].OriginX -= Parts[i].Texture->LeftOffset;
-					Parts[i].OriginY -= Parts[i].Texture->TopOffset;
+					Parts[i].OriginX -= Parts[i].Texture->GetLeftOffset(0);
+					Parts[i].OriginY -= Parts[i].Texture->GetTopOffset(0);
 				}
 			}
 		}

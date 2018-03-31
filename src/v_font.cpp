@@ -417,7 +417,7 @@ FFont::FFont (const char *name, const char *nametemplate, int first, int count, 
 					charlumps[i] = pic;
 
 				int height = pic->GetScaledHeight();
-				int yoffs = pic->GetScaledTopOffset();
+				int yoffs = pic->GetScaledTopOffset(0);
 
 				if (yoffs > maxyoffs)
 				{
@@ -1713,8 +1713,8 @@ FFontChar2::FFontChar2 (int sourcelump, int sourcepos, int width, int height, in
 	UseType = ETextureType::FontChar;
 	Width = width;
 	Height = height;
-	LeftOffset = leftofs;
-	TopOffset = topofs;
+	_LeftOffset[1] = _LeftOffset[0] = leftofs;
+	_TopOffset[1] = _TopOffset[0] = topofs;
 	CalcBitSize ();
 }
 
@@ -1964,7 +1964,7 @@ FSpecialFont::FSpecialFont (const char *name, int first, int count, FTexture **l
 		if (pic != NULL)
 		{
 			int height = pic->GetScaledHeight();
-			int yoffs = pic->GetScaledTopOffset();
+			int yoffs = pic->GetScaledTopOffset(0);
 
 			if (yoffs > maxyoffs)
 			{

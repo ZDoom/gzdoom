@@ -581,8 +581,10 @@ void FTextureManager::AddHiresTextures (int wadnum)
 							// Replace the entire texture and adjust the scaling and offset factors.
 							newtex->bWorldPanning = true;
 							newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-							newtex->LeftOffset = int(oldtex->GetScaledLeftOffset() * newtex->Scale.X);
-							newtex->TopOffset = int(oldtex->GetScaledTopOffset() * newtex->Scale.Y);
+							newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
+							newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
+							newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
+							newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
 							ReplaceTexture(tlist[i], newtex, true);
 						}
 					}
@@ -671,8 +673,10 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 									// Replace the entire texture and adjust the scaling and offset factors.
 									newtex->bWorldPanning = true;
 									newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-									newtex->LeftOffset = int(oldtex->GetScaledLeftOffset() * newtex->Scale.X);
-									newtex->TopOffset = int(oldtex->GetScaledTopOffset() * newtex->Scale.Y);
+									newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
+									newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
+									newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
+									newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
 									ReplaceTexture(tlist[i], newtex, true);
 								}
 							}
@@ -1040,6 +1044,7 @@ void FTextureManager::Init()
 	FixAnimations();
 	InitSwitchList();
 	InitPalettedVersions();
+	AdjustSpriteOffsets();
 }
 
 //==========================================================================
@@ -1188,6 +1193,105 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	return 0;
 }
 
+//-----------------------------------------------------------------------------
+//
+// Adjust sprite offsets for GL rendering (IWAD resources only)
+//
+//-----------------------------------------------------------------------------
+
+void FTextureManager::AdjustSpriteOffsets()
+{
+	int lump, lastlump = 0;
+	int sprid;
+	TMap<int, bool> donotprocess;
+
+	int numtex = Wads.GetNumLumps();
+
+	for (int i = 0; i < numtex; i++)
+	{
+		if (Wads.GetLumpFile(i) > Wads.GetIwadNum()) break; // we are past the IWAD
+		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == Wads.GetIwadNum())
+		{
+			char str[9];
+			Wads.GetLumpName(str, i);
+			str[8] = 0;
+			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
+			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > Wads.GetIwadNum())
+			{
+				// This texture has been replaced by some PWAD.
+				memcpy(&sprid, str, 4);
+				donotprocess[sprid] = true;
+			}
+		}
+	}
+
+	while ((lump = Wads.FindLump("SPROFS", &lastlump, false)) != -1)
+	{
+		FScanner sc;
+		sc.OpenLumpNum(lump);
+		sc.SetCMode(true);
+		int ofslumpno = Wads.GetLumpFile(lump);
+		while (sc.GetString())
+		{
+			int x, y;
+			bool iwadonly = false;
+			bool forced = false;
+			FTextureID texno = TexMan.CheckForTexture(sc.String, ETextureType::Sprite);
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			x = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			y = sc.Number;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				if (sc.Compare("iwad")) iwadonly = true;
+				if (sc.Compare("iwadforced")) forced = iwadonly = true;
+			}
+			if (texno.isValid())
+			{
+				FTexture * tex = TexMan[texno];
+
+				int lumpnum = tex->GetSourceLump();
+				// We only want to change texture offsets for sprites in the IWAD or the file this lump originated from.
+				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
+				{
+					int wadno = Wads.GetLumpFile(lumpnum);
+					if ((iwadonly && wadno == Wads.GetIwadNum()) || (!iwadonly && wadno == ofslumpno))
+					{
+						if (wadno == Wads.GetIwadNum() && !forced && iwadonly)
+						{
+							memcpy(&sprid, &tex->Name[0], 4);
+							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.
+						}
+						tex->_LeftOffset[1] = x;
+						tex->_TopOffset[1] = y;
+					}
+				}
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FTextureManager::SpriteAdjustChanged()
+{
+	for (auto &texi : Textures)
+	{
+		auto tex = texi.Texture;
+		if (tex->GetLeftOffset(0) != tex->GetLeftOffset(1) || tex->GetTopOffset(0) != tex->GetTopOffset(1))
+		{
+			tex->SetSpriteAdjust();
+		}
+	}
+}
+
 //==========================================================================
 //
 //
@@ -1269,7 +1373,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetScaledOffset)
 	auto tex = TexMan.ByIndex(texid);
 	if (tex != nullptr)
 	{
-		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(), tex->GetScaledTopOffsetDouble()));
+		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(0), tex->GetScaledTopOffsetDouble(0)));
 	}
 	ACTION_RETURN_VEC2(DVector2(-1, -1));
 }

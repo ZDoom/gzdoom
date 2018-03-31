@@ -113,8 +113,8 @@ FIMGZTexture::FIMGZTexture (int lumpnum, uint16_t w, uint16_t h, int16_t l, int1
 	Wads.GetLumpName (Name, lumpnum);
 	Width = w;
 	Height = h;
-	LeftOffset = l;
-	TopOffset = t;
+	_LeftOffset[1] = _LeftOffset[0] = l;
+	_TopOffset[1] = _TopOffset[0] = t;
 	isalpha = _isalpha;
 	CalcBitSize ();
 }
@@ -130,14 +130,6 @@ uint8_t *FIMGZTexture::MakeTexture (FRenderStyle style)
 	FMemLump lump = Wads.ReadLump (SourceLump);
 	const ImageHeader *imgz = (const ImageHeader *)lump.GetMem();
 	const uint8_t *data = (const uint8_t *)&imgz[1];
-
-	if (Width != 0xFFFF)
-	{
-		Width = LittleShort(imgz->Width);
-		Height = LittleShort(imgz->Height);
-		LeftOffset = LittleShort(imgz->LeftOffset);
-		TopOffset = LittleShort(imgz->TopOffset);
-	}
 
 	uint8_t *dest_p;
 	int dest_adv = Height;

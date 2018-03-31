@@ -264,7 +264,7 @@ namespace swrenderer
 		double pspriteyscale = pspritexscale * viewport->BaseYaspectMul * ((double)SCREENHEIGHT / SCREENWIDTH) * r_viewwindow.WidescreenRatio;
 		double pspritexiscale = 1 / pspritexscale;
 
-		int tleft = tex->GetScaledLeftOffset();
+		int tleft = tex->GetScaledLeftOffset(0);
 		int twidth = tex->GetScaledWidth();
 
 		// calculate edges of the shape
@@ -287,7 +287,7 @@ namespace swrenderer
 
 		vis.renderflags = owner->renderflags;
 
-		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
+		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->GetTopOffset(0);
 
 		auto screencanvas = screen->GetCanvas();
 		if (Thread->Viewport->viewpoint.camera->player && (viewport->RenderTarget != screencanvas ||

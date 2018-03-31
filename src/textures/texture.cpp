@@ -47,6 +47,15 @@
 #include "textures/textures.h"
 #include "v_palette.h"
 
+// Make sprite offset adjustment user-configurable per renderer.
+int r_spriteadjustSW, r_spriteadjustHW;
+CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	r_spriteadjustHW = !!(self & 2);
+	r_spriteadjustSW = !!(self & 1);
+	TexMan.SpriteAdjustChanged();
+}
+
 typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
 
 struct TexCreateInfo
@@ -146,12 +155,13 @@ FTexture * FTexture::CreateTexture (const char *name, int lumpnum, ETextureType 
 
 
 FTexture::FTexture (const char *name, int lumpnum)
-: LeftOffset(0), TopOffset(0),
+	: 
   WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
   UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0)
 {
+	_LeftOffset[0] = _LeftOffset[1] = _TopOffset[0] = _TopOffset[1] = 0;
 	id.SetInvalid();
 	if (name != NULL)
 	{

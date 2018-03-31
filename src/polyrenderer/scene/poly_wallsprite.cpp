@@ -56,7 +56,7 @@ void RenderPolyWallSprite::Render(PolyRenderThread *thread, const TriMatrix &wor
 	// Determine left and right edges of sprite. The sprite's angle is its normal,
 	// so the edges are 90 degrees each side of it.
 	double x2 = tex->GetScaledWidth() * spriteScale.X;
-	double x1 = tex->GetScaledLeftOffset() * spriteScale.X;
+	double x1 = tex->GetScaledLeftOffsetPo() * spriteScale.X;
 	DVector2 left, right;
 	left.X = pos.X - x1 * angcos;
 	left.Y = pos.Y - x1 * angsin;

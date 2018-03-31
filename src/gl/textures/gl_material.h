@@ -122,18 +122,21 @@ class FMaterial
 	short mRenderWidth;
 	short mRenderHeight;
 	bool mExpanded;
+	bool mTrimResult;
+	uint16_t trim[4];
 
 	float mSpriteU[2], mSpriteV[2];
 	FloatRect mSpriteRect;
 
 	FGLTexture * ValidateSysTexture(FTexture * tex, bool expand);
-	bool TrimBorders(int *rect);
+	bool TrimBorders(uint16_t *rect);
 
 public:
 	FTexture *tex;
 	
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
+	void SetSpriteRect();
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
 	bool isMasked() const
@@ -197,37 +200,6 @@ public:
 	int GetTopOffset() const
 	{
 		return mTopOffset;
-	}
-
-	int GetScaledLeftOffset() const
-	{
-		return int(mLeftOffset / tex->Scale.X);
-	}
-
-	int GetScaledTopOffset() const
-	{
-		return int(mTopOffset / tex->Scale.Y);
-	}
-
-	float GetScaledLeftOffsetFloat() const
-	{
-		return float(mLeftOffset / tex->Scale.X);
-	}
-
-	float GetScaledTopOffsetFloat() const
-	{
-		return float(mTopOffset/ tex->Scale.Y);
-	}
-
-	// This is scaled size in floating point as needed by sprites
-	float GetScaledWidthFloat() const
-	{
-		return float(mWidth / tex->Scale.X);
-	}
-
-	float GetScaledHeightFloat() const
-	{
-		return float(mHeight / tex->Scale.Y);
 	}
 
 	// Get right/bottom UV coordinates for patch drawing

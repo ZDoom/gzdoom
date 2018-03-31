@@ -250,8 +250,6 @@ FJPEGTexture::FJPEGTexture (int lumpnum, int width, int height)
 : FWorldTexture(NULL, lumpnum)
 {
 	UseType = ETextureType::MiscPatch;
-	LeftOffset = 0;
-	TopOffset = 0;
 	bMasked = false;
 
 	Width = width;

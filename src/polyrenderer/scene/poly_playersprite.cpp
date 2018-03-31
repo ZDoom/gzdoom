@@ -261,7 +261,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 	double pspriteyscale = pspritexscale * yaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
-	int tleft = tex->GetScaledLeftOffset();
+	int tleft = tex->GetScaledLeftOffsetPo();
 	int twidth = tex->GetScaledWidth();
 
 	// calculate edges of the shape
@@ -286,7 +286,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	vis.renderflags = owner->renderflags;
 
-	vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
+	vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->GetTopOffsetPo();
 
 	auto screencanvas = screen->GetCanvas();
 

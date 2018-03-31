@@ -44,7 +44,6 @@ FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 	Name = name;
 	Width = width;
 	Height = height;
-	LeftOffset = TopOffset = 0;
 	CalcBitSize ();
 
 	bMasked = false;

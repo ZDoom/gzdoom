@@ -207,8 +207,6 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 	int i;
 
 	UseType = ETextureType::MiscPatch;
-	LeftOffset = 0;
-	TopOffset = 0;
 	bMasked = false;
 
 	Width = width;
@@ -251,8 +249,8 @@ FPNGTexture::FPNGTexture (FileReader &lump, int lumpnum, const FString &filename
 					Printf ("Y-Offset for PNG texture %s is bad: %d (0x%08x)\n", Wads.GetLumpFullName (lumpnum), ihoty, ihoty);
 					ihoty = 0;
 				}
-				LeftOffset = ihotx;
-				TopOffset = ihoty;
+				_LeftOffset[1] = _LeftOffset[0] = ihotx;
+				_TopOffset[1] = _TopOffset[0] = ihoty;
 			}
 			break;
 

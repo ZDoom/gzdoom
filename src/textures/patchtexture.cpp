@@ -159,8 +159,8 @@ FPatchTexture::FPatchTexture (int lumpnum, patch_t * header, bool isalphatex)
 	isalpha = isalphatex;
 	Width = header->width;
 	Height = header->height;
-	LeftOffset = header->leftoffset;
-	TopOffset = header->topoffset;
+	_LeftOffset[1] = _LeftOffset[0] = header->leftoffset;
+	_TopOffset[1] = _TopOffset[0] = header->topoffset;
 	DetectBadPatches();
 	CalcBitSize ();
 }
@@ -310,8 +310,8 @@ void FPatchTexture::DetectBadPatches ()
 				return;	// More than one post in a column!
 			}
 		}
-		LeftOffset = 0;
-		TopOffset = 0;
+		_LeftOffset[1] = _LeftOffset[0] = 0;
+		_TopOffset[1] = _TopOffset[0] = 0;
 		badflag = true;
 		bMasked = false;	// Hacked textures don't have transparent parts.
 	}

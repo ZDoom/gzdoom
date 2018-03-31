@@ -290,8 +290,6 @@ FDDSTexture::FDDSTexture (FileReader &lump, int lumpnum, void *vsurfdesc)
 	DDSURFACEDESC2 *surf = (DDSURFACEDESC2 *)vsurfdesc;
 
 	UseType = ETextureType::MiscPatch;
-	LeftOffset = 0;
-	TopOffset = 0;
 	bMasked = false;
 
 	Width = uint16_t(surf->Width);

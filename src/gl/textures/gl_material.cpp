@@ -520,8 +520,8 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 
 	mWidth = tx->GetWidth();
 	mHeight = tx->GetHeight();
-	mLeftOffset = tx->LeftOffset;
-	mTopOffset = tx->TopOffset;
+	mLeftOffset = tx->GetLeftOffset(0);	// These only get used by decals and decals should not use renderer-specific offsets.
+	mTopOffset = tx->GetTopOffset(0);
 	mRenderWidth = tx->GetScaledWidth();
 	mRenderHeight = tx->GetScaledHeight();
 	mSpriteU[0] = mSpriteV[0] = 0.f;
@@ -534,59 +534,26 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		mBaseLayer = ValidateSysTexture(basetex, expanded);
 	}
 
-	float fxScale = tx->Scale.X;
-	float fyScale = tx->Scale.Y;
-
-	// mSpriteRect is for positioning the sprite in the scene.
-	mSpriteRect.left = -mLeftOffset / fxScale;
-	mSpriteRect.top = -mTopOffset / fyScale;
-	mSpriteRect.width = mWidth / fxScale;
-	mSpriteRect.height = mHeight / fyScale;
-
+	mExpanded = expanded;
 	if (expanded)
 	{
-		// a little adjustment to make sprites look better with texture filtering:
-		// create a 1 pixel wide empty frame around them.
-		int trim[4];
-		bool trimmed = TrimBorders(trim);	// get the trim size before adding the empty frame
-
 		int oldwidth = mWidth;
 		int oldheight = mHeight;
 
-		mWidth+=2;
-		mHeight+=2;
-		mLeftOffset+=1;
-		mTopOffset+=1;
+		mTrimResult = TrimBorders(trim);	// get the trim size before adding the empty frame
+		mWidth += 2;
+		mHeight += 2;
 		mRenderWidth = mRenderWidth * mWidth / oldwidth;
 		mRenderHeight = mRenderHeight * mHeight / oldheight;
 
-		// Reposition the sprite with the frame considered
-		mSpriteRect.left = -mLeftOffset / fxScale;
-		mSpriteRect.top = -mTopOffset / fyScale;
-		mSpriteRect.width = mWidth / fxScale;
-		mSpriteRect.height = mHeight / fyScale;
-
-		if (trimmed)
-		{
-			mSpriteRect.left += trim[0] / fxScale;
-			mSpriteRect.top += trim[1] / fyScale;
-
-			mSpriteRect.width -= (oldwidth - trim[2]) / fxScale;
-			mSpriteRect.height -= (oldheight - trim[3]) / fyScale;
-
-			mSpriteU[0] = trim[0] / (float)mWidth;
-			mSpriteV[0] = trim[1] / (float)mHeight;
-			mSpriteU[1] -= (oldwidth - trim[0] - trim[2]) / (float)mWidth; 
-			mSpriteV[1] -= (oldheight - trim[1] - trim[3]) / (float)mHeight; 
-		}
 	}
+	SetSpriteRect();
 
 	mTextureLayers.ShrinkToFit();
 	mMaxBound = -1;
 	mMaterials.Push(this);
 	tx->gl_info.Material[expanded] = this;
 	if (tx->bHasCanvas) tx->gl_info.mIsTransparent = 0;
-	mExpanded = expanded;
 }
 
 //===========================================================================
@@ -608,6 +575,59 @@ FMaterial::~FMaterial()
 
 }
 
+//===========================================================================
+//
+// Set the sprite rectangle
+//
+//===========================================================================
+
+void FMaterial::SetSpriteRect()
+{
+	auto leftOffset = tex->GetLeftOffsetHW();
+	auto topOffset = tex->GetTopOffsetHW();
+
+	float fxScale = tex->Scale.X;
+	float fyScale = tex->Scale.Y;
+
+	// mSpriteRect is for positioning the sprite in the scene.
+	mSpriteRect.left = -leftOffset / fxScale;
+	mSpriteRect.top = -topOffset / fyScale;
+	mSpriteRect.width = mWidth / fxScale;
+	mSpriteRect.height = mHeight / fyScale;
+
+	if (mExpanded)
+	{
+		// a little adjustment to make sprites look better with texture filtering:
+		// create a 1 pixel wide empty frame around them.
+
+		int oldwidth = mWidth - 2;
+		int oldheight = mHeight - 2;
+
+		leftOffset += 1;
+		topOffset += 1;
+
+		// Reposition the sprite with the frame considered
+		mSpriteRect.left = -leftOffset / fxScale;
+		mSpriteRect.top = -topOffset / fyScale;
+		mSpriteRect.width = mWidth / fxScale;
+		mSpriteRect.height = mHeight / fyScale;
+
+		if (mTrimResult)
+		{
+			mSpriteRect.left += trim[0] / fxScale;
+			mSpriteRect.top += trim[1] / fyScale;
+
+			mSpriteRect.width -= (oldwidth - trim[2]) / fxScale;
+			mSpriteRect.height -= (oldheight - trim[3]) / fyScale;
+
+			mSpriteU[0] = trim[0] / (float)mWidth;
+			mSpriteV[0] = trim[1] / (float)mHeight;
+			mSpriteU[1] -= (oldwidth - trim[0] - trim[2]) / (float)mWidth;
+			mSpriteV[1] -= (oldheight - trim[1] - trim[3]) / (float)mHeight;
+		}
+	}
+}
+
 
 //===========================================================================
 // 
@@ -616,7 +636,7 @@ FMaterial::~FMaterial()
 //
 //===========================================================================
 
-bool FMaterial::TrimBorders(int *rect)
+bool FMaterial::TrimBorders(uint16_t *rect)
 {
 	PalEntry col;
 	int w;

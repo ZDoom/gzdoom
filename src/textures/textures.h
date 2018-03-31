@@ -75,6 +75,7 @@ class FTextureManager;
 class FTerrainTypeArray;
 class FGLTexture;
 class FMaterial;
+extern int r_spriteadjustSW, r_spriteadjustHW;
 
 class FNullTextureID : public FTextureID
 {
@@ -171,7 +172,7 @@ public:
 	static FTexture *CreateTexture(int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
 
-	int16_t LeftOffset, TopOffset;
+	//int16_t LeftOffset, TopOffset;
 
 	uint8_t WidthBits, HeightBits;
 
@@ -245,10 +246,33 @@ public:
 	double GetScaledHeightDouble () { return Height / Scale.Y; }
 	double GetScaleY() const { return Scale.Y; }
 
-	int GetScaledLeftOffset () { int foo = int((LeftOffset * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
-	int GetScaledTopOffset () { int foo = int((TopOffset * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
-	double GetScaledLeftOffsetDouble() { return LeftOffset / Scale.X; }
-	double GetScaledTopOffsetDouble() { return TopOffset / Scale.Y; }
+	// Now with improved offset adjustment.
+	int GetLeftOffset(int adjusted) { return _LeftOffset[adjusted]; }
+	int GetTopOffset(int adjusted) { return _TopOffset[adjusted]; }
+	int GetScaledLeftOffset (int adjusted) { int foo = int((_LeftOffset[adjusted] * 2) / Scale.X); return (foo >> 1) + (foo & 1); }
+	int GetScaledTopOffset (int adjusted) { int foo = int((_TopOffset[adjusted] * 2) / Scale.Y); return (foo >> 1) + (foo & 1); }
+	double GetScaledLeftOffsetDouble(int adjusted) { return _LeftOffset[adjusted] / Scale.X; }
+	double GetScaledTopOffsetDouble(int adjusted) { return _TopOffset[adjusted] / Scale.Y; }
+
+	// Interfaces for the different renderers. Everything that needs to check renderer-dependent offsets
+	// should use these, so that if changes are needed, this is the only place to edit.
+
+	// For the original software renderer
+	int GetLeftOffsetSW() { return _LeftOffset[r_spriteadjustSW]; }
+	int GetTopOffsetSW() { return _TopOffset[r_spriteadjustSW]; }
+	int GetScaledLeftOffsetSW() { return GetScaledLeftOffset(r_spriteadjustSW); }
+	int GetScaledTopOffsetSW() { return GetScaledTopOffset(r_spriteadjustSW); }
+
+	// For the softpoly renderer, in case it wants adjustment
+	int GetLeftOffsetPo() { return _LeftOffset[r_spriteadjustSW]; }
+	int GetTopOffsetPo() { return _TopOffset[r_spriteadjustSW]; }
+	int GetScaledLeftOffsetPo() { return GetScaledLeftOffset(r_spriteadjustSW); }
+	int GetScaledTopOffsetPo() { return GetScaledTopOffset(r_spriteadjustSW); }
+
+	// For the hardware renderer
+	int GetLeftOffsetHW() { return _LeftOffset[r_spriteadjustHW]; }
+	int GetTopOffsetHW() { return _TopOffset[r_spriteadjustHW]; }
+
 	virtual void ResolvePatches() {}
 
 	virtual void SetFrontSkyLayer();
@@ -266,8 +290,10 @@ public:
 	{
 		Width = BaseTexture->GetWidth();
 		Height = BaseTexture->GetHeight();
-		TopOffset = BaseTexture->TopOffset;
-		LeftOffset = BaseTexture->LeftOffset;
+		_TopOffset[0] = BaseTexture->_TopOffset[0];
+		_TopOffset[1] = BaseTexture->_TopOffset[1];
+		_LeftOffset[0] = BaseTexture->_LeftOffset[0];
+		_LeftOffset[1] = BaseTexture->_LeftOffset[1];
 		WidthBits = BaseTexture->WidthBits;
 		HeightBits = BaseTexture->HeightBits;
 		Scale = BaseTexture->Scale;
@@ -280,6 +306,7 @@ public:
 
 protected:
 	uint16_t Width, Height, WidthMask;
+	int16_t _LeftOffset[2], _TopOffset[2];
 	static uint8_t GrayMap[256];
 	uint8_t *GetRemap(FRenderStyle style, bool srcisgrayscale = false)
 	{
@@ -414,6 +441,9 @@ public:
 	void CheckTrans(unsigned char * buffer, int size, int trans);
 	bool ProcessData(unsigned char * buffer, int w, int h, bool ispatch);
 	int CheckRealHeight();
+	void SetSpriteAdjust();
+
+	friend class FTextureManager;
 };
 
 class FxAddSub;
@@ -514,6 +544,7 @@ public:
 	void AddTexturesForWad(int wadnum);
 	void Init();
 	void DeleteAll();
+	void SpriteAdjustChanged();
 
 	// Replaces one texture with another. The new texture will be assigned
 	// the same name, slot, and use type as the texture it is replacing.
@@ -539,6 +570,7 @@ private:
 	// texture counting
 	int CountTexturesX ();
 	int CountLumpTextures (int lumpnum);
+	void AdjustSpriteOffsets();
 
 	// Build tiles
 	void AddTiles (const FString &pathprefix, const void *, int translation);

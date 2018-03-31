@@ -70,87 +70,6 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, 0)
 void gl_CreateSections();
 void AddAutoMaterials();
 
-//-----------------------------------------------------------------------------
-//
-// Adjust sprite offsets for GL rendering (IWAD resources only)
-//
-//-----------------------------------------------------------------------------
-
-void AdjustSpriteOffsets()
-{
-	int lump, lastlump = 0;
-	int sprid;
-	TMap<int, bool> donotprocess;
-
-	int numtex = Wads.GetNumLumps();
-
-	for (int i = 0; i < numtex; i++)
-	{
-		if (Wads.GetLumpFile(i) > Wads.GetIwadNum()) break; // we are past the IWAD
-		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == Wads.GetIwadNum())
-		{
-			char str[9];
-			Wads.GetLumpName(str, i);
-			str[8] = 0;
-			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
-			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > Wads.GetIwadNum())
-			{
-				// This texture has been replaced by some PWAD.
-				memcpy(&sprid, str, 4);
-				donotprocess[sprid] = true;
-			}
-		}
-	}
-
-	while ((lump = Wads.FindLump("SPROFS", &lastlump, false)) != -1)
-	{
-		FScanner sc;
-		sc.OpenLumpNum(lump);
-		sc.SetCMode(true);
-		GLRenderer->FlushTextures();
-		int ofslumpno = Wads.GetLumpFile(lump);
-		while (sc.GetString())
-		{
-			int x,y;
-			bool iwadonly = false;
-			bool forced = false;
-			FTextureID texno = TexMan.CheckForTexture(sc.String, ETextureType::Sprite);
-			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			x=sc.Number;
-			sc.MustGetStringName(",");
-			sc.MustGetNumber();
-			y=sc.Number;
-			if (sc.CheckString(","))
-			{
-				sc.MustGetString();
-				if (sc.Compare("iwad")) iwadonly = true;
-				if (sc.Compare("iwadforced")) forced = iwadonly = true;
-			}
-			if (texno.isValid())
-			{
-				FTexture * tex = TexMan[texno];
-
-				int lumpnum = tex->GetSourceLump();
-				// We only want to change texture offsets for sprites in the IWAD or the file this lump originated from.
-				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
-				{
-					int wadno = Wads.GetLumpFile(lumpnum);
-					if ((iwadonly && wadno==Wads.GetIwadNum()) || (!iwadonly && wadno == ofslumpno))
-					{
-						if (wadno == Wads.GetIwadNum() && !forced && iwadonly)
-						{
-							memcpy(&sprid, &tex->Name[0], 4);
-							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.
-						}
-						tex->LeftOffset=x;
-						tex->TopOffset=y;
-					}
-				}
-			}
-		}
-	}
-}
 
 
 
@@ -362,7 +281,6 @@ void gl_RecalcVertexHeights(vertex_t * v)
 
 void gl_InitData()
 {
-	AdjustSpriteOffsets();
 	AddAutoMaterials();
 }
 

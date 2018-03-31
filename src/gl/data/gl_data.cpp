@@ -68,9 +68,6 @@ CUSTOM_CVAR(Bool, gl_notexturefill, false, 0)
 
 
 void gl_CreateSections();
-void AddAutoMaterials();
-
-
 
 
 //==========================================================================
@@ -278,11 +275,6 @@ void gl_RecalcVertexHeights(vertex_t * v)
 
 
 
-
-void gl_InitData()
-{
-	AddAutoMaterials();
-}
 
 //==========================================================================
 //

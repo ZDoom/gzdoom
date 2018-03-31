@@ -44,7 +44,6 @@ namespace swrenderer
 		RenderScene();
 		~RenderScene();
 
-		void Init();
 		void ScreenResized();
 		void Deinit();	
 

@@ -63,6 +63,5 @@ extern TArray<uint8_t> currentmapsection;
 
 void gl_InitPortals();
 void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement);
-void gl_InitData();
 
 #endif

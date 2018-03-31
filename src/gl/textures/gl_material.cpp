@@ -864,8 +864,8 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 	if (mShaderIndex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
 	{
 		FTexture *tex = mBaseLayer->tex;
-		*pAreas = tex->gl_info.areas;
-		return tex->gl_info.areacount;
+		*pAreas = tex->areas;
+		return tex->areacount;
 	}
 	else
 	{

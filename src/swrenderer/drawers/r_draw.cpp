@@ -81,7 +81,7 @@ namespace swrenderer
 
 	uint32_t particle_texture[NUM_PARTICLE_TEXTURES][PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
 
-	short zeroarray[MAXWIDTH];
+	short zeroarray[MAXWIDTH] = { 0 };
 	short screenheightarray[MAXWIDTH];
 
 	void R_InitShadeMaps()

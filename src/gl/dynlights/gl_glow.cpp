@@ -52,7 +52,7 @@ void gl_InitGlow(FScanner &sc)
 				sc.MustGetString();
 				FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Flat,FTextureManager::TEXMAN_TryAny);
 				FTexture *tex = TexMan[flump];
-				if (tex) tex->gl_info.bAutoGlowing = tex->gl_info.bGlowing = tex->gl_info.bFullbright = true;
+				if (tex) tex->gl_info.bAutoGlowing = tex->bGlowing = tex->gl_info.bFullbright = true;
 			}
 		}
 		else if (sc.Compare("WALLS"))
@@ -63,7 +63,7 @@ void gl_InitGlow(FScanner &sc)
 				sc.MustGetString();
 				FTextureID flump=TexMan.CheckForTexture(sc.String, ETextureType::Wall,FTextureManager::TEXMAN_TryAny);
 				FTexture *tex = TexMan[flump];
-				if (tex) tex->gl_info.bAutoGlowing = tex->gl_info.bGlowing = tex->gl_info.bFullbright = true;
+				if (tex) tex->gl_info.bAutoGlowing = tex->bGlowing = tex->gl_info.bFullbright = true;
 			}
 		}
 		else if (sc.Compare("TEXTURE"))
@@ -94,8 +94,8 @@ void gl_InitGlow(FScanner &sc)
 			if (tex && color != 0)
 			{
 				tex->gl_info.bAutoGlowing = false;
-				tex->gl_info.bGlowing = true;
-				tex->gl_info.GlowColor = color;
+				tex->bGlowing = true;
+				tex->GlowColor = color;
 			}
 		}
 	}

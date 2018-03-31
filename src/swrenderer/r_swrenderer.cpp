@@ -81,16 +81,12 @@ using namespace swrenderer;
 
 FSoftwareRenderer::FSoftwareRenderer()
 {
+	R_InitShadeMaps();
+	InitSWColorMaps();
 }
 
 FSoftwareRenderer::~FSoftwareRenderer()
 {
-}
-
-void FSoftwareRenderer::Init()
-{
-	mScene.Init();
-	InitSWColorMaps();		
 }
 
 void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)

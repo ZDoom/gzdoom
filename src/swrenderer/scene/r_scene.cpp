@@ -378,14 +378,6 @@ namespace swrenderer
 		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
 	}
 
-	void RenderScene::Init()
-	{
-		// viewwidth / viewheight are set by the defaults
-		fillshort(zeroarray, MAXWIDTH, 0);
-
-		R_InitShadeMaps();
-	}
-
 	void RenderScene::Deinit()
 	{
 		MainThread()->TranslucentPass->Deinit();

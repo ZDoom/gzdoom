@@ -404,13 +404,8 @@ void R_Init ()
 	atterm (R_Shutdown);
 
 	StartScreen->Progress();
-	// Colormap init moved back to InitPalette()
-	//R_InitColormaps ();
-	//StartScreen->Progress();
-
 	R_InitTranslationTables ();
 	R_SetViewSize (screenblocks);
-	Renderer->Init();
 }
 
 //==========================================================================

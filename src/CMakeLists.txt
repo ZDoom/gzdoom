@@ -1113,6 +1113,7 @@ set (PCH_SOURCES
 	textures/anim_switches.cpp
 	textures/automaptexture.cpp
 	textures/bitmap.cpp
+	textures/brightmaptexture.cpp
 	textures/buildtexture.cpp
 	textures/canvastexture.cpp
 	textures/ddstexture.cpp

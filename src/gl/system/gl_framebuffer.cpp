@@ -98,7 +98,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
 	gl_SetupMenu();
-	gl_GenerateGlobalBrightmapFromColormap();
 	DoSetGamma();
 }
 
@@ -454,7 +453,6 @@ void OpenGLFrameBuffer::GameRestart()
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdatePalette ();
 	ScreenshotBuffer = NULL;
-	gl_GenerateGlobalBrightmapFromColormap();
 	GLRenderer->GetSpecialTextures();
 }
 

@@ -171,6 +171,7 @@ public:
 	static FTexture *CreateTexture(const char *name, int lumpnum, ETextureType usetype);
 	static FTexture *CreateTexture(int lumpnum, ETextureType usetype);
 	virtual ~FTexture ();
+	void AddAutoMaterials();
 
 	//int16_t LeftOffset, TopOffset;
 
@@ -181,6 +182,11 @@ public:
 	int SourceLump;
 	FTextureID id;
 
+	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
+
+	// Paletted variant
+	FTexture *PalVersion = nullptr;
+	// Material layers
 	FTexture *Brightmap = nullptr;
 	FTexture *Normal = nullptr;							// Normal map texture
 	FTexture *Specular = nullptr;						// Specular light texture for the diffuse+normal+specular light model
@@ -203,9 +209,16 @@ public:
 							// doing it per patch.
 	uint8_t bMultiPatch:1;		// This is a multipatch texture (we really could use real type info for textures...)
 	uint8_t bKeepAround:1;		// This texture was used as part of a multi-patch texture. Do not free it.
+	uint8_t bFullNameTexture : 1;
+	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
+	uint8_t bGlowing : 1;						// Texture glow color
+	int8_t bTranslucent : 2;
 
 	uint16_t Rotations;
 	int16_t SkyOffset;
+	FloatRect *areas = nullptr;
+	int areacount = 0;
+	PalEntry GlowColor = 0;
 
 
 	struct Span
@@ -373,13 +386,6 @@ protected:
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
 		gl_info = other->gl_info;
-		Brightmap = NULL;
-		Normal = NULL;
-		Specular = NULL;
-		Metallic = NULL;
-		Roughness = NULL;
-		AmbientOcclusion = NULL;
-		gl_info.areas = NULL;
 	}
 
 	std::vector<uint32_t> PixelsBgra;
@@ -411,18 +417,13 @@ public:
 		FGLTexture *SystemTexture[2];
 		float Glossiness;
 		float SpecularLevel;
-		PalEntry GlowColor;
 		int GlowHeight;
-		FloatRect *areas;
-		int areacount;
 		int shaderindex;
 		float shaderspeed;
 		int mIsTransparent:2;
-		bool bGlowing:1;						// Texture glows
 		bool bAutoGlowing : 1;					// Glow info is determined from texture image.
 		bool bFullbright:1;						// always draw fullbright
 		bool bSkybox:1;							// This is a skybox
-		char bBrightmapChecked:1;				// Set to 1 if brightmap has been checked
 		bool bDisableFullbright:1;				// This texture will not be displayed as fullbright sprite
 		bool bNoFilter:1;
 		bool bNoCompress:1;
@@ -434,7 +435,7 @@ public:
 	MiscGLInfo gl_info;
 
 	void GetGlowColor(float *data);
-	bool isGlowing() { return gl_info.bGlowing; }
+	bool isGlowing() { return bGlowing; }
 	bool isFullbright() { return gl_info.bFullbright; }
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
@@ -597,6 +598,7 @@ private:
 	void ParseAnimatedDoor(FScanner &sc);
 
 	void InitPalettedVersions();
+	void GenerateGlobalBrightmapFromColormap();
 
 	// Switches
 
@@ -616,7 +618,6 @@ private:
 	int HashFirst[HASH_SIZE];
 	FTextureID DefaultTexture;
 	TArray<int> FirstTextureForFile;
-	TMap<int,int> PalettedVersions;		// maps from normal -> paletted version
 	TArray<TArray<uint8_t> > BuildTileData;
 
 	TArray<FAnimDef *> mAnimations;
@@ -624,6 +625,8 @@ private:
 	TArray<FDoorAnimation> mAnimatedDoors;
 
 public:
+	bool HasGlobalBrightmap;
+	FRemapTable GlobalBrightmap;
 	short sintable[2048];	// for texture warping
 	enum
 	{

@@ -48,7 +48,6 @@ struct FRenderer
 
 	virtual void OnModeSet () {}
 	virtual void SetClearColor(int color) = 0;
-	virtual void Init() = 0;
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov) = 0;
 	virtual void PreprocessLevel() {}
 	virtual void CleanLevelData() {}

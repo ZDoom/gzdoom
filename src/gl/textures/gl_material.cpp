@@ -44,7 +44,6 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
 #include "gl/textures/gl_texture.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/shaders/gl_shader.h"
@@ -250,7 +249,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	{
 		// When using translations everything must be mapped to the base palette.
 		// so use CopyTrueColorTranslated
-		tex->CopyTrueColorTranslated(&bmp, exx, exx, 0, GLTranslationPalette::GetPalette(translation));
+		tex->CopyTrueColorTranslated(&bmp, exx, exx, 0, FUniquePalette::GetPalette(translation));
 		isTransparent = 0;
 		// This is not conclusive for setting the texture's transparency info.
 	}
@@ -299,7 +298,8 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 		}
 		else
 		{
-			translation = GLTranslationPalette::GetInternalTranslation(translation);
+			auto remap = TranslationToTable(translation);
+			translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
 		}
 	}
 

@@ -45,7 +45,6 @@
 #include "gl/data/gl_data.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/textures/gl_texture.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/utility/gl_templates.h"
 #include "gl/gl_functions.h"
@@ -339,19 +338,6 @@ int OpenGLFrameBuffer::GetPageCount()
 	return 1;
 }
 
-
-//==========================================================================
-//
-// DFrameBuffer :: CreatePalette
-//
-// Creates a native palette from a remap table, if supported.
-//
-//==========================================================================
-
-FNativePalette *OpenGLFrameBuffer::CreatePalette(FRemapTable *remap)
-{
-	return GLTranslationPalette::CreatePalette(remap);
-}
 
 //==========================================================================
 //

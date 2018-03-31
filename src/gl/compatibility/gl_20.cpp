@@ -50,7 +50,6 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/textures/gl_translate.h"
 
 
 CVAR(Bool, gl_lights_additive, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -954,7 +953,7 @@ int LegacyDesaturation(F2DDrawer::RenderCommand &cmd)
 
 	// The easy case: It was already done.
 	auto find = DesaturatedTranslationTable.CheckKey(cmd.mTranslation);
-	if (find != nullptr && find->tables[desat] != nullptr) return GLTranslationPalette::GetInternalTranslation(find->tables[desat]);
+	if (find != nullptr && find->tables[desat] != nullptr) return find->tables[desat]->GetUniqueIndex();
 
 	// To handle this case for the legacy renderer a desaturated variant of the translation needs to be built.
 	auto newremap = new FRemapTable(*cmd.mTranslation);
@@ -971,5 +970,5 @@ int LegacyDesaturation(F2DDrawer::RenderCommand &cmd)
 	}
 	auto &tbl = DesaturatedTranslationTable[cmd.mTranslation];
 	tbl.tables[desat] = newremap;
-	return GLTranslationPalette::GetInternalTranslation(newremap);
+	return newremap->GetUniqueIndex();
 }

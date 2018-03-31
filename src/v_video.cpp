@@ -884,19 +884,6 @@ void DFrameBuffer::DrawBlendingRect()
 
 //==========================================================================
 //
-// DFrameBuffer :: CreatePalette
-//
-// Creates a native palette from a remap table, if supported.
-//
-//==========================================================================
-
-FNativePalette *DFrameBuffer::CreatePalette(FRemapTable *remap)
-{
-	return NULL;
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: WipeStartScreen
 //
 // Grabs a copy of the screen currently displayed to serve as the initial
@@ -957,17 +944,6 @@ void DFrameBuffer::WipeCleanup()
 void DFrameBuffer::GameRestart()
 {
 }
-
-//===========================================================================
-//
-// 
-//
-//===========================================================================
-
-FNativePalette::~FNativePalette()
-{
-}
-
 
 CCMD(clean)
 {

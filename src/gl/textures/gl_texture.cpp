@@ -46,7 +46,6 @@
 #include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/models/gl_models.h"
 
 //==========================================================================
@@ -513,7 +512,8 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	while (it.NextPair(pair))
 	{
 		PClassActor *cls = pair->Key;
-		int gltrans = GLTranslationPalette::GetInternalTranslation(GetDefaultByType(cls)->Translation);
+		auto remap = TranslationToTable(GetDefaultByType(cls)->Translation);
+		int gltrans = remap == nullptr ? 0 : remap->GetUniqueIndex();
 
 		for (unsigned i = 0; i < cls->GetStateCount(); i++)
 		{

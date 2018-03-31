@@ -64,7 +64,6 @@
 #include "gl/shaders/gl_postprocessshader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_texture.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
@@ -576,7 +575,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
 			if (mat == nullptr) continue;
 
-			if (gltrans == -1) gltrans = GLTranslationPalette::GetInternalTranslation(cmd.mTranslation);
+			if (gltrans == -1 && cmd.mTranslation != nullptr) gltrans = cmd.mTranslation->GetUniqueIndex();
 			gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, cmd.mDrawMode == F2DDrawer::DTM_AlphaTexture);
 			gl_RenderState.EnableTexture(true);
 

@@ -519,27 +519,38 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 
 	if (iwadparm)
 	{
-		// Check if the given IWAD has an absolute path, in which case the search path will be ignored.
-		custwad = iwadparm;
-		FixPathSeperator(custwad);
-		DefaultExtension(custwad, ".wad");
-		bool isAbsolute = (custwad[0] == '/');
+		const char* const extensions[] = { ".wad", ".pk3", ".iwad", ".ipk3", ".ipk7" };
+
+		for (auto ext : extensions)
+		{
+			// Check if the given IWAD has an absolute path, in which case the search path will be ignored.
+			custwad = iwadparm;
+			FixPathSeperator(custwad);
+			DefaultExtension(custwad, ext);
+			bool isAbsolute = (custwad[0] == '/');
 #ifdef WINDOWS
-		isAbsolute |= (custwad.Len() >= 2 && custwad[1] == ':');
+			isAbsolute |= (custwad.Len() >= 2 && custwad[1] == ':');
 #endif
-		if (isAbsolute)
-		{
-			if (FileExists(custwad)) mFoundWads.Push({ custwad, "", -1 });
-		}
-		else
-		{
-			for (auto &dir : mSearchPaths)
+			if (isAbsolute)
 			{
-				FStringf fullpath("%s/%s", dir.GetChars(), custwad.GetChars());
-				if (FileExists(fullpath))
+				if (FileExists(custwad)) mFoundWads.Push({ custwad, "", -1 });
+			}
+			else
+			{
+				for (auto &dir : mSearchPaths)
 				{
-					mFoundWads.Push({ fullpath, "", -1 });
+					FStringf fullpath("%s/%s", dir.GetChars(), custwad.GetChars());
+					if (FileExists(fullpath))
+					{
+						mFoundWads.Push({ fullpath, "", -1 });
+					}
 				}
+			}
+
+			if (mFoundWads.Size() != numFoundWads)
+			{
+				// Found IWAD with guessed extension
+				break;
 			}
 		}
 	}

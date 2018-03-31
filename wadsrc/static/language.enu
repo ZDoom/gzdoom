@@ -577,7 +577,7 @@ NERVETEXT =
 	"HITTING THE FLOOR. HIS DEATH MOAN GURGLES\n"
 	"OUT THROUGH THE MESS YOU LEFT OF HIS FACE.\n"
 	"\n"
-	"THIS RIDE IS CLOSED.\n".
+	"THIS RIDE IS CLOSED.\n";
 
 // Cast list (must appear in this order)
 CC_ZOMBIE = "ZOMBIEMAN";
@@ -1296,7 +1296,7 @@ TXT_GRAVITY = "Gravity weighs you down";
 TXT_IMKILLS = "KILLS";
 TXT_IMITEMS = "ITEMS";
 TXT_IMSECRETS = "SECRETS";
-TXT_IMTIME = "TIME".
+TXT_IMTIME = "TIME";
 
 RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
 
@@ -1455,7 +1455,7 @@ TXT_MMLAUNCHER = "You picked up the mini missile launcher.";
 TXT_FLAMER = "You picked up the flame thrower.";
 TXT_MAULER = "You picked up the mauler.";
 TXT_GLAUNCHER = "You picked up the Grenade launcher.";
-TXT_SIGIL = "You picked up the SIGIL.".
+TXT_SIGIL = "You picked up the SIGIL.";
 
 TXT_BASEKEY = "You picked up the Base Key.";
 TXT_GOVSKEY = "You picked up the Govs Key.";
@@ -1564,7 +1564,7 @@ TXT_GOAWAY			= "Go away!";
 TXT_COMM0			= "Incoming Message";
 TXT_COMM1			= "Incoming Message from BlackBird";
 
-TXT_TRADE			=  " for %u".
+TXT_TRADE			=  " for %u";
 
 AMMO_CLIP			= "Bullets";
 AMMO_SHELLS			= "Shotgun Shells";
@@ -2467,11 +2467,11 @@ OPTSTR_5POINT1				= "5.1 speakers";
 OPTSTR_7POINT1				= "7.1 speakers";
 OPTSTR_NOINTERPOLATION		= "No interpolation";
 OPTSTR_SPLINE				= "Spline";
-OPTSTR_OPENAL				= "OpenAL".
+OPTSTR_OPENAL				= "OpenAL";
 
 NOTSET				= "Not set";
 SAFEMESSAGE			= "Do you really want to do this?";
-MNU_COLORPICKER		= "SELECT COLOR".
+MNU_COLORPICKER		= "SELECT COLOR";
 
 WI_FINISHED			= "finished";
 WI_ENTERING			= "Now entering:";
@@ -2846,7 +2846,7 @@ OPTVAL_REVERSEFIRST			= "Reverse";
 
 DSPLYMNU_TCOPT		= "TrueColor Options";
 
-TCMNU_TITLE		= "TRUECOLOR OPTIONS".
+TCMNU_TITLE		= "TRUECOLOR OPTIONS";
 
 TCMNU_TRUECOLOR				= "True color output";
 TCMNU_MINFILTER				= "Linear filter when downscaling";

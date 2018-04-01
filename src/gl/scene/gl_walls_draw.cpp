@@ -74,14 +74,10 @@ void GLWall::SetupLights()
 	Plane p;
 
 	lightdata.Clear();
-	p.Set(&glseg);
 
-	/*
-	if (!p.ValidNormal()) 
-	{
-		return;
-	}
-	*/
+	auto normal = glseg.Normal();
+	p.Set(normal, -normal.X * glseg.x1 - normal.Y * glseg.y1);
+
 	FLightNode *node;
 	if (seg->sidedef == NULL)
 	{

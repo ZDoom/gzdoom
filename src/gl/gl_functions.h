@@ -7,6 +7,5 @@ class AActor;
 
 void gl_PreprocessLevel();
 void gl_CleanLevelData();
-void gl_LinkLights();
 
 #endif

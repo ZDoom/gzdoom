@@ -50,6 +50,7 @@
 EXTERN_CVAR(Bool, gl_render_precise)
 EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool, gl_precache)
+EXTERN_CVAR(Bool, gl_texture_usehires)
 
 //===========================================================================
 //
@@ -141,7 +142,7 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 //
 //===========================================================================
 
-const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, FTexture *hirescheck)
+const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, int flags)
 {
 	int usebright = false;
 
@@ -179,11 +180,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			
 			if (!tex->bHasCanvas)
 			{
-				int flags = CTF_ProcessData;
-				if (bExpandFlag) flags |= CTF_Expand;
-				if (hirescheck) flags |= CTF_CheckHires;
-
-				buffer = tex->CreateTexBuffer(translation, w, h, flags);
+				buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
 				if (tex->bWarped && gl.legacyMode && w*h <= 256*256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
 				{
 					// need to do software warping
@@ -486,8 +483,8 @@ void FMaterial::SetSpriteRect()
 
 //===========================================================================
 // 
-//	Finds gaps in the texture which can be skipped by the renderer
-//  This was mainly added to speed up one area in E4M6 of 007LTSD
+//  Finds empty space around the texture. 
+//  Used for sprites that got placed into a huge empty frame.
 //
 //===========================================================================
 
@@ -607,12 +604,14 @@ void FMaterial::Bind(int clampmode, int translation)
 
 	int usebright = false;
 	int maxbound = 0;
-	bool allowhires = tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY && !mExpanded;
 
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 
-	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, allowhires? tex:NULL);
+	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
+	int flags = mExpanded? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY)? CTF_CheckHires : 0;
+
+	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, flags);
 	if (gltexture != NULL)
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)

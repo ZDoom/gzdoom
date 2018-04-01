@@ -59,8 +59,6 @@ CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	TexMan.SpriteAdjustChanged();
 }
 
-EXTERN_CVAR(Bool, gl_texture_usehires)
-
 //==========================================================================
 //
 // 
@@ -1357,7 +1355,7 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 
 	// Textures that are already scaled in the texture lump will not get replaced
 	// by hires textures
-	if (gl_texture_usehires && (flags & CTF_CheckHires) && translation != STRange_AlphaTexture)
+	if ((flags & CTF_CheckHires) && translation != STRange_AlphaTexture)
 	{
 		buffer = LoadHiresTexture(&w, &h);
 		if (buffer)

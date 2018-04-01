@@ -31,7 +31,6 @@ struct FSoftwareRenderer : public FRenderer
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov) override;
 
 	void PreprocessLevel() override;
-	void CleanLevelData() override;
 
 	uint32_t GetCaps() override;
 

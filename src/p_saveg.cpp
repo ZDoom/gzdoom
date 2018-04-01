@@ -943,7 +943,6 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	}
 	arc("saveversion", SaveVersion);
 
-	Renderer->StartSerialize(arc);
 	if (arc.isReading())
 	{
 		DThinker::DestroyAllThinkers();
@@ -1025,6 +1024,4 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	}
 	AActor::RecreateAllAttachedLights();
 	InitPortalGroups();
-	Renderer->EndSerialize(arc);
-
 }

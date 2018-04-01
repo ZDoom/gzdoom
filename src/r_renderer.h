@@ -40,17 +40,12 @@ struct FRenderer
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites() {}
 
-	// notify the renderer that serialization of the curent level is about to start/end
-	virtual void StartSerialize(FSerializer &arc) {}
-	virtual void EndSerialize(FSerializer &arc) {}
-
 	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
 
 	virtual void OnModeSet () {}
 	virtual void SetClearColor(int color) = 0;
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov) = 0;
 	virtual void PreprocessLevel() {}
-	virtual void CleanLevelData() {}
 
 	virtual uint32_t GetCaps() { return 0; }
 };

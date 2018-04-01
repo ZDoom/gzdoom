@@ -365,10 +365,6 @@ void FSoftwareRenderer::PreprocessLevel()
 	}
 }
 
-void FSoftwareRenderer::CleanLevelData()
-{
-}
-
 uint32_t FSoftwareRenderer::GetCaps()
 {
 	ActorRenderFeatureFlags FlagSet = 0;

@@ -42,7 +42,6 @@
 #include "po_man.h"
 #include "r_utility.h"
 #include "p_local.h"
-#include "gl/gl_functions.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"
@@ -1003,11 +1002,8 @@ struct FGLInterface : public FRenderer
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
 	void RenderView(player_t *player) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
-	void StartSerialize(FSerializer &arc) override;
-	void EndSerialize(FSerializer &arc) override;
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, double fov) override;
 	void PreprocessLevel() override;
-	void CleanLevelData() override;
 
 	int GetMaxViewPitch(bool down) override;
 	void SetClearColor(int color) override;
@@ -1024,20 +1020,6 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
 {	
 	gl_PrecacheTexture(texhitlist, actorhitlist);
-}
-
-//===========================================================================
-//
-// notify the renderer that serialization of the curent level is about to start/end
-//
-//===========================================================================
-
-void FGLInterface::StartSerialize(FSerializer &arc)
-{
-}
-
-void FGLInterface::EndSerialize(FSerializer &arc)
-{
 }
 
 //===========================================================================
@@ -1147,14 +1129,10 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, do
 // 
 //
 //===========================================================================
-
+void gl_PreprocessLevel();
 void FGLInterface::PreprocessLevel() 
 {
 	gl_PreprocessLevel();
-}
-
-void FGLInterface::CleanLevelData() 
-{
 }
 
 uint32_t FGLInterface::GetCaps()

@@ -64,6 +64,23 @@ struct FloatRect
 	}
 };
 
+// Special translation values for CreateTexBuffer
+enum ESpecialTranslations : int32_t
+{
+	STRange_Min = 0x10000000,
+	STRange_Desaturate = 0x10000000,
+	STRange_Specialcolormap = 0x20000000,
+	STRange_AlphaTexture = 0x30000000
+};
+
+enum ECreateTexBufferFlags
+{
+	CTF_CheckHires = 1,	// use external hires replacement if found
+	CTF_Expand = 2,		// create buffer with a one-pixel wide border
+	CTF_ProcessData = 4	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+};
+
+
 
 class FBitmap;
 struct FRemapTable;
@@ -404,10 +421,13 @@ protected:
 
 
 public:
-	unsigned char *LoadHiresTexture(int *width, int *height);
+	unsigned char * CreateTexBuffer(int translation, int & w, int & h, int flags = 0);
+	bool GetTranslucency();
+
 private:
 	int CheckDDPK3();
 	int CheckExternalFile(bool & hascolorkey);
+	unsigned char *LoadHiresTexture(int *width, int *height);
 
 	bool bSWSkyColorDone = false;
 	PalEntry FloorSkyColor;

@@ -169,7 +169,6 @@ public:
 	void ClearBorders();
 
 	void FlushTextures();
-	unsigned char *GetTextureBuffer(FTexture *tex, int &w, int &h);
 	void SetupLevel();
 
 	void RenderView(player_t* player);

@@ -415,22 +415,6 @@ void FGLRenderer::EndOffscreen()
 
 //===========================================================================
 // 
-//
-//
-//===========================================================================
-
-unsigned char *FGLRenderer::GetTextureBuffer(FTexture *tex, int &w, int &h)
-{
-	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
-	if (gltex)
-	{
-		return gltex->CreateTexBuffer(0, w, h);
-	}
-	return NULL;
-}
-
-//===========================================================================
-// 
 // Vertex buffer for 2D drawer
 //
 //===========================================================================

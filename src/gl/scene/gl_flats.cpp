@@ -418,7 +418,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		}
 		else 
 		{
-			if (!gltexture->GetTransparent()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+			if (!gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 			gl_SetPlaneTextureRotation(&plane, gltexture);
@@ -470,7 +470,7 @@ inline void GLFlat::PutFlat(bool fog)
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
 		list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
 	}
-	else if (gltexture->GetTransparent())
+	else if (gltexture->tex->GetTranslucency())
 	{
 		if (stack)
 		{

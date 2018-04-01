@@ -146,7 +146,7 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 		
 	}
 
-	if (tex->GetTransparent() || OverrideShader != -1)
+	if (tex->tex->GetTranslucency() || OverrideShader != -1)
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	}

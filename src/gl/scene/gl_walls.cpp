@@ -71,7 +71,7 @@ void GLWall::PutWall(bool translucent)
 	};
 
 
-	if (gltexture && gltexture->GetTransparent() && passflag[type] == 2)
+	if (gltexture && gltexture->tex->GetTranslucency() && passflag[type] == 2)
 	{
 		translucent = true;
 	}
@@ -994,7 +994,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		case 0:
 			RenderStyle=STYLE_Translucent;
 			alpha = seg->linedef->alpha;
-			translucent =alpha < 1. || (gltexture && gltexture->GetTransparent());
+			translucent =alpha < 1. || (gltexture && gltexture->tex->GetTranslucency());
 			break;
 
 		case ML_ADDTRANS:

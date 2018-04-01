@@ -398,7 +398,7 @@ void GLWall::RenderTranslucentWall()
 		{
 			SetupLights();
 		}
-		if (!gltexture->GetTransparent()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+		if (!gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		if (RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 		RenderTextured(RWF_TEXTURED | RWF_NOSPLIT);

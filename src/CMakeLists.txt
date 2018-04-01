@@ -1110,30 +1110,30 @@ set (PCH_SOURCES
 	resourcefiles/resourcefile.cpp
 	textures/animations.cpp
 	textures/anim_switches.cpp
-	textures/automaptexture.cpp
 	textures/bitmap.cpp
-	textures/brightmaptexture.cpp
-	textures/buildtexture.cpp
-	textures/canvastexture.cpp
-	textures/ddstexture.cpp
-	textures/flattexture.cpp
-	textures/imgztexture.cpp
-	textures/jpegtexture.cpp
-	textures/md5check.cpp
-	textures/multipatchtexture.cpp
-	textures/patchtexture.cpp
-	textures/pcxtexture.cpp
-	textures/pngtexture.cpp
-	textures/rawpagetexture.cpp
-	textures/emptytexture.cpp
-	textures/backdroptexture.cpp
-	textures/shadertexture.cpp
 	textures/texture.cpp
 	textures/texturemanager.cpp
-	textures/tgatexture.cpp
-	textures/warptexture.cpp
 	textures/skyboxtexture.cpp
-	textures/worldtexture.cpp
+	textures/formats/automaptexture.cpp
+	textures/formats/brightmaptexture.cpp
+	textures/formats/buildtexture.cpp
+	textures/formats/canvastexture.cpp
+	textures/formats/ddstexture.cpp
+	textures/formats/flattexture.cpp
+	textures/formats/imgztexture.cpp
+	textures/formats/jpegtexture.cpp
+	textures/formats/md5check.cpp
+	textures/formats/multipatchtexture.cpp
+	textures/formats/patchtexture.cpp
+	textures/formats/pcxtexture.cpp
+	textures/formats/pngtexture.cpp
+	textures/formats/rawpagetexture.cpp
+	textures/formats/emptytexture.cpp
+	textures/formats/backdroptexture.cpp
+	textures/formats/shadertexture.cpp
+	textures/formats/tgatexture.cpp
+	textures/formats/worldtexture.cpp
+	textures/formats/warptexture.cpp
 	xlat/parse_xlat.cpp
 	fragglescript/t_func.cpp
 	fragglescript/t_load.cpp
@@ -1438,6 +1438,7 @@ source_group("Poly Renderer\\Math" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_D
 source_group("Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/drawers/.+")
 source_group("Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/scene/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
+source_group("Render Data\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/formats/.+")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")
 source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)

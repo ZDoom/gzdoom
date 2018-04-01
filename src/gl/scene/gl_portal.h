@@ -74,7 +74,7 @@ struct GLSkyInfo
 extern UniqueList<GLSkyInfo> UniqueSkies;
 extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
-extern UniqueList<FGLLinePortal> UniqueLineToLines;
+extern UniqueList<FLinePortalSpan> UniqueLineToLines;
 struct GLEEHorizonPortal;
 class GLSceneDrawer;
 
@@ -198,7 +198,7 @@ struct GLLinePortal : public GLPortal
 		CalcDelta();
 	}
 
-	GLLinePortal(FGLLinePortal *line)
+	GLLinePortal(FLinePortalSpan *line)
 	{
 		if (line->lines[0]->mType != PORTT_LINKED || line->v1 == nullptr)
 		{
@@ -258,7 +258,7 @@ public:
 
 struct GLLineToLinePortal : public GLLinePortal
 {
-	FGLLinePortal *glport;
+	FLinePortalSpan *glport;
 protected:
 	virtual void DrawContents();
 	virtual void * GetSource() const { return glport; }
@@ -268,7 +268,7 @@ protected:
 
 public:
 	
-	GLLineToLinePortal(FGLLinePortal *ll)
+	GLLineToLinePortal(FLinePortalSpan *ll)
 		: GLLinePortal(ll)
 	{
 		glport = ll;
@@ -331,11 +331,11 @@ protected:
 	virtual void * GetSource() const { return origin; }
 	virtual bool IsSky() { return true; }	// although this isn't a real sky it can be handled as one.
 	virtual const char *GetName();
-	FPortal *origin;
+	FSectorPortalGroup *origin;
 
 public:
 	
-	GLSectorStackPortal(FPortal *pt) 
+	GLSectorStackPortal(FSectorPortalGroup *pt) 
 	{
 		origin=pt;
 	}

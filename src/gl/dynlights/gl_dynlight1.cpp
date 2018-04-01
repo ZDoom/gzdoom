@@ -29,7 +29,6 @@
 #include "c_dispatch.h"
 #include "p_local.h"
 #include "vectors.h"
-#include "gl/gl_functions.h"
 #include "g_level.h"
 #include "actorinlines.h"
 #include "a_dynlight.h"

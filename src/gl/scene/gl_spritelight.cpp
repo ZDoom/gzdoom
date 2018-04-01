@@ -30,7 +30,6 @@
 #include "p_local.h"
 #include "p_effect.h"
 #include "vectors.h"
-#include "gl/gl_functions.h"
 #include "g_level.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"

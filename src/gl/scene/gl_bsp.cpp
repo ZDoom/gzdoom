@@ -520,16 +520,16 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 					(sub->numlines > 2) ? SSRF_PROCESSED|SSRF_RENDERALL : SSRF_PROCESSED;
 				if (sub->hacked & 1) gl_drawinfo->AddHackedSubsector(sub);
 
-				FPortal *portal;
+				FSectorPortalGroup *portal;
 
-				portal = fakesector->GetGLPortal(sector_t::ceiling);
+				portal = fakesector->GetPortalGroup(sector_t::ceiling);
 				if (portal != NULL)
 				{
 					GLSectorStackPortal *glportal = portal->GetRenderState();
 					glportal->AddSubsector(sub);
 				}
 
-				portal = fakesector->GetGLPortal(sector_t::floor);
+				portal = fakesector->GetPortalGroup(sector_t::floor);
 				if (portal != NULL)
 				{
 					GLSectorStackPortal *glportal = portal->GetRenderState();

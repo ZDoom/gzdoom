@@ -45,7 +45,6 @@
 #include "gl/data/gl_data.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/gl_functions.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"

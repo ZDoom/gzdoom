@@ -48,7 +48,12 @@
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/gl_functions.h"
+
+//==========================================================================
+//
+// Helper types for portal grouping
+//
+//==========================================================================
 
 struct FPortalID
 {
@@ -69,24 +74,7 @@ struct FPortalSector
 };
 
 typedef TArray<FPortalSector> FPortalSectors;
-
 typedef TMap<FPortalID, FPortalSectors> FPortalMap;
-
-TArray<FPortal *> glSectorPortals;
-TArray<FGLLinePortal*> linePortalToGL;
-TArray<FGLLinePortal> glLinePortals;
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-GLSectorStackPortal *FPortal::GetRenderState()
-{
-	if (glportal == NULL) glportal = new GLSectorStackPortal(this);
-	return glportal;
-}
 
 //==========================================================================
 //
@@ -117,7 +105,6 @@ struct FCoverageBuilder
 	FCoverageVertex center;
 
 	//==========================================================================
-	//
 	//
 	//
 	//==========================================================================
@@ -305,10 +292,16 @@ struct FCoverageBuilder
 //==========================================================================
 //
 // Calculate portal coverage for a single subsector
+// This data is used by the clipper to free up the ranges covered by a portal.
+//
+// This also gets called by the render hack code because ZDoom was really lax
+// with its stacked sector things and allowed partial tagging of affected sectors
+// Any such sector will only be found during rendering and must create its
+// coverage info then.
 //
 //==========================================================================
 
-void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement)
+void BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement)
 {
 	TArray<FCoverageVertex> shape;
 	double centerx=0, centery=0;
@@ -332,7 +325,7 @@ void gl_BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, c
 
 //==========================================================================
 //
-// portal initialization
+//
 //
 //==========================================================================
 
@@ -355,15 +348,20 @@ static void CollectPortalSectors(FPortalMap &collection)
 	}
 }
 
-void gl_InitPortals()
+//==========================================================================
+//
+// group sector portals by displacement
+// The renderer can handle such a group in one go to avoid multiple 
+// BSP traversals
+//
+//==========================================================================
+
+static void GroupSectorPortals()
 {
 	FPortalMap collection;
 
-	if (level.nodes.Size() == 0) return;
-
-	
 	CollectPortalSectors(collection);
-	glSectorPortals.Clear();
+	level.portalGroups.Clear();
 
 	FPortalMap::Iterator it(collection);
 	FPortalMap::Pair *pair;
@@ -371,31 +369,31 @@ void gl_InitPortals()
 	int planeflags = 0;
 	while (it.NextPair(pair))
 	{
-		for(unsigned i=0;i<pair->Value.Size(); i++)
+		for (unsigned i = 0; i < pair->Value.Size(); i++)
 		{
 			if (pair->Value[i].mPlane == sector_t::floor) planeflags |= 1;
 			else if (pair->Value[i].mPlane == sector_t::ceiling) planeflags |= 2;
 		}
-		for (int i=1;i<=2;i<<=1)
+		for (int i = 1; i <= 2; i <<= 1)
 		{
-			// add separate glSectorPortals for floor and ceiling.
+			// add separate portals for floor and ceiling.
 			if (planeflags & i)
 			{
-				FPortal *portal = new FPortal;
+				FSectorPortalGroup *portal = new FSectorPortalGroup;
 				portal->mDisplacement = pair->Key.mDisplacement;
-				portal->plane = (i==1? sector_t::floor : sector_t::ceiling);	/**/
+				portal->plane = (i == 1 ? sector_t::floor : sector_t::ceiling);	/**/
 				portal->glportal = NULL;
-				glSectorPortals.Push(portal);
-				for(unsigned j=0;j<pair->Value.Size(); j++)
+				level.portalGroups.Push(portal);
+				for (unsigned j = 0; j < pair->Value.Size(); j++)
 				{
 					sector_t *sec = pair->Value[j].mSub;
 					int plane = pair->Value[j].mPlane;
 					if (portal->plane == plane)
 					{
-						for(int k=0;k<sec->subsectorcount; k++)
+						for (int k = 0; k < sec->subsectorcount; k++)
 						{
 							subsector_t *sub = sec->subsectors[k];
-							gl_BuildPortalCoverage(&sub->portalcoverage[plane], sub, pair->Key.mDisplacement);
+							BuildPortalCoverage(&sub->portalcoverage[plane], sub, pair->Key.mDisplacement);
 						}
 						sec->portals[plane] = portal;
 					}
@@ -403,10 +401,18 @@ void gl_InitPortals()
 			}
 		}
 	}
+}
 
-	// Now group the line glSectorPortals (each group must be a continuous set of colinear linedefs with no gaps)
-	glLinePortals.Clear();
-	linePortalToGL.Clear();
+//==========================================================================
+//
+// Group the line portals 
+// Each group must be a continuous set of colinear linedefs with no gaps
+//
+//==========================================================================
+
+static void GroupLinePortals()
+{
+	level.linePortalSpans.Clear();
 	TArray<int> tempindex;
 
 	tempindex.Reserve(level.linePortals.Size());
@@ -419,13 +425,13 @@ void gl_InitPortals()
 
 		if (tempindex[i] == -1)
 		{
-			tempindex[i] = glLinePortals.Size();
+			tempindex[i] = level.linePortalSpans.Size();
 			line_t *pSrcLine = level.linePortals[i].mOrigin;
 			line_t *pLine = level.linePortals[i].mDestination;
-			FGLLinePortal &glport = glLinePortals[glLinePortals.Reserve(1)];
+			FLinePortalSpan &glport = level.linePortalSpans[level.linePortalSpans.Reserve(1)];
 			glport.lines.Push(&level.linePortals[i]);
 
-			// We cannot do this grouping for non-linked glSectorPortals because they can be changed at run time.
+			// We cannot do this grouping for non-linked portals because they can be changed at run time.
 			if (level.linePortals[i].mType == PORTT_LINKED && pLine != nullptr)
 			{
 				glport.v1 = pLine->v1;
@@ -440,7 +446,7 @@ void gl_InitPortals()
 						{
 							line_t *pSrcLine2 = level.linePortals[j].mOrigin;
 							line_t *pLine2 = level.linePortals[j].mDestination;
-							// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical glSectorPortals aren't found here.)
+							// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical portals aren't found here.)
 							unsigned srcang = pSrcLine->Delta().Angle().BAMs();
 							unsigned dstang = pLine->Delta().Angle().BAMs();
 							if ((pSrcLine->v2 == pSrcLine2->v1 && pLine->v1 == pLine2->v2) ||
@@ -465,30 +471,37 @@ void gl_InitPortals()
 			}
 		}
 	}
-	linePortalToGL.Resize(level.linePortals.Size());
+
+	// Final assignment can only be done when all allocations are finished. Otherwise the array may be moved.
 	for (unsigned i = 0; i < level.linePortals.Size(); i++)
 	{
-		linePortalToGL[i] = &glLinePortals[tempindex[i]];
-		/*
-		Printf("portal at line %d translates to GL portal %d, range = %f,%f to %f,%f\n",
-			int(level.linePortals[i].mOrigin - lines), tempindex[i], linePortalToGL[i]->v1->fixX() / 65536., linePortalToGL[i]->v1->fixY() / 65536., linePortalToGL[i]->v2->fixX() / 65536., linePortalToGL[i]->v2->fixY() / 65536.);
-		*/
+		level.linePortals[i].mGroup = &level.linePortalSpans[tempindex[i]];
 	}
+
+}
+
+void InitPortalGroups()
+{
+	if (level.nodes.Size() == 0) return;
+
+	GroupSectorPortals();
+	GroupLinePortals();
 }
 
 CCMD(dumpportals)
 {
-	for(unsigned i=0;i<glSectorPortals.Size(); i++)
+	for(unsigned i=0;i<level.portalGroups.Size(); i++)
 	{
-		double xdisp = glSectorPortals[i]->mDisplacement.X;
-		double ydisp = glSectorPortals[i]->mDisplacement.Y;
-		Printf(PRINT_LOG, "Portal #%d, %s, displacement = (%f,%f)\n", i, glSectorPortals[i]->plane==0? "floor":"ceiling",
+		auto p = level.portalGroups[i];
+		double xdisp = p->mDisplacement.X;
+		double ydisp = p->mDisplacement.Y;
+		Printf(PRINT_LOG, "Portal #%d, %s, displacement = (%f,%f)\n", i, p->plane==0? "floor":"ceiling",
 			xdisp, ydisp);
 		Printf(PRINT_LOG, "Coverage:\n");
 		for(auto &sub : level.subsectors)
 		{
-			FPortal *port = sub.render_sector->GetGLPortal(glSectorPortals[i]->plane);
-			if (port == glSectorPortals[i])
+			auto port = sub.render_sector->GetPortalGroup(p->plane);
+			if (port == p)
 			{
 				Printf(PRINT_LOG, "\tSubsector %d (%d):\n\t\t", sub.Index(), sub.render_sector->sectornum);
 				for(unsigned k = 0;k< sub.numlines; k++)
@@ -496,7 +509,7 @@ CCMD(dumpportals)
 					Printf(PRINT_LOG, "(%.3f,%.3f), ",	sub.firstline[k].v1->fX() + xdisp, sub.firstline[k].v1->fY() + ydisp);
 				}
 				Printf(PRINT_LOG, "\n\t\tCovered by subsectors:\n");
-				FPortalCoverage *cov = &sub.portalcoverage[glSectorPortals[i]->plane];
+				FPortalCoverage *cov = &sub.portalcoverage[p->plane];
 				for(int l = 0;l< cov->sscount; l++)
 				{
 					subsector_t *csub = &level.subsectors[cov->subsectors[l]];

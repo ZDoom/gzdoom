@@ -49,7 +49,6 @@
 #include "sdlglvideo.h"
 #include "gl/system/gl_system.h"
 #include "r_defs.h"
-#include "gl/gl_functions.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"

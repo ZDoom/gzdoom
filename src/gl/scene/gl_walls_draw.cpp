@@ -27,7 +27,6 @@
 #include "g_levellocals.h"
 #include "actor.h"
 #include "actorinlines.h"
-#include "gl/gl_functions.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"

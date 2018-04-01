@@ -60,7 +60,7 @@ public:
 	void DrawBlend(sector_t * viewsector);
 	void EndDrawScene(sector_t * viewsector);
 	void DrawEndScene2D(sector_t * viewsector);
-	void RenderActorsInPortal(FGLLinePortal *glport);
+	void RenderActorsInPortal(FLinePortalSpan *glport);
 
 	void CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector);
 

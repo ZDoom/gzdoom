@@ -1034,7 +1034,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	sub->validcount=validcount;
 
 	// Has a sector stack or skybox itself!
-	if (sub->render_sector->GetGLPortal(sector_t::ceiling) != nullptr) return;
+	if (sub->render_sector->GetPortalGroup(sector_t::ceiling) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
 	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
@@ -1078,7 +1078,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	sub->validcount=validcount;
 
 	// Has a sector stack or skybox itself!
-	if (sub->render_sector->GetGLPortal(sector_t::floor) != nullptr) return;
+	if (sub->render_sector->GetPortalGroup(sector_t::floor) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
 	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
@@ -1125,7 +1125,7 @@ void FDrawInfo::ProcessSectorStacks()
 	for (i=0;i<CeilingStacks.Size (); i++)
 	{
 		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fake, mDrawer->in_area, false);
-		FPortal *portal = sec->GetGLPortal(sector_t::ceiling);
+		auto portal = sec->GetPortalGroup(sector_t::ceiling);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
@@ -1149,7 +1149,7 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sub->portalcoverage[sector_t::ceiling].subsectors == NULL)
 					{
-						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling],	sub, portal->mDisplacement);
+						BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling],	sub, portal->mDisplacement);
 					}
 
 					portal->GetRenderState()->AddSubsector(sub);
@@ -1169,7 +1169,7 @@ void FDrawInfo::ProcessSectorStacks()
 	for (i=0;i<FloorStacks.Size (); i++)
 	{
 		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fake, mDrawer->in_area, false);
-		FPortal *portal = sec->GetGLPortal(sector_t::floor);
+		auto portal = sec->GetPortalGroup(sector_t::floor);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
@@ -1194,7 +1194,7 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sub->portalcoverage[sector_t::floor].subsectors == NULL)
 					{
-						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal->mDisplacement);
+						BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal->mDisplacement);
 					}
 
 					GLSectorStackPortal *glportal = portal->GetRenderState();

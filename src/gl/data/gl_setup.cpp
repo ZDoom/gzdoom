@@ -48,7 +48,6 @@
 #include "gl/dynlights/gl_dynlight.h"
 #include "gl/dynlights/gl_glow.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/gl_functions.h"
 
 //==========================================================================
 //
@@ -568,8 +567,6 @@ void gl_PreprocessLevel()
 	}
 	delete[] checkmap;
 
-	gl_InitPortals();
-
 	if (GLRenderer != NULL) 
 	{
 		GLRenderer->SetupLevel();
@@ -580,53 +577,6 @@ void gl_PreprocessLevel()
 #endif
 }
 
-
-
-//==========================================================================
-//
-// Cleans up all the GL data for the last level
-//
-//==========================================================================
-
-void gl_CleanLevelData()
-{
-	// Dynamic lights must be destroyed before the sector information here is deleted.
-	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	AActor * mo=it.Next();
-	while (mo)
-	{
-		AActor * next = it.Next();
-		mo->Destroy();
-		mo=next;
-	}
-
-	if (level.sides.Size() > 0 && level.sides[0].segs)
-	{
-		delete [] level.sides[0].segs;
-		level.sides[0].segs = NULL;
-	}
-	if (level.sectors.Size() > 0 && level.sectors[0].subsectors) 
-	{
-		delete [] level.sectors[0].subsectors;
-		level.sectors[0].subsectors = nullptr;
-	}
-	for (auto &sub : level.subsectors)
-	{
-		for(int j=0;j<2;j++)
-		{
-			if (sub.portalcoverage[j].subsectors != NULL)
-			{
-				delete [] sub.portalcoverage[j].subsectors;
-				sub.portalcoverage[j].subsectors = NULL;
-			}
-		}
-	}
-	for(unsigned i=0;i<glSectorPortals.Size(); i++)
-	{
-		delete glSectorPortals[i];
-	}
-	glSectorPortals.Clear();
-}
 
 
 //==========================================================================

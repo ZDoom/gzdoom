@@ -30,7 +30,6 @@
 #include "p_effect.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "gl/gl_functions.h"
 #include "r_defs.h"
 #include "r_sky.h"
 #include "r_utility.h"
@@ -1284,7 +1283,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 //
 //==========================================================================
 
-void GLSceneDrawer::RenderActorsInPortal(FGLLinePortal *glport)
+void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
 {
 	TMap<AActor*, bool> processcheck;
 	if (glport->validcount == validcount) return;	// only process once per frame

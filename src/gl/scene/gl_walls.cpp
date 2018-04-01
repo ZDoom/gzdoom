@@ -179,7 +179,7 @@ void GLWall::PutPortal(int ptype)
 			line_t *otherside = lineportal->lines[0]->mDestination;
 			if (otherside != NULL && otherside->portalindex < level.linePortals.Size())
 			{
-				mDrawer->RenderActorsInPortal(linePortalToGL[otherside->portalindex]);
+				mDrawer->RenderActorsInPortal(otherside->getPortal()->mGroup);
 			}
 			portal = new GLLineToLinePortal(lineportal);
 		}
@@ -1562,7 +1562,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (seg->linedef->isVisualPortal())
 		{
-			lineportal = linePortalToGL[seg->linedef->portalindex];
+			lineportal = seg->linedef->getPortal()->mGroup;
 			ztop[0] = zceil[0];
 			ztop[1] = zceil[1];
 			zbottom[0] = zfloor[0];
@@ -1669,7 +1669,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (isportal)
 		{
-			lineportal = linePortalToGL[seg->linedef->portalindex];
+			lineportal = seg->linedef->getPortal()->mGroup;
 			ztop[0] = bch1;
 			ztop[1] = bch2;
 			zbottom[0] = bfh1;

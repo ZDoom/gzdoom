@@ -42,7 +42,6 @@
 #include "po_man.h"
 #include "r_utility.h"
 #include "p_local.h"
-#include "gl/gl_functions.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"
@@ -266,7 +265,7 @@ void GLSceneDrawer::CreateScene()
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
-	for(unsigned i=0;i<glSectorPortals.Size(); i++) glSectorPortals[i]->glportal = NULL;
+	for(auto p : level.portalGroups) p->glportal = nullptr;
 	GLRenderer->gl_spriteindex=0;
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
@@ -462,7 +461,7 @@ void GLSceneDrawer::RenderTranslucent()
 //-----------------------------------------------------------------------------
 //
 // gl_drawscene - this function renders the scene from the current
-// viewpoint, including mirrors and skyboxes and other glSectorPortals
+// viewpoint, including mirrors and skyboxes and other portals
 // It is assumed that the GLPortal::EndFrame returns with the 
 // stencil, z-buffer and the projection matrix intact!
 //
@@ -513,7 +512,7 @@ void GLSceneDrawer::DrawScene(int drawmode)
 		gl_RenderState.ApplyMatrices();
 	}
 
-	// Handle all glSectorPortals after rendering the opaque objects but before
+	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
 	GLPortal::EndFrame();
@@ -1041,7 +1040,6 @@ void FGLInterface::EndSerialize(FSerializer &arc)
 	if (arc.isReading())
 	{
 		// The portal data needs to be recreated after reading a savegame.
-		gl_InitPortals();
 	}
 }
 
@@ -1152,6 +1150,7 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, do
 // 
 //
 //===========================================================================
+void gl_PreprocessLevel();
 
 void FGLInterface::PreprocessLevel() 
 {
@@ -1160,7 +1159,6 @@ void FGLInterface::PreprocessLevel()
 
 void FGLInterface::CleanLevelData() 
 {
-	gl_CleanLevelData();
 }
 
 uint32_t FGLInterface::GetCaps()

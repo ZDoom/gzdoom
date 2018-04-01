@@ -45,7 +45,7 @@
 struct FLightNode;
 struct FGLSection;
 class FSerializer;
-struct FPortal;
+struct FSectorPortalGroup;
 struct FSectorPortal;
 struct FLinePortal;
 struct seg_t;
@@ -1075,7 +1075,7 @@ public:
 	int							subsectorcount;		// list of subsectors
 	double						transdoorheight;	// for transparent door hacks
 	subsector_t **				subsectors;
-	FPortal *					portals[2];			// floor and ceiling portals
+	FSectorPortalGroup *					portals[2];			// floor and ceiling portals
 
 	enum
 	{
@@ -1089,7 +1089,7 @@ public:
 
 	float GetReflect(int pos) { return gl_plane_reflection_i? reflect[pos] : 0; }
 	bool VBOHeightcheck(int pos) const { return vboheight[pos] == GetPlaneTexZ(pos); }
-	FPortal *GetGLPortal(int plane) { return portals[plane]; }
+	FSectorPortalGroup *GetPortalGroup(int plane) { return portals[plane]; }
 
 	enum
 	{
@@ -1417,6 +1417,8 @@ struct FPortalCoverage
 	uint32_t *		subsectors;
 	int			sscount;
 };
+
+void BuildPortalCoverage(FPortalCoverage *coverage, subsector_t *subsector, const DVector2 &displacement);
 
 struct subsector_t
 {

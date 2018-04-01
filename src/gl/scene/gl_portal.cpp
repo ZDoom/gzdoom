@@ -87,7 +87,7 @@ bool	 GLPortal::inskybox;
 UniqueList<GLSkyInfo> UniqueSkies;
 UniqueList<GLHorizonInfo> UniqueHorizons;
 UniqueList<secplane_t> UniquePlaneMirrors;
-UniqueList<FGLLinePortal> UniqueLineToLines;
+UniqueList<FLinePortalSpan> UniqueLineToLines;
 
 //==========================================================================
 //
@@ -673,6 +673,22 @@ void GLSkyboxPortal::DrawContents()
 //
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
+
+
+//==========================================================================
+//
+// Fixme: This needs abstraction.
+//
+//==========================================================================
+
+GLSectorStackPortal *FSectorPortalGroup::GetRenderState()
+{
+	if (glportal == NULL) glportal = new GLSectorStackPortal(this);
+	return glportal;
+}
+
+
+
 GLSectorStackPortal::~GLSectorStackPortal()
 {
 	if (origin != NULL && origin->glportal == this)
@@ -730,7 +746,7 @@ void GLSectorStackPortal::SetupCoverage()
 //-----------------------------------------------------------------------------
 void GLSectorStackPortal::DrawContents()
 {
-	FPortal *portal = origin;
+	FSectorPortalGroup *portal = origin;
 
 	r_viewpoint.Pos += origin->mDisplacement;
 	r_viewpoint.ActorPos += origin->mDisplacement;

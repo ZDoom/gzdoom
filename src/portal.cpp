@@ -507,6 +507,8 @@ void P_ClearPortals()
 	level.linePortals.Clear();
 	level.linkedPortals.Clear();
 	level.sectorPortals.Resize(2);
+	level.PortalBlockmap.Clear();
+
 	// The first entry must always be the default skybox. This is what every sector gets by default.
 	memset(&level.sectorPortals[0], 0, sizeof(level.sectorPortals[0]));
 	level.sectorPortals[0].mType = PORTS_SKYVIEWPOINT;
@@ -515,6 +517,25 @@ void P_ClearPortals()
 	memset(&level.sectorPortals[1], 0, sizeof(level.sectorPortals[0]));
 	level.sectorPortals[1].mType = PORTS_SKYVIEWPOINT;
 	level.sectorPortals[1].mFlags = PORTSF_SKYFLATONLY;
+
+	// also clear the render data
+	for (auto &sub : level.subsectors)
+	{
+		for (int j = 0; j<2; j++)
+		{
+			if (sub.portalcoverage[j].subsectors != nullptr)
+			{
+				delete[] sub.portalcoverage[j].subsectors;
+				sub.portalcoverage[j].subsectors = nullptr;
+			}
+		}
+	}
+	for (unsigned i = 0; i<level.portalGroups.Size(); i++)
+	{
+		delete level.portalGroups[i];
+	}
+	level.portalGroups.Clear();
+	level.linePortalSpans.Clear();
 }
 
 //============================================================================

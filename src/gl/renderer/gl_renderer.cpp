@@ -33,8 +33,6 @@
 #include "m_png.h"
 #include "m_crc32.h"
 #include "w_wad.h"
-//#include "gl/gl_intern.h"
-#include "gl/gl_functions.h"
 #include "vectors.h"
 #include "doomstat.h"
 

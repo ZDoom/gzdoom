@@ -727,6 +727,7 @@ file( GLOB HEADER_FILES
 	gl/system/*.h
 	gl/textures/*.h
 	gl/utility/*.h
+	gl_load/*.h
 	*.h
 )
 
@@ -857,7 +858,7 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_vertex.cpp
 	gl/scene/gl_spritelight.cpp
 	gl/dynlights/gl_dynlight1.cpp
-	gl/system/gl_load.c
+	gl_load/gl_load.c
 	gl/models/gl_models.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
@@ -1411,6 +1412,7 @@ source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fr
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Inventory" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_inventory/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl_load/.+")
 source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
 source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")

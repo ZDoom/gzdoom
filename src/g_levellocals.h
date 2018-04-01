@@ -152,6 +152,12 @@ struct FLevelLocals
 	float		pixelstretch;
 	float		MusicVolume;
 
+	// Hardware render stuff that can either be set via CVAR or MAPINFO
+	int			lightmode;
+	bool		brightfog;
+	bool		lightadditivesurfaces;
+	bool		notexturefill;
+
 	bool		IsJumpingAllowed() const;
 	bool		IsCrouchingAllowed() const;
 	bool		IsFreelookAllowed() const;

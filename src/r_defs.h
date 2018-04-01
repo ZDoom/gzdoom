@@ -138,6 +138,7 @@ struct vertex_t
 	}
 
 	int Index() const;
+	void RecalcVertexHeights();
 
 
 	angle_t viewangle;	// precalculated angle for clipping

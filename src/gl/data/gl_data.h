@@ -6,24 +6,6 @@
 #include "vectors.h"
 #include "r_utility.h"
 
-struct GLRenderSettings
-{
-	int8_t lightmode;
-	bool notexturefill;
-	bool brightfog;
-	bool lightadditivesurfaces;
-
-	int8_t map_lightmode;
-	int8_t map_notexturefill;
-	int8_t map_brightfog;
-	int8_t map_lightadditivesurfaces;
-
-	FVector3 skyrotatevector;
-	FVector3 skyrotatevector2;
-};
-
-extern GLRenderSettings glset;
-
 #include "r_defs.h"
 #include "a_sharedglobal.h"
 #include "c_cvars.h"
@@ -35,7 +17,6 @@ inline	int getExtraLight()
 	return r_viewpoint.extralight * gl_weaponlight;
 }
 
-void gl_RecalcVertexHeights(vertex_t * v);
 
 struct GLSectorStackPortal;
 

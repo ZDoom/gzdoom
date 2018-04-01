@@ -2395,6 +2395,46 @@ int side_t::GetLightLevel (bool foggy, int baselight, bool is3dlight, int *pfake
 	return baselight;
 }
 
+//==========================================================================
+//
+// Recalculate all heights affecting this vertex.
+//
+//==========================================================================
+
+void vertex_t::RecalcVertexHeights()
+{
+	int i, j, k;
+	float height;
+
+	numheights = 0;
+	for (i = 0; i < numsectors; i++)
+	{
+		for (j = 0; j<2; j++)
+		{
+			if (j == 0) height = (float)sectors[i]->ceilingplane.ZatPoint(this);
+			else height = (float)sectors[i]->floorplane.ZatPoint(this);
+
+			for (k = 0; k < numheights; k++)
+			{
+				if (height == heightlist[k]) break;
+				if (height < heightlist[k])
+				{
+					memmove(&heightlist[k + 1], &heightlist[k], sizeof(float) * (numheights - k));
+					heightlist[k] = height;
+					numheights++;
+					break;
+				}
+			}
+			if (k == numheights) heightlist[numheights++] = height;
+		}
+	}
+	if (numheights <= 2) numheights = 0;	// is not in need of any special attention
+	dirty = false;
+}
+
+
+
+
 DEFINE_ACTION_FUNCTION(_Secplane, isSlope)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(secplane_t);

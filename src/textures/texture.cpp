@@ -1381,7 +1381,7 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 		{
 			inf.blend = (EBlend)(BLEND_DESATURATE1 + translation - STRange_Desaturate);
 		}
-		else if (translation >= STRange_Specialcolormap && translation < STRange_Specialcolormap + SpecialColormaps.Size())
+		else if (translation >= STRange_Specialcolormap && translation < STRange_Specialcolormap + (int)SpecialColormaps.Size())
 		{
 			inf.blend = (EBlend)(BLEND_SPECIALCOLORMAP1 + translation - STRange_Specialcolormap);
 		}

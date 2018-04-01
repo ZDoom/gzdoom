@@ -485,7 +485,7 @@ static bool gl_CheckFog(FColormap *cm, int lightlevel)
 	{
 		frontfog = true;
 	}
-	else  if (level.fogdensity != 0 || (glset.lightmode & 4) || cm->FogDensity > 0)
+	else  if (level.fogdensity != 0 || (level.lightmode & 4) || cm->FogDensity > 0)
 	{
 		// case 3: level has fog density set
 		frontfog = true;
@@ -849,7 +849,7 @@ void GLSceneDrawer::RenderMultipassStuff()
 		{
 			gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
 			glDepthFunc(GL_EQUAL);
-			if (glset.lightmode == 8) gl_RenderState.SetSoftLightLevel(255);
+			if (level.lightmode == 8) gl_RenderState.SetSoftLightLevel(255);
 			gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX);
 			gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX);
 			gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX);

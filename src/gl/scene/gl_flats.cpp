@@ -110,7 +110,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 {
 	Plane p;
 
-	if (renderstyle == STYLE_Add && !glset.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
+	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
 
 	if (dli != NULL && *dli != -1)
 	{

@@ -50,8 +50,6 @@
 #include "gl/utility/gl_clock.h"
 #include "gl/gl_functions.h"
 
-void InitGLRMapinfoData();
-
 //==========================================================================
 //
 // 
@@ -580,8 +578,6 @@ void gl_PreprocessLevel()
 #if 0
 	gl_CreateSections();
 #endif
-
-	InitGLRMapinfoData();
 }
 
 

@@ -1482,8 +1482,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		glseg.fracright = 1;
 		if (gl_seamless)
 		{
-			if (v1->dirty) gl_RecalcVertexHeights(v1);
-			if (v2->dirty) gl_RecalcVertexHeights(v2);
+			if (v1->dirty) v1->RecalcVertexHeights();
+			if (v2->dirty) v2->RecalcVertexHeights();
 		}
 	}
 	else	// polyobjects must be rendered per seg.

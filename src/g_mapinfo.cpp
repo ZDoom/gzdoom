@@ -283,6 +283,14 @@ void level_info_t::Reset()
 	specialactions.Clear();
 	DefaultEnvironment = 0;
 	PrecacheSounds.Clear();
+
+	brightfog = -1;
+	lightmode = -1;
+	notexturefill = -1;
+	lightadditivesurfaces = -1;
+	skyrotatevector = FVector3(0, 0, 1);
+	skyrotatevector2 = FVector3(0, 0, 1);
+
 }
 
 
@@ -1361,6 +1369,82 @@ DEFINE_MAP_OPTION(pixelratio, false)
 	info->pixelstretch = (float)parse.sc.Float;
 }
 
+
+DEFINE_MAP_OPTION(brightfog, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+	info->brightfog = parse.sc.Number;
+}
+
+DEFINE_MAP_OPTION(lightmode, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetNumber();
+
+	if ((parse.sc.Number >= 0 && parse.sc.Number <= 4) || parse.sc.Number == 8)
+	{
+		info->lightmode = uint8_t(parse.sc.Number);
+	}
+	else
+	{
+		parse.sc.ScriptMessage("Invalid light mode %d", parse.sc.Number);
+	}
+}
+
+DEFINE_MAP_OPTION(notexturefill, false)
+{
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		info->notexturefill = !!parse.sc.Number;
+	}
+	else
+	{
+		info->notexturefill = true;
+	}
+}
+
+DEFINE_MAP_OPTION(lightadditivesurfaces, false)
+{
+	if (parse.CheckAssign())
+	{
+		parse.sc.MustGetNumber();
+		info->lightadditivesurfaces = !!parse.sc.Number;
+	}
+	else
+	{
+		info->lightadditivesurfaces = true;
+	}
+}
+
+DEFINE_MAP_OPTION(skyrotate, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	info->skyrotatevector.X = (float)parse.sc.Float;
+	if (parse.format_type == FMapInfoParser::FMT_New) parse.sc.MustGetStringName(",");
+	parse.sc.MustGetFloat();
+	info->skyrotatevector.Y = (float)parse.sc.Float;
+	if (parse.format_type == FMapInfoParser::FMT_New) parse.sc.MustGetStringName(",");
+	parse.sc.MustGetFloat();
+	info->skyrotatevector.Z = (float)parse.sc.Float;
+	info->skyrotatevector.MakeUnit();
+}
+
+DEFINE_MAP_OPTION(skyrotate2, false)
+{
+	parse.ParseAssign();
+	parse.sc.MustGetFloat();
+	info->skyrotatevector2.X = (float)parse.sc.Float;
+	if (parse.format_type == FMapInfoParser::FMT_New) parse.sc.MustGetStringName(",");
+	parse.sc.MustGetFloat();
+	info->skyrotatevector2.Y = (float)parse.sc.Float;
+	if (parse.format_type == FMapInfoParser::FMT_New) parse.sc.MustGetStringName(",");
+	parse.sc.MustGetFloat();
+	info->skyrotatevector2.Z = (float)parse.sc.Float;
+	info->skyrotatevector2.MakeUnit();
+}
 
 //==========================================================================
 //

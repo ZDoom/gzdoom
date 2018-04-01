@@ -315,7 +315,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 		lightlevel = gl_CalcLightLevel(lightlevel, getExtraLight(), true);
 
-		if (glset.lightmode == 8 || lightlevel < 92)
+		if (level.lightmode == 8 || lightlevel < 92)
 		{
 			// Korshun: the way based on max possible light level for sector like in software renderer.
 			float min_L = 36.0 / 31.0 - ((lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63
@@ -335,7 +335,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	}
 	
 	// Korshun: fullbright fog in opengl, render weapon sprites fullbright (but don't cancel out the light color!)
-	if (glset.brightfog && ((level.flags&LEVEL_HASFADETABLE) || cm.FadeColor != 0))
+	if (level.brightfog && ((level.flags&LEVEL_HASFADETABLE) || cm.FadeColor != 0))
 	{
 		lightlevel = 255;
 	}
@@ -344,8 +344,8 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
-	int oldlightmode = glset.lightmode;
-	if (glset.lightmode == 8) glset.lightmode = 2;
+	int oldlightmode = level.lightmode;
+	if (level.lightmode == 8) level.lightmode = 2;
 
 	for(DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
@@ -491,7 +491,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.SetDynLight(0, 0, 0);
 	gl_RenderState.EnableBrightmap(false);
-	glset.lightmode = oldlightmode;
+	level.lightmode = oldlightmode;
 }
 
 //==========================================================================

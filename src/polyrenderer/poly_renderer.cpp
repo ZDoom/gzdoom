@@ -41,7 +41,6 @@
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Float, r_visibility)
-void InitGLRMapinfoData();
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -183,7 +182,6 @@ void PolyRenderer::SetupPerspectiveMatrix()
 
 	if (!bDidSetup)
 	{
-		InitGLRMapinfoData();
 		bDidSetup = true;
 	}
 

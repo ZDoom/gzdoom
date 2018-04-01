@@ -661,7 +661,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->backsector->GetTexture(sector_t::ceiling) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::ceiling) != NULL) continue;
 
-		if (!glset.notexturefill) FloodUpperGap(seg);
+		if (!level.notexturefill) FloodUpperGap(seg);
 	}
 
 	validcount++;
@@ -680,7 +680,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::floor) != NULL) continue;
 
-		if (!glset.notexturefill) FloodLowerGap(seg);
+		if (!level.notexturefill) FloodLowerGap(seg);
 	}
 	MissingUpperTextures.Clear();
 	MissingLowerTextures.Clear();

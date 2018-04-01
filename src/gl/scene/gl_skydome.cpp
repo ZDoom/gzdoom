@@ -435,9 +435,9 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	gl_RenderState.mModelMatrix.loadIdentity();
 
 	if (!sky2)
-		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, glset.skyrotatevector.X, glset.skyrotatevector.Z, glset.skyrotatevector.Y);
+		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, level.info->skyrotatevector.X, level.info->skyrotatevector.Z, level.info->skyrotatevector.Y);
 	else
-		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, glset.skyrotatevector2.X, glset.skyrotatevector2.Z, glset.skyrotatevector2.Y);
+		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, level.info->skyrotatevector2.X, level.info->skyrotatevector2.Z, level.info->skyrotatevector2.Y);
 
 	if (sb->faces[5]) 
 	{
@@ -501,10 +501,10 @@ void GLSkyPortal::DrawContents()
 	bool drawBoth = false;
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
-	int oldlightmode = glset.lightmode;
-	if (glset.lightmode == 8)
+	int oldlightmode = ::level.lightmode;
+	if (::level.lightmode == 8)
 	{
-		glset.lightmode = 2;
+		::level.lightmode = 2;
 		gl_RenderState.SetSoftLightLevel(-1);
 	}
 
@@ -557,7 +557,7 @@ void GLSkyPortal::DrawContents()
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
 	gl_RenderState.ApplyMatrices();
-	glset.lightmode = oldlightmode;
+	::level.lightmode = oldlightmode;
 	gl_RenderState.SetDepthClamp(oldClamp);
 }
 

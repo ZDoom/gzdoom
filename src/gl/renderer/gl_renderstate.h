@@ -31,6 +31,7 @@
 #include "c_cvars.h"
 #include "r_defs.h"
 #include "r_data/r_translate.h"
+#include "g_levellocals.h"
 
 class FVertexBuffer;
 class FShader;
@@ -356,9 +357,9 @@ public:
 		mGlowBottom.Set(b[0], b[1], b[2], b[3]);
 	}
 
-	void SetSoftLightLevel(int level)
+	void SetSoftLightLevel(int llevel)
 	{
-		if (glset.lightmode == 8) mLightParms[3] = level / 255.f;
+		if (level.lightmode == 8) mLightParms[3] = llevel / 255.f;
 		else mLightParms[3] = -1.f;
 	}
 

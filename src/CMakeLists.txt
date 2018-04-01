@@ -1043,7 +1043,6 @@ set (PCH_SOURCES
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
 	gl/compatibility/gl_20.cpp
-	gl/data/gl_data.cpp
 	gl/data/gl_portaldata.cpp
 	gl/data/gl_setup.cpp
 	gl/data/gl_vertexbuffer.cpp

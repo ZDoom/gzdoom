@@ -53,7 +53,6 @@
 #include "v_video.h"
 #include "g_levellocals.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_convert.h"
 #include "i_time.h"
 
 glcycle_t RenderWall,SetupWall,ClipWall;

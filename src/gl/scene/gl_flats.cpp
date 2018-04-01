@@ -53,7 +53,6 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_convert.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
 #ifdef _DEBUG

@@ -8317,15 +8317,15 @@ DEFINE_ACTION_FUNCTION(AActor, Vec2To)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_OBJECT_NOT_NULL(t, AActor)
-		ACTION_RETURN_VEC2(self->Vec2To(t));
+	ACTION_RETURN_VEC2(self->Vec2To(t));
 }
 
 DEFINE_ACTION_FUNCTION(AActor, Vec3Angle)
 {
 	PARAM_SELF_PROLOGUE(AActor);
 	PARAM_FLOAT(length)
-		PARAM_ANGLE(angle);
-	PARAM_FLOAT(z);
+	PARAM_ANGLE(angle);
+	PARAM_FLOAT_DEF(z);
 	PARAM_BOOL_DEF(absolute);
 	ACTION_RETURN_VEC3(self->Vec3Angle(length, angle, z, absolute));
 }

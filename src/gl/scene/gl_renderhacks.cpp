@@ -39,12 +39,9 @@
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 
 
 // This is for debugging maps.
-
-FreeList<gl_subsectorrendernode> SSR_List;
 
 // profiling data
 static int totalupper, totallower;
@@ -62,7 +59,7 @@ void FDrawInfo::ClearBuffers()
 		{
 			gl_subsectorrendernode * n = node;
 			node = node->next;
-			SSR_List.Release(n);
+			delete n;
 		}
 	}
 	otherfloorplanes.Clear();
@@ -74,7 +71,7 @@ void FDrawInfo::ClearBuffers()
 		{
 			gl_subsectorrendernode * n = node;
 			node = node->next;
-			SSR_List.Release(n);
+			delete n;
 		}
 	}
 	otherceilingplanes.Clear();
@@ -507,7 +504,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 
 					AddOtherCeilingPlane(sec->sectornum, node);
@@ -551,7 +548,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(fakesector->sectornum, node);
 				}
@@ -579,7 +576,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sec->sectornum, node);
 				}
@@ -622,7 +619,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(fakesector->sectornum, node);
 				}
@@ -955,7 +952,7 @@ void FDrawInfo::HandleHackedSubsectors()
 			{
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sub->render_sector->sectornum, node);
@@ -985,7 +982,7 @@ void FDrawInfo::HandleHackedSubsectors()
 			{
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(sub->render_sector->sectornum, node);
@@ -1159,7 +1156,7 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sec->GetAlpha(sector_t::ceiling) != 0 && sec->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
-						gl_subsectorrendernode * node = SSR_List.GetNew();
+						gl_subsectorrendernode * node = new gl_subsectorrendernode;
 						node->sub = sub;
 						AddOtherCeilingPlane(sec->sectornum, node);
 					}
@@ -1205,7 +1202,7 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sec->GetAlpha(sector_t::floor) != 0 && sec->GetTexture(sector_t::floor) != skyflatnum)
 					{
-						gl_subsectorrendernode * node = SSR_List.GetNew();
+						gl_subsectorrendernode * node = new gl_subsectorrendernode;
 						node->sub = sub;
 						AddOtherFloorPlane(sec->sectornum, node);
 					}

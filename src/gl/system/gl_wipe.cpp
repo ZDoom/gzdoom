@@ -41,7 +41,6 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/data/gl_vertexbuffer.h"
 
 

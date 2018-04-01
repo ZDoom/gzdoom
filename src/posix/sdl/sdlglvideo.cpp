@@ -50,12 +50,10 @@
 #include "gl/system/gl_system.h"
 #include "r_defs.h"
 #include "gl/gl_functions.h"
-//#include "gl/gl_intern.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/textures/gl_material.h"
 #include "gl/system/gl_cvars.h"
 

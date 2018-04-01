@@ -56,7 +56,6 @@
 #include "gl/stereo3d/scoped_color_mask.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------

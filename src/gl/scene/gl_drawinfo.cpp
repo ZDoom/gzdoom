@@ -44,7 +44,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/scoped_color_mask.h"
 #include "gl/renderer/gl_quaddrawer.h"

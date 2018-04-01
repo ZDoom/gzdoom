@@ -66,7 +66,6 @@
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "r_videoscale.h"

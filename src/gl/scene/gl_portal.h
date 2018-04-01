@@ -37,10 +37,8 @@
 #define __GL_PORTAL_H
 
 #include "tarray.h"
-//#include "gl/gl_intern.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/data/gl_data.h"
 
 struct GLHorizonInfo

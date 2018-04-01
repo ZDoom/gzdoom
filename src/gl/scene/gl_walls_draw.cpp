@@ -45,7 +45,6 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
 EXTERN_CVAR(Bool, gl_seamless)

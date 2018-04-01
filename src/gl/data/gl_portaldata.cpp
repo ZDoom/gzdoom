@@ -107,6 +107,7 @@ struct FCoverageBuilder
 	//==========================================================================
 	//
 	//
+	//
 	//==========================================================================
 
 	FCoverageBuilder(subsector_t *sub)
@@ -477,7 +478,6 @@ static void GroupLinePortals()
 	{
 		level.linePortals[i].mGroup = &level.linePortalSpans[tempindex[i]];
 	}
-
 }
 
 void InitPortalGroups()

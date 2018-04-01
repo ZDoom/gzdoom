@@ -4122,6 +4122,7 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// This must be done BEFORE the PolyObj Spawn!!!
 	Renderer->PreprocessLevel();
+	InitPortalGroups();
 
 	times[16].Clock();
 	if (reloop) P_LoopSidedefs (false);

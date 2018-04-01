@@ -64,7 +64,6 @@ extern "C" {
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;	
 }
 
-void gl_CalculateCPUSpeed();
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
 
 // these get used before GLEW is initialized so we have to use separate pointers with different names
@@ -162,9 +161,6 @@ public:
 
 Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
 {
-	#ifdef _WIN32
-		 gl_CalculateCPUSpeed();
-	#endif
 	I_SetWndProc();
 	m_DisplayWidth = vid_defwidth;
 	m_DisplayHeight = vid_defheight;

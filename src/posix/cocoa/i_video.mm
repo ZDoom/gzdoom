@@ -408,9 +408,6 @@ CocoaVideo::CocoaVideo()
 {
 	memset(&m_modeIterator, 0, sizeof m_modeIterator);
 
-	extern void gl_CalculateCPUSpeed();
-	gl_CalculateCPUSpeed();
-
 	// Create OpenGL pixel format
 	NSOpenGLPixelFormatAttribute defaultProfile = NSOpenGLProfileVersion3_2Core;
 

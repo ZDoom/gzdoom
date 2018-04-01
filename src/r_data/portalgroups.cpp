@@ -19,12 +19,6 @@
 //
 //--------------------------------------------------------------------------
 //
-/*
-** gl_setup.cpp
-** Initializes the data structures required by the GL renderer to handle
-** a level
-**
-**/
 
 #include "doomtype.h"
 #include "colormatcher.h"
@@ -39,15 +33,8 @@
 #include "g_level.h"
 #include "a_sharedglobal.h"
 #include "g_levellocals.h"
+#include "r_utility.h"
 
-#include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/scene/gl_clipper.h"
-#include "gl/scene/gl_portal.h"
-#include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
-#include "gl/utility/gl_clock.h"
 
 //==========================================================================
 //

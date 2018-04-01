@@ -625,7 +625,7 @@ void FGLRenderer::CreateTonemapPalette()
 			}
 		}
 
-		mTonemapPalette = new FHardwareTexture(512, 512, true);
+		mTonemapPalette = new FHardwareTexture(true);
 		mTonemapPalette->CreateTexture(&lut[0], 512, 512, 0, false, 0, "mTonemapPalette");
 	}
 }

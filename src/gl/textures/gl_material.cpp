@@ -69,7 +69,6 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 	tex = tx;
 
 	mHwTexture = NULL;
-	bExpandFlag = expandpatches;
 	lastSampler = 254;
 	lastTranslation = -1;
 	tex->gl_info.SystemTexture[expandpatches] = this;
@@ -131,7 +130,7 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 	if (tex->UseType==ETextureType::Null) return NULL;		// Cannot register a NULL texture
 	if (mHwTexture == NULL)
 	{
-		mHwTexture = new FHardwareTexture(tex->GetWidth() + bExpandFlag*2, tex->GetHeight() + bExpandFlag*2, tex->gl_info.bNoCompress);
+		mHwTexture = new FHardwareTexture(tex->gl_info.bNoCompress);
 	}
 	return mHwTexture; 
 }
@@ -627,7 +626,7 @@ void FMaterial::Bind(int clampmode, int translation)
 			{
 				layer = mTextureLayers[i].texture;
 			}
-			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, NULL);
+			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, 0);
 			maxbound = i+1;
 		}
 	}
@@ -738,7 +737,7 @@ void FMaterial::BindToFrameBuffer()
 	if (mBaseLayer->mHwTexture == NULL)
 	{
 		// must create the hardware texture first
-		mBaseLayer->Bind(0, 0, 0, NULL);
+		mBaseLayer->Bind(0, 0, 0, 0);
 		FHardwareTexture::Unbind(0);
 		ClearLastTexture();
 	}

@@ -1353,8 +1353,6 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 	int isTransparent = -1;
 
 
-	// Textures that are already scaled in the texture lump will not get replaced
-	// by hires textures
 	if ((flags & CTF_CheckHires) && translation != STRange_AlphaTexture)
 	{
 		buffer = LoadHiresTexture(&w, &h);

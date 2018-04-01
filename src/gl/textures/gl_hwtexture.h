@@ -60,7 +60,7 @@ public:
 
 private:
 
-	short texwidth, texheight;
+	short texwidth = 0, texheight = 0;
 	bool forcenocompression;
 
 	TranslatedTexture glDefTex;
@@ -70,10 +70,10 @@ private:
 	TranslatedTexture * GetTexID(int translation);
 
 	int GetDepthBuffer();
-	void Resize(int width, int height, unsigned char *src_data, unsigned char *dst_data);
+	void Resize(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data);
 
 public:
-	FHardwareTexture(int w, int h, bool nocompress);
+	FHardwareTexture(bool nocompress);
 	~FHardwareTexture();
 
 	static void Unbind(int texunit);

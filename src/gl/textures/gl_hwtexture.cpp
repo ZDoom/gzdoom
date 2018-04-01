@@ -85,7 +85,7 @@ static void ResampleBoxPrecalc(TArray<BoxPrecalc>& boxes, int oldDim)
 	}
 }
 
-void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, unsigned char *dst_data)
+void FHardwareTexture::Resize(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data)
 {
 
 	// This function implements a simple pre-blur/box averaging method for
@@ -96,8 +96,8 @@ void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, un
 	TArray<BoxPrecalc> vPrecalcs(height, true);
 	TArray<BoxPrecalc> hPrecalcs(width, true);
 
-	ResampleBoxPrecalc(vPrecalcs, texheight);
-	ResampleBoxPrecalc(hPrecalcs, texwidth);
+	ResampleBoxPrecalc(vPrecalcs, sheight);
+	ResampleBoxPrecalc(hPrecalcs, swidth);
 
 	int averaged_pixels, averaged_alpha, src_pixel_index;
 	double sum_r, sum_g, sum_b, sum_a;
@@ -122,7 +122,7 @@ void FHardwareTexture::Resize(int width, int height, unsigned char *src_data, un
 				for (int i = hPrecalc.boxStart; i <= hPrecalc.boxEnd; ++i)
 				{
 					// Calculate the actual index in our source pixels
-					src_pixel_index = j * texwidth + i;
+					src_pixel_index = j * swidth + i;
 
 					int a = src_data[src_pixel_index * 4 + 3];
 					if (a > 0)	// do not use color from fully transparent pixels
@@ -179,8 +179,6 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 
 	if (!buffer)
 	{
-		w=texwidth;
-		h=abs(texheight);
 		rw = GetTexDimension (w);
 		rh = GetTexDimension (h);
 
@@ -201,12 +199,15 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 			unsigned char * scaledbuffer=(unsigned char *)calloc(4,rw * (rh+1));
 			if (scaledbuffer)
 			{
-				Resize(rw, rh, buffer, scaledbuffer);
+				Resize(w, h, rw, rh, buffer, scaledbuffer);
 				deletebuffer=true;
 				buffer=scaledbuffer;
 			}
 		}
 	}
+	// store the physical size.
+	texwidth = rw;
+	texheight = rh;
 	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
 
 	if (deletebuffer) free(buffer);
@@ -227,11 +228,9 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 //	Creates a texture
 //
 //===========================================================================
-FHardwareTexture::FHardwareTexture(int _width, int _height, bool nocompression) 
+FHardwareTexture::FHardwareTexture(bool nocompression) 
 {
 	forcenocompression = nocompression;
-	texwidth=_width;
-	texheight=_height;
 
 	glDefTex.glTexID = 0;
 	glDefTex.translation = 0;

@@ -20,18 +20,9 @@
 //--------------------------------------------------------------------------
 //
 /*
-** Hires texture management
+** external hires texture management (i.e. Doomsday style texture packs)
 **
 */
-
-#ifdef _MSC_VER
-#define    F_OK    0    /* Check for file existence */
-#define    W_OK    2    /* Check for write permission */
-#define    R_OK    4    /* Check for read permission */
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
 
 #include "w_wad.h"
 #include "m_png.h"
@@ -42,11 +33,8 @@
 #include "doomstat.h"
 #include "d_main.h"
 #include "zstring.h"
+#include "bitmap.h"
 #include "textures.h"
-
-#ifndef _WIN32
-#define _access(a,b)	access(a,b)
-#endif
 
 static int Doom2Wad = -1;
 
@@ -67,7 +55,7 @@ static void SetDoom2Wad()
 // Checks for the presence of a hires texture replacement in a Doomsday style PK3
 //
 //==========================================================================
-int CheckDDPK3(FTexture *tex)
+int FTexture::CheckDDPK3()
 {
 	static const char * doom1texpath[]= {
 		"data/jdoom/textures/doom/%s.%s", "data/jdoom/textures/doom-ult/%s.%s", "data/jdoom/textures/doom1/%s.%s", "data/jdoom/textures/%s.%s", NULL };
@@ -111,7 +99,7 @@ int CheckDDPK3(FTexture *tex)
 
 	FString checkName;
 	const char ** checklist;
-	ETextureType useType=tex->UseType;
+	ETextureType useType=UseType;
 
 	if (useType==ETextureType::SkinSprite || useType==ETextureType::Decal || useType==ETextureType::FontChar)
 	{
@@ -165,7 +153,7 @@ int CheckDDPK3(FTexture *tex)
 
 		for (const char ** extp=extensions; *extp; extp++)
 		{
-			checkName.Format(*checklist, tex->Name.GetChars(), *extp);
+			checkName.Format(*checklist, Name.GetChars(), *extp);
 			int lumpnum = Wads.CheckNumForFullName(checkName);
 			if (lumpnum >= 0) return lumpnum;
 		}
@@ -180,7 +168,7 @@ int CheckDDPK3(FTexture *tex)
 // Checks for the presence of a hires texture replacement
 //
 //==========================================================================
-int CheckExternalFile(FTexture *tex, bool & hascolorkey)
+int FTexture::CheckExternalFile(bool & hascolorkey)
 {
 	static const char * doom1texpath[]= {
 		"%stextures/doom/doom1/%s.%s", "%stextures/doom/doom1/%s-ck.%s", 
@@ -292,7 +280,7 @@ int CheckExternalFile(FTexture *tex, bool & hascolorkey)
 
 	FString checkName;
 	const char ** checklist;
-	ETextureType useType = tex->UseType;
+	ETextureType useType = UseType;
 
 	if (useType == ETextureType::SkinSprite || useType == ETextureType::Decal || useType == ETextureType::FontChar)
 	{
@@ -346,7 +334,7 @@ int CheckExternalFile(FTexture *tex, bool & hascolorkey)
 
 		for (const char ** extp=extensions; *extp; extp++)
 		{
-			checkName.Format(*checklist, progdir.GetChars(), tex->Name.GetChars(), *extp);
+			checkName.Format(*checklist, progdir.GetChars(), Name.GetChars(), *extp);
 			if (_access(checkName, 0) == 0) 
 			{
 				hascolorkey = !!strstr(checkName, "-ck.");
@@ -358,4 +346,54 @@ int CheckExternalFile(FTexture *tex, bool & hascolorkey)
 	return -3;
 }
 
+//==========================================================================
+//
+// Checks for the presence of a hires texture replacement and loads it
+//
+//==========================================================================
+
+unsigned char *FTexture::LoadHiresTexture(int *width, int *height)
+{
+	if (HiresLump == -1)
+	{
+		bHiresHasColorKey = false;
+		HiresLump = CheckDDPK3();
+		if (HiresLump < 0) HiresLump = CheckExternalFile(bHiresHasColorKey);
+
+		if (HiresLump >= 0)
+		{
+			HiresTexture = FTexture::CreateTexture(HiresLump, ETextureType::Any);
+			HiresTexture->Name = "";
+			TexMan.AddTexture(HiresTexture);	// let the texture manager manage this.
+		}
+	}
+	if (HiresTexture != nullptr)
+	{
+		int w = HiresTexture->GetWidth();
+		int h = HiresTexture->GetHeight();
+
+		unsigned char * buffer = new unsigned char[w*(h + 1) * 4];
+		memset(buffer, 0, w * (h + 1) * 4);
+
+		FBitmap bmp(buffer, w * 4, w, h);
+
+		int trans = HiresTexture->CopyTrueColorPixels(&bmp, 0, 0);
+		HiresTexture->CheckTrans(buffer, w*h, trans);
+
+		if (bHiresHasColorKey)
+		{
+			// This is a crappy Doomsday color keyed image
+			// We have to remove the key manually. :(
+			uint32_t * dwdata = (uint32_t*)buffer;
+			for (int i = (w*h); i>0; i--)
+			{
+				if (dwdata[i] == 0xffffff00 || dwdata[i] == 0xffff00ff) dwdata[i] = 0;
+			}
+		}
+		*width = w;
+		*height = h;
+		return buffer;
+	}
+	return nullptr;
+}
 

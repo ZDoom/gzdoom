@@ -37,14 +37,13 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/textures/gl_texture.h"
 #include "c_cvars.h"
-#include "gl/hqnx/hqx.h"
+#include "hqnx/hqx.h"
 #ifdef HAVE_MMX
-#include "gl/hqnx_asm/hqnx_asm.h"
+#include "hqnx_asm/hqnx_asm.h"
 #endif
-#include "gl/xbr/xbrz.h"
-#include "gl/xbr/xbrz_old.h"
+#include "xbr/xbrz.h"
+#include "xbr/xbrz_old.h"
 
 #include "parallel_for.h"
 
@@ -314,7 +313,7 @@ static void xbrzOldScale(size_t factor, const uint32_t* src, uint32_t* trg, int 
 //  the upsampled buffer.
 //
 //===========================================================================
-unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, unsigned char *inputBuffer, const int inWidth, const int inHeight, int &outWidth, int &outHeight, bool hasAlpha )
+unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffer, const int inWidth, const int inHeight, int &outWidth, int &outHeight, bool hasAlpha )
 {
 	// [BB] Make sure that outWidth and outHeight denote the size of
 	// the returned buffer even if we don't upsample the input buffer.
@@ -326,18 +325,18 @@ unsigned char *gl_CreateUpsampledTextureBuffer ( const FTexture *inputTexture, u
 		return inputBuffer;
 
 	// [BB] Don't try to upsample textures based off FCanvasTexture.
-	if ( inputTexture->bHasCanvas )
+	if ( bHasCanvas )
 		return inputBuffer;
 
 	// [BB] Don't upsample non-shader handled warped textures. Needs too much memory and time
-	if (gl.legacyMode && inputTexture->bWarped)
+	if (gl.legacyMode && bWarped)
 		return inputBuffer;
 
 	// already scaled?
-	if (inputTexture->Scale.X >= 2 && inputTexture->Scale.Y >= 2)
+	if (Scale.X >= 2 && Scale.Y >= 2)
 		return inputBuffer;
 
-	switch (inputTexture->UseType)
+	switch (UseType)
 	{
 	case ETextureType::Sprite:
 	case ETextureType::SkinSprite:

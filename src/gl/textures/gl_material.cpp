@@ -43,7 +43,6 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
-#include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/shaders/gl_shader.h"
@@ -70,10 +69,6 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 	tex = tx;
 
 	mHwTexture = NULL;
-	HiresLump = -1;
-	hirestexture = NULL;
-	bHasColorkey = false;
-	bIsTransparent = -1;
 	bExpandFlag = expandpatches;
 	lastSampler = 254;
 	lastTranslation = -1;
@@ -89,58 +84,6 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 FGLTexture::~FGLTexture()
 {
 	Clean(true);
-	if (hirestexture) delete hirestexture;
-}
-
-//==========================================================================
-//
-// Checks for the presence of a hires texture replacement and loads it
-//
-//==========================================================================
-unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *height)
-{
-	if (bExpandFlag) return NULL;	// doesn't work for expanded textures
-
-	if (HiresLump==-1) 
-	{
-		bHasColorkey = false;
-		HiresLump = CheckDDPK3(tex);
-		if (HiresLump < 0) HiresLump = CheckExternalFile(tex, bHasColorkey);
-
-		if (HiresLump >=0) 
-		{
-			hirestexture = FTexture::CreateTexture(HiresLump, ETextureType::Any);
-		}
-	}
-	if (hirestexture != NULL)
-	{
-		int w=hirestexture->GetWidth();
-		int h=hirestexture->GetHeight();
-
-		unsigned char * buffer=new unsigned char[w*(h+1)*4];
-		memset(buffer, 0, w * (h+1) * 4);
-
-		FBitmap bmp(buffer, w*4, w, h);
-		
-		int trans = hirestexture->CopyTrueColorPixels(&bmp, 0, 0);
-		hirestexture->CheckTrans(buffer, w*h, trans);
-		bIsTransparent = hirestexture->gl_info.mIsTransparent;
-
-		if (bHasColorkey)
-		{
-			// This is a crappy Doomsday color keyed image
-			// We have to remove the key manually. :(
-			uint32_t * dwdata=(uint32_t*)buffer;
-			for (int i=(w*h);i>0;i--)
-			{
-				if (dwdata[i]==0xffffff00 || dwdata[i]==0xffff00ff) dwdata[i]=0;
-			}
-		}
-		*width = w;
-		*height = h;
-		return buffer;
-	}
-	return NULL;
 }
 
 //===========================================================================
@@ -194,7 +137,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 	// by hires textures
 	if (gl_texture_usehires && hirescheck != NULL && !alphatrans)
 	{
-		buffer = LoadHiresTexture (hirescheck, &w, &h);
+		buffer = hirescheck->LoadHiresTexture (&w, &h);
 		if (buffer)
 		{
 			return buffer;
@@ -227,8 +170,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx, 0, translation >= STRange_Min? &inf : nullptr);
 		tex->CheckTrans(buffer, W*H, trans);
-		isTransparent = tex->gl_info.mIsTransparent;
-		if (bIsTransparent == -1) bIsTransparent = isTransparent;
+		isTransparent = tex->bTranslucent;
 		// alpha texture for legacy mode
 		if (alphatrans)
 		{
@@ -259,7 +201,7 @@ unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, F
 
 	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
 	// [BB] Potentially upsample the buffer.
-	return gl_CreateUpsampledTextureBuffer ( tex, buffer, W, H, w, h, !!isTransparent);
+	return tex->CreateUpsampledTextureBuffer (buffer, W, H, w, h, !!isTransparent);
 }
 
 
@@ -553,7 +495,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mMaxBound = -1;
 	mMaterials.Push(this);
 	tx->gl_info.Material[expanded] = this;
-	if (tx->bHasCanvas) tx->gl_info.mIsTransparent = 0;
+	if (tx->bHasCanvas) tx->bTranslucent = 0;
 }
 
 //===========================================================================

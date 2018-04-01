@@ -62,19 +62,13 @@ class FGLTexture
 	friend class FMaterial;
 public:
 	FTexture * tex;
-	FTexture * hirestexture;
-	int8_t bIsTransparent;
-	int HiresLump;
 
 private:
 	FHardwareTexture *mHwTexture;
 
-	bool bHasColorkey;		// only for hires
 	bool bExpandFlag;
 	uint8_t lastSampler;
 	int lastTranslation;
-
-	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
 
 	FHardwareTexture *CreateHwTexture();
 
@@ -222,7 +216,7 @@ public:
 
 	bool GetTransparent() const
 	{
-		if (mBaseLayer->bIsTransparent == -1) 
+		if (tex->bTranslucent == -1) 
 		{
 			if (!mBaseLayer->tex->bHasCanvas)
 			{
@@ -232,10 +226,10 @@ public:
 			}
 			else
 			{
-				mBaseLayer->bIsTransparent = 0;
+				tex->bTranslucent = 0;
 			}
 		}
-		return !!mBaseLayer->bIsTransparent;
+		return !!tex->bTranslucent;
 	}
 
 	static void DeleteAll();

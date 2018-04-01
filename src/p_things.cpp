@@ -917,15 +917,15 @@ int P_Thing_Warp(AActor *caller, AActor *reference, double xofs, double yofs, do
 			if (flags & WARPF_WARPINTERPOLATION)
 			{
 				// This just translates the movement but doesn't change the vector
-				DVector3 displacedold  = old + Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
+				DVector3 displacedold  = old + level.Displacements.getOffset(oldpgroup, caller->Sector->PortalGroup);
 				caller->Prev += caller->Pos() - displacedold;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}
 			else if (flags & WARPF_COPYINTERPOLATION)
 			{
 				// Map both positions of the reference actor to the current portal group
-				DVector3 displacedold = old + Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
-				DVector3 displacedref = old + Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
+				DVector3 displacedold = old + level.Displacements.getOffset(reference->PrevPortalGroup, caller->Sector->PortalGroup);
+				DVector3 displacedref = old + level.Displacements.getOffset(reference->Sector->PortalGroup, caller->Sector->PortalGroup);
 				caller->Prev = caller->Pos() + displacedold - displacedref;
 				caller->PrevPortalGroup = caller->Sector->PortalGroup;
 			}

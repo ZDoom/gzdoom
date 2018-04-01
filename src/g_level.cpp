@@ -2017,7 +2017,7 @@ inline T VecDiff(const T& v1, const T& v2)
 
 		if (nullptr != sec1 && nullptr != sec2)
 		{
-			result += Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
+			result += level.Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
 		}
 	}
 

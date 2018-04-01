@@ -993,7 +993,7 @@ void G_SerializeLevel(FSerializer &arc, bool hubload)
 	arc("sidedefs", level.sides, level.loadsides);
 	arc("sectors", level.sectors, level.loadsectors);
 	arc("zones", level.Zones);
-	arc("lineportals", linePortals);
+	arc("lineportals", level.linePortals);
 	arc("sectorportals", level.sectorPortals);
 	if (arc.isReading()) P_CollectLinkedPortals();
 

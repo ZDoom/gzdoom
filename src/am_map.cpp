@@ -2540,7 +2540,7 @@ void AM_drawWalls (bool allmap)
 	static mline_t l;
 	int lock, color;
 
-	int numportalgroups = am_portaloverlay ? Displacements.size : 0;
+	int numportalgroups = am_portaloverlay ? level.Displacements.size : 0;
 
 	for (int p = numportalgroups - 1; p >= -1; p--)
 	{
@@ -2564,7 +2564,7 @@ void AM_drawWalls (bool allmap)
 			bool portalmode = numportalgroups > 0 &&  pg != MapPortalGroup;
 			if (pg == p)
 			{
-				offset = Displacements.getOffset(pg, MapPortalGroup);
+				offset = level.Displacements.getOffset(pg, MapPortalGroup);
 			}
 			else if (p == -1 && (pg == MapPortalGroup || !am_portaloverlay))
 			{

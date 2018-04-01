@@ -177,7 +177,7 @@ void GLWall::PutPortal(int ptype)
 		if (!portal)
 		{
 			line_t *otherside = lineportal->lines[0]->mDestination;
-			if (otherside != NULL && otherside->portalindex < linePortals.Size())
+			if (otherside != NULL && otherside->portalindex < level.linePortals.Size())
 			{
 				mDrawer->RenderActorsInPortal(linePortalToGL[otherside->portalindex]);
 			}

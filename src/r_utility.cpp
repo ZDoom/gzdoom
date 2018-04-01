@@ -506,7 +506,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		}
 		else
 		{
-			DVector2 disp = Displacements.getOffset(oldgroup, newgroup);
+			DVector2 disp = level.Displacements.getOffset(oldgroup, newgroup);
 			viewpoint.Pos = iview->Old.Pos + (iview->New.Pos - iview->Old.Pos - disp) * Frac;
 			viewpoint.Path[0] = viewpoint.Path[1] = iview->New.Pos;
 		}

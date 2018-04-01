@@ -81,13 +81,13 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 
 			// This is a performance critical section of code where we cannot afford to let the compiler decide whether to inline the function or not.
 			// This will do the calculations explicitly rather than calling one of AActor's utility functions.
-			if (Displacements.size > 0)
+			if (level.Displacements.size > 0)
 			{
 				int fromgroup = light->Sector->PortalGroup;
 				int togroup = subsec->sector->PortalGroup;
 				if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
 
-				DVector2 offset = Displacements.getOffset(fromgroup, togroup);
+				DVector2 offset = level.Displacements.getOffset(fromgroup, togroup);
 				L = FVector3(x - light->X() - offset.X, y - light->Y() - offset.Y, z - light->Z());
 			}
 			else

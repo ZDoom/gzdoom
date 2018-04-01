@@ -409,24 +409,24 @@ void gl_InitPortals()
 	linePortalToGL.Clear();
 	TArray<int> tempindex;
 
-	tempindex.Reserve(linePortals.Size());
-	memset(&tempindex[0], -1, linePortals.Size() * sizeof(int));
+	tempindex.Reserve(level.linePortals.Size());
+	memset(&tempindex[0], -1, level.linePortals.Size() * sizeof(int));
 
-	for (unsigned i = 0; i < linePortals.Size(); i++)
+	for (unsigned i = 0; i < level.linePortals.Size(); i++)
 	{
-		auto port = linePortals[i];
+		auto port = level.linePortals[i];
 		bool gotsome;
 
 		if (tempindex[i] == -1)
 		{
 			tempindex[i] = glLinePortals.Size();
-			line_t *pSrcLine = linePortals[i].mOrigin;
-			line_t *pLine = linePortals[i].mDestination;
+			line_t *pSrcLine = level.linePortals[i].mOrigin;
+			line_t *pLine = level.linePortals[i].mDestination;
 			FGLLinePortal &glport = glLinePortals[glLinePortals.Reserve(1)];
-			glport.lines.Push(&linePortals[i]);
+			glport.lines.Push(&level.linePortals[i]);
 
 			// We cannot do this grouping for non-linked glSectorPortals because they can be changed at run time.
-			if (linePortals[i].mType == PORTT_LINKED && pLine != nullptr)
+			if (level.linePortals[i].mType == PORTT_LINKED && pLine != nullptr)
 			{
 				glport.v1 = pLine->v1;
 				glport.v2 = pLine->v2;
@@ -434,12 +434,12 @@ void gl_InitPortals()
 				{
 					// now collect all other colinear lines connected to this one. We run this loop as long as it still finds a match
 					gotsome = false;
-					for (unsigned j = 0; j < linePortals.Size(); j++)
+					for (unsigned j = 0; j < level.linePortals.Size(); j++)
 					{
 						if (tempindex[j] == -1)
 						{
-							line_t *pSrcLine2 = linePortals[j].mOrigin;
-							line_t *pLine2 = linePortals[j].mDestination;
+							line_t *pSrcLine2 = level.linePortals[j].mOrigin;
+							line_t *pLine2 = level.linePortals[j].mDestination;
 							// angular precision is intentionally reduced to 32 bit BAM to account for precision problems (otherwise many not perfectly horizontal or vertical glSectorPortals aren't found here.)
 							unsigned srcang = pSrcLine->Delta().Angle().BAMs();
 							unsigned dstang = pLine->Delta().Angle().BAMs();
@@ -456,7 +456,7 @@ void gl_InitPortals()
 									tempindex[j] = tempindex[i];
 									if (pLine->v1 == pLine2->v2) glport.v1 = pLine2->v1;
 									else glport.v2 = pLine2->v2;
-									glport.lines.Push(&linePortals[j]);
+									glport.lines.Push(&level.linePortals[j]);
 								}
 							}
 						}
@@ -465,13 +465,13 @@ void gl_InitPortals()
 			}
 		}
 	}
-	linePortalToGL.Resize(linePortals.Size());
-	for (unsigned i = 0; i < linePortals.Size(); i++)
+	linePortalToGL.Resize(level.linePortals.Size());
+	for (unsigned i = 0; i < level.linePortals.Size(); i++)
 	{
 		linePortalToGL[i] = &glLinePortals[tempindex[i]];
 		/*
 		Printf("portal at line %d translates to GL portal %d, range = %f,%f to %f,%f\n",
-			int(linePortals[i].mOrigin - lines), tempindex[i], linePortalToGL[i]->v1->fixX() / 65536., linePortalToGL[i]->v1->fixY() / 65536., linePortalToGL[i]->v2->fixX() / 65536., linePortalToGL[i]->v2->fixY() / 65536.);
+			int(level.linePortals[i].mOrigin - lines), tempindex[i], linePortalToGL[i]->v1->fixX() / 65536., linePortalToGL[i]->v1->fixY() / 65536., linePortalToGL[i]->v2->fixX() / 65536., linePortalToGL[i]->v2->fixY() / 65536.);
 		*/
 	}
 }

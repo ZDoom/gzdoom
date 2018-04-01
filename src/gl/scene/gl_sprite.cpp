@@ -726,13 +726,13 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
-	if (thruportal == 1) thingpos += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+	if (thruportal == 1) thingpos += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
 	if (thing == camera && !r_viewpoint.showviewer)
 	{
 		DVector3 thingorigin = thing->Pos();
-		if (thruportal == 1) thingorigin += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+		if (thruportal == 1) thingorigin += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(thingorigin.X - r_viewpoint.ActorPos.X) < 2 && fabs(thingorigin.Y - r_viewpoint.ActorPos.Y) < 2) return;
 	}
 	// Thing is invisible if close to the camera.

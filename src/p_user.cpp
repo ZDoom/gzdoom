@@ -2326,7 +2326,7 @@ void P_PredictionLerpReset()
 
 bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &result, float scale)
 {
-	//DVector2 pfrom = Displacements.getOffset(from.portalgroup, to.portalgroup);
+	//DVector2 pfrom = level.Displacements.getOffset(from.portalgroup, to.portalgroup);
 	DVector3 vecFrom = from.pos;
 	DVector3 vecTo = to.pos;
 	DVector3 vecResult;

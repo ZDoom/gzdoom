@@ -75,8 +75,6 @@ struct FDisplacementTable
 	}
 };
 
-extern FDisplacementTable Displacements;
-
 
 //============================================================================
 //
@@ -128,8 +126,6 @@ struct FPortalBlockmap
 		return data[x + dx*y];
 	}
 };
-
-extern FPortalBlockmap PortalBlockmap;
 
 
 //============================================================================
@@ -193,8 +189,6 @@ struct FLinePortal
 	portnode_t *lineportal_thinglist;
 };
 
-extern TArray<FLinePortal> linePortals;
-
 //============================================================================
 //
 // All information about a sector plane portal
@@ -249,10 +243,6 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
 bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double upperz, double checkradius, FPortalGroupArray &out);
 void P_CollectLinkedPortals();
-inline int P_NumPortalGroups()
-{
-	return Displacements.size;
-}
 unsigned P_GetSkyboxPortal(AActor *actor);
 unsigned P_GetPortal(int type, int plane, sector_t *orgsec, sector_t *destsec, const DVector2 &displacement);
 unsigned P_GetStackPortal(AActor *point, int plane);

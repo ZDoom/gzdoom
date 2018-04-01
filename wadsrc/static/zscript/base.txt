@@ -663,31 +663,31 @@ struct StringTable native
 // Most are handled at load time and are omitted here.
 struct DehInfo native
 {
-	native int MaxSoulsphere;
-	native uint8 ExplosionStyle;
-	native double ExplosionAlpha;
-	native int NoAutofreeze;
-	native int BFGCells;
-	native int BlueAC;
+	native readonly int MaxSoulsphere;
+	native readonly uint8 ExplosionStyle;
+	native readonly double ExplosionAlpha;
+	native readonly int NoAutofreeze;
+	native readonly int BFGCells;
+	native readonly int BlueAC;
 }
 
 struct State native
 {
-	native State NextState;
-	native int sprite;
-	native int16 Tics;
-	native uint16 TicRange;
-	native uint8 Frame;		
-	native uint8 UseFlags;	
-	native int Misc1;
-	native int Misc2;
-	native uint16 bSlow;
-	native uint16 bFast;
-	native bool bFullbright;
-	native bool bNoDelay;
-	native bool bSameFrame;
-	native bool bCanRaise;
-	native bool bDehacked;
+	native readonly State NextState;
+	native readonly int sprite;
+	native readonly int16 Tics;
+	native readonly uint16 TicRange;
+	native readonly uint8 Frame;		
+	native readonly uint8 UseFlags;	
+	native readonly int Misc1;
+	native readonly int Misc2;
+	native readonly uint16 bSlow;
+	native readonly uint16 bFast;
+	native readonly bool bFullbright;
+	native readonly bool bNoDelay;
+	native readonly bool bSameFrame;
+	native readonly bool bCanRaise;
+	native readonly bool bDehacked;
 	
 	native int DistanceTo(state other);
 	native bool ValidateSpriteFrame();

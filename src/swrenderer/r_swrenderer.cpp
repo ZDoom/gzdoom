@@ -188,15 +188,6 @@ void FSoftwareRenderer::RenderView(player_t *player)
 	FCanvasTextureInfo::UpdateAll();
 }
 
-void FSoftwareRenderer::RemapVoxels()
-{
-	for (unsigned i=0; i<Voxels.Size(); i++)
-	{
-		Voxels[i]->CreateBgraSlabData();
-		Voxels[i]->Remap();
-	}
-}
-
 void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
 	DCanvas *pic = new DSimpleCanvas (width, height, false);

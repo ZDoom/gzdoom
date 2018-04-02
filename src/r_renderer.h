@@ -31,9 +31,6 @@ struct FRenderer
 	// render 3D view
 	virtual void RenderView(player_t *player) = 0;
 
-	// Remap voxel palette
-	virtual void RemapVoxels() {}
-
 	// renders view to a savegame picture
 	virtual void WriteSavePic (player_t *player, FileWriter *file, int width, int height) = 0;
 

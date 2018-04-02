@@ -15,9 +15,6 @@ struct FSoftwareRenderer : public FRenderer
 	// render 3D view
 	void RenderView(player_t *player) override;
 
-	// Remap voxel palette
-	void RemapVoxels() override;
-
 	// renders view to a savegame picture
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
 

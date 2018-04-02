@@ -1031,7 +1031,6 @@ set (PCH_SOURCES
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_dynlight.cpp
-	g_shared/a_dynlightdata.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
@@ -1145,6 +1144,7 @@ set (PCH_SOURCES
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	r_data/colormaps.cpp
+	r_data/a_dynlightdata.cpp
 	r_data/r_translate.cpp
 	r_data/sprites.cpp
 	r_data/portalgroups.cpp

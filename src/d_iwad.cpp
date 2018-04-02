@@ -427,7 +427,7 @@ void FIWadManager::AddIWADCandidates(const char *dir)
 				if (p != nullptr)
 				{
 					// special IWAD extension.
-					if (!stricmp(p, ".iwad") || !stricmp(p, ".ipk3") || !stricmp(p, "ipk7"))
+					if (!stricmp(p, ".iwad") || !stricmp(p, ".ipk3") || !stricmp(p, ".ipk7"))
 					{
 						mFoundWads.Push(FFoundWadInfo{ slasheddir + FindName, "", -1 });
 					}
@@ -461,7 +461,7 @@ void FIWadManager::ValidateIWADs()
 	{
 		int index;
 		auto x = strrchr(p.mFullPath, '.');
-		if (x != nullptr && (!stricmp(x, ".iwad") || !stricmp(x, ".ipk3") || !stricmp(x, "ipk7")))
+		if (x != nullptr && (!stricmp(x, ".iwad") || !stricmp(x, ".ipk3") || !stricmp(x, ".ipk7")))
 		{
 			index = CheckIWADInfo(p.mFullPath);
 		}

@@ -373,18 +373,6 @@ void gl_PrintStartupLog()
 		glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
 		Printf("Max. vertex shader storage blocks: %d\n", v);
 	}
-
-	// For shader-less, the special alphatexture translation must be changed to actually set the alpha, because it won't get translated by a shader.
-	if (gl.legacyMode)
-	{
-		FRemapTable *remap = translationtables[TRANSLATION_Standard][8];
-		for (int i = 0; i < 256; i++)
-		{
-			remap->Remap[i] = i;
-			remap->Palette[i] = PalEntry(i, 255, 255, 255);
-		}
-	}
-
 }
 
 std::pair<double, bool> gl_getInfo()

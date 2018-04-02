@@ -44,9 +44,16 @@
 // profiling data
 static int totalupper, totallower;
 static int lowershcount, uppershcount;
-static glcycle_t totalms, showtotalms;
-static glcycle_t totalssms;
-static sector_t fakesec;
+static glcycle_t totalms, showtotalms, totalssms;
+
+
+static sector_t fakesec;	// this is static because it gets used in recursively called functions.
+
+// Having this static doesn't really matter here because the hack code is not multithreading-capable anyway.
+static bool inview;
+static subsector_t * viewsubsector;
+static TArray<seg_t *> lowersegs;
+
 
 void FDrawInfo::ClearBuffers()
 {
@@ -760,9 +767,6 @@ bool FDrawInfo::CheckAnchorFloor(subsector_t * sub)
 // Collect connected subsectors that have to be rendered with the same plane
 //
 //==========================================================================
-static bool inview;
-static subsector_t * viewsubsector;
-static TArray<seg_t *> lowersegs;
 
 bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 {
@@ -1117,12 +1121,11 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 void FDrawInfo::ProcessSectorStacks()
 {
 	unsigned int i;
-	sector_t fake;
 
 	validcount++;
 	for (i=0;i<CeilingStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fake, mDrawer->in_area, false);
+		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fakesec, mDrawer->in_area, false);
 		auto portal = sec->GetPortalGroup(sector_t::ceiling);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
@@ -1147,7 +1150,7 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sub->portalcoverage[sector_t::ceiling].subsectors == NULL)
 					{
-						BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling],	sub, portal->mDisplacement);
+						BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling], sub, portal->mDisplacement);
 					}
 
 					portal->GetRenderState()->AddSubsector(sub);
@@ -1166,7 +1169,7 @@ void FDrawInfo::ProcessSectorStacks()
 	validcount++;
 	for (i=0;i<FloorStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fake, mDrawer->in_area, false);
+		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fakesec, mDrawer->in_area, false);
 		auto portal = sec->GetPortalGroup(sector_t::floor);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{

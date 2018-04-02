@@ -87,6 +87,8 @@ UniqueList<GLHorizonInfo> UniqueHorizons;
 UniqueList<secplane_t> UniquePlaneMirrors;
 UniqueList<FLinePortalSpan> UniqueLineToLines;
 
+int skyboxrecursion = 0;
+
 //==========================================================================
 //
 //
@@ -460,7 +462,7 @@ void GLPortal::StartFrame()
 
 //-----------------------------------------------------------------------------
 //
-// Portal info
+// printing portal info
 //
 //-----------------------------------------------------------------------------
 
@@ -471,7 +473,7 @@ CCMD(gl_portalinfo)
 	gl_portalinfo = true;
 }
 
-FString indent;
+static FString indent;
 
 //-----------------------------------------------------------------------------
 //
@@ -610,7 +612,7 @@ void GLPortal::RestoreMapSection()
 // GLSkyboxPortal::DrawContents
 //
 //-----------------------------------------------------------------------------
-static int skyboxrecursion=0;
+
 void GLSkyboxPortal::DrawContents()
 {
 	int old_pm = PlaneMirrorMode;

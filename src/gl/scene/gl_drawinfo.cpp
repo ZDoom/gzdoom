@@ -48,6 +48,7 @@
 #include "gl/renderer/gl_quaddrawer.h"
 
 FDrawInfo * gl_drawinfo;
+FDrawInfoList di_list;
 
 //==========================================================================
 //
@@ -986,8 +987,6 @@ void FDrawInfoList::Release(FDrawInfo * di)
 	di->ClearBuffers();
 	mList.Push(di);
 }
-
-static FDrawInfoList di_list;
 
 //==========================================================================
 //

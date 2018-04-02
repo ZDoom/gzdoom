@@ -86,8 +86,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 
 extern bool NoInterpolateView;
 
-area_t			in_area;
-int camtexcount;
+int camtexcount;	// used to decide how VSync is done. It just counts the number of camera textures per frame.
 
 //-----------------------------------------------------------------------------
 //
@@ -273,7 +272,9 @@ void GLSceneDrawer::CreateScene()
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached();
 	Bsp.Unclock();
 
-	// And now the crappy hacks that have to be done to avoid rendering anomalies:
+	// And now the crappy hacks that have to be done to avoid rendering anomalies.
+	// These cannot be multithreaded when the time comes because all these depend
+	// on the global 'validcount' variable.
 
 	gl_drawinfo->HandleMissingTextures();	// Missing upper/lower textures
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water

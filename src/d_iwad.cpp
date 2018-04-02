@@ -348,6 +348,16 @@ int FIWadManager::CheckIWADInfo(const char *fn)
 					FIWADInfo result;
 					ParseIWadInfo(resfile->Filename, (const char*)lmp->CacheLump(), lmp->LumpSize, &result);
 					delete resfile;
+
+					for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)
+					{
+						if (mIWadInfos[i].Name == result.Name)
+						{
+							return i;
+						}
+					}
+
+					mOrderNames.Push(result.Name);
 					return mIWadInfos.Push(result);
 				}
 				catch (CRecoverableError &err)

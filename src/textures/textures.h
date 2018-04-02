@@ -44,6 +44,29 @@
 #include "r_data/r_translate.h"
 #include <vector>
 
+enum MaterialShaderIndex
+{
+	SHADER_Default,
+	SHADER_Warp1,
+	SHADER_Warp2,
+	SHADER_Brightmap,
+	SHADER_Specular,
+	SHADER_SpecularBrightmap,
+	SHADER_PBR,
+	SHADER_PBRBrightmap,
+	SHADER_NoTexture,
+	SHADER_BasicFuzz,
+	SHADER_SmoothFuzz,
+	SHADER_SwirlyFuzz,
+	SHADER_TranslucentFuzz,
+	SHADER_JaggedFuzz,
+	SHADER_NoiseFuzz,
+	SHADER_SmoothNoiseFuzz,
+	SHADER_SoftwareFuzz,
+	FIRST_USER_SHADER
+};
+
+
 struct FloatRect
 {
 	float left,top;

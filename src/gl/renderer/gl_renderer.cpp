@@ -60,6 +60,7 @@
 #include "gl/shaders/gl_present3dRowshader.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 #include "gl/shaders/gl_postprocessshader.h"
+#include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"

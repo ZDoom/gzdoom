@@ -793,6 +793,147 @@ void ADynamicLight::OnDestroy()
 }
 
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void AActor::AttachLight(unsigned int count, const FLightDefaults *lightdef)
+{
+	ADynamicLight *light;
+
+	if (count < AttachedLights.Size()) 
+	{
+		light = barrier_cast<ADynamicLight*>(AttachedLights[count]);
+		assert(light != NULL);
+	}
+	else
+	{
+		light = Spawn<ADynamicLight>(Pos(), NO_REPLACE);
+		light->target = this;
+		light->owned = true;
+		light->ObjectFlags |= OF_Transient;
+		//light->lightflags |= LF_ATTENUATE;
+		AttachedLights.Push(light);
+	}
+	light->flags2&=~MF2_DORMANT;
+	lightdef->ApplyProperties(light);
+}
+
+//==========================================================================
+//
+// per-state light adjustment
+//
+//==========================================================================
+extern TArray<FLightDefaults *> StateLights;
+
+void AActor::SetDynamicLights()
+{
+	TArray<FInternalLightAssociation *> & LightAssociations = GetInfo()->LightAssociations;
+	unsigned int count = 0;
+
+	if (state == NULL) return;
+	if (LightAssociations.Size() > 0)
+	{
+		ADynamicLight *lights, *tmpLight;
+		unsigned int i;
+
+		lights = tmpLight = NULL;
+
+		for (i = 0; i < LightAssociations.Size(); i++)
+		{
+			if (LightAssociations[i]->Sprite() == sprite &&
+				(LightAssociations[i]->Frame()==frame || LightAssociations[i]->Frame()==-1))
+			{
+				AttachLight(count++, LightAssociations[i]->Light());
+			}
+		}
+	}
+	if (count == 0 && state->Light > 0)
+	{
+		for(int i= state->Light; StateLights[i] != NULL; i++)
+		{
+			if (StateLights[i] != (FLightDefaults*)-1)
+			{
+				AttachLight(count++, StateLights[i]);
+			}
+		}
+	}
+
+	for(;count<AttachedLights.Size();count++)
+	{
+		AttachedLights[count]->flags2 |= MF2_DORMANT;
+		memset(AttachedLights[count]->args, 0, 3*sizeof(args[0]));
+	}
+}
+
+//==========================================================================
+//
+// Needed for garbage collection
+//
+//==========================================================================
+
+size_t AActor::PropagateMark()
+{
+	for (unsigned i = 0; i<AttachedLights.Size(); i++)
+	{
+		GC::Mark(AttachedLights[i]);
+	}
+	return Super::PropagateMark();
+}
+
+//==========================================================================
+//
+// This is called before saving the game
+//
+//==========================================================================
+
+void AActor::DeleteAllAttachedLights()
+{
+	TThinkerIterator<AActor> it;
+	AActor * a;
+	ADynamicLight * l;
+
+	while ((a=it.Next())) 
+	{
+		a->AttachedLights.Clear();
+	}
+
+	TThinkerIterator<ADynamicLight> it2;
+
+	l=it2.Next();
+	while (l) 
+	{
+		ADynamicLight * ll = it2.Next();
+		if (l->owned) l->Destroy();
+		l=ll;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void AActor::RecreateAllAttachedLights()
+{
+	TThinkerIterator<AActor> it;
+	AActor * a;
+
+	while ((a=it.Next())) 
+	{
+		a->SetDynamicLights();
+	}
+}
+
+//==========================================================================
+//
+// CCMDs
+//
+//==========================================================================
+
 CCMD(listlights)
 {
 	int walls, sectors, subsecs;

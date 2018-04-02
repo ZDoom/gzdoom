@@ -33,6 +33,7 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/shaders/gl_postprocessshader.h"
+#include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "textures/textures.h"
 #include "textures/bitmap.h"
 

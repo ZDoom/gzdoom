@@ -1055,7 +1055,6 @@ set (PCH_SOURCES
 	gl/renderer/gl_postprocess.cpp
 	gl/renderer/gl_postprocessstate.cpp
 	gl/shaders/gl_shader.cpp
-	gl/shaders/gl_texshader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
 	gl/shaders/gl_shadowmapshader.cpp
@@ -1144,6 +1143,7 @@ set (PCH_SOURCES
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	r_data/colormaps.cpp
+	r_data/gldefs.cpp
 	r_data/a_dynlightdata.cpp
 	r_data/r_translate.cpp
 	r_data/sprites.cpp

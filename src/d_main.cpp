@@ -176,6 +176,7 @@ extern bool gameisdead;
 extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
 extern bool insave;
+extern TDeletingArray<FLightDefaults *> LightDefaults;
 
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
@@ -2772,6 +2773,7 @@ void D_DoomMain (void)
 		DestroyCVarsFlagged(CVAR_MOD);	// Delete any cvar left by mods
 		FS_Close();						// destroy the global FraggleScript.
 		DeinitMenus();
+		LightDefaults.Clear();			// this can leak heap memory if it isn't cleared.
 
 		// delete DoomStartupInfo data
 		DoomStartupInfo.Name = (const char*)0;

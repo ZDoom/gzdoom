@@ -272,7 +272,7 @@ struct TVector2
 
 
 	// Dot product
-	double operator | (const TVector2 &other) const
+	vec_t operator | (const TVector2 &other) const
 	{
 		return X*other.X + Y*other.Y;
 	}

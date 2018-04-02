@@ -42,7 +42,6 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/shaders/gl_shader.h"

@@ -3,6 +3,9 @@
 
 #include "vectors.h"
 
+namespace hwrenderer
+{
+
 // Node in a binary AABB tree
 struct AABBTreeNode
 {
@@ -57,3 +60,5 @@ private:
 	// Generate a tree node and its children recursively
 	int GenerateTreeNode(int *lines, int num_lines, const FVector2 *centroids, int *work_buffer);
 };
+
+} // namespace

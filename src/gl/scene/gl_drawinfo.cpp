@@ -35,7 +35,6 @@
 #include "g_levellocals.h"
 
 #include "gl/system/gl_cvars.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"

@@ -20,12 +20,12 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/dynlights/gl_aabbtree.h"
-#include "gl/system/gl_interface.h"
 #include "r_state.h"
 #include "g_levellocals.h"
+#include "hw_aabbtree.h"
+
+namespace hwrenderer
+{
 
 LevelAABBTree::LevelAABBTree()
 {
@@ -285,4 +285,7 @@ int LevelAABBTree::GenerateTreeNode(int *lines, int num_lines, const FVector2 *c
 	// Store resulting node and return its index
 	nodes.Push(AABBTreeNode(aabb_min, aabb_max, left_index, right_index));
 	return (int)nodes.Size() - 1;
+}
+
+
 }

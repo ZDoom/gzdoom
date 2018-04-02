@@ -28,7 +28,6 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
-#include "gl/data/gl_data.h"
 #include "gl/renderer/gl_colormap.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"

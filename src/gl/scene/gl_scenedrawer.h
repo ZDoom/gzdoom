@@ -6,6 +6,16 @@
 #include "gl_portal.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
+#include "r_utility.h"
+#include "c_cvars.h"
+
+EXTERN_CVAR(Int, gl_weaponlight);
+
+inline	int getExtraLight()
+{
+	return r_viewpoint.extralight * gl_weaponlight;
+}
+
 
 class GLSceneDrawer
 {

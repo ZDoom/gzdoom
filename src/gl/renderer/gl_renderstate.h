@@ -25,7 +25,6 @@
 
 #include <string.h>
 #include "gl/system/gl_interface.h"
-#include "gl/data/gl_data.h"
 #include "r_data/matrix.h"
 #include "gl/textures/gl_material.h"
 #include "c_cvars.h"

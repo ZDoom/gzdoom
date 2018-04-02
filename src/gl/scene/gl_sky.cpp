@@ -30,7 +30,6 @@
 #include "portal.h"
 #include "g_levellocals.h"
 
-#include "gl/data/gl_data.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"

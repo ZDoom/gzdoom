@@ -51,7 +51,6 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/shaders/gl_ambientshader.h"
 #include "gl/shaders/gl_bloomshader.h"

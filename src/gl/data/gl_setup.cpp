@@ -51,156 +51,169 @@
 
 //==========================================================================
 //
-// 
+// Map section generation
+// Map sections are physically separated parts of the map.
+// If the player is in section A, any map part in other sections can
+// often be quickly discarded to improve performance.
 //
 //==========================================================================
-static TArray<subsector_t *> MapSectionCollector;
 
-static void DoSetMapSection(subsector_t *sub, int num)
+struct MapSectionGenerator
 {
-	MapSectionCollector.Resize(1);
-	MapSectionCollector[0] = sub;
-	sub->mapsection = num;
-	for (unsigned a = 0; a < MapSectionCollector.Size(); a++)
+	struct cvertex_t
 	{
-		sub = MapSectionCollector[a];
-		for (uint32_t i = 0; i < sub->numlines; i++)
+		double X, Y;
+
+		operator int() const { return xs_FloorToInt(X) + 65536 * xs_FloorToInt(Y); }
+		bool operator!= (const cvertex_t &other) const { return fabs(X - other.X) >= EQUAL_EPSILON || fabs(Y - other.Y) >= EQUAL_EPSILON; }
+		cvertex_t& operator =(const vertex_t *v) { X = v->fX(); Y = v->fY(); return *this; }
+	};
+
+	typedef TMap<cvertex_t, int> FSectionVertexMap;
+	TArray<subsector_t *> MapSectionCollector;
+
+	//==========================================================================
+	//
+	// 
+	//
+	//==========================================================================
+
+	void DoSetMapSection(subsector_t *sub, int num)
+	{
+		MapSectionCollector.Resize(1);
+		MapSectionCollector[0] = sub;
+		sub->mapsection = num;
+		for (unsigned a = 0; a < MapSectionCollector.Size(); a++)
 		{
-			seg_t * seg = sub->firstline + i;
-
-			if (seg->PartnerSeg)
+			sub = MapSectionCollector[a];
+			for (uint32_t i = 0; i < sub->numlines; i++)
 			{
-				subsector_t * sub2 = seg->PartnerSeg->Subsector;
+				seg_t * seg = sub->firstline + i;
 
-				if (sub2->mapsection != num)
+				if (seg->PartnerSeg)
 				{
-					assert(sub2->mapsection == 0);
-					sub2->mapsection = num;
-					MapSectionCollector.Push(sub2);
+					subsector_t * sub2 = seg->PartnerSeg->Subsector;
+
+					if (sub2->mapsection != num)
+					{
+						assert(sub2->mapsection == 0);
+						sub2->mapsection = num;
+						MapSectionCollector.Push(sub2);
+					}
 				}
 			}
 		}
+		MapSectionCollector.Clear();
 	}
-	MapSectionCollector.Clear();
-}
 
-//==========================================================================
-//
-// Merge sections. This is needed in case the map contains errors
-// like overlapping lines resulting in abnormal subsectors.
-//
-// This function ensures that any vertex position can only be in one section.
-//
-//==========================================================================
+	//==========================================================================
+	//
+	// Merge sections. This is needed in case the map contains errors
+	// like overlapping lines resulting in abnormal subsectors.
+	//
+	// This function ensures that any vertex position can only be in one section.
+	//
+	//==========================================================================
 
-struct cvertex_t
-{
-	double X, Y;
 
-	operator int() const { return xs_FloorToInt(X) + 65536 * xs_FloorToInt(Y); }
-	bool operator!= (const cvertex_t &other) const { return fabs(X - other.X) >= EQUAL_EPSILON || fabs(Y - other.Y) >= EQUAL_EPSILON; }
-	cvertex_t& operator =(const vertex_t *v) { X = v->fX(); Y = v->fY(); return *this; }
-};
-
-typedef TMap<cvertex_t, int> FSectionVertexMap;
-
-static int MergeMapSections(int num)
-{
-	FSectionVertexMap vmap;
-	FSectionVertexMap::Pair *pair;
-	TArray<int> sectmap;
-	TArray<bool> sectvalid;
-	sectmap.Resize(num);
-	sectvalid.Resize(num);
-	for (int i = 0; i < num; i++)
+	int MergeMapSections(int num)
 	{
-		sectmap[i] = -1;
-		sectvalid[i] = true;
-	}
-	int mergecount = 1;
-
-
-	cvertex_t vt;
-
-	// first step: Set mapsection for all vertex positions.
-	for (auto &seg : level.segs)
-	{
-		int section = seg.Subsector->mapsection;
-		for (int j = 0; j < 2; j++)
+		FSectionVertexMap vmap;
+		FSectionVertexMap::Pair *pair;
+		TArray<int> sectmap;
+		TArray<bool> sectvalid;
+		sectmap.Resize(num);
+		sectvalid.Resize(num);
+		for (int i = 0; i < num; i++)
 		{
-			vt = j == 0 ? seg.v1 : seg.v2;
-			vmap[vt] = section;
+			sectmap[i] = -1;
+			sectvalid[i] = true;
 		}
-	}
+		int mergecount = 1;
 
-	// second step: Check if any seg references more than one mapsection, either by subsector or by vertex
-	for (auto &seg : level.segs)
-	{
-		int section = seg.Subsector->mapsection;
-		for (int j = 0; j < 2; j++)
+
+		cvertex_t vt;
+
+		// first step: Set mapsection for all vertex positions.
+		for (auto &seg : level.segs)
 		{
-			vt = j == 0 ? seg.v1 : seg.v2;
-			int vsection = vmap[vt];
-
-			if (vsection != section)
+			int section = seg.Subsector->mapsection;
+			for (int j = 0; j < 2; j++)
 			{
-				// These 2 sections should be merged
-				for (auto &sub : level.subsectors)
-				{
-					if (sub.mapsection == vsection) sub.mapsection = section;
-				}
-				FSectionVertexMap::Iterator it(vmap);
-				while (it.NextPair(pair))
-				{
-					if (pair->Value == vsection) pair->Value = section;
-				}
-				sectvalid[vsection - 1] = false;
+				vt = j == 0 ? seg.v1 : seg.v2;
+				vmap[vt] = section;
 			}
 		}
-	}
-	for (int i = 0; i < num; i++)
-	{
-		if (sectvalid[i]) sectmap[i] = mergecount++;
-	}
-	for (auto &sub : level.subsectors)
-	{
-		sub.mapsection = sectmap[sub.mapsection - 1];
-		assert(sub.mapsection != -1);
-	}
-	return mergecount - 1;
-}
 
-//==========================================================================
-//
-// 
-//
-//==========================================================================
+		// second step: Check if any seg references more than one mapsection, either by subsector or by vertex
+		for (auto &seg : level.segs)
+		{
+			int section = seg.Subsector->mapsection;
+			for (int j = 0; j < 2; j++)
+			{
+				vt = j == 0 ? seg.v1 : seg.v2;
+				int vsection = vmap[vt];
 
-static void SetMapSections()
-{
-	bool set;
-	int num = 0;
-	do
-	{
-		set = false;
+				if (vsection != section)
+				{
+					// These 2 sections should be merged
+					for (auto &sub : level.subsectors)
+					{
+						if (sub.mapsection == vsection) sub.mapsection = section;
+					}
+					FSectionVertexMap::Iterator it(vmap);
+					while (it.NextPair(pair))
+					{
+						if (pair->Value == vsection) pair->Value = section;
+					}
+					sectvalid[vsection - 1] = false;
+				}
+			}
+		}
+		for (int i = 0; i < num; i++)
+		{
+			if (sectvalid[i]) sectmap[i] = mergecount++;
+		}
 		for (auto &sub : level.subsectors)
 		{
-			if (sub.mapsection == 0)
+			sub.mapsection = sectmap[sub.mapsection - 1];
+			assert(sub.mapsection != -1);
+		}
+		return mergecount - 1;
+	}
+
+	//==========================================================================
+	//
+	// 
+	//
+	//==========================================================================
+
+	void SetMapSections()
+	{
+		bool set;
+		int num = 0;
+		do
+		{
+			set = false;
+			for (auto &sub : level.subsectors)
 			{
-				num++;
-				DoSetMapSection(&sub, num);
-				set = true;
-				break;
+				if (sub.mapsection == 0)
+				{
+					num++;
+					DoSetMapSection(&sub, num);
+					set = true;
+					break;
+				}
 			}
 		}
+		while (set);
+		num = MergeMapSections(num);
+		currentmapsection.Resize(1 + num/8);
+	#ifdef DEBUG
+		Printf("%d map sections found\n", num);
+	#endif
 	}
-	while (set);
-	num = MergeMapSections(num);
-	currentmapsection.Resize(1 + num/8);
-#ifdef DEBUG
-	Printf("%d map sections found\n", num);
-#endif
-}
+};
 
 //==========================================================================
 //
@@ -283,7 +296,8 @@ static void PrepareSectorData()
 			}
 		}
 	}
-	SetMapSections();
+	MapSectionGenerator msg;
+	msg.SetMapSections();
 }
 
 //==========================================================================

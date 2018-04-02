@@ -44,8 +44,6 @@
 #include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
-FDynLightData modellightdata;
-int modellightindex = -1;
 
 template<class T>
 T smoothstep(const T edge0, const T edge1, const T x)
@@ -198,6 +196,8 @@ void BSPWalkCircle(float x, float y, float radiusSquared, const Callback &callba
 
 int gl_SetDynModelLight(AActor *self, int dynlightindex)
 {
+	static FDynLightData modellightdata;	// If this ever gets multithreaded, this variable must either be made non-static or thread_local.
+
 	// For deferred light mode this function gets called twice. First time for list upload, and second for draw.
 	if (gl.lightmethod == LM_DEFERRED && dynlightindex != -1)
 	{

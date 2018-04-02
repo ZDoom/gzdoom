@@ -314,7 +314,7 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		}
 
 		// cache all used models
-		FGLModelRenderer renderer;
+		FGLModelRenderer renderer(-1);
 		for (unsigned i = 0; i < Models.Size(); i++)
 		{
 			if (modellist[i]) 

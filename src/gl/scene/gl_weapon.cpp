@@ -73,7 +73,7 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 	// [BB] In the HUD model step we just render the model and break out. 
 	if ( hudModelStep )
 	{
-		gl_RenderHUDModel(psp, sx, sy);
+		gl_RenderHUDModel(psp, sx, sy, weapondynlightindex[psp]);
 		return;
 	}
 

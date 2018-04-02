@@ -115,21 +115,7 @@ int TexFormat[]={
 
 
 
-//==========================================================================
-//
-// GL status data for a texture
-//
-//==========================================================================
-
-FTexture::MiscGLInfo::MiscGLInfo() throw()
-{
-	bNoExpand = false;
-
-	Material[1] = Material[0] = NULL;
-	SystemTexture[1] = SystemTexture[0] = NULL;
-}
-
-FTexture::MiscGLInfo::~MiscGLInfo()
+FTexture::GLTexInfo::~GLTexInfo()
 {
 	for (int i = 0; i < 2; i++)
 	{

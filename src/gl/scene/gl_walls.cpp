@@ -39,7 +39,6 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
@@ -1537,7 +1536,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	gltexture = NULL;
 
 
-	if (gl_GetWallGlow(frontsector, topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
+	if (frontsector->GetWallGlow(topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
 	topplane = frontsector->ceilingplane;
 	bottomplane = frontsector->floorplane;
 
@@ -1773,7 +1772,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		RenderStyle = STYLE_Normal;
 		Colormap = frontsector->Colormap;
 
-		if (gl_GetWallGlow(frontsector, topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
+		if (frontsector->GetWallGlow(topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
 		topplane = frontsector->ceilingplane;
 		bottomplane = frontsector->floorplane;
 		dynlightindex = -1;

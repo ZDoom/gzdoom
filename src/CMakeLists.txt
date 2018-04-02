@@ -1043,7 +1043,6 @@ set (PCH_SOURCES
 	g_statusbar/shared_sbar.cpp
 	gl/compatibility/gl_20.cpp
 	gl/data/gl_vertexbuffer.cpp
-	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_lightbuffer.cpp
 	gl/dynlights/gl_aabbtree.cpp
 	gl/dynlights/gl_shadowmap.cpp

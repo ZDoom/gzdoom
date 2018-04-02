@@ -34,7 +34,6 @@
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"

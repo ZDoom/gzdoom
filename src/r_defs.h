@@ -663,6 +663,9 @@ public:
 	FSectorPortal *ValidatePortal(int which);
 	void CheckPortalPlane(int plane);
 
+	int CheckSpriteGlow(int lightlevel, const DVector3 &pos);
+	bool GetWallGlow(float *topglowcolor, float *bottomglowcolor);
+
 
 	enum
 	{

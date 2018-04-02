@@ -48,7 +48,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_data.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/scene/gl_portal.h"
@@ -425,7 +424,7 @@ void GLSprite::Draw(int pass)
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
 			int thislight = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
-			int thisll = actor == nullptr? thislight : (uint8_t)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_viewpoint.TicFrac));
+			int thisll = actor == nullptr? thislight : (uint8_t)actor->Sector->CheckSpriteGlow(thislight, actor->InterpolatedPosition(r_viewpoint.TicFrac));
 
 			FColormap thiscm;
 			thiscm.CopyFog(Colormap);
@@ -947,7 +946,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255);
 
-	lightlevel = gl_CheckSpriteGlow(rendersector, lightlevel, thingpos);
+	lightlevel = rendersector->CheckSpriteGlow(lightlevel, thingpos);
 
 	ThingColor = (thing->RenderStyle.Flags & STYLEF_ColorIsFixed) ? thing->fillcolor : 0xffffff;
 	ThingColor.a = 255;

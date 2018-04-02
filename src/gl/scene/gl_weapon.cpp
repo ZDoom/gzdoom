@@ -41,7 +41,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/models/gl_models.h"
@@ -330,7 +329,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		{
 			lightlevel = (2 * lightlevel + 255) / 3;
 		}
-		lightlevel = gl_CheckSpriteGlow(viewsector, lightlevel, playermo->Pos());
+		lightlevel = viewsector->CheckSpriteGlow(lightlevel, playermo->Pos());
 
 	}
 	

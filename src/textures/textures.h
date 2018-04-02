@@ -477,15 +477,15 @@ public:
 
 public:
 
-	struct MiscGLInfo
+	struct GLTexInfo
 	{
 		FMaterial *Material[2] = { nullptr, nullptr };
 		FGLTexture *SystemTexture[2] = { nullptr, nullptr };
 		bool bNoExpand = false;
 
-		~MiscGLInfo();
+		~GLTexInfo();
 	};
-	MiscGLInfo gl_info;
+	GLTexInfo gl_info;
 
 	void GetGlowColor(float *data);
 	bool isGlowing() { return bGlowing; }

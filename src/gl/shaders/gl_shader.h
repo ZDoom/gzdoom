@@ -353,6 +353,7 @@ public:
 private:
 	FShader *mActiveShader = nullptr;
 	TArray<FShaderCollection*> mPassShaders;
+	int mBrdfLUT = 0;
 };
 
 class FShaderCollection

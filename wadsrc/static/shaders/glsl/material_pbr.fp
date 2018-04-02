@@ -168,18 +168,18 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 
 	vec3 kS = F;
 	vec3 kD = 1.0 - kS;
+	kD *= 1.0 - metallic;
 
 	vec3 irradiance = ambientLight; // texture(irradianceMap, N).rgb
 	vec3 diffuse = irradiance * albedo;
 
-	//kD *= 1.0 - metallic;
-	//const float MAX_REFLECTION_LOD = 4.0;
-	//vec3 prefilteredColor = textureLod(prefilterMap, R,  roughness * MAX_REFLECTION_LOD).rgb;
-	//vec2 envBRDF = texture(brdfLUT, vec2(clamp(dot(N, V), 0.0, 1.0), roughness)).rg;
-	//vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
+	// const float MAX_REFLECTION_LOD = 4.0;
+	// vec3 R = reflect(-V, N);
+	vec3 prefilteredColor = ambientLight; // textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+	vec2 envBRDF = texture(BrdfLUT, vec2(clamp(dot(N, V), 0.0, 1.0), roughness)).rg;
+	vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
-	//vec3 ambient = (kD * diffuse + specular) * ao;
-	vec3 ambient = (kD * diffuse) * ao;
+	vec3 ambient = (kD * diffuse + specular) * ao;
 
 	vec3 color = max(ambient + Lo, vec3(0.0));
 

@@ -225,6 +225,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	// textures
 	i_data += "uniform sampler2D tex;\n";
 	i_data += "uniform sampler2D ShadowMap;\n";
+	i_data += "uniform sampler2D BrdfLUT;\n";
 	i_data += "uniform sampler2D texture2;\n";
 	i_data += "uniform sampler2D texture3;\n";
 	i_data += "uniform sampler2D texture4;\n";
@@ -486,6 +487,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	int shadowmapindex = glGetUniformLocation(hShader, "ShadowMap");
 	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
 
+	int brdfindex = glGetUniformLocation(hShader, "BrdfLUT");
+	if (brdfindex > 0) glUniform1i(brdfindex, 17);
+
 	glUseProgram(0);
 	return !!linked;
 }
@@ -632,6 +636,25 @@ FShaderManager::FShaderManager()
 			for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
 				mPassShaders.Push(new FShaderCollection((EPassType)passType));
 		}
+
+		if (gl.glslversion >= 3.0f)
+		{
+			int lump = Wads.CheckNumForFullName("brdf_lut.lmp", 0);
+			if (lump == -1) I_Error("Unable to load 'brdf_lut.lmp'");
+			FMemLump data = Wads.ReadLump(lump);
+			if (data.GetSize() < 512 * 512 * 4) // GetSize() returns some allocated block size rather than the actual size of the lump??
+				I_Error("Unexpected size for brdf_lut.lmp");
+
+			glGenTextures(1, (GLuint*)&mBrdfLUT);
+			glActiveTexture(GL_TEXTURE0 + 17);
+			glBindTexture(GL_TEXTURE_2D, mBrdfLUT);
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_HALF_FLOAT, data.GetMem());
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glActiveTexture(GL_TEXTURE0);
+		}
 	}
 }
 
@@ -644,6 +667,12 @@ FShaderManager::~FShaderManager()
 
 		for (auto collection : mPassShaders)
 			delete collection;
+
+		if (mBrdfLUT != 0)
+		{
+			glDeleteTextures(1, (GLuint*)&mBrdfLUT);
+			mBrdfLUT = 0;
+		}
 	}
 }
 

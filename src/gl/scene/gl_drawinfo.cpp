@@ -625,7 +625,7 @@ SortNode * GLDrawList::SortSpriteList(SortNode * head)
 	for(count=0,n=head;n;n=n->next) sortspritelist.Push(n);
 	std::sort(sortspritelist.begin(), sortspritelist.end(), [=](SortNode *a, SortNode *b)
 	{
-		return CompareSprites(a, b);
+		return CompareSprites(a, b) < 0;
 	});
 
 	for(i=0;i<sortspritelist.Size();i++)
@@ -906,13 +906,13 @@ void GLDrawList::SortWalls()
 {
 	if (drawitems.Size() > 1)
 	{
-		std::sort(drawitems.begin(), drawitems.end(), [=](const GLDrawItem &a, const GLDrawItem &b) -> int
+		std::sort(drawitems.begin(), drawitems.end(), [=](const GLDrawItem &a, const GLDrawItem &b) -> bool
 		{
 			GLWall * w1 = &walls[a.index];
 			GLWall * w2 = &walls[b.index];
 
-			if (w1->gltexture != w2->gltexture) return w1->gltexture - w2->gltexture;
-			return ((w1->flags & 3) - (w2->flags & 3));
+			if (w1->gltexture != w2->gltexture) return w1->gltexture < w2->gltexture;
+			return (w1->flags & 3) < (w2->flags & 3);
 
 		});
 	}
@@ -926,7 +926,7 @@ void GLDrawList::SortFlats()
 		{
 			GLFlat * w1 = &flats[a.index];
 			GLFlat* w2 = &flats[b.index];
-			return w1->gltexture - w2->gltexture;
+			return w1->gltexture < w2->gltexture;
 		});
 	}
 }

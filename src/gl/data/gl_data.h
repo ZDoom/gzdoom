@@ -17,9 +17,4 @@ inline	int getExtraLight()
 	return r_viewpoint.extralight * gl_weaponlight;
 }
 
-
-struct GLSectorStackPortal;
-
-extern TArray<uint8_t> currentmapsection;
-
 #endif

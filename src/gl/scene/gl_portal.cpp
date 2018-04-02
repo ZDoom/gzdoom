@@ -579,20 +579,22 @@ GLPortal * GLPortal::FindPortal(const void * src)
 
 //-----------------------------------------------------------------------------
 //
-// 
+// Save/RestoreMapSection
+//
+// saves CurrentMapSection for a recursive call of SceneDrawer::DrawScene
 //
 //-----------------------------------------------------------------------------
 
 void GLPortal::SaveMapSection()
 {
-	savedmapsection.Resize(currentmapsection.Size());
-	memcpy(&savedmapsection[0], &currentmapsection[0], currentmapsection.Size());
-	memset(&currentmapsection[0], 0, currentmapsection.Size());
+	SavedMapSection = std::move(drawer->CurrentMapSections);
+	drawer->CurrentMapSections.Resize(SavedMapSection.Size());
+	drawer->CurrentMapSections.Zero();
 }
 
 void GLPortal::RestoreMapSection()
 {
-	memcpy(&currentmapsection[0], &savedmapsection[0], currentmapsection.Size());
+	drawer->CurrentMapSections = std::move(SavedMapSection);
 }
 
 //-----------------------------------------------------------------------------
@@ -650,7 +652,7 @@ void GLSkyboxPortal::DrawContents()
 	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
 
 	SaveMapSection();
-	currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
+	drawer->CurrentMapSections.Set(mapsection);
 
 	drawer->DrawScene(DM_SKYPORTAL);
 	portal->mFlags &= ~PORTSF_INSKYBOX;
@@ -732,7 +734,7 @@ void GLSectorStackPortal::SetupCoverage()
 		for(int j=0;j<sub->portalcoverage[plane].sscount; j++)
 		{
 			subsector_t *dsub = &::level.subsectors[sub->portalcoverage[plane].subsectors[j]];
-			currentmapsection[dsub->mapsection>>3] |= 1 << (dsub->mapsection&7);
+			drawer->CurrentMapSections.Set(dsub->mapsection);
 			gl_drawinfo->ss_renderflags[dsub->Index()] |= SSRF_SEEN;
 		}
 	}
@@ -1055,8 +1057,7 @@ void GLLineToLinePortal::DrawContents()
 		if (line->sidedef[0]->Flags & WALLF_POLYOBJ) 
 			sub = R_PointInSubsector(line->v1->fixX(), line->v1->fixY());
 		else sub = line->frontsector->subsectors[0];
-		int mapsection = sub->mapsection;
-		currentmapsection[mapsection >> 3] |= 1 << (mapsection & 7);
+		drawer->CurrentMapSections.Set(sub->mapsection);
 	}
 
 	GLRenderer->mViewActor = nullptr;

@@ -423,7 +423,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 	if (!sector) return;
 
 	// If the mapsections differ this subsector can't possibly be visible from the current view point
-	if (!(currentmapsection[sub->mapsection>>3] & (1 << (sub->mapsection & 7)))) return;
+	if (!CurrentMapSections[sub->mapsection]) return;
 	if (sub->flags & SSECF_POLYORG) return;	// never render polyobject origin subsectors because their vertices no longer are where one may expect.
 
 	if (gl_drawinfo->ss_renderflags[sub->Index()] & SSRF_SEEN)

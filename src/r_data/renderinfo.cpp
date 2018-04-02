@@ -21,8 +21,8 @@
 //
 /*
 ** gl_setup.cpp
-** Initializes the data structures required by the GL renderer to handle
-** a level
+** Initializes the data structures required by the hardware renderer to handle
+** render hacks and optimization.
 **
 **/
 
@@ -41,13 +41,6 @@
 #include "p_setup.h"
 #include "g_level.h"
 #include "g_levellocals.h"
-
-#include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
-#include "gl/utility/gl_clock.h"
 
 //==========================================================================
 //
@@ -208,7 +201,7 @@ struct MapSectionGenerator
 		}
 		while (set);
 		num = MergeMapSections(num);
-		currentmapsection.Resize(1 + num/8);
+		level.NumMapSections = num;
 	#ifdef DEBUG
 		Printf("%d map sections found\n", num);
 	#endif
@@ -544,7 +537,7 @@ static void PrepareSegs()
 //
 //==========================================================================
 
-void gl_PreprocessLevel()
+void InitRenderInfo()
 {
 	PrepareSegs();
 	PrepareSectorData();
@@ -580,11 +573,6 @@ void gl_PreprocessLevel()
 		}
 	}
 	delete[] checkmap;
-
-	if (GLRenderer != NULL) 
-	{
-		GLRenderer->SetupLevel();
-	}
 
 #if 0
 	gl_CreateSections();

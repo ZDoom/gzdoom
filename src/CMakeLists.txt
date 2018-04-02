@@ -1043,7 +1043,6 @@ set (PCH_SOURCES
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
 	gl/compatibility/gl_20.cpp
-	gl/data/gl_setup.cpp
 	gl/data/gl_vertexbuffer.cpp
 	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_lightbuffer.cpp
@@ -1150,6 +1149,7 @@ set (PCH_SOURCES
 	r_data/sprites.cpp
 	r_data/portalgroups.cpp
 	r_data/voxels.cpp
+	r_data/renderinfo.cpp
 	r_data/renderstyle.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_vanillatrans.cpp

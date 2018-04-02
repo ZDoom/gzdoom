@@ -721,7 +721,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	}
 
 	// If this thing is in a map section that's not in view it can't possibly be visible
-	if (!thruportal && !(currentmapsection[thing->subsector->mapsection >> 3] & (1 << (thing->subsector->mapsection & 7)))) return;
+	if (!thruportal && !mDrawer->CurrentMapSections[thing->subsector->mapsection]) return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(r_viewpoint.TicFrac);

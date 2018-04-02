@@ -45,6 +45,7 @@ public:
 	Clipper clipper;
 	int		FixedColormap;
 	area_t	in_area;
+	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
 
 	angle_t FrustumAngle();
 	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
@@ -71,7 +72,7 @@ public:
 	void DrawPSprite(player_t * player, DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
 	void DrawTargeterSprites();
-
+	
 	void InitClipper(angle_t a1, angle_t a2)
 	{
 		clipper.Clear();

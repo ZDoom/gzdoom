@@ -136,7 +136,6 @@ void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *
 		node = node->nextLight;
 	}
 	gl_RenderState.SetDynLight(out[0], out[1], out[2]);
-	modellightindex = -1;
 }
 
 void gl_SetDynSpriteLight(AActor *thing, particle_t *particle)
@@ -202,7 +201,6 @@ int gl_SetDynModelLight(AActor *self, int dynlightindex)
 	if (gl.lightmethod == LM_DEFERRED && dynlightindex != -1)
 	{
 		gl_RenderState.SetDynLight(0, 0, 0);
-		modellightindex = dynlightindex;
 		return dynlightindex;
 	}
 
@@ -260,7 +258,6 @@ int gl_SetDynModelLight(AActor *self, int dynlightindex)
 	if (gl.lightmethod != LM_DEFERRED)
 	{
 		gl_RenderState.SetDynLight(0, 0, 0);
-		modellightindex = dynlightindex;
 	}
 	return dynlightindex;
 }

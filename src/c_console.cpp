@@ -1000,8 +1000,6 @@ void FNotifyBuffer::Draw()
 
 	lineadv = SmallFont->GetHeight ();
 
-	BorderTopRefresh = screen->GetPageCount ();
-
 	for (unsigned i = 0; i < Text.Size(); ++ i)
 	{
 		FNotifyText &notify = Text[i];
@@ -1086,14 +1084,6 @@ void C_DrawConsole ()
 	else
 	{
 		offset = -ConFont->GetHeight();
-	}
-
-	if ((ConBottom < oldbottom) &&
-		(gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL) &&
-		(viewwindowx || viewwindowy) &&
-		viewactive)
-	{
-		V_SetBorderNeedRefresh();
 	}
 
 	oldbottom = ConBottom;

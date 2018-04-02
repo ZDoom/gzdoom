@@ -325,9 +325,6 @@ public:
 	// Converse of SetFlash
 	virtual void GetFlash (PalEntry &rgb, int &amount) = 0;
 
-	// Returns the number of video pages the frame buffer is using.
-	virtual int GetPageCount () = 0;
-
 	// Returns true if running fullscreen.
 	virtual bool IsFullscreen () = 0;
 
@@ -431,7 +428,6 @@ public:
 	void DrawFrame(int left, int top, int width, int height);
 	void DrawBorder(int x1, int y1, int x2, int y2);
 	void DrawViewBorder();
-	void DrawTopBorder();
 	void RefreshViewBorder();
 
 	// Calculate gamma table
@@ -492,9 +488,6 @@ FString V_GetColorStringByName (const char *name, FScriptPosition *sc = nullptr)
 // Tries to get color by name, then by string
 int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc = nullptr);
 int V_GetColor(const uint32_t *palette, FScanner &sc);
-
-// If the view size is not full screen, draws a border around it.
-void V_SetBorderNeedRefresh();
 
 int CheckRatio (int width, int height, int *trueratio=NULL);
 static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }

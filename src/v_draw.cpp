@@ -1219,23 +1219,6 @@ void DFrameBuffer::FlatFill(int left, int top, int right, int bottom, FTexture *
 
 //==========================================================================
 //
-// V_SetBorderNeedRefresh
-//
-// Flag the border as in need of updating. (Probably because something that
-// was on top of it has changed.
-//
-//==========================================================================
-
-void V_SetBorderNeedRefresh()
-{
-	if (screen != NULL)
-	{
-		BorderNeedRefresh = screen->GetPageCount();
-	}
-}
-
-//==========================================================================
-//
 // V_DrawFrame
 //
 // Draw a frame around the specified area using the view border
@@ -1321,9 +1304,6 @@ void DFrameBuffer::DrawBorder (int x1, int y1, int x2, int y2)
 //
 //==========================================================================
 
-int BorderNeedRefresh;
-
-
 void DFrameBuffer::DrawViewBorder (void)
 {
 	if (viewwidth == Width)
@@ -1341,49 +1321,6 @@ void DFrameBuffer::DrawViewBorder (void)
 
 //==========================================================================
 //
-// R_DrawTopBorder
-//
-// Draws the top border around the view for different size windows
-//
-//==========================================================================
-
-void DFrameBuffer::DrawTopBorder ()
-{
-	FTexture *p;
-	int offset;
-
-	if (viewwidth == Width)
-		return;
-
-	offset = gameinfo.Border.offset;
-
-	if (viewwindowy < 34)
-	{
-		DrawBorder (0, 0, viewwindowx, 34);
-		DrawBorder (viewwindowx, 0, viewwindowx + viewwidth, viewwindowy);
-		DrawBorder (viewwindowx + viewwidth, 0, Width, 34);
-		p = TexMan(gameinfo.Border.t);
-		FlatFill(viewwindowx, viewwindowy - p->GetHeight(), viewwindowx + viewwidth, viewwindowy, p, true);
-
-		p = TexMan(gameinfo.Border.l);
-		FlatFill(viewwindowx - p->GetWidth(), viewwindowy, viewwindowx, 35, p, true);
-		p = TexMan(gameinfo.Border.r);
-		FlatFill(viewwindowx + viewwidth, viewwindowy, viewwindowx + viewwidth + p->GetWidth(), 35, p, true);
-
-		p = TexMan(gameinfo.Border.tl);
-		DrawTexture (p, viewwindowx - offset, viewwindowy - offset, TAG_DONE);
-
-		p = TexMan(gameinfo.Border.tr);
-		DrawTexture (p, viewwindowx + viewwidth, viewwindowy - offset, TAG_DONE);
-	}
-	else
-	{
-		DrawBorder (0, 0, Width, 34);
-	}
-}
-
-//==========================================================================
-//
 // R_RefreshViewBorder
 //
 // Draws the border around the player view, if needed.
@@ -1394,20 +1331,7 @@ void DFrameBuffer::RefreshViewBorder ()
 {
 	if (setblocks < 10)
 	{
-		if (BorderNeedRefresh)
-		{
-			BorderNeedRefresh--;
-			if (BorderTopRefresh)
-			{
-				BorderTopRefresh--;
-			}
-			DrawViewBorder();
-		}
-		else if (BorderTopRefresh)
-		{
-			BorderTopRefresh--;
-			DrawTopBorder();
-		}
+		DrawViewBorder();
 	}
 }
 

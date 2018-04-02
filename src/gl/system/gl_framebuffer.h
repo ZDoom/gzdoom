@@ -44,7 +44,6 @@ public:
 	PalEntry *GetPalette ();
 	bool SetFlash(PalEntry rgb, int amount);
 	void GetFlash(PalEntry &rgb, int &amount);
-	int GetPageCount();
 	bool Begin2D(bool copy3d);
 	void GameRestart();
 

@@ -274,8 +274,6 @@ void CT_Drawer (void)
 		screen->DrawText (SmallFont, CR_GREY, promptwidth, y, (char *)(ChatQueue + i), 
 			DTA_VirtualWidth, screen_width, DTA_VirtualHeight, screen_height, DTA_KeepRatio, true, TAG_DONE);
 		ChatQueue[len] = '\0';
-
-		BorderTopRefresh = screen->GetPageCount ();
 	}
 
 	if (players[consoleplayer].camera != NULL &&

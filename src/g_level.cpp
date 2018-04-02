@@ -523,7 +523,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	demoplayback = false;
 	automapactive = false;
 	viewactive = true;
-	V_SetBorderNeedRefresh();
 
 	//Added by MC: Initialize bots.
 	if (!deathmatch)

@@ -834,7 +834,6 @@ void M_Drawer (void)
 		if (!CurrentMenu->DontDim)
 		{
 			M_Dim();
-			V_SetBorderNeedRefresh();
 		}
 		CurrentMenu->CallDrawer();
 	}
@@ -855,7 +854,6 @@ void M_ClearMenus()
 		CurrentMenu->Destroy();
 		CurrentMenu = parent;
 	}
-	V_SetBorderNeedRefresh();
 	menuactive = MENU_Off;
 }
 

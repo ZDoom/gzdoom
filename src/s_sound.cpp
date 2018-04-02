@@ -297,7 +297,6 @@ void S_NoiseDebug (void)
 		}
 		chan = (FSoundChan *)((size_t)chan->PrevChan - myoffsetof(FSoundChan, NextChan));
 	}
-	V_SetBorderNeedRefresh();
 }
 
 static FString LastLocalSndInfo;

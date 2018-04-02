@@ -1017,7 +1017,6 @@ void DBaseStatusBar::Draw (EHudState state)
 			VMValue params[] = { (DObject*)this };
 			VMCall(func, params, countof(params), nullptr, 0);
 		}
-		V_SetBorderNeedRefresh();
 	}
 
 	if (viewactive)
@@ -1258,7 +1257,6 @@ void DBaseStatusBar::DrawConsistancy () const
 		screen->DrawText (SmallFont, CR_GREEN, 
 			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
 			0, conbuff, DTA_CleanNoMove, true, TAG_DONE);
-		BorderTopRefresh = screen->GetPageCount ();
 	}
 }
 
@@ -1291,7 +1289,6 @@ void DBaseStatusBar::DrawWaiting () const
 		screen->DrawText (SmallFont, CR_ORANGE, 
 			(screen->GetWidth() - SmallFont->StringWidth (conbuff)*CleanXfac) / 2,
 			SmallFont->GetHeight()*CleanYfac, conbuff, DTA_CleanNoMove, true, TAG_DONE);
-		BorderTopRefresh = screen->GetPageCount ();
 	}
 }
 

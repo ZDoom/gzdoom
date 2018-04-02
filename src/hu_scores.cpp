@@ -184,7 +184,6 @@ void HU_DrawScores (player_t *player)
 
 	HU_DoDrawScores (player, sortedplayers);
 
-	V_SetBorderNeedRefresh();
 }
 
 //==========================================================================

@@ -738,8 +738,6 @@ void D_Display ()
 	}
 	setmodeneeded = false;
 
-	V_SetBorderNeedRefresh();
-
 	// [RH] Allow temporarily disabling wipes
 	if (NoWipe)
 	{
@@ -810,7 +808,6 @@ void D_Display ()
 			Renderer->RenderView(&players[consoleplayer]);
 
 			screen->Begin2D(viewactive);
-			V_SetBorderNeedRefresh();
 			Renderer->DrawRemainingPlayerSprites();
 			screen->DrawBlendingRect();
 			if (automapactive)
@@ -1311,7 +1308,6 @@ void D_DoAdvanceDemo (void)
 		Advisory = NULL;
 		if (!M_DemoNoPlay)
 		{
-			V_SetBorderNeedRefresh();
 			democount++;
 			mysnprintf (demoname + 4, countof(demoname) - 4, "%d", democount);
 			if (Wads.CheckNumForName (demoname) < 0)

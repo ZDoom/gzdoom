@@ -133,7 +133,6 @@ public:
 	bool SetGamma(float gamma) { Gamma = gamma; return true; }
 	bool SetFlash(PalEntry rgb, int amount) { DBGBREAK; return false; }
 	void GetFlash(PalEntry &rgb, int &amount) { DBGBREAK; }
-	int GetPageCount() { DBGBREAK; return 0; }
 	bool IsFullscreen() { DBGBREAK; return 0; }
 
 	float Gamma;
@@ -1252,7 +1251,6 @@ void V_Init2()
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();
-	V_SetBorderNeedRefresh();
 	setsizeneeded = true;
 }
 

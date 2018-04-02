@@ -2412,7 +2412,6 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 				paused = player + 1;
 				S_PauseSound (false, false);
 			}
-			V_SetBorderNeedRefresh();
 		}
 		break;
 

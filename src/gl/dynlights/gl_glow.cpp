@@ -48,11 +48,11 @@ int gl_CheckSpriteGlow(sector_t *sector, int lightlevel, const DVector3 &pos)
 		FTexture *tex = TexMan[sector->GetTexture(sector_t::floor)];
 		if (tex != NULL && tex->isGlowing())
 		{
-			if (!tex->gl_info.bAutoGlowing) tex = TexMan(sector->GetTexture(sector_t::floor));
+			if (!tex->bAutoGlowing) tex = TexMan(sector->GetTexture(sector_t::floor));
 			if (tex->isGlowing())	// recheck the current animation frame.
 			{
 				tex->GetGlowColor(bottomglowcolor);
-				bottomglowcolor[3] = (float)tex->gl_info.GlowHeight;
+				bottomglowcolor[3] = (float)tex->GlowHeight;
 			}
 		}
 	}
@@ -93,12 +93,12 @@ bool gl_GetWallGlow(sector_t *sector, float *topglowcolor, float *bottomglowcolo
 		FTexture *tex = TexMan[sector->GetTexture(sector_t::ceiling)];
 		if (tex != NULL && tex->isGlowing())
 		{
-			if (!tex->gl_info.bAutoGlowing) tex = TexMan(sector->GetTexture(sector_t::ceiling));
+			if (!tex->bAutoGlowing) tex = TexMan(sector->GetTexture(sector_t::ceiling));
 			if (tex->isGlowing())	// recheck the current animation frame.
 			{
 				ret = true;
 				tex->GetGlowColor(topglowcolor);
-				topglowcolor[3] = (float)tex->gl_info.GlowHeight;
+				topglowcolor[3] = (float)tex->GlowHeight;
 			}
 		}
 	}
@@ -117,12 +117,12 @@ bool gl_GetWallGlow(sector_t *sector, float *topglowcolor, float *bottomglowcolo
 		FTexture *tex = TexMan[sector->GetTexture(sector_t::floor)];
 		if (tex != NULL && tex->isGlowing())
 		{
-			if (!tex->gl_info.bAutoGlowing) tex = TexMan(sector->GetTexture(sector_t::floor));
+			if (!tex->bAutoGlowing) tex = TexMan(sector->GetTexture(sector_t::floor));
 			if (tex->isGlowing())	// recheck the current animation frame.
 			{
 				ret = true;
 				tex->GetGlowColor(bottomglowcolor);
-				bottomglowcolor[3] = (float)tex->gl_info.GlowHeight;
+				bottomglowcolor[3] = (float)tex->GlowHeight;
 			}
 		}
 	}

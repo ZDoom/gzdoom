@@ -519,7 +519,7 @@ void GLSkyPortal::DrawContents()
 	drawer->SetupView(0, 0, 0, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
-	if (origin->texture[0] && origin->texture[0]->tex->gl_info.bSkybox)
+	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
 	{
 		RenderBox(origin->skytexno1, origin->texture[0], origin->x_offset[0], origin->sky2);
 	}

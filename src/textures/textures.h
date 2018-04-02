@@ -256,6 +256,11 @@ public:
 	uint8_t bFullNameTexture : 1;
 	uint8_t bBrightmapChecked : 1;				// Set to 1 if brightmap has been checked
 	uint8_t bGlowing : 1;						// Texture glow color
+	uint8_t bAutoGlowing : 1;					// Glow info is determined from texture image.
+	uint8_t bFullbright : 1;					// always draw fullbright
+	uint8_t bDisableFullbright : 1;				// This texture will not be displayed as fullbright sprite
+	uint8_t bSkybox : 1;						// is a cubic skybox
+	uint8_t bNoCompress : 1;
 	int8_t bTranslucent : 2;
 	bool bHiresHasColorKey = false;				// Support for old color-keyed Doomsday textures
 
@@ -263,8 +268,14 @@ public:
 	int16_t SkyOffset;
 	FloatRect *areas = nullptr;
 	int areacount = 0;
+	int GlowHeight = 128;
 	PalEntry GlowColor = 0;
 	int HiresLump = -1;							// For external hires textures.
+	float Glossiness = 10.f;
+	float SpecularLevel = 0.1f;
+	float shaderspeed = 1.f;
+	int shaderindex = 0;
+
 
 
 	struct Span
@@ -468,29 +479,17 @@ public:
 
 	struct MiscGLInfo
 	{
-		FMaterial *Material[2];
-		FGLTexture *SystemTexture[2];
-		float Glossiness;
-		float SpecularLevel;
-		int GlowHeight;
-		int shaderindex;
-		float shaderspeed;
-		bool bAutoGlowing : 1;					// Glow info is determined from texture image.
-		bool bFullbright:1;						// always draw fullbright
-		bool bSkybox:1;							// This is a skybox
-		bool bDisableFullbright:1;				// This texture will not be displayed as fullbright sprite
-		bool bNoFilter:1;
-		bool bNoCompress:1;
-		bool bNoExpand:1;
+		FMaterial *Material[2] = { nullptr, nullptr };
+		FGLTexture *SystemTexture[2] = { nullptr, nullptr };
+		bool bNoExpand = false;
 
-		MiscGLInfo() throw ();
 		~MiscGLInfo();
 	};
 	MiscGLInfo gl_info;
 
 	void GetGlowColor(float *data);
 	bool isGlowing() { return bGlowing; }
-	bool isFullbright() { return gl_info.bFullbright; }
+	bool isFullbright() { return bFullbright; }
 	void CreateDefaultBrightmap();
 	bool FindHoles(const unsigned char * buffer, int w, int h);
 	static bool SmoothEdges(unsigned char * buffer,int w, int h);

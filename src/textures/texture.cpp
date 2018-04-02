@@ -184,6 +184,11 @@ FTexture::FTexture (const char *name, int lumpnum)
 {
 	bBrightmapChecked = false;
 	bGlowing = false;
+	bAutoGlowing = false;
+	bFullbright = false;
+	bDisableFullbright = false;
+	bSkybox = false;
+	bNoCompress = false;
 	bTranslucent = -1;
 
 

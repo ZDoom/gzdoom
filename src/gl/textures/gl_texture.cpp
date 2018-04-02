@@ -123,17 +123,7 @@ int TexFormat[]={
 
 FTexture::MiscGLInfo::MiscGLInfo() throw()
 {
-	GlowHeight = 128;
-	bSkybox = false;
-	bFullbright = false;
-	bDisableFullbright = false;
-	bNoFilter = false;
-	bNoCompress = false;
 	bNoExpand = false;
-	shaderspeed = 1.f;
-	shaderindex = 0;
-	Glossiness = 10.0f;
-	SpecularLevel = 0.1f;
 
 	Material[1] = Material[0] = NULL;
 	SystemTexture[1] = SystemTexture[0] = NULL;
@@ -222,7 +212,7 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		if (texhitlist[i] & (FTextureManager::HIT_Sky | FTextureManager::HIT_Wall))
 		{
 			FTexture *tex = TexMan.ByIndex(i);
-			if (tex->gl_info.bSkybox)
+			if (tex->bSkybox)
 			{
 				FSkyBox *sb = static_cast<FSkyBox*>(tex);
 				for (int i = 0; i<6; i++)

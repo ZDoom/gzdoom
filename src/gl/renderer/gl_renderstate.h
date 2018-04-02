@@ -158,8 +158,8 @@ public:
 			mTempTM = TM_MODULATE;
 		}
 		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
-		mShaderTimer = mat->tex->gl_info.shaderspeed;
-		SetSpecular(mat->tex->gl_info.Glossiness, mat->tex->gl_info.SpecularLevel);
+		mShaderTimer = mat->tex->shaderspeed;
+		SetSpecular(mat->tex->Glossiness, mat->tex->SpecularLevel);
 		mat->Bind(clampmode, translation);
 	}
 

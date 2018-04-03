@@ -98,13 +98,6 @@ CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 	}
 }
 
-// Software OpenGL canvas
-CUSTOM_CVAR(Bool, vid_glswfb, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if ((self ? 1 : 0) != currentcanvas)
-		Printf("You must restart " GAMENAME " for this change to take effect.\n");
-}
-
 // [ZDoomGL]
 CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -195,15 +188,11 @@ static void I_DeleteRenderer()
 void I_CreateRenderer()
 {
 	currentrenderer = vid_renderer;
-	currentcanvas = vid_glswfb;
 	if (currentrenderer == 1)
 		Printf("Renderer: OpenGL\n");
-	else if (currentcanvas == 1)
-		Printf("Renderer: Software on OpenGL\n");
-	else if (currentcanvas == 0)
-		Printf("Renderer: Software on Direct3D\n");
 	else
-		Printf("Renderer: Unknown\n");
+		Printf("Renderer: Software on OpenGL\n");
+
 	if (Renderer == NULL)
 	{
 		if (currentrenderer==1) Renderer = gl_CreateInterface();

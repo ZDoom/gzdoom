@@ -37,8 +37,6 @@ struct FRenderer
 	// draws player sprites with hardware acceleration (only useful for software rendering)
 	virtual void DrawRemainingPlayerSprites() {}
 
-	virtual int GetMaxViewPitch(bool down) = 0;	// return value is in plain degrees
-
 	virtual void OnModeSet () {}
 	virtual void SetClearColor(int color) = 0;
 	virtual void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov) = 0;

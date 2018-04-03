@@ -1005,7 +1005,6 @@ struct FGLInterface : public FRenderer
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, double fov) override;
 	void PreprocessLevel() override;
 
-	int GetMaxViewPitch(bool down) override;
 	void SetClearColor(int color) override;
 	uint32_t GetCaps() override;
 };
@@ -1020,19 +1019,6 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
 {	
 	gl_PrecacheTexture(texhitlist, actorhitlist);
-}
-
-//===========================================================================
-//
-// Get max. view angle (renderer specific information so it goes here now)
-//
-//===========================================================================
-
-EXTERN_CVAR(Float, maxviewpitch)
-
-int FGLInterface::GetMaxViewPitch(bool down)
-{
-	return int(maxviewpitch);
 }
 
 //===========================================================================

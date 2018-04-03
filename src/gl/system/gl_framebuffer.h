@@ -39,13 +39,16 @@ public:
 	bool SetContrast(float contrast);
 	void DoSetGamma();
 
-	void UpdatePalette();
-	void GetFlashedPalette (PalEntry pal[256]);
-	PalEntry *GetPalette ();
-	bool SetFlash(PalEntry rgb, int amount);
-	void GetFlash(PalEntry &rgb, int &amount);
-	bool Begin2D(bool copy3d);
-	void GameRestart();
+	void UpdatePalette() override;
+	void GetFlashedPalette (PalEntry pal[256]) override;
+	PalEntry *GetPalette () override;
+	bool SetFlash(PalEntry rgb, int amount) override;
+	void GetFlash(PalEntry &rgb, int &amount) override;
+	bool Begin2D(bool copy3d) override;
+	void GameRestart() override;
+	void InitForLevel() override;
+	void SetClearColor(int color) override;
+	uint32_t GetCaps() override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer

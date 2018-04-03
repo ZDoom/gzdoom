@@ -90,10 +90,11 @@ FRenderer *CreateSWRenderer()
 	return new FSoftwareRenderer;
 }
 
+EXTERN_CVAR(Bool, swtruecolor)
 
 void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 {
-	bool isbgra = screen->IsBgra();
+	bool isbgra = swtruecolor;
 
 	if (tex != NULL)
 	{
@@ -329,7 +330,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	r_viewwindow = cameraViewwindow;
 }
 
-void FSoftwareRenderer::PreprocessLevel()
+void FSoftwareRenderer::SetColormap()
 {
 	// This just sets the default colormap for the spftware renderer.
 	NormalLight.Maps = realcolormaps.Maps;
@@ -341,23 +342,3 @@ void FSoftwareRenderer::PreprocessLevel()
 	}
 }
 
-uint32_t FSoftwareRenderer::GetCaps()
-{
-	ActorRenderFeatureFlags FlagSet = 0;
-
-	if (r_polyrenderer)
-		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH | RFF_SLOPE3DFLOORS;
-	else
-	{
-		FlagSet |= RFF_UNCLIPPEDTEX;
-		if (r_drawvoxels)
-			FlagSet |= RFF_VOXELS;
-	}
-
-	if (screen && screen->IsBgra())
-		FlagSet |= RFF_TRUECOLOR;
-	else
-		FlagSet |= RFF_COLORMAP;
-
-	return (uint32_t)FlagSet;
-}

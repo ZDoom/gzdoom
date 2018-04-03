@@ -680,7 +680,7 @@ void D_Display ()
 	cycles.Clock();
 
 	r_UseVanillaTransparency = UseVanillaTransparency(); // [SP] Cache UseVanillaTransparency() call
-	r_renderercaps = Renderer->GetCaps(); // [SP] Get the current capabilities of the renderer
+	r_renderercaps = screen->GetCaps(); // [SP] Get the current capabilities of the renderer
 
 	if (players[consoleplayer].camera == NULL)
 	{
@@ -808,8 +808,9 @@ void D_Display ()
 			Renderer->RenderView(&players[consoleplayer]);
 
 			screen->Begin2D(viewactive);
-			Renderer->DrawRemainingPlayerSprites();
-			screen->DrawBlendingRect();
+			// todo: These need to go into RenderView.
+			//Renderer->DrawRemainingPlayerSprites();
+			//screen->DrawBlendingRect();
 			if (automapactive)
 			{
 				AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());

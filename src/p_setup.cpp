@@ -4128,9 +4128,9 @@ void P_SetupLevel (const char *lumpname, int position)
 	}
 
 	// This must be done BEFORE the PolyObj Spawn!!!
-	InitRenderInfo();
-	Renderer->PreprocessLevel();
-	SWRenderer->PreprocessLevel();
+	InitRenderInfo();			// create hardware independent renderer resources for the level.
+	screen->InitForLevel();		// create hardware dependent level resources (e.g. the vertex buffer)
+	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
 	InitPortalGroups();
 
 	times[16].Clock();

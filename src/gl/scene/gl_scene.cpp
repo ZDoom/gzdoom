@@ -1003,10 +1003,6 @@ struct FGLInterface : public FRenderer
 	void RenderView(player_t *player) override;
 	void WriteSavePic (player_t *player, FileWriter *file, int width, int height) override;
 	void RenderTextureView (FCanvasTexture *self, AActor *viewpoint, double fov) override;
-	void PreprocessLevel() override;
-
-	void SetClearColor(int color) override;
-	uint32_t GetCaps() override;
 };
 
 //==========================================================================
@@ -1019,20 +1015,6 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 void FGLInterface::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist)
 {	
 	gl_PrecacheTexture(texhitlist, actorhitlist);
-}
-
-//===========================================================================
-//
-// 
-//
-//===========================================================================
-
-void FGLInterface::SetClearColor(int color)
-{
-	PalEntry pe = GPalette.BaseColors[color];
-	GLRenderer->mSceneClearColor[0] = pe.r / 255.f;
-	GLRenderer->mSceneClearColor[1] = pe.g / 255.f;
-	GLRenderer->mSceneClearColor[2] = pe.b / 255.f;
 }
 
 //===========================================================================
@@ -1110,44 +1092,6 @@ void FGLInterface::RenderTextureView (FCanvasTexture *tex, AActor *Viewpoint, do
 	camtexcount++;
 }
 
-//===========================================================================
-//
-// 
-//
-//===========================================================================
-void FGLInterface::PreprocessLevel() 
-{
-	if (GLRenderer != NULL) 
-	{
-		GLRenderer->SetupLevel();
-	}
-}
-
-uint32_t FGLInterface::GetCaps()
-{
-	// describe our basic feature set
-	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
-		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL;
-	if (r_drawvoxels)
-		FlagSet |= RFF_VOXELS;
-	if (gl_legacy_mode)
-	{
-		// legacy mode always has truecolor because palette tonemap is not available
-		FlagSet |= RFF_TRUECOLOR;
-	}
-	else if (!(FGLRenderBuffers::IsEnabled()))
-	{
-		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
-		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;
-	}
-	else
-	{
-		if (gl_tonemap != 5) // not running palette tonemap shader
-			FlagSet |= RFF_TRUECOLOR;
-		FlagSet |= RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
-	}
-	return (uint32_t)FlagSet;
-}
 //===========================================================================
 //
 // 

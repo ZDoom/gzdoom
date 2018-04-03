@@ -40,6 +40,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/textures/gl_hwtexture.h"
@@ -189,6 +190,43 @@ void OpenGLFrameBuffer::Update()
 	GLRenderer->SetOutputViewport(nullptr);
 }
 
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+EXTERN_CVAR(Bool, r_drawvoxels)
+EXTERN_CVAR(Int, gl_tonemap)
+extern int currentrenderer;
+
+uint32_t OpenGLFrameBuffer::GetCaps()
+{
+	if (currentrenderer == 0) return Super::GetCaps();
+
+	// describe our basic feature set
+	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
+		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL;
+	if (r_drawvoxels)
+		FlagSet |= RFF_VOXELS;
+	if (gl.legacyMode)
+	{
+		// legacy mode always has truecolor because palette tonemap is not available
+		FlagSet |= RFF_TRUECOLOR;
+	}
+	else if (!(FGLRenderBuffers::IsEnabled()))
+	{
+		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
+		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;
+	}
+	else
+	{
+		if (gl_tonemap != 5) // not running palette tonemap shader
+			FlagSet |= RFF_TRUECOLOR;
+		FlagSet |= RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
+	}
+	return (uint32_t)FlagSet;
+}
 
 //==========================================================================
 //
@@ -328,6 +366,29 @@ void OpenGLFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
 	rgb.a = 0;
 	amount = Flash.a;
 }
+
+void OpenGLFrameBuffer::InitForLevel()
+{
+	if (GLRenderer != NULL)
+	{
+		GLRenderer->SetupLevel();
+	}
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+void OpenGLFrameBuffer::SetClearColor(int color)
+{
+	PalEntry pe = GPalette.BaseColors[color];
+	GLRenderer->mSceneClearColor[0] = pe.r / 255.f;
+	GLRenderer->mSceneClearColor[1] = pe.g / 255.f;
+	GLRenderer->mSceneClearColor[2] = pe.b / 255.f;
+}
+
 
 //==========================================================================
 //

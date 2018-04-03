@@ -25,6 +25,7 @@ struct FSoftwareRenderer : public FRenderer
 	void RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov) override;
 
 	void SetColormap() override;
+	void Init() override;
 
 private:
 	void PrecacheTexture(FTexture *tex, int cache);

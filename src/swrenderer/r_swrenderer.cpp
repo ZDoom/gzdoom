@@ -52,6 +52,8 @@
 #include "p_setup.h"
 #include "g_levellocals.h"
 
+extern int currentrenderer;
+
 // [BB] Use ZDoom's freelook limit for the sotfware renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.
 CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -80,6 +82,10 @@ CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOI
 using namespace swrenderer;
 
 FSoftwareRenderer::FSoftwareRenderer()
+{
+}
+
+void FSoftwareRenderer::Init()
 {
 	R_InitShadeMaps();
 	InitSWColorMaps();
@@ -240,7 +246,9 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 
 void FSoftwareRenderer::OnModeSet ()
 {
-	mScene.ScreenResized();
+	// This does not work if the SW renderer is not in use.
+	if (currentrenderer == 0)
+		mScene.ScreenResized();
 }
 
 void FSoftwareRenderer::SetClearColor(int color)

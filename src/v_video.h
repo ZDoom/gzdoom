@@ -55,6 +55,7 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 
 class FTexture;
 struct FColormap;
+class FileWriter;
 enum FTextureFormat : uint32_t;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
@@ -357,6 +358,9 @@ public:
 	virtual void InitForLevel() {}
 	virtual void SetClearColor(int color) {}
 	virtual uint32_t GetCaps();
+	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
+	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height) {}
+	virtual void RenderView(player_t *player) {}
 
 	// Screen wiping
 	virtual bool WipeStartScreen(int type);

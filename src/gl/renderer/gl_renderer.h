@@ -171,8 +171,6 @@ public:
 	void FlushTextures();
 	void SetupLevel();
 
-	void RenderView(player_t* player);
-
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
 	void AmbientOccludeScene();
@@ -190,6 +188,9 @@ public:
 	void Flush();
 	void GetSpecialTextures();
 	void Draw2D(F2DDrawer *data);
+	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
+	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
+	void RenderView(player_t *player);
 
 
 	bool StartOffscreen();

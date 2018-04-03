@@ -195,10 +195,53 @@ void OpenGLFrameBuffer::Update()
 // 
 //
 //===========================================================================
+extern int currentrenderer;
+
+void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
+{
+	if (currentrenderer == 0)
+		Super::RenderTextureView(tex, Viewpoint, FOV);
+	else if (GLRenderer != nullptr)
+	{
+		GLRenderer->RenderTextureView(tex, Viewpoint, FOV);
+		camtexcount++;
+	}
+}
+
+//===========================================================================
+//
+// Render the view to a savegame picture
+//
+//===========================================================================
+
+void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+{
+	if (GLRenderer != nullptr)
+		GLRenderer->WriteSavePic(player, file, width, height);
+}
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
+
+void OpenGLFrameBuffer::RenderView(player_t *player)
+{
+	if (GLRenderer != nullptr)
+		GLRenderer->RenderView(player);
+}
+
+
+
+//===========================================================================
+//
+// 
+//
+//===========================================================================
 
 EXTERN_CVAR(Bool, r_drawvoxels)
 EXTERN_CVAR(Int, gl_tonemap)
-extern int currentrenderer;
 
 uint32_t OpenGLFrameBuffer::GetCaps()
 {
@@ -235,7 +278,6 @@ uint32_t OpenGLFrameBuffer::GetCaps()
 //==========================================================================
 
 CVAR(Bool, gl_finishbeforeswap, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-extern int camtexcount;
 
 void OpenGLFrameBuffer::Swap()
 {

@@ -65,7 +65,6 @@ IVideo *Video;
 
 // do not include GL headers here, only declare the necessary functions.
 IVideo *gl_CreateVideo();
-FRenderer *gl_CreateInterface();
 
 void I_RestartRenderer();
 int currentrenderer = -1;

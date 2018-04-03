@@ -2247,7 +2247,7 @@ static void PutSavePic (FileWriter *file, int width, int height)
 	}
 	else
 	{
-		Renderer->WriteSavePic(&players[consoleplayer], file, width, height);
+		screen->WriteSavePic(&players[consoleplayer], file, width, height);
 	}
 }
 

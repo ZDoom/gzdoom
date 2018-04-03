@@ -35,6 +35,10 @@
 #include "w_wad.h"
 #include "vectors.h"
 #include "doomstat.h"
+#include "i_time.h"
+#include "p_effect.h"
+#include "d_player.h"
+#include "a_dynlight.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -46,6 +50,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_ambientshader.h"
@@ -69,8 +74,10 @@
 #include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
+EXTERN_CVAR(Bool, cl_capfps)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
+extern bool NoInterpolateView;
 
 //===========================================================================
 // 
@@ -410,6 +417,122 @@ void FGLRenderer::EndOffscreen()
 {
 	glBindFramebuffer(GL_FRAMEBUFFER, mOldFBID); 
 }
+
+//-----------------------------------------------------------------------------
+//
+// renders the view
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::RenderView(player_t* player)
+{
+	// Todo: This needs to call the software renderer and process the returned image, if so desired.
+	checkBenchActive();
+
+	gl_RenderState.SetVertexBuffer(mVBO);
+	mVBO->Reset();
+
+	// reset statistics counters
+	ResetProfilingData();
+
+	// Get this before everything else
+	if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
+	else r_viewpoint.TicFrac = I_GetTimeFrac();
+
+	P_FindParticleSubsectors();
+
+	if (!gl.legacyMode) mLights->Clear();
+
+	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
+	bool saved_niv = NoInterpolateView;
+	NoInterpolateView = false;
+	// prepare all camera textures that have been used in the last frame
+	FCanvasTextureInfo::UpdateAll();
+	NoInterpolateView = saved_niv;
+
+
+	// now render the main view
+	float fovratio;
+	float ratio = r_viewwindow.WidescreenRatio;
+	if (r_viewwindow.WidescreenRatio >= 1.3f)
+	{
+		fovratio = 1.333333f;
+	}
+	else
+	{
+		fovratio = ratio;
+	}
+	GLSceneDrawer drawer;
+
+	drawer.SetFixedColormap(player);
+
+	// Check if there's some lights. If not some code can be skipped.
+	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+	mLightCount = ((it.Next()) != NULL);
+
+	mShadowMap.Update();
+	sector_t * viewsector = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+
+	All.Unclock();
+}
+
+//===========================================================================
+//
+// Camera texture rendering
+//
+//===========================================================================
+
+void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
+{
+	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
+
+	int width = gltex->TextureWidth();
+	int height = gltex->TextureHeight();
+
+	if (gl.legacyMode)
+	{
+		// In legacy mode, fail if the requested texture is too large.
+		if (gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight()) return;
+		glFlush();
+	}
+	else
+	{
+		StartOffscreen();
+		gltex->BindToFrameBuffer();
+	}
+
+	GL_IRECT bounds;
+	bounds.left = bounds.top = 0;
+	bounds.width = FHardwareTexture::GetTexDimension(gltex->GetWidth());
+	bounds.height = FHardwareTexture::GetTexDimension(gltex->GetHeight());
+
+	GLSceneDrawer drawer;
+	drawer.FixedColormap = CM_DEFAULT;
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
+
+	if (gl.legacyMode)
+	{
+		glFlush();
+		gl_RenderState.SetMaterial(gltex, 0, 0, -1, false);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
+	}
+	else
+	{
+		EndOffscreen();
+	}
+
+	tex->SetUpdated();
+}
+
+void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+{
+	// Todo: This needs to call the software renderer and process the returned image, if so desired.
+	// This also needs to take out parts of the scene drawer so they can be shared between renderers.
+	GLSceneDrawer drawer;
+	drawer.WriteSavePic(player, file, width, height);
+}
+
 
 //===========================================================================
 // 

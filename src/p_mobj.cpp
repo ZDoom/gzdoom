@@ -741,10 +741,7 @@ bool AActor::SetState (FState *newstate, bool nofunction)
 		newstate = newstate->GetNextState();
 	} while (tics == 0);
 
-	if (Renderer != NULL)
-	{
-		SetDynamicLights();
-	}
+	SetDynamicLights();
 	return true;
 }
 

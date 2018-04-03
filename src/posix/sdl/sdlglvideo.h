@@ -9,9 +9,6 @@
 EXTERN_CVAR (Float, dimamount)
 EXTERN_CVAR (Color, dimcolor)
 
-struct FRenderer;
-FRenderer *gl_CreateInterface();
-
 class SDLGLVideo : public IVideo
 {
  public:

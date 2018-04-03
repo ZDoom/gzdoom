@@ -49,6 +49,9 @@ public:
 	void InitForLevel() override;
 	void SetClearColor(int color) override;
 	uint32_t GetCaps() override;
+	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV) override;
+	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
+	void RenderView(player_t *player) override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
@@ -76,6 +79,7 @@ private:
 	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
 	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
 	uint8_t *ScreenshotBuffer;			// What the name says. This must be maintained because the software renderer can return a locked canvas surface which the caller cannot release.
+	int camtexcount = 0;
 
 	class Wiper
 	{

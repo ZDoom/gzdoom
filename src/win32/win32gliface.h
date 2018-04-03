@@ -20,7 +20,6 @@ EXTERN_CVAR(Int, vid_adapter);
 extern IVideo *Video;
 
 struct FRenderer;
-FRenderer *gl_CreateInterface();
 
 
 

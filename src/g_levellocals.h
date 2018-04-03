@@ -86,6 +86,7 @@ struct FLevelLocals
 	TArray<FSectorPortal> sectorPortals;
 	TArray<FLinePortal> linePortals;
 
+	// Portal information.
 	FDisplacementTable Displacements;
 	FPortalBlockmap PortalBlockmap;
 	TArray<FLinePortal*> linkedPortals;	// only the linked portals, this is used to speed up looking for them in P_CollectConnectedGroups.

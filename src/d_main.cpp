@@ -2276,6 +2276,39 @@ static void CheckCmdLine()
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+extern int currentrenderer;
+EXTERN_CVAR(Int, vid_renderer)
+FRenderer *gl_CreateInterface();
+FRenderer *CreateSWRenderer();
+
+static void DeleteRenderer()
+{
+	if (Renderer != NULL) delete Renderer;
+	if (SWRenderer != NULL) delete SWRenderer;
+}
+
+void D_CreateRenderer()
+{
+	currentrenderer = vid_renderer;
+	if (currentrenderer == 1)
+		Printf("Renderer: OpenGL\n");
+	else
+		Printf("Renderer: Software on OpenGL\n");
+
+	if (Renderer == NULL)
+	{
+		Renderer = gl_CreateInterface();
+		SWRenderer = CreateSWRenderer();
+		atterm(DeleteRenderer);
+	}
+}
+
+//==========================================================================
+//
 // D_DoomMain
 //
 //==========================================================================
@@ -2458,7 +2491,7 @@ void D_DoomMain (void)
 		{
 			if (!batchrun) Printf ("I_Init: Setting up machine state.\n");
 			I_Init ();
-			I_CreateRenderer();
+			D_CreateRenderer();
 		}
 
 		if (!batchrun) Printf ("V_Init: allocate screen.\n");

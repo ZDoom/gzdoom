@@ -5,6 +5,8 @@
 
 struct FRenderer;
 extern FRenderer *Renderer;
+extern FRenderer *SWRenderer;
+
 class FSerializer;
 class FTexture;
 class AActor;
@@ -15,16 +17,6 @@ class FileWriter;
 
 struct FRenderer
 {
-	FRenderer()
-	{
-		Renderer = this;
-	}
-
-	virtual ~FRenderer()
-	{
-		Renderer = NULL;
-	}
-
 	// precache one texture
 	virtual void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
 

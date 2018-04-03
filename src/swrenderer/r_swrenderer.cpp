@@ -85,9 +85,11 @@ FSoftwareRenderer::FSoftwareRenderer()
 	InitSWColorMaps();
 }
 
-FSoftwareRenderer::~FSoftwareRenderer()
+FRenderer *CreateSWRenderer()
 {
+	return new FSoftwareRenderer;
 }
+
 
 void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 {

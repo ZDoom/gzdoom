@@ -1868,10 +1868,6 @@ OptionMenu RendererMenu protected
 	Option "$RNDMNU_RENDERER",	"vid_renderer", "PolyDoom"
 	Option "$RNDMNU_TRUECOLOR",	"swtruecolor", "OnOff"
 	Option "$RNDMNU_POLY",		"r_polyrenderer", "OnOff"
-	IfOption(Windows)
-	{
-		Option "$RNDMNU_CANVAS",	"vid_glswfb", "GLD3D"
-	}
 }
 
 /*=======================================

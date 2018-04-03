@@ -36,9 +36,6 @@ extern int sys_ostype;
 #include "version.h"
 #include "v_video.h"
 
-#ifdef _WIN32
-EXTERN_CVAR(Bool, vid_glswfb)
-#endif
 extern int currentrenderer;
 CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
@@ -254,20 +251,10 @@ static int GetCoreInfo()
 
 static int GetRenderInfo()
 {
-	if (currentrenderer == 0)
-	{
-#ifdef _WIN32
-		if (vid_glswfb) return 2;
-#endif
-		return 1;
-	}
-	else
-	{
-		auto info = gl_getInfo();
-		if (info.first < 3.3) return 3;	// Legacy OpenGL. Don't care about Intel HD 3000 on Windows being run in 'risky' mode.
-		if (!info.second) return 4;
-		return 5;
-	}
+	auto info = gl_getInfo();
+	if (info.first < 3.3) return 3;	// Legacy OpenGL. Don't care about Intel HD 3000 on Windows being run in 'risky' mode.
+	if (!info.second) return 4;
+	return 5;
 }
 
 static void D_DoHTTPRequest(const char *request)

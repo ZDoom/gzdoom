@@ -7,7 +7,6 @@
 struct FSoftwareRenderer : public FRenderer
 {
 	FSoftwareRenderer();
-	~FSoftwareRenderer();
 
 	// precache textures
 	void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) override;
@@ -34,3 +33,5 @@ private:
 
 	swrenderer::RenderScene mScene;
 };
+
+FRenderer *CreateSWRenderer();

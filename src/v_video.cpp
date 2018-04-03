@@ -109,6 +109,7 @@ EXTERN_CVAR(Bool, r_blendmethod)
 int active_con_scale();
 
 FRenderer *Renderer;
+FRenderer *SWRenderer;
 
 EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Bool, fullscreen)

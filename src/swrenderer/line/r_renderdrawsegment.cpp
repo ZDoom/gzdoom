@@ -264,27 +264,39 @@ namespace swrenderer
 			WallC.sx1 = ds->sx1;
 			WallC.sx2 = ds->sx2;
 
-			double top, bot;
-			GetMaskedWallTopBottom(ds, top, bot);
-			top -= Thread->Viewport->viewpoint.Pos.Z;
-			bot -= Thread->Viewport->viewpoint.Pos.Z;
+			// Unclipped vanilla Doom range for the wall. Relies on ceiling/floor clip to clamp the wall in range.
+			double ceilZ = textop;
+			double floorZ = textop - texheight;
 
+			// The 3D Floors implementation destroys the ceiling clip when doing its height passes..
+			if (m3DFloor.clipTop || m3DFloor.clipBottom)
+			{
+				// Use the actual correct wall range for the midtexture.
+				// This doesn't work for self-referenced sectors, which is why we only do it if we have 3D floors.
+
+				double top, bot;
+				GetMaskedWallTopBottom(ds, top, bot);
+				top -= Thread->Viewport->viewpoint.Pos.Z;
+				bot -= Thread->Viewport->viewpoint.Pos.Z;
+
+				ceilZ = MIN(ceilZ, top);
+				floorZ = MAX(floorZ, bot);
+			}
+
+			// Clip wall by the current 3D floor render range.
 			if (m3DFloor.clipTop)
 			{
-				wallupper.Project(Thread->Viewport.get(), textop < m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z ? textop : m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z, &WallC);
-			}
-			else
-			{
-				wallupper.Project(Thread->Viewport.get(), MIN(textop, top), &WallC);
+				double clipZ = m3DFloor.sclipTop - Thread->Viewport->viewpoint.Pos.Z;
+				ceilZ = MIN(ceilZ, clipZ);
 			}
 			if (m3DFloor.clipBottom)
 			{
-				walllower.Project(Thread->Viewport.get(), textop - texheight > m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z ? textop - texheight : m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z, &WallC);
+				double clipZ = m3DFloor.sclipBottom - Thread->Viewport->viewpoint.Pos.Z;
+				floorZ = MAX(floorZ, clipZ);
 			}
-			else
-			{
-				walllower.Project(Thread->Viewport.get(), MAX(textop - texheight, bot), &WallC);
-			}
+
+			wallupper.Project(Thread->Viewport.get(), ceilZ, &WallC);
+			walllower.Project(Thread->Viewport.get(), floorZ, &WallC);
 
 			for (int i = x1; i < x2; i++)
 			{

@@ -36,6 +36,7 @@
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "events.h"
+#include "gi.h"
 
 static FRandom pr_lightning ("Lightning");
 
@@ -205,6 +206,32 @@ static DLightningThinker *LocateLightning ()
 
 void P_StartLightning ()
 {
+	const bool isOriginalHexen = (gameinfo.gametype == GAME_Hexen)
+		&& (level.flags2 & LEVEL2_HEXENHACK);
+
+	if (isOriginalHexen)
+	{
+		bool hasLightning = false;
+
+		for (const sector_t &sector : level.sectors)
+		{
+			hasLightning = sector.GetTexture(sector_t::ceiling) == skyflatnum
+				|| sector.special == Light_IndoorLightning1
+				|| sector.special == Light_IndoorLightning2;
+
+			if (hasLightning)
+			{
+				break;
+			}
+		}
+
+		if (!hasLightning)
+		{
+			level.flags &= ~LEVEL_STARTLIGHTNING;
+			return;
+		}
+	}
+
 	DLightningThinker *lightning = LocateLightning ();
 	if (lightning == NULL)
 	{

@@ -34,7 +34,6 @@ public:
 	{
 		DTF_Wrap = 1,
 		DTF_Scissor = 2,
-		//DTF_SpecialColormap = 4,
 	};
 
 

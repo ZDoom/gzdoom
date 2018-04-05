@@ -51,6 +51,7 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
+#include "gl/scene/gl_swscene.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_ambientshader.h"
@@ -75,6 +76,8 @@
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Float, underwater_fade_scalar)
+EXTERN_CVAR(Bool, swtruecolor)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 extern bool NoInterpolateView;
@@ -206,6 +209,7 @@ FGLRenderer::~FGLRenderer()
 		glBindVertexArray(0);
 		glDeleteVertexArrays(1, &mVAOID);
 	}
+	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
 	if (mLinearDepthShader) delete mLinearDepthShader;
@@ -423,55 +427,63 @@ void FGLRenderer::EndOffscreen()
 // renders the view
 //
 //-----------------------------------------------------------------------------
+extern int currentrenderer;
 
 void FGLRenderer::RenderView(player_t* player)
 {
-	// Todo: This needs to call the software renderer and process the returned image, if so desired.
-	checkBenchActive();
-
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mVBO->Reset();
 
-	// reset statistics counters
-	ResetProfilingData();
-
-	// Get this before everything else
-	if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
-	else r_viewpoint.TicFrac = I_GetTimeFrac();
-
-	P_FindParticleSubsectors();
-
-	if (!gl.legacyMode) mLights->Clear();
-
-	// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
-	bool saved_niv = NoInterpolateView;
-	NoInterpolateView = false;
-	// prepare all camera textures that have been used in the last frame
-	FCanvasTextureInfo::UpdateAll();
-	NoInterpolateView = saved_niv;
-
-
-	// now render the main view
-	float fovratio;
-	float ratio = r_viewwindow.WidescreenRatio;
-	if (r_viewwindow.WidescreenRatio >= 1.3f)
+	if (currentrenderer == 0)
 	{
-		fovratio = 1.333333f;
+		if (swdrawer == nullptr) swdrawer = new SWSceneDrawer;
+		swdrawer->RenderView(player);
 	}
 	else
 	{
-		fovratio = ratio;
+		checkBenchActive();
+
+		// reset statistics counters
+		ResetProfilingData();
+
+		// Get this before everything else
+		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
+		else r_viewpoint.TicFrac = I_GetTimeFrac();
+
+		P_FindParticleSubsectors();
+
+		if (!gl.legacyMode) mLights->Clear();
+
+		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
+		bool saved_niv = NoInterpolateView;
+		NoInterpolateView = false;
+		// prepare all camera textures that have been used in the last frame
+		FCanvasTextureInfo::UpdateAll();
+		NoInterpolateView = saved_niv;
+
+
+		// now render the main view
+		float fovratio;
+		float ratio = r_viewwindow.WidescreenRatio;
+		if (r_viewwindow.WidescreenRatio >= 1.3f)
+		{
+			fovratio = 1.333333f;
+		}
+		else
+		{
+			fovratio = ratio;
+		}
+		// Check if there's some lights. If not some code can be skipped.
+		TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+		mLightCount = ((it.Next()) != NULL);
+
+		GLSceneDrawer drawer;
+
+		drawer.SetFixedColormap(player);
+
+		mShadowMap.Update();
+		sector_t * viewsector = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
-	GLSceneDrawer drawer;
-
-	drawer.SetFixedColormap(player);
-
-	// Check if there's some lights. If not some code can be skipped.
-	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	mLightCount = ((it.Next()) != NULL);
-
-	mShadowMap.Update();
-	sector_t * viewsector = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 
 	All.Unclock();
 }
@@ -531,6 +543,127 @@ void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, in
 	// This also needs to take out parts of the scene drawer so they can be shared between renderers.
 	GLSceneDrawer drawer;
 	drawer.WriteSavePic(player, file, width, height);
+}
+
+
+void gl_FillScreen()
+{
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.Apply();
+	// The fullscreen quad is stored at index 4 in the main vertex buffer.
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
+}
+
+//==========================================================================
+//
+// Draws a blend over the entire view
+//
+//==========================================================================
+void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap)
+{
+	float blend[4] = { 0,0,0,0 };
+	PalEntry blendv = 0;
+	float extra_red;
+	float extra_green;
+	float extra_blue;
+	player_t *player = NULL;
+
+	if (players[consoleplayer].camera != NULL)
+	{
+		player = players[consoleplayer].camera->player;
+	}
+
+	// don't draw sector based blends when an invulnerability colormap is active
+	if (!FixedColormap)
+	{
+		if (!viewsector->e->XFloor.ffloors.Size())
+		{
+			if (viewsector->heightsec && !(viewsector->MoreFlags&SECF_IGNOREHEIGHTSEC))
+			{
+				auto s = viewsector->heightsec;
+				blendv = s->floorplane.PointOnSide(r_viewpoint.Pos) < 0? s->bottommap : s->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->topmap : s->midmap;
+			}
+		}
+		else
+		{
+			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
+
+			for (unsigned int i = 0; i < lightlist.Size(); i++)
+			{
+				double lightbottom;
+				if (i < lightlist.Size() - 1)
+					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
+				else
+					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
+
+				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
+				{
+					// 3d floor 'fog' is rendered as a blending value
+					blendv = lightlist[i].blend;
+					// If this is the same as the sector's it doesn't apply!
+					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
+					// a little hack to make this work for Legacy maps.
+					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
+					break;
+				}
+			}
+		}
+
+		if (blendv.a == 0 && docolormap)
+		{
+			blendv = R_BlendForColormap(blendv);
+		}
+
+		if (blendv.a == 255)
+		{
+
+			extra_red = blendv.r / 255.0f;
+			extra_green = blendv.g / 255.0f;
+			extra_blue = blendv.b / 255.0f;
+
+			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
+			blendv = 0;
+
+			// black multiplicative blends are ignored
+			if (extra_red || extra_green || extra_blue)
+			{
+				gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
+				gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
+				gl_FillScreen();
+			}
+		}
+		else if (blendv.a)
+		{
+			// [Nash] allow user to set blend intensity
+			int cnt = blendv.a;
+			cnt = (int)(cnt * underwater_fade_scalar);
+
+			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
+		}
+	}
+
+	if (player)
+	{
+		V_AddPlayerBlend(player, blend, 0.5, 175);
+	}
+
+	if (players[consoleplayer].camera != NULL)
+	{
+		// except for fadeto effects
+		player_t *player = (players[consoleplayer].camera->player != NULL) ? players[consoleplayer].camera->player : &players[consoleplayer];
+		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
+	}
+
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	if (blend[3]>0.0f)
+	{
+		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
+		gl_FillScreen();
+	}
+	gl_RenderState.ResetColor();
+	gl_RenderState.EnableTexture(true);
 }
 
 
@@ -690,6 +823,11 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				gl_RenderState.mTextureMatrix.translate(0.f, 1.f, 0.0f);
 				gl_RenderState.EnableTextureMatrix(true);
 			}
+			if (cmd.mTexture->UseType == ETextureType::SWCanvas)
+			{
+				//gl_RenderState.SetTextureMode(swtruecolor ? 0 : 1);
+				//gl_RenderState.SetEffect(EFF_SWQUAD);
+			}
 		}
 		else
 		{
@@ -717,6 +855,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			break;
 
 		}
+		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.EnableTextureMatrix(false);
 	}
 	glDisable(GL_SCISSOR_TEST);

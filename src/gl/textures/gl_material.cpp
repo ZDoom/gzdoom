@@ -75,6 +75,22 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 
 //===========================================================================
 //
+// Constructor 2 for the SW framebuffer which provides its own hardware texture.
+//
+//===========================================================================
+FGLTexture::FGLTexture(FTexture * tx, FHardwareTexture *hwtex)
+{
+	assert(tx->gl_info.SystemTexture[0] == NULL);
+	tex = tx;
+
+	mHwTexture = hwtex;
+	lastSampler = 254;
+	lastTranslation = -1;
+	tex->gl_info.SystemTexture[0] = this;
+}
+
+//===========================================================================
+//
 // Destructor
 //
 //===========================================================================
@@ -82,6 +98,7 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 FGLTexture::~FGLTexture()
 {
 	Clean(true);
+	for (auto & i : tex->gl_info.SystemTexture) if (i == this) i = nullptr;
 }
 
 //===========================================================================
@@ -174,7 +191,7 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			int w=0, h=0;
 
 			// Create this texture
-			unsigned char * buffer = NULL;
+			unsigned char * buffer = nullptr;
 			
 			if (!tex->bHasCanvas)
 			{

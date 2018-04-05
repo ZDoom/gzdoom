@@ -64,6 +64,7 @@ void PeekThreadedErrorPane();
 #endif
 
 EXTERN_CVAR(Int, r_clearbuffer)
+EXTERN_CVAR(Bool, swtruecolor)
 
 CVAR(Bool, r_scene_multithreaded, false, 0);
 CVAR(Bool, r_models, false, 0);
@@ -87,44 +88,38 @@ namespace swrenderer
 		clearcolor = color;
 	}
 
-	void RenderScene::RenderView(player_t *player)
+	void RenderScene::RenderView(player_t *player, DCanvas *target)
 	{
-		if (screen->LockCanvas())
+		auto viewport = MainThread()->Viewport.get();
+		viewport->RenderTarget = target;
+
+		int width = SCREENWIDTH;
+		int height = SCREENHEIGHT;
+		float trueratio;
+		ActiveRatio(width, height, &trueratio);
+		viewport->SetViewport(MainThread(), width, height, trueratio);
+
+		if (r_clearbuffer != 0)
 		{
-			auto viewport = MainThread()->Viewport.get();
-			viewport->RenderTarget = screen->GetCanvas();
-
-			int width = SCREENWIDTH;
-			int height = SCREENHEIGHT;
-			float trueratio;
-			ActiveRatio(width, height, &trueratio);
-			viewport->SetViewport(MainThread(), width, height, trueratio);
-
-			if (r_clearbuffer != 0)
+			if (!viewport->RenderTarget->IsBgra())
 			{
-				if (!viewport->RenderTarget->IsBgra())
-				{
-					memset(viewport->RenderTarget->GetPixels(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
-				}
-				else
-				{
-					uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
-					int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
-					uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
-					for (int i = 0; i < size; i++)
-						dest[i] = bgracolor;
-				}
+				memset(viewport->RenderTarget->GetPixels(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
 			}
-
-			RenderActorView(player->mo);
-
-			DrawerWaitCycles.Clock();
-			DrawerThreads::WaitForWorkers();
-			DrawerWaitCycles.Unclock();
-
-			screen->UnlockCanvas();
+			else
+			{
+				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
+				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
+				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
+				for (int i = 0; i < size; i++)
+					dest[i] = bgracolor;
+			}
 		}
 
+		RenderActorView(player->mo);
+
+		DrawerWaitCycles.Clock();
+		DrawerThreads::WaitForWorkers();
+		DrawerWaitCycles.Unclock();
 	}
 
 	void RenderScene::RenderActorView(AActor *actor, bool dontmaplines)
@@ -367,15 +362,18 @@ namespace swrenderer
 		viewactive = savedviewactive;
 	}
 
+
 	void RenderScene::ScreenResized()
 	{
 		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen->GetCanvas();
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
+		viewport->RenderTarget = new DCanvas(width, height, swtruecolor);	// Some code deeper down needs something valid here, so give it a dummy canvas.
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
+		delete viewport->RenderTarget;
+		viewport->RenderTarget = nullptr;
 	}
 
 	void RenderScene::Deinit()

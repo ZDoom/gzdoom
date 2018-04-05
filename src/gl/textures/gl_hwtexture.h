@@ -66,6 +66,8 @@ private:
 	TranslatedTexture glDefTex;
 	TArray<TranslatedTexture> glTex_Translated;
 	unsigned int glDepthID;	// only used by camera textures
+	unsigned int glBufferID = 0;
+	int glTextureBytes = 4;
 
 	TranslatedTexture * GetTexID(int translation);
 
@@ -82,6 +84,9 @@ public:
 	void BindToFrameBuffer();
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
+	void AllocateBuffer(int w, int h, int texelsize);
+	uint8_t *MapBuffer();
+
 	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name);
 	unsigned int GetTextureHandle(int translation);
 

@@ -45,7 +45,7 @@ struct FTexCoordInfo
 
 //===========================================================================
 // 
-// this is the texture maintenance class for OpenGL. 
+// device independent wrapper around the hardware texture and its sampler state
 //
 //===========================================================================
 class FMaterial;
@@ -68,10 +68,12 @@ private:
 	
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
+	FGLTexture(FTexture * tx, FHardwareTexture *hwtex);	// for the SW framebuffer
 	~FGLTexture();
 
 	void Clean(bool all);
 	void CleanUnused(SpriteHits &usedtranslations);
+	bool isInitialized() const { return mHwTexture != nullptr; }
 };
 
 //===========================================================================
@@ -124,6 +126,12 @@ public:
 	void SetSpriteRect();
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
+	void AddTextureLayer(FTexture *tex)
+	{
+		FTextureLayer layer = { tex, false };
+		ValidateTexture(tex, false);
+		mTextureLayers.Push(layer);
+	}
 	bool isMasked() const
 	{
 		return !!mBaseLayer->tex->bMasked;

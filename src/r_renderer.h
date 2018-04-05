@@ -13,6 +13,7 @@ class player_t;
 struct sector_t;
 class FCanvasTexture;
 class FileWriter;
+class DCanvas;
 
 struct FRenderer
 {
@@ -22,7 +23,7 @@ struct FRenderer
 	virtual void Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist) = 0;
 
 	// render 3D view
-	virtual void RenderView(player_t *player) = 0;
+	virtual void RenderView(player_t *player, DCanvas *target) = 0;
 
 	// renders view to a savegame picture
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height) = 0;

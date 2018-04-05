@@ -201,6 +201,7 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 {
 	if (currentrenderer == 0)
 		Super::RenderTextureView(tex, Viewpoint, FOV);
+
 	else if (GLRenderer != nullptr)
 	{
 		GLRenderer->RenderTextureView(tex, Viewpoint, FOV);
@@ -216,6 +217,9 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 
 void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
 {
+	if (currentrenderer == 0)
+		Super::WriteSavePic(player, file, width, height);
+
 	if (GLRenderer != nullptr)
 		GLRenderer->WriteSavePic(player, file, width, height);
 }

@@ -794,23 +794,11 @@ void D_Display ()
 				break;
 			}
 
-			if (StatusBar != NULL)
-			{
-				float blend[4] = { 0, 0, 0, 0 };
-				StatusBar->BlendView (blend);
-			}
-			screen->SetBlendingRect(viewwindowx, viewwindowy,
-				viewwindowx + viewwidth, viewwindowy + viewheight);
-
 			// [ZZ] execute event hook that we just started the frame
 			//E_RenderFrame();
 			//
 			screen->RenderView(&players[consoleplayer]);
-
-			screen->Begin2D(viewactive);
-			// todo: These need to go into RenderView.
-			//Renderer->DrawRemainingPlayerSprites();
-			//screen->DrawBlendingRect();
+			// returns with 2S mode set.
 			if (automapactive)
 			{
 				AM_Drawer (hud_althud? viewheight : StatusBar->GetTopOfStatusbar());

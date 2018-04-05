@@ -208,7 +208,7 @@ static bool currentModelMatrixState;
 
 void FRenderState::ApplyFixedFunction()
 {
-	int thistm = mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
+	int thistm = mTextureMode == TM_MODULATE && (mTempTM == TM_OPAQUE || mSpecialEffect == EFF_SWQUAD) ? TM_OPAQUE : mTextureMode;
 	if (thistm != ffTextureMode)
 	{
 		ffTextureMode = thistm;

@@ -965,6 +965,12 @@ void DFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, dou
 	SWRenderer->RenderTextureView(tex, Viewpoint, FOV);
 }
 
+void DFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+{
+	SWRenderer->WriteSavePic(player, file, width, height);
+}
+
+
 CCMD(clean)
 {
 	Printf ("CleanXfac: %d\nCleanYfac: %d\n", CleanXfac, CleanYfac);

@@ -49,7 +49,7 @@ namespace swrenderer
 
 		void SetClearColor(int color);
 		
-		void RenderView(player_t *player);
+		void RenderView(player_t *player, DCanvas *target);
 		void RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines = false);
 	
 		bool DontMapLines() const { return dontmaplines; }

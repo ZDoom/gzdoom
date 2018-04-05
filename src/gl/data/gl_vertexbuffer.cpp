@@ -169,9 +169,9 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 
 	// and the second one for the fullscreen quad used for blend overlays.
 	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
-	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 0);
-	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
-	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
+	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
+	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
+	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
 
 	// and this is for the postprocessing copy operation
 	vbo_shadowdata[8].Set(-1.0f, -1.0f, 0, 0.0f, 0.0f);
@@ -217,10 +217,10 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 void FFlatVertexBuffer::OutputResized(int width, int height)
 {
 	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
-	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 0);
-	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
-	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
-	
+	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
+	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
+	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
+
 	Map();
 	memcpy(&map[4], &vbo_shadowdata[4], 4 * sizeof(FFlatVertex));
 	Unmap();

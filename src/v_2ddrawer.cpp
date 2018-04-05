@@ -307,7 +307,6 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	AddCommand(&dg);
 }
 
-
 //==========================================================================
 //
 //

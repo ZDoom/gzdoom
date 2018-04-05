@@ -226,18 +226,12 @@ public:
 
 	bool SetBuffer(int width, int height, int pitch, uint8_t *buffer)
 	{
-		if (PixelBuffer == nullptr)
-		{
-			Width = width;
-			Height = height;
-			Pitch = pitch;
-			PixelBuffer = buffer;
-			return true;
-		}
-		else
-		{
-			return false;
-		}
+		assert(buffer);
+		Width = width;
+		Height = height;
+		Pitch = pitch;
+		PixelBuffer = buffer;
+		return true;
 	}
 
 
@@ -339,10 +333,6 @@ public:
 
 	virtual bool LegacyHardware() const { return false; }	// only for reporting SM1.4 support to the stat collector
 
-	// For FrameBuffers with a software canvas that requires special preparation before being used.
-	virtual bool LockCanvas() { return true; }
-	virtual void UnlockCanvas() {}
-
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
 	virtual bool Begin2D(bool copy3d);
@@ -359,7 +349,7 @@ public:
 	virtual void SetClearColor(int color) {}
 	virtual uint32_t GetCaps();
 	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
-	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height) {}
+	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	virtual void RenderView(player_t *player) {}
 
 	// Screen wiping

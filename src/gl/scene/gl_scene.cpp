@@ -79,7 +79,6 @@ CVAR(Bool, gl_sort_textures, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR (Bool, cl_capfps)
 EXTERN_CVAR (Bool, r_deathcamera)
-EXTERN_CVAR (Float, underwater_fade_scalar)
 EXTERN_CVAR (Float, r_visibility)
 EXTERN_CVAR (Bool, gl_legacy_mode)
 EXTERN_CVAR (Bool, r_drawvoxels)
@@ -515,138 +514,6 @@ void GLSceneDrawer::DrawScene(int drawmode)
 	RenderTranslucent();
 }
 
-
-void gl_FillScreen()
-{
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply();
-	// The fullscreen quad is stored at index 4 in the main vertex buffer.
-	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
-}
-
-//==========================================================================
-//
-// Draws a blend over the entire view
-//
-//==========================================================================
-void GLSceneDrawer::DrawBlend(sector_t * viewsector)
-{
-	float blend[4]={0,0,0,0};
-	PalEntry blendv=0;
-	float extra_red;
-	float extra_green;
-	float extra_blue;
-	player_t *player = NULL;
-
-	if (players[consoleplayer].camera != NULL)
-	{
-		player=players[consoleplayer].camera->player;
-	}
-
-	// don't draw sector based blends when an invulnerability colormap is active
-	if (!FixedColormap)
-	{
-		if (!viewsector->e->XFloor.ffloors.Size())
-		{
-			if (viewsector->heightsec && !(viewsector->MoreFlags&SECF_IGNOREHEIGHTSEC))
-			{
-				switch (in_area)
-				{
-				default:
-				case area_normal: blendv = viewsector->heightsec->midmap; break;
-				case area_above: blendv = viewsector->heightsec->topmap; break;
-				case area_below: blendv = viewsector->heightsec->bottommap; break;
-				}
-			}
-		}
-		else
-		{
-			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
-
-			for (unsigned int i = 0; i < lightlist.Size(); i++)
-			{
-				double lightbottom;
-				if (i < lightlist.Size() - 1)
-					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
-				else
-					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
-
-				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
-				{
-					// 3d floor 'fog' is rendered as a blending value
-					blendv = lightlist[i].blend;
-					// If this is the same as the sector's it doesn't apply!
-					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
-					// a little hack to make this work for Legacy maps.
-					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
-					break;
-				}
-			}
-		}
-
-		if (blendv.a == 0)
-		{
-			blendv = R_BlendForColormap(blendv);
-		}
-
-		if (blendv.a == 255)
-		{
-
-			extra_red = blendv.r / 255.0f;
-			extra_green = blendv.g / 255.0f;
-			extra_blue = blendv.b / 255.0f;
-
-			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
-			blendv = 0;
-
-			// black multiplicative blends are ignored
-			if (extra_red || extra_green || extra_blue)
-			{
-				gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
-				gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
-				gl_FillScreen();
-			}
-		}
-		else if (blendv.a)
-		{
-			// [Nash] allow user to set blend intensity
-			int cnt = blendv.a;
-			cnt = (int)(cnt * underwater_fade_scalar);
-
-			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
-		}
-	}
-
-	// This mostly duplicates the code in shared_sbar.cpp
-	// When I was writing this the original was called too late so that I
-	// couldn't get the blend in time. However, since then I made some changes
-	// here that would get lost if I switched back so I won't do it.
-
-	if (player)
-	{
-		V_AddPlayerBlend(player, blend, 0.5, 175);
-	}
-	
-	if (players[consoleplayer].camera != NULL)
-	{
-		// except for fadeto effects
-		player_t *player = (players[consoleplayer].camera->player != NULL) ? players[consoleplayer].camera->player : &players[consoleplayer];
-		V_AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
-	}
-
-	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (blend[3]>0.0f)
-	{
-		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
-		gl_FillScreen();
-	}
-	gl_RenderState.ResetColor();
-	gl_RenderState.EnableTexture(true);
-}
-
-
 //-----------------------------------------------------------------------------
 //
 // Draws player sprites and color blend
@@ -784,6 +651,17 @@ void GLSceneDrawer::SetFixedColormap (player_t *player)
 		}
 	}
 	gl_RenderState.SetFixedColormap(FixedColormap);
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void GLSceneDrawer::DrawBlend(sector_t *viewsector)
+{
+	GLRenderer->DrawBlend(viewsector, !!FixedColormap, true);
 }
 
 //-----------------------------------------------------------------------------

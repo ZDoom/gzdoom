@@ -95,10 +95,6 @@ extern int setblocks;
 FTexture *CrosshairImage;
 static int CrosshairNum;
 
-// [RH] Base blending values (for e.g. underwater)
-int BaseBlendR, BaseBlendG, BaseBlendB;
-float BaseBlendA;
-
 CVAR (Int, paletteflash, 0, CVAR_ARCHIVE)
 CVAR (Flag, pf_hexenweaps,	paletteflash, PF_HEXENWEAPONS)
 CVAR (Flag, pf_poison,		paletteflash, PF_POISON)
@@ -1196,26 +1192,6 @@ void DBaseStatusBar::DrawTopStuff (EHudState state)
 	}
 }
 
-//---------------------------------------------------------------------------
-//
-// BlendView
-//
-//---------------------------------------------------------------------------
-
-void DBaseStatusBar::BlendView (float blend[4])
-{
-	// [Nash] Allow user to set blend intensity
-	float cnt = (BaseBlendA * underwater_fade_scalar);
-
-	V_AddBlend (BaseBlendR / 255.f, BaseBlendG / 255.f, BaseBlendB / 255.f, cnt, blend);
-	V_AddPlayerBlend(CPlayer, blend, 1.0f, 228);
-
-	player_t *player = (CPlayer->camera != NULL && CPlayer->camera->player != NULL) ? CPlayer->camera->player : CPlayer;
-	V_AddBlend (player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
-
-	V_SetBlend ((int)(blend[0] * 255.0f), (int)(blend[1] * 255.0f),
-				(int)(blend[2] * 255.0f), (int)(blend[3] * 256.0f));
-}
 
 void DBaseStatusBar::DrawConsistancy () const
 {

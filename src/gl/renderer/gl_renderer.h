@@ -45,6 +45,7 @@ class FHardwareTexture;
 class FShadowMapShader;
 class FCustomPostProcessShaders;
 class GLSceneDrawer;
+class SWSceneDrawer;
 
 inline float DEG2RAD(float deg)
 {
@@ -146,6 +147,7 @@ public:
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
+	SWSceneDrawer *swdrawer = nullptr;
 
 	GL_IRECT mScreenViewport;
 	GL_IRECT mSceneViewport;
@@ -191,6 +193,7 @@ public:
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	void RenderView(player_t *player);
+	void DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap);
 
 
 	bool StartOffscreen();

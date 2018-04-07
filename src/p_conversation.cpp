@@ -232,6 +232,11 @@ bool LoadScriptFile (const char *name, bool include, int type)
 
 	if (!found)
 	{
+		if (type == 0)
+		{
+			Printf(TEXTCOLOR_RED "Could not find dialog file %s", name);
+		}
+
 		return false;
 	}
 	FileReader lump = Wads.ReopenLumpReader (lumpnum);

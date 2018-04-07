@@ -227,8 +227,10 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 bool LoadScriptFile (const char *name, bool include, int type)
 {
 	int lumpnum = Wads.CheckNumForName (name);
+	const bool found = lumpnum >= 0
+		|| (lumpnum = Wads.CheckNumForFullName (name)) >= 0;
 
-	if (lumpnum < 0)
+	if (!found)
 	{
 		return false;
 	}

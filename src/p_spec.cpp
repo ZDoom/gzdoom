@@ -248,18 +248,20 @@ DEFINE_ACTION_FUNCTION(_Line, Activate)
 	PARAM_POINTER(mo, AActor);
 	PARAM_INT(side);
 	PARAM_INT(activationType);
-	PARAM_FLOAT_DEF(optx);
-	PARAM_FLOAT_DEF(opty);
-	PARAM_FLOAT_DEF(optz);
-	if ( optx == opty == optz == NAN )
-	{
-		ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, NULL));
-	}
-	else
-	{
-		DVector3 optpos = DVector3(optx, opty, optz);
-		ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, &optpos));
-	}
+	ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, NULL));
+}
+
+DEFINE_ACTION_FUNCTION(_Line, RemoteActivate)
+{
+	PARAM_SELF_PROLOGUE(line_t);
+	PARAM_POINTER(mo, AActor);
+	PARAM_INT(side);
+	PARAM_INT(activationType);
+	PARAM_FLOAT(optx);
+	PARAM_FLOAT(opty);
+	PARAM_FLOAT(optz);
+	DVector3 optpos = DVector3(optx, opty, optz);
+	ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, &optpos));
 }
 
 //============================================================================

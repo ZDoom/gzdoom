@@ -156,7 +156,8 @@ struct Line native play
 	native Line getPortalDestination();
 	native int getPortalAlignment();
 	native int Index();
-	native bool Activate(Actor activator, int side, int type, Vector3 pos = (double.nan, double.nan, double.nan));
+	native bool Activate(Actor activator, int side, int type);
+	native bool RemoteActivate(Actor activator, int side, int type, Vector3 pos);
 	
 	int GetUDMFInt(Name nm)
 	{

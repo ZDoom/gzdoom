@@ -104,6 +104,34 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
+int currentrenderer = -1;
+
+// [ZDoomGL]
+CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	// 0: Software renderer
+	// 1: OpenGL renderer
+
+	if (self != currentrenderer)
+	{
+		switch (self)
+		{
+		case 0:
+			Printf("Switching to software renderer...\n");
+			break;
+		case 1:
+			Printf("Switching to OpenGL renderer...\n");
+			break;
+		default:
+			Printf("Unknown renderer (%d).  Falling back to software renderer...\n", (int)vid_renderer);
+			self = 0; // make sure to actually switch to the software renderer
+			break;
+		}
+	}
+	currentrenderer = self;
+}
+
+
 EXTERN_CVAR(Bool, r_blendmethod)
 
 int active_con_scale();

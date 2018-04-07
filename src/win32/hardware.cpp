@@ -67,7 +67,7 @@ IVideo *Video;
 IVideo *gl_CreateVideo();
 
 void I_RestartRenderer();
-int currentrenderer = -1;
+extern int currentrenderer;
 int currentcanvas = -1;
 int currentgpuswitch = -1;
 bool changerenderer;
@@ -97,31 +97,6 @@ CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 	}
 }
 
-// [ZDoomGL]
-CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	// 0: Software renderer
-	// 1: OpenGL renderer
-
-	if (self != currentrenderer)
-	{
-		switch (self)
-		{
-		case 0:
-			Printf("Switching to software renderer...\n");
-			break;
-		case 1:
-			Printf("Switching to OpenGL renderer...\n");
-			break;
-		default:
-			Printf("Unknown renderer (%d).  Falling back to software renderer...\n", *vid_renderer);
-			self = 0; // make sure to actually switch to the software renderer
-			break;
-		}
-		//changerenderer = true;
-		Printf("You must restart " GAMENAME " to switch the renderer\n");
-	}
-}
 
 CCMD (vid_restart)
 {

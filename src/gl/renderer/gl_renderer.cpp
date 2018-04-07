@@ -434,7 +434,7 @@ void FGLRenderer::RenderView(player_t* player)
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mVBO->Reset();
 
-	if (currentrenderer == 0 && 0)
+	if (currentrenderer == 0)
 	{
 		if (swdrawer == nullptr) swdrawer = new SWSceneDrawer;
 		swdrawer->RenderView(player);

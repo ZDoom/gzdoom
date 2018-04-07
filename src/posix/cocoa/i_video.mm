@@ -102,7 +102,7 @@
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
-int currentrenderer;
+extern int currentrenderer;
 
 EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
@@ -137,31 +137,6 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
 
-CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	// 0: Software renderer
-	// 1: OpenGL renderer
-
-	if (self != currentrenderer)
-	{
-		switch (self)
-		{
-			case 0:
-				Printf("Switching to software renderer...\n");
-				break;
-			case 1:
-				Printf("Switching to OpenGL renderer...\n");
-				break;
-			default:
-				Printf("Unknown renderer (%d). Falling back to software renderer...\n",
-					static_cast<int>(vid_renderer));
-				self = 0;
-				break;
-		}
-
-		Printf("You must restart " GAMENAME " to switch the renderer\n");
-	}
-}
 
 EXTERN_CVAR(Bool, gl_smooth_rendered)
 

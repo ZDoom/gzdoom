@@ -586,6 +586,7 @@ static const FDefaultShader defaultshaders[]=
 	{"SpecularBrightmap", "shaders/glsl/func_brightmap.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
 	{"PBR","shaders/glsl/func_normal.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
 	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"Paletted",	"shaders/glsl/func_paletted.fp", "shaders/glsl/material_nolight.fp", ""},
 	{"No Texture", "shaders/glsl/func_notexture.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", "shaders/glsl/material_normal.fp", ""},

@@ -327,7 +327,11 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	}
 	else
 	*/
-	if (tx->bWarped)
+	if (tx->UseType == ETextureType::SWCanvas && tx->WidthBits == 0)
+	{
+		mShaderIndex = SHADER_Paletted;
+	}
+	else if (tx->bWarped)
 	{
 		mShaderIndex = tx->bWarped; // This picks SHADER_Warp1 or SHADER_Warp2
 		tx->shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
@@ -620,6 +624,7 @@ void FMaterial::Bind(int clampmode, int translation)
 	int usebright = false;
 	int maxbound = 0;
 
+	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 

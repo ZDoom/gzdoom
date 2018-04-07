@@ -54,6 +54,7 @@ enum MaterialShaderIndex
 	SHADER_SpecularBrightmap,
 	SHADER_PBR,
 	SHADER_PBRBrightmap,
+	SHADER_Paletted,
 	SHADER_NoTexture,
 	SHADER_BasicFuzz,
 	SHADER_SmoothFuzz,

@@ -84,8 +84,8 @@ CUSTOM_CVAR (Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 			self = 0; // make sure to actually switch to the software renderer
 			break;
 		}
-		Printf("You must restart " GAMENAME " to switch the renderer\n");
 	}
+	currentrenderer = self;
 }
 
 void I_ShutdownGraphics ()

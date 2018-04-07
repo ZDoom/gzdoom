@@ -434,7 +434,7 @@ void FGLRenderer::RenderView(player_t* player)
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mVBO->Reset();
 
-	if (currentrenderer == 0)
+	if (currentrenderer == 0 && 0)
 	{
 		if (swdrawer == nullptr) swdrawer = new SWSceneDrawer;
 		swdrawer->RenderView(player);
@@ -836,11 +836,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 				gl_RenderState.mTextureMatrix.scale(1.f, -1.f, 1.f);
 				gl_RenderState.mTextureMatrix.translate(0.f, 1.f, 0.0f);
 				gl_RenderState.EnableTextureMatrix(true);
-			}
-			if (cmd.mTexture->UseType == ETextureType::SWCanvas)
-			{
-				//gl_RenderState.SetTextureMode(swtruecolor ? 0 : 1);
-				//gl_RenderState.SetEffect(EFF_SWQUAD);
 			}
 		}
 		else

@@ -14,31 +14,6 @@ class FSWSceneTexture;
 
 class SWSceneDrawer
 {
-	enum
-	{
-		PSCONST_SpecialStart,
-		PSCONST_SpecialEnd,
-		PSCONST_Colormap,
-		PSCONST_ScreenSize,
-		NumPSCONST
-	};
-
-	enum
-	{
-		SHADER_Palette,
-		SHADER_Truecolor,
-		SHADER_PaletteCM,
-		SHADER_TruecolorCM,
-		NUM_SHADERS
-	};
-	
-	struct FBVERTEX
-	{
-		float x, y, z;
-		uint32_t color;
-		float tu, tv;
-	};
-	
 	FTexture *PaletteTexture = nullptr;
 	FSWSceneTexture *FBTexture = nullptr;
 	bool FBIsTruecolor = false;

@@ -1223,3 +1223,21 @@ enum ActorRenderFeatureFlag
 	RFF_VOXELS		= 1<<12, // renderer is capable of voxels
 };
 
+// Special activation types
+enum SPAC
+{
+	SPAC_Cross = 1<<0,		// when player crosses line
+	SPAC_Use = 1<<1,		// when player uses line
+	SPAC_MCross = 1<<2,		// when monster crosses line
+	SPAC_Impact = 1<<3,		// when projectile hits line
+	SPAC_Push = 1<<4,		// when player pushes line	
+	SPAC_PCross = 1<<5,		// when projectile crosses line
+	SPAC_UseThrough = 1<<6,	// when player uses line (doesn't block)
+	// SPAC_PTOUCH is mapped to SPAC_PCross|SPAC_Impact
+	SPAC_AnyCross = 1<<7,	// when anything without the MF2_TELEPORT flag crosses the line
+	SPAC_MUse = 1<<8,		// monsters can use
+	SPAC_MPush = 1<<9,		// monsters can push
+	SPAC_UseBack = 1<<10,	// Can be used from the backside
+
+	SPAC_PlayerActivate = (SPAC_Cross|SPAC_Use|SPAC_Impact|SPAC_Push|SPAC_AnyCross|SPAC_UseThrough|SPAC_UseBack),
+};

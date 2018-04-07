@@ -242,6 +242,26 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(_Line, Activate)
+{
+	PARAM_SELF_PROLOGUE(line_t);
+	PARAM_POINTER(mo, AActor);
+	PARAM_INT(side);
+	PARAM_INT(activationType);
+	PARAM_FLOAT_DEF(optx);
+	PARAM_FLOAT_DEF(opty);
+	PARAM_FLOAT_DEF(optz);
+	if ( optx == opty == optz == NAN )
+	{
+		ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, NULL));
+	}
+	else
+	{
+		DVector3 optpos = DVector3(optx, opty, optz);
+		ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, &optpos));
+	}
+}
+
 //============================================================================
 //
 // P_TestActivateLine

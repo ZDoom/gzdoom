@@ -38,7 +38,6 @@
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/r_swcolormaps.h"
-#include "gl/system/gl_swframebuffer.h"
 
 EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, screenblocks)

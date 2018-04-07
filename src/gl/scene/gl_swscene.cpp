@@ -104,7 +104,7 @@ SWSceneDrawer::~SWSceneDrawer()
 void SWSceneDrawer::RenderView(player_t *player)
 {
 	DCanvas buffer(screen->GetWidth(), screen->GetHeight(), swtruecolor);
-	if (FBTexture == nullptr || FBTexture->hwtex == nullptr || FBTexture->GetWidth() != screen->GetWidth() || FBTexture->GetHeight() != screen->GetHeight() || (swtruecolor?4:1) != FBTexture->WidthBits)
+	if (FBTexture == nullptr || FBTexture->hwtex == nullptr || FBTexture->GetWidth() != screen->GetWidth() || FBTexture->GetHeight() != screen->GetHeight() || (swtruecolor? 1:0) != FBTexture->WidthBits)
 	{
 		// This manually constructs its own material here.
 		if (FBTexture != nullptr) delete FBTexture;

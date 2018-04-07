@@ -54,6 +54,20 @@ typedef TArray<void*> FDynArray_Ptr;
 typedef TArray<DObject*> FDynArray_Obj;
 typedef TArray<FString> FDynArray_String;
 
+// The following macros are used to zero initialize items implicitly added to a dynamic array
+// Some function like Insert() and Resize() can append such items during their operation
+// It's more natural for a scripting language to have them initialized
+// This is a must for DObject pointers because of garbage collection
+
+#define PARAM_DYNARRAY_SIZE_PROLOGUE(type) \
+	PARAM_SELF_STRUCT_PROLOGUE(type); \
+	const unsigned oldSize = self->Size();
+
+#define DYNARRAY_FILL_ITEMS_SKIP(skip) \
+	const int fillCount = int(self->Size() - oldSize) - skip; \
+	if (fillCount > 0) memset(&(*self)[oldSize], 0, sizeof(*self)[0] * fillCount);
+
+
 //-----------------------------------------------------
 //
 // Int8 array
@@ -107,10 +121,11 @@ DEFINE_ACTION_FUNCTION(FDynArray_I8, Delete)
 
 DEFINE_ACTION_FUNCTION(FDynArray_I8, Insert)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_I8);
 	PARAM_INT(index);
 	PARAM_INT(val);
 	self->Insert(index, val);
+	DYNARRAY_FILL_ITEMS_SKIP(1);
 	return 0;
 }
 
@@ -131,9 +146,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_I8, Grow)
 
 DEFINE_ACTION_FUNCTION(FDynArray_I8, Resize)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I8);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_I8);
 	PARAM_INT(count);
 	self->Resize(count);
+	DYNARRAY_FILL_ITEMS_SKIP(0);
 	return 0;
 }
 
@@ -210,10 +226,11 @@ DEFINE_ACTION_FUNCTION(FDynArray_I16, Delete)
 
 DEFINE_ACTION_FUNCTION(FDynArray_I16, Insert)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_I16);
 	PARAM_INT(index);
 	PARAM_INT(val);
 	self->Insert(index, val);
+	DYNARRAY_FILL_ITEMS_SKIP(1);
 	return 0;
 }
 
@@ -234,9 +251,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_I16, Grow)
 
 DEFINE_ACTION_FUNCTION(FDynArray_I16, Resize)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I16);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_I16);
 	PARAM_INT(count);
 	self->Resize(count);
+	DYNARRAY_FILL_ITEMS_SKIP(0);
 	return 0;
 }
 
@@ -313,10 +331,11 @@ DEFINE_ACTION_FUNCTION(FDynArray_I32, Delete)
 
 DEFINE_ACTION_FUNCTION(FDynArray_I32, Insert)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_I32);
 	PARAM_INT(index);
 	PARAM_INT(val);
 	self->Insert(index, val);
+	DYNARRAY_FILL_ITEMS_SKIP(1);
 	return 0;
 }
 
@@ -337,9 +356,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_I32, Grow)
 
 DEFINE_ACTION_FUNCTION(FDynArray_I32, Resize)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_I32);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_I32);
 	PARAM_INT(count);
 	self->Resize(count);
+	DYNARRAY_FILL_ITEMS_SKIP(0);
 	return 0;
 }
 
@@ -416,10 +436,11 @@ DEFINE_ACTION_FUNCTION(FDynArray_F32, Delete)
 
 DEFINE_ACTION_FUNCTION(FDynArray_F32, Insert)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_F32);
 	PARAM_INT(index);
 	PARAM_FLOAT(val);
 	self->Insert(index, (float)val);
+	DYNARRAY_FILL_ITEMS_SKIP(1);
 	return 0;
 }
 
@@ -440,9 +461,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_F32, Grow)
 
 DEFINE_ACTION_FUNCTION(FDynArray_F32, Resize)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F32);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_F32);
 	PARAM_INT(count);
 	self->Resize(count);
+	DYNARRAY_FILL_ITEMS_SKIP(0);
 	return 0;
 }
 
@@ -519,10 +541,11 @@ DEFINE_ACTION_FUNCTION(FDynArray_F64, Delete)
 
 DEFINE_ACTION_FUNCTION(FDynArray_F64, Insert)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_F64);
 	PARAM_INT(index);
 	PARAM_FLOAT(val);
 	self->Insert(index, val);
+	DYNARRAY_FILL_ITEMS_SKIP(1);
 	return 0;
 }
 
@@ -543,9 +566,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_F64, Grow)
 
 DEFINE_ACTION_FUNCTION(FDynArray_F64, Resize)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_F64);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_F64);
 	PARAM_INT(count);
 	self->Resize(count);
+	DYNARRAY_FILL_ITEMS_SKIP(0);
 	return 0;
 }
 
@@ -622,10 +646,11 @@ DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Delete)
 
 DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Insert)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_Ptr);
 	PARAM_INT(index);
 	PARAM_POINTER(val, void);
 	self->Insert(index, val);
+	DYNARRAY_FILL_ITEMS_SKIP(1);
 	return 0;
 }
 
@@ -646,9 +671,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Grow)
 
 DEFINE_ACTION_FUNCTION(FDynArray_Ptr, Resize)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Ptr);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_Ptr);
 	PARAM_INT(count);
 	self->Resize(count);
+	DYNARRAY_FILL_ITEMS_SKIP(0);
 	return 0;
 }
 
@@ -727,11 +753,12 @@ DEFINE_ACTION_FUNCTION(FDynArray_Obj, Delete)
 
 DEFINE_ACTION_FUNCTION(FDynArray_Obj, Insert)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_Obj);
 	PARAM_INT(index);
 	PARAM_OBJECT(val, DObject);
 	GC::WriteBarrier(val);
 	self->Insert(index, val);
+	DYNARRAY_FILL_ITEMS_SKIP(1);
 	return 0;
 }
 
@@ -752,9 +779,10 @@ DEFINE_ACTION_FUNCTION(FDynArray_Obj, Grow)
 
 DEFINE_ACTION_FUNCTION(FDynArray_Obj, Resize)
 {
-	PARAM_SELF_STRUCT_PROLOGUE(FDynArray_Obj);
+	PARAM_DYNARRAY_SIZE_PROLOGUE(FDynArray_Obj);
 	PARAM_INT(count);
 	self->Resize(count);
+	DYNARRAY_FILL_ITEMS_SKIP(0);
 	return 0;
 }
 

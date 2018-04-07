@@ -348,6 +348,16 @@ int FIWadManager::CheckIWADInfo(const char *fn)
 					FIWADInfo result;
 					ParseIWadInfo(resfile->Filename, (const char*)lmp->CacheLump(), lmp->LumpSize, &result);
 					delete resfile;
+
+					for (unsigned i = 0, count = mIWadInfos.Size(); i < count; ++i)
+					{
+						if (mIWadInfos[i].Name == result.Name)
+						{
+							return i;
+						}
+					}
+
+					mOrderNames.Push(result.Name);
 					return mIWadInfos.Push(result);
 				}
 				catch (CRecoverableError &err)
@@ -427,7 +437,7 @@ void FIWadManager::AddIWADCandidates(const char *dir)
 				if (p != nullptr)
 				{
 					// special IWAD extension.
-					if (!stricmp(p, ".iwad") || !stricmp(p, ".ipk3") || !stricmp(p, "ipk7"))
+					if (!stricmp(p, ".iwad") || !stricmp(p, ".ipk3") || !stricmp(p, ".ipk7"))
 					{
 						mFoundWads.Push(FFoundWadInfo{ slasheddir + FindName, "", -1 });
 					}
@@ -461,7 +471,7 @@ void FIWadManager::ValidateIWADs()
 	{
 		int index;
 		auto x = strrchr(p.mFullPath, '.');
-		if (x != nullptr && (!stricmp(x, ".iwad") || !stricmp(x, ".ipk3") || !stricmp(x, "ipk7")))
+		if (x != nullptr && (!stricmp(x, ".iwad") || !stricmp(x, ".ipk3") || !stricmp(x, ".ipk7")))
 		{
 			index = CheckIWADInfo(p.mFullPath);
 		}

@@ -35,8 +35,13 @@ class ArtiHealingRadius : Inventory
 
 		for (int i = 0; i < MAXPLAYERS; ++i)
 		{
+			if (!playeringame[i])
+			{
+				continue;
+			}
+
 			PlayerPawn mo = players[i].mo;
-			if (playeringame[i] && mo != null && mo.health > 0 && mo.Distance2D (Owner) <= HEAL_RADIUS_DIST)
+			if (mo != null && mo.health > 0 && mo.Distance2D (Owner) <= HEAL_RADIUS_DIST)
 			{
 				// Q: Is it worth it to make this selectable as a player property?
 				// A: Probably not - but it sure doesn't hurt.

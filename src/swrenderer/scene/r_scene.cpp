@@ -67,7 +67,7 @@ EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
 
 CVAR(Bool, r_scene_multithreaded, false, 0);
-CVAR(Bool, r_models, false, 0);
+CVAR(Bool, r_models, true, 0);
 
 namespace swrenderer
 {
@@ -98,6 +98,8 @@ namespace swrenderer
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(MainThread(), width, height, trueratio);
+		if (r_models)
+			PolyTriangleDrawer::ClearBuffers(viewport->RenderTarget);
 
 		if (r_clearbuffer != 0)
 		{
@@ -158,7 +160,7 @@ namespace swrenderer
 		R_UpdateFuzzPosFrameStart();
 
 		if (r_models)
-			MainThread()->Viewport->SetupPolyViewport();
+			MainThread()->Viewport->SetupPolyViewport(MainThread());
 
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
@@ -267,6 +269,8 @@ namespace swrenderer
 		thread->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
 		thread->Portal->SetMainPortal();
 
+		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget, true);
+
 		// Cull things outside the range seen by this thread
 		VisibleSegmentRenderer visitor;
 		if (thread->X1 > 0)
@@ -361,6 +365,8 @@ namespace swrenderer
 		viewwindowy = y;
 		viewactive = true;
 		viewport->SetViewport(MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
+		if (r_models)
+			PolyTriangleDrawer::ClearBuffers(viewport->RenderTarget);
 
 		RenderActorView(actor, dontmaplines);
 		DrawerWaitCycles.Clock();
@@ -372,9 +378,7 @@ namespace swrenderer
 		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		screen->Lock(true);
 		viewport->SetViewport(MainThread(), width, height, trueratio);
-		screen->Unlock();
 
 		viewactive = savedviewactive;
 	}
@@ -387,9 +391,7 @@ namespace swrenderer
 		int height = SCREENHEIGHT;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		screen->Lock(true);
 		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
-		screen->Unlock();
 	}
 
 	void RenderScene::Init()

@@ -203,16 +203,15 @@ void FSoftwareRenderer::RemapVoxels()
 
 void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	DCanvas *pic = new DSimpleCanvas (width, height, false);
+	DSimpleCanvas pic(width, height, false);
 	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
-	pic->Lock ();
 	if (r_polyrenderer)
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
 		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
+		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, &pic, 0, 0, width, height, true);
 		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
 		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
@@ -220,14 +219,12 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	{
 		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
 		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.RenderViewToCanvas(player->mo, pic, 0, 0, width, height);
+		mScene.RenderViewToCanvas(player->mo, &pic, 0, 0, width, height);
 		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
 	screen->GetFlashedPalette (palette);
-	M_CreatePNG (file, pic->GetBuffer(), palette, SS_PAL, width, height, pic->GetPitch(), Gamma);
-	pic->Unlock ();
-	delete pic;
+	M_CreatePNG (file, pic.GetBuffer(), palette, SS_PAL, width, height, pic.GetPitch(), Gamma);
 }
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()

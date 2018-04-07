@@ -5,7 +5,7 @@
 #include <memory>
 #include "v_video.h"
 #include "r_defs.h"
-#include "polyrenderer/math/tri_matrix.h"
+#include "polyrenderer/math/gpu_types.h"
 
 namespace swrenderer
 {
@@ -20,11 +20,11 @@ namespace swrenderer
 		void SetViewport(RenderThread *thread, int width, int height, float trueratio);
 		void SetupFreelook();
 		
-		void SetupPolyViewport();
+		void SetupPolyViewport(RenderThread *thread);
 
-		TriMatrix WorldToView;
-		TriMatrix ViewToClip;
-		TriMatrix WorldToClip;
+		Mat4f WorldToView;
+		Mat4f ViewToClip;
+		Mat4f WorldToClip;
 
 		DCanvas *RenderTarget = nullptr;
 
@@ -72,5 +72,8 @@ namespace swrenderer
 	private:
 		void InitTextureMapping();
 		void SetupBuffer();
+
+		static Mat4f SoftwareWorldToView(const FRenderViewpoint &viewpoint);
+		static Mat4f SoftwareViewToClip(double focalTangent, double centerY, double YaspectMul);
 	};
 }

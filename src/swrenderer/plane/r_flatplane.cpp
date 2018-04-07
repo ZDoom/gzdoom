@@ -276,7 +276,7 @@ namespace swrenderer
 
 		drawerargs.DrawSpan(Thread);
 		if (r_models)
-			drawerargs.DrawDepthSpan(Thread, zbufferdepth);
+			drawerargs.DrawDepthSpan(Thread, zbufferdepth, zbufferdepth);
 	}
 
 	/////////////////////////////////////////////////////////////////////////

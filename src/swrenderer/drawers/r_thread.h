@@ -32,6 +32,8 @@
 // Use multiple threads when drawing
 EXTERN_CVAR(Bool, r_multithreaded)
 
+class PolyTriangleThreadData;
+
 // Worker data for each thread executing drawer commands
 class DrawerThread
 {
@@ -47,6 +49,8 @@ public:
 
 	// Working buffer used by the tilted (sloped) span drawer
 	const uint8_t *tiltlighting[MAXWIDTH];
+
+	std::shared_ptr<PolyTriangleThreadData> poly;
 
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)

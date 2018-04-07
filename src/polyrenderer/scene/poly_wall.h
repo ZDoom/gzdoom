@@ -31,11 +31,11 @@ class PolyCull;
 class RenderPolyWall
 {
 public:
-	static bool RenderLine(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals, line_t *lastPortalLine);
-	static void Render3DFloorLine(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput);
+	static bool RenderLine(PolyRenderThread *thread, const PolyClipPlane &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals, line_t *lastPortalLine);
+	static void Render3DFloorLine(PolyRenderThread *thread, const PolyClipPlane &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput);
 
 	void SetCoords(const DVector2 &v1, const DVector2 &v2, double ceil1, double floor1, double ceil2, double floor2);
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane);
+	void Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane);
 
 	DVector2 v1;
 	DVector2 v2;
@@ -101,9 +101,9 @@ class PolyTranslucentWall : public PolyTranslucentObject
 public:
 	PolyTranslucentWall(RenderPolyWall wall) : PolyTranslucentObject(wall.SubsectorDepth, 1e6), wall(wall) { }
 
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) override
+	void Render(PolyRenderThread *thread, const PolyClipPlane &portalPlane) override
 	{
-		wall.Render(thread, worldToClip, portalPlane);
+		wall.Render(thread, portalPlane);
 	}
 
 	RenderPolyWall wall;

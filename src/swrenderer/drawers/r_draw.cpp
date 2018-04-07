@@ -292,7 +292,7 @@ namespace swrenderer
 	class DepthSpanCommand : public DrawerCommand
 	{
 	public:
-		DepthSpanCommand(const SpanDrawerArgs &args, float idepth) : idepth(idepth)
+		DepthSpanCommand(const SpanDrawerArgs &args, float idepth1, float idepth2) : idepth1(idepth1), idepth2(idepth2)
 		{
 			y = args.DestY();
 			x1 = args.DestX1();
@@ -310,16 +310,30 @@ namespace swrenderer
 			int pitch = PolyStencilBuffer::Instance()->BlockWidth() * 8;
 			float *values = zbuffer->Values() + y * pitch;
 			int end = x2;
-			float depth = idepth;
-			for (int x = x1; x <= end; x++)
+
+			if (idepth1 == idepth2)
 			{
-				values[x] = depth;
+				float depth = idepth1;
+				for (int x = x1; x <= end; x++)
+				{
+					values[x] = depth;
+				}
+			}
+			else
+			{
+				float depth = idepth1;
+				float step = (idepth2 - idepth1) / (x2 - x1 + 1);
+				for (int x = x1; x <= end; x++)
+				{
+					values[x] = depth;
+					depth += step;
+				}
 			}
 		}
 
 	private:
 		int y, x1, x2;
-		float idepth;
+		float idepth1, idepth2;
 	};
 
 	void SWPixelFormatDrawers::DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth)
@@ -332,8 +346,8 @@ namespace swrenderer
 		Queue->Push<DepthColumnCommand>(args, idepth);
 	}
 
-	void SWPixelFormatDrawers::DrawDepthSpan(const SpanDrawerArgs &args, float idepth)
+	void SWPixelFormatDrawers::DrawDepthSpan(const SpanDrawerArgs &args, float idepth1, float idepth2)
 	{
-		Queue->Push<DepthSpanCommand>(args, idepth);
+		Queue->Push<DepthSpanCommand>(args, idepth1, idepth2);
 	}
 }

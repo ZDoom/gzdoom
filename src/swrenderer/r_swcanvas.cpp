@@ -401,7 +401,7 @@ void SWCanvas::DrawLine(DCanvas *canvas, int x0, int y0, int x1, int y1, int pal
 		palColor = PalFromRGB(realcolor);
 	}
 
-	canvas->Lock();
+	canvas->Lock(true);
 	int deltaX, deltaY, xDir;
 
 	if (y0 > y1)

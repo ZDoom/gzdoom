@@ -47,7 +47,7 @@
 class TriangleBlock
 {
 public:
-	TriangleBlock(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	TriangleBlock(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
 	void Render();
 
 private:
@@ -61,7 +61,7 @@ private:
 	void RenderBlock(int x0, int y0, int x1, int y1);
 
 	const TriDrawTriangleArgs *args;
-	WorkerThreadData *thread;
+	PolyTriangleThreadData *thread;
 
 	// Block size, standard 8x8 (must be power of two)
 	static const int q = 8;
@@ -138,7 +138,7 @@ private:
 	void DepthWrite(const TriDrawTriangleArgs *args);
 };
 
-TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args, WorkerThreadData *thread) : args(args), thread(thread)
+TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread) : args(args), thread(thread)
 {
 	const ShadedTriVertex &v1 = *args->v1;
 	const ShadedTriVertex &v2 = *args->v2;
@@ -1071,19 +1071,10 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 
 #endif
 
-EXTERN_CVAR(Bool, r_polyrenderer)
-
-void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
 {
-	if (r_polyrenderer)
-	{
-		TriangleBlock block(args, thread);
-		block.Render();
-	}
-	else
-	{
-		DrawSWRender(args, thread);
-	}
+	TriangleBlock block(args, thread);
+	block.Render();
 }
 
 static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sortedVertices)
@@ -1100,7 +1091,7 @@ static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sort
 		std::swap(sortedVertices[1], sortedVertices[2]);
 }
 
-void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
+void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
 {
 	// Sort vertices by Y position
 	ShadedTriVertex *sortedVertices[3];
@@ -1568,7 +1559,7 @@ void(*ScreenTriangle::TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDra
 	&TriScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FogBoundarySampler>::Execute      // FogBoundary
 };
 
-void(*ScreenTriangle::RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *) =
+void(*ScreenTriangle::RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *) =
 {
 	&RectScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
 	&RectScreenDrawer8<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureMasked
@@ -1596,7 +1587,7 @@ void(*ScreenTriangle::RectDrawers8[])(const void *, int, int, int, const RectDra
 	&RectScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FogBoundarySampler>::Execute      // FogBoundary
 };
 
-void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *) =
+void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *) =
 {
 	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
 	&RectScreenDrawer32<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureMasked

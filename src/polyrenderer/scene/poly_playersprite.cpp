@@ -43,8 +43,6 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 	//
 	// We also can't move it because the model render code relies on it
 
-	//renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
-
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
 	int 		i;
@@ -61,6 +59,8 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		(players[consoleplayer].cheats & CF_CHASECAM) ||
 		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
+
+	renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	PolyTransferHeights fakeflat(viewpoint.camera->subsector);
 

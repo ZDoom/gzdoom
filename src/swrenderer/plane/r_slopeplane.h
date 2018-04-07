@@ -48,5 +48,8 @@ namespace swrenderer
 		fixed_t xscale, yscale;
 		FDynamicColormap *basecolormap;
 		SpanDrawerArgs drawerargs;
+
+		DVector3 planeNormal;
+		double planeD;
 	};
 }

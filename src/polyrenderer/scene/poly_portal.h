@@ -26,10 +26,9 @@
 
 struct PolyPortalVertexRange
 {
-	PolyPortalVertexRange(const TriVertex *vertices, int count, bool ccw) : Vertices(vertices), Count(count), Ccw(ccw) { }
+	PolyPortalVertexRange(const TriVertex *vertices, int count) : Vertices(vertices), Count(count) { }
 	const TriVertex *Vertices;
 	int Count;
-	bool Ccw;
 };
 
 class PolyPortalSegment
@@ -45,7 +44,7 @@ public:
 	PolyDrawSectorPortal(FSectorPortal *portal, bool ceiling);
 
 	void Render(int portalDepth);
-	void RenderTranslucent(int portalDepth);
+	void RenderTranslucent();
 	
 	FSectorPortal *Portal = nullptr;
 	uint32_t StencilValue = 0;
@@ -57,7 +56,7 @@ private:
 	void RestoreGlobals();
 
 	bool Ceiling;
-	RenderPolyScene RenderPortal;
+	PolyPortalViewpoint PortalViewpoint;
 	
 	int savedextralight;
 	DVector3 savedpos;
@@ -74,7 +73,7 @@ public:
 	PolyDrawLinePortal(line_t *mirror);
 
 	void Render(int portalDepth);
-	void RenderTranslucent(int portalDepth);
+	void RenderTranslucent();
 
 	FLinePortal *Portal = nullptr;
 	line_t *Mirror = nullptr;
@@ -86,7 +85,7 @@ private:
 	void SaveGlobals();
 	void RestoreGlobals();
 
-	RenderPolyScene RenderPortal;
+	PolyPortalViewpoint PortalViewpoint;
 
 	int savedextralight;
 	DVector3 savedpos;

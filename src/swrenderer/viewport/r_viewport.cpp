@@ -59,15 +59,33 @@ namespace swrenderer
 	{
 	}
 
-	void RenderViewport::SetupPolyViewport()
+	void RenderViewport::SetupPolyViewport(RenderThread *thread)
 	{
-		PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
-		PolyZBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
-
-		PolyTriangleDrawer::set_viewport(viewwindowx, viewwindowy, viewwidth, viewheight, RenderTarget);
-		WorldToView = TriMatrix::worldToView(viewpoint);
-		ViewToClip = TriMatrix::viewToClip(viewwindow.FocalTangent, CenterY, YaspectMul);
+		WorldToView = SoftwareWorldToView(viewpoint);
+		ViewToClip = SoftwareViewToClip(viewwindow.FocalTangent, CenterY, YaspectMul);
 		WorldToClip = ViewToClip * WorldToView;
+	}
+
+	Mat4f RenderViewport::SoftwareWorldToView(const FRenderViewpoint &viewpoint)
+	{
+		Mat4f m = Mat4f::Null();
+		m.Matrix[0 + 0 * 4] = (float)viewpoint.Sin;
+		m.Matrix[0 + 1 * 4] = (float)-viewpoint.Cos;
+		m.Matrix[1 + 2 * 4] = 1.0f;
+		m.Matrix[2 + 0 * 4] = (float)-viewpoint.Cos;
+		m.Matrix[2 + 1 * 4] = (float)-viewpoint.Sin;
+		m.Matrix[3 + 3 * 4] = 1.0f;
+		return m * Mat4f::Translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
+	}
+
+	Mat4f RenderViewport::SoftwareViewToClip(double focalTangent, double centerY, double YaspectMul)
+	{
+		float near = 5.0f;
+		float far = 65536.0f;
+		float width = (float)(focalTangent * near);
+		float top = (float)(centerY / viewheight * YaspectMul * near);
+		float bottom = (float)(top - YaspectMul * near);
+		return Mat4f::Frustum(-width, width, bottom, top, near, far, Handedness::Right, ClipZRange::NegativePositiveW);
 	}
 
 	void RenderViewport::SetViewport(RenderThread *thread, int fullWidth, int fullHeight, float trueratio)

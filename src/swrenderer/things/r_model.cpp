@@ -92,7 +92,8 @@ namespace swrenderer
 	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)
 	{
 		ModelActor = actor;
-		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.matrix);
+		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+		SetTransform();
 	}
 
 	void SWModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
@@ -127,21 +128,21 @@ namespace swrenderer
 		float ratio = Viewwindow.WidescreenRatio;
 		float fovratio = (Viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 		float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(Viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
-		TriMatrix altWorldToView =
-			TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
-			TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-			TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
-			TriMatrix::swapYZ() *
-			TriMatrix::translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
+		Mat4f altWorldToView =
+			Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+			Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
+			Mat4f::Scale(1.0f, level.info->pixelstretch, 1.0f) *
+			Mat4f::SwapYZ() *
+			Mat4f::Translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
 
-		TriMatrix swapYZ = TriMatrix::null();
-		swapYZ.matrix[0 + 0 * 4] = 1.0f;
-		swapYZ.matrix[1 + 2 * 4] = 1.0f;
-		swapYZ.matrix[2 + 1 * 4] = 1.0f;
-		swapYZ.matrix[3 + 3 * 4] = 1.0f;
+		Mat4f swapYZ = Mat4f::Null();
+		swapYZ.Matrix[0 + 0 * 4] = 1.0f;
+		swapYZ.Matrix[1 + 2 * 4] = 1.0f;
+		swapYZ.Matrix[2 + 1 * 4] = 1.0f;
+		swapYZ.Matrix[3 + 3 * 4] = 1.0f;
 
 		VSMatrix worldToView;
-		worldToView.loadMatrix((altWorldToView * swapYZ).matrix);
+		worldToView.loadMatrix((altWorldToView * swapYZ).Matrix);
 
 		VSMatrix objectToWorld;
 		worldToView.inverseMatrix(objectToWorld);
@@ -151,7 +152,8 @@ namespace swrenderer
 	void SWModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix)
 	{
 		ModelActor = actor;
-		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.matrix);
+		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+		SetTransform();
 	}
 
 	void SWModelRenderer::EndDrawHUDModel(AActor *actor)
@@ -169,6 +171,17 @@ namespace swrenderer
 		SkinTexture = skin;
 	}
 
+	void SWModelRenderer::SetTransform()
+	{
+		Mat4f swapYZ = Mat4f::Null();
+		swapYZ.Matrix[0 + 0 * 4] = 1.0f;
+		swapYZ.Matrix[1 + 2 * 4] = 1.0f;
+		swapYZ.Matrix[2 + 1 * 4] = 1.0f;
+		swapYZ.Matrix[3 + 3 * 4] = 1.0f;
+
+		PolyTriangleDrawer::SetTransform(Thread->DrawQueue, Thread->FrameMemory->NewObject<Mat4f>(Thread->Viewport->WorldToClip * swapYZ * ObjectToWorld));
+	}
+
 	void SWModelRenderer::DrawArrays(int start, int count)
 	{
 		const auto &viewpoint = Thread->Viewport->viewpoint;
@@ -180,19 +193,8 @@ namespace swrenderer
 		bool fullbrightSprite = ((ModelActor->renderflags & RF_FULLBRIGHT) || (ModelActor->flags5 & MF5_BRIGHT));
 		int lightlevel = fullbrightSprite ? 255 : ModelActor->Sector->lightlevel + actualextralight;
 
-		TriMatrix swapYZ = TriMatrix::null();
-		swapYZ.matrix[0 + 0 * 4] = 1.0f;
-		swapYZ.matrix[1 + 2 * 4] = 1.0f;
-		swapYZ.matrix[2 + 1 * 4] = 1.0f;
-		swapYZ.matrix[3 + 3 * 4] = 1.0f;
-
-		TriMatrix *transform = Thread->FrameMemory->NewObject<TriMatrix>();
-		*transform = Thread->Viewport->WorldToClip * swapYZ * ObjectToWorld;
-
 		PolyDrawArgs args;
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, Thread->Light->SpriteGlobVis(foggy), fullbrightSprite);
-		args.SetTransform(transform);
-		args.SetFaceCullCCW(true);
 		args.SetClipPlane(0, PolyClipPlane());
 		args.SetStyle(TriBlendMode::TextureOpaque);
 
@@ -218,19 +220,8 @@ namespace swrenderer
 		bool fullbrightSprite = ((ModelActor->renderflags & RF_FULLBRIGHT) || (ModelActor->flags5 & MF5_BRIGHT));
 		int lightlevel = fullbrightSprite ? 255 : ModelActor->Sector->lightlevel + actualextralight;
 
-		TriMatrix swapYZ = TriMatrix::null();
-		swapYZ.matrix[0 + 0 * 4] = 1.0f;
-		swapYZ.matrix[1 + 2 * 4] = 1.0f;
-		swapYZ.matrix[2 + 1 * 4] = 1.0f;
-		swapYZ.matrix[3 + 3 * 4] = 1.0f;
-
-		TriMatrix *transform = Thread->FrameMemory->NewObject<TriMatrix>();
-		*transform = Thread->Viewport->WorldToClip * swapYZ * ObjectToWorld;
-
 		PolyDrawArgs args;
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, Thread->Light->SpriteGlobVis(foggy), fullbrightSprite);
-		args.SetTransform(transform);
-		args.SetFaceCullCCW(true);
 		args.SetClipPlane(0, PolyClipPlane());
 		args.SetStyle(TriBlendMode::TextureOpaque);
 
@@ -247,7 +238,7 @@ namespace swrenderer
 
 	double SWModelRenderer::GetTimeFloat()
 	{
-		return (double)screen->FrameTime * (double)TICRATE / 1000.0;
+		return (double)I_msTime() * (double)TICRATE / 1000.;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -282,11 +273,11 @@ namespace swrenderer
 
 	void SWModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 	{
-		SWModelRenderer *polyrenderer = (SWModelRenderer *)renderer;
+		SWModelRenderer *swrenderer = (SWModelRenderer *)renderer;
 
-		if (true)//if (frame1 == frame2 || size == 0 || polyrenderer->InterpolationFactor == 0.f)
+		if (frame1 == frame2 || size == 0 || swrenderer->InterpolationFactor == 0.f)
 		{
-			TriVertex *vertices = polyrenderer->Thread->FrameMemory->AllocMemory<TriVertex>(size);
+			TriVertex *vertices = swrenderer->Thread->FrameMemory->AllocMemory<TriVertex>(size);
 
 			for (unsigned int i = 0; i < size; i++)
 			{
@@ -301,26 +292,27 @@ namespace swrenderer
 				};
 			}
 
-			polyrenderer->VertexBuffer = vertices;
-			polyrenderer->IndexBuffer = &mIndexBuffer[0];
+			swrenderer->VertexBuffer = vertices;
+			swrenderer->IndexBuffer = &mIndexBuffer[0];
 		}
 		else
 		{
-			TriVertex *vertices = polyrenderer->Thread->FrameMemory->AllocMemory<TriVertex>(size);
+			TriVertex *vertices = swrenderer->Thread->FrameMemory->AllocMemory<TriVertex>(size);
 
-			float frac = polyrenderer->InterpolationFactor;
+			float frac = swrenderer->InterpolationFactor;
+			float inv_frac = 1.0f - frac;
 			for (unsigned int i = 0; i < size; i++)
 			{
-				vertices[i].x = mVertexBuffer[frame1 + i].x * (1.0f - frac) + mVertexBuffer[frame2 + i].x * frac;
-				vertices[i].y = mVertexBuffer[frame1 + i].y * (1.0f - frac) + mVertexBuffer[frame2 + i].y * frac;
-				vertices[i].z = mVertexBuffer[frame1 + i].z * (1.0f - frac) + mVertexBuffer[frame2 + i].z * frac;
+				vertices[i].x = mVertexBuffer[frame1 + i].x * inv_frac + mVertexBuffer[frame2 + i].x * frac;
+				vertices[i].y = mVertexBuffer[frame1 + i].y * inv_frac + mVertexBuffer[frame2 + i].y * frac;
+				vertices[i].z = mVertexBuffer[frame1 + i].z * inv_frac + mVertexBuffer[frame2 + i].z * frac;
 				vertices[i].w = 1.0f;
 				vertices[i].u = mVertexBuffer[frame1 + i].u;
 				vertices[i].v = mVertexBuffer[frame1 + i].v;
 			}
 
-			polyrenderer->VertexBuffer = vertices;
-			polyrenderer->IndexBuffer = &mIndexBuffer[0];
+			swrenderer->VertexBuffer = vertices;
+			swrenderer->IndexBuffer = &mIndexBuffer[0];
 		}
 	}
 }

@@ -1106,7 +1106,7 @@ void DFrameBuffer::Clear(int left, int top, int right, int bottom, int palcolor,
 	{
 		color = GPalette.BaseColors[palcolor] | 0xff000000;
 	}
-	m2DDrawer.AddColorOnlyQuad(left, top, right - left, bottom - top, color | 0xFF000000);
+	m2DDrawer.AddColorOnlyQuad(left, top, right - left, bottom - top, color | 0xFF000000, nullptr);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, Clear)
@@ -1131,7 +1131,7 @@ DEFINE_ACTION_FUNCTION(_Screen, Clear)
 //
 //==========================================================================
 
-void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, int h)
+void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style)
 {
 	if (amount <= 0)
 	{
@@ -1141,10 +1141,10 @@ void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, in
 	{
 		amount = 1;
 	}
-	m2DDrawer.AddColorOnlyQuad(x1, y1, w, h, color | (int(amount * 255) << 24));
+	m2DDrawer.AddColorOnlyQuad(x1, y1, w, h, color.d & 0xffffff | (int(amount * 255) << 24), style);
 }
 
-void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h)
+void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle *style)
 {
 	if (clipwidth >= 0 && clipheight >= 0)
 	{
@@ -1164,7 +1164,7 @@ void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int
 		if (h > clipheight) h = clipheight;
 		if (h <= 0) return;
 	}
-	DoDim(color, damount, x1, y1, w, h);
+	DoDim(color, damount, x1, y1, w, h, style);
 }
 
 DEFINE_ACTION_FUNCTION(_Screen, Dim)

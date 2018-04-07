@@ -123,5 +123,5 @@ void SWSceneDrawer::RenderView(player_t *player)
 	screen->Begin2D(false);
 	screen->DrawTexture(FBTexture, 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 	SWRenderer->DrawRemainingPlayerSprites();
-	GLRenderer->DrawBlend(r_viewpoint.sector, !!map, swtruecolor);
+	GLRenderer->DrawBlend(r_viewpoint.sector, !!map, swtruecolor, true);
 }

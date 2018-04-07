@@ -122,7 +122,7 @@ public:
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel);
 	void AddFlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin);
 
-	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color);
+	void AddColorOnlyQuad(int left, int top, int width, int height, PalEntry color, FRenderStyle *style);
 
 	void AddDim(PalEntry color, float damount, int x1, int y1, int w, int h);
 	void AddClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);

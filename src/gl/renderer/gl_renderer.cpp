@@ -560,7 +560,7 @@ void gl_FillScreen()
 // Draws a blend over the entire view
 //
 //==========================================================================
-void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap)
+void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap, bool in2d)
 {
 	float blend[4] = { 0,0,0,0 };
 	PalEntry blendv = 0;
@@ -623,15 +623,22 @@ void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool doco
 			extra_blue = blendv.b / 255.0f;
 
 			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
-			blendv = 0;
 
 			// black multiplicative blends are ignored
 			if (extra_red || extra_green || extra_blue)
 			{
-				gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
-				gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
-				gl_FillScreen();
+				if (!in2d)
+				{
+					gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
+					gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
+					gl_FillScreen();
+				}
+				else
+				{
+					screen->Dim(blendv, 1, 0, 0, screen->GetWidth(), screen->GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+				}
 			}
+			blendv = 0;
 		}
 		else if (blendv.a)
 		{
@@ -655,15 +662,22 @@ void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool doco
 		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 
-	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	if (blend[3]>0.0f)
+	if (!in2d)
 	{
-		gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
-		gl_FillScreen();
+		gl_RenderState.SetTextureMode(TM_MODULATE);
+		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		if (blend[3] > 0.0f)
+		{
+			gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
+			gl_FillScreen();
+		}
+		gl_RenderState.ResetColor();
+		gl_RenderState.EnableTexture(true);
 	}
-	gl_RenderState.ResetColor();
-	gl_RenderState.EnableTexture(true);
+	else
+	{
+		screen->Dim(PalEntry(255, blend[0] * 255, blend[1] * 255, blend[2] * 255), blend[3], 0, 0, screen->GetWidth(), screen->GetHeight());
+	}
 }
 
 

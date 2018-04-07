@@ -435,14 +435,14 @@ void F2DDrawer::AddFlatFill(int left, int top, int right, int bottom, FTexture *
 //
 //===========================================================================
 
-void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color)
+void F2DDrawer::AddColorOnlyQuad(int x1, int y1, int w, int h, PalEntry color, FRenderStyle *style)
 {
 	RenderCommand dg;
 
 	dg.mType = DrawTypeTriangles;
 	dg.mVertCount = 4;
 	dg.mVertIndex = (int)mVertices.Reserve(4);
-	dg.mRenderStyle = LegacyRenderStyles[STYLE_Translucent];
+	dg.mRenderStyle = style? *style : LegacyRenderStyles[STYLE_Translucent];
 	auto ptr = &mVertices[dg.mVertIndex];
 	ptr->Set(x1, y1, 0, 0, 0, color); ptr++;
 	ptr->Set(x1, y1 + h, 0, 0, 0, color); ptr++;

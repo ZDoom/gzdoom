@@ -371,8 +371,8 @@ public:
 	void Clear2D() { m2DDrawer.Clear(); }
 
 	// Dim part of the canvas
-	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h);
-	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h);
+	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
+	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
 
 	// Fill an area with a texture
 	void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);

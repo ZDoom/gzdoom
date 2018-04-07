@@ -102,25 +102,9 @@
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
-extern int currentrenderer;
-
 EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
-
-CUSTOM_CVAR(Bool, swtruecolor, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	// Strictly speaking this doesn't require a mode switch, but it is the easiest
-	// way to force a CreateFramebuffer call without a lot of refactoring.
-	if (currentrenderer == 0)
-	{
-		extern int NewWidth, NewHeight, NewBits, DisplayBits;
-		NewWidth      = screen->VideoWidth;
-		NewHeight     = screen->VideoHeight;
-		NewBits       = DisplayBits;
-		setmodeneeded = true;
-	}
-}
 
 CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -386,7 +370,7 @@ CocoaVideo::CocoaVideo()
 	// Create OpenGL pixel format
 	NSOpenGLPixelFormatAttribute defaultProfile = NSOpenGLProfileVersion3_2Core;
 
-	if (1 == vid_renderer && NSAppKitVersionNumber < AppKit10_9)
+	if (NSAppKitVersionNumber < AppKit10_9)
 	{
 		// There is no support for OpenGL 3.3 before Mavericks
 		defaultProfile = NSOpenGLProfileVersionLegacy;
@@ -821,7 +805,7 @@ void I_InitGraphics()
 
 DFrameBuffer* I_SetMode(int &width, int &height, DFrameBuffer* old)
 {
-	return Video->CreateFrameBuffer(width, height, swtruecolor, fullscreen, old);
+	return Video->CreateFrameBuffer(width, height, false, fullscreen, old);
 }
 
 bool I_CheckResolution(const int width, const int height, const int bits)

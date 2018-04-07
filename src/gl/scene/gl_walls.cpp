@@ -1218,6 +1218,7 @@ void GLWall::InverseFloors(seg_t * seg, sector_t * frontsector,
 	for (unsigned int i = 0; i < frontffloors.Size(); i++)
 	{
 		F3DFloor * rover = frontffloors[i];
+		if (rover->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 		if (!(rover->flags&FF_EXISTS)) continue;
 		if (!(rover->flags&FF_RENDERSIDES)) continue;
 		if (!(rover->flags&(FF_INVERTSIDES | FF_ALLSIDES))) continue;
@@ -1270,6 +1271,7 @@ void GLWall::ClipFFloors(seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
 	for (unsigned int i = 0; i < frontffloors.Size(); i++)
 	{
 		F3DFloor * rover = frontffloors[i];
+		if (rover->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 		if (!(rover->flags&FF_EXISTS)) continue;
 		if (!(rover->flags&FF_RENDERSIDES)) continue;
 		if ((rover->flags&(FF_SWIMMABLE | FF_TRANSLUCENT)) != flags) continue;
@@ -1369,6 +1371,7 @@ void GLWall::DoFFloorBlocks(seg_t * seg, sector_t * frontsector, sector_t * back
 	for (unsigned int i = 0; i < backffloors.Size(); i++)
 	{
 		F3DFloor * rover = backffloors[i];
+		if (rover->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 		if (!(rover->flags&FF_EXISTS)) continue;
 		if (!(rover->flags&FF_RENDERSIDES) || (rover->flags&FF_INVERTSIDES)) continue;
 

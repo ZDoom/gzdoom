@@ -2132,7 +2132,7 @@ void AM_drawSubsectors()
 			{
 				F3DFloor *rover = sec->e->XFloor.ffloors[i];
 				if (!(rover->flags & FF_EXISTS)) continue;
-				if (rover->flags & FF_FOG) continue;
+				if (rover->flags & (FF_FOG|FF_THISINSIDE)) continue;
 				if (!(rover->flags & FF_RENDERPLANES)) continue;
 				if (rover->alpha == 0) continue;
 				double roverz = rover->top.plane->ZatPoint(secx, secy);
@@ -2339,6 +2339,7 @@ bool AM_Check3DFloors(line_t *line)
 	for(unsigned i=0;i<ff_front.Size();i++)
 	{
 		F3DFloor *rover = ff_front[i];
+		if (rover->flags & FF_THISINSIDE) continue;
 		if (!(rover->flags & FF_EXISTS)) continue;
 		if (rover->alpha == 0) continue;
 		realfrontcount++;
@@ -2347,6 +2348,7 @@ bool AM_Check3DFloors(line_t *line)
 	for(unsigned i=0;i<ff_back.Size();i++)
 	{
 		F3DFloor *rover = ff_back[i];
+		if (rover->flags & FF_THISINSIDE) continue;
 		if (!(rover->flags & FF_EXISTS)) continue;
 		if (rover->alpha == 0) continue;
 		realbackcount++;
@@ -2357,6 +2359,7 @@ bool AM_Check3DFloors(line_t *line)
 	for(unsigned i=0;i<ff_front.Size();i++)
 	{
 		F3DFloor *rover = ff_front[i];
+		if (rover->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 		if (!(rover->flags & FF_EXISTS)) continue;
 		if (rover->alpha == 0) continue;
 
@@ -2364,6 +2367,7 @@ bool AM_Check3DFloors(line_t *line)
 		for(unsigned j=0;j<ff_back.Size();j++)
 		{
 			F3DFloor *rover2 = ff_back[j];
+			if (rover2->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 			if (!(rover2->flags & FF_EXISTS)) continue;
 			if (rover2->alpha == 0) continue;
 			if (rover->model == rover2->model && rover->flags == rover2->flags) 

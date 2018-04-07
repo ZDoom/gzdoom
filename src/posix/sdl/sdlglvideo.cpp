@@ -67,12 +67,10 @@
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern IVideo *Video;
-// extern int vid_renderer;
 
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
-EXTERN_CVAR (Int, vid_renderer)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
 

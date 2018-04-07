@@ -597,6 +597,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 			for (unsigned int i = 0; i < x.ffloors.Size(); i++)
 			{
 				F3DFloor * ff = x.ffloors[i];
+				if (ff->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 				float floorh = ff->top.plane->ZatPoint(thingpos);
 				float ceilingh = ff->bottom.plane->ZatPoint(thingpos);
 				if (floorh == thing->floorz)

@@ -49,7 +49,6 @@
 
 EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Float, vid_winscale)
 EXTERN_CVAR (Bool, win_borderless)
 
@@ -67,7 +66,6 @@ IVideo *Video;
 IVideo *gl_CreateVideo();
 
 void I_RestartRenderer();
-extern int currentrenderer;
 int currentcanvas = -1;
 int currentgpuswitch = -1;
 bool changerenderer;
@@ -180,7 +178,7 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 		}
 		break;
 	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, swtruecolor, fs, old);
+	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, false, fs, old);
 
 	//* Right now, CreateFrameBuffer cannot return NULL
 	if (res == NULL)
@@ -358,19 +356,6 @@ void I_RestoreWindowedPos ()
 }
 
 extern int NewWidth, NewHeight, NewBits, DisplayBits;
-
-CUSTOM_CVAR(Bool, swtruecolor, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
-{
-	// Strictly speaking this doesn't require a mode switch, but it is the easiest
-	// way to force a CreateFramebuffer call without a lot of refactoring.
-	if (currentrenderer == 0)
-	{
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
-		NewBits = DisplayBits;
-		setmodeneeded = true;
-	}
-}
 
 CUSTOM_CVAR(Bool, win_borderless, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {

@@ -406,6 +406,12 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, FVector3 & nearP
 	float dist = fabsf(p.DistToPoint(lpos.X, lpos.Z, lpos.Y));
 	float radius = light->GetRadius();
 
+	if (V_IsHardwareRenderer() && gl.legacyMode && (light->lightflags & LF_ATTENUATE))
+	{
+		radius *= 0.66f;
+	}
+
+
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
 	if (checkside && gl_lights_checkside && p.PointOnSide(lpos.X, lpos.Z, lpos.Y))

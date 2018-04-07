@@ -1044,7 +1044,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 
 	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, 0))
 	{
-		vid_renderer = 0;
+		I_FatalError("Unable to initialize OpenGL");
 		return;
 	}
 	HDC hDC = GetDC(Window);

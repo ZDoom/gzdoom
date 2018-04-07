@@ -44,7 +44,6 @@ RenderContext gl;
 static double realglversion;	// this is public so the statistics code can access it.
 
 EXTERN_CVAR(Bool, gl_legacy_mode)
-extern int currentrenderer;
 CVAR(Bool, gl_riskymodernpath, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 //==========================================================================
@@ -211,11 +210,7 @@ void gl_LoadExtensions()
 	
 		// The minimum requirement for the modern render path is GL 3.3.
 		// Although some GL 3.1 or 3.2 solutions may theoretically work they are usually too broken or too slow.
-		// unless, of course, we're simply using this as a software backend...
-		float minmodernpath = 3.3f;
-		if (gl_riskymodernpath)
-			minmodernpath = 3.1f;
-		if ((gl_version < minmodernpath && (currentrenderer==1)) || gl_version < 3.0f)
+		if (gl_version < 3.3f)
 		{
 			gl.legacyMode = true;
 			gl.lightmethod = LM_LEGACY;

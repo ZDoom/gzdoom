@@ -43,7 +43,6 @@
 int BaseBlendR, BaseBlendG, BaseBlendB;
 float BaseBlendA;
 
-EXTERN_CVAR(Bool, swtruecolor)
 
 
 // using FDummyTexture as base because that implements the required software renderer functions.
@@ -103,13 +102,13 @@ SWSceneDrawer::~SWSceneDrawer()
 
 void SWSceneDrawer::RenderView(player_t *player)
 {
-	DCanvas buffer(screen->GetWidth(), screen->GetHeight(), swtruecolor);
-	if (FBTexture == nullptr || FBTexture->hwtex == nullptr || FBTexture->GetWidth() != screen->GetWidth() || FBTexture->GetHeight() != screen->GetHeight() || (swtruecolor? 1:0) != FBTexture->WidthBits)
+	DCanvas buffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor());
+	if (FBTexture == nullptr || FBTexture->hwtex == nullptr || FBTexture->GetWidth() != screen->GetWidth() || FBTexture->GetHeight() != screen->GetHeight() || (V_IsTrueColor() ? 1:0) != FBTexture->WidthBits)
 	{
 		// This manually constructs its own material here.
 		if (FBTexture != nullptr) delete FBTexture;
-		FBTexture = new FSWSceneTexture(screen->GetWidth(), screen->GetHeight(), swtruecolor);
-		FBTexture->hwtex->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), swtruecolor ? 4 : 1);
+		FBTexture = new FSWSceneTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor());
+		FBTexture->hwtex->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 		auto mat = FMaterial::ValidateTexture(FBTexture, false);
 		mat->AddTextureLayer(PaletteTexture);
 	}
@@ -123,5 +122,5 @@ void SWSceneDrawer::RenderView(player_t *player)
 	screen->Begin2D(false);
 	screen->DrawTexture(FBTexture, 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 	SWRenderer->DrawRemainingPlayerSprites();
-	GLRenderer->DrawBlend(r_viewpoint.sector, !!map, swtruecolor, true);
+	GLRenderer->DrawBlend(r_viewpoint.sector, !!map, V_IsTrueColor(), true);
 }

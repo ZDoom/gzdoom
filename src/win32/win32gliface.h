@@ -14,7 +14,6 @@ EXTERN_CVAR (Color, dimcolor)
 
 EXTERN_CVAR(Int, vid_defwidth);
 EXTERN_CVAR(Int, vid_defheight);
-EXTERN_CVAR(Int, vid_renderer);
 EXTERN_CVAR(Int, vid_adapter);
 
 extern IVideo *Video;

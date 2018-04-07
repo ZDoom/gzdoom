@@ -195,13 +195,13 @@ void OpenGLFrameBuffer::Update()
 // 
 //
 //===========================================================================
-extern int currentrenderer;
 
 void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
-	if (currentrenderer == 0)
+	if (!V_IsHardwareRenderer())
+	{
 		Super::RenderTextureView(tex, Viewpoint, FOV);
-
+	}
 	else if (GLRenderer != nullptr)
 	{
 		GLRenderer->RenderTextureView(tex, Viewpoint, FOV);
@@ -217,7 +217,7 @@ void OpenGLFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint
 
 void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
 {
-	if (currentrenderer == 0)
+	if (!V_IsHardwareRenderer())
 		Super::WriteSavePic(player, file, width, height);
 
 	if (GLRenderer != nullptr)
@@ -249,7 +249,8 @@ EXTERN_CVAR(Int, gl_tonemap)
 
 uint32_t OpenGLFrameBuffer::GetCaps()
 {
-	if (currentrenderer == 0) return Super::GetCaps();
+	if (!V_IsHardwareRenderer())
+		return Super::GetCaps();
 
 	// describe our basic feature set
 	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |

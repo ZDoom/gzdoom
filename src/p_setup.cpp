@@ -3427,7 +3427,6 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 // Preloads all relevant graphics for the level.
 //
 //===========================================================================
-extern int currentrenderer;
 void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
 static void P_PrecacheLevel()
@@ -3504,7 +3503,7 @@ static void P_PrecacheLevel()
 	}
 
 	// This is just a temporary solution, until the hardware renderer's texture manager is in a better state.
-	if (currentrenderer == 0)
+	if (!V_IsHardwareRenderer())
 		SWRenderer->Precache(hitlist, actorhitlist);
 	else
 		gl_PrecacheTexture(hitlist, actorhitlist);

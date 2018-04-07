@@ -64,7 +64,6 @@ void PeekThreadedErrorPane();
 #endif
 
 EXTERN_CVAR(Int, r_clearbuffer)
-EXTERN_CVAR(Bool, swtruecolor)
 
 CVAR(Bool, r_scene_multithreaded, false, 0);
 CVAR(Bool, r_models, false, 0);
@@ -368,7 +367,7 @@ namespace swrenderer
 		auto viewport = MainThread()->Viewport.get();
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
-		viewport->RenderTarget = new DCanvas(width, height, swtruecolor);	// Some code deeper down needs something valid here, so give it a dummy canvas.
+		viewport->RenderTarget = new DCanvas(width, height, V_IsTrueColor());	// Some code deeper down needs something valid here, so give it a dummy canvas.
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);

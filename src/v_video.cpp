@@ -104,32 +104,16 @@ CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
-int currentrenderer = -1;
-
-// [ZDoomGL]
-CUSTOM_CVAR(Int, vid_renderer, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	// 0: Software renderer
-	// 1: OpenGL renderer
-
-	if (self != currentrenderer)
+	if (usergame)
 	{
-		switch (self)
-		{
-		case 0:
-			Printf("Switching to software renderer...\n");
-			break;
-		case 1:
-			Printf("Switching to OpenGL renderer...\n");
-			break;
-		default:
-			Printf("Unknown renderer (%d).  Falling back to software renderer...\n", (int)vid_renderer);
-			self = 0; // make sure to actually switch to the software renderer
-			break;
-		}
+		// [SP] Update pitch limits to the netgame/gamesim.
+		players[consoleplayer].SendPitchLimits();
 	}
-	currentrenderer = self;
+	// No further checks needed. All this changes now is which scene drawer the render backend calls.
 }
+
 
 
 EXTERN_CVAR(Bool, r_blendmethod)
@@ -138,7 +122,6 @@ int active_con_scale();
 
 FRenderer *SWRenderer;
 
-EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Bool, fullscreen)
 
 #define DBGBREAK assert(0)
@@ -964,14 +947,13 @@ void DFrameBuffer::GameRestart()
 //
 //==========================================================================
 
-EXTERN_CVAR(Bool, r_polyrenderer)
 EXTERN_CVAR(Bool, r_drawvoxels)
 
 uint32_t DFrameBuffer::GetCaps()
 {
 	ActorRenderFeatureFlags FlagSet = 0;
 
-	if (r_polyrenderer)
+	if (V_IsPolyRenderer())
 		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH | RFF_SLOPE3DFLOORS;
 	else
 	{
@@ -980,7 +962,7 @@ uint32_t DFrameBuffer::GetCaps()
 			FlagSet |= RFF_VOXELS;
 	}
 
-	if (swtruecolor)
+	if (V_IsTrueColor())
 		FlagSet |= RFF_TRUECOLOR;
 	else
 		FlagSet |= RFF_COLORMAP;

@@ -77,7 +77,6 @@
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
 EXTERN_CVAR(Float, underwater_fade_scalar)
-EXTERN_CVAR(Bool, swtruecolor)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 extern bool NoInterpolateView;
@@ -427,14 +426,13 @@ void FGLRenderer::EndOffscreen()
 // renders the view
 //
 //-----------------------------------------------------------------------------
-extern int currentrenderer;
 
 void FGLRenderer::RenderView(player_t* player)
 {
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mVBO->Reset();
 
-	if (currentrenderer == 0)
+	if (!V_IsHardwareRenderer())
 	{
 		if (swdrawer == nullptr) swdrawer = new SWSceneDrawer;
 		swdrawer->RenderView(player);

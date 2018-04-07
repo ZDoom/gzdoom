@@ -53,6 +53,29 @@ void V_UpdateModeSize (int width, int height);
 void V_OutputResized (int width, int height);
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
 
+EXTERN_CVAR(Int, vid_rendermode)
+
+inline bool V_IsHardwareRenderer()
+{
+	return vid_rendermode == 4;
+}
+
+inline bool V_IsSoftwareRenderer()
+{
+	return vid_rendermode < 2;
+}
+
+inline bool V_IsPolyRenderer()
+{
+	return vid_rendermode == 2 || vid_rendermode == 3;
+}
+
+inline bool V_IsTrueColor()
+{
+	return vid_rendermode == 1 || vid_rendermode == 3;
+}
+
+
 class FTexture;
 struct FColormap;
 class FileWriter;

@@ -129,7 +129,6 @@ static void DestroyCustomCursor();
 EXTERN_CVAR(String, language);
 EXTERN_CVAR (Bool, queryiwad);
 // Used on welcome/IWAD screen.
-EXTERN_CVAR (Int, vid_renderer)
 EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Bool, disableautoload)
 EXTERN_CVAR (Bool, autoloadlights)
@@ -824,7 +823,7 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		char	szString[256];
 
 		// Check the current video settings.
-		SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
+		//SendDlgItemMessage( hDlg, vid_renderer ? IDC_WELCOME_OPENGL : IDC_WELCOME_SOFTWARE, BM_SETCHECK, BST_CHECKED, 0 );
 		SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_SETCHECK, fullscreen ? BST_CHECKED : BST_UNCHECKED, 0 );
 
 		// [SP] This is our's
@@ -870,7 +869,6 @@ BOOL CALLBACK IWADBoxCallback(HWND hDlg, UINT message, WPARAM wParam, LPARAM lPa
 		{
 			SetQueryIWad(hDlg);
 			// [SP] Upstreamed from Zandronum
-			vid_renderer = SendDlgItemMessage( hDlg, IDC_WELCOME_OPENGL, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
 			fullscreen = SendDlgItemMessage( hDlg, IDC_WELCOME_FULLSCREEN, BM_GETCHECK, 0, 0 ) == BST_CHECKED;
 
 			// [SP] This is our's.

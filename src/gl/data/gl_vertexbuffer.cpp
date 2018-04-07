@@ -298,7 +298,7 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 	for(unsigned i=0; i<target->e->XFloor.ffloors.Size(); i++)
 	{
 		F3DFloor *ffloor = target->e->XFloor.ffloors[i];
-		if (ffloor->model == model) return ffloor;
+		if (ffloor->model == model && !(ffloor->flags & FF_THISINSIDE)) return ffloor;
 	}
 	return NULL;
 }

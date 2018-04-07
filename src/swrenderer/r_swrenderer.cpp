@@ -52,8 +52,6 @@
 #include "p_setup.h"
 #include "g_levellocals.h"
 
-extern int currentrenderer;
-
 // [BB] Use ZDoom's freelook limit for the sotfware renderer.
 // Note: ZDoom's limit is chosen such that the sky is rendered properly.
 CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -64,20 +62,6 @@ CUSTOM_CVAR (Bool, cl_oldfreelooklimit, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG 
 
 EXTERN_CVAR(Float, maxviewpitch)	// [SP] CVAR from OpenGL Renderer
 EXTERN_CVAR(Bool, r_drawvoxels)
-
-CUSTOM_CVAR(Bool, r_polyrenderer, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self == 1 && !hasglnodes)
-	{
-		Printf("No GL BSP detected. You must restart the map before rendering will be correct\n");
-	}
-
-	if (usergame)
-	{
-		// [SP] Update pitch limits to the netgame/gamesim.
-		players[consoleplayer].SendPitchLimits();
-	}
-}
 
 using namespace swrenderer;
 
@@ -96,11 +80,9 @@ FRenderer *CreateSWRenderer()
 	return new FSoftwareRenderer;
 }
 
-EXTERN_CVAR(Bool, swtruecolor)
-
 void FSoftwareRenderer::PrecacheTexture(FTexture *tex, int cache)
 {
-	bool isbgra = swtruecolor;
+	bool isbgra = V_IsTrueColor();
 
 	if (tex != NULL)
 	{
@@ -177,7 +159,7 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 
 void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target)
 {
-	if (r_polyrenderer)
+	if (V_IsPolyRenderer())
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
 		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
@@ -203,7 +185,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
-	if (r_polyrenderer)
+	if (V_IsPolyRenderer())
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
 		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
@@ -226,7 +208,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()
 {
-	if (!r_polyrenderer)
+	if (!V_IsPolyRenderer())
 	{
 		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
 		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
@@ -247,7 +229,7 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 void FSoftwareRenderer::OnModeSet ()
 {
 	// This does not work if the SW renderer is not in use.
-	if (currentrenderer == 0)
+	if (!V_IsHardwareRenderer())
 		mScene.ScreenResized();
 }
 
@@ -258,9 +240,9 @@ void FSoftwareRenderer::SetClearColor(int color)
 
 void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoint, double fov)
 {
-	auto renderTarget = r_polyrenderer ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
-	auto &cameraViewpoint = r_polyrenderer ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
-	auto &cameraViewwindow = r_polyrenderer ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
+	auto renderTarget = V_IsPolyRenderer() ? PolyRenderer::Instance()->RenderTarget : mScene.MainThread()->Viewport->RenderTarget;
+	auto &cameraViewpoint = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewpoint : mScene.MainThread()->Viewport->viewpoint;
+	auto &cameraViewwindow = V_IsPolyRenderer() ? PolyRenderer::Instance()->Viewwindow : mScene.MainThread()->Viewport->viewwindow;
 
 	// Grab global state shared with rest of zdoom
 	cameraViewpoint = r_viewpoint;
@@ -276,7 +258,7 @@ void FSoftwareRenderer::RenderTextureView (FCanvasTexture *tex, AActor *viewpoin
 	DAngle savedfov = cameraViewpoint.FieldOfView;
 	R_SetFOV (cameraViewpoint, fov);
 
-	if (r_polyrenderer)
+	if (V_IsPolyRenderer())
 		PolyRenderer::Instance()->RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);
 	else
 		mScene.RenderViewToCanvas(viewpoint, Canvas, 0, 0, tex->GetWidth(), tex->GetHeight(), tex->bFirstUpdate);

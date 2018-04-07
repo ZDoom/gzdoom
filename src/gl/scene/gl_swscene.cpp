@@ -115,7 +115,7 @@ void SWSceneDrawer::RenderView(player_t *player)
 	}
 	auto buf = FBTexture->hwtex->MapBuffer();
 	if (!buf) I_FatalError("Unable to map buffer for software rendering");
-	buffer.SetBuffer(screen->GetWidth(), screen->GetHeight(), screen->GetWidth() *  (swtruecolor ? 4 : 1), buf);
+	buffer.SetBuffer(screen->GetWidth(), screen->GetHeight(), screen->GetWidth(), buf);
 	SWRenderer->RenderView(player, &buffer);
 	FBTexture->hwtex->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 

@@ -224,6 +224,7 @@ public:
 	inline int GetPitch () const { return Pitch; }
 	inline bool IsBgra() const { return Bgra; }
 
+	// Note: pitch here is in pixels, not bytes.
 	bool SetBuffer(int width, int height, int pitch, uint8_t *buffer)
 	{
 		assert(buffer);

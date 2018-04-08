@@ -1141,7 +1141,7 @@ void DFrameBuffer::DoDim(PalEntry color, float amount, int x1, int y1, int w, in
 	{
 		amount = 1;
 	}
-	m2DDrawer.AddColorOnlyQuad(x1, y1, w, h, color.d & 0xffffff | (int(amount * 255) << 24), style);
+	m2DDrawer.AddColorOnlyQuad(x1, y1, w, h, (color.d & 0xffffff) | (int(amount * 255) << 24), style);
 }
 
 void DFrameBuffer::Dim(PalEntry color, float damount, int x1, int y1, int w, int h, FRenderStyle *style)

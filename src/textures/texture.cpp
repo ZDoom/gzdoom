@@ -1047,7 +1047,7 @@ void FTexture::AddAutoMaterials()
 		if (dot > slash) searchname.Truncate(dot);
 	}
 
-	for (int i = 0; i < countof(autosearchpaths); i++)
+	for (size_t i = 0; i < countof(autosearchpaths); i++)
 	{
 		auto &layer = autosearchpaths[i];
 		if (this->*(layer.pointer) == nullptr)	// only if no explicit assignment had been done.

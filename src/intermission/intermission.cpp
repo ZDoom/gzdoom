@@ -77,8 +77,6 @@ CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 {
-	int lumpnum;
-
 	if (desc->mCdTrack == 0 || !S_ChangeCDMusic (desc->mCdTrack, desc->mCdId))
 	{
 		if (desc->mMusic.IsEmpty())

@@ -84,6 +84,7 @@ namespace swrenderer
 		void SetupBuffer();
 
 		static Mat4f SoftwareWorldToView(const FRenderViewpoint &viewpoint);
-		static Mat4f SoftwareViewToClip(double focalTangent, double centerY, double YaspectMul);
+
+		Mat4f SoftwareViewToClip();
 	};
 }

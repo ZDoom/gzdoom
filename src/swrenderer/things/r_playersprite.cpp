@@ -289,15 +289,19 @@ namespace swrenderer
 
 		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->GetTopOffset(0);
 
-		auto screencanvas = screen->GetCanvas();
-		if (Thread->Viewport->viewpoint.camera->player && (viewport->RenderTarget != screencanvas ||
+		// Force it to use software rendering.
+		// To do: Fix that Draw2D() is never called by SWSceneDrawer::RenderView. Also make sure to adjust the similar comment in poly_playersprite.cpp
+		bool renderToCanvas = true; 
+		//bool renderToCanvas = viewport->RenderingToCanvas;
+
+		if (Thread->Viewport->viewpoint.camera->player && (renderToCanvas ||
 			viewheight == viewport->RenderTarget->GetHeight() ||
 			(viewport->RenderTarget->GetWidth() > (BASEXCENTER * 2))))
 		{	// Adjust PSprite for fullscreen views
 			AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
 			if (weapon != nullptr && weapon->YAdjust != 0)
 			{
-				if (viewport->RenderTarget != screencanvas || viewheight == viewport->RenderTarget->GetHeight())
+				if (renderToCanvas || viewheight == viewport->RenderTarget->GetHeight())
 				{
 					vis.texturemid -= weapon->YAdjust;
 				}
@@ -414,7 +418,7 @@ namespace swrenderer
 
 		// Check for hardware-assisted 2D. If it's available, and this sprite is not
 		// fuzzy, don't draw it until after the switch to 2D mode.
-		if (!noaccel && viewport->RenderTarget == screencanvas)
+		if (!noaccel && !renderToCanvas)
 		{
 			FRenderStyle style = vis.RenderStyle;
 			style.CheckFuzz();

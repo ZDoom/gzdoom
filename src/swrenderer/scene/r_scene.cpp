@@ -91,6 +91,7 @@ namespace swrenderer
 	{
 		auto viewport = MainThread()->Viewport.get();
 		viewport->RenderTarget = target;
+		viewport->RenderingToCanvas = false;
 
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
@@ -339,6 +340,7 @@ namespace swrenderer
 
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
+		viewport->RenderingToCanvas = true;
 
 		R_SetWindow(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, 12, width, height, height, true);
 		viewwindowx = x;
@@ -351,7 +353,8 @@ namespace swrenderer
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();
 
-		viewport->RenderTarget = screen->GetCanvas();
+		viewport->RenderTarget = nullptr;
+		viewport->RenderingToCanvas = false;
 
 		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
 		float trueratio;

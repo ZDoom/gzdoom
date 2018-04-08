@@ -309,7 +309,6 @@ public:
 
 	inline int GetWidth() const { return Width; }
 	inline int GetHeight() const { return Height; }
-	virtual DCanvas *GetCanvas() { return nullptr; }
 
 	// Make the surface visible.
 	virtual void Update () = 0;

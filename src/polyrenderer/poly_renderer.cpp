@@ -89,7 +89,7 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 	Threads.MainThread()->FlushDrawQueue();
 	DrawerThreads::WaitForWorkers();
 
-	RenderTarget = screen->GetCanvas();
+	RenderTarget = nullptr;
 	RenderToCanvas = false;
 	R_ExecuteSetViewSize(Viewpoint, Viewwindow);
 	float trueratio;

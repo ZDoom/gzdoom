@@ -74,7 +74,7 @@ namespace swrenderer
 	{
 		int virtheight, virtwidth, virtwidth2, virtheight2;
 
-		if (!RenderingToCanvas())
+		if (!RenderingToCanvas)
 		{ // Set r_viewsize cvar to reflect the current view size
 			UCVarValue value;
 			char temp[16];

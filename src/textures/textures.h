@@ -286,13 +286,13 @@ public:
 	};
 
 	// Returns a single column of the texture
-	virtual const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out) = 0;
+	virtual const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out);
 
 	// Returns a single column of the texture, in BGRA8 format
 	virtual const uint32_t *GetColumnBgra(unsigned int column, const Span **spans_out);
 
 	// Returns the whole texture, stored in column-major order
-	virtual const uint8_t *GetPixels(FRenderStyle style) = 0;
+	virtual const uint8_t *GetPixels(FRenderStyle style);
 
 	// Returns the whole texture, stored in column-major order, in BGRA8 format
 	virtual const uint32_t *GetPixelsBgra();
@@ -712,8 +712,6 @@ class FDummyTexture : public FTexture
 {
 public:
 	FDummyTexture ();
-	const uint8_t *GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out) override;
-	const uint8_t *GetPixels(FRenderStyle style) override;
 	void SetSize (int width, int height);
 };
 

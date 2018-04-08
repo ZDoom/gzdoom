@@ -45,9 +45,7 @@ float BaseBlendA;
 
 
 
-// using FDummyTexture as base because that implements the required software renderer functions.
-
-class FSWPaletteTexture : public FDummyTexture
+class FSWPaletteTexture : public FTexture
 {
 public:
 	FSWPaletteTexture()
@@ -68,7 +66,7 @@ public:
 	}
 };
 
-class FSWSceneTexture : public FDummyTexture
+class FSWSceneTexture : public FTexture
 {
 public:
 	FHardwareTexture *hwtex;

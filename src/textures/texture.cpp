@@ -1455,6 +1455,22 @@ bool FTexture::GetTranslucency()
 
 //===========================================================================
 // 
+// empty stubs to be overloaded by child classes.
+//
+//===========================================================================
+
+const uint8_t *FTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
+{
+	return nullptr;
+}
+
+const uint8_t *FTexture::GetPixels(FRenderStyle style)
+{
+	return nullptr;
+}
+
+//===========================================================================
+// 
 // Dummy texture for the 0-entry.
 //
 //===========================================================================
@@ -1474,17 +1490,6 @@ void FDummyTexture::SetSize (int width, int height)
 	Width = width;
 	Height = height;
 	CalcBitSize ();
-}
-
-// These only get called from the texture precacher which discards the result.
-const uint8_t *FDummyTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
-{
-	return nullptr;
-}
-
-const uint8_t *FDummyTexture::GetPixels(FRenderStyle style)
-{
-	return nullptr;
 }
 
 //==========================================================================

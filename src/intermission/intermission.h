@@ -73,7 +73,6 @@ struct FIntermissionAction
 	int mCdId;
 	int mDuration;
 	FString mBackground;
-	FString mPalette;
 	FString mSound;
 	bool mFlatfill;
 	bool mMusicLooping;
@@ -169,7 +168,6 @@ protected:
 
 public:
 	int mTicker;
-	bool mPaletteChanged;
 
 	DIntermissionScreen() {}
 	virtual void Init(FIntermissionAction *desc, bool first);

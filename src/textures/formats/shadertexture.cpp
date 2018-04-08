@@ -64,6 +64,8 @@ public:
 		Width = vertical ? 2 : 256;
 		Height = vertical ? 256 : 2;
 		CalcBitSize();
+		bMasked = false;
+		bTranslucent = false;
 		PixelsAreStatic = 2;	// The alpha buffer is static, but if this gets used as a regular texture, a separate buffer needs to be made.
 
 		// Fill the column/row with shading values.

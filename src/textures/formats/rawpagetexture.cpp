@@ -37,6 +37,8 @@
 #include "files.h"
 #include "w_wad.h"
 #include "v_palette.h"
+#include "gi.h"
+#include "bitmap.h"
 #include "textures/textures.h"
 
 
@@ -48,9 +50,11 @@
 
 class FRawPageTexture : public FWorldTexture
 {
+	int mPaletteLump = -1;
 public:
 	FRawPageTexture (int lumpnum);
 	uint8_t *MakeTexture (FRenderStyle style) override;
+	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf) override;
 };
 
 //==========================================================================
@@ -159,6 +163,13 @@ FRawPageTexture::FRawPageTexture (int lumpnum)
 	WidthBits = 8;
 	HeightBits = 8;
 	WidthMask = 255;
+
+	// Special case hack for Heretic's E2 end pic. This is not going to be exposed as an editing feature because the implications would be horrible.
+	if (Name.CompareNoCase("E2END") == 0 && gameinfo.gametype == GAME_Heretic)
+	{
+		mPaletteLump = Wads.CheckNumForName("E2PAL");
+		if (Wads.LumpLength(mPaletteLump) < 768) mPaletteLump = -1;
+	}
 }
 
 //==========================================================================
@@ -179,6 +190,9 @@ uint8_t *FRawPageTexture::MakeTexture (FRenderStyle style)
 
 	const uint8_t *remap = GetRemap(style);
 
+	// This does not handle the custom palette. 
+	// User maps are encouraged to use a real image format when replacing E2END and the original could never be used anywhere else.
+
 	// Convert the source image from row-major to column-major format
 	for (int y = 200; y != 0; --y)
 	{
@@ -188,8 +202,29 @@ uint8_t *FRawPageTexture::MakeTexture (FRenderStyle style)
 			dest_p += 200;
 			source_p++;
 		}
-		dest_p -= 200*320-1;
+		dest_p -= 200 * 320 - 1;
 	}
 	return Pixels;
 }
 
+int FRawPageTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
+{
+	if (mPaletteLump < 0) return FTexture::CopyTrueColorPixels(bmp, x, y, rotate, inf);
+	else
+	{
+		FMemLump lump = Wads.ReadLump(SourceLump);
+		FMemLump plump = Wads.ReadLump(mPaletteLump);
+		const uint8_t *source = (const uint8_t *)lump.GetMem();
+		const uint8_t *psource = (const uint8_t *)plump.GetMem();
+		PalEntry paldata[256];
+		for (auto & pe : paldata)
+		{
+			pe.r = *psource++;
+			pe.g = *psource++;
+			pe.b = *psource++;
+			pe.a = 255;
+		}
+		bmp->CopyPixelData(x, y, source, 320, 200, 1, 320, 0, paldata, inf);
+	}
+
+}

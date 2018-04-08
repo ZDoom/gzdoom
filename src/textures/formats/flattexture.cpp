@@ -92,6 +92,7 @@ FFlatTexture::FFlatTexture (int lumpnum)
 	}
 
 	bMasked = false;
+	bTranslucent = false;
 	WidthBits = HeightBits = bits;
 	Width = Height = 1 << bits;
 	WidthMask = (1 << bits) - 1;

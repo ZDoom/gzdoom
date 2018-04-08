@@ -50,11 +50,7 @@ public:
 	~SDLGLFB ();
 
 	void ForceBuffering (bool force);
-	bool Lock(bool buffered);
-	bool Lock ();
-	void Unlock();
 
-	bool IsValid ();
 	bool IsFullscreen ();
 
 	virtual void SetVSync( bool vsync );

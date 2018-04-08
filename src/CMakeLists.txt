@@ -519,7 +519,6 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
 	posix/sdl/i_system.cpp
-	posix/sdl/sdlvideo.cpp
 	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES

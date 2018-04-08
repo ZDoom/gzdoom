@@ -94,6 +94,8 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 }
 #endif
 
+CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
 // CODE --------------------------------------------------------------------
@@ -395,12 +397,6 @@ bool SDLGLFB::IsFullscreen ()
 	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 }
 
-
-bool SDLGLFB::IsValid ()
-{
-	return DFrameBuffer::IsValid() && Screen != NULL;
-}
-
 void SDLGLFB::SetVSync( bool vsync )
 {
 #if defined (__APPLE__)
@@ -449,3 +445,20 @@ int SDLGLFB::GetClientHeight()
 	return height;
 }
 
+
+// each platform has its own specific version of this function.
+void I_SetWindowTitle(const char* caption)
+{
+#if 0
+	// This needs to be done differently. The static_cast here is fundamentally wrong because SDLFB is not the true ancestor of the screen's class.
+	auto Screen = static_cast<SDLFB *>(screen)->GetSDLWindow();
+	if (caption)
+		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), caption);
+	else
+	{
+		FString default_caption;
+		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), default_caption);
+	}
+#endif
+}

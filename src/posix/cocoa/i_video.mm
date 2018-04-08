@@ -31,7 +31,7 @@
  **
  */
 
-#include "gl/system/gl_load.h"
+#include "gl_load/gl_load.h"
 
 #include "i_common.h"
 
@@ -257,11 +257,12 @@ private:
 	int  m_width;
 	int  m_height;
 	bool m_fullscreen;
+	bool m_bgra;
 	bool m_hiDPI;
 
 	void SetFullscreenMode(int width, int height);
 	void SetWindowedMode(int width, int height);
-	void SetMode(int width, int height, bool fullscreen, bool hiDPI);
+	void SetMode(int width, int height, bool fullscreen, bool bgra, bool hiDPI);
 
 	static CocoaVideo* GetInstance();
 };
@@ -305,10 +306,6 @@ extern id appCtrl;
 
 namespace
 {
-
-extern cycle_t BlitCycles;
-cycle_t FlipCycles;
-
 
 CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 {
@@ -363,6 +360,7 @@ CocoaVideo::CocoaVideo()
 , m_width(-1)
 , m_height(-1)
 , m_fullscreen(false)
+, m_bgra(false)
 , m_hiDPI(false)
 {
 	memset(&m_modeIterator, 0, sizeof m_modeIterator);
@@ -459,9 +457,9 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	if (NULL != old)
 	{
-		if (width == m_width && height == m_height && bgra == old->IsBgra())
+		if (width == m_width && height == m_height && bgra == m_bgra)
 		{
-			SetMode(width, height, fullscreen, vid_hidpi);
+			SetMode(width, height, fullscreen, bgra, vid_hidpi);
 			return old;
 		}
 
@@ -481,7 +479,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	fb->SetFlash(flashColor, flashAmount);
 
-	SetMode(width, height, fullscreen, vid_hidpi);
+	SetMode(width, height, fullscreen, bgra, vid_hidpi);
 
 	return fb;
 }
@@ -503,7 +501,7 @@ void CocoaVideo::UseHiDPI(const bool hiDPI)
 {
 	if (CocoaVideo* const video = GetInstance())
 	{
-		video->SetMode(video->m_width, video->m_height, video->m_fullscreen, hiDPI);
+		video->SetMode(video->m_width, video->m_height, video->m_fullscreen, video->m_bgra, hiDPI);
 	}
 }
 
@@ -610,9 +608,10 @@ void CocoaVideo::SetWindowedMode(const int width, const int height)
 	[m_window exitAppOnClose];
 }
 
-void CocoaVideo::SetMode(const int width, const int height, const bool fullscreen, const bool hiDPI)
+void CocoaVideo::SetMode(const int width, const int height, const bool fullscreen, const bool bgra, const bool hiDPI)
 {
 	if (fullscreen == m_fullscreen
+		&& bgra    == m_bgra
 		&& width   == m_width
 		&& height  == m_height
 		&& hiDPI   == m_hiDPI)
@@ -649,9 +648,10 @@ void CocoaVideo::SetMode(const int width, const int height, const bool fullscree
 		[m_window makeKeyAndOrderFront:nil];
 	}
 
-	m_fullscreen = fullscreen;
 	m_width      = width;
 	m_height     = height;
+	m_fullscreen = fullscreen;
+	m_bgra       = bgra;
 	m_hiDPI      = hiDPI;
 }
 
@@ -763,14 +763,6 @@ int SDLGLFB::GetClientHeight()
 
 
 // ---------------------------------------------------------------------------
-
-
-ADD_STAT(blit)
-{
-	FString result;
-	result.Format("blit=%04.1f ms  flip=%04.1f ms", BlitCycles.TimeMS(), FlipCycles.TimeMS());
-	return result;
-}
 
 
 IVideo* Video;

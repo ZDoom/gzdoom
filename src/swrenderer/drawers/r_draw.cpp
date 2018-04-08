@@ -225,6 +225,7 @@ namespace swrenderer
 			if (rendertarget->IsBgra())
 			{
 				uint32_t *destorg = (uint32_t*)rendertarget->GetBuffer();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint32_t *dest = (uint32_t*)args.Dest();
 				int offset  = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();
@@ -233,6 +234,7 @@ namespace swrenderer
 			else
 			{
 				uint8_t *destorg = rendertarget->GetBuffer();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint8_t *dest = (uint8_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();
@@ -247,6 +249,7 @@ namespace swrenderer
 			if (rendertarget->IsBgra())
 			{
 				uint32_t *destorg = (uint32_t*)rendertarget->GetBuffer();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint32_t *dest = (uint32_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();
@@ -255,6 +258,7 @@ namespace swrenderer
 			else
 			{
 				uint8_t *destorg = rendertarget->GetBuffer();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint8_t *dest = (uint8_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();

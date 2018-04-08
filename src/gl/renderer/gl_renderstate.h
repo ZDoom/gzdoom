@@ -73,6 +73,7 @@ enum EPassType
 
 class FRenderState
 {
+	friend void gl_SetTextureMode(int type);
 	bool mTextureEnabled;
 	bool mFogEnabled;
 	bool mGlowEnabled;

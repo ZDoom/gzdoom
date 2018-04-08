@@ -130,6 +130,31 @@ void gl_PatchMenu()
 
 void gl_SetTextureMode(int type)
 {
+	if (type == TM_SWCANVAS)
+	{
+		int shader = V_IsTrueColor() ? 2 : 0;
+		float c1[4], c2[4];
+		if (gl_RenderState.mColormapState > CM_DEFAULT && gl_RenderState.mColormapState < CM_MAXCOLORMAP)
+		{
+			FSpecialColormap *scm = &SpecialColormaps[gl_RenderState.mColormapState - CM_FIRSTSPECIALCOLORMAP];
+			for (int i = 0; i < 3; i++)
+			{
+				c1[i] = scm->ColorizeStart[i];
+				c2[i] = scm->ColorizeEnd[i] - scm->ColorizeStart[i];
+			}
+			c1[3] = 0;
+			c2[3] = 0;
+			shader++;
+		}
+		// Type 2 (unaltered true color) can be done without activating the shader.
+		if (shader != 2)
+		{
+			GLRenderer->legacyShaders->BindShader(shader, c1, c2);
+			return;
+		}
+		else type = TM_MODULATE;
+	}
+	glUseProgram(0);
 	if (type == TM_MASK)
 	{
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);

@@ -78,7 +78,7 @@ LegacyShaderContainer::~LegacyShaderContainer()
 	for (auto p : Shaders) if (p) delete p;
 }
 
-LegacyShader* LegacyShaderContainer::CreatePixelShader(const FString& vertexsrc, const FString& fragmentsrc, const FString &defines)
+LegacyShader* LegacyShaderContainer::CreatePixelShader(const FString& vertex, const FString& fragment, const FString &defines)
 {
 	auto shader = new LegacyShader();
 	char buffer[10000];
@@ -91,6 +91,7 @@ LegacyShader* LegacyShaderContainer::CreatePixelShader(const FString& vertexsrc,
 	if (shader->FragmentShader == 0) { Printf("glCreateShader(GL_FRAGMENT_SHADER) failed. Disabling OpenGL hardware acceleration.\n"); return nullptr; }
 	
 	{
+		FString vertexsrc = defines + vertex;
 		int lengths[1] = { (int)vertexsrc.Len() };
 		const char *sources[1] = { vertexsrc.GetChars() };
 		glShaderSource(shader->VertexShader, 1, sources, lengths);
@@ -98,6 +99,7 @@ LegacyShader* LegacyShaderContainer::CreatePixelShader(const FString& vertexsrc,
 	}
 
 	{
+		FString fragmentsrc = defines + fragment;
 		int lengths[1] = { (int)fragmentsrc.Len() };
 		const char *sources[1] = { fragmentsrc.GetChars() };
 		glShaderSource(shader->FragmentShader, 1, sources, lengths);
@@ -138,8 +140,8 @@ LegacyShader* LegacyShaderContainer::CreatePixelShader(const FString& vertexsrc,
 
 	shader->ConstantLocations[0] = glGetUniformLocation(shader->Program, "uColor1");
 	shader->ConstantLocations[1] = glGetUniformLocation(shader->Program, "uColor2");
-	shader->ImageLocation = glGetUniformLocation(shader->Program, "Image");
-	shader->PaletteLocation = glGetUniformLocation(shader->Program, "Palette");
+	shader->ImageLocation = glGetUniformLocation(shader->Program, "tex");
+	shader->PaletteLocation = glGetUniformLocation(shader->Program, "palette");
 
 	return shader;
 }

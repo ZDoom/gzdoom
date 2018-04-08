@@ -802,7 +802,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		{
 			auto index = cmd.mSpecialColormap - &SpecialColormaps[0];
 			if (index < 0 || (unsigned)index >= SpecialColormaps.Size()) index = 0;	// if it isn't in the table FBitmap cannot use it. Shouldn't happen anyway.
-			if (!gl.legacyMode)
+			if (!gl.legacyMode || cmd.mTexture->UseType == ETextureType::SWCanvas)
 			{ 
 				gl_RenderState.SetFixedColormap(CM_FIRSTSPECIALCOLORMAPFORCED + int(index));
 			}

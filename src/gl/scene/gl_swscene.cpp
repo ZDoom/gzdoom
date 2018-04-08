@@ -59,7 +59,11 @@ public:
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 	{
-		memcpy(bmp->GetPixels(), GPalette.BaseColors, 1024);
+		PalEntry *pe = (PalEntry*)bmp->GetPixels();
+		for (int i = 0; i < 256; i++)
+		{
+			pe[i] = GPalette.BaseColors[i].d | 0xff000000;
+		}
 		return 0;
 	}
 };

@@ -697,16 +697,15 @@ void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool doco
 // Vertex buffer for 2D drawer
 //
 //===========================================================================
-#define TDiO ((F2DDrawer::TwoDVertex*)NULL)
 
 class F2DVertexBuffer : public FSimpleVertexBuffer
 {
 	uint32_t ibo_id;
 
 	// Make sure we can build upon FSimpleVertexBuffer.
-	static_assert(&VSiO->x == &TDiO->x, "x not aligned");
-	static_assert(&VSiO->u == &TDiO->u, "y not aligned");
-	static_assert(&VSiO->color == &TDiO->color0, "color not aligned");
+	static_assert(offsetof(FSimpleVertex, x) == offsetof(F2DDrawer::TwoDVertex, x), "x not aligned");
+	static_assert(offsetof(FSimpleVertex, u) == offsetof(F2DDrawer::TwoDVertex, u), "u not aligned");
+	static_assert(offsetof(FSimpleVertex, color) == offsetof(F2DDrawer::TwoDVertex, color0), "color not aligned");
 
 public:
 

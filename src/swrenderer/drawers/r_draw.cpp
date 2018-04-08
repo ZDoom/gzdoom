@@ -289,6 +289,8 @@ namespace swrenderer
 		float idepth;
 	};
 
+	// #define DEPTH_DEBUG
+
 	class DepthSpanCommand : public DrawerCommand
 	{
 	public:
@@ -297,6 +299,9 @@ namespace swrenderer
 			y = args.DestY();
 			x1 = args.DestX1();
 			x2 = args.DestX2();
+			#ifdef DEPTH_DEBUG
+			dest = (uint32_t*)args.Viewport()->GetDest(0, args.DestY());
+			#endif
 		}
 
 		FString DebugInfo() override { return "DepthSpanCommand"; }
@@ -314,9 +319,16 @@ namespace swrenderer
 			if (idepth1 == idepth2)
 			{
 				float depth = idepth1;
+				#ifdef DEPTH_DEBUG
+				uint32_t gray = clamp<int32_t>((int32_t)(1.0f / depth / 4.0f), 0, 255);
+				uint32_t color = MAKEARGB(255, gray, gray, gray);
+				#endif
 				for (int x = x1; x <= end; x++)
 				{
 					values[x] = depth;
+					#ifdef DEPTH_DEBUG
+					dest[x] = color;
+					#endif
 				}
 			}
 			else
@@ -325,6 +337,12 @@ namespace swrenderer
 				float step = (idepth2 - idepth1) / (x2 - x1 + 1);
 				for (int x = x1; x <= end; x++)
 				{
+					#ifdef DEPTH_DEBUG
+					uint32_t gray = clamp<int32_t>((int32_t)(1.0f / depth / 4.0f), 0, 255);
+					uint32_t color = MAKEARGB(255, gray, gray, gray);
+					dest[x] = color;
+					#endif
+
 					values[x] = depth;
 					depth += step;
 				}
@@ -334,6 +352,9 @@ namespace swrenderer
 	private:
 		int y, x1, x2;
 		float idepth1, idepth2;
+		#ifdef DEPTH_DEBUG
+		uint32_t *dest;
+		#endif
 	};
 
 	void SWPixelFormatDrawers::DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth)

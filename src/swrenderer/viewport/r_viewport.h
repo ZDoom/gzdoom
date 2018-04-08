@@ -68,7 +68,17 @@ namespace swrenderer
 			else
 				return FocalLengthY / (screenY + 0.5 - CenterY) * planeHeight;
 		}
-		
+
+		double ScreenToViewX(int screenX, double viewZ) const
+		{
+			return (screenX + 0.5 - CenterX) / FocalLengthX * viewZ;
+		}
+
+		double ScreenToViewY(int screenY, double viewZ) const
+		{
+			return (CenterY - screenY - 0.5) / FocalLengthY * viewZ;
+		}
+
 	private:
 		void InitTextureMapping();
 		void SetupBuffer();

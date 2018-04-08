@@ -89,11 +89,10 @@ namespace swrenderer
 		auto viewport = Thread->Viewport.get();
 
 		DVector3 worldNormal = pl->height.Normal();
-		double worldD = pl->height.fD();
 		planeNormal.X = worldNormal.X * viewport->viewpoint.Sin - worldNormal.Y * viewport->viewpoint.Cos;
 		planeNormal.Y = worldNormal.X * viewport->viewpoint.Cos + worldNormal.Y * viewport->viewpoint.Sin;
 		planeNormal.Z = worldNormal.Z;
-		planeD = worldD + planeNormal.Z * viewport->viewpoint.Pos.Z;
+		planeD = -planeNormal.Z * (pl->height.ZatPoint(viewport->viewpoint.Pos.X, viewport->viewpoint.Pos.Y) - viewport->viewpoint.Pos.Z);
 
 
 		drawerargs.SetSolidColor(3);
@@ -213,24 +212,23 @@ namespace swrenderer
 
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
+		drawerargs.DrawTiltedSpan(Thread, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+
 		if (r_models)
 		{
-			// Calculate normalized device coordinates for the span
-			// 1.5 is not a typo. The range is [x1,x2]
-			double devY = -(y + 0.5 - Thread->Viewport->CenterY) / Thread->Viewport->InvZtoScale / Thread->Viewport->viewwindow.FocalTangent;
-			double devX1 = (x1 + 0.5 - Thread->Viewport->CenterX) / Thread->Viewport->CenterX;
-			double devX2 = (x2 + 1.5 - Thread->Viewport->CenterX) / Thread->Viewport->CenterX;
+			double viewZ = 1.0;
+			double viewX1 = Thread->Viewport->ScreenToViewX(x1, viewZ);
+			double viewX2 = Thread->Viewport->ScreenToViewX(x2 + 1, viewZ);
+			double viewY = Thread->Viewport->ScreenToViewY(y, viewZ);
 
 			// Find depth values for the span
-			float zbufferdepth1 = (float)-planeD / (planeNormal | DVector3(devX1, 1.0, devY));
-			float zbufferdepth2 = (float)-planeD / (planeNormal | DVector3(devX2, 1.0, devY));
+			float zbufferdepth1 = (float)(-planeD / (planeNormal | DVector3(viewX1, viewZ, viewY)));
+			float zbufferdepth2 = (float)(-planeD / (planeNormal | DVector3(viewX2, viewZ, viewY)));
 
 			drawerargs.SetDestX1(x1);
 			drawerargs.SetDestX2(x2);
 			drawerargs.SetDestY(Thread->Viewport.get(), y);
 			drawerargs.DrawDepthSpan(Thread, 1.0f / zbufferdepth1, 1.0f / zbufferdepth2);
 		}
-
-		drawerargs.DrawTiltedSpan(Thread, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
 	}
 }

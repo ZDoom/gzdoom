@@ -289,10 +289,8 @@ namespace swrenderer
 
 		vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->GetTopOffset(0);
 
-		// Force it to use software rendering.
-		// To do: Fix that Draw2D() is never called by SWSceneDrawer::RenderView. Also make sure to adjust the similar comment in poly_playersprite.cpp
-		bool renderToCanvas = true; 
-		//bool renderToCanvas = viewport->RenderingToCanvas;
+		// Force it to use software rendering when drawing to a canvas texture.
+		bool renderToCanvas = viewport->RenderingToCanvas;
 
 		if (Thread->Viewport->viewpoint.camera->player && (renderToCanvas ||
 			viewheight == viewport->RenderTarget->GetHeight() ||
@@ -487,7 +485,7 @@ namespace swrenderer
 				DTA_FillColor, sprite.FillColor,
 				DTA_SpecialColormap, sprite.special,
 				DTA_ColorOverlay, sprite.overlay.d,
-				DTA_Color, sprite.LightColor,
+				DTA_Color, sprite.LightColor | 0xff000000,	// the color here does not have a valid alpha component.
 				DTA_Desaturate, sprite.Desaturate,
 				TAG_DONE);
 		}

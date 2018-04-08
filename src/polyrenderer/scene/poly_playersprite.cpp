@@ -218,10 +218,8 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 	DCanvas *renderTarget = PolyRenderer::Instance()->RenderTarget;
 
-	// Force it to use software rendering.
-	// To do: Fix that Draw2D() is never called by SWSceneDrawer::RenderView. Make sure to adjust the similar comment in r_playersprite.cpp
-	bool renderToCanvas = true;
-	//bool renderToCanvas = PolyRenderer::Instance()->RenderToCanvas;
+	// Force it to use software rendering when drawing to a canvas texture.
+	bool renderToCanvas = PolyRenderer::Instance()->RenderToCanvas;
 
 	sprframe = &SpriteFrames[sprdef->spriteframes + pspr->GetFrame()];
 

@@ -311,13 +311,7 @@ public:
 	inline int GetHeight() const { return Height; }
 	virtual DCanvas *GetCanvas() { return nullptr; }
 
-
-	// Access control
-	virtual bool IsValid() = delete;
-	virtual bool Lock(bool buffered = true) = delete;		// Returns true if the surface was lost since last time
-	virtual void Unlock() = delete;
-
-	// Make the surface visible. Also implies Unlock().
+	// Make the surface visible.
 	virtual void Update () = 0;
 
 	// Return a pointer to 256 palette entries that can be written to.

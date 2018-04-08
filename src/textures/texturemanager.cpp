@@ -172,7 +172,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 		if (stricmp (tex->Name, name) == 0 )
 		{
 			// If we look for short names, we must ignore any long name texture.
-			if ((flags & TEXMAN_ShortNameOnly) && !tex->bFullNameTexture)
+			if ((flags & TEXMAN_ShortNameOnly) && tex->bFullNameTexture)
 			{
 				continue;
 			}

@@ -193,10 +193,6 @@ void ST_LoadCrosshair(bool alwaysload)
 		return;
 	}
 
-	if (CrosshairImage != NULL)
-	{
-		CrosshairImage->Unload ();
-	}
 	if (num == 0)
 	{
 		CrosshairNum = 0;

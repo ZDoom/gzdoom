@@ -39,6 +39,7 @@ public:
 	bool SetContrast(float contrast);
 	void DoSetGamma();
 
+	void CleanForRestart() override;
 	void UpdatePalette() override;
 	void GetFlashedPalette (PalEntry pal[256]) override;
 	PalEntry *GetPalette () override;

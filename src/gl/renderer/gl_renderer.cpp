@@ -361,6 +361,13 @@ int FGLRenderer::ScreenToWindowY(int y)
 //
 //===========================================================================
 
+void FGLRenderer::ResetSWScene()
+{
+	// force recreation of the SW scene drawer to ensure it gets a new set of resources.
+	if (swdrawer != nullptr) delete swdrawer;
+	swdrawer = nullptr;
+}
+
 void FGLRenderer::SetupLevel()
 {
 	mVBO->CreateVBO();

@@ -355,7 +355,8 @@ public:
 	// Set the rect defining the area affected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
-	virtual bool LegacyHardware() const { return false; }	// only for reporting SM1.4 support to the stat collector
+	// Delete any resources that need to be deleted after restarting with a different IWAD
+	virtual void CleanForRestart() {}
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.

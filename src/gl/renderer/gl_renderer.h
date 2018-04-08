@@ -172,6 +172,7 @@ public:
 
 	void FlushTextures();
 	void SetupLevel();
+	void ResetSWScene();
 
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);

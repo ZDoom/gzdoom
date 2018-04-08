@@ -118,7 +118,7 @@ inline unsigned __int64 rdtsc()
 	return __rdtsc();
 }
 #elif defined __APPLE__ && (defined __i386__ || defined __x86_64__)
-inline unsigned __int64 rdtsc()
+inline uint64_t rdtsc()
 {
 	return __builtin_ia32_rdtsc();
 }

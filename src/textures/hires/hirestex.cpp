@@ -36,6 +36,11 @@
 #include "bitmap.h"
 #include "textures.h"
 
+#ifndef _WIN32
+#include <unistd.h>
+#define _access(a,b) access(a,b)
+#endif
+
 static int Doom2Wad = -1;
 
 // quick'n dirty hack. Should be enough here...

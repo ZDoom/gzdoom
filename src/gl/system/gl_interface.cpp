@@ -43,9 +43,6 @@ static TArray<FString>  m_Extensions;
 RenderContext gl;
 static double realglversion;	// this is public so the statistics code can access it.
 
-EXTERN_CVAR(Bool, gl_legacy_mode)
-CVAR(Bool, gl_riskymodernpath, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-
 //==========================================================================
 //
 // 
@@ -322,7 +319,6 @@ void gl_LoadExtensions()
 
 	UCVarValue value;
 	value.Bool = gl.legacyMode;
-	gl_legacy_mode.ForceSet (value, CVAR_Bool);
 }
 
 //==========================================================================

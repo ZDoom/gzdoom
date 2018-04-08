@@ -52,7 +52,6 @@
 
 
 CVAR(Bool, gl_lights_additive, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, gl_legacy_mode, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 //==========================================================================
 //
@@ -64,7 +63,7 @@ CVAR(Bool, gl_legacy_mode, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 void gl_PatchMenu()
 {
 	// Radial fog and Doom lighting are not available without full shader support.
-	if (!gl_legacy_mode) return;
+	if (!gl.legacyMode) return;
 
 	FOptionValues **opt = OptionValues.CheckKey("LightingModes");
 	if (opt != NULL) 

@@ -2637,7 +2637,7 @@ void D_DoomMain (void)
 			}
 
 			V_Init2();
-			gl_PatchMenu();
+			gl_PatchMenu();	// removes unapplicable entries for old hardware. This cannot be done in MENUDEF because at the point it gets parsed it doesn't have the needed info.
 			UpdateJoystickMenu(NULL);
 
 			v = Args->CheckValue ("-loadgame");

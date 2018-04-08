@@ -44,6 +44,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/textures/gl_hwtexture.h"
+#include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl_debug.h"
@@ -389,6 +390,11 @@ void OpenGLFrameBuffer::CleanForRestart()
 {
 	if (GLRenderer)
 		GLRenderer->ResetSWScene();
+}
+
+void OpenGLFrameBuffer::SetTextureFilterMode()
+{
+	if (GLRenderer != nullptr && GLRenderer->mSamplerManager != nullptr) GLRenderer->mSamplerManager->SetTextureFilterMode();
 }
 
 void OpenGLFrameBuffer::UpdatePalette()

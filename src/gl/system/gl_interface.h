@@ -29,6 +29,7 @@ enum RenderFlags
 
 enum TexMode
 {
+	TM_SWCANVAS = -1,	// special case for the legacy renderer, do not use for anything but the SW renderer's canvas.
 	TM_MODULATE = 0,	// (r, g, b, a)
 	TM_MASK,			// (1, 1, 1, a)
 	TM_OPAQUE,			// (r, g, b, 1)

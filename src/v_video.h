@@ -357,6 +357,7 @@ public:
 
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
+	virtual void SetTextureFilterMode() {}
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
@@ -366,7 +367,6 @@ public:
 	// Returns true if Begin2D has been called and 2D drawing is now active
 	bool HasBegun2D() { return isIn2D; }
 
-	// DrawTexture calls after Begin2D use native textures.
 
 	// Report a game restart
 	virtual void GameRestart();

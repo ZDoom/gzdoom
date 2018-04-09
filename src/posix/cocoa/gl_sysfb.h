@@ -1,8 +1,8 @@
 /*
- ** sdlglvideo.h
+ ** gl_sysfb.h
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2014 Alexey Lysiuk
+ ** Copyright 2012-2018 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -31,29 +31,17 @@
  **
  */
 
-
-// IMPORTANT NOTE!
-// This file was intentially named sdlglvideo.h but it has nothing with SDL
-// The name was selected to avoid spreding of changes over the project
-// The same applies to SDLGLFB class
-// See gl/system/gl_framebuffer.h for details about its usage
-
-
-#ifndef COCOA_SDLGLVIDEO_H_INCLUDED
-#define COCOA_SDLGLVIDEO_H_INCLUDED
+#ifndef COCOA_GL_SYSFB_H_INCLUDED
+#define COCOA_GL_SYSFB_H_INCLUDED
 
 #include "v_video.h"
 
-#include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_hwtexture.h"
-
-
-class SDLGLFB : public DFrameBuffer
+class SystemFrameBuffer : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SDLGLFB(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
-	~SDLGLFB();
+	SystemFrameBuffer(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
+	~SystemFrameBuffer();
 
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
@@ -62,6 +50,7 @@ public:
 	int GetClientHeight();
 
 	virtual int GetTrueHeight() { return GetClientHeight(); }
+
 protected:
 	bool                UpdatePending;
 
@@ -72,7 +61,7 @@ protected:
 	bool				m_supportsGamma;
 	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
 
-	SDLGLFB();
+	SystemFrameBuffer();
 
 	void InitializeState();
 
@@ -83,4 +72,4 @@ protected:
 	void ResetGammaTable();
 };
 
-#endif // COCOA_SDLGLVIDEO_H_INCLUDED
+#endif // COCOA_GL_SYSFB_H_INCLUDED

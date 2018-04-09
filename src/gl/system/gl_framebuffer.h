@@ -1,10 +1,7 @@
 #ifndef __GL_FRAMEBUFFER
 #define __GL_FRAMEBUFFER
 
-#ifdef _WIN32
-#include "hardware.h"
-#include "win32gliface.h"
-#endif
+#include "gl_sysfb.h"
 
 #include <memory>
 
@@ -12,17 +9,9 @@ class FHardwareTexture;
 class FSimpleVertexBuffer;
 class FGLDebug;
 
-#ifdef _WIN32
-class OpenGLFrameBuffer : public Win32GLFrameBuffer
+class OpenGLFrameBuffer : public SystemFrameBuffer
 {
-	typedef Win32GLFrameBuffer Super;
-#else
-#include "sdlglvideo.h"
-class OpenGLFrameBuffer : public SDLGLFB
-{
-	typedef SDLGLFB Super;	//[C]commented, DECLARE_CLASS defines this in linux
-#endif
-
+	typedef SystemFrameBuffer Super;
 
 public:
 

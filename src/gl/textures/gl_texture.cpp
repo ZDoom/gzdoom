@@ -34,9 +34,6 @@
 #include "r_state.h"
 #include "actor.h"
 #include "cmdlib.h"
-#ifdef _WIN32
-#include "win32gliface.h"
-#endif
 #include "v_palette.h"
 #include "sc_man.h"
 #include "textures/skyboxtexture.h"

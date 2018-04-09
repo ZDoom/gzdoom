@@ -1,37 +1,18 @@
-#ifndef __WIN32GLIFACE_H__
-#define __WIN32GLIFACE_H__
+#ifndef __WIN32_GL_SYSFB_H__
+#define __WIN32_GL_SYSFB_H__
 
-#include "hardware.h"
 #include "v_video.h"
-#include "tarray.h"
 
-extern IVideo *Video;
-
-
-
-EXTERN_CVAR (Float, dimamount)
-EXTERN_CVAR (Color, dimcolor)
-
-EXTERN_CVAR(Int, vid_defwidth);
-EXTERN_CVAR(Int, vid_defheight);
-EXTERN_CVAR(Int, vid_adapter);
-
-extern IVideo *Video;
-
-struct FRenderer;
-
-
-
-class Win32GLFrameBuffer : public DFrameBuffer
+class SystemFrameBuffer : public DFrameBuffer
 {
 	typedef DFrameBuffer Super;
 
 public:
-	Win32GLFrameBuffer() {}
+	SystemFrameBuffer() {}
 	// Actually, hMonitor is a HMONITOR, but it's passed as a void * as there
     // look to be some cross-platform bits in the way.
-	Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
-	virtual ~Win32GLFrameBuffer();
+	SystemFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra);
+	virtual ~SystemFrameBuffer();
 
 	void SetVSync (bool vsync);
 	void SwapBuffers();
@@ -66,4 +47,4 @@ protected:
 
 };
 
-#endif //__WIN32GLIFACE_H__
+#endif // __WIN32_GL_SYSFB_H__

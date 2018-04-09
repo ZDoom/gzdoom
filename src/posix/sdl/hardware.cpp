@@ -46,7 +46,7 @@
 #include "v_text.h"
 #include "doomstat.h"
 #include "m_argv.h"
-#include "sdlglvideo.h"
+#include "gl_sysfb.h"
 #include "r_renderer.h"
 #include "swrenderer/r_swrenderer.h"
 
@@ -89,8 +89,9 @@ void I_InitGraphics ()
 
 	val.Bool = !!Args->CheckParm ("-devparm");
 	ticker.SetGenericRepDefault (val, CVAR_Bool);
-	
-	Video = new SDLGLVideo(0);
+
+	extern IVideo *gl_CreateVideo();
+	Video = gl_CreateVideo();
 	
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

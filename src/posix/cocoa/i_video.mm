@@ -665,7 +665,7 @@ CocoaVideo* CocoaVideo::GetInstance()
 // ---------------------------------------------------------------------------
 
 
-SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool fullscreen, bool bgra)
+SystemFrameBuffer::SystemFrameBuffer(void*, const int width, const int height, int, int, const bool fullscreen, bool bgra)
 : DFrameBuffer(width, height, bgra)
 , UpdatePending(false)
 {
@@ -685,20 +685,20 @@ SDLGLFB::SDLGLFB(void*, const int width, const int height, int, int, const bool 
 	}
 }
 
-SDLGLFB::SDLGLFB()
+SystemFrameBuffer::SystemFrameBuffer()
 {
 }
 
-SDLGLFB::~SDLGLFB()
+SystemFrameBuffer::~SystemFrameBuffer()
 {
 }
 
-bool SDLGLFB::IsFullscreen()
+bool SystemFrameBuffer::IsFullscreen()
 {
 	return CocoaVideo::IsFullscreen();
 }
 
-void SDLGLFB::SetVSync(bool vsync)
+void SystemFrameBuffer::SetVSync(bool vsync)
 {
 	const GLint value = vsync ? 1 : 0;
 
@@ -707,21 +707,21 @@ void SDLGLFB::SetVSync(bool vsync)
 }
 
 
-void SDLGLFB::InitializeState()
+void SystemFrameBuffer::InitializeState()
 {
 }
 
-bool SDLGLFB::CanUpdate()
+bool SystemFrameBuffer::CanUpdate()
 {
 	return true;
 }
 
-void SDLGLFB::SwapBuffers()
+void SystemFrameBuffer::SwapBuffers()
 {
 	[[NSOpenGLContext currentContext] flushBuffer];
 }
 
-void SDLGLFB::SetGammaTable(uint16_t* table)
+void SystemFrameBuffer::SetGammaTable(uint16_t* table)
 {
 	if (m_supportsGamma)
 	{
@@ -737,7 +737,7 @@ void SDLGLFB::SetGammaTable(uint16_t* table)
 	}
 }
 
-void SDLGLFB::ResetGammaTable()
+void SystemFrameBuffer::ResetGammaTable()
 {
 	if (m_supportsGamma)
 	{
@@ -745,7 +745,7 @@ void SDLGLFB::ResetGammaTable()
 	}
 }
 
-int SDLGLFB::GetClientWidth()
+int SystemFrameBuffer::GetClientWidth()
 {
 	NSView *view = [[NSOpenGLContext currentContext] view];
 	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
@@ -753,7 +753,7 @@ int SDLGLFB::GetClientWidth()
 	return clientWidth > 0 ? clientWidth : Width;
 }
 
-int SDLGLFB::GetClientHeight()
+int SystemFrameBuffer::GetClientHeight()
 {
 	NSView *view = [[NSOpenGLContext currentContext] view];
 	NSRect backingBounds = [view convertRectToBacking: [view bounds]];

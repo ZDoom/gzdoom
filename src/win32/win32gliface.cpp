@@ -32,14 +32,13 @@
 **
 */
 
-//#include "gl/system/gl_system.h"
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <GL/gl.h>
 #include "wglext.h"
 
-#include "win32gliface.h"
+#include "gl_sysfb.h"
+#include "hardware.h"
 #include "x86.h"
 #include "templates.h"
 #include "version.h"
@@ -51,7 +50,6 @@
 #include "v_text.h"
 #include "m_argv.h"
 #include "doomerrors.h"
-//#include "gl_defs.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
@@ -81,6 +79,9 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 
 EXTERN_CVAR(Bool, vr_enable_quadbuffered)
 EXTERN_CVAR(Int, vid_refreshrate)
+EXTERN_CVAR(Int, vid_defwidth)
+EXTERN_CVAR(Int, vid_defheight)
+EXTERN_CVAR(Int, vid_adapter)
 
 
 //==========================================================================
@@ -451,7 +452,7 @@ bool Win32GLVideo::GoFullscreen(bool yes)
 
 DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer *old)
 {
-	Win32GLFrameBuffer *fb;
+	SystemFrameBuffer *fb;
 
 	if (fs)
 	{
@@ -480,7 +481,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, 
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		fb = static_cast<Win32GLFrameBuffer *> (old);
+		fb = static_cast<SystemFrameBuffer *> (old);
 		if (fb->m_Width == m_DisplayWidth &&
 			fb->m_Height == m_DisplayHeight &&
 			fb->m_Bits == m_DisplayBits &&
@@ -974,7 +975,7 @@ bool Win32GLVideo::SetFullscreen(const char *devicename, int w, int h, int bits,
 //
 //==========================================================================
 
-Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : DFrameBuffer(width, height, bgra) 
+SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : DFrameBuffer(width, height, bgra)
 {
 	m_Width = width;
 	m_Height = height;
@@ -1083,7 +1084,7 @@ Win32GLFrameBuffer::Win32GLFrameBuffer(void *hMonitor, int width, int height, in
 //
 //==========================================================================
 
-Win32GLFrameBuffer::~Win32GLFrameBuffer()
+SystemFrameBuffer::~SystemFrameBuffer()
 {
 	ResetGammaTable();
 	I_SaveWindowedPos();
@@ -1106,7 +1107,7 @@ Win32GLFrameBuffer::~Win32GLFrameBuffer()
 //
 //==========================================================================
 
-void Win32GLFrameBuffer::InitializeState()
+void SystemFrameBuffer::InitializeState()
 {
 }
 
@@ -1116,7 +1117,7 @@ void Win32GLFrameBuffer::InitializeState()
 //
 //==========================================================================
 
-bool Win32GLFrameBuffer::CanUpdate()
+bool SystemFrameBuffer::CanUpdate()
 {
 	if (!AppActive && IsFullscreen()) return false;
 	return true;
@@ -1128,7 +1129,7 @@ bool Win32GLFrameBuffer::CanUpdate()
 //
 //==========================================================================
 
-void Win32GLFrameBuffer::ResetGammaTable()
+void SystemFrameBuffer::ResetGammaTable()
 {
 	if (m_supportsGamma)
 	{
@@ -1138,7 +1139,7 @@ void Win32GLFrameBuffer::ResetGammaTable()
 	}
 }
 
-void Win32GLFrameBuffer::SetGammaTable(uint16_t *tbl)
+void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)
 	{
@@ -1154,7 +1155,7 @@ void Win32GLFrameBuffer::SetGammaTable(uint16_t *tbl)
 //
 //==========================================================================
 
-bool Win32GLFrameBuffer::IsFullscreen()
+bool SystemFrameBuffer::IsFullscreen()
 {
 	return m_Fullscreen;
 }
@@ -1165,12 +1166,12 @@ bool Win32GLFrameBuffer::IsFullscreen()
 //
 //==========================================================================
 
-void Win32GLFrameBuffer::SetVSync (bool vsync)
+void SystemFrameBuffer::SetVSync (bool vsync)
 {
 	if (myWglSwapIntervalExtProc != NULL) myWglSwapIntervalExtProc(vsync ? SwapInterval : 0);
 }
 
-void Win32GLFrameBuffer::SwapBuffers()
+void SystemFrameBuffer::SwapBuffers()
 {
 	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
 	I_FPSLimit();
@@ -1183,7 +1184,7 @@ void Win32GLFrameBuffer::SwapBuffers()
 //
 //==========================================================================
 
-void Win32GLFrameBuffer::NewRefreshRate ()
+void SystemFrameBuffer::NewRefreshRate ()
 {
 	if (m_Fullscreen)
 	{
@@ -1194,21 +1195,21 @@ void Win32GLFrameBuffer::NewRefreshRate ()
 	}
 }
 
-int Win32GLFrameBuffer::GetClientWidth()
+int SystemFrameBuffer::GetClientWidth()
 {
 	RECT rect = { 0 };
 	GetClientRect(Window, &rect);
 	return rect.right - rect.left;
 }
 
-int Win32GLFrameBuffer::GetClientHeight()
+int SystemFrameBuffer::GetClientHeight()
 {
 	RECT rect = { 0 };
 	GetClientRect(Window, &rect);
 	return rect.bottom - rect.top;
 }
 
-int Win32GLFrameBuffer::GetTrueHeight() 
+int SystemFrameBuffer::GetTrueHeight()
 { 
 	return static_cast<Win32GLVideo *>(Video)->GetTrueHeight(); 
 }

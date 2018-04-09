@@ -54,6 +54,7 @@
 #include "w_wad.h"
 #include "textures.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -532,6 +533,16 @@ void CheckCompatibility(MapData *map)
 
 void SetCompatibilityParams()
 {
+	PClass *const cls = PClass::FindClass("LevelCompatibility");
+	if (cls != nullptr)
+	{
+		PFunction *const func = dyn_cast<PFunction>(cls->FindSymbol("Apply", true));
+		if (func != nullptr)
+		{
+			VMCall(func->Variants[0].Implementation, nullptr, 0, nullptr, 0);
+		}
+	}
+
 	if (ii_compatparams != -1)
 	{
 		unsigned i = ii_compatparams;

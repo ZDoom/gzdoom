@@ -631,16 +631,6 @@ AAECADD4D97970AFF702D86FAFAC7D17 // doom.wad e4m4
 	setsectorspecial 264 0
 }
 
-
-AB24AE6E2CB13CBDD04600A4D37F9189 // doom2.wad map02
-1EC0AF1E3985650F0C9000319C599D0C // doom2bfg.wad map02
-{
-	// missing textures
-	setwalltexture 327 front bot STONE4
-	setwalltexture 328 front bot STONE4
-	setwalltexture 338 front bot STONE4
-	setwalltexture 339 front bot STONE4
-}
 CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
 {
 	// missing textures
@@ -666,11 +656,6 @@ CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
 	// fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
 	setsectortag 4 0
 	setsectortag 153 0
-}
-66C46385EB1A23D60839D1532522076B // doom2.wad map08
-{
-	// missing texture
-	setwalltexture 101 back top BRICK7
 }
 5BDA34DA60C0530794CC1EA2DA017976 // doom2.wad map14
 {

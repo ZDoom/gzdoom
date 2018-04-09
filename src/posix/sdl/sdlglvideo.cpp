@@ -477,16 +477,13 @@ int SystemFrameBuffer::GetClientHeight()
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
-#if 0
-	// This needs to be done differently. The static_cast here is fundamentally wrong because SDLFB is not the true ancestor of the screen's class.
-	auto Screen = static_cast<SDLFB *>(screen)->GetSDLWindow();
+	auto window = static_cast<SystemFrameBuffer *>(screen)->GetSDLWindow();
 	if (caption)
-		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), caption);
+		SDL_SetWindowTitle(window, caption);
 	else
 	{
 		FString default_caption;
 		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
-		SDL_SetWindowTitle(static_cast<SDLFB *>(screen)->GetSDLWindow(), default_caption);
+		SDL_SetWindowTitle(window, default_caption);
 	}
-#endif
 }

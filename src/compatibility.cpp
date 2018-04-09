@@ -466,7 +466,7 @@ void ParseCompatibility()
 //
 //==========================================================================
 
-void CheckCompatibility(MapData *map)
+FName CheckCompatibility(MapData *map)
 {
 	FMD5Holder md5;
 	FCompatValues *flags;
@@ -489,13 +489,16 @@ void CheckCompatibility(MapData *map)
 
 	flags = BCompatMap.CheckKey(md5);
 
+	FString hash;
+
+	for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
+	{
+		hash.AppendFormat("%02X", md5.Bytes[j]);
+	}
+
 	if (developer >= DMSG_NOTIFY)
 	{
-		Printf("MD5 = ");
-		for (size_t j = 0; j < sizeof(md5.Bytes); ++j)
-		{
-			Printf("%02X", md5.Bytes[j]);
-		}
+		Printf("MD5 = %s", hash.GetChars());
 		if (flags != NULL)
 		{
 			Printf(", cflags = %08x, cflags2 = %08x, bflags = %08x\n",
@@ -523,6 +526,7 @@ void CheckCompatibility(MapData *map)
 	{
 		ib_compatflags |= BCOMPATF_FLOATBOB;
 	}
+	return FName(hash, true);	// if this returns NAME_None it means there is no scripted compatibility handler.
 }
 
 //==========================================================================
@@ -531,15 +535,19 @@ void CheckCompatibility(MapData *map)
 //
 //==========================================================================
 
-void SetCompatibilityParams()
+void SetCompatibilityParams(FName checksum)
 {
-	PClass *const cls = PClass::FindClass("LevelCompatibility");
-	if (cls != nullptr)
+	if (checksum != NAME_None)
 	{
-		PFunction *const func = dyn_cast<PFunction>(cls->FindSymbol("Apply", true));
-		if (func != nullptr)
+		PClass *const cls = PClass::FindClass("LevelCompatibility");
+		if (cls != nullptr)
 		{
-			VMCall(func->Variants[0].Implementation, nullptr, 0, nullptr, 0);
+			PFunction *const func = dyn_cast<PFunction>(cls->FindSymbol("Apply", true));
+			if (func != nullptr)
+			{
+				VMValue param = { (int)checksum };
+				VMCall(func->Variants[0].Implementation, &param, 1, nullptr, 0);
+			}
 		}
 	}
 

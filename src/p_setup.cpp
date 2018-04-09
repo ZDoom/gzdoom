@@ -3756,7 +3756,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		{
 			level.maptype = MAPTYPE_UDMF;
 		}
-		CheckCompatibility(map);
+		FName checksum = CheckCompatibility(map);
 		if (ib_compatflags & BCOMPATF_REBUILDNODES)
 		{
 			ForceNodeBuild = true;
@@ -3834,7 +3834,7 @@ void P_SetupLevel (const char *lumpname, int position)
 			times[0].Unclock();
 		}
 
-		SetCompatibilityParams();
+		SetCompatibilityParams(checksum);
 
 		times[6].Clock();
 		P_LoopSidedefs (true);

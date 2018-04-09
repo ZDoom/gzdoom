@@ -1,24 +1,28 @@
 
 class LevelCompatibility play
 {
-	private static void Apply()
+	private static void Apply(Name checksum)
 	{
-		string checksum = level.GetChecksum();
-
-		if (   checksum ~== "AB24AE6E2CB13CBDD04600A4D37F9189"   // doom2.wad map02
-			|| checksum ~== "1EC0AF1E3985650F0C9000319C599D0C")  // doom2bfg.wad map02
+		switch (checksum)
 		{
-			// Missing textures
-			TextureID stone4 = TexMan.CheckForTexture("STONE4", TexMan.Type_Wall);
-			SetWallTextureID(327, Line.front, Side.bottom, stone4);
-			SetWallTextureID(328, Line.front, Side.bottom, stone4);
-			SetWallTextureID(338, Line.front, Side.bottom, stone4);
-			SetWallTextureID(339, Line.front, Side.bottom, stone4);
-		}
-		else if (checksum ~== "66C46385EB1A23D60839D1532522076B")  // doom2.wad map08
-		{
-			// Missing texture
-			SetWallTexture(101, Line.back, Side.top, "BRICK7");
+			case 'AB24AE6E2CB13CBDD04600A4D37F9189':   // doom2.wad map02
+			case '1EC0AF1E3985650F0C9000319C599D0C':  // doom2bfg.wad map02
+			{
+				// Missing textures
+				TextureID stone4 = TexMan.CheckForTexture("STONE4", TexMan.Type_Wall);
+				SetWallTextureID(327, Line.front, Side.bottom, stone4);
+				SetWallTextureID(328, Line.front, Side.bottom, stone4);
+				SetWallTextureID(338, Line.front, Side.bottom, stone4);
+				SetWallTextureID(339, Line.front, Side.bottom, stone4);
+				break;
+			}
+			
+			case '66C46385EB1A23D60839D1532522076B':  // doom2.wad map08
+			{
+				// Missing texture
+				SetWallTexture(101, Line.back, Side.top, "BRICK7");
+				break;
+			}
 		}
 	}
 

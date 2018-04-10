@@ -5247,7 +5247,8 @@ void AActor::PostBeginPlay ()
 void AActor::CallPostBeginPlay()
 {
 	Super::CallPostBeginPlay();
-	E_WorldThingSpawned(this);
+	if (!(flags8 & MF8_NOEVENTSPAWN))
+		E_WorldThingSpawned(this);
 }
 
 void AActor::MarkPrecacheSounds() const
@@ -5385,7 +5386,8 @@ void AActor::OnDestroy ()
 	//      note that this differs from ThingSpawned in that you can actually override OnDestroy to avoid calling the hook.
 	//      but you can't really do that without utterly breaking the game, so it's ok.
 	//      note: if OnDestroy is ever made optional, E_WorldThingDestroyed should still be called for ANY thing.
-	E_WorldThingDestroyed(this);
+	if (!(flags8 & MF8_NOEVENTDESTROY))
+		E_WorldThingDestroyed(this);
 
 	ClearRenderSectorList();
 	ClearRenderLineList();
@@ -7770,7 +7772,7 @@ void AActor::Revive()
 {
 	AActor *info = GetDefault();
 	FLinkContext ctx;
-
+	bool TriggerEvent = (!(flags8 & MF8_NOEVENTREVIVE));
 	bool flagchange = (flags & (MF_NOBLOCKMAP | MF_NOSECTOR)) != (info->flags & (MF_NOBLOCKMAP | MF_NOSECTOR));
 
 	if (flagchange) UnlinkFromWorld(&ctx);
@@ -7782,6 +7784,7 @@ void AActor::Revive()
 	flags5 = info->flags5;
 	flags6 = info->flags6;
 	flags7 = info->flags7;
+	flags8 = info->flags8;
 	if (SpawnFlags & MTF_FRIENDLY) flags |= MF_FRIENDLY;
 	DamageType = info->DamageType;
 	health = SpawnHealth();
@@ -7795,7 +7798,8 @@ void AActor::Revive()
 	}
 
 	// [ZZ] resurrect hook
-	E_WorldThingRevived(this);
+	if (TriggerEvent)
+		E_WorldThingRevived(this);
 }
 
 int AActor::GetGibHealth() const

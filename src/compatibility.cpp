@@ -772,6 +772,78 @@ void SetCompatibilityParams(FName checksum)
 	}
 }
 
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, OffsetSectorPlane)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(sector);
+	PARAM_INT(planeval);
+	PARAM_FLOAT(delta);
+
+	sector_t *sec = &level.sectors[sector];
+	secplane_t& plane = sector_t::floor == planeval? sec->floorplane : sec->ceilingplane;
+	plane.ChangeHeight(delta);
+	sec->ChangePlaneTexZ(planeval, delta);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, ClearSectorTags)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(sector);
+	tagManager.RemoveSectorTags(sector);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, AddSectorTag)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(sector);
+	PARAM_INT(tag);
+	tagManager.AddSectorTag(sector, tag);
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingSkills)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(thing);
+	PARAM_INT(skillmask);
+
+	if ((unsigned)thing < MapThingsConverted.Size())
+	{
+		MapThingsConverted[thing].SkillFilter = skillmask;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingZ)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(thing);
+	PARAM_FLOAT(z);
+
+	if ((unsigned)thing < MapThingsConverted.Size())
+	{
+		MapThingsConverted[thing].pos.Z = z;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingFlags)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(thing);
+	PARAM_INT(flags);
+
+	if ((unsigned)thing < MapThingsConverted.Size())
+	{
+		MapThingsConverted[thing].flags = flags;
+	}
+	return 0;
+}
+
+
+
 //==========================================================================
 //
 // CCMD mapchecksum

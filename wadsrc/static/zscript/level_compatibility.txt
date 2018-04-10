@@ -23,9 +23,399 @@ class LevelCompatibility play
 				SetWallTexture(101, Line.back, Side.top, "BRICK7");
 				break;
 			}
+			
+			case 'E2B5D1400279335811C1C1C0B437D9C8': // Deathknights of the Dark Citadel, map54
+			{
+				// This map has two gear boxes which are flagged for player cross
+				// activation instead of the proper player uses activation.
+				SetLineActivation(943, SPAC_Use);
+				SetLineActivation(963, SPAC_Use);
+				break;
+			}
+			
+			case '3F249EDD62A3A08F53A6C53CB4C7ABE5': // Artica 3 map01
+			{
+				ClearLineSpecial(66);
+				break;
+			}
+			
+			case 'F481922F4881F74760F3C0437FD5EDD0': // // Community Chest 3 map03
+			{
+				// I have no idea how this conveyor belt setup manages to work under Boom.
+				// Set the sector the voodoo doll ends up standing on when sectors tagged
+				// 1 are raised so that the voodoo doll will be carried.
+				SetLineSpecial(3559, Sector_CopyScroller, 17, 6);
+				break;
+			}
+
+			case '5B862477519B21B30059A466F2FF6460': // Khorus, map08
+			{
+				// This map uses a voodoo conveyor with slanted walls to shunt the
+				// voodoo doll into side areas. For some reason, this voodoo doll
+				// is unable to slide on them, because the slide calculation gets
+				// them slightly inside the walls and thinks they are stuck. I could
+				// not reproduce this with the real player, which is what has me
+				// stumped. So, help them out be attaching some ThrustThing specials
+				// to the walls.
+				SetLineSpecial(443, ThrustThing, 96, 4);
+				SetLineFlags(443, Line.ML_REPEAT_SPECIAL);
+				SetLineActivation(443, SPAC_Push);
+				SetLineSpecial(455, ThrustThing, 96, 4);
+				SetLineFlags(455, Line.ML_REPEAT_SPECIAL);
+				SetLineActivation(455, SPAC_Push);
+				break;
+			}
+
+			case '3D1E36E50F5A8D289E15433941605224': // Master Levels, catwalk.wad
+			{
+				// make it impossible to open door to 1-way bridge before getting red key
+				ClearSectorTags(35);
+				AddSectorTag(35, 15);
+				for(int i=605; i<609;i++)
+				{
+					SetLineActivation(i, SPAC_PCross);
+					SetLineSpecial(i, Door_Open, 15, 64);
+				}
+				break;
+			}
+			
+			case '3B9CAA02952F405269353FAAD8F8EC33': // Master Levels, nessus.wad
+			{
+				// move secret sector from too-thin doorframe to BFG closet
+				SetSectorSpecial(211, 0);
+				SetSectorSpecial(212, 1024);
+				// lower floor a bit so secret sector can be entered fully
+				OffsetSectorPlane(212, Sector.floor, -16);
+				// make secret door stay open so you can't get locked in closet
+				SetLineSpecial(1008, Door_Open, 0, 64);
+				break;
+			}
+
+			case '7ED9800213C00D6E7FB98652AB48B3DE': // Ultimate Simplicity, map04
+			{
+				// Add missing map spots on easy and medium skills
+				// Demons will teleport into starting room making 100% kills possible
+				SetThingSkills(31, 31);
+				SetThingSkills(32, 31);
+				break;
+			}
+  
+			case '1891E029994B023910CFE0B3209C3CDB': // Ultimate Simplicity, map07
+			{
+				// It is possible to get stuck on skill 0 or 1 when no shots have been fired
+				// after sector 17 became accessible and before entering famous mancubus room.
+				// Monsters from the mentioned sector won't be alerted and so 
+				// they won't teleport into the battle. ACS will wait forever for their deaths.
+				SetLineSpecial(397, NoiseAlert);
+				SetLineSpecial(411, NoiseAlert);
+				break;
+			}
+
+			case 'F0E6F30F57B0425F17E43600AA813E80': // Ultimate Simplicity, map11
+			{
+				// If door (sector #309) is closed it cannot be open again
+				// from one side potentially blocking level progression
+				ClearLineSpecial(2445);
+				break;
+			}
+
+			case '952CC8D03572E17BA550B01B366EFBB9': // Cheogsh map01
+			{
+				// make the blue key spawn above the 3D floor
+				SetThingZ(918, 296);
+				break;
+			}
+
+			case 'D62DCA9EC226DE49108D5DD9271F7631': // Cheogsh 2 map04
+			{
+				// Stuff in megasphere cage is positioned too low
+				for(int i=1640; i<=1649; i++)
+				{
+					SetThingZ(i, 528);
+				}
+				break;
+			}
+
+			case 'DFC18B92BF3E8142B8684ECD8BD2EF06': // TNT: Evilution map15
+			{
+				// raise up sector with its counterpart so 100% kills becomes possible
+				AddSectorTag(330, 11);
+				break;
+			}
+
+			case '2C4A3356C5EB3526D2C72A4AA4B18A36': // TNT: Evilution map29
+			{
+				// remove mancubus who always gets stuck in teleport tunnel, preventing
+				// 100% kills on HMP
+				SetThingFlags(405, 0);
+				break;
+			}
+
+			case 'A53AE580A4AF2B5D0B0893F86914781E': // TNT: Evilution map31
+			{
+				// The famous missing yellow key...
+				SetThingFlags(470, 2016);
+				break;
+			}
+
+			case 'D99AD22FF21A41B4EECDB3A7C803D75E': // TNT: Evilution map32
+			{
+				// door can close permanently; make switch that opens it repeatable
+				SetLineFlags(872, Line.ML_REPEAT_SPECIAL);
+				// switch should only open way to red key, don't lower bars yet,
+				// instead make line just before red key open bars
+				ClearSectorTags(197);
+				AddSectorTag(197, 8);
+				SetLineSpecial(1279, Floor_LowerToLowest, 8, 32);
+				SetLineActivation(1240, SPAC_PCross);
+				SetLineSpecial(1240, Floor_LowerToLowest, 38, 32);
+				break;
+			}
+
+			case '279BB50468FE9F5B36C6D821E4902369': // Plutonia Experiment map30
+			{
+				// flag items in deathmatch-only area correctly so that 100% items
+				// are possible in solo
+				SetThingFlags(250, 17);
+				SetThingFlags(251, 17);
+				SetThingFlags(252, 17);
+				SetThingFlags(253, 17);
+				SetThingFlags(254, 17);
+				SetThingFlags(206, 17);
+				break;
+			}
+
+			case '4CB7AAC5C43CF32BDF05FD36481C1D9F': // Plutonia: Revisited map27
+			{
+				SetLineSpecial(1214, Plat_DownWaitUpStayLip, 20, 64, 150);
+				SetLineSpecial(1215, Plat_DownWaitUpStayLip, 20, 64, 150);
+				SetLineSpecial(1216, Plat_DownWaitUpStayLip, 20, 64, 150);
+				SetLineSpecial(1217, Plat_DownWaitUpStayLip, 20, 64, 150);
+				SetLineSpecial(1227, Plat_DownWaitUpStayLip, 20, 64, 150);
+				break;
+			}
+
+			case '5B26545FF21B051CA06D389CE535684C': // doom.wad e1m4
+			{
+				// missing textures	
+				SetWallTexture(693, Line.back, Side.top, "BROWN1");
+				// fix HOM errors with sectors too low
+				OffsetSectorPlane(9,  Sector.floor, 8);
+				OffsetSectorPlane(105, Sector.floor, 8);
+				OffsetSectorPlane(132, Sector.floor, 8);
+				OffsetSectorPlane(137, Sector.floor, 8);
+				break;
+			}
+			case 'A24FE135D5B6FD427FE27BEF89717A65': // doom.wad e2m2
+			{
+				// missing textures
+				SetWallTexture(947, Line.back, Side.top, "BROWN1");
+				SetWallTexture(1596, Line.back, Side.top, "WOOD1");
+				break;
+			}
+			case '1BC04D646B32D3A3E411DAF3C1A38FF8': // doom.wad e2m4
+			{
+				// missing textures
+				SetWallTexture(551, Line.back, Side.top, "PIPE4");
+				SetWallTexture(865, Line.back, Side.bottom, "STEP5");
+				SetWallTexture(1062, Line.front, Side.top, "GSTVINE1");
+				SetWallTexture(1071, Line.front, Side.top, "MARBLE1");
+				break;
+			}
+			case '99C580AD8FABE923CAB485CB7F3C5E5D': // doom.wad e2m5
+			{
+				// missing textures
+				SetWallTexture(590, Line.back, Side.top, "GRAYBIG");
+				SetWallTexture(590, Line.front, Side.bottom, "BROWN1");
+				break;
+			}
+			case '3838AB29292587A7EE3CA71E7040868D': // doom.wad e2m6
+			{
+				// missing texture
+				SetWallTexture(1091, Line.back, Side.top, "compspan");
+				break;
+			}
+			case '8590F489879870C098CD7029C3187159': // doom.wad e2m7
+			{
+				// missing texture
+				SetWallTexture(1286, Line.front, Side.bottom, "SHAWN2");
+				break;
+			}
+			case '8A6399FAAA2E68649D4E4B16642074BE': // doom.wad e2m9
+			{
+				// missing textures
+				SetWallTexture(121, Line.back, Side.top, "SW1LION");
+				SetWallTexture(123, Line.back, Side.top, "GSTONE1");
+				SetWallTexture(140, Line.back, Side.top, "GSTONE1");
+				break;
+			}
+			case '2B65CB046EA40D2E44576949381769CA': // Commercial Doom e3m4
+			{
+				// This line is erroneously specified as Door_Raise that monsters
+				// can operate. If they do, they block you off from half the map. Change
+				// this into a one-shot Door_Open so that it won't close.
+				SetLineSpecial(1069, Door_Open, 0, 16);
+				SetLineFlags(1069, 0, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			case '5AC51CA9F1B57D4538049422A5E37291': // doom.wad e3m7
+			{
+				// missing texture
+				SetWallTexture(971, Line.back, Side.top, "SP_HOT1");
+				break;
+			}
+			case 'DA0C8281AC70EEC31127C228BCD7FE2C': // doom.wad e4m1
+			{
+				// missing texture
+				SetWallTexture(470, Line.front, Side.top, "GSTONE1");
+				break;
+			}
+			case 'F6EE16F770AD309D608EA0B1F1E249FC': // Ultimate Doom, e4m3
+			{
+				// Remove unreachable secrets
+				SetSectorSpecial(124, 0);
+				SetSectorSpecial(125, 0);
+				// clear staircase to secret area
+				SetSectorSpecial(127, 0);
+				SetSectorSpecial(128, 0);
+				SetSectorSpecial(129, 0);
+				SetSectorSpecial(130, 0);
+				SetSectorSpecial(131, 0);
+				SetSectorSpecial(132, 0);
+				SetSectorSpecial(133, 0);
+				SetSectorSpecial(134, 0);
+				SetSectorSpecial(136, 0);
+				SetSectorSpecial(137, 0);
+				SetSectorSpecial(138, 0);
+				SetSectorSpecial(147, 0);
+				SetSectorSpecial(148, 0);
+				SetSectorSpecial(149, 0);
+				SetSectorSpecial(150, 0);
+				SetSectorSpecial(151, 0);
+				SetSectorSpecial(152, 0);
+				SetSectorSpecial(155, 0);
+				break;
+			}
+			case 'AAECADD4D97970AFF702D86FAFAC7D17': // doom.wad e4m4
+			{
+				// missing textures
+				TextureID brownhug = TexMan.CheckForTexture("BROWNHUG", TexMan.Type_Wall);
+				SetWallTextureID(427, Line.back, Side.top, BROWNHUG);
+				SetWallTextureID(558, Line.back, Side.top, BROWNHUG);
+				SetWallTextureID(567, Line.front, Side.top, BROWNHUG);
+				SetWallTextureID(572, Line.front, Side.top, BROWNHUG);
+				break;
+			}
+			case '94D4C869A0C02EF4F7375022B36AAE45': // Ultimate Doom, e4m7
+			{
+				// Remove unreachable secrets
+				SetSectorSpecial(263, 0);
+				SetSectorSpecial(264, 0);
+				break;
+			}
+
+			case 'CEC791136A83EEC4B91D39718BDF9D82': // doom2.wad map04
+			{
+				// missing textures
+				SetWallTexture(456, Line.back, Side.top, "SUPPORT3");
+				TextureID stone = TexMan.CheckForTexture("STONE", TexMan.Type_Wall);
+				SetWallTextureID(108, Line.front, Side.top, STONE);
+				SetWallTextureID(109, Line.front, Side.top, STONE);
+				SetWallTextureID(110, Line.front, Side.top, STONE);
+				SetWallTextureID(111, Line.front, Side.top, STONE);
+				SetWallTextureID(127, Line.front, Side.top, STONE);
+				SetWallTextureID(128, Line.front, Side.top, STONE);
+				// remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
+				ClearSectorTags(19);
+				ClearSectorTags(20);
+				ClearSectorTags(23);
+				ClearSectorTags(28);
+				ClearSectorTags(33);
+				ClearSectorTags(34);
+				ClearSectorTags(83);
+				ClearSectorTags(85);
+				break;
+			}
+			case '9E061AD7FBCD7FAD968C976CB4AA3B9D': // doom2.wad map05
+			{
+				// fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
+				ClearSectorTags(4);
+				ClearSectorTags(153);
+				break;
+			}
+			case '5BDA34DA60C0530794CC1EA2DA017976': // doom2.wad map14
+			{
+				// missing textures
+				SetWallTexture(1259, Line.back, Side.top, "BSTONE2");
+				SetWallTexture(1305, Line.back, Side.top, "BSTONE2");
+			}
+			case '1A540BA717BF9EC85F8522594C352F2A': // Doom II, map15
+			{
+				SetSectorSpecial(147, 0);
+				break;
+			}
+			case '0D491365C1B88B7D1B603890100DD03E': // doom2.wad map18
+			{
+				// missing textures
+				SetWallTexture(451, Line.front, Side.mid, "metal");
+				SetWallTexture(459, Line.front, Side.mid, "metal");
+				break;
+			}
+			case 'B5506B1E8F2FC272AD0C77B9E0DF5491': // doom2.wad map19
+			{
+				// missing textures
+				SetWallTexture(355, Line.back, Side.top, "STONE2");
+				SetWallTexture(736, Line.front, Side.top, "SLADWALL");
+				break;
+			}
+			case 'EBDAC00E9D25D884B2C8F4B1F0390539': // doom2.wad map21
+			{
+				// push ceiling down in glitchy sectors above the stair switches
+				OffsetSectorPlane(50, Sector.ceiling, -56);
+				OffsetSectorPlane(54, Sector.ceiling, -56);
+				break;
+			}
+			case '110F84DE041052B59307FAF0293E6BC0': // Doom II, map27
+			{
+				SetSectorSpecial(93, 0);
+				SetWallTexture(582, Line.back, Side.top, "ZIMMER3");
+				break;
+			}
+			case '20251EDA21B2F2ECF6FF5B8BBC00B26C': // Doom II, MAP29
+			{
+				// Missing textures on teleporters
+				TextureID support3 = TexMan.CheckForTexture("SUPPORT3", TexMan.Type_Wall);
+				for(int i=0;i<4;i++)
+				{
+					SetWallTextureID(405+i, Line.back, Side.bottom, SUPPORT3);
+					SetWallTextureID(516+i, Line.back, Side.bottom, SUPPORT3);
+					SetWallTextureID(524+1, Line.back, Side.bottom, SUPPORT3);
+					SetWallTextureID(1146+i, Line.back, Side.bottom, SUPPORT3);
+					SetWallTextureID(1138+i, Line.back, Side.bottom, SUPPORT3);
+				}
+				break;
+			}
+			case 'ABC4EB5A1535ECCD0061AD14F3547908': // Plutonia Experiment, map26
+			{
+				SetSectorSpecial(156, 0);
+				break;
+			}
+
+			case 'FF635FB9A2F076566299910F8C78F707': // nerve.wad, level04
+			{
+				SetSectorSpecial(868, 0);
+				break;
+			}
 		}
 	}
 
+	private static native void ClearSectorTags(int sector);
+	private static native void AddSectorTag(int sector, int tag);
+	private static native void OffsetSectorPlane(int sector, int plane, double offset);
+	private static native void SetThingSkills(int thing, int skills);
+	private static native void SetThingZ(int thing, double z);
+	private static native void SetThingFlags(int thing, int flags);
+	
 	private static void SetWallTexture(int line, int side, int texpart, String texture)
 	{
 		SetWallTextureID(line, side, texpart, TexMan.CheckForTexture(texture, TexMan.Type_Wall));
@@ -34,6 +424,31 @@ class LevelCompatibility play
 	private static void SetWallTextureID(int line, int side, int texpart, TextureID texture)
 	{
 		level.Lines[line].sidedef[side].SetTexture(texpart, texture);
+	}
+	
+	private static void SetLineFlags(int line, int setflags, int clearflags = 0)
+	{
+		level.Lines[line].flags = (level.Lines[line].flags & ~clearflags) | setflags;
+	}
+	
+	private static void SetLineActivation(int line, int acttype)
+	{
+		level.Lines[line].activation = acttype;
+	}
+	
+	private static void ClearLineSpecial(int line)
+	{
+		level.Lines[line].special = 0;
+	}
+	
+	private static void SetLineSpecial(int line, int special, int arg1 = 0, int arg2 = 0, int arg3 = 0, int arg4 = 0, int arg5 = 0)
+	{
+		level.Lines[line].special = special;
+		level.Lines[line].args[0] = arg1;
+		level.Lines[line].args[1] = arg2;
+		level.Lines[line].args[2] = arg3;
+		level.Lines[line].args[3] = arg4;
+		level.Lines[line].args[4] = arg5;
 	}
 	
 	private static void SetSectorSpecial(int sectornum, int special)

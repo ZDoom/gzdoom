@@ -350,7 +350,8 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 	}
 
 	// [ZZ] Fire WorldThingDied script hook.
-	E_WorldThingDied(this, inflictor);
+	if (!(flags8 & MF8_NOEVENTDEATH))
+		E_WorldThingDied(this, inflictor);
 
 	// [JM] Fire KILL type scripts for actor. Not needed for players, since they have the "DEATH" script type.
 	if (!player && !(flags7 & MF7_NOKILLSCRIPTS) && ((flags7 & MF7_USEKILLSCRIPTS) || gameinfo.forcekillscripts))
@@ -1637,7 +1638,8 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	// [ZZ] event handlers need the result.
 	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle);
 	if (!realdamage) ACTION_RETURN_INT(0);
-	E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
+	if (!(self->flags8 & MF8_NOEVENTDAMAGE)) 
+		E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
 	ACTION_RETURN_INT(realdamage);
 }
 
@@ -1657,7 +1659,8 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle);
 		if (!realdamage) return 0;
 		// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
-		E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+		if (!target || !(target->flags8 & MF8_NOEVENTDAMAGE))
+			E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
 		return realdamage;
 	}
 }

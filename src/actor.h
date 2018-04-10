@@ -401,6 +401,11 @@ enum ActorFlag8
 {
 	MF8_FRIGHTENING		= 0x00000001,	// for those moments when halloween just won't do
 	MF8_INSCROLLSEC		= 0x00000002,	// actor is partially inside a scrolling sector
+	MF8_NOEVENTSPAWN	= 0x00000004,	// [MC] WorldThingSpawned is not executed in events upon spawning
+	MF8_NOEVENTDAMAGE	= 0x00000008,	// [MC] WorldThingDamaged ^
+	MF8_NOEVENTDEATH	= 0x00000010,	// [MC] WorldThingDied ^
+	MF8_NOEVENTDESTROY	= 0x00000020,	// [MC] WorldThingDestroyed ^
+	MF8_NOEVENTREVIVE	= 0x00000040,	// [MC] WorldThingRevived ^
 };
 
 // --- mobj.renderflags ---

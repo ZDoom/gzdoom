@@ -35,4 +35,9 @@ class LevelCompatibility play
 	{
 		level.Lines[line].sidedef[side].SetTexture(texpart, texture);
 	}
+	
+	private static void SetSectorSpecial(int sectornum, int special)
+	{
+		level.sectors[sectornum].special = special;
+	}
 }

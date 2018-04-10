@@ -1,35 +1,3 @@
-6DC9F6CCEAE7A91AEC48EBE506F22BC4 // void.wad MAP01
-{
-	// Slightly squash the pillars in the starting room with "stimpacks"
-	// floating on them so that they can be obtained.
-	setsectoroffset 62 floor -8
-	setwallyscale 286 front bot 1.090909
-	setwallyscale 287 front bot 1.090909
-	setwallyscale 288 front bot 1.090909
-	setwallyscale 289 front bot 1.090909
-	
-	setsectoroffset 63 floor -8
-	setwallyscale 290 front bot 1.090909
-	setwallyscale 291 front bot 1.090909
-	setwallyscale 292 front bot 1.090909
-	setwallyscale 293 front bot 1.090909
-	
-	setsectoroffset 118 floor -8
-	setwallyscale 710 front bot 1.090909
-	setwallyscale 711 front bot 1.090909
-	setwallyscale 712 front bot 1.090909
-	setwallyscale 713 front bot 1.090909
-	
-	setsectoroffset 119 floor -8
-	setwallyscale 714 front bot 1.090909
-	setwallyscale 715 front bot 1.090909
-	setwallyscale 716 front bot 1.090909
-	setwallyscale 717 front bot 1.090909
-
-	setslopeoverflow
-	polyobj
-}
-
 B2D8DA03489D1C67F60DC87FBC4EA338 // map01 - Massmouth 2
 801304DA3784308D333951B5E0CF8E9E // map02
 6EA4D5CAEA16857B2A882467E1633BC2 // map03
@@ -52,15 +20,6 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 	resetplayerspeed
 }
 
-5C594C67CF7721005DE71429F9811370 // Eternal Doom map03
-{
-	// fix broken staircase. The compatibility option is not sufficient
-	// to reliably handle this so clear the tags from the unwanted sectors.
-	setsectortag 212 0
-	setsectortag 213 0
-	setsectortag 214 0
-}
-
 6DA6FCBA8089161BDEC6A1D3F6C8D60F // Eternal Doom MAP25
 {
 	stairs
@@ -77,7 +36,6 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 	useblocking
 }
 
-// mostly cosmetic (except AV MAP07 and MM2 MAP25)
 0EECBF37B328C9CAAF20DED4949A4157 // Sudtic e2m6
 4ACE0644883BDA0CBA254FA02C9ACF83 // Teutic e3m4
 9F2BE080A33F775294BD78822456924E // Nukemine e1m4
@@ -87,6 +45,7 @@ CD31793D3A4B00231B124C0C23649644 // Strain map02
 F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 1497894956B3C8EBE8A240B7FDD99C6A // MM2 map25
 941E4CB56EE4184E0B1ED43486AB0BBF // AV map07
+6D4156EE0D12B77AD143A37C4D3DCF98 // dmonfear.wad map22
 {
 	shorttex
 }
@@ -95,11 +54,6 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 74AF92E96FE10D039D31C1F6526D7D7C // Real World map11
 {
 	trace
-}
-
-9D50EBE17CEC78938C7A668DB0768611 // Strain map07: Make the exit accessible
-{
-	clearlineflags 1021 1
 }
 
 71C2E6D9CFA3D8750C6A9599FB2453BD // Hacx map03: There are some switches behind 
@@ -180,11 +134,6 @@ CA267398C9B3A8F79349D3394F8B2106 // map20
 	spritesort
 }
 
-DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller depending on Boom side effects
-{
-	setlinespecial 391 Sector_CopyScroller 99 6 0 0 0
-}
-
 1D9E43988940CCD3555724E15DD8B1AB // Happy Time Circus map01 has bad teleporters
 040F83028FFA74456E335ED300BE2C33 // MAP17 (TownInfection.wad)
 156FA31F5FF72A87BF345B68029D3051 // MAP02 (nprject5.wad)
@@ -201,6 +150,101 @@ AF40D0E49BD1B76D4B1AADD8212ADC46 // MAP01 (the wad that shall not be named =P)
 	badangles
 }
 
+8FA29398776146189396AA1AC6BB9E13 // Roger Ritenour's Phobos map03
+{
+	floormove
+}
+
+// There is a special at the beginning of the level which relies on the Pain Elemental's lost soul limit.
+811A0C97777A198BC9B2BB558CB46E6A // Hell Revealed map19
+{
+	limitpain
+}
+
+7C1913DEE396BA26CFF22A0E9369B7D2 // Nuke Mine, e1m2
+{
+	pointonline
+}
+
+8B2AC8D4DB4A49A5DCCBB067E04434D6 // The Hell Factory Hub One, map04
+65A1EB4C87386F290816660A52932FF1 // Master Levels, garrison.wad
+3DEE4EFEFAF3260C800A30734F54CE75 // Hellbound, map14
+5FAA25F5A6AAB3409CAE0AF87F910341 // DOOM.wad e1m6
+94893A0DC429A22ADC4B3A73DA537E16 // DOOM2.WAD map25
+{
+	rebuildnodes
+}
+
+64B6CE3CB7349B6F6B1A885C449ACB96 // Super Sonic Doom, map31
+{
+	// During the end-of-level tally, both PROP_FROZEN and PROP_TOTALLYFROZEN
+	// are set, but only PROP_TOTALLYFROZEN is cleared, so PROP_FROZEN is
+	// still set when returning to the origin map.
+	linkfrozenprops
+}
+
+E89CCC7E155F1032F693359CC219BE6C // hexen.wad map30
+B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
+6941BDC2F80C0FEBE34EFA23D5FB72B7 // sonic.wad map10
+3ABB618A475BCBC531B457BAA6E4E70A // Daedalus map04
+795FDE3CC1C97140F326D0152B3FCE2A // Daedalus map24
+{
+	DisablePushWindowCheck
+}
+
+D0139194F7817BF06F3988DFC47DB38D // Whispers of Satan map29
+{
+	
+}
+
+5397C3B7D9B33AAF526D15A81A762828 // daedalus.wad Travel tubes (they are all identical)
+{
+	multiexit
+}
+
+C98F79709BD7E0E4C19026AB9575EC6F // cc-cod.zip:codlev.wad map07
+{
+	maskedmidtex
+}
+
+7B82B12A6990E09553B12FDB4E3824A0 // hti.wad map01
+{
+	teleport
+}
+
+8570AA0D6737C0A19DB66767764F157F // sonic.wad map04
+{
+	noslopeid
+}
+
+3FFAF2F624C1B4BB6F581DCF7B99CBA7 // hexen.wad MAP36
+7DC65D5029DD834481CD716B3D71388A // hexdd.wad MAP47
+05AA32F1D2220A462DCDA245ED22B94B // sonic.wad map09
+{
+	polyobj
+}
+
+
+D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
+19D03FFC875589E21EDBB7AB74EF4AEF // Return to Hadron, e1m9, 2016.01.03 update
+{
+	pointonline
+}
+
+1ED329858AB154C55878DA1C11A4F100 // unloved.pk3:unlovedmaps.wad map01
+FA23E72FA955E66EC68609F72C0BA71E // unloved.pk3:unlovedmaps.wad map02
+41BEC1F643CFEEC997AF98276A05EC88 // unloved.pk3:unlovedmaps.wad map03
+AF9A6370BE562584BC11165ECF364713 // unloved.pk3:unlovedmaps.wad map04
+DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
+261E64897A572C8DB8DC041E64BE27AD // unloved2beta1.pk3:u2_new2maps2.wad map06
+04800B1F35E8C036EBABC8C616402927 // unloved2beta1.pk3:u2_new2maps2.wad map07
+9E54F70648A77BBD090FF78A3AA05367 // unloved2beta1.pk3:u2_new2maps2.wad map08
+72E9E0F41F691B7F956E62F35B4A617F // unloved2beta1.pk3:u2_new2maps2.wad map09
+3D3FE412E87AD8B2316DAEC9E25F2E5D // unloved2beta1.pk3:u2_new2maps2.wad map10
+{
+	clipmidtex
+}
+
 E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 {
 	// This map has two gear boxes which are flagged for player cross
@@ -214,103 +258,6 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	clearlinespecial 66
 }
 
-8FA29398776146189396AA1AC6BB9E13 // Roger Ritenour's Phobos map03
-{
-	floormove
-}
-
-// There is a special at the beginning of the level which relies on the Pain Elemental's lost soul limit.
-811A0C97777A198BC9B2BB558CB46E6A // Hell Revealed map19
-{
-	limitpain
-}
-
-// Daedalus: Fix SPAC_Push lines that aren't on lines you can actually push
-3ABB618A475BCBC531B457BAA6E4E70A // map04
-{
-	// forcefields
-	// the lines we're setting are already set for repeatable SPAC_Push
-	clearlinespecial 90
-	setlinespecial 3749 ACS_Execute 23 0 1 0 0
-	clearlinespecial 94
-	setlinespecial 3766 ACS_Execute 23 0 2 0 0
-	clearlinespecial 92
-	setlinespecial 3777 ACS_Execute 23 0 3 0 0
-	clearlinespecial 98
-	setlinespecial 3784 ACS_Execute 23 0 4 0 0
-}
-795FDE3CC1C97140F326D0152B3FCE2A // map24
-{
-	// doors
-	clearlinespecial 1512
-	setlinespecial 1505 Door_Raise 213 50 100 0 0
-	setlineflags 1505 0x200		// repeatable
-	setactivation 1505 16		// SPAC_Push
-	clearlinespecial 1514
-	setlinespecial 1508 Door_Raise 213 50 100 0 0
-	setlineflags 1508 0x200
-	setactivation 1508 16
-	
-	clearlinespecial 1525
-	setlinespecial 1522 Door_Raise 214 50 100 0 0
-	setlineflags 1522 0x200
-	setactivation 1522 16
-	clearlinespecial 1530
-	setlinespecial 1527 Door_Raise 214 50 100 0 0
-	setlineflags 1527 0x200
-	setactivation 1527 16
-	
-	clearlinespecial 5277
-	setlinespecial 5209 Door_Raise 24 20 255 0 0
-	setlineflags 5209 0x200
-	setactivation 5209 16
-	clearlinespecial 5714
-	setlinespecial 5267 Door_Raise 24 20 255 0 0
-	setlineflags 5267 0x200
-	setactivation 5267 16
-	
-	clearlinespecial 5715
-	setlinespecial 5229 Door_Raise 24 20 255 0 0
-	setlineflags 5229 0x200
-	setactivation 5229 16
-	clearlinespecial 5345
-	setlinespecial 5232 Door_Raise 24 20 255 0 0
-	setlineflags 5232 0x200
-	setactivation 5232 16
-	
-	// consoles?
-	clearlinespecial 3639
-	setlinespecial 3633 ACS_Execute 14 0 0 0 0
-	setlinespecial 3635 ACS_Execute 14 0 0 0 0
-	setlineflags 3633 0x200
-	setlineflags 3635 0x200
-	setactivation 3633 16
-	setactivation 3635 16
-
-	clearlinespecial 3647
-	setlinespecial 3644 ACS_Execute 14 0 0 0 0
-	setlinespecial 3641 ACS_Execute 14 0 0 0 0
-	setlineflags 3644 0x200
-	setlineflags 3641 0x200
-	setactivation 3644 16
-	setactivation 3641 16
-	
-	clearlinespecial 3659
-	clearlinespecial 3657
-	setlinespecial 3653 ACS_Execute 13 0 0 0 0
-	setlinespecial 3655 ACS_Execute 13 0 0 0 0
-	setlinespecial 3651 ACS_Execute 13 0 0 0 0
-	setlinespecial 3654 ACS_Execute 13 0 0 0 0
-	setlineflags 3653 0x200
-	setlineflags 3655 0x200
-	setlineflags 3651 0x200
-	setlineflags 3654 0x200
-	setactivation 3653 16
-	setactivation 3655 16
-	setactivation 3651 16
-	setactivation 3654 16
-}
-
 // Community Chest 3
 F481922F4881F74760F3C0437FD5EDD0 // map03
 {
@@ -318,11 +265,6 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	// Set the sector the voodoo doll ends up standing on when sectors tagged
 	// 1 are raised so that the voodoo doll will be carried.
 	setlinespecial 3559 Sector_CopyScroller 17 6 0 0 0
-}
-
-7C1913DEE396BA26CFF22A0E9369B7D2 // Nuke Mine, e1m2
-{
-	pointonline
 }
 
 5B862477519B21B30059A466F2FF6460 // Khorus, map08
@@ -340,14 +282,6 @@ F481922F4881F74760F3C0437FD5EDD0 // map03
 	setlinespecial 455 ThrustThing 96 4 0 0 0
 	setlineflags 455 0x200		// repeatable
 	setactivation 455 16		// SPAC_Push
-}
-
-8B2AC8D4DB4A49A5DCCBB067E04434D6 // The Hell Factory Hub One, map04
-65A1EB4C87386F290816660A52932FF1 // Master Levels, garrison.wad
-3DEE4EFEFAF3260C800A30734F54CE75 // Hellbound, map14
-5FAA25F5A6AAB3409CAE0AF87F910341 // DOOM.wad e1m6
-{
-	rebuildnodes
 }
 
 3D1E36E50F5A8D289E15433941605224 // Master Levels, catwalk.wad
@@ -407,14 +341,6 @@ F0E6F30F57B0425F17E43600AA813E80 // Ultimate Simplicity, map11
 	setthingz 918 296
 }
 
-64B6CE3CB7349B6F6B1A885C449ACB96 // Super Sonic Doom, map31
-{
-	// During the end-of-level tally, both PROP_FROZEN and PROP_TOTALLYFROZEN
-	// are set, but only PROP_TOTALLYFROZEN is cleared, so PROP_FROZEN is
-	// still set when returning to the origin map.
-	linkfrozenprops
-}
-
 D62DCA9EC226DE49108D5DD9271F7631 // Cheogsh 2 map04
 {
 	// Stuff in megasphere cage is positioned too low
@@ -428,13 +354,6 @@ D62DCA9EC226DE49108D5DD9271F7631 // Cheogsh 2 map04
 	setthingz 1647 528
 	setthingz 1648 528
 	setthingz 1649 528
-}
-
-E89CCC7E155F1032F693359CC219BE6C // hexen.wad map30
-B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
-6941BDC2F80C0FEBE34EFA23D5FB72B7 // sonic.wad map10
-{
-	DisablePushWindowCheck
 }
 
 DFC18B92BF3E8142B8684ECD8BD2EF06 // TNT: Evilution map15
@@ -487,43 +406,6 @@ D99AD22FF21A41B4EECDB3A7C803D75E // TNT: Evilution map32
 	setlinespecial 1216 Plat_DownWaitUpStayLip 20 64 150 0 0
 	setlinespecial 1217 Plat_DownWaitUpStayLip 20 64 150 0 0
 	setlinespecial 1227 Plat_DownWaitUpStayLip 20 64 150 0 0
-}
-
-D0139194F7817BF06F3988DFC47DB38D // Whispers of Satan map29
-{
-	nopassover
-}
-
-5397C3B7D9B33AAF526D15A81A762828 // daedalus.wad Travel tubes (they are all identical)
-{
-	multiexit
-}
-
-C98F79709BD7E0E4C19026AB9575EC6F // cc-cod.zip:codlev.wad map07
-{
-	maskedmidtex
-}
-
-7B82B12A6990E09553B12FDB4E3824A0 // hti.wad map01
-{
-	teleport
-}
-
-8570AA0D6737C0A19DB66767764F157F // sonic.wad map04
-{
-	noslopeid
-}
-
-05AA32F1D2220A462DCDA245ED22B94B // sonic.wad map09
-{
-	polyobj
-}
-
-
-D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
-19D03FFC875589E21EDBB7AB74EF4AEF // Return to Hadron, e1m9, 2016.01.03 update
-{
-	pointonline
 }
 
 5B26545FF21B051CA06D389CE535684C // doom.wad e1m4
@@ -685,10 +567,6 @@ EBDAC00E9D25D884B2C8F4B1F0390539 // doom2.wad map21
 	setsectoroffset 50 ceil -56
 	setsectoroffset 54 ceil -56
 }
-94893A0DC429A22ADC4B3A73DA537E16 // DOOM2.WAD map25
-{
-   rebuildnodes
-}
 110F84DE041052B59307FAF0293E6BC0 // Doom II, map27
 {
 	setsectorspecial 93 0
@@ -747,19 +625,6 @@ B68EB7CFB4CC481796E2919B9C16DFBD // Moc11.wad e1m6
 	setlinespecial 2410 Sector_Set3DFloor 32002 4 1 0 0
 }
 
-1ED329858AB154C55878DA1C11A4F100 // unloved.pk3:unlovedmaps.wad map01
-FA23E72FA955E66EC68609F72C0BA71E // unloved.pk3:unlovedmaps.wad map02
-41BEC1F643CFEEC997AF98276A05EC88 // unloved.pk3:unlovedmaps.wad map03
-AF9A6370BE562584BC11165ECF364713 // unloved.pk3:unlovedmaps.wad map04
-DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
-261E64897A572C8DB8DC041E64BE27AD // unloved2beta1.pk3:u2_new2maps2.wad map06
-04800B1F35E8C036EBABC8C616402927 // unloved2beta1.pk3:u2_new2maps2.wad map07
-9E54F70648A77BBD090FF78A3AA05367 // unloved2beta1.pk3:u2_new2maps2.wad map08
-72E9E0F41F691B7F956E62F35B4A617F // unloved2beta1.pk3:u2_new2maps2.wad map09
-3D3FE412E87AD8B2316DAEC9E25F2E5D // unloved2beta1.pk3:u2_new2maps2.wad map10
-{
-	clipmidtex
-}
 
 
 // Cosmetic fixes for Heretic: Shadow of the Serpent Riders
@@ -832,12 +697,6 @@ CA3773ED313E8899311F3DD0CA195A68 // e3m6
 	setwalltexture 3431 back top BRKGRY01
 }
 
-3FFAF2F624C1B4BB6F581DCF7B99CBA7 // hexen.wad MAP36
-7DC65D5029DD834481CD716B3D71388A // hexdd.wad MAP47
-{
-	polyobj
-}
-
 3D8ED20BF5CAAE6D6AE0E10999C75084 // hgarden.pk3 map01
 {
 	// spawn trees on top of arches
@@ -847,11 +706,6 @@ CA3773ED313E8899311F3DD0CA195A68 // e3m6
 	setthingz 402 168
 	setthingz 403 168
 	setthingz 404 168
-}
-
-6D4156EE0D12B77AD143A37C4D3DCF98 // dmonfear.wad map22
-{
-	shorttex
 }
 
 FCCA97FC851F6473EAA069F74247B317 // pg-raw.wad map31
@@ -867,3 +721,55 @@ FCCA97FC851F6473EAA069F74247B317 // pg-raw.wad map31
 	setsectortag 74 4
 	setlinespecial 357 Transfer_Heights 4 2 0 0 0 
 }
+
+6DC9F6CCEAE7A91AEC48EBE506F22BC4 // void.wad MAP01
+{
+	// Slightly squash the pillars in the starting room with "stimpacks"
+	// floating on them so that they can be obtained.
+	setsectoroffset 62 floor -8
+	setwallyscale 286 front bot 1.090909
+	setwallyscale 287 front bot 1.090909
+	setwallyscale 288 front bot 1.090909
+	setwallyscale 289 front bot 1.090909
+	
+	setsectoroffset 63 floor -8
+	setwallyscale 290 front bot 1.090909
+	setwallyscale 291 front bot 1.090909
+	setwallyscale 292 front bot 1.090909
+	setwallyscale 293 front bot 1.090909
+	
+	setsectoroffset 118 floor -8
+	setwallyscale 710 front bot 1.090909
+	setwallyscale 711 front bot 1.090909
+	setwallyscale 712 front bot 1.090909
+	setwallyscale 713 front bot 1.090909
+	
+	setsectoroffset 119 floor -8
+	setwallyscale 714 front bot 1.090909
+	setwallyscale 715 front bot 1.090909
+	setwallyscale 716 front bot 1.090909
+	setwallyscale 717 front bot 1.090909
+
+	setslopeoverflow
+	polyobj
+}
+
+5C594C67CF7721005DE71429F9811370 // Eternal Doom map03
+{
+	// fix broken staircase. The compatibility option is not sufficient
+	// to reliably handle this so clear the tags from the unwanted sectors.
+	setsectortag 212 0
+	setsectortag 213 0
+	setsectortag 214 0
+}
+
+9D50EBE17CEC78938C7A668DB0768611 // Strain map07: Make the exit accessible
+{
+	clearlineflags 1021 1
+}
+
+DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller depending on Boom side effects
+{
+	setlinespecial 391 Sector_CopyScroller 99 6 0 0 0
+}
+

@@ -413,6 +413,13 @@ class LevelCompatibility play
 				OffsetSectorPlane(527, Sector.floor, -32);
 				break;
 			}
+
+			case 'CC3911090452D7C39EC8B3D97CEFDD6F': // jenesis.wad map16
+			{
+				// Missing texture with hardware renderer because of wrongly lowered sector
+				ClearSectorTags(483);
+				break;
+			}
 		}
 	}
 

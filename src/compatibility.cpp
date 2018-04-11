@@ -842,6 +842,19 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingFlags)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetVertex)
+{
+	PARAM_PROLOGUE;
+	PARAM_UINT(vertex);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+
+	if (vertex < level.vertexes.Size())
+	{
+		level.vertexes[vertex].p = DVector2(x, y);
+	}
+	return 0;
+}
 
 
 //==========================================================================

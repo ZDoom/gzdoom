@@ -407,6 +407,75 @@ class LevelCompatibility play
 				break;
 			}
 
+			case 'D94587625BA779644D58151A87897CF1': // heretic.wad e1m2
+			{
+				// Missing textures
+				TextureID mossrck1 = TexMan.CheckForTexture("MOSSRCK1", TexMan.Type_Wall);
+				SetWallTextureID( 477, Line.back,  Side.top, mossrck1);
+				SetWallTextureID( 478, Line.back,  Side.top, mossrck1);
+				SetWallTextureID( 479, Line.back,  Side.top, mossrck1);
+				SetWallTextureID(1057, Line.front, Side.top, mossrck1);
+				break;
+			}
+			case 'ADD0FAC41AFB0B3C9B9F3C0006F93805': // heretic.wad e1m3
+			{
+				// Broken door between the hallway that leads to a Torch 
+				// and the passage that has a Bag of Holding at its end
+				OffsetSectorPlane(86, Sector.floor,   -128);
+				OffsetSectorPlane(86, Sector.ceiling, -128);
+				break;
+			}
+			case '916318D8B06DAC2D83424B23E4B66531': // heretic.wad e1m4
+			{
+				// Wrong sector offsets
+				OffsetSectorPlane( 0, Sector.ceiling, 8);
+				OffsetSectorPlane( 1, Sector.ceiling, 8);
+				OffsetSectorPlane( 2, Sector.ceiling, 8);
+				OffsetSectorPlane( 3, Sector.ceiling, 8);
+				OffsetSectorPlane( 4, Sector.ceiling, 8);
+				OffsetSectorPlane( 6, Sector.ceiling, 8);
+				OffsetSectorPlane( 6, Sector.floor,   8);
+				OffsetSectorPlane(17, Sector.ceiling, 8);
+				// Yellow key door
+				OffsetSectorPlane(284, Sector.floor,   -8);
+				OffsetSectorPlane(284, Sector.ceiling, -8);
+				// Missing textures
+				SetWallTexture(490, Line.back,  Side.bottom, "GRSTNPB");
+				TextureID woodwl = TexMan.CheckForTexture("WOODWL", TexMan.Type_Wall);
+				SetWallTextureID( 722, Line.front, Side.bottom, woodwl);
+				SetWallTextureID( 911, Line.front, Side.bottom, woodwl);
+				SetWallTextureID(1296, Line.front, Side.bottom, woodwl);
+				break;
+			}
+			case '397A0E17A39542E4E8294E156FAB0502': // heretic.wad e2m2
+			{
+				// Missing green door statues on easy and hard difficulties
+				SetThingSkills(17, 31);
+				SetThingSkills(18, 31);
+				break;
+			}
+			case 'CA3773ED313E8899311F3DD0CA195A68': // heretic.wad e3m6
+			{
+				// Quartz flask outside of map
+				SetThingSkills(373, 0);
+				// Missing wall torch on hard difficulty
+				SetThingSkills(448, 31);
+				// Missing textures
+				TextureID mossrck1 = TexMan.CheckForTexture("MOSSRCK1", TexMan.Type_Wall);
+				SetWallTextureID(343, Line.front, Side.top, mossrck1);
+				SetWallTextureID(370, Line.front, Side.top, mossrck1);
+				break;
+			}
+			case '5E3FCFDE78310BB89F92B1626A47D0AD': // heretic.wad E4M7
+			{
+				// Missing textures
+				TextureID cstlrck = TexMan.CheckForTexture("CSTLRCK", TexMan.Type_Wall);
+				SetWallTextureID(1274, Line.front, Side.top, cstlrck);
+				SetWallTextureID(1277, Line.back,  Side.top, cstlrck);
+				SetWallTextureID(1278, Line.front, Side.top, cstlrck);
+				break;
+			}
+
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
 			{
 				// Lower floor a bit so secret switch becomes accessible
@@ -420,6 +489,13 @@ class LevelCompatibility play
 				ClearSectorTags(483);
 				break;
 			}
+
+			case 'B68EB7CFB4CC481796E2919B9C16DFBD':  // Moc11.wad e1m6
+			{
+				SetVertex(1650, -3072, 2671);
+				SetVertex(1642, -2944, 2671);
+				break;
+			}
 		}
 	}
 
@@ -429,6 +505,7 @@ class LevelCompatibility play
 	private static native void SetThingSkills(int thing, int skills);
 	private static native void SetThingZ(int thing, double z);
 	private static native void SetThingFlags(int thing, int flags);
+	private static native void SetVertex(uint vertex, double x, double y);
 	
 	private static void SetWallTexture(int line, int side, int texpart, String texture)
 	{

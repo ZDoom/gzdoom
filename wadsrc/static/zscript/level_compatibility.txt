@@ -571,7 +571,7 @@ class LevelCompatibility play
 				SetLineSectorRef(328, Line.front, 74);
 				SetLineSectorRef(329, Line.front, 74);
 				AddSectorTag(74, 4);
-				SetLineSpecial(357, Transfer_Heights, 4, 2);
+				SetLineSpecial(357, Transfer_Heights, 6);
 				break;
 			}
 			
@@ -589,6 +589,44 @@ class LevelCompatibility play
 				break;
 			}
 			
+			case '5A24FC83A3F9A2D6D54AF04E2E96684F': // AV.WAD MAP01
+			{
+				SetLineSectorRef(225, Line.back, 36);
+				SetLineSectorRef(222, Line.back, 36);
+				SetLineSectorRef(231, Line.back, 36);
+
+				SetLineSectorRef(223, Line.back, 36);
+				SetLineSectorRef(224, Line.back, 36);
+				SetLineSectorRef(227, Line.back, 36);
+
+				SetLineSectorRef(229, Line.back, 39);
+				SetLineSectorRef(233, Line.back, 39);
+
+				TextureID nukage = TexMan.CheckForTexture("NUKAGE1", TexMan.Type_Flat);
+				SetWallTexture(222, Line.front, Side.bottom, nukage);
+				SetWallTexture(223, Line.front, Side.bottom, nukage);
+				SetWallTexture(224, Line.front, Side.bottom, nukage);
+				SetWallTexture(225, Line.front, Side.bottom, nukage);
+				SetWallTexture(227, Line.front, Side.bottom, nukage);
+				SetWallTexture(231, Line.front, Side.bottom, nukage);
+				SetWallTexture(229, Line.front, Side.bottom, nukage);
+				SetWallTexture(233, Line.front, Side.bottom, nukage);
+
+				for(int i = 0; i < 8; i++)
+				{
+					SetLineSectorRef(i+234, Line.back, 37);
+					SetLineSectorRef(i+243, Line.back, 37);
+					SetWallTexture(i+234, Line.back, Side.bottom, nukage);
+					SetWallTexture(i+243, Line.back, Side.bottom, nukage);
+				}
+
+				SetLineSpecial(336, Transfer_Heights, 32000, 6);
+				AddSectorTag(40, 32000);
+				AddSectorTag(38, 32000);
+				AddSectorTag(37, 32000);
+				AddSectorTag(34, 32000);
+				break;
+			}
 		}
 	}
 

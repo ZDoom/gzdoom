@@ -449,10 +449,11 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetLineSectorRef)
 		&& lineidx < level.lines.Size()
 		&& sectoridx < level.sectors.Size())
 	{
-		if (side_t *side = level.lines[lineidx].sidedef[sideidx])
-		{
-			side->sector = &level.sectors[sectoridx];
-		}
+		line_t *line = &level.lines[lineidx];
+		side_t *side = line->sidedef[sideidx];
+		side->sector = &level.sectors[sectoridx];
+		if (sideidx == 0) line->frontsector = side->sector;
+		else line->backsector = side->sector;
 	}
 	ForceNodeBuild = true;
 	return 0;
@@ -505,3 +506,4 @@ CCMD (hiddencompatflags)
 {
 	Printf("%08x %08x %08x\n", ii_compatflags, ii_compatflags2, ib_compatflags);
 }
+

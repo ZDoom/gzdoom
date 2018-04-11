@@ -39,7 +39,7 @@ class LevelCompatibility play
 				break;
 			}
 			
-			case 'F481922F4881F74760F3C0437FD5EDD0': // // Community Chest 3 map03
+			case 'F481922F4881F74760F3C0437FD5EDD0': // Community Chest 3 map03
 			{
 				// I have no idea how this conveyor belt setup manages to work under Boom.
 				// Set the sector the voodoo doll ends up standing on when sectors tagged
@@ -484,6 +484,7 @@ class LevelCompatibility play
 				SetSectorTexture(145, Sector.floor, "F_CONCRP");
 				SetSectorLight(138, 192);
 				SetWallTexture(3431, Line.back, Side.top, "BRKGRY01");
+				break;
 			}
 
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
@@ -504,6 +505,42 @@ class LevelCompatibility play
 			{
 				SetVertex(1650, -3072, 2671);
 				SetVertex(1642, -2944, 2671);
+				break;
+			}
+
+			case '5C594C67CF7721005DE71429F9811370': // Eternal Doom map03
+			{
+				// fix broken staircase. The compatibility option is not sufficient
+				// to reliably handle this so clear the tags from the unwanted sectors.
+				ClearSectorTags(212);
+				ClearSectorTags(213);
+				ClearSectorTags(214);
+				break;
+			}
+		
+			case 'DCE862393CAAA6FF1294FB7056B53057': // UAC Ultra map07
+			{
+				// Contains a scroller depending on Boom side effects
+				SetLineSpecial(391, Sector_CopyScroller, 99, 6);
+				break;
+			}
+
+			case '9D50EBE17CEC78938C7A668DB0768611': // Strain map07
+			{
+				// Make the exit accessible
+				SetLineFlags(1021, 0, 1);
+				break;
+			}
+
+			case '3D8ED20BF5CAAE6D6AE0E10999C75084': // hgarden.pk3 map01
+			{
+				// spawn trees on top of arches
+				SetThingZ(399, 168);
+				SetThingZ(400, 168);
+				SetThingZ(401, 168);
+				SetThingZ(402, 168);
+				SetThingZ(403, 168);
+				SetThingZ(404, 168);
 				break;
 			}
 		}

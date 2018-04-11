@@ -194,7 +194,7 @@ B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
 
 D0139194F7817BF06F3988DFC47DB38D // Whispers of Satan map29
 {
-	
+	nopassover
 }
 
 5397C3B7D9B33AAF526D15A81A762828 // daedalus.wad Travel tubes (they are all identical)
@@ -223,7 +223,6 @@ C98F79709BD7E0E4C19026AB9575EC6F // cc-cod.zip:codlev.wad map07
 {
 	polyobj
 }
-
 
 D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 19D03FFC875589E21EDBB7AB74EF4AEF // Return to Hadron, e1m9, 2016.01.03 update
@@ -265,16 +264,6 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 
 
 
-3D8ED20BF5CAAE6D6AE0E10999C75084 // hgarden.pk3 map01
-{
-	// spawn trees on top of arches
-	setthingz 399 168
-	setthingz 400 168
-	setthingz 401 168
-	setthingz 402 168
-	setthingz 403 168
-	setthingz 404 168
-}
 
 FCCA97FC851F6473EAA069F74247B317 // pg-raw.wad map31
 {
@@ -321,23 +310,3 @@ FCCA97FC851F6473EAA069F74247B317 // pg-raw.wad map31
 	setslopeoverflow
 	polyobj
 }
-
-5C594C67CF7721005DE71429F9811370 // Eternal Doom map03
-{
-	// fix broken staircase. The compatibility option is not sufficient
-	// to reliably handle this so clear the tags from the unwanted sectors.
-	setsectortag 212 0
-	setsectortag 213 0
-	setsectortag 214 0
-}
-
-9D50EBE17CEC78938C7A668DB0768611 // Strain map07: Make the exit accessible
-{
-	clearlineflags 1021 1
-}
-
-DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller depending on Boom side effects
-{
-	setlinespecial 391 Sector_CopyScroller 99 6 0 0 0
-}
-

@@ -265,16 +265,6 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 
 
 
-39C594CAC07EE51C80F757DA465FCC94 // strife1.wad map10
-{
-	// fix the shooting range by matching sector 138 and 145 properties together
-	setsectoroffset 145 floor -32
-	setsectoroffset 145 ceil 40
-	setsectortexture 145 floor F_CONCRP
-	setsectorlight 138 192
-	setwalltexture 3431 back top BRKGRY01
-}
-
 3D8ED20BF5CAAE6D6AE0E10999C75084 // hgarden.pk3 map01
 {
 	// spawn trees on top of arches

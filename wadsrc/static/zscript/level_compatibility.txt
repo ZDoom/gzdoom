@@ -476,6 +476,16 @@ class LevelCompatibility play
 				break;
 			}
 
+			case '39C594CAC07EE51C80F757DA465FCC94': // strife1.wad map10
+			{
+				// fix the shooting range by matching sector 138 and 145 properties together
+				OffsetSectorPlane(145, Sector.floor,  -32);
+				OffsetSectorPlane(145, Sector.ceiling, 40);
+				SetSectorTexture(145, Sector.floor, "F_CONCRP");
+				SetSectorLight(138, 192);
+				SetWallTexture(3431, Line.back, Side.top, "BRKGRY01");
+			}
+
 			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
 			{
 				// Lower floor a bit so secret switch becomes accessible
@@ -545,5 +555,20 @@ class LevelCompatibility play
 	private static void SetSectorSpecial(int sectornum, int special)
 	{
 		level.sectors[sectornum].special = special;
+	}
+
+	private static void SetSectorTextureID(int sectornum, int plane, TextureID texture)
+	{
+		level.sectors[sectornum].SetTexture(plane, texture);
+	}
+
+	private static void SetSectorTexture(int sectornum, int plane, String texture)
+	{
+		SetSectorTextureID(sectornum, plane, TexMan.CheckForTexture(texture, TexMan.Type_Flat));
+	}
+
+	private static void SetSectorLight(int sectornum, int newval)
+	{
+		level.sectors[sectornum].SetLightLevel(newval);
 	}
 }

@@ -104,6 +104,7 @@ enum
 
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 extern TArray<FMapThing> MapThingsConverted;
+extern bool ForceNodeBuild;
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -853,6 +854,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetVertex)
 	{
 		level.vertexes[vertex].p = DVector2(x, y);
 	}
+	ForceNodeBuild = true;
 	return 0;
 }
 
@@ -872,6 +874,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetLineSectorRef)
 			side->sector = &level.sectors[sectoridx];
 		}
 	}
+	ForceNodeBuild = true;
 	return 0;
 }
 

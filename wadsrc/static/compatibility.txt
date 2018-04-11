@@ -194,7 +194,7 @@ B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
 
 D0139194F7817BF06F3988DFC47DB38D // Whispers of Satan map29
 {
-	nopassover
+	nopassover
 }
 
 5397C3B7D9B33AAF526D15A81A762828 // daedalus.wad Travel tubes (they are all identical)
@@ -248,20 +248,4 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 {
 	setslopeoverflow
 	polyobj
-}
-
-
-
-
-712BB4CFBD0753178CA0C6814BE4C288 // map12 BTSX_E1 - patch some rendering glitches that are problematic to detect
-{
-	setsectortag 545 32000
-	setsectortag 1618 32000
-	setlinespecial 2853 Sector_Set3DFloor 32000 4 0 0 0
-	setsectortag 439 32001
-	setsectortag 458 32001
-	setlinespecial 2182 Sector_Set3DFloor 32001 4 0 0 0
-	setsectortag 454 32002
-	setsectortag 910 32002
-	setlinespecial 2410 Sector_Set3DFloor 32002 4 1 0 0
 }

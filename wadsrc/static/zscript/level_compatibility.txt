@@ -406,6 +406,13 @@ class LevelCompatibility play
 				SetSectorSpecial(868, 0);
 				break;
 			}
+
+			case 'DB31D71B11E3E4393B9C0CCB44A8639F': // rop_2015.wad e1m5
+			{
+				// Lower floor a bit so secret switch becomes accessible
+				OffsetSectorPlane(527, Sector.floor, -32);
+				break;
+			}
 		}
 	}
 

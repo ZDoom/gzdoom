@@ -607,7 +607,15 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornu
 		{
 			actor->player->secretcount++;
 		}
-		if (cl_showsecretmessage && actor->CheckLocalView(consoleplayer))
+		int retval = 1;
+		IFVIRTUALPTR(actor, AActor, OnGiveSecret)
+		{
+			VMValue params[] = { actor, printmessage, playsound };
+			VMReturn ret;
+			ret.IntAt(&retval);
+			VMCall(func, params, countof(params), &ret, 1);
+		}
+		if (retval && cl_showsecretmessage && actor->CheckLocalView(consoleplayer))
 		{
 			if (printmessage)
 			{
@@ -633,6 +641,7 @@ DEFINE_ACTION_FUNCTION(AActor, GiveSecret)
 	P_GiveSecret(self, printmessage, playsound, -1);
 	return 0;
 }
+
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, GiveSecret)
 {

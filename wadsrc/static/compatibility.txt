@@ -244,6 +244,11 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 	clipmidtex
 }
 
+6DC9F6CCEAE7A91AEC48EBE506F22BC4 // void.wad MAP01
+{
+	setslopeoverflow
+	polyobj
+}
 
 
 
@@ -259,54 +264,4 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 	setsectortag 454 32002
 	setsectortag 910 32002
 	setlinespecial 2410 Sector_Set3DFloor 32002 4 1 0 0
-}
-
-
-
-
-
-FCCA97FC851F6473EAA069F74247B317 // pg-raw.wad map31
-{
-	setlinesectorref 331 front 74
-	setlinesectorref 326 front 74
-	setlinesectorref 497 front 74
-	setlinesectorref 474 front 74
-	setlinesectorref 471 front 74
-	setlinesectorref 327 front 74
-	setlinesectorref 328 front 74
-	setlinesectorref 329 front 74
-	setsectortag 74 4
-	setlinespecial 357 Transfer_Heights 4 2 0 0 0 
-}
-
-6DC9F6CCEAE7A91AEC48EBE506F22BC4 // void.wad MAP01
-{
-	// Slightly squash the pillars in the starting room with "stimpacks"
-	// floating on them so that they can be obtained.
-	setsectoroffset 62 floor -8
-	setwallyscale 286 front bot 1.090909
-	setwallyscale 287 front bot 1.090909
-	setwallyscale 288 front bot 1.090909
-	setwallyscale 289 front bot 1.090909
-	
-	setsectoroffset 63 floor -8
-	setwallyscale 290 front bot 1.090909
-	setwallyscale 291 front bot 1.090909
-	setwallyscale 292 front bot 1.090909
-	setwallyscale 293 front bot 1.090909
-	
-	setsectoroffset 118 floor -8
-	setwallyscale 710 front bot 1.090909
-	setwallyscale 711 front bot 1.090909
-	setwallyscale 712 front bot 1.090909
-	setwallyscale 713 front bot 1.090909
-	
-	setsectoroffset 119 floor -8
-	setwallyscale 714 front bot 1.090909
-	setwallyscale 715 front bot 1.090909
-	setwallyscale 716 front bot 1.090909
-	setwallyscale 717 front bot 1.090909
-
-	setslopeoverflow
-	polyobj
 }

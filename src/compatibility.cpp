@@ -856,6 +856,25 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetVertex)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetLineSectorRef)
+{
+	PARAM_PROLOGUE;
+	PARAM_UINT(lineidx);
+	PARAM_UINT(sideidx);
+	PARAM_UINT(sectoridx);
+
+	if (   sideidx < 2
+		&& lineidx < level.lines.Size()
+		&& sectoridx < level.sectors.Size())
+	{
+		if (side_t *side = level.lines[lineidx].sidedef[sideidx])
+		{
+			side->sector = &level.sectors[sectoridx];
+		}
+	}
+	return 0;
+}
+
 
 //==========================================================================
 //

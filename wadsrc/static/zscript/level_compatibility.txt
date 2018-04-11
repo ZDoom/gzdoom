@@ -440,7 +440,7 @@ class LevelCompatibility play
 				OffsetSectorPlane(284, Sector.floor,   -8);
 				OffsetSectorPlane(284, Sector.ceiling, -8);
 				// Missing textures
-				SetWallTexture(490, Line.back,  Side.bottom, "GRSTNPB");
+				SetWallTexture(490, Line.back, Side.bottom, "GRSTNPB");
 				TextureID woodwl = TexMan.CheckForTexture("WOODWL", TexMan.Type_Wall);
 				SetWallTextureID( 722, Line.front, Side.bottom, woodwl);
 				SetWallTextureID( 911, Line.front, Side.bottom, woodwl);
@@ -528,7 +528,7 @@ class LevelCompatibility play
 			case '9D50EBE17CEC78938C7A668DB0768611': // Strain map07
 			{
 				// Make the exit accessible
-				SetLineFlags(1021, 0, 1);
+				SetLineFlags(1021, 0, Line.ML_BLOCKING);
 				break;
 			}
 
@@ -543,6 +543,36 @@ class LevelCompatibility play
 				SetThingZ(404, 168);
 				break;
 			}
+
+			case '6DC9F6CCEAE7A91AEC48EBE506F22BC4': // void.wad MAP01
+			{
+				// Slightly squash the pillars in the starting room with "stimpacks"
+				// floating on them so that they can be obtained.
+				OffsetSectorPlane( 62, Sector.floor, -8);
+				OffsetSectorPlane( 63, Sector.floor, -8);
+				OffsetSectorPlane(118, Sector.floor, -8);
+				OffsetSectorPlane(119, Sector.floor, -8);
+				for (int i = 0; i < 8; ++i)
+				{
+					SetWallYScale(286 + i, Line.front, Side.bottom, 1.090909);
+					SetWallYScale(710 + i, Line.front, Side.bottom, 1.090909);
+				}
+				break;
+			}
+
+			case 'FCCA97FC851F6473EAA069F74247B317': // pg-raw.wad map31
+			{
+				SetLineSectorRef(331, Line.front, 74);
+				SetLineSectorRef(326, Line.front, 74);
+				SetLineSectorRef(497, Line.front, 74);
+				SetLineSectorRef(474, Line.front, 74);
+				SetLineSectorRef(471, Line.front, 74);
+				SetLineSectorRef(327, Line.front, 74);
+				SetLineSectorRef(328, Line.front, 74);
+				SetLineSectorRef(329, Line.front, 74);
+				AddSectorTag(74, 4);
+				SetLineSpecial(357, Transfer_Heights, 4, 2);
+			}
 		}
 	}
 
@@ -553,6 +583,7 @@ class LevelCompatibility play
 	private static native void SetThingZ(int thing, double z);
 	private static native void SetThingFlags(int thing, int flags);
 	private static native void SetVertex(uint vertex, double x, double y);
+	private static native void SetLineSectorRef(uint line, uint side, uint sector);
 	
 	private static void SetWallTexture(int line, int side, int texpart, String texture)
 	{
@@ -607,5 +638,10 @@ class LevelCompatibility play
 	private static void SetSectorLight(int sectornum, int newval)
 	{
 		level.sectors[sectornum].SetLightLevel(newval);
+	}
+
+	private static void SetWallYScale(int line, int side, int texpart, double scale)
+	{
+		level.lines[line].sidedef[side].SetTextureYScale(texpart, 1.090909);
 	}
 }

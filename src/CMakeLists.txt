@@ -409,8 +409,7 @@ CHECK_CXX_SOURCE_COMPILES("thread_local int i; int main() { i = 0; }"
 	HAVE_THREAD_LOCAL)
 
 if( NOT HAVE_THREAD_LOCAL )
-	message( WARNING "C++ compiler doesn't support thread_local storage duration specifier" )
-	add_definitions( -Dthread_local= )
+	message( SEND_ERROR "C++ compiler doesn't support thread_local storage duration specifier" )
 endif()
 
 # Check for functions that may or may not exist.

@@ -627,6 +627,45 @@ class LevelCompatibility play
 				AddSectorTag(34, 32000);
 				break;
 			}
+			
+			case '32FADD80710CAFCC2B09B4610C3340B3': // ksutra.wad map01
+			{
+				// This rebuilds the ending pit with a 3D floor.
+				for(int i = Line.front; i <= Line.back; i++)
+				{
+					SetLineSectorRef(509, i, 129);
+					SetLineSectorRef(510, i, 129);
+					SetLineSectorRef(522, i, 129);
+					SetLineSectorRef(526, i, 129);
+					SetLineSectorRef(527, i, 129);
+					for(int j = 538; j <= 544; j++)
+					{
+						SetLineSectorRef(j, i, 129);
+					}						
+					for(int j = 547; j <= 552; j++)
+					{
+						SetLineSectorRef(j, i, 129);
+					}					
+				}
+				AddSectorTag(129, 32000);
+				SetSectorLight(129, 160);
+				for(int i = 148; i <= 151; i++)
+				{
+					AddSectorTag(i, 32000);
+					SetSectorLight(i, 160);
+				}
+				SetSectorTexture(126, Sector.Ceiling, "GRASS1");
+				OffsetSectorPlane(126, Sector.Floor, 72);
+				OffsetSectorPlane(126, Sector.Ceiling, 128);
+				SetLineSpecial(524, Sector_Set3DFloor, 32000, 1, 0, 255);
+				SetWallTexture(524, Line.Front, Side.Mid, "ASHWALL3");
+				SetWallTexture(537, Line.Front, Side.Bottom, "ASHWALL3");
+				SetWallTexture(536, Line.Front, Side.Bottom, "ASHWALL3");
+				SetWallTexture(546, Line.Front, Side.Bottom, "ASHWALL3");
+				SetWallTexture(449, Line.Front, Side.Mid, "-");
+				break;
+			}
+
 		}
 	}
 

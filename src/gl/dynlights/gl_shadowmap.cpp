@@ -216,18 +216,18 @@ void FShadowMap::UploadAABBTree()
 	if (mAABBTree)
 		return;
 
-	mAABBTree.reset(new LevelAABBTree());
+	mAABBTree.reset(new hwrenderer::LevelAABBTree());
 
 	int oldBinding = 0;
 	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &oldBinding);
 
 	glGenBuffers(1, (GLuint*)&mNodesBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mNodesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(hwrenderer::AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0], GL_STATIC_DRAW);
 
 	glGenBuffers(1, (GLuint*)&mLinesBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLinesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(hwrenderer::AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 }

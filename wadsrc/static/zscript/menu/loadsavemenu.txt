@@ -132,7 +132,8 @@ class LoadSaveMenu : ListMenu
 		commentLeft = savepicLeft;
 		commentTop = savepicTop + savepicHeight + 16;
 		commentWidth = savepicWidth;
-		commentHeight = (51+(screen.GetHeight()>200?10:0))*CleanYfac;
+		//commentHeight = (51+(screen.GetHeight()>200?10:0))*CleanYfac;
+		commentHeight = listboxHeight - savepicHeight - 16;
 		commentRight = commentLeft + commentWidth;
 		commentBottom = commentTop + commentHeight;
 	}

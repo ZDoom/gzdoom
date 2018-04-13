@@ -29,14 +29,11 @@
 #include "doomdata.h"
 #include "portal.h"
 #include "g_levellocals.h"
-#include "gl/gl_functions.h"
 
-#include "gl/data/gl_data.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/textures/gl_material.h"
-#include "gl/utility/gl_convert.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 
@@ -136,7 +133,7 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 		case PORTS_PORTAL:
 		case PORTS_LINKEDPORTAL:
 		{
-			FPortal *glport = sector->GetGLPortal(plane);
+			auto glport = sector->GetPortalGroup(plane);
 			if (glport != NULL)
 			{
 				if (sector->PortalBlocksView(plane)) return;
@@ -299,8 +296,8 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 			int type = fs->GetPortalType(sector_t::ceiling);
 			if (type == PORTS_STACKEDSECTORTHING || type == PORTS_PORTAL || type == PORTS_LINKEDPORTAL)
 			{
-				FPortal *pfront = fs->GetGLPortal(sector_t::ceiling);
-				FPortal *pback = bs->GetGLPortal(sector_t::ceiling);
+				auto pfront = fs->GetPortalGroup(sector_t::ceiling);
+				auto pback = bs->GetPortalGroup(sector_t::ceiling);
 				if (pfront == NULL || fs->PortalBlocksView(sector_t::ceiling)) return;
 				if (pfront == pback && !bs->PortalBlocksView(sector_t::ceiling)) return;
 			}
@@ -378,8 +375,8 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 			int type = fs->GetPortalType(sector_t::floor);
 			if (type == PORTS_STACKEDSECTORTHING || type == PORTS_PORTAL || type == PORTS_LINKEDPORTAL)
 			{
-				FPortal *pfront = fs->GetGLPortal(sector_t::floor);
-				FPortal *pback = bs->GetGLPortal(sector_t::floor);
+				auto pfront = fs->GetPortalGroup(sector_t::floor);
+				auto pback = bs->GetPortalGroup(sector_t::floor);
 				if (pfront == NULL || fs->PortalBlocksView(sector_t::floor)) return;
 				if (pfront == pback && !bs->PortalBlocksView(sector_t::floor)) return;
 			}

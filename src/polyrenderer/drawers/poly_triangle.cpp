@@ -47,7 +47,7 @@ void PolyTriangleDrawer::ClearBuffers(DCanvas *canvas)
 
 void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, bool span_drawers)
 {
-	uint8_t *dest = (uint8_t*)canvas->GetBuffer();
+	uint8_t *dest = (uint8_t*)canvas->GetPixels();
 	int dest_width = canvas->GetWidth();
 	int dest_height = canvas->GetHeight();
 	int dest_pitch = canvas->GetPitch();
@@ -605,7 +605,7 @@ void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 void DrawRectCommand::Execute(DrawerThread *thread)
 {
 	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
-	const void *destOrg = renderTarget->GetBuffer();
+	const void *destOrg = renderTarget->GetPixels();
 	int destWidth = renderTarget->GetWidth();
 	int destHeight = renderTarget->GetHeight();
 	int destPitch = renderTarget->GetPitch();

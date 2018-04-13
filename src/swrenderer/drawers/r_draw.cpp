@@ -81,7 +81,7 @@ namespace swrenderer
 
 	uint32_t particle_texture[NUM_PARTICLE_TEXTURES][PARTICLE_TEXTURE_SIZE * PARTICLE_TEXTURE_SIZE];
 
-	short zeroarray[MAXWIDTH];
+	short zeroarray[MAXWIDTH] = { 0 };
 	short screenheightarray[MAXWIDTH];
 
 	void R_InitShadeMaps()
@@ -193,7 +193,7 @@ namespace swrenderer
 
 	void R_UpdateFuzzPosFrameStart()
 	{
-		if (r_fuzzscale || r_polyrenderer)
+		if (r_fuzzscale || V_IsPolyRenderer())
 		{
 			static int next_random = 0;
 
@@ -207,7 +207,7 @@ namespace swrenderer
 
 	void R_UpdateFuzzPos(const SpriteDrawerArgs &args)
 	{
-		if (!r_fuzzscale && !r_polyrenderer)
+		if (!r_fuzzscale && !V_IsPolyRenderer())
 		{
 			int yl = MAX(args.FuzzY1(), 1);
 			int yh = MIN(args.FuzzY2(), fuzzviewheight);
@@ -224,7 +224,7 @@ namespace swrenderer
 			auto rendertarget = args.Viewport()->RenderTarget;
 			if (rendertarget->IsBgra())
 			{
-				uint32_t *destorg = (uint32_t*)rendertarget->GetBuffer();
+				uint32_t *destorg = (uint32_t*)rendertarget->GetPixels();
 				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint32_t *dest = (uint32_t*)args.Dest();
 				int offset  = (int)(ptrdiff_t)(dest - destorg);
@@ -233,7 +233,7 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t *destorg = rendertarget->GetBuffer();
+				uint8_t *destorg = rendertarget->GetPixels();
 				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint8_t *dest = (uint8_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
@@ -248,7 +248,7 @@ namespace swrenderer
 			auto rendertarget = args.Viewport()->RenderTarget;
 			if (rendertarget->IsBgra())
 			{
-				uint32_t *destorg = (uint32_t*)rendertarget->GetBuffer();
+				uint32_t *destorg = (uint32_t*)rendertarget->GetPixels();
 				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint32_t *dest = (uint32_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
@@ -257,7 +257,7 @@ namespace swrenderer
 			}
 			else
 			{
-				uint8_t *destorg = rendertarget->GetBuffer();
+				uint8_t *destorg = rendertarget->GetPixels();
 				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint8_t *dest = (uint8_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);

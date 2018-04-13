@@ -86,20 +86,47 @@
 #include "r_videoscale.h"
 #include "i_time.h"
 
+EXTERN_CVAR(Bool, cl_capfps)
+
+CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (vid_maxfps < TICRATE && vid_maxfps != 0)
+	{
+		vid_maxfps = TICRATE;
+	}
+	else if (vid_maxfps > 1000)
+	{
+		vid_maxfps = 1000;
+	}
+	else if (cl_capfps == 0)
+	{
+		I_SetFPSLimit(vid_maxfps);
+	}
+}
+
+CUSTOM_CVAR(Int, vid_rendermode, 4, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (usergame)
+	{
+		// [SP] Update pitch limits to the netgame/gamesim.
+		players[consoleplayer].SendPitchLimits();
+	}
+	screen->SetTextureFilterMode();
+
+	// No further checks needed. All this changes now is which scene drawer the render backend calls.
+}
+
+
+
 EXTERN_CVAR(Bool, r_blendmethod)
 
 int active_con_scale();
 
-FRenderer *Renderer;
+FRenderer *SWRenderer;
 
-EXTERN_CVAR (Bool, swtruecolor)
 EXTERN_CVAR (Bool, fullscreen)
 
-#if defined(_DEBUG) && defined(_M_IX86) && !defined(__MINGW32__)
-#define DBGBREAK	{ __asm int 3 }
-#else
-#define DBGBREAK
-#endif
+#define DBGBREAK assert(0)
 
 class DDummyFrameBuffer : public DFrameBuffer
 {
@@ -111,7 +138,7 @@ public:
 		Width = width;
 		Height = height;
 	}
-	bool Lock(bool buffered) { DBGBREAK; return false; }
+	// These methods should never be called.
 	void Update() { DBGBREAK; }
 	PalEntry *GetPalette() { DBGBREAK; return NULL; }
 	void GetFlashedPalette(PalEntry palette[256]) { DBGBREAK; }
@@ -119,13 +146,7 @@ public:
 	bool SetGamma(float gamma) { Gamma = gamma; return true; }
 	bool SetFlash(PalEntry rgb, int amount) { DBGBREAK; return false; }
 	void GetFlash(PalEntry &rgb, int &amount) { DBGBREAK; }
-	int GetPageCount() { DBGBREAK; return 0; }
 	bool IsFullscreen() { DBGBREAK; return 0; }
-#ifdef _WIN32
-	void PaletteChanged() {}
-	int QueryNewPalette() { return 0; }
-	bool Is8BitMode() { return false; }
-#endif
 
 	float Gamma;
 };
@@ -191,19 +212,6 @@ CUSTOM_CVAR (Int, vid_refreshrate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR (Float, dimamount, -1.f, CVAR_ARCHIVE)
-{
-	if (self < 0.f && self != -1.f)
-	{
-		self = -1.f;
-	}
-	else if (self > 1.f)
-	{
-		self = 1.f;
-	}
-}
-CVAR (Color, dimcolor, 0xffd700, CVAR_ARCHIVE)
-
 // [RH] Set true when vid_setmode command has been executed
 bool	setmodeneeded = false;
 // [RH] Resolution to change to when setmodeneeded is true
@@ -219,8 +227,6 @@ int		NewWidth, NewHeight, NewBits;
 DCanvas::DCanvas (int _width, int _height, bool _bgra)
 {
 	// Init member vars
-	Buffer = NULL;
-	LockCount = 0;
 	Width = _width;
 	Height = _height;
 	Bgra = _bgra;
@@ -234,122 +240,6 @@ DCanvas::DCanvas (int _width, int _height, bool _bgra)
 
 DCanvas::~DCanvas ()
 {
-}
-
-//==========================================================================
-//
-// DCanvas :: IsValid
-//
-//==========================================================================
-
-bool DCanvas::IsValid ()
-{
-	// A nun-subclassed DCanvas is never valid
-	return false;
-}
-
-//==========================================================================
-//
-// DCanvas :: FlatFill
-//
-// Fill an area with a texture. If local_origin is false, then the origin
-// used for the wrapping is (0,0). Otherwise, (left,right) is used.
-//
-//==========================================================================
-
-void DCanvas::FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin)
-{
-	int w = src->GetWidth();
-	int h = src->GetHeight();
-
-	// Repeatedly draw the texture, left-to-right, top-to-bottom.
-	for (int y = local_origin ? top : (top / h * h); y < bottom; y += h)
-	{
-		for (int x = local_origin ? left : (left / w * w); x < right; x += w)
-		{
-			DrawTexture (src, x, y,
-				DTA_ClipLeft, left,
-				DTA_ClipRight, right,
-				DTA_ClipTop, top,
-				DTA_ClipBottom, bottom,
-				DTA_TopOffset, 0,
-				DTA_LeftOffset, 0,
-				TAG_DONE);
-		}
-	}
-}
-
-//==========================================================================
-//
-// DCanvas :: Dim
-//
-// Applies a colored overlay to the entire screen, with the opacity
-// determined by the dimamount cvar.
-//
-//==========================================================================
-
-void DCanvas::Dim (PalEntry color)
-{
-	PalEntry dimmer;
-	float amount;
-
-	if (dimamount >= 0)
-	{
-		dimmer = PalEntry(dimcolor);
-		amount = dimamount;
-	}
-	else
-	{
-		dimmer = gameinfo.dimcolor;
-		amount = gameinfo.dimamount;
-	}
-
-	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
-	{ // On the Hexen title screen, the default dimming is not
-		// enough to make the menus readable.
-		amount = MIN<float> (1.f, amount*2.f);
-	}
-	// Add the cvar's dimming on top of the color passed to the function
-	if (color.a != 0)
-	{
-		float dim[4] = { color.r/255.f, color.g/255.f, color.b/255.f, color.a/255.f };
-		V_AddBlend (dimmer.r/255.f, dimmer.g/255.f, dimmer.b/255.f, amount, dim);
-		dimmer = PalEntry (uint8_t(dim[0]*255), uint8_t(dim[1]*255), uint8_t(dim[2]*255));
-		amount = dim[3];
-	}
-	Dim (dimmer, amount, 0, 0, Width, Height);
-}
-
-//==========================================================================
-//
-// DCanvas :: GetScreenshotBuffer
-//
-// Returns a buffer containing the most recently displayed frame. The
-// width and height of this buffer are the same as the canvas.
-//
-//==========================================================================
-
-void DCanvas::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
-{
-	Lock(true);
-	buffer = GetBuffer();
-	pitch = IsBgra() ? GetPitch() * 4 : GetPitch();
-	color_type = IsBgra() ? SS_BGRA : SS_PAL;
-	gamma = Gamma;
-}
-
-//==========================================================================
-//
-// DCanvas :: ReleaseScreenshotBuffer
-//
-// Releases the buffer obtained through GetScreenshotBuffer. These calls
-// must not be nested.
-//
-//==========================================================================
-
-void DCanvas::ReleaseScreenshotBuffer()
-{
-	Unlock();
 }
 
 //==========================================================================
@@ -638,7 +528,7 @@ static void BuildTransTable (const PalEntry *palette)
 //
 //==========================================================================
 
-void DCanvas::CalcGamma (float gamma, uint8_t gammalookup[256])
+void DFrameBuffer::CalcGamma (float gamma, uint8_t gammalookup[256])
 {
 	// I found this formula on the web at
 	// <http://panda.mostang.com/sane/sane-gamma.html>,
@@ -663,7 +553,7 @@ void DCanvas::CalcGamma (float gamma, uint8_t gammalookup[256])
 DSimpleCanvas::DSimpleCanvas (int width, int height, bool bgra)
 	: DCanvas (width, height, bgra)
 {
-	MemBuffer = nullptr;
+	PixelBuffer = nullptr;
 	Resize(width, height);
 }
 
@@ -672,10 +562,10 @@ void DSimpleCanvas::Resize(int width, int height)
 	Width = width;
 	Height = height;
 
-	if (MemBuffer != NULL)
+	if (PixelBuffer != NULL)
 	{
-		delete[] MemBuffer;
-		MemBuffer = NULL;
+		delete[] PixelBuffer;
+		PixelBuffer = NULL;
 	}
 
 	// Making the pitch a power of 2 is very bad for performance
@@ -714,8 +604,8 @@ void DSimpleCanvas::Resize(int width, int height)
 		}
 	}
 	int bytes_per_pixel = Bgra ? 4 : 1;
-	MemBuffer = new uint8_t[Pitch * height * bytes_per_pixel];
-	memset (MemBuffer, 0, Pitch * height * bytes_per_pixel);
+	PixelBuffer = new uint8_t[Pitch * height * bytes_per_pixel];
+	memset (PixelBuffer, 0, Pitch * height * bytes_per_pixel);
 }
 
 //==========================================================================
@@ -726,52 +616,10 @@ void DSimpleCanvas::Resize(int width, int height)
 
 DSimpleCanvas::~DSimpleCanvas ()
 {
-	if (MemBuffer != NULL)
+	if (PixelBuffer != NULL)
 	{
-		delete[] MemBuffer;
-		MemBuffer = NULL;
-	}
-}
-
-//==========================================================================
-//
-// DSimpleCanvas :: IsValid
-//
-//==========================================================================
-
-bool DSimpleCanvas::IsValid ()
-{
-	return (MemBuffer != NULL);
-}
-
-//==========================================================================
-//
-// DSimpleCanvas :: Lock
-//
-//==========================================================================
-
-bool DSimpleCanvas::Lock (bool)
-{
-	if (LockCount == 0)
-	{
-		Buffer = MemBuffer;
-	}
-	LockCount++;
-	return false;		// System surfaces are never lost
-}
-
-//==========================================================================
-//
-// DSimpleCanvas :: Unlock
-//
-//==========================================================================
-
-void DSimpleCanvas::Unlock ()
-{
-	if (--LockCount <= 0)
-	{
-		LockCount = 0;
-		Buffer = NULL;	// Enforce buffer access only between Lock/Unlock
+		delete[] PixelBuffer;
+		PixelBuffer = NULL;
 	}
 }
 
@@ -785,78 +633,17 @@ void DSimpleCanvas::Unlock ()
 //==========================================================================
 
 DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
-	: DSimpleCanvas (ViewportScaledWidth(width, height), ViewportScaledHeight(width, height), bgra)
+	//: DCanvas 
 {
+	Width = ViewportScaledWidth(width, height);
+	Height = ViewportScaledHeight(width, height);
+	Bgra = bgra;
+
 	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
-	Accel2D = false;
 
 	VideoWidth = width;
 	VideoHeight = height;
 }
-
-//==========================================================================
-//
-// DFrameBuffer :: PostprocessBgra
-//
-// Copies data to destination buffer while performing gamma and flash.
-// This is only needed if a target cannot do this with shaders.
-//
-//==========================================================================
-
-void DFrameBuffer::CopyWithGammaBgra(void *output, int pitch, const uint8_t *gammared, const uint8_t *gammagreen, const uint8_t *gammablue, PalEntry flash, int flash_amount)
-{
-	const uint8_t *gammatables[3] = { gammared, gammagreen, gammablue };
-
-	if (flash_amount > 0)
-	{
-		uint16_t inv_flash_amount = 256 - flash_amount;
-		uint16_t flash_red = flash.r * flash_amount;
-		uint16_t flash_green = flash.g * flash_amount;
-		uint16_t flash_blue = flash.b * flash_amount;
-		
-		for (int y = 0; y < Height; y++)
-		{
-			uint8_t *dest = (uint8_t*)output + y * pitch;
-			uint8_t *src = MemBuffer + y * Pitch * 4;
-			for (int x = 0;  x < Width; x++)
-			{
-				uint16_t fg_red = src[2];
-				uint16_t fg_green = src[1];
-				uint16_t fg_blue = src[0];
-				uint16_t red = (fg_red * inv_flash_amount + flash_red) >> 8;
-				uint16_t green = (fg_green * inv_flash_amount + flash_green) >> 8;
-				uint16_t blue = (fg_blue * inv_flash_amount + flash_blue) >> 8;
-
-				dest[0] = gammatables[2][blue];
-				dest[1] = gammatables[1][green];
-				dest[2] = gammatables[0][red];
-				dest[3] = 0xff;
-
-				dest += 4;
-				src += 4;
-			}
-		}
-	}
-	else
-	{
-		for (int y = 0; y < Height; y++)
-		{
-			uint8_t *dest = (uint8_t*)output + y * pitch;
-			uint8_t *src = MemBuffer + y * Pitch * 4;
-			for (int x = 0;  x < Width; x++)
-			{
-				dest[0] = gammatables[2][src[0]];
-				dest[1] = gammatables[1][src[1]];
-				dest[2] = gammatables[0][src[2]];
-				dest[3] = 0xff;
-
-				dest += 4;
-				src += 4;
-			}
-		}
-	}
-}
-
 
 //==========================================================================
 //
@@ -904,38 +691,15 @@ void DFrameBuffer::DrawRateStuff ()
 	// draws little dots on the bottom of the screen
 	if (ticker)
 	{
-		int64_t i = I_GetTime();
-		int64_t tics = i - LastTic;
-		uint8_t *buffer = GetBuffer();
+		int64_t t = I_GetTime();
+		int64_t tics = t - LastTic;
 
-		LastTic = i;
+		LastTic = t;
 		if (tics > 20) tics = 20;
 
-		// Buffer can be NULL if we're doing hardware accelerated 2D
-		if (buffer != NULL)
-		{
-			if (IsBgra())
-			{
-				uint32_t *buffer32 = (uint32_t*)buffer;
-				buffer32 += (GetHeight() - 1) * GetPitch();
-
-				for (i = 0; i < tics * 2; i += 2)	buffer32[i] = 0xffffffff;
-				for (; i < 20 * 2; i += 2)			buffer32[i] = 0xff000000;
-			}
-			else
-			{
-				buffer += (GetHeight() - 1) * GetPitch();
-
-				for (i = 0; i < tics * 2; i += 2)	buffer[i] = 0xff;
-				for (; i < 20 * 2; i += 2)			buffer[i] = 0x00;
-			}
-		}
-		else
-		{
-			int i;
-			for (i = 0; i < tics*2; i += 2)		Clear(i, Height-1, i+1, Height, 255, 0);
-			for ( ; i < 20*2; i += 2)			Clear(i, Height-1, i+1, Height, 0, 0);
-		}
+		int i;
+		for (i = 0; i < tics*2; i += 2)		Clear(i, Height-1, i+1, Height, 255, 0);
+		for ( ; i < 20*2; i += 2)			Clear(i, Height-1, i+1, Height, 0, 0);
 	}
 
 	// draws the palette for debugging
@@ -1065,32 +829,6 @@ void FPaletteTester::MakeTexture()
 
 //==========================================================================
 //
-// DFrameBuffer :: CopyFromBuff
-//
-// Copies pixels from main memory to video memory. This is only used by
-// DDrawFB.
-//
-//==========================================================================
-
-void DFrameBuffer::CopyFromBuff (uint8_t *src, int srcPitch, int width, int height, uint8_t *dest)
-{
-	if (Pitch == width && Pitch == Width && srcPitch == width)
-	{
-		memcpy (dest, src, Width * Height);
-	}
-	else
-	{
-		for (int y = 0; y < height; y++)
-		{
-			memcpy (dest, src, width);
-			dest += Pitch;
-			src += srcPitch;
-		}
-	}
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: SetVSync
 //
 // Turns vertical sync on and off, if supported.
@@ -1144,48 +882,6 @@ bool DFrameBuffer::Begin2D (bool copy3d)
 
 //==========================================================================
 //
-// DFrameBuffer :: DrawBlendingRect
-//
-// In hardware 2D modes, the blending rect needs to be drawn separately
-// from transferring the 3D scene to video memory, because the weapon
-// sprite is drawn on top of that.
-//
-//==========================================================================
-
-void DFrameBuffer::DrawBlendingRect()
-{
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: CreateTexture
-//
-// Creates a native texture for a game texture, if supported.
-// The hardware renderer does not use this interface because it is 
-// far too limited
-//
-//==========================================================================
-
-FNativeTexture *DFrameBuffer::CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping)
-{
-	return NULL;
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: CreatePalette
-//
-// Creates a native palette from a remap table, if supported.
-//
-//==========================================================================
-
-FNativePalette *DFrameBuffer::CreatePalette(FRemapTable *remap)
-{
-	return NULL;
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: WipeStartScreen
 //
 // Grabs a copy of the screen currently displayed to serve as the initial
@@ -1196,7 +892,7 @@ FNativePalette *DFrameBuffer::CreatePalette(FRemapTable *remap)
 
 bool DFrameBuffer::WipeStartScreen(int type)
 {
-	return wipe_StartScreen(type);
+	return false;
 }
 
 //==========================================================================
@@ -1210,8 +906,6 @@ bool DFrameBuffer::WipeStartScreen(int type)
 
 void DFrameBuffer::WipeEndScreen()
 {
-	wipe_EndScreen();
-	Unlock();
 }
 
 //==========================================================================
@@ -1226,8 +920,7 @@ void DFrameBuffer::WipeEndScreen()
 
 bool DFrameBuffer::WipeDo(int ticks)
 {
-	Lock(true);
-	return wipe_ScreenWipe(ticks);
+	return false;
 }
 
 //==========================================================================
@@ -1238,7 +931,6 @@ bool DFrameBuffer::WipeDo(int ticks)
 
 void DFrameBuffer::WipeCleanup()
 {
-	wipe_Cleanup();
 }
 
 //==========================================================================
@@ -1251,30 +943,45 @@ void DFrameBuffer::GameRestart()
 {
 }
 
-//===========================================================================
+//==========================================================================
 //
-// 
+// DFrameBuffer :: GetCaps
 //
-//===========================================================================
+//==========================================================================
 
-FNativePalette::~FNativePalette()
-{
-}
+EXTERN_CVAR(Bool, r_drawvoxels)
 
-FNativeTexture::~FNativeTexture()
+uint32_t DFrameBuffer::GetCaps()
 {
-	// Remove link from the game texture
-	if (mGameTex != nullptr)
+	ActorRenderFeatureFlags FlagSet = 0;
+
+	if (V_IsPolyRenderer())
+		FlagSet |= RFF_POLYGONAL | RFF_TILTPITCH | RFF_SLOPE3DFLOORS;
+	else
 	{
-		mGameTex->Native[mFormat] = nullptr;
+		FlagSet |= RFF_UNCLIPPEDTEX;
+		if (r_drawvoxels)
+			FlagSet |= RFF_VOXELS;
 	}
 
+	if (V_IsTrueColor())
+		FlagSet |= RFF_TRUECOLOR;
+	else
+		FlagSet |= RFF_COLORMAP;
+
+	return (uint32_t)FlagSet;
 }
 
-bool FNativeTexture::CheckWrapping(bool wrapping)
+void DFrameBuffer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
-	return true;
+	SWRenderer->RenderTextureView(tex, Viewpoint, FOV);
 }
+
+void DFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+{
+	SWRenderer->WriteSavePic(player, file, width, height);
+}
+
 
 CCMD(clean)
 {
@@ -1295,10 +1002,6 @@ bool V_DoModeSetup (int width, int height, int bits)
 
 	screen = buff;
 	screen->SetGamma (Gamma);
-
-	// Load fonts now so they can be packed into textures straight away,
-	// if D3DFB is being used for the display.
-	FFont::StaticPreloadFonts();
 
 	DisplayBits = bits;
 	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
@@ -1353,7 +1056,9 @@ void V_UpdateModeSize (int width, int height)
 	DisplayHeight = height;
 
 	R_OldBlend = ~0;
-	Renderer->OnModeSet();
+
+	// the software renderer also needs to be notified
+	SWRenderer->OnModeSet();
 }
 
 void V_OutputResized (int width, int height)
@@ -1578,11 +1283,9 @@ void V_Init2()
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	screen->SetGamma (gamma);
-	Renderer->RemapVoxels();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();
-	V_SetBorderNeedRefresh();
 	setsizeneeded = true;
 }
 

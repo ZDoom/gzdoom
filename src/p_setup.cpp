@@ -110,6 +110,8 @@
 #include "p_spec.h"
 #include "p_saveg.h"
 #include "g_levellocals.h"
+#include "c_dispatch.h"
+#include "a_dynlight.h"
 #ifndef NO_EDATA
 #include "edata.h"
 #endif
@@ -127,6 +129,7 @@ void P_SetSlopes ();
 void P_CopySlopes();
 void BloodCrypt (void *data, int key, int len);
 void P_ClearUDMFKeys();
+void InitRenderInfo();
 
 extern AActor *P_SpawnMapThing (FMapThing *mthing, int position);
 
@@ -1499,6 +1502,8 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		ss->ZoneNumber = 0xFFFF;
 		ss->terrainnum[sector_t::ceiling] = ss->terrainnum[sector_t::floor] = -1;
 
+
+
 		// [RH] Sectors default to white light with the default fade.
 		//		If they are outside (have a sky ceiling), they use the outside fog.
 		ss->Colormap.LightColor = PalEntry(255, 255, 255);
@@ -1506,10 +1511,15 @@ void P_LoadSectors (MapData *map, FMissingTextureTracker &missingtex)
 		{
 			ss->Colormap.FadeColor.SetRGB(level.outsidefog);
 		}
+		else  if (level.flags & LEVEL_HASFADETABLE)
+		{
+			ss->Colormap.FadeColor= 0x939393;	// The true color software renderer needs this. (The hardware renderer will ignore this value if LEVEL_HASFADETABLE is set.)
+		}
 		else
 		{
 			ss->Colormap.FadeColor.SetRGB(level.fadeto);
 		}
+
 
 		// killough 8/28/98: initialize all sectors to normal friction
 		ss->friction = ORIG_FRICTION;
@@ -3417,6 +3427,7 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 // Preloads all relevant graphics for the level.
 //
 //===========================================================================
+void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
 static void P_PrecacheLevel()
 {
@@ -3491,21 +3502,35 @@ static void P_PrecacheLevel()
 		if (tex.Exists()) hitlist[tex.GetIndex()] |= FTextureManager::HIT_Wall;
 	}
 
-	Renderer->Precache(hitlist, actorhitlist);
+	// This is just a temporary solution, until the hardware renderer's texture manager is in a better state.
+	if (!V_IsHardwareRenderer())
+		SWRenderer->Precache(hitlist, actorhitlist);
+	else
+		gl_PrecacheTexture(hitlist, actorhitlist);
 
 	delete[] hitlist;
 }
 
 extern polyblock_t **PolyBlockMap;
 
-//===========================================================================
+
+//==========================================================================
 //
 //
 //
-//===========================================================================
+//==========================================================================
 
 void P_FreeLevelData ()
 {
+	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+	auto mo = it.Next();
+	while (mo)
+	{
+		auto next = it.Next();
+		mo->Destroy();
+		mo = next;
+	}
+
 	// [ZZ] delete per-map event handlers
 	E_Shutdown(true);
 	MapThingsConverted.Clear();
@@ -3520,7 +3545,6 @@ void P_FreeLevelData ()
 	AActor::ClearTIDHashes();
 
 	interpolator.ClearInterpolations();	// [RH] Nothing to interpolate on a fresh level.
-	Renderer->CleanLevelData();
 	FPolyObj::ClearAllSubsectorLinks(); // can't be done as part of the polyobj deletion process.
 	SN_StopAllSequences ();
 	DThinker::DestroyAllThinkers ();
@@ -3530,14 +3554,26 @@ void P_FreeLevelData ()
 		level.killed_monsters = level.found_items = level.found_secrets =
 		wminfo.maxfrags = 0;
 		
+	// delete allocated data in the level arrays.
 	if (level.sectors.Size() > 0)
 	{
 		delete[] level.sectors[0].e;
+		if (level.sectors[0].subsectors)
+		{
+			delete[] level.sectors[0].subsectors;
+			level.sectors[0].subsectors = nullptr;
+		}
 	}
 	for (auto &sub : level.subsectors)
 	{
 		if (sub.BSP != nullptr) delete sub.BSP;
 	}
+	if (level.sides.Size() > 0 && level.sides[0].segs)
+	{
+		delete[] level.sides[0].segs;
+		level.sides[0].segs = nullptr;
+	}
+
 
 	FBehavior::StaticUnloadModules ();
 	level.segs.Clear();
@@ -3639,7 +3675,7 @@ void P_SetupLevel (const char *lumpname, int position)
 
 	// This is motivated as follows:
 
-	bool RequireGLNodes = Renderer->RequireGLNodes() || am_textured;
+	bool RequireGLNodes = true;	// Even the software renderer needs GL nodes now.
 
 	for (i = 0; i < (int)countof(times); ++i)
 	{
@@ -3756,7 +3792,7 @@ void P_SetupLevel (const char *lumpname, int position)
 		{
 			level.maptype = MAPTYPE_UDMF;
 		}
-		CheckCompatibility(map);
+		FName checksum = CheckCompatibility(map);
 		if (ib_compatflags & BCOMPATF_REBUILDNODES)
 		{
 			ForceNodeBuild = true;
@@ -3834,7 +3870,7 @@ void P_SetupLevel (const char *lumpname, int position)
 			times[0].Unclock();
 		}
 
-		SetCompatibilityParams();
+		SetCompatibilityParams(checksum);
 
 		times[6].Clock();
 		P_LoopSidedefs (true);
@@ -4097,7 +4133,10 @@ void P_SetupLevel (const char *lumpname, int position)
 	}
 
 	// This must be done BEFORE the PolyObj Spawn!!!
-	Renderer->PreprocessLevel();
+	InitRenderInfo();			// create hardware independent renderer resources for the level.
+	screen->InitForLevel();		// create hardware dependent level resources (e.g. the vertex buffer)
+	SWRenderer->SetColormap();	//The SW renderer needs to do some special setup for the level's default colormap.
+	InitPortalGroups();
 
 	times[16].Clock();
 	if (reloop) P_LoopSidedefs (false);
@@ -4294,3 +4333,48 @@ CCMD (lineloc)
 }
 #endif
 
+//==========================================================================
+//
+// dumpgeometry
+//
+//==========================================================================
+
+CCMD(dumpgeometry)
+{
+	for (auto &sector : level.sectors)
+	{
+		Printf(PRINT_LOG, "Sector %d\n", sector.sectornum);
+		for (int j = 0; j<sector.subsectorcount; j++)
+		{
+			subsector_t * sub = sector.subsectors[j];
+
+			Printf(PRINT_LOG, "    Subsector %d - real sector = %d - %s\n", int(sub->Index()), sub->sector->sectornum, sub->hacked & 1 ? "hacked" : "");
+			for (uint32_t k = 0; k<sub->numlines; k++)
+			{
+				seg_t * seg = sub->firstline + k;
+				if (seg->linedef)
+				{
+					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, linedef %d, side %d",
+						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(),
+						seg->Index(), seg->linedef->Index(), seg->sidedef != seg->linedef->sidedef[0]);
+				}
+				else
+				{
+					Printf(PRINT_LOG, "      (%4.4f, %4.4f), (%4.4f, %4.4f) - seg %d, miniseg",
+						seg->v1->fX(), seg->v1->fY(), seg->v2->fX(), seg->v2->fY(), seg->Index());
+				}
+				if (seg->PartnerSeg)
+				{
+					subsector_t * sub2 = seg->PartnerSeg->Subsector;
+					Printf(PRINT_LOG, ", back sector = %d, real back sector = %d", sub2->render_sector->sectornum, seg->PartnerSeg->frontsector->sectornum);
+				}
+				else if (seg->backsector)
+				{
+					Printf(PRINT_LOG, ", back sector = %d (no partnerseg)", seg->backsector->sectornum);
+				}
+
+				Printf(PRINT_LOG, "\n");
+			}
+		}
+	}
+}

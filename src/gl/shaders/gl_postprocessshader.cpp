@@ -23,7 +23,6 @@
 #include "gl/system/gl_system.h"
 #include "m_swap.h"
 #include "v_video.h"
-#include "gl/gl_functions.h"
 #include "vectors.h"
 #include "w_wad.h"
 #include "gl/system/gl_interface.h"
@@ -34,6 +33,7 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/shaders/gl_postprocessshader.h"
+#include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "textures/textures.h"
 #include "textures/bitmap.h"
 

@@ -36,7 +36,7 @@ struct FMD5HashTraits
 extern TMap<FMD5Holder, FCompatValues, FMD5HashTraits> BCompatMap;
 
 void ParseCompatibility();
-void CheckCompatibility(MapData *map);
-void SetCompatibilityParams();
+FName CheckCompatibility(MapData *map);
+void SetCompatibilityParams(FName);
 
 #endif

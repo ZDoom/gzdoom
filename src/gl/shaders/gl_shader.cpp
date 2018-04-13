@@ -41,7 +41,6 @@
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
-#include "gl/data/gl_data.h"
 #include "r_data/matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -587,6 +586,7 @@ static const FDefaultShader defaultshaders[]=
 	{"SpecularBrightmap", "shaders/glsl/func_brightmap.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
 	{"PBR","shaders/glsl/func_normal.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
 	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"Paletted",	"shaders/glsl/func_paletted.fp", "shaders/glsl/material_nolight.fp", ""},
 	{"No Texture", "shaders/glsl/func_notexture.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Smooth Fuzz", "shaders/glsl/fuzz_smooth.fp", "shaders/glsl/material_normal.fp", ""},
@@ -599,7 +599,7 @@ static const FDefaultShader defaultshaders[]=
 	{nullptr,nullptr,nullptr,nullptr}
 };
 
-static TArray<FString> usershaders;
+TArray<FString> usershaders;
 
 struct FEffectShader
 {
@@ -617,6 +617,7 @@ static const FEffectShader effectshaders[]=
 	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
 	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
+	{ "swrquad", "shaders/glsl/main.vp", "shaders/glsl/swshader.fp", nullptr, nullptr, "#define SIMPLE\n" },
 };
 
 FShaderManager::FShaderManager()
@@ -870,157 +871,6 @@ void FShaderCollection::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
 void gl_DestroyUserShaders()
 {
 	// todo
-}
-
-//==========================================================================
-//
-// Parses a shader definition
-//
-//==========================================================================
-
-void gl_ParseHardwareShader(FScanner &sc, int deflump)
-{
-	sc.MustGetString();
-	if (sc.Compare("postprocess"))
-	{
-		sc.MustGetString();
-
-		PostProcessShader shaderdesc;
-		shaderdesc.Target = sc.String;
-		shaderdesc.Target.ToLower();
-
-		bool validTarget = false;
-		if (sc.Compare("beforebloom")) validTarget = true;
-		if (sc.Compare("scene")) validTarget = true;
-		if (sc.Compare("screen")) validTarget = true;		
-		if (!validTarget)
-			sc.ScriptError("Invalid target '%s' for postprocess shader",sc.String);
-
-		sc.MustGetToken('{');
-		while (!sc.CheckToken('}'))
-		{
-			sc.MustGetString();
-			if (sc.Compare("shader"))
-			{
-				sc.MustGetString();
-				shaderdesc.ShaderLumpName = sc.String;
-
-				sc.MustGetNumber();
-				shaderdesc.ShaderVersion = sc.Number;
-				if (sc.Number > 450 || sc.Number < 330)
-					sc.ScriptError("Shader version must be in range 330 to 450!");
-			}
-			else if (sc.Compare("name"))
-			{
-				sc.MustGetString();
-				shaderdesc.Name = sc.String;
-			}
-			else if (sc.Compare("uniform"))
-			{
-				sc.MustGetString();
-				FString uniformType = sc.String;
-				uniformType.ToLower();
-
-				sc.MustGetString();
-				FString uniformName = sc.String;
-
-				PostProcessUniformType parsedType = PostProcessUniformType::Undefined;
-
-				if (uniformType.Compare("int") == 0)
-					parsedType = PostProcessUniformType::Int;
-				else if (uniformType.Compare("float") == 0)
-					parsedType = PostProcessUniformType::Float;
-				else if (uniformType.Compare("vec2") == 0)
-					parsedType = PostProcessUniformType::Vec2;
-				else if (uniformType.Compare("vec3") == 0)
-					parsedType = PostProcessUniformType::Vec3;
-				else
-					sc.ScriptError("Unrecognized uniform type '%s'", sc.String);
-
-				if (parsedType != PostProcessUniformType::Undefined)
-					shaderdesc.Uniforms[uniformName].Type = parsedType;
-			}
-			else if (sc.Compare("texture"))
-			{
-				sc.MustGetString();
-				FString textureName = sc.String;
-
-				sc.MustGetString();
-				FString textureSource = sc.String;
-
-				shaderdesc.Textures[textureName] = textureSource;
-			}
-			else if (sc.Compare("enabled"))
-			{
-				shaderdesc.Enabled = true;
-			}
-			else
-			{
-				sc.ScriptError("Unknown keyword '%s'", sc.String);
-			}
-		}
-
-		PostProcessShaders.Push(shaderdesc);
-	}
-	else
-	{
-		ETextureType type = ETextureType::Any;
-
-		if (sc.Compare("texture")) type = ETextureType::Wall;
-		else if (sc.Compare("flat")) type = ETextureType::Flat;
-		else if (sc.Compare("sprite")) type = ETextureType::Sprite;
-		else sc.UnGet();
-
-		bool disable_fullbright = false;
-		bool thiswad = false;
-		bool iwad = false;
-		int maplump = -1;
-		FString maplumpname;
-		float speed = 1.f;
-
-		sc.MustGetString();
-		FTextureID no = TexMan.CheckForTexture(sc.String, type);
-		FTexture *tex = TexMan[no];
-
-		sc.MustGetToken('{');
-		while (!sc.CheckToken('}'))
-		{
-			sc.MustGetString();
-			if (sc.Compare("shader"))
-			{
-				sc.MustGetString();
-				maplumpname = sc.String;
-			}
-			else if (sc.Compare("speed"))
-			{
-				sc.MustGetFloat();
-				speed = float(sc.Float);
-			}
-		}
-		if (!tex)
-		{
-			return;
-		}
-
-		if (maplumpname.IsNotEmpty())
-		{
-			if (tex->bWarped != 0)
-			{
-				Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
-				return;
-			}
-			tex->gl_info.shaderspeed = speed;
-			for (unsigned i = 0; i < usershaders.Size(); i++)
-			{
-				if (!usershaders[i].CompareNoCase(maplumpname))
-				{
-					tex->gl_info.shaderindex = i + FIRST_USER_SHADER;
-					return;
-				}
-			}
-			tex->gl_info.shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
-		}
-	}
 }
 
 static bool IsConsolePlayer(player_t *player)

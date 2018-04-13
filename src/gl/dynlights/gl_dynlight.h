@@ -25,7 +25,6 @@
 
 #include "c_cvars.h"
 #include "a_dynlight.h"
-#include "gl/utility/gl_geometric.h"
 
 
 struct FDynLightData

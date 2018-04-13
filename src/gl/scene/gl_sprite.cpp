@@ -30,7 +30,6 @@
 #include "p_effect.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "gl/gl_functions.h"
 #include "r_defs.h"
 #include "r_sky.h"
 #include "r_utility.h"
@@ -48,8 +47,6 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/scene/gl_portal.h"
@@ -82,7 +79,6 @@ EXTERN_CVAR (Bool, r_debug_disable_vis_filter)
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
 extern uint32_t r_renderercaps;
-extern int modellightindex;
 
 enum HWRenderStyle
 {
@@ -301,7 +297,7 @@ void GLSprite::Draw(int pass)
 		gl_SetRenderStyle(RenderStyle, false, 
 			// The rest of the needed checks are done inside gl_SetRenderStyle
 			trans > 1.f - FLT_EPSILON && gl_usecolorblending && mDrawer->FixedColormap == CM_DEFAULT && actor && 
-			fullbright && gltexture && !gltexture->GetTransparent());
+			fullbright && gltexture && !gltexture->tex->GetTranslucency());
 
 		if (hw_styleflags == STYLEHW_NoAlphaTest)
 		{
@@ -426,7 +422,7 @@ void GLSprite::Draw(int pass)
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
 			int thislight = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
-			int thisll = actor == nullptr? thislight : (uint8_t)gl_CheckSpriteGlow(actor->Sector, thislight, actor->InterpolatedPosition(r_viewpoint.TicFrac));
+			int thisll = actor == nullptr? thislight : (uint8_t)actor->Sector->CheckSpriteGlow(thislight, actor->InterpolatedPosition(r_viewpoint.TicFrac));
 
 			FColormap thiscm;
 			thiscm.CopyFog(Colormap);
@@ -477,7 +473,7 @@ void GLSprite::Draw(int pass)
 		}
 		else
 		{
-			gl_RenderModel(this);
+			gl_RenderModel(this, dynlightindex);
 		}
 	}
 
@@ -601,6 +597,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 			for (unsigned int i = 0; i < x.ffloors.Size(); i++)
 			{
 				F3DFloor * ff = x.ffloors[i];
+				if (ff->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 				float floorh = ff->top.plane->ZatPoint(thingpos);
 				float ceilingh = ff->bottom.plane->ZatPoint(thingpos);
 				if (floorh == thing->floorz)
@@ -722,17 +719,17 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	}
 
 	// If this thing is in a map section that's not in view it can't possibly be visible
-	if (!thruportal && !(currentmapsection[thing->subsector->mapsection >> 3] & (1 << (thing->subsector->mapsection & 7)))) return;
+	if (!thruportal && !mDrawer->CurrentMapSections[thing->subsector->mapsection]) return;
 
 	// [RH] Interpolate the sprite's position to make it look smooth
 	DVector3 thingpos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
-	if (thruportal == 1) thingpos += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+	if (thruportal == 1) thingpos += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
 	if (thing == camera && !r_viewpoint.showviewer)
 	{
 		DVector3 thingorigin = thing->Pos();
-		if (thruportal == 1) thingorigin += Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
+		if (thruportal == 1) thingorigin += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 		if (fabs(thingorigin.X - r_viewpoint.ActorPos.X) < 2 && fabs(thingorigin.Y - r_viewpoint.ActorPos.Y) < 2) return;
 	}
 	// Thing is invisible if close to the camera.
@@ -941,14 +938,14 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 	// allow disabling of the fullbright flag by a brightmap definition
 	// (e.g. to do the gun flashes of Doom's zombies correctly.
 	fullbright = (thing->flags5 & MF5_BRIGHT) ||
-		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->gl_info.bDisableFullbright));
+		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->bDisableFullbright));
 
 	lightlevel = fullbright ? 255 :
 		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255);
 
-	lightlevel = gl_CheckSpriteGlow(rendersector, lightlevel, thingpos);
+	lightlevel = rendersector->CheckSpriteGlow(lightlevel, thingpos);
 
 	ThingColor = (thing->RenderStyle.Flags & STYLEF_ColorIsFixed) ? thing->fillcolor : 0xffffff;
 	ThingColor.a = 255;
@@ -1063,7 +1060,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 			RenderStyle.DestAlpha = STYLEALPHA_InvSrc;
 		}
 	}
-	if ((gltexture && gltexture->GetTransparent()) || (RenderStyle.Flags & STYLEF_RedIsAlpha))
+	if ((gltexture && gltexture->tex->GetTranslucency()) || (RenderStyle.Flags & STYLEF_RedIsAlpha))
 	{
 		if (hw_styleflags == STYLEHW_Solid)
 		{
@@ -1284,7 +1281,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 //
 //==========================================================================
 
-void GLSceneDrawer::RenderActorsInPortal(FGLLinePortal *glport)
+void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
 {
 	TMap<AActor*, bool> processcheck;
 	if (glport->validcount == validcount) return;	// only process once per frame

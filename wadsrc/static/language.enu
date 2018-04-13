@@ -2211,6 +2211,7 @@ RNDMNU_CANVAS			= "Software Canvas";
 
 // Video Options
 VIDMNU_TITLE			= "VIDEO MODE";
+VIDMNU_RENDERMODE		= "Render Mode";
 VIDMNU_FULLSCREEN		= "Fullscreen";
 VIDMNU_HIDPI			= "Retina/HiDPI support";
 VIDMNU_BRDLSS			= "Borderless Windowed Mode";
@@ -2398,6 +2399,9 @@ OPTVAL_SDL					= "SDL";
 OPTVAL_COCOA				= "Cocoa";
 OPTVAL_HWPOLY				= "OpenGL-Accelerated";
 OPTVAL_SWDOOM				= "Doom Software Renderer";
+OPTVAL_SWDOOMTC				= "True Color SW Renderer";
+OPTVAL_SWPOLY				= "Softpoly Renderer";
+OPTVAL_SWPOLYTC				= "True Color Softpoly";
 OPTVAL_DEDICATED			= "High-Performance";
 OPTVAL_INTEGRATED			= "Power-Saving";
 OPTVAL_VANILLA				= "Vanilla";

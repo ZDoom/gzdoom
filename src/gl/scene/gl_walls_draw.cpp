@@ -27,17 +27,14 @@
 #include "g_levellocals.h"
 #include "actor.h"
 #include "actorinlines.h"
-#include "gl/gl_functions.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
@@ -45,7 +42,6 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
@@ -60,7 +56,7 @@ FDynLightData lightdata;
 
 void GLWall::SetupLights()
 {
-	if (RenderStyle == STYLE_Add && !glset.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
+	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
 
 	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
 	switch (type)
@@ -75,14 +71,10 @@ void GLWall::SetupLights()
 	Plane p;
 
 	lightdata.Clear();
-	p.Set(&glseg);
 
-	/*
-	if (!p.ValidNormal()) 
-	{
-		return;
-	}
-	*/
+	auto normal = glseg.Normal();
+	p.Set(normal, -normal.X * glseg.x1 - normal.Y * glseg.y1);
+
 	FLightNode *node;
 	if (seg->sidedef == NULL)
 	{
@@ -403,7 +395,7 @@ void GLWall::RenderTranslucentWall()
 		{
 			SetupLights();
 		}
-		if (!gltexture->GetTransparent()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+		if (!gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		if (RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 		RenderTextured(RWF_TEXTURED | RWF_NOSPLIT);

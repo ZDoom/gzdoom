@@ -35,6 +35,7 @@
 #define __G_LEVEL_H__
 
 #include "doomtype.h"
+#include "vectors.h"
 #include "sc_man.h"
 #include "resourcefiles/file_zip.h"
 
@@ -394,6 +395,14 @@ struct level_info_t
 	TArray<FName> PrecacheClasses;
 	
 	TArray<FString> EventHandlers;
+
+	int8_t		lightmode;
+	int8_t		brightfog;
+	int8_t		lightadditivesurfaces;
+	int8_t		notexturefill;
+	FVector3	skyrotatevector;
+	FVector3	skyrotatevector2;
+
 
 	level_info_t() 
 	{ 

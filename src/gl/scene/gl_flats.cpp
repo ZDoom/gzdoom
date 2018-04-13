@@ -43,18 +43,14 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_convert.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
 #ifdef _DEBUG
@@ -112,7 +108,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 {
 	Plane p;
 
-	if (renderstyle == STYLE_Add && !glset.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
+	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
 
 	if (dli != NULL && *dli != -1)
 	{
@@ -143,7 +139,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 			continue;
 		}
 
-		p.Set(plane.plane);
+		p.Set(plane.plane.Normal(), plane.plane.fD());
 		gl_GetLight(sub->sector->PortalGroup, p, light, false, lightdata);
 		node = node->nextLight;
 	}
@@ -420,7 +416,7 @@ void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIG
 		}
 		else 
 		{
-			if (!gltexture->GetTransparent()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+			if (!gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 			gl_SetPlaneTextureRotation(&plane, gltexture);
@@ -472,7 +468,7 @@ inline void GLFlat::PutFlat(bool fog)
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
 		list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
 	}
-	else if (gltexture->GetTransparent())
+	else if (gltexture->tex->GetTranslucency())
 	{
 		if (stack)
 		{

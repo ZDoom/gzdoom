@@ -1,7 +1,6 @@
 /*
 ** 
-** This is a copy of the regular cycle_t from a time when that was based
-** on QueryPerformanceCounter which is too costly for real-time profiling.
+**  Hardware render profiling info
 **
 **---------------------------------------------------------------------------
 ** Copyright 1998-2016 Randy Heit
@@ -34,17 +33,6 @@
 **
 */
 
-#ifdef _WIN32
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
-#include <intrin.h>
-
-#elif defined __APPLE__
-#include <sys/sysctl.h>
-#endif
-
-#include <inttypes.h>
-
 #include "i_system.h"
 #include "g_level.h"
 #include "c_console.h"
@@ -53,7 +41,6 @@
 #include "v_video.h"
 #include "g_levellocals.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_convert.h"
 #include "i_time.h"
 
 glcycle_t RenderWall,SetupWall,ClipWall;
@@ -68,67 +55,6 @@ int vertexcount, flatvertices, flatprimitives;
 
 int rendered_lines,rendered_flats,rendered_sprites,render_vertexsplit,render_texsplit,rendered_decals, rendered_portals;
 int iter_dlightf, iter_dlight, draw_dlight, draw_dlightf;
-
-double		gl_SecondsPerCycle = 1e-8;
-double		gl_MillisecPerCycle = 1e-5;		// 100 MHz
-
-// For GL timing the performance counter is far too costly so we still need RDTSC
-// even though it may not be perfect.
-
-void gl_CalculateCPUSpeed ()
-{
-	#ifdef _WIN32
-		LARGE_INTEGER freq;
-
-		QueryPerformanceFrequency (&freq);
-
-		if (freq.QuadPart != 0)
-		{
-			LARGE_INTEGER count1, count2;
-			unsigned minDiff;
-			int64_t ClockCalibration = 0;
-
-			// Count cycles for at least 55 milliseconds.
-			// The performance counter is very low resolution compared to CPU
-			// speeds today, so the longer we count, the more accurate our estimate.
-			// On the other hand, we don't want to count too long, because we don't
-			// want the user to notice us spend time here, since most users will
-			// probably never use the performance statistics.
-			minDiff = freq.LowPart * 11 / 200;
-
-			// Minimize the chance of task switching during the testing by going very
-			// high priority. This is another reason to avoid timing for too long.
-			SetPriorityClass (GetCurrentProcess (), REALTIME_PRIORITY_CLASS);
-			SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_TIME_CRITICAL);
-			ClockCalibration = __rdtsc();
-			QueryPerformanceCounter (&count1);
-			do
-			{
-				QueryPerformanceCounter (&count2);
-			} while ((uint32_t)((uint64_t)count2.QuadPart - (uint64_t)count1.QuadPart) < minDiff);
-			ClockCalibration = __rdtsc() - ClockCalibration;
-			QueryPerformanceCounter (&count2);
-			SetPriorityClass (GetCurrentProcess (), NORMAL_PRIORITY_CLASS);
-			SetThreadPriority (GetCurrentThread (), THREAD_PRIORITY_NORMAL);
-
-			double CyclesPerSecond = (double)ClockCalibration *
-				(double)freq.QuadPart /
-				(double)((__int64)count2.QuadPart - (__int64)count1.QuadPart);
-			gl_SecondsPerCycle = 1.0 / CyclesPerSecond;
-			gl_MillisecPerCycle = 1000.0 / CyclesPerSecond;
-		}
-	#elif defined __APPLE__
-		long long frequency;
-		size_t size = sizeof frequency;
-
-		if (0 == sysctlbyname("machdep.tsc.frequency", &frequency, &size, nullptr, 0) && 0 != frequency)
-		{
-			gl_SecondsPerCycle = 1.0 / frequency;
-			gl_MillisecPerCycle = 1000.0 / frequency;
-		}
-	#endif
-}
-
 
 void ResetProfilingData()
 {
@@ -239,7 +165,7 @@ void CheckBench()
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);
 		AppendMissingTextureStats(compose);
-		compose.AppendFormat("%" PRIu64 " fps\n\n", screen->GetLastFPS());
+		compose.AppendFormat("%llu fps\n\n", screen->GetLastFPS());
 
 		FILE *f = fopen("benchmarks.txt", "at");
 		if (f != NULL)
@@ -270,11 +196,11 @@ CCMD(bench)
 	C_HideConsole ();
 }
 
-bool gl_benching = false;
+bool glcycle_t::active = false;
 
 void  checkBenchActive()
 {
 	FStat *stat = FStat::FindStat("rendertimes");
-	gl_benching = ((stat != NULL && stat->isActive()) || printstats);
+	glcycle_t::active = ((stat != NULL && stat->isActive()) || printstats);
 }
 

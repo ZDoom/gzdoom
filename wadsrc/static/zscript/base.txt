@@ -138,7 +138,7 @@ enum DrawTextureTags
 	DTA_ColorOverlay,	// DWORD: ARGB to overlay on top of image; limited to black for software
 	DTA_Internal1,
 	DTA_Internal2,
-	DTA_Internal3,
+	DTA_Desaturate,		// explicit desaturation factor (does not do anything in Legacy OpenGL)
 	DTA_Fullscreen,		// Draw image fullscreen (same as DTA_VirtualWidth/Height with graphics size.)
 
 	// floating point duplicates of some of the above:
@@ -155,6 +155,14 @@ enum DrawTextureTags
 	DTA_TextLen,		// stop after this many characters, even if \0 not hit
 	DTA_CellX,			// horizontal size of character cell
 	DTA_CellY,			// vertical size of character cell
+
+	DTA_Color,
+	DTA_FlipY,			// bool: flip image vertically
+	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
+	DTA_SrcY,
+	DTA_SrcWidth,
+	DTA_SrcHeight
+
 };
 
 struct Screen native

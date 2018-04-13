@@ -47,7 +47,7 @@
 #include "c_dispatch.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "win32iface.h"
+#include "hardware.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "cmdlib.h"

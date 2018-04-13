@@ -28,7 +28,6 @@
 #include "gl/system/gl_system.h"
 #include "m_swap.h"
 #include "v_video.h"
-#include "gl/gl_functions.h"
 #include "vectors.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"

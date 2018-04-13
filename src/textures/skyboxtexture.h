@@ -43,8 +43,3 @@ public:
 		return fliptop;
 	}
 };
-
-
-void ParseGldefSkybox(FScanner &sc);
-void ParseVavoomSkybox();
-

@@ -58,8 +58,9 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 
 	// Calculate unclipped position and UV coordinates
 
-	double edge_left = tex->LeftOffset * decal->ScaleX;
-	double edge_right = (tex->GetWidth() - tex->LeftOffset) * decal->ScaleX;
+	// decals should not use renderer specific offsets.
+	double edge_left = tex->GetLeftOffset(0) * decal->ScaleX;
+	double edge_right = (tex->GetWidth() - tex->GetLeftOffset(0)) * decal->ScaleX;	
 
 	DVector2 angvec = (line->v2->fPos() - line->v1->fPos()).Unit();
 	DVector2 normal = { angvec.Y, -angvec.X };

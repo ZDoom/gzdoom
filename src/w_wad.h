@@ -135,7 +135,7 @@ public:
 	inline int GetNumForName (const uint8_t *name) { return GetNumForName ((const char *)name); }
 	inline int GetNumForName (const uint8_t *name, int ns) { return GetNumForName ((const char *)name, ns); }
 
-	int CheckNumForFullName (const char *name, bool trynormal = false, int namespc = ns_global);
+	int CheckNumForFullName (const char *name, bool trynormal = false, int namespc = ns_global, bool ignoreext = false);
 	int CheckNumForFullName (const char *name, int wadfile);
 	int GetNumForFullName (const char *name);
 
@@ -193,6 +193,9 @@ protected:
 
 	uint32_t *FirstLumpIndex_FullName;	// The same information for fully qualified paths from .zips
 	uint32_t *NextLumpIndex_FullName;
+
+	uint32_t *FirstLumpIndex_NoExt;	// The same information for fully qualified paths from .zips
+	uint32_t *NextLumpIndex_NoExt;
 
 	uint32_t NumLumps;					// Not necessarily the same as LumpInfo.Size()
 	uint32_t NumWads;

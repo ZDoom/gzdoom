@@ -1351,7 +1351,7 @@ int WINAPI WinMain (HINSTANCE hInstance, HINSTANCE nothing, LPSTR cmdline, int n
 	_CrtSetDbgFlag (_CrtSetDbgFlag(0) | _CRTDBG_LEAK_CHECK_DF);
 
 	// Use this to break at a specific allocation number.
-	//_crtBreakAlloc = 53039;
+	//_crtBreakAlloc = 177312;
 #endif
 
 	DoMain (hInstance);

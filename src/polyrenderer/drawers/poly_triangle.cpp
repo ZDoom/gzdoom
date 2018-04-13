@@ -52,7 +52,7 @@ bool PolyTriangleDrawer::mirror;
 
 void PolyTriangleDrawer::set_viewport(int x, int y, int width, int height, DCanvas *canvas)
 {
-	dest = (uint8_t*)canvas->GetBuffer();
+	dest = (uint8_t*)canvas->GetPixels();
 	dest_width = canvas->GetWidth();
 	dest_height = canvas->GetHeight();
 	dest_pitch = canvas->GetPitch();
@@ -554,7 +554,7 @@ void DrawRectCommand::Execute(DrawerThread *thread)
 	thread_data.num_cores = thread->num_cores;
 
 	auto renderTarget = PolyRenderer::Instance()->RenderTarget;
-	const void *destOrg = renderTarget->GetBuffer();
+	const void *destOrg = renderTarget->GetPixels();
 	int destWidth = renderTarget->GetWidth();
 	int destHeight = renderTarget->GetHeight();
 	int destPitch = renderTarget->GetPitch();

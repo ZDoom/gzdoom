@@ -63,9 +63,9 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 
 	double offsetX;
 	if (flipTextureX)
-		offsetX = (tex->GetWidth() - tex->LeftOffset) * thingxscalemul;
+		offsetX = (tex->GetWidth() - tex->GetLeftOffsetPo()) * thingxscalemul;
 	else
-		offsetX = tex->LeftOffset * thingxscalemul;
+		offsetX = tex->GetLeftOffsetPo() * thingxscalemul;
 
 	left = DVector2(pos.X - viewpoint.Sin * offsetX, pos.Y + viewpoint.Cos * offsetX);
 	right = DVector2(left.X + viewpoint.Sin * spriteWidth, left.Y - viewpoint.Cos * spriteWidth);
@@ -110,7 +110,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const TriMatrix &worldTo
 	double thingyscalemul = thing->Scale.Y / tex->Scale.Y;
 	double spriteHeight = thingyscalemul * tex->GetHeight();
 
-	posZ -= (tex->GetHeight() - tex->TopOffset) * thingyscalemul;
+	posZ -= (tex->GetHeight() - tex->GetTopOffsetPo()) * thingyscalemul;
 	posZ = PerformSpriteClipAdjustment(thing, thingpos, spriteHeight, posZ);
 
 	//double depth = 1.0;

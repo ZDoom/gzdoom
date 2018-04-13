@@ -338,7 +338,7 @@ namespace swrenderer
 		}
 		if (k >= voxobj->NumMips) k = voxobj->NumMips - 1;
 
-		mip = &voxobj->Mips[k];		if (mip->SlabData == NULL) return;
+		mip = &voxobj->Mips[k];		if (mip->GetSlabData(false) == NULL) return;
 
 		minslabz >>= k;
 		maxslabz >>= k;
@@ -391,6 +391,8 @@ namespace swrenderer
 		yoff = (abs(gxinc) + abs(gyinc)) >> 1;
 
 		bool useSlabDataBgra = !drawerargs.DrawerNeedsPalInput() && viewport->RenderTarget->IsBgra();
+		if (!useSlabDataBgra) voxobj->Remap();
+		else voxobj->CreateBgraSlabData();
 
 		int coverageX1 = this->x2;
 		int coverageX2 = this->x1;
@@ -462,7 +464,8 @@ namespace swrenderer
 
 			for (x = xs; x != xe; x += xi)
 			{
-				uint8_t *slabxoffs = &mip->SlabData[mip->OffsetX[x]];
+				auto SlabData = mip->GetSlabData(true);
+				uint8_t *slabxoffs = &SlabData[mip->OffsetX[x]];
 				short *xyoffs = &mip->OffsetXY[x * (mip->SizeY + 1)];
 
 				nx = FixedMul(ggxstart + ggxinc[x], viewport->viewingrangerecip) + x1;
@@ -588,7 +591,7 @@ namespace swrenderer
 								//
 								// We can find the same slab column by calculating the offset from the start of SlabData
 								// and use that to offset into the BGRA version of the same data.
-								columnColors = (const uint8_t *)(&mip->SlabDataBgra[0] + (ptrdiff_t)(col - mip->SlabData));
+								columnColors = (const uint8_t *)(&mip->SlabDataBgra[0] + (ptrdiff_t)(col - SlabData));
 							}
 
 							// Find top and bottom pixels that match and draw them as one strip
@@ -687,7 +690,7 @@ namespace swrenderer
 
 	kvxslab_t *RenderVoxel::GetSlabStart(const FVoxelMipLevel &mip, int x, int y)
 	{
-		return (kvxslab_t *)&mip.SlabData[mip.OffsetX[x] + (int)mip.OffsetXY[x * (mip.SizeY + 1) + y]];
+		return (kvxslab_t *)&mip.GetSlabData(true)[mip.OffsetX[x] + (int)mip.OffsetXY[x * (mip.SizeY + 1) + y]];
 	}
 
 	kvxslab_t *RenderVoxel::GetSlabEnd(const FVoxelMipLevel &mip, int x, int y)

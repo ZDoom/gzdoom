@@ -490,9 +490,6 @@ endif()
 set( PLAT_WIN32_SOURCES
 	sound/mididevices/music_win_mididevice.cpp
 	win32/critsec.cpp
-	win32/fb_d3d9.cpp
-	win32/fb_d3d9_wipe.cpp
-	win32/fb_ddraw.cpp
 	win32/hardware.cpp
 	win32/helperthread.cpp
 	win32/i_cd.cpp
@@ -521,7 +518,6 @@ set( PLAT_SDL_SOURCES
 	posix/sdl/i_joystick.cpp
 	posix/sdl/i_main.cpp
 	posix/sdl/i_system.cpp
-	posix/sdl/sdlvideo.cpp
 	posix/sdl/sdlglvideo.cpp
 	posix/sdl/st_start.cpp )
 set( PLAT_UNIX_SOURCES
@@ -574,17 +570,17 @@ if( HAVE_MMX )
 	add_definitions( -DHAVE_MMX=1 )
 
 	set( SYSTEM_SOURCES ${SYSTEM_SOURCES}
-		gl/hqnx_asm/hq2x_asm.cpp
-		gl/hqnx_asm/hq3x_asm.cpp
-		gl/hqnx_asm/hq4x_asm.cpp
-		gl/hqnx_asm/hqnx_asm_Image.cpp)
+		textures/hires/hqnx_asm/hq2x_asm.cpp
+		textures/hires/hqnx_asm/hq3x_asm.cpp
+		textures/hires/hqnx_asm/hq4x_asm.cpp
+		textures/hires/hqnx_asm/hqnx_asm_Image.cpp)
 
 	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		set_source_files_properties(
-			gl/hqnx_asm/hq2x_asm.cpp
-			gl/hqnx_asm/hq3x_asm.cpp
-			gl/hqnx_asm/hq4x_asm.cpp
-			gl/textures/gl_hqresize.cpp
+			textures/hires/hqnx_asm/hq2x_asm.cpp
+			textures/hires/hqnx_asm/hq3x_asm.cpp
+			textures/hires/hqnx_asm/hq4x_asm.cpp
+			textures/hires/gl_hqresize.cpp
 			PROPERTIES COMPILE_FLAGS "-mmmx" )
 	endif( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 endif( HAVE_MMX )
@@ -689,6 +685,9 @@ file( GLOB HEADER_FILES
 	sfmt/*.h
 	sound/*.h
 	textures/*.h
+	textures/hires/hqnx/*.h
+	textures/hires/hqnx_asm/*.h
+	textures/hires/xbr/*.h
 	scripting/*.h
 	scripting/backend/*.h
 	scripting/decorate/*.h
@@ -718,9 +717,6 @@ file( GLOB HEADER_FILES
 	gl/api/*.h
 	gl/data/*.h
 	gl/dynlights/*.h
-	gl/hqnx/*.h
-	gl/hqnx_asm/*.h
-	gl/xbr/*.h
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
@@ -729,11 +725,11 @@ file( GLOB HEADER_FILES
 	gl/system/*.h
 	gl/textures/*.h
 	gl/utility/*.h
+	gl_load/*.h
 	*.h
 )
 
 set ( SWRENDER_SOURCES
-	swrenderer/r_swcanvas.cpp
 	swrenderer/r_swcolormaps.cpp
 	swrenderer/r_swrenderer.cpp
 	swrenderer/r_memory.cpp
@@ -836,13 +832,12 @@ set( FASTMATH_SOURCES
 	sound/timiditypp/fft4g.cpp
 	sound/timiditypp/reverb.cpp
 	gl/utility/gl_clock.cpp
-	gl/renderer/gl_2ddrawer.cpp
-	gl/hqnx/init.cpp
-	gl/hqnx/hq2x.cpp
-	gl/hqnx/hq3x.cpp
-	gl/hqnx/hq4x.cpp
-	gl/xbr/xbrz.cpp
-	gl/xbr/xbrz_old.cpp
+	textures/hires/hqnx/init.cpp
+	textures/hires/hqnx/hq2x.cpp
+	textures/hires/hqnx/hq3x.cpp
+	textures/hires/hqnx/hq4x.cpp
+	textures/hires/xbr/xbrz.cpp
+	textures/hires/xbr/xbrz_old.cpp
 	gl/scene/gl_bsp.cpp
 	gl/scene/gl_fakeflat.cpp
 	gl/scene/gl_clipper.cpp
@@ -855,13 +850,14 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_renderhacks.cpp
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
+	gl/scene/gl_swscene.cpp
 	gl/scene/gl_sky.cpp
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
 	gl/scene/gl_vertex.cpp
 	gl/scene/gl_spritelight.cpp
 	gl/dynlights/gl_dynlight1.cpp
-	gl/system/gl_load.c
+	gl_load/gl_load.c
 	gl/models/gl_models.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
@@ -1016,6 +1012,7 @@ set (PCH_SOURCES
 	stringtable.cpp
 	teaminfo.cpp
 	umapinfo.cpp
+	v_2ddrawer.cpp
 	v_blend.cpp
 	v_collection.cpp
 	v_draw.cpp
@@ -1033,7 +1030,6 @@ set (PCH_SOURCES
 	g_shared/a_action.cpp
 	g_shared/a_decals.cpp
 	g_shared/a_dynlight.cpp
-	g_shared/a_dynlightdata.cpp
 	g_shared/a_flashfader.cpp
 	g_shared/a_lightning.cpp
 	g_shared/a_morph.cpp
@@ -1045,13 +1041,9 @@ set (PCH_SOURCES
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
 	gl/compatibility/gl_20.cpp
-	gl/data/gl_data.cpp
-	gl/data/gl_portaldata.cpp
-	gl/data/gl_setup.cpp
+	gl/compatibility/gl_swshader20.cpp
 	gl/data/gl_vertexbuffer.cpp
-	gl/dynlights/gl_glow.cpp
 	gl/dynlights/gl_lightbuffer.cpp
-	gl/dynlights/gl_aabbtree.cpp
 	gl/dynlights/gl_shadowmap.cpp
 	gl/renderer/gl_quaddrawer.cpp
 	gl/renderer/gl_renderer.cpp
@@ -1061,7 +1053,6 @@ set (PCH_SOURCES
 	gl/renderer/gl_postprocess.cpp
 	gl/renderer/gl_postprocessstate.cpp
 	gl/shaders/gl_shader.cpp
-	gl/shaders/gl_texshader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
 	gl/shaders/gl_shadowmapshader.cpp
@@ -1084,18 +1075,15 @@ set (PCH_SOURCES
 	gl/stereo3d/gl_interleaved3d.cpp
 	gl/system/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
-	gl/system/gl_swframebuffer.cpp
-	gl/system/gl_swwipe.cpp
 	gl/system/gl_debug.cpp
 	gl/system/gl_menu.cpp
 	gl/system/gl_wipe.cpp
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_texture.cpp
 	gl/textures/gl_material.cpp
-	gl/textures/gl_hirestex.cpp
 	gl/textures/gl_samplers.cpp
-	gl/textures/gl_translate.cpp
-	gl/textures/gl_hqresize.cpp
+	hwrenderer/dynlights/hw_aabbtree.cpp
+	
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
@@ -1116,29 +1104,32 @@ set (PCH_SOURCES
 	resourcefiles/resourcefile.cpp
 	textures/animations.cpp
 	textures/anim_switches.cpp
-	textures/automaptexture.cpp
 	textures/bitmap.cpp
-	textures/buildtexture.cpp
-	textures/canvastexture.cpp
-	textures/ddstexture.cpp
-	textures/flattexture.cpp
-	textures/imgztexture.cpp
-	textures/jpegtexture.cpp
-	textures/md5check.cpp
-	textures/multipatchtexture.cpp
-	textures/patchtexture.cpp
-	textures/pcxtexture.cpp
-	textures/pngtexture.cpp
-	textures/rawpagetexture.cpp
-	textures/emptytexture.cpp
-	textures/backdroptexture.cpp
-	textures/shadertexture.cpp
 	textures/texture.cpp
 	textures/texturemanager.cpp
-	textures/tgatexture.cpp
-	textures/warptexture.cpp
 	textures/skyboxtexture.cpp
-	textures/worldtexture.cpp
+	textures/formats/automaptexture.cpp
+	textures/formats/brightmaptexture.cpp
+	textures/formats/buildtexture.cpp
+	textures/formats/canvastexture.cpp
+	textures/formats/ddstexture.cpp
+	textures/formats/flattexture.cpp
+	textures/formats/imgztexture.cpp
+	textures/formats/jpegtexture.cpp
+	textures/formats/md5check.cpp
+	textures/formats/multipatchtexture.cpp
+	textures/formats/patchtexture.cpp
+	textures/formats/pcxtexture.cpp
+	textures/formats/pngtexture.cpp
+	textures/formats/rawpagetexture.cpp
+	textures/formats/emptytexture.cpp
+	textures/formats/backdroptexture.cpp
+	textures/formats/shadertexture.cpp
+	textures/formats/tgatexture.cpp
+	textures/formats/worldtexture.cpp
+	textures/formats/warptexture.cpp
+	textures/hires/hqresize.cpp
+	textures/hires/hirestex.cpp
 	xlat/parse_xlat.cpp
 	fragglescript/t_func.cpp
 	fragglescript/t_load.cpp
@@ -1152,9 +1143,13 @@ set (PCH_SOURCES
 	intermission/intermission.cpp
 	intermission/intermission_parse.cpp
 	r_data/colormaps.cpp
+	r_data/gldefs.cpp
+	r_data/a_dynlightdata.cpp
 	r_data/r_translate.cpp
 	r_data/sprites.cpp
+	r_data/portalgroups.cpp
 	r_data/voxels.cpp
+	r_data/renderinfo.cpp
 	r_data/renderstyle.cpp
 	r_data/r_interpolate.cpp
 	r_data/r_vanillatrans.cpp
@@ -1416,12 +1411,21 @@ source_group("FraggleScript" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/fr
 source_group("Intermission" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/intermission/.+")
 source_group("Inventory" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/g_inventory/.+")
 source_group("Menu" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/menu/.+")
+source_group("Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
+source_group("Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/data/.+")
+source_group("Hardware Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/dynlights/.+")
+source_group("Hardware Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/models/.+")
+source_group("Hardware Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/renderer/.+")
+source_group("Hardware Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/scene/.+")
+source_group("Hardware Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/stereo3d/.+")
+source_group("Hardware Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/shaders/.+")
+source_group("Hardware Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/system/.+")
+source_group("Hardware Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/textures/.+")
+source_group("Hardware Renderer\\Utilities" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/utility/.+")
+source_group("OpenGL Loader" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl_load/.+")
 source_group("OpenGL Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/.+")
 source_group("OpenGL Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/data/.+")
 source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/dynlights/.+")
-source_group("OpenGL Renderer\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx/.+")
-source_group("OpenGL Renderer\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
-source_group("OpenGL Renderer\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/hqnx_asm/.+")
 source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
 source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
 source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
@@ -1444,6 +1448,11 @@ source_group("Poly Renderer\\Drawers" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURC
 source_group("Poly Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/polyrenderer/scene/.+")
 source_group("Render Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/.+")
 source_group("Render Data\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/.+")
+source_group("Render Data\\Textures\\Hires" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/hires/.+")
+source_group("Render Data\\Textures\\Hires\\HQ Resize" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/hires/hqnx/.+")
+source_group("Render Data\\Textures\\Hires\\HQ Resize MMX version" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/hires/hqnx_asm/.+")
+source_group("Render Data\\Textures\\Hires\\XBRZ" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/hires/xbr/.+")
+source_group("Render Data\\Textures\\Formats" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/textures/formats/.+")
 source_group("Render Data\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/r_data/models/.+")
 source_group("Render Interface" FILES r_defs.h r_renderer.h r_sky.cpp r_sky.h r_state.h r_utility.cpp r_utility.h)
 source_group("Resource Files" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/resourcefiles/.+")

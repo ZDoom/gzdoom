@@ -84,7 +84,7 @@ namespace swrenderer
 		// Determine left and right edges of sprite. The sprite's angle is its normal,
 		// so the edges are 90 degrees each side of it.
 		x2 = pic->GetScaledWidth();
-		x1 = pic->GetScaledLeftOffset();
+		x1 = pic->GetScaledLeftOffsetSW();
 
 		x1 *= scale.X;
 		x2 *= scale.X;
@@ -107,7 +107,7 @@ namespace swrenderer
 		// but right now, I just want to get them drawing.
 		tz = (pos.X - thread->Viewport->viewpoint.Pos.X) * thread->Viewport->viewpoint.TanCos + (pos.Y - thread->Viewport->viewpoint.Pos.Y) * thread->Viewport->viewpoint.TanSin;
 
-		int scaled_to = pic->GetScaledTopOffset();
+		int scaled_to = pic->GetScaledTopOffsetSW();
 		int scaled_bo = scaled_to - pic->GetScaledHeight();
 		gzt = pos.Z + scale.Y * scaled_to;
 		gzb = pos.Z + scale.Y * scaled_bo;

@@ -94,7 +94,7 @@
 #include "s_sound.h"
 #include "m_misc.h"
 #include "gameconfigfile.h"
-#include "win32iface.h"
+#include "hardware.h"
 #include "templates.h"
 #include "cmdlib.h"
 #include "d_event.h"
@@ -456,10 +456,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_PAINT:
-		if (screen != NULL && 0)
-		{
-			static_cast<BaseWinFB *> (screen)->PaintToWindow ();
-		}
 		return DefWindowProc (hWnd, message, wParam, lParam);
 
 	case WM_SETTINGCHANGE:
@@ -615,22 +611,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 #endif
 		}
 		break;
-
-	case WM_PALETTECHANGED:
-		if ((HWND)wParam == Window)
-			break;
-		if (screen != NULL)
-		{
-			screen->PaletteChanged ();
-		}
-		return DefWindowProc (hWnd, message, wParam, lParam);
-
-	case WM_QUERYNEWPALETTE:
-		if (screen != NULL)
-		{
-			return screen->QueryNewPalette ();
-		}
-		return DefWindowProc (hWnd, message, wParam, lParam);
 
 	case WM_ERASEBKGND:
 		return true;

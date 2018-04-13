@@ -2,31 +2,32 @@
 
 #include "actor.h"
 #include "r_defs.h"
-// These depend on both actor.h and r_defs.h so they cannot be in either file without creating a cross dependency.
+#include "g_levellocals.h"
+// These depend on both actor.h and r_defs.h so they cannot be in either file without creating a circular dependency.
 
 inline DVector3 AActor::PosRelative(int portalgroup) const
 {
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, portalgroup);
+	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, portalgroup);
 }
 
 inline DVector3 AActor::PosRelative(const AActor *other) const
 {
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
+	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, other->Sector->PortalGroup);
 }
 
 inline DVector3 AActor::PosRelative(sector_t *sec) const
 {
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
+	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, sec->PortalGroup);
 }
 
 inline DVector3 AActor::PosRelative(line_t *line) const
 {
-	return Pos() + Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
+	return Pos() + level.Displacements.getOffset(Sector->PortalGroup, line->frontsector->PortalGroup);
 }
 
 inline DVector3 PosRelative(const DVector3 &pos, line_t *line, sector_t *refsec = NULL)
 {
-	return pos + Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
+	return pos + level.Displacements.getOffset(refsec->PortalGroup, line->frontsector->PortalGroup);
 }
 
 

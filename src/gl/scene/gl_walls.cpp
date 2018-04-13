@@ -37,15 +37,12 @@
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
-#include "gl/data/gl_data.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/shaders/gl_shader.h"
 
 
@@ -72,7 +69,7 @@ void GLWall::PutWall(bool translucent)
 	};
 
 
-	if (gltexture && gltexture->GetTransparent() && passflag[type] == 2)
+	if (gltexture && gltexture->tex->GetTranslucency() && passflag[type] == 2)
 	{
 		translucent = true;
 	}
@@ -178,9 +175,9 @@ void GLWall::PutPortal(int ptype)
 		if (!portal)
 		{
 			line_t *otherside = lineportal->lines[0]->mDestination;
-			if (otherside != NULL && otherside->portalindex < linePortals.Size())
+			if (otherside != NULL && otherside->portalindex < level.linePortals.Size())
 			{
-				mDrawer->RenderActorsInPortal(linePortalToGL[otherside->portalindex]);
+				mDrawer->RenderActorsInPortal(otherside->getPortal()->mGroup);
 			}
 			portal = new GLLineToLinePortal(lineportal);
 		}
@@ -995,7 +992,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		case 0:
 			RenderStyle=STYLE_Translucent;
 			alpha = seg->linedef->alpha;
-			translucent =alpha < 1. || (gltexture && gltexture->GetTransparent());
+			translucent =alpha < 1. || (gltexture && gltexture->tex->GetTranslucency());
 			break;
 
 		case ML_ADDTRANS:
@@ -1221,6 +1218,7 @@ void GLWall::InverseFloors(seg_t * seg, sector_t * frontsector,
 	for (unsigned int i = 0; i < frontffloors.Size(); i++)
 	{
 		F3DFloor * rover = frontffloors[i];
+		if (rover->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 		if (!(rover->flags&FF_EXISTS)) continue;
 		if (!(rover->flags&FF_RENDERSIDES)) continue;
 		if (!(rover->flags&(FF_INVERTSIDES | FF_ALLSIDES))) continue;
@@ -1273,6 +1271,7 @@ void GLWall::ClipFFloors(seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
 	for (unsigned int i = 0; i < frontffloors.Size(); i++)
 	{
 		F3DFloor * rover = frontffloors[i];
+		if (rover->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 		if (!(rover->flags&FF_EXISTS)) continue;
 		if (!(rover->flags&FF_RENDERSIDES)) continue;
 		if ((rover->flags&(FF_SWIMMABLE | FF_TRANSLUCENT)) != flags) continue;
@@ -1372,6 +1371,7 @@ void GLWall::DoFFloorBlocks(seg_t * seg, sector_t * frontsector, sector_t * back
 	for (unsigned int i = 0; i < backffloors.Size(); i++)
 	{
 		F3DFloor * rover = backffloors[i];
+		if (rover->flags & FF_THISINSIDE) continue;	// only relevant for software rendering.
 		if (!(rover->flags&FF_EXISTS)) continue;
 		if (!(rover->flags&FF_RENDERSIDES) || (rover->flags&FF_INVERTSIDES)) continue;
 
@@ -1483,8 +1483,8 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 		glseg.fracright = 1;
 		if (gl_seamless)
 		{
-			if (v1->dirty) gl_RecalcVertexHeights(v1);
-			if (v2->dirty) gl_RecalcVertexHeights(v2);
+			if (v1->dirty) v1->RecalcVertexHeights();
+			if (v2->dirty) v2->RecalcVertexHeights();
 		}
 	}
 	else	// polyobjects must be rendered per seg.
@@ -1538,7 +1538,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 	gltexture = NULL;
 
 
-	if (gl_GetWallGlow(frontsector, topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
+	if (frontsector->GetWallGlow(topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
 	topplane = frontsector->ceilingplane;
 	bottomplane = frontsector->floorplane;
 
@@ -1563,7 +1563,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (seg->linedef->isVisualPortal())
 		{
-			lineportal = linePortalToGL[seg->linedef->portalindex];
+			lineportal = seg->linedef->getPortal()->mGroup;
 			ztop[0] = zceil[0];
 			ztop[1] = zceil[1];
 			zbottom[0] = zfloor[0];
@@ -1670,7 +1670,7 @@ void GLWall::Process(seg_t *seg, sector_t * frontsector, sector_t * backsector)
 
 		if (isportal)
 		{
-			lineportal = linePortalToGL[seg->linedef->portalindex];
+			lineportal = seg->linedef->getPortal()->mGroup;
 			ztop[0] = bch1;
 			ztop[1] = bch2;
 			zbottom[0] = bfh1;
@@ -1774,7 +1774,7 @@ void GLWall::ProcessLowerMiniseg(seg_t *seg, sector_t * frontsector, sector_t * 
 		RenderStyle = STYLE_Normal;
 		Colormap = frontsector->Colormap;
 
-		if (gl_GetWallGlow(frontsector, topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
+		if (frontsector->GetWallGlow(topglowcolor, bottomglowcolor)) flags |= GLWF_GLOW;
 		topplane = frontsector->ceilingplane;
 		bottomplane = frontsector->floorplane;
 		dynlightindex = -1;

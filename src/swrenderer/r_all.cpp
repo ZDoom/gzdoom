@@ -1,6 +1,5 @@
 #include "r_memory.cpp"
 #include "r_renderthread.cpp"
-#include "r_swcanvas.cpp"
 #include "r_swrenderer.cpp"
 #include "r_swcolormaps.cpp"
 #include "drawers/r_draw.cpp"

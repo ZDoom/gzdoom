@@ -36,8 +36,6 @@ extern int sys_ostype;
 #include "version.h"
 #include "v_video.h"
 
-EXTERN_CVAR(Bool, vid_glswfb)
-extern int currentrenderer;
 CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
@@ -252,34 +250,17 @@ static int GetCoreInfo()
 
 static int GetRenderInfo()
 {
-	if (currentrenderer == 0)
-	{
-		if (!screen->Accel2D) return 0;
-		if (vid_glswfb) return 2;
-		if (screen->LegacyHardware()) return 6;
-		return 1;
-	}
-	else
-	{
-		auto info = gl_getInfo();
-		if (info.first < 3.3) return 3;	// Legacy OpenGL. Don't care about Intel HD 3000 on Windows being run in 'risky' mode.
-		if (!info.second) return 4;
-		return 5;
-	}
+	auto info = gl_getInfo();
+	if (info.first < 3.3) return 3;	// Legacy OpenGL. Don't care about Intel HD 3000 on Windows being run in 'risky' mode.
+	if (!info.second) return 4;
+	return 5;
 }
 
 static void D_DoHTTPRequest(const char *request)
 {
 	if (I_HTTPRequest(request))
 	{
-		if (currentrenderer == 0)
-		{
-			cvar_forceset("sentstats_swr_done", CHECKVERSIONSTR);
-		}
-		else
-		{
-			cvar_forceset("sentstats_hwr_done", CHECKVERSIONSTR);
-		}
+		cvar_forceset("sentstats_hwr_done", CHECKVERSIONSTR);
 	}
 }
 
@@ -295,12 +276,11 @@ void D_DoAnonStats()
 	done = true;
 
 	// Do not repeat if already sent.
-	if (currentrenderer == 0 && sentstats_swr_done >= CHECKVERSION) return;
-	if (currentrenderer == 1 && sentstats_hwr_done >= CHECKVERSION) return;
+	if (sentstats_hwr_done >= CHECKVERSION) return;
 
 	static char requeststring[1024];
 	mysnprintf(requeststring, sizeof requeststring, "GET /stats.py?render=%i&cores=%i&os=%i&renderconfig=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), currentrenderer, sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
+		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), V_IsHardwareRenderer(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();

@@ -486,10 +486,10 @@ int SightCheck::P_SightBlockLinesIterator (int x, int y)
 
 	// if any of the previous blocks may contain a portal we may abort the collection of lines here, but we may not abort the sight check.
 	// (We still try to delay activating this for as long as possible.)
-	portalfound = portalfound || PortalBlockmap(x, y).containsLinkedPortals;
+	portalfound = portalfound || level.PortalBlockmap(x, y).containsLinkedPortals;
 
 	polyLink = PolyBlockMap[offset];
-	portalfound |= (polyLink && PortalBlockmap.hasLinkedPolyPortals);
+	portalfound |= (polyLink && level.PortalBlockmap.hasLinkedPolyPortals);
 	while (polyLink)
 	{
 		if (polyLink->polyobj)

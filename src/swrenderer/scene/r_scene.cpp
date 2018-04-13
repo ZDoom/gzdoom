@@ -63,7 +63,6 @@
 void PeekThreadedErrorPane();
 #endif
 
-EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
 
 CVAR(Bool, r_scene_multithreaded, false, 0);
@@ -88,10 +87,11 @@ namespace swrenderer
 		clearcolor = color;
 	}
 
-	void RenderScene::RenderView(player_t *player)
+	void RenderScene::RenderView(player_t *player, DCanvas *target)
 	{
 		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen;
+		viewport->RenderTarget = target;
+		viewport->RenderingToCanvas = false;
 
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
@@ -103,27 +103,19 @@ namespace swrenderer
 		{
 			if (!viewport->RenderTarget->IsBgra())
 			{
-				memset(viewport->RenderTarget->GetBuffer(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
+				memset(viewport->RenderTarget->GetPixels(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
 			}
 			else
 			{
 				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
 				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
-				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetBuffer();
+				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
 				for (int i = 0; i < size; i++)
 					dest[i] = bgracolor;
 			}
 		}
 
 		RenderActorView(player->mo);
-
-		// Apply special colormap if the target cannot do it
-		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
-		{
-			auto queue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
-			queue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
-			DrawerThreads::Execute(queue);
-		}
 
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
@@ -172,13 +164,6 @@ namespace swrenderer
 
 		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
-
-		// If we don't want shadered colormaps, NULL it now so that the
-		// copy to the screen does not use a special colormap shader.
-		if (!r_shadercolormaps && !MainThread()->Viewport->RenderTarget->IsBgra())
-		{
-			CameraLight::Instance()->ClearShaderColormap();
-		}
 	}
 
 	void RenderScene::RenderPSprites()
@@ -355,6 +340,7 @@ namespace swrenderer
 
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
+		viewport->RenderingToCanvas = true;
 
 		R_SetWindow(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, 12, width, height, height, true);
 		viewwindowx = x;
@@ -367,37 +353,29 @@ namespace swrenderer
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();
 
-		viewport->RenderTarget = screen;
+		viewport->RenderTarget = nullptr;
+		viewport->RenderingToCanvas = false;
 
 		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		screen->Lock(true);
 		viewport->SetViewport(MainThread(), width, height, trueratio);
-		screen->Unlock();
 
 		viewactive = savedviewactive;
 	}
 
+
 	void RenderScene::ScreenResized()
 	{
 		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen;
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
+		viewport->RenderTarget = new DCanvas(width, height, V_IsTrueColor());	// Some code deeper down needs something valid here, so give it a dummy canvas.
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
-		screen->Lock(true);
 		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
-		screen->Unlock();
-	}
-
-	void RenderScene::Init()
-	{
-		// viewwidth / viewheight are set by the defaults
-		fillshort(zeroarray, MAXWIDTH, 0);
-
-		R_InitShadeMaps();
+		delete viewport->RenderTarget;
+		viewport->RenderTarget = nullptr;
 	}
 
 	void RenderScene::Deinit()

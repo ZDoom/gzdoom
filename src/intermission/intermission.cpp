@@ -77,8 +77,6 @@ CVAR(Bool, nointerscrollabort, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 {
-	int lumpnum;
-
 	if (desc->mCdTrack == 0 || !S_ChangeCDMusic (desc->mCdTrack, desc->mCdId))
 	{
 		if (desc->mMusic.IsEmpty())
@@ -121,26 +119,6 @@ void DIntermissionScreen::Init(FIntermissionAction *desc, bool first)
 		mFlatfill = desc->mFlatfill;
 	}
 	S_Sound (CHAN_VOICE | CHAN_UI, desc->mSound, 1.0f, ATTN_NONE);
-	if (desc->mPalette.IsNotEmpty() && (lumpnum = Wads.CheckNumForFullName(desc->mPalette, true)) > 0)
-	{
-		PalEntry *palette;
-		uint8_t palbuffer[768];
-		const uint8_t *orgpal;
-		FMemLump lump;
-		int i;
-
-		ReadPalette(lumpnum, palbuffer);
-		orgpal = (uint8_t *)palbuffer;
-		palette = screen->GetPalette ();
-		for (i = 256; i > 0; i--, orgpal += 3)
-		{
-			*palette++ = PalEntry (orgpal[0], orgpal[1], orgpal[2]);
-		}
-		screen->UpdatePalette ();
-		mPaletteChanged = true;
-		NoWipe = 1;
-		M_EnableMenu(false);
-	}
 	mOverlays.Resize(desc->mOverlays.Size());
 	for (unsigned i=0; i < mOverlays.Size(); i++)
 	{
@@ -208,21 +186,6 @@ void DIntermissionScreen::Drawer ()
 
 void DIntermissionScreen::OnDestroy()
 {
-	if (mPaletteChanged)
-	{
-		PalEntry *palette;
-		int i;
-
-		palette = screen->GetPalette ();
-		for (i = 0; i < 256; ++i)
-		{
-			palette[i] = GPalette.BaseColors[i];
-		}
-		screen->UpdatePalette ();
-		NoWipe = 5;
-		mPaletteChanged = false;
-		M_EnableMenu(true);
-	}
 	S_StopSound(CHAN_VOICE);
 	Super::OnDestroy();
 }
@@ -793,7 +756,7 @@ bool DIntermissionController::Responder (event_t *ev)
 {
 	if (mScreen != NULL)
 	{
-		if (!mScreen->mPaletteChanged && ev->type == EV_KeyDown)
+		if (ev->type == EV_KeyDown)
 		{
 			const char *cmd = Bindings.GetBind (ev->data1);
 

@@ -272,7 +272,7 @@ struct TVector2
 
 
 	// Dot product
-	double operator | (const TVector2 &other) const
+	vec_t operator | (const TVector2 &other) const
 	{
 		return X*other.X + Y*other.Y;
 	}
@@ -1672,5 +1672,49 @@ typedef TVector4<double>		DVector4;
 typedef TRotator<double>		DRotator;
 typedef TMatrix3x3<double>		DMatrix3x3;
 typedef TAngle<double>			DAngle;
+
+
+class Plane
+{
+public:
+	void Set(FVector3 normal, float d)
+	{
+		m_normal = normal;
+		m_d = d;
+	}
+
+	// same for a play-vector. Note that y and z are inversed.
+	void Set(DVector3 normal, double d)
+	{
+		m_normal = { (float)normal.X, (float)normal.Z, (float)normal.Y };
+		m_d = (float)d;
+	}
+
+	float DistToPoint(float x, float y, float z)
+	{
+		FVector3 p(x, y, z);
+
+		return (m_normal | p) + m_d;
+	}
+
+
+	bool PointOnSide(float x, float y, float z)
+	{
+		return DistToPoint(x, y, z) < 0.f;
+	}
+
+	bool PointOnSide(FVector3 &v) { return PointOnSide(v.X, v.Y, v.Z); }
+	bool ValidNormal() { return m_normal.LengthSquared() == 1.f; }
+
+	float A() { return m_normal.X; }
+	float B() { return m_normal.Y; }
+	float C() { return m_normal.Z; }
+	float D() { return m_d; }
+
+	const FVector3 &Normal() const { return m_normal; }
+protected:
+	FVector3 m_normal;
+	float m_d;
+};
 
 #endif

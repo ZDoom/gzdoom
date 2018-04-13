@@ -67,7 +67,7 @@ void AddToConsole (int printlevel, const char *string);
 int PrintString (int printlevel, const char *string);
 int VPrintf (int printlevel, const char *format, va_list parms) GCCFORMAT(2);
 
-void C_DrawConsole (bool hw2d);
+void C_DrawConsole ();
 void C_ToggleConsole (void);
 void C_FullConsole (void);
 void C_HideConsole (void);

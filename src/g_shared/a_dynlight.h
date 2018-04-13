@@ -8,17 +8,28 @@ EXTERN_CVAR(Bool, gl_attachedlights)
 
 class ADynamicLight;
 class FSerializer;
-class FLightDefaults;
 
+enum ELightType
+{
+	PointLight,
+	PulseLight,
+	FlickerLight,
+	RandomFlickerLight,
+	SectorLight,
+	DummyLight,
+	ColorPulseLight,
+	ColorFlickerLight,
+	RandomColorFlickerLight
+};
 
 enum
 {
-   LIGHT_RED = 0,
-   LIGHT_GREEN = 1,
-   LIGHT_BLUE = 2,
-   LIGHT_INTENSITY = 3,
-   LIGHT_SECONDARY_INTENSITY = 4,
-   LIGHT_SCALE = 3,
+	LIGHT_RED = 0,
+	LIGHT_GREEN = 1,
+	LIGHT_BLUE = 2,
+	LIGHT_INTENSITY = 3,
+	LIGHT_SECONDARY_INTENSITY = 4,
+	LIGHT_SCALE = 3,
 };
 
 enum LightFlag
@@ -32,22 +43,109 @@ enum LightFlag
 	LF_SPOT = 64
 };
 
+//==========================================================================
+//
+// Light definitions
+//
+//==========================================================================
+class FLightDefaults
+{
+public:
+	FLightDefaults(FName name, ELightType type);
+
+	void ApplyProperties(ADynamicLight * light) const;
+	FName GetName() const { return m_Name; }
+	void SetParameter(double p) { m_Param = p; }
+	void SetArg(int arg, int val) { m_Args[arg] = val; }
+	int GetArg(int arg) { return m_Args[arg]; }
+	uint8_t GetAttenuate() const { return m_attenuate; }
+	void SetOffset(float* ft) { m_Pos.X = ft[0]; m_Pos.Z = ft[1]; m_Pos.Y = ft[2]; }
+	void SetSubtractive(bool subtract) { m_subtractive = subtract; }
+	void SetAdditive(bool add) { m_additive = add; }
+	void SetDontLightSelf(bool add) { m_dontlightself = add; }
+	void SetAttenuate(bool on) { m_attenuate = on; }
+	void SetHalo(bool halo) { m_halo = halo; }
+	void SetDontLightActors(bool on) { m_dontlightactors = on; }
+	void SetSpot(bool spot) { m_spot = spot; }
+	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
+	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
+
+	void OrderIntensities()
+	{
+		if (m_Args[LIGHT_INTENSITY] > m_Args[LIGHT_SECONDARY_INTENSITY])
+		{
+			std::swap(m_Args[LIGHT_INTENSITY], m_Args[LIGHT_SECONDARY_INTENSITY]);
+			m_swapped = true;
+		}
+	}
+
+protected:
+	FName m_Name;
+	int m_Args[5] = { 0,0,0,0,0 };
+	double m_Param = 0;
+	DVector3 m_Pos = { 0,0,0 };
+	ELightType m_type;
+	int8_t m_attenuate = -1;
+	bool m_subtractive = false;
+	bool m_additive = false;
+	bool m_halo = false;
+	bool m_dontlightself = false;
+	bool m_dontlightactors = false;
+	bool m_swapped = false;
+	bool m_spot = false;
+	double m_spotInnerAngle = 10.0;
+	double m_spotOuterAngle = 25.0;
+};
+
+//==========================================================================
+//
+// Light associations (intermediate parser data)
+//
+//==========================================================================
+
+class FLightAssociation
+{
+public:
+	//FLightAssociation();
+	FLightAssociation(FName actorName, const char *frameName, FName lightName)
+		: m_ActorName(actorName), m_AssocLight(lightName)
+	{
+		strncpy(m_FrameName, frameName, 8);
+	}
+
+	FName ActorName() { return m_ActorName; }
+	const char *FrameName() { return m_FrameName; }
+	FName Light() { return m_AssocLight; }
+	void ReplaceLightName(FName newName) { m_AssocLight = newName; }
+protected:
+	char m_FrameName[8];
+	FName m_ActorName, m_AssocLight;
+};
+
+
+//==========================================================================
+//
+// Light associations per actor class
+//
+//==========================================================================
+
+class FInternalLightAssociation
+{
+public:
+	FInternalLightAssociation(FLightAssociation * asso);
+	int Sprite() const { return m_sprite; }
+	int Frame() const { return m_frame; }
+	const FLightDefaults *Light() const { return m_AssocLight; }
+protected:
+	int m_sprite;
+	int m_frame;
+	FLightDefaults * m_AssocLight;
+};
+
+
+
 typedef TFlags<LightFlag> LightFlags;
 DEFINE_TFLAGS_OPERATORS(LightFlags)
-
-
-enum ELightType
-{
-	PointLight,
-	PulseLight,
-	FlickerLight,
-	RandomFlickerLight,
-	SectorLight,
-	DummyLight,
-	ColorPulseLight,
-	ColorFlickerLight, 
-	RandomColorFlickerLight
-};
 
 
 struct FLightNode

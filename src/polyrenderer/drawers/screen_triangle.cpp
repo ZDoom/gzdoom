@@ -1071,11 +1071,10 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 
 #endif
 
-EXTERN_CVAR(Bool, r_polyrenderer)
 
 void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread)
 {
-	if (r_polyrenderer)
+	if (V_IsPolyRenderer())
 	{
 		TriangleBlock block(args, thread);
 		block.Render();

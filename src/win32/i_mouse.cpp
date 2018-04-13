@@ -46,7 +46,7 @@
 #include "c_cvars.h"
 #include "doomdef.h"
 #include "doomstat.h"
-#include "win32iface.h"
+#include "hardware.h"
 #include "rawinput.h"
 #include "menu/menu.h"
 #include "events.h"

@@ -730,13 +730,36 @@ bool player_t::GetPainFlash(FName type, PalEntry *color) const
 //
 //===========================================================================
 
+EXTERN_CVAR(Float, maxviewpitch)
+EXTERN_CVAR(Bool, cl_oldfreelooklimit);
+
+
+static int GetSoftPitch(bool down)
+{
+	int MAX_DN_ANGLE = MIN(56, (int)maxviewpitch); // Max looking down angle
+	int MAX_UP_ANGLE = MIN(32, (int)maxviewpitch); // Max looking up angle
+	return (down ? MAX_DN_ANGLE : ((cl_oldfreelooklimit) ? MAX_UP_ANGLE : MAX_DN_ANGLE));
+}
+
 void player_t::SendPitchLimits() const
 {
 	if (this - players == consoleplayer)
 	{
+		int uppitch, downpitch;
+
+		if (V_IsSoftwareRenderer())
+		{
+			uppitch = GetSoftPitch(false);
+			downpitch = GetSoftPitch(true);
+		}
+		else
+		{
+			uppitch = downpitch = (int)maxviewpitch;
+		}
+
 		Net_WriteByte(DEM_SETPITCHLIMIT);
-		Net_WriteByte(Renderer->GetMaxViewPitch(false));	// up
-		Net_WriteByte(Renderer->GetMaxViewPitch(true));		// down
+		Net_WriteByte(uppitch);
+		Net_WriteByte(downpitch);
 	}
 }
 
@@ -2326,7 +2349,7 @@ void P_PredictionLerpReset()
 
 bool P_LerpCalculate(AActor *pmo, PredictPos from, PredictPos to, PredictPos &result, float scale)
 {
-	//DVector2 pfrom = Displacements.getOffset(from.portalgroup, to.portalgroup);
+	//DVector2 pfrom = level.Displacements.getOffset(from.portalgroup, to.portalgroup);
 	DVector3 vecFrom = from.pos;
 	DVector3 vecTo = to.pos;
 	DVector3 vecResult;

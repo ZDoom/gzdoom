@@ -74,7 +74,7 @@ namespace swrenderer
 	{
 		int virtheight, virtwidth, virtwidth2, virtheight2;
 
-		if (!RenderingToCanvas())
+		if (!RenderingToCanvas)
 		{ // Set r_viewsize cvar to reflect the current view size
 			UCVarValue value;
 			char temp[16];
@@ -162,7 +162,7 @@ namespace swrenderer
 
 		int pitch = RenderTarget->GetPitch();
 		int pixelsize = RenderTarget->IsBgra() ? 4 : 1;
-		return RenderTarget->GetBuffer() + (x + y * pitch) * pixelsize;
+		return RenderTarget->GetPixels() + (x + y * pitch) * pixelsize;
 	}
 
 	void RenderViewport::InitTextureMapping()

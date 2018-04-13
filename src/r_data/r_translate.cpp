@@ -52,6 +52,7 @@
 #include "r_state.h"
 #include "vm.h"
 #include "v_text.h"
+#include "m_crc32.h"
 
 #include "gi.h"
 #include "stats.h"
@@ -103,6 +104,38 @@ static bool IndexOutOfRange(const int start1, const int end1, const int start2, 
 	return IndexOutOfRange(start2, end2) || outOfRange;
 }
 
+
+
+TArray<FUniquePalette::PalData> FUniquePalette::AllPalettes;
+
+//----------------------------------------------------------------------------
+//
+// Helper class to deal with frequently changing translations from ACS
+//
+//----------------------------------------------------------------------------
+
+bool FUniquePalette::Update()
+{
+	PalData pd;
+
+	memset(pd.pe, 0, sizeof(pd.pe));
+	memcpy(pd.pe, remap->Palette, remap->NumEntries * sizeof(*remap->Palette));
+	pd.crc32 = CalcCRC32((uint8_t*)pd.pe, sizeof(pd.pe));
+	for (unsigned int i = 0; i< AllPalettes.Size(); i++)
+	{
+		if (pd.crc32 == AllPalettes[i].crc32)
+		{
+			if (!memcmp(pd.pe, AllPalettes[i].pe, sizeof(pd.pe)))
+			{
+				Index = 1 + i;
+				return true;
+			}
+		}
+	}
+	Index = 1 + AllPalettes.Push(pd);
+	return true;
+}
+
 /****************************************************/
 /****************************************************/
 
@@ -125,6 +158,23 @@ FRemapTable::FRemapTable(int count)
 FRemapTable::~FRemapTable()
 {
 	Free();
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+int FRemapTable::GetUniqueIndex()
+{
+	if (Inactive) return 0;
+	if (Native == nullptr)
+	{
+		Native = new FUniquePalette(this);
+		Native->Update();
+	}
+	return Native->GetIndex();
 }
 
 //----------------------------------------------------------------------------
@@ -348,21 +398,6 @@ void FRemapTable::UpdateNative()
 	{
 		Native->Update();
 	}
-}
-
-//----------------------------------------------------------------------------
-//
-//
-//
-//----------------------------------------------------------------------------
-
-FNativePalette *FRemapTable::GetNative()
-{
-	if (Native == NULL)
-	{
-		Native = screen->CreatePalette(this);
-	}
-	return Native;
 }
 
 //----------------------------------------------------------------------------

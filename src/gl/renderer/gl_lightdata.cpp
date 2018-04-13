@@ -28,7 +28,6 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
-#include "gl/data/gl_data.h"
 #include "gl/renderer/gl_colormap.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -53,8 +52,6 @@ CUSTOM_CVAR(Bool, gl_enhanced_nightvision, true, CVAR_ARCHIVE|CVAR_NOINITCALL)
 		GLRenderer->mShaderManager->ResetFixedColormap();
 	}
 }
-CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE);
-CVAR(Bool, gl_lightadditivesurfaces, false, CVAR_ARCHIVE);
 
 
 
@@ -97,14 +94,6 @@ CUSTOM_CVAR(Int,gl_fogmode,1,CVAR_ARCHIVE|CVAR_NOINITCALL)
 	if (self<0) self=0;
 }
 
-CUSTOM_CVAR(Int, gl_lightmode, 3 ,CVAR_ARCHIVE|CVAR_NOINITCALL)
-{
-	int newself = self;
-	if (newself > 4) newself=8;	// use 8 for software lighting to avoid conflicts with the bit mask
-	if (newself < 0) newself=0;
-	if (self != newself) self = newself;
-	glset.lightmode = newself;
-}
 
 
 
@@ -119,12 +108,12 @@ CUSTOM_CVAR(Int, gl_lightmode, 3 ,CVAR_ARCHIVE|CVAR_NOINITCALL)
 void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending,
 					   int *tm, int *sb, int *db, int *be)
 {
-	static int blendstyles[] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA };
+	static int blendstyles[] = { GL_ZERO, GL_ONE, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_SRC_COLOR, GL_ONE_MINUS_SRC_COLOR, GL_DST_COLOR, GL_ONE_MINUS_DST_COLOR,  };
 	static int renderops[] = { 0, GL_FUNC_ADD, GL_FUNC_SUBTRACT, GL_FUNC_REVERSE_SUBTRACT, -1, -1, -1, -1, 
 		-1, -1, -1, -1, -1, -1, -1, -1 };
 
-	int srcblend = blendstyles[style.SrcAlpha&3];
-	int dstblend = blendstyles[style.DestAlpha&3];
+	int srcblend = blendstyles[style.SrcAlpha%STYLEALPHA_MAX];
+	int dstblend = blendstyles[style.DestAlpha%STYLEALPHA_MAX];
 	int blendequation = renderops[style.BlendOp&15];
 	int texturemode = drawopaque? TM_OPAQUE : TM_MODULATE;
 
@@ -138,7 +127,6 @@ void gl_GetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 	}
 	else if (style.Flags & STYLEF_InvertSource)
 	{
-		// The only place where InvertSource is used is for inverted sprites with the infrared powerup.
 		texturemode = TM_INVERSE;
 	}
 
@@ -173,7 +161,7 @@ int gl_CalcLightLevel(int lightlevel, int rellight, bool weapon)
 
 	if (lightlevel == 0) return 0;
 
-	if ((glset.lightmode & 2) && lightlevel < 192 && !weapon) 
+	if ((level.lightmode & 2) && lightlevel < 192 && !weapon) 
 	{
 		if (lightlevel > 100)
 		{
@@ -211,7 +199,7 @@ static PalEntry gl_CalcLightColor(int light, PalEntry pe, int blendfactor)
 {
 	int r,g,b;
 
-	if (glset.lightmode == 8)
+	if (level.lightmode == 8)
 	{
 		return pe;
 	}
@@ -277,7 +265,7 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 {
 	float density;
 
-	if (glset.lightmode & 4)
+	if (level.lightmode & 4)
 	{
 		// uses approximations of Legacy's default settings.
 		density = level.fogdensity ? level.fogdensity : 18;
@@ -290,9 +278,9 @@ float gl_GetFogDensity(int lightlevel, PalEntry fogcolor, int sectorfogdensity)
 	else if ((fogcolor.d & 0xffffff) == 0)
 	{
 		// case 2: black fog
-		if (glset.lightmode != 8 && !(level.flags3 & LEVEL3_NOLIGHTFADE))
+		if (level.lightmode != 8 && !(level.flags3 & LEVEL3_NOLIGHTFADE))
 		{
-			density = distfogtable[glset.lightmode != 0][gl_ClampLight(lightlevel)];
+			density = distfogtable[level.lightmode != 0][gl_ClampLight(lightlevel)];
 		}
 		else
 		{
@@ -351,7 +339,7 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 	else if (level.outsidefogdensity != 0 && APART(level.info->outsidefog) != 0xff && (fogcolor.d & 0xffffff) == (level.info->outsidefog & 0xffffff))
 	{
 	}
-	else  if (level.fogdensity!=0 || (glset.lightmode & 4))
+	else  if (level.fogdensity!=0 || (level.lightmode & 4))
 	{
 		// case 3: level has fog density set
 	}
@@ -370,7 +358,7 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector)
 	{
 		return false;
 	}
-	else  if (level.fogdensity!=0 || (glset.lightmode & 4))
+	else  if (level.fogdensity!=0 || (level.lightmode & 4))
 	{
 		// case 3: level has fog density set
 		return false;
@@ -460,7 +448,7 @@ void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *c
 	}
 	else
 	{
-		if (glset.lightmode == 2 && fogcolor == 0)
+		if (level.lightmode == 2 && fogcolor == 0)
 		{
 			float light = gl_CalcLightLevel(lightlevel, rellight, false);
 			gl_SetShaderLight(light, lightlevel);
@@ -481,7 +469,7 @@ void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *c
 		gl_RenderState.SetFog(fogcolor, fogdensity);
 
 		// Korshun: fullbright fog like in software renderer.
-		if (glset.lightmode == 8 && glset.brightfog && fogdensity != 0 && fogcolor != 0)
+		if (level.lightmode == 8 && level.brightfog && fogdensity != 0 && fogcolor != 0)
 		{
 			gl_RenderState.SetSoftLightLevel(255);
 		}

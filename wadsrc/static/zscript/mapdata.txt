@@ -102,6 +102,12 @@ struct Side native play
 
 struct Line native play
 {
+	enum ESide
+	{
+		front=0,
+		back=1
+	}
+
 	enum ELineFlags
 	{
 		ML_BLOCKING					=0x00000001,	// solid, is an obstacle

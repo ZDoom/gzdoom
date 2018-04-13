@@ -7,6 +7,7 @@ version "3.3"
 #include "zscript/actor.txt"
 #include "zscript/actor_checks.txt"
 #include "zscript/events.txt"
+#include "zscript/level_compatibility.txt"
 
 #include "zscript/menu/menuitembase.txt"
 #include "zscript/menu/menu.txt"

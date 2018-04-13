@@ -225,13 +225,6 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 	}
 }
 
-void FSoftwareRenderer::OnModeSet ()
-{
-	// This does not work if the SW renderer is not in use.
-	if (!V_IsHardwareRenderer())
-		mScene.ScreenResized();
-}
-
 void FSoftwareRenderer::SetClearColor(int color)
 {
 	mScene.SetClearColor(color);

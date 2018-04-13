@@ -44,7 +44,6 @@ namespace swrenderer
 		RenderScene();
 		~RenderScene();
 
-		void ScreenResized();
 		void Deinit();	
 
 		void SetClearColor(int color);

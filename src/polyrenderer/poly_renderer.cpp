@@ -58,6 +58,8 @@ void PolyRenderer::RenderView(player_t *player, DCanvas *target)
 {
 	using namespace swrenderer;
 	
+	R_ExecuteSetViewSize(Viewpoint, Viewwindow);
+
 	RenderTarget = target;
 	RenderToCanvas = false;
 	int width = SCREENWIDTH;
@@ -93,10 +95,6 @@ void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int
 
 	RenderTarget = nullptr;
 	RenderToCanvas = false;
-	R_ExecuteSetViewSize(Viewpoint, Viewwindow);
-	float trueratio;
-	ActiveRatio(width, height, &trueratio);
-	//viewport->SetViewport(&Thread, width, height, viewport->viewwindow.WidescreenRatio);
 	viewactive = savedviewactive;
 }
 

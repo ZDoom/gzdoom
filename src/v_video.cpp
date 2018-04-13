@@ -1056,9 +1056,6 @@ void V_UpdateModeSize (int width, int height)
 	DisplayHeight = height;
 
 	R_OldBlend = ~0;
-
-	// the software renderer also needs to be notified
-	SWRenderer->OnModeSet();
 }
 
 void V_OutputResized (int width, int height)

@@ -93,6 +93,8 @@ namespace swrenderer
 		viewport->RenderTarget = target;
 		viewport->RenderingToCanvas = false;
 
+		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
+
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
 		float trueratio;
@@ -361,27 +363,7 @@ namespace swrenderer
 
 		viewport->RenderTarget = nullptr;
 		viewport->RenderingToCanvas = false;
-
-		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
-		float trueratio;
-		ActiveRatio(width, height, &trueratio);
-		viewport->SetViewport(MainThread(), width, height, trueratio);
-
 		viewactive = savedviewactive;
-	}
-
-
-	void RenderScene::ScreenResized()
-	{
-		auto viewport = MainThread()->Viewport.get();
-		int width = SCREENWIDTH;
-		int height = SCREENHEIGHT;
-		viewport->RenderTarget = new DCanvas(width, height, V_IsTrueColor());	// Some code deeper down needs something valid here, so give it a dummy canvas.
-		float trueratio;
-		ActiveRatio(width, height, &trueratio);
-		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
-		delete viewport->RenderTarget;
-		viewport->RenderTarget = nullptr;
 	}
 
 	void RenderScene::Deinit()

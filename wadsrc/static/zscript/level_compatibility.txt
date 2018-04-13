@@ -603,21 +603,21 @@ class LevelCompatibility play
 				SetLineSectorRef(233, Line.back, 39);
 
 				TextureID nukage = TexMan.CheckForTexture("NUKAGE1", TexMan.Type_Flat);
-				SetWallTexture(222, Line.front, Side.bottom, nukage);
-				SetWallTexture(223, Line.front, Side.bottom, nukage);
-				SetWallTexture(224, Line.front, Side.bottom, nukage);
-				SetWallTexture(225, Line.front, Side.bottom, nukage);
-				SetWallTexture(227, Line.front, Side.bottom, nukage);
-				SetWallTexture(231, Line.front, Side.bottom, nukage);
-				SetWallTexture(229, Line.front, Side.bottom, nukage);
-				SetWallTexture(233, Line.front, Side.bottom, nukage);
+				SetWallTextureID(222, Line.front, Side.bottom, nukage);
+				SetWallTextureID(223, Line.front, Side.bottom, nukage);
+				SetWallTextureID(224, Line.front, Side.bottom, nukage);
+				SetWallTextureID(225, Line.front, Side.bottom, nukage);
+				SetWallTextureID(227, Line.front, Side.bottom, nukage);
+				SetWallTextureID(231, Line.front, Side.bottom, nukage);
+				SetWallTextureID(229, Line.front, Side.bottom, nukage);
+				SetWallTextureID(233, Line.front, Side.bottom, nukage);
 
 				for(int i = 0; i < 8; i++)
 				{
 					SetLineSectorRef(i+234, Line.back, 37);
 					SetLineSectorRef(i+243, Line.back, 37);
-					SetWallTexture(i+234, Line.back, Side.bottom, nukage);
-					SetWallTexture(i+243, Line.back, Side.bottom, nukage);
+					SetWallTextureID(i+234, Line.back, Side.bottom, nukage);
+					SetWallTextureID(i+243, Line.back, Side.bottom, nukage);
 				}
 
 				SetLineSpecial(336, Transfer_Heights, 32000, 6);

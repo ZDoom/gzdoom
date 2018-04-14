@@ -90,11 +90,11 @@ void FFlatVertexGenerator::OutputResized(int width, int height)
 
 void FFlatVertex::SetFlatVertex(vertex_t *vt, const secplane_t & plane)
 {
-	x = vt->fX();
-	y = vt->fY();
-	z = plane.ZatPoint(vt);
-	u = vt->fX()/64.f;
-	v = -vt->fY()/64.f;
+	x = (float)vt->fX();
+	y = (float)vt->fY();
+	z = (float)plane.ZatPoint(vt);
+	u = (float)vt->fX()/64.f;
+	v = -(float)vt->fY()/64.f;
 }
 
 //==========================================================================
@@ -243,7 +243,7 @@ void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane, FFlatVe
 	FFlatVertex *mapvt = &map[startvt];
 	for(int i=0; i<countvt; i++, vt++, mapvt++)
 	{
-		vt->z = splane.ZatPoint(vt->x, vt->y);
+		vt->z = (float)splane.ZatPoint(vt->x, vt->y);
 		if (plane == sector_t::floor && sec->transdoor) vt->z -= 1;
 		mapvt->z = vt->z;
 	}

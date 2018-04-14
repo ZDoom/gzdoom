@@ -106,11 +106,11 @@ struct GLSectorPlane
 	}
 };
 
-class FDrawInfo;
+struct FDrawInfo;
 
 class GLWall
 {
-	friend class FDrawInfo;
+	friend struct FDrawInfo;
 public:
 	static const char passflag[];
 

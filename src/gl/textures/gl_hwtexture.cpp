@@ -207,8 +207,6 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 		}
 	}
 	// store the physical size.
-	texwidth = rw;
-	texheight = rh;
 
 	int sourcetype;
 	if (glTextureBytes > 0)
@@ -467,14 +465,14 @@ void FHardwareTexture::UnbindAll()
 //
 //===========================================================================
 
-int FHardwareTexture::GetDepthBuffer()
+int FHardwareTexture::GetDepthBuffer(int width, int height)
 {
 	if (glDepthID == 0)
 	{
 		glGenRenderbuffers(1, &glDepthID);
 		glBindRenderbuffer(GL_RENDERBUFFER, glDepthID);
 		glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, 
-			GetTexDimension(texwidth), GetTexDimension(texheight));
+			GetTexDimension(width), GetTexDimension(height));
 		glBindRenderbuffer(GL_RENDERBUFFER, 0);
 	}
 	return glDepthID;
@@ -487,10 +485,12 @@ int FHardwareTexture::GetDepthBuffer()
 //
 //===========================================================================
 
-void FHardwareTexture::BindToFrameBuffer()
+void FHardwareTexture::BindToFrameBuffer(int width, int height)
 {
+	width = GetTexDimension(width);
+	height = GetTexDimension(height);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glDefTex.glTexID, 0);
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer());
-	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer());
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer(width, height));
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer(width, height));
 }
 

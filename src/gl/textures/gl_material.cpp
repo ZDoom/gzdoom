@@ -207,6 +207,11 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 					wt->GenTime[0] = screen->FrameTime;
 				}
 			}
+			else
+			{
+				w = tex->GetWidth();
+				h = tex->GetHeight();
+			}
 			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FGLTexture.Bind")) 
 			{
 				// could not create texture
@@ -762,7 +767,7 @@ void FMaterial::BindToFrameBuffer()
 		FHardwareTexture::Unbind(0);
 		ClearLastTexture();
 	}
-	mBaseLayer->mHwTexture->BindToFrameBuffer();
+	mBaseLayer->mHwTexture->BindToFrameBuffer(mWidth, mHeight);
 }
 
 //==========================================================================

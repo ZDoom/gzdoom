@@ -25,43 +25,110 @@
 #include "swrenderer/drawers/r_draw.h"
 #include "swrenderer/drawers/r_thread.h"
 #include "polyrenderer/drawers/screen_triangle.h"
-#include "polyrenderer/math/tri_matrix.h"
+#include "polyrenderer/math/gpu_types.h"
 #include "polyrenderer/drawers/poly_buffer.h"
 #include "polyrenderer/drawers/poly_draw_args.h"
-
-typedef void(*PolyDrawFuncPtr)(const TriDrawTriangleArgs *, WorkerThreadData *);
 
 class PolyTriangleDrawer
 {
 public:
-	static void set_viewport(int x, int y, int width, int height, DCanvas *canvas);
-	static void toggle_mirror();
-	static bool is_mirror();
+	static void ClearBuffers(DCanvas *canvas);
+	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, bool span_drawers);
+	static void ToggleMirror(const DrawerCommandQueuePtr &queue);
+	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip);
+};
+
+class PolyTriangleThreadData
+{
+public:
+	PolyTriangleThreadData(int32_t core, int32_t num_cores) : core(core), num_cores(num_cores) { }
+
+	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, bool span_drawers);
+	void SetTransform(const Mat4f *objectToClip);
+	void ToggleMirror() { mirror = !mirror; }
+
+	void DrawElements(const PolyDrawArgs &args);
+	void DrawArrays(const PolyDrawArgs &args);
+
+	int32_t core;
+	int32_t num_cores;
+
+	// The number of lines to skip to reach the first line to be rendered by this thread
+	int skipped_by_thread(int first_line)
+	{
+		int core_skip = (num_cores - (first_line - core) % num_cores) % num_cores;
+		return core_skip;
+	}
+
+	static PolyTriangleThreadData *Get(DrawerThread *thread);
 
 private:
-	static ShadedTriVertex shade_vertex(const PolyDrawArgs &drawargs, const TriVertex &v);
-	static void draw_elements(const PolyDrawArgs &args, WorkerThreadData *thread);
-	static void draw_arrays(const PolyDrawArgs &args, WorkerThreadData *thread);
-	static void draw_shaded_triangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static bool is_degenerate(const ShadedTriVertex *vertices);
-	static bool is_frontfacing(TriDrawTriangleArgs *args);
+	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const TriVertex &v);
+	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
+	static bool IsDegenerate(const ShadedTriVertex *vertices);
+	static bool IsFrontfacing(TriDrawTriangleArgs *args);
+	static int ClipEdge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert);
 
-	static int clipedge(const ShadedTriVertex *verts, ShadedTriVertex *clippedvert);
-
-	static int viewport_x, viewport_y, viewport_width, viewport_height, dest_pitch, dest_width, dest_height;
-	static bool dest_bgra;
-	static uint8_t *dest;
-	static bool mirror;
+	int viewport_x = 0;
+	int viewport_y = 0;
+	int viewport_width = 0;
+	int viewport_height = 0;
+	int dest_pitch = 0;
+	int dest_width = 0;
+	int dest_height = 0;
+	bool dest_bgra = false;
+	uint8_t *dest = nullptr;
+	bool mirror = false;
+	const Mat4f *objectToClip = nullptr;
+	bool span_drawers = false;
 
 	enum { max_additional_vertices = 16 };
+};
 
-	friend class DrawPolyTrianglesCommand;
+class PolySetTransformCommand : public DrawerCommand
+{
+public:
+	PolySetTransformCommand(const Mat4f *objectToClip);
+
+	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override { return "PolySetTransform"; }
+
+private:
+	const Mat4f *objectToClip;
+};
+
+class PolyToggleMirrorCommand : public DrawerCommand
+{
+public:
+	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override { return "PolyToggleMirror"; }
+};
+
+class PolySetViewportCommand : public DrawerCommand
+{
+public:
+	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, bool span_drawers);
+
+	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override { return "PolySetViewport"; }
+
+private:
+	int x;
+	int y;
+	int width;
+	int height;
+	uint8_t *dest;
+	int dest_width;
+	int dest_height;
+	int dest_pitch;
+	bool dest_bgra;
+	bool span_drawers;
 };
 
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args, bool mirror);
+	DrawPolyTrianglesCommand(const PolyDrawArgs &args);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override { return "DrawPolyTriangles"; }

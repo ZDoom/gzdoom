@@ -93,11 +93,15 @@ namespace swrenderer
 		viewport->RenderTarget = target;
 		viewport->RenderingToCanvas = false;
 
+		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
+
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(MainThread(), width, height, trueratio);
+		if (r_models)
+			PolyTriangleDrawer::ClearBuffers(viewport->RenderTarget);
 
 		if (r_clearbuffer != 0)
 		{
@@ -151,7 +155,7 @@ namespace swrenderer
 		R_UpdateFuzzPosFrameStart();
 
 		if (r_models)
-			MainThread()->Viewport->SetupPolyViewport();
+			MainThread()->Viewport->SetupPolyViewport(MainThread());
 
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
@@ -253,6 +257,8 @@ namespace swrenderer
 		thread->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
 		thread->Portal->SetMainPortal();
 
+		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget, true);
+
 		// Cull things outside the range seen by this thread
 		VisibleSegmentRenderer visitor;
 		if (thread->X1 > 0)
@@ -349,6 +355,8 @@ namespace swrenderer
 		viewwindowy = y;
 		viewactive = true;
 		viewport->SetViewport(MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
+		if (r_models)
+			PolyTriangleDrawer::ClearBuffers(viewport->RenderTarget);
 
 		RenderActorView(actor, dontmaplines);
 		DrawerWaitCycles.Clock();
@@ -357,27 +365,7 @@ namespace swrenderer
 
 		viewport->RenderTarget = savedtarget;
 		viewport->RenderingToCanvas = false;
-
-		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
-		float trueratio;
-		ActiveRatio(width, height, &trueratio);
-		viewport->SetViewport(MainThread(), width, height, trueratio);
-
 		viewactive = savedviewactive;
-	}
-
-
-	void RenderScene::ScreenResized()
-	{
-		auto viewport = MainThread()->Viewport.get();
-		int width = SCREENWIDTH;
-		int height = SCREENHEIGHT;
-		viewport->RenderTarget = new DCanvas(width, height, V_IsTrueColor());	// Some code deeper down needs something valid here, so give it a dummy canvas.
-		float trueratio;
-		ActiveRatio(width, height, &trueratio);
-		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
-		delete viewport->RenderTarget;
-		viewport->RenderTarget = nullptr;
 	}
 
 	void RenderScene::Deinit()

@@ -68,10 +68,12 @@ namespace swrenderer
 		void DrawElements(int numIndices, size_t offset) override;
 		double GetTimeFloat() override;
 
+		void SetTransform();
+
 		RenderThread *Thread = nullptr;
 
 		AActor *ModelActor = nullptr;
-		TriMatrix ObjectToWorld;
+		Mat4f ObjectToWorld;
 		FTexture *SkinTexture = nullptr;
 		unsigned int *IndexBuffer = nullptr;
 		TriVertex *VertexBuffer = nullptr;

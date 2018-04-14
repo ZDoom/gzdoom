@@ -28,7 +28,7 @@
 
 class PolyRenderThread;
 class FTexture;
-struct TriMatrix;
+class Mat4f;
 
 enum class PolyDrawMode
 {
@@ -75,19 +75,14 @@ public:
 	void SetWriteColor(bool enable) { mWriteColor = enable; }
 	void SetWriteStencil(bool enable, uint8_t stencilWriteValue = 0) { mWriteStencil = enable; mStencilWriteValue = stencilWriteValue; }
 	void SetWriteDepth(bool enable) { mWriteDepth = enable; }
-	void SetFaceCullCCW(bool counterclockwise) { mFaceCullCCW = counterclockwise; }
 	void SetStyle(TriBlendMode blendmode, double srcalpha = 1.0, double destalpha = 1.0) { mBlendMode = blendmode; mSrcAlpha = (uint32_t)(srcalpha * 256.0 + 0.5); mDestAlpha = (uint32_t)(destalpha * 256.0 + 0.5); }
 	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
-	void SetTransform(const TriMatrix *objectToClip) { mObjectToClip = objectToClip; }
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
 	void SetDynLightColor(uint32_t color) { mDynLightColor = color; }
-	void DrawArray(PolyRenderThread *thread, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
-	void DrawElements(PolyRenderThread *thread, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 	void DrawArray(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
 	void DrawElements(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 
-	const TriMatrix *ObjectToClip() const { return mObjectToClip; }
 	const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }
 
 	const TriVertex *Vertices() const { return mVertices; }
@@ -95,9 +90,9 @@ public:
 	const unsigned int *Elements() const { return mElements; }
 	PolyDrawMode DrawMode() const { return mDrawMode; }
 
-	bool FaceCullCCW() const { return mFaceCullCCW; }
 	bool WriteColor() const { return mWriteColor; }
 
+	FTexture *Texture() const { return mTexture; }
 	const uint8_t *TexturePixels() const { return mTexturePixels; }
 	int TextureWidth() const { return mTextureWidth; }
 	int TextureHeight() const { return mTextureHeight; }
@@ -140,16 +135,15 @@ public:
 	void SetNormal(const FVector3 &normal) { mNormal = normal; }
 
 private:
-	const TriMatrix *mObjectToClip = nullptr;
 	const TriVertex *mVertices = nullptr;
 	int mVertexCount = 0;
 	const unsigned int *mElements = nullptr;
 	PolyDrawMode mDrawMode = PolyDrawMode::Triangles;
-	bool mFaceCullCCW = false;
 	bool mDepthTest = false;
 	bool mWriteStencil = true;
 	bool mWriteColor = true;
 	bool mWriteDepth = true;
+	FTexture *mTexture = nullptr;
 	const uint8_t *mTexturePixels = nullptr;
 	int mTextureWidth = 0;
 	int mTextureHeight = 0;
@@ -185,7 +179,6 @@ private:
 class RectDrawArgs
 {
 public:
-	void SetTexture(const uint8_t *texels, int width, int height);
 	void SetTexture(FTexture *texture, FRenderStyle style);
 	void SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel);
@@ -194,6 +187,7 @@ public:
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void Draw(PolyRenderThread *thread, double x0, double x1, double y0, double y1, double u0, double u1, double v0, double v1);
 
+	FTexture *Texture() const { return mTexture; }
 	const uint8_t *TexturePixels() const { return mTexturePixels; }
 	int TextureWidth() const { return mTextureWidth; }
 	int TextureHeight() const { return mTextureHeight; }
@@ -227,6 +221,7 @@ public:
 	float V1() const { return mV1; }
 
 private:
+	FTexture *mTexture = nullptr;
 	const uint8_t *mTexturePixels = nullptr;
 	int mTextureWidth = 0;
 	int mTextureHeight = 0;

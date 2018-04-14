@@ -30,7 +30,7 @@
 #include "polyrenderer/scene/poly_light.h"
 #include "polyrenderer/poly_renderthread.h"
 
-void RenderPolyWallSprite::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue)
+void RenderPolyWallSprite::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue)
 {
 	if (RenderPolySprite::IsThingCulled(thing))
 		return;
@@ -102,8 +102,6 @@ void RenderPolyWallSprite::Render(PolyRenderThread *thread, const TriMatrix &wor
 
 	PolyDrawArgs args;
 	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
-	args.SetTransform(&worldToClip);
-	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetTexture(tex, thing->RenderStyle);
 	args.SetClipPlane(0, clipPlane);
@@ -111,5 +109,5 @@ void RenderPolyWallSprite::Render(PolyRenderThread *thread, const TriMatrix &wor
 	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
 	args.SetStyle(TriBlendMode::TextureMasked);
-	args.DrawArray(thread, vertices, 4, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
 }

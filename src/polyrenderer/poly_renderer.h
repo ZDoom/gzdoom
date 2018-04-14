@@ -34,11 +34,15 @@
 #include "scene/poly_light.h"
 #include "swrenderer/r_memory.h"
 #include "poly_renderthread.h"
+#include "stats.h"
 
 class AActor;
 class DCanvas;
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
+
+extern cycle_t PolyCullCycles, PolyOpaqueCycles, PolyMaskedCycles, PolyDrawerWaitCycles;
+extern int PolyTotalBatches, PolyTotalTriangles, PolyTotalDrawCalls;
 
 class PolyRenderer
 {
@@ -61,9 +65,10 @@ public:
 	FViewWindow Viewwindow;
 	FRenderViewpoint Viewpoint;
 	PolyLightVisibility Light;
+	RenderPolyScene Scene;
 
-	TriMatrix WorldToView;
-	TriMatrix WorldToClip;
+	Mat4f WorldToView;
+	Mat4f WorldToClip;
 
 private:
 	void RenderActorView(AActor *actor, bool dontmaplines);
@@ -71,7 +76,6 @@ private:
 	void SetSceneViewport();
 	void SetupPerspectiveMatrix();
 
-	RenderPolyScene MainPortal;
 	PolySkyDome Skydome;
 	RenderPolyPlayerSprites PlayerSprites;
 	uint32_t NextStencilValue = 0;

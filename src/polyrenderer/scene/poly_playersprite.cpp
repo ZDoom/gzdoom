@@ -34,6 +34,7 @@
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+EXTERN_CVAR(Bool, r_models)
 
 void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 {
@@ -41,8 +42,6 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 	// draws the canvas textures between this call and the final call to RenderRemainingSprites..
 	//
 	// We also can't move it because the model render code relies on it
-
-	//renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -60,6 +59,8 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		(players[consoleplayer].cheats & CF_CHASECAM) ||
 		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
+
+	renderHUDModel = r_models && gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	PolyTransferHeights fakeflat(viewpoint.camera->subsector);
 

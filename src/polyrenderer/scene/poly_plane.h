@@ -57,13 +57,13 @@ private:
 class RenderPolyPlane
 {
 public:
-	static void RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	static void RenderPlanes(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
 
 private:
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	void Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
 
-	void RenderPortal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
-	void RenderNormal(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight);
+	void RenderPortal(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals);
+	void RenderNormal(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight);
 
 	void RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, PolyDrawSectorPortal *polyportal, bool ceiling, double skyHeight);
 
@@ -79,9 +79,9 @@ private:
 class Render3DFloorPlane
 {
 public:
-	static void RenderPlanes(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, uint32_t subsectorDepth, std::vector<PolyTranslucentObject *> &translucentObjects);
+	static void RenderPlanes(PolyRenderThread *thread, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, uint32_t subsectorDepth, std::vector<PolyTranslucentObject *> &translucentObjects);
 
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane);
+	void Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane);
 
 	subsector_t *sub = nullptr;
 	uint32_t stencilValue = 0;
@@ -97,9 +97,9 @@ class PolyTranslucent3DFloorPlane : public PolyTranslucentObject
 public:
 	PolyTranslucent3DFloorPlane(Render3DFloorPlane plane, uint32_t subsectorDepth) : PolyTranslucentObject(subsectorDepth, 1e7), plane(plane) { }
 
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &portalPlane) override
+	void Render(PolyRenderThread *thread, const PolyClipPlane &portalPlane) override
 	{
-		plane.Render(thread, worldToClip, portalPlane);
+		plane.Render(thread, portalPlane);
 	}
 
 	Render3DFloorPlane plane;

@@ -47,22 +47,45 @@ RenderPolyScene::~RenderPolyScene()
 {
 }
 
-void RenderPolyScene::SetViewpoint(const TriMatrix &worldToClip, const PolyClipPlane &portalPlane, uint32_t stencilValue)
+void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 {
-	WorldToClip = worldToClip;
-	StencilValue = stencilValue;
-	PortalPlane = portalPlane;
-}
+	CurrentViewpoint = viewpoint;
 
-void RenderPolyScene::Render(int portalDepth)
-{
 	PolyRenderThread *thread = PolyRenderer::Instance()->Threads.MainThread();
 
-	SectorPortals.clear();
-	LinePortals.clear();
-	Cull.CullScene(PortalPlane);
+	CurrentViewpoint->ObjectsStart = thread->TranslucentObjects.size();
+	CurrentViewpoint->SectorPortalsStart = thread->SectorPortals.size();
+	CurrentViewpoint->LinePortalsStart = thread->LinePortals.size();
+
+	PolyCullCycles.Clock();
+	Cull.CullScene(CurrentViewpoint->PortalPlane);
+	PolyCullCycles.Unclock();
+
 	RenderSectors();
-	RenderPortals(portalDepth);
+
+	PolyMaskedCycles.Clock();
+	const auto &rviewpoint = PolyRenderer::Instance()->Viewpoint;
+	for (uint32_t sectorIndex : Cull.SeenSectors)
+	{
+		sector_t *sector = &level.sectors[sectorIndex];
+		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
+		{
+			DVector2 left, right;
+			if (!RenderPolySprite::GetLine(thing, left, right))
+				continue;
+			double distanceSquared = (thing->Pos() - rviewpoint.Pos).LengthSquared();
+			AddSprite(thread, thing, distanceSquared, left, right);
+		}
+	}
+	PolyMaskedCycles.Unclock();
+
+	CurrentViewpoint->ObjectsEnd = thread->TranslucentObjects.size();
+	CurrentViewpoint->SectorPortalsEnd = thread->SectorPortals.size();
+	CurrentViewpoint->LinePortalsEnd = thread->LinePortals.size();
+
+	RenderPortals();
+
+	CurrentViewpoint = nullptr;
 }
 
 void RenderPolyScene::RenderSectors()
@@ -72,11 +95,18 @@ void RenderPolyScene::RenderSectors()
 	int totalcount = (int)Cull.PvsSubsectors.size();
 	uint32_t *subsectors = Cull.PvsSubsectors.data();
 
-	TranslucentObjects.resize(PolyRenderer::Instance()->Threads.NumThreads());
+	PolyOpaqueCycles.Clock();
 
 	PolyRenderer::Instance()->Threads.RenderThreadSlices(totalcount, [&](PolyRenderThread *thread)
 	{
-		TranslucentObjects[thread->ThreadIndex].clear();
+		PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip));
+
+		if (thread != mainthread)
+		{
+			thread->TranslucentObjects.clear();
+			thread->SectorPortals.clear();
+			thread->LinePortals.clear();
+		}
 
 		int start = thread->Start;
 		int end = thread->End;
@@ -86,9 +116,11 @@ void RenderPolyScene::RenderSectors()
 		}
 	}, [&](PolyRenderThread *thread)
 	{
-		const auto &objects = TranslucentObjects[thread->ThreadIndex];
-		TranslucentObjects[0].insert(TranslucentObjects[0].end(), objects.begin(), objects.end());
+		const auto &objects = thread->TranslucentObjects;
+		mainthread->TranslucentObjects.insert(mainthread->TranslucentObjects.end(), objects.begin(), objects.end());
 	});
+
+	PolyOpaqueCycles.Unclock();
 }
 
 void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub, uint32_t subsectorDepth)
@@ -121,15 +153,15 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 			RenderPolyNode(thread, &sub->BSP->Nodes.Last(), subsectorDepth, frontsector);
 		}
 
-		Render3DFloorPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, TranslucentObjects[thread->ThreadIndex]);
-		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		Render3DFloorPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
+		RenderPolyPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, sub, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals);
 	}
 	else
 	{
 		PolyTransferHeights fakeflat(sub);
 
-		Render3DFloorPlane::RenderPlanes(thread, WorldToClip, PortalPlane, sub, StencilValue, subsectorDepth, TranslucentObjects[thread->ThreadIndex]);
-		RenderPolyPlane::RenderPlanes(thread, WorldToClip, PortalPlane, fakeflat, StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, SectorPortals);
+		Render3DFloorPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
+		RenderPolyPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, fakeflat, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -147,7 +179,7 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 		for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
 			particle_t *particle = Particles + i;
-			TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, StencilValue));
+			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, CurrentViewpoint->StencilValue));
 		}
 	}
 }
@@ -200,7 +232,7 @@ void RenderPolyScene::RenderPolySubsector(PolyRenderThread *thread, subsector_t 
 				sub->flags |= SSECF_DRAWN;
 			}
 
-			RenderPolyWall::RenderLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects[thread->ThreadIndex], LinePortals, LastPortalLine);
+			RenderPolyWall::RenderLine(thread, CurrentViewpoint->PortalPlane, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, thread->TranslucentObjects, thread->LinePortals, CurrentViewpoint->LastPortalLine);
 		}
 	}
 }
@@ -210,21 +242,21 @@ int RenderPolyScene::PointOnSide(const DVector2 &pos, const node_t *node)
 	return DMulScale32(FLOAT2FIXED(pos.Y) - node->y, node->dx, node->x - FLOAT2FIXED(pos.X), node->dy) > 0;
 }
 
-void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right)
+void RenderPolyScene::AddSprite(PolyRenderThread *thread, AActor *thing, double sortDistance, const DVector2 &left, const DVector2 &right)
 {
 	if (level.nodes.Size() == 0)
 	{
 		subsector_t *sub = &level.subsectors[0];
 		if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
-			TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, 0.0f, 1.0f, StencilValue));
+			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, 0.0f, 1.0f, CurrentViewpoint->StencilValue));
 	}
 	else
 	{
-		RenderSprite(thread, thing, sortDistance, left, right, 0.0, 1.0, level.HeadNode());
+		AddSprite(thread, thing, sortDistance, left, right, 0.0, 1.0, level.HeadNode());
 	}
 }
 
-void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, double sortDistance, DVector2 left, DVector2 right, double t1, double t2, void *node)
+void RenderPolyScene::AddSprite(PolyRenderThread *thread, AActor *thing, double sortDistance, DVector2 left, DVector2 right, double t1, double t2, void *node)
 {
 	while (!((size_t)node & 1))  // Keep going until found a subsector
 	{
@@ -246,7 +278,7 @@ void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, doub
 			DVector2 mid = left * (1.0 - t) + right * t;
 			double tmid = t1 * (1.0 - t) + t2 * t;
 			
-			RenderSprite(thread, thing, sortDistance, mid, right, tmid, t2, bsp->children[sideRight]);
+			AddSprite(thread, thing, sortDistance, mid, right, tmid, t2, bsp->children[sideRight]);
 			right = mid;
 			t2 = tmid;
 		}
@@ -256,7 +288,7 @@ void RenderPolyScene::RenderSprite(PolyRenderThread *thread, AActor *thing, doub
 	subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
 	
 	if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
-		TranslucentObjects[thread->ThreadIndex].push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, (float)t1, (float)t2, StencilValue));
+		thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, (float)t1, (float)t2, CurrentViewpoint->StencilValue));
 }
 
 void RenderPolyScene::RenderLine(PolyRenderThread *thread, subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)
@@ -274,127 +306,129 @@ void RenderPolyScene::RenderLine(PolyRenderThread *thread, subsector_t *sub, seg
 		for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 		{
 			F3DFloor *fakeFloor = line->backsector->e->XFloor.ffloors[i];
-			RenderPolyWall::Render3DFloorLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, fakeFloor, TranslucentObjects[thread->ThreadIndex]);
+			RenderPolyWall::Render3DFloorLine(thread, CurrentViewpoint->PortalPlane, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, fakeFloor, thread->TranslucentObjects);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	RenderPolyWall::RenderLine(thread, WorldToClip, PortalPlane, line, frontsector, subsectorDepth, StencilValue, TranslucentObjects[thread->ThreadIndex], LinePortals, LastPortalLine);
+	RenderPolyWall::RenderLine(thread, CurrentViewpoint->PortalPlane, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, thread->TranslucentObjects, thread->LinePortals, CurrentViewpoint->LastPortalLine);
 }
 
-void RenderPolyScene::RenderPortals(int portalDepth)
+void RenderPolyScene::RenderPortals()
 {
 	PolyRenderThread *thread = PolyRenderer::Instance()->Threads.MainThread();
 
 	bool foggy = false;
-	if (portalDepth < r_portal_recursions)
+	if (CurrentViewpoint->PortalDepth < r_portal_recursions)
 	{
-		for (auto &portal : SectorPortals)
-			portal->Render(portalDepth + 1);
+		for (auto &portal : thread->SectorPortals)
+			portal->Render(CurrentViewpoint->PortalDepth + 1);
 
-		for (auto &portal : LinePortals)
-			portal->Render(portalDepth + 1);
+		for (auto &portal : thread->LinePortals)
+			portal->Render(CurrentViewpoint->PortalDepth + 1);
 	}
 	else // Fill with black
 	{
 		PolyDrawArgs args;
-		args.SetTransform(&WorldToClip);
 		args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(foggy), true);
 		args.SetColor(0, 0);
-		args.SetClipPlane(0, PortalPlane);
+		args.SetClipPlane(0, CurrentViewpoint->PortalPlane);
 		args.SetStyle(TriBlendMode::FillOpaque);
 
-		for (auto &portal : SectorPortals)
+		for (auto &portal : thread->SectorPortals)
 		{
 			args.SetStencilTestValue(portal->StencilValue);
 			args.SetWriteStencil(true, portal->StencilValue + 1);
 			for (const auto &verts : portal->Shape)
 			{
-				args.SetFaceCullCCW(verts.Ccw);
-				args.DrawArray(thread, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
+				args.DrawArray(thread->DrawQueue, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 
-		for (auto &portal : LinePortals)
+		for (auto &portal : thread->LinePortals)
 		{
 			args.SetStencilTestValue(portal->StencilValue);
 			args.SetWriteStencil(true, portal->StencilValue + 1);
 			for (const auto &verts : portal->Shape)
 			{
-				args.SetFaceCullCCW(verts.Ccw);
-				args.DrawArray(thread, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
+				args.DrawArray(thread->DrawQueue, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 	}
 }
 
-void RenderPolyScene::RenderTranslucent(int portalDepth)
+void RenderPolyScene::RenderTranslucent(PolyPortalViewpoint *viewpoint)
 {
+	CurrentViewpoint = viewpoint;
+
 	PolyRenderThread *thread = PolyRenderer::Instance()->Threads.MainThread();
 
-	if (portalDepth < r_portal_recursions)
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip));
+
+	if (CurrentViewpoint->PortalDepth < r_portal_recursions)
 	{
-		for (auto it = SectorPortals.rbegin(); it != SectorPortals.rend(); ++it)
+		for (auto it = thread->SectorPortals.rbegin(); it != thread->SectorPortals.rend(); ++it)
 		{
 			auto &portal = *it;
-			portal->RenderTranslucent(portalDepth + 1);
+			portal->RenderTranslucent();
 		
 			PolyDrawArgs args;
-			args.SetTransform(&WorldToClip);
 			args.SetStencilTestValue(portal->StencilValue + 1);
-			args.SetWriteStencil(true, StencilValue + 1);
-			args.SetClipPlane(0, PortalPlane);
+			args.SetWriteStencil(true, CurrentViewpoint->StencilValue + 1);
+			args.SetClipPlane(0, CurrentViewpoint->PortalPlane);
 			for (const auto &verts : portal->Shape)
 			{
-				args.SetFaceCullCCW(verts.Ccw);
 				args.SetWriteColor(false);
-				args.DrawArray(thread, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
+				args.DrawArray(thread->DrawQueue, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 
-		for (auto it = LinePortals.rbegin(); it != LinePortals.rend(); ++it)
+		for (auto it = thread->LinePortals.rbegin(); it != thread->LinePortals.rend(); ++it)
 		{
 			auto &portal = *it;
-			portal->RenderTranslucent(portalDepth + 1);
+			portal->RenderTranslucent();
 		
 			PolyDrawArgs args;
-			args.SetTransform(&WorldToClip);
 			args.SetStencilTestValue(portal->StencilValue + 1);
-			args.SetWriteStencil(true, StencilValue + 1);
-			args.SetClipPlane(0, PortalPlane);
+			args.SetWriteStencil(true, CurrentViewpoint->StencilValue + 1);
+			args.SetClipPlane(0, CurrentViewpoint->PortalPlane);
 			for (const auto &verts : portal->Shape)
 			{
-				args.SetFaceCullCCW(verts.Ccw);
 				args.SetWriteColor(false);
-				args.DrawArray(thread, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
+				args.DrawArray(thread->DrawQueue, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 			}
 		}
 	}
 
-	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-	for (uint32_t sectorIndex : Cull.SeenSectors)
+	PolyMaskedCycles.Clock();
+
+	// Draw all translucent objects back to front
+	if (CurrentViewpoint->ObjectsEnd > CurrentViewpoint->ObjectsStart)
 	{
-		sector_t *sector = &level.sectors[sectorIndex];
-		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
+		std::stable_sort(
+			thread->TranslucentObjects.begin() + CurrentViewpoint->ObjectsStart,
+			thread->TranslucentObjects.begin() + CurrentViewpoint->ObjectsEnd,
+			[](auto a, auto b) { return *a < *b; });
+
+		size_t i = CurrentViewpoint->ObjectsEnd - 1;
+		size_t start = CurrentViewpoint->ObjectsStart;
+		auto objects = thread->TranslucentObjects.data();
+		while (true)
 		{
-			DVector2 left, right;
-			if (!RenderPolySprite::GetLine(thing, left, right))
-				continue;
-			double distanceSquared = (thing->Pos() - viewpoint.Pos).LengthSquared();
-			RenderSprite(thread, thing, distanceSquared, left, right);
+			PolyTranslucentObject *obj = objects[i];
+			obj->Render(thread, CurrentViewpoint->PortalPlane);
+			obj->~PolyTranslucentObject();
+			if (i == start)
+				break;
+			i--;
 		}
 	}
 
-	std::stable_sort(TranslucentObjects[0].begin(), TranslucentObjects[0].end(), [](auto a, auto b) { return *a < *b; });
+	thread->TranslucentObjects.clear();
 
-	for (auto it = TranslucentObjects[0].rbegin(); it != TranslucentObjects[0].rend(); ++it)
-	{
-		PolyTranslucentObject *obj = *it;
-		obj->Render(thread, WorldToClip, PortalPlane);
-		obj->~PolyTranslucentObject();
-	}
+	PolyMaskedCycles.Unclock();
 
-	TranslucentObjects[0].clear();
+	CurrentViewpoint = nullptr;
 }
 
 /////////////////////////////////////////////////////////////////////////////

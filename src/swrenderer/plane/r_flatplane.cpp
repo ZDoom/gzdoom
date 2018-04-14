@@ -178,7 +178,8 @@ namespace swrenderer
 		double curyfrac = baseyfrac + ystepscale * (x1 - minx);
 
 		double distance = viewport->PlaneDepth(y, planeheight);
-		float zbufferdepth = 1.0f / (distance * Thread->Viewport->viewwindow.FocalTangent);
+
+		float zbufferdepth = (float)(1.0 / fabs(planeheight / Thread->Viewport->ScreenToViewY(y, 1.0)));
 
 		drawerargs.SetTextureUStep(distance * xstepscale / drawerargs.TextureWidth());
 		drawerargs.SetTextureUPos((distance * curxfrac + pviewx) / drawerargs.TextureWidth());
@@ -276,7 +277,7 @@ namespace swrenderer
 
 		drawerargs.DrawSpan(Thread);
 		if (r_models)
-			drawerargs.DrawDepthSpan(Thread, zbufferdepth);
+			drawerargs.DrawDepthSpan(Thread, zbufferdepth, zbufferdepth);
 	}
 
 	/////////////////////////////////////////////////////////////////////////

@@ -85,7 +85,6 @@ bool	 GLPortal::inskybox;
 UniqueList<GLSkyInfo> UniqueSkies;
 UniqueList<GLHorizonInfo> UniqueHorizons;
 UniqueList<secplane_t> UniquePlaneMirrors;
-UniqueList<FLinePortalSpan> UniqueLineToLines;
 
 int skyboxrecursion = 0;
 
@@ -100,7 +99,6 @@ void GLPortal::BeginScene()
 	UniqueSkies.Clear();
 	UniqueHorizons.Clear();
 	UniquePlaneMirrors.Clear();
-	UniqueLineToLines.Clear();
 }
 
 //==========================================================================

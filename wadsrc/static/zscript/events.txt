@@ -27,6 +27,7 @@ struct WorldEvent native play version("2.4")
     native readonly double DamageAngle;
     // for line(pre)activated
     native readonly Line ActivatedLine;
+	native readonly int ActivationType;
     native bool ShouldActivate;
 }
 

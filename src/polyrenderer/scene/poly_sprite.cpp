@@ -74,15 +74,18 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 
 void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
 {
-	int spritenum = thing->sprite;
-	bool isPicnumOverride = thing->picnum.isValid();
-	FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
-	if (modelframe)
+	if (r_models)
 	{
-		const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
-		DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
-		PolyRenderModel(thread, PolyRenderer::Instance()->WorldToClip, clipPlane, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
-		return;
+		int spritenum = thing->sprite;
+		bool isPicnumOverride = thing->picnum.isValid();
+		FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+		if (modelframe)
+		{
+			const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
+			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
+			PolyRenderModel(thread, PolyRenderer::Instance()->WorldToClip, clipPlane, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
+			return;
+		}
 	}
 
 	DVector2 line[2];

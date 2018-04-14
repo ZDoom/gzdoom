@@ -34,6 +34,7 @@
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
+EXTERN_CVAR(Bool, r_models)
 
 void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 {
@@ -59,7 +60,7 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
 
-	renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	renderHUDModel = r_models && gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	PolyTransferHeights fakeflat(viewpoint.camera->subsector);
 

@@ -97,13 +97,14 @@ private:
 	void CreateEyeBuffers(int eye);
 	void CreateShadowMap();
 	void CreateAmbientOcclusion(int width, int height);
-	GLuint Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data = nullptr);
-	GLuint Create2DMultisampleTexture(const FString &name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
-	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height);
-	GLuint CreateRenderBuffer(const FString &name, GLuint format, int width, int height, int samples);
-	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer);
-	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
-	GLuint CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint colorbuffer2, GLuint depthstencil, bool multisample);
+
+	GLuint Create2DTexture(const char *name, GLuint format, int width, int height, const void *data = nullptr);
+	GLuint Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
+	GLuint CreateRenderBuffer(const char *name, GLuint format, int width, int height);
+	GLuint CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples);
+	GLuint CreateFrameBuffer(const char *name, GLuint colorbuffer);
+	GLuint CreateFrameBuffer(const char *name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
+	GLuint CreateFrameBuffer(const char *name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint colorbuffer2, GLuint depthstencil, bool multisample);
 	bool CheckFrameBufferCompleteness();
 	void ClearFrameBuffer(bool stencil, bool depth);
 	void DeleteTexture(GLuint &handle);

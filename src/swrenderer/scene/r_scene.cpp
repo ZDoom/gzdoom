@@ -111,11 +111,12 @@ namespace swrenderer
 			}
 			else
 			{
-				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
+				PalEntry bgracolor = GPalette.BaseColors[clearcolor];
+				bgracolor.a = 255;
 				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
 				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
 				for (int i = 0; i < size; i++)
-					dest[i] = bgracolor;
+					dest[i] = bgracolor.d;
 			}
 		}
 
@@ -343,6 +344,7 @@ namespace swrenderer
 		auto viewport = MainThread()->Viewport.get();
 		
 		const bool savedviewactive = viewactive;
+		auto savedtarget = viewport->RenderTarget;
 
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
@@ -361,7 +363,7 @@ namespace swrenderer
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();
 
-		viewport->RenderTarget = nullptr;
+		viewport->RenderTarget = savedtarget;
 		viewport->RenderingToCanvas = false;
 		viewactive = savedviewactive;
 	}

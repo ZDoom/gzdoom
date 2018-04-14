@@ -236,6 +236,9 @@ struct FDrawInfo
 	~FDrawInfo();
 	void ClearBuffers();
 
+	void AddWall(GLWall *wall);
+	bool PutWallCompat(GLWall *wall, int passflag);	// Legacy GL only.
+
 	bool DoOneSectorUpper(subsector_t * subsec, float planez);
 	bool DoOneSectorLower(subsector_t * subsec, float planez);
 	bool DoFakeBridge(subsector_t * subsec, float planez);

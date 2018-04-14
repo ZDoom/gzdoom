@@ -428,8 +428,8 @@ void FGLRenderBuffers::CreateExposureLevels(int width, int height)
 		FGLExposureTextureLevel level;
 		level.Width = width;
 		level.Height = height;
-		level.Texture = Create2DTexture(textureName, GL_R32F, level.Width, level.Height);
-		level.Framebuffer = CreateFrameBuffer(fbName, level.Texture);
+		level.Texture = Create2DTexture(textureName.GetChars(), GL_R32F, level.Width, level.Height);
+		level.Framebuffer = CreateFrameBuffer(fbName.GetChars(), level.Texture);
 		ExposureLevels.Push(level);
 	} while (width > 1 || height > 1);
 
@@ -474,7 +474,7 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 //
 //==========================================================================
 
-GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int width, int height, const void *data)
+GLuint FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int width, int height, const void *data)
 {
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
@@ -508,7 +508,7 @@ GLuint FGLRenderBuffers::Create2DTexture(const FString &name, GLuint format, int
 	return handle;
 }
 
-GLuint FGLRenderBuffers::Create2DMultisampleTexture(const FString &name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
+GLuint FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
 {
 	GLuint handle = 0;
 	glGenTextures(1, &handle);
@@ -525,7 +525,7 @@ GLuint FGLRenderBuffers::Create2DMultisampleTexture(const FString &name, GLuint 
 //
 //==========================================================================
 
-GLuint FGLRenderBuffers::CreateRenderBuffer(const FString &name, GLuint format, int width, int height)
+GLuint FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height)
 {
 	GLuint handle = 0;
 	glGenRenderbuffers(1, &handle);
@@ -535,7 +535,7 @@ GLuint FGLRenderBuffers::CreateRenderBuffer(const FString &name, GLuint format, 
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateRenderBuffer(const FString &name, GLuint format, int width, int height, int samples)
+GLuint FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples)
 {
 	if (samples <= 1)
 		return CreateRenderBuffer(name, format, width, height);
@@ -554,7 +554,7 @@ GLuint FGLRenderBuffers::CreateRenderBuffer(const FString &name, GLuint format, 
 //
 //==========================================================================
 
-GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer)
+GLuint FGLRenderBuffers::CreateFrameBuffer(const char *name, GLuint colorbuffer)
 {
 	GLuint handle = 0;
 	glGenFramebuffers(1, &handle);
@@ -566,7 +566,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer)
+GLuint FGLRenderBuffers::CreateFrameBuffer(const char *name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer)
 {
 	GLuint handle = 0;
 	glGenFramebuffers(1, &handle);
@@ -582,7 +582,7 @@ GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuff
 	return handle;
 }
 
-GLuint FGLRenderBuffers::CreateFrameBuffer(const FString &name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint colorbuffer2, GLuint depthstencil, bool multisample)
+GLuint FGLRenderBuffers::CreateFrameBuffer(const char *name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint colorbuffer2, GLuint depthstencil, bool multisample)
 {
 	GLuint handle = 0;
 	glGenFramebuffers(1, &handle);

@@ -58,7 +58,7 @@ FSamplerManager::FSamplerManager()
 		{
 			FString name;
 			name.Format("mSamplers[%d]", i);
-			FGLDebug::LabelObject(GL_SAMPLER, mSamplers[i], name);
+			FGLDebug::LabelObject(GL_SAMPLER, mSamplers[i], name.GetChars());
 		}
 	}
 

@@ -226,5 +226,5 @@ int FRawPageTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate,
 		}
 		bmp->CopyPixelData(x, y, source, 320, 200, 1, 320, 0, paldata, inf);
 	}
-
+	return 0;
 }

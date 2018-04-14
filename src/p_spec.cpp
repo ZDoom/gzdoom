@@ -191,7 +191,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 
 	// [MK] Use WorldLinePreActivated to decide if activation should continue
 	bool shouldactivate = true;
-	E_WorldLinePreActivated(line, mo, &shouldactivate);
+	E_WorldLinePreActivated(line, mo, activationType, &shouldactivate);
 	if ( !shouldactivate ) return false;
 
 	bool remote = (line->special != 7 && line->special != 8 && (line->special < 11 || line->special > 14));
@@ -206,7 +206,7 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 					line->args[3], line->args[4]);
 
 	// [MK] Fire up WorldLineActivated
-	if ( buttonSuccess ) E_WorldLineActivated(line, mo);
+	if ( buttonSuccess ) E_WorldLineActivated(line, mo, activationType);
 
 	special = line->special;
 	if (!repeat && buttonSuccess)

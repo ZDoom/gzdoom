@@ -805,7 +805,7 @@ template<typename BlendT, typename SamplerT>
 class RectScreenDrawer32
 {
 public:
-	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
+	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
 	{
 		using namespace TriScreenDrawerModes;
 
@@ -821,7 +821,7 @@ public:
 
 private:
 	template<typename ShadeModeT, typename FilterModeT>
-	FORCEINLINE static void VECTORCALL Loop(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
+	FORCEINLINE static void VECTORCALL Loop(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
 	{
 		using namespace TriScreenDrawerModes;
 

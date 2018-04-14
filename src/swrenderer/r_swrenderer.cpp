@@ -181,7 +181,7 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target)
 
 void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	DCanvas *pic = new DSimpleCanvas (width, height, false);
+	DSimpleCanvas pic(width, height, false);
 	PalEntry palette[256];
 
 	// Take a snapshot of the player's view
@@ -189,7 +189,7 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
 		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, pic, 0, 0, width, height, true);
+		PolyRenderer::Instance()->RenderViewToCanvas(player->mo, &pic, 0, 0, width, height, true);
 		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
 		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
@@ -197,13 +197,12 @@ void FSoftwareRenderer::WriteSavePic (player_t *player, FileWriter *file, int wi
 	{
 		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
 		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.RenderViewToCanvas(player->mo, pic, 0, 0, width, height);
+		mScene.RenderViewToCanvas(player->mo, &pic, 0, 0, width, height);
 		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}
 	screen->GetFlashedPalette (palette);
-	M_CreatePNG (file, pic->GetPixels(), palette, SS_PAL, width, height, pic->GetPitch(), Gamma);
-	delete pic;
+	M_CreatePNG (file, pic.GetPixels(), palette, SS_PAL, width, height, pic.GetPitch(), Gamma);
 }
 
 void FSoftwareRenderer::DrawRemainingPlayerSprites()
@@ -224,13 +223,6 @@ void FSoftwareRenderer::DrawRemainingPlayerSprites()
 		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
 		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
-}
-
-void FSoftwareRenderer::OnModeSet ()
-{
-	// This does not work if the SW renderer is not in use.
-	if (!V_IsHardwareRenderer())
-		mScene.ScreenResized();
 }
 
 void FSoftwareRenderer::SetClearColor(int color)

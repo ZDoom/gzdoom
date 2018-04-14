@@ -27,10 +27,10 @@
 class RenderPolyDecal
 {
 public:
-	static void RenderWallDecals(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue);
+	static void RenderWallDecals(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue);
 
 private:
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue);
+	void Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue);
 
 	void GetDecalSectors(DBaseDecal *decal, const seg_t *line, sector_t **front, sector_t **back);
 	double GetDecalZ(DBaseDecal *decal, const seg_t *line, sector_t *front, sector_t *back);

@@ -534,32 +534,32 @@ static bool gl_CheckFog(FColormap *cm, int lightlevel)
 //
 //==========================================================================
 
-bool GLWall::PutWallCompat(int passflag)
+bool FDrawInfo::PutWallCompat(GLWall *wall, int passflag)
 {
 	static int list_indices[2][2] =
 	{ { GLLDL_WALLS_PLAIN, GLLDL_WALLS_FOG },{ GLLDL_WALLS_MASKED, GLLDL_WALLS_FOGMASKED } };
 
 	// are lights possible?
-	if (mDrawer->FixedColormap != CM_DEFAULT || !gl_lights || seg->sidedef == nullptr || type == RENDERWALL_M2SNF || !gltexture) return false;
+	if (mDrawer->FixedColormap != CM_DEFAULT || !gl_lights || wall->seg->sidedef == nullptr || wall->type == RENDERWALL_M2SNF || !wall->gltexture) return false;
 
 	// multipassing these is problematic.
-	if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S)) return false;
+	if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S)) return false;
 
 	// Any lights affecting this wall?
-	if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
+	if (!(wall->seg->sidedef->Flags & WALLF_POLYOBJ))
 	{
-		if (seg->sidedef->lighthead == nullptr) return false;
+		if (wall->seg->sidedef->lighthead == nullptr) return false;
 	}
-	else if (sub)
+	else if (wall->sub)
 	{
-		if (sub->lighthead == nullptr) return false;
+		if (wall->sub->lighthead == nullptr) return false;
 	}
 
-	bool foggy = gl_CheckFog(&Colormap, lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
-	bool masked = passflag == 2 && gltexture->isMasked();
+	bool foggy = gl_CheckFog(&wall->Colormap, wall->lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
+	bool masked = passflag == 2 && wall->gltexture->isMasked();
 
 	int list = list_indices[masked][foggy];
-	gl_drawinfo->dldrawlists[list].AddWall(this);
+	dldrawlists[list].AddWall(wall);
 	return true;
 
 }

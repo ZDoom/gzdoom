@@ -429,7 +429,7 @@ template<typename BlendT, typename SamplerT>
 class RectScreenDrawer8
 {
 public:
-	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
+	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
 	{
 		using namespace TriScreenDrawerModes;
 

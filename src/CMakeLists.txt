@@ -796,7 +796,7 @@ set( POLYRENDER_SOURCES
 	polyrenderer/drawers/poly_triangle.cpp
 	polyrenderer/drawers/poly_draw_args.cpp
 	polyrenderer/drawers/screen_triangle.cpp
-	polyrenderer/math/tri_matrix.cpp
+	polyrenderer/math/gpu_types.cpp
 )
 
 # These files will be flagged as "headers" so that they appear in project files
@@ -1085,6 +1085,7 @@ set (PCH_SOURCES
 	gl/textures/gl_texture.cpp
 	gl/textures/gl_material.cpp
 	gl/textures/gl_samplers.cpp
+	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	
 	menu/joystickmenu.cpp

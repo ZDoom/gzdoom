@@ -88,6 +88,13 @@ namespace swrenderer
 
 		auto viewport = Thread->Viewport.get();
 
+		DVector3 worldNormal = pl->height.Normal();
+		planeNormal.X = worldNormal.X * viewport->viewpoint.Sin - worldNormal.Y * viewport->viewpoint.Cos;
+		planeNormal.Y = worldNormal.X * viewport->viewpoint.Cos + worldNormal.Y * viewport->viewpoint.Sin;
+		planeNormal.Z = worldNormal.Z;
+		planeD = -planeNormal.Z * (pl->height.ZatPoint(viewport->viewpoint.Pos.X, viewport->viewpoint.Pos.Y) - viewport->viewpoint.Pos.Z);
+
+
 		drawerargs.SetSolidColor(3);
 		drawerargs.SetTexture(Thread, texture);
 
@@ -205,15 +212,23 @@ namespace swrenderer
 
 	void RenderSlopePlane::RenderLine(int y, int x1, int x2)
 	{
-		/* To do: project (x1,y) and (x2,y) on the plane to calculate the depth
-		double distance = Thread->Viewport->PlaneDepth(y, planeheight);
-		float zbufferdepth = 1.0f / (distance * Thread->Viewport->viewwindow.FocalTangent);
-		drawerargs.SetDestX1(x1);
-		drawerargs.SetDestX2(x2);
-		drawerargs.SetDestY(Thread->Viewport.get(), y);
-		drawerargs.DrawDepthSpan(Thread, zbufferdepth);
-		*/
-
 		drawerargs.DrawTiltedSpan(Thread, y, x1, x2, plane_sz, plane_su, plane_sv, plane_shade, planeshade, planelightfloat, pviewx, pviewy, basecolormap);
+
+		if (r_models)
+		{
+			double viewZ = 1.0;
+			double viewX1 = Thread->Viewport->ScreenToViewX(x1, viewZ);
+			double viewX2 = Thread->Viewport->ScreenToViewX(x2 + 1, viewZ);
+			double viewY = Thread->Viewport->ScreenToViewY(y, viewZ);
+
+			// Find depth values for the span
+			float zbufferdepth1 = (float)(-planeD / (planeNormal | DVector3(viewX1, viewZ, viewY)));
+			float zbufferdepth2 = (float)(-planeD / (planeNormal | DVector3(viewX2, viewZ, viewY)));
+
+			drawerargs.SetDestX1(x1);
+			drawerargs.SetDestX2(x2);
+			drawerargs.SetDestY(Thread->Viewport.get(), y);
+			drawerargs.DrawDepthSpan(Thread, 1.0f / zbufferdepth1, 1.0f / zbufferdepth2);
+		}
 	}
 }

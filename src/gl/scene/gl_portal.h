@@ -74,7 +74,6 @@ struct GLSkyInfo
 extern UniqueList<GLSkyInfo> UniqueSkies;
 extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
-extern UniqueList<FLinePortalSpan> UniqueLineToLines;
 struct GLEEHorizonPortal;
 class GLSceneDrawer;
 

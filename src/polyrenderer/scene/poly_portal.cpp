@@ -30,6 +30,7 @@
 #include "poly_portal.h"
 #include "polyrenderer/poly_renderer.h"
 #include "polyrenderer/scene/poly_light.h"
+#include "polyrenderer/scene/poly_scene.h"
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -58,31 +59,35 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	float ratio = viewwindow.WidescreenRatio;
 	float fovratio = (viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
-	TriMatrix worldToView =
-		TriMatrix::rotate((float)viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
-		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
-		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
-		TriMatrix::swapYZ() *
-		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
-	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
+	Mat4f worldToView =
+		Mat4f::Rotate((float)viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
+		Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+		Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
+		Mat4f::Scale(1.0f, level.info->pixelstretch, 1.0f) *
+		Mat4f::SwapYZ() *
+		Mat4f::Translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
+	Mat4f worldToClip = Mat4f::Perspective(fovy, ratio, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * worldToView;
 
-	PolyClipPlane portalPlane(0.0f, 0.0f, 0.0f, 1.0f);
-	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
-	//RenderPortal.SetPortalSegments(Segments);
-	RenderPortal.Render(portalDepth);
+	PortalViewpoint = PolyPortalViewpoint();
+	PortalViewpoint.WorldToView = worldToView;
+	PortalViewpoint.WorldToClip = worldToClip;
+	PortalViewpoint.StencilValue = StencilValue;
+	PortalViewpoint.PortalPlane = PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f);
+	PortalViewpoint.PortalDepth = portalDepth;
+
+	PolyRenderer::Instance()->Scene.Render(&PortalViewpoint);
 	
 	RestoreGlobals();
 }
 
-void PolyDrawSectorPortal::RenderTranslucent(int portalDepth)
+void PolyDrawSectorPortal::RenderTranslucent()
 {
 	if (Portal->mType == PORTS_HORIZON || Portal->mType == PORTS_PLANE)
 		return;
 
 	SaveGlobals();
 		
-	RenderPortal.RenderTranslucent(portalDepth);
+	PolyRenderer::Instance()->Scene.RenderTranslucent(&PortalViewpoint);
 
 	RestoreGlobals();
 }
@@ -169,16 +174,16 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	float ratio = viewwindow.WidescreenRatio;
 	float fovratio = (viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
-	TriMatrix worldToView =
-		TriMatrix::rotate((float)viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
-		TriMatrix::rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
-		TriMatrix::rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
-		TriMatrix::scale(1.0f, level.info->pixelstretch, 1.0f) *
-		TriMatrix::swapYZ() *
-		TriMatrix::translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
+	Mat4f worldToView =
+		Mat4f::Rotate((float)viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
+		Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
+		Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
+		Mat4f::Scale(1.0f, level.info->pixelstretch, 1.0f) *
+		Mat4f::SwapYZ() *
+		Mat4f::Translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
 	if (Mirror)
-		worldToView = TriMatrix::scale(-1.0f, 1.0f, 1.0f) * worldToView;
-	TriMatrix worldToClip = TriMatrix::perspective(fovy, ratio, 5.0f, 65535.0f) * worldToView;
+		worldToView = Mat4f::Scale(-1.0f, 1.0f, 1.0f) * worldToView;
+	Mat4f worldToClip = Mat4f::Perspective(fovy, ratio, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * worldToView;
 
 	// Find portal destination line and make sure it faces the right way
 	line_t *clipLine = Portal ? Portal->mDestination : Mirror;
@@ -202,18 +207,23 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	Segments.clear();
 	Segments.push_back({ angle1, angle2 });*/
 
-	RenderPortal.LastPortalLine = clipLine;
-	RenderPortal.SetViewpoint(worldToClip, portalPlane, StencilValue);
-	//RenderPortal.SetPortalSegments(Segments);
-	RenderPortal.Render(portalDepth);
+	PortalViewpoint = PolyPortalViewpoint();
+	PortalViewpoint.WorldToView = worldToView;
+	PortalViewpoint.WorldToClip = worldToClip;
+	PortalViewpoint.StencilValue = StencilValue;
+	PortalViewpoint.PortalPlane = portalPlane;
+	PortalViewpoint.PortalDepth = portalDepth;
+	PortalViewpoint.LastPortalLine = clipLine;
+
+	PolyRenderer::Instance()->Scene.Render(&PortalViewpoint);
 
 	RestoreGlobals();
 }
 
-void PolyDrawLinePortal::RenderTranslucent(int portalDepth)
+void PolyDrawLinePortal::RenderTranslucent()
 {
 	SaveGlobals();
-	RenderPortal.RenderTranslucent(portalDepth);
+	PolyRenderer::Instance()->Scene.RenderTranslucent(&PortalViewpoint);
 	RestoreGlobals();
 }
 
@@ -304,7 +314,7 @@ void PolyDrawLinePortal::SaveGlobals()
 	R_SetViewAngle(viewpoint, viewwindow);
 
 	if (Mirror)
-		PolyTriangleDrawer::toggle_mirror();
+		PolyTriangleDrawer::ToggleMirror(PolyRenderer::Instance()->Threads.MainThread()->DrawQueue);
 }
 
 void PolyDrawLinePortal::RestoreGlobals()
@@ -328,5 +338,5 @@ void PolyDrawLinePortal::RestoreGlobals()
 	R_SetViewAngle(viewpoint, viewwindow);
 
 	if (Mirror)
-		PolyTriangleDrawer::toggle_mirror();
+		PolyTriangleDrawer::ToggleMirror(PolyRenderer::Instance()->Threads.MainThread()->DrawQueue);
 }

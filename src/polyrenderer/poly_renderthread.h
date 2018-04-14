@@ -29,6 +29,9 @@
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 class RenderMemory;
+class PolyTranslucentObject;
+class PolyDrawSectorPortal;
+class PolyDrawLinePortal;
 
 class PolyRenderThread
 {
@@ -45,6 +48,10 @@ public:
 
 	std::unique_ptr<RenderMemory> FrameMemory;
 	DrawerCommandQueuePtr DrawQueue;
+
+	std::vector<PolyTranslucentObject *> TranslucentObjects;
+	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
+	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;
 
 	// Make sure texture can accessed safely
 	void PrepareTexture(FTexture *texture, FRenderStyle style);
@@ -72,6 +79,8 @@ public:
 	PolyRenderThread *MainThread() { return Threads.front().get(); }
 	int NumThreads() const { return (int)Threads.size(); }
 
+	std::vector<std::unique_ptr<PolyRenderThread>> Threads;
+
 private:
 	void RenderThreadSlice(PolyRenderThread *thread);
 
@@ -80,7 +89,6 @@ private:
 
 	std::function<void(PolyRenderThread *)> WorkerCallback;
 
-	std::vector<std::unique_ptr<PolyRenderThread>> Threads;
 	std::mutex start_mutex;
 	std::condition_variable start_condition;
 	bool shutdown_flag = false;

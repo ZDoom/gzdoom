@@ -64,7 +64,7 @@ private:
 
 	FHardwareTexture *CreateHwTexture();
 
-	const FHardwareTexture *Bind(int texunit, int clamp, int translation, int flags);
+	bool Bind(int texunit, int clamp, int translation, int flags);
 	
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);

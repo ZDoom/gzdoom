@@ -157,7 +157,7 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 //
 //===========================================================================
 
-const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, int flags)
+bool FGLTexture::Bind(int texunit, int clampmode, int translation, int flags)
 {
 	int usebright = false;
 
@@ -207,11 +207,16 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 					wt->GenTime[0] = screen->FrameTime;
 				}
 			}
+			else
+			{
+				w = tex->GetWidth();
+				h = tex->GetHeight();
+			}
 			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FGLTexture.Bind")) 
 			{
 				// could not create texture
 				delete[] buffer;
-				return NULL;
+				return false;
 			}
 			delete[] buffer;
 		}
@@ -220,9 +225,9 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 		if (lastSampler != clampmode)
 			lastSampler = GLRenderer->mSamplerManager->Bind(texunit, clampmode, lastSampler);
 		lastTranslation = translation;
-		return hwtex; 
+		return true; 
 	}
-	return NULL;
+	return false;
 }
 
 //===========================================================================
@@ -631,8 +636,7 @@ void FMaterial::Bind(int clampmode, int translation)
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = mExpanded? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY)? CTF_CheckHires : 0;
 
-	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, flags);
-	if (gltexture != NULL)
+	if (mBaseLayer->Bind(0, clampmode, translation, flags))
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{
@@ -762,7 +766,7 @@ void FMaterial::BindToFrameBuffer()
 		FHardwareTexture::Unbind(0);
 		ClearLastTexture();
 	}
-	mBaseLayer->mHwTexture->BindToFrameBuffer();
+	mBaseLayer->mHwTexture->BindToFrameBuffer(mWidth, mHeight);
 }
 
 //==========================================================================

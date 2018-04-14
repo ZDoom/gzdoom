@@ -404,16 +404,16 @@ void E_WorldThingDestroyed(AActor* actor)
 		handler->WorldThingDestroyed(actor);
 }
 
-void E_WorldLinePreActivated(line_t* line, AActor* actor, bool* shouldactivate)
+void E_WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate)
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->WorldLinePreActivated(line, actor, shouldactivate);
+		handler->WorldLinePreActivated(line, actor, activationType, shouldactivate);
 }
 
-void E_WorldLineActivated(line_t* line, AActor* actor)
+void E_WorldLineActivated(line_t* line, AActor* actor, int activationType)
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->WorldLineActivated(line, actor);
+		handler->WorldLineActivated(line, actor, activationType);
 }
 
 void E_PlayerEntered(int num, bool fromhub)
@@ -545,6 +545,7 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageType);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageFlags);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageAngle);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivatedLine);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivationType);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ShouldActivate);
 
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
@@ -795,7 +796,7 @@ void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
 	}
 }
 
-void DStaticEventHandler::WorldLinePreActivated(line_t* line, AActor* actor, bool* shouldactivate)
+void DStaticEventHandler::WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate)
 {
 	IFVIRTUAL(DStaticEventHandler, WorldLinePreActivated)
 	{
@@ -805,6 +806,7 @@ void DStaticEventHandler::WorldLinePreActivated(line_t* line, AActor* actor, boo
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		e.ActivatedLine = line;
+		e.ActivationType = activationType;
 		e.ShouldActivate = *shouldactivate;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
@@ -812,7 +814,7 @@ void DStaticEventHandler::WorldLinePreActivated(line_t* line, AActor* actor, boo
 	}
 }
 
-void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor)
+void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor, int activationType)
 {
 	IFVIRTUAL(DStaticEventHandler, WorldLineActivated)
 	{
@@ -822,6 +824,7 @@ void DStaticEventHandler::WorldLineActivated(line_t* line, AActor* actor)
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
 		e.ActivatedLine = line;
+		e.ActivationType = activationType;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}

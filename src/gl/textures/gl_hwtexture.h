@@ -60,7 +60,6 @@ public:
 
 private:
 
-	short texwidth = 0, texheight = 0;
 	bool forcenocompression;
 
 	TranslatedTexture glDefTex;
@@ -71,7 +70,7 @@ private:
 
 	TranslatedTexture * GetTexID(int translation);
 
-	int GetDepthBuffer();
+	int GetDepthBuffer(int w, int h);
 	void Resize(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data);
 
 public:
@@ -81,13 +80,14 @@ public:
 	static void Unbind(int texunit);
 	static void UnbindAll();
 
-	void BindToFrameBuffer();
+	void BindToFrameBuffer(int w, int h);
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
 	void AllocateBuffer(int w, int h, int texelsize);
 	uint8_t *MapBuffer();
 
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name);
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name) = delete;
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name);
 	unsigned int GetTextureHandle(int translation);
 
 	void Clean(bool all);

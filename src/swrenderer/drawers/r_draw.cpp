@@ -225,6 +225,7 @@ namespace swrenderer
 			if (rendertarget->IsBgra())
 			{
 				uint32_t *destorg = (uint32_t*)rendertarget->GetPixels();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint32_t *dest = (uint32_t*)args.Dest();
 				int offset  = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();
@@ -233,6 +234,7 @@ namespace swrenderer
 			else
 			{
 				uint8_t *destorg = rendertarget->GetPixels();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint8_t *dest = (uint8_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();
@@ -247,6 +249,7 @@ namespace swrenderer
 			if (rendertarget->IsBgra())
 			{
 				uint32_t *destorg = (uint32_t*)rendertarget->GetPixels();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint32_t *dest = (uint32_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();
@@ -255,6 +258,7 @@ namespace swrenderer
 			else
 			{
 				uint8_t *destorg = rendertarget->GetPixels();
+				destorg += viewwindowx + viewwindowy * rendertarget->GetPitch();
 				uint8_t *dest = (uint8_t*)args.Dest();
 				int offset = (int)(ptrdiff_t)(dest - destorg);
 				x = offset % rendertarget->GetPitch();
@@ -289,14 +293,19 @@ namespace swrenderer
 		float idepth;
 	};
 
+	// #define DEPTH_DEBUG
+
 	class DepthSpanCommand : public DrawerCommand
 	{
 	public:
-		DepthSpanCommand(const SpanDrawerArgs &args, float idepth) : idepth(idepth)
+		DepthSpanCommand(const SpanDrawerArgs &args, float idepth1, float idepth2) : idepth1(idepth1), idepth2(idepth2)
 		{
 			y = args.DestY();
 			x1 = args.DestX1();
 			x2 = args.DestX2();
+			#ifdef DEPTH_DEBUG
+			dest = (uint32_t*)args.Viewport()->GetDest(0, args.DestY());
+			#endif
 		}
 
 		FString DebugInfo() override { return "DepthSpanCommand"; }
@@ -310,16 +319,46 @@ namespace swrenderer
 			int pitch = PolyStencilBuffer::Instance()->BlockWidth() * 8;
 			float *values = zbuffer->Values() + y * pitch;
 			int end = x2;
-			float depth = idepth;
-			for (int x = x1; x <= end; x++)
+
+			if (idepth1 == idepth2)
 			{
-				values[x] = depth;
+				float depth = idepth1;
+				#ifdef DEPTH_DEBUG
+				uint32_t gray = clamp<int32_t>((int32_t)(1.0f / depth / 4.0f), 0, 255);
+				uint32_t color = MAKEARGB(255, gray, gray, gray);
+				#endif
+				for (int x = x1; x <= end; x++)
+				{
+					values[x] = depth;
+					#ifdef DEPTH_DEBUG
+					dest[x] = color;
+					#endif
+				}
+			}
+			else
+			{
+				float depth = idepth1;
+				float step = (idepth2 - idepth1) / (x2 - x1 + 1);
+				for (int x = x1; x <= end; x++)
+				{
+					#ifdef DEPTH_DEBUG
+					uint32_t gray = clamp<int32_t>((int32_t)(1.0f / depth / 4.0f), 0, 255);
+					uint32_t color = MAKEARGB(255, gray, gray, gray);
+					dest[x] = color;
+					#endif
+
+					values[x] = depth;
+					depth += step;
+				}
 			}
 		}
 
 	private:
 		int y, x1, x2;
-		float idepth;
+		float idepth1, idepth2;
+		#ifdef DEPTH_DEBUG
+		uint32_t *dest;
+		#endif
 	};
 
 	void SWPixelFormatDrawers::DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth)
@@ -332,8 +371,8 @@ namespace swrenderer
 		Queue->Push<DepthColumnCommand>(args, idepth);
 	}
 
-	void SWPixelFormatDrawers::DrawDepthSpan(const SpanDrawerArgs &args, float idepth)
+	void SWPixelFormatDrawers::DrawDepthSpan(const SpanDrawerArgs &args, float idepth1, float idepth2)
 	{
-		Queue->Push<DepthSpanCommand>(args, idepth);
+		Queue->Push<DepthSpanCommand>(args, idepth1, idepth2);
 	}
 }

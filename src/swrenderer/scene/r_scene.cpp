@@ -107,11 +107,12 @@ namespace swrenderer
 			}
 			else
 			{
-				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
+				PalEntry bgracolor = GPalette.BaseColors[clearcolor];
+				bgracolor.a = 255;
 				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
 				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
 				for (int i = 0; i < size; i++)
-					dest[i] = bgracolor;
+					dest[i] = bgracolor.d;
 			}
 		}
 

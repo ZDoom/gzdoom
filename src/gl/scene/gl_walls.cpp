@@ -46,6 +46,56 @@
 #include "gl/shaders/gl_shader.h"
 
 
+void FDrawInfo::AddWall(GLWall *wall)
+{
+	bool translucent = !!(wall->flags & GLWall::GLWF_TRANSLUCENT);
+	int list;
+
+	if (translucent) // translucent walls
+	{
+		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
+		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(true);
+		drawlists[GLDL_TRANSLUCENT].AddWall(wall);
+	}
+	else
+	{
+		if (gl.legacyMode)
+		{
+			if (PutWallCompat(wall, GLWall::passflag[wall->type])) return;
+		}
+
+		bool masked;
+
+		masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
+
+		if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S))
+		{
+			list = GLDL_MASKEDWALLSOFS;
+		}
+		else
+		{
+			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
+		}
+		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(false);
+		drawlists[list].AddWall(wall);
+
+	}
+}
+
+
+const char GLWall::passflag[] = {
+	0,		//RENDERWALL_NONE,             
+	1,		//RENDERWALL_TOP,              // unmasked
+	1,		//RENDERWALL_M1S,              // unmasked
+	2,		//RENDERWALL_M2S,              // depends on render and texture settings
+	1,		//RENDERWALL_BOTTOM,           // unmasked
+	3,		//RENDERWALL_FOGBOUNDARY,      // translucent
+	1,		//RENDERWALL_MIRRORSURFACE,    // only created from PORTALTYPE_MIRROR
+	2,		//RENDERWALL_M2SNF,            // depends on render and texture settings, no fog, used on mid texture lines with a fog boundary.
+	3,		//RENDERWALL_COLOR,            // translucent
+	2,		//RENDERWALL_FFBLOCK           // depends on render and texture settings
+};
+
 //==========================================================================
 //
 // 
@@ -53,26 +103,11 @@
 //==========================================================================
 void GLWall::PutWall(bool translucent)
 {
-	int list;
-
-	static char passflag[] = {
-		0,		//RENDERWALL_NONE,             
-		1,		//RENDERWALL_TOP,              // unmasked
-		1,		//RENDERWALL_M1S,              // unmasked
-		2,		//RENDERWALL_M2S,              // depends on render and texture settings
-		1,		//RENDERWALL_BOTTOM,           // unmasked
-		3,		//RENDERWALL_FOGBOUNDARY,      // translucent
-		1,		//RENDERWALL_MIRRORSURFACE,    // only created from PORTALTYPE_MIRROR
-		2,		//RENDERWALL_M2SNF,            // depends on render and texture settings, no fog, used on mid texture lines with a fog boundary.
-		3,		//RENDERWALL_COLOR,            // translucent
-		2,		//RENDERWALL_FFBLOCK           // depends on render and texture settings
-	};
-
-
 	if (gltexture && gltexture->tex->GetTranslucency() && passflag[type] == 2)
 	{
 		translucent = true;
 	}
+	if (translucent) flags |= GLWF_TRANSLUCENT;
 
 	if (mDrawer->FixedColormap)
 	{
@@ -81,36 +116,7 @@ void GLWall::PutWall(bool translucent)
 		Colormap.Clear();
 	}
 	if (mDrawer->isFullbright(Colormap.LightColor, lightlevel)) flags &= ~GLWF_GLOW;
-
-	if (translucent) // translucent walls
-	{
-		ViewDistance = (r_viewpoint.Pos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
-		if (gl.buffermethod == BM_DEFERRED) MakeVertices(true);
-		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].AddWall(this);
-	}
-	else
-	{
-		if (gl.legacyMode && !translucent)
-		{
-			if (PutWallCompat(passflag[type])) return;
-		}
-
-		bool masked;
-
-		masked = passflag[type] == 1 ? false : (gltexture && gltexture->isMasked());
-
-		if ((flags&GLWF_SKYHACK && type == RENDERWALL_M2S))
-		{
-			list = GLDL_MASKEDWALLSOFS;
-		}
-		else
-		{
-			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
-		}
-		if (gl.buffermethod == BM_DEFERRED) MakeVertices(false);
-		gl_drawinfo->drawlists[list].AddWall(this);
-
-	}
+	gl_drawinfo->AddWall(this);
 	lightlist = NULL;
 	vertcount = 0;	// make sure that following parts of the same linedef do not get this one's vertex info.
 }

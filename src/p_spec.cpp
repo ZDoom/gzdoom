@@ -242,6 +242,28 @@ bool P_ActivateLine (line_t *line, AActor *mo, int side, int activationType, DVe
 	return true;
 }
 
+DEFINE_ACTION_FUNCTION(_Line, Activate)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	PARAM_POINTER(mo, AActor);
+	PARAM_INT(side);
+	PARAM_INT(activationType);
+	ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, NULL));
+}
+
+DEFINE_ACTION_FUNCTION(_Line, RemoteActivate)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(line_t);
+	PARAM_POINTER(mo, AActor);
+	PARAM_INT(side);
+	PARAM_INT(activationType);
+	PARAM_FLOAT(optx);
+	PARAM_FLOAT(opty);
+	PARAM_FLOAT(optz);
+	DVector3 optpos = DVector3(optx, opty, optz);
+	ACTION_RETURN_BOOL(P_ActivateLine(self, mo, side, activationType, &optpos));
+}
+
 //============================================================================
 //
 // P_TestActivateLine

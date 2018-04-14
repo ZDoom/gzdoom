@@ -103,7 +103,8 @@ enum WOPL_InstrumentFlags
 {
     WOPL_Flags_NONE      = 0,
     WOPL_Flag_Enable4OP  = 0x01,
-    WOPL_Flag_Pseudo4OP  = 0x02
+    WOPL_Flag_Pseudo4OP  = 0x02,
+    WOPL_Flag_NoSound    = 0x04,
 };
 
 struct WOPL_Inst
@@ -151,6 +152,7 @@ static bool readInstrument(MIDIplay::fileReader &file, WOPL_Inst &ins, uint16_t 
 
     uint8_t flags       = idata[39];
     ins.adlins.flags = (flags & WOPL_Flag_Enable4OP) && (flags & WOPL_Flag_Pseudo4OP) ? adlinsdata::Flag_Pseudo4op : 0;
+    ins.adlins.flags|= (flags & WOPL_Flag_NoSound) ? adlinsdata::Flag_NoSound : 0;
     ins.fourOps      = (flags & WOPL_Flag_Enable4OP) || (flags & WOPL_Flag_Pseudo4OP);
 
     ins.op[0].feedconn = (idata[40]);

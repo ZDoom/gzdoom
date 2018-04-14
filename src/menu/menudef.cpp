@@ -1429,11 +1429,11 @@ static void InitMusicMenus()
 
 	if (menu != nullptr)
 	{
-		if (soundfonts.Size() > 0)
+		int adl_banks_count = adl_getBanksCount();
+		if (adl_banks_count > 0)
 		{
-			int adl_banks_count = adl_getBanksCount();
 			const char *const *adl_bank_names = adl_getBankNames();
-			for(int i=0; i < adl_banks_count; i++)
+			for (int i=0; i < adl_banks_count; i++)
 			{
 				auto it = CreateOptionMenuItemCommand(adl_bank_names[i], FStringf("adl_bank %d", i), true);
 				static_cast<DOptionMenuDescriptor*>(*menu)->mItems.Push(it);

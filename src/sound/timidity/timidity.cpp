@@ -36,7 +36,7 @@
 #include "v_text.h"
 #include "timidity.h"
 
-CUSTOM_CVAR(String, midi_config, CONFIG_FILE, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(String, midi_config, "gzdoom", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	Timidity::FreeAll();
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_GUS)

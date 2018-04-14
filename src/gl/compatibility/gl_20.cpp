@@ -41,7 +41,6 @@
 #include "actorinlines.h"
 #include "g_levellocals.h"
 #include "gl/dynlights/gl_dynlight.h"
-#include "gl/utility/gl_geometric.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/system/gl_interface.h"
@@ -53,7 +52,6 @@
 
 
 CVAR(Bool, gl_lights_additive, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, gl_legacy_mode, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 //==========================================================================
 //
@@ -65,7 +63,7 @@ CVAR(Bool, gl_legacy_mode, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 void gl_PatchMenu()
 {
 	// Radial fog and Doom lighting are not available without full shader support.
-	if (!gl_legacy_mode) return;
+	if (!gl.legacyMode) return;
 
 	FOptionValues **opt = OptionValues.CheckKey("LightingModes");
 	if (opt != NULL) 
@@ -132,6 +130,31 @@ void gl_PatchMenu()
 
 void gl_SetTextureMode(int type)
 {
+	if (type == TM_SWCANVAS)
+	{
+		int shader = V_IsTrueColor() ? 2 : 0;
+		float c1[4], c2[4];
+		if (gl_RenderState.mColormapState > CM_DEFAULT && gl_RenderState.mColormapState < CM_MAXCOLORMAP)
+		{
+			FSpecialColormap *scm = &SpecialColormaps[gl_RenderState.mColormapState - CM_FIRSTSPECIALCOLORMAP];
+			for (int i = 0; i < 3; i++)
+			{
+				c1[i] = scm->ColorizeStart[i];
+				c2[i] = scm->ColorizeEnd[i] - scm->ColorizeStart[i];
+			}
+			c1[3] = 0;
+			c2[3] = 0;
+			shader++;
+		}
+		// Type 2 (unaltered true color) can be done without activating the shader.
+		if (shader != 2)
+		{
+			GLRenderer->legacyShaders->BindShader(shader, c1, c2);
+			return;
+		}
+		else type = TM_MODULATE;
+	}
+	glUseProgram(0);
 	if (type == TM_MASK)
 	{
 		glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
@@ -209,7 +232,7 @@ static bool currentModelMatrixState;
 
 void FRenderState::ApplyFixedFunction()
 {
-	int thistm = mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode;
+	int thistm = mTextureMode == TM_MODULATE && (mTempTM == TM_OPAQUE || mSpecialEffect == EFF_SWQUAD) ? TM_OPAQUE : mTextureMode;
 	if (thistm != ffTextureMode)
 	{
 		ffTextureMode = thistm;
@@ -407,6 +430,12 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, FVector3 & nearP
 	float dist = fabsf(p.DistToPoint(lpos.X, lpos.Z, lpos.Y));
 	float radius = light->GetRadius();
 
+	if (V_IsHardwareRenderer() && gl.legacyMode && (light->lightflags & LF_ATTENUATE))
+	{
+		radius *= 0.66f;
+	}
+
+
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
 	if (checkside && gl_lights_checkside && p.PointOnSide(lpos.X, lpos.Z, lpos.Y))
@@ -486,7 +515,7 @@ static bool gl_CheckFog(FColormap *cm, int lightlevel)
 	{
 		frontfog = true;
 	}
-	else  if (level.fogdensity != 0 || (glset.lightmode & 4) || cm->FogDensity > 0)
+	else  if (level.fogdensity != 0 || (level.lightmode & 4) || cm->FogDensity > 0)
 	{
 		// case 3: level has fog density set
 		frontfog = true;
@@ -641,7 +670,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 			continue;
 		}
 
-		p.Set(plane.plane);
+		p.Set(plane.plane.Normal(), plane.plane.fD());
 		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, false, pass != GLPASS_LIGHTTEX))
 		{
 			node = node->nextLight;
@@ -715,7 +744,8 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 	FVector3 nearPt, up, right;
 	float scale;
 
-	p.Set(&glseg);
+	auto normal = glseg.Normal();
+	p.Set(normal, -normal.X * glseg.x1 - normal.Y * glseg.y1);
 
 	if (!p.ValidNormal())
 	{
@@ -849,7 +879,7 @@ void GLSceneDrawer::RenderMultipassStuff()
 		{
 			gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
 			glDepthFunc(GL_EQUAL);
-			if (glset.lightmode == 8) gl_RenderState.SetSoftLightLevel(255);
+			if (level.lightmode == 8) gl_RenderState.SetSoftLightLevel(255);
 			gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX);
 			gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX);
 			gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX);
@@ -896,3 +926,79 @@ void GLSceneDrawer::RenderMultipassStuff()
 
 }
 
+
+//==========================================================================
+//
+// Draws a color overlay for Legacy OpenGL
+//
+//==========================================================================
+
+void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd)
+{
+	if (cmd.mDrawMode == F2DDrawer::DTM_Opaque || cmd.mDrawMode == F2DDrawer::DTM_InvertOpaque)
+	{
+		gl_RenderState.EnableTexture(false);
+	}
+	else
+	{
+		gl_RenderState.SetTextureMode(TM_MASK);
+	}
+	// Draw this the old fashioned way, there really is no point setting up a buffer for it.
+	glBegin(GL_TRIANGLES);
+	for (int i = 0; i < cmd.mIndexCount; i++)
+	{
+		auto &vertex = drawer->mVertices[drawer->mIndices[i + cmd.mIndexIndex]];
+		glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+		glBlendEquation(GL_FUNC_ADD);
+		glColor4ub(cmd.mColor1.r, cmd.mColor1.g, cmd.mColor1.b, vertex.color0.a);
+		glTexCoord2f(vertex.u, vertex.v);
+		glVertex3f(vertex.x, vertex.y, vertex.z);
+	}
+	glEnd();
+}
+
+//==========================================================================
+//
+// Desaturation with translations.
+// Let's keep this fallback crap strictly out of the main code, 
+// including the data it creates!
+//
+//==========================================================================
+
+struct DesaturatedTranslations
+{
+	FRemapTable *tables[32] = { nullptr };
+};
+
+static TMap<FRemapTable *, DesaturatedTranslations> DesaturatedTranslationTable;
+static TDeletingArray<FRemapTable *> DesaturatedRemaps;	// This is only here to delete the remap tables without infesting other code.
+
+
+int LegacyDesaturation(F2DDrawer::RenderCommand &cmd)
+{
+	int desat = cmd.mDesaturate / 8;
+	if (desat <= 0 || desat >= 32) return -1;
+	if(cmd.mTranslation == nullptr) return desat - 1 + STRange_Desaturate;
+	// Now it gets nasty. We got a combination of translation and desaturation.
+
+	// The easy case: It was already done.
+	auto find = DesaturatedTranslationTable.CheckKey(cmd.mTranslation);
+	if (find != nullptr && find->tables[desat] != nullptr) return find->tables[desat]->GetUniqueIndex();
+
+	// To handle this case for the legacy renderer a desaturated variant of the translation needs to be built.
+	auto newremap = new FRemapTable(*cmd.mTranslation);
+	DesaturatedRemaps.Push(newremap);
+	for (int i = 0; i < newremap->NumEntries; i++)
+	{
+		// This is used for true color texture creation, so the remap table can be left alone.
+		auto &p = newremap->Palette[i];
+		auto gray = p.Luminance();
+
+		p.r = (p.r * (31 - desat) + gray * (1 + desat)) / 32;
+		p.g = (p.g * (31 - desat) + gray * (1 + desat)) / 32;
+		p.b = (p.b * (31 - desat) + gray * (1 + desat)) / 32;
+	}
+	auto &tbl = DesaturatedTranslationTable[cmd.mTranslation];
+	tbl.tables[desat] = newremap;
+	return newremap->GetUniqueIndex();
+}

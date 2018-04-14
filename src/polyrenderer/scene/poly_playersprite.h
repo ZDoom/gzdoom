@@ -83,8 +83,8 @@ public:
 	bool flip = false;
 	FSpecialColormap *special = nullptr;
 	PalEntry overlay = 0;
-	FColormapStyle colormapstyle;
-	bool usecolormapstyle = false;
+	PalEntry LightColor = 0xffffffff;
+	uint8_t Desaturate = 0;
 };
 
 class RenderPolyPlayerSprites

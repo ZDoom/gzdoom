@@ -74,6 +74,20 @@ CVAR (Float, snd_menuvolume, 0.6f, CVAR_ARCHIVE)
 CVAR(Int, m_use_mouse, 2, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, m_show_backbutton, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
+CUSTOM_CVAR(Float, dimamount, -1.f, CVAR_ARCHIVE)
+{
+	if (self < 0.f && self != -1.f)
+	{
+		self = -1.f;
+	}
+	else if (self > 1.f)
+	{
+		self = 1.f;
+	}
+}
+CVAR(Color, dimcolor, 0xffd700, CVAR_ARCHIVE)
+
+
 
 DEFINE_ACTION_FUNCTION(DMenu, GetCurrentMenu)
 {
@@ -766,6 +780,41 @@ void M_Ticker (void)
 	}
 }
 
+//==========================================================================
+//
+// M_Dim
+//
+// Applies a colored overlay to the entire screen, with the opacity
+// determined by the dimamount cvar.
+//
+//==========================================================================
+
+static void M_Dim()
+{
+	PalEntry dimmer;
+	float amount;
+
+	if (dimamount >= 0)
+	{
+		dimmer = PalEntry(dimcolor);
+		amount = dimamount;
+	}
+	else
+	{
+		dimmer = gameinfo.dimcolor;
+		amount = gameinfo.dimamount;
+	}
+
+	if (gameinfo.gametype == GAME_Hexen && gamestate == GS_DEMOSCREEN)
+	{ // On the Hexen title screen, the default dimming is not
+	  // enough to make the menus readable.
+		amount = MIN<float>(1.f, amount*2.f);
+	}
+
+	screen->Dim(dimmer, amount, 0, 0, screen->GetWidth(), screen->GetHeight());
+}
+
+
 //=============================================================================
 //
 //
@@ -778,24 +827,13 @@ void M_Drawer (void)
 	AActor *camera = player->camera;
 	PalEntry fade = 0;
 
-	if (!screen->Accel2D && camera != nullptr && (gamestate == GS_LEVEL || gamestate == GS_TITLELEVEL))
-	{
-		if (camera->player != nullptr)
-		{
-			player = camera->player;
-		}
-		fade = PalEntry (uint8_t(player->BlendA*255), uint8_t(player->BlendR*255), uint8_t(player->BlendG*255), uint8_t(player->BlendB*255));
-	}
-
-
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
 		if (GLRenderer)
 			GLRenderer->BlurScene(gameinfo.bluramount);
 		if (!CurrentMenu->DontDim)
 		{
-			screen->Dim(fade);
-			V_SetBorderNeedRefresh();
+			M_Dim();
 		}
 		CurrentMenu->CallDrawer();
 	}
@@ -816,7 +854,6 @@ void M_ClearMenus()
 		CurrentMenu->Destroy();
 		CurrentMenu = parent;
 	}
-	V_SetBorderNeedRefresh();
 	menuactive = MENU_Off;
 }
 

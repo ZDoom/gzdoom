@@ -6,6 +6,16 @@
 #include "gl_portal.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
+#include "r_utility.h"
+#include "c_cvars.h"
+
+EXTERN_CVAR(Int, gl_weaponlight);
+
+inline	int getExtraLight()
+{
+	return r_viewpoint.extralight * gl_weaponlight;
+}
+
 
 class GLSceneDrawer
 {
@@ -45,6 +55,7 @@ public:
 	Clipper clipper;
 	int		FixedColormap;
 	area_t	in_area;
+	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
 
 	angle_t FrustumAngle();
 	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
@@ -60,7 +71,7 @@ public:
 	void DrawBlend(sector_t * viewsector);
 	void EndDrawScene(sector_t * viewsector);
 	void DrawEndScene2D(sector_t * viewsector);
-	void RenderActorsInPortal(FGLLinePortal *glport);
+	void RenderActorsInPortal(FLinePortalSpan *glport);
 
 	void CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector);
 
@@ -71,7 +82,7 @@ public:
 	void DrawPSprite(player_t * player, DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
 	void DrawTargeterSprites();
-
+	
 	void InitClipper(angle_t a1, angle_t a2)
 	{
 		clipper.Clear();

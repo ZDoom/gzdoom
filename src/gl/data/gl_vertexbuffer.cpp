@@ -35,7 +35,6 @@
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 
 
@@ -170,9 +169,9 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 
 	// and the second one for the fullscreen quad used for blend overlays.
 	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
-	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 0);
-	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
-	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
+	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
+	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
+	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
 
 	// and this is for the postprocessing copy operation
 	vbo_shadowdata[8].Set(-1.0f, -1.0f, 0, 0.0f, 0.0f);
@@ -218,10 +217,10 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 void FFlatVertexBuffer::OutputResized(int width, int height)
 {
 	vbo_shadowdata[4].Set(0, 0, 0, 0, 0);
-	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 0);
-	vbo_shadowdata[6].Set((float)width, 0, 0, 0, 0);
-	vbo_shadowdata[7].Set((float)width, (float)height, 0, 0, 0);
-	
+	vbo_shadowdata[5].Set(0, (float)height, 0, 0, 1);
+	vbo_shadowdata[6].Set((float)width, 0, 0, 1, 0);
+	vbo_shadowdata[7].Set((float)width, (float)height, 0, 1, 1);
+
 	Map();
 	memcpy(&map[4], &vbo_shadowdata[4], 4 * sizeof(FFlatVertex));
 	Unmap();
@@ -299,7 +298,7 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 	for(unsigned i=0; i<target->e->XFloor.ffloors.Size(); i++)
 	{
 		F3DFloor *ffloor = target->e->XFloor.ffloors[i];
-		if (ffloor->model == model) return ffloor;
+		if (ffloor->model == model && !(ffloor->flags & FF_THISINSIDE)) return ffloor;
 	}
 	return NULL;
 }

@@ -29,14 +29,14 @@ enum RenderFlags
 
 enum TexMode
 {
+	TM_SWCANVAS = -1,	// special case for the legacy renderer, do not use for anything but the SW renderer's canvas.
 	TM_MODULATE = 0,	// (r, g, b, a)
 	TM_MASK,			// (1, 1, 1, a)
 	TM_OPAQUE,			// (r, g, b, 1)
 	TM_INVERSE,			// (1-r, 1-g, 1-b, a)
 	TM_REDTOALPHA,		// (1, 1, 1, r)
 	TM_CLAMPY,			// (r, g, b, (t >= 0.0 && t <= 1.0)? a:0)
-
-	TM_INVERTOPAQUE,	// used by GL 2.x fallback code.
+	TM_INVERTOPAQUE,	// (1-r, 1-g, 1-b, 1)
 };
 
 enum ELightMethod

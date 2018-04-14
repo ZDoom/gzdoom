@@ -178,8 +178,8 @@ static void DrawHudText(FFont *font, int color, char * text, int x, int y, doubl
 		FTexture *texc = font->GetChar(text[i], &width);
 		if (texc != NULL)
 		{
-			double offset = texc->GetScaledTopOffsetDouble() 
-				- tex_zero->GetScaledTopOffsetDouble() 
+			double offset = texc->GetScaledTopOffsetDouble(0) 
+				- tex_zero->GetScaledTopOffsetDouble(0) 
 				+ tex_zero->GetScaledHeightDouble();
 
 			screen->DrawChar(font, color, x, y, text[i],

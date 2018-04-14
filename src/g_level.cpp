@@ -117,6 +117,31 @@ EXTERN_CVAR (String, playerclass)
 
 void G_VerifySkill();
 
+CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (level.info->brightfog == -1) level.brightfog = self;
+}
+
+CUSTOM_CVAR(Bool, gl_lightadditivesurfaces, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	if (level.info->lightadditivesurfaces == -1) level.lightadditivesurfaces = self;
+}
+
+CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
+{
+	if (level.info->notexturefill == -1) level.notexturefill = self;
+}
+
+CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
+{
+	int newself = self;
+	if (newself > 4) newself = 8;	// use 8 for software lighting to avoid conflicts with the bit mask
+	if (newself < 0) newself = 0;
+	if (self != newself) self = newself;
+	else if ((level.info == nullptr || level.info->lightmode == -1)) level.lightmode = self;
+}
+
+
 
 static FRandom pr_classchoice ("RandomPlayerClassChoice");
 
@@ -498,7 +523,6 @@ void G_InitNew (const char *mapname, bool bTitleLevel)
 	demoplayback = false;
 	automapactive = false;
 	viewactive = true;
-	V_SetBorderNeedRefresh();
 
 	//Added by MC: Initialize bots.
 	if (!deathmatch)
@@ -1491,6 +1515,12 @@ void G_InitLevelLocals ()
 	compatflags2.Callback();
 
 	level.DefaultEnvironment = info->DefaultEnvironment;
+
+	level.lightmode = info->lightmode < 0? gl_lightmode : info->lightmode;
+	level.brightfog = info->brightfog < 0? gl_brightfog : !!info->brightfog;
+	level.lightadditivesurfaces = info->lightadditivesurfaces < 0 ? gl_lightadditivesurfaces : !!info->lightadditivesurfaces;
+	level.notexturefill = info->notexturefill < 0 ? gl_notexturefill : !!info->notexturefill;
+
 }
 
 //==========================================================================
@@ -1986,7 +2016,7 @@ inline T VecDiff(const T& v1, const T& v2)
 
 		if (nullptr != sec1 && nullptr != sec2)
 		{
-			result += Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
+			result += level.Displacements.getOffset(sec2->PortalGroup, sec1->PortalGroup);
 		}
 	}
 

@@ -108,7 +108,7 @@ ADLMIDI_EXPORT int adl_setBank(ADL_MIDIPlayer *device, int bank)
     if(static_cast<uint32_t>(bankno) >= NumBanks)
     {
         char errBuf[150];
-        std::snprintf(errBuf, 150, "Embedded bank number may only be 0..%u!\n", (NumBanks - 1));
+        snprintf(errBuf, 150, "Embedded bank number may only be 0..%u!\n", (NumBanks - 1));
         play->setErrorString(errBuf);
         return -1;
     }
@@ -139,7 +139,7 @@ ADLMIDI_EXPORT int adl_setNumFourOpsChn(ADL_MIDIPlayer *device, int ops4)
     if((unsigned int)ops4 > 6 * play->m_setup.NumCards)
     {
         char errBuff[250];
-        std::snprintf(errBuff, 250, "number of four-op channels may only be 0..%u when %u OPL3 cards are used.\n", (6 * (play->m_setup.NumCards)), play->m_setup.NumCards);
+        snprintf(errBuff, 250, "number of four-op channels may only be 0..%u when %u OPL3 cards are used.\n", (6 * (play->m_setup.NumCards)), play->m_setup.NumCards);
         play->setErrorString(errBuff);
         return -1;
     }

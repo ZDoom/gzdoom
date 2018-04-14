@@ -1646,6 +1646,8 @@ TXT_GOAWAY			= "Allez-vous en!";
 TXT_COMM0			= "Message reçu.";
 TXT_COMM1			= "Message reçu de BlackBird";
 
+TXT_TRADE			=  " pour %u";
+
 AMMO_CLIP			= "Balles";
 AMMO_SHELLS			= "Cartouches";
 AMMO_ROCKETS		= "Roquettes";

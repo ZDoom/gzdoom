@@ -142,7 +142,7 @@ namespace swrenderer
 		// pretty much the same as what R_AddLine() does.
 
 		double edge_right = WallSpriteTile->GetWidth();
-		double edge_left = WallSpriteTile->LeftOffset;
+		double edge_left = WallSpriteTile->GetLeftOffset(0);	// decals should not use renderer-specific offsets.
 		edge_right = (edge_right - edge_left) * decal->ScaleX;
 		edge_left *= decal->ScaleX;
 
@@ -233,7 +233,7 @@ namespace swrenderer
 		}
 
 		yscale = decal->ScaleY;
-		texturemid = WallSpriteTile->TopOffset + (zpos - thread->Viewport->viewpoint.Pos.Z) / yscale;
+		texturemid = WallSpriteTile->GetTopOffset(0) + (zpos - thread->Viewport->viewpoint.Pos.Z) / yscale;
 
 		// Clip sprite to drawseg
 		x1 = MAX<int>(clipper->x1, x1);

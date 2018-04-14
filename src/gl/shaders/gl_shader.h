@@ -200,6 +200,12 @@ public:
 	{
 		glUniform4f(mIndex, a, b, c, d);
 	}
+
+	void Set(PalEntry newvalue)
+	{
+		glUniform4f(mIndex, newvalue.r / 255.f, newvalue.g / 255.f, newvalue.b / 255.f, newvalue.a / 255.f);
+	}
+
 };
 
 class FBufferedUniformPE
@@ -397,28 +403,6 @@ public:
 		}
 		return NULL;
 	}
-};
-
-enum MaterialShaderIndex
-{
-	SHADER_Default,
-	SHADER_Warp1,
-	SHADER_Warp2,
-	SHADER_Brightmap,
-	SHADER_Specular,
-	SHADER_SpecularBrightmap,
-	SHADER_PBR,
-	SHADER_PBRBrightmap,
-	SHADER_NoTexture,
-	SHADER_BasicFuzz,
-	SHADER_SmoothFuzz,
-	SHADER_SwirlyFuzz,
-	SHADER_TranslucentFuzz,
-	SHADER_JaggedFuzz,
-	SHADER_NoiseFuzz,
-	SHADER_SmoothNoiseFuzz,
-	SHADER_SoftwareFuzz,
-	FIRST_USER_SHADER
 };
 
 enum

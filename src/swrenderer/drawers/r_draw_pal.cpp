@@ -3074,7 +3074,7 @@ namespace swrenderer
 	void DrawVoxelBlocksPalCommand::Execute(DrawerThread *thread)
 	{
 		int destpitch = args.Viewport()->RenderTarget->GetPitch();
-		uint8_t *destorig = args.Viewport()->RenderTarget->GetBuffer();
+		uint8_t *destorig = args.Viewport()->RenderTarget->GetPixels();
 		const uint8_t *colormap = args.Colormap(args.Viewport());
 
 		for (int i = 0; i < blockcount; i++)

@@ -297,7 +297,6 @@ void S_NoiseDebug (void)
 		}
 		chan = (FSoundChan *)((size_t)chan->PrevChan - myoffsetof(FSoundChan, NextChan));
 	}
-	V_SetBorderNeedRefresh();
 }
 
 static FString LastLocalSndInfo;
@@ -732,7 +731,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 		if(type == SOURCE_Unattached)
 		{		
 			sector_t *sec = P_PointInSector(pt[0], pt[2]);
-			DVector2 disp = Displacements.getOffset(pgroup, sec->PortalGroup);
+			DVector2 disp = level.Displacements.getOffset(pgroup, sec->PortalGroup);
 			pos->X = pt[0] - (float)disp.X;
 			pos->Y = !(chanflags & CHAN_LISTENERZ) ? pt[1] : (float)listenpos.Z;
 			pos->Z = pt[2] - (float)disp.Y;
@@ -749,7 +748,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				//assert(actor != NULL);
 				if (actor != NULL)
 				{
-					DVector2 disp = Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
+					DVector2 disp = level.Displacements.getOffset(pgroup, actor->Sector->PortalGroup);
 					DVector3 posi = actor->Pos() - disp;
 					*pos = { (float)posi.X, (float)posi.Z, (float)posi.Y };
 				}
@@ -759,7 +758,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				assert(sector != NULL);
 				if (sector != NULL)
 				{
-					DVector2 disp = Displacements.getOffset(pgroup, sector->PortalGroup);
+					DVector2 disp = level.Displacements.getOffset(pgroup, sector->PortalGroup);
 					if (chanflags & CHAN_AREA)
 					{
 						// listener must be reversely offset to calculate the proper sound origin.
@@ -781,7 +780,7 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 				assert(poly != NULL);
 				if (poly != NULL)
 				{
-					DVector2 disp = Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
+					DVector2 disp = level.Displacements.getOffset(pgroup, poly->CenterSubsector->sector->PortalGroup);
 					CalcPolyobjSoundOrg(listenpos + disp, poly, *pos);
 					pos->X += (float)disp.X;
 					pos->Z += (float)disp.Y;
@@ -817,14 +816,17 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 //
 //==========================================================================
 
-inline bool Validate(const float value)
+inline bool Validate(const float value, const float limit)
 {
-	return value >= -32768.f && value <= 32768.f;
+	return value >= -limit && value <= limit;
 }
 
-static bool Validate(const FVector3 &value, const char *const name, const AActor *const actor)
+static bool Validate(const FVector3 &value, const float limit, const char *const name, const AActor *const actor)
 {
-	const bool valid = Validate(value.X) && Validate(value.Y) && Validate(value.Z);
+	const bool valid = 
+		   Validate(value.X, limit)
+		&& Validate(value.Y, limit)
+		&& Validate(value.Z, limit);
 
 	if (!valid)
 	{
@@ -845,8 +847,13 @@ static bool Validate(const FVector3 &value, const char *const name, const AActor
 
 static bool ValidatePosVel(const AActor *actor, const FVector3 &pos, const FVector3 &vel)
 {
-	const bool valid = Validate(pos, "position", actor);
-	return Validate(vel, "velocity", actor) && valid;
+	// The actual limit for map coordinates
+	static const float POSITION_LIMIT = 32768.f;
+	const bool valid = Validate(pos, POSITION_LIMIT, "position", actor);
+
+	// The maximum velocity is enough to travel through entire map in one tic
+	static const float VELOCITY_LIMIT = 2 * POSITION_LIMIT * TICRATE;
+	return Validate(vel, VELOCITY_LIMIT, "velocity", actor) && valid;
 }
 
 static bool ValidatePosVel(const FSoundChan *const chan, const FVector3 &pos, const FVector3 &vel)

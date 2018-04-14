@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "gl/dynlights/gl_aabbtree.h"
+#include "hwrenderer/dynlights/hw_aabbtree.h"
 #include "tarray.h"
 #include <memory>
 
@@ -55,7 +55,7 @@ private:
 	unsigned mLastNumSegs = 0;
 
 	// AABB-tree of the level, used for ray tests
-	std::unique_ptr<LevelAABBTree> mAABBTree;
+	std::unique_ptr<hwrenderer::LevelAABBTree> mAABBTree;
 
 	FShadowMap(const FShadowMap &) = delete;
 	FShadowMap &operator=(FShadowMap &) = delete;

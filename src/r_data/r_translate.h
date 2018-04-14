@@ -4,7 +4,6 @@
 #include "doomtype.h"
 #include "tarray.h"
 
-class FNativePalette;
 class FSerializer;
 
 enum
@@ -31,6 +30,34 @@ enum EStandardTranslations
 	STD_Grayscale = 9,	// desaturated version of the palette.
 };
 
+struct FRemapTable;
+
+class FUniquePalette
+{
+	friend struct FRemapTable;
+	struct PalData
+	{
+		int crc32;
+		PalEntry pe[256];
+	};
+	static TArray<PalData> AllPalettes;
+
+	int Index;
+	FRemapTable *remap;
+
+	FUniquePalette(FRemapTable *r) { remap = r; Index = -1; }
+
+public:
+
+	static PalEntry *GetPalette(unsigned int index)
+	{
+		return index > 0 && index <= AllPalettes.Size() ? AllPalettes[index - 1].pe : NULL;
+	}
+	bool Update();
+	int GetIndex() const { return Index; }
+};
+
+
 struct FRemapTable
 {
 	FRemapTable(int count=256);
@@ -42,7 +69,6 @@ struct FRemapTable
 	void MakeIdentity();
 	void KillNative();
 	void UpdateNative();
-	FNativePalette *GetNative();
 	bool IsIdentity() const;
 	void Serialize(FSerializer &arc);
 	static void StaticSerializeTranslations(FSerializer &arc);
@@ -53,10 +79,11 @@ struct FRemapTable
 	bool AddTint(int start, int end, int r, int g, int b, int amount);
 	bool AddToTranslation(const char * range);
 	int StoreTranslation(int slot);
+	int GetUniqueIndex();
 
 	uint8_t *Remap;				// For the software renderer
 	PalEntry *Palette;			// The ideal palette this maps to
-	FNativePalette *Native;		// The Palette stored in a HW texture
+	FUniquePalette *Native;		// The index into the list of unique palettes (this is to avoid frequent texture recreation with changing ACS translations)
 	int NumEntries;				// # of elements in this table (usually 256)
 	bool Inactive;				// This table is inactive and should be treated as if it was passed as NULL
 

@@ -1,35 +1,3 @@
-6DC9F6CCEAE7A91AEC48EBE506F22BC4 // void.wad MAP01
-{
-	// Slightly squash the pillars in the starting room with "stimpacks"
-	// floating on them so that they can be obtained.
-	setsectoroffset 62 floor -8
-	setwallyscale 286 front bot 1.090909
-	setwallyscale 287 front bot 1.090909
-	setwallyscale 288 front bot 1.090909
-	setwallyscale 289 front bot 1.090909
-	
-	setsectoroffset 63 floor -8
-	setwallyscale 290 front bot 1.090909
-	setwallyscale 291 front bot 1.090909
-	setwallyscale 292 front bot 1.090909
-	setwallyscale 293 front bot 1.090909
-	
-	setsectoroffset 118 floor -8
-	setwallyscale 710 front bot 1.090909
-	setwallyscale 711 front bot 1.090909
-	setwallyscale 712 front bot 1.090909
-	setwallyscale 713 front bot 1.090909
-	
-	setsectoroffset 119 floor -8
-	setwallyscale 714 front bot 1.090909
-	setwallyscale 715 front bot 1.090909
-	setwallyscale 716 front bot 1.090909
-	setwallyscale 717 front bot 1.090909
-
-	setslopeoverflow
-	polyobj
-}
-
 B2D8DA03489D1C67F60DC87FBC4EA338 // map01 - Massmouth 2
 801304DA3784308D333951B5E0CF8E9E // map02
 6EA4D5CAEA16857B2A882467E1633BC2 // map03
@@ -52,15 +20,6 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 	resetplayerspeed
 }
 
-5C594C67CF7721005DE71429F9811370 // Eternal Doom map03
-{
-	// fix broken staircase. The compatibility option is not sufficient
-	// to reliably handle this so clear the tags from the unwanted sectors.
-	setsectortag 212 0
-	setsectortag 213 0
-	setsectortag 214 0
-}
-
 6DA6FCBA8089161BDEC6A1D3F6C8D60F // Eternal Doom MAP25
 {
 	stairs
@@ -77,7 +36,6 @@ A80E7EE40E0D0C76A6FBD242BE29FE27 // map15
 	useblocking
 }
 
-// mostly cosmetic (except AV MAP07 and MM2 MAP25)
 0EECBF37B328C9CAAF20DED4949A4157 // Sudtic e2m6
 4ACE0644883BDA0CBA254FA02C9ACF83 // Teutic e3m4
 9F2BE080A33F775294BD78822456924E // Nukemine e1m4
@@ -87,6 +45,7 @@ CD31793D3A4B00231B124C0C23649644 // Strain map02
 F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 1497894956B3C8EBE8A240B7FDD99C6A // MM2 map25
 941E4CB56EE4184E0B1ED43486AB0BBF // AV map07
+6D4156EE0D12B77AD143A37C4D3DCF98 // dmonfear.wad map22
 {
 	shorttex
 }
@@ -95,11 +54,6 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 74AF92E96FE10D039D31C1F6526D7D7C // Real World map11
 {
 	trace
-}
-
-9D50EBE17CEC78938C7A668DB0768611 // Strain map07: Make the exit accessible
-{
-	clearlineflags 1021 1
 }
 
 71C2E6D9CFA3D8750C6A9599FB2453BD // Hacx map03: There are some switches behind 
@@ -180,11 +134,6 @@ CA267398C9B3A8F79349D3394F8B2106 // map20
 	spritesort
 }
 
-DCE862393CAAA6FF1294FB7056B53057 // UAC Ultra map07: Contains a scroller depending on Boom side effects
-{
-	setlinespecial 391 Sector_CopyScroller 99 6 0 0 0
-}
-
 1D9E43988940CCD3555724E15DD8B1AB // Happy Time Circus map01 has bad teleporters
 040F83028FFA74456E335ED300BE2C33 // MAP17 (TownInfection.wad)
 156FA31F5FF72A87BF345B68029D3051 // MAP02 (nprject5.wad)
@@ -201,19 +150,6 @@ AF40D0E49BD1B76D4B1AADD8212ADC46 // MAP01 (the wad that shall not be named =P)
 	badangles
 }
 
-E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
-{
-	// This map has two gear boxes which are flagged for player cross
-	// activation instead of the proper player uses activation.
-	setactivation 963 2
-	setactivation 943 2
-}
-
-3F249EDD62A3A08F53A6C53CB4C7ABE5 // Artica 3 map01
-{
-	clearlinespecial 66
-}
-
 8FA29398776146189396AA1AC6BB9E13 // Roger Ritenour's Phobos map03
 {
 	floormove
@@ -225,186 +161,18 @@ E2B5D1400279335811C1C1C0B437D9C8 // Deathknights of the Dark Citadel, map54
 	limitpain
 }
 
-// Daedalus: Fix SPAC_Push lines that aren't on lines you can actually push
-3ABB618A475BCBC531B457BAA6E4E70A // map04
-{
-	// forcefields
-	// the lines we're setting are already set for repeatable SPAC_Push
-	clearlinespecial 90
-	setlinespecial 3749 ACS_Execute 23 0 1 0 0
-	clearlinespecial 94
-	setlinespecial 3766 ACS_Execute 23 0 2 0 0
-	clearlinespecial 92
-	setlinespecial 3777 ACS_Execute 23 0 3 0 0
-	clearlinespecial 98
-	setlinespecial 3784 ACS_Execute 23 0 4 0 0
-}
-795FDE3CC1C97140F326D0152B3FCE2A // map24
-{
-	// doors
-	clearlinespecial 1512
-	setlinespecial 1505 Door_Raise 213 50 100 0 0
-	setlineflags 1505 0x200		// repeatable
-	setactivation 1505 16		// SPAC_Push
-	clearlinespecial 1514
-	setlinespecial 1508 Door_Raise 213 50 100 0 0
-	setlineflags 1508 0x200
-	setactivation 1508 16
-	
-	clearlinespecial 1525
-	setlinespecial 1522 Door_Raise 214 50 100 0 0
-	setlineflags 1522 0x200
-	setactivation 1522 16
-	clearlinespecial 1530
-	setlinespecial 1527 Door_Raise 214 50 100 0 0
-	setlineflags 1527 0x200
-	setactivation 1527 16
-	
-	clearlinespecial 5277
-	setlinespecial 5209 Door_Raise 24 20 255 0 0
-	setlineflags 5209 0x200
-	setactivation 5209 16
-	clearlinespecial 5714
-	setlinespecial 5267 Door_Raise 24 20 255 0 0
-	setlineflags 5267 0x200
-	setactivation 5267 16
-	
-	clearlinespecial 5715
-	setlinespecial 5229 Door_Raise 24 20 255 0 0
-	setlineflags 5229 0x200
-	setactivation 5229 16
-	clearlinespecial 5345
-	setlinespecial 5232 Door_Raise 24 20 255 0 0
-	setlineflags 5232 0x200
-	setactivation 5232 16
-	
-	// consoles?
-	clearlinespecial 3639
-	setlinespecial 3633 ACS_Execute 14 0 0 0 0
-	setlinespecial 3635 ACS_Execute 14 0 0 0 0
-	setlineflags 3633 0x200
-	setlineflags 3635 0x200
-	setactivation 3633 16
-	setactivation 3635 16
-
-	clearlinespecial 3647
-	setlinespecial 3644 ACS_Execute 14 0 0 0 0
-	setlinespecial 3641 ACS_Execute 14 0 0 0 0
-	setlineflags 3644 0x200
-	setlineflags 3641 0x200
-	setactivation 3644 16
-	setactivation 3641 16
-	
-	clearlinespecial 3659
-	clearlinespecial 3657
-	setlinespecial 3653 ACS_Execute 13 0 0 0 0
-	setlinespecial 3655 ACS_Execute 13 0 0 0 0
-	setlinespecial 3651 ACS_Execute 13 0 0 0 0
-	setlinespecial 3654 ACS_Execute 13 0 0 0 0
-	setlineflags 3653 0x200
-	setlineflags 3655 0x200
-	setlineflags 3651 0x200
-	setlineflags 3654 0x200
-	setactivation 3653 16
-	setactivation 3655 16
-	setactivation 3651 16
-	setactivation 3654 16
-}
-
-// Community Chest 3
-F481922F4881F74760F3C0437FD5EDD0 // map03
-{
-	// I have no idea how this conveyor belt setup manages to work under Boom.
-	// Set the sector the voodoo doll ends up standing on when sectors tagged
-	// 1 are raised so that the voodoo doll will be carried.
-	setlinespecial 3559 Sector_CopyScroller 17 6 0 0 0
-}
-
 7C1913DEE396BA26CFF22A0E9369B7D2 // Nuke Mine, e1m2
 {
 	pointonline
-}
-
-5B862477519B21B30059A466F2FF6460 // Khorus, map08
-{
-	// This map uses a voodoo conveyor with slanted walls to shunt the
-	// voodoo doll into side areas. For some reason, this voodoo doll
-	// is unable to slide on them, because the slide calculation gets
-	// them slightly inside the walls and thinks they are stuck. I could
-	// not reproduce this with the real player, which is what has me
-	// stumped. So, help them out be attaching some ThrustThing specials
-	// to the walls.
-	setlinespecial 443 ThrustThing 96 4 0 0 0
-	setlineflags 443 0x200		// repeatable
-	setactivation 443 16		// SPAC_Push
-	setlinespecial 455 ThrustThing 96 4 0 0 0
-	setlineflags 455 0x200		// repeatable
-	setactivation 455 16		// SPAC_Push
 }
 
 8B2AC8D4DB4A49A5DCCBB067E04434D6 // The Hell Factory Hub One, map04
 65A1EB4C87386F290816660A52932FF1 // Master Levels, garrison.wad
 3DEE4EFEFAF3260C800A30734F54CE75 // Hellbound, map14
 5FAA25F5A6AAB3409CAE0AF87F910341 // DOOM.wad e1m6
+94893A0DC429A22ADC4B3A73DA537E16 // DOOM2.WAD map25
 {
 	rebuildnodes
-}
-
-3D1E36E50F5A8D289E15433941605224 // Master Levels, catwalk.wad
-{
-	// make it impossible to open door to 1-way bridge before getting red key
-	setsectortag 35 0 // existing tag must be cleared before new one can be set
-	setsectortag 35 15
-	setactivation 605 1 // SPAC_PCross
-	setactivation 606 1
-	setactivation 607 1
-	setactivation 608 1
-	setlinespecial 605 Door_Open 15 64 0 0 0 // fast, stay open
-	setlinespecial 606 Door_Open 15 64 0 0 0
-	setlinespecial 607 Door_Open 15 64 0 0 0
-	setlinespecial 608 Door_Open 15 64 0 0 0
-}
-
-3B9CAA02952F405269353FAAD8F8EC33 // Master Levels, nessus.wad
-{
-	// move secret sector from too-thin doorframe to BFG closet
-	setsectorspecial 211 0
-	setsectorspecial 212 1024
-	// lower floor a bit so secret sector can be entered fully
-	setsectoroffset 212 floor -16
-	// make secret door stay open so you can't get locked in closet
-	setlinespecial 1008 Door_Open 0 64 0 0 0
-}
-
-7ED9800213C00D6E7FB98652AB48B3DE // Ultimate Simplicity, map04
-{
-	// Add missing map spots on easy and medium skills
-	// Demons will teleport into starting room making 100% kills possible
-	setthingskills 31 31
-	setthingskills 32 31
-}
-
-1891E029994B023910CFE0B3209C3CDB // Ultimate Simplicity, map07
-{
-	// It is possible to get stuck on skill 0 or 1 when no shots have been fired
-	// after sector 17 became accessible and before entering famous mancubus room.
-	// Monsters from the mentioned sector won't be alerted and so 
-	// they won't teleport into the battle. ACS will wait forever for their deaths.
-	setlinespecial 397 NoiseAlert 0 0 0 0 0
-	setlinespecial 411 NoiseAlert 0 0 0 0 0
-}
-
-F0E6F30F57B0425F17E43600AA813E80 // Ultimate Simplicity, map11
-{
-	// If door (sector #309) is closed it cannot be open again
-	// from one side potentially blocking level progression
-	clearlinespecial 2445
-}
-
-952CC8D03572E17BA550B01B366EFBB9 // Cheogsh map01
-{
-	// make the blue key spawn above the 3D floor
-	setthingz 918 296
 }
 
 64B6CE3CB7349B6F6B1A885C449ACB96 // Super Sonic Doom, map31
@@ -415,78 +183,13 @@ F0E6F30F57B0425F17E43600AA813E80 // Ultimate Simplicity, map11
 	linkfrozenprops
 }
 
-D62DCA9EC226DE49108D5DD9271F7631 // Cheogsh 2 map04
-{
-	// Stuff in megasphere cage is positioned too low
-	setthingz 1640 528
-	setthingz 1641 528
-	setthingz 1642 528
-	setthingz 1643 528
-	setthingz 1644 528
-	setthingz 1645 528
-	setthingz 1646 528
-	setthingz 1647 528
-	setthingz 1648 528
-	setthingz 1649 528
-}
-
 E89CCC7E155F1032F693359CC219BE6C // hexen.wad map30
 B9DFF13207EACAC675C71D82624D0007 // XtheaterIII map01
 6941BDC2F80C0FEBE34EFA23D5FB72B7 // sonic.wad map10
+3ABB618A475BCBC531B457BAA6E4E70A // Daedalus map04
+795FDE3CC1C97140F326D0152B3FCE2A // Daedalus map24
 {
 	DisablePushWindowCheck
-}
-
-DFC18B92BF3E8142B8684ECD8BD2EF06 // TNT: Evilution map15
-{
-	// raise up sector with its counterpart so 100% kills becomes possible
-	setsectortag 330 11
-}
-
-2C4A3356C5EB3526D2C72A4AA4B18A36 // TNT: Evilution map29
-{
-	// remove mancubus who always gets stuck in teleport tunnel, preventing
-	// 100% kills on HMP
-	setthingflags 405 0
-}
-
-A53AE580A4AF2B5D0B0893F86914781E // TNT: Evilution map31
-{
-	setthingflags 470 2016
-}
-
-D99AD22FF21A41B4EECDB3A7C803D75E // TNT: Evilution map32
-{
-	// door can close permanently; make switch that opens it repeatable
-	setlineflags 872 0x200
-	// switch should only open way to red key, don't lower bars yet,
-	// instead make line just before red key open bars
-	setsectortag 197 0
-	setsectortag 197 8
-	setlinespecial 1279 Floor_LowerToLowest 8 32 0 0 0
-	setactivation 1240 1 // SPAC_PCross
-	setlinespecial 1240 Floor_LowerToLowest 38 32 0 0 0
-}
-
-279BB50468FE9F5B36C6D821E4902369 // Plutonia Experiment map30
-{
-	// flag items in deathmatch-only area correctly so that 100% items
-	// are possible in solo
-	setthingflags 250 17
-	setthingflags 251 17
-	setthingflags 252 17
-	setthingflags 253 17
-	setthingflags 254 17
-	setthingflags 206 17
-}
-
-4CB7AAC5C43CF32BDF05FD36481C1D9F // Plutonia: Revisited map27
-{
-	setlinespecial 1214 Plat_DownWaitUpStayLip 20 64 150 0 0
-	setlinespecial 1215 Plat_DownWaitUpStayLip 20 64 150 0 0
-	setlinespecial 1216 Plat_DownWaitUpStayLip 20 64 150 0 0
-	setlinespecial 1217 Plat_DownWaitUpStayLip 20 64 150 0 0
-	setlinespecial 1227 Plat_DownWaitUpStayLip 20 64 150 0 0
 }
 
 D0139194F7817BF06F3988DFC47DB38D // Whispers of Satan map29
@@ -514,252 +217,17 @@ C98F79709BD7E0E4C19026AB9575EC6F // cc-cod.zip:codlev.wad map07
 	noslopeid
 }
 
+3FFAF2F624C1B4BB6F581DCF7B99CBA7 // hexen.wad MAP36
+7DC65D5029DD834481CD716B3D71388A // hexdd.wad MAP47
 05AA32F1D2220A462DCDA245ED22B94B // sonic.wad map09
 {
 	polyobj
 }
 
-
 D7F6E9F08C39A17026349A04F8C0B0BE // Return to Hadron, e1m9
 19D03FFC875589E21EDBB7AB74EF4AEF // Return to Hadron, e1m9, 2016.01.03 update
 {
 	pointonline
-}
-
-5B26545FF21B051CA06D389CE535684C // doom.wad e1m4
-{
-	// missing textures	
-	setwalltexture 693 back top BROWN1
-	// fix HOM errors with sectors too low
-	setsectoroffset 9 floor 8
-	setsectoroffset 105 floor 8
-	setsectoroffset 132 floor 8
-	setsectoroffset 137 floor 8
-}
-A24FE135D5B6FD427FE27BEF89717A65 // doom.wad e2m2
-{
-	// missing textures
-	setwalltexture 947 back top BROWN1
-	setwalltexture 1596 back top WOOD1
-}
-1BC04D646B32D3A3E411DAF3C1A38FF8 // doom.wad e2m4
-{
-	// missing textures
-	setwalltexture 551 back top PIPE4
-	setwalltexture 865 back bot STEP5
-	setwalltexture 1062 front top GSTVINE1
-	setwalltexture 1071 front top MARBLE1	
-}
-99C580AD8FABE923CAB485CB7F3C5E5D // doom.wad e2m5
-{
-	// missing textures
-	setwalltexture 590 back top GRAYBIG
-	setwalltexture 590 front bot BROWN1
-}
-3838AB29292587A7EE3CA71E7040868D // doom.wad e2m6
-{
-	// missing texture
-	setwalltexture 1091 back top compspan
-}
-8590F489879870C098CD7029C3187159 // doom.wad e2m7
-{
-	// missing texture
-	setwalltexture 1286 front bot SHAWN2
-}
-8A6399FAAA2E68649D4E4B16642074BE // doom.wad e2m9
-{
-	// missing textures
-	setwalltexture 121 back top SW1LION
-	setwalltexture 123 back top GSTONE1
-	setwalltexture 140 back top GSTONE1
-}
-2B65CB046EA40D2E44576949381769CA // Commercial Doom e3m4
-{
-	// This line is erroneously specified as Door_Raise that monsters
-	// can operate. If they do, they block you off from half the map. Change
-	// this into a one-shot Door_Open so that it won't close.
-	setlinespecial 1069 Door_Open 0 16 0 0 0
-	clearlineflags 1069 0x200
-}
-5AC51CA9F1B57D4538049422A5E37291 // doom.wad e3m7
-{
-	// missing texture
-	setwalltexture 971 back top SP_HOT1
-}
-DA0C8281AC70EEC31127C228BCD7FE2C // doom.wad e4m1
-{
-	// missing texture
-	setwalltexture 470 front top GSTONE1
-}
-F6EE16F770AD309D608EA0B1F1E249FC // Ultimate Doom, e4m3
-{
-	// Remove unreachable secrets
-	setsectorspecial 124 0
-	setsectorspecial 125 0
-	// clear staircase to secret area
-	setsectorspecial 127 0
-	setsectorspecial 128 0
-	setsectorspecial 129 0
-	setsectorspecial 130 0
-	setsectorspecial 131 0
-	setsectorspecial 132 0
-	setsectorspecial 133 0
-	setsectorspecial 134 0
-	setsectorspecial 136 0
-	setsectorspecial 137 0
-	setsectorspecial 138 0
-	setsectorspecial 147 0
-	setsectorspecial 148 0
-	setsectorspecial 149 0
-	setsectorspecial 150 0
-	setsectorspecial 151 0
-	setsectorspecial 152 0
-	setsectorspecial 155 0
-}
-AAECADD4D97970AFF702D86FAFAC7D17 // doom.wad e4m4
-{
-	// missing textures
-	setwalltexture 427 back top BROWNHUG
-	setwalltexture 558 back top BROWNHUG
-	setwalltexture 567 front top BROWNHUG
-	setwalltexture 572 front top BROWNHUG
-}
-94D4C869A0C02EF4F7375022B36AAE45 // Ultimate Doom, e4m7
-{
-	// Remove unreachable secrets
-	setsectorspecial 263 0
-	setsectorspecial 264 0
-}
-
-
-AB24AE6E2CB13CBDD04600A4D37F9189 // doom2.wad map02
-1EC0AF1E3985650F0C9000319C599D0C // doom2bfg.wad map02
-{
-	// missing textures
-	setwalltexture 327 front bot STONE4
-	setwalltexture 328 front bot STONE4
-	setwalltexture 338 front bot STONE4
-	setwalltexture 339 front bot STONE4
-}
-CEC791136A83EEC4B91D39718BDF9D82 // doom2.wad map04
-{
-	// missing textures
-	setwalltexture 456 back top SUPPORT3
-	setwalltexture 108 front top STONE
-	setwalltexture 109 front top STONE
-	setwalltexture 110 front top STONE
-	setwalltexture 111 front top STONE
-	setwalltexture 127 front top STONE
-	setwalltexture 128 front top STONE
-	// remove erroneous blue keycard pickup ambush sector tags (nearby viewing windows, and the lights)
-	setsectortag 19 0
-	setsectortag 20 0
-	setsectortag 23 0
-	setsectortag 28 0
-	setsectortag 33 0
-	setsectortag 34 0
-	setsectortag 83 0
-	setsectortag 85 0
-}
-9E061AD7FBCD7FAD968C976CB4AA3B9D // doom2.wad map05
-{
-	// fix bug with opening westmost door in door hallway - incorrect sector tagging - see doomwiki.org for more info
-	setsectortag 4 0
-	setsectortag 153 0
-}
-66C46385EB1A23D60839D1532522076B // doom2.wad map08
-{
-	// missing texture
-	setwalltexture 101 back top BRICK7
-}
-5BDA34DA60C0530794CC1EA2DA017976 // doom2.wad map14
-{
-	// missing textures
-	setwalltexture 1259 back top BSTONE2
-	setwalltexture 1305 back top BSTONE2
-}
-1A540BA717BF9EC85F8522594C352F2A // Doom II, map15
-{
-	setsectorspecial 147 0
-}
-0D491365C1B88B7D1B603890100DD03E // doom2.wad map18
-{
-	// missing textures
-	setwalltexture 451 front mid metal
-	setwalltexture 459 front mid metal
-}
-B5506B1E8F2FC272AD0C77B9E0DF5491 // doom2.wad map19
-{
-	// missing textures
-	setwalltexture 355 back top STONE2
-	setwalltexture 736 front top SLADWALL
-}
-EBDAC00E9D25D884B2C8F4B1F0390539 // doom2.wad map21
-{
-	// push ceiling down in glitchy sectors above the stair switches
-	setsectoroffset 50 ceil -56
-	setsectoroffset 54 ceil -56
-}
-94893A0DC429A22ADC4B3A73DA537E16 // DOOM2.WAD map25
-{
-   rebuildnodes
-}
-110F84DE041052B59307FAF0293E6BC0 // Doom II, map27
-{
-	setsectorspecial 93 0
-	setwalltexture 582 back top ZIMMER3
-}
-20251EDA21B2F2ECF6FF5B8BBC00B26C // Doom II, MAP29
-{
-	// Missing textures on teleporters
-	setwalltexture 405 back bot SUPPORT3
-	setwalltexture 406 back bot SUPPORT3
-	setwalltexture 407 back bot SUPPORT3
-	setwalltexture 408 back bot SUPPORT3
-	setwalltexture 516 back bot SUPPORT3
-	setwalltexture 517 back bot SUPPORT3
-	setwalltexture 518 back bot SUPPORT3
-	setwalltexture 519 back bot SUPPORT3
-	setwalltexture 524 back bot SUPPORT3
-	setwalltexture 525 back bot SUPPORT3
-	setwalltexture 526 back bot SUPPORT3
-	setwalltexture 527 back bot SUPPORT3
-	setwalltexture 1146 back bot SUPPORT3
-	setwalltexture 1147 back bot SUPPORT3
-	setwalltexture 1148 back bot SUPPORT3
-	setwalltexture 1149 back bot SUPPORT3
-	setwalltexture 1138 back bot SUPPORT3
-	setwalltexture 1139 back bot SUPPORT3
-	setwalltexture 1140 back bot SUPPORT3
-	setwalltexture 1141 back bot SUPPORT3
-}
-ABC4EB5A1535ECCD0061AD14F3547908 // Plutonia Experiment, map26
-{
-	setsectorspecial 156 0
-}
-
-FF635FB9A2F076566299910F8C78F707 // nerve.wad, level04
-{
-	setsectorspecial 868 0
-}
-
-B68EB7CFB4CC481796E2919B9C16DFBD // Moc11.wad e1m6
-{
-	setvertex 1650 -3072 2671
-	setvertex 1642 -2944 2671
-}
-
-712BB4CFBD0753178CA0C6814BE4C288 // map12 BTSX_E1 - patch some rendering glitches that are problematic to detect
-{
-	setsectortag 545 32000
-	setsectortag 1618 32000
-	setlinespecial 2853 Sector_Set3DFloor 32000 4 0 0 0
-	setsectortag 439 32001
-	setsectortag 458 32001
-	setlinespecial 2182 Sector_Set3DFloor 32001 4 0 0 0
-	setsectortag 454 32002
-	setsectortag 910 32002
-	setlinespecial 2410 Sector_Set3DFloor 32002 4 1 0 0
 }
 
 1ED329858AB154C55878DA1C11A4F100 // unloved.pk3:unlovedmaps.wad map01
@@ -776,109 +244,8 @@ DC96228097DD004C40CCB1DB14A91EAA // unloved.pk3:unlovedmaps.wad map05
 	clipmidtex
 }
 
-
-// Cosmetic fixes for Heretic: Shadow of the Serpent Riders
-D94587625BA779644D58151A87897CF1 // e1m2
+6DC9F6CCEAE7A91AEC48EBE506F22BC4 // void.wad MAP01
 {
-	// Missing textures
-	setwalltexture 477 back top MOSSRCK1
-	setwalltexture 478 back top MOSSRCK1
-	setwalltexture 479 back top MOSSRCK1
-	setwalltexture 1057 front top MOSSRCK1
-}
-ADD0FAC41AFB0B3C9B9F3C0006F93805 // e1m3
-{
-	// Broken door between the hallway that leads to a Torch 
-	// and the passage that has a Bag of Holding at its end
-	setsectoroffset 86 floor -128
-	setsectoroffset 86 ceil -128
-}
-916318D8B06DAC2D83424B23E4B66531 // e1m4
-{
-	// Wrong sector offsets
-	setsectoroffset 0 ceil 8
-	setsectoroffset 1 ceil 8
-	setsectoroffset 2 ceil 8
-	setsectoroffset 3 ceil 8
-	setsectoroffset 4 ceil 8
-	setsectoroffset 6 ceil 8
-	setsectoroffset 6 floor 8
-	setsectoroffset 17 ceil 8
-	// Yellow key door
-	setsectoroffset 284 floor -8
-	setsectoroffset 284 ceil -8
-	// Missing textures
-	setwalltexture 490 back bot GRSTNPB
-	setwalltexture 722 front bot WOODWL
-	setwalltexture 911 front bot WOODWL
-	setwalltexture 1296 front bot WOODWL
-}
-397A0E17A39542E4E8294E156FAB0502 // e2m2
-{
-	// Missing green door statues on easy and hard difficulties
-	setthingskills 17 31
-	setthingskills 18 31
-}
-CA3773ED313E8899311F3DD0CA195A68 // e3m6
-{
-	// Quartz flask outside of map
-	setthingskills 373 0
-	// Missing wall torch on hard difficulty
-	setthingskills 448 31
-	// Missing textures
-	setwalltexture 343 front top MOSSRCK1
-	setwalltexture 370 front top MOSSRCK1
-}
-5E3FCFDE78310BB89F92B1626A47D0AD // heretic.wad E4M7
-{
-	// Missing textures
-	setwalltexture 1274 front top CSTLRCK
-	setwalltexture 1277 back top CSTLRCK
-	setwalltexture 1278 front top CSTLRCK
-}
-
-39C594CAC07EE51C80F757DA465FCC94 // strife1.wad map10
-{
-	// fix the shooting range by matching sector 138 and 145 properties together
-	setsectoroffset 145 floor -32
-	setsectoroffset 145 ceil 40
-	setsectortexture 145 floor F_CONCRP
-	setsectorlight 138 192
-	setwalltexture 3431 back top BRKGRY01
-}
-
-3FFAF2F624C1B4BB6F581DCF7B99CBA7 // hexen.wad MAP36
-7DC65D5029DD834481CD716B3D71388A // hexdd.wad MAP47
-{
+	setslopeoverflow
 	polyobj
-}
-
-3D8ED20BF5CAAE6D6AE0E10999C75084 // hgarden.pk3 map01
-{
-	// spawn trees on top of arches
-	setthingz 399 168
-	setthingz 400 168
-	setthingz 401 168
-	setthingz 402 168
-	setthingz 403 168
-	setthingz 404 168
-}
-
-6D4156EE0D12B77AD143A37C4D3DCF98 // dmonfear.wad map22
-{
-	shorttex
-}
-
-FCCA97FC851F6473EAA069F74247B317 // pg-raw.wad map31
-{
-	setlinesectorref 331 front 74
-	setlinesectorref 326 front 74
-	setlinesectorref 497 front 74
-	setlinesectorref 474 front 74
-	setlinesectorref 471 front 74
-	setlinesectorref 327 front 74
-	setlinesectorref 328 front 74
-	setlinesectorref 329 front 74
-	setsectortag 74 4
-	setlinespecial 357 Transfer_Heights 4 2 0 0 0 
 }

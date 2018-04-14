@@ -504,7 +504,7 @@ void DBaseDecal::Spread (const FDecalTemplate *tpl, side_t *wall, double x, doub
 	int dwidth = tex->GetWidth ();
 
 	DecalWidth = dwidth * ScaleX;
-	DecalLeft = tex->LeftOffset * ScaleX;
+	DecalLeft = tex->GetLeftOffset(0) * ScaleX;
 	DecalRight = DecalWidth - DecalLeft;
 	SpreadSource = this;
 	SpreadTemplate = tpl;

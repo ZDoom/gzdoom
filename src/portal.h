@@ -75,8 +75,6 @@ struct FDisplacementTable
 	}
 };
 
-extern FDisplacementTable Displacements;
-
 
 //============================================================================
 //
@@ -129,8 +127,6 @@ struct FPortalBlockmap
 	}
 };
 
-extern FPortalBlockmap PortalBlockmap;
-
 
 //============================================================================
 //
@@ -177,6 +173,8 @@ enum
 // All information about a line-to-line portal (all types)
 //
 //============================================================================
+struct FLinePortalSpan;
+struct vertex_t;
 
 struct FLinePortal
 {
@@ -191,9 +189,17 @@ struct FLinePortal
 	double mSinRot;
 	double mCosRot;
 	portnode_t *lineportal_thinglist;
+	FLinePortalSpan *mGroup;
 };
 
-extern TArray<FLinePortal> linePortals;
+struct FLinePortalSpan
+{
+	// defines the complete span of connected colinear line portals, if they are of type PORTT_LINKED.
+	vertex_t	*v1 = nullptr, *v2 = nullptr;	// vertices, from v1 to v2
+	TArray<FLinePortal *> lines;
+	int validcount = 0;
+};
+
 
 //============================================================================
 //
@@ -238,6 +244,24 @@ struct FSectorPortal
 
 //============================================================================
 //
+// This groups all sector portals with identical offset.
+//
+//============================================================================
+
+struct GLSectorStackPortal;
+struct FSectorPortalGroup
+{
+	DVector2 mDisplacement;
+	int plane;
+	GLSectorStackPortal *glportal;	// for quick access to the render data. This is only valid during BSP traversal!
+
+	GLSectorStackPortal *GetRenderState();
+};
+
+
+
+//============================================================================
+//
 // Functions
 //
 //============================================================================
@@ -249,10 +273,6 @@ bool P_ChangePortal(line_t *ln, int thisid, int destid);
 void P_CreateLinkedPortals();
 bool P_CollectConnectedGroups(int startgroup, const DVector3 &position, double upperz, double checkradius, FPortalGroupArray &out);
 void P_CollectLinkedPortals();
-inline int P_NumPortalGroups()
-{
-	return Displacements.size;
-}
 unsigned P_GetSkyboxPortal(AActor *actor);
 unsigned P_GetPortal(int type, int plane, sector_t *orgsec, sector_t *destsec, const DVector2 &displacement);
 unsigned P_GetStackPortal(AActor *point, int plane);
@@ -265,6 +285,7 @@ void P_TranslatePortalVXVY(line_t* src, double &velx, double &vely);
 void P_TranslatePortalAngle(line_t* src, DAngle& angle);
 void P_TranslatePortalZ(line_t* src, double& vz);
 DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy);
+void InitPortalGroups();
 
 
 #endif

@@ -1204,8 +1204,8 @@ DEFINE_ACTION_FUNCTION(FStringStruct, AppendFormat)
 DEFINE_ACTION_FUNCTION(FStringStruct, Mid)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(FString);
-	PARAM_UINT(pos);
-	PARAM_UINT(len);
+	PARAM_UINT_DEF(pos);
+	PARAM_UINT_DEF(len);
 	FString s = self->Mid(pos, len);
 	ACTION_RETURN_STRING(s);
 }

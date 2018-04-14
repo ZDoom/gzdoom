@@ -4,6 +4,7 @@
 **
 **---------------------------------------------------------------------------
 ** Copyright 2004-2007 Randy Heit
+** Copyright 2006-2018 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -47,13 +48,22 @@
 #include "textures/textures.h"
 #include "v_palette.h"
 
-typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
+FTexture *CreateBrightmapTexture(FTexture*);
 
-struct TexCreateInfo
+// Make sprite offset adjustment user-configurable per renderer.
+int r_spriteadjustSW, r_spriteadjustHW;
+CUSTOM_CVAR(Int, r_spriteadjust, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	CreateFunc TryCreate;
-	ETextureType usetype;
-};
+	r_spriteadjustHW = !!(self & 2);
+	r_spriteadjustSW = !!(self & 1);
+	TexMan.SpriteAdjustChanged();
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 uint8_t FTexture::GrayMap[256];
 
@@ -61,9 +71,24 @@ void FTexture::InitGrayMap()
 {
 	for (int i = 0; i < 256; ++i)
 	{
-		GrayMap[i] = ColorMatcher.Pick (i, i, i);
+		GrayMap[i] = ColorMatcher.Pick(i, i, i);
 	}
 }
+
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+typedef FTexture * (*CreateFunc)(FileReader & file, int lumpnum);
+
+struct TexCreateInfo
+{
+	CreateFunc TryCreate;
+	ETextureType usetype;
+};
 
 FTexture *IMGZTexture_TryCreate(FileReader &, int lumpnum);
 FTexture *PNGTexture_TryCreate(FileReader &, int lumpnum);
@@ -144,14 +169,30 @@ FTexture * FTexture::CreateTexture (const char *name, int lumpnum, ETextureType 
 	return tex;
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 FTexture::FTexture (const char *name, int lumpnum)
-: LeftOffset(0), TopOffset(0),
+	: 
   WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
   UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
-  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false),
+  bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false), bFullNameTexture(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0)
 {
+	bBrightmapChecked = false;
+	bGlowing = false;
+	bAutoGlowing = false;
+	bFullbright = false;
+	bDisableFullbright = false;
+	bSkybox = false;
+	bNoCompress = false;
+	bTranslucent = -1;
+
+
+	_LeftOffset[0] = _LeftOffset[1] = _TopOffset[0] = _TopOffset[1] = 0;
 	id.SetInvalid();
 	if (name != NULL)
 	{
@@ -171,14 +212,21 @@ FTexture::FTexture (const char *name, int lumpnum)
 FTexture::~FTexture ()
 {
 	FTexture *link = Wads.GetLinkedTexture(SourceLump);
-	if (link == this) Wads.SetLinkedTexture(SourceLump, NULL);
-	KillNative();
+	if (link == this) Wads.SetLinkedTexture(SourceLump, nullptr);
+	if (areas != nullptr) delete[] areas;
+	areas = nullptr;
 }
 
 void FTexture::Unload()
 {
 	PixelsBgra = std::vector<uint32_t>();
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 const uint32_t *FTexture::GetColumnBgra(unsigned int column, const Span **spans_out)
 {
@@ -207,6 +255,12 @@ const uint32_t *FTexture::GetPixelsBgra()
 	return PixelsBgra.data();
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 bool FTexture::CheckModified (FRenderStyle)
 {
 	return false;
@@ -221,6 +275,12 @@ void FTexture::SetFrontSkyLayer ()
 {
 	bNoRemap0 = true;
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void FTexture::CalcBitSize ()
 {
@@ -248,6 +308,12 @@ void FTexture::CalcBitSize ()
 
 	HeightBits = i;
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 FTexture::Span **FTexture::CreateSpans (const uint8_t *pixels) const
 {
@@ -348,6 +414,12 @@ void FTexture::FreeSpans (Span **spans) const
 	M_Free (spans);
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void FTexture::GenerateBgraFromBitmap(const FBitmap &bitmap)
 {
 	CreatePixelsBgraWithMipmaps();
@@ -389,6 +461,12 @@ int FTexture::MipmapLevels() const
 
 	return MAX(widthbits, heightbits);
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void FTexture::GenerateBgraMipmaps()
 {
@@ -511,6 +589,12 @@ void FTexture::GenerateBgraMipmaps()
 	}
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void FTexture::GenerateBgraMipmapsFast()
 {
 	uint32_t *src = PixelsBgra.data();
@@ -551,6 +635,12 @@ void FTexture::GenerateBgraMipmapsFast()
 		dest += w * h;
 	}
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, int ypos, int rotate, const uint8_t *translation, FRenderStyle style)
 {
@@ -593,8 +683,12 @@ void FTexture::CopyToBlock (uint8_t *dest, int dwidth, int dheight, int xpos, in
 	}
 }
 
+//==========================================================================
+//
 // Converts a texture between row-major and column-major format
 // by flipping it about the X=Y axis.
+//
+//==========================================================================
 
 void FTexture::FlipSquareBlock (uint8_t *block, int x, int y)
 {
@@ -711,39 +805,11 @@ void FTexture::FlipNonSquareBlockRemap (uint8_t *dst, const uint8_t *src, int x,
 	}
 }
 
-FNativeTexture *FTexture::GetNative(FTextureFormat fmt, bool wrapping)
-{
-	if (Native[fmt] != NULL)
-	{
-		if (!Native[fmt]->CheckWrapping(wrapping))
-		{ // Texture's wrapping mode is not compatible.
-		  // Destroy it and get a new one.
-			delete Native[fmt];
-		}
-		else
-		{
-			if (CheckModified(DefaultRenderStyle()))
-			{
-				Native[fmt]->Update();
-			}
-			return Native[fmt];
-		}
-	}
-	Native[fmt] = screen->CreateTexture(this, fmt, wrapping);
-	return Native[fmt];
-}
-
-void FTexture::KillNative()
-{
-	for (auto &nat : Native)
-	{
-		if (nat != nullptr)
-		{
-			delete nat;
-			nat = nullptr;
-		}
-	}
-}
+//==========================================================================
+//
+// 
+//
+//==========================================================================
 
 void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat fmt)
 {
@@ -812,7 +878,13 @@ int FTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, Pa
 	return 0;
 }
 
-bool FTexture::UseBasePalette() 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+bool FTexture::UseBasePalette()
 { 
 	return true; 
 }
@@ -939,8 +1011,469 @@ int FTexture::CheckRealHeight()
 	return maxy;
 }
 
+//==========================================================================
+//
+// Search auto paths for extra material textures
+//
+//==========================================================================
+
+void FTexture::AddAutoMaterials()
+{
+	struct AutoTextureSearchPath
+	{
+		const char *path;
+		FTexture *FTexture::*pointer;
+	};
+
+	static AutoTextureSearchPath autosearchpaths[] =
+	{
+		{ "brightmaps/", &FTexture::Brightmap }, // For backwards compatibility, only for short names
+	{ "materials/brightmaps/", &FTexture::Brightmap },
+	{ "materials/normalmaps/", &FTexture::Normal },
+	{ "materials/specular/", &FTexture::Specular },
+	{ "materials/metallic/", &FTexture::Metallic },
+	{ "materials/roughness/", &FTexture::Roughness },
+	{ "materials/ao/", &FTexture::AmbientOcclusion }
+	};
 
 
+	int startindex = bFullNameTexture ? 1 : 0;
+	FString searchname = Name;
+
+	if (bFullNameTexture)
+	{
+		auto dot = searchname.LastIndexOf('.');
+		auto slash = searchname.LastIndexOf('/');
+		if (dot > slash) searchname.Truncate(dot);
+	}
+
+	for (size_t i = 0; i < countof(autosearchpaths); i++)
+	{
+		auto &layer = autosearchpaths[i];
+		if (this->*(layer.pointer) == nullptr)	// only if no explicit assignment had been done.
+		{
+			FStringf lookup("%s%s%s", layer.path, bFullNameTexture ? "" : "auto/", searchname.GetChars());
+			auto lump = Wads.CheckNumForFullName(lookup, false, ns_global, true);
+			if (lump != -1)
+			{
+				auto bmtex = TexMan.FindTexture(Wads.GetLumpFullName(lump), ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+				if (bmtex != nullptr)
+				{
+					bmtex->bMasked = false;
+					this->*(layer.pointer) = bmtex;
+				}
+			}
+		}
+	}
+}
+
+//===========================================================================
+// 
+// Checks if the texture has a default brightmap and creates it if so
+//
+//===========================================================================
+void FTexture::CreateDefaultBrightmap()
+{
+	if (!bBrightmapChecked)
+	{
+		// Check for brightmaps
+		if (UseBasePalette() && TexMan.HasGlobalBrightmap &&
+			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
+			Brightmap == NULL && bWarped == 0
+			)
+		{
+			// May have one - let's check when we use this texture
+			const uint8_t *texbuf = GetPixels(DefaultRenderStyle());
+			const int white = ColorMatcher.Pick(255, 255, 255);
+
+			int size = GetWidth() * GetHeight();
+			for (int i = 0; i<size; i++)
+			{
+				if (TexMan.GlobalBrightmap.Remap[texbuf[i]] == white)
+				{
+					// Create a brightmap
+					DPrintf(DMSG_NOTIFY, "brightmap created for texture '%s'\n", Name.GetChars());
+					Brightmap = CreateBrightmapTexture(this);
+					bBrightmapChecked = true;
+					TexMan.AddTexture(Brightmap);
+					return;
+				}
+			}
+			// No bright pixels found
+			DPrintf(DMSG_SPAMMY, "No bright pixels found in texture '%s'\n", Name.GetChars());
+			bBrightmapChecked = 1;
+		}
+		else
+		{
+			// does not have one so set the flag to 'done'
+			bBrightmapChecked = 1;
+		}
+	}
+}
+
+
+//==========================================================================
+//
+// Calculates glow color for a texture
+//
+//==========================================================================
+
+void FTexture::GetGlowColor(float *data)
+{
+	if (bGlowing && GlowColor == 0)
+	{
+		int w = Width, h = Height;
+		auto buffer = new uint8_t[w * h];
+		if (buffer)
+		{
+			FillBuffer(buffer, w, h, TEX_RGB);
+			GlowColor = averageColor((uint32_t *)buffer, w*h, 153);
+			delete[] buffer;
+		}
+
+		// Black glow equals nothing so switch glowing off
+		if (GlowColor == 0) bGlowing = false;
+	}
+	data[0] = GlowColor.r / 255.0f;
+	data[1] = GlowColor.g / 255.0f;
+	data[2] = GlowColor.b / 255.0f;
+}
+
+//===========================================================================
+// 
+//	Finds gaps in the texture which can be skipped by the renderer
+//  This was mainly added to speed up one area in E4M6 of 007LTSD
+//
+//===========================================================================
+
+bool FTexture::FindHoles(const unsigned char * buffer, int w, int h)
+{
+	const unsigned char * li;
+	int y, x;
+	int startdraw, lendraw;
+	int gaps[5][2];
+	int gapc = 0;
+
+
+	// already done!
+	if (areacount) return false;
+	if (UseType == ETextureType::Flat) return false;	// flats don't have transparent parts
+	areacount = -1;	//whatever happens next, it shouldn't be done twice!
+
+							// large textures are excluded for performance reasons
+	if (h>512) return false;
+
+	startdraw = -1;
+	lendraw = 0;
+	for (y = 0; y<h; y++)
+	{
+		li = buffer + w * y * 4 + 3;
+
+		for (x = 0; x<w; x++, li += 4)
+		{
+			if (*li != 0) break;
+		}
+
+		if (x != w)
+		{
+			// non - transparent
+			if (startdraw == -1)
+			{
+				startdraw = y;
+				// merge transparent gaps of less than 16 pixels into the last drawing block
+				if (gapc && y <= gaps[gapc - 1][0] + gaps[gapc - 1][1] + 16)
+				{
+					gapc--;
+					startdraw = gaps[gapc][0];
+					lendraw = y - startdraw;
+				}
+				if (gapc == 4) return false;	// too many splits - this isn't worth it
+			}
+			lendraw++;
+		}
+		else if (startdraw != -1)
+		{
+			if (lendraw == 1) lendraw = 2;
+			gaps[gapc][0] = startdraw;
+			gaps[gapc][1] = lendraw;
+			gapc++;
+
+			startdraw = -1;
+			lendraw = 0;
+		}
+	}
+	if (startdraw != -1)
+	{
+		gaps[gapc][0] = startdraw;
+		gaps[gapc][1] = lendraw;
+		gapc++;
+	}
+	if (startdraw == 0 && lendraw == h) return false;	// nothing saved so don't create a split list
+
+	if (gapc > 0)
+	{
+		FloatRect * rcs = new FloatRect[gapc];
+
+		for (x = 0; x < gapc; x++)
+		{
+			// gaps are stored as texture (u/v) coordinates
+			rcs[x].width = rcs[x].left = -1.0f;
+			rcs[x].top = (float)gaps[x][0] / (float)h;
+			rcs[x].height = (float)gaps[x][1] / (float)h;
+		}
+		areas = rcs;
+	}
+	else areas = nullptr;
+	areacount = gapc;
+
+	return true;
+}
+
+//----------------------------------------------------------------------------
+//
+//
+//
+//----------------------------------------------------------------------------
+
+void FTexture::CheckTrans(unsigned char * buffer, int size, int trans)
+{
+	if (bTranslucent == -1)
+	{
+		bTranslucent = trans;
+		if (trans == -1)
+		{
+			uint32_t * dwbuf = (uint32_t*)buffer;
+			for (int i = 0; i<size; i++)
+			{
+				uint32_t alpha = dwbuf[i] >> 24;
+
+				if (alpha != 0xff && alpha != 0)
+				{
+					bTranslucent = 1;
+					return;
+				}
+			}
+			bTranslucent = 0;
+		}
+	}
+}
+
+
+//===========================================================================
+// 
+// smooth the edges of transparent fields in the texture
+//
+//===========================================================================
+
+#ifdef WORDS_BIGENDIAN
+#define MSB 0
+#define SOME_MASK 0xffffff00
+#else
+#define MSB 3
+#define SOME_MASK 0x00ffffff
+#endif
+
+#define CHKPIX(ofs) (l1[(ofs)*4+MSB]==255 ? (( ((uint32_t*)l1)[0] = ((uint32_t*)l1)[ofs]&SOME_MASK), trans=true ) : false)
+
+bool FTexture::SmoothEdges(unsigned char * buffer, int w, int h)
+{
+	int x, y;
+	bool trans = buffer[MSB] == 0; // If I set this to false here the code won't detect textures 
+								   // that only contain transparent pixels.
+	bool semitrans = false;
+	unsigned char * l1;
+
+	if (h <= 1 || w <= 1) return false;  // makes (a) no sense and (b) doesn't work with this code!
+
+	l1 = buffer;
+
+
+	if (l1[MSB] == 0 && !CHKPIX(1)) CHKPIX(w);
+	else if (l1[MSB]<255) semitrans = true;
+	l1 += 4;
+	for (x = 1; x<w - 1; x++, l1 += 4)
+	{
+		if (l1[MSB] == 0 && !CHKPIX(-1) && !CHKPIX(1)) CHKPIX(w);
+		else if (l1[MSB]<255) semitrans = true;
+	}
+	if (l1[MSB] == 0 && !CHKPIX(-1)) CHKPIX(w);
+	else if (l1[MSB]<255) semitrans = true;
+	l1 += 4;
+
+	for (y = 1; y<h - 1; y++)
+	{
+		if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(1)) CHKPIX(w);
+		else if (l1[MSB]<255) semitrans = true;
+		l1 += 4;
+		for (x = 1; x<w - 1; x++, l1 += 4)
+		{
+			if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(-1) && !CHKPIX(1) && !CHKPIX(-w - 1) && !CHKPIX(-w + 1) && !CHKPIX(w - 1) && !CHKPIX(w + 1)) CHKPIX(w);
+			else if (l1[MSB]<255) semitrans = true;
+		}
+		if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(-1)) CHKPIX(w);
+		else if (l1[MSB]<255) semitrans = true;
+		l1 += 4;
+	}
+
+	if (l1[MSB] == 0 && !CHKPIX(-w)) CHKPIX(1);
+	else if (l1[MSB]<255) semitrans = true;
+	l1 += 4;
+	for (x = 1; x<w - 1; x++, l1 += 4)
+	{
+		if (l1[MSB] == 0 && !CHKPIX(-w) && !CHKPIX(-1)) CHKPIX(1);
+		else if (l1[MSB]<255) semitrans = true;
+	}
+	if (l1[MSB] == 0 && !CHKPIX(-w)) CHKPIX(-1);
+	else if (l1[MSB]<255) semitrans = true;
+
+	return trans || semitrans;
+}
+
+//===========================================================================
+// 
+// Post-process the texture data after the buffer has been created
+//
+//===========================================================================
+
+bool FTexture::ProcessData(unsigned char * buffer, int w, int h, bool ispatch)
+{
+	if (bMasked)
+	{
+		bMasked = SmoothEdges(buffer, w, h);
+		if (bMasked && !ispatch) FindHoles(buffer, w, h);
+	}
+	return true;
+}
+
+//===========================================================================
+// 
+//	Initializes the buffer for the texture data
+//
+//===========================================================================
+
+unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int flags)
+{
+	unsigned char * buffer;
+	int W, H;
+	int isTransparent = -1;
+
+
+	if ((flags & CTF_CheckHires) && translation != STRange_AlphaTexture)
+	{
+		buffer = LoadHiresTexture(&w, &h);
+		if (buffer)
+		{
+			return buffer;
+		}
+	}
+
+	int exx = !!(flags & CTF_Expand);
+
+	W = w = GetWidth() + 2 * exx;
+	H = h = GetHeight() + 2 * exx;
+
+
+	buffer = new unsigned char[W*(H + 1) * 4];
+	memset(buffer, 0, W * (H + 1) * 4);
+
+	FBitmap bmp(buffer, W * 4, W, H);
+
+	if (translation <= 0 || translation >= STRange_Min)
+	{
+		// Allow creation of desaturated or special-colormapped textures for the legacy renderer.
+		FCopyInfo inf = { OP_COPY, BLEND_NONE,{ 0 }, 0, 0 };
+		if (translation >= STRange_Desaturate && translation < STRange_Desaturate + 31)	// there are 31 ranges of desaturations available
+		{
+			inf.blend = (EBlend)(BLEND_DESATURATE1 + translation - STRange_Desaturate);
+		}
+		else if (translation >= STRange_Specialcolormap && translation < STRange_Specialcolormap + (int)SpecialColormaps.Size())
+		{
+			inf.blend = (EBlend)(BLEND_SPECIALCOLORMAP1 + translation - STRange_Specialcolormap);
+		}
+
+		int trans = CopyTrueColorPixels(&bmp, exx, exx, 0, translation >= STRange_Min ? &inf : nullptr);
+		CheckTrans(buffer, W*H, trans);
+		isTransparent = bTranslucent;
+		// alpha texture for legacy mode
+		if (translation == STRange_AlphaTexture)
+		{
+			for (int i = 0; i < W*H; i++)
+			{
+				int b = buffer[4 * i];
+				int g = buffer[4 * i + 1];
+				int r = buffer[4 * i + 2];
+				int gray = Luminance(r, g, b);
+				buffer[4 * i] = 255;
+				buffer[4 * i + 1] = 255;
+				buffer[4 * i + 2] = 255;
+				buffer[4 * i + 3] = (buffer[4 * i + 3] * gray) >> 8;
+			}
+		}
+	}
+	else
+	{
+		// When using translations everything must be mapped to the base palette.
+		// so use CopyTrueColorTranslated
+		CopyTrueColorTranslated(&bmp, exx, exx, 0, FUniquePalette::GetPalette(translation));
+		isTransparent = 0;
+		// This is not conclusive for setting the texture's transparency info.
+	}
+
+	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
+	// [BB] Potentially upsample the buffer.
+	if (flags & CTF_ProcessData)
+	{
+		buffer = CreateUpsampledTextureBuffer(buffer, W, H, w, h, !!isTransparent);
+		ProcessData(buffer, w, h, false);
+	}
+	return buffer;
+}
+
+//===========================================================================
+// 
+// Dummy texture for the 0-entry.
+//
+//===========================================================================
+
+bool FTexture::GetTranslucency()
+{
+	if (bTranslucent == -1)
+	{
+		if (!bHasCanvas)
+		{
+			int w, h;
+			unsigned char *buffer = CreateTexBuffer(0, w, h);
+			delete[] buffer;
+		}
+		else
+		{
+			bTranslucent = 0;
+		}
+	}
+	return !!bTranslucent;
+}
+
+//===========================================================================
+// 
+// empty stubs to be overloaded by child classes.
+//
+//===========================================================================
+
+const uint8_t *FTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
+{
+	return nullptr;
+}
+
+const uint8_t *FTexture::GetPixels(FRenderStyle style)
+{
+	return nullptr;
+}
+
+//===========================================================================
+// 
+// Dummy texture for the 0-entry.
+//
+//===========================================================================
 
 FDummyTexture::FDummyTexture ()
 {
@@ -957,17 +1490,6 @@ void FDummyTexture::SetSize (int width, int height)
 	Width = width;
 	Height = height;
 	CalcBitSize ();
-}
-
-// These only get called from the texture precacher which discards the result.
-const uint8_t *FDummyTexture::GetColumn(FRenderStyle style, unsigned int column, const Span **spans_out)
-{
-	return nullptr;
-}
-
-const uint8_t *FDummyTexture::GetPixels(FRenderStyle style)
-{
-	return nullptr;
 }
 
 //==========================================================================

@@ -1199,12 +1199,12 @@ public:
 
 		if((offsetflags & SBarInfoCommand::CENTER) == SBarInfoCommand::CENTER)
 		{
-			if (forceWidth < 0)	dx -= (texture->GetScaledWidthDouble()/2.0)-texture->GetScaledLeftOffsetDouble();
-			else	dx -= forceWidth*(0.5-(texture->GetScaledLeftOffsetDouble()/texture->GetScaledWidthDouble()));
+			if (forceWidth < 0)	dx -= (texture->GetScaledWidthDouble()/2.0)-texture->GetScaledLeftOffsetDouble(0);
+			else	dx -= forceWidth*(0.5-(texture->GetScaledLeftOffsetDouble(0)/texture->GetScaledWidthDouble()));
 			//Unoptimalized ^^formula is dx -= forceWidth/2.0-(texture->GetScaledLeftOffsetDouble()*forceWidth/texture->GetScaledWidthDouble());
 			
-			if (forceHeight < 0)	dy -= (texture->GetScaledHeightDouble()/2.0)-texture->GetScaledTopOffsetDouble();
-			else	dy -= forceHeight*(0.5-(texture->GetScaledTopOffsetDouble()/texture->GetScaledHeightDouble()));
+			if (forceHeight < 0)	dy -= (texture->GetScaledHeightDouble()/2.0)-texture->GetScaledTopOffsetDouble(0);
+			else	dy -= forceHeight*(0.5-(texture->GetScaledTopOffsetDouble(0)/texture->GetScaledHeightDouble()));
 		}
 
 		dx += xOffset;
@@ -1215,10 +1215,10 @@ public:
 			double tmp = 0;
 			w = forceWidth < 0 ? texture->GetScaledWidthDouble() : forceWidth;
 			h = forceHeight < 0 ? texture->GetScaledHeightDouble() : forceHeight;
-			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetScaledLeftOffsetDouble();
-			double dcy = clip[1] == 0 ? 0 : dy + clip[1] - texture->GetScaledTopOffsetDouble();
-			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetScaledLeftOffsetDouble();
-			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetScaledTopOffsetDouble();
+			double dcx = clip[0] == 0 ? 0 : dx + clip[0] - texture->GetScaledLeftOffsetDouble(0);
+			double dcy = clip[1] == 0 ? 0 : dy + clip[1] - texture->GetScaledTopOffsetDouble(0);
+			double dcr = clip[2] == 0 ? INT_MAX : dx + w - clip[2] - texture->GetScaledLeftOffsetDouble(0);
+			double dcb = clip[3] == 0 ? INT_MAX : dy + h - clip[3] - texture->GetScaledTopOffsetDouble(0);
 
 			if(clip[0] != 0 || clip[1] != 0)
 			{
@@ -1300,10 +1300,10 @@ public:
 			// Check for clipping
 			if(clip[0] != 0 || clip[1] != 0 || clip[2] != 0 || clip[3] != 0)
 			{
-				rcx = clip[0] == 0 ? 0 : rx+((clip[0] - texture->GetScaledLeftOffsetDouble())*Scale.X);
-				rcy = clip[1] == 0 ? 0 : ry+((clip[1] - texture->GetScaledTopOffsetDouble())*Scale.Y);
-				rcr = clip[2] == 0 ? INT_MAX : rx+w-((clip[2] + texture->GetScaledLeftOffsetDouble())*Scale.X);
-				rcb = clip[3] == 0 ? INT_MAX : ry+h-((clip[3] + texture->GetScaledTopOffsetDouble())*Scale.Y);
+				rcx = clip[0] == 0 ? 0 : rx+((clip[0] - texture->GetScaledLeftOffsetDouble(0))*Scale.X);
+				rcy = clip[1] == 0 ? 0 : ry+((clip[1] - texture->GetScaledTopOffsetDouble(0))*Scale.Y);
+				rcr = clip[2] == 0 ? INT_MAX : rx+w-((clip[2] + texture->GetScaledLeftOffsetDouble(0))*Scale.X);
+				rcb = clip[3] == 0 ? INT_MAX : ry+h-((clip[3] + texture->GetScaledTopOffsetDouble(0))*Scale.Y);
 			}
 
 			if(clearDontDraw)
@@ -1399,8 +1399,8 @@ public:
 			}
 			int character = (unsigned char)*str;
 
-			if(script->spacingCharacter == '\0') //If we are monospaced lets use the offset
-				ax += (c->LeftOffset+1); //ignore x offsets since we adapt to character size
+			if (script->spacingCharacter == '\0') //If we are monospaced lets use the offset
+				ax += (c->GetLeftOffset(0) + 1); //ignore x offsets since we adapt to character size
 
 			double rx, ry, rw, rh;
 			rx = ax + xOffset;
@@ -1463,8 +1463,8 @@ public:
 				DTA_DestHeightF, rh,
 				DTA_Alpha, Alpha,
 				TAG_DONE);
-			if(script->spacingCharacter == '\0')
-				ax += width + spacing - (c->LeftOffset+1);
+			if (script->spacingCharacter == '\0')
+				ax += width + spacing - (c->GetLeftOffset(0) + 1);
 			else //width gets changed at the call to GetChar()
 				ax += font->GetCharWidth((unsigned char) script->spacingCharacter) + spacing;
 			str++;

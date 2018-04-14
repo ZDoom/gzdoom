@@ -19,6 +19,17 @@ vec3 ProcessMaterial(vec3 material, vec3 color);
 
 //===========================================================================
 //
+// Color to grayscale
+//
+//===========================================================================
+
+float grayscale(vec4 color)
+{
+	return dot(color.rgb, vec3(0.4, 0.56, 0.14));
+}
+
+//===========================================================================
+//
 // Desaturate a color
 //
 //===========================================================================
@@ -27,7 +38,7 @@ vec4 desaturate(vec4 texel)
 {
 	if (uDesaturationFactor > 0.0)
 	{
-		float gray = (texel.r * 0.3 + texel.g * 0.56 + texel.b * 0.14);	
+		float gray = grayscale(texel);
 		return mix (texel, vec4(gray,gray,gray,texel.a), uDesaturationFactor);
 	}
 	else
@@ -64,7 +75,7 @@ vec4 getTexel(vec2 st)
 			break;
 			
 		case 4:	// TM_REDTOALPHA
-			float gray = (texel.r * 0.3 + texel.g * 0.56 + texel.b * 0.14);	
+			float gray = grayscale(texel);
 			texel = vec4(1.0, 1.0, 1.0, gray*texel.a);
 			break;
 			
@@ -73,6 +84,10 @@ vec4 getTexel(vec2 st)
 			{
 				texel.a = 0.0;
 			}
+			break;
+			
+		case 6: // TM_OPAQUEINVERSE
+			texel = vec4(1.0-texel.r, 1.0-texel.b, 1.0-texel.g, 1.0);
 			break;
 	}
 	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
@@ -415,7 +430,7 @@ void main()
 
 	switch (uFixedColormap)
 	{
-		case 0:
+		case 0:	// in-game rendering.
 		{
 			float fogdist = 0.0;
 			float fogfactor = 0.0;
@@ -451,21 +466,21 @@ void main()
 			break;
 		}
 		
-		case 1:
+		case 1:	// special colormap
 		{
-			float gray = (frag.r * 0.3 + frag.g * 0.56 + frag.b * 0.14);	
+			float gray = grayscale(frag);
 			vec4 cm = uFixedColormapStart + gray * uFixedColormapRange;
 			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a*vColor.a);
 			break;
 		}
 		
-		case 2:
+		case 2:	// fullscreen tint.
 		{
 			frag = vColor * frag * uFixedColormapStart;
 			break;
 		}
 
-		case 3:
+		case 3:	// fog layer
 		{
 			float fogdist;
 			float fogfactor;
@@ -486,6 +501,14 @@ void main()
 			frag = vec4(uFogColor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * vColor.a);
 			break;
 		}
+		
+		case 4:	// simple 2D (reuses a uniform for the special colormap for the color overlay.)
+		{
+			frag = frag * vColor;
+			frag.rgb = frag.rgb + uFixedColormapStart.rgb;
+			break;
+		}
+			
 	}
 	FragColor = frag;
 #ifdef GBUFFER_PASS

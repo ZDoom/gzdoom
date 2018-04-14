@@ -101,7 +101,7 @@ namespace swrenderer
 		}
 
 		// [RH] Added scaling
-		int scaled_to = tex->GetScaledTopOffset();
+		int scaled_to = tex->GetScaledTopOffsetSW();
 		int scaled_bo = scaled_to - tex->GetScaledHeight();
 		double gzt = pos.Z + spriteScale.Y * scaled_to;
 		double gzb = pos.Z + spriteScale.Y * scaled_bo;
@@ -153,7 +153,7 @@ namespace swrenderer
 		// calculate edges of the shape
 		const double thingxscalemul = spriteScale.X / tex->Scale.X;
 
-		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->LeftOffset - 1) : tex->LeftOffset) * thingxscalemul;
+		tx -= ((renderflags & RF_XFLIP) ? (tex->GetWidth() - tex->GetLeftOffsetSW() - 1) : tex->GetLeftOffsetSW()) * thingxscalemul;
 		double dtx1 = tx * xscale;
 		int x1 = viewport->viewwindow.centerx + xs_RoundToInt(dtx1);
 
@@ -181,7 +181,7 @@ namespace swrenderer
 		vis->yscale = float(viewport->InvZtoScale * yscale / tz);
 		vis->idepth = float(1 / tz);
 		vis->floorclip = thing->Floorclip / yscale;
-		vis->texturemid = tex->TopOffset - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip) / yscale;
+		vis->texturemid = tex->GetTopOffsetSW() - (viewport->viewpoint.Pos.Z - pos.Z + thing->Floorclip) / yscale;
 		vis->x1 = x1 < renderportal->WindowLeft ? renderportal->WindowLeft : x1;
 		vis->x2 = x2 > renderportal->WindowRight ? renderportal->WindowRight : x2;
 		//vis->Angle = thing->Angles.Yaw;

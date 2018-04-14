@@ -138,13 +138,13 @@ public:
 	//
 	void WorldLoaded();
 	void WorldUnloaded();
-	void WorldThingSpawned(AActor*);
-	void WorldThingDied(AActor*, AActor*);
-	void WorldThingRevived(AActor*);
-	void WorldThingDamaged(AActor*, AActor*, AActor*, int, FName, int, DAngle);
-	void WorldThingDestroyed(AActor*);
-	void WorldLinePreActivated(line_t*, AActor*, bool*);
-	void WorldLineActivated(line_t*, AActor*);
+	void WorldThingSpawned(AActor* actor);
+	void WorldThingDied(AActor* actor, AActor* inflictor);
+	void WorldThingRevived(AActor* actor);
+	void WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
+	void WorldThingDestroyed(AActor* actor);
+	void WorldLinePreActivated(line_t* line, AActor* actor, bool* shouldactivate);
+	void WorldLineActivated(line_t* line, AActor* actor);
 	void WorldLightning();
 	void WorldTick();
 

@@ -160,7 +160,7 @@ void FHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 //
 //===========================================================================
 
-unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name)
+unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
 {
 	int rh,rw;
 	int texformat=TexFormat[gl_texture_format];

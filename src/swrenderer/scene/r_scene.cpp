@@ -337,6 +337,7 @@ namespace swrenderer
 		auto viewport = MainThread()->Viewport.get();
 		
 		const bool savedviewactive = viewactive;
+		auto savedtarget = viewport->RenderTarget;
 
 		viewwidth = width;
 		viewport->RenderTarget = canvas;
@@ -353,7 +354,7 @@ namespace swrenderer
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();
 
-		viewport->RenderTarget = nullptr;
+		viewport->RenderTarget = savedtarget;
 		viewport->RenderingToCanvas = false;
 
 		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);

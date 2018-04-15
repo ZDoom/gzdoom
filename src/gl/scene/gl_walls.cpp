@@ -1085,6 +1085,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 	// restore some values that have been altered in this function
 	glseg=glsave;
 	flags&=~(GLT_CLAMPX|GLT_CLAMPY|GLWF_NOSPLITUPPER|GLWF_NOSPLITLOWER);
+	RenderStyle = STYLE_Normal;
 }
 
 

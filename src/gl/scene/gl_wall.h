@@ -276,6 +276,17 @@ public:
 		mDrawer = drawer;
 	}
 
+	GLWall(const GLWall &other)
+	{
+		memcpy(this, &other, sizeof(GLWall));
+	}
+
+	GLWall & operator=(const GLWall &other)
+	{
+		memcpy(this, &other, sizeof(GLWall));
+		return *this;
+	}
+
 	void Process(seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void ProcessLowerMiniseg(seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void Draw(int pass);
@@ -349,6 +360,18 @@ public:
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(sector_t * frontsector);
 	void Draw(int pass, bool trans);
+
+	GLFlat(const GLFlat &other)
+	{
+		memcpy(this, &other, sizeof(GLFlat));
+	}
+
+	GLFlat & operator=(const GLFlat &other)
+	{
+		memcpy(this, &other, sizeof(GLFlat));
+		return *this;
+	}
+
 };
 
 

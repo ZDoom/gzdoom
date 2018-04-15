@@ -285,8 +285,8 @@ SortNode * GLDrawList::FindSortWall(SortNode * head)
 //==========================================================================
 void GLDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 {
-	GLFlat * fh=&flats[drawitems[head->itemindex].index];
-	GLFlat * fs=&flats[drawitems[sort->itemindex].index];
+	GLFlat * fh= flats[drawitems[head->itemindex].index];
+	GLFlat * fs= flats[drawitems[sort->itemindex].index];
 
 	if (fh->z==fs->z) 
 		head->AddToEqual(sort);
@@ -304,7 +304,7 @@ void GLDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 //==========================================================================
 void GLDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 {
-	GLFlat * fh = &flats[drawitems[head->itemindex].index];
+	GLFlat * fh = flats[drawitems[head->itemindex].index];
 	GLWall * ws = walls[drawitems[sort->itemindex].index];
 
 	bool ceiling = fh->z > r_viewpoint.Pos.Z;
@@ -362,7 +362,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 //==========================================================================
 void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 {
-	GLFlat * fh = &flats[drawitems[head->itemindex].index];
+	GLFlat * fh = flats[drawitems[head->itemindex].index];
 	GLSprite * ss = &sprites[drawitems[sort->itemindex].index];
 
 	bool ceiling = fh->z > r_viewpoint.Pos.Z;
@@ -722,7 +722,7 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 	{
 	case GLDIT_FLAT:
 		{
-			GLFlat * f=&flats[drawitems[i].index];
+			GLFlat * f= flats[drawitems[i].index];
 			RenderFlat.Clock();
 			f->Draw(pass, trans);
 			RenderFlat.Unclock();
@@ -764,7 +764,7 @@ void GLDrawList::DoDrawSorted(SortNode * head)
 
 	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
 	{
-		z = flats[drawitems[head->itemindex].index].z;
+		z = flats[drawitems[head->itemindex].index]->z;
 		relation = z > r_viewpoint.Pos.Z ? 1 : -1;
 	}
 
@@ -878,7 +878,7 @@ void GLDrawList::DrawFlats(int pass)
 	RenderFlat.Clock();
 	for(unsigned i=0;i<drawitems.Size();i++)
 	{
-		flats[drawitems[i].index].Draw(pass, false);
+		flats[drawitems[i].index]->Draw(pass, false);
 	}
 	RenderFlat.Unclock();
 }
@@ -924,8 +924,8 @@ void GLDrawList::SortFlats()
 	{
 		std::sort(drawitems.begin(), drawitems.end(), [=](const GLDrawItem &a, const GLDrawItem &b)
 		{
-			GLFlat * w1 = &flats[a.index];
-			GLFlat* w2 = &flats[b.index];
+			GLFlat * w1 = flats[a.index];
+			GLFlat* w2 = flats[b.index];
 			return w1->gltexture < w2->gltexture;
 		});
 	}
@@ -949,9 +949,11 @@ GLWall *GLDrawList::NewWall()
 //
 //
 //==========================================================================
-void GLDrawList::AddFlat(GLFlat * flat)
+GLFlat *GLDrawList::NewFlat()
 {
-	drawitems.Push(GLDrawItem(GLDIT_FLAT,flats.Push(*flat)));
+	auto flat = (GLFlat*)RenderDataAllocator.Alloc(sizeof(GLFlat));
+	drawitems.Push(GLDrawItem(GLDIT_FLAT,flats.Push(flat)));
+	return flat;
 }
 
 //==========================================================================

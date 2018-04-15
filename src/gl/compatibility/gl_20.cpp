@@ -584,7 +584,8 @@ bool GLFlat::PutFlatCompat(bool fog)
 
 	
 	int list = list_indices[masked][foggy];
-	gl_drawinfo->dldrawlists[list].AddFlat(this);
+	auto newflat = gl_drawinfo->drawlists[list].NewFlat();
+	*newflat = *this;
 	return true;
 }
 

@@ -107,7 +107,7 @@ struct GLDrawList
 {
 //private:
 	TArray<GLWall*> walls;
-	TArray<GLFlat> flats;
+	TArray<GLFlat*> flats;
 	TArray<GLSprite> sprites;
 	TArray<GLDrawItem> drawitems;
 	int SortNodeStart;
@@ -132,8 +132,7 @@ public:
 	}
 
 	GLWall *NewWall();
-	//void AddWall(GLWall * wall);
-	void AddFlat(GLFlat * flat);
+	GLFlat *NewFlat();
 	void AddSprite(GLSprite * sprite);
 	void Reset();
 	void SortWalls();

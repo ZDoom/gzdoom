@@ -322,6 +322,7 @@ namespace swrenderer
 
 			if (BlendT::Mode == (int)SpriteBlendModes::Opaque)
 			{
+				fgcolor.a = 255;
 				return fgcolor;
 			}
 			else if (BlendT::Mode == (int)SpriteBlendModes::Shaded)

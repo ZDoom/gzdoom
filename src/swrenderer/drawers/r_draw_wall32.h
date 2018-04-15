@@ -285,6 +285,7 @@ namespace swrenderer
 
 			if (BlendT::Mode == (int)WallBlendModes::Opaque)
 			{
+				fgcolor.a = 255;
 				return fgcolor;
 			}
 			else if (BlendT::Mode == (int)WallBlendModes::Masked)

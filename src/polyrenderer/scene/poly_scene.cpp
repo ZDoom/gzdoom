@@ -322,11 +322,11 @@ void RenderPolyScene::RenderPortals()
 	bool foggy = false;
 	if (CurrentViewpoint->PortalDepth < r_portal_recursions)
 	{
-		for (auto &portal : thread->SectorPortals)
-			portal->Render(CurrentViewpoint->PortalDepth + 1);
+		for (size_t i = CurrentViewpoint->SectorPortalsStart; i < CurrentViewpoint->SectorPortalsEnd; i++)
+			thread->SectorPortals[i]->Render(CurrentViewpoint->PortalDepth + 1);
 
-		for (auto &portal : thread->LinePortals)
-			portal->Render(CurrentViewpoint->PortalDepth + 1);
+		for (size_t i = CurrentViewpoint->LinePortalsStart; i < CurrentViewpoint->LinePortalsEnd; i++)
+			thread->LinePortals[i]->Render(CurrentViewpoint->PortalDepth + 1);
 	}
 	else // Fill with black
 	{
@@ -336,8 +336,9 @@ void RenderPolyScene::RenderPortals()
 		args.SetClipPlane(0, CurrentViewpoint->PortalPlane);
 		args.SetStyle(TriBlendMode::FillOpaque);
 
-		for (auto &portal : thread->SectorPortals)
+		for (size_t i = CurrentViewpoint->SectorPortalsStart; i < CurrentViewpoint->SectorPortalsEnd; i++)
 		{
+			const auto &portal = thread->SectorPortals[i];
 			args.SetStencilTestValue(portal->StencilValue);
 			args.SetWriteStencil(true, portal->StencilValue + 1);
 			for (const auto &verts : portal->Shape)
@@ -346,8 +347,9 @@ void RenderPolyScene::RenderPortals()
 			}
 		}
 
-		for (auto &portal : thread->LinePortals)
+		for (size_t i = CurrentViewpoint->LinePortalsStart; i < CurrentViewpoint->LinePortalsEnd; i++)
 		{
+			const auto &portal = thread->LinePortals[i];
 			args.SetStencilTestValue(portal->StencilValue);
 			args.SetWriteStencil(true, portal->StencilValue + 1);
 			for (const auto &verts : portal->Shape)
@@ -365,15 +367,17 @@ void RenderPolyScene::RenderTranslucent(PolyPortalViewpoint *viewpoint)
 
 	PolyRenderThread *thread = PolyRenderer::Instance()->Threads.MainThread();
 
-	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip));
+	Mat4f *transform = thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip);
 
 	if (CurrentViewpoint->PortalDepth < r_portal_recursions)
 	{
-		for (auto it = thread->SectorPortals.rbegin(); it != thread->SectorPortals.rend(); ++it)
+		for (size_t i = CurrentViewpoint->SectorPortalsEnd; i > CurrentViewpoint->SectorPortalsStart; i--)
 		{
-			auto &portal = *it;
+			auto &portal = thread->SectorPortals[i - 1];
 			portal->RenderTranslucent();
-		
+
+			PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform);
+
 			PolyDrawArgs args;
 			args.SetStencilTestValue(portal->StencilValue + 1);
 			args.SetWriteStencil(true, CurrentViewpoint->StencilValue + 1);
@@ -385,11 +389,13 @@ void RenderPolyScene::RenderTranslucent(PolyPortalViewpoint *viewpoint)
 			}
 		}
 
-		for (auto it = thread->LinePortals.rbegin(); it != thread->LinePortals.rend(); ++it)
+		for (size_t i = CurrentViewpoint->LinePortalsEnd; i > CurrentViewpoint->LinePortalsStart; i--)
 		{
-			auto &portal = *it;
+			auto &portal = thread->LinePortals[i - 1];
 			portal->RenderTranslucent();
 		
+			PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform);
+
 			PolyDrawArgs args;
 			args.SetStencilTestValue(portal->StencilValue + 1);
 			args.SetWriteStencil(true, CurrentViewpoint->StencilValue + 1);
@@ -401,32 +407,24 @@ void RenderPolyScene::RenderTranslucent(PolyPortalViewpoint *viewpoint)
 			}
 		}
 	}
+
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform);
 
 	PolyMaskedCycles.Clock();
 
 	// Draw all translucent objects back to front
-	if (CurrentViewpoint->ObjectsEnd > CurrentViewpoint->ObjectsStart)
+	std::stable_sort(
+		thread->TranslucentObjects.begin() + CurrentViewpoint->ObjectsStart,
+		thread->TranslucentObjects.begin() + CurrentViewpoint->ObjectsEnd,
+		[](auto a, auto b) { return *a < *b; });
+
+	auto objects = thread->TranslucentObjects.data();
+	for (size_t i = CurrentViewpoint->ObjectsEnd; i > CurrentViewpoint->ObjectsStart; i--)
 	{
-		std::stable_sort(
-			thread->TranslucentObjects.begin() + CurrentViewpoint->ObjectsStart,
-			thread->TranslucentObjects.begin() + CurrentViewpoint->ObjectsEnd,
-			[](auto a, auto b) { return *a < *b; });
-
-		size_t i = CurrentViewpoint->ObjectsEnd - 1;
-		size_t start = CurrentViewpoint->ObjectsStart;
-		auto objects = thread->TranslucentObjects.data();
-		while (true)
-		{
-			PolyTranslucentObject *obj = objects[i];
-			obj->Render(thread, CurrentViewpoint->PortalPlane);
-			obj->~PolyTranslucentObject();
-			if (i == start)
-				break;
-			i--;
-		}
+		PolyTranslucentObject *obj = objects[i - 1];
+		obj->Render(thread, CurrentViewpoint->PortalPlane);
+		obj->~PolyTranslucentObject();
 	}
-
-	thread->TranslucentObjects.clear();
 
 	PolyMaskedCycles.Unclock();
 

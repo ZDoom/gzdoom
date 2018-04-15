@@ -49,6 +49,7 @@ RenderPolyScene::~RenderPolyScene()
 
 void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 {
+	PolyPortalViewpoint *oldviewpoint = CurrentViewpoint;
 	CurrentViewpoint = viewpoint;
 
 	PolyRenderThread *thread = PolyRenderer::Instance()->Threads.MainThread();
@@ -85,7 +86,7 @@ void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 
 	RenderPortals();
 
-	CurrentViewpoint = nullptr;
+	CurrentViewpoint = oldviewpoint;
 }
 
 void RenderPolyScene::RenderSectors()
@@ -359,6 +360,7 @@ void RenderPolyScene::RenderPortals()
 
 void RenderPolyScene::RenderTranslucent(PolyPortalViewpoint *viewpoint)
 {
+	PolyPortalViewpoint *oldviewpoint = CurrentViewpoint;
 	CurrentViewpoint = viewpoint;
 
 	PolyRenderThread *thread = PolyRenderer::Instance()->Threads.MainThread();
@@ -428,7 +430,7 @@ void RenderPolyScene::RenderTranslucent(PolyPortalViewpoint *viewpoint)
 
 	PolyMaskedCycles.Unclock();
 
-	CurrentViewpoint = nullptr;
+	CurrentViewpoint = oldviewpoint;
 }
 
 /////////////////////////////////////////////////////////////////////////////

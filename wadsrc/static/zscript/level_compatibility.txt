@@ -666,6 +666,13 @@ class LevelCompatibility play
 				break;
 			}
 
+			case '9C14350A111C3DC6A8AF04D950E6DDDB': // ma_val.pk3 map01
+			{
+				// Missing wall textures with hardware renderer
+				OffsetSectorPlane(7072, Sector.floor, -48);
+				OffsetSectorPlane(7073, Sector.floor, -32);
+				break;
+			}
 		}
 	}
 

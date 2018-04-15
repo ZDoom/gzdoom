@@ -441,6 +441,18 @@ public:
 
 	// Lines start-end and fdiv must intersect.
 	double CalcIntersectionVertex(GLWall * w2);
+
+	GLSprite(const GLSprite &other)
+	{
+		memcpy(this, &other, sizeof(GLSprite));
+	}
+
+	GLSprite & operator=(const GLSprite &other)
+	{
+		memcpy(this, &other, sizeof(GLSprite));
+		return *this;
+	}
+
 };
 
 inline float Dist2(float x1,float y1,float x2,float y2)

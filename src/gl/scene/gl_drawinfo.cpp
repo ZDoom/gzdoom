@@ -363,7 +363,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 {
 	GLFlat * fh = flats[drawitems[head->itemindex].index];
-	GLSprite * ss = &sprites[drawitems[sort->itemindex].index];
+	GLSprite * ss = sprites[drawitems[sort->itemindex].index];
 
 	bool ceiling = fh->z > r_viewpoint.Pos.Z;
 
@@ -373,27 +373,24 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 	if ((hiz > fh->z && loz < fh->z) || ss->modelframe)
 	{
 		// We have to split this sprite
-		GLSprite s = *ss;
-		AddSprite(&s);	// add a copy to avoid reallocation issues.
+		GLSprite *s = NewSprite();
+		*s = *ss;
 
 		// Splitting is done in the shader with clip planes, if available.
 		// The fallback here only really works for non-y-billboarded sprites.
 		if (gl.flags & RFL_NO_CLIP_PLANES)
 		{
-			GLSprite * ss1;
-			ss1 = &sprites[sprites.Size() - 1];
-			ss = &sprites[drawitems[sort->itemindex].index];	// may have been reallocated!
 			float newtexv = ss->vt + ((ss->vb - ss->vt) / (ss->z2 - ss->z1))*(fh->z - ss->z1);
 
 			if (!ceiling)
 			{
-				ss->z1 = ss1->z2 = fh->z;
-				ss->vt = ss1->vb = newtexv;
+				ss->z1 = s->z2 = fh->z;
+				ss->vt = s->vb = newtexv;
 			}
 			else
 			{
-				ss1->z1 = ss->z2 = fh->z;
-				ss1->vt = ss->vb = newtexv;
+				s->z1 = ss->z2 = fh->z;
+				s->vt = ss->vb = newtexv;
 			}
 		}
 
@@ -508,8 +505,7 @@ EXTERN_CVAR(Bool, gl_billboard_particles)
 void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 {
 	GLWall *wh= walls[drawitems[head->itemindex].index];
-	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
-	GLSprite * ss1;
+	GLSprite * ss= sprites[drawitems[sort->itemindex].index];
 
 	float v1 = wh->PointOnSide(ss->x1, ss->y1);
 	float v2 = wh->PointOnSide(ss->x2, ss->y2);
@@ -562,14 +558,12 @@ void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 		float iy=(float)(ss->y1 + r * (ss->y2-ss->y1));
 		float iu=(float)(ss->ul + r * (ss->ur-ss->ul));
 
-		GLSprite s=*ss;
-		AddSprite(&s);
-		ss1=&sprites[sprites.Size()-1];
-		ss=&sprites[drawitems[sort->itemindex].index];	// may have been reallocated!
+		GLSprite *s = NewSprite();
+		*s = *ss;
 
-		ss1->x1=ss->x2=ix;
-		ss1->y1=ss->y2=iy;
-		ss1->ul=ss->ur=iu;
+		s->x1=ss->x2=ix;
+		s->y1=ss->y2=iy;
+		s->ul=ss->ur=iu;
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -597,8 +591,8 @@ void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 
 inline int GLDrawList::CompareSprites(SortNode * a,SortNode * b)
 {
-	GLSprite * s1=&sprites[drawitems[a->itemindex].index];
-	GLSprite * s2=&sprites[drawitems[b->itemindex].index];
+	GLSprite * s1= sprites[drawitems[a->itemindex].index];
+	GLSprite * s2= sprites[drawitems[b->itemindex].index];
 
 	int res = s1->depth - s2->depth;
 
@@ -740,7 +734,7 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 
 	case GLDIT_SPRITE:
 		{
-			GLSprite * s=&sprites[drawitems[i].index];
+			GLSprite * s= sprites[drawitems[i].index];
 			RenderSprite.Clock();
 			s->Draw(pass);
 			RenderSprite.Unclock();
@@ -961,9 +955,11 @@ GLFlat *GLDrawList::NewFlat()
 //
 //
 //==========================================================================
-void GLDrawList::AddSprite(GLSprite * sprite)
+GLSprite *GLDrawList::NewSprite()
 {	
-	drawitems.Push(GLDrawItem(GLDIT_SPRITE,sprites.Push(*sprite)));
+	auto sprite = (GLSprite*)RenderDataAllocator.Alloc(sizeof(GLSprite));
+	drawitems.Push(GLDrawItem(GLDIT_SPRITE, sprites.Push(sprite)));
+	return sprite;
 }
 
 

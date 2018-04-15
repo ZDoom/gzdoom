@@ -209,6 +209,7 @@ std2:
 		'version'					{ RET(ParseVersion >= MakeVersion(2, 4, 0)? TK_Version : TK_Identifier); }
 		'action'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Action : TK_Identifier); }
 		'readonly'					{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_ReadOnly : TK_Identifier); }
+		'internal'					{ RET(ParseVersion >= MakeVersion(3, 4, 0)? TK_Internal : TK_Identifier); }
 		'let'						{ RET(ParseVersion >= MakeVersion(1, 0, 0)? TK_Let : TK_Identifier); }
 
 		/* Actor state options */

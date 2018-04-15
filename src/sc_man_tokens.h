@@ -138,6 +138,7 @@ xx(TK_Meta,					"'meta'")
 xx(TK_Deprecated,			"'deprecated'")
 xx(TK_Version,				"'version'")
 xx(TK_ReadOnly,				"'readonly'")
+xx(TK_Internal,				"'internal'")
 
 xx(TK_CanRaise,				"'canraise'")
 xx(TK_Fast,					"'fast'")

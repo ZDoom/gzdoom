@@ -334,7 +334,7 @@ struct Sector native play
 
 	native SectorAction		SecActTarget;
 
-	native uint					Portals[2];
+	native internal uint		Portals[2];
 	native readonly int			PortalGroup;
 
 	native readonly int			sectornum;

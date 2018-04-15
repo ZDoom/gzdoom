@@ -580,7 +580,7 @@ struct LevelLocals native
 	native Array<@Line> Lines;
 	native Array<@Side> Sides;
 	native readonly Array<@Vertex> Vertexes;
-	native Array<@SectorPortal> SectorPortals;
+	native internal Array<@SectorPortal> SectorPortals;
 	
 	native readonly int time;
 	native readonly int maptime;

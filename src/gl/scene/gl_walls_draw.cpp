@@ -73,7 +73,7 @@ void GLWall::SetupLights()
 	lightdata.Clear();
 
 	auto normal = glseg.Normal();
-	p.Set(normal, -normal.X * glseg.x1 - normal.Y * glseg.y1);
+	p.Set(normal, -normal.X * glseg.x1 - normal.Z * glseg.y1);
 
 	FLightNode *node;
 	if (seg->sidedef == NULL)

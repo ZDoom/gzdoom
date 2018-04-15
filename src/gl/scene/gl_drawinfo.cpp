@@ -464,6 +464,7 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 
 		ws->vertcount = 0;	// invalidate current vertices.
 		GLWall *w= NewWall();
+		*w = *ws;
 
 		w->glseg.x1=ws->glseg.x2=ix;
 		w->glseg.y1=ws->glseg.y2=iy;

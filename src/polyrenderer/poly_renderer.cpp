@@ -127,6 +127,13 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
 
+	static bool firstcall = true;
+	if (firstcall)
+	{
+		swrenderer::R_InitFuzzTable(RenderTarget->GetPitch());
+		firstcall = false;
+	}
+
 	swrenderer::R_UpdateFuzzPosFrameStart();
 
 	if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;

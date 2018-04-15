@@ -30,6 +30,7 @@
 #include "templates.h"
 #include "r_utility.h"
 #include "v_video.h"
+#include "g_levellocals.h"
 
 EXTERN_CVAR(Float, transsouls)
 
@@ -324,6 +325,11 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	// is necessary in order to best reproduce Doom's original lighting.
 	double map = (NUMCOLORMAPS * 2.) - ((lightlevel + 12) * (NUMCOLORMAPS / 128.));
 	double fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);
+	// handle the brighter light modes of the hardware renderer.
+	if (vid_rendermode == 4 && (level.lightmode < 2 || level.lightmode == 4))
+	{
+		fadelevel = pow(fadelevel, 1.3);
+	}
 
 	RenderCommand poly;
 

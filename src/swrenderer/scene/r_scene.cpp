@@ -343,13 +343,19 @@ namespace swrenderer
 	{
 		auto viewport = MainThread()->Viewport.get();
 		
-		const bool savedviewactive = viewactive;
-		auto savedtarget = viewport->RenderTarget;
+		// Save a bunch of silly globals:
+		auto savedViewpoint = viewport->viewpoint;
+		auto savedViewwindow = viewport->viewwindow;
+		auto savedviewwindowx = viewwindowx;
+		auto savedviewwindowy = viewwindowy;
+		auto savedviewwidth = viewwidth;
+		auto savedviewheight = viewheight;
+		auto savedviewactive = viewactive;
+		auto savedRenderTarget = viewport->RenderTarget;
 
-		viewwidth = width;
+		// Setup the view:
 		viewport->RenderTarget = canvas;
 		viewport->RenderingToCanvas = true;
-
 		R_SetWindow(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, 12, width, height, height, true);
 		viewwindowx = x;
 		viewwindowy = y;
@@ -358,14 +364,23 @@ namespace swrenderer
 		if (r_models)
 			PolyTriangleDrawer::ClearBuffers(viewport->RenderTarget);
 
+		// Render:
 		RenderActorView(actor, dontmaplines);
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();
 
-		viewport->RenderTarget = savedtarget;
 		viewport->RenderingToCanvas = false;
+
+		// Restore silly globals:
+		viewport->viewpoint = savedViewpoint;
+		viewport->viewwindow = savedViewwindow;
+		viewwindowx = savedviewwindowx;
+		viewwindowy = savedviewwindowy;
+		viewwidth = savedviewwidth;
+		viewheight = savedviewheight;
 		viewactive = savedviewactive;
+		viewport->RenderTarget = savedRenderTarget;
 	}
 
 	void RenderScene::Deinit()

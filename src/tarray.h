@@ -560,6 +560,10 @@ public:
 	{
 		return Array[index];
 	}
+	T &At(size_t index) const
+	{
+		return Array[index];
+	}
 	unsigned int Size() const
 	{
 		return Count;

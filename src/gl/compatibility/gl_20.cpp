@@ -559,7 +559,8 @@ bool FDrawInfo::PutWallCompat(GLWall *wall, int passflag)
 	bool masked = passflag == 2 && wall->gltexture->isMasked();
 
 	int list = list_indices[masked][foggy];
-	dldrawlists[list].AddWall(wall);
+	auto newwall = dldrawlists[list].NewWall();
+	*newwall = *wall;
 	return true;
 
 }

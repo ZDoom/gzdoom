@@ -55,7 +55,8 @@ void FDrawInfo::AddWall(GLWall *wall)
 	{
 		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
 		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(true);
-		drawlists[GLDL_TRANSLUCENT].AddWall(wall);
+		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
+		*newwall = *wall;
 	}
 	else
 	{
@@ -77,8 +78,8 @@ void FDrawInfo::AddWall(GLWall *wall)
 			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
 		}
 		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(false);
-		drawlists[list].AddWall(wall);
-
+		auto newwall = drawlists[list].NewWall();
+		*newwall = *wall;
 	}
 }
 
@@ -172,7 +173,8 @@ void GLWall::PutPortal(int ptype)
 		{
 			// draw a reflective layer over the mirror
 			type=RENDERWALL_MIRRORSURFACE;
-			gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].AddWall(this);
+			auto newwall = gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
+			*newwall = *this;
 		}
 		break;
 

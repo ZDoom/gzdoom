@@ -33,6 +33,7 @@
 #include "r_state.h"
 #include "doomstat.h"
 #include "g_levellocals.h"
+#include "memarena.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/data/gl_vertexbuffer.h"
@@ -49,6 +50,13 @@
 
 FDrawInfo * gl_drawinfo;
 FDrawInfoList di_list;
+
+static FMemArena RenderDataAllocator(1024*1024);	// Use large blocks to reduce allocation time.
+
+void ResetAllocator()
+{
+	RenderDataAllocator.FreeAll();
+}
 
 //==========================================================================
 //
@@ -244,7 +252,7 @@ SortNode * GLDrawList::FindSortWall(SortNode * head)
 		GLDrawItem * it = &drawitems[node->itemindex];
 		if (it->rendertype == GLDIT_WALL)
 		{
-			float d = walls[it->index].ViewDistance;
+			float d = walls[it->index]->ViewDistance;
 			if (d > farthest) farthest = d;
 			if (d < nearest) nearest = d;
 		}
@@ -258,7 +266,7 @@ SortNode * GLDrawList::FindSortWall(SortNode * head)
 		GLDrawItem * it = &drawitems[node->itemindex];
 		if (it->rendertype == GLDIT_WALL)
 		{
-			float di = fabsf(walls[it->index].ViewDistance - farthest);
+			float di = fabsf(walls[it->index]->ViewDistance - farthest);
 			if (!best || di < bestdist)
 			{
 				best = node;
@@ -294,10 +302,10 @@ void GLDrawList::SortPlaneIntoPlane(SortNode * head,SortNode * sort)
 //
 //
 //==========================================================================
-void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
+void GLDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 {
-	GLFlat * fh=&flats[drawitems[head->itemindex].index];
-	GLWall * ws=&walls[drawitems[sort->itemindex].index];
+	GLFlat * fh = &flats[drawitems[head->itemindex].index];
+	GLWall * ws = walls[drawitems[sort->itemindex].index];
 
 	bool ceiling = fh->z > r_viewpoint.Pos.Z;
 
@@ -305,18 +313,13 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 	{
 		// We have to split this wall!
 
-		// WARNING: NEVER EVER push a member of an array onto the array itself.
-		// Bad things will happen if the memory must be reallocated!
-		GLWall w = *ws;
-		AddWall(&w);
-	
+		GLWall *w = NewWall();
+		*w = *ws;
+
 		// Splitting is done in the shader with clip planes, if available
 		if (gl.flags & RFL_NO_CLIP_PLANES)
 		{
-			GLWall * ws1;
 			ws->vertcount = 0;	// invalidate current vertices.
-			ws1=&walls[walls.Size()-1];
-			ws=&walls[drawitems[sort->itemindex].index];	// may have been reallocated!
 			float newtexv = ws->tcs[GLWall::UPLFT].v + ((ws->tcs[GLWall::LOLFT].v - ws->tcs[GLWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
 
 			// I make the very big assumption here that translucent walls in sloped sectors
@@ -324,13 +327,13 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 			// code would become extremely more complicated.
 			if (!ceiling)
 			{
-				ws->ztop[1] = ws1->zbottom[1] = ws->ztop[0] = ws1->zbottom[0] = fh->z;
-				ws->tcs[GLWall::UPRGT].v = ws1->tcs[GLWall::LORGT].v = ws->tcs[GLWall::UPLFT].v = ws1->tcs[GLWall::LOLFT].v = newtexv;
+				ws->ztop[1] = w->zbottom[1] = ws->ztop[0] = w->zbottom[0] = fh->z;
+				ws->tcs[GLWall::UPRGT].v = w->tcs[GLWall::LORGT].v = ws->tcs[GLWall::UPLFT].v = w->tcs[GLWall::LOLFT].v = newtexv;
 			}
 			else
 			{
-				ws1->ztop[1] = ws->zbottom[1] = ws1->ztop[0] = ws->zbottom[0] = fh->z;
-				ws1->tcs[GLWall::UPLFT].v = ws->tcs[GLWall::LOLFT].v = ws1->tcs[GLWall::UPRGT].v = ws->tcs[GLWall::LORGT].v=newtexv;
+				w->ztop[1] = ws->zbottom[1] = w->ztop[0] = ws->zbottom[0] = fh->z;
+				w->tcs[GLWall::UPLFT].v = ws->tcs[GLWall::LOLFT].v = w->tcs[GLWall::UPRGT].v = ws->tcs[GLWall::LORGT].v = newtexv;
 			}
 		}
 
@@ -341,7 +344,7 @@ void GLDrawList::SortWallIntoPlane(SortNode * head,SortNode * sort)
 		head->AddToLeft(sort);
 		head->AddToRight(sort2);
 	}
-	else if ((ws->zbottom[0]<fh->z && !ceiling) || (ws->ztop[0]>fh->z && ceiling))	// completely on the left side
+	else if ((ws->zbottom[0] < fh->z && !ceiling) || (ws->ztop[0] > fh->z && ceiling))	// completely on the left side
 	{
 		head->AddToLeft(sort);
 	}
@@ -421,9 +424,8 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 
 void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 {
-	GLWall * wh=&walls[drawitems[head->itemindex].index];
-	GLWall * ws=&walls[drawitems[sort->itemindex].index];
-	GLWall * ws1;
+	GLWall * wh= walls[drawitems[head->itemindex].index];
+	GLWall * ws= walls[drawitems[sort->itemindex].index];
 	float v1=wh->PointOnSide(ws->glseg.x1,ws->glseg.y1);
 	float v2=wh->PointOnSide(ws->glseg.x2,ws->glseg.y2);
 
@@ -461,21 +463,18 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 		float izb=(float)(ws->zbottom[0]+r*(ws->zbottom[1]-ws->zbottom[0]));
 
 		ws->vertcount = 0;	// invalidate current vertices.
-		GLWall w=*ws;
-		AddWall(&w);
-		ws1=&walls[walls.Size()-1];
-		ws=&walls[drawitems[sort->itemindex].index];	// may have been reallocated!
+		GLWall *w= NewWall();
 
-		ws1->glseg.x1=ws->glseg.x2=ix;
-		ws1->glseg.y1=ws->glseg.y2=iy;
-		ws1->glseg.fracleft = ws->glseg.fracright = ws->glseg.fracleft + r*(ws->glseg.fracright - ws->glseg.fracleft);
-		ws1->ztop[0]=ws->ztop[1]=izt;
-		ws1->zbottom[0]=ws->zbottom[1]=izb;
-		ws1->tcs[GLWall::LOLFT].u = ws1->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
+		w->glseg.x1=ws->glseg.x2=ix;
+		w->glseg.y1=ws->glseg.y2=iy;
+		w->glseg.fracleft = ws->glseg.fracright = ws->glseg.fracleft + r*(ws->glseg.fracright - ws->glseg.fracleft);
+		w->ztop[0]=ws->ztop[1]=izt;
+		w->zbottom[0]=ws->zbottom[1]=izb;
+		w->tcs[GLWall::LOLFT].u = w->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
 		if (gl.buffermethod == BM_DEFERRED)
 		{
 			ws->MakeVertices(false);
-			ws1->MakeVertices(false);
+			w->MakeVertices(false);
 		}
 
 		SortNode * sort2=SortNodes.GetNew();
@@ -507,7 +506,7 @@ EXTERN_CVAR(Bool, gl_billboard_particles)
 
 void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 {
-	GLWall * wh=&walls[drawitems[head->itemindex].index];
+	GLWall *wh= walls[drawitems[head->itemindex].index];
 	GLSprite * ss=&sprites[drawitems[sort->itemindex].index];
 	GLSprite * ss1;
 
@@ -731,7 +730,7 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 
 	case GLDIT_WALL:
 		{
-			GLWall * w=&walls[drawitems[i].index];
+			GLWall * w= walls[drawitems[i].index];
 			RenderWall.Clock();
 			w->Draw(pass);
 			RenderWall.Unclock();
@@ -863,7 +862,7 @@ void GLDrawList::DrawWalls(int pass)
 	RenderWall.Clock();
 	for(unsigned i=0;i<drawitems.Size();i++)
 	{
-		walls[drawitems[i].index].Draw(pass);
+		walls[drawitems[i].index]->Draw(pass);
 	}
 	RenderWall.Unclock();
 }
@@ -892,7 +891,7 @@ void GLDrawList::DrawDecals()
 {
 	for(unsigned i=0;i<drawitems.Size();i++)
 	{
-		walls[drawitems[i].index].DoDrawDecals();
+		walls[drawitems[i].index]->DoDrawDecals();
 	}
 }
 
@@ -908,8 +907,8 @@ void GLDrawList::SortWalls()
 	{
 		std::sort(drawitems.begin(), drawitems.end(), [=](const GLDrawItem &a, const GLDrawItem &b) -> bool
 		{
-			GLWall * w1 = &walls[a.index];
-			GLWall * w2 = &walls[b.index];
+			GLWall * w1 = walls[a.index];
+			GLWall * w2 = walls[b.index];
 
 			if (w1->gltexture != w2->gltexture) return w1->gltexture < w2->gltexture;
 			return (w1->flags & 3) < (w2->flags & 3);
@@ -936,9 +935,12 @@ void GLDrawList::SortFlats()
 //
 //
 //==========================================================================
-void GLDrawList::AddWall(GLWall * wall)
+
+GLWall *GLDrawList::NewWall()
 {
-	drawitems.Push(GLDrawItem(GLDIT_WALL,walls.Push(*wall)));
+	auto wall = (GLWall*)RenderDataAllocator.Alloc(sizeof(GLWall));
+	drawitems.Push(GLDrawItem(GLDIT_WALL, walls.Push(wall)));
+	return wall;
 }
 
 //==========================================================================
@@ -1059,6 +1061,8 @@ void FDrawInfo::EndDrawInfo()
 	}
 	gl_drawinfo=di->next;
 	di_list.Release(di);
+	if (gl_drawinfo == nullptr) 
+		ResetAllocator();
 }
 
 

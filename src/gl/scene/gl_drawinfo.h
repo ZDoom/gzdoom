@@ -106,7 +106,7 @@ struct SortNode
 struct GLDrawList
 {
 //private:
-	TArray<GLWall> walls;
+	TArray<GLWall*> walls;
 	TArray<GLFlat> flats;
 	TArray<GLSprite> sprites;
 	TArray<GLDrawItem> drawitems;
@@ -131,7 +131,8 @@ public:
 		return drawitems.Size();
 	}
 
-	void AddWall(GLWall * wall);
+	GLWall *NewWall();
+	//void AddWall(GLWall * wall);
 	void AddFlat(GLFlat * flat);
 	void AddSprite(GLSprite * sprite);
 	void Reset();

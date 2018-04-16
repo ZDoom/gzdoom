@@ -33,14 +33,7 @@
 #include "actorinlines.h"
 #include "a_dynlight.h"
 
-#include "gl/system/gl_interface.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/dynlights/gl_dynlight.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
+#include "gl_dynlight.h"
 
 
 //==========================================================================
@@ -49,6 +42,7 @@
 //
 //==========================================================================
 
+// These shouldn't be called 'gl...' anymore...
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -59,7 +53,7 @@ CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata)
+bool FDynLightData::GetLight(int group, Plane & p, ADynamicLight * light, bool checkside)
 {
 	DVector3 pos = light->PosRelative(group);
 	float radius = (light->GetRadius());
@@ -73,7 +67,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 		return false;
 	}
 
-	gl_AddLightToList(group, light, ldata);
+	AddLightToList(group, light);
 	return true;
 }
 
@@ -82,7 +76,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 // Add one dynamic light to the light data list
 //
 //==========================================================================
-void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
+void FDynLightData::AddLightToList(int group, ADynamicLight * light)
 {
 	int i = 0;
 
@@ -143,7 +137,7 @@ void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
 		spotDirZ = -light->Angles.Yaw.Sin() * xzLen;
 	}
 
-	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(16)];
+	float *data = &arrays[i][arrays[i].Reserve(16)];
 	data[0] = pos.X;
 	data[1] = pos.Z;
 	data[2] = pos.Y;

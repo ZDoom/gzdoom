@@ -53,13 +53,11 @@ struct FDynLightData
 		if (siz[1] > max) siz[1] = max;
 		if (siz[2] > max) siz[2] = max;
 	}
+    
+    bool GetLight(int group, Plane & p, ADynamicLight * light, bool checkside);
+    void AddLightToList(int group, ADynamicLight * light);
+
 };
-
-
-
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &data);
-void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata);
-void gl_UploadLights(FDynLightData &data);
 
 
 #endif

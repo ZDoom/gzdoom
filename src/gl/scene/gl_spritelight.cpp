@@ -243,7 +243,7 @@ int gl_SetDynModelLight(AActor *self, int dynlightindex)
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							gl_AddLightToList(group, light, modellightdata);
+							modellightdata.AddLightToList(group, light);
 							addedLights.push_back(light);
 						}
 					}

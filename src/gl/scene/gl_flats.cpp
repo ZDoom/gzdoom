@@ -130,7 +130,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 		}
 		iter_dlightf++;
 
-		// we must do the side check here because gl_SetupLight needs the correct plane orientation
+		// we must do the side check here because gl_GetLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
 		double planeh = plane.plane.ZatPoint(light);
 		if ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling))
@@ -140,7 +140,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 		}
 
 		p.Set(plane.plane.Normal(), plane.plane.fD());
-		gl_GetLight(sub->sector->PortalGroup, p, light, false, lightdata);
+		lightdata.GetLight(sub->sector->PortalGroup, p, light, false);
 		node = node->nextLight;
 	}
 

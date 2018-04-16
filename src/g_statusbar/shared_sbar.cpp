@@ -658,7 +658,6 @@ void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer
 {
 	DHUDMessageBase *old = NULL;
 	DHUDMessageBase **prev;
-	DObject *container = this;
 
 	old = (id == 0 || id == 0xFFFFFFFF) ? NULL : DetachMessage (id);
 	if (old != NULL)
@@ -679,14 +678,13 @@ void DBaseStatusBar::AttachMessage (DHUDMessageBase *msg, uint32_t id, int layer
 	// it gets drawn back to front.)
 	while (*prev != NULL && (*prev)->SBarID > id)
 	{
-		container = *prev;
 		prev = &(*prev)->Next;
 	}
 
 	msg->Next = *prev;
 	msg->SBarID = id;
 	*prev = msg;
-	GC::WriteBarrier(container, msg);
+	GC::WriteBarrier(msg);
 }
 
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, AttachMessage)

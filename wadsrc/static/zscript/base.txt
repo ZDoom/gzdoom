@@ -651,6 +651,10 @@ struct LevelLocals native
 
 	native static clearscope vector2 Vec2Diff(vector2 v1, vector2 v2);
 	native static clearscope vector3 Vec3Diff(vector3 v1, vector3 v2);
+	
+	native static clearscope vector2 Vec2Offset(vector2 pos, vector2 dir, bool absolute = false);
+	native static clearscope vector3 Vec2OffsetZ(vector2 pos, vector2 dir, double atz, bool absolute = false);
+	native static clearscope vector3 Vec3Offset(vector3 pos, vector3 dir, bool absolute = false);
 
 	native String GetChecksum() const;
 

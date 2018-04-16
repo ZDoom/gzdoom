@@ -27,6 +27,7 @@
 #include "g_levellocals.h"
 #include "actor.h"
 #include "actorinlines.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
@@ -34,7 +35,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/dynlights/gl_dynlight.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"

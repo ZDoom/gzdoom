@@ -856,9 +856,9 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_walls_draw.cpp
 	gl/scene/gl_vertex.cpp
 	gl/scene/gl_spritelight.cpp
-	gl/dynlights/gl_dynlight1.cpp
 	gl_load/gl_load.c
 	gl/models/gl_models.cpp
+	hwrenderer/dynlights/hw_dynlightdata.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp

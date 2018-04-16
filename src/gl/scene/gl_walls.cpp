@@ -34,10 +34,10 @@
 #include "doomdata.h"
 #include "portal.h"
 #include "g_levellocals.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
-#include "gl/dynlights/gl_dynlight.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"

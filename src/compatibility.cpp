@@ -375,6 +375,22 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingSkills)
 	return 0;
 }
 
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingXY)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(thing);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+
+	if ((unsigned)thing < MapThingsConverted.Size())
+	{
+		auto& pos = MapThingsConverted[thing].pos;
+		pos.X = x;
+		pos.Y = y;
+	}
+	return 0;
+}
+
 DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingZ)
 {
 	PARAM_PROLOGUE;

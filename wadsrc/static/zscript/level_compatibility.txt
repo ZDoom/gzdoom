@@ -680,6 +680,7 @@ class LevelCompatibility play
 	private static native void AddSectorTag(int sector, int tag);
 	private static native void OffsetSectorPlane(int sector, int plane, double offset);
 	private static native void SetThingSkills(int thing, int skills);
+	private static native void SetThingXY(int thing, double x, double y);
 	private static native void SetThingZ(int thing, double z);
 	private static native void SetThingFlags(int thing, int flags);
 	private static native void SetVertex(uint vertex, double x, double y);

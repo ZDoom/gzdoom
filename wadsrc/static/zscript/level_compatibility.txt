@@ -671,6 +671,15 @@ class LevelCompatibility play
 				// Missing wall textures with hardware renderer
 				OffsetSectorPlane(7072, Sector.floor, -48);
 				OffsetSectorPlane(7073, Sector.floor, -32);
+				// Missing teleporting monsters
+				SetThingFlags(376, 0x200);
+				SetThingFlags(377, 0x300);
+				for (int i = 437; i < 449; ++i)
+				{
+					SetThingFlags(i, 0x600);
+				}
+				// Stuck imp
+				SetThingXY(8, 1200, -1072);
 				break;
 			}
 		}

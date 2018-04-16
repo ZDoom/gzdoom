@@ -49,7 +49,6 @@
 //
 //==========================================================================
 
-CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
@@ -69,7 +68,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
-	if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
+	if (checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
 	{
 		return false;
 	}

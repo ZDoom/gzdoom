@@ -438,7 +438,7 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, FVector3 & nearP
 
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
-	if (checkside && gl_lights_checkside && p.PointOnSide(lpos.X, lpos.Z, lpos.Y))
+	if (checkside && p.PointOnSide(lpos.X, lpos.Z, lpos.Y))
 	{
 		return false;
 	}
@@ -666,7 +666,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		// we must do the side check here because gl_SetupLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
 		double planeh = plane.plane.ZatPoint(light);
-		if (gl_lights_checkside && ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
+		if (((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
 		{
 			node = node->nextLight;
 			continue;

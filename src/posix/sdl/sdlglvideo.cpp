@@ -74,6 +74,7 @@ EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
+EXTERN_CVAR (Bool, gl_always_legacy)
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
@@ -330,6 +331,8 @@ SystemFrameBuffer::SystemFrameBuffer (void *, int width, int height, int, int, b
 	UpdatePending = false;
 
 	const char *version = Args->CheckValue("-glversion");
+	if (gl_always_legacy)
+		version = "2.0";
 	if (version != NULL)
 	{
 		double gl_version = strtod(version, NULL) + 0.01;

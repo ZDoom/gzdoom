@@ -43,6 +43,11 @@ static TArray<FString>  m_Extensions;
 RenderContext gl;
 static double realglversion;	// this is public so the statistics code can access it.
 
+CUSTOM_CVAR(Bool, gl_always_legacy, 0, CVAR_GLOBALCONFIG|CVAR_ARCHIVE|CVAR_NOINITCALL)
+{
+	Printf("gl_always_legacy requires a restart to take effect.\n");
+}
+
 //==========================================================================
 //
 // 
@@ -156,6 +161,9 @@ void gl_LoadExtensions()
 		else Printf("Emulating OpenGL v %s\n", version);
 	}
 
+	if (gl_always_legacy)
+		version = "2.0";
+
 	float gl_version = (float)strtod(version, NULL) + 0.01f;
 
 	if (gl.es)
@@ -188,7 +196,6 @@ void gl_LoadExtensions()
 		{
 			I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 2.0 with framebuffer support is required to run " GAMENAME ".\n");
 		}
-		
 		gl.es = false;
 
 		// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version

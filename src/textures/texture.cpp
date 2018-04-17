@@ -1079,7 +1079,8 @@ void FTexture::CreateDefaultBrightmap()
 		// Check for brightmaps
 		if (UseBasePalette() && TexMan.HasGlobalBrightmap &&
 			UseType != ETextureType::Decal && UseType != ETextureType::MiscPatch && UseType != ETextureType::FontChar &&
-			Brightmap == NULL && bWarped == 0
+			Brightmap == NULL && bWarped == 0 &&
+			GetPixels(DefaultRenderStyle())
 			)
 		{
 			// May have one - let's check when we use this texture

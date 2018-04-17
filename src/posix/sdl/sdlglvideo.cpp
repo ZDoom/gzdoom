@@ -46,17 +46,14 @@
 #include "c_console.h"
 
 #include "videomodes.h"
-#include "sdlglvideo.h"
-#include "sdlvideo.h"
+#include "hardware.h"
+#include "gl_sysfb.h"
 #include "gl/system/gl_system.h"
 #include "r_defs.h"
-#include "gl/gl_functions.h"
-//#include "gl/gl_intern.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/textures/gl_material.h"
 #include "gl/system/gl_cvars.h"
 
@@ -71,12 +68,10 @@
 // EXTERNAL DATA DECLARATIONS ----------------------------------------------
 
 extern IVideo *Video;
-// extern int vid_renderer;
 
 EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
-EXTERN_CVAR (Int, vid_renderer)
 EXTERN_CVAR (Int, vid_maxfps)
 EXTERN_CVAR (Bool, cl_capfps)
 
@@ -89,26 +84,42 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 #ifdef __arm__
-CUSTOM_CVAR(Bool, vid_glswfb, false, CVAR_NOINITCALL)
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
 CUSTOM_CVAR(Bool, gl_es, false, CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 #else
-CUSTOM_CVAR(Bool, vid_glswfb, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
 CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 #endif
 
+CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
+
+class SDLGLVideo : public IVideo
+{
+public:
+	SDLGLVideo (int parm);
+	~SDLGLVideo ();
+
+	EDisplayType GetDisplayType () { return DISPLAY_Both; }
+	void SetWindowedScale (float scale);
+
+	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
+
+	void StartModeIterator (int bits, bool fs);
+	bool NextMode (int *width, int *height, bool *letterbox);
+	bool SetResolution (int width, int height, int bits);
+
+	void SetupPixelFormat(bool allowsoftware, int multisample, const int *glver);
+
+private:
+	int IteratorMode;
+	int IteratorBits;
+};
 
 // CODE --------------------------------------------------------------------
 
@@ -157,7 +168,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 
 	if (old != NULL)
 	{ // Reuse the old framebuffer if its attributes are the same
-		SDLBaseFB *fb = static_cast<SDLBaseFB *> (old);
+		SystemFrameBuffer *fb = static_cast<SystemFrameBuffer *> (old);
 		if (fb->Width == width &&
 			fb->Height == height)
 		{
@@ -178,24 +189,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 //		flashAmount = 0;
 	}
 	
-	SDLBaseFB *fb;
-	if (vid_renderer == 1)
-	{
-		fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
-	}
-	else if (vid_glswfb == 0)
-	{
-		fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
-	}
-	else
-	{
-		fb = (SDLBaseFB*)CreateGLSWFrameBuffer(width, height, bgra, fullscreen);
-		if (!fb->IsValid())
-		{
-			delete fb;
-			fb = new SDLFB(width, height, bgra, fullscreen, nullptr);
-		}
-	}
+	SystemFrameBuffer *fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
 
 	retry = 0;
 	
@@ -206,13 +200,8 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 	// 3. Try in the opposite screen mode with the closest size
 	// This is a somewhat confusing mass of recursion here.
 
-	while (fb == NULL || !fb->IsValid ())
+	while (fb == NULL)
 	{
-		if (fb != NULL)
-		{
-			delete fb;
-		}
-
 		switch (retry)
 		{
 		case 0:
@@ -239,7 +228,7 @@ DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, b
 		}
 
 		++retry;
-		fb = static_cast<SDLBaseFB *>(CreateFrameBuffer (width, height, false, fullscreen, NULL));
+		fb = static_cast<SystemFrameBuffer *>(CreateFrameBuffer (width, height, false, fullscreen, NULL));
 	}
 
 //	fb->SetFlash (flashColor, flashAmount);
@@ -316,10 +305,16 @@ void SDLGLVideo::SetupPixelFormat(bool allowsoftware, int multisample, const int
 }
 
 
+IVideo *gl_CreateVideo()
+{
+	return new SDLGLVideo(0);
+}
+
+
 // FrameBuffer implementation -----------------------------------------------
 
-SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen, bool bgra)
-	: SDLBaseFB (width, height, bgra)
+SystemFrameBuffer::SystemFrameBuffer (void *, int width, int height, int, int, bool fullscreen, bool bgra)
+	: DFrameBuffer (width, height, bgra)
 {
 	// NOTE: Core profiles were added with GL 3.2, so there's no sense trying
 	// to set core 3.1 or 3.0. We could try a forward-compatible context
@@ -332,7 +327,6 @@ SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen, bool
 	int glveridx = 0;
 	int i;
 
-	m_Lock=0;
 	UpdatePending = false;
 
 	const char *version = Args->CheckValue("-glversion");
@@ -383,7 +377,7 @@ SDLGLFB::SDLGLFB (void *, int width, int height, int, int, bool fullscreen, bool
 	}
 }
 
-SDLGLFB::~SDLGLFB ()
+SystemFrameBuffer::~SystemFrameBuffer ()
 {
 	if (Screen)
 	{
@@ -401,25 +395,16 @@ SDLGLFB::~SDLGLFB ()
 
 
 
-void SDLGLFB::InitializeState() 
+void SystemFrameBuffer::InitializeState()
 {
 }
 
-bool SDLGLFB::CanUpdate ()
+bool SystemFrameBuffer::CanUpdate ()
 {
-	if (m_Lock != 1)
-	{
-		if (m_Lock > 0)
-		{
-			UpdatePending = true;
-			--m_Lock;
-		}
-		return false;
-	}
 	return true;
 }
 
-void SDLGLFB::SetGammaTable(uint16_t *tbl)
+void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)
 	{
@@ -427,7 +412,7 @@ void SDLGLFB::SetGammaTable(uint16_t *tbl)
 	}
 }
 
-void SDLGLFB::ResetGammaTable()
+void SystemFrameBuffer::ResetGammaTable()
 {
 	if (m_supportsGamma)
 	{
@@ -435,47 +420,12 @@ void SDLGLFB::ResetGammaTable()
 	}
 }
 
-bool SDLGLFB::Lock(bool buffered)
-{
-	m_Lock++;
-	Buffer = MemBuffer;
-	return true;
-}
-
-bool SDLGLFB::Lock () 
-{ 	
-	return Lock(false); 
-}
-
-void SDLGLFB::Unlock () 	
-{ 
-	if (UpdatePending && m_Lock == 1)
-	{
-		Update ();
-	}
-	else if (--m_Lock <= 0)
-	{
-		m_Lock = 0;
-	}
-}
-
-bool SDLGLFB::IsLocked () 
-{ 
-	return m_Lock>0;// true;
-}
-
-bool SDLGLFB::IsFullscreen ()
+bool SystemFrameBuffer::IsFullscreen ()
 {
 	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 }
 
-
-bool SDLGLFB::IsValid ()
-{
-	return DFrameBuffer::IsValid() && Screen != NULL;
-}
-
-void SDLGLFB::SetVSync( bool vsync )
+void SystemFrameBuffer::SetVSync( bool vsync )
 {
 #if defined (__APPLE__)
 	const GLint value = vsync ? 1 : 0;
@@ -493,11 +443,11 @@ void SDLGLFB::SetVSync( bool vsync )
 #endif
 }
 
-void SDLGLFB::NewRefreshRate ()
+void SystemFrameBuffer::NewRefreshRate ()
 {
 }
 
-void SDLGLFB::SwapBuffers()
+void SystemFrameBuffer::SwapBuffers()
 {
 #if !defined(__APPLE__) && !defined(__OpenBSD__)
 	if (vid_maxfps && !cl_capfps)
@@ -509,51 +459,31 @@ void SDLGLFB::SwapBuffers()
 	SDL_GL_SwapWindow (Screen);
 }
 
-int SDLGLFB::GetClientWidth()
+int SystemFrameBuffer::GetClientWidth()
 {
 	int width = 0;
 	SDL_GL_GetDrawableSize(Screen, &width, nullptr);
 	return width;
 }
 
-int SDLGLFB::GetClientHeight()
+int SystemFrameBuffer::GetClientHeight()
 {
 	int height = 0;
 	SDL_GL_GetDrawableSize(Screen, nullptr, &height);
 	return height;
 }
 
-void SDLGLFB::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
-{
-	int w, h;
-	SDL_GetWindowSize (Screen, &w, &h);
 
-	// Detect if we're doing scaling in the Window and adjust the mouse
-	// coordinates accordingly. This could be more efficent, but I
-	// don't think performance is an issue in the menus.
-	if(IsFullscreen())
-	{
-		int realw = w, realh = h;
-		ScaleWithAspect (realw, realh, SCREENWIDTH, SCREENHEIGHT);
-		if (realw != SCREENWIDTH || realh != SCREENHEIGHT)
-		{
-			double xratio = (double)SCREENWIDTH/realw;
-			double yratio = (double)SCREENHEIGHT/realh;
-			if (realw < w)
-			{
-				x = (x - (w - realw)/2)*xratio;
-				y *= yratio;
-			}
-			else
-			{
-				y = (y - (h - realh)/2)*yratio;
-				x *= xratio;
-			}
-		}
-	}
+// each platform has its own specific version of this function.
+void I_SetWindowTitle(const char* caption)
+{
+	auto window = static_cast<SystemFrameBuffer *>(screen)->GetSDLWindow();
+	if (caption)
+		SDL_SetWindowTitle(window, caption);
 	else
 	{
-		x = (int16_t)(x*Width/w);
-		y = (int16_t)(y*Height/h);
+		FString default_caption;
+		default_caption.Format(GAMESIG " %s (%s)", GetVersionString(), GetGitTime());
+		SDL_SetWindowTitle(window, default_caption);
 	}
 }

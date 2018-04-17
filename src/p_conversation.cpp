@@ -227,9 +227,16 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 bool LoadScriptFile (const char *name, bool include, int type)
 {
 	int lumpnum = Wads.CheckNumForName (name);
+	const bool found = lumpnum >= 0
+		|| (lumpnum = Wads.CheckNumForFullName (name)) >= 0;
 
-	if (lumpnum < 0)
+	if (!found)
 	{
+		if (type == 0)
+		{
+			Printf(TEXTCOLOR_RED "Could not find dialog file %s", name);
+		}
+
 		return false;
 	}
 	FileReader lump = Wads.ReopenLumpReader (lumpnum);

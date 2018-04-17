@@ -45,45 +45,35 @@ struct FTexCoordInfo
 
 //===========================================================================
 // 
-// this is the texture maintenance class for OpenGL. 
+// device independent wrapper around the hardware texture and its sampler state
 //
 //===========================================================================
 class FMaterial;
-
 
 class FGLTexture
 {
 	friend class FMaterial;
 public:
 	FTexture * tex;
-	FTexture * hirestexture;
-	int8_t bIsTransparent;
-	int HiresLump;
 
 private:
 	FHardwareTexture *mHwTexture;
 
-	bool bHasColorkey;		// only for hires
-	bool bExpandFlag;
 	uint8_t lastSampler;
 	int lastTranslation;
 
-	unsigned char * LoadHiresTexture(FTexture *hirescheck, int *width, int *height);
-
 	FHardwareTexture *CreateHwTexture();
 
-	const FHardwareTexture *Bind(int texunit, int clamp, int translation, FTexture *hirescheck);
+	bool Bind(int texunit, int clamp, int translation, int flags);
 	
 public:
 	FGLTexture(FTexture * tx, bool expandpatches);
+	FGLTexture(FTexture * tx, FHardwareTexture *hwtex);	// for the SW framebuffer
 	~FGLTexture();
-
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded = true, bool alphatrans = false);
 
 	void Clean(bool all);
 	void CleanUnused(SpriteHits &usedtranslations);
-	int Dump(int i);
-
+	bool isInitialized() const { return mHwTexture != nullptr; }
 };
 
 //===========================================================================
@@ -102,6 +92,9 @@ class FMaterial
 		bool animated;
 	};
 
+	// This array is needed because not all textures are managed by the texture manager
+	// but some code needs to discard all hardware dependent data attached to any created texture.
+	// Font characters are not, for example.
 	static TArray<FMaterial *> mMaterials;
 	static int mMaxBound;
 
@@ -116,20 +109,29 @@ class FMaterial
 	short mRenderWidth;
 	short mRenderHeight;
 	bool mExpanded;
+	bool mTrimResult;
+	uint16_t trim[4];
 
 	float mSpriteU[2], mSpriteV[2];
 	FloatRect mSpriteRect;
 
 	FGLTexture * ValidateSysTexture(FTexture * tex, bool expand);
-	bool TrimBorders(int *rect);
+	bool TrimBorders(uint16_t *rect);
 
 public:
 	FTexture *tex;
 	
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
+	void SetSpriteRect();
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
+	void AddTextureLayer(FTexture *tex)
+	{
+		FTextureLayer layer = { tex, false };
+		ValidateTexture(tex, false);
+		mTextureLayers.Push(layer);
+	}
 	bool isMasked() const
 	{
 		return !!mBaseLayer->tex->bMasked;
@@ -141,11 +143,6 @@ public:
 	}
 
 	void Bind(int clamp, int translation);
-
-	unsigned char * CreateTexBuffer(int translation, int & w, int & h, bool allowhires=true, bool createexpanded = true) const
-	{
-		return mBaseLayer->CreateTexBuffer(translation, w, h, allowhires? tex : NULL, createexpanded);
-	}
 
 	void Clean(bool f)
 	{
@@ -193,37 +190,6 @@ public:
 		return mTopOffset;
 	}
 
-	int GetScaledLeftOffset() const
-	{
-		return int(mLeftOffset / tex->Scale.X);
-	}
-
-	int GetScaledTopOffset() const
-	{
-		return int(mTopOffset / tex->Scale.Y);
-	}
-
-	float GetScaledLeftOffsetFloat() const
-	{
-		return float(mLeftOffset / tex->Scale.X);
-	}
-
-	float GetScaledTopOffsetFloat() const
-	{
-		return float(mTopOffset/ tex->Scale.Y);
-	}
-
-	// This is scaled size in floating point as needed by sprites
-	float GetScaledWidthFloat() const
-	{
-		return float(mWidth / tex->Scale.X);
-	}
-
-	float GetScaledHeightFloat() const
-	{
-		return float(mHeight / tex->Scale.Y);
-	}
-
 	// Get right/bottom UV coordinates for patch drawing
 	float GetUL() const { return 0; }
 	float GetVT() const { return 0; }
@@ -237,25 +203,6 @@ public:
 	float GetSpriteUR() const { return mSpriteU[1]; }
 	float GetSpriteVB() const { return mSpriteV[1]; }
 
-
-
-	bool GetTransparent() const
-	{
-		if (mBaseLayer->bIsTransparent == -1) 
-		{
-			if (!mBaseLayer->tex->bHasCanvas)
-			{
-				int w, h;
-				unsigned char *buffer = CreateTexBuffer(0, w, h);
-				delete [] buffer;
-			}
-			else
-			{
-				mBaseLayer->bIsTransparent = 0;
-			}
-		}
-		return !!mBaseLayer->bIsTransparent;
-	}
 
 	static void DeleteAll();
 	static void FlushAll();

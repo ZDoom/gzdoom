@@ -46,14 +46,13 @@ class PolySkyDome
 {
 public:
 	PolySkyDome();
-	void Render(PolyRenderThread *thread, const TriMatrix &worldToClip);
+	void Render(PolyRenderThread *thread, const Mat4f &worldToView, const Mat4f &worldToClip);
 
 private:
 	TArray<FVector2> mInitialUV;
 	TArray<TriVertex> mVertices;
 	TArray<unsigned int> mPrimStart;
 	int mRows, mColumns;
-	TriMatrix objectToClip;
 
 	void SkyVertex(int r, int c, bool yflip);
 	void CreateSkyHemisphere(bool zflip);
@@ -63,7 +62,7 @@ private:
 
 	TriVertex SetVertexXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0);
 
-	TriMatrix GLSkyMath();
+	Mat4f GLSkyMath();
 
 	PolySkySetup mCurrentSetup;
 };

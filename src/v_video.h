@@ -41,6 +41,8 @@
 #include "dobject.h"
 #include "r_data/renderstyle.h"
 #include "c_cvars.h"
+#include "v_colortables.h"
+#include "v_2ddrawer.h"
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
@@ -51,8 +53,32 @@ void V_UpdateModeSize (int width, int height);
 void V_OutputResized (int width, int height);
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
 
+EXTERN_CVAR(Int, vid_rendermode)
+
+inline bool V_IsHardwareRenderer()
+{
+	return vid_rendermode == 4;
+}
+
+inline bool V_IsSoftwareRenderer()
+{
+	return vid_rendermode < 2;
+}
+
+inline bool V_IsPolyRenderer()
+{
+	return vid_rendermode == 2 || vid_rendermode == 3;
+}
+
+inline bool V_IsTrueColor()
+{
+	return vid_rendermode == 1 || vid_rendermode == 3;
+}
+
+
 class FTexture;
 struct FColormap;
+class FileWriter;
 enum FTextureFormat : uint32_t;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
@@ -77,7 +103,7 @@ enum
 	DTA_DestWidth,		// width of area to draw to
 	DTA_DestHeight,		// height of area to draw to
 	DTA_Alpha,			// alpha value for translucency
-	DTA_FillColor,		// color to stencil onto the destination (RGB is the color for truecolor drawers, A is the palette index for paletted drawers)
+	DTA_FillColor,		// color to stencil onto the destination
 	DTA_TranslationIndex, // translation table to recolor the source
 	DTA_AlphaChannel,	// bool: the source is an alpha channel; used with DTA_FillColor
 	DTA_Clean,			// bool: scale texture size and position by CleanXfac and CleanYfac
@@ -108,8 +134,8 @@ enum
 	DTA_RenderStyle,	// same as render style for actors
 	DTA_ColorOverlay,	// uint32_t: ARGB to overlay on top of image; limited to black for software
 	DTA_BilinearFilter,	// bool: apply bilinear filtering to the image
-	DTA_SpecialColormap,// pointer to FSpecialColormapParameters (likely to be forever hardware-only)
-	DTA_ColormapStyle,	// pointer to FColormapStyle (hardware-only)
+	DTA_SpecialColormap,// pointer to FSpecialColormapParameters
+	DTA_Desaturate,		// explicit desaturation factor (does not do anything in Legacy OpenGL)
 	DTA_Fullscreen,		// Draw image fullscreen (same as DTA_VirtualWidth/Height with graphics size.)
 
 	// floating point duplicates of some of the above:
@@ -129,6 +155,12 @@ enum
 
 	// New additions. 
 	DTA_Color,
+	DTA_FlipY,			// bool: flip image vertically
+	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
+	DTA_SrcY,
+	DTA_SrcWidth,
+	DTA_SrcHeight
+
 };
 
 enum
@@ -162,12 +194,13 @@ struct DrawParms
 	double top;
 	double left;
 	float Alpha;
-	uint32_t fillcolor;
+	PalEntry fillcolor;
 	FRemapTable *remap;
-	uint32_t colorOverlay;
+	PalEntry colorOverlay;
 	PalEntry color;
 	INTBOOL alphaChannel;
 	INTBOOL flipX;
+	INTBOOL flipY;
 	//float shadowAlpha;
 	int shadowColor;
 	INTBOOL keepratio;
@@ -175,12 +208,14 @@ struct DrawParms
 	INTBOOL bilinear;
 	FRenderStyle style;
 	struct FSpecialColormap *specialcolormap;
-	struct FColormapStyle *colormapstyle;
+	int desaturate;
 	int scalex, scaley;
 	int cellx, celly;
 	int maxstrlen;
 	bool fortext;
 	bool virtBottom;
+	double srcx, srcy;
+	double srcwidth, srcheight;
 };
 
 struct Va_List
@@ -206,111 +241,30 @@ public:
 	virtual ~DCanvas ();
 
 	// Member variable access
-	inline uint8_t *GetBuffer () const { return Buffer; }
+	inline uint8_t *GetPixels () const { return PixelBuffer; }
 	inline int GetWidth () const { return Width; }
 	inline int GetHeight () const { return Height; }
 	inline int GetPitch () const { return Pitch; }
 	inline bool IsBgra() const { return Bgra; }
 
-	virtual bool IsValid ();
+	// Note: pitch here is in pixels, not bytes.
+	bool SetBuffer(int width, int height, int pitch, uint8_t *buffer)
+	{
+		assert(buffer);
+		Width = width;
+		Height = height;
+		Pitch = pitch;
+		PixelBuffer = buffer;
+		return true;
+	}
 
-	// Access control
-	virtual bool Lock (bool buffered=true) = 0;		// Returns true if the surface was lost since last time
-	virtual void Unlock () = 0;
-	virtual bool IsLocked () { return Buffer != NULL; }	// Returns true if the surface is locked
-
-	// Draw a linear block of pixels into the canvas
-	virtual void DrawBlock (int x, int y, int width, int height, const uint8_t *src) const;
-
-	// Reads a linear block of pixels into the view buffer.
-	virtual void GetBlock (int x, int y, int width, int height, uint8_t *dest) const;
-
-	// Dim the entire canvas for the menus
-	virtual void Dim (PalEntry color = 0);
-
-	// Dim part of the canvas
-	virtual void Dim (PalEntry color, float amount, int x1, int y1, int w, int h) final;
-	virtual void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h);
-
-	// Fill an area with a texture
-	virtual void FlatFill (int left, int top, int right, int bottom, FTexture *src, bool local_origin=false);
-
-	// Fill a simple polygon with a texture
-	virtual void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
-		double originx, double originy, double scalex, double scaley, DAngle rotation,
-		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
-
-	// Set an area to a specified color
-	virtual void Clear (int left, int top, int right, int bottom, int palcolor, uint32_t color) final;
-	virtual void DoClear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
-
-	// Draws a line
-	virtual void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
-
-	// Draws a single pixel
-	virtual void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
-
-	// Calculate gamma table
-	void CalcGamma (float gamma, uint8_t gammalookup[256]);
-
-
-	// Retrieves a buffer containing image data for a screenshot.
-	// Hint: Pitch can be negative for upside-down images, in which case buffer
-	// points to the last row in the buffer, which will be the first row output.
-	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma);
-
-	// Releases the screenshot buffer.
-	virtual void ReleaseScreenshotBuffer();
-
-	// Text drawing functions -----------------------------------------------
-
-	// 2D Texture drawing
-	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
-	void SetClipRect(int x, int y, int w, int h);
-	void GetClipRect(int *x, int *y, int *w, int *h);
-
-	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
-	void DrawTexture (FTexture *img, double x, double y, int tags, ...);
-	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
-	void FillBorder (FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
-	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom=false, bool handleaspect=true) const;
-
-	// Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
-	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom=false, bool handleaspect=true) const;
-
-#ifdef DrawText
-#undef DrawText	// See WinUser.h for the definition of DrawText as a macro
-#endif
-	// 2D Text drawing
-	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...);
-	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args);
-	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
-	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
 
 protected:
-	uint8_t *Buffer;
+	uint8_t *PixelBuffer;
 	int Width;
 	int Height;
 	int Pitch;
-	int LockCount;
 	bool Bgra;
-	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
-
-	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
-
-	bool ClipBox (int &left, int &top, int &width, int &height, const uint8_t *&src, const int srcpitch) const;
-	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
-	virtual void DrawTextureParms(FTexture *img, DrawParms &parms);
-
-	template<class T>
-	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
-
-	DCanvas() {}
-
-private:
-	// Keep track of canvases, for automatic destruction at exit
-	DCanvas *Next;
-	static DCanvas *CanvasChain;
 };
 
 // A canvas in system memory.
@@ -321,54 +275,42 @@ class DSimpleCanvas : public DCanvas
 public:
 	DSimpleCanvas (int width, int height, bool bgra);
 	~DSimpleCanvas ();
-
-	bool IsValid ();
-	bool Lock (bool buffered=true);
-	void Unlock ();
-
-protected:
 	void Resize(int width, int height);
-
-	uint8_t *MemBuffer;
-
-	DSimpleCanvas() {}
 };
 
-// This class represents a native texture, as opposed to an FTexture.
-class FNativeTexture
-{
-protected:
-	FTexture * mGameTex;
-	FTextureFormat mFormat;
-public:
-	FNativeTexture(FTexture *tex, FTextureFormat fmt) : mGameTex(tex), mFormat(fmt) {}
-	virtual ~FNativeTexture();
-	virtual bool Update() = 0;
-	virtual bool CheckWrapping(bool wrapping);
-};
 
-// This class represents a texture lookup palette.
-class FNativePalette
-{
-public:
-	virtual ~FNativePalette();
-	virtual bool Update() = 0;
-};
+class FUniquePalette;
 
 // A canvas that represents the actual display. The video code is responsible
 // for actually implementing this. Built on top of SimpleCanvas, because it
 // needs a system memory buffer when buffered output is enabled.
 
-class DFrameBuffer : public DSimpleCanvas
+class DFrameBuffer
 {
 	typedef DSimpleCanvas Super;
+protected:
+
+	void DrawTextureV(FTexture *img, double x, double y, uint32_t tag, va_list tags) = delete;
+	void DrawTextureParms(FTexture *img, DrawParms &parms);
+
+	template<class T>
+	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
+	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
+
+	F2DDrawer m2DDrawer;
+	int Width = 0;
+	int Height = 0;
+	bool Bgra = 0;
+	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
+
 public:
 	DFrameBuffer (int width, int height, bool bgra);
+	virtual ~DFrameBuffer() {}
 
-	// Force the surface to use buffered output if true is passed.
-	virtual bool Lock (bool buffered) = 0;
+	inline int GetWidth() const { return Width; }
+	inline int GetHeight() const { return Height; }
 
-	// Make the surface visible. Also implies Unlock().
+	// Make the surface visible.
 	virtual void Update () = 0;
 
 	// Return a pointer to 256 palette entries that can be written to.
@@ -394,9 +336,6 @@ public:
 	// Converse of SetFlash
 	virtual void GetFlash (PalEntry &rgb, int &amount) = 0;
 
-	// Returns the number of video pages the frame buffer is using.
-	virtual int GetPageCount () = 0;
-
 	// Returns true if running fullscreen.
 	virtual bool IsFullscreen () = 0;
 
@@ -409,13 +348,11 @@ public:
 	// Set the rect defining the area affected by blending.
 	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
 
-	bool Accel2D;	// If true, 2D drawing can be accelerated.
-	virtual bool LegacyHardware() const { return false; }	// only for reporting SM1.4 support to the stat collector
+	// Delete any resources that need to be deleted after restarting with a different IWAD
+	virtual void CleanForRestart() {}
+	virtual void SetTextureFilterMode() {}
 
-	// Begin 2D drawing operations. This is like Update, but it doesn't end
-	// the scene, and it doesn't present the image yet. If you are going to
-	// be covering the entire screen with 2D elements, then pass false to
-	// avoid copying the software buffer to the screen.
+	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
 	virtual bool Begin2D(bool copy3d);
 	void End2D() { isIn2D = false; }
@@ -423,22 +360,15 @@ public:
 	// Returns true if Begin2D has been called and 2D drawing is now active
 	bool HasBegun2D() { return isIn2D; }
 
-	// DrawTexture calls after Begin2D use native textures.
 
-	// Draws the blending rectangle over the viewwindow if in hardware-
-	// accelerated 2D mode.
-	virtual void DrawBlendingRect();
-
-	// Create a native texture from a game texture.
-	virtual FNativeTexture *CreateTexture(FTexture *gametex, FTextureFormat fmt, bool wrapping);
-
-	// Create a palette texture from a remap/palette table.
-	virtual FNativePalette *CreatePalette(FRemapTable *remap);
-
-	// Precaches or unloads a texture
-	
 	// Report a game restart
 	virtual void GameRestart();
+	virtual void InitForLevel() {}
+	virtual void SetClearColor(int color) {}
+	virtual uint32_t GetCaps();
+	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
+	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
+	virtual void RenderView(player_t *player) {}
 
 	// Screen wiping
 	virtual bool WipeStartScreen(int type);
@@ -450,11 +380,72 @@ public:
 
 	uint64_t GetLastFPS() const { return LastCount; }
 
-#ifdef _WIN32
-	virtual void PaletteChanged () = 0;
-	virtual int QueryNewPalette () = 0;
-	virtual bool Is8BitMode() = 0;
+	// 2D Texture drawing
+	void ClearClipRect() { clipleft = cliptop = 0; clipwidth = clipheight = -1; }
+	void SetClipRect(int x, int y, int w, int h);
+	void GetClipRect(int *x, int *y, int *w, int *h);
+
+	virtual void Draw2D() {}
+	void Clear2D() { m2DDrawer.Clear(); }
+
+	// Dim part of the canvas
+	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
+	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
+
+	// Fill an area with a texture
+	void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
+
+	// Fill a simple polygon with a texture
+	void FillSimplePoly(FTexture *tex, FVector2 *points, int npoints,
+		double originx, double originy, double scalex, double scaley, DAngle rotation,
+		const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
+
+	// Set an area to a specified color
+	void Clear(int left, int top, int right, int bottom, int palcolor, uint32_t color);
+
+	// Draws a line
+	void DrawLine(int x0, int y0, int x1, int y1, int palColor, uint32_t realcolor);
+
+	// Draws a single pixel
+	void DrawPixel(int x, int y, int palcolor, uint32_t rgbcolor);
+
+
+	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
+	void DrawTexture(FTexture *img, double x, double y, int tags, ...);
+	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
+	void FillBorder(FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
+	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom = false, bool handleaspect = true) const;
+
+	// Code that uses these (i.e. SBARINFO) should probably be evaluated for using doubles all around instead.
+	void VirtualToRealCoordsInt(int &x, int &y, int &w, int &h, int vwidth, int vheight, bool vbottom = false, bool handleaspect = true) const;
+
+	// Text drawing functions -----------------------------------------------
+
+#ifdef DrawText
+#undef DrawText	// See WinUser.h for the definition of DrawText as a macro
 #endif
+	// 2D Text drawing
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, int tag_first, ...);
+	void DrawText(FFont *font, int normalcolor, double x, double y, const char *string, VMVa_List &args);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, int tag_first, ...);
+	void DrawChar(FFont *font, int normalcolor, double x, double y, int character, VMVa_List &args);
+
+	void DrawFrame(int left, int top, int width, int height);
+	void DrawBorder(int x1, int y1, int x2, int y2);
+	void DrawViewBorder();
+	void RefreshViewBorder();
+
+	// Calculate gamma table
+	void CalcGamma(float gamma, uint8_t gammalookup[256]);
+
+
+	// Retrieves a buffer containing image data for a screenshot.
+	// Hint: Pitch can be negative for upside-down images, in which case buffer
+	// points to the last row in the buffer, which will be the first row output.
+	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) {}
+
+	// Releases the screenshot buffer.
+	virtual void ReleaseScreenshotBuffer() {}
 
 	// The original size of the framebuffer as selected in the video menu.
 	int VideoWidth = 0;
@@ -463,8 +454,6 @@ public:
 
 protected:
 	void DrawRateStuff ();
-	void CopyFromBuff (uint8_t *src, int srcPitch, int width, int height, uint8_t *dest);
-	void CopyWithGammaBgra(void *output, int pitch, const uint8_t *gammared, const uint8_t *gammagreen, const uint8_t *gammablue, PalEntry flash, int flash_amount);
 
 	DFrameBuffer () {}
 
@@ -483,54 +472,6 @@ extern DFrameBuffer *screen;
 
 EXTERN_CVAR (Float, Gamma)
 
-// Translucency tables
-
-// RGB32k is a normal R5G5B5 -> palette lookup table.
-
-// Use a union so we can "overflow" without warnings.
-// Otherwise, we get stuff like this from Clang (when compiled
-// with -fsanitize=bounds) while running:
-//   src/v_video.cpp:390:12: runtime error: index 1068 out of bounds for type 'uint8_t [32]'
-//   src/r_draw.cpp:273:11: runtime error: index 1057 out of bounds for type 'uint8_t [32]'
-union ColorTable32k
-{
-	uint8_t RGB[32][32][32];
-	uint8_t All[32 *32 *32];
-};
-extern ColorTable32k RGB32k;
-
-// [SP] RGB666 support
-union ColorTable256k
-{
-	uint8_t RGB[64][64][64];
-	uint8_t All[64 *64 *64];
-};
-extern ColorTable256k RGB256k;
-
-// Col2RGB8 is a pre-multiplied palette for color lookup. It is stored in a
-// special R10B10G10 format for efficient blending computation.
-//		--RRRRRrrr--BBBBBbbb--GGGGGggg--   at level 64
-//		--------rrrr------bbbb------gggg   at level 1
-extern uint32_t Col2RGB8[65][256];
-
-// Col2RGB8_LessPrecision is the same as Col2RGB8, but the LSB for red
-// and blue are forced to zero, so if the blend overflows, it won't spill
-// over into the next component's value.
-//		--RRRRRrrr-#BBBBBbbb-#GGGGGggg--  at level 64
-//      --------rrr#------bbb#------gggg  at level 1
-extern uint32_t *Col2RGB8_LessPrecision[65];
-
-// Col2RGB8_Inverse is the same as Col2RGB8_LessPrecision, except the source
-// palette has been inverted.
-extern uint32_t Col2RGB8_Inverse[65][256];
-
-// "Magic" numbers used during the blending:
-//		--000001111100000111110000011111	= 0x01f07c1f
-//		-0111111111011111111101111111111	= 0x3FEFFBFF
-//		-1000000000100000000010000000000	= 0x40100400
-//		------10000000001000000000100000	= 0x40100400 >> 5
-//		--11111-----11111-----11111-----	= 0x40100400 - (0x40100400 >> 5) aka "white"
-//		--111111111111111111111111111111	= 0x3FFFFFFF
 
 // Allocates buffer screens, call before R_Init.
 void V_Init (bool restart);
@@ -552,13 +493,6 @@ FString V_GetColorStringByName (const char *name, FScriptPosition *sc = nullptr)
 // Tries to get color by name, then by string
 int V_GetColor (const uint32_t *palette, const char *str, FScriptPosition *sc = nullptr);
 int V_GetColor(const uint32_t *palette, FScanner &sc);
-void V_DrawFrame (int left, int top, int width, int height);
-
-// If the view size is not full screen, draws a border around it.
-void V_DrawBorder (int x1, int y1, int x2, int y2);
-void V_RefreshViewBorder ();
-
-void V_SetBorderNeedRefresh();
 
 int CheckRatio (int width, int height, int *trueratio=NULL);
 static inline int CheckRatio (double width, double height) { return CheckRatio(int(width), int(height)); }

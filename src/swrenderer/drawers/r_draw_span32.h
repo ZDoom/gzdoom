@@ -371,6 +371,7 @@ namespace swrenderer
 
 			if (BlendT::Mode == (int)SpanBlendModes::Opaque)
 			{
+				fgcolor.a = 255;
 				return fgcolor;
 			}
 			else if (BlendT::Mode == (int)SpanBlendModes::Masked)

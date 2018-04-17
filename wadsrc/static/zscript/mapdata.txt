@@ -102,6 +102,12 @@ struct Side native play
 
 struct Line native play
 {
+	enum ESide
+	{
+		front=0,
+		back=1
+	}
+
 	enum ELineFlags
 	{
 		ML_BLOCKING					=0x00000001,	// solid, is an obstacle
@@ -156,6 +162,8 @@ struct Line native play
 	native Line getPortalDestination();
 	native int getPortalAlignment();
 	native int Index();
+	native bool Activate(Actor activator, int side, int type);
+	native bool RemoteActivate(Actor activator, int side, int type, Vector3 pos);
 	
 	int GetUDMFInt(Name nm)
 	{
@@ -326,7 +334,7 @@ struct Sector native play
 
 	native SectorAction		SecActTarget;
 
-	native uint					Portals[2];
+	native internal uint		Portals[2];
 	native readonly int			PortalGroup;
 
 	native readonly int			sectornum;

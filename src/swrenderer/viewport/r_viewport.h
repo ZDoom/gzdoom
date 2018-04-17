@@ -5,7 +5,7 @@
 #include <memory>
 #include "v_video.h"
 #include "r_defs.h"
-#include "polyrenderer/math/tri_matrix.h"
+#include "polyrenderer/math/gpu_types.h"
 
 namespace swrenderer
 {
@@ -20,13 +20,14 @@ namespace swrenderer
 		void SetViewport(RenderThread *thread, int width, int height, float trueratio);
 		void SetupFreelook();
 		
-		void SetupPolyViewport();
+		void SetupPolyViewport(RenderThread *thread);
 
-		TriMatrix WorldToView;
-		TriMatrix ViewToClip;
-		TriMatrix WorldToClip;
+		Mat4f WorldToView;
+		Mat4f ViewToClip;
+		Mat4f WorldToClip;
 
 		DCanvas *RenderTarget = nullptr;
+		bool RenderingToCanvas = false;
 
 		FViewWindow viewwindow;
 		FRenderViewpoint viewpoint;
@@ -52,8 +53,6 @@ namespace swrenderer
 
 		uint8_t *GetDest(int x, int y);
 
-		bool RenderingToCanvas() const { return RenderTarget != screen; }
-
 		DVector3 PointWorldToView(const DVector3 &worldPos) const;
 		DVector3 PointWorldToScreen(const DVector3 &worldPos) const;
 		DVector3 PointViewToScreen(const DVector3 &viewPos) const;
@@ -68,9 +67,23 @@ namespace swrenderer
 			else
 				return FocalLengthY / (screenY + 0.5 - CenterY) * planeHeight;
 		}
-		
+
+		double ScreenToViewX(int screenX, double viewZ) const
+		{
+			return (screenX + 0.5 - CenterX) / FocalLengthX * viewZ;
+		}
+
+		double ScreenToViewY(int screenY, double viewZ) const
+		{
+			return (CenterY - screenY - 0.5) / FocalLengthY * viewZ;
+		}
+
 	private:
 		void InitTextureMapping();
 		void SetupBuffer();
+
+		static Mat4f SoftwareWorldToView(const FRenderViewpoint &viewpoint);
+
+		Mat4f SoftwareViewToClip();
 	};
 }

@@ -42,9 +42,6 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
-#include "gl/textures/gl_texture.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/shaders/gl_shader.h"
@@ -71,14 +68,25 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 	tex = tx;
 
 	mHwTexture = NULL;
-	HiresLump = -1;
-	hirestexture = NULL;
-	bHasColorkey = false;
-	bIsTransparent = -1;
-	bExpandFlag = expandpatches;
 	lastSampler = 254;
 	lastTranslation = -1;
 	tex->gl_info.SystemTexture[expandpatches] = this;
+}
+
+//===========================================================================
+//
+// Constructor 2 for the SW framebuffer which provides its own hardware texture.
+//
+//===========================================================================
+FGLTexture::FGLTexture(FTexture * tx, FHardwareTexture *hwtex)
+{
+	assert(tx->gl_info.SystemTexture[0] == NULL);
+	tex = tx;
+
+	mHwTexture = hwtex;
+	lastSampler = 254;
+	lastTranslation = -1;
+	tex->gl_info.SystemTexture[0] = this;
 }
 
 //===========================================================================
@@ -90,58 +98,7 @@ FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
 FGLTexture::~FGLTexture()
 {
 	Clean(true);
-	if (hirestexture) delete hirestexture;
-}
-
-//==========================================================================
-//
-// Checks for the presence of a hires texture replacement and loads it
-//
-//==========================================================================
-unsigned char *FGLTexture::LoadHiresTexture(FTexture *tex, int *width, int *height)
-{
-	if (bExpandFlag) return NULL;	// doesn't work for expanded textures
-
-	if (HiresLump==-1) 
-	{
-		bHasColorkey = false;
-		HiresLump = CheckDDPK3(tex);
-		if (HiresLump < 0) HiresLump = CheckExternalFile(tex, bHasColorkey);
-
-		if (HiresLump >=0) 
-		{
-			hirestexture = FTexture::CreateTexture(HiresLump, ETextureType::Any);
-		}
-	}
-	if (hirestexture != NULL)
-	{
-		int w=hirestexture->GetWidth();
-		int h=hirestexture->GetHeight();
-
-		unsigned char * buffer=new unsigned char[w*(h+1)*4];
-		memset(buffer, 0, w * (h+1) * 4);
-
-		FBitmap bmp(buffer, w*4, w, h);
-		
-		int trans = hirestexture->CopyTrueColorPixels(&bmp, 0, 0);
-		hirestexture->CheckTrans(buffer, w*h, trans);
-		bIsTransparent = hirestexture->gl_info.mIsTransparent;
-
-		if (bHasColorkey)
-		{
-			// This is a crappy Doomsday color keyed image
-			// We have to remove the key manually. :(
-			uint32_t * dwdata=(uint32_t*)buffer;
-			for (int i=(w*h);i>0;i--)
-			{
-				if (dwdata[i]==0xffffff00 || dwdata[i]==0xffff00ff) dwdata[i]=0;
-			}
-		}
-		*width = w;
-		*height = h;
-		return buffer;
-	}
-	return NULL;
+	for (auto & i : tex->gl_info.SystemTexture) if (i == this) i = nullptr;
 }
 
 //===========================================================================
@@ -180,81 +137,6 @@ void FGLTexture::CleanUnused(SpriteHits &usedtranslations)
 
 //===========================================================================
 // 
-//	Initializes the buffer for the texture data
-//
-//===========================================================================
-
-unsigned char * FGLTexture::CreateTexBuffer(int translation, int & w, int & h, FTexture *hirescheck, bool createexpanded, bool alphatrans)
-{
-	unsigned char * buffer;
-	int W, H;
-	int isTransparent = -1;
-
-
-	// Textures that are already scaled in the texture lump will not get replaced
-	// by hires textures
-	if (gl_texture_usehires && hirescheck != NULL && !alphatrans)
-	{
-		buffer = LoadHiresTexture (hirescheck, &w, &h);
-		if (buffer)
-		{
-			return buffer;
-		}
-	}
-
-	int exx = bExpandFlag && createexpanded;
-
-	W = w = tex->GetWidth() + 2 * exx;
-	H = h = tex->GetHeight() + 2 * exx;
-
-
-	buffer=new unsigned char[W*(H+1)*4];
-	memset(buffer, 0, W * (H+1) * 4);
-
-	FBitmap bmp(buffer, W*4, W, H);
-
-	if (translation <= 0 || alphatrans)
-	{
-		int trans = tex->CopyTrueColorPixels(&bmp, exx, exx);
-		tex->CheckTrans(buffer, W*H, trans);
-		isTransparent = tex->gl_info.mIsTransparent;
-		if (bIsTransparent == -1) bIsTransparent = isTransparent;
-		// alpha texture for legacy mode
-		if (alphatrans)
-		{
-			for (int i = 0; i < W*H; i++)
-			{
-				int b = buffer[4 * i];
-				int g = buffer[4 * i + 1];
-				int r = buffer[4 * i + 2];
-				int gray = Luminance(r, g, b);
-				buffer[4 * i] = 255;
-				buffer[4 * i + 1] = 255;
-				buffer[4 * i + 2] = 255;
-				buffer[4 * i + 3] = (buffer[4 * i + 3] * gray) >> 8;
-			}
-		}
-	}
-	else
-	{
-		// When using translations everything must be mapped to the base palette.
-		// so use CopyTrueColorTranslated
-		tex->CopyTrueColorTranslated(&bmp, exx, exx, 0, GLTranslationPalette::GetPalette(translation));
-		isTransparent = 0;
-		// This is not conclusive for setting the texture's transparency info.
-	}
-
-	// if we just want the texture for some checks there's no need for upsampling.
-	if (!createexpanded) return buffer;
-
-	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
-	// [BB] Potentially upsample the buffer.
-	return gl_CreateUpsampledTextureBuffer ( tex, buffer, W, H, w, h, !!isTransparent);
-}
-
-
-//===========================================================================
-// 
 //	Create hardware texture for world use
 //
 //===========================================================================
@@ -264,7 +146,7 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 	if (tex->UseType==ETextureType::Null) return NULL;		// Cannot register a NULL texture
 	if (mHwTexture == NULL)
 	{
-		mHwTexture = new FHardwareTexture(tex->GetWidth() + bExpandFlag*2, tex->GetHeight() + bExpandFlag*2, tex->gl_info.bNoCompress);
+		mHwTexture = new FHardwareTexture(tex->bNoCompress);
 	}
 	return mHwTexture; 
 }
@@ -275,21 +157,18 @@ FHardwareTexture *FGLTexture::CreateHwTexture()
 //
 //===========================================================================
 
-const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int translation, FTexture *hirescheck)
+bool FGLTexture::Bind(int texunit, int clampmode, int translation, int flags)
 {
 	int usebright = false;
-	bool alphatrans = translation == INT_MAX;	// This is only needed for legacy mode because no texture combine setting allows using the color as alpha.
 
-	if (!alphatrans)
+	if (translation <= 0)
 	{
-		if (translation <= 0)
-		{
-			translation = -translation;
-		}
-		else
-		{
-			translation = GLTranslationPalette::GetInternalTranslation(translation);
-		}
+		translation = -translation;
+	}
+	else
+	{
+		auto remap = TranslationToTable(translation);
+		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
 	}
 
 	bool needmipmap = (clampmode <= CLAMP_XY);
@@ -312,11 +191,11 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 			int w=0, h=0;
 
 			// Create this texture
-			unsigned char * buffer = NULL;
+			unsigned char * buffer = nullptr;
 			
 			if (!tex->bHasCanvas)
 			{
-				buffer = CreateTexBuffer(translation, w, h, hirescheck, true, alphatrans);
+				buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
 				if (tex->bWarped && gl.legacyMode && w*h <= 256*256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
 				{
 					// need to do software warping
@@ -327,13 +206,17 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 					buffer = warpbuffer;
 					wt->GenTime[0] = screen->FrameTime;
 				}
-				tex->ProcessData(buffer, w, h, false);
+			}
+			else
+			{
+				w = tex->GetWidth();
+				h = tex->GetHeight();
 			}
 			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FGLTexture.Bind")) 
 			{
 				// could not create texture
 				delete[] buffer;
-				return NULL;
+				return false;
 			}
 			delete[] buffer;
 		}
@@ -342,9 +225,9 @@ const FHardwareTexture *FGLTexture::Bind(int texunit, int clampmode, int transla
 		if (lastSampler != clampmode)
 			lastSampler = GLRenderer->mSamplerManager->Bind(texunit, clampmode, lastSampler);
 		lastTranslation = translation;
-		return hwtex; 
+		return true; 
 	}
-	return NULL;
+	return false;
 }
 
 //===========================================================================
@@ -449,39 +332,43 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	}
 	else
 	*/
-	if (tx->bWarped)
+	if (tx->UseType == ETextureType::SWCanvas && tx->WidthBits == 0)
+	{
+		mShaderIndex = SHADER_Paletted;
+	}
+	else if (tx->bWarped)
 	{
 		mShaderIndex = tx->bWarped; // This picks SHADER_Warp1 or SHADER_Warp2
-		tx->gl_info.shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
+		tx->shaderspeed = static_cast<FWarpTexture*>(tx)->GetSpeed();
 	}
 	else if (tx->bHasCanvas)
 	{
-		if (tx->gl_info.shaderindex >= FIRST_USER_SHADER)
+		if (tx->shaderindex >= FIRST_USER_SHADER)
 		{
-			mShaderIndex = tx->gl_info.shaderindex;
+			mShaderIndex = tx->shaderindex;
 		}
 		// no brightmap for cameratexture
 	}
 	else
 	{
-		if (tx->gl_info.shaderindex >= FIRST_USER_SHADER)
+		if (tx->shaderindex >= FIRST_USER_SHADER)
 		{
-			mShaderIndex = tx->gl_info.shaderindex;
+			mShaderIndex = tx->shaderindex;
 		}
 		else
 		{
-			if (tx->gl_info.Normal && tx->gl_info.Specular)
+			if (tx->Normal && tx->Specular)
 			{
-				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Specular })
+				for (auto &texture : { tx->Normal, tx->Specular })
 				{
 					ValidateSysTexture(texture, expanded);
 					mTextureLayers.Push({ texture, false });
 				}
 				mShaderIndex = SHADER_Specular;
 			}
-			else if (tx->gl_info.Normal && tx->gl_info.Metallic && tx->gl_info.Roughness && tx->gl_info.AmbientOcclusion)
+			else if (tx->Normal && tx->Metallic && tx->Roughness && tx->AmbientOcclusion)
 			{
-				for (auto &texture : { tx->gl_info.Normal, tx->gl_info.Metallic, tx->gl_info.Roughness, tx->gl_info.AmbientOcclusion })
+				for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 				{
 					ValidateSysTexture(texture, expanded);
 					mTextureLayers.Push({ texture, false });
@@ -490,10 +377,10 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			}
 
 			tx->CreateDefaultBrightmap();
-			if (tx->gl_info.Brightmap != NULL)
+			if (tx->Brightmap != NULL)
 			{
-				ValidateSysTexture(tx->gl_info.Brightmap, expanded);
-				FTextureLayer layer = {tx->gl_info.Brightmap, false};
+				ValidateSysTexture(tx->Brightmap, expanded);
+				FTextureLayer layer = {tx->Brightmap, false};
 				mTextureLayers.Push(layer);
 				if (mShaderIndex == SHADER_Specular)
 					mShaderIndex = SHADER_SpecularBrightmap;
@@ -509,8 +396,8 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 
 	mWidth = tx->GetWidth();
 	mHeight = tx->GetHeight();
-	mLeftOffset = tx->LeftOffset;
-	mTopOffset = tx->TopOffset;
+	mLeftOffset = tx->GetLeftOffset(0);	// These only get used by decals and decals should not use renderer-specific offsets.
+	mTopOffset = tx->GetTopOffset(0);
 	mRenderWidth = tx->GetScaledWidth();
 	mRenderHeight = tx->GetScaledHeight();
 	mSpriteU[0] = mSpriteV[0] = 0.f;
@@ -523,59 +410,26 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 		mBaseLayer = ValidateSysTexture(basetex, expanded);
 	}
 
-	float fxScale = tx->Scale.X;
-	float fyScale = tx->Scale.Y;
-
-	// mSpriteRect is for positioning the sprite in the scene.
-	mSpriteRect.left = -mLeftOffset / fxScale;
-	mSpriteRect.top = -mTopOffset / fyScale;
-	mSpriteRect.width = mWidth / fxScale;
-	mSpriteRect.height = mHeight / fyScale;
-
+	mExpanded = expanded;
 	if (expanded)
 	{
-		// a little adjustment to make sprites look better with texture filtering:
-		// create a 1 pixel wide empty frame around them.
-		int trim[4];
-		bool trimmed = TrimBorders(trim);	// get the trim size before adding the empty frame
-
 		int oldwidth = mWidth;
 		int oldheight = mHeight;
 
-		mWidth+=2;
-		mHeight+=2;
-		mLeftOffset+=1;
-		mTopOffset+=1;
+		mTrimResult = TrimBorders(trim);	// get the trim size before adding the empty frame
+		mWidth += 2;
+		mHeight += 2;
 		mRenderWidth = mRenderWidth * mWidth / oldwidth;
 		mRenderHeight = mRenderHeight * mHeight / oldheight;
 
-		// Reposition the sprite with the frame considered
-		mSpriteRect.left = -mLeftOffset / fxScale;
-		mSpriteRect.top = -mTopOffset / fyScale;
-		mSpriteRect.width = mWidth / fxScale;
-		mSpriteRect.height = mHeight / fyScale;
-
-		if (trimmed)
-		{
-			mSpriteRect.left += trim[0] / fxScale;
-			mSpriteRect.top += trim[1] / fyScale;
-
-			mSpriteRect.width -= (oldwidth - trim[2]) / fxScale;
-			mSpriteRect.height -= (oldheight - trim[3]) / fyScale;
-
-			mSpriteU[0] = trim[0] / (float)mWidth;
-			mSpriteV[0] = trim[1] / (float)mHeight;
-			mSpriteU[1] -= (oldwidth - trim[0] - trim[2]) / (float)mWidth; 
-			mSpriteV[1] -= (oldheight - trim[1] - trim[3]) / (float)mHeight; 
-		}
 	}
+	SetSpriteRect();
 
 	mTextureLayers.ShrinkToFit();
 	mMaxBound = -1;
 	mMaterials.Push(this);
 	tx->gl_info.Material[expanded] = this;
-	if (tx->bHasCanvas) tx->gl_info.mIsTransparent = 0;
-	mExpanded = expanded;
+	if (tx->bHasCanvas) tx->bTranslucent = 0;
 }
 
 //===========================================================================
@@ -597,21 +451,74 @@ FMaterial::~FMaterial()
 
 }
 
-
 //===========================================================================
-// 
-//	Finds gaps in the texture which can be skipped by the renderer
-//  This was mainly added to speed up one area in E4M6 of 007LTSD
+//
+// Set the sprite rectangle
 //
 //===========================================================================
 
-bool FMaterial::TrimBorders(int *rect)
+void FMaterial::SetSpriteRect()
+{
+	auto leftOffset = tex->GetLeftOffsetHW();
+	auto topOffset = tex->GetTopOffsetHW();
+
+	float fxScale = tex->Scale.X;
+	float fyScale = tex->Scale.Y;
+
+	// mSpriteRect is for positioning the sprite in the scene.
+	mSpriteRect.left = -leftOffset / fxScale;
+	mSpriteRect.top = -topOffset / fyScale;
+	mSpriteRect.width = mWidth / fxScale;
+	mSpriteRect.height = mHeight / fyScale;
+
+	if (mExpanded)
+	{
+		// a little adjustment to make sprites look better with texture filtering:
+		// create a 1 pixel wide empty frame around them.
+
+		int oldwidth = mWidth - 2;
+		int oldheight = mHeight - 2;
+
+		leftOffset += 1;
+		topOffset += 1;
+
+		// Reposition the sprite with the frame considered
+		mSpriteRect.left = -leftOffset / fxScale;
+		mSpriteRect.top = -topOffset / fyScale;
+		mSpriteRect.width = mWidth / fxScale;
+		mSpriteRect.height = mHeight / fyScale;
+
+		if (mTrimResult)
+		{
+			mSpriteRect.left += trim[0] / fxScale;
+			mSpriteRect.top += trim[1] / fyScale;
+
+			mSpriteRect.width -= (oldwidth - trim[2]) / fxScale;
+			mSpriteRect.height -= (oldheight - trim[3]) / fyScale;
+
+			mSpriteU[0] = trim[0] / (float)mWidth;
+			mSpriteV[0] = trim[1] / (float)mHeight;
+			mSpriteU[1] -= (oldwidth - trim[0] - trim[2]) / (float)mWidth;
+			mSpriteV[1] -= (oldheight - trim[1] - trim[3]) / (float)mHeight;
+		}
+	}
+}
+
+
+//===========================================================================
+// 
+//  Finds empty space around the texture. 
+//  Used for sprites that got placed into a huge empty frame.
+//
+//===========================================================================
+
+bool FMaterial::TrimBorders(uint16_t *rect)
 {
 	PalEntry col;
 	int w;
 	int h;
 
-	unsigned char *buffer = CreateTexBuffer(0, w, h, false, false);
+	unsigned char *buffer = tex->CreateTexBuffer(0, w, h);
 
 	if (buffer == NULL) 
 	{
@@ -721,13 +628,15 @@ void FMaterial::Bind(int clampmode, int translation)
 
 	int usebright = false;
 	int maxbound = 0;
-	bool allowhires = tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY && !mExpanded;
 
+	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
 	else if (tex->bWarped && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
 
-	const FHardwareTexture *gltexture = mBaseLayer->Bind(0, clampmode, translation, allowhires? tex:NULL);
-	if (gltexture != NULL)
+	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
+	int flags = mExpanded? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY)? CTF_CheckHires : 0;
+
+	if (mBaseLayer->Bind(0, clampmode, translation, flags))
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{
@@ -742,7 +651,7 @@ void FMaterial::Bind(int clampmode, int translation)
 			{
 				layer = mTextureLayers[i].texture;
 			}
-			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, NULL);
+			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, 0);
 			maxbound = i+1;
 		}
 	}
@@ -833,8 +742,8 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 	if (mShaderIndex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
 	{
 		FTexture *tex = mBaseLayer->tex;
-		*pAreas = tex->gl_info.areas;
-		return tex->gl_info.areacount;
+		*pAreas = tex->areas;
+		return tex->areacount;
 	}
 	else
 	{
@@ -853,11 +762,11 @@ void FMaterial::BindToFrameBuffer()
 	if (mBaseLayer->mHwTexture == NULL)
 	{
 		// must create the hardware texture first
-		mBaseLayer->Bind(0, 0, 0, NULL);
+		mBaseLayer->Bind(0, 0, 0, 0);
 		FHardwareTexture::Unbind(0);
 		ClearLastTexture();
 	}
-	mBaseLayer->mHwTexture->BindToFrameBuffer();
+	mBaseLayer->mHwTexture->BindToFrameBuffer(mWidth, mHeight);
 }
 
 //==========================================================================
@@ -879,14 +788,14 @@ again:
 		{
 			if (expand)
 			{
-				if (tex->bWarped || tex->bHasCanvas || tex->gl_info.shaderindex >= FIRST_USER_SHADER)
+				if (tex->bWarped || tex->bHasCanvas || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
 				{
 					tex->gl_info.bNoExpand = true;
 					goto again;
 				}
-				if (tex->gl_info.Brightmap != NULL &&
-					(tex->GetWidth() != tex->gl_info.Brightmap->GetWidth() ||
-					tex->GetHeight() != tex->gl_info.Brightmap->GetHeight())
+				if (tex->Brightmap != NULL &&
+					(tex->GetWidth() != tex->Brightmap->GetWidth() ||
+					tex->GetHeight() != tex->Brightmap->GetHeight())
 					)
 				{
 					// do not expand if the brightmap's size differs.

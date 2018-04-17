@@ -32,7 +32,6 @@
 #include "g_levellocals.h"
 
 #include "gl/system/gl_cvars.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
@@ -40,7 +39,6 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_texture.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/renderer/gl_quaddrawer.h"

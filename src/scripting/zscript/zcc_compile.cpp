@@ -1241,6 +1241,7 @@ bool ZCCCompiler::CompileFields(PContainerType *type, TArray<ZCC_VarDeclarator *
 		if (field->Flags & ZCC_Protected) varflags |= VARF_Protected;
 		if (field->Flags & ZCC_Deprecated) varflags |= VARF_Deprecated;
 		if (field->Flags & ZCC_ReadOnly) varflags |= VARF_ReadOnly;
+		if (field->Flags & ZCC_Internal) varflags |= VARF_InternalAccess;
 		if (field->Flags & ZCC_Transient) varflags |= VARF_Transient;
 		if (mVersion >= MakeVersion(2, 4, 0))
 		{
@@ -2327,7 +2328,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 			} while (t != f->Type);
 		}
 
-		int notallowed = ZCC_Latent | ZCC_Meta | ZCC_ReadOnly | ZCC_Abstract;
+		int notallowed = ZCC_Latent | ZCC_Meta | ZCC_ReadOnly | ZCC_Abstract | ZCC_Internal;
 
 		if (f->Flags & notallowed)
 		{

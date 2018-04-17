@@ -40,6 +40,7 @@
 
 void PolyDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
 {
+	mTexture = nullptr;
 	mTexturePixels = texels;
 	mTextureWidth = width;
 	mTextureHeight = height;
@@ -48,6 +49,7 @@ void PolyDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
 
 void PolyDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 {
+	mTexture = texture;
 	mTextureWidth = texture->GetWidth();
 	mTextureHeight = texture->GetHeight();
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
@@ -70,6 +72,7 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 			else
 				mTranslation = table->Remap;
 
+			mTexture = texture;
 			mTextureWidth = texture->GetWidth();
 			mTextureHeight = texture->GetHeight();
 			mTexturePixels = texture->GetPixels(style);
@@ -79,6 +82,7 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 	
 	if (style.Flags & STYLEF_RedIsAlpha)
 	{
+		mTexture = texture;
 		mTextureWidth = texture->GetWidth();
 		mTextureHeight = texture->GetHeight();
 		mTexturePixels = texture->GetPixels(style);
@@ -133,7 +137,7 @@ void PolyDrawArgs::DrawArray(const DrawerCommandQueuePtr &queue, const TriVertex
 	mVertexCount = vcount;
 	mElements = nullptr;
 	mDrawMode = mode;
-	queue->Push<DrawPolyTrianglesCommand>(*this, PolyTriangleDrawer::is_mirror());
+	queue->Push<DrawPolyTrianglesCommand>(*this);
 }
 
 void PolyDrawArgs::DrawElements(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode)
@@ -142,25 +146,7 @@ void PolyDrawArgs::DrawElements(const DrawerCommandQueuePtr &queue, const TriVer
 	mElements = elements;
 	mVertexCount = count;
 	mDrawMode = mode;
-	queue->Push<DrawPolyTrianglesCommand>(*this, PolyTriangleDrawer::is_mirror());
-}
-
-void PolyDrawArgs::DrawArray(PolyRenderThread *thread, const TriVertex *vertices, int vcount, PolyDrawMode mode)
-{
-	mVertices = vertices;
-	mVertexCount = vcount;
-	mElements = nullptr;
-	mDrawMode = mode;
-	thread->DrawQueue->Push<DrawPolyTrianglesCommand>(*this, PolyTriangleDrawer::is_mirror());
-}
-
-void PolyDrawArgs::DrawElements(PolyRenderThread *thread, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode)
-{
-	mVertices = vertices;
-	mElements = elements;
-	mVertexCount = count;
-	mDrawMode = mode;
-	thread->DrawQueue->Push<DrawPolyTrianglesCommand>(*this, PolyTriangleDrawer::is_mirror());
+	queue->Push<DrawPolyTrianglesCommand>(*this);
 }
 
 void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *tex, bool fullbright)
@@ -224,16 +210,9 @@ void PolyDrawArgs::SetStyle(const FRenderStyle &renderstyle, double alpha, uint3
 
 /////////////////////////////////////////////////////////////////////////////
 
-void RectDrawArgs::SetTexture(const uint8_t *texels, int width, int height)
-{
-	mTexturePixels = texels;
-	mTextureWidth = width;
-	mTextureHeight = height;
-	mTranslation = nullptr;
-}
-
 void RectDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 {
+	mTexture = texture;
 	mTextureWidth = texture->GetWidth();
 	mTextureHeight = texture->GetHeight();
 	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
@@ -255,6 +234,7 @@ void RectDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 			else
 				mTranslation = table->Remap;
 
+			mTexture = texture;
 			mTextureWidth = texture->GetWidth();
 			mTextureHeight = texture->GetHeight();
 			mTexturePixels = texture->GetPixels(style);
@@ -264,6 +244,7 @@ void RectDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 
 	if (style.Flags & STYLEF_RedIsAlpha)
 	{
+		mTexture = texture;
 		mTextureWidth = texture->GetWidth();
 		mTextureHeight = texture->GetHeight();
 		mTexturePixels = texture->GetPixels(style);
@@ -312,6 +293,7 @@ void RectDrawArgs::Draw(PolyRenderThread *thread, double x0, double x1, double y
 	mU1 = (float)u1;
 	mV0 = (float)v0;
 	mV1 = (float)v1;
+
 	thread->DrawQueue->Push<DrawRectCommand>(*this);
 }
 

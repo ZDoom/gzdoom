@@ -33,10 +33,12 @@
 #include "m_png.h"
 #include "m_crc32.h"
 #include "w_wad.h"
-//#include "gl/gl_intern.h"
-#include "gl/gl_functions.h"
 #include "vectors.h"
 #include "doomstat.h"
+#include "i_time.h"
+#include "p_effect.h"
+#include "d_player.h"
+#include "a_dynlight.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -46,10 +48,10 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/renderer/gl_2ddrawer.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "gl/scene/gl_scenedrawer.h"
+#include "gl/scene/gl_swscene.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/shaders/gl_ambientshader.h"
@@ -63,20 +65,21 @@
 #include "gl/shaders/gl_present3dRowshader.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 #include "gl/shaders/gl_postprocessshader.h"
+#include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/stereo3d/gl_stereo3d.h"
-#include "gl/textures/gl_texture.h"
-#include "gl/textures/gl_translate.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 #include "gl/models/gl_models.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
+EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Float, underwater_fade_scalar)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
+extern bool NoInterpolateView;
 
 //===========================================================================
 // 
@@ -105,7 +108,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	gl_spriteindex = 0;
 	mShaderManager = nullptr;
 	mLights = nullptr;
-	m2DDrawer = nullptr;
 	mTonemapPalette = nullptr;
 	mBuffers = nullptr;
 	mPresentShader = nullptr;
@@ -160,7 +162,11 @@ void FGLRenderer::Initialize(int width, int height)
 	mPresent3dRowShader = new FPresent3DRowShader();
 	mShadowMapShader = new FShadowMapShader();
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
-	m2DDrawer = new F2DDrawer;
+
+	if (gl.legacyMode)
+	{
+		legacyShaders = new LegacyShaderContainer;
+	}
 
 	GetSpecialTextures();
 
@@ -196,7 +202,7 @@ FGLRenderer::~FGLRenderer()
 	gl_FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
-	if (m2DDrawer != nullptr) delete m2DDrawer;
+	if (legacyShaders) delete legacyShaders;
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mSamplerManager != NULL) delete mSamplerManager;
 	if (mVBO != NULL) delete mVBO;
@@ -208,6 +214,7 @@ FGLRenderer::~FGLRenderer()
 		glBindVertexArray(0);
 		glDeleteVertexArrays(1, &mVAOID);
 	}
+	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
 	if (mLinearDepthShader) delete mLinearDepthShader;
@@ -360,6 +367,13 @@ int FGLRenderer::ScreenToWindowY(int y)
 //
 //===========================================================================
 
+void FGLRenderer::ResetSWScene()
+{
+	// force recreation of the SW scene drawer to ensure it gets a new set of resources.
+	if (swdrawer != nullptr) delete swdrawer;
+	swdrawer = nullptr;
+}
+
 void FGLRenderer::SetupLevel()
 {
 	mVBO->CreateVBO();
@@ -420,18 +434,462 @@ void FGLRenderer::EndOffscreen()
 	glBindFramebuffer(GL_FRAMEBUFFER, mOldFBID); 
 }
 
-//===========================================================================
-// 
+//-----------------------------------------------------------------------------
 //
+// renders the view
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::RenderView(player_t* player)
+{
+	gl_RenderState.SetVertexBuffer(mVBO);
+	mVBO->Reset();
+
+	if (!V_IsHardwareRenderer())
+	{
+		if (swdrawer == nullptr) swdrawer = new SWSceneDrawer;
+		swdrawer->RenderView(player);
+	}
+	else
+	{
+		checkBenchActive();
+
+		// reset statistics counters
+		ResetProfilingData();
+
+		// Get this before everything else
+		if (cl_capfps || r_NoInterpolate) r_viewpoint.TicFrac = 1.;
+		else r_viewpoint.TicFrac = I_GetTimeFrac();
+
+		P_FindParticleSubsectors();
+
+		if (!gl.legacyMode) mLights->Clear();
+
+		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
+		bool saved_niv = NoInterpolateView;
+		NoInterpolateView = false;
+		// prepare all camera textures that have been used in the last frame
+		FCanvasTextureInfo::UpdateAll();
+		NoInterpolateView = saved_niv;
+
+
+		// now render the main view
+		float fovratio;
+		float ratio = r_viewwindow.WidescreenRatio;
+		if (r_viewwindow.WidescreenRatio >= 1.3f)
+		{
+			fovratio = 1.333333f;
+		}
+		else
+		{
+			fovratio = ratio;
+		}
+		// Check if there's some lights. If not some code can be skipped.
+		TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+		mLightCount = ((it.Next()) != NULL);
+
+		GLSceneDrawer drawer;
+
+		drawer.SetFixedColormap(player);
+
+		mShadowMap.Update();
+		sector_t * viewsector = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+	}
+
+	All.Unclock();
+}
+
+//===========================================================================
+//
+// Camera texture rendering
 //
 //===========================================================================
 
-unsigned char *FGLRenderer::GetTextureBuffer(FTexture *tex, int &w, int &h)
+void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV)
 {
 	FMaterial * gltex = FMaterial::ValidateTexture(tex, false);
-	if (gltex)
+
+	int width = gltex->TextureWidth();
+	int height = gltex->TextureHeight();
+
+	if (gl.legacyMode)
 	{
-		return gltex->CreateTexBuffer(0, w, h);
+		// In legacy mode, fail if the requested texture is too large.
+		if (gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight()) return;
+		glFlush();
 	}
-	return NULL;
+	else
+	{
+		StartOffscreen();
+		gltex->BindToFrameBuffer();
+	}
+
+	GL_IRECT bounds;
+	bounds.left = bounds.top = 0;
+	bounds.width = FHardwareTexture::GetTexDimension(gltex->GetWidth());
+	bounds.height = FHardwareTexture::GetTexDimension(gltex->GetHeight());
+
+	GLSceneDrawer drawer;
+	drawer.FixedColormap = CM_DEFAULT;
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
+
+	if (gl.legacyMode)
+	{
+		glFlush();
+		gl_RenderState.SetMaterial(gltex, 0, 0, -1, false);
+		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
+	}
+	else
+	{
+		EndOffscreen();
+	}
+
+	tex->SetUpdated();
+}
+
+void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+{
+	// Todo: This needs to call the software renderer and process the returned image, if so desired.
+	// This also needs to take out parts of the scene drawer so they can be shared between renderers.
+	GLSceneDrawer drawer;
+	drawer.WriteSavePic(player, file, width, height);
+}
+
+
+void gl_FillScreen()
+{
+	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.Apply();
+	// The fullscreen quad is stored at index 4 in the main vertex buffer.
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
+}
+
+//==========================================================================
+//
+// Draws a blend over the entire view
+//
+//==========================================================================
+void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap, bool in2d)
+{
+	float blend[4] = { 0,0,0,0 };
+	PalEntry blendv = 0;
+	float extra_red;
+	float extra_green;
+	float extra_blue;
+	player_t *player = NULL;
+
+	if (players[consoleplayer].camera != NULL)
+	{
+		player = players[consoleplayer].camera->player;
+	}
+
+	// don't draw sector based blends when an invulnerability colormap is active
+	if (!FixedColormap)
+	{
+		if (!viewsector->e->XFloor.ffloors.Size())
+		{
+			if (viewsector->heightsec && !(viewsector->MoreFlags&SECF_IGNOREHEIGHTSEC))
+			{
+				auto s = viewsector->heightsec;
+				blendv = s->floorplane.PointOnSide(r_viewpoint.Pos) < 0? s->bottommap : s->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->topmap : s->midmap;
+			}
+		}
+		else
+		{
+			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
+
+			for (unsigned int i = 0; i < lightlist.Size(); i++)
+			{
+				double lightbottom;
+				if (i < lightlist.Size() - 1)
+					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
+				else
+					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
+
+				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
+				{
+					// 3d floor 'fog' is rendered as a blending value
+					blendv = lightlist[i].blend;
+					// If this is the same as the sector's it doesn't apply!
+					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
+					// a little hack to make this work for Legacy maps.
+					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
+					break;
+				}
+			}
+		}
+
+		if (blendv.a == 0 && docolormap)
+		{
+			blendv = R_BlendForColormap(blendv);
+		}
+
+		if (blendv.a == 255)
+		{
+
+			extra_red = blendv.r / 255.0f;
+			extra_green = blendv.g / 255.0f;
+			extra_blue = blendv.b / 255.0f;
+
+			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
+
+			// black multiplicative blends are ignored
+			if (extra_red || extra_green || extra_blue)
+			{
+				if (!in2d)
+				{
+					gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
+					gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
+					gl_FillScreen();
+				}
+				else
+				{
+					screen->Dim(blendv, 1, 0, 0, screen->GetWidth(), screen->GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+				}
+			}
+			blendv = 0;
+		}
+		else if (blendv.a)
+		{
+			// [Nash] allow user to set blend intensity
+			int cnt = blendv.a;
+			cnt = (int)(cnt * underwater_fade_scalar);
+
+			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
+		}
+	}
+
+	if (player)
+	{
+		V_AddPlayerBlend(player, blend, 0.5, 175);
+	}
+
+	if (players[consoleplayer].camera != NULL)
+	{
+		// except for fadeto effects
+		player_t *player = (players[consoleplayer].camera->player != NULL) ? players[consoleplayer].camera->player : &players[consoleplayer];
+		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
+	}
+
+	if (!in2d)
+	{
+		gl_RenderState.SetTextureMode(TM_MODULATE);
+		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		if (blend[3] > 0.0f)
+		{
+			gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
+			gl_FillScreen();
+		}
+		gl_RenderState.ResetColor();
+		gl_RenderState.EnableTexture(true);
+	}
+	else
+	{
+		screen->Dim(PalEntry(255, blend[0] * 255, blend[1] * 255, blend[2] * 255), blend[3], 0, 0, screen->GetWidth(), screen->GetHeight());
+	}
+}
+
+
+//===========================================================================
+// 
+// Vertex buffer for 2D drawer
+//
+//===========================================================================
+
+class F2DVertexBuffer : public FSimpleVertexBuffer
+{
+	uint32_t ibo_id;
+
+	// Make sure we can build upon FSimpleVertexBuffer.
+	static_assert(offsetof(FSimpleVertex, x) == offsetof(F2DDrawer::TwoDVertex, x), "x not aligned");
+	static_assert(offsetof(FSimpleVertex, u) == offsetof(F2DDrawer::TwoDVertex, u), "u not aligned");
+	static_assert(offsetof(FSimpleVertex, color) == offsetof(F2DDrawer::TwoDVertex, color0), "color not aligned");
+
+public:
+
+	F2DVertexBuffer()
+	{
+		glGenBuffers(1, &ibo_id);
+	}
+	~F2DVertexBuffer()
+	{
+		if (ibo_id != 0)
+		{
+			glDeleteBuffers(1, &ibo_id);
+		}
+	}
+	void UploadData(F2DDrawer::TwoDVertex *vertices, int vertcount, int *indices, int indexcount)
+	{
+		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
+		glBufferData(GL_ARRAY_BUFFER, vertcount * sizeof(vertices[0]), vertices, GL_STREAM_DRAW);
+
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexcount * sizeof(indices[0]), indices, GL_STREAM_DRAW);
+	}
+
+	void BindVBO() override
+	{
+		FSimpleVertexBuffer::BindVBO();
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
+	}
+};
+
+//===========================================================================
+// 
+// Draws the 2D stuff. This is the version for OpenGL 3 and later.
+//
+//===========================================================================
+
+void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd);
+int LegacyDesaturation(F2DDrawer::RenderCommand &cmd);
+
+void FGLRenderer::Draw2D(F2DDrawer *drawer)
+{
+
+
+	auto &vertices = drawer->mVertices;
+	auto &indices = drawer->mIndices;
+	auto &commands = drawer->mData;
+
+	if (commands.Size() == 0) return;
+
+	for (auto &v : vertices)
+	{
+		// Change from BGRA to RGBA
+		std::swap(v.color0.r, v.color0.b);
+	}
+	auto vb = new F2DVertexBuffer;
+	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
+	gl_RenderState.SetVertexBuffer(vb);
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+
+	for(auto &cmd : commands)
+	{
+
+		int gltrans = -1;
+		int tm, sb, db, be;
+		// The texture mode being returned here cannot be used, because the higher level code 
+		// already manipulated the data so that some cases will not be handled correctly.
+		// Since we already get a proper mode from the calling code this doesn't really matter.
+		gl_GetRenderStyle(cmd.mRenderStyle, false, false, &tm, &sb, &db, &be);
+		gl_RenderState.BlendEquation(be); 
+		gl_RenderState.BlendFunc(sb, db);
+
+		// Rather than adding remapping code, let's enforce that the constants here are equal.
+		static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
+		static_assert(int(F2DDrawer::DTM_Opaque) == int(TM_OPAQUE), "DTM_Opaque != TM_OPAQUE");
+		static_assert(int(F2DDrawer::DTM_Invert) == int(TM_INVERSE), "DTM_Invert != TM_INVERSE");
+		static_assert(int(F2DDrawer::DTM_InvertOpaque) == int(TM_INVERTOPAQUE), "DTM_InvertOpaque != TM_INVERTOPAQUE");
+		static_assert(int(F2DDrawer::DTM_Stencil) == int(TM_MASK), "DTM_Stencil != TM_MASK");
+		static_assert(int(F2DDrawer::DTM_AlphaTexture) == int(TM_REDTOALPHA), "DTM_AlphaTexture != TM_REDTOALPHA");
+		gl_RenderState.SetTextureMode(cmd.mDrawMode);
+		if (cmd.mFlags & F2DDrawer::DTF_Scissor)
+		{
+			glEnable(GL_SCISSOR_TEST);
+			// scissor test doesn't use the current viewport for the coordinates, so use real screen coordinates
+			// Note that the origin here is the lower left corner!
+			auto sciX = ScreenToWindowX(cmd.mScissor[0]);
+			auto sciY = ScreenToWindowY(cmd.mScissor[3]);
+			auto sciW = ScreenToWindowX(cmd.mScissor[2]) - sciX;
+			auto sciH = ScreenToWindowY(cmd.mScissor[1]) - sciY;
+			glScissor(sciX, sciY, sciW, sciH);
+		}
+		else glDisable(GL_SCISSOR_TEST);
+
+		if (cmd.mSpecialColormap != nullptr)
+		{
+			auto index = cmd.mSpecialColormap - &SpecialColormaps[0];
+			if (index < 0 || (unsigned)index >= SpecialColormaps.Size()) index = 0;	// if it isn't in the table FBitmap cannot use it. Shouldn't happen anyway.
+			if (!gl.legacyMode || cmd.mTexture->UseType == ETextureType::SWCanvas)
+			{ 
+				gl_RenderState.SetFixedColormap(CM_FIRSTSPECIALCOLORMAPFORCED + int(index));
+			}
+			else
+			{
+				// map the special colormap to a translation for the legacy renderer.
+				// This only gets used on the software renderer's weapon sprite.
+				gltrans = STRange_Specialcolormap + index;
+			}
+		}
+		else
+		{
+			if (!gl.legacyMode)
+			{
+				gl_RenderState.Set2DOverlayColor(cmd.mColor1);
+				gl_RenderState.SetFixedColormap(CM_PLAIN2D);
+			}
+			else if (cmd.mDesaturate > 0)
+			{
+				gltrans = LegacyDesaturation(cmd);
+			}
+		}
+
+		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
+
+		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+
+		if (cmd.mTexture != nullptr)
+		{
+			auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
+			if (mat == nullptr) continue;
+
+			// This requires very special handling
+			if (gl.legacyMode && cmd.mTexture->UseType == ETextureType::SWCanvas)
+			{
+				gl_RenderState.SetTextureMode(TM_SWCANVAS);
+			}
+
+			if (gltrans == -1 && cmd.mTranslation != nullptr) gltrans = cmd.mTranslation->GetUniqueIndex();
+			gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, cmd.mDrawMode == F2DDrawer::DTM_AlphaTexture);
+			gl_RenderState.EnableTexture(true);
+
+			// Canvas textures are stored upside down
+			if (cmd.mTexture->bHasCanvas)
+			{
+				gl_RenderState.mTextureMatrix.loadIdentity();
+				gl_RenderState.mTextureMatrix.scale(1.f, -1.f, 1.f);
+				gl_RenderState.mTextureMatrix.translate(0.f, 1.f, 0.0f);
+				gl_RenderState.EnableTextureMatrix(true);
+			}
+		}
+		else
+		{
+			gl_RenderState.EnableTexture(false);
+		}
+		gl_RenderState.Apply();
+
+		switch (cmd.mType)
+		{
+		case F2DDrawer::DrawTypeTriangles:
+			glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
+			if (gl.legacyMode && cmd.mColor1 != 0)
+			{
+				// Draw the overlay as a separate operation.
+				LegacyColorOverlay(drawer, cmd);
+			}
+			break;
+
+		case F2DDrawer::DrawTypeLines:
+			glDrawArrays(GL_LINES, cmd.mVertIndex, cmd.mVertCount);
+			break;
+
+		case F2DDrawer::DrawTypePoints:
+			glDrawArrays(GL_POINTS, cmd.mVertIndex, cmd.mVertCount);
+			break;
+
+		}
+		gl_RenderState.SetEffect(EFF_NONE);
+		gl_RenderState.EnableTextureMatrix(false);
+	}
+	glDisable(GL_SCISSOR_TEST);
+
+	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
+	gl_RenderState.EnableTexture(true);
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	gl_RenderState.ResetColor();
+	gl_RenderState.Apply();
+	delete vb;
 }

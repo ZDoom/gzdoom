@@ -61,6 +61,7 @@ enum ERenderStyle
 	STYLE_Subtract,			// Actually this is 'reverse subtract' but this is what normal people would expect by 'subtract'.
 	STYLE_AddStencil,		// Fill image interior with alphacolor
 	STYLE_AddShaded,		// Treat patch data as alpha values for alphacolor
+	STYLE_Multiply,			// Multiply source with destination (HW renderer only.)
 
 	STYLE_Count
 };
@@ -87,6 +88,11 @@ enum ERenderAlpha
 	STYLEALPHA_One,			// Blend factor is 1.0
 	STYLEALPHA_Src,			// Blend factor is alpha
 	STYLEALPHA_InvSrc,		// Blend factor is 1.0 - alpha
+	STYLEALPHA_SrcCol,		// Blend factor is color (HWR only)
+	STYLEALPHA_InvSrcCol,	// Blend factor is 1.0 - color (HWR only)
+	STYLEALPHA_DstCol,		// Blend factor is dest. color (HWR only)
+	STYLEALPHA_InvDstCol,	// Blend factor is 1.0 - dest. color (HWR only)
+	STYLEALPHA_MAX
 };
 
 enum ERenderFlags

@@ -386,7 +386,6 @@ void FSavegameManager::LoadSavegame(int Selected)
 		quickSaveSlot = SaveGames[Selected];
 	}
 	M_ClearMenus();
-	V_SetBorderNeedRefresh();
 	LastAccessed = Selected;
 }
 
@@ -428,7 +427,6 @@ void FSavegameManager::DoSave(int Selected, const char *savegamestring)
 		G_SaveGame(filename, savegamestring);
 	}
 	M_ClearMenus();
-	V_SetBorderNeedRefresh();
 }
 
 DEFINE_ACTION_FUNCTION(FSavegameManager, DoSave)
@@ -487,7 +485,7 @@ unsigned FSavegameManager::ExtractSaveData(int index)
 			arc("Comment", pcomment);
 
 			comment = time;
-			if (time.Len() > 0) comment += "\n\n";
+			if (time.Len() > 0) comment += "\n";
 			comment += pcomment;
 
 			SaveComment = V_BreakLines(SmallFont, WindowSize, comment.GetChars());
@@ -619,10 +617,12 @@ void FSavegameManager::DrawSaveComment(FFont *font, int cr, int x, int y, int sc
 
 	CleanXfac = CleanYfac = scalefactor;
 
+	int maxlines = screen->GetHeight()>400?10:screen->GetHeight()>240?7:screen->GetHeight()>200?8:5;
+	if (SmallFont->GetHeight() > 9) maxlines--; // not Doom
 	// I'm not sure why SaveComment would go nullptr in this loop, but I got
 	// a crash report where it was nullptr when i reached 1, so now I check
 	// for that.
-	for (int i = 0; SaveComment != nullptr && SaveComment[i].Width >= 0 && i < 6; ++i)
+	for (int i = 0; SaveComment != nullptr && SaveComment[i].Width >= 0 && i < maxlines; ++i)
 	{
 		screen->DrawText(font, cr, x, y + font->GetHeight() * i * scalefactor, SaveComment[i].Text,	DTA_CleanNoMove, true, TAG_DONE);
 	}

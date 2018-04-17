@@ -27,19 +27,7 @@
 
 class FString;
 class PolyDrawArgs;
-
-struct WorkerThreadData
-{
-	int32_t core;
-	int32_t num_cores;
-
-	// The number of lines to skip to reach the first line to be rendered by this thread
-	int skipped_by_thread(int first_line)
-	{
-		int core_skip = (num_cores - (first_line - core) % num_cores) % num_cores;
-		return core_skip;
-	}
-};
+class PolyTriangleThreadData;
 
 struct ShadedTriVertex
 {
@@ -148,15 +136,15 @@ enum class TriBlendMode
 class ScreenTriangle
 {
 public:
-	static void Draw(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
-	static void DrawSWRender(const TriDrawTriangleArgs *args, WorkerThreadData *thread);
+	static void Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
+	static void DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
 	static void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args);
 	static void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args);
 
 	static void(*TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
 	static void(*TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
-	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
-	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, WorkerThreadData *);
+	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
+	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
 
 	static int FuzzStart;
 };

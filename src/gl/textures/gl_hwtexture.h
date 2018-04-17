@@ -60,29 +60,34 @@ public:
 
 private:
 
-	short texwidth, texheight;
 	bool forcenocompression;
 
 	TranslatedTexture glDefTex;
 	TArray<TranslatedTexture> glTex_Translated;
 	unsigned int glDepthID;	// only used by camera textures
+	unsigned int glBufferID = 0;
+	int glTextureBytes = 4;
 
 	TranslatedTexture * GetTexID(int translation);
 
-	int GetDepthBuffer();
-	void Resize(int width, int height, unsigned char *src_data, unsigned char *dst_data);
+	int GetDepthBuffer(int w, int h);
+	void Resize(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data);
 
 public:
-	FHardwareTexture(int w, int h, bool nocompress);
+	FHardwareTexture(bool nocompress);
 	~FHardwareTexture();
 
 	static void Unbind(int texunit);
 	static void UnbindAll();
 
-	void BindToFrameBuffer();
+	void BindToFrameBuffer(int w, int h);
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
-	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name);
+	void AllocateBuffer(int w, int h, int texelsize);
+	uint8_t *MapBuffer();
+
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const FString &name) = delete;
+	unsigned int CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name);
 	unsigned int GetTextureHandle(int translation);
 
 	void Clean(bool all);

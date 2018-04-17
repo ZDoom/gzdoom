@@ -32,7 +32,7 @@
 #include "a_sharedglobal.h"
 #include "swrenderer/scene/r_scene.h"
 
-void RenderPolyDecal::RenderWallDecals(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue)
+void RenderPolyDecal::RenderWallDecals(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const seg_t *line, uint32_t stencilValue)
 {
 	if (line->linedef == nullptr && line->sidedef == nullptr)
 		return;
@@ -40,11 +40,11 @@ void RenderPolyDecal::RenderWallDecals(PolyRenderThread *thread, const TriMatrix
 	for (DBaseDecal *decal = line->sidedef->AttachedDecals; decal != nullptr; decal = decal->WallNext)
 	{
 		RenderPolyDecal render;
-		render.Render(thread, worldToClip, clipPlane, decal, line, stencilValue);
+		render.Render(thread, clipPlane, decal, line, stencilValue);
 	}
 }
 
-void RenderPolyDecal::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue)
+void RenderPolyDecal::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, DBaseDecal *decal, const seg_t *line, uint32_t stencilValue)
 {
 	if (decal->RenderFlags & RF_INVISIBLE || !viewactive || !decal->PicNum.isValid())
 		return;
@@ -58,8 +58,9 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 
 	// Calculate unclipped position and UV coordinates
 
-	double edge_left = tex->LeftOffset * decal->ScaleX;
-	double edge_right = (tex->GetWidth() - tex->LeftOffset) * decal->ScaleX;
+	// decals should not use renderer specific offsets.
+	double edge_left = tex->GetLeftOffset(0) * decal->ScaleX;
+	double edge_right = (tex->GetWidth() - tex->GetLeftOffset(0)) * decal->ScaleX;	
 
 	DVector2 angvec = (line->v2->fPos() - line->v1->fPos()).Unit();
 	DVector2 normal = { angvec.Y, -angvec.X };
@@ -186,15 +187,12 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, const TriMatrix &worldToC
 	args.SetLight(GetColorTable(front->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), fullbrightSprite);
 	args.SetColor(0xff000000 | decal->AlphaColor, decal->AlphaColor >> 24);
 	args.SetStyle(decal->RenderStyle, decal->Alpha, decal->AlphaColor, decal->Translation, tex, false);
-	args.SetTransform(&worldToClip);
-	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
-	args.SetWriteStencil(true, stencilValue);
 	args.SetClipPlane(0, clipPlane);
 	args.SetDepthTest(true);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);
-	args.DrawArray(thread, vertices, 4, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 void RenderPolyDecal::GetDecalSectors(DBaseDecal *decal, const seg_t *line, sector_t **front, sector_t **back)

@@ -32,7 +32,10 @@ class GLSprite;
 
 class FGLModelRenderer : public FModelRenderer
 {
+	int modellightindex = -1;
 public:
+	FGLModelRenderer(int mli) : modellightindex(mli)
+	{}
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) override;
 	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
@@ -48,5 +51,5 @@ public:
 	double GetTimeFloat() override;
 };
 
-void gl_RenderModel(GLSprite * spr);
-void gl_RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
+void gl_RenderModel(GLSprite * spr, int mli);
+void gl_RenderHUDModel(DPSprite *psp, float ofsx, float ofsy, int mli);

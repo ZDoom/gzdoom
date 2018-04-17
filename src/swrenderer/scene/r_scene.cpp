@@ -63,7 +63,6 @@
 void PeekThreadedErrorPane();
 #endif
 
-EXTERN_CVAR(Bool, r_shadercolormaps)
 EXTERN_CVAR(Int, r_clearbuffer)
 
 CVAR(Bool, r_scene_multithreaded, false, 0);
@@ -88,42 +87,40 @@ namespace swrenderer
 		clearcolor = color;
 	}
 
-	void RenderScene::RenderView(player_t *player)
+	void RenderScene::RenderView(player_t *player, DCanvas *target)
 	{
 		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen;
+		viewport->RenderTarget = target;
+		viewport->RenderingToCanvas = false;
+
+		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
 
 		int width = SCREENWIDTH;
 		int height = SCREENHEIGHT;
 		float trueratio;
 		ActiveRatio(width, height, &trueratio);
 		viewport->SetViewport(MainThread(), width, height, trueratio);
+		if (r_models)
+			PolyTriangleDrawer::ClearBuffers(viewport->RenderTarget);
 
 		if (r_clearbuffer != 0)
 		{
 			if (!viewport->RenderTarget->IsBgra())
 			{
-				memset(viewport->RenderTarget->GetBuffer(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
+				memset(viewport->RenderTarget->GetPixels(), clearcolor, viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight());
 			}
 			else
 			{
-				uint32_t bgracolor = GPalette.BaseColors[clearcolor].d;
+				PalEntry bgracolor = GPalette.BaseColors[clearcolor];
+				bgracolor.a = 255;
 				int size = viewport->RenderTarget->GetPitch() * viewport->RenderTarget->GetHeight();
-				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetBuffer();
+				uint32_t *dest = (uint32_t *)viewport->RenderTarget->GetPixels();
 				for (int i = 0; i < size; i++)
-					dest[i] = bgracolor;
+					dest[i] = bgracolor.d;
 			}
 		}
 
 		RenderActorView(player->mo);
-
-		// Apply special colormap if the target cannot do it
-		if (CameraLight::Instance()->ShaderColormap() && viewport->RenderTarget->IsBgra() && !(r_shadercolormaps && screen->Accel2D))
-		{
-			auto queue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
-			queue->Push<ApplySpecialColormapRGBACommand>(CameraLight::Instance()->ShaderColormap(), screen);
-			DrawerThreads::Execute(queue);
-		}
 
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
@@ -158,7 +155,7 @@ namespace swrenderer
 		R_UpdateFuzzPosFrameStart();
 
 		if (r_models)
-			MainThread()->Viewport->SetupPolyViewport();
+			MainThread()->Viewport->SetupPolyViewport(MainThread());
 
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
@@ -172,13 +169,6 @@ namespace swrenderer
 
 		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;
 		interpolator.RestoreInterpolations();
-
-		// If we don't want shadered colormaps, NULL it now so that the
-		// copy to the screen does not use a special colormap shader.
-		if (!r_shadercolormaps && !MainThread()->Viewport->RenderTarget->IsBgra())
-		{
-			CameraLight::Instance()->ClearShaderColormap();
-		}
 	}
 
 	void RenderScene::RenderPSprites()
@@ -267,6 +257,8 @@ namespace swrenderer
 		thread->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
 		thread->Portal->SetMainPortal();
 
+		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget, true);
+
 		// Cull things outside the range seen by this thread
 		VisibleSegmentRenderer visitor;
 		if (thread->X1 > 0)
@@ -351,53 +343,44 @@ namespace swrenderer
 	{
 		auto viewport = MainThread()->Viewport.get();
 		
-		const bool savedviewactive = viewactive;
+		// Save a bunch of silly globals:
+		auto savedViewpoint = viewport->viewpoint;
+		auto savedViewwindow = viewport->viewwindow;
+		auto savedviewwindowx = viewwindowx;
+		auto savedviewwindowy = viewwindowy;
+		auto savedviewwidth = viewwidth;
+		auto savedviewheight = viewheight;
+		auto savedviewactive = viewactive;
+		auto savedRenderTarget = viewport->RenderTarget;
 
-		viewwidth = width;
+		// Setup the view:
 		viewport->RenderTarget = canvas;
-
+		viewport->RenderingToCanvas = true;
 		R_SetWindow(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow, 12, width, height, height, true);
 		viewwindowx = x;
 		viewwindowy = y;
 		viewactive = true;
 		viewport->SetViewport(MainThread(), width, height, MainThread()->Viewport->viewwindow.WidescreenRatio);
+		if (r_models)
+			PolyTriangleDrawer::ClearBuffers(viewport->RenderTarget);
 
+		// Render:
 		RenderActorView(actor, dontmaplines);
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();
 		DrawerWaitCycles.Unclock();
 
-		viewport->RenderTarget = screen;
+		viewport->RenderingToCanvas = false;
 
-		R_ExecuteSetViewSize(MainThread()->Viewport->viewpoint, MainThread()->Viewport->viewwindow);
-		float trueratio;
-		ActiveRatio(width, height, &trueratio);
-		screen->Lock(true);
-		viewport->SetViewport(MainThread(), width, height, trueratio);
-		screen->Unlock();
-
+		// Restore silly globals:
+		viewport->viewpoint = savedViewpoint;
+		viewport->viewwindow = savedViewwindow;
+		viewwindowx = savedviewwindowx;
+		viewwindowy = savedviewwindowy;
+		viewwidth = savedviewwidth;
+		viewheight = savedviewheight;
 		viewactive = savedviewactive;
-	}
-
-	void RenderScene::ScreenResized()
-	{
-		auto viewport = MainThread()->Viewport.get();
-		viewport->RenderTarget = screen;
-		int width = SCREENWIDTH;
-		int height = SCREENHEIGHT;
-		float trueratio;
-		ActiveRatio(width, height, &trueratio);
-		screen->Lock(true);
-		viewport->SetViewport(MainThread(), SCREENWIDTH, SCREENHEIGHT, trueratio);
-		screen->Unlock();
-	}
-
-	void RenderScene::Init()
-	{
-		// viewwidth / viewheight are set by the defaults
-		fillshort(zeroarray, MAXWIDTH, 0);
-
-		R_InitShadeMaps();
+		viewport->RenderTarget = savedRenderTarget;
 	}
 
 	void RenderScene::Deinit()

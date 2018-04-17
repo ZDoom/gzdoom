@@ -26,9 +26,9 @@
 */
 
 #include "templates.h"
+#include "doomstat.h"
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
-#include "gl/data/gl_data.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
@@ -69,7 +69,6 @@ void FRenderState::Reset()
 	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
 	mTextureMode = -1;
-	mLightIndex = -1;
 	mDesaturation = 0;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
@@ -159,8 +158,6 @@ bool FRenderState::ApplyShader()
 
 	glVertexAttrib4fv(VATTR_COLOR, mColor.vec);
 	glVertexAttrib4fv(VATTR_NORMAL, mNormal.vec);
-	//activeShader->muObjectColor2.Set(mObjectColor2);
-	activeShader->muObjectColor2.Set(mObjectColor2);
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
@@ -171,13 +168,14 @@ bool FRenderState::ApplyShader()
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
+	activeShader->muObjectColor2.Set(mObjectColor2);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muClipHeight.Set(mClipHeight);
 	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
-	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
+	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muViewHeight.Set(viewheight);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
@@ -225,7 +223,28 @@ bool FRenderState::ApplyShader()
 		activeShader->currentcliplinestate = 0;
 	}
 
-	if (mColormapState != activeShader->currentfixedcolormap)
+	if (mColormapState < -1)	// 2D operations
+	{
+		if (mColormapState != CM_SPECIAL2D)
+		{
+			activeShader->muColormapStart.Set(m2DColors[0]);
+			activeShader->muFixedColormap.Set(4);
+		}
+		else
+		{
+			float startr = m2DColors[0].r / 255.f;
+			float startg = m2DColors[0].g / 255.f;
+			float startb = m2DColors[0].b / 255.f;
+			float ranger = m2DColors[1].r / 255.f - startr;
+			float rangeg = m2DColors[1].g / 255.f - startg;
+			float rangeb = m2DColors[1].b / 255.f - startb;
+			activeShader->muColormapStart.Set(startr, startg, startb, 0.f);
+			activeShader->muColormapRange.Set(ranger, rangeg, rangeb, 0.f);
+			activeShader->muFixedColormap.Set(1);
+		}
+		activeShader->currentfixedcolormap = mColormapState;
+	}
+	else if (mColormapState != activeShader->currentfixedcolormap)
 	{
 		float r, g, b;
 		activeShader->currentfixedcolormap = mColormapState;
@@ -233,9 +252,9 @@ bool FRenderState::ApplyShader()
 		{
 			activeShader->muFixedColormap.Set(0);
 		}
-		else if (mColormapState > CM_DEFAULT && mColormapState < CM_MAXCOLORMAP)
+		else if ((mColormapState >= CM_FIRSTSPECIALCOLORMAP && mColormapState < CM_MAXCOLORMAPFORCED))
 		{
-			if (FGLRenderBuffers::IsEnabled())
+			if (FGLRenderBuffers::IsEnabled() && mColormapState < CM_FIRSTSPECIALCOLORMAPFORCED)
 			{
 				// When using postprocessing to apply the colormap, we must render the image fullbright here.
 				activeShader->muFixedColormap.Set(2);
@@ -243,13 +262,20 @@ bool FRenderState::ApplyShader()
 			}
 			else
 			{
-				FSpecialColormap *scm = &SpecialColormaps[mColormapState - CM_FIRSTSPECIALCOLORMAP];
-				float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
-					scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
+				if (mColormapState >= CM_FIRSTSPECIALCOLORMAPFORCED)
+				{
+					auto colormapState = mColormapState + CM_FIRSTSPECIALCOLORMAP - CM_FIRSTSPECIALCOLORMAPFORCED;
+					if (colormapState < CM_MAXCOLORMAP)
+					{
+						FSpecialColormap *scm = &SpecialColormaps[colormapState - CM_FIRSTSPECIALCOLORMAP];
+						float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
+							scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 
-				activeShader->muFixedColormap.Set(1);
-				activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
-				activeShader->muColormapRange.Set(m);
+						activeShader->muFixedColormap.Set(1);
+						activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
+						activeShader->muColormapRange.Set(m);
+					}
+				}
 			}
 		}
 		else if (mColormapState == CM_FOGLAYER)

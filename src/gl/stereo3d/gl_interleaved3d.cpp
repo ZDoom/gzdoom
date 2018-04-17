@@ -41,6 +41,10 @@
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_present3dRowshader.h"
 
+#ifdef _WIN32
+#include "hardware.h"
+#endif // _WIN32
+
 EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)

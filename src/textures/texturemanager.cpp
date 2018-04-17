@@ -163,14 +163,19 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 	{
 		return FTextureID(0);
 	}
-	i = HashFirst[MakeKey (name) % HASH_SIZE];
 
-	while (i != HASH_END)
+	for(i = HashFirst[MakeKey(name) % HASH_SIZE]; i != HASH_END; i = Textures[i].HashNext)
 	{
 		const FTexture *tex = Textures[i].Texture;
 
-		if (stricmp (tex->Name, name) == 0)
+
+		if (stricmp (tex->Name, name) == 0 )
 		{
+			// If we look for short names, we must ignore any long name texture.
+			if ((flags & TEXMAN_ShortNameOnly) && tex->bFullNameTexture)
+			{
+				continue;
+			}
 			// The name matches, so check the texture type
 			if (usetype == ETextureType::Any)
 			{
@@ -210,7 +215,6 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 				}
 			}
 		}
-		i = Textures[i].HashNext;
 	}
 
 	if ((flags & TEXMAN_TryAny) && usetype != ETextureType::Any)
@@ -242,6 +246,7 @@ FTextureID FTextureManager::CheckForTexture (const char *name, ETextureType uset
 				tex = FTexture::CreateTexture("", lump, ETextureType::Override);
 				if (tex != NULL)
 				{
+					tex->AddAutoMaterials();
 					Wads.SetLinkedTexture(lump, tex);
 					return AddTexture(tex);
 				}
@@ -581,8 +586,10 @@ void FTextureManager::AddHiresTextures (int wadnum)
 							// Replace the entire texture and adjust the scaling and offset factors.
 							newtex->bWorldPanning = true;
 							newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-							newtex->LeftOffset = int(oldtex->GetScaledLeftOffset() * newtex->Scale.X);
-							newtex->TopOffset = int(oldtex->GetScaledTopOffset() * newtex->Scale.Y);
+							newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
+							newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
+							newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
+							newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
 							ReplaceTexture(tlist[i], newtex, true);
 						}
 					}
@@ -671,8 +678,10 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 									// Replace the entire texture and adjust the scaling and offset factors.
 									newtex->bWorldPanning = true;
 									newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-									newtex->LeftOffset = int(oldtex->GetScaledLeftOffset() * newtex->Scale.X);
-									newtex->TopOffset = int(oldtex->GetScaledTopOffset() * newtex->Scale.Y);
+									newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
+									newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
+									newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
+									newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
 									ReplaceTexture(tlist[i], newtex, true);
 								}
 							}
@@ -977,6 +986,7 @@ FTexture *CreateShaderTexture(bool, bool);
 void FTextureManager::Init()
 {
 	DeleteAll();
+	GenerateGlobalBrightmapFromColormap();
 	SpriteFrames.Clear();
 	//if (BuildTileFiles.Size() == 0) CountBuildTiles ();
 	FTexture::InitGrayMap();
@@ -1040,6 +1050,12 @@ void FTextureManager::Init()
 	FixAnimations();
 	InitSwitchList();
 	InitPalettedVersions();
+	AdjustSpriteOffsets();
+	// Add auto materials to each texture after everything has been set up.
+	for (auto &tex : Textures)
+	{
+		tex.Texture->AddAutoMaterials();
+	}
 }
 
 //==========================================================================
@@ -1052,7 +1068,6 @@ void FTextureManager::InitPalettedVersions()
 {
 	int lump, lastlump = 0;
 
-	PalettedVersions.Clear();
 	while ((lump = Wads.FindLump("PALVERS", &lastlump)) != -1)
 	{
 		FScanner sc(lump);
@@ -1072,7 +1087,10 @@ void FTextureManager::InitPalettedVersions()
 			}
 			if (pic1.isValid() && pic2.isValid())
 			{
-				PalettedVersions[pic1.GetIndex()] = pic2.GetIndex();
+				FTexture *owner = TexMan[pic1];
+				FTexture *owned = TexMan[pic2];
+
+				if (owner && owned) owner->PalVersion = owned;
 			}
 		}
 	}
@@ -1084,12 +1102,13 @@ void FTextureManager::InitPalettedVersions()
 //
 //==========================================================================
 
+// fixme: The way this is used, it is mostly useless.
 FTextureID FTextureManager::PalCheck(FTextureID tex)
 {
 	if (vid_nopalsubstitutions) return tex;
-	int *newtex = PalettedVersions.CheckKey(tex.GetIndex());
-	if (newtex == NULL || *newtex == 0) return tex;
-	return *newtex;
+	auto ftex = operator[](tex);
+	if (ftex != nullptr && ftex->PalVersion != nullptr) return ftex->PalVersion->id;
+	return tex;
 }
 
 //===========================================================================
@@ -1188,6 +1207,154 @@ int FTextureManager::CountLumpTextures (int lumpnum)
 	return 0;
 }
 
+//-----------------------------------------------------------------------------
+//
+// Adjust sprite offsets for GL rendering (IWAD resources only)
+//
+//-----------------------------------------------------------------------------
+
+void FTextureManager::AdjustSpriteOffsets()
+{
+	int lump, lastlump = 0;
+	int sprid;
+	TMap<int, bool> donotprocess;
+
+	int numtex = Wads.GetNumLumps();
+
+	for (int i = 0; i < numtex; i++)
+	{
+		if (Wads.GetLumpFile(i) > Wads.GetIwadNum()) break; // we are past the IWAD
+		if (Wads.GetLumpNamespace(i) == ns_sprites && Wads.GetLumpFile(i) == Wads.GetIwadNum())
+		{
+			char str[9];
+			Wads.GetLumpName(str, i);
+			str[8] = 0;
+			FTextureID texid = TexMan.CheckForTexture(str, ETextureType::Sprite, 0);
+			if (texid.isValid() && Wads.GetLumpFile(TexMan[texid]->SourceLump) > Wads.GetIwadNum())
+			{
+				// This texture has been replaced by some PWAD.
+				memcpy(&sprid, str, 4);
+				donotprocess[sprid] = true;
+			}
+		}
+	}
+
+	while ((lump = Wads.FindLump("SPROFS", &lastlump, false)) != -1)
+	{
+		FScanner sc;
+		sc.OpenLumpNum(lump);
+		sc.SetCMode(true);
+		int ofslumpno = Wads.GetLumpFile(lump);
+		while (sc.GetString())
+		{
+			int x, y;
+			bool iwadonly = false;
+			bool forced = false;
+			FTextureID texno = TexMan.CheckForTexture(sc.String, ETextureType::Sprite);
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			x = sc.Number;
+			sc.MustGetStringName(",");
+			sc.MustGetNumber();
+			y = sc.Number;
+			if (sc.CheckString(","))
+			{
+				sc.MustGetString();
+				if (sc.Compare("iwad")) iwadonly = true;
+				if (sc.Compare("iwadforced")) forced = iwadonly = true;
+			}
+			if (texno.isValid())
+			{
+				FTexture * tex = TexMan[texno];
+
+				int lumpnum = tex->GetSourceLump();
+				// We only want to change texture offsets for sprites in the IWAD or the file this lump originated from.
+				if (lumpnum >= 0 && lumpnum < Wads.GetNumLumps())
+				{
+					int wadno = Wads.GetLumpFile(lumpnum);
+					if ((iwadonly && wadno == Wads.GetIwadNum()) || (!iwadonly && wadno == ofslumpno))
+					{
+						if (wadno == Wads.GetIwadNum() && !forced && iwadonly)
+						{
+							memcpy(&sprid, &tex->Name[0], 4);
+							if (donotprocess.CheckKey(sprid)) continue;	// do not alter sprites that only get partially replaced.
+						}
+						tex->_LeftOffset[1] = x;
+						tex->_TopOffset[1] = y;
+					}
+				}
+			}
+		}
+	}
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void FTextureManager::SpriteAdjustChanged()
+{
+	for (auto &texi : Textures)
+	{
+		auto tex = texi.Texture;
+		if (tex->GetLeftOffset(0) != tex->GetLeftOffset(1) || tex->GetTopOffset(0) != tex->GetTopOffset(1))
+		{
+			tex->SetSpriteAdjust();
+		}
+	}
+}
+
+//===========================================================================
+// 
+// Examines the colormap to see if some of the colors have to be
+// considered fullbright all the time.
+//
+//===========================================================================
+
+void FTextureManager::GenerateGlobalBrightmapFromColormap()
+{
+	Wads.CheckNumForFullName("textures/tgapal", false, 0, true);
+	HasGlobalBrightmap = false;
+	int lump = Wads.CheckNumForName("COLORMAP");
+	if (lump == -1) lump = Wads.CheckNumForName("COLORMAP", ns_colormaps);
+	if (lump == -1) return;
+	FMemLump cmap = Wads.ReadLump(lump);
+	uint8_t palbuffer[768];
+	ReadPalette(Wads.CheckNumForName("PLAYPAL"), palbuffer);
+
+	const unsigned char *cmapdata = (const unsigned char *)cmap.GetMem();
+	const uint8_t *paldata = palbuffer;
+
+	const int black = 0;
+	const int white = ColorMatcher.Pick(255, 255, 255);
+
+
+	GlobalBrightmap.MakeIdentity();
+	memset(GlobalBrightmap.Remap, white, 256);
+	for (int i = 0; i<256; i++) GlobalBrightmap.Palette[i] = PalEntry(255, 255, 255, 255);
+	for (int j = 0; j<32; j++)
+	{
+		for (int i = 0; i<256; i++)
+		{
+			// the palette comparison should be for ==0 but that gives false positives with Heretic
+			// and Hexen.
+			if (cmapdata[i + j * 256] != i || (paldata[3 * i]<10 && paldata[3 * i + 1]<10 && paldata[3 * i + 2]<10))
+			{
+				GlobalBrightmap.Remap[i] = black;
+				GlobalBrightmap.Palette[i] = PalEntry(255, 0, 0, 0);
+			}
+		}
+	}
+	for (int i = 0; i<256; i++)
+	{
+		HasGlobalBrightmap |= GlobalBrightmap.Remap[i] == white;
+		if (GlobalBrightmap.Remap[i] == white) DPrintf(DMSG_NOTIFY, "Marked color %d as fullbright\n", i);
+	}
+}
+
+
 //==========================================================================
 //
 //
@@ -1269,7 +1436,7 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetScaledOffset)
 	auto tex = TexMan.ByIndex(texid);
 	if (tex != nullptr)
 	{
-		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(), tex->GetScaledTopOffsetDouble()));
+		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(0), tex->GetScaledTopOffsetDouble(0)));
 	}
 	ACTION_RETURN_VEC2(DVector2(-1, -1));
 }

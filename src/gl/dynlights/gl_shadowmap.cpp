@@ -23,7 +23,6 @@
 #include "gl/system/gl_system.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_shadowmap.h"
-#include "gl/dynlights/gl_dynlight.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "gl/system/gl_cvars.h"
@@ -31,6 +30,7 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/shaders/gl_shadowmapshader.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "r_state.h"
 #include "g_levellocals.h"
 #include "stats.h"
@@ -42,12 +42,7 @@
 	the fragment shader (main.fp) needs to sample from row 20. That is, the V texture coordinate needs
 	to be 20.5/1024.
 
-	mLightToShadowmap is a hash map storing which line each ADynamicLight is assigned to. The public
-	ShadowMapIndex function allows the main rendering to find the index and upload that along with the
-	normal light data. From there, the main.fp shader can sample from the shadow map texture, which
-	is currently always bound to texture unit 16.
-
-	The texel row for each light is split into four parts. One for each direction, like a cube texture,
+    The texel row for each light is split into four parts. One for each direction, like a cube texture,
 	but then only in 2D where this reduces itself to a square. When main.fp samples from the shadow map
 	it first decides in which direction the fragment is (relative to the light), like cubemap sampling does
 	for 3D, but once again just for the 2D case.
@@ -96,6 +91,20 @@ CUSTOM_CVAR(Int, gl_shadowmap_quality, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 		break;
 	}
 }
+
+CUSTOM_CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+    if (!self)
+    {
+        // Unset any residual shadow map indices in the light actors.
+        TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+        while (auto light = it.Next())
+        {
+            light->mShadowmapIndex = 1024;
+        }
+    }
+}
+
 
 void FShadowMap::Update()
 {
@@ -152,42 +161,32 @@ bool FShadowMap::IsEnabled() const
 	return gl_light_shadowmap && !!(gl.flags & RFL_SHADER_STORAGE_BUFFER);
 }
 
-int FShadowMap::ShadowMapIndex(ADynamicLight *light)
-{
-	if (IsEnabled())
-	{
-		auto val = mLightToShadowmap.CheckKey(light);
-		if (val != nullptr) return *val;
-	}
-	return 1024;
-}
-
 void FShadowMap::UploadLights()
 {
 	if (mLights.Size() != 1024 * 4) mLights.Resize(1024 * 4);
 	int lightindex = 0;
-	mLightToShadowmap.Clear(mLightToShadowmap.CountUsed() * 2); // To do: allow clearing a TMap while building up a reserve
 
 	// Todo: this should go through the blockmap in a spiral pattern around the player so that closer lights are preferred.
 	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 	while (auto light = it.Next())
 	{
 		LightsProcessed++;
-		if (light->shadowmapped)
+		if (light->shadowmapped && lightindex < 1024 * 4)
 		{
 			LightsShadowmapped++;
 
-			mLightToShadowmap[light] = lightindex >> 2;
+			light->mShadowmapIndex = lightindex >> 2;
 
 			mLights[lightindex] = light->X();
 			mLights[lightindex+1] = light->Y();
 			mLights[lightindex+2] = light->Z();
 			mLights[lightindex+3] = light->GetRadius();
 			lightindex += 4;
-
-			if (lightindex == 1024*4) // Only 1024 lights for now
-				break;
 		}
+        else
+        {
+            light->mShadowmapIndex = 1024;
+        }
 
 	}
 
@@ -216,18 +215,18 @@ void FShadowMap::UploadAABBTree()
 	if (mAABBTree)
 		return;
 
-	mAABBTree.reset(new LevelAABBTree());
+	mAABBTree.reset(new hwrenderer::LevelAABBTree());
 
 	int oldBinding = 0;
 	glGetIntegerv(GL_SHADER_STORAGE_BUFFER_BINDING, &oldBinding);
 
 	glGenBuffers(1, (GLuint*)&mNodesBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mNodesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(hwrenderer::AABBTreeNode) * mAABBTree->nodes.Size(), &mAABBTree->nodes[0], GL_STATIC_DRAW);
 
 	glGenBuffers(1, (GLuint*)&mLinesBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, mLinesBuffer);
-	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0], GL_STATIC_DRAW);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(hwrenderer::AABBTreeLine) * mAABBTree->lines.Size(), &mAABBTree->lines[0], GL_STATIC_DRAW);
 
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, oldBinding);
 }

@@ -106,9 +106,9 @@ struct SortNode
 struct GLDrawList
 {
 //private:
-	TArray<GLWall> walls;
-	TArray<GLFlat> flats;
-	TArray<GLSprite> sprites;
+	TArray<GLWall*> walls;
+	TArray<GLFlat*> flats;
+	TArray<GLSprite*> sprites;
 	TArray<GLDrawItem> drawitems;
 	int SortNodeStart;
 	SortNode * sorted;
@@ -131,9 +131,9 @@ public:
 		return drawitems.Size();
 	}
 
-	void AddWall(GLWall * wall);
-	void AddFlat(GLFlat * flat);
-	void AddSprite(GLSprite * sprite);
+	GLWall *NewWall();
+	GLFlat *NewFlat();
+	GLSprite *NewSprite();
 	void Reset();
 	void SortWalls();
 	void SortFlats();
@@ -235,6 +235,9 @@ struct FDrawInfo
 	FDrawInfo();
 	~FDrawInfo();
 	void ClearBuffers();
+
+	void AddWall(GLWall *wall);
+	bool PutWallCompat(GLWall *wall, int passflag);	// Legacy GL only.
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez);
 	bool DoOneSectorLower(subsector_t * subsec, float planez);

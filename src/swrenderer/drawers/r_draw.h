@@ -97,7 +97,7 @@ namespace swrenderer
 
 		void DrawDepthSkyColumn(const SkyDrawerArgs &args, float idepth);
 		void DrawDepthWallColumn(const WallDrawerArgs &args, float idepth);
-		void DrawDepthSpan(const SpanDrawerArgs &args, float idepth);
+		void DrawDepthSpan(const SpanDrawerArgs &args, float idepth1, float idepth2);
 		
 		DrawerCommandQueuePtr Queue;
 	};

@@ -400,7 +400,7 @@ Intermission Inter_Underwater
 {
 	Image
 	{
-		Background = "E2END", 0, "E2PAL"
+		Background = "E2END", 0
 	}
 	GotoTitle
 	{

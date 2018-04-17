@@ -34,7 +34,7 @@
 EXTERN_CVAR(Bool, r_drawplayersprites)
 EXTERN_CVAR(Bool, r_deathcamera)
 EXTERN_CVAR(Bool, r_fullbrightignoresectorcolor)
-EXTERN_CVAR(Bool, r_shadercolormaps)
+EXTERN_CVAR(Bool, r_models)
 
 void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 {
@@ -42,8 +42,6 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 	// draws the canvas textures between this call and the final call to RenderRemainingSprites..
 	//
 	// We also can't move it because the model render code relies on it
-
-	//renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -61,6 +59,8 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		(players[consoleplayer].cheats & CF_CHASECAM) ||
 		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
+
+	renderHUDModel = r_models && gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	PolyTransferHeights fakeflat(viewpoint.camera->subsector);
 
@@ -180,7 +180,8 @@ void RenderPolyPlayerSprites::RenderRemainingSprites()
 			DTA_FillColor, sprite.FillColor,
 			DTA_SpecialColormap, sprite.special,
 			DTA_ColorOverlay, sprite.overlay.d,
-			DTA_ColormapStyle, sprite.usecolormapstyle ? &sprite.colormapstyle : nullptr,
+			DTA_Color, sprite.LightColor | 0xff000000,	// the color here does not have a valid alpha component.
+			DTA_Desaturate, sprite.Desaturate,
 			TAG_DONE);
 	}
 
@@ -217,6 +218,9 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	const auto &viewwindow = PolyRenderer::Instance()->Viewwindow;
 	DCanvas *renderTarget = PolyRenderer::Instance()->RenderTarget;
+
+	// Force it to use software rendering when drawing to a canvas texture.
+	bool renderToCanvas = PolyRenderer::Instance()->RenderToCanvas;
 
 	sprframe = &SpriteFrames[sprdef->spriteframes + pspr->GetFrame()];
 
@@ -261,7 +265,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 	double pspriteyscale = pspritexscale * yaspectMul;
 	double pspritexiscale = 1 / pspritexscale;
 
-	int tleft = tex->GetScaledLeftOffset();
+	int tleft = tex->GetScaledLeftOffsetPo();
 	int twidth = tex->GetScaledWidth();
 
 	// calculate edges of the shape
@@ -286,16 +290,16 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	vis.renderflags = owner->renderflags;
 
-	vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->TopOffset;
+	vis.texturemid = (BASEYCENTER - sy) * tex->Scale.Y + tex->GetTopOffsetPo();
 
-	if (viewpoint.camera->player && (renderTarget != screen ||
+	if (viewpoint.camera->player && (renderToCanvas ||
 		viewheight == renderTarget->GetHeight() ||
 		(renderTarget->GetWidth() > (BASEXCENTER * 2))))
 	{	// Adjust PSprite for fullscreen views
 		AWeapon *weapon = dyn_cast<AWeapon>(pspr->GetCaller());
 		if (weapon != nullptr && weapon->YAdjust != 0)
 		{
-			if (renderTarget != screen || viewheight == renderTarget->GetHeight())
+			if (renderToCanvas || viewheight == renderTarget->GetHeight())
 			{
 				vis.texturemid -= weapon->YAdjust;
 			}
@@ -385,13 +389,6 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 				noaccel = true;
 			}
 		}
-		// If we're drawing with a special colormap, but shaders for them are disabled, do
-		// not accelerate.
-		if (!r_shadercolormaps && (vis.Light.BaseColormap >= &SpecialSWColormaps[0] &&
-			vis.Light.BaseColormap <= &SpecialSWColormaps.Last()))
-		{
-			noaccel = true;
-		}
 		// If drawing with a BOOM colormap, disable acceleration.
 		if (vis.Light.BaseColormap == &NormalLight && NormalLight.Maps != realcolormaps.Maps)
 		{
@@ -417,7 +414,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	// Check for hardware-assisted 2D. If it's available, and this sprite is not
 	// fuzzy, don't draw it until after the switch to 2D mode.
-	if (!noaccel && renderTarget == screen && (DFrameBuffer *)screen->Accel2D)
+	if (!noaccel && !renderToCanvas)
 	{
 		FRenderStyle style = vis.RenderStyle;
 		style.CheckFuzz();
@@ -448,19 +445,12 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 			{
 				accelSprite.special = PolyCameraLight::Instance()->ShaderColormap();
 			}
-			else if (colormap_to_use->Color == PalEntry(255, 255, 255) &&
-				colormap_to_use->Desaturate == 0)
+			else 
 			{
 				accelSprite.overlay = colormap_to_use->Fade;
 				accelSprite.overlay.a = uint8_t(vis.Light.ColormapNum * 255 / NUMCOLORMAPS);
-			}
-			else
-			{
-				accelSprite.usecolormapstyle = true;
-				accelSprite.colormapstyle.Color = colormap_to_use->Color;
-				accelSprite.colormapstyle.Fade = colormap_to_use->Fade;
-				accelSprite.colormapstyle.Desaturate = colormap_to_use->Desaturate;
-				accelSprite.colormapstyle.FadeLevel = vis.Light.ColormapNum / float(NUMCOLORMAPS);
+				accelSprite.LightColor = colormap_to_use->Color;
+				accelSprite.Desaturate = (uint8_t)clamp(colormap_to_use->Desaturate, 0, 255);
 			}
 
 			AcceleratedSprites.Push(accelSprite);
@@ -512,7 +502,7 @@ void PolyNoAccelPlayerSprite::Render(PolyRenderThread *thread)
 		y1 = centerY - texturemid * yscale;
 		y2 = y1 + pic->GetHeight() * yscale;
 	}
-	args.Draw(thread, x1, x2, y1, y2, 0.0f, 1.0f, 0.0f, 1.0f);
+	args.Draw(thread, viewwindowx + x1, viewwindowx + x2, viewwindowy + y1, viewwindowy + y2, 0.0f, 1.0f, 0.0f, 1.0f);
 }
 
 /////////////////////////////////////////////////////////////////////////////

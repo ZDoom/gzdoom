@@ -58,7 +58,7 @@ FSamplerManager::FSamplerManager()
 		{
 			FString name;
 			name.Format("mSamplers[%d]", i);
-			FGLDebug::LabelObject(GL_SAMPLER, mSamplers[i], name);
+			FGLDebug::LabelObject(GL_SAMPLER, mSamplers[i], name.GetChars());
 		}
 	}
 
@@ -94,6 +94,7 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 	}
 	else
 	{
+		int filter = V_IsHardwareRenderer() ? gl_texture_filter : 0;
 		glActiveTexture(GL_TEXTURE0 + texunit);
 		switch (num)
 		{
@@ -102,8 +103,8 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			if (lastval >= CLAMP_XY_NOMIP)
 			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[filter].minfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 			}
 			break;
@@ -113,8 +114,8 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 			if (lastval >= CLAMP_XY_NOMIP)
 			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[filter].minfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 			}
 			break;
@@ -124,8 +125,8 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			if (lastval >= CLAMP_XY_NOMIP)
 			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[filter].minfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 			}
 			break;
@@ -135,8 +136,8 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			if (lastval >= CLAMP_XY_NOMIP)
 			{
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
-				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[filter].minfilter);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 				glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 			}
 			break;
@@ -144,8 +145,8 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 		case CLAMP_XY_NOMIP:
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1);
 			break;
 
@@ -160,8 +161,8 @@ uint8_t FSamplerManager::Bind(int texunit, int num, int lastval)
 		case CLAMP_CAMTEX:
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 			glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 1);
 			break;
 		}
@@ -176,17 +177,18 @@ void FSamplerManager::SetTextureFilterMode()
 	if (gl.flags & RFL_SAMPLER_OBJECTS)
 	{
 		UnbindAll();
+		int filter = V_IsHardwareRenderer() ? gl_texture_filter : 0;
 
 		for (int i = 0; i < 4; i++)
 		{
-			glSamplerParameteri(mSamplers[i], GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].minfilter);
-			glSamplerParameteri(mSamplers[i], GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+			glSamplerParameteri(mSamplers[i], GL_TEXTURE_MIN_FILTER, TexFilter[filter].minfilter);
+			glSamplerParameteri(mSamplers[i], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 			glSamplerParameterf(mSamplers[i], GL_TEXTURE_MAX_ANISOTROPY_EXT, gl_texture_filter_anisotropic);
 		}
-		glSamplerParameteri(mSamplers[4], GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
-		glSamplerParameteri(mSamplers[4], GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
-		glSamplerParameteri(mSamplers[6], GL_TEXTURE_MIN_FILTER, TexFilter[gl_texture_filter].magfilter);
-		glSamplerParameteri(mSamplers[6], GL_TEXTURE_MAG_FILTER, TexFilter[gl_texture_filter].magfilter);
+		glSamplerParameteri(mSamplers[4], GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
+		glSamplerParameteri(mSamplers[4], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
+		glSamplerParameteri(mSamplers[6], GL_TEXTURE_MIN_FILTER, TexFilter[filter].magfilter);
+		glSamplerParameteri(mSamplers[6], GL_TEXTURE_MAG_FILTER, TexFilter[filter].magfilter);
 	}
 	else
 	{

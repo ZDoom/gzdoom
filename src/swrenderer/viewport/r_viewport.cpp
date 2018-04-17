@@ -59,22 +59,43 @@ namespace swrenderer
 	{
 	}
 
-	void RenderViewport::SetupPolyViewport()
+	void RenderViewport::SetupPolyViewport(RenderThread *thread)
 	{
-		PolyStencilBuffer::Instance()->Clear(RenderTarget->GetWidth(), RenderTarget->GetHeight(), 0);
-		PolyZBuffer::Instance()->Resize(RenderTarget->GetPitch(), RenderTarget->GetHeight());
-
-		PolyTriangleDrawer::set_viewport(viewwindowx, viewwindowy, viewwidth, viewheight, RenderTarget);
-		WorldToView = TriMatrix::worldToView(viewpoint);
-		ViewToClip = TriMatrix::viewToClip(viewwindow.FocalTangent, CenterY, YaspectMul);
+		WorldToView = SoftwareWorldToView(viewpoint);
+		ViewToClip = SoftwareViewToClip();
 		WorldToClip = ViewToClip * WorldToView;
+	}
+
+	Mat4f RenderViewport::SoftwareWorldToView(const FRenderViewpoint &viewpoint)
+	{
+		Mat4f m = Mat4f::Null();
+		m.Matrix[0 + 0 * 4] = (float)viewpoint.Sin;
+		m.Matrix[0 + 1 * 4] = (float)-viewpoint.Cos;
+		m.Matrix[1 + 2 * 4] = 1.0f;
+		m.Matrix[2 + 0 * 4] = (float)-viewpoint.Cos;
+		m.Matrix[2 + 1 * 4] = (float)-viewpoint.Sin;
+		m.Matrix[3 + 3 * 4] = 1.0f;
+		return m * Mat4f::Translate((float)-viewpoint.Pos.X, (float)-viewpoint.Pos.Y, (float)-viewpoint.Pos.Z);
+	}
+
+	Mat4f RenderViewport::SoftwareViewToClip()
+	{
+		float near = 5.0f;
+		float far = 65536.0f;
+		float width = CenterX / FocalLengthX;
+		float height = viewheight * 0.5 / FocalLengthY;
+		float offset = CenterY / FocalLengthY - height;
+		width *= near;
+		height *= near;
+		offset *= near;
+		return Mat4f::Frustum(-width, width, -height + offset, height + offset, near, far, Handedness::Right, ClipZRange::NegativePositiveW);
 	}
 
 	void RenderViewport::SetViewport(RenderThread *thread, int fullWidth, int fullHeight, float trueratio)
 	{
 		int virtheight, virtwidth, virtwidth2, virtheight2;
 
-		if (!RenderingToCanvas())
+		if (!RenderingToCanvas)
 		{ // Set r_viewsize cvar to reflect the current view size
 			UCVarValue value;
 			char temp[16];
@@ -162,7 +183,7 @@ namespace swrenderer
 
 		int pitch = RenderTarget->GetPitch();
 		int pixelsize = RenderTarget->IsBgra() ? 4 : 1;
-		return RenderTarget->GetBuffer() + (x + y * pitch) * pixelsize;
+		return RenderTarget->GetPixels() + (x + y * pitch) * pixelsize;
 	}
 
 	void RenderViewport::InitTextureMapping()

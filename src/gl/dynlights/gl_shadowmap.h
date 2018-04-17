@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "gl/dynlights/gl_aabbtree.h"
+#include "hwrenderer/dynlights/hw_aabbtree.h"
 #include "tarray.h"
 #include <memory>
 
@@ -19,9 +19,6 @@ public:
 
 	// Update shadow map texture
 	void Update();
-
-	// Return the assigned shadow map index for a given light
-	int ShadowMapIndex(ADynamicLight *light);
 
 	// Test if a world position is in shadow relative to the specified light and returns false if it is
 	bool ShadowTest(ADynamicLight *light, const DVector3 &pos);
@@ -42,9 +39,6 @@ private:
 	// Working buffer for creating the list of lights. Stored here to avoid allocating memory each frame
 	TArray<float> mLights;
 
-	// The assigned shadow map index for each light
-	TMap<ADynamicLight*, int> mLightToShadowmap;
-
 	// OpenGL storage buffers for the AABB tree
 	int mNodesBuffer = 0;
 	int mLinesBuffer = 0;
@@ -55,7 +49,7 @@ private:
 	unsigned mLastNumSegs = 0;
 
 	// AABB-tree of the level, used for ray tests
-	std::unique_ptr<LevelAABBTree> mAABBTree;
+	std::unique_ptr<hwrenderer::LevelAABBTree> mAABBTree;
 
 	FShadowMap(const FShadowMap &) = delete;
 	FShadowMap &operator=(FShadowMap &) = delete;

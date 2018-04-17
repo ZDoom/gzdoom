@@ -6,7 +6,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
-//#include <direct.h>
 #include <stddef.h>
 #include <string.h>
 #include <ctype.h>
@@ -20,20 +19,12 @@
 #endif
 #include <time.h>
 
-#ifdef _MSC_VER
-#define    F_OK    0    /* Check for file existence */
-#define    W_OK    2    /* Check for write permission */
-#define    R_OK    4    /* Check for read permission */
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
 
 //GL headers
-#include "gl_load.h"
+#include "gl_load/gl_load.h"
 
 #if defined(__APPLE__)
 	#include <OpenGL/OpenGL.h>

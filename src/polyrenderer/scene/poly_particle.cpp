@@ -32,7 +32,7 @@
 
 EXTERN_CVAR(Int, gl_particles_style)
 
-void RenderPolyParticle::Render(PolyRenderThread *thread, const TriMatrix &worldToClip, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
+void RenderPolyParticle::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
 {
 	double timefrac = r_viewpoint.TicFrac;
 	if (paused || bglobal.freeze || (level.flags2 & LEVEL2_FROZEN))
@@ -82,14 +82,12 @@ void RenderPolyParticle::Render(PolyRenderThread *thread, const TriMatrix &world
 	args.SetDepthTest(true);
 	args.SetColor(particle->color | 0xff000000, particle->color >> 24);
 	args.SetStyle(TriBlendMode::Shaded, particle->alpha, 1.0 - particle->alpha);
-	args.SetTransform(&worldToClip);
-	args.SetFaceCullCCW(true);
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);
 	args.SetClipPlane(0, clipPlane);
 	args.SetTexture(GetParticleTexture(), ParticleTextureSize, ParticleTextureSize);
-	args.DrawArray(thread, vertices, 4, PolyDrawMode::TriangleFan);
+	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 uint8_t *RenderPolyParticle::GetParticleTexture()

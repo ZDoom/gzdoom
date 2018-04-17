@@ -250,6 +250,7 @@ namespace TriScreenDrawerModes
 		{
 			__m128i outcolor = fgcolor;
 			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 			return outcolor;
 		}
 		else if (BlendT::Mode == (int)BlendModes::Masked)
@@ -805,7 +806,7 @@ template<typename BlendT, typename SamplerT>
 class RectScreenDrawer32
 {
 public:
-	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
+	static void Execute(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
 	{
 		using namespace TriScreenDrawerModes;
 
@@ -821,7 +822,7 @@ public:
 
 private:
 	template<typename ShadeModeT, typename FilterModeT>
-	FORCEINLINE static void VECTORCALL Loop(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, WorkerThreadData *thread)
+	FORCEINLINE static void VECTORCALL Loop(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
 	{
 		using namespace TriScreenDrawerModes;
 

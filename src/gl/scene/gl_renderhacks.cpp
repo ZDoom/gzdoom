@@ -33,25 +33,27 @@
 #include "g_levellocals.h"
 
 #include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_data.h"
-#include "gl/dynlights/gl_glow.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/utility/gl_templates.h"
 
 
 // This is for debugging maps.
 
-FreeList<gl_subsectorrendernode> SSR_List;
-
 // profiling data
 static int totalupper, totallower;
 static int lowershcount, uppershcount;
-static glcycle_t totalms, showtotalms;
-static glcycle_t totalssms;
-static sector_t fakesec;
+static glcycle_t totalms, showtotalms, totalssms;
+
+
+static sector_t fakesec;	// this is static because it gets used in recursively called functions.
+
+// Having this static doesn't really matter here because the hack code is not multithreading-capable anyway.
+static bool inview;
+static subsector_t * viewsubsector;
+static TArray<seg_t *> lowersegs;
+
 
 void FDrawInfo::ClearBuffers()
 {
@@ -62,7 +64,7 @@ void FDrawInfo::ClearBuffers()
 		{
 			gl_subsectorrendernode * n = node;
 			node = node->next;
-			SSR_List.Release(n);
+			delete n;
 		}
 	}
 	otherfloorplanes.Clear();
@@ -74,7 +76,7 @@ void FDrawInfo::ClearBuffers()
 		{
 			gl_subsectorrendernode * n = node;
 			node = node->next;
-			SSR_List.Release(n);
+			delete n;
 		}
 	}
 	otherceilingplanes.Clear();
@@ -507,7 +509,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 
 					AddOtherCeilingPlane(sec->sectornum, node);
@@ -551,7 +553,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(fakesector->sectornum, node);
 				}
@@ -579,7 +581,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sec->sectornum, node);
 				}
@@ -622,7 +624,7 @@ void FDrawInfo::HandleMissingTextures()
 
 				for (unsigned int j = 0; j < HandledSubsectors.Size(); j++)
 				{
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(fakesector->sectornum, node);
 				}
@@ -664,7 +666,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->backsector->GetTexture(sector_t::ceiling) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::ceiling) != NULL) continue;
 
-		if (!glset.notexturefill) FloodUpperGap(seg);
+		if (!level.notexturefill) FloodUpperGap(seg);
 	}
 
 	validcount++;
@@ -683,7 +685,7 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::floor) != NULL) continue;
 
-		if (!glset.notexturefill) FloodLowerGap(seg);
+		if (!level.notexturefill) FloodLowerGap(seg);
 	}
 	MissingUpperTextures.Clear();
 	MissingLowerTextures.Clear();
@@ -765,9 +767,6 @@ bool FDrawInfo::CheckAnchorFloor(subsector_t * sub)
 // Collect connected subsectors that have to be rendered with the same plane
 //
 //==========================================================================
-static bool inview;
-static subsector_t * viewsubsector;
-static TArray<seg_t *> lowersegs;
 
 bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 {
@@ -955,7 +954,7 @@ void FDrawInfo::HandleHackedSubsectors()
 			{
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sub->render_sector->sectornum, node);
@@ -985,7 +984,7 @@ void FDrawInfo::HandleHackedSubsectors()
 			{
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
 				{				
-					gl_subsectorrendernode * node = SSR_List.GetNew();
+					gl_subsectorrendernode * node = new gl_subsectorrendernode;
 
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(sub->render_sector->sectornum, node);
@@ -1037,7 +1036,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	sub->validcount=validcount;
 
 	// Has a sector stack or skybox itself!
-	if (sub->render_sector->GetGLPortal(sector_t::ceiling) != nullptr) return;
+	if (sub->render_sector->GetPortalGroup(sector_t::ceiling) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
 	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
@@ -1081,7 +1080,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	sub->validcount=validcount;
 
 	// Has a sector stack or skybox itself!
-	if (sub->render_sector->GetGLPortal(sector_t::floor) != nullptr) return;
+	if (sub->render_sector->GetPortalGroup(sector_t::floor) != nullptr) return;
 
 	// Don't bother processing unrendered subsectors
 	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
@@ -1122,13 +1121,12 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 void FDrawInfo::ProcessSectorStacks()
 {
 	unsigned int i;
-	sector_t fake;
 
 	validcount++;
 	for (i=0;i<CeilingStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fake, mDrawer->in_area, false);
-		FPortal *portal = sec->GetGLPortal(sector_t::ceiling);
+		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fakesec, mDrawer->in_area, false);
+		auto portal = sec->GetPortalGroup(sector_t::ceiling);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
@@ -1152,14 +1150,14 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sub->portalcoverage[sector_t::ceiling].subsectors == NULL)
 					{
-						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling],	sub, portal->mDisplacement);
+						BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling], sub, portal->mDisplacement);
 					}
 
 					portal->GetRenderState()->AddSubsector(sub);
 
 					if (sec->GetAlpha(sector_t::ceiling) != 0 && sec->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
-						gl_subsectorrendernode * node = SSR_List.GetNew();
+						gl_subsectorrendernode * node = new gl_subsectorrendernode;
 						node->sub = sub;
 						AddOtherCeilingPlane(sec->sectornum, node);
 					}
@@ -1171,8 +1169,8 @@ void FDrawInfo::ProcessSectorStacks()
 	validcount++;
 	for (i=0;i<FloorStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fake, mDrawer->in_area, false);
-		FPortal *portal = sec->GetGLPortal(sector_t::floor);
+		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fakesec, mDrawer->in_area, false);
+		auto portal = sec->GetPortalGroup(sector_t::floor);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
 			subsector_t * sub = sec->subsectors[k];
@@ -1197,7 +1195,7 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sub->portalcoverage[sector_t::floor].subsectors == NULL)
 					{
-						gl_BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal->mDisplacement);
+						BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal->mDisplacement);
 					}
 
 					GLSectorStackPortal *glportal = portal->GetRenderState();
@@ -1205,7 +1203,7 @@ void FDrawInfo::ProcessSectorStacks()
 
 					if (sec->GetAlpha(sector_t::floor) != 0 && sec->GetTexture(sector_t::floor) != skyflatnum)
 					{
-						gl_subsectorrendernode * node = SSR_List.GetNew();
+						gl_subsectorrendernode * node = new gl_subsectorrendernode;
 						node->sub = sub;
 						AddOtherFloorPlane(sec->sectornum, node);
 					}

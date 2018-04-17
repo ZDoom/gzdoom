@@ -40,11 +40,12 @@ class FPresentShader;
 class FPresent3DCheckerShader;
 class FPresent3DColumnShader; 
 class FPresent3DRowShader;
-class F2DDrawer;
+class FGL2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
 class FCustomPostProcessShaders;
 class GLSceneDrawer;
+class SWSceneDrawer;
 
 inline float DEG2RAD(float deg)
 {
@@ -87,6 +88,29 @@ enum
 	DM_PORTAL,
 	DM_SKYPORTAL
 };
+
+
+// Helper baggage to draw the paletted software renderer output on old hardware.
+// This must be here because the 2D drawer needs to access it, not the scene drawer.
+class LegacyShader;
+struct LegacyShaderContainer
+{
+	enum
+	{
+		NUM_SHADERS = 4
+	};
+
+	LegacyShader *Shaders[NUM_SHADERS];
+
+	LegacyShader* CreatePixelShader(const FString& vertexsrc, const FString& fragmentsrc, const FString &defines);
+	LegacyShaderContainer();
+	~LegacyShaderContainer();
+	bool LoadShaders();
+	void BindShader(int num, const float *p1, const float *p2);
+};
+
+
+
 
 class FGLRenderer
 {
@@ -146,7 +170,8 @@ public:
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
-	F2DDrawer *m2DDrawer;
+	SWSceneDrawer *swdrawer = nullptr;
+	LegacyShaderContainer *legacyShaders = nullptr;
 
 	GL_IRECT mScreenViewport;
 	GL_IRECT mSceneViewport;
@@ -170,10 +195,8 @@ public:
 	void ClearBorders();
 
 	void FlushTextures();
-	unsigned char *GetTextureBuffer(FTexture *tex, int &w, int &h);
 	void SetupLevel();
-
-	void RenderView(player_t* player);
+	void ResetSWScene();
 
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
@@ -191,6 +214,11 @@ public:
 	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
 	void Flush();
 	void GetSpecialTextures();
+	void Draw2D(F2DDrawer *data);
+	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
+	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
+	void RenderView(player_t *player);
+	void DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap, bool in2d = false);
 
 
 	bool StartOffscreen();

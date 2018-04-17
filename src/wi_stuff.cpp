@@ -228,8 +228,8 @@ private:
 
 			right = c[i]->GetScaledWidth();
 			bottom = c[i]->GetScaledHeight();
-			left = lnodes[n].x - c[i]->GetScaledLeftOffset();
-			top = lnodes[n].y - c[i]->GetScaledTopOffset();
+			left = lnodes[n].x - c[i]->GetScaledLeftOffset(0);
+			top = lnodes[n].y - c[i]->GetScaledTopOffset(0);
 			right += left;
 			bottom += top;
 

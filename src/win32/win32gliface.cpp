@@ -82,6 +82,7 @@ EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
 EXTERN_CVAR(Int, vid_adapter)
+EXTERN_CVAR(Bool, gl_always_legacy)
 
 
 //==========================================================================
@@ -867,7 +868,7 @@ bool Win32GLVideo::InitHardware (HWND Window, int multisample)
 	int prof = WGL_CONTEXT_CORE_PROFILE_BIT_ARB;
 	const char *version = Args->CheckValue("-glversion");
 
-	if (version != nullptr && strtod(version, nullptr) < 3.0) prof = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
+	if (gl_always_legacy || (version != nullptr && strtod(version, nullptr) < 3.0)) prof = WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB;
 
 	for (; prof <= WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB; prof++)
 	{

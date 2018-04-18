@@ -32,46 +32,15 @@
 **
 */
 
-#ifdef _DEBUG
-#define D3D_DEBUG_INFO
-#endif
-#define DIRECTDRAW_VERSION 0x0300
-#define DIRECT3D_VERSION 0x0900
-
 #define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-#include <ddraw.h>
-#include <d3d9.h>
 
 // HEADER FILES ------------------------------------------------------------
 
-#define WIN32_LEAN_AND_MEAN
-
-#include <windows.h>
-#include <ddraw.h>
-#include <d3d9.h>
-#include <stdio.h>
-#include <ctype.h>
-
-#include "doomtype.h"
-
-#include "c_dispatch.h"
-#include "templates.h"
+#include "c_cvars.h"
 #include "i_system.h"
-#include "i_video.h"
-#include "v_video.h"
-#include "v_pfx.h"
-#include "stats.h"
-#include "doomerrors.h"
-#include "m_argv.h"
-#include "r_defs.h"
-#include "v_text.h"
-#include "version.h"
-
-
-#include "optwin32.h"
 
 // MACROS ------------------------------------------------------------------
 

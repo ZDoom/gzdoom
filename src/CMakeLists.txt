@@ -713,8 +713,9 @@ file( GLOB HEADER_FILES
 	polyrenderer/math/*.h
 	polyrenderer/drawers/*.h
 	polyrenderer/scene/*.h
+	hwrenderer/data/*.h
+	hwrenderer/dynlights/*.h
 	gl/*.h
-	gl/api/*.h
 	gl/data/*.h
 	gl/dynlights/*.h
 	gl/models/*.h

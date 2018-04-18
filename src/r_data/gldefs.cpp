@@ -52,7 +52,7 @@
 #include "textures/skyboxtexture.h"
 #include "gl/shaders/gl_postprocessshader.h"
 
-void AddLightDefaults(FLightDefaults *defaults);
+void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
 void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
 
@@ -193,6 +193,7 @@ static const char *CoreKeywords[]=
    "detail",
    "#include",
    "material",
+   "lightsizefactor",
    nullptr
 };
 
@@ -215,7 +216,8 @@ enum
    TAG_HARDWARESHADER,
    TAG_DETAIL,
    TAG_INCLUDE,
-   TAG_MATERIAL
+   TAG_MATERIAL,
+   TAG_LIGHTSIZEFACTOR,
 };
 
 //==========================================================================
@@ -230,6 +232,7 @@ class GLDefsParser
 	int workingLump;
 	int ScriptDepth = 0;
 	TArray<FLightAssociation> &LightAssociations;
+	double lightSizeFactor = 1.;
 
 	//==========================================================================
 	//
@@ -470,7 +473,7 @@ class GLDefsParser
 					sc.ScriptError("Unknown tag: %s\n", sc.String);
 				}
 			}
-			AddLightDefaults(defaults);
+			AddLightDefaults(defaults, lightSizeFactor);
 		}
 		else
 		{
@@ -565,7 +568,7 @@ class GLDefsParser
 			}
 			defaults->OrderIntensities();
 
-			AddLightDefaults(defaults);
+			AddLightDefaults(defaults, lightSizeFactor);
 		}
 		else
 		{
@@ -660,7 +663,7 @@ class GLDefsParser
 				}
 			}
 			defaults->OrderIntensities();
-			AddLightDefaults(defaults);
+			AddLightDefaults(defaults, lightSizeFactor);
 		}
 		else
 		{
@@ -760,7 +763,7 @@ class GLDefsParser
 				defaults->SetArg(LIGHT_SECONDARY_INTENSITY, defaults->GetArg(LIGHT_INTENSITY));
 				defaults->SetArg(LIGHT_INTENSITY, v);
 			}
-			AddLightDefaults(defaults);
+			AddLightDefaults(defaults, lightSizeFactor);
 		}
 		else
 		{
@@ -846,7 +849,7 @@ class GLDefsParser
 					sc.ScriptError("Unknown tag: %s\n", sc.String);
 				}
 			}
-			AddLightDefaults(defaults);
+			AddLightDefaults(defaults, lightSizeFactor);
 		}
 		else
 		{
@@ -1427,7 +1430,6 @@ class GLDefsParser
 			}
 		}
 	}
-
 	
 
 public:
@@ -1461,6 +1463,7 @@ public:
 						sc.ScriptError("Lump '%s' not found", sc.String);
 
 					GLDefsParser newscanner(lump, LightAssociations);
+					newscanner.lightSizeFactor = lightSizeFactor;
 					newscanner.DoParseDefs();
 					break;
 				}
@@ -1507,6 +1510,9 @@ public:
 				break;
 			case TAG_DETAIL:
 				ParseDetailTexture();
+				break;
+			case TAG_LIGHTSIZEFACTOR:
+				lightSizeFactor = ParseFloat(sc);
 				break;
 			case TAG_DISABLE_FB:
 				{

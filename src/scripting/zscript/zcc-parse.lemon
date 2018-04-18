@@ -1120,6 +1120,7 @@ decl_flag(X) ::= FINAL(T).		{ X.Int = ZCC_Final; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= META(T).		{ X.Int = ZCC_Meta; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= TRANSIENT(T).	{ X.Int = ZCC_Transient; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= READONLY(T).	{ X.Int = ZCC_ReadOnly; X.SourceLoc =  T.SourceLoc; }
+decl_flag(X) ::= INTERNAL(T).	{ X.Int = ZCC_Internal; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VIRTUAL(T).	{ X.Int = ZCC_Virtual; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= OVERRIDE(T).	{ X.Int = ZCC_Override; X.SourceLoc =  T.SourceLoc; }
 decl_flag(X) ::= VARARG(T).     { X.Int = ZCC_VarArg; X.SourceLoc = T.SourceLoc; }

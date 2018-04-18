@@ -74,28 +74,6 @@ enum
 	SLOT_BCOMPAT
 };
 
-enum
-{
-	CP_END,
-	CP_CLEARFLAGS,
-	CP_SETFLAGS,
-	CP_SETSPECIAL,
-	CP_CLEARSPECIAL,
-	CP_SETACTIVATION,
-	CP_SETSECTOROFFSET,
-	CP_SETSECTORSPECIAL,
-	CP_SETWALLYSCALE,
-	CP_SETWALLTEXTURE,
-	CP_SETTHINGZ,
-	CP_SETTAG,
-	CP_SETTHINGFLAGS,
-	CP_SETVERTEX,
-	CP_SETTHINGSKILLS,
-	CP_SETSECTORTEXTURE,
-	CP_SETSECTORLIGHT,
-	CP_SETLINESECTORREF,
-};
-
 // EXTERNAL FUNCTION PROTOTYPES --------------------------------------------
 
 // PUBLIC FUNCTION PROTOTYPES ----------------------------------------------
@@ -393,6 +371,22 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingSkills)
 	if ((unsigned)thing < MapThingsConverted.Size())
 	{
 		MapThingsConverted[thing].SkillFilter = skillmask;
+	}
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetThingXY)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(thing);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+
+	if ((unsigned)thing < MapThingsConverted.Size())
+	{
+		auto& pos = MapThingsConverted[thing].pos;
+		pos.X = x;
+		pos.Y = y;
 	}
 	return 0;
 }

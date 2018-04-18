@@ -250,6 +250,7 @@ namespace TriScreenDrawerModes
 		{
 			__m128i outcolor = fgcolor;
 			outcolor = _mm_packus_epi16(outcolor, _mm_setzero_si128());
+			outcolor = _mm_or_si128(outcolor, _mm_set1_epi32(0xff000000));
 			return outcolor;
 		}
 		else if (BlendT::Mode == (int)BlendModes::Masked)

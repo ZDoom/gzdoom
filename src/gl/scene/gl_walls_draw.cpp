@@ -27,6 +27,7 @@
 #include "g_levellocals.h"
 #include "actor.h"
 #include "actorinlines.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
@@ -34,7 +35,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/dynlights/gl_dynlight.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
@@ -73,7 +73,7 @@ void GLWall::SetupLights()
 	lightdata.Clear();
 
 	auto normal = glseg.Normal();
-	p.Set(normal, -normal.X * glseg.x1 - normal.Y * glseg.y1);
+	p.Set(normal, -normal.X * glseg.x1 - normal.Z * glseg.y1);
 
 	FLightNode *node;
 	if (seg->sidedef == NULL)
@@ -139,7 +139,7 @@ void GLWall::SetupLights()
 				}
 				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
 				{
-					gl_GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true, lightdata);
+					lightdata.GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true);
 				}
 			}
 		}

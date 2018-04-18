@@ -33,11 +33,11 @@
 #include "g_level.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
-#include "gl/dynlights/gl_dynlight.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
@@ -243,7 +243,7 @@ int gl_SetDynModelLight(AActor *self, int dynlightindex)
 					{
 						if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
 						{
-							gl_AddLightToList(group, light, modellightdata);
+							modellightdata.AddLightToList(group, light);
 							addedLights.push_back(light);
 						}
 					}

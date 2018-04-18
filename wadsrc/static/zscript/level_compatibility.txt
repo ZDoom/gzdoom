@@ -666,6 +666,22 @@ class LevelCompatibility play
 				break;
 			}
 
+			case '9C14350A111C3DC6A8AF04D950E6DDDB': // ma_val.pk3 map01
+			{
+				// Missing wall textures with hardware renderer
+				OffsetSectorPlane(7072, Sector.floor, -48);
+				OffsetSectorPlane(7073, Sector.floor, -32);
+				// Missing teleporting monsters
+				SetThingFlags(376, 0x200);
+				SetThingFlags(377, 0x300);
+				for (int i = 437; i < 449; ++i)
+				{
+					SetThingFlags(i, 0x600);
+				}
+				// Stuck imp
+				SetThingXY(8, 1200, -1072);
+				break;
+			}
 		}
 	}
 
@@ -673,6 +689,7 @@ class LevelCompatibility play
 	private static native void AddSectorTag(int sector, int tag);
 	private static native void OffsetSectorPlane(int sector, int plane, double offset);
 	private static native void SetThingSkills(int thing, int skills);
+	private static native void SetThingXY(int thing, double x, double y);
 	private static native void SetThingZ(int thing, double z);
 	private static native void SetThingFlags(int thing, int flags);
 	private static native void SetVertex(uint vertex, double x, double y);

@@ -149,6 +149,7 @@ static void InitTokenMap()
 	TOKENDEF (TK_Deprecated,	ZCC_DEPRECATED);
 	TOKENDEF (TK_Version,		ZCC_VERSION);
 	TOKENDEF (TK_ReadOnly,		ZCC_READONLY);
+	TOKENDEF (TK_Internal,		ZCC_INTERNAL);
 	TOKENDEF ('{',				ZCC_LBRACE);
 	TOKENDEF ('}',				ZCC_RBRACE);
 	TOKENDEF (TK_Struct,		ZCC_STRUCT);

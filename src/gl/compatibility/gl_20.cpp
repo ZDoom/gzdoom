@@ -40,7 +40,8 @@
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "g_levellocals.h"
-#include "gl/dynlights/gl_dynlight.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
+
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/system/gl_interface.h"
@@ -438,7 +439,7 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, FVector3 & nearP
 
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
-	if (checkside && gl_lights_checkside && p.PointOnSide(lpos.X, lpos.Z, lpos.Y))
+	if (checkside && p.PointOnSide(lpos.X, lpos.Z, lpos.Y))
 	{
 		return false;
 	}
@@ -559,7 +560,8 @@ bool FDrawInfo::PutWallCompat(GLWall *wall, int passflag)
 	bool masked = passflag == 2 && wall->gltexture->isMasked();
 
 	int list = list_indices[masked][foggy];
-	dldrawlists[list].AddWall(wall);
+	auto newwall = dldrawlists[list].NewWall();
+	*newwall = *wall;
 	return true;
 
 }
@@ -583,7 +585,8 @@ bool GLFlat::PutFlatCompat(bool fog)
 
 	
 	int list = list_indices[masked][foggy];
-	gl_drawinfo->dldrawlists[list].AddFlat(this);
+	auto newflat = gl_drawinfo->dldrawlists[list].NewFlat();
+	*newflat = *this;
 	return true;
 }
 
@@ -664,7 +667,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		// we must do the side check here because gl_SetupLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
 		double planeh = plane.plane.ZatPoint(light);
-		if (gl_lights_checkside && ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
+		if (((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
 		{
 			node = node->nextLight;
 			continue;
@@ -745,7 +748,7 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 	float scale;
 
 	auto normal = glseg.Normal();
-	p.Set(normal, -normal.X * glseg.x1 - normal.Y * glseg.y1);
+	p.Set(normal, -normal.X * glseg.x1 - normal.Z * glseg.y1);
 
 	if (!p.ValidNormal())
 	{

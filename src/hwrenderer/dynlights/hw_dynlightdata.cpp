@@ -1,7 +1,7 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2002-2016 Christoph Oelckers
+// Copyright(C) 2002-2018 Christoph Oelckers
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -33,14 +33,7 @@
 #include "actorinlines.h"
 #include "a_dynlight.h"
 
-#include "gl/system/gl_interface.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/dynlights/gl_dynlight.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
+#include "hw_dynlightdata.h"
 
 
 //==========================================================================
@@ -49,10 +42,9 @@
 //
 //==========================================================================
 
-CVAR (Bool, gl_lights_checkside, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+// These shouldn't be called 'gl...' anymore...
 CVAR (Bool, gl_light_sprites, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR (Bool, gl_light_particles, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
-CVAR (Bool, gl_light_shadowmap, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 
 CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 
@@ -61,7 +53,7 @@ CVAR(Int, gl_attenuate, -1, 0);	// This is mainly a debug option.
 // Sets up the parameters to render one dynamic light onto one plane
 //
 //==========================================================================
-bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FDynLightData &ldata)
+bool FDynLightData::GetLight(int group, Plane & p, ADynamicLight * light, bool checkside)
 {
 	DVector3 pos = light->PosRelative(group);
 	float radius = (light->GetRadius());
@@ -70,12 +62,12 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
-	if (checkside && gl_lights_checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
+	if (checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
 	{
 		return false;
 	}
 
-	gl_AddLightToList(group, light, ldata);
+	AddLightToList(group, light);
 	return true;
 }
 
@@ -84,7 +76,7 @@ bool gl_GetLight(int group, Plane & p, ADynamicLight * light, bool checkside, FD
 // Add one dynamic light to the light data list
 //
 //==========================================================================
-void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
+void FDynLightData::AddLightToList(int group, ADynamicLight * light)
 {
 	int i = 0;
 
@@ -117,10 +109,10 @@ void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
 		i = 1;
 	}
 
-	// Store attenuate flag in the sign bit of the float.
-	float shadowIndex = GLRenderer->mShadowMap.ShadowMapIndex(light) + 1.0f;
+	float shadowIndex = light->mShadowmapIndex + 1.0f;
 	bool attenuate;
 
+    // Store attenuate flag in the sign bit of the float.
 	if (gl_attenuate == -1) attenuate = !!(light->lightflags & LF_ATTENUATE);
 	else attenuate = !!gl_attenuate;
 
@@ -145,7 +137,7 @@ void gl_AddLightToList(int group, ADynamicLight * light, FDynLightData &ldata)
 		spotDirZ = -light->Angles.Yaw.Sin() * xzLen;
 	}
 
-	float *data = &ldata.arrays[i][ldata.arrays[i].Reserve(16)];
+	float *data = &arrays[i][arrays[i].Reserve(16)];
 	data[0] = pos.X;
 	data[1] = pos.Z;
 	data[2] = pos.Y;

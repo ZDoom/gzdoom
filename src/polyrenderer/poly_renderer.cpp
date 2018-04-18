@@ -62,11 +62,6 @@ void PolyRenderer::RenderView(player_t *player, DCanvas *target)
 
 	RenderTarget = target;
 	RenderToCanvas = false;
-	int width = SCREENWIDTH;
-	int height = SCREENHEIGHT;
-	float trueratio;
-	ActiveRatio(width, height, &trueratio);
-	//viewport->SetViewport(&Thread, width, height, trueratio);
 
 	RenderActorView(player->mo, false);
 
@@ -78,24 +73,40 @@ void PolyRenderer::RenderView(player_t *player, DCanvas *target)
 
 void PolyRenderer::RenderViewToCanvas(AActor *actor, DCanvas *canvas, int x, int y, int width, int height, bool dontmaplines)
 {
-	const bool savedviewactive = viewactive;
+	// Save a bunch of silly globals:
+	auto savedViewpoint = Viewpoint;
+	auto savedViewwindow = Viewwindow;
+	auto savedviewwindowx = viewwindowx;
+	auto savedviewwindowy = viewwindowy;
+	auto savedviewwidth = viewwidth;
+	auto savedviewheight = viewheight;
+	auto savedviewactive = viewactive;
+	auto savedRenderTarget = RenderTarget;
 
-	viewwidth = width;
+	// Setup the view:
 	RenderTarget = canvas;
 	RenderToCanvas = true;
 	R_SetWindow(Viewpoint, Viewwindow, 12, width, height, height, true);
-	//viewport->SetViewport(&Thread, width, height, Viewwindow.WidescreenRatio);
 	viewwindowx = x;
 	viewwindowy = y;
 	viewactive = true;
 	
+	// Render:
 	RenderActorView(actor, dontmaplines);
 	Threads.MainThread()->FlushDrawQueue();
 	DrawerThreads::WaitForWorkers();
 
-	RenderTarget = nullptr;
 	RenderToCanvas = false;
+
+	// Restore silly globals:
+	Viewpoint = savedViewpoint;
+	Viewwindow = savedViewwindow;
+	viewwindowx = savedviewwindowx;
+	viewwindowy = savedviewwindowy;
+	viewwidth = savedviewwidth;
+	viewheight = savedviewheight;
 	viewactive = savedviewactive;
+	RenderTarget = savedRenderTarget;
 }
 
 void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
@@ -114,6 +125,13 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	P_FindParticleSubsectors();
 	PO_LinkToSubsectors();
 
+	static bool firstcall = true;
+	if (firstcall)
+	{
+		swrenderer::R_InitFuzzTable(RenderTarget->GetPitch());
+		firstcall = false;
+	}
+
 	swrenderer::R_UpdateFuzzPosFrameStart();
 
 	if (APART(R_OldBlend)) NormalLight.Maps = realcolormaps.Maps;
@@ -124,10 +142,15 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	PolyCameraLight::Instance()->SetCamera(Viewpoint, RenderTarget, actor);
 	//Viewport->SetupFreelook();
 
-	ActorRenderFlags savedflags = Viewpoint.camera->renderflags;
-	// Never draw the player unless in chasecam mode
-	if (!Viewpoint.showviewer)
-		Viewpoint.camera->renderflags |= RF_INVISIBLE;
+	ActorRenderFlags savedflags = 0;
+	if (Viewpoint.camera)
+	{
+		savedflags = Viewpoint.camera->renderflags;
+
+		// Never draw the player unless in chasecam mode
+		if (!Viewpoint.showviewer)
+			Viewpoint.camera->renderflags |= RF_INVISIBLE;
+	}
 
 	ScreenTriangle::FuzzStart = (ScreenTriangle::FuzzStart + 14) % FUZZTABLE;
 
@@ -145,7 +168,8 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	Scene.RenderTranslucent(&mainViewpoint);
 	PlayerSprites.Render(Threads.MainThread());
 
-	Viewpoint.camera->renderflags = savedflags;
+	if (Viewpoint.camera)
+		Viewpoint.camera->renderflags = savedflags;
 	interpolator.RestoreInterpolations ();
 }
 

@@ -1,4 +1,4 @@
-version "3.3"
+version "3.4"
 #include "zscript/base.txt"
 #include "zscript/sounddata.txt"
 #include "zscript/mapdata.txt"

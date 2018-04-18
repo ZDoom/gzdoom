@@ -69,7 +69,6 @@ void FRenderState::Reset()
 	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
 	mTextureMode = -1;
-	mLightIndex = -1;
 	mDesaturation = 0;
 	mSrcBlend = GL_SRC_ALPHA;
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
@@ -176,7 +175,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
-	activeShader->muLightIndex.Set(mLightIndex);	// will always be -1 for now
+	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muViewHeight.Set(viewheight);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);

@@ -34,10 +34,10 @@
 #include "doomdata.h"
 #include "portal.h"
 #include "g_levellocals.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
-#include "gl/dynlights/gl_dynlight.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
@@ -55,7 +55,8 @@ void FDrawInfo::AddWall(GLWall *wall)
 	{
 		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
 		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(true);
-		drawlists[GLDL_TRANSLUCENT].AddWall(wall);
+		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
+		*newwall = *wall;
 	}
 	else
 	{
@@ -77,8 +78,8 @@ void FDrawInfo::AddWall(GLWall *wall)
 			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
 		}
 		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(false);
-		drawlists[list].AddWall(wall);
-
+		auto newwall = drawlists[list].NewWall();
+		*newwall = *wall;
 	}
 }
 
@@ -172,7 +173,8 @@ void GLWall::PutPortal(int ptype)
 		{
 			// draw a reflective layer over the mirror
 			type=RENDERWALL_MIRRORSURFACE;
-			gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].AddWall(this);
+			auto newwall = gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
+			*newwall = *this;
 		}
 		break;
 
@@ -1085,6 +1087,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 	// restore some values that have been altered in this function
 	glseg=glsave;
 	flags&=~(GLT_CLAMPX|GLT_CLAMPY|GLWF_NOSPLITUPPER|GLWF_NOSPLITLOWER);
+	RenderStyle = STYLE_Normal;
 }
 
 

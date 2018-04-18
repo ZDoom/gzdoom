@@ -242,6 +242,7 @@ namespace TriScreenDrawerModes
 	{
 		if (BlendT::Mode == (int)BlendModes::Opaque)
 		{
+			fgcolor.a = 255;
 			return fgcolor;
 		}
 		else if (BlendT::Mode == (int)BlendModes::Masked)

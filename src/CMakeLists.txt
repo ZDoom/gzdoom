@@ -62,21 +62,6 @@ if( WIN32 )
 		set( DX_dinput8_LIBRARY dinput8 )
 	else()
 
-		find_path( D3D_INCLUDE_DIR d3d9.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT D3D_INCLUDE_DIR )
-			# Modern versions of the Windows SDK include d3d9.h. Unfortunately,
-			# CMake cannot find this file via find_path, so we check for it using
-			# CHECK_INCLUDE_FILE.
-			CHECK_INCLUDE_FILE( d3d9.h D3D9_H_FOUND )
-			if ( NOT D3D9_H_FOUND )
-				message( SEND_ERROR "Could not find DirectX 9 header files" )
-			endif()
-		else()
-			include_directories( ${D3D_INCLUDE_DIR} )
-		endif()
-
 		find_path( XINPUT_INCLUDE_DIR xinput.h
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Include )
@@ -713,8 +698,9 @@ file( GLOB HEADER_FILES
 	polyrenderer/math/*.h
 	polyrenderer/drawers/*.h
 	polyrenderer/scene/*.h
+	hwrenderer/data/*.h
+	hwrenderer/dynlights/*.h
 	gl/*.h
-	gl/api/*.h
 	gl/data/*.h
 	gl/dynlights/*.h
 	gl/models/*.h
@@ -1287,9 +1273,6 @@ set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_F
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
-if ( WIN32 )
-	set_source_files_properties( win32/fb_d3d9.cpp win32/fb_d3d9_wipe.cpp PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
-endif()
 
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")

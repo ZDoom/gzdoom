@@ -137,7 +137,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 
 extern int ScriptDepth;
 
-void AddLightDefaults(FLightDefaults *defaults)
+void AddLightDefaults(FLightDefaults *defaults, double attnFactor)
 {
    FLightDefaults *temp;
    unsigned int i;
@@ -152,6 +152,11 @@ void AddLightDefaults(FLightDefaults *defaults)
          LightDefaults.Delete(i);
          break;
       }
+   }
+   if (defaults->GetAttenuate())
+   {
+	   defaults->SetArg(LIGHT_INTENSITY, int(defaults->GetArg(LIGHT_INTENSITY) * attnFactor));
+	   defaults->SetArg(LIGHT_SECONDARY_INTENSITY, int(defaults->GetArg(LIGHT_SECONDARY_INTENSITY) * attnFactor));
    }
 
    LightDefaults.Push(defaults);

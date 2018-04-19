@@ -23,7 +23,6 @@
 #ifndef __GLC_DYNLIGHT_H
 #define __GLC_DYNLIGHT_H
 
-#include "c_cvars.h"
 #include "a_dynlight.h"
 
 

@@ -109,6 +109,7 @@ typedef int32_t ssize_t;
 #pragma warning(disable:4267)
 #pragma warning(disable:4244)
 #pragma warning(disable:4146)
+#pragma warning(disable:4800)
 #endif
 
 #include "fraction.hpp"

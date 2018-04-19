@@ -55,26 +55,14 @@
 **
 */
 
-#include "templates.h"
-#include "m_random.h"
-#include "p_local.h"
 #include "c_dispatch.h"
-#include "g_level.h"
 #include "thingdef.h"
-#include "i_system.h"
-#include "templates.h"
-#include "doomdata.h"
 #include "r_utility.h"
-#include "p_local.h"
-#include "portal.h"
 #include "doomstat.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
 #include "actorinlines.h"
-#include "c_cvars.h"
-#include "gl/system//gl_interface.h"
-#include "vm.h"
 
 
 CUSTOM_CVAR (Bool, gl_lights, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)

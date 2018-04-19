@@ -26,12 +26,7 @@
 **/
 
 #include "gl/system/gl_system.h"
-#include "c_dispatch.h"
-#include "p_local.h"
-#include "vectors.h"
-#include "g_level.h"
 #include "actorinlines.h"
-#include "a_dynlight.h"
 
 #include "hw_dynlightdata.h"
 

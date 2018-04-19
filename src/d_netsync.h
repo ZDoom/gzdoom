@@ -13,10 +13,10 @@ struct NetSyncData {
 	uint8_t			frame;				// sprite frame to draw
 	uint8_t			effects;			// [RH] see p_effect.h
 	FRenderStyle	RenderStyle;		// Style to draw this actor with
-	uint32_t			Translation;
-	uint32_t			RenderRequired;		// current renderer must have this feature set
-	uint32_t			RenderHidden;		// current renderer must *not* have any of these features
-	ActorRenderFlags	renderflags;		// Different rendering flags
+	uint32_t		Translation;
+	uint32_t		RenderRequired;		// current renderer must have this feature set
+	uint32_t		RenderHidden;		// current renderer must *not* have any of these features
+	uint32_t		renderflags;		// Different rendering flags
 	double			Floorclip;		// value to use for floor clipping
 	DAngle			VisibleStartAngle;
 	DAngle			VisibleStartPitch;

@@ -225,6 +225,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform sampler2D tex;\n";
 	i_data += "uniform sampler2D ShadowMap;\n";
 	i_data += "uniform sampler2D BrdfLUT;\n";
+	i_data += "uniform samplerCube IrradianceMap;\n";
+	i_data += "uniform samplerCube PrefilterMap;\n";
 	i_data += "uniform sampler2D texture2;\n";
 	i_data += "uniform sampler2D texture3;\n";
 	i_data += "uniform sampler2D texture4;\n";
@@ -489,6 +491,12 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	int brdfindex = glGetUniformLocation(hShader, "BrdfLUT");
 	if (brdfindex > 0) glUniform1i(brdfindex, 17);
 
+	int irradianceindex = glGetUniformLocation(hShader, "IrradianceMap");
+	if (irradianceindex > 0) glUniform1i(irradianceindex, 18);
+
+	int prefilterindex = glGetUniformLocation(hShader, "PrefilterMap");
+	if (prefilterindex > 0) glUniform1i(prefilterindex, 19);
+
 	glUseProgram(0);
 	return !!linked;
 }
@@ -640,21 +648,71 @@ FShaderManager::FShaderManager()
 
 		if (gl.glslversion >= 3.0f)
 		{
+			const char *lumpname = "brdf_lut.lmp";
 			int lump = Wads.CheckNumForFullName("brdf_lut.lmp", 0);
-			if (lump == -1) I_Error("Unable to load 'brdf_lut.lmp'");
+			if (lump == -1) I_Error("Unable to load %s", lumpname);
 			FMemLump data = Wads.ReadLump(lump);
-			if (data.GetSize() < 512 * 512 * 4) // GetSize() returns some allocated block size rather than the actual size of the lump??
-				I_Error("Unexpected size for brdf_lut.lmp");
 
-			glGenTextures(1, (GLuint*)&mBrdfLUT);
+			uint8_t *ptr = (uint8_t *)data.GetMem();
+			uint8_t *brdflut = ptr;
+			uint8_t *irradiance = brdflut + 512 * 512 * 4;
+			uint8_t *prefilter = irradiance + 32 * 32 * 8 * 6;
+			ptrdiff_t size = prefilter + (128 * 128 + 64 * 64 + 32 * 32 + 16 * 16 + 8 * 8) * 8 * 6 - ptr;
+
+			if (data.GetSize() < size) // GetSize() returns some allocated block size rather than the actual size of the lump??
+				I_Error("Unexpected size for %s", lumpname);
+
 			glActiveTexture(GL_TEXTURE0 + 17);
+			glGenTextures(1, (GLuint*)&mBrdfLUT);
 			glBindTexture(GL_TEXTURE_2D, mBrdfLUT);
-			glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_HALF_FLOAT, data.GetMem());
+			glTexImage2D(GL_TEXTURE_2D, 0, GL_RG16F, 512, 512, 0, GL_RG, GL_HALF_FLOAT, brdflut);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			GLint sides[] =
+			{
+				GL_TEXTURE_CUBE_MAP_POSITIVE_X, GL_TEXTURE_CUBE_MAP_POSITIVE_Y, GL_TEXTURE_CUBE_MAP_POSITIVE_Z,
+				GL_TEXTURE_CUBE_MAP_NEGATIVE_X, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z
+			};
+
+			glActiveTexture(GL_TEXTURE0 + 18);
+			glGenTextures(1, (GLuint*)&mIrradianceMap);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, mIrradianceMap);
+			for (GLint side : sides)
+			{
+				glTexImage2D(side, 0, GL_RGBA16F, 32, 32, 0, GL_RGBA, GL_HALF_FLOAT, irradiance);
+				irradiance += 32 * 32 * 8;
+			}
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+			glActiveTexture(GL_TEXTURE0 + 19);
+			glGenTextures(1, (GLuint*)&mPrefilterMap);
+			glBindTexture(GL_TEXTURE_CUBE_MAP, mPrefilterMap);
+			for (GLint side : sides)
+			{
+				int size = 128;
+				for (int level = 0; level < 5; level++)
+				{
+					glTexImage2D(side, level, GL_RGBA16F, size, size, 0, GL_RGBA, GL_HALF_FLOAT, prefilter);
+					prefilter += size * size * 8;
+					size >>= 1;
+				}
+			}
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
 			glActiveTexture(GL_TEXTURE0);
+
+			glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 		}
 	}
 }

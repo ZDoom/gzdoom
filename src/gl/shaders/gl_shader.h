@@ -360,6 +360,8 @@ private:
 	FShader *mActiveShader = nullptr;
 	TArray<FShaderCollection*> mPassShaders;
 	int mBrdfLUT = 0;
+	int mIrradianceMap = 0;
+	int mPrefilterMap = 0;
 };
 
 class FShaderCollection

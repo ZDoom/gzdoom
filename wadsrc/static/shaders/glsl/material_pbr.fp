@@ -73,6 +73,10 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 	vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
 	vec3 Lo = uDynLightColor.rgb;
+	vec3 envWest = vec3(0.0);
+	vec3 envEast = vec3(0.0);
+	vec3 envNorth = vec3(0.0);
+	vec3 envSouth = vec3(0.0);
 
 	if (uLightIndex >= 0)
 	{
@@ -89,34 +93,50 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 				vec4 lightspot1 = lights[i+2];
 				vec4 lightspot2 = lights[i+3];
 
-				vec3 L = normalize(lightpos.xyz - worldpos);
-				vec3 H = normalize(V + L);
-
-				float attenuation = quadraticDistanceAttenuation(lightpos);
-				if (lightspot1.w == 1.0)
-					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-				if (lightcolor.a < 0.0)
-					attenuation *= clamp(dot(N, L), 0.0, 1.0); // Sign bit is the attenuated light flag
-
-				if (attenuation > 0.0)
+				if (lightcolor.a < 0.0) // Attenuated lights act as true point lights
 				{
-					attenuation *= shadowAttenuation(lightpos, lightcolor.a);
+					vec3 L = normalize(lightpos.xyz - worldpos);
+					vec3 H = normalize(V + L);
 
-					vec3 radiance = lightcolor.rgb * attenuation;
+					float attenuation = quadraticDistanceAttenuation(lightpos);
+					if (lightspot1.w == 1.0)
+						attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
+					if (lightcolor.a < 0.0)
+						attenuation *= clamp(dot(N, L), 0.0, 1.0); // Sign bit is the attenuated light flag
 
-					// cook-torrance brdf
-					float NDF = DistributionGGX(N, H, roughness);
-					float G = GeometrySmith(N, V, L, roughness);
-					vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+					if (attenuation > 0.0)
+					{
+						attenuation *= shadowAttenuation(lightpos, lightcolor.a);
 
-					vec3 kS = F;
-					vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+						vec3 radiance = lightcolor.rgb * attenuation;
 
-					vec3 nominator = NDF * G * F;
-					float denominator = 4.0 * clamp(dot(N, V), 0.0, 1.0) * clamp(dot(N, L), 0.0, 1.0);
-					vec3 specular = nominator / max(denominator, 0.001);
+						// cook-torrance brdf
+						float NDF = DistributionGGX(N, H, roughness);
+						float G = GeometrySmith(N, V, L, roughness);
+						vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
-					Lo += (kD * albedo / PI + specular) * radiance;
+						vec3 kS = F;
+						vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
+
+						vec3 nominator = NDF * G * F;
+						float denominator = 4.0 * clamp(dot(N, V), 0.0, 1.0) * clamp(dot(N, L), 0.0, 1.0);
+						vec3 specular = nominator / max(denominator, 0.001);
+
+						Lo += (kD * albedo / PI + specular) * radiance;
+					}
+				}
+				else // Non-attenuated lights act as environmental lights
+				{
+					float lightdistance = distance(lightpos.xyz, pixelpos.xyz);
+					float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
+					vec3 L = normalize(lightpos.xyz - worldpos);
+
+					float cx = L.x * attenuation;
+					float cz = L.z * attenuation;
+					envEast += lightcolor.rgb * clamp(cx, 0.0, 1.0);
+					envWest += lightcolor.rgb * clamp(-cx, 0.0, 1.0);
+					envNorth += lightcolor.rgb * clamp(cz, 0.0, 1.0);
+					envSouth += lightcolor.rgb * clamp(-cz, 0.0, 1.0);
 				}
 			}
 			//
@@ -162,7 +182,9 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 		}
 	}
 
-	// Pretend we sampled the sector light level from an irradiance map
+	// Calculate environmental light contribution using four directional colors:
+
+	// To do: add ambientLight 
 
 	vec3 F = fresnelSchlickRoughness(clamp(dot(N, V), 0.0, 1.0), F0, roughness);
 
@@ -170,12 +192,15 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 	vec3 kD = 1.0 - kS;
 	kD *= 1.0 - metallic;
 
-	vec3 irradiance = ambientLight; // texture(irradianceMap, N).rgb
+	const float MAX_REFLECTION_LOD = 4.0;
+	vec3 R = reflect(-V, N);
+	vec4 irradianceData = texture(IrradianceMap, N);
+	vec4 prefilterData = textureLod(PrefilterMap, R, roughness * MAX_REFLECTION_LOD);
+
+	vec3 irradiance = irradianceData.x * envEast + irradianceData.y * envWest + irradianceData.z * envNorth + irradianceData.w * envSouth;
 	vec3 diffuse = irradiance * albedo;
 
-	// const float MAX_REFLECTION_LOD = 4.0;
-	// vec3 R = reflect(-V, N);
-	vec3 prefilteredColor = ambientLight; // textureLod(prefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+	vec3 prefilteredColor = prefilterData.x * envEast + prefilterData.y * envWest + prefilterData.z * envNorth + prefilterData.w * envSouth;
 	vec2 envBRDF = texture(BrdfLUT, vec2(clamp(dot(N, V), 0.0, 1.0), roughness)).rg;
 	vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 

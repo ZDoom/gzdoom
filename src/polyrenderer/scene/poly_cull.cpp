@@ -137,7 +137,7 @@ void PolyCull::CullSubsector(subsector_t *sub)
 		}
 
 		// Skip line if entirely behind portal clipping plane
-		if ((PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D <= 0.0) ||
+		if ((PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D <= 0.0) &&
 			(PortalClipPlane.A * line->v2->fX() + PortalClipPlane.B * line->v2->fY() + PortalClipPlane.D <= 0.0))
 		{
 			PvsLineVisible[NextPvsLineStart++] = false;

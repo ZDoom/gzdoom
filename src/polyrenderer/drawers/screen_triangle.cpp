@@ -333,19 +333,12 @@ void TriangleBlock::RenderBlock(int x0, int y0, int x1, int y1)
 			if (Mask0 == 0 && Mask1 == 0)
 				continue;
 
-			// To do: make the stencil test use its own flag for comparison mode instead of abusing the depth test..
-			if (!depthTest)
-			{
-				StencilEqualTest();
-				if (Mask0 == 0 && Mask1 == 0)
-					continue;
-			}
-			else
-			{
-				StencilGreaterEqualTest();
-				if (Mask0 == 0 && Mask1 == 0)
-					continue;
+			StencilEqualTest();
+			if (Mask0 == 0 && Mask1 == 0)
+				continue;
 
+			if (depthTest)
+			{
 				DepthTest(args);
 				if (Mask0 == 0 && Mask1 == 0)
 					continue;

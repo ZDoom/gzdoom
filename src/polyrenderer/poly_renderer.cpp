@@ -158,17 +158,14 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 
 	ClearBuffers();
 	SetSceneViewport();
-	SetupPerspectiveMatrix();
 
-	PolyPortalViewpoint mainViewpoint;
-	mainViewpoint.WorldToView = WorldToView;
-	mainViewpoint.WorldToClip = WorldToClip;
+	PolyPortalViewpoint mainViewpoint = SetupPerspectiveMatrix();
 	mainViewpoint.StencilValue = GetNextStencilValue();
 	mainViewpoint.PortalPlane = PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f);
+	Scene.CurrentViewpoint = &mainViewpoint;
 	Scene.Render(&mainViewpoint);
-	Skydome.Render(Threads.MainThread(), WorldToView, WorldToClip);
-	Scene.RenderTranslucent(&mainViewpoint);
 	PlayerSprites.Render(Threads.MainThread());
+	Scene.CurrentViewpoint = nullptr;
 
 	if (Viewpoint.camera)
 		Viewpoint.camera->renderflags = savedflags;
@@ -213,15 +210,8 @@ void PolyRenderer::SetSceneViewport()
 	}
 }
 
-void PolyRenderer::SetupPerspectiveMatrix()
+PolyPortalViewpoint PolyRenderer::SetupPerspectiveMatrix()
 {
-	static bool bDidSetup = false;
-
-	if (!bDidSetup)
-	{
-		bDidSetup = true;
-	}
-
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
 	double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
@@ -232,9 +222,12 @@ void PolyRenderer::SetupPerspectiveMatrix()
 
 	float ratio = Viewwindow.WidescreenRatio;
 	float fovratio = (Viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
+
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(Viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
 
-	WorldToView =
+	PolyPortalViewpoint portalViewpoint;
+
+	portalViewpoint.WorldToView =
 		Mat4f::Rotate((float)Viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
 		Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
@@ -242,7 +235,9 @@ void PolyRenderer::SetupPerspectiveMatrix()
 		Mat4f::SwapYZ() *
 		Mat4f::Translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
 
-	WorldToClip = Mat4f::Perspective(fovy, ratio, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * WorldToView;
+	portalViewpoint.WorldToClip = Mat4f::Perspective(fovy, ratio, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * portalViewpoint.WorldToView;
+
+	return portalViewpoint;
 }
 
 cycle_t PolyCullCycles, PolyOpaqueCycles, PolyMaskedCycles, PolyDrawerWaitCycles;

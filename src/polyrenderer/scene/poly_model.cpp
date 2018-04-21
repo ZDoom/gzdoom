@@ -93,7 +93,7 @@ VSMatrix PolyModelRenderer::GetViewToWorldMatrix()
 	swapYZ.Matrix[3 + 3 * 4] = 1.0f;
 
 	VSMatrix worldToView;
-	worldToView.loadMatrix((PolyRenderer::Instance()->WorldToView * swapYZ).Matrix);
+	worldToView.loadMatrix((PolyRenderer::Instance()->Scene.CurrentViewpoint->WorldToView * swapYZ).Matrix);
 	
 	VSMatrix objectToWorld;
 	worldToView.inverseMatrix(objectToWorld);

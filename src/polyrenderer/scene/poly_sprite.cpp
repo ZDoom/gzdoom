@@ -83,7 +83,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &cli
 		{
 			const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
-			PolyRenderModel(thread, PolyRenderer::Instance()->WorldToClip, clipPlane, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
+			PolyRenderModel(thread, PolyRenderer::Instance()->Scene.CurrentViewpoint->WorldToClip, clipPlane, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
 			return;
 		}
 	}

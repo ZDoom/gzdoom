@@ -32,6 +32,7 @@
 #include "polyrenderer/math/gpu_types.h"
 #include "poly_playersprite.h"
 #include "poly_cull.h"
+#include "poly_sky.h"
 
 class PolyTranslucentObject
 {
@@ -63,7 +64,7 @@ public:
 	uint32_t StencilValue = 0;
 	int PortalDepth = 0;
 
-	line_t *LastPortalLine = nullptr;
+	line_t *PortalEnterLine = nullptr;
 
 	size_t ObjectsStart = 0;
 	size_t ObjectsEnd = 0;
@@ -81,7 +82,6 @@ public:
 	~RenderPolyScene();
 
 	void Render(PolyPortalViewpoint *viewpoint);
-	void RenderTranslucent(PolyPortalViewpoint *viewpoint);
 
 	static const uint32_t SkySubsectorDepth = 0x7fffffff;
 
@@ -89,6 +89,7 @@ public:
 
 private:
 	void RenderPortals();
+	void RenderTranslucent();
 	void RenderSectors();
 	void RenderSubsector(PolyRenderThread *thread, subsector_t *sub, uint32_t subsectorDepth);
 	void RenderLine(PolyRenderThread *thread, subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
@@ -100,6 +101,7 @@ private:
 	static int PointOnSide(const DVector2 &pos, const node_t *node);
 
 	PolyCull Cull;
+	PolySkyDome Skydome;
 };
 
 enum class PolyWaterFakeSide

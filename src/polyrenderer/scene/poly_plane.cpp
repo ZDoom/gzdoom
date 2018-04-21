@@ -36,17 +36,17 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals, size_t sectorPortalsStart)
 {
 	if (fakeflat.FrontSector->CenterFloor() == fakeflat.FrontSector->CenterCeiling())
 		return;
 
 	RenderPolyPlane plane;
-	plane.Render(thread, clipPlane, fakeflat, stencilValue, true, skyCeilingHeight, sectorPortals);
-	plane.Render(thread, clipPlane, fakeflat, stencilValue, false, skyFloorHeight, sectorPortals);
+	plane.Render(thread, clipPlane, fakeflat, stencilValue, true, skyCeilingHeight, sectorPortals, sectorPortalsStart);
+	plane.Render(thread, clipPlane, fakeflat, stencilValue, false, skyFloorHeight, sectorPortals, sectorPortalsStart);
 }
 
-void RenderPolyPlane::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals, size_t sectorPortalsStart)
 {
 	FSectorPortal *portal = fakeflat.FrontSector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
 	if (!portal || (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
@@ -55,7 +55,7 @@ void RenderPolyPlane::Render(PolyRenderThread *thread, const PolyClipPlane &clip
 	}
 	else
 	{
-		RenderPortal(thread, clipPlane, fakeflat, stencilValue, ceiling, skyHeight, portal, sectorPortals);
+		RenderPortal(thread, clipPlane, fakeflat, stencilValue, ceiling, skyHeight, portal, sectorPortals, sectorPortalsStart);
 	}
 }
 
@@ -99,7 +99,7 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyClipPlane
 	}
 }
 
-void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals, size_t sectorPortalsStart)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -113,11 +113,11 @@ void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyClipPlane
 		return;
 	}
 
-	for (auto &p : sectorPortals)
+	for (size_t i = sectorPortalsStart; i < sectorPortals.size(); i++)
 	{
-		if (p->Portal == portal) // To do: what other criteria do we need to check for?
+		if (sectorPortals[i]->Portal == portal) // To do: what other criteria do we need to check for?
 		{
-			polyportal = p.get();
+			polyportal = sectorPortals[i].get();
 			break;
 		}
 	}

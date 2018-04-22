@@ -682,6 +682,13 @@ class LevelCompatibility play
 				SetThingXY(8, 1200, -1072);
 				break;
 			}
+
+			case '5B8689912D21E91D899C61BBBDD44D7C': // altar of evil.wad map01
+			{
+				// Missing teleport destination on easy skill
+				SetThingSkills(115, 31);
+				break;
+			}
 		}
 	}
 

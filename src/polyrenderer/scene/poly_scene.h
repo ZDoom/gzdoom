@@ -63,6 +63,7 @@ public:
 	PolyClipPlane PortalPlane;
 	uint32_t StencilValue = 0;
 	int PortalDepth = 0;
+	bool Mirror = false;
 
 	line_t *PortalEnterLine = nullptr;
 

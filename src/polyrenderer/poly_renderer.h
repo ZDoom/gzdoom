@@ -55,7 +55,7 @@ public:
 
 	static PolyRenderer *Instance();
 
-	PolyPortalViewpoint SetupPerspectiveMatrix();
+	PolyPortalViewpoint SetupPerspectiveMatrix(bool mirror = false);
 
 	uint32_t GetNextStencilValue() { uint32_t value = NextStencilValue; NextStencilValue += 2; return value; }
 

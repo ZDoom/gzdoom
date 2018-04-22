@@ -150,7 +150,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	Segments.clear();
 	Segments.push_back({ angle1, angle2 });*/
 
-	PortalViewpoint = PolyRenderer::Instance()->SetupPerspectiveMatrix();
+	PortalViewpoint = PolyRenderer::Instance()->SetupPerspectiveMatrix(Mirror);
 	PortalViewpoint.StencilValue = StencilValue;
 	PortalViewpoint.PortalPlane = portalPlane;
 	PortalViewpoint.PortalDepth = portalDepth;
@@ -248,9 +248,6 @@ void PolyDrawLinePortal::SaveGlobals()
 	viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
 
 	R_SetViewAngle(viewpoint, viewwindow);
-
-	if (Mirror)
-		PolyTriangleDrawer::ToggleMirror(PolyRenderer::Instance()->Threads.MainThread()->DrawQueue);
 }
 
 void PolyDrawLinePortal::RestoreGlobals()
@@ -269,7 +266,4 @@ void PolyDrawLinePortal::RestoreGlobals()
 	}
 
 	R_SetViewAngle(viewpoint, viewwindow);
-
-	if (Mirror)
-		PolyTriangleDrawer::ToggleMirror(PolyRenderer::Instance()->Threads.MainThread()->DrawQueue);
 }

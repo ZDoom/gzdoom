@@ -29,7 +29,7 @@
 class PolyCull
 {
 public:
-	void CullScene(const PolyClipPlane &portalClipPlane);
+	void CullScene(const PolyClipPlane &portalClipPlane, sector_t *portalEnter);
 
 	bool IsLineSegVisible(uint32_t subsectorDepth, uint32_t lineIndex)
 	{
@@ -78,6 +78,7 @@ private:
 	bool FirstSkyHeight = true;
 
 	PolyClipPlane PortalClipPlane;
+	sector_t *PortalEnter = nullptr;
 
 	std::vector<uint32_t> PvsLineStart;
 	std::vector<bool> PvsLineVisible;

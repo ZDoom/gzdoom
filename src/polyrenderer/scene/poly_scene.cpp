@@ -59,7 +59,7 @@ void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 	CurrentViewpoint->LinePortalsStart = thread->LinePortals.size();
 
 	PolyCullCycles.Clock();
-	Cull.CullScene(CurrentViewpoint->PortalPlane);
+	Cull.CullScene(CurrentViewpoint->PortalPlane, CurrentViewpoint->PortalEnterSector);
 	PolyCullCycles.Unclock();
 
 	RenderSectors();

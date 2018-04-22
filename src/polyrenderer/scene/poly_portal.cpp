@@ -50,6 +50,7 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	PortalViewpoint.StencilValue = StencilValue;
 	PortalViewpoint.PortalPlane = PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f);
 	PortalViewpoint.PortalDepth = portalDepth;
+	PortalViewpoint.PortalEnterSector = Portal->mDestination;
 
 	PolyRenderer::Instance()->Scene.Render(&PortalViewpoint);
 	

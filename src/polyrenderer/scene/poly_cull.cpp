@@ -28,7 +28,7 @@
 #include "poly_cull.h"
 #include "polyrenderer/poly_renderer.h"
 
-void PolyCull::CullScene(const PolyClipPlane &portalClipPlane)
+void PolyCull::CullScene(const PolyClipPlane &portalClipPlane, sector_t *portalEnter)
 {
 	ClearSolidSegments();
 	MarkViewFrustum();
@@ -49,6 +49,7 @@ void PolyCull::CullScene(const PolyClipPlane &portalClipPlane)
 	PvsLineVisible.resize(level.segs.Size());
 
 	PortalClipPlane = portalClipPlane;
+	PortalEnter = portalEnter;
 
 	// Cull front to back
 	FirstSkyHeight = true;
@@ -87,6 +88,14 @@ void PolyCull::CullNode(void *node)
 
 void PolyCull::CullSubsector(subsector_t *sub)
 {
+	// Ignore everything in front of the portal
+	if (PortalEnter)
+	{
+		if (sub->sector != PortalEnter)
+			return;
+		PortalEnter = nullptr;
+	}
+
 	// Check if subsector is clipped entirely by the portal clip plane
 	bool visible = false;
 	for (uint32_t i = 0; i < sub->numlines; i++)

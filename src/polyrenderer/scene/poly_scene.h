@@ -66,6 +66,7 @@ public:
 	bool Mirror = false;
 
 	line_t *PortalEnterLine = nullptr;
+	sector_t *PortalEnterSector = nullptr;
 
 	size_t ObjectsStart = 0;
 	size_t ObjectsEnd = 0;

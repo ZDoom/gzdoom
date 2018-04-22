@@ -81,6 +81,11 @@ if( WIN32 )
 		find_library( DX_dinput8_LIBRARY dinput8
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Lib Lib/${XBITS} )
+		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+			find_library( DX_dxguid_LIBRARY dxguid
+				PATHS ENV DXSDK_DIR
+				PATH_SUFFIXES Lib Lib/${XBITS} )
+		endif()
 
 		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
 		# CMake cannot find these libraries via find_library.
@@ -89,6 +94,13 @@ if( WIN32 )
 			set( DX_dinput8_LIBRARY dinput8 )
 		endif()
 
+		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+			# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
+			# were moved to dinput8.lib.
+			if( NOT DX_dxguid_LIBRARY )
+				message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
+			endif()
+		endif()
 	endif()
 
 	set( ZDOOM_LIBS
@@ -109,6 +121,11 @@ if( WIN32 )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
 	endif()
 
+	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		if( DX_dxguid_LIBRARY )
+			list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
+		endif()
+	endif()
 else()
 	if( APPLE )
 		set( NO_GTK ON )

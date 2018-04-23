@@ -919,7 +919,6 @@ set (PCH_SOURCES
 	i_time.cpp
 	info.cpp
 	keysections.cpp
-	lumpconfigfile.cpp
 	m_alloc.cpp
 	m_argv.cpp
 	m_bbox.cpp

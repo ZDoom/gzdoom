@@ -691,8 +691,8 @@ public:
 	void CallDeactivate(AActor *activator);
 
 	// Called when actor dies
-	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0);
-	void CallDie(AActor *source, AActor *inflictor, int dmgflags = 0);
+	virtual void Die (AActor *source, AActor *inflictor, int dmgflags = 0, FName MeansOfDeath = NAME_None);
+	void CallDie(AActor *source, AActor *inflictor, int dmgflags = 0, FName MeansOfDeath = NAME_None);
 
 	// Perform some special damage action. Returns the amount of damage to do.
 	// Returning -1 signals the damage routine to exit immediately

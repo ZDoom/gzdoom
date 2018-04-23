@@ -429,7 +429,7 @@ class Actor : Thinker native
 	virtual native void Deactivate(Actor activator);
 	virtual native int DoSpecialDamage (Actor target, int damage, Name damagetype);
 	virtual native int TakeSpecialDamage (Actor inflictor, Actor source, int damage, Name damagetype);
-	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0);
+	virtual native void Die(Actor source, Actor inflictor, int dmgflags = 0, Name MeansOfDeath = 'none');
 	virtual native bool Slam(Actor victim);
 	virtual native void Touch(Actor toucher);
 	virtual native void MarkPrecacheSounds();

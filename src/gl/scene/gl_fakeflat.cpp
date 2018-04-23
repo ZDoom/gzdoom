@@ -159,7 +159,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 //
 //==========================================================================
 
-void GLSceneDrawer::CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
+area_t gl_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
 	if (in_area == area_default &&
 		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&
@@ -174,9 +174,9 @@ void GLSceneDrawer::CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsec
 
 		// allow some tolerance in case slopes are involved
 		if (cz1 <= fz1 + 1. / 100 && cz2 <= fz2 + 1. / 100)
-			in_area = area_below;
+			return area_below;
 		else
-			in_area = area_normal;
+			return area_normal;
 	}
 }
 

@@ -246,6 +246,7 @@ enum area_t
 // Global functions. Make them members of GLRenderer later?
 bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsector);
 sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
+area_t gl_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector);
 
 struct TexFilter_s
 {

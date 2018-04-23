@@ -36,21 +36,21 @@
 void gl_FlushModels();
 bool polymodelsInUse;
 
-void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)
+void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)
 {
-	PolyModelRenderer renderer(thread, worldToClip, clipPlane, stencilValue);
+	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
 	renderer.RenderModel(x, y, z, smf, actor);
 }
 
-void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy)
+void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy)
 {
-	PolyModelRenderer renderer(thread, worldToClip, clipPlane, stencilValue);
+	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
 	renderer.RenderHUDModel(psp, ofsx, ofsy);
 }
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolyModelRenderer::PolyModelRenderer(PolyRenderThread *thread, const Mat4f &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue) : Thread(thread), WorldToClip(worldToClip), ClipPlane(clipPlane), StencilValue(stencilValue)
+PolyModelRenderer::PolyModelRenderer(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue) : Thread(thread), WorldToClip(worldToClip), StencilValue(stencilValue)
 {
 	if (!polymodelsInUse)
 	{

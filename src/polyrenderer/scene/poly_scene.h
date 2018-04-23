@@ -40,7 +40,7 @@ public:
 	PolyTranslucentObject(uint32_t subsectorDepth = 0, double distanceSquared = 0.0) : subsectorDepth(subsectorDepth), DistanceSquared(distanceSquared) { }
 	virtual ~PolyTranslucentObject() { }
 
-	virtual void Render(PolyRenderThread *thread, const PolyClipPlane &portalPlane) = 0;
+	virtual void Render(PolyRenderThread *thread) = 0;
 
 	bool operator<(const PolyTranslucentObject &other) const
 	{
@@ -60,7 +60,6 @@ class PolyPortalViewpoint
 public:
 	Mat4f WorldToView;
 	Mat4f WorldToClip;
-	PolyClipPlane PortalPlane;
 	uint32_t StencilValue = 0;
 	int PortalDepth = 0;
 	bool Mirror = false;

@@ -44,11 +44,15 @@ void PolyDrawSectorPortal::Render(int portalDepth)
 	if (Portal->mType == PORTS_HORIZON || Portal->mType == PORTS_PLANE)
 		return;
 
+	/*angle_t angle1 = PolyCull::PointToPseudoAngle(v1->fX(), v1->fY());
+	angle_t angle2 = PolyCull::PointToPseudoAngle(v2->fX(), v2->fY());
+	Segments.clear();
+	Segments.push_back({ angle1, angle2 });*/
+
 	SaveGlobals();
 
 	PortalViewpoint = PolyRenderer::Instance()->SetupPerspectiveMatrix();
 	PortalViewpoint.StencilValue = StencilValue;
-	PortalViewpoint.PortalPlane = PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f);
 	PortalViewpoint.PortalDepth = portalDepth;
 	PortalViewpoint.PortalEnterSector = Portal->mDestination;
 
@@ -134,28 +138,12 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	DVector2 pt1 = clipLine->v1->fPos() - PolyRenderer::Instance()->Viewpoint.Pos;
 	DVector2 pt2 = clipLine->v2->fPos() - PolyRenderer::Instance()->Viewpoint.Pos;
 	bool backfacing = (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0);
-	vertex_t *v1 = backfacing ? clipLine->v1 : clipLine->v2;
-	vertex_t *v2 = backfacing ? clipLine->v2 : clipLine->v1;
-
-	// Calculate plane clipping
-	DVector2 planePos = v1->fPos();
-	DVector2 planeNormal = (v2->fPos() - v1->fPos()).Rotated90CW();
-	planeNormal.MakeUnit();
-	double planeD = -(planeNormal | (planePos + planeNormal * 0.001));
-	PolyClipPlane portalPlane((float)planeNormal.X, (float)planeNormal.Y, (float)0.0f, (float)planeD);
-
-	// Cull everything outside the portal line
-	// To do: this doesn't work for some strange reason..
-	/*angle_t angle1 = PolyCull::PointToPseudoAngle(v1->fX(), v1->fY());
-	angle_t angle2 = PolyCull::PointToPseudoAngle(v2->fX(), v2->fY());
-	Segments.clear();
-	Segments.push_back({ angle1, angle2 });*/
 
 	PortalViewpoint = PolyRenderer::Instance()->SetupPerspectiveMatrix(Mirror);
 	PortalViewpoint.StencilValue = StencilValue;
-	PortalViewpoint.PortalPlane = portalPlane;
 	PortalViewpoint.PortalDepth = portalDepth;
 	PortalViewpoint.PortalEnterLine = clipLine;
+	PortalViewpoint.PortalEnterSector = backfacing ? clipLine->frontsector : clipLine->backsector;
 
 	PolyRenderer::Instance()->Scene.Render(&PortalViewpoint);
 

@@ -59,7 +59,7 @@ void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 	CurrentViewpoint->LinePortalsStart = thread->LinePortals.size();
 
 	PolyCullCycles.Clock();
-	Cull.CullScene(CurrentViewpoint->PortalPlane, CurrentViewpoint->PortalEnterSector);
+	Cull.CullScene(CurrentViewpoint->PortalEnterSector, CurrentViewpoint->PortalEnterLine);
 	PolyCullCycles.Unclock();
 
 	RenderSectors();
@@ -158,15 +158,15 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 			RenderPolyNode(thread, &sub->BSP->Nodes.Last(), subsectorDepth, frontsector);
 		}
 
-		Render3DFloorPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, sub, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals, CurrentViewpoint->SectorPortalsStart);
+		Render3DFloorPlane::RenderPlanes(thread, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
+		RenderPolyPlane::RenderPlanes(thread, sub, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals, CurrentViewpoint->SectorPortalsStart);
 	}
 	else
 	{
 		PolyTransferHeights fakeflat(sub);
 
-		Render3DFloorPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(thread, CurrentViewpoint->PortalPlane, fakeflat, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals, CurrentViewpoint->SectorPortalsStart);
+		Render3DFloorPlane::RenderPlanes(thread, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
+		RenderPolyPlane::RenderPlanes(thread, fakeflat, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals, CurrentViewpoint->SectorPortalsStart);
 
 		for (uint32_t i = 0; i < sub->numlines; i++)
 		{
@@ -237,7 +237,7 @@ void RenderPolyScene::RenderPolySubsector(PolyRenderThread *thread, subsector_t 
 				sub->flags |= SSECF_DRAWN;
 			}
 
-			RenderPolyWall::RenderLine(thread, CurrentViewpoint->PortalPlane, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, thread->TranslucentObjects, thread->LinePortals, CurrentViewpoint->LinePortalsStart, CurrentViewpoint->PortalEnterLine);
+			RenderPolyWall::RenderLine(thread, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, thread->TranslucentObjects, thread->LinePortals, CurrentViewpoint->LinePortalsStart, CurrentViewpoint->PortalEnterLine);
 		}
 	}
 }
@@ -311,12 +311,12 @@ void RenderPolyScene::RenderLine(PolyRenderThread *thread, subsector_t *sub, seg
 		for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 		{
 			F3DFloor *fakeFloor = line->backsector->e->XFloor.ffloors[i];
-			RenderPolyWall::Render3DFloorLine(thread, CurrentViewpoint->PortalPlane, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, fakeFloor, thread->TranslucentObjects);
+			RenderPolyWall::Render3DFloorLine(thread, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, fakeFloor, thread->TranslucentObjects);
 		}
 	}
 
 	// Render wall, and update culling info if its an occlusion blocker
-	RenderPolyWall::RenderLine(thread, CurrentViewpoint->PortalPlane, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, thread->TranslucentObjects, thread->LinePortals, CurrentViewpoint->LinePortalsStart, CurrentViewpoint->PortalEnterLine);
+	RenderPolyWall::RenderLine(thread, line, frontsector, subsectorDepth, CurrentViewpoint->StencilValue, thread->TranslucentObjects, thread->LinePortals, CurrentViewpoint->LinePortalsStart, CurrentViewpoint->PortalEnterLine);
 }
 
 void RenderPolyScene::RenderPortals()
@@ -339,7 +339,6 @@ void RenderPolyScene::RenderPortals()
 	PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform);
 
 	PolyDrawArgs args;
-	args.SetClipPlane(0, CurrentViewpoint->PortalPlane);
 	args.SetWriteColor(!enterPortals);
 	args.SetDepthTest(false);
 
@@ -394,7 +393,7 @@ void RenderPolyScene::RenderTranslucent()
 	for (size_t i = CurrentViewpoint->ObjectsEnd; i > CurrentViewpoint->ObjectsStart; i--)
 	{
 		PolyTranslucentObject *obj = objects[i - 1];
-		obj->Render(thread, CurrentViewpoint->PortalPlane);
+		obj->Render(thread);
 		obj->~PolyTranslucentObject();
 	}
 

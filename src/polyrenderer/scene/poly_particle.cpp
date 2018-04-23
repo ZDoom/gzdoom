@@ -32,7 +32,7 @@
 
 EXTERN_CVAR(Int, gl_particles_style)
 
-void RenderPolyParticle::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
+void RenderPolyParticle::Render(PolyRenderThread *thread, particle_t *particle, subsector_t *sub, uint32_t stencilValue)
 {
 	double timefrac = r_viewpoint.TicFrac;
 	if (paused || bglobal.freeze || (level.flags2 & LEVEL2_FROZEN))
@@ -85,7 +85,6 @@ void RenderPolyParticle::Render(PolyRenderThread *thread, const PolyClipPlane &c
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);
-	args.SetClipPlane(0, clipPlane);
 	args.SetTexture(GetParticleTexture(), ParticleTextureSize, ParticleTextureSize);
 	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
 }

@@ -1842,9 +1842,9 @@ class PowerCoupling : Actor
 		Loop;
 	}
 	
-	override void Die (Actor source, Actor inflictor, int dmgflags)
+	override void Die (Actor source, Actor inflictor, int dmgflags, Name MeansOfDeath)
 	{
-		Super.Die (source, inflictor, dmgflags);
+		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
 
 		int i;
 

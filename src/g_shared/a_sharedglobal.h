@@ -162,7 +162,7 @@ public:
 	void Tick ();
 	
 	void Serialize(FSerializer &arc);
-	void Die (AActor *source, AActor *inflictor, int dmgflags);
+	void Die (AActor *source, AActor *inflictor, int dmgflags, FName MeansOfDeath) override;
 	void OnDestroy() override;
 
 	TObjPtr<AActor*> UnmorphedMe;

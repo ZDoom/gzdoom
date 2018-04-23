@@ -112,13 +112,13 @@ class Heresiarch : Actor
 		Stop;
 	}
 
-	override void Die (Actor source, Actor inflictor, int dmgflags)
+	override void Die (Actor source, Actor inflictor, int dmgflags, Name MeansOfDeath)
 	{
 		// The heresiarch just executes a script instead of a special upon death
 		int script = special;
 		special = 0;
 
-		Super.Die (source, inflictor, dmgflags);
+		Super.Die (source, inflictor, dmgflags, MeansOfDeath);
 
 		if (script != 0)
 		{

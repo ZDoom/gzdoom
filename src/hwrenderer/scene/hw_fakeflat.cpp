@@ -30,8 +30,7 @@
 #include "g_levellocals.h"
 #include "a_sharedglobal.h"
 #include "r_sky.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_scenedrawer.h"
+#include "hw_fakeflat.h"
 
 
 //==========================================================================

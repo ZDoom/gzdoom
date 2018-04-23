@@ -825,8 +825,6 @@ set( FASTMATH_SOURCES
 	textures/hires/xbr/xbrz.cpp
 	textures/hires/xbr/xbrz_old.cpp
 	gl/scene/gl_bsp.cpp
-	gl/scene/gl_fakeflat.cpp
-	gl/scene/gl_clipper.cpp
 	gl/scene/gl_decal.cpp
 	gl/scene/gl_drawinfo.cpp
 	gl/scene/gl_flats.cpp
@@ -845,6 +843,8 @@ set( FASTMATH_SOURCES
 	gl_load/gl_load.c
 	gl/models/gl_models.cpp
 	hwrenderer/dynlights/hw_dynlightdata.cpp
+	hwrenderer/scene/hw_fakeflat.cpp
+	hwrenderer/scene/hw_clipper.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp

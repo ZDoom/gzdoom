@@ -302,10 +302,10 @@ public:
 	virtual bool Mipmapped() { return true; }
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
-	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
+	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return SourceLump; }
-	virtual FTexture *GetRedirect(bool wantwarped);
+	virtual FTexture *GetRedirect();
 	virtual FTexture *GetRawTexture();		// for FMultiPatchTexture to override
 
 	virtual void Unload ();
@@ -725,13 +725,13 @@ public:
 	void Unload() override;
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL) override;
+	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL) override;
 	const uint32_t *GetPixelsBgra() override;
 	bool CheckModified (FRenderStyle) override;
 
 	float GetSpeed() const { return Speed; }
 	int GetSourceLump() { return SourcePic->GetSourceLump(); }
 	void SetSpeed(float fac) { Speed = fac; }
-	FTexture *GetRedirect(bool wantwarped);
 
 	uint64_t GenTime[2] = { 0, 0 };
 	uint64_t GenTimeBgra = 0;

@@ -87,6 +87,7 @@ class FMaterial
 
 public:
 	FTexture *tex;
+	FTexture *sourcetex;	// in case of redirection this is different from tex.
 	
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
@@ -101,7 +102,7 @@ public:
 	}
 	bool isMasked() const
 	{
-		return !!tex->bMasked;
+		return !!sourcetex->bMasked;
 	}
 
 	int GetLayers() const

@@ -22,8 +22,6 @@
 
 #include "w_wad.h"
 #include "cmdlib.h"
-#include "sc_man.h"
-#include "m_crc32.h"
 #include "r_data/models/models.h"
 
 #define MAX_QPATH 64

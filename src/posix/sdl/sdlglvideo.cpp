@@ -35,13 +35,10 @@
 
 #include "doomtype.h"
 
-#include "templates.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "v_video.h"
-#include "v_pfx.h"
-#include "stats.h"
 #include "version.h"
 #include "c_console.h"
 
@@ -54,8 +51,6 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
-#include "gl/system/gl_cvars.h"
 
 // MACROS ------------------------------------------------------------------
 

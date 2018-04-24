@@ -34,7 +34,6 @@
 
 #include "doomtype.h"
 #include "i_system.h"
-#include "v_palette.h"
 #include "v_pfx.h"
 
 PfxUnion GPfxPal;

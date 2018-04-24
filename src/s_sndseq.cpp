@@ -21,7 +21,6 @@
 //
 
 #include <string.h>
-#include <stdio.h>
 
 #include "doomtype.h"
 #include "doomstat.h"
@@ -30,12 +29,10 @@
 #include "s_sound.h"
 #include "s_sndseq.h"
 #include "w_wad.h"
-#include "i_system.h"
 #include "cmdlib.h"
 #include "p_local.h"
 #include "po_man.h"
 #include "gi.h"
-#include "templates.h"
 #include "c_dispatch.h"
 #include "g_level.h"
 #include "serializer.h"

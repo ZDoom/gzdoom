@@ -23,14 +23,10 @@
 //
 //-----------------------------------------------------------------------------
 
-#include "i_video.h"
 #include "v_video.h"
 #include "m_random.h"
-#include "doomdef.h"
 #include "f_wipe.h"
-#include "c_cvars.h"
 #include "templates.h"
-#include "v_palette.h"
 
 int wipe_CalcBurn (uint8_t *burnarray, int width, int height, int density)
 {

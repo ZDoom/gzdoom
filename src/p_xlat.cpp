@@ -36,16 +36,10 @@
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "doomdata.h"
-#include "m_swap.h"
 #include "p_spec.h"
 #include "p_local.h"
 #include "a_sharedglobal.h"
-#include "gi.h"
-#include "w_wad.h"
-#include "sc_man.h"
-#include "cmdlib.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 #include "xlat/xlat.h"
 
 // define names for the TriggerType field of the general linedefs

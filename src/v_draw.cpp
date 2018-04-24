@@ -37,26 +37,16 @@
 
 #include "doomtype.h"
 #include "v_video.h"
-#include "m_swap.h"
 #include "r_defs.h"
 #include "r_utility.h"
 #include "r_renderer.h"
-#include "r_data/r_translate.h"
 #include "doomstat.h"
-#include "v_palette.h"
 #include "gi.h"
 #include "g_level.h"
-#include "st_stuff.h"
 #include "sbar.h"
 
-#include "i_system.h"
 #include "i_video.h"
-#include "templates.h"
-#include "d_net.h"
-#include "colormatcher.h"
-#include "r_data/colormaps.h"
 #include "g_levellocals.h"
-#include "textures.h"
 #include "vm.h"
 
 CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)

@@ -34,10 +34,7 @@
 
 #include "templates.h"
 #include "textures/textures.h"
-#include "doomdef.h"
-#include "g_game.h"
 #include "s_sound.h"
-#include "doomstat.h"
 #include "r_state.h"
 #include "w_wad.h"
 #include "cmdlib.h"

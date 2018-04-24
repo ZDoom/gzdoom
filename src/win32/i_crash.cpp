@@ -37,9 +37,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0501
 #include <windows.h>
-#include <winnt.h>
 #include <richedit.h>
-#include <winuser.h>
 #include <tlhelp32.h>
 #ifndef _M_IX86
 #include <winternl.h>
@@ -55,22 +53,14 @@
 #endif
 #include <commctrl.h>
 #include <commdlg.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <setupapi.h>
 #include <uxtheme.h>
 #include <shellapi.h>
-#include <uxtheme.h>
-#include <stddef.h>
 
 #include "doomtype.h"
 #include "resource.h"
 #include "version.h"
 #include "m_swap.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include <time.h>
 #include <zlib.h>
 

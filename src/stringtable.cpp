@@ -33,11 +33,9 @@
 */
 
 #include <string.h>
-#include <stddef.h>
 
 #include "stringtable.h"
 #include "cmdlib.h"
-#include "m_swap.h"
 #include "w_wad.h"
 #include "i_system.h"
 #include "sc_man.h"
@@ -109,7 +107,6 @@ void FStringTable::FreeNonDehackedStrings ()
 	}
 }
 
-#include "doomerrors.h"
 void FStringTable::LoadStrings (bool enuOnly)
 {
 	int lastlump, lump;

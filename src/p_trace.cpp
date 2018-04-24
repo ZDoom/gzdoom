@@ -34,11 +34,9 @@
 
 #include "p_trace.h"
 #include "p_local.h"
-#include "i_system.h"
 #include "r_sky.h"
 #include "doomstat.h"
 #include "p_maputl.h"
-#include "r_defs.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "p_terrain.h"

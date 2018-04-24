@@ -21,9 +21,7 @@
 //
 
 #include "gl/system/gl_system.h"
-#include "templates.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"

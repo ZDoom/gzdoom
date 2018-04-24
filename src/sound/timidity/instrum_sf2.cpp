@@ -9,7 +9,6 @@
 #include "templates.h"
 #include "timidity.h"
 #include "sf2.h"
-#include "files.h"
 #include "i_soundfont.h"
 
 namespace Timidity

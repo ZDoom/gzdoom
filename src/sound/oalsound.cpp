@@ -33,20 +33,13 @@
 */
 
 #include <functional>
-#include <memory>
 #include <chrono>
 
 #include "doomstat.h"
 #include "templates.h"
 #include "oalsound.h"
-#include "c_cvars.h"
 #include "c_dispatch.h"
-#include "i_system.h"
 #include "v_text.h"
-#include "gi.h"
-#include "actor.h"
-#include "r_state.h"
-#include "w_wad.h"
 #include "i_module.h"
 #include "i_music.h"
 #include "i_musicinterns.h"

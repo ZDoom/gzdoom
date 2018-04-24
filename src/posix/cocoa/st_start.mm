@@ -38,7 +38,6 @@
 #include "c_cvars.h"
 #include "st_console.h"
 #include "st_start.h"
-#include "v_text.h"
 
 
 FStartupScreen *StartScreen;

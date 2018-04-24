@@ -35,11 +35,8 @@
 
 #include "doomstat.h"
 #include "g_hub.h"
-#include "tarray.h"
 #include "g_level.h"
 #include "g_game.h"
-#include "gi.h"
-#include "files.h"
 #include "m_png.h"
 #include "gstrings.h"
 #include "wi_stuff.h"

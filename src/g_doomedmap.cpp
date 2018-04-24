@@ -36,13 +36,8 @@
 #include "info.h"
 #include "actor.h"
 #include "p_lnspec.h"
-#include "m_fixed.h"
 #include "c_dispatch.h"
-#include "templates.h"
-#include "cmdlib.h"
-#include "g_level.h"
 #include "v_text.h"
-#include "i_system.h"
 
 
 const char *SpecialMapthingNames[] = {

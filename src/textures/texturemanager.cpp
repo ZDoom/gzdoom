@@ -48,11 +48,9 @@
 #include "st_start.h"
 #include "cmdlib.h"
 #include "g_level.h"
-#include "m_fixed.h"
 #include "v_video.h"
 #include "r_renderer.h"
 #include "r_sky.h"
-#include "textures/textures.h"
 #include "vm.h"
 
 FTextureManager TexMan;

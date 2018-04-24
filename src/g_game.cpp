@@ -26,7 +26,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stddef.h>
-#include <time.h>
 #include <memory>
 #ifdef __APPLE__
 #include <CoreServices/CoreServices.h>
@@ -43,9 +42,7 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "menu/menu.h"
-#include "m_random.h"
 #include "m_crc32.h"
-#include "i_system.h"
 #include "p_saveg.h"
 #include "p_tick.h"
 #include "d_main.h"
@@ -54,24 +51,16 @@
 #include "st_stuff.h"
 #include "am_map.h"
 #include "c_console.h"
-#include "c_cvars.h"
 #include "c_bind.h"
 #include "c_dispatch.h"
-#include "v_video.h"
 #include "w_wad.h"
 #include "p_local.h" 
-#include "s_sound.h"
 #include "gstrings.h"
 #include "r_sky.h"
 #include "g_game.h"
-#include "g_level.h"
-#include "b_bot.h"			//Added by MC:
 #include "sbar.h"
-#include "m_swap.h"
 #include "m_png.h"
-#include "gi.h"
 #include "a_keys.h"
-#include "r_data/r_translate.h"
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_event.h"
@@ -82,18 +71,12 @@
 #include "r_utility.h"
 #include "a_morph.h"
 #include "p_spec.h"
-#include "r_data/colormaps.h"
 #include "serializer.h"
-#include "w_zip.h"
-#include "resourcefiles/resourcefile.h"
 #include "vm.h"
-
-#include <zlib.h>
 
 #include "g_hub.h"
 #include "g_levellocals.h"
 #include "events.h"
-#include "d_main.h"
 
 
 static FRandom pr_dmspawn ("DMSpawn");

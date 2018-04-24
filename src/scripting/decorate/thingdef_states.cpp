@@ -39,23 +39,11 @@
 */
 
 #include "a_pickups.h"
-#include "info.h"
-#include "sc_man.h"
-#include "tarray.h"
-#include "templates.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
 #include "p_local.h"
-#include "v_palette.h"
-#include "doomerrors.h"
 #include "thingdef.h"
-#include "a_sharedglobal.h"
-#include "s_sound.h"
-#include "i_system.h"
-#include "colormatcher.h"
 #include "backend/codegen.h"
-#include "templates.h"
-#include "backend/vmbuilder.h"
 
 //==========================================================================
 //***

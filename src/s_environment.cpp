@@ -33,7 +33,6 @@
 */
 
 #include "doomtype.h"
-#include "tarray.h"
 #include "s_sound.h"
 #include "sc_man.h"
 #include "cmdlib.h"
@@ -44,7 +43,6 @@
 
 #include "c_cvars.h"
 #include "c_dispatch.h"
-#include "files.h"
 #include "vm.h"
 #include "dobject.h"
 #include "menu/menu.h"

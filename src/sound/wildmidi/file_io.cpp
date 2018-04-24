@@ -39,7 +39,6 @@
 #include "files.h"
 #include "wm_error.h"
 #include "file_io.h"
-#include "cmdlib.h"
 #include "i_soundfont.h"
 
 std::unique_ptr<FSoundFontReader> wm_sfreader;

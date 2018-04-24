@@ -26,12 +26,8 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "i_time.h"
 #include "gi.h"
 #include "m_png.h"
-#include "m_random.h"
-#include "st_stuff.h"
-#include "dobject.h"
 #include "doomstat.h"
 #include "g_level.h"
 #include "r_data/r_interpolate.h"
@@ -40,11 +36,9 @@
 #include "p_effect.h"
 #include "sbar.h"
 #include "po_man.h"
-#include "r_utility.h"
 #include "p_local.h"
 #include "serializer.h"
 #include "g_levellocals.h"
-#include "events.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/dynlights/gl_lightbuffer.h"
@@ -59,11 +53,8 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/stereo3d/scoped_view_shifter.h"
-#include "gl/textures/gl_material.h"
-#include "gl/utility/gl_clock.h"
 
 //==========================================================================
 //
@@ -269,9 +260,9 @@ void GLSceneDrawer::CreateScene()
 	// These cannot be multithreaded when the time comes because all these depend
 	// on the global 'validcount' variable.
 
-	gl_drawinfo->HandleMissingTextures();	// Missing upper/lower textures
+	gl_drawinfo->HandleMissingTextures(in_area);	// Missing upper/lower textures
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water
-	gl_drawinfo->ProcessSectorStacks();		// merge visplanes of sector stacks
+	gl_drawinfo->ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
 	GLRenderer->mVBO->Unmap();
 
 	ProcessAll.Unclock();

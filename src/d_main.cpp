@@ -38,16 +38,13 @@
 #ifdef HAVE_FPU_CONTROL
 #include <fpu_control.h>
 #endif
-#include <float.h>
 
 #if defined(__unix__) || defined(__APPLE__)
 #include <unistd.h>
 #endif
 
-#include <time.h>
 #include <math.h>
 #include <assert.h>
-#include <sys/stat.h>
 
 #include "doomerrors.h"
 
@@ -67,7 +64,6 @@
 #include "menu/menu.h"
 #include "c_console.h"
 #include "c_dispatch.h"
-#include "i_system.h"
 #include "i_sound.h"
 #include "i_video.h"
 #include "g_game.h"
@@ -81,40 +77,29 @@
 #include "d_main.h"
 #include "d_dehacked.h"
 #include "cmdlib.h"
-#include "s_sound.h"
-#include "m_swap.h"
 #include "v_text.h"
 #include "gi.h"
-#include "b_bot.h"		//Added by MC:
-#include "stats.h"
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
 #include "version.h"
-#include "v_text.h"
 #include "st_start.h"
-#include "templates.h"
 #include "teaminfo.h"
 #include "hardware.h"
 #include "sbarinfo.h"
 #include "d_net.h"
-#include "g_level.h"
 #include "d_event.h"
 #include "d_netinf.h"
-#include "v_palette.h"
 #include "m_cheat.h"
 #include "compatibility.h"
 #include "m_joy.h"
-#include "sc_man.h"
 #include "po_man.h"
-#include "resourcefiles/resourcefile.h"
 #include "r_renderer.h"
 #include "p_local.h"
 #include "autosegs.h"
 #include "fragglescript/t_fs.h"
 #include "g_levellocals.h"
 #include "events.h"
-#include "r_utility.h"
 #include "vm.h"
 #include "types.h"
 #include "r_data/r_vanillatrans.h"

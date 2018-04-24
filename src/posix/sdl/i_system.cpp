@@ -27,17 +27,11 @@
 #include <unistd.h>
 
 #include <stdarg.h>
-#include <sys/types.h>
-#include <sys/time.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
 #include <fcntl.h>
-#include <signal.h>
 
 #include <SDL.h>
 
 #include "doomerrors.h"
-#include <math.h>
 
 #include "doomtype.h"
 #include "doomstat.h"
@@ -46,27 +40,15 @@
 #include "cmdlib.h"
 #include "m_argv.h"
 #include "m_misc.h"
-#include "i_video.h"
 #include "i_sound.h"
-#include "i_music.h"
 #include "x86.h"
 
 #include "d_main.h"
 #include "d_net.h"
 #include "g_game.h"
-#include "i_system.h"
 #include "c_dispatch.h"
-#include "templates.h"
-#include "v_palette.h"
-#include "textures.h"
-#include "bitmap.h"
 
-#include "stats.h"
-#include "hardware.h"
 #include "gameconfigfile.h"
-
-#include "m_fixed.h"
-#include "g_level.h"
 
 EXTERN_CVAR (String, language)
 

@@ -44,7 +44,6 @@
  */
 
 #include <math.h>
-#include <limits>
 
 #include "doomtype.h"
 #include "opl.h"

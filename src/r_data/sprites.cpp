@@ -25,17 +25,13 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "s_sound.h"
-#include "c_console.h"
 #include "d_player.h"
 #include "d_netinf.h"
 #include "gi.h"
-#include "colormatcher.h"
 #include "c_dispatch.h"
-#include "r_defs.h"
 #include "v_text.h"
 #include "r_data/sprites.h"
 #include "r_data/voxels.h"
-#include "textures/textures.h"
 #include "vm.h"
 
 void gl_InitModels();

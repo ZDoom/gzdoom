@@ -34,11 +34,7 @@
 
 #include "vmbuilder.h"
 #include "codegen.h"
-#include "info.h"
 #include "m_argv.h"
-//#include "thingdef.h"
-#include "doomerrors.h"
-#include "vmintern.h"
 
 struct VMRemap
 {

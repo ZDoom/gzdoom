@@ -33,11 +33,8 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/scene/gl_portal.h"
-#include "c_dispatch.h"
 #include "p_local.h"
-#include "g_level.h"
 #include "r_sky.h"
-#include "g_levellocals.h"
 
 // externally settable lighting properties
 static float distfogtable[2][256];	// light to fog conversion table for black fog

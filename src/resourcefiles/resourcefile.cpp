@@ -38,10 +38,8 @@
 #include "resourcefile.h"
 #include "cmdlib.h"
 #include "w_wad.h"
-#include "doomerrors.h"
 #include "gi.h"
 #include "doomstat.h"
-#include "w_zip.h"
 
 
 //==========================================================================

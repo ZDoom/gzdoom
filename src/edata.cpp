@@ -36,7 +36,6 @@
 
 #include "w_wad.h"
 #include "m_argv.h"
-#include "zstring.h"
 #include "sc_man.h"
 #include "g_level.h"
 #include "doomdata.h"
@@ -46,9 +45,7 @@
 #include "p_setup.h"
 #include "p_tags.h"
 #include "p_terrain.h"
-#include "v_palette.h"
 #include "p_acs.h"
-#include "r_data/colormaps.h"
 #include "g_levellocals.h"
 
 

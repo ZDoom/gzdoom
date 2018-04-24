@@ -29,18 +29,12 @@
 #include "p_local.h"
 #include "a_sharedglobal.h"
 #include "g_levellocals.h"
-#include "r_sky.h"
 #include "p_effect.h"
 #include "po_man.h"
-#include "doomdata.h"
-#include "g_levellocals.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_wall.h"
-#include "gl/utility/gl_clock.h"
 
 EXTERN_CVAR(Bool, gl_render_segs)
 

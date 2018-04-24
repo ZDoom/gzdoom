@@ -34,12 +34,9 @@
 
 #include "p_setup.h"
 #include "p_lnspec.h"
-#include "templates.h"
-#include "i_system.h"
 #include "p_conversation.h"
 #include "p_udmf.h"
 #include "doomerrors.h"
-#include "cmdlib.h"
 #include "actor.h"
 #include "a_pickups.h"
 #include "w_wad.h"

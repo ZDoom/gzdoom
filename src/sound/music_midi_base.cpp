@@ -36,14 +36,7 @@
 
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
-#include "i_music.h"
-#include "i_system.h"
-#include "gameconfigfile.h"
-#include "cmdlib.h"
-#include "m_misc.h"
-#include "s_sound.h"
 
-#include "templates.h"
 #include "v_text.h"
 #include "menu/menu.h"
 

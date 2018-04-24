@@ -34,12 +34,9 @@
 */
 
 #include "doomtype.h"
-#include "files.h"
-#include "templates.h"
 #include "r_utility.h"
 #include "textures/textures.h"
 #include "warpbuffer.h"
-#include "v_palette.h"
 #include "v_video.h"
 
 

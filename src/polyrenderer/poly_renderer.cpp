@@ -161,7 +161,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 
 	PolyPortalViewpoint mainViewpoint = SetupPerspectiveMatrix();
 	mainViewpoint.StencilValue = GetNextStencilValue();
-	mainViewpoint.PortalPlane = PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f);
 	Scene.CurrentViewpoint = &mainViewpoint;
 	Scene.Render(&mainViewpoint);
 	PlayerSprites.Render(Threads.MainThread());

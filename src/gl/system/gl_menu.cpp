@@ -23,12 +23,8 @@
 
 #include "gl/system/gl_system.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
 #include "v_video.h"
-#include "version.h"
-#include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
-#include "gl/renderer/gl_renderer.h"
 #include "menu/menu.h"
 
 

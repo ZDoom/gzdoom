@@ -39,22 +39,12 @@
 #define _WIN32_WINNT 0x0501
 #include <windows.h>
 #include <xinput.h>
-#include <malloc.h>
 #include <limits.h>
 
 #include "i_input.h"
-#include "i_system.h"
 #include "d_event.h"
-#include "d_gui.h"
-#include "c_cvars.h"
-#include "c_dispatch.h"
-#include "doomdef.h"
-#include "doomstat.h"
-#include "hardware.h"
 #include "templates.h"
 #include "gameconfigfile.h"
-#include "cmdlib.h"
-#include "v_text.h"
 #include "m_argv.h"
 
 // MACROS ------------------------------------------------------------------

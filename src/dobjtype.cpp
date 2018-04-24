@@ -35,19 +35,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <float.h>
 #include <limits>
 
 #include "dobject.h"
-#include "i_system.h"
 #include "serializer.h"
 #include "actor.h"
-#include "templates.h"
 #include "autosegs.h"
 #include "v_text.h"
 #include "a_pickups.h"
 #include "d_player.h"
-#include "doomerrors.h"
 #include "fragglescript/t_fs.h"
 #include "a_keys.h"
 #include "vm.h"

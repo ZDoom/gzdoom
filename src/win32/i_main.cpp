@@ -49,7 +49,6 @@
 //#include <wtsapi32.h>
 #define NOTIFY_FOR_THIS_SESSION 0
 
-#include <stdlib.h>
 #ifdef _MSC_VER
 #include <eh.h>
 #include <new.h>
@@ -57,27 +56,17 @@
 #endif
 #include "resource.h"
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <math.h>
-
 #include "doomerrors.h"
 #include "hardware.h"
 
-#include "doomtype.h"
 #include "m_argv.h"
 #include "d_main.h"
 #include "i_module.h"
-#include "i_system.h"
 #include "c_console.h"
 #include "version.h"
-#include "i_video.h"
-#include "i_sound.h"
 #include "i_input.h"
 #include "w_wad.h"
-#include "templates.h"
 #include "cmdlib.h"
-#include "g_level.h"
 #include "doomstat.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
@@ -87,8 +76,6 @@
 #include "st_start.h"
 
 #include "optwin32.h"
-
-#include <assert.h>
 
 // MACROS ------------------------------------------------------------------
 

@@ -52,13 +52,8 @@
 #include "b_bot.h"	//Added by MC:
 
 #include "d_player.h"
-#include "a_sharedglobal.h"
-#include "a_pickups.h"
 #include "gi.h"
-#include "templates.h"
 #include "sbar.h"
-#include "s_sound.h"
-#include "g_level.h"
 #include "d_net.h"
 #include "d_netinf.h"
 #include "a_morph.h"

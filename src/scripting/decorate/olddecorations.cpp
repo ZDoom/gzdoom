@@ -35,20 +35,13 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "actor.h"
-#include "info.h"
-#include "sc_man.h"
-#include "tarray.h"
-#include "templates.h"
 #include "r_defs.h"
 #include "a_pickups.h"
-#include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
 #include "decallib.h"
-#include "i_system.h"
 #include "thingdef.h"
 #include "backend/codegen.h"
-#include "r_data/r_translate.h"
 
 // TYPES -------------------------------------------------------------------
 

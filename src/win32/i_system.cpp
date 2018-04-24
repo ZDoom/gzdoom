@@ -47,15 +47,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <io.h>
-#include <direct.h>
 #include <string.h>
 #include <process.h>
 #include <time.h>
 
 #include <stdarg.h>
-#include <sys/types.h>
-#include <sys/timeb.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -65,17 +61,10 @@
 
 #include "hardware.h"
 #include "doomerrors.h"
-#include <math.h>
 
-#include "doomtype.h"
 #include "version.h"
-#include "doomdef.h"
-#include "cmdlib.h"
-#include "m_argv.h"
 #include "m_misc.h"
-#include "i_video.h"
 #include "i_sound.h"
-#include "i_music.h"
 #include "resource.h"
 #include "x86.h"
 #include "stats.h"
@@ -84,17 +73,13 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "i_input.h"
-#include "i_system.h"
 #include "c_dispatch.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "v_palette.h"
-#include "stats.h"
 #include "textures/bitmap.h"
-#include "textures/textures.h"
 
 #include "optwin32.h"
 

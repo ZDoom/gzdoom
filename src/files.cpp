@@ -34,9 +34,7 @@
 */
 
 #include "files.h"
-#include "i_system.h"
 #include "templates.h"
-#include "m_misc.h"
 
 
 

@@ -35,7 +35,6 @@
 #include "i_system.h"
 #include "d_protocol.h"
 #include "d_net.h"
-#include "doomdef.h"
 #include "doomstat.h"
 #include "cmdlib.h"
 #include "serializer.h"
@@ -408,7 +407,6 @@ int SkipTicCmd (uint8_t **stream, int count)
 	return skip;
 }
 
-#include <assert.h>
 extern short consistancy[MAXPLAYERS][BACKUPTICS];
 void ReadTicCmd (uint8_t **stream, int player, int tic)
 {

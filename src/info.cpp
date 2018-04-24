@@ -37,7 +37,6 @@
 
 #include "doomstat.h"
 #include "info.h"
-#include "m_fixed.h"
 #include "c_dispatch.h"
 #include "d_net.h"
 #include "v_text.h"
@@ -45,18 +44,12 @@
 #include "gi.h"
 #include "actor.h"
 #include "r_state.h"
-#include "i_system.h"
 #include "p_local.h"
-#include "templates.h"
-#include "cmdlib.h"
-#include "g_level.h"
 #include "stats.h"
 #include "thingdef.h"
 #include "d_player.h"
-#include "doomerrors.h"
 #include "events.h"
 #include "types.h"
-#include "vm.h"
 
 extern void LoadActors ();
 extern void InitBotStuff();

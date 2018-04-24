@@ -40,7 +40,6 @@
 
 #include "doomerrors.h"
 #include "d_main.h"
-#include "zstring.h"
 #include "sc_man.h"
 #include "cmdlib.h"
 

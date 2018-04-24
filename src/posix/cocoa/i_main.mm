@@ -35,7 +35,6 @@
 #include "s_sound.h"
 
 #include <sys/sysctl.h>
-#include <unistd.h>
 
 // Avoid collision between DObject class and Objective-C
 #define Class ObjectClass
@@ -44,10 +43,8 @@
 #include "c_cvars.h"
 #include "cmdlib.h"
 #include "d_main.h"
-#include "doomerrors.h"
 #include "i_system.h"
 #include "m_argv.h"
-#include "s_sound.h"
 #include "st_console.h"
 #include "version.h"
 

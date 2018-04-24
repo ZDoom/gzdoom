@@ -27,18 +27,11 @@
 **/
 
 #include "w_wad.h"
-#include "cmdlib.h"
-#include "sc_man.h"
-#include "m_crc32.h"
-#include "c_console.h"
-#include "g_game.h"
-#include "doomstat.h"
 #include "g_level.h"
 #include "colormatcher.h"
 #include "textures/bitmap.h"
 #include "g_levellocals.h"
 #include "models.h"
-#include "v_palette.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data

@@ -34,9 +34,7 @@
 #include <math.h>
 #include <stdlib.h>
 
-#include "timidity.h"
 #include "common.h"
-#include "instrum.h"
 #include "filter.h"
 
 namespace TimidityPlus

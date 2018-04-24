@@ -42,28 +42,18 @@
 #include "c_dispatch.h"
 #include "doomstat.h"
 #include "hardware.h"
-#include "i_system.h"
 #include "m_argv.h"
 #include "m_png.h"
 #include "r_renderer.h"
 #include "swrenderer/r_swrenderer.h"
 #include "st_console.h"
-#include "stats.h"
-#include "textures.h"
-#include "v_palette.h"
-#include "v_pfx.h"
 #include "v_text.h"
-#include "v_video.h"
 #include "version.h"
 #include "videomodes.h"
 
-#include "gl/system/gl_system.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_interface.h"
 #include "gl/textures/gl_samplers.h"
-#include "gl/utility/gl_clock.h"
 
 #undef Class
 

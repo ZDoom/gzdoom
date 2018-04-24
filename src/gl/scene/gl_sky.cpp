@@ -22,12 +22,10 @@
 
 #include "gl/system/gl_system.h"
 #include "a_sharedglobal.h"
-#include "g_level.h"
 #include "r_sky.h"
 #include "r_state.h"
 #include "r_utility.h"
 #include "doomdata.h"
-#include "portal.h"
 #include "g_levellocals.h"
 
 #include "gl/renderer/gl_lightdata.h"

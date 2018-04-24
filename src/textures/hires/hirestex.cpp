@@ -29,12 +29,7 @@
 #include "sbar.h"
 #include "gi.h"
 #include "cmdlib.h"
-#include "sc_man.h"
-#include "doomstat.h"
-#include "d_main.h"
-#include "zstring.h"
 #include "bitmap.h"
-#include "textures.h"
 
 #ifndef _WIN32
 #include <unistd.h>

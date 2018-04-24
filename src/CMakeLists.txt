@@ -637,19 +637,7 @@ add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DAD
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
-if( WIN32 )
-	set( EXTRA_HEADER_DIRS win32/*.h )
-elseif( APPLE )
-	if( OSX_COCOA_BACKEND )
-		set( EXTRA_HEADER_DIRS posix/*.h posix/cocoa/*.h )
-	else()
-		set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
-	endif()
-else()
-	set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
-endif()
 file( GLOB HEADER_FILES
-	${EXTRA_HEADER_DIRS}
 	fragglescript/*.h
 	g_shared/*.h
 	g_statusbar/*.h
@@ -663,6 +651,7 @@ file( GLOB HEADER_FILES
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
+	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
 	rapidjson/*.h
@@ -831,7 +820,6 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_walls.cpp
 	gl/scene/gl_sprite.cpp
 	gl/scene/gl_skydome.cpp
-	gl/scene/gl_renderhacks.cpp
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
 	gl/scene/gl_swscene.cpp
@@ -845,6 +833,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/dynlights/hw_dynlightdata.cpp
 	hwrenderer/scene/hw_fakeflat.cpp
 	hwrenderer/scene/hw_clipper.cpp
+	hwrenderer/scene/hw_renderhacks.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp
@@ -919,7 +908,6 @@ set (PCH_SOURCES
 	i_time.cpp
 	info.cpp
 	keysections.cpp
-	lumpconfigfile.cpp
 	m_alloc.cpp
 	m_argv.cpp
 	m_bbox.cpp

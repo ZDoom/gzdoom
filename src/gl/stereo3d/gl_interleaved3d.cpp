@@ -34,9 +34,7 @@
 */
 
 #include "gl_interleaved3d.h"
-#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_present3dRowshader.h"

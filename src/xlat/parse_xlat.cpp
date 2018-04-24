@@ -35,10 +35,6 @@
 
 
 #include "doomtype.h"
-#include "w_wad.h"
-#include "c_console.h"
-#include "info.h"
-#include "gi.h"
 #include "parsecontext.h"
 #include "xlat_parser.h"
 #include "xlat.h"

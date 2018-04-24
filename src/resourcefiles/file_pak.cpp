@@ -33,8 +33,6 @@
 */
 
 #include "resourcefile.h"
-#include "cmdlib.h"
-#include "v_text.h"
 #include "w_wad.h"
 
 //==========================================================================

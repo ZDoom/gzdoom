@@ -26,8 +26,6 @@
 #include <stdlib.h>
 
 #include "timidity.h"
-#include "templates.h"
-#include "c_cvars.h"
 
 namespace Timidity
 {

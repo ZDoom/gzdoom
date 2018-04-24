@@ -34,20 +34,12 @@
 
 #include <SDL.h>
 #include <signal.h>
-#include <time.h>
 
-#include "version.h"
 #include "hardware.h"
-#include "i_video.h"
-#include "i_system.h"
-#include "c_console.h"
-#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "doomstat.h"
 #include "m_argv.h"
-#include "gl_sysfb.h"
-#include "r_renderer.h"
 #include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR (Bool, ticker)

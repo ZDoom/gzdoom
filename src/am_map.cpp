@@ -30,14 +30,11 @@
 #include "doomdef.h"
 #include "templates.h"
 #include "g_level.h"
-#include "doomdef.h"
 #include "st_stuff.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "w_wad.h"
 #include "a_sharedglobal.h"
-#include "statnums.h"
-#include "r_data/r_translate.h"
 #include "d_event.h"
 #include "gi.h"
 #include "p_setup.h"
@@ -50,19 +47,10 @@
 #include "p_blockmap.h"
 
 #include "m_cheat.h"
-#include "i_system.h"
 #include "c_dispatch.h"
-#include "colormatcher.h"
 #include "d_netinf.h"
 
-// Needs access to LFB.
-#include "v_video.h"
-#include "v_palette.h"
-
-#include "v_text.h"
-
 // State.
-#include "doomstat.h"
 #include "r_state.h"
 #include "r_utility.h"
 
@@ -72,7 +60,6 @@
 #include "am_map.h"
 #include "po_man.h"
 #include "a_keys.h"
-#include "r_data/colormaps.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 

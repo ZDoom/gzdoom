@@ -34,23 +34,17 @@
 
 #include "doomtype.h"
 #include "doomdef.h"
-#include "cmdlib.h"
 #include "c_dispatch.h"
 #include "c_bind.h"
 #include "g_level.h"
 #include "hu_stuff.h"
-#include "gi.h"
 #include "configfile.h"
-#include "i_system.h"
 #include "d_event.h"
 #include "w_wad.h"
 #include "templates.h"
 #include "dobject.h"
 #include "vm.h"
 #include "i_time.h"
-
-#include <math.h>
-#include <stdlib.h>
 
 const char *KeyNames[NUM_KEYS] =
 {

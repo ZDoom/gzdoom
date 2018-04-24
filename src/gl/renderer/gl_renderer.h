@@ -57,17 +57,6 @@ inline float RAD2DEG(float deg)
 	return deg * float(180. / M_PI);
 }
 
-enum SectorRenderFlags
-{
-	// This is used to avoid creating too many drawinfos
-	SSRF_RENDERFLOOR = 1,
-	SSRF_RENDERCEILING = 2,
-	SSRF_RENDER3DPLANES = 4,
-	SSRF_RENDERALL = 7,
-	SSRF_PROCESSED = 8,
-	SSRF_SEEN = 16,
-};
-
 struct GL_IRECT
 {
 	int left,top;

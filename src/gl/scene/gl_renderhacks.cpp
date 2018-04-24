@@ -27,16 +27,14 @@
 
 #include "a_sharedglobal.h"
 #include "r_utility.h"
-#include "r_defs.h"
 #include "r_sky.h"
 #include "g_level.h"
 #include "g_levellocals.h"
 
-#include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
+#include "hw_drawinfo.h"
 #include "gl/utility/gl_clock.h"
+
+sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
 
 // This is for debugging maps.
@@ -1147,7 +1145,7 @@ void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 						BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling], sub, portal->mDisplacement);
 					}
 
-					portal->GetRenderState()->AddSubsector(sub);
+					AddSubsectorToPortal(portal, sub);
 
 					if (sec->GetAlpha(sector_t::ceiling) != 0 && sec->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
@@ -1192,8 +1190,7 @@ void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 						BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal->mDisplacement);
 					}
 
-					GLSectorStackPortal *glportal = portal->GetRenderState();
-					glportal->AddSubsector(sub);
+					AddSubsectorToPortal(portal, sub);
 
 					if (sec->GetAlpha(sector_t::floor) != 0 && sec->GetTexture(sector_t::floor) != skyflatnum)
 					{

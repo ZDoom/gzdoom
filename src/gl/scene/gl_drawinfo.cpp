@@ -1319,3 +1319,10 @@ void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
 		rendered_lines++;
 	}
 }
+
+// Same here for the dependency on the portal.
+void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub)
+{
+	portal->GetRenderState()->AddSubsector(sub);
+}
+

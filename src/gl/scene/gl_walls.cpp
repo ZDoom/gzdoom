@@ -31,6 +31,7 @@
 #include "doomdata.h"
 #include "g_levellocals.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hwrenderer/textures/hw_material.h"
 
 #include "gl/system/gl_cvars.h"
 #include "gl/system/gl_interface.h"
@@ -38,7 +39,6 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
 
 

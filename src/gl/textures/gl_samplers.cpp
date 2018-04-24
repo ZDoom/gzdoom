@@ -28,7 +28,7 @@
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl_samplers.h"
-#include "gl_material.h"
+#include "hwrenderer/textures/hw_material.h"
 
 extern TexFilter_s TexFilter[];
 

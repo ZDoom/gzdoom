@@ -35,13 +35,13 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "i_time.h"
+#include "hwrenderer/textures/hw_material.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
-#include "gl/textures/gl_material.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 

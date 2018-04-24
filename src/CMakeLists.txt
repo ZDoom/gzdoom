@@ -1054,10 +1054,10 @@ set (PCH_SOURCES
 	gl/system/gl_wipe.cpp
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_texture.cpp
-	gl/textures/gl_material.cpp
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
+	hwrenderer/textures/hw_material.cpp
 	
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp

@@ -25,9 +25,8 @@
 #include "sbar.h"
 #include "stats.h"
 #include "r_utility.h"
-#include "hwrenderer/textures/hw_ihwtexture.h"
-
-#include "gl_material.h"
+#include "hw_ihwtexture.h"
+#include "hw_material.h"
 
 EXTERN_CVAR(Bool, gl_texture_usehires)
 

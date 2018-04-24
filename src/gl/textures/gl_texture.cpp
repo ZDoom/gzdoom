@@ -32,10 +32,10 @@
 #include "r_state.h"
 #include "actor.h"
 #include "textures/skyboxtexture.h"
+#include "hwrenderer/textures/hw_material.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/models/gl_models.h"
 

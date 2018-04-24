@@ -31,7 +31,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/textures/gl_material.h"
+#include "hwrenderer/textures/hw_material.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 

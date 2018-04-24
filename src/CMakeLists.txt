@@ -1058,6 +1058,7 @@ set (PCH_SOURCES
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	hwrenderer/textures/hw_material.cpp
+	hwrenderer/textures/hw_precache.cpp
 	
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp

@@ -38,6 +38,7 @@
 #include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/models/gl_models.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 
@@ -392,6 +393,12 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex)
 { 
 	return new FHardwareTexture(tex->bNoCompress);
 }
+
+FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
+{
+	return new FGLModelRenderer(mli);
+}
+
 
 void OpenGLFrameBuffer::UnbindTexUnit(int no)
 {

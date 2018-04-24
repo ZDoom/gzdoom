@@ -3412,7 +3412,7 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 // Preloads all relevant graphics for the level.
 //
 //===========================================================================
-void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
+void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
 static void P_PrecacheLevel()
 {
@@ -3491,7 +3491,7 @@ static void P_PrecacheLevel()
 	if (!V_IsHardwareRenderer())
 		SWRenderer->Precache(hitlist, actorhitlist);
 	else
-		gl_PrecacheTexture(hitlist, actorhitlist);
+		hw_PrecacheTexture(hitlist, actorhitlist);
 
 	delete[] hitlist;
 }

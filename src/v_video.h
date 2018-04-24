@@ -80,6 +80,7 @@ class FTexture;
 struct FColormap;
 class FileWriter;
 enum FTextureFormat : uint32_t;
+class FModelRenderer;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.
@@ -354,6 +355,7 @@ public:
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
 	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual void UnbindTexUnit(int no) {}
 
 	// Begin 2D drawing operations.

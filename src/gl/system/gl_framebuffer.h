@@ -44,6 +44,7 @@ public:
 	void RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
+	FModelRenderer *CreateModelRenderer(int mli) override;
 	void UnbindTexUnit(int no) override;
 
 	// Retrieves a buffer containing image data for a screenshot.

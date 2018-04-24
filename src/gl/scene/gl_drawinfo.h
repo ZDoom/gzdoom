@@ -2,7 +2,7 @@
 #define __GL_DRAWINFO_H
 
 #include "gl/scene/gl_wall.h"
-#include "hw_drawinfo.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 
 enum GLDrawItemType
 {

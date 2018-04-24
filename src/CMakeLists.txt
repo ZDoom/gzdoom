@@ -822,7 +822,6 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_walls.cpp
 	gl/scene/gl_sprite.cpp
 	gl/scene/gl_skydome.cpp
-	gl/scene/gl_renderhacks.cpp
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
 	gl/scene/gl_swscene.cpp
@@ -834,6 +833,7 @@ set( FASTMATH_SOURCES
 	gl_load/gl_load.c
 	gl/models/gl_models.cpp
 	hwrenderer/dynlights/hw_dynlightdata.cpp
+	hwrenderer/scene/hw_renderhacks.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp

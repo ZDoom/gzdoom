@@ -140,11 +140,11 @@ void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
 		else
 		{
 			// clipping checks are only needed when the backsector is not the same as the front sector
-			in_area = gl_CheckViewArea(in_area, seg->v1, seg->v2, seg->frontsector, seg->backsector);
+			in_area = hw_CheckViewArea(in_area, seg->v1, seg->v2, seg->frontsector, seg->backsector);
 
-			backsector = gl_FakeFlat(seg->backsector, &bs, in_area, true);
+			backsector = hw_FakeFlat(seg->backsector, &bs, in_area, true);
 
-			if (gl_CheckClip(seg->sidedef, currentsector, backsector))
+			if (hw_CheckClip(seg->sidedef, currentsector, backsector))
 			{
 				clipper.SafeAddClipRange(startAngle, endAngle);
 			}
@@ -428,7 +428,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 	}
 	if (clipper.IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
 
-	fakesector=gl_FakeFlat(sector, &fake, in_area, false);
+	fakesector=hw_FakeFlat(sector, &fake, in_area, false);
 
 	if (GLRenderer->mClipPortal)
 	{
@@ -495,7 +495,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 					sector = sub->render_sector;
 					// the planes of this subsector are faked to belong to another sector
 					// This means we need the heightsec parts and light info of the render sector, not the actual one.
-					fakesector = gl_FakeFlat(sector, &fake, in_area, false);
+					fakesector = hw_FakeFlat(sector, &fake, in_area, false);
 				}
 
 				uint8_t &srf = gl_drawinfo->sectorrenderflags[sub->render_sector->sectornum];

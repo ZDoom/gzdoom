@@ -780,7 +780,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 	if (sector->sectornum != thing->Sector->sectornum && !thruportal)
 	{
-		rendersector = gl_FakeFlat(thing->Sector, &rs, mDrawer->in_area, false);
+		rendersector = hw_FakeFlat(thing->Sector, &rs, mDrawer->in_area, false);
 	}
 	else
 	{
@@ -1320,7 +1320,7 @@ void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
 					th->Prev += newpos - savedpos;
 
 					GLSprite spr(this);
-					spr.Process(th, gl_FakeFlat(th->Sector, &fakesector, in_area, false), 2);
+					spr.Process(th, hw_FakeFlat(th->Sector, &fakesector, in_area, false), 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

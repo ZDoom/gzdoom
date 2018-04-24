@@ -223,7 +223,6 @@ public:
 	static float GetZFar() { return 65536.f; }
 };
 
-enum area_t : int;
 #include "hwrenderer/scene/hw_fakeflat.h"
 
 struct TexFilter_s

@@ -38,9 +38,8 @@
 // Check whether the player can look beyond this line
 //
 //==========================================================================
-CVAR(Bool, gltest_slopeopt, false, 0)
 
-bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsector)
+bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsector)
 {
 	line_t *linedef = sidedef->linedef;
 	double bs_floorheight1;
@@ -158,7 +157,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 //
 //==========================================================================
 
-area_t gl_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
+area_t hw_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
 	if (in_area == area_default &&
 		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&
@@ -186,7 +185,7 @@ area_t gl_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *fr
 // by hardware rendering
 //
 //==========================================================================
-sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back)
+sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back)
 {
 	if (!sec->heightsec || sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC || sec->heightsec==sec) 
 	{

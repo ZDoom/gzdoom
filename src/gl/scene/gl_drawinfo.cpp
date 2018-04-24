@@ -1206,8 +1206,8 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -1258,8 +1258,8 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
 
 	vertex_t * v1, * v2;
 

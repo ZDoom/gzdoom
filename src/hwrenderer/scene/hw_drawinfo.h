@@ -15,13 +15,7 @@ struct gl_subsectorrendernode
 	subsector_t *				sub;
 };
 
-enum area_t : int
-{
-	area_normal,
-	area_below,
-	area_above,
-	area_default
-};
+enum area_t : int;
 
 enum SectorRenderFlags
 {

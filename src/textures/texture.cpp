@@ -46,6 +46,7 @@
 #include "v_video.h"
 #include "m_fixed.h"
 #include "textures/warpbuffer.h"
+#include "hwrenderer/textures/hw_material.h"
 
 FTexture *CreateBrightmapTexture(FTexture*);
 
@@ -188,6 +189,7 @@ FTexture::FTexture (const char *name, int lumpnum)
 	bDisableFullbright = false;
 	bSkybox = false;
 	bNoCompress = false;
+	bNoExpand = false;
 	bTranslucent = -1;
 
 
@@ -214,6 +216,16 @@ FTexture::~FTexture ()
 	if (link == this) Wads.SetLinkedTexture(SourceLump, nullptr);
 	if (areas != nullptr) delete[] areas;
 	areas = nullptr;
+
+	for (int i = 0; i < 2; i++)
+	{
+		if (Material[i] != nullptr) delete Material[i];
+		Material[i] = nullptr;
+
+		if (SystemTexture[i] != nullptr) delete SystemTexture[i];
+		SystemTexture[i] = nullptr;
+	}
+
 }
 
 void FTexture::Unload()
@@ -1462,6 +1474,21 @@ bool FTexture::GetTranslucency()
 		}
 	}
 	return !!bTranslucent;
+}
+
+//===========================================================================
+// 
+// Sprite adjust has changed.
+// This needs to alter the material's sprite rect.
+//
+//===========================================================================
+
+void FTexture::SetSpriteAdjust()
+{
+	for (auto mat : Material)
+	{
+		if (mat != nullptr) mat->SetSpriteRect();
+	}
 }
 
 //===========================================================================

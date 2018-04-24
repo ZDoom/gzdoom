@@ -25,6 +25,7 @@
 #include "sbar.h"
 #include "stats.h"
 #include "r_utility.h"
+#include "c_dispatch.h"
 #include "hw_ihwtexture.h"
 #include "hw_material.h"
 
@@ -103,10 +104,10 @@ IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
 {
 	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
-		IHardwareTexture *gltex = tex->gl_info.SystemTexture[expand];
+		IHardwareTexture *gltex = tex->SystemTexture[expand];
 		if (gltex == nullptr) 
 		{
-			gltex = tex->gl_info.SystemTexture[expand] = screen->CreateHardwareTexture(tex);
+			gltex = tex->SystemTexture[expand] = screen->CreateHardwareTexture(tex);
 		}
 		return gltex;
 	}
@@ -229,7 +230,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mTextureLayers.ShrinkToFit();
 	mMaxBound = -1;
 	mMaterials.Push(this);
-	tx->gl_info.Material[expanded] = this;
+	tx->Material[expanded] = this;
 	if (tx->bHasCanvas) tx->bTranslucent = 0;
 }
 
@@ -581,16 +582,16 @@ FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
 again:
 	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
-		if (tex->gl_info.bNoExpand) expand = false;
+		if (tex->bNoExpand) expand = false;
 
-		FMaterial *gltex = tex->gl_info.Material[expand];
+		FMaterial *gltex = tex->Material[expand];
 		if (gltex == NULL) 
 		{
 			if (expand)
 			{
 				if (tex->bWarped || tex->bHasCanvas || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
 				{
-					tex->gl_info.bNoExpand = true;
+					tex->bNoExpand = true;
 					goto again;
 				}
 				if (tex->Brightmap != NULL &&
@@ -599,7 +600,7 @@ again:
 					)
 				{
 					// do not expand if the brightmap's size differs.
-					tex->gl_info.bNoExpand = true;
+					tex->bNoExpand = true;
 					goto again;
 				}
 			}
@@ -634,7 +635,7 @@ void FMaterial::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			auto gltex = TexMan.ByIndex(i)->gl_info.SystemTexture[j];
+			auto gltex = TexMan.ByIndex(i)->SystemTexture[j];
 			if (gltex != nullptr) gltex->Clean(true);
 		}
 	}
@@ -650,3 +651,42 @@ void FMaterial::Clean(bool f)
 	// This somehow needs to deal with the other layers as well, but they probably need some form of reference counting to work properly...
 	mBaseLayer->Clean(f);
 }
+
+//==========================================================================
+//
+// Prints some texture info
+//
+//==========================================================================
+
+CCMD(textureinfo)
+{
+	int cntt = 0;
+	for (int i = 0; i < TexMan.NumTextures(); i++)
+	{
+		FTexture *tex = TexMan.ByIndex(i);
+		if (tex->SystemTexture[0] || tex->SystemTexture[1] || tex->Material[0] || tex->Material[1])
+		{
+			int lump = tex->GetSourceLump();
+			Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
+			if (tex->Material[0])
+			{
+				Printf(PRINT_LOG, "in use (normal)\n");
+			}
+			else if (tex->SystemTexture[0])
+			{
+				Printf(PRINT_LOG, "referenced (normal)\n");
+			}
+			if (tex->Material[1])
+			{
+				Printf(PRINT_LOG, "in use (expanded)\n");
+			}
+			else if (tex->SystemTexture[1])
+			{
+				Printf(PRINT_LOG, "referenced (normal)\n");
+			}
+			cntt++;
+		}
+	}
+	Printf(PRINT_LOG, "%d system textures\n", cntt);
+}
+

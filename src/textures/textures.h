@@ -228,6 +228,9 @@ public:
 	int SourceLump;
 	FTextureID id;
 
+	FMaterial *Material[2] = { nullptr, nullptr };
+	IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
+
 	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
 
 	// Paletted variant
@@ -265,6 +268,7 @@ public:
 	uint8_t bDisableFullbright : 1;				// This texture will not be displayed as fullbright sprite
 	uint8_t bSkybox : 1;						// is a cubic skybox
 	uint8_t bNoCompress : 1;
+	uint8_t bNoExpand : 1;
 	int8_t bTranslucent : 2;
 	bool bHiresHasColorKey = false;				// Support for old color-keyed Doomsday textures
 
@@ -446,7 +450,6 @@ protected:
 		CopySize(other);
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
-		gl_info = other->gl_info;
 	}
 
 	std::vector<uint32_t> PixelsBgra;
@@ -480,16 +483,6 @@ public:
 	static void FlipNonSquareBlockRemap (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch, const uint8_t *remap);
 
 public:
-
-	struct GLTexInfo
-	{
-		FMaterial *Material[2] = { nullptr, nullptr };
-		IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
-		bool bNoExpand = false;
-
-		~GLTexInfo();
-	};
-	GLTexInfo gl_info;
 
 	void GetGlowColor(float *data);
 	bool isGlowing() { return bGlowing; }

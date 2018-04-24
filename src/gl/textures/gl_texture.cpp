@@ -106,34 +106,6 @@ int TexFormat[]={
 };
 
 
-
-FTexture::GLTexInfo::~GLTexInfo()
-{
-	for (int i = 0; i < 2; i++)
-	{
-		if (Material[i] != NULL) delete Material[i];
-		Material[i] = NULL;
-
-		if (SystemTexture[i] != NULL) delete SystemTexture[i];
-		SystemTexture[i] = NULL;
-	}
-}
-
-//===========================================================================
-// 
-// Sprite adjust has changed.
-// This needs to alter the material's sprite rect.
-//
-//===========================================================================
-
-void FTexture::SetSpriteAdjust()
-{
-	for(auto mat : gl_info.Material)
-	{
-		if (mat != nullptr) mat->SetSpriteRect();
-	}
-}
-
 //==========================================================================
 //
 // DFrameBuffer :: PrecacheTexture
@@ -280,11 +252,11 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		{
 			if (!texhitlist[i])
 			{
-				if (tex->gl_info.Material[0]) tex->gl_info.Material[0]->Clean(true);
+				if (tex->Material[0]) tex->Material[0]->Clean(true);
 			}
 			if (spritehitlist[i] == nullptr || (*spritehitlist[i]).CountUsed() == 0)
 			{
-				if (tex->gl_info.Material[1]) tex->gl_info.Material[1]->Clean(true);
+				if (tex->Material[1]) tex->Material[1]->Clean(true);
 			}
 		}
 	}
@@ -317,44 +289,5 @@ void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 	delete[] spritehitlist;
 	delete[] spritelist;
 	delete[] modellist;
-}
-
-
-//==========================================================================
-//
-// Prints some texture info
-//
-//==========================================================================
-
-CCMD(textureinfo)
-{
-	int cntt = 0;
-	for (int i = 0; i < TexMan.NumTextures(); i++)
-	{
-		FTexture *tex = TexMan.ByIndex(i);
-		if (tex->gl_info.SystemTexture[0] || tex->gl_info.SystemTexture[1] || tex->gl_info.Material[0] || tex->gl_info.Material[1])
-		{
-			int lump = tex->GetSourceLump();
-			Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
-			if (tex->gl_info.Material[0])
-			{
-				Printf(PRINT_LOG, "in use (normal)\n");
-			}
-			else if (tex->gl_info.SystemTexture[0])
-			{
-				Printf(PRINT_LOG, "referenced (normal)\n");
-			}
-			if (tex->gl_info.Material[1])
-			{
-				Printf(PRINT_LOG, "in use (expanded)\n");
-			}
-			else if (tex->gl_info.SystemTexture[1])
-			{
-				Printf(PRINT_LOG, "referenced (normal)\n");
-			}
-			cntt++;
-		}
-	}
-	Printf(PRINT_LOG, "%d system textures\n", cntt);
 }
 

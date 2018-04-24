@@ -33,6 +33,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_colormap.h"
 #include "gl/dynlights//gl_lightbuffer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 

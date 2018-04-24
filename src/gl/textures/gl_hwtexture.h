@@ -16,16 +16,11 @@ class FCanvasTexture;
 class AActor;
 typedef TMap<int, bool> SpriteHits;
 
+
 // For error catching while changing parameters.
 enum EInvalid
 {
 	Invalid = 0
-};
-
-enum
-{
-	GLT_CLAMPX=1,
-	GLT_CLAMPY=2
 };
 
 class FHardwareTexture

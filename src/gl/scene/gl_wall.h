@@ -116,8 +116,8 @@ public:
 
 	enum
 	{
-		//GLWF_CLAMPX=1, use GLT_* for these!
-		//GLWF_CLAMPY=2,
+		GLWF_CLAMPX=1,
+		GLWF_CLAMPY=2,
 		GLWF_SKYHACK=4,
 		GLWF_GLOW=8,		// illuminated by glowing flats
 		GLWF_NOSPLITUPPER=16,

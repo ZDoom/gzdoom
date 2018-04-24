@@ -49,6 +49,7 @@
 #include "gl/shaders/gl_presentshader.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/stereo3d/gl_stereo3d.h"
+#include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
 
 //==========================================================================

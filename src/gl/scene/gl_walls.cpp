@@ -33,6 +33,7 @@
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_cvars.h"
+#include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
@@ -601,7 +602,7 @@ bool GLWall::SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float textureto
 	{
 		bool normalize = false;
 		if (gltexture->tex->bHasCanvas) normalize = true;
-		else if (flags & GLT_CLAMPY)
+		else if (flags & GLWF_CLAMPY)
 		{
 			// for negative scales we can get negative coordinates here.
 			normalize = (tcs[UPLFT].v > tcs[LOLFT].v || tcs[UPRGT].v > tcs[LORGT].v);
@@ -651,7 +652,7 @@ void GLWall::CheckTexturePosition(FTexCoordInfo *tci)
 		if ((tcs[UPLFT].v == 0.f && tcs[UPRGT].v == 0.f && tcs[LOLFT].v <= 1.f && tcs[LORGT].v <= 1.f) ||
 			(tcs[UPLFT].v >= 0.f && tcs[UPRGT].v >= 0.f && tcs[LOLFT].v == 1.f && tcs[LORGT].v == 1.f))
 		{
-			flags |= GLT_CLAMPY;
+			flags |= GLWF_CLAMPY;
 		}
 	}
 	else
@@ -672,7 +673,7 @@ void GLWall::CheckTexturePosition(FTexCoordInfo *tci)
 		if ((tcs[LOLFT].v == 0.f && tcs[LORGT].v == 0.f && tcs[UPLFT].v <= 1.f && tcs[UPRGT].v <= 1.f) ||
 			(tcs[LOLFT].v >= 0.f && tcs[LORGT].v >= 0.f && tcs[UPLFT].v == 1.f && tcs[UPRGT].v == 1.f))
 		{
-			flags |= GLT_CLAMPY;
+			flags |= GLWF_CLAMPY;
 		}
 	}
 
@@ -688,7 +689,7 @@ void GLWall::CheckTexturePosition(FTexCoordInfo *tci)
 		if ((tcs[UPLFT].u == 0.f && tcs[LOLFT].u == 0.f && tcs[UPRGT].u <= 1.f && tcs[LORGT].u <= 1.f) ||
 			(tcs[UPLFT].u >= 0.f && tcs[LOLFT].u >= 0.f && tcs[UPRGT].u == 1.f && tcs[LORGT].u == 1.f))
 		{
-			flags |= GLT_CLAMPX;
+			flags |= GLWF_CLAMPX;
 		}
 	}
 }
@@ -941,15 +942,15 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 		if ((textureoffset == 0 && righttex <= tci.mRenderWidth) ||
 			(textureoffset >= 0 && righttex == tci.mRenderWidth))
 		{
-			flags |= GLT_CLAMPX;
+			flags |= GLWF_CLAMPX;
 		}
 		else
 		{
-			flags &= ~GLT_CLAMPX;
+			flags &= ~GLWF_CLAMPX;
 		}
 		if (!wrap)
 		{
-			flags |= GLT_CLAMPY;
+			flags |= GLWF_CLAMPY;
 		}
 	}
 	if (mirrory)
@@ -1081,7 +1082,7 @@ void GLWall::DoMidTexture(seg_t * seg, bool drawfogboundary,
 	}
 	// restore some values that have been altered in this function
 	glseg=glsave;
-	flags&=~(GLT_CLAMPX|GLT_CLAMPY|GLWF_NOSPLITUPPER|GLWF_NOSPLITLOWER);
+	flags&=~(GLWF_CLAMPX|GLWF_CLAMPY|GLWF_NOSPLITUPPER|GLWF_NOSPLITLOWER);
 	RenderStyle = STYLE_Normal;
 }
 
@@ -1192,7 +1193,7 @@ void GLWall::BuildFFBlock(seg_t * seg, F3DFloor * rover,
 	alpha = 1.0f;
 	lightlevel = savelight;
 	Colormap = savecolor;
-	flags &= ~GLT_CLAMPY;
+	flags &= ~GLWF_CLAMPY;
 }
 
 

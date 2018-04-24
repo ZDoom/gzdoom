@@ -29,6 +29,7 @@
 #include "gl/system/gl_debug.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/shaders/gl_shader.h"
+#include "gl/textures/gl_hwtexture.h"
 #include "gl_swscene.h"
 #include "w_wad.h"
 #include "d_player.h"

@@ -327,7 +327,7 @@ void GLWall::RenderTextured(int rflags)
 
 	if (type == RENDERWALL_M2SNF)
 	{
-		if (flags & GLT_CLAMPY)
+		if (flags & GLWF_CLAMPY)
 		{
 			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
 		}

@@ -34,6 +34,7 @@
 #include "gl/system/gl_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_colormap.h"
 #include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 

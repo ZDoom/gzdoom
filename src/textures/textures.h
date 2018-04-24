@@ -44,6 +44,8 @@
 #include "r_data/r_translate.h"
 #include <vector>
 
+typedef TMap<int, bool> SpriteHits;
+
 enum MaterialShaderIndex
 {
 	SHADER_Default,

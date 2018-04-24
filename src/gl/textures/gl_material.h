@@ -4,8 +4,6 @@
 
 #include "m_fixed.h"
 #include "textures/textures.h"
-#include "gl/textures/gl_hwtexture.h"
-#include "gl/renderer/gl_colormap.h"
 #include "i_system.h"
 #include "r_defs.h"
 
@@ -112,10 +110,7 @@ public:
 
 	void Bind(int clamp, int translation);
 
-	void Clean(bool f)
-	{
-		mBaseLayer->Clean(f);
-	}
+	void Clean(bool f);
 
 	void BindToFrameBuffer();
 	// Patch drawing utilities

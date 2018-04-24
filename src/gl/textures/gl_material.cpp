@@ -30,6 +30,7 @@
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/textures/gl_hwtexture.h"
 #include "gl/textures/gl_material.h"
 #include "gl/shaders/gl_shader.h"
 
@@ -634,7 +635,7 @@ void FMaterial::FlushAll()
 {
 	for(int i=mMaterials.Size()-1;i>=0;i--)
 	{
-		mMaterials[i]->Clean(true);
+		mMaterials[i]->mBaseLayer->Clean(true);
 	}
 	// This is for shader layers. All shader layers must be managed by the texture manager
 	// so this will catch everything.
@@ -651,4 +652,10 @@ void FMaterial::FlushAll()
 void FMaterial::ClearLastTexture()
 {
 	last = NULL;
+}
+
+void FMaterial::Clean(bool f)
+{
+	// This somehow needs to deal with the other layers as well, but they probably need some form of reference counting to work properly...
+	mBaseLayer->Clean(f);
 }

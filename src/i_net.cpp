@@ -34,7 +34,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
 /* [Petteri] Use Winsock for Win32: */
 #ifdef __WIN32__
@@ -56,17 +55,12 @@
 
 #include "doomtype.h"
 #include "i_system.h"
-#include "d_event.h"
 #include "d_net.h"
 #include "m_argv.h"
-#include "m_swap.h"
 #include "m_crc32.h"
 #include "d_player.h"
-#include "templates.h"
-#include "c_console.h"
 #include "st_start.h"
 #include "m_misc.h"
-#include "doomstat.h"
 
 #include "i_net.h"
 

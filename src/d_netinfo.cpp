@@ -35,26 +35,17 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#include <assert.h>
 
 #include "doomtype.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "d_netinf.h"
 #include "d_net.h"
-#include "d_protocol.h"
 #include "d_player.h"
 #include "c_dispatch.h"
-#include "v_palette.h"
-#include "v_video.h"
-#include "i_system.h"
 #include "r_state.h"
 #include "sbar.h"
-#include "gi.h"
-#include "m_random.h"
 #include "teaminfo.h"
-#include "r_data/r_translate.h"
-#include "templates.h"
 #include "cmdlib.h"
 #include "serializer.h"
 #include "vm.h"

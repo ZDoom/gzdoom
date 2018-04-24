@@ -39,10 +39,7 @@
 #include "m_random.h"
 #include "d_player.h"
 #include "p_spec.h"
-#include "sc_man.h"
-#include "templates.h"
 #include "w_wad.h"
-#include "g_level.h"
 #include "serializer.h"
 
 // MACROS ------------------------------------------------------------------

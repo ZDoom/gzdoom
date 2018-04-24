@@ -36,11 +36,8 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
-#include "v_palette.h"
 #include "v_video.h"
 #include "bitmap.h"
-#include "textures/textures.h"
-#include "r_data/r_translate.h"
 
 bool checkIMGZPalette(FileReader &file);
 

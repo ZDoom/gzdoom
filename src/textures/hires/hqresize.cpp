@@ -37,7 +37,6 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
-#include "c_cvars.h"
 #include "hqnx/hqx.h"
 #ifdef HAVE_MMX
 #include "hqnx_asm/hqnx_asm.h"

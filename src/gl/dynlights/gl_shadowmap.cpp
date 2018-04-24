@@ -23,7 +23,6 @@
 #include "gl/system/gl_system.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_shadowmap.h"
-#include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_renderer.h"
@@ -31,8 +30,6 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
-#include "r_state.h"
-#include "g_levellocals.h"
 #include "stats.h"
 
 /*

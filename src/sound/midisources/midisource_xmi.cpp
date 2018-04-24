@@ -35,10 +35,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
-#include "templates.h"
-#include "doomdef.h"
-#include "m_swap.h"
-#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 

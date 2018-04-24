@@ -35,11 +35,8 @@
 #include <stdlib.h>
 #include "info.h"
 #include "gi.h"
-#include "m_fixed.h"
-#include "v_palette.h"
 #include "sc_man.h"
 #include "w_wad.h"
-#include "i_system.h"
 #include "v_video.h"
 #include "g_level.h"
 #include "vm.h"

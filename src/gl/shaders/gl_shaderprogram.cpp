@@ -26,16 +26,12 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "m_swap.h"
 #include "v_video.h"
-#include "vectors.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "w_wad.h"
-#include "i_system.h"
-#include "doomerrors.h"
 
 FShaderProgram::FShaderProgram()
 {

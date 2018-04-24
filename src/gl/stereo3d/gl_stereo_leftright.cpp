@@ -33,7 +33,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include <cmath>
 
 EXTERN_CVAR(Float, vr_screendist)
 EXTERN_CVAR(Float, vr_hunits_per_meter)

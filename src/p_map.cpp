@@ -65,9 +65,7 @@
 
 #include "m_bbox.h"
 #include "m_random.h"
-#include "i_system.h"
 #include "c_dispatch.h"
-#include "math/cmath.h"
 
 #include "doomdef.h"
 #include "p_local.h"
@@ -85,19 +83,12 @@
 #include "p_3dmidtex.h"
 #include "vm.h"
 
-#include "s_sound.h"
 #include "decallib.h"
 
 // State.
-#include "doomstat.h"
-#include "r_state.h"
-
-#include "gi.h"
 
 #include "a_sharedglobal.h"
 #include "p_conversation.h"
-#include "r_data/r_translate.h"
-#include "g_level.h"
 #include "r_sky.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"

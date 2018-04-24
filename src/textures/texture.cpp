@@ -45,8 +45,6 @@
 #include "c_dispatch.h"
 #include "v_video.h"
 #include "m_fixed.h"
-#include "textures/textures.h"
-#include "v_palette.h"
 
 FTexture *CreateBrightmapTexture(FTexture*);
 

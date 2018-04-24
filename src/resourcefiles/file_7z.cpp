@@ -39,10 +39,7 @@
 
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "templates.h"
 #include "v_text.h"
-#include "w_zip.h"
-#include "i_system.h"
 #include "w_wad.h"
 
 

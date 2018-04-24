@@ -30,16 +30,12 @@
 #include "w_wad.h"
 #include "v_palette.h"
 #include "templates.h"
-#include "vectors.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/data/gl_vertexbuffer.h"
 

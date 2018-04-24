@@ -36,12 +36,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
-#include "templates.h"
-#include "doomdef.h"
-#include "m_swap.h"
-#include "w_wad.h"
-#include "v_text.h"
-#include "timidity/timidity.h"
 #include <errno.h>
 
 // MACROS ------------------------------------------------------------------

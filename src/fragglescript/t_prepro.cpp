@@ -41,7 +41,6 @@
 /* includes ************************/
 
 #include "t_script.h"
-#include "i_system.h"
 #include "w_wad.h"
 #include "serializer.h"
 

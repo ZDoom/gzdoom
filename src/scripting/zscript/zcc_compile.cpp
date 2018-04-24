@@ -34,22 +34,13 @@
 
 #include "a_pickups.h"
 #include "thingdef.h"
-#include "sc_man.h"
 #include "c_console.h"
-#include "c_dispatch.h"
-#include "doomerrors.h"
 #include "w_wad.h"
-#include "cmdlib.h"
-#include "m_alloc.h"
 #include "zcc_parser.h"
 #include "zcc-parse.h"
 #include "zcc_compile.h"
 #include "v_text.h"
 #include "p_lnspec.h"
-#include "i_system.h"
-#include "gdtoa.h"
-#include "backend/vmbuilder.h"
-#include "types.h"
 
 FSharedStringArena VMStringConstants;
 bool isActor(PContainerType *type);

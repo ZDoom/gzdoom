@@ -30,16 +30,9 @@
 
 #include "gl/system/gl_system.h"
 #include "menu/menu.h"
-#include "tarray.h"
-#include "doomtype.h"
-#include "m_argv.h"
-#include "zstring.h"
-#include "i_system.h"
-#include "v_text.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
-#include "g_levellocals.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/renderer/gl_renderer.h"

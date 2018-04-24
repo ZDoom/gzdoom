@@ -27,7 +27,6 @@
 
 #include "timidity.h"
 #include "doomdef.h"
-#include "m_swap.h"
 
 #define __Sound_SetError(x)
 

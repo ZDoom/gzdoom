@@ -30,11 +30,7 @@
 #include "tarray.h"
 #include "doomtype.h"
 #include "m_argv.h"
-#include "zstring.h"
 #include "version.h"
-#include "i_system.h"
-#include "v_text.h"
-#include "r_data/r_translate.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 

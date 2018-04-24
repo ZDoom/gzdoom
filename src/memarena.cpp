@@ -38,10 +38,8 @@
 */
 
 #include "doomtype.h"
-#include "m_alloc.h"
 #include "memarena.h"
 #include "c_dispatch.h"
-#include "zstring.h"
 
 struct FMemArena::Block
 {

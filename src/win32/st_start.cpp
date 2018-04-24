@@ -38,11 +38,9 @@
 #define _WIN32_WINNT 0x0501	// required to get the MARQUEE defines
 #include <windows.h>
 #include <commctrl.h>
-#include <stdio.h>
 #include "resource.h"
 
 #include "st_start.h"
-#include "resource.h"
 #include "templates.h"
 #include "i_system.h"
 #include "i_input.h"
@@ -52,7 +50,6 @@
 #include "s_sound.h"
 #include "m_argv.h"
 #include "d_main.h"
-#include "v_palette.h"
 
 // MACROS ------------------------------------------------------------------
 

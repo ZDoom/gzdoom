@@ -34,7 +34,6 @@
 */
 
 #include "gl_sidebyside3d.h"
-#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 
 namespace s3d {

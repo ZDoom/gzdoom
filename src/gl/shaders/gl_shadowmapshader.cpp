@@ -22,12 +22,6 @@
 
 #include "gl/system/gl_system.h"
 #include "files.h"
-#include "m_swap.h"
-#include "v_video.h"
-#include "vectors.h"
-#include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 
 void FShadowMapShader::Bind()

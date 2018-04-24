@@ -39,22 +39,15 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "r_data/r_vanillatrans.h"
-#include "i_time.h"
 
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
-#include "gl/utility/gl_clock.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
 CVAR(Bool, gl_usecolorblending, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

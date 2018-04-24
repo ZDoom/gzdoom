@@ -38,11 +38,8 @@
 //#define GME_DLL
 
 #include "i_musicinterns.h"
-#include "c_cvars.h"
-#include "critsec.h"
 #include <gme/gme.h>
 #include "v_text.h"
-#include "files.h"
 #include "templates.h"
 
 // MACROS ------------------------------------------------------------------

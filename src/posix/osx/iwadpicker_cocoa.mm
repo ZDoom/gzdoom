@@ -48,7 +48,6 @@
 
 #include <Cocoa/Cocoa.h>
 #include <wordexp.h>
-#include <unistd.h>
 
 
 CVAR(String, osx_additional_parameters, "", CVAR_ARCHIVE | CVAR_NOSET | CVAR_GLOBALCONFIG);

@@ -35,8 +35,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "i_musicinterns.h"
-#include "c_cvars.h"
-#include "critsec.h"
 #include "v_text.h"
 #include "templates.h"
 #include "m_fixed.h"

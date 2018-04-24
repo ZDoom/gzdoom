@@ -30,8 +30,6 @@
 #include <memory>
 
 #include "timidity.h"
-#include "m_swap.h"
-#include "files.h"
 #include "templates.h"
 #include "gf1patch.h"
 #include "i_soundfont.h"

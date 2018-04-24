@@ -34,11 +34,9 @@
 #include "s_sndseq.h"
 #include "doomstat.h"
 #include "r_state.h"
-#include "gi.h"
 #include "serializer.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
-#include "textures.h"
 #include "vm.h"
 
 //============================================================================

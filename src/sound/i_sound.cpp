@@ -34,33 +34,18 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 
 #include "doomtype.h"
-#include <math.h>
 
 #include "oalsound.h"
 
 #include "mpg123_decoder.h"
 #include "sndfile_decoder.h"
 
-#include "m_swap.h"
-#include "stats.h"
-#include "files.h"
-#include "c_cvars.h"
 #include "c_dispatch.h"
-#include "i_system.h"
-#include "i_sound.h"
 #include "i_music.h"
 #include "m_argv.h"
-#include "m_misc.h"
-#include "w_wad.h"
-#include "i_video.h"
-#include "s_sound.h"
 #include "v_text.h"
-#include "gi.h"
-
-#include "doomdef.h"
 
 EXTERN_CVAR (Float, snd_sfxvolume)
 CVAR (Int, snd_samplerate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)

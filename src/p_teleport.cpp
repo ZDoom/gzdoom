@@ -36,8 +36,6 @@
 #include "r_state.h"
 #include "gi.h"
 #include "a_sharedglobal.h"
-#include "m_random.h"
-#include "i_system.h"
 #include "doomstat.h"
 #include "d_player.h"
 #include "p_maputl.h"

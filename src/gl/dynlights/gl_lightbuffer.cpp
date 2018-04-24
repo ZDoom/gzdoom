@@ -28,7 +28,6 @@
 #include "gl/system/gl_system.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-#include "gl/system/gl_interface.h"
 #include "gl/utility//gl_clock.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 

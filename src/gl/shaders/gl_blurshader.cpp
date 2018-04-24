@@ -26,12 +26,7 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "m_swap.h"
 #include "v_video.h"
-#include "vectors.h"
-#include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_renderer.h"

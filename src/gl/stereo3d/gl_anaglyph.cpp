@@ -26,7 +26,6 @@
 */
 
 #include "gl_anaglyph.h"
-#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 
 namespace s3d {

@@ -68,7 +68,6 @@
 #include "a_sharedglobal.h"
 #include "p_local.h"
 #include "r_sky.h"
-#include "r_data/colormaps.h"
 #include "g_levellocals.h"
 #include "vm.h"
 

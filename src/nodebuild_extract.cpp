@@ -42,7 +42,6 @@
 #include <float.h>
 
 #include "nodebuild.h"
-#include "templates.h"
 #include "g_levellocals.h"
 
 #if 0

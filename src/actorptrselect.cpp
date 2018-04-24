@@ -34,7 +34,6 @@
 #include "actorptrselect.h"
 #include "actor.h"
 #include "d_player.h"
-#include "p_pspr.h"
 #include "p_local.h"
 
 //==========================================================================

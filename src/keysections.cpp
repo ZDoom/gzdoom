@@ -35,8 +35,6 @@
 
 
 #include "menu/menu.h"
-#include "g_level.h"
-#include "d_player.h"
 #include "gi.h"
 #include "c_bind.h"
 #include "c_dispatch.h"

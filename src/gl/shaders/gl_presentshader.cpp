@@ -26,12 +26,7 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "m_swap.h"
 #include "v_video.h"
-#include "vectors.h"
-#include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_presentshader.h"
 
 void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program_name)

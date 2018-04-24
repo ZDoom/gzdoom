@@ -30,15 +30,10 @@
 #include "gl/system/gl_system.h"
 #include "tarray.h"
 #include "doomtype.h"
-#include "zstring.h"
-#include "i_system.h"
 #include "r_utility.h"
 #include "w_wad.h"
-#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/renderer/gl_renderer.h"
-#include "gl/system/gl_interface.h"
-#include "gl/renderer/gl_renderstate.h"
 
 
 class LegacyShader

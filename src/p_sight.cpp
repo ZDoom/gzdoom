@@ -28,19 +28,12 @@
 #include "p_maputl.h"
 #include "p_blockmap.h"
 #include "m_random.h"
-#include "m_bbox.h"
 #include "p_lnspec.h"
-#include "g_level.h"
 #include "po_man.h"
-#include "r_utility.h"
 #include "b_bot.h"
 #include "p_spec.h"
 #include "vm.h"
 
-// State.
-#include "r_state.h"
-
-#include "stats.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 

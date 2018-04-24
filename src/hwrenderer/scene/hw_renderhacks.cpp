@@ -28,7 +28,6 @@
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 #include "r_sky.h"
-#include "g_level.h"
 #include "g_levellocals.h"
 
 #include "hwrenderer/scene/hw_drawinfo.h"

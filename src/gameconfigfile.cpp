@@ -33,18 +33,15 @@
 */
 
 #include <stdio.h>
-#include <time.h>
 
 #ifdef __APPLE__
 #include <CoreServices/CoreServices.h>
 #endif
 
-#include "doomdef.h"
 #include "gameconfigfile.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "c_bind.h"
-#include "gstrings.h"
 #include "m_argv.h"
 #include "cmdlib.h"
 #include "version.h"
@@ -52,7 +49,6 @@
 #include "v_font.h"
 #include "a_pickups.h"
 #include "doomstat.h"
-#include "i_system.h"
 #include "gi.h"
 #include "d_main.h"
 

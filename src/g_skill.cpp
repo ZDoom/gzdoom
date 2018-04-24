@@ -36,12 +36,9 @@
 #include <ctype.h>
 #include "doomstat.h"
 #include "d_player.h"
-#include "g_level.h"
 #include "g_game.h"
 #include "gi.h"
-#include "templates.h"
 #include "v_font.h"
-#include "m_fixed.h"
 #include "gstrings.h"
 #include "g_levellocals.h"
 #include "vm.h"

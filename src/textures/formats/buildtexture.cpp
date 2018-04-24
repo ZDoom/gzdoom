@@ -39,12 +39,10 @@
 #include "w_wad.h"
 #include "templates.h"
 #include "cmdlib.h"
-#include "st_start.h"
 #include "colormatcher.h"
 #include "bitmap.h"
 #include "textures/textures.h"
 #include "r_data/sprites.h"
-#include "r_data/r_translate.h"
 #include "resourcefiles/resourcefile.h"
 
 

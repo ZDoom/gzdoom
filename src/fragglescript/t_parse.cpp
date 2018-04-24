@@ -33,10 +33,7 @@
 /* includes ************************/
 #include <stdarg.h>
 #include "t_script.h"
-#include "s_sound.h"
 #include "v_text.h"
-#include "c_cvars.h"
-#include "i_system.h"
 
 
 CVAR(Bool, script_debug, false, 0)

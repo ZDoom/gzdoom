@@ -24,15 +24,11 @@
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_sharedglobal.h"
-#include "g_level.h"
-#include "templates.h"
-#include "vectors.h"
 #include "r_defs.h"
 #include "r_sky.h"
 #include "r_utility.h"
 #include "p_maputl.h"
 #include "doomdata.h"
-#include "portal.h"
 #include "g_levellocals.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
@@ -43,7 +39,6 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/textures/gl_material.h"
 #include "gl/utility/gl_clock.h"
-#include "gl/shaders/gl_shader.h"
 
 
 void FDrawInfo::AddWall(GLWall *wall)

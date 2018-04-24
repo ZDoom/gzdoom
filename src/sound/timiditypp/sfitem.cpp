@@ -23,10 +23,7 @@
  *	soundfont generator table definition
  *================================================================*/
 
-#include <stdio.h>
 #include <stdint.h>
-#include "timidity.h"
-#include "common.h"
 #include "sflayer.h"
 #include "sfitem.h"
 

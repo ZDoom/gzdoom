@@ -27,23 +27,14 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "m_swap.h"
 #include "v_video.h"
-#include "doomstat.h"
 #include "m_png.h"
-#include "m_crc32.h"
-#include "vectors.h"
-#include "v_palette.h"
 #include "templates.h"
-#include "textures/skyboxtexture.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/textures/gl_hwtexture.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/utility/gl_clock.h"
 #include "gl/data/gl_vertexbuffer.h"

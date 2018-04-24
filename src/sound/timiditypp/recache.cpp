@@ -32,7 +32,6 @@
 #include "instrum.h"
 #include "playmidi.h"
 #include "tables.h"
-#include "mblock.h"
 #include "recache.h"
 #include "resample.h"
 

@@ -26,13 +26,9 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/renderer/gl_renderstate.h"
-#include "v_palette.h"
-#include "v_video.h"
 #include "gl_swscene.h"
 #include "w_wad.h"
 #include "d_player.h"

@@ -38,22 +38,16 @@
 
 #include <stdlib.h>
 #include <ctype.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <string.h>
 
 #include "doomtype.h"
 #include "m_argv.h"
-#include "i_system.h"
 #include "cmdlib.h"
 #include "c_dispatch.h"
 #include "w_wad.h"
-#include "w_zip.h"
 #include "m_crc32.h"
 #include "v_text.h"
-#include "templates.h"
 #include "gi.h"
-#include "doomerrors.h"
 #include "resourcefiles/resourcefile.h"
 #include "md5.h"
 #include "doomstat.h"

@@ -34,10 +34,6 @@
 
 #include "templates.h"
 #include "p_setup.h"
-#include <stdarg.h>
-#include <string.h>
-#include <math.h>
-#include <stdlib.h>
 
 #include "version.h"
 #include "g_game.h"
@@ -49,27 +45,22 @@
 #include "i_system.h"
 #include "i_video.h"
 #include "g_input.h"
-#include "m_swap.h"
 #include "v_palette.h"
 #include "v_video.h"
 #include "v_text.h"
 #include "w_wad.h"
 #include "sbar.h"
 #include "s_sound.h"
-#include "s_sndseq.h"
 #include "doomstat.h"
 #include "d_gui.h"
-#include "v_video.h"
 #include "cmdlib.h"
 #include "d_net.h"
-#include "g_level.h"
 #include "d_event.h"
 #include "d_player.h"
 #include "gstrings.h"
 #include "c_consolebuffer.h"
 #include "g_levellocals.h"
 #include "vm.h"
-#include "i_time.h"
 
 FString FStringFormat(VM_ARGS); // extern from thingdef_data.cpp
 

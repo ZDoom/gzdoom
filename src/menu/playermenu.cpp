@@ -34,19 +34,10 @@
 */
 
 #include "menu/menu.h"
-#include "v_video.h"
-#include "v_font.h"
 #include "gi.h"
-#include "gstrings.h"
-#include "d_player.h"
-#include "d_event.h"
-#include "d_gui.h"
 #include "c_dispatch.h"
 #include "teaminfo.h"
-#include "v_palette.h"
 #include "r_state.h"
-#include "r_data/r_translate.h"
-#include "v_text.h"
 #include "vm.h"
 
 EXTERN_CVAR(Int, team)

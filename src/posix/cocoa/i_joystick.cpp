@@ -32,10 +32,8 @@
  */
 
 #include <IOKit/IOCFPlugIn.h>
-#include <IOKit/IOKitLib.h>
 #include <IOKit/IOMessage.h>
 #include <IOKit/hid/IOHIDLib.h>
-#include <IOKit/hid/IOHIDUsageTables.h>
 
 #include "d_event.h"
 #include "doomdef.h"

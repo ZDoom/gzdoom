@@ -25,7 +25,6 @@
 #include "a_lightning.h"
 #include "doomstat.h"
 #include "p_lnspec.h"
-#include "statnums.h"
 #include "m_random.h"
 #include "templates.h"
 #include "s_sound.h"

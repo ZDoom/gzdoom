@@ -45,39 +45,6 @@ struct FTexCoordInfo
 
 //===========================================================================
 // 
-// device independent wrapper around the hardware texture and its sampler state
-//
-//===========================================================================
-class FMaterial;
-
-class FGLTexture
-{
-	friend class FMaterial;
-public:
-	FTexture * tex;
-
-private:
-	FHardwareTexture *mHwTexture;
-
-	uint8_t lastSampler;
-	int lastTranslation;
-
-	FHardwareTexture *CreateHwTexture();
-
-	bool Bind(int texunit, int clamp, int translation, int flags);
-	
-public:
-	FGLTexture(FTexture * tx, bool expandpatches);
-	FGLTexture(FTexture * tx, FHardwareTexture *hwtex);	// for the SW framebuffer
-	~FGLTexture();
-
-	void Clean(bool all);
-	void CleanUnused(SpriteHits &usedtranslations);
-	bool isInitialized() const { return mHwTexture != nullptr; }
-};
-
-//===========================================================================
-// 
 // this is the material class for OpenGL. 
 //
 //===========================================================================
@@ -98,7 +65,7 @@ class FMaterial
 	static TArray<FMaterial *> mMaterials;
 	static int mMaxBound;
 
-	FGLTexture *mBaseLayer;	
+	FHardwareTexture *mBaseLayer;	
 	TArray<FTextureLayer> mTextureLayers;
 	int mShaderIndex;
 
@@ -115,7 +82,7 @@ class FMaterial
 	float mSpriteU[2], mSpriteV[2];
 	FloatRect mSpriteRect;
 
-	FGLTexture * ValidateSysTexture(FTexture * tex, bool expand);
+	FHardwareTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	bool TrimBorders(uint16_t *rect);
 
 public:
@@ -134,7 +101,7 @@ public:
 	}
 	bool isMasked() const
 	{
-		return !!mBaseLayer->tex->bMasked;
+		return !!tex->bMasked;
 	}
 
 	int GetLayers() const

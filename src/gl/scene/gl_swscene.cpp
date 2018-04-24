@@ -65,7 +65,6 @@ public:
 class FSWSceneTexture : public FTexture
 {
 public:
-	FHardwareTexture *hwtex;
 
 	FSWSceneTexture(int w, int h, int bits)
 	{
@@ -73,9 +72,8 @@ public:
 		Height = h;
 		WidthBits = bits;
 		UseType = ETextureType::SWCanvas;
-
-		hwtex = new FHardwareTexture(true);
-		new FGLTexture(this, hwtex);
+		bNoCompress = true;
+		gl_info.SystemTexture[0] = screen->CreateHardwareTexture(this);
 	}
 
 	// This is just a wrapper around the hardware texture and should never call the bitmap getters - if it does, something is wrong.
@@ -101,20 +99,23 @@ SWSceneDrawer::~SWSceneDrawer()
 void SWSceneDrawer::RenderView(player_t *player)
 {
 	DCanvas buffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor());
-	if (FBTexture == nullptr || FBTexture->hwtex == nullptr || FBTexture->GetWidth() != screen->GetWidth() || FBTexture->GetHeight() != screen->GetHeight() || (V_IsTrueColor() ? 1:0) != FBTexture->WidthBits)
+	if (FBTexture == nullptr || FBTexture->gl_info.SystemTexture[0] == nullptr || 
+		FBTexture->GetWidth() != screen->GetWidth() || 
+		FBTexture->GetHeight() != screen->GetHeight() || 
+		(V_IsTrueColor() ? 1:0) != FBTexture->WidthBits)
 	{
 		// This manually constructs its own material here.
 		if (FBTexture != nullptr) delete FBTexture;
 		FBTexture = new FSWSceneTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor());
-		FBTexture->hwtex->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
+		FBTexture->gl_info.SystemTexture[0]->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 		auto mat = FMaterial::ValidateTexture(FBTexture, false);
 		mat->AddTextureLayer(PaletteTexture);
 	}
-	auto buf = FBTexture->hwtex->MapBuffer();
+	auto buf = FBTexture->gl_info.SystemTexture[0]->MapBuffer();
 	if (!buf) I_FatalError("Unable to map buffer for software rendering");
 	buffer.SetBuffer(screen->GetWidth(), screen->GetHeight(), screen->GetWidth(), buf);
 	SWRenderer->RenderView(player, &buffer);
-	FBTexture->hwtex->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
+	FBTexture->gl_info.SystemTexture[0]->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 	screen->Begin2D(false);

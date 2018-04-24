@@ -388,6 +388,12 @@ void OpenGLFrameBuffer::SetTextureFilterMode()
 	if (GLRenderer != nullptr && GLRenderer->mSamplerManager != nullptr) GLRenderer->mSamplerManager->SetTextureFilterMode();
 }
 
+FHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex) 
+{ 
+	return new FHardwareTexture(tex->bNoCompress);
+}
+
+
 void OpenGLFrameBuffer::UpdatePalette()
 {
 	if (GLRenderer)

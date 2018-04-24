@@ -43,6 +43,7 @@ public:
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	void RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
+	FHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer

@@ -99,9 +99,10 @@ enum ESpecialTranslations : int32_t
 
 enum ECreateTexBufferFlags
 {
-	CTF_CheckHires = 1,	// use external hires replacement if found
-	CTF_Expand = 2,		// create buffer with a one-pixel wide border
-	CTF_ProcessData = 4	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+	CTF_CheckHires = 1,		// use external hires replacement if found
+	CTF_Expand = 2,			// create buffer with a one-pixel wide border
+	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+	CTF_MaybeWarped = 8		// may be warped if needed
 };
 
 
@@ -114,7 +115,7 @@ class FScanner;
 // Texture IDs
 class FTextureManager;
 class FTerrainTypeArray;
-class FGLTexture;
+class FHardwareTexture;
 class FMaterial;
 extern int r_spriteadjustSW, r_spriteadjustHW;
 
@@ -481,7 +482,7 @@ public:
 	struct GLTexInfo
 	{
 		FMaterial *Material[2] = { nullptr, nullptr };
-		FGLTexture *SystemTexture[2] = { nullptr, nullptr };
+		FHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
 		bool bNoExpand = false;
 
 		~GLTexInfo();

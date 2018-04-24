@@ -83,6 +83,8 @@ public:
 	void BindToFrameBuffer(int w, int h);
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
+	bool BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags);
+
 	void AllocateBuffer(int w, int h, int texelsize);
 	uint8_t *MapBuffer();
 

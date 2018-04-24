@@ -26,198 +26,17 @@
 #include "sbar.h"
 #include "stats.h"
 #include "r_utility.h"
-#include "textures/warpbuffer.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/textures/gl_material.h"
-#include "gl/textures/gl_samplers.h"
 #include "gl/shaders/gl_shader.h"
 
 EXTERN_CVAR(Bool, gl_render_precise)
 EXTERN_CVAR(Int, gl_lightmode)
 EXTERN_CVAR(Bool, gl_precache)
 EXTERN_CVAR(Bool, gl_texture_usehires)
-
-//===========================================================================
-//
-// The GL texture maintenance class
-//
-//===========================================================================
-
-//===========================================================================
-//
-// Constructor
-//
-//===========================================================================
-FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
-{
-	assert(tx->gl_info.SystemTexture[expandpatches] == NULL);
-	tex = tx;
-
-	mHwTexture = NULL;
-	lastSampler = 254;
-	lastTranslation = -1;
-	tex->gl_info.SystemTexture[expandpatches] = this;
-}
-
-//===========================================================================
-//
-// Constructor 2 for the SW framebuffer which provides its own hardware texture.
-//
-//===========================================================================
-FGLTexture::FGLTexture(FTexture * tx, FHardwareTexture *hwtex)
-{
-	assert(tx->gl_info.SystemTexture[0] == NULL);
-	tex = tx;
-
-	mHwTexture = hwtex;
-	lastSampler = 254;
-	lastTranslation = -1;
-	tex->gl_info.SystemTexture[0] = this;
-}
-
-//===========================================================================
-//
-// Destructor
-//
-//===========================================================================
-
-FGLTexture::~FGLTexture()
-{
-	Clean(true);
-	for (auto & i : tex->gl_info.SystemTexture) if (i == this) i = nullptr;
-}
-
-//===========================================================================
-// 
-//	Deletes all allocated resources
-//
-//===========================================================================
-
-void FGLTexture::Clean(bool all)
-{
-	if (mHwTexture != nullptr) 
-	{
-		if (!all) mHwTexture->Clean(false);
-		else
-		{
-			delete mHwTexture;
-			mHwTexture = nullptr;
-		}
-
-		lastSampler = 253;
-		lastTranslation = -1;
-	}
-}
-
-
-void FGLTexture::CleanUnused(SpriteHits &usedtranslations)
-{
-	if (mHwTexture != nullptr)
-	{
-		mHwTexture->CleanUnused(usedtranslations);
-		lastSampler = 253;
-		lastTranslation = -1;
-	}
-}
-
-
-//===========================================================================
-// 
-//	Create hardware texture for world use
-//
-//===========================================================================
-
-FHardwareTexture *FGLTexture::CreateHwTexture()
-{
-	if (tex->UseType==ETextureType::Null) return NULL;		// Cannot register a NULL texture
-	if (mHwTexture == NULL)
-	{
-		mHwTexture = new FHardwareTexture(tex->bNoCompress);
-	}
-	return mHwTexture; 
-}
-
-//===========================================================================
-// 
-//	Binds a texture to the renderer
-//
-//===========================================================================
-
-bool FGLTexture::Bind(int texunit, int clampmode, int translation, int flags)
-{
-	int usebright = false;
-
-	if (translation <= 0)
-	{
-		translation = -translation;
-	}
-	else
-	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-	}
-
-	bool needmipmap = (clampmode <= CLAMP_XY);
-
-	FHardwareTexture *hwtex = CreateHwTexture();
-
-	if (hwtex)
-	{
-		// Texture has become invalid
-		if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified(DefaultRenderStyle()))
-		{
-			Clean(true);
-			hwtex = CreateHwTexture();
-		}
-
-		// Bind it to the system.
-		if (!hwtex->Bind(texunit, translation, needmipmap))
-		{
-			
-			int w=0, h=0;
-
-			// Create this texture
-			unsigned char * buffer = nullptr;
-			
-			if (!tex->bHasCanvas)
-			{
-				buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
-				if (tex->bWarped && gl.legacyMode && w*h <= 256*256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
-				{
-					// need to do software warping
-					FWarpTexture *wt = static_cast<FWarpTexture*>(tex);
-					unsigned char *warpbuffer = new unsigned char[w*h*4];
-					WarpBuffer((uint32_t*)warpbuffer, (const uint32_t*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, screen->FrameTime, wt->Speed, tex->bWarped);
-					delete[] buffer;
-					buffer = warpbuffer;
-					wt->GenTime[0] = screen->FrameTime;
-				}
-			}
-			else
-			{
-				w = tex->GetWidth();
-				h = tex->GetHeight();
-			}
-			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FGLTexture.Bind")) 
-			{
-				// could not create texture
-				delete[] buffer;
-				return false;
-			}
-			delete[] buffer;
-		}
-		if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
-		if (translation != lastTranslation) lastSampler = 254;
-		if (lastSampler != clampmode)
-			lastSampler = GLRenderer->mSamplerManager->Bind(texunit, clampmode, lastSampler);
-		lastTranslation = translation;
-		return true; 
-	}
-	return false;
-}
 
 //===========================================================================
 //
@@ -288,18 +107,18 @@ float FTexCoordInfo::TextureAdjustWidth() const
 //
 //
 //===========================================================================
-FGLTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
+FHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
 {
 	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
-		FGLTexture *gltex = tex->gl_info.SystemTexture[expand];
-		if (gltex == NULL) 
+		FHardwareTexture *gltex = tex->gl_info.SystemTexture[expand];
+		if (gltex == nullptr) 
 		{
-			gltex = new FGLTexture(tex, expand);
+			gltex = tex->gl_info.SystemTexture[expand] = screen->CreateHardwareTexture(tex);
 		}
 		return gltex;
 	}
-	return NULL;
+	return nullptr;
 }
 
 //===========================================================================
@@ -625,7 +444,7 @@ void FMaterial::Bind(int clampmode, int translation)
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = mExpanded? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY)? CTF_CheckHires : 0;
 
-	if (mBaseLayer->Bind(0, clampmode, translation, flags))
+	if (mBaseLayer->BindOrCreate(tex, 0, clampmode, translation, flags))
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{
@@ -634,13 +453,13 @@ void FMaterial::Bind(int clampmode, int translation)
 			{
 				FTextureID id = mTextureLayers[i].texture->id;
 				layer = TexMan(id);
-				ValidateSysTexture(layer, mExpanded);
 			}
 			else
 			{
 				layer = mTextureLayers[i].texture;
 			}
-			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, 0);
+			auto systex = ValidateSysTexture(layer, mExpanded);
+			systex->BindOrCreate(layer, i+1, clampmode, 0, 0);
 			maxbound = i+1;
 		}
 	}
@@ -730,7 +549,6 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 {
 	if (mShaderIndex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
 	{
-		FTexture *tex = mBaseLayer->tex;
 		*pAreas = tex->areas;
 		return tex->areacount;
 	}
@@ -748,14 +566,14 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 
 void FMaterial::BindToFrameBuffer()
 {
-	if (mBaseLayer->mHwTexture == NULL)
+	if (mBaseLayer == nullptr)
 	{
 		// must create the hardware texture first
-		mBaseLayer->Bind(0, 0, 0, 0);
+		mBaseLayer->BindOrCreate(tex, 0, 0, 0, 0);
 		FHardwareTexture::Unbind(0);
 		ClearLastTexture();
 	}
-	mBaseLayer->mHwTexture->BindToFrameBuffer(mWidth, mHeight);
+	mBaseLayer->BindToFrameBuffer(mWidth, mHeight);
 }
 
 //==========================================================================
@@ -823,8 +641,8 @@ void FMaterial::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			FGLTexture *gltex = TexMan.ByIndex(i)->gl_info.SystemTexture[j];
-			if (gltex != NULL) gltex->Clean(true);
+			auto gltex = TexMan.ByIndex(i)->gl_info.SystemTexture[j];
+			if (gltex != nullptr) gltex->Clean(true);
 		}
 	}
 }

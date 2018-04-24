@@ -269,9 +269,9 @@ void GLSceneDrawer::CreateScene()
 	// These cannot be multithreaded when the time comes because all these depend
 	// on the global 'validcount' variable.
 
-	gl_drawinfo->HandleMissingTextures();	// Missing upper/lower textures
+	gl_drawinfo->HandleMissingTextures(in_area);	// Missing upper/lower textures
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water
-	gl_drawinfo->ProcessSectorStacks();		// merge visplanes of sector stacks
+	gl_drawinfo->ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
 	GLRenderer->mVBO->Unmap();
 
 	ProcessAll.Unclock();

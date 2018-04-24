@@ -234,13 +234,7 @@ public:
 	static float GetZFar() { return 65536.f; }
 };
 
-enum area_t
-{
-	area_normal,
-	area_below,
-	area_above,
-	area_default
-};
+enum area_t : int;
 
 
 // Global functions. Make them members of GLRenderer later?

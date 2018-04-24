@@ -1307,3 +1307,15 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 	// Step3: Delete the stencil
 	ClearFloodStencil(&ws);
 }
+
+// This was temporarily moved out of gl_renderhacks.cpp so that the dependency on GLWall could be eliminated until things have progressed a bit.
+void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
+{
+	for(unsigned int j=0;j<lowersegs.Size();j++)
+	{
+		seg_t * seg=lowersegs[j];
+		GLWall wall(mDrawer);
+		wall.ProcessLowerMiniseg(seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+		rendered_lines++;
+	}
+}

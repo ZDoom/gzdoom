@@ -11,10 +11,10 @@
 
 #include "tarray.h"
 #include "gl/system/gl_interface.h"
+#include "hwrenderer/textures/hw_ihwtexture.h"
 
 class FCanvasTexture;
 class AActor;
-typedef TMap<int, bool> SpriteHits;
 
 
 // For error catching while changing parameters.
@@ -23,7 +23,7 @@ enum EInvalid
 	Invalid = 0
 };
 
-class FHardwareTexture
+class FHardwareTexture : public IHardwareTexture
 {
 public:
 	enum

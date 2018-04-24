@@ -280,7 +280,7 @@ public:
 
 
 class FUniquePalette;
-class FHardwareTexture;
+class IHardwareTexture;
 class FTexture;
 
 // A canvas that represents the actual display. The video code is responsible
@@ -353,7 +353,8 @@ public:
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
-	virtual FHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual void UnbindTexUnit(int no) {}
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.

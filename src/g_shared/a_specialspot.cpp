@@ -33,10 +33,7 @@
 **
 */
 #include "a_specialspot.h"
-#include "m_random.h"
 #include "p_local.h"
-#include "statnums.h"
-#include "i_system.h"
 #include "doomstat.h"
 #include "serializer.h"
 #include "a_pickups.h"

@@ -45,12 +45,9 @@
 #include "p_tags.h"
 #include "v_text.h"
 #include "a_sharedglobal.h"
-#include "i_system.h"
 #include "c_dispatch.h"
 #include "p_maputl.h"
 #include "p_spec.h"
-#include "p_checkposition.h"
-#include "math/cmath.h"
 #include "g_levellocals.h"
 #include "vm.h"
 

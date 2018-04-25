@@ -21,16 +21,14 @@
 //
 
 #include "gl/system/gl_system.h"
-#include "templates.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl_samplers.h"
-#include "gl_material.h"
+#include "hwrenderer/textures/hw_material.h"
 
 extern TexFilter_s TexFilter[];
 

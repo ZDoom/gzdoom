@@ -32,6 +32,7 @@
 #include "polyrenderer/math/gpu_types.h"
 #include "poly_playersprite.h"
 #include "poly_cull.h"
+#include "poly_sky.h"
 
 class PolyTranslucentObject
 {
@@ -39,7 +40,7 @@ public:
 	PolyTranslucentObject(uint32_t subsectorDepth = 0, double distanceSquared = 0.0) : subsectorDepth(subsectorDepth), DistanceSquared(distanceSquared) { }
 	virtual ~PolyTranslucentObject() { }
 
-	virtual void Render(PolyRenderThread *thread, const PolyClipPlane &portalPlane) = 0;
+	virtual void Render(PolyRenderThread *thread) = 0;
 
 	bool operator<(const PolyTranslucentObject &other) const
 	{
@@ -59,11 +60,12 @@ class PolyPortalViewpoint
 public:
 	Mat4f WorldToView;
 	Mat4f WorldToClip;
-	PolyClipPlane PortalPlane;
 	uint32_t StencilValue = 0;
 	int PortalDepth = 0;
+	bool Mirror = false;
 
-	line_t *LastPortalLine = nullptr;
+	line_t *PortalEnterLine = nullptr;
+	sector_t *PortalEnterSector = nullptr;
 
 	size_t ObjectsStart = 0;
 	size_t ObjectsEnd = 0;
@@ -81,7 +83,6 @@ public:
 	~RenderPolyScene();
 
 	void Render(PolyPortalViewpoint *viewpoint);
-	void RenderTranslucent(PolyPortalViewpoint *viewpoint);
 
 	static const uint32_t SkySubsectorDepth = 0x7fffffff;
 
@@ -89,6 +90,7 @@ public:
 
 private:
 	void RenderPortals();
+	void RenderTranslucent();
 	void RenderSectors();
 	void RenderSubsector(PolyRenderThread *thread, subsector_t *sub, uint32_t subsectorDepth);
 	void RenderLine(PolyRenderThread *thread, subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth);
@@ -100,6 +102,7 @@ private:
 	static int PointOnSide(const DVector2 &pos, const node_t *node);
 
 	PolyCull Cull;
+	PolySkyDome Skydome;
 };
 
 enum class PolyWaterFakeSide

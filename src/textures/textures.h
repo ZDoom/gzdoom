@@ -44,6 +44,8 @@
 #include "r_data/r_translate.h"
 #include <vector>
 
+typedef TMap<int, bool> SpriteHits;
+
 enum MaterialShaderIndex
 {
 	SHADER_Default,
@@ -99,9 +101,10 @@ enum ESpecialTranslations : int32_t
 
 enum ECreateTexBufferFlags
 {
-	CTF_CheckHires = 1,	// use external hires replacement if found
-	CTF_Expand = 2,		// create buffer with a one-pixel wide border
-	CTF_ProcessData = 4	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+	CTF_CheckHires = 1,		// use external hires replacement if found
+	CTF_Expand = 2,			// create buffer with a one-pixel wide border
+	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
+	CTF_MaybeWarped = 8		// may be warped if needed
 };
 
 
@@ -114,7 +117,7 @@ class FScanner;
 // Texture IDs
 class FTextureManager;
 class FTerrainTypeArray;
-class FGLTexture;
+class IHardwareTexture;
 class FMaterial;
 extern int r_spriteadjustSW, r_spriteadjustHW;
 
@@ -225,6 +228,9 @@ public:
 	int SourceLump;
 	FTextureID id;
 
+	FMaterial *Material[2] = { nullptr, nullptr };
+	IHardwareTexture *SystemTexture[2] = { nullptr, nullptr };
+
 	// None of the following pointers are owned by this texture, they are all controlled by the texture manager.
 
 	// Paletted variant
@@ -262,6 +268,7 @@ public:
 	uint8_t bDisableFullbright : 1;				// This texture will not be displayed as fullbright sprite
 	uint8_t bSkybox : 1;						// is a cubic skybox
 	uint8_t bNoCompress : 1;
+	uint8_t bNoExpand : 1;
 	int8_t bTranslucent : 2;
 	bool bHiresHasColorKey = false;				// Support for old color-keyed Doomsday textures
 
@@ -301,10 +308,10 @@ public:
 	virtual bool Mipmapped() { return true; }
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL);
-	int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
+	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL);
 	virtual bool UseBasePalette();
 	virtual int GetSourceLump() { return SourceLump; }
-	virtual FTexture *GetRedirect(bool wantwarped);
+	virtual FTexture *GetRedirect();
 	virtual FTexture *GetRawTexture();		// for FMultiPatchTexture to override
 
 	virtual void Unload ();
@@ -443,7 +450,6 @@ protected:
 		CopySize(other);
 		bNoDecals = other->bNoDecals;
 		Rotations = other->Rotations;
-		gl_info = other->gl_info;
 	}
 
 	std::vector<uint32_t> PixelsBgra;
@@ -477,16 +483,6 @@ public:
 	static void FlipNonSquareBlockRemap (uint8_t *blockto, const uint8_t *blockfrom, int x, int y, int srcpitch, const uint8_t *remap);
 
 public:
-
-	struct GLTexInfo
-	{
-		FMaterial *Material[2] = { nullptr, nullptr };
-		FGLTexture *SystemTexture[2] = { nullptr, nullptr };
-		bool bNoExpand = false;
-
-		~GLTexInfo();
-	};
-	GLTexInfo gl_info;
 
 	void GetGlowColor(float *data);
 	bool isGlowing() { return bGlowing; }
@@ -724,13 +720,13 @@ public:
 	void Unload() override;
 
 	virtual int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate=0, FCopyInfo *inf = NULL) override;
+	virtual int CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf = NULL) override;
 	const uint32_t *GetPixelsBgra() override;
 	bool CheckModified (FRenderStyle) override;
 
 	float GetSpeed() const { return Speed; }
 	int GetSourceLump() { return SourcePic->GetSourceLump(); }
 	void SetSpeed(float fac) { Speed = fac; }
-	FTexture *GetRedirect(bool wantwarped);
 
 	uint64_t GenTime[2] = { 0, 0 };
 	uint64_t GenTimeBgra = 0;

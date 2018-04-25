@@ -34,10 +34,6 @@
 
 #include <ctype.h>
 #include "menu/menu.h"
-#include "d_event.h"
-#include "d_gui.h"
-#include "v_video.h"
-#include "v_text.h"
 #include "d_main.h"
 #include "gstrings.h"
 #include "gi.h"

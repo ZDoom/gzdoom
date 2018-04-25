@@ -35,7 +35,6 @@
 
 #include <chrono>
 #include <thread>
-#include <stdint.h>
 #include "i_time.h"
 #include "doomdef.h"
 #include "c_cvars.h"

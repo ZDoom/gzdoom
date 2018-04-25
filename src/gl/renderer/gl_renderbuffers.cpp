@@ -26,18 +26,12 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "m_swap.h"
 #include "v_video.h"
-#include "vectors.h"
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "w_wad.h"
-#include "i_system.h"
-#include "doomerrors.h"
 #include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);

@@ -36,14 +36,11 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <mmsystem.h>
-#include <ctype.h>
 #include <stdlib.h>
 
 #include "doomtype.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
 #include "m_argv.h"
-#include "i_system.h"
 #include "version.h"
 
 #include "i_cd.h"

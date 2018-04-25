@@ -34,7 +34,7 @@ class PolyTriangleDrawer
 public:
 	static void ClearBuffers(DCanvas *canvas);
 	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, bool span_drawers);
-	static void ToggleMirror(const DrawerCommandQueuePtr &queue);
+	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip);
 };
 
@@ -45,7 +45,7 @@ public:
 
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, bool span_drawers);
 	void SetTransform(const Mat4f *objectToClip);
-	void ToggleMirror() { mirror = !mirror; }
+	void SetCullCCW(bool value) { ccw = value; }
 
 	void DrawElements(const PolyDrawArgs &args);
 	void DrawArrays(const PolyDrawArgs &args);
@@ -78,7 +78,7 @@ private:
 	int dest_height = 0;
 	bool dest_bgra = false;
 	uint8_t *dest = nullptr;
-	bool mirror = false;
+	bool ccw = true;
 	const Mat4f *objectToClip = nullptr;
 	bool span_drawers = false;
 
@@ -97,11 +97,16 @@ private:
 	const Mat4f *objectToClip;
 };
 
-class PolyToggleMirrorCommand : public DrawerCommand
+class PolySetCullCCWCommand : public DrawerCommand
 {
 public:
+	PolySetCullCCWCommand(bool ccw);
+
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolyToggleMirror"; }
+	FString DebugInfo() override { return "PolySetCullCCWCommand"; }
+
+private:
+	bool ccw;
 };
 
 class PolySetViewportCommand : public DrawerCommand

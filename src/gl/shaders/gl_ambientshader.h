@@ -1,6 +1,8 @@
 #ifndef __GL_AMBIENTSHADER_H
 #define __GL_AMBIENTSHADER_H
 
+#include <memory>
+
 #include "gl_shaderprogram.h"
 
 class FLinearDepthShader

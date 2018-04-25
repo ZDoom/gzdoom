@@ -56,7 +56,6 @@
 #include "gl/system/gl_system.h"
 #include "doomtype.h"
 #include "g_level.h"
-#include "sc_man.h"
 #include "w_wad.h"
 #include "r_state.h"
 #include "r_utility.h"
@@ -69,9 +68,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
 
 
 //-----------------------------------------------------------------------------

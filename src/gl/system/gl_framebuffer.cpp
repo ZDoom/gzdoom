@@ -27,26 +27,18 @@
 */
 
 #include "gl/system/gl_system.h"
-#include "m_swap.h"
 #include "v_video.h"
-#include "doomstat.h"
 #include "m_png.h"
-#include "m_crc32.h"
-#include "vectors.h"
-#include "v_palette.h"
 #include "templates.h"
-#include "textures/skyboxtexture.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/textures/gl_hwtexture.h"
 #include "gl/textures/gl_samplers.h"
-#include "gl/utility/gl_clock.h"
+#include "hwrenderer/utility/hw_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/models/gl_models.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 
@@ -60,7 +52,6 @@ FGLRenderer *GLRenderer;
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
-void gl_SetupMenu();
 
 CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -94,7 +85,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	InitializeState();
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
-	gl_SetupMenu();
 	DoSetGamma();
 }
 
@@ -396,6 +386,24 @@ void OpenGLFrameBuffer::SetTextureFilterMode()
 {
 	if (GLRenderer != nullptr && GLRenderer->mSamplerManager != nullptr) GLRenderer->mSamplerManager->SetTextureFilterMode();
 }
+
+IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex) 
+{ 
+	return new FHardwareTexture(tex->bNoCompress);
+}
+
+FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
+{
+	return new FGLModelRenderer(mli);
+}
+
+
+void OpenGLFrameBuffer::UnbindTexUnit(int no)
+{
+	FHardwareTexture::Unbind(no);
+}
+
+
 
 void OpenGLFrameBuffer::UpdatePalette()
 {

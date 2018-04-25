@@ -34,7 +34,6 @@
 #include "i_common.h"
 
 #include "d_main.h"
-#include "i_system.h"
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"

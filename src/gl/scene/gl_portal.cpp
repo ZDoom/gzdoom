@@ -27,33 +27,24 @@
 
 #include "gl/system/gl_system.h"
 #include "p_local.h"
-#include "vectors.h"
 #include "c_dispatch.h"
 #include "doomstat.h"
 #include "a_sharedglobal.h"
 #include "r_sky.h"
-#include "portal.h"
 #include "p_maputl.h"
 #include "d_player.h"
 #include "g_levellocals.h"
-#include "actorinlines.h"
 
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_quaddrawer.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/scene/gl_clipper.h"
+#include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/scoped_color_mask.h"
-#include "gl/textures/gl_material.h"
-#include "gl/utility/gl_clock.h"
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -1071,7 +1062,7 @@ void GLLineToLinePortal::DrawContents()
 
 void GLLineToLinePortal::RenderAttached()
 {
-	drawer->RenderActorsInPortal(glport);
+	gl_drawinfo->ProcessActorsInPortal(glport);
 }
 
 //-----------------------------------------------------------------------------

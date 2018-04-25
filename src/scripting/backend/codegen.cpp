@@ -39,22 +39,13 @@
 
 #include <stdlib.h>
 #include "actor.h"
-#include "sc_man.h"
-#include "tarray.h"
-#include "templates.h"
 #include "cmdlib.h"
-#include "i_system.h"
-#include "m_random.h"
 #include "a_pickups.h"
 #include "thingdef.h"
 #include "p_lnspec.h"
-#include "doomstat.h"
 #include "codegen.h"
-#include "m_fixed.h"
-#include "vmbuilder.h"
 #include "v_text.h"
 #include "w_wad.h"
-#include "math/cmath.h"
 
 inline PClass *PObjectPointer::PointedClass() const { return static_cast<PClassType*>(PointedType)->Descriptor; }
 

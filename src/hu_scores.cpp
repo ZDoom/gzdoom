@@ -36,7 +36,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include "c_console.h"
-#include "st_stuff.h"
 #include "teaminfo.h"
 #include "templates.h"
 #include "v_video.h"
@@ -44,7 +43,6 @@
 #include "g_level.h"
 #include "d_netinf.h"
 #include "v_font.h"
-#include "v_palette.h"
 #include "d_player.h"
 #include "hu_stuff.h"
 #include "gstrings.h"

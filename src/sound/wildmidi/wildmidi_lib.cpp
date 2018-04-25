@@ -32,16 +32,9 @@
 #include <fcntl.h>
 #include <math.h>
 #ifndef _WIN32
-#include <pwd.h>
 #include <strings.h>
-#include <unistd.h>
 #endif
-#include <stdarg.h>
-#include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-#include <sys/types.h>
 #include <memory>
 
 #include "common.h"

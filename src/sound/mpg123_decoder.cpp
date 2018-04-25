@@ -32,7 +32,6 @@
 */
 
 #include "mpg123_decoder.h"
-#include "files.h"
 #include "i_module.h"
 #include "cmdlib.h"
 

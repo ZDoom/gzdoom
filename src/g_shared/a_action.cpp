@@ -24,16 +24,11 @@
 #include "actor.h"
 #include "p_conversation.h"
 #include "p_lnspec.h"
-#include "m_random.h"
-#include "s_sound.h"
 #include "d_player.h"
 #include "p_local.h"
 #include "p_terrain.h"
 #include "p_enemy.h"
-#include "statnums.h"
-#include "templates.h"
 #include "serializer.h"
-#include "r_data/r_translate.h"
 #include "vm.h"
 
 //----------------------------------------------------------------------------

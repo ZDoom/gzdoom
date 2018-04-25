@@ -28,16 +28,15 @@
 
 #include "gl/system/gl_system.h"
 #include "templates.h"
-#include "m_crc32.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
-#include "v_palette.h"
+#include "hwrenderer/textures/hw_material.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/textures/gl_material.h"
+#include "gl/renderer/gl_colormap.h"
+#include "gl/textures/gl_samplers.h"
 
 
 extern TexFilter_s TexFilter[];
@@ -492,5 +491,66 @@ void FHardwareTexture::BindToFrameBuffer(int width, int height)
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glDefTex.glTexID, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer(width, height));
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer(width, height));
+}
+
+
+//===========================================================================
+// 
+//	Binds a texture to the renderer
+//
+//===========================================================================
+
+bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags)
+{
+	int usebright = false;
+
+	if (translation <= 0)
+	{
+		translation = -translation;
+	}
+	else
+	{
+		auto remap = TranslationToTable(translation);
+		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
+	}
+
+	bool needmipmap = (clampmode <= CLAMP_XY);
+
+	// Texture has become invalid
+	if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified(DefaultRenderStyle()))
+	{
+		Clean(true);
+	}
+
+	// Bind it to the system.
+	if (!Bind(texunit, translation, needmipmap))
+	{
+
+		int w = 0, h = 0;
+
+		// Create this texture
+		unsigned char * buffer = nullptr;
+
+		if (!tex->bHasCanvas)
+		{
+			if (gl.legacyMode) flags |= CTF_MaybeWarped;
+			buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
+		}
+		else
+		{
+			w = tex->GetWidth();
+			h = tex->GetHeight();
+		}
+		if (!CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FHardwareTexture.BindOrCreate"))
+		{
+			// could not create texture
+			delete[] buffer;
+			return false;
+		}
+		delete[] buffer;
+	}
+	if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
+	return true;
 }
 

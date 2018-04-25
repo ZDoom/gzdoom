@@ -3,8 +3,7 @@
 **  Hardware render profiling info
 **
 **---------------------------------------------------------------------------
-** Copyright 1998-2016 Randy Heit
-** Copyright 2007-2016 Christoph Oelckers
+** Copyright 2007-2018 Christoph Oelckers
 ** All rights reserved.
 **
 ** Redistribution and use in source and binary forms, with or without
@@ -40,7 +39,7 @@
 #include "r_utility.h"
 #include "v_video.h"
 #include "g_levellocals.h"
-#include "gl/utility/gl_clock.h"
+#include "hw_clock.h"
 #include "i_time.h"
 
 glcycle_t RenderWall,SetupWall,ClipWall;
@@ -140,9 +139,6 @@ ADD_STAT(lightstats)
 	return out;
 }
 
-void AppendMissingTextureStats(FString &out);
-
-
 static int printstats;
 static bool switchfps;
 static uint64_t waitstart;
@@ -164,7 +160,7 @@ void CheckBench()
 		AppendRenderStats(compose);
 		AppendRenderTimes(compose);
 		AppendLightStats(compose);
-		AppendMissingTextureStats(compose);
+		//AppendMissingTextureStats(compose);
 		compose.AppendFormat("%llu fps\n\n", screen->GetLastFPS());
 
 		FILE *f = fopen("benchmarks.txt", "at");

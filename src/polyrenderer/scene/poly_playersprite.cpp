@@ -255,7 +255,7 @@ void RenderPolyPlayerSprites::RenderSprite(PolyRenderThread *thread, DPSprite *p
 
 	if (renderHUDModel)
 	{
-		PolyRenderHUDModel(thread, PolyRenderer::Instance()->WorldToClip, PolyClipPlane(), 1, pspr, (float)sx, (float)sy);
+		PolyRenderHUDModel(thread, PolyRenderer::Instance()->Scene.CurrentViewpoint->WorldToClip, 1, pspr, (float)sx, (float)sy);
 		return;
 	}
 

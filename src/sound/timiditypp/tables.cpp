@@ -30,7 +30,6 @@
 #include <stdio.h>
 #include <math.h>
 #include "timidity.h"
-#include "common.h"
 #include "tables.h"
 #include "instrum.h"
 

@@ -33,9 +33,7 @@
 */
 
 #include "bitmap.h"
-#include "templates.h"
 #include "r_data/r_translate.h"
-#include "v_palette.h"
 #include "r_data/colormaps.h"
 
 

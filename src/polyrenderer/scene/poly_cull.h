@@ -29,7 +29,7 @@
 class PolyCull
 {
 public:
-	void CullScene(const PolyClipPlane &portalClipPlane);
+	void CullScene(sector_t *portalSector, line_t *portalLine);
 
 	bool IsLineSegVisible(uint32_t subsectorDepth, uint32_t lineIndex)
 	{
@@ -53,12 +53,10 @@ private:
 		angle_t Start, End;
 	};
 
-	void ClearSolidSegments();
 	void MarkViewFrustum();
-
-	bool GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const;
-	bool IsSegmentCulled(angle_t angle1, angle_t angle2) const;
 	void InvertSegments();
+
+	bool IsSegmentCulled(angle_t angle1, angle_t angle2) const;
 
 	void CullNode(void *node);
 	void CullSubsector(subsector_t *sub);
@@ -70,14 +68,13 @@ private:
 
 	void MarkSegmentCulled(angle_t angle1, angle_t angle2);
 
-	FString lastLevelName;
-
 	std::vector<SolidSegment> SolidSegments;
 	std::vector<SolidSegment> TempInvertSolidSegments;
-	const int SolidCullScale = 3000;
+	std::vector<SolidSegment> PortalVisibility;
 	bool FirstSkyHeight = true;
 
-	PolyClipPlane PortalClipPlane;
+	sector_t *PortalSector = nullptr;
+	line_t *PortalLine = nullptr;
 
 	std::vector<uint32_t> PvsLineStart;
 	std::vector<bool> PvsLineVisible;

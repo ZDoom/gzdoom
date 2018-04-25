@@ -40,13 +40,10 @@
 #include "p_lnspec.h"
 #include "p_maputl.h"
 #include "w_wad.h"
-#include "sc_man.h"
 #include "g_level.h"
 #include "p_terrain.h"
 #include "d_player.h"
-#include "r_utility.h"
 #include "p_spec.h"
-#include "r_data/colormaps.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 

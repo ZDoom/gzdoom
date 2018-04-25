@@ -23,22 +23,17 @@
 
 #include "info.h"
 #include "a_pickups.h"
-#include "gstrings.h"
 #include "p_local.h"
 #include "gi.h"
-#include "s_sound.h"
-#include "m_random.h"
 #include "a_sharedglobal.h"
 #include "sbar.h"
 #include "a_morph.h"
 #include "doomstat.h"
-#include "g_level.h"
 #include "serializer.h"
 #include "p_enemy.h"
 #include "d_player.h"
 #include "r_data/sprites.h"
 #include "g_levellocals.h"
-#include "vm.h"
 #include "vm.h"
 
 static FRandom pr_morphmonst ("MorphMonster");

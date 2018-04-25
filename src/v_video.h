@@ -80,6 +80,7 @@ class FTexture;
 struct FColormap;
 class FileWriter;
 enum FTextureFormat : uint32_t;
+class FModelRenderer;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.
@@ -280,6 +281,8 @@ public:
 
 
 class FUniquePalette;
+class IHardwareTexture;
+class FTexture;
 
 // A canvas that represents the actual display. The video code is responsible
 // for actually implementing this. Built on top of SimpleCanvas, because it
@@ -351,6 +354,9 @@ public:
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
+	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
+	virtual void UnbindTexUnit(int no) {}
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.

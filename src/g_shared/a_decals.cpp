@@ -36,17 +36,12 @@
 #include "a_sharedglobal.h"
 #include "r_defs.h"
 #include "p_local.h"
-#include "v_video.h"
 #include "p_trace.h"
 #include "decallib.h"
-#include "statnums.h"
 #include "c_dispatch.h"
 #include "d_net.h"
-#include "colormatcher.h"
-#include "v_palette.h"
 #include "serializer.h"
 #include "doomdata.h"
-#include "r_state.h"
 #include "g_levellocals.h"
 
 static double DecalWidth, DecalLeft, DecalRight;

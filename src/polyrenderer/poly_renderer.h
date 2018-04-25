@@ -30,7 +30,6 @@
 #include "r_utility.h"
 #include "scene/poly_portal.h"
 #include "scene/poly_playersprite.h"
-#include "scene/poly_sky.h"
 #include "scene/poly_light.h"
 #include "swrenderer/r_memory.h"
 #include "poly_renderthread.h"
@@ -38,6 +37,7 @@
 
 class AActor;
 class DCanvas;
+class PolyPortalViewpoint;
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 
@@ -54,7 +54,9 @@ public:
 	void RenderRemainingPlayerSprites();
 
 	static PolyRenderer *Instance();
-	
+
+	PolyPortalViewpoint SetupPerspectiveMatrix(bool mirror = false);
+
 	uint32_t GetNextStencilValue() { uint32_t value = NextStencilValue; NextStencilValue += 2; return value; }
 
 	bool DontMapLines = false;
@@ -67,16 +69,11 @@ public:
 	PolyLightVisibility Light;
 	RenderPolyScene Scene;
 
-	Mat4f WorldToView;
-	Mat4f WorldToClip;
-
 private:
 	void RenderActorView(AActor *actor, bool dontmaplines);
 	void ClearBuffers();
 	void SetSceneViewport();
-	void SetupPerspectiveMatrix();
 
-	PolySkyDome Skydome;
 	RenderPolyPlayerSprites PlayerSprites;
 	uint32_t NextStencilValue = 0;
 };

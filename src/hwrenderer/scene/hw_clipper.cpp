@@ -35,7 +35,7 @@
 **
 */
 
-#include "gl/scene/gl_clipper.h"
+#include "hw_clipper.h"
 #include "g_levellocals.h"
 
 unsigned Clipper::starttime;

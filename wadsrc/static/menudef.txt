@@ -2125,6 +2125,23 @@ OptionValue "HqResizeModes"
    15, "xBRZ_old 4x"
 }
 
+OptionValue "HqResizeModesNoMMX"
+{
+   0, "$OPTVAL_OFF"
+   1, "$OPTVAL_SCALE2X"
+   2, "$OPTVAL_SCALE3X"
+   3, "$OPTVAL_SCALE4X"
+   4, "$OPTVAL_HQ2X"
+   5, "$OPTVAL_HQ3X"
+   6, "$OPTVAL_HQ4X"
+   10, "xBRZ 2x"
+   11, "xBRZ 3x"
+   12, "xBRZ 4x"
+   13, "xBRZ_old 2x"
+   14, "xBRZ_old 3x"
+   15, "xBRZ_old 4x"
+}
+
 OptionValue "FogMode"
 {
 	0, "$OPTVAL_OFF"
@@ -2178,7 +2195,15 @@ OptionMenu "GLTextureGLOptions" protected
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
 	Option "$GLTEXMNU_TEXFORMAT",		gl_texture_format,				"TextureFormats"
 	Option "$GLTEXMNU_ENABLEHIRES",		gl_texture_usehires,			"YesNo"
-	Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModes"
+	
+	ifOption(MMX)
+	{
+		Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModes"
+	}
+	else
+	{
+		Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModesNoMMX"
+	}
 	Option "$GLTEXMNU_RESIZETEX",		gl_texture_hqresize_textures,	"OnOff"
 	Option "$GLTEXMNU_RESIZESPR",		gl_texture_hqresize_sprites,	"OnOff"
 	Option "$GLTEXMNU_RESIZEFNT",		gl_texture_hqresize_fonts,		"OnOff"

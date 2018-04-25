@@ -30,21 +30,14 @@
 #include "gl/system/gl_system.h"
 #include "r_sky.h"
 #include "r_utility.h"
-#include "r_state.h"
 #include "doomstat.h"
 #include "g_levellocals.h"
-#include "memarena.h"
 
-#include "gl/system/gl_cvars.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/textures/gl_material.h"
-#include "gl/utility/gl_clock.h"
-#include "gl/shaders/gl_shader.h"
 #include "gl/stereo3d/scoped_color_mask.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
@@ -1020,6 +1013,7 @@ void FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mDrawer = drawer;
+    di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
 }
 
@@ -1213,8 +1207,8 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -1265,8 +1259,8 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = gl_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = gl_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -1307,3 +1301,22 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 	// Step3: Delete the stencil
 	ClearFloodStencil(&ws);
 }
+
+// This was temporarily moved out of gl_renderhacks.cpp so that the dependency on GLWall could be eliminated until things have progressed a bit.
+void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
+{
+	for(unsigned int j=0;j<lowersegs.Size();j++)
+	{
+		seg_t * seg=lowersegs[j];
+		GLWall wall(mDrawer);
+		wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+		rendered_lines++;
+	}
+}
+
+// Same here for the dependency on the portal.
+void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub)
+{
+	portal->GetRenderState()->AddSubsector(sub);
+}
+

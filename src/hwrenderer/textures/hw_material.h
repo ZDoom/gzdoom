@@ -4,8 +4,6 @@
 
 #include "m_fixed.h"
 #include "textures/textures.h"
-#include "gl/textures/gl_hwtexture.h"
-#include "gl/renderer/gl_colormap.h"
 #include "i_system.h"
 #include "r_defs.h"
 
@@ -13,6 +11,7 @@ EXTERN_CVAR(Bool, gl_precache)
 
 struct FRemapTable;
 class FTextureShader;
+class IHardwareTexture;
 
 enum
 {
@@ -45,39 +44,6 @@ struct FTexCoordInfo
 
 //===========================================================================
 // 
-// device independent wrapper around the hardware texture and its sampler state
-//
-//===========================================================================
-class FMaterial;
-
-class FGLTexture
-{
-	friend class FMaterial;
-public:
-	FTexture * tex;
-
-private:
-	FHardwareTexture *mHwTexture;
-
-	uint8_t lastSampler;
-	int lastTranslation;
-
-	FHardwareTexture *CreateHwTexture();
-
-	bool Bind(int texunit, int clamp, int translation, int flags);
-	
-public:
-	FGLTexture(FTexture * tx, bool expandpatches);
-	FGLTexture(FTexture * tx, FHardwareTexture *hwtex);	// for the SW framebuffer
-	~FGLTexture();
-
-	void Clean(bool all);
-	void CleanUnused(SpriteHits &usedtranslations);
-	bool isInitialized() const { return mHwTexture != nullptr; }
-};
-
-//===========================================================================
-// 
 // this is the material class for OpenGL. 
 //
 //===========================================================================
@@ -98,7 +64,7 @@ class FMaterial
 	static TArray<FMaterial *> mMaterials;
 	static int mMaxBound;
 
-	FGLTexture *mBaseLayer;	
+	IHardwareTexture *mBaseLayer;	
 	TArray<FTextureLayer> mTextureLayers;
 	int mShaderIndex;
 
@@ -115,11 +81,12 @@ class FMaterial
 	float mSpriteU[2], mSpriteV[2];
 	FloatRect mSpriteRect;
 
-	FGLTexture * ValidateSysTexture(FTexture * tex, bool expand);
+	IHardwareTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	bool TrimBorders(uint16_t *rect);
 
 public:
 	FTexture *tex;
+	FTexture *sourcetex;	// in case of redirection this is different from tex.
 	
 	FMaterial(FTexture *tex, bool forceexpand);
 	~FMaterial();
@@ -134,7 +101,7 @@ public:
 	}
 	bool isMasked() const
 	{
-		return !!mBaseLayer->tex->bMasked;
+		return !!sourcetex->bMasked;
 	}
 
 	int GetLayers() const
@@ -144,10 +111,7 @@ public:
 
 	void Bind(int clamp, int translation);
 
-	void Clean(bool f)
-	{
-		mBaseLayer->Clean(f);
-	}
+	void Clean(bool f);
 
 	void BindToFrameBuffer();
 	// Patch drawing utilities

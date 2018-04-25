@@ -40,7 +40,6 @@
 #include "c_cvars.h"
 #include "c_dispatch.h"
 #include "b_bot.h"
-#include "m_argv.h"
 #include "doomstat.h"
 #include "p_local.h"
 #include "cmdlib.h"

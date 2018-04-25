@@ -36,12 +36,9 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
-#include "templates.h"
 #include "v_palette.h"
 #include "v_video.h"
 #include "bitmap.h"
-#include "textures/textures.h"
-#include "r_data/r_translate.h"
 
 
 // posts are runs of non masked source pixels

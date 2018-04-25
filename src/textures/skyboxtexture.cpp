@@ -21,7 +21,6 @@
 //
 
 #include "doomtype.h"
-#include "sc_man.h"
 #include "w_wad.h"
 #include "textures.h"
 #include "skyboxtexture.h"

@@ -31,7 +31,6 @@
 #include "p_spec.h"
 #include "serializer.h"
 #include "p_lnspec.h"
-#include "c_cvars.h"
 #include "p_maputl.h"
 #include "p_local.h"
 #include "d_player.h"

@@ -34,18 +34,11 @@
 */
 
 #include "doomtype.h"
-#include "files.h"
 #include "w_wad.h"
-#include "templates.h"
 #include "i_system.h"
 #include "r_data/r_translate.h"
 #include "bitmap.h"
-#include "colormatcher.h"
-#include "c_dispatch.h"
 #include "v_video.h"
-#include "m_fixed.h"
-#include "textures/textures.h"
-#include "v_palette.h"
 
 class FBrightmapTexture : public FWorldTexture
 {

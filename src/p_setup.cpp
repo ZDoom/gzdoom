@@ -59,7 +59,6 @@
 
 
 #include <math.h>
-#include <float.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
 #endif
@@ -67,27 +66,17 @@
 #include "templates.h"
 #include "d_player.h"
 #include "m_argv.h"
-#include "m_swap.h"
-#include "m_bbox.h"
 #include "g_game.h"
-#include "i_system.h"
-#include "x86.h"
 #include "w_wad.h"
-#include "doomdef.h"
 #include "p_local.h"
 #include "p_effect.h"
 #include "p_terrain.h"
 #include "nodebuild.h"
-#include "s_sound.h"
-#include "doomstat.h"
 #include "p_lnspec.h"
-#include "v_palette.h"
 #include "c_console.h"
-#include "c_cvars.h"
 #include "p_acs.h"
 #include "announcer.h"
 #include "wi_stuff.h"
-#include "stats.h"
 #include "doomerrors.h"
 #include "gi.h"
 #include "p_conversation.h"
@@ -95,20 +84,16 @@
 #include "s_sndseq.h"
 #include "sbar.h"
 #include "p_setup.h"
-#include "r_data/r_translate.h"
 #include "r_data/r_interpolate.h"
 #include "r_sky.h"
 #include "cmdlib.h"
-#include "g_level.h"
 #include "md5.h"
 #include "compatibility.h"
 #include "po_man.h"
 #include "r_renderer.h"
-#include "r_data/colormaps.h"
 #include "p_blockmap.h"
 #include "r_utility.h"
 #include "p_spec.h"
-#include "p_saveg.h"
 #include "g_levellocals.h"
 #include "c_dispatch.h"
 #include "a_dynlight.h"
@@ -3431,7 +3416,7 @@ void P_GetPolySpots (MapData * map, TArray<FNodeBuilder::FPolyStart> &spots, TAr
 // Preloads all relevant graphics for the level.
 //
 //===========================================================================
-void gl_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
+void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitlist);
 
 static void P_PrecacheLevel()
 {
@@ -3510,7 +3495,7 @@ static void P_PrecacheLevel()
 	if (!V_IsHardwareRenderer())
 		SWRenderer->Precache(hitlist, actorhitlist);
 	else
-		gl_PrecacheTexture(hitlist, actorhitlist);
+		hw_PrecacheTexture(hitlist, actorhitlist);
 
 	delete[] hitlist;
 }

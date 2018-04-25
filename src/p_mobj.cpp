@@ -67,15 +67,10 @@
 #include "p_lnspec.h"
 #include "p_effect.h"
 #include "p_terrain.h"
-#include "st_stuff.h"
 #include "hu_stuff.h"
-#include "s_sound.h"
-#include "doomstat.h"
 #include "v_video.h"
-#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "b_bot.h"	//Added by MC:
-#include "stats.h"
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "sbar.h"
@@ -86,15 +81,10 @@
 #include "p_conversation.h"
 #include "g_game.h"
 #include "teaminfo.h"
-#include "r_data/r_translate.h"
 #include "r_sky.h"
-#include "g_level.h"
 #include "d_event.h"
-#include "colormatcher.h"
-#include "v_palette.h"
 #include "p_enemy.h"
 #include "gstrings.h"
-#include "r_data/colormaps.h"
 #include "r_renderer.h"
 #include "po_man.h"
 #include "p_spec.h"
@@ -103,7 +93,6 @@
 #include "r_utility.h"
 #include "thingdef.h"
 #include "d_player.h"
-#include "vm.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
 #include "events.h"
@@ -495,6 +484,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("score", Score)
 		A("designatedteam", DesignatedTeam)
 		A("lastpush", lastpush)
+		A("activationtype", activationtype)
 		A("lastbump", lastbump)
 		A("painthreshold", PainThreshold)
 		A("damagefactor", DamageFactor)

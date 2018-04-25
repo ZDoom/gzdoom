@@ -34,31 +34,20 @@
 
 #include "g_level.h"
 
-#include <stddef.h>
-#include <string.h>
-#include <math.h>
-#include <float.h>
 #ifdef _WIN32
 #include <io.h>
 #else
-#include <unistd.h>
 #define O_BINARY 0
 #endif
-#include <fcntl.h>
 
 #include "templates.h"
 #include "v_video.h"
-#include "i_system.h"
 #include "w_wad.h"
 #include "i_video.h"
 #include "c_dispatch.h"
 #include "st_stuff.h"
-#include "gi.h"
 #include "x86.h"
-#include "colormatcher.h"
-#include "v_palette.h"
 #include "g_levellocals.h"
-#include "r_data/colormaps.h"
 
 FPalette GPalette;
 FColorMatcher ColorMatcher;

@@ -41,7 +41,6 @@
 #include "cmdlib.h"
 #include "m_misc.h"
 #include "version.h"	// for GAMENAME
-#include "i_system.h"
 
 #include "optwin32.h"
 

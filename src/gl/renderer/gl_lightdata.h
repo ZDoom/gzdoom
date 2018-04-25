@@ -23,16 +23,6 @@ bool gl_CheckFog(sector_t *frontsector, sector_t *backsector);
 
 void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *cm, bool isadditive);
 
-inline bool gl_isBlack(PalEntry color)
-{
-	return color.r + color.g + color.b == 0;
-}
-
-inline bool gl_isWhite(PalEntry color)
-{
-	return color.r + color.g + color.b == 3*0xff;
-}
-
 
 
 #endif

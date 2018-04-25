@@ -35,6 +35,8 @@ class DynamicLight : Actor native
 		Radius 0.1;
 		FloatBobPhase 0;
 		RenderRadius -1;
+		DynamicLight.SpotInnerAngle 10;
+		DynamicLight.SpotOuterAngle 25;
 		+NOBLOCKMAP
 		+NOGRAVITY
 		+FIXMAPTHINGPOS

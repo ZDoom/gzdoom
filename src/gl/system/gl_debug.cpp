@@ -27,16 +27,11 @@
 
 #include "templates.h"
 #include "gl/system/gl_system.h"
-#include "gl/system/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "stats.h"
 #include <set>
 #include <string>
 #include <vector>
-
-#ifndef _MSC_VER
-#include <signal.h>
-#endif
 
 CUSTOM_CVAR(Int, gl_debug_level, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {

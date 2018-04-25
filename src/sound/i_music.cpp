@@ -35,32 +35,16 @@
 #ifndef _WIN32
 #include <sys/types.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <signal.h>
-#include <unistd.h>
 #include "mus2midi.h"
 #endif
 
-#include <ctype.h>
-#include <assert.h>
-#include <stdio.h>
 #include <zlib.h>
 
 #include "i_musicinterns.h"
-#include "doomtype.h"
 #include "m_argv.h"
-#include "i_music.h"
 #include "w_wad.h"
-#include "c_console.h"
 #include "c_dispatch.h"
-#include "i_system.h"
-#include "i_sound.h"
-#include "s_sound.h"
-#include "m_swap.h"
-#include "i_cd.h"
 #include "templates.h"
-#include "m_misc.h"
 #include "stats.h"
 #include "timidity/timidity.h"
 #include "vm.h"

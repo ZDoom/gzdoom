@@ -3,7 +3,7 @@
 
 #include "r_defs.h"
 #include "m_fixed.h"
-#include "gl_clipper.h"
+#include "hwrenderer/scene/hw_clipper.h"
 #include "gl_portal.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"

@@ -34,14 +34,11 @@
 **
 */
 #include "actor.h"
-#include "templates.h"
 #include "cmdlib.h"
-#include "i_system.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "thingdef.h"
 #include "r_state.h"
-#include "vm.h"
 
 
 // stores indices for symbolic state labels for some old-style DECORATE functions.

@@ -20,215 +20,16 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
 #include "w_wad.h"
 #include "m_png.h"
 #include "sbar.h"
-#include "gi.h"
-#include "cmdlib.h"
-#include "c_dispatch.h"
 #include "stats.h"
 #include "r_utility.h"
-#include "templates.h"
-#include "sc_man.h"
-#include "r_data/renderstyle.h"
-#include "colormatcher.h"
-#include "textures/warpbuffer.h"
-#include "textures/bitmap.h"
+#include "c_dispatch.h"
+#include "hw_ihwtexture.h"
+#include "hw_material.h"
 
-//#include "gl/gl_intern.h"
-
-#include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/textures/gl_material.h"
-#include "gl/textures/gl_samplers.h"
-#include "gl/shaders/gl_shader.h"
-
-EXTERN_CVAR(Bool, gl_render_precise)
-EXTERN_CVAR(Int, gl_lightmode)
-EXTERN_CVAR(Bool, gl_precache)
 EXTERN_CVAR(Bool, gl_texture_usehires)
-
-//===========================================================================
-//
-// The GL texture maintenance class
-//
-//===========================================================================
-
-//===========================================================================
-//
-// Constructor
-//
-//===========================================================================
-FGLTexture::FGLTexture(FTexture * tx, bool expandpatches)
-{
-	assert(tx->gl_info.SystemTexture[expandpatches] == NULL);
-	tex = tx;
-
-	mHwTexture = NULL;
-	lastSampler = 254;
-	lastTranslation = -1;
-	tex->gl_info.SystemTexture[expandpatches] = this;
-}
-
-//===========================================================================
-//
-// Constructor 2 for the SW framebuffer which provides its own hardware texture.
-//
-//===========================================================================
-FGLTexture::FGLTexture(FTexture * tx, FHardwareTexture *hwtex)
-{
-	assert(tx->gl_info.SystemTexture[0] == NULL);
-	tex = tx;
-
-	mHwTexture = hwtex;
-	lastSampler = 254;
-	lastTranslation = -1;
-	tex->gl_info.SystemTexture[0] = this;
-}
-
-//===========================================================================
-//
-// Destructor
-//
-//===========================================================================
-
-FGLTexture::~FGLTexture()
-{
-	Clean(true);
-	for (auto & i : tex->gl_info.SystemTexture) if (i == this) i = nullptr;
-}
-
-//===========================================================================
-// 
-//	Deletes all allocated resources
-//
-//===========================================================================
-
-void FGLTexture::Clean(bool all)
-{
-	if (mHwTexture != nullptr) 
-	{
-		if (!all) mHwTexture->Clean(false);
-		else
-		{
-			delete mHwTexture;
-			mHwTexture = nullptr;
-		}
-
-		lastSampler = 253;
-		lastTranslation = -1;
-	}
-}
-
-
-void FGLTexture::CleanUnused(SpriteHits &usedtranslations)
-{
-	if (mHwTexture != nullptr)
-	{
-		mHwTexture->CleanUnused(usedtranslations);
-		lastSampler = 253;
-		lastTranslation = -1;
-	}
-}
-
-
-//===========================================================================
-// 
-//	Create hardware texture for world use
-//
-//===========================================================================
-
-FHardwareTexture *FGLTexture::CreateHwTexture()
-{
-	if (tex->UseType==ETextureType::Null) return NULL;		// Cannot register a NULL texture
-	if (mHwTexture == NULL)
-	{
-		mHwTexture = new FHardwareTexture(tex->bNoCompress);
-	}
-	return mHwTexture; 
-}
-
-//===========================================================================
-// 
-//	Binds a texture to the renderer
-//
-//===========================================================================
-
-bool FGLTexture::Bind(int texunit, int clampmode, int translation, int flags)
-{
-	int usebright = false;
-
-	if (translation <= 0)
-	{
-		translation = -translation;
-	}
-	else
-	{
-		auto remap = TranslationToTable(translation);
-		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
-	}
-
-	bool needmipmap = (clampmode <= CLAMP_XY);
-
-	FHardwareTexture *hwtex = CreateHwTexture();
-
-	if (hwtex)
-	{
-		// Texture has become invalid
-		if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified(DefaultRenderStyle()))
-		{
-			Clean(true);
-			hwtex = CreateHwTexture();
-		}
-
-		// Bind it to the system.
-		if (!hwtex->Bind(texunit, translation, needmipmap))
-		{
-			
-			int w=0, h=0;
-
-			// Create this texture
-			unsigned char * buffer = nullptr;
-			
-			if (!tex->bHasCanvas)
-			{
-				buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
-				if (tex->bWarped && gl.legacyMode && w*h <= 256*256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
-				{
-					// need to do software warping
-					FWarpTexture *wt = static_cast<FWarpTexture*>(tex);
-					unsigned char *warpbuffer = new unsigned char[w*h*4];
-					WarpBuffer((uint32_t*)warpbuffer, (const uint32_t*)buffer, w, h, wt->WidthOffsetMultiplier, wt->HeightOffsetMultiplier, screen->FrameTime, wt->Speed, tex->bWarped);
-					delete[] buffer;
-					buffer = warpbuffer;
-					wt->GenTime[0] = screen->FrameTime;
-				}
-			}
-			else
-			{
-				w = tex->GetWidth();
-				h = tex->GetHeight();
-			}
-			if (!hwtex->CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FGLTexture.Bind")) 
-			{
-				// could not create texture
-				delete[] buffer;
-				return false;
-			}
-			delete[] buffer;
-		}
-		if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
-		if (translation != lastTranslation) lastSampler = 254;
-		if (lastSampler != clampmode)
-			lastSampler = GLRenderer->mSamplerManager->Bind(texunit, clampmode, lastSampler);
-		lastTranslation = translation;
-		return true; 
-	}
-	return false;
-}
 
 //===========================================================================
 //
@@ -286,10 +87,10 @@ float FTexCoordInfo::TextureAdjustWidth() const
 	if (mWorldPanning) 
 	{
 		float tscale = fabs(mTempScale.X);
-		if (tscale == 1.f) return mRenderWidth;
+		if (tscale == 1.f) return (float)mRenderWidth;
 		else return mWidth / fabs(tscale);
 	}
-	else return mWidth;
+	else return (float)mWidth;
 }
 
 
@@ -299,18 +100,18 @@ float FTexCoordInfo::TextureAdjustWidth() const
 //
 //
 //===========================================================================
-FGLTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
+IHardwareTexture * FMaterial::ValidateSysTexture(FTexture * tex, bool expand)
 {
 	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
-		FGLTexture *gltex = tex->gl_info.SystemTexture[expand];
-		if (gltex == NULL) 
+		IHardwareTexture *gltex = tex->SystemTexture[expand];
+		if (gltex == nullptr) 
 		{
-			gltex = new FGLTexture(tex, expand);
+			gltex = tex->SystemTexture[expand] = screen->CreateHardwareTexture(tex);
 		}
 		return gltex;
 	}
-	return NULL;
+	return nullptr;
 }
 
 //===========================================================================
@@ -324,7 +125,7 @@ int FMaterial::mMaxBound;
 FMaterial::FMaterial(FTexture * tx, bool expanded)
 {
 	mShaderIndex = SHADER_Default;
-	tex = tx;
+	sourcetex = tex = tx;
 
 	// TODO: apply custom shader object here
 	/* if (tx->CustomShaderDefinition)
@@ -403,10 +204,11 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mSpriteU[0] = mSpriteV[0] = 0.f;
 	mSpriteU[1] = mSpriteV[1] = 1.f;
 
-	FTexture *basetex = (tx->bWarped && gl.legacyMode)? tx : tx->GetRedirect(false);
+	FTexture *basetex = tx->GetRedirect();
 	// allow the redirect only if the texture is not expanded or the scale matches.
 	if (!expanded || (tx->Scale.X == basetex->Scale.X && tx->Scale.Y == basetex->Scale.Y))
 	{
+		sourcetex = basetex;
 		mBaseLayer = ValidateSysTexture(basetex, expanded);
 	}
 
@@ -428,7 +230,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mTextureLayers.ShrinkToFit();
 	mMaxBound = -1;
 	mMaterials.Push(this);
-	tx->gl_info.Material[expanded] = this;
+	tx->Material[expanded] = this;
 	if (tx->bHasCanvas) tx->bTranslucent = 0;
 }
 
@@ -462,8 +264,8 @@ void FMaterial::SetSpriteRect()
 	auto leftOffset = tex->GetLeftOffsetHW();
 	auto topOffset = tex->GetTopOffsetHW();
 
-	float fxScale = tex->Scale.X;
-	float fyScale = tex->Scale.Y;
+	float fxScale = (float)tex->Scale.X;
+	float fyScale = (float)tex->Scale.Y;
 
 	// mSpriteRect is for positioning the sprite in the scene.
 	mSpriteRect.left = -leftOffset / fxScale;
@@ -518,7 +320,7 @@ bool FMaterial::TrimBorders(uint16_t *rect)
 	int w;
 	int h;
 
-	unsigned char *buffer = tex->CreateTexBuffer(0, w, h);
+	unsigned char *buffer = sourcetex->CreateTexBuffer(0, w, h);
 
 	if (buffer == NULL) 
 	{
@@ -636,7 +438,7 @@ void FMaterial::Bind(int clampmode, int translation)
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = mExpanded? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY)? CTF_CheckHires : 0;
 
-	if (mBaseLayer->Bind(0, clampmode, translation, flags))
+	if (mBaseLayer->BindOrCreate(tex, 0, clampmode, translation, flags))
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{
@@ -645,20 +447,20 @@ void FMaterial::Bind(int clampmode, int translation)
 			{
 				FTextureID id = mTextureLayers[i].texture->id;
 				layer = TexMan(id);
-				ValidateSysTexture(layer, mExpanded);
 			}
 			else
 			{
 				layer = mTextureLayers[i].texture;
 			}
-			layer->gl_info.SystemTexture[mExpanded]->Bind(i+1, clampmode, 0, 0);
+			auto systex = ValidateSysTexture(layer, mExpanded);
+			systex->BindOrCreate(layer, i+1, clampmode, 0, 0);
 			maxbound = i+1;
 		}
 	}
 	// unbind everything from the last texture that's still active
 	for(int i=maxbound+1; i<=mMaxBound;i++)
 	{
-		FHardwareTexture::Unbind(i);
+		screen->UnbindTexUnit(i);
 		mMaxBound = maxbound;
 	}
 }
@@ -698,12 +500,12 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
 	if (x == 1.f)
 	{
 		tci->mRenderWidth = mRenderWidth;
-		tci->mScale.X = tex->Scale.X;
+		tci->mScale.X = (float)tex->Scale.X;
 		tci->mTempScale.X = 1.f;
 	}
 	else
 	{
-		float scale_x = x * tex->Scale.X;
+		float scale_x = x * (float)tex->Scale.X;
 		tci->mRenderWidth = xs_CeilToInt(mWidth / scale_x);
 		tci->mScale.X = scale_x;
 		tci->mTempScale.X = x;
@@ -712,12 +514,12 @@ void FMaterial::GetTexCoordInfo(FTexCoordInfo *tci, float x, float y) const
 	if (y == 1.f)
 	{
 		tci->mRenderHeight = mRenderHeight;
-		tci->mScale.Y = tex->Scale.Y;
+		tci->mScale.Y = (float)tex->Scale.Y;
 		tci->mTempScale.Y = 1.f;
 	}
 	else
 	{
-		float scale_y = y * tex->Scale.Y;
+		float scale_y = y * (float)tex->Scale.Y;
 		tci->mRenderHeight = xs_CeilToInt(mHeight / scale_y);
 		tci->mScale.Y = scale_y;
 		tci->mTempScale.Y = y;
@@ -741,9 +543,8 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 {
 	if (mShaderIndex == SHADER_Default)	// texture splitting can only be done if there's no attached effects
 	{
-		FTexture *tex = mBaseLayer->tex;
-		*pAreas = tex->areas;
-		return tex->areacount;
+		*pAreas = sourcetex->areas;
+		return sourcetex->areacount;
 	}
 	else
 	{
@@ -759,14 +560,14 @@ int FMaterial::GetAreas(FloatRect **pAreas) const
 
 void FMaterial::BindToFrameBuffer()
 {
-	if (mBaseLayer->mHwTexture == NULL)
+	if (mBaseLayer == nullptr)
 	{
 		// must create the hardware texture first
-		mBaseLayer->Bind(0, 0, 0, 0);
-		FHardwareTexture::Unbind(0);
+		mBaseLayer->BindOrCreate(sourcetex, 0, 0, 0, 0);
+		screen->UnbindTexUnit(0);
 		ClearLastTexture();
 	}
-	mBaseLayer->mHwTexture->BindToFrameBuffer(mWidth, mHeight);
+	mBaseLayer->BindToFrameBuffer(mWidth, mHeight);
 }
 
 //==========================================================================
@@ -781,16 +582,16 @@ FMaterial * FMaterial::ValidateTexture(FTexture * tex, bool expand)
 again:
 	if (tex	&& tex->UseType!=ETextureType::Null)
 	{
-		if (tex->gl_info.bNoExpand) expand = false;
+		if (tex->bNoExpand) expand = false;
 
-		FMaterial *gltex = tex->gl_info.Material[expand];
+		FMaterial *gltex = tex->Material[expand];
 		if (gltex == NULL) 
 		{
 			if (expand)
 			{
 				if (tex->bWarped || tex->bHasCanvas || tex->shaderindex >= FIRST_USER_SHADER || (tex->shaderindex >= SHADER_Specular && tex->shaderindex <= SHADER_PBRBrightmap))
 				{
-					tex->gl_info.bNoExpand = true;
+					tex->bNoExpand = true;
 					goto again;
 				}
 				if (tex->Brightmap != NULL &&
@@ -799,7 +600,7 @@ again:
 					)
 				{
 					// do not expand if the brightmap's size differs.
-					tex->gl_info.bNoExpand = true;
+					tex->bNoExpand = true;
 					goto again;
 				}
 			}
@@ -826,7 +627,7 @@ void FMaterial::FlushAll()
 {
 	for(int i=mMaterials.Size()-1;i>=0;i--)
 	{
-		mMaterials[i]->Clean(true);
+		mMaterials[i]->mBaseLayer->Clean(true);
 	}
 	// This is for shader layers. All shader layers must be managed by the texture manager
 	// so this will catch everything.
@@ -834,8 +635,8 @@ void FMaterial::FlushAll()
 	{
 		for (int j = 0; j < 2; j++)
 		{
-			FGLTexture *gltex = TexMan.ByIndex(i)->gl_info.SystemTexture[j];
-			if (gltex != NULL) gltex->Clean(true);
+			auto gltex = TexMan.ByIndex(i)->SystemTexture[j];
+			if (gltex != nullptr) gltex->Clean(true);
 		}
 	}
 }
@@ -844,3 +645,48 @@ void FMaterial::ClearLastTexture()
 {
 	last = NULL;
 }
+
+void FMaterial::Clean(bool f)
+{
+	// This somehow needs to deal with the other layers as well, but they probably need some form of reference counting to work properly...
+	mBaseLayer->Clean(f);
+}
+
+//==========================================================================
+//
+// Prints some texture info
+//
+//==========================================================================
+
+CCMD(textureinfo)
+{
+	int cntt = 0;
+	for (int i = 0; i < TexMan.NumTextures(); i++)
+	{
+		FTexture *tex = TexMan.ByIndex(i);
+		if (tex->SystemTexture[0] || tex->SystemTexture[1] || tex->Material[0] || tex->Material[1])
+		{
+			int lump = tex->GetSourceLump();
+			Printf(PRINT_LOG, "Texture '%s' (Index %d, Lump %d, Name '%s'):\n", tex->Name.GetChars(), i, lump, Wads.GetLumpFullName(lump));
+			if (tex->Material[0])
+			{
+				Printf(PRINT_LOG, "in use (normal)\n");
+			}
+			else if (tex->SystemTexture[0])
+			{
+				Printf(PRINT_LOG, "referenced (normal)\n");
+			}
+			if (tex->Material[1])
+			{
+				Printf(PRINT_LOG, "in use (expanded)\n");
+			}
+			else if (tex->SystemTexture[1])
+			{
+				Printf(PRINT_LOG, "referenced (normal)\n");
+			}
+			cntt++;
+		}
+	}
+	Printf(PRINT_LOG, "%d system textures\n", cntt);
+}
+

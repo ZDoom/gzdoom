@@ -35,7 +35,6 @@
 // HEADER FILES ------------------------------------------------------------
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <zlib.h>
 #ifdef _MSC_VER
 #include <malloc.h>		// for alloca()
@@ -47,8 +46,6 @@
 #include "r_defs.h"
 #include "v_video.h"
 #include "m_png.h"
-#include "templates.h"
-#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -33,7 +33,6 @@
 
 #include "i_musicinterns.h"
 #include "i_cd.h"
-#include "files.h"
 
 void CDSong::Play (bool looping, int subsong)
 {

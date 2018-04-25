@@ -36,7 +36,6 @@
 
 #include <unistd.h>
 #include <sys/time.h>
-#include <sys/types.h>
 #include <termios.h>
 
 #include "st_start.h"

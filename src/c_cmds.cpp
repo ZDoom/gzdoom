@@ -35,7 +35,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include <time.h>
 
 #ifdef _WIN32
 #include <direct.h>
@@ -56,11 +55,9 @@
 #include "g_game.h"
 #include "g_level.h"
 #include "w_wad.h"
-#include "g_level.h"
 #include "gi.h"
 #include "r_defs.h"
 #include "d_player.h"
-#include "templates.h"
 #include "p_local.h"
 #include "r_sky.h"
 #include "p_setup.h"
@@ -68,9 +65,7 @@
 #include "d_net.h"
 #include "v_text.h"
 #include "p_lnspec.h"
-#include "v_video.h"
 #include "r_utility.h"
-#include "r_data/r_interpolate.h"
 #include "c_functions.h"
 #include "g_levellocals.h"
 

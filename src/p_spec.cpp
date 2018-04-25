@@ -75,11 +75,7 @@
 #include "gstrings.h"
 #include "events.h"
 
-#include "i_system.h"
-#include "m_argv.h"
 #include "m_random.h"
-#include "m_bbox.h"
-#include "w_wad.h"
 
 #include "p_local.h"
 #include "p_spec.h"
@@ -91,20 +87,11 @@
 
 #include "g_game.h"
 
-#include "s_sound.h"
-#include "sc_man.h"
-#include "gi.h"
-#include "statnums.h"
-#include "g_level.h"
-#include "v_font.h"
 #include "a_sharedglobal.h"
-#include "serializer.h"
 #include "a_keys.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
 #include "d_player.h"
-#include "p_maputl.h"
-#include "p_blockmap.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #ifndef NO_EDATA
@@ -112,12 +99,7 @@
 #endif
 #include "vm.h"
 
-// State.
-#include "r_state.h"
-
 #include "c_console.h"
-
-#include "r_data/r_interpolate.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 

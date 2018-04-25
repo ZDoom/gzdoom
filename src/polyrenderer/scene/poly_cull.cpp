@@ -28,11 +28,8 @@
 #include "poly_cull.h"
 #include "polyrenderer/poly_renderer.h"
 
-void PolyCull::CullScene(const PolyClipPlane &portalClipPlane)
+void PolyCull::CullScene(sector_t *portalSector, line_t *portalLine)
 {
-	ClearSolidSegments();
-	MarkViewFrustum();
-
 	for (uint32_t sub : PvsSubsectors)
 		SubsectorDepths[sub] = 0xffffffff;
 	SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
@@ -48,7 +45,34 @@ void PolyCull::CullScene(const PolyClipPlane &portalClipPlane)
 	PvsLineStart.clear();
 	PvsLineVisible.resize(level.segs.Size());
 
-	PortalClipPlane = portalClipPlane;
+	PortalSector = portalSector;
+	PortalLine = portalLine;
+
+	SolidSegments.clear();
+
+	if (portalLine)
+	{
+		DVector3 viewpos = PolyRenderer::Instance()->Viewpoint.Pos;
+		DVector2 pt1 = portalLine->v1->fPos() - viewpos;
+		DVector2 pt2 = portalLine->v2->fPos() - viewpos;
+		if (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0)
+		{
+			angle_t angle1 = PointToPseudoAngle(portalLine->v1->fX(), portalLine->v1->fY());
+			angle_t angle2 = PointToPseudoAngle(portalLine->v2->fX(), portalLine->v2->fY());
+			MarkSegmentCulled(angle1, angle2);
+		}
+		else
+		{
+			angle_t angle2 = PointToPseudoAngle(portalLine->v1->fX(), portalLine->v1->fY());
+			angle_t angle1 = PointToPseudoAngle(portalLine->v2->fX(), portalLine->v2->fY());
+			MarkSegmentCulled(angle1, angle2);
+		}
+		InvertSegments();
+	}
+	else
+	{
+		MarkViewFrustum();
+	}
 
 	// Cull front to back
 	FirstSkyHeight = true;
@@ -87,19 +111,13 @@ void PolyCull::CullNode(void *node)
 
 void PolyCull::CullSubsector(subsector_t *sub)
 {
-	// Check if subsector is clipped entirely by the portal clip plane
-	bool visible = false;
-	for (uint32_t i = 0; i < sub->numlines; i++)
+	// Ignore everything in front of the portal
+	if (PortalSector)
 	{
-		seg_t *line = &sub->firstline[i];
-		if (PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D > 0.0)
-		{
-			visible = true;
-			break;
-		}
+		if (sub->sector != PortalSector)
+			return;
+		PortalSector = nullptr;
 	}
-	if (!visible)
-		return;
 
 	// Update sky heights for the scene
 	if (!FirstSkyHeight)
@@ -136,16 +154,16 @@ void PolyCull::CullSubsector(subsector_t *sub)
 			continue;
 		}
 
-		// Skip line if entirely behind portal clipping plane
-		if ((PortalClipPlane.A * line->v1->fX() + PortalClipPlane.B * line->v1->fY() + PortalClipPlane.D <= 0.0) ||
-			(PortalClipPlane.A * line->v2->fX() + PortalClipPlane.B * line->v2->fY() + PortalClipPlane.D <= 0.0))
+		// Do not draw the portal line
+		if (line->linedef == PortalLine)
 		{
 			PvsLineVisible[NextPvsLineStart++] = false;
 			continue;
 		}
 
-		angle_t angle1, angle2;
-		bool lineVisible = GetAnglesForLine(line->v1->fX(), line->v1->fY(), line->v2->fX(), line->v2->fY(), angle1, angle2);
+		angle_t angle2 = PointToPseudoAngle(line->v1->fX(), line->v1->fY());
+		angle_t angle1 = PointToPseudoAngle(line->v2->fX(), line->v2->fY());
+		bool lineVisible = !IsSegmentCulled(angle1, angle2);
 		if (lineVisible && line->backsector == nullptr)
 		{
 			MarkSegmentCulled(angle1, angle2);
@@ -162,26 +180,6 @@ void PolyCull::CullSubsector(subsector_t *sub)
 	}
 
 	SubsectorDepths[sub->Index()] = subsectorDepth;
-}
-
-void PolyCull::ClearSolidSegments()
-{
-	SolidSegments.clear();
-}
-
-void PolyCull::InvertSegments()
-{
-	TempInvertSolidSegments.swap(SolidSegments);
-	ClearSolidSegments();
-	angle_t cur = 0;
-	for (const auto &segment : TempInvertSolidSegments)
-	{
-		if (cur < segment.Start)
-			MarkSegmentCulled(cur, segment.Start - 1);
-		cur = segment.End + 1;
-	}
-	if (cur < ANGLE_MAX)
-		MarkSegmentCulled(cur, ANGLE_MAX);
 }
 
 bool PolyCull::IsSegmentCulled(angle_t startAngle, angle_t endAngle) const
@@ -296,11 +294,20 @@ bool PolyCull::CheckBBox(float *bspcoord)
 	return !IsSegmentCulled(angle2, angle1);
 }
 
-bool PolyCull::GetAnglesForLine(double x1, double y1, double x2, double y2, angle_t &angle1, angle_t &angle2) const
+void PolyCull::InvertSegments()
 {
-	angle2 = PointToPseudoAngle(x1, y1);
-	angle1 = PointToPseudoAngle(x2, y2);
-	return !IsSegmentCulled(angle1, angle2);
+	TempInvertSolidSegments.swap(SolidSegments);
+	SolidSegments.clear();
+	angle_t cur = 0;
+	for (const auto &segment : TempInvertSolidSegments)
+	{
+		if (cur < segment.Start)
+			MarkSegmentCulled(cur, segment.Start - 1);
+		if (segment.End == ANGLE_MAX)
+			return;
+		cur = segment.End + 1;
+	}
+	MarkSegmentCulled(cur, ANGLE_MAX);
 }
 
 void PolyCull::MarkViewFrustum()

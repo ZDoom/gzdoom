@@ -637,19 +637,7 @@ add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DAD
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
-if( WIN32 )
-	set( EXTRA_HEADER_DIRS win32/*.h )
-elseif( APPLE )
-	if( OSX_COCOA_BACKEND )
-		set( EXTRA_HEADER_DIRS posix/*.h posix/cocoa/*.h )
-	else()
-		set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
-	endif()
-else()
-	set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
-endif()
 file( GLOB HEADER_FILES
-	${EXTRA_HEADER_DIRS}
 	fragglescript/*.h
 	g_shared/*.h
 	g_statusbar/*.h
@@ -663,6 +651,7 @@ file( GLOB HEADER_FILES
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
+	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
 	rapidjson/*.h
@@ -817,7 +806,6 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/timiditypp/fft4g.cpp
 	sound/timiditypp/reverb.cpp
-	gl/utility/gl_clock.cpp
 	textures/hires/hqnx/init.cpp
 	textures/hires/hqnx/hq2x.cpp
 	textures/hires/hqnx/hq3x.cpp
@@ -825,15 +813,12 @@ set( FASTMATH_SOURCES
 	textures/hires/xbr/xbrz.cpp
 	textures/hires/xbr/xbrz_old.cpp
 	gl/scene/gl_bsp.cpp
-	gl/scene/gl_fakeflat.cpp
-	gl/scene/gl_clipper.cpp
 	gl/scene/gl_decal.cpp
 	gl/scene/gl_drawinfo.cpp
 	gl/scene/gl_flats.cpp
 	gl/scene/gl_walls.cpp
 	gl/scene/gl_sprite.cpp
 	gl/scene/gl_skydome.cpp
-	gl/scene/gl_renderhacks.cpp
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
 	gl/scene/gl_swscene.cpp
@@ -845,6 +830,9 @@ set( FASTMATH_SOURCES
 	gl_load/gl_load.c
 	gl/models/gl_models.cpp
 	hwrenderer/dynlights/hw_dynlightdata.cpp
+	hwrenderer/scene/hw_fakeflat.cpp
+	hwrenderer/scene/hw_clipper.cpp
+	hwrenderer/scene/hw_renderhacks.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp
@@ -922,7 +910,6 @@ set (PCH_SOURCES
 	i_time.cpp
 	info.cpp
 	keysections.cpp
-	lumpconfigfile.cpp
 	m_alloc.cpp
 	m_argv.cpp
 	m_bbox.cpp
@@ -1069,10 +1056,12 @@ set (PCH_SOURCES
 	gl/system/gl_wipe.cpp
 	gl/textures/gl_hwtexture.cpp
 	gl/textures/gl_texture.cpp
-	gl/textures/gl_material.cpp
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
+	hwrenderer/textures/hw_material.cpp
+	hwrenderer/textures/hw_precache.cpp
+	hwrenderer/utility/hw_clock.cpp
 	
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp

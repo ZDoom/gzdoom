@@ -74,9 +74,9 @@ void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const 
 	queue->Push<PolySetTransformCommand>(objectToClip);
 }
 
-void PolyTriangleDrawer::ToggleMirror(const DrawerCommandQueuePtr &queue)
+void PolyTriangleDrawer::SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw)
 {
-	queue->Push<PolyToggleMirrorCommand>();
+	queue->Push<PolySetCullCCWCommand>(ccw);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -93,7 +93,7 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	dest_pitch = new_dest_pitch;
 	dest_bgra = new_dest_bgra;
 	span_drawers = new_span_drawers;
-	mirror = false;
+	ccw = true;
 }
 
 void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip)
@@ -118,7 +118,6 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
 
-	bool ccw = !mirror;
 	const TriVertex *vinput = drawargs.Vertices();
 	const unsigned int *elements = drawargs.Elements();
 	int vcount = drawargs.VertexCount();
@@ -146,15 +145,16 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
 	}
 	else // TriangleDrawMode::TriangleStrip
 	{
+		bool toggleccw = ccw;
 		vert[0] = ShadeVertex(drawargs, vinput[*(elements++)]);
 		vert[1] = ShadeVertex(drawargs, vinput[*(elements++)]);
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = ShadeVertex(drawargs, vinput[*(elements++)]);
-			DrawShadedTriangle(vert, ccw, &args);
+			DrawShadedTriangle(vert, toggleccw, &args);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
-			ccw = !ccw;
+			toggleccw = !toggleccw;
 		}
 	}
 }
@@ -176,7 +176,6 @@ void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
 
-	bool ccw = !mirror;
 	const TriVertex *vinput = drawargs.Vertices();
 	int vcount = drawargs.VertexCount();
 
@@ -203,15 +202,16 @@ void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
 	}
 	else // TriangleDrawMode::TriangleStrip
 	{
+		bool toggleccw = ccw;
 		vert[0] = ShadeVertex(drawargs, *(vinput++));
 		vert[1] = ShadeVertex(drawargs, *(vinput++));
 		for (int i = 2; i < vcount; i++)
 		{
 			vert[2] = ShadeVertex(drawargs, *(vinput++));
-			DrawShadedTriangle(vert, ccw, &args);
+			DrawShadedTriangle(vert, toggleccw, &args);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
-			ccw = !ccw;
+			toggleccw = !toggleccw;
 		}
 	}
 }
@@ -569,9 +569,13 @@ void PolySetTransformCommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
-void PolyToggleMirrorCommand::Execute(DrawerThread *thread)
+PolySetCullCCWCommand::PolySetCullCCWCommand(bool ccw) : ccw(ccw)
 {
-	PolyTriangleThreadData::Get(thread)->ToggleMirror();
+}
+
+void PolySetCullCCWCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetCullCCW(ccw);
 }
 
 /////////////////////////////////////////////////////////////////////////////

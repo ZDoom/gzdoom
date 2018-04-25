@@ -27,9 +27,6 @@
 
 #include "gl/system/gl_system.h"
 #include "gl/stereo3d/gl_stereo3d.h"
-#include "gl/renderer/gl_renderer.h"
-#include "vectors.h" // RAD2DEG
-#include "doomtype.h" // M_PI
 
 namespace s3d {
 

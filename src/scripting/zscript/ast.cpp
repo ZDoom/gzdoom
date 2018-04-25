@@ -34,8 +34,6 @@
 #include "dobject.h"
 #include "vmintern.h"
 #include "types.h"
-#include "sc_man.h"
-#include "memarena.h"
 #include "zcc_parser.h"
 #include "zcc-parse.h"
 

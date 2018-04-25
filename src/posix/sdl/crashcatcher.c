@@ -1,13 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
 #include <sys/param.h>
 #include <string.h>
 #include <errno.h>
-#include <limits.h>
 
 #ifdef __linux__
 #include <sys/prctl.h>

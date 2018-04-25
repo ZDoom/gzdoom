@@ -31,23 +31,17 @@
 **
 */
 #include <SDL.h>
-#include <ctype.h>
 #include "doomtype.h"
-#include "c_dispatch.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "m_argv.h"
-#include "i_input.h"
 #include "v_video.h"
 
 #include "d_main.h"
 #include "d_event.h"
 #include "d_gui.h"
 #include "c_console.h"
-#include "c_cvars.h"
-#include "i_system.h"
 #include "dikeys.h"
-#include "templates.h"
 #include "s_sound.h"
 #include "events.h"
 

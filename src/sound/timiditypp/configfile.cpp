@@ -22,17 +22,11 @@ Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA 02111-1307 USA
 #include <string.h>
 #include <stdint.h>
 
-#include <time.h>
-
-#include <signal.h>
-
 #include "timidity.h"
 #include "common.h"
 #include "instrum.h"
 #include "quantity.h"
 #include "cmdlib.h"
-#include "i_soundfont.h"
-
 
 
 namespace TimidityPlus

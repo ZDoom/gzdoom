@@ -21,14 +21,9 @@
 //
 
 
-#include "gl/system/gl_system.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
 #include "v_video.h"
-#include "version.h"
-#include "gl/system/gl_interface.h"
 #include "gl/system/gl_cvars.h"
-#include "gl/renderer/gl_renderer.h"
 #include "menu/menu.h"
 
 
@@ -81,34 +76,4 @@ CUSTOM_CVAR (Float, vid_saturation, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	}
 }
 
-CUSTOM_CVAR(Int, gl_satformula, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (screen != NULL)
-	{
-		screen->SetGamma(Gamma);
-	}
-}
-
-
-// Do some tinkering with the menus so that certain options only appear
-// when they are actually valid.
-void gl_SetupMenu()
-{
-#ifndef HAVE_MMX
-	FOptionValues **opt = OptionValues.CheckKey("HqResizeModes");
-	if (opt != NULL) 
-	{
-		for(int i = (*opt)->mValues.Size()-1; i>=0; i--)
-		{
-			// Delete hqNx MMX resize modes for targets
-			// without support of this instruction set
-			const auto index = llround((*opt)->mValues[i].Value);
-
-			if (index > 6 && index < 10)
-			{
-				(*opt)->mValues.Delete(i);
-			}
-		}
-	}
-#endif
-}
+CVAR(Int, gl_satformula, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);

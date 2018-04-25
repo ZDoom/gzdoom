@@ -36,10 +36,6 @@
 #include <windows.h>
 
 #include "hardware.h"
-#include "i_video.h"
-#include "i_system.h"
-#include "c_console.h"
-#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "v_text.h"
 #include "doomstat.h"

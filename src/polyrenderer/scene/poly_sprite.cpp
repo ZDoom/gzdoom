@@ -72,7 +72,7 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	return true;
 }
 
-void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
+void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
 {
 	if (r_models)
 	{
@@ -83,7 +83,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &cli
 		{
 			const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
-			PolyRenderModel(thread, PolyRenderer::Instance()->WorldToClip, clipPlane, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
+			PolyRenderModel(thread, PolyRenderer::Instance()->Scene.CurrentViewpoint->WorldToClip, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
 			return;
 		}
 	}
@@ -161,7 +161,6 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &cli
 	SetDynlight(thing, args);
 	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
 	args.SetStencilTestValue(stencilValue);
-	args.SetClipPlane(0, clipPlane);
 	if ((thing->renderflags & RF_ZDOOMTRANS) && r_UseVanillaTransparency)
 		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	else

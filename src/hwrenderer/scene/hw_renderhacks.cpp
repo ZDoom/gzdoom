@@ -27,35 +27,15 @@
 
 #include "a_sharedglobal.h"
 #include "r_utility.h"
-#include "r_defs.h"
 #include "r_sky.h"
-#include "g_level.h"
 #include "g_levellocals.h"
 
-#include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
-#include "gl/utility/gl_clock.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/utility/hw_clock.h"
 
+sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
-// This is for debugging maps.
-
-// profiling data
-static int totalupper, totallower;
-static int lowershcount, uppershcount;
-static glcycle_t totalms, showtotalms, totalssms;
-
-
-static sector_t fakesec;	// this is static because it gets used in recursively called functions.
-
-// Having this static doesn't really matter here because the hack code is not multithreading-capable anyway.
-static bool inview;
-static subsector_t * viewsubsector;
-static TArray<seg_t *> lowersegs;
-
-
-void FDrawInfo::ClearBuffers()
+void HWDrawInfo::ClearBuffers()
 {
 	for(unsigned int i=0;i< otherfloorplanes.Size();i++)
 	{
@@ -98,7 +78,7 @@ void FDrawInfo::ClearBuffers()
 //
 //==========================================================================
 
-void FDrawInfo::AddOtherFloorPlane(int sector, gl_subsectorrendernode * node)
+void HWDrawInfo::AddOtherFloorPlane(int sector, gl_subsectorrendernode * node)
 {
 	int oldcnt = otherfloorplanes.Size();
 
@@ -111,7 +91,7 @@ void FDrawInfo::AddOtherFloorPlane(int sector, gl_subsectorrendernode * node)
 	otherfloorplanes[sector] = node;
 }
 
-void FDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node)
+void HWDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node)
 {
 	int oldcnt = otherceilingplanes.Size();
 
@@ -130,11 +110,10 @@ void FDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node)
 // Collects all sectors that might need a fake ceiling
 //
 //==========================================================================
-void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float Backheight)
+void HWDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float Backheight)
 {
 	if (!side->segs[0]->backsector) return;
 
-	totalms.Clock();
 	for (int i = 0; i < side->numsegs; i++)
 	{
 		seg_t *seg = side->segs[i];
@@ -148,7 +127,6 @@ void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float Ba
 
 			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector)
 			{
-				totalms.Unclock();
 				return;
 			}
 
@@ -166,7 +144,6 @@ void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float Ba
 					msi.MTI_Index = i;
 					msi.seg = seg;
 					MissingUpperSegs.Push(msi);
-					totalms.Unclock();
 					return;
 				}
 			}
@@ -178,7 +155,6 @@ void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float Ba
 			MissingUpperSegs.Push(msi);
 		}
 	}
-	totalms.Unclock();
 }
 
 //==========================================================================
@@ -186,7 +162,7 @@ void FDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float Ba
 // Collects all sectors that might need a fake floor
 //
 //==========================================================================
-void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Backheight)
+void HWDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Backheight)
 {
 	sector_t *backsec = side->segs[0]->backsector;
 	if (!backsec) return;
@@ -197,7 +173,6 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Ba
 		if (backsec->transdoorheight == backsec->GetPlaneTexZ(sector_t::floor)) return;
 	}
 
-	totalms.Clock();
 	// we need to check all segs of this sidedef
 	for (int i = 0; i < side->numsegs; i++)
 	{
@@ -213,14 +188,12 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Ba
 
 			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector)
 			{
-				totalms.Unclock();
 				return;
 			}
 
 			// Ignore FF_FIX's because they are designed to abuse missing textures
 			if (seg->backsector->e->XFloor.ffloors.Size() && (seg->backsector->e->XFloor.ffloors[0]->flags&(FF_FIX | FF_SEETHROUGH)) == FF_FIX)
 			{
-				totalms.Unclock();
 				return;
 			}
 
@@ -238,7 +211,6 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Ba
 					msi.MTI_Index = i;
 					msi.seg = seg;
 					MissingLowerSegs.Push(msi);
-					totalms.Unclock();
 					return;
 				}
 			}
@@ -250,7 +222,6 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Ba
 			MissingLowerSegs.Push(msi);
 		}
 	}
-	totalms.Unclock();
 }
 
 
@@ -259,7 +230,7 @@ void FDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float Ba
 // 
 //
 //==========================================================================
-bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
+bool HWDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez, area_t in_area)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
@@ -283,7 +254,7 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
+			sector_t * sec = hw_FakeFlat(seg->backsector, &fakesec, in_area, true);
 
 			// Don't bother with slopes
 			if (sec->ceilingplane.isSlope())  return false;
@@ -304,7 +275,7 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 				else return false;
 			}
 		}
-		if (!DoOneSectorUpper(backsub, Planez)) return false;
+		if (!DoOneSectorUpper(backsub, Planez, in_area)) return false;
 	}
 	// all checked ok. This subsector is part of the current fake plane
 
@@ -317,7 +288,7 @@ bool FDrawInfo::DoOneSectorUpper(subsector_t * subsec, float Planez)
 // 
 //
 //==========================================================================
-bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
+bool HWDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez, area_t in_area)
 {
 	// Is there a one-sided wall in this subsector?
 	// Do this first to avoid unnecessary recursion
@@ -341,7 +312,7 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
+			sector_t * sec = hw_FakeFlat(seg->backsector, &fakesec, in_area, true);
 
 			// Don't bother with slopes
 			if (sec->floorplane.isSlope())  return false;
@@ -362,7 +333,7 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 				else return false;
 			}
 		}
-		if (!DoOneSectorLower(backsub, Planez)) return false;
+		if (!DoOneSectorLower(backsub, Planez, in_area)) return false;
 	}
 	// all checked ok. This sector is part of the current fake plane
 
@@ -376,7 +347,7 @@ bool FDrawInfo::DoOneSectorLower(subsector_t * subsec, float Planez)
 //
 //
 //==========================================================================
-bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
+bool HWDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez, area_t in_area)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
@@ -400,7 +371,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
+			sector_t * sec = hw_FakeFlat(seg->backsector, &fakesec, in_area, true);
 
 			// Don't bother with slopes
 			if (sec->floorplane.isSlope())  return false;
@@ -416,7 +387,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 			// No texture checks though! 
 			if (sec->GetPlaneTexZ(sector_t::floor) == Planez) continue;
 		}
-		if (!DoFakeBridge(backsub, Planez)) return false;
+		if (!DoFakeBridge(backsub, Planez, in_area)) return false;
 	}
 	// all checked ok. This sector is part of the current fake plane
 
@@ -429,7 +400,7 @@ bool FDrawInfo::DoFakeBridge(subsector_t * subsec, float Planez)
 //
 //
 //==========================================================================
-bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
+bool HWDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez, area_t in_area)
 {
 	// Is there a one-sided wall in this sector?
 	// Do this first to avoid unnecessary recursion
@@ -453,7 +424,7 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 			// Note: if this is a real line between sectors
 			// we can be sure that render_sector is the real sector!
 
-			sector_t * sec = gl_FakeFlat(seg->backsector, &fakesec, mDrawer->in_area, true);
+			sector_t * sec = hw_FakeFlat(seg->backsector, &fakesec, in_area, true);
 
 			// Don't bother with slopes
 			if (sec->ceilingplane.isSlope())  return false;
@@ -469,7 +440,7 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 			// No texture checks though! 
 			if (sec->GetPlaneTexZ(sector_t::ceiling) == Planez) continue;
 		}
-		if (!DoFakeCeilingBridge(backsub, Planez)) return false;
+		if (!DoFakeCeilingBridge(backsub, Planez, in_area)) return false;
 	}
 	// all checked ok. This sector is part of the current fake plane
 
@@ -483,12 +454,9 @@ bool FDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez)
 // Draws the fake planes
 //
 //==========================================================================
-void FDrawInfo::HandleMissingTextures()
+void HWDrawInfo::HandleMissingTextures(area_t in_area)
 {
 	sector_t fake;
-	totalms.Clock();
-	totalupper = MissingUpperTextures.Size();
-	totallower = MissingLowerTextures.Size();
 
 	for (unsigned int i = 0; i < MissingUpperTextures.Size(); i++)
 	{
@@ -501,7 +469,7 @@ void FDrawInfo::HandleMissingTextures()
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
 			MissingUpperTextures[i].sub->validcount = validcount;
-			if (DoOneSectorUpper(MissingUpperTextures[i].sub, MissingUpperTextures[i].Planez))
+			if (DoOneSectorUpper(MissingUpperTextures[i].sub, MissingUpperTextures[i].Planez, in_area))
 			{
 				sector_t * sec = MissingUpperTextures[i].seg->backsector;
 				// The mere fact that this seg has been added to the list means that the back sector
@@ -542,11 +510,11 @@ void FDrawInfo::HandleMissingTextures()
 
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
-			sector_t * fakesector = gl_FakeFlat(MissingUpperTextures[i].seg->frontsector, &fake, mDrawer->in_area, false);
+			sector_t * fakesector = hw_FakeFlat(MissingUpperTextures[i].seg->frontsector, &fake, in_area, false);
 			float planez = (float)fakesector->GetPlaneTexZ(sector_t::ceiling);
 
 			backsub->validcount = validcount;
-			if (DoFakeCeilingBridge(backsub, planez))
+			if (DoFakeCeilingBridge(backsub, planez, in_area))
 			{
 				// The mere fact that this seg has been added to the list means that the back sector
 				// will be rendered so we can safely assume that it is already in the render list
@@ -573,7 +541,7 @@ void FDrawInfo::HandleMissingTextures()
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
 			MissingLowerTextures[i].sub->validcount = validcount;
-			if (DoOneSectorLower(MissingLowerTextures[i].sub, MissingLowerTextures[i].Planez))
+			if (DoOneSectorLower(MissingLowerTextures[i].sub, MissingLowerTextures[i].Planez, in_area))
 			{
 				sector_t * sec = MissingLowerTextures[i].seg->backsector;
 				// The mere fact that this seg has been added to the list means that the back sector
@@ -613,11 +581,11 @@ void FDrawInfo::HandleMissingTextures()
 
 		{
 			// It isn't a hole. Now check whether it might be a fake bridge
-			sector_t * fakesector = gl_FakeFlat(MissingLowerTextures[i].seg->frontsector, &fake, mDrawer->in_area, false);
+			sector_t * fakesector = hw_FakeFlat(MissingLowerTextures[i].seg->frontsector, &fake, in_area, false);
 			float planez = (float)fakesector->GetPlaneTexZ(sector_t::floor);
 
 			backsub->validcount = validcount;
-			if (DoFakeBridge(backsub, planez))
+			if (DoFakeBridge(backsub, planez, in_area))
 			{
 				// The mere fact that this seg has been added to the list means that the back sector
 				// will be rendered so we can safely assume that it is already in the render list
@@ -632,10 +600,6 @@ void FDrawInfo::HandleMissingTextures()
 			continue;
 		}
 	}
-
-	totalms.Unclock();
-	showtotalms = totalms;
-	totalms.Reset();
 }
 
 
@@ -645,7 +609,7 @@ void FDrawInfo::HandleMissingTextures()
 //
 //==========================================================================
 
-void FDrawInfo::DrawUnhandledMissingTextures()
+void HWDrawInfo::DrawUnhandledMissingTextures()
 {
 	validcount++;
 	for (int i = MissingUpperSegs.Size() - 1; i >= 0; i--)
@@ -694,27 +658,13 @@ void FDrawInfo::DrawUnhandledMissingTextures()
 
 }
 
-void AppendMissingTextureStats(FString &out)
-{
-	out.AppendFormat("Missing textures: %d upper, %d lower, %.3f ms\n", 
-		totalupper, totallower, showtotalms.TimeMS());
-}
-
-ADD_STAT(missingtextures)
-{
-	FString out;
-	AppendMissingTextureStats(out);
-	return out;
-}
-
-
 //==========================================================================
 //
 // Multi-sector deep water hacks
 //
 //==========================================================================
 
-void FDrawInfo::AddHackedSubsector(subsector_t * sub)
+void HWDrawInfo::AddHackedSubsector(subsector_t * sub)
 {
 	if (!(level.maptype == MAPTYPE_HEXEN))
 	{
@@ -729,7 +679,7 @@ void FDrawInfo::AddHackedSubsector(subsector_t * sub)
 //
 //==========================================================================
 
-bool FDrawInfo::CheckAnchorFloor(subsector_t * sub)
+bool HWDrawInfo::CheckAnchorFloor(subsector_t * sub)
 {
 	// This subsector has a one sided wall and can be used.
 	if (sub->hacked==3) return true;
@@ -768,7 +718,7 @@ bool FDrawInfo::CheckAnchorFloor(subsector_t * sub)
 //
 //==========================================================================
 
-bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
+bool HWDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 {
 
 	// mark it checked
@@ -832,7 +782,7 @@ bool FDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 //
 //==========================================================================
 
-bool FDrawInfo::CheckAnchorCeiling(subsector_t * sub)
+bool HWDrawInfo::CheckAnchorCeiling(subsector_t * sub)
 {
 	// This subsector has a one sided wall and can be used.
 	if (sub->hacked==3) return true;
@@ -871,7 +821,7 @@ bool FDrawInfo::CheckAnchorCeiling(subsector_t * sub)
 //
 //==========================================================================
 
-bool FDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
+bool HWDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 {
 	// mark it checked
 	sub->validcount=validcount;
@@ -931,12 +881,8 @@ bool FDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 //
 //==========================================================================
 
-void FDrawInfo::HandleHackedSubsectors()
+void HWDrawInfo::HandleHackedSubsectors()
 {
-	lowershcount=uppershcount=0;
-	totalssms.Reset();
-	totalssms.Clock();
-
 	viewsubsector = R_PointInSubsector(r_viewpoint.Pos);
 
 	// Each subsector may only be processed once in this loop!
@@ -959,14 +905,7 @@ void FDrawInfo::HandleHackedSubsectors()
 					node->sub = HandledSubsectors[j];
 					AddOtherFloorPlane(sub->render_sector->sectornum, node);
 				}
-				if (inview) for(unsigned int j=0;j<lowersegs.Size();j++)
-				{
-					seg_t * seg=lowersegs[j];
-					GLWall wall(mDrawer);
-					wall.ProcessLowerMiniseg(seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
-					rendered_lines++;
-				}
-				lowershcount+=HandledSubsectors.Size();
+                if (inview) ProcessLowerMinisegs(lowersegs);
 			}
 		}
 	}
@@ -989,23 +928,13 @@ void FDrawInfo::HandleHackedSubsectors()
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(sub->render_sector->sectornum, node);
 				}
-				uppershcount+=HandledSubsectors.Size();
 			}
 		}
 	}
 
 
 	SubsectorHacks.Clear();
-	totalssms.Unclock();
 }
-
-ADD_STAT(sectorhacks)
-{
-	FString out;
-	out.Format("sectorhacks = %.3f ms, %d upper, %d lower\n", totalssms.TimeMS(), uppershcount, lowershcount);
-	return out;
-}
-
 
 //==========================================================================
 //
@@ -1014,12 +943,12 @@ ADD_STAT(sectorhacks)
 //
 //==========================================================================
 
-void FDrawInfo::AddFloorStack(sector_t * sec)
+void HWDrawInfo::AddFloorStack(sector_t * sec)
 {
 	FloorStacks.Push(sec);
 }
 
-void FDrawInfo::AddCeilingStack(sector_t * sec)
+void HWDrawInfo::AddCeilingStack(sector_t * sec)
 {
 	CeilingStacks.Push(sec);
 }
@@ -1030,7 +959,7 @@ void FDrawInfo::AddCeilingStack(sector_t * sec)
 //
 //==========================================================================
 
-void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
+void HWDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor, area_t in_area)
 {
 	// mark it checked
 	sub->validcount=validcount;
@@ -1042,7 +971,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
-	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, mDrawer->in_area, false);
+	sector_t * me = hw_FakeFlat(sub->render_sector, &fakesec, in_area, false);
 	if (me->GetTexture(sector_t::ceiling) != anchor->GetTexture(sector_t::ceiling) ||
 		me->ceilingplane != anchor->ceilingplane ||
 		me->GetCeilingLight() != anchor->GetCeilingLight() ||
@@ -1063,7 +992,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 		{
 			subsector_t * backsub = seg->PartnerSeg->Subsector;
 
-			if (backsub->validcount!=validcount) CollectSectorStacksCeiling (backsub, anchor);
+			if (backsub->validcount!=validcount) CollectSectorStacksCeiling (backsub, anchor, in_area);
 		}
 	}
 }
@@ -1074,7 +1003,7 @@ void FDrawInfo::CollectSectorStacksCeiling(subsector_t * sub, sector_t * anchor)
 //
 //==========================================================================
 
-void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
+void HWDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor, area_t in_area)
 {
 	// mark it checked
 	sub->validcount=validcount;
@@ -1086,7 +1015,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 	if (sub->numlines>2 && !(ss_renderflags[sub->Index()]&SSRF_PROCESSED)) return;
 
 	// Must be the exact same visplane
-	sector_t * me = gl_FakeFlat(sub->render_sector, &fakesec, mDrawer->in_area, false);
+	sector_t * me = hw_FakeFlat(sub->render_sector, &fakesec, in_area, false);
 	if (me->GetTexture(sector_t::floor) != anchor->GetTexture(sector_t::floor) ||
 		me->floorplane != anchor->floorplane ||
 		me->GetFloorLight() != anchor->GetFloorLight() ||
@@ -1107,7 +1036,7 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 		{
 			subsector_t * backsub = seg->PartnerSeg->Subsector;
 
-			if (backsub->validcount!=validcount) CollectSectorStacksFloor (backsub, anchor);
+			if (backsub->validcount!=validcount) CollectSectorStacksFloor (backsub, anchor, in_area);
 		}
 	}
 }
@@ -1118,14 +1047,14 @@ void FDrawInfo::CollectSectorStacksFloor(subsector_t * sub, sector_t * anchor)
 //
 //==========================================================================
 
-void FDrawInfo::ProcessSectorStacks()
+void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 {
 	unsigned int i;
 
 	validcount++;
 	for (i=0;i<CeilingStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(CeilingStacks[i], &fakesec, mDrawer->in_area, false);
+		sector_t *sec = hw_FakeFlat(CeilingStacks[i], &fakesec, in_area, false);
 		auto portal = sec->GetPortalGroup(sector_t::ceiling);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
@@ -1140,7 +1069,7 @@ void FDrawInfo::ProcessSectorStacks()
 					{
 						subsector_t * backsub = seg->PartnerSeg->Subsector;
 
-						if (backsub->validcount!=validcount) CollectSectorStacksCeiling (backsub, sec);
+						if (backsub->validcount!=validcount) CollectSectorStacksCeiling (backsub, sec, in_area);
 					}
 				}
 				for(unsigned int j=0;j<HandledSubsectors.Size();j++)
@@ -1153,7 +1082,7 @@ void FDrawInfo::ProcessSectorStacks()
 						BuildPortalCoverage(&sub->portalcoverage[sector_t::ceiling], sub, portal->mDisplacement);
 					}
 
-					portal->GetRenderState()->AddSubsector(sub);
+					AddSubsectorToPortal(portal, sub);
 
 					if (sec->GetAlpha(sector_t::ceiling) != 0 && sec->GetTexture(sector_t::ceiling) != skyflatnum)
 					{
@@ -1169,7 +1098,7 @@ void FDrawInfo::ProcessSectorStacks()
 	validcount++;
 	for (i=0;i<FloorStacks.Size (); i++)
 	{
-		sector_t *sec = gl_FakeFlat(FloorStacks[i], &fakesec, mDrawer->in_area, false);
+		sector_t *sec = hw_FakeFlat(FloorStacks[i], &fakesec, in_area, false);
 		auto portal = sec->GetPortalGroup(sector_t::floor);
 		if (portal != NULL) for(int k=0;k<sec->subsectorcount;k++)
 		{
@@ -1184,7 +1113,7 @@ void FDrawInfo::ProcessSectorStacks()
 					{
 						subsector_t	* backsub = seg->PartnerSeg->Subsector;
 
-						if (backsub->validcount!=validcount) CollectSectorStacksFloor (backsub, sec);
+						if (backsub->validcount!=validcount) CollectSectorStacksFloor (backsub, sec, in_area);
 					}
 				}
 
@@ -1198,8 +1127,7 @@ void FDrawInfo::ProcessSectorStacks()
 						BuildPortalCoverage(&sub->portalcoverage[sector_t::floor], sub, portal->mDisplacement);
 					}
 
-					GLSectorStackPortal *glportal = portal->GetRenderState();
-					glportal->AddSubsector(sub);
+					AddSubsectorToPortal(portal, sub);
 
 					if (sec->GetAlpha(sector_t::floor) != 0 && sec->GetTexture(sector_t::floor) != skyflatnum)
 					{

@@ -35,7 +35,6 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "gi.h"
-#include "v_text.h"
 #include "actor.h"
 #include "c_dispatch.h"
 #include "d_net.h"

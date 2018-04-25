@@ -34,8 +34,6 @@
 #include "i_common.h"
 
 #include <fnmatch.h>
-#include <unistd.h>
-#include <sys/stat.h>
 #include <sys/sysctl.h>
 
 #include "d_protocol.h"

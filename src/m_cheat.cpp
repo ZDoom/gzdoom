@@ -37,34 +37,22 @@
 
 
 #include <stdlib.h>
-#include <math.h>
 
 #include "m_cheat.h"
 #include "d_player.h"
-#include "doomstat.h"
 #include "gstrings.h"
 #include "p_local.h"
 #include "gi.h"
 #include "p_enemy.h"
 #include "sbar.h"
 #include "c_dispatch.h"
-#include "v_video.h"
-#include "w_wad.h"
 #include "a_keys.h"
-#include "templates.h"
-#include "c_console.h"
-#include "r_data/r_translate.h"
-#include "g_level.h"
 #include "d_net.h"
-#include "d_dehacked.h"
-#include "gi.h"
 #include "serializer.h"
 #include "r_utility.h"
 #include "a_morph.h"
 #include "g_levellocals.h"
 #include "vm.h"
-#include "events.h"
-#include "p_acs.h"
 
 // [RH] Actually handle the cheat. The cheat code in st_stuff.c now just
 // writes some bytes to the network data stream, and the network code

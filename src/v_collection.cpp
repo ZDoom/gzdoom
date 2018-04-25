@@ -35,9 +35,7 @@
 #include "v_collection.h"
 #include "v_font.h"
 #include "v_video.h"
-#include "m_swap.h"
 #include "w_wad.h"
-#include "textures.h"
 
 FImageCollection::FImageCollection ()
 {

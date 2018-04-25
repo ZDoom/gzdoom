@@ -21,16 +21,9 @@
 //
 
 #include "doomtype.h"
-#include "colormatcher.h"
-#include "i_system.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "c_dispatch.h"
-#include "r_sky.h"
-#include "sc_man.h"
-#include "w_wad.h"
-#include "gi.h"
-#include "g_level.h"
 #include "a_sharedglobal.h"
 #include "g_levellocals.h"
 #include "r_utility.h"

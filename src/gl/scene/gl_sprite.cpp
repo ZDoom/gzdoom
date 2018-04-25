@@ -39,22 +39,15 @@
 #include "events.h"
 #include "actorinlines.h"
 #include "r_data/r_vanillatrans.h"
-#include "i_time.h"
 
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_framebuffer.h"
 #include "gl/system/gl_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
-#include "gl/utility/gl_clock.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
 CVAR(Bool, gl_usecolorblending, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -314,7 +307,7 @@ void GLSprite::Draw(int pass)
 			float minalpha=0.1f;
 
 			// fog + fuzz don't work well without some fiddling with the alpha value!
-			if (!gl_isBlack(Colormap.FadeColor))
+			if (!Colormap.FadeColor.isBlack())
 			{
 				float dist=Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, x,y);
 				int fogd = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
@@ -368,7 +361,7 @@ void GLSprite::Draw(int pass)
 	}
 
 
-	if (gl_isBlack(Colormap.FadeColor)) foglevel=lightlevel;
+	if (Colormap.FadeColor.isBlack()) foglevel=lightlevel;
 
 	if (RenderStyle.Flags & STYLEF_FadeToBlack) 
 	{
@@ -381,7 +374,7 @@ void GLSprite::Draw(int pass)
 		if (!modelframe)
 		{
 			// non-black fog with subtractive style needs special treatment
-			if (!gl_isBlack(Colormap.FadeColor))
+			if (!Colormap.FadeColor.isBlack())
 			{
 				foglayer = true;
 				// Due to the two-layer approach we need to force an alpha test that lets everything pass
@@ -560,7 +553,7 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 				copySprite.Colormap.Decolorize();
 			}
 
-			if (!gl_isWhite(ThingColor))
+			if (!ThingColor.isWhite())
 			{
 				copySprite.Colormap.LightColor.r = (copySprite.Colormap.LightColor.r*ThingColor.r) >> 8;
 				copySprite.Colormap.LightColor.g = (copySprite.Colormap.LightColor.g*ThingColor.g) >> 8;
@@ -787,7 +780,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 
 	if (sector->sectornum != thing->Sector->sectornum && !thruportal)
 	{
-		rendersector = gl_FakeFlat(thing->Sector, &rs, mDrawer->in_area, false);
+		rendersector = hw_FakeFlat(thing->Sector, &rs, mDrawer->in_area, false);
 	}
 	else
 	{
@@ -1283,7 +1276,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 //
 //==========================================================================
 
-void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
+void FDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport)
 {
 	TMap<AActor*, bool> processcheck;
 	if (glport->validcount == validcount) return;	// only process once per frame
@@ -1297,7 +1290,6 @@ void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
 			// process only if the other side links back to this one.
 			if (port2 != nullptr && port->mDestination == port2->mOrigin && port->mOrigin == port2->mDestination)
 			{
-
 				for (portnode_t *node = port->lineportal_thinglist; node != nullptr; node = node->m_snext)
 				{
 					AActor *th = node->m_thing;
@@ -1326,8 +1318,8 @@ void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
 					th->SetXYZ(newpos);
 					th->Prev += newpos - savedpos;
 
-					GLSprite spr(this);
-					spr.Process(th, gl_FakeFlat(th->Sector, &fakesector, in_area, false), 2);
+					GLSprite spr(mDrawer);
+					spr.Process(th, hw_FakeFlat(th->Sector, &fakesector, mDrawer->in_area, false), 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

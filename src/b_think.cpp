@@ -47,14 +47,9 @@
 #include "p_local.h"
 #include "b_bot.h"
 #include "g_game.h"
-#include "m_random.h"
-#include "stats.h"
-#include "a_pickups.h"
-#include "statnums.h"
 #include "d_net.h"
 #include "d_event.h"
 #include "d_player.h"
-#include "vectors.h"
 #include "actorinlines.h"
 
 static FRandom pr_botmove ("BotMove");

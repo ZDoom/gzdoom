@@ -30,8 +30,7 @@
 #include "g_levellocals.h"
 #include "a_sharedglobal.h"
 #include "r_sky.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/scene/gl_scenedrawer.h"
+#include "hw_fakeflat.h"
 
 
 //==========================================================================
@@ -39,9 +38,8 @@
 // Check whether the player can look beyond this line
 //
 //==========================================================================
-CVAR(Bool, gltest_slopeopt, false, 0)
 
-bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsector)
+bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsector)
 {
 	line_t *linedef = sidedef->linedef;
 	double bs_floorheight1;
@@ -159,7 +157,7 @@ bool gl_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 //
 //==========================================================================
 
-void GLSceneDrawer::CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
+area_t hw_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
 	if (in_area == area_default &&
 		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&
@@ -174,10 +172,11 @@ void GLSceneDrawer::CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsec
 
 		// allow some tolerance in case slopes are involved
 		if (cz1 <= fz1 + 1. / 100 && cz2 <= fz2 + 1. / 100)
-			in_area = area_below;
+			return area_below;
 		else
-			in_area = area_normal;
+			return area_normal;
 	}
+	return in_area;
 }
 
 
@@ -187,7 +186,7 @@ void GLSceneDrawer::CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsec
 // by hardware rendering
 //
 //==========================================================================
-sector_t * gl_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back)
+sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back)
 {
 	if (!sec->heightsec || sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC || sec->heightsec==sec) 
 	{

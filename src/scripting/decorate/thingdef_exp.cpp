@@ -39,16 +39,9 @@
 */
 
 #include "actor.h"
-#include "sc_man.h"
-#include "tarray.h"
-#include "templates.h"
 #include "cmdlib.h"
-#include "i_system.h"
-#include "m_random.h"
 #include "a_pickups.h"
 #include "thingdef.h"
-#include "p_lnspec.h"
-#include "doomstat.h"
 #include "backend/codegen.h"
 
 FRandom pr_exrandom ("EX_Random");

@@ -11,10 +11,11 @@
 
 #include "tarray.h"
 #include "gl/system/gl_interface.h"
+#include "hwrenderer/textures/hw_ihwtexture.h"
 
 class FCanvasTexture;
 class AActor;
-typedef TMap<int, bool> SpriteHits;
+
 
 // For error catching while changing parameters.
 enum EInvalid
@@ -22,13 +23,7 @@ enum EInvalid
 	Invalid = 0
 };
 
-enum
-{
-	GLT_CLAMPX=1,
-	GLT_CLAMPY=2
-};
-
-class FHardwareTexture
+class FHardwareTexture : public IHardwareTexture
 {
 public:
 	enum
@@ -83,6 +78,8 @@ public:
 	void BindToFrameBuffer(int w, int h);
 
 	unsigned int Bind(int texunit, int translation, bool needmipmap);
+	bool BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags);
+
 	void AllocateBuffer(int w, int h, int texelsize);
 	uint8_t *MapBuffer();
 

@@ -33,7 +33,6 @@
 */
 
 #include <string.h>
-#include <stdio.h>
 #include <assert.h>
 
 #include "cmdlib.h"
@@ -42,18 +41,12 @@
 #include "c_dispatch.h"
 
 #include "doomstat.h"
-#include "c_cvars.h"
 #include "d_player.h"
 
 #include "d_netinf.h"
 
-#include "i_system.h"
-#include "v_palette.h"
-#include "v_video.h"
-#include "colormatcher.h"
 #include "menu/menu.h"
 #include "vm.h"
-#include "v_text.h"
 
 struct FLatchedValue
 {

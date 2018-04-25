@@ -38,7 +38,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
-#include <assert.h>
 
 #include "templates.h"
 #include "doomtype.h"
@@ -49,7 +48,6 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "configfile.h"
-#include "m_crc32.h"
 #include "v_text.h"
 #include "d_net.h"
 #include "d_main.h"

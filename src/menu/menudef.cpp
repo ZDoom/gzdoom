@@ -240,6 +240,12 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 		{
 			filter |= IsOpenALPresent();
 		}
+		else if (sc.Compare("MMX"))
+		{
+			#ifdef HAVE_MMX
+				filter = true;
+			#endif
+		}
 	}
 	while (sc.CheckString(","));
 	sc.MustGetStringName(")");

@@ -107,6 +107,7 @@ struct GLSectorPlane
 };
 
 struct FDrawInfo;
+struct HWDrawInfo;
 
 class GLWall
 {
@@ -198,16 +199,16 @@ private:
 
 	void CheckGlowing();
 	bool PutWallCompat(int passflag);
-	void PutWall(bool translucent);
-	void PutPortal(int ptype);
+	void PutWall(HWDrawInfo *di, bool translucent);
+	void PutPortal(HWDrawInfo *di, int ptype);
 	void CheckTexturePosition(FTexCoordInfo *tci);
 
 	void RenderFogBoundaryCompat();
 	void RenderLightsCompat(int pass);
 
-	void Put3DWall(lightlist_t * lightlist, bool translucent);
-	bool SplitWallComplex(sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
-	void SplitWall(sector_t * frontsector, bool translucent);
+	void Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent);
+	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
+	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 
 	void SetupLights();
 	bool PrepareLight(ADynamicLight * light, int pass);
@@ -217,26 +218,25 @@ private:
 
 	void FloodPlane(int pass);
 
-	void SkyPlane(sector_t *sector, int plane, bool allowmirror);
-	void SkyLine(sector_t *sec, line_t *line);
-	void SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2);
-	void SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
-	void SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
+	void SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowmirror);
+	void SkyLine(HWDrawInfo *di, sector_t *sec, line_t *line);
+	void SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2);
+	void SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
+	void SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2);
 
 	void LightPass();
-	void SetHorizon(vertex_t * ul, vertex_t * ur, vertex_t * ll, vertex_t * lr);
-	bool DoHorizon(seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
+	bool DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,vertex_t * v2);
 
 	bool SetWallCoordinates(seg_t * seg, FTexCoordInfo *tci, float ceilingrefheight,
 		float topleft, float topright, float bottomleft, float bottomright, float t_ofs);
 
-	void DoTexture(int type,seg_t * seg,int peg,
+	void DoTexture(HWDrawInfo *di, int type,seg_t * seg,int peg,
 						   float ceilingrefheight, float floorrefheight,
 						   float CeilingHeightstart,float CeilingHeightend,
 						   float FloorHeightstart,float FloorHeightend,
 						   float v_offset);
 
-	void DoMidTexture(seg_t * seg, bool drawfogboundary,
+	void DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 					  sector_t * front, sector_t * back,
 					  sector_t * realfront, sector_t * realback,
 					  float fch1, float fch2, float ffh1, float ffh2,
@@ -244,16 +244,16 @@ private:
 
 	void GetPlanePos(F3DFloor::planeref * planeref, float & left, float & right);
 
-	void BuildFFBlock(seg_t * seg, F3DFloor * rover,
+	void BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 					  float ff_topleft, float ff_topright, 
 					  float ff_bottomleft, float ff_bottomright);
-	void InverseFloors(seg_t * seg, sector_t * frontsector,
+	void InverseFloors(HWDrawInfo *di, seg_t * seg, sector_t * frontsector,
 					   float topleft, float topright, 
 					   float bottomleft, float bottomright);
-	void ClipFFloors(seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
+	void ClipFFloors(HWDrawInfo *di, seg_t * seg, F3DFloor * ffloor, sector_t * frontsector,
 					float topleft, float topright, 
 					float bottomleft, float bottomright);
-	void DoFFloorBlocks(seg_t * seg, sector_t * frontsector, sector_t * backsector,
+	void DoFFloorBlocks(HWDrawInfo *di, seg_t * seg, sector_t * frontsector, sector_t * backsector,
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
@@ -287,8 +287,8 @@ public:
 		return *this;
 	}
 
-	void Process(seg_t *seg, sector_t *frontsector, sector_t *backsector);
-	void ProcessLowerMiniseg(seg_t *seg, sector_t *frontsector, sector_t *backsector);
+	void Process(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
+	void ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void Draw(int pass);
 
 	float PointOnSide(float x,float y)

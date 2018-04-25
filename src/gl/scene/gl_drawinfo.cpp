@@ -1013,6 +1013,7 @@ void FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mDrawer = drawer;
+    di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
 }
 
@@ -1308,7 +1309,7 @@ void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
 	{
 		seg_t * seg=lowersegs[j];
 		GLWall wall(mDrawer);
-		wall.ProcessLowerMiniseg(seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+		wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
 		rendered_lines++;
 	}
 }

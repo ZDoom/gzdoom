@@ -71,7 +71,6 @@ public:
 	void DrawBlend(sector_t * viewsector);
 	void EndDrawScene(sector_t * viewsector);
 	void DrawEndScene2D(sector_t * viewsector);
-	void RenderActorsInPortal(FLinePortalSpan *glport);
 
 	sector_t *RenderViewpoint(AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);
@@ -107,10 +106,5 @@ public:
 	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
 	{
 		gl_SetFog(lightlevel, rellight, FixedColormap != CM_DEFAULT, cmap, isadditive);
-	}
-
-	inline bool isFullbright(PalEntry color, int lightlevel)
-	{
-		return FixedColormap != CM_DEFAULT || (gl_isWhite(color) && lightlevel == 255);
 	}
 };

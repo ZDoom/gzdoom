@@ -307,7 +307,7 @@ void GLSprite::Draw(int pass)
 			float minalpha=0.1f;
 
 			// fog + fuzz don't work well without some fiddling with the alpha value!
-			if (!gl_isBlack(Colormap.FadeColor))
+			if (!Colormap.FadeColor.isBlack())
 			{
 				float dist=Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, x,y);
 				int fogd = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
@@ -361,7 +361,7 @@ void GLSprite::Draw(int pass)
 	}
 
 
-	if (gl_isBlack(Colormap.FadeColor)) foglevel=lightlevel;
+	if (Colormap.FadeColor.isBlack()) foglevel=lightlevel;
 
 	if (RenderStyle.Flags & STYLEF_FadeToBlack) 
 	{
@@ -374,7 +374,7 @@ void GLSprite::Draw(int pass)
 		if (!modelframe)
 		{
 			// non-black fog with subtractive style needs special treatment
-			if (!gl_isBlack(Colormap.FadeColor))
+			if (!Colormap.FadeColor.isBlack())
 			{
 				foglayer = true;
 				// Due to the two-layer approach we need to force an alpha test that lets everything pass
@@ -553,7 +553,7 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 				copySprite.Colormap.Decolorize();
 			}
 
-			if (!gl_isWhite(ThingColor))
+			if (!ThingColor.isWhite())
 			{
 				copySprite.Colormap.LightColor.r = (copySprite.Colormap.LightColor.r*ThingColor.r) >> 8;
 				copySprite.Colormap.LightColor.g = (copySprite.Colormap.LightColor.g*ThingColor.g) >> 8;
@@ -1276,7 +1276,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 //
 //==========================================================================
 
-void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
+void FDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport)
 {
 	TMap<AActor*, bool> processcheck;
 	if (glport->validcount == validcount) return;	// only process once per frame
@@ -1290,7 +1290,6 @@ void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
 			// process only if the other side links back to this one.
 			if (port2 != nullptr && port->mDestination == port2->mOrigin && port->mOrigin == port2->mDestination)
 			{
-
 				for (portnode_t *node = port->lineportal_thinglist; node != nullptr; node = node->m_snext)
 				{
 					AActor *th = node->m_thing;
@@ -1319,8 +1318,8 @@ void GLSceneDrawer::RenderActorsInPortal(FLinePortalSpan *glport)
 					th->SetXYZ(newpos);
 					th->Prev += newpos - savedpos;
 
-					GLSprite spr(this);
-					spr.Process(th, hw_FakeFlat(th->Sector, &fakesector, in_area, false), 2);
+					GLSprite spr(mDrawer);
+					spr.Process(th, hw_FakeFlat(th->Sector, &fakesector, mDrawer->in_area, false), 2);
 					th->Angles.Yaw = savedangle;
 					th->SetXYZ(savedpos);
 					th->Prev -= newpos - savedpos;

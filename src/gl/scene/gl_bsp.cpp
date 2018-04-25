@@ -168,7 +168,7 @@ void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
 
 			GLWall wall(this);
 			wall.sub = currentsubsector;
-			wall.Process(seg, currentsector, backsector);
+			wall.Process(gl_drawinfo, seg, currentsector, backsector);
 			rendered_lines++;
 
 			SetupWall.Unclock();

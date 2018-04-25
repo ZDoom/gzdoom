@@ -20,7 +20,6 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
 #include "a_sharedglobal.h"
 #include "r_sky.h"
 #include "r_state.h"
@@ -108,7 +107,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 //
 //==========================================================================
 
-void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
+void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowreflect)
 {
 	int ptype = -1;
 
@@ -160,7 +159,7 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 	}
 	if (ptype != -1)
 	{
-		PutPortal(ptype);
+		PutPortal(di, ptype);
 	}
 }
 
@@ -171,7 +170,7 @@ void GLWall::SkyPlane(sector_t *sector, int plane, bool allowreflect)
 //
 //==========================================================================
 
-void GLWall::SkyLine(sector_t *fs, line_t *line)
+void GLWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 {
 	FSectorPortal *secport = line->GetTransferredPortal();
 	GLSkyInfo skyinfo;
@@ -195,7 +194,7 @@ void GLWall::SkyLine(sector_t *fs, line_t *line)
 	ztop[1] = zceil[1];
 	zbottom[0] = zfloor[0];
 	zbottom[1] = zfloor[1];
-	PutPortal(ptype);
+	PutPortal(di, ptype);
 }
 
 
@@ -205,17 +204,17 @@ void GLWall::SkyLine(sector_t *fs, line_t *line)
 //
 //==========================================================================
 
-void GLWall::SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2)
+void GLWall::SkyNormal(HWDrawInfo *di, sector_t * fs,vertex_t * v1,vertex_t * v2)
 {
 	ztop[0]=ztop[1]=32768.0f;
 	zbottom[0]=zceil[0];
 	zbottom[1]=zceil[1];
-	SkyPlane(fs, sector_t::ceiling, true);
+	SkyPlane(di, fs, sector_t::ceiling, true);
 
 	ztop[0]=zfloor[0];
 	ztop[1]=zfloor[1];
 	zbottom[0]=zbottom[1]=-32768.0f;
-	SkyPlane(fs, sector_t::floor, true);
+	SkyPlane(di, fs, sector_t::floor, true);
 }
 
 //==========================================================================
@@ -224,7 +223,7 @@ void GLWall::SkyNormal(sector_t * fs,vertex_t * v1,vertex_t * v2)
 //
 //==========================================================================
 
-void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void GLWall::SkyTop(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::ceiling)==skyflatnum)
 	{
@@ -254,7 +253,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 						ztop[0]=ztop[1]=32768.0f;
 						zbottom[0]=zbottom[1]= 
 							bs->ceilingplane.ZatPoint(v2) + seg->sidedef->GetTextureYOffset(side_t::mid);
-						SkyPlane(fs, sector_t::ceiling, false);
+						SkyPlane(di, fs, sector_t::ceiling, false);
 						return;
 					}
 				}
@@ -308,7 +307,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 
 	}
 
-	SkyPlane(fs, sector_t::ceiling, true);
+	SkyPlane(di, fs, sector_t::ceiling, true);
 }
 
 
@@ -318,7 +317,7 @@ void GLWall::SkyTop(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex
 //
 //==========================================================================
 
-void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
+void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,vertex_t * v2)
 {
 	if (fs->GetTexture(sector_t::floor)==skyflatnum)
 	{
@@ -386,6 +385,6 @@ void GLWall::SkyBottom(seg_t * seg,sector_t * fs,sector_t * bs,vertex_t * v1,ver
 		ztop[1] = fs->floorplane.ZatPoint(v2);
 	}
 
-	SkyPlane(fs, sector_t::floor, true);
+	SkyPlane(di, fs, sector_t::floor, true);
 }
 

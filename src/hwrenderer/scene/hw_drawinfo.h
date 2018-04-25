@@ -3,6 +3,7 @@
 #include "r_defs.h"
 
 struct FSectorPortalGroup;
+class GLWall;
 
 //==========================================================================
 //
@@ -57,6 +58,8 @@ struct HWDrawInfo
 		subsector_t * sub;
 		uint8_t flags;
 	};
+    
+    int FixedColormap;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -118,6 +121,11 @@ public:
 	virtual void FloodLowerGap(seg_t * seg) = 0;
 	virtual void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) = 0;
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
+    
+    virtual void AddWall(GLWall *w) = 0;
+    virtual void AddMirrorSurface(GLWall *w) = 0;
+    virtual void ProcessActorsInPortal(FLinePortalSpan *glport) = 0;
+
 
 };
 

@@ -41,7 +41,7 @@
 #include "r_data/r_vanillatrans.h"
 
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"

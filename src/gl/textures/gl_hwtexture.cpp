@@ -32,15 +32,35 @@
 #include "hwrenderer/textures/hw_material.h"
 
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_colormap.h"
 #include "gl/textures/gl_samplers.h"
 
 
-extern TexFilter_s TexFilter[];
-extern int TexFormat[];
+TexFilter_s TexFilter[]={
+	{GL_NEAREST,					GL_NEAREST,		false},
+	{GL_NEAREST_MIPMAP_NEAREST,		GL_NEAREST,		true},
+	{GL_LINEAR,						GL_LINEAR,		false},
+	{GL_LINEAR_MIPMAP_NEAREST,		GL_LINEAR,		true},
+	{GL_LINEAR_MIPMAP_LINEAR,		GL_LINEAR,		true},
+	{GL_NEAREST_MIPMAP_LINEAR,		GL_NEAREST,		true},
+	{GL_LINEAR_MIPMAP_LINEAR,		GL_NEAREST,		true},
+};
+
+int TexFormat[]={
+	GL_RGBA8,
+	GL_RGB5_A1,
+	GL_RGBA4,
+	GL_RGBA2,
+	// [BB] Added compressed texture formats.
+	GL_COMPRESSED_RGBA_ARB,
+	GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+	GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+	GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+};
+
 
 
 //===========================================================================
@@ -162,13 +182,15 @@ void FHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
 {
 	int rh,rw;
-	int texformat=TexFormat[gl_texture_format];
+	int texformat = GL_RGBA8;// TexFormat[gl_texture_format];
 	bool deletebuffer=false;
 
+	/*
 	if (forcenocompression)
 	{
 		texformat = GL_RGBA8;
 	}
+	*/
 	TranslatedTexture * glTex=GetTexID(translation);
 	if (glTex->glTexID==0) glGenTextures(1,&glTex->glTexID);
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);

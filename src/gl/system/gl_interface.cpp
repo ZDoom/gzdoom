@@ -32,7 +32,7 @@
 #include "m_argv.h"
 #include "version.h"
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 
 void gl_PatchMenu();
 static TArray<FString>  m_Extensions;

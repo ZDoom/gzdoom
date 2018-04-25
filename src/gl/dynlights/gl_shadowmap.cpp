@@ -24,7 +24,7 @@
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_shadowmap.h"
 #include "gl/system/gl_debug.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"

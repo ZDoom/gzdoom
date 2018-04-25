@@ -30,7 +30,7 @@
 #include "gl/system/gl_system.h"
 #include "gl/system/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_colormap.h"

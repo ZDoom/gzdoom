@@ -27,7 +27,7 @@
 
 #include "gl/system/gl_system.h"
 #include "v_video.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_tonemapshader.h"
 
 void FTonemapShader::Bind()

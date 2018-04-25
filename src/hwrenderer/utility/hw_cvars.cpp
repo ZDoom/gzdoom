@@ -23,7 +23,7 @@
 
 #include "c_cvars.h"
 #include "v_video.h"
-#include "gl/system/gl_cvars.h"
+#include "hw_cvars.h"
 #include "menu/menu.h"
 
 

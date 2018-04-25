@@ -35,23 +35,6 @@
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
-
-// This is for debugging maps.
-
-// profiling data
-static int totalupper, totallower;
-static int lowershcount, uppershcount;
-static glcycle_t totalms, showtotalms, totalssms;
-
-
-static sector_t fakesec;	// this is static because it gets used in recursively called functions.
-
-// Having this static doesn't really matter here because the hack code is not multithreading-capable anyway.
-static bool inview;
-static subsector_t * viewsubsector;
-static TArray<seg_t *> lowersegs;
-
-
 void HWDrawInfo::ClearBuffers()
 {
 	for(unsigned int i=0;i< otherfloorplanes.Size();i++)
@@ -131,7 +114,6 @@ void HWDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float B
 {
 	if (!side->segs[0]->backsector) return;
 
-	totalms.Clock();
 	for (int i = 0; i < side->numsegs; i++)
 	{
 		seg_t *seg = side->segs[i];
@@ -145,7 +127,6 @@ void HWDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float B
 
 			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector)
 			{
-				totalms.Unclock();
 				return;
 			}
 
@@ -163,7 +144,6 @@ void HWDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float B
 					msi.MTI_Index = i;
 					msi.seg = seg;
 					MissingUpperSegs.Push(msi);
-					totalms.Unclock();
 					return;
 				}
 			}
@@ -175,7 +155,6 @@ void HWDrawInfo::AddUpperMissingTexture(side_t * side, subsector_t *sub, float B
 			MissingUpperSegs.Push(msi);
 		}
 	}
-	totalms.Unclock();
 }
 
 //==========================================================================
@@ -194,7 +173,6 @@ void HWDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float B
 		if (backsec->transdoorheight == backsec->GetPlaneTexZ(sector_t::floor)) return;
 	}
 
-	totalms.Clock();
 	// we need to check all segs of this sidedef
 	for (int i = 0; i < side->numsegs; i++)
 	{
@@ -210,14 +188,12 @@ void HWDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float B
 
 			if (sub->render_sector != sub->sector || seg->frontsector != sub->sector)
 			{
-				totalms.Unclock();
 				return;
 			}
 
 			// Ignore FF_FIX's because they are designed to abuse missing textures
 			if (seg->backsector->e->XFloor.ffloors.Size() && (seg->backsector->e->XFloor.ffloors[0]->flags&(FF_FIX | FF_SEETHROUGH)) == FF_FIX)
 			{
-				totalms.Unclock();
 				return;
 			}
 
@@ -235,7 +211,6 @@ void HWDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float B
 					msi.MTI_Index = i;
 					msi.seg = seg;
 					MissingLowerSegs.Push(msi);
-					totalms.Unclock();
 					return;
 				}
 			}
@@ -247,7 +222,6 @@ void HWDrawInfo::AddLowerMissingTexture(side_t * side, subsector_t *sub, float B
 			MissingLowerSegs.Push(msi);
 		}
 	}
-	totalms.Unclock();
 }
 
 
@@ -483,9 +457,6 @@ bool HWDrawInfo::DoFakeCeilingBridge(subsector_t * subsec, float Planez, area_t 
 void HWDrawInfo::HandleMissingTextures(area_t in_area)
 {
 	sector_t fake;
-	totalms.Clock();
-	totalupper = MissingUpperTextures.Size();
-	totallower = MissingLowerTextures.Size();
 
 	for (unsigned int i = 0; i < MissingUpperTextures.Size(); i++)
 	{
@@ -629,10 +600,6 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 			continue;
 		}
 	}
-
-	totalms.Unclock();
-	showtotalms = totalms;
-	totalms.Reset();
 }
 
 
@@ -690,20 +657,6 @@ void HWDrawInfo::DrawUnhandledMissingTextures()
 	MissingLowerSegs.Clear();
 
 }
-
-void AppendMissingTextureStats(FString &out)
-{
-	out.AppendFormat("Missing textures: %d upper, %d lower, %.3f ms\n", 
-		totalupper, totallower, showtotalms.TimeMS());
-}
-
-ADD_STAT(missingtextures)
-{
-	FString out;
-	AppendMissingTextureStats(out);
-	return out;
-}
-
 
 //==========================================================================
 //
@@ -930,10 +883,6 @@ bool HWDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 
 void HWDrawInfo::HandleHackedSubsectors()
 {
-	lowershcount=uppershcount=0;
-	totalssms.Reset();
-	totalssms.Clock();
-
 	viewsubsector = R_PointInSubsector(r_viewpoint.Pos);
 
 	// Each subsector may only be processed once in this loop!
@@ -957,7 +906,6 @@ void HWDrawInfo::HandleHackedSubsectors()
 					AddOtherFloorPlane(sub->render_sector->sectornum, node);
 				}
                 if (inview) ProcessLowerMinisegs(lowersegs);
-				lowershcount+=HandledSubsectors.Size();
 			}
 		}
 	}
@@ -980,23 +928,13 @@ void HWDrawInfo::HandleHackedSubsectors()
 					node->sub = HandledSubsectors[j];
 					AddOtherCeilingPlane(sub->render_sector->sectornum, node);
 				}
-				uppershcount+=HandledSubsectors.Size();
 			}
 		}
 	}
 
 
 	SubsectorHacks.Clear();
-	totalssms.Unclock();
 }
-
-ADD_STAT(sectorhacks)
-{
-	FString out;
-	out.Format("sectorhacks = %.3f ms, %d upper, %d lower\n", totalssms.TimeMS(), uppershcount, lowershcount);
-	return out;
-}
-
 
 //==========================================================================
 //

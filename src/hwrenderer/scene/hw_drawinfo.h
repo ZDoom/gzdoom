@@ -78,6 +78,14 @@ struct HWDrawInfo
 	TArray<uint8_t> ss_renderflags;
 	TArray<uint8_t> no_renderflags;
 
+private:
+    // For ProcessLowerMiniseg
+    bool inview;
+    subsector_t * viewsubsector;
+    TArray<seg_t *> lowersegs;
+    
+    sector_t fakesec;    // this is a struct member because it gets used in recursively called functions so it cannot be pu on the stack.
+public:
 
 	void ClearBuffers();
 

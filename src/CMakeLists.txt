@@ -1051,7 +1051,6 @@ set (PCH_SOURCES
 	gl/system/gl_debug.cpp
 	gl/system/gl_wipe.cpp
 	gl/textures/gl_hwtexture.cpp
-	gl/textures/gl_texture.cpp
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp

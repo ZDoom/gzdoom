@@ -9,6 +9,10 @@
 #include "gl/dynlights/gl_shadowmap.h"
 #include <functional>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+
 struct particle_t;
 class FCanvasTexture;
 class FFlatVertexBuffer;

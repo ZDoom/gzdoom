@@ -39,7 +39,7 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 
-#include "gl/utility/gl_clock.h"
+#include "hwrenderer/utility/hw_clock.h"
 
 
 void FDrawInfo::AddWall(GLWall *wall)

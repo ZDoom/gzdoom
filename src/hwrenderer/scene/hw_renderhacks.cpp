@@ -31,7 +31,7 @@
 #include "g_levellocals.h"
 
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "gl/utility/gl_clock.h"
+#include "hwrenderer/utility/hw_clock.h"
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 

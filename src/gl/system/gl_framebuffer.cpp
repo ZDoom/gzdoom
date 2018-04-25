@@ -36,7 +36,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_samplers.h"
-#include "gl/utility/gl_clock.h"
+#include "hwrenderer/utility/hw_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/models/gl_models.h"
 #include "gl_debug.h"

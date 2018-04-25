@@ -24,7 +24,7 @@
 #define __VERTEXBUFFER_H
 
 #include "tarray.h"
-#include "gl/utility/gl_clock.h"
+#include "hwrenderer/utility/hw_clock.h"
 #include "gl/system/gl_interface.h"
 #include "r_data/models/models.h"
 #include "hwrenderer/data/flatvertices.h"

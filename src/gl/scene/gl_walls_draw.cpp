@@ -297,7 +297,7 @@ void GLWall::RenderMirrorSurface()
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 		glDepthMask(false);
-		DoDrawDecals();
+		gl_drawinfo->DoDrawDecals(this);
 		glDepthMask(true);
 		glPolygonOffset(0.0f, 0.0f);
 		glDisable(GL_POLYGON_OFFSET_FILL);

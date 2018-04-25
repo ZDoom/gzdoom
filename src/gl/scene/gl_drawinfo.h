@@ -183,6 +183,9 @@ struct FDrawInfo : public HWDrawInfo
 
 	bool PutWallCompat(GLWall *wall, int passflag);	// Legacy GL only.
 	
+	void DrawDecal(GLWall *wall, DBaseDecal *decal);
+	void DoDrawDecals(GLWall *wall);
+
 	
 	void StartScene();
 	void SetupFloodStencil(wallseg * ws);

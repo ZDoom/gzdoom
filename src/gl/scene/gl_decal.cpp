@@ -51,10 +51,11 @@ struct DecalVertex
 //
 //
 //==========================================================================
-void GLWall::DrawDecal(DBaseDecal *decal)
+void FDrawInfo::DrawDecal(GLWall *wall, DBaseDecal *decal)
 {
-	line_t * line=seg->linedef;
-	side_t * side=seg->sidedef;
+	auto seg = wall->seg;
+	line_t * line = seg->linedef;
+	side_t * side = seg->sidedef;
 	int i;
 	float zpos;
 	int light;
@@ -63,10 +64,10 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	bool flipx, flipy;
 	DecalVertex dv[4];
 	FTextureID decalTile;
-	
+
 
 	if (decal->RenderFlags & RF_INVISIBLE) return;
-	if (type==RENDERWALL_FFBLOCK && gltexture->isMasked()) return;	// No decals on 3D floors with transparent textures.
+	if (wall->type == RENDERWALL_FFBLOCK && wall->gltexture->isMasked()) return;	// No decals on 3D floors with transparent textures.
 
 	//if (decal->sprite != 0xffff)
 	{
@@ -98,8 +99,8 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	sector_t *frontsector;
 
 	// for 3d-floor segments use the model sector as reference
-	if ((decal->RenderFlags&RF_CLIPMASK)==RF_CLIPMID) frontsector=decal->Sector;
-	else frontsector=seg->frontsector;
+	if ((decal->RenderFlags&RF_CLIPMASK) == RF_CLIPMID) frontsector = decal->Sector;
+	else frontsector = seg->frontsector;
 
 	switch (decal->RenderFlags & RF_RELMASK)
 	{
@@ -111,7 +112,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		//break;
 
 	case RF_RELUPPER:
-		if (type!=RENDERWALL_TOP) return;
+		if (wall->type != RENDERWALL_TOP) return;
 		if (line->flags & ML_DONTPEGTOP)
 		{
 			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
@@ -122,7 +123,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		}
 		break;
 	case RF_RELLOWER:
-		if (type!=RENDERWALL_BOTTOM) return;
+		if (wall->type != RENDERWALL_BOTTOM) return;
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
 			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
@@ -133,7 +134,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		}
 		break;
 	case RF_RELMID:
-		if (type==RENDERWALL_TOP || type==RENDERWALL_BOTTOM) return;
+		if (wall->type == RENDERWALL_TOP || wall->type == RENDERWALL_BOTTOM) return;
 		if (line->flags & ML_DONTPEGBOTTOM)
 		{
 			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::floor);
@@ -143,7 +144,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 			zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 		}
 	}
-	
+
 	if (decal->RenderFlags & RF_FULLBRIGHT)
 	{
 		light = 255;
@@ -151,36 +152,36 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	}
 	else
 	{
-		light = lightlevel;
-		rel = rellight + getExtraLight();
+		light = wall->lightlevel;
+		rel = wall->rellight + getExtraLight();
 	}
-	
-	FColormap p = Colormap;
-	
+
+	FColormap p = wall->Colormap;
+
 	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
 	{
 		p.Decolorize();
 	}
-	
-	
-	
+
+
+
 	a = decal->Alpha;
-	
+
 	// now clip the decal to the actual polygon
 	float decalwidth = tex->TextureWidth()  * decal->ScaleX;
-	float decalheight= tex->TextureHeight() * decal->ScaleY;
+	float decalheight = tex->TextureHeight() * decal->ScaleY;
 	float decallefto = tex->GetLeftOffset() * decal->ScaleX;
-	float decaltopo  = tex->GetTopOffset()  * decal->ScaleY;
+	float decaltopo = tex->GetTopOffset()  * decal->ScaleY;
 
-	
+	auto &glseg = wall->glseg;
 	float leftedge = glseg.fracleft * side->TexelLength;
 	float linelength = glseg.fracright * side->TexelLength - leftedge;
 
 	// texel index of the decal's left edge
-	float decalpixpos = (float)side->TexelLength * decal->LeftDistance - (flipx? decalwidth-decallefto : decallefto) - leftedge;
+	float decalpixpos = (float)side->TexelLength * decal->LeftDistance - (flipx ? decalwidth - decallefto : decallefto) - leftedge;
 
-	float left,right;
-	float lefttex,righttex;
+	float left, right;
+	float lefttex, righttex;
 
 	// decal is off the left edge
 	if (decalpixpos < 0)
@@ -193,7 +194,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		left = decalpixpos;
 		lefttex = 0;
 	}
-	
+
 	// decal is off the right edge
 	if (decalpixpos + decalwidth > linelength)
 	{
@@ -205,77 +206,76 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		right = decalpixpos + decalwidth;
 		righttex = decalwidth;
 	}
-	if (right<=left) return;	// nothing to draw
+	if (right <= left) return;	// nothing to draw
 
 	// one texture unit on the wall as vector
-	float vx=(glseg.x2-glseg.x1)/linelength;
-	float vy=(glseg.y2-glseg.y1)/linelength;
-		
-	dv[1].x=dv[0].x=glseg.x1+vx*left;
-	dv[1].y=dv[0].y=glseg.y1+vy*left;
+	float vx = (glseg.x2 - glseg.x1) / linelength;
+	float vy = (glseg.y2 - glseg.y1) / linelength;
 
-	dv[3].x=dv[2].x=glseg.x1+vx*right;
-	dv[3].y=dv[2].y=glseg.y1+vy*right;
-		
-	zpos+= (flipy? decalheight-decaltopo : decaltopo);
+	dv[1].x = dv[0].x = glseg.x1 + vx * left;
+	dv[1].y = dv[0].y = glseg.y1 + vy * left;
 
-	dv[1].z=dv[2].z = zpos;
-	dv[0].z=dv[3].z = dv[1].z - decalheight;
-	dv[1].v=dv[2].v = tex->GetVT();
+	dv[3].x = dv[2].x = glseg.x1 + vx * right;
+	dv[3].y = dv[2].y = glseg.y1 + vy * right;
 
-	dv[1].u=dv[0].u = tex->GetU(lefttex / decal->ScaleX);
-	dv[3].u=dv[2].u = tex->GetU(righttex / decal->ScaleX);
-	dv[0].v=dv[3].v = tex->GetVB();
+	zpos += (flipy ? decalheight - decaltopo : decaltopo);
 
+	dv[1].z = dv[2].z = zpos;
+	dv[0].z = dv[3].z = dv[1].z - decalheight;
+	dv[1].v = dv[2].v = tex->GetVT();
+
+	dv[1].u = dv[0].u = tex->GetU(lefttex / decal->ScaleX);
+	dv[3].u = dv[2].u = tex->GetU(righttex / decal->ScaleX);
+	dv[0].v = dv[3].v = tex->GetVB();
 
 	// now clip to the top plane
-	float vzt=(ztop[1]-ztop[0])/linelength;
-	float topleft=this->ztop[0]+vzt*left;
-	float topright=this->ztop[0]+vzt*right;
+	float vzt = (wall->ztop[1] - wall->ztop[0]) / linelength;
+	float topleft = wall->ztop[0] + vzt * left;
+	float topright = wall->ztop[0] + vzt * right;
 
 	// completely below the wall
-	if (topleft<dv[0].z && topright<dv[3].z) 
+	if (topleft < dv[0].z && topright < dv[3].z)
 		return;
 
-	if (topleft<dv[1].z || topright<dv[2].z)
+	if (topleft < dv[1].z || topright < dv[2].z)
 	{
 		// decal has to be clipped at the top
 		// let texture clamping handle all extreme cases
-		dv[1].v=(dv[1].z-topleft)/(dv[1].z-dv[0].z)*dv[0].v;
-		dv[2].v=(dv[2].z-topright)/(dv[2].z-dv[3].z)*dv[3].v;
-		dv[1].z=topleft;
-		dv[2].z=topright;
+		dv[1].v = (dv[1].z - topleft) / (dv[1].z - dv[0].z)*dv[0].v;
+		dv[2].v = (dv[2].z - topright) / (dv[2].z - dv[3].z)*dv[3].v;
+		dv[1].z = topleft;
+		dv[2].z = topright;
 	}
 
 	// now clip to the bottom plane
-	float vzb=(zbottom[1]-zbottom[0])/linelength;
-	float bottomleft=this->zbottom[0]+vzb*left;
-	float bottomright=this->zbottom[0]+vzb*right;
+	float vzb = (wall->zbottom[1] - wall->zbottom[0]) / linelength;
+	float bottomleft = wall->zbottom[0] + vzb * left;
+	float bottomright = wall->zbottom[0] + vzb * right;
 
 	// completely above the wall
-	if (bottomleft>dv[1].z && bottomright>dv[2].z) 
+	if (bottomleft > dv[1].z && bottomright > dv[2].z)
 		return;
 
-	if (bottomleft>dv[0].z || bottomright>dv[3].z)
+	if (bottomleft > dv[0].z || bottomright > dv[3].z)
 	{
 		// decal has to be clipped at the bottom
 		// let texture clamping handle all extreme cases
-		dv[0].v=(dv[1].z-bottomleft)/(dv[1].z-dv[0].z)*(dv[0].v-dv[1].v) + dv[1].v;
-		dv[3].v=(dv[2].z-bottomright)/(dv[2].z-dv[3].z)*(dv[3].v-dv[2].v) + dv[2].v;
-		dv[0].z=bottomleft;
-		dv[3].z=bottomright;
+		dv[0].v = (dv[1].z - bottomleft) / (dv[1].z - dv[0].z)*(dv[0].v - dv[1].v) + dv[1].v;
+		dv[3].v = (dv[2].z - bottomright) / (dv[2].z - dv[3].z)*(dv[3].v - dv[2].v) + dv[2].v;
+		dv[0].z = bottomleft;
+		dv[3].z = bottomright;
 	}
 
 
 	if (flipx)
 	{
 		float ur = tex->GetUR();
-		for(i=0;i<4;i++) dv[i].u=ur-dv[i].u;
+		for (i = 0; i < 4; i++) dv[i].u = ur - dv[i].u;
 	}
 	if (flipy)
 	{
 		float vb = tex->GetVB();
-		for(i=0;i<4;i++) dv[i].v=vb-dv[i].v;
+		for (i = 0; i < 4; i++) dv[i].v = vb - dv[i].v;
 	}
 
 	// calculate dynamic light effect.
@@ -284,13 +284,13 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;
 		decal->GetXY(seg->sidedef, x, y);
-		gl_SetDynSpriteLight(nullptr, x, y, zpos - decalheight * 0.5f, sub);
+		gl_SetDynSpriteLight(nullptr, x, y, zpos - decalheight * 0.5f, wall->sub);
 	}
 
 	// alpha color only has an effect when using an alpha texture.
 	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
 	{
-		gl_RenderState.SetObjectColor(decal->AlphaColor|0xff000000);
+		gl_RenderState.SetObjectColor(decal->AlphaColor | 0xff000000);
 	}
 
 
@@ -310,7 +310,7 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	PalEntry fc = gl_RenderState.GetFogColor();
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
 	{
-		gl_RenderState.SetFog(0,-1);
+		gl_RenderState.SetFog(0, -1);
 	}
 
 	gl_RenderState.SetNormal(glseg.Normal());
@@ -321,30 +321,32 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 		qd.Set(i, dv[i].x, dv[i].z, dv[i].y, dv[i].u, dv[i].v);
 	}
 
-	if (lightlist == NULL)
+	if (wall->lightlist == nullptr)
 	{
 		gl_RenderState.Apply();
 		qd.Render(GL_TRIANGLE_FAN);
 	}
 	else
 	{
-		for (unsigned k = 0; k < lightlist->Size(); k++)
+		auto &lightlist = *wall->lightlist;
+
+		for (unsigned k = 0; k < lightlist.Size(); k++)
 		{
-			secplane_t &lowplane = k == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[k + 1].plane;
+			secplane_t &lowplane = k == lightlist.Size() - 1 ? wall->bottomplane : lightlist[k + 1].plane;
 
 			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
 			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
 
 			if (low1 < dv[1].z || low2 < dv[2].z)
 			{
-				int thisll = (*lightlist)[k].caster != NULL ? gl_ClampLight(*(*lightlist)[k].p_lightlevel) : lightlevel;
+				int thisll = lightlist[k].caster != NULL ? gl_ClampLight(*lightlist[k].p_lightlevel) : wall->lightlevel;
 				FColormap thiscm;
-				thiscm.FadeColor = Colormap.FadeColor;
-				thiscm.CopyFrom3DLight(&(*lightlist)[k]);
+				thiscm.FadeColor = wall->Colormap.FadeColor;
+				thiscm.CopyFrom3DLight(&lightlist[k]);
 				mDrawer->SetColor(thisll, rel, thiscm, a);
 				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
-				mDrawer->SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
-				gl_RenderState.SetSplitPlanes((*lightlist)[k].plane, lowplane);
+				mDrawer->SetFog(thisll, rel, &thiscm, wall->RenderStyle == STYLE_Add);
+				gl_RenderState.SetSplitPlanes(lightlist[k].plane, lowplane);
 
 				gl_RenderState.Apply();
 				qd.Render(GL_TRIANGLE_FAN);
@@ -356,8 +358,8 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 	rendered_decals++;
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.SetObjectColor(0xffffffff);
-	gl_RenderState.SetFog(fc,-1);
-	gl_RenderState.SetDynLight(0,0,0);
+	gl_RenderState.SetFog(fc, -1);
+	gl_RenderState.SetDynLight(0, 0, 0);
 }
 
 //==========================================================================
@@ -365,27 +367,27 @@ void GLWall::DrawDecal(DBaseDecal *decal)
 //
 //
 //==========================================================================
-void GLWall::DoDrawDecals()
+void FDrawInfo::DoDrawDecals(GLWall *wall)
 {
-	if (seg->sidedef && seg->sidedef->AttachedDecals)
+	if (wall->seg->sidedef && wall->seg->sidedef->AttachedDecals)
 	{
-		if (lightlist != NULL)
+		if (wall->lightlist != nullptr)
 		{
 			gl_RenderState.EnableSplit(true);
 		}
 		else
 		{
-			mDrawer->SetFog(lightlevel, rellight + getExtraLight(), &Colormap, false);
+			mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
 		}
 
-		DBaseDecal *decal = seg->sidedef->AttachedDecals;
+		DBaseDecal *decal = wall->seg->sidedef->AttachedDecals;
 		while (decal)
 		{
-			DrawDecal(decal);
+			DrawDecal(wall, decal);
 			decal = decal->WallNext;
 		}
 
-		if (lightlist != NULL)
+		if (wall->lightlist != nullptr)
 		{
 			gl_RenderState.EnableSplit(false);
 		}

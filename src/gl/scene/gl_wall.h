@@ -257,9 +257,6 @@ private:
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
-	void DrawDecal(DBaseDecal *actor);
-	void DoDrawDecals();
-
 	void RenderFogBoundary();
 	void RenderMirrorSurface();
 	void RenderTranslucentWall();

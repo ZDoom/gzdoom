@@ -879,7 +879,7 @@ void GLDrawList::DrawDecals()
 {
 	for(unsigned i=0;i<drawitems.Size();i++)
 	{
-		walls[drawitems[i].index]->DoDrawDecals();
+		gl_drawinfo->DoDrawDecals(walls[drawitems[i].index]);
 	}
 }
 

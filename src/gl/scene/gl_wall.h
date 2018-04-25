@@ -203,15 +203,11 @@ private:
 	void PutPortal(HWDrawInfo *di, int ptype);
 	void CheckTexturePosition(FTexCoordInfo *tci);
 
-	void RenderFogBoundaryCompat();
-	void RenderLightsCompat(int pass);
-
 	void Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent);
 	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
 	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 
 	void SetupLights();
-	bool PrepareLight(ADynamicLight * light, int pass);
 	void MakeVertices(bool nosplit);
 	void RenderWall(int textured);
 	void RenderTextured(int rflags);

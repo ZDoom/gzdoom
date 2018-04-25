@@ -235,7 +235,7 @@ void GLWall::RenderFogBoundary()
 		}
 		else
 		{
-			RenderFogBoundaryCompat();
+			gl_drawinfo->RenderFogBoundaryCompat(this);
 		}
 	}
 }
@@ -450,7 +450,7 @@ void GLWall::Draw(int pass)
 	case GLPASS_LIGHTTEX:
 	case GLPASS_LIGHTTEX_ADDITIVE:
 	case GLPASS_LIGHTTEX_FOGGY:
-		RenderLightsCompat(pass);
+		gl_drawinfo->RenderLightsCompat(this, pass);
 		break;
 
 	case GLPASS_TEXONLY:

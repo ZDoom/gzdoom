@@ -181,8 +181,11 @@ struct FDrawInfo : public HWDrawInfo
     void AddMirrorSurface(GLWall *w) override;
     void ProcessActorsInPortal(FLinePortalSpan *glport) override;
 
-	bool PutWallCompat(GLWall *wall, int passflag);	// Legacy GL only.
-	
+	// Legacy GL only. 
+	bool PutWallCompat(GLWall *wall, int passflag);
+	void RenderFogBoundaryCompat(GLWall *wall);
+	void RenderLightsCompat(GLWall *wall, int pass);
+
 	void DrawDecal(GLWall *wall, DBaseDecal *decal);
 	void DoDrawDecals(GLWall *wall);
 

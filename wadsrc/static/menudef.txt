@@ -2025,19 +2025,6 @@ OptionValue "FXAAQuality"
 	4, "$OPTVAL_EXTREME"
 }
 
-OptionValue "TextureFormats"
-{
-	0, "$OPTVAL_RGBA8"
-	1, "$OPTVAL_RGB5A1"
-	2, "$OPTVAL_RGBA4"
-	3, "$OPTVAL_RGBA2"
-	// [BB] Added modes for texture compression.
-	4, "$OPTVAL_COMPRRGBA"
-	5, "$OPTVAL_S3TCDXT1"
-	6, "$OPTVAL_S3TCDXT3"
-	7, "$OPTVAL_S3TCDXT5"
-}
-
 OptionValue "Anisotropy"
 {
 	1, "$OPTVAL_OFF"
@@ -2193,7 +2180,6 @@ OptionMenu "GLTextureGLOptions" protected
 	Option "$GLTEXMNU_TEXENABLED",		gl_texture,						"YesNo"
 	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
-	Option "$GLTEXMNU_TEXFORMAT",		gl_texture_format,				"TextureFormats"
 	Option "$GLTEXMNU_ENABLEHIRES",		gl_texture_usehires,			"YesNo"
 	
 	ifOption(MMX)

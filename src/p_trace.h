@@ -92,11 +92,12 @@ struct FTraceResults
 
 enum
 {
-	TRACE_NoSky			= 1,	// Hitting the sky returns TRACE_HitNone
-	TRACE_PCross		= 2,	// Trigger SPAC_PCROSS lines
-	TRACE_Impact		= 4,	// Trigger SPAC_IMPACT lines
-	TRACE_PortalRestrict= 8,	// Cannot go through portals without a static link offset.
-	TRACE_ReportPortals = 16,	// Report any portal crossing to the TraceCallback
+	TRACE_NoSky			= 0x0001,	// Hitting the sky returns TRACE_HitNone
+	TRACE_PCross		= 0x0002,	// Trigger SPAC_PCROSS lines
+	TRACE_Impact		= 0x0004,	// Trigger SPAC_IMPACT lines
+	TRACE_PortalRestrict= 0x0008,	// Cannot go through portals without a static link offset.
+	TRACE_ReportPortals = 0x0010,	// Report any portal crossing to the TraceCallback
+	TRACE_3DCallback	= 0x0020,	// [ZZ] use TraceCallback to determine whether we need to go through a line to do 3D floor check, or not. without this, only line flag mask is used
 };
 
 // return values from callback

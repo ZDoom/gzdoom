@@ -1373,7 +1373,9 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 
 	if ((flags & CTF_CheckHires) && translation != STRange_AlphaTexture)
 	{
-		return LoadHiresTexture(&w, &h);
+		buffer = LoadHiresTexture(&w, &h);
+		if (buffer != nullptr)
+			return buffer;
 	}
 
 	int exx = !!(flags & CTF_Expand);

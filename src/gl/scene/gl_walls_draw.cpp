@@ -146,25 +146,6 @@ bool GLWall::SetupLights(FDynLightData &lightdata)
 
 //==========================================================================
 //
-// build the vertices for this wall
-//
-//==========================================================================
-
-void GLWall::MakeVertices(bool nosplit)
-{
-	if (vertcount == 0)
-	{
-		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
-		vertcount = split ? CountVertices() : 4;
-
-		FFlatVertex *ptr = GLRenderer->mVBO->Alloc(vertcount, &vertindex);
-		CreateVertices(ptr, split);
-	}
-}
-
-
-//==========================================================================
-//
 // General purpose wall rendering function
 // everything goes through here
 //

@@ -180,6 +180,7 @@ struct FDrawInfo : public HWDrawInfo
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
     void ProcessActorsInPortal(FLinePortalSpan *glport) override;
+	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 
 	// Legacy GL only. 
 	bool PutWallCompat(GLWall *wall, int passflag);

@@ -23,6 +23,7 @@
 
 #include "r_defs.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
 #include "gl/scene/gl_wall.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
@@ -234,3 +235,23 @@ int GLWall::CountVertices()
 	}
 	return cnt;
 }
+
+//==========================================================================
+//
+// build the vertices for this wall
+//
+//==========================================================================
+
+void GLWall::MakeVertices(HWDrawInfo *di, bool nosplit)
+{
+	if (vertcount == 0)
+	{
+		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
+		vertcount = split ? CountVertices() : 4;
+
+		auto ret = di->AllocVertices(vertcount);
+		vertindex = ret.second;
+		CreateVertices(ret.first, split);
+	}
+}
+

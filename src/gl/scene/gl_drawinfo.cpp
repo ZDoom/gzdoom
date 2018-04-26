@@ -462,8 +462,8 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 		w->ztop[0]=ws->ztop[1]=izt;
 		w->zbottom[0]=ws->zbottom[1]=izb;
 		w->tcs[GLWall::LOLFT].u = w->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
-		ws->MakeVertices(false);
-		w->MakeVertices(false);
+		ws->MakeVertices(gl_drawinfo, false);
+		w->MakeVertices(gl_drawinfo, false);
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -1317,3 +1317,9 @@ void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *su
 	portal->GetRenderState()->AddSubsector(sub);
 }
 
+std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
+{
+	unsigned int index = -1;
+	auto p = GLRenderer->mVBO->Alloc(count, &index);
+	return std::make_pair(p, index);
+}

@@ -3,6 +3,8 @@
 #include "r_defs.h"
 
 struct FSectorPortalGroup;
+struct FLinePortalSpan;
+struct FFlatVertex;
 class GLWall;
 
 //==========================================================================
@@ -125,6 +127,7 @@ public:
     virtual void AddWall(GLWall *w) = 0;
     virtual void AddMirrorSurface(GLWall *w) = 0;
     virtual void ProcessActorsInPortal(FLinePortalSpan *glport) = 0;
+	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
 
 
 };

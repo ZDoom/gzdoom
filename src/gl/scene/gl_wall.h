@@ -211,11 +211,12 @@ private:
 	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 
 	bool SetupLights(FDynLightData &lightdata);
-	void MakeVertices(bool nosplit);
 	void RenderWall(int textured);
 	void RenderTextured(int rflags);
 
 	void FloodPlane(int pass);
+
+	void MakeVertices(HWDrawInfo *di, bool nosplit);
 
 	void SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowmirror);
 	void SkyLine(HWDrawInfo *di, sector_t *sec, line_t *line);

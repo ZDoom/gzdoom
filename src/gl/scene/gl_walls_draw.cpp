@@ -154,9 +154,11 @@ void GLWall::MakeVertices(bool nosplit)
 {
 	if (vertcount == 0)
 	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		CreateVertices(ptr, nosplit);
-		vertcount = GLRenderer->mVBO->GetCount(ptr, &vertindex);
+		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
+		vertcount = split ? CountVertices() : 4;
+
+		FFlatVertex *ptr = GLRenderer->mVBO->Alloc(vertcount, &vertindex);
+		CreateVertices(ptr, split);
 	}
 }
 
@@ -170,25 +172,9 @@ void GLWall::MakeVertices(bool nosplit)
 
 void GLWall::RenderWall(int textured)
 {
+	assert(vertcount > 0);
 	gl_RenderState.Apply();
 	gl_RenderState.ApplyLightIndex(dynlightindex);
-	if (gl.buffermethod != BM_DEFERRED)
-	{
-		MakeVertices(!!(textured&RWF_NOSPLIT));
-	}
-	else if (vertcount == 0)
-	{
-		// This should never happen but in case it actually does, use the quad drawer as fallback (without edge splitting.)
-		// This way it at least gets drawn.
-		FQuadDrawer qd;
-		qd.Set(0, glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
-		qd.Set(1, glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
-		qd.Set(2, glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
-		qd.Set(3, glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
-		qd.Render(GL_TRIANGLE_FAN);
-		vertexcount += 4;
-		return;
-	}
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, vertindex, vertcount);
 	vertexcount += vertcount;
 }

@@ -50,7 +50,7 @@ void FDrawInfo::AddWall(GLWall *wall)
 	if (translucent) // translucent walls
 	{
 		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
-		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(true);
+		wall->MakeVertices(true);
 		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
 		*newwall = *wall;
 	}
@@ -73,7 +73,7 @@ void FDrawInfo::AddWall(GLWall *wall)
 		{
 			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
 		}
-		if (gl.buffermethod == BM_DEFERRED) wall->MakeVertices(false);
+		wall->MakeVertices(false);
 		auto newwall = drawlists[list].NewWall();
 		*newwall = *wall;
 	}
@@ -133,7 +133,7 @@ void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 {
 	GLPortal * portal;
 
-	if (gl.buffermethod == BM_DEFERRED) MakeVertices(false);
+	MakeVertices(false);
 	switch (ptype)
 	{
 	// portals don't go into the draw list.

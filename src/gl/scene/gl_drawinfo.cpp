@@ -462,11 +462,8 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 		w->ztop[0]=ws->ztop[1]=izt;
 		w->zbottom[0]=ws->zbottom[1]=izb;
 		w->tcs[GLWall::LOLFT].u = w->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
-		if (gl.buffermethod == BM_DEFERRED)
-		{
-			ws->MakeVertices(false);
-			w->MakeVertices(false);
-		}
+		ws->MakeVertices(false);
+		w->MakeVertices(false);
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));

@@ -35,8 +35,6 @@ EXTERN_CVAR(Bool, gl_seamless)
 
 void GLWall::SplitUpperEdge(FFlatVertex *&ptr)
 {
-	if (seg == NULL || seg->sidedef == NULL || (seg->sidedef->Flags & WALLF_POLYOBJ) || seg->sidedef->numsegs == 1) return;
-
 	side_t *sidedef = seg->sidedef;
 	float polyw = glseg.fracright - glseg.fracleft;
 	float facu = (tcs[UPRGT].u - tcs[UPLFT].u) / polyw;
@@ -71,8 +69,6 @@ void GLWall::SplitUpperEdge(FFlatVertex *&ptr)
 
 void GLWall::SplitLowerEdge(FFlatVertex *&ptr)
 {
-	if (seg == NULL || seg->sidedef == NULL || (seg->sidedef->Flags & WALLF_POLYOBJ) || seg->sidedef->numsegs == 1) return;
-
 	side_t *sidedef = seg->sidedef;
 	float polyw = glseg.fracright - glseg.fracleft;
 	float facu = (tcs[LORGT].u - tcs[LOLFT].u) / polyw;
@@ -173,20 +169,68 @@ void GLWall::SplitRightEdge(FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::CreateVertices(FFlatVertex *&ptr, bool nosplit)
+void GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
 {
-	bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
 	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
 	ptr++;
 	if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
 	ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
 	ptr++;
-	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(ptr);
+	if (split && !(flags & GLWF_NOSPLITUPPER && seg->sidedef->numsegs > 1)) SplitUpperEdge(ptr);
 	ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
 	ptr++;
 	if (split && glseg.fracright == 1) SplitRightEdge(ptr);
 	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
 	ptr++;
-	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(ptr);
+	if (split && !(flags & GLWF_NOSPLITLOWER) && seg->sidedef->numsegs > 1) SplitLowerEdge(ptr);
 }
 
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+int GLWall::CountVertices()
+{
+	int cnt = 4;
+	vertex_t * vi = vertexes[0];
+	if (glseg.fracleft == 0 && vi != nullptr && vi->numheights)
+	{
+		int i = 0;
+
+		while (i<vi->numheights && vi->heightlist[i] <= zbottom[0]) i++;
+		while (i<vi->numheights && vi->heightlist[i] < ztop[0])
+		{
+			i++;
+			cnt++;
+		}
+	}
+	auto sidedef = seg->sidedef;
+	if (!(flags & (GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER)) && sidedef->numsegs > 1)
+	{
+		int cnt2 = 0;
+		for (int i = sidedef->numsegs - 2; i >= 0; i--)
+		{
+			float sidefrac = sidedef->segs[i]->sidefrac;
+			if (sidefrac >= glseg.fracright) continue;
+			if (sidefrac <= glseg.fracleft) break;
+			cnt2++;
+		}
+		if ((flags & (GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER)) == (GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER)) cnt2 <<= 1;
+		cnt += cnt2;
+	}
+	vi = vertexes[1];
+	if (glseg.fracright == 1 && vi != nullptr && vi->numheights)
+	{
+		int i = 0;
+
+		while (i<vi->numheights && vi->heightlist[i] <= zbottom[1]) i++;
+		while (i<vi->numheights && vi->heightlist[i] < ztop[1])
+		{
+			i++;
+			cnt++;
+		}
+	}
+	return cnt;
+}

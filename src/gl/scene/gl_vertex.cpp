@@ -21,12 +21,9 @@
 //
 
 
-
-#include "gl/system/gl_system.h"
-
-#include "gl/renderer/gl_renderer.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/scene/gl_drawinfo.h"
+#include "r_defs.h"
+#include "hwrenderer/data/flatvertices.h"
+#include "gl/scene/gl_wall.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 
@@ -168,5 +165,28 @@ void GLWall::SplitRightEdge(FFlatVertex *&ptr)
 			i--;
 		}
 	}
+}
+
+//==========================================================================
+//
+// Create vertices for one wall
+//
+//==========================================================================
+
+void GLWall::CreateVertices(FFlatVertex *&ptr, bool nosplit)
+{
+	bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
+	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
+	ptr++;
+	if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
+	ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
+	ptr++;
+	if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(ptr);
+	ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
+	ptr++;
+	if (split && glseg.fracright == 1) SplitRightEdge(ptr);
+	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
+	ptr++;
+	if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(ptr);
 }
 

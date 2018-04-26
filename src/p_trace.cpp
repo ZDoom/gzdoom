@@ -637,7 +637,7 @@ cont:
 
 		case TRACE_Skip:
 			Results->HitType = TRACE_HitNone;
-			if (!special3dpass && (TraceFlags & TRACE_3DCallback) && entersector->e->XFloor.ffloors.Size())
+			if (!special3dpass && (TraceFlags & TRACE_3DCallback) && entersector && entersector->e->XFloor.ffloors.Size())
 				return LineCheck(in, dist, hit, true);
 			break;
 
@@ -646,7 +646,7 @@ cont:
 		}
 	}
 
-	if (Results->HitType == TRACE_HitNone)
+	if (Results->HitType == TRACE_HitNone && entersector)
 	{
 		CurSector = entersector;
 		EnterDist = dist;

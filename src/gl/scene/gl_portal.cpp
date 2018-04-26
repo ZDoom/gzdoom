@@ -1240,7 +1240,7 @@ void GLEEHorizonPortal::DrawContents()
 	{
 		GLHorizonInfo horz;
 		horz.plane.GetFromSector(sector, sector_t::ceiling);
-		horz.lightlevel = gl_ClampLight(sector->GetCeilingLight());
+		horz.lightlevel = hw_ClampLight(sector->GetCeilingLight());
 		horz.colormap = sector->Colormap;
 		horz.specialcolor = 0xffffffff;
 		if (portal->mType == PORTS_PLANE)
@@ -1254,7 +1254,7 @@ void GLEEHorizonPortal::DrawContents()
 	{
 		GLHorizonInfo horz;
 		horz.plane.GetFromSector(sector, sector_t::floor);
-		horz.lightlevel = gl_ClampLight(sector->GetFloorLight());
+		horz.lightlevel = hw_ClampLight(sector->GetFloorLight());
 		horz.colormap = sector->Colormap;
 		horz.specialcolor = 0xffffffff;
 		if (portal->mType == PORTS_PLANE)

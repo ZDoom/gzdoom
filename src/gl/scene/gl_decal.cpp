@@ -339,7 +339,7 @@ void FDrawInfo::DrawDecal(GLWall *wall, DBaseDecal *decal)
 
 			if (low1 < dv[1].z || low2 < dv[2].z)
 			{
-				int thisll = lightlist[k].caster != NULL ? gl_ClampLight(*lightlist[k].p_lightlevel) : wall->lightlevel;
+				int thisll = lightlist[k].caster != NULL ? hw_ClampLight(*lightlist[k].p_lightlevel) : wall->lightlevel;
 				FColormap thiscm;
 				thiscm.FadeColor = wall->Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&lightlist[k]);

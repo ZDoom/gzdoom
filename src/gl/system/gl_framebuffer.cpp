@@ -86,6 +86,8 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
 	DoSetGamma();
+	hwcaps = gl.flags;
+	if (gl.legacyMode) hwcaps |= RFL_NO_SHADERS;
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
@@ -413,6 +415,13 @@ void OpenGLFrameBuffer::TextureFilterChanged()
 	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();
 }
 
+void OpenGLFrameBuffer::ResetFixedColormap()
+{
+	if (GLRenderer != nullptr && GLRenderer->mShaderManager != nullptr)
+	{
+		GLRenderer->mShaderManager->ResetFixedColormap();
+	}
+}
 
 
 void OpenGLFrameBuffer::UpdatePalette()

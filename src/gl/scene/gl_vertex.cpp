@@ -24,7 +24,7 @@
 #include "r_defs.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
-#include "gl/scene/gl_wall.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 

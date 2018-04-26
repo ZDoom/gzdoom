@@ -179,6 +179,8 @@ struct FDrawInfo : public HWDrawInfo
 	
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
+	void AddPortal(GLWall *w, int portaltype) override;
+
     void ProcessActorsInPortal(FLinePortalSpan *glport) override;
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 
@@ -197,6 +199,15 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, bool ceiling);
 	void FloodUpperGap(seg_t * seg) override;
 	void FloodLowerGap(seg_t * seg) override;
+
+	// Wall drawer
+	void RenderWall(GLWall *wall, int textured);
+	void RenderFogBoundary(GLWall *wall);
+	void RenderMirrorSurface(GLWall *wall);
+	void RenderTranslucentWall(GLWall *wall);
+	void RenderTexturedWall(GLWall *wall, int rflags);
+	void DrawWall(GLWall *wall, int pass);
+
 	
 	// These two may be moved to the API independent part of the renderer later.
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;

@@ -717,7 +717,7 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 		{
 			GLWall * w= walls[drawitems[i].index];
 			RenderWall.Clock();
-			w->Draw(pass);
+			gl_drawinfo->DrawWall(w, pass);
 			RenderWall.Unclock();
 		}
 		break;
@@ -845,9 +845,9 @@ void GLDrawList::Draw(int pass, bool trans)
 void GLDrawList::DrawWalls(int pass)
 {
 	RenderWall.Clock();
-	for(unsigned i=0;i<drawitems.Size();i++)
+	for(auto &item : drawitems)
 	{
-		walls[drawitems[i].index]->Draw(pass);
+		gl_drawinfo->DrawWall(walls[item.index], pass);
 	}
 	RenderWall.Unclock();
 }
@@ -1305,7 +1305,7 @@ void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
 	for(unsigned int j=0;j<lowersegs.Size();j++)
 	{
 		seg_t * seg=lowersegs[j];
-		GLWall wall(mDrawer);
+		GLWall wall;
 		wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
 		rendered_lines++;
 	}

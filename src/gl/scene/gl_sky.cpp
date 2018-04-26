@@ -26,11 +26,15 @@
 #include "r_utility.h"
 #include "doomdata.h"
 #include "g_levellocals.h"
-
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
+#include "p_lnspec.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/scene/hw_portal.h"
+#include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/textures/hw_material.h"
+
+#include "gl/renderer/gl_renderer.h"
+#include "gl/scene/gl_portal.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
 

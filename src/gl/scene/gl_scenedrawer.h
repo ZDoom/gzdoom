@@ -100,7 +100,7 @@ public:
 	bool CheckFog(sector_t *frontsector, sector_t *backsector)
 	{
 		if (FixedColormap != CM_DEFAULT) return false;
-		return gl_CheckFog(frontsector, backsector);
+		return hw_CheckFog(frontsector, backsector);
 	}
 
 	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)

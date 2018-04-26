@@ -34,6 +34,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "p_lnspec.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_interface.h"
@@ -543,7 +544,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 
 	// FF_FOG requires an inverted logic where to get the light from
 	lightlist_t *light = P_GetPlaneLight(sector, plane.plane, underside);
-	lightlevel = gl_ClampLight(*light->p_lightlevel);
+	lightlevel = hw_ClampLight(*light->p_lightlevel);
 	
 	if (rover->flags & FF_FOG)
 	{
@@ -609,7 +610,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 		srf |= SSRF_RENDERFLOOR;
 
-		lightlevel = gl_ClampLight(frontsector->GetFloorLight());
+		lightlevel = hw_ClampLight(frontsector->GetFloorLight());
 		Colormap = frontsector->Colormap;
 		FlatColor = frontsector->SpecialColors[sector_t::floor];
 		port = frontsector->ValidatePortal(sector_t::floor);
@@ -646,7 +647,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || light->lightsource == NULL)
 					&& (light->p_lightlevel != &frontsector->lightlevel))
 				{
-					lightlevel = gl_ClampLight(*light->p_lightlevel);
+					lightlevel = hw_ClampLight(*light->p_lightlevel);
 				}
 
 				Colormap.CopyFrom3DLight(light);
@@ -669,7 +670,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 		srf |= SSRF_RENDERCEILING;
 
-		lightlevel = gl_ClampLight(frontsector->GetCeilingLight());
+		lightlevel = hw_ClampLight(frontsector->GetCeilingLight());
 		Colormap = frontsector->Colormap;
 		FlatColor = frontsector->SpecialColors[sector_t::ceiling];
 		port = frontsector->ValidatePortal(sector_t::ceiling);
@@ -707,7 +708,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 				if ((!(sector->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING))
 					&& (light->p_lightlevel != &frontsector->lightlevel))
 				{
-					lightlevel = gl_ClampLight(*light->p_lightlevel);
+					lightlevel = hw_ClampLight(*light->p_lightlevel);
 				}
 				Colormap.CopyFrom3DLight(light);
 			}
@@ -801,7 +802,7 @@ void GLFlat::ProcessSector(sector_t * frontsector)
 
 							if (rover->flags&FF_FIX)
 							{
-								lightlevel = gl_ClampLight(rover->model->lightlevel);
+								lightlevel = hw_ClampLight(rover->model->lightlevel);
 								Colormap = rover->GetColormap();
 							}
 

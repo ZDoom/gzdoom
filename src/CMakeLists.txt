@@ -1058,6 +1058,7 @@ set (PCH_SOURCES
 	hwrenderer/textures/hw_precache.cpp
 	hwrenderer/utility/hw_clock.cpp
 	hwrenderer/utility/hw_cvars.cpp
+	hwrenderer/utility/hw_lighting.cpp
 	
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp

@@ -31,61 +31,14 @@
 #include "g_levellocals.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/textures/hw_material.h"
-
-#include "gl/renderer/gl_lightdata.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/system/gl_interface.h"
-
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
-
 #include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/utility/hw_lighting.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/scene/hw_portal.h"
 
 
-void FDrawInfo::AddWall(GLWall *wall)
-{
-	bool translucent = !!(wall->flags & GLWall::GLWF_TRANSLUCENT);
-	int list;
-
-	if (translucent) // translucent walls
-	{
-		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
-		wall->MakeVertices(this, true);
-		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
-		*newwall = *wall;
-	}
-	else
-	{
-		if (gl.legacyMode)
-		{
-			if (PutWallCompat(wall, GLWall::passflag[wall->type])) return;
-		}
-
-		bool masked;
-
-		masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
-
-		if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S))
-		{
-			list = GLDL_MASKEDWALLSOFS;
-		}
-		else
-		{
-			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
-		}
-		wall->MakeVertices(this, false);
-		auto newwall = drawlists[list].NewWall();
-		*newwall = *wall;
-	}
-}
-
-void FDrawInfo::AddMirrorSurface(GLWall *w)
-{
-    w->type=RENDERWALL_MIRRORSURFACE;
-    auto newwall = drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
-    *newwall = *w;
-
-}
 
 
 const char GLWall::passflag[] = {
@@ -131,80 +84,9 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 
 void GLWall::PutPortal(HWDrawInfo *di, int ptype)
 {
-	GLPortal * portal;
-
-	MakeVertices(di, false);
-	switch (ptype)
-	{
-	// portals don't go into the draw list.
-	// Instead they are added to the portal manager
-	case PORTALTYPE_HORIZON:
-		horizon=UniqueHorizons.Get(horizon);
-		portal=GLPortal::FindPortal(horizon);
-		if (!portal) portal=new GLHorizonPortal(horizon);
-		portal->AddLine(this);
-		break;
-
-	case PORTALTYPE_SKYBOX:
-		portal = GLPortal::FindPortal(secportal);
-		if (!portal)
-		{
-			// either a regular skybox or an Eternity-style horizon
-			if (secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(secportal);
-			else portal = new GLSkyboxPortal(secportal);
-		}
-		portal->AddLine(this);
-		break;
-
-	case PORTALTYPE_SECTORSTACK:
-		portal = this->portal->GetRenderState();
-		portal->AddLine(this);
-		break;
-
-	case PORTALTYPE_PLANEMIRROR:
-		if (GLPortal::PlaneMirrorMode * planemirror->fC() <=0)
-		{
-			//@sync-portal
-			planemirror=UniquePlaneMirrors.Get(planemirror);
-			portal=GLPortal::FindPortal(planemirror);
-			if (!portal) portal=new GLPlaneMirrorPortal(planemirror);
-			portal->AddLine(this);
-		}
-		break;
-
-	case PORTALTYPE_MIRROR:
-		portal=GLPortal::FindPortal(seg->linedef);
-		if (!portal) portal=new GLMirrorPortal(seg->linedef);
-		portal->AddLine(this);
-		if (gl_mirror_envmap) 
-		{
-			// draw a reflective layer over the mirror
-            di->AddMirrorSurface(this);
-		}
-		break;
-
-	case PORTALTYPE_LINETOLINE:
-		portal=GLPortal::FindPortal(lineportal);
-		if (!portal)
-		{
-			line_t *otherside = lineportal->lines[0]->mDestination;
-			if (otherside != NULL && otherside->portalindex < level.linePortals.Size())
-			{
-				di->ProcessActorsInPortal(otherside->getPortal()->mGroup);
-			}
-			portal = new GLLineToLinePortal(lineportal);
-		}
-		portal->AddLine(this);
-		break;
-
-	case PORTALTYPE_SKY:
-		portal=GLPortal::FindPortal(sky);
-		if (!portal) portal=new GLSkyPortal(sky);
-		portal->AddLine(this);
-		break;
-	}
-	vertcount = 0;
+	di->AddPortal(this, ptype);
 }
+
 //==========================================================================
 //
 //	Sets 3D-floor lighting info
@@ -216,7 +98,7 @@ void GLWall::Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent
 	// only modify the light level if it doesn't originate from the seg's frontsector. This is to account for light transferring effects
 	if (lightlist->p_lightlevel != &seg->sidedef->sector->lightlevel)
 	{
-		lightlevel = gl_ClampLight(*lightlist->p_lightlevel);
+		lightlevel = hw_ClampLight(*lightlist->p_lightlevel);
 	}
 	// relative light won't get changed here. It is constant across the entire wall.
 
@@ -367,7 +249,7 @@ void GLWall::SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent)
 				(maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
 				(maplightbottomleft > zbottom[0] && maplightbottomright < zbottom[1]))
 			{
-				if (!(gl.flags & RFL_NO_CLIP_PLANES))
+				if (!(screen->hwcaps & RFL_NO_CLIP_PLANES))
 				{
 					// Use hardware clipping if this cannot be done cleanly.
 					this->lightlist = &lightlist;
@@ -449,7 +331,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 		else
 		{
 			hi.plane.GetFromSector(fs, sector_t::ceiling);
-			hi.lightlevel = gl_ClampLight(fs->GetCeilingLight());
+			hi.lightlevel = hw_ClampLight(fs->GetCeilingLight());
 			hi.colormap = fs->Colormap;
 			hi.specialcolor = fs->SpecialColors[sector_t::ceiling];
 
@@ -457,7 +339,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 			{
 				light = P_GetPlaneLight(fs, &fs->ceilingplane, true);
 
-				if(!(fs->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING)) hi.lightlevel = gl_ClampLight(*light->p_lightlevel);
+				if(!(fs->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING)) hi.lightlevel = hw_ClampLight(*light->p_lightlevel);
 				hi.colormap.CopyLight(light->extra_colormap);
 			}
 
@@ -478,7 +360,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 		else
 		{
 			hi.plane.GetFromSector(fs, sector_t::floor);
-			hi.lightlevel = gl_ClampLight(fs->GetFloorLight());
+			hi.lightlevel = hw_ClampLight(fs->GetFloorLight());
 			hi.colormap = fs->Colormap;
 			hi.specialcolor = fs->SpecialColors[sector_t::floor];
 
@@ -486,7 +368,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 			{
 				light = P_GetPlaneLight(fs, &fs->floorplane, false);
 
-				if(!(fs->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING)) hi.lightlevel = gl_ClampLight(*light->p_lightlevel);
+				if(!(fs->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING)) hi.lightlevel = hw_ClampLight(*light->p_lightlevel);
 				hi.colormap.CopyLight(light->extra_colormap);
 			}
 
@@ -1124,7 +1006,7 @@ void GLWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 			Colormap.Clear();
 			Colormap.LightColor = light->extra_colormap.FadeColor;
 			// the fog plane defines the light level, not the front sector
-			lightlevel = gl_ClampLight(*light->p_lightlevel);
+			lightlevel = hw_ClampLight(*light->p_lightlevel);
 			gltexture = NULL;
 			type = RENDERWALL_FFBLOCK;
 		}
@@ -1531,9 +1413,9 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 	lightlist = NULL;
 
 	int rel = 0;
-	int orglightlevel = gl_ClampLight(frontsector->lightlevel);
+	int orglightlevel = hw_ClampLight(frontsector->lightlevel);
 	bool foggy = (!Colormap.FadeColor.isBlack() || level.flags&LEVEL_HASFADETABLE);	// fog disables fake contrast
-	lightlevel = gl_ClampLight(seg->sidedef->GetLightLevel(foggy, orglightlevel, false, &rel));
+	lightlevel = hw_ClampLight(seg->sidedef->GetLightLevel(foggy, orglightlevel, false, &rel));
 	if (orglightlevel >= 253)			// with the software renderer fake contrast won't be visible above this.
 	{
 		rellight = 0;
@@ -1664,7 +1546,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
-		bool drawfogboundary = di->FixedColormap == CM_DEFAULT && gl_CheckFog(frontsector, backsec);
+		bool drawfogboundary = di->FixedColormap == CM_DEFAULT && hw_CheckFog(frontsector, backsec);
 		FTexture *tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
 		if (tex != NULL)
 		{
@@ -1781,7 +1663,7 @@ void GLWall::ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t * frontsec
 		flags = 0;
 
 		// can't do fake contrast without a sidedef
-		lightlevel = gl_ClampLight(frontsector->lightlevel);
+		lightlevel = hw_ClampLight(frontsector->lightlevel);
 		rellight = 0;
 
 		alpha = 1.0f;

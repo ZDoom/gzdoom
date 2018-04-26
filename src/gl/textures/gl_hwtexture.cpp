@@ -29,13 +29,13 @@
 #include "gl/system/gl_system.h"
 #include "templates.h"
 #include "c_cvars.h"
+#include "r_data/colormaps.h"
 #include "hwrenderer/textures/hw_material.h"
 
 #include "gl/system/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_colormap.h"
 #include "gl/textures/gl_samplers.h"
 
 

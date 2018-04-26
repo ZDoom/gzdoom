@@ -310,7 +310,7 @@ void GLSprite::Draw(int pass)
 			if (!Colormap.FadeColor.isBlack())
 			{
 				float dist=Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, x,y);
-				int fogd = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
+				int fogd = hw_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
 
 				// this value was determined by trial and error and is scale dependent!
 				float factor = 0.05f + exp(-fogd*dist / 62500.f);
@@ -414,7 +414,7 @@ void GLSprite::Draw(int pass)
 			secplane_t *topplane = i == 0 ? &topp : &(*lightlist)[i].plane;
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
-			int thislight = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+			int thislight = (*lightlist)[i].caster != NULL ? hw_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
 			int thisll = actor == nullptr? thislight : (uint8_t)actor->Sector->CheckSpriteGlow(thislight, actor->InterpolatedPosition(r_viewpoint.TicFrac));
 
 			FColormap thiscm;
@@ -545,7 +545,7 @@ void GLSprite::SplitSprite(sector_t * frontsector, bool translucent)
 		if (lightbottom<z1)
 		{
 			copySprite=*this;
-			copySprite.lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
+			copySprite.lightlevel = hw_ClampLight(*lightlist[i].p_lightlevel);
 			copySprite.Colormap.CopyLight(lightlist[i].extra_colormap);
 
 			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
@@ -936,7 +936,7 @@ void GLSprite::Process(AActor* thing, sector_t * sector, int thruportal)
 		((thing->renderflags & RF_FULLBRIGHT) && (!gltexture || !gltexture->tex->bDisableFullbright));
 
 	lightlevel = fullbright ? 255 :
-		gl_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
+		hw_ClampLight(rendersector->GetTexture(sector_t::ceiling) == skyflatnum ?
 			rendersector->GetCeilingLight() : rendersector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(rendersector->lightlevel, 0, 255);
 
@@ -1146,7 +1146,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 	
 	if (particle->alpha==0) return;
 
-	lightlevel = gl_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
+	lightlevel = hw_ClampLight(sector->GetTexture(sector_t::ceiling) == skyflatnum ? 
 		sector->GetCeilingLight() : sector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
@@ -1167,7 +1167,7 @@ void GLSprite::ProcessParticle (particle_t *particle, sector_t *sector)//, int s
 
 			if (lightbottom < particle->Pos.Z)
 			{
-				lightlevel = gl_ClampLight(*lightlist[i].p_lightlevel);
+				lightlevel = hw_ClampLight(*lightlist[i].p_lightlevel);
 				Colormap.CopyLight(lightlist[i].extra_colormap);
 				break;
 			}

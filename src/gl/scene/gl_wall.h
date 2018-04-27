@@ -11,7 +11,9 @@
 #include "r_data/colormaps.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 
 struct GLHorizonInfo;
 struct F3DFloor;

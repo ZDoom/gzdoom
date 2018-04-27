@@ -34,7 +34,7 @@ public:
 	PalEntry *GetPalette () override;
 	bool SetFlash(PalEntry rgb, int amount) override;
 	void GetFlash(PalEntry &rgb, int &amount) override;
-	bool Begin2D(bool copy3d) override;
+	void Begin2D(bool copy3d) override;
 	void GameRestart() override;
 	void InitForLevel() override;
 	void SetClearColor(int color) override;

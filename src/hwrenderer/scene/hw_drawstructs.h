@@ -9,7 +9,9 @@
 #include "textures/textures.h"
 #include "r_data/colormaps.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 
 struct GLHorizonInfo;
 struct GLSkyInfo;

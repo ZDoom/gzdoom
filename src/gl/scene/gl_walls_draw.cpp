@@ -153,7 +153,7 @@ bool GLWall::SetupLights(FDynLightData &lightdata)
 
 void FDrawInfo::RenderWall(GLWall *wall, int textured)
 {
-	assert(vertcount > 0);
+	assert(wall->vertcount > 0);
 	gl_RenderState.Apply();
 	gl_RenderState.ApplyLightIndex(wall->dynlightindex);
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, wall->vertindex, wall->vertcount);

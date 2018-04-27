@@ -327,6 +327,7 @@ protected:
 
 public:
 	int hwcaps = 0;
+	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
 
 public:
 	DFrameBuffer (int width, int height, bool bgra);

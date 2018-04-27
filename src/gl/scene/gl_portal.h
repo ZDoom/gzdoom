@@ -64,7 +64,6 @@ public:
 	static GLSceneDrawer *drawer;
 	static int PlaneMirrorMode;
 	static int inupperstack;
-	static int	instack[2];
 	static bool	inskybox;
 
 private:

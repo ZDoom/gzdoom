@@ -34,6 +34,7 @@ extern FTextureID	skyflatnum;
 extern fixed_t		sky1cyl,		sky2cyl;
 extern FTextureID	sky1texture,	sky2texture;
 extern double		sky1pos,		sky2pos;
+extern float		hw_sky1pos, hw_sky2pos;
 extern double	skytexturemid;
 extern float	skyiscale;
 extern double	skyscale;

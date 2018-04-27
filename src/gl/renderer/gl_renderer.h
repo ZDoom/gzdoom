@@ -155,8 +155,6 @@ public:
 	FTextureID glPart;
 	FTextureID mirrorTexture;
 	
-	float mSky1Pos, mSky2Pos;
-
 	FRotator mAngles;
 	FVector2 mViewVector;
 

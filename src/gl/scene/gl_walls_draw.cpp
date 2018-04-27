@@ -463,6 +463,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		break;
 
 	case PORTALTYPE_SKY:
+		wall->sky = UniqueSkies.Get(wall->sky);
 		portal = GLPortal::FindPortal(wall->sky);
 		if (!portal) portal = new GLSkyPortal(wall->sky);
 		portal->AddLine(wall);

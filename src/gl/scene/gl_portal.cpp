@@ -70,7 +70,6 @@ int GLPortal::renderdepth;
 int GLPortal::PlaneMirrorMode;
 GLuint GLPortal::QueryObject;
 
-int		 GLPortal::instack[2];
 bool	 GLPortal::inskybox;
 
 UniqueList<GLSkyInfo> UniqueSkies;
@@ -442,7 +441,7 @@ void GLPortal::StartFrame()
 	if (renderdepth==0)
 	{
 		inskybox=false;
-		instack[sector_t::floor]=instack[sector_t::ceiling]=0;
+		screen->instack[sector_t::floor] = screen->instack[sector_t::ceiling] = 0;
 	}
 	renderdepth++;
 }
@@ -743,7 +742,7 @@ void GLSectorStackPortal::DrawContents()
 	GLRenderer->mViewActor = NULL;
 
 	// avoid recursions!
-	if (origin->plane != -1) instack[origin->plane]++;
+	if (origin->plane != -1) screen->instack[origin->plane]++;
 
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	SaveMapSection();
@@ -762,7 +761,7 @@ void GLSectorStackPortal::DrawContents()
 	drawer->DrawScene(DM_PORTAL);
 	RestoreMapSection();
 
-	if (origin->plane != -1) instack[origin->plane]--;
+	if (origin->plane != -1) screen->instack[origin->plane]--;
 }
 
 //-----------------------------------------------------------------------------
@@ -789,7 +788,7 @@ void GLPlaneMirrorPortal::DrawContents()
 		return;
 	}
 	// A plane mirror needs to flip the portal exclusion logic because inside the mirror, up is down and down is up.
-	std::swap(instack[sector_t::floor], instack[sector_t::ceiling]);
+	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
 
 	int old_pm = PlaneMirrorMode;
 
@@ -810,7 +809,7 @@ void GLPlaneMirrorPortal::DrawContents()
 	gl_RenderState.SetClipHeight(0.f, 0.f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode = old_pm;
-	std::swap(instack[sector_t::floor], instack[sector_t::ceiling]);
+	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
 }
 
 void GLPlaneMirrorPortal::PushState()

@@ -128,7 +128,7 @@ public:
     virtual void AddWall(GLWall *w) = 0;
 	virtual void AddPortal(GLWall *w, int portaltype) = 0;
     virtual void AddMirrorSurface(GLWall *w) = 0;
-    virtual void AddDecal(GLDecal *d) = 0;
+    virtual GLDecal *AddDecal(bool onmirror) = 0;
     virtual void ProcessActorsInPortal(FLinePortalSpan *glport) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
 

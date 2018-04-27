@@ -40,28 +40,6 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
-struct DecalVertex
-{
-	float x,y,z;
-	float u,v;
-};
-
-struct GLDecal
-{
-	unsigned int vertindex;
-	FMaterial *gltexture;
-	GLWall *wall;
-	DBaseDecal *decal;
-	DecalVertex dv[4];
-	float zcenter;
-
-	int light;
-	int rel;
-	float a;
-	FColormap colormap;
-
-};
-
 void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 {
 	line_t * line = seg->linedef;
@@ -70,11 +48,11 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 	float zpos;
 	bool flipx, flipy;
 	FTextureID decalTile;
-	GLDecal gldecal;
 	
 	
 	if (decal->RenderFlags & RF_INVISIBLE) return;
 	if (type == RENDERWALL_FFBLOCK && gltexture->isMasked()) return;	// No decals on 3D floors with transparent textures.
+	if (seg == nullptr) return;
 	
 	
 	decalTile = decal->PicNum;
@@ -138,8 +116,8 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 				zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 			}
 	}
-	
-	memset(&gldecal, 0, sizeof(gldecal));
+
+	GLDecal &gldecal = *di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
 	gldecal.gltexture = FMaterial::ValidateTexture(texture, true);
 	gldecal.wall = this;
 	gldecal.decal = decal;
@@ -286,7 +264,6 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 	{
 		verts.first[i].Set(dv[i].x, dv[i].z, dv[i].y, dv[i].u, dv[i].v);
 	}
-	di->AddDecal(&gldecal);
 }
 
 //==========================================================================
@@ -312,9 +289,8 @@ void GLWall::ProcessDecals(HWDrawInfo *di)
 //
 //
 //==========================================================================
-void FDrawInfo::DrawDecal(GLWall *__wall, DBaseDecal *__decal)
+void FDrawInfo::DrawDecal(GLDecal *gldecal)
 {
-	GLDecal *gldecal;
 	auto wall = gldecal->wall;
 	auto decal = gldecal->decal;
 	auto tex = gldecal->gltexture;
@@ -401,29 +377,42 @@ void FDrawInfo::DrawDecal(GLWall *__wall, DBaseDecal *__decal)
 //
 //
 //==========================================================================
-void FDrawInfo::DoDrawDecals(GLWall *wall)
+void FDrawInfo::DrawDecals()
 {
-	if (wall->seg->sidedef && wall->seg->sidedef->AttachedDecals)
+	GLWall *wall = nullptr;
+	for (auto gldecal : decals[0])
 	{
-		if (wall->lightlist != nullptr)
+		if (gldecal->wall != wall)
 		{
-			gl_RenderState.EnableSplit(true);
+			wall = gldecal->wall;
+			if (wall->lightlist != nullptr)
+			{
+				gl_RenderState.EnableSplit(true);
+			}
+			else
+			{
+				gl_RenderState.EnableSplit(false);
+				mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+			}
 		}
-		else
-		{
-			mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
-		}
+		DrawDecal(gldecal);
+	}
+	if (wall && wall->lightlist != nullptr) gl_RenderState.EnableSplit(false);
+}
 
-		DBaseDecal *decal = wall->seg->sidedef->AttachedDecals;
-		while (decal)
+//==========================================================================
+//
+// This list will never get long, so this code should be ok.
+//
+//==========================================================================
+void FDrawInfo::DrawDecalsForMirror(GLWall *wall)
+{
+	mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+	for (auto gldecal : decals[1])
+	{
+		if (gldecal->wall == wall)
 		{
-			DrawDecal(wall, decal);
-			decal = decal->WallNext;
-		}
-
-		if (wall->lightlist != nullptr)
-		{
-			gl_RenderState.EnableSplit(false);
+			DrawDecal(gldecal);
 		}
 	}
 }

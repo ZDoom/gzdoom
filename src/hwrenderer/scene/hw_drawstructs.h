@@ -281,6 +281,32 @@ public:
 
 };
 
+
+
+
+struct DecalVertex
+{
+	float x, y, z;
+	float u, v;
+};
+
+struct GLDecal
+{
+	FMaterial *gltexture;
+	GLWall *wall;
+	DBaseDecal *decal;
+	DecalVertex dv[4];
+	float zcenter;
+	unsigned int vertindex;
+
+	int light;
+	int rel;
+	float a;
+	FColormap colormap;
+
+};
+
+
 inline float Dist2(float x1,float y1,float x2,float y2)
 {
 	return sqrtf((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));

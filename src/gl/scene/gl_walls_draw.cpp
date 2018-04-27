@@ -139,13 +139,14 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	glDepthFunc(GL_LESS);
 
 	// This is drawn in the translucent pass which is done after the decal pass
-	// As a result the decals have to be drawn here.
+	// As a result the decals have to be drawn here, right after the wall they are on,
+	// because the depth buffer won't get set by translucent items.
 	if (wall->seg->sidedef->AttachedDecals)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 		glDepthMask(false);
-		gl_drawinfo->DoDrawDecals(wall);
+		gl_drawinfo->DrawDecalsForMirror(wall);
 		glDepthMask(true);
 		glPolygonOffset(0.0f, 0.0f);
 		glDisable(GL_POLYGON_OFFSET_FILL);

@@ -158,7 +158,6 @@ public:
 	void Draw(int pass, bool trans = false);
 	void DrawWalls(int pass);
 	void DrawFlats(int pass);
-	void DrawDecals();
 	
 	GLDrawList * next;
 } ;
@@ -172,6 +171,7 @@ struct FDrawInfo : public HWDrawInfo
 	
 	FDrawInfo * next;
 	GLDrawList drawlists[GLDL_TYPES];
+	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	GLDrawList *dldrawlists = NULL;	// only gets allocated when needed.
 	
 	FDrawInfo();
@@ -179,6 +179,7 @@ struct FDrawInfo : public HWDrawInfo
 	
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
+	GLDecal *AddDecal(bool onmirror) override;
 	void AddPortal(GLWall *w, int portaltype) override;
 
     void ProcessActorsInPortal(FLinePortalSpan *glport) override;
@@ -189,10 +190,10 @@ struct FDrawInfo : public HWDrawInfo
 	void RenderFogBoundaryCompat(GLWall *wall);
 	void RenderLightsCompat(GLWall *wall, int pass);
 
-	void DrawDecal(GLWall *wall, DBaseDecal *decal);
-	void DoDrawDecals(GLWall *wall);
+	void DrawDecal(GLDecal *gldecal);
+	void DrawDecals();
+	void DrawDecalsForMirror(GLWall *wall);
 
-	
 	void StartScene();
 	void SetupFloodStencil(wallseg * ws);
 	void ClearFloodStencil(wallseg * ws);

@@ -403,6 +403,18 @@ void E_WorldThingDestroyed(AActor* actor)
 		handler->WorldThingDestroyed(actor);
 }
 
+void E_WorldThingPrePickedUp(AActor* actor, AActor* toucher, bool* shouldpickup)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingPrePickedUp(actor, toucher, shouldpickup);
+}
+
+void E_WorldThingPickedUp(AActor* actor, AActor* toucher)
+{
+	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
+		handler->WorldThingPickedUp(actor, toucher);
+}
+
 void E_WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate)
 {
 	for (DStaticEventHandler* handler = E_FirstEventHandler; handler; handler = handler->next)
@@ -546,6 +558,8 @@ DEFINE_FIELD_X(WorldEvent, FWorldEvent, DamageAngle);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivatedLine);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ActivationType);
 DEFINE_FIELD_X(WorldEvent, FWorldEvent, ShouldActivate);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, Toucher);
+DEFINE_FIELD_X(WorldEvent, FWorldEvent, ShouldPickup);
 
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, PlayerNumber);
 DEFINE_FIELD_X(PlayerEvent, FPlayerEvent, IsReturn);
@@ -632,6 +646,8 @@ DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDied)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingRevived)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDamaged)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingDestroyed)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingPrePickedUp)
+DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldThingPickedUp)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLinePreActivated)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLineActivated)
 DEFINE_EMPTY_HANDLER(DStaticEventHandler, WorldLightning)
@@ -790,6 +806,36 @@ void DStaticEventHandler::WorldThingDestroyed(AActor* actor)
 			return;
 		FWorldEvent e = E_SetupWorldEvent();
 		e.Thing = actor;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+	}
+}
+
+void DStaticEventHandler::WorldThingPrePickedUp(AActor* actor, AActor* toucher, bool* shouldpickup)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingPrePickedUp)
+	{
+		if (func == DStaticEventHandler_WorldThingPrePickedUp_VMPtr)
+			return;
+		FWorldEvent e = E_SetupWorldEvent();
+		e.Thing = actor;
+		e.Toucher = toucher;
+		e.ShouldPickup = *shouldpickup;
+		VMValue params[2] = { (DStaticEventHandler*)this, &e };
+		VMCall(func, params, 2, nullptr, 0);
+		*shouldpickup = e.ShouldPickup;
+	}
+}
+
+void DStaticEventHandler::WorldThingPickedUp(AActor* actor, AActor* toucher)
+{
+	IFVIRTUAL(DStaticEventHandler, WorldThingPickedUp)
+	{
+		if (func == DStaticEventHandler_WorldThingPickedUp_VMPtr)
+			return;
+		FWorldEvent e = E_SetupWorldEvent();
+		e.Thing = actor;
+		e.Toucher = toucher;
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 	}

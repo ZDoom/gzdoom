@@ -1,7 +1,7 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2003-2016 Christoph Oelckers
+// Copyright(C) 2003-2018 Christoph Oelckers
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -21,24 +21,20 @@
 //
 /*
 ** gl_decal.cpp
-** OpenGL decal rendering code
+** OpenGL decal processing code
 **
 */
 
 #include "doomdata.h"
-#include "gl/system/gl_system.h"
 #include "a_sharedglobal.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
-
+#include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/renderer/gl_renderstate.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
-#include "gl/renderer/gl_quaddrawer.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/utility/hw_lighting.h"
+#include "hwrenderer/data/flatvertices.h"
 
 void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 {
@@ -257,7 +253,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 
 	gldecal.zcenter = zpos - decalheight * 0.5f;
 	
-	auto verts = gl_drawinfo->AllocVertices(4);
+	auto verts = di->AllocVertices(4);
 	gldecal.vertindex = verts.second;
 	
 	for (i = 0; i < 4; i++)

@@ -31,6 +31,7 @@
 #include "gl/system/gl_interface.h"
 #include "r_data/models/models.h"
 #include "hwrenderer/data/flatvertices.h"
+#include "hwrenderer/scene/hw_skydome.h"
 
 struct vertex_t;
 struct secplane_t;
@@ -196,73 +197,15 @@ public:
 };
 
 
-struct FSkyVertex
+class FSkyVertexBuffer : public FVertexBuffer, public FSkyDomeCreator
 {
-	float x, y, z, u, v;
-	PalEntry color;
-
-	void Set(float xx, float zz, float yy, float uu=0, float vv=0, PalEntry col=0xffffffff)
-	{
-		x = xx;
-		z = zz;
-		y = yy;
-		u = uu;
-		v = vv;
-		color = col;
-	}
-
-	void SetXYZ(float xx, float yy, float zz, float uu = 0, float vv = 0, PalEntry col = 0xffffffff)
-	{
-		x = xx;
-		y = yy;
-		z = zz;
-		u = uu;
-		v = vv;
-		color = col;
-	}
-
-};
-
-class FSkyVertexBuffer : public FVertexBuffer
-{
-public:
-	static const int SKYHEMI_UPPER = 1;
-	static const int SKYHEMI_LOWER = 2;
-
-	enum
-	{
-		SKYMODE_MAINLAYER = 0,
-		SKYMODE_SECONDLAYER = 1,
-		SKYMODE_FOGLAYER = 2
-	};
-
-private:
-	TArray<FSkyVertex> mVertices;
-	TArray<unsigned int> mPrimStart;
-
-	int mRows, mColumns;
-
-	// indices for sky cubemap faces
-	int mFaceStart[7];
-	int mSideStart;
-
-	void SkyVertex(int r, int c, bool yflip);
-	void CreateSkyHemisphere(int hemi);
-	void CreateDome();
 	void RenderRow(int prim, int row);
 
 public:
 
 	FSkyVertexBuffer();
-	virtual ~FSkyVertexBuffer();
 	void RenderDome(FMaterial *tex, int mode);
 	void BindVBO();
-	int FaceStart(int i)
-	{
-		if (i >= 0 && i < 7) return mFaceStart[i];
-		else return mSideStart;
-	}
-
 };
 
 class FModelVertexBuffer : public FVertexBuffer, public IModelVertexBuffer

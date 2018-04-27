@@ -11,7 +11,9 @@
 #include "r_data/colormaps.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 
 struct GLHorizonInfo;
 struct F3DFloor;
@@ -84,7 +86,7 @@ public:
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(sector_t * frontsector);
 	void Draw(int pass, bool trans);
-
+	
 	GLFlat(const GLFlat &other)
 	{
 		memcpy(this, &other, sizeof(GLFlat));

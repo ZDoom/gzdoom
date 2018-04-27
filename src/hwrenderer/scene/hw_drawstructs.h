@@ -9,7 +9,9 @@
 #include "textures/textures.h"
 #include "r_data/colormaps.h"
 
+#ifdef _MSC_VER
 #pragma warning(disable:4244)
+#endif
 
 struct GLHorizonInfo;
 struct GLSkyInfo;
@@ -234,6 +236,8 @@ public:
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
+    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal);
+    void ProcessDecals(HWDrawInfo *di);
 
 	void CreateVertices(FFlatVertex *&ptr, bool nosplit);
 	void SplitLeftEdge (FFlatVertex *&ptr);

@@ -504,7 +504,7 @@ void main()
 		
 		case 4:	// simple 2D (reuses a uniform for the special colormap for the color overlay.)
 		{
-			frag = frag * vColor;
+			frag = frag * ProcessLight(vColor);
 			frag.rgb = frag.rgb + uFixedColormapStart.rgb;
 			break;
 		}

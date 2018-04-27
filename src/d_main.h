@@ -101,6 +101,7 @@ struct FIWADInfo
 	FString Required;		// Requires another IWAD
 	uint32_t FgColor = 0;	// Foreground color for title banner
 	uint32_t BkColor = 0xc0c0c0;		// Background color for title banner
+	FString Song;
 	EGameType gametype = GAME_Doom;		// which game are we playing?
 	int StartupType = FStartupInfo::DefaultStartup;		// alternate startup type
 	FString MapInfo;		// Base mapinfo to load

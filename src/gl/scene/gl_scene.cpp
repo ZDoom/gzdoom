@@ -375,15 +375,7 @@ void GLSceneDrawer::RenderScene(int recursion)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
-
-	// this is the only geometry type on which decals can possibly appear
-	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawDecals();
-	if (gl.legacyMode)
-	{
-		// also process the render lists with walls and dynamic lights
-        gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawDecals();
-        gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawDecals();
-	}
+	gl_drawinfo->DrawDecals();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -434,9 +426,10 @@ void GLSceneDrawer::RenderTranslucent()
 	gl_drawinfo->drawlists[GLDL_TRANSLUCENT].DrawSorted();
 	gl_RenderState.EnableBrightmap(false);
 
-	glDepthMask(true);
 
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
+	glDepthMask(true);
+
 	RenderAll.Unclock();
 }
 

@@ -29,6 +29,7 @@
 #include "p_maputl.h"
 #include "doomdata.h"
 #include "g_levellocals.h"
+#include "actorinlines.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/utility/hw_cvars.h"
@@ -39,6 +40,105 @@
 #include "hwrenderer/scene/hw_portal.h"
 
 
+//==========================================================================
+//
+// Collect lights for shader
+//
+//==========================================================================
+
+bool GLWall::SetupLights(FDynLightData &lightdata)
+{
+	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return false;	// no lights on additively blended surfaces.
+
+	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
+	switch (type)
+	{
+	case RENDERWALL_FOGBOUNDARY:
+	case RENDERWALL_MIRRORSURFACE:
+	case RENDERWALL_COLOR:
+		return false;
+	}
+
+	float vtx[]={glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2};
+	Plane p;
+
+	lightdata.Clear();
+
+	auto normal = glseg.Normal();
+	p.Set(normal, -normal.X * glseg.x1 - normal.Z * glseg.y1);
+
+	FLightNode *node;
+	if (seg->sidedef == NULL)
+	{
+		node = NULL;
+	}
+	else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
+	{
+		node = seg->sidedef->lighthead;
+	}
+	else if (sub)
+	{
+		// Polobject segs cannot be checked per sidedef so use the subsector instead.
+		node = sub->lighthead;
+	}
+	else node = NULL;
+
+	// Iterate through all dynamic lights which touch this wall and render them
+	while (node)
+	{
+		if (!(node->lightsource->flags2&MF2_DORMANT))
+		{
+			iter_dlight++;
+
+			DVector3 posrel = node->lightsource->PosRelative(seg->frontsector);
+			float x = posrel.X;
+			float y = posrel.Y;
+			float z = posrel.Z;
+			float dist = fabsf(p.DistToPoint(x, z, y));
+			float radius = node->lightsource->GetRadius();
+			float scale = 1.0f / ((2.f * radius) - dist);
+			FVector3 fn, pos;
+
+			if (radius > 0.f && dist < radius)
+			{
+				FVector3 nearPt, up, right;
+
+				pos = { x, z, y };
+				fn = p.Normal();
+
+				fn.GetRightUp(right, up);
+
+				FVector3 tmpVec = fn * dist;
+				nearPt = pos + tmpVec;
+
+				FVector3 t1;
+				int outcnt[4]={0,0,0,0};
+				texcoord tcs[4];
+
+				// do a quick check whether the light touches this polygon
+				for(int i=0;i<4;i++)
+				{
+					t1 = FVector3(&vtx[i*3]);
+					FVector3 nearToVert = t1 - nearPt;
+					tcs[i].u = ((nearToVert | right) * scale) + 0.5f;
+					tcs[i].v = ((nearToVert | up) * scale) + 0.5f;
+
+					if (tcs[i].u<0) outcnt[0]++;
+					if (tcs[i].u>1) outcnt[1]++;
+					if (tcs[i].v<0) outcnt[2]++;
+					if (tcs[i].v>1) outcnt[3]++;
+
+				}
+				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
+				{
+					lightdata.GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true);
+				}
+			}
+		}
+		node = node->nextLight;
+	}
+	return true;
+}
 
 
 const char GLWall::passflag[] = {

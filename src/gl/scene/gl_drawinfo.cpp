@@ -869,19 +869,6 @@ void GLDrawList::DrawFlats(int pass)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-void GLDrawList::DrawDecals()
-{
-	for(unsigned i=0;i<drawitems.Size();i++)
-	{
-		gl_drawinfo->DoDrawDecals(walls[drawitems[i].index]);
-	}
-}
-
-//==========================================================================
-//
 // Sorting the drawitems first by texture and then by light level.
 //
 //==========================================================================
@@ -951,7 +938,6 @@ GLSprite *GLDrawList::NewSprite()
 	drawitems.Push(GLDrawItem(GLDIT_SPRITE, sprites.Push(sprite)));
 	return sprite;
 }
-
 
 //==========================================================================
 //
@@ -1033,6 +1019,8 @@ void FDrawInfo::StartScene()
 	{
 		for (int i = 0; i < GLLDL_TYPES; i++) dldrawlists[i].Reset();
 	}
+	decals[0].Clear();
+	decals[1].Clear();
 }
 
 //==========================================================================
@@ -1323,3 +1311,11 @@ std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int cou
 	auto p = GLRenderer->mVBO->Alloc(count, &index);
 	return std::make_pair(p, index);
 }
+
+GLDecal *FDrawInfo::AddDecal(bool onmirror)
+{
+	auto decal = (GLDecal*)RenderDataAllocator.Alloc(sizeof(GLDecal));
+	decals[onmirror ? 1 : 0].Push(decal);
+	return decal;
+}
+

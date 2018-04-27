@@ -481,10 +481,9 @@ void OpenGLFrameBuffer::SetClearColor(int color)
 //
 //
 //==========================================================================
-bool OpenGLFrameBuffer::Begin2D(bool copy3d)
+void OpenGLFrameBuffer::Begin2D(bool copy3d)
 {
 	Super::Begin2D(copy3d);
-	ClearClipRect();
 	gl_RenderState.mViewMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.ortho(0, GetWidth(), GetHeight(), 0, -1.0f, 1.0f);
 	gl_RenderState.ApplyMatrices();
@@ -503,7 +502,6 @@ bool OpenGLFrameBuffer::Begin2D(bool copy3d)
 
 	if (GLRenderer != NULL)
 			GLRenderer->Begin2D();
-	return true;
 }
 
 //===========================================================================

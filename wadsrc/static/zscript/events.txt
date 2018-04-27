@@ -29,6 +29,8 @@ struct WorldEvent native play version("2.4")
     native readonly Line ActivatedLine;
 	native readonly int ActivationType;
     native bool ShouldActivate;
+	native readonly Actor Toucher;
+	native readonly bool ShouldPickup;
 }
 
 struct PlayerEvent native play version("2.4")
@@ -304,6 +306,8 @@ class StaticEventHandler : Object native play version("2.4")
     virtual native void WorldThingRevived(WorldEvent e);
     virtual native void WorldThingDamaged(WorldEvent e);
     virtual native void WorldThingDestroyed(WorldEvent e);
+	virtual native void WorldThingPrePickedUp(WorldEvent e);
+	virtual native void WorldThingPickedUp(WorldEvent e);
     virtual native void WorldLinePreActivated(WorldEvent e);
     virtual native void WorldLineActivated(WorldEvent e);
     virtual native void WorldLightning(WorldEvent e); // for the sake of completeness.

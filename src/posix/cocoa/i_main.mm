@@ -145,9 +145,6 @@ static void I_DetectOS()
 	
 	if (10 == majorVersion) switch (minorVersion)
 	{
-		case  4: name = "Mac OS X Tiger";        break;
-		case  5: name = "Mac OS X Leopard";      break;
-		case  6: name = "Mac OS X Snow Leopard"; break;
 		case  7: name = "Mac OS X Lion";         break;
 		case  8: name = "OS X Mountain Lion";    break;
 		case  9: name = "OS X Mavericks";        break;

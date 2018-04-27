@@ -470,3 +470,137 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 	}
 	wall->vertcount = 0;
 }
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FDrawInfo::DrawDecal(GLDecal *gldecal)
+{
+	auto wall = gldecal->wall;
+	auto decal = gldecal->decal;
+	auto tex = gldecal->gltexture;
+	auto &seg = wall->seg;
+	
+	// calculate dynamic light effect.
+	if (gl_lights && GLRenderer->mLightCount && !mDrawer->FixedColormap && gl_light_sprites)
+	{
+		// Note: This should be replaced with proper shader based lighting.
+		double x, y;
+		decal->GetXY(seg->sidedef, x, y);
+		gl_SetDynSpriteLight(nullptr, x, y, gldecal->zcenter, wall->sub);
+	}
+
+	// alpha color only has an effect when using an alpha texture.
+	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
+	{
+		gl_RenderState.SetObjectColor(decal->AlphaColor | 0xff000000);
+	}
+
+	gl_SetRenderStyle(decal->RenderStyle, false, false);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
+
+
+	// If srcalpha is one it looks better with a higher alpha threshold
+	if (decal->RenderStyle.SrcAlpha == STYLEALPHA_One) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+	else gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
+
+
+	mDrawer->SetColor(gldecal->light, gldecal->rel, gldecal->colormap, gldecal->a);
+	// for additively drawn decals we must temporarily set the fog color to black.
+	PalEntry fc = gl_RenderState.GetFogColor();
+	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
+	{
+		gl_RenderState.SetFog(0, -1);
+	}
+
+	gl_RenderState.SetNormal(wall->glseg.Normal());
+
+	if (wall->lightlist == nullptr)
+	{
+		gl_RenderState.Apply();
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);
+	}
+	else
+	{
+		auto &lightlist = *wall->lightlist;
+
+		for (unsigned k = 0; k < lightlist.Size(); k++)
+		{
+			secplane_t &lowplane = k == lightlist.Size() - 1 ? wall->bottomplane : lightlist[k + 1].plane;
+
+			DecalVertex *dv = gldecal->dv;
+			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
+			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
+
+			if (low1 < dv[1].z || low2 < dv[2].z)
+			{
+				int thisll = lightlist[k].caster != NULL ? hw_ClampLight(*lightlist[k].p_lightlevel) : wall->lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = wall->Colormap.FadeColor;
+				thiscm.CopyFrom3DLight(&lightlist[k]);
+				mDrawer->SetColor(thisll, gldecal->rel, thiscm, gldecal->a);
+				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
+				mDrawer->SetFog(thisll, gldecal->rel, &thiscm, wall->RenderStyle == STYLE_Add);
+				gl_RenderState.SetSplitPlanes(lightlist[k].plane, lowplane);
+
+				gl_RenderState.Apply();
+				GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);
+			}
+			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
+		}
+	}
+
+	rendered_decals++;
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetObjectColor(0xffffffff);
+	gl_RenderState.SetFog(fc, -1);
+	gl_RenderState.SetDynLight(0, 0, 0);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FDrawInfo::DrawDecals()
+{
+	GLWall *wall = nullptr;
+	for (auto gldecal : decals[0])
+	{
+		if (gldecal->wall != wall)
+		{
+			wall = gldecal->wall;
+			if (wall->lightlist != nullptr)
+			{
+				gl_RenderState.EnableSplit(true);
+			}
+			else
+			{
+				gl_RenderState.EnableSplit(false);
+				mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+			}
+		}
+		DrawDecal(gldecal);
+	}
+	if (wall && wall->lightlist != nullptr) gl_RenderState.EnableSplit(false);
+}
+
+//==========================================================================
+//
+// This list will never get long, so this code should be ok.
+//
+//==========================================================================
+void FDrawInfo::DrawDecalsForMirror(GLWall *wall)
+{
+	mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+	for (auto gldecal : decals[1])
+	{
+		if (gldecal->wall == wall)
+		{
+			DrawDecal(gldecal);
+		}
+	}
+}
+

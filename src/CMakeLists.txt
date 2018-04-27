@@ -820,7 +820,6 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
 	gl/scene/gl_swscene.cpp
-	gl/scene/gl_sky.cpp
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
 	gl/scene/gl_spritelight.cpp
@@ -830,6 +829,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_decal.cpp
 	hwrenderer/scene/hw_clipper.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
+	hwrenderer/scene/hw_sky.cpp
 	hwrenderer/scene/hw_walls.cpp
 	hwrenderer/scene/hw_walls_vertex.cpp
 	r_data/models/models.cpp

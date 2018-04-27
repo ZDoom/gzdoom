@@ -40,6 +40,10 @@ void E_WorldThingRevived(AActor* actor);
 void E_WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
 // called before AActor::Destroy of each actor.
 void E_WorldThingDestroyed(AActor* actor);
+// 
+void E_WorldThingPrePickedUp(AActor* actor, AActor* owner, bool* shouldpickup);
+// 
+void E_WorldThingPickedUp(AActor* actor, AActor* owner);
 // called in P_ActivateLine before executing special, set shouldactivate to false to prevent activation.
 void E_WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
 // called in P_ActivateLine after successful special execution.
@@ -143,6 +147,8 @@ public:
 	void WorldThingRevived(AActor* actor);
 	void WorldThingDamaged(AActor* actor, AActor* inflictor, AActor* source, int damage, FName mod, int flags, DAngle angle);
 	void WorldThingDestroyed(AActor* actor);
+	void WorldThingPrePickedUp(AActor* actor, AActor* toucher, bool* shouldpickup);
+	void WorldThingPickedUp(AActor* actor, AActor* owner);
 	void WorldLinePreActivated(line_t* line, AActor* actor, int activationType, bool* shouldactivate);
 	void WorldLineActivated(line_t* line, AActor* actor, int activationType);
 	void WorldLightning();
@@ -205,6 +211,8 @@ struct FWorldEvent
 	line_t* ActivatedLine = nullptr;
 	int ActivationType = 0;
 	bool ShouldActivate = true;
+	AActor* Toucher = nullptr;
+	bool ShouldPickup = true;
 };
 
 struct FPlayerEvent

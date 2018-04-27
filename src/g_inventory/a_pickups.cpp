@@ -51,6 +51,7 @@
 #include "vm.h"
 #include "c_functions.h"
 #include "g_levellocals.h"
+#include "events.h"
 
 EXTERN_CVAR(Bool, sv_unlimited_pickup)
 

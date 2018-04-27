@@ -86,7 +86,7 @@ public:
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(sector_t * frontsector);
 	void Draw(int pass, bool trans);
-
+	
 	GLFlat(const GLFlat &other)
 	{
 		memcpy(this, &other, sizeof(GLFlat));

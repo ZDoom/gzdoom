@@ -461,6 +461,7 @@ void FDrawInfo::AddWall(GLWall *wall)
 		wall->MakeVertices(this, false);
 		auto newwall = drawlists[list].NewWall();
 		*newwall = *wall;
+		if (!masked) newwall->ProcessDecals(this);
 	}
 	wall->dynlightindex = -1;
 }
@@ -482,6 +483,7 @@ void FDrawInfo::AddMirrorSurface(GLWall *w)
 	tcs[GLWall::LOLFT].u = tcs[GLWall::LORGT].u = tcs[GLWall::UPLFT].u = tcs[GLWall::UPRGT].u = v.X;
 	tcs[GLWall::LOLFT].v = tcs[GLWall::LORGT].v = tcs[GLWall::UPLFT].v = tcs[GLWall::UPRGT].v = v.Z;
 	newwall->MakeVertices(this, false);
+	newwall->ProcessDecals(this);
 }
 
 //==========================================================================

@@ -2588,6 +2588,7 @@ void P_UnPredictPlayer ()
 		int inventorytics = player->inventorytics;
 
 		*player = PredictionPlayerBackup;
+		PredictionPlayerBackup = {}; // Clear the copy so its destructor doesn't try delete the psprites list
 
 		// Restore the camera instead of using the backup's copy, because spynext/prev
 		// could cause it to change during prediction.

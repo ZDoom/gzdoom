@@ -48,6 +48,7 @@
 
 bool GLWall::SetupLights(FDynLightData &lightdata)
 {
+	if (screen->hwcaps & RFL_NO_SHADERS) return false;	// useless in OpenGL 2.
 	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return false;	// no lights on additively blended surfaces.
 
 	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)

@@ -566,21 +566,21 @@ bool FDrawInfo::PutWallCompat(GLWall *wall, int passflag)
 //
 //==========================================================================
 
-bool GLFlat::PutFlatCompat(bool fog)
+bool FDrawInfo::PutFlatCompat(GLFlat *flat, bool fog)
 {
 	// are lights possible?
-	if (mDrawer->FixedColormap != CM_DEFAULT || !gl_lights || !gltexture || renderstyle != STYLE_Translucent || alpha < 1.f - FLT_EPSILON || sector->lighthead == NULL) return false;
+	if (FixedColormap != CM_DEFAULT || !gl_lights || !flat->gltexture || flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || flat->sector->lighthead == NULL) return false;
 
 	static int list_indices[2][2] =
 	{ { GLLDL_FLATS_PLAIN, GLLDL_FLATS_FOG },{ GLLDL_FLATS_MASKED, GLLDL_FLATS_FOGMASKED } };
 
-	bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
-	bool foggy = CheckFog(&Colormap, lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
+	bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
+	bool foggy = CheckFog(&flat->Colormap, flat->lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
 
 	
 	int list = list_indices[masked][foggy];
 	auto newflat = gl_drawinfo->dldrawlists[list].NewFlat();
-	*newflat = *this;
+	*newflat = *flat;
 	return true;
 }
 
@@ -645,7 +645,7 @@ void FDrawInfo::RenderFogBoundaryCompat(GLWall *wall)
 //
 //==========================================================================
 
-void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
+void FDrawInfo::DrawSubsectorLights(GLFlat *flat, subsector_t * sub, int pass)
 {
 	Plane p;
 	FVector3 nearPt, up, right, t1;
@@ -666,14 +666,14 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 
 		// we must do the side check here because gl_SetupLight needs the correct plane orientation
 		// which we don't have for Legacy-style 3D-floors
-		double planeh = plane.plane.ZatPoint(light);
-		if (((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling)))
+		double planeh = flat->plane.plane.ZatPoint(light);
+		if (((planeh<light->Z() && flat->ceiling) || (planeh>light->Z() && !flat->ceiling)))
 		{
 			node = node->nextLight;
 			continue;
 		}
 
-		p.Set(plane.plane.Normal(), plane.plane.fD());
+		p.Set(flat->plane.plane.Normal(), flat->plane.plane.fD());
 		if (!gl_SetupLight(sub->sector->PortalGroup, p, light, nearPt, up, right, scale, false, pass != GLPASS_LIGHTTEX))
 		{
 			node = node->nextLight;
@@ -686,7 +686,7 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 		{
 			vertex_t *vt = sub->firstline[k].v1;
 			ptr->x = vt->fX();
-			ptr->z = plane.plane.ZatPoint(vt) + dz;
+			ptr->z = flat->plane.plane.ZatPoint(vt) + flat->dz;
 			ptr->y = vt->fY();
 			t1 = { ptr->x, ptr->z, ptr->y };
 			FVector3 nearToVert = t1 - nearPt;
@@ -706,29 +706,29 @@ void GLFlat::DrawSubsectorLights(subsector_t * sub, int pass)
 //
 //==========================================================================
 
-void GLFlat::DrawLightsCompat(int pass)
+void FDrawInfo::DrawLightsCompat(GLFlat *flat, int pass)
 {
 	gl_RenderState.Apply();
 	// Draw the subsectors belonging to this sector
-	for (int i = 0; i<sector->subsectorcount; i++)
+	for (int i = 0; i<flat->sector->subsectorcount; i++)
 	{
-		subsector_t * sub = sector->subsectors[i];
-		if (gl_drawinfo->ss_renderflags[sub->Index()] & renderflags)
+		subsector_t * sub = flat->sector->subsectors[i];
+		if (gl_drawinfo->ss_renderflags[sub->Index()] & flat->renderflags)
 		{
-			DrawSubsectorLights(sub, pass);
+			DrawSubsectorLights(flat, sub, pass);
 		}
 	}
 
 	// Draw the subsectors assigned to it due to missing textures
-	if (!(renderflags&SSRF_RENDER3DPLANES))
+	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
 	{
-		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR) ?
-			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR) ?
+			gl_drawinfo->GetOtherFloorPlanes(flat->sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(flat->sector->sectornum);
 
 		while (node)
 		{
-			DrawSubsectorLights(node->sub, pass);
+			DrawSubsectorLights(flat, node->sub, pass);
 			node = node->next;
 		}
 	}

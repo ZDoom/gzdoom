@@ -181,14 +181,19 @@ struct FDrawInfo : public HWDrawInfo
     void AddMirrorSurface(GLWall *w) override;
 	GLDecal *AddDecal(bool onmirror) override;
 	void AddPortal(GLWall *w, int portaltype) override;
+	void AddFlat(GLFlat *flat, bool fog) override;
 
     void ProcessActorsInPortal(FLinePortalSpan *glport) override;
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 
 	// Legacy GL only. 
 	bool PutWallCompat(GLWall *wall, int passflag);
+	bool PutFlatCompat(GLFlat *flat, bool fog);
 	void RenderFogBoundaryCompat(GLWall *wall);
 	void RenderLightsCompat(GLWall *wall, int pass);
+	void DrawSubsectorLights(GLFlat *flat, subsector_t * sub, int pass);
+	void DrawLightsCompat(GLFlat *flat, int pass);
+
 
 	void DrawDecal(GLDecal *gldecal);
 	void DrawDecals();
@@ -208,6 +213,13 @@ struct FDrawInfo : public HWDrawInfo
 	void RenderTranslucentWall(GLWall *wall);
 	void RenderTexturedWall(GLWall *wall, int rflags);
 	void DrawWall(GLWall *wall, int pass);
+
+	// Flat drawer
+	void DrawFlat(GLFlat *flat, int pass, bool trans);	// trans only has meaning for GLPASS_LIGHTSONLY
+	void DrawSkyboxSector(GLFlat *flat, int pass, bool processlights);
+	void DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans);
+	void ProcessLights(GLFlat *flat, bool istrans);
+	void DrawSubsector(GLFlat *flat, subsector_t * sub);
 
 	
 	// These two may be moved to the API independent part of the renderer later.
@@ -243,7 +255,6 @@ public:
 
 extern FDrawInfo * gl_drawinfo;
 
-void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture);
 void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending);
 
 #endif

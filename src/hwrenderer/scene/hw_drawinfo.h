@@ -6,6 +6,7 @@ struct FSectorPortalGroup;
 struct FLinePortalSpan;
 struct FFlatVertex;
 class GLWall;
+class GLFlat;
 struct GLDecal;
 
 //==========================================================================
@@ -128,6 +129,8 @@ public:
     virtual void AddWall(GLWall *w) = 0;
 	virtual void AddPortal(GLWall *w, int portaltype) = 0;
     virtual void AddMirrorSurface(GLWall *w) = 0;
+	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
+
     virtual GLDecal *AddDecal(bool onmirror) = 0;
     virtual void ProcessActorsInPortal(FLinePortalSpan *glport) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;

@@ -708,7 +708,7 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 		{
 			GLFlat * f= flats[drawitems[i].index];
 			RenderFlat.Clock();
-			f->Draw(pass, trans);
+			gl_drawinfo->DrawFlat(f, pass, trans);
 			RenderFlat.Unclock();
 		}
 		break;
@@ -862,7 +862,7 @@ void GLDrawList::DrawFlats(int pass)
 	RenderFlat.Clock();
 	for(unsigned i=0;i<drawitems.Size();i++)
 	{
-		flats[drawitems[i].index]->Draw(pass, false);
+		gl_drawinfo->DrawFlat(flats[drawitems[i].index], pass, false);
 	}
 	RenderFlat.Unclock();
 }
@@ -1154,7 +1154,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	float fviewy = r_viewpoint.Pos.Y;
 	float fviewz = r_viewpoint.Pos.Z;
 
-	gl_SetPlaneTextureRotation(&plane, gltexture);
+	gl_RenderState.SetPlaneTextureRotation(&plane, gltexture);
 	gl_RenderState.Apply();
 
 	float prj_fac1 = (planez-fviewz)/(ws->z1-fviewz);

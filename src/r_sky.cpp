@@ -65,6 +65,9 @@ CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE)
 	R_InitSkyMap ();
 }
 
+CVAR(Float, skyoffset, 0, 0)	// for testing
+
+
 
 int			freelookviewheight;
 

@@ -504,8 +504,8 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 					srf |= SSRF_PROCESSED;
 
 					SetupFlat.Clock();
-					GLFlat flat(this);
-					flat.ProcessSector(fakesector);
+					GLFlat flat;
+					flat.ProcessSector(gl_drawinfo, fakesector);
 					SetupFlat.Unclock();
 				}
 				// mark subsector as processed - but mark for rendering only if it has an actual area.

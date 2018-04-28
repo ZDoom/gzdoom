@@ -22,6 +22,7 @@ struct FSectorPortalGroup;
 struct FFlatVertex;
 struct FLinePortalSpan;
 struct FDynLightData;
+class VSMatrix;
 
 enum WallTypes
 {
@@ -281,6 +282,59 @@ public:
 
 };
 
+//==========================================================================
+//
+// One flat plane in the draw list
+//
+//==========================================================================
+
+class GLFlat
+{
+public:
+	sector_t * sector;
+	float dz; // z offset for rendering hacks
+	float z; // the z position of the flat (only valid for non-sloped planes)
+	FMaterial *gltexture;
+
+	FColormap Colormap;	// light and fog
+	PalEntry FlatColor;
+	ERenderStyle renderstyle;
+
+	float alpha;
+	GLSectorPlane plane;
+	int lightlevel;
+	bool stack;
+	bool ceiling;
+	uint8_t renderflags;
+	int vboindex;
+	//int vboheight;
+
+	int dynlightindex;
+
+	void SetupSubsectorLights(int pass, subsector_t * sub, int *dli = NULL);
+
+	void PutFlat(HWDrawInfo *di, bool fog = false);
+	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
+	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
+	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
+	
+	GLFlat() {}
+
+	GLFlat(const GLFlat &other)
+	{
+		memcpy(this, &other, sizeof(GLFlat));
+	}
+
+	GLFlat & operator=(const GLFlat &other)
+	{
+		memcpy(this, &other, sizeof(GLFlat));
+		return *this;
+	}
+
+};
+
+
+
 
 
 
@@ -311,3 +365,5 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 {
 	return sqrtf((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
 }
+
+bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);

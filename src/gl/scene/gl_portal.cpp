@@ -1185,7 +1185,7 @@ void GLHorizonPortal::DrawContents()
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 	gl_RenderState.SetObjectColor(origin->specialcolor);
 
-	gl_SetPlaneTextureRotation(sp, gltexture);
+	gl_RenderState.SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply();

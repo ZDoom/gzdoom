@@ -4,6 +4,8 @@
 #include "gl/scene/gl_wall.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
 
+class GLSceneDrawer;
+
 enum GLDrawItemType
 {
 	GLDIT_WALL,
@@ -226,6 +228,7 @@ struct FDrawInfo : public HWDrawInfo
 	// These two may be moved to the API independent part of the renderer later.
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
+	int ClipPoint(const DVector3 &pos) override;
 
 	static void StartDrawInfo(GLSceneDrawer *drawer);
 	static void EndDrawInfo();

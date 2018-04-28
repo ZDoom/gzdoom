@@ -834,6 +834,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_flats.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_sky.cpp
+	hwrenderer/scene/hw_sprites.cpp
 	hwrenderer/scene/hw_walls.cpp
 	hwrenderer/scene/hw_walls_vertex.cpp
 	r_data/models/models.cpp

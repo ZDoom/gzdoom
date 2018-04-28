@@ -23,6 +23,9 @@ struct FFlatVertex;
 struct FLinePortalSpan;
 struct FDynLightData;
 class VSMatrix;
+struct FSpriteModelFrame;
+struct particle_t;
+enum area_t : int;
 
 enum HWRenderStyle
 {
@@ -330,7 +333,72 @@ public:
 
 };
 
+//==========================================================================
+//
+// One sprite in the draw list
+//
+//==========================================================================
 
+
+class GLSprite
+{
+public:
+	int lightlevel;
+	uint8_t foglevel;
+	uint8_t hw_styleflags;
+	bool fullbright;
+	PalEntry ThingColor;	// thing's own color
+	FColormap Colormap;
+	FSpriteModelFrame * modelframe;
+	FRenderStyle RenderStyle;
+	int OverrideShader;
+
+	int translation;
+	int index;
+	int depth;
+
+	float topclip;
+	float bottomclip;
+
+	float x,y,z;	// needed for sorting!
+
+	float ul,ur;
+	float vt,vb;
+	float x1,y1,z1;
+	float x2,y2,z2;
+
+	FMaterial *gltexture;
+	float trans;
+	AActor * actor;
+	particle_t * particle;
+	TArray<lightlist_t> *lightlist;
+	DRotator Angles;
+
+	int dynlightindex;
+
+	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
+	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
+	bool CalculateVertices(HWDrawInfo *di, FVector3 *v);
+
+public:
+
+	GLSprite() {}
+	void PutSprite(HWDrawInfo *di, bool translucent);
+	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false);
+	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
+
+	GLSprite(const GLSprite &other)
+	{
+		memcpy(this, &other, sizeof(GLSprite));
+	}
+
+	GLSprite & operator=(const GLSprite &other)
+	{
+		memcpy(this, &other, sizeof(GLSprite));
+		return *this;
+	}
+
+};
 
 
 
@@ -364,3 +432,4 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 }
 
 bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
+extern const float LARGE_VALUE;

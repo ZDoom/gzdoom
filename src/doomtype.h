@@ -283,6 +283,17 @@ enum ESSType
 
 const double M_PI = 3.14159265358979323846;	// matches value in gcc v2 math.h
 
+inline float DEG2RAD(float deg)
+{
+	return deg * float(M_PI / 180.0);
+}
+
+inline float RAD2DEG(float deg)
+{
+	return deg * float(180. / M_PI);
+}
+
+
 template <typename T, size_t N>
 char ( &_ArraySizeHelper( T (&array)[N] ))[N];
 

@@ -95,7 +95,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mViewVector = FVector2(0,0);
 	mVBO = nullptr;
 	mSkyVBO = nullptr;
-	gl_spriteindex = 0;
 	mShaderManager = nullptr;
 	mLights = nullptr;
 	mTonemapPalette = nullptr;
@@ -157,8 +156,6 @@ void FGLRenderer::Initialize(int width, int height)
 	{
 		legacyShaders = new LegacyShaderContainer;
 	}
-
-	GetSpecialTextures();
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
 	if (!gl.legacyMode)
@@ -228,16 +225,6 @@ FGLRenderer::~FGLRenderer()
 	delete mCustomPostProcessShaders;
 	delete mFXAAShader;
 	delete mFXAALumaShader;
-}
-
-
-void FGLRenderer::GetSpecialTextures()
-{
-	if (gl.legacyMode) glLight = TexMan.CheckForTexture("glstuff/gllight.png", ETextureType::MiscPatch);
-	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", ETextureType::MiscPatch);
-	glPart = TexMan.CheckForTexture("glstuff/glpart.png", ETextureType::MiscPatch);
-	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", ETextureType::MiscPatch);
-
 }
 
 //==========================================================================

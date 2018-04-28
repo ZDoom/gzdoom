@@ -85,7 +85,7 @@ void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
 	if (portalclip)
 	{
 		int clipres = GLRenderer->mClipPortal->ClipSeg(seg);
-		if (clipres == GLPortal::PClip_InFront) return;
+		if (clipres == PClip_InFront) return;
 	}
 
 	angle_t startAngle = clipper.GetClipAngle(seg->v2);
@@ -436,7 +436,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 	if (GLRenderer->mClipPortal)
 	{
 		int clipres = GLRenderer->mClipPortal->ClipSubsector(sub);
-		if (clipres == GLPortal::PClip_InFront)
+		if (clipres == PClip_InFront)
 		{
 			line_t *line = GLRenderer->mClipPortal->ClipLine();
 			// The subsector is out of range, but we still have to check lines that lie directly on the boundary and may expose their upper or lower parts.
@@ -458,6 +458,12 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 
 		for (i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
+			if (GLRenderer->mClipPortal)
+			{
+				int clipres = GLRenderer->mClipPortal->ClipPoint(Particles[i].Pos);
+				if (clipres == PClip_InFront) continue;
+			}
+
 			GLSprite sprite;
 			sprite.ProcessParticle(gl_drawinfo, &Particles[i], fakesector);
 		}

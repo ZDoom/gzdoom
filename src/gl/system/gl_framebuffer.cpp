@@ -574,7 +574,6 @@ void OpenGLFrameBuffer::GameRestart()
 	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
 	UpdatePalette ();
 	ScreenshotBuffer = NULL;
-	GLRenderer->GetSpecialTextures();
 }
 
 

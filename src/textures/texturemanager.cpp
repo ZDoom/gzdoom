@@ -1054,6 +1054,12 @@ void FTextureManager::Init()
 	{
 		tex.Texture->AddAutoMaterials();
 	}
+
+	glLight = TexMan.CheckForTexture("glstuff/gllight.png", ETextureType::MiscPatch);
+	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", ETextureType::MiscPatch);
+	glPart = TexMan.CheckForTexture("glstuff/glpart.png", ETextureType::MiscPatch);
+	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", ETextureType::MiscPatch);
+
 }
 
 //==========================================================================

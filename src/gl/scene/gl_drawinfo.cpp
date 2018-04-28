@@ -32,6 +32,7 @@
 #include "r_utility.h"
 #include "doomstat.h"
 #include "g_levellocals.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
 
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
@@ -1305,6 +1306,12 @@ void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *su
 {
 	portal->GetRenderState()->AddSubsector(sub);
 }
+
+int FDrawInfo::ClipPoint(const DVector3 &pos)
+{
+	return GLRenderer->mClipPortal->ClipPoint(pos);
+}
+
 
 std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
 {

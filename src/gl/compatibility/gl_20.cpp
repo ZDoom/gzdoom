@@ -483,8 +483,8 @@ bool gl_SetupLight(int group, Plane & p, ADynamicLight * light, FVector3 & nearP
 
 bool gl_SetupLightTexture()
 {
-	if (!GLRenderer->glLight.isValid()) return false;
-	FMaterial * pat = FMaterial::ValidateTexture(GLRenderer->glLight, false, false);
+	if (!TexMan.glLight.isValid()) return false;
+	FMaterial * pat = FMaterial::ValidateTexture(TexMan.glLight, false, false);
 	gl_RenderState.SetMaterial(pat, CLAMP_XY_NOMIP, 0, -1, false);
 	return true;
 }

@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include "r_defs.h"
 
 struct FSectorPortalGroup;
@@ -34,6 +35,13 @@ enum SectorRenderFlags
     SSRF_SEEN = 16,
 };
 
+enum EPortalClip
+{
+	PClip_InFront,
+	PClip_Inside,
+	PClip_Behind,
+};
+
 
 struct HWDrawInfo
 {
@@ -65,6 +73,11 @@ struct HWDrawInfo
 	};
     
     int FixedColormap;
+	std::atomic<int> spriteindex;
+	bool clipPortal;
+	FRotator mAngles;
+	FVector2 mViewVector;
+	AActor *mViewActor;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -137,6 +150,8 @@ public:
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
+
+	virtual int ClipPoint(const DVector3 &pos) = 0;
 
 
 };

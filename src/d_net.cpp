@@ -246,33 +246,9 @@ void Network::D_CheckNetGame()
 		Printf("using alternate port %i\n", port);
 	}
 
-	// parse network game options,
-	//		player 1: -host <numplayers>
-	//		player x: -join <player 1's address>
-	if ((i = Args->CheckParm("-host")))
-	{
-		doomcom = I_InitNetwork(port);
-		//HostGame(i);
-	}
-	else if ((i = Args->CheckParm("-join")))
-	{
-		if ((i == Args->NumArgs() - 1) ||
-			(Args->GetArg(i + 1)[0] == '-') ||
-			(Args->GetArg(i + 1)[0] == '+'))
-			I_FatalError("You need to specify the host machine's address");
-
-		doomcom = I_InitNetwork(0);
-		doomcom->Connect(Args->GetArg(i + 1));
-		//JoinGame(i);
-	}
-	else
-	{
-		// single player game
-		netgame = false;
-		multiplayer = false;
-		//numplayers = numnodes = 1;
-		consoleplayer = 0;
-	}
+	netgame = false;
+	multiplayer = false;
+	consoleplayer = 0;
 
 	v = Args->CheckValue("-dup");
 	if (v)

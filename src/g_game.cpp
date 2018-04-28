@@ -154,6 +154,7 @@ bool 			netgame;				// only true if packets are broadcast
 bool			multiplayer;
 bool			multiplayernext = false;		// [SP] Map coop/dm implementation
 bool			netclient;				// clientside playsim
+bool			netserver = false;		// used to enforce 'netplay = true'
 player_t		players[MAXPLAYERS];
 bool			playeringame[MAXPLAYERS];
 
@@ -2851,6 +2852,7 @@ void G_TimeDemo (const char* name)
 void G_InitServerNetGame(const char *mapname)
 {
 	netgame = true;
+	netserver = true;
 	netclient = false;
 	multiplayer = true;
 	multiplayernext = true;
@@ -2867,6 +2869,7 @@ void G_InitServerNetGame(const char *mapname)
 void G_InitClientNetGame(int player, const char* mapname)
 {
 	netgame = true;
+	netserver = false;
 	netclient = true;
 	multiplayer = true;
 	multiplayernext = true;

@@ -62,6 +62,7 @@ private:
 	int mSendTic = 0;
 
 	ticcmd_t mCurrentInput[MAXPLAYERS];
+	ticcmd_t mSentInput[BACKUPTICS];
 	FDynamicBuffer mCurrentCommands;
 	FDynamicBuffer mSendCommands;
 };

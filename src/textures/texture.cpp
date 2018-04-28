@@ -1374,71 +1374,64 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 	if ((flags & CTF_CheckHires) && translation != STRange_AlphaTexture)
 	{
 		buffer = LoadHiresTexture(&w, &h);
+		if (buffer != nullptr)
+			return buffer;
 	}
 
-	if (buffer == nullptr)
+	int exx = !!(flags & CTF_Expand);
+
+	W = w = GetWidth() + 2 * exx;
+	H = h = GetHeight() + 2 * exx;
+
+
+	buffer = new unsigned char[W*(H + 1) * 4];
+	memset(buffer, 0, W * (H + 1) * 4);
+
+	FBitmap bmp(buffer, W * 4, W, H);
+
+	if (translation <= 0 || translation >= STRange_Min)
 	{
-
-		int exx = !!(flags & CTF_Expand);
-
-		W = w = GetWidth() + 2 * exx;
-		H = h = GetHeight() + 2 * exx;
-
-
-		buffer = new unsigned char[W*(H + 1) * 4];
-		memset(buffer, 0, W * (H + 1) * 4);
-
-		FBitmap bmp(buffer, W * 4, W, H);
-
-		if (translation <= 0 || translation >= STRange_Min)
+		// Allow creation of desaturated or special-colormapped textures for the legacy renderer.
+		FCopyInfo inf = { OP_COPY, BLEND_NONE,{ 0 }, 0, 0 };
+		if (translation >= STRange_Desaturate && translation < STRange_Desaturate + 31)	// there are 31 ranges of desaturations available
 		{
-			// Allow creation of desaturated or special-colormapped textures for the legacy renderer.
-			FCopyInfo inf = { OP_COPY, BLEND_NONE,{ 0 }, 0, 0 };
-			if (translation >= STRange_Desaturate && translation < STRange_Desaturate + 31)	// there are 31 ranges of desaturations available
-			{
-				inf.blend = (EBlend)(BLEND_DESATURATE1 + translation - STRange_Desaturate);
-			}
-			else if (translation >= STRange_Specialcolormap && translation < STRange_Specialcolormap + (int)SpecialColormaps.Size())
-			{
-				inf.blend = (EBlend)(BLEND_SPECIALCOLORMAP1 + translation - STRange_Specialcolormap);
-			}
-
-			int trans = CopyTrueColorPixels(&bmp, exx, exx, 0, translation >= STRange_Min ? &inf : nullptr);
-			CheckTrans(buffer, W*H, trans);
-			isTransparent = bTranslucent;
-			// alpha texture for legacy mode
-			if (translation == STRange_AlphaTexture)
-			{
-				for (int i = 0; i < W*H; i++)
-				{
-					int b = buffer[4 * i];
-					int g = buffer[4 * i + 1];
-					int r = buffer[4 * i + 2];
-					int gray = Luminance(r, g, b);
-					buffer[4 * i] = 255;
-					buffer[4 * i + 1] = 255;
-					buffer[4 * i + 2] = 255;
-					buffer[4 * i + 3] = (buffer[4 * i + 3] * gray) >> 8;
-				}
-			}
+			inf.blend = (EBlend)(BLEND_DESATURATE1 + translation - STRange_Desaturate);
 		}
-		else
+		else if (translation >= STRange_Specialcolormap && translation < STRange_Specialcolormap + (int)SpecialColormaps.Size())
 		{
-			// When using translations everything must be mapped to the base palette.
-			// so use CopyTrueColorTranslated
-			CopyTrueColorTranslated(&bmp, exx, exx, 0, FUniquePalette::GetPalette(translation));
-			isTransparent = 0;
-			// This is not conclusive for setting the texture's transparency info.
+			inf.blend = (EBlend)(BLEND_SPECIALCOLORMAP1 + translation - STRange_Specialcolormap);
 		}
 
-		// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
-		// [BB] Potentially upsample the buffer.
-		if (flags & CTF_ProcessData)
+		int trans = CopyTrueColorPixels(&bmp, exx, exx, 0, translation >= STRange_Min ? &inf : nullptr);
+		CheckTrans(buffer, W*H, trans);
+		isTransparent = bTranslucent;
+		// alpha texture for legacy mode
+		if (translation == STRange_AlphaTexture)
 		{
-			buffer = CreateUpsampledTextureBuffer(buffer, W, H, w, h, !!isTransparent);
-			ProcessData(buffer, w, h, false);
+			for (int i = 0; i < W*H; i++)
+			{
+				int b = buffer[4 * i];
+				int g = buffer[4 * i + 1];
+				int r = buffer[4 * i + 2];
+				int gray = Luminance(r, g, b);
+				buffer[4 * i] = 255;
+				buffer[4 * i + 1] = 255;
+				buffer[4 * i + 2] = 255;
+				buffer[4 * i + 3] = (buffer[4 * i + 3] * gray) >> 8;
+			}
 		}
 	}
+	else
+	{
+		// When using translations everything must be mapped to the base palette.
+		// so use CopyTrueColorTranslated
+		CopyTrueColorTranslated(&bmp, exx, exx, 0, FUniquePalette::GetPalette(translation));
+		isTransparent = 0;
+		// This is not conclusive for setting the texture's transparency info.
+	}
+
+	// [BB] The hqnx upsampling (not the scaleN one) destroys partial transparency, don't upsamle textures using it.
+	// [BB] Potentially upsample the buffer.
 	if ((flags & CTF_MaybeWarped) && bWarped && w*h <= 256 * 256)	// do not software-warp larger textures, especially on the old systems that still need this fallback.
 	{
 		// need to do software warping
@@ -1449,6 +1442,14 @@ unsigned char * FTexture::CreateTexBuffer(int translation, int & w, int & h, int
 		buffer = warpbuffer;
 		wt->GenTime[0] = screen->FrameTime;
 	}
+	else 
+	{
+		if (flags & CTF_ProcessData) 
+			buffer = CreateUpsampledTextureBuffer(buffer, W, H, w, h, !!isTransparent);
+	}
+
+	if (flags & CTF_ProcessData)
+		ProcessData(buffer, w, h, false);
 
 	return buffer;
 }

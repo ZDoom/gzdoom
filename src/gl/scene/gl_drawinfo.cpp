@@ -462,11 +462,8 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 		w->ztop[0]=ws->ztop[1]=izt;
 		w->zbottom[0]=ws->zbottom[1]=izb;
 		w->tcs[GLWall::LOLFT].u = w->tcs[GLWall::UPLFT].u = ws->tcs[GLWall::LORGT].u = ws->tcs[GLWall::UPRGT].u = iu;
-		if (gl.buffermethod == BM_DEFERRED)
-		{
-			ws->MakeVertices(false);
-			w->MakeVertices(false);
-		}
+		ws->MakeVertices(gl_drawinfo, false);
+		w->MakeVertices(gl_drawinfo, false);
 
 		SortNode * sort2=SortNodes.GetNew();
 		memset(sort2,0,sizeof(SortNode));
@@ -720,7 +717,7 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 		{
 			GLWall * w= walls[drawitems[i].index];
 			RenderWall.Clock();
-			w->Draw(pass);
+			gl_drawinfo->DrawWall(w, pass);
 			RenderWall.Unclock();
 		}
 		break;
@@ -848,9 +845,9 @@ void GLDrawList::Draw(int pass, bool trans)
 void GLDrawList::DrawWalls(int pass)
 {
 	RenderWall.Clock();
-	for(unsigned i=0;i<drawitems.Size();i++)
+	for(auto &item : drawitems)
 	{
-		walls[drawitems[i].index]->Draw(pass);
+		gl_drawinfo->DrawWall(walls[item.index], pass);
 	}
 	RenderWall.Unclock();
 }
@@ -868,19 +865,6 @@ void GLDrawList::DrawFlats(int pass)
 		flats[drawitems[i].index]->Draw(pass, false);
 	}
 	RenderFlat.Unclock();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLDrawList::DrawDecals()
-{
-	for(unsigned i=0;i<drawitems.Size();i++)
-	{
-		walls[drawitems[i].index]->DoDrawDecals();
-	}
 }
 
 //==========================================================================
@@ -954,7 +938,6 @@ GLSprite *GLDrawList::NewSprite()
 	drawitems.Push(GLDrawItem(GLDIT_SPRITE, sprites.Push(sprite)));
 	return sprite;
 }
-
 
 //==========================================================================
 //
@@ -1036,6 +1019,8 @@ void FDrawInfo::StartScene()
 	{
 		for (int i = 0; i < GLLDL_TYPES; i++) dldrawlists[i].Reset();
 	}
+	decals[0].Clear();
+	decals[1].Clear();
 }
 
 //==========================================================================
@@ -1308,7 +1293,7 @@ void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
 	for(unsigned int j=0;j<lowersegs.Size();j++)
 	{
 		seg_t * seg=lowersegs[j];
-		GLWall wall(mDrawer);
+		GLWall wall;
 		wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
 		rendered_lines++;
 	}
@@ -1318,5 +1303,19 @@ void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
 void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub)
 {
 	portal->GetRenderState()->AddSubsector(sub);
+}
+
+std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
+{
+	unsigned int index = -1;
+	auto p = GLRenderer->mVBO->Alloc(count, &index);
+	return std::make_pair(p, index);
+}
+
+GLDecal *FDrawInfo::AddDecal(bool onmirror)
+{
+	auto decal = (GLDecal*)RenderDataAllocator.Alloc(sizeof(GLDecal));
+	decals[onmirror ? 1 : 0].Push(decal);
+	return decal;
 }
 

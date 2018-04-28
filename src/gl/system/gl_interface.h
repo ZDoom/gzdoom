@@ -11,22 +11,6 @@ enum GLCompat
 	CMPT_GL4
 };
 
-enum RenderFlags
-{
-	// [BB] Added texture compression flags.
-	RFL_TEXTURE_COMPRESSION=1,
-	RFL_TEXTURE_COMPRESSION_S3TC=2,
-
-	RFL_SHADER_STORAGE_BUFFER = 4,
-	RFL_BUFFER_STORAGE = 8,
-	RFL_SAMPLER_OBJECTS = 16,
-
-	RFL_NO_CLIP_PLANES = 32,
-
-	RFL_INVALIDATE_BUFFER = 64,
-	RFL_DEBUG = 128
-};
-
 enum TexMode
 {
 	TM_SWCANVAS = -1,	// special case for the legacy renderer, do not use for anything but the SW renderer's canvas.

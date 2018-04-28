@@ -44,6 +44,25 @@
 #include "v_colortables.h"
 #include "v_2ddrawer.h"
 
+enum EHWCaps
+{
+	// [BB] Added texture compression flags.
+	RFL_TEXTURE_COMPRESSION = 1,
+	RFL_TEXTURE_COMPRESSION_S3TC = 2,
+
+	RFL_SHADER_STORAGE_BUFFER = 4,
+	RFL_BUFFER_STORAGE = 8,
+	RFL_SAMPLER_OBJECTS = 16,
+
+	RFL_NO_CLIP_PLANES = 32,
+
+	RFL_INVALIDATE_BUFFER = 64,
+	RFL_DEBUG = 128,
+	RFL_NO_SHADERS = 256
+};
+
+
+
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
 extern int DisplayWidth, DisplayHeight, DisplayBits;
@@ -307,6 +326,10 @@ protected:
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 public:
+	int hwcaps = 0;
+	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
+
+public:
 	DFrameBuffer (int width, int height, bool bgra);
 	virtual ~DFrameBuffer() {}
 
@@ -357,10 +380,13 @@ public:
 	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual void UnbindTexUnit(int no) {}
+	virtual void FlushTextures() {}
+	virtual void TextureFilterChanged() {}
+	virtual void ResetFixedColormap() {}
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
-	virtual bool Begin2D(bool copy3d);
+	virtual void Begin2D(bool copy3d);
 	void End2D() { isIn2D = false; }
 
 	// Returns true if Begin2D has been called and 2D drawing is now active

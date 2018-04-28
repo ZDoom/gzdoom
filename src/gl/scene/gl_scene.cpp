@@ -44,7 +44,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
@@ -375,15 +375,7 @@ void GLSceneDrawer::RenderScene(int recursion)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
-
-	// this is the only geometry type on which decals can possibly appear
-	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawDecals();
-	if (gl.legacyMode)
-	{
-		// also process the render lists with walls and dynamic lights
-        gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawDecals();
-        gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawDecals();
-	}
+	gl_drawinfo->DrawDecals();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -434,9 +426,10 @@ void GLSceneDrawer::RenderTranslucent()
 	gl_drawinfo->drawlists[GLDL_TRANSLUCENT].DrawSorted();
 	gl_RenderState.EnableBrightmap(false);
 
-	glDepthMask(true);
 
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
+	glDepthMask(true);
+
 	RenderAll.Unclock();
 }
 
@@ -678,12 +671,6 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 
 	GLRenderer->mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
 	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
-
-	// Scroll the sky
-	GLRenderer->mSky1Pos = (double)fmod((double)screen->FrameTime * (double)level.skyspeed1, 1024.f) * 90./256.;
-	GLRenderer->mSky2Pos = (double)fmod((double)screen->FrameTime * (double)level.skyspeed2, 1024.f) * 90./256.;
-
-
 
 	if (camera->player && camera->player-players==consoleplayer &&
 		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera==camera->player->mo)

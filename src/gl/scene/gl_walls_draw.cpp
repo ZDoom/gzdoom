@@ -29,7 +29,7 @@
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
@@ -42,138 +42,7 @@
 
 EXTERN_CVAR(Bool, gl_seamless)
 
-//==========================================================================
-//
-// Collect lights for shader
-//
-//==========================================================================
 FDynLightData lightdata;
-
-
-void GLWall::SetupLights()
-{
-	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
-
-	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
-	switch (type)
-	{
-	case RENDERWALL_FOGBOUNDARY:
-	case RENDERWALL_MIRRORSURFACE:
-	case RENDERWALL_COLOR:
-		return;
-	}
-
-	float vtx[]={glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2};
-	Plane p;
-
-	lightdata.Clear();
-
-	auto normal = glseg.Normal();
-	p.Set(normal, -normal.X * glseg.x1 - normal.Z * glseg.y1);
-
-	FLightNode *node;
-	if (seg->sidedef == NULL)
-	{
-		node = NULL;
-	}
-	else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
-	{
-		node = seg->sidedef->lighthead;
-	}
-	else if (sub)
-	{
-		// Polobject segs cannot be checked per sidedef so use the subsector instead.
-		node = sub->lighthead;
-	}
-	else node = NULL;
-
-	// Iterate through all dynamic lights which touch this wall and render them
-	while (node)
-	{
-		if (!(node->lightsource->flags2&MF2_DORMANT))
-		{
-			iter_dlight++;
-
-			DVector3 posrel = node->lightsource->PosRelative(seg->frontsector);
-			float x = posrel.X;
-			float y = posrel.Y;
-			float z = posrel.Z;
-			float dist = fabsf(p.DistToPoint(x, z, y));
-			float radius = node->lightsource->GetRadius();
-			float scale = 1.0f / ((2.f * radius) - dist);
-			FVector3 fn, pos;
-
-			if (radius > 0.f && dist < radius)
-			{
-				FVector3 nearPt, up, right;
-
-				pos = { x, z, y };
-				fn = p.Normal();
-
-				fn.GetRightUp(right, up);
-
-				FVector3 tmpVec = fn * dist;
-				nearPt = pos + tmpVec;
-
-				FVector3 t1;
-				int outcnt[4]={0,0,0,0};
-				texcoord tcs[4];
-
-				// do a quick check whether the light touches this polygon
-				for(int i=0;i<4;i++)
-				{
-					t1 = FVector3(&vtx[i*3]);
-					FVector3 nearToVert = t1 - nearPt;
-					tcs[i].u = ((nearToVert | right) * scale) + 0.5f;
-					tcs[i].v = ((nearToVert | up) * scale) + 0.5f;
-
-					if (tcs[i].u<0) outcnt[0]++;
-					if (tcs[i].u>1) outcnt[1]++;
-					if (tcs[i].v<0) outcnt[2]++;
-					if (tcs[i].v>1) outcnt[3]++;
-
-				}
-				if (outcnt[0]!=4 && outcnt[1]!=4 && outcnt[2]!=4 && outcnt[3]!=4) 
-				{
-					lightdata.GetLight(seg->frontsector->PortalGroup, p, node->lightsource, true);
-				}
-			}
-		}
-		node = node->nextLight;
-	}
-
-	dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-}
-
-//==========================================================================
-//
-// build the vertices for this wall
-//
-//==========================================================================
-
-void GLWall::MakeVertices(bool nosplit)
-{
-	if (vertcount == 0)
-	{
-		bool split = (gl_seamless && !nosplit && seg->sidedef != NULL && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
-
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-
-		ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
-		ptr++;
-		if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
-		ptr->Set(glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
-		ptr++;
-		if (split && !(flags & GLWF_NOSPLITUPPER)) SplitUpperEdge(ptr);
-		ptr->Set(glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
-		ptr++;
-		if (split && glseg.fracright == 1) SplitRightEdge(ptr);
-		ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
-		ptr++;
-		if (split && !(flags & GLWF_NOSPLITLOWER)) SplitLowerEdge(ptr);
-		vertcount = GLRenderer->mVBO->GetCount(ptr, &vertindex);
-	}
-}
 
 
 //==========================================================================
@@ -183,29 +52,13 @@ void GLWall::MakeVertices(bool nosplit)
 //
 //==========================================================================
 
-void GLWall::RenderWall(int textured)
+void FDrawInfo::RenderWall(GLWall *wall, int textured)
 {
+	assert(wall->vertcount > 0);
 	gl_RenderState.Apply();
-	gl_RenderState.ApplyLightIndex(dynlightindex);
-	if (gl.buffermethod != BM_DEFERRED)
-	{
-		MakeVertices(!!(textured&RWF_NOSPLIT));
-	}
-	else if (vertcount == 0)
-	{
-		// This should never happen but in case it actually does, use the quad drawer as fallback (without edge splitting.)
-		// This way it at least gets drawn.
-		FQuadDrawer qd;
-		qd.Set(0, glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
-		qd.Set(1, glseg.x1, ztop[0], glseg.y1, tcs[UPLFT].u, tcs[UPLFT].v);
-		qd.Set(2, glseg.x2, ztop[1], glseg.y2, tcs[UPRGT].u, tcs[UPRGT].v);
-		qd.Set(3, glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
-		qd.Render(GL_TRIANGLE_FAN);
-		vertexcount += 4;
-		return;
-	}
-	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, vertindex, vertcount);
-	vertexcount += vertcount;
+	gl_RenderState.ApplyLightIndex(wall->dynlightindex);
+	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, wall->vertindex, wall->vertcount);
+	vertexcount += wall->vertcount;
 }
 
 //==========================================================================
@@ -214,20 +67,20 @@ void GLWall::RenderWall(int textured)
 //
 //==========================================================================
 
-void GLWall::RenderFogBoundary()
+void FDrawInfo::RenderFogBoundary(GLWall *wall)
 {
 	if (gl_fogmode && mDrawer->FixedColormap == 0)
 	{
 		if (!gl.legacyMode)
 		{
-			int rel = rellight + getExtraLight();
-			mDrawer->SetFog(lightlevel, rel, &Colormap, false);
+			int rel = wall->rellight + getExtraLight();
+			mDrawer->SetFog(wall->lightlevel, rel, &wall->Colormap, false);
 			gl_RenderState.EnableDrawBuffers(1);
 			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
 			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			glEnable(GL_POLYGON_OFFSET_FILL);
 			glPolygonOffset(-1.0f, -128.0f);
-			RenderWall(RWF_BLANK);
+			RenderWall(wall, GLWall::RWF_BLANK);
 			glPolygonOffset(0.0f, 0.0f);
 			glDisable(GL_POLYGON_OFFSET_FILL);
 			gl_RenderState.SetEffect(EFF_NONE);
@@ -235,7 +88,7 @@ void GLWall::RenderFogBoundary()
 		}
 		else
 		{
-			RenderFogBoundaryCompat();
+			RenderFogBoundaryCompat(wall);
 		}
 	}
 }
@@ -246,32 +99,27 @@ void GLWall::RenderFogBoundary()
 // 
 //
 //==========================================================================
-void GLWall::RenderMirrorSurface()
+void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 {
 	if (!GLRenderer->mirrorTexture.isValid()) return;
-
-	// For the sphere map effect we need a normal of the mirror surface,
-	FVector3 v = glseg.Normal();
 
 	if (!gl.legacyMode)
 	{
 		// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
-		tcs[LOLFT].u = tcs[LORGT].u = tcs[UPLFT].u = tcs[UPRGT].u = v.X;
-		tcs[LOLFT].v = tcs[LORGT].v = tcs[UPLFT].v = tcs[UPRGT].v = v.Z;
-
 		gl_RenderState.EnableTextureMatrix(true);
 		gl_RenderState.mTextureMatrix.computeNormalMatrix(gl_RenderState.mViewMatrix);
 	}
 	else
 	{
+		FVector3 v = wall->glseg.Normal();
 		glNormal3fv(&v[0]);
 	}
 
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
-	mDrawer->SetColor(lightlevel, 0, Colormap ,0.1f);
-	mDrawer->SetFog(lightlevel, 0, &Colormap, true);
+	mDrawer->SetColor(wall->lightlevel, 0, wall->Colormap ,0.1f);
+	mDrawer->SetFog(wall->lightlevel, 0, &wall->Colormap, true);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
 	glDepthFunc(GL_LEQUAL);
@@ -279,8 +127,8 @@ void GLWall::RenderMirrorSurface()
 	FMaterial * pat=FMaterial::ValidateTexture(GLRenderer->mirrorTexture, false, false);
 	gl_RenderState.SetMaterial(pat, CLAMP_NONE, 0, -1, false);
 
-	flags &= ~GLWF_GLOW;
-	RenderWall(RWF_BLANK);
+	wall->flags &= ~GLWall::GLWF_GLOW;
+	RenderWall(wall, GLWall::RWF_BLANK);
 
 	gl_RenderState.EnableTextureMatrix(false);
 	gl_RenderState.SetEffect(EFF_NONE);
@@ -291,13 +139,14 @@ void GLWall::RenderMirrorSurface()
 	glDepthFunc(GL_LESS);
 
 	// This is drawn in the translucent pass which is done after the decal pass
-	// As a result the decals have to be drawn here.
-	if (seg->sidedef->AttachedDecals)
+	// As a result the decals have to be drawn here, right after the wall they are on,
+	// because the depth buffer won't get set by translucent items.
+	if (wall->seg->sidedef->AttachedDecals)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 		glDepthMask(false);
-		DoDrawDecals();
+		gl_drawinfo->DrawDecalsForMirror(wall);
 		glDepthMask(true);
 		glPolygonOffset(0.0f, 0.0f);
 		glDisable(GL_POLYGON_OFFSET_FILL);
@@ -312,61 +161,61 @@ void GLWall::RenderMirrorSurface()
 //
 //==========================================================================
 
-void GLWall::RenderTextured(int rflags)
+void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 {
 	int tmode = gl_RenderState.GetTextureMode();
-	int rel = rellight + getExtraLight();
+	int rel = wall->rellight + getExtraLight();
 
-	if (flags & GLWF_GLOW)
+	if (wall->flags & GLWall::GLWF_GLOW)
 	{
 		gl_RenderState.EnableGlow(true);
-		gl_RenderState.SetGlowParams(topglowcolor, bottomglowcolor);
+		gl_RenderState.SetGlowParams(wall->topglowcolor, wall->bottomglowcolor);
 	}
-	gl_RenderState.SetGlowPlanes(topplane, bottomplane);
-	gl_RenderState.SetMaterial(gltexture, flags & 3, 0, -1, false);
+	gl_RenderState.SetGlowPlanes(wall->topplane, wall->bottomplane);
+	gl_RenderState.SetMaterial(wall->gltexture, wall->flags & 3, 0, -1, false);
 
-	if (type == RENDERWALL_M2SNF)
+	if (wall->type == RENDERWALL_M2SNF)
 	{
-		if (flags & GLWF_CLAMPY)
+		if (wall->flags & GLWall::GLWF_CLAMPY)
 		{
 			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
 		}
-		mDrawer->SetFog(255, 0, NULL, false);
+		mDrawer->SetFog(255, 0, nullptr, false);
 	}
-	gl_RenderState.SetObjectColor(seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
-	gl_RenderState.SetObjectColor2(seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
+	gl_RenderState.SetObjectColor(wall->seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
+	gl_RenderState.SetObjectColor2(wall->seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
 
-	float absalpha = fabsf(alpha);
-	if (lightlist == NULL)
+	float absalpha = fabsf(wall->alpha);
+	if (wall->lightlist == nullptr)
 	{
-		if (type != RENDERWALL_M2SNF) mDrawer->SetFog(lightlevel, rel, &Colormap, RenderStyle == STYLE_Add);
-		mDrawer->SetColor(lightlevel, rel, Colormap, absalpha);
-		RenderWall(rflags);
+		if (wall->type != RENDERWALL_M2SNF) mDrawer->SetFog(wall->lightlevel, rel, &wall->Colormap, wall->RenderStyle == STYLE_Add);
+		mDrawer->SetColor(wall->lightlevel, rel, wall->Colormap, absalpha);
+		RenderWall(wall, rflags);
 	}
 	else
 	{
 		gl_RenderState.EnableSplit(true);
 
-		for (unsigned i = 0; i < lightlist->Size(); i++)
+		for (unsigned i = 0; i < wall->lightlist->Size(); i++)
 		{
-			secplane_t &lowplane = i == (*lightlist).Size() - 1 ? bottomplane : (*lightlist)[i + 1].plane;
+			secplane_t &lowplane = i == (*wall->lightlist).Size() - 1 ? wall->bottomplane : (*wall->lightlist)[i + 1].plane;
 			// this must use the exact same calculation method as GLWall::Process etc.
-			float low1 = lowplane.ZatPoint(vertexes[0]);
-			float low2 = lowplane.ZatPoint(vertexes[1]);
+			float low1 = lowplane.ZatPoint(wall->vertexes[0]);
+			float low2 = lowplane.ZatPoint(wall->vertexes[1]);
 
-			if (low1 < ztop[0] || low2 < ztop[1])
+			if (low1 < wall->ztop[0] || low2 < wall->ztop[1])
 			{
-				int thisll = (*lightlist)[i].caster != NULL ? gl_ClampLight(*(*lightlist)[i].p_lightlevel) : lightlevel;
+				int thisll = (*wall->lightlist)[i].caster != NULL ? hw_ClampLight(*(*wall->lightlist)[i].p_lightlevel) : wall->lightlevel;
 				FColormap thiscm;
-				thiscm.FadeColor = Colormap.FadeColor;
-				thiscm.FogDensity = Colormap.FogDensity;
-				thiscm.CopyFrom3DLight(&(*lightlist)[i]);
+				thiscm.FadeColor = wall->Colormap.FadeColor;
+				thiscm.FogDensity = wall->Colormap.FogDensity;
+				thiscm.CopyFrom3DLight(&(*wall->lightlist)[i]);
 				mDrawer->SetColor(thisll, rel, thiscm, absalpha);
-				if (type != RENDERWALL_M2SNF) mDrawer->SetFog(thisll, rel, &thiscm, RenderStyle == STYLE_Add);
-				gl_RenderState.SetSplitPlanes((*lightlist)[i].plane, lowplane);
-				RenderWall(rflags);
+				if (wall->type != RENDERWALL_M2SNF) mDrawer->SetFog(thisll, rel, &thiscm, wall->RenderStyle == STYLE_Add);
+				gl_RenderState.SetSplitPlanes((*wall->lightlist)[i].plane, lowplane);
+				RenderWall(wall, rflags);
 			}
-			if (low1 <= zbottom[0] && low2 <= zbottom[1]) break;
+			if (low1 <= wall->zbottom[0] && low2 <= wall->zbottom[1]) break;
 		}
 
 		gl_RenderState.EnableSplit(false);
@@ -383,27 +232,28 @@ void GLWall::RenderTextured(int rflags)
 //
 //==========================================================================
 
-void GLWall::RenderTranslucentWall()
+void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 {
-	if (gltexture)
+	if (wall->gltexture)
 	{
 		if (mDrawer->FixedColormap == CM_DEFAULT && gl_lights && gl.lightmethod == LM_DIRECT)
 		{
-			SetupLights();
+			if (wall->SetupLights(lightdata))
+				wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
 		}
-		if (!gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+		if (!wall->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-		if (RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
-		RenderTextured(RWF_TEXTURED | RWF_NOSPLIT);
-		if (RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		if (wall->RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
+		RenderTexturedWall(wall, GLWall::RWF_TEXTURED | GLWall::RWF_NOSPLIT);
+		if (wall->RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	}
 	else
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-		mDrawer->SetColor(lightlevel, 0, Colormap, fabsf(alpha));
-		mDrawer->SetFog(lightlevel, 0, &Colormap, RenderStyle == STYLE_Add);
+		mDrawer->SetColor(wall->lightlevel, 0, wall->Colormap, fabsf(wall->alpha));
+		mDrawer->SetFog(wall->lightlevel, 0, &wall->Colormap, wall->RenderStyle == STYLE_Add);
 		gl_RenderState.EnableTexture(false);
-		RenderWall(RWF_NOSPLIT);
+		RenderWall(wall, GLWall::RWF_NOSPLIT);
 		gl_RenderState.EnableTexture(true);
 	}
 }
@@ -413,36 +263,38 @@ void GLWall::RenderTranslucentWall()
 // 
 //
 //==========================================================================
-void GLWall::Draw(int pass)
+void FDrawInfo::DrawWall(GLWall *wall, int pass)
 {
-	gl_RenderState.SetNormal(glseg.Normal());
+	gl_RenderState.SetNormal(wall->glseg.Normal());
 	switch (pass)
 	{
 	case GLPASS_LIGHTSONLY:
-		SetupLights();
+		if (wall->SetupLights(lightdata))
+			wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
 		break;
 
 	case GLPASS_ALL:
-		SetupLights();
+		if (wall->SetupLights(lightdata))
+			wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
 		// fall through
 	case GLPASS_PLAIN:
-		RenderTextured(RWF_TEXTURED);
+		RenderTexturedWall(wall, GLWall::RWF_TEXTURED);
 		break;
 
 	case GLPASS_TRANSLUCENT:
 
-		switch (type)
+		switch (wall->type)
 		{
 		case RENDERWALL_MIRRORSURFACE:
-			RenderMirrorSurface();
+			RenderMirrorSurface(wall);
 			break;
 
 		case RENDERWALL_FOGBOUNDARY:
-			RenderFogBoundary();
+			RenderFogBoundary(wall);
 			break;
 
 		default:
-			RenderTranslucentWall();
+			RenderTranslucentWall(wall);
 			break;
 		}
 		break;
@@ -450,12 +302,306 @@ void GLWall::Draw(int pass)
 	case GLPASS_LIGHTTEX:
 	case GLPASS_LIGHTTEX_ADDITIVE:
 	case GLPASS_LIGHTTEX_FOGGY:
-		RenderLightsCompat(pass);
+		gl_drawinfo->RenderLightsCompat(wall, pass);
 		break;
 
 	case GLPASS_TEXONLY:
-		gl_RenderState.SetMaterial(gltexture, flags & 3, 0, -1, false);
-		RenderWall(RWF_TEXTURED);
+		gl_RenderState.SetMaterial(wall->gltexture, wall->flags & 3, 0, -1, false);
+		RenderWall(wall, GLWall::RWF_TEXTURED);
 		break;
 	}
 }
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void FDrawInfo::AddWall(GLWall *wall)
+{
+	bool translucent = !!(wall->flags & GLWall::GLWF_TRANSLUCENT);
+	int list;
+
+	if (translucent) // translucent walls
+	{
+		if (!gl.legacyMode && mDrawer->FixedColormap == CM_DEFAULT && wall->gltexture != nullptr)
+		{
+			if (wall->SetupLights(lightdata))
+				wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
+		}
+		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
+		wall->MakeVertices(this, true);
+		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
+		*newwall = *wall;
+	}
+	else
+	{
+		if (gl.legacyMode)
+		{
+			if (PutWallCompat(wall, GLWall::passflag[wall->type])) return;
+		}
+		else if (mDrawer->FixedColormap == CM_DEFAULT)
+		{
+			if (wall->SetupLights(lightdata))
+				wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
+		}
+
+
+		bool masked;
+
+		masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
+
+		if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S))
+		{
+			list = GLDL_MASKEDWALLSOFS;
+		}
+		else
+		{
+			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
+		}
+		wall->MakeVertices(this, false);
+		auto newwall = drawlists[list].NewWall();
+		*newwall = *wall;
+		if (!masked) newwall->ProcessDecals(this);
+	}
+	wall->dynlightindex = -1;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void FDrawInfo::AddMirrorSurface(GLWall *w)
+{
+	w->type = RENDERWALL_MIRRORSURFACE;
+	auto newwall = drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
+	*newwall = *w;
+
+	FVector3 v = newwall->glseg.Normal();
+	auto tcs = newwall->tcs;
+	tcs[GLWall::LOLFT].u = tcs[GLWall::LORGT].u = tcs[GLWall::UPLFT].u = tcs[GLWall::UPRGT].u = v.X;
+	tcs[GLWall::LOLFT].v = tcs[GLWall::LORGT].v = tcs[GLWall::UPLFT].v = tcs[GLWall::UPRGT].v = v.Z;
+	newwall->MakeVertices(this, false);
+	newwall->ProcessDecals(this);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void FDrawInfo::AddPortal(GLWall *wall, int ptype)
+{
+	GLPortal * portal;
+
+	wall->MakeVertices(this, false);
+	switch (ptype)
+	{
+		// portals don't go into the draw list.
+		// Instead they are added to the portal manager
+	case PORTALTYPE_HORIZON:
+		wall->horizon = UniqueHorizons.Get(wall->horizon);
+		portal = GLPortal::FindPortal(wall->horizon);
+		if (!portal) portal = new GLHorizonPortal(wall->horizon);
+		portal->AddLine(wall);
+		break;
+
+	case PORTALTYPE_SKYBOX:
+		portal = GLPortal::FindPortal(wall->secportal);
+		if (!portal)
+		{
+			// either a regular skybox or an Eternity-style horizon
+			if (wall->secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(wall->secportal);
+			else portal = new GLSkyboxPortal(wall->secportal);
+		}
+		portal->AddLine(wall);
+		break;
+
+	case PORTALTYPE_SECTORSTACK:
+		portal = wall->portal->GetRenderState();
+		portal->AddLine(wall);
+		break;
+
+	case PORTALTYPE_PLANEMIRROR:
+		if (GLPortal::PlaneMirrorMode * wall->planemirror->fC() <= 0)
+		{
+			//@sync-portal
+			wall->planemirror = UniquePlaneMirrors.Get(wall->planemirror);
+			portal = GLPortal::FindPortal(wall->planemirror);
+			if (!portal) portal = new GLPlaneMirrorPortal(wall->planemirror);
+			portal->AddLine(wall);
+		}
+		break;
+
+	case PORTALTYPE_MIRROR:
+		portal = GLPortal::FindPortal(wall->seg->linedef);
+		if (!portal) portal = new GLMirrorPortal(wall->seg->linedef);
+		portal->AddLine(wall);
+		if (gl_mirror_envmap)
+		{
+			// draw a reflective layer over the mirror
+			AddMirrorSurface(wall);
+		}
+		break;
+
+	case PORTALTYPE_LINETOLINE:
+		portal = GLPortal::FindPortal(wall->lineportal);
+		if (!portal)
+		{
+			line_t *otherside = wall->lineportal->lines[0]->mDestination;
+			if (otherside != NULL && otherside->portalindex < level.linePortals.Size())
+			{
+				ProcessActorsInPortal(otherside->getPortal()->mGroup);
+			}
+			portal = new GLLineToLinePortal(wall->lineportal);
+		}
+		portal->AddLine(wall);
+		break;
+
+	case PORTALTYPE_SKY:
+		wall->sky = UniqueSkies.Get(wall->sky);
+		portal = GLPortal::FindPortal(wall->sky);
+		if (!portal) portal = new GLSkyPortal(wall->sky);
+		portal->AddLine(wall);
+		break;
+	}
+	wall->vertcount = 0;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FDrawInfo::DrawDecal(GLDecal *gldecal)
+{
+	auto wall = gldecal->wall;
+	auto decal = gldecal->decal;
+	auto tex = gldecal->gltexture;
+	auto &seg = wall->seg;
+	
+	// calculate dynamic light effect.
+	if (gl_lights && GLRenderer->mLightCount && !mDrawer->FixedColormap && gl_light_sprites)
+	{
+		// Note: This should be replaced with proper shader based lighting.
+		double x, y;
+		decal->GetXY(seg->sidedef, x, y);
+		gl_SetDynSpriteLight(nullptr, x, y, gldecal->zcenter, wall->sub);
+	}
+
+	// alpha color only has an effect when using an alpha texture.
+	if (decal->RenderStyle.Flags & STYLEF_RedIsAlpha)
+	{
+		gl_RenderState.SetObjectColor(decal->AlphaColor | 0xff000000);
+	}
+
+	gl_SetRenderStyle(decal->RenderStyle, false, false);
+	gl_RenderState.SetMaterial(tex, CLAMP_XY, decal->Translation, 0, !!(decal->RenderStyle.Flags & STYLEF_RedIsAlpha));
+
+
+	// If srcalpha is one it looks better with a higher alpha threshold
+	if (decal->RenderStyle.SrcAlpha == STYLEALPHA_One) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+	else gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
+
+
+	mDrawer->SetColor(gldecal->light, gldecal->rel, gldecal->colormap, gldecal->a);
+	// for additively drawn decals we must temporarily set the fog color to black.
+	PalEntry fc = gl_RenderState.GetFogColor();
+	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
+	{
+		gl_RenderState.SetFog(0, -1);
+	}
+
+	gl_RenderState.SetNormal(wall->glseg.Normal());
+
+	if (wall->lightlist == nullptr)
+	{
+		gl_RenderState.Apply();
+		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);
+	}
+	else
+	{
+		auto &lightlist = *wall->lightlist;
+
+		for (unsigned k = 0; k < lightlist.Size(); k++)
+		{
+			secplane_t &lowplane = k == lightlist.Size() - 1 ? wall->bottomplane : lightlist[k + 1].plane;
+
+			DecalVertex *dv = gldecal->dv;
+			float low1 = lowplane.ZatPoint(dv[1].x, dv[1].y);
+			float low2 = lowplane.ZatPoint(dv[2].x, dv[2].y);
+
+			if (low1 < dv[1].z || low2 < dv[2].z)
+			{
+				int thisll = lightlist[k].caster != NULL ? hw_ClampLight(*lightlist[k].p_lightlevel) : wall->lightlevel;
+				FColormap thiscm;
+				thiscm.FadeColor = wall->Colormap.FadeColor;
+				thiscm.CopyFrom3DLight(&lightlist[k]);
+				mDrawer->SetColor(thisll, gldecal->rel, thiscm, gldecal->a);
+				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
+				mDrawer->SetFog(thisll, gldecal->rel, &thiscm, wall->RenderStyle == STYLE_Add);
+				gl_RenderState.SetSplitPlanes(lightlist[k].plane, lowplane);
+
+				gl_RenderState.Apply();
+				GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, gldecal->vertindex, 4);
+			}
+			if (low1 <= dv[0].z && low2 <= dv[3].z) break;
+		}
+	}
+
+	rendered_decals++;
+	gl_RenderState.SetTextureMode(TM_MODULATE);
+	gl_RenderState.SetObjectColor(0xffffffff);
+	gl_RenderState.SetFog(fc, -1);
+	gl_RenderState.SetDynLight(0, 0, 0);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FDrawInfo::DrawDecals()
+{
+	GLWall *wall = nullptr;
+	for (auto gldecal : decals[0])
+	{
+		if (gldecal->wall != wall)
+		{
+			wall = gldecal->wall;
+			if (wall->lightlist != nullptr)
+			{
+				gl_RenderState.EnableSplit(true);
+			}
+			else
+			{
+				gl_RenderState.EnableSplit(false);
+				mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+			}
+		}
+		DrawDecal(gldecal);
+	}
+	if (wall && wall->lightlist != nullptr) gl_RenderState.EnableSplit(false);
+}
+
+//==========================================================================
+//
+// This list will never get long, so this code should be ok.
+//
+//==========================================================================
+void FDrawInfo::DrawDecalsForMirror(GLWall *wall)
+{
+	mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+	for (auto gldecal : decals[1])
+	{
+		if (gldecal->wall == wall)
+		{
+			DrawDecal(gldecal);
+		}
+	}
+}
+

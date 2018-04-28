@@ -28,7 +28,7 @@
 #include "gl/system/gl_system.h"
 #include "v_video.h"
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "w_wad.h"

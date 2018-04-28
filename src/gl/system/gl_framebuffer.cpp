@@ -86,6 +86,8 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
 	DoSetGamma();
+	hwcaps = gl.flags;
+	if (gl.legacyMode) hwcaps |= RFL_NO_SHADERS;
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
@@ -403,6 +405,23 @@ void OpenGLFrameBuffer::UnbindTexUnit(int no)
 	FHardwareTexture::Unbind(no);
 }
 
+void OpenGLFrameBuffer::FlushTextures()
+{
+	if (GLRenderer) GLRenderer->FlushTextures();
+}
+
+void OpenGLFrameBuffer::TextureFilterChanged()
+{
+	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();
+}
+
+void OpenGLFrameBuffer::ResetFixedColormap()
+{
+	if (GLRenderer != nullptr && GLRenderer->mShaderManager != nullptr)
+	{
+		GLRenderer->mShaderManager->ResetFixedColormap();
+	}
+}
 
 
 void OpenGLFrameBuffer::UpdatePalette()
@@ -462,10 +481,9 @@ void OpenGLFrameBuffer::SetClearColor(int color)
 //
 //
 //==========================================================================
-bool OpenGLFrameBuffer::Begin2D(bool copy3d)
+void OpenGLFrameBuffer::Begin2D(bool copy3d)
 {
 	Super::Begin2D(copy3d);
-	ClearClipRect();
 	gl_RenderState.mViewMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.ortho(0, GetWidth(), GetHeight(), 0, -1.0f, 1.0f);
 	gl_RenderState.ApplyMatrices();
@@ -484,7 +502,6 @@ bool OpenGLFrameBuffer::Begin2D(bool copy3d)
 
 	if (GLRenderer != NULL)
 			GLRenderer->Begin2D();
-	return true;
 }
 
 //===========================================================================

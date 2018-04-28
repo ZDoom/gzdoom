@@ -1,14 +1,8 @@
+#pragma once
 
-
-#ifndef _GL_INTERN_H
-#define _GL_INTERN_H
 
 #include "r_defs.h"
 #include "c_cvars.h"
-
-#ifdef _MSC_VER
-#pragma warning(disable:4244)
-#endif
 
 EXTERN_CVAR(Bool,gl_enhanced_nightvision)
 EXTERN_CVAR(Int, screenblocks);
@@ -63,4 +57,3 @@ EXTERN_CVAR(Float, gl_ssao_blur_amount)
 EXTERN_CVAR(Int, gl_debug_level)
 EXTERN_CVAR(Bool, gl_debug_breakpoint)
 
-#endif // _GL_INTERN_H

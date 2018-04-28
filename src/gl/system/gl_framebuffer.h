@@ -34,7 +34,7 @@ public:
 	PalEntry *GetPalette () override;
 	bool SetFlash(PalEntry rgb, int amount) override;
 	void GetFlash(PalEntry &rgb, int &amount) override;
-	bool Begin2D(bool copy3d) override;
+	void Begin2D(bool copy3d) override;
 	void GameRestart() override;
 	void InitForLevel() override;
 	void SetClearColor(int color) override;
@@ -46,6 +46,9 @@ public:
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
 	void UnbindTexUnit(int no) override;
+	void FlushTextures() override;
+	void TextureFilterChanged() override;
+	void ResetFixedColormap() override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer

@@ -9,14 +9,6 @@
 #include "r_utility.h"
 #include "c_cvars.h"
 
-EXTERN_CVAR(Int, gl_weaponlight);
-
-inline	int getExtraLight()
-{
-	return r_viewpoint.extralight * gl_weaponlight;
-}
-
-
 class GLSceneDrawer
 {
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
@@ -100,7 +92,7 @@ public:
 	bool CheckFog(sector_t *frontsector, sector_t *backsector)
 	{
 		if (FixedColormap != CM_DEFAULT) return false;
-		return gl_CheckFog(frontsector, backsector);
+		return hw_CheckFog(frontsector, backsector);
 	}
 
 	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)

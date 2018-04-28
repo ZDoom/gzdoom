@@ -158,7 +158,6 @@ public:
 	void Draw(int pass, bool trans = false);
 	void DrawWalls(int pass);
 	void DrawFlats(int pass);
-	void DrawDecals();
 	
 	GLDrawList * next;
 } ;
@@ -172,6 +171,7 @@ struct FDrawInfo : public HWDrawInfo
 	
 	FDrawInfo * next;
 	GLDrawList drawlists[GLDL_TYPES];
+	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	GLDrawList *dldrawlists = NULL;	// only gets allocated when needed.
 	
 	FDrawInfo();
@@ -179,17 +179,36 @@ struct FDrawInfo : public HWDrawInfo
 	
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
-    void ProcessActorsInPortal(FLinePortalSpan *glport) override;
+	GLDecal *AddDecal(bool onmirror) override;
+	void AddPortal(GLWall *w, int portaltype) override;
 
-	bool PutWallCompat(GLWall *wall, int passflag);	// Legacy GL only.
-	
-	
+    void ProcessActorsInPortal(FLinePortalSpan *glport) override;
+	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
+
+	// Legacy GL only. 
+	bool PutWallCompat(GLWall *wall, int passflag);
+	void RenderFogBoundaryCompat(GLWall *wall);
+	void RenderLightsCompat(GLWall *wall, int pass);
+
+	void DrawDecal(GLDecal *gldecal);
+	void DrawDecals();
+	void DrawDecalsForMirror(GLWall *wall);
+
 	void StartScene();
 	void SetupFloodStencil(wallseg * ws);
 	void ClearFloodStencil(wallseg * ws);
 	void DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, bool ceiling);
 	void FloodUpperGap(seg_t * seg) override;
 	void FloodLowerGap(seg_t * seg) override;
+
+	// Wall drawer
+	void RenderWall(GLWall *wall, int textured);
+	void RenderFogBoundary(GLWall *wall);
+	void RenderMirrorSurface(GLWall *wall);
+	void RenderTranslucentWall(GLWall *wall);
+	void RenderTexturedWall(GLWall *wall, int rflags);
+	void DrawWall(GLWall *wall, int pass);
+
 	
 	// These two may be moved to the API independent part of the renderer later.
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;

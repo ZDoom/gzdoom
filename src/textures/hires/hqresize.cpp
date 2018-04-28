@@ -34,16 +34,14 @@
 **
 */
 
-#include "gl/system/gl_system.h"
-#include "gl/system/gl_interface.h"
-#include "gl/renderer/gl_renderer.h"
+#include "c_cvars.h"
+#include "v_video.h"
 #include "hqnx/hqx.h"
 #ifdef HAVE_MMX
 #include "hqnx_asm/hqnx_asm.h"
 #endif
 #include "xbr/xbrz.h"
 #include "xbr/xbrz_old.h"
-
 #include "parallel_for.h"
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -58,18 +56,18 @@ CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 		if (self == 8) self = 10;
 		if (self == 9) self = 6;
 	#endif
-	GLRenderer->FlushTextures();
+	screen->FlushTextures();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self > 1024) self = 1024;
-	GLRenderer->FlushTextures();
+	screen->FlushTextures();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	GLRenderer->FlushTextures();
+	screen->FlushTextures();
 }
 
 CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);
@@ -325,10 +323,6 @@ unsigned char *FTexture::CreateUpsampledTextureBuffer (unsigned char *inputBuffe
 
 	// [BB] Don't try to upsample textures based off FCanvasTexture.
 	if ( bHasCanvas )
-		return inputBuffer;
-
-	// [BB] Don't upsample non-shader handled warped textures. Needs too much memory and time
-	if (gl.legacyMode && bWarped)
 		return inputBuffer;
 
 	// already scaled?

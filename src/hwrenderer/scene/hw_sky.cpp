@@ -26,10 +26,11 @@
 #include "r_utility.h"
 #include "doomdata.h"
 #include "g_levellocals.h"
-
-#include "gl/renderer/gl_lightdata.h"
-#include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_portal.h"
+#include "p_lnspec.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/scene/hw_portal.h"
+#include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/textures/hw_material.h"
 
 CVAR(Bool,gl_noskyboxes, false, 0)
@@ -72,7 +73,7 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 		if (level.flags&LEVEL_DOUBLESKY)
 		{
 			texture[1] = FMaterial::ValidateTexture(sky1texture, false, true);
-			x_offset[1] = GLRenderer->mSky1Pos;
+			x_offset[1] = hw_sky1pos;
 			doublesky = true;
 		}
 
@@ -82,13 +83,13 @@ void GLSkyInfo::init(int sky1, PalEntry FadeColor)
 			texture[0] = FMaterial::ValidateTexture(sky2texture, false, true);
 			skytexno1 = sky2texture;
 			sky2 = true;
-			x_offset[0] = GLRenderer->mSky2Pos;
+			x_offset[0] = hw_sky2pos;
 		}
 		else if (!doublesky)
 		{
 			texture[0] = FMaterial::ValidateTexture(sky1texture, false, true);
 			skytexno1 = sky1texture;
-			x_offset[0] = GLRenderer->mSky1Pos;
+			x_offset[0] = hw_sky1pos;
 		}
 	}
 	if (level.skyfog > 0)
@@ -120,7 +121,8 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 		GLSkyInfo skyinfo;
 		skyinfo.init(sector->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
-		sky = UniqueSkies.Get(&skyinfo);
+		sky = &skyinfo;
+		PutPortal(di, ptype);
 	}
 	else if (sportal != nullptr)
 	{
@@ -135,7 +137,7 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 			{
 				if (sector->PortalBlocksView(plane)) return;
 
-				if (GLPortal::instack[1 - plane]) return;
+				if (screen->instack[1 - plane]) return;
 				ptype = PORTALTYPE_SECTORSTACK;
 				portal = glport;
 			}
@@ -188,7 +190,7 @@ void GLWall::SkyLine(HWDrawInfo *di, sector_t *fs, line_t *line)
 	{
 		skyinfo.init(fs->sky, Colormap.FadeColor);
 		ptype = PORTALTYPE_SKY;
-		sky = UniqueSkies.Get(&skyinfo);
+		sky = &skyinfo;
 	}
 	ztop[0] = zceil[0];
 	ztop[1] = zceil[1];

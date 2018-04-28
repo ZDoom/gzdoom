@@ -1269,7 +1269,7 @@ class PlayerPawn : Actor native
 	//----------------------------------------------------------------------------
 
 	native clearscope int GetMaxHealth(bool withupgrades = false) const;
-	native bool ResetAirSupply (bool playgasp = false);
+	native bool ResetAirSupply (bool playgasp = true);
 	native clearscope static String GetPrintableDisplayName(Class<Actor> cls);
 	native void CheckMusicChange();
 	native void CalcHeight ();

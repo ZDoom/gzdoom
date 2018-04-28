@@ -38,7 +38,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/system/gl_interface.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
@@ -495,7 +495,7 @@ bool gl_SetupLightTexture()
 //
 //==========================================================================
 
-static bool gl_CheckFog(FColormap *cm, int lightlevel)
+static bool CheckFog(FColormap *cm, int lightlevel)
 {
 	bool frontfog;
 
@@ -549,12 +549,13 @@ bool FDrawInfo::PutWallCompat(GLWall *wall, int passflag)
 		if (wall->sub->lighthead == nullptr) return false;
 	}
 
-	bool foggy = gl_CheckFog(&wall->Colormap, wall->lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
+	bool foggy = CheckFog(&wall->Colormap, wall->lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
 	bool masked = passflag == 2 && wall->gltexture->isMasked();
 
 	int list = list_indices[masked][foggy];
 	auto newwall = dldrawlists[list].NewWall();
 	*newwall = *wall;
+	if (!masked) newwall->ProcessDecals(this);
 	return true;
 
 }
@@ -574,7 +575,7 @@ bool GLFlat::PutFlatCompat(bool fog)
 	{ { GLLDL_FLATS_PLAIN, GLLDL_FLATS_FOG },{ GLLDL_FLATS_MASKED, GLLDL_FLATS_FOGMASKED } };
 
 	bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
-	bool foggy = gl_CheckFog(&Colormap, lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
+	bool foggy = CheckFog(&Colormap, lightlevel) || (level.flags&LEVEL_HASFADETABLE) || gl_lights_additive;
 
 	
 	int list = list_indices[masked][foggy];
@@ -590,11 +591,17 @@ bool GLFlat::PutFlatCompat(bool fog)
 //
 //==========================================================================
 
-void GLWall::RenderFogBoundaryCompat()
+void FDrawInfo::RenderFogBoundaryCompat(GLWall *wall)
 {
 	// without shaders some approximation is needed. This won't look as good
 	// as the shader version but it's an acceptable compromise.
-	float fogdensity = gl_GetFogDensity(lightlevel, Colormap.FadeColor, Colormap.FogDensity);
+	auto &Colormap = wall->Colormap;
+	auto &glseg = wall->glseg;
+	auto tcs = wall->tcs;
+	auto ztop = wall->ztop;
+	auto zbottom = wall->zbottom;
+
+	float fogdensity = hw_GetFogDensity(wall->lightlevel, Colormap.FadeColor, Colormap.FogDensity);
 
 	float dist1 = Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, glseg.x1, glseg.y1);
 	float dist2 = Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, glseg.x2, glseg.y2);
@@ -614,14 +621,14 @@ void GLWall::RenderFogBoundaryCompat()
 	glDepthFunc(GL_LEQUAL);
 	glColor4f(fc[0], fc[1], fc[2], fogd1);
 	glBegin(GL_TRIANGLE_FAN);
-	glTexCoord2f(tcs[LOLFT].u, tcs[LOLFT].v);
+	glTexCoord2f(tcs[GLWall::LOLFT].u, tcs[GLWall::LOLFT].v);
 	glVertex3f(glseg.x1, zbottom[0], glseg.y1);
-	glTexCoord2f(tcs[UPLFT].u, tcs[UPLFT].v);
+	glTexCoord2f(tcs[GLWall::UPLFT].u, tcs[GLWall::UPLFT].v);
 	glVertex3f(glseg.x1, ztop[0], glseg.y1);
 	glColor4f(fc[0], fc[1], fc[2], fogd2);
-	glTexCoord2f(tcs[UPRGT].u, tcs[UPRGT].v);
+	glTexCoord2f(tcs[GLWall::UPRGT].u, tcs[GLWall::UPRGT].v);
 	glVertex3f(glseg.x2, ztop[1], glseg.y2);
-	glTexCoord2f(tcs[LORGT].u, tcs[LORGT].v);
+	glTexCoord2f(tcs[GLWall::LORGT].u, tcs[GLWall::LORGT].v);
 	glVertex3f(glseg.x2, zbottom[1], glseg.y2);
 	glEnd();
 	glDepthFunc(GL_LESS);
@@ -733,8 +740,13 @@ void GLFlat::DrawLightsCompat(int pass)
 // Sets up the texture coordinates for one light to be rendered
 //
 //==========================================================================
-bool GLWall::PrepareLight(ADynamicLight * light, int pass)
+static bool PrepareLight(GLWall *wall, ADynamicLight * light, int pass)
 {
+	auto &glseg = wall->glseg;
+	auto tcs = wall->tcs;
+	auto ztop = wall->ztop;
+	auto zbottom = wall->zbottom;
+
 	float vtx[] = { glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2 };
 	Plane p;
 	FVector3 nearPt, up, right;
@@ -748,7 +760,7 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 		return false;
 	}
 
-	if (!gl_SetupLight(seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, true, pass != GLPASS_LIGHTTEX))
+	if (!gl_SetupLight(wall->seg->frontsector->PortalGroup, p, light, nearPt, up, right, scale, true, pass != GLPASS_LIGHTTEX))
 	{
 		return false;
 	}
@@ -778,27 +790,27 @@ bool GLWall::PrepareLight(ADynamicLight * light, int pass)
 }
 
 
-void GLWall::RenderLightsCompat(int pass)
+void FDrawInfo::RenderLightsCompat(GLWall *wall, int pass)
 {
 	FLightNode * node;
 
 	// black fog is diminishing light and should affect lights less than the rest!
-	if (pass == GLPASS_LIGHTTEX) mDrawer->SetFog((255 + lightlevel) >> 1, 0, NULL, false);
-	else mDrawer->SetFog(lightlevel, 0, &Colormap, true);
+	if (pass == GLPASS_LIGHTTEX) mDrawer->SetFog((255 + wall->lightlevel) >> 1, 0, NULL, false);
+	else mDrawer->SetFog(wall->lightlevel, 0, &wall->Colormap, true);
 
-	if (seg->sidedef == NULL)
+	if (wall->seg->sidedef == NULL)
 	{
 		return;
 	}
-	else if (!(seg->sidedef->Flags & WALLF_POLYOBJ))
+	else if (!(wall->seg->sidedef->Flags & WALLF_POLYOBJ))
 	{
 		// Iterate through all dynamic lights which touch this wall and render them
-		node = seg->sidedef->lighthead;
+		node = wall->seg->sidedef->lighthead;
 	}
-	else if (sub)
+	else if (wall->sub)
 	{
 		// To avoid constant rechecking for polyobjects use the subsector's lightlist instead
-		node = sub->lighthead;
+		node = wall->sub->lighthead;
 	}
 	else
 	{
@@ -806,7 +818,7 @@ void GLWall::RenderLightsCompat(int pass)
 	}
 
 	texcoord save[4];
-	memcpy(save, tcs, sizeof(tcs));
+	memcpy(save, wall->tcs, sizeof(wall->tcs));
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;
@@ -818,15 +830,15 @@ void GLWall::RenderLightsCompat(int pass)
 			node = node->nextLight;
 			continue;
 		}
-		if (PrepareLight(light, pass))
+		if (PrepareLight(wall, light, pass))
 		{
-			vertcount = 0;
-			RenderWall(RWF_TEXTURED);
+			wall->vertcount = 0;
+			RenderWall(wall, GLWall::RWF_TEXTURED);
 		}
 		node = node->nextLight;
 	}
-	memcpy(tcs, save, sizeof(tcs));
-	vertcount = 0;
+	memcpy(wall->tcs, save, sizeof(wall->tcs));
+	wall->vertcount = 0;
 }
 
 //==========================================================================

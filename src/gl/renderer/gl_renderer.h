@@ -9,6 +9,10 @@
 #include "gl/dynlights/gl_shadowmap.h"
 #include <functional>
 
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
+
 struct particle_t;
 class FCanvasTexture;
 class FFlatVertexBuffer;
@@ -151,8 +155,6 @@ public:
 	FTextureID glPart;
 	FTextureID mirrorTexture;
 	
-	float mSky1Pos, mSky2Pos;
-
 	FRotator mAngles;
 	FVector2 mViewVector;
 

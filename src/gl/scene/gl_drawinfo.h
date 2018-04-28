@@ -165,9 +165,7 @@ public:
 
 struct FDrawInfo : public HWDrawInfo
 {
-	
 	GLSceneDrawer *mDrawer;
-	
 	
 	FDrawInfo * next;
 	GLDrawList drawlists[GLDL_TYPES];
@@ -182,8 +180,8 @@ struct FDrawInfo : public HWDrawInfo
 	GLDecal *AddDecal(bool onmirror) override;
 	void AddPortal(GLWall *w, int portaltype) override;
 	void AddFlat(GLFlat *flat, bool fog) override;
+	void AddSprite(GLSprite *sprite, bool translucent) override;
 
-    void ProcessActorsInPortal(FLinePortalSpan *glport) override;
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 
 	// Legacy GL only. 
@@ -222,6 +220,8 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawSubsector(GLFlat *flat, subsector_t * sub);
 	void SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli);
 
+	// Sprite drawer
+	void DrawSprite(GLSprite *sprite, int pass);
 	
 	// These two may be moved to the API independent part of the renderer later.
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;

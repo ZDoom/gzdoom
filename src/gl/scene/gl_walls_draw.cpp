@@ -455,7 +455,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 			line_t *otherside = wall->lineportal->lines[0]->mDestination;
 			if (otherside != NULL && otherside->portalindex < level.linePortals.Size())
 			{
-				ProcessActorsInPortal(otherside->getPortal()->mGroup);
+				ProcessActorsInPortal(otherside->getPortal()->mGroup, mDrawer->in_area);
 			}
 			portal = new GLLineToLinePortal(wall->lineportal);
 		}

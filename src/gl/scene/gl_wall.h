@@ -30,6 +30,7 @@ struct FFlatVertex;
 struct FLinePortalSpan;
 class GLSceneDrawer;
 struct FDynLightData;
+enum area_t : int;
 
 struct FDrawInfo;
 struct HWDrawInfo;
@@ -47,7 +48,6 @@ public:
 	friend struct GLDrawList;
 	friend void Mod_RenderModel(GLSprite * spr, model_t * mdl, int framenumber);
 
-	GLSceneDrawer *mDrawer;
 	int lightlevel;
 	uint8_t foglevel;
 	uint8_t hw_styleflags;
@@ -81,25 +81,16 @@ public:
 
 	int dynlightindex;
 
-	void SplitSprite(sector_t * frontsector, bool translucent);
-	void SetLowerParam();
+	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
-	void CalculateVertices(FVector3 *v);
+	bool CalculateVertices(FVector3 *v);
 
 public:
 
-	GLSprite(GLSceneDrawer *drawer)
-	{
-		mDrawer = drawer;
-	}
-	void Draw(int pass);
-	void PutSprite(bool translucent);
-	void Process(AActor* thing,sector_t * sector, int thruportal = false);
-	void ProcessParticle (particle_t *particle, sector_t *sector);//, int shade, int fakeside)
-	void SetThingColor(PalEntry);
-
-	// Lines start-end and fdiv must intersect.
-	double CalcIntersectionVertex(GLWall * w2);
+	GLSprite() {}
+	void PutSprite(HWDrawInfo *di, bool translucent);
+	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false);
+	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 
 	GLSprite(const GLSprite &other)
 	{

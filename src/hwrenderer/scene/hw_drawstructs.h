@@ -24,6 +24,13 @@ struct FLinePortalSpan;
 struct FDynLightData;
 class VSMatrix;
 
+enum HWRenderStyle
+{
+	STYLEHW_Normal,			// default
+	STYLEHW_Solid,			// drawn solid (needs special treatment for sprites)
+	STYLEHW_NoAlphaTest,	// disable alpha test
+};
+
 enum WallTypes
 {
 	RENDERWALL_NONE,
@@ -268,16 +275,6 @@ public:
 	float PointOnSide(float x,float y)
 	{
 		return -((y-glseg.y1)*(glseg.x2-glseg.x1)-(x-glseg.x1)*(glseg.y2-glseg.y1));
-	}
-
-	// Lines start-end and fdiv must intersect.
-	double CalcIntersectionVertex(GLWall * w2)
-	{
-		float ax = glseg.x1, ay=glseg.y1;
-		float bx = glseg.x2, by=glseg.y2;
-		float cx = w2->glseg.x1, cy=w2->glseg.y1;
-		float dx = w2->glseg.x2, dy=w2->glseg.y2;
-		return ((ay-cy)*(dx-cx)-(ax-cx)*(dy-cy)) / ((bx-ax)*(dy-cy)-(by-ay)*(dx-cx));
 	}
 
 };

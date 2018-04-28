@@ -94,27 +94,6 @@ void GLDrawList::Reset()
 	drawitems.Clear();
 }
 
-
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-// Translucent polygon sorting - uses a BSP algorithm with an additional 'equal' branch
-
-inline double GLSprite::CalcIntersectionVertex(GLWall * w2)
-{
-	float ax = x1, ay=y1;
-	float bx = x2, by=y2;
-	float cx = w2->glseg.x1, cy=w2->glseg.y1;
-	float dx = w2->glseg.x2, dy=w2->glseg.y2;
-	return ((ay-cy)*(dx-cx)-(ax-cx)*(dy-cy)) / ((bx-ax)*(dy-cy)-(by-ay)*(dx-cx));
-}
-
-
-
 //==========================================================================
 //
 //
@@ -404,13 +383,22 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 	}
 }
 
-
 //==========================================================================
 //
 //
 //
 //==========================================================================
 #define MIN_EQ (0.0005f)
+
+// Lines start-end and fdiv must intersect.
+inline double CalcIntersectionVertex(GLWall *w1, GLWall * w2)
+{
+	float ax = w1->glseg.x1, ay = w1->glseg.y1;
+	float bx = w1->glseg.x2, by = w1->glseg.y2;
+	float cx = w2->glseg.x1, cy = w2->glseg.y1;
+	float dx = w2->glseg.x2, dy = w2->glseg.y2;
+	return ((ay - cy)*(dx - cx) - (ax - cx)*(dy - cy)) / ((bx - ax)*(dy - cy) - (by - ay)*(dx - cx));
+}
 
 void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 {
@@ -444,7 +432,7 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 	}
 	else
 	{
-		double r=ws->CalcIntersectionVertex(wh);
+		double r = CalcIntersectionVertex(ws, wh);
 
 		float ix=(float)(ws->glseg.x1+r*(ws->glseg.x2-ws->glseg.x1));
 		float iy=(float)(ws->glseg.y1+r*(ws->glseg.y2-ws->glseg.y1));
@@ -491,6 +479,19 @@ void GLDrawList::SortWallIntoWall(SortNode * head,SortNode * sort)
 EXTERN_CVAR(Int, gl_billboard_mode)
 EXTERN_CVAR(Bool, gl_billboard_faces_camera)
 EXTERN_CVAR(Bool, gl_billboard_particles)
+
+
+
+inline double CalcIntersectionVertex(GLSprite *s, GLWall * w2)
+{
+	float ax = s->x1, ay = s->y1;
+	float bx = s->x2, by = s->y2;
+	float cx = w2->glseg.x1, cy = w2->glseg.y1;
+	float dx = w2->glseg.x2, dy = w2->glseg.y2;
+	return ((ay - cy)*(dx - cx) - (ax - cx)*(dy - cy)) / ((bx - ax)*(dy - cy) - (by - ay)*(dx - cx));
+}
+
+
 
 void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 {
@@ -542,7 +543,7 @@ void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 			}
 			return;
 		}
-		double r=ss->CalcIntersectionVertex(wh);
+		double r=CalcIntersectionVertex(ss, wh);
 
 		float ix=(float)(ss->x1 + r * (ss->x2-ss->x1));
 		float iy=(float)(ss->y1 + r * (ss->y2-ss->y1));
@@ -726,7 +727,7 @@ void GLDrawList::DoDraw(int pass, int i, bool trans)
 		{
 			GLSprite * s= sprites[drawitems[i].index];
 			RenderSprite.Clock();
-			s->Draw(pass);
+			gl_drawinfo->DrawSprite(s, pass);
 			RenderSprite.Unclock();
 		}
 		break;

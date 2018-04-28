@@ -363,9 +363,12 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 				continue;
 			}
 		}
-
-		GLSprite sprite(this);
-		sprite.Process(thing, sector, false);
+		// If this thing is in a map section that's not in view it can't possibly be visible
+		if (CurrentMapSections[thing->subsector->mapsection])
+		{
+			GLSprite sprite;
+			sprite.Process(gl_drawinfo, thing, sector, in_area, false);
+		}
 	}
 	
 	for (msecnode_t *node = sec->sectorportal_thinglist; node; node = node->m_snext)
@@ -382,8 +385,8 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 			}
 		}
 
-		GLSprite sprite(this);
-		sprite.Process(thing, sector, true);
+		GLSprite sprite;
+		sprite.Process(gl_drawinfo, thing, sector, gl_drawinfo->mDrawer->in_area, true);
 	}
 	SetupSprite.Unclock();
 }
@@ -455,8 +458,8 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 
 		for (i = ParticlesInSubsec[sub->Index()]; i != NO_PARTICLE; i = Particles[i].snext)
 		{
-			GLSprite sprite(this);
-			sprite.ProcessParticle(&Particles[i], fakesector);
+			GLSprite sprite;
+			sprite.ProcessParticle(gl_drawinfo, &Particles[i], fakesector);
 		}
 		SetupSprite.Unclock();
 	}

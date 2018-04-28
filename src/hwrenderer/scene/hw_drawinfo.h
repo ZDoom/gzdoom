@@ -7,6 +7,7 @@ struct FLinePortalSpan;
 struct FFlatVertex;
 class GLWall;
 class GLFlat;
+class GLSprite;
 struct GLDecal;
 
 //==========================================================================
@@ -118,6 +119,8 @@ public:
 	void AddCeilingStack(sector_t * sec);
 	void ProcessSectorStacks(area_t in_area);
 
+	void ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area);
+
 	void AddOtherFloorPlane(int sector, gl_subsectorrendernode * node);
 	void AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node);
 
@@ -130,9 +133,9 @@ public:
 	virtual void AddPortal(GLWall *w, int portaltype) = 0;
     virtual void AddMirrorSurface(GLWall *w) = 0;
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
+	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
-    virtual void ProcessActorsInPortal(FLinePortalSpan *glport) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
 
 

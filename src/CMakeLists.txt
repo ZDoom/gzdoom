@@ -831,6 +831,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_fakeflat.cpp
 	hwrenderer/scene/hw_decal.cpp
 	hwrenderer/scene/hw_clipper.cpp
+	hwrenderer/scene/hw_flats.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_sky.cpp
 	hwrenderer/scene/hw_walls.cpp

@@ -220,6 +220,7 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans);
 	void ProcessLights(GLFlat *flat, bool istrans);
 	void DrawSubsector(GLFlat *flat, subsector_t * sub);
+	void SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli);
 
 	
 	// These two may be moved to the API independent part of the renderer later.

@@ -311,7 +311,7 @@ public:
 
 	int dynlightindex;
 
-	void SetupSubsectorLights(int pass, subsector_t * sub, int *dli = NULL);
+	bool SetupSubsectorLights(int pass, subsector_t * sub);
 
 	void PutFlat(HWDrawInfo *di, bool fog = false);
 	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);

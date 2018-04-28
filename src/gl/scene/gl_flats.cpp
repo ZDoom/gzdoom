@@ -359,7 +359,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	int rel = getExtraLight();
 
 #ifdef _DEBUG
-	if (sector->sectornum == gl_breaksec)
+	if (flat->sector->sectornum == gl_breaksec)
 	{
 		int a = 0;
 	}

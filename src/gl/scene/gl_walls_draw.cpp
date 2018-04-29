@@ -236,11 +236,6 @@ void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 {
 	if (wall->gltexture)
 	{
-		if (mDrawer->FixedColormap == CM_DEFAULT && gl_lights && gl.lightmethod == LM_DIRECT)
-		{
-			if (wall->SetupLights(lightdata))
-				wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-		}
 		if (!wall->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 		else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 		if (wall->RenderStyle == STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
@@ -268,15 +263,7 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 	gl_RenderState.SetNormal(wall->glseg.Normal());
 	switch (pass)
 	{
-	case GLPASS_LIGHTSONLY:
-		if (wall->SetupLights(lightdata))
-			wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-		break;
-
 	case GLPASS_ALL:
-		if (wall->SetupLights(lightdata))
-			wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-		// fall through
 	case GLPASS_PLAIN:
 		RenderTexturedWall(wall, GLWall::RWF_TEXTURED);
 		break;

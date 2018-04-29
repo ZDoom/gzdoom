@@ -310,11 +310,8 @@ void GLSceneDrawer::RenderScene(int recursion)
 	if (gl.lightmethod == LM_DEFERRED && haslights)
 	{
 		GLRenderer->mLights->Begin();
-		gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawWalls(gl_drawinfo, GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_PLAINFLATS].DrawFlats(gl_drawinfo, GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLS].DrawWalls(gl_drawinfo, GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].DrawFlats(gl_drawinfo, GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(gl_drawinfo, GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].Draw(gl_drawinfo, GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].Draw(gl_drawinfo, GLPASS_LIGHTSONLY, true);
 		gl_drawinfo->drawlists[GLDL_MODELS].Draw(gl_drawinfo, GLPASS_LIGHTSONLY);

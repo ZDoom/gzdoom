@@ -249,6 +249,8 @@ void GLSceneDrawer::CreateScene()
 	for(auto p : level.portalGroups) p->glportal = nullptr;
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
+	GLRenderer->mLights->Begin();
+
 	SetView();
 	validcount++;	// used for processing sidedefs only once by the renderer.
 
@@ -269,6 +271,7 @@ void GLSceneDrawer::CreateScene()
 	gl_drawinfo->HandleMissingTextures(in_area);	// Missing upper/lower textures
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water
 	gl_drawinfo->ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
+	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();
 
 	ProcessAll.Unclock();

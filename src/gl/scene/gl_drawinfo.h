@@ -156,13 +156,12 @@ public:
 	int CompareSprites(SortNode * a,SortNode * b);
 	SortNode * SortSpriteList(SortNode * head);
 	SortNode * DoSort(SortNode * head);
-	
-	void DoDraw(int pass, int index, bool trans);
-	void DoDrawSorted(SortNode * node);
-	void DrawSorted();
-	void Draw(int pass, bool trans = false);
-	void DrawWalls(int pass);
-	void DrawFlats(int pass);
+	void Sort();
+
+	void DoDraw(HWDrawInfo *di, int pass, int index, bool trans);
+	void Draw(HWDrawInfo *di, int pass, bool trans = false);
+	void DrawWalls(HWDrawInfo *di, int pass);
+	void DrawFlats(HWDrawInfo *di, int pass);
 	
 	GLDrawList * next;
 } ;
@@ -215,10 +214,10 @@ struct FDrawInfo : public HWDrawInfo
 	void RenderMirrorSurface(GLWall *wall);
 	void RenderTranslucentWall(GLWall *wall);
 	void RenderTexturedWall(GLWall *wall, int rflags);
-	void DrawWall(GLWall *wall, int pass);
+	void DrawWall(GLWall *wall, int pass) override;
 
 	// Flat drawer
-	void DrawFlat(GLFlat *flat, int pass, bool trans);	// trans only has meaning for GLPASS_LIGHTSONLY
+	void DrawFlat(GLFlat *flat, int pass, bool trans) override;	// trans only has meaning for GLPASS_LIGHTSONLY
 	void DrawSkyboxSector(GLFlat *flat, int pass, bool processlights);
 	void DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans);
 	void ProcessLights(GLFlat *flat, bool istrans);
@@ -227,7 +226,10 @@ struct FDrawInfo : public HWDrawInfo
 
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);
-	
+
+	void DoDrawSorted(GLDrawList *dl, SortNode * head);
+	void DrawSorted(int listindex);
+
 	// These two may be moved to the API independent part of the renderer later.
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;

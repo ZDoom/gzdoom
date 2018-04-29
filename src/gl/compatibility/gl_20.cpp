@@ -857,8 +857,8 @@ void GLSceneDrawer::RenderMultipassStuff()
 	gl_RenderState.EnableTexture(false);
 	gl_RenderState.EnableBrightmap(false);
 	gl_RenderState.Apply();
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_PLAIN);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(gl_drawinfo, GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(gl_drawinfo, GLPASS_PLAIN);
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>0.5 will show
 	// This creates a blank surface that only fills the nontransparent parts of the texture
@@ -866,18 +866,18 @@ void GLSceneDrawer::RenderMultipassStuff()
 	gl_RenderState.SetTextureMode(TM_MASK);
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_PLAIN);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(gl_drawinfo, GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(gl_drawinfo, GLPASS_PLAIN);
 
 	// Part 3: The base of fogged surfaces, including the texture
 	gl_RenderState.EnableBrightmap(false);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_PLAIN);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(gl_drawinfo, GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(gl_drawinfo, GLPASS_PLAIN);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_PLAIN);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(gl_drawinfo, GLPASS_PLAIN);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(gl_drawinfo, GLPASS_PLAIN);
 
 	// second pass: draw lights
 	glDepthMask(false);
@@ -888,10 +888,10 @@ void GLSceneDrawer::RenderMultipassStuff()
 			gl_RenderState.BlendFunc(GL_ONE, GL_ONE);
 			glDepthFunc(GL_EQUAL);
 			if (level.lightmode == 8) gl_RenderState.SetSoftLightLevel(255);
-			gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX);
-			gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX);
-			gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX);
-			gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(gl_drawinfo, GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(gl_drawinfo, GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(gl_drawinfo, GLPASS_LIGHTTEX);
+			gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(gl_drawinfo, GLPASS_LIGHTTEX);
 			gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		}
 		else gl_lights = false;
@@ -903,11 +903,11 @@ void GLSceneDrawer::RenderMultipassStuff()
 	gl_RenderState.EnableFog(false);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
 	glDepthFunc(GL_LEQUAL);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_TEXONLY);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(gl_drawinfo, GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(gl_drawinfo, GLPASS_TEXONLY);
 	gl_RenderState.AlphaFunc(GL_GREATER, gl_mask_threshold);
-	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_TEXONLY);
-	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(gl_drawinfo, GLPASS_TEXONLY);
+	gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(gl_drawinfo, GLPASS_TEXONLY);
 
 	// fourth pass: additive lights
 	gl_RenderState.EnableFog(true);
@@ -915,14 +915,14 @@ void GLSceneDrawer::RenderMultipassStuff()
 	glDepthFunc(GL_EQUAL);
 	if (gl_SetupLightTexture())
 	{
-		gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(GLPASS_LIGHTTEX_ADDITIVE);
-		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(GLPASS_LIGHTTEX_FOGGY);
-		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(GLPASS_LIGHTTEX_FOGGY);
-		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(GLPASS_LIGHTTEX_FOGGY);
-		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(GLPASS_LIGHTTEX_FOGGY);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_PLAIN].DrawWalls(gl_drawinfo, GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_MASKED].DrawWalls(gl_drawinfo, GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_PLAIN].DrawFlats(gl_drawinfo, GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_MASKED].DrawFlats(gl_drawinfo, GLPASS_LIGHTTEX_ADDITIVE);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOG].DrawWalls(gl_drawinfo, GLPASS_LIGHTTEX_FOGGY);
+		gl_drawinfo->dldrawlists[GLLDL_WALLS_FOGMASKED].DrawWalls(gl_drawinfo, GLPASS_LIGHTTEX_FOGGY);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOG].DrawFlats(gl_drawinfo, GLPASS_LIGHTTEX_FOGGY);
+		gl_drawinfo->dldrawlists[GLLDL_FLATS_FOGMASKED].DrawFlats(gl_drawinfo, GLPASS_LIGHTTEX_FOGGY);
 	}
 	else gl_lights = false;
 

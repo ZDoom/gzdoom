@@ -351,7 +351,7 @@ void GLDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 
 		// Splitting is done in the shader with clip planes, if available.
 		// The fallback here only really works for non-y-billboarded sprites.
-		if (gl.flags & RFL_NO_CLIP_PLANES)
+		if (screen->hwcaps & RFL_NO_CLIP_PLANES)
 		{
 			float newtexv = ss->vt + ((ss->vb - ss->vt) / (ss->z2 - ss->z1))*(fh->z - ss->z1);
 
@@ -481,8 +481,6 @@ EXTERN_CVAR(Int, gl_billboard_mode)
 EXTERN_CVAR(Bool, gl_billboard_faces_camera)
 EXTERN_CVAR(Bool, gl_billboard_particles)
 
-
-
 inline double CalcIntersectionVertex(GLSprite *s, GLWall * w2)
 {
 	float ax = s->x1, ay = s->y1;
@@ -491,8 +489,6 @@ inline double CalcIntersectionVertex(GLSprite *s, GLWall * w2)
 	float dx = w2->glseg.x2, dy = w2->glseg.y2;
 	return ((ay - cy)*(dx - cx) - (ax - cx)*(dy - cy)) / ((bx - ax)*(dy - cy) - (by - ay)*(dx - cx));
 }
-
-
 
 void GLDrawList::SortSpriteIntoWall(SortNode * head,SortNode * sort)
 {
@@ -696,177 +692,15 @@ SortNode * GLDrawList::DoSort(SortNode * head)
 	return sn;
 }
 
-
 //==========================================================================
 //
 //
 //
 //==========================================================================
-void GLDrawList::DoDraw(int pass, int i, bool trans)
+void GLDrawList::Sort()
 {
-	switch(drawitems[i].rendertype)
-	{
-	case GLDIT_FLAT:
-		{
-			GLFlat * f= flats[drawitems[i].index];
-			RenderFlat.Clock();
-			gl_drawinfo->DrawFlat(f, pass, trans);
-			RenderFlat.Unclock();
-		}
-		break;
-
-	case GLDIT_WALL:
-		{
-			GLWall * w= walls[drawitems[i].index];
-			RenderWall.Clock();
-			gl_drawinfo->DrawWall(w, pass);
-			RenderWall.Unclock();
-		}
-		break;
-
-	case GLDIT_SPRITE:
-		{
-			GLSprite * s= sprites[drawitems[i].index];
-			RenderSprite.Clock();
-			gl_drawinfo->DrawSprite(s, pass);
-			RenderSprite.Unclock();
-		}
-		break;
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLDrawList::DoDrawSorted(SortNode * head)
-{
-	float clipsplit[2];
-	int relation = 0;
-	float z = 0.f;
-
-	gl_RenderState.GetClipSplit(clipsplit);
-
-	if (drawitems[head->itemindex].rendertype == GLDIT_FLAT)
-	{
-		z = flats[drawitems[head->itemindex].index]->z;
-		relation = z > r_viewpoint.Pos.Z ? 1 : -1;
-	}
-
-
-	// left is further away, i.e. for stuff above viewz its z coordinate higher, for stuff below viewz its z coordinate is lower
-	if (head->left) 
-	{
-		if (relation == -1)
-		{
-			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
-		}
-		else if (relation == 1)
-		{
-			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
-		}
-		DoDrawSorted(head->left);
-		gl_RenderState.SetClipSplit(clipsplit);
-	}
-	DoDraw(GLPASS_TRANSLUCENT, head->itemindex, true);
-	if (head->equal)
-	{
-		SortNode * ehead=head->equal;
-		while (ehead)
-		{
-			DoDraw(GLPASS_TRANSLUCENT, ehead->itemindex, true);
-			ehead=ehead->equal;
-		}
-	}
-	// right is closer, i.e. for stuff above viewz its z coordinate is lower, for stuff below viewz its z coordinate is higher
-	if (head->right)
-	{
-		if (relation == 1)
-		{
-			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
-		}
-		else if (relation == -1)
-		{
-			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
-		}
-		DoDrawSorted(head->right);
-		gl_RenderState.SetClipSplit(clipsplit);
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLDrawList::DrawSorted()
-{
-	if (drawitems.Size()==0) return;
-
-	if (!sorted)
-	{
-		GLRenderer->mVBO->Map();
-		MakeSortList();
-		sorted=DoSort(SortNodes[SortNodeStart]);
-		GLRenderer->mVBO->Unmap();
-	}
-	gl_RenderState.ClearClipSplit();
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		glEnable(GL_CLIP_DISTANCE1);
-		glEnable(GL_CLIP_DISTANCE2);
-	}
-	DoDrawSorted(sorted);
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		glDisable(GL_CLIP_DISTANCE1);
-		glDisable(GL_CLIP_DISTANCE2);
-	}
-	gl_RenderState.ClearClipSplit();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLDrawList::Draw(int pass, bool trans)
-{
-	for(unsigned i=0;i<drawitems.Size();i++)
-	{
-		DoDraw(pass, i, trans);
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLDrawList::DrawWalls(int pass)
-{
-	RenderWall.Clock();
-	for(auto &item : drawitems)
-	{
-		gl_drawinfo->DrawWall(walls[item.index], pass);
-	}
-	RenderWall.Unclock();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLDrawList::DrawFlats(int pass)
-{
-	RenderFlat.Clock();
-	for(unsigned i=0;i<drawitems.Size();i++)
-	{
-		gl_drawinfo->DrawFlat(flats[drawitems[i].index], pass, false);
-	}
-	RenderFlat.Unclock();
+	MakeSortList();
+	sorted = DoSort(SortNodes[SortNodeStart]);
 }
 
 //==========================================================================
@@ -904,6 +738,7 @@ void GLDrawList::SortFlats()
 	}
 }
 
+
 //==========================================================================
 //
 //
@@ -939,6 +774,178 @@ GLSprite *GLDrawList::NewSprite()
 	auto sprite = (GLSprite*)RenderDataAllocator.Alloc(sizeof(GLSprite));
 	drawitems.Push(GLDrawItem(GLDIT_SPRITE, sprites.Push(sprite)));
 	return sprite;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void GLDrawList::DoDraw(HWDrawInfo *di, int pass, int i, bool trans)
+{
+	switch(drawitems[i].rendertype)
+	{
+	case GLDIT_FLAT:
+		{
+			GLFlat * f= flats[drawitems[i].index];
+			RenderFlat.Clock();
+			di->DrawFlat(f, pass, trans);
+			RenderFlat.Unclock();
+		}
+		break;
+
+	case GLDIT_WALL:
+		{
+			GLWall * w= walls[drawitems[i].index];
+			RenderWall.Clock();
+			di->DrawWall(w, pass);
+			RenderWall.Unclock();
+		}
+		break;
+
+	case GLDIT_SPRITE:
+		{
+			GLSprite * s= sprites[drawitems[i].index];
+			RenderSprite.Clock();
+			gl_drawinfo->DrawSprite(s, pass);
+			RenderSprite.Unclock();
+		}
+		break;
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void GLDrawList::Draw(HWDrawInfo *di, int pass, bool trans)
+{
+	for (unsigned i = 0; i < drawitems.Size(); i++)
+	{
+		DoDraw(di, pass, i, trans);
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void GLDrawList::DrawWalls(HWDrawInfo *di, int pass)
+{
+	RenderWall.Clock();
+	for (auto &item : drawitems)
+	{
+		di->DrawWall(walls[item.index], pass);
+	}
+	RenderWall.Unclock();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void GLDrawList::DrawFlats(HWDrawInfo *di, int pass)
+{
+	RenderFlat.Clock();
+	for (unsigned i = 0; i<drawitems.Size(); i++)
+	{
+		di->DrawFlat(flats[drawitems[i].index], pass, false);
+	}
+	RenderFlat.Unclock();
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FDrawInfo::DoDrawSorted(GLDrawList *dl, SortNode * head)
+{
+	float clipsplit[2];
+	int relation = 0;
+	float z = 0.f;
+
+	gl_RenderState.GetClipSplit(clipsplit);
+
+	if (dl->drawitems[head->itemindex].rendertype == GLDIT_FLAT)
+	{
+		z = dl->flats[dl->drawitems[head->itemindex].index]->z;
+		relation = z > r_viewpoint.Pos.Z ? 1 : -1;
+	}
+
+
+	// left is further away, i.e. for stuff above viewz its z coordinate higher, for stuff below viewz its z coordinate is lower
+	if (head->left) 
+	{
+		if (relation == -1)
+		{
+			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
+		}
+		else if (relation == 1)
+		{
+			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
+		}
+		DoDrawSorted(dl, head->left);
+		gl_RenderState.SetClipSplit(clipsplit);
+	}
+	dl->DoDraw(gl_drawinfo, GLPASS_TRANSLUCENT, head->itemindex, true);
+	if (head->equal)
+	{
+		SortNode * ehead=head->equal;
+		while (ehead)
+		{
+			dl->DoDraw(gl_drawinfo, GLPASS_TRANSLUCENT, ehead->itemindex, true);
+			ehead=ehead->equal;
+		}
+	}
+	// right is closer, i.e. for stuff above viewz its z coordinate is lower, for stuff below viewz its z coordinate is higher
+	if (head->right)
+	{
+		if (relation == 1)
+		{
+			gl_RenderState.SetClipSplit(clipsplit[0], z);	// render below: set flat as top clip plane
+		}
+		else if (relation == -1)
+		{
+			gl_RenderState.SetClipSplit(z, clipsplit[1]);	// render above: set flat as bottom clip plane
+		}
+		DoDrawSorted(dl, head->right);
+		gl_RenderState.SetClipSplit(clipsplit);
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+void FDrawInfo::DrawSorted(int listindex)
+{
+	GLDrawList *dl = &drawlists[listindex];
+	if (dl->drawitems.Size()==0) return;
+
+	if (!dl->sorted)
+	{
+		GLRenderer->mVBO->Map();
+		dl->Sort();
+		GLRenderer->mVBO->Unmap();
+	}
+	gl_RenderState.ClearClipSplit();
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
+	{
+		glEnable(GL_CLIP_DISTANCE1);
+		glEnable(GL_CLIP_DISTANCE2);
+	}
+	DoDrawSorted(dl, dl->sorted);
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
+	{
+		glDisable(GL_CLIP_DISTANCE1);
+		glDisable(GL_CLIP_DISTANCE2);
+	}
+	gl_RenderState.ClearClipSplit();
 }
 
 //==========================================================================

@@ -143,6 +143,9 @@ public:
 	void GetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t * subsec, float *out);
 	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
 
+	virtual void DrawWall(GLWall *wall, int pass) = 0;
+	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;
+	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
 
 	virtual void FloodUpperGap(seg_t * seg) = 0;
 	virtual void FloodLowerGap(seg_t * seg) = 0;

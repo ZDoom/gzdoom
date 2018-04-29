@@ -1,8 +1,11 @@
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
-#include "gl/scene/gl_wall.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+
+#ifdef _MSC_VER
+#pragma warning(disable:4244)
+#endif
 
 class GLSceneDrawer;
 

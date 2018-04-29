@@ -491,7 +491,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 		double x, y;
 		float out[3];
 		decal->GetXY(seg->sidedef, x, y);
-		hw_GetDynSpriteLight(nullptr, x, y, gldecal->zcenter, wall->sub, out);
+		GetDynSpriteLight(nullptr, x, y, gldecal->zcenter, wall->sub, out);
 		gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 	}
 

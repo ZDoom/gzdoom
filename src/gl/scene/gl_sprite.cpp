@@ -69,7 +69,7 @@ int gl_SetDynModelLight(AActor *self, int dynlightindex)
 	if (gl.legacyMode)
 	{
 		float out[3];
-		hw_GetDynSpriteLight(self, nullptr, out);
+		gl_drawinfo->GetDynSpriteLight(self, nullptr, out);
 		gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 		return -1;
 	}
@@ -198,7 +198,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			else
 			{
 				float out[3];
-				hw_GetDynSpriteLight(gl_light_sprites ? sprite->actor : nullptr, gl_light_particles ? sprite->particle : nullptr, out);
+				GetDynSpriteLight(gl_light_sprites ? sprite->actor : nullptr, gl_light_particles ? sprite->particle : nullptr, out);
 				gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 			}
 		}

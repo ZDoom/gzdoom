@@ -10,6 +10,8 @@ class GLWall;
 class GLFlat;
 class GLSprite;
 struct GLDecal;
+class IShadowMap;
+struct particle_t;
 
 //==========================================================================
 //
@@ -78,6 +80,7 @@ struct HWDrawInfo
 	FRotator mAngles;
 	FVector2 mViewVector;
 	AActor *mViewActor;
+	IShadowMap *mShadowMap;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -136,6 +139,10 @@ public:
 
 	void AddOtherFloorPlane(int sector, gl_subsectorrendernode * node);
 	void AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node);
+
+	void GetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t * subsec, float *out);
+	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
+
 
 	virtual void FloodUpperGap(seg_t * seg) = 0;
 	virtual void FloodLowerGap(seg_t * seg) = 0;

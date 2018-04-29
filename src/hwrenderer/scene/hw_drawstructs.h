@@ -432,8 +432,6 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 }
 
 bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
-void hw_GetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *subsec, float *out);
-void hw_GetDynSpriteLight(AActor *actor, particle_t *particle, float *out);
 void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata);
 
 extern const float LARGE_VALUE;

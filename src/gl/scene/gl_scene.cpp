@@ -256,6 +256,7 @@ void GLSceneDrawer::CreateScene()
 	gl_drawinfo->mAngles = GLRenderer->mAngles;
 	gl_drawinfo->mViewVector = GLRenderer->mViewVector;
 	gl_drawinfo->mViewActor = GLRenderer->mViewActor;
+	gl_drawinfo->mShadowMap = &GLRenderer->mShadowMap;
 
 	RenderBSPNode (level.HeadNode());
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached();
@@ -581,7 +582,6 @@ void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
 
 void GLSceneDrawer::ProcessScene(bool toscreen)
 {
-	FDrawInfo::StartDrawInfo(this);
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	GLPortal::BeginScene();
 
@@ -590,7 +590,6 @@ void GLSceneDrawer::ProcessScene(bool toscreen)
 	CurrentMapSections.Zero();
 	CurrentMapSections.Set(mapsection);
 	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
-	FDrawInfo::EndDrawInfo();
 
 }
 
@@ -714,8 +713,11 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
+		FDrawInfo::StartDrawInfo(this);
 		ProcessScene(toscreen);
 		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
+		FDrawInfo::EndDrawInfo();
+
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
 			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(lviewsector); });

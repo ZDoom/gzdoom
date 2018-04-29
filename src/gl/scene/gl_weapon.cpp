@@ -457,7 +457,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 					else
 					{
 						float out[3];
-						hw_GetDynSpriteLight(playermo, nullptr, out);
+						gl_drawinfo->GetDynSpriteLight(playermo, nullptr, out);
 						gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 					}
 				}

@@ -2,7 +2,6 @@
 #pragma once
 
 #include "hw_aabbtree.h"
-#include "tarray.h"
 #include "stats.h"
 #include <memory>
 

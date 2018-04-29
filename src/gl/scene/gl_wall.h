@@ -19,8 +19,5 @@ struct particle_t;
 
 // Light + color
 
-void gl_SetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *subsec);
-void gl_SetDynSpriteLight(AActor *actor, particle_t *particle);
-int gl_SetDynModelLight(AActor *self, int dynlightindex);
 
 #endif

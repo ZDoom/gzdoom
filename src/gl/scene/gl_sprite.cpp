@@ -42,6 +42,7 @@
 
 #include "gl/system/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
@@ -49,6 +50,7 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/models/gl_models.h"
 #include "gl/renderer/gl_quaddrawer.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 
 extern uint32_t r_renderercaps;
 
@@ -60,6 +62,36 @@ void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 	gl_RenderState.BlendEquation(be);
 	gl_RenderState.BlendFunc(sb, db);
 	gl_RenderState.SetTextureMode(tm);
+}
+
+int gl_SetDynModelLight(AActor *self, int dynlightindex)
+{
+	if (gl.legacyMode)
+	{
+		float out[3];
+		hw_GetDynSpriteLight(self, nullptr, out);
+		gl_RenderState.SetDynLight(out[0], out[1], out[2]);
+		return -1;
+	}
+	else
+	{
+		// For deferred light mode this function gets called twice. First time for list upload, and second for draw.
+		if (gl.lightmethod == LM_DEFERRED && dynlightindex != -1)
+		{
+			gl_RenderState.SetDynLight(0, 0, 0);
+			return dynlightindex;
+		}
+		hw_GetDynModelLight(self, lightdata);
+
+		dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
+
+		if (gl.lightmethod != LM_DEFERRED)
+		{
+			gl_RenderState.SetDynLight(0, 0, 0);
+		}
+		return dynlightindex;
+
+	}
 }
 
 //==========================================================================
@@ -164,7 +196,11 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			if (sprite->modelframe && !sprite->particle)
 				sprite->dynlightindex = gl_SetDynModelLight(gl_light_sprites ? sprite->actor : nullptr, sprite->dynlightindex);
 			else
-				gl_SetDynSpriteLight(gl_light_sprites ? sprite->actor : nullptr, gl_light_particles ? sprite->particle : nullptr);
+			{
+				float out[3];
+				hw_GetDynSpriteLight(gl_light_sprites ? sprite->actor : nullptr, gl_light_particles ? sprite->particle : nullptr, out);
+				gl_RenderState.SetDynLight(out[0], out[1], out[2]);
+			}
 		}
 		sector_t *cursec = sprite->actor ? sprite->actor->Sector : sprite->particle ? sprite->particle->subsector->sector : nullptr;
 		if (cursec != nullptr)

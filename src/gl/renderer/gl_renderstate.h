@@ -535,7 +535,7 @@ public:
 
 	void SetPlaneTextureRotation(GLSectorPlane *plane, FMaterial *texture)
 	{
-		if (gl_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
+		if (hw_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
 		{
 			EnableTextureMatrix(true);
 		}

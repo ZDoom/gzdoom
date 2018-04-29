@@ -42,8 +42,8 @@
 
 EXTERN_CVAR(Bool, gl_seamless)
 
-FDynLightData lightdata;
-
+// If we want to share the array to avoid constant allocations it needs to be thread local unless it'd be littered with expensive synchronization.
+thread_local FDynLightData lightdata;
 
 //==========================================================================
 //
@@ -489,8 +489,10 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	{
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;
+		float out[3];
 		decal->GetXY(seg->sidedef, x, y);
-		gl_SetDynSpriteLight(nullptr, x, y, gldecal->zcenter, wall->sub);
+		hw_GetDynSpriteLight(nullptr, x, y, gldecal->zcenter, wall->sub, out);
+		gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 	}
 
 	// alpha color only has an effect when using an alpha texture.

@@ -44,6 +44,7 @@
 #include "gl/models/gl_models.h"
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/stereo3d/gl_stereo3d.h"
+#include "gl/dynlights/gl_lightbuffer.h"
 
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR(Float, transsouls)
@@ -449,10 +450,16 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				if (gl_lights && GLRenderer->mLightCount && FixedColormap == CM_DEFAULT && gl_light_sprites)
 				{
 					FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
-					if (smf)
+					if (smf && !gl.legacyMode)
+					{
 						gl_SetDynModelLight(playermo, weapondynlightindex[psp]);
+					}
 					else
-						gl_SetDynSpriteLight(playermo, NULL);
+					{
+						float out[3];
+						hw_GetDynSpriteLight(playermo, nullptr, out);
+						gl_RenderState.SetDynLight(out[0], out[1], out[2]);
+					}
 				}
 				SetColor(ll, 0, cmc, trans, true);
 			}

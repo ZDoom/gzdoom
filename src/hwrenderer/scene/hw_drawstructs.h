@@ -311,7 +311,7 @@ public:
 
 	int dynlightindex;
 
-	bool SetupSubsectorLights(int pass, subsector_t * sub);
+	bool SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata);
 
 	void PutFlat(HWDrawInfo *di, bool fog = false);
 	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
@@ -431,5 +431,9 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 	return sqrtf((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
 }
 
-bool gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
+bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
+void hw_GetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t *subsec, float *out);
+void hw_GetDynSpriteLight(AActor *actor, particle_t *particle, float *out);
+void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata);
+
 extern const float LARGE_VALUE;

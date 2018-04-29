@@ -33,6 +33,7 @@
 #include "g_levellocals.h"
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
+#include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/utility/hw_cvars.h"
 
@@ -280,5 +281,87 @@ WeaponRenderStyle GetWeaponRenderStyle(DPSprite *psp, AActor *playermo)
 		r.alpha = vis.Alpha;
 	}
 	return r;
+}
+
+//==========================================================================
+//
+// Coordinates
+//
+//==========================================================================
+
+bool GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *player, WeaponRect &rc)
+{
+	float			tx;
+	float			x1, x2;
+	float			scale;
+	float			scalex;
+	float			ftexturemid;
+
+	// decide which patch to use
+	bool mirror;
+	FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., &mirror);
+	if (!lump.isValid()) return false;
+
+	FMaterial * tex = FMaterial::ValidateTexture(lump, true, false);
+	if (!tex) return false;
+
+	float vw = (float)viewwidth;
+	float vh = (float)viewheight;
+
+	FloatRect r;
+	tex->GetSpriteRect(&r);
+
+	// calculate edges of the shape
+	scalex = (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * vw / 320;
+
+	tx = (psp->Flags & PSPF_MIRROR) ? ((160 - r.width) - (sx + r.left)) : (sx - (160 - r.left));
+	x1 = tx * scalex + vw / 2;
+	if (x1 > vw)	return false; // off the right side
+	rc.x1 = x1 + viewwindowx;
+
+
+	tx += r.width;
+	x2 = tx * scalex + vw / 2;
+	if (x2 < 0) return false; // off the left side
+	rc.x2 = x2 + viewwindowx;
+
+	// killough 12/98: fix psprite positioning problem
+	ftexturemid = 100.f - sy - r.top;
+
+	AWeapon * wi = player->ReadyWeapon;
+	if (wi && wi->YAdjust != 0)
+	{
+		float fYAd = wi->YAdjust;
+		if (screenblocks >= 11)
+		{
+			ftexturemid -= fYAd;
+		}
+		else
+		{
+			ftexturemid -= float(StatusBar->GetDisplacement()) * fYAd;
+		}
+	}
+
+	scale = (SCREENHEIGHT*vw) / (SCREENWIDTH * 200.0f);
+	rc.y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
+	rc.y2 = rc.y1 + (r.height * scale) + 1;
+
+
+	if (!(mirror) != !(psp->Flags & (PSPF_FLIP)))
+	{
+		rc.u2 = tex->GetSpriteUL();
+		rc.v1 = tex->GetSpriteVT();
+		rc.u1 = tex->GetSpriteUR();
+		rc.v2 = tex->GetSpriteVB();
+	}
+	else
+	{
+		rc.u1 = tex->GetSpriteUL();
+		rc.v1 = tex->GetSpriteVT();
+		rc.u2 = tex->GetSpriteUR();
+		rc.v2 = tex->GetSpriteVB();
+	}
+	rc.tex = tex;
+	return true;
 }
 

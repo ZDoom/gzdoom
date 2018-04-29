@@ -50,7 +50,6 @@
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, r_deathcamera)
 
-
 //==========================================================================
 //
 // R_DrawPSprite
@@ -59,91 +58,20 @@ EXTERN_CVAR (Bool, r_deathcamera)
 
 void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float sy, int OverrideShader, bool alphatexture)
 {
-	float			fU1,fV1;
-	float			fU2,fV2;
-	float			tx;
-	float			x1,y1,x2,y2;
-	float			scale;
-	float			scalex;
-	float			ftexturemid;
+	WeaponRect rc;
 	
-	// decide which patch to use
-	bool mirror;
-	FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., &mirror);
-	if (!lump.isValid()) return;
-
-	FMaterial * tex = FMaterial::ValidateTexture(lump, true, false);
-	if (!tex) return;
-
-	gl_RenderState.SetMaterial(tex, CLAMP_XY_NOMIP, 0, OverrideShader, alphatexture);
-
-	float vw = (float)viewwidth;
-	float vh = (float)viewheight;
-
-	FloatRect r;
-	tex->GetSpriteRect(&r);
-
-	// calculate edges of the shape
-	scalex = (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * vw / 320;
-
-	tx = (psp->Flags & PSPF_MIRROR) ? ((160 - r.width) - (sx + r.left)) : (sx - (160 - r.left));
-	x1 = tx * scalex + vw/2;
-	if (x1 > vw)	return; // off the right side
-	x1 += viewwindowx;
-
-	tx += r.width;
-	x2 = tx * scalex + vw / 2;
-	if (x2 < 0) return; // off the left side
-	x2 += viewwindowx;
-
-	// killough 12/98: fix psprite positioning problem
-	ftexturemid = 100.f - sy - r.top;
-
-	AWeapon * wi=player->ReadyWeapon;
-	if (wi && wi->YAdjust != 0)
-	{
-		float fYAd = wi->YAdjust;
-		if (screenblocks >= 11)
-		{
-			ftexturemid -= fYAd;
-		}
-		else 
-		{
-			ftexturemid -= StatusBar->GetDisplacement () * fYAd;
-		}
-	}
-
-	scale = (SCREENHEIGHT*vw) / (SCREENWIDTH * 200.0f);
-	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
-	y2 = y1 + (r.height * scale) + 1;
-
-
-	if (!(mirror) != !(psp->Flags & (PSPF_FLIP)))
-	{
-		fU2 = tex->GetSpriteUL();
-		fV1 = tex->GetSpriteVT();
-		fU1 = tex->GetSpriteUR();
-		fV2 = tex->GetSpriteVB();
-	}
-	else
-	{
-		fU1 = tex->GetSpriteUL();
-		fV1 = tex->GetSpriteVT();
-		fU2 = tex->GetSpriteUR();
-		fV2 = tex->GetSpriteVB();
-		
-	}
-
-	if (tex->tex->GetTranslucency() || OverrideShader != -1)
+	if (!GetWeaponRect(psp, sx, sy, player, rc)) return;
+	gl_RenderState.SetMaterial(rc.tex, CLAMP_XY_NOMIP, 0, OverrideShader, alphatexture);
+	if (rc.tex->tex->GetTranslucency() || OverrideShader != -1)
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	}
 	gl_RenderState.Apply();
 	FQuadDrawer qd;
-	qd.Set(0, x1, y1, 0, fU1, fV1);
-	qd.Set(1, x1, y2, 0, fU1, fV2);
-	qd.Set(2, x2, y1, 0, fU2, fV1);
-	qd.Set(3, x2, y2, 0, fU2, fV2);
+	qd.Set(0, rc.x1, rc.y1, 0, rc.u1, rc.v1);
+	qd.Set(1, rc.x1, rc.y2, 0, rc.u1, rc.v2);
+	qd.Set(2, rc.x2, rc.y1, 0, rc.u2, rc.v1);
+	qd.Set(3, rc.x2, rc.y2, 0, rc.u2, rc.v2);
 	qd.Render(GL_TRIANGLE_STRIP);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.5f);
 }

@@ -73,7 +73,7 @@ CUSTOM_CVAR (Float, Gamma, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 	if (screen != NULL)
 	{
-		screen->SetGamma (self);
+		screen->SetGamma ();
 	}
 }
 

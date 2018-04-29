@@ -318,6 +318,7 @@ protected:
 	template<class T>
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
+	void BuildGammaTable(uint16_t *gt);
 
 	F2DDrawer m2DDrawer;
 	int Width = 0;
@@ -351,7 +352,7 @@ public:
 	// Sets the gamma level. Returns false if the hardware does not support
 	// gamma changing. (Always true for now, since palettes can always be
 	// gamma adjusted.)
-	virtual bool SetGamma (float gamma) = 0;
+	virtual void SetGamma() {}
 
 	// Sets a color flash. RGB is the color, and amount is 0-256, with 256
 	// being all flash and 0 being no flash. Returns false if the hardware

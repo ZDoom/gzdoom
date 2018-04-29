@@ -23,10 +23,7 @@ public:
 	void Update();
 
 	// Color correction
-	bool SetGamma (float gamma);
-	bool SetBrightness(float bright);
-	bool SetContrast(float contrast);
-	void DoSetGamma();
+	void SetGamma();
 
 	void CleanForRestart() override;
 	void UpdatePalette() override;

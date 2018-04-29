@@ -57,7 +57,7 @@ CUSTOM_CVAR (Float, vid_brightness, 0.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (screen != NULL)
 	{
-		screen->SetGamma(Gamma); //Brightness (self);
+		screen->SetGamma();
 	}
 }
 
@@ -65,7 +65,7 @@ CUSTOM_CVAR (Float, vid_contrast, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (screen != NULL)
 	{
-		screen->SetGamma(Gamma); //SetContrast (self);
+		screen->SetGamma();
 	}
 }
 
@@ -73,7 +73,7 @@ CUSTOM_CVAR (Float, vid_saturation, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 {
 	if (screen != NULL)
 	{
-		screen->SetGamma(Gamma);
+		screen->SetGamma();
 	}
 }
 

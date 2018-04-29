@@ -42,8 +42,6 @@
 #include "gl_debug.h"
 #include "r_videoscale.h"
 
-EXTERN_CVAR (Float, vid_brightness)
-EXTERN_CVAR (Float, vid_contrast)
 EXTERN_CVAR (Bool, vid_vsync)
 
 CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
@@ -56,7 +54,7 @@ void gl_PrintStartupLog();
 CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self < 0 || self > 2) self = 2;
-	if (GLRenderer != NULL && GLRenderer->framebuffer != NULL) GLRenderer->framebuffer->DoSetGamma();
+	if (screen != nullptr) screen->SetGamma();
 }
 
 //==========================================================================
@@ -85,7 +83,7 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	InitializeState();
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
-	DoSetGamma();
+	SetGamma();
 	hwcaps = gl.flags;
 	if (gl.legacyMode) hwcaps |= RFL_NO_SHADERS;
 }
@@ -321,7 +319,7 @@ void OpenGLFrameBuffer::SetVSync(bool vsync)
 //
 //===========================================================================
 
-void OpenGLFrameBuffer::DoSetGamma()
+void OpenGLFrameBuffer::SetGamma()
 {
 	bool useHWGamma = m_supportsGamma && ((vid_hwgamma == 0) || (vid_hwgamma == 2 && IsFullscreen()));
 	if (useHWGamma)
@@ -329,21 +327,7 @@ void OpenGLFrameBuffer::DoSetGamma()
 		uint16_t gammaTable[768];
 
 		// This formula is taken from Doomsday
-		float gamma = clamp<float>(Gamma, 0.1f, 4.f);
-		float contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
-		float bright = clamp<float>(vid_brightness, -0.8f, 0.8f);
-
-		double invgamma = 1 / gamma;
-		double norm = pow(255., invgamma - 1);
-
-		for (int i = 0; i < 256; i++)
-		{
-			double val = i * contrast - (contrast - 1) * 127;
-			val += bright * 128;
-			if(gamma != 1) val = pow(val, invgamma) / norm;
-
-			gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (uint16_t)clamp<double>(val*256, 0, 0xffff);
-		}
+		BuildGammaTable(gammaTable);
 		SetGammaTable(gammaTable);
 
 		HWGammaActive = true;
@@ -353,24 +337,6 @@ void OpenGLFrameBuffer::DoSetGamma()
 		ResetGammaTable();
 		HWGammaActive = false;
 	}
-}
-
-bool OpenGLFrameBuffer::SetGamma(float gamma)
-{
-	DoSetGamma();
-	return true;
-}
-
-bool OpenGLFrameBuffer::SetBrightness(float bright)
-{
-	DoSetGamma();
-	return true;
-}
-
-bool OpenGLFrameBuffer::SetContrast(float contrast)
-{
-	DoSetGamma();
-	return true;
 }
 
 //===========================================================================

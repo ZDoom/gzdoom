@@ -310,6 +310,8 @@ void FDrawInfo::AddWall(GLWall *wall)
 	bool translucent = !!(wall->flags & GLWall::GLWF_TRANSLUCENT);
 	int list;
 
+	wall->MakeVertices(this, translucent);
+
 	if (translucent) // translucent walls
 	{
 		if (!gl.legacyMode && mDrawer->FixedColormap == CM_DEFAULT && wall->gltexture != nullptr)
@@ -318,7 +320,6 @@ void FDrawInfo::AddWall(GLWall *wall)
 				wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
 		}
 		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
-		wall->MakeVertices(this, true);
 		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
 		*newwall = *wall;
 	}
@@ -347,12 +348,12 @@ void FDrawInfo::AddWall(GLWall *wall)
 		{
 			list = masked ? GLDL_MASKEDWALLS : GLDL_PLAINWALLS;
 		}
-		wall->MakeVertices(this, false);
 		auto newwall = drawlists[list].NewWall();
 		*newwall = *wall;
 		if (!masked) newwall->ProcessDecals(this);
 	}
 	wall->dynlightindex = -1;
+	wall->vertcount = 0;
 }
 
 //==========================================================================

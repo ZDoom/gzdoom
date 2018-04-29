@@ -152,6 +152,7 @@ public:
 	GL_IRECT mSceneViewport;
 	GL_IRECT mOutputLetterbox;
 	bool mDrawingScene2D = false;
+	bool buffersActive = false;
 
 	float mSceneClearColor[3];
 
@@ -166,7 +167,6 @@ public:
 
 	void Initialize(int width, int height);
 
-	void Begin2D();
 	void ClearBorders();
 
 	void FlushTextures();
@@ -193,7 +193,7 @@ public:
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	void RenderView(player_t *player);
 	void DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap, bool in2d = false);
-
+	void BeginFrame();
 
 	bool StartOffscreen();
 	void EndOffscreen();

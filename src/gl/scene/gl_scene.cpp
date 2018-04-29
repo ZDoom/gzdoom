@@ -134,7 +134,7 @@ void GLSceneDrawer::Reset3DViewport()
 
 void GLSceneDrawer::Set3DViewport(bool mainview)
 {
-	if (mainview && GLRenderer->mBuffers->Setup(GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mSceneViewport.width, GLRenderer->mSceneViewport.height))
+	if (mainview && GLRenderer->buffersActive)
 	{
 		bool useSSAO = (gl_ssao != 0);
 		GLRenderer->mBuffers->BindSceneFB(useSSAO);
@@ -526,8 +526,6 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 
 	glDisable(GL_STENCIL_TEST);
 
-	GLRenderer->framebuffer->Begin2D(false);
-
 	Reset3DViewport();
 
 	// Delay drawing psprites until after bloom has been applied, if enabled.
@@ -776,7 +774,6 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	glDisable(GL_STENCIL_TEST);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
-	screen->Begin2D(false);
 	if (!FGLRenderBuffers::IsEnabled())
 	{
 		DrawBlend(viewsector);

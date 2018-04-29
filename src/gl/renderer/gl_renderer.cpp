@@ -356,21 +356,6 @@ void FGLRenderer::SetupLevel()
 	mVBO->CreateVBO();
 }
 
-void FGLRenderer::Begin2D()
-{
-	if (mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
-	{
-		if (mDrawingScene2D)
-			mBuffers->BindSceneFB(false);
-		else
-			mBuffers->BindCurrentFB();
-	}
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-	glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-
-	gl_RenderState.EnableFog(false);
-}
-
 //===========================================================================
 // 
 //
@@ -532,6 +517,12 @@ void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, in
 	GLSceneDrawer drawer;
 	drawer.WriteSavePic(player, file, width, height);
 }
+
+void FGLRenderer::BeginFrame()
+{
+	buffersActive = GLRenderer->mBuffers->Setup(GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mSceneViewport.width, GLRenderer->mSceneViewport.height);
+}
+
 
 
 void gl_FillScreen()
@@ -721,9 +712,31 @@ public:
 
 void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd);
 int LegacyDesaturation(F2DDrawer::RenderCommand &cmd);
+CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
+	if (buffersActive)
+	{
+		mBuffers->BindCurrentFB();
+	}
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	gl_RenderState.mViewMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
+	gl_RenderState.ApplyMatrices();
+
+	glDisable(GL_DEPTH_TEST);
+
+	// Korshun: ENABLE AUTOMAP ANTIALIASING!!!
+	if (gl_aalines)
+		glEnable(GL_LINE_SMOOTH);
+	else
+	{
+		glDisable(GL_MULTISAMPLE);
+		glDisable(GL_LINE_SMOOTH);
+		glLineWidth(1.0);
+	}
 
 
 	auto &vertices = drawer->mVertices;
@@ -741,6 +754,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	gl_RenderState.EnableFog(false);
 
 	for(auto &cmd : commands)
 	{

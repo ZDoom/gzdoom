@@ -44,8 +44,6 @@
 
 EXTERN_CVAR (Bool, vid_vsync)
 
-CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
-
 FGLRenderer *GLRenderer;
 
 void gl_LoadExtensions();
@@ -140,7 +138,6 @@ void OpenGLFrameBuffer::InitializeState()
 
 	GLRenderer->Initialize(GetWidth(), GetHeight());
 	GLRenderer->SetOutputViewport(nullptr);
-	Begin2D(false);
 }
 
 //==========================================================================
@@ -156,8 +153,6 @@ void OpenGLFrameBuffer::Update()
 		GLRenderer->Flush();
 		return;
 	}
-
-	Begin2D(false);
 
 	DrawRateStuff();
 	GLRenderer->Flush();
@@ -442,32 +437,10 @@ void OpenGLFrameBuffer::SetClearColor(int color)
 }
 
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void OpenGLFrameBuffer::Begin2D(bool copy3d)
+void OpenGLFrameBuffer::BeginFrame()
 {
-	Super::Begin2D(copy3d);
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.ortho(0, GetWidth(), GetHeight(), 0, -1.0f, 1.0f);
-	gl_RenderState.ApplyMatrices();
-
-	glDisable(GL_DEPTH_TEST);
-
-	// Korshun: ENABLE AUTOMAP ANTIALIASING!!!
-	if (gl_aalines)
-		glEnable(GL_LINE_SMOOTH);
-	else
-	{
-		glDisable(GL_MULTISAMPLE);
-		glDisable(GL_LINE_SMOOTH);
-		glLineWidth(1.0);
-	}
-
-	if (GLRenderer != NULL)
-			GLRenderer->Begin2D();
+	if (GLRenderer != nullptr)
+		GLRenderer->BeginFrame();
 }
 
 //===========================================================================

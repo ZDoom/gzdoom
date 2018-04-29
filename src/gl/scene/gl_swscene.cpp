@@ -119,7 +119,6 @@ void SWSceneDrawer::RenderView(player_t *player)
 	FBTexture->SystemTexture[0]->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
-	screen->Begin2D(false);
 	screen->DrawTexture(FBTexture, 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 	SWRenderer->DrawRemainingPlayerSprites();
 	GLRenderer->DrawBlend(r_viewpoint.sector, !!map, V_IsTrueColor(), true);

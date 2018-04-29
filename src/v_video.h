@@ -372,9 +372,6 @@ public:
 	// Tells the device to recreate itself with the new setting from vid_refreshrate.
 	virtual void NewRefreshRate ();
 
-	// Set the rect defining the area affected by blending.
-	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
-
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
@@ -384,10 +381,11 @@ public:
 	virtual void FlushTextures() {}
 	virtual void TextureFilterChanged() {}
 	virtual void ResetFixedColormap() {}
+	virtual void BeginFrame() {}
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
-	virtual void Begin2D(bool copy3d);
+	void Begin2D(bool copy3d) { isIn2D = true; }
 	void End2D() { isIn2D = false; }
 
 	// Returns true if Begin2D has been called and 2D drawing is now active

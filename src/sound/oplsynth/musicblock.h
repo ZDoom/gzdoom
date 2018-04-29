@@ -15,6 +15,7 @@ struct OPLVoice
 	bool sustained;
 	int8_t	fine_tuning;
 	int	pitch;
+	uint32_t timestamp;
 };
 
 struct musicBlock {
@@ -23,6 +24,7 @@ struct musicBlock {
 
 	OPLChannel oplchannels[NUM_CHANNELS];
 	OPLio *io;
+	uint32_t timeCounter;
 
 	struct GenMidiInstrument OPLinstruments[GENMIDI_NUM_TOTAL];
 

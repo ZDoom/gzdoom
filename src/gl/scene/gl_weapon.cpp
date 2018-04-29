@@ -58,7 +58,7 @@ EXTERN_CVAR (Bool, r_deathcamera)
 //
 //==========================================================================
 
-void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture)
+void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float sy, int OverrideShader, bool alphatexture)
 {
 	float			fU1,fV1;
 	float			fU2,fV2;
@@ -68,13 +68,6 @@ void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, floa
 	float			scalex;
 	float			ftexturemid;
 	
-	// [BB] In the HUD model step we just render the model and break out. 
-	if ( hudModelStep )
-	{
-		gl_RenderHUDModel(psp, sx, sy, weapondynlightindex[psp]);
-		return;
-	}
-
 	// decide which patch to use
 	bool mirror;
 	FTextureID lump = sprites[psp->GetSprite()].GetSpriteFrame(psp->GetFrame(), 0, 0., &mirror);
@@ -218,13 +211,229 @@ void GLSceneDrawer::SetupWeaponLight()
 //
 //==========================================================================
 
+struct WeaponPosition
+{
+	float wx, wy;
+	float bobx, boby;
+	DPSprite *weapon;
+};
+
+static WeaponPosition GetWeaponPosition(player_t *player)
+{
+	WeaponPosition w;
+	P_BobWeapon(player, &w.bobx, &w.boby, r_viewpoint.TicFrac);
+
+	// Interpolate the main weapon layer once so as to be able to add it to other layers.
+	if ((w.weapon = player->FindPSprite(PSP_WEAPON)) != nullptr)
+	{
+		if (w.weapon->firstTic)
+		{
+			w.wx = w.weapon->x;
+			w.wy = w.weapon->y;
+		}
+		else
+		{
+			w.wx = w.weapon->oldx + (w.weapon->x - w.weapon->oldx) * r_viewpoint.TicFrac;
+			w.wy = w.weapon->oldy + (w.weapon->y - w.weapon->oldy) * r_viewpoint.TicFrac;
+		}
+	}
+	else
+	{
+		w.wx = 0;
+		w.wy = 0;
+	}
+	return w;
+}
+
+FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp)
+{
+	if (psp->firstTic)
+	{ // Can't interpolate the first tic.
+		psp->firstTic = false;
+		psp->oldx = psp->x;
+		psp->oldy = psp->y;
+	}
+
+	float sx = psp->oldx + (psp->x - psp->oldx) * r_viewpoint.TicFrac;
+	float sy = psp->oldy + (psp->y - psp->oldy) * r_viewpoint.TicFrac;
+
+	if (psp->Flags & PSPF_ADDBOB)
+	{
+		sx += (psp->Flags & PSPF_MIRROR) ? -weap.bobx : weap.bobx;
+		sy += weap.boby;
+	}
+
+	if (psp->Flags & PSPF_ADDWEAPON && psp->GetID() != PSP_WEAPON)
+	{
+		sx += weap.wx;
+		sy += weap.wy;
+	}
+	return { sx, sy };
+}
+
+struct WeaponLighting
+{
+	FColormap cm;
+	int lightlevel;
+	bool isbelow;
+};
+
+WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int FixedColormap, area_t in_area, const DVector3 &playerpos )
+{
+	WeaponLighting l;
+
+	if (FixedColormap)
+	{
+		l.lightlevel = 255;
+		l.cm.Clear();
+		l.isbelow = false;
+	}
+	else
+	{
+		sector_t fs;
+		auto fakesec = hw_FakeFlat(viewsector, &fs, in_area, false);
+
+		// calculate light level for weapon sprites
+		l.lightlevel = hw_ClampLight(fakesec->lightlevel);
+
+		// calculate colormap for weapon sprites
+		if (viewsector->e->XFloor.ffloors.Size() && !(level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING))
+		{
+			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
+			for (unsigned i = 0; i<lightlist.Size(); i++)
+			{
+				double lightbottom;
+
+				if (i<lightlist.Size() - 1)
+				{
+					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
+				}
+				else
+				{
+					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
+				}
+
+				if (lightbottom<r_viewpoint.Pos.Z)
+				{
+					l.cm = lightlist[i].extra_colormap;
+					l.lightlevel = hw_ClampLight(*lightlist[i].p_lightlevel);
+					break;
+				}
+			}
+		}
+		else
+		{
+			l.cm = fakesec->Colormap;
+			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) l.cm.ClearColor();
+		}
+
+		l.lightlevel = hw_CalcLightLevel(l.lightlevel, getExtraLight(), true);
+
+		if (level.lightmode == 8 || l.lightlevel < 92)
+		{
+			// Korshun: the way based on max possible light level for sector like in software renderer.
+			float min_L = 36.0 / 31.0 - ((l.lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63
+			if (min_L < 0)
+				min_L = 0;
+			else if (min_L > 1.0)
+				min_L = 1.0;
+
+			l.lightlevel = (1.0 - min_L) * 255;
+		}
+		else
+		{
+			l.lightlevel = (2 * l.lightlevel + 255) / 3;
+		}
+		l.lightlevel = viewsector->CheckSpriteGlow(l.lightlevel, playerpos);
+		l.isbelow = fakesec != viewsector && in_area == area_below;
+	}
+
+	// Korshun: fullbright fog in opengl, render weapon sprites fullbright (but don't cancel out the light color!)
+	if (level.brightfog && ((level.flags&LEVEL_HASFADETABLE) || l.cm.FadeColor != 0))
+	{
+		l.lightlevel = 255;
+	}
+	return l;
+}
+
+
+struct WeaponRenderStyle
+{
+	FRenderStyle RenderStyle;
+	float alpha;
+	int OverrideShader;
+};
+
+WeaponRenderStyle GetWeaponRenderStyle(DPSprite *psp, AActor *playermo)
+{
+	WeaponRenderStyle r;
+	auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->Alpha);
+
+	visstyle_t vis;
+	float trans = 0.f;
+
+	vis.RenderStyle = STYLE_Count;
+	vis.Alpha = rs.second;
+	vis.Invert = false;
+	playermo->AlterWeaponSprite(&vis);
+
+	if (!(psp->Flags & PSPF_FORCEALPHA)) trans = vis.Alpha;
+
+	if (vis.RenderStyle != STYLE_Count && !(psp->Flags & PSPF_FORCESTYLE))
+	{
+		r.RenderStyle = vis.RenderStyle;
+	}
+	else
+	{
+		r.RenderStyle = rs.first;
+	}
+	if (r.RenderStyle.BlendOp == STYLEOP_None) return r;
+
+	if (vis.Invert)
+	{
+		// this only happens for Strife's inverted weapon sprite
+		r.RenderStyle.Flags |= STYLEF_InvertSource;
+	}
+
+	// Set the render parameters
+
+	r.OverrideShader = -1;
+	if (r.RenderStyle.BlendOp == STYLEOP_Fuzz)
+	{
+		if (gl_fuzztype != 0)
+		{
+			// Todo: implement shader selection here
+			r.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+			r.OverrideShader = SHADER_NoTexture + gl_fuzztype;
+			r.alpha = 0.99f;	// trans may not be 1 here
+		}
+		else
+		{
+			r.RenderStyle.BlendOp = STYLEOP_Shadow;
+		}
+	}
+
+
+	if (r.RenderStyle.Flags & STYLEF_TransSoulsAlpha)
+	{
+		r.alpha	= transsouls;
+	}
+	else if (r.RenderStyle.Flags & STYLEF_Alpha1)
+	{
+		r.alpha = 1.f;
+	}
+	else if (trans == 0.f)
+	{
+		r.alpha = vis.Alpha;
+	}
+	return r;
+}
+
 void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 {
 	bool brightflash = false;
 	unsigned int i;
-	int lightlevel=0;
 	FColormap cm;
-	sector_t * fakesec, fs;
 	AActor * playermo=players[consoleplayer].camera;
 	player_t * player=playermo->player;
 	
@@ -240,101 +449,8 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		(r_deathcamera && camera->health <= 0))
 		return;
 
-	float bobx, boby, wx, wy;
-	DPSprite *weapon;
-
-	P_BobWeapon(camera->player, &bobx, &boby, r_viewpoint.TicFrac);
-
-	// Interpolate the main weapon layer once so as to be able to add it to other layers.
-	if ((weapon = camera->player->FindPSprite(PSP_WEAPON)) != nullptr)
-	{
-		if (weapon->firstTic)
-		{
-			wx = weapon->x;
-			wy = weapon->y;
-		}
-		else
-		{
-			wx = weapon->oldx + (weapon->x - weapon->oldx) * r_viewpoint.TicFrac;
-			wy = weapon->oldy + (weapon->y - weapon->oldy) * r_viewpoint.TicFrac;
-		}
-	}
-	else
-	{
-		wx = 0;
-		wy = 0;
-	}
-
-	if (FixedColormap) 
-	{
-		lightlevel=255;
-		cm.Clear();
-		fakesec = viewsector;
-	}
-	else
-	{
-		fakesec = hw_FakeFlat(viewsector, &fs, in_area, false);
-
-		// calculate light level for weapon sprites
-		lightlevel = hw_ClampLight(fakesec->lightlevel);
-
-		// calculate colormap for weapon sprites
-		if (viewsector->e->XFloor.ffloors.Size() && !(level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING))
-		{
-			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
-			for(i=0;i<lightlist.Size();i++)
-			{
-				double lightbottom;
-
-				if (i<lightlist.Size()-1) 
-				{
-					lightbottom=lightlist[i+1].plane.ZatPoint(r_viewpoint.Pos);
-				}
-				else 
-				{
-					lightbottom=viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
-				}
-
-				if (lightbottom<player->viewz) 
-				{
-					cm = lightlist[i].extra_colormap;
-					lightlevel = hw_ClampLight(*lightlist[i].p_lightlevel);
-					break;
-				}
-			}
-		}
-		else 
-		{
-			cm=fakesec->Colormap;
-			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) cm.ClearColor();
-		}
-
-		lightlevel = hw_CalcLightLevel(lightlevel, getExtraLight(), true);
-
-		if (level.lightmode == 8 || lightlevel < 92)
-		{
-			// Korshun: the way based on max possible light level for sector like in software renderer.
-			float min_L = 36.0 / 31.0 - ((lightlevel / 255.0) * (63.0 / 31.0)); // Lightlevel in range 0-63
-			if (min_L < 0)
-				min_L = 0;
-			else if (min_L > 1.0)
-				min_L = 1.0;
-
-			lightlevel = (1.0 - min_L) * 255;
-		}
-		else
-		{
-			lightlevel = (2 * lightlevel + 255) / 3;
-		}
-		lightlevel = viewsector->CheckSpriteGlow(lightlevel, playermo->Pos());
-
-	}
-	
-	// Korshun: fullbright fog in opengl, render weapon sprites fullbright (but don't cancel out the light color!)
-	if (level.brightfog && ((level.flags&LEVEL_HASFADETABLE) || cm.FadeColor != 0))
-	{
-		lightlevel = 255;
-	}
+	WeaponPosition weap = GetWeaponPosition(camera->player);
+	WeaponLighting light = GetWeaponLighting(viewsector, r_viewpoint.Pos, FixedColormap, in_area, camera->Pos());
 
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 
@@ -345,75 +461,17 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 	for(DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
-		auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->Alpha);
+		WeaponRenderStyle rs = GetWeaponRenderStyle(psp, camera);
+		if (rs.RenderStyle.BlendOp == STYLEOP_None) continue;
 
-		visstyle_t vis;
-		float trans = 0.f;
+		gl_SetRenderStyle(rs.RenderStyle, false, false);
 
-		vis.RenderStyle = STYLE_Count;
-		vis.Alpha = rs.second;
-		vis.Invert = false;
-		playermo->AlterWeaponSprite(&vis);
-
-		FRenderStyle RenderStyle;
-
-		if (!(psp->Flags & PSPF_FORCEALPHA)) trans = vis.Alpha;
-
-		if (vis.RenderStyle != STYLE_Count && !(psp->Flags & PSPF_FORCESTYLE))
-		{
-			RenderStyle = vis.RenderStyle;
-		}
-		else
-		{
-			RenderStyle = rs.first;
-		}
-		if (RenderStyle.BlendOp == STYLEOP_None) continue;
-
-		if (vis.Invert)
-		{
-			// this only happens for Strife's inverted weapon sprite
-			RenderStyle.Flags |= STYLEF_InvertSource;
-		}
-
-		// Set the render parameters
-
-		int OverrideShader = -1;
-		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
-		{
-			if (gl_fuzztype != 0)
-			{
-				// Todo: implement shader selection here
-				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-				OverrideShader = SHADER_NoTexture + gl_fuzztype;
-				trans = 0.99f;	// trans may not be 1 here
-			}
-			else
-			{
-				RenderStyle.BlendOp = STYLEOP_Shadow;
-			}
-		}
-
-		gl_SetRenderStyle(RenderStyle, false, false);
-
-		if (RenderStyle.Flags & STYLEF_TransSoulsAlpha)
-		{
-			trans = transsouls;
-		}
-		else if (RenderStyle.Flags & STYLEF_Alpha1)
-		{
-			trans = 1.f;
-		}
-		else if (trans == 0.f)
-		{
-			trans = vis.Alpha;
-		}
-
-		PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
+		PalEntry ThingColor = (camera->RenderStyle.Flags & STYLEF_ColorIsFixed) ? camera->fillcolor : 0xffffff;
 		ThingColor.a = 255;
 
 		// now draw the different layers of the weapon.
 		// For stencil render styles brightmaps need to be disabled.
-		gl_RenderState.EnableBrightmap(!(RenderStyle.Flags & STYLEF_ColorIsFixed));
+		gl_RenderState.EnableBrightmap(!(rs.RenderStyle.Flags & STYLEF_ColorIsFixed));
 
 		const bool bright = isBright(psp);
 		const PalEntry finalcol = bright
@@ -424,10 +482,10 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		if (psp->GetState() != nullptr) 
 		{
 			FColormap cmc = cm;
-			int ll = lightlevel;
+			int ll = light.lightlevel;
 			if (bright)
 			{
-				if (fakesec == viewsector || in_area != area_below)	
+				if (light.isbelow)	
 				{
 					cmc.MakeWhite();
 				}
@@ -441,7 +499,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 				ll = 255;
 			}
 			// set the lighting parameters
-			if (RenderStyle.BlendOp == STYLEOP_Shadow)
+			if (rs.RenderStyle.BlendOp == STYLEOP_Shadow)
 			{
 				gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, cmc.Desaturation);
 			}
@@ -461,33 +519,20 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 						gl_RenderState.SetDynLight(out[0], out[1], out[2]);
 					}
 				}
-				SetColor(ll, 0, cmc, trans, true);
+				SetColor(ll, 0, cmc, rs.alpha, true);
 			}
 
-			if (psp->firstTic)
-			{ // Can't interpolate the first tic.
-				psp->firstTic = false;
-				psp->oldx = psp->x;
-				psp->oldy = psp->y;
-			}
+			FVector2 spos = BobWeapon(weap, psp);
 
-			float sx = psp->oldx + (psp->x - psp->oldx) * r_viewpoint.TicFrac;
-			float sy = psp->oldy + (psp->y - psp->oldy) * r_viewpoint.TicFrac;
-
-			if (psp->Flags & PSPF_ADDBOB)
+			// [BB] In the HUD model step we just render the model and break out. 
+			if (hudModelStep)
 			{
-				sx += (psp->Flags & PSPF_MIRROR) ? -bobx : bobx;
-				sy += boby;
+				gl_RenderHUDModel(psp, spos.X, spos.Y, weapondynlightindex[psp]);
 			}
-
-			if (psp->Flags & PSPF_ADDWEAPON && psp->GetID() != PSP_WEAPON)
+			else
 			{
-				sx += wx;
-				sy += wy;
+				DrawPSprite(player, psp, spos.X, spos.Y, rs.OverrideShader, !!(rs.RenderStyle.Flags & STYLEF_RedIsAlpha));
 			}
-
-
-			DrawPSprite(player, psp, sx, sy, hudModelStep, OverrideShader, !!(RenderStyle.Flags & STYLEF_RedIsAlpha));
 		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
@@ -495,6 +540,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	gl_RenderState.EnableBrightmap(false);
 	level.lightmode = oldlightmode;
 }
+
 
 //==========================================================================
 //
@@ -520,6 +566,6 @@ void GLSceneDrawer::DrawTargeterSprites()
 	// The Targeter's sprites are always drawn normally.
 	for (DPSprite *psp = player->FindPSprite(PSP_TARGETCENTER); psp != nullptr; psp = psp->GetNext())
 	{
-		if (psp->GetState() != nullptr) DrawPSprite(player, psp, psp->x, psp->y, false, 0, false);
+		if (psp->GetState() != nullptr) DrawPSprite(player, psp, psp->x, psp->y, 0, false);
 	}
 }

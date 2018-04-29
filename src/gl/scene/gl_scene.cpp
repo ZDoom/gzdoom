@@ -547,6 +547,11 @@ void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
 {
 	const bool renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
+	// This should be removed once all 2D stuff is really done through the 2D interface.
+	gl_RenderState.mViewMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
+	gl_RenderState.ApplyMatrices();
+
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if (renderHUDModel == false)
 	{

@@ -68,10 +68,11 @@ public:
 	void RenderView(player_t *player);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 
-	void DrawPSprite(player_t * player, DPSprite *psp, float sx, float sy, bool hudModelStep, int OverrideShader, bool alphatexture);
+	void DrawPSprite(player_t * player, DPSprite *psp, float sx, float sy, int OverrideShader, bool alphatexture);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
 	void DrawTargeterSprites();
-	
+	void DrawPlayerHUDModel(sector_t * viewsector);
+
 	void InitClipper(angle_t a1, angle_t a2)
 	{
 		clipper.Clear();

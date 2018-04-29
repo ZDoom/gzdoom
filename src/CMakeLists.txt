@@ -829,6 +829,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/dynlights/hw_dynlightdata.cpp
 	hwrenderer/scene/hw_fakeflat.cpp
 	hwrenderer/scene/hw_decal.cpp
+	hwrenderer/scene/hw_drawlist.cpp
 	hwrenderer/scene/hw_clipper.cpp
 	hwrenderer/scene/hw_flats.cpp
 	hwrenderer/scene/hw_renderhacks.cpp

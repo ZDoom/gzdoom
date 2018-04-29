@@ -1,20 +1,13 @@
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
-#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_drawlist.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
 
 class GLSceneDrawer;
-
-enum GLDrawItemType
-{
-	GLDIT_WALL,
-	GLDIT_FLAT,
-	GLDIT_SPRITE,
-};
 
 enum DrawListType
 {
@@ -69,112 +62,14 @@ enum Drawpasses
 	
 };
 
-//==========================================================================
-//
-// Intermediate struct to link one draw item into a draw list
-//
-// unfortunately this struct must not contain pointers because
-// the arrays may be reallocated!
-//
-//==========================================================================
-
-struct GLDrawItem
-{
-	GLDrawItemType rendertype;
-	int index;
-	
-	GLDrawItem(GLDrawItemType _rendertype,int _index) : rendertype(_rendertype),index(_index) {}
-};
-
-struct SortNode
-{
-	int itemindex;
-	SortNode * parent;
-	SortNode * next;		// unsorted successor
-	SortNode * left;		// left side of this node
-	SortNode * equal;		// equal to this node
-	SortNode * right;		// right side of this node
-	
-	
-	void UnlinkFromChain();
-	void Link(SortNode * hook);
-	void AddToEqual(SortNode * newnode);
-	void AddToLeft (SortNode * newnode);
-	void AddToRight(SortNode * newnode);
-};
-
-//==========================================================================
-//
-// One draw list. This contains all info for one type of rendering data
-//
-//==========================================================================
-
-struct GLDrawList
-{
-	//private:
-	TArray<GLWall*> walls;
-	TArray<GLFlat*> flats;
-	TArray<GLSprite*> sprites;
-	TArray<GLDrawItem> drawitems;
-	int SortNodeStart;
-	SortNode * sorted;
-	
-public:
-	GLDrawList()
-	{
-		next=NULL;
-		SortNodeStart=-1;
-		sorted=NULL;
-	}
-	
-	~GLDrawList()
-	{
-		Reset();
-	}
-	
-	unsigned int Size()
-	{
-		return drawitems.Size();
-	}
-	
-	GLWall *NewWall();
-	GLFlat *NewFlat();
-	GLSprite *NewSprite();
-	void Reset();
-	void SortWalls();
-	void SortFlats();
-	
-	
-	void MakeSortList();
-	SortNode * FindSortPlane(SortNode * head);
-	SortNode * FindSortWall(SortNode * head);
-	void SortPlaneIntoPlane(SortNode * head,SortNode * sort);
-	void SortWallIntoPlane(SortNode * head,SortNode * sort);
-	void SortSpriteIntoPlane(SortNode * head,SortNode * sort);
-	void SortWallIntoWall(SortNode * head,SortNode * sort);
-	void SortSpriteIntoWall(SortNode * head,SortNode * sort);
-	int CompareSprites(SortNode * a,SortNode * b);
-	SortNode * SortSpriteList(SortNode * head);
-	SortNode * DoSort(SortNode * head);
-	void Sort();
-
-	void DoDraw(HWDrawInfo *di, int pass, int index, bool trans);
-	void Draw(HWDrawInfo *di, int pass, bool trans = false);
-	void DrawWalls(HWDrawInfo *di, int pass);
-	void DrawFlats(HWDrawInfo *di, int pass);
-	
-	GLDrawList * next;
-} ;
-
-
 struct FDrawInfo : public HWDrawInfo
 {
 	GLSceneDrawer *mDrawer;
 	
 	FDrawInfo * next;
-	GLDrawList drawlists[GLDL_TYPES];
+	HWDrawList drawlists[GLDL_TYPES];
 	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
-	GLDrawList *dldrawlists = NULL;	// only gets allocated when needed.
+	HWDrawList *dldrawlists = NULL;	// only gets allocated when needed.
 	
 	FDrawInfo();
 	~FDrawInfo();
@@ -227,7 +122,7 @@ struct FDrawInfo : public HWDrawInfo
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);
 
-	void DoDrawSorted(GLDrawList *dl, SortNode * head);
+	void DoDrawSorted(HWDrawList *dl, SortNode * head);
 	void DrawSorted(int listindex);
 
 	// These two may be moved to the API independent part of the renderer later.

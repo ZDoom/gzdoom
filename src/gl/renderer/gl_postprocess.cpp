@@ -601,7 +601,8 @@ void FGLRenderer::CreateTonemapPalette()
 			{
 				for (int b = 0; b < 64; b++)
 				{
-					PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 0, 256)];
+					PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 
+						gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256)];
 					int index = ((r * 64 + g) * 64 + b) * 4;
 					lut[index] = color.b;
 					lut[index + 1] = color.g;
@@ -912,43 +913,5 @@ void FGLRenderer::ClearBorders()
 		glClear(GL_COLOR_BUFFER_BIT);
 	}
 	glDisable(GL_SCISSOR_TEST);
-}
-
-
-// [SP] Re-implemented BestColor for more precision rather than speed. This function is only ever called once until the game palette is changed.
-
-int FGLRenderer::PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
-{
-	const PalEntry *pal = (const PalEntry *)pal_in;
-	static double powtable[256];
-	static bool firstTime = true;
-	static float trackpowtable = 0.;
-
-	double fbestdist = DBL_MAX, fdist;
-	int bestcolor = 0;
-
-	if (firstTime || trackpowtable != gl_paltonemap_powtable)
-	{
-		trackpowtable = gl_paltonemap_powtable;
-		firstTime = false;
-		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)gl_paltonemap_powtable);
-	}
-
-	for (int color = first; color < num; color++)
-	{
-		double x = powtable[abs(r-pal[color].r)];
-		double y = powtable[abs(g-pal[color].g)];
-		double z = powtable[abs(b-pal[color].b)];
-		fdist = x + y + z;
-		if (color == first || ((gl_paltonemap_reverselookup)?(fdist <= fbestdist):(fdist < fbestdist)))
-		{
-			if (fdist == 0 && !gl_paltonemap_reverselookup)
-				return color;
-
-			fbestdist = fdist;
-			bestcolor = color;
-		}
-	}
-	return bestcolor;
 }
 

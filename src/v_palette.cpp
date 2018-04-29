@@ -121,6 +121,48 @@ int BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num)
 	return bestcolor;
 }
 
+
+// [SP] Re-implemented BestColor for more precision rather than speed. This function is only ever called once until the game palette is changed.
+
+int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, bool reverselookup, float powtable_val, int first, int num)
+{
+	const PalEntry *pal = (const PalEntry *)pal_in;
+	static double powtable[256];
+	static bool firstTime = true;
+	static float trackpowtable = 0.;
+
+	double fbestdist = DBL_MAX, fdist;
+	int bestcolor = 0;
+
+	if (firstTime || trackpowtable != powtable_val)
+	{
+		auto pt = powtable_val;
+		trackpowtable = pt;
+		firstTime = false;
+		for (int x = 0; x < 256; x++) powtable[x] = pow((double)x/255, (double)pt);
+	}
+
+	for (int color = first; color < num; color++)
+	{
+		double x = powtable[abs(r-pal[color].r)];
+		double y = powtable[abs(g-pal[color].g)];
+		double z = powtable[abs(b-pal[color].b)];
+		fdist = x + y + z;
+		if (color == first || (reverselookup?(fdist <= fbestdist):(fdist < fbestdist)))
+		{
+			if (fdist == 0 && !reverselookup)
+				return color;
+
+			fbestdist = fdist;
+			bestcolor = color;
+		}
+	}
+	return bestcolor;
+}
+
+
+
+
 FPalette::FPalette ()
 {
 }

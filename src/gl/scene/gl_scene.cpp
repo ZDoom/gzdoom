@@ -551,6 +551,9 @@ void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
 	gl_RenderState.mViewMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
 	gl_RenderState.ApplyMatrices();
+	glDisable(GL_DEPTH_TEST);
+	glDisable(GL_MULTISAMPLE);
+
 
 	// [BB] Only draw the sprites if we didn't render a HUD model before.
 	if (renderHUDModel == false)

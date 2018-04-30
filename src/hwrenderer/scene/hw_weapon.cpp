@@ -212,6 +212,22 @@ WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int 
 	return l;
 }
 
+void WeaponLighting::SetBright()
+{
+	if (!isbelow)
+	{
+		cm.MakeWhite();
+	}
+	else
+	{
+		// under water areas keep most of their color for fullbright objects
+		cm.LightColor.r = (3 * cm.LightColor.r + 0xff) / 4;
+		cm.LightColor.g = (3 * cm.LightColor.g + 0xff) / 4;
+		cm.LightColor.b = (3 * cm.LightColor.b + 0xff) / 4;
+	}
+	lightlevel = 255;
+}
+
 //==========================================================================
 //
 // Render Style

@@ -19,6 +19,8 @@ struct WeaponLighting
 	FColormap cm;
 	int lightlevel;
 	bool isbelow;
+
+	void SetBright();
 };
 
 struct WeaponRenderStyle

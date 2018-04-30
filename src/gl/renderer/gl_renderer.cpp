@@ -767,6 +767,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_GetRenderStyle(cmd.mRenderStyle, false, false, &tm, &sb, &db, &be);
 		gl_RenderState.BlendEquation(be); 
 		gl_RenderState.BlendFunc(sb, db);
+		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
 
 		// Rather than adding remapping code, let's enforce that the constants here are equal.
 		static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
@@ -878,6 +879,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	gl_RenderState.EnableTexture(true);
+	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.ResetColor();

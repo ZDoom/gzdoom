@@ -248,7 +248,7 @@ static void PrepareSectorData()
 
 	for (auto &sub : level.subsectors)
 	{
-		sub.render_sector->subsectorcount++;
+		sub.sectorindex = (uint16_t)sub.render_sector->subsectorcount++;
 	}
 
 	for (auto &sec : level.sectors) 

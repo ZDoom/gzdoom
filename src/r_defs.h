@@ -1431,15 +1431,17 @@ struct subsector_t
 	seg_t		*firstline;
 	sector_t	*render_sector;
 	uint32_t	numlines;
-	int			flags;
+	uint16_t	flags;
+	uint16_t	sectorindex;
 
-	void BuildPolyBSP();
-	int Index() const;
 	// subsector related GL data
 	FLightNode *	lighthead;	// Light nodes (blended and additive)
 	int				validcount;
 	short			mapsection;
 	char			hacked;			// 1: is part of a render hack
+
+	void BuildPolyBSP();
+	int Index() const;
 									// 2: has one-sided walls
 	FPortalCoverage	portalcoverage[2];
 };

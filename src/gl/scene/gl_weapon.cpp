@@ -124,7 +124,6 @@ void GLSceneDrawer::SetupWeaponLight()
 void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 {
 	bool brightflash = false;
-	FColormap cm;
 	AActor * playermo=players[consoleplayer].camera;
 	player_t * player=playermo->player;
 	
@@ -172,7 +171,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 		if (psp->GetState() != nullptr) 
 		{
-			FColormap cmc = cm;
+			FColormap cmc = light.cm;
 			int ll = light.lightlevel;
 			if (bright)
 			{

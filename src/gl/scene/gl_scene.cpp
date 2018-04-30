@@ -261,6 +261,7 @@ void GLSceneDrawer::CreateScene()
 	gl_drawinfo->mShadowMap = &GLRenderer->mShadowMap;
 
 	RenderBSPNode (level.HeadNode());
+	// Process all the sprites on the current portal's back side which touch the portal.
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached();
 	Bsp.Unclock();
 
@@ -271,6 +272,7 @@ void GLSceneDrawer::CreateScene()
 	gl_drawinfo->HandleMissingTextures(in_area);	// Missing upper/lower textures
 	gl_drawinfo->HandleHackedSubsectors();	// open sector hacks for deep water
 	gl_drawinfo->ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
+	SetupWeaponLight();
 	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();
 
@@ -317,8 +319,6 @@ void GLSceneDrawer::RenderScene(int recursion)
 		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].DrawFlats(gl_drawinfo, GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].Draw(gl_drawinfo, GLPASS_LIGHTSONLY);
 		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].Draw(gl_drawinfo, GLPASS_LIGHTSONLY, true);
-		gl_drawinfo->drawlists[GLDL_MODELS].Draw(gl_drawinfo, GLPASS_LIGHTSONLY);
-		SetupWeaponLight();
 		GLRenderer->mLights->Finish();
 	}
 

@@ -1655,6 +1655,26 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 
  //===========================================================================
  //
+ // checks if the floor is higher than the ceiling and sets a flag
+ // This condition needs to be tested by the hardware renderer,
+ // so always having its state available in a flag allows for easier optimization.
+ //
+ //===========================================================================
+
+ void sector_t::CheckOverlap()
+ {
+	 if (planes[sector_t::floor].TexZ > planes[sector_t::ceiling].TexZ && !floorplane.isSlope() && !ceilingplane.isSlope())
+	 {
+		 MoreFlags |= SECMF_OVERLAPPING;
+	 }
+	 else
+	 {
+		 MoreFlags &= ~SECMF_OVERLAPPING;
+	 }
+ }
+
+ //===========================================================================
+ //
  //
  //
  //===========================================================================
@@ -1857,7 +1877,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(o);
 	 PARAM_BOOL_DEF(dirty);
-	 self->SetPlaneTexZ(pos, o, dirty);
+	 self->SetPlaneTexZ(pos, o, true);	// not setting 'dirty' here is a guaranteed cause for problems.
 	 return 0;
  }
 

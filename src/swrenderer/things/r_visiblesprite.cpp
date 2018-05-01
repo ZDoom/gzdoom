@@ -197,7 +197,7 @@ namespace swrenderer
 					hzb = MAX(hzb, hz);
 				}
 			}
-			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
+			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECMF_FAKEFLOORONLY))
 			{
 				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);

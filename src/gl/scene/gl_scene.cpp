@@ -107,7 +107,7 @@ void GLSceneDrawer::SetViewArea()
 	{
 		in_area = r_viewpoint.Pos.Z <= r_viewpoint.sector->heightsec->floorplane.ZatPoint(r_viewpoint.Pos) ? area_below :
 				(r_viewpoint.Pos.Z > r_viewpoint.sector->heightsec->ceilingplane.ZatPoint(r_viewpoint.Pos) &&
-				!(r_viewpoint.sector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? area_above : area_normal;
+				!(r_viewpoint.sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? area_above : area_normal;
 	}
 	else
 	{

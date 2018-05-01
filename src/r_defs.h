@@ -469,15 +469,16 @@ enum
 // Internal sector flags
 enum
 {
-	SECF_FAKEFLOORONLY	= 2,	// when used as heightsec in R_FakeFlat, only copies floor
-	SECF_CLIPFAKEPLANES = 4,	// as a heightsec, clip planes to target sector's planes
-	SECF_NOFAKELIGHT	= 8,	// heightsec does not change lighting
-	SECF_IGNOREHEIGHTSEC= 16,	// heightsec is only for triggering sector actions
-	SECF_UNDERWATER		= 32,	// sector is underwater
-	SECF_FORCEDUNDERWATER= 64,	// sector is forced to be underwater
-	SECF_UNDERWATERMASK	= 32+64,
-	SECF_DRAWN			= 128,	// sector has been drawn at least once
-	SECF_HIDDEN			= 256,	// Do not draw on textured automap
+	SECMF_FAKEFLOORONLY		= 2,	// when used as heightsec in R_FakeFlat, only copies floor
+	SECMF_CLIPFAKEPLANES	= 4,	// as a heightsec, clip planes to target sector's planes
+	SECMF_NOFAKELIGHT		= 8,	// heightsec does not change lighting
+	SECMF_IGNOREHEIGHTSEC	= 16,	// heightsec is only for triggering sector actions
+	SECMF_UNDERWATER		= 32,	// sector is underwater
+	SECMF_FORCEDUNDERWATER	= 64,	// sector is forced to be underwater
+	SECMF_UNDERWATERMASK	= 32+64,
+	SECMF_DRAWN				= 128,	// sector has been drawn at least once
+	SECMF_HIDDEN			= 256,	// Do not draw on textured automap
+	SECMF_OVERLAPPING		= 512,	// floor and ceiling overlap and require special renderer action.
 };
 
 enum
@@ -657,7 +658,7 @@ public:
 
 	sector_t *GetHeightSec() const
 	{
-		return (MoreFlags & SECF_IGNOREHEIGHTSEC)? nullptr : heightsec;
+		return (MoreFlags & SECMF_IGNOREHEIGHTSEC)? nullptr : heightsec;
 	}
 
 	double GetFriction(int plane = sector_t::floor, double *movefac = NULL) const;
@@ -851,15 +852,23 @@ public:
 		return planes[pos].TexZ;
 	}
 
+	void SetPlaneTexZQuick(int pos, double val)	// For the *FakeFlat functions which do not need to have the overlap checked.
+	{
+		planes[pos].TexZ = val;
+	}
+
 	void SetPlaneTexZ(int pos, double val, bool dirtify = false)	// This mainly gets used by init code. The only place where it must set the vertex to dirty is the interpolation code.
 	{
 		planes[pos].TexZ = val;
 		if (dirtify) SetAllVerticesDirty();
+		CheckOverlap();
 	}
 
 	void ChangePlaneTexZ(int pos, double val)
 	{
 		planes[pos].TexZ += val;
+		SetAllVerticesDirty();
+		CheckOverlap();
 	}
 
 	static inline short ClampLight(int level)
@@ -930,6 +939,7 @@ public:
 	DVector2 GetPortalDisplacement(int plane);
 	int GetPortalType(int plane);
 	int GetOppositePortalGroup(int plane);
+	void CheckOverlap();
 
 	void SetVerticesDirty()
 	{
@@ -1416,7 +1426,7 @@ struct seg_t
 enum
 {
 	SSECF_DEGENERATE = 1,
-	SSECF_DRAWN = 2,
+	SSECMF_DRAWN = 2,
 	SSECF_POLYORG = 4,
 };
 

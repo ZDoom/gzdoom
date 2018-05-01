@@ -155,7 +155,7 @@ namespace swrenderer
 			bool underwater = r_fakingunderwater ||
 				(heightsec && heightsec->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) <= 0);
 			bool doorunderwater = false;
-			int diffTex = (s->MoreFlags & SECF_CLIPFAKEPLANES);
+			int diffTex = (s->MoreFlags & SECMF_CLIPFAKEPLANES);
 
 			// Replace sector being drawn with a copy to be hacked
 			*tempsec = *sec;
@@ -167,12 +167,12 @@ namespace swrenderer
 				{
 					tempsec->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
 				}
-				else if (s->MoreFlags & SECF_FAKEFLOORONLY)
+				else if (s->MoreFlags & SECMF_FAKEFLOORONLY)
 				{
 					if (underwater)
 					{
 						tempsec->Colormap = s->Colormap;
-						if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+						if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 						{
 							tempsec->lightlevel = s->lightlevel;
 
@@ -197,7 +197,7 @@ namespace swrenderer
 				tempsec->floorplane = s->floorplane;
 			}
 
-			if (!(s->MoreFlags & SECF_FAKEFLOORONLY))
+			if (!(s->MoreFlags & SECMF_FAKEFLOORONLY))
 			{
 				if (diffTex)
 				{
@@ -271,7 +271,7 @@ namespace swrenderer
 					tempsec->planes[sector_t::ceiling].xform = s->planes[sector_t::ceiling].xform;
 				}
 
-				if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+				if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 				{
 					tempsec->lightlevel = s->lightlevel;
 
@@ -288,7 +288,7 @@ namespace swrenderer
 				FakeSide = WaterFakeSide::BelowFloor;
 			}
 			else if (heightsec && heightsec->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) <= 0 &&
-				orgceilz > refceilz && !(s->MoreFlags & SECF_FAKEFLOORONLY))
+				orgceilz > refceilz && !(s->MoreFlags & SECMF_FAKEFLOORONLY))
 			{	// Above-ceiling hack
 				tempsec->ceilingplane = s->ceilingplane;
 				tempsec->floorplane = s->ceilingplane;
@@ -307,7 +307,7 @@ namespace swrenderer
 					tempsec->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 				}
 
-				if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+				if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 				{
 					tempsec->lightlevel = s->lightlevel;
 
@@ -517,7 +517,7 @@ namespace swrenderer
 		}
 
 		frontsector = sub->sector;
-		frontsector->MoreFlags |= SECF_DRAWN;
+		frontsector->MoreFlags |= SECMF_DRAWN;
 		count = sub->numlines;
 		line = sub->firstline;
 

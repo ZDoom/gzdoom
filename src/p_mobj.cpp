@@ -3261,7 +3261,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 			sec->TriggerSectorActions (mo, SECSPAC_EyesDive);
 		}
 
-		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
+		if (!(hs->MoreFlags & SECMF_FAKEFLOORONLY))
 		{
 			waterz = hs->ceilingplane.ZatPoint(mo);
 			if (oldz <= waterz && newz > waterz)
@@ -4731,7 +4731,7 @@ void AActor::SplashCheck()
 		return;
 	}
 
-	if (Sector->MoreFlags & SECF_UNDERWATER)	// intentionally not SECF_UNDERWATERMASK
+	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 	{
 		waterlevel = 3;
 	}
@@ -4741,7 +4741,7 @@ void AActor::SplashCheck()
 		if (hsec != NULL)
 		{
 			fh = hsec->floorplane.ZatPoint(this);
-			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
+			//if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 			{
 				if (Z() < fh)
 				{
@@ -4756,7 +4756,7 @@ void AActor::SplashCheck()
 						}
 					}
 				}
-				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
+				else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
 				{
 					waterlevel = 3;
 				}
@@ -4833,7 +4833,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 		return false;
 	}
 
-	if (Sector->MoreFlags & SECF_UNDERWATER)	// intentionally not SECF_UNDERWATERMASK
+	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 	{
 		waterlevel = 3;
 	}
@@ -4843,7 +4843,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 		if (hsec != NULL)
 		{
 			fh = hsec->floorplane.ZatPoint(this);
-			if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
+			if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 			{
 				if (Z() < fh)
 				{
@@ -4858,7 +4858,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 						}
 					}
 				}
-				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
+				else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
 				{
 					waterlevel = 3;
 				}
@@ -6562,7 +6562,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool check
 		}
 	}
 	hsec = sec->GetHeightSec();
-	if (force || hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
+	if (force || hsec == NULL || !(hsec->MoreFlags & SECMF_CLIPFAKEPLANES))
 	{
 		terrainnum = sec->GetTerrain(sector_t::floor);
 	}

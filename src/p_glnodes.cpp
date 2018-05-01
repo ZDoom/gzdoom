@@ -1329,7 +1329,7 @@ void P_SetRenderSector()
 	}
 	for(i = 0; i < numsectors; i++)
 	{
-		if (hidesec[i]) sectors[i].MoreFlags |= SECF_HIDDEN;
+		if (hidesec[i]) sectors[i].MoreFlags |= SECMF_HIDDEN;
 	}
 	delete [] hidesec;
 #endif

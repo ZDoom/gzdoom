@@ -1343,6 +1343,7 @@ void P_SpawnSpecials (void)
 		case Transfer_Heights:
 			{
 				sec = line.frontsector;
+				
 				if (line.args[1] & 2)
 				{
 					sec->MoreFlags |= SECF_FAKEFLOORONLY;
@@ -1363,6 +1364,7 @@ void P_SpawnSpecials (void)
 				{
 					sec->MoreFlags |= SECF_IGNOREHEIGHTSEC;
 				}
+				else level.HasHeightSecs = true;
 				if (line.args[1] & 32)
 				{
 					sec->MoreFlags |= SECF_NOFAKELIGHT;

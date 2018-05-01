@@ -111,7 +111,7 @@ void GLSceneDrawer::SetViewArea()
 	}
 	else
 	{
-		in_area = area_default;	// depends on exposed lower sectors
+		in_area = level.HasHeightSecs? area_default : area_normal;	// depends on exposed lower sectors, if map contains heightsecs.
 	}
 }
 

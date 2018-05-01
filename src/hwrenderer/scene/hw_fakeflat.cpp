@@ -153,13 +153,14 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 
 //==========================================================================
 //
-// check for levels with exposed lower areas
+// check for levels with exposed lower areas. May only be called if actual
+// state is not known yet!
 //
 //==========================================================================
 
-area_t hw_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
+area_t hw_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
-	if (in_area == area_default &&
+	if (
 		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&
 		(!frontsector->heightsec || frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
 	{
@@ -176,7 +177,7 @@ area_t hw_CheckViewArea(area_t in_area, vertex_t *v1, vertex_t *v2, sector_t *fr
 		else
 			return area_normal;
 	}
-	return in_area;
+	return area_default;
 }
 
 

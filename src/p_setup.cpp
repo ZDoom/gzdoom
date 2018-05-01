@@ -4221,6 +4221,23 @@ void P_SetupLevel (const char *lumpname, int position)
 		AnnounceGameStart ();
 	}
 
+	// This check was previously done at run time each time the heightsec was checked.
+	// However, since 3D floors are static data, we can easily precalculate this and store it in the sector's flags for quick access.
+	for (auto &s : level.sectors)
+	{
+		if (s.heightsec != nullptr)
+		{
+			// If any of these 3D floors render their planes, ignore heightsec.
+			for (auto &ff : s.e->XFloor.ffloors)
+			{
+				if ((ff->flags & (FF_EXISTS | FF_RENDERPLANES)) == (FF_EXISTS | FF_RENDERPLANES))
+				{
+					s.MoreFlags |= SECF_IGNOREHEIGHTSEC;	// mark the heightsec inactive.
+				}
+			}
+		}
+	}
+
 	P_ResetSightCounters (true);
 	//Printf ("free memory: 0x%x\n", Z_FreeMemory());
 

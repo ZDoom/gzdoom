@@ -497,7 +497,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 			// but undetermined heightsec state. This can only happen if the
 			// subsector is obstructed but not excluded due to a large bounding box.
 			// Due to the way a BSP works such a subsector can never be visible
-			if (!sector->heightsec || sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC || in_area!=area_default)
+			if (!sector->GetHeightSec() || in_area!=area_default)
 			{
 				if (sector != sub->render_sector)
 				{

@@ -309,7 +309,7 @@ void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingp
 				}
 			}
 		}
-		else if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+		else if (thing->Sector->GetHeightSec())
 		{
 			if (thing->flags2&MF2_ONMOBJ && thing->floorz ==
 				thing->Sector->heightsec->floorplane.ZatPoint(thingpos))

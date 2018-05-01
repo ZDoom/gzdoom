@@ -160,9 +160,7 @@ bool hw_CheckClip(side_t * sidedef, sector_t * frontsector, sector_t * backsecto
 
 area_t hw_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, sector_t *backsector)
 {
-	if (
-		(backsector->heightsec && !(backsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)) &&
-		(!frontsector->heightsec || frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (backsector->GetHeightSec() && !frontsector->GetHeightSec())
 	{
 		sector_t * s = backsector->heightsec;
 
@@ -189,7 +187,7 @@ area_t hw_CheckViewArea(vertex_t *v1, vertex_t *v2, sector_t *frontsector, secto
 //==========================================================================
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back)
 {
-	if (!sec->heightsec || sec->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC || sec->heightsec==sec) 
+	if (!sec->GetHeightSec() || sec->heightsec==sec) 
 	{
 		// check for backsectors with the ceiling lower than the floor. These will create
 		// visual glitches because upper amd lower textures overlap.

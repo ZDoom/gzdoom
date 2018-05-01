@@ -173,7 +173,7 @@ namespace swrenderer
 			hzb = spr->gzb;
 		}
 
-		if (spr->heightsec && !(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+		if (spr->heightsec)
 		{ // only things in specially marked sectors
 			if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 			{

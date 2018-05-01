@@ -554,8 +554,7 @@ namespace swrenderer
 		VisiblePlane *ceilingplane = frontsector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) > 0 ||
 			frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
 			portal != nullptr ||
-			(frontsector->heightsec &&
-				!(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+			(frontsector->GetHeightSec() &&
 				frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
 			Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 				frontsector->GetTexture(sector_t::ceiling),
@@ -597,8 +596,7 @@ namespace swrenderer
 		VisiblePlane *floorplane = frontsector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) > 0 || // killough 3/7/98
 			frontsector->GetTexture(sector_t::floor) == skyflatnum ||
 			portal != nullptr ||
-			(frontsector->heightsec &&
-				!(frontsector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC) &&
+			(frontsector->GetHeightSec() &&
 				frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
 			Thread->PlaneList->FindPlane(frontsector->floorplane,
 				frontsector->GetTexture(sector_t::floor),

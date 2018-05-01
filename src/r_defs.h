@@ -654,7 +654,12 @@ public:
 	void ClosestPoint(const DVector2 &pos, DVector2 &out) const;
 	int GetFloorLight () const;
 	int GetCeilingLight () const;
-	sector_t *GetHeightSec() const;
+
+	sector_t *GetHeightSec() const
+	{
+		return (MoreFlags & SECF_IGNOREHEIGHTSEC)? nullptr : heightsec;
+	}
+
 	double GetFriction(int plane = sector_t::floor, double *movefac = NULL) const;
 	bool TriggerSectorActions(AActor *thing, int activation);
 

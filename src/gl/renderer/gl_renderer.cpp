@@ -558,7 +558,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool doco
 	{
 		if (!viewsector->e->XFloor.ffloors.Size())
 		{
-			if (viewsector->heightsec && !(viewsector->MoreFlags&SECF_IGNOREHEIGHTSEC))
+			if (viewsector->GetHeightSec())
 			{
 				auto s = viewsector->heightsec;
 				blendv = s->floorplane.PointOnSide(r_viewpoint.Pos) < 0? s->bottommap : s->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->topmap : s->midmap;

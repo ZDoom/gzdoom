@@ -288,8 +288,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 
 	switch (pass)
 	{
-	case GLPASS_PLAIN:			// Single-pass rendering
-	case GLPASS_ALL:			// Same, but also creates the dynlight data.
+	case GLPASS_ALL:	// Single-pass rendering
 		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
 		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture->tex->isFullbright())

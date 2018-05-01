@@ -47,7 +47,7 @@ EXTERN_CVAR(Int, gl_fuzztype)
 //
 //==========================================================================
 
-bool isBright(DPSprite *psp)
+static bool isBright(DPSprite *psp)
 {
 	if (psp != nullptr && psp->GetState() != nullptr)
 	{
@@ -134,7 +134,7 @@ FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp)
 //
 //==========================================================================
 
-WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int FixedColormap, area_t in_area, const DVector3 &playerpos )
+WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int FixedColormap, area_t in_area, const DVector3 &playerpos)
 {
 	WeaponLighting l;
 
@@ -212,7 +212,13 @@ WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int 
 	return l;
 }
 
-void WeaponLighting::SetBright()
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void HUDSprite::SetBright(bool isbelow)
 {
 	if (!isbelow)
 	{
@@ -234,9 +240,8 @@ void WeaponLighting::SetBright()
 //
 //==========================================================================
 
-WeaponRenderStyle GetWeaponRenderStyle(DPSprite *psp, AActor *playermo)
+bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *viewsector, WeaponLighting &lighting)
 {
-	WeaponRenderStyle r;
 	auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->Alpha);
 
 	visstyle_t vis;
@@ -251,52 +256,63 @@ WeaponRenderStyle GetWeaponRenderStyle(DPSprite *psp, AActor *playermo)
 
 	if (vis.RenderStyle != STYLE_Count && !(psp->Flags & PSPF_FORCESTYLE))
 	{
-		r.RenderStyle = vis.RenderStyle;
+		RenderStyle = vis.RenderStyle;
 	}
 	else
 	{
-		r.RenderStyle = rs.first;
+		RenderStyle = rs.first;
 	}
-	if (r.RenderStyle.BlendOp == STYLEOP_None) return r;
+	if (RenderStyle.BlendOp == STYLEOP_None) return false;
 
 	if (vis.Invert)
 	{
 		// this only happens for Strife's inverted weapon sprite
-		r.RenderStyle.Flags |= STYLEF_InvertSource;
+		RenderStyle.Flags |= STYLEF_InvertSource;
 	}
 
 	// Set the render parameters
 
-	r.OverrideShader = -1;
-	if (r.RenderStyle.BlendOp == STYLEOP_Fuzz)
+	OverrideShader = -1;
+	if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 	{
 		if (gl_fuzztype != 0)
 		{
 			// Todo: implement shader selection here
-			r.RenderStyle = LegacyRenderStyles[STYLE_Translucent];
-			r.OverrideShader = SHADER_NoTexture + gl_fuzztype;
-			r.alpha = 0.99f;	// trans may not be 1 here
+			RenderStyle = LegacyRenderStyles[STYLE_Translucent];
+			OverrideShader = SHADER_NoTexture + gl_fuzztype;
+			alpha = 0.99f;	// trans may not be 1 here
 		}
 		else
 		{
-			r.RenderStyle.BlendOp = STYLEOP_Shadow;
+			RenderStyle.BlendOp = STYLEOP_Shadow;
 		}
 	}
 
-
-	if (r.RenderStyle.Flags & STYLEF_TransSoulsAlpha)
+	if (RenderStyle.Flags & STYLEF_TransSoulsAlpha)
 	{
-		r.alpha	= transsouls;
+		alpha	= transsouls;
 	}
-	else if (r.RenderStyle.Flags & STYLEF_Alpha1)
+	else if (RenderStyle.Flags & STYLEF_Alpha1)
 	{
-		r.alpha = 1.f;
+		alpha = 1.f;
 	}
 	else if (trans == 0.f)
 	{
-		r.alpha = vis.Alpha;
+		alpha = vis.Alpha;
 	}
-	return r;
+	if (!RenderStyle.IsVisible(alpha)) return false;	// if it isn't visible skip the rest.
+
+	PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;
+	ThingColor.a = 255;
+
+	const bool bright = isBright(psp);
+	ObjectColor = bright ? ThingColor : ThingColor.Modulate(viewsector->SpecialColors[sector_t::sprites]);
+
+	lightlevel = lighting.lightlevel;
+	cm = lighting.cm;
+	if (bright) SetBright(lighting.isbelow);
+
+	return true;
 }
 
 //==========================================================================
@@ -305,10 +321,9 @@ WeaponRenderStyle GetWeaponRenderStyle(DPSprite *psp, AActor *playermo)
 //
 //==========================================================================
 
-bool GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *player, WeaponRect &rc)
+bool HUDSprite::GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *player)
 {
 	float			tx;
-	float			x1, x2;
 	float			scale;
 	float			scalex;
 	float			ftexturemid;
@@ -333,13 +348,13 @@ bool GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *player, WeaponRe
 	tx = (psp->Flags & PSPF_MIRROR) ? ((160 - r.width) - (sx + r.left)) : (sx - (160 - r.left));
 	x1 = tx * scalex + vw / 2;
 	if (x1 > vw)	return false; // off the right side
-	rc.x1 = x1 + viewwindowx;
+	x1 += viewwindowx;
 
 
 	tx += r.width;
 	x2 = tx * scalex + vw / 2;
 	if (x2 < 0) return false; // off the left side
-	rc.x2 = x2 + viewwindowx;
+	x2 += viewwindowx;
 
 	// killough 12/98: fix psprite positioning problem
 	ftexturemid = 100.f - sy - r.top;
@@ -359,25 +374,25 @@ bool GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *player, WeaponRe
 	}
 
 	scale = (SCREENHEIGHT*vw) / (SCREENWIDTH * 200.0f);
-	rc.y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
-	rc.y2 = rc.y1 + (r.height * scale) + 1;
+	y1 = viewwindowy + vh / 2 - (ftexturemid * scale);
+	y2 = y1 + (r.height * scale) + 1;
 
 
 	if (!(mirror) != !(psp->Flags & (PSPF_FLIP)))
 	{
-		rc.u2 = tex->GetSpriteUL();
-		rc.v1 = tex->GetSpriteVT();
-		rc.u1 = tex->GetSpriteUR();
-		rc.v2 = tex->GetSpriteVB();
+		u2 = tex->GetSpriteUL();
+		v1 = tex->GetSpriteVT();
+		u1 = tex->GetSpriteUR();
+		v2 = tex->GetSpriteVB();
 	}
 	else
 	{
-		rc.u1 = tex->GetSpriteUL();
-		rc.v1 = tex->GetSpriteVT();
-		rc.u2 = tex->GetSpriteUR();
-		rc.v2 = tex->GetSpriteVB();
+		u1 = tex->GetSpriteUL();
+		v1 = tex->GetSpriteVT();
+		u2 = tex->GetSpriteUR();
+		v2 = tex->GetSpriteVB();
 	}
-	rc.tex = tex;
+	this->tex = tex;
 	return true;
 }
 

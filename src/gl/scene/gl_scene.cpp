@@ -311,8 +311,7 @@ void GLSceneDrawer::RenderScene(int recursion)
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	bool haslights = GLRenderer->mLightCount > 0 && FixedColormap == CM_DEFAULT && gl_lights;
-	if (gl.lightmethod == LM_DEFERRED && haslights)
+	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights)
 	{
 		GLRenderer->mLights->Begin();
 		gl_drawinfo->drawlists[GLDL_PLAINFLATS].DrawFlats(gl_drawinfo, GLPASS_LIGHTSONLY);
@@ -329,21 +328,17 @@ void GLSceneDrawer::RenderScene(int recursion)
 
 	int pass;
 
-	if (!haslights || gl.lightmethod == LM_DEFERRED)
-	{
-		pass = GLPASS_PLAIN;
-	}
-	else if (gl.lightmethod == LM_DIRECT)
+	if (!level.HasDynamicLights || !gl.legacyMode)
 	{
 		pass = GLPASS_ALL;
 	}
 	else // GL 2.x legacy mode
 	{
 		// process everything that needs to handle textured dynamic lights.
-		if (haslights) RenderMultipassStuff();
+		if (level.HasDynamicLights) RenderMultipassStuff();
 
 		// The remaining lists which are unaffected by dynamic lights are just processed as normal.
-		pass = GLPASS_PLAIN;
+		pass = GLPASS_ALL;
 	}
 
 	gl_RenderState.EnableTexture(gl_texture);
@@ -772,10 +767,6 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	GLRenderer->mVBO->Reset();
 	if (!gl.legacyMode) GLRenderer->mLights->Clear();
-
-	// Check if there's some lights. If not some code can be skipped.
-	TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-	GLRenderer->mLightCount = ((it.Next()) != NULL);
 
 	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds,
 								r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);

@@ -90,7 +90,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mCurrentPortal = nullptr;
 	mMirrorCount = 0;
 	mPlaneMirrorCount = 0;
-	mLightCount = 0;
 	mAngles = FRotator(0.f, 0.f, 0.f);
 	mViewVector = FVector2(0,0);
 	mVBO = nullptr;
@@ -446,9 +445,6 @@ void FGLRenderer::RenderView(player_t* player)
 		{
 			fovratio = ratio;
 		}
-		// Check if there's some lights. If not some code can be skipped.
-		TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-		mLightCount = ((it.Next()) != NULL);
 
 		GLSceneDrawer drawer;
 

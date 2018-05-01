@@ -49,7 +49,7 @@ T smoothstep(const T edge0, const T edge1, const T x)
 //
 //==========================================================================
 
-void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t * subsec, float *out)
+void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLightNode *node, int portalgroup, float *out)
 {
 	ADynamicLight *light;
 	float frac, lr, lg, lb;
@@ -57,7 +57,6 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, subs
 	
 	out[0] = out[1] = out[2] = 0.f;
 	// Go through both light lists
-	FLightNode * node = subsec->lighthead;
 	while (node)
 	{
 		light=node->lightsource;
@@ -71,7 +70,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, subs
 			if (level.Displacements.size > 0)
 			{
 				int fromgroup = light->Sector->PortalGroup;
-				int togroup = subsec->sector->PortalGroup;
+				int togroup = portalgroup;
 				if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
 
 				DVector2 offset = level.Displacements.getOffset(fromgroup, togroup);
@@ -132,11 +131,11 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 {
 	if (thing != NULL)
 	{
-		GetDynSpriteLight(thing, thing->X(), thing->Y(), thing->Center(), thing->subsector, out);
+		GetDynSpriteLight(thing, thing->X(), thing->Y(), thing->Center(), thing->subsector->lighthead, thing->Sector->PortalGroup, out);
 	}
 	else if (particle != NULL)
 	{
-		GetDynSpriteLight(NULL, particle->Pos.X, particle->Pos.Y, particle->Pos.Z, particle->subsector, out);
+		GetDynSpriteLight(NULL, particle->Pos.X, particle->Pos.Y, particle->Pos.Z, particle->subsector->lighthead, particle->subsector->sector->PortalGroup, out);
 	}
 }
 

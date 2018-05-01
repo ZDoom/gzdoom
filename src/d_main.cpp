@@ -79,6 +79,7 @@
 #include "cmdlib.h"
 #include "v_text.h"
 #include "gi.h"
+#include "a_dynlight.h"
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
@@ -776,6 +777,15 @@ void D_Display ()
 			// [ZZ] execute event hook that we just started the frame
 			//E_RenderFrame();
 			//
+
+			// Check for the presence of dynamic lights at the start of the frame once.
+			if (gl_lights)
+			{
+				TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+				level.HasDynamicLights = !!it.Next();
+			}
+			else level.HasDynamicLights = false;	// lights are off so effectively we have none.
+
 			screen->RenderView(&players[consoleplayer]);
 			screen->Begin2D(false);
 			// returns with 2S mode set.

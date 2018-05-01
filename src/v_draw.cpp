@@ -144,6 +144,39 @@ void DFrameBuffer::DrawTexture (FTexture *img, double x, double y, int tags_firs
 
 //==========================================================================
 //
+// Internal texture drawing function with a fully constructed coordinate rectangle
+//
+//==========================================================================
+
+void DFrameBuffer::DrawTexture(FTexture *img, const FTextureRect &rc, int tags_first, ...)
+{
+	Va_List tags;
+	va_start(tags.list, tags_first);
+	DrawParms parms;
+
+	bool res = ParseDrawTextureTags(img, 0, 0, tags_first, tags, &parms, false);
+	va_end(tags.list);
+	if (!res)
+	{
+		return;
+	}
+
+	// set coordinates from the passed rect. All related functionality from the tag list will be ignored.
+	parms.texwidth = parms.destwidth = rc.mScreenRect.width;
+	parms.texheight = parms.destheight = rc.mScreenRect.height;
+	parms.x = rc.mScreenRect.left;
+	parms.y = rc.mScreenRect.top;
+	parms.srcx = rc.mTextureRect.left;
+	parms.srcy = rc.mTextureRect.top;
+	parms.srcwidth = rc.mTextureRect.width;
+	parms.srcheight = rc.mTextureRect.height;
+	parms.flipX = parms.flipY = false;
+	parms.windowleft = 0;
+	parms.windowright = parms.texwidth;
+	DrawTextureParms(img, parms);
+}
+//==========================================================================
+//
 // ZScript texture drawing function
 //
 //==========================================================================

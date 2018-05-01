@@ -12,6 +12,7 @@ class GLSprite;
 struct GLDecal;
 class IShadowMap;
 struct particle_t;
+struct FDynLightData;
 
 //==========================================================================
 //
@@ -140,7 +141,7 @@ public:
 	void AddOtherFloorPlane(int sector, gl_subsectorrendernode * node);
 	void AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node);
 
-	void GetDynSpriteLight(AActor *self, float x, float y, float z, subsector_t * subsec, float *out);
+	void GetDynSpriteLight(AActor *self, float x, float y, float z, FLightNode *node, int portalgroup, float *out);
 	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
 
 	virtual void DrawWall(GLWall *wall, int pass) = 0;
@@ -157,6 +158,8 @@ public:
     virtual void AddMirrorSurface(GLWall *w) = 0;
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
+	
+	virtual int UploadLights(FDynLightData &data) = 0;
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;

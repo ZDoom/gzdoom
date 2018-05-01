@@ -30,6 +30,8 @@
 
 #include "hw_dynlightdata.h"
 
+// If we want to share the array to avoid constant allocations it needs to be thread local unless it'd be littered with expensive synchronization.
+thread_local FDynLightData lightdata;
 
 //==========================================================================
 //

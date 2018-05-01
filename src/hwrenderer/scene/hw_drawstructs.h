@@ -39,8 +39,8 @@ enum WallTypes
 	RENDERWALL_NONE,
 	RENDERWALL_TOP,
 	RENDERWALL_M1S,
-	RENDERWALL_M2S,
 	RENDERWALL_BOTTOM,
+	RENDERWALL_M2S,
 	RENDERWALL_FOGBOUNDARY,
 	RENDERWALL_MIRRORSURFACE,
 	RENDERWALL_M2SNF,
@@ -205,7 +205,7 @@ public:
 	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
 	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 
-	bool SetupLights(FDynLightData &lightdata);
+	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata);
 
 	void MakeVertices(HWDrawInfo *di, bool nosplit);
 
@@ -247,7 +247,7 @@ public:
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
-    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal);
+    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
     void ProcessDecals(HWDrawInfo *di);
 
 	void CreateVertices(FFlatVertex *&ptr, bool nosplit);
@@ -412,16 +412,19 @@ struct DecalVertex
 struct GLDecal
 {
 	FMaterial *gltexture;
-	GLWall *wall;
+	TArray<lightlist_t> *lightlist;
 	DBaseDecal *decal;
 	DecalVertex dv[4];
 	float zcenter;
 	unsigned int vertindex;
 
-	int light;
-	int rel;
-	float a;
-	FColormap colormap;
+	FRenderStyle renderstyle;
+	int lightlevel;
+	int rellight;
+	float alpha;
+	FColormap Colormap;
+	secplane_t bottomplane;
+	FVector3 Normal;
 
 };
 

@@ -225,7 +225,7 @@ void musicBlock::noteOn(uint32_t channel, uint8_t key, int volume)
 		if (double_voice)
 		{
 			i = findFreeVoice();
-			if (i > 0)
+			if (i >= 0)
 			{
 				voiceKeyOn(i, channel, instrument, 1, key, volume);
 			}

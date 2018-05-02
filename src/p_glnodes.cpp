@@ -1329,7 +1329,7 @@ void P_SetRenderSector()
 	}
 	for(i = 0; i < numsectors; i++)
 	{
-		if (hidesec[i]) sectors[i].MoreFlags |= SECF_HIDDEN;
+		if (hidesec[i]) sectors[i].MoreFlags |= SECMF_HIDDEN;
 	}
 	delete [] hidesec;
 #endif
@@ -1437,27 +1437,4 @@ void P_SetRenderSector()
 			break;
 		}
 	}
-
-#if 0	// may be useful later so let's keep it here for now
-	// now group the subsectors by sector
-	subsector_t ** subsectorbuffer = new subsector_t * [numsubsectors];
-
-	for(i=0, ss=subsectors; i<numsubsectors; i++, ss++)
-	{
-		ss->render_sector->subsectorcount++;
-	}
-
-	for (i=0; i<numsectors; i++) 
-	{
-		sectors[i].subsectors = subsectorbuffer;
-		subsectorbuffer += sectors[i].subsectorcount;
-		sectors[i].subsectorcount = 0;
-	}
-	
-	for(i=0, ss = subsectors; i<numsubsectors; i++, ss++)
-	{
-		ss->render_sector->subsectors[ss->render_sector->subsectorcount++]=ss;
-	}
-#endif
-
 }

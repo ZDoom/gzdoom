@@ -30,6 +30,9 @@
 #include "g_levellocals.h"
 #include "polyrenderer/scene/poly_light.h"
 
+EXTERN_CVAR(Float, skyoffset)
+
+
 PolySkyDome::PolySkyDome()
 {
 	CreateDome();
@@ -212,7 +215,6 @@ Mat4f PolySkyDome::GLSkyMath()
 	float y_offset = 0.0f;
 	bool mirror = false;
 	FTexture *tex = mCurrentSetup.frontskytex;
-	float skyoffset = 0.0f; // skyoffset debugging CVAR in GL renderer
 
 	int texh = 0;
 	int texw = 0;

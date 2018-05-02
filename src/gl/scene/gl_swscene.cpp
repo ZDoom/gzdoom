@@ -25,16 +25,16 @@
 **
 */
 
-#include "gl/system/gl_system.h"
-#include "gl/system/gl_debug.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/shaders/gl_shader.h"
 #include "hwrenderer/textures/hw_ihwtexture.h"
+#include "hwrenderer/textures/hw_material.h"
+#include "r_renderer.h"
 #include "gl_swscene.h"
 #include "w_wad.h"
 #include "d_player.h"
 #include "textures/bitmap.h"
 #include "swrenderer/scene/r_light.h"
+
+#include "gl/renderer/gl_renderer.h"
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;
@@ -119,7 +119,6 @@ void SWSceneDrawer::RenderView(player_t *player)
 	FBTexture->SystemTexture[0]->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
-	screen->Begin2D(false);
 	screen->DrawTexture(FBTexture, 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 	SWRenderer->DrawRemainingPlayerSprites();
 	GLRenderer->DrawBlend(r_viewpoint.sector, !!map, V_IsTrueColor(), true);

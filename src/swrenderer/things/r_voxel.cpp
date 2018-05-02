@@ -113,7 +113,7 @@ namespace swrenderer
 			{
 				if (gzt < heightsec->floorplane.ZatPoint(pos))
 					return;
-				if (!(heightsec->MoreFlags & SECF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint(pos))
+				if (!(heightsec->MoreFlags & SECMF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint(pos))
 					return;
 			}
 		}

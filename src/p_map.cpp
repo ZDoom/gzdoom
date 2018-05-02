@@ -2682,7 +2682,7 @@ bool P_TryMove(AActor *thing, const DVector2 &pos,
 			newsec->TriggerSectorActions(thing, SECSPAC_EyesDive);
 		}
 
-		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
+		if (!(hs->MoreFlags & SECMF_FAKEFLOORONLY))
 		{
 			fakez = hs->ceilingplane.ZatPoint(pos);
 			if (!oldAboveFakeCeiling && eyez > fakez)
@@ -6872,7 +6872,7 @@ bool P_ChangeSector(sector_t *sector, int crunch, double amt, int floorOrCeil, b
 
 	if (floorOrCeil != 2) sector->CheckPortalPlane(floorOrCeil);	// check for portal obstructions after everything is done.
 
-	if (!cpos.nofit && !isreset /* && sector->MoreFlags & (SECF_UNDERWATERMASK)*/)
+	if (!cpos.nofit && !isreset /* && sector->MoreFlags & (SECMF_UNDERWATERMASK)*/)
 	{
 		// If this is a control sector for a deep water transfer, all actors in affected
 		// sectors need to have their waterlevel information updated and if applicable,

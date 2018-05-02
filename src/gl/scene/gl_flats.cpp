@@ -34,6 +34,7 @@
 #include "d_player.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "p_lnspec.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/system/gl_interface.h"
@@ -47,105 +48,31 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
-#ifdef _DEBUG
-CVAR(Int, gl_breaksec, -1, 0)
-#endif
-//==========================================================================
-//
-// Sets the texture matrix according to the plane's texture positioning
-// information
-//
-//==========================================================================
-
-void gl_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture)
-{
-	// only manipulate the texture matrix if needed.
-	if (!secplane->Offs.isZero() ||
-		secplane->Scale.X != 1. || secplane->Scale.Y != 1 ||
-		secplane->Angle != 0 ||
-		gltexture->TextureWidth() != 64 ||
-		gltexture->TextureHeight() != 64)
-	{
-		float uoffs = secplane->Offs.X / gltexture->TextureWidth();
-		float voffs = secplane->Offs.Y / gltexture->TextureHeight();
-
-		float xscale1 = secplane->Scale.X;
-		float yscale1 = secplane->Scale.Y;
-		if (gltexture->tex->bHasCanvas)
-		{
-			yscale1 = 0 - yscale1;
-		}
-		float angle = -secplane->Angle;
-
-		float xscale2 = 64.f / gltexture->TextureWidth();
-		float yscale2 = 64.f / gltexture->TextureHeight();
-
-		gl_RenderState.mTextureMatrix.loadIdentity();
-		gl_RenderState.mTextureMatrix.scale(xscale1, yscale1, 1.0f);
-		gl_RenderState.mTextureMatrix.translate(uoffs, voffs, 0.0f);
-		gl_RenderState.mTextureMatrix.scale(xscale2, yscale2, 1.0f);
-		gl_RenderState.mTextureMatrix.rotate(angle, 0.0f, 0.0f, 1.0f);
-		gl_RenderState.EnableTextureMatrix(true);
-	}
-}
-
-
-
 //==========================================================================
 //
 // Flats 
 //
 //==========================================================================
-extern FDynLightData lightdata;
 
-void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
+void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli)
 {
-	Plane p;
-
-	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
-
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
 		(*dli)++;
 		return;
 	}
-
-	lightdata.Clear();
-	FLightNode * node = sub->lighthead;
-	while (node)
+	if (flat->SetupSubsectorLights(pass, sub, lightdata))
 	{
-		ADynamicLight * light = node->lightsource;
-			
-		if (light->flags2&MF2_DORMANT)
+		int d = GLRenderer->mLights->UploadLights(lightdata);
+		if (pass == GLPASS_LIGHTSONLY)
 		{
-			node=node->nextLight;
-			continue;
+			GLRenderer->mLights->StoreIndex(d);
 		}
-		iter_dlightf++;
-
-		// we must do the side check here because gl_GetLight needs the correct plane orientation
-		// which we don't have for Legacy-style 3D-floors
-		double planeh = plane.plane.ZatPoint(light);
-		if ((planeh<light->Z() && ceiling) || (planeh>light->Z() && !ceiling))
+		else
 		{
-			node = node->nextLight;
-			continue;
+			gl_RenderState.ApplyLightIndex(d);
 		}
-
-		p.Set(plane.plane.Normal(), plane.plane.fD());
-		lightdata.GetLight(sub->sector->PortalGroup, p, light, false);
-		node = node->nextLight;
-	}
-
-	int d = GLRenderer->mLights->UploadLights(lightdata);
-	if (pass == GLPASS_LIGHTSONLY)
-	{
-		GLRenderer->mLights->StoreIndex(d);
-	}
-	else
-	{
-		gl_RenderState.ApplyLightIndex(d);
 	}
 }
 
@@ -155,7 +82,7 @@ void GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, int *dli)
 //
 //==========================================================================
 
-void GLFlat::DrawSubsector(subsector_t * sub)
+void FDrawInfo::DrawSubsector(GLFlat *flat, subsector_t * sub)
 {
 	if (gl.buffermethod != BM_DEFERRED)
 	{
@@ -164,7 +91,7 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 		{
 			vertex_t *vt = sub->firstline[k].v1;
 			ptr->x = vt->fX();
-			ptr->z = plane.plane.ZatPoint(vt) + dz;
+			ptr->z = flat->plane.plane.ZatPoint(vt) + flat->dz;
 			ptr->y = vt->fY();
 			ptr->u = vt->fX() / 64.f;
 			ptr->v = -vt->fY() / 64.f;
@@ -189,7 +116,7 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 			for (unsigned int x = 0; x < 4; x++)
 			{
 				vertex_t *vt = sub->firstline[vi[x]].v1;
-				qd.Set(x, vt->fX(), plane.plane.ZatPoint(vt) + dz, vt->fY(), vt->fX() / 64.f, -vt->fY() / 64.f);
+				qd.Set(x, vt->fX(), flat->plane.plane.ZatPoint(vt) + flat->dz, vt->fY(), vt->fX() / 64.f, -vt->fY() / 64.f);
 			}
 			qd.Render(GL_TRIANGLE_FAN);
 		}
@@ -206,30 +133,30 @@ void GLFlat::DrawSubsector(subsector_t * sub)
 //
 //==========================================================================
 
-void GLFlat::ProcessLights(bool istrans)
+void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 {
-	dynlightindex = GLRenderer->mLights->GetIndexPtr();
+	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
 
 	// Draw the subsectors belonging to this sector
-	for (int i=0; i<sector->subsectorcount; i++)
+	for (int i=0; i< flat->sector->subsectorcount; i++)
 	{
-		subsector_t * sub = sector->subsectors[i];
-		if (gl_drawinfo->ss_renderflags[sub->Index()]&renderflags || istrans)
+		subsector_t * sub = flat->sector->subsectors[i];
+		if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 		{
-			SetupSubsectorLights(GLPASS_LIGHTSONLY, sub);
+			SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
 		}
 	}
 
 	// Draw the subsectors assigned to it due to missing textures
-	if (!(renderflags&SSRF_RENDER3DPLANES))
+	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
 	{
-		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
+			gl_drawinfo->GetOtherFloorPlanes(flat->sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(flat->sector->sectornum);
 
 		while (node)
 		{
-			SetupSubsectorLights(GLPASS_LIGHTSONLY, node->sub);
+			SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, node->sub, nullptr);
 			node = node->next;
 		}
 	}
@@ -242,21 +169,21 @@ void GLFlat::ProcessLights(bool istrans)
 //
 //==========================================================================
 
-void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
+void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans)
 {
-	int dli = dynlightindex;
+	int dli = flat->dynlightindex;
 
 	gl_RenderState.Apply();
-	if (vboindex >= 0)
+	if (flat->vboindex >= 0)
 	{
-		int index = vboindex;
-		for (int i=0; i<sector->subsectorcount; i++)
+		int index = flat->vboindex;
+		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{
-			subsector_t * sub = sector->subsectors[i];
+			subsector_t * sub = flat->sector->subsectors[i];
 				
-			if (gl_drawinfo->ss_renderflags[sub->Index()]&renderflags || istrans)
+			if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 			{
-				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
+				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
 				drawcalls.Clock();
 				glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
 				drawcalls.Unclock();
@@ -270,28 +197,28 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 	{
 		// Draw the subsectors belonging to this sector
 		// (can this case even happen?)
-		for (int i=0; i<sector->subsectorcount; i++)
+		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{
-			subsector_t * sub = sector->subsectors[i];
-			if (gl_drawinfo->ss_renderflags[sub->Index()]&renderflags || istrans)
+			subsector_t * sub = flat->sector->subsectors[i];
+			if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 			{
-				if (processlights) SetupSubsectorLights(GLPASS_ALL, sub, &dli);
-				DrawSubsector(sub);
+				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
+				DrawSubsector(flat, sub);
 			}
 		}
 	}
 
 	// Draw the subsectors assigned to it due to missing textures
-	if (!(renderflags&SSRF_RENDER3DPLANES))
+	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
 	{
-		gl_subsectorrendernode * node = (renderflags&SSRF_RENDERFLOOR)?
-			gl_drawinfo->GetOtherFloorPlanes(sector->sectornum) :
-			gl_drawinfo->GetOtherCeilingPlanes(sector->sectornum);
+		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
+			gl_drawinfo->GetOtherFloorPlanes(flat->sector->sectornum) :
+			gl_drawinfo->GetOtherCeilingPlanes(flat->sector->sectornum);
 
 		while (node)
 		{
-			if (processlights) SetupSubsectorLights(GLPASS_ALL, node->sub, &dli);
-			DrawSubsector(node->sub);
+			if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, node->sub, &dli);
+			DrawSubsector(flat, node->sub);
 			node = node->next;
 		}
 	}
@@ -307,13 +234,13 @@ void GLFlat::DrawSubsectors(int pass, bool processlights, bool istrans)
 //
 //==========================================================================
 
-void GLFlat::DrawSkyboxSector(int pass, bool processlights)
+void FDrawInfo::DrawSkyboxSector(GLFlat *flat, int pass, bool processlights)
 {
 
 	float minx = FLT_MAX, miny = FLT_MAX;
 	float maxx = -FLT_MAX, maxy = -FLT_MAX;
 
-	for (auto ln : sector->Lines)
+	for (auto ln : flat->sector->Lines)
 	{
 		float x = ln->v1->fX();
 		float y = ln->v1->fY();
@@ -329,10 +256,10 @@ void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 		if (y > maxy) maxy = y;
 	}
 
-	float z = plane.plane.ZatPoint(0., 0.) + dz;
+	float z = flat->plane.plane.ZatPoint(0., 0.) + flat->dz;
 	static float uvals[] = { 0, 0, 1, 1 };
 	static float vvals[] = { 1, 0, 0, 1 };
-	int rot = -xs_FloorToInt(plane.Angle / 90.f);
+	int rot = -xs_FloorToInt(flat->plane.Angle / 90.f);
 
 	FQuadDrawer qd;
 
@@ -352,481 +279,126 @@ void GLFlat::DrawSkyboxSector(int pass, bool processlights)
 //
 //
 //==========================================================================
-void GLFlat::Draw(int pass, bool trans)	// trans only has meaning for GLPASS_LIGHTSONLY
+void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has meaning for GLPASS_LIGHTSONLY
 {
 	int rel = getExtraLight();
 
-#ifdef _DEBUG
-	if (sector->sectornum == gl_breaksec)
-	{
-		int a = 0;
-	}
-#endif
-
+	auto &plane = flat->plane;
 	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 
 	switch (pass)
 	{
-	case GLPASS_PLAIN:			// Single-pass rendering
-	case GLPASS_ALL:			// Same, but also creates the dynlight data.
-		mDrawer->SetColor(lightlevel, rel, Colormap,1.0f);
-		mDrawer->SetFog(lightlevel, rel, &Colormap, false);
-		if (!gltexture->tex->isFullbright())
-			gl_RenderState.SetObjectColor(FlatColor | 0xff000000);
-		if (sector->special != GLSector_Skybox)
+	case GLPASS_ALL:	// Single-pass rendering
+		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
+		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		if (!flat->gltexture->tex->isFullbright())
+			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
+		if (flat->sector->special != GLSector_Skybox)
 		{
-			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
-			gl_SetPlaneTextureRotation(&plane, gltexture);
-			DrawSubsectors(pass, (pass == GLPASS_ALL || dynlightindex > -1), false);
+			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
+			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
+			DrawSubsectors(flat, pass, (pass == GLPASS_ALL || flat->dynlightindex > -1), false);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		else
 		{
-			gl_RenderState.SetMaterial(gltexture, CLAMP_XY, 0, -1, false);
-			DrawSkyboxSector(pass, (pass == GLPASS_ALL || dynlightindex > -1));
+			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
+			DrawSkyboxSector(flat, pass, (pass == GLPASS_ALL || flat->dynlightindex > -1));
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;
 
 	case GLPASS_LIGHTSONLY:
-		if (!trans || gltexture)
+		if (!trans || flat->gltexture)
 		{
-			ProcessLights(trans);
+			ProcessLights(flat, trans);
 		}
 		break;
 
 	case GLPASS_TRANSLUCENT:
-		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		mDrawer->SetColor(lightlevel, rel, Colormap, alpha);
-		mDrawer->SetFog(lightlevel, rel, &Colormap, false);
-		if (!gltexture || !gltexture->tex->isFullbright())
-			gl_RenderState.SetObjectColor(FlatColor | 0xff000000);
-		if (!gltexture)
+		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
+		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
+		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		if (!flat->gltexture || !flat->gltexture->tex->isFullbright())
+			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
+		if (!flat->gltexture)
 		{
 			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.EnableTexture(false);
-			DrawSubsectors(pass, false, true);
+			DrawSubsectors(flat, pass, false, true);
 			gl_RenderState.EnableTexture(true);
 		}
 		else 
 		{
-			if (!gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
+			if (!flat->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-			gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
-			gl_SetPlaneTextureRotation(&plane, gltexture);
-			DrawSubsectors(pass, !gl.legacyMode && (gl.lightmethod == LM_DIRECT || dynlightindex > -1), true);
+			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
+			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
+			DrawSubsectors(flat, pass, !gl.legacyMode && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
-		if (renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;
 
 	case GLPASS_LIGHTTEX:
 	case GLPASS_LIGHTTEX_ADDITIVE:
 	case GLPASS_LIGHTTEX_FOGGY:
-		DrawLightsCompat(pass);
+		DrawLightsCompat(flat, pass);
 		break;
 
 	case GLPASS_TEXONLY:
-		gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
-		gl_SetPlaneTextureRotation(&plane, gltexture);
-		DrawSubsectors(pass, false, false);
+		gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
+		gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
+		DrawSubsectors(flat, pass, false, false);
 		gl_RenderState.EnableTextureMatrix(false);
 		break;
 	}
 }
 
-
 //==========================================================================
 //
-// GLFlat::PutFlat
+// FDrawInfo::AddFlat
 //
 // Checks texture, lighting and translucency settings and puts this
 // plane in the appropriate render list.
 //
 //==========================================================================
-inline void GLFlat::PutFlat(bool fog)
+
+void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
 {
 	int list;
 
-	if (mDrawer->FixedColormap) 
-	{
-		Colormap.Clear();
-	}
 	if (gl.legacyMode)
 	{
-		if (PutFlatCompat(fog)) return;
+		if (PutFlatCompat(flat, fog)) return;
 	}
-	if (renderstyle!=STYLE_Translucent || alpha < 1.f - FLT_EPSILON || fog || gltexture == NULL)
+	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.
-		list = (renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
+		list = (flat->renderflags&SSRF_RENDER3DPLANES) ? GLDL_TRANSLUCENT : GLDL_TRANSLUCENTBORDER;
 	}
-	else if (gltexture->tex->GetTranslucency())
+	else if (flat->gltexture->tex->GetTranslucency())
 	{
-		if (stack)
+		if (flat->stack)
 		{
 			list = GLDL_TRANSLUCENTBORDER;
 		}
-		else if ((renderflags&SSRF_RENDER3DPLANES) && !plane.plane.isSlope())
+		else if ((flat->renderflags&SSRF_RENDER3DPLANES) && !flat->plane.plane.isSlope())
 		{
 			list = GLDL_TRANSLUCENT;
-		} 
-		else 
+		}
+		else
 		{
 			list = GLDL_PLAINFLATS;
 		}
 	}
 	else
 	{
-		bool masked = gltexture->isMasked() && ((renderflags&SSRF_RENDER3DPLANES) || stack);
+		bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
 		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
 	}
-	dynlightindex = -1;	// make sure this is always initialized to something proper.
 	auto newflat = gl_drawinfo->drawlists[list].NewFlat();
-	*newflat = *this;
-}
-
-//==========================================================================
-//
-// This draws one flat 
-// The passed sector does not indicate the area which is rendered. 
-// It is only used as source for the plane data.
-// The whichplane boolean indicates if the flat is a floor(false) or a ceiling(true)
-//
-//==========================================================================
-
-void GLFlat::Process(sector_t * model, int whichplane, bool fog)
-{
-	plane.GetFromSector(model, whichplane);
-	if (whichplane != int(ceiling))
-	{
-		// Flip the normal if the source plane has a different orientation than what we are about to render.
-		plane.plane.FlipVert();
-	}
-
-	if (!fog)
-	{
-		gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
-		if (!gltexture) return;
-		if (gltexture->tex->isFullbright()) 
-		{
-			Colormap.MakeWhite();
-			lightlevel=255;
-		}
-	}
-	else 
-	{
-		gltexture = NULL;
-		lightlevel = abs(lightlevel);
-	}
-
-	// get height from vplane
-	if (whichplane == sector_t::floor && sector->transdoor) dz = -1;
-	else dz = 0;
-
-	z = plane.plane.ZatPoint(0.f, 0.f);
-	
-	PutFlat(fog);
-	rendered_flats++;
-}
-
-//==========================================================================
-//
-// Sets 3D floor info. Common code for all 4 cases 
-//
-//==========================================================================
-
-void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
-{
-	F3DFloor::planeref & plane = top? rover->top : rover->bottom;
-
-	// FF_FOG requires an inverted logic where to get the light from
-	lightlist_t *light = P_GetPlaneLight(sector, plane.plane, underside);
-	lightlevel = gl_ClampLight(*light->p_lightlevel);
-	
-	if (rover->flags & FF_FOG)
-	{
-		Colormap.LightColor = light->extra_colormap.FadeColor;
-		FlatColor = 0xffffffff;
-	}
-	else
-	{
-		Colormap.CopyFrom3DLight(light);
-		FlatColor = *plane.flatcolor;
-	}
-
-
-	alpha = rover->alpha/255.0f;
-	renderstyle = rover->flags&FF_ADDITIVETRANS? STYLE_Add : STYLE_Translucent;
-	if (plane.model->VBOHeightcheck(plane.isceiling))
-	{
-		vboindex = plane.vindex;
-	}
-	else
-	{
-		vboindex = -1;
-	}
-}
-
-//==========================================================================
-//
-// Process a sector's flats for rendering
-// This function is only called once per sector.
-// Subsequent subsectors are just quickly added to the ss_renderflags array
-//
-//==========================================================================
-
-void GLFlat::ProcessSector(sector_t * frontsector)
-{
-	lightlist_t * light;
-	FSectorPortal *port;
-
-#ifdef _DEBUG
-	if (frontsector->sectornum == gl_breaksec)
-	{
-		int a = 0;
-	}
-#endif
-
-	// Get the real sector for this one.
-	sector = &level.sectors[frontsector->sectornum];
-	extsector_t::xfloor &x = sector->e->XFloor;
-	dynlightindex = -1;
-
-	uint8_t &srf = gl_drawinfo->sectorrenderflags[sector->sectornum];
-
-	//
-	//
-	//
-	// do floors
-	//
-	//
-	//
-	if (frontsector->floorplane.ZatPoint(r_viewpoint.Pos) <= r_viewpoint.Pos.Z)
-	{
-		// process the original floor first.
-
-		srf |= SSRF_RENDERFLOOR;
-
-		lightlevel = gl_ClampLight(frontsector->GetFloorLight());
-		Colormap = frontsector->Colormap;
-		FlatColor = frontsector->SpecialColors[sector_t::floor];
-		port = frontsector->ValidatePortal(sector_t::floor);
-		if ((stack = (port != NULL)))
-		{
-			if (port->mType == PORTS_STACKEDSECTORTHING)
-			{
-				gl_drawinfo->AddFloorStack(sector);	// stacked sector things require visplane merging.
-			}
-			alpha = frontsector->GetAlpha(sector_t::floor);
-		}
-		else
-		{
-			alpha = 1.0f - frontsector->GetReflect(sector_t::floor);
-		}
-
-		if (alpha != 0.f && frontsector->GetTexture(sector_t::floor) != skyflatnum)
-		{
-			if (frontsector->VBOHeightcheck(sector_t::floor))
-			{
-				vboindex = frontsector->vboindex[sector_t::floor];
-			}
-			else
-			{
-				vboindex = -1;
-			}
-
-			ceiling = false;
-			renderflags = SSRF_RENDERFLOOR;
-
-			if (x.ffloors.Size())
-			{
-				light = P_GetPlaneLight(sector, &frontsector->floorplane, false);
-				if ((!(sector->GetFlags(sector_t::floor)&PLANEF_ABSLIGHTING) || light->lightsource == NULL)
-					&& (light->p_lightlevel != &frontsector->lightlevel))
-				{
-					lightlevel = gl_ClampLight(*light->p_lightlevel);
-				}
-
-				Colormap.CopyFrom3DLight(light);
-			}
-			renderstyle = STYLE_Translucent;
-			Process(frontsector, sector_t::floor, false);
-		}
-	}
-
-	//
-	//
-	//
-	// do ceilings
-	//
-	//
-	//
-	if (frontsector->ceilingplane.ZatPoint(r_viewpoint.Pos) >= r_viewpoint.Pos.Z)
-	{
-		// process the original ceiling first.
-
-		srf |= SSRF_RENDERCEILING;
-
-		lightlevel = gl_ClampLight(frontsector->GetCeilingLight());
-		Colormap = frontsector->Colormap;
-		FlatColor = frontsector->SpecialColors[sector_t::ceiling];
-		port = frontsector->ValidatePortal(sector_t::ceiling);
-		if ((stack = (port != NULL)))
-		{
-			if (port->mType == PORTS_STACKEDSECTORTHING)
-			{
-				gl_drawinfo->AddCeilingStack(sector);
-			}
-			alpha = frontsector->GetAlpha(sector_t::ceiling);
-		}
-		else
-		{
-			alpha = 1.0f - frontsector->GetReflect(sector_t::ceiling);
-		}
-
-		if (alpha != 0.f && frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
-		{
-			if (frontsector->VBOHeightcheck(sector_t::ceiling))
-			{
-				vboindex = frontsector->vboindex[sector_t::ceiling];
-			}
-			else
-			{
-				vboindex = -1;
-			}
-
-			ceiling = true;
-			renderflags = SSRF_RENDERCEILING;
-
-			if (x.ffloors.Size())
-			{
-				light = P_GetPlaneLight(sector, &sector->ceilingplane, true);
-
-				if ((!(sector->GetFlags(sector_t::ceiling)&PLANEF_ABSLIGHTING))
-					&& (light->p_lightlevel != &frontsector->lightlevel))
-				{
-					lightlevel = gl_ClampLight(*light->p_lightlevel);
-				}
-				Colormap.CopyFrom3DLight(light);
-			}
-			renderstyle = STYLE_Translucent;
-			Process(frontsector, sector_t::ceiling, false);
-		}
-	}
-
-	//
-	//
-	//
-	// do 3D floors
-	//
-	//
-	//
-
-	stack = false;
-	if (x.ffloors.Size())
-	{
-		player_t * player = players[consoleplayer].camera->player;
-
-		renderflags = SSRF_RENDER3DPLANES;
-		srf |= SSRF_RENDER3DPLANES;
-		// 3d-floors must not overlap!
-		double lastceilingheight = sector->CenterCeiling();	// render only in the range of the
-		double lastfloorheight = sector->CenterFloor();		// current sector part (if applicable)
-		F3DFloor * rover;
-		int k;
-
-		// floors are ordered now top to bottom so scanning the list for the best match
-		// is no longer necessary.
-
-		ceiling = true;
-		Colormap = frontsector->Colormap;
-		for (k = 0; k < (int)x.ffloors.Size(); k++)
-		{
-			rover = x.ffloors[k];
-
-			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
-			{
-				if (rover->flags&FF_FOG && mDrawer->FixedColormap) continue;
-				if (!rover->top.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
-				{
-					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
-					if (ff_top < lastceilingheight)
-					{
-						if (r_viewpoint.Pos.Z <= rover->top.plane->ZatPoint(r_viewpoint.Pos))
-						{
-							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
-							Colormap.FadeColor = frontsector->Colormap.FadeColor;
-							Process(rover->top.model, rover->top.isceiling, !!(rover->flags&FF_FOG));
-						}
-						lastceilingheight = ff_top;
-					}
-				}
-				if (!rover->bottom.copied && !(rover->flags&FF_INVERTPLANES))
-				{
-					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);
-					if (ff_bottom < lastceilingheight)
-					{
-						if (r_viewpoint.Pos.Z <= rover->bottom.plane->ZatPoint(r_viewpoint.Pos))
-						{
-							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
-							Colormap.FadeColor = frontsector->Colormap.FadeColor;
-							Process(rover->bottom.model, rover->bottom.isceiling, !!(rover->flags&FF_FOG));
-						}
-						lastceilingheight = ff_bottom;
-						if (rover->alpha < 255) lastceilingheight += EQUAL_EPSILON;
-					}
-				}
-			}
-		}
-
-		ceiling = false;
-		for (k = x.ffloors.Size() - 1; k >= 0; k--)
-		{
-			rover = x.ffloors[k];
-
-			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
-			{
-				if (rover->flags&FF_FOG && mDrawer->FixedColormap) continue;
-				if (!rover->bottom.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
-				{
-					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);
-					if (ff_bottom > lastfloorheight || (rover->flags&FF_FIX))
-					{
-						if (r_viewpoint.Pos.Z >= rover->bottom.plane->ZatPoint(r_viewpoint.Pos))
-						{
-							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
-							Colormap.FadeColor = frontsector->Colormap.FadeColor;
-
-							if (rover->flags&FF_FIX)
-							{
-								lightlevel = gl_ClampLight(rover->model->lightlevel);
-								Colormap = rover->GetColormap();
-							}
-
-							Process(rover->bottom.model, rover->bottom.isceiling, !!(rover->flags&FF_FOG));
-						}
-						lastfloorheight = ff_bottom;
-					}
-				}
-				if (!rover->top.copied && !(rover->flags&FF_INVERTPLANES))
-				{
-					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
-					if (ff_top > lastfloorheight)
-					{
-						if (r_viewpoint.Pos.Z >= rover->top.plane->ZatPoint(r_viewpoint.Pos))
-						{
-							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
-							Colormap.FadeColor = frontsector->Colormap.FadeColor;
-							Process(rover->top.model, rover->top.isceiling, !!(rover->flags&FF_FOG));
-						}
-						lastfloorheight = ff_top;
-						if (rover->alpha < 255) lastfloorheight -= EQUAL_EPSILON;
-					}
-				}
-			}
-		}
-	}
+	*newflat = *flat;
 }
 

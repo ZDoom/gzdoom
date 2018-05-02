@@ -90,12 +90,10 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mCurrentPortal = nullptr;
 	mMirrorCount = 0;
 	mPlaneMirrorCount = 0;
-	mLightCount = 0;
 	mAngles = FRotator(0.f, 0.f, 0.f);
 	mViewVector = FVector2(0,0);
 	mVBO = nullptr;
 	mSkyVBO = nullptr;
-	gl_spriteindex = 0;
 	mShaderManager = nullptr;
 	mLights = nullptr;
 	mTonemapPalette = nullptr;
@@ -157,8 +155,6 @@ void FGLRenderer::Initialize(int width, int height)
 	{
 		legacyShaders = new LegacyShaderContainer;
 	}
-
-	GetSpecialTextures();
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
 	if (!gl.legacyMode)
@@ -228,16 +224,6 @@ FGLRenderer::~FGLRenderer()
 	delete mCustomPostProcessShaders;
 	delete mFXAAShader;
 	delete mFXAALumaShader;
-}
-
-
-void FGLRenderer::GetSpecialTextures()
-{
-	if (gl.legacyMode) glLight = TexMan.CheckForTexture("glstuff/gllight.png", ETextureType::MiscPatch);
-	glPart2 = TexMan.CheckForTexture("glstuff/glpart2.png", ETextureType::MiscPatch);
-	glPart = TexMan.CheckForTexture("glstuff/glpart.png", ETextureType::MiscPatch);
-	mirrorTexture = TexMan.CheckForTexture("glstuff/mirror.png", ETextureType::MiscPatch);
-
 }
 
 //==========================================================================
@@ -369,21 +355,6 @@ void FGLRenderer::SetupLevel()
 	mVBO->CreateVBO();
 }
 
-void FGLRenderer::Begin2D()
-{
-	if (mBuffers->Setup(mScreenViewport.width, mScreenViewport.height, mSceneViewport.width, mSceneViewport.height))
-	{
-		if (mDrawingScene2D)
-			mBuffers->BindSceneFB(false);
-		else
-			mBuffers->BindCurrentFB();
-	}
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-	glScissor(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-
-	gl_RenderState.EnableFog(false);
-}
-
 //===========================================================================
 // 
 //
@@ -474,9 +445,6 @@ void FGLRenderer::RenderView(player_t* player)
 		{
 			fovratio = ratio;
 		}
-		// Check if there's some lights. If not some code can be skipped.
-		TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
-		mLightCount = ((it.Next()) != NULL);
 
 		GLSceneDrawer drawer;
 
@@ -546,6 +514,12 @@ void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, in
 	drawer.WriteSavePic(player, file, width, height);
 }
 
+void FGLRenderer::BeginFrame()
+{
+	buffersActive = GLRenderer->mBuffers->Setup(GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mSceneViewport.width, GLRenderer->mSceneViewport.height);
+}
+
+
 
 void gl_FillScreen()
 {
@@ -580,7 +554,7 @@ void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool doco
 	{
 		if (!viewsector->e->XFloor.ffloors.Size())
 		{
-			if (viewsector->heightsec && !(viewsector->MoreFlags&SECF_IGNOREHEIGHTSEC))
+			if (viewsector->GetHeightSec())
 			{
 				auto s = viewsector->heightsec;
 				blendv = s->floorplane.PointOnSide(r_viewpoint.Pos) < 0? s->bottommap : s->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->topmap : s->midmap;
@@ -734,9 +708,31 @@ public:
 
 void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd);
 int LegacyDesaturation(F2DDrawer::RenderCommand &cmd);
+CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
+	if (buffersActive)
+	{
+		mBuffers->BindCurrentFB();
+	}
+	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+
+	gl_RenderState.mViewMatrix.loadIdentity();
+	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
+	gl_RenderState.ApplyMatrices();
+
+	glDisable(GL_DEPTH_TEST);
+
+	// Korshun: ENABLE AUTOMAP ANTIALIASING!!!
+	if (gl_aalines)
+		glEnable(GL_LINE_SMOOTH);
+	else
+	{
+		glDisable(GL_MULTISAMPLE);
+		glDisable(GL_LINE_SMOOTH);
+		glLineWidth(1.0);
+	}
 
 
 	auto &vertices = drawer->mVertices;
@@ -754,6 +750,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	gl_RenderState.EnableFog(false);
 
 	for(auto &cmd : commands)
 	{
@@ -766,6 +763,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_GetRenderStyle(cmd.mRenderStyle, false, false, &tm, &sb, &db, &be);
 		gl_RenderState.BlendEquation(be); 
 		gl_RenderState.BlendFunc(sb, db);
+		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
 
 		// Rather than adding remapping code, let's enforce that the constants here are equal.
 		static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
@@ -877,6 +875,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	gl_RenderState.EnableTexture(true);
+	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.ResetColor();

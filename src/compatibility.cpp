@@ -51,6 +51,7 @@
 #include "textures.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "actor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -447,6 +448,13 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetLineSectorRef)
 	}
 	ForceNodeBuild = true;
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, GetDefaultActor)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(actorclass);
+	ACTION_RETURN_OBJECT(GetDefaultByName(actorclass));
 }
 
 

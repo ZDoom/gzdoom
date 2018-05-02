@@ -26,6 +26,7 @@
 #include <string.h>
 #include "gl/system/gl_interface.h"
 #include "r_data/matrix.h"
+#include "hwrenderer/scene//hw_drawstructs.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "c_cvars.h"
 #include "r_defs.h"
@@ -34,6 +35,7 @@
 
 class FVertexBuffer;
 class FShader;
+struct GLSectorPlane;
 extern TArray<VSMatrix> gl_MatrixStack;
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
@@ -530,6 +532,15 @@ public:
 	// Backwards compatibility crap follows
 	void ApplyFixedFunction();
 	void DrawColormapOverlay();
+
+	void SetPlaneTextureRotation(GLSectorPlane *plane, FMaterial *texture)
+	{
+		if (hw_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
+		{
+			EnableTextureMatrix(true);
+		}
+	}
+
 };
 
 extern FRenderState gl_RenderState;

@@ -73,6 +73,8 @@
 #include "i_time.h"
 
 EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Float, vid_brightness)
+EXTERN_CVAR(Float, vid_contrast)
 
 CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -129,7 +131,6 @@ public:
 	PalEntry *GetPalette() { DBGBREAK; return NULL; }
 	void GetFlashedPalette(PalEntry palette[256]) { DBGBREAK; }
 	void UpdatePalette() { DBGBREAK; }
-	bool SetGamma(float gamma) { Gamma = gamma; return true; }
 	bool SetFlash(PalEntry rgb, int amount) { DBGBREAK; return false; }
 	void GetFlash(PalEntry &rgb, int &amount) { DBGBREAK; }
 	bool IsFullscreen() { DBGBREAK; return 0; }
@@ -840,34 +841,6 @@ void DFrameBuffer::NewRefreshRate ()
 
 //==========================================================================
 //
-// DFrameBuffer :: SetBlendingRect
-//
-// Defines the area of the screen containing the 3D view.
-//
-//==========================================================================
-
-void DFrameBuffer::SetBlendingRect (int x1, int y1, int x2, int y2)
-{
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: Begin2D
-//
-// Signal that 3D rendering is complete, and the rest of the operations on
-// the canvas until Unlock() will be 2D ones.
-//
-//==========================================================================
-
-bool DFrameBuffer::Begin2D (bool copy3d)
-{
-	isIn2D = true;
-	ClearClipRect();
-	return false;
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: WipeStartScreen
 //
 // Grabs a copy of the screen currently displayed to serve as the initial
@@ -931,6 +904,31 @@ void DFrameBuffer::GameRestart()
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+void DFrameBuffer::BuildGammaTable(uint16_t *gammaTable)
+{
+	float gamma = clamp<float>(Gamma, 0.1f, 4.f);
+	float contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
+	float bright = clamp<float>(vid_brightness, -0.8f, 0.8f);
+
+	double invgamma = 1 / gamma;
+	double norm = pow(255., invgamma - 1);
+
+	for (int i = 0; i < 256; i++)
+	{
+		double val = i * contrast - (contrast - 1) * 127;
+		val += bright * 128;
+		if (gamma != 1) val = pow(val, invgamma) / norm;
+
+		gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (uint16_t)clamp<double>(val * 256, 0, 0xffff);
+	}
+}
+
+//==========================================================================
+//
 // DFrameBuffer :: GetCaps
 //
 //==========================================================================
@@ -987,7 +985,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 	}
 
 	screen = buff;
-	screen->SetGamma (Gamma);
+	screen->SetGamma ();
 
 	DisplayBits = bits;
 	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
@@ -1265,7 +1263,7 @@ void V_Init2()
 	else
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
-	screen->SetGamma (gamma);
+	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();

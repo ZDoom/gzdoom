@@ -22,15 +22,18 @@ add_library( jpeg
     jdmarker.c
     jdmaster.c
     jdmerge.c
+    jdphuff.c
     jdpostct.c
     jdsample.c
     jerror.c
     jidctflt.c
     jidctfst.c
     jidctint.c
-    jmemansi.c
+    jidctred.c
     jmemmgr.c
+    jmemnobs.c
     jquant1.c
     jquant2.c
+    jsimd_none.c
     jutils.c )
 target_link_libraries( jpeg )

@@ -208,7 +208,9 @@ int GLWall::CountVertices()
 		}
 	}
 	auto sidedef = seg->sidedef;
-	if (!(flags & (GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER)) && sidedef->numsegs > 1)
+	constexpr auto NOSPLIT_LOWER_UPPER = GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER;
+	const bool canSplit = (flags & NOSPLIT_LOWER_UPPER) != NOSPLIT_LOWER_UPPER;
+	if (canSplit && sidedef->numsegs > 1)
 	{
 		int cnt2 = 0;
 		for (int i = sidedef->numsegs - 2; i >= 0; i--)
@@ -218,7 +220,8 @@ int GLWall::CountVertices()
 			if (sidefrac <= glseg.fracleft) break;
 			cnt2++;
 		}
-		if ((flags & (GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER)) == (GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER)) cnt2 <<= 1;
+		const bool splitBoth = !(flags & NOSPLIT_LOWER_UPPER);
+		if (splitBoth) cnt2 <<= 1;
 		cnt += cnt2;
 	}
 	vi = vertexes[1];

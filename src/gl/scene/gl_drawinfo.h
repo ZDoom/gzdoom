@@ -48,7 +48,6 @@ enum Drawpasses
 {
 	GLPASS_ALL,			// Main pass with dynamic lights
 	GLPASS_LIGHTSONLY,	// only collect dynamic lights
-	GLPASS_PLAIN,		// Main pass without dynamic lights
 	GLPASS_DECALS,		// Draws a decal
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
 	
@@ -82,6 +81,7 @@ struct FDrawInfo : public HWDrawInfo
 	void AddSprite(GLSprite *sprite, bool translucent) override;
 
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
+	int UploadLights(FDynLightData &data) override;
 
 	// Legacy GL only. 
 	bool PutWallCompat(GLWall *wall, int passflag);

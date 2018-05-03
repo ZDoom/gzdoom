@@ -327,15 +327,6 @@ void FDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
 		list = GLDL_MODELS;
 	}
 	
-	// That's a lot of checks...
-	if (sprite->modelframe && sprite->RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && gl_light_sprites && mDrawer->FixedColormap == CM_DEFAULT && !sprite->fullbright && !gl.legacyMode)
-	{
-		hw_GetDynModelLight(sprite->actor, lightdata);
-		sprite->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-	}
-	else
-		sprite->dynlightindex = -1;
-	
 	auto newsprt = gl_drawinfo->drawlists[list].NewSprite();
 	*newsprt = *sprite;
 }

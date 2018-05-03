@@ -37,7 +37,5 @@ public:
 
 int gl_SetDynModelLight(AActor *self, int dynlightindex);
 
-extern thread_local FDynLightData lightdata;
-
 #endif
 

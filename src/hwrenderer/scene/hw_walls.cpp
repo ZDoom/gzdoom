@@ -46,10 +46,12 @@
 //
 //==========================================================================
 
-bool GLWall::SetupLights(FDynLightData &lightdata)
+void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 {
-	if (screen->hwcaps & RFL_NO_SHADERS) return false;	// useless in OpenGL 2.
-	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return false;	// no lights on additively blended surfaces.
+	lightdata.Clear();
+
+	if (screen->hwcaps & RFL_NO_SHADERS) return;	// useless in OpenGL 2.
+	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
 
 	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
 	switch (type)
@@ -57,13 +59,12 @@ bool GLWall::SetupLights(FDynLightData &lightdata)
 	case RENDERWALL_FOGBOUNDARY:
 	case RENDERWALL_MIRRORSURFACE:
 	case RENDERWALL_COLOR:
-		return false;
+		return;
 	}
 
 	float vtx[]={glseg.x1,zbottom[0],glseg.y1, glseg.x1,ztop[0],glseg.y1, glseg.x2,ztop[1],glseg.y2, glseg.x2,zbottom[1],glseg.y2};
 	Plane p;
 
-	lightdata.Clear();
 
 	auto normal = glseg.Normal();
 	p.Set(normal, -normal.X * glseg.x1 - normal.Z * glseg.y1);
@@ -138,7 +139,7 @@ bool GLWall::SetupLights(FDynLightData &lightdata)
 		}
 		node = node->nextLight;
 	}
-	return true;
+	dynlightindex = di->UploadLights(lightdata);
 }
 
 
@@ -166,8 +167,12 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 	{
 		translucent = true;
 	}
-	if (translucent) flags |= GLWF_TRANSLUCENT;
-
+	if (translucent)
+	{
+		flags |= GLWF_TRANSLUCENT;
+		ViewDistance = (r_viewpoint.Pos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
+	}
+	
 	if (di->FixedColormap)
 	{
 		// light planes don't get drawn with fullbright rendering
@@ -178,9 +183,25 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
     if (di->FixedColormap != CM_DEFAULT || (Colormap.LightColor.isWhite() && lightlevel == 255))
         flags &= ~GLWF_GLOW;
     
- 	di->AddWall(this);
-	lightlist = NULL;
-	vertcount = 0;	// make sure that following parts of the same linedef do not get this one's vertex info.
+	if (level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && gltexture != nullptr && !(screen->hwcaps & RFL_NO_SHADERS))
+	{
+		SetupLights(di, lightdata);
+	}
+	MakeVertices(di, translucent);
+
+
+	bool solid;
+	if (passflag[type] == 1) solid = true;
+	else if (type == RENDERWALL_FFBLOCK) solid = (gltexture && gltexture->isMasked());
+	else solid = false;
+	if (solid) ProcessDecals(di);
+
+	di->AddWall(this);
+
+	lightlist = nullptr;
+	// make sure that following parts of the same linedef do not get this one's vertex and lighting info.
+	vertcount = 0;	
+	dynlightindex = -1;
 }
 
 void GLWall::PutPortal(HWDrawInfo *di, int ptype)

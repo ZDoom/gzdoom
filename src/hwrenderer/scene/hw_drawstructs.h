@@ -205,7 +205,7 @@ public:
 	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
 	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 
-	bool SetupLights(FDynLightData &lightdata);
+	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata);
 
 	void MakeVertices(HWDrawInfo *di, bool nosplit);
 

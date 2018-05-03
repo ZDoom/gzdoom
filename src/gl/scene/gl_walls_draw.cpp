@@ -303,19 +303,8 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 
 void FDrawInfo::AddWall(GLWall *wall)
 {
-	bool translucent = !!(wall->flags & GLWall::GLWF_TRANSLUCENT);
-	int list;
-
-	wall->MakeVertices(this, translucent);
-
-	if (translucent) // translucent walls
+	if (wall->flags & GLWall::GLWF_TRANSLUCENT)
 	{
-		if (!gl.legacyMode && mDrawer->FixedColormap == CM_DEFAULT && wall->gltexture != nullptr)
-		{
-			if (wall->SetupLights(lightdata))
-				wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-		}
-		wall->ViewDistance = (r_viewpoint.Pos - (wall->seg->linedef->v1->fPos() + wall->seg->linedef->Delta() / 2)).XY().LengthSquared();
 		auto newwall = drawlists[GLDL_TRANSLUCENT].NewWall();
 		*newwall = *wall;
 	}
@@ -325,16 +314,9 @@ void FDrawInfo::AddWall(GLWall *wall)
 		{
 			if (PutWallCompat(wall, GLWall::passflag[wall->type])) return;
 		}
-		else if (mDrawer->FixedColormap == CM_DEFAULT)
-		{
-			if (wall->SetupLights(lightdata))
-				wall->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);
-		}
 
-
-		bool masked;
-
-		masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
+		bool masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
+		int list;
 
 		if ((wall->flags & GLWall::GLWF_SKYHACK && wall->type == RENDERWALL_M2S))
 		{
@@ -346,10 +328,7 @@ void FDrawInfo::AddWall(GLWall *wall)
 		}
 		auto newwall = drawlists[list].NewWall();
 		*newwall = *wall;
-		if (!masked) newwall->ProcessDecals(this);
 	}
-	wall->dynlightindex = -1;
-	wall->vertcount = 0;
 }
 
 //==========================================================================

@@ -247,7 +247,7 @@ public:
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
-    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal);
+    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
     void ProcessDecals(HWDrawInfo *di);
 
 	void CreateVertices(FFlatVertex *&ptr, bool nosplit);
@@ -412,16 +412,19 @@ struct DecalVertex
 struct GLDecal
 {
 	FMaterial *gltexture;
-	GLWall *wall;
+	TArray<lightlist_t> *lightlist;
 	DBaseDecal *decal;
 	DecalVertex dv[4];
 	float zcenter;
 	unsigned int vertindex;
 
-	int light;
-	int rel;
-	float a;
-	FColormap colormap;
+	FRenderStyle renderstyle;
+	int lightlevel;
+	int rellight;
+	float alpha;
+	FColormap Colormap;
+	secplane_t bottomplane;
+	FVector3 Normal;
 
 };
 

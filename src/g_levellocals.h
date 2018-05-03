@@ -152,6 +152,7 @@ struct FLevelLocals
 
 	bool		FromSnapshot;			// The current map was restored from a snapshot
 	bool		HasHeightSecs;			// true if some Transfer_Heights effects are present in the map. If this is false, some checks in the renderer can be shortcut.
+	bool		HasDynamicLights;		// Another render optimization for maps with no lights at all.
 
 	double		teamdamage;
 

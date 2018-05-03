@@ -99,7 +99,7 @@ void GLSceneDrawer::SetupWeaponLight()
 		return;
 
 	// Check if lighting can be used on this item.
-	if (camera->RenderStyle.BlendOp == STYLEOP_Shadow || !gl_lights || !gl_light_sprites || !GLRenderer->mLightCount || FixedColormap != CM_DEFAULT || gl.legacyMode)
+	if (camera->RenderStyle.BlendOp == STYLEOP_Shadow || !level.HasDynamicLights || !gl_light_sprites || FixedColormap != CM_DEFAULT || gl.legacyMode)
 		return;
 
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
@@ -179,7 +179,7 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 		}
 		else
 		{
-			if (gl_lights && GLRenderer->mLightCount && FixedColormap == CM_DEFAULT && gl_light_sprites)
+			if (level.HasDynamicLights && FixedColormap == CM_DEFAULT && gl_light_sprites)
 			{
 				FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
 				if (!smf || gl.legacyMode)	// For models with per-pixel lighting this was done in a previous pass.

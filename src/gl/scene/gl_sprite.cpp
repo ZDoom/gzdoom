@@ -144,7 +144,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	}
 	if (RenderStyle.BlendOp != STYLEOP_Shadow)
 	{
-		if (gl_lights && GLRenderer->mLightCount && mDrawer->FixedColormap == CM_DEFAULT && !sprite->fullbright)
+		if (level.HasDynamicLights && mDrawer->FixedColormap == CM_DEFAULT && !sprite->fullbright)
 		{
 			if ( sprite->dynlightindex == -1)	// only set if we got no light buffer index. This covers all cases where sprite lighting is used.
 			{
@@ -328,7 +328,7 @@ void FDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
 	}
 	
 	// That's a lot of checks...
-	if (sprite->modelframe && sprite->RenderStyle.BlendOp != STYLEOP_Shadow && gl_lights && gl_light_sprites && GLRenderer->mLightCount && mDrawer->FixedColormap == CM_DEFAULT && !sprite->fullbright && !gl.legacyMode)
+	if (sprite->modelframe && sprite->RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && gl_light_sprites && mDrawer->FixedColormap == CM_DEFAULT && !sprite->fullbright && !gl.legacyMode)
 	{
 		hw_GetDynModelLight(sprite->actor, lightdata);
 		sprite->dynlightindex = GLRenderer->mLights->UploadLights(lightdata);

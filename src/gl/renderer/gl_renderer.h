@@ -104,7 +104,6 @@ public:
 	GLPortal *mCurrentPortal;
 	int mMirrorCount;
 	int mPlaneMirrorCount;
-	int mLightCount;
 	float mCurrentFoV;
 	AActor *mViewActor;
 	FShaderManager *mShaderManager;

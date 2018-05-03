@@ -42,9 +42,6 @@
 
 EXTERN_CVAR(Bool, gl_seamless)
 
-// If we want to share the array to avoid constant allocations it needs to be thread local unless it'd be littered with expensive synchronization.
-thread_local FDynLightData lightdata;
-
 //==========================================================================
 //
 // General purpose wall rendering function
@@ -473,7 +470,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	auto &seg = wall->seg;
 	
 	// calculate dynamic light effect.
-	if (gl_lights && GLRenderer->mLightCount && !mDrawer->FixedColormap && gl_light_sprites)
+	if (level.HasDynamicLights && !mDrawer->FixedColormap && gl_light_sprites)
 	{
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;

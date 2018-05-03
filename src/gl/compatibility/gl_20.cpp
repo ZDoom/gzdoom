@@ -881,7 +881,7 @@ void GLSceneDrawer::RenderMultipassStuff()
 
 	// second pass: draw lights
 	glDepthMask(false);
-	if (GLRenderer->mLightCount && !FixedColormap)
+	if (level.HasDynamicLights && !FixedColormap)
 	{
 		if (gl_SetupLightTexture())
 		{

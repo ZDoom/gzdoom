@@ -50,30 +50,43 @@
 EXTERN_CVAR (Bool, r_drawplayersprites)
 EXTERN_CVAR (Bool, r_deathcamera)
 
+
 //==========================================================================
 //
 // R_DrawPSprite
 //
 //==========================================================================
 
-void GLSceneDrawer::DrawPSprite (player_t * player,DPSprite *psp, float sx, float sy, int OverrideShader, bool alphatexture)
+void GLSceneDrawer::DrawPSprite (HUDSprite *huds)
 {
-	WeaponRect rc;
-	
-	if (!GetWeaponRect(psp, sx, sy, player, rc)) return;
-	gl_RenderState.SetMaterial(rc.tex, CLAMP_XY_NOMIP, 0, OverrideShader, alphatexture);
-	if (rc.tex->tex->GetTranslucency() || OverrideShader != -1)
+	if (huds->RenderStyle.BlendOp == STYLEOP_Shadow)
 	{
-		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, huds->cm.Desaturation);
 	}
+	else
+	{
+		SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
+	}
+	gl_SetRenderStyle(huds->RenderStyle, false, false);
+	gl_RenderState.SetObjectColor(huds->ObjectColor);
+	gl_RenderState.SetDynLight(huds->dynrgb[0], huds->dynrgb[1], huds->dynrgb[2]);
+	gl_RenderState.SetMaterial(huds->tex, CLAMP_XY_NOMIP, 0, huds->OverrideShader, !!(huds->RenderStyle.Flags & STYLEF_RedIsAlpha));
+	float thresh = (huds->tex->tex->GetTranslucency() || huds->OverrideShader != -1) ? 0.f : gl_mask_sprite_threshold;
+	gl_RenderState.AlphaFunc(GL_GEQUAL, thresh);
+	gl_RenderState.EnableBrightmap(!(huds->RenderStyle.Flags & STYLEF_ColorIsFixed));
+
 	gl_RenderState.Apply();
 	FQuadDrawer qd;
-	qd.Set(0, rc.x1, rc.y1, 0, rc.u1, rc.v1);
-	qd.Set(1, rc.x1, rc.y2, 0, rc.u1, rc.v2);
-	qd.Set(2, rc.x2, rc.y1, 0, rc.u2, rc.v1);
-	qd.Set(3, rc.x2, rc.y2, 0, rc.u2, rc.v2);
+	qd.Set(0, huds->x1, huds->y1, 0, huds->u1, huds->v1);
+	qd.Set(1, huds->x1, huds->y2, 0, huds->u1, huds->v2);
+	qd.Set(2, huds->x2, huds->y1, 0, huds->u2, huds->v1);
+	qd.Set(3, huds->x2, huds->y2, 0, huds->u2, huds->v2);
 	qd.Render(GL_TRIANGLE_STRIP);
+
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
+	gl_RenderState.SetObjectColor(0xffffffff);
+	gl_RenderState.SetDynLight(0, 0, 0);
+	gl_RenderState.EnableBrightmap(false);
 }
 
 //==========================================================================
@@ -143,8 +156,6 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	WeaponPosition weap = GetWeaponPosition(camera->player);
 	WeaponLighting light = GetWeaponLighting(viewsector, r_viewpoint.Pos, FixedColormap, in_area, camera->Pos());
 
-	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
-
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
 	int oldlightmode = level.lightmode;
@@ -153,61 +164,40 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 	for(DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (!psp->GetState()) continue;
-		WeaponRenderStyle rs = GetWeaponRenderStyle(psp, camera);
-		if (rs.RenderStyle.BlendOp == STYLEOP_None) continue;
+		FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
+		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
+		if (smf && !hudModelStep) continue;
+		if (!smf && hudModelStep) continue;
 
-		gl_SetRenderStyle(rs.RenderStyle, false, false);
+		HUDSprite hudsprite;
+		hudsprite.owner = playermo;
+		hudsprite.mframe = smf;
 
-		PalEntry ThingColor = (camera->RenderStyle.Flags & STYLEF_ColorIsFixed) ? camera->fillcolor : 0xffffff;
-		ThingColor.a = 255;
-
-		// now draw the different layers of the weapon.
-		// For stencil render styles brightmaps need to be disabled.
-		gl_RenderState.EnableBrightmap(!(rs.RenderStyle.Flags & STYLEF_ColorIsFixed));
-
-		const bool bright = isBright(psp);
-		const PalEntry finalcol = bright? ThingColor : ThingColor.Modulate(viewsector->SpecialColors[sector_t::sprites]);
-		gl_RenderState.SetObjectColor(finalcol);
-
-		auto ll = light;
-		if (bright) ll.SetBright();
-
-		// set the lighting parameters
-		if (rs.RenderStyle.BlendOp == STYLEOP_Shadow)
-		{
-			gl_RenderState.SetColor(0.2f, 0.2f, 0.2f, 0.33f, ll.cm.Desaturation);
-		}
-		else
-		{
-			if (level.HasDynamicLights && FixedColormap == CM_DEFAULT && gl_light_sprites)
-			{
-				FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
-				if (!smf || gl.legacyMode)	// For models with per-pixel lighting this was done in a previous pass.
-				{
-					float out[3];
-					gl_drawinfo->GetDynSpriteLight(playermo, nullptr, out);
-					gl_RenderState.SetDynLight(out[0], out[1], out[2]);
-				}
-			}
-			SetColor(ll.lightlevel, 0, ll.cm, rs.alpha, true);
-		}
+		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
 
 		FVector2 spos = BobWeapon(weap, psp);
+
+		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
+		// set the lighting parameters
+		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && FixedColormap == CM_DEFAULT && gl_light_sprites && !hudModelStep || gl.legacyMode)	
+			// For models with per-pixel lighting this was done in a previous pass.
+		{
+			gl_drawinfo->GetDynSpriteLight(playermo, nullptr, hudsprite.dynrgb);
+		}
 
 		// [BB] In the HUD model step we just render the model and break out. 
 		if (hudModelStep)
 		{
-			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+			hudsprite.x1 = spos.X;
+			hudsprite.y1 = spos.Y;
 			gl_RenderHUDModel(psp, spos.X, spos.Y, weapondynlightindex[psp]);
 		}
 		else
 		{
-			DrawPSprite(player, psp, spos.X, spos.Y, rs.OverrideShader, !!(rs.RenderStyle.Flags & STYLEF_RedIsAlpha));
+			if (!hudsprite.GetWeaponRect(psp, spos.X, spos.Y, player)) continue;
+			DrawPSprite(&hudsprite);
 		}
 	}
-	gl_RenderState.SetObjectColor(0xffffffff);
-	gl_RenderState.SetDynLight(0, 0, 0);
-	gl_RenderState.EnableBrightmap(false);
 	level.lightmode = oldlightmode;
 }
 
@@ -220,22 +210,32 @@ void GLSceneDrawer::DrawPlayerSprites(sector_t * viewsector, bool hudModelStep)
 
 void GLSceneDrawer::DrawTargeterSprites()
 {
-	AActor * playermo=players[consoleplayer].camera;
-	player_t * player=playermo->player;
-	
-	if(!player || playermo->renderflags&RF_INVISIBLE || !r_drawplayersprites ||
-		GLRenderer->mViewActor!=playermo) return;
+	AActor * playermo = players[consoleplayer].camera;
+	player_t * player = playermo->player;
 
-	gl_RenderState.EnableBrightmap(false);
-	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	gl_RenderState.AlphaFunc(GL_GEQUAL,gl_mask_sprite_threshold);
-	gl_RenderState.BlendEquation(GL_FUNC_ADD);
-	gl_RenderState.ResetColor();
-	gl_RenderState.SetTextureMode(TM_MODULATE);
+	if (!player || playermo->renderflags&RF_INVISIBLE || !r_drawplayersprites || GLRenderer->mViewActor != playermo) return;
+
+	HUDSprite hudsprite;
+
+	hudsprite.owner = playermo;
+	hudsprite.mframe = nullptr;
+	hudsprite.cm.Clear();
+	hudsprite.lightlevel = 255;
+	hudsprite.ObjectColor = 0xffffffff;
+	hudsprite.alpha = 1;
+	hudsprite.RenderStyle = DefaultRenderStyle();
+	hudsprite.OverrideShader = -1;
+	hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
 
 	// The Targeter's sprites are always drawn normally.
 	for (DPSprite *psp = player->FindPSprite(PSP_TARGETCENTER); psp != nullptr; psp = psp->GetNext())
 	{
-		if (psp->GetState() != nullptr) DrawPSprite(player, psp, psp->x, psp->y, 0, false);
+		if (psp->GetState() != nullptr && (psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr))
+		{
+			hudsprite.weapon = psp;
+			hudsprite.GetWeaponRect(psp, psp->x, psp->y, player);
+
+			DrawPSprite(&hudsprite);
+		}
 	}
 }

@@ -9,6 +9,8 @@
 #include "r_utility.h"
 #include "c_cvars.h"
 
+struct HUDSprite;
+
 class GLSceneDrawer
 {
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
@@ -68,7 +70,7 @@ public:
 	void RenderView(player_t *player);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 
-	void DrawPSprite(player_t * player, DPSprite *psp, float sx, float sy, int OverrideShader, bool alphatexture);
+	void DrawPSprite(HUDSprite *huds);
 	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
 	void DrawTargeterSprites();
 	void DrawPlayerHUDModel(sector_t * viewsector);

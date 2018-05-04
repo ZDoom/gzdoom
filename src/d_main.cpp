@@ -28,13 +28,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(a,b) _mkdir (a)
-#else
-#include <sys/stat.h>
-#endif
-
 #ifdef HAVE_FPU_CONTROL
 #include <fpu_control.h>
 #endif
@@ -237,6 +230,7 @@ FStartupInfo DoomStartupInfo;
 FString lastIWAD;
 int restart = 0;
 bool batchrun;	// just run the startup and collect all error messages in a logfile, then quit without any interaction
+bool AppActive = true;
 
 cycle_t FrameCycles;
 
@@ -645,6 +639,8 @@ CVAR (Flag, compat_multiexit,			compatflags2, COMPATF2_MULTIEXIT);
 CVAR (Flag, compat_teleport,			compatflags2, COMPATF2_TELEPORT);
 CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 
+CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 //==========================================================================
 //
 // D_Display
@@ -660,6 +656,11 @@ void D_Display ()
 	if (nodrawers || screen == NULL)
 		return; 				// for comparative timing / profiling
 	
+	if (!AppActive && (screen->IsFullscreen() || !vid_activeinbackground))
+	{
+		return;
+	}
+
 	cycle_t cycles;
 	
 	cycles.Reset();

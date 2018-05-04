@@ -55,7 +55,6 @@
 #include "gl/system/gl_framebuffer.h"
 
 extern HWND			Window;
-extern BOOL AppActive;
 
 extern "C" {
     __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
@@ -70,8 +69,6 @@ PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
 PFNWGLSWAPINTERVALEXTPROC myWglSwapIntervalExtProc;
 
 
-
-CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -1110,18 +1107,6 @@ SystemFrameBuffer::~SystemFrameBuffer()
 
 void SystemFrameBuffer::InitializeState()
 {
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-bool SystemFrameBuffer::CanUpdate()
-{
-	if (!AppActive && (IsFullscreen() || !vid_activeinbackground)) return false;
-	return true;
 }
 
 //==========================================================================

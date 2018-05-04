@@ -701,11 +701,6 @@ void SystemFrameBuffer::InitializeState()
 {
 }
 
-bool SystemFrameBuffer::CanUpdate()
-{
-	return true;
-}
-
 void SystemFrameBuffer::SwapBuffers()
 {
 	[[NSOpenGLContext currentContext] flushBuffer];

@@ -305,9 +305,16 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_WINDOWEVENT:
 		switch (sev.window.event)
 		{
+			extern bool AppActive;
+
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
+				S_SetSoundPaused(1);
+				AppActive = true;
+				break;
+
 			case SDL_WINDOWEVENT_FOCUS_LOST:
-				S_SetSoundPaused((!!i_soundinbackground) || sev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
+				S_SetSoundPaused(i_soundinbackground);
+				AppActive = false;
 				break;
 		}
 		break;

@@ -148,12 +148,6 @@ void OpenGLFrameBuffer::InitializeState()
 
 void OpenGLFrameBuffer::Update()
 {
-	if (!CanUpdate()) 
-	{
-		GLRenderer->Flush();
-		return;
-	}
-
 	DrawRateStuff();
 	GLRenderer->Flush();
 

@@ -296,18 +296,24 @@ ApplicationController* appCtrl;
 }
 
 
+extern bool AppActive;
+
 - (void)applicationDidBecomeActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
 	
 	S_SetSoundPaused(1);
+
+	AppActive = true;
 }
 
 - (void)applicationWillResignActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
 	
-	S_SetSoundPaused((!!i_soundinbackground) || 0);
+	S_SetSoundPaused(i_soundinbackground);
+
+	AppActive = false;
 }
 
 

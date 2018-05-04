@@ -144,7 +144,7 @@ LPDIRECTINPUT8			g_pdi;
 LPDIRECTINPUT			g_pdi3;
 
 
-BOOL AppActive = TRUE;
+extern bool AppActive;
 int SessionState = 0;
 int BlockMouseMove; 
 
@@ -527,7 +527,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_ACTIVATEAPP:
-		AppActive = wParam;
+		AppActive = wParam == TRUE;
 		if (wParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), INGAME_PRIORITY_CLASS);

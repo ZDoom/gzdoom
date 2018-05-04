@@ -13,6 +13,7 @@ struct GLDecal;
 class IShadowMap;
 struct particle_t;
 struct FDynLightData;
+struct HUDSprite;
 
 //==========================================================================
 //
@@ -144,6 +145,9 @@ public:
 	void GetDynSpriteLight(AActor *self, float x, float y, float z, FLightNode *node, int portalgroup, float *out);
 	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
 
+	void PreparePlayerSprites(sector_t * viewsector, area_t in_area);
+	void PrepareTargeterSprites();
+
 	virtual void DrawWall(GLWall *wall, int pass) = 0;
 	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;
 	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
@@ -158,7 +162,8 @@ public:
     virtual void AddMirrorSurface(GLWall *w) = 0;
 	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
 	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
-	
+	virtual void AddHUDSprite(HUDSprite *huds) = 0;
+
 	virtual int UploadLights(FDynLightData &data) = 0;
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;

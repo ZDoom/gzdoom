@@ -31,14 +31,21 @@
 #include "doomstat.h"
 #include "d_player.h"
 #include "g_levellocals.h"
+#include "r_data/models/models.h"
 #include "hw_weapon.h"
 #include "hw_fakeflat.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/scene/hw_drawstructs.h"
+#include "hwrenderer/data/flatvertices.h"
 
 EXTERN_CVAR(Float, transsouls)
 EXTERN_CVAR(Int, gl_fuzztype)
+EXTERN_CVAR(Bool, r_drawplayersprites)
+EXTERN_CVAR(Bool, r_deathcamera)
 
 
 //==========================================================================
@@ -69,7 +76,7 @@ static bool isBright(DPSprite *psp)
 //
 //==========================================================================
 
-WeaponPosition GetWeaponPosition(player_t *player)
+static WeaponPosition GetWeaponPosition(player_t *player)
 {
 	WeaponPosition w;
 	P_BobWeapon(player, &w.bobx, &w.boby, r_viewpoint.TicFrac);
@@ -102,7 +109,7 @@ WeaponPosition GetWeaponPosition(player_t *player)
 //
 //==========================================================================
 
-FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp)
+static FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp)
 {
 	if (psp->firstTic)
 	{ // Can't interpolate the first tic.
@@ -134,7 +141,7 @@ FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp)
 //
 //==========================================================================
 
-WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int FixedColormap, area_t in_area, const DVector3 &playerpos)
+static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int FixedColormap, area_t in_area, const DVector3 &playerpos)
 {
 	WeaponLighting l;
 
@@ -321,7 +328,7 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 //
 //==========================================================================
 
-bool HUDSprite::GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *player)
+bool HUDSprite::GetWeaponRect(HWDrawInfo *di, DPSprite *psp, float sx, float sy, player_t *player)
 {
 	float			tx;
 	float			scale;
@@ -344,6 +351,8 @@ bool HUDSprite::GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *playe
 
 	// calculate edges of the shape
 	scalex = (320.0f / (240.0f * r_viewwindow.WidescreenRatio)) * vw / 320;
+
+	float x1, y1, x2, y2, u1, v1, u2, v2;
 
 	tx = (psp->Flags & PSPF_MIRROR) ? ((160 - r.width) - (sx + r.left)) : (sx - (160 - r.left));
 	x1 = tx * scalex + vw / 2;
@@ -392,7 +401,142 @@ bool HUDSprite::GetWeaponRect(DPSprite *psp, float sx, float sy, player_t *playe
 		u2 = tex->GetSpriteUR();
 		v2 = tex->GetSpriteVB();
 	}
+
+	auto verts = di->AllocVertices(4);
+	mx = verts.second;
+
+	verts.first[0].Set(x1, y1, 0, u1, v1);
+	verts.first[1].Set(x1, y2, 0, u1, v2);
+	verts.first[2].Set(x2, y1, 0, u2, v1);
+	verts.first[3].Set(x2, y2, 0, u2, v2);
+
 	this->tex = tex;
 	return true;
 }
 
+//==========================================================================
+//
+// R_DrawPlayerSprites
+//
+//==========================================================================
+
+void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
+{
+
+	bool brightflash = false;
+	AActor * playermo = players[consoleplayer].camera;
+	player_t * player = playermo->player;
+	const bool hudModelStep = gl_IsHUDModelForPlayerAvailable(player);
+
+	AActor *camera = r_viewpoint.camera;
+
+	// this is the same as the software renderer
+	if (!player ||
+		!r_drawplayersprites ||
+		!camera->player ||
+		(player->cheats & CF_CHASECAM) ||
+		(r_deathcamera && camera->health <= 0))
+		return;
+
+	WeaponPosition weap = GetWeaponPosition(camera->player);
+	WeaponLighting light = GetWeaponLighting(viewsector, r_viewpoint.Pos, FixedColormap, in_area, camera->Pos());
+
+	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
+	// light mode here to draw the weapon sprite.
+	int oldlightmode = level.lightmode;
+	if (level.lightmode == 8) level.lightmode = 2;
+
+	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
+	{
+		if (!psp->GetState()) continue;
+		FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
+		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
+		if (smf && !hudModelStep) continue;
+		if (!smf && hudModelStep) continue;
+
+		HUDSprite hudsprite;
+		hudsprite.owner = playermo;
+		hudsprite.mframe = smf;
+		hudsprite.weapon = psp;
+
+		if (!hudsprite.GetWeaponRenderStyle(psp, camera, viewsector, light)) continue;
+
+		FVector2 spos = BobWeapon(weap, psp);
+
+		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
+		hudsprite.lightindex = -1;
+		// set the lighting parameters
+		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && FixedColormap == CM_DEFAULT && gl_light_sprites)
+		{
+			if (!hudModelStep || (screen->hwcaps & RFL_NO_SHADERS))
+			{
+				GetDynSpriteLight(playermo, nullptr, hudsprite.dynrgb);
+			}
+			else
+			{
+				hw_GetDynModelLight(playermo, lightdata);
+				hudsprite.lightindex = UploadLights(lightdata);
+			}
+		}
+
+		// [BB] In the HUD model step we just render the model and break out. 
+		if (hudModelStep)
+		{
+			hudsprite.mx = spos.X;
+			hudsprite.my = spos.Y;
+		}
+		else
+		{
+			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player)) continue;
+		}
+		AddHUDSprite(&hudsprite);
+	}
+	level.lightmode = oldlightmode;
+	PrepareTargeterSprites();
+}
+
+
+//==========================================================================
+//
+// R_DrawPlayerSprites
+//
+//==========================================================================
+
+void HWDrawInfo::PrepareTargeterSprites()
+{
+	AActor * playermo = players[consoleplayer].camera;
+	player_t * player = playermo->player;
+	AActor *camera = r_viewpoint.camera;
+
+	// this is the same as above
+	if (!player ||
+		!r_drawplayersprites ||
+		!camera->player ||
+		(player->cheats & CF_CHASECAM) ||
+		(r_deathcamera && camera->health <= 0))
+		return;
+
+	HUDSprite hudsprite;
+
+	hudsprite.owner = playermo;
+	hudsprite.mframe = nullptr;
+	hudsprite.cm.Clear();
+	hudsprite.lightlevel = 255;
+	hudsprite.ObjectColor = 0xffffffff;
+	hudsprite.alpha = 1;
+	hudsprite.RenderStyle = DefaultRenderStyle();
+	hudsprite.OverrideShader = -1;
+	hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
+
+	// The Targeter's sprites are always drawn normally.
+	for (DPSprite *psp = player->FindPSprite(PSP_TARGETCENTER); psp != nullptr; psp = psp->GetNext())
+	{
+		if (psp->GetState() != nullptr && (psp->GetID() != PSP_TARGETCENTER || CrosshairImage == nullptr))
+		{
+			hudsprite.weapon = psp;
+			hudsprite.GetWeaponRect(this, psp, psp->x, psp->y, player);
+
+			AddHUDSprite(&hudsprite);
+		}
+	}
+}

@@ -38,7 +38,6 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/renderer/gl_quaddrawer.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 

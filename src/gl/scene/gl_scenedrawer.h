@@ -20,8 +20,6 @@ class GLSceneDrawer
 
 	TMap<DPSprite*, int> weapondynlightindex;
 
-	void SetupWeaponLight();
-
 	void RenderMultipassStuff();
 	
 	void UnclipSubsector(subsector_t *sub);
@@ -69,11 +67,6 @@ public:
 	sector_t *RenderViewpoint(AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	void RenderView(player_t *player);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
-
-	void DrawPSprite(HUDSprite *huds);
-	void DrawPlayerSprites(sector_t * viewsector, bool hudModelStep);
-	void DrawTargeterSprites();
-	void DrawPlayerHUDModel(sector_t * viewsector);
 
 	void InitClipper(angle_t a1, angle_t a2)
 	{

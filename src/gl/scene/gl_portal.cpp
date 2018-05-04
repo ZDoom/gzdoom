@@ -39,7 +39,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_quaddrawer.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"

@@ -32,6 +32,7 @@
 #include "r_utility.h"
 #include "doomstat.h"
 #include "g_levellocals.h"
+#include "tarray.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 
 #include "gl/data/gl_vertexbuffer.h"
@@ -219,6 +220,7 @@ void FDrawInfo::StartScene()
 	}
 	decals[0].Clear();
 	decals[1].Clear();
+	hudsprites.Clear();
 }
 
 //==========================================================================

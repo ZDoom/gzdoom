@@ -640,6 +640,7 @@ CVAR (Flag, compat_teleport,			compatflags2, COMPATF2_TELEPORT);
 CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 
 CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 //==========================================================================
 //
@@ -971,6 +972,22 @@ void D_ErrorCleanup ()
 	insave = false;
 }
 
+static void UpdateSoundPauseState()
+{
+	if (i_soundinbackground)
+	{
+		return;
+	}
+
+	static bool prevAppActive = AppActive;
+
+	if (prevAppActive != AppActive)
+	{
+		S_SetSoundPaused(AppActive);
+		prevAppActive = AppActive;
+	}
+}
+
 //==========================================================================
 //
 // D_DoomLoop
@@ -1001,6 +1018,8 @@ void D_DoomLoop ()
 				I_StartFrame ();
 			}
 			I_SetFrameTime();
+
+			UpdateSoundPauseState();
 
 			// process one or more tics
 			if (singletics)

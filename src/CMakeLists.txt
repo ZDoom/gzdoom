@@ -801,6 +801,7 @@ set( NOT_COMPILED_SOURCE_FILES
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
 	swrenderer/r_all.cpp
+	swrenderer/r_swscene.cpp
 	polyrenderer/poly_all.cpp
 	sound/oplsynth/opl_mus_player.cpp
 	sound/mpg123_decoder.cpp
@@ -822,7 +823,6 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_skydome.cpp
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
-	gl/scene/gl_swscene.cpp
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
 	gl_load/gl_load.c

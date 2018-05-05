@@ -35,6 +35,7 @@
 #include "p_effect.h"
 #include "d_player.h"
 #include "a_dynlight.h"
+#include "swrenderer/r_swscene.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -47,7 +48,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
-#include "gl/scene/gl_swscene.h"
 #include "gl/shaders/gl_ambientshader.h"
 #include "gl/shaders/gl_bloomshader.h"
 #include "gl/shaders/gl_blurshader.h"

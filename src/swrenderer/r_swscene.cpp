@@ -20,21 +20,19 @@
 //--------------------------------------------------------------------------
 //
 /*
-** gl_swscene.cpp
-** common overlay code for software and hardware renderer
+** r_swscene.cpp
+** render the software scene through the hardware rendering backend
 **
 */
 
 #include "hwrenderer/textures/hw_ihwtexture.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "r_renderer.h"
-#include "gl_swscene.h"
+#include "r_swscene.h"
 #include "w_wad.h"
 #include "d_player.h"
 #include "textures/bitmap.h"
 #include "swrenderer/scene/r_light.h"
-
-#include "gl/renderer/gl_renderer.h"
 
 // [RH] Base blending values (for e.g. underwater)
 int BaseBlendR, BaseBlendG, BaseBlendB;

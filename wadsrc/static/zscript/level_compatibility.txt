@@ -172,6 +172,12 @@ class LevelCompatibility play
 				break;
 			}
 
+			case '1EF7DEAECA03DE03BF363A3193757B5C': // PLUTONIA.wad map11
+			{
+				SetLineSectorRef(41, Line.back, 6);
+				break;
+			}			
+			
 			case '279BB50468FE9F5B36C6D821E4902369': // Plutonia Experiment map30
 			{
 				// flag items in deathmatch-only area correctly so that 100% items

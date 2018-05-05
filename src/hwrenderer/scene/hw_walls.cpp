@@ -183,11 +183,14 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
     if (di->FixedColormap != CM_DEFAULT || (Colormap.LightColor.isWhite() && lightlevel == 255))
         flags &= ~GLWF_GLOW;
     
-	if (level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && gltexture != nullptr && !(screen->hwcaps & RFL_NO_SHADERS))
+	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
 	{
-		SetupLights(di, lightdata);
+		if (level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && gltexture != nullptr && !(screen->hwcaps & RFL_NO_SHADERS))
+		{
+			SetupLights(di, lightdata);
+		}
+		MakeVertices(di, translucent);
 	}
-	MakeVertices(di, translucent);
 
 
 	bool solid;

@@ -256,6 +256,15 @@ void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 //==========================================================================
 void FDrawInfo::DrawWall(GLWall *wall, int pass)
 {
+	if (screen->hwcaps & RFL_BUFFER_STORAGE)
+	{
+		if (level.HasDynamicLights && FixedColormap == CM_DEFAULT && wall->gltexture != nullptr && !(screen->hwcaps & RFL_NO_SHADERS))
+		{
+			wall->SetupLights(this, lightdata);
+		}
+		wall->MakeVertices(this, !!(wall->flags & GLWall::GLWF_TRANSLUCENT));
+	}
+
 	gl_RenderState.SetNormal(wall->glseg.Normal());
 	switch (pass)
 	{

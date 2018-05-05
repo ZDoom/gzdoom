@@ -19,6 +19,6 @@ public:
 	SWSceneDrawer();
 	~SWSceneDrawer();
 
-	void RenderView(player_t *player);
+	sector_t *RenderView(player_t *player);
 };
 

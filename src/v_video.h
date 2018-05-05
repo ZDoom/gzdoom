@@ -44,6 +44,8 @@
 #include "v_colortables.h"
 #include "v_2ddrawer.h"
 
+struct sector_t;
+
 enum EHWCaps
 {
 	// [BB] Added texture compression flags.
@@ -91,7 +93,7 @@ inline bool V_IsPolyRenderer()
 
 inline bool V_IsTrueColor()
 {
-	return vid_rendermode == 1 || vid_rendermode == 3;
+	return vid_rendermode == 1 || vid_rendermode == 3 || vid_rendermode == 4;
 }
 
 
@@ -399,7 +401,7 @@ public:
 	virtual uint32_t GetCaps();
 	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
-	virtual void RenderView(player_t *player) {}
+	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 
 	// Screen wiping
 	virtual bool WipeStartScreen(int type);
@@ -422,6 +424,7 @@ public:
 	// Dim part of the canvas
 	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
 	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
+	void DrawBlend(sector_t * viewsector);
 
 	// Fill an area with a texture
 	void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);

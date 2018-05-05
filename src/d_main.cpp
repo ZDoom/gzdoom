@@ -652,6 +652,7 @@ CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 void D_Display ()
 {
 	bool wipe;
+	sector_t *viewsec;
 
 	if (nodrawers || screen == NULL)
 		return; 				// for comparative timing / profiling
@@ -787,8 +788,9 @@ void D_Display ()
 			}
 			else level.HasDynamicLights = false;	// lights are off so effectively we have none.
 
-			screen->RenderView(&players[consoleplayer]);
+			viewsec = screen->RenderView(&players[consoleplayer]);
 			screen->Begin2D(false);
+			screen->DrawBlend(viewsec);
 			// returns with 2S mode set.
 			if (automapactive)
 			{

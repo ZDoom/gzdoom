@@ -66,7 +66,6 @@
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Bool, cl_capfps)
-EXTERN_CVAR(Float, underwater_fade_scalar)
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
 extern bool NoInterpolateView;
@@ -401,15 +400,16 @@ void FGLRenderer::EndOffscreen()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::RenderView(player_t* player)
+sector_t *FGLRenderer::RenderView(player_t* player)
 {
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mVBO->Reset();
+	sector_t *retsec;
 
 	if (!V_IsHardwareRenderer())
 	{
 		if (swdrawer == nullptr) swdrawer = new SWSceneDrawer;
-		swdrawer->RenderView(player);
+		retsec = swdrawer->RenderView(player);
 	}
 	else
 	{
@@ -451,10 +451,10 @@ void FGLRenderer::RenderView(player_t* player)
 		drawer.SetFixedColormap(player);
 
 		mShadowMap.Update();
-		sector_t * viewsector = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+		retsec = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
-
 	All.Unclock();
+	return retsec;
 }
 
 //===========================================================================
@@ -518,143 +518,6 @@ void FGLRenderer::BeginFrame()
 {
 	buffersActive = GLRenderer->mBuffers->Setup(GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mSceneViewport.width, GLRenderer->mSceneViewport.height);
 }
-
-
-
-void gl_FillScreen()
-{
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-	gl_RenderState.EnableTexture(false);
-	gl_RenderState.Apply();
-	// The fullscreen quad is stored at index 4 in the main vertex buffer.
-	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
-}
-
-//==========================================================================
-//
-// Draws a blend over the entire view
-//
-//==========================================================================
-void FGLRenderer::DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap, bool in2d)
-{
-	float blend[4] = { 0,0,0,0 };
-	PalEntry blendv = 0;
-	float extra_red;
-	float extra_green;
-	float extra_blue;
-	player_t *player = NULL;
-
-	if (players[consoleplayer].camera != NULL)
-	{
-		player = players[consoleplayer].camera->player;
-	}
-
-	// don't draw sector based blends when an invulnerability colormap is active
-	if (!FixedColormap)
-	{
-		if (!viewsector->e->XFloor.ffloors.Size())
-		{
-			if (viewsector->GetHeightSec())
-			{
-				auto s = viewsector->heightsec;
-				blendv = s->floorplane.PointOnSide(r_viewpoint.Pos) < 0? s->bottommap : s->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->topmap : s->midmap;
-			}
-		}
-		else
-		{
-			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
-
-			for (unsigned int i = 0; i < lightlist.Size(); i++)
-			{
-				double lightbottom;
-				if (i < lightlist.Size() - 1)
-					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
-				else
-					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
-
-				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
-				{
-					// 3d floor 'fog' is rendered as a blending value
-					blendv = lightlist[i].blend;
-					// If this is the same as the sector's it doesn't apply!
-					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
-					// a little hack to make this work for Legacy maps.
-					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
-					break;
-				}
-			}
-		}
-
-		if (blendv.a == 0 && docolormap)
-		{
-			blendv = R_BlendForColormap(blendv);
-		}
-
-		if (blendv.a == 255)
-		{
-
-			extra_red = blendv.r / 255.0f;
-			extra_green = blendv.g / 255.0f;
-			extra_blue = blendv.b / 255.0f;
-
-			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
-
-			// black multiplicative blends are ignored
-			if (extra_red || extra_green || extra_blue)
-			{
-				if (!in2d)
-				{
-					gl_RenderState.BlendFunc(GL_DST_COLOR, GL_ZERO);
-					gl_RenderState.SetColor(extra_red, extra_green, extra_blue, 1.0f);
-					gl_FillScreen();
-				}
-				else
-				{
-					screen->Dim(blendv, 1, 0, 0, screen->GetWidth(), screen->GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
-				}
-			}
-			blendv = 0;
-		}
-		else if (blendv.a)
-		{
-			// [Nash] allow user to set blend intensity
-			int cnt = blendv.a;
-			cnt = (int)(cnt * underwater_fade_scalar);
-
-			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
-		}
-	}
-
-	if (player)
-	{
-		V_AddPlayerBlend(player, blend, 0.5, 175);
-	}
-
-	if (players[consoleplayer].camera != NULL)
-	{
-		// except for fadeto effects
-		player_t *player = (players[consoleplayer].camera->player != NULL) ? players[consoleplayer].camera->player : &players[consoleplayer];
-		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
-	}
-
-	if (!in2d)
-	{
-		gl_RenderState.SetTextureMode(TM_MODULATE);
-		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		if (blend[3] > 0.0f)
-		{
-			gl_RenderState.SetColor(blend[0], blend[1], blend[2], blend[3]);
-			gl_FillScreen();
-		}
-		gl_RenderState.ResetColor();
-		gl_RenderState.EnableTexture(true);
-	}
-	else
-	{
-		screen->Dim(PalEntry(255, blend[0] * 255, blend[1] * 255, blend[2] * 255), blend[3], 0, 0, screen->GetWidth(), screen->GetHeight());
-	}
-}
-
 
 //===========================================================================
 // 

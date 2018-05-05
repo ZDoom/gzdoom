@@ -97,7 +97,7 @@ SWSceneDrawer::~SWSceneDrawer()
 	if (FBTexture != nullptr) delete FBTexture;
 }
 
-void SWSceneDrawer::RenderView(player_t *player)
+sector_t *SWSceneDrawer::RenderView(player_t *player)
 {
 	DCanvas buffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor());
 	if (FBTexture == nullptr || FBTexture->SystemTexture[0] == nullptr || 
@@ -121,5 +121,5 @@ void SWSceneDrawer::RenderView(player_t *player)
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 	screen->DrawTexture(FBTexture, 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 	SWRenderer->DrawRemainingPlayerSprites();
-	GLRenderer->DrawBlend(r_viewpoint.sector, !!map, V_IsTrueColor(), true);
+	return r_viewpoint.sector;
 }

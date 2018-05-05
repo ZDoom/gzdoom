@@ -210,10 +210,11 @@ void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int wid
 //
 //===========================================================================
 
-void OpenGLFrameBuffer::RenderView(player_t *player)
+sector_t *OpenGLFrameBuffer::RenderView(player_t *player)
 {
 	if (GLRenderer != nullptr)
-		GLRenderer->RenderView(player);
+		return GLRenderer->RenderView(player);
+	return nullptr;
 }
 
 

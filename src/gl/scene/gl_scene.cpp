@@ -558,10 +558,6 @@ void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
 
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
-	if (!FGLRenderBuffers::IsEnabled())
-	{
-		DrawBlend(viewsector);
-	}
 
 	// Restore standard rendering state
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -633,17 +629,6 @@ void GLSceneDrawer::SetFixedColormap (player_t *player)
 		}
 	}
 	gl_RenderState.SetFixedColormap(FixedColormap);
-}
-
-//-----------------------------------------------------------------------------
-//
-//
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::DrawBlend(sector_t *viewsector)
-{
-	GLRenderer->DrawBlend(viewsector, !!FixedColormap, true);
 }
 
 //-----------------------------------------------------------------------------
@@ -727,8 +712,6 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 				gl_RenderState.mProjectionMatrix.ortho(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mScreenViewport.top, -1.0f, 1.0f);
 				gl_RenderState.ApplyMatrices();
 			}
-
-			DrawBlend(lviewsector);
 		}
 		FDrawInfo::EndDrawInfo();
 		GLRenderer->mDrawingScene2D = false;
@@ -770,7 +753,9 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	gl_RenderState.SetSoftLightLevel(-1);
 	if (!FGLRenderBuffers::IsEnabled())
 	{
-		DrawBlend(viewsector);
+		// Since this doesn't do any of the 2D rendering it needs to draw the screen blend itself before extracting the image.
+		screen->DrawBlend(viewsector);
+		screen->Draw2D();
 	}
 	GLRenderer->CopyToBackbuffer(&bounds, false);
 	glFlush();

@@ -37,7 +37,7 @@ public:
 	uint32_t GetCaps() override;
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV) override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
-	void RenderView(player_t *player) override;
+	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;

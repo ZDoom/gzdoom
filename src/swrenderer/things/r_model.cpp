@@ -61,6 +61,7 @@ namespace swrenderer
 
 	RenderModel::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, float idepth) : x(x), y(y), z(z), smf(smf), actor(actor)
 	{
+		gpos = { x, y, z };
 		this->idepth = idepth;
 	}
 

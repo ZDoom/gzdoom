@@ -60,6 +60,7 @@ struct TriDrawTriangleArgs
 	bool destBgra;
 	ScreenTriangleStepVariables gradientX;
 	ScreenTriangleStepVariables gradientY;
+	float depthOffset;
 
 	bool CalculateGradients()
 	{

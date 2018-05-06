@@ -155,11 +155,13 @@ namespace swrenderer
 		ModelActor = actor;
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 		SetTransform();
+		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
 	}
 
 	void SWModelRenderer::EndDrawHUDModel(AActor *actor)
 	{
 		ModelActor = nullptr;
+		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
 	}
 
 	void SWModelRenderer::SetInterpolation(double interpolation)

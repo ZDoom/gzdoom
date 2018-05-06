@@ -41,6 +41,7 @@
 #include "d_event.h"
 #include "d_gui.h"
 #include "c_console.h"
+#include "c_dispatch.h"
 #include "dikeys.h"
 #include "s_sound.h"
 #include "events.h"
@@ -193,6 +194,7 @@ static void I_CheckGUICapture ()
 		{
 			memset (DownState, 0, sizeof(DownState));
 		}
+		ResetButtonStates();
 	}
 }
 

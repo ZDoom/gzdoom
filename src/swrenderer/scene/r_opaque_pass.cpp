@@ -497,6 +497,11 @@ namespace swrenderer
 		{
 			outersubsector = true;
 			InSubsector = sub;
+
+			// Mark the visual sorting depth of this subsector
+			uint32_t subsectorDepth = (uint32_t)PvsSubsectors.size();
+			SubsectorDepths[sub->Index()] = subsectorDepth;
+			PvsSubsectors.push_back(sub->Index());
 		}
 
 #ifdef RANGECHECK
@@ -837,6 +842,11 @@ namespace swrenderer
 		if (Thread->MainThread)
 			WallCycles.Clock();
 
+		for (uint32_t sub : PvsSubsectors)
+			SubsectorDepths[sub] = 0xffffffff;
+		SubsectorDepths.resize(level.subsectors.Size(), 0xffffffff);
+
+		PvsSubsectors.clear();
 		SeenSpriteSectors.clear();
 		SeenActors.clear();
 

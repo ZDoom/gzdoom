@@ -59,7 +59,7 @@ namespace swrenderer
 		Sprites.Push(sprite);
 	}
 
-	void VisibleSpriteList::Sort()
+	void VisibleSpriteList::Sort(RenderThread *thread)
 	{
 		unsigned int first = StartIndices.Size() == 0 ? 0 : StartIndices.Last();
 		unsigned int count = Sprites.Size() - first;
@@ -83,9 +83,59 @@ namespace swrenderer
 				SortedSprites[i] = Sprites[first + count - i - 1];
 		}
 
-		std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
+		if (r_models) // To do: only do this if models are spotted - just in case there's some lame renderhack somewhere that relies on Carmacks algorithm
 		{
-			return a->SortDist() > b->SortDist();
-		});
+			for (unsigned int i = 0; i < count; i++)
+			{
+				FVector2 worldPos = SortedSprites[i]->WorldPos().XY();
+				SortedSprites[i]->SubsectorDepth = FindSubsectorDepth(thread, { worldPos.X, worldPos.Y });
+			}
+
+			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
+			{
+				if (a->SubsectorDepth != b->SubsectorDepth)
+					return a->SubsectorDepth < b->SubsectorDepth;
+				else
+					return a->SortDist() > b->SortDist();
+			});
+		}
+		else
+		{
+			std::stable_sort(&SortedSprites[0], &SortedSprites[count], [](VisibleSprite *a, VisibleSprite *b) -> bool
+			{
+				return a->SortDist() > b->SortDist();
+			});
+		}
+	}
+
+	uint32_t VisibleSpriteList::FindSubsectorDepth(RenderThread *thread, const DVector2 &worldPos)
+	{
+		if (level.nodes.Size() == 0)
+		{
+			subsector_t *sub = &level.subsectors[0];
+			return thread->OpaquePass->GetSubsectorDepth(sub->Index());
+		}
+		else
+		{
+			return FindSubsectorDepth(thread, worldPos, level.HeadNode());
+		}
+	}
+
+	uint32_t VisibleSpriteList::FindSubsectorDepth(RenderThread *thread, const DVector2 &worldPos, void *node)
+	{
+		while (!((size_t)node & 1))  // Keep going until found a subsector
+		{
+			node_t *bsp = (node_t *)node;
+
+			DVector2 planePos(FIXED2DBL(bsp->x), FIXED2DBL(bsp->y));
+			DVector2 planeNormal = DVector2(FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx));
+			double planeD = planeNormal | planePos;
+
+			int side = (worldPos | planeNormal) > planeD;
+			node = bsp->children[side];
+		}
+
+		subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
+		return thread->OpaquePass->GetSubsectorDepth(sub->Index());
 	}
 }

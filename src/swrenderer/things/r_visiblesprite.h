@@ -43,10 +43,9 @@ namespace swrenderer
 		bool IsCurrentPortalUniq(int portalUniq) const { return CurrentPortalUniq == portalUniq; }
 		const FVector3 &WorldPos() const { return gpos; }
 
-		double SortDist2D() const { return DVector2(deltax, deltay).LengthSquared(); }
 		float SortDist() const { return idepth; }
 
-		float DrawSegDepth() const { return depth; }
+		int SubsectorDepth;
 
 	protected:
 		virtual bool IsParticle() const { return false; }

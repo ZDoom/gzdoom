@@ -71,6 +71,8 @@ namespace swrenderer
 		
 		void ClearSeenSprites() { SeenSpriteSectors.clear(); SeenActors.clear(); }
 
+		uint32_t GetSubsectorDepth(int index) const { return SubsectorDepths[index]; }
+
 		short floorclip[MAXWIDTH];
 		short ceilingclip[MAXWIDTH];
 
@@ -97,5 +99,7 @@ namespace swrenderer
 		SWRenderLine renderline;
 		std::set<sector_t*> SeenSpriteSectors;
 		std::set<AActor*> SeenActors;
+		std::vector<uint32_t> PvsSubsectors;
+		std::vector<uint32_t> SubsectorDepths;
 	};
 }

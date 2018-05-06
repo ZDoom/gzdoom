@@ -53,6 +53,8 @@ namespace swrenderer
 		
 		int CurrentPortalUniq = 0; // [ZZ] to identify the portal that this drawseg is in. used for sprite clipping.
 
+		int SubsectorDepth;
+
 		bool Has3DFloorWalls() const { return b3DFloorBoundary != 0; }
 		bool Has3DFloorFrontSectorWalls() const { return (b3DFloorBoundary & 2) == 2; }
 		bool Has3DFloorBackSectorWalls() const { return (b3DFloorBoundary & 1) == 1; }

@@ -346,6 +346,7 @@ namespace swrenderer
 		draw_segment->x2 = stop;
 		draw_segment->curline = mLineSegment;
 		draw_segment->foggy = foggy;
+		draw_segment->SubsectorDepth = Thread->OpaquePass->GetSubsectorDepth(mSubsector->Index());
 
 		bool markportal = ShouldMarkPortal();
 

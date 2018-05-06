@@ -178,7 +178,7 @@ namespace swrenderer
 			MaskedCycles.Clock();
 
 		CollectPortals();
-		Thread->SpriteList->Sort();
+		Thread->SpriteList->Sort(Thread);
 		Thread->DrawSegments->BuildSegmentGroups();
 
 		Clip3DFloors *clip3d = Thread->Clip3D.get();

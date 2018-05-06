@@ -1334,7 +1334,8 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 	if (players[consoleplayer].camera != nullptr)
 	{
 		player = players[consoleplayer].camera->player;
-		fullbright = (player->fixedcolormap != NOFIXEDCOLORMAP || player->extralight == INT_MIN || player->fixedlightlevel != -1);
+		if (player)
+			fullbright = (player->fixedcolormap != NOFIXEDCOLORMAP || player->extralight == INT_MIN || player->fixedlightlevel != -1);
 	}
 
 	// don't draw sector based blends when any fullbright screen effect is active.

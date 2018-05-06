@@ -66,7 +66,6 @@ namespace swrenderer
 		void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) override;
 		void DrawArrays(int start, int count) override;
 		void DrawElements(int numIndices, size_t offset) override;
-		double GetTimeFloat() override;
 
 		void SetTransform();
 

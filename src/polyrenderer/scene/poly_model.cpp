@@ -181,11 +181,6 @@ void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 	args.DrawElements(Thread->DrawQueue, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
 }
 
-double PolyModelRenderer::GetTimeFloat()
-{
-	return (double)I_msTime() * (double)TICRATE / 1000.;
-}
-
 /////////////////////////////////////////////////////////////////////////////
 
 PolyModelVertexBuffer::PolyModelVertexBuffer(bool needindex, bool singleframe)

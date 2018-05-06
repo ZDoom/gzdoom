@@ -72,10 +72,9 @@ public:
 	virtual void DrawArrays(int start, int count) = 0;
 	virtual void DrawElements(int numIndices, size_t offset) = 0;
 
-	virtual double GetTimeFloat() = 0;
-
 private:
 	void RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, Matrix3x4 *normaltransform, int translation);
+	static double GetTimeFloat();
 };
 
 struct FModelVertex

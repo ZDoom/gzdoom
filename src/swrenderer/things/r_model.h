@@ -52,7 +52,7 @@ namespace swrenderer
 	class SWModelRenderer : public FModelRenderer
 	{
 	public:
-		SWModelRenderer(RenderThread *thread);
+		SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor);
 
 		void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) override;
 		void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
@@ -70,9 +70,11 @@ namespace swrenderer
 		void SetTransform();
 
 		RenderThread *Thread = nullptr;
+		Fake3DTranslucent Clip3DFloor;
 
 		AActor *ModelActor = nullptr;
 		Mat4f ObjectToWorld;
+		PolyClipPlane ClipTop, ClipBottom;
 		FTexture *SkinTexture = nullptr;
 		unsigned int *IndexBuffer = nullptr;
 		TriVertex *VertexBuffer = nullptr;

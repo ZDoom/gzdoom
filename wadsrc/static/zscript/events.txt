@@ -30,7 +30,7 @@ struct WorldEvent native play version("2.4")
 	native readonly int ActivationType;
     native bool ShouldActivate;
 	native readonly Actor Toucher;
-	native readonly bool ShouldPickup;
+	native bool ShouldPickup;
 }
 
 struct PlayerEvent native play version("2.4")

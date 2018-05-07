@@ -82,7 +82,6 @@
 #include "d_main.h"
 #include "d_gui.h"
 #include "c_console.h"
-#include "s_sound.h"
 #include "gameconfigfile.h"
 #include "hardware.h"
 #include "d_event.h"
@@ -148,7 +147,6 @@ extern bool AppActive;
 int SessionState = 0;
 int BlockMouseMove; 
 
-CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool, k_allowfullscreentoggle, true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, norawinput, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
@@ -536,7 +534,6 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), IDLE_PRIORITY_CLASS);
 		}
-		S_SetSoundPaused ((!!i_soundinbackground) || wParam);
 		break;
 
 	case WM_WTSSESSION_CHANGE:

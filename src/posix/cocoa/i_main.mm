@@ -57,7 +57,6 @@
 // ---------------------------------------------------------------------------
 
 
-CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 EXTERN_CVAR(Int,  vid_defwidth )
 EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, vid_vsync    )
@@ -301,8 +300,6 @@ extern bool AppActive;
 - (void)applicationDidBecomeActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
-	
-	S_SetSoundPaused(1);
 
 	AppActive = true;
 }
@@ -310,8 +307,6 @@ extern bool AppActive;
 - (void)applicationWillResignActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
-	
-	S_SetSoundPaused(i_soundinbackground);
 
 	AppActive = false;
 }

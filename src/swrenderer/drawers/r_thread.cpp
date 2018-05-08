@@ -40,6 +40,7 @@ void PeekThreadedErrorPane();
 #endif
 
 CVAR(Bool, r_multithreaded, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Int, r_debug_draw, 0, 0);
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -74,6 +75,23 @@ void DrawerThreads::Execute(DrawerCommandQueuePtr commands)
 	end_lock.unlock();
 	start_lock.unlock();
 	queue->start_condition.notify_all();
+}
+
+void DrawerThreads::ResetDebugDrawPos()
+{
+	auto queue = Instance();
+	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
+	bool reached_end = false;
+	for (auto &thread : queue->threads)
+	{
+		if (thread.debug_draw_pos + r_debug_draw * 60 * 2 < queue->debug_draw_end)
+			reached_end = true;
+		thread.debug_draw_pos = 0;
+	}
+	if (!reached_end)
+		queue->debug_draw_end += r_debug_draw;
+	else
+		queue->debug_draw_end = 0;
 }
 
 void DrawerThreads::WaitForWorkers()
@@ -124,9 +142,21 @@ void DrawerThreads::WorkerMain(DrawerThread *thread)
 		start_lock.unlock();
 
 		// Do the work:
-		for (auto& command : list->commands)
+		if (r_debug_draw)
 		{
-			command->Execute(thread);
+			for (auto& command : list->commands)
+			{
+				thread->debug_draw_pos++;
+				if (thread->debug_draw_pos < debug_draw_end)
+					command->Execute(thread);
+			}
+		}
+		else
+		{
+			for (auto& command : list->commands)
+			{
+				command->Execute(thread);
+			}
 		}
 
 		// Notify main thread that we finished:

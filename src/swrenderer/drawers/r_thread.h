@@ -52,6 +52,8 @@ public:
 
 	std::shared_ptr<PolyTriangleThreadData> poly;
 
+	size_t debug_draw_pos = 0;
+
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
 	{
@@ -109,6 +111,8 @@ public:
 
 	// Waits for all commands to finish executing
 	static void WaitForWorkers();
+
+	static void ResetDebugDrawPos();
 	
 private:
 	DrawerThreads();
@@ -131,6 +135,8 @@ private:
 	std::mutex end_mutex;
 	std::condition_variable end_condition;
 	size_t tasks_left = 0;
+
+	size_t debug_draw_end = 0;
 
 	DrawerThread single_core_thread;
 	

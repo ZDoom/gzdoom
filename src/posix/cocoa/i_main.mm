@@ -369,8 +369,17 @@ extern bool AppActive;
 		}
 	}
 
-	s_argv.Push("-file");
-	s_argv.Push([filename UTF8String]);
+	bool iwad = false;
+
+	if (const char* const extPos = strrchr(charFileName, '.'))
+	{
+		iwad = 0 == stricmp(extPos, ".iwad")
+			|| 0 == stricmp(extPos, ".ipk3")
+			|| 0 == stricmp(extPos, ".ipk7");
+	}
+
+	s_argv.Push(iwad ? "-iwad" : "-file");
+	s_argv.Push(charFileName);
 
 	return TRUE;
 }

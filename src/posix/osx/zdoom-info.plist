@@ -38,6 +38,9 @@
 				<string>zip</string>
 				<string>pk7</string>
 				<string>7z</string>
+				<string>iwad</string>
+				<string>ipk3</string>
+				<string>ipk7</string>
 			</array>
 		</dict>
 	</array>

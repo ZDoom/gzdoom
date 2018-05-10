@@ -5,15 +5,17 @@
 #include <memory>
 
 class FGLRenderer;
+class PPFrameBuffer;
+class PPTexture;
 
 class FBlurShader
 {
 public:
-	void BlurVertical(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height);
-	void BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height);
+	void BlurVertical(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height);
+	void BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height);
 
 private:
-	void Blur(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height, bool vertical);
+	void Blur(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height, bool vertical);
 
 	struct BlurSetup
 	{

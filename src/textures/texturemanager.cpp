@@ -1050,9 +1050,12 @@ void FTextureManager::Init()
 	InitPalettedVersions();
 	AdjustSpriteOffsets();
 	// Add auto materials to each texture after everything has been set up.
-	for (auto &tex : Textures)
+	// Textures array can be reallocated in process, so ranged for loop is not suitable.
+	// There is no need to process discovered material textures here,
+	// CheckForTexture() did this already.
+	for (unsigned int i = 0, count = Textures.Size(); i < count; ++i)
 	{
-		tex.Texture->AddAutoMaterials();
+		Textures[i].Texture->AddAutoMaterials();
 	}
 
 	glLight = TexMan.CheckForTexture("glstuff/gllight.png", ETextureType::MiscPatch);

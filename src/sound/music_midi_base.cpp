@@ -241,8 +241,8 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 
 CCMD (snd_listmididevices)
 {
-	Printf("%s-8. libOPN\n", -7 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-7. libADL\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-8. libOPN\n", -8 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-7. libADL\n", -7 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-6. WildMidi\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");

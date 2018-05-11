@@ -474,16 +474,7 @@ namespace swrenderer
 		// Add sprites of things in sector.
 		// Draw one or more line segments.
 
-		int 		 count;
-		seg_t*		 line;
-		sector_t     tempsec;				// killough 3/7/98: deep water hack
-		int          floorlightlevel;		// killough 3/16/98: set floor lightlevel
-		int          ceilinglightlevel;		// killough 4/11/98
-		bool		 outersubsector;
-		int	fll, cll, position;
-		FSectorPortal *portal;
-
-		lightlist_t *light;
+		bool outersubsector;
 
 		if (InSubsector != nullptr)
 		{ // InSubsector is not nullptr. This means we are rendering from a mini-BSP.
@@ -519,14 +510,11 @@ namespace swrenderer
 
 		frontsector = sub->sector;
 		frontsector->MoreFlags |= SECMF_DRAWN;
-		count = sub->numlines;
-		line = sub->firstline;
 
 		// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
+		sector_t tempsec;
+		int floorlightlevel, ceilinglightlevel;
 		frontsector = FakeFlat(frontsector, &tempsec, &floorlightlevel, &ceilinglightlevel, nullptr, 0, 0, 0, 0);
-
-		fll = floorlightlevel;
-		cll = ceilinglightlevel;
 
 		// [RH] set foggy flag
 		bool foggy = level.fadeto || frontsector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
@@ -534,15 +522,16 @@ namespace swrenderer
 		// kg3D - fake lights
 		CameraLight *cameraLight = CameraLight::Instance();
 		FDynamicColormap *basecolormap;
+		int adjusted_ceilinglightlevel = ceilinglightlevel;
 		if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
-			light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
+			lightlist_t *light = P_GetPlaneLight(frontsector, &frontsector->ceilingplane, false);
 			basecolormap = GetColorTable(light->extra_colormap, frontsector->SpecialColors[sector_t::ceiling]);
 			// If this is the real ceiling, don't discard plane lighting R_FakeFlat()
 			// accounted for.
 			if (light->p_lightlevel != &frontsector->lightlevel)
 			{
-				ceilinglightlevel = *light->p_lightlevel;
+				adjusted_ceilinglightlevel = *light->p_lightlevel;
 			}
 		}
 		else
@@ -550,16 +539,18 @@ namespace swrenderer
 			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::ceiling]);
 		}
 
-		portal = frontsector->ValidatePortal(sector_t::ceiling);
+		FSectorPortal *portal = frontsector->ValidatePortal(sector_t::ceiling);
 
-		VisiblePlane *ceilingplane = frontsector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) > 0 ||
+		VisiblePlane *ceilingplane = nullptr;
+		if (frontsector->ceilingplane.PointOnSide(Thread->Viewport->viewpoint.Pos) > 0 ||
 			frontsector->GetTexture(sector_t::ceiling) == skyflatnum ||
-			portal != nullptr ||
-			(frontsector->GetHeightSec() &&
-				frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum) ?
-			Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
+			portal ||
+			(frontsector->GetHeightSec() && frontsector->heightsec->GetTexture(sector_t::floor) == skyflatnum))
+		{
+			ceilingplane = Thread->PlaneList->FindPlane(
+				frontsector->ceilingplane,
 				frontsector->GetTexture(sector_t::ceiling),
-				ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 4/11/98
+				adjusted_ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
 				frontsector->GetAlpha(sector_t::ceiling),
 				!!(frontsector->GetFlags(sector_t::ceiling) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::ceiling].xform,
@@ -567,21 +558,21 @@ namespace swrenderer
 				portal,
 				basecolormap,
 				Fake3DOpaque::Normal,
-				0
-			) : nullptr;
+				0);
 
-		if (ceilingplane)
 			ceilingplane->AddLights(Thread, frontsector->lighthead);
+		}
 
+		int adjusted_floorlightlevel = floorlightlevel;
 		if (cameraLight->FixedLightLevel() < 0 && frontsector->e && frontsector->e->XFloor.lightlist.Size())
 		{
-			light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
+			lightlist_t *light = P_GetPlaneLight(frontsector, &frontsector->floorplane, false);
 			basecolormap = GetColorTable(light->extra_colormap, frontsector->SpecialColors[sector_t::floor]);
 			// If this is the real floor, don't discard plane lighting R_FakeFlat()
 			// accounted for.
 			if (light->p_lightlevel != &frontsector->lightlevel)
 			{
-				floorlightlevel = *light->p_lightlevel;
+				adjusted_floorlightlevel = *light->p_lightlevel;
 			}
 		}
 		else
@@ -589,19 +580,17 @@ namespace swrenderer
 			basecolormap = (r_fullbrightignoresectorcolor && cameraLight->FixedLightLevel() >= 0) ? &FullNormalLight : GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::floor]);
 		}
 
-		// killough 3/7/98: Add (x,y) offsets to flats, add deep water check
-		// killough 3/16/98: add floorlightlevel
-		// killough 10/98: add support for skies transferred from sidedefs
 		portal = frontsector->ValidatePortal(sector_t::floor);
 
-		VisiblePlane *floorplane = frontsector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) > 0 || // killough 3/7/98
+		VisiblePlane *floorplane = nullptr;
+		if (frontsector->floorplane.PointOnSide(Thread->Viewport->viewpoint.Pos) > 0 ||
 			frontsector->GetTexture(sector_t::floor) == skyflatnum ||
-			portal != nullptr ||
-			(frontsector->GetHeightSec() &&
-				frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum) ?
-			Thread->PlaneList->FindPlane(frontsector->floorplane,
+			portal ||
+			(frontsector->GetHeightSec() && frontsector->heightsec->GetTexture(sector_t::ceiling) == skyflatnum))
+		{
+			floorplane = Thread->PlaneList->FindPlane(frontsector->floorplane,
 				frontsector->GetTexture(sector_t::floor),
-				floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 3/16/98
+				adjusted_floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
 				frontsector->GetAlpha(sector_t::floor),
 				!!(frontsector->GetFlags(sector_t::floor) & PLANEF_ADDITIVE),
 				frontsector->planes[sector_t::floor].xform,
@@ -609,11 +598,10 @@ namespace swrenderer
 				portal,
 				basecolormap,
 				Fake3DOpaque::Normal,
-				0
-			) : nullptr;
+				0);
 
-		if (floorplane)
 			floorplane->AddLights(Thread, frontsector->lighthead);
+		}
 
 		// kg3D - fake planes rendering
 		if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
@@ -647,24 +635,29 @@ namespace swrenderer
 					tempsec = *clip3d->fakeFloor->fakeFloor->model;
 					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
 					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
+
+					int	position;
 					if (!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
 					{
 						tempsec.SetTexture(sector_t::floor, tempsec.GetTexture(sector_t::ceiling));
 						position = sector_t::ceiling;
 					}
-					else position = sector_t::floor;
+					else
+					{
+						position = sector_t::floor;
+					}
 					frontsector = &tempsec;
 
 					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 					{
-						light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
+						lightlist_t *light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
 						basecolormap = GetColorTable(light->extra_colormap);
-						floorlightlevel = *light->p_lightlevel;
+						adjusted_floorlightlevel = *light->p_lightlevel;
 					}
 
 					VisiblePlane *floorplane3d = Thread->PlaneList->FindPlane(frontsector->floorplane,
 						frontsector->GetTexture(sector_t::floor),
-						floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 3/16/98
+						adjusted_floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 3/16/98
 						frontsector->GetAlpha(sector_t::floor),
 						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
@@ -674,8 +667,7 @@ namespace swrenderer
 						Fake3DOpaque::FakeFloor,
 						fakeAlpha);
 
-					if (floorplane3d)
-						floorplane3d->AddLights(Thread, frontsector->lighthead);
+					floorplane3d->AddLights(Thread, frontsector->lighthead);
 
 					FakeDrawLoop(sub, floorplane3d, nullptr, foggy, basecolormap, Fake3DOpaque::FakeFloor);
 					frontsector = sub->sector;
@@ -709,27 +701,33 @@ namespace swrenderer
 					tempsec = *clip3d->fakeFloor->fakeFloor->model;
 					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
 					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
+
+					int	position;
 					if ((!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR)) ||
 						(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
 					{
 						tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
 						position = sector_t::floor;
 					}
-					else position = sector_t::ceiling;
+					else
+					{
+						position = sector_t::ceiling;
+					}
+
 					frontsector = &tempsec;
 
 					tempsec.ceilingplane.ChangeHeight(-1 / 65536.);
 					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
 					{
-						light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
+						lightlist_t *light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
 						basecolormap = GetColorTable(light->extra_colormap);
-						ceilinglightlevel = *light->p_lightlevel;
+						adjusted_ceilinglightlevel = *light->p_lightlevel;
 					}
 					tempsec.ceilingplane.ChangeHeight(1 / 65536.);
 
 					VisiblePlane *ceilingplane3d = Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 						frontsector->GetTexture(sector_t::ceiling),
-						ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 4/11/98
+						adjusted_ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 4/11/98
 						frontsector->GetAlpha(sector_t::ceiling),
 						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
 						frontsector->planes[position].xform,
@@ -739,8 +737,7 @@ namespace swrenderer
 						Fake3DOpaque::FakeCeiling,
 						fakeAlpha);
 
-					if (ceilingplane3d)
-						ceilingplane3d->AddLights(Thread, frontsector->lighthead);
+					ceilingplane3d->AddLights(Thread, frontsector->lighthead);
 
 					FakeDrawLoop(sub, nullptr, ceilingplane3d, foggy, basecolormap, Fake3DOpaque::FakeCeiling);
 					frontsector = sub->sector;
@@ -750,8 +747,6 @@ namespace swrenderer
 		}
 
 		basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], true);
-		floorlightlevel = fll;
-		ceilinglightlevel = cll;
 
 		// killough 9/18/98: Fix underwater slowdown, by passing real sector 
 		// instead of fake one. Improve sprite lighting by basing sprite
@@ -770,12 +765,12 @@ namespace swrenderer
 			}
 		}
 
-		count = sub->numlines;
-		line = sub->firstline;
-
 		DVector2 viewpointPos = Thread->Viewport->viewpoint.Pos.XY();
 
 		basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::walltop]);
+
+		seg_t *line = sub->firstline;
+		int count = sub->numlines;
 		while (count--)
 		{
 			double dist1 = (line->v1->fPos() - viewpointPos).LengthSquared();

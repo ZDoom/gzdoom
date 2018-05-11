@@ -644,7 +644,7 @@ bool I_InitInput (void *hwnd)
 			hr = di8c(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8A, (void **)&g_pdi, NULL);
 			if (FAILED(hr))
 			{
-				Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx", hr);
+				Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx\n", hr);
 				g_pdi = NULL;	// Just to be sure DirectInput8Create didn't change it
 			}
 		}

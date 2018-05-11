@@ -241,7 +241,7 @@ UNSAFE_CCMD(recordmap)
 {
 	if (netgame)
 	{
-		Printf("You cannot record a new game while in a netgame.");
+		Printf("You cannot record a new game while in a netgame.\n");
 		return;
 	}
 	if (argv.argc() > 2)

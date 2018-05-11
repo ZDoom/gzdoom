@@ -2591,12 +2591,12 @@ UNSAFE_CCMD (playdemo)
 {
 	if (netgame)
 	{
-		Printf("End your current netgame first!");
+		Printf("End your current netgame first!\n");
 		return;
 	}
 	if (demorecording)
 	{
-		Printf("End your current demo first!");
+		Printf("End your current demo first!\n");
 		return;
 	}
 	if (argv.argc() > 1)

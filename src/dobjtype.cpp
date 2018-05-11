@@ -142,7 +142,7 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 	if (strcmp(key, "classtype"))
 	{
 		// this does not represent a DObject
-		Printf(TEXTCOLOR_RED "trying to read user variables but got a non-object (first key is '%s')", key);
+		Printf(TEXTCOLOR_RED "trying to read user variables but got a non-object (first key is '%s')\n", key);
 		ar.mErrors++;
 		return false;
 	}

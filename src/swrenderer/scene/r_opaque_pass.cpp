@@ -483,10 +483,6 @@ namespace swrenderer
 		int	fll, cll, position;
 		FSectorPortal *portal;
 
-		// kg3D - fake floor stuff
-		VisiblePlane *backupfp;
-		VisiblePlane *backupcp;
-		//secplane_t templane;
 		lightlist_t *light;
 
 		if (InSubsector != nullptr)
@@ -622,9 +618,6 @@ namespace swrenderer
 		// kg3D - fake planes rendering
 		if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
 		{
-			backupfp = floorplane;
-			backupcp = ceilingplane;
-
 			Clip3DFloors *clip3d = Thread->Clip3D.get();
 
 			// first check all floors
@@ -669,8 +662,7 @@ namespace swrenderer
 						floorlightlevel = *light->p_lightlevel;
 					}
 
-					ceilingplane = nullptr;
-					floorplane = Thread->PlaneList->FindPlane(frontsector->floorplane,
+					VisiblePlane *floorplane3d = Thread->PlaneList->FindPlane(frontsector->floorplane,
 						frontsector->GetTexture(sector_t::floor),
 						floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 3/16/98
 						frontsector->GetAlpha(sector_t::floor),
@@ -682,10 +674,10 @@ namespace swrenderer
 						Fake3DOpaque::FakeFloor,
 						fakeAlpha);
 
-					if (floorplane)
-						floorplane->AddLights(Thread, frontsector->lighthead);
+					if (floorplane3d)
+						floorplane3d->AddLights(Thread, frontsector->lighthead);
 
-					FakeDrawLoop(sub, floorplane, ceilingplane, foggy, basecolormap, Fake3DOpaque::FakeFloor);
+					FakeDrawLoop(sub, floorplane3d, nullptr, foggy, basecolormap, Fake3DOpaque::FakeFloor);
 					frontsector = sub->sector;
 				}
 			}
@@ -735,8 +727,7 @@ namespace swrenderer
 					}
 					tempsec.ceilingplane.ChangeHeight(1 / 65536.);
 
-					floorplane = nullptr;
-					ceilingplane = Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
+					VisiblePlane *ceilingplane3d = Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
 						frontsector->GetTexture(sector_t::ceiling),
 						ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 4/11/98
 						frontsector->GetAlpha(sector_t::ceiling),
@@ -748,16 +739,14 @@ namespace swrenderer
 						Fake3DOpaque::FakeCeiling,
 						fakeAlpha);
 
-					if (ceilingplane)
-						ceilingplane->AddLights(Thread, frontsector->lighthead);
+					if (ceilingplane3d)
+						ceilingplane3d->AddLights(Thread, frontsector->lighthead);
 
-					FakeDrawLoop(sub, floorplane, ceilingplane, foggy, basecolormap, Fake3DOpaque::FakeCeiling);
+					FakeDrawLoop(sub, nullptr, ceilingplane3d, foggy, basecolormap, Fake3DOpaque::FakeCeiling);
 					frontsector = sub->sector;
 				}
 			}
 			clip3d->fakeFloor = nullptr;
-			floorplane = backupfp;
-			ceilingplane = backupcp;
 		}
 
 		basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], true);
@@ -801,10 +790,6 @@ namespace swrenderer
 				// kg3D - fake planes bounding calculation
 				if (r_3dfloors && line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
 				{
-					backupfp = floorplane;
-					backupcp = ceilingplane;
-					floorplane = nullptr;
-					ceilingplane = nullptr;
 					Clip3DFloors *clip3d = Thread->Clip3D.get();
 					for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
 					{
@@ -821,11 +806,9 @@ namespace swrenderer
 							clip3d->fakeFloor->validcount = validcount;
 							clip3d->NewClip();
 						}
-						renderline.Render(line, InSubsector, frontsector, &tempsec, floorplane, ceilingplane, foggy, basecolormap, opaque3dfloor); // fake
+						renderline.Render(line, InSubsector, frontsector, &tempsec, nullptr, nullptr, foggy, basecolormap, opaque3dfloor); // fake
 					}
 					clip3d->fakeFloor = nullptr;
-					floorplane = backupfp;
-					ceilingplane = backupcp;
 				}
 				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy, basecolormap, Fake3DOpaque::Normal); // now real
 			}

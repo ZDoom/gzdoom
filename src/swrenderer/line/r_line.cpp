@@ -559,7 +559,7 @@ namespace swrenderer
 			Thread->Portal->AddLinePortal(mLineSegment->linedef, draw_segment->x1, draw_segment->x2, draw_segment->sprtopclip, draw_segment->sprbottomclip);
 		}
 
-		return m3DFloor.type == Fake3DOpaque::Normal;
+		return true;
 	}
 
 	bool SWRenderLine::ShouldMarkFloor() const

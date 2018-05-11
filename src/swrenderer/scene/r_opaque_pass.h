@@ -81,18 +81,19 @@ namespace swrenderer
 	private:
 		void RenderBSPNode(void *node);
 		void RenderSubsector(subsector_t *sub);
-
 		bool CheckBBox(float *bspcoord);
+
 		void AddPolyobjs(subsector_t *sub);
-		void FakeDrawLoop(subsector_t *sub, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque opaque3dfloor);
+
+		void Add3DFloorPlanes(subsector_t *sub, sector_t *frontsector, FDynamicColormap *basecolormap, bool foggy, int adjusted_ceilinglightlevel, int adjusted_floorlightlevel);
+		void FakeDrawLoop(subsector_t *sub, sector_t *frontsector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque opaque3dfloor);
+		void Add3DFloorLine(seg_t *line, sector_t *frontsector, FDynamicColormap *basecolormap, bool foggy);
 
 		void AddSprites(sector_t *sec, int lightlevel, WaterFakeSide fakeside, bool foggy, FDynamicColormap *basecolormap);
-
 		bool IsPotentiallyVisible(AActor *thing);
 		bool GetThingSprite(AActor *thing, ThingSprite &sprite);
 
 		subsector_t *InSubsector = nullptr;
-		sector_t *frontsector = nullptr;
 		WaterFakeSide FakeSide = WaterFakeSide::Center;
 		bool r_fakingunderwater = false;
 

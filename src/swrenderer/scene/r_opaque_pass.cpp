@@ -450,7 +450,7 @@ namespace swrenderer
 	}
 
 	// kg3D - add fake segs, never rendered
-	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque opaque3dfloor)
+	void RenderOpaquePass::FakeDrawLoop(subsector_t *sub, sector_t *frontsector, VisiblePlane *floorplane, VisiblePlane *ceilingplane, bool foggy, FDynamicColormap *basecolormap, Fake3DOpaque opaque3dfloor)
 	{
 		int 		 count;
 		seg_t*		 line;
@@ -496,8 +496,6 @@ namespace swrenderer
 			I_Error("RenderSubsector: ss %i with numss = %u", sub->Index(), level.subsectors.Size());
 #endif
 
-		assert(sub->sector != nullptr);
-
 		if (sub->polys)
 		{ // Render the polyobjs in the subsector first
 			AddPolyobjs(sub);
@@ -508,13 +506,12 @@ namespace swrenderer
 			return;
 		}
 
-		frontsector = sub->sector;
-		frontsector->MoreFlags |= SECMF_DRAWN;
+		sub->sector->MoreFlags |= SECMF_DRAWN;
 
 		// killough 3/8/98, 4/4/98: Deep water / fake ceiling effect
 		sector_t tempsec;
 		int floorlightlevel, ceilinglightlevel;
-		frontsector = FakeFlat(frontsector, &tempsec, &floorlightlevel, &ceilinglightlevel, nullptr, 0, 0, 0, 0);
+		sector_t *frontsector = FakeFlat(sub->sector, &tempsec, &floorlightlevel, &ceilinglightlevel, nullptr, 0, 0, 0, 0);
 
 		// [RH] set foggy flag
 		bool foggy = level.fadeto || frontsector->Colormap.FadeColor || (level.flags & LEVEL_HASFADETABLE);
@@ -603,157 +600,14 @@ namespace swrenderer
 			floorplane->AddLights(Thread, frontsector->lighthead);
 		}
 
-		// kg3D - fake planes rendering
-		if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
-		{
-			Clip3DFloors *clip3d = Thread->Clip3D.get();
-
-			// first check all floors
-			for (int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++)
-			{
-				clip3d->SetFakeFloor(frontsector->e->XFloor.ffloors[i]);
-				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
-				if (!clip3d->fakeFloor->fakeFloor->model) continue;
-				if (clip3d->fakeFloor->fakeFloor->bottom.plane->isSlope()) continue;
-				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
-				{
-					clip3d->AddHeight(clip3d->fakeFloor->fakeFloor->top.plane, frontsector);
-				}
-				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
-				if (clip3d->fakeFloor->fakeFloor->alpha == 0) continue;
-				if (clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR) continue;
-				fixed_t fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
-				if (clip3d->fakeFloor->validcount != validcount)
-				{
-					clip3d->fakeFloor->validcount = validcount;
-					clip3d->NewClip();
-				}
-				double fakeHeight = clip3d->fakeFloor->fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
-				if (fakeHeight < Thread->Viewport->viewpoint.Pos.Z &&
-					fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
-				{
-					tempsec = *clip3d->fakeFloor->fakeFloor->model;
-					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
-					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
-
-					int	position;
-					if (!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
-					{
-						tempsec.SetTexture(sector_t::floor, tempsec.GetTexture(sector_t::ceiling));
-						position = sector_t::ceiling;
-					}
-					else
-					{
-						position = sector_t::floor;
-					}
-					frontsector = &tempsec;
-
-					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
-					{
-						lightlist_t *light = P_GetPlaneLight(sub->sector, &frontsector->floorplane, false);
-						basecolormap = GetColorTable(light->extra_colormap);
-						adjusted_floorlightlevel = *light->p_lightlevel;
-					}
-
-					VisiblePlane *floorplane3d = Thread->PlaneList->FindPlane(frontsector->floorplane,
-						frontsector->GetTexture(sector_t::floor),
-						adjusted_floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 3/16/98
-						frontsector->GetAlpha(sector_t::floor),
-						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
-						frontsector->planes[position].xform,
-						frontsector->sky,
-						nullptr,
-						basecolormap,
-						Fake3DOpaque::FakeFloor,
-						fakeAlpha);
-
-					floorplane3d->AddLights(Thread, frontsector->lighthead);
-
-					FakeDrawLoop(sub, floorplane3d, nullptr, foggy, basecolormap, Fake3DOpaque::FakeFloor);
-					frontsector = sub->sector;
-				}
-			}
-			// and now ceilings
-			for (unsigned int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++)
-			{
-				clip3d->SetFakeFloor(frontsector->e->XFloor.ffloors[i]);
-				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
-				if (!clip3d->fakeFloor->fakeFloor->model) continue;
-				if (clip3d->fakeFloor->fakeFloor->top.plane->isSlope()) continue;
-				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
-				{
-					clip3d->AddHeight(clip3d->fakeFloor->fakeFloor->bottom.plane, frontsector);
-				}
-				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
-				if (clip3d->fakeFloor->fakeFloor->alpha == 0) continue;
-				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && (clip3d->fakeFloor->fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
-				fixed_t fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
-
-				if (clip3d->fakeFloor->validcount != validcount)
-				{
-					clip3d->fakeFloor->validcount = validcount;
-					clip3d->NewClip();
-				}
-				double fakeHeight = clip3d->fakeFloor->fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
-				if (fakeHeight > Thread->Viewport->viewpoint.Pos.Z &&
-					fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
-				{
-					tempsec = *clip3d->fakeFloor->fakeFloor->model;
-					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
-					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
-
-					int	position;
-					if ((!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR)) ||
-						(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
-					{
-						tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
-						position = sector_t::floor;
-					}
-					else
-					{
-						position = sector_t::ceiling;
-					}
-
-					frontsector = &tempsec;
-
-					tempsec.ceilingplane.ChangeHeight(-1 / 65536.);
-					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
-					{
-						lightlist_t *light = P_GetPlaneLight(sub->sector, &frontsector->ceilingplane, false);
-						basecolormap = GetColorTable(light->extra_colormap);
-						adjusted_ceilinglightlevel = *light->p_lightlevel;
-					}
-					tempsec.ceilingplane.ChangeHeight(1 / 65536.);
-
-					VisiblePlane *ceilingplane3d = Thread->PlaneList->FindPlane(frontsector->ceilingplane,		// killough 3/8/98
-						frontsector->GetTexture(sector_t::ceiling),
-						adjusted_ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),				// killough 4/11/98
-						frontsector->GetAlpha(sector_t::ceiling),
-						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
-						frontsector->planes[position].xform,
-						frontsector->sky,
-						nullptr,
-						basecolormap,
-						Fake3DOpaque::FakeCeiling,
-						fakeAlpha);
-
-					ceilingplane3d->AddLights(Thread, frontsector->lighthead);
-
-					FakeDrawLoop(sub, nullptr, ceilingplane3d, foggy, basecolormap, Fake3DOpaque::FakeCeiling);
-					frontsector = sub->sector;
-				}
-			}
-			clip3d->fakeFloor = nullptr;
-		}
-
-		basecolormap = GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], true);
+		Add3DFloorPlanes(sub, frontsector, basecolormap, foggy, adjusted_ceilinglightlevel, adjusted_floorlightlevel);
 
 		// killough 9/18/98: Fix underwater slowdown, by passing real sector 
 		// instead of fake one. Improve sprite lighting by basing sprite
 		// lightlevels on floor & ceiling lightlevels in the surrounding area.
 		// [RH] Handle sprite lighting like Duke 3D: If the ceiling is a sky, sprites are lit by
 		// it, otherwise they are lit by the floor.
-		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy, basecolormap);
+		AddSprites(sub->sector, frontsector->GetTexture(sector_t::ceiling) == skyflatnum ? ceilinglightlevel : floorlightlevel, FakeSide, foggy, GetColorTable(frontsector->Colormap, frontsector->SpecialColors[sector_t::sprites], true));
 
 		// [RH] Add particles
 		if ((unsigned int)(sub->Index()) < level.subsectors.Size())
@@ -782,29 +636,7 @@ namespace swrenderer
 			}
 			else if (!outersubsector || line->sidedef == nullptr || !(line->sidedef->Flags & WALLF_POLYOBJ))
 			{
-				// kg3D - fake planes bounding calculation
-				if (r_3dfloors && line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
-				{
-					Clip3DFloors *clip3d = Thread->Clip3D.get();
-					for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
-					{
-						clip3d->SetFakeFloor(line->backsector->e->XFloor.ffloors[i]);
-						if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
-						if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
-						if (!clip3d->fakeFloor->fakeFloor->model) continue;
-						Fake3DOpaque opaque3dfloor = Fake3DOpaque::FakeBack;
-						tempsec = *clip3d->fakeFloor->fakeFloor->model;
-						tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
-						tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
-						if (clip3d->fakeFloor->validcount != validcount)
-						{
-							clip3d->fakeFloor->validcount = validcount;
-							clip3d->NewClip();
-						}
-						renderline.Render(line, InSubsector, frontsector, &tempsec, nullptr, nullptr, foggy, basecolormap, opaque3dfloor); // fake
-					}
-					clip3d->fakeFloor = nullptr;
-				}
+				Add3DFloorLine(line, frontsector, basecolormap, foggy);
 				renderline.Render(line, InSubsector, frontsector, nullptr, floorplane, ceilingplane, foggy, basecolormap, Fake3DOpaque::Normal); // now real
 			}
 			line++;
@@ -812,6 +644,177 @@ namespace swrenderer
 		if (outersubsector)
 		{
 			InSubsector = nullptr;
+		}
+	}
+
+	void RenderOpaquePass::Add3DFloorLine(seg_t *line, sector_t *frontsector, FDynamicColormap *basecolormap, bool foggy)
+	{
+		// kg3D - fake planes bounding calculation
+		if (r_3dfloors && line->backsector && frontsector->e && line->backsector->e->XFloor.ffloors.Size())
+		{
+			Clip3DFloors *clip3d = Thread->Clip3D.get();
+			for (unsigned int i = 0; i < line->backsector->e->XFloor.ffloors.Size(); i++)
+			{
+				clip3d->SetFakeFloor(line->backsector->e->XFloor.ffloors[i]);
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
+				if (!clip3d->fakeFloor->fakeFloor->model) continue;
+				Fake3DOpaque opaque3dfloor = Fake3DOpaque::FakeBack;
+				sector_t tempsec = *clip3d->fakeFloor->fakeFloor->model;
+				tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
+				tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
+				if (clip3d->fakeFloor->validcount != validcount)
+				{
+					clip3d->fakeFloor->validcount = validcount;
+					clip3d->NewClip();
+				}
+				renderline.Render(line, InSubsector, frontsector, &tempsec, nullptr, nullptr, foggy, basecolormap, opaque3dfloor); // fake
+			}
+			clip3d->fakeFloor = nullptr;
+		}
+	}
+
+	void RenderOpaquePass::Add3DFloorPlanes(subsector_t *sub, sector_t *frontsector, FDynamicColormap *basecolormap, bool foggy, int ceilinglightlevel, int floorlightlevel)
+	{
+		// kg3D - fake planes rendering
+		if (r_3dfloors && frontsector->e && frontsector->e->XFloor.ffloors.Size())
+		{
+			CameraLight *cameraLight = CameraLight::Instance();
+			Clip3DFloors *clip3d = Thread->Clip3D.get();
+
+			// first check all floors
+			for (int i = 0; i < (int)frontsector->e->XFloor.ffloors.Size(); i++)
+			{
+				clip3d->SetFakeFloor(frontsector->e->XFloor.ffloors[i]);
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
+				if (!clip3d->fakeFloor->fakeFloor->model) continue;
+				if (clip3d->fakeFloor->fakeFloor->bottom.plane->isSlope()) continue;
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+				{
+					clip3d->AddHeight(clip3d->fakeFloor->fakeFloor->top.plane, frontsector);
+				}
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
+				if (clip3d->fakeFloor->fakeFloor->alpha == 0) continue;
+				if (clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR) continue;
+				fixed_t fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
+				if (clip3d->fakeFloor->validcount != validcount)
+				{
+					clip3d->fakeFloor->validcount = validcount;
+					clip3d->NewClip();
+				}
+				double fakeHeight = clip3d->fakeFloor->fakeFloor->top.plane->ZatPoint(frontsector->centerspot);
+				if (fakeHeight < Thread->Viewport->viewpoint.Pos.Z &&
+					fakeHeight > frontsector->floorplane.ZatPoint(frontsector->centerspot))
+				{
+					sector_t tempsec = *clip3d->fakeFloor->fakeFloor->model;
+					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
+					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
+
+					int	position;
+					if (!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
+					{
+						tempsec.SetTexture(sector_t::floor, tempsec.GetTexture(sector_t::ceiling));
+						position = sector_t::ceiling;
+					}
+					else
+					{
+						position = sector_t::floor;
+					}
+
+					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
+					{
+						lightlist_t *light = P_GetPlaneLight(sub->sector, &tempsec.floorplane, false);
+						basecolormap = GetColorTable(light->extra_colormap);
+						floorlightlevel = *light->p_lightlevel;
+					}
+
+					VisiblePlane *floorplane3d = Thread->PlaneList->FindPlane(
+						tempsec.floorplane,
+						tempsec.GetTexture(sector_t::floor),
+						floorlightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
+						tempsec.GetAlpha(sector_t::floor),
+						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
+						tempsec.planes[position].xform,
+						tempsec.sky,
+						nullptr,
+						basecolormap,
+						Fake3DOpaque::FakeFloor,
+						fakeAlpha);
+
+					floorplane3d->AddLights(Thread, tempsec.lighthead);
+
+					FakeDrawLoop(sub, &tempsec, floorplane3d, nullptr, foggy, basecolormap, Fake3DOpaque::FakeFloor);
+				}
+			}
+			// and now ceilings
+			for (unsigned int i = 0; i < frontsector->e->XFloor.ffloors.Size(); i++)
+			{
+				clip3d->SetFakeFloor(frontsector->e->XFloor.ffloors[i]);
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_EXISTS)) continue;
+				if (!clip3d->fakeFloor->fakeFloor->model) continue;
+				if (clip3d->fakeFloor->fakeFloor->top.plane->isSlope()) continue;
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_NOSHADE) || (clip3d->fakeFloor->fakeFloor->flags & (FF_RENDERPLANES | FF_RENDERSIDES)))
+				{
+					clip3d->AddHeight(clip3d->fakeFloor->fakeFloor->bottom.plane, frontsector);
+				}
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_RENDERPLANES)) continue;
+				if (clip3d->fakeFloor->fakeFloor->alpha == 0) continue;
+				if (!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && (clip3d->fakeFloor->fakeFloor->flags & (FF_SWIMMABLE | FF_INVERTSECTOR)) == (FF_SWIMMABLE | FF_INVERTSECTOR)) continue;
+				fixed_t fakeAlpha = MIN<fixed_t>(Scale(clip3d->fakeFloor->fakeFloor->alpha, OPAQUE, 255), OPAQUE);
+
+				if (clip3d->fakeFloor->validcount != validcount)
+				{
+					clip3d->fakeFloor->validcount = validcount;
+					clip3d->NewClip();
+				}
+				double fakeHeight = clip3d->fakeFloor->fakeFloor->bottom.plane->ZatPoint(frontsector->centerspot);
+				if (fakeHeight > Thread->Viewport->viewpoint.Pos.Z &&
+					fakeHeight < frontsector->ceilingplane.ZatPoint(frontsector->centerspot))
+				{
+					sector_t tempsec = *clip3d->fakeFloor->fakeFloor->model;
+					tempsec.floorplane = *clip3d->fakeFloor->fakeFloor->top.plane;
+					tempsec.ceilingplane = *clip3d->fakeFloor->fakeFloor->bottom.plane;
+
+					int	position;
+					if ((!(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE) && !(clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR)) ||
+						(clip3d->fakeFloor->fakeFloor->flags & FF_THISINSIDE && clip3d->fakeFloor->fakeFloor->flags & FF_INVERTSECTOR))
+					{
+						tempsec.SetTexture(sector_t::ceiling, tempsec.GetTexture(sector_t::floor));
+						position = sector_t::floor;
+					}
+					else
+					{
+						position = sector_t::ceiling;
+					}
+
+					tempsec.ceilingplane.ChangeHeight(-1 / 65536.);
+					if (cameraLight->FixedLightLevel() < 0 && sub->sector->e->XFloor.lightlist.Size())
+					{
+						lightlist_t *light = P_GetPlaneLight(sub->sector, &tempsec.ceilingplane, false);
+						basecolormap = GetColorTable(light->extra_colormap);
+						ceilinglightlevel = *light->p_lightlevel;
+					}
+					tempsec.ceilingplane.ChangeHeight(1 / 65536.);
+
+					VisiblePlane *ceilingplane3d = Thread->PlaneList->FindPlane(
+						tempsec.ceilingplane,
+						tempsec.GetTexture(sector_t::ceiling),
+						ceilinglightlevel + LightVisibility::ActualExtraLight(foggy, Thread->Viewport.get()),
+						tempsec.GetAlpha(sector_t::ceiling),
+						!!(clip3d->fakeFloor->fakeFloor->flags & FF_ADDITIVETRANS),
+						tempsec.planes[position].xform,
+						tempsec.sky,
+						nullptr,
+						basecolormap,
+						Fake3DOpaque::FakeCeiling,
+						fakeAlpha);
+
+					ceilingplane3d->AddLights(Thread, tempsec.lighthead);
+
+					FakeDrawLoop(sub, &tempsec, nullptr, ceilingplane3d, foggy, basecolormap, Fake3DOpaque::FakeCeiling);
+				}
+			}
+			clip3d->fakeFloor = nullptr;
 		}
 	}
 

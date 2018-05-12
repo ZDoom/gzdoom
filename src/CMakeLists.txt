@@ -1134,6 +1134,7 @@ set (PCH_SOURCES
 	r_data/models/models_md3.cpp
 	r_data/models/models_md2.cpp
 	r_data/models/models_voxel.cpp
+	r_data/models/models_zmdl.cpp
 	scripting/symbols.cpp
 	scripting/types.cpp
 	scripting/thingdef.cpp

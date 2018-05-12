@@ -39,6 +39,7 @@
 #include "g_levellocals.h"
 #include "r_utility.h"
 #include "r_data/models/models.h"
+#include "r_data/models/models_zmdl.h"
 #include "i_time.h"
 
 #ifdef _MSC_VER
@@ -425,6 +426,10 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	else if (!memcmp(buffer, "IDP3", 4))
 	{
 		model = new FMD3Model;
+	}
+	else if (!memcmp(buffer, "ZMDL", 4))
+	{
+		model = new FZMDLModel;
 	}
 
 	if (model != nullptr)

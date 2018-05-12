@@ -30,11 +30,19 @@ struct ZModelStream
 
 	void BeginChunk()
 	{
-		if (filepos + 8 <= filelength)
+		if (!ReadError() && filepos + 8 <= filelength)
 		{
 			name = *(uint32_t*)(filebuffer + filepos);
-			length = *(uint32_t*)(filebuffer + filepos);
-			buffer = filebuffer + filepos;
+			length = *(uint32_t*)(filebuffer + filepos + 4);
+			buffer = filebuffer + filepos + 8;
+			pos = 0;
+			if (length > 0x0f000000 || filepos + 8 + length > (uint32_t)filelength)
+			{
+				name = 0;
+				pos = 1;
+				length = 0;
+				buffer = nullptr;
+			}
 		}
 		else
 		{
@@ -52,9 +60,13 @@ struct ZModelStream
 
 	void EndChunk()
 	{
-		filepos += length;
-		name = 0;
-		length = 0;
+		if (!ReadError())
+		{
+			filepos += length + 8;
+			name = 0;
+			length = 0;
+			pos = 0;
+		}
 	}
 
 	uint32_t Uint32() { return Read<uint32_t>(); }
@@ -127,7 +139,7 @@ private:
 		uint32_t count = Uint32();
 		if (count != 0 && pos + count * sizeof(T) <= (size_t)length)
 		{
-			TArray<T> values(count);
+			TArray<T> values(count, true);
 			memcpy(&values[0], buffer + pos, count * sizeof(T));
 			pos += count * sizeof(T);
 			return values;
@@ -246,31 +258,60 @@ int FZMDLModel::FindFrame(const char *name)
 
 void FZMDLModel::RenderFrame(FModelRenderer *renderer, FTexture *skin, int frame, int frame2, double inter, int translation)
 {
+	mVBuf->SetupFrame(renderer, 0, 0, 0);
+
+	for (unsigned int i = 0; i < mMaterials.Size(); i++)
+	{
+		FTexture *surfaceSkin = TexMan(mMaterials[i].Name.GetChars()); // To do: use texture id!!!!
+		renderer->SetMaterial(surfaceSkin, false, translation);
+		renderer->DrawElements(mMaterials[i].VertexCount, mMaterials[i].StartElement * sizeof(unsigned int));
+	}
 }
 
 void FZMDLModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	int length = Wads.LumpLength(mLumpNum);
-	FMemLump lumpdata = Wads.ReadLump(mLumpNum);
-	const char *buffer = (const char *)lumpdata.GetMem();
-	ZModelStream s(buffer, length);
-
-	while (!s.ReadError())
+	if (mVBuf == nullptr)
 	{
-		s.BeginChunk();
+		int length = Wads.LumpLength(mLumpNum);
+		FMemLump lumpdata = Wads.ReadLump(mLumpNum);
+		const char *buffer = (const char *)lumpdata.GetMem();
+		ZModelStream s(buffer, length);
 
-		if (s.IsChunk("ZDAT"))
+		while (!s.ReadError())
 		{
-			mVertices = s.VertexArray();
-			mElements = s.Uint32Array();
-			break;
-		}
-		else if (s.IsChunk("ZEND"))
-		{
-			break;
+			s.BeginChunk();
+
+			if (s.IsChunk("ZDAT"))
+			{
+				mVertices = s.VertexArray();
+				mElements = s.Uint32Array();
+				break;
+			}
+			else if (s.IsChunk("ZEND"))
+			{
+				break;
+			}
+
+			s.EndChunk();
 		}
 
-		s.EndChunk();
+		mVBuf = renderer->CreateVertexBuffer(true, true);
+
+		FModelVertex *vertptr = mVBuf->LockVertexBuffer(mVertices.Size());
+		for (unsigned int i = 0; i < mVertices.Size(); i++)
+		{
+			const auto &v = mVertices[i];
+			vertptr[i].Set(v.Pos.X, v.Pos.Y, v.Pos.Z, v.TexCoords.X, v.TexCoords.Y);
+			vertptr[i].SetNormal(v.Normal.X, v.Normal.Y, v.Normal.Z);
+		}
+		mVBuf->UnlockVertexBuffer();
+
+		unsigned int *indxptr = mVBuf->LockIndexBuffer(mElements.Size());
+		memcpy(indxptr, &mElements[0], sizeof(uint32_t) * mElements.Size());
+		mVBuf->UnlockIndexBuffer();
+
+		mVertices.Clear();
+		mElements.Clear();
 	}
 }
 

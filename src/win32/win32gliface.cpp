@@ -55,7 +55,6 @@
 #include "gl/system/gl_framebuffer.h"
 
 extern HWND			Window;
-extern BOOL AppActive;
 
 extern "C" {
     __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
@@ -68,7 +67,6 @@ extern int NewWidth, NewHeight, NewBits, DisplayBits;
 PFNWGLCHOOSEPIXELFORMATARBPROC myWglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
 PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
 PFNWGLSWAPINTERVALEXTPROC myWglSwapIntervalExtProc;
-
 
 
 
@@ -1109,18 +1107,6 @@ SystemFrameBuffer::~SystemFrameBuffer()
 
 void SystemFrameBuffer::InitializeState()
 {
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-bool SystemFrameBuffer::CanUpdate()
-{
-	if (!AppActive && IsFullscreen()) return false;
-	return true;
 }
 
 //==========================================================================

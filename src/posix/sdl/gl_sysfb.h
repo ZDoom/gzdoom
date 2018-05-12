@@ -33,7 +33,6 @@ public:
 	virtual int GetTrueHeight() { return GetClientHeight(); }
 
 protected:
-	bool CanUpdate();
 	void SetGammaTable(uint16_t *tbl);
 	void ResetGammaTable();
 	void InitializeState();

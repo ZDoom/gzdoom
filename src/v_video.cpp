@@ -73,6 +73,10 @@
 #include "i_time.h"
 
 EXTERN_CVAR(Bool, cl_capfps)
+EXTERN_CVAR(Float, vid_brightness)
+EXTERN_CVAR(Float, vid_contrast)
+CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
+EXTERN_CVAR(Int, screenblocks)
 
 CUSTOM_CVAR(Int, vid_maxfps, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
@@ -129,10 +133,11 @@ public:
 	PalEntry *GetPalette() { DBGBREAK; return NULL; }
 	void GetFlashedPalette(PalEntry palette[256]) { DBGBREAK; }
 	void UpdatePalette() { DBGBREAK; }
-	bool SetGamma(float gamma) { Gamma = gamma; return true; }
 	bool SetFlash(PalEntry rgb, int amount) { DBGBREAK; return false; }
 	void GetFlash(PalEntry &rgb, int &amount) { DBGBREAK; }
 	bool IsFullscreen() { DBGBREAK; return 0; }
+	int GetClientWidth() { DBGBREAK; return 0; }
+	int GetClientHeight() { DBGBREAK; return 0; }
 
 	float Gamma;
 };
@@ -840,33 +845,6 @@ void DFrameBuffer::NewRefreshRate ()
 
 //==========================================================================
 //
-// DFrameBuffer :: SetBlendingRect
-//
-// Defines the area of the screen containing the 3D view.
-//
-//==========================================================================
-
-void DFrameBuffer::SetBlendingRect (int x1, int y1, int x2, int y2)
-{
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: Begin2D
-//
-// Signal that 3D rendering is complete, and the rest of the operations on
-// the canvas until Unlock() will be 2D ones.
-//
-//==========================================================================
-
-void DFrameBuffer::Begin2D (bool copy3d)
-{
-	isIn2D = true;
-	ClearClipRect();
-}
-
-//==========================================================================
-//
 // DFrameBuffer :: WipeStartScreen
 //
 // Grabs a copy of the screen currently displayed to serve as the initial
@@ -930,6 +908,31 @@ void DFrameBuffer::GameRestart()
 
 //==========================================================================
 //
+//
+//
+//==========================================================================
+
+void DFrameBuffer::BuildGammaTable(uint16_t *gammaTable)
+{
+	float gamma = clamp<float>(Gamma, 0.1f, 4.f);
+	float contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
+	float bright = clamp<float>(vid_brightness, -0.8f, 0.8f);
+
+	double invgamma = 1 / gamma;
+	double norm = pow(255., invgamma - 1);
+
+	for (int i = 0; i < 256; i++)
+	{
+		double val = i * contrast - (contrast - 1) * 127;
+		val += bright * 128;
+		if (gamma != 1) val = pow(val, invgamma) / norm;
+
+		gammaTable[i] = gammaTable[i + 256] = gammaTable[i + 512] = (uint16_t)clamp<double>(val * 256, 0, 0xffff);
+	}
+}
+
+//==========================================================================
+//
 // DFrameBuffer :: GetCaps
 //
 //==========================================================================
@@ -968,6 +971,117 @@ void DFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, i
 }
 
 
+//==========================================================================
+//
+// Calculates the viewport values needed for 2D and 3D operations
+//
+//==========================================================================
+
+void DFrameBuffer::SetOutputViewport(IntRect *bounds)
+{
+	if (bounds)
+	{
+		mSceneViewport = *bounds;
+		mScreenViewport = *bounds;
+		mOutputLetterbox = *bounds;
+		return;
+	}
+
+	// Special handling so the view with a visible status bar displays properly
+	int height, width;
+	if (screenblocks >= 10)
+	{
+		height = GetHeight();
+		width = GetWidth();
+	}
+	else
+	{
+		height = (screenblocks*GetHeight() / 10) & ~7;
+		width = (screenblocks*GetWidth() / 10);
+	}
+
+	// Back buffer letterbox for the final output
+	int clientWidth = GetClientWidth();
+	int clientHeight = GetClientHeight();
+	if (clientWidth == 0 || clientHeight == 0)
+	{
+		// When window is minimized there may not be any client area.
+		// Pretend to the rest of the render code that we just have a very small window.
+		clientWidth = 160;
+		clientHeight = 120;
+	}
+	int screenWidth = GetWidth();
+	int screenHeight = GetHeight();
+	float scaleX, scaleY;
+	if (ViewportIsScaled43())
+	{
+		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (screenHeight * 1.2f));
+		scaleY = scaleX * 1.2f;
+	}
+	else
+	{
+		scaleX = MIN(clientWidth / (float)screenWidth, clientHeight / (float)screenHeight);
+		scaleY = scaleX;
+	}
+	mOutputLetterbox.width = (int)round(screenWidth * scaleX);
+	mOutputLetterbox.height = (int)round(screenHeight * scaleY);
+	mOutputLetterbox.left = (clientWidth - mOutputLetterbox.width) / 2;
+	mOutputLetterbox.top = (clientHeight - mOutputLetterbox.height) / 2;
+
+	// The entire renderable area, including the 2D HUD
+	mScreenViewport.left = 0;
+	mScreenViewport.top = 0;
+	mScreenViewport.width = screenWidth;
+	mScreenViewport.height = screenHeight;
+
+	// Viewport for the 3D scene
+	mSceneViewport.left = viewwindowx;
+	mSceneViewport.top = screenHeight - (height + viewwindowy - ((height - viewheight) / 2));
+	mSceneViewport.width = viewwidth;
+	mSceneViewport.height = height;
+
+	// Scale viewports to fit letterbox
+	bool notScaled = ((mScreenViewport.width == ViewportScaledWidth(mScreenViewport.width, mScreenViewport.height)) &&
+		(mScreenViewport.width == ViewportScaledHeight(mScreenViewport.width, mScreenViewport.height)) &&
+		!ViewportIsScaled43());
+	if ((gl_scale_viewport && !IsFullscreen() && notScaled) || !RenderBuffersEnabled())
+	{
+		mScreenViewport.width = mOutputLetterbox.width;
+		mScreenViewport.height = mOutputLetterbox.height;
+		mSceneViewport.left = (int)round(mSceneViewport.left * scaleX);
+		mSceneViewport.top = (int)round(mSceneViewport.top * scaleY);
+		mSceneViewport.width = (int)round(mSceneViewport.width * scaleX);
+		mSceneViewport.height = (int)round(mSceneViewport.height * scaleY);
+
+		// Without render buffers we have to render directly to the letterbox
+		if (!RenderBuffersEnabled())
+		{
+			mScreenViewport.left += mOutputLetterbox.left;
+			mScreenViewport.top += mOutputLetterbox.top;
+			mSceneViewport.left += mOutputLetterbox.left;
+			mSceneViewport.top += mOutputLetterbox.top;
+		}
+	}
+}
+
+//===========================================================================
+// 
+// Calculates the OpenGL window coordinates for a zdoom screen position
+//
+//===========================================================================
+
+int DFrameBuffer::ScreenToWindowX(int x)
+{
+	return mScreenViewport.left + (int)round(x * mScreenViewport.width / (float)GetWidth());
+}
+
+int DFrameBuffer::ScreenToWindowY(int y)
+{
+	return mScreenViewport.top + mScreenViewport.height - (int)round(y * mScreenViewport.height / (float)GetHeight());
+}
+
+
+
 CCMD(clean)
 {
 	Printf ("CleanXfac: %d\nCleanYfac: %d\n", CleanXfac, CleanYfac);
@@ -986,7 +1100,7 @@ bool V_DoModeSetup (int width, int height, int bits)
 	}
 
 	screen = buff;
-	screen->SetGamma (Gamma);
+	screen->SetGamma ();
 
 	DisplayBits = bits;
 	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
@@ -1264,7 +1378,7 @@ void V_Init2()
 	else
 		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
-	screen->SetGamma (gamma);
+	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
 	M_InitVideoModesMenu();

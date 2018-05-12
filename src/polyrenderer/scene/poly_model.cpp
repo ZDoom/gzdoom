@@ -105,11 +105,13 @@ void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectT
 	ModelActor = actor;
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 	SetTransform();
+	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
 }
 
 void PolyModelRenderer::EndDrawHUDModel(AActor *actor)
 {
 	ModelActor = nullptr;
+	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
 }
 
 void PolyModelRenderer::SetInterpolation(double interpolation)
@@ -177,11 +179,6 @@ void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 	args.SetWriteDepth(true);
 	args.SetWriteStencil(false);
 	args.DrawElements(Thread->DrawQueue, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
-}
-
-double PolyModelRenderer::GetTimeFloat()
-{
-	return (double)I_msTime() * (double)TICRATE / 1000.;
 }
 
 /////////////////////////////////////////////////////////////////////////////

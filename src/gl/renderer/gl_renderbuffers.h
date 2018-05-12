@@ -3,24 +3,65 @@
 
 #include "gl/shaders/gl_shader.h"
 
+class PPTexture
+{
+public:
+	void Bind(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE)
+	{
+		glActiveTexture(GL_TEXTURE0 + index);
+		glBindTexture(GL_TEXTURE_2D, handle);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
+	}
+
+private:
+	GLuint handle = 0;
+
+	friend class FGLRenderBuffers;
+};
+
+class PPFrameBuffer
+{
+public:
+	void Bind()
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, handle);
+	}
+
+private:
+	GLuint handle = 0;
+
+	friend class FGLRenderBuffers;
+};
+
+class PPRenderBuffer
+{
+private:
+	GLuint handle = 0;
+
+	friend class FGLRenderBuffers;
+};
+
 class FGLBloomTextureLevel
 {
 public:
-	GLuint VTexture = 0;
-	GLuint VFramebuffer = 0;
-	GLuint HTexture = 0;
-	GLuint HFramebuffer = 0;
-	GLuint Width = 0;
-	GLuint Height = 0;
+	PPTexture VTexture;
+	PPFrameBuffer VFramebuffer;
+	PPTexture HTexture;
+	PPFrameBuffer HFramebuffer;
+	int Width = 0;
+	int Height = 0;
 };
 
 class FGLExposureTextureLevel
 {
 public:
-	GLuint Texture = 0;
-	GLuint Framebuffer = 0;
-	GLuint Width = 0;
-	GLuint Height = 0;
+	PPTexture Texture;
+	PPFrameBuffer Framebuffer;
+	int Width = 0;
+	int Height = 0;
 };
 
 class FGLRenderBuffers
@@ -38,12 +79,14 @@ public:
 	void BindSceneDepthTexture(int index);
 	void BlitSceneToTexture();
 
-	void BindCurrentTexture(int index);
+	void BlitLinear(PPFrameBuffer src, PPFrameBuffer dest, int sx0, int sy0, int sx1, int sy1, int dx0, int dy0, int dx1, int dy1);
+
+	void BindCurrentTexture(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE);
 	void BindCurrentFB();
 	void BindNextFB();
 	void NextTexture();
 
-	int GetCurrentFB() const { return mPipelineFB[mCurrentPipelineTexture]; }
+	PPFrameBuffer GetCurrentFB() const { return mPipelineFB[mCurrentPipelineTexture]; }
 
 	void BindOutputFB();
 
@@ -58,21 +101,21 @@ public:
 	FGLBloomTextureLevel BloomLevels[NumBloomLevels];
 
 	TArray<FGLExposureTextureLevel> ExposureLevels;
-	GLuint ExposureTexture = 0;
-	GLuint ExposureFB = 0;
+	PPTexture ExposureTexture;
+	PPFrameBuffer ExposureFB;
 	bool FirstExposureFrame = true;
 
 	// Ambient occlusion buffers
-	GLuint LinearDepthTexture = 0;
-	GLuint LinearDepthFB = 0;
-	GLuint AmbientTexture0 = 0;
-	GLuint AmbientTexture1 = 0;
-	GLuint AmbientFB0 = 0;
-	GLuint AmbientFB1 = 0;
+	PPTexture LinearDepthTexture;
+	PPFrameBuffer LinearDepthFB;
+	PPTexture AmbientTexture0;
+	PPTexture AmbientTexture1;
+	PPFrameBuffer AmbientFB0;
+	PPFrameBuffer AmbientFB1;
 	int AmbientWidth = 0;
 	int AmbientHeight = 0;
 	enum { NumAmbientRandomTextures = 3 };
-	GLuint AmbientRandomTexture[NumAmbientRandomTextures];
+	PPTexture AmbientRandomTexture[NumAmbientRandomTextures];
 
 	static bool IsEnabled();
 
@@ -98,18 +141,19 @@ private:
 	void CreateShadowMap();
 	void CreateAmbientOcclusion(int width, int height);
 
-	GLuint Create2DTexture(const char *name, GLuint format, int width, int height, const void *data = nullptr);
-	GLuint Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
-	GLuint CreateRenderBuffer(const char *name, GLuint format, int width, int height);
-	GLuint CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples);
-	GLuint CreateFrameBuffer(const char *name, GLuint colorbuffer);
-	GLuint CreateFrameBuffer(const char *name, GLuint colorbuffer, GLuint depthstencil, bool colorIsARenderBuffer);
-	GLuint CreateFrameBuffer(const char *name, GLuint colorbuffer0, GLuint colorbuffer1, GLuint colorbuffer2, GLuint depthstencil, bool multisample);
+	PPTexture Create2DTexture(const char *name, GLuint format, int width, int height, const void *data = nullptr);
+	PPTexture Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
+	PPRenderBuffer CreateRenderBuffer(const char *name, GLuint format, int width, int height);
+	PPRenderBuffer CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples);
+	PPFrameBuffer CreateFrameBuffer(const char *name, PPTexture colorbuffer);
+	PPFrameBuffer CreateFrameBuffer(const char *name, PPTexture colorbuffer, PPRenderBuffer depthstencil);
+	PPFrameBuffer CreateFrameBuffer(const char *name, PPRenderBuffer colorbuffer, PPRenderBuffer depthstencil);
+	PPFrameBuffer CreateFrameBuffer(const char *name, PPTexture colorbuffer0, PPTexture colorbuffer1, PPTexture colorbuffer2, PPTexture depthstencil, bool multisample);
 	bool CheckFrameBufferCompleteness();
 	void ClearFrameBuffer(bool stencil, bool depth);
-	void DeleteTexture(GLuint &handle);
-	void DeleteRenderBuffer(GLuint &handle);
-	void DeleteFrameBuffer(GLuint &handle);
+	void DeleteTexture(PPTexture &handle);
+	void DeleteRenderBuffer(PPRenderBuffer &handle);
+	void DeleteFrameBuffer(PPFrameBuffer &handle);
 
 	int mWidth = 0;
 	int mHeight = 0;
@@ -122,28 +166,29 @@ private:
 	int mCurrentPipelineTexture = 0;
 
 	// Buffers for the scene
-	GLuint mSceneMultisample = 0;
-	GLuint mSceneDepthStencil = 0;
-	GLuint mSceneFog = 0;
-	GLuint mSceneNormal = 0;
-	GLuint mSceneFB = 0;
-	GLuint mSceneDataFB = 0;
+	PPTexture mSceneMultisampleTex;
+	PPTexture mSceneDepthStencilTex;
+	PPTexture mSceneFogTex;
+	PPTexture mSceneNormalTex;
+	PPRenderBuffer mSceneMultisampleBuf;
+	PPRenderBuffer mSceneDepthStencilBuf;
+	PPRenderBuffer mSceneFogBuf;
+	PPRenderBuffer mSceneNormalBuf;
+	PPFrameBuffer mSceneFB;
+	PPFrameBuffer mSceneDataFB;
 	bool mSceneUsesTextures = false;
 
 	// Effect/HUD buffers
-	GLuint mPipelineTexture[NumPipelineTextures];
-	GLuint mPipelineFB[NumPipelineTextures];
-
-	// Back buffer frame buffer
-	GLuint mOutputFB = 0;
+	PPTexture mPipelineTexture[NumPipelineTextures];
+	PPFrameBuffer mPipelineFB[NumPipelineTextures];
 
 	// Eye buffers
-	TArray<GLuint> mEyeTextures;
-	TArray<GLuint> mEyeFBs;
+	TArray<PPTexture> mEyeTextures;
+	TArray<PPFrameBuffer> mEyeFBs;
 
 	// Shadow map texture
-	GLuint mShadowMapTexture = 0;
-	GLuint mShadowMapFB = 0;
+	PPTexture mShadowMapTexture;
+	PPFrameBuffer mShadowMapFB;
 	int mCurrentShadowMapSize = 0;
 
 	static bool FailedCreate;

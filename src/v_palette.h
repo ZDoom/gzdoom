@@ -71,6 +71,7 @@ extern FPalette GPalette;
 #define DIM_OVERLAY MAKEARGB(170,0,0,0)
 
 int BestColor (const uint32_t *pal, int r, int g, int b, int first=1, int num=255);
+int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, bool reverselookup, float powtable, int first=1, int num=255);
 void DoBlending (const PalEntry *from, PalEntry *to, int count, int r, int g, int b, int a);
 
 void ReadPalette(int lumpnum, uint8_t *buffer);

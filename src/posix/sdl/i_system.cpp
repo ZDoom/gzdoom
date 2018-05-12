@@ -20,6 +20,7 @@
 //
 
 
+#include <sys/wait.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -28,6 +29,7 @@
 
 #include <stdarg.h>
 #include <fcntl.h>
+#include <time.h>
 
 #include <SDL.h>
 

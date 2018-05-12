@@ -44,10 +44,13 @@
 #include "gi.h"
 #include "g_level.h"
 #include "sbar.h"
+#include "d_player.h"
 
 #include "i_video.h"
 #include "g_levellocals.h"
 #include "vm.h"
+
+CVAR(Float, underwater_fade_scalar, 1.0f, CVAR_ARCHIVE) // [Nash] user-settable underwater blend intensity
 
 CUSTOM_CVAR(Int, uiscale, 0, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
@@ -1312,4 +1315,109 @@ void DFrameBuffer::RefreshViewBorder ()
 		DrawViewBorder();
 	}
 }
+
+//==========================================================================
+//
+// Draws a blend over the entire view
+//
+//==========================================================================
+void DFrameBuffer::DrawBlend(sector_t * viewsector)
+{
+	float blend[4] = { 0,0,0,0 };
+	PalEntry blendv = 0;
+	float extra_red;
+	float extra_green;
+	float extra_blue;
+	player_t *player = nullptr;
+	bool fullbright = false;
+
+	if (players[consoleplayer].camera != nullptr)
+	{
+		player = players[consoleplayer].camera->player;
+		if (player)
+			fullbright = (player->fixedcolormap != NOFIXEDCOLORMAP || player->extralight == INT_MIN || player->fixedlightlevel != -1);
+	}
+
+	// don't draw sector based blends when any fullbright screen effect is active.
+	if (!fullbright)
+	{
+		if (!viewsector->e->XFloor.ffloors.Size())
+		{
+			if (viewsector->GetHeightSec())
+			{
+				auto s = viewsector->heightsec;
+				blendv = s->floorplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->bottommap : s->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->topmap : s->midmap;
+			}
+		}
+		else
+		{
+			TArray<lightlist_t> & lightlist = viewsector->e->XFloor.lightlist;
+
+			for (unsigned int i = 0; i < lightlist.Size(); i++)
+			{
+				double lightbottom;
+				if (i < lightlist.Size() - 1)
+					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
+				else
+					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
+
+				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
+				{
+					// 3d floor 'fog' is rendered as a blending value
+					blendv = lightlist[i].blend;
+					// If this is the same as the sector's it doesn't apply!
+					if (blendv == viewsector->Colormap.FadeColor) blendv = 0;
+					// a little hack to make this work for Legacy maps.
+					if (blendv.a == 0 && blendv != 0) blendv.a = 128;
+					break;
+				}
+			}
+		}
+
+		if (blendv.a == 0 && V_IsTrueColor())	// The paletted software renderer uses the original colormap as this frame's palette, but in true color that isn't doable.
+		{
+			blendv = R_BlendForColormap(blendv);
+		}
+
+		if (blendv.a == 255)
+		{
+
+			extra_red = blendv.r / 255.0f;
+			extra_green = blendv.g / 255.0f;
+			extra_blue = blendv.b / 255.0f;
+
+			// If this is a multiplicative blend do it separately and add the additive ones on top of it.
+
+			// black multiplicative blends are ignored
+			if (extra_red || extra_green || extra_blue)
+			{
+				screen->Dim(blendv, 1, 0, 0, screen->GetWidth(), screen->GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
+			}
+			blendv = 0;
+		}
+		else if (blendv.a)
+		{
+			// [Nash] allow user to set blend intensity
+			int cnt = blendv.a;
+			cnt = (int)(cnt * underwater_fade_scalar);
+
+			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
+		}
+	}
+
+	if (player)
+	{
+		V_AddPlayerBlend(player, blend, 0.5, 175);
+	}
+
+	if (players[consoleplayer].camera != NULL)
+	{
+		// except for fadeto effects
+		player_t *player = (players[consoleplayer].camera->player != NULL) ? players[consoleplayer].camera->player : &players[consoleplayer];
+		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
+	}
+
+	screen->Dim(PalEntry(255, uint8_t(blend[0] * 255), uint8_t(blend[1] * 255), uint8_t(blend[2] * 255)), blend[3], 0, 0, screen->GetWidth(), screen->GetHeight());
+}
+
 

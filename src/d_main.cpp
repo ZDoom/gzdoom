@@ -28,13 +28,6 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#ifdef _WIN32
-#include <direct.h>
-#define mkdir(a,b) _mkdir (a)
-#else
-#include <sys/stat.h>
-#endif
-
 #ifdef HAVE_FPU_CONTROL
 #include <fpu_control.h>
 #endif
@@ -79,6 +72,7 @@
 #include "cmdlib.h"
 #include "v_text.h"
 #include "gi.h"
+#include "a_dynlight.h"
 #include "gameconfigfile.h"
 #include "sbar.h"
 #include "decallib.h"
@@ -236,6 +230,7 @@ FStartupInfo DoomStartupInfo;
 FString lastIWAD;
 int restart = 0;
 bool batchrun;	// just run the startup and collect all error messages in a logfile, then quit without any interaction
+bool AppActive = true;
 
 cycle_t FrameCycles;
 
@@ -657,6 +652,8 @@ CVAR (Flag, compat_multiexit,			compatflags2, COMPATF2_MULTIEXIT);
 CVAR (Flag, compat_teleport,			compatflags2, COMPATF2_TELEPORT);
 CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 
+CVAR(Bool, vid_activeinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
 //==========================================================================
 //
 // D_Display
@@ -668,10 +665,16 @@ CVAR (Flag, compat_pushwindow,			compatflags2, COMPATF2_PUSHWINDOW);
 void D_Display ()
 {
 	bool wipe;
+	sector_t *viewsec;
 
 	if (nodrawers || screen == NULL)
 		return; 				// for comparative timing / profiling
 	
+	if (!AppActive && (screen->IsFullscreen() || !vid_activeinbackground))
+	{
+		return;
+	}
+
 	cycle_t cycles;
 	
 	cycles.Reset();
@@ -766,13 +769,15 @@ void D_Display ()
 		screen->FrameTime = I_msTimeFS();
 		TexMan.UpdateAnimations(screen->FrameTime);
 		R_UpdateSky(screen->FrameTime);
+		screen->BeginFrame();
+		screen->ClearClipRect();
 		switch (gamestate)
 		{
 		case GS_FULLCONSOLE:
-			screen->SetBlendingRect(0,0,0,0);
 			screen->Begin2D(false);
 			C_DrawConsole ();
 			M_Drawer ();
+			screen->End2D();
 			screen->Update ();
 			return;
 
@@ -787,7 +792,18 @@ void D_Display ()
 			// [ZZ] execute event hook that we just started the frame
 			//E_RenderFrame();
 			//
-			screen->RenderView(&players[consoleplayer]);
+
+			// Check for the presence of dynamic lights at the start of the frame once.
+			if (gl_lights)
+			{
+				TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
+				level.HasDynamicLights = !!it.Next();
+			}
+			else level.HasDynamicLights = false;	// lights are off so effectively we have none.
+
+			viewsec = screen->RenderView(&players[consoleplayer]);
+			screen->Begin2D(false);
+			screen->DrawBlend(viewsec);
 			// returns with 2S mode set.
 			if (automapactive)
 			{
@@ -833,21 +849,18 @@ void D_Display ()
 			break;
 
 		case GS_INTERMISSION:
-			screen->SetBlendingRect(0,0,0,0);
 			screen->Begin2D(false);
 			WI_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_FINALE:
-			screen->SetBlendingRect(0,0,0,0);
 			screen->Begin2D(false);
 			F_Drawer ();
 			CT_Drawer ();
 			break;
 
 		case GS_DEMOSCREEN:
-			screen->SetBlendingRect(0,0,0,0);
 			screen->Begin2D(false);
 			D_PageDrawer ();
 			CT_Drawer ();
@@ -1408,7 +1421,7 @@ void D_DoAdvanceDemo (void)
 		{
 			Page->Unload ();
 		}
-		Page = TexMan[pagename];
+		Page = TexMan(pagename);
 	}
 }
 

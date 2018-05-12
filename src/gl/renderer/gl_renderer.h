@@ -51,29 +51,6 @@ class FCustomPostProcessShaders;
 class GLSceneDrawer;
 class SWSceneDrawer;
 
-inline float DEG2RAD(float deg)
-{
-	return deg * float(M_PI / 180.0);
-}
-
-inline float RAD2DEG(float deg)
-{
-	return deg * float(180. / M_PI);
-}
-
-struct GL_IRECT
-{
-	int left,top;
-	int width,height;
-
-
-	void Offset(int xofs,int yofs)
-	{
-		left+=xofs;
-		top+=yofs;
-	}
-};
-
 enum
 {
 	DM_MAINVIEW,
@@ -114,12 +91,10 @@ public:
 	GLPortal *mCurrentPortal;
 	int mMirrorCount;
 	int mPlaneMirrorCount;
-	int mLightCount;
 	float mCurrentFoV;
 	AActor *mViewActor;
 	FShaderManager *mShaderManager;
 	FSamplerManager *mSamplerManager;
-	int gl_spriteindex;
 	unsigned int mFBID;
 	unsigned int mVAOID;
 	int mOldFBID;
@@ -150,11 +125,6 @@ public:
 
 	FShadowMap mShadowMap;
 
-	FTextureID glLight;
-	FTextureID glPart2;
-	FTextureID glPart;
-	FTextureID mirrorTexture;
-	
 	FRotator mAngles;
 	FVector2 mViewVector;
 
@@ -164,10 +134,8 @@ public:
 	SWSceneDrawer *swdrawer = nullptr;
 	LegacyShaderContainer *legacyShaders = nullptr;
 
-	GL_IRECT mScreenViewport;
-	GL_IRECT mSceneViewport;
-	GL_IRECT mOutputLetterbox;
 	bool mDrawingScene2D = false;
+	bool buffersActive = false;
 
 	float mSceneClearColor[3];
 
@@ -176,13 +144,8 @@ public:
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
 
-	void SetOutputViewport(GL_IRECT *bounds);
-	int ScreenToWindowX(int x);
-	int ScreenToWindowY(int y);
-
 	void Initialize(int width, int height);
 
-	void Begin2D();
 	void ClearBorders();
 
 	void FlushTextures();
@@ -201,16 +164,14 @@ public:
 	void LensDistortScene();
 	void ApplyFXAA();
 	void BlurScene(float gameinfobluramount);
-	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
-	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
+	void CopyToBackbuffer(const IntRect *bounds, bool applyGamma);
+	void DrawPresentTexture(const IntRect &box, bool applyGamma);
 	void Flush();
-	void GetSpecialTextures();
 	void Draw2D(F2DDrawer *data);
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
-	void RenderView(player_t *player);
-	void DrawBlend(sector_t * viewsector, bool FixedColormap, bool docolormap, bool in2d = false);
-
+	sector_t *RenderView(player_t *player);
+	void BeginFrame();
 
 	bool StartOffscreen();
 	void EndOffscreen();
@@ -218,8 +179,6 @@ public:
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
-
-	int PTM_BestColor (const uint32_t *pal_in, int r, int g, int b, int first, int num);
 
 	static float GetZNear() { return 5.f; }
 	static float GetZFar() { return 65536.f; }

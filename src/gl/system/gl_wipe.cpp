@@ -115,7 +115,7 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 		return false;
 	}
 
-	const auto &viewport = GLRenderer->mScreenViewport;
+	const auto &viewport = screen->mScreenViewport;
 	wipestartscreen = new FHardwareTexture(true);
 	wipestartscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
@@ -163,7 +163,7 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 void OpenGLFrameBuffer::WipeEndScreen()
 {
 	GLRenderer->Flush();
-	const auto &viewport = GLRenderer->mScreenViewport;
+	const auto &viewport = screen->mScreenViewport;
 	wipeendscreen = new FHardwareTexture(true);
 	wipeendscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
@@ -206,7 +206,7 @@ bool OpenGLFrameBuffer::WipeDo(int ticks)
 		if (FGLRenderBuffers::IsEnabled())
 		{
 			GLRenderer->mBuffers->BindCurrentFB();
-			const auto &bounds = GLRenderer->mScreenViewport;
+			const auto &bounds = screen->mScreenViewport;
 			glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 		}
 

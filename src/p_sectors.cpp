@@ -1068,30 +1068,6 @@ FSectorPortal *sector_t::ValidatePortal(int which)
 //
 //=====================================================================================
 
-sector_t *sector_t::GetHeightSec() const
-{
-	if (heightsec == NULL)
-	{
-		return NULL;
-	}
-	if (heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC)
-	{
-		return NULL;
-	}
-	if (e && e->XFloor.ffloors.Size())
-	{
-		// If any of these fake floors render their planes, ignore heightsec.
-		for (unsigned i = e->XFloor.ffloors.Size(); i-- > 0; )
-		{
-			if ((e->XFloor.ffloors[i]->flags & (FF_EXISTS | FF_RENDERPLANES)) == (FF_EXISTS | FF_RENDERPLANES))
-			{
-				return NULL;
-			}
-		}
-	}
-	return heightsec;
-}
-
 DEFINE_ACTION_FUNCTION(_Sector, GetHeightSec)
 {
 	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
@@ -1679,6 +1655,26 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 
  //===========================================================================
  //
+ // checks if the floor is higher than the ceiling and sets a flag
+ // This condition needs to be tested by the hardware renderer,
+ // so always having its state available in a flag allows for easier optimization.
+ //
+ //===========================================================================
+
+ void sector_t::CheckOverlap()
+ {
+	 if (planes[sector_t::floor].TexZ > planes[sector_t::ceiling].TexZ && !floorplane.isSlope() && !ceilingplane.isSlope())
+	 {
+		 MoreFlags |= SECMF_OVERLAPPING;
+	 }
+	 else
+	 {
+		 MoreFlags &= ~SECMF_OVERLAPPING;
+	 }
+ }
+
+ //===========================================================================
+ //
  //
  //
  //===========================================================================
@@ -1881,7 +1877,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 	 PARAM_INT(pos);
 	 PARAM_FLOAT(o);
 	 PARAM_BOOL_DEF(dirty);
-	 self->SetPlaneTexZ(pos, o, dirty);
+	 self->SetPlaneTexZ(pos, o, true);	// not setting 'dirty' here is a guaranteed cause for problems.
 	 return 0;
  }
 

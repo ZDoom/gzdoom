@@ -65,7 +65,6 @@ protected:
 
 	void InitializeState();
 
-	bool CanUpdate();
 	void SwapBuffers();
 
 	void SetGammaTable(uint16_t* table);

@@ -44,6 +44,8 @@
 #include "v_colortables.h"
 #include "v_2ddrawer.h"
 
+struct sector_t;
+
 enum EHWCaps
 {
 	// [BB] Added texture compression flags.
@@ -60,6 +62,21 @@ enum EHWCaps
 	RFL_DEBUG = 128,
 	RFL_NO_SHADERS = 256
 };
+
+struct IntRect
+{
+	int left, top;
+	int width, height;
+
+
+	void Offset(int xofs, int yofs)
+	{
+		left += xofs;
+		top += yofs;
+	}
+};
+
+
 
 
 
@@ -91,7 +108,7 @@ inline bool V_IsPolyRenderer()
 
 inline bool V_IsTrueColor()
 {
-	return vid_rendermode == 1 || vid_rendermode == 3;
+	return vid_rendermode == 1 || vid_rendermode == 3 || vid_rendermode == 4;
 }
 
 
@@ -318,6 +335,7 @@ protected:
 	template<class T>
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
+	void BuildGammaTable(uint16_t *gt);
 
 	F2DDrawer m2DDrawer;
 	int Width = 0;
@@ -328,6 +346,10 @@ protected:
 public:
 	int hwcaps = 0;
 	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
+
+	IntRect mScreenViewport;
+	IntRect mSceneViewport;
+	IntRect mOutputLetterbox;
 
 public:
 	DFrameBuffer (int width, int height, bool bgra);
@@ -351,7 +373,7 @@ public:
 	// Sets the gamma level. Returns false if the hardware does not support
 	// gamma changing. (Always true for now, since palettes can always be
 	// gamma adjusted.)
-	virtual bool SetGamma (float gamma) = 0;
+	virtual void SetGamma() {}
 
 	// Sets a color flash. RGB is the color, and amount is 0-256, with 256
 	// being all flash and 0 being no flash. Returns false if the hardware
@@ -371,9 +393,6 @@ public:
 	// Tells the device to recreate itself with the new setting from vid_refreshrate.
 	virtual void NewRefreshRate ();
 
-	// Set the rect defining the area affected by blending.
-	virtual void SetBlendingRect (int x1, int y1, int x2, int y2);
-
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
@@ -383,10 +402,16 @@ public:
 	virtual void FlushTextures() {}
 	virtual void TextureFilterChanged() {}
 	virtual void ResetFixedColormap() {}
+	virtual void BeginFrame() {}
+
+	virtual int GetClientWidth() = 0;
+	virtual int GetClientHeight() = 0;
+	virtual bool RenderBuffersEnabled() { return false; };
+
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
-	virtual void Begin2D(bool copy3d);
+	void Begin2D(bool copy3d) { isIn2D = true; }
 	void End2D() { isIn2D = false; }
 
 	// Returns true if Begin2D has been called and 2D drawing is now active
@@ -400,7 +425,7 @@ public:
 	virtual uint32_t GetCaps();
 	virtual void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
 	virtual void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
-	virtual void RenderView(player_t *player) {}
+	virtual sector_t *RenderView(player_t *player) { return nullptr;  }
 
 	// Screen wiping
 	virtual bool WipeStartScreen(int type);
@@ -423,6 +448,7 @@ public:
 	// Dim part of the canvas
 	void Dim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
 	void DoDim(PalEntry color, float amount, int x1, int y1, int w, int h, FRenderStyle *style = nullptr);
+	void DrawBlend(sector_t * viewsector);
 
 	// Fill an area with a texture
 	void FlatFill(int left, int top, int right, int bottom, FTexture *src, bool local_origin = false);
@@ -469,6 +495,10 @@ public:
 
 	// Calculate gamma table
 	void CalcGamma(float gamma, uint8_t gammalookup[256]);
+
+	virtual void SetOutputViewport(IntRect *bounds);
+	int ScreenToWindowX(int x);
+	int ScreenToWindowY(int y);
 
 
 	// Retrieves a buffer containing image data for a screenshot.

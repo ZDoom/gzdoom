@@ -1024,7 +1024,7 @@ CCMD (openmenu)
 {
 	if (argv.argc() < 2)
 	{
-		Printf("Usage: openmenu \"menu_name\"");
+		Printf("Usage: openmenu \"menu_name\"\n");
 		return;
 	}
 	M_StartControlPanel (true);

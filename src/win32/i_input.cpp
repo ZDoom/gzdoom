@@ -144,7 +144,7 @@ LPDIRECTINPUT8			g_pdi;
 LPDIRECTINPUT			g_pdi3;
 
 
-BOOL AppActive = TRUE;
+extern bool AppActive;
 int SessionState = 0;
 int BlockMouseMove; 
 
@@ -527,7 +527,7 @@ LRESULT CALLBACK WndProc (HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 
 	case WM_ACTIVATEAPP:
-		AppActive = wParam;
+		AppActive = wParam == TRUE;
 		if (wParam)
 		{
 			SetPriorityClass (GetCurrentProcess (), INGAME_PRIORITY_CLASS);
@@ -644,7 +644,7 @@ bool I_InitInput (void *hwnd)
 			hr = di8c(g_hInst, DIRECTINPUT_VERSION, IID_IDirectInput8A, (void **)&g_pdi, NULL);
 			if (FAILED(hr))
 			{
-				Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx", hr);
+				Printf(TEXTCOLOR_ORANGE "DirectInput8Create failed: %08lx\n", hr);
 				g_pdi = NULL;	// Just to be sure DirectInput8Create didn't change it
 			}
 		}

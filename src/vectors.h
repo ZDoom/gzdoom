@@ -1704,7 +1704,6 @@ public:
 	}
 
 	bool PointOnSide(FVector3 &v) { return PointOnSide(v.X, v.Y, v.Z); }
-	bool ValidNormal() { return m_normal.LengthSquared() == 1.f; }
 
 	float A() { return m_normal.X; }
 	float B() { return m_normal.Y; }

@@ -39,7 +39,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_quaddrawer.h"
+#include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
@@ -1060,7 +1060,7 @@ void GLLineToLinePortal::DrawContents()
 
 void GLLineToLinePortal::RenderAttached()
 {
-	gl_drawinfo->ProcessActorsInPortal(glport);
+	gl_drawinfo->ProcessActorsInPortal(glport, gl_drawinfo->mDrawer->in_area);
 }
 
 //-----------------------------------------------------------------------------
@@ -1185,7 +1185,7 @@ void GLHorizonPortal::DrawContents()
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 	gl_RenderState.SetObjectColor(origin->specialcolor);
 
-	gl_SetPlaneTextureRotation(sp, gltexture);
+	gl_RenderState.SetPlaneTextureRotation(sp, gltexture);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply();

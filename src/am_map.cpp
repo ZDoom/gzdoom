@@ -1935,10 +1935,10 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	else
 	{
 		in_area = pos.Z <= viewer->Sector->heightsec->floorplane.ZatPoint(pos) ? -1 :
-			(pos.Z > viewer->Sector->heightsec->ceilingplane.ZatPoint(pos) && !(viewer->Sector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? 1 : 0;
+			(pos.Z > viewer->Sector->heightsec->ceilingplane.ZatPoint(pos) && !(viewer->Sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? 1 : 0;
 	}
 
-	int diffTex = (sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES);
+	int diffTex = (sec->heightsec->MoreFlags & SECMF_CLIPFAKEPLANES);
 	sector_t * s = sec->heightsec;
 
 	memcpy(dest, sec, sizeof(sector_t));
@@ -1950,14 +1950,14 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 		if (s->floorplane.CopyPlaneIfValid(&dest->floorplane, &sec->ceilingplane))
 		{
 			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
-			dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
+			dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
 		}
-		else if (s->MoreFlags & SECF_FAKEFLOORONLY)
+		else if (s->MoreFlags & SECMF_FAKEFLOORONLY)
 		{
 			if (in_area == -1)
 			{
 				dest->Colormap = s->Colormap;
-				if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+				if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 				{
 					dest->lightlevel = s->lightlevel;
 					dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
@@ -1970,16 +1970,16 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	}
 	else
 	{
-		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
+		dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
 		dest->floorplane = s->floorplane;
 	}
 
 	if (in_area == -1)
 	{
 		dest->Colormap = s->Colormap;
-		dest->SetPlaneTexZ(sector_t::floor, sec->GetPlaneTexZ(sector_t::floor));
+		dest->SetPlaneTexZQuick(sector_t::floor, sec->GetPlaneTexZ(sector_t::floor));
 		dest->floorplane = sec->floorplane;
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->lightlevel = s->lightlevel;
 		}
@@ -1987,7 +1987,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 		dest->SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
 		dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
 			dest->ChangeFlags(sector_t::floor, -1, s->GetFlags(sector_t::floor));
@@ -1996,9 +1996,9 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	else if (in_area == 1)
 	{
 		dest->Colormap = s->Colormap;
-		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
+		dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
 		dest->floorplane = s->ceilingplane;
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->lightlevel = s->lightlevel;
 		}
@@ -2011,7 +2011,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 			dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 		}
 
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->lightlevel = s->lightlevel;
 			dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
@@ -2048,7 +2048,7 @@ void AM_drawSubsectors()
 			continue;
 		}
 
-		if ((!(subsectors[i].flags & SSECF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECF_HIDDEN)) && am_cheat == 0)
+		if ((!(subsectors[i].flags & SSECMF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECMF_HIDDEN)) && am_cheat == 0)
 		{
 			continue;
 		}
@@ -2169,7 +2169,7 @@ void AM_drawSubsectors()
 
 		// If this subsector has not actually been seen yet (because you are cheating
 		// to see it on the map), tint and desaturate it.
-		if (!(subsectors[i].flags & SSECF_DRAWN))
+		if (!(subsectors[i].flags & SSECMF_DRAWN))
 		{
 			colormap.LightColor = PalEntry(
 				(colormap.LightColor.r + 255) / 2,
@@ -3163,8 +3163,8 @@ void AM_drawAuthorMarkers ()
 			// Use more correct info if we have GL nodes available
 			if (mark->args[1] == 0 ||
 				(mark->args[1] == 1 && (hasglnodes ?
-				 marked->subsector->flags & SSECF_DRAWN :
-				 marked->Sector->MoreFlags & SECF_DRAWN)))
+				 marked->subsector->flags & SSECMF_DRAWN :
+				 marked->Sector->MoreFlags & SECMF_DRAWN)))
 			{
 				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);

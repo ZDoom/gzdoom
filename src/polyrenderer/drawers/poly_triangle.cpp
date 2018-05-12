@@ -79,6 +79,11 @@ void PolyTriangleDrawer::SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw
 	queue->Push<PolySetCullCCWCommand>(ccw);
 }
 
+void PolyTriangleDrawer::SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable)
+{
+	queue->Push<PolySetWeaponSceneCommand>(enable);
+}
+
 /////////////////////////////////////////////////////////////////////////////
 
 void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra, bool new_span_drawers)
@@ -94,6 +99,7 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	dest_bgra = new_dest_bgra;
 	span_drawers = new_span_drawers;
 	ccw = true;
+	weaponScene = false;
 }
 
 void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip)
@@ -117,6 +123,7 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
 	args.stencilValues = PolyStencilBuffer::Instance()->Values();
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
+	args.depthOffset = weaponScene ? 1.0f : 0.0f;
 
 	const TriVertex *vinput = drawargs.Vertices();
 	const unsigned int *elements = drawargs.Elements();
@@ -175,6 +182,7 @@ void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
 	args.stencilValues = PolyStencilBuffer::Instance()->Values();
 	args.stencilMasks = PolyStencilBuffer::Instance()->Masks();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
+	args.depthOffset = weaponScene ? 1.0f : 0.0f;
 
 	const TriVertex *vinput = drawargs.Vertices();
 	int vcount = drawargs.VertexCount();
@@ -576,6 +584,17 @@ PolySetCullCCWCommand::PolySetCullCCWCommand(bool ccw) : ccw(ccw)
 void PolySetCullCCWCommand::Execute(DrawerThread *thread)
 {
 	PolyTriangleThreadData::Get(thread)->SetCullCCW(ccw);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolySetWeaponSceneCommand::PolySetWeaponSceneCommand(bool value) : value(value)
+{
+}
+
+void PolySetWeaponSceneCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetWeaponScene(value);
 }
 
 /////////////////////////////////////////////////////////////////////////////

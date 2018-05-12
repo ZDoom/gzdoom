@@ -233,16 +233,22 @@ else()
 	set( REL_C_FLAGS "" )
 	set( DEB_C_FLAGS "" )
 
-	# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
-	if( APPLE AND "${CMAKE_C_COMPILER_ID}" STREQUAL "GNU" )
-		set( ALL_C_FLAGS "-static-libgcc" )
-	endif()
 	
-	if( NOT APPLE )
+	if( APPLE )
+		if( CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
+			# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
+			# C++11 support using SDKs 10.7 and 10.8.
+			set( CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}" )
+			set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
+		elseif( CMAKE_CXX_COMPILER_ID STREQUAL "GNU" )
+			# If we're compiling with a custom GCC on the Mac (which we know since g++-4.2 doesn't support C++11) statically link libgcc.
+			set( ALL_C_FLAGS "-static-libgcc" )
+		endif()
+	else()
 		# Generic GCC/Clang requires position independent executable to be enabled explicitly
 		set( ALL_C_FLAGS "${ALL_C_FLAGS} -fPIE" )
 		set( CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pie" )
-	endif()
+	endif( APPLE )
 endif()
 
 set( CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} ${REL_LINKER_FLAGS}" )
@@ -289,8 +295,8 @@ if( JPEG_FOUND AND NOT FORCE_INTERNAL_JPEG )
 	message( STATUS "Using system jpeg library, includes found at ${JPEG_INCLUDE_DIR}" )
 else()
 	message( STATUS "Using internal jpeg library" )
-	add_subdirectory( jpeg-6b )
-	set( JPEG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jpeg-6b )
+	add_subdirectory( jpeg )
+	set( JPEG_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/jpeg )
 	set( JPEG_LIBRARIES jpeg )
 	set( JPEG_LIBRARY jpeg )
 endif()

@@ -80,12 +80,12 @@ void QuadStereo::Present() const
 		glDrawBuffer(GL_BACK_LEFT);
 		GLRenderer->ClearBorders();
 		GLRenderer->mBuffers->BindEyeTexture(0, 0);
-		GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+		GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
 
 		glDrawBuffer(GL_BACK_RIGHT);
 		GLRenderer->ClearBorders();
 		GLRenderer->mBuffers->BindEyeTexture(1, 0);
-		GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+		GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
 
 		glDrawBuffer(GL_BACK);
 	}
@@ -94,7 +94,7 @@ void QuadStereo::Present() const
 		GLRenderer->mBuffers->BindOutputFB();
 		GLRenderer->ClearBorders();
 		GLRenderer->mBuffers->BindEyeTexture(0, 0);
-		GLRenderer->DrawPresentTexture(GLRenderer->mOutputLetterbox, true);
+		GLRenderer->DrawPresentTexture(screen->mOutputLetterbox, true);
 	}
 }
 

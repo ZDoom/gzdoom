@@ -30,6 +30,7 @@
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_renderer.h"
+#include "gl/renderer/gl_renderbuffers.h"
 
 //==========================================================================
 //
@@ -37,7 +38,7 @@
 //
 //==========================================================================
 
-void FBlurShader::BlurVertical(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height)
+void FBlurShader::BlurVertical(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height)
 {
 	Blur(renderer, blurAmount, sampleCount, inputTexture, outputFrameBuffer, width, height, true);
 }
@@ -48,7 +49,7 @@ void FBlurShader::BlurVertical(FGLRenderer *renderer, float blurAmount, int samp
 //
 //==========================================================================
 
-void FBlurShader::BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height)
+void FBlurShader::BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height)
 {
 	Blur(renderer, blurAmount, sampleCount, inputTexture, outputFrameBuffer, width, height, false);
 }
@@ -59,7 +60,7 @@ void FBlurShader::BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sa
 //
 //==========================================================================
 
-void FBlurShader::Blur(FGLRenderer *renderer, float blurAmount, int sampleCount, GLuint inputTexture, GLuint outputFrameBuffer, int width, int height, bool vertical)
+void FBlurShader::Blur(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height, bool vertical)
 {
 	BlurSetup *setup = GetSetup(blurAmount, sampleCount);
 	if (vertical)
@@ -67,14 +68,9 @@ void FBlurShader::Blur(FGLRenderer *renderer, float blurAmount, int sampleCount,
 	else
 		setup->HorizontalShader->Bind();
 
-	glActiveTexture(GL_TEXTURE0);
-	glBindTexture(GL_TEXTURE_2D, inputTexture);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	inputTexture.Bind(0);
 
-	glBindFramebuffer(GL_FRAMEBUFFER, outputFrameBuffer);
+	outputFrameBuffer.Bind();
 	glViewport(0, 0, width, height);
 	glDisable(GL_BLEND);
 

@@ -61,12 +61,13 @@ namespace swrenderer
 
 	RenderModel::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, float idepth) : x(x), y(y), z(z), smf(smf), actor(actor)
 	{
+		gpos = { x, y, z };
 		this->idepth = idepth;
 	}
 
 	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
-		SWModelRenderer renderer(thread);
+		SWModelRenderer renderer(thread, clip3DFloor);
 		renderer.RenderModel(x, y, z, smf, actor);
 	}
 
@@ -74,13 +75,13 @@ namespace swrenderer
 
 	void RenderHUDModel(RenderThread *thread, DPSprite *psp, float ofsx, float ofsy)
 	{
-		SWModelRenderer renderer(thread);
+		SWModelRenderer renderer(thread, Fake3DTranslucent());
 		renderer.RenderHUDModel(psp, ofsx, ofsy);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
 
-	SWModelRenderer::SWModelRenderer(RenderThread *thread) : Thread(thread)
+	SWModelRenderer::SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor) : Thread(thread), Clip3DFloor(clip3DFloor)
 	{
 		if (polymodelsInUse)
 		{
@@ -93,6 +94,39 @@ namespace swrenderer
 	{
 		ModelActor = actor;
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+
+		ClipTop = {};
+		ClipBottom = {};
+		if (Clip3DFloor.clipTop || Clip3DFloor.clipBottom)
+		{
+			// Convert 3d floor clipping planes from world to object space
+
+			VSMatrix inverseMat;
+			const_cast<VSMatrix &>(objectToWorldMatrix).inverseMatrix(inverseMat);
+			Mat4f worldToObject;
+			inverseMat.copy(worldToObject.Matrix);
+
+			// Note: Y and Z is swapped here
+
+			Vec4f one = worldToObject * Vec4f(0.0f, 1.0f, 0.0f, 1.0f);
+			Vec4f zero = worldToObject * Vec4f(0.0f, 0.0f, 0.0f, 1.0f);
+			Vec4f up = { one.X - zero.X, one.Y - zero.Y, one.Z - zero.Z };
+
+			if (Clip3DFloor.clipTop)
+			{
+				Vec4f p = worldToObject * Vec4f(0.0f, Clip3DFloor.sclipTop, 0.0f, 1.0f);
+				float d = up.X * p.X + up.Y * p.Y + up.Z * p.Z;
+				ClipTop = { -up.X, -up.Y, -up.Z, d };
+			}
+
+			if (Clip3DFloor.clipBottom)
+			{
+				Vec4f p = worldToObject * Vec4f(0.0f, Clip3DFloor.sclipBottom, 0.0f, 1.0f);
+				float d = up.X * p.X + up.Y * p.Y + up.Z * p.Z;
+				ClipBottom = { up.X, up.Y, up.Z, -d };
+			}
+		}
+
 		SetTransform();
 	}
 
@@ -153,12 +187,16 @@ namespace swrenderer
 	{
 		ModelActor = actor;
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+		ClipTop = {};
+		ClipBottom = {};
 		SetTransform();
+		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
 	}
 
 	void SWModelRenderer::EndDrawHUDModel(AActor *actor)
 	{
 		ModelActor = nullptr;
+		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
 	}
 
 	void SWModelRenderer::SetInterpolation(double interpolation)
@@ -195,7 +233,6 @@ namespace swrenderer
 
 		PolyDrawArgs args;
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, Thread->Light->SpriteGlobVis(foggy), fullbrightSprite);
-		args.SetClipPlane(0, PolyClipPlane());
 		args.SetStyle(TriBlendMode::TextureOpaque);
 
 		if (Thread->Viewport->RenderTarget->IsBgra())
@@ -206,6 +243,10 @@ namespace swrenderer
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
+		args.SetClipPlane(0, PolyClipPlane());
+		args.SetClipPlane(1, ClipTop);
+		args.SetClipPlane(2, ClipBottom);
+
 		args.DrawArray(Thread->DrawQueue, VertexBuffer + start, count);
 	}
 
@@ -222,7 +263,6 @@ namespace swrenderer
 
 		PolyDrawArgs args;
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, Thread->Light->SpriteGlobVis(foggy), fullbrightSprite);
-		args.SetClipPlane(0, PolyClipPlane());
 		args.SetStyle(TriBlendMode::TextureOpaque);
 
 		if (Thread->Viewport->RenderTarget->IsBgra())
@@ -233,12 +273,11 @@ namespace swrenderer
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
-		args.DrawElements(Thread->DrawQueue, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
-	}
+		args.SetClipPlane(0, PolyClipPlane());
+		args.SetClipPlane(1, ClipTop);
+		args.SetClipPlane(2, ClipBottom);
 
-	double SWModelRenderer::GetTimeFloat()
-	{
-		return (double)I_msTime() * (double)TICRATE / 1000.;
+		args.DrawElements(Thread->DrawQueue, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////

@@ -362,13 +362,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 		endif ()
 	endif ()
 
-	# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
-	# C++11 support using SDKs 10.7 and 10.8.
-	if ( APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-		set( CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}" )
-		set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
-	endif ()
-
 	# Remove extra warnings when using the official DirectX headers.
 	# Also, TDM-GCC 4.4.0 no longer accepts glibc-style printf formats as valid,
 	# which is a royal pain. The previous version I had been using was fine with them.
@@ -689,6 +682,9 @@ file( GLOB HEADER_FILES
 	polyrenderer/scene/*.h
 	hwrenderer/data/*.h
 	hwrenderer/dynlights/*.h
+	hwrenderer/scene/*.h
+	hwrenderer/textures/*.h
+	hwrenderer/utilities/*.h
 	gl/*.h
 	gl/data/*.h
 	gl/dynlights/*.h
@@ -798,6 +794,7 @@ set( NOT_COMPILED_SOURCE_FILES
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
 	swrenderer/r_all.cpp
+	swrenderer/r_swscene.cpp
 	polyrenderer/poly_all.cpp
 	sound/oplsynth/opl_mus_player.cpp
 	sound/mpg123_decoder.cpp
@@ -819,19 +816,22 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_skydome.cpp
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
-	gl/scene/gl_swscene.cpp
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
-	gl/scene/gl_spritelight.cpp
 	gl_load/gl_load.c
 	hwrenderer/dynlights/hw_dynlightdata.cpp
 	hwrenderer/scene/hw_fakeflat.cpp
 	hwrenderer/scene/hw_decal.cpp
+	hwrenderer/scene/hw_drawlist.cpp
 	hwrenderer/scene/hw_clipper.cpp
+	hwrenderer/scene/hw_flats.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_sky.cpp
+	hwrenderer/scene/hw_sprites.cpp
+	hwrenderer/scene/hw_spritelight.cpp
 	hwrenderer/scene/hw_walls.cpp
 	hwrenderer/scene/hw_walls_vertex.cpp
+	hwrenderer/scene/hw_weapon.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp
@@ -1057,6 +1057,8 @@ set (PCH_SOURCES
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
+	hwrenderer/dynlights/hw_shadowmap.cpp
+	hwrenderer/scene/hw_skydome.cpp
 	hwrenderer/textures/hw_material.cpp
 	hwrenderer/textures/hw_precache.cpp
 	hwrenderer/utility/hw_clock.cpp

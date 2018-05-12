@@ -172,6 +172,12 @@ class LevelCompatibility play
 				break;
 			}
 
+			case '1EF7DEAECA03DE03BF363A3193757B5C': // PLUTONIA.wad map11
+			{
+				SetLineSectorRef(41, Line.back, 6);
+				break;
+			}			
+			
 			case '279BB50468FE9F5B36C6D821E4902369': // Plutonia Experiment map30
 			{
 				// flag items in deathmatch-only area correctly so that 100% items
@@ -689,6 +695,13 @@ class LevelCompatibility play
 				SetThingSkills(115, 31);
 				break;
 			}
+
+			case 'CCF699953746087E46185B2A40D9F8AF': // satanx.wad map01
+			{
+				// Restore monster cross flag for DeHackEd friendly marine
+				GetDefaultActor('WolfensteinSS').bActivateMCross = true;
+				break;
+			}
 		}
 	}
 
@@ -701,6 +714,7 @@ class LevelCompatibility play
 	private static native void SetThingFlags(int thing, int flags);
 	private static native void SetVertex(uint vertex, double x, double y);
 	private static native void SetLineSectorRef(uint line, uint side, uint sector);
+	private static native Actor GetDefaultActor(Name actorclass);
 	
 	private static void SetWallTexture(int line, int side, int texpart, String texture)
 	{

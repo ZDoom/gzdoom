@@ -698,15 +698,15 @@ CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 		for (auto &sec : level.sectors)
 		{
 			sector_t *hsec = sec.GetHeightSec();
-			if (hsec && !(hsec->MoreFlags & SECF_UNDERWATER))
+			if (hsec && !(hsec->MoreFlags & SECMF_UNDERWATER))
 			{
 				if (self)
 				{
-					hsec->MoreFlags |= SECF_FORCEDUNDERWATER;
+					hsec->MoreFlags |= SECMF_FORCEDUNDERWATER;
 				}
 				else
 				{
-					hsec->MoreFlags &= ~SECF_FORCEDUNDERWATER;
+					hsec->MoreFlags &= ~SECMF_FORCEDUNDERWATER;
 				}
 			}
 		}
@@ -1248,7 +1248,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case Sector_Hidden:
-		sector->MoreFlags |= SECF_HIDDEN;
+		sector->MoreFlags |= SECMF_HIDDEN;
 		break;
 
 	case Sector_Heal:
@@ -1343,35 +1343,38 @@ void P_SpawnSpecials (void)
 		case Transfer_Heights:
 			{
 				sec = line.frontsector;
+				
 				if (line.args[1] & 2)
 				{
-					sec->MoreFlags |= SECF_FAKEFLOORONLY;
+					sec->MoreFlags |= SECMF_FAKEFLOORONLY;
 				}
 				if (line.args[1] & 4)
 				{
-					sec->MoreFlags |= SECF_CLIPFAKEPLANES;
+					sec->MoreFlags |= SECMF_CLIPFAKEPLANES;
 				}
 				if (line.args[1] & 8)
 				{
-					sec->MoreFlags |= SECF_UNDERWATER;
+					sec->MoreFlags |= SECMF_UNDERWATER;
 				}
 				else if (forcewater)
 				{
-					sec->MoreFlags |= SECF_FORCEDUNDERWATER;
+					sec->MoreFlags |= SECMF_FORCEDUNDERWATER;
 				}
 				if (line.args[1] & 16)
 				{
-					sec->MoreFlags |= SECF_IGNOREHEIGHTSEC;
+					sec->MoreFlags |= SECMF_IGNOREHEIGHTSEC;
 				}
+				else level.HasHeightSecs = true;
 				if (line.args[1] & 32)
 				{
-					sec->MoreFlags |= SECF_NOFAKELIGHT;
+					sec->MoreFlags |= SECMF_NOFAKELIGHT;
 				}
 				FSectorTagIterator itr(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					level.sectors[s].heightsec = sec;
 					sec->e->FakeFloor.Sectors.Push(&level.sectors[s]);
+					level.sectors[s].MoreFlags |= (sec->MoreFlags & SECMF_IGNOREHEIGHTSEC);	// copy this to the destination sector for easier checking.
 					level.sectors[s].AdjustFloorClip();
 				}
 				break;

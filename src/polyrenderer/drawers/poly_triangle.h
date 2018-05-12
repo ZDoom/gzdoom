@@ -35,6 +35,7 @@ public:
 	static void ClearBuffers(DCanvas *canvas);
 	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, bool span_drawers);
 	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
+	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip);
 };
 
@@ -46,6 +47,7 @@ public:
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, bool span_drawers);
 	void SetTransform(const Mat4f *objectToClip);
 	void SetCullCCW(bool value) { ccw = value; }
+	void SetWeaponScene(bool value) { weaponScene = value; }
 
 	void DrawElements(const PolyDrawArgs &args);
 	void DrawArrays(const PolyDrawArgs &args);
@@ -79,6 +81,7 @@ private:
 	bool dest_bgra = false;
 	uint8_t *dest = nullptr;
 	bool ccw = true;
+	bool weaponScene = false;
 	const Mat4f *objectToClip = nullptr;
 	bool span_drawers = false;
 
@@ -107,6 +110,18 @@ public:
 
 private:
 	bool ccw;
+};
+
+class PolySetWeaponSceneCommand : public DrawerCommand
+{
+public:
+	PolySetWeaponSceneCommand(bool value);
+
+	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override { return "PolySetWeaponSceneCommand"; }
+
+private:
+	bool value;
 };
 
 class PolySetViewportCommand : public DrawerCommand

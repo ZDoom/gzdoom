@@ -36,7 +36,7 @@
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/data/flatvertices.h"
 
-void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
+void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal)
 {
 	line_t * line = seg->linedef;
 	side_t * side = seg->sidedef;
@@ -112,34 +112,9 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 				zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 			}
 	}
+	FMaterial *tex = FMaterial::ValidateTexture(texture, true);
 
-	GLDecal &gldecal = *di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
-	gldecal.gltexture = FMaterial::ValidateTexture(texture, true);
-	gldecal.wall = this;
-	gldecal.decal = decal;
-	
-	if (decal->RenderFlags & RF_FULLBRIGHT)
-	{
-		gldecal.light = 255;
-		gldecal.rel = 0;
-	}
-	else
-	{
-		gldecal.light = lightlevel;
-		gldecal.rel = rellight + getExtraLight();
-	}
-	
-	gldecal.colormap = Colormap;
-	
-	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
-	{
-		gldecal.colormap.Decolorize();
-	}
-	
-	gldecal.a = decal->Alpha;
-	
 	// now clip the decal to the actual polygon
-	FMaterial *tex = gldecal.gltexture;
 
 	float decalwidth = tex->TextureWidth()  * decal->ScaleX;
 	float decalheight = tex->TextureHeight() * decal->ScaleY;
@@ -178,13 +153,15 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 		right = decalpixpos + decalwidth;
 		righttex = decalwidth;
 	}
-	if (right <= left) return;	// nothing to draw
+	if (right <= left) 
+		return;	// nothing to draw
 	
+
 	// one texture unit on the wall as vector
 	float vx = (glseg.x2 - glseg.x1) / linelength;
 	float vy = (glseg.y2 - glseg.y1) / linelength;
 	
-	DecalVertex *dv = gldecal.dv;
+	DecalVertex dv[4];
 	dv[1].x = dv[0].x = glseg.x1 + vx * left;
 	dv[1].y = dv[0].y = glseg.y1 + vy * left;
 	
@@ -251,10 +228,37 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal)
 		for (i = 0; i < 4; i++) dv[i].v = vb - dv[i].v;
 	}
 
-	gldecal.zcenter = zpos - decalheight * 0.5f;
+	GLDecal *gldecal = di->AddDecal(type == RENDERWALL_MIRRORSURFACE);
+	gldecal->gltexture = tex;
+	gldecal->decal = decal;
+
+	if (decal->RenderFlags & RF_FULLBRIGHT)
+	{
+		gldecal->lightlevel = 255;
+		gldecal->rellight = 0;
+	}
+	else
+	{
+		gldecal->lightlevel = lightlevel;
+		gldecal->rellight = rellight + getExtraLight();
+	}
+
+	gldecal->Colormap = Colormap;
+
+	if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
+	{
+		gldecal->Colormap.Decolorize();
+	}
+
+	gldecal->alpha = decal->Alpha;
+	gldecal->zcenter = zpos - decalheight * 0.5f;
+	gldecal->bottomplane = bottomplane;
+	gldecal->Normal = normal;
+	gldecal->lightlist = lightlist;
+	memcpy(gldecal->dv, dv, sizeof(dv));
 	
 	auto verts = di->AllocVertices(4);
-	gldecal.vertindex = verts.second;
+	gldecal->vertindex = verts.second;
 	
 	for (i = 0; i < 4; i++)
 	{
@@ -272,10 +276,14 @@ void GLWall::ProcessDecals(HWDrawInfo *di)
 	if (seg->sidedef != nullptr)
 	{
 		DBaseDecal *decal = seg->sidedef->AttachedDecals;
-		while (decal)
+		if (decal)
 		{
-			ProcessDecal(di, decal);
-			decal = decal->WallNext;
+			auto normal = glseg.Normal();	// calculate the normal only once per wall because it requires a square root.
+			while (decal)
+			{
+				ProcessDecal(di, decal, normal);
+				decal = decal->WallNext;
+			}
 		}
 	}
 }

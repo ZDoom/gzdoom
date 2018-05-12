@@ -23,10 +23,7 @@ public:
 	void Update();
 
 	// Color correction
-	bool SetGamma (float gamma);
-	bool SetBrightness(float bright);
-	bool SetContrast(float contrast);
-	void DoSetGamma();
+	void SetGamma();
 
 	void CleanForRestart() override;
 	void UpdatePalette() override;
@@ -34,14 +31,13 @@ public:
 	PalEntry *GetPalette () override;
 	bool SetFlash(PalEntry rgb, int amount) override;
 	void GetFlash(PalEntry &rgb, int &amount) override;
-	void Begin2D(bool copy3d) override;
 	void GameRestart() override;
 	void InitForLevel() override;
 	void SetClearColor(int color) override;
 	uint32_t GetCaps() override;
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV) override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
-	void RenderView(player_t *player) override;
+	sector_t *RenderView(player_t *player) override;
 	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
@@ -49,6 +45,9 @@ public:
 	void FlushTextures() override;
 	void TextureFilterChanged() override;
 	void ResetFixedColormap() override;
+	void BeginFrame() override;
+	bool RenderBuffersEnabled() override;
+	void SetOutputViewport(IntRect *bounds) override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer

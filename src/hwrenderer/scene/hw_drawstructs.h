@@ -22,6 +22,17 @@ struct FSectorPortalGroup;
 struct FFlatVertex;
 struct FLinePortalSpan;
 struct FDynLightData;
+class VSMatrix;
+struct FSpriteModelFrame;
+struct particle_t;
+enum area_t : int;
+
+enum HWRenderStyle
+{
+	STYLEHW_Normal,			// default
+	STYLEHW_Solid,			// drawn solid (needs special treatment for sprites)
+	STYLEHW_NoAlphaTest,	// disable alpha test
+};
 
 enum WallTypes
 {
@@ -133,7 +144,7 @@ public:
 		LORGT,
 	};
 
-	friend struct GLDrawList;
+	friend struct HWDrawList;
 	friend class GLPortal;
 
 	vertex_t * vertexes[2];				// required for polygon splitting
@@ -194,7 +205,7 @@ public:
 	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
 	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 
-	bool SetupLights(FDynLightData &lightdata);
+	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata);
 
 	void MakeVertices(HWDrawInfo *di, bool nosplit);
 
@@ -236,7 +247,7 @@ public:
 					  float fch1, float fch2, float ffh1, float ffh2,
 					  float bch1, float bch2, float bfh1, float bfh2);
 
-    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal);
+    void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
     void ProcessDecals(HWDrawInfo *di);
 
 	void CreateVertices(FFlatVertex *&ptr, bool nosplit);
@@ -269,14 +280,122 @@ public:
 		return -((y-glseg.y1)*(glseg.x2-glseg.x1)-(x-glseg.x1)*(glseg.y2-glseg.y1));
 	}
 
-	// Lines start-end and fdiv must intersect.
-	double CalcIntersectionVertex(GLWall * w2)
+};
+
+//==========================================================================
+//
+// One flat plane in the draw list
+//
+//==========================================================================
+
+class GLFlat
+{
+public:
+	sector_t * sector;
+	float dz; // z offset for rendering hacks
+	float z; // the z position of the flat (only valid for non-sloped planes)
+	FMaterial *gltexture;
+
+	FColormap Colormap;	// light and fog
+	PalEntry FlatColor;
+	ERenderStyle renderstyle;
+
+	float alpha;
+	GLSectorPlane plane;
+	int lightlevel;
+	bool stack;
+	bool ceiling;
+	uint8_t renderflags;
+	int vboindex;
+	//int vboheight;
+
+	int dynlightindex;
+
+	bool SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata);
+
+	void PutFlat(HWDrawInfo *di, bool fog = false);
+	void Process(HWDrawInfo *di, sector_t * model, int whichplane, bool notexture);
+	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
+	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
+	
+	GLFlat() {}
+
+	GLFlat(const GLFlat &other)
 	{
-		float ax = glseg.x1, ay=glseg.y1;
-		float bx = glseg.x2, by=glseg.y2;
-		float cx = w2->glseg.x1, cy=w2->glseg.y1;
-		float dx = w2->glseg.x2, dy=w2->glseg.y2;
-		return ((ay-cy)*(dx-cx)-(ax-cx)*(dy-cy)) / ((bx-ax)*(dy-cy)-(by-ay)*(dx-cx));
+		memcpy(this, &other, sizeof(GLFlat));
+	}
+
+	GLFlat & operator=(const GLFlat &other)
+	{
+		memcpy(this, &other, sizeof(GLFlat));
+		return *this;
+	}
+
+};
+
+//==========================================================================
+//
+// One sprite in the draw list
+//
+//==========================================================================
+
+
+class GLSprite
+{
+public:
+	int lightlevel;
+	uint8_t foglevel;
+	uint8_t hw_styleflags;
+	bool fullbright;
+	PalEntry ThingColor;	// thing's own color
+	FColormap Colormap;
+	FSpriteModelFrame * modelframe;
+	FRenderStyle RenderStyle;
+	int OverrideShader;
+
+	int translation;
+	int index;
+	int depth;
+
+	float topclip;
+	float bottomclip;
+
+	float x,y,z;	// needed for sorting!
+
+	float ul,ur;
+	float vt,vb;
+	float x1,y1,z1;
+	float x2,y2,z2;
+
+	FMaterial *gltexture;
+	float trans;
+	AActor * actor;
+	particle_t * particle;
+	TArray<lightlist_t> *lightlist;
+	DRotator Angles;
+
+	int dynlightindex;
+
+	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
+	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);
+	bool CalculateVertices(HWDrawInfo *di, FVector3 *v);
+
+public:
+
+	GLSprite() {}
+	void PutSprite(HWDrawInfo *di, bool translucent);
+	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false);
+	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
+
+	GLSprite(const GLSprite &other)
+	{
+		memcpy(this, &other, sizeof(GLSprite));
+	}
+
+	GLSprite & operator=(const GLSprite &other)
+	{
+		memcpy(this, &other, sizeof(GLSprite));
+		return *this;
 	}
 
 };
@@ -293,16 +412,19 @@ struct DecalVertex
 struct GLDecal
 {
 	FMaterial *gltexture;
-	GLWall *wall;
+	TArray<lightlist_t> *lightlist;
 	DBaseDecal *decal;
 	DecalVertex dv[4];
 	float zcenter;
 	unsigned int vertindex;
 
-	int light;
-	int rel;
-	float a;
-	FColormap colormap;
+	FRenderStyle renderstyle;
+	int lightlevel;
+	int rellight;
+	float alpha;
+	FColormap Colormap;
+	secplane_t bottomplane;
+	FVector3 Normal;
 
 };
 
@@ -311,3 +433,8 @@ inline float Dist2(float x1,float y1,float x2,float y2)
 {
 	return sqrtf((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
 }
+
+bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * gltexture, VSMatrix &mat);
+void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata);
+
+extern const float LARGE_VALUE;

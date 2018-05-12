@@ -243,7 +243,7 @@ UNSAFE_CCMD(recordmap)
 {
 	if (netgame)
 	{
-		Printf("You cannot record a new game while in a netgame.");
+		Printf("You cannot record a new game while in a netgame.\n");
 		return;
 	}
 	if (argv.argc() > 2)
@@ -1485,6 +1485,7 @@ void G_InitLevelLocals ()
 	level.Music = info->Music;
 	level.musicorder = info->musicorder;
 	level.MusicVolume = 1.f;
+	level.HasHeightSecs = false;
 
 	level.LevelName = level.info->LookupLevelName();
 	level.NextMap = info->NextMap;

@@ -58,5 +58,7 @@ struct FDynLightData
 
 };
 
+extern thread_local FDynLightData lightdata;
+
 
 #endif

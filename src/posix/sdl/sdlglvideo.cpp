@@ -394,11 +394,6 @@ void SystemFrameBuffer::InitializeState()
 {
 }
 
-bool SystemFrameBuffer::CanUpdate ()
-{
-	return true;
-}
-
 void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)

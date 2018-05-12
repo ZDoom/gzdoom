@@ -682,6 +682,12 @@ public:
 	{
 		SINMASK = 2047
 	};
+
+	FTextureID glLight;
+	FTextureID glPart2;
+	FTextureID glPart;
+	FTextureID mirrorTexture;
+
 };
 
 // base class for everything that can be used as a world texture. 

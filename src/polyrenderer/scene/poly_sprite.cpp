@@ -182,7 +182,7 @@ double RenderPolySprite::GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos
 			return floorh;
 	}
 
-	if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (thing->Sector->GetHeightSec())
 	{
 		if (thing->flags2&MF2_ONMOBJ && thing->floorz == thing->Sector->heightsec->floorplane.ZatPoint(thingpos))
 		{
@@ -204,7 +204,7 @@ double RenderPolySprite::GetSpriteCeilingZ(AActor *thing, const DVector2 &thingp
 			return ceilingh;
 	}
 
-	if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (thing->Sector->GetHeightSec())
 	{
 		if (thing->flags2&MF2_ONMOBJ && thing->ceilingz == thing->Sector->heightsec->ceilingplane.ZatPoint(thingpos))
 		{

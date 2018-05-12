@@ -1136,10 +1136,10 @@ void FTexture::GetGlowColor(float *data)
 	if (bGlowing && GlowColor == 0)
 	{
 		int w = Width, h = Height;
-		auto buffer = new uint8_t[w * h];
+		auto buffer = new uint8_t[w * h * 4];
 		if (buffer)
 		{
-			FillBuffer(buffer, w, h, TEX_RGB);
+			FillBuffer(buffer, w * 4, h, TEX_RGB);
 			GlowColor = averageColor((uint32_t *)buffer, w*h, 153);
 			delete[] buffer;
 		}

@@ -115,7 +115,7 @@ LegacyShader* LegacyShaderContainer::CreatePixelShader(const FString& vertex, co
 		GLsizei length = 0;
 		buffer[0] = 0;
 		glGetShaderInfoLog(errorShader, 10000, &length, buffer);
-		Printf("Shader compile failed: %s", buffer);
+		Printf("Shader compile failed: %s\n", buffer);
 		delete shader;
 		return nullptr;
 	}
@@ -129,7 +129,7 @@ LegacyShader* LegacyShaderContainer::CreatePixelShader(const FString& vertex, co
 		GLsizei length = 0;
 		buffer[0] = 0;
 		glGetProgramInfoLog(shader->Program, 10000, &length, buffer);
-		Printf("Shader link failed: %s", buffer);
+		Printf("Shader link failed: %s\n", buffer);
 		delete shader;
 		return nullptr;
 	}

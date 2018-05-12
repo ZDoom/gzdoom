@@ -365,7 +365,7 @@ void TriangleBlock::DepthTest(const TriDrawTriangleArgs *args)
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y);
+	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
 
 	uint32_t mask0 = 0;
 	uint32_t mask1 = 0;
@@ -413,7 +413,7 @@ void TriangleBlock::DepthTest(const TriDrawTriangleArgs *args)
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y);
+	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
 
 	__m128 mposYW = _mm_setr_ps(posYW, posYW + stepXW, posYW + stepXW + stepXW, posYW + stepXW + stepXW + stepXW);
 	__m128 mstepXW = _mm_set1_ps(stepXW * 4.0f);
@@ -959,7 +959,7 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y);
+	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
 
 	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
 	{
@@ -1020,7 +1020,7 @@ void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
 
 	float stepXW = args->gradientX.W;
 	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y);
+	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
 
 	__m128 mposYW = _mm_setr_ps(posYW, posYW + stepXW, posYW + stepXW + stepXW, posYW + stepXW + stepXW + stepXW);
 	__m128 mstepXW = _mm_set1_ps(stepXW * 4.0f);
@@ -1180,7 +1180,7 @@ void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleT
 
 		float startX = x + (0.5f - v1X);
 		float startY = y + (0.5f - v1Y);
-		float posXW = v1W + stepXW * startX + args->gradientY.W * startY;
+		float posXW = v1W + stepXW * startX + args->gradientY.W * startY + args->depthOffset;
 
 #ifndef NO_SSE
 		__m128 mstepXW = _mm_set1_ps(stepXW * 4.0f);

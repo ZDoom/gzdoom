@@ -53,6 +53,22 @@ namespace swrenderer
 	{
 		if (IsModel())
 		{
+			// Draw segments behind model
+			DrawSegmentList *segmentlist = thread->DrawSegments.get();
+			RenderPortal *renderportal = thread->Portal.get();
+			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
+			{
+				DrawSegment *ds = segmentlist->TranslucentSegment(index);
+				if (ds->SubsectorDepth >= SubsectorDepth && ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
+				{
+					int r1 = MAX<int>(ds->x1, 0);
+					int r2 = MIN<int>(ds->x2, viewwidth - 1);
+
+					RenderDrawSegment renderer(thread);
+					renderer.Render(ds, r1, r2, clip3DFloor);
+				}
+			}
+
 			Render(thread, nullptr, nullptr, 0, 0, clip3DFloor);
 			return;
 		}
@@ -173,7 +189,7 @@ namespace swrenderer
 			hzb = spr->gzb;
 		}
 
-		if (spr->heightsec && !(spr->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+		if (spr->heightsec)
 		{ // only things in specially marked sectors
 			if (spr->FakeFlatStat != WaterFakeSide::AboveCeiling)
 			{
@@ -197,7 +213,7 @@ namespace swrenderer
 					hzb = MAX(hzb, hz);
 				}
 			}
-			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECF_FAKEFLOORONLY))
+			if (spr->FakeFlatStat != WaterFakeSide::BelowFloor && !(spr->heightsec->MoreFlags & SECMF_FAKEFLOORONLY))
 			{
 				double hz = spr->heightsec->ceilingplane.ZatPoint(spr->gpos);
 				int h = xs_RoundToInt(viewport->CenterY - (hz - viewport->viewpoint.Pos.Z) * scale);
@@ -299,30 +315,49 @@ namespace swrenderer
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// Render draw segments behind sprite
-		for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
+		if (r_models)
 		{
-			DrawSegment *ds = segmentlist->TranslucentSegment(index);
-
-			if (ds->x1 >= x2 || ds->x2 <= x1)
+			int subsectordepth = spr->SubsectorDepth;
+			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
 			{
-				continue;
-			}
-
-			float neardepth = MIN(ds->sz1, ds->sz2);
-			float fardepth = MAX(ds->sz1, ds->sz2);
-
-			// Check if sprite is in front of draw seg:
-			if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
-				(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
-				(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
-			{
-				if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
+				DrawSegment *ds = segmentlist->TranslucentSegment(index);
+				if (ds->SubsectorDepth >= subsectordepth && ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
 				{
-					int r1 = MAX<int>(ds->x1, x1);
-					int r2 = MIN<int>(ds->x2, x2);
+					int r1 = MAX<int>(ds->x1, 0);
+					int r2 = MIN<int>(ds->x2, viewwidth - 1);
 
 					RenderDrawSegment renderer(thread);
 					renderer.Render(ds, r1, r2, clip3DFloor);
+				}
+			}
+		}
+		else
+		{
+			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)
+			{
+				DrawSegment *ds = segmentlist->TranslucentSegment(index);
+
+				if (ds->x1 >= x2 || ds->x2 <= x1)
+				{
+					continue;
+				}
+
+				float neardepth = MIN(ds->sz1, ds->sz2);
+				float fardepth = MAX(ds->sz1, ds->sz2);
+
+				// Check if sprite is in front of draw seg:
+				if ((!spr->IsWallSprite() && neardepth > spr->depth) || ((spr->IsWallSprite() || fardepth > spr->depth) &&
+					(spr->gpos.Y - ds->curline->v1->fY()) * (ds->curline->v2->fX() - ds->curline->v1->fX()) -
+					(spr->gpos.X - ds->curline->v1->fX()) * (ds->curline->v2->fY() - ds->curline->v1->fY()) <= 0))
+				{
+					if (ds->CurrentPortalUniq == renderportal->CurrentPortalUniq)
+					{
+						int r1 = MAX<int>(ds->x1, x1);
+						int r2 = MIN<int>(ds->x2, x2);
+
+						RenderDrawSegment renderer(thread);
+						renderer.Render(ds, r1, r2, clip3DFloor);
+					}
 				}
 			}
 		}

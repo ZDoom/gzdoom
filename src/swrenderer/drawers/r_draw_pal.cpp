@@ -2822,7 +2822,7 @@ namespace swrenderer
 		}
 		else
 		{
-			for (int i = 0; i < width; ++i)
+			for (int i = 0; i <= width; ++i)
 			{
 				tiltlighting[i] = _colormap;
 			}

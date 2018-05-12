@@ -146,11 +146,6 @@ void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, (void*)(intptr_t)offset);
 }
 
-double FGLModelRenderer::GetTimeFloat()
-{
-	return (double)I_msTime() * (double)TICRATE / 1000.;
-}
-
 //===========================================================================
 //
 // Uses a hardware buffer if either single frame (i.e. no interpolation needed)

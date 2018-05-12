@@ -267,7 +267,7 @@ CUSTOM_CVAR(Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
-		screen->SetGamma(Gamma);
+		screen->SetGamma();
 	}
 }
 
@@ -275,7 +275,7 @@ CUSTOM_CVAR(Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
-		screen->SetGamma(Gamma);
+		screen->SetGamma();
 	}
 }
 
@@ -283,7 +283,7 @@ CUSTOM_CVAR(Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
-		screen->SetGamma(Gamma);
+		screen->SetGamma();
 	}
 }
 
@@ -378,11 +378,11 @@ CocoaVideo::CocoaVideo()
 	if (nil == pixelFormat && NSOpenGLProfileVersion3_2Core == defaultProfile)
 	{
 		pixelFormat = CreatePixelFormat(NSOpenGLProfileVersionLegacy);
+	}
 
-		if (nil == pixelFormat)
-		{
-			I_FatalError("Cannot OpenGL create pixel format, graphics hardware is not supported");
-		}
+	if (nil == pixelFormat)
+	{
+		I_FatalError("Cannot create OpenGL pixel format, graphics hardware is not supported");
 	}
 
 	// Create OpenGL context and view
@@ -699,11 +699,6 @@ void SystemFrameBuffer::SetVSync(bool vsync)
 
 void SystemFrameBuffer::InitializeState()
 {
-}
-
-bool SystemFrameBuffer::CanUpdate()
-{
-	return true;
 }
 
 void SystemFrameBuffer::SwapBuffers()

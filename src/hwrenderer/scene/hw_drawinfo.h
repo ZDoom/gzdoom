@@ -1,12 +1,19 @@
 #pragma once
 
+#include <atomic>
 #include "r_defs.h"
 
 struct FSectorPortalGroup;
 struct FLinePortalSpan;
 struct FFlatVertex;
 class GLWall;
+class GLFlat;
+class GLSprite;
 struct GLDecal;
+class IShadowMap;
+struct particle_t;
+struct FDynLightData;
+struct HUDSprite;
 
 //==========================================================================
 //
@@ -30,6 +37,13 @@ enum SectorRenderFlags
     SSRF_RENDERALL = 7,
     SSRF_PROCESSED = 8,
     SSRF_SEEN = 16,
+};
+
+enum EPortalClip
+{
+	PClip_InFront,
+	PClip_Inside,
+	PClip_Behind,
 };
 
 
@@ -63,6 +77,12 @@ struct HWDrawInfo
 	};
     
     int FixedColormap;
+	std::atomic<int> spriteindex;
+	bool clipPortal;
+	FRotator mAngles;
+	FVector2 mViewVector;
+	AActor *mViewActor;
+	IShadowMap *mShadowMap;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -117,8 +137,20 @@ public:
 	void AddCeilingStack(sector_t * sec);
 	void ProcessSectorStacks(area_t in_area);
 
+	void ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area);
+
 	void AddOtherFloorPlane(int sector, gl_subsectorrendernode * node);
 	void AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node);
+
+	void GetDynSpriteLight(AActor *self, float x, float y, float z, FLightNode *node, int portalgroup, float *out);
+	void GetDynSpriteLight(AActor *thing, particle_t *particle, float *out);
+
+	void PreparePlayerSprites(sector_t * viewsector, area_t in_area);
+	void PrepareTargeterSprites();
+
+	virtual void DrawWall(GLWall *wall, int pass) = 0;
+	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;
+	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
 
 	virtual void FloodUpperGap(seg_t * seg) = 0;
 	virtual void FloodLowerGap(seg_t * seg) = 0;
@@ -128,9 +160,16 @@ public:
     virtual void AddWall(GLWall *w) = 0;
 	virtual void AddPortal(GLWall *w, int portaltype) = 0;
     virtual void AddMirrorSurface(GLWall *w) = 0;
+	virtual void AddFlat(GLFlat *flat, bool fog) = 0;
+	virtual void AddSprite(GLSprite *sprite, bool translucent) = 0;
+	virtual void AddHUDSprite(HUDSprite *huds) = 0;
+
+	virtual int UploadLights(FDynLightData &data) = 0;
+
     virtual GLDecal *AddDecal(bool onmirror) = 0;
-    virtual void ProcessActorsInPortal(FLinePortalSpan *glport) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
+
+	virtual int ClipPoint(const DVector3 &pos) = 0;
 
 
 };

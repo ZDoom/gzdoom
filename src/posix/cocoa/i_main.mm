@@ -296,18 +296,24 @@ ApplicationController* appCtrl;
 }
 
 
+extern bool AppActive;
+
 - (void)applicationDidBecomeActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
 	
 	S_SetSoundPaused(1);
+
+	AppActive = true;
 }
 
 - (void)applicationWillResignActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
 	
-	S_SetSoundPaused((!!i_soundinbackground) || 0);
+	S_SetSoundPaused(i_soundinbackground);
+
+	AppActive = false;
 }
 
 
@@ -363,8 +369,17 @@ ApplicationController* appCtrl;
 		}
 	}
 
-	s_argv.Push("-file");
-	s_argv.Push([filename UTF8String]);
+	bool iwad = false;
+
+	if (const char* const extPos = strrchr(charFileName, '.'))
+	{
+		iwad = 0 == stricmp(extPos, ".iwad")
+			|| 0 == stricmp(extPos, ".ipk3")
+			|| 0 == stricmp(extPos, ".ipk7");
+	}
+
+	s_argv.Push(iwad ? "-iwad" : "-file");
+	s_argv.Push(charFileName);
 
 	return TRUE;
 }

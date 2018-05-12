@@ -307,6 +307,10 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 	{
 		alpha = vis.Alpha;
 	}
+	else
+	{
+		alpha = trans;
+	}
 	if (!RenderStyle.IsVisible(alpha)) return false;	// if it isn't visible skip the rest.
 
 	PalEntry ThingColor = (playermo->RenderStyle.Flags & STYLEF_ColorIsFixed) ? playermo->fillcolor : 0xffffff;

@@ -39,6 +39,7 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/models/gl_models.h"
+#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 
@@ -137,7 +138,7 @@ void OpenGLFrameBuffer::InitializeState()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	GLRenderer->Initialize(GetWidth(), GetHeight());
-	GLRenderer->SetOutputViewport(nullptr);
+	SetOutputViewport(nullptr);
 }
 
 //==========================================================================
@@ -167,7 +168,7 @@ void OpenGLFrameBuffer::Update()
 		GLRenderer->mVBO->OutputResized(Width, Height);
 	}
 
-	GLRenderer->SetOutputViewport(nullptr);
+	SetOutputViewport(nullptr);
 }
 
 //===========================================================================
@@ -379,6 +380,17 @@ void OpenGLFrameBuffer::ResetFixedColormap()
 	}
 }
 
+bool OpenGLFrameBuffer::RenderBuffersEnabled()
+{
+	return FGLRenderBuffers::IsEnabled();
+}
+
+void OpenGLFrameBuffer::SetOutputViewport(IntRect *bounds)
+{
+	Super::SetOutputViewport(bounds);
+	s3d::Stereo3DMode::getCurrentMode().AdjustViewports();
+}
+
 
 void OpenGLFrameBuffer::UpdatePalette()
 {
@@ -446,7 +458,7 @@ void OpenGLFrameBuffer::BeginFrame()
 
 void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma)
 {
-	const auto &viewport = GLRenderer->mOutputLetterbox;
+	const auto &viewport = mOutputLetterbox;
 
 	// Grab what is in the back buffer.
 	// We cannot rely on SCREENWIDTH/HEIGHT here because the output may have been scaled.
@@ -513,10 +525,10 @@ void OpenGLFrameBuffer::GameRestart()
 
 void OpenGLFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 {
-	int letterboxX = GLRenderer->mOutputLetterbox.left;
-	int letterboxY = GLRenderer->mOutputLetterbox.top;
-	int letterboxWidth = GLRenderer->mOutputLetterbox.width;
-	int letterboxHeight = GLRenderer->mOutputLetterbox.height;
+	int letterboxX = mOutputLetterbox.left;
+	int letterboxY = mOutputLetterbox.top;
+	int letterboxWidth = mOutputLetterbox.width;
+	int letterboxHeight = mOutputLetterbox.height;
 
 	// Subtract the LB video mode letterboxing
 	if (IsFullscreen())

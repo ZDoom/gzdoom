@@ -63,7 +63,7 @@ public:
 	void EndDrawScene(sector_t * viewsector);
 	void DrawEndScene2D(sector_t * viewsector);
 
-	sector_t *RenderViewpoint(AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
+	sector_t *RenderViewpoint(AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	sector_t *RenderView(player_t *player);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 

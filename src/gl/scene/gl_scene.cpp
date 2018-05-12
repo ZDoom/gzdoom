@@ -123,7 +123,7 @@ void GLSceneDrawer::SetViewArea()
 
 void GLSceneDrawer::Reset3DViewport()
 {
-	glViewport(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.top, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height);
+	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
 }
 
 //-----------------------------------------------------------------------------
@@ -150,7 +150,7 @@ void GLSceneDrawer::Set3DViewport(bool mainview)
 	glClearColor(GLRenderer->mSceneClearColor[0], GLRenderer->mSceneClearColor[1], GLRenderer->mSceneClearColor[2], 1.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-	const auto &bounds = GLRenderer->mSceneViewport;
+	const auto &bounds = screen->mSceneViewport;
 	glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 	glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
 
@@ -637,7 +637,7 @@ void GLSceneDrawer::SetFixedColormap (player_t *player)
 //
 //-----------------------------------------------------------------------------
 
-sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
+sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
 	sector_t * lviewsector;
 	GLRenderer->mSceneClearColor[0] = 0.0f;
@@ -680,7 +680,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 			SetFixedColormap(camera->player); // reiterate color map for each eye, so night vision goggles work in both eyes
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
-		GLRenderer->SetOutputViewport(bounds);
+		screen->SetOutputViewport(bounds);
 		Set3DViewport(mainview);
 		GLRenderer->mDrawingScene2D = true;
 		GLRenderer->mCurrentFoV = fov;
@@ -704,12 +704,12 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();
-			glViewport(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.top, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height);
+			glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
 
 			if (!toscreen)
 			{
 				gl_RenderState.mViewMatrix.loadIdentity();
-				gl_RenderState.mProjectionMatrix.ortho(GLRenderer->mScreenViewport.left, GLRenderer->mScreenViewport.width, GLRenderer->mScreenViewport.height, GLRenderer->mScreenViewport.top, -1.0f, 1.0f);
+				gl_RenderState.mProjectionMatrix.ortho(screen->mScreenViewport.left, screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mScreenViewport.top, -1.0f, 1.0f);
 				gl_RenderState.ApplyMatrices();
 			}
 		}
@@ -733,7 +733,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, GL_IRECT * bounds, f
 
 void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	GL_IRECT bounds;
+	IntRect bounds;
 
 	P_FindParticleSubsectors();	// make sure that all recently spawned particles have a valid subsector.
 	bounds.left=0;

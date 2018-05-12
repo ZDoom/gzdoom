@@ -187,6 +187,9 @@ void FGLRenderer::AmbientOccludeScene()
 
 	float blurSharpness = 1.0f / blurAmount;
 
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
+
 	float sceneScaleX = mSceneViewport.width / (float)mScreenViewport.width;
 	float sceneScaleY = mSceneViewport.height / (float)mScreenViewport.height;
 	float sceneOffsetX = mSceneViewport.left / (float)mScreenViewport.width;
@@ -254,7 +257,7 @@ void FGLRenderer::AmbientOccludeScene()
 
 	// Add SSAO back to scene texture:
 	mBuffers->BindSceneFB(false);
-	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
+	glViewport(screen->mSceneViewport.left, screen->mSceneViewport.top, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -291,6 +294,9 @@ void FGLRenderer::UpdateCameraExposure()
 
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
+
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
 
 	// Extract light level from scene texture:
 	auto &level0 = mBuffers->ExposureLevels[0];
@@ -364,6 +370,9 @@ void FGLRenderer::BloomScene(int fixedcm)
 	int sampleCount = gl_bloom_kernel_size;
 
 	auto &level0 = mBuffers->BloomLevels[0];
+
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
 
 	// Extract blooming pixels from scene texture:
 	level0.VFramebuffer.Bind();
@@ -450,7 +459,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
 	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);
 
-	const auto &viewport = mScreenViewport; // The area we want to blur. Could also be mSceneViewport if only the scene area is to be blured
+	const auto &viewport = screen->mScreenViewport; // The area we want to blur. Could also be mSceneViewport if only the scene area is to be blured
 
 	const auto &level0 = mBuffers->BloomLevels[0];
 
@@ -490,7 +499,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	// Copy blur back to scene texture:
 	mBuffers->BlitLinear(level0.VFramebuffer, mBuffers->GetCurrentFB(), 0, 0, level0.Width, level0.Height, viewport.left, viewport.top, viewport.width, viewport.height);
 
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+	glViewport(viewport.left, viewport.top, viewport.width, viewport.height);
 
 	FGLDebug::PopGroup();
 }
@@ -639,7 +648,7 @@ void FGLRenderer::LensDistortScene()
 		0.0f
 	};
 
-	float aspect = mSceneViewport.width / (float)mSceneViewport.height;
+	float aspect = screen->mSceneViewport.width / (float)screen->mSceneViewport.height;
 
 	// Scale factor to keep sampling within the input texture
 	float r2 = aspect * aspect * 0.25 + 0.25f;
@@ -715,6 +724,8 @@ void FGLRenderer::ApplyFXAA()
 void FGLRenderer::Flush()
 {
 	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
 
 	if (stereo3dMode.IsMono() || !FGLRenderBuffers::IsEnabled())
 	{
@@ -747,7 +758,7 @@ void FGLRenderer::Flush()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
+void FGLRenderer::CopyToBackbuffer(const IntRect *bounds, bool applyGamma)
 {
 	screen->Draw2D();	// draw all pending 2D stuff before copying the buffer
 	screen->Clear2D();
@@ -760,7 +771,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		FGLPostProcessState savedState;
 		mBuffers->BindOutputFB();
 
-		GL_IRECT box;
+		IntRect box;
 		if (bounds)
 		{
 			box = *bounds;
@@ -768,7 +779,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		else
 		{
 			ClearBorders();
-			box = mOutputLetterbox;
+			box = screen->mOutputLetterbox;
 		}
 
 		mBuffers->BindCurrentTexture(0);
@@ -782,7 +793,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 	FGLDebug::PopGroup();
 }
 
-void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
+void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 {
 	glViewport(box.left, box.top, box.width, box.height);
 
@@ -815,7 +826,7 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 		mPresentShader->Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.f));
 		mPresentShader->GrayFormula.Set(static_cast<int>(gl_satformula));
 	}
-	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
+	mPresentShader->Scale.Set(screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight());
 	RenderScreenQuad();
 }
 
@@ -827,7 +838,7 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 
 void FGLRenderer::ClearBorders()
 {
-	const auto &box = mOutputLetterbox;
+	const auto &box = screen->mOutputLetterbox;
 
 	int clientWidth = framebuffer->GetClientWidth();
 	int clientHeight = framebuffer->GetClientHeight();

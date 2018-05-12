@@ -63,6 +63,21 @@ enum EHWCaps
 	RFL_NO_SHADERS = 256
 };
 
+struct IntRect
+{
+	int left, top;
+	int width, height;
+
+
+	void Offset(int xofs, int yofs)
+	{
+		left += xofs;
+		top += yofs;
+	}
+};
+
+
+
 
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
@@ -332,6 +347,10 @@ public:
 	int hwcaps = 0;
 	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
 
+	IntRect mScreenViewport;
+	IntRect mSceneViewport;
+	IntRect mOutputLetterbox;
+
 public:
 	DFrameBuffer (int width, int height, bool bgra);
 	virtual ~DFrameBuffer() {}
@@ -384,6 +403,11 @@ public:
 	virtual void TextureFilterChanged() {}
 	virtual void ResetFixedColormap() {}
 	virtual void BeginFrame() {}
+
+	virtual int GetClientWidth() = 0;
+	virtual int GetClientHeight() = 0;
+	virtual bool RenderBuffersEnabled() { return false; };
+
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
@@ -471,6 +495,10 @@ public:
 
 	// Calculate gamma table
 	void CalcGamma(float gamma, uint8_t gammalookup[256]);
+
+	virtual void SetOutputViewport(IntRect *bounds);
+	int ScreenToWindowX(int x);
+	int ScreenToWindowY(int y);
 
 
 	// Retrieves a buffer containing image data for a screenshot.

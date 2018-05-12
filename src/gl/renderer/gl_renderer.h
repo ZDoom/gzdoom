@@ -51,19 +51,6 @@ class FCustomPostProcessShaders;
 class GLSceneDrawer;
 class SWSceneDrawer;
 
-struct GL_IRECT
-{
-	int left,top;
-	int width,height;
-
-
-	void Offset(int xofs,int yofs)
-	{
-		left+=xofs;
-		top+=yofs;
-	}
-};
-
 enum
 {
 	DM_MAINVIEW,
@@ -147,9 +134,6 @@ public:
 	SWSceneDrawer *swdrawer = nullptr;
 	LegacyShaderContainer *legacyShaders = nullptr;
 
-	GL_IRECT mScreenViewport;
-	GL_IRECT mSceneViewport;
-	GL_IRECT mOutputLetterbox;
 	bool mDrawingScene2D = false;
 	bool buffersActive = false;
 
@@ -159,10 +143,6 @@ public:
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
-
-	void SetOutputViewport(GL_IRECT *bounds);
-	int ScreenToWindowX(int x);
-	int ScreenToWindowY(int y);
 
 	void Initialize(int width, int height);
 
@@ -184,8 +164,8 @@ public:
 	void LensDistortScene();
 	void ApplyFXAA();
 	void BlurScene(float gameinfobluramount);
-	void CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma);
-	void DrawPresentTexture(const GL_IRECT &box, bool applyGamma);
+	void CopyToBackbuffer(const IntRect *bounds, bool applyGamma);
+	void DrawPresentTexture(const IntRect &box, bool applyGamma);
 	void Flush();
 	void Draw2D(F2DDrawer *data);
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);

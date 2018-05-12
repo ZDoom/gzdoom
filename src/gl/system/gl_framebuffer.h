@@ -46,6 +46,8 @@ public:
 	void TextureFilterChanged() override;
 	void ResetFixedColormap() override;
 	void BeginFrame() override;
+	bool RenderBuffersEnabled() override;
+	void SetOutputViewport(IntRect *bounds) override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer

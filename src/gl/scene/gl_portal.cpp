@@ -163,12 +163,11 @@ void GLPortal::DrawPortalStencil()
 bool GLPortal::Start(bool usestencil, bool doquery)
 {
 	rendered_portals++;
-//	PortalAll.Clock();
+	Clocker c(PortalAll);
 	if (usestencil)
 	{
 		if (!gl_portals) 
 		{
-//			PortalAll.Unclock();
 			return false;
 		}
 	
@@ -226,7 +225,6 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 						// restore default stencil op.
 						glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
 						glStencilFunc(GL_EQUAL, recursion, ~0);		// draw sky into stencil
-						PortalAll.Unclock();
 						return false;
 					}
 				}
@@ -285,7 +283,6 @@ bool GLPortal::Start(bool usestencil, bool doquery)
 	GLRenderer->mCurrentPortal = this;
 
 	if (PrevPortal != NULL) PrevPortal->PushState();
-//	PortalAll.Unclock();
 	return true;
 }
 
@@ -326,7 +323,7 @@ void GLPortal::End(bool usestencil)
 {
 	bool needdepth = NeedDepthBuffer();
 
-	PortalAll.Clock();
+	Clocker c(PortalAll);
 	if (PrevPortal != NULL) PrevPortal->PopState();
 	GLRenderer->mCurrentPortal = PrevPortal;
 	GLRenderer->mClipPortal = PrevClipPortal;
@@ -425,7 +422,6 @@ void GLPortal::End(bool usestencil)
 		}
 		glDepthFunc(GL_LESS);
 	}
-	PortalAll.Unclock();
 }
 
 
@@ -1151,7 +1147,7 @@ GLHorizonPortal::GLHorizonPortal(GLHorizonInfo * pt, bool local)
 //-----------------------------------------------------------------------------
 void GLHorizonPortal::DrawContents()
 {
-	PortalAll.Clock();
+	Clocker c(PortalAll);
 
 	FMaterial * gltexture;
 	PalEntry color;
@@ -1162,7 +1158,6 @@ void GLHorizonPortal::DrawContents()
 	if (!gltexture) 
 	{
 		ClearScreen();
-		PortalAll.Unclock();
 		return;
 	}
 	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
@@ -1198,8 +1193,6 @@ void GLHorizonPortal::DrawContents()
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + vcount, 10);
 
 	gl_RenderState.EnableTextureMatrix(false);
-	PortalAll.Unclock();
-
 }
 
 
@@ -1225,7 +1218,6 @@ void GLHorizonPortal::DrawContents()
 
 void GLEEHorizonPortal::DrawContents()
 {
-	PortalAll.Clock();
 	sector_t *sector = portal->mOrigin;
 	if (sector->GetTexture(sector_t::floor) == skyflatnum ||
 		sector->GetTexture(sector_t::ceiling) == skyflatnum)
@@ -1263,9 +1255,6 @@ void GLEEHorizonPortal::DrawContents()
 		GLHorizonPortal floor(&horz, true);
 		floor.DrawContents();
 	}
-
-
-
 }
 
 void GLPortal::Initialize()

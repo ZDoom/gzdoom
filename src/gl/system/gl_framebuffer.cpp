@@ -205,8 +205,7 @@ void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int wid
 {
 	if (!V_IsHardwareRenderer())
 		Super::WriteSavePic(player, file, width, height);
-
-	if (GLRenderer != nullptr)
+	else if (GLRenderer != nullptr)
 		GLRenderer->WriteSavePic(player, file, width, height);
 }
 

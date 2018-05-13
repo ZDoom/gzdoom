@@ -310,7 +310,7 @@ namespace swrenderer
 	{
 	}
 
-	void SWModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
+	void SWModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix> &bones)
 	{
 		SWModelRenderer *swrenderer = (SWModelRenderer *)renderer;
 

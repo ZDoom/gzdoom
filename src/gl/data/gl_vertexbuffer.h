@@ -213,6 +213,7 @@ class FModelVertexBuffer : public FVertexBuffer, public IModelVertexBuffer
 	int mIndexFrame[2];
 	FModelVertex *vbo_ptr;
 	uint32_t ibo_id;
+	uint32_t bones_id = 0;
 
 public:
 
@@ -225,7 +226,7 @@ public:
 	unsigned int *LockIndexBuffer(unsigned int size) override;
 	void UnlockIndexBuffer() override;
 
-	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
+	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix> &bones = {}) override;
 	void BindVBO() override;
 };
 

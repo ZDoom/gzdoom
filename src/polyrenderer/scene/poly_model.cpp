@@ -211,7 +211,7 @@ void PolyModelVertexBuffer::UnlockIndexBuffer()
 {
 }
 
-void PolyModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
+void PolyModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix> &bones)
 {
 	PolyModelRenderer *polyrenderer = (PolyModelRenderer *)renderer;
 

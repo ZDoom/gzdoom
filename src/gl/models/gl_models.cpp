@@ -183,6 +183,8 @@ void FModelVertexBuffer::BindVBO()
 		glEnableVertexAttribArray(VATTR_TEXCOORD);
 		glEnableVertexAttribArray(VATTR_VERTEX2);
 		glEnableVertexAttribArray(VATTR_NORMAL);
+		glEnableVertexAttribArray(VATTR_BONEWEIGHT);
+		glEnableVertexAttribArray(VATTR_BONESELECTOR);
 		glDisableVertexAttribArray(VATTR_COLOR);
 	}
 	else
@@ -204,6 +206,10 @@ FModelVertexBuffer::~FModelVertexBuffer()
 	if (ibo_id != 0)
 	{
 		glDeleteBuffers(1, &ibo_id);
+	}
+	if (bones_id != 0)
+	{
+		glDeleteBuffers(1, &bones_id);
 	}
 	if (vbo_ptr != nullptr)
 	{
@@ -299,8 +305,18 @@ void FModelVertexBuffer::UnlockIndexBuffer()
 //===========================================================================
 static TArray<FModelVertex> iBuffer;
 
-void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
+void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix> &bones)
 {
+	if (bones.Size() > 0)
+	{
+		if (bones_id == 0)
+			glGenBuffers(1, &bones_id);
+
+		glBindBufferBase(GL_UNIFORM_BUFFER, BONEBUF_BINDINGPOINT, bones_id);
+		glBindBuffer(GL_UNIFORM_BUFFER, bones_id); // Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
+		glBufferData(GL_UNIFORM_BUFFER, bones.Size() * sizeof(VSMatrix), &bones[0], GL_STREAM_DRAW);
+	}
+
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	if (vbo_id > 0)
 	{
@@ -310,6 +326,8 @@ void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame
 			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);
 			glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
 			glVertexAttribPointer(VATTR_NORMAL, 4, GL_INT_2_10_10_10_REV, true, sizeof(FModelVertex), &VMO[frame2].packedNormal);
+			glVertexAttribPointer(VATTR_BONEWEIGHT, 4, GL_UNSIGNED_BYTE, true, sizeof(FModelVertex), VMO[frame2].boneweight);
+			glVertexAttribIPointer(VATTR_BONESELECTOR, 4, GL_UNSIGNED_BYTE, sizeof(FModelVertex), VMO[frame2].boneselector);
 		}
 		else
 		{

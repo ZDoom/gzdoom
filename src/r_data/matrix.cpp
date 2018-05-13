@@ -129,6 +129,30 @@ VSMatrix::translate(FLOATTYPE x, FLOATTYPE y, FLOATTYPE z)
 	mMatrix[14] = mMatrix[2] * x + mMatrix[6] * y + mMatrix[10] * z + mMatrix[14];
 }
 
+void VSMatrix::transpose()
+{
+	FLOATTYPE original[16];
+	for (int cnt = 0; cnt < 16; cnt++)
+		original[cnt] = mMatrix[cnt];
+
+	mMatrix[0] = original[0];
+	mMatrix[1] = original[4];
+	mMatrix[2] = original[8];
+	mMatrix[3] = original[12];
+	mMatrix[4] = original[1];
+	mMatrix[5] = original[5];
+	mMatrix[6] = original[9];
+	mMatrix[7] = original[13];
+	mMatrix[8] = original[2];
+	mMatrix[9] = original[6];
+	mMatrix[10] = original[10];
+	mMatrix[11] = original[14];
+	mMatrix[12] = original[3];
+	mMatrix[13] = original[7];
+	mMatrix[14] = original[11];
+	mMatrix[15] = original[15];
+}
+
 
 // gl Scale implementation
 void 

@@ -46,6 +46,44 @@ struct ZModelTrack
 {
 	TArray<uint32_t> Timestamps;
 	TArray<Value> Values;
+
+	float FindAnimationKeys(uint32_t timestamp, unsigned int &index, unsigned int &index2)
+	{
+		if (Timestamps.Size() == 0)
+		{
+			index = 0;
+			index2 = 0;
+			return 0.0f;
+		}
+
+		index = BinarySearch(timestamp);
+		index2 = MIN(index + 1, Timestamps.Size() - 1);
+
+		uint32_t start = Timestamps[index];
+		uint32_t end = Timestamps[index2];
+		if (start != end)
+			return clamp((timestamp - start) / (float)(end - start), 0.0f, 1.0f);
+		else
+			return 0.0f;
+	}
+
+private:
+	unsigned int BinarySearch(uint32_t timestamp) const
+	{
+		int search_max = static_cast<int>(Timestamps.Size()) - 1;
+		int imin = 0;
+		int imax = search_max;
+		while (imin < imax)
+		{
+			int imid = imin + (imax - imin) / 2;
+			if (Timestamps[imid] > timestamp)
+				imax = imid;
+			else
+				imin = imid + 1;
+		}
+		bool found = (imax == imin && Timestamps[imin] > timestamp);
+		return found ? imin - 1 : search_max;
+	}
 };
 
 struct ZModelBoneAnim
@@ -133,4 +171,6 @@ private:
 	// ZDAT chunk
 	TArray<ZModelVertex> mVertices;
 	TArray<uint32_t> mElements;
+
+	uint32_t currentTime = 0;
 };

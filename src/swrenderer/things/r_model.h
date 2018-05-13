@@ -93,7 +93,7 @@ namespace swrenderer
 		unsigned int *LockIndexBuffer(unsigned int size) override;
 		void UnlockIndexBuffer() override;
 
-		void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
+		void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size, const TArray<VSMatrix> &bones) override;
 
 	private:
 		int mIndexFrame[2];

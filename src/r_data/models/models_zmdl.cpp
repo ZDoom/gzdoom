@@ -258,7 +258,54 @@ int FZMDLModel::FindFrame(const char *name)
 
 void FZMDLModel::RenderFrame(FModelRenderer *renderer, FTexture *skin, int frame, int frame2, double inter, int translation)
 {
-	mVBuf->SetupFrame(renderer, 0, 0, 0);
+	currentTime = (currentTime + 16) % mAnimations[0].Duration;
+
+	TArray<VSMatrix> bones(mBones.Size(), true);
+	for (unsigned int i = 0; i < mBones.Size(); i++)
+	{
+		// Find keys
+		unsigned int translationIndex, translationIndex2;
+		unsigned int rotationIndex, rotationIndex2;
+		unsigned int scaleIndex, scaleIndex2;
+		float translationInterpolation = mAnimations[0].Bones[i].Translation.FindAnimationKeys(currentTime, translationIndex, translationIndex2);
+		float rotationInterpolation = mAnimations[0].Bones[i].Rotation.FindAnimationKeys(currentTime, rotationIndex, rotationIndex2);
+		float scaleInterpolation = mAnimations[0].Bones[i].Scale.FindAnimationKeys(currentTime, scaleIndex, scaleIndex2);
+
+		// Get values
+		ZModelVec3f translation = mAnimations[0].Bones[i].Translation.Values[translationIndex];
+		ZModelQuaternionf rotation = mAnimations[0].Bones[i].Rotation.Values[rotationIndex];
+		ZModelVec3f scale = mAnimations[0].Bones[i].Scale.Values[scaleIndex];
+
+		// Interpolate
+		//ZModelVec3f translation2 = mAnimations[0].Bones[i].Translation.Values[translationIndex2];
+		//ZModelQuaternionf rotation2 = mAnimations[0].Bones[i].Rotation.Values[rotationIndex2];
+		//ZModelVec3f scale2 = mAnimations[0].Bones[i].Scale.Values[scaleIndex2];
+		//position = mix(translation, position2, translationInterpolation);
+		//rotation = Quaternionf::slerp(rotation, rotation2, rotationInterpolation);
+		//scale = mix(scale, scale2, scaleInterpolation);
+
+		// Quaternion to matrix
+		float m[16] = { 0.0f };
+		m[0 * 4 + 0] = 1.0f - 2.0f * rotation.Y*rotation.Y - 2.0f * rotation.Z*rotation.Z;
+		m[1 * 4 + 0] = 2.0f * rotation.X*rotation.Y - 2.0f * rotation.W*rotation.Z;
+		m[2 * 4 + 0] = 2.0f * rotation.X*rotation.Z + 2.0f * rotation.W*rotation.Y;
+		m[0 * 4 + 1] = 2.0f * rotation.X*rotation.Y + 2.0f * rotation.W*rotation.Z;
+		m[1 * 4 + 1] = 1.0f - 2.0f * rotation.X*rotation.X - 2.0f * rotation.Z*rotation.Z;
+		m[2 * 4 + 1] = 2.0f * rotation.Y*rotation.Z - 2.0f * rotation.W*rotation.X;
+		m[0 * 4 + 2] = 2.0f * rotation.X*rotation.Z - 2.0f * rotation.W*rotation.Y;
+		m[1 * 4 + 2] = 2.0f * rotation.Y*rotation.Z + 2.0f * rotation.W*rotation.X;
+		m[2 * 4 + 2] = 1.0f - 2.0f * rotation.X*rotation.X - 2.0f * rotation.Y*rotation.Y;
+		m[3 * 4 + 3] = 1.0f;
+
+		// Create 4x4 bones transform
+		bones[i].loadIdentity();
+		bones[i].translate(translation.X, translation.Y, translation.Z);
+		bones[i].scale(scale.X, scale.Y, scale.Z);
+		bones[i].multMatrix(m);
+		bones[i].translate(-mBones[i].Pivot.X, -mBones[i].Pivot.Y, -mBones[i].Pivot.Z);
+	}
+
+	mVBuf->SetupFrame(renderer, 0, 0, 0, bones);
 
 	for (unsigned int i = 0; i < mMaterials.Size(); i++)
 	{
@@ -303,6 +350,8 @@ void FZMDLModel::BuildVertexBuffer(FModelRenderer *renderer)
 			const auto &v = mVertices[i];
 			vertptr[i].Set(v.Pos.X, v.Pos.Y, v.Pos.Z, v.TexCoords.X, v.TexCoords.Y);
 			vertptr[i].SetNormal(v.Normal.X, v.Normal.Y, v.Normal.Z);
+			vertptr[i].SetBoneSelector(v.BoneIndices.X, v.BoneIndices.Y, v.BoneIndices.Z, v.BoneIndices.W);
+			vertptr[i].SetBoneWeight(v.BoneWeights.X, v.BoneWeights.Y, v.BoneWeights.Z, v.BoneWeights.W);
 		}
 		mVBuf->UnlockVertexBuffer();
 

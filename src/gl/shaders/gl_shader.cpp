@@ -214,6 +214,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "};\n";
 	i_data += "#endif\n";
 
+	// bone transforms
+	i_data += "#ifdef USE_BONES\n";
+	i_data += "uniform BoneBufferUBO\n";
+	i_data += "{\n";
+	i_data += "    mat4 bones[256];\n";
+	i_data += "};\n";
+	i_data += "#endif\n";
+
 	// textures
 	i_data += "uniform sampler2D tex;\n";
 	i_data += "uniform sampler2D ShadowMap;\n";
@@ -293,6 +301,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	{
 		vp_comb << "#define SUPPORTS_SHADOWMAPS\n";
 	}
+
+	vp_comb << "#define USE_BONES\n";
 
 	vp_comb << defines << i_data.GetChars();
 	FString fp_comb = vp_comb;
@@ -382,6 +392,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glBindAttribLocation(hShader, VATTR_COLOR, "aColor");
 	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 	glBindAttribLocation(hShader, VATTR_NORMAL, "aNormal");
+	glBindAttribLocation(hShader, VATTR_BONEWEIGHT, "aBoneWeight");
+	glBindAttribLocation(hShader, VATTR_BONESELECTOR, "aBoneSelector");
 
 	glBindFragDataLocation(hShader, 0, "FragColor");
 	glBindFragDataLocation(hShader, 1, "FragFog");
@@ -461,6 +473,12 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	{
 		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
+	}
+
+	if (!gl.legacyMode)
+	{
+		int tempindex = glGetUniformBlockIndex(hShader, "BoneBufferUBO");
+		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, BONEBUF_BINDINGPOINT);
 	}
 
 	glUseProgram(hShader);

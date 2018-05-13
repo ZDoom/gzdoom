@@ -12,17 +12,32 @@ out vec4 vWorldNormal;
 out vec4 vEyeNormal;
 #endif
 
+#if defined(USE_BONES) && !defined(SIMPLE)
+in vec4 aBoneWeight;
+in ivec4 aBoneSelector;
+#endif
+
 out vec4 vTexCoord;
 out vec4 vColor;
+
+struct BonesResult
+{
+	vec3 Normal;
+	vec4 Position;
+};
+
+BonesResult ApplyBones();
 
 void main()
 {
 	vec2 parmTexCoord;
 	vec4 parmPosition;
 	
+	BonesResult bones = ApplyBones();
+
 	#ifndef USE_QUAD_DRAWER
 		parmTexCoord = aTexCoord;
-		parmPosition = aPosition;
+		parmPosition = bones.Position;
 	#else
 		if (uQuadMode == 0)
 		{
@@ -62,7 +77,7 @@ void main()
 			gl_ClipDistance[4] = worldcoord.y + ((uSplitBottomPlane.w + uSplitBottomPlane.x * worldcoord.x + uSplitBottomPlane.y * worldcoord.z) * uSplitBottomPlane.z);
 		}
 
-		vWorldNormal = NormalModelMatrix * vec4(normalize(aNormal.xyz), 1.0);
+		vWorldNormal = NormalModelMatrix * vec4(normalize(bones.Normal), 1.0);
 		vEyeNormal = NormalViewMatrix * vWorldNormal;
 	#endif
 	
@@ -93,3 +108,81 @@ void main()
 	gl_ClipDistance[2] = uClipSplit.y - worldcoord.y;
 	
 }
+
+#if defined(USE_BONES) && !defined(SIMPLE)
+
+BonesResult ApplyBones()
+{
+	BonesResult result;
+	if (aBoneWeight.x != 0.0 || aBoneWeight.y != 0.0 || aBoneWeight.z != 0.0 || aBoneWeight.w != 0.0)
+	{
+		result.Position = vec4(0.0);
+		result.Normal = vec3(0.0);
+
+		// We use low precision input for our bone weights. Rescale so the sum still is 1.0
+		float totalWeight = aBoneWeight.x + aBoneWeight.y + aBoneWeight.z + aBoneWeight.w;
+		float weightMultiplier = 1.0 / totalWeight;
+		vec4 boneWeight = aBoneWeight * weightMultiplier;
+
+		if (boneWeight.x != 0.0)
+		{
+			mat4 transform = bones[aBoneSelector.x];
+			mat3 rotation = mat3(transform);
+			result.Position += (transform * aPosition) * boneWeight.x;
+			result.Normal += (rotation * aNormal.xyz) * boneWeight.x;
+		}
+
+		if (boneWeight.y != 0.0)
+		{
+			mat4 transform = bones[aBoneSelector.y];
+			mat3 rotation = mat3(transform);
+			result.Position += (transform * aPosition) * boneWeight.y;
+			result.Normal += (rotation * aNormal.xyz) * boneWeight.y;
+		}
+
+		if (boneWeight.z != 0.0)
+		{
+			mat4 transform = bones[aBoneSelector.z];
+			mat3 rotation = mat3(transform);
+			result.Position += (transform * aPosition) * boneWeight.z;
+			result.Normal += (rotation * aNormal.xyz) * boneWeight.z;
+		}
+
+		if (boneWeight.w != 0.0)
+		{
+			mat4 transform = bones[aBoneSelector.w];
+			mat3 rotation = mat3(transform);
+			result.Position += (transform * aPosition) * boneWeight.w;
+			result.Normal += (rotation * aNormal.xyz) * boneWeight.w;
+		}
+
+		result.Position.w = 1.0; // For numerical stability
+	}
+	else
+	{
+		result.Position = aPosition;
+		result.Normal = aNormal.xyz;
+	}
+	return result;
+}
+
+#elif !defined(SIMPLE)
+
+BonesResult ApplyBones()
+{
+	BonesResult result;
+	result.Position = aPosition;
+	result.Normal = aNormal.xyz;
+	return result;
+}
+
+#else
+
+BonesResult ApplyBones()
+{
+	BonesResult result;
+	result.Position = aPosition;
+	return result;
+}
+
+#endif

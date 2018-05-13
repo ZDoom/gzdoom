@@ -69,6 +69,10 @@ void FSimpleVertexBuffer::BindVBO()
 		glEnableVertexAttribArray(VATTR_COLOR);
 		glDisableVertexAttribArray(VATTR_VERTEX2);
 		glDisableVertexAttribArray(VATTR_NORMAL);
+		glDisableVertexAttribArray(VATTR_BONEWEIGHT);
+		glDisableVertexAttribArray(VATTR_BONESELECTOR);
+		glVertexAttrib4f(VATTR_BONEWEIGHT, 0.0f, 0.0f, 0.0f, 0.0f);
+		glVertexAttrib4f(VATTR_BONESELECTOR, 0.0f, 0.0f, 0.0f, 0.0f);
 	}
 	else
 	{
@@ -197,6 +201,10 @@ void FFlatVertexBuffer::BindVBO()
 		glDisableVertexAttribArray(VATTR_COLOR);
 		glDisableVertexAttribArray(VATTR_VERTEX2);
 		glDisableVertexAttribArray(VATTR_NORMAL);
+		glDisableVertexAttribArray(VATTR_BONEWEIGHT);
+		glDisableVertexAttribArray(VATTR_BONESELECTOR);
+		glVertexAttrib4f(VATTR_BONEWEIGHT, 0.0f, 0.0f, 0.0f, 0.0f);
+		glVertexAttrib4f(VATTR_BONESELECTOR, 0.0f, 0.0f, 0.0f, 0.0f);
 	}
 	else
 	{

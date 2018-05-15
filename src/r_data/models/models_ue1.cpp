@@ -42,18 +42,34 @@ double unpackuvert( uint32_t n, int c )
 bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int length )
 {
 	mLumpNum = lumpnum;
-	// read signature
-	if ( memcmp(buffer,"UMSH",4) )
-		return false;
-	// map structures
-	int ofs = 4;
-	dhead = (d3dhead*)(buffer+ofs);
-	ofs += sizeof(d3dhead);
-	dpolys = (d3dpoly*)(buffer+ofs);
-	ofs += sizeof(d3dpoly)*dhead->numpolys;
-	ahead = (a3dhead*)(buffer+ofs);
-	ofs += sizeof(a3dhead);
-	averts = (uint32_t*)(buffer+ofs);
+	int lumpnum2;
+	FMemLump lump2;
+	const char *buffer2;
+	FString realfilename = Wads.GetLumpFullName(lumpnum);
+	if ( realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
+	{
+		realfilename.Substitute("_d.3d","_a.3d");
+		lumpnum2 = Wads.CheckNumForFullName(realfilename);
+		lump2 = Wads.ReadLump(lumpnum2);
+		buffer2 = (char*)lump2.GetMem();
+		// map structures
+		dhead = (d3dhead*)(buffer);
+		dpolys = (d3dpoly*)(buffer+sizeof(d3dhead));
+		ahead = (a3dhead*)(buffer2);
+		averts = (uint32_t*)(buffer2+sizeof(a3dhead));
+	}
+	else
+	{
+		realfilename.Substitute("_a.3d","_d.3d");
+		lumpnum2 = Wads.CheckNumForFullName(realfilename);
+		lump2 = Wads.ReadLump(lumpnum2);
+		buffer2 = (char*)lump2.GetMem();
+		// map structures
+		dhead = (d3dhead*)(buffer2);
+		dpolys = (d3dpoly*)(buffer2+sizeof(d3dhead));
+		ahead = (a3dhead*)(buffer);
+		averts = (uint32_t*)(buffer+sizeof(a3dhead));
+	}
 	// set counters
 	numVerts = dhead->numverts;
 	numFrames = ahead->numframes;

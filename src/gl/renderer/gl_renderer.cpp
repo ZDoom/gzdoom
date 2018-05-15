@@ -36,6 +36,7 @@
 #include "d_player.h"
 #include "a_dynlight.h"
 #include "swrenderer/r_swscene.h"
+#include "hwrenderer/utility/hw_clock.h"
 
 #include "gl/system/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
@@ -463,6 +464,7 @@ CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
+	twoD.Clock();
 	if (buffersActive)
 	{
 		mBuffers->BindCurrentFB();
@@ -491,7 +493,11 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	auto &indices = drawer->mIndices;
 	auto &commands = drawer->mData;
 
-	if (commands.Size() == 0) return;
+	if (commands.Size() == 0)
+	{
+		twoD.Unclock();
+		return;
+	}
 
 	for (auto &v : vertices)
 	{
@@ -633,4 +639,5 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	delete vb;
+	twoD.Unclock();
 }

@@ -824,7 +824,8 @@ static bool Validate(const FVector3 &value, const float limit, const char *const
 
 	if (!valid)
 	{
-		Printf(TEXTCOLOR_RED "Invalid sound %s " TEXTCOLOR_WHITE "(%f, %f, %f)", name, value.X, value.Y, value.Z);
+		// Sound position and velocity have Y and Z axes swapped comparing to map coordinate system
+		Printf(TEXTCOLOR_RED "Invalid sound %s " TEXTCOLOR_WHITE "(%f, %f, %f)", name, value.X, value.Z, value.Y);
 
 		if (actor == nullptr)
 		{

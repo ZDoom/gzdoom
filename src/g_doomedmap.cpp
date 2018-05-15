@@ -181,6 +181,7 @@ void FMapInfoParser::ParseDoomEdNums()
 			memset(editem.args, 0, sizeof(editem.args));
 			editem.argsdefined = 0;
 			editem.noskillflags = false;
+			editem.linenum = sc.Line;
 
 			int minargs = 0;
 			int maxargs = 5;

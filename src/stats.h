@@ -212,6 +212,30 @@ public:
 	}
 };
 
+// Helper for code that uses a timer and has multiple exit points.
+class Clocker
+{
+public:
+
+	explicit Clocker(glcycle_t& clck)
+		: clock(clck)
+	{
+		clock.Clock();
+	}
+
+	~Clocker()
+	{	// unlock
+		clock.Unclock();
+	}
+
+	Clocker(const Clocker&) = delete;
+	Clocker& operator=(const Clocker&) = delete;
+private:
+	glcycle_t & clock;
+};
+
+
+
 class FStat
 {
 public:

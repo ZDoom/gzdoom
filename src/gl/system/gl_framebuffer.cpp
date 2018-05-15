@@ -149,8 +149,13 @@ void OpenGLFrameBuffer::InitializeState()
 
 void OpenGLFrameBuffer::Update()
 {
+	twoD.Reset();
+	Flush3D.Reset();
+
 	DrawRateStuff();
+	Flush3D.Clock();
 	GLRenderer->Flush();
+	Flush3D.Unclock();
 
 	Swap();
 	CheckBench();
@@ -200,8 +205,7 @@ void OpenGLFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int wid
 {
 	if (!V_IsHardwareRenderer())
 		Super::WriteSavePic(player, file, width, height);
-
-	if (GLRenderer != nullptr)
+	else if (GLRenderer != nullptr)
 		GLRenderer->WriteSavePic(player, file, width, height);
 }
 
@@ -244,7 +248,7 @@ uint32_t OpenGLFrameBuffer::GetCaps()
 		// legacy mode always has truecolor because palette tonemap is not available
 		FlagSet |= RFF_TRUECOLOR;
 	}
-	else if (!(FGLRenderBuffers::IsEnabled()))
+	else if (!RenderBuffersEnabled())
 	{
 		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
 		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;

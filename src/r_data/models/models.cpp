@@ -415,7 +415,6 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	FMemLump lumpd = Wads.ReadLump(lump);
 	char * buffer = (char*)lumpd.GetMem();
 
-	bool isunreal3d = false;
 	if ( fullname.IndexOf("_d.3d") == fullname.Len()-5 )
 	{
 		FString anivfile = fullname.GetChars();
@@ -423,7 +422,6 @@ static unsigned FindModel(const char * path, const char * modelfile)
 		if ( Wads.CheckNumForFullName(anivfile) > 0 )
 		{
 			model = new FUE1Model;
-			isunreal3d = true;
 		}
 	}
 	else if ( fullname.IndexOf("_a.3d") == fullname.Len()-5 )
@@ -433,23 +431,19 @@ static unsigned FindModel(const char * path, const char * modelfile)
 		if ( Wads.CheckNumForFullName(datafile) > 0 )
 		{
 			model = new FUE1Model;
-			isunreal3d = true;
 		}
 	}
-	if ( !isunreal3d )
+	else if (!memcmp(buffer, "DMDM", 4))
 	{
-		if (!memcmp(buffer, "DMDM", 4))
-		{
-			model = new FDMDModel;
-		}
-		else if (!memcmp(buffer, "IDP2", 4))
-		{
-			model = new FMD2Model;
-		}
-		else if (!memcmp(buffer, "IDP3", 4))
-		{
-			model = new FMD3Model;
-		}
+		model = new FDMDModel;
+	}
+	else if (!memcmp(buffer, "IDP2", 4))
+	{
+		model = new FMD2Model;
+	}
+	else if (!memcmp(buffer, "IDP3", 4))
+	{
+		model = new FMD3Model;
 	}
 
 	if (model != nullptr)

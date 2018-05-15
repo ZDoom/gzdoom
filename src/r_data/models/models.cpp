@@ -1,4 +1,4 @@
-// 
+//
 //---------------------------------------------------------------------------
 //
 // Copyright(C) 2005-2016 Christoph Oelckers
@@ -415,21 +415,41 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	FMemLump lumpd = Wads.ReadLump(lump);
 	char * buffer = (char*)lumpd.GetMem();
 
-	if (!memcmp(buffer, "DMDM", 4))
+	bool isunreal3d = false;
+	if ( fullname.IndexOf("_d.3d") == fullname.Len()-5 )
 	{
-		model = new FDMDModel;
+		FString anivfile = fullname.GetChars();
+		anivfile.Substitute("_d.3d","_a.3d");
+		if ( Wads.CheckNumForFullName(anivfile) > 0 )
+		{
+			model = new FUE1Model;
+			isunreal3d = true;
+		}
 	}
-	else if (!memcmp(buffer, "IDP2", 4))
+	else if ( fullname.IndexOf("_a.3d") == fullname.Len()-5 )
 	{
-		model = new FMD2Model;
+		FString datafile = fullname.GetChars();
+		datafile.Substitute("_a.3d","_d.3d");
+		if ( Wads.CheckNumForFullName(datafile) > 0 )
+		{
+			model = new FUE1Model;
+			isunreal3d = true;
+		}
 	}
-	else if (!memcmp(buffer, "IDP3", 4))
+	if ( !isunreal3d )
 	{
-		model = new FMD3Model;
-	}
-	else if (!memcmp(buffer, "UMSH", 4))
-	{
-		model = new FUE1Model;
+		if (!memcmp(buffer, "DMDM", 4))
+		{
+			model = new FDMDModel;
+		}
+		else if (!memcmp(buffer, "IDP2", 4))
+		{
+			model = new FMD2Model;
+		}
+		else if (!memcmp(buffer, "IDP3", 4))
+		{
+			model = new FMD3Model;
+		}
 	}
 
 	if (model != nullptr)
@@ -541,7 +561,7 @@ void gl_InitModels()
 				smf.xscale=smf.yscale=smf.zscale=1.f;
 
 				smf.type = PClass::FindClass(sc.String);
-				if (!smf.type || smf.type->Defaults == nullptr) 
+				if (!smf.type || smf.type->Defaults == nullptr)
 				{
 					sc.ScriptError("MODELDEF: Unknown actor type '%s'\n", sc.String);
 				}
@@ -581,7 +601,7 @@ void gl_InitModels()
 						sc.MustGetFloat();
 						smf.zscale = sc.Float;
 					}
-					// [BB] Added zoffset reading. 
+					// [BB] Added zoffset reading.
 					// Now it must be considered deprecated.
 					else if (sc.Compare("zoffset"))
 					{

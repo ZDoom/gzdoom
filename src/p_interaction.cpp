@@ -909,7 +909,7 @@ static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 
 // Returns the amount of damage actually inflicted upon the target, or -1 if
 // the damage was cancelled.
-static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
+static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle, bool& needevent)
 {
 	DAngle ang;
 	player_t *player = NULL;
@@ -1503,8 +1503,13 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 					source = source->tracer;
 				}
 			}
+
+			const int realdamage = MAX(0, damage);
+			E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+			needevent = false;
+
 			target->CallDie (source, inflictor, flags);
-			return MAX(0, damage);
+			return realdamage;
 		}
 	}
 
@@ -1630,9 +1635,12 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_FLOAT_DEF(angle);
 
 	// [ZZ] event handlers need the result.
-	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle);
-	if (!realdamage) ACTION_RETURN_INT(0);
-	E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
+	bool needevent = true;
+	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle, needevent);
+	if (realdamage && needevent)
+	{
+		E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
+	}
 	ACTION_RETURN_INT(realdamage);
 }
 
@@ -1649,10 +1657,13 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 	}
 	else
 	{
-		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle);
-		if (!realdamage) return 0;
-		// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
-		E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+		bool needevent = true;
+		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle, needevent);
+		if (realdamage && needevent)
+		{
+			// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
+			E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+		}
 		return realdamage;
 	}
 }

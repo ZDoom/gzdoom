@@ -32,7 +32,7 @@
 #include "m_argv.h"
 #include "version.h"
 #include "v_video.h"
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 
 void gl_PatchMenu();

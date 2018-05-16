@@ -40,7 +40,7 @@
 #include "actorinlines.h"
 #include "r_data/r_vanillatrans.h"
 
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/scene/hw_drawstructs.h"
 #include "gl/renderer/gl_lightdata.h"

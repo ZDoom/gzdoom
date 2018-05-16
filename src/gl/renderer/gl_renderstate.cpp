@@ -29,7 +29,7 @@
 #include "doomstat.h"
 #include "r_data/colormaps.h"
 #include "gl/system/gl_system.h"
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_shader.h"

@@ -1046,7 +1046,7 @@ set (PCH_SOURCES
 	gl/stereo3d/gl_quadstereo.cpp
 	gl/stereo3d/gl_sidebyside3d.cpp
 	gl/stereo3d/gl_interleaved3d.cpp
-	gl/system/gl_interface.cpp
+	gl_load/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_debug.cpp
 	gl/system/gl_wipe.cpp

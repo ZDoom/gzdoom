@@ -42,7 +42,7 @@
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 #include "gl/dynlights/gl_lightbuffer.h"
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_lightdata.h"

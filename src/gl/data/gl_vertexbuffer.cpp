@@ -29,7 +29,7 @@
 #include "doomtype.h"
 #include "p_local.h"
 #include "r_state.h"
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/data/gl_vertexbuffer.h"

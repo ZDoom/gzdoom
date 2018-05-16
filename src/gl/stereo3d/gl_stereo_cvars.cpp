@@ -33,19 +33,13 @@
 #include "gl/stereo3d/gl_interleaved3d.h"
 #include "version.h"
 
+EXTERN_CVAR(Bool, vr_enable_quadbuffered)
+
 // Set up 3D-specific console variables:
 CVAR(Int, vr_mode, 0, CVAR_GLOBALCONFIG)
 
 // switch left and right eye views
 CVAR(Bool, vr_swap_eyes, false, CVAR_GLOBALCONFIG)
-
-// For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
-// Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
-// but makes it possible for subsequent "vr_mode 7" to invoke quad-buffered stereo
-CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
-}
 
 // intraocular distance in meters
 CVAR(Float, vr_ipd, 0.062f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG) // METERS

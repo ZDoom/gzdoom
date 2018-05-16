@@ -24,18 +24,18 @@
 #include "cmdlib.h"
 #include "r_data/models/models_ue1.h"
 
-double unpackuvert( uint32_t n, int c )
+float unpackuvert( uint32_t n, int c )
 {
 	switch( c )
 	{
 	case 2:
-		return ((int16_t)((n&0x7ff)<<5))/127.;
+		return ((int16_t)((n&0x7ff)<<5))/127.f;
 	case 1:
-		return ((int16_t)(((n>>11)&0x7ff)<<5))/127.;
+		return ((int16_t)(((n>>11)&0x7ff)<<5))/127.f;
 	case 0:
-		return ((int16_t)(((n>>22)&0x3ff)<<6))/127.;
+		return ((int16_t)(((n>>22)&0x3ff)<<6))/127.f;
 	default:
-		return 0.;
+		return 0.f;
 	}
 }
 

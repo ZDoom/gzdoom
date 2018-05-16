@@ -75,11 +75,16 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 	numFrames = ahead->numframes;
 	numPolys = dhead->numpolys;
 	numGroups = 0;
+	groupIndices.Reset();
 	uint8_t used[256] = {0};
 	for ( int i=0; i<numPolys; i++ )
 		used[dpolys[i].texnum] = 1;
 	for ( int i=0; i<256; i++ )
-		if ( used[i] ) numGroups++;
+	{
+		if ( !used[i] ) continue;
+		groupIndices.Push(i);
+		numGroups++;
+	}
 	LoadGeometry();
 	return true;
 }
@@ -166,7 +171,7 @@ void FUE1Model::LoadGeometry()
 		Group.numPolys = 0;
 		for ( int j=0; j<numPolys; j++ )
 		{
-			if ( polys[j].texNum != i )
+			if ( polys[j].texNum != groupIndices[i] )
 				continue;
 			Group.P.Push(j);
 			Group.numPolys++;
@@ -208,8 +213,8 @@ void FUE1Model::RenderFrame( FModelRenderer *renderer, FTexture *skin, int frame
 				sskin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i]);
 			if ( !sskin )
 			{
-				continue;
 				vofs += vsize;
+				continue;
 			}
 		}
 		renderer->SetMaterial(sskin,false,translation);

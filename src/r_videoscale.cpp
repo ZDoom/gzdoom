@@ -99,3 +99,52 @@ bool ViewportIsScaled43()
 		vid_scalemode = 0;
 	return vScaleTable[vid_scalemode].isScaled43;
 }
+
+void R_ShowCurrentScaling()
+{
+	Printf("Current Scale: %f\n", (float)(vid_scalefactor));
+}
+
+bool R_CalcsShouldBeBlocked()
+{
+	if (vid_scalemode < 0 || vid_scalemode > 1)
+	{
+		Printf("vid_scalemode should be 0 or 1 before using this command.\n");
+		return true;
+	}
+	return false;	
+}
+
+CCMD (vid_scaletowidth)
+{
+	float newscalefactor;
+
+	if (R_CalcsShouldBeBlocked())
+		return;	
+
+	if (argv.argc() > 1)
+		newscalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayWidth);
+	else
+		newscalefactor = vid_scalefactor;
+	if ( newscalefactor > 2.0 || newscalefactor <= 0.0 )
+		newscalefactor = 1.0;
+	vid_scalefactor = newscalefactor;
+	R_ShowCurrentScaling();
+}
+
+CCMD (vid_scaletoheight)
+{
+	float newscalefactor;
+
+	if (R_CalcsShouldBeBlocked())
+		return;	
+
+	if (argv.argc() > 1)
+		newscalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayHeight);
+	else
+		newscalefactor = vid_scalefactor;
+	if ( newscalefactor > 2.0 || newscalefactor <= 0.0 )
+		newscalefactor = 1.0;
+	vid_scalefactor = newscalefactor;
+	R_ShowCurrentScaling();
+}

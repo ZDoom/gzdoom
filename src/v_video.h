@@ -343,6 +343,9 @@ protected:
 	bool Bgra = 0;
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
+	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
+	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
+
 public:
 	int hwcaps = 0;
 	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
@@ -362,13 +365,13 @@ public:
 	virtual void Update () = 0;
 
 	// Return a pointer to 256 palette entries that can be written to.
-	virtual PalEntry *GetPalette () = 0;
+	PalEntry *GetPalette ();
 
 	// Stores the palette with flash blended in into 256 dwords
-	virtual void GetFlashedPalette (PalEntry palette[256]) = 0;
+	void GetFlashedPalette (PalEntry palette[256]);
 
 	// Mark the palette as changed. It will be updated on the next Update().
-	virtual void UpdatePalette () = 0;
+	virtual void UpdatePalette() {}
 
 	// Sets the gamma level. Returns false if the hardware does not support
 	// gamma changing. (Always true for now, since palettes can always be
@@ -379,10 +382,10 @@ public:
 	// being all flash and 0 being no flash. Returns false if the hardware
 	// does not support this. (Always true for now, since palettes can always
 	// be flashed.)
-	virtual bool SetFlash (PalEntry rgb, int amount) = 0;
+	bool SetFlash (PalEntry rgb, int amount);
 
 	// Converse of SetFlash
-	virtual void GetFlash (PalEntry &rgb, int &amount) = 0;
+	void GetFlash (PalEntry &rgb, int &amount);
 
 	// Returns true if running fullscreen.
 	virtual bool IsFullscreen () = 0;
@@ -419,7 +422,7 @@ public:
 
 
 	// Report a game restart
-	virtual void GameRestart();
+	void InitPalette();
 	virtual void InitForLevel() {}
 	virtual void SetClearColor(int color) {}
 	virtual uint32_t GetCaps();
@@ -433,7 +436,8 @@ public:
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 
-	virtual void ScaleCoordsFromWindow(int16_t &x, int16_t &y) {}
+	virtual int GetTrueHeight() { return GetHeight(); }
+	void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 
 	uint64_t GetLastFPS() const { return LastCount; }
 
@@ -505,9 +509,6 @@ public:
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
 	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) {}
-
-	// Releases the screenshot buffer.
-	virtual void ReleaseScreenshotBuffer() {}
 
 	// The original size of the framebuffer as selected in the video menu.
 	int VideoWidth = 0;

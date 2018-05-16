@@ -75,9 +75,7 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	gl_RenderState.Reset();
 
 	GLRenderer = new FGLRenderer(this);
-	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
-	UpdatePalette ();
-	ScreenshotBuffer = NULL;
+	InitPalette();
 
 	InitializeState();
 	mDebug = std::make_shared<FGLDebug>();
@@ -396,35 +394,6 @@ void OpenGLFrameBuffer::SetOutputViewport(IntRect *bounds)
 }
 
 
-void OpenGLFrameBuffer::UpdatePalette()
-{
-	if (GLRenderer)
-		GLRenderer->ClearTonemapPalette();
-}
-
-void OpenGLFrameBuffer::GetFlashedPalette (PalEntry pal[256])
-{
-	memcpy(pal, SourcePalette, 256*sizeof(PalEntry));
-}
-
-PalEntry *OpenGLFrameBuffer::GetPalette ()
-{
-	return SourcePalette;
-}
-
-bool OpenGLFrameBuffer::SetFlash(PalEntry rgb, int amount)
-{
-	Flash = PalEntry(amount, rgb.r, rgb.g, rgb.b);
-	return true;
-}
-
-void OpenGLFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
-{
-	rgb = Flash;
-	rgb.a = 0;
-	amount = Flash.a;
-}
-
 void OpenGLFrameBuffer::InitForLevel()
 {
 	if (GLRenderer != NULL)
@@ -432,6 +401,13 @@ void OpenGLFrameBuffer::InitForLevel()
 		GLRenderer->SetupLevel();
 	}
 }
+
+void OpenGLFrameBuffer::UpdatePalette()
+{
+	if (GLRenderer)
+		GLRenderer->ClearTonemapPalette();
+}
+
 
 //===========================================================================
 //
@@ -476,8 +452,7 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 
-	ReleaseScreenshotBuffer();
-	ScreenshotBuffer = new uint8_t[w * h * 3];
+	auto ScreenshotBuffer = new uint8_t[w * h * 3];
 
 	float rcpWidth = 1.0f / w;
 	float rcpHeight = 1.0f / h;
@@ -504,42 +479,6 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 	// Screenshot should not use gamma correction if it was already applied to rendered image
 	EXTERN_CVAR(Bool, fullscreen);
 	gamma = 1 == vid_hwgamma || (2 == vid_hwgamma && !fullscreen) ? 1.0f : Gamma;
-}
-
-//===========================================================================
-// 
-// Releases the screenshot buffer.
-//
-//===========================================================================
-
-void OpenGLFrameBuffer::ReleaseScreenshotBuffer()
-{
-	if (ScreenshotBuffer != NULL) delete [] ScreenshotBuffer;
-	ScreenshotBuffer = NULL;
-}
-
-
-void OpenGLFrameBuffer::GameRestart()
-{
-	memcpy (SourcePalette, GPalette.BaseColors, sizeof(PalEntry)*256);
-	UpdatePalette ();
-	ScreenshotBuffer = NULL;
-}
-
-
-void OpenGLFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
-{
-	int letterboxX = mOutputLetterbox.left;
-	int letterboxY = mOutputLetterbox.top;
-	int letterboxWidth = mOutputLetterbox.width;
-	int letterboxHeight = mOutputLetterbox.height;
-
-	// Subtract the LB video mode letterboxing
-	if (IsFullscreen())
-		y -= (GetTrueHeight() - VideoHeight) / 2;
-
-	x = int16_t((x - letterboxX) * Width / letterboxWidth);
-	y = int16_t((y - letterboxY) * Height / letterboxHeight);
 }
 
 //===========================================================================

@@ -27,11 +27,6 @@ public:
 
 	void CleanForRestart() override;
 	void UpdatePalette() override;
-	void GetFlashedPalette (PalEntry pal[256]) override;
-	PalEntry *GetPalette () override;
-	bool SetFlash(PalEntry rgb, int amount) override;
-	void GetFlash(PalEntry &rgb, int &amount) override;
-	void GameRestart() override;
 	void InitForLevel() override;
 	void SetClearColor(int color) override;
 	uint32_t GetCaps() override;
@@ -54,9 +49,6 @@ public:
 	// points to the last row in the buffer, which will be the first row output.
 	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) override;
 
-	// Releases the screenshot buffer.
-	virtual void ReleaseScreenshotBuffer();
-
 	bool WipeStartScreen(int type);
 	void WipeEndScreen();
 	bool WipeDo(int ticks);
@@ -66,14 +58,11 @@ public:
 
 	void SetVSync(bool vsync);
 
-	void ScaleCoordsFromWindow(int16_t &x, int16_t &y) override;
 	void Draw2D() override;
 
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 private:
-	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
-	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
 	uint8_t *ScreenshotBuffer;			// What the name says. This must be maintained because the software renderer can return a locked canvas surface which the caller cannot release.
 	int camtexcount = 0;
 

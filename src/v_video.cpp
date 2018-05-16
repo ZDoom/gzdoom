@@ -130,11 +130,6 @@ public:
 	}
 	// These methods should never be called.
 	void Update() { DBGBREAK; }
-	PalEntry *GetPalette() { DBGBREAK; return NULL; }
-	void GetFlashedPalette(PalEntry palette[256]) { DBGBREAK; }
-	void UpdatePalette() { DBGBREAK; }
-	bool SetFlash(PalEntry rgb, int amount) { DBGBREAK; return false; }
-	void GetFlash(PalEntry &rgb, int &amount) { DBGBREAK; }
 	bool IsFullscreen() { DBGBREAK; return 0; }
 	int GetClientWidth() { DBGBREAK; return 0; }
 	int GetClientHeight() { DBGBREAK; return 0; }
@@ -818,6 +813,37 @@ void FPaletteTester::MakeTexture()
 	CurTranslation = t;
 }
 
+
+//==========================================================================
+//
+// Palette stuff.
+//
+//==========================================================================
+
+void DFrameBuffer::GetFlashedPalette(PalEntry pal[256])
+{
+	DoBlending(SourcePalette, pal, 256, Flash.r, Flash.g, Flash.b, Flash.a);
+}
+
+PalEntry *DFrameBuffer::GetPalette()
+{
+	return SourcePalette;
+}
+
+bool DFrameBuffer::SetFlash(PalEntry rgb, int amount)
+{
+	Flash = PalEntry(amount, rgb.r, rgb.g, rgb.b);
+	return true;
+}
+
+void DFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
+{
+	rgb = Flash;
+	rgb.a = 0;
+	amount = Flash.a;
+}
+
+
 //==========================================================================
 //
 // DFrameBuffer :: SetVSync
@@ -898,12 +924,14 @@ void DFrameBuffer::WipeCleanup()
 
 //==========================================================================
 //
-// DFrameBuffer :: GameRestart
+// DFrameBuffer :: InitPalette
 //
 //==========================================================================
 
-void DFrameBuffer::GameRestart()
+void DFrameBuffer::InitPalette()
 {
+	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
+	UpdatePalette();
 }
 
 //==========================================================================
@@ -1079,6 +1107,22 @@ int DFrameBuffer::ScreenToWindowY(int y)
 {
 	return mScreenViewport.top + mScreenViewport.height - (int)round(y * mScreenViewport.height / (float)GetHeight());
 }
+
+void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
+{
+	int letterboxX = mOutputLetterbox.left;
+	int letterboxY = mOutputLetterbox.top;
+	int letterboxWidth = mOutputLetterbox.width;
+	int letterboxHeight = mOutputLetterbox.height;
+
+	// Subtract the LB video mode letterboxing
+	if (IsFullscreen())
+		y -= (GetTrueHeight() - VideoHeight) / 2;
+
+	x = int16_t((x - letterboxX) * Width / letterboxWidth);
+	y = int16_t((y - letterboxY) * Height / letterboxHeight);
+}
+
 
 
 

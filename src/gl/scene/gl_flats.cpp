@@ -25,7 +25,7 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "a_sharedglobal.h"
 #include "r_defs.h"
 #include "r_sky.h"

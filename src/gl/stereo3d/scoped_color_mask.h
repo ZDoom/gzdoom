@@ -28,7 +28,7 @@
 #ifndef GL_STEREO3D_SCOPED_COLOR_MASK_H_
 #define GL_STEREO3D_SCOPED_COLOR_MASK_H_
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 
 /**
 * Temporarily change color mask

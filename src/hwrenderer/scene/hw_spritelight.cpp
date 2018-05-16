@@ -25,7 +25,6 @@
 **
 */
 
-#include "gl/system/gl_system.h"
 #include "c_dispatch.h"
 #include "p_local.h"
 #include "p_effect.h"
@@ -74,15 +73,15 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 				if (fromgroup == togroup || fromgroup == 0 || togroup == 0) goto direct;
 
 				DVector2 offset = level.Displacements.getOffset(fromgroup, togroup);
-				L = FVector3(x - light->X() - offset.X, y - light->Y() - offset.Y, z - light->Z());
+				L = FVector3(x - (float)(light->X() + offset.X), y - (float)(light->Y() + offset.Y), z - (float)light->Z());
 			}
 			else
 			{
 			direct:
-				L = FVector3(x - light->X(), y - light->Y(), z - light->Z());
+				L = FVector3(x - (float)light->X(), y - (float)light->Y(), z - (float)light->Z());
 			}
 
-			dist = L.LengthSquared();
+			dist = (float)L.LengthSquared();
 			radius = light->GetRadius();
 
 			if (dist < radius * radius)
@@ -110,7 +109,7 @@ void HWDrawInfo::GetDynSpriteLight(AActor *self, float x, float y, float z, FLig
 					lb = light->GetBlue() / 255.0f;
 					if (light->IsSubtractive())
 					{
-						float bright = FVector3(lr, lg, lb).Length();
+						float bright = (float)FVector3(lr, lg, lb).Length();
 						FVector3 lightColor(lr, lg, lb);
 						lr = (bright - lr) * -1;
 						lg = (bright - lg) * -1;
@@ -131,11 +130,11 @@ void HWDrawInfo::GetDynSpriteLight(AActor *thing, particle_t *particle, float *o
 {
 	if (thing != NULL)
 	{
-		GetDynSpriteLight(thing, thing->X(), thing->Y(), thing->Center(), thing->subsector->lighthead, thing->Sector->PortalGroup, out);
+		GetDynSpriteLight(thing, (float)thing->X(), (float)thing->Y(), (float)thing->Center(), thing->subsector->lighthead, thing->Sector->PortalGroup, out);
 	}
 	else if (particle != NULL)
 	{
-		GetDynSpriteLight(NULL, particle->Pos.X, particle->Pos.Y, particle->Pos.Z, particle->subsector->lighthead, particle->subsector->sector->PortalGroup, out);
+		GetDynSpriteLight(NULL, (float)particle->Pos.X, (float)particle->Pos.Y, (float)particle->Pos.Z, particle->subsector->lighthead, particle->subsector->sector->PortalGroup, out);
 	}
 }
 
@@ -196,10 +195,10 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 
 		addedLights.Clear();
 
-		float x = self->X();
-		float y = self->Y();
-		float z = self->Center();
-		float radiusSquared = self->renderradius * self->renderradius;
+		float x = (float)self->X();
+		float y = (float)self->Y();
+		float z = (float)self->Center();
+		float radiusSquared = (float)(self->renderradius * self->renderradius);
 
 		BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
 		{
@@ -211,7 +210,7 @@ void hw_GetDynModelLight(AActor *self, FDynLightData &modellightdata)
 				{
 					int group = subsector->sector->PortalGroup;
 					DVector3 pos = light->PosRelative(group);
-					float radius = light->GetRadius() + self->renderradius;
+					float radius = (float)(light->GetRadius() + self->renderradius);
 					double dx = pos.X - x;
 					double dy = pos.Y - y;
 					double dz = pos.Z - z;

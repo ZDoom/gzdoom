@@ -28,7 +28,7 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "menu/menu.h"
 #include "r_utility.h"
 #include "g_levellocals.h"

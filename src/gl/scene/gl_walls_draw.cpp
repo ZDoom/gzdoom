@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_sharedglobal.h"

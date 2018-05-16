@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_shadowmap.h"
 #include "gl/system/gl_debug.h"

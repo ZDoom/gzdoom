@@ -27,7 +27,7 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "r_sky.h"
 #include "r_utility.h"
 #include "doomstat.h"

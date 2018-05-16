@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "c_cvars.h"
 
 #include "gl_load/gl_interface.h"

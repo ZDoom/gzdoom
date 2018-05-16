@@ -26,7 +26,7 @@
 */
 
 #include "templates.h"
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/system/gl_debug.h"
 #include "stats.h"
 #include <set>

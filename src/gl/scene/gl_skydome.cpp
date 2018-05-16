@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "doomtype.h"
 #include "g_level.h"
 #include "w_wad.h"

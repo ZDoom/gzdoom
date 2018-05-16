@@ -25,7 +25,7 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "doomtype.h"
 #include "p_local.h"
 #include "r_state.h"

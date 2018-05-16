@@ -25,7 +25,7 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "gl/shaders/gl_blurshader.h"
 #include "gl/data/gl_vertexbuffer.h"

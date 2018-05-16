@@ -88,4 +88,5 @@ private:
 	TArray<UE1Vertex> verts;
 	TArray<UE1Poly> polys;
 	TArray<UE1Group> groups;
+	TArray<int> groupIndices;
 };

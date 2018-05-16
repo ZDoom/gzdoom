@@ -44,10 +44,10 @@ struct ZModelMaterial
 template<typename Value>
 struct ZModelTrack
 {
-	TArray<uint32_t> Timestamps;
+	TArray<float> Timestamps;
 	TArray<Value> Values;
 
-	float FindAnimationKeys(uint32_t timestamp, unsigned int &index, unsigned int &index2)
+	float FindAnimationKeys(float timestamp, unsigned int &index, unsigned int &index2)
 	{
 		if (Timestamps.Size() == 0)
 		{
@@ -59,16 +59,16 @@ struct ZModelTrack
 		index = BinarySearch(timestamp);
 		index2 = MIN(index + 1, Timestamps.Size() - 1);
 
-		uint32_t start = Timestamps[index];
-		uint32_t end = Timestamps[index2];
+		float start = Timestamps[index];
+		float end = Timestamps[index2];
 		if (start != end)
-			return clamp((timestamp - start) / (float)(end - start), 0.0f, 1.0f);
+			return clamp((timestamp - start) / (end - start), 0.0f, 1.0f);
 		else
 			return 0.0f;
 	}
 
 private:
-	unsigned int BinarySearch(uint32_t timestamp) const
+	unsigned int BinarySearch(float timestamp) const
 	{
 		int search_max = static_cast<int>(Timestamps.Size()) - 1;
 		int imin = 0;
@@ -102,26 +102,14 @@ struct ZModelMaterialAnim
 
 struct ZModelAnimation
 {
-	FString Name;             // Name of animation
+	FString Name;
+	float Duration; // Length of this animation sequence in seconds
 
-	int32_t VariationNext;    // Next variation to use when animation ends. -1 if none
-	float Frequency;          // Used to determine how often the animation is played. For all animations of the same name, this adds up to 1.0
-
-	uint32_t MinReplayCount;  // Minimum amount of times animation will repeat
-	uint32_t MaxReplayCount;  // Maximum amount of times animation will repeat
-
-	uint32_t Duration;        // Length of this animation sequence in milliseconds
-
-	uint32_t BlendTimeIn;     // lerp animation states between animations where the end and start values differ (in milliseconds)
-	uint32_t BlendTimeOut;    // Blend between this sequence and the next sequence (in milliseconds)
-
-	ZModelVec3f AabbMin;      // Animation bounds (for culling purposes)
+	ZModelVec3f AabbMin; // Animation bounds (for culling purposes)
 	ZModelVec3f AabbMax;
 
 	TArray<ZModelBoneAnim> Bones; // Animation tracks for each bone
 	TArray<ZModelMaterialAnim> Materials; // Animation tracks for each material
-
-	ZModelTrack<uint32_t> Events; // Animation events, should we support this? Useful to timing camera shakes and sounds with foot steps and such
 };
 
 enum class ZModelBoneType : uint32_t
@@ -166,11 +154,12 @@ private:
 	TArray<ZModelBone> mBones;
 	TArray<ZModelAnimation> mAnimations;
 	TArray<ZModelAttachment> mAttachments;
-	TArray<FString> mEvents;
+	bool mValid = false;
 
-	// ZDAT chunk
-	TArray<ZModelVertex> mVertices;
-	TArray<uint32_t> mElements;
+	TArray<VSMatrix> mBoneTransforms;
+	TArray<FTextureID> mTextureIDs;
 
-	uint32_t currentTime = 0;
+	int mCurrentAnim = 0;
+
+	float currentTime = 0.0f;
 };

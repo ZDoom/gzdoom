@@ -111,10 +111,21 @@ void main()
 
 #if defined(USE_BONES) && !defined(SIMPLE)
 
+void AddWeightedBone(int boneIndex, float weight, inout vec4 position, inout vec3 normal)
+{
+	if (weight != 0.0)
+	{
+		mat4 transform = bones[boneIndex];
+		mat3 rotation = mat3(transform);
+		position += (transform * aPosition) * weight;
+		normal += (rotation * aNormal.xyz) * weight;
+	}
+}
+
 BonesResult ApplyBones()
 {
 	BonesResult result;
-	if (aBoneWeight.x != 0.0 || aBoneWeight.y != 0.0 || aBoneWeight.z != 0.0 || aBoneWeight.w != 0.0)
+	if (aBoneWeight != vec4(0.0))
 	{
 		result.Position = vec4(0.0);
 		result.Normal = vec3(0.0);
@@ -124,37 +135,10 @@ BonesResult ApplyBones()
 		float weightMultiplier = 1.0 / totalWeight;
 		vec4 boneWeight = aBoneWeight * weightMultiplier;
 
-		if (boneWeight.x != 0.0)
-		{
-			mat4 transform = bones[aBoneSelector.x];
-			mat3 rotation = mat3(transform);
-			result.Position += (transform * aPosition) * boneWeight.x;
-			result.Normal += (rotation * aNormal.xyz) * boneWeight.x;
-		}
-
-		if (boneWeight.y != 0.0)
-		{
-			mat4 transform = bones[aBoneSelector.y];
-			mat3 rotation = mat3(transform);
-			result.Position += (transform * aPosition) * boneWeight.y;
-			result.Normal += (rotation * aNormal.xyz) * boneWeight.y;
-		}
-
-		if (boneWeight.z != 0.0)
-		{
-			mat4 transform = bones[aBoneSelector.z];
-			mat3 rotation = mat3(transform);
-			result.Position += (transform * aPosition) * boneWeight.z;
-			result.Normal += (rotation * aNormal.xyz) * boneWeight.z;
-		}
-
-		if (boneWeight.w != 0.0)
-		{
-			mat4 transform = bones[aBoneSelector.w];
-			mat3 rotation = mat3(transform);
-			result.Position += (transform * aPosition) * boneWeight.w;
-			result.Normal += (rotation * aNormal.xyz) * boneWeight.w;
-		}
+		AddWeightedBone(aBoneSelector.x, boneWeight.x, result.Position, result.Normal);
+		AddWeightedBone(aBoneSelector.y, boneWeight.y, result.Position, result.Normal);
+		AddWeightedBone(aBoneSelector.z, boneWeight.z, result.Position, result.Normal);
+		AddWeightedBone(aBoneSelector.w, boneWeight.w, result.Position, result.Normal);
 
 		result.Position.w = 1.0; // For numerical stability
 	}

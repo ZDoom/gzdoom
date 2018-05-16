@@ -195,23 +195,17 @@ bool FZMDLModel::Load(const char *filename, int lumpnum, const char *buffer, int
 	{
 		ZModelAnimation anim;
 		anim.Name = s.String();
-		anim.VariationNext = s.Uint32();
-		anim.Frequency = s.Float();
-		anim.MinReplayCount = s.Uint32();
-		anim.MaxReplayCount = s.Uint32();
-		anim.Duration = s.Uint32();
-		anim.BlendTimeIn = s.Uint32();
-		anim.BlendTimeOut = s.Uint32();
+		anim.Duration = s.Float();
 		anim.AabbMin = s.Vec3f();
 		anim.AabbMax = s.Vec3f();
 		for (auto j = s.Uint32(); j > 0; j--)
 		{
 			ZModelBoneAnim bone;
-			bone.Translation.Timestamps = s.Uint32Array();
+			bone.Translation.Timestamps = s.FloatArray();
 			bone.Translation.Values = s.Vec3fArray();
-			bone.Rotation.Timestamps = s.Uint32Array();
+			bone.Rotation.Timestamps = s.FloatArray();
 			bone.Rotation.Values = s.QuaternionfArray();
-			bone.Scale.Timestamps = s.Uint32Array();
+			bone.Scale.Timestamps = s.FloatArray();
 			bone.Scale.Values = s.Vec3fArray();
 			anim.Bones.Push(bone);
 			if (s.ReadError()) return false;
@@ -219,17 +213,15 @@ bool FZMDLModel::Load(const char *filename, int lumpnum, const char *buffer, int
 		for (auto j = s.Uint32(); j > 0; j--)
 		{
 			ZModelMaterialAnim mat;
-			mat.Translation.Timestamps = s.Uint32Array();
+			mat.Translation.Timestamps = s.FloatArray();
 			mat.Translation.Values = s.Vec3fArray();
-			mat.Rotation.Timestamps = s.Uint32Array();
+			mat.Rotation.Timestamps = s.FloatArray();
 			mat.Rotation.Values = s.QuaternionfArray();
-			mat.Scale.Timestamps = s.Uint32Array();
+			mat.Scale.Timestamps = s.FloatArray();
 			mat.Scale.Values = s.Vec3fArray();
 			anim.Materials.Push(mat);
 			if (s.ReadError()) return false;
 		}
-		anim.Events.Timestamps = s.Uint32Array();
-		anim.Events.Values = s.Uint32Array();
 		mAnimations.Push(anim);
 		if (s.ReadError()) return false;
 	}
@@ -244,42 +236,49 @@ bool FZMDLModel::Load(const char *filename, int lumpnum, const char *buffer, int
 		if (s.ReadError()) return false;
 	}
 
-	mEvents = s.StringArray();
-
 	s.EndChunk();
 
-	return !s.ReadError();
-}
+	mValid = !s.ReadError();
 
-int FZMDLModel::FindFrame(const char *name)
-{
-	return 0;
+	if (mValid)
+	{
+		mBoneTransforms.Resize(mBones.Size());
+		for (unsigned int i = 0; i < mMaterials.Size(); i++)
+			mTextureIDs.Push(TexMan(mMaterials[i].Name.GetChars())->id);
+
+		mCurrentAnim = 0;
+	}
+
+	return mValid;
 }
 
 void FZMDLModel::RenderFrame(FModelRenderer *renderer, FTexture *skin, int frame, int frame2, double inter, int translation)
 {
-	currentTime = (currentTime + 16) % mAnimations[0].Duration;
+	if (!mValid)
+		return;
 
-	TArray<VSMatrix> bones(mBones.Size(), true);
+	const auto &animation = mAnimations[mCurrentAnim];
+	currentTime = fmod(currentTime + 0.01666667f, animation.Duration);
+
 	for (unsigned int i = 0; i < mBones.Size(); i++)
 	{
 		// Find keys
 		unsigned int translationIndex, translationIndex2;
 		unsigned int rotationIndex, rotationIndex2;
 		unsigned int scaleIndex, scaleIndex2;
-		float translationInterpolation = mAnimations[0].Bones[i].Translation.FindAnimationKeys(currentTime, translationIndex, translationIndex2);
-		float rotationInterpolation = mAnimations[0].Bones[i].Rotation.FindAnimationKeys(currentTime, rotationIndex, rotationIndex2);
-		float scaleInterpolation = mAnimations[0].Bones[i].Scale.FindAnimationKeys(currentTime, scaleIndex, scaleIndex2);
+		float translationInterpolation = animation.Bones[i].Translation.FindAnimationKeys(currentTime, translationIndex, translationIndex2);
+		float rotationInterpolation = animation.Bones[i].Rotation.FindAnimationKeys(currentTime, rotationIndex, rotationIndex2);
+		float scaleInterpolation = animation.Bones[i].Scale.FindAnimationKeys(currentTime, scaleIndex, scaleIndex2);
 
 		// Get values
-		ZModelVec3f translation = mAnimations[0].Bones[i].Translation.Values[translationIndex];
-		ZModelQuaternionf rotation = mAnimations[0].Bones[i].Rotation.Values[rotationIndex];
-		ZModelVec3f scale = mAnimations[0].Bones[i].Scale.Values[scaleIndex];
+		ZModelVec3f translation = animation.Bones[i].Translation.Values[translationIndex];
+		ZModelQuaternionf rotation = animation.Bones[i].Rotation.Values[rotationIndex];
+		ZModelVec3f scale = animation.Bones[i].Scale.Values[scaleIndex];
 
 		// Interpolate
-		//ZModelVec3f translation2 = mAnimations[0].Bones[i].Translation.Values[translationIndex2];
-		//ZModelQuaternionf rotation2 = mAnimations[0].Bones[i].Rotation.Values[rotationIndex2];
-		//ZModelVec3f scale2 = mAnimations[0].Bones[i].Scale.Values[scaleIndex2];
+		//ZModelVec3f translation2 = animation.Bones[i].Translation.Values[translationIndex2];
+		//ZModelQuaternionf rotation2 = animation.Bones[i].Rotation.Values[rotationIndex2];
+		//ZModelVec3f scale2 = animation.Bones[i].Scale.Values[scaleIndex2];
 		//position = mix(translation, position2, translationInterpolation);
 		//rotation = Quaternionf::slerp(rotation, rotation2, rotationInterpolation);
 		//scale = mix(scale, scale2, scaleInterpolation);
@@ -298,18 +297,18 @@ void FZMDLModel::RenderFrame(FModelRenderer *renderer, FTexture *skin, int frame
 		m[3 * 4 + 3] = 1.0f;
 
 		// Create 4x4 bones transform
-		bones[i].loadIdentity();
-		bones[i].translate(translation.X, translation.Y, translation.Z);
-		bones[i].scale(scale.X, scale.Y, scale.Z);
-		bones[i].multMatrix(m);
-		bones[i].translate(-mBones[i].Pivot.X, -mBones[i].Pivot.Y, -mBones[i].Pivot.Z);
+		mBoneTransforms[i].loadIdentity();
+		mBoneTransforms[i].translate(translation.X, translation.Y, translation.Z);
+		mBoneTransforms[i].scale(scale.X, scale.Y, scale.Z);
+		mBoneTransforms[i].multMatrix(m);
+		mBoneTransforms[i].translate(-mBones[i].Pivot.X, -mBones[i].Pivot.Y, -mBones[i].Pivot.Z);
 	}
 
-	mVBuf->SetupFrame(renderer, 0, 0, 0, bones);
+	mVBuf->SetupFrame(renderer, 0, 0, 0, mBoneTransforms);
 
 	for (unsigned int i = 0; i < mMaterials.Size(); i++)
 	{
-		FTexture *surfaceSkin = TexMan(mMaterials[i].Name.GetChars()); // To do: use texture id!!!!
+		FTexture *surfaceSkin = TexMan(mTextureIDs[i]);
 		renderer->SetMaterial(surfaceSkin, false, translation);
 		renderer->DrawElements(mMaterials[i].VertexCount, mMaterials[i].StartElement * sizeof(unsigned int));
 	}
@@ -317,8 +316,10 @@ void FZMDLModel::RenderFrame(FModelRenderer *renderer, FTexture *skin, int frame
 
 void FZMDLModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (mVBuf == nullptr)
+	if (mVBuf == nullptr && mValid)
 	{
+		mValid = false;
+
 		int length = Wads.LumpLength(mLumpNum);
 		FMemLump lumpdata = Wads.ReadLump(mLumpNum);
 		const char *buffer = (const char *)lumpdata.GetMem();
@@ -330,8 +331,27 @@ void FZMDLModel::BuildVertexBuffer(FModelRenderer *renderer)
 
 			if (s.IsChunk("ZDAT"))
 			{
-				mVertices = s.VertexArray();
-				mElements = s.Uint32Array();
+				TArray<ZModelVertex> vertices = s.VertexArray();
+				TArray<uint32_t> elements = s.Uint32Array();
+
+				mVBuf = renderer->CreateVertexBuffer(true, true);
+
+				FModelVertex *vertptr = mVBuf->LockVertexBuffer(vertices.Size());
+				for (unsigned int i = 0; i < vertices.Size(); i++)
+				{
+					const auto &v = vertices[i];
+					vertptr[i].Set(v.Pos.X, v.Pos.Y, v.Pos.Z, v.TexCoords.X, v.TexCoords.Y);
+					vertptr[i].SetNormal(v.Normal.X, v.Normal.Y, v.Normal.Z);
+					vertptr[i].SetBoneSelector(v.BoneIndices.X, v.BoneIndices.Y, v.BoneIndices.Z, v.BoneIndices.W);
+					vertptr[i].SetBoneWeight(v.BoneWeights.X, v.BoneWeights.Y, v.BoneWeights.Z, v.BoneWeights.W);
+				}
+				mVBuf->UnlockVertexBuffer();
+
+				unsigned int *indxptr = mVBuf->LockIndexBuffer(elements.Size());
+				memcpy(indxptr, &elements[0], sizeof(uint32_t) * elements.Size());
+				mVBuf->UnlockIndexBuffer();
+
+				mValid = true;
 				break;
 			}
 			else if (s.IsChunk("ZEND"))
@@ -341,29 +361,14 @@ void FZMDLModel::BuildVertexBuffer(FModelRenderer *renderer)
 
 			s.EndChunk();
 		}
-
-		mVBuf = renderer->CreateVertexBuffer(true, true);
-
-		FModelVertex *vertptr = mVBuf->LockVertexBuffer(mVertices.Size());
-		for (unsigned int i = 0; i < mVertices.Size(); i++)
-		{
-			const auto &v = mVertices[i];
-			vertptr[i].Set(v.Pos.X, v.Pos.Y, v.Pos.Z, v.TexCoords.X, v.TexCoords.Y);
-			vertptr[i].SetNormal(v.Normal.X, v.Normal.Y, v.Normal.Z);
-			vertptr[i].SetBoneSelector(v.BoneIndices.X, v.BoneIndices.Y, v.BoneIndices.Z, v.BoneIndices.W);
-			vertptr[i].SetBoneWeight(v.BoneWeights.X, v.BoneWeights.Y, v.BoneWeights.Z, v.BoneWeights.W);
-		}
-		mVBuf->UnlockVertexBuffer();
-
-		unsigned int *indxptr = mVBuf->LockIndexBuffer(mElements.Size());
-		memcpy(indxptr, &mElements[0], sizeof(uint32_t) * mElements.Size());
-		mVBuf->UnlockIndexBuffer();
-
-		mVertices.Clear();
-		mElements.Clear();
 	}
 }
 
 void FZMDLModel::AddSkins(uint8_t *hitlist)
 {
+}
+
+int FZMDLModel::FindFrame(const char *name)
+{
+	return 0;
 }

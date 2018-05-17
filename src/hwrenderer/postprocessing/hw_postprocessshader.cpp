@@ -22,7 +22,7 @@
 
 #include "vm.h"
 #include "d_player.h"
-#include "hwrenderer/shaders/hw_postprocessshader.h"
+#include "hw_postprocessshader.h"
 
 TArray<PostProcessShader> PostProcessShaders;
 

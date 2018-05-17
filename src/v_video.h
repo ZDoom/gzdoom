@@ -349,6 +349,7 @@ protected:
 public:
 	int hwcaps = 0;
 	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
+	bool enable_quadbuffered = false;
 
 	IntRect mScreenViewport;
 	IntRect mSceneViewport;

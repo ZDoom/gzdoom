@@ -88,7 +88,7 @@ const Stereo3DMode& Stereo3DMode::getCurrentMode()
 		setCurrentMode(RightEyeView::getInstance(vr_ipd));
 		break;
 	case 7:
-		if (vr_enable_quadbuffered) {
+		if (screen->enable_quadbuffered) {
 			setCurrentMode(QuadStereo::getInstance(vr_ipd));
 		}
 		else {

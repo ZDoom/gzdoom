@@ -147,7 +147,7 @@ enum ELineFlags : unsigned
 	ML_DONTPEGBOTTOM			= 0x00000010,	// lower texture unpegged
 	ML_SECRET					= 0x00000020,	// don't map as two sided: IT'S A SECRET!
 	ML_SOUNDBLOCK				= 0x00000040,	// don't let sound cross two of these
-	ML_DONTDRAW 				= 0x00000080,	// don't draw on the automap
+	ML_DONTDRAW 				= 0x00000080,	// don't draw on the automap - NEW: UDMF AutoMap type
 	ML_MAPPED					= 0x00000100,	// set if already drawn in automap
 	ML_REPEAT_SPECIAL			= 0x00000200,	// special is repeatable
 
@@ -170,6 +170,7 @@ enum ELineFlags : unsigned
 	ML_BLOCKSIGHT				= 0x04000000,	// blocks monster line of sight
 	ML_BLOCKHITSCAN				= 0x08000000,	// blocks hitscan attacks
 	ML_3DMIDTEX_IMPASS			= 0x10000000,	// [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
+	ML_REVEALED					= 0x20000000,	// set if revealed in automap  [Raccoon's Note: I feel like this should've been 0x00000800 or 0x000010000, but they were probably skipped for a reason, so...]
 
 	ML_PORTALCONNECT			= 0x80000000,	// for internal use only: This line connects to a sector with a linked portal (used to speed up sight checks.)
 };

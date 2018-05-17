@@ -55,7 +55,7 @@ namespace
 
 CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self <= 0.0 || self > 2.0)
+	if (self < 0.05 || self > 2.0)
 		self = 1.0;
 }
 
@@ -117,34 +117,22 @@ bool R_CalcsShouldBeBlocked()
 
 CCMD (vid_scaletowidth)
 {
-	float newscalefactor;
-
 	if (R_CalcsShouldBeBlocked())
 		return;	
 
 	if (argv.argc() > 1)
-		newscalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayWidth);
-	else
-		newscalefactor = vid_scalefactor;
-	if ( newscalefactor > 2.0 || newscalefactor <= 0.0 )
-		newscalefactor = 1.0;
-	vid_scalefactor = newscalefactor;
+		vid_scalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayWidth);
+
 	R_ShowCurrentScaling();
 }
 
 CCMD (vid_scaletoheight)
 {
-	float newscalefactor;
-
 	if (R_CalcsShouldBeBlocked())
 		return;	
 
 	if (argv.argc() > 1)
-		newscalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayHeight);
-	else
-		newscalefactor = vid_scalefactor;
-	if ( newscalefactor > 2.0 || newscalefactor <= 0.0 )
-		newscalefactor = 1.0;
-	vid_scalefactor = newscalefactor;
+		vid_scalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayHeight);
+
 	R_ShowCurrentScaling();
 }

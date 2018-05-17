@@ -72,12 +72,6 @@ EXTERN_CVAR (Bool, cl_capfps)
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
-// DUMMY DATA DEFINITIONS --------------------------------------------------
-
-CVAR(Bool, vr_enable_quadbuffered, false, CVAR_NOSET)
-/* this is to fix compile on non-Windows platforms because this code is only
-   used on Windows, anyhow, but references to it exist elsewhere in the code */
-
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)

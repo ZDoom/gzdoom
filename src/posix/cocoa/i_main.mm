@@ -63,10 +63,6 @@ EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, vid_vsync    )
 EXTERN_CVAR(Bool, fullscreen   )
 
-CVAR(Bool, vr_enable_quadbuffered, false, CVAR_NOSET)
-/* this is to fix compile on non-Windows platforms because this code is only
-   used on Windows, anyhow, but references to it exist elsewhere in the code */
-
 
 // ---------------------------------------------------------------------------
 

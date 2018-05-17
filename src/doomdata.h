@@ -147,7 +147,7 @@ enum ELineFlags : unsigned
 	ML_DONTPEGBOTTOM			= 0x00000010,	// lower texture unpegged
 	ML_SECRET					= 0x00000020,	// don't map as two sided: IT'S A SECRET!
 	ML_SOUNDBLOCK				= 0x00000040,	// don't let sound cross two of these
-	ML_DONTDRAW 				= 0x00000080,	// don't draw on the automap - NEW: UDMF AutoMap type
+	ML_DONTDRAW 				= 0x00000080,	// don't draw on the automap
 	ML_MAPPED					= 0x00000100,	// set if already drawn in automap
 	ML_REPEAT_SPECIAL			= 0x00000200,	// special is repeatable
 

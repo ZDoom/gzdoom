@@ -117,8 +117,6 @@ bool R_CalcsShouldBeBlocked()
 
 CCMD (vid_scaletowidth)
 {
-	float newscalefactor;
-
 	if (R_CalcsShouldBeBlocked())
 		return;	
 
@@ -130,8 +128,6 @@ CCMD (vid_scaletowidth)
 
 CCMD (vid_scaletoheight)
 {
-	float newscalefactor;
-
 	if (R_CalcsShouldBeBlocked())
 		return;	
 

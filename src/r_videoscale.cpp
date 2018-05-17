@@ -102,7 +102,9 @@ bool ViewportIsScaled43()
 
 void R_ShowCurrentScaling()
 {
+	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = x1 * vid_scalefactor, y2 = y1 * vid_scalefactor;
 	Printf("Current Scale: %f\n", (float)(vid_scalefactor));
+	Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
 }
 
 bool R_CalcsShouldBeBlocked()
@@ -115,13 +117,18 @@ bool R_CalcsShouldBeBlocked()
 	return false;	
 }
 
+CCMD (vid_showcurrentscaling)
+{
+	R_ShowCurrentScaling();
+}
+
 CCMD (vid_scaletowidth)
 {
 	if (R_CalcsShouldBeBlocked())
 		return;	
 
 	if (argv.argc() > 1)
-		vid_scalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayWidth);
+		vid_scalefactor = (float)((double)atof(argv[1]) / screen->GetClientWidth());
 
 	R_ShowCurrentScaling();
 }
@@ -132,7 +139,7 @@ CCMD (vid_scaletoheight)
 		return;	
 
 	if (argv.argc() > 1)
-		vid_scalefactor = (float)((double)vid_scalefactor * (double)atof(argv[1]) / (double)DisplayHeight);
+		vid_scalefactor = (float)((double)atof(argv[1]) / screen->GetClientHeight());
 
 	R_ShowCurrentScaling();
 }

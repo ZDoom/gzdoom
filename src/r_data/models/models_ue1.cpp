@@ -115,8 +115,8 @@ void FUE1Model::LoadGeometry()
 		// unpack coords
 		for ( int j=0; j<3; j++ )
 		{
-			Poly.C[j].S = dpolys[i].uv[j][0]/255.;
-			Poly.C[j].T = dpolys[i].uv[j][1]/255.;
+			Poly.C[j].S = dpolys[i].uv[j][0]/255.f;
+			Poly.C[j].T = dpolys[i].uv[j][1]/255.f;
 		}
 		Poly.texNum = dpolys[i].texnum;
 		// push
@@ -130,7 +130,7 @@ void FUE1Model::LoadGeometry()
 		for ( int j=0; j<numVerts; j++ )
 		{
 			UE1Vector nsum = {0,0,0};
-			double total = 0.;
+			float total = 0.;
 			for ( int k=0; k<numPolys; k++ )
 			{
 				if ( (polys[k].V[0] != j) && (polys[k].V[1] != j) && (polys[k].V[2] != j) ) continue;
@@ -147,8 +147,8 @@ void FUE1Model::LoadGeometry()
 				norm.X = dir[0].Y*dir[1].Z-dir[0].Z*dir[1].Y;
 				norm.Y = dir[0].Z*dir[1].X-dir[0].X*dir[1].Z;
 				norm.Z = dir[0].X*dir[1].Y-dir[0].Y*dir[1].X;
-				double s = sqrt(norm.X*norm.X+norm.Y*norm.Y+norm.Z*norm.Z);
-				if ( s != 0. )
+				float s = (float)sqrt(norm.X*norm.X+norm.Y*norm.Y+norm.Z*norm.Z);
+				if ( s != 0.f )
 				{
 					norm.X /= s;
 					norm.Y /= s;
@@ -157,7 +157,7 @@ void FUE1Model::LoadGeometry()
 				nsum.X += norm.X;
 				nsum.Y += norm.Y;
 				nsum.Z += norm.Z;
-				total+=1.;
+				total+=1.f;
 			}
 			verts[j+numVerts*i].Normal.X = nsum.X/total;
 			verts[j+numVerts*i].Normal.Y = nsum.Y/total;

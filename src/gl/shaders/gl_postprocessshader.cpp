@@ -28,13 +28,11 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/shaders/gl_postprocessshader.h"
+#include "hwrenderer/shaders/hw_postprocessshader.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "textures/bitmap.h"
 
 CVAR(Bool, gl_custompost, true, 0)
-
-TArray<PostProcessShader> PostProcessShaders;
 
 FCustomPostProcessShaders::FCustomPostProcessShaders()
 {

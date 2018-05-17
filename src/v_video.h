@@ -411,7 +411,7 @@ public:
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
 	virtual bool RenderBuffersEnabled() { return false; };
-
+	virtual void BlurScene(float amount) {}
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.

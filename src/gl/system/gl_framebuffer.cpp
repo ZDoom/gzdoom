@@ -382,6 +382,11 @@ void OpenGLFrameBuffer::ResetFixedColormap()
 	}
 }
 
+void OpenGLFrameBuffer::BlurScene(float amount)
+{
+	GLRenderer->BlurScene(amount);
+}
+
 bool OpenGLFrameBuffer::RenderBuffersEnabled()
 {
 	return FGLRenderBuffers::IsEnabled();

@@ -23,6 +23,7 @@
 #include "w_wad.h"
 #include "cmdlib.h"
 #include "r_data/models/models_zmdl.h"
+#include "i_time.h"
 
 struct ZModelStream
 {
@@ -257,8 +258,15 @@ void FZMDLModel::RenderFrame(FModelRenderer *renderer, FTexture *skin, int frame
 	if (!mValid)
 		return;
 
+	if (lastAnimChange == 0 || I_msTime() - lastAnimChange > 10000)
+	{
+		if (lastAnimChange != 0)
+			mCurrentAnim = (mCurrentAnim + 1) % mAnimations.Size();
+		lastAnimChange = I_msTime();
+	}
+
 	const auto &animation = mAnimations[mCurrentAnim];
-	currentTime = fmod(currentTime + 0.01666667f, animation.Duration);
+	currentTime = (float)fmod(I_msTime()/1000.0, (double)animation.Duration);
 
 	for (unsigned int i = 0; i < mBones.Size(); i++)
 	{

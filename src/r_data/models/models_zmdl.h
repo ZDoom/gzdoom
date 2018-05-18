@@ -162,4 +162,5 @@ private:
 	int mCurrentAnim = 0;
 
 	float currentTime = 0.0f;
+	uint64_t lastAnimChange = 0;
 };

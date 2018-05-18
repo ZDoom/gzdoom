@@ -2583,6 +2583,115 @@ void AM_drawWalls (bool allmap)
 					}
 				}
 
+				if (line.forceAMap > 0 && (am_cheat == 0 || am_cheat >= 4)) {
+					/*
+					0: IGNORE
+					1: 1-sided.
+					2: floor diff.
+					3: ceiling diff.
+					4: floor and ceiling diff.
+					5: 3D floor edge
+					6: Trigger
+					7: Door
+					8: Lock
+					9: Found Secret
+					10: Teleporter
+					11: Exit
+					12: Exit Teleporter
+					13:
+					14:
+					15:
+					16:
+					17:
+					18:
+					19:
+					20: ???
+					20s: Custom Color Linedefs
+					*/
+					switch (line.forceAMap)
+					{
+					case 1: // 1 sided
+						AM_drawMline(&l, AMColors.WallColor);
+						continue;
+					case 2: // Floor diff
+						AM_drawMline(&l, AMColors.FDWallColor);
+						continue;
+					case 3: // Ceiling diff
+						AM_drawMline(&l, AMColors.CDWallColor);
+						continue;
+					case 4: // Both diff
+						AM_drawMline(&l, AMColors.FDWallColor); // Not implemented, but might as well be ready
+						continue;
+					case 5: // 3Dfloor edge
+						AM_drawMline(&l, AMColors.EFWallColor);
+						continue;
+					case 6: // Trigger
+						AM_drawMline(&l, AMColors.SpecialWallColor);
+						continue;
+					case 7: // Door
+						AM_drawMline(&l, AMColors.SpecialWallColor); // Not sure this is implemented, but might as well be ready
+						continue;
+					case 8: // Locked
+							/*	if (AMColors.displayLocks && &lock) // This SHOULD be a feature, but I'm not implementing it right now.
+							{
+							color = P_GetMapColorForLock(lock);
+
+							AMColor c;
+
+							if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
+							else c = AMColors[AMColors.LockedColor];
+
+							AM_drawMline(&l, c);
+							}
+							else
+							{*/
+						AM_drawMline(&l, AMColors.LockedColor);  // locked special
+																 //	}
+						continue;
+					case 9: // Secret
+						AM_drawMline(&l, AMColors.SecretSectorColor);
+						continue;
+					case 10: // Teleporter
+						AM_drawMline(&l, AMColors.IntraTeleportColor);
+						continue;
+					case 11: // Exit Switch
+						AM_drawMline(&l, AMColors.InterTeleportColor); // Is this the right one?
+						continue;
+					case 12: // Exit Teleport
+						AM_drawMline(&l, AMColors.InterTeleportColor);
+						continue;
+						break;
+						// Custom Line Types
+						/*case 21:
+						AM_drawMline(&l, AMColors.CustomLineType1);
+						continue;
+						case 22:
+						AM_drawMline(&l, AMColors.CustomLineType2);
+						continue;
+						case 23:
+						AM_drawMline(&l, AMColors.CustomLineType3);
+						continue;
+						case 24:
+						AM_drawMline(&l, AMColors.CustomLineType4);
+						continue;
+						case 25:
+						AM_drawMline(&l, AMColors.CustomLineType5);
+						continue;
+						case 26:
+						AM_drawMline(&l, AMColors.CustomLineType6);
+						continue;
+						case 27:
+						AM_drawMline(&l, AMColors.CustomLineType7);
+						continue;
+						case 28:
+						AM_drawMline(&l, AMColors.CustomLineType8);
+						continue;
+						case 29:
+						AM_drawMline(&l, AMColors.CustomLineType9);
+						continue;*/
+					}
+				}
+
 				if (portalmode)
 				{
 					AM_drawMline(&l, AMColors.PortalColor);
@@ -2658,7 +2767,7 @@ void AM_drawWalls (bool allmap)
 					AM_drawMline(&l, AMColors.TSWallColor);
 				}
 			}
-			else if (allmap)
+			else if (allmap || (line.flags & ML_REVEALED))
 			{
 				if ((line.flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 				{

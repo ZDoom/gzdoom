@@ -20,21 +20,19 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "w_wad.h"
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/shaders/gl_postprocessshader.h"
+#include "hwrenderer/postprocessing/hw_postprocessshader.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "textures/bitmap.h"
 
 CVAR(Bool, gl_custompost, true, 0)
-
-TArray<PostProcessShader> PostProcessShaders;
 
 FCustomPostProcessShaders::FCustomPostProcessShaders()
 {

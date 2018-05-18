@@ -258,7 +258,7 @@ long MemoryReader::Seek(long offset, int origin)
 		break;
 
 	}
-	if (offset < 0 || offset >= Length) return -1;
+	if (offset < 0 || offset > Length) return -1;
 	FilePos = clamp<long>(offset, 0, Length);
 	return 0;
 }

@@ -28,6 +28,7 @@
 #define __GL_FXAASHADER_H__
 
 #include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 
 class FFXAALumaShader
 {
@@ -41,19 +42,9 @@ private:
 };
 
 
-class FFXAAShader
+class FFXAAShader : public IFXAAShader
 {
 public:
-	enum Quality
-	{
-		None,
-		Low,
-		Medium,
-		High,
-		Extreme,
-		Count
-	};
-
 	void Bind();
 
 	FBufferedUniform1i InputTexture;

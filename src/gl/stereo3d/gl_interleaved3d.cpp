@@ -92,7 +92,7 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	const GL_IRECT& box = GLRenderer->mOutputLetterbox;
+	const IntRect& box = screen->mOutputLetterbox;
 	glViewport(box.left, box.top, box.width, box.height);
 
 	shader.Bind();
@@ -115,8 +115,8 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 		shader.GrayFormula.Set(static_cast<int>(gl_satformula));
 	}
 	shader.Scale.Set(
-		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
-		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
+		screen->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
+		screen->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
 }
 
 // fixme: I don't know how to get absolute window position on Mac and Linux
@@ -150,7 +150,7 @@ void CheckerInterleaved3D::Present() const
 	GLRenderer->mPresent3dCheckerShader->WindowPositionParity.Set(
 		(windowVOffset
 			+ windowHOffset
-			+ GLRenderer->mOutputLetterbox.height + 1 // +1 because of origin at bottom
+			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
 		) % 2 // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
 	);
 
@@ -162,15 +162,15 @@ void s3d::CheckerInterleaved3D::AdjustViewports() const
 	// decrease the total pixel count by 2, but keep the same aspect ratio
 	const float sqrt2 = 1.41421356237f;
 	// Change size of renderbuffer, and align to screen
-	GLRenderer->mSceneViewport.height /= sqrt2;
-	GLRenderer->mSceneViewport.top /= sqrt2;
-	GLRenderer->mSceneViewport.width /= sqrt2;
-	GLRenderer->mSceneViewport.left /= sqrt2;
+	screen->mSceneViewport.height /= sqrt2;
+	screen->mSceneViewport.top /= sqrt2;
+	screen->mSceneViewport.width /= sqrt2;
+	screen->mSceneViewport.left /= sqrt2;
 
-	GLRenderer->mScreenViewport.height /= sqrt2;
-	GLRenderer->mScreenViewport.top /= sqrt2;
-	GLRenderer->mScreenViewport.width /= sqrt2;
-	GLRenderer->mScreenViewport.left /= sqrt2;
+	screen->mScreenViewport.height /= sqrt2;
+	screen->mScreenViewport.top /= sqrt2;
+	screen->mScreenViewport.width /= sqrt2;
+	screen->mScreenViewport.left /= sqrt2;
 }
 
 void ColumnInterleaved3D::Present() const
@@ -214,7 +214,7 @@ void RowInterleaved3D::Present() const
 
 	GLRenderer->mPresent3dRowShader->WindowPositionParity.Set(
 		(windowVOffset
-			+ GLRenderer->mOutputLetterbox.height + 1 // +1 because of origin at bottom
+			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
 		) % 2
 	);
 

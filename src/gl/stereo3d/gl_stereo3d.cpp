@@ -25,7 +25,7 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 
 namespace s3d {

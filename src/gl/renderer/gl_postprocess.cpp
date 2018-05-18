@@ -25,7 +25,7 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gi.h"
 #include "m_png.h"
 #include "r_utility.h"
@@ -51,93 +51,6 @@
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
-
-//==========================================================================
-//
-// CVARs
-//
-//==========================================================================
-CVAR(Bool, gl_bloom, false, CVAR_ARCHIVE);
-CUSTOM_CVAR(Float, gl_bloom_amount, 1.4f, CVAR_ARCHIVE)
-{
-	if (self < 0.1f) self = 0.1f;
-}
-
-CVAR(Float, gl_exposure_scale, 1.3f, CVAR_ARCHIVE)
-CVAR(Float, gl_exposure_min, 0.35f, CVAR_ARCHIVE)
-CVAR(Float, gl_exposure_base, 0.35f, CVAR_ARCHIVE)
-CVAR(Float, gl_exposure_speed, 0.05f, CVAR_ARCHIVE)
-
-CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE)
-{
-	if (self < 0 || self > 5)
-		self = 0;
-}
-
-CUSTOM_CVAR(Int, gl_bloom_kernel_size, 7, CVAR_ARCHIVE)
-{
-	if (self < 3 || self > 15 || self % 2 == 0)
-		self = 7;
-}
-
-CVAR(Bool, gl_lens, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
-CVAR(Float, gl_lens_k, -0.12f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Float, gl_lens_kcube, 0.1f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Float, gl_lens_chromatic, 1.12f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-
-CUSTOM_CVAR(Int, gl_fxaa, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0 || self >= FFXAAShader::Count)
-	{
-		self = 0;
-	}
-}
-
-CUSTOM_CVAR(Int, gl_ssao, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0 || self > 3)
-		self = 0;
-}
-
-CUSTOM_CVAR(Int, gl_ssao_portals, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	if (self < 0)
-		self = 0;
-}
-
-CVAR(Float, gl_ssao_strength, 0.7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, gl_ssao_debug, 0, 0)
-CVAR(Float, gl_ssao_bias, 0.2f, 0)
-CVAR(Float, gl_ssao_radius, 80.0f, 0)
-CUSTOM_CVAR(Float, gl_ssao_blur, 16.0f, 0)
-{
-	if (self < 0.1f) self = 0.1f;
-}
-
-CUSTOM_CVAR(Float, gl_ssao_exponent, 1.8f, 0)
-{
-	if (self < 0.1f) self = 0.1f;
-}
-
-CUSTOM_CVAR(Float, gl_paltonemap_powtable, 2.0f, CVAR_ARCHIVE | CVAR_NOINITCALL)
-{
-	if (GLRenderer)
-		GLRenderer->ClearTonemapPalette();
-}
-
-CUSTOM_CVAR(Bool, gl_paltonemap_reverselookup, true, CVAR_ARCHIVE | CVAR_NOINITCALL)
-{
-	if (GLRenderer)
-		GLRenderer->ClearTonemapPalette();
-}
-
-CVAR(Float, gl_menu_blur, -1.0f, CVAR_ARCHIVE)
-
-EXTERN_CVAR(Float, vid_brightness)
-EXTERN_CVAR(Float, vid_contrast)
-EXTERN_CVAR(Float, vid_saturation)
-EXTERN_CVAR(Int, gl_satformula)
 
 void FGLRenderer::RenderScreenQuad()
 {
@@ -186,6 +99,9 @@ void FGLRenderer::AmbientOccludeScene()
 	float r2 = aoRadius * aoRadius;
 
 	float blurSharpness = 1.0f / blurAmount;
+
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
 
 	float sceneScaleX = mSceneViewport.width / (float)mScreenViewport.width;
 	float sceneScaleY = mSceneViewport.height / (float)mScreenViewport.height;
@@ -254,7 +170,7 @@ void FGLRenderer::AmbientOccludeScene()
 
 	// Add SSAO back to scene texture:
 	mBuffers->BindSceneFB(false);
-	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
+	glViewport(screen->mSceneViewport.left, screen->mSceneViewport.top, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	glEnable(GL_BLEND);
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -291,6 +207,9 @@ void FGLRenderer::UpdateCameraExposure()
 
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
+
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
 
 	// Extract light level from scene texture:
 	auto &level0 = mBuffers->ExposureLevels[0];
@@ -364,6 +283,9 @@ void FGLRenderer::BloomScene(int fixedcm)
 	int sampleCount = gl_bloom_kernel_size;
 
 	auto &level0 = mBuffers->BloomLevels[0];
+
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
 
 	// Extract blooming pixels from scene texture:
 	level0.VFramebuffer.Bind();
@@ -450,7 +372,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
 	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);
 
-	const auto &viewport = mScreenViewport; // The area we want to blur. Could also be mSceneViewport if only the scene area is to be blured
+	const auto &viewport = screen->mScreenViewport; // The area we want to blur. Could also be mSceneViewport if only the scene area is to be blured
 
 	const auto &level0 = mBuffers->BloomLevels[0];
 
@@ -490,7 +412,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	// Copy blur back to scene texture:
 	mBuffers->BlitLinear(level0.VFramebuffer, mBuffers->GetCurrentFB(), 0, 0, level0.Width, level0.Height, viewport.left, viewport.top, viewport.width, viewport.height);
 
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
+	glViewport(viewport.left, viewport.top, viewport.width, viewport.height);
 
 	FGLDebug::PopGroup();
 }
@@ -639,7 +561,7 @@ void FGLRenderer::LensDistortScene()
 		0.0f
 	};
 
-	float aspect = mSceneViewport.width / (float)mSceneViewport.height;
+	float aspect = screen->mSceneViewport.width / (float)screen->mSceneViewport.height;
 
 	// Scale factor to keep sampling within the input texture
 	float r2 = aspect * aspect * 0.25 + 0.25f;
@@ -715,6 +637,8 @@ void FGLRenderer::ApplyFXAA()
 void FGLRenderer::Flush()
 {
 	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
 
 	if (stereo3dMode.IsMono() || !FGLRenderBuffers::IsEnabled())
 	{
@@ -747,7 +671,7 @@ void FGLRenderer::Flush()
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
+void FGLRenderer::CopyToBackbuffer(const IntRect *bounds, bool applyGamma)
 {
 	screen->Draw2D();	// draw all pending 2D stuff before copying the buffer
 	screen->Clear2D();
@@ -760,7 +684,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		FGLPostProcessState savedState;
 		mBuffers->BindOutputFB();
 
-		GL_IRECT box;
+		IntRect box;
 		if (bounds)
 		{
 			box = *bounds;
@@ -768,7 +692,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 		else
 		{
 			ClearBorders();
-			box = mOutputLetterbox;
+			box = screen->mOutputLetterbox;
 		}
 
 		mBuffers->BindCurrentTexture(0);
@@ -782,7 +706,7 @@ void FGLRenderer::CopyToBackbuffer(const GL_IRECT *bounds, bool applyGamma)
 	FGLDebug::PopGroup();
 }
 
-void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
+void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 {
 	glViewport(box.left, box.top, box.width, box.height);
 
@@ -815,7 +739,7 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 		mPresentShader->Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.f));
 		mPresentShader->GrayFormula.Set(static_cast<int>(gl_satformula));
 	}
-	mPresentShader->Scale.Set(mScreenViewport.width / (float)mBuffers->GetWidth(), mScreenViewport.height / (float)mBuffers->GetHeight());
+	mPresentShader->Scale.Set(screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight());
 	RenderScreenQuad();
 }
 
@@ -827,7 +751,7 @@ void FGLRenderer::DrawPresentTexture(const GL_IRECT &box, bool applyGamma)
 
 void FGLRenderer::ClearBorders()
 {
-	const auto &box = mOutputLetterbox;
+	const auto &box = screen->mOutputLetterbox;
 
 	int clientWidth = framebuffer->GetClientWidth();
 	int clientHeight = framebuffer->GetClientHeight();

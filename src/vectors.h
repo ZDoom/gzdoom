@@ -1362,7 +1362,7 @@ struct TAngle
 
 	vec_t Radians() const
 	{
-		return Degrees * (pi::pi() / 180.0);
+		return vec_t(Degrees * (pi::pi() / 180.0));
 	}
 
 	unsigned BAMs() const

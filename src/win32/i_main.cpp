@@ -915,23 +915,20 @@ void DoMain (HINSTANCE hInstance)
 		atterm (I_Quit);
 
 		// Figure out what directory the program resides in.
-		char *program;
-
-#ifdef _MSC_VER
-		if (_get_pgmptr(&program) != 0)
+		char progbuff[1024];
+		if (GetModuleFileName(nullptr, progbuff, sizeof progbuff) == 0)
 		{
 			I_FatalError("Could not determine program location.");
 		}
-#else
-		char progbuff[1024];
-		GetModuleFileName(0, progbuff, sizeof(progbuff));
 		progbuff[1023] = '\0';
-		program = progbuff;
-#endif
 
+		char *program = progbuff;
 		progdir = program;
 		program = progdir.LockBuffer();
-		*(strrchr(program, '\\') + 1) = '\0';
+		if (char *lastsep = strrchr(program, '\\'))
+		{
+			lastsep[1] = '\0';
+		}
 		FixPathSeperator(program);
 		progdir.Truncate((long)strlen(program));
 		progdir.UnlockBuffer();

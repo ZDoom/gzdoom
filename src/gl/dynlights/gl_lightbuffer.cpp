@@ -25,7 +25,7 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "hwrenderer/utility/hw_clock.h"

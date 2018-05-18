@@ -1,4 +1,4 @@
-// 
+//
 //---------------------------------------------------------------------------
 //
 // Copyright(C) 2005-2016 Christoph Oelckers
@@ -39,6 +39,7 @@
 #include "g_levellocals.h"
 #include "r_utility.h"
 #include "r_data/models/models.h"
+#include "r_data/models/models_ue1.h"
 #include "r_data/models/models_zmdl.h"
 #include "i_time.h"
 
@@ -415,7 +416,25 @@ static unsigned FindModel(const char * path, const char * modelfile)
 	FMemLump lumpd = Wads.ReadLump(lump);
 	char * buffer = (char*)lumpd.GetMem();
 
-	if (!memcmp(buffer, "DMDM", 4))
+	if ( fullname.IndexOf("_d.3d") == fullname.Len()-5 )
+	{
+		FString anivfile = fullname.GetChars();
+		anivfile.Substitute("_d.3d","_a.3d");
+		if ( Wads.CheckNumForFullName(anivfile) > 0 )
+		{
+			model = new FUE1Model;
+		}
+	}
+	else if ( fullname.IndexOf("_a.3d") == fullname.Len()-5 )
+	{
+		FString datafile = fullname.GetChars();
+		datafile.Substitute("_a.3d","_d.3d");
+		if ( Wads.CheckNumForFullName(datafile) > 0 )
+		{
+			model = new FUE1Model;
+		}
+	}
+	else if (!memcmp(buffer, "DMDM", 4))
 	{
 		model = new FDMDModel;
 	}
@@ -541,7 +560,7 @@ void gl_InitModels()
 				smf.xscale=smf.yscale=smf.zscale=1.f;
 
 				smf.type = PClass::FindClass(sc.String);
-				if (!smf.type || smf.type->Defaults == nullptr) 
+				if (!smf.type || smf.type->Defaults == nullptr)
 				{
 					sc.ScriptError("MODELDEF: Unknown actor type '%s'\n", sc.String);
 				}
@@ -581,7 +600,7 @@ void gl_InitModels()
 						sc.MustGetFloat();
 						smf.zscale = sc.Float;
 					}
-					// [BB] Added zoffset reading. 
+					// [BB] Added zoffset reading.
 					// Now it must be considered deprecated.
 					else if (sc.Compare("zoffset"))
 					{

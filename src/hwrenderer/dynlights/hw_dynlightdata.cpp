@@ -25,7 +25,6 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
 #include "actorinlines.h"
 
 #include "hw_dynlightdata.h"
@@ -55,11 +54,11 @@ bool FDynLightData::GetLight(int group, Plane & p, ADynamicLight * light, bool c
 	DVector3 pos = light->PosRelative(group);
 	float radius = (light->GetRadius());
 
-	float dist = fabsf(p.DistToPoint(pos.X, pos.Z, pos.Y));
+	auto dist = fabs(p.DistToPoint((float)pos.X, (float)pos.Z, (float)pos.Y));
 
 	if (radius <= 0.f) return false;
 	if (dist > radius) return false;
-	if (checkside && p.PointOnSide(pos.X, pos.Z, pos.Y))
+	if (checkside && p.PointOnSide((float)pos.X, (float)pos.Z, (float)pos.Y))
 	{
 		return false;
 	}
@@ -124,20 +123,20 @@ void FDynLightData::AddLightToList(int group, ADynamicLight * light)
 	if (light->IsSpot())
 	{
 		lightType = 1.0f;
-		spotInnerAngle = light->SpotInnerAngle.Cos();
-		spotOuterAngle = light->SpotOuterAngle.Cos();
+		spotInnerAngle = (float)light->SpotInnerAngle.Cos();
+		spotOuterAngle = (float)light->SpotOuterAngle.Cos();
 
 		DAngle negPitch = -light->Angles.Pitch;
 		double xzLen = negPitch.Cos();
-		spotDirX = -light->Angles.Yaw.Cos() * xzLen;
-		spotDirY = -negPitch.Sin();
-		spotDirZ = -light->Angles.Yaw.Sin() * xzLen;
+		spotDirX = float(-light->Angles.Yaw.Cos() * xzLen);
+		spotDirY = float(-negPitch.Sin());
+		spotDirZ = float(-light->Angles.Yaw.Sin() * xzLen);
 	}
 
 	float *data = &arrays[i][arrays[i].Reserve(16)];
-	data[0] = pos.X;
-	data[1] = pos.Z;
-	data[2] = pos.Y;
+	data[0] = float(pos.X);
+	data[1] = float(pos.Z);
+	data[2] = float(pos.Y);
 	data[3] = radius;
 	data[4] = r;
 	data[5] = g;

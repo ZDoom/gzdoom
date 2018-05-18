@@ -856,6 +856,8 @@ public:
 		if (level.flags2 & LEVEL2_WRAPMIDTEX) ld->flags |= ML_WRAP_MIDTEX;
 		if (level.flags2 & LEVEL2_CHECKSWITCHRANGE) ld->flags |= ML_CHECKSWITCHRANGE;
 
+		ld->forceAMap = 0;
+
 		sc.MustGetToken('{');
 		while (!sc.CheckToken('}'))
 		{
@@ -946,7 +948,7 @@ public:
 				continue;
 
 			case NAME_Mapped:
-				Flag(ld->flags, ML_MAPPED, key); 
+				Flag(ld->flags, ML_MAPPED, key);
 				continue;
 
 			case NAME_Jumpover:
@@ -1107,12 +1109,19 @@ public:
 				Flag(ld->flags, ML_3DMIDTEX_IMPASS, key);
 				continue;
 
+			case NAME_Revealed:
+				Flag(ld->flags, ML_REVEALED, key);
+				continue;
+
+			case NAME_ForceAMap:
+				ld->forceAMap = CheckInt(key);
+				continue;
+
 			case NAME_MoreIds:
 				// delay parsing of the tag string until parsing of the sector is complete
 				// This ensures that the ID is always the first tag in the list.
 				tagstring = CheckString(key);
 				break;
-
 
 			default:
 				break;

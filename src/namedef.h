@@ -531,12 +531,14 @@ xx(Wrapmidtex)
 xx(Midtex3d)
 xx(Checkswitchrange)
 xx(Firstsideonly)
-xx(Transparent)	
+xx(Transparent)
 xx(Passuse)
 xx(Repeatspecial)
 xx(Conversation)
 xx(Locknumber)
 xx(Midtex3dimpassible)
+xx(Revealed) // new
+xx(ForceAMap) // new
 
 xx(Playercross)
 xx(Playeruse)

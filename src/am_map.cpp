@@ -2658,7 +2658,7 @@ void AM_drawWalls (bool allmap)
 					AM_drawMline(&l, AMColors.TSWallColor);
 				}
 			}
-			else if (allmap)
+			else if (allmap || (line.flags & ML_REVEALED))
 			{
 				if ((line.flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 				{

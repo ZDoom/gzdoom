@@ -170,6 +170,7 @@ enum ELineFlags : unsigned
 	ML_BLOCKSIGHT				= 0x04000000,	// blocks monster line of sight
 	ML_BLOCKHITSCAN				= 0x08000000,	// blocks hitscan attacks
 	ML_3DMIDTEX_IMPASS			= 0x10000000,	// [TP] if 3D midtex, behaves like a height-restricted ML_BLOCKING
+	ML_REVEALED					= 0x20000000,	// set if revealed in automap
 
 	ML_PORTALCONNECT			= 0x80000000,	// for internal use only: This line connects to a sector with a linked portal (used to speed up sight checks.)
 };

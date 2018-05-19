@@ -81,7 +81,6 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
-	screen->enable_quadbuffered = self;
 }
 
 EXTERN_CVAR(Int, vid_refreshrate)
@@ -1082,6 +1081,7 @@ SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, int width, int height, int 
 
 	m_supportsGamma = !!GetDeviceGammaRamp(hDC, (void *)m_origGamma);
 	ReleaseDC(Window, hDC);
+    enable_quadbuffered = vr_enable_quadbuffered;
 }
 
 //==========================================================================

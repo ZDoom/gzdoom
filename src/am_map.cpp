@@ -2584,31 +2584,7 @@ void AM_drawWalls (bool allmap)
 				}
 
 				if (line.forceAMap > 0 && (am_cheat == 0 || am_cheat >= 4)) {
-					/*
-					0: IGNORE
-					1: 1-sided.
-					2: floor diff.
-					3: ceiling diff.
-					4: floor and ceiling diff.
-					5: 3D floor edge
-					6: Trigger
-					7: Door
-					8: Lock
-					9: Found Secret
-					10: Teleporter
-					11: Exit
-					12: Exit Teleporter
-					13:
-					14:
-					15:
-					16:
-					17:
-					18:
-					19:
-					20: ???
-					20s: Custom Color Linedefs
-					*/
-					switch (line.forceAMap)
+					switch (line.forceAMap)  // Mapper wants to force the automap to render the line a specific way.
 					{
 					case 1: // 1 sided
 						AM_drawMline(&l, AMColors.WallColor);
@@ -2632,21 +2608,8 @@ void AM_drawWalls (bool allmap)
 						AM_drawMline(&l, AMColors.SpecialWallColor); // Not sure this is implemented, but might as well be ready
 						continue;
 					case 8: // Locked
-							/*	if (AMColors.displayLocks && &lock) // This SHOULD be a feature, but I'm not implementing it right now.
-							{
-							color = P_GetMapColorForLock(lock);
-
-							AMColor c;
-
-							if (color >= 0)	c.FromRGB(RPART(color), GPART(color), BPART(color));
-							else c = AMColors[AMColors.LockedColor];
-
-							AM_drawMline(&l, c);
-							}
-							else
-							{*/
+						// TODO: should take into account the type of lock on a linedef.
 						AM_drawMline(&l, AMColors.LockedColor);  // locked special
-																 //	}
 						continue;
 					case 9: // Secret
 						AM_drawMline(&l, AMColors.SecretSectorColor);
@@ -2660,35 +2623,6 @@ void AM_drawWalls (bool allmap)
 					case 12: // Exit Teleport
 						AM_drawMline(&l, AMColors.InterTeleportColor);
 						continue;
-						break;
-						// Custom Line Types
-						/*case 21:
-						AM_drawMline(&l, AMColors.CustomLineType1);
-						continue;
-						case 22:
-						AM_drawMline(&l, AMColors.CustomLineType2);
-						continue;
-						case 23:
-						AM_drawMline(&l, AMColors.CustomLineType3);
-						continue;
-						case 24:
-						AM_drawMline(&l, AMColors.CustomLineType4);
-						continue;
-						case 25:
-						AM_drawMline(&l, AMColors.CustomLineType5);
-						continue;
-						case 26:
-						AM_drawMline(&l, AMColors.CustomLineType6);
-						continue;
-						case 27:
-						AM_drawMline(&l, AMColors.CustomLineType7);
-						continue;
-						case 28:
-						AM_drawMline(&l, AMColors.CustomLineType8);
-						continue;
-						case 29:
-						AM_drawMline(&l, AMColors.CustomLineType9);
-						continue;*/
 					}
 				}
 

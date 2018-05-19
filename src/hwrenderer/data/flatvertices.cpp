@@ -165,6 +165,7 @@ int FFlatVertexGenerator::CreateIndexedSectorVertices(sector_t *sec, const secpl
 		subsector_t *sub = sec->subsectors[j];
 		CreateIndexedSubsectorVertices(sub, plane, floor, vi, gen);
 	}
+	sec->ibocount = ibo_data.Size() - rt;
 	return rt;
 }
 

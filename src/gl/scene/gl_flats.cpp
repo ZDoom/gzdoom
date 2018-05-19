@@ -62,7 +62,35 @@ void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, 
 		(*dli)++;
 		return;
 	}
-	if (flat->SetupSubsectorLights(pass, sub, lightdata))
+	if (flat->SetupSectorLights(pass, flat->sector, lightdata))
+	{
+		int d = GLRenderer->mLights->UploadLights(lightdata);
+		if (pass == GLPASS_LIGHTSONLY)
+		{
+			GLRenderer->mLights->StoreIndex(d);
+		}
+		else
+		{
+			gl_RenderState.ApplyLightIndex(d);
+		}
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void FDrawInfo::SetupSectorLights(GLFlat *flat, int pass, int *dli)
+{
+	if (dli != NULL && *dli != -1)
+	{
+		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
+		(*dli)++;
+		return;
+	}
+	if (flat->SetupSectorLights(pass, flat->sector, lightdata))
 	{
 		int d = GLRenderer->mLights->UploadLights(lightdata);
 		if (pass == GLPASS_LIGHTSONLY)
@@ -137,13 +165,20 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 {
 	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
 
-	// Draw the subsectors belonging to this sector
-	for (int i=0; i< flat->sector->subsectorcount; i++)
+	if (flat->sector->ibocount > 0)
 	{
-		subsector_t * sub = flat->sector->subsectors[i];
-		if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
+		SetupSectorLights(flat, GLPASS_LIGHTSONLY, nullptr);
+	}
+	else
+	{
+		// Draw the subsectors belonging to this sector
+		for (int i = 0; i < flat->sector->subsectorcount; i++)
 		{
-			SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
+			subsector_t * sub = flat->sector->subsectors[i];
+			if (gl_drawinfo->ss_renderflags[sub->Index()] & flat->renderflags || istrans)
+			{
+				SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
+			}
 		}
 	}
 
@@ -175,7 +210,18 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 	gl_RenderState.Apply();
 	if (gl.legacyMode) processlights = false;
-	if (flat->vboindex >= 0)
+
+	auto vcount = flat->sector->ibocount;
+	if (vcount > 0)
+	{
+		if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
+		drawcalls.Clock();
+		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + flat->vboindex);
+		drawcalls.Unclock();
+		flatvertices += vcount;
+		flatprimitives++;
+	}
+	else if (flat->vboindex >= 0)
 	{
 		int index = flat->vboindex;
 		for (int i=0; i<flat->sector->subsectorcount; i++)

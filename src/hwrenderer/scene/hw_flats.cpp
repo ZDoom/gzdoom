@@ -261,7 +261,6 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	sector = &level.sectors[frontsector->sectornum];
 	extsector_t::xfloor &x = sector->e->XFloor;
 	dynlightindex = -1;
-	vertexcount = sector->ibocount;
 
 	uint8_t &srf = di->sectorrenderflags[sector->sectornum];
 

@@ -88,11 +88,6 @@ public:
 	void OutputResized(int width, int height);
 
 private:
-	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor);
-	int CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor);
-	int CreateVertices(int h, sector_t *sec, const secplane_t &plane, int floor);
-	void CreateFlatVertices();
-
 	int CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FIndexGenerationInfo &gen);
 	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FIndexGenerationInfo &gen);
 	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FIndexGenerationInfo> &gen);

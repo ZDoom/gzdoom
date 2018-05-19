@@ -48,6 +48,8 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
+CVAR(Bool, gl_render_subsectors, false, 0)
+
 //==========================================================================
 //
 // Flats 
@@ -165,7 +167,7 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 {
 	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
 
-	if (flat->sector->ibocount > 0)
+	if (flat->sector->ibocount > 0 && !gl_render_subsectors)
 	{
 		SetupSectorLights(flat, GLPASS_LIGHTSONLY, nullptr);
 	}
@@ -212,7 +214,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	if (gl.legacyMode) processlights = false;
 
 	auto vcount = flat->sector->ibocount;
-	if (vcount > 0)
+	if (vcount > 0 && !gl_render_subsectors)
 	{
 		if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
 		drawcalls.Clock();

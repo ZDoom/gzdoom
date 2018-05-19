@@ -537,6 +537,8 @@ xx(Repeatspecial)
 xx(Conversation)
 xx(Locknumber)
 xx(Midtex3dimpassible)
+xx(Revealed)
+xx(ForceAMap)
 
 xx(Playercross)
 xx(Playeruse)

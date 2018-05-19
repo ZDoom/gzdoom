@@ -1297,6 +1297,7 @@ struct line_t
 	int			locknumber;	// [Dusk] lock number for special
 	unsigned	portalindex;
 	unsigned	portaltransferred;
+	uint8_t	forceAMap; // Should be a uint8, but those don't reliably work in a switch
 
 	DVector2 Delta() const
 	{

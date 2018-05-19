@@ -470,16 +470,16 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 			int sx = u * viewport.width;
 			int sy = v * viewport.height;
 			int sindex = (sx + sy * viewport.width) * 3;
-			int dindex = (x + y * w) * 3;
+			int dindex = (x + (h - y - 1) * w) * 3;
 			ScreenshotBuffer[dindex] = pixels[sindex];
 			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
 			ScreenshotBuffer[dindex + 2] = pixels[sindex + 2];
 		}
 	}
 
-	pitch = -w*3;
+	pitch = w * 3;
 	color_type = SS_RGB;
-	buffer = ScreenshotBuffer + w * 3 * (h - 1);
+	buffer = ScreenshotBuffer;
 
 	// Screenshot should not use gamma correction if it was already applied to rendered image
 	EXTERN_CVAR(Bool, fullscreen);

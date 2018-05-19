@@ -1087,9 +1087,10 @@ public:
 		vbo_fakeceiling = ceiling+2,
 	};
 
-	int				vboindex[4];	// VBO indices of the 4 planes this sector uses during rendering
+	int				vboindex[4];	// VBO/IBO indices of the 4 planes this sector uses during rendering
 	double			vboheight[2];	// Last calculated height for the 2 planes of this actual sector
-	int				vbocount[2];	// Total count of vertices belonging to this sector's planes
+	int				vbocount[2];	// Total count of vertices belonging to this sector's planes. This is used when a sector height changes and also contains all attached planes.
+	int				ibocount;		// number of indices per plane (identical for all planes.) If this is -1 the index buffer is not in use.
 
 	float GetReflect(int pos) { return gl_plane_reflection_i? reflect[pos] : 0; }
 	bool VBOHeightcheck(int pos) const { return vboheight[pos] == GetPlaneTexZ(pos); }

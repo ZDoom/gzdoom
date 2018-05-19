@@ -588,6 +588,7 @@ bool FDrawInfo::PutFlatCompat(GLFlat *flat, bool fog)
 	int list = list_indices[masked][foggy];
 	auto newflat = gl_drawinfo->dldrawlists[list].NewFlat();
 	*newflat = *flat;
+	newflat->vboindex = -1;	// don't use the vertex buffer with legacy lights to ensure all passes use the same render logic.
 	return true;
 }
 

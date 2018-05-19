@@ -186,7 +186,8 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 			{
 				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
 				drawcalls.Clock();
-				glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
+				//glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
+				glDrawElements(GL_TRIANGLE_FAN, sub->numlines, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
 				drawcalls.Unclock();
 				flatvertices += sub->numlines;
 				flatprimitives++;

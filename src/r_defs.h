@@ -1281,6 +1281,26 @@ struct side_t
 
 };
 
+enum AutomapLineStyle : int
+{
+	AMLS_Default,
+	AMLS_OneSided,
+	AMLS_TwoSided,
+	AMLS_FloorDiff,
+	AMLS_CeilingDiff,
+	AMLS_ExtraFloor,
+	AMLS_Special,
+	AMLS_Secret,
+	AMLS_NotSeen,
+	AMLS_Locked,
+	AMLS_IntraTeleport,
+	AMLS_InterTeleport,
+	AMLS_UnexploredSecret,
+	AMLS_Portal,
+
+	AMLS_COUNT
+};
+
 struct line_t
 {
 	vertex_t	*v1, *v2;	// vertices, from v1 to v2
@@ -1297,6 +1317,7 @@ struct line_t
 	int			locknumber;	// [Dusk] lock number for special
 	unsigned	portalindex;
 	unsigned	portaltransferred;
+	AutomapLineStyle automapstyle;
 
 	DVector2 Delta() const
 	{

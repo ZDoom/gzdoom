@@ -181,24 +181,23 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{
 			subsector_t * sub = flat->sector->subsectors[i];
+			if (sub->numlines <= 2) continue;
 				
 			if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 			{
 				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
 				drawcalls.Clock();
-				//glDrawArrays(GL_TRIANGLE_FAN, index, sub->numlines);
-				glDrawElements(GL_TRIANGLE_FAN, sub->numlines, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
+				glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
 				drawcalls.Unclock();
 				flatvertices += sub->numlines;
 				flatprimitives++;
 			}
-			index += sub->numlines;
+			index += (sub->numlines - 2) * 3;
 		}
 	}
 	else
 	{
 		// Draw the subsectors belonging to this sector
-		// (can this case even happen?)
 		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{
 			subsector_t * sub = flat->sector->subsectors[i];

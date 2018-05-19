@@ -234,11 +234,20 @@ void FFlatVertexGenerator::CreateFlatVertices()
 
 int FFlatVertexGenerator::CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FFlatVertexGenerator::FIndexGenerationInfo &gen)
 {
-	int idx = ibo_data.Reserve(sub->numlines);
-	for (unsigned int k = 0; k<sub->numlines; k++)
+	if (sub->numlines < 3) return -1;
+
+	int idx = ibo_data.Reserve((sub->numlines - 2) * 3);
+	int idxc = idx;
+	int firstndx = gen.GetIndex(sub->firstline[0].v1);
+	int secondndx = gen.GetIndex(sub->firstline[1].v1);
+	for (unsigned int k = 2; k<sub->numlines; k++)
 	{
 		auto ndx = gen.GetIndex(sub->firstline[k].v1);
-		ibo_data[idx + k] = vi + ndx;
+
+		ibo_data[idx++] = vi + firstndx;
+		ibo_data[idx++] = vi + secondndx;
+		ibo_data[idx++] = vi + ndx;
+		secondndx = ndx;
 	}
 	return idx;
 }

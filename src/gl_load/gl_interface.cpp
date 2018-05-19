@@ -238,7 +238,12 @@ void gl_LoadExtensions()
 						// Intel's GLSL compiler is a bit broken with extensions, so unlock the feature only if not on Intel or having GL 4.3.
 						if (strstr(gl.vendorstring, "Intel") == NULL || gl_version >= 4.3f)
 						{
-							gl.flags |= RFL_SHADER_STORAGE_BUFFER;
+							// Mesa implements shader storage only for fragment shaders.
+							// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
+							int v;
+							glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
+							if (v > 0)
+								gl.flags |= RFL_SHADER_STORAGE_BUFFER;
 						}
 					}
 					gl.flags |= RFL_BUFFER_STORAGE;

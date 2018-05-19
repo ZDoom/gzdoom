@@ -46,7 +46,7 @@ bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int
 	FMemLump lump2;
 	const char *buffer2;
 	FString realfilename = Wads.GetLumpFullName(lumpnum);
-	if ( realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
+	if ( (size_t)realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
 	{
 		realfilename.Substitute("_d.3d","_a.3d");
 		lumpnum2 = Wads.CheckNumForFullName(realfilename);

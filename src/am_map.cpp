@@ -326,6 +326,30 @@ struct AMColorset
 
 //=============================================================================
 //
+// automap colors forced by linedef
+//
+//=============================================================================
+
+static const int AUTOMAP_LINE_COLORS[AMLS_COUNT] =
+{
+	-1, 								// AMLS_Default (unused)
+	AMColorset::WallColor, 				// AMLS_OneSided,
+	AMColorset::TSWallColor, 			// AMLS_TwoSided
+	AMColorset::FDWallColor, 			// AMLS_FloorDiff
+	AMColorset::CDWallColor, 			// AMLS_CeilingDiff
+	AMColorset::EFWallColor, 			// AMLS_ExtraFloor
+	AMColorset::SpecialWallColor, 		// AMLS_Special
+	AMColorset::SecretWallColor, 		// AMLS_Secret
+	AMColorset::NotSeenColor, 			// AMLS_NotSeen
+	AMColorset::LockedColor, 			// AMLS_Locked
+	AMColorset::IntraTeleportColor, 	// AMLS_IntraTeleport
+	AMColorset::InterTeleportColor, 	// AMLS_InterTeleport
+	AMColorset::UnexploredSecretColor, 	// AMLS_UnexploredSecret
+	AMColorset::PortalColor, 			// AMLS_Portal
+};
+
+//=============================================================================
+//
 // predefined colorsets
 //
 //=============================================================================
@@ -2581,6 +2605,13 @@ void AM_drawWalls (bool allmap)
 					{
 						continue;
 					}
+				}
+
+				if (line.automapstyle > AMLS_Default && line.automapstyle < AMLS_COUNT
+					&& (am_cheat == 0 || am_cheat >= 4))
+				{
+					AM_drawMline(&l, AUTOMAP_LINE_COLORS[line.automapstyle]);
+					continue;
 				}
 
 				if (portalmode)

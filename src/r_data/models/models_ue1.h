@@ -58,12 +58,12 @@ private:
 	// converted data structures
 	struct UE1Vertex
 	{
-		DVector3 Pos, Normal;
+		FVector3 Pos, Normal;
 	};
 	struct UE1Poly
 	{
 		int V[3];
-		DVector2 C[3];
+		FVector2 C[3];
 		int texNum;
 	};
 	struct UE1Group

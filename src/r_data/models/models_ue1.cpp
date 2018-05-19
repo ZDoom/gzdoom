@@ -98,7 +98,7 @@ void FUE1Model::LoadGeometry()
 		{
 			UE1Vertex Vert;
 			// unpack position
-			Vert.Pos = DVector3(unpackuvert(averts[j+i*numVerts],0),
+			Vert.Pos = FVector3(unpackuvert(averts[j+i*numVerts],0),
 				unpackuvert(averts[j+i*numVerts],1),
 				unpackuvert(averts[j+i*numVerts],2));
 			// push vertex (without normals, will be calculated later)
@@ -114,7 +114,7 @@ void FUE1Model::LoadGeometry()
 			Poly.V[j] = dpolys[i].vertices[j];
 		// unpack coords
 		for ( int j=0; j<3; j++ )
-			Poly.C[j] = DVector2(dpolys[i].uv[j][0]/255.f,dpolys[i].uv[j][1]/255.f);
+			Poly.C[j] = FVector2(dpolys[i].uv[j][0]/255.f,dpolys[i].uv[j][1]/255.f);
 		Poly.texNum = dpolys[i].texnum;
 		// push
 		polys.Push(Poly);
@@ -126,11 +126,11 @@ void FUE1Model::LoadGeometry()
 	{
 		for ( int j=0; j<numVerts; j++ )
 		{
-			DVector3 nsum = DVector3(0,0,0);
+			FVector3 nsum = FVector3(0,0,0);
 			for ( int k=0; k<numPolys; k++ )
 			{
 				if ( (polys[k].V[0] != j) && (polys[k].V[1] != j) && (polys[k].V[2] != j) ) continue;
-				DVector3 vert[3], dir[2], norm;
+				FVector3 vert[3], dir[2], norm;
 				// compute facet normal
 				for ( int l=0; l<3; l++ )
 					vert[l] = verts[polys[k].V[l]+numVerts*i].Pos;
@@ -225,7 +225,7 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 				for ( int l=2; l>=0; l-- )
 				{
 					UE1Vertex V = verts[polys[groups[j].P[k]].V[l]+i*numVerts];
-					DVector2 C = polys[groups[j].P[k]].C[l];
+					FVector2 C = polys[groups[j].P[k]].C[l];
 					FModelVertex *vert = &vptr[vidx++];
 					vert->Set(V.Pos.X,V.Pos.Y,V.Pos.Z,C.X,C.Y);
 					vert->SetNormal(V.Normal.X,V.Normal.Y,V.Normal.Z);

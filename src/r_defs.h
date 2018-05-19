@@ -979,32 +979,18 @@ public:
 	double		CenterFloor() const { return floorplane.ZatPoint(centerspot); }
 	double		CenterCeiling() const { return ceilingplane.ZatPoint(centerspot); }
 
+	void CopyColors(sector_t *other)
+	{
+		memcpy(SpecialColors, other->SpecialColors, sizeof(SpecialColors));
+		Colormap = other->Colormap;
+	}
+
 	// [RH] store floor and ceiling planes instead of heights
 	secplane_t	floorplane, ceilingplane;
 
 	// [RH] give floor and ceiling even more properties
 	PalEntry SpecialColors[5];
 	FColormap Colormap;
-
-private:
-	FDynamicColormap *_ColorMap;	// [RH] Per-sector colormap
-
-public:
-	// just a helper for refactoring 
-	FDynamicColormap *GetColorMap()
-	{
-		return _ColorMap;
-	}
-
-	void CopyColors(sector_t *other)
-	{
-		memcpy(SpecialColors, other->SpecialColors, sizeof(SpecialColors));
-		Colormap = other->Colormap;
-
-		_ColorMap = other->_ColorMap;
-	}
-
-
 
 	TObjPtr<AActor*> SoundTarget;
 

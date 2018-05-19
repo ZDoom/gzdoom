@@ -29,7 +29,7 @@
 #include "vectors.h" // RAD2DEG
 #include "doomtype.h" // M_PI
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"

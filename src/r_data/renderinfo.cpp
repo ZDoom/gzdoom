@@ -26,7 +26,6 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
 #include "doomtype.h"
 #include "p_local.h"
 #include "p_spec.h"

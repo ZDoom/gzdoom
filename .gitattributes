@@ -15,6 +15,7 @@
 *.vcproj	text eol=crlf
 *.sln		text eol=crlf
 *.bat		text eol=crlf
+*.rc		text eol=crlf
 
 *.txt		text
 language.*	text

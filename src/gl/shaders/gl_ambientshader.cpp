@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_ambientshader.h"

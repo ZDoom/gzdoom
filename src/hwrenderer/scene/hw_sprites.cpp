@@ -25,7 +25,6 @@
 **
 */
 
-#include "gl/system/gl_system.h"
 #include "p_local.h"
 #include "p_effect.h"
 #include "g_level.h"

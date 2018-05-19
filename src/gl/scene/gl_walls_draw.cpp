@@ -20,7 +20,7 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "a_sharedglobal.h"
@@ -28,7 +28,7 @@
 #include "actorinlines.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"

@@ -28,7 +28,7 @@
 #include <mutex>
 #include "tarray.h"
 #include "hwrenderer/utility/hw_clock.h"
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "r_data/models/models.h"
 #include "hwrenderer/data/flatvertices.h"
 #include "hwrenderer/scene/hw_skydome.h"

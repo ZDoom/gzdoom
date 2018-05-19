@@ -53,7 +53,6 @@
 **---------------------------------------------------------------------------
 **
 */
-#include "gl/system/gl_system.h"
 #include "doomtype.h"
 #include "g_level.h"
 #include "w_wad.h"
@@ -97,7 +96,7 @@ void FSkyDomeCreator::SkyVertex(int r, int c, bool zflip)
 	static const float scale = 10000.;
 
 	FAngle topAngle = (c / (float)mColumns * 360.f);
-	FAngle sideAngle = maxSideAngle * (mRows - r) / mRows;
+	FAngle sideAngle = maxSideAngle * float(mRows - r) / float(mRows);
 	float height = sideAngle.Sin();
 	float realRadius = scale * sideAngle.Cos();
 	FVector2 pos = topAngle.ToVector(realRadius);

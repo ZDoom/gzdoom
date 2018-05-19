@@ -26,12 +26,12 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "m_png.h"
 #include "templates.h"
 
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
@@ -382,6 +382,11 @@ void OpenGLFrameBuffer::ResetFixedColormap()
 	}
 }
 
+void OpenGLFrameBuffer::BlurScene(float amount)
+{
+	GLRenderer->BlurScene(amount);
+}
+
 bool OpenGLFrameBuffer::RenderBuffersEnabled()
 {
 	return FGLRenderBuffers::IsEnabled();
@@ -465,16 +470,16 @@ void OpenGLFrameBuffer::GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, 
 			int sx = u * viewport.width;
 			int sy = v * viewport.height;
 			int sindex = (sx + sy * viewport.width) * 3;
-			int dindex = (x + y * w) * 3;
+			int dindex = (x + (h - y - 1) * w) * 3;
 			ScreenshotBuffer[dindex] = pixels[sindex];
 			ScreenshotBuffer[dindex + 1] = pixels[sindex + 1];
 			ScreenshotBuffer[dindex + 2] = pixels[sindex + 2];
 		}
 	}
 
-	pitch = -w*3;
+	pitch = w * 3;
 	color_type = SS_RGB;
-	buffer = ScreenshotBuffer + w * 3 * (h - 1);
+	buffer = ScreenshotBuffer;
 
 	// Screenshot should not use gamma correction if it was already applied to rendered image
 	EXTERN_CVAR(Bool, fullscreen);

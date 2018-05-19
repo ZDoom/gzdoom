@@ -43,6 +43,7 @@ public:
 	void BeginFrame() override;
 	bool RenderBuffersEnabled() override;
 	void SetOutputViewport(IntRect *bounds) override;
+	void BlurScene(float amount) override;
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
@@ -63,7 +64,6 @@ public:
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 private:
-	uint8_t *ScreenshotBuffer;			// What the name says. This must be maintained because the software renderer can return a locked canvas surface which the caller cannot release.
 	int camtexcount = 0;
 
 	class Wiper

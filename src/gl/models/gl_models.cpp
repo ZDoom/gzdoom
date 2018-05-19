@@ -26,7 +26,7 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "w_wad.h"
 #include "g_game.h"
 #include "doomstat.h"
@@ -37,7 +37,7 @@
 #include "i_time.h"
 #include "hwrenderer/textures/hw_material.h"
 
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"

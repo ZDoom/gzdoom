@@ -38,7 +38,7 @@
 
 #include "gl_stereo3d.h"
 #include "gl_stereo_leftright.h"
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/renderer/gl_renderstate.h"
 
 

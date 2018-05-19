@@ -114,7 +114,7 @@ void FUE1Model::LoadGeometry()
 			Poly.V[j] = dpolys[i].vertices[j];
 		// unpack coords
 		for ( int j=0; j<3; j++ )
-			Poly.C[j] = DVector2(dpolys[i].uv[j][0]/255.,dpolys[i].uv[j][1]/255.);
+			Poly.C[j] = DVector2(dpolys[i].uv[j][0]/255.f,dpolys[i].uv[j][1]/255.f);
 		Poly.texNum = dpolys[i].texnum;
 		// push
 		polys.Push(Poly);

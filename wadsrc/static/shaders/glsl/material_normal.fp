@@ -10,6 +10,7 @@ vec3 lightContribution(int i, vec3 normal)
 	if (lightpos.w < lightdistance)
 		return vec3(0.0); // Early out lights touching surface but not this fragment
 
+	vec3 lightdir = normalize(lightpos.xyz - pixelpos.xyz);
 	float dotprod = dot(normal, lightdir);
 	if (dotprod < 0.0) return vec3(0.0);	// light hits from the backside. This can happen with full sector light lists and must be rejected for all cases.
 	
@@ -20,7 +21,6 @@ vec3 lightContribution(int i, vec3 normal)
 
 	if (lightcolor.a < 0.0) // Sign bit is the attenuated light flag
 	{
-		vec3 lightdir = normalize(lightpos.xyz - pixelpos.xyz);
 		attenuation *= clamp(dotprod, 0.0, 1.0);
 	}
 

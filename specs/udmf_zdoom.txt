@@ -122,7 +122,24 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       arg0str = <string>;         // Alternate string-based version of arg0
       moreids = <string>;         // Additional line IDs, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
 
-      transparent   = <bool>; // true = line is a Strife transparent line (alpha 0.25)
+      transparent   = <bool>;     // true = line is a Strife transparent line (alpha 0.25)
+
+      automapstyle = <integer>;   // Explicit automap style. Possible values can be
+                                  //  0: Automap style is based on line properties (default).
+                                  //  1: One-sided wall.
+                                  //  2: Two-sided wall.
+                                  //  3: Floor levels of front and back sectors are different.
+                                  //  4: Ceiling levels of front and back sectors are different.
+                                  //  5: 3D floor border.
+                                  //  6: Wall with special non-door action.
+                                  //  7: Secret door.
+                                  //  8: Wall not seen yet.
+                                  //  9: Locked door.
+                                  // 10: Intra-level teleporter.
+                                  // 11: Inter-level or game-ending teleporter.
+                                  // 12: Unexplored secret wall.
+                                  // 13: Portal line.
+      revealed = <bool>;          // true = line is initially visible on automap.
 
       * Note about arg0str
 
@@ -431,6 +448,7 @@ sector material colors.
 arg0str in dynamic lights.
 
 1.30 20.05.2018
+Added automapstyle and revealed linedef properties.
 Replaced tabs with spaces.
 
 ===============================================================================

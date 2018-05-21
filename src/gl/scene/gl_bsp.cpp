@@ -46,6 +46,7 @@ void GLSceneDrawer::UnclipSubsector(subsector_t *sub)
 {
 	int count = sub->numlines;
 	seg_t * seg = sub->firstline;
+	auto &clipper = *gl_drawinfo->mClipper;
 
 	while (count--)
 	{
@@ -88,6 +89,7 @@ void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
 		if (clipres == PClip_InFront) return;
 	}
 
+	auto &clipper = *gl_drawinfo->mClipper;
 	angle_t startAngle = clipper.GetClipAngle(seg->v2);
 	angle_t endAngle = clipper.GetClipAngle(seg->v1);
 
@@ -225,7 +227,7 @@ void GLSceneDrawer::RenderPolyBSPNode (void *node)
 		side ^= 1;
 
 		// It is not necessary to use the slower precise version here
-		if (!clipper.CheckBox(bsp->bbox[side]))
+		if (!gl_drawinfo->mClipper->CheckBox(bsp->bbox[side]))
 		{
 			return;
 		}
@@ -429,7 +431,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 		// range this subsector spans before going on.
 		UnclipSubsector(sub);
 	}
-	if (clipper.IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
+	if (gl_drawinfo->mClipper->IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
 
 	fakesector=hw_FakeFlat(sector, &fake, gl_drawinfo->in_area, false);
 
@@ -575,7 +577,7 @@ void GLSceneDrawer::RenderBSPNode (void *node)
 		side ^= 1;
 
 		// It is not necessary to use the slower precise version here
-		if (!clipper.CheckBox(bsp->bbox[side]))
+		if (!gl_drawinfo->mClipper->CheckBox(bsp->bbox[side]))
 		{
 			if (!(gl_drawinfo->no_renderflags[bsp->Index()] & SSRF_SEEN))
 				return;

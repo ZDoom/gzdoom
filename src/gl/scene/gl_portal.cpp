@@ -286,14 +286,14 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
 }
 
 
-inline void GLPortal::ClearClipper()
+inline void GLPortal::ClearClipper(FDrawInfo *di)
 {
 	DAngle angleOffset = deltaangle(savedAngles.Yaw, r_viewpoint.Angles.Yaw);
 
-	drawer->clipper.Clear();
+	di->mClipper->Clear();
 
 	// Set the clipper to the minimal visible area
-	drawer->clipper.SafeAddClipRange(0,0xffffffff);
+	di->mClipper->SafeAddClipRange(0,0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
 		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - savedViewPos).Angle() + angleOffset;
@@ -301,16 +301,16 @@ inline void GLPortal::ClearClipper()
 
 		if (deltaangle(endAngle, startAngle) < 0)
 		{
-			drawer->clipper.SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
+			di->mClipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
 		}
 	}
 
 	// and finally clip it to the visible area
 	angle_t a1 = drawer->FrustumAngle();
-	if (a1 < ANGLE_180) drawer->clipper.SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
+	if (a1 < ANGLE_180) di->mClipper->SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
 
 	// lock the parts that have just been clipped out.
-	drawer->clipper.SetSilhouette();
+	di->mClipper->SetSilhouette();
 }
 
 //-----------------------------------------------------------------------------
@@ -607,7 +607,7 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 	inskybox = true;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	di->SetViewArea();
-	ClearClipper();
+	ClearClipper(di);
 
 	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
 
@@ -717,15 +717,15 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	SetupCoverage(di);
-	ClearClipper();
+	ClearClipper(di);
 	
 	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.
 	// The portal will re-validate the necessary parts when its subsectors get traversed.
 	subsector_t *sub = R_PointInSubsector(r_viewpoint.Pos);
 	if (!(di->ss_renderflags[sub->Index()] & SSRF_SEEN))
 	{
-		drawer->clipper.SafeAddClipRange(0, ANGLE_MAX);
-		drawer->clipper.SetBlocked(true);
+		di->mClipper->SafeAddClipRange(0, ANGLE_MAX);
+		di->mClipper->SetBlocked(true);
 	}
 
 	drawer->DrawScene(di, DM_PORTAL);
@@ -771,7 +771,7 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 
 	PlaneMirrorFlag++;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
-	ClearClipper();
+	ClearClipper(di);
 
 	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
 	drawer->DrawScene(di, DM_PORTAL);
@@ -938,14 +938,14 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 	MirrorFlag++;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
-	drawer->clipper.Clear();
+	di->mClipper->Clear();
 
 	angle_t af = drawer->FrustumAngle();
-	if (af<ANGLE_180) drawer->clipper.SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs()+af, r_viewpoint.Angles.Yaw.BAMs()-af);
+	if (af<ANGLE_180) di->mClipper->SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs()+af, r_viewpoint.Angles.Yaw.BAMs()-af);
 
 	angle_t a2 = linedef->v1->GetClipAngle();
 	angle_t a1 = linedef->v2->GetClipAngle();
-	drawer->clipper.SafeAddClipRange(a1,a2);
+	di->mClipper->SafeAddClipRange(a1,a2);
 
 	gl_RenderState.SetClipLine(linedef);
 	gl_RenderState.EnableClipLine(true);
@@ -1017,7 +1017,7 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 	GLRenderer->mViewActor = nullptr;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
-	ClearClipper();
+	ClearClipper(di);
 	gl_RenderState.SetClipLine(glport->lines[0]->mDestination);
 	gl_RenderState.EnableClipLine(true);
 	drawer->DrawScene(di, DM_PORTAL);

@@ -14,6 +14,7 @@ class IShadowMap;
 struct particle_t;
 struct FDynLightData;
 struct HUDSprite;
+class Clipper;
 
 //==========================================================================
 //
@@ -83,6 +84,7 @@ struct HWDrawInfo
 	FVector2 mViewVector;
 	AActor *mViewActor;
 	IShadowMap *mShadowMap;
+	Clipper *mClipper;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;

@@ -91,7 +91,7 @@ protected:
 	void End(bool usestencil);
 	virtual void DrawContents(FDrawInfo *di)=0;
 	virtual void * GetSource() const =0;	// GetSource MUST be implemented!
-	void ClearClipper();
+	void ClearClipper(FDrawInfo *di);
 	virtual bool IsSky() { return false; }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }

@@ -44,7 +44,6 @@ public:
 		GLPortal::drawer = this;
 	}
 
-	Clipper clipper;
 	int		FixedColormap;
 
 	angle_t FrustumAngle();
@@ -64,12 +63,6 @@ public:
 	sector_t *RenderViewpoint(AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	sector_t *RenderView(player_t *player);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
-
-	void InitClipper(angle_t a1, angle_t a2)
-	{
-		clipper.Clear();
-		clipper.SafeAddClipRangeRealAngles(a1, a2);
-	}
 
 	void SetView()
 	{

@@ -191,10 +191,16 @@ FDrawInfo::~FDrawInfo()
 // Sets up a new drawinfo struct
 //
 //==========================================================================
+
+// OpenGL has no use for multiple clippers so use the same one for all DrawInfos.
+static Clipper staticClipper;
+
 FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mDrawer = drawer;
+	di->mClipper = &staticClipper;
+	staticClipper.Clear();
     di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
 	return di;

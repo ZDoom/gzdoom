@@ -214,7 +214,7 @@ void GLSceneDrawer::SetupView(float vx, float vy, float vz, DAngle va, bool mirr
 void GLSceneDrawer::CreateScene(FDrawInfo *di)
 {
 	angle_t a1 = FrustumAngle();
-	InitClipper(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
+	di->mClipper->SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
 
 	// reset the portal manager
 	GLPortal::StartFrame();

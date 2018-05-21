@@ -33,9 +33,6 @@
 #include "actorinlines.h"
 #include "i_time.h"
 
-void gl_FlushModels();
-bool polymodelsInUse;
-
 void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)
 {
 	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
@@ -52,11 +49,6 @@ void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint
 
 PolyModelRenderer::PolyModelRenderer(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue) : Thread(thread), WorldToClip(worldToClip), StencilValue(stencilValue)
 {
-	if (!polymodelsInUse)
-	{
-		gl_FlushModels();
-		polymodelsInUse = true;
-	}
 }
 
 void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)

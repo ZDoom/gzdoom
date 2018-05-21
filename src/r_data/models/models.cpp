@@ -171,7 +171,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 {
 	AActor * playermo = players[consoleplayer].camera;
-	FSpriteModelFrame *smf = gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
+	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
 
 	// [BB] No model found for this sprite, so we can't render anything.
 	if (smf == nullptr)
@@ -247,7 +247,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 					}
 				}
 				if (inter != 0.0)
-					smfNext = gl_FindModelFrame(ti, nextState->sprite, nextState->Frame, false);
+					smfNext = FindModelFrame(ti, nextState->sprite, nextState->Frame, false);
 			}
 		}
 	}
@@ -259,7 +259,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 			FModel * mdl = Models[smf->modelIDs[i]];
 			FTexture *tex = smf->skinIDs[i].isValid() ? TexMan(smf->skinIDs[i]) : nullptr;
 			mdl->BuildVertexBuffer(this);
-			SetVertexBuffer(mdl->mVBuf);
+			SetVertexBuffer(mdl->GetVertexBuffer(this));
 
 			mdl->PushSpriteMDLFrame(smf, i);
 
@@ -275,17 +275,7 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FStat
 
 /////////////////////////////////////////////////////////////////////////////
 
-void gl_LoadModels()
-{
-	/*
-	for (int i = Models.Size() - 1; i >= 0; i--)
-	{
-		Models[i]->BuildVertexBuffer();
-	}
-	*/
-}
-
-void gl_FlushModels()
+void FlushModels()
 {
 	for (int i = Models.Size() - 1; i >= 0; i--)
 	{
@@ -295,9 +285,24 @@ void gl_FlushModels()
 
 /////////////////////////////////////////////////////////////////////////////
 
+FModel::FModel()
+{
+	for (int i = 0; i < NumModelRendererTypes; i++)
+		mVBuf[i] = nullptr;
+}
+
 FModel::~FModel()
 {
-	if (mVBuf != nullptr) delete mVBuf;
+	DestroyVertexBuffer();
+}
+
+void FModel::DestroyVertexBuffer()
+{
+	for (int i = 0; i < NumModelRendererTypes; i++)
+	{
+		delete mVBuf[i];
+		mVBuf[i] = nullptr;
+	}
 }
 
 static TArray<FSpriteModelFrame> SpriteModelFrames;
@@ -842,11 +847,11 @@ void gl_InitModels()
 
 //===========================================================================
 //
-// gl_FindModelFrame
+// FindModelFrame
 //
 //===========================================================================
 
-FSpriteModelFrame * gl_FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped)
+FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped)
 {
 	if (GetDefaultByType(ti)->hasmodel)
 	{
@@ -887,11 +892,11 @@ FSpriteModelFrame * gl_FindModelFrame(const PClass * ti, int sprite, int frame, 
 
 //===========================================================================
 //
-// gl_IsHUDModelForPlayerAvailable
+// IsHUDModelForPlayerAvailable
 //
 //===========================================================================
 
-bool gl_IsHUDModelForPlayerAvailable (player_t * player)
+bool IsHUDModelForPlayerAvailable (player_t * player)
 {
 	if (player == nullptr || player->ReadyWeapon == nullptr)
 		return false;
@@ -902,7 +907,7 @@ bool gl_IsHUDModelForPlayerAvailable (player_t * player)
 		return false;
 
 	FState* state = psp->GetState();
-	FSpriteModelFrame *smf = gl_FindModelFrame(player->ReadyWeapon->GetClass(), state->sprite, state->GetFrame(), false);
+	FSpriteModelFrame *smf = FindModelFrame(player->ReadyWeapon->GetClass(), state->sprite, state->GetFrame(), false);
 	return ( smf != nullptr );
 }
 

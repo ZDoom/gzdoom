@@ -119,7 +119,7 @@ void hw_PrecacheTexture(uint8_t *texhitlist, TMap<PClassActor*, bool> &actorhitl
 		{
 			auto &state = cls->GetStates()[i];
 			spritelist[state.sprite].Insert(gltrans, true);
-			FSpriteModelFrame * smf = gl_FindModelFrame(cls, state.sprite, state.Frame, false);
+			FSpriteModelFrame * smf = FindModelFrame(cls, state.sprite, state.Frame, false);
 			if (smf != NULL)
 			{
 				for (int i = 0; i < MAX_MODELS_PER_FRAME; i++)

@@ -36,6 +36,7 @@ class FGLModelRenderer : public FModelRenderer
 public:
 	FGLModelRenderer(int mli) : modellightindex(mli)
 	{}
+	ModelRendererType GetType() const override { return GLModelRendererType; }
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) override;
 	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;

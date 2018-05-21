@@ -962,7 +962,7 @@ namespace swrenderer
 					{
 						int spritenum = thing->sprite;
 						bool isPicnumOverride = thing->picnum.isValid();
-						FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+						FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 						if (modelframe && (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared() < model_distance_cull)
 						{
 							DVector3 pos = thing->InterpolatedPosition(Thread->Viewport->viewpoint.TicFrac);

@@ -271,7 +271,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 //
 //
 //-----------------------------------------------------------------------------
-void GLSkyPortal::DrawContents()
+void GLSkyPortal::DrawContents(FDrawInfo *di)
 {
 	bool drawBoth = false;
 

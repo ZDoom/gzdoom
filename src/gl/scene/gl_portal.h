@@ -89,9 +89,9 @@ protected:
 	GLPortal(bool local = false) { if (!local) portals.Push(this); }
 	virtual ~GLPortal() { }
 
-	bool Start(bool usestencil, bool doquery);
+	bool Start(bool usestencil, bool doquery, FDrawInfo **pDi);
 	void End(bool usestencil);
-	virtual void DrawContents()=0;
+	virtual void DrawContents(FDrawInfo *di)=0;
 	virtual void * GetSource() const =0;	// GetSource MUST be implemented!
 	void ClearClipper();
 	virtual bool IsSky() { return false; }
@@ -111,9 +111,10 @@ public:
 		// Start may perform an occlusion query. If that returns 0 there
 		// is no need to draw the stencil's contents and there's also no
 		// need to restore the affected area becasue there is none!
-		if (Start(usestencil, doquery))
+		FDrawInfo *di;
+		if (Start(usestencil, doquery, &di))
 		{
-			DrawContents();
+			DrawContents(di);
 			End(usestencil);
 		}
 	}
@@ -134,7 +135,7 @@ public:
 	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
 	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
 	virtual line_t *ClipLine() { return NULL; }
-	virtual void RenderAttached() {}
+	virtual void RenderAttached(FDrawInfo *di) {}
 
 	static void BeginScene();
 	static void StartFrame();
@@ -205,7 +206,7 @@ struct GLMirrorPortal : public GLLinePortal
 	line_t * linedef;
 
 protected:
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return linedef; }
 	virtual const char *GetName();
 
@@ -223,11 +224,11 @@ struct GLLineToLinePortal : public GLLinePortal
 {
 	FLinePortalSpan *glport;
 protected:
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return glport; }
 	virtual const char *GetName();
 	virtual line_t *ClipLine() { return line(); }
-	virtual void RenderAttached();
+	virtual void RenderAttached(FDrawInfo *di);
 
 public:
 	
@@ -244,7 +245,7 @@ struct GLSkyboxPortal : public GLPortal
 	FSectorPortal * portal;
 
 protected:
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return portal; }
 	virtual bool IsSky() { return true; }
 	virtual const char *GetName();
@@ -266,7 +267,7 @@ struct GLSkyPortal : public GLPortal
 	friend struct GLEEHorizonPortal;
 
 protected:
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return origin; }
 	virtual bool IsSky() { return true; }
 	virtual bool NeedDepthBuffer() { return false; }
@@ -290,7 +291,7 @@ struct GLSectorStackPortal : public GLPortal
 	TArray<subsector_t *> subsectors;
 protected:
 	virtual ~GLSectorStackPortal();
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return origin; }
 	virtual bool IsSky() { return true; }	// although this isn't a real sky it can be handled as one.
 	virtual const char *GetName();
@@ -313,7 +314,7 @@ public:
 struct GLPlaneMirrorPortal : public GLPortal
 {
 protected:
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return origin; }
 	virtual const char *GetName();
 	virtual void PushState();
@@ -338,7 +339,7 @@ struct GLHorizonPortal : public GLPortal
 	friend struct GLEEHorizonPortal;
 
 protected:
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return origin; }
 	virtual bool NeedDepthBuffer() { return false; }
 	virtual bool NeedCap() { return false; }
@@ -354,7 +355,7 @@ struct GLEEHorizonPortal : public GLPortal
 	FSectorPortal * portal;
 
 protected:
-	virtual void DrawContents();
+	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return portal; }
 	virtual bool NeedDepthBuffer() { return false; }
 	virtual bool NeedCap() { return false; }

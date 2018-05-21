@@ -34,9 +34,9 @@ class GLSceneDrawer
 	void RenderBSPNode(void *node);
 
 	void RenderScene(FDrawInfo *di, int recursion);
-	void RenderTranslucent();
+	void RenderTranslucent(FDrawInfo *di);
 
-	void CreateScene();
+	void CreateScene(FDrawInfo *di);
 
 public:
 	GLSceneDrawer()
@@ -58,8 +58,8 @@ public:
 	void Set3DViewport(bool mainview);
 	void Reset3DViewport();
 	void SetFixedColormap(player_t *player);
-	void DrawScene(int drawmode);
-	void ProcessScene(bool toscreen = false);
+	void DrawScene(FDrawInfo *di, int drawmode);
+	void ProcessScene(FDrawInfo *di, bool toscreen = false);
 	void EndDrawScene(FDrawInfo *di, sector_t * viewsector);
 	void DrawEndScene2D(FDrawInfo *di, sector_t * viewsector);
 

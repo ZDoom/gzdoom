@@ -135,7 +135,7 @@ struct FDrawInfo : public HWDrawInfo
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
 	int ClipPoint(const DVector3 &pos) override;
 
-	static void StartDrawInfo(GLSceneDrawer *drawer);
+	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer);
 	static void EndDrawInfo();
 	
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)

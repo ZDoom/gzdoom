@@ -191,12 +191,13 @@ FDrawInfo::~FDrawInfo()
 // Sets up a new drawinfo struct
 //
 //==========================================================================
-void FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
+FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mDrawer = drawer;
     di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
+	return di;
 }
 
 void FDrawInfo::StartScene()

@@ -204,14 +204,6 @@ void FDrawInfo::StartScene()
 {
 	ClearBuffers();
 
-	sectorrenderflags.Resize(level.sectors.Size());
-	ss_renderflags.Resize(level.subsectors.Size());
-	no_renderflags.Resize(level.subsectors.Size());
-
-	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
-	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
-
 	next = gl_drawinfo;
 	gl_drawinfo = this;
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
@@ -393,8 +385,8 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -445,8 +437,8 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, in_area, false);
 
 	vertex_t * v1, * v2;
 

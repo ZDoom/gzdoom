@@ -75,11 +75,9 @@ private:
 	DRotator savedAngles;
 	bool savedshowviewer;
 	AActor * savedviewactor;
-	area_t savedviewarea;
 	ActorRenderFlags savedvisibility;
 	GLPortal *PrevPortal;
 	GLPortal *PrevClipPortal;
-	BitArray SavedMapSection;
 	TArray<unsigned int> mPrimIndices;
 
 protected:
@@ -99,8 +97,6 @@ protected:
 	virtual bool NeedDepthBuffer() { return true; }
 	void ClearScreen();
 	virtual const char *GetName() = 0;
-	void SaveMapSection();
-	void RestoreMapSection();
 	virtual void PushState() {}
 	virtual void PopState() {}
 

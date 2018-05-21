@@ -140,9 +140,9 @@ void GLSceneDrawer::AddLine (seg_t *seg, bool portalclip)
  		else
 		{
 			// clipping checks are only needed when the backsector is not the same as the front sector
-			if (in_area == area_default) in_area = hw_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
+			if (gl_drawinfo->in_area == area_default) gl_drawinfo->in_area = hw_CheckViewArea(seg->v1, seg->v2, seg->frontsector, seg->backsector);
 
-			backsector = hw_FakeFlat(seg->backsector, &bs, in_area, true);
+			backsector = hw_FakeFlat(seg->backsector, &bs, gl_drawinfo->in_area, true);
 
 			if (hw_CheckClip(seg->sidedef, currentsector, backsector))
 			{
@@ -364,10 +364,10 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 			}
 		}
 		// If this thing is in a map section that's not in view it can't possibly be visible
-		if (CurrentMapSections[thing->subsector->mapsection])
+		if (gl_drawinfo->CurrentMapSections[thing->subsector->mapsection])
 		{
 			GLSprite sprite;
-			sprite.Process(gl_drawinfo, thing, sector, in_area, false);
+			sprite.Process(gl_drawinfo, thing, sector, gl_drawinfo->in_area, false);
 		}
 	}
 	
@@ -386,7 +386,7 @@ void GLSceneDrawer::RenderThings(subsector_t * sub, sector_t * sector)
 		}
 
 		GLSprite sprite;
-		sprite.Process(gl_drawinfo, thing, sector, gl_drawinfo->mDrawer->in_area, true);
+		sprite.Process(gl_drawinfo, thing, sector, gl_drawinfo->in_area, true);
 	}
 	SetupSprite.Unclock();
 }
@@ -419,7 +419,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 	if (!sector) return;
 
 	// If the mapsections differ this subsector can't possibly be visible from the current view point
-	if (!CurrentMapSections[sub->mapsection]) return;
+	if (!gl_drawinfo->CurrentMapSections[sub->mapsection]) return;
 	if (sub->flags & SSECF_POLYORG) return;	// never render polyobject origin subsectors because their vertices no longer are where one may expect.
 
 	if (gl_drawinfo->ss_renderflags[sub->Index()] & SSRF_SEEN)
@@ -431,7 +431,7 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 	}
 	if (clipper.IsBlocked()) return;	// if we are inside a stacked sector portal which hasn't unclipped anything yet.
 
-	fakesector=hw_FakeFlat(sector, &fake, in_area, false);
+	fakesector=hw_FakeFlat(sector, &fake, gl_drawinfo->in_area, false);
 
 	if (GLRenderer->mClipPortal)
 	{
@@ -497,14 +497,14 @@ void GLSceneDrawer::DoSubsector(subsector_t * sub)
 			// but undetermined heightsec state. This can only happen if the
 			// subsector is obstructed but not excluded due to a large bounding box.
 			// Due to the way a BSP works such a subsector can never be visible
-			if (!sector->GetHeightSec() || in_area!=area_default)
+			if (!sector->GetHeightSec() || gl_drawinfo->in_area!=area_default)
 			{
 				if (sector != sub->render_sector)
 				{
 					sector = sub->render_sector;
 					// the planes of this subsector are faked to belong to another sector
 					// This means we need the heightsec parts and light info of the render sector, not the actual one.
-					fakesector = hw_FakeFlat(sector, &fake, in_area, false);
+					fakesector = hw_FakeFlat(sector, &fake, gl_drawinfo->in_area, false);
 				}
 
 				uint8_t &srf = gl_drawinfo->sectorrenderflags[sub->render_sector->sectornum];

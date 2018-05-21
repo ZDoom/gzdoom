@@ -271,7 +271,6 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
 	savedshowviewer = r_viewpoint.showviewer;
 	savedAngles = r_viewpoint.Angles;
 	savedviewactor=GLRenderer->mViewActor;
-	savedviewarea=drawer->in_area;
 	savedviewpath[0] = r_viewpoint.Path[0];
 	savedviewpath[1] = r_viewpoint.Path[1];
 	savedvisibility = r_viewpoint.camera ? r_viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
@@ -340,7 +339,6 @@ void GLPortal::End(bool usestencil)
 		r_viewpoint.ActorPos = savedViewActorPos;
 		r_viewpoint.Angles = savedAngles;
 		GLRenderer->mViewActor=savedviewactor;
-		drawer->in_area=savedviewarea;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags = (r_viewpoint.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
@@ -399,7 +397,6 @@ void GLPortal::End(bool usestencil)
 		r_viewpoint.Pos = savedViewPos;
 		r_viewpoint.Angles = savedAngles;
 		GLRenderer->mViewActor=savedviewactor;
-		drawer->in_area=savedviewarea;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags |= savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
@@ -561,26 +558,6 @@ GLPortal * GLPortal::FindPortal(const void * src)
 
 
 //-----------------------------------------------------------------------------
-//
-// Save/RestoreMapSection
-//
-// saves CurrentMapSection for a recursive call of SceneDrawer::DrawScene
-//
-//-----------------------------------------------------------------------------
-
-void GLPortal::SaveMapSection()
-{
-	SavedMapSection = std::move(drawer->CurrentMapSections);
-	drawer->CurrentMapSections.Resize(SavedMapSection.Size());
-	drawer->CurrentMapSections.Zero();
-}
-
-void GLPortal::RestoreMapSection()
-{
-	drawer->CurrentMapSections = std::move(SavedMapSection);
-}
-
-//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //
 //
@@ -629,13 +606,13 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 
 	inskybox = true;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
-	drawer->SetViewArea();
+	di->SetViewArea();
 	ClearClipper();
 
 	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
 
-	SaveMapSection();
-	drawer->CurrentMapSections.Set(mapsection);
+	di->CurrentMapSections.Zero();
+	di->CurrentMapSections.Set(mapsection);
 
 	drawer->DrawScene(di, DM_SKYPORTAL);
 	portal->mFlags &= ~PORTSF_INSKYBOX;
@@ -645,8 +622,6 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 
 	PlaneMirrorMode = old_pm;
 	r_viewpoint.extralight = saved_extralight;
-
-	RestoreMapSection();
 }
 
 //-----------------------------------------------------------------------------
@@ -717,7 +692,7 @@ void GLSectorStackPortal::SetupCoverage(FDrawInfo *di)
 		for(int j=0;j<sub->portalcoverage[plane].sscount; j++)
 		{
 			subsector_t *dsub = &::level.subsectors[sub->portalcoverage[plane].subsectors[j]];
-			drawer->CurrentMapSections.Set(dsub->mapsection);
+			di->CurrentMapSections.Set(dsub->mapsection);
 			di->ss_renderflags[dsub->Index()] |= SSRF_SEEN;
 		}
 	}
@@ -741,7 +716,6 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 	if (origin->plane != -1) screen->instack[origin->plane]++;
 
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
-	SaveMapSection();
 	SetupCoverage(di);
 	ClearClipper();
 	
@@ -755,7 +729,6 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 	}
 
 	drawer->DrawScene(di, DM_PORTAL);
-	RestoreMapSection();
 
 	if (origin->plane != -1) screen->instack[origin->plane]--;
 }
@@ -1031,8 +1004,6 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 	}
 
 
-	SaveMapSection();
-
 	for (unsigned i = 0; i < lines.Size(); i++)
 	{
 		line_t *line = lines[i].seg->linedef->getPortalDestination();
@@ -1040,7 +1011,7 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 		if (line->sidedef[0]->Flags & WALLF_POLYOBJ) 
 			sub = R_PointInSubsector(line->v1->fixX(), line->v1->fixY());
 		else sub = line->frontsector->subsectors[0];
-		drawer->CurrentMapSections.Set(sub->mapsection);
+		di->CurrentMapSections.Set(sub->mapsection);
 	}
 
 	GLRenderer->mViewActor = nullptr;
@@ -1051,12 +1022,11 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 	gl_RenderState.EnableClipLine(true);
 	drawer->DrawScene(di, DM_PORTAL);
 	gl_RenderState.EnableClipLine(false);
-	RestoreMapSection();
 }
 
 void GLLineToLinePortal::RenderAttached(FDrawInfo *di)
 {
-	di->ProcessActorsInPortal(glport, di->mDrawer->in_area);
+	di->ProcessActorsInPortal(glport, di->in_area);
 }
 
 //-----------------------------------------------------------------------------

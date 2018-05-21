@@ -46,8 +46,6 @@ public:
 
 	Clipper clipper;
 	int		FixedColormap;
-	area_t	in_area;
-	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
 
 	angle_t FrustumAngle();
 	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);

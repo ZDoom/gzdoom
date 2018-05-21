@@ -104,6 +104,9 @@ struct HWDrawInfo
 	TArray<uint8_t> ss_renderflags;
 	TArray<uint8_t> no_renderflags;
 
+	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
+	area_t	in_area;
+
 private:
     // For ProcessLowerMiniseg
     bool inview;
@@ -114,6 +117,7 @@ private:
 public:
 
 	void ClearBuffers();
+	void SetViewArea();
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);

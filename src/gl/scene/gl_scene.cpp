@@ -94,29 +94,6 @@ angle_t GLSceneDrawer::FrustumAngle()
 
 //-----------------------------------------------------------------------------
 //
-// Sets the area the camera is in
-//
-//-----------------------------------------------------------------------------
-void GLSceneDrawer::SetViewArea()
-{
-	// The render_sector is better suited to represent the current position in GL
-	r_viewpoint.sector = R_PointInSubsector(r_viewpoint.Pos)->render_sector;
-
-	// Get the heightsec state from the render sector, not the current one!
-	if (r_viewpoint.sector->GetHeightSec())
-	{
-		in_area = r_viewpoint.Pos.Z <= r_viewpoint.sector->heightsec->floorplane.ZatPoint(r_viewpoint.Pos) ? area_below :
-				(r_viewpoint.Pos.Z > r_viewpoint.sector->heightsec->ceilingplane.ZatPoint(r_viewpoint.Pos) &&
-				!(r_viewpoint.sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? area_above : area_normal;
-	}
-	else
-	{
-		in_area = level.HasHeightSecs? area_default : area_normal;	// depends on exposed lower sectors, if map contains heightsecs.
-	}
-}
-
-//-----------------------------------------------------------------------------
-//
 // resets the 3D viewport
 //
 //-----------------------------------------------------------------------------
@@ -261,7 +238,7 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	di->mShadowMap = &GLRenderer->mShadowMap;
 
 	RenderBSPNode (level.HeadNode());
-	di->PreparePlayerSprites(r_viewpoint.sector, in_area);
+	di->PreparePlayerSprites(r_viewpoint.sector, di->in_area);
 
 	// Process all the sprites on the current portal's back side which touch the portal.
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached(di);
@@ -271,9 +248,9 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	// These cannot be multithreaded when the time comes because all these depend
 	// on the global 'validcount' variable.
 
-	di->HandleMissingTextures(in_area);	// Missing upper/lower textures
+	di->HandleMissingTextures(di->in_area);	// Missing upper/lower textures
 	di->HandleHackedSubsectors();	// open sector hacks for deep water
-	di->ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
+	di->ProcessSectorStacks(di->in_area);		// merge visplanes of sector stacks
 	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();
 
@@ -578,9 +555,7 @@ void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
 	GLPortal::BeginScene();
 
 	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
-	CurrentMapSections.Resize(level.NumMapSections);
-	CurrentMapSections.Zero();
-	CurrentMapSections.Set(mapsection);
+	di->CurrentMapSections.Set(mapsection);
 	DrawScene(di, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }
@@ -644,7 +619,6 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 	GLRenderer->mSceneClearColor[1] = 0.0f;
 	GLRenderer->mSceneClearColor[2] = 0.0f;
 	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
-	SetViewArea();
 
 	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
 
@@ -684,6 +658,10 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		Set3DViewport(mainview);
 		GLRenderer->mDrawingScene2D = true;
 		GLRenderer->mCurrentFoV = fov;
+
+		FDrawInfo *di = FDrawInfo::StartDrawInfo(this);
+		di->SetViewArea();
+
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
@@ -694,7 +672,6 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
-		FDrawInfo *di = FDrawInfo::StartDrawInfo(this);
 		ProcessScene(di, toscreen);
 		if (mainview && toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
 

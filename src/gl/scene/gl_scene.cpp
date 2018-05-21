@@ -228,16 +228,18 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	GLRenderer->mVBO->Map();
 	GLRenderer->mLights->Begin();
 
-	SetView();
+	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
+	di->viewx = FLOAT2FIXED(r_viewpoint.Pos.X);
+	di->viewy = FLOAT2FIXED(r_viewpoint.Pos.Y);
+
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	 
-	di->clipPortal = !!GLRenderer->mClipPortal;
 	di->mAngles = GLRenderer->mAngles;
 	di->mViewVector = GLRenderer->mViewVector;
 	di->mViewActor = GLRenderer->mViewActor;
 	di->mShadowMap = &GLRenderer->mShadowMap;
 
-	RenderBSPNode (level.HeadNode());
+	di->RenderBSPNode (level.HeadNode());
 	di->PreparePlayerSprites(r_viewpoint.sector, di->in_area);
 
 	// Process all the sprites on the current portal's back side which touch the portal.
@@ -453,7 +455,6 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 	{
 		CreateScene(di);
 	}
-	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
 	RenderScene(di, recursion);
 

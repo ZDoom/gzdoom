@@ -133,7 +133,6 @@ struct FDrawInfo : public HWDrawInfo
 	// These two may be moved to the API independent part of the renderer later.
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
-	int ClipPoint(const DVector3 &pos) override;
 
 	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer);
 	static void EndDrawInfo();
@@ -161,8 +160,6 @@ public:
 	void Release(FDrawInfo *);
 };
 
-
-extern FDrawInfo * gl_drawinfo;
 
 void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending);
 

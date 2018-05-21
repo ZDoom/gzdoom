@@ -277,8 +277,6 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
 
 
 	PrevPortal = GLRenderer->mCurrentPortal;
-	PrevClipPortal = GLRenderer->mClipPortal;
-	GLRenderer->mClipPortal = NULL;	// Portals which need this have to set it themselves
 	GLRenderer->mCurrentPortal = this;
 
 	if (PrevPortal != NULL) PrevPortal->PushState();
@@ -324,8 +322,6 @@ void GLPortal::End(bool usestencil)
 
 	Clocker c(PortalAll);
 	if (PrevPortal != NULL) PrevPortal->PopState();
-	GLRenderer->mCurrentPortal = PrevPortal;
-	GLRenderer->mClipPortal = PrevClipPortal;
 
 	if (usestencil)
 	{
@@ -878,7 +874,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 		return;
 	}
 
-	GLRenderer->mClipPortal = this;
+	di->mClipPortal = this;
 	DAngle StartAngle = r_viewpoint.Angles.Yaw;
 	DVector3 StartPos = r_viewpoint.Pos;
 
@@ -979,7 +975,7 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 		return;
 	}
 
-	GLRenderer->mClipPortal = this;
+	di->mClipPortal = this;
 
 	line_t *origin = glport->lines[0]->mOrigin;
 	P_TranslatePortalXY(origin, r_viewpoint.Pos.X, r_viewpoint.Pos.Y);
@@ -1251,3 +1247,9 @@ const char *GLLineToLinePortal::GetName() { return "LineToLine"; }
 const char *GLHorizonPortal::GetName() { return "Horizon"; }
 const char *GLEEHorizonPortal::GetName() { return "EEHorizon"; }
 
+// This needs to remain on the renderer side until the portal interface can be abstracted.
+void FSectorPortalGroup::AddSubsector(subsector_t *sub)
+{
+	GLSectorStackPortal *glportal = GetRenderState();
+	glportal->AddSubsector(sub);
+}

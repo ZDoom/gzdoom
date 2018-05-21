@@ -49,7 +49,7 @@ extern UniqueList<secplane_t> UniquePlaneMirrors;
 struct GLEEHorizonPortal;
 class GLSceneDrawer;
 
-class GLPortal
+class GLPortal : public IPortal
 {
 	static TArray<GLPortal *> portals;
 	static int recursion;
@@ -77,7 +77,6 @@ private:
 	AActor * savedviewactor;
 	ActorRenderFlags savedvisibility;
 	GLPortal *PrevPortal;
-	GLPortal *PrevClipPortal;
 	TArray<unsigned int> mPrimIndices;
 
 protected:
@@ -127,10 +126,6 @@ public:
 
 	static bool isMirrored() { return !!((MirrorFlag ^ PlaneMirrorFlag) & 1); }
 
-	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
-	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
-	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
-	virtual line_t *ClipLine() { return NULL; }
 	virtual void RenderAttached(FDrawInfo *di) {}
 
 	static void BeginScene();

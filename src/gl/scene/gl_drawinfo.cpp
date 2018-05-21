@@ -44,7 +44,7 @@
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
-FDrawInfo * gl_drawinfo;
+static FDrawInfo * gl_drawinfo;
 FDrawInfoList di_list;
 
 //==========================================================================
@@ -503,12 +503,6 @@ void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *su
 {
 	portal->GetRenderState()->AddSubsector(sub);
 }
-
-int FDrawInfo::ClipPoint(const DVector3 &pos)
-{
-	return GLRenderer->mClipPortal->ClipPoint(pos);
-}
-
 
 std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
 {

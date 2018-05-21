@@ -85,7 +85,6 @@ extern bool NoInterpolateView;
 FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb) 
 {
 	framebuffer = fb;
-	mClipPortal = nullptr;
 	mCurrentPortal = nullptr;
 	mMirrorCount = 0;
 	mPlaneMirrorCount = 0;

@@ -13,26 +13,10 @@ struct HUDSprite;
 
 class GLSceneDrawer
 {
-	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
-	
-	subsector_t *currentsubsector;	// used by the line processing code.
-	sector_t *currentsector;
-
 	TMap<DPSprite*, int> weapondynlightindex;
 
 	void RenderMultipassStuff(FDrawInfo *di);
 	
-	void UnclipSubsector(subsector_t *sub);
-	void AddLine (seg_t *seg, bool portalclip);
-	void PolySubsector(subsector_t * sub);
-	void RenderPolyBSPNode (void *node);
-	void AddPolyobjs(subsector_t *sub);
-	void AddLines(subsector_t * sub, sector_t * sector);
-	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line);
-	void RenderThings(subsector_t * sub, sector_t * sector);
-	void DoSubsector(subsector_t * sub);
-	void RenderBSPNode(void *node);
-
 	void RenderScene(FDrawInfo *di, int recursion);
 	void RenderTranslucent(FDrawInfo *di);
 
@@ -63,12 +47,6 @@ public:
 	sector_t *RenderViewpoint(AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	sector_t *RenderView(player_t *player);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
-
-	void SetView()
-	{
-		viewx = FLOAT2FIXED(r_viewpoint.Pos.X);
-		viewy = FLOAT2FIXED(r_viewpoint.Pos.Y);
-	}
 
 	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
 	{

@@ -94,8 +94,8 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	if (smf->flags & MDL_ROTATING)
 	{
-		const double time = smf->rotationSpeed*GetTimeFloat() / 200.;
-		rotateOffset = double((time - xs_FloorToInt(time)) *360.);
+		double turns = (I_GetTime() % 200 + I_GetTimeFrac()) / 200.0;
+		rotateOffset = turns * 360.0;
 	}
 
 	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.
@@ -164,7 +164,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	objectToWorldMatrix.scale(1, stretch, 1);
 
 	BeginDrawModel(actor, smf, objectToWorldMatrix);
-	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), nullptr, translation);
+	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
 	EndDrawModel(actor, smf);
 }
 
@@ -200,16 +200,11 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
 	BeginDrawHUDModel(playermo, objectToWorldMatrix);
-	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), nullptr, 0);
+	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
 	EndDrawHUDModel(playermo);
 }
 
-void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf,
-	const FState *curState,
-	const int curTics,
-	const PClass *ti,
-	Matrix3x4 *normaltransform,
-	int translation)
+void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
 {
 	// [BB] Frame interpolation: Find the FSpriteModelFrame smfNext which follows after smf in the animation
 	// and the scalar value inter ( element of [0,1) ), both necessary to determine the interpolated frame.
@@ -225,14 +220,13 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf,
 			// [BB] In case the tic counter is frozen we have to leave ticFraction at zero.
 			if (ConsoleState == c_up && menuactive != MENU_On && !(level.flags2 & LEVEL2_FROZEN))
 			{
-				double time = GetTimeFloat();
-				ticFraction = (time - static_cast<int>(time));
+				ticFraction = I_GetTimeFrac();
 			}
-			inter = static_cast<double>(curState->Tics - curTics - ticFraction) / static_cast<double>(curState->Tics);
+			inter = static_cast<double>(curState->Tics - curTics + ticFraction) / static_cast<double>(curState->Tics);
 
 			// [BB] For some actors (e.g. ZPoisonShroom) spr->actor->tics can be bigger than curState->Tics.
 			// In this case inter is negative and we need to set it to zero.
-			if (inter < 0.)
+			if (curState->Tics < curTics)
 				inter = 0.;
 			else
 			{
@@ -277,11 +271,6 @@ void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf,
 			ResetVertexBuffer();
 		}
 	}
-}
-
-double FModelRenderer::GetTimeFloat()
-{
-	return (double)I_msTime() * (double)TICRATE / 1000.;
 }
 
 /////////////////////////////////////////////////////////////////////////////

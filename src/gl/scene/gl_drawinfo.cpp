@@ -81,13 +81,13 @@ void FDrawInfo::DoDrawSorted(HWDrawList *dl, SortNode * head)
 		DoDrawSorted(dl, head->left);
 		gl_RenderState.SetClipSplit(clipsplit);
 	}
-	dl->DoDraw(gl_drawinfo, GLPASS_TRANSLUCENT, head->itemindex, true);
+	dl->DoDraw(this, GLPASS_TRANSLUCENT, head->itemindex, true);
 	if (head->equal)
 	{
 		SortNode * ehead=head->equal;
 		while (ehead)
 		{
-			dl->DoDraw(gl_drawinfo, GLPASS_TRANSLUCENT, ehead->itemindex, true);
+			dl->DoDraw(this, GLPASS_TRANSLUCENT, ehead->itemindex, true);
 			ehead=ehead->equal;
 		}
 	}

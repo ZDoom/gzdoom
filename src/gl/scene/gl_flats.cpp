@@ -141,7 +141,7 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 	for (int i=0; i< flat->sector->subsectorcount; i++)
 	{
 		subsector_t * sub = flat->sector->subsectors[i];
-		if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
+		if (ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 		{
 			SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
 		}
@@ -151,8 +151,8 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
 	{
 		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
-			gl_drawinfo->GetOtherFloorPlanes(flat->sector->sectornum) :
-			gl_drawinfo->GetOtherCeilingPlanes(flat->sector->sectornum);
+			GetOtherFloorPlanes(flat->sector->sectornum) :
+			GetOtherCeilingPlanes(flat->sector->sectornum);
 
 		while (node)
 		{
@@ -182,7 +182,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 		{
 			subsector_t * sub = flat->sector->subsectors[i];
 				
-			if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
+			if (ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 			{
 				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
 				drawcalls.Clock();
@@ -201,7 +201,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{
 			subsector_t * sub = flat->sector->subsectors[i];
-			if (gl_drawinfo->ss_renderflags[sub->Index()]& flat->renderflags || istrans)
+			if (ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 			{
 				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
 				DrawSubsector(flat, sub);
@@ -213,8 +213,8 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
 	{
 		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
-			gl_drawinfo->GetOtherFloorPlanes(flat->sector->sectornum) :
-			gl_drawinfo->GetOtherCeilingPlanes(flat->sector->sectornum);
+			GetOtherFloorPlanes(flat->sector->sectornum) :
+			GetOtherCeilingPlanes(flat->sector->sectornum);
 
 		while (node)
 		{
@@ -399,7 +399,7 @@ void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
 		bool masked = flat->gltexture->isMasked() && ((flat->renderflags&SSRF_RENDER3DPLANES) || flat->stack);
 		list = masked ? GLDL_MASKEDFLATS : GLDL_PLAINFLATS;
 	}
-	auto newflat = gl_drawinfo->drawlists[list].NewFlat();
+	auto newflat = drawlists[list].NewFlat();
 	*newflat = *flat;
 }
 

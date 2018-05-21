@@ -142,7 +142,7 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
 		glDepthMask(false);
-		gl_drawinfo->DrawDecalsForMirror(wall);
+		DrawDecalsForMirror(wall);
 		glDepthMask(true);
 		glPolygonOffset(0.0f, 0.0f);
 		glDisable(GL_POLYGON_OFFSET_FILL);
@@ -293,7 +293,7 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 	case GLPASS_LIGHTTEX:
 	case GLPASS_LIGHTTEX_ADDITIVE:
 	case GLPASS_LIGHTTEX_FOGGY:
-		gl_drawinfo->RenderLightsCompat(wall, pass);
+		RenderLightsCompat(wall, pass);
 		break;
 
 	case GLPASS_TEXONLY:

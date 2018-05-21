@@ -688,7 +688,7 @@ GLSectorStackPortal::~GLSectorStackPortal()
 //
 //-----------------------------------------------------------------------------
 
-static uint8_t SetCoverage(void *node)
+static uint8_t SetCoverage(FDrawInfo *di, void *node)
 {
 	if (level.nodes.Size() == 0)
 	{
@@ -697,18 +697,18 @@ static uint8_t SetCoverage(void *node)
 	if (!((size_t)node & 1))  // Keep going until found a subsector
 	{
 		node_t *bsp = (node_t *)node;
-		uint8_t coverage = SetCoverage(bsp->children[0]) | SetCoverage(bsp->children[1]);
+		uint8_t coverage = SetCoverage(di, bsp->children[0]) | SetCoverage(di, bsp->children[1]);
 		gl_drawinfo->no_renderflags[bsp->Index()] = coverage;
 		return coverage;
 	}
 	else
 	{
 		subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
-		return gl_drawinfo->ss_renderflags[sub->Index()] & SSRF_SEEN;
+		return di->ss_renderflags[sub->Index()] & SSRF_SEEN;
 	}
 }
 
-void GLSectorStackPortal::SetupCoverage()
+void GLSectorStackPortal::SetupCoverage(FDrawInfo *di)
 {
 	for(unsigned i=0; i<subsectors.Size(); i++)
 	{
@@ -721,7 +721,7 @@ void GLSectorStackPortal::SetupCoverage()
 			gl_drawinfo->ss_renderflags[dsub->Index()] |= SSRF_SEEN;
 		}
 	}
-	SetCoverage(::level.HeadNode());
+	SetCoverage(di, ::level.HeadNode());
 }
 
 //-----------------------------------------------------------------------------
@@ -742,7 +742,7 @@ void GLSectorStackPortal::DrawContents()
 
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	SaveMapSection();
-	SetupCoverage();
+	SetupCoverage(gl_drawinfo);
 	ClearClipper();
 	
 	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.

@@ -327,7 +327,7 @@ void FDrawInfo::AddSprite(GLSprite *sprite, bool translucent)
 		list = GLDL_MODELS;
 	}
 	
-	auto newsprt = gl_drawinfo->drawlists[list].NewSprite();
+	auto newsprt = drawlists[list].NewSprite();
 	*newsprt = *sprite;
 }
 

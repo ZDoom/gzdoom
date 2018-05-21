@@ -253,7 +253,7 @@ void GLSceneDrawer::CreateScene()
 
 	SetView();
 	validcount++;	// used for processing sidedefs only once by the renderer.
-
+	 
 	gl_drawinfo->clipPortal = !!GLRenderer->mClipPortal;
 	gl_drawinfo->mAngles = GLRenderer->mAngles;
 	gl_drawinfo->mViewVector = GLRenderer->mViewVector;
@@ -289,7 +289,7 @@ void GLSceneDrawer::CreateScene()
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::RenderScene(int recursion)
+void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 {
 	RenderAll.Clock();
 
@@ -303,11 +303,11 @@ void GLSceneDrawer::RenderScene(int recursion)
 
 	if (gl_sort_textures)
 	{
-		gl_drawinfo->drawlists[GLDL_PLAINWALLS].SortWalls();
-		gl_drawinfo->drawlists[GLDL_PLAINFLATS].SortFlats();
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLS].SortWalls();
-		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].SortFlats();
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
+		di->drawlists[GLDL_PLAINWALLS].SortWalls();
+		di->drawlists[GLDL_PLAINFLATS].SortFlats();
+		di->drawlists[GLDL_MASKEDWALLS].SortWalls();
+		di->drawlists[GLDL_MASKEDFLATS].SortFlats();
+		di->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
 	}
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
@@ -315,10 +315,10 @@ void GLSceneDrawer::RenderScene(int recursion)
 	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && FixedColormap == CM_DEFAULT)
 	{
 		GLRenderer->mLights->Begin();
-		gl_drawinfo->drawlists[GLDL_PLAINFLATS].DrawFlats(gl_drawinfo, GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_MASKEDFLATS].DrawFlats(gl_drawinfo, GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_TRANSLUCENTBORDER].Draw(gl_drawinfo, GLPASS_LIGHTSONLY);
-		gl_drawinfo->drawlists[GLDL_TRANSLUCENT].Draw(gl_drawinfo, GLPASS_LIGHTSONLY, true);
+		di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, GLPASS_LIGHTSONLY);
+		di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, GLPASS_LIGHTSONLY);
+		di->drawlists[GLDL_TRANSLUCENTBORDER].Draw(di, GLPASS_LIGHTSONLY);
+		di->drawlists[GLDL_TRANSLUCENT].Draw(di, GLPASS_LIGHTSONLY, true);
 		GLRenderer->mLights->Finish();
 	}
 
@@ -336,7 +336,7 @@ void GLSceneDrawer::RenderScene(int recursion)
 	else // GL 2.x legacy mode
 	{
 		// process everything that needs to handle textured dynamic lights.
-		if (level.HasDynamicLights) RenderMultipassStuff();
+		if (level.HasDynamicLights) RenderMultipassStuff(di);
 
 		// The remaining lists which are unaffected by dynamic lights are just processed as normal.
 		pass = GLPASS_ALL;
@@ -344,8 +344,8 @@ void GLSceneDrawer::RenderScene(int recursion)
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
-	gl_drawinfo->drawlists[GLDL_PLAINWALLS].DrawWalls(gl_drawinfo, pass);
-	gl_drawinfo->drawlists[GLDL_PLAINFLATS].DrawFlats(gl_drawinfo, pass);
+	di->drawlists[GLDL_PLAINWALLS].DrawWalls(di, pass);
+	di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, pass);
 
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -355,20 +355,20 @@ void GLSceneDrawer::RenderScene(int recursion)
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	gl_drawinfo->drawlists[GLDL_MASKEDWALLS].DrawWalls(gl_drawinfo, pass);
-	gl_drawinfo->drawlists[GLDL_MASKEDFLATS].DrawFlats(gl_drawinfo, pass);
+	di->drawlists[GLDL_MASKEDWALLS].DrawWalls(di, pass);
+	di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, pass);
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
-	if (gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
+	if (di->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
-		gl_drawinfo->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(gl_drawinfo, pass);
+		di->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(di, pass);
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(0, 0);
 	}
 
-	gl_drawinfo->drawlists[GLDL_MODELS].Draw(gl_drawinfo, pass);
+	di->drawlists[GLDL_MODELS].Draw(di, pass);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -377,7 +377,7 @@ void GLSceneDrawer::RenderScene(int recursion)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
-	gl_drawinfo->DrawDecals();
+	di->DrawDecals();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -395,7 +395,7 @@ void GLSceneDrawer::RenderScene(int recursion)
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
-	gl_drawinfo->DrawUnhandledMissingTextures();
+	di->DrawUnhandledMissingTextures();
 	glDepthMask(true);
 
 	glPolygonOffset(0.0f, 0.0f);
@@ -478,7 +478,7 @@ void GLSceneDrawer::DrawScene(int drawmode)
 	}
 	GLRenderer->mClipPortal = NULL;	// this must be reset before any portal recursion takes place.
 
-	RenderScene(recursion);
+	RenderScene(gl_drawinfo, recursion);
 
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
@@ -505,7 +505,7 @@ void GLSceneDrawer::DrawScene(int drawmode)
 //-----------------------------------------------------------------------------
 
 
-void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
+void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 {
 	gl_RenderState.EnableFog(false);
 
@@ -515,7 +515,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
 		glClear(GL_DEPTH_BUFFER_BIT);
-		gl_drawinfo->DrawPlayerSprites(true);
+		di->DrawPlayerSprites(true);
 	}
 
 	glDisable(GL_STENCIL_TEST);
@@ -525,7 +525,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 	// Delay drawing psprites until after bloom has been applied, if enabled.
 	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom || FixedColormap != CM_DEFAULT)
 	{
-		DrawEndScene2D(viewsector);
+		DrawEndScene2D(di, viewsector);
 	}
 	else
 	{
@@ -537,7 +537,7 @@ void GLSceneDrawer::EndDrawScene(sector_t * viewsector)
 	}
 }
 
-void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
+void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
 {
 	const bool renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
@@ -549,7 +549,7 @@ void GLSceneDrawer::DrawEndScene2D(sector_t * viewsector)
 	glDisable(GL_MULTISAMPLE);
 
 
- 	gl_drawinfo->DrawPlayerSprites(false);
+ 	di->DrawPlayerSprites(false);
 
 	if (gl.legacyMode)
 	{
@@ -696,11 +696,11 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 
 		FDrawInfo::StartDrawInfo(this);
 		ProcessScene(toscreen);
-		if (mainview && toscreen) EndDrawScene(lviewsector); // do not call this for camera textures.
+		if (mainview && toscreen) EndDrawScene(gl_drawinfo, lviewsector); // do not call this for camera textures.
 
 		if (mainview && FGLRenderBuffers::IsEnabled())
 		{
-			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(lviewsector); });
+			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(gl_drawinfo, lviewsector); });
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();

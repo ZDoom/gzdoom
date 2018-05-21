@@ -302,7 +302,7 @@ public:
 	{
 		origin=pt;
 	}
-	void SetupCoverage();
+	void SetupCoverage(FDrawInfo *di);
 	void AddSubsector(subsector_t *sub)
 	{
 		subsectors.Push(sub);

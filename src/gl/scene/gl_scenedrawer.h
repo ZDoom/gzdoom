@@ -20,7 +20,7 @@ class GLSceneDrawer
 
 	TMap<DPSprite*, int> weapondynlightindex;
 
-	void RenderMultipassStuff();
+	void RenderMultipassStuff(FDrawInfo *di);
 	
 	void UnclipSubsector(subsector_t *sub);
 	void AddLine (seg_t *seg, bool portalclip);
@@ -33,7 +33,7 @@ class GLSceneDrawer
 	void DoSubsector(subsector_t * sub);
 	void RenderBSPNode(void *node);
 
-	void RenderScene(int recursion);
+	void RenderScene(FDrawInfo *di, int recursion);
 	void RenderTranslucent();
 
 	void CreateScene();
@@ -60,8 +60,8 @@ public:
 	void SetFixedColormap(player_t *player);
 	void DrawScene(int drawmode);
 	void ProcessScene(bool toscreen = false);
-	void EndDrawScene(sector_t * viewsector);
-	void DrawEndScene2D(sector_t * viewsector);
+	void EndDrawScene(FDrawInfo *di, sector_t * viewsector);
+	void DrawEndScene2D(FDrawInfo *di, sector_t * viewsector);
 
 	sector_t *RenderViewpoint(AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	sector_t *RenderView(player_t *player);

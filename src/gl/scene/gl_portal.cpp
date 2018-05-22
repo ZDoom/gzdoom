@@ -425,11 +425,11 @@ void GLPortal::End(bool usestencil)
 //-----------------------------------------------------------------------------
 void GLPortal::StartFrame()
 {
-	GLPortal * p=NULL;
+	GLPortal * p = nullptr;
 	portals.Push(p);
-	if (renderdepth==0)
+	if (renderdepth == 0)
 	{
-		inskybox=false;
+		inskybox = false;
 		screen->instack[sector_t::floor] = screen->instack[sector_t::ceiling] = 0;
 	}
 	renderdepth++;

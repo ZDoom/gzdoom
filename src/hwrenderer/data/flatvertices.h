@@ -45,9 +45,8 @@ class FFlatVertexGenerator
 {
 protected:
 	TArray<FFlatVertex> vbo_shadowdata;
+	FFlatVertex *mMap;
 
-
-	void CheckPlanes(sector_t *sector);
 
 public:
 	enum
@@ -70,12 +69,12 @@ private:
 	int CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor);
 	int CreateVertices(int h, sector_t *sec, const secplane_t &plane, int floor);
 	void CreateFlatVertices();
-	void UpdatePlaneVertices(sector_t *sec, int plane, FFlatVertex *map);
+	void UpdatePlaneVertices(sector_t *sec, int plane);
 protected:
 	void CreateVertices();
-	void CheckPlanes(sector_t *sector, FFlatVertex *map);
-	void CheckUpdate(sector_t *sector, FFlatVertex *map);
-
+	void CheckPlanes(sector_t *sector);
+public:
+	void CheckUpdate(sector_t *sector);
 };
 
 #endif

@@ -177,16 +177,6 @@ public:
 
 #endif
 
-	void CheckPlanes(sector_t *sector)
-	{
-		FFlatVertexGenerator::CheckPlanes(sector, map);
-	}
-
-	void CheckUpdate(sector_t *sector)
-	{
-		FFlatVertexGenerator::CheckUpdate(sector, map);
-	}
-
 	void Reset()
 	{
 		mCurIndex = mIndex;

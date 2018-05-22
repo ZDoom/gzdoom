@@ -557,6 +557,7 @@ void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
 
 	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
 	di->CurrentMapSections.Set(mapsection);
+	GLRenderer->mCurrentPortal = nullptr;
 	DrawScene(di, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }

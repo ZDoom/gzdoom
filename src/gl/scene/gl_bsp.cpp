@@ -37,6 +37,7 @@
 #include "hwrenderer/scene/hw_drawinfo.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/data/flatvertices.h"
 
 
 EXTERN_CVAR(Bool, gl_render_segs)
@@ -452,7 +453,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 
 	if (sector->validcount != validcount)
 	{
-		GLRenderer->mVBO->CheckUpdate(sector);
+		mVBO->CheckUpdate(sector);
 	}
 
 	// [RH] Add particles

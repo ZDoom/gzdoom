@@ -199,6 +199,7 @@ FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mDrawer = drawer;
+	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
 	staticClipper.Clear();
     di->FixedColormap = drawer->FixedColormap;

@@ -233,13 +233,13 @@ void FFlatVertexGenerator::CreateFlatVertices()
 //
 //==========================================================================
 
-void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane, FFlatVertex *map)
+void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane)
 {
 	int startvt = sec->vboindex[plane];
 	int countvt = sec->vbocount[plane];
 	secplane_t &splane = sec->GetSecPlane(plane);
 	FFlatVertex *vt = &vbo_shadowdata[startvt];
-	FFlatVertex *mapvt = &map[startvt];
+	FFlatVertex *mapvt = &mMap[startvt];
 	for(int i=0; i<countvt; i++, vt++, mapvt++)
 	{
 		vt->z = (float)splane.ZatPoint(vt->x, vt->y);
@@ -266,16 +266,16 @@ void FFlatVertexGenerator::CreateVertices()
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CheckPlanes(sector_t *sector, FFlatVertex *map)
+void FFlatVertexGenerator::CheckPlanes(sector_t *sector)
 {
 	if (sector->GetPlaneTexZ(sector_t::ceiling) != sector->vboheight[sector_t::ceiling])
 	{
-		UpdatePlaneVertices(sector, sector_t::ceiling, map);
+		UpdatePlaneVertices(sector, sector_t::ceiling);
 		sector->vboheight[sector_t::ceiling] = sector->GetPlaneTexZ(sector_t::ceiling);
 	}
 	if (sector->GetPlaneTexZ(sector_t::floor) != sector->vboheight[sector_t::floor])
 	{
-		UpdatePlaneVertices(sector, sector_t::floor, map);
+		UpdatePlaneVertices(sector, sector_t::floor);
 		sector->vboheight[sector_t::floor] = sector->GetPlaneTexZ(sector_t::floor);
 	}
 }
@@ -287,11 +287,11 @@ void FFlatVertexGenerator::CheckPlanes(sector_t *sector, FFlatVertex *map)
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CheckUpdate(sector_t *sector, FFlatVertex *map)
+void FFlatVertexGenerator::CheckUpdate(sector_t *sector)
 {
-	CheckPlanes(sector, map);
+	CheckPlanes(sector);
 	sector_t *hs = sector->GetHeightSec();
-	if (hs != NULL) CheckPlanes(hs, map);
+	if (hs != NULL) CheckPlanes(hs);
 	for (unsigned i = 0; i < sector->e->XFloor.ffloors.Size(); i++)
-		CheckPlanes(sector->e->XFloor.ffloors[i]->model, map);
+		CheckPlanes(sector->e->XFloor.ffloors[i]->model);
 }

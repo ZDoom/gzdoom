@@ -3,6 +3,7 @@
 #include <atomic>
 #include "r_defs.h"
 
+
 struct FSectorPortalGroup;
 struct FLinePortalSpan;
 struct FFlatVertex;
@@ -16,6 +17,7 @@ struct FDynLightData;
 struct HUDSprite;
 class Clipper;
 class IPortal;
+class FFlatVertexGenerator;
 
 //==========================================================================
 //
@@ -107,9 +109,11 @@ struct HWDrawInfo
 	TArray<uint8_t> ss_renderflags;
 	TArray<uint8_t> no_renderflags;
 
+	// This is needed by the BSP traverser.
 	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
 	area_t	in_area;
 	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
+	FFlatVertexGenerator *mVBO;	// this class needs access because the sector vertex updating is part of BSP traversal.
 
 
 private:

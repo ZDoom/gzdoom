@@ -157,6 +157,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 	mIndex = mCurIndex = 0;
 	mNumReserved = NUM_RESERVED;
 
+	mMap = map;
 	Map();
 	memcpy(map, &vbo_shadowdata[0], mNumReserved * sizeof(FFlatVertex));
 	Unmap();
@@ -215,7 +216,7 @@ void FFlatVertexBuffer::Map()
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		gl_RenderState.ResetVertexBuffer();
-		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT|GL_MAP_UNSYNCHRONIZED_BIT);
+		mMap = map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT|GL_MAP_UNSYNCHRONIZED_BIT);
 	}
 }
 
@@ -227,7 +228,7 @@ void FFlatVertexBuffer::Unmap()
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		gl_RenderState.ResetVertexBuffer();
 		glUnmapBuffer(GL_ARRAY_BUFFER);
-		map = nullptr;
+		mMap = map = nullptr;
 	}
 }
 

@@ -120,9 +120,26 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       blockhitscan = <bool>;      // Line blocks hitscan attacks
       locknumber = <int>;         // Line special is locked
       arg0str = <string>;         // Alternate string-based version of arg0
-	  moreids = <string>;         // Additional line IDs, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
+      moreids = <string>;         // Additional line IDs, specified as a space separated list of numbers (e.g. "2 666 1003 4505")
 
-      transparent   = <bool>; // true = line is a Strife transparent line (alpha 0.25)
+      transparent   = <bool>;     // true = line is a Strife transparent line (alpha 0.25)
+
+      automapstyle = <integer>;   // Explicit automap style. Possible values can be
+                                  //  0: Automap style is based on line properties (default).
+                                  //  1: One-sided wall.
+                                  //  2: Two-sided wall.
+                                  //  3: Floor levels of front and back sectors are different.
+                                  //  4: Ceiling levels of front and back sectors are different.
+                                  //  5: 3D floor border.
+                                  //  6: Wall with special non-door action.
+                                  //  7: Secret door.
+                                  //  8: Wall not seen yet.
+                                  //  9: Locked door.
+                                  // 10: Intra-level teleporter.
+                                  // 11: Inter-level or game-ending teleporter.
+                                  // 12: Unexplored secret wall.
+                                  // 13: Portal line.
+      revealed = <bool>;          // true = line is initially visible on automap.
 
       * Note about arg0str
 
@@ -171,14 +188,14 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       yscaleceiling = <float>;        // Y texture scale of ceiling texture, Default = 1.0.
       rotationfloor = <float>;        // Rotation of floor texture in degrees, Default = 0.0.
       rotationceiling = <float>;      // Rotation of ceiling texture in degrees, Default = 0.0.
-	  ceilingplane_a = <float>;       // Define the plane equation for the sector's ceiling. Default is a horizontal plane at 'heightceiling'.
-	  ceilingplane_b = <float>;       // 'heightceiling' will still be used to calculate texture alignment.
-	  ceilingplane_c = <float>;       // The plane equation will only be used if all 4 values are given.
-	  ceilingplane_d = <float>;
-	  floorplane_a = <float>;         // Define the plane equation for the sector's floor. Default is a horizontal plane at 'heightfloor'.
-	  floorplane_b = <float>;         // 'heightfloor' will still be used to calculate texture alignment.
-	  floorplane_c = <float>;         // The plane equation will only be used if all 4 values are given.
-	  floorplane_d = <float>;
+      ceilingplane_a = <float>;       // Define the plane equation for the sector's ceiling. Default is a horizontal plane at 'heightceiling'.
+      ceilingplane_b = <float>;       // 'heightceiling' will still be used to calculate texture alignment.
+      ceilingplane_c = <float>;       // The plane equation will only be used if all 4 values are given.
+      ceilingplane_d = <float>;
+      floorplane_a = <float>;         // Define the plane equation for the sector's floor. Default is a horizontal plane at 'heightfloor'.
+      floorplane_b = <float>;         // 'heightfloor' will still be used to calculate texture alignment.
+      floorplane_c = <float>;         // The plane equation will only be used if all 4 values are given.
+      floorplane_d = <float>;
       lightfloor = <integer>;         // The floor's light level. Default is 0.
       lightceiling = <integer>;       // The ceiling's light level. Default is 0.
       lightfloorabsolute = <bool>;    // true = 'lightfloor' is an absolute value. Default is 
@@ -196,8 +213,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       fadecolor = <integer>;          // Sector's fog color as RRGGBB value, default = 0x000000.
       desaturation = <float>;         // Color desaturation factor. 0 = none, 1 = full, default = 0.
       silent = <bool>;                // Actors in this sector make no sound,
-      nofallingdamage = <bool>;		  // Falling damage is disabled in this sector
-	  noattack = <bool>;              // Blocks monster attacks in this sector.
+      nofallingdamage = <bool>;       // Falling damage is disabled in this sector
+      noattack = <bool>;              // Blocks monster attacks in this sector.
       dropactors = <bool>;            // Actors drop with instantly moving floors (*)
       norespawn = <bool>;             // Players can not respawn in this sector
       soundsequence = <string>;       // The sound sequence to play when this sector moves. Placing a
@@ -215,21 +232,21 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       damagehazard = <bool>;          // Changes damage model to Strife's delayed damage for the given sector. Default = false.
       floorterrain = <string>;        // Sets the terrain for the sector's floor. Default = 'use the flat texture's terrain definition.'
       ceilingterrain = <string>;      // Sets the terrain for the sector's ceiling. Default = 'use the flat texture's terrain definition.'
-	  floor_reflect = <float>;        // reflectiveness of floor (OpenGL only, not functional on sloped sectors)
-	  ceiling_reflect = <float>;      // reflectiveness of ceiling (OpenGL only, not functional on sloped sectors)
-	  fogdensity = <integer>;         // Sets an explicit fog density for the sector, overriding the default calculation from the light level. Value range is 0-510,
-	                                  // 0 meaning that the default is to be used, 2 equalling the density of a light level of 250, and 255 equalling the density of
-	                                  // a light level of 0.  (OpenGL only)
-	  floorglowcolor = <integer>;     // Sector's floor glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing. (OpenGL 3.x and newer only)
-	  floorglowheight = <float>;      // Height of floor glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
-	  ceilingglowcolor = <integer>;   // Sector's ceiling glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing. (OpenGL 3.x and newer only)
-	  ceilingglowheight = <float>;    // Height of ceiling glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
-	  color_floor = <int>;            // Material color of sector's floor. Default is white (0xffffff)
-	  color_ceiling = <int>;          // Material color of sector's ceiling. Default is white (0xffffff)
-	  color_walltop = <int>;          // Material color of top of sector's sidedefs. In OpenGL 2.x and the software renderer this will define the entire wall's color) Default is white (0xffffff)
-	  color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
-	  color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
-							  
+      floor_reflect = <float>;        // reflectiveness of floor (OpenGL only, not functional on sloped sectors)
+      ceiling_reflect = <float>;      // reflectiveness of ceiling (OpenGL only, not functional on sloped sectors)
+      fogdensity = <integer>;         // Sets an explicit fog density for the sector, overriding the default calculation from the light level. Value range is 0-510,
+                                      // 0 meaning that the default is to be used, 2 equalling the density of a light level of 250, and 255 equalling the density of
+                                      // a light level of 0.  (OpenGL only)
+      floorglowcolor = <integer>;     // Sector's floor glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing. (OpenGL 3.x and newer only)
+      floorglowheight = <float>;      // Height of floor glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
+      ceilingglowcolor = <integer>;   // Sector's ceiling glow color as RRGGBB value, default = 'use texture's definition'. Set to -1 to disable glowing. (OpenGL 3.x and newer only)
+      ceilingglowheight = <float>;    // Height of ceiling glow. This only has an effect for the sector's own glow color, but not for a texture based glow. (OpenGL 3.x and newer only)
+      color_floor = <int>;            // Material color of sector's floor. Default is white (0xffffff)
+      color_ceiling = <int>;          // Material color of sector's ceiling. Default is white (0xffffff)
+      color_walltop = <int>;          // Material color of top of sector's sidedefs. In OpenGL 2.x and the software renderer this will define the entire wall's color) Default is white (0xffffff)
+      color_wallbottom = <int>;       // Material color of bottom of sector's sidedefs (OpenGL 3.x and later only) Default is white (0xffffff)
+      color_sprites = <int>;          // Material color of sprites in sector. Default is white (0xffffff)
+
 
       portal_ceil_blocksound = <bool> // ceiling portal blocks sound.
       portal_ceil_disabled = <bool>   // ceiling portal disabled.
@@ -241,8 +258,8 @@ Note: All <bool> fields default to false unless mentioned otherwise.
       portal_floor_nopass = <bool>     // ceiling portal blocks movement if true.
       portal_floor_norender = <bool>   // ceiling portal not rendered.
       portal_floor_overlaytype = <string> // defines translucency style, can either be "translucent" or "additive". Default is "translucent".
-	  
-      
+
+
       * Note about dropactors
 
       The spec requires this to be false by default. Currently, however, ZDoom assumes this to be true
@@ -253,37 +270,37 @@ Note: All <bool> fields default to false unless mentioned otherwise.
 
    thing
    {
-      skill# = <bool>			// Unlike the base spec, # can range from 1-16.
-      class# = <bool>			// Unlike the base spec, # can range from 1-16.
-      conversation = <int>		// Assigns a conversation dialogue to this thing.
+      skill# = <bool>           // Unlike the base spec, # can range from 1-16.
+      class# = <bool>           // Unlike the base spec, # can range from 1-16.
+      conversation = <int>      // Assigns a conversation dialogue to this thing.
                                 // Parameter is the conversation ID, 0 meaning none.
       countsecret = <bool>;     // Picking up this actor counts as a secret.
       arg0str = <string>;       // Alternate string-based version of arg0
-	  gravity = <float>;		// Set per-actor gravity. Positive values are multiplied with the class's property, 
-	                            // negative values are used as their absolute. Default = 1.0.
-								
-	  health = <float>;			// Set per-actor health. Positive values are multiplied with the class's property,
-								// negative values are used as their absolute. Default = 1.
-								
-	  renderstyle = <string>;	// Set per-actor render style, overriding the class default. Possible values can be "normal",
-								// "none", "add" or "additive", "subtract" or "subtractive", "stencil", "translucentstencil", 
-								// "addstencil", "shaded", "addshaded", "translucent", "fuzzy", "optfuzzy", "soultrans" and "shadow". 
-								// Default is an empty string for no change.
-	  fillcolor = <integer>;    // Fill color used by the "stencil", "addstencil" and "translucentstencil" rendestyles, as RRGGBB value, default = 0x000000.
-	  alpha = <float>;          // Translucency of this actor (if applicable to renderstyle), default is 1.0.
-	  score = <int>;			// Score value of this actor, overriding the class default if not null. Default = 0.
-      pitch = <integer>; 		// Pitch of thing in degrees. Default = 0 (horizontal).
-      roll = <integer>; 		// Pitch of thing in degrees. Default = 0 (horizontal).
-	  scalex = <float>;         // Vertical scaling on thing. Default = 0 (ignored).
-	  scaley = <float>;         // Horizontal scaling on thing. Default = 0 (ignored).
-	  scale = <float>;        	// Vertical and horizontal scaling on thing. Default = 0 (ignored).
-	  floatbobphase = <int>;	// Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
+      gravity = <float>;        // Set per-actor gravity. Positive values are multiplied with the class's property, 
+                                // negative values are used as their absolute. Default = 1.0.
+
+      health = <float>;         // Set per-actor health. Positive values are multiplied with the class's property,
+                                // negative values are used as their absolute. Default = 1.
+
+      renderstyle = <string>;   // Set per-actor render style, overriding the class default. Possible values can be "normal",
+                                // "none", "add" or "additive", "subtract" or "subtractive", "stencil", "translucentstencil", 
+                                // "addstencil", "shaded", "addshaded", "translucent", "fuzzy", "optfuzzy", "soultrans" and "shadow". 
+                                // Default is an empty string for no change.
+      fillcolor = <integer>;    // Fill color used by the "stencil", "addstencil" and "translucentstencil" rendestyles, as RRGGBB value, default = 0x000000.
+      alpha = <float>;          // Translucency of this actor (if applicable to renderstyle), default is 1.0.
+      score = <int>;            // Score value of this actor, overriding the class default if not null. Default = 0.
+      pitch = <integer>;        // Pitch of thing in degrees. Default = 0 (horizontal).
+      roll = <integer>;         // Pitch of thing in degrees. Default = 0 (horizontal).
+      scalex = <float>;         // Vertical scaling on thing. Default = 0 (ignored).
+      scaley = <float>;         // Horizontal scaling on thing. Default = 0 (ignored).
+      scale = <float>;          // Vertical and horizontal scaling on thing. Default = 0 (ignored).
+      floatbobphase = <int>;    // Sets the thing's floatbobphase. Valid phase values are 0-63. Default = -1 (use actor class default).
 
       * Note about arg0str
 
       For things with ACS specials (80-86 and 226), if arg0str is present and non-null, it
       will be used as the name of the script to execute, and arg0 will be ignored.
-	  On dynamic lights, arg0str can be used to set a color by name, this will supersede all args which are normally used to define a color.
+      On dynamic lights, arg0str can be used to set a color by name, this will supersede all args which are normally used to define a color.
    }
 
 
@@ -429,6 +446,10 @@ sector material colors.
 
 1.29 04.02.2018
 arg0str in dynamic lights.
+
+1.30 20.05.2018
+Added automapstyle and revealed linedef properties.
+Replaced tabs with spaces.
 
 ===============================================================================
 EOF

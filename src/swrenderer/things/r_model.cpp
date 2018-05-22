@@ -34,9 +34,6 @@
 #include "swrenderer/viewport/r_viewport.h"
 #include "swrenderer/scene/r_light.h"
 
-void gl_FlushModels();
-extern bool polymodelsInUse;
-
 namespace swrenderer
 {
 	void RenderModel::Project(RenderThread *thread, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor)
@@ -83,11 +80,6 @@ namespace swrenderer
 
 	SWModelRenderer::SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor) : Thread(thread), Clip3DFloor(clip3DFloor)
 	{
-		if (polymodelsInUse)
-		{
-			gl_FlushModels();
-			polymodelsInUse = false;
-		}
 	}
 
 	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)

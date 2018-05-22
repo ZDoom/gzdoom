@@ -488,7 +488,7 @@ void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 	gl_RenderState.EnableFog(false);
 
 	// [BB] HUD models need to be rendered here. 
-	const bool renderHUDModel = gl_IsHUDModelForPlayerAvailable( players[consoleplayer].camera->player );
+	const bool renderHUDModel = IsHUDModelForPlayerAvailable( players[consoleplayer].camera->player );
 	if ( renderHUDModel )
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
@@ -517,7 +517,7 @@ void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 
 void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
 {
-	const bool renderHUDModel = gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	// This should be removed once all 2D stuff is really done through the 2D interface.
 	gl_RenderState.mViewMatrix.loadIdentity();

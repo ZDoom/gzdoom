@@ -120,9 +120,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mCustomPostProcessShaders = nullptr;
 }
 
-void gl_LoadModels();
-void gl_FlushModels();
-
 void FGLRenderer::Initialize(int width, int height)
 {
 	mBuffers = new FGLRenderBuffers();
@@ -174,7 +171,6 @@ void FGLRenderer::Initialize(int width, int height)
 	SetupLevel();
 	mShaderManager = new FShaderManager;
 	mSamplerManager = new FSamplerManager;
-	gl_LoadModels();
 
 	GLPortal::Initialize();
 }
@@ -183,7 +179,7 @@ FGLRenderer::~FGLRenderer()
 {
 	GLPortal::Shutdown();
 
-	gl_FlushModels();
+	FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
 	if (legacyShaders) delete legacyShaders;

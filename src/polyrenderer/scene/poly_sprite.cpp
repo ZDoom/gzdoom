@@ -78,7 +78,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector
 	{
 		int spritenum = thing->sprite;
 		bool isPicnumOverride = thing->picnum.isValid();
-		FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+		FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
 		if (modelframe)
 		{
 			const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;

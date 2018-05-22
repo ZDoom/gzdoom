@@ -198,7 +198,7 @@ void FUE1Model::RenderFrame( FModelRenderer *renderer, FTexture *skin, int frame
 			}
 		}
 		renderer->SetMaterial(sskin,false,translation);
-		mVBuf->SetupFrame(renderer,vofs+frame*fsize,vofs+frame2*fsize,vsize);
+		GetVertexBuffer(renderer)->SetupFrame(renderer,vofs+frame*fsize,vofs+frame2*fsize,vsize);
 		renderer->DrawArrays(0,vsize);
 		vofs += vsize;
 	}
@@ -207,14 +207,15 @@ void FUE1Model::RenderFrame( FModelRenderer *renderer, FTexture *skin, int frame
 
 void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 {
-	if ( mVBuf != NULL )
+	if (GetVertexBuffer(renderer))
 		return;
 	int vsize = 0;
 	for ( int i=0; i<numGroups; i++ )
 		vsize += groups[i].numPolys*3;
 	vsize *= numFrames;
-	mVBuf = renderer->CreateVertexBuffer(false,numFrames==1);
-	FModelVertex *vptr = mVBuf->LockVertexBuffer(vsize);
+	auto vbuf = renderer->CreateVertexBuffer(false,numFrames==1);
+	SetVertexBuffer(renderer, vbuf);
+	FModelVertex *vptr = vbuf->LockVertexBuffer(vsize);
 	int vidx = 0;
 	for ( int i=0; i<numFrames; i++ )
 	{
@@ -233,7 +234,7 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 			}
 		}
 	}
-	mVBuf->UnlockVertexBuffer();
+	vbuf->UnlockVertexBuffer();
 }
 
 void FUE1Model::AddSkins( uint8_t *hitlist )

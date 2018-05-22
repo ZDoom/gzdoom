@@ -252,14 +252,13 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 	auto rs = psp->GetRenderStyle(playermo->RenderStyle, playermo->Alpha);
 
 	visstyle_t vis;
-	float trans = 0.f;
 
 	vis.RenderStyle = STYLE_Count;
 	vis.Alpha = rs.second;
 	vis.Invert = false;
 	playermo->AlterWeaponSprite(&vis);
 
-	if (!(psp->Flags & PSPF_FORCEALPHA)) trans = vis.Alpha;
+	alpha = (psp->Flags & PSPF_FORCEALPHA) ? 0.f : vis.Alpha;
 
 	if (vis.RenderStyle != STYLE_Count && !(psp->Flags & PSPF_FORCESTYLE))
 	{
@@ -303,13 +302,9 @@ bool HUDSprite::GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *
 	{
 		alpha = 1.f;
 	}
-	else if (trans == 0.f)
+	else if (alpha == 0.f)
 	{
 		alpha = vis.Alpha;
-	}
-	else
-	{
-		alpha = trans;
 	}
 	if (!RenderStyle.IsVisible(alpha)) return false;	// if it isn't visible skip the rest.
 
@@ -430,7 +425,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 	bool brightflash = false;
 	AActor * playermo = players[consoleplayer].camera;
 	player_t * player = playermo->player;
-	const bool hudModelStep = gl_IsHUDModelForPlayerAvailable(player);
+	const bool hudModelStep = IsHUDModelForPlayerAvailable(player);
 
 	AActor *camera = r_viewpoint.camera;
 
@@ -453,7 +448,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 	for (DPSprite *psp = player->psprites; psp != nullptr && psp->GetID() < PSP_TARGETCENTER; psp = psp->GetNext())
 	{
 		if (!psp->GetState()) continue;
-		FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? gl_FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
+		FSpriteModelFrame *smf = playermo->player->ReadyWeapon ? FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false) : nullptr;
 		// This is an 'either-or' proposition. This maybe needs some work to allow overlays with weapon models but as originally implemented this just won't work.
 		if (smf && !hudModelStep) continue;
 		if (!smf && hudModelStep) continue;

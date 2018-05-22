@@ -46,6 +46,14 @@ FTextureID LoadSkin(const char * path, const char * fn);
 struct FSpriteModelFrame;
 class IModelVertexBuffer;
 
+enum ModelRendererType
+{
+	GLModelRendererType,
+	SWModelRendererType,
+	PolyModelRendererType,
+	NumModelRendererTypes
+};
+
 class FModelRenderer
 {
 public:
@@ -53,6 +61,8 @@ public:
 
 	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor);
 	void RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
+
+	virtual ModelRendererType GetType() const = 0;
 
 	virtual void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) = 0;
 	virtual void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) = 0;
@@ -73,8 +83,7 @@ public:
 	virtual void DrawElements(int numIndices, size_t offset) = 0;
 
 private:
-	void RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, Matrix3x4 *normaltransform, int translation);
-	static double GetTimeFloat();
+	void RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation);
 };
 
 struct FModelVertex
@@ -123,11 +132,7 @@ public:
 class FModel
 {
 public:
-
-	FModel() 
-	{ 
-		mVBuf = NULL;
-	}
+	FModel();
 	virtual ~FModel();
 
 	virtual bool Load(const char * fn, int lumpnum, const char * buffer, int length) = 0;
@@ -135,19 +140,20 @@ public:
 	virtual void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0) = 0;
 	virtual void BuildVertexBuffer(FModelRenderer *renderer) = 0;
 	virtual void AddSkins(uint8_t *hitlist) = 0;
-	void DestroyVertexBuffer()
-	{
-		delete mVBuf;
-		mVBuf = NULL;
-	}
 	virtual float getAspectFactor() { return 1.f; }
+
+	void SetVertexBuffer(FModelRenderer *renderer, IModelVertexBuffer *buffer) { mVBuf[renderer->GetType()] = buffer; }
+	IModelVertexBuffer *GetVertexBuffer(FModelRenderer *renderer) const { return mVBuf[renderer->GetType()]; }
+	void DestroyVertexBuffer();
 
 	const FSpriteModelFrame *curSpriteMDLFrame;
 	int curMDLIndex;
 	void PushSpriteMDLFrame(const FSpriteModelFrame *smf, int index) { curSpriteMDLFrame = smf; curMDLIndex = index; };
 
-	IModelVertexBuffer *mVBuf;
 	FString mFileName;
+
+private:
+	IModelVertexBuffer *mVBuf[NumModelRendererTypes];
 };
 
 class FDMDModel : public FModel
@@ -473,9 +479,9 @@ struct FSpriteModelFrame
 	float pitchoffset, rolloffset; // I don't want to bother with type transformations, so I made this variables float.
 };
 
-FSpriteModelFrame * gl_FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);
-
-bool gl_IsHUDModelForPlayerAvailable (player_t * player);
+FSpriteModelFrame * FindModelFrame(const PClass * ti, int sprite, int frame, bool dropped);
+bool IsHUDModelForPlayerAvailable(player_t * player);
+void FlushModels();
 
 class DeletingModelArray : public TArray<FModel *>
 {

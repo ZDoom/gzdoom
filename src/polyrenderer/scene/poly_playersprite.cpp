@@ -60,7 +60,7 @@ void RenderPolyPlayerSprites::Render(PolyRenderThread *thread)
 		(r_deathcamera && viewpoint.camera->health <= 0))
 		return;
 
-	renderHUDModel = r_models && gl_IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	renderHUDModel = r_models && IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	PolyTransferHeights fakeflat(viewpoint.camera->subsector);
 

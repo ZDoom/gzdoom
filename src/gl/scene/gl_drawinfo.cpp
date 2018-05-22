@@ -44,7 +44,7 @@
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
-FDrawInfo * gl_drawinfo;
+static FDrawInfo * gl_drawinfo;
 FDrawInfoList di_list;
 
 //==========================================================================
@@ -81,13 +81,13 @@ void FDrawInfo::DoDrawSorted(HWDrawList *dl, SortNode * head)
 		DoDrawSorted(dl, head->left);
 		gl_RenderState.SetClipSplit(clipsplit);
 	}
-	dl->DoDraw(gl_drawinfo, GLPASS_TRANSLUCENT, head->itemindex, true);
+	dl->DoDraw(this, GLPASS_TRANSLUCENT, head->itemindex, true);
 	if (head->equal)
 	{
 		SortNode * ehead=head->equal;
 		while (ehead)
 		{
-			dl->DoDraw(gl_drawinfo, GLPASS_TRANSLUCENT, ehead->itemindex, true);
+			dl->DoDraw(this, GLPASS_TRANSLUCENT, ehead->itemindex, true);
 			ehead=ehead->equal;
 		}
 	}
@@ -191,25 +191,25 @@ FDrawInfo::~FDrawInfo()
 // Sets up a new drawinfo struct
 //
 //==========================================================================
-void FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
+
+// OpenGL has no use for multiple clippers so use the same one for all DrawInfos.
+static Clipper staticClipper;
+
+FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mDrawer = drawer;
+	di->mVBO = GLRenderer->mVBO;
+	di->mClipper = &staticClipper;
+	staticClipper.Clear();
     di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
+	return di;
 }
 
 void FDrawInfo::StartScene()
 {
 	ClearBuffers();
-
-	sectorrenderflags.Resize(level.sectors.Size());
-	ss_renderflags.Resize(level.subsectors.Size());
-	no_renderflags.Resize(level.subsectors.Size());
-
-	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
-	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
 
 	next = gl_drawinfo;
 	gl_drawinfo = this;
@@ -392,8 +392,8 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -444,8 +444,8 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 {
 	wallseg ws;
 	sector_t ffake, bfake;
-	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, mDrawer->in_area, true);
-	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, mDrawer->in_area, false);
+	sector_t * fakefsector = hw_FakeFlat(seg->frontsector, &ffake, in_area, true);
+	sector_t * fakebsector = hw_FakeFlat(seg->backsector, &bfake, in_area, false);
 
 	vertex_t * v1, * v2;
 
@@ -504,12 +504,6 @@ void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *su
 {
 	portal->GetRenderState()->AddSubsector(sub);
 }
-
-int FDrawInfo::ClipPoint(const DVector3 &pos)
-{
-	return GLRenderer->mClipPortal->ClipPoint(pos);
-}
-
 
 std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
 {

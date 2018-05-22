@@ -13,30 +13,14 @@ struct HUDSprite;
 
 class GLSceneDrawer
 {
-	fixed_t viewx, viewy;	// since the nodes are still fixed point, keeping the view position  also fixed point for node traversal is faster.
-	
-	subsector_t *currentsubsector;	// used by the line processing code.
-	sector_t *currentsector;
-
 	TMap<DPSprite*, int> weapondynlightindex;
 
-	void RenderMultipassStuff();
+	void RenderMultipassStuff(FDrawInfo *di);
 	
-	void UnclipSubsector(subsector_t *sub);
-	void AddLine (seg_t *seg, bool portalclip);
-	void PolySubsector(subsector_t * sub);
-	void RenderPolyBSPNode (void *node);
-	void AddPolyobjs(subsector_t *sub);
-	void AddLines(subsector_t * sub, sector_t * sector);
-	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line);
-	void RenderThings(subsector_t * sub, sector_t * sector);
-	void DoSubsector(subsector_t * sub);
-	void RenderBSPNode(void *node);
+	void RenderScene(FDrawInfo *di, int recursion);
+	void RenderTranslucent(FDrawInfo *di);
 
-	void RenderScene(int recursion);
-	void RenderTranslucent();
-
-	void CreateScene();
+	void CreateScene(FDrawInfo *di);
 
 public:
 	GLSceneDrawer()
@@ -44,10 +28,7 @@ public:
 		GLPortal::drawer = this;
 	}
 
-	Clipper clipper;
 	int		FixedColormap;
-	area_t	in_area;
-	BitArray CurrentMapSections;	// this cannot be a single number, because a group of portals with the same displacement may link different sections.
 
 	angle_t FrustumAngle();
 	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
@@ -58,26 +39,14 @@ public:
 	void Set3DViewport(bool mainview);
 	void Reset3DViewport();
 	void SetFixedColormap(player_t *player);
-	void DrawScene(int drawmode);
-	void ProcessScene(bool toscreen = false);
-	void EndDrawScene(sector_t * viewsector);
-	void DrawEndScene2D(sector_t * viewsector);
+	void DrawScene(FDrawInfo *di, int drawmode);
+	void ProcessScene(FDrawInfo *di, bool toscreen = false);
+	void EndDrawScene(FDrawInfo *di, sector_t * viewsector);
+	void DrawEndScene2D(FDrawInfo *di, sector_t * viewsector);
 
 	sector_t *RenderViewpoint(AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	sector_t *RenderView(player_t *player);
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
-
-	void InitClipper(angle_t a1, angle_t a2)
-	{
-		clipper.Clear();
-		clipper.SafeAddClipRangeRealAngles(a1, a2);
-	}
-
-	void SetView()
-	{
-		viewx = FLOAT2FIXED(r_viewpoint.Pos.X);
-		viewy = FLOAT2FIXED(r_viewpoint.Pos.Y);
-	}
 
 	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
 	{

@@ -7,6 +7,7 @@
 
 struct FPortalGroupArray;
 struct portnode_t;
+struct subsector_t;
 //============================================================================
 //
 // This table holds the offsets for the different parts of a map
@@ -256,6 +257,8 @@ struct FSectorPortalGroup
 	GLSectorStackPortal *glportal;	// for quick access to the render data. This is only valid during BSP traversal!
 
 	GLSectorStackPortal *GetRenderState();
+
+	void AddSubsector(subsector_t *sub);
 };
 
 

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "hw_drawinfo.h"
 #include "hwrenderer/textures/hw_material.h"
 
 struct GLSkyInfo
@@ -32,3 +33,12 @@ struct GLHorizonInfo
 	PalEntry specialcolor;
 };
 
+class IPortal
+{
+public:
+	virtual ~IPortal() {}
+	virtual int ClipSeg(seg_t *seg) { return PClip_Inside; }
+	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }
+	virtual int ClipPoint(const DVector2 &pos) { return PClip_Inside; }
+	virtual line_t *ClipLine() { return nullptr; }
+};

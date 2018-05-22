@@ -121,6 +121,7 @@ struct FDrawInfo : public HWDrawInfo
 	void ProcessLights(GLFlat *flat, bool istrans);
 	void DrawSubsector(GLFlat *flat, subsector_t * sub);
 	void SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli);
+	void SetupSectorLights(GLFlat *flat, int pass, int *dli);
 
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);
@@ -133,9 +134,8 @@ struct FDrawInfo : public HWDrawInfo
 	// These two may be moved to the API independent part of the renderer later.
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
-	int ClipPoint(const DVector3 &pos) override;
 
-	static void StartDrawInfo(GLSceneDrawer *drawer);
+	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer);
 	static void EndDrawInfo();
 	
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
@@ -161,8 +161,6 @@ public:
 	void Release(FDrawInfo *);
 };
 
-
-extern FDrawInfo * gl_drawinfo;
 
 void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblending);
 

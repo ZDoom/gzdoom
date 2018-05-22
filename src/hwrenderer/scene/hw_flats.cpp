@@ -92,14 +92,13 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 //
 //==========================================================================
 
-bool GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata)
+bool GLFlat::SetupLights(int pass, FLightNode * node, FDynLightData &lightdata, int portalgroup)
 {
 	Plane p;
 
 	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces) return false;	// no lights on additively blended surfaces.
 
 	lightdata.Clear();
-	FLightNode * node = sub->lighthead;
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;
@@ -121,11 +120,21 @@ bool GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &li
 		}
 
 		p.Set(plane.plane.Normal(), plane.plane.fD());
-		lightdata.GetLight(sub->sector->PortalGroup, p, light, false);
+		lightdata.GetLight(portalgroup, p, light, false);
 		node = node->nextLight;
 	}
 
 	return true;
+}
+
+bool GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata)
+{
+	return SetupLights(pass, sub->lighthead, lightdata, sub->sector->PortalGroup);
+}
+
+bool GLFlat::SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdata)
+{
+	return SetupLights(pass, sec->lighthead, lightdata, sec->PortalGroup);
 }
 
 //==========================================================================

@@ -95,6 +95,7 @@ public:
 
 class FFlatVertexBuffer : public FVertexBuffer, public FFlatVertexGenerator
 {
+	unsigned int ibo_id;
 	FFlatVertex *map;
 	unsigned int mIndex;
 	std::atomic<unsigned int> mCurIndex;
@@ -176,6 +177,11 @@ public:
 	}
 
 #endif
+
+	uint32_t *GetIndexPointer() const
+	{
+		return ibo_id == 0 ? &ibo_data[0] : nullptr;
+	}
 
 	void Reset()
 	{

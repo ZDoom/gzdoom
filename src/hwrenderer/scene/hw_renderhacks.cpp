@@ -1090,6 +1090,7 @@ void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 				{				
 					subsector_t *sub = HandledSubsectors[j];
 					ss_renderflags[sub->Index()] &= ~SSRF_RENDERCEILING;
+					sub->sector->ibocount = -1;	// cannot render this sector in one go.
 
 					if (sub->portalcoverage[sector_t::ceiling].subsectors == NULL)
 					{
@@ -1135,6 +1136,7 @@ void HWDrawInfo::ProcessSectorStacks(area_t in_area)
 				{				
 					subsector_t *sub = HandledSubsectors[j];
 					ss_renderflags[sub->Index()] &= ~SSRF_RENDERFLOOR;
+					sub->sector->ibocount = -1;	// cannot render this sector in one go.
 
 					if (sub->portalcoverage[sector_t::floor].subsectors == NULL)
 					{

@@ -121,6 +121,7 @@ struct FDrawInfo : public HWDrawInfo
 	void ProcessLights(GLFlat *flat, bool istrans);
 	void DrawSubsector(GLFlat *flat, subsector_t * sub);
 	void SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli);
+	void SetupSectorLights(GLFlat *flat, int pass, int *dli);
 
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);

@@ -81,6 +81,7 @@ class FRenderState
 	bool mGlowEnabled;
 	bool mSplitEnabled;
 	bool mClipLineEnabled;
+	bool mClipLineShouldBeActive;
 	bool mBrightmapEnabled;
 	bool mColorMask[4];
 	bool currentColorMask[4];
@@ -199,6 +200,11 @@ public:
 	bool GetClipLineState()
 	{
 		return mClipLineEnabled;
+	}
+
+	bool GetClipLineShouldBeActive()
+	{
+		return mClipLineShouldBeActive;
 	}
 
 	void SetClipHeight(float height, float direction);
@@ -325,6 +331,11 @@ public:
 			{
 				glDisable(GL_CLIP_DISTANCE0);
 			}
+		}
+		else
+		{
+			// this needs to be flagged because in this case per-sector plane rendering needs to be disabled if a clip plane is active.
+			mClipLineShouldBeActive = on;
 		}
 	}
 

@@ -118,13 +118,22 @@ static F3DFloor *Find3DFloor(sector_t *target, sector_t *model)
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor)
+int FFlatVertexGenerator::CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FFlatVertexGenerator::FIndexGenerationInfo &gen)
 {
-	int idx = vbo_shadowdata.Reserve(sub->numlines);
-	for(unsigned int k=0; k<sub->numlines; k++, idx++)
+	if (sub->numlines < 3) return -1;
+
+	int idx = ibo_data.Reserve((sub->numlines - 2) * 3);
+	int idxc = idx;
+	int firstndx = gen.GetIndex(sub->firstline[0].v1);
+	int secondndx = gen.GetIndex(sub->firstline[1].v1);
+	for (unsigned int k = 2; k<sub->numlines; k++)
 	{
-		vbo_shadowdata[idx].SetFlatVertex(sub->firstline[k].v1, plane);
-		if (sub->sector->transdoor && floor) vbo_shadowdata[idx].z -= 1.f;
+		auto ndx = gen.GetIndex(sub->firstline[k].v1);
+
+		ibo_data[idx++] = vi + firstndx;
+		ibo_data[idx++] = vi + secondndx;
+		ibo_data[idx++] = vi + ndx;
+		secondndx = ndx;
 	}
 	return idx;
 }
@@ -135,15 +144,28 @@ int FFlatVertexGenerator::CreateSubsectorVertices(subsector_t *sub, const secpla
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor)
+int FFlatVertexGenerator::CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FFlatVertexGenerator::FIndexGenerationInfo &gen)
 {
-	int rt = vbo_shadowdata.Size();
-	// First calculate the vertices for the sector itself
-	for(int j=0; j<sec->subsectorcount; j++)
+	int rt = ibo_data.Size();
+	int vi = vbo_shadowdata.Reserve(gen.vertices.Size());
+	float diff;
+
+	// Create the actual vertices.
+	if (sec->transdoor && floor) diff = -1.f;
+	else diff = 0.f;
+	for (unsigned i = 0; i < gen.vertices.Size(); i++)
+	{
+		vbo_shadowdata[vi + i].SetFlatVertex(gen.vertices[i], plane);
+		vbo_shadowdata[vi + i].z += diff;
+	}
+	
+	// Create the indices for the subsectors
+	for (int j = 0; j<sec->subsectorcount; j++)
 	{
 		subsector_t *sub = sec->subsectors[j];
-		CreateSubsectorVertices(sub, plane, floor);
+		CreateIndexedSubsectorVertices(sub, plane, floor, vi, gen);
 	}
+	sec->ibocount = ibo_data.Size() - rt;
 	return rt;
 }
 
@@ -153,23 +175,23 @@ int FFlatVertexGenerator::CreateSectorVertices(sector_t *sec, const secplane_t &
 //
 //==========================================================================
 
-int FFlatVertexGenerator::CreateVertices(int h, sector_t *sec, const secplane_t &plane, int floor)
+int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FFlatVertexGenerator::FIndexGenerationInfo> &gen)
 {
 	// First calculate the vertices for the sector itself
 	sec->vboheight[h] = sec->GetPlaneTexZ(h);
-	sec->vboindex[h] = CreateSectorVertices(sec, plane, floor);
+	sec->vboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, gen[sec->Index()]);
 
 	// Next are all sectors using this one as heightsec
 	TArray<sector_t *> &fakes = sec->e->FakeFloor.Sectors;
-	for (unsigned g=0; g<fakes.Size(); g++)
+	for (unsigned g = 0; g<fakes.Size(); g++)
 	{
 		sector_t *fsec = fakes[g];
-		fsec->vboindex[2+h] = CreateSectorVertices(fsec, plane, false);
+		fsec->vboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
 	}
 
 	// and finally all attached 3D floors
 	TArray<sector_t *> &xf = sec->e->XFloor.attached;
-	for (unsigned g=0; g<xf.Size(); g++)
+	for (unsigned g = 0; g<xf.Size(); g++)
 	{
 		sector_t *fsec = xf[g];
 		F3DFloor *ffloor = Find3DFloor(fsec, sec);
@@ -181,10 +203,9 @@ int FFlatVertexGenerator::CreateVertices(int h, sector_t *sec, const secplane_t 
 
 			if (dotop || dobottom)
 			{
-				if (dotop) ffloor->top.vindex = vbo_shadowdata.Size();
-				if (dobottom) ffloor->bottom.vindex = vbo_shadowdata.Size();
-	
-				CreateSectorVertices(fsec, plane, false);
+				auto ndx = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
+				if (dotop) ffloor->top.vindex = ndx;
+				if (dobottom) ffloor->bottom.vindex = ndx;
 			}
 		}
 	}
@@ -199,13 +220,28 @@ int FFlatVertexGenerator::CreateVertices(int h, sector_t *sec, const secplane_t 
 //
 //==========================================================================
 
-void FFlatVertexGenerator::CreateFlatVertices()
+void FFlatVertexGenerator::CreateIndexedFlatVertices()
 {
+	TArray<FIndexGenerationInfo> gen;
+	gen.Resize(level.sectors.Size());
+	// This must be generated up front so that the following code knows how many vertices a sector contains.
+	for (unsigned i = 0; i < level.sectors.Size(); i++)
+	{
+		for (int j = 0; j < level.sectors[i].subsectorcount; j++)
+		{
+			auto sub = level.sectors[i].subsectors[j];
+			for (unsigned k = 0; k < sub->numlines; k++)
+			{
+				auto vert = sub->firstline[k].v1;
+				gen[i].AddVertex(vert);
+			}
+		}
+	}
 	for (int h = sector_t::floor; h <= sector_t::ceiling; h++)
 	{
-		for(auto &sec : level.sectors)
+		for (auto &sec : level.sectors)
 		{
-			CreateVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor);
+			CreateIndexedVertices(h, &sec, sec.GetSecPlane(h), h == sector_t::floor, gen);
 		}
 	}
 
@@ -213,7 +249,7 @@ void FFlatVertexGenerator::CreateFlatVertices()
 	// No new vertices are needed here. The planes come from the actual sector
 	for (auto &sec : level.sectors)
 	{
-		for(auto ff : sec.e->XFloor.ffloors)
+		for (auto ff : sec.e->XFloor.ffloors)
 		{
 			if (ff->top.model == &sec)
 			{
@@ -257,7 +293,7 @@ void FFlatVertexGenerator::UpdatePlaneVertices(sector_t *sec, int plane)
 void FFlatVertexGenerator::CreateVertices()
 {
 	vbo_shadowdata.Resize(NUM_RESERVED);
-	CreateFlatVertices();
+	CreateIndexedFlatVertices();
 }
 
 //==========================================================================

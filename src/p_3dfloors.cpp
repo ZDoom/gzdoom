@@ -120,6 +120,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	ffloor->top.copied = ffloor->bottom.copied = false;
 	ffloor->top.model = ffloor->bottom.model = ffloor->model = sec2;
 	ffloor->target = sec;
+	ffloor->top.vindex = ffloor->bottom.vindex = -1;
 
 	if (!(flags&FF_THINFLOOR))
 	{

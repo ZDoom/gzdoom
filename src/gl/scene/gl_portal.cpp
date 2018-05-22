@@ -322,6 +322,7 @@ void GLPortal::End(bool usestencil)
 
 	Clocker c(PortalAll);
 	if (PrevPortal != NULL) PrevPortal->PopState();
+	GLRenderer->mCurrentPortal = PrevPortal;
 
 	if (usestencil)
 	{

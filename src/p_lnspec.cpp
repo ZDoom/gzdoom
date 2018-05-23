@@ -2768,56 +2768,11 @@ FUNC(LS_Line_SetBlocking)
 FUNC(LS_Line_SetFlags)
 // Line_SetFlags (id, setflags, clearflags)
 {
-/*	static const uint32_t flagtrans[] =
-	{
-		ML_BLOCKING,
-		ML_BLOCKMONSTERS,
-		ML_TWOSIDED,
-		ML_DONTPEGTOP,
-		ML_DONTPEGBOTTOM,
-		ML_SECRET,
-		ML_SOUNDBLOCK,
-		ML_DONTDRAW,
-		ML_MAPPED,
-		ML_REPEAT_SPECIAL,
-		ML_ADDTRANS,
-		ML_MONSTERSCANACTIVATE,
-		ML_BLOCK_PLAYERS,
-		ML_BLOCKEVERYTHING,
-		ML_ZONEBOUNDARY,
-		ML_RAILING,
-		ML_BLOCK_FLOATERS,
-		ML_CLIP_MIDTEX,
-		ML_WRAP_MIDTEX,
-		ML_3DMIDTEX,
-		ML_CHECKSWITCHRANGE,
-		ML_FIRSTSIDEONLY,
-		ML_BLOCKPROJECTILE,
-		ML_BLOCKUSE,
-		ML_BLOCKSIGHT,
-		ML_BLOCKHITSCAN,
-		ML_3DMIDTEX_IMPASS,
-		ML_REVEALED,
-		ML_PORTALCONNECT, // UNUSABLE, Here to block off that for loop
-	};*/
-
-//	if (arg0 == 0) return false;
-	
-/*	int setflags = 0;
-	int clearflags = 0;
-
-	for (int i = 0; flagtrans[i] != ML_PORTALCONNECT; i++, arg1 >>= 1, arg2 >>= 1)
-	{
-		if (arg1 > 0) setflags |= flagtrans[i];
-		if (arg2 > 0) clearflags |= flagtrans[i];
-	}*/
-
 	FLineIdIterator itr(arg0);
 	int line;
 	while ((line = itr.Next()) >= 0)
 	{
 		level.lines[line].flags = (level.lines[line].flags & ~arg2) | arg1;
-//		level.lines[line].flags = (level.lines[line].flags & ~clearflags) | setflags;
 	}
 
 	return true;

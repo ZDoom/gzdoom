@@ -62,7 +62,7 @@ void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, 
 		(*dli)++;
 		return;
 	}
-	if (flat->SetupSectorLights(pass, flat->sector, lightdata))
+	if (flat->SetupSubsectorLights(pass, sub, lightdata))
 	{
 		int d = GLRenderer->mLights->UploadLights(lightdata);
 		if (pass == GLPASS_LIGHTSONLY)

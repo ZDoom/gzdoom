@@ -844,7 +844,6 @@ static void ParseModelDefLump(int Lump)
 				}
 			}
 		}
-		// This code is commented out because Gene Tech has broken include statements that blocks this feature..
 		else if (sc.Compare("#include"))
 		{
 			sc.MustGetString();

@@ -56,10 +56,12 @@ void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, co
 	ModelActor = actor;
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 	SetTransform();
+	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 }
 
 void PolyModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 {
+	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 	ModelActor = nullptr;
 }
 
@@ -98,12 +100,14 @@ void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectT
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 	SetTransform();
 	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
+	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 }
 
 void PolyModelRenderer::EndDrawHUDModel(AActor *actor)
 {
 	ModelActor = nullptr;
 	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
+	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 }
 
 void PolyModelRenderer::SetInterpolation(double interpolation)

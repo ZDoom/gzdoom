@@ -79,6 +79,11 @@ void PolyTriangleDrawer::SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw
 	queue->Push<PolySetCullCCWCommand>(ccw);
 }
 
+void PolyTriangleDrawer::SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided)
+{
+	queue->Push<PolySetTwoSidedCommand>(twosided);
+}
+
 void PolyTriangleDrawer::SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable)
 {
 	queue->Push<PolySetWeaponSceneCommand>(enable);
@@ -348,6 +353,14 @@ void PolyTriangleThreadData::DrawShadedTriangle(const ShadedTriVertex *vert, boo
 		}
 	}
 
+	if (twosided && numclipvert > 2)
+	{
+		args->v1 = &clippedvert[0];
+		args->v2 = &clippedvert[1];
+		args->v3 = &clippedvert[2];
+		ccw = !IsFrontfacing(args);
+	}
+
 	// Draw screen triangles
 	if (ccw)
 	{
@@ -584,6 +597,17 @@ PolySetCullCCWCommand::PolySetCullCCWCommand(bool ccw) : ccw(ccw)
 void PolySetCullCCWCommand::Execute(DrawerThread *thread)
 {
 	PolyTriangleThreadData::Get(thread)->SetCullCCW(ccw);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolySetTwoSidedCommand::PolySetTwoSidedCommand(bool twosided) : twosided(twosided)
+{
+}
+
+void PolySetTwoSidedCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetTwoSided(twosided);
 }
 
 /////////////////////////////////////////////////////////////////////////////

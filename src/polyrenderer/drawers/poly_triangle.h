@@ -35,6 +35,7 @@ public:
 	static void ClearBuffers(DCanvas *canvas);
 	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, bool span_drawers);
 	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
+	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
 	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip);
 };
@@ -47,6 +48,7 @@ public:
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, bool span_drawers);
 	void SetTransform(const Mat4f *objectToClip);
 	void SetCullCCW(bool value) { ccw = value; }
+	void SetTwoSided(bool value) { twosided = value; }
 	void SetWeaponScene(bool value) { weaponScene = value; }
 
 	void DrawElements(const PolyDrawArgs &args);
@@ -81,6 +83,7 @@ private:
 	bool dest_bgra = false;
 	uint8_t *dest = nullptr;
 	bool ccw = true;
+	bool twosided = false;
 	bool weaponScene = false;
 	const Mat4f *objectToClip = nullptr;
 	bool span_drawers = false;
@@ -110,6 +113,18 @@ public:
 
 private:
 	bool ccw;
+};
+
+class PolySetTwoSidedCommand : public DrawerCommand
+{
+public:
+	PolySetTwoSidedCommand(bool twosided);
+
+	void Execute(DrawerThread *thread) override;
+	FString DebugInfo() override { return "PolySetCullCCWCommand"; }
+
+private:
+	bool twosided;
 };
 
 class PolySetWeaponSceneCommand : public DrawerCommand

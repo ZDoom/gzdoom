@@ -120,11 +120,13 @@ namespace swrenderer
 		}
 
 		SetTransform();
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 	}
 
 	void SWModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 	{
 		ModelActor = nullptr;
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 	}
 
 	IModelVertexBuffer *SWModelRenderer::CreateVertexBuffer(bool needindex, bool singleframe)
@@ -183,12 +185,14 @@ namespace swrenderer
 		ClipBottom = {};
 		SetTransform();
 		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 	}
 
 	void SWModelRenderer::EndDrawHUDModel(AActor *actor)
 	{
 		ModelActor = nullptr;
 		PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 	}
 
 	void SWModelRenderer::SetInterpolation(double interpolation)

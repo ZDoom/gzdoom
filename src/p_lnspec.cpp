@@ -2765,6 +2765,18 @@ FUNC(LS_Line_SetBlocking)
 	return true;
 }
 
+FUNC(LS_Line_SetFlags)
+// Line_SetFlags (id, setflags, clearflags)
+{
+	FLineIdIterator itr(arg0);
+	int line;
+	while ((line = itr.Next()) >= 0)
+	{
+		level.lines[line].flags = (level.lines[line].flags & ~arg2) | arg1;
+	}
+
+	return true;
+}
 
 
 FUNC(LS_ChangeCamera)
@@ -3713,7 +3725,7 @@ static lnSpecFunc LineSpecials[] =
 	/* 278 */ LS_Sector_SetCeilingGlow,
 	/* 279 */ LS_Floor_MoveToValueAndCrush,
 	/* 280 */ LS_Ceiling_MoveToValueAndCrush,
-
+	/* 281 */ LS_Line_SetFlags,
 
 };
 

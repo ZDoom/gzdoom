@@ -48,8 +48,6 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
-CVAR(Bool, gl_render_subsectors, false, 0)
-
 //==========================================================================
 //
 // Flats 
@@ -166,24 +164,24 @@ void FDrawInfo::DrawSubsector(GLFlat *flat, subsector_t * sub)
 void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 {
 	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
-
-	if (flat->sector->ibocount > 0 && !gl_render_subsectors && !gl_RenderState.GetClipLineShouldBeActive())
+	
+	if (flat->sector->ibocount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
 	{
 		SetupSectorLights(flat, GLPASS_LIGHTSONLY, nullptr);
 	}
 	else
 	{
-	// Draw the subsectors belonging to this sector
+		// Draw the subsectors belonging to this sector
 		for (int i = 0; i < flat->sector->subsectorcount; i++)
-	{
-		subsector_t * sub = flat->sector->subsectors[i];
-			if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
 		{
-			SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
+			subsector_t * sub = flat->sector->subsectors[i];
+			if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
+			{
+				SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
+			}
 		}
 	}
-	}
-
+	
 	// Draw the subsectors assigned to it due to missing textures
 	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
 	{
@@ -214,7 +212,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	if (gl.legacyMode) processlights = false;
 
 	auto vcount = flat->sector->ibocount;
-	if (vcount > 0 && !gl_render_subsectors && !gl_RenderState.GetClipLineShouldBeActive())
+	if (vcount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
 	{
 		if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
 		drawcalls.Clock();

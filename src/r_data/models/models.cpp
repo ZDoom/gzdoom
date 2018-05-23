@@ -845,16 +845,21 @@ static void ParseModelDefLump(int Lump)
 			}
 		}
 		// This code is commented out because Gene Tech has broken include statements that blocks this feature..
-		/*else if (sc.Compare("#include"))
+		else if (sc.Compare("#include"))
 		{
 			sc.MustGetString();
 			// This is not using sc.Open because it can print a more useful error message when done here
 			int includelump = Wads.CheckNumForFullName(sc.String, true);
 			if (includelump == -1)
-				sc.ScriptError("Lump '%s' not found", sc.String);
+			{
+				if (strcmp(sc.String, "sentinel.modl") != 0) // Gene Tech mod has a broken #include statement
+					sc.ScriptError("Lump '%s' not found", sc.String);
+			}
 			else
+			{
 				ParseModelDefLump(includelump);
-		}*/
+			}
+		}
 	}
 }
 

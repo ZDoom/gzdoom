@@ -216,14 +216,14 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	{
 		if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
 		drawcalls.Clock();
-		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + flat->vboindex);
+		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + flat->iboindex);
 		drawcalls.Unclock();
 		flatvertices += vcount;
 		flatprimitives++;
 	}
-	else if (flat->vboindex >= 0)
+	else if (flat->iboindex >= 0)
 	{
-		int index = flat->vboindex;
+		int index = flat->iboindex;
 		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{
 			subsector_t * sub = flat->sector->subsectors[i];

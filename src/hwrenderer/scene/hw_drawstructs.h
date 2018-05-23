@@ -306,7 +306,7 @@ public:
 	bool stack;
 	bool ceiling;
 	uint8_t renderflags;
-	int vboindex;
+	int iboindex;
 	//int vboheight;
 
 	int dynlightindex;

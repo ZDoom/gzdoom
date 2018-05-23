@@ -177,21 +177,22 @@ int FFlatVertexGenerator::CreateIndexedSectorVertices(sector_t *sec, const secpl
 
 int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FFlatVertexGenerator::FIndexGenerationInfo> &gen)
 {
+	sec->vboindex[h] = vbo_shadowdata.Size();
 	// First calculate the vertices for the sector itself
 	sec->vboheight[h] = sec->GetPlaneTexZ(h);
-	sec->vboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, gen[sec->Index()]);
+	sec->iboindex[h] = CreateIndexedSectorVertices(sec, plane, floor, gen[sec->Index()]);
 
 	// Next are all sectors using this one as heightsec
 	TArray<sector_t *> &fakes = sec->e->FakeFloor.Sectors;
-	for (unsigned g = 0; g<fakes.Size(); g++)
+	for (unsigned g = 0; g < fakes.Size(); g++)
 	{
 		sector_t *fsec = fakes[g];
-		fsec->vboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
+		fsec->iboindex[2 + h] = CreateIndexedSectorVertices(fsec, plane, false, gen[fsec->Index()]);
 	}
 
 	// and finally all attached 3D floors
 	TArray<sector_t *> &xf = sec->e->XFloor.attached;
-	for (unsigned g = 0; g<xf.Size(); g++)
+	for (unsigned g = 0; g < xf.Size(); g++)
 	{
 		sector_t *fsec = xf[g];
 		F3DFloor *ffloor = Find3DFloor(fsec, sec);
@@ -210,7 +211,7 @@ int FFlatVertexGenerator::CreateIndexedVertices(int h, sector_t *sec, const secp
 		}
 	}
 	sec->vbocount[h] = vbo_shadowdata.Size() - sec->vboindex[h];
-	return sec->vboindex[h];
+	return sec->iboindex[h];
 }
 
 
@@ -253,11 +254,11 @@ void FFlatVertexGenerator::CreateIndexedFlatVertices()
 		{
 			if (ff->top.model == &sec)
 			{
-				ff->top.vindex = sec.vboindex[ff->top.isceiling];
+				ff->top.vindex = sec.iboindex[ff->top.isceiling];
 			}
 			if (ff->bottom.model == &sec)
 			{
-				ff->bottom.vindex = sec.vboindex[ff->top.isceiling];
+				ff->bottom.vindex = sec.iboindex[ff->top.isceiling];
 			}
 		}
 	}

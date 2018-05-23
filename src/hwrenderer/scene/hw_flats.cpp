@@ -229,11 +229,11 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 	renderstyle = rover->flags&FF_ADDITIVETRANS? STYLE_Add : STYLE_Translucent;
 	if (plane.model->VBOHeightcheck(plane.isceiling))
 	{
-		vboindex = plane.vindex;
+		iboindex = plane.vindex;
 	}
 	else
 	{
-		vboindex = -1;
+		iboindex = -1;
 	}
 }
 
@@ -298,11 +298,11 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 		{
 			if (frontsector->VBOHeightcheck(sector_t::floor))
 			{
-				vboindex = frontsector->vboindex[sector_t::floor];
+				iboindex = frontsector->iboindex[sector_t::floor];
 			}
 			else
 			{
-				vboindex = -1;
+				iboindex = -1;
 			}
 
 			ceiling = false;
@@ -358,11 +358,11 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 		{
 			if (frontsector->VBOHeightcheck(sector_t::ceiling))
 			{
-				vboindex = frontsector->vboindex[sector_t::ceiling];
+				iboindex = frontsector->iboindex[sector_t::ceiling];
 			}
 			else
 			{
-				vboindex = -1;
+				iboindex = -1;
 			}
 
 			ceiling = true;

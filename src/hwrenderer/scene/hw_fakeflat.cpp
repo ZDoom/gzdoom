@@ -234,7 +234,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		{
 			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
 			dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
-			dest->vboindex[sector_t::floor] = sec->vboindex[sector_t::vbo_fakefloor];
+			dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakefloor];
 			dest->vboheight[sector_t::floor] = s->vboheight[sector_t::floor];
 		}
 		else if (s->MoreFlags & SECMF_FAKEFLOORONLY)
@@ -260,7 +260,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
 		dest->floorplane   = s->floorplane;
 
-		dest->vboindex[sector_t::floor] = sec->vboindex[sector_t::vbo_fakefloor];
+		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakefloor];
 		dest->vboheight[sector_t::floor] = s->vboheight[sector_t::floor];
 	}
 
@@ -272,7 +272,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 			{
 				dest->SetTexture(sector_t::ceiling, s->GetTexture(sector_t::ceiling), false);
 				dest->SetPlaneTexZQuick(sector_t::ceiling, s->GetPlaneTexZ(sector_t::ceiling));
-				dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::vbo_fakeceiling];
+				dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakeceiling];
 				dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::ceiling];
 			}
 		}
@@ -280,7 +280,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		{
 			dest->ceilingplane  = s->ceilingplane;
 			dest->SetPlaneTexZQuick(sector_t::ceiling, s->GetPlaneTexZ(sector_t::ceiling));
-			dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::vbo_fakeceiling];
+			dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakeceiling];
 			dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::ceiling];
 		}
 	}
@@ -294,10 +294,10 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		dest->ceilingplane=s->floorplane;
 		dest->ceilingplane.FlipVert();
 
-		dest->vboindex[sector_t::floor] = sec->vboindex[sector_t::floor];
+		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::floor];
 		dest->vboheight[sector_t::floor] = sec->vboheight[sector_t::floor];
 
-		dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::vbo_fakefloor];
+		dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::vbo_fakefloor];
 		dest->vboheight[sector_t::ceiling] = s->vboheight[sector_t::floor];
 
 		dest->ClearPortal(sector_t::ceiling);
@@ -347,10 +347,10 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 		dest->floorplane = s->ceilingplane;
 		dest->floorplane.FlipVert();
 
-		dest->vboindex[sector_t::floor] = sec->vboindex[sector_t::vbo_fakeceiling];
+		dest->iboindex[sector_t::floor] = sec->iboindex[sector_t::vbo_fakeceiling];
 		dest->vboheight[sector_t::floor] = s->vboheight[sector_t::ceiling];
 
-		dest->vboindex[sector_t::ceiling] = sec->vboindex[sector_t::ceiling];
+		dest->iboindex[sector_t::ceiling] = sec->iboindex[sector_t::ceiling];
 		dest->vboheight[sector_t::ceiling] = sec->vboheight[sector_t::ceiling];
 
 		dest->ClearPortal(sector_t::floor);

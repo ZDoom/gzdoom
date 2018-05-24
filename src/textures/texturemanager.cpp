@@ -607,12 +607,6 @@ void FTextureManager::AddHiresTextures (int wadnum)
 void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 {
 	int remapLump, lastLump;
-	FString src;
-	bool is32bit;
-	int width, height;
-	ETextureType type;
-	int mode;
-	TArray<FTextureID> tlist;
 
 	lastLump = 0;
 
@@ -620,141 +614,165 @@ void FTextureManager::LoadTextureDefs(int wadnum, const char *lumpname)
 	{
 		if (Wads.GetLumpFile(remapLump) == wadnum)
 		{
-			FScanner sc(remapLump);
-			while (sc.GetString())
+			ParseTextureDef(remapLump);
+		}
+	}
+}
+
+void FTextureManager::ParseTextureDef(int lump)
+{
+	TArray<FTextureID> tlist;
+
+	FScanner sc(lump);
+	while (sc.GetString())
+	{
+		if (sc.Compare("remap")) // remap an existing texture
+		{
+			sc.MustGetString();
+
+			// allow selection by type
+			int mode;
+			ETextureType type;
+			if (sc.Compare("wall")) type=ETextureType::Wall, mode=FTextureManager::TEXMAN_Overridable;
+			else if (sc.Compare("flat")) type=ETextureType::Flat, mode=FTextureManager::TEXMAN_Overridable;
+			else if (sc.Compare("sprite")) type=ETextureType::Sprite, mode=0;
+			else type = ETextureType::Any, mode = 0;
+
+			if (type != ETextureType::Any) sc.MustGetString();
+
+			sc.String[8]=0;
+
+			tlist.Clear();
+			int amount = ListTextures(sc.String, tlist);
+			FName texname = sc.String;
+
+			sc.MustGetString();
+			int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
+			if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
+
+			if (tlist.Size() == 0)
 			{
-				if (sc.Compare("remap")) // remap an existing texture
+				Printf("Attempting to remap non-existent texture %s to %s\n",
+					texname.GetChars(), sc.String);
+			}
+			else if (lumpnum == -1)
+			{
+				Printf("Attempting to remap texture %s to non-existent lump %s\n",
+					texname.GetChars(), sc.String);
+			}
+			else
+			{
+				for(unsigned int i = 0; i < tlist.Size(); i++)
 				{
-					sc.MustGetString();
+					FTexture * oldtex = Textures[tlist[i].GetIndex()].Texture;
+					int sl;
 
-					// allow selection by type
-					if (sc.Compare("wall")) type=ETextureType::Wall, mode=FTextureManager::TEXMAN_Overridable;
-					else if (sc.Compare("flat")) type=ETextureType::Flat, mode=FTextureManager::TEXMAN_Overridable;
-					else if (sc.Compare("sprite")) type=ETextureType::Sprite, mode=0;
-					else type = ETextureType::Any, mode = 0;
-
-					if (type != ETextureType::Any) sc.MustGetString();
-
-					sc.String[8]=0;
-
-					tlist.Clear();
-					int amount = ListTextures(sc.String, tlist);
-					FName texname = sc.String;
-
-					sc.MustGetString();
-					int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
-					if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
-
-					if (tlist.Size() == 0)
+					// only replace matching types. For sprites also replace any MiscPatches
+					// based on the same lump. These can be created for icons.
+					if (oldtex->UseType == type || type == ETextureType::Any ||
+						(mode == TEXMAN_Overridable && oldtex->UseType == ETextureType::Override) ||
+						(type == ETextureType::Sprite && oldtex->UseType == ETextureType::MiscPatch &&
+						(sl=oldtex->GetSourceLump()) >= 0 && Wads.GetLumpNamespace(sl) == ns_sprites)
+						)
 					{
-						Printf("Attempting to remap non-existent texture %s to %s\n",
-							texname.GetChars(), sc.String);
-					}
-					else if (lumpnum == -1)
-					{
-						Printf("Attempting to remap texture %s to non-existent lump %s\n",
-							texname.GetChars(), sc.String);
-					}
-					else
-					{
-						for(unsigned int i = 0; i < tlist.Size(); i++)
+						FTexture * newtex = FTexture::CreateTexture (lumpnum, ETextureType::Any);
+						if (newtex != NULL)
 						{
-							FTexture * oldtex = Textures[tlist[i].GetIndex()].Texture;
-							int sl;
-
-							// only replace matching types. For sprites also replace any MiscPatches
-							// based on the same lump. These can be created for icons.
-							if (oldtex->UseType == type || type == ETextureType::Any ||
-								(mode == TEXMAN_Overridable && oldtex->UseType == ETextureType::Override) ||
-								(type == ETextureType::Sprite && oldtex->UseType == ETextureType::MiscPatch &&
-								(sl=oldtex->GetSourceLump()) >= 0 && Wads.GetLumpNamespace(sl) == ns_sprites)
-								)
-							{
-								FTexture * newtex = FTexture::CreateTexture (lumpnum, ETextureType::Any);
-								if (newtex != NULL)
-								{
-									// Replace the entire texture and adjust the scaling and offset factors.
-									newtex->bWorldPanning = true;
-									newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
-									newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
-									newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
-									newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
-									newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
-									ReplaceTexture(tlist[i], newtex, true);
-								}
-							}
+							// Replace the entire texture and adjust the scaling and offset factors.
+							newtex->bWorldPanning = true;
+							newtex->SetScaledSize(oldtex->GetScaledWidth(), oldtex->GetScaledHeight());
+							newtex->_LeftOffset[0] = int(oldtex->GetScaledLeftOffset(0) * newtex->Scale.X);
+							newtex->_LeftOffset[1] = int(oldtex->GetScaledLeftOffset(1) * newtex->Scale.X);
+							newtex->_TopOffset[0] = int(oldtex->GetScaledTopOffset(0) * newtex->Scale.Y);
+							newtex->_TopOffset[1] = int(oldtex->GetScaledTopOffset(1) * newtex->Scale.Y);
+							ReplaceTexture(tlist[i], newtex, true);
 						}
 					}
-				}
-				else if (sc.Compare("define")) // define a new "fake" texture
-				{
-					sc.GetString();
-					
-					FString base = ExtractFileBase(sc.String, false);
-					if (!base.IsEmpty())
-					{
-						src = base.Left(8);
-
-						int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
-						if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
-
-						sc.GetString();
-						is32bit = !!sc.Compare("force32bit");
-						if (!is32bit) sc.UnGet();
-
-						sc.MustGetNumber();
-						width = sc.Number;
-						sc.MustGetNumber();
-						height = sc.Number;
-
-						if (lumpnum>=0)
-						{
-							FTexture *newtex = FTexture::CreateTexture(lumpnum, ETextureType::Override);
-
-							if (newtex != NULL)
-							{
-								// Replace the entire texture and adjust the scaling and offset factors.
-								newtex->bWorldPanning = true;
-								newtex->SetScaledSize(width, height);
-								newtex->Name = src;
-
-								FTextureID oldtex = TexMan.CheckForTexture(src, ETextureType::MiscPatch);
-								if (oldtex.isValid()) 
-								{
-									ReplaceTexture(oldtex, newtex, true);
-									newtex->UseType = ETextureType::Override;
-								}
-								else AddTexture(newtex);
-							}
-						}
-					}				
-					//else Printf("Unable to define hires texture '%s'\n", tex->Name);
-				}
-				else if (sc.Compare("texture"))
-				{
-					ParseXTexture(sc, ETextureType::Override);
-				}
-				else if (sc.Compare("sprite"))
-				{
-					ParseXTexture(sc, ETextureType::Sprite);
-				}
-				else if (sc.Compare("walltexture"))
-				{
-					ParseXTexture(sc, ETextureType::Wall);
-				}
-				else if (sc.Compare("flat"))
-				{
-					ParseXTexture(sc, ETextureType::Flat);
-				}
-				else if (sc.Compare("graphic"))
-				{
-					ParseXTexture(sc, ETextureType::MiscPatch);
-				}
-				else
-				{
-					sc.ScriptError("Texture definition expected, found '%s'", sc.String);
 				}
 			}
+		}
+		else if (sc.Compare("define")) // define a new "fake" texture
+		{
+			sc.GetString();
+					
+			FString base = ExtractFileBase(sc.String, false);
+			if (!base.IsEmpty())
+			{
+				FString src = base.Left(8);
+
+				int lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_patches);
+				if (lumpnum == -1) lumpnum = Wads.CheckNumForFullName(sc.String, true, ns_graphics);
+
+				sc.GetString();
+				bool is32bit = !!sc.Compare("force32bit");
+				if (!is32bit) sc.UnGet();
+
+				sc.MustGetNumber();
+				int width = sc.Number;
+				sc.MustGetNumber();
+				int height = sc.Number;
+
+				if (lumpnum>=0)
+				{
+					FTexture *newtex = FTexture::CreateTexture(lumpnum, ETextureType::Override);
+
+					if (newtex != NULL)
+					{
+						// Replace the entire texture and adjust the scaling and offset factors.
+						newtex->bWorldPanning = true;
+						newtex->SetScaledSize(width, height);
+						newtex->Name = src;
+
+						FTextureID oldtex = TexMan.CheckForTexture(src, ETextureType::MiscPatch);
+						if (oldtex.isValid()) 
+						{
+							ReplaceTexture(oldtex, newtex, true);
+							newtex->UseType = ETextureType::Override;
+						}
+						else AddTexture(newtex);
+					}
+				}
+			}				
+			//else Printf("Unable to define hires texture '%s'\n", tex->Name);
+		}
+		else if (sc.Compare("texture"))
+		{
+			ParseXTexture(sc, ETextureType::Override);
+		}
+		else if (sc.Compare("sprite"))
+		{
+			ParseXTexture(sc, ETextureType::Sprite);
+		}
+		else if (sc.Compare("walltexture"))
+		{
+			ParseXTexture(sc, ETextureType::Wall);
+		}
+		else if (sc.Compare("flat"))
+		{
+			ParseXTexture(sc, ETextureType::Flat);
+		}
+		else if (sc.Compare("graphic"))
+		{
+			ParseXTexture(sc, ETextureType::MiscPatch);
+		}
+		else if (sc.Compare("#include"))
+		{
+			sc.MustGetString();
+
+			// This is not using sc.Open because it can print a more useful error message when done here
+			int includelump = Wads.CheckNumForFullName(sc.String, true);
+			if (includelump == -1)
+			{
+				sc.ScriptError("Lump '%s' not found", sc.String);
+			}
+			else
+			{
+				ParseTextureDef(includelump);
+			}
+		}
+		else
+		{
+			sc.ScriptError("Texture definition expected, found '%s'", sc.String);
 		}
 	}
 }

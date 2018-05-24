@@ -139,7 +139,7 @@ void PolyDrawLinePortal::Render(int portalDepth)
 	DVector2 pt2 = clipLine->v2->fPos() - PolyRenderer::Instance()->Viewpoint.Pos;
 	bool backfacing = (pt1.Y * (pt1.X - pt2.X) + pt1.X * (pt2.Y - pt1.Y) >= 0);
 
-	PortalViewpoint = PolyRenderer::Instance()->SetupPerspectiveMatrix(Mirror);
+	PortalViewpoint = PolyRenderer::Instance()->SetupPerspectiveMatrix(Mirror != nullptr);
 	PortalViewpoint.StencilValue = StencilValue;
 	PortalViewpoint.PortalDepth = portalDepth;
 	PortalViewpoint.PortalEnterLine = clipLine;

@@ -12,7 +12,7 @@ vec3 lightContribution(int i, vec3 normal)
 
 	vec3 lightdir = normalize(lightpos.xyz - pixelpos.xyz);
 	float dotprod = dot(normal, lightdir);
-	if (dotprod < 0.0) return vec3(0.0);	// light hits from the backside. This can happen with full sector light lists and must be rejected for all cases.
+	if (dotprod < -0.0001) return vec3(0.0);	// light hits from the backside. This can happen with full sector light lists and must be rejected for all cases. Note that this can cause precision issues.
 	
 	float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
 

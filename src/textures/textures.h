@@ -584,6 +584,7 @@ public:
 	void AddPatches (int lumpnum);
 	void AddHiresTextures (int wadnum);
 	void LoadTextureDefs(int wadnum, const char *lumpname);
+	void ParseTextureDef(int remapLump);
 	void ParseXTexture(FScanner &sc, ETextureType usetype);
 	void SortTexturesByType(int start, int end);
 	bool AreTexturesCompatible (FTextureID picnum1, FTextureID picnum2);

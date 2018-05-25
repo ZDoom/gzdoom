@@ -754,7 +754,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		cls = PClass::FindClass(screenclass);
 		if (cls == nullptr)
 		{
-			I_FatalError("Cannot create statis screen");
+			I_FatalError("Cannot create status screen");
 		}
 	}
 	// Set up some global stuff that is always needed.

@@ -63,7 +63,7 @@ bool FDynLightData::GetLight(int group, Plane & p, ADynamicLight * light, bool c
 		return false;
 	}
 
-	AddLightToList(group, light);
+	AddLightToList(group, light, false);
 	return true;
 }
 
@@ -72,7 +72,7 @@ bool FDynLightData::GetLight(int group, Plane & p, ADynamicLight * light, bool c
 // Add one dynamic light to the light data list
 //
 //==========================================================================
-void FDynLightData::AddLightToList(int group, ADynamicLight * light)
+void FDynLightData::AddLightToList(int group, ADynamicLight * light, bool forceAttenuate)
 {
 	int i = 0;
 
@@ -109,7 +109,7 @@ void FDynLightData::AddLightToList(int group, ADynamicLight * light)
 	bool attenuate;
 
     // Store attenuate flag in the sign bit of the float.
-	if (gl_attenuate == -1) attenuate = !!(light->lightflags & LF_ATTENUATE);
+	if (gl_attenuate == -1) attenuate = !!(light->lightflags & LF_ATTENUATE) || forceAttenuate;
 	else attenuate = !!gl_attenuate;
 
 	if (attenuate) shadowIndex = -shadowIndex;

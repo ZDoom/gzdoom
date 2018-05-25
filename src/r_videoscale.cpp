@@ -102,7 +102,7 @@ bool ViewportIsScaled43()
 
 void R_ShowCurrentScaling()
 {
-	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = x1 * vid_scalefactor, y2 = y1 * vid_scalefactor;
+	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = int(x1 * vid_scalefactor), y2 = int(y1 * vid_scalefactor);
 	Printf("Current Scale: %f\n", (float)(vid_scalefactor));
 	Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
 }

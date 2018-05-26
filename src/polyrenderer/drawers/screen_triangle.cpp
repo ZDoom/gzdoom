@@ -1287,6 +1287,169 @@ void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 	uint32_t *destLine = dest + args->pitch * y;
 
 	int x = x0;
+
+#ifndef NO_SSE
+	__m128i mfillcolor = _mm_set1_epi32(fillcolor);
+	__m128i mcapcolor = _mm_unpacklo_epi8(mfillcolor, _mm_setzero_si128());
+	__m128i malpha = _mm_set1_epi32(alpha);
+
+	int sseEnd = x0 + ((x1 - x0) & ~3);
+	while (x < sseEnd)
+	{
+		__m128i fg;
+
+		if (ModeT::SWFlags & SWSTYLEF_Fill)
+		{
+			fg = mfillcolor;
+		}
+		else if (ModeT::SWFlags & SWSTYLEF_FogBoundary)
+		{
+			fg = _mm_loadl_epi64((const __m128i*)(destLine + x));
+		}
+		else
+		{
+			float rcpW0 = 0x01000000 / posXW;
+			float rcpW1 = 0x01000000 / (posXW + stepXW);
+
+			int32_t u0 = (int32_t)(posXU * rcpW0);
+			int32_t u1 = (int32_t)((posXU + stepXU) * rcpW1);
+			int32_t v0 = (int32_t)(posXV * rcpW0);
+			int32_t v1 = (int32_t)((posXV + stepXV) * rcpW1);
+			uint32_t texelX0 = ((((uint32_t)u0 << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelX1 = ((((uint32_t)u1 << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY0 = ((((uint32_t)v0 << 8) >> 16) * texHeight) >> 16;
+			uint32_t texelY1 = ((((uint32_t)v1 << 8) >> 16) * texHeight) >> 16;
+
+			if (ModeT::SWFlags & SWSTYLEF_Translated)
+			{
+				uint32_t fg0 = translation[((const uint8_t*)texPixels)[texelX0 * texHeight + texelY0]];
+				uint32_t fg1 = translation[((const uint8_t*)texPixels)[texelX1 * texHeight + texelY1]];
+				fg = _mm_setr_epi32(fg0, fg1, 0, 0);
+			}
+			else
+			{
+				uint32_t fg0 = texPixels[texelX0 * texHeight + texelY0];
+				uint32_t fg1 = texPixels[texelX1 * texHeight + texelY1];
+				fg = _mm_setr_epi32(fg0, fg1, 0, 0);
+			}
+		}
+
+		if (ModeT::SWFlags & SWSTYLEF_Skycap)
+		{
+			float rcpW0 = 0x01000000 / posXW;
+			float rcpW1 = 0x01000000 / (posXW + stepXW);
+			int32_t v0 = (int32_t)(posXV * rcpW0);
+			int32_t v1 = (int32_t)((posXV + stepXV) * rcpW1);
+
+			int start_fade = 2; // How fast it should fade out
+			__m128i v = _mm_setr_epi32(v0, v0, v1, v1);
+			__m128i alpha_top = _mm_min_epi16(_mm_max_epi16(_mm_srai_epi32(v, 16 - start_fade), _mm_setzero_si128()), _mm_set1_epi16(256));
+			__m128i alpha_bottom = _mm_min_epi16(_mm_max_epi16(_mm_srai_epi32(_mm_sub_epi32(_mm_set1_epi32(2 << 24), v), 16 - start_fade), _mm_setzero_si128()), _mm_set1_epi16(256));
+			__m128i a = _mm_min_epi16(alpha_top, alpha_bottom);
+			a = _mm_shufflelo_epi16(_mm_shufflehi_epi16(a, _MM_SHUFFLE(0, 0, 0, 0)), _MM_SHUFFLE(0, 0, 0, 0));
+			__m128i inv_a = _mm_sub_epi32(_mm_set1_epi32(256), a);
+
+			fg = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+			__m128i c = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_mullo_epi16(fg, a), _mm_mullo_epi16(mcapcolor, inv_a)), _mm_set1_epi16(127)), 8);
+			_mm_storel_epi64((__m128i*)(destLine + x), _mm_packus_epi16(c, c));
+		}
+		else
+		{
+			if ((ModeT::Flags & STYLEF_ColorIsFixed) && !(ModeT::SWFlags & SWSTYLEF_Fill))
+			{
+				__m128i rgbmask = _mm_set1_epi32(0x00ffffff);
+				if (ModeT::Flags & STYLEF_RedIsAlpha)
+					fg = _mm_or_si128(_mm_andnot_si128(rgbmask, _mm_slli_epi32(fg, 8)), _mm_and_si128(rgbmask, mfillcolor));
+				else
+					fg = _mm_or_si128(_mm_andnot_si128(rgbmask, fg), _mm_and_si128(rgbmask, mfillcolor));
+			}
+
+			if (!(ModeT::Flags & STYLEF_Alpha1))
+			{
+				__m128i a = _mm_srli_epi32(fg, 24);
+				a = _mm_srli_epi32(_mm_mullo_epi16(a, malpha), 8);
+				fg = _mm_or_si128(_mm_and_si128(fg, _mm_set1_epi32(0x00ffffff)), _mm_slli_epi32(a, 24));
+			}
+
+			fg = _mm_unpacklo_epi8(fg, _mm_setzero_si128());
+
+			fixed_t lightpos0 = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+			fixed_t lightpos1 = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * (posXW + stepXW)), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+			lightpos0 = (lightpos0 & lightmask) | ((light << 8) & ~lightmask);
+			lightpos1 = (lightpos1 & lightmask) | ((light << 8) & ~lightmask);
+			int lightshade0 = lightpos0 >> 8;
+			int lightshade1 = lightpos1 >> 8;
+			__m128i shadedfg = _mm_srli_epi16(_mm_mullo_epi16(fg, _mm_setr_epi16(lightshade0, lightshade0, lightshade0, 256, lightshade1, lightshade1, lightshade1, 256)), 8);
+
+			__m128i out;
+			if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_Zero)
+			{
+				out = shadedfg;
+			}
+			else if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_One)
+			{
+				__m128i dest = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(destLine + x)), _mm_setzero_si128());
+				if (ModeT::BlendOp == STYLEOP_Add)
+				{
+					out = _mm_add_epi16(dest, shadedfg);
+				}
+				else if (ModeT::BlendOp == STYLEOP_RevSub)
+				{
+					out = _mm_sub_epi16(dest, shadedfg);
+				}
+				else //if (ModeT::BlendOp == STYLEOP_Sub)
+				{
+					out = _mm_sub_epi16(shadedfg, dest);
+				}
+			}
+			else if (ModeT::SWFlags & SWSTYLEF_SrcColorOneMinusSrcColor)
+			{
+				__m128i dest = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(destLine + x)), _mm_setzero_si128());
+				__m128i sfactor = _mm_add_epi16(shadedfg, _mm_srli_epi16(shadedfg, 7));
+				__m128i dfactor = _mm_sub_epi16(_mm_set1_epi16(256), sfactor);
+				out = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(_mm_mullo_epi16(dest, dfactor), _mm_mullo_epi16(shadedfg, sfactor)), _mm_set1_epi16(127)), 8);
+			}
+			else
+			{
+				__m128i dest = _mm_unpacklo_epi8(_mm_loadl_epi64((const __m128i*)(destLine + x)), _mm_setzero_si128());
+
+				__m128i sfactor = _mm_shufflehi_epi16(_mm_shufflelo_epi16(shadedfg, _MM_SHUFFLE(3, 3, 3, 3)), _MM_SHUFFLE(3, 3, 3, 3));
+				sfactor = _mm_add_epi16(sfactor, _mm_srli_epi16(sfactor, 7)); // 255 -> 256
+				__m128i dfactor = _mm_sub_epi16(_mm_set1_epi16(256), sfactor);
+				__m128i src = _mm_mullo_epi16(shadedfg, sfactor);
+				if (ModeT::BlendDest == STYLEALPHA_One)
+				{
+					dest = _mm_slli_epi16(dest, 8);
+				}
+				else
+				{
+					__m128i dfactor = _mm_sub_epi16(_mm_set1_epi16(256), sfactor);
+					dest = _mm_mullo_epi16(dest, dfactor);
+				}
+
+				if (ModeT::BlendOp == STYLEOP_Add)
+				{
+					out = _mm_srli_epi16(_mm_add_epi16(_mm_add_epi16(dest, src), _mm_set1_epi16(127)), 8);
+				}
+				else if (ModeT::BlendOp == STYLEOP_RevSub)
+				{
+					out = _mm_srli_epi16(_mm_add_epi16(_mm_sub_epi16(dest, src), _mm_set1_epi16(127)), 8);
+				}
+				else //if (ModeT::BlendOp == STYLEOP_Sub)
+				{
+					out = _mm_srli_epi16(_mm_add_epi16(_mm_sub_epi16(src, dest), _mm_set1_epi16(127)), 8);
+				}
+			}
+			_mm_storel_epi64((__m128i*)(destLine + x), _mm_or_si128(_mm_packus_epi16(out, out), _mm_set1_epi32(0xff000000)));
+		}
+
+		posXW += stepXW + stepXW;
+		posXU += stepXU + stepXU;
+		posXV += stepXV + stepXV;
+		x += 2;
+	}
+#endif
+
 	while (x < x1)
 	{
 		uint32_t fg;
@@ -1345,7 +1508,7 @@ void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 				g = (g * a + bg_green * inv_a + 127) >> 8;
 				b = (b * a + bg_blue * inv_a + 127) >> 8;
 
-				destLine[x] = RGB256k.All[((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2)];
+				destLine[x] = MAKEARGB(255, r, g, b);
 			}
 		}
 		else

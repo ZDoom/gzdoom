@@ -2782,7 +2782,7 @@ FUNC(LS_Line_SetAutomapFlags)
 	int setflags = 0;
 	int clearflags = 0;
 
-	for (int i = 0; flagtrans[i] != ML_PORTALCONNECT; i++, arg1 >>= 1, arg2 >>= 1)
+	for (int i = 0; flagtrans[i] != -1; i++, arg1 >>= 1, arg2 >>= 1)
 	{
 		if (arg1 & 1) setflags |= flagtrans[i];
 		if (arg2 & 1) clearflags |= flagtrans[i];
@@ -2799,9 +2799,10 @@ FUNC(LS_Line_SetAutomapFlags)
 }
 
 FUNC(LS_Line_SetAutomapStyle)
-// Line_SetAutomapStyle (id, setflags, clearflags)
+// Line_SetAutomapStyle (id, style)
 {
-	if (arg1 < AMLS_COUNT && arg1 >= 0) {
+	if (arg1 < AMLS_COUNT && arg1 >= 0)
+	{
 		FLineIdIterator itr(arg0);
 		int line;
 		while ((line = itr.Next()) >= 0)

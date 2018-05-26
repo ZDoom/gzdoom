@@ -1163,7 +1163,8 @@ void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleT
 
 	// Draw the triangle:
 
-	auto drawfunc = (args->destBgra) ? DrawSpan32 : DrawSpan8;
+	int bmode = (int)args->uniforms->BlendMode();
+	auto drawfunc = args->destBgra ? ScreenTriangle::SpanDrawers32[bmode] : ScreenTriangle::SpanDrawers8[bmode];
 
 	float stepXW = args->gradientX.W;
 	float v1X = args->v1->x;
@@ -1248,10 +1249,11 @@ void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleT
 	}
 }
 
-#ifndef NO_SSE
-
-void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
+template<typename ModeT>
+void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 {
+	using namespace TriScreenDrawerModes;
+
 	float v1X = args->v1->x;
 	float v1Y = args->v1->y;
 	float v1W = args->v1->w;
@@ -1267,127 +1269,12 @@ void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs
 	float posXV = v1V + stepXV * startX + args->gradientY.V * startY;
 
 	const uint32_t *texPixels = (const uint32_t*)args->uniforms->TexturePixels();
+	const uint32_t *translation = (const uint32_t*)args->uniforms->Translation();
 	int texWidth = args->uniforms->TextureWidth();
 	int texHeight = args->uniforms->TextureHeight();
 
-	bool is_fixed_light = args->uniforms->FixedLight();
-	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
-	uint32_t light = args->uniforms->Light();
-	float shade = 2.0f - (light + 12.0f) / 128.0f;
-	float globVis = args->uniforms->GlobVis() * (1.0f / 32.0f);
-	light += light >> 7; // 255 -> 256
-
-	uint32_t *dest = (uint32_t*)args->dest;
-	uint32_t *destLine = dest + args->pitch * y;
-
-	int x = x0;
-	int sseEnd = x0 + ((x1 - x0) & ~3);
-	while (x < sseEnd)
-	{
-		uint32_t fgcolor[2];
-		int32_t lightshade[2];
-
-		float rcpW = 0x01000000 / posXW;
-		int32_t u = (int32_t)(posXU * rcpW);
-		int32_t v = (int32_t)(posXV * rcpW);
-		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-		fgcolor[0] = texPixels[texelX * texHeight + texelY];
-
-		fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-		lightshade[0] = lightpos >> 8;
-
-		posXW += stepXW;
-		posXU += stepXU;
-		posXV += stepXV;
-
-		rcpW = 0x01000000 / posXW;
-		u = (int32_t)(posXU * rcpW);
-		v = (int32_t)(posXV * rcpW);
-		texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-		texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-		fgcolor[1] = texPixels[texelX * texHeight + texelY];
-
-		lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-		lightshade[1] = lightpos >> 8;
-
-		posXW += stepXW;
-		posXU += stepXU;
-		posXV += stepXV;
-
-		__m128i mfgcolor = _mm_loadl_epi64((const __m128i*)fgcolor);
-		mfgcolor = _mm_unpacklo_epi8(mfgcolor, _mm_setzero_si128());
-
-		__m128i mlightshade = _mm_loadl_epi64((const __m128i*)lightshade);
-		mlightshade = _mm_shuffle_epi32(mlightshade, _MM_SHUFFLE(1, 0, 1, 0));
-		mlightshade = _mm_packs_epi32(mlightshade, mlightshade);
-
-		__m128i mdestcolor = _mm_srli_epi16(_mm_mullo_epi16(mfgcolor, mlightshade), 8);
-		mdestcolor = _mm_packus_epi16(mdestcolor, _mm_setzero_si128());
-		mdestcolor = _mm_or_si128(mdestcolor, _mm_set1_epi32(0xff000000));
-
-		_mm_storel_epi64((__m128i*)(destLine + x), mdestcolor);
-
-		x += 2;
-	}
-
-	while (x < x1)
-	{
-		float rcpW = 0x01000000 / posXW;
-		int32_t u = (int32_t)(posXU * rcpW);
-		int32_t v = (int32_t)(posXV * rcpW);
-
-		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-		uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
-
-		uint32_t fgcolor_r = RPART(fgcolor);
-		uint32_t fgcolor_g = GPART(fgcolor);
-		uint32_t fgcolor_b = BPART(fgcolor);
-		uint32_t fgcolor_a = APART(fgcolor);
-		if (fgcolor_a > 127)
-		{
-			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-			int lightshade = lightpos >> 8;
-
-			fgcolor_r = (fgcolor_r * lightshade) >> 8;
-			fgcolor_g = (fgcolor_g * lightshade) >> 8;
-			fgcolor_b = (fgcolor_b * lightshade) >> 8;
-
-			destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
-		}
-
-		posXW += stepXW;
-		posXU += stepXU;
-		posXV += stepXV;
-		x++;
-	}
-}
-
-#else
-
-void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
-{
-	float v1X = args->v1->x;
-	float v1Y = args->v1->y;
-	float v1W = args->v1->w;
-	float v1U = args->v1->u * v1W;
-	float v1V = args->v1->v * v1W;
-	float stepXW = args->gradientX.W;
-	float stepXU = args->gradientX.U;
-	float stepXV = args->gradientX.V;
-	float startX = x0 + (0.5f - v1X);
-	float startY = y + (0.5f - v1Y);
-	float posXW = v1W + stepXW * startX + args->gradientY.W * startY;
-	float posXU = v1U + stepXU * startX + args->gradientY.U * startY;
-	float posXV = v1V + stepXV * startX + args->gradientY.V * startY;
-
-	const uint32_t *texPixels = (const uint32_t*)args->uniforms->TexturePixels();
-	int texWidth = args->uniforms->TextureWidth();
-	int texHeight = args->uniforms->TextureHeight();
+	int fillcolor = args->uniforms->Color();
+	int alpha = args->uniforms->SrcAlpha();
 
 	bool is_fixed_light = args->uniforms->FixedLight();
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
@@ -1402,29 +1289,197 @@ void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs
 	int x = x0;
 	while (x < x1)
 	{
-		float rcpW = 0x01000000 / posXW;
-		int32_t u = (int32_t)(posXU * rcpW);
-		int32_t v = (int32_t)(posXV * rcpW);
+		uint32_t fg;
 
-		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-		uint32_t fgcolor = texPixels[texelX * texHeight + texelY];
-
-		uint32_t fgcolor_r = RPART(fgcolor);
-		uint32_t fgcolor_g = GPART(fgcolor);
-		uint32_t fgcolor_b = BPART(fgcolor);
-		uint32_t fgcolor_a = APART(fgcolor);
-		if (fgcolor_a > 127)
+		if (ModeT::SWFlags & SWSTYLEF_Fill)
 		{
+			fg = fillcolor;
+		}
+		else if (ModeT::SWFlags & SWSTYLEF_FogBoundary)
+		{
+			fg = destLine[x];
+		}
+		else
+		{
+			float rcpW = 0x01000000 / posXW;
+			int32_t u = (int32_t)(posXU * rcpW);
+			int32_t v = (int32_t)(posXV * rcpW);
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+
+			if (ModeT::SWFlags & SWSTYLEF_Translated)
+			{
+				fg = translation[((const uint8_t*)texPixels)[texelX * texHeight + texelY]];
+			}
+			else
+			{
+				fg = texPixels[texelX * texHeight + texelY];
+			}
+		}
+
+		if (ModeT::SWFlags & SWSTYLEF_Skycap)
+		{
+			float rcpW = 0x01000000 / posXW;
+			int32_t v = (int32_t)(posXV * rcpW);
+
+			int start_fade = 2; // How fast it should fade out
+			int alpha_top = clamp(v >> (16 - start_fade), 0, 256);
+			int alpha_bottom = clamp(((2 << 24) - v) >> (16 - start_fade), 0, 256);
+			int a = MIN(alpha_top, alpha_bottom);
+			int inv_a = 256 - a;
+
+			if (a == 256)
+			{
+				destLine[x] = fg;
+			}
+			else
+			{
+				uint32_t r = RPART(fg);
+				uint32_t g = GPART(fg);
+				uint32_t b = BPART(fg);
+				uint32_t fg_a = APART(fg);
+				uint32_t bg_red = RPART(fillcolor);
+				uint32_t bg_green = GPART(fillcolor);
+				uint32_t bg_blue = BPART(fillcolor);
+				r = (r * a + bg_red * inv_a + 127) >> 8;
+				g = (g * a + bg_green * inv_a + 127) >> 8;
+				b = (b * a + bg_blue * inv_a + 127) >> 8;
+
+				destLine[x] = RGB256k.All[((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2)];
+			}
+		}
+		else
+		{
+			if ((ModeT::Flags & STYLEF_ColorIsFixed) && !(ModeT::SWFlags & SWSTYLEF_Fill))
+			{
+				if (ModeT::Flags & STYLEF_RedIsAlpha)
+					fg = ((fg << 8) & 0xff000000) | (fillcolor & 0x00ffffff);
+				else
+					fg = (fg & 0xff000000) | (fillcolor & 0x00ffffff);
+			}
+
+			uint32_t fgalpha = fg >> 24;
+
+			if (!(ModeT::Flags & STYLEF_Alpha1))
+			{
+				fgalpha = (fgalpha * alpha) >> 8;
+			}
+
 			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
 			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
 			int lightshade = lightpos >> 8;
+			uint32_t shadedfg_r = (RPART(fg) * lightshade) >> 8;
+			uint32_t shadedfg_g = (GPART(fg) * lightshade) >> 8;
+			uint32_t shadedfg_b = (BPART(fg) * lightshade) >> 8;
 
-			fgcolor_r = (fgcolor_r * lightshade) >> 8;
-			fgcolor_g = (fgcolor_g * lightshade) >> 8;
-			fgcolor_b = (fgcolor_b * lightshade) >> 8;
+			if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_Zero)
+			{
+				destLine[x] = MAKEARGB(255, shadedfg_r, shadedfg_g, shadedfg_b);
+			}
+			else if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_One)
+			{
+				uint32_t dest = destLine[x];
 
-			destLine[x] = 0xff000000 | (fgcolor_r << 16) | (fgcolor_g << 8) | fgcolor_b;
+				if (ModeT::BlendOp == STYLEOP_Add)
+				{
+					uint32_t out_r = MIN<uint32_t>(RPART(dest) + shadedfg_r, 255);
+					uint32_t out_g = MIN<uint32_t>(GPART(dest) + shadedfg_g, 255);
+					uint32_t out_b = MIN<uint32_t>(BPART(dest) + shadedfg_b, 255);
+					destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+				}
+				else if (ModeT::BlendOp == STYLEOP_RevSub)
+				{
+					uint32_t out_r = MAX<uint32_t>(RPART(dest) - shadedfg_r, 0);
+					uint32_t out_g = MAX<uint32_t>(GPART(dest) - shadedfg_g, 0);
+					uint32_t out_b = MAX<uint32_t>(BPART(dest) - shadedfg_b, 0);
+					destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+				}
+				else //if (ModeT::BlendOp == STYLEOP_Sub)
+				{
+					uint32_t out_r = MAX<uint32_t>(shadedfg_r - RPART(dest), 0);
+					uint32_t out_g = MAX<uint32_t>(shadedfg_g - GPART(dest), 0);
+					uint32_t out_b = MAX<uint32_t>(shadedfg_b - BPART(dest), 0);
+					destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+				}
+			}
+			else if (ModeT::SWFlags & SWSTYLEF_SrcColorOneMinusSrcColor)
+			{
+				uint32_t dest = destLine[x];
+
+				uint32_t sfactor_r = shadedfg_r; sfactor_r += sfactor_r >> 7; // 255 -> 256
+				uint32_t sfactor_g = shadedfg_g; sfactor_g += sfactor_g >> 7; // 255 -> 256
+				uint32_t sfactor_b = shadedfg_b; sfactor_b += sfactor_b >> 7; // 255 -> 256
+				uint32_t sfactor_a = fgalpha; sfactor_a += sfactor_a >> 7; // 255 -> 256
+				uint32_t dfactor_r = 256 - sfactor_r;
+				uint32_t dfactor_g = 256 - sfactor_g;
+				uint32_t dfactor_b = 256 - sfactor_b;
+				uint32_t out_r = (RPART(dest) * dfactor_r + shadedfg_r * sfactor_r + 128) >> 8;
+				uint32_t out_g = (GPART(dest) * dfactor_g + shadedfg_g * sfactor_g + 128) >> 8;
+				uint32_t out_b = (BPART(dest) * dfactor_b + shadedfg_b * sfactor_b + 128) >> 8;
+
+				destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+			}
+			else if (fgalpha == 255)
+			{
+				destLine[x] = MAKEARGB(255, shadedfg_r, shadedfg_g, shadedfg_b);
+			}
+			else if (fgalpha != 0)
+			{
+				uint32_t dest = destLine[x];
+
+				uint32_t sfactor = fgalpha; sfactor += sfactor >> 7; // 255 -> 256
+				uint32_t dfactor = 256 - sfactor;
+				uint32_t src_r = shadedfg_r * sfactor;
+				uint32_t src_g = shadedfg_g * sfactor;
+				uint32_t src_b = shadedfg_b * sfactor;
+				uint32_t dest_r = RPART(dest);
+				uint32_t dest_g = GPART(dest);
+				uint32_t dest_b = BPART(dest);
+				if (ModeT::BlendDest == STYLEALPHA_One)
+				{
+					dest_r <<= 8;
+					dest_g <<= 8;
+					dest_b <<= 8;
+				}
+				else
+				{
+					uint32_t dfactor = 256 - sfactor;
+					dest_r *= dfactor;
+					dest_g *= dfactor;
+					dest_b *= dfactor;
+				}
+
+				uint32_t out_r, out_g, out_b;
+				if (ModeT::BlendOp == STYLEOP_Add)
+				{
+					if (ModeT::BlendDest == STYLEALPHA_One)
+					{
+						out_r = MIN<int32_t>((dest_r + src_r + 128) >> 8, 255);
+						out_g = MIN<int32_t>((dest_g + src_g + 128) >> 8, 255);
+						out_b = MIN<int32_t>((dest_b + src_b + 128) >> 8, 255);
+					}
+					else
+					{
+						out_r = (dest_r + src_r + 128) >> 8;
+						out_g = (dest_g + src_g + 128) >> 8;
+						out_b = (dest_b + src_b + 128) >> 8;
+					}
+				}
+				else if (ModeT::BlendOp == STYLEOP_RevSub)
+				{
+					out_r = MAX<int32_t>(static_cast<int32_t>(dest_r - src_r + 128) >> 8, 0);
+					out_g = MAX<int32_t>(static_cast<int32_t>(dest_g - src_g + 128) >> 8, 0);
+					out_b = MAX<int32_t>(static_cast<int32_t>(dest_b - src_b + 128) >> 8, 0);
+				}
+				else //if (ModeT::BlendOp == STYLEOP_Sub)
+				{
+					out_r = MAX<int32_t>(static_cast<int32_t>(src_r - dest_r + 128) >> 8, 0);
+					out_g = MAX<int32_t>(static_cast<int32_t>(src_g - dest_g + 128) >> 8, 0);
+					out_b = MAX<int32_t>(static_cast<int32_t>(src_b - dest_b + 128) >> 8, 0);
+				}
+
+				destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+			}
 		}
 
 		posXW += stepXW;
@@ -1434,10 +1489,11 @@ void ScreenTriangle::DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs
 	}
 }
 
-#endif
-
-void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
+template<typename ModeT>
+void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 {
+	using namespace TriScreenDrawerModes;
+
 	float v1X = args->v1->x;
 	float v1Y = args->v1->y;
 	float v1W = args->v1->w;
@@ -1455,8 +1511,16 @@ void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs 
 	auto colormaps = args->uniforms->BaseColormap();
 
 	const uint8_t *texPixels = args->uniforms->TexturePixels();
+	const uint8_t *translation = args->uniforms->Translation();
 	int texWidth = args->uniforms->TextureWidth();
 	int texHeight = args->uniforms->TextureHeight();
+
+	int fillcolor = args->uniforms->Color();
+	int alpha = args->uniforms->SrcAlpha();
+
+	uint32_t capcolor = fillcolor;
+	if (ModeT::SWFlags & SWSTYLEF_Skycap)
+		capcolor = GPalette.BaseColors[capcolor].d;
 
 	bool is_fixed_light = args->uniforms->FixedLight();
 	uint32_t lightmask = is_fixed_light ? 0 : 0xffffffff;
@@ -1471,23 +1535,197 @@ void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs 
 	int x = x0;
 	while (x < x1)
 	{
-		float rcpW = 0x01000000 / posXW;
-		int32_t u = (int32_t)(posXU * rcpW);
-		int32_t v = (int32_t)(posXV * rcpW);
+		int fg;
+		int fgalpha = 255;
 
-		uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
-		uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
-		uint8_t fgcolor = texPixels[texelX * texHeight + texelY];
+		if (ModeT::SWFlags & SWSTYLEF_Fill)
+		{
+			fg = fillcolor;
+		}
+		else if (ModeT::SWFlags & SWSTYLEF_FogBoundary)
+		{
+			fg = destLine[x];
+		}
+		else
+		{
+			float rcpW = 0x01000000 / posXW;
+			int32_t u = (int32_t)(posXU * rcpW);
+			int32_t v = (int32_t)(posXV * rcpW);
+			uint32_t texelX = ((((uint32_t)u << 8) >> 16) * texWidth) >> 16;
+			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
+			fg = texPixels[texelX * texHeight + texelY];
 
-		fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
-		lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
-		int lightshade = lightpos >> 8;
+			if (ModeT::SWFlags & SWSTYLEF_Translated)
+				fg = translation[fg];
 
-		lightshade = ((256 - lightshade) * NUMCOLORMAPS) & 0xffffff00;
-		uint8_t shadedfg = colormaps[lightshade + fgcolor];
+			fgalpha = (fg != 0) ? 255 : 0;
+		}
 
-		if (fgcolor != 0)
-			destLine[x] = shadedfg;
+		if (ModeT::SWFlags & SWSTYLEF_Skycap)
+		{
+			float rcpW = 0x01000000 / posXW;
+			int32_t v = (int32_t)(posXV * rcpW);
+
+			int start_fade = 2; // How fast it should fade out
+			int alpha_top = clamp(v >> (16 - start_fade), 0, 256);
+			int alpha_bottom = clamp(((2 << 24) - v) >> (16 - start_fade), 0, 256);
+			int a = MIN(alpha_top, alpha_bottom);
+			int inv_a = 256 - a;
+
+			if (a == 256)
+			{
+				destLine[x] = fg;
+			}
+			else
+			{
+				uint32_t texelrgb = GPalette.BaseColors[fg].d;
+
+				uint32_t r = RPART(texelrgb);
+				uint32_t g = GPART(texelrgb);
+				uint32_t b = BPART(texelrgb);
+				uint32_t fg_a = APART(texelrgb);
+				uint32_t bg_red = RPART(capcolor);
+				uint32_t bg_green = GPART(capcolor);
+				uint32_t bg_blue = BPART(capcolor);
+				r = (r * a + bg_red * inv_a + 127) >> 8;
+				g = (g * a + bg_green * inv_a + 127) >> 8;
+				b = (b * a + bg_blue * inv_a + 127) >> 8;
+
+				destLine[x] = RGB256k.All[((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2)];
+			}
+		}
+		else
+		{
+			if ((ModeT::Flags & STYLEF_ColorIsFixed) && !(ModeT::SWFlags & SWSTYLEF_Fill))
+			{
+				if (ModeT::Flags & STYLEF_RedIsAlpha)
+					fgalpha = fg;
+				fg = fillcolor;
+			}
+
+			if (!(ModeT::Flags & STYLEF_Alpha1))
+			{
+				fgalpha = (fgalpha * alpha) >> 8;
+			}
+
+			fixed_t lightpos = FRACUNIT - (int)(clamp(shade - MIN(24.0f / 32.0f, globVis * posXW), 0.0f, 31.0f / 32.0f) * (float)FRACUNIT);
+			lightpos = (lightpos & lightmask) | ((light << 8) & ~lightmask);
+			int lightshade = lightpos >> 8;
+			lightshade = ((256 - lightshade) * NUMCOLORMAPS) & 0xffffff00;
+			uint8_t shadedfg = colormaps[lightshade + fg];
+
+			if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_Zero)
+			{
+				destLine[x] = shadedfg;
+			}
+			else if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_One)
+			{
+				uint32_t src = GPalette.BaseColors[shadedfg];
+				uint32_t dest = GPalette.BaseColors[destLine[x]];
+
+				if (ModeT::BlendOp == STYLEOP_Add)
+				{
+					uint32_t out_r = MIN<uint32_t>(RPART(dest) + RPART(src), 255);
+					uint32_t out_g = MIN<uint32_t>(GPART(dest) + GPART(src), 255);
+					uint32_t out_b = MIN<uint32_t>(BPART(dest) + BPART(src), 255);
+					destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+				}
+				else if (ModeT::BlendOp == STYLEOP_RevSub)
+				{
+					uint32_t out_r = MAX<uint32_t>(RPART(dest) - RPART(src), 0);
+					uint32_t out_g = MAX<uint32_t>(GPART(dest) - GPART(src), 0);
+					uint32_t out_b = MAX<uint32_t>(BPART(dest) - BPART(src), 0);
+					destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+				}
+				else //if (ModeT::BlendOp == STYLEOP_Sub)
+				{
+					uint32_t out_r = MAX<uint32_t>(RPART(src) - RPART(dest), 0);
+					uint32_t out_g = MAX<uint32_t>(GPART(src) - GPART(dest), 0);
+					uint32_t out_b = MAX<uint32_t>(BPART(src) - BPART(dest), 0);
+					destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+				}
+			}
+			else if (ModeT::SWFlags & SWSTYLEF_SrcColorOneMinusSrcColor)
+			{
+				uint32_t src = GPalette.BaseColors[shadedfg];
+				uint32_t dest = GPalette.BaseColors[destLine[x]];
+
+				uint32_t sfactor_r = RPART(src); sfactor_r += sfactor_r >> 7; // 255 -> 256
+				uint32_t sfactor_g = GPART(src); sfactor_g += sfactor_g >> 7; // 255 -> 256
+				uint32_t sfactor_b = BPART(src); sfactor_b += sfactor_b >> 7; // 255 -> 256
+				uint32_t sfactor_a = fgalpha; sfactor_a += sfactor_a >> 7; // 255 -> 256
+				uint32_t dfactor_r = 256 - sfactor_r;
+				uint32_t dfactor_g = 256 - sfactor_g;
+				uint32_t dfactor_b = 256 - sfactor_b;
+				uint32_t out_r = (RPART(dest) * dfactor_r + RPART(src) * sfactor_r + 128) >> 8;
+				uint32_t out_g = (GPART(dest) * dfactor_g + GPART(src) * sfactor_g + 128) >> 8;
+				uint32_t out_b = (BPART(dest) * dfactor_b + BPART(src) * sfactor_b + 128) >> 8;
+
+				destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+			}
+			else if (fgalpha == 255)
+			{
+				destLine[x] = shadedfg;
+			}
+			else if (fgalpha != 0)
+			{
+				uint32_t src = GPalette.BaseColors[shadedfg];
+				uint32_t dest = GPalette.BaseColors[destLine[x]];
+
+				uint32_t sfactor = fgalpha; sfactor += sfactor >> 7; // 255 -> 256
+				uint32_t dfactor = 256 - sfactor;
+				uint32_t src_r = RPART(src) * sfactor;
+				uint32_t src_g = GPART(src) * sfactor;
+				uint32_t src_b = BPART(src) * sfactor;
+				uint32_t dest_r = RPART(dest);
+				uint32_t dest_g = GPART(dest);
+				uint32_t dest_b = BPART(dest);
+				if (ModeT::BlendDest == STYLEALPHA_One)
+				{
+					dest_r <<= 8;
+					dest_g <<= 8;
+					dest_b <<= 8;
+				}
+				else
+				{
+					uint32_t dfactor = 256 - sfactor;
+					dest_r *= dfactor;
+					dest_g *= dfactor;
+					dest_b *= dfactor;
+				}
+
+				uint32_t out_r, out_g, out_b;
+				if (ModeT::BlendOp == STYLEOP_Add)
+				{
+					if (ModeT::BlendDest == STYLEALPHA_One)
+					{
+						out_r = MIN<int32_t>((dest_r + src_r + 128) >> 8, 255);
+						out_g = MIN<int32_t>((dest_g + src_g + 128) >> 8, 255);
+						out_b = MIN<int32_t>((dest_b + src_b + 128) >> 8, 255);
+					}
+					else
+					{
+						out_r = (dest_r + src_r + 128) >> 8;
+						out_g = (dest_g + src_g + 128) >> 8;
+						out_b = (dest_b + src_b + 128) >> 8;
+					}
+				}
+				else if (ModeT::BlendOp == STYLEOP_RevSub)
+				{
+					out_r = MAX<int32_t>(static_cast<int32_t>(dest_r - src_r + 128) >> 8, 0);
+					out_g = MAX<int32_t>(static_cast<int32_t>(dest_g - src_g + 128) >> 8, 0);
+					out_b = MAX<int32_t>(static_cast<int32_t>(dest_b - src_b + 128) >> 8, 0);
+				}
+				else //if (ModeT::BlendOp == STYLEOP_Sub)
+				{
+					out_r = MAX<int32_t>(static_cast<int32_t>(src_r - dest_r + 128) >> 8, 0);
+					out_g = MAX<int32_t>(static_cast<int32_t>(src_g - dest_g + 128) >> 8, 0);
+					out_b = MAX<int32_t>(static_cast<int32_t>(src_b - dest_b + 128) >> 8, 0);
+				}
+
+				destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+			}
+		}
 
 		posXW += stepXW;
 		posXU += stepXU;
@@ -1495,6 +1733,70 @@ void ScreenTriangle::DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs 
 		x++;
 	}
 }
+
+void(*ScreenTriangle::SpanDrawers8[])(int, int, int, const TriDrawTriangleArgs *) =
+{
+	&DrawSpan8<TriScreenDrawerModes::StyleOpaque>,
+	&DrawSpan8<TriScreenDrawerModes::StyleSkycap>,
+	&DrawSpan8<TriScreenDrawerModes::StyleFogBoundary>,
+	&DrawSpan8<TriScreenDrawerModes::StyleSrcColor>,
+	&DrawSpan8<TriScreenDrawerModes::StyleFill>,
+	&DrawSpan8<TriScreenDrawerModes::StyleNormal>,
+	&DrawSpan8<TriScreenDrawerModes::StyleFuzzy>,
+	&DrawSpan8<TriScreenDrawerModes::StyleStencil>,
+	&DrawSpan8<TriScreenDrawerModes::StyleTranslucent>,
+	&DrawSpan8<TriScreenDrawerModes::StyleAdd>,
+	&DrawSpan8<TriScreenDrawerModes::StyleShaded>,
+	&DrawSpan8<TriScreenDrawerModes::StyleTranslucentStencil>,
+	&DrawSpan8<TriScreenDrawerModes::StyleShadow>,
+	&DrawSpan8<TriScreenDrawerModes::StyleSubtract>,
+	&DrawSpan8<TriScreenDrawerModes::StyleAddStencil>,
+	&DrawSpan8<TriScreenDrawerModes::StyleAddShaded>,
+	&DrawSpan8<TriScreenDrawerModes::StyleOpaqueTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleSrcColorTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleNormalTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleStencilTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleTranslucentTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleAddTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleShadedTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleTranslucentStencilTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleShadowTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleSubtractTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleAddStencilTranslated>,
+	&DrawSpan8<TriScreenDrawerModes::StyleAddShadedTranslated>
+};
+
+void(*ScreenTriangle::SpanDrawers32[])(int, int, int, const TriDrawTriangleArgs *) =
+{
+	&DrawSpan32<TriScreenDrawerModes::StyleOpaque>,
+	&DrawSpan32<TriScreenDrawerModes::StyleSkycap>,
+	&DrawSpan32<TriScreenDrawerModes::StyleFogBoundary>,
+	&DrawSpan32<TriScreenDrawerModes::StyleSrcColor>,
+	&DrawSpan32<TriScreenDrawerModes::StyleFill>,
+	&DrawSpan32<TriScreenDrawerModes::StyleNormal>,
+	&DrawSpan32<TriScreenDrawerModes::StyleFuzzy>,
+	&DrawSpan32<TriScreenDrawerModes::StyleStencil>,
+	&DrawSpan32<TriScreenDrawerModes::StyleTranslucent>,
+	&DrawSpan32<TriScreenDrawerModes::StyleAdd>,
+	&DrawSpan32<TriScreenDrawerModes::StyleShaded>,
+	&DrawSpan32<TriScreenDrawerModes::StyleTranslucentStencil>,
+	&DrawSpan32<TriScreenDrawerModes::StyleShadow>,
+	&DrawSpan32<TriScreenDrawerModes::StyleSubtract>,
+	&DrawSpan32<TriScreenDrawerModes::StyleAddStencil>,
+	&DrawSpan32<TriScreenDrawerModes::StyleAddShaded>,
+	&DrawSpan32<TriScreenDrawerModes::StyleOpaqueTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleSrcColorTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleNormalTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleStencilTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleTranslucentTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleAddTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleShadedTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleTranslucentStencilTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleShadowTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleSubtractTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleAddStencilTranslated>,
+	&DrawSpan32<TriScreenDrawerModes::StyleAddShadedTranslated>
+};
 
 void(*ScreenTriangle::TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *) =
 {

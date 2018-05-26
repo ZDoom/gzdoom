@@ -151,10 +151,10 @@ extend class Actor
 		A_PlaySound("brain/pain", CHAN_VOICE, 1, false, ATTN_NONE);
 	}
 
-	private static void BrainishExplosion(vector3 pos)
+	private static void BrainishExplosion(vector3 pos, class<Actor> explosionactortype)
 	{
-		Actor boom = Actor.Spawn("Rocket", pos, NO_REPLACE);
-		if (boom)
+		Actor boom = Actor.Spawn(explosionactortype, pos, NO_REPLACE);
+		if (boom && boom.ResolveState("Brainexplode"))
 		{
 			boom.DeathSound = "misc/brainexplode";
 			boom.Vel.z = random[BrainScream](0, 255)/128.;
@@ -165,23 +165,28 @@ extend class Actor
 			boom.tics -= random[BrainScream](0, 7);
 			if (boom.tics < 1) boom.tics = 1;
 		}
+		else boom.Destroy(); //destroy the actor if it doesn't have BrainExplode state.
 	}
 	
-	void A_BrainScream()
+	void A_BrainScream(class <Actor> explosionactortype = "Rocket")
 	{
+		//[Cacodemon345] validate the given string.
+		if (explosionactortype == null) explosionactortype = "Rocket";
 		for (double x = -196; x < +320; x += 8)
 		{
 			// (1 / 512.) is actually what the original value of 128 did, even though it probably meant 128 map units.
-			BrainishExplosion(Vec2OffsetZ(x, -320, (1 / 512.) + random[BrainExplode](0, 255) * 2));
+			BrainishExplosion(Vec2OffsetZ(x, -320, (1 / 512.) + random[BrainExplode](0, 255) * 2), explosionactortype =  "Rocket");
 		}
 		A_PlaySound("brain/death", CHAN_VOICE, 1, false, ATTN_NONE);
 	}
 	
-	void A_BrainExplode()
+	void A_BrainExplode(class <Actor> explosionactortype = "Rocket")
 	{
+		//[Cacodemon345] validate the given string.
+		if (explosionactortype == null) explosionactortype = "Rocket";
 		double x = random2[BrainExplode]() / 32.;
 		Vector3 pos = Vec2OffsetZ(x, 0, 1 / 512. + random[BrainExplode]() * 2);
-		BrainishExplosion(pos);
+		BrainishExplosion(pos,explosionactortype);
 	}
 
 	void A_BrainDie()

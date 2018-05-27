@@ -174,7 +174,7 @@ extend class Actor
 		for (double x = -196; x < +320; x += 8)
 		{
 			// (1 / 512.) is actually what the original value of 128 did, even though it probably meant 128 map units.
-			BrainishExplosion(Vec2OffsetZ(x, -320, (1 / 512.) + random[BrainExplode](0, 255) * 2), explosionactortype =  "Rocket");
+			BrainishExplosion(Vec2OffsetZ(x, -320, (1 / 512.) + random[BrainExplode](0, 255) * 2), explosionactortype);
 		}
 		A_PlaySound("brain/death", CHAN_VOICE, 1, false, ATTN_NONE);
 	}

@@ -2730,6 +2730,7 @@ void D_DoomMain (void)
 		ST_Clear();
 		D_ErrorCleanup ();
 		DThinker::DestroyThinkersInList(STAT_STATIC);
+		E_Shutdown(false);
 		P_FreeLevelData();
 		P_FreeExtraLevelData();
 

@@ -170,7 +170,6 @@ extend class Actor
 	
 	void A_BrainScream(class <Actor> explosionactortype = "Rocket")
 	{
-		//[Cacodemon345] validate the given string.
 		if (explosionactortype == null) explosionactortype = "Rocket";
 		for (double x = -196; x < +320; x += 8)
 		{
@@ -182,7 +181,6 @@ extend class Actor
 	
 	void A_BrainExplode(class <Actor> explosionactortype = "Rocket")
 	{
-		//[Cacodemon345] validate the given string.
 		if (explosionactortype == null) explosionactortype = "Rocket";
 		double x = random2[BrainExplode]() / 32.;
 		Vector3 pos = Vec2OffsetZ(x, 0, 1 / 512. + random[BrainExplode]() * 2);

@@ -168,7 +168,7 @@ extend class Actor
 		else boom.Destroy(); //destroy the actor if it doesn't have BrainExplode state.
 	}
 	
-	void A_BrainScream(class <Actor> explosionactortype = null)
+	void A_BrainScream(class <Actor> explosionactortype)
 	{
 		if (explosionactortype == null) explosionactortype = "Rocket";
 		for (double x = -196; x < +320; x += 8)
@@ -179,7 +179,7 @@ extend class Actor
 		A_PlaySound("brain/death", CHAN_VOICE, 1, false, ATTN_NONE);
 	}
 	
-	void A_BrainExplode(class <Actor> explosionactortype = null)
+	void A_BrainExplode(class <Actor> explosionactortype)
 	{
 		if (explosionactortype == null) explosionactortype = "Rocket";
 		double x = random2[BrainExplode]() / 32.;

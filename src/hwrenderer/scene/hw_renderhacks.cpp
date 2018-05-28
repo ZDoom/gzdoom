@@ -86,6 +86,12 @@ void HWDrawInfo::ClearBuffers()
 	mClipPortal = nullptr;
 }
 
+void HWDrawInfo::UpdateCurrentMapSection()
+{
+	const int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
+	CurrentMapSections.Set(mapsection);
+}
+
 //==========================================================================
 //
 // Adds a subsector plane to a sector's render list

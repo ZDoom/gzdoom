@@ -175,6 +175,8 @@ public:
 	void PreparePlayerSprites(sector_t * viewsector, area_t in_area);
 	void PrepareTargeterSprites();
 
+	void UpdateCurrentMapSection();
+
 	virtual void DrawWall(GLWall *wall, int pass) = 0;
 	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;
 	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;

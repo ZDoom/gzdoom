@@ -29,11 +29,11 @@ float unpackuvert( uint32_t n, int c )
 	switch( c )
 	{
 	case 2:
-		return ((int16_t)((n&0x7ff)<<5))/127.f;
+		return ((int16_t)((n&0x7ff)<<5))/128.f;
 	case 1:
-		return ((int16_t)(((n>>11)&0x7ff)<<5))/127.f;
+		return ((int16_t)(((n>>11)&0x7ff)<<5))/128.f;
 	case 0:
-		return ((int16_t)(((n>>22)&0x3ff)<<6))/127.f;
+		return ((int16_t)(((n>>22)&0x3ff)<<6))/128.f;
 	default:
 		return 0.f;
 	}
@@ -98,9 +98,9 @@ void FUE1Model::LoadGeometry()
 		{
 			UE1Vertex Vert;
 			// unpack position
-			Vert.Pos = FVector3(unpackuvert(averts[j+i*numVerts],0),
-				unpackuvert(averts[j+i*numVerts],1),
-				unpackuvert(averts[j+i*numVerts],2));
+			Vert.Pos = FVector3(unpackuvert(averts[j+i*numVerts],2),
+				unpackuvert(averts[j+i*numVerts],0),
+				-unpackuvert(averts[j+i*numVerts],1));
 			// push vertex (without normals, will be calculated later)
 			verts.Push(Vert);
 		}
@@ -136,8 +136,6 @@ void FUE1Model::LoadGeometry()
 					vert[l] = verts[polys[k].V[l]+numVerts*i].Pos;
 				dir[0] = vert[1]-vert[0];
 				dir[1] = vert[2]-vert[0];
-				dir[0].MakeUnit();
-				dir[1].MakeUnit();
 				norm = dir[0]^dir[1];
 				nsum += norm.Unit();
 			}
@@ -223,7 +221,7 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 		{
 			for ( int k=0; k<groups[j].numPolys; k++ )
 			{
-				for ( int l=2; l>=0; l-- )
+				for ( int l=0; l<3; l++ )
 				{
 					UE1Vertex V = verts[polys[groups[j].P[k]].V[l]+i*numVerts];
 					FVector2 C = polys[groups[j].P[k]].C[l];

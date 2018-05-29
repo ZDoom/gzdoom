@@ -75,7 +75,7 @@ public:
 	void SetWriteColor(bool enable) { mWriteColor = enable; }
 	void SetWriteStencil(bool enable, uint8_t stencilWriteValue = 0) { mWriteStencil = enable; mStencilWriteValue = stencilWriteValue; }
 	void SetWriteDepth(bool enable) { mWriteDepth = enable; }
-	void SetStyle(TriBlendMode blendmode, double alpha = 1.0) { mBlendMode = blendmode; mSrcAlpha = (uint32_t)(alpha * 256.0 + 0.5); }
+	void SetStyle(TriBlendMode blendmode, double alpha = 1.0) { mBlendMode = blendmode; mAlpha = (uint32_t)(alpha * 256.0 + 0.5); }
 	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
@@ -107,8 +107,7 @@ public:
 
 	TriBlendMode BlendMode() const { return mBlendMode; }
 	uint32_t Color() const { return mColor; }
-	uint32_t SrcAlpha() const { return mSrcAlpha; }
-	uint32_t DestAlpha() const { return 256 - mSrcAlpha; }
+	uint32_t Alpha() const { return mAlpha; }
 
 	float GlobVis() const { return mGlobVis; }
 	uint32_t Light() const { return mLight; }
@@ -155,7 +154,7 @@ private:
 	TriBlendMode mBlendMode = TriBlendMode::Fill;
 	uint32_t mLight = 0;
 	uint32_t mColor = 0;
-	uint32_t mSrcAlpha = 0;
+	uint32_t mAlpha = 0;
 	uint16_t mLightAlpha = 0;
 	uint16_t mLightRed = 0;
 	uint16_t mLightGreen = 0;

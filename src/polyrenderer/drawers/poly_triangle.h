@@ -38,6 +38,8 @@ public:
 	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
 	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip);
+
+	static bool IsBgra();
 };
 
 class PolyTriangleThreadData

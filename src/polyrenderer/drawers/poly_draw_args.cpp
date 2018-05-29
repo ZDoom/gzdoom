@@ -52,7 +52,7 @@ void PolyDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 	mTexture = texture;
 	mTextureWidth = texture->GetWidth();
 	mTextureHeight = texture->GetHeight();
-	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
+	if (PolyTriangleDrawer::IsBgra())
 		mTexturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
 		mTexturePixels = texture->GetPixels(style);
@@ -67,7 +67,7 @@ void PolyDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 		FRemapTable *table = TranslationToTable(translationID);
 		if (table != nullptr && !table->Inactive)
 		{
-			if (PolyRenderer::Instance()->RenderTarget->IsBgra())
+			if (PolyTriangleDrawer::IsBgra())
 				mTranslation = (uint8_t*)table->Palette;
 			else
 				mTranslation = table->Remap;
@@ -121,7 +121,7 @@ void PolyDrawArgs::SetLight(FSWColormap *base_colormap, uint32_t lightlevel, dou
 
 void PolyDrawArgs::SetColor(uint32_t bgra, uint8_t palindex)
 {
-	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
+	if (PolyTriangleDrawer::IsBgra())
 	{
 		mColor = bgra;
 	}
@@ -217,7 +217,7 @@ void RectDrawArgs::SetTexture(FTexture *texture, FRenderStyle style)
 	mTexture = texture;
 	mTextureWidth = texture->GetWidth();
 	mTextureHeight = texture->GetHeight();
-	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
+	if (PolyTriangleDrawer::IsBgra())
 		mTexturePixels = (const uint8_t *)texture->GetPixelsBgra();
 	else
 		mTexturePixels = texture->GetPixels(style);
@@ -231,7 +231,7 @@ void RectDrawArgs::SetTexture(FTexture *texture, uint32_t translationID, FRender
 		FRemapTable *table = TranslationToTable(translationID);
 		if (table != nullptr && !table->Inactive)
 		{
-			if (PolyRenderer::Instance()->RenderTarget->IsBgra())
+			if (PolyTriangleDrawer::IsBgra())
 				mTranslation = (uint8_t*)table->Palette;
 			else
 				mTranslation = table->Remap;
@@ -275,7 +275,7 @@ void RectDrawArgs::SetLight(FSWColormap *base_colormap, uint32_t lightlevel)
 
 void RectDrawArgs::SetColor(uint32_t bgra, uint8_t palindex)
 {
-	if (PolyRenderer::Instance()->RenderTarget->IsBgra())
+	if (PolyTriangleDrawer::IsBgra())
 	{
 		mColor = bgra;
 	}

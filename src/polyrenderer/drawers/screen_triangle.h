@@ -251,6 +251,22 @@ namespace TriScreenDrawerModes
 	struct FuzzSampler { static const int Mode = (int)Samplers::Fuzz; };
 	struct FogBoundarySampler { static const int Mode = (int)Samplers::FogBoundary; };
 
+	enum SWOptFlags
+	{
+		SWOPT_DynLights = 1,
+		SWOPT_ColoredFog = 2,
+		SWOPT_FixedLight = 4
+	};
+
+	struct DrawerOpt { static const int Flags = 0; };
+	struct DrawerOptF { static const int Flags = SWOPT_FixedLight; };
+	struct DrawerOptC { static const int Flags = SWOPT_ColoredFog; };
+	struct DrawerOptCF { static const int Flags = SWOPT_ColoredFog | SWOPT_FixedLight; };
+	struct DrawerOptL { static const int Flags = SWOPT_DynLights; };
+	struct DrawerOptLC { static const int Flags = SWOPT_DynLights | SWOPT_ColoredFog; };
+	struct DrawerOptLF { static const int Flags = SWOPT_DynLights | SWOPT_FixedLight; };
+	struct DrawerOptLCF { static const int Flags = SWOPT_DynLights | SWOPT_ColoredFog | SWOPT_FixedLight; };
+
 	static const int fuzzcolormap[FUZZTABLE] =
 	{
 		 6, 11,  6, 11,  6,  6, 11,  6,  6, 11, 

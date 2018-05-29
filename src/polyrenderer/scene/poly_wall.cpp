@@ -354,7 +354,14 @@ void RenderPolyWall::Render(PolyRenderThread *thread)
 	}
 	else
 	{
-		args.SetStyle(Additive ? TriBlendMode::Add : TriBlendMode::Normal, MIN(Alpha, 1.0));
+		double a = MIN(Alpha, 1.0);
+		if (Additive)
+			args.SetStyle(TriBlendMode::Add, a);
+		else if (a < 1.0)
+			args.SetStyle(TriBlendMode::Translucent, a);
+		else
+			args.SetStyle(TriBlendMode::Normal);
+
 		args.SetStencilTestValue(StencilValue + 1);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);

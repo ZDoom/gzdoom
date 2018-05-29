@@ -39,10 +39,17 @@
 #include "screen_triangle.h"
 #include "x86.h"
 
+static bool isBgraRenderTarget = false;
+
 void PolyTriangleDrawer::ClearBuffers(DCanvas *canvas)
 {
 	PolyStencilBuffer::Instance()->Clear(canvas->GetWidth(), canvas->GetHeight(), 0);
 	PolyZBuffer::Instance()->Resize(canvas->GetPitch(), canvas->GetHeight());
+}
+
+bool PolyTriangleDrawer::IsBgra()
+{
+	return isBgraRenderTarget;
 }
 
 void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, bool span_drawers)
@@ -52,6 +59,7 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	int dest_height = canvas->GetHeight();
 	int dest_pitch = canvas->GetPitch();
 	bool dest_bgra = canvas->IsBgra();
+	isBgraRenderTarget = dest_bgra;
 
 	int offsetx = clamp(x, 0, dest_width);
 	int offsety = clamp(y, 0, dest_height);

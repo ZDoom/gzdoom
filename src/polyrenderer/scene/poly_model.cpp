@@ -56,12 +56,16 @@ void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, co
 	ModelActor = actor;
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 	SetTransform();
-	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
+
+	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 }
 
 void PolyModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 {
-	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
+	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
+
 	ModelActor = nullptr;
 }
 
@@ -100,14 +104,18 @@ void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectT
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
 	SetTransform();
 	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
-	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
+
+	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
 }
 
 void PolyModelRenderer::EndDrawHUDModel(AActor *actor)
 {
 	ModelActor = nullptr;
 	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, false);
-	PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
+
+	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
+		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
 }
 
 void PolyModelRenderer::SetInterpolation(double interpolation)
@@ -146,8 +154,7 @@ void PolyModelRenderer::DrawArrays(int start, int count)
 	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
-	args.SetStyle(TriBlendMode::Opaque);
-	args.SetTexture(SkinTexture, DefaultRenderStyle());
+	args.SetStyle(ModelActor->RenderStyle, ModelActor->Alpha, ModelActor->fillcolor, ModelActor->Translation, SkinTexture, fullbrightSprite);
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);
 	args.SetWriteStencil(false);
@@ -169,8 +176,7 @@ void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 	args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
 	args.SetStencilTestValue(StencilValue);
 	args.SetClipPlane(0, PolyClipPlane());
-	args.SetStyle(TriBlendMode::Opaque);
-	args.SetTexture(SkinTexture, DefaultRenderStyle());
+	args.SetStyle(ModelActor->RenderStyle, ModelActor->Alpha, ModelActor->fillcolor, ModelActor->Translation, SkinTexture, fullbrightSprite);
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);
 	args.SetWriteStencil(false);

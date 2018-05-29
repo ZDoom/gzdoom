@@ -32,7 +32,6 @@ public:
 
 	angle_t FrustumAngle();
 	void SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror);
-	void SetViewArea();
 	void SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
 	void SetViewAngle(DAngle viewangle);
 	void SetProjection(VSMatrix matrix);

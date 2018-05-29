@@ -606,10 +606,7 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 	di->SetViewArea();
 	ClearClipper(di);
 
-	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
-
-	di->CurrentMapSections.Zero();
-	di->CurrentMapSections.Set(mapsection);
+	di->UpdateCurrentMapSection();
 
 	drawer->DrawScene(di, DM_SKYPORTAL);
 	portal->mFlags &= ~PORTSF_INSKYBOX;
@@ -770,6 +767,8 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	ClearClipper(di);
 
+	di->UpdateCurrentMapSection();
+
 	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
 	drawer->DrawScene(di, DM_PORTAL);
 	gl_RenderState.SetClipHeight(0.f, 0.f);
@@ -874,6 +873,8 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 		ClearScreen();
 		return;
 	}
+
+	di->UpdateCurrentMapSection();
 
 	di->mClipPortal = this;
 	DAngle StartAngle = r_viewpoint.Angles.Yaw;

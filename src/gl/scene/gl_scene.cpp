@@ -739,6 +739,8 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	GLRenderer->CopyToBackbuffer(&bounds, false);
 	glFlush();
 
+	screen->SetOutputViewport(nullptr);
+
 	uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
 	glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
 	M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width * 3, Gamma);

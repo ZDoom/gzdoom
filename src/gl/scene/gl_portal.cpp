@@ -874,6 +874,8 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 		return;
 	}
 
+	di->UpdateCurrentMapSection();
+
 	di->mClipPortal = this;
 	DAngle StartAngle = r_viewpoint.Angles.Yaw;
 	DVector3 StartPos = r_viewpoint.Pos;
@@ -942,8 +944,6 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 	angle_t a2 = linedef->v1->GetClipAngle();
 	angle_t a1 = linedef->v2->GetClipAngle();
 	di->mClipper->SafeAddClipRange(a1,a2);
-
-	di->UpdateCurrentMapSection();
 
 	gl_RenderState.SetClipLine(linedef);
 	gl_RenderState.EnableClipLine(true);

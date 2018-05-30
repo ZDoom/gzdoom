@@ -351,6 +351,9 @@ void FDrawInfo::AddMirrorSurface(GLWall *w)
 	auto newwall = drawlists[GLDL_TRANSLUCENTBORDER].NewWall();
 	*newwall = *w;
 
+	// Invalidate vertices to allow setting of texture coordinates
+	newwall->vertcount = 0;
+
 	FVector3 v = newwall->glseg.Normal();
 	auto tcs = newwall->tcs;
 	tcs[GLWall::LOLFT].u = tcs[GLWall::LORGT].u = tcs[GLWall::UPLFT].u = tcs[GLWall::UPRGT].u = v.X;

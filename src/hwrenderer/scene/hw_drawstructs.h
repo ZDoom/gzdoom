@@ -250,11 +250,14 @@ public:
     void ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &normal);
     void ProcessDecals(HWDrawInfo *di);
 
-	void CreateVertices(FFlatVertex *&ptr, bool nosplit);
+	int CreateVertices(FFlatVertex *&ptr, bool nosplit);
 	void SplitLeftEdge (FFlatVertex *&ptr);
 	void SplitRightEdge(FFlatVertex *&ptr);
 	void SplitUpperEdge(FFlatVertex *&ptr);
 	void SplitLowerEdge(FFlatVertex *&ptr);
+
+	void CountLeftEdge (unsigned &ptr);
+	void CountRightEdge(unsigned &ptr);
 
 	int CountVertices();
 

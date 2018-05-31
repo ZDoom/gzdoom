@@ -1522,6 +1522,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		}
 		v1 = seg->v1;
 		v2 = seg->v2;
+		flags |= GLWF_NOSPLITLOWER | GLWF_NOSPLITLOWER;	// seg-splitting not needed for single segs.
 	}
 
 

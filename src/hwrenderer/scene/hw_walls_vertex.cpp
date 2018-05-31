@@ -170,8 +170,9 @@ void GLWall::SplitRightEdge(FFlatVertex *&ptr)
 //
 //==========================================================================
 
-void GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
+int GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
 {
+	auto oo = ptr;
 	ptr->Set(glseg.x1, zbottom[0], glseg.y1, tcs[LOLFT].u, tcs[LOLFT].v);
 	ptr++;
 	if (split && glseg.fracleft == 0) SplitLeftEdge(ptr);
@@ -184,6 +185,58 @@ void GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
 	ptr->Set(glseg.x2, zbottom[1], glseg.y2, tcs[LORGT].u, tcs[LORGT].v);
 	ptr++;
 	if (split && !(flags & GLWF_NOSPLITLOWER) && seg->sidedef->numsegs > 1) SplitLowerEdge(ptr);
+	return int(ptr - oo);
+}
+
+
+//==========================================================================
+//
+// Split left edge of wall
+//
+//==========================================================================
+
+void GLWall::CountLeftEdge(unsigned &ptr)
+{
+	if (vertexes[0] == NULL) return;
+
+	vertex_t * vi = vertexes[0];
+
+	if (vi->numheights)
+	{
+		int i = 0;
+
+		while (i<vi->numheights && vi->heightlist[i] <= zbottom[0]) i++;
+		while (i<vi->numheights && vi->heightlist[i] < ztop[0])
+		{
+			ptr++;
+			i++;
+		}
+	}
+}
+
+//==========================================================================
+//
+// Split right edge of wall
+//
+//==========================================================================
+
+void GLWall::CountRightEdge(unsigned &ptr)
+{
+	if (vertexes[1] == NULL) return;
+
+	vertex_t * vi = vertexes[1];
+
+	if (vi->numheights)
+	{
+		int i = vi->numheights - 1;
+
+		while (i>0 && vi->heightlist[i] >= ztop[1]) i--;
+		while (i>0 && vi->heightlist[i] > zbottom[1])
+		{
+			ptr++;
+			i--;
+		}
+	}
 }
 
 //==========================================================================
@@ -194,49 +247,13 @@ void GLWall::CreateVertices(FFlatVertex *&ptr, bool split)
 
 int GLWall::CountVertices()
 {
-	int cnt = 4;
-	vertex_t * vi = vertexes[0];
-	if (glseg.fracleft == 0 && vi != nullptr && vi->numheights)
-	{
-		int i = 0;
-
-		while (i<vi->numheights && vi->heightlist[i] <= zbottom[0]) i++;
-		while (i<vi->numheights && vi->heightlist[i] < ztop[0])
-		{
-			i++;
-			cnt++;
-		}
-	}
-	auto sidedef = seg->sidedef;
-	constexpr auto NOSPLIT_LOWER_UPPER = GLWF_NOSPLITLOWER | GLWF_NOSPLITUPPER;
-	const bool canSplit = (flags & NOSPLIT_LOWER_UPPER) != NOSPLIT_LOWER_UPPER;
-	if (canSplit && sidedef->numsegs > 1)
-	{
-		int cnt2 = 0;
-		for (int i = sidedef->numsegs - 2; i >= 0; i--)
-		{
-			float sidefrac = sidedef->segs[i]->sidefrac;
-			if (sidefrac >= glseg.fracright) continue;
-			if (sidefrac <= glseg.fracleft) break;
-			cnt2++;
-		}
-		const bool splitBoth = !(flags & NOSPLIT_LOWER_UPPER);
-		if (splitBoth) cnt2 <<= 1;
-		cnt += cnt2;
-	}
-	vi = vertexes[1];
-	if (glseg.fracright == 1 && vi != nullptr && vi->numheights)
-	{
-		int i = 0;
-
-		while (i<vi->numheights && vi->heightlist[i] <= zbottom[1]) i++;
-		while (i<vi->numheights && vi->heightlist[i] < ztop[1])
-		{
-			i++;
-			cnt++;
-		}
-	}
-	return cnt;
+	unsigned ptr = 4;
+	if (glseg.fracleft == 0) CountLeftEdge(ptr);
+	if (glseg.fracright == 1) CountRightEdge(ptr);
+	// This may allocate a few vertices too many in case of a split linedef but this is a rare case that isn't worth the required overhead for a precise calculation.
+	if (!(flags & GLWF_NOSPLITUPPER)) ptr += seg->sidedef->numsegs - 1;
+	if (!(flags & GLWF_NOSPLITLOWER)) ptr += seg->sidedef->numsegs - 1;
+	return (int)ptr;
 }
 
 //==========================================================================
@@ -250,11 +267,9 @@ void GLWall::MakeVertices(HWDrawInfo *di, bool nosplit)
 	if (vertcount == 0)
 	{
 		bool split = (gl_seamless && !nosplit && seg->sidedef != nullptr && !(seg->sidedef->Flags & WALLF_POLYOBJ) && !(flags & GLWF_NOSPLIT));
-		vertcount = split ? CountVertices() : 4;
-
-		auto ret = di->AllocVertices(vertcount);
+		auto ret = di->AllocVertices(split ? CountVertices() : 4);
 		vertindex = ret.second;
-		CreateVertices(ret.first, split);
+		vertcount = CreateVertices(ret.first, split);
 	}
 }
 

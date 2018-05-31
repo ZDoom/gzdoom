@@ -1440,19 +1440,18 @@ FString I_GetLongPathName(FString shortpath)
 	return longpath;
 }
 
-#if _MSC_VER == 1900 && defined(_USING_V110_SDK71_)
+#ifdef _USING_V110_SDK71_
 //==========================================================================
 //
-// VS14Stat
+// _stat64i32
 //
-// Work around an issue where stat doesn't work with v140_xp. This was
-// supposedly fixed, but as of Update 1 continues to not function on XP.
+// Work around an issue where stat() function doesn't work 
+// with Windows XP compatible toolset.
+// It uses GetFileInformationByHandleEx() which requires Windows Vista.
 //
 //==========================================================================
 
-#include <sys/stat.h>
-
-int VS14Stat(const char *path, struct _stat64i32 *buffer)
+int _stat64i32(const char *path, struct _stat64i32 *buffer)
 {
 	WIN32_FILE_ATTRIBUTE_DATA data;
 	if(!GetFileAttributesEx(path, GetFileExInfoStandard, &data))

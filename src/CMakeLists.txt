@@ -416,11 +416,6 @@ if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
 endif()
 
-# Fix stat in v140_xp (broken in RTM and Update 1 so far)
-if( MSVC AND MSVC_VERSION EQUAL 1900 AND CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" )
-	add_definitions( -D_stat64i32=VS14Stat )
-endif()
-
 if( UNIX )
 	CHECK_LIBRARY_EXISTS( rt clock_gettime "" CLOCK_GETTIME_IN_RT )
 	if( NOT CLOCK_GETTIME_IN_RT )

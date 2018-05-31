@@ -67,6 +67,19 @@ int cvar_defflags;
 
 FBaseCVar::FBaseCVar (const char *var_name, uint32_t flags, void (*callback)(FBaseCVar &))
 {
+	if (var_name != nullptr && (flags & CVAR_SERVERINFO))
+	{
+		// This limitation is imposed by network protocol which uses only 6 bits 
+		// for name's length with terminating null character
+		static const size_t NAME_LENGHT_MAX = 63;
+
+		if (strlen(var_name) > NAME_LENGHT_MAX)
+		{
+			I_FatalError("Name of the server console variable \"%s\" is too long.\n"
+				"Its length should not exceed %zu characters.\n", var_name, NAME_LENGHT_MAX);
+		}
+	}
+
 	FBaseCVar *var;
 
 	var = FindCVar (var_name, NULL);

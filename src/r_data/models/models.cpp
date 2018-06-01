@@ -94,8 +94,16 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	if (smf->flags & MDL_ROTATING)
 	{
-		double turns = (I_GetTime() % 200 + I_GetTimeFrac()) / 200.0;
-		rotateOffset = turns * 360.0;
+		if (smf->rotationSpeed > 0.0000000001)
+		{
+			double turns = (I_GetTime() + I_GetTimeFrac()) / (200.0 / smf->rotationSpeed);
+			turns -= std::floor(turns);
+			rotateOffset = turns * 360.0;
+		}
+		else
+		{
+			rotateOffset = 0.0;
+		}
 	}
 
 	// Added MDL_USEACTORPITCH and MDL_USEACTORROLL flags processing.

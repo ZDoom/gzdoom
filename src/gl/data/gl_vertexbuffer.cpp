@@ -249,10 +249,7 @@ void FFlatVertexBuffer::Unmap()
 void FFlatVertexBuffer::CreateVBO()
 {
 	vbo_shadowdata.Resize(mNumReserved);
-	if (!gl.legacyMode)
-	{
-		FFlatVertexGenerator::CreateVertices();
-	}
+	FFlatVertexGenerator::CreateVertices();
 	mCurIndex = mIndex = vbo_shadowdata.Size();
 	Map();
 	memcpy(map, &vbo_shadowdata[0], vbo_shadowdata.Size() * sizeof(FFlatVertex));

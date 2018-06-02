@@ -51,7 +51,7 @@ PolyModelRenderer::PolyModelRenderer(PolyRenderThread *thread, const Mat4f &worl
 {
 }
 
-void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)
+void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
 	ModelActor = actor;
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
@@ -98,7 +98,7 @@ VSMatrix PolyModelRenderer::GetViewToWorldMatrix()
 	return objectToWorld;
 }
 
-void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix)
+void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
 	ModelActor = actor;
 	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);

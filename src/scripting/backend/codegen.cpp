@@ -1060,6 +1060,7 @@ FxExpression *FxFloatCast::Resolve(FCompileContext &ctx)
 	if (basex->IsFloat())
 	{
 		FxExpression *x = basex;
+		x->ValueType = ValueType;
 		basex = nullptr;
 		delete this;
 		return x;

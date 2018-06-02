@@ -94,7 +94,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 
 	if (smf->flags & MDL_ROTATING)
 	{
-		if (smf->rotationSpeed > 0.0000000001)
+		if (smf->rotationSpeed > 0.0000000001 || smf->rotationSpeed < -0.0000000001)
 		{
 			double turns = (I_GetTime() + I_GetTimeFrac()) / (200.0 / smf->rotationSpeed);
 			turns -= floor(turns);

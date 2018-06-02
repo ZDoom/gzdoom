@@ -82,7 +82,7 @@ namespace swrenderer
 	{
 	}
 
-	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)
+	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 	{
 		ModelActor = actor;
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
@@ -181,7 +181,7 @@ namespace swrenderer
 		return objectToWorld;
 	}
 
-	void SWModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix)
+	void SWModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
 	{
 		ModelActor = actor;
 		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);

@@ -54,7 +54,7 @@ VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 	return objectToWorldMatrix;
 }
 
-void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)
+void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
 	glDepthFunc(GL_LEQUAL);
 	gl_RenderState.EnableTexture(true);
@@ -65,7 +65,7 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace(GL_CW);
+		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CW : GL_CCW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -81,7 +81,7 @@ void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 		glDisable(GL_CULL_FACE);
 }
 
-void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix)
+void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
 	glDepthFunc(GL_LEQUAL);
 
@@ -91,7 +91,7 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace(GLPortal::isMirrored()? GL_CW : GL_CCW);
+		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CW : GL_CCW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;

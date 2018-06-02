@@ -171,7 +171,9 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor() : 1.f) / level.info->pixelstretch;
 	objectToWorldMatrix.scale(1, stretch, 1);
 
-	BeginDrawModel(actor, smf, objectToWorldMatrix);
+	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
+
+	BeginDrawModel(actor, smf, objectToWorldMatrix, orientation < 0);
 	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
 	EndDrawModel(actor, smf);
 }
@@ -207,7 +209,9 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
-	BeginDrawHUDModel(playermo, objectToWorldMatrix);
+	float orientation = smf->xscale * smf->yscale * smf->zscale;
+
+	BeginDrawHUDModel(playermo, objectToWorldMatrix, orientation < 0);
 	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
 	EndDrawHUDModel(playermo);
 }

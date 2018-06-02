@@ -33,8 +33,6 @@ public:
 	void Resize(int newwidth, int newheight);
 	int Width() const { return width; }
 	int Height() const { return height; }
-	int BlockWidth() const { return (width + 7) / 8; }
-	int BlockHeight() const { return (height + 7) / 8; }
 	float *Values() { return values.data(); }
 
 private:
@@ -50,16 +48,10 @@ public:
 	void Clear(int newwidth, int newheight, uint8_t stencil_value = 0);
 	int Width() const { return width; }
 	int Height() const { return height; }
-	int BlockWidth() const { return (width + 7) / 8; }
-	int BlockHeight() const { return (height + 7) / 8; }
 	uint8_t *Values() { return values.data(); }
-	uint32_t *Masks() { return masks.data(); }
 
 private:
 	int width;
 	int height;
-
-	// 8x8 blocks of stencil values, plus a mask for each block indicating if values are the same for early out stencil testing
 	std::vector<uint8_t> values;
-	std::vector<uint32_t> masks;
 };

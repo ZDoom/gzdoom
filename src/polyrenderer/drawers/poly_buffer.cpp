@@ -48,8 +48,7 @@ void PolyZBuffer::Resize(int newwidth, int newheight)
 {
 	width = newwidth;
 	height = newheight;
-	int count = BlockWidth() * BlockHeight();
-	values.resize(count * 64);
+	values.resize(width * height);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -64,14 +63,6 @@ void PolyStencilBuffer::Clear(int newwidth, int newheight, uint8_t stencil_value
 {
 	width = newwidth;
 	height = newheight;
-	int count = BlockWidth() * BlockHeight();
-	values.resize(count * 64);
-	masks.resize(count);
-
-	uint8_t *v = Values();
-	uint32_t *m = Masks();
-	for (int i = 0; i < count; i++)
-	{
-		m[i] = 0xffffff00 | stencil_value;
-	}
+	values.resize(width * height);
+	memset(Values(), stencil_value, width * height);
 }

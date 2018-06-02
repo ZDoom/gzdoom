@@ -44,1091 +44,6 @@
 #include "poly_drawer8.h"
 #include "x86.h"
 
-class TriangleBlock
-{
-public:
-	TriangleBlock(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
-	void Render();
-
-private:
-	void RenderSubdivide(int x0, int y0, int x1, int y1);
-
-	enum class CoverageModes { Full, Partial };
-	struct CoverageFull { static const int Mode = (int)CoverageModes::Full; };
-	struct CoveragePartial { static const int Mode = (int)CoverageModes::Partial; };
-
-	template<typename CoverageMode>
-	void RenderBlock(int x0, int y0, int x1, int y1);
-
-	const TriDrawTriangleArgs *args;
-	PolyTriangleThreadData *thread;
-
-	// Block size, standard 8x8 (must be power of two)
-	static const int q = 8;
-
-	// Deltas
-	int DX12, DX23, DX31;
-	int DY12, DY23, DY31;
-
-	// Fixed-point deltas
-	int FDX12, FDX23, FDX31;
-	int FDY12, FDY23, FDY31;
-
-	// Half-edge constants
-	int C1, C2, C3;
-
-	// Stencil buffer
-	int stencilPitch;
-	uint8_t * RESTRICT stencilValues;
-	uint32_t * RESTRICT stencilMasks;
-	uint8_t stencilTestValue;
-	uint32_t stencilWriteValue;
-
-	// Viewport clipping
-	int clipright;
-	int clipbottom;
-
-	// Depth buffer
-	float * RESTRICT zbuffer;
-	int32_t zbufferPitch;
-
-	// Triangle bounding block
-	int minx, miny;
-	int maxx, maxy;
-
-	// Active block
-	int X, Y;
-	uint32_t Mask0, Mask1;
-
-#ifndef NO_SSE
-	__m128i mFDY12Offset;
-	__m128i mFDY23Offset;
-	__m128i mFDY31Offset;
-	__m128i mFDY12x4;
-	__m128i mFDY23x4;
-	__m128i mFDY31x4;
-	__m128i mFDX12;
-	__m128i mFDX23;
-	__m128i mFDX31;
-	__m128i mC1;
-	__m128i mC2;
-	__m128i mC3;
-	__m128i mDX12;
-	__m128i mDY12;
-	__m128i mDX23;
-	__m128i mDY23;
-	__m128i mDX31;
-	__m128i mDY31;
-#endif
-
-	enum class CoverageResult
-	{
-		full,
-		partial,
-		none
-	};
-	CoverageResult AreaCoverageTest(int x0, int y0, int x1, int y1);
-
-	void CoverageTest();
-	void StencilEqualTest();
-	void StencilGreaterEqualTest();
-	void DepthTest(const TriDrawTriangleArgs *args);
-	void ClipTest();
-	void StencilWrite();
-	void DepthWrite(const TriDrawTriangleArgs *args);
-};
-
-TriangleBlock::TriangleBlock(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread) : args(args), thread(thread)
-{
-	const ShadedTriVertex &v1 = *args->v1;
-	const ShadedTriVertex &v2 = *args->v2;
-	const ShadedTriVertex &v3 = *args->v3;
-
-	clipright = args->clipright;
-	clipbottom = args->clipbottom;
-
-	stencilPitch = args->stencilPitch;
-	stencilValues = args->stencilValues;
-	stencilMasks = args->stencilMasks;
-	stencilTestValue = args->uniforms->StencilTestValue();
-	stencilWriteValue = args->uniforms->StencilWriteValue();
-
-	zbuffer = args->zbuffer;
-	zbufferPitch = args->stencilPitch;
-
-	// 28.4 fixed-point coordinates
-#ifdef NO_SSE
-	const int Y1 = (int)round(16.0f * v1.y);
-	const int Y2 = (int)round(16.0f * v2.y);
-	const int Y3 = (int)round(16.0f * v3.y);
-
-	const int X1 = (int)round(16.0f * v1.x);
-	const int X2 = (int)round(16.0f * v2.x);
-	const int X3 = (int)round(16.0f * v3.x);
-#else
-	int tempround[4 * 3];
-	__m128 m16 = _mm_set1_ps(16.0f);
-	__m128 mhalf = _mm_set1_ps(65536.5f);
-	__m128i m65536 = _mm_set1_epi32(65536);
-	_mm_storeu_si128((__m128i*)tempround, _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v1), m16), mhalf)), m65536));
-	_mm_storeu_si128((__m128i*)(tempround + 4), _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v2), m16), mhalf)), m65536));
-	_mm_storeu_si128((__m128i*)(tempround + 8), _mm_sub_epi32(_mm_cvtps_epi32(_mm_add_ps(_mm_mul_ps(_mm_loadu_ps((const float*)&v3), m16), mhalf)), m65536));
-	const int X1 = tempround[0];
-	const int X2 = tempround[4];
-	const int X3 = tempround[8];
-	const int Y1 = tempround[1];
-	const int Y2 = tempround[5];
-	const int Y3 = tempround[9];
-#endif
-
-	// Deltas
-	DX12 = X1 - X2;
-	DX23 = X2 - X3;
-	DX31 = X3 - X1;
-
-	DY12 = Y1 - Y2;
-	DY23 = Y2 - Y3;
-	DY31 = Y3 - Y1;
-
-	// Fixed-point deltas
-	FDX12 = DX12 << 4;
-	FDX23 = DX23 << 4;
-	FDX31 = DX31 << 4;
-
-	FDY12 = DY12 << 4;
-	FDY23 = DY23 << 4;
-	FDY31 = DY31 << 4;
-
-	// Bounding rectangle
-	minx = MAX((MIN(MIN(X1, X2), X3) + 0xF) >> 4, 0);
-	maxx = MIN((MAX(MAX(X1, X2), X3) + 0xF) >> 4, clipright - 1);
-	miny = MAX((MIN(MIN(Y1, Y2), Y3) + 0xF) >> 4, 0);
-	maxy = MIN((MAX(MAX(Y1, Y2), Y3) + 0xF) >> 4, clipbottom - 1);
-	if (minx >= maxx || miny >= maxy)
-	{
-		return;
-	}
-
-	// Start and end in corner of 8x8 block
-	minx &= ~(q - 1);
-	miny &= ~(q - 1);
-	maxx |= q - 1;
-	maxy |= q - 1;
-
-	// Half-edge constants
-	C1 = DY12 * X1 - DX12 * Y1;
-	C2 = DY23 * X2 - DX23 * Y2;
-	C3 = DY31 * X3 - DX31 * Y3;
-
-	// Correct for fill convention
-	if (DY12 < 0 || (DY12 == 0 && DX12 > 0)) C1++;
-	if (DY23 < 0 || (DY23 == 0 && DX23 > 0)) C2++;
-	if (DY31 < 0 || (DY31 == 0 && DX31 > 0)) C3++;
-
-#ifndef NO_SSE
-	mFDY12Offset = _mm_setr_epi32(0, FDY12, FDY12 * 2, FDY12 * 3);
-	mFDY23Offset = _mm_setr_epi32(0, FDY23, FDY23 * 2, FDY23 * 3);
-	mFDY31Offset = _mm_setr_epi32(0, FDY31, FDY31 * 2, FDY31 * 3);
-	mFDY12x4 = _mm_set1_epi32(FDY12 * 4);
-	mFDY23x4 = _mm_set1_epi32(FDY23 * 4);
-	mFDY31x4 = _mm_set1_epi32(FDY31 * 4);
-	mFDX12 = _mm_set1_epi32(FDX12);
-	mFDX23 = _mm_set1_epi32(FDX23);
-	mFDX31 = _mm_set1_epi32(FDX31);
-	mC1 = _mm_set1_epi32(C1);
-	mC2 = _mm_set1_epi32(C2);
-	mC3 = _mm_set1_epi32(C3);
-	mDX12 = _mm_set1_epi32(DX12);
-	mDY12 = _mm_set1_epi32(DY12);
-	mDX23 = _mm_set1_epi32(DX23);
-	mDY23 = _mm_set1_epi32(DY23);
-	mDX31 = _mm_set1_epi32(DX31);
-	mDY31 = _mm_set1_epi32(DY31);
-#endif
-}
-
-void TriangleBlock::Render()
-{
-	RenderSubdivide(minx / q, miny / q, (maxx + 1) / q, (maxy + 1) / q);
-}
-
-void TriangleBlock::RenderSubdivide(int x0, int y0, int x1, int y1)
-{
-	CoverageResult result = AreaCoverageTest(x0 * q, y0 * q, x1 * q, y1 * q);
-	if (result == CoverageResult::full)
-	{
-		RenderBlock<CoverageFull>(x0 * q, y0 * q, x1 * q, y1 * q);
-	}
-	else if (result == CoverageResult::partial)
-	{
-		bool doneX = x1 - x0 <= 8;
-		bool doneY = y1 - y0 <= 8;
-		if (doneX && doneY)
-		{
-			RenderBlock<CoveragePartial>(x0 * q, y0 * q, x1 * q, y1 * q);
-		}
-		else
-		{
-			int midx = (x0 + x1) >> 1;
-			int midy = (y0 + y1) >> 1;
-			if (doneX)
-			{
-				RenderSubdivide(x0, y0, x1, midy);
-				RenderSubdivide(x0, midy, x1, y1);
-			}
-			else if (doneY)
-			{
-				RenderSubdivide(x0, y0, midx, y1);
-				RenderSubdivide(midx, y0, x1, y1);
-			}
-			else
-			{
-				RenderSubdivide(x0, y0, midx, midy);
-				RenderSubdivide(midx, y0, x1, midy);
-				RenderSubdivide(x0, midy, midx, y1);
-				RenderSubdivide(midx, midy, x1, y1);
-			}
-		}
-	}
-}
-
-template<typename CoverageModeT>
-void TriangleBlock::RenderBlock(int x0, int y0, int x1, int y1)
-{
-	// First block line for this thread
-	int core = thread->core;
-	int num_cores = thread->num_cores;
-	int core_skip = (num_cores - ((y0 / q) - core) % num_cores) % num_cores;
-	int start_miny = y0 + core_skip * q;
-
-	bool depthTest = args->uniforms->DepthTest();
-	bool writeColor = args->uniforms->WriteColor();
-	bool writeStencil = args->uniforms->WriteStencil();
-	bool writeDepth = args->uniforms->WriteDepth();
-
-	int bmode = (int)args->uniforms->BlendMode();
-	auto drawFunc = args->destBgra ? ScreenTriangle::SpanDrawers32[bmode] : ScreenTriangle::SpanDrawers8[bmode];
-
-	// Loop through blocks
-	for (int y = start_miny; y < y1; y += q * num_cores)
-	{
-		for (int x = x0; x < x1; x += q)
-		{
-			X = x;
-			Y = y;
-
-			if (CoverageModeT::Mode == (int)CoverageModes::Full)
-			{
-				Mask0 = 0xffffffff;
-				Mask1 = 0xffffffff;
-			}
-			else
-			{
-				CoverageTest();
-				if (Mask0 == 0 && Mask1 == 0)
-					continue;
-			}
-
-			ClipTest();
-			if (Mask0 == 0 && Mask1 == 0)
-				continue;
-
-			StencilEqualTest();
-			if (Mask0 == 0 && Mask1 == 0)
-				continue;
-
-			if (depthTest)
-			{
-				DepthTest(args);
-				if (Mask0 == 0 && Mask1 == 0)
-					continue;
-			}
-
-			if (writeColor)
-			{
-				if (Mask0 == 0xffffffff)
-				{
-					drawFunc(Y, X, X + 8, args);
-					drawFunc(Y + 1, X, X + 8, args);
-					drawFunc(Y + 2, X, X + 8, args);
-					drawFunc(Y + 3, X, X + 8, args);
-				}
-				else if (Mask0 != 0)
-				{
-					uint32_t mask = Mask0;
-					for (int j = 0; j < 4; j++)
-					{
-						int start = 0;
-						int i;
-						for (i = 0; i < 8; i++)
-						{
-							if (!(mask & 0x80000000))
-							{
-								if (i > start)
-									drawFunc(Y + j, X + start, X + i, args);
-								start = i + 1;
-							}
-							mask <<= 1;
-						}
-						if (i > start)
-							drawFunc(Y + j, X + start, X + i, args);
-					}
-				}
-
-				if (Mask1 == 0xffffffff)
-				{
-					drawFunc(Y + 4, X, X + 8, args);
-					drawFunc(Y + 5, X, X + 8, args);
-					drawFunc(Y + 6, X, X + 8, args);
-					drawFunc(Y + 7, X, X + 8, args);
-				}
-				else if (Mask1 != 0)
-				{
-					uint32_t mask = Mask1;
-					for (int j = 4; j < 8; j++)
-					{
-						int start = 0;
-						int i;
-						for (i = 0; i < 8; i++)
-						{
-							if (!(mask & 0x80000000))
-							{
-								if (i > start)
-									drawFunc(Y + j, X + start, X + i, args);
-								start = i + 1;
-							}
-							mask <<= 1;
-						}
-						if (i > start)
-							drawFunc(Y + j, X + start, X + i, args);
-					}
-				}
-			}
-
-			if (writeStencil)
-				StencilWrite();
-			if (writeDepth)
-				DepthWrite(args);
-		}
-	}
-}
-
-#ifdef NO_SSE
-
-void TriangleBlock::DepthTest(const TriDrawTriangleArgs *args)
-{
-	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
-	float *depth = zbuffer + block * 64;
-
-	const ShadedTriVertex &v1 = *args->v1;
-
-	float stepXW = args->gradientX.W;
-	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
-
-	uint32_t mask0 = 0;
-	uint32_t mask1 = 0;
-
-	for (int iy = 0; iy < 4; iy++)
-	{
-		float posXW = posYW;
-		for (int ix = 0; ix < 8; ix++)
-		{
-			bool covered = *depth <= posXW;
-			mask0 <<= 1;
-			mask0 |= (uint32_t)covered;
-			depth++;
-			posXW += stepXW;
-		}
-		posYW += stepYW;
-	}
-
-	for (int iy = 0; iy < 4; iy++)
-	{
-		float posXW = posYW;
-		for (int ix = 0; ix < 8; ix++)
-		{
-			bool covered = *depth <= posXW;
-			mask1 <<= 1;
-			mask1 |= (uint32_t)covered;
-			depth++;
-			posXW += stepXW;
-		}
-		posYW += stepYW;
-	}
-
-	Mask0 = Mask0 & mask0;
-	Mask1 = Mask1 & mask1;
-}
-
-#else
-
-void TriangleBlock::DepthTest(const TriDrawTriangleArgs *args)
-{
-	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
-	float *depth = zbuffer + block * 64;
-
-	const ShadedTriVertex &v1 = *args->v1;
-
-	float stepXW = args->gradientX.W;
-	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
-
-	__m128 mposYW = _mm_setr_ps(posYW, posYW + stepXW, posYW + stepXW + stepXW, posYW + stepXW + stepXW + stepXW);
-	__m128 mstepXW = _mm_set1_ps(stepXW * 4.0f);
-	__m128 mstepYW = _mm_set1_ps(stepYW);
-
-	uint32_t mask0 = 0;
-	uint32_t mask1 = 0;
-
-	for (int iy = 0; iy < 4; iy++)
-	{
-		__m128 mposXW = mposYW;
-		for (int ix = 0; ix < 2; ix++)
-		{
-			__m128 covered = _mm_cmplt_ps(_mm_loadu_ps(depth), mposXW);
-			mask0 <<= 4;
-			mask0 |= _mm_movemask_ps(_mm_shuffle_ps(covered, covered, _MM_SHUFFLE(0, 1, 2, 3)));
-			depth += 4;
-			mposXW = _mm_add_ps(mposXW, mstepXW);
-		}
-		mposYW = _mm_add_ps(mposYW, mstepYW);
-	}
-
-	for (int iy = 0; iy < 4; iy++)
-	{
-		__m128 mposXW = mposYW;
-		for (int ix = 0; ix < 2; ix++)
-		{
-			__m128 covered = _mm_cmplt_ps(_mm_loadu_ps(depth), mposXW);
-			mask1 <<= 4;
-			mask1 |= _mm_movemask_ps(_mm_shuffle_ps(covered, covered, _MM_SHUFFLE(0, 1, 2, 3)));
-			depth += 4;
-			mposXW = _mm_add_ps(mposXW, mstepXW);
-		}
-		mposYW = _mm_add_ps(mposYW, mstepYW);
-	}
-
-	Mask0 = Mask0 & mask0;
-	Mask1 = Mask1 & mask1;
-}
-
-#endif
-
-void TriangleBlock::ClipTest()
-{
-	static const uint32_t clipxmask[8] =
-	{
-		0,
-		0x80808080,
-		0xc0c0c0c0,
-		0xe0e0e0e0,
-		0xf0f0f0f0,
-		0xf8f8f8f8,
-		0xfcfcfcfc,
-		0xfefefefe
-	};
-
-	static const uint32_t clipymask[8] =
-	{
-		0,
-		0xff000000,
-		0xffff0000,
-		0xffffff00,
-		0xffffffff,
-		0xffffffff,
-		0xffffffff,
-		0xffffffff
-	};
-
-	uint32_t xmask = (X + 8 <= clipright) ? 0xffffffff : clipxmask[clipright - X];
-	uint32_t ymask0 = (Y + 4 <= clipbottom) ? 0xffffffff : clipymask[clipbottom - Y];
-	uint32_t ymask1 = (Y + 8 <= clipbottom) ? 0xffffffff : clipymask[clipbottom - Y - 4];
-
-	Mask0 = Mask0 & xmask & ymask0;
-	Mask1 = Mask1 & xmask & ymask1;
-}
-
-#ifdef NO_SSE
-
-void TriangleBlock::StencilEqualTest()
-{
-	// Stencil test the whole block, if possible
-	int block = (X >> 3) + (Y >> 3) * stencilPitch;
-	uint8_t *stencilBlock = &stencilValues[block * 64];
-	uint32_t *stencilBlockMask = &stencilMasks[block];
-	bool blockIsSingleStencil = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
-	bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) != stencilTestValue;
-	if (skipBlock)
-	{
-		Mask0 = 0;
-		Mask1 = 0;
-	}
-	else if (!blockIsSingleStencil)
-	{
-		uint32_t mask0 = 0;
-		uint32_t mask1 = 0;
-
-		for (int iy = 0; iy < 4; iy++)
-		{
-			for (int ix = 0; ix < q; ix++)
-			{
-				bool passStencilTest = stencilBlock[ix + iy * q] == stencilTestValue;
-				mask0 <<= 1;
-				mask0 |= (uint32_t)passStencilTest;
-			}
-		}
-
-		for (int iy = 4; iy < q; iy++)
-		{
-			for (int ix = 0; ix < q; ix++)
-			{
-				bool passStencilTest = stencilBlock[ix + iy * q] == stencilTestValue;
-				mask1 <<= 1;
-				mask1 |= (uint32_t)passStencilTest;
-			}
-		}
-
-		Mask0 = Mask0 & mask0;
-		Mask1 = Mask1 & mask1;
-	}
-}
-
-#else
-
-void TriangleBlock::StencilEqualTest()
-{
-	// Stencil test the whole block, if possible
-	int block = (X >> 3) + (Y >> 3) * stencilPitch;
-	uint8_t *stencilBlock = &stencilValues[block * 64];
-	uint32_t *stencilBlockMask = &stencilMasks[block];
-	bool blockIsSingleStencil = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
-	bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) != stencilTestValue;
-	if (skipBlock)
-	{
-		Mask0 = 0;
-		Mask1 = 0;
-	}
-	else if (!blockIsSingleStencil)
-	{
-		__m128i mstencilTestValue = _mm_set1_epi16(stencilTestValue);
-		uint32_t mask0 = 0;
-		uint32_t mask1 = 0;
-
-		for (int iy = 0; iy < 2; iy++)
-		{
-			__m128i mstencilBlock = _mm_loadu_si128((const __m128i *)stencilBlock);
-
-			__m128i mstencilTest = _mm_cmpeq_epi16(_mm_unpacklo_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
-			__m128i mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
-			__m128i mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
-			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mstencilTest = _mm_cmpeq_epi16(_mm_unpackhi_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
-			mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
-			mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
-			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mask0 <<= 16;
-			mask0 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
-
-			stencilBlock += 16;
-		}
-
-		for (int iy = 0; iy < 2; iy++)
-		{
-			__m128i mstencilBlock = _mm_loadu_si128((const __m128i *)stencilBlock);
-
-			__m128i mstencilTest = _mm_cmpeq_epi16(_mm_unpacklo_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
-			__m128i mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
-			__m128i mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
-			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mstencilTest = _mm_cmpeq_epi16(_mm_unpackhi_epi8(mstencilBlock, _mm_setzero_si128()), mstencilTestValue);
-			mstencilTest0 = _mm_unpacklo_epi16(mstencilTest, mstencilTest);
-			mstencilTest1 = _mm_unpackhi_epi16(mstencilTest, mstencilTest);
-			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mstencilTest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mstencilTest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mask1 <<= 16;
-			mask1 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
-
-			stencilBlock += 16;
-		}
-
-		Mask0 = Mask0 & mask0;
-		Mask1 = Mask1 & mask1;
-	}
-}
-
-#endif
-
-void TriangleBlock::StencilGreaterEqualTest()
-{
-	// Stencil test the whole block, if possible
-	int block = (X >> 3) + (Y >> 3) * stencilPitch;
-	uint8_t *stencilBlock = &stencilValues[block * 64];
-	uint32_t *stencilBlockMask = &stencilMasks[block];
-	bool blockIsSingleStencil = ((*stencilBlockMask) & 0xffffff00) == 0xffffff00;
-	bool skipBlock = blockIsSingleStencil && ((*stencilBlockMask) & 0xff) < stencilTestValue;
-	if (skipBlock)
-	{
-		Mask0 = 0;
-		Mask1 = 0;
-	}
-	else if (!blockIsSingleStencil)
-	{
-		uint32_t mask0 = 0;
-		uint32_t mask1 = 0;
-
-		for (int iy = 0; iy < 4; iy++)
-		{
-			for (int ix = 0; ix < q; ix++)
-			{
-				bool passStencilTest = stencilBlock[ix + iy * q] >= stencilTestValue;
-				mask0 <<= 1;
-				mask0 |= (uint32_t)passStencilTest;
-			}
-		}
-
-		for (int iy = 4; iy < q; iy++)
-		{
-			for (int ix = 0; ix < q; ix++)
-			{
-				bool passStencilTest = stencilBlock[ix + iy * q] >= stencilTestValue;
-				mask1 <<= 1;
-				mask1 |= (uint32_t)passStencilTest;
-			}
-		}
-
-		Mask0 = Mask0 & mask0;
-		Mask1 = Mask1 & mask1;
-	}
-}
-
-TriangleBlock::CoverageResult TriangleBlock::AreaCoverageTest(int x0, int y0, int x1, int y1)
-{
-	// Corners of block
-	x0 = x0 << 4;
-	x1 = (x1 - 1) << 4;
-	y0 = y0 << 4;
-	y1 = (y1 - 1) << 4;
-
-	// Evaluate half-space functions
-	bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
-	bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
-	bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
-	bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
-	int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
-
-	bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
-	bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
-	bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
-	bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
-	int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
-
-	bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
-	bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
-	bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
-	bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
-	int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
-
-	if (a == 0 || b == 0 || c == 0) // Skip block when outside an edge
-	{
-		return CoverageResult::none;
-	}
-	else if (a == 0xf && b == 0xf && c == 0xf) // Accept whole block when totally covered
-	{
-		return CoverageResult::full;
-	}
-	else // Partially covered block
-	{
-		return CoverageResult::partial;
-	}
-}
-
-#ifdef NO_SSE
-
-void TriangleBlock::CoverageTest()
-{
-	// Corners of block
-	int x0 = X << 4;
-	int x1 = (X + q - 1) << 4;
-	int y0 = Y << 4;
-	int y1 = (Y + q - 1) << 4;
-
-	// Evaluate half-space functions
-	bool a00 = C1 + DX12 * y0 - DY12 * x0 > 0;
-	bool a10 = C1 + DX12 * y0 - DY12 * x1 > 0;
-	bool a01 = C1 + DX12 * y1 - DY12 * x0 > 0;
-	bool a11 = C1 + DX12 * y1 - DY12 * x1 > 0;
-	int a = (a00 << 0) | (a10 << 1) | (a01 << 2) | (a11 << 3);
-
-	bool b00 = C2 + DX23 * y0 - DY23 * x0 > 0;
-	bool b10 = C2 + DX23 * y0 - DY23 * x1 > 0;
-	bool b01 = C2 + DX23 * y1 - DY23 * x0 > 0;
-	bool b11 = C2 + DX23 * y1 - DY23 * x1 > 0;
-	int b = (b00 << 0) | (b10 << 1) | (b01 << 2) | (b11 << 3);
-
-	bool c00 = C3 + DX31 * y0 - DY31 * x0 > 0;
-	bool c10 = C3 + DX31 * y0 - DY31 * x1 > 0;
-	bool c01 = C3 + DX31 * y1 - DY31 * x0 > 0;
-	bool c11 = C3 + DX31 * y1 - DY31 * x1 > 0;
-	int c = (c00 << 0) | (c10 << 1) | (c01 << 2) | (c11 << 3);
-
-	if (a == 0 || b == 0 || c == 0) // Skip block when outside an edge
-	{
-		Mask0 = 0;
-		Mask1 = 0;
-	}
-	else if (a == 0xf && b == 0xf && c == 0xf) // Accept whole block when totally covered
-	{
-		Mask0 = 0xffffffff;
-		Mask1 = 0xffffffff;
-	}
-	else // Partially covered block
-	{
-		x0 = X << 4;
-		x1 = (X + q - 1) << 4;
-		int CY1 = C1 + DX12 * y0 - DY12 * x0;
-		int CY2 = C2 + DX23 * y0 - DY23 * x0;
-		int CY3 = C3 + DX31 * y0 - DY31 * x0;
-
-		uint32_t mask0 = 0;
-		uint32_t mask1 = 0;
-
-		for (int iy = 0; iy < 4; iy++)
-		{
-			int CX1 = CY1;
-			int CX2 = CY2;
-			int CX3 = CY3;
-
-			for (int ix = 0; ix < q; ix++)
-			{
-				bool covered = CX1 > 0 && CX2 > 0 && CX3 > 0;
-				mask0 <<= 1;
-				mask0 |= (uint32_t)covered;
-
-				CX1 -= FDY12;
-				CX2 -= FDY23;
-				CX3 -= FDY31;
-			}
-
-			CY1 += FDX12;
-			CY2 += FDX23;
-			CY3 += FDX31;
-		}
-
-		for (int iy = 4; iy < q; iy++)
-		{
-			int CX1 = CY1;
-			int CX2 = CY2;
-			int CX3 = CY3;
-
-			for (int ix = 0; ix < q; ix++)
-			{
-				bool covered = CX1 > 0 && CX2 > 0 && CX3 > 0;
-				mask1 <<= 1;
-				mask1 |= (uint32_t)covered;
-
-				CX1 -= FDY12;
-				CX2 -= FDY23;
-				CX3 -= FDY31;
-			}
-
-			CY1 += FDX12;
-			CY2 += FDX23;
-			CY3 += FDX31;
-		}
-
-		Mask0 = mask0;
-		Mask1 = mask1;
-	}
-}
-
-#else
-
-void TriangleBlock::CoverageTest()
-{
-	// Corners of block
-	int x0 = X << 4;
-	int x1 = (X + q - 1) << 4;
-	int y0 = Y << 4;
-	int y1 = (Y + q - 1) << 4;
-
-	__m128i mY = _mm_set_epi32(y0, y0, y1, y1);
-	__m128i mX = _mm_set_epi32(x0, x0, x1, x1);
-
-	// Evaluate half-space functions
-	__m128i mCY1 = _mm_sub_epi32(
-		_mm_add_epi32(mC1, _mm_shuffle_epi32(_mm_mul_epu32(mDX12, mY), _MM_SHUFFLE(0, 0, 2, 2))),
-		_mm_shuffle_epi32(_mm_mul_epu32(mDY12, mX), _MM_SHUFFLE(0, 2, 0, 2)));
-	__m128i mA = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
-
-	__m128i mCY2 = _mm_sub_epi32(
-		_mm_add_epi32(mC2, _mm_shuffle_epi32(_mm_mul_epu32(mDX23, mY), _MM_SHUFFLE(0, 0, 2, 2))),
-		_mm_shuffle_epi32(_mm_mul_epu32(mDY23, mX), _MM_SHUFFLE(0, 2, 0, 2)));
-	__m128i mB = _mm_cmpgt_epi32(mCY2, _mm_setzero_si128());
-
-	__m128i mCY3 = _mm_sub_epi32(
-		_mm_add_epi32(mC3, _mm_shuffle_epi32(_mm_mul_epu32(mDX31, mY), _MM_SHUFFLE(0, 0, 2, 2))),
-		_mm_shuffle_epi32(_mm_mul_epu32(mDY31, mX), _MM_SHUFFLE(0, 2, 0, 2)));
-	__m128i mC = _mm_cmpgt_epi32(mCY3, _mm_setzero_si128());
-
-	int abc = _mm_movemask_epi8(_mm_packs_epi16(_mm_packs_epi32(mA, mB), _mm_packs_epi32(mC, _mm_setzero_si128())));
-
-	if ((abc & 0xf) == 0 || (abc & 0xf0) == 0 || (abc & 0xf00) == 0) // Skip block when outside an edge
-	{
-		Mask0 = 0;
-		Mask1 = 0;
-	}
-	else if (abc == 0xfff) // Accept whole block when totally covered
-	{
-		Mask0 = 0xffffffff;
-		Mask1 = 0xffffffff;
-	}
-	else // Partially covered block
-	{
-		uint32_t mask0 = 0;
-		uint32_t mask1 = 0;
-
-		mCY1 = _mm_sub_epi32(_mm_shuffle_epi32(mCY1, _MM_SHUFFLE(0, 0, 0, 0)), mFDY12Offset);
-		mCY2 = _mm_sub_epi32(_mm_shuffle_epi32(mCY2, _MM_SHUFFLE(0, 0, 0, 0)), mFDY23Offset);
-		mCY3 = _mm_sub_epi32(_mm_shuffle_epi32(mCY3, _MM_SHUFFLE(0, 0, 0, 0)), mFDY31Offset);
-		for (int iy = 0; iy < 2; iy++)
-		{
-			__m128i mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY3, _mm_setzero_si128()), mtest0);
-			__m128i mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
-			mCY1 = _mm_add_epi32(mCY1, mFDX12);
-			mCY2 = _mm_add_epi32(mCY2, mFDX23);
-			mCY3 = _mm_add_epi32(mCY3, mFDX31);
-			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY3, _mm_setzero_si128()), mtest0);
-			mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
-			mCY1 = _mm_add_epi32(mCY1, mFDX12);
-			mCY2 = _mm_add_epi32(mCY2, mFDX23);
-			mCY3 = _mm_add_epi32(mCY3, mFDX31);
-			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mask0 <<= 16;
-			mask0 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
-		}
-
-		for (int iy = 0; iy < 2; iy++)
-		{
-			__m128i mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY3, _mm_setzero_si128()), mtest0);
-			__m128i mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
-			mCY1 = _mm_add_epi32(mCY1, mFDX12);
-			mCY2 = _mm_add_epi32(mCY2, mFDX23);
-			mCY3 = _mm_add_epi32(mCY3, mFDX31);
-			__m128i first = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mtest0 = _mm_cmpgt_epi32(mCY1, _mm_setzero_si128());
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY2, _mm_setzero_si128()), mtest0);
-			mtest0 = _mm_and_si128(_mm_cmpgt_epi32(mCY3, _mm_setzero_si128()), mtest0);
-			mtest1 = _mm_cmpgt_epi32(_mm_sub_epi32(mCY1, mFDY12x4), _mm_setzero_si128());
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY2, mFDY23x4), _mm_setzero_si128()), mtest1);
-			mtest1 = _mm_and_si128(_mm_cmpgt_epi32(_mm_sub_epi32(mCY3, mFDY31x4), _mm_setzero_si128()), mtest1);
-			mCY1 = _mm_add_epi32(mCY1, mFDX12);
-			mCY2 = _mm_add_epi32(mCY2, mFDX23);
-			mCY3 = _mm_add_epi32(mCY3, mFDX31);
-			__m128i second = _mm_packs_epi32(_mm_shuffle_epi32(mtest1, _MM_SHUFFLE(0, 1, 2, 3)), _mm_shuffle_epi32(mtest0, _MM_SHUFFLE(0, 1, 2, 3)));
-
-			mask1 <<= 16;
-			mask1 |= _mm_movemask_epi8(_mm_packs_epi16(second, first));
-		}
-
-		Mask0 = mask0;
-		Mask1 = mask1;
-	}
-}
-
-#endif
-
-void TriangleBlock::StencilWrite()
-{
-	int block = (X >> 3) + (Y >> 3) * stencilPitch;
-	uint8_t *stencilBlock = &stencilValues[block * 64];
-	uint32_t &stencilBlockMask = stencilMasks[block];
-	uint32_t writeValue = stencilWriteValue;
-
-	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
-	{
-		stencilBlockMask = 0xffffff00 | writeValue;
-	}
-	else
-	{
-		uint32_t mask0 = Mask0;
-		uint32_t mask1 = Mask1;
-
-		bool isSingleValue = (stencilBlockMask & 0xffffff00) == 0xffffff00;
-		if (isSingleValue)
-		{
-			uint8_t value = stencilBlockMask & 0xff;
-			for (int v = 0; v < 64; v++)
-				stencilBlock[v] = value;
-			stencilBlockMask = 0;
-		}
-
-		int count = 0;
-		for (int v = 0; v < 32; v++)
-		{
-			if ((mask0 & (1 << 31)) || stencilBlock[v] == writeValue)
-			{
-				stencilBlock[v] = writeValue;
-				count++;
-			}
-			mask0 <<= 1;
-		}
-		for (int v = 32; v < 64; v++)
-		{
-			if ((mask1 & (1 << 31)) || stencilBlock[v] == writeValue)
-			{
-				stencilBlock[v] = writeValue;
-				count++;
-			}
-			mask1 <<= 1;
-		}
-
-		if (count == 64)
-			stencilBlockMask = 0xffffff00 | writeValue;
-	}
-}
-
-#ifdef NO_SSE
-
-void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
-{
-	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
-	float *depth = zbuffer + block * 64;
-
-	const ShadedTriVertex &v1 = *args->v1;
-
-	float stepXW = args->gradientX.W;
-	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
-
-	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
-	{
-		for (int iy = 0; iy < 8; iy++)
-		{
-			float posXW = posYW;
-			for (int ix = 0; ix < 8; ix++)
-			{
-				*(depth++) = posXW;
-				posXW += stepXW;
-			}
-			posYW += stepYW;
-		}
-	}
-	else
-	{
-		uint32_t mask0 = Mask0;
-		uint32_t mask1 = Mask1;
-
-		for (int iy = 0; iy < 4; iy++)
-		{
-			float posXW = posYW;
-			for (int ix = 0; ix < 8; ix++)
-			{
-				if (mask0 & (1 << 31))
-					*depth = posXW;
-				posXW += stepXW;
-				mask0 <<= 1;
-				depth++;
-			}
-			posYW += stepYW;
-		}
-
-		for (int iy = 0; iy < 4; iy++)
-		{
-			float posXW = posYW;
-			for (int ix = 0; ix < 8; ix++)
-			{
-				if (mask1 & (1 << 31))
-					*depth = posXW;
-				posXW += stepXW;
-				mask1 <<= 1;
-				depth++;
-			}
-			posYW += stepYW;
-		}
-	}
-}
-
-#else
-
-void TriangleBlock::DepthWrite(const TriDrawTriangleArgs *args)
-{
-	int block = (X >> 3) + (Y >> 3) * zbufferPitch;
-	float *depth = zbuffer + block * 64;
-
-	const ShadedTriVertex &v1 = *args->v1;
-
-	float stepXW = args->gradientX.W;
-	float stepYW = args->gradientY.W;
-	float posYW = v1.w + stepXW * (X - v1.x) + stepYW * (Y - v1.y) + args->depthOffset;
-
-	__m128 mposYW = _mm_setr_ps(posYW, posYW + stepXW, posYW + stepXW + stepXW, posYW + stepXW + stepXW + stepXW);
-	__m128 mstepXW = _mm_set1_ps(stepXW * 4.0f);
-	__m128 mstepYW = _mm_set1_ps(stepYW);
-
-	if (Mask0 == 0xffffffff && Mask1 == 0xffffffff)
-	{
-		for (int iy = 0; iy < 8; iy++)
-		{
-			__m128 mposXW = mposYW;
-			_mm_storeu_ps(depth, mposXW); depth += 4; mposXW = _mm_add_ps(mposXW, mstepXW);
-			_mm_storeu_ps(depth, mposXW); depth += 4;
-			mposYW = _mm_add_ps(mposYW, mstepYW);
-		}
-	}
-	else
-	{
-		__m128i mxormask = _mm_set1_epi32(0xffffffff);
-		__m128i topfour = _mm_setr_epi32(1 << 31, 1 << 30, 1 << 29, 1 << 28);
-
-		__m128i mmask0 = _mm_set1_epi32(Mask0);
-		__m128i mmask1 = _mm_set1_epi32(Mask1);
-
-		for (int iy = 0; iy < 4; iy++)
-		{
-			__m128 mposXW = mposYW;
-			_mm_maskmoveu_si128(_mm_castps_si128(mposXW), _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)depth); mmask0 = _mm_slli_epi32(mmask0, 4); depth += 4; mposXW = _mm_add_ps(mposXW, mstepXW);
-			_mm_maskmoveu_si128(_mm_castps_si128(mposXW), _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask0, topfour), _mm_setzero_si128()), mxormask), (char*)depth); mmask0 = _mm_slli_epi32(mmask0, 4); depth += 4;
-			mposYW = _mm_add_ps(mposYW, mstepYW);
-		}
-
-		for (int iy = 0; iy < 4; iy++)
-		{
-			__m128 mposXW = mposYW;
-			_mm_maskmoveu_si128(_mm_castps_si128(mposXW), _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)depth); mmask1 = _mm_slli_epi32(mmask1, 4); depth += 4; mposXW = _mm_add_ps(mposXW, mstepXW);
-			_mm_maskmoveu_si128(_mm_castps_si128(mposXW), _mm_xor_si128(_mm_cmpeq_epi32(_mm_and_si128(mmask1, topfour), _mm_setzero_si128()), mxormask), (char*)depth); mmask1 = _mm_slli_epi32(mmask1, 4); depth += 4;
-			mposYW = _mm_add_ps(mposYW, mstepYW);
-		}
-	}
-}
-
-#endif
-
-void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
-{
-	TriangleBlock block(args, thread);
-	block.Render();
-}
-
 static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sortedVertices)
 {
 	sortedVertices[0] = args->v1;
@@ -1143,7 +58,7 @@ static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sort
 		std::swap(sortedVertices[1], sortedVertices[2]);
 }
 
-void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
+void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread)
 {
 	// Sort vertices by Y position
 	ShadedTriVertex *sortedVertices[3];
@@ -1230,13 +145,22 @@ void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleT
 	float v1Y = args->v1->y;
 	float v1W = args->v1->w;
 
+	bool depthTest = args->uniforms->DepthTest();
+	bool stencilTest = true;
+	bool writeColor = args->uniforms->WriteColor();
+	bool writeStencil = args->uniforms->WriteStencil();
+	bool writeDepth = args->uniforms->WriteDepth();
+	uint8_t stencilTestValue = args->uniforms->StencilTestValue();
+	uint8_t stencilWriteValue = args->uniforms->StencilWriteValue();
+
 	int num_cores = thread->num_cores;
 	for (int y = topY + thread->skipped_by_thread(topY); y < bottomY; y += num_cores)
 	{
 		int x = leftEdge[y];
 		int xend = rightEdge[y];
 
-		float *zbufferLine = args->zbuffer + args->stencilPitch * 8 * y;
+		float *zbufferLine = args->zbuffer + args->pitch * y;
+		uint8_t *stencilLine = args->stencilbuffer + args->pitch * y;
 
 		float startX = x + (0.5f - v1X);
 		float startY = y + (0.5f - v1Y);
@@ -1249,59 +173,211 @@ void ScreenTriangle::DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleT
 		{
 			int xstart = x;
 
-			int xendsse = x + ((xend - x) & ~3);
-			__m128 mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
-			while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 15 && x < xendsse)
+			if (depthTest && stencilTest)
 			{
-				_mm_storeu_ps(zbufferLine + x, mposXW);
-				mposXW = _mm_add_ps(mposXW, mstepXW);
-				x += 4;
-			}
-			posXW = _mm_cvtss_f32(mposXW);
+				int xendsse = x + ((xend - x) / 4);
+				__m128 mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+				while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 15 &&
+					stencilLine[x] == stencilTestValue &&
+					stencilLine[x + 1] == stencilTestValue &&
+					stencilLine[x + 2] == stencilTestValue &&
+					stencilLine[x + 3] == stencilTestValue &&
+					x < xendsse)
+				{
+					if (writeDepth)
+						_mm_storeu_ps(zbufferLine + x, mposXW);
+					mposXW = _mm_add_ps(mposXW, mstepXW);
+					x += 4;
+				}
+				posXW = _mm_cvtss_f32(mposXW);
 
-			while (zbufferLine[x] <= posXW && x < xend)
+				while (zbufferLine[x] <= posXW && stencilLine[x] == stencilTestValue && x < xend)
+				{
+					if (writeDepth)
+						zbufferLine[x] = posXW;
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (depthTest)
 			{
-				zbufferLine[x] = posXW;
-				posXW += stepXW;
-				x++;
+				int xendsse = x + ((xend - x) / 4);
+				__m128 mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+				while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 15 && x < xendsse)
+				{
+					if (writeDepth)
+						_mm_storeu_ps(zbufferLine + x, mposXW);
+					mposXW = _mm_add_ps(mposXW, mstepXW);
+					x += 4;
+				}
+				posXW = _mm_cvtss_f32(mposXW);
+
+				while (zbufferLine[x] <= posXW && x < xend)
+				{
+					if (writeDepth)
+						zbufferLine[x] = posXW;
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (stencilTest)
+			{
+				while (stencilLine[x] == stencilTestValue && x < xend)
+					x++;
+			}
+			else
+			{
+				x = xend;
 			}
 
 			if (x > xstart)
-				drawfunc(y, xstart, x, args);
-
-			xendsse = x + ((xend - x) & ~3);
-			mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
-			while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 0 && x < xendsse)
 			{
-				mposXW = _mm_add_ps(mposXW, mstepXW);
-				x += 4;
+				if (writeColor)
+					drawfunc(y, xstart, x, args);
+
+				if (writeStencil)
+				{
+					for (int i = xstart; i < x; i++)
+						stencilLine[i] = stencilWriteValue;
+				}
+
+				if (!depthTest && writeDepth)
+				{
+					for (int i = xstart; i < x; i++)
+					{
+						zbufferLine[i] = posXW;
+						posXW += stepXW;
+					}
+				}
 			}
-			posXW = _mm_cvtss_f32(mposXW);
 
-			while (zbufferLine[x] > posXW && x < xend)
+			if (depthTest && stencilTest)
 			{
-				posXW += stepXW;
-				x++;
+				int xendsse = x + ((xend - x) / 4);
+				__m128 mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+				while ((_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 0 ||
+					stencilLine[x] != stencilTestValue ||
+					stencilLine[x + 1] != stencilTestValue ||
+					stencilLine[x + 2] != stencilTestValue ||
+					stencilLine[x + 3] != stencilTestValue) &&
+					x < xendsse)
+				{
+					mposXW = _mm_add_ps(mposXW, mstepXW);
+					x += 4;
+				}
+				posXW = _mm_cvtss_f32(mposXW);
+
+				while ((zbufferLine[x] > posXW || stencilLine[x] != stencilTestValue) && x < xend)
+				{
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (depthTest)
+			{
+				int xendsse = x + ((xend - x) / 4);
+				__m128 mposXW = _mm_add_ps(_mm_set1_ps(posXW), mfirstStepXW);
+				while (_mm_movemask_ps(_mm_cmple_ps(_mm_loadu_ps(zbufferLine + x), mposXW)) == 0 && x < xendsse)
+				{
+					mposXW = _mm_add_ps(mposXW, mstepXW);
+					x += 4;
+				}
+				posXW = _mm_cvtss_f32(mposXW);
+
+				while (zbufferLine[x] > posXW && x < xend)
+				{
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (stencilTest)
+			{
+				while (stencilLine[x] != stencilTestValue && x < xend)
+				{
+					posXW += stepXW;
+					x++;
+				}
 			}
 		}
 #else
 		while (x < xend)
 		{
 			int xstart = x;
-			while (zbufferLine[x] <= posXW && x < xend)
+
+			if (depthTest && stencilTest)
 			{
-				zbufferLine[x] = posXW;
-				posXW += stepXW;
-				x++;
+				while (zbufferLine[x] <= posXW && stencilLine[x] == stencilTestValue && x < xend)
+				{
+					if (writeDepth)
+						zbufferLine[x] = posXW;
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (depthTest)
+			{
+				while (zbufferLine[x] <= posXW && x < xend)
+				{
+					if (writeDepth)
+						zbufferLine[x] = posXW;
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (stencilTest)
+			{
+				while (stencilLine[x] == stencilTestValue && x < xend)
+					x++;
+			}
+			else
+			{
+				x = xend;
 			}
 
 			if (x > xstart)
-				drawfunc(y, xstart, x, args);
-
-			while (zbufferLine[x] > posXW && x < xend)
 			{
-				posXW += stepXW;
-				x++;
+				if (writeColor)
+					drawfunc(y, xstart, x, args);
+
+				if (writeStencil)
+				{
+					for (int i = xstart; i < x; i++)
+						stencilLine[i] = stencilWriteValue;
+				}
+
+				if (!depthTest && writeDepth)
+				{
+					for (int i = xstart; i < x; i++)
+					{
+						zbufferLine[i] = posXW;
+						posXW += stepXW;
+					}
+				}
+			}
+
+			if (depthTest && stencilTest)
+			{
+				while ((zbufferLine[x] > posXW || stencilLine[x] != stencilTestValue) && x < xend)
+				{
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (depthTest)
+			{
+				while (zbufferLine[x] > posXW && x < xend)
+				{
+					posXW += stepXW;
+					x++;
+				}
+			}
+			else if (stencilTest)
+			{
+				while (stencilLine[x] != stencilTestValue && x < xend)
+				{
+					posXW += stepXW;
+					x++;
+				}
 			}
 		}
 #endif

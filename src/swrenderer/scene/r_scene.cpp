@@ -259,7 +259,7 @@ namespace swrenderer
 		thread->OpaquePass->ResetFakingUnderwater(); // [RH] Hack to make windows into underwater areas possible
 		thread->Portal->SetMainPortal();
 
-		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget, true);
+		PolyTriangleDrawer::SetViewport(thread->DrawQueue, viewwindowx, viewwindowy, viewwidth, viewheight, thread->Viewport->RenderTarget);
 
 		// Cull things outside the range seen by this thread
 		VisibleSegmentRenderer visitor;

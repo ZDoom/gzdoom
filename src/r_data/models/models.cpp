@@ -97,7 +97,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 		if (smf->rotationSpeed > 0.0000000001)
 		{
 			double turns = (I_GetTime() + I_GetTimeFrac()) / (200.0 / smf->rotationSpeed);
-			turns -= std::floor(turns);
+			turns -= floor(turns);
 			rotateOffset = turns * 360.0;
 		}
 		else

@@ -209,7 +209,11 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	int dli = flat->dynlightindex;
 
 	gl_RenderState.Apply();
-	if (gl.legacyMode) processlights = false;
+	if (gl.legacyMode)
+	{
+		processlights = false;
+		goto legacy;
+	}
 
 	auto vcount = flat->sector->ibocount;
 	if (vcount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
@@ -243,6 +247,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	}
 	else
 	{
+		legacy:
 		// Draw the subsectors belonging to this sector
 		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{

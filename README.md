@@ -12,7 +12,7 @@ Please see license files for individual contributor licenses
 
 Special thanks to Coraline of the 3DGE team for allowing us to use her README.md as a template for this one.
 
-### Licensed under the GPL v3 (or greater)
+### Licensed under the GPL v3
 ##### https://www.gnu.org/licenses/quick-guide-gplv3.en.html
 ---
 

@@ -395,7 +395,6 @@ void GLSceneDrawer::RenderTranslucent(FDrawInfo *di)
 {
 	RenderAll.Clock();
 
-	glDepthMask(false);
 	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
 
 	// final pass: translucent stuff
@@ -404,6 +403,7 @@ void GLSceneDrawer::RenderTranslucent(FDrawInfo *di)
 
 	gl_RenderState.EnableBrightmap(true);
 	di->drawlists[GLDL_TRANSLUCENTBORDER].Draw(di, GLPASS_TRANSLUCENT);
+	glDepthMask(false);
 	di->DrawSorted(GLDL_TRANSLUCENT);
 	gl_RenderState.EnableBrightmap(false);
 

@@ -82,9 +82,6 @@
 static FRandom pr_dmspawn ("DMSpawn");
 static FRandom pr_pspawn ("PlayerSpawn");
 
-const int SAVEPICWIDTH = 216;
-const int SAVEPICHEIGHT = 162;
-
 bool	G_CheckDemoStatus (void);
 void	G_ReadDemoTiccmd (ticcmd_t *cmd, int player);
 void	G_WriteDemoTiccmd (ticcmd_t *cmd, int player, int buf);

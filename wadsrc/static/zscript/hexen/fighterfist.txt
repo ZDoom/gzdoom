@@ -56,7 +56,7 @@ class FWeapFist : FighterWeapon
 		Class<Actor> pufftype;
 		FTranslatedLineTarget t;
 
-		double slope = AimLineAttack (angle, 2*DEFMELEERANGE, t);
+		double slope = AimLineAttack (angle, 2*DEFMELEERANGE, t, 0., ALF_CHECK3D);
 		if (t.linetarget != null)
 		{
 			if (++weaponspecial >= 3)
@@ -117,7 +117,7 @@ class FWeapFist : FighterWeapon
 		// didn't find any creatures, so try to strike any walls
 		weaponspecial = 0;
 
-		double slope = AimLineAttack (angle, DEFMELEERANGE);
+		double slope = AimLineAttack (angle, DEFMELEERANGE, null, 0., ALF_CHECK3D);
 		LineAttack (angle, DEFMELEERANGE, slope, damage, 'Melee', "PunchPuff", true);
 	}
 	

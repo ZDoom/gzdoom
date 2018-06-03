@@ -3998,6 +3998,70 @@ struct aim_t
 		SetResult(thing_other, newtrace.thing_other);
 	}
 
+	//============================================================================
+	//
+	// Finds where the trace exits an actor to check for hits from above/below 
+	//
+	//============================================================================
+
+	double ExitPoint(AActor *thing)
+	{
+		// The added check at the exit point only has some value if a 3D distance check is involved
+		if (!(flags & ALF_CHECK3D)) return -1;
+
+		divline_t trace = { startpos.X, startpos.Y, aimtrace.X, aimtrace.Y };
+		divline_t line;
+
+		for (int i = 0; i < 4; ++i)
+		{
+			switch (i)
+			{
+			case 0:		// Top edge
+				line.y = thing->Y() + thing->radius;
+				if (trace.y > line.y) continue;
+				line.x = thing->X() + thing->radius;
+				line.dx = -thing->radius * 2;
+				line.dy = 0;
+				break;
+
+			case 1:		// Right edge
+				line.x = thing->X() + thing->radius;
+				if (trace.x > line.x) continue;
+				line.y = thing->Y() - thing->radius;
+				line.dx = 0;
+				line.dy = thing->radius * 2;
+				break;
+
+			case 2:		// Bottom edge
+				line.y = thing->Y() - thing->radius;
+				if (trace.y < line.y) continue;
+				line.x = thing->X() - thing->radius;
+				line.dx = thing->radius * 2;
+				line.dy = 0;
+				break;
+
+			case 3:		// Left edge
+				line.x = thing->X() - thing->radius;
+				if (trace.x < line.x) continue;
+				line.y = thing->Y() + thing->radius;
+				line.dx = 0;
+				line.dy = thing->radius * -2;
+				break;
+			}
+
+			// If it is, see if the trace crosses it
+			if (P_PointOnDivlineSide(line.x, line.y, &trace) !=
+				P_PointOnDivlineSide(line.x + line.dx, line.y + line.dy, &trace))
+			{
+				// It's a hit
+				double frac = P_InterceptVector(&trace, &line);
+				if (frac > 1.) frac = 1.;
+				return frac;
+			}
+		}
+
+		return -1.;
+	}
 
 	//============================================================================
 	//
@@ -4047,9 +4111,7 @@ struct aim_t
 		intercept_t *in;
 
 		if (aimdebug)
-			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f\n",
-				startpos.X / 65536., startpos.Y / 65536., startpos.Z / 65536.,
-				aimtrace.X / 65536., aimtrace.Y / 65536.);
+			Printf("Start AimTraverse, start = %f,%f,%f, vect = %f,%f\n", startpos.X, startpos.Y, startpos.Z, aimtrace.X, aimtrace.Y);
 		
 		while ((in = it.Next()))
 		{
@@ -4195,12 +4257,38 @@ struct aim_t
 			thingtoppitch = -VecToAngle(dist, th->Top() - shootz);
 
 			if (thingtoppitch > bottompitch)
-				continue;					// shot over the thing
+			{
+				// Check for a hit from above
+				if (shootz > th->Top())
+				{
+					double exitfrac = ExitPoint(th);
+					if (exitfrac > 0.)
+					{
+						double exitdist = attackrange * exitfrac;
+						thingtoppitch = -VecToAngle(exitdist, th->Top() - shootz);
+						if (thingtoppitch > bottompitch) continue;
+					}
+				}
+				else continue;					// shot over the thing
+			}
 
 			thingbottompitch = -VecToAngle(dist, th->Z() - shootz);
 
 			if (thingbottompitch < toppitch)
+			{
+				// Check for a hit from below
+				if (shootz < th->Z())
+				{
+					double exitfrac = ExitPoint(th);
+					if (exitfrac > 0.)
+					{
+						double exitdist = attackrange * exitfrac;
+						thingbottompitch = -VecToAngle(exitdist, th->Z() - shootz);
+						if (thingbottompitch < toppitch) continue;
+					}
+				}
 				continue;					// shot under the thing
+			}
 
 			if (crossedffloors)
 			{

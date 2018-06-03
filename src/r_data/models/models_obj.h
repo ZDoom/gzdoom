@@ -29,66 +29,59 @@
 class FOBJModel : public FModel
 {
 private:
-  int mLumpNum;
-  int numMtls;
+	int mLumpNum;
+	const char *newSideSep = "$"; // OBJ side separator is /, which is parsed as a line comment by FScanner if two of them are next to each other.
 
-  enum class FaceElement
-  {
-    VertexIndex,
-    UVIndex,
-    VNormalIndex
-  };
+	enum class FaceElement
+	{
+		VertexIndex,
+		UVIndex,
+		VNormalIndex
+	};
 
-  struct OBJFaceSide
-  {
-    int vertref;
-    int normref;
-    int uvref;
-  };
-  struct OBJFace
-  {
-    int sideCount;
-    OBJFaceSide sides[4];
-  };
-  struct OBJTriangle
-  {
-    int vertref[3];
-  };
-  struct OBJSurface // 1 surface per 'usemtl'
-  {
-    int numTris; // Number of triangulated faces
-    int numFaces; // Number of faces
-    int faceStart; // Index of first face in faces array
-    OBJFace* tris; // Triangles
-    FTextureID skin;
-    OBJSurface(FTextureID skin): numTris(0), numFaces(0), faceStart(0), tris(nullptr), skin(skin) {}
-  };
+	struct OBJFaceSide
+	{
+		int vertref;
+		int normref;
+		int uvref;
+	};
+	struct OBJFace
+	{
+		int sideCount;
+		OBJFaceSide sides[4];
+	};
+	struct OBJSurface // 1 surface per 'usemtl'
+	{
+		unsigned int numTris; // Number of triangulated faces
+		unsigned int numFaces; // Number of faces
+		unsigned int vbStart; // First index in vertex buffer
+		unsigned int faceStart; // Index of first face in faces array
+		OBJFace* tris; // Triangles
+		FTextureID skin;
+		OBJSurface(FTextureID skin): numTris(0), numFaces(0), vbStart(0), faceStart(0), tris(nullptr), skin(skin) {}
+	};
 
-  TArray<FVector3> verts;
-  TArray<FVector3> norms;
-  TArray<FVector2> uvs;
-  TArray<OBJFace> faces;
-  TArray<OBJSurface> surfaces;
-  FTextureID curMtl;
-  OBJSurface* curSurface;
-  int aggSurfFaceCount;
-  int curSurfFaceCount;
-  FScanner sc;
+	TArray<FVector3> verts;
+	TArray<FVector3> norms;
+	TArray<FVector2> uvs;
+	TArray<OBJFace> faces;
+	TArray<OBJSurface> surfaces;
+	FScanner sc;
 
-  void ParseVector2(TArray<FVector2> &array);
-  void ParseVector3(TArray<FVector3> &array);
-  void ParseFaceSide(const FString &side, OBJFace &face, int sidx);
-  void ConstructSurfaceTris(OBJSurface *surf);
-  int ResolveIndex(int origIndex, FaceElement el);
-  void TriangulateQuad(const OBJFace &quad, OBJFace *tris);
+	void ParseVector2(TArray<FVector2> &array);
+	void ParseVector3(TArray<FVector3> &array);
+	void ParseFaceSide(const FString &side, OBJFace &face, int sidx);
+	void ConstructSurfaceTris(OBJSurface &surf);
+	int ResolveIndex(int origIndex, FaceElement el);
+	void TriangulateQuad(const OBJFace &quad, OBJFace *tris);
 public:
-  FOBJModel(): curSurface(nullptr), aggSurfFaceCount(0), curSurfFaceCount(0) {}
-  ~FOBJModel();
-  bool Load(const char* fn, int lumpnum, const char* buffer, int length) override;
-  int FindFrame(const char* name) override;
-  void RenderFrame(FModelRenderer* renderer, FTexture* skin, int frame, int frame2, double inter, int translation=0) override;
-  void BuildVertexBuffer(FModelRenderer* renderer) override;
-  void AddSkins(uint8_t* hitlist) override;
+	FOBJModel() {}
+	~FOBJModel();
+	bool Load(const char* fn, int lumpnum, const char* buffer, int length) override;
+	int FindFrame(const char* name) override;
+	void RenderFrame(FModelRenderer* renderer, FTexture* skin, int frame, int frame2, double inter, int translation=0) override;
+	void BuildVertexBuffer(FModelRenderer* renderer) override;
+	void AddSkins(uint8_t* hitlist) override;
 };
 
 #endif

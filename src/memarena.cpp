@@ -55,13 +55,14 @@ struct FMemArena::Block
 //
 // RoundPointer
 //
-// Rounds a pointer up to a pointer-sized boundary.
+// Rounds a pointer up to the size of the largest integral type.
 //
 //==========================================================================
 
 static inline void *RoundPointer(void *ptr)
 {
-	return (void *)(((size_t)ptr + sizeof(void*) - 1) & ~(sizeof(void*) - 1));
+	const auto roundsize = std::max(sizeof(void*), sizeof(double));
+	return (void *)(((size_t)ptr + roundsize - 1) & ~(roundsize - 1));
 }
 
 //==========================================================================

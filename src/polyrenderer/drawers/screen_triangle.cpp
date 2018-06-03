@@ -399,8 +399,9 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 	uint32_t light;
 	fixed_t shade, lightpos, lightstep;
 	uint32_t shade_fade_r, shade_fade_g, shade_fade_b, shade_light_r, shade_light_g, shade_light_b, desaturate, inv_desaturate;
-	int16_t dynlights_r[MAXWIDTH / 8], dynlights_g[MAXWIDTH / 8], dynlights_b[MAXWIDTH / 8];
+	int16_t dynlights_r[MAXWIDTH / 16], dynlights_g[MAXWIDTH / 16], dynlights_b[MAXWIDTH / 16];
 	int16_t posdynlight_r, posdynlight_g, posdynlight_b;
+	fixed_t lightarray[MAXWIDTH / 16];
 
 	v1X = args->v1->x;
 	v1Y = args->v1->y;
@@ -435,6 +436,29 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
 		lightpos = (fixed_t)(globVis * posXW * (float)FRACUNIT);
 		lightstep = (fixed_t)(globVis * stepXW * (float)FRACUNIT);
+
+		int affineOffset = x0 / 16 * 16 - x0;
+		lightpos = lightpos + lightstep * affineOffset;
+		lightstep = lightstep * 16;
+
+		fixed_t maxvis = 24 * FRACUNIT / 32;
+		fixed_t maxlight = 31 * FRACUNIT / 32;
+
+		for (int x = x0 / 16; x <= x1 / 16 + 1; x++)
+		{
+			lightarray[x] = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
+			lightpos += lightstep;
+		}
+
+		int offset = x0 >> 4;
+		int t1 = x0 & 15;
+		int t0 = 16 - t1;
+		lightpos = (lightarray[offset] * t0 + lightarray[offset + 1] * t1);
+
+		for (int x = x0 / 16; x <= x1 / 16; x++)
+		{
+			lightarray[x] = lightarray[x + 1] - lightarray[x];
+		}
 	}
 
 	if (OptT::Flags & SWOPT_DynLights)
@@ -686,9 +710,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 			}
 			else
 			{
-				fixed_t maxvis = 24 * FRACUNIT / 32;
-				fixed_t maxlight = 31 * FRACUNIT / 32;
-				lightshade = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
+				lightshade = lightpos >> 4;
 			}
 
 			uint32_t lit_r = 0, lit_g = 0, lit_b = 0;
@@ -840,7 +862,7 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 			posdynlight_b += dynlights_b[x >> 4];
 		}
 		if (!(OptT::Flags & SWOPT_FixedLight))
-			lightpos += lightstep;
+			lightpos += lightarray[x >> 4];
 		x++;
 	}
 }
@@ -906,8 +928,9 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 	int alpha;
 	uint32_t light;
 	fixed_t shade, lightpos, lightstep;
-	int16_t dynlights_r[MAXWIDTH / 8], dynlights_g[MAXWIDTH / 8], dynlights_b[MAXWIDTH / 8];
+	int16_t dynlights_r[MAXWIDTH / 16], dynlights_g[MAXWIDTH / 16], dynlights_b[MAXWIDTH / 16];
 	int16_t posdynlight_r, posdynlight_g, posdynlight_b;
+	fixed_t lightarray[MAXWIDTH / 16];
 
 	v1X = args->v1->x;
 	v1Y = args->v1->y;
@@ -947,6 +970,29 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		shade = (fixed_t)((2.0f - (light + 12.0f) / 128.0f) * (float)FRACUNIT);
 		lightpos = (fixed_t)(globVis * posXW * (float)FRACUNIT);
 		lightstep = (fixed_t)(globVis * stepXW * (float)FRACUNIT);
+
+		int affineOffset = x0 / 16 * 16 - x0;
+		lightpos = lightpos + lightstep * affineOffset;
+		lightstep = lightstep * 16;
+
+		fixed_t maxvis = 24 * FRACUNIT / 32;
+		fixed_t maxlight = 31 * FRACUNIT / 32;
+
+		for (int x = x0 / 16; x <= x1 / 16 + 1; x++)
+		{
+			lightarray[x] = (clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight) >> 8) << 5;
+			lightpos += lightstep;
+		}
+
+		int offset = x0 >> 4;
+		int t1 = x0 & 15;
+		int t0 = 16 - t1;
+		lightpos = (lightarray[offset] * t0 + lightarray[offset + 1] * t1);
+
+		for (int x = x0 / 16; x <= x1 / 16; x++)
+		{
+			lightarray[x] = lightarray[x + 1] - lightarray[x];
+		}
 	}
 
 	if (OptT::Flags & SWOPT_DynLights)
@@ -1178,10 +1224,7 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 			}
 			else
 			{
-				fixed_t maxvis = 24 * FRACUNIT / 32;
-				fixed_t maxlight = 31 * FRACUNIT / 32;
-				int lightshade = (FRACUNIT - clamp<fixed_t>(shade - MIN(maxvis, lightpos), 0, maxlight)) >> 8;
-				lightshade = ((256 - lightshade) << 5) & 0xffffff00;
+				int lightshade = (lightpos >> 4) & 0xffffff00;
 				shadedfg = colormaps[lightshade + fg];
 			}
 
@@ -1326,7 +1369,7 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 			posdynlight_b += dynlights_b[x >> 4];
 		}
 		if (!(OptT::Flags & SWOPT_FixedLight))
-			lightpos += lightstep;
+			lightpos += lightarray[x >> 4];
 		x++;
 	}
 }

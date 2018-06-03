@@ -35,6 +35,7 @@
 #include "p_effect.h"
 #include "d_player.h"
 #include "a_dynlight.h"
+#include "g_game.h"
 #include "swrenderer/r_swscene.h"
 #include "hwrenderer/utility/hw_clock.h"
 
@@ -96,6 +97,8 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mLights = nullptr;
 	mTonemapPalette = nullptr;
 	mBuffers = nullptr;
+	mScreenBuffers = nullptr;
+	mSaveBuffers = nullptr;
 	mPresentShader = nullptr;
 	mPresent3dCheckerShader = nullptr;
 	mPresent3dColumnShader = nullptr;
@@ -122,7 +125,9 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 
 void FGLRenderer::Initialize(int width, int height)
 {
-	mBuffers = new FGLRenderBuffers();
+	mScreenBuffers = new FGLRenderBuffers();
+	mSaveBuffers = new FGLRenderBuffers();
+	mBuffers = mScreenBuffers;
 	mLinearDepthShader = new FLinearDepthShader();
 	mDepthBlurShader = new FDepthBlurShader();
 	mSSAOShader = new FSSAOShader();
@@ -400,7 +405,9 @@ void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, in
 
 void FGLRenderer::BeginFrame()
 {
-	buffersActive = GLRenderer->mBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
+	buffersActive = GLRenderer->mScreenBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
+	if (buffersActive)
+		buffersActive = GLRenderer->mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 }
 
 //===========================================================================

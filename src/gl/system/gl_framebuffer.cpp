@@ -136,7 +136,7 @@ void OpenGLFrameBuffer::InitializeState()
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	GLRenderer->Initialize(GetWidth(), GetHeight());
-	SetOutputViewport(nullptr);
+	SetViewportRects(nullptr);
 }
 
 //==========================================================================
@@ -164,14 +164,11 @@ void OpenGLFrameBuffer::Update()
 	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
 	if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
 	{
-		// Do not call Resize here because it's only for software canvases
 		Width = clientWidth;
 		Height = clientHeight;
 		V_OutputResized(Width, Height);
 		GLRenderer->mVBO->OutputResized(Width, Height);
 	}
-
-	SetOutputViewport(nullptr);
 }
 
 //===========================================================================
@@ -392,10 +389,11 @@ bool OpenGLFrameBuffer::RenderBuffersEnabled()
 	return FGLRenderBuffers::IsEnabled();
 }
 
-void OpenGLFrameBuffer::SetOutputViewport(IntRect *bounds)
+void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)
 {
-	Super::SetOutputViewport(bounds);
-	s3d::Stereo3DMode::getCurrentMode().AdjustViewports();
+	Super::SetViewportRects(bounds);
+	if (!bounds)
+		s3d::Stereo3DMode::getCurrentMode().AdjustViewports();
 }
 
 
@@ -431,6 +429,7 @@ void OpenGLFrameBuffer::SetClearColor(int color)
 
 void OpenGLFrameBuffer::BeginFrame()
 {
+	SetViewportRects(nullptr);
 	if (GLRenderer != nullptr)
 		GLRenderer->BeginFrame();
 }

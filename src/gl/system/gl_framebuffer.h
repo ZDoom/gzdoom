@@ -42,7 +42,7 @@ public:
 	void ResetFixedColormap() override;
 	void BeginFrame() override;
 	bool RenderBuffersEnabled() override;
-	void SetOutputViewport(IntRect *bounds) override;
+	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;
 
 	// Retrieves a buffer containing image data for a screenshot.

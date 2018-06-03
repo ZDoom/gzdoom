@@ -1005,7 +1005,7 @@ void DFrameBuffer::WriteSavePic(player_t *player, FileWriter *file, int width, i
 //
 //==========================================================================
 
-void DFrameBuffer::SetOutputViewport(IntRect *bounds)
+void DFrameBuffer::SetViewportRects(IntRect *bounds)
 {
 	if (bounds)
 	{

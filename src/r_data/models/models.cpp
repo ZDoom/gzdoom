@@ -40,6 +40,7 @@
 #include "r_utility.h"
 #include "r_data/models/models.h"
 #include "r_data/models/models_ue1.h"
+#include "r_data/models/models_obj.h"
 #include "i_time.h"
 
 #ifdef _MSC_VER
@@ -436,6 +437,10 @@ static unsigned FindModel(const char * path, const char * modelfile)
 		{
 			model = new FUE1Model;
 		}
+	}
+	else if ( (size_t)fullname.LastIndexOf(".obj") == fullname.Len() - 1 )
+	{ // LastIndexOf works differently than it does in JavaScript
+		model = new FOBJModel;
 	}
 	else if (!memcmp(buffer, "DMDM", 4))
 	{
@@ -937,4 +942,3 @@ bool IsHUDModelForPlayerAvailable (player_t * player)
 	FSpriteModelFrame *smf = FindModelFrame(player->ReadyWeapon->GetClass(), state->sprite, state->GetFrame(), false);
 	return ( smf != nullptr );
 }
-

@@ -399,6 +399,8 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 	uint32_t light;
 	fixed_t shade, lightpos, lightstep;
 	uint32_t shade_fade_r, shade_fade_g, shade_fade_b, shade_light_r, shade_light_g, shade_light_b, desaturate, inv_desaturate;
+	int16_t dynlights_r[MAXWIDTH / 8], dynlights_g[MAXWIDTH / 8], dynlights_b[MAXWIDTH / 8];
+	int16_t posdynlight_r, posdynlight_g, posdynlight_b;
 
 	v1X = args->v1->x;
 	v1Y = args->v1->y;
@@ -453,6 +455,99 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		worldnormalY = args->uniforms->Normal().Y;
 		worldnormalZ = args->uniforms->Normal().Z;
 		dynlightcolor = args->uniforms->DynLightColor();
+
+		int affineOffset = x0 / 16 * 16 - x0;
+		float posLightW = posXW + stepXW * affineOffset;
+		posWorldX = posWorldX + stepWorldX * affineOffset;
+		posWorldY = posWorldY + stepWorldY * affineOffset;
+		posWorldZ = posWorldZ + stepWorldZ * affineOffset;
+		float stepLightW = stepXW * 16.0f;
+		stepWorldX *= 16.0f;
+		stepWorldY *= 16.0f;
+		stepWorldZ *= 16.0f;
+
+		for (int x = x0 / 16; x <= x1 / 16 + 1; x++)
+		{
+			uint32_t lit_r = RPART(dynlightcolor);
+			uint32_t lit_g = GPART(dynlightcolor);
+			uint32_t lit_b = BPART(dynlightcolor);
+
+			float rcp_posXW = 1.0f / posLightW;
+			float worldposX = posWorldX * rcp_posXW;
+			float worldposY = posWorldY * rcp_posXW;
+			float worldposZ = posWorldZ * rcp_posXW;
+			for (int i = 0; i < num_lights; i++)
+			{
+				float lightposX = lights[i].x;
+				float lightposY = lights[i].y;
+				float lightposZ = lights[i].z;
+				float light_radius = lights[i].radius;
+				uint32_t light_color = lights[i].color;
+
+				bool is_attenuated = light_radius < 0.0f;
+				if (is_attenuated)
+					light_radius = -light_radius;
+
+				// L = light-pos
+				// dist = sqrt(dot(L, L))
+				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				float Lx = lightposX - worldposX;
+				float Ly = lightposY - worldposY;
+				float Lz = lightposZ - worldposZ;
+				float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
+#ifdef NO_SSE
+				//float rcp_dist = 1.0f / sqrt(dist2);
+				float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
+				float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
+#endif
+				float dist = dist2 * rcp_dist;
+				float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+
+				// The simple light type
+				float simple_attenuation = distance_attenuation;
+
+				// The point light type
+				// diffuse = max(dot(N,normalize(L)),0) * attenuation
+				Lx *= rcp_dist;
+				Ly *= rcp_dist;
+				Lz *= rcp_dist;
+				float dotNL = worldnormalX * Lx + worldnormalY * Ly + worldnormalZ * Lz;
+				float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
+
+				uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
+
+				lit_r += (RPART(light_color) * attenuation) >> 8;
+				lit_g += (GPART(light_color) * attenuation) >> 8;
+				lit_b += (BPART(light_color) * attenuation) >> 8;
+			}
+
+			lit_r = MIN<uint32_t>(lit_r, 255);
+			lit_g = MIN<uint32_t>(lit_g, 255);
+			lit_b = MIN<uint32_t>(lit_b, 255);
+			dynlights_r[x] = lit_r;
+			dynlights_g[x] = lit_g;
+			dynlights_b[x] = lit_b;
+
+			posLightW += stepLightW;
+			posWorldX += stepWorldX;
+			posWorldY += stepWorldY;
+			posWorldZ += stepWorldZ;
+		}
+
+		int offset = x0 >> 4;
+		int t1 = x0 & 15;
+		int t0 = 16 - t1;
+		posdynlight_r = (dynlights_r[offset] * t0 + dynlights_r[offset + 1] * t1);
+		posdynlight_g = (dynlights_g[offset] * t0 + dynlights_g[offset + 1] * t1);
+		posdynlight_b = (dynlights_b[offset] * t0 + dynlights_b[offset + 1] * t1);
+
+		for (int x = x0 / 16; x <= x1 / 16; x++)
+		{
+			dynlights_r[x] = dynlights_r[x + 1] - dynlights_r[x];
+			dynlights_g[x] = dynlights_g[x + 1] - dynlights_g[x];
+			dynlights_b[x] = dynlights_b[x + 1] - dynlights_b[x];
+		}
 	}
 
 	if (OptT::Flags & SWOPT_ColoredFog)
@@ -599,59 +694,9 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 			uint32_t lit_r = 0, lit_g = 0, lit_b = 0;
 			if (OptT::Flags & SWOPT_DynLights)
 			{
-				lit_r = RPART(dynlightcolor);
-				lit_g = GPART(dynlightcolor);
-				lit_b = BPART(dynlightcolor);
-
-				float rcp_posXW = 1.0f / posXW;
-				float worldposX = posWorldX * rcp_posXW;
-				float worldposY = posWorldY * rcp_posXW;
-				float worldposZ = posWorldZ * rcp_posXW;
-				for (int i = 0; i < num_lights; i++)
-				{
-					float lightposX = lights[i].x;
-					float lightposY = lights[i].y;
-					float lightposZ = lights[i].z;
-					float light_radius = lights[i].radius;
-					uint32_t light_color = lights[i].color;
-
-					bool is_attenuated = light_radius < 0.0f;
-					if (is_attenuated)
-						light_radius = -light_radius;
-
-					// L = light-pos
-					// dist = sqrt(dot(L, L))
-					// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
-					float Lx = lightposX - worldposX;
-					float Ly = lightposY - worldposY;
-					float Lz = lightposZ - worldposZ;
-					float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
-#ifdef NO_SSE
-					//float rcp_dist = 1.0f / sqrt(dist2);
-					float rcp_dist = 1.0f / (dist2 * 0.01f);
-#else
-					float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
-#endif
-					float dist = dist2 * rcp_dist;
-					float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
-
-					// The simple light type
-					float simple_attenuation = distance_attenuation;
-
-					// The point light type
-					// diffuse = max(dot(N,normalize(L)),0) * attenuation
-					Lx *= rcp_dist;
-					Ly *= rcp_dist;
-					Lz *= rcp_dist;
-					float dotNL = worldnormalX * Lx + worldnormalY * Ly + worldnormalZ * Lz;
-					float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
-
-					uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
-
-					lit_r += (RPART(light_color) * attenuation) >> 8;
-					lit_g += (GPART(light_color) * attenuation) >> 8;
-					lit_b += (BPART(light_color) * attenuation) >> 8;
-				}
+				lit_r = posdynlight_r >> 4;
+				lit_g = posdynlight_g >> 4;
+				lit_b = posdynlight_b >> 4;
 			}
 
 			uint32_t shadedfg_r, shadedfg_g, shadedfg_b;
@@ -665,23 +710,15 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 				shadedfg_g = (((shade_fade_g + ((fg_g * inv_desaturate + intensity) >> 8) * lightshade) >> 8) * shade_light_g) >> 8;
 				shadedfg_b = (((shade_fade_b + ((fg_b * inv_desaturate + intensity) >> 8) * lightshade) >> 8) * shade_light_b) >> 8;
 
-				lit_r = MIN(lit_r, (uint32_t)256);
-				lit_g = MIN(lit_g, (uint32_t)256);
-				lit_b = MIN(lit_b, (uint32_t)256);
-
 				shadedfg_r = MIN(shadedfg_r + ((fg_r * lit_r) >> 8), (uint32_t)255);
 				shadedfg_g = MIN(shadedfg_g + ((fg_g * lit_g) >> 8), (uint32_t)255);
 				shadedfg_b = MIN(shadedfg_b + ((fg_b * lit_b) >> 8), (uint32_t)255);
 			}
 			else
 			{
-				lit_r = MIN(lightshade + lit_r, (uint32_t)256);
-				lit_g = MIN(lightshade + lit_g, (uint32_t)256);
-				lit_b = MIN(lightshade + lit_b, (uint32_t)256);
-
-				shadedfg_r = (RPART(fg) * lit_r) >> 8;
-				shadedfg_g = (GPART(fg) * lit_g) >> 8;
-				shadedfg_b = (BPART(fg) * lit_b) >> 8;
+				shadedfg_r = (RPART(fg) * MIN(lightshade + lit_r, (uint32_t)256)) >> 8;
+				shadedfg_g = (GPART(fg) * MIN(lightshade + lit_g, (uint32_t)256)) >> 8;
+				shadedfg_b = (BPART(fg) * MIN(lightshade + lit_b, (uint32_t)256)) >> 8;
 			}
 
 			if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_Zero)
@@ -798,9 +835,9 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		posXV += stepXV;
 		if (OptT::Flags & SWOPT_DynLights)
 		{
-			posWorldX += stepWorldX;
-			posWorldY += stepWorldY;
-			posWorldZ += stepWorldZ;
+			posdynlight_r += dynlights_r[x >> 4];
+			posdynlight_g += dynlights_g[x >> 4];
+			posdynlight_b += dynlights_b[x >> 4];
 		}
 		if (!(OptT::Flags & SWOPT_FixedLight))
 			lightpos += lightstep;
@@ -869,6 +906,8 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 	int alpha;
 	uint32_t light;
 	fixed_t shade, lightpos, lightstep;
+	int16_t dynlights_r[MAXWIDTH / 8], dynlights_g[MAXWIDTH / 8], dynlights_b[MAXWIDTH / 8];
+	int16_t posdynlight_r, posdynlight_g, posdynlight_b;
 
 	v1X = args->v1->x;
 	v1Y = args->v1->y;
@@ -928,6 +967,99 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		worldnormalY = args->uniforms->Normal().Y;
 		worldnormalZ = args->uniforms->Normal().Z;
 		dynlightcolor = args->uniforms->DynLightColor();
+
+		int affineOffset = x0 / 16 * 16 - x0;
+		float posLightW = posXW + stepXW * affineOffset;
+		posWorldX = posWorldX + stepWorldX * affineOffset;
+		posWorldY = posWorldY + stepWorldY * affineOffset;
+		posWorldZ = posWorldZ + stepWorldZ * affineOffset;
+		float stepLightW = stepXW * 16.0f;
+		stepWorldX *= 16.0f;
+		stepWorldY *= 16.0f;
+		stepWorldZ *= 16.0f;
+
+		for (int x = x0 / 16; x <= x1 / 16 + 1; x++)
+		{
+			uint32_t lit_r = RPART(dynlightcolor);
+			uint32_t lit_g = GPART(dynlightcolor);
+			uint32_t lit_b = BPART(dynlightcolor);
+
+			float rcp_posXW = 1.0f / posLightW;
+			float worldposX = posWorldX * rcp_posXW;
+			float worldposY = posWorldY * rcp_posXW;
+			float worldposZ = posWorldZ * rcp_posXW;
+			for (int i = 0; i < num_lights; i++)
+			{
+				float lightposX = lights[i].x;
+				float lightposY = lights[i].y;
+				float lightposZ = lights[i].z;
+				float light_radius = lights[i].radius;
+				uint32_t light_color = lights[i].color;
+
+				bool is_attenuated = light_radius < 0.0f;
+				if (is_attenuated)
+					light_radius = -light_radius;
+
+				// L = light-pos
+				// dist = sqrt(dot(L, L))
+				// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
+				float Lx = lightposX - worldposX;
+				float Ly = lightposY - worldposY;
+				float Lz = lightposZ - worldposZ;
+				float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
+#ifdef NO_SSE
+				//float rcp_dist = 1.0f / sqrt(dist2);
+				float rcp_dist = 1.0f / (dist2 * 0.01f);
+#else
+				float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
+#endif
+				float dist = dist2 * rcp_dist;
+				float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
+
+				// The simple light type
+				float simple_attenuation = distance_attenuation;
+
+				// The point light type
+				// diffuse = max(dot(N,normalize(L)),0) * attenuation
+				Lx *= rcp_dist;
+				Ly *= rcp_dist;
+				Lz *= rcp_dist;
+				float dotNL = worldnormalX * Lx + worldnormalY * Ly + worldnormalZ * Lz;
+				float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
+
+				uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
+
+				lit_r += (RPART(light_color) * attenuation) >> 8;
+				lit_g += (GPART(light_color) * attenuation) >> 8;
+				lit_b += (BPART(light_color) * attenuation) >> 8;
+			}
+
+			lit_r = MIN<uint32_t>(lit_r, 255);
+			lit_g = MIN<uint32_t>(lit_g, 255);
+			lit_b = MIN<uint32_t>(lit_b, 255);
+			dynlights_r[x] = lit_r;
+			dynlights_g[x] = lit_g;
+			dynlights_b[x] = lit_b;
+
+			posLightW += stepLightW;
+			posWorldX += stepWorldX;
+			posWorldY += stepWorldY;
+			posWorldZ += stepWorldZ;
+		}
+
+		int offset = x0 >> 4;
+		int t1 = x0 & 15;
+		int t0 = 16 - t1;
+		posdynlight_r = (dynlights_r[offset] * t0 + dynlights_r[offset + 1] * t1);
+		posdynlight_g = (dynlights_g[offset] * t0 + dynlights_g[offset + 1] * t1);
+		posdynlight_b = (dynlights_b[offset] * t0 + dynlights_b[offset + 1] * t1);
+
+		for (int x = x0 / 16; x <= x1 / 16; x++)
+		{
+			dynlights_r[x] = dynlights_r[x + 1] - dynlights_r[x];
+			dynlights_g[x] = dynlights_g[x + 1] - dynlights_g[x];
+			dynlights_b[x] = dynlights_b[x + 1] - dynlights_b[x];
+		}
 	}
 
 	uint8_t *dest = (uint8_t*)args->dest;
@@ -1055,69 +1187,11 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 
 			if (OptT::Flags & SWOPT_DynLights)
 			{
-				uint32_t lit_r = RPART(dynlightcolor);
-				uint32_t lit_g = GPART(dynlightcolor);
-				uint32_t lit_b = BPART(dynlightcolor);
-
-#ifdef NO_SSE
-				float rcp_posXW = 1.0f / posXW;
-#else
-				float rcp_posXW = _mm_cvtss_f32(_mm_rcp_ss(_mm_set_ss(posXW)));
-#endif
-				float worldposX = posWorldX * rcp_posXW;
-				float worldposY = posWorldY * rcp_posXW;
-				float worldposZ = posWorldZ * rcp_posXW;
-				for (int i = 0; i < num_lights; i++)
+				if (posdynlight_r | posdynlight_g | posdynlight_b)
 				{
-					float lightposX = lights[i].x;
-					float lightposY = lights[i].y;
-					float lightposZ = lights[i].z;
-					float light_radius = lights[i].radius;
-					uint32_t light_color = lights[i].color;
-
-					bool is_attenuated = light_radius < 0.0f;
-					if (is_attenuated)
-						light_radius = -light_radius;
-
-					// L = light-pos
-					// dist = sqrt(dot(L, L))
-					// distance_attenuation = 1 - MIN(dist * (1/radius), 1)
-					float Lx = lightposX - worldposX;
-					float Ly = lightposY - worldposY;
-					float Lz = lightposZ - worldposZ;
-					float dist2 = Lx * Lx + Ly * Ly + Lz * Lz;
-#ifdef NO_SSE
-					//float rcp_dist = 1.0f / sqrt(dist2);
-					float rcp_dist = 1.0f / (dist2 * 0.01f);
-#else
-					float rcp_dist = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(dist2)));
-#endif
-					float dist = dist2 * rcp_dist;
-					float distance_attenuation = 256.0f - MIN(dist * light_radius, 256.0f);
-
-					// The simple light type
-					float simple_attenuation = distance_attenuation;
-
-					// The point light type
-					// diffuse = max(dot(N,normalize(L)),0) * attenuation
-					Lx *= rcp_dist;
-					Ly *= rcp_dist;
-					Lz *= rcp_dist;
-					float dotNL = worldnormalX * Lx + worldnormalY * Ly + worldnormalZ * Lz;
-					float point_attenuation = MAX(dotNL, 0.0f) * distance_attenuation;
-
-					uint32_t attenuation = (uint32_t)(is_attenuated ? (int32_t)point_attenuation : (int32_t)simple_attenuation);
-
-					lit_r += (RPART(light_color) * attenuation) >> 8;
-					lit_g += (GPART(light_color) * attenuation) >> 8;
-					lit_b += (BPART(light_color) * attenuation) >> 8;
-				}
-
-				if (lit_r || lit_g || lit_b)
-				{
-					lit_r = MIN(lit_r, (uint32_t)256);
-					lit_g = MIN(lit_g, (uint32_t)256);
-					lit_b = MIN(lit_b, (uint32_t)256);
+					uint32_t lit_r = posdynlight_r >> 4;
+					uint32_t lit_g = posdynlight_g >> 4;
+					uint32_t lit_b = posdynlight_b >> 4;
 
 					uint32_t fgrgb = GPalette.BaseColors[fg];
 					uint32_t shadedfgrgb = GPalette.BaseColors[shadedfg];
@@ -1247,9 +1321,9 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		posXV += stepXV;
 		if (OptT::Flags & SWOPT_DynLights)
 		{
-			posWorldX += stepWorldX;
-			posWorldY += stepWorldY;
-			posWorldZ += stepWorldZ;
+			posdynlight_r += dynlights_r[x >> 4];
+			posdynlight_g += dynlights_g[x >> 4];
+			posdynlight_b += dynlights_b[x >> 4];
 		}
 		if (!(OptT::Flags & SWOPT_FixedLight))
 			lightpos += lightstep;

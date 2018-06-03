@@ -1997,7 +1997,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_CustomPunch)
 
 	angle = self->Angles.Yaw + pr_cwpunch.Random2() * (5.625 / 256);
 	if (range == 0) range = DEFMELEERANGE;
-	pitch = P_AimLineAttack (self, angle, range, &t);
+	pitch = P_AimLineAttack (self, angle, range, &t, 0., ALF_CHECK3D);
 
 	// only use ammo when actually hitting something!
 	if ((flags & CPF_USEAMMO) && t.linetarget && weapon && ACTION_CALL_FROM_PSPRITE())

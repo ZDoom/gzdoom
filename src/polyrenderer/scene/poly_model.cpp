@@ -59,12 +59,14 @@ void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, co
 
 	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
 		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
+	PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, !mirrored);
 }
 
 void PolyModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 {
 	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
 		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
+	PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, true);
 
 	ModelActor = nullptr;
 }
@@ -107,6 +109,7 @@ void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectT
 
 	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
 		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
+	PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, !mirrored);
 }
 
 void PolyModelRenderer::EndDrawHUDModel(AActor *actor)
@@ -116,6 +119,7 @@ void PolyModelRenderer::EndDrawHUDModel(AActor *actor)
 
 	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
 		PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, false);
+	PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, true);
 }
 
 void PolyModelRenderer::SetInterpolation(double interpolation)

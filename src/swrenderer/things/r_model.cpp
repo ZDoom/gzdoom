@@ -194,7 +194,7 @@ namespace swrenderer
 
 		if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal])
 			PolyTriangleDrawer::SetTwoSided(Thread->DrawQueue, true);
-		PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, !mirrored);
+		PolyTriangleDrawer::SetCullCCW(Thread->DrawQueue, mirrored);
 	}
 
 	void SWModelRenderer::EndDrawHUDModel(AActor *actor)

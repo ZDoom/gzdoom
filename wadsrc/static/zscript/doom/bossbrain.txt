@@ -153,17 +153,41 @@ extend class Actor
 
 	private static void BrainishExplosion(vector3 pos)
 	{
-		Actor boom = Actor.Spawn("Rocket", pos, NO_REPLACE);
-		if (boom)
+		Actor boom = Actor.Spawn("BossBrain", pos, ALLOW_REPLACE);
+		if (boom && boom.ResolveState("Brainexplode"))
 		{
 			boom.DeathSound = "misc/brainexplode";
 			boom.Vel.z = random[BrainScream](0, 255)/128.;
 
 			boom.SetStateLabel ("Brainexplode");
 			boom.bRocketTrail = false;
+			boom.bNOGRAVITY = true;
+			boom.bSOLID = false;
+			boom.bSHOOTABLE = false;
+			boom.A_SetMass(100);
 			boom.SetDamage(0);	// disables collision detection which is not wanted here
 			boom.tics -= random[BrainScream](0, 7);
 			if (boom.tics < 1) boom.tics = 1;
+		}
+		else 
+		{
+			boom.Destroy();
+			Actor boom = Actor.Spawn("BossBrain",pos,NO_REPLACE);
+			if (boom && boom.ResolveState("Brainexplode"))
+			{
+				boom.DeathSound = "misc/brainexplode";
+				boom.Vel.z = random[BrainScream](0, 255)/128.;
+
+				boom.SetStateLabel ("Brainexplode");
+				boom.bRocketTrail = false;
+				boom.bNOGRAVITY = true;
+				boom.bSOLID = false;
+				boom.bSHOOTABLE = false;
+				boom.A_SetMass(100);
+				boom.SetDamage(0);	// disables collision detection which is not wanted here
+				boom.tics -= random[BrainScream](0, 7);
+				if (boom.tics < 1) boom.tics = 1;
+			}
 		}
 	}
 	

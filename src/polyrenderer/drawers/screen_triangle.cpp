@@ -36,12 +36,6 @@
 #include "poly_triangle.h"
 #include "swrenderer/drawers/r_draw_rgba.h"
 #include "screen_triangle.h"
-#ifndef NO_SSE
-#include "poly_drawer32_sse2.h"
-#else
-#include "poly_drawer32.h"
-#endif
-#include "poly_drawer8.h"
 #include "x86.h"
 
 static void SortVertices(const TriDrawTriangleArgs *args, ShadedTriVertex **sortedVertices)
@@ -1284,6 +1278,516 @@ void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 	}
 }
 
+template<typename ModeT>
+void DrawRect8(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
+{
+	using namespace TriScreenDrawerModes;
+
+	int x0 = clamp((int)(args->X0() + 0.5f), 0, destWidth);
+	int x1 = clamp((int)(args->X1() + 0.5f), 0, destWidth);
+	int y0 = clamp((int)(args->Y0() + 0.5f), 0, destHeight);
+	int y1 = clamp((int)(args->Y1() + 0.5f), 0, destHeight);
+
+	if (x1 <= x0 || y1 <= y0)
+		return;
+
+	const uint8_t *colormaps, *texPixels, *translation;
+	int texWidth, texHeight;
+	uint32_t fillcolor;
+	int alpha;
+	uint32_t light;
+
+	texPixels = args->TexturePixels();
+	translation = args->Translation();
+	texWidth = args->TextureWidth();
+	texHeight = args->TextureHeight();
+	fillcolor = args->Color();
+	alpha = args->Alpha();
+	colormaps = args->BaseColormap();
+	light = args->Light();
+	light += light >> 7; // 255 -> 256
+	light = ((256 - light) * NUMCOLORMAPS) & 0xffffff00;
+
+	float fstepU = (args->U1() - args->U0()) / (args->X1() - args->X0());
+	float fstepV = (args->V1() - args->V0()) / (args->Y1() - args->Y0());
+	uint32_t startU = (int32_t)((args->U0() + (x0 + 0.5f - args->X0()) * fstepU) * 0x1000000);
+	uint32_t startV = (int32_t)((args->V0() + (y0 + 0.5f - args->Y0()) * fstepV) * 0x1000000);
+	uint32_t stepU = (int32_t)(fstepU * 0x1000000);
+	uint32_t stepV = (int32_t)(fstepV * 0x1000000);
+
+	uint32_t posV = startV;
+	int num_cores = thread->num_cores;
+	int skip = thread->skipped_by_thread(y0);
+	posV += skip * stepV;
+	stepV *= num_cores;
+	for (int y = y0 + skip; y < y1; y += num_cores, posV += stepV)
+	{
+		uint8_t *destLine = ((uint8_t*)destOrg) + y * destPitch;
+
+		uint32_t posU = startU;
+		for (int x = x0; x < x1; x++)
+		{
+			int fg = 0;
+			int fgalpha = 255;
+
+			if (ModeT::SWFlags & SWSTYLEF_Fill)
+			{
+				fg = fillcolor;
+			}
+			else if (ModeT::BlendOp != STYLEOP_Fuzz)
+			{
+				uint32_t texelX = (((posU << 8) >> 16) * texWidth) >> 16;
+				uint32_t texelY = (((posV << 8) >> 16) * texHeight) >> 16;
+				fg = texPixels[texelX * texHeight + texelY];
+
+				if (ModeT::SWFlags & SWSTYLEF_Translated)
+					fg = translation[fg];
+
+				fgalpha = (fg != 0) ? 255 : 0;
+			}
+
+			if (ModeT::BlendOp == STYLEOP_Fuzz)
+			{
+				using namespace swrenderer;
+
+				uint32_t texelX = (((posU << 8) >> 16) * texWidth) >> 16;
+				uint32_t texelY = (((posV << 8) >> 16) * texHeight) >> 16;
+				unsigned int sampleshadeout = (texPixels[texelX * texHeight + texelY] != 0) ? 256 : 0;
+
+				fixed_t fuzzscale = (200 << FRACBITS) / viewheight;
+
+				int scaled_x = (x * fuzzscale) >> FRACBITS;
+				int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + fuzzpos;
+
+				fixed_t fuzzcount = FUZZTABLE << FRACBITS;
+				fixed_t fuzz = ((fuzz_x << FRACBITS) + y * fuzzscale) % fuzzcount;
+				unsigned int alpha = fuzzoffset[fuzz >> FRACBITS];
+
+				sampleshadeout = (sampleshadeout * alpha) >> 5;
+
+				uint32_t a = 256 - sampleshadeout;
+
+				uint32_t dest = GPalette.BaseColors[destLine[x]].d;
+				uint32_t r = (RPART(dest) * a) >> 8;
+				uint32_t g = (GPART(dest) * a) >> 8;
+				uint32_t b = (BPART(dest) * a) >> 8;
+				destLine[x] = RGB256k.All[((r >> 2) << 12) | ((g >> 2) << 6) | (b >> 2)];
+			}
+			else
+			{
+				if ((ModeT::Flags & STYLEF_ColorIsFixed) && !(ModeT::SWFlags & SWSTYLEF_Fill))
+				{
+					if (ModeT::Flags & STYLEF_RedIsAlpha)
+						fgalpha = fg;
+					fg = fillcolor;
+				}
+
+				if (!(ModeT::Flags & STYLEF_Alpha1))
+				{
+					fgalpha = (fgalpha * alpha) >> 8;
+				}
+
+				uint8_t shadedfg = colormaps[light + fg];
+
+				if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_Zero)
+				{
+					destLine[x] = shadedfg;
+				}
+				else if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_One)
+				{
+					uint32_t src = GPalette.BaseColors[shadedfg];
+					uint32_t dest = GPalette.BaseColors[destLine[x]];
+
+					if (ModeT::BlendOp == STYLEOP_Add)
+					{
+						uint32_t out_r = MIN<uint32_t>(RPART(dest) + RPART(src), 255);
+						uint32_t out_g = MIN<uint32_t>(GPART(dest) + GPART(src), 255);
+						uint32_t out_b = MIN<uint32_t>(BPART(dest) + BPART(src), 255);
+						destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+					}
+					else if (ModeT::BlendOp == STYLEOP_RevSub)
+					{
+						uint32_t out_r = MAX<uint32_t>(RPART(dest) - RPART(src), 0);
+						uint32_t out_g = MAX<uint32_t>(GPART(dest) - GPART(src), 0);
+						uint32_t out_b = MAX<uint32_t>(BPART(dest) - BPART(src), 0);
+						destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+					}
+					else //if (ModeT::BlendOp == STYLEOP_Sub)
+					{
+						uint32_t out_r = MAX<uint32_t>(RPART(src) - RPART(dest), 0);
+						uint32_t out_g = MAX<uint32_t>(GPART(src) - GPART(dest), 0);
+						uint32_t out_b = MAX<uint32_t>(BPART(src) - BPART(dest), 0);
+						destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+					}
+				}
+				else if (ModeT::SWFlags & SWSTYLEF_SrcColorOneMinusSrcColor)
+				{
+					uint32_t src = GPalette.BaseColors[shadedfg];
+					uint32_t dest = GPalette.BaseColors[destLine[x]];
+
+					uint32_t sfactor_r = RPART(src); sfactor_r += sfactor_r >> 7; // 255 -> 256
+					uint32_t sfactor_g = GPART(src); sfactor_g += sfactor_g >> 7; // 255 -> 256
+					uint32_t sfactor_b = BPART(src); sfactor_b += sfactor_b >> 7; // 255 -> 256
+					uint32_t sfactor_a = fgalpha; sfactor_a += sfactor_a >> 7; // 255 -> 256
+					uint32_t dfactor_r = 256 - sfactor_r;
+					uint32_t dfactor_g = 256 - sfactor_g;
+					uint32_t dfactor_b = 256 - sfactor_b;
+					uint32_t out_r = (RPART(dest) * dfactor_r + RPART(src) * sfactor_r + 128) >> 8;
+					uint32_t out_g = (GPART(dest) * dfactor_g + GPART(src) * sfactor_g + 128) >> 8;
+					uint32_t out_b = (BPART(dest) * dfactor_b + BPART(src) * sfactor_b + 128) >> 8;
+
+					destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+				}
+				else if (ModeT::BlendSrc == STYLEALPHA_Src && ModeT::BlendDest == STYLEALPHA_InvSrc && fgalpha == 255)
+				{
+					destLine[x] = shadedfg;
+				}
+				else if (ModeT::BlendSrc != STYLEALPHA_Src || ModeT::BlendDest != STYLEALPHA_InvSrc || fgalpha != 0)
+				{
+					uint32_t src = GPalette.BaseColors[shadedfg];
+					uint32_t dest = GPalette.BaseColors[destLine[x]];
+
+					uint32_t sfactor = fgalpha; sfactor += sfactor >> 7; // 255 -> 256
+					uint32_t dfactor = 256 - sfactor;
+					uint32_t src_r = RPART(src) * sfactor;
+					uint32_t src_g = GPART(src) * sfactor;
+					uint32_t src_b = BPART(src) * sfactor;
+					uint32_t dest_r = RPART(dest);
+					uint32_t dest_g = GPART(dest);
+					uint32_t dest_b = BPART(dest);
+					if (ModeT::BlendDest == STYLEALPHA_One)
+					{
+						dest_r <<= 8;
+						dest_g <<= 8;
+						dest_b <<= 8;
+					}
+					else
+					{
+						uint32_t dfactor = 256 - sfactor;
+						dest_r *= dfactor;
+						dest_g *= dfactor;
+						dest_b *= dfactor;
+					}
+
+					uint32_t out_r, out_g, out_b;
+					if (ModeT::BlendOp == STYLEOP_Add)
+					{
+						if (ModeT::BlendDest == STYLEALPHA_One)
+						{
+							out_r = MIN<int32_t>((dest_r + src_r + 128) >> 8, 255);
+							out_g = MIN<int32_t>((dest_g + src_g + 128) >> 8, 255);
+							out_b = MIN<int32_t>((dest_b + src_b + 128) >> 8, 255);
+						}
+						else
+						{
+							out_r = (dest_r + src_r + 128) >> 8;
+							out_g = (dest_g + src_g + 128) >> 8;
+							out_b = (dest_b + src_b + 128) >> 8;
+						}
+					}
+					else if (ModeT::BlendOp == STYLEOP_RevSub)
+					{
+						out_r = MAX<int32_t>(static_cast<int32_t>(dest_r - src_r + 128) >> 8, 0);
+						out_g = MAX<int32_t>(static_cast<int32_t>(dest_g - src_g + 128) >> 8, 0);
+						out_b = MAX<int32_t>(static_cast<int32_t>(dest_b - src_b + 128) >> 8, 0);
+					}
+					else //if (ModeT::BlendOp == STYLEOP_Sub)
+					{
+						out_r = MAX<int32_t>(static_cast<int32_t>(src_r - dest_r + 128) >> 8, 0);
+						out_g = MAX<int32_t>(static_cast<int32_t>(src_g - dest_g + 128) >> 8, 0);
+						out_b = MAX<int32_t>(static_cast<int32_t>(src_b - dest_b + 128) >> 8, 0);
+					}
+
+					destLine[x] = RGB256k.All[((out_r >> 2) << 12) | ((out_g >> 2) << 6) | (out_b >> 2)];
+				}
+			}
+
+			posU += stepU;
+		}
+	}
+}
+
+template<typename ModeT, typename OptT>
+void DrawRectOpt32(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
+{
+	using namespace TriScreenDrawerModes;
+
+	int x0 = clamp((int)(args->X0() + 0.5f), 0, destWidth);
+	int x1 = clamp((int)(args->X1() + 0.5f), 0, destWidth);
+	int y0 = clamp((int)(args->Y0() + 0.5f), 0, destHeight);
+	int y1 = clamp((int)(args->Y1() + 0.5f), 0, destHeight);
+
+	if (x1 <= x0 || y1 <= y0)
+		return;
+
+	const uint32_t *texPixels, *translation;
+	int texWidth, texHeight;
+	uint32_t fillcolor;
+	int alpha;
+	uint32_t light;
+	uint32_t shade_fade_r, shade_fade_g, shade_fade_b, shade_light_r, shade_light_g, shade_light_b, desaturate, inv_desaturate;
+
+	texPixels = (const uint32_t*)args->TexturePixels();
+	translation = (const uint32_t*)args->Translation();
+	texWidth = args->TextureWidth();
+	texHeight = args->TextureHeight();
+	fillcolor = args->Color();
+	alpha = args->Alpha();
+	light = args->Light();
+	light += light >> 7; // 255 -> 256
+
+	if (OptT::Flags & SWOPT_ColoredFog)
+	{
+		shade_fade_r = args->ShadeFadeRed();
+		shade_fade_g = args->ShadeFadeGreen();
+		shade_fade_b = args->ShadeFadeBlue();
+		shade_light_r = args->ShadeLightRed();
+		shade_light_g = args->ShadeLightGreen();
+		shade_light_b = args->ShadeLightBlue();
+		desaturate = args->ShadeDesaturate();
+		inv_desaturate = 256 - desaturate;
+	}
+
+	float fstepU = (args->U1() - args->U0()) / (args->X1() - args->X0());
+	float fstepV = (args->V1() - args->V0()) / (args->Y1() - args->Y0());
+	uint32_t startU = (int32_t)((args->U0() + (x0 + 0.5f - args->X0()) * fstepU) * 0x1000000);
+	uint32_t startV = (int32_t)((args->V0() + (y0 + 0.5f - args->Y0()) * fstepV) * 0x1000000);
+	uint32_t stepU = (int32_t)(fstepU * 0x1000000);
+	uint32_t stepV = (int32_t)(fstepV * 0x1000000);
+
+	uint32_t posV = startV;
+	int num_cores = thread->num_cores;
+	int skip = thread->skipped_by_thread(y0);
+	posV += skip * stepV;
+	stepV *= num_cores;
+	for (int y = y0 + skip; y < y1; y += num_cores, posV += stepV)
+	{
+		uint32_t *destLine = ((uint32_t*)destOrg) + y * destPitch;
+
+		uint32_t posU = startU;
+		for (int x = x0; x < x1; x++)
+		{
+			uint32_t fg = 0;
+
+			if (ModeT::SWFlags & SWSTYLEF_Fill)
+			{
+				fg = fillcolor;
+			}
+			else if (ModeT::SWFlags & SWSTYLEF_FogBoundary)
+			{
+				fg = destLine[x];
+			}
+			else if (ModeT::BlendOp != STYLEOP_Fuzz)
+			{
+				uint32_t texelX = (((posU << 8) >> 16) * texWidth) >> 16;
+				uint32_t texelY = (((posV << 8) >> 16) * texHeight) >> 16;
+
+				if (ModeT::SWFlags & SWSTYLEF_Translated)
+				{
+					fg = translation[((const uint8_t*)texPixels)[texelX * texHeight + texelY]];
+				}
+				else if (ModeT::Flags & STYLEF_RedIsAlpha)
+				{
+					fg = ((const uint8_t*)texPixels)[texelX * texHeight + texelY];
+				}
+				else
+				{
+					fg = texPixels[texelX * texHeight + texelY];
+				}
+			}
+
+			if (ModeT::BlendOp == STYLEOP_Fuzz)
+			{
+				using namespace swrenderer;
+
+				uint32_t texelX = (((posU << 8) >> 16) * texWidth) >> 16;
+				uint32_t texelY = (((posV << 8) >> 16) * texHeight) >> 16;
+				unsigned int sampleshadeout = APART(texPixels[texelX * texHeight + texelY]);
+				sampleshadeout += sampleshadeout >> 7; // 255 -> 256
+
+				fixed_t fuzzscale = (200 << FRACBITS) / viewheight;
+
+				int scaled_x = (x * fuzzscale) >> FRACBITS;
+				int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + fuzzpos;
+
+				fixed_t fuzzcount = FUZZTABLE << FRACBITS;
+				fixed_t fuzz = ((fuzz_x << FRACBITS) + y * fuzzscale) % fuzzcount;
+				unsigned int alpha = fuzzoffset[fuzz >> FRACBITS];
+
+				sampleshadeout = (sampleshadeout * alpha) >> 5;
+
+				uint32_t a = 256 - sampleshadeout;
+
+				uint32_t dest = destLine[x];
+				uint32_t out_r = (RPART(dest) * a) >> 8;
+				uint32_t out_g = (GPART(dest) * a) >> 8;
+				uint32_t out_b = (BPART(dest) * a) >> 8;
+				destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+			}
+			else
+			{
+				if ((ModeT::Flags & STYLEF_ColorIsFixed) && !(ModeT::SWFlags & SWSTYLEF_Fill))
+				{
+					if (ModeT::Flags & STYLEF_RedIsAlpha)
+						fg = (fg << 24) | (fillcolor & 0x00ffffff);
+					else
+						fg = (fg & 0xff000000) | (fillcolor & 0x00ffffff);
+				}
+
+				uint32_t fgalpha = fg >> 24;
+
+				if (!(ModeT::Flags & STYLEF_Alpha1))
+				{
+					fgalpha = (fgalpha * alpha) >> 8;
+				}
+
+				int lightshade = light;
+
+				uint32_t lit_r = 0, lit_g = 0, lit_b = 0;
+
+				uint32_t shadedfg_r, shadedfg_g, shadedfg_b;
+				if (OptT::Flags & SWOPT_ColoredFog)
+				{
+					uint32_t fg_r = RPART(fg);
+					uint32_t fg_g = GPART(fg);
+					uint32_t fg_b = BPART(fg);
+					uint32_t intensity = ((fg_r * 77 + fg_g * 143 + fg_b * 37) >> 8) * desaturate;
+					shadedfg_r = (((shade_fade_r + ((fg_r * inv_desaturate + intensity) >> 8) * lightshade) >> 8) * shade_light_r) >> 8;
+					shadedfg_g = (((shade_fade_g + ((fg_g * inv_desaturate + intensity) >> 8) * lightshade) >> 8) * shade_light_g) >> 8;
+					shadedfg_b = (((shade_fade_b + ((fg_b * inv_desaturate + intensity) >> 8) * lightshade) >> 8) * shade_light_b) >> 8;
+				}
+				else
+				{
+					shadedfg_r = (RPART(fg) * lightshade) >> 8;
+					shadedfg_g = (GPART(fg) * lightshade) >> 8;
+					shadedfg_b = (BPART(fg) * lightshade) >> 8;
+				}
+
+				if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_Zero)
+				{
+					destLine[x] = MAKEARGB(255, shadedfg_r, shadedfg_g, shadedfg_b);
+				}
+				else if (ModeT::BlendSrc == STYLEALPHA_One && ModeT::BlendDest == STYLEALPHA_One)
+				{
+					uint32_t dest = destLine[x];
+
+					if (ModeT::BlendOp == STYLEOP_Add)
+					{
+						uint32_t out_r = MIN<uint32_t>(RPART(dest) + shadedfg_r, 255);
+						uint32_t out_g = MIN<uint32_t>(GPART(dest) + shadedfg_g, 255);
+						uint32_t out_b = MIN<uint32_t>(BPART(dest) + shadedfg_b, 255);
+						destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+					}
+					else if (ModeT::BlendOp == STYLEOP_RevSub)
+					{
+						uint32_t out_r = MAX<uint32_t>(RPART(dest) - shadedfg_r, 0);
+						uint32_t out_g = MAX<uint32_t>(GPART(dest) - shadedfg_g, 0);
+						uint32_t out_b = MAX<uint32_t>(BPART(dest) - shadedfg_b, 0);
+						destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+					}
+					else //if (ModeT::BlendOp == STYLEOP_Sub)
+					{
+						uint32_t out_r = MAX<uint32_t>(shadedfg_r - RPART(dest), 0);
+						uint32_t out_g = MAX<uint32_t>(shadedfg_g - GPART(dest), 0);
+						uint32_t out_b = MAX<uint32_t>(shadedfg_b - BPART(dest), 0);
+						destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+					}
+				}
+				else if (ModeT::SWFlags & SWSTYLEF_SrcColorOneMinusSrcColor)
+				{
+					uint32_t dest = destLine[x];
+
+					uint32_t sfactor_r = shadedfg_r; sfactor_r += sfactor_r >> 7; // 255 -> 256
+					uint32_t sfactor_g = shadedfg_g; sfactor_g += sfactor_g >> 7; // 255 -> 256
+					uint32_t sfactor_b = shadedfg_b; sfactor_b += sfactor_b >> 7; // 255 -> 256
+					uint32_t sfactor_a = fgalpha; sfactor_a += sfactor_a >> 7; // 255 -> 256
+					uint32_t dfactor_r = 256 - sfactor_r;
+					uint32_t dfactor_g = 256 - sfactor_g;
+					uint32_t dfactor_b = 256 - sfactor_b;
+					uint32_t out_r = (RPART(dest) * dfactor_r + shadedfg_r * sfactor_r + 128) >> 8;
+					uint32_t out_g = (GPART(dest) * dfactor_g + shadedfg_g * sfactor_g + 128) >> 8;
+					uint32_t out_b = (BPART(dest) * dfactor_b + shadedfg_b * sfactor_b + 128) >> 8;
+
+					destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+				}
+				else if (ModeT::BlendSrc == STYLEALPHA_Src && ModeT::BlendDest == STYLEALPHA_InvSrc && fgalpha == 255)
+				{
+					destLine[x] = MAKEARGB(255, shadedfg_r, shadedfg_g, shadedfg_b);
+				}
+				else if (ModeT::BlendSrc != STYLEALPHA_Src || ModeT::BlendDest != STYLEALPHA_InvSrc || fgalpha != 0)
+				{
+					uint32_t dest = destLine[x];
+
+					uint32_t sfactor = fgalpha; sfactor += sfactor >> 7; // 255 -> 256
+					uint32_t src_r = shadedfg_r * sfactor;
+					uint32_t src_g = shadedfg_g * sfactor;
+					uint32_t src_b = shadedfg_b * sfactor;
+					uint32_t dest_r = RPART(dest);
+					uint32_t dest_g = GPART(dest);
+					uint32_t dest_b = BPART(dest);
+					if (ModeT::BlendDest == STYLEALPHA_One)
+					{
+						dest_r <<= 8;
+						dest_g <<= 8;
+						dest_b <<= 8;
+					}
+					else
+					{
+						uint32_t dfactor = 256 - sfactor;
+						dest_r *= dfactor;
+						dest_g *= dfactor;
+						dest_b *= dfactor;
+					}
+
+					uint32_t out_r, out_g, out_b;
+					if (ModeT::BlendOp == STYLEOP_Add)
+					{
+						if (ModeT::BlendDest == STYLEALPHA_One)
+						{
+							out_r = MIN<int32_t>((dest_r + src_r + 128) >> 8, 255);
+							out_g = MIN<int32_t>((dest_g + src_g + 128) >> 8, 255);
+							out_b = MIN<int32_t>((dest_b + src_b + 128) >> 8, 255);
+						}
+						else
+						{
+							out_r = (dest_r + src_r + 128) >> 8;
+							out_g = (dest_g + src_g + 128) >> 8;
+							out_b = (dest_b + src_b + 128) >> 8;
+						}
+					}
+					else if (ModeT::BlendOp == STYLEOP_RevSub)
+					{
+						out_r = MAX<int32_t>(static_cast<int32_t>(dest_r - src_r + 128) >> 8, 0);
+						out_g = MAX<int32_t>(static_cast<int32_t>(dest_g - src_g + 128) >> 8, 0);
+						out_b = MAX<int32_t>(static_cast<int32_t>(dest_b - src_b + 128) >> 8, 0);
+					}
+					else //if (ModeT::BlendOp == STYLEOP_Sub)
+					{
+						out_r = MAX<int32_t>(static_cast<int32_t>(src_r - dest_r + 128) >> 8, 0);
+						out_g = MAX<int32_t>(static_cast<int32_t>(src_g - dest_g + 128) >> 8, 0);
+						out_b = MAX<int32_t>(static_cast<int32_t>(src_b - dest_b + 128) >> 8, 0);
+					}
+
+					destLine[x] = MAKEARGB(255, out_r, out_g, out_b);
+				}
+			}
+
+			posU += stepU;
+		}
+	}
+}
+
+template<typename ModeT>
+void DrawRect32(const void *destOrg, int destWidth, int destHeight, int destPitch, const RectDrawArgs *args, PolyTriangleThreadData *thread)
+{
+	using namespace TriScreenDrawerModes;
+
+	if (args->SimpleShade())
+		DrawRectOpt32<ModeT, DrawerOptF>(destOrg, destWidth, destHeight, destPitch, args, thread);
+	else
+		DrawRectOpt32<ModeT, DrawerOptCF>(destOrg, destWidth, destHeight, destPitch, args, thread);
+}
+
 void(*ScreenTriangle::SpanDrawers8[])(int, int, int, const TriDrawTriangleArgs *) =
 {
 	&DrawSpan8<TriScreenDrawerModes::StyleOpaque>,
@@ -1350,58 +1854,66 @@ void(*ScreenTriangle::SpanDrawers32[])(int, int, int, const TriDrawTriangleArgs 
 
 void(*ScreenTriangle::RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *) =
 {
-	&RectScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
-	&RectScreenDrawer8<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureMasked
-	&RectScreenDrawer8<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureAdd
-	&RectScreenDrawer8<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureSub
-	&RectScreenDrawer8<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureRevSub
-	&RectScreenDrawer8<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureAddSrcColor
-	&RectScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedOpaque
-	&RectScreenDrawer8<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedMasked
-	&RectScreenDrawer8<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedAdd
-	&RectScreenDrawer8<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedSub
-	&RectScreenDrawer8<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedRevSub
-	&RectScreenDrawer8<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedAddSrcColor
-	&RectScreenDrawer8<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,          // Shaded
-	&RectScreenDrawer8<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,  // AddShaded
-	&RectScreenDrawer8<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute,         // Stencil
-	&RectScreenDrawer8<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute, // AddStencil
-	&RectScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute,            // FillOpaque
-	&RectScreenDrawer8<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillAdd
-	&RectScreenDrawer8<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillSub
-	&RectScreenDrawer8<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillRevSub
-	&RectScreenDrawer8<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillAddSrcColor
-	&RectScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute,          // Skycap
-	&RectScreenDrawer8<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute,            // Fuzz
-	&RectScreenDrawer8<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FogBoundarySampler>::Execute      // FogBoundary
+	&DrawRect8<TriScreenDrawerModes::StyleOpaque>,
+	&DrawRect8<TriScreenDrawerModes::StyleSkycap>,
+	&DrawRect8<TriScreenDrawerModes::StyleFogBoundary>,
+	&DrawRect8<TriScreenDrawerModes::StyleSrcColor>,
+	&DrawRect8<TriScreenDrawerModes::StyleFill>,
+	&DrawRect8<TriScreenDrawerModes::StyleNormal>,
+	&DrawRect8<TriScreenDrawerModes::StyleFuzzy>,
+	&DrawRect8<TriScreenDrawerModes::StyleStencil>,
+	&DrawRect8<TriScreenDrawerModes::StyleTranslucent>,
+	&DrawRect8<TriScreenDrawerModes::StyleAdd>,
+	&DrawRect8<TriScreenDrawerModes::StyleShaded>,
+	&DrawRect8<TriScreenDrawerModes::StyleTranslucentStencil>,
+	&DrawRect8<TriScreenDrawerModes::StyleShadow>,
+	&DrawRect8<TriScreenDrawerModes::StyleSubtract>,
+	&DrawRect8<TriScreenDrawerModes::StyleAddStencil>,
+	&DrawRect8<TriScreenDrawerModes::StyleAddShaded>,
+	&DrawRect8<TriScreenDrawerModes::StyleOpaqueTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleSrcColorTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleNormalTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleStencilTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleTranslucentTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleAddTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleShadedTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleTranslucentStencilTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleShadowTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleSubtractTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleAddStencilTranslated>,
+	&DrawRect8<TriScreenDrawerModes::StyleAddShadedTranslated>
 };
 
 void(*ScreenTriangle::RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *) =
 {
-	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureOpaque
-	&RectScreenDrawer32<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TextureSampler>::Execute,         // TextureMasked
-	&RectScreenDrawer32<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureAdd
-	&RectScreenDrawer32<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,       // TextureSub
-	&RectScreenDrawer32<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureRevSub
-	&RectScreenDrawer32<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TextureSampler>::Execute,    // TextureAddSrcColor
-	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedOpaque
-	&RectScreenDrawer32<TriScreenDrawerModes::MaskedBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,      // TranslatedMasked
-	&RectScreenDrawer32<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedAdd
-	&RectScreenDrawer32<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute,    // TranslatedSub
-	&RectScreenDrawer32<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedRevSub
-	&RectScreenDrawer32<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::TranslatedSampler>::Execute, // TranslatedAddSrcColor
-	&RectScreenDrawer32<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,          // Shaded
-	&RectScreenDrawer32<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::ShadedSampler>::Execute,  // AddShaded
-	&RectScreenDrawer32<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute,         // Stencil
-	&RectScreenDrawer32<TriScreenDrawerModes::AddClampShadedBlend, TriScreenDrawerModes::StencilSampler>::Execute, // AddStencil
-	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FillSampler>::Execute,            // FillOpaque
-	&RectScreenDrawer32<TriScreenDrawerModes::AddClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillAdd
-	&RectScreenDrawer32<TriScreenDrawerModes::SubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,          // FillSub
-	&RectScreenDrawer32<TriScreenDrawerModes::RevSubClampBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillRevSub
-	&RectScreenDrawer32<TriScreenDrawerModes::AddSrcColorBlend, TriScreenDrawerModes::FillSampler>::Execute,       // FillAddSrcColor
-	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::SkycapSampler>::Execute,          // Skycap
-	&RectScreenDrawer32<TriScreenDrawerModes::ShadedBlend, TriScreenDrawerModes::FuzzSampler>::Execute,            // Fuzz
-	&RectScreenDrawer32<TriScreenDrawerModes::OpaqueBlend, TriScreenDrawerModes::FogBoundarySampler>::Execute,     // FogBoundary
+	&DrawRect32<TriScreenDrawerModes::StyleOpaque>,
+	&DrawRect32<TriScreenDrawerModes::StyleSkycap>,
+	&DrawRect32<TriScreenDrawerModes::StyleFogBoundary>,
+	&DrawRect32<TriScreenDrawerModes::StyleSrcColor>,
+	&DrawRect32<TriScreenDrawerModes::StyleFill>,
+	&DrawRect32<TriScreenDrawerModes::StyleNormal>,
+	&DrawRect32<TriScreenDrawerModes::StyleFuzzy>,
+	&DrawRect32<TriScreenDrawerModes::StyleStencil>,
+	&DrawRect32<TriScreenDrawerModes::StyleTranslucent>,
+	&DrawRect32<TriScreenDrawerModes::StyleAdd>,
+	&DrawRect32<TriScreenDrawerModes::StyleShaded>,
+	&DrawRect32<TriScreenDrawerModes::StyleTranslucentStencil>,
+	&DrawRect32<TriScreenDrawerModes::StyleShadow>,
+	&DrawRect32<TriScreenDrawerModes::StyleSubtract>,
+	&DrawRect32<TriScreenDrawerModes::StyleAddStencil>,
+	&DrawRect32<TriScreenDrawerModes::StyleAddShaded>,
+	&DrawRect32<TriScreenDrawerModes::StyleOpaqueTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleSrcColorTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleNormalTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleStencilTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleTranslucentTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleAddTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleShadedTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleTranslucentStencilTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleShadowTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleSubtractTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleAddStencilTranslated>,
+	&DrawRect32<TriScreenDrawerModes::StyleAddShadedTranslated>
 };
 
 int ScreenTriangle::FuzzStart = 0;

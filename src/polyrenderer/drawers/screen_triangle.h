@@ -136,34 +136,6 @@ enum class TriBlendMode
 	AddShadedTranslated
 };
 
-enum class RectBlendMode
-{
-	TextureOpaque,
-	TextureMasked,
-	TextureAdd,
-	TextureSub,
-	TextureRevSub,
-	TextureAddSrcColor,
-	TranslatedOpaque,
-	TranslatedMasked,
-	TranslatedAdd,
-	TranslatedSub,
-	TranslatedRevSub,
-	TranslatedAddSrcColor,
-	Shaded,
-	AddShaded,
-	Stencil,
-	AddStencil,
-	FillOpaque,
-	FillAdd,
-	FillSub,
-	FillRevSub,
-	FillAddSrcColor,
-	Skycap,
-	Fuzz,
-	FogBoundary
-};
-
 class ScreenTriangle
 {
 public:
@@ -218,35 +190,6 @@ namespace TriScreenDrawerModes
 	struct StyleSubtractTranslated { static const int BlendOp = STYLEOP_RevSub, BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = 0, SWFlags = SWSTYLEF_Translated; };
 	struct StyleAddStencilTranslated { static const int BlendOp = STYLEOP_Add,  BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = STYLEF_ColorIsFixed, SWFlags = SWSTYLEF_Translated; };
 	struct StyleAddShadedTranslated { static const int BlendOp = STYLEOP_Add,   BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = STYLEF_RedIsAlpha | STYLEF_ColorIsFixed, SWFlags = SWSTYLEF_Translated; };
-
-	enum class BlendModes { Opaque, Masked, AddClamp, SubClamp, RevSubClamp, AddSrcColorOneMinusSrcColor, Shaded, AddClampShaded };
-	struct OpaqueBlend { static const int Mode = (int)BlendModes::Opaque; };
-	struct MaskedBlend { static const int Mode = (int)BlendModes::Masked; };
-	struct AddClampBlend { static const int Mode = (int)BlendModes::AddClamp; };
-	struct SubClampBlend { static const int Mode = (int)BlendModes::SubClamp; };
-	struct RevSubClampBlend { static const int Mode = (int)BlendModes::RevSubClamp; };
-	struct AddSrcColorBlend { static const int Mode = (int)BlendModes::AddSrcColorOneMinusSrcColor; };
-	struct ShadedBlend { static const int Mode = (int)BlendModes::Shaded; };
-	struct AddClampShadedBlend { static const int Mode = (int)BlendModes::AddClampShaded; };
-
-	enum class FilterModes { Nearest, Linear };
-	struct NearestFilter { static const int Mode = (int)FilterModes::Nearest; };
-	struct LinearFilter { static const int Mode = (int)FilterModes::Linear; };
-
-	enum class ShadeMode { None, Simple, Advanced };
-	struct NoShade { static const int Mode = (int)ShadeMode::None; };
-	struct SimpleShade { static const int Mode = (int)ShadeMode::Simple; };
-	struct AdvancedShade { static const int Mode = (int)ShadeMode::Advanced; };
-
-	enum class Samplers { Texture, Fill, Shaded, Stencil, Translated, Skycap, Fuzz, FogBoundary };
-	struct TextureSampler { static const int Mode = (int)Samplers::Texture; };
-	struct FillSampler { static const int Mode = (int)Samplers::Fill; };
-	struct ShadedSampler { static const int Mode = (int)Samplers::Shaded; };
-	struct StencilSampler { static const int Mode = (int)Samplers::Stencil; };
-	struct TranslatedSampler { static const int Mode = (int)Samplers::Translated; };
-	struct SkycapSampler { static const int Mode = (int)Samplers::Skycap; };
-	struct FuzzSampler { static const int Mode = (int)Samplers::Fuzz; };
-	struct FogBoundarySampler { static const int Mode = (int)Samplers::FogBoundary; };
 
 	enum SWOptFlags
 	{

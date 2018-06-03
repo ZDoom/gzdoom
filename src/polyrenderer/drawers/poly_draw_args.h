@@ -180,8 +180,8 @@ public:
 	void SetTexture(FTexture *texture, FRenderStyle style);
 	void SetTexture(FTexture *texture, uint32_t translationID, FRenderStyle style);
 	void SetLight(FSWColormap *basecolormap, uint32_t lightlevel);
-	void SetStyle(RectBlendMode blendmode, double srcalpha = 1.0, double destalpha = 1.0) { mBlendMode = blendmode; mSrcAlpha = (uint32_t)(srcalpha * 256.0 + 0.5); mDestAlpha = (uint32_t)(destalpha * 256.0 + 0.5); }
-	void SetStyle(FRenderStyle renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
+	void SetStyle(TriBlendMode blendmode, double alpha = 1.0) { mBlendMode = blendmode; mAlpha = (uint32_t)(alpha * 256.0 + 0.5); }
+	void SetStyle(const FRenderStyle &renderstyle, double alpha, uint32_t fillcolor, uint32_t translationID, FTexture *texture, bool fullbright);
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void Draw(PolyRenderThread *thread, double x0, double x1, double y0, double y1, double u0, double u1, double v0, double v1);
 
@@ -191,10 +191,9 @@ public:
 	int TextureHeight() const { return mTextureHeight; }
 	const uint8_t *Translation() const { return mTranslation; }
 
-	RectBlendMode BlendMode() const { return mBlendMode; }
+	TriBlendMode BlendMode() const { return mBlendMode; }
 	uint32_t Color() const { return mColor; }
-	uint32_t SrcAlpha() const { return mSrcAlpha; }
-	uint32_t DestAlpha() const { return mDestAlpha; }
+	uint32_t Alpha() const { return mAlpha; }
 
 	uint32_t Light() const { return mLight; }
 	const uint8_t *BaseColormap() const { return mColormaps; }
@@ -225,11 +224,10 @@ private:
 	int mTextureHeight = 0;
 	const uint8_t *mTranslation = nullptr;
 	const uint8_t *mColormaps = nullptr;
-	RectBlendMode mBlendMode = RectBlendMode::FillOpaque;
+	TriBlendMode mBlendMode = TriBlendMode::Fill;
 	uint32_t mLight = 0;
 	uint32_t mColor = 0;
-	uint32_t mSrcAlpha = 0;
-	uint32_t mDestAlpha = 0;
+	uint32_t mAlpha = 0;
 	uint16_t mLightAlpha = 0;
 	uint16_t mLightRed = 0;
 	uint16_t mLightGreen = 0;

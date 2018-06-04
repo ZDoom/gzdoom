@@ -757,8 +757,8 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 					{
 						// listener must be reversely offset to calculate the proper sound origin.
 						CalcSectorSoundOrg(listenpos + disp, sector, channum, *pos);
-						pos->X += (float)disp.X;
-						pos->Z += (float)disp.Y;
+						pos->X -= (float)disp.X;
+						pos->Z -= (float)disp.Y;
 					}
 					else
 					{

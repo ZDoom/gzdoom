@@ -876,6 +876,9 @@ set (PCH_SOURCES
 	d_main.cpp
 	d_stats.cpp
 	d_net.cpp
+	d_netsingle.cpp
+	d_netserver.cpp
+	d_netclient.cpp
 	d_netinfo.cpp
 	d_protocol.cpp
 	decallib.cpp

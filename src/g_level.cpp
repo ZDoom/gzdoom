@@ -150,6 +150,8 @@ extern bool sendpause, sendsave, sendturn180, SendLand;
 void *statcopy;					// for statistics driver
 
 FLevelLocals level;			// info about current level
+extern bool			netserver;				// serverside playsim
+extern bool			netclient;				// clientside playsim
 
 
 //==========================================================================
@@ -350,7 +352,7 @@ void G_NewInit ()
 	}
 
 	G_ClearSnapshots ();
-	netgame = false;
+	netgame = (netclient || netserver);
 	multiplayer = multiplayernext;
 	multiplayernext = false;
 	if (demoplayback)
@@ -903,7 +905,7 @@ IMPLEMENT_CLASS(DAutosaver, false, false)
 
 void DAutosaver::Tick ()
 {
-	Net_WriteByte (DEM_CHECKAUTOSAVE);
+	network->WriteByte (DEM_CHECKAUTOSAVE);
 	Destroy ();
 }
 

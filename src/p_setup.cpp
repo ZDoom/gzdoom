@@ -1838,6 +1838,10 @@ void P_SpawnThings (int position)
 
 	for (int i=0; i < numthings; i++)
 	{
+		// Only spawn the player mobj for the client in a client/server game
+		if (netclient && (MapThingsConverted[i].info->Type || MapThingsConverted[i].info->Special != SMT_Player1Start + position))
+			continue;
+
 		AActor *actor = SpawnMapThing (i, &MapThingsConverted[i], position);
 		unsigned *udi = MapThingsUserDataIndex.CheckKey((unsigned)i);
 		if (udi != NULL)

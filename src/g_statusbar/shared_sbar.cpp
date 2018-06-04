@@ -1214,7 +1214,7 @@ void DBaseStatusBar::DrawConsistancy () const
 			{
 				fprintf (debugfile, "%s as of tic %d (%d)\n", conbuff,
 					players[1-consoleplayer].inconsistant,
-					players[1-consoleplayer].inconsistant/ticdup);
+					players[1-consoleplayer].inconsistant/network->ticdup);
 			}
 		}
 		screen->DrawText (SmallFont, CR_GREEN, 

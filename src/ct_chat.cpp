@@ -349,16 +349,16 @@ static void ShoveChatStr (const char *str, uint8_t who)
 		who |= 2;
 	}
 
-	Net_WriteByte (DEM_SAY);
-	Net_WriteByte (who);
+	network->WriteByte (DEM_SAY);
+	network->WriteByte (who);
 
 	if (!chat_substitution || !DoSubstitution (substBuff, str))
 	{
-		Net_WriteString (str);
+		network->WriteString (str);
 	}
 	else
 	{
-		Net_WriteString (substBuff);
+		network->WriteString (substBuff);
 	}
 }
 

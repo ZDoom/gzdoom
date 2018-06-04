@@ -54,19 +54,9 @@ EXTERN_CVAR(String, language)
 
 uint32_t LanguageIDs[4];
 
-
 void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
 {
 }
-
-
-ticcmd_t* I_BaseTiccmd()
-{
-	static ticcmd_t emptycmd;
-    return &emptycmd;
-}
-
-
 
 //
 // SetLanguageIDs

@@ -404,7 +404,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	{
 		// The teamplay mode uses colors to show teams, so we need some
 		// other way to do highlighting. And it may as well be used for
-		// all modes for the sake of consistancy.
+		// all modes for the sake of consistency.
 		screen->Dim(MAKERGB(200,245,255), 0.125f, col1 - 12*CleanXfac, y - 1, col5 + (maxnamewidth + 24)*CleanXfac, height + 2);
 	}
 
@@ -431,14 +431,7 @@ static void HU_DrawPlayer (player_t *player, bool highlight, int col1, int col2,
 	screen->DrawText (SmallFont, color, col4, y + ypadding, player->userinfo.GetName(),
 		DTA_CleanNoMove, true, TAG_DONE);
 
-	int avgdelay = 0;
-	for (int i = 0; i < BACKUPTICS; i++)
-	{
-		avgdelay += netdelay[nodeforplayer[(int)(player - players)]][i];
-	}
-	avgdelay /= BACKUPTICS;
-
-	mysnprintf(str, countof(str), "%d", (avgdelay * ticdup) * (1000 / TICRATE));
+	mysnprintf(str, countof(str), "%d", network->GetPing((int)(player - players)));
 
 	screen->DrawText(SmallFont, color, col5, y + ypadding, str,
 		DTA_CleanNoMove, true, TAG_DONE);

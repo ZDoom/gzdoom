@@ -373,9 +373,6 @@ namespace swrenderer
 			WallSampler sampler(Thread->Viewport.get(), y1, texturemid, swal[x], yrepeat, lwal[x] + xoffset, xmagnitude, rw_pic);
 			Draw1Column(x, y1, y2, sampler);
 		}
-
-		if (Thread->MainThread)
-			NetUpdate();
 	}
 
 	void RenderWallPart::ProcessNormalWall(const short *uwal, const short *dwal, double texturemid, float *swal, fixed_t *lwal)

@@ -210,44 +210,47 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	auto vcount = flat->sector->ibocount;
 
 	gl_RenderState.Apply();
+	auto iboindex = flat->iboindex;
 	if (gl.legacyMode)
 	{
 		processlights = false;
-		goto legacy;
+		iboindex = -1;
 	}
 
-	if (vcount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
+	if (iboindex >= 0)
 	{
-		if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
-		drawcalls.Clock();
-		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + flat->iboindex);
-		drawcalls.Unclock();
-		flatvertices += vcount;
-		flatprimitives++;
-	}
-	else if (flat->iboindex >= 0)
-	{
-		int index = flat->iboindex;
-		for (int i=0; i<flat->sector->subsectorcount; i++)
+		if (vcount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
 		{
-			subsector_t * sub = flat->sector->subsectors[i];
-			if (sub->numlines <= 2) continue;
-				
-			if (ss_renderflags[sub->Index()]& flat->renderflags || istrans)
+			if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
+			drawcalls.Clock();
+			glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + iboindex);
+			drawcalls.Unclock();
+			flatvertices += vcount;
+			flatprimitives++;
+		}
+		else
+		{
+			int index = iboindex;
+			for (int i = 0; i < flat->sector->subsectorcount; i++)
 			{
-				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
-				drawcalls.Clock();
-				glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
-				drawcalls.Unclock();
-				flatvertices += sub->numlines;
-				flatprimitives++;
+				subsector_t * sub = flat->sector->subsectors[i];
+				if (sub->numlines <= 2) continue;
+
+				if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
+				{
+					if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
+					drawcalls.Clock();
+					glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
+					drawcalls.Unclock();
+					flatvertices += sub->numlines;
+					flatprimitives++;
+				}
+				index += (sub->numlines - 2) * 3;
 			}
-			index += (sub->numlines - 2) * 3;
 		}
 	}
 	else
 	{
-		legacy:
 		// Draw the subsectors belonging to this sector
 		for (int i=0; i<flat->sector->subsectorcount; i++)
 		{

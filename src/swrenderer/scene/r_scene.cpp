@@ -159,6 +159,8 @@ namespace swrenderer
 		if (r_models)
 			MainThread()->Viewport->SetupPolyViewport(MainThread());
 
+		FRenderViewpoint origviewpoint = MainThread()->Viewport->viewpoint;
+
 		ActorRenderFlags savedflags = MainThread()->Viewport->viewpoint.camera->renderflags;
 		// Never draw the player unless in chasecam mode
 		if (!MainThread()->Viewport->viewpoint.showviewer)
@@ -167,6 +169,12 @@ namespace swrenderer
 		}
 
 		RenderThreadSlices();
+
+		// Mirrors fail to restore the original viewpoint -- we need it for the HUD weapon to draw correctly.
+		MainThread()->Viewport->viewpoint = origviewpoint;
+		if (r_models)
+			MainThread()->Viewport->SetupPolyViewport(MainThread());
+
 		RenderPSprites();
 
 		MainThread()->Viewport->viewpoint.camera->renderflags = savedflags;

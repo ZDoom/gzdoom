@@ -62,6 +62,10 @@ namespace swrenderer
 	void RenderViewport::SetupPolyViewport(RenderThread *thread)
 	{
 		WorldToView = SoftwareWorldToView(viewpoint);
+
+		if (thread->Portal->MirrorFlags & RF_XFLIP)
+			WorldToView = Mat4f::Scale(-1.0f, 1.0f, 1.0f) * WorldToView;
+
 		ViewToClip = SoftwareViewToClip();
 		WorldToClip = ViewToClip * WorldToView;
 	}

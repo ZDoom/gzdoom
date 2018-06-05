@@ -919,7 +919,7 @@ void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 {
 	using namespace TriScreenDrawerModes;
 
-	if (args->uniforms->NumLights() == 0)
+	if (args->uniforms->NumLights() == 0 && args->uniforms->DynLightColor() == 0)
 	{
 		if (!args->uniforms->FixedLight())
 		{
@@ -1447,7 +1447,7 @@ void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 {
 	using namespace TriScreenDrawerModes;
 
-	if (args->uniforms->NumLights() == 0)
+	if (args->uniforms->NumLights() == 0 && args->uniforms->DynLightColor() == 0)
 	{
 		if (!args->uniforms->FixedLight())
 			DrawSpanOpt8<ModeT, DrawerOptC>(y, x0, x1, args);

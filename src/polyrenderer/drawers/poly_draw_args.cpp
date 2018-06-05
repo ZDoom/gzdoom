@@ -106,15 +106,24 @@ void PolyDrawArgs::SetLight(FSWColormap *base_colormap, uint32_t lightlevel, dou
 
 	mLight = clamp<uint32_t>(lightlevel, 0, 255);
 	mFixedLight = fixed;
-	mLightRed = base_colormap->Color.r * 256 / 255;
-	mLightGreen = base_colormap->Color.g * 256 / 255;
-	mLightBlue = base_colormap->Color.b * 256 / 255;
-	mLightAlpha = base_colormap->Color.a * 256 / 255;
+	mLightRed = base_colormap->Color.r;
+	mLightRed += mLightRed >> 7;
+	mLightGreen = base_colormap->Color.g;
+	mLightGreen += mLightGreen >> 7;
+	mLightBlue = base_colormap->Color.b;
+	mLightBlue += mLightBlue >> 7;
+	mLightAlpha = base_colormap->Color.a;
+	mLightAlpha += mLightAlpha >> 7;
 	mFadeRed = base_colormap->Fade.r;
+	mFadeRed += mFadeRed >> 7;
 	mFadeGreen = base_colormap->Fade.g;
+	mFadeGreen += mFadeGreen >> 7;
 	mFadeBlue = base_colormap->Fade.b;
+	mFadeBlue += mFadeBlue >> 7;
 	mFadeAlpha = base_colormap->Fade.a;
-	mDesaturate = MIN(abs(base_colormap->Desaturate), 255) * 255 / 256;
+	mFadeAlpha += mFadeAlpha >> 7;
+	mDesaturate = MIN(abs(base_colormap->Desaturate), 255);
+	mDesaturate += mDesaturate >> 7;
 	mSimpleShade = (base_colormap->Color.d == 0x00ffffff && base_colormap->Fade.d == 0x00000000 && base_colormap->Desaturate == 0);
 	mColormaps = base_colormap->Maps;
 }

@@ -127,15 +127,20 @@ int FSavegameManager::InsertSaveNode(FSaveGameNode *node)
 	}
 	else
 	{	// Add node at top of list
-		unsigned int i;
-		for (i = 0; i < SaveGames.Size(); i++)
+		unsigned int i = 0;
+		if (!strstr(node->Filename.GetChars(),"auto"))
 		{
-			if (SaveGames[i]->bOldVersion || node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0)
+			for (i = 0; i < SaveGames.Size(); i++)
 			{
-				break;
+				//if (SaveGames[i]->bOldVersion || node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0)
+				if (!strstr(SaveGames[i]->Filename.GetChars(),"auto") && node->Filename.CompareNoCase(SaveGames[i]->Filename) >= 0)
+				{
+					break;
+				}
 			}
 		}
 		SaveGames.Insert(i, node);
+
 		return i;
 	}
 }

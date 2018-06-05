@@ -37,7 +37,7 @@ public:
 	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
 	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
 	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
-	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip);
+	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
 
 	static bool IsBgra();
 };
@@ -48,7 +48,7 @@ public:
 	PolyTriangleThreadData(int32_t core, int32_t num_cores) : core(core), num_cores(num_cores) { }
 
 	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
-	void SetTransform(const Mat4f *objectToClip);
+	void SetTransform(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 	void SetCullCCW(bool value) { ccw = value; }
 	void SetTwoSided(bool value) { twosided = value; }
 	void SetWeaponScene(bool value) { weaponScene = value; }
@@ -88,6 +88,7 @@ private:
 	bool twosided = false;
 	bool weaponScene = false;
 	const Mat4f *objectToClip = nullptr;
+	const Mat4f *objectToWorld = nullptr;
 
 	enum { max_additional_vertices = 16 };
 };
@@ -95,13 +96,14 @@ private:
 class PolySetTransformCommand : public DrawerCommand
 {
 public:
-	PolySetTransformCommand(const Mat4f *objectToClip);
+	PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 
 	void Execute(DrawerThread *thread) override;
 	FString DebugInfo() override { return "PolySetTransform"; }
 
 private:
 	const Mat4f *objectToClip;
+	const Mat4f *objectToWorld;
 };
 
 class PolySetCullCCWCommand : public DrawerCommand

@@ -104,7 +104,7 @@ void RenderPolyScene::RenderSectors()
 	PolyRenderer::Instance()->Threads.RenderThreadSlices(totalcount, [&](PolyRenderThread *thread)
 	{
 		PolyTriangleDrawer::SetCullCCW(thread->DrawQueue, !CurrentViewpoint->Mirror);
-		PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip));
+		PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip), nullptr);
 
 		if (thread != mainthread)
 		{
@@ -336,7 +336,7 @@ void RenderPolyScene::RenderPortals()
 
 	Mat4f *transform = thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip);
 	PolyTriangleDrawer::SetCullCCW(thread->DrawQueue, !CurrentViewpoint->Mirror);
-	PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform);
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform, nullptr);
 
 	PolyDrawArgs args;
 	args.SetWriteColor(!enterPortals);
@@ -379,7 +379,7 @@ void RenderPolyScene::RenderTranslucent()
 
 	Mat4f *transform = thread->FrameMemory->NewObject<Mat4f>(CurrentViewpoint->WorldToClip);
 	PolyTriangleDrawer::SetCullCCW(thread->DrawQueue, !CurrentViewpoint->Mirror);
-	PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform);
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, transform, nullptr);
 
 	PolyMaskedCycles.Clock();
 

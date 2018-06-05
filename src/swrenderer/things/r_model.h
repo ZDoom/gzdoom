@@ -28,6 +28,8 @@
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 
+struct PolyLight;
+
 namespace swrenderer
 {
 	void RenderHUDModel(RenderThread *thread, DPSprite *psp, float ofsx, float ofsy);
@@ -55,6 +57,8 @@ namespace swrenderer
 	{
 	public:
 		SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor, Mat4f *worldToClip, bool mirrorWorldToClip);
+
+		void AddLights(AActor *actor);
 
 		ModelRendererType GetType() const override { return SWModelRendererType; }
 
@@ -85,6 +89,8 @@ namespace swrenderer
 		float InterpolationFactor = 0.0;
 		Mat4f *WorldToClip = nullptr;
 		bool MirrorWorldToClip = false;
+		PolyLight *Lights = nullptr;
+		int NumLights = 0;
 	};
 
 	class SWModelVertexBuffer : public IModelVertexBuffer

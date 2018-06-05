@@ -32,6 +32,7 @@ class RenderMemory;
 class PolyTranslucentObject;
 class PolyDrawSectorPortal;
 class PolyDrawLinePortal;
+class ADynamicLight;
 
 class PolyRenderThread
 {
@@ -52,6 +53,8 @@ public:
 	std::vector<PolyTranslucentObject *> TranslucentObjects;
 	std::vector<std::unique_ptr<PolyDrawSectorPortal>> SectorPortals;
 	std::vector<std::unique_ptr<PolyDrawLinePortal>> LinePortals;
+
+	TArray<ADynamicLight*> AddedLightsArray;
 
 	// Make sure texture can accessed safely
 	void PrepareTexture(FTexture *texture, FRenderStyle style);

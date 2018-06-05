@@ -83,7 +83,7 @@ void PolySkyDome::Render(PolyRenderThread *thread, const Mat4f &worldToView, con
 
 	int rc = mRows + 1;
 
-	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip * objectToWorld));
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip * objectToWorld), nullptr);
 
 	PolyDrawArgs args;
 	args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(false), true);

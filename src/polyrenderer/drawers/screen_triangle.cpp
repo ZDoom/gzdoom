@@ -586,6 +586,14 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		inv_desaturate = 256 - desaturate;
 	}
 
+	fixed_t fuzzscale;
+	int _fuzzpos;
+	if (ModeT::BlendOp == STYLEOP_Fuzz)
+	{
+		fuzzscale = (200 << FRACBITS) / viewheight;
+		_fuzzpos = swrenderer::fuzzpos;
+	}
+
 	uint32_t *dest = (uint32_t*)args->dest;
 	uint32_t *destLine = dest + args->pitch * y;
 
@@ -604,10 +612,8 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 			unsigned int sampleshadeout = APART(texPixels[texelX * texHeight + texelY]);
 			sampleshadeout += sampleshadeout >> 7; // 255 -> 256
 
-			fixed_t fuzzscale = (200 << FRACBITS) / viewheight;
-
 			int scaled_x = (x * fuzzscale) >> FRACBITS;
-			int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + fuzzpos;
+			int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + _fuzzpos;
 
 			fixed_t fuzzcount = FUZZTABLE << FRACBITS;
 			fixed_t fuzz = ((fuzz_x << FRACBITS) + y * fuzzscale) % fuzzcount;
@@ -1155,6 +1161,14 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		}
 	}
 
+	fixed_t fuzzscale;
+	int _fuzzpos;
+	if (ModeT::BlendOp == STYLEOP_Fuzz)
+	{
+		fuzzscale = (200 << FRACBITS) / viewheight;
+		_fuzzpos = swrenderer::fuzzpos;
+	}
+
 	uint8_t *dest = (uint8_t*)args->dest;
 	uint8_t *destLine = dest + args->pitch * y;
 
@@ -1172,10 +1186,8 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 			uint32_t texelY = ((((uint32_t)v << 8) >> 16) * texHeight) >> 16;
 			unsigned int sampleshadeout = (texPixels[texelX * texHeight + texelY] != 0) ? 256 : 0;
 
-			fixed_t fuzzscale = (200 << FRACBITS) / viewheight;
-
 			int scaled_x = (x * fuzzscale) >> FRACBITS;
-			int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + fuzzpos;
+			int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + _fuzzpos;
 
 			fixed_t fuzzcount = FUZZTABLE << FRACBITS;
 			fixed_t fuzz = ((fuzz_x << FRACBITS) + y * fuzzscale) % fuzzcount;
@@ -1493,6 +1505,14 @@ void DrawRect8(const void *destOrg, int destWidth, int destHeight, int destPitch
 	light += light >> 7; // 255 -> 256
 	light = ((256 - light) * NUMCOLORMAPS) & 0xffffff00;
 
+	fixed_t fuzzscale;
+	int _fuzzpos;
+	if (ModeT::BlendOp == STYLEOP_Fuzz)
+	{
+		fuzzscale = (200 << FRACBITS) / viewheight;
+		_fuzzpos = swrenderer::fuzzpos;
+	}
+
 	float fstepU = (args->U1() - args->U0()) / (args->X1() - args->X0());
 	float fstepV = (args->V1() - args->V0()) / (args->Y1() - args->Y0());
 	uint32_t startU = (int32_t)((args->U0() + (x0 + 0.5f - args->X0()) * fstepU) * 0x1000000);
@@ -1520,10 +1540,8 @@ void DrawRect8(const void *destOrg, int destWidth, int destHeight, int destPitch
 				uint32_t texelY = (((posV << 8) >> 16) * texHeight) >> 16;
 				unsigned int sampleshadeout = (texPixels[texelX * texHeight + texelY] != 0) ? 256 : 0;
 
-				fixed_t fuzzscale = (200 << FRACBITS) / viewheight;
-
 				int scaled_x = (x * fuzzscale) >> FRACBITS;
-				int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + fuzzpos;
+				int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + _fuzzpos;
 
 				fixed_t fuzzcount = FUZZTABLE << FRACBITS;
 				fixed_t fuzz = ((fuzz_x << FRACBITS) + y * fuzzscale) % fuzzcount;
@@ -1737,6 +1755,14 @@ void DrawRectOpt32(const void *destOrg, int destWidth, int destHeight, int destP
 		inv_desaturate = 256 - desaturate;
 	}
 
+	fixed_t fuzzscale;
+	int _fuzzpos;
+	if (ModeT::BlendOp == STYLEOP_Fuzz)
+	{
+		fuzzscale = (200 << FRACBITS) / viewheight;
+		_fuzzpos = swrenderer::fuzzpos;
+	}
+
 	float fstepU = (args->U1() - args->U0()) / (args->X1() - args->X0());
 	float fstepV = (args->V1() - args->V0()) / (args->Y1() - args->Y0());
 	uint32_t startU = (int32_t)((args->U0() + (x0 + 0.5f - args->X0()) * fstepU) * 0x1000000);
@@ -1765,10 +1791,8 @@ void DrawRectOpt32(const void *destOrg, int destWidth, int destHeight, int destP
 				unsigned int sampleshadeout = APART(texPixels[texelX * texHeight + texelY]);
 				sampleshadeout += sampleshadeout >> 7; // 255 -> 256
 
-				fixed_t fuzzscale = (200 << FRACBITS) / viewheight;
-
 				int scaled_x = (x * fuzzscale) >> FRACBITS;
-				int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + fuzzpos;
+				int fuzz_x = fuzz_random_x_offset[scaled_x % FUZZ_RANDOM_X_SIZE] + _fuzzpos;
 
 				fixed_t fuzzcount = FUZZTABLE << FRACBITS;
 				fixed_t fuzz = ((fuzz_x << FRACBITS) + y * fuzzscale) % fuzzcount;

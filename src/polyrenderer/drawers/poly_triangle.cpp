@@ -77,9 +77,9 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	queue->Push<PolySetViewportCommand>(viewport_x, viewport_y, viewport_width, viewport_height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
 }
 
-void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip)
+void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld)
 {
-	queue->Push<PolySetTransformCommand>(objectToClip);
+	queue->Push<PolySetTransformCommand>(objectToClip, objectToWorld);
 }
 
 void PolyTriangleDrawer::SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw)
@@ -114,9 +114,10 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	weaponScene = false;
 }
 
-void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip)
+void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Mat4f *newObjectToWorld)
 {
 	objectToClip = newObjectToClip;
+	objectToWorld = newObjectToWorld;
 }
 
 void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
@@ -235,18 +236,30 @@ void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
 ShadedTriVertex PolyTriangleThreadData::ShadeVertex(const PolyDrawArgs &drawargs, const TriVertex &v)
 {
 	// Apply transform to get clip coordinates:
-	Vec4f position = (*objectToClip) * Vec4f(v.x, v.y, v.z, v.w);
+	Vec4f objpos = Vec4f(v.x, v.y, v.z, v.w);
+	Vec4f clippos = (*objectToClip) * objpos;
 
 	ShadedTriVertex sv;
-	sv.x = position.X;
-	sv.y = position.Y;
-	sv.z = position.Z;
-	sv.w = position.W;
+	sv.x = clippos.X;
+	sv.y = clippos.Y;
+	sv.z = clippos.Z;
+	sv.w = clippos.W;
 	sv.u = v.u;
 	sv.v = v.v;
-	sv.worldX = v.x;
-	sv.worldY = v.y;
-	sv.worldZ = v.z;
+
+	if (!objectToWorld) // Identity matrix
+	{
+		sv.worldX = v.x;
+		sv.worldY = v.y;
+		sv.worldZ = v.z;
+	}
+	else
+	{
+		Vec4f worldpos = (*objectToWorld) * objpos;
+		sv.worldX = worldpos.X;
+		sv.worldY = worldpos.Y;
+		sv.worldZ = worldpos.Z;
+	}
 
 	// Calculate gl_ClipDistance[i]
 	for (int i = 0; i < 3; i++)
@@ -576,13 +589,13 @@ PolyTriangleThreadData *PolyTriangleThreadData::Get(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolySetTransformCommand::PolySetTransformCommand(const Mat4f *objectToClip) : objectToClip(objectToClip)
+PolySetTransformCommand::PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld) : objectToClip(objectToClip), objectToWorld(objectToWorld)
 {
 }
 
 void PolySetTransformCommand::Execute(DrawerThread *thread)
 {
-	PolyTriangleThreadData::Get(thread)->SetTransform(objectToClip);
+	PolyTriangleThreadData::Get(thread)->SetTransform(objectToClip, objectToWorld);
 }
 
 /////////////////////////////////////////////////////////////////////////////

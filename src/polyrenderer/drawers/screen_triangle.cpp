@@ -480,6 +480,29 @@ void DrawSpanOpt32(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		worldnormalZ = args->uniforms->Normal().Z;
 		dynlightcolor = args->uniforms->DynLightColor();
 
+		// The normal vector cannot be uniform when drawing models. Calculate and use the face normal:
+		if (worldnormalX == 0.0f && worldnormalY == 0.0f && worldnormalZ == 0.0f)
+		{
+			float dx1 = args->v2->worldX - args->v1->worldX;
+			float dy1 = args->v2->worldY - args->v1->worldY;
+			float dz1 = args->v2->worldZ - args->v1->worldZ;
+			float dx2 = args->v3->worldX - args->v1->worldX;
+			float dy2 = args->v3->worldY - args->v1->worldY;
+			float dz2 = args->v3->worldZ - args->v1->worldZ;
+			worldnormalX = dy1 * dz2 - dz1 * dy2;
+			worldnormalY = dz1 * dx2 - dx1 * dz2;
+			worldnormalZ = dx1 * dy2 - dy1 * dx2;
+			float lensqr = worldnormalX * worldnormalX + worldnormalY * worldnormalY + worldnormalZ * worldnormalZ;
+#ifndef NO_SSE
+			float rcplen = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(lensqr)));
+#else
+			float rcplen = 1.0f / sqrt(lensqr);
+#endif
+			worldnormalX *= rcplen;
+			worldnormalY *= rcplen;
+			worldnormalZ *= rcplen;
+		}
+
 		int affineOffset = x0 / 16 * 16 - x0;
 		float posLightW = posW + stepW * affineOffset;
 		posWorldX = posWorldX + stepWorldX * affineOffset;
@@ -1066,6 +1089,29 @@ void DrawSpanOpt8(int y, int x0, int x1, const TriDrawTriangleArgs *args)
 		worldnormalY = args->uniforms->Normal().Y;
 		worldnormalZ = args->uniforms->Normal().Z;
 		dynlightcolor = args->uniforms->DynLightColor();
+
+		// The normal vector cannot be uniform when drawing models. Calculate and use the face normal:
+		if (worldnormalX == 0.0f && worldnormalY == 0.0f && worldnormalZ == 0.0f)
+		{
+			float dx1 = args->v2->worldX - args->v1->worldX;
+			float dy1 = args->v2->worldY - args->v1->worldY;
+			float dz1 = args->v2->worldZ - args->v1->worldZ;
+			float dx2 = args->v3->worldX - args->v1->worldX;
+			float dy2 = args->v3->worldY - args->v1->worldY;
+			float dz2 = args->v3->worldZ - args->v1->worldZ;
+			worldnormalX = dy1 * dz2 - dz1 * dy2;
+			worldnormalY = dz1 * dx2 - dx1 * dz2;
+			worldnormalZ = dx1 * dy2 - dy1 * dx2;
+			float lensqr = worldnormalX * worldnormalX + worldnormalY * worldnormalY + worldnormalZ * worldnormalZ;
+#ifndef NO_SSE
+			float rcplen = _mm_cvtss_f32(_mm_rsqrt_ss(_mm_set_ss(lensqr)));
+#else
+			float rcplen = 1.0f / sqrt(lensqr);
+#endif
+			worldnormalX *= rcplen;
+			worldnormalY *= rcplen;
+			worldnormalZ *= rcplen;
+		}
 
 		int affineOffset = x0 / 16 * 16 - x0;
 		float posLightW = posW + stepW * affineOffset;

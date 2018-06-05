@@ -34,6 +34,8 @@ class PolyModelRenderer : public FModelRenderer
 public:
 	PolyModelRenderer(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue);
 
+	void AddLights(AActor *actor);
+
 	ModelRendererType GetType() const override { return PolyModelRendererType; }
 
 	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
@@ -61,6 +63,8 @@ public:
 	unsigned int *IndexBuffer = nullptr;
 	TriVertex *VertexBuffer = nullptr;
 	float InterpolationFactor = 0.0;
+	PolyLight *Lights = nullptr;
+	int NumLights = 0;
 };
 
 class PolyModelVertexBuffer : public IModelVertexBuffer

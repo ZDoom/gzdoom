@@ -75,6 +75,7 @@ namespace swrenderer
 	void RenderModel::Render(RenderThread *thread, short *cliptop, short *clipbottom, int minZ, int maxZ, Fake3DTranslucent clip3DFloor)
 	{
 		SWModelRenderer renderer(thread, clip3DFloor, &WorldToClip, MirrorWorldToClip);
+		renderer.AddLights(actor);
 		renderer.RenderModel(x, y, z, smf, actor);
 	}
 
@@ -91,6 +92,70 @@ namespace swrenderer
 	SWModelRenderer::SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor, Mat4f *worldToClip, bool mirrorWorldToClip)
 		: Thread(thread), Clip3DFloor(clip3DFloor), WorldToClip(worldToClip), MirrorWorldToClip(mirrorWorldToClip)
 	{
+	}
+
+	void SWModelRenderer::AddLights(AActor *actor)
+	{
+		if (gl_lights && actor)
+		{
+			auto &addedLights = Thread->AddedLightsArray;
+
+			addedLights.Clear();
+
+			float x = (float)actor->X();
+			float y = (float)actor->Y();
+			float z = (float)actor->Center();
+			float radiusSquared = (float)(actor->renderradius * actor->renderradius);
+
+			BSPWalkCircle(x, y, radiusSquared, [&](subsector_t *subsector) // Iterate through all subsectors potentially touched by actor
+			{
+				FLightNode * node = subsector->lighthead;
+				while (node) // check all lights touching a subsector
+				{
+					ADynamicLight *light = node->lightsource;
+					if (light->visibletoplayer && !(light->flags2&MF2_DORMANT) && (!(light->lightflags&LF_DONTLIGHTSELF) || light->target != actor) && !(light->lightflags&LF_DONTLIGHTACTORS))
+					{
+						int group = subsector->sector->PortalGroup;
+						DVector3 pos = light->PosRelative(group);
+						float radius = (float)(light->GetRadius() + actor->renderradius);
+						double dx = pos.X - x;
+						double dy = pos.Y - y;
+						double dz = pos.Z - z;
+						double distSquared = dx * dx + dy * dy + dz * dz;
+						if (distSquared < radius * radius) // Light and actor touches
+						{
+							if (std::find(addedLights.begin(), addedLights.end(), light) == addedLights.end()) // Check if we already added this light from a different subsector
+							{
+								addedLights.Push(light);
+							}
+						}
+					}
+					node = node->nextLight;
+				}
+			});
+
+			NumLights = addedLights.Size();
+			Lights = Thread->FrameMemory->AllocMemory<PolyLight>(NumLights);
+			for (int i = 0; i < NumLights; i++)
+			{
+				ADynamicLight *lightsource = addedLights[i];
+
+				bool is_point_light = (lightsource->lightflags & LF_ATTENUATE) != 0;
+
+				uint32_t red = lightsource->GetRed();
+				uint32_t green = lightsource->GetGreen();
+				uint32_t blue = lightsource->GetBlue();
+
+				PolyLight &light = Lights[i];
+				light.x = (float)lightsource->X();
+				light.y = (float)lightsource->Y();
+				light.z = (float)lightsource->Z();
+				light.radius = 256.0f / lightsource->GetRadius();
+				light.color = (red << 16) | (green << 8) | blue;
+				if (is_point_light)
+					light.radius = -light.radius;
+			}
+		}
 	}
 
 	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
@@ -235,8 +300,9 @@ namespace swrenderer
 		swapYZ.Matrix[1 + 2 * 4] = 1.0f;
 		swapYZ.Matrix[2 + 1 * 4] = 1.0f;
 		swapYZ.Matrix[3 + 3 * 4] = 1.0f;
+		ObjectToWorld = swapYZ * ObjectToWorld;
 
-		PolyTriangleDrawer::SetTransform(Thread->DrawQueue, Thread->FrameMemory->NewObject<Mat4f>((*WorldToClip) * swapYZ * ObjectToWorld));
+		PolyTriangleDrawer::SetTransform(Thread->DrawQueue, Thread->FrameMemory->NewObject<Mat4f>((*WorldToClip) * ObjectToWorld), Thread->FrameMemory->NewObject<Mat4f>(ObjectToWorld));
 	}
 
 	void SWModelRenderer::DrawArrays(int start, int count)
@@ -252,6 +318,8 @@ namespace swrenderer
 
 		PolyDrawArgs args;
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, Thread->Light->SpriteGlobVis(foggy), fullbrightSprite);
+		args.SetLights(Lights, NumLights);
+		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(ModelActor->RenderStyle, ModelActor->Alpha, ModelActor->fillcolor, ModelActor->Translation, SkinTexture, fullbrightSprite);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
@@ -276,6 +344,8 @@ namespace swrenderer
 
 		PolyDrawArgs args;
 		args.SetLight(GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true), lightlevel, Thread->Light->SpriteGlobVis(foggy), fullbrightSprite);
+		args.SetLights(Lights, NumLights);
+		args.SetNormal(FVector3(0.0f, 0.0f, 0.0f));
 		args.SetStyle(ModelActor->RenderStyle, ModelActor->Alpha, ModelActor->fillcolor, ModelActor->Translation, SkinTexture, fullbrightSprite);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);

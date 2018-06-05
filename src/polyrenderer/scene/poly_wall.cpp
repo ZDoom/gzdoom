@@ -108,7 +108,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t 
 			return true;
 		}
 	}
-	else if (line->PartnerSeg)
+	else if (line->PartnerSeg && line->PartnerSeg->Subsector)
 	{
 		PolyTransferHeights fakeback(line->PartnerSeg->Subsector);
 		sector_t *backsector = fakeback.FrontSector;

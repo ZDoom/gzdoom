@@ -30,6 +30,7 @@
 #include "p_pspr.h"
 #include "r_data/voxels.h"
 #include "info.h"
+#include "g_levellocals.h"
 
 #define MAX_LODS			4
 

@@ -4971,9 +4971,21 @@ bool P_LineTrace(AActor *t1, DAngle angle, double distance,
 	}
 
 	ActorFlags aflags = (flags & TRF_ALLACTORS) ? ActorFlags::FromInt(0xFFFFFFFF) : MF_SHOOTABLE;
-	int lflags = 0;
-	if ( !(flags & TRF_THRUBLOCK) ) lflags |= ML_BLOCKEVERYTHING;
-	if ( !(flags & TRF_THRUHITSCAN) ) lflags |= ML_BLOCKHITSCAN;
+	if ( flags & TRF_SOLIDACTORS ) aflags |= MF_SOLID;
+	int lflags = ML_BLOCKEVERYTHING|ML_BLOCKHITSCAN;
+	if ( flags & TRF_BLOCKUSE ) lflags |= ML_BLOCKUSE;
+	if ( flags & TRF_BLOCKSELF )
+	{
+		bool Projectile = ( (t1->flags&MF_MISSILE) || (t1->BounceFlags&BOUNCE_MBF) );
+		bool NotBlocked = ( (t1->flags3&MF3_NOBLOCKMONST) || ( (i_compatflags&COMPATF_NOBLOCKFRIENDS) && (t1->flags&MF_FRIENDLY) ) );
+		if ( Projectile ) lflags |= ML_BLOCKPROJECTILE;
+		if ( !Projectile || (t1->flags8&MF8_BLOCKASPLAYER) ) lflags |= ML_BLOCKING;
+		if ( !NotBlocked ) lflags |= ML_BLOCKMONSTERS;
+		if ( t1->player || (t1->flags8&MF8_BLOCKASPLAYER) ) lflags |= ML_BLOCKING|ML_BLOCK_PLAYERS;
+		if ( t1->flags&MF_FLOAT ) lflags |= ML_BLOCK_FLOATERS;
+	}
+	if ( flags & TRF_THRUBLOCK ) lflags &= ~ML_BLOCKEVERYTHING;
+	if ( flags & TRF_THRUHITSCAN ) lflags &= ~ML_BLOCKHITSCAN;
 	int tflags = TRACE_ReportPortals;
 	if ( flags & TRF_NOSKY ) tflags |= TRACE_NoSky;
 

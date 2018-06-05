@@ -346,6 +346,9 @@ enum	// P_LineTrace flags
 	TRF_THRUHITSCAN = 32,
 	TRF_NOSKY = 64,
 	TRF_ALLACTORS = 128,
+	TRF_SOLIDACTORS = 256,
+	TRF_BLOCKUSE = 512,
+	TRF_BLOCKSELF = 1024,
 };
 
 void	P_TraceBleed(int damage, const DVector3 &pos, AActor *target, DAngle angle, DAngle pitch);

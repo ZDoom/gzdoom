@@ -4271,6 +4271,7 @@ struct aim_t
 						thingtoppitch = -VecToAngle(exitdist, th->Top() - shootz);
 						if (thingtoppitch > bottompitch) continue;
 					}
+					else continue;					// shot over the thing
 				}
 				else continue;					// shot over the thing
 			}
@@ -4289,6 +4290,7 @@ struct aim_t
 						thingbottompitch = -VecToAngle(exitdist, th->Z() - shootz);
 						if (thingbottompitch < toppitch) continue;
 					}
+					else continue;					// shot over the thing
 				}
 				continue;					// shot under the thing
 			}

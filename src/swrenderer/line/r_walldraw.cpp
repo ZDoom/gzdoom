@@ -189,7 +189,12 @@ namespace swrenderer
 		{
 			auto viewport = Thread->Viewport.get();
 			
-			drawerargs.dc_viewpos.X = (float)((x + 0.5 - viewport->CenterX) / viewport->CenterX * zcol);
+			int tx = x;
+			bool mirror = !!(Thread->Portal->MirrorFlags & RF_XFLIP);
+			if (mirror)
+				tx = viewwidth - tx - 1;
+
+			drawerargs.dc_viewpos.X = (float)((tx + 0.5 - viewport->CenterX) / viewport->CenterX * zcol);
 			drawerargs.dc_viewpos.Y = zcol;
 			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y1 - 0.5) / viewport->InvZtoScale * zcol);
 			drawerargs.dc_viewpos_step.Z = (float)(-zcol / viewport->InvZtoScale);

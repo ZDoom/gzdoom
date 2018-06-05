@@ -205,12 +205,20 @@ namespace swrenderer
 
 		if (r_dynlights)
 		{
+			int tx = x1;
+			bool mirror = !!(Thread->Portal->MirrorFlags & RF_XFLIP);
+			if (mirror)
+				tx = viewwidth - tx - 1;
+
 			// Find row position in view space
 			float zspan = (float)(planeheight / (fabs(y + 0.5 - viewport->CenterY) / viewport->InvZtoScale));
-			drawerargs.dc_viewpos.X = (float)((x1 + 0.5 - viewport->CenterX) / viewport->CenterX * zspan);
+			drawerargs.dc_viewpos.X = (float)((tx + 0.5 - viewport->CenterX) / viewport->CenterX * zspan);
 			drawerargs.dc_viewpos.Y = zspan;
 			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y - 0.5) / viewport->InvZtoScale * zspan);
 			drawerargs.dc_viewpos_step.X = (float)(zspan / viewport->CenterX);
+
+			if (mirror)
+				drawerargs.dc_viewpos_step.X = -drawerargs.dc_viewpos_step.X;
 
 			// Plane normal
 			drawerargs.dc_normal.X = 0.0f;

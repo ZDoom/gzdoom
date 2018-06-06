@@ -29,7 +29,6 @@
 class FOBJModel : public FModel
 {
 private:
-	int mLumpNum;
 	const char *newSideSep = "$"; // OBJ side separator is /, which is parsed as a line comment by FScanner if two of them are next to each other.
 
 	enum class FaceElement
@@ -47,7 +46,7 @@ private:
 	};
 	struct OBJFace
 	{
-		int sideCount;
+		unsigned int sideCount;
 		OBJFaceSide sides[4];
 	};
 	struct OBJSurface // 1 surface per 'usemtl'
@@ -68,12 +67,13 @@ private:
 	TArray<OBJSurface> surfaces;
 	FScanner sc;
 
-	void ParseVector2(TArray<FVector2> &array);
-	void ParseVector3(TArray<FVector3> &array);
-	void ParseFaceSide(const FString &side, OBJFace &face, int sidx);
+	template<typename T, size_t L> void ParseVector(TArray<T> &array);
+	bool ParseFaceSide(const FString &side, OBJFace &face, int sidx);
 	void ConstructSurfaceTris(OBJSurface &surf);
 	int ResolveIndex(int origIndex, FaceElement el);
 	void TriangulateQuad(const OBJFace &quad, OBJFace *tris);
+	FVector3 RealignVector(FVector3 vecToRealign);
+	FVector2 FixUV(FVector2 vecToRealign);
 public:
 	FOBJModel() {}
 	~FOBJModel();

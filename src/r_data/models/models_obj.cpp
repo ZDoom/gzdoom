@@ -20,7 +20,6 @@
 //--------------------------------------------------------------------------
 
 #include "w_wad.h"
-#include "cmdlib.h"
 #include "r_data/models/models_obj.h"
 
 /**
@@ -30,6 +29,7 @@
  * @param lumpnum The lump index in the wad collection
  * @param buffer The contents of the model file
  * @param length The size of the model file
+ * @return Whether or not the model was parsed successfully
  */
 bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length)
 {
@@ -63,9 +63,9 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 
 		// Replace forward slashes with percent signs so they aren't parsed as line comments
 		objBuf.ReplaceChars('/', *newSideSep);
+		char* wObjBuf = objBuf.LockBuffer();
 
 		// Substitute broken usemtl statements with old ones
-		bpos = 0, nlpos = 0;
 		for (size_t i = 0; i < mtlUsages.Size(); i++)
 		{
 			bpos = mtlUsageIdxs[i];
@@ -74,21 +74,30 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			{
 				nlpos = objBuf.Len();
 			}
-			FString lineStr(objBuf.GetChars() + bpos, nlpos - bpos);
-			objBuf.Substitute(lineStr, mtlUsages[i]);
+			memcpy(wObjBuf + bpos, mtlUsages[i].GetChars(), nlpos - bpos);
 		}
 
+		bpos = 0;
 		// Find each OBJ line comment, and convert each to a C-style line comment
 		while (1)
 		{
-			bpos = objBuf.IndexOf('#');
+			bpos = objBuf.IndexOf('#', bpos);
 			if (bpos == -1) break;
-			objBuf.Remove(bpos, 1);
-			objBuf.Insert(bpos, "//", 2);
+			if (objBuf[(unsigned int)bpos + 1] == '\n')
+			{
+				wObjBuf[bpos] = ' ';
+			}
+			else
+			{
+				wObjBuf[bpos] = '/';
+				wObjBuf[bpos+1] = '/';
+			}
+			bpos += 1;
 		}
+		wObjBuf = nullptr;
+		objBuf.UnlockBuffer();
 	}
 	sc.OpenString(objName, objBuf);
-	//Printf("Parsing %s\n", objName.GetChars());
 
 	FTextureID curMtl = FNullTextureID();
 	OBJSurface *curSurface = nullptr;
@@ -97,21 +106,17 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 
 	while(sc.GetString())
 	{
-		if /*(sc.Compare("#")) // Line comment
+		if (sc.Compare("v")) // Vertex
 		{
-			sc.Line += 1; // I don't think this does anything, though...
-		}
-		else if*/ (sc.Compare("v")) // Vertex
-		{
-			ParseVector3(this->verts);
+			ParseVector<FVector3, 3>(this->verts);
 		}
 		else if (sc.Compare("vn")) // Vertex normal
 		{
-			ParseVector3(this->norms);
+			ParseVector<FVector3, 3>(this->norms);
 		}
 		else if (sc.Compare("vt")) // UV Coordinates
 		{
-			ParseVector2(this->uvs);
+			ParseVector<FVector2, 2>(this->uvs);
 		}
 		else if (sc.Compare("usemtl"))
 		{
@@ -123,6 +128,11 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 			{
 				// Relative to model file path?
 				curMtl = LoadSkin(fn, sc.String);
+			}
+
+			if (!curMtl.isValid())
+			{
+				sc.ScriptMessage("Material %s (#%u) not found.", sc.String, surfaces.Size());
 			}
 
 			// Build surface...
@@ -160,7 +170,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 				// A face must have at least 3 sides
 				sc.MustGetString();
 				sides[i] = sc.String;
-				ParseFaceSide(sides[i], face, i);
+				if (!ParseFaceSide(sides[i], face, i)) return false;
 			}
 			face.sideCount = 3;
 			if (sc.GetString())
@@ -169,7 +179,7 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 				{
 					sides[3] = sc.String;
 					face.sideCount += 1;
-					ParseFaceSide(sides[3], face, 3);
+					if (!ParseFaceSide(sides[3], face, 3)) return false;
 				}
 				else
 				{
@@ -197,55 +207,38 @@ bool FOBJModel::Load(const char* fn, int lumpnum, const char* buffer, int length
 		uvs.Push(FVector2(0.0, 0.0));
 	}
 
-	/*
-	Printf("%d vertices\n", verts.Size());
-	Printf("%d normals\n", norms.Size());
-	Printf("%d UVs\n", uvs.Size());
-	Printf("%d faces\n", faces.Size());
-	Printf("%d surfaces\n", surfaces.Size());
-	*/
-
-	mLumpNum = lumpnum;
 	return true;
 }
 
 /**
-	* Parse a 2D vector
-	*
-	* @param start The buffer to parse from
-	* @param array The array to append the parsed vector to
-	*/
-void FOBJModel::ParseVector2(TArray<FVector2> &array)
+ * Parse an x-Dimensional vector
+ *
+ * @tparam T A subclass of TVector2 to be used
+ * @tparam L The length of the vector to parse
+ * @param[out] array The array to append the parsed vector to
+ */
+template<typename T, size_t L> void FOBJModel::ParseVector(TArray<T> &array)
 {
-	float coord[2];
-	for (int axis = 0; axis < 2; axis++)
+	float *coord = new float[L];
+	for (size_t axis = 0; axis < L; axis++)
 	{
 		sc.MustGetFloat();
 		coord[axis] = (float)sc.Float;
 	}
-	FVector2 vec(coord);
+	T vec(coord);
 	array.Push(vec);
+	delete[] coord;
 }
 
 /**
-	* Parse a 3D vector
-	*
-	* @param start The buffer to parse from
-	* @param array The array to append the parsed vector to
-	*/
-void FOBJModel::ParseVector3(TArray<FVector3> &array)
-{
-	float coord[3];
-	for (int axis = 0; axis < 3; axis++)
-	{
-		sc.MustGetFloat();
-		coord[axis] = (float)sc.Float;
-	}
-	FVector3 vec(coord);
-	array.Push(vec);
-}
-
-void FOBJModel::ParseFaceSide(const FString &sideStr, OBJFace &face, int sidx)
+ * Parse a side of a face
+ *
+ * @param[in] sideStr The side definition string
+ * @param[out] face The face to assign the parsed side data to
+ * @param sidx The 0-based index of the side
+ * @return Whether or not the face side was parsed successfully
+ */
+bool FOBJModel::ParseFaceSide(const FString &sideStr, OBJFace &face, int sidx)
 {
 	OBJFaceSide side;
 	int origIdx;
@@ -261,6 +254,7 @@ void FOBJModel::ParseFaceSide(const FString &sideStr, OBJFace &face, int sidx)
 		else
 		{
 			sc.ScriptError("Vertex reference is not optional!");
+			return false;
 		}
 
 		if (sides[1].Len() > 0)
@@ -298,8 +292,18 @@ void FOBJModel::ParseFaceSide(const FString &sideStr, OBJFace &face, int sidx)
 		side.uvref = -1;
 	}
 	face.sides[sidx] = side;
+	return true;
 }
 
+/**
+ * Resolve an OBJ index to an absolute index
+ *
+ * OBJ indices are 1-based, and can also be negative
+ *
+ * @param origIndex The original OBJ index to resolve
+ * @param el What type of element the index references
+ * @return The absolute index of the element
+ */
 int FOBJModel::ResolveIndex(int origIndex, FaceElement el)
 {
 	if (origIndex > 0)
@@ -324,6 +328,11 @@ int FOBJModel::ResolveIndex(int origIndex, FaceElement el)
 	return -1;
 }
 
+/**
+ * Construct the vertex buffer for this model
+ *
+ * @param renderer A pointer to the model renderer. Used to allocate the vertex buffer.
+ */
 void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
 	if (GetVertexBuffer(renderer))
@@ -358,45 +367,55 @@ void FOBJModel::BuildVertexBuffer(FModelRenderer *renderer)
 				OBJFaceSide &curSide = surfaces[i].tris[j].sides[side];
 
 				int vidx = curSide.vertref;
-				int uvidx = (curSide.uvref >= 0 && curSide.uvref < uvs.Size()) ? curSide.uvref : 0;
+				int uvidx = (curSide.uvref >= 0 && (unsigned int)curSide.uvref < uvs.Size()) ? curSide.uvref : 0;
 				int nidx = curSide.normref;
 
-				mdv->Set(verts[vidx].X, verts[vidx].Y, verts[vidx].Z, uvs[uvidx].X, uvs[uvidx].Y * -1);
+				FVector3 curVvec = RealignVector(verts[vidx]);
+				FVector2 curUvec = FixUV(uvs[uvidx]);
+				FVector3 *nvec = nullptr;
 
-				if (nidx >= 0 && nidx < norms.Size())
+				mdv->Set(curVvec.X, curVvec.Y, curVvec.Z, curUvec.X, curUvec.Y);
+
+				if (nidx >= 0 && (unsigned int)nidx < norms.Size())
 				{
-					mdv->SetNormal(norms[nidx].X, norms[nidx].Y, norms[nidx].Z);
+					nvec = new FVector3(RealignVector(norms[nidx]));
 				}
 				else
 				{
 					// https://www.khronos.org/opengl/wiki/Calculating_a_Surface_Normal
 					// Find other sides of triangle
-					int nextSidx = side + 1;
+					int nextSidx = side + 2;
 					if (nextSidx >= 3) nextSidx -= 3;
 
-					int lastSidx = side + 2;
+					int lastSidx = side + 1;
 					if (lastSidx >= 3) lastSidx -= 3;
 
 					OBJFaceSide &nextSide = surfaces[i].tris[j].sides[nextSidx];
 					OBJFaceSide &lastSide = surfaces[i].tris[j].sides[lastSidx];
 
 					// Cross-multiply the U-vector and V-vector
-					FVector3 uvec = verts[nextSide.vertref] - verts[curSide.vertref];
-					FVector3 vvec = verts[lastSide.vertref] - verts[curSide.vertref];
+					FVector3 uvec = RealignVector(verts[nextSide.vertref]) - curVvec;
+					FVector3 vvec = RealignVector(verts[lastSide.vertref]) - curVvec;
 
-					FVector3 nvec = uvec ^ vvec;
-					mdv->SetNormal(nvec.X, nvec.Y, nvec.Z);
+					nvec = new FVector3(uvec ^ vvec);
 				}
+				mdv->SetNormal(nvec->X, nvec->Y, nvec->Z);
+				delete nvec;
 			}
 		}
+		delete[] surfaces[i].tris;
 	}
-
 	vbuf->UnlockVertexBuffer();
 }
 
+/**
+ * Fill in the triangle data for a surface
+ *
+ * @param[in,out] surf The surface to fill in the triangle data for
+ */
 void FOBJModel::ConstructSurfaceTris(OBJSurface &surf)
 {
-	int triCount = 0;
+	unsigned int triCount = 0;
 
 	size_t start = surf.faceStart;
 	size_t end = start + surf.numFaces;
@@ -427,6 +446,12 @@ void FOBJModel::ConstructSurfaceTris(OBJSurface &surf)
 	}
 }
 
+/**
+ * Triangulate a 4-sided face
+ *
+ * @param[in] quad The 4-sided face to triangulate
+ * @param[out] tris The resultant triangle data
+ */
 void FOBJModel::TriangulateQuad(const OBJFace &quad, OBJFace *tris)
 {
 	tris[0].sideCount = 3;
@@ -445,11 +470,53 @@ void FOBJModel::TriangulateQuad(const OBJFace &quad, OBJFace *tris)
 	}
 }
 
+/**
+ * Re-align a vector to match MD3 alignment
+ *
+ * @param vecToRealign The vector to re-align
+ * @return The re-aligned vector
+ */
+inline FVector3 FOBJModel::RealignVector(FVector3 vecToRealign)
+{
+	vecToRealign.Z *= -1;
+	return vecToRealign;
+}
+
+/**
+ * Fix UV coordinates of a UV vector
+ *
+ * @param vecToRealign The vector to fix
+ * @return The fixed UV coordinate vector
+ */
+inline FVector2 FOBJModel::FixUV(FVector2 vecToRealign)
+{
+	vecToRealign.Y *= -1;
+	return vecToRealign;
+}
+
+/**
+ * Find the index of the frame with the given name
+ *
+ * OBJ models are not animated, so this always returns 0
+ *
+ * @param name The name of the frame
+ * @return The index of the frame
+ */
 int FOBJModel::FindFrame(const char* name)
 {
 	return 0; // OBJs are not animated.
 }
 
+/**
+ * Render the model
+ *
+ * @param renderer The model renderer
+ * @param skin The loaded skin for the surface
+ * @param frameno Unused
+ * @param frameno2 Unused
+ * @param inter Unused
+ * @param translation The translation for the skin
+ */
 void FOBJModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frameno, int frameno2, double inter, int translation)
 {
 	for (unsigned int i = 0; i < surfaces.Size(); i++)
@@ -459,7 +526,7 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 		FTexture *userSkin = skin;
 		if (!userSkin)
 		{
-			if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+			if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 			{
 				userSkin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i]);
 			}
@@ -468,21 +535,36 @@ void FOBJModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 				userSkin = TexMan(surf->skin);
 			}
 		}
-		if (!userSkin) return;
+
+		// Still no skin after checking for one?
+		if (!userSkin)
+		{
+			continue;
+		}
 
 		renderer->SetMaterial(userSkin, false, translation);
-		GetVertexBuffer(renderer)->SetupFrame(renderer, 0, 0, surf->numTris * 3);
-		renderer->DrawArrays(surf->vbStart, surf->numTris * 3);
+		GetVertexBuffer(renderer)->SetupFrame(renderer, surf->vbStart, surf->vbStart, surf->numTris * 3);
+		renderer->DrawArrays(0, surf->numTris * 3);
 	}
 }
 
+/**
+ * Pre-cache skins for the model
+ *
+ * @param hitlist The list of textures
+ */
 void FOBJModel::AddSkins(uint8_t* hitlist)
 {
 	for (size_t i = 0; i < surfaces.Size(); i++)
 	{
-		if (curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
+		if (i < MD3_MAX_SURFACES && curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid())
 		{
+			// Precache skins manually reassigned by the user.
+			// On OBJs with lots of skins, such as Doom map OBJs exported from GZDB,
+			// there may be too many skins for the user to manually change, unless
+			// the limit is bumped or surfaceskinIDs is changed to a TArray<FTextureID>.
 			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].GetIndex()] |= FTextureManager::HIT_Flat;
+			return; // No need to precache skin that was replaced
 		}
 
 		OBJSurface * surf = &surfaces[i];
@@ -493,15 +575,14 @@ void FOBJModel::AddSkins(uint8_t* hitlist)
 	}
 }
 
+/**
+ * Remove the data that was loaded
+ */
 FOBJModel::~FOBJModel()
 {
 	verts.Clear();
 	norms.Clear();
 	uvs.Clear();
 	faces.Clear();
-	for (size_t i = 0; i < surfaces.Size(); i++)
-	{
-		delete[] surfaces[i].tris;
-	}
 	surfaces.Clear();
 }

@@ -191,6 +191,50 @@ void DFrameBuffer::DrawTextureParms(FTexture *img, DrawParms &parms)
 
 //==========================================================================
 //
+// ZScript arbitrary textured shape drawing functions
+//
+//==========================================================================
+
+void DFrameBuffer::DrawShape(FTexture *img, DShape2D *shape, int tags_first, ...)
+{
+	Va_List tags;
+	va_start(tags.list, tags_first);
+	DrawParms parms;
+
+	bool res = ParseDrawTextureTags(img, 0, 0, tags_first, tags, &parms, false);
+	va_end(tags.list);
+	if (!res) return;
+	m2DDrawer.AddShape(img, shape, parms);
+}
+
+void DFrameBuffer::DrawShape(FTexture *img, DShape2D *shape, VMVa_List &args)
+{
+	DrawParms parms;
+	uint32_t tag = ListGetInt(args);
+
+	bool res = ParseDrawTextureTags(img, 0, 0, tag, args, &parms, false);
+	if (!res) return;
+	m2DDrawer.AddShape(img, shape, parms);
+}
+
+DEFINE_ACTION_FUNCTION(_Screen, DrawShape)
+{
+	PARAM_PROLOGUE;
+	PARAM_INT(texid);
+	PARAM_BOOL(animate);
+	PARAM_POINTER(shape, DShape2D);
+
+	if (!screen->HasBegun2D()) ThrowAbortException(X_OTHER, "Attempt to draw to screen outside a draw function");
+
+	FTexture *tex = animate ? TexMan(FSetTextureID(texid)) : TexMan[FSetTextureID(texid)];
+	VMVa_List args = { param + 3, 0, numparam - 3 };
+
+	screen->DrawShape(tex, shape, args);
+	return 0;
+}
+
+//==========================================================================
+//
 // Clipping rect
 //
 //==========================================================================

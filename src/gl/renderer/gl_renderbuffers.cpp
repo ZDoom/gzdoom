@@ -928,7 +928,7 @@ void FGLRenderBuffers::BindOutputFB()
 
 bool FGLRenderBuffers::IsEnabled()
 {
-	return BuffersActive && !gl.legacyMode && !FailedCreate;
+	return BuffersActive && !FailedCreate;
 }
 
 bool FGLRenderBuffers::FailedCreate = false;

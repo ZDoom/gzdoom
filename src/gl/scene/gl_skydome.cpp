@@ -54,26 +54,14 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 void FSkyVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (!gl.legacyMode)
-	{
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
-		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSkyVertex), &VSO->color);
-		glEnableVertexAttribArray(VATTR_VERTEX);
-		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		glEnableVertexAttribArray(VATTR_COLOR);
-		glDisableVertexAttribArray(VATTR_VERTEX2);
-		glDisableVertexAttribArray(VATTR_NORMAL);
-	}
-	else
-	{
-		glVertexPointer(3, GL_FLOAT, sizeof(FSkyVertex), &VSO->x);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(FSkyVertex), &VSO->u);
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(FSkyVertex), &VSO->color);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-	}
+	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->x);
+	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
+	glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSkyVertex), &VSO->color);
+	glEnableVertexAttribArray(VATTR_VERTEX);
+	glEnableVertexAttribArray(VATTR_TEXCOORD);
+	glEnableVertexAttribArray(VATTR_COLOR);
+	glDisableVertexAttribArray(VATTR_VERTEX2);
+	glDisableVertexAttribArray(VATTR_NORMAL);
 }
 
 //-----------------------------------------------------------------------------
@@ -111,11 +99,6 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 		gl_RenderState.Apply();
 		RenderRow(GL_TRIANGLE_FAN, rc);
 		gl_RenderState.EnableTexture(true);
-		// The color array can only be activated now if this is drawn without shader
-		if (gl.legacyMode)
-		{
-			glEnableClientState(GL_COLOR_ARRAY);
-		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.Apply();

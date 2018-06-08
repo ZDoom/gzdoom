@@ -86,7 +86,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 
 	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;
-	if (gl.legacyMode) hwcaps |= RFL_NO_SHADERS;
 	glslversion = gl.glslversion;
 }
 
@@ -134,7 +133,6 @@ void OpenGLFrameBuffer::InitializeState()
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_CLAMP);
 	glDisable(GL_DEPTH_TEST);
-	if (gl.legacyMode) glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LINE_SMOOTH);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -243,12 +241,8 @@ uint32_t OpenGLFrameBuffer::GetCaps()
 		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL;
 	if (r_drawvoxels)
 		FlagSet |= RFF_VOXELS;
-	if (gl.legacyMode)
-	{
-		// legacy mode always has truecolor because palette tonemap is not available
-		FlagSet |= RFF_TRUECOLOR;
-	}
-	else if (!RenderBuffersEnabled())
+
+	if (!RenderBuffersEnabled())
 	{
 		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
 		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;

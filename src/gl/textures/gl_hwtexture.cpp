@@ -233,23 +233,11 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	if (glTextureBytes > 0)
 	{
 		if (glTextureBytes < 4) glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-		if (gl.legacyMode)
-		{
-			// Do not use 2 and 3 here. They won't do anything useful!!!
-			static const int ITypes[] = { GL_LUMINANCE8, GL_LUMINANCE8_ALPHA8, GL_RGB8, GL_RGBA8 };
-			static const int STypes[] = { GL_LUMINANCE, GL_LUMINANCE_ALPHA, GL_BGR, GL_BGRA };
+		static const int ITypes[] = { GL_R8, GL_RG8, GL_RGB8, GL_RGBA8 };
+		static const int STypes[] = { GL_RED, GL_RG, GL_BGR, GL_BGRA };
 
-			texformat = ITypes[glTextureBytes - 1];
-			sourcetype = STypes[glTextureBytes - 1];
-		}
-		else
-		{
-			static const int ITypes[] = { GL_R8, GL_RG8, GL_RGB8, GL_RGBA8 };
-			static const int STypes[] = { GL_RED, GL_RG, GL_BGR, GL_BGRA };
-
-			texformat = ITypes[glTextureBytes - 1];
-			sourcetype = STypes[glTextureBytes - 1];
-		}
+		texformat = ITypes[glTextureBytes - 1];
+		sourcetype = STypes[glTextureBytes - 1];
 	}
 	else
 	{
@@ -539,7 +527,7 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 	bool needmipmap = (clampmode <= CLAMP_XY);
 
 	// Texture has become invalid
-	if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified(DefaultRenderStyle()))
+	if (!tex->bHasCanvas && !tex->bWarped && tex->CheckModified(DefaultRenderStyle()))
 	{
 		Clean(true);
 	}
@@ -555,7 +543,6 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 
 		if (!tex->bHasCanvas)
 		{
-			if (gl.legacyMode) flags |= CTF_MaybeWarped;
 			buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
 		}
 		else

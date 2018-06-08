@@ -467,7 +467,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		// set the lighting parameters
 		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && FixedColormap == CM_DEFAULT && gl_light_sprites)
 		{
-			if (!hudModelStep || (screen->hwcaps & RFL_NO_SHADERS))
+			if (!hudModelStep)
 			{
 				GetDynSpriteLight(playermo, nullptr, hudsprite.dynrgb);
 			}

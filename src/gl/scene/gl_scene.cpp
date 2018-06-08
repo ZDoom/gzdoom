@@ -306,20 +306,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	int pass;
-
-	if (!level.HasDynamicLights || !gl.legacyMode)
-	{
-		pass = GLPASS_ALL;
-	}
-	else // GL 2.x legacy mode
-	{
-		// process everything that needs to handle textured dynamic lights.
-		if (level.HasDynamicLights) RenderMultipassStuff(di);
-
-		// The remaining lists which are unaffected by dynamic lights are just processed as normal.
-		pass = GLPASS_ALL;
-	}
+	int pass = GLPASS_ALL;
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
@@ -529,11 +516,6 @@ void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
 
  	di->DrawPlayerSprites(false);
 
-	if (gl.legacyMode)
-	{
-		gl_RenderState.DrawColormapOverlay();
-	}
-
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 
@@ -728,7 +710,7 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	SetFixedColormap(player);
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	GLRenderer->mVBO->Reset();
-	if (!gl.legacyMode) GLRenderer->mLights->Clear();
+	GLRenderer->mLights->Clear();
 
 	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);

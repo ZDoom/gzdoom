@@ -67,25 +67,18 @@ void FDrawInfo::RenderFogBoundary(GLWall *wall)
 {
 	if (gl_fogmode && mDrawer->FixedColormap == 0)
 	{
-		if (!gl.legacyMode)
-		{
-			int rel = wall->rellight + getExtraLight();
-			mDrawer->SetFog(wall->lightlevel, rel, &wall->Colormap, false);
-			gl_RenderState.EnableDrawBuffers(1);
-			gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
-			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-			glEnable(GL_POLYGON_OFFSET_FILL);
-			glPolygonOffset(-1.0f, -128.0f);
-			RenderWall(wall, GLWall::RWF_BLANK);
-			glPolygonOffset(0.0f, 0.0f);
-			glDisable(GL_POLYGON_OFFSET_FILL);
-			gl_RenderState.SetEffect(EFF_NONE);
-			gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
-		}
-		else
-		{
-			RenderFogBoundaryCompat(wall);
-		}
+		int rel = wall->rellight + getExtraLight();
+		mDrawer->SetFog(wall->lightlevel, rel, &wall->Colormap, false);
+		gl_RenderState.EnableDrawBuffers(1);
+		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
+		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+		glEnable(GL_POLYGON_OFFSET_FILL);
+		glPolygonOffset(-1.0f, -128.0f);
+		RenderWall(wall, GLWall::RWF_BLANK);
+		glPolygonOffset(0.0f, 0.0f);
+		glDisable(GL_POLYGON_OFFSET_FILL);
+		gl_RenderState.SetEffect(EFF_NONE);
+		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 	}
 }
 
@@ -99,17 +92,9 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 {
 	if (!TexMan.mirrorTexture.isValid()) return;
 
-	if (!gl.legacyMode)
-	{
-		// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
-		gl_RenderState.EnableTextureMatrix(true);
-		gl_RenderState.mTextureMatrix.computeNormalMatrix(gl_RenderState.mViewMatrix);
-	}
-	else
-	{
-		FVector3 v = wall->glseg.Normal();
-		glNormal3fv(&v[0]);
-	}
+	// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
+	gl_RenderState.EnableTextureMatrix(true);
+	gl_RenderState.mTextureMatrix.computeNormalMatrix(gl_RenderState.mViewMatrix);
 
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
@@ -258,7 +243,7 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 {
 	if (screen->hwcaps & RFL_BUFFER_STORAGE)
 	{
-		if (level.HasDynamicLights && FixedColormap == CM_DEFAULT && wall->gltexture != nullptr && !(screen->hwcaps & RFL_NO_SHADERS))
+		if (level.HasDynamicLights && FixedColormap == CM_DEFAULT && wall->gltexture != nullptr)
 		{
 			wall->SetupLights(this, lightdata);
 		}
@@ -289,17 +274,6 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 			break;
 		}
 		break;
-
-	case GLPASS_LIGHTTEX:
-	case GLPASS_LIGHTTEX_ADDITIVE:
-	case GLPASS_LIGHTTEX_FOGGY:
-		RenderLightsCompat(wall, pass);
-		break;
-
-	case GLPASS_TEXONLY:
-		gl_RenderState.SetMaterial(wall->gltexture, wall->flags & 3, 0, -1, false);
-		RenderWall(wall, GLWall::RWF_TEXTURED);
-		break;
 	}
 }
 
@@ -318,11 +292,6 @@ void FDrawInfo::AddWall(GLWall *wall)
 	}
 	else
 	{
-		if (gl.legacyMode)
-		{
-			if (PutWallCompat(wall, GLWall::passflag[wall->type])) return;
-		}
-
 		bool masked = GLWall::passflag[wall->type] == 1 ? false : (wall->gltexture && wall->gltexture->isMasked());
 		int list;
 

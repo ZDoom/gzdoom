@@ -219,7 +219,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 {
 	// That's a lot of checks...
-	if (modelframe && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && !fullbright && !(screen->hwcaps & RFL_NO_SHADERS))
+	if (modelframe && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && !fullbright)
 	{
 		hw_GetDynModelLight(actor, lightdata);
 		dynlightindex = di->UploadLights(lightdata);
@@ -709,7 +709,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		RenderStyle.CheckFuzz();
 		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl_fuzztype != 0 && !(screen->hwcaps & RFL_NO_SHADERS) && !(RenderStyle.Flags & STYLEF_InvertSource))
+			if (gl_fuzztype != 0 && !(RenderStyle.Flags & STYLEF_InvertSource))
 			{
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 				OverrideShader = SHADER_NoTexture + gl_fuzztype;

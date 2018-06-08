@@ -148,9 +148,6 @@ public:
 
 	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
 	{
-		// alpha textures need special treatment in the legacy renderer because without shaders they need a different texture. This will also override all other translations.
-		if (alphatexture &&  gl.legacyMode) translation = -STRange_AlphaTexture;
-		
 		if (mat->tex->bHasCanvas)
 		{
 			mTempTM = TM_OPAQUE;

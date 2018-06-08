@@ -116,7 +116,6 @@ extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern void HUD_InitHud();
-void gl_PatchMenu();	// remove modern OpenGL options on old hardware.
 void DeinitMenus();
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -2635,7 +2634,6 @@ void D_DoomMain (void)
 			}
 
 			V_Init2();
-			gl_PatchMenu();	// removes unapplicable entries for old hardware. This cannot be done in MENUDEF because at the point it gets parsed it doesn't have the needed info.
 			UpdateJoystickMenu(NULL);
 
 			v = Args->CheckValue ("-loadgame");

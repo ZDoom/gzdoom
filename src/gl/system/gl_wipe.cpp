@@ -133,10 +133,6 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 		GLRenderer->mBuffers->BindCurrentFB();
 		copyPixels();
 	}
-	else if (gl.legacyMode)
-	{
-		copyPixels();
-	}
 	else
 	{
 		GLint readbuffer = 0;

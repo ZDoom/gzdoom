@@ -179,9 +179,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		if (gl.es)
 		{
-			vp_comb.Format("#version 300 es\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
 		else
 		{
@@ -360,7 +358,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
-	if (!gl.legacyMode && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
 		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
@@ -422,7 +420,6 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 	FString defines;
 	defines += shaderdefines;
 	// this can't be in the shader code due to ATI strangeness.
-	if (gl.MaxLights() == 128) defines += "#define MAXLIGHTS128\n";
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
 	if (passType == GBUFFER_PASS) defines += "#define GBUFFER_PASS\n";
 
@@ -518,30 +515,17 @@ static const FEffectShader effectshaders[]=
 
 FShaderManager::FShaderManager()
 {
-	if (!gl.legacyMode)
-	{
-		if (gl.es) // OpenGL ES does not support multiple fragment shader outputs. As a result, no GBUFFER passes are possible.
-		{
-			mPassShaders.Push(new FShaderCollection(NORMAL_PASS));
-		}
-		else
-		{
-			for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
-				mPassShaders.Push(new FShaderCollection((EPassType)passType));
-		}
-	}
+	for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
+		mPassShaders.Push(new FShaderCollection((EPassType)passType));
 }
 
 FShaderManager::~FShaderManager()
 {
-	if (!gl.legacyMode)
-	{
-		glUseProgram(0);
-		mActiveShader = NULL;
+	glUseProgram(0);
+	mActiveShader = NULL;
 
-		for (auto collection : mPassShaders)
-			delete collection;
-	}
+	for (auto collection : mPassShaders)
+		delete collection;
 }
 
 void FShaderManager::SetActiveShader(FShader *sh)
@@ -571,21 +555,11 @@ FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passT
 
 void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view, EPassType passType)
 {
-	if (gl.legacyMode)
-	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf(proj->get());
-		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf(view->get());
-	}
-	else
-	{
-		if (passType < mPassShaders.Size())
-			mPassShaders[passType]->ApplyMatrices(proj, view);
+	if (passType < mPassShaders.Size())
+		mPassShaders[passType]->ApplyMatrices(proj, view);
 
-		if (mActiveShader)
-			mActiveShader->Bind();
-	}
+	if (mActiveShader)
+		mActiveShader->Bind();
 }
 
 void FShaderManager::ResetFixedColormap()

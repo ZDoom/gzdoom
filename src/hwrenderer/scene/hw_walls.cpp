@@ -50,7 +50,6 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 {
 	lightdata.Clear();
 
-	if (screen->hwcaps & RFL_NO_SHADERS) return;	// useless in OpenGL 2.
 	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
 
 	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
@@ -185,7 +184,7 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
     
 	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
 	{
-		if (level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && gltexture != nullptr && !(screen->hwcaps & RFL_NO_SHADERS))
+		if (level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && gltexture != nullptr)
 		{
 			SetupLights(di, lightdata);
 		}

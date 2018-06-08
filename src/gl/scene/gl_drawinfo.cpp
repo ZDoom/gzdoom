@@ -173,15 +173,10 @@ void FDrawInfoList::Release(FDrawInfo * di)
 FDrawInfo::FDrawInfo()
 {
 	next = NULL;
-	if (gl.legacyMode)
-	{
-		dldrawlists = new HWDrawList[GLLDL_TYPES];
-	}
 }
 
 FDrawInfo::~FDrawInfo()
 {
-	if (dldrawlists != NULL) delete[] dldrawlists;
 	ClearBuffers();
 }
 
@@ -214,10 +209,6 @@ void FDrawInfo::StartScene()
 	next = gl_drawinfo;
 	gl_drawinfo = this;
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
-	if (dldrawlists != NULL)
-	{
-		for (int i = 0; i < GLLDL_TYPES; i++) dldrawlists[i].Reset();
-	}
 	decals[0].Clear();
 	decals[1].Clear();
 	hudsprites.Clear();
@@ -233,10 +224,6 @@ void FDrawInfo::EndDrawInfo()
 	FDrawInfo * di = gl_drawinfo;
 
 	for(int i=0;i<GLDL_TYPES;i++) di->drawlists[i].Reset();
-	if (di->dldrawlists != NULL)
-	{
-		for (int i = 0; i < GLLDL_TYPES; i++) di->dldrawlists[i].Reset();
-	}
 	gl_drawinfo=di->next;
 	di_list.Release(di);
 	if (gl_drawinfo == nullptr) 

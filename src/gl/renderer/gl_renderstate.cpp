@@ -348,14 +348,7 @@ void FRenderState::Apply()
 		else mVertexBuffer->BindVBO();
 		mCurrentVertexBuffer = mVertexBuffer;
 	}
-	if (!gl.legacyMode) 
-	{
-		ApplyShader();
-	}
-	else
-	{
-		ApplyFixedFunction();
-	}
+	ApplyShader();
 }
 
 
@@ -385,38 +378,22 @@ void FRenderState::ApplyMatrices()
 
 void FRenderState::ApplyLightIndex(int index)
 {
-	if (!gl.legacyMode)
+	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
 	{
-		if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
-		{
-			index = GLRenderer->mLights->BindUBO(index);
-		}
-		activeShader->muLightIndex.Set(index);
+		index = GLRenderer->mLights->BindUBO(index);
 	}
+	activeShader->muLightIndex.Set(index);
 }
 
 void FRenderState::SetClipHeight(float height, float direction)
 {
 	mClipHeight = height;
 	mClipHeightDirection = direction;
-#if 1
-	// This still doesn't work... :(
+
 	if (gl.flags & RFL_NO_CLIP_PLANES) return;
-#endif
+
 	if (direction != 0.f)
 	{
-		/*
-		if (gl.flags & RFL_NO_CLIP_PLANES)
-		{
-			glMatrixMode(GL_MODELVIEW);
-			glPushMatrix();
-			glLoadMatrixf(mViewMatrix.get());
-			// Plane mirrors never are slopes.
-			double d[4] = { 0, direction, 0, -direction * height };
-			glClipPlane(GL_CLIP_PLANE0, d);
-			glPopMatrix();
-		}
-		*/
 		glEnable(GL_CLIP_DISTANCE0);
 	}
 	else

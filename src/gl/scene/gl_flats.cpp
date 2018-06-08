@@ -213,11 +213,6 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 	gl_RenderState.Apply();
 	auto iboindex = flat->iboindex;
-	if (gl.legacyMode)
-	{
-		processlights = false;
-		iboindex = -1;
-	}
 
 	if (iboindex >= 0)
 	{
@@ -391,24 +386,11 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, !gl.legacyMode && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
+			DrawSubsectors(flat, pass, (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetObjectColor(0xffffffff);
-		break;
-
-	case GLPASS_LIGHTTEX:
-	case GLPASS_LIGHTTEX_ADDITIVE:
-	case GLPASS_LIGHTTEX_FOGGY:
-		DrawLightsCompat(flat, pass);
-		break;
-
-	case GLPASS_TEXONLY:
-		gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
-		gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-		DrawSubsectors(flat, pass, false, false);
-		gl_RenderState.EnableTextureMatrix(false);
 		break;
 	}
 }
@@ -426,10 +408,6 @@ void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
 {
 	int list;
 
-	if (gl.legacyMode)
-	{
-		if (PutFlatCompat(flat, fog)) return;
-	}
 	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.

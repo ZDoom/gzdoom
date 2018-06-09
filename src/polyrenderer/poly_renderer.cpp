@@ -27,6 +27,7 @@
 #include "st_stuff.h"
 #include "r_data/r_translate.h"
 #include "r_data/r_interpolate.h"
+#include "r_data/models/models.h"
 #include "poly_renderer.h"
 #include "d_net.h"
 #include "po_man.h"
@@ -41,6 +42,9 @@
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Float, r_visibility)
+EXTERN_CVAR(Bool, r_models)
+
+extern bool r_modelscene;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -155,6 +159,8 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 	}
 
 	ScreenTriangle::FuzzStart = (ScreenTriangle::FuzzStart + 14) % FUZZTABLE;
+
+	r_modelscene = r_models && Models.Size() > 0;
 
 	ClearBuffers();
 	SetSceneViewport();

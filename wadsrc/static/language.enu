@@ -1818,6 +1818,7 @@ DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_SKYMODE				= "Sky render mode";
 DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Fullbright overrides sector color";
+DSPLYMNU_MODELS					= "Models";
 DSPLYMNU_SCALEFUZZ				= "Scale fuzz effect";
 DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
 DSPLYMNU_OLDTRANS				= "Classic Transparency";

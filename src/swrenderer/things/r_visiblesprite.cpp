@@ -315,7 +315,7 @@ namespace swrenderer
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// Render draw segments behind sprite
-		if (r_models)
+		if (r_modelscene)
 		{
 			int subsectordepth = spr->SubsectorDepth;
 			for (unsigned int index = 0; index != segmentlist->TranslucentSegmentsCount(); index++)

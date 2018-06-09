@@ -83,7 +83,7 @@ namespace swrenderer
 				SortedSprites[i] = Sprites[first + count - i - 1];
 		}
 
-		if (r_models) // To do: only do this if models are spotted - just in case there's some lame renderhack somewhere that relies on Carmacks algorithm
+		if (r_modelscene)
 		{
 			for (unsigned int i = 0; i < count; i++)
 			{

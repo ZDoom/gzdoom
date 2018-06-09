@@ -6860,7 +6860,7 @@ ExpEmit FxCVar::Emit(VMFunctionBuilder *build)
 		auto cv = static_cast<FFlagCVar *>(CVar);
 		auto vcv = &cv->ValueVar;
 		if (vcv == &compatflags) pVal = &i_compatflags;
-		else if (vcv == &compatflags2) pVal = &ii_compatflags2;
+		else if (vcv == &compatflags2) pVal = &i_compatflags2;
 		else pVal = &vcv->Value;
 		build->Emit(OP_LKP, addr.RegNum, build->GetConstantAddress(pVal));
 		build->Emit(OP_LW, dest.RegNum, addr.RegNum, nul);

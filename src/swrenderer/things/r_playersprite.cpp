@@ -94,7 +94,7 @@ namespace swrenderer
 			(r_deathcamera && Thread->Viewport->viewpoint.camera->health <= 0))
 			return;
 		
-		renderHUDModel = r_models && IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+		renderHUDModel = r_modelscene && IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 		FDynamicColormap *basecolormap;
 		CameraLight *cameraLight = CameraLight::Instance();

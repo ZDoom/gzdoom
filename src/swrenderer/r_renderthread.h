@@ -31,6 +31,7 @@ class RenderMemory;
 class ADynamicLight;
 
 EXTERN_CVAR(Bool, r_models);
+extern bool r_modelscene;
 
 namespace swrenderer
 {

@@ -140,7 +140,7 @@ void PolyDrawArgs::SetColor(uint32_t bgra, uint8_t palindex)
 	}
 }
 
-void PolyDrawArgs::DrawArray(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, int vcount, PolyDrawMode mode)
+void PolyDrawArgs::DrawArray(const DrawerCommandQueuePtr &queue, const void *vertices, int vcount, PolyDrawMode mode)
 {
 	mVertices = vertices;
 	mVertexCount = vcount;
@@ -149,7 +149,7 @@ void PolyDrawArgs::DrawArray(const DrawerCommandQueuePtr &queue, const TriVertex
 	queue->Push<DrawPolyTrianglesCommand>(*this);
 }
 
-void PolyDrawArgs::DrawElements(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode)
+void PolyDrawArgs::DrawElements(const DrawerCommandQueuePtr &queue, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode)
 {
 	mVertices = vertices;
 	mElements = elements;

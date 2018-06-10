@@ -38,6 +38,7 @@ public:
 	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
 	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
 	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
+	static void SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
 
 	static bool IsBgra();
@@ -54,6 +55,7 @@ public:
 	void SetCullCCW(bool value) { ccw = value; }
 	void SetTwoSided(bool value) { twosided = value; }
 	void SetWeaponScene(bool value) { weaponScene = value; }
+	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; modelInterpolationFactor = interpolationFactor; }
 
 	void DrawElements(const PolyDrawArgs &args);
 	void DrawArrays(const PolyDrawArgs &args);
@@ -71,7 +73,7 @@ public:
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 
 private:
-	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const TriVertex &v);
+	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, int index);
 	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
 	static bool IsDegenerate(const ShadedTriVertex *vertices);
 	static bool IsFrontfacing(TriDrawTriangleArgs *args);
@@ -91,6 +93,9 @@ private:
 	bool weaponScene = false;
 	const Mat4f *objectToClip = nullptr;
 	const Mat4f *objectToWorld = nullptr;
+	int modelFrame1 = -1;
+	int modelFrame2 = -1;
+	float modelInterpolationFactor = 0.0f;
 
 	enum { max_additional_vertices = 16 };
 };
@@ -138,6 +143,19 @@ public:
 
 private:
 	bool value;
+};
+
+class PolySetModelVertexShaderCommand : public DrawerCommand
+{
+public:
+	PolySetModelVertexShaderCommand(int frame1, int frame2, float interpolationFactor);
+
+	void Execute(DrawerThread *thread) override;
+
+private:
+	int frame1;
+	int frame2;
+	float interpolationFactor;
 };
 
 class PolyClearStencilCommand : public DrawerCommand

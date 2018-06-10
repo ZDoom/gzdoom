@@ -45,7 +45,7 @@ class PolyStencilBuffer
 {
 public:
 	static PolyStencilBuffer *Instance();
-	void Clear(int newwidth, int newheight, uint8_t stencil_value = 0);
+	void Resize(int newwidth, int newheight);
 	int Width() const { return width; }
 	int Height() const { return height; }
 	uint8_t *Values() { return values.data(); }

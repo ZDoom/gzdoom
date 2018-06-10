@@ -41,15 +41,20 @@
 
 static bool isBgraRenderTarget = false;
 
-void PolyTriangleDrawer::ClearBuffers(DCanvas *canvas)
+void PolyTriangleDrawer::ResizeBuffers(DCanvas *canvas)
 {
-	PolyStencilBuffer::Instance()->Clear(canvas->GetWidth(), canvas->GetHeight(), 0);
+	PolyStencilBuffer::Instance()->Resize(canvas->GetWidth(), canvas->GetHeight());
 	PolyZBuffer::Instance()->Resize(canvas->GetPitch(), canvas->GetHeight());
 }
 
 bool PolyTriangleDrawer::IsBgra()
 {
 	return isBgraRenderTarget;
+}
+
+void PolyTriangleDrawer::ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value)
+{
+	queue->Push<PolyClearStencilCommand>(value);
 }
 
 void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas)
@@ -98,6 +103,21 @@ void PolyTriangleDrawer::SetWeaponScene(const DrawerCommandQueuePtr &queue, bool
 }
 
 /////////////////////////////////////////////////////////////////////////////
+
+void PolyTriangleThreadData::ClearStencil(uint8_t value)
+{
+	auto buffer = PolyStencilBuffer::Instance();
+	int width = buffer->Width();
+	int height = buffer->Height();
+	uint8_t *data = buffer->Values();
+
+	data += core * width;
+	for (int y = core; y < height; y += num_cores)
+	{
+		memset(data, value, width);
+		data += num_cores * width;
+	}
+}
 
 void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra)
 {
@@ -629,6 +649,17 @@ PolySetWeaponSceneCommand::PolySetWeaponSceneCommand(bool value) : value(value)
 void PolySetWeaponSceneCommand::Execute(DrawerThread *thread)
 {
 	PolyTriangleThreadData::Get(thread)->SetWeaponScene(value);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyClearStencilCommand::PolyClearStencilCommand(uint8_t value) : value(value)
+{
+}
+
+void PolyClearStencilCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->ClearStencil(value);
 }
 
 /////////////////////////////////////////////////////////////////////////////

@@ -453,7 +453,7 @@ void FMaterial::Bind(int clampmode, int translation)
 				layer = mTextureLayers[i].texture;
 			}
 			auto systex = ValidateSysTexture(layer, mExpanded);
-			systex->BindOrCreate(layer, i+1, clampmode, 0, 0);
+			systex->BindOrCreate(layer, i+1, clampmode, 0, mExpanded ? CTF_Expand : 0);
 			maxbound = i+1;
 		}
 	}

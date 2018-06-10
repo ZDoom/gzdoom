@@ -97,8 +97,6 @@ public:
 	virtual void Execute(DrawerThread *thread) = 0;
 };
 
-void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal));
-
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 
@@ -122,7 +120,6 @@ private:
 	void WorkerMain(DrawerThread *thread);
 
 	static DrawerThreads *Instance();
-	static void ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal);
 	
 	std::vector<DrawerThread> threads;
 

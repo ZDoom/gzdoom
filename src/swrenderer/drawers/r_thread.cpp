@@ -203,15 +203,6 @@ void DrawerThreads::StopThreads()
 	shutdown_flag = false;
 }
 
-#ifndef WIN32
-
-void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal))
-{
-	tryBlock(data);
-}
-
-#endif
-
 DrawerCommandQueue::DrawerCommandQueue(RenderMemory *frameMemory) : FrameMemory(frameMemory)
 {
 }

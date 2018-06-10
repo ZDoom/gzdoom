@@ -203,6 +203,8 @@ void DrawerThreads::StopThreads()
 	shutdown_flag = false;
 }
 
+/////////////////////////////////////////////////////////////////////////////
+
 DrawerCommandQueue::DrawerCommandQueue(RenderMemory *frameMemory) : FrameMemory(frameMemory)
 {
 }
@@ -210,4 +212,14 @@ DrawerCommandQueue::DrawerCommandQueue(RenderMemory *frameMemory) : FrameMemory(
 void *DrawerCommandQueue::AllocMemory(size_t size)
 {
 	return FrameMemory->AllocMemory<uint8_t>((int)size);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void GroupMemoryBarrierCommand::Execute(DrawerThread *thread)
+{
+	std::unique_lock<std::mutex> lock(mutex);
+	count++;
+	condition.notify_all();
+	condition.wait(lock, [&]() { return count >= thread->num_cores; });
 }

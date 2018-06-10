@@ -97,6 +97,18 @@ public:
 	virtual void Execute(DrawerThread *thread) = 0;
 };
 
+// Wait for all worker threads before executing next command
+class GroupMemoryBarrierCommand : public DrawerCommand
+{
+public:
+	void Execute(DrawerThread *thread);
+
+private:
+	std::mutex mutex;
+	std::condition_variable condition;
+	size_t count = 0;
+};
+
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 

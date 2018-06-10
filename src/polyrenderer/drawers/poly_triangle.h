@@ -101,7 +101,6 @@ public:
 	PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolySetTransform"; }
 
 private:
 	const Mat4f *objectToClip;
@@ -114,7 +113,6 @@ public:
 	PolySetCullCCWCommand(bool ccw);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolySetCullCCWCommand"; }
 
 private:
 	bool ccw;
@@ -126,7 +124,6 @@ public:
 	PolySetTwoSidedCommand(bool twosided);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolySetCullCCWCommand"; }
 
 private:
 	bool twosided;
@@ -138,7 +135,6 @@ public:
 	PolySetWeaponSceneCommand(bool value);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolySetWeaponSceneCommand"; }
 
 private:
 	bool value;
@@ -150,7 +146,6 @@ public:
 	PolyClearStencilCommand(uint8_t value);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolyClearStencilCommand"; }
 
 private:
 	uint8_t value;
@@ -162,7 +157,6 @@ public:
 	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolySetViewport"; }
 
 private:
 	int x;
@@ -182,7 +176,6 @@ public:
 	DrawPolyTrianglesCommand(const PolyDrawArgs &args);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "DrawPolyTriangles"; }
 
 private:
 	PolyDrawArgs args;
@@ -194,7 +187,6 @@ public:
 	DrawRectCommand(const RectDrawArgs &args) : args(args) { }
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "DrawRect"; }
 
 private:
 	RectDrawArgs args;

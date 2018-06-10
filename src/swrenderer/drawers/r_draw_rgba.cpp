@@ -307,11 +307,6 @@ namespace swrenderer
 		}
 	}
 
-	FString DrawScaledFuzzColumnRGBACommand::DebugInfo()
-	{
-		return "DrawScaledFuzzColumn";
-	}
-
 	/////////////////////////////////////////////////////////////////////////////
 
 	DrawFuzzColumnRGBACommand::DrawFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs)
@@ -446,11 +441,6 @@ namespace swrenderer
 #endif
 	}
 
-	FString DrawFuzzColumnRGBACommand::DebugInfo()
-	{
-		return "DrawFuzzColumn";
-	}
-
 	/////////////////////////////////////////////////////////////////////////////
 
 	FillSpanRGBACommand::FillSpanRGBACommand(const SpanDrawerArgs &drawerargs)
@@ -474,11 +464,6 @@ namespace swrenderer
 		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
-	}
-
-	FString FillSpanRGBACommand::DebugInfo()
-	{
-		return "FillSpan";
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -541,11 +526,6 @@ namespace swrenderer
 
 			dest[x] = 0xff000000 | (red << 16) | (green << 8) | blue;
 		} while (++x <= x2);
-	}
-
-	FString DrawFogBoundaryLineRGBACommand::DebugInfo()
-	{
-		return "DrawFogBoundaryLine";
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -678,11 +658,6 @@ namespace swrenderer
 		}
 	}
 
-	FString DrawTiltedSpanRGBACommand::DebugInfo()
-	{
-		return "DrawTiltedSpan";
-	}
-
 	/////////////////////////////////////////////////////////////////////////////
 
 	DrawColoredSpanRGBACommand::DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs)
@@ -710,11 +685,6 @@ namespace swrenderer
 		uint32_t color = LightBgra::shade_pal_index_simple(_color, light);
 		for (int i = 0; i < count; i++)
 			dest[i] = color;
-	}
-
-	FString DrawColoredSpanRGBACommand::DebugInfo()
-	{
-		return "DrawColoredSpan";
 	}
 
 	/////////////////////////////////////////////////////////////////////////////
@@ -926,11 +896,6 @@ namespace swrenderer
 		}
 	}
 
-	FString DrawParticleColumnRGBACommand::DebugInfo()
-	{
-		return "DrawParticle";
-	}
-
 	/////////////////////////////////////////////////////////////////////////////
 
 	DrawVoxelBlocksRGBACommand::DrawVoxelBlocksRGBACommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) : args(args), blocks(blocks), blockcount(blockcount)
@@ -965,10 +930,5 @@ namespace swrenderer
 				drawer.args.dc_dest += 4;
 			}
 		}
-	}
-
-	FString DrawVoxelBlocksRGBACommand::DebugInfo()
-	{
-		return "DrawVoxelBlocks";
 	}
 }

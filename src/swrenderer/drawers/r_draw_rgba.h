@@ -83,7 +83,6 @@ namespace swrenderer
 	public:
 		DrawFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 	};
 
 	class DrawScaledFuzzColumnRGBACommand : public DrawerCommand
@@ -99,7 +98,6 @@ namespace swrenderer
 	public:
 		DrawScaledFuzzColumnRGBACommand(const SpriteDrawerArgs &drawerargs);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 	};
 
 	class FillSpanRGBACommand : public DrawerCommand
@@ -114,7 +112,6 @@ namespace swrenderer
 	public:
 		FillSpanRGBACommand(const SpanDrawerArgs &drawerargs);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 	};
 
 	class DrawFogBoundaryLineRGBACommand : public DrawerCommand
@@ -129,7 +126,6 @@ namespace swrenderer
 	public:
 		DrawFogBoundaryLineRGBACommand(const SpanDrawerArgs &drawerargs);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 	};
 
 	class DrawTiltedSpanRGBACommand : public DrawerCommand
@@ -156,7 +152,6 @@ namespace swrenderer
 	public:
 		DrawTiltedSpanRGBACommand(const SpanDrawerArgs &drawerargs, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 	};
 
 	class DrawColoredSpanRGBACommand : public DrawerCommand
@@ -172,7 +167,6 @@ namespace swrenderer
 		DrawColoredSpanRGBACommand(const SpanDrawerArgs &drawerargs);
 
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 	};
 
 #if 0
@@ -192,7 +186,6 @@ namespace swrenderer
 	public:
 		ApplySpecialColormapRGBACommand(FSpecialColormap *colormap, DFrameBuffer *screen);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "ApplySpecialColormapRGBACommand"; }
 	};
 #endif
 
@@ -219,7 +212,6 @@ namespace swrenderer
 	public:
 		DrawParticleColumnRGBACommand(uint32_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 
 	private:
 		uint32_t *_dest;
@@ -238,7 +230,6 @@ namespace swrenderer
 	public:
 		DrawVoxelBlocksRGBACommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 
 	private:
 		SpriteDrawerArgs args;

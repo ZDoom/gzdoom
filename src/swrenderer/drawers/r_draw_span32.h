@@ -432,8 +432,6 @@ namespace swrenderer
 				return outcolor;
 			}
 		}
-
-		FString DebugInfo() override { return "DrawSpan32T"; }
 	};
 
 	typedef DrawSpan32T<DrawSpan32TModes::OpaqueSpan> DrawSpan32Command;

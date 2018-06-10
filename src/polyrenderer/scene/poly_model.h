@@ -61,7 +61,7 @@ public:
 	Mat4f ObjectToWorld;
 	FTexture *SkinTexture = nullptr;
 	unsigned int *IndexBuffer = nullptr;
-	TriVertex *VertexBuffer = nullptr;
+	FModelVertex *VertexBuffer = nullptr;
 	float InterpolationFactor = 0.0;
 	PolyLight *Lights = nullptr;
 	int NumLights = 0;
@@ -82,7 +82,6 @@ public:
 	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
 
 private:
-	int mIndexFrame[2];
 	TArray<FModelVertex> mVertexBuffer;
 	TArray<unsigned int> mIndexBuffer;
 };

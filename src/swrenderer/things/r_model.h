@@ -85,7 +85,7 @@ namespace swrenderer
 		PolyClipPlane ClipTop, ClipBottom;
 		FTexture *SkinTexture = nullptr;
 		unsigned int *IndexBuffer = nullptr;
-		TriVertex *VertexBuffer = nullptr;
+		FModelVertex *VertexBuffer = nullptr;
 		float InterpolationFactor = 0.0;
 		Mat4f *WorldToClip = nullptr;
 		bool MirrorWorldToClip = false;
@@ -108,7 +108,6 @@ namespace swrenderer
 		void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
 
 	private:
-		int mIndexFrame[2];
 		TArray<FModelVertex> mVertexBuffer;
 		TArray<unsigned int> mIndexBuffer;
 	};

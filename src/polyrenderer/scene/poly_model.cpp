@@ -38,12 +38,14 @@ void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_
 	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
 	renderer.AddLights(actor);
 	renderer.RenderModel(x, y, z, smf, actor);
+	PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 }
 
 void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy)
 {
 	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
 	renderer.RenderHUDModel(psp, ofsx, ofsy);
+	PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -288,44 +290,7 @@ void PolyModelVertexBuffer::UnlockIndexBuffer()
 void PolyModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size)
 {
 	PolyModelRenderer *polyrenderer = (PolyModelRenderer *)renderer;
-
-	if (frame1 == frame2 || size == 0 || polyrenderer->InterpolationFactor == 0.f)
-	{
-		TriVertex *vertices = polyrenderer->Thread->FrameMemory->AllocMemory<TriVertex>(size);
-
-		for (unsigned int i = 0; i < size; i++)
-		{
-			vertices[i] =
-			{
-				mVertexBuffer[frame1 + i].x,
-				mVertexBuffer[frame1 + i].y,
-				mVertexBuffer[frame1 + i].z,
-				1.0f,
-				mVertexBuffer[frame1 + i].u,
-				mVertexBuffer[frame1 + i].v
-			};
-		}
-
-		polyrenderer->VertexBuffer = vertices;
-		polyrenderer->IndexBuffer = &mIndexBuffer[0];
-	}
-	else
-	{
-		TriVertex *vertices = polyrenderer->Thread->FrameMemory->AllocMemory<TriVertex>(size);
-
-		float frac = polyrenderer->InterpolationFactor;
-		float inv_frac = 1.0f - frac;
-		for (unsigned int i = 0; i < size; i++)
-		{
-			vertices[i].x = mVertexBuffer[frame1 + i].x * inv_frac + mVertexBuffer[frame2 + i].x * frac;
-			vertices[i].y = mVertexBuffer[frame1 + i].y * inv_frac + mVertexBuffer[frame2 + i].y * frac;
-			vertices[i].z = mVertexBuffer[frame1 + i].z * inv_frac + mVertexBuffer[frame2 + i].z * frac;
-			vertices[i].w = 1.0f;
-			vertices[i].u = mVertexBuffer[frame1 + i].u;
-			vertices[i].v = mVertexBuffer[frame1 + i].v;
-		}
-
-		polyrenderer->VertexBuffer = vertices;
-		polyrenderer->IndexBuffer = &mIndexBuffer[0];
-	}
+	polyrenderer->VertexBuffer = mVertexBuffer.Size() ? &mVertexBuffer[0] : nullptr;
+	polyrenderer->IndexBuffer = mIndexBuffer.Size() ? &mIndexBuffer[0] : nullptr;
+	PolyTriangleDrawer::SetModelVertexShader(polyrenderer->Thread->DrawQueue, frame1, frame2, polyrenderer->InterpolationFactor);
 }

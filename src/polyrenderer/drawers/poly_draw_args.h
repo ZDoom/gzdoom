@@ -80,12 +80,12 @@ public:
 	void SetColor(uint32_t bgra, uint8_t palindex);
 	void SetLights(PolyLight *lights, int numLights) { mLights = lights; mNumLights = numLights; }
 	void SetDynLightColor(uint32_t color) { mDynLightColor = color; }
-	void DrawArray(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
-	void DrawElements(const DrawerCommandQueuePtr &queue, const TriVertex *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void DrawArray(const DrawerCommandQueuePtr &queue, const void *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	void DrawElements(const DrawerCommandQueuePtr &queue, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 
 	const PolyClipPlane &ClipPlane(int index) const { return mClipPlane[index]; }
 
-	const TriVertex *Vertices() const { return mVertices; }
+	const void *Vertices() const { return mVertices; }
 	int VertexCount() const { return mVertexCount; }
 	const unsigned int *Elements() const { return mElements; }
 	PolyDrawMode DrawMode() const { return mDrawMode; }
@@ -134,7 +134,7 @@ public:
 	void SetNormal(const FVector3 &normal) { mNormal = normal; }
 
 private:
-	const TriVertex *mVertices = nullptr;
+	const void *mVertices = nullptr;
 	int mVertexCount = 0;
 	const unsigned int *mElements = nullptr;
 	PolyDrawMode mDrawMode = PolyDrawMode::Triangles;

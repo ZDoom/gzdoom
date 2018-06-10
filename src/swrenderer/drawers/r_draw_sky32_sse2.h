@@ -153,8 +153,6 @@ namespace swrenderer
 				index += num_cores;
 			}
 		}
-		
-		FString DebugInfo() override { return "DrawSkySingle32Command"; }
 	};
 	
 	class DrawSkyDouble32Command : public DrawerCommand
@@ -308,7 +306,5 @@ namespace swrenderer
 				index += num_cores;
 			}
 		}
-		
-		FString DebugInfo() override { return "DrawSkyDouble32Command"; }
 	};
 }

@@ -95,7 +95,6 @@ public:
 	virtual ~DrawerCommand() { }
 
 	virtual void Execute(DrawerThread *thread) = 0;
-	virtual FString DebugInfo() = 0;
 };
 
 void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal));

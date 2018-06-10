@@ -386,8 +386,6 @@ namespace swrenderer
 				return outcolor;
 			}
 		}
-
-		FString DebugInfo() override { return "DrawSprite32T"; }
 	};
 
 	typedef DrawSprite32T<DrawSprite32TModes::CopySprite, DrawSprite32TModes::TextureSampler> DrawSpriteCopy32Command;

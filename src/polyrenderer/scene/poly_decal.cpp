@@ -191,7 +191,7 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, DBaseDecal *decal, const 
 	args.SetDepthTest(true);
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);
-	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 void RenderPolyDecal::GetDecalSectors(DBaseDecal *decal, const seg_t *line, sector_t **front, sector_t **back)

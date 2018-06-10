@@ -112,7 +112,7 @@ void PolySkyDome::RenderRow(PolyRenderThread *thread, PolyDrawArgs &args, int ro
 {
 	args.SetColor(capcolor, capcolorindex);
 	args.SetStyle(TriBlendMode::Skycap);
-	args.DrawArray(thread->DrawQueue, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
 }
 
 void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
@@ -122,7 +122,7 @@ void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args
 
 	args.SetColor(solid, palsolid);
 	args.SetStyle(TriBlendMode::Fill);
-	args.DrawArray(thread->DrawQueue, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
 }
 
 void PolySkyDome::CreateDome()

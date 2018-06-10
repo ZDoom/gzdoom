@@ -86,7 +86,7 @@ void RenderPolyParticle::Render(PolyRenderThread *thread, particle_t *particle, 
 	args.SetWriteStencil(false);
 	args.SetWriteDepth(false);
 	args.SetTexture(GetParticleTexture(), ParticleTextureSize, ParticleTextureSize);
-	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 uint8_t *RenderPolyParticle::GetParticleTexture()

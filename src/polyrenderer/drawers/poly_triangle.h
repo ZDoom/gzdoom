@@ -40,7 +40,8 @@ public:
 	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
 	static void SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor);
 	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
-
+	static void DrawArray(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	static void DrawElements(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
 	static bool IsBgra();
 };
 
@@ -57,8 +58,8 @@ public:
 	void SetWeaponScene(bool value) { weaponScene = value; }
 	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; modelInterpolationFactor = interpolationFactor; }
 
-	void DrawElements(const PolyDrawArgs &args);
-	void DrawArrays(const PolyDrawArgs &args);
+	void DrawElements(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode);
+	void DrawArray(const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode);
 
 	int32_t core;
 	int32_t num_cores;
@@ -73,7 +74,7 @@ public:
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 
 private:
-	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, int index);
+	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index);
 	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
 	static bool IsDegenerate(const ShadedTriVertex *vertices);
 	static bool IsFrontfacing(TriDrawTriangleArgs *args);
@@ -191,12 +192,16 @@ private:
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args);
+	DrawPolyTrianglesCommand(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode);
 
 	void Execute(DrawerThread *thread) override;
 
 private:
 	PolyDrawArgs args;
+	const void *vertices;
+	const unsigned int *elements;
+	int count;
+	PolyDrawMode mode;
 };
 
 class DrawRectCommand : public DrawerCommand

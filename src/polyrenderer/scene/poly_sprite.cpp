@@ -168,7 +168,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector
 	args.SetDepthTest(true);
 	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
-	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 double RenderPolySprite::GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos)

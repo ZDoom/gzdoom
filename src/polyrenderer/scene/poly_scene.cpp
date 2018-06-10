@@ -357,7 +357,7 @@ void RenderPolyScene::RenderPortals()
 		args.SetWriteStencil(true, CurrentViewpoint->StencilValue + 1);
 		for (const auto &verts : portal->Shape)
 		{
-			args.DrawArray(thread->DrawQueue, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
+			PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 		}
 	}
 
@@ -368,7 +368,7 @@ void RenderPolyScene::RenderPortals()
 		args.SetWriteStencil(true, CurrentViewpoint->StencilValue + 1);
 		for (const auto &verts : portal->Shape)
 		{
-			args.DrawArray(thread->DrawQueue, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
+			PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, verts.Vertices, verts.Count, PolyDrawMode::TriangleFan);
 		}
 	}
 }

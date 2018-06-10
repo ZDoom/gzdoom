@@ -330,7 +330,7 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		args.DrawArray(Thread->DrawQueue, VertexBuffer + start, count);
+		PolyTriangleDrawer::DrawArray(Thread->DrawQueue, args, VertexBuffer + start, count);
 	}
 
 	void SWModelRenderer::DrawElements(int numIndices, size_t offset)
@@ -356,7 +356,7 @@ namespace swrenderer
 		args.SetClipPlane(1, ClipTop);
 		args.SetClipPlane(2, ClipBottom);
 
-		args.DrawElements(Thread->DrawQueue, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
+		PolyTriangleDrawer::DrawElements(Thread->DrawQueue, args, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////

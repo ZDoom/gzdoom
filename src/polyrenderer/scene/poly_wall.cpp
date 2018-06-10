@@ -331,7 +331,7 @@ void RenderPolyWall::Render(PolyRenderThread *thread)
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 		if (!Texture)
 			return;
 	}
@@ -342,7 +342,7 @@ void RenderPolyWall::Render(PolyRenderThread *thread)
 		args.SetWriteStencil(true, Polyportal->StencilValue);
 		args.SetWriteColor(false);
 		args.SetWriteDepth(false);
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 		Polyportal->Shape.push_back({ vertices, 4 });
 	}
 	else if (!Masked)
@@ -466,7 +466,7 @@ void RenderPolyWall::DrawStripes(PolyRenderThread *thread, PolyDrawArgs &args, T
 
 			args.SetClipPlane(1, topPlane);
 			args.SetClipPlane(2, bottomPlane);
-			args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+			PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 
 			FDynamicColormap *basecolormap = GetColorTable(lit->extra_colormap, Line->frontsector->SpecialColors[sector_t::walltop]);
 
@@ -489,11 +489,11 @@ void RenderPolyWall::DrawStripes(PolyRenderThread *thread, PolyDrawArgs &args, T
 
 		args.SetClipPlane(1, topPlane);
 		args.SetClipPlane(2, PolyClipPlane());
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 	}
 }
 

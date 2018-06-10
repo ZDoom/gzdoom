@@ -231,7 +231,7 @@ void PolyModelRenderer::DrawArrays(int start, int count)
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);
 	args.SetWriteStencil(false);
-	args.DrawArray(Thread->DrawQueue, VertexBuffer + start, count);
+	PolyTriangleDrawer::DrawArray(Thread->DrawQueue, args, VertexBuffer + start, count);
 }
 
 void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
@@ -254,7 +254,7 @@ void PolyModelRenderer::DrawElements(int numIndices, size_t offset)
 	args.SetDepthTest(true);
 	args.SetWriteDepth(true);
 	args.SetWriteStencil(false);
-	args.DrawElements(Thread->DrawQueue, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
+	PolyTriangleDrawer::DrawElements(Thread->DrawQueue, args, VertexBuffer, IndexBuffer + offset / sizeof(unsigned int), numIndices);
 }
 
 /////////////////////////////////////////////////////////////////////////////

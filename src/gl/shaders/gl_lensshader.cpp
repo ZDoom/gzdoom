@@ -33,16 +33,15 @@ void FLensShader::Bind()
 {
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", prolog, 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/lensdistortion");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		InputTexture.Init(mShader, "InputTexture");
-		AspectRatio.Init(mShader, "Aspect");
-		Scale.Init(mShader, "Scale");
-		LensDistortionCoefficient.Init(mShader, "k");
-		CubicDistortionValue.Init(mShader, "kcube");
+		Uniforms.Init(mShader);
 	}
 	mShader.Bind();
 }

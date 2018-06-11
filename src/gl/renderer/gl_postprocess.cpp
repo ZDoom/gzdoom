@@ -582,10 +582,11 @@ void FGLRenderer::LensDistortScene()
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
 	mLensShader->Bind();
 	mLensShader->InputTexture.Set(0);
-	mLensShader->AspectRatio.Set(aspect);
-	mLensShader->Scale.Set(scale);
-	mLensShader->LensDistortionCoefficient.Set(k);
-	mLensShader->CubicDistortionValue.Set(kcube);
+	mLensShader->Uniforms->AspectRatio = aspect;
+	mLensShader->Uniforms->Scale = scale;
+	mLensShader->Uniforms->LensDistortionCoefficient = k;
+	mLensShader->Uniforms->CubicDistortionValue = kcube;
+	mLensShader->Uniforms.Set();
 	RenderScreenQuad();
 	mBuffers->NextTexture();
 

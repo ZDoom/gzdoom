@@ -9,10 +9,30 @@ public:
 	void Bind();
 
 	FBufferedUniformSampler InputTexture;
-	FBufferedUniform1f AspectRatio;
-	FBufferedUniform1f Scale;
-	FBufferedUniform4f LensDistortionCoefficient;
-	FBufferedUniform4f CubicDistortionValue;
+
+	struct UniformBlock
+	{
+		float AspectRatio;
+		float Scale;
+		float Padding0, Padding1;
+		FVector4 LensDistortionCoefficient;
+		FVector4 CubicDistortionValue;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "Aspect", UniformType::Float, offsetof(UniformBlock, AspectRatio) },
+				{ "Scale", UniformType::Float, offsetof(UniformBlock, Scale) },
+				{ "Padding0", UniformType::Float, offsetof(UniformBlock, Padding0) },
+				{ "Padding1", UniformType::Float, offsetof(UniformBlock, Padding1) },
+				{ "k", UniformType::Vec4, offsetof(UniformBlock, LensDistortionCoefficient) },
+				{ "kcube", UniformType::Vec4, offsetof(UniformBlock, CubicDistortionValue) }
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	FShaderProgram mShader;

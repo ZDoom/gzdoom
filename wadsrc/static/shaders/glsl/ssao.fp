@@ -2,25 +2,10 @@
 in vec2 TexCoord;
 out vec4 FragColor;
 
-uniform vec2 UVToViewA;
-uniform vec2 UVToViewB;
-uniform vec2 InvFullResolution;
-
-uniform float NDotVBias;
-uniform float NegInvR2;
-uniform float RadiusToScreen;
-uniform float AOMultiplier;
-
-uniform float AOStrength;
-
-uniform vec2 Scale;
-uniform vec2 Offset;
-
 uniform sampler2D DepthTexture;
 
 #if defined(MULTISAMPLE)
 uniform sampler2DMS NormalTexture;
-uniform int SampleIndex;
 #else
 uniform sampler2D NormalTexture;
 #endif

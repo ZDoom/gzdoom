@@ -6,13 +6,9 @@ uniform sampler2D AODepthTexture;
 
 #if defined(MULTISAMPLE)
 uniform sampler2DMS SceneFogTexture;
-uniform int SampleCount;
 #else
 uniform sampler2D SceneFogTexture;
 #endif
-
-uniform vec2 Scale;
-uniform vec2 Offset;
 
 void main()
 {

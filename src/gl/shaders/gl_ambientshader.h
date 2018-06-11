@@ -12,13 +12,37 @@ public:
 
 	FBufferedUniformSampler DepthTexture;
 	FBufferedUniformSampler ColorTexture;
-	FBufferedUniform1i SampleIndex;
-	FBufferedUniform1f LinearizeDepthA;
-	FBufferedUniform1f LinearizeDepthB;
-	FBufferedUniform1f InverseDepthRangeA;
-	FBufferedUniform1f InverseDepthRangeB;
-	FBufferedUniform2f Scale;
-	FBufferedUniform2f Offset;
+
+	struct UniformBlock
+	{
+		int SampleIndex;
+		float LinearizeDepthA;
+		float LinearizeDepthB;
+		float InverseDepthRangeA;
+		float InverseDepthRangeB;
+		float Padding0, Padding1, Padding2;
+		FVector2 Scale;
+		FVector2 Offset;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "SampleIndex", UniformType::Int, offsetof(UniformBlock, SampleIndex) },
+				{ "LinearizeDepthA", UniformType::Float, offsetof(UniformBlock, LinearizeDepthA) },
+				{ "LinearizeDepthB", UniformType::Float, offsetof(UniformBlock, LinearizeDepthB) },
+				{ "InverseDepthRangeA", UniformType::Float, offsetof(UniformBlock, InverseDepthRangeA) },
+				{ "InverseDepthRangeB", UniformType::Float, offsetof(UniformBlock, InverseDepthRangeB) },
+				{ "Padding0", UniformType::Float, offsetof(UniformBlock, Padding0) },
+				{ "Padding1", UniformType::Float, offsetof(UniformBlock, Padding1) },
+				{ "Padding2", UniformType::Float, offsetof(UniformBlock, Padding2) },
+				{ "Scale", UniformType::Vec2, offsetof(UniformBlock, Scale) },
+				{ "Offset", UniformType::Vec2, offsetof(UniformBlock, Offset) }
+			};
+		}
+	};
+	
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	std::unique_ptr<FShaderProgram> mShader;
@@ -33,17 +57,44 @@ public:
 	FBufferedUniformSampler DepthTexture;
 	FBufferedUniformSampler NormalTexture;
 	FBufferedUniformSampler RandomTexture;
-	FBufferedUniform2f UVToViewA;
-	FBufferedUniform2f UVToViewB;
-	FBufferedUniform2f InvFullResolution;
-	FBufferedUniform1f NDotVBias;
-	FBufferedUniform1f NegInvR2;
-	FBufferedUniform1f RadiusToScreen;
-	FBufferedUniform1f AOMultiplier;
-	FBufferedUniform1f AOStrength;
-	FBufferedUniform2f Scale;
-	FBufferedUniform2f Offset;
-	FBufferedUniform1i SampleIndex;
+
+	struct UniformBlock
+	{
+		FVector2 UVToViewA;
+		FVector2 UVToViewB;
+		FVector2 InvFullResolution;
+		float NDotVBias;
+		float NegInvR2;
+		float RadiusToScreen;
+		float AOMultiplier;
+		float AOStrength;
+		int SampleIndex;
+		float Padding0, Padding1;
+		FVector2 Scale;
+		FVector2 Offset;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "UVToViewA", UniformType::Vec2, offsetof(UniformBlock, UVToViewA) },
+				{ "UVToViewB", UniformType::Vec2, offsetof(UniformBlock, UVToViewB) },
+				{ "InvFullResolution", UniformType::Vec2, offsetof(UniformBlock, InvFullResolution) },
+				{ "NDotVBias", UniformType::Float, offsetof(UniformBlock, NDotVBias) },
+				{ "NegInvR2", UniformType::Float, offsetof(UniformBlock, NegInvR2) },
+				{ "RadiusToScreen", UniformType::Float, offsetof(UniformBlock, RadiusToScreen) },
+				{ "AOMultiplier", UniformType::Float, offsetof(UniformBlock, AOMultiplier) },
+				{ "AOStrength", UniformType::Float, offsetof(UniformBlock, AOStrength) },
+				{ "SampleIndex", UniformType::Int, offsetof(UniformBlock, SampleIndex) },
+				{ "Padding0", UniformType::Float, offsetof(UniformBlock, Padding0) },
+				{ "Padding1", UniformType::Float, offsetof(UniformBlock, Padding1) },
+				{ "Scale", UniformType::Vec2, offsetof(UniformBlock, Scale) },
+				{ "Offset", UniformType::Vec2, offsetof(UniformBlock, Offset) },
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	enum Quality
@@ -68,9 +119,25 @@ public:
 	void Bind(bool vertical);
 
 	FBufferedUniformSampler AODepthTexture[2];
-	FBufferedUniform1f BlurSharpness[2];
-	FBufferedUniform2f InvFullResolution[2];
-	FBufferedUniform1f PowExponent[2];
+
+	struct UniformBlock
+	{
+		float BlurSharpness;
+		float PowExponent;
+		FVector2 InvFullResolution;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "BlurSharpness", UniformType::Float, offsetof(UniformBlock, BlurSharpness) },
+				{ "PowExponent", UniformType::Float, offsetof(UniformBlock, PowExponent) },
+				{ "InvFullResolution", UniformType::Vec2, offsetof(UniformBlock, InvFullResolution) }
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms[2];
 
 private:
 	FShaderProgram mShader[2];
@@ -83,9 +150,29 @@ public:
 
 	FBufferedUniformSampler AODepthTexture;
 	FBufferedUniformSampler SceneFogTexture;
-	FBufferedUniform1i SampleCount;
-	FBufferedUniform2f Scale;
-	FBufferedUniform2f Offset;
+
+	struct UniformBlock
+	{
+		int SampleCount;
+		int Padding0, Padding1, Padding2;
+		FVector2 Scale;
+		FVector2 Offset;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "SampleCount", UniformType::Int, offsetof(UniformBlock, SampleCount) },
+				{ "Padding0", UniformType::Int, offsetof(UniformBlock, Padding0) },
+				{ "Padding1", UniformType::Int, offsetof(UniformBlock, Padding1) },
+				{ "Padding2", UniformType::Int, offsetof(UniformBlock, Padding2) },
+				{ "Scale", UniformType::Vec2, offsetof(UniformBlock, Scale) },
+				{ "Offset", UniformType::Vec2, offsetof(UniformBlock, Offset) }
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	std::unique_ptr<FShaderProgram> mShader;

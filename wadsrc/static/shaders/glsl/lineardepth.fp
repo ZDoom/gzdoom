@@ -5,18 +5,10 @@ out vec4 FragColor;
 #if defined(MULTISAMPLE)
 uniform sampler2DMS DepthTexture;
 uniform sampler2DMS ColorTexture;
-uniform int SampleIndex;
 #else
 uniform sampler2D DepthTexture;
 uniform sampler2D ColorTexture;
 #endif
-
-uniform float LinearizeDepthA;
-uniform float LinearizeDepthB;
-uniform float InverseDepthRangeA;
-uniform float InverseDepthRangeB;
-uniform vec2 Scale;
-uniform vec2 Offset;
 
 float normalizeDepth(float depth)
 {

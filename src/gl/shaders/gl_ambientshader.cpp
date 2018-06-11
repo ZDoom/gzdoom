@@ -33,21 +33,18 @@ void FLinearDepthShader::Bind()
 
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+		if (multisample) prolog += "#define MULTISAMPLE\n";
+
 		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", multisample ? "#define MULTISAMPLE\n" : "", 330);
+		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", prolog, 330);
 		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/lineardepth");
 		mShader->SetAttribLocation(0, "PositionInProjection");
 		DepthTexture.Init(*mShader, "DepthTexture");
 		ColorTexture.Init(*mShader, "ColorTexture");
-		SampleIndex.Init(*mShader, "SampleIndex");
-		LinearizeDepthA.Init(*mShader, "LinearizeDepthA");
-		LinearizeDepthB.Init(*mShader, "LinearizeDepthB");
-		InverseDepthRangeA.Init(*mShader, "InverseDepthRangeA");
-		InverseDepthRangeB.Init(*mShader, "InverseDepthRangeB");
-		Scale.Init(*mShader, "Scale");
-		Offset.Init(*mShader, "Offset");
+		Uniforms.Init(*mShader);
 		mMultisample = multisample;
 	}
 	mShader->Bind();
@@ -61,26 +58,19 @@ void FSSAOShader::Bind()
 
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+		prolog += GetDefines(gl_ssao, multisample);
+
 		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", GetDefines(gl_ssao, multisample), 330);
+		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", prolog, 330);
 		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/ssao");
 		mShader->SetAttribLocation(0, "PositionInProjection");
 		DepthTexture.Init(*mShader, "DepthTexture");
 		NormalTexture.Init(*mShader, "NormalTexture");
 		RandomTexture.Init(*mShader, "RandomTexture");
-		UVToViewA.Init(*mShader, "UVToViewA");
-		UVToViewB.Init(*mShader, "UVToViewB");
-		InvFullResolution.Init(*mShader, "InvFullResolution");
-		NDotVBias.Init(*mShader, "NDotVBias");
-		NegInvR2.Init(*mShader, "NegInvR2");
-		RadiusToScreen.Init(*mShader, "RadiusToScreen");
-		AOMultiplier.Init(*mShader, "AOMultiplier");
-		AOStrength.Init(*mShader, "AOStrength");
-		Scale.Init(*mShader, "Scale");
-		Offset.Init(*mShader, "Offset");
-		SampleIndex.Init(*mShader, "SampleIndex");
+		Uniforms.Init(*mShader);
 		mMultisample = multisample;
 	}
 	mShader->Bind();
@@ -116,15 +106,19 @@ void FDepthBlurShader::Bind(bool vertical)
 	auto &shader = mShader[vertical];
 	if (!shader)
 	{
+		FString prolog = Uniforms[vertical].CreateDeclaration("Uniforms", UniformBlock::Desc());
+		if (vertical)
+			prolog += "#define BLUR_VERTICAL\n";
+		else
+			prolog += "#define BLUR_HORIZONTAL\n";
+
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/depthblur.fp", vertical ? "#define BLUR_VERTICAL\n" : "#define BLUR_HORIZONTAL\n", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/depthblur.fp", prolog, 330);
 		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/depthblur");
 		shader.SetAttribLocation(0, "PositionInProjection");
 		AODepthTexture[vertical].Init(shader, "AODepthTexture");
-		BlurSharpness[vertical].Init(shader, "BlurSharpness");
-		InvFullResolution[vertical].Init(shader, "InvFullResolution");
-		PowExponent[vertical].Init(shader, "PowExponent");
+		Uniforms[vertical].Init(shader);
 	}
 	shader.Bind();
 }
@@ -137,17 +131,19 @@ void FSSAOCombineShader::Bind()
 
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+		if (multisample)
+			prolog += "#define MULTISAMPLE\n";
+
 		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", multisample ? "#define MULTISAMPLE\n" : "", 330);
+		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", prolog, 330);
 		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/ssaocombine");
 		mShader->SetAttribLocation(0, "PositionInProjection");
 		AODepthTexture.Init(*mShader, "AODepthTexture");
 		SceneFogTexture.Init(*mShader, "SceneFogTexture");
-		SampleCount.Init(*mShader, "SampleCount");
-		Scale.Init(*mShader, "Scale");
-		Offset.Init(*mShader, "Offset");
+		Uniforms.Init(*mShader);
 		mMultisample = multisample;
 	}
 	mShader->Bind();

@@ -69,14 +69,15 @@ void FExposureExtractShader::Bind()
 {
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureextract.fp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureextract.fp", prolog, 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/exposureextract");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		SceneTexture.Init(mShader, "SceneTexture");
-		Scale.Init(mShader, "Scale");
-		Offset.Init(mShader, "Offset");
+		Uniforms.Init(mShader);
 	}
 	mShader.Bind();
 }
@@ -99,16 +100,15 @@ void FExposureCombineShader::Bind()
 {
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposurecombine.fp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposurecombine.fp", prolog, 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/exposurecombine");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		ExposureTexture.Init(mShader, "ExposureTexture");
-		ExposureBase.Init(mShader, "ExposureBase");
-		ExposureMin.Init(mShader, "ExposureMin");
-		ExposureScale.Init(mShader, "ExposureScale");
-		ExposureSpeed.Init(mShader, "ExposureSpeed");
+		Uniforms.Init(mShader);
 	}
 	mShader.Bind();
 }

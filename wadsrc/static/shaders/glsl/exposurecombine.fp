@@ -3,10 +3,6 @@ in vec2 TexCoord;
 out vec4 FragColor;
 
 uniform sampler2D ExposureTexture;
-uniform float ExposureBase;
-uniform float ExposureMin;
-uniform float ExposureScale;
-uniform float ExposureSpeed;
 
 void main()
 {

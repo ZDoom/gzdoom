@@ -223,8 +223,9 @@ void FGLRenderer::UpdateCameraExposure()
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
 	mExposureExtractShader->Bind();
 	mExposureExtractShader->SceneTexture.Set(0);
-	mExposureExtractShader->Scale.Set(mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height);
-	mExposureExtractShader->Offset.Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
+	mExposureExtractShader->Uniforms->Scale = { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
+	mExposureExtractShader->Uniforms->Offset = { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
+	mExposureExtractShader->Uniforms.Set();
 	RenderScreenQuad();
 
 	// Find the average value:
@@ -257,10 +258,11 @@ void FGLRenderer::UpdateCameraExposure()
 	mBuffers->ExposureLevels.Last().Texture.Bind(0);
 	mExposureCombineShader->Bind();
 	mExposureCombineShader->ExposureTexture.Set(0);
-	mExposureCombineShader->ExposureBase.Set(gl_exposure_base);
-	mExposureCombineShader->ExposureMin.Set(gl_exposure_min);
-	mExposureCombineShader->ExposureScale.Set(gl_exposure_scale);
-	mExposureCombineShader->ExposureSpeed.Set(gl_exposure_speed);
+	mExposureCombineShader->Uniforms->ExposureBase = gl_exposure_base;
+	mExposureCombineShader->Uniforms->ExposureMin = gl_exposure_min;
+	mExposureCombineShader->Uniforms->ExposureScale = gl_exposure_scale;
+	mExposureCombineShader->Uniforms->ExposureSpeed = gl_exposure_speed;
+	mExposureCombineShader->Uniforms.Set();
 	RenderScreenQuad();
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 

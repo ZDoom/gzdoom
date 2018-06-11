@@ -31,18 +31,15 @@
 
 void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program_name)
 {
-	mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", "", 330);
-	mShader.Compile(FShaderProgram::Fragment, vtx_shader_name, "", 330);
+	FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
+	mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", prolog, 330);
+	mShader.Compile(FShaderProgram::Fragment, vtx_shader_name, prolog, 330);
 	mShader.SetFragDataLocation(0, "FragColor");
 	mShader.Link(program_name);
 	mShader.SetAttribLocation(0, "PositionInProjection");
 	mShader.SetAttribLocation(1, "UV");
-	InvGamma.Init(mShader, "InvGamma");
-	Contrast.Init(mShader, "Contrast");
-	Brightness.Init(mShader, "Brightness");
-	Saturation.Init(mShader, "Saturation");
-	GrayFormula.Init(mShader, "GrayFormula");
-	Scale.Init(mShader, "UVScale");
+	Uniforms.Init(mShader);
 }
 
 void FPresentShader::Bind()

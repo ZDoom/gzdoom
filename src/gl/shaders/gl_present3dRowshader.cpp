@@ -35,7 +35,6 @@ void FPresentStereoShaderBase::Init(const char * vtx_shader_name, const char * p
 	FPresentShaderBase::Init(vtx_shader_name, program_name);
 	LeftEyeTexture.Init(mShader, "LeftEyeTexture");
 	RightEyeTexture.Init(mShader, "RightEyeTexture");
-	WindowPositionParity.Init(mShader, "WindowPositionParity");
 }
 
 void FPresent3DCheckerShader::Bind()

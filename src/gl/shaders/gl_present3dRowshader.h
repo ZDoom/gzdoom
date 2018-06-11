@@ -36,7 +36,6 @@ class FPresentStereoShaderBase : public FPresentShaderBase
 public:
 	FBufferedUniformSampler LeftEyeTexture;
 	FBufferedUniformSampler RightEyeTexture;
-	FBufferedUniform1i WindowPositionParity;
 
 protected:
 	void Init(const char * vtx_shader_name, const char * program_name) override;

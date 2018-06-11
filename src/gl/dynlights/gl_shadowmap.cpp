@@ -52,7 +52,8 @@ void FShadowMap::Update()
 	GLRenderer->mBuffers->BindShadowMapFB();
 
 	GLRenderer->mShadowMapShader->Bind();
-	GLRenderer->mShadowMapShader->ShadowmapQuality.Set(gl_shadowmap_quality);
+	GLRenderer->mShadowMapShader->Uniforms->ShadowmapQuality = gl_shadowmap_quality;
+	GLRenderer->mShadowMapShader->Uniforms.Set();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLightList);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mNodesBuffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLinesBuffer);

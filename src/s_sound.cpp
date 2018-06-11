@@ -470,7 +470,7 @@ void S_Start ()
 
 	// Don't start the music if loading a savegame, because the music is stored there.
 	// Don't start the music if revisiting a level in a hub for the same reason.
-	if (!savegamerestore && (level.info == nullptr || level.info->Snapshot.mBuffer == nullptr || !level.info->isValid()))
+	if (!level.IsReentering())
 	{
 		if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
 			S_ChangeMusic (level.Music, level.musicorder);

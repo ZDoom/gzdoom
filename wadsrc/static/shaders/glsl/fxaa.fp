@@ -605,8 +605,6 @@ FxaaFloat4 FxaaPixelShader(FxaaFloat2 pos, FxaaTex tex, FxaaFloat2 fxaaQualityRc
 	#endif
 }
 
-uniform vec2 ReciprocalResolution;
-
 void main()
 {
 	FragColor = FxaaPixelShader(TexCoord, InputTexture, ReciprocalResolution, 0.75f, 0.166f, 0.0833f);

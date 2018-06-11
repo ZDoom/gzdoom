@@ -25,8 +25,6 @@ private:
 		int sampleCount;
 		std::shared_ptr<FShaderProgram> VerticalShader;
 		std::shared_ptr<FShaderProgram> HorizontalShader;
-		FBufferedUniform1f VerticalScaleX, VerticalScaleY;
-		FBufferedUniform1f HorizontalScaleX, HorizontalScaleY;
 	};
 
 	BlurSetup *GetSetup(float blurAmount, int sampleCount);

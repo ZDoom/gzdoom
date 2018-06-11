@@ -302,8 +302,9 @@ void FGLRenderer::BloomScene(int fixedcm)
 	mBloomExtractShader->Bind();
 	mBloomExtractShader->SceneTexture.Set(0);
 	mBloomExtractShader->ExposureTexture.Set(1);
-	mBloomExtractShader->Scale.Set(mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height);
-	mBloomExtractShader->Offset.Set(mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height);
+	mBloomExtractShader->Uniforms->Scale = { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
+	mBloomExtractShader->Uniforms->Offset = { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
+	mBloomExtractShader->Uniforms.Set();
 	RenderScreenQuad();
 
 	// Blur and downscale:
@@ -611,12 +612,6 @@ void FGLRenderer::ApplyFXAA()
 
 	FGLDebug::PushGroup("ApplyFXAA");
 
-	const GLfloat rpcRes[2] =
-	{
-		1.0f / mBuffers->GetWidth(),
-		1.0f / mBuffers->GetHeight()
-	};
-
 	FGLPostProcessState savedState;
 
 	mBuffers->BindNextFB();
@@ -630,7 +625,8 @@ void FGLRenderer::ApplyFXAA()
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
 	mFXAAShader->Bind();
 	mFXAAShader->InputTexture.Set(0);
-	mFXAAShader->ReciprocalResolution.Set(rpcRes);
+	mFXAAShader->Uniforms->ReciprocalResolution = { 1.0f / mBuffers->GetWidth(), 1.0f / mBuffers->GetHeight() };
+	mFXAAShader->Uniforms.Set();
 	RenderScreenQuad();
 	mBuffers->NextTexture();
 

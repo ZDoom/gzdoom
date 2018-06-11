@@ -4,8 +4,6 @@ out vec4 FragColor;
 
 uniform sampler2D SceneTexture;
 uniform sampler2D ExposureTexture;
-uniform vec2 Scale;
-uniform vec2 Offset;
 
 void main()
 {

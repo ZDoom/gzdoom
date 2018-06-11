@@ -161,6 +161,19 @@ void FShaderProgram::SetAttribLocation(int index, const char *name)
 
 //==========================================================================
 //
+// Set uniform buffer location
+//
+//==========================================================================
+
+void FShaderProgram::SetUniformBufferLocation(int index, const char *name)
+{
+	GLuint uniformBlockIndex = glGetUniformBlockIndex(mProgram, name);
+	if (uniformBlockIndex != GL_INVALID_INDEX)
+		glUniformBlockBinding(mProgram, uniformBlockIndex, index);
+}
+
+//==========================================================================
+//
 // Makes the shader the active program
 //
 //==========================================================================

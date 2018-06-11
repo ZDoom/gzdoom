@@ -118,7 +118,7 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 		screen->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
 		screen->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight()
 	};
-	shader.Uniforms.Set();
+	shader.Uniforms.Set(POSTPROCESS_BINDINGPOINT);
 }
 
 // fixme: I don't know how to get absolute window position on Mac and Linux
@@ -155,7 +155,7 @@ void CheckerInterleaved3D::Present() const
 			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
 		) % 2; // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
 
-	GLRenderer->mPresent3dCheckerShader->Uniforms.Set();
+	GLRenderer->mPresent3dCheckerShader->Uniforms.Set(POSTPROCESS_BINDINGPOINT);
 	GLRenderer->RenderScreenQuad();
 }
 
@@ -193,7 +193,7 @@ void ColumnInterleaved3D::Present() const
 #endif // _WIN32
 
 	GLRenderer->mPresent3dColumnShader->Uniforms->WindowPositionParity = windowHOffset;
-	GLRenderer->mPresent3dColumnShader->Uniforms.Set();
+	GLRenderer->mPresent3dColumnShader->Uniforms.Set(POSTPROCESS_BINDINGPOINT);
 
 	GLRenderer->RenderScreenQuad();
 }
@@ -220,7 +220,7 @@ void RowInterleaved3D::Present() const
 			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
 		) % 2;
 
-	GLRenderer->mPresent3dColumnShader->Uniforms.Set();
+	GLRenderer->mPresent3dColumnShader->Uniforms.Set(POSTPROCESS_BINDINGPOINT);
 	GLRenderer->RenderScreenQuad();
 }
 

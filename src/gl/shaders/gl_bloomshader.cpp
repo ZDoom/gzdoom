@@ -40,9 +40,10 @@ void FBloomExtractShader::Bind()
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/bloomextract");
 		mShader.SetAttribLocation(0, "PositionInProjection");
+		mShader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
 		SceneTexture.Init(mShader, "SceneTexture");
 		ExposureTexture.Init(mShader, "ExposureTexture");
-		Uniforms.Init(mShader);
+		Uniforms.Init();
 	}
 	mShader.Bind();
 }

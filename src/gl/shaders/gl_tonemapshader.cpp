@@ -76,8 +76,9 @@ void FExposureExtractShader::Bind()
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/exposureextract");
 		mShader.SetAttribLocation(0, "PositionInProjection");
+		mShader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
 		SceneTexture.Init(mShader, "SceneTexture");
-		Uniforms.Init(mShader);
+		Uniforms.Init();
 	}
 	mShader.Bind();
 }
@@ -107,8 +108,9 @@ void FExposureCombineShader::Bind()
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/exposurecombine");
 		mShader.SetAttribLocation(0, "PositionInProjection");
+		mShader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
 		ExposureTexture.Init(mShader, "ExposureTexture");
-		Uniforms.Init(mShader);
+		Uniforms.Init();
 	}
 	mShader.Bind();
 }

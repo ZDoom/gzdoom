@@ -47,7 +47,6 @@ public:
 
 	FString CreateDeclaration(const char *name, const std::vector<UniformFieldDesc> &fields)
 	{
-		mName = name;
 		mFields = fields;
 
 		FString decl;
@@ -61,23 +60,18 @@ public:
 		return decl;
 	}
 
-	void Init(GLuint hShader, int index = POSTPROCESS_BINDINGPOINT)
+	void Init()
 	{
-		GLuint uniformBlockIndex = glGetUniformBlockIndex(hShader, mName);
-		if (uniformBlockIndex != GL_INVALID_INDEX)
-		{
-			glUniformBlockBinding(hShader, uniformBlockIndex, index);
+		if (!mBufferHandle)
 			glGenBuffers(1, (GLuint*)&mBufferHandle);
-			mIndex = index;
-		}
 	}
 
-	void Set()
+	void Set(int index)
 	{
 		glBindBuffer(GL_UNIFORM_BUFFER, mBufferHandle);
 		glBufferData(GL_UNIFORM_BUFFER, sizeof(T), &Values, GL_STREAM_DRAW);
 
-		glBindBufferBase(GL_UNIFORM_BUFFER, mIndex, mBufferHandle);
+		glBindBufferBase(GL_UNIFORM_BUFFER, index, mBufferHandle);
 	}
 
 	T *operator->() { return &Values; }
@@ -109,8 +103,6 @@ private:
 		}
 	}
 
-	const char *mName = nullptr;
-	int mIndex = -1;
 	GLuint mBufferHandle = 0;
 	std::vector<UniformFieldDesc> mFields;
 	std::vector<int> mUniformLocations;
@@ -134,6 +126,7 @@ public:
 	void SetFragDataLocation(int index, const char *name);
 	void Link(const char *name);
 	void SetAttribLocation(int index, const char *name);
+	void SetUniformBufferLocation(int index, const char *name);
 	void Bind();
 
 	operator GLuint() const { return mProgram; }

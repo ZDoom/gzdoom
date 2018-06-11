@@ -40,8 +40,9 @@ void FLensShader::Bind()
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/lensdistortion");
 		mShader.SetAttribLocation(0, "PositionInProjection");
+		mShader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
 		InputTexture.Init(mShader, "InputTexture");
-		Uniforms.Init(mShader);
+		Uniforms.Init();
 	}
 	mShader.Bind();
 }

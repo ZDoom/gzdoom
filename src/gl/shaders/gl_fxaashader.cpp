@@ -91,8 +91,9 @@ void FFXAAShader::Bind()
 		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/fxaa");
 		shader.SetAttribLocation(0, "PositionInProjection");
+		shader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
 		InputTexture.Init(shader, "InputTexture");
-		Uniforms.Init(shader);
+		Uniforms.Init();
 	}
 
 	shader.Bind();

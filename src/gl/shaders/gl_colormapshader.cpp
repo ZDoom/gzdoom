@@ -41,7 +41,8 @@ void FColormapShader::Bind()
 		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/colormap");
 		shader.SetAttribLocation(0, "PositionInProjection");
-		Uniforms.Init(shader);
+		shader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		Uniforms.Init();
 	}
 	shader.Bind();
 }

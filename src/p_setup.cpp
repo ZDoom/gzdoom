@@ -4127,7 +4127,7 @@ void P_SetupLevel (const char *lumpname, int position)
 	times[16].Clock();
 	if (reloop) P_LoopSidedefs (false);
 	PO_Init ();				// Initialize the polyobjs
-	if (!savegamerestore)
+	if (!level.IsReentering())
 		P_FinalizePortals();	// finalize line portals after polyobjects have been initialized. This info is needed for properly flagging them.
 	times[16].Unclock();
 

@@ -39,7 +39,8 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	mShader.Link(program_name);
 	mShader.SetAttribLocation(0, "PositionInProjection");
 	mShader.SetAttribLocation(1, "UV");
-	Uniforms.Init(mShader);
+	mShader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+	Uniforms.Init();
 }
 
 void FPresentShader::Bind()

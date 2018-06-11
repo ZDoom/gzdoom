@@ -9,8 +9,23 @@ public:
 	void Bind();
 
 	FBufferedUniformSampler SceneTexture;
-	FUniform4f MapStart;
-	FUniform4f MapRange;
+
+	struct UniformBlock
+	{
+		FVector4 MapStart;
+		FVector4 MapRange;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "uFixedColormapStart", UniformType::Vec4, offsetof(UniformBlock, MapStart) },
+				{ "uFixedColormapRange", UniformType::Vec4, offsetof(UniformBlock, MapRange) },
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 

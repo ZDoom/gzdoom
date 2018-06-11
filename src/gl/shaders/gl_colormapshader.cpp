@@ -34,13 +34,14 @@ void FColormapShader::Bind()
 	auto &shader = mShader;
 	if (!shader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/colormap.fp", "", 330);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/colormap.fp", prolog, 330);
 		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/colormap");
 		shader.SetAttribLocation(0, "PositionInProjection");
-		MapStart.Init(shader, "uFixedColormapStart");
-		MapRange.Init(shader, "uFixedColormapRange");
+		Uniforms.Init(shader);
 	}
 	shader.Bind();
 }

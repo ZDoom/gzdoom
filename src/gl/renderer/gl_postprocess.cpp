@@ -735,20 +735,21 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 	mPresentShader->InputTexture.Set(0);
 	if (!applyGamma || framebuffer->IsHWGammaActive())
 	{
-		mPresentShader->InvGamma.Set(1.0f);
-		mPresentShader->Contrast.Set(1.0f);
-		mPresentShader->Brightness.Set(0.0f);
-		mPresentShader->Saturation.Set(1.0f);
+		mPresentShader->Uniforms->InvGamma = 1.0f;
+		mPresentShader->Uniforms->Contrast = 1.0f;
+		mPresentShader->Uniforms->Brightness = 0.0f;
+		mPresentShader->Uniforms->Saturation = 1.0f;
 	}
 	else
 	{
-		mPresentShader->InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
-		mPresentShader->Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
-		mPresentShader->Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
-		mPresentShader->Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.f));
-		mPresentShader->GrayFormula.Set(static_cast<int>(gl_satformula));
+		mPresentShader->Uniforms->InvGamma = 1.0f / clamp<float>(Gamma, 0.1f, 4.f);
+		mPresentShader->Uniforms->Contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
+		mPresentShader->Uniforms->Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
+		mPresentShader->Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);
+		mPresentShader->Uniforms->GrayFormula = static_cast<int>(gl_satformula);
 	}
-	mPresentShader->Scale.Set(screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight());
+	mPresentShader->Uniforms->Scale = { screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight() };
+	mPresentShader->Uniforms.Set();
 	RenderScreenQuad();
 }
 

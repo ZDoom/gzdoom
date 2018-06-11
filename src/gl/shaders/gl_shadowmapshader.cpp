@@ -28,12 +28,14 @@ void FShadowMapShader::Bind()
 {
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", "", 430);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", prolog, 430);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/shadowmap");
 		mShader.SetAttribLocation(0, "PositionInProjection");
-		ShadowmapQuality.Init(mShader, "ShadowmapQuality");
+		Uniforms.Init(mShader);
 	}
 	mShader.Bind();
 }

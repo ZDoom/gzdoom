@@ -9,12 +9,32 @@ public:
 	virtual ~FPresentShaderBase() {}
 	virtual void Bind() = 0;
 
-	FBufferedUniform1f InvGamma;
-	FBufferedUniform1f Contrast;
-	FBufferedUniform1f Brightness;
-	FBufferedUniform1f Saturation;
-	FBufferedUniform1i GrayFormula;
-	FBufferedUniform2f Scale;
+	struct UniformBlock
+	{
+		float InvGamma;
+		float Contrast;
+		float Brightness;
+		float Saturation;
+		int GrayFormula;
+		int WindowPositionParity; // top-of-window might not be top-of-screen
+		FVector2 Scale;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "InvGamma", UniformType::Float, offsetof(UniformBlock, InvGamma) },
+				{ "Contrast", UniformType::Float, offsetof(UniformBlock, Contrast) },
+				{ "Brightness", UniformType::Float, offsetof(UniformBlock, Brightness) },
+				{ "Saturation", UniformType::Float, offsetof(UniformBlock, Saturation) },
+				{ "GrayFormula", UniformType::Int, offsetof(UniformBlock, GrayFormula) },
+				{ "WindowPositionParity", UniformType::Int, offsetof(UniformBlock, WindowPositionParity) },
+				{ "UVScale", UniformType::Vec2, offsetof(UniformBlock, Scale) },
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 protected:
 	virtual void Init(const char * vtx_shader_name, const char * program_name);

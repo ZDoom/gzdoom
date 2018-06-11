@@ -3,11 +3,6 @@ in vec2 TexCoord;
 out vec4 FragColor;
 
 uniform sampler2D InputTexture;
-uniform float InvGamma;
-uniform float Contrast;
-uniform float Brightness;
-uniform float Saturation;
-uniform int GrayFormula;
 
 vec4 ApplyGamma(vec4 c)
 {

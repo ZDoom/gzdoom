@@ -37,8 +37,23 @@ public:
 	void Bind();
 
 	FBufferedUniformSampler SceneTexture;
-	FBufferedUniform2f Scale;
-	FBufferedUniform2f Offset;
+
+	struct UniformBlock
+	{
+		FVector2 Scale;
+		FVector2 Offset;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "Scale", UniformType::Vec2, offsetof(UniformBlock, Scale) },
+				{ "Offset", UniformType::Vec2, offsetof(UniformBlock, Offset) }
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	FShaderProgram mShader;
@@ -61,10 +76,27 @@ public:
 	void Bind();
 
 	FBufferedUniformSampler ExposureTexture;
-	FBufferedUniform1f ExposureBase;
-	FBufferedUniform1f ExposureMin;
-	FBufferedUniform1f ExposureScale;
-	FBufferedUniform1f ExposureSpeed;
+
+	struct UniformBlock
+	{
+		float ExposureBase;
+		float ExposureMin;
+		float ExposureScale;
+		float ExposureSpeed;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "ExposureBase", UniformType::Float, offsetof(UniformBlock, ExposureBase) },
+				{ "ExposureMin", UniformType::Float, offsetof(UniformBlock, ExposureMin) },
+				{ "ExposureScale", UniformType::Float, offsetof(UniformBlock, ExposureScale) },
+				{ "ExposureSpeed", UniformType::Float, offsetof(UniformBlock, ExposureSpeed) }
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	FShaderProgram mShader;

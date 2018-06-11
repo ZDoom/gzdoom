@@ -33,15 +33,16 @@ void FBloomExtractShader::Bind()
 {
 	if (!mShader)
 	{
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", "", 330);
+		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", prolog, 330);
 		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/bloomextract");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		SceneTexture.Init(mShader, "SceneTexture");
 		ExposureTexture.Init(mShader, "ExposureTexture");
-		Scale.Init(mShader, "Scale");
-		Offset.Init(mShader, "Offset");
+		Uniforms.Init(mShader);
 	}
 	mShader.Bind();
 }

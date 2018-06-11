@@ -83,16 +83,16 @@ void FFXAAShader::Bind()
 
 	if (!shader)
 	{
-		const FString defines = GetDefines();
+		const FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc()) + GetDefines();
 		const int maxVersion = GetMaxVersion();
 
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/fxaa.fp", defines, maxVersion);
+		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/fxaa.fp", prolog, maxVersion);
 		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/fxaa");
 		shader.SetAttribLocation(0, "PositionInProjection");
 		InputTexture.Init(shader, "InputTexture");
-		ReciprocalResolution.Init(shader, "ReciprocalResolution");
+		Uniforms.Init(shader);
 	}
 
 	shader.Bind();

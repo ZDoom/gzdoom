@@ -48,7 +48,24 @@ public:
 	void Bind();
 
 	FBufferedUniform1i InputTexture;
-	FBufferedUniform2f ReciprocalResolution;
+
+	struct UniformBlock
+	{
+		FVector2 ReciprocalResolution;
+		float Padding0, Padding1;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "ReciprocalResolution", UniformType::Vec2, offsetof(UniformBlock, ReciprocalResolution) },
+				{ "Padding0", UniformType::Float, offsetof(UniformBlock, Padding0) },
+				{ "Padding1", UniformType::Float, offsetof(UniformBlock, Padding1) }
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	FShaderProgram mShaders[Count];

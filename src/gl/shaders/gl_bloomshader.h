@@ -10,8 +10,23 @@ public:
 
 	FBufferedUniformSampler SceneTexture;
 	FBufferedUniformSampler ExposureTexture;
-	FBufferedUniform2f Scale;
-	FBufferedUniform2f Offset;
+
+	struct UniformBlock
+	{
+		FVector2 Scale;
+		FVector2 Offset;
+
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "Scale", UniformType::Vec2, offsetof(UniformBlock, Scale) },
+				{ "Offset", UniformType::Vec2, offsetof(UniformBlock, Offset) }
+			};
+		}
+	};
+
+	ShaderUniforms<UniformBlock> Uniforms;
 
 private:
 	FShaderProgram mShader;

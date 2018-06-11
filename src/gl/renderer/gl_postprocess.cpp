@@ -529,8 +529,9 @@ void FGLRenderer::ColormapScene(int fixedcm)
 	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
 		scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
 
-	mColormapShader->MapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
-	mColormapShader->MapRange.Set(m);
+	mColormapShader->Uniforms->MapStart = { scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f };
+	mColormapShader->Uniforms->MapRange = m;
+	mColormapShader->Uniforms.Set();
 
 	RenderScreenQuad();
 	mBuffers->NextTexture();

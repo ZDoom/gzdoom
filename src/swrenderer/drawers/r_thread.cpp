@@ -221,5 +221,5 @@ void GroupMemoryBarrierCommand::Execute(DrawerThread *thread)
 	std::unique_lock<std::mutex> lock(mutex);
 	count++;
 	condition.notify_all();
-	condition.wait(lock, [&]() { return count >= thread->num_cores; });
+	condition.wait(lock, [&]() { return count >= (size_t)thread->num_cores; });
 }

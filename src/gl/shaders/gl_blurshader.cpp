@@ -44,7 +44,6 @@ void FBlurShader::Bind(bool vertical)
 
 		mShader[vertical].Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader[vertical].Compile(FShaderProgram::Fragment, "shaders/glsl/blur.fp", prolog, 330);
-		mShader[vertical].SetFragDataLocation(0, "FragColor");
 		mShader[vertical].Link("shaders/glsl/blur");
 		mShader[vertical].SetAttribLocation(0, "PositionInProjection");
 		mShader[vertical].SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");

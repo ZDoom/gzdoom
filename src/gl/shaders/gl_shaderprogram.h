@@ -20,7 +20,6 @@ public:
 
 	void Compile(ShaderType type, const char *lumpName, const char *defines, int maxGlslVersion);
 	void Compile(ShaderType type, const char *name, const FString &code, const char *defines, int maxGlslVersion);
-	void SetFragDataLocation(int index, const char *name);
 	void Link(const char *name);
 	void SetAttribLocation(int index, const char *name);
 	void SetUniformBufferLocation(int index, const char *name);

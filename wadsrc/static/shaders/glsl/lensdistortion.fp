@@ -30,7 +30,7 @@
 */
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
 uniform sampler2D InputTexture;
 

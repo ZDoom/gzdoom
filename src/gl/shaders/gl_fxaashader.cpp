@@ -35,7 +35,6 @@ void FFXAALumaShader::Bind()
 	{
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/fxaa.fp", "#define FXAA_LUMA_PASS\n", 330);
-		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/fxaa");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		InputTexture.Init(mShader, "InputTexture");
@@ -88,7 +87,6 @@ void FFXAAShader::Bind()
 
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/fxaa.fp", prolog, maxVersion);
-		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/fxaa");
 		shader.SetAttribLocation(0, "PositionInProjection");
 		shader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");

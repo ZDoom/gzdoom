@@ -1,5 +1,5 @@
 in vec4 vTexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
 vec4 TextureLookup(vec2 tex_coord)
 {

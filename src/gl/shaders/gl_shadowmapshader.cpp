@@ -32,7 +32,6 @@ void FShadowMapShader::Bind()
 
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", prolog, 430);
-		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/shadowmap");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");

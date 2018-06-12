@@ -37,7 +37,6 @@ void FLensShader::Bind()
 
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", prolog, 330);
-		mShader.SetFragDataLocation(0, "FragColor");
 		mShader.Link("shaders/glsl/lensdistortion");
 		mShader.SetAttribLocation(0, "PositionInProjection");
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");

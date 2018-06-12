@@ -32,21 +32,31 @@
 #include "basictypes.h"
 #include "vectors.h"
 
-namespace s3d {
+/**
+ * Temporarily shift
+ */
+class ScopedViewShifter
+{
+public:
+    ScopedViewShifter(DVector3 &var, float dxyz[3]) // in meters
+    {
+        // save original values
+        mVar = &var;
+        cachedView = var;
+        // modify values
+        var += DVector3(dxyz[0], dxyz[1], dxyz[2]);
+    }
+    
+    ~ScopedViewShifter()
+    {
+        // restore original values
+        *mVar = cachedView;
+    }
 
-	/**
-	 * Temporarily shift 
-	 */
-	class ScopedViewShifter
-	{
-	public:
-		ScopedViewShifter(float dxyz[3]); // in meters
-		~ScopedViewShifter();
+private:
+    DVector3 *mVar;
+    DVector3 cachedView;
+};
 
-	private:
-		DVector3 cachedView;
-	};
-
-} /* namespace s3d */
 
 #endif // GL_STEREO3D_SCOPED_VIEW_SHIFTER_H_

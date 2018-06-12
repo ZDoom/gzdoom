@@ -1040,7 +1040,6 @@ set (PCH_SOURCES
 	gl/stereo3d/gl_stereo3d.cpp
 	gl/stereo3d/gl_stereo_cvars.cpp
 	gl/stereo3d/gl_stereo_leftright.cpp
-	gl/stereo3d/scoped_view_shifter.cpp
 	gl/stereo3d/gl_anaglyph.cpp
 	gl/stereo3d/gl_quadstereo.cpp
 	gl/stereo3d/gl_sidebyside3d.cpp

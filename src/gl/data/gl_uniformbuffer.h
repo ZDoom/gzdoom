@@ -9,11 +9,10 @@ class GLUniformBuffer : public IUniformBuffer
 	unsigned mBufferId;
 	bool mStaticDraw;
 
-protected:
+public:
 	GLUniformBuffer(size_t size, bool staticdraw = false);
 	~GLUniformBuffer();
 
-	void Bind() override;
 	void SetData(const void *data) override;
 
 	unsigned ID() const
@@ -21,4 +20,4 @@ protected:
 		return mBufferId;
 	}
 
-}
+};

@@ -319,6 +319,7 @@ public:
 class FUniquePalette;
 class IHardwareTexture;
 class FTexture;
+class IUniformBuffer;
 
 // A canvas that represents the actual display. The video code is responsible
 // for actually implementing this. Built on top of SimpleCanvas, because it
@@ -412,6 +413,9 @@ public:
 	virtual int GetClientHeight() = 0;
 	virtual bool RenderBuffersEnabled() { return false; };
 	virtual void BlurScene(float amount) {}
+    
+    // Interface to hardware rendering resources
+    virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.

@@ -263,13 +263,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		{
 			vp_comb.Format("#version 300 es\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
-		else if (gl.glslversion < 1.4f) // This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
-		{
-			vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-		}
 		else
 		{
-			vp_comb.Format("#version 140\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+			vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
 	}
 	else
@@ -379,10 +375,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	glBindAttribLocation(hShader, VATTR_COLOR, "aColor");
 	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
 	glBindAttribLocation(hShader, VATTR_NORMAL, "aNormal");
-
-	glBindFragDataLocation(hShader, 0, "FragColor");
-	glBindFragDataLocation(hShader, 1, "FragFog");
-	glBindFragDataLocation(hShader, 2, "FragNormal");
 
 	glLinkProgram(hShader);
 

@@ -120,17 +120,6 @@ void FShaderProgram::Compile(ShaderType type, const char *name, const FString &c
 
 //==========================================================================
 //
-// Binds a fragment output variable to a frame buffer render target
-//
-//==========================================================================
-
-void FShaderProgram::SetFragDataLocation(int index, const char *name)
-{
-	glBindFragDataLocation(mProgram, index, name);
-}
-
-//==========================================================================
-//
 // Links a program with the compiled shaders
 //
 //==========================================================================

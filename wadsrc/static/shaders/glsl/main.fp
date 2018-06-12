@@ -6,10 +6,10 @@ in vec4 vEyeNormal;
 in vec4 vTexCoord;
 in vec4 vColor;
 
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 #ifdef GBUFFER_PASS
-out vec4 FragFog;
-out vec4 FragNormal;
+layout(location=1) out vec4 FragFog;
+layout(location=2) out vec4 FragNormal;
 #endif
 
 vec4 Process(vec4 color);

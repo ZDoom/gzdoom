@@ -39,7 +39,6 @@ void FLinearDepthShader::Bind()
 		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", prolog, 330);
-		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/lineardepth");
 		mShader->SetAttribLocation(0, "PositionInProjection");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
@@ -65,7 +64,6 @@ void FSSAOShader::Bind()
 		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", prolog, 330);
-		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/ssao");
 		mShader->SetAttribLocation(0, "PositionInProjection");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
@@ -116,7 +114,6 @@ void FDepthBlurShader::Bind(bool vertical)
 
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/depthblur.fp", prolog, 330);
-		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/depthblur");
 		shader.SetAttribLocation(0, "PositionInProjection");
 		shader.SetUniformBufferLocation(Uniforms[vertical].BindingPoint(), "Uniforms");
@@ -141,7 +138,6 @@ void FSSAOCombineShader::Bind()
 		mShader.reset(new FShaderProgram());
 		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", prolog, 330);
-		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/ssaocombine");
 		mShader->SetAttribLocation(0, "PositionInProjection");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");

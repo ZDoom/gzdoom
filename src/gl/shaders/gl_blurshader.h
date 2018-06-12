@@ -1,5 +1,5 @@
-#ifndef __GL_BLURSHADER_H
-#define __GL_BLURSHADER_H
+
+#pragma once
 
 #include "gl_shaderprogram.h"
 #include <memory>
@@ -11,31 +11,32 @@ class PPTexture;
 class FBlurShader
 {
 public:
-	void BlurVertical(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height);
-	void BlurHorizontal(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height);
+	void Bind(bool vertical);
 
-private:
-	void Blur(FGLRenderer *renderer, float blurAmount, int sampleCount, PPTexture inputTexture, PPFrameBuffer outputFrameBuffer, int width, int height, bool vertical);
+	FBufferedUniformSampler SourceTexture[2];
 
-	struct BlurSetup
+	struct UniformBlock
 	{
-		BlurSetup(float blurAmount, int sampleCount) : blurAmount(blurAmount), sampleCount(sampleCount) { }
+		float SampleWeights[8];
 
-		float blurAmount;
-		int sampleCount;
-		std::shared_ptr<FShaderProgram> VerticalShader;
-		std::shared_ptr<FShaderProgram> HorizontalShader;
+		static std::vector<UniformFieldDesc> Desc()
+		{
+			return
+			{
+				{ "SampleWeights0", UniformType::Float, offsetof(UniformBlock, SampleWeights[0]) },
+				{ "SampleWeights1", UniformType::Float, offsetof(UniformBlock, SampleWeights[1]) },
+				{ "SampleWeights2", UniformType::Float, offsetof(UniformBlock, SampleWeights[2]) },
+				{ "SampleWeights3", UniformType::Float, offsetof(UniformBlock, SampleWeights[3]) },
+				{ "SampleWeights4", UniformType::Float, offsetof(UniformBlock, SampleWeights[4]) },
+				{ "SampleWeights5", UniformType::Float, offsetof(UniformBlock, SampleWeights[5]) },
+				{ "SampleWeights6", UniformType::Float, offsetof(UniformBlock, SampleWeights[6]) },
+				{ "SampleWeights7", UniformType::Float, offsetof(UniformBlock, SampleWeights[7]) },
+			};
+		}
 	};
 
-	BlurSetup *GetSetup(float blurAmount, int sampleCount);
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms[2];
 
-	FString VertexShaderCode();
-	FString FragmentShaderCode(float blurAmount, int sampleCount, bool vertical);
-
-	float ComputeGaussian(float n, float theta);
-	void ComputeBlurSamples(int sampleCount, float blurAmount, TArray<float> &sample_weights, TArray<int> &sample_offsets);
-
-	TArray<BlurSetup> mBlurSetups;
+private:
+	FShaderProgram mShader[2];
 };
-
-#endif

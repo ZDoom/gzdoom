@@ -54,7 +54,7 @@
 #include "gl/scene/gl_portal.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "gl/stereo3d/gl_stereo3d.h"
-#include "gl/stereo3d/scoped_view_shifter.h"
+#include "hwrenderer/utility/scoped_view_shifter.h"
 
 //==========================================================================
 //

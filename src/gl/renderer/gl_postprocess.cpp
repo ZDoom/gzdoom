@@ -275,6 +275,48 @@ void FGLRenderer::UpdateCameraExposure()
 //
 //-----------------------------------------------------------------------------
 
+static float ComputeBlurGaussian(float n, float theta) // theta = Blur Amount
+{
+	return (float)((1.0f / sqrtf(2 * (float)M_PI * theta)) * expf(-(n * n) / (2.0f * theta * theta)));
+}
+
+static void ComputeBlurSamples(int sampleCount, float blurAmount, float *sampleWeights)
+{
+	sampleWeights[0] = ComputeBlurGaussian(0, blurAmount);
+
+	float totalWeights = sampleWeights[0];
+
+	for (int i = 0; i < sampleCount / 2; i++)
+	{
+		float weight = ComputeBlurGaussian(i + 1.0f, blurAmount);
+
+		sampleWeights[i * 2 + 1] = weight;
+		sampleWeights[i * 2 + 2] = weight;
+
+		totalWeights += weight * 2;
+	}
+
+	for (int i = 0; i < sampleCount; i++)
+	{
+		sampleWeights[i] /= totalWeights;
+	}
+}
+
+static void RenderBlur(FGLRenderer *renderer, float blurAmount, PPTexture input, PPFrameBuffer output, int width, int height, bool vertical)
+{
+	ComputeBlurSamples(7, blurAmount, renderer->mBlurShader->Uniforms[vertical]->SampleWeights);
+
+	renderer->mBlurShader->Bind(vertical);
+	renderer->mBlurShader->SourceTexture[vertical].Set(0);
+	renderer->mBlurShader->Uniforms[vertical].Set(POSTPROCESS_BINDINGPOINT);
+
+	input.Bind(0);
+	output.Bind();
+	glViewport(0, 0, width, height);
+	glDisable(GL_BLEND);
+	renderer->RenderScreenQuad();
+}
+
 void FGLRenderer::BloomScene(int fixedcm)
 {
 	// Only bloom things if enabled and no special fixed light mode is active
@@ -287,7 +329,6 @@ void FGLRenderer::BloomScene(int fixedcm)
 	savedState.SaveTextureBindings(2);
 
 	const float blurAmount = gl_bloom_amount;
-	int sampleCount = gl_bloom_kernel_size;
 
 	auto &level0 = mBuffers->BloomLevels[0];
 
@@ -312,8 +353,8 @@ void FGLRenderer::BloomScene(int fixedcm)
 	{
 		auto &level = mBuffers->BloomLevels[i];
 		auto &next = mBuffers->BloomLevels[i + 1];
-		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
+		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
+		RenderBlur(this, blurAmount, level.HTexture, next.VFramebuffer, next.Width, next.Height, true);
 	}
 
 	// Blur and upscale:
@@ -322,8 +363,8 @@ void FGLRenderer::BloomScene(int fixedcm)
 		auto &level = mBuffers->BloomLevels[i];
 		auto &next = mBuffers->BloomLevels[i - 1];
 
-		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
+		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
+		RenderBlur(this, blurAmount, level.HTexture, level.VFramebuffer, level.Width, level.Height, true);
 
 		// Linear upscale:
 		next.VFramebuffer.Bind();
@@ -334,8 +375,8 @@ void FGLRenderer::BloomScene(int fixedcm)
 		RenderScreenQuad();
 	}
 
-	mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
-	mBlurShader->BlurVertical(this, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
+	RenderBlur(this, blurAmount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height, false);
+	RenderBlur(this, blurAmount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height, true);
 
 	// Add bloom back to scene texture:
 	mBuffers->BindCurrentFB();
@@ -376,7 +417,6 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
 
-	int sampleCount = 9;
 	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
 	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);
 
@@ -392,8 +432,8 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 	{
 		auto &level = mBuffers->BloomLevels[i];
 		auto &next = mBuffers->BloomLevels[i + 1];
-		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, next.VFramebuffer, next.Width, next.Height);
+		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
+		RenderBlur(this, blurAmount, level.HTexture, next.VFramebuffer, next.Width, next.Height, true);
 	}
 
 	// Blur and upscale:
@@ -402,8 +442,8 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 		auto &level = mBuffers->BloomLevels[i];
 		auto &next = mBuffers->BloomLevels[i - 1];
 
-		mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level.VTexture, level.HFramebuffer, level.Width, level.Height);
-		mBlurShader->BlurVertical(this, blurAmount, sampleCount, level.HTexture, level.VFramebuffer, level.Width, level.Height);
+		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
+		RenderBlur(this, blurAmount, level.HTexture, level.VFramebuffer, level.Width, level.Height, true);
 
 		// Linear upscale:
 		next.VFramebuffer.Bind();
@@ -414,8 +454,8 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 		RenderScreenQuad();
 	}
 
-	mBlurShader->BlurHorizontal(this, blurAmount, sampleCount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height);
-	mBlurShader->BlurVertical(this, blurAmount, sampleCount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height);
+	RenderBlur(this, blurAmount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height, false);
+	RenderBlur(this, blurAmount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height, true);
 
 	// Copy blur back to scene texture:
 	mBuffers->BlitLinear(level0.VFramebuffer, mBuffers->GetCurrentFB(), 0, 0, level0.Width, level0.Height, viewport.left, viewport.top, viewport.width, viewport.height);

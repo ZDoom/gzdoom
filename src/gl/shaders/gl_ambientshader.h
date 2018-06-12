@@ -42,7 +42,7 @@ public:
 		}
 	};
 	
-	ShaderUniforms<UniformBlock> Uniforms;
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
 	std::unique_ptr<FShaderProgram> mShader;
@@ -94,7 +94,7 @@ public:
 		}
 	};
 
-	ShaderUniforms<UniformBlock> Uniforms;
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
 	enum Quality
@@ -137,7 +137,7 @@ public:
 		}
 	};
 
-	ShaderUniforms<UniformBlock> Uniforms[2];
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms[2];
 
 private:
 	FShaderProgram mShader[2];
@@ -172,7 +172,7 @@ public:
 		}
 	};
 
-	ShaderUniforms<UniformBlock> Uniforms;
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
 	std::unique_ptr<FShaderProgram> mShader;

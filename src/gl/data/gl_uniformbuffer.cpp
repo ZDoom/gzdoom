@@ -71,3 +71,14 @@ void GLUniformBuffer::SetData(const void *data)
 		glBufferData(GL_UNIFORM_BUFFER, mSize, data, mStaticDraw? GL_STATIC_DRAW : GL_STREAM_DRAW);
 	}
 }
+
+//==========================================================================
+//
+// This needs to go away later.
+//
+//==========================================================================
+
+void GLUniformBuffer::Bind(int bindingpoint)
+{
+	glBindBufferBase(GL_UNIFORM_BUFFER, bindingpoint, mBufferId);
+}

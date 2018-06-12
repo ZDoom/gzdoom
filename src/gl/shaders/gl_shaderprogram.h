@@ -20,6 +20,7 @@ enum class UniformType
 	UVec2,
 	UVec3,
 	UVec4,
+	Mat4
 };
 
 class UniformFieldDesc
@@ -33,7 +34,7 @@ public:
 	std::size_t Offset;
 };
 
-template<typename T>
+template<typename T, int bindingpoint>
 class ShaderUniforms
 {
 public:
@@ -48,12 +49,17 @@ public:
 			delete mBuffer;
 	}
 
+	int BindingPoint() const
+	{
+		return bindingpoint;
+	}
+
 	FString CreateDeclaration(const char *name, const std::vector<UniformFieldDesc> &fields)
 	{
 		mFields = fields;
 
 		FString decl;
-		decl.Format("layout(%s) uniform %s\n{\n", screen->GetUniformLayoutString(mBindingPoint).GetChars(), name);
+		decl.Format("layout(%s) uniform %s\n{\n", screen->GetUniformLayoutString(bindingpoint).GetChars(), name);
 		for (const auto &field : fields)
 		{
 			decl.AppendFormat("\t%s %s;\n", GetTypeStr(field.Type), field.Name);
@@ -69,13 +75,14 @@ public:
 			mBuffer = screen->CreateUniformBuffer(sizeof(T));
 	}
 
-	void Set(int index)
+	void Set(bool bind = true)
 	{
 		if (mBuffer != nullptr)
 			mBuffer->SetData(&Values);
 
-		// Needs to be done in an API independent way!
-		glBindBufferBase(GL_UNIFORM_BUFFER, index, ((GLUniformBuffer*)mBuffer)->ID());
+		// Let's hope this can be done better when things have moved further ahead.
+		// This really is not the best place to add something that depends on API behavior.
+		if (bind) mBuffer->Bind(bindingpoint);
 	}
 
 	T *operator->() { return &Values; }
@@ -104,12 +111,12 @@ private:
 		case UniformType::UVec2: return "uvec2";
 		case UniformType::UVec3: return "uvec3";
 		case UniformType::UVec4: return "uvec4";
+		case UniformType::Mat4: return "mat4";
 		}
 	}
 
     IUniformBuffer *mBuffer = nullptr;
 	std::vector<UniformFieldDesc> mFields;
-	int mBindingPoint; // Fixme: This needs to be known on init because Vulkan wants to put it into the block declaration.
 };
 
 class FShaderProgram

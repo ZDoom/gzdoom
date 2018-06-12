@@ -42,7 +42,7 @@ void FLinearDepthShader::Bind()
 		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/lineardepth");
 		mShader->SetAttribLocation(0, "PositionInProjection");
-		mShader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		DepthTexture.Init(*mShader, "DepthTexture");
 		ColorTexture.Init(*mShader, "ColorTexture");
 		Uniforms.Init();
@@ -68,7 +68,7 @@ void FSSAOShader::Bind()
 		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/ssao");
 		mShader->SetAttribLocation(0, "PositionInProjection");
-		mShader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		DepthTexture.Init(*mShader, "DepthTexture");
 		NormalTexture.Init(*mShader, "NormalTexture");
 		RandomTexture.Init(*mShader, "RandomTexture");
@@ -119,7 +119,7 @@ void FDepthBlurShader::Bind(bool vertical)
 		shader.SetFragDataLocation(0, "FragColor");
 		shader.Link("shaders/glsl/depthblur");
 		shader.SetAttribLocation(0, "PositionInProjection");
-		shader.SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		shader.SetUniformBufferLocation(Uniforms[vertical].BindingPoint(), "Uniforms");
 		AODepthTexture[vertical].Init(shader, "AODepthTexture");
 		Uniforms[vertical].Init();
 	}
@@ -144,7 +144,7 @@ void FSSAOCombineShader::Bind()
 		mShader->SetFragDataLocation(0, "FragColor");
 		mShader->Link("shaders/glsl/ssaocombine");
 		mShader->SetAttribLocation(0, "PositionInProjection");
-		mShader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		AODepthTexture.Init(*mShader, "AODepthTexture");
 		SceneFogTexture.Init(*mShader, "SceneFogTexture");
 		Uniforms.Init();

@@ -34,7 +34,7 @@ public:
 		}
 	};
 
-	ShaderUniforms<UniformBlock> Uniforms;
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 protected:
 	virtual void Init(const char * vtx_shader_name, const char * program_name);

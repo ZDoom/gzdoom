@@ -44,6 +44,8 @@ public:
 	bool RenderBuffersEnabled() override;
 	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;
+    IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) override;
+
 
 	// Retrieves a buffer containing image data for a screenshot.
 	// Hint: Pitch can be negative for upside-down images, in which case buffer

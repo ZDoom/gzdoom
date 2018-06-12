@@ -68,6 +68,6 @@ void GLUniformBuffer::SetData(const void *data)
 	if (mBufferId != 0)
 	{
 		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
-		glBufferData(GL_UNIFORM_BUFFER, size, data, mStaticDraw? GL_STATIC_DRAW : GL_STREAM_DRAW);
+		glBufferData(GL_UNIFORM_BUFFER, mSize, data, mStaticDraw? GL_STATIC_DRAW : GL_STREAM_DRAW);
 	}
 }

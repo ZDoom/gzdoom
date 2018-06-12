@@ -38,6 +38,7 @@
 #include "gl/textures/gl_samplers.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/data/gl_uniformbuffer.h"
 #include "gl/models/gl_models.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl_debug.h"
@@ -355,6 +356,10 @@ FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli)
 	return new FGLModelRenderer(mli);
 }
 
+IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticuse)
+{
+    return new GLUniformBuffer(size, staticuse);
+}
 
 void OpenGLFrameBuffer::UnbindTexUnit(int no)
 {

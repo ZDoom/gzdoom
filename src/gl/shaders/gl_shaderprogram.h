@@ -1,6 +1,9 @@
 
 #pragma once
 
+#include "hwrenderer/data/uniformbuffer.h"
+#include "v_video.h"
+#include "gl/data/gl_uniformbuffer.h"
 #include "gl_shader.h"
 
 enum class UniformType
@@ -41,8 +44,8 @@ public:
 
 	~ShaderUniforms()
 	{
-		if (mBufferHandle)
-			glDeleteBuffers(1, &mBufferHandle);
+		if (mBuffer != nullptr)
+			delete mBuffer;
 	}
 
 	FString CreateDeclaration(const char *name, const std::vector<UniformFieldDesc> &fields)
@@ -50,7 +53,7 @@ public:
 		mFields = fields;
 
 		FString decl;
-		decl.Format("layout(std140) uniform %s\n{\n", name);
+		decl.Format("layout(%s) uniform %s\n{\n", screen->GetUniformLayoutString(mBindingPoint).GetChars(), name);
 		for (const auto &field : fields)
 		{
 			decl.AppendFormat("\t%s %s;\n", GetTypeStr(field.Type), field.Name);
@@ -62,16 +65,17 @@ public:
 
 	void Init()
 	{
-		if (!mBufferHandle)
-			glGenBuffers(1, (GLuint*)&mBufferHandle);
+		if (mBuffer == nullptr)
+			mBuffer = screen->CreateUniformBuffer(sizeof(T));
 	}
 
 	void Set(int index)
 	{
-		glBindBuffer(GL_UNIFORM_BUFFER, mBufferHandle);
-		glBufferData(GL_UNIFORM_BUFFER, sizeof(T), &Values, GL_STREAM_DRAW);
+		if (mBuffer != nullptr)
+			mBuffer->SetData(&Values);
 
-		glBindBufferBase(GL_UNIFORM_BUFFER, index, mBufferHandle);
+		// Needs to be done in an API independent way!
+		glBindBufferBase(GL_UNIFORM_BUFFER, index, ((GLUniformBuffer*)mBuffer)->ID());
 	}
 
 	T *operator->() { return &Values; }
@@ -103,9 +107,9 @@ private:
 		}
 	}
 
-	GLuint mBufferHandle = 0;
+    IUniformBuffer *mBuffer = nullptr;
 	std::vector<UniformFieldDesc> mFields;
-	std::vector<int> mUniformLocations;
+	int mBindingPoint; // Fixme: This needs to be known on init because Vulkan wants to put it into the block declaration.
 };
 
 class FShaderProgram

@@ -45,6 +45,7 @@ public:
 	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;
     IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) override;
+    virtual FString GetUniformLayoutString(int bindingpoint) { return "std140"; }
 
 
 	// Retrieves a buffer containing image data for a screenshot.

@@ -26,7 +26,7 @@ public:
 		}
 	};
 
-	ShaderUniforms<UniformBlock> Uniforms;
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
 	FShaderProgram mShader;

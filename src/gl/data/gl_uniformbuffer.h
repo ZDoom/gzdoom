@@ -14,6 +14,7 @@ public:
 	~GLUniformBuffer();
 
 	void SetData(const void *data) override;
+	void Bind(int bindingpoint) override;
 
 	unsigned ID() const
 	{

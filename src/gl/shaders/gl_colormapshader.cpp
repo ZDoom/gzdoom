@@ -39,7 +39,6 @@ void FColormapShader::Bind()
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/colormap.fp", prolog, 330);
 		shader.Link("shaders/glsl/colormap");
-		shader.SetAttribLocation(0, "PositionInProjection");
 		shader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}

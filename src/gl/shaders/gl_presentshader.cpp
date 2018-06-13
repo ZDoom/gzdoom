@@ -36,8 +36,6 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", prolog, 330);
 	mShader.Compile(FShaderProgram::Fragment, vtx_shader_name, prolog, 330);
 	mShader.Link(program_name);
-	mShader.SetAttribLocation(0, "PositionInProjection");
-	mShader.SetAttribLocation(1, "UV");
 	mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 	Uniforms.Init();
 }

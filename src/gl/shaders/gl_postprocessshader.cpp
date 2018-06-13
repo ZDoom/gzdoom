@@ -169,7 +169,6 @@ void PostProcessShaderInstance::CompileShader()
 	mProgram.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", Desc->ShaderVersion);
 	mProgram.Compile(FShaderProgram::Fragment, lumpName, code, prolog.GetChars(), Desc->ShaderVersion);
 	mProgram.Link(Desc->ShaderLumpName.GetChars());
-	mProgram.SetAttribLocation(0, "PositionInProjection");
 	mInputTexture.Init(mProgram, "InputTexture");
 }
 

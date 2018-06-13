@@ -26,7 +26,7 @@
 */
 
 #include "v_video.h"
-#include "gl/shaders/gl_presentshader.h"
+#include "hw_presentshader.h"
 
 void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program_name)
 {

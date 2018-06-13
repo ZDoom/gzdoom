@@ -1,7 +1,7 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2016 Christoph Oelckers
+// Copyright(C) 2016 Magnus Norddahl
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,26 +20,26 @@
 //--------------------------------------------------------------------------
 //
 /*
-** gl_colormapshader.cpp
-** Applies a fullscreen colormap to the scene
+** gl_lensshader.cpp
+** Lens distortion with chromatic aberration shader
 **
 */
 
 #include "v_video.h"
-#include "gl/shaders/gl_colormapshader.h"
+#include "hw_lensshader.h"
 
-void FColormapShader::Bind(IRenderQueue *q)
+void FLensShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+
 		mShader.reset(screen->CreateShaderProgram());
 		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/colormap.fp", prolog, 330);
-		mShader->Link("shaders/glsl/colormap");
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", prolog, 330);
+		mShader->Link("shaders/glsl/lensdistortion");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
 	mShader->Bind(q);
 }
-

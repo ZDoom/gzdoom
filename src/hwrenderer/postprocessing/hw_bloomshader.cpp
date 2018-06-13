@@ -20,15 +20,15 @@
 //--------------------------------------------------------------------------
 //
 /*
-** gl_lensshader.cpp
-** Lens distortion with chromatic aberration shader
+** gl_bloomshader.cpp
+** Shaders used to do bloom
 **
 */
 
 #include "v_video.h"
-#include "gl/shaders/gl_lensshader.h"
+#include "hw_bloomshader.h"
 
-void FLensShader::Bind(IRenderQueue *q)
+void FBloomExtractShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -36,10 +36,22 @@ void FLensShader::Bind(IRenderQueue *q)
 
 		mShader.reset(screen->CreateShaderProgram());
 		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", prolog, 330);
-		mShader->Link("shaders/glsl/lensdistortion");
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", prolog, 330);
+		mShader->Link("shaders/glsl/bloomextract");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
+	}
+	mShader->Bind(q);
+}
+
+void FBloomCombineShader::Bind(IRenderQueue *q)
+{
+	if (!mShader)
+	{
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
+		mShader->Link("shaders/glsl/bloomcombine");
 	}
 	mShader->Bind(q);
 }

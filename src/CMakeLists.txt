@@ -1027,16 +1027,6 @@ set (PCH_SOURCES
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
-	gl/shaders/gl_shadowmapshader.cpp
-	gl/shaders/gl_presentshader.cpp
-	gl/shaders/gl_present3dRowshader.cpp
-	gl/shaders/gl_bloomshader.cpp
-	gl/shaders/gl_ambientshader.cpp
-	gl/shaders/gl_blurshader.cpp
-	gl/shaders/gl_colormapshader.cpp
-	gl/shaders/gl_tonemapshader.cpp
-	gl/shaders/gl_lensshader.cpp
-	gl/shaders/gl_fxaashader.cpp
 	gl/stereo3d/gl_stereo3d.cpp
 	gl/stereo3d/gl_stereo_cvars.cpp
 	gl/stereo3d/gl_stereo_leftright.cpp
@@ -1056,6 +1046,16 @@ set (PCH_SOURCES
 	hwrenderer/scene/hw_skydome.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
+	hwrenderer/postprocessing/hw_shadowmapshader.cpp
+	hwrenderer/postprocessing/hw_presentshader.cpp
+	hwrenderer/postprocessing/hw_present3dRowshader.cpp
+	hwrenderer/postprocessing/hw_bloomshader.cpp
+	hwrenderer/postprocessing/hw_ambientshader.cpp
+	hwrenderer/postprocessing/hw_blurshader.cpp
+	hwrenderer/postprocessing/hw_colormapshader.cpp
+	hwrenderer/postprocessing/hw_tonemapshader.cpp
+	hwrenderer/postprocessing/hw_lensshader.cpp
+	hwrenderer/postprocessing/hw_fxaashader.cpp
 	hwrenderer/textures/hw_material.cpp
 	hwrenderer/textures/hw_precache.cpp
 	hwrenderer/utility/hw_clock.cpp

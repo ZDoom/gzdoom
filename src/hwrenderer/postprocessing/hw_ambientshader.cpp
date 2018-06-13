@@ -22,7 +22,7 @@
 
 #include "v_video.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl_ambientshader.h"
+#include "hw_ambientshader.h"
 
 void FLinearDepthShader::Bind(IRenderQueue *q)
 {

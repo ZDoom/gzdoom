@@ -1,7 +1,7 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2016 Magnus Norddahl
+// Copyright(C) 2015 Christopher Bruns
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,31 +20,34 @@
 //--------------------------------------------------------------------------
 //
 /*
-** gl_blurshader.cpp
-** Gaussian blur shader
+** gl_present3dRowshader.h
+** Final composition and present shader for row-interleaved stereoscopic 3D mode
 **
 */
 
-#include "v_video.h"
-#include "gl/shaders/gl_blurshader.h"
+#ifndef GL_PRESENT3DROWSHADER_H_
+#define GL_PRESENT3DROWSHADER_H_
 
-void FBlurShader::Bind(IRenderQueue *q, bool vertical)
+#include "hw_shaderprogram.h"
+#include "hw_presentshader.h"
+
+class FPresent3DCheckerShader : public FPresentShaderBase
 {
-	if (!mShader[vertical])
-	{
-		FString prolog = Uniforms[vertical].CreateDeclaration("Uniforms", UniformBlock::Desc());
-		if (vertical)
-			prolog += "#define BLUR_VERTICAL\n";
-		else
-			prolog += "#define BLUR_HORIZONTAL\n";
+public:
+	void Bind(IRenderQueue *q) override;
+};
 
-		mShader[vertical].reset(screen->CreateShaderProgram());
-		mShader[vertical]->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader[vertical]->Compile(IShaderProgram::Fragment, "shaders/glsl/blur.fp", prolog, 330);
-		mShader[vertical]->Link("shaders/glsl/blur");
-		mShader[vertical]->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
-		Uniforms[vertical].Init();
-	}
+class FPresent3DColumnShader : public FPresentShaderBase
+{
+public:
+	void Bind(IRenderQueue *q) override;
+};
 
-	mShader[vertical]->Bind(q);
-}
+class FPresent3DRowShader : public FPresentShaderBase
+{
+public:
+	void Bind(IRenderQueue *q) override;
+};
+
+// GL_PRESENT3DROWSHADER_H_
+#endif

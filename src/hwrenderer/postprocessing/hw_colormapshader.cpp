@@ -1,7 +1,7 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2016 Magnus Norddahl
+// Copyright(C) 2016 Christoph Oelckers
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -20,38 +20,26 @@
 //--------------------------------------------------------------------------
 //
 /*
-** gl_bloomshader.cpp
-** Shaders used to do bloom
+** gl_colormapshader.cpp
+** Applies a fullscreen colormap to the scene
 **
 */
 
 #include "v_video.h"
-#include "gl/shaders/gl_bloomshader.h"
+#include "hw_colormapshader.h"
 
-void FBloomExtractShader::Bind(IRenderQueue *q)
+void FColormapShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
-
 		mShader.reset(screen->CreateShaderProgram());
 		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", prolog, 330);
-		mShader->Link("shaders/glsl/bloomextract");
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/colormap.fp", prolog, 330);
+		mShader->Link("shaders/glsl/colormap");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
 	mShader->Bind(q);
 }
 
-void FBloomCombineShader::Bind(IRenderQueue *q)
-{
-	if (!mShader)
-	{
-		mShader.reset(screen->CreateShaderProgram());
-		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
-		mShader->Link("shaders/glsl/bloomcombine");
-	}
-	mShader->Bind(q);
-}

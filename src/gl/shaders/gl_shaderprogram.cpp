@@ -176,7 +176,7 @@ void FShaderProgram::SetUniformBufferLocation(int index, const char *name)
 //
 //==========================================================================
 
-void FShaderProgram::Bind()
+void FShaderProgram::Bind(IRenderQueue *)
 {
 	glUseProgram(mProgram);
 }

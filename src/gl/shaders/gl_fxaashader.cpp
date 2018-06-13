@@ -29,7 +29,7 @@
 
 EXTERN_CVAR(Int, gl_fxaa)
 
-void FFXAALumaShader::Bind()
+void FFXAALumaShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -38,7 +38,7 @@ void FFXAALumaShader::Bind()
 		mShader.Link("shaders/glsl/fxaa");
 	}
 
-	mShader.Bind();
+	mShader.Bind(q);
 }
 
 static int GetMaxVersion()
@@ -73,7 +73,7 @@ static FString GetDefines()
 	return result;
 }
 
-void FFXAAShader::Bind()
+void FFXAAShader::Bind(IRenderQueue *q)
 {
 	assert(gl_fxaa > 0 && gl_fxaa < Count);
 	FShaderProgram &shader = mShaders[gl_fxaa];
@@ -90,5 +90,5 @@ void FFXAAShader::Bind()
 		Uniforms.Init();
 	}
 
-	shader.Bind();
+	shader.Bind(q);
 }

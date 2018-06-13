@@ -6,7 +6,7 @@
 class FTonemapShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	static bool IsPaletteMode();
 
@@ -30,7 +30,7 @@ private:
 class FExposureExtractShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{
@@ -56,7 +56,7 @@ private:
 class FExposureAverageShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 private:
 	FShaderProgram mShader;
@@ -65,7 +65,7 @@ private:
 class FExposureCombineShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{

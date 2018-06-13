@@ -8,7 +8,7 @@
 class FLinearDepthShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{
@@ -49,7 +49,7 @@ private:
 class FSSAOShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{
@@ -109,7 +109,7 @@ private:
 class FDepthBlurShader
 {
 public:
-	void Bind(bool vertical);
+	void Bind(IRenderQueue *q, bool vertical);
 
 	struct UniformBlock
 	{
@@ -137,7 +137,7 @@ private:
 class FSSAOCombineShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{

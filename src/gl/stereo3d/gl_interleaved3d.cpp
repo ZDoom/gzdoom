@@ -95,7 +95,7 @@ static void prepareInterleavedPresent(FPresentShaderBase& shader)
 	const IntRect& box = screen->mOutputLetterbox;
 	glViewport(box.left, box.top, box.width, box.height);
 
-	shader.Bind();
+	shader.Bind(NOQUEUE);
 
 	if ( GLRenderer->framebuffer->IsHWGammaActive() )
 	{

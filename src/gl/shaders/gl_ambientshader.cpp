@@ -25,7 +25,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_ambientshader.h"
 
-void FLinearDepthShader::Bind()
+void FLinearDepthShader::Bind(IRenderQueue *q)
 {
 	bool multisample = (gl_multisample > 1);
 	if (mMultisample != multisample)
@@ -44,10 +44,10 @@ void FLinearDepthShader::Bind()
 		Uniforms.Init();
 		mMultisample = multisample;
 	}
-	mShader->Bind();
+	mShader->Bind(q);
 }
 
-void FSSAOShader::Bind()
+void FSSAOShader::Bind(IRenderQueue *q)
 {
 	bool multisample = (gl_multisample > 1);
 	if (mCurrentQuality != gl_ssao || mMultisample != multisample)
@@ -66,7 +66,7 @@ void FSSAOShader::Bind()
 		Uniforms.Init();
 		mMultisample = multisample;
 	}
-	mShader->Bind();
+	mShader->Bind(q);
 }
 
 FString FSSAOShader::GetDefines(int mode, bool multisample)
@@ -94,7 +94,7 @@ FString FSSAOShader::GetDefines(int mode, bool multisample)
 	return defines;
 }
 
-void FDepthBlurShader::Bind(bool vertical)
+void FDepthBlurShader::Bind(IRenderQueue *q, bool vertical)
 {
 	auto &shader = mShader[vertical];
 	if (!shader)
@@ -111,10 +111,10 @@ void FDepthBlurShader::Bind(bool vertical)
 		shader.SetUniformBufferLocation(Uniforms[vertical].BindingPoint(), "Uniforms");
 		Uniforms[vertical].Init();
 	}
-	shader.Bind();
+	shader.Bind(q);
 }
 
-void FSSAOCombineShader::Bind()
+void FSSAOCombineShader::Bind(IRenderQueue *q)
 {
 	bool multisample = (gl_multisample > 1);
 	if (mMultisample != multisample)
@@ -134,5 +134,5 @@ void FSSAOCombineShader::Bind()
 		Uniforms.Init();
 		mMultisample = multisample;
 	}
-	mShader->Bind();
+	mShader->Bind(q);
 }

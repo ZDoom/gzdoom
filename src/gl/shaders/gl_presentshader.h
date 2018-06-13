@@ -7,7 +7,7 @@ class FPresentShaderBase
 {
 public:
 	virtual ~FPresentShaderBase() {}
-	virtual void Bind() = 0;
+	virtual void Bind(IRenderQueue *q) = 0;
 
 	struct UniformBlock
 	{
@@ -44,7 +44,7 @@ protected:
 class FPresentShader : public FPresentShaderBase
 {
 public:
-	void Bind() override;
+	void Bind(IRenderQueue *q) override;
 
 };
 

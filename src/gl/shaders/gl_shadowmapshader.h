@@ -6,7 +6,7 @@
 class FShadowMapShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{

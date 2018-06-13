@@ -29,7 +29,7 @@
 #include "v_video.h"
 #include "gl/shaders/gl_lensshader.h"
 
-void FLensShader::Bind()
+void FLensShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -41,5 +41,5 @@ void FLensShader::Bind()
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }

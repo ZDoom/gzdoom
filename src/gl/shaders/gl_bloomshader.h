@@ -6,7 +6,7 @@
 class FBloomExtractShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{
@@ -32,7 +32,7 @@ private:
 class FBloomCombineShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 private:
 	FShaderProgram mShader;

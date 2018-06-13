@@ -40,11 +40,11 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 	Uniforms.Init();
 }
 
-void FPresentShader::Bind()
+void FPresentShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
 		Init("shaders/glsl/present.fp", "shaders/glsl/present");
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }

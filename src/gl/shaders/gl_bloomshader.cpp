@@ -29,7 +29,7 @@
 #include "v_video.h"
 #include "gl/shaders/gl_bloomshader.h"
 
-void FBloomExtractShader::Bind()
+void FBloomExtractShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -41,10 +41,10 @@ void FBloomExtractShader::Bind()
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }
 
-void FBloomCombineShader::Bind()
+void FBloomCombineShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -52,5 +52,5 @@ void FBloomCombineShader::Bind()
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
 		mShader.Link("shaders/glsl/bloomcombine");
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }

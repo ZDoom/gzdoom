@@ -29,7 +29,7 @@
 #include "v_video.h"
 #include "gl/shaders/gl_colormapshader.h"
 
-void FColormapShader::Bind()
+void FColormapShader::Bind(IRenderQueue *q)
 {
 	auto &shader = mShader;
 	if (!shader)
@@ -41,6 +41,6 @@ void FColormapShader::Bind()
 		shader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	shader.Bind();
+	shader.Bind(q);
 }
 

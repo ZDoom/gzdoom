@@ -1,8 +1,7 @@
 
 #pragma once
 
-#include "gl_shaderprogram.h"
-#include <memory>
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
 class FGLRenderer;
 class PPFrameBuffer;
@@ -36,5 +35,5 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms[2];
 
 private:
-	FShaderProgram mShader[2];
+	std::unique_ptr<IShaderProgram> mShader[2];
 };

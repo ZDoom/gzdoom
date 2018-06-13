@@ -27,7 +27,7 @@
 #ifndef __GL_FXAASHADER_H__
 #define __GL_FXAASHADER_H__
 
-#include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 
 class FFXAALumaShader
@@ -36,7 +36,7 @@ public:
 	void Bind(IRenderQueue *q);
 
 private:
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 
@@ -64,7 +64,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	FShaderProgram mShaders[Count];
+	std::unique_ptr<IShaderProgram> mShaders[Count];
 };
 
 #endif // __GL_FXAASHADER_H__

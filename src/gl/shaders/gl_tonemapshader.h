@@ -1,7 +1,7 @@
 #ifndef __GL_TONEMAPSHADER_H
 #define __GL_TONEMAPSHADER_H
 
-#include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
 class FTonemapShader
 {
@@ -24,7 +24,7 @@ private:
 
 	static const char *GetDefines(int mode);
 
-	FShaderProgram mShader[NumTonemapModes];
+	std::unique_ptr<IShaderProgram> mShader[NumTonemapModes];
 };
 
 class FExposureExtractShader
@@ -50,7 +50,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 class FExposureAverageShader
@@ -59,7 +59,7 @@ public:
 	void Bind(IRenderQueue *q);
 
 private:
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 class FExposureCombineShader
@@ -89,7 +89,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 #endif

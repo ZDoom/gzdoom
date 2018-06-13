@@ -1,7 +1,7 @@
 #ifndef __GL_BLOOMSHADER_H
 #define __GL_BLOOMSHADER_H
 
-#include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
 class FBloomExtractShader
 {
@@ -26,7 +26,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 class FBloomCombineShader
@@ -35,7 +35,7 @@ public:
 	void Bind(IRenderQueue *q);
 
 private:
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 #endif

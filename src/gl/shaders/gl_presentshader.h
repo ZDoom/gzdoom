@@ -1,7 +1,7 @@
 #ifndef __GL_PRESENTSHADER_H
 #define __GL_PRESENTSHADER_H
 
-#include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
 class FPresentShaderBase
 {
@@ -38,7 +38,7 @@ public:
 
 protected:
 	virtual void Init(const char * vtx_shader_name, const char * program_name);
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 class FPresentShader : public FPresentShaderBase

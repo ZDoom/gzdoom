@@ -1,9 +1,7 @@
 #ifndef __GL_AMBIENTSHADER_H
 #define __GL_AMBIENTSHADER_H
 
-#include <memory>
-
-#include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
 class FLinearDepthShader
 {
@@ -42,7 +40,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	std::unique_ptr<FShaderProgram> mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 	bool mMultisample = false;
 };
 
@@ -101,7 +99,7 @@ private:
 
 	FString GetDefines(int mode, bool multisample);
 
-	std::unique_ptr<FShaderProgram> mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 	Quality mCurrentQuality = Off;
 	bool mMultisample = false;
 };
@@ -131,7 +129,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms[2];
 
 private:
-	FShaderProgram mShader[2];
+	std::unique_ptr<IShaderProgram> mShader[2];
 };
 
 class FSSAOCombineShader
@@ -163,7 +161,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	std::unique_ptr<FShaderProgram> mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 	bool mMultisample = false;
 };
 

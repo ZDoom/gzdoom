@@ -1,7 +1,7 @@
 #ifndef __GL_SHADOWMAPSHADER_H
 #define __GL_SHADOWMAPSHADER_H
 
-#include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
 class FShadowMapShader
 {
@@ -28,7 +28,7 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 #endif

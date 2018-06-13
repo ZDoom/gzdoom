@@ -111,7 +111,7 @@ bool PostProcessShaderInstance::IsShaderSupported()
 
 void PostProcessShaderInstance::CompileShader()
 {
-	if (mProgram)
+	if (mProgram.Handle())
 		return;
 
 	// Get the custom shader
@@ -164,10 +164,10 @@ void PostProcessShaderInstance::CompileShader()
 	prolog += uniformTextures;
 	prolog += pipelineInOut;
 
-	mProgram.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", Desc->ShaderVersion);
-	mProgram.Compile(FShaderProgram::Fragment, lumpName, code, prolog.GetChars(), Desc->ShaderVersion);
+	mProgram.Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", Desc->ShaderVersion);
+	mProgram.Compile(IShaderProgram::Fragment, lumpName, code, prolog.GetChars(), Desc->ShaderVersion);
 	mProgram.Link(Desc->ShaderLumpName.GetChars());
-	mInputTexture.Init(mProgram, "InputTexture");
+	mInputTexture.Init(mProgram.Handle(), "InputTexture");
 }
 
 void PostProcessShaderInstance::UpdateUniforms()
@@ -176,7 +176,7 @@ void PostProcessShaderInstance::UpdateUniforms()
 	TMap<FString, PostProcessUniformValue>::Pair *pair;
 	while (it.NextPair(pair))
 	{
-		int location = glGetUniformLocation(mProgram, pair->Key.GetChars());
+		int location = glGetUniformLocation(mProgram.Handle(), pair->Key.GetChars());
 		if (location != -1)
 		{
 			switch (pair->Value.Type)
@@ -207,7 +207,7 @@ void PostProcessShaderInstance::BindTextures()
 	TMap<FString, FString>::Pair *pair;
 	while (it.NextPair(pair))
 	{
-		int location = glGetUniformLocation(mProgram, pair->Key.GetChars());
+		int location = glGetUniformLocation(mProgram.Handle(), pair->Key.GetChars());
 		if (location == -1)
 			continue;
 

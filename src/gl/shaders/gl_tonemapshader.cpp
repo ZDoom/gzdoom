@@ -25,7 +25,6 @@
 **
 */
 
-#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_tonemapshader.h"
@@ -37,11 +36,12 @@ void FTonemapShader::Bind(IRenderQueue *q)
 	{
 		auto prolog = GetDefines(gl_tonemap);
 
-		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/tonemap.fp", prolog, 330);
-		shader.Link("shaders/glsl/tonemap");
+		shader.reset(screen->CreateShaderProgram());
+		shader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		shader->Compile(IShaderProgram::Fragment, "shaders/glsl/tonemap.fp", prolog, 330);
+		shader->Link("shaders/glsl/tonemap");
 	}
-	shader.Bind(q);
+	shader->Bind(q);
 }
 
 bool FTonemapShader::IsPaletteMode()
@@ -68,24 +68,26 @@ void FExposureExtractShader::Bind(IRenderQueue *q)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureextract.fp", prolog, 330);
-		mShader.Link("shaders/glsl/exposureextract");
-		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/exposureextract.fp", prolog, 330);
+		mShader->Link("shaders/glsl/exposureextract");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }
 
 void FExposureAverageShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 400);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureaverage.fp", "", 400);
-		mShader.Link("shaders/glsl/exposureaverage");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 400);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/exposureaverage.fp", "", 400);
+		mShader->Link("shaders/glsl/exposureaverage");
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }
 
 void FExposureCombineShader::Bind(IRenderQueue *q)
@@ -94,11 +96,12 @@ void FExposureCombineShader::Bind(IRenderQueue *q)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposurecombine.fp", prolog, 330);
-		mShader.Link("shaders/glsl/exposurecombine");
-		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/exposurecombine.fp", prolog, 330);
+		mShader->Link("shaders/glsl/exposurecombine");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }

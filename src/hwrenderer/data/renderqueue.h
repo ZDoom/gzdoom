@@ -19,15 +19,15 @@ typedef TFlags<ColormaskBits, uint8_t> Colormask;
 
 class IRenderQueue
 {
-  Colormask mColorMask;
+	Colormask mColorMask;
 
 
-  Colormask GetColorMask() const
-  {
-    return mColorMask;
-  }
+	Colormask GetColorMask() const
+	{
+		return mColorMask;
+	}
 
-  void SetColorMask(Colormask mask) = 0;
+	virtual void SetColorMask(Colormask mask) = 0;
 
 
 };

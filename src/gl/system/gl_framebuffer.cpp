@@ -41,6 +41,7 @@
 #include "gl/data/gl_uniformbuffer.h"
 #include "gl/models/gl_models.h"
 #include "gl/stereo3d/gl_stereo3d.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 
@@ -363,6 +364,12 @@ IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticu
 {
     return new GLUniformBuffer(size, staticuse);
 }
+
+IShaderProgram *OpenGLFrameBuffer::CreateShaderProgram() 
+{ 
+	return new FShaderProgram; 
+}
+
 
 void OpenGLFrameBuffer::UnbindTexUnit(int no)
 {

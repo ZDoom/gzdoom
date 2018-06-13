@@ -35,8 +35,6 @@ class FFXAALumaShader
 public:
 	void Bind();
 
-	FBufferedUniform1i InputTexture;
-
 private:
 	FShaderProgram mShader;
 };
@@ -46,8 +44,6 @@ class FFXAAShader : public IFXAAShader
 {
 public:
 	void Bind();
-
-	FBufferedUniform1i InputTexture;
 
 	struct UniformBlock
 	{

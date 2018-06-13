@@ -22,6 +22,7 @@ public:
 	void Compile(ShaderType type, const char *name, const FString &code, const char *defines, int maxGlslVersion);
 	void Link(const char *name);
 	void SetUniformBufferLocation(int index, const char *name);
+
 	void Bind();
 
 	operator GLuint() const { return mProgram; }
@@ -31,7 +32,7 @@ private:
 	FShaderProgram(const FShaderProgram &) = delete;
 	FShaderProgram &operator=(const FShaderProgram &) = delete;
 
-	static FString PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion);
+	FString PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion);
 
 	void CreateShader(ShaderType type);
 	FString GetShaderInfoLog(GLuint handle);
@@ -39,4 +40,5 @@ private:
 
 	GLuint mProgram = 0;
 	GLuint mShaders[NumShaderTypes];
+	TArray<std::pair<FString, int>> samplerstobind;
 };

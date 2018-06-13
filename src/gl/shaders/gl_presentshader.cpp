@@ -45,7 +45,6 @@ void FPresentShader::Bind()
 	if (!mShader)
 	{
 		Init("shaders/glsl/present.fp", "shaders/glsl/present");
-		InputTexture.Init(mShader, "InputTexture");
 	}
 	mShader.Bind();
 }

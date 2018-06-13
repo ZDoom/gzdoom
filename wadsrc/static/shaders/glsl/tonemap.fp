@@ -2,8 +2,8 @@
 in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
-uniform sampler2D InputTexture;
-uniform sampler2D ExposureTexture;
+layout(binding=0) uniform sampler2D InputTexture;
+layout(binding=1) uniform sampler2D ExposureTexture;
 
 vec3 Linear(vec3 c)
 {
@@ -65,7 +65,7 @@ vec3 Tonemap(vec3 color)
 
 #elif defined(PALETTE)
 
-uniform sampler2D PaletteLUT;
+layout(binding=2) uniform sampler2D PaletteLUT;
 
 vec3 Tonemap(vec3 color)
 {

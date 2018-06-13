@@ -31,6 +31,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"
+#include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "w_wad.h"
 
 FShaderProgram::FShaderProgram()
@@ -135,11 +136,27 @@ void FShaderProgram::Link(const char *name)
 	{
 		I_FatalError("Link Shader '%s':\n%s\n", name, GetProgramInfoLog(mProgram).GetChars());
 	}
+
+	// This is only for old OpenGL which didn't allow to set the binding from within the shader.
+	if (screen->glslversion < 4.20)
+	{
+		glUseProgram(mProgram);
+		for (auto &uni : samplerstobind)
+		{
+			auto index = glGetUniformLocation(mProgram, uni.first);
+			if (index >= 0)
+			{
+				glUniform1i(index, uni.second);
+			}
+		}
+	}
+	samplerstobind.Clear();
+	samplerstobind.ShrinkToFit();
 }
 
 //==========================================================================
 //
-// Set uniform buffer location
+// Set uniform buffer location (only useful for GL 3.3)
 //
 //==========================================================================
 
@@ -226,6 +243,12 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 
 	patchedCode << "#line 1\n";
 	patchedCode << code;
+
+	if (maxGlslVersion < 420)
+	{
+		// Here we must strip out all layout(binding) declarations for sampler uniforms and store them in 'samplerstobind' which can then be processed by the link function.
+		patchedCode = RemoveSamplerBindings(patchedCode, samplerstobind);
+	}
 
 	return patchedCode;
 }

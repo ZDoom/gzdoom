@@ -13,8 +13,6 @@ class FBlurShader
 public:
 	void Bind(bool vertical);
 
-	FBufferedUniformSampler SourceTexture[2];
-
 	struct UniformBlock
 	{
 		float SampleWeights[8];

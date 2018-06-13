@@ -32,6 +32,7 @@
 #include "w_wad.h"
 #include "doomerrors.h"
 #include "cmdlib.h"
+#include "hwrenderer/utility/hw_shaderpatcher.h"
 
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_debug.h"
@@ -40,88 +41,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-
-static bool IsGlslWhitespace(char c)
-{
-	switch (c)
-	{
-	case ' ':
-	case '\r':
-	case '\n':
-	case '\t':
-	case '\f':
-		return true;
-	default:
-		return false;
-	}
-}
-
-static FString NextGlslToken(const char *chars, long len, long &pos)
-{
-	// Eat whitespace
-	long tokenStart = pos;
-	while (tokenStart != len && IsGlslWhitespace(chars[tokenStart]))
-		tokenStart++;
-
-	// Find token end
-	long tokenEnd = tokenStart;
-	while (tokenEnd != len && !IsGlslWhitespace(chars[tokenEnd]) && chars[tokenEnd] != ';')
-		tokenEnd++;
-
-	pos = tokenEnd;
-	return FString(chars + tokenStart, tokenEnd - tokenStart);
-}
-
-static FString RemoveLegacyUserUniforms(FString code)
-{
-	// User shaders must declare their uniforms via the GLDEFS file.
-	// The following code searches for legacy uniform declarations in the shader itself and replaces them with whitespace.
-
-	long len = (long)code.Len();
-	char *chars = code.LockBuffer();
-
-	long startIndex = 0;
-	while (true)
-	{
-		long matchIndex = code.IndexOf("uniform", startIndex);
-		if (matchIndex == -1)
-			break;
-
-		bool isLegacyUniformName = false;
-
-		bool isKeywordStart = matchIndex == 0 || IsGlslWhitespace(chars[matchIndex - 1]);
-		bool isKeywordEnd = matchIndex + 7 == len || IsGlslWhitespace(chars[matchIndex + 7]);
-		if (isKeywordStart && isKeywordEnd)
-		{
-			long pos = matchIndex + 7;
-			FString type = NextGlslToken(chars, len, pos);
-			FString identifier = NextGlslToken(chars, len, pos);
-
-			isLegacyUniformName = type.Compare("float") == 0 && identifier.Compare("timer") == 0;
-		}
-
-		if (isLegacyUniformName)
-		{
-			long statementEndIndex = code.IndexOf(';', matchIndex + 7);
-			if (statementEndIndex == -1)
-				statementEndIndex = len;
-			for (long i = matchIndex; i <= statementEndIndex; i++)
-			{
-				if (!IsGlslWhitespace(chars[i]))
-					chars[i] = ' ';
-			}
-			startIndex = statementEndIndex;
-		}
-		else
-		{
-			startIndex = matchIndex + 7;
-		}
-	}
-
-	code.UnlockBuffer();
-
-	return code;
-}
 
 bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {

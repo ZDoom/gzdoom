@@ -46,7 +46,6 @@ void FBlurShader::Bind(bool vertical)
 		mShader[vertical].Compile(FShaderProgram::Fragment, "shaders/glsl/blur.fp", prolog, 330);
 		mShader[vertical].Link("shaders/glsl/blur");
 		mShader[vertical].SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
-		SourceTexture[vertical].Init(mShader[vertical], "SourceTexture");
 		Uniforms[vertical].Init();
 	}
 

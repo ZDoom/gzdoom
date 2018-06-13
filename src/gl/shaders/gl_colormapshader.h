@@ -8,8 +8,6 @@ class FColormapShader
 public:
 	void Bind();
 
-	FBufferedUniformSampler SceneTexture;
-
 	struct UniformBlock
 	{
 		FVector4 MapStart;

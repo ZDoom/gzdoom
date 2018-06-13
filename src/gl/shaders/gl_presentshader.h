@@ -46,7 +46,6 @@ class FPresentShader : public FPresentShaderBase
 public:
 	void Bind() override;
 
-	FBufferedUniformSampler InputTexture;
 };
 
 #endif

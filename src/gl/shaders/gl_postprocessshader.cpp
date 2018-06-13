@@ -93,8 +93,6 @@ void PostProcessShaderInstance::Run()
 	UpdateUniforms();
 	BindTextures();
 
-	mInputTexture.Set(0);
-
 	GLRenderer->RenderScreenQuad();
 
 	glActiveTexture(GL_TEXTURE0);

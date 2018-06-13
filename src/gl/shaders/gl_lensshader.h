@@ -8,8 +8,6 @@ class FLensShader
 public:
 	void Bind();
 
-	FBufferedUniformSampler InputTexture;
-
 	struct UniformBlock
 	{
 		float AspectRatio;

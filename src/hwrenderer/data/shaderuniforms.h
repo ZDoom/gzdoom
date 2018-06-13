@@ -164,7 +164,19 @@ struct SamplerUniform
 		case SamplerType::uSamplerCube: return "usamplerCube";
 		}
 	}
-			
+
+	static FString CreateDeclaration(std::vector<SamplerUniform> &samplers)
+	{
+		FString build;
+
+		for (auto &sampler : samplers)
+		{
+			if (screen->glslversion >= 4.2f) build.AppendFormat("layout(binding = %d) uniform", sampler.mBinding);
+			build.AppendFormat("%s %s;\n", sampler.GetTypeStr(), sampler.mName);
+		}
+		return build;
+	}
+
 	int mBinding;
 	SamplerType mType;
 	const char *mName;

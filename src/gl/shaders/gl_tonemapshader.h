@@ -8,10 +8,6 @@ class FTonemapShader
 public:
 	void Bind();
 
-	FBufferedUniformSampler SceneTexture;
-	FBufferedUniformSampler ExposureTexture;
-	FBufferedUniformSampler PaletteLUT;
-
 	static bool IsPaletteMode();
 
 private:
@@ -35,8 +31,6 @@ class FExposureExtractShader
 {
 public:
 	void Bind();
-
-	FBufferedUniformSampler SceneTexture;
 
 	struct UniformBlock
 	{
@@ -64,8 +58,6 @@ class FExposureAverageShader
 public:
 	void Bind();
 
-	FBufferedUniformSampler ExposureTexture;
-
 private:
 	FShaderProgram mShader;
 };
@@ -74,8 +66,6 @@ class FExposureCombineShader
 {
 public:
 	void Bind();
-
-	FBufferedUniformSampler ExposureTexture;
 
 	struct UniformBlock
 	{

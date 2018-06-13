@@ -680,7 +680,7 @@ file( GLOB HEADER_FILES
 	hwrenderer/dynlights/*.h
 	hwrenderer/scene/*.h
 	hwrenderer/textures/*.h
-	hwrenderer/utilities/*.h
+	hwrenderer/utility/*.h
 	gl/*.h
 	gl/data/*.h
 	gl/dynlights/*.h
@@ -1061,6 +1061,7 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_clock.cpp
 	hwrenderer/utility/hw_cvars.cpp
 	hwrenderer/utility/hw_lighting.cpp
+	hwrenderer/utility/hw_shaderpatcher.cpp
 
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp

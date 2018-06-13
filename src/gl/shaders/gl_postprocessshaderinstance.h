@@ -22,7 +22,7 @@ private:
 	void BindTextures();
 
 	FShaderProgram mProgram;
-	FBufferedUniformSampler mInputTexture;
+	FUniform1i mInputTexture;
 	std::map<FTexture*, int> mTextureHandles;
 };
 

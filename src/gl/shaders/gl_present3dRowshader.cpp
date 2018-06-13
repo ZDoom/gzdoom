@@ -30,13 +30,6 @@
 #include "gl_load/gl_system.h"
 #include "gl/shaders/gl_present3dRowshader.h"
 
-void FPresentStereoShaderBase::Init(const char * vtx_shader_name, const char * program_name)
-{
-	FPresentShaderBase::Init(vtx_shader_name, program_name);
-	LeftEyeTexture.Init(mShader, "LeftEyeTexture");
-	RightEyeTexture.Init(mShader, "RightEyeTexture");
-}
-
 void FPresent3DCheckerShader::Bind()
 {
 	if (!mShader)

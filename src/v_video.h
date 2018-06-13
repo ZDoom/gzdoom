@@ -117,6 +117,7 @@ struct FColormap;
 class FileWriter;
 enum FTextureFormat : uint32_t;
 class FModelRenderer;
+struct SamplerUniform;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.

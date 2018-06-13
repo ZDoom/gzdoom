@@ -31,29 +31,19 @@
 #include "gl_shaderprogram.h"
 #include "gl_presentshader.h"
 
-class FPresentStereoShaderBase : public FPresentShaderBase
-{
-public:
-	FBufferedUniformSampler LeftEyeTexture;
-	FBufferedUniformSampler RightEyeTexture;
-
-protected:
-	void Init(const char * vtx_shader_name, const char * program_name) override;
-};
-
-class FPresent3DCheckerShader : public FPresentStereoShaderBase
+class FPresent3DCheckerShader : public FPresentShaderBase
 {
 public:
 	void Bind() override;
 };
 
-class FPresent3DColumnShader : public FPresentStereoShaderBase
+class FPresent3DColumnShader : public FPresentShaderBase
 {
 public:
 	void Bind() override;
 };
 
-class FPresent3DRowShader : public FPresentStereoShaderBase
+class FPresent3DRowShader : public FPresentShaderBase
 {
 public:
 	void Bind() override;

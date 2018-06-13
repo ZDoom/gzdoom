@@ -30,7 +30,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_tonemapshader.h"
 
-void FTonemapShader::Bind()
+void FTonemapShader::Bind(IRenderQueue *q)
 {
 	auto &shader = mShader[gl_tonemap];
 	if (!shader)
@@ -41,7 +41,7 @@ void FTonemapShader::Bind()
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/tonemap.fp", prolog, 330);
 		shader.Link("shaders/glsl/tonemap");
 	}
-	shader.Bind();
+	shader.Bind(q);
 }
 
 bool FTonemapShader::IsPaletteMode()
@@ -62,7 +62,7 @@ const char *FTonemapShader::GetDefines(int mode)
 	}
 }
 
-void FExposureExtractShader::Bind()
+void FExposureExtractShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -74,10 +74,10 @@ void FExposureExtractShader::Bind()
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }
 
-void FExposureAverageShader::Bind()
+void FExposureAverageShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -85,10 +85,10 @@ void FExposureAverageShader::Bind()
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureaverage.fp", "", 400);
 		mShader.Link("shaders/glsl/exposureaverage");
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }
 
-void FExposureCombineShader::Bind()
+void FExposureCombineShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -100,5 +100,5 @@ void FExposureCombineShader::Bind()
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }

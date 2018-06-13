@@ -11,7 +11,7 @@ class PPTexture;
 class FBlurShader
 {
 public:
-	void Bind(bool vertical);
+	void Bind(IRenderQueue *q, bool vertical);
 
 	struct UniformBlock
 	{

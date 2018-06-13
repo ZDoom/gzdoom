@@ -11,7 +11,7 @@ public:
 	PostProcessShaderInstance(PostProcessShader *desc) : Desc(desc) { }
 	~PostProcessShaderInstance();
 
-	void Run();
+	void Run(IRenderQueue *q);
 
 	PostProcessShader *Desc;
 

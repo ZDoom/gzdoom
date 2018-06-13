@@ -32,7 +32,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 
-void FBlurShader::Bind(bool vertical)
+void FBlurShader::Bind(IRenderQueue *q, bool vertical)
 {
 	if (!mShader[vertical])
 	{
@@ -49,5 +49,5 @@ void FBlurShader::Bind(bool vertical)
 		Uniforms[vertical].Init();
 	}
 
-	mShader[vertical].Bind();
+	mShader[vertical].Bind(q);
 }

@@ -6,7 +6,7 @@
 class FColormapShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{

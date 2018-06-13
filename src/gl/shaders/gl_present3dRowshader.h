@@ -34,19 +34,19 @@
 class FPresent3DCheckerShader : public FPresentShaderBase
 {
 public:
-	void Bind() override;
+	void Bind(IRenderQueue *q) override;
 };
 
 class FPresent3DColumnShader : public FPresentShaderBase
 {
 public:
-	void Bind() override;
+	void Bind(IRenderQueue *q) override;
 };
 
 class FPresent3DRowShader : public FPresentShaderBase
 {
 public:
-	void Bind() override;
+	void Bind(IRenderQueue *q) override;
 };
 
 // GL_PRESENT3DROWSHADER_H_

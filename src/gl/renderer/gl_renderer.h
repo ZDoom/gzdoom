@@ -50,6 +50,7 @@ class FShadowMapShader;
 class FCustomPostProcessShaders;
 class GLSceneDrawer;
 class SWSceneDrawer;
+#define NOQUEUE nullptr	// just some token to be used as a placeholder
 
 enum
 {

@@ -55,7 +55,7 @@ void FCustomPostProcessShaders::Run(FString target)
 	{
 		if (shader->Desc->Target == target)
 		{
-			shader->Run();
+			shader->Run(NOQUEUE);
 		}
 	}
 }
@@ -68,7 +68,7 @@ PostProcessShaderInstance::~PostProcessShaderInstance()
 		glDeleteTextures(1, (GLuint*)&it.second);
 }
 
-void PostProcessShaderInstance::Run()
+void PostProcessShaderInstance::Run(IRenderQueue *q)
 {
 	if (!IsShaderSupported())
 		return;
@@ -88,7 +88,7 @@ void PostProcessShaderInstance::Run()
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-	mProgram.Bind();
+	mProgram.Bind(q);
 
 	UpdateUniforms();
 	BindTextures();

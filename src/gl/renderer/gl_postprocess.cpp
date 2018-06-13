@@ -115,7 +115,7 @@ void FGLRenderer::AmbientOccludeScene()
 	glViewport(0, 0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
 	mBuffers->BindSceneDepthTexture(0);
 	mBuffers->BindSceneColorTexture(1);
-	mLinearDepthShader->Bind();
+	mLinearDepthShader->Bind(NOQUEUE);
 	if (gl_multisample > 1) mLinearDepthShader->Uniforms->SampleIndex = 0;
 	mLinearDepthShader->Uniforms->LinearizeDepthA = 1.0f / GetZFar() - 1.0f / GetZNear();
 	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / GetZNear(), 1.e-8f);
@@ -131,7 +131,7 @@ void FGLRenderer::AmbientOccludeScene()
 	mBuffers->LinearDepthTexture.Bind(0);
 	mBuffers->AmbientRandomTexture[randomTexture].Bind(2, GL_NEAREST, GL_REPEAT);
 	mBuffers->BindSceneNormalTexture(1);
-	mSSAOShader->Bind();
+	mSSAOShader->Bind(NOQUEUE);
 	if (gl_multisample > 1) mSSAOShader->Uniforms->SampleIndex = 0;
 	mSSAOShader->Uniforms->UVToViewA = { 2.0f * invFocalLenX, 2.0f * invFocalLenY };
 	mSSAOShader->Uniforms->UVToViewB = { -invFocalLenX, -invFocalLenY };
@@ -151,7 +151,7 @@ void FGLRenderer::AmbientOccludeScene()
 	{
 		mBuffers->AmbientFB0.Bind();
 		mBuffers->AmbientTexture1.Bind(0);
-		mDepthBlurShader->Bind(false);
+		mDepthBlurShader->Bind(NOQUEUE, false);
 		mDepthBlurShader->Uniforms[false]->BlurSharpness = blurSharpness;
 		mDepthBlurShader->Uniforms[false]->InvFullResolution = { 1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight };
 		mDepthBlurShader->Uniforms[false].Set();
@@ -159,7 +159,7 @@ void FGLRenderer::AmbientOccludeScene()
 
 		mBuffers->AmbientFB1.Bind();
 		mBuffers->AmbientTexture0.Bind(0);
-		mDepthBlurShader->Bind(true);
+		mDepthBlurShader->Bind(NOQUEUE, true);
 		mDepthBlurShader->Uniforms[true]->BlurSharpness = blurSharpness;
 		mDepthBlurShader->Uniforms[true]->InvFullResolution = { 1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight };
 		mDepthBlurShader->Uniforms[true]->PowExponent = gl_ssao_exponent;
@@ -180,7 +180,7 @@ void FGLRenderer::AmbientOccludeScene()
 	}
 	mBuffers->AmbientTexture1.Bind(0, GL_LINEAR);
 	mBuffers->BindSceneFogTexture(1);
-	mSSAOCombineShader->Bind();
+	mSSAOCombineShader->Bind(NOQUEUE);
 	if (gl_multisample > 1) mSSAOCombineShader->Uniforms->SampleCount = gl_multisample;
 	mSSAOCombineShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
 	mSSAOCombineShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
@@ -214,7 +214,7 @@ void FGLRenderer::UpdateCameraExposure()
 	level0.Framebuffer.Bind();
 	glViewport(0, 0, level0.Width, level0.Height);
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
-	mExposureExtractShader->Bind();
+	mExposureExtractShader->Bind(NOQUEUE);
 	mExposureExtractShader->Uniforms->Scale = { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
 	mExposureExtractShader->Uniforms->Offset = { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
 	mExposureExtractShader->Uniforms.Set();
@@ -229,7 +229,7 @@ void FGLRenderer::UpdateCameraExposure()
 		next.Framebuffer.Bind();
 		glViewport(0, 0, next.Width, next.Height);
 		level.Texture.Bind(0);
-		mExposureAverageShader->Bind();
+		mExposureAverageShader->Bind(NOQUEUE);
 		RenderScreenQuad();
 	}
 
@@ -247,7 +247,7 @@ void FGLRenderer::UpdateCameraExposure()
 		mBuffers->FirstExposureFrame = false;
 	}
 	mBuffers->ExposureLevels.Last().Texture.Bind(0);
-	mExposureCombineShader->Bind();
+	mExposureCombineShader->Bind(NOQUEUE);
 	mExposureCombineShader->Uniforms->ExposureBase = gl_exposure_base;
 	mExposureCombineShader->Uniforms->ExposureMin = gl_exposure_min;
 	mExposureCombineShader->Uniforms->ExposureScale = gl_exposure_scale;
@@ -296,7 +296,7 @@ static void RenderBlur(FGLRenderer *renderer, float blurAmount, PPTexture input,
 {
 	ComputeBlurSamples(7, blurAmount, renderer->mBlurShader->Uniforms[vertical]->SampleWeights);
 
-	renderer->mBlurShader->Bind(vertical);
+	renderer->mBlurShader->Bind(NOQUEUE, vertical);
 	renderer->mBlurShader->Uniforms[vertical].Set(POSTPROCESS_BINDINGPOINT);
 
 	input.Bind(0);
@@ -329,7 +329,7 @@ void FGLRenderer::BloomScene(int fixedcm)
 	glViewport(0, 0, level0.Width, level0.Height);
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
 	mBuffers->ExposureTexture.Bind(1);
-	mBloomExtractShader->Bind();
+	mBloomExtractShader->Bind(NOQUEUE);
 	mBloomExtractShader->Uniforms->Scale = { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
 	mBloomExtractShader->Uniforms->Offset = { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
 	mBloomExtractShader->Uniforms.Set();
@@ -357,7 +357,7 @@ void FGLRenderer::BloomScene(int fixedcm)
 		next.VFramebuffer.Bind();
 		glViewport(0, 0, next.Width, next.Height);
 		level.VTexture.Bind(0, GL_LINEAR);
-		mBloomCombineShader->Bind();
+		mBloomCombineShader->Bind(NOQUEUE);
 		RenderScreenQuad();
 	}
 
@@ -371,7 +371,7 @@ void FGLRenderer::BloomScene(int fixedcm)
 	glBlendEquation(GL_FUNC_ADD);
 	glBlendFunc(GL_ONE, GL_ONE);
 	level0.VTexture.Bind(0, GL_LINEAR);
-	mBloomCombineShader->Bind();
+	mBloomCombineShader->Bind(NOQUEUE);
 	RenderScreenQuad();
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
@@ -434,7 +434,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 		next.VFramebuffer.Bind();
 		glViewport(0, 0, next.Width, next.Height);
 		level.VTexture.Bind(0, GL_LINEAR);
-		mBloomCombineShader->Bind();
+		mBloomCombineShader->Bind(NOQUEUE);
 		RenderScreenQuad();
 	}
 
@@ -469,7 +469,7 @@ void FGLRenderer::TonemapScene()
 
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0);
-	mTonemapShader->Bind();
+	mTonemapShader->Bind(NOQUEUE);
 
 	if (mTonemapShader->IsPaletteMode())
 	{
@@ -546,7 +546,7 @@ void FGLRenderer::ColormapScene(int fixedcm)
 
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0);
-	mColormapShader->Bind();
+	mColormapShader->Bind(NOQUEUE);
 	
 	FSpecialColormap *scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
 	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
@@ -604,7 +604,7 @@ void FGLRenderer::LensDistortScene()
 
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
-	mLensShader->Bind();
+	mLensShader->Bind(NOQUEUE);
 	mLensShader->Uniforms->AspectRatio = aspect;
 	mLensShader->Uniforms->Scale = scale;
 	mLensShader->Uniforms->LensDistortionCoefficient = k;
@@ -635,13 +635,13 @@ void FGLRenderer::ApplyFXAA()
 
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0);
-	mFXAALumaShader->Bind();
+	mFXAALumaShader->Bind(NOQUEUE);
 	RenderScreenQuad();
 	mBuffers->NextTexture();
 
 	mBuffers->BindNextFB();
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
-	mFXAAShader->Bind();
+	mFXAAShader->Bind(NOQUEUE);
 	mFXAAShader->Uniforms->ReciprocalResolution = { 1.0f / mBuffers->GetWidth(), 1.0f / mBuffers->GetHeight() };
 	mFXAAShader->Uniforms.Set();
 	RenderScreenQuad();
@@ -744,7 +744,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	}
 
-	mPresentShader->Bind();
+	mPresentShader->Bind(NOQUEUE);
 	if (!applyGamma || framebuffer->IsHWGammaActive())
 	{
 		mPresentShader->Uniforms->InvGamma = 1.0f;

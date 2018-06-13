@@ -33,7 +33,7 @@
 class FFXAALumaShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 private:
 	FShaderProgram mShader;
@@ -43,7 +43,7 @@ private:
 class FFXAAShader : public IFXAAShader
 {
 public:
-	void Bind();
+	void Bind(IRenderQueue *q);
 
 	struct UniformBlock
 	{

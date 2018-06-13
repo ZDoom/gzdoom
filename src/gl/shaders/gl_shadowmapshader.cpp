@@ -24,7 +24,7 @@
 #include "files.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 
-void FShadowMapShader::Bind()
+void FShadowMapShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
@@ -36,5 +36,5 @@ void FShadowMapShader::Bind()
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind();
+	mShader.Bind(q);
 }

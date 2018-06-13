@@ -5,6 +5,8 @@
 #include "gl_shader.h"
 #include "hwrenderer/data/shaderuniforms.h"
 
+class IRenderQueue;
+
 class FShaderProgram
 {
 public:
@@ -23,7 +25,7 @@ public:
 	void Link(const char *name);
 	void SetUniformBufferLocation(int index, const char *name);
 
-	void Bind();
+	void Bind(IRenderQueue *q);	// the parameter here is just a preparation for Vulkan
 
 	operator GLuint() const { return mProgram; }
 	explicit operator bool() const { return mProgram != 0; }

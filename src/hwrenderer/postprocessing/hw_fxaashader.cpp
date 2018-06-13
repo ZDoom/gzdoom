@@ -24,7 +24,7 @@
 // Fast approXimate Anti-Aliasing (FXAA) post-processing
 //
 
-#include "gl/shaders/gl_fxaashader.h"
+#include "hw_fxaashader.h"
 
 EXTERN_CVAR(Int, gl_fxaa)
 

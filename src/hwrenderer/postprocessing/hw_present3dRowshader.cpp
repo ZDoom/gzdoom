@@ -1,7 +1,7 @@
 // 
 //---------------------------------------------------------------------------
 //
-// Copyright(C) 2016 Magnus Norddahl
+// Copyright(C) 2016 Christopher Bruns
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -19,22 +19,39 @@
 //
 //--------------------------------------------------------------------------
 //
+/*
+** gl_3dRowshader.cpp
+** Copy rendered texture to back buffer, possibly with gamma correction
+** while interleaving rows from two independent viewpoint textures,
+** representing the left-eye and right-eye views.
+**
+*/
 
-#include "files.h"
-#include "gl/shaders/gl_shadowmapshader.h"
+#include "hw_present3dRowshader.h"
 
-void FShadowMapShader::Bind(IRenderQueue *q)
+void FPresent3DCheckerShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
-		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+		Init("shaders/glsl/present_checker3d.fp", "shaders/glsl/presentChecker3d");
+	}
+	mShader->Bind(q);
+}
 
-		mShader.reset(screen->CreateShaderProgram());
-		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);
-		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", prolog, 430);
-		mShader->Link("shaders/glsl/shadowmap");
-		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
-		Uniforms.Init();
+void FPresent3DColumnShader::Bind(IRenderQueue *q)
+{
+	if (!mShader)
+	{
+		Init("shaders/glsl/present_column3d.fp", "shaders/glsl/presentColumn3d");
+	}
+	mShader->Bind(q);
+}
+
+void FPresent3DRowShader::Bind(IRenderQueue *q)
+{
+	if (!mShader)
+	{
+		Init("shaders/glsl/present_row3d.fp", "shaders/glsl/presentRow3d");
 	}
 	mShader->Bind(q);
 }

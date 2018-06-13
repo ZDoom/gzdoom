@@ -27,7 +27,7 @@
 
 #include "v_video.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/shaders/gl_tonemapshader.h"
+#include "hw_tonemapshader.h"
 
 void FTonemapShader::Bind(IRenderQueue *q)
 {

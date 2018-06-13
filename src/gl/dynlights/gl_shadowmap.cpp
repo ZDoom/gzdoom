@@ -28,7 +28,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/shaders/gl_shadowmapshader.h"
+#include "hwrenderer/postprocessing/hw_shadowmapshader.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "stats.h"
 

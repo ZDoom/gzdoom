@@ -37,7 +37,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/shaders/gl_present3dRowshader.h"
+#include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 
 #ifdef _WIN32
 #include "hardware.h"

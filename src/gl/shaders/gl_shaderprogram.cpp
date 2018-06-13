@@ -145,9 +145,12 @@ void FShaderProgram::Link(const char *name)
 
 void FShaderProgram::SetUniformBufferLocation(int index, const char *name)
 {
-	GLuint uniformBlockIndex = glGetUniformBlockIndex(mProgram, name);
-	if (uniformBlockIndex != GL_INVALID_INDEX)
-		glUniformBlockBinding(mProgram, uniformBlockIndex, index);
+	if (screen->glslversion < 4.20)
+	{
+		GLuint uniformBlockIndex = glGetUniformBlockIndex(mProgram, name);
+		if (uniformBlockIndex != GL_INVALID_INDEX)
+			glUniformBlockBinding(mProgram, uniformBlockIndex, index);
+	}
 }
 
 //==========================================================================
@@ -201,6 +204,8 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 {
 	FString patchedCode;
 
+	// If we have 4.2, always use it because it adds important new syntax.
+	if (maxGlslVersion < 420 && gl.glslversion >= 4.2f) maxGlslVersion = 420;
 	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
 	if (gl.es)
 		patchedCode.AppendFormat("#version %d es\n", shaderVersion);
@@ -224,11 +229,3 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 
 	return patchedCode;
 }
-
-//==========================================================================
-//
-// patch the shader source to work with 
-// GLSL 1.2 keywords and identifiers
-//
-//==========================================================================
-

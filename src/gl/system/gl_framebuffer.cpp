@@ -82,8 +82,11 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
 	SetGamma();
+
+	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;
 	if (gl.legacyMode) hwcaps |= RFL_NO_SHADERS;
+	glslversion = gl.glslversion;
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()

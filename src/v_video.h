@@ -349,6 +349,7 @@ protected:
 
 public:
 	int hwcaps = 0;
+	float glslversion = 0;			// This is here so that the differences between old OpenGL and new OpenGL/Vulkan can be handled by platform independent code.
 	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
 	bool enable_quadbuffered = false;
 
@@ -416,7 +417,6 @@ public:
     
     // Interface to hardware rendering resources
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
-    virtual FString GetUniformLayoutString(int bindingpoint) { return ""; }
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.

@@ -57,7 +57,16 @@ public:
 		mFields = fields;
 
 		FString decl;
-		decl.Format("layout(%s) uniform %s\n{\n", screen->GetUniformLayoutString(bindingpoint).GetChars(), name);
+		FString layout;
+		if (screen->glslversion < 4.20)
+		{
+			layout = "std140";
+		}
+		else
+		{
+			layout.Format("std140, binding = %d", bindingpoint);
+		}
+		decl.Format("layout(%s) uniform %s\n{\n", layout.GetChars(), name);
 		for (const auto &field : fields)
 		{
 			decl.AppendFormat("\t%s %s;\n", GetTypeStr(field.Type), field.Name);
@@ -117,3 +126,46 @@ private:
 	std::vector<UniformFieldDesc> mFields;
 };
 
+
+enum class SamplerType : int
+{
+	Sampler1D,
+	Sampler2D,
+	Sampler3D,
+	SamplerCube,
+	iSampler1D,
+	iSampler2D,
+	iSampler3D,
+	iSamplerCube,
+	uSampler1D,
+	uSampler2D,
+	uSampler3D,
+	uSamplerCube,
+};
+
+struct SamplerUniform
+{
+	const char *GetTypeStr() const
+	{
+		switch (mType)
+		{
+		default:
+		case SamplerType::Sampler1D: return "sampler1D";
+		case SamplerType::Sampler2D: return "sampler2D";
+		case SamplerType::Sampler3D: return "sampler3D";
+		case SamplerType::SamplerCube: return "samplerCube";
+		case SamplerType::iSampler1D: return "isampler1D";
+		case SamplerType::iSampler2D: return "isampler2D";
+		case SamplerType::iSampler3D: return "isampler3D";
+		case SamplerType::iSamplerCube: return "isamplerCube";
+		case SamplerType::uSampler1D: return "usampler1D";
+		case SamplerType::uSampler2D: return "usampler2D";
+		case SamplerType::uSampler3D: return "usampler3D";
+		case SamplerType::uSamplerCube: return "usamplerCube";
+		}
+	}
+			
+	int mBinding;
+	SamplerType mType;
+	const char *mName;
+};

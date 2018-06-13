@@ -129,8 +129,8 @@ void FGLRenderer::AmbientOccludeScene()
 	// Apply ambient occlusion
 	mBuffers->AmbientFB1.Bind();
 	mBuffers->LinearDepthTexture.Bind(0);
-	mBuffers->AmbientRandomTexture[randomTexture].Bind(1, GL_NEAREST, GL_REPEAT);
-	mBuffers->BindSceneNormalTexture(2);
+	mBuffers->AmbientRandomTexture[randomTexture].Bind(2, GL_NEAREST, GL_REPEAT);
+	mBuffers->BindSceneNormalTexture(1);
 	mSSAOShader->Bind();
 	if (gl_multisample > 1) mSSAOShader->Uniforms->SampleIndex = 0;
 	mSSAOShader->Uniforms->UVToViewA = { 2.0f * invFocalLenX, 2.0f * invFocalLenY };

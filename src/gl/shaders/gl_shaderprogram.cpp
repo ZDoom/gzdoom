@@ -139,17 +139,6 @@ void FShaderProgram::Link(const char *name)
 
 //==========================================================================
 //
-// Set vertex attribute location
-//
-//==========================================================================
-
-void FShaderProgram::SetAttribLocation(int index, const char *name)
-{
-	glBindAttribLocation(mProgram, index, name);
-}
-
-//==========================================================================
-//
 // Set uniform buffer location
 //
 //==========================================================================

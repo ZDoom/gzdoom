@@ -1,10 +1,10 @@
 
-in vec4 aPosition;
-in vec2 aTexCoord;
-in vec4 aColor;
+layout(location = 0) in vec4 aPosition;
+layout(location = 1) in vec2 aTexCoord;
+layout(location = 2) in vec4 aColor;
 #ifndef SIMPLE	// we do not need these for simple shaders
-in vec4 aVertex2;
-in vec4 aNormal;
+layout(location = 3) in vec4 aVertex2;
+layout(location = 4) in vec4 aNormal;
 out vec4 pixelpos;
 out vec3 glowdist;
 

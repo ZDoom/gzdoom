@@ -38,7 +38,6 @@ void FTonemapShader::Bind()
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/tonemap.fp", GetDefines(gl_tonemap), 330);
 		shader.Link("shaders/glsl/tonemap");
-		shader.SetAttribLocation(0, "PositionInProjection");
 		SceneTexture.Init(shader, "InputTexture");
 		ExposureTexture.Init(shader, "ExposureTexture");
 		PaletteLUT.Init(shader, "PaletteLUT");
@@ -73,7 +72,6 @@ void FExposureExtractShader::Bind()
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureextract.fp", prolog, 330);
 		mShader.Link("shaders/glsl/exposureextract");
-		mShader.SetAttribLocation(0, "PositionInProjection");
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		SceneTexture.Init(mShader, "SceneTexture");
 		Uniforms.Init();
@@ -88,7 +86,6 @@ void FExposureAverageShader::Bind()
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 400);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposureaverage.fp", "", 400);
 		mShader.Link("shaders/glsl/exposureaverage");
-		mShader.SetAttribLocation(0, "PositionInProjection");
 		ExposureTexture.Init(mShader, "ExposureTexture");
 	}
 	mShader.Bind();
@@ -103,7 +100,6 @@ void FExposureCombineShader::Bind()
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/exposurecombine.fp", prolog, 330);
 		mShader.Link("shaders/glsl/exposurecombine");
-		mShader.SetAttribLocation(0, "PositionInProjection");
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		ExposureTexture.Init(mShader, "ExposureTexture");
 		Uniforms.Init();

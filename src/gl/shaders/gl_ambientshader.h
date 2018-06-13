@@ -10,9 +10,6 @@ class FLinearDepthShader
 public:
 	void Bind();
 
-	FBufferedUniformSampler DepthTexture;
-	FBufferedUniformSampler ColorTexture;
-
 	struct UniformBlock
 	{
 		int SampleIndex;
@@ -53,10 +50,6 @@ class FSSAOShader
 {
 public:
 	void Bind();
-
-	FBufferedUniformSampler DepthTexture;
-	FBufferedUniformSampler NormalTexture;
-	FBufferedUniformSampler RandomTexture;
 
 	struct UniformBlock
 	{
@@ -118,8 +111,6 @@ class FDepthBlurShader
 public:
 	void Bind(bool vertical);
 
-	FBufferedUniformSampler AODepthTexture[2];
-
 	struct UniformBlock
 	{
 		float BlurSharpness;
@@ -147,9 +138,6 @@ class FSSAOCombineShader
 {
 public:
 	void Bind();
-
-	FBufferedUniformSampler AODepthTexture;
-	FBufferedUniformSampler SceneFogTexture;
 
 	struct UniformBlock
 	{

@@ -39,8 +39,6 @@ void FBloomExtractShader::Bind()
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", prolog, 330);
 		mShader.Link("shaders/glsl/bloomextract");
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
-		SceneTexture.Init(mShader, "SceneTexture");
-		ExposureTexture.Init(mShader, "ExposureTexture");
 		Uniforms.Init();
 	}
 	mShader.Bind();
@@ -53,7 +51,6 @@ void FBloomCombineShader::Bind()
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
 		mShader.Link("shaders/glsl/bloomcombine");
-		BloomTexture.Init(mShader, "Bloom");
 	}
 	mShader.Bind();
 }

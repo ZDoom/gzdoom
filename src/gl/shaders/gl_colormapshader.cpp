@@ -35,7 +35,6 @@ void FColormapShader::Bind()
 	if (!shader)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
-
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/colormap.fp", prolog, 330);
 		shader.Link("shaders/glsl/colormap");

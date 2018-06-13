@@ -36,7 +36,6 @@ void FFXAALumaShader::Bind()
 		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/fxaa.fp", "#define FXAA_LUMA_PASS\n", 330);
 		mShader.Link("shaders/glsl/fxaa");
-		InputTexture.Init(mShader, "InputTexture");
 	}
 
 	mShader.Bind();
@@ -81,14 +80,13 @@ void FFXAAShader::Bind()
 
 	if (!shader)
 	{
-		const FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc()) + GetDefines();
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc()) + GetDefines();
 		const int maxVersion = GetMaxVersion();
 
 		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
 		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/fxaa.fp", prolog, maxVersion);
 		shader.Link("shaders/glsl/fxaa");
 		shader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
-		InputTexture.Init(shader, "InputTexture");
 		Uniforms.Init();
 	}
 

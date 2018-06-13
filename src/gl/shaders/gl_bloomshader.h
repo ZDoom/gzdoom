@@ -8,9 +8,6 @@ class FBloomExtractShader
 public:
 	void Bind();
 
-	FBufferedUniformSampler SceneTexture;
-	FBufferedUniformSampler ExposureTexture;
-
 	struct UniformBlock
 	{
 		FVector2 Scale;
@@ -36,8 +33,6 @@ class FBloomCombineShader
 {
 public:
 	void Bind();
-
-	FBufferedUniformSampler BloomTexture;
 
 private:
 	FShaderProgram mShader;

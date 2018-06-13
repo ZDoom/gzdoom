@@ -39,7 +39,6 @@ void FLensShader::Bind()
 		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", prolog, 330);
 		mShader.Link("shaders/glsl/lensdistortion");
 		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
-		InputTexture.Init(mShader, "InputTexture");
 		Uniforms.Init();
 	}
 	mShader.Bind();

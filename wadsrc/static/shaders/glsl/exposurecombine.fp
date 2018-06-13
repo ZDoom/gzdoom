@@ -2,7 +2,7 @@
 in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
-uniform sampler2D ExposureTexture;
+layout(binding=0) uniform sampler2D ExposureTexture;
 
 void main()
 {

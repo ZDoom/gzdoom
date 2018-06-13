@@ -74,7 +74,7 @@ const RowInterleaved3D& RowInterleaved3D::getInstance(float ipd)
 	return instance;
 }
 
-static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
+static void prepareInterleavedPresent(FPresentShaderBase& shader)
 {
 	GLRenderer->mBuffers->BindOutputFB();
 	GLRenderer->ClearBorders();
@@ -96,8 +96,6 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 	glViewport(box.left, box.top, box.width, box.height);
 
 	shader.Bind();
-	shader.LeftEyeTexture.Set(0);
-	shader.RightEyeTexture.Set(1);
 
 	if ( GLRenderer->framebuffer->IsHWGammaActive() )
 	{

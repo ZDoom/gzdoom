@@ -3,11 +3,11 @@ in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
 #if defined(MULTISAMPLE)
-uniform sampler2DMS DepthTexture;
-uniform sampler2DMS ColorTexture;
+layout(binding=0) uniform sampler2DMS DepthTexture;
+layout(binding=1) uniform sampler2DMS ColorTexture;
 #else
-uniform sampler2D DepthTexture;
-uniform sampler2D ColorTexture;
+layout(binding=0) uniform sampler2D DepthTexture;
+layout(binding=1) uniform sampler2D ColorTexture;
 #endif
 
 float normalizeDepth(float depth)

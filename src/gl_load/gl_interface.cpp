@@ -225,6 +225,7 @@ void gl_LoadExtensions()
 					gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows.
 				}
 #endif
+				gl.glslversion = 3.31f;	// Force GLSL down to 3.3.
 			}
 			else if (gl_version < 4.5f)
 			{

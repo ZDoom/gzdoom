@@ -25,7 +25,6 @@
 **
 */
 
-#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "gl/shaders/gl_presentshader.h"
 
@@ -33,10 +32,11 @@ void FPresentShaderBase::Init(const char * vtx_shader_name, const char * program
 {
 	FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 
-	mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", prolog, 330);
-	mShader.Compile(FShaderProgram::Fragment, vtx_shader_name, prolog, 330);
-	mShader.Link(program_name);
-	mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+	mShader.reset(screen->CreateShaderProgram());
+	mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquadscale.vp", prolog, 330);
+	mShader->Compile(IShaderProgram::Fragment, vtx_shader_name, prolog, 330);
+	mShader->Link(program_name);
+	mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 	Uniforms.Init();
 }
 
@@ -46,5 +46,5 @@ void FPresentShader::Bind(IRenderQueue *q)
 	{
 		Init("shaders/glsl/present.fp", "shaders/glsl/present");
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }

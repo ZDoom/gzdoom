@@ -25,7 +25,6 @@
 **
 */
 
-#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "gl/shaders/gl_lensshader.h"
 
@@ -35,11 +34,12 @@ void FLensShader::Bind(IRenderQueue *q)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", prolog, 330);
-		mShader.Link("shaders/glsl/lensdistortion");
-		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/lensdistortion.fp", prolog, 330);
+		mShader->Link("shaders/glsl/lensdistortion");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }

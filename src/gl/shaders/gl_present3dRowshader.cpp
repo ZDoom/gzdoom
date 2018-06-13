@@ -36,7 +36,7 @@ void FPresent3DCheckerShader::Bind(IRenderQueue *q)
 	{
 		Init("shaders/glsl/present_checker3d.fp", "shaders/glsl/presentChecker3d");
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }
 
 void FPresent3DColumnShader::Bind(IRenderQueue *q)
@@ -45,7 +45,7 @@ void FPresent3DColumnShader::Bind(IRenderQueue *q)
 	{
 		Init("shaders/glsl/present_column3d.fp", "shaders/glsl/presentColumn3d");
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }
 
 void FPresent3DRowShader::Bind(IRenderQueue *q)
@@ -54,5 +54,5 @@ void FPresent3DRowShader::Bind(IRenderQueue *q)
 	{
 		Init("shaders/glsl/present_row3d.fp", "shaders/glsl/presentRow3d");
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }

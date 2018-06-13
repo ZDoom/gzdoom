@@ -1,7 +1,7 @@
 #ifndef __GL_COLORMAPSHADER_H
 #define __GL_COLORMAPSHADER_H
 
-#include "gl_shaderprogram.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
 class FColormapShader
 {
@@ -27,7 +27,7 @@ public:
 
 private:
 
-	FShaderProgram mShader;
+	std::unique_ptr<IShaderProgram> mShader;
 };
 
 #endif

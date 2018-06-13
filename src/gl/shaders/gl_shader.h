@@ -382,11 +382,5 @@ public:
 	}
 };
 
-enum
-{
-	LIGHTBUF_BINDINGPOINT = 1,
-	POSTPROCESS_BINDINGPOINT = 2
-};
-
 #endif
 

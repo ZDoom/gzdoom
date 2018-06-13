@@ -20,7 +20,6 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl_load/gl_system.h"
 #include "files.h"
 #include "gl/shaders/gl_shadowmapshader.h"
 
@@ -30,11 +29,12 @@ void FShadowMapShader::Bind(IRenderQueue *q)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", prolog, 430);
-		mShader.Link("shaders/glsl/shadowmap");
-		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 430);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/shadowmap.fp", prolog, 430);
+		mShader->Link("shaders/glsl/shadowmap");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }

@@ -25,12 +25,8 @@
 **
 */
 
-#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "gl/shaders/gl_blurshader.h"
-#include "gl/data/gl_vertexbuffer.h"
-#include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_renderbuffers.h"
 
 void FBlurShader::Bind(IRenderQueue *q, bool vertical)
 {
@@ -42,12 +38,13 @@ void FBlurShader::Bind(IRenderQueue *q, bool vertical)
 		else
 			prolog += "#define BLUR_HORIZONTAL\n";
 
-		mShader[vertical].Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader[vertical].Compile(FShaderProgram::Fragment, "shaders/glsl/blur.fp", prolog, 330);
-		mShader[vertical].Link("shaders/glsl/blur");
-		mShader[vertical].SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		mShader[vertical].reset(screen->CreateShaderProgram());
+		mShader[vertical]->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader[vertical]->Compile(IShaderProgram::Fragment, "shaders/glsl/blur.fp", prolog, 330);
+		mShader[vertical]->Link("shaders/glsl/blur");
+		mShader[vertical]->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
 		Uniforms[vertical].Init();
 	}
 
-	mShader[vertical].Bind(q);
+	mShader[vertical]->Bind(q);
 }

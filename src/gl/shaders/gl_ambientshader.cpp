@@ -20,10 +20,9 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl/shaders/gl_ambientshader.h"
+#include "gl_ambientshader.h"
 
 void FLinearDepthShader::Bind(IRenderQueue *q)
 {
@@ -36,9 +35,9 @@ void FLinearDepthShader::Bind(IRenderQueue *q)
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 		if (multisample) prolog += "#define MULTISAMPLE\n";
 
-		mShader.reset(new FShaderProgram());
-		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", prolog, 330);
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/lineardepth.fp", prolog, 330);
 		mShader->Link("shaders/glsl/lineardepth");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
@@ -58,9 +57,9 @@ void FSSAOShader::Bind(IRenderQueue *q)
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 		prolog += GetDefines(gl_ssao, multisample);
 
-		mShader.reset(new FShaderProgram());
-		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssao.fp", prolog, 330);
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/ssao.fp", prolog, 330);
 		mShader->Link("shaders/glsl/ssao");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
@@ -105,13 +104,14 @@ void FDepthBlurShader::Bind(IRenderQueue *q, bool vertical)
 		else
 			prolog += "#define BLUR_HORIZONTAL\n";
 
-		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/depthblur.fp", prolog, 330);
-		shader.Link("shaders/glsl/depthblur");
-		shader.SetUniformBufferLocation(Uniforms[vertical].BindingPoint(), "Uniforms");
+		shader.reset(screen->CreateShaderProgram());
+		shader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		shader->Compile(IShaderProgram::Fragment, "shaders/glsl/depthblur.fp", prolog, 330);
+		shader->Link("shaders/glsl/depthblur");
+		shader->SetUniformBufferLocation(Uniforms[vertical].BindingPoint(), "Uniforms");
 		Uniforms[vertical].Init();
 	}
-	shader.Bind(q);
+	shader->Bind(q);
 }
 
 void FSSAOCombineShader::Bind(IRenderQueue *q)
@@ -126,9 +126,9 @@ void FSSAOCombineShader::Bind(IRenderQueue *q)
 		if (multisample)
 			prolog += "#define MULTISAMPLE\n";
 
-		mShader.reset(new FShaderProgram());
-		mShader->Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader->Compile(FShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", prolog, 330);
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/ssaocombine.fp", prolog, 330);
 		mShader->Link("shaders/glsl/ssaocombine");
 		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();

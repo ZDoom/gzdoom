@@ -4,6 +4,12 @@
 #include "hwrenderer/data/uniformbuffer.h"
 #include "v_video.h"
 
+enum
+{
+	LIGHTBUF_BINDINGPOINT = 1,
+	POSTPROCESS_BINDINGPOINT = 2
+};
+
 enum class UniformType
 {
 	Int,

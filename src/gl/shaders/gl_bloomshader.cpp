@@ -25,7 +25,6 @@
 **
 */
 
-#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "gl/shaders/gl_bloomshader.h"
 
@@ -35,22 +34,24 @@ void FBloomExtractShader::Bind(IRenderQueue *q)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
 
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", prolog, 330);
-		mShader.Link("shaders/glsl/bloomextract");
-		mShader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/bloomextract.fp", prolog, 330);
+		mShader->Link("shaders/glsl/bloomextract");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }
 
 void FBloomCombineShader::Bind(IRenderQueue *q)
 {
 	if (!mShader)
 	{
-		mShader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		mShader.Compile(FShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
-		mShader.Link("shaders/glsl/bloomcombine");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/bloomcombine.fp", "", 330);
+		mShader->Link("shaders/glsl/bloomcombine");
 	}
-	mShader.Bind(q);
+	mShader->Bind(q);
 }

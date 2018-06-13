@@ -33,6 +33,7 @@
 #include "doomerrors.h"
 #include "cmdlib.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
+#include "hwrenderer/data/shaderuniforms.h"
 
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_debug.h"

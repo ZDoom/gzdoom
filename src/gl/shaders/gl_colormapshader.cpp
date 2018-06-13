@@ -25,22 +25,21 @@
 **
 */
 
-#include "gl_load/gl_system.h"
 #include "v_video.h"
 #include "gl/shaders/gl_colormapshader.h"
 
 void FColormapShader::Bind(IRenderQueue *q)
 {
-	auto &shader = mShader;
-	if (!shader)
+	if (!mShader)
 	{
 		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
-		shader.Compile(FShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		shader.Compile(FShaderProgram::Fragment, "shaders/glsl/colormap.fp", prolog, 330);
-		shader.Link("shaders/glsl/colormap");
-		shader.SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/colormap.fp", prolog, 330);
+		mShader->Link("shaders/glsl/colormap");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
 		Uniforms.Init();
 	}
-	shader.Bind(q);
+	mShader->Bind(q);
 }
 

@@ -45,6 +45,7 @@
 #include "v_2ddrawer.h"
 
 struct sector_t;
+class IShaderProgram;
 
 enum EHWCaps
 {
@@ -418,6 +419,7 @@ public:
     
     // Interface to hardware rendering resources
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
+	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.

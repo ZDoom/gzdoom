@@ -113,14 +113,12 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mTonemapPalette = nullptr;
 	mColormapShader = nullptr;
 	mLensShader = nullptr;
-	mLinearDepthShader = nullptr;
-	mDepthBlurShader = nullptr;
-	mSSAOShader = nullptr;
-	mSSAOCombineShader = nullptr;
 	mFXAAShader = nullptr;
 	mFXAALumaShader = nullptr;
 	mShadowMapShader = nullptr;
 	mCustomPostProcessShaders = nullptr;
+
+	mAmbientPass = nullptr;
 }
 
 void FGLRenderer::Initialize(int width, int height)
@@ -128,10 +126,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mScreenBuffers = new FGLRenderBuffers();
 	mSaveBuffers = new FGLRenderBuffers();
 	mBuffers = mScreenBuffers;
-	mLinearDepthShader = new FLinearDepthShader();
-	mDepthBlurShader = new FDepthBlurShader();
-	mSSAOShader = new FSSAOShader();
-	mSSAOCombineShader = new FSSAOCombineShader();
+	mAmbientPass = new FAmbientPass;
+
 	mBloomExtractShader = new FBloomExtractShader();
 	mBloomCombineShader = new FBloomCombineShader();
 	mExposureExtractShader = new FExposureExtractShader();
@@ -202,10 +198,7 @@ FGLRenderer::~FGLRenderer()
 	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
-	if (mLinearDepthShader) delete mLinearDepthShader;
-	if (mDepthBlurShader) delete mDepthBlurShader;
-	if (mSSAOShader) delete mSSAOShader;
-	if (mSSAOCombineShader) delete mSSAOCombineShader;
+	if (mAmbientPass) delete mAmbientPass;
 	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
 	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
 	if (mPresent3dRowShader) delete mPresent3dRowShader;

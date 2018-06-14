@@ -3,10 +3,20 @@
 
 #include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
-class FLinearDepthShader
+class FAmbientShader
 {
+protected:
+	std::unique_ptr<IShaderProgram> mShader;
+
 public:
 	void Bind(IRenderQueue *q);
+};
+
+class FLinearDepthShader : public FAmbientShader
+{
+public:
+
+	void Validate();
 
 	struct UniformBlock
 	{
@@ -40,14 +50,13 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	std::unique_ptr<IShaderProgram> mShader;
 	bool mMultisample = false;
 };
 
-class FSSAOShader
+class FSSAOShader : public FAmbientShader
 {
 public:
-	void Bind(IRenderQueue *q);
+	void Validate();
 
 	struct UniformBlock
 	{
@@ -99,15 +108,16 @@ private:
 
 	FString GetDefines(int mode, bool multisample);
 
-	std::unique_ptr<IShaderProgram> mShader;
 	Quality mCurrentQuality = Off;
 	bool mMultisample = false;
 };
 
-class FDepthBlurShader
+class FDepthBlurShader : public FAmbientShader
 {
+	bool mVertical;
 public:
-	void Bind(IRenderQueue *q, bool vertical);
+	FDepthBlurShader(bool vertical) : mVertical(vertical) {}
+	void Validate();
 
 	struct UniformBlock
 	{
@@ -126,16 +136,13 @@ public:
 		}
 	};
 
-	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms[2];
-
-private:
-	std::unique_ptr<IShaderProgram> mShader[2];
+	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 };
 
-class FSSAOCombineShader
+class FSSAOCombineShader : public FAmbientShader
 {
 public:
-	void Bind(IRenderQueue *q);
+	void Validate();
 
 	struct UniformBlock
 	{
@@ -161,8 +168,23 @@ public:
 	ShaderUniforms<UniformBlock, POSTPROCESS_BINDINGPOINT> Uniforms;
 
 private:
-	std::unique_ptr<IShaderProgram> mShader;
 	bool mMultisample = false;
 };
 
+
+class FAmbientPass
+{
+public:
+	std::unique_ptr<FLinearDepthShader> mLinearDepthShader;
+	std::unique_ptr<FDepthBlurShader> mDepthBlurShader[2];
+	std::unique_ptr<FSSAOShader> mSSAOShader;
+	std::unique_ptr<FSSAOCombineShader> mSSAOCombineShader;
+public:
+	int AmbientWidth = 0;
+	int AmbientHeight = 0;
+	enum { NumAmbientRandomTextures = 3 };
+
+	FAmbientPass();
+	void Setup(float proj5, float aspect);
+};
 #endif

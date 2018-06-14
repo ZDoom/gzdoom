@@ -418,6 +418,8 @@ public:
 	virtual void BlurScene(float amount) {}
     
     // Interface to hardware rendering resources
+	static float GetZNear() { return 5.f; }
+	static float GetZFar() { return 65536.f; }
     virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
 	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
 

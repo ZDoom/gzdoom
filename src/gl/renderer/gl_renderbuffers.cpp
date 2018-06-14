@@ -139,7 +139,7 @@ void FGLRenderBuffers::ClearAmbientOcclusion()
 	DeleteTexture(LinearDepthTexture);
 	DeleteTexture(AmbientTexture0);
 	DeleteTexture(AmbientTexture1);
-	for (int i = 0; i < NumAmbientRandomTextures; i++)
+	for (int i = 0; i < FAmbientPass::NumAmbientRandomTextures; i++)
 		DeleteTexture(AmbientRandomTexture[i]);
 }
 
@@ -350,6 +350,10 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 	if (width <= 0 || height <= 0)
 		return;
 
+	auto ambientPass = GLRenderer->mAmbientPass;
+	auto &AmbientWidth = ambientPass->AmbientWidth;
+	auto &AmbientHeight = ambientPass->AmbientHeight;
+
 	AmbientWidth = (width + 1) / 2;
 	AmbientHeight = (height + 1) / 2;
 	LinearDepthTexture = Create2DTexture("LinearDepthTexture", GL_R32F, AmbientWidth, AmbientHeight);
@@ -360,11 +364,11 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
 
 	// Must match quality enum in FSSAOShader::GetDefines
-	double numDirections[NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
+	double numDirections[FAmbientPass::NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
 
 	std::mt19937 generator(1337);
 	std::uniform_real_distribution<double> distribution(0.0, 1.0);
-	for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
+	for (int quality = 0; quality < FAmbientPass::NumAmbientRandomTextures; quality++)
 	{
 		int16_t randomValues[16 * 4];
 

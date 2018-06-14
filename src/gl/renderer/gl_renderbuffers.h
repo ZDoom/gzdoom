@@ -1,6 +1,7 @@
 #ifndef __GL_RENDERBUFFERS_H
 #define __GL_RENDERBUFFERS_H
 
+#include "hwrenderer/postprocessing/hw_ambientshader.h"
 #include "gl/shaders/gl_shader.h"
 
 class PPTexture
@@ -112,10 +113,7 @@ public:
 	PPTexture AmbientTexture1;
 	PPFrameBuffer AmbientFB0;
 	PPFrameBuffer AmbientFB1;
-	int AmbientWidth = 0;
-	int AmbientHeight = 0;
-	enum { NumAmbientRandomTextures = 3 };
-	PPTexture AmbientRandomTexture[NumAmbientRandomTextures];
+	PPTexture AmbientRandomTexture[FAmbientPass::NumAmbientRandomTextures];
 
 	static bool IsEnabled();
 

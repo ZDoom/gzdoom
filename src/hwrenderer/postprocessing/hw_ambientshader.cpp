@@ -22,9 +22,15 @@
 
 #include "v_video.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hw_postprocess_cvars.h"
 #include "hw_ambientshader.h"
 
-void FLinearDepthShader::Bind(IRenderQueue *q)
+void FAmbientShader::Bind(IRenderQueue *q)
+{
+	mShader->Bind(q);
+}
+
+void FLinearDepthShader::Validate()
 {
 	bool multisample = (gl_multisample > 1);
 	if (mMultisample != multisample)
@@ -43,10 +49,9 @@ void FLinearDepthShader::Bind(IRenderQueue *q)
 		Uniforms.Init();
 		mMultisample = multisample;
 	}
-	mShader->Bind(q);
 }
 
-void FSSAOShader::Bind(IRenderQueue *q)
+void FSSAOShader::Validate()
 {
 	bool multisample = (gl_multisample > 1);
 	if (mCurrentQuality != gl_ssao || mMultisample != multisample)
@@ -65,7 +70,6 @@ void FSSAOShader::Bind(IRenderQueue *q)
 		Uniforms.Init();
 		mMultisample = multisample;
 	}
-	mShader->Bind(q);
 }
 
 FString FSSAOShader::GetDefines(int mode, bool multisample)
@@ -93,28 +97,26 @@ FString FSSAOShader::GetDefines(int mode, bool multisample)
 	return defines;
 }
 
-void FDepthBlurShader::Bind(IRenderQueue *q, bool vertical)
+void FDepthBlurShader::Validate()
 {
-	auto &shader = mShader[vertical];
-	if (!shader)
+	if (!mShader)
 	{
-		FString prolog = Uniforms[vertical].CreateDeclaration("Uniforms", UniformBlock::Desc());
-		if (vertical)
+		FString prolog = Uniforms.CreateDeclaration("Uniforms", UniformBlock::Desc());
+		if (mVertical)
 			prolog += "#define BLUR_VERTICAL\n";
 		else
 			prolog += "#define BLUR_HORIZONTAL\n";
 
-		shader.reset(screen->CreateShaderProgram());
-		shader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
-		shader->Compile(IShaderProgram::Fragment, "shaders/glsl/depthblur.fp", prolog, 330);
-		shader->Link("shaders/glsl/depthblur");
-		shader->SetUniformBufferLocation(Uniforms[vertical].BindingPoint(), "Uniforms");
-		Uniforms[vertical].Init();
+		mShader.reset(screen->CreateShaderProgram());
+		mShader->Compile(IShaderProgram::Vertex, "shaders/glsl/screenquad.vp", "", 330);
+		mShader->Compile(IShaderProgram::Fragment, "shaders/glsl/depthblur.fp", prolog, 330);
+		mShader->Link("shaders/glsl/depthblur");
+		mShader->SetUniformBufferLocation(Uniforms.BindingPoint(), "Uniforms");
+		Uniforms.Init();
 	}
-	shader->Bind(q);
 }
 
-void FSSAOCombineShader::Bind(IRenderQueue *q)
+void FSSAOCombineShader::Validate()
 {
 	bool multisample = (gl_multisample > 1);
 	if (mMultisample != multisample)
@@ -134,5 +136,86 @@ void FSSAOCombineShader::Bind(IRenderQueue *q)
 		Uniforms.Init();
 		mMultisample = multisample;
 	}
-	mShader->Bind(q);
+}
+
+
+
+FAmbientPass::FAmbientPass()
+{
+	mLinearDepthShader.reset(new FLinearDepthShader());
+	mDepthBlurShader[0].reset(new FDepthBlurShader(false));
+	mDepthBlurShader[1].reset(new FDepthBlurShader(true));
+	mSSAOShader.reset(new FSSAOShader());
+	mSSAOCombineShader.reset(new FSSAOCombineShader());
+}
+
+
+void FAmbientPass::Setup(float proj5, float aspect)
+{
+	float bias = gl_ssao_bias;
+	float aoRadius = gl_ssao_radius;
+	const float blurAmount = gl_ssao_blur;
+	float aoStrength = gl_ssao_strength;
+
+	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
+	float tanHalfFovy = 1.0f / proj5;
+	float invFocalLenX = tanHalfFovy * aspect;
+	float invFocalLenY = tanHalfFovy;
+	float nDotVBias = clamp(bias, 0.0f, 1.0f);
+	float r2 = aoRadius * aoRadius;
+
+	float blurSharpness = 1.0f / blurAmount;
+
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
+
+	float sceneScaleX = mSceneViewport.width / (float)mScreenViewport.width;
+	float sceneScaleY = mSceneViewport.height / (float)mScreenViewport.height;
+	float sceneOffsetX = mSceneViewport.left / (float)mScreenViewport.width;
+	float sceneOffsetY = mSceneViewport.top / (float)mScreenViewport.height;
+
+	mLinearDepthShader->Validate();
+	if (gl_multisample > 1) mLinearDepthShader->Uniforms->SampleIndex = 0;
+	mLinearDepthShader->Uniforms->LinearizeDepthA = 1.0f / screen->GetZFar() - 1.0f / screen->GetZNear();
+	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / screen->GetZNear(), 1.e-8f);
+	mLinearDepthShader->Uniforms->InverseDepthRangeA = 1.0f;
+	mLinearDepthShader->Uniforms->InverseDepthRangeB = 0.0f;
+	mLinearDepthShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
+	mLinearDepthShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
+	mLinearDepthShader->Uniforms.Set();
+
+	mSSAOShader->Validate();
+	if (gl_multisample > 1) mSSAOShader->Uniforms->SampleIndex = 0;
+	mSSAOShader->Uniforms->UVToViewA = { 2.0f * invFocalLenX, 2.0f * invFocalLenY };
+	mSSAOShader->Uniforms->UVToViewB = { -invFocalLenX, -invFocalLenY };
+	mSSAOShader->Uniforms->InvFullResolution = { 1.0f / AmbientWidth, 1.0f / AmbientHeight };
+	mSSAOShader->Uniforms->NDotVBias = nDotVBias;
+	mSSAOShader->Uniforms->NegInvR2 = -1.0f / r2;
+	mSSAOShader->Uniforms->RadiusToScreen = aoRadius * 0.5f / tanHalfFovy * AmbientHeight;
+	mSSAOShader->Uniforms->AOMultiplier = 1.0f / (1.0f - nDotVBias);
+	mSSAOShader->Uniforms->AOStrength = aoStrength;
+	mSSAOShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
+	mSSAOShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
+	mSSAOShader->Uniforms.Set();
+
+	// Blur SSAO texture
+	if (gl_ssao_debug < 2)
+	{
+		mDepthBlurShader[false]->Validate();
+		mDepthBlurShader[false]->Uniforms->BlurSharpness = blurSharpness;
+		mDepthBlurShader[false]->Uniforms->InvFullResolution = { 1.0f / AmbientWidth, 1.0f / AmbientHeight };
+		mDepthBlurShader[false]->Uniforms.Set();
+
+		mDepthBlurShader[true]->Validate();
+		mDepthBlurShader[true]->Uniforms->BlurSharpness = blurSharpness;
+		mDepthBlurShader[true]->Uniforms->InvFullResolution = { 1.0f / AmbientWidth, 1.0f / AmbientHeight };
+		mDepthBlurShader[true]->Uniforms->PowExponent = gl_ssao_exponent;
+		mDepthBlurShader[true]->Uniforms.Set();
+	}
+
+	mSSAOCombineShader->Validate();
+	if (gl_multisample > 1) mSSAOCombineShader->Uniforms->SampleCount = gl_multisample;
+	mSSAOCombineShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
+	mSSAOCombineShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
+	mSSAOCombineShader->Uniforms.Set();
 }

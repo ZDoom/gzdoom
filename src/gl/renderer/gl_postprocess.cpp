@@ -86,44 +86,19 @@ void FGLRenderer::AmbientOccludeScene()
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(3);
 
-	float bias = gl_ssao_bias;
-	float aoRadius = gl_ssao_radius;
-	const float blurAmount = gl_ssao_blur;
-	float aoStrength = gl_ssao_strength;
+	int randomTexture = clamp(gl_ssao - 1, 0, FAmbientPass::NumAmbientRandomTextures - 1);
 
-	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
-	float tanHalfFovy = 1.0f / gl_RenderState.mProjectionMatrix.get()[5];
-	float invFocalLenX = tanHalfFovy * (mBuffers->GetSceneWidth() / (float)mBuffers->GetSceneHeight());
-	float invFocalLenY = tanHalfFovy;
-	float nDotVBias = clamp(bias, 0.0f, 1.0f);
-	float r2 = aoRadius * aoRadius;
+	float proj5 = gl_RenderState.mProjectionMatrix.get()[5];
+	float aspect = (mBuffers->GetSceneWidth() / (float)mBuffers->GetSceneHeight());
 
-	float blurSharpness = 1.0f / blurAmount;
-
-	const auto &mSceneViewport = screen->mSceneViewport;
-	const auto &mScreenViewport = screen->mScreenViewport;
-
-	float sceneScaleX = mSceneViewport.width / (float)mScreenViewport.width;
-	float sceneScaleY = mSceneViewport.height / (float)mScreenViewport.height;
-	float sceneOffsetX = mSceneViewport.left / (float)mScreenViewport.width;
-	float sceneOffsetY = mSceneViewport.top / (float)mScreenViewport.height;
-
-	int randomTexture = clamp(gl_ssao - 1, 0, FGLRenderBuffers::NumAmbientRandomTextures - 1);
+	mAmbientPass->Setup(proj5, aspect);
 
 	// Calculate linear depth values
 	mBuffers->LinearDepthFB.Bind();
-	glViewport(0, 0, mBuffers->AmbientWidth, mBuffers->AmbientHeight);
+	glViewport(0, 0, mAmbientPass->AmbientWidth, mAmbientPass->AmbientHeight);
 	mBuffers->BindSceneDepthTexture(0);
 	mBuffers->BindSceneColorTexture(1);
-	mLinearDepthShader->Bind(NOQUEUE);
-	if (gl_multisample > 1) mLinearDepthShader->Uniforms->SampleIndex = 0;
-	mLinearDepthShader->Uniforms->LinearizeDepthA = 1.0f / GetZFar() - 1.0f / GetZNear();
-	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / GetZNear(), 1.e-8f);
-	mLinearDepthShader->Uniforms->InverseDepthRangeA = 1.0f;
-	mLinearDepthShader->Uniforms->InverseDepthRangeB = 0.0f;
-	mLinearDepthShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
-	mLinearDepthShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
-	mLinearDepthShader->Uniforms.Set();
+	mAmbientPass->mLinearDepthShader->Bind(NOQUEUE);
 	RenderScreenQuad();
 
 	// Apply ambient occlusion
@@ -131,19 +106,7 @@ void FGLRenderer::AmbientOccludeScene()
 	mBuffers->LinearDepthTexture.Bind(0);
 	mBuffers->AmbientRandomTexture[randomTexture].Bind(2, GL_NEAREST, GL_REPEAT);
 	mBuffers->BindSceneNormalTexture(1);
-	mSSAOShader->Bind(NOQUEUE);
-	if (gl_multisample > 1) mSSAOShader->Uniforms->SampleIndex = 0;
-	mSSAOShader->Uniforms->UVToViewA = { 2.0f * invFocalLenX, 2.0f * invFocalLenY };
-	mSSAOShader->Uniforms->UVToViewB = { -invFocalLenX, -invFocalLenY };
-	mSSAOShader->Uniforms->InvFullResolution = { 1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight };
-	mSSAOShader->Uniforms->NDotVBias = nDotVBias;
-	mSSAOShader->Uniforms->NegInvR2 = -1.0f / r2;
-	mSSAOShader->Uniforms->RadiusToScreen = aoRadius * 0.5 / tanHalfFovy * mBuffers->AmbientHeight;
-	mSSAOShader->Uniforms->AOMultiplier = 1.0f / (1.0f - nDotVBias);
-	mSSAOShader->Uniforms->AOStrength = aoStrength;
-	mSSAOShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
-	mSSAOShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
-	mSSAOShader->Uniforms.Set();
+	mAmbientPass->mSSAOShader->Bind(NOQUEUE);
 	RenderScreenQuad();
 
 	// Blur SSAO texture
@@ -151,19 +114,12 @@ void FGLRenderer::AmbientOccludeScene()
 	{
 		mBuffers->AmbientFB0.Bind();
 		mBuffers->AmbientTexture1.Bind(0);
-		mDepthBlurShader->Bind(NOQUEUE, false);
-		mDepthBlurShader->Uniforms[false]->BlurSharpness = blurSharpness;
-		mDepthBlurShader->Uniforms[false]->InvFullResolution = { 1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight };
-		mDepthBlurShader->Uniforms[false].Set();
+		mAmbientPass->mDepthBlurShader[false]->Bind(NOQUEUE);
 		RenderScreenQuad();
 
 		mBuffers->AmbientFB1.Bind();
 		mBuffers->AmbientTexture0.Bind(0);
-		mDepthBlurShader->Bind(NOQUEUE, true);
-		mDepthBlurShader->Uniforms[true]->BlurSharpness = blurSharpness;
-		mDepthBlurShader->Uniforms[true]->InvFullResolution = { 1.0f / mBuffers->AmbientWidth, 1.0f / mBuffers->AmbientHeight };
-		mDepthBlurShader->Uniforms[true]->PowExponent = gl_ssao_exponent;
-		mDepthBlurShader->Uniforms[true].Set();
+		mAmbientPass->mDepthBlurShader[true]->Bind(NOQUEUE);
 		RenderScreenQuad();
 	}
 
@@ -180,11 +136,7 @@ void FGLRenderer::AmbientOccludeScene()
 	}
 	mBuffers->AmbientTexture1.Bind(0, GL_LINEAR);
 	mBuffers->BindSceneFogTexture(1);
-	mSSAOCombineShader->Bind(NOQUEUE);
-	if (gl_multisample > 1) mSSAOCombineShader->Uniforms->SampleCount = gl_multisample;
-	mSSAOCombineShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
-	mSSAOCombineShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
-	mSSAOCombineShader->Uniforms.Set();
+	mAmbientPass->mSSAOCombineShader->Bind(NOQUEUE);
 	RenderScreenQuad();
 
 	FGLDebug::PopGroup();

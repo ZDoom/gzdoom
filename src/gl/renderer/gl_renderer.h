@@ -25,10 +25,8 @@ class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
-class FLinearDepthShader;
-class FDepthBlurShader;
-class FSSAOShader;
-class FSSAOCombineShader;
+class FAmbientPass;
+
 class FBloomExtractShader;
 class FBloomCombineShader;
 class FExposureExtractShader;
@@ -100,13 +98,11 @@ public:
 	unsigned int mVAOID;
 	int mOldFBID;
 
+	FAmbientPass *mAmbientPass;
+
 	FGLRenderBuffers *mBuffers;
 	FGLRenderBuffers *mScreenBuffers;
 	FGLRenderBuffers *mSaveBuffers;
-	FLinearDepthShader *mLinearDepthShader;
-	FSSAOShader *mSSAOShader;
-	FDepthBlurShader *mDepthBlurShader;
-	FSSAOCombineShader *mSSAOCombineShader;
 	FBloomExtractShader *mBloomExtractShader;
 	FBloomCombineShader *mBloomCombineShader;
 	FExposureExtractShader *mExposureExtractShader;
@@ -182,9 +178,6 @@ public:
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
-
-	static float GetZNear() { return 5.f; }
-	static float GetZFar() { return 65536.f; }
 };
 
 #include "hwrenderer/scene/hw_fakeflat.h"

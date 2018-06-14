@@ -1,6 +1,8 @@
 
 #pragma once
 
+#include <memory>
+
 #include "hwrenderer/data/shaderuniforms.h"
 
 class IRenderQueue;

@@ -565,7 +565,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		{
 			if (!gl.legacyMode)
 			{
-				gl_RenderState.Set2DOverlayColor(cmd.mColor1);
+				gl_RenderState.SetFog(cmd.mColor1, 0);
 				gl_RenderState.SetFixedColormap(CM_PLAIN2D);
 			}
 			else if (cmd.mDesaturate > 0)

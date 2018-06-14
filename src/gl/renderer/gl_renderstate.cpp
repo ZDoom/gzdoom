@@ -221,25 +221,9 @@ bool FRenderState::ApplyShader()
 		activeShader->currentcliplinestate = 0;
 	}
 
-	if (mColormapState < -1)	// 2D operations
+	if (mColormapState == CM_PLAIN2D)	// 2D operations
 	{
-		if (mColormapState != CM_SPECIAL2D)
-		{
-			activeShader->muColormapStart.Set(m2DColors[0]);
-			activeShader->muFixedColormap.Set(4);
-		}
-		else
-		{
-			float startr = m2DColors[0].r / 255.f;
-			float startg = m2DColors[0].g / 255.f;
-			float startb = m2DColors[0].b / 255.f;
-			float ranger = m2DColors[1].r / 255.f - startr;
-			float rangeg = m2DColors[1].g / 255.f - startg;
-			float rangeb = m2DColors[1].b / 255.f - startb;
-			activeShader->muColormapStart.Set(startr, startg, startb, 0.f);
-			activeShader->muColormapRange.Set(ranger, rangeg, rangeb, 0.f);
-			activeShader->muFixedColormap.Set(1);
-		}
+		activeShader->muFixedColormap.Set(4);
 		activeShader->currentfixedcolormap = mColormapState;
 	}
 	else if (mColormapState != activeShader->currentfixedcolormap)

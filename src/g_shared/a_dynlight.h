@@ -46,6 +46,13 @@ enum LightFlag
 	LF_SPOT = 64
 };
 
+enum SubLightFormula
+{
+	SLF_ZDOOMGL = 1,
+	SLF_PRECISE = 2,
+	SLF_RAW = 3,
+};
+
 //==========================================================================
 //
 // Light definitions
@@ -72,6 +79,8 @@ public:
 	void SetSpot(bool spot) { m_spot = spot; }
 	void SetSpotInnerAngle(double angle) { m_spotInnerAngle = angle; }
 	void SetSpotOuterAngle(double angle) { m_spotOuterAngle = angle; }
+	uint8_t GetSubLightType() { return m_sublighttype; }
+	void SetSubLightType(uint8_t val) { m_sublighttype = val; }
 
 	void OrderIntensities()
 	{
@@ -98,6 +107,7 @@ protected:
 	bool m_spot = false;
 	double m_spotInnerAngle = 10.0;
 	double m_spotOuterAngle = 25.0;
+	uint8_t m_sublighttype = 1;
 };
 
 //==========================================================================
@@ -203,6 +213,8 @@ public:
 	bool IsSubtractive() { return !!(lightflags & LF_SUBTRACTIVE); }
 	bool IsAdditive() { return !!(lightflags & LF_ADDITIVE); }
 	bool IsSpot() { return !!(lightflags & LF_SPOT); }
+	uint8_t GetSubLightType();
+	void SetSubLightType(uint8_t Val);
 	FState *targetState;
 	FLightNode * touching_sides;
 	FLightNode * touching_subsectors;

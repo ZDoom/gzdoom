@@ -97,11 +97,14 @@ void FDynLightData::AddLightToList(int group, ADynamicLight * light, bool forceA
 	if (light->IsSubtractive())
 	{
 		DVector3 v(r, g, b);
-		float length = (float)v.Length();
-		
-		r = length - r;
-		g = length - g;
-		b = length - b;
+		float length = (light->GetSubLightType() == 1) ? ((float)v.Length()) : (r + g + b - clamp(r, g, b));
+
+		if (light->GetSubLightType() != 3)
+		{
+			r = length - r;
+			g = length - g;
+			b = length - b;
+		}
 		i = 1;
 	}
 

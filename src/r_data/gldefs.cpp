@@ -136,6 +136,7 @@ static const char *LightTags[]=
    "attenuate",
    "dontlightactors",
    "spot",
+   "sublighttype",
    nullptr
 };
 
@@ -158,7 +159,8 @@ enum {
    LIGHTTAG_DONTLIGHTSELF,
    LIGHTTAG_ATTENUATE,
    LIGHTTAG_DONTLIGHTACTORS,
-   LIGHTTAG_SPOT
+   LIGHTTAG_SPOT,
+   LIGHTTAG_SUBLIGHTTYPE,
 };
 
 //==========================================================================
@@ -463,6 +465,10 @@ class GLDefsParser
 						defaults->SetSpotOuterAngle(outerAngle);
 					}
 					break;
+				case LIGHTTAG_SUBLIGHTTYPE:
+					intVal = clamp<int>(ParseInt(sc), 1, 3);
+					defaults->SetSubLightType(intVal);
+					break;
 				default:
 					sc.ScriptError("Unknown tag: %s\n", sc.String);
 				}
@@ -555,6 +561,10 @@ class GLDefsParser
 						defaults->SetSpotInnerAngle(innerAngle);
 						defaults->SetSpotOuterAngle(outerAngle);
 					}
+					break;
+				case LIGHTTAG_SUBLIGHTTYPE:
+					intVal = clamp<int>(ParseInt(sc), 1, 3);
+					defaults->SetSubLightType(intVal);
 					break;
 				default:
 					sc.ScriptError("Unknown tag: %s\n", sc.String);
@@ -652,6 +662,10 @@ class GLDefsParser
 						defaults->SetSpotOuterAngle(outerAngle);
 					}
 					break;
+				case LIGHTTAG_SUBLIGHTTYPE:
+					intVal = clamp<int>(ParseInt(sc), 1, 3);
+					defaults->SetSubLightType(intVal);
+					break;
 				default:
 					sc.ScriptError("Unknown tag: %s\n", sc.String);
 				}
@@ -747,6 +761,10 @@ class GLDefsParser
 						defaults->SetSpotOuterAngle(outerAngle);
 					}
 					break;
+				case LIGHTTAG_SUBLIGHTTYPE:
+					intVal = clamp<int>(ParseInt(sc), 1, 3);
+					defaults->SetSubLightType(intVal);
+					break;
 				default:
 					sc.ScriptError("Unknown tag: %s\n", sc.String);
 				}
@@ -777,6 +795,7 @@ class GLDefsParser
 		int type;
 		float floatVal;
 		float floatTriple[3];
+		int intVal;
 		FLightDefaults *defaults;
 
 		// get name
@@ -838,6 +857,10 @@ class GLDefsParser
 						defaults->SetSpotInnerAngle(innerAngle);
 						defaults->SetSpotOuterAngle(outerAngle);
 					}
+					break;
+				case LIGHTTAG_SUBLIGHTTYPE:
+					intVal = clamp<int>(ParseInt(sc), 1, 3);
+					defaults->SetSubLightType(intVal);
 					break;
 				default:
 					sc.ScriptError("Unknown tag: %s\n", sc.String);

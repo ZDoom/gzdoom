@@ -266,12 +266,12 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			{
 				// If we get here we know that we have colored fog and no fixed colormap.
 				mDrawer->SetFog(sprite->foglevel, rel, &sprite->Colormap, additivefog);
-				gl_RenderState.SetFixedColormap(CM_FOGLAYER);
+				gl_RenderState.SetTextureMode(TM_FOGLAYER);
 				gl_RenderState.BlendEquation(GL_FUNC_ADD);
 				gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				gl_RenderState.Apply();
 				qd.Render(GL_TRIANGLE_STRIP);
-				gl_RenderState.SetFixedColormap(CM_DEFAULT);
+				gl_RenderState.SetTextureMode(TM_MODULATE);
 			}
 		}
 		else

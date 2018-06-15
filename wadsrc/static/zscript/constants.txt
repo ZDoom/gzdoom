@@ -850,6 +850,61 @@ enum ERenderStyle
 	STYLE_AddShaded,
 };
 
+enum ERenderOp
+{
+	STYLEOP_None,         // Do not draw
+	STYLEOP_Add,          // Add source to destination
+	STYLEOP_Sub,          // Subtract source from destination
+	STYLEOP_RevSub,       // Subtract destination from source
+	STYLEOP_Fuzz,         // Draw fuzzy on top of destination - ignores alpha and color
+	STYLEOP_FuzzOrAdd,    // Draw fuzzy or add, based on user preference
+	STYLEOP_FuzzOrSub,    // Draw fuzzy or subtract, based on user preference
+	STYLEOP_FuzzOrRevSub, // Draw fuzzy or reverse subtract, based on user preference
+
+	// special styles
+	STYLEOP_Shadow,            
+};
+
+enum ERenderAlpha
+{
+	STYLEALPHA_Zero,   // Blend factor is 0.0
+	STYLEALPHA_One,    // Blend factor is 1.0
+	STYLEALPHA_Src,    // Blend factor is alpha
+	STYLEALPHA_InvSrc, // Blend factor is 1.0 - alpha
+};
+
+enum ERenderFlags
+{
+	// Use value of transsouls as alpha.
+	STYLEF_TransSoulsAlpha = 1,
+
+	// Force alpha to 1. Not the same as STYLEALPHA_One, since that also
+	// ignores alpha from the texture.
+	STYLEF_Alpha1 = 2,
+
+	// Use red component from grayscale/RGB texture as alpha. If the texture
+	// is paletted, the palette is ignored and it is treated as grayscale.
+	// This should generally be combined with STYLEF_ColorIsFixed, since that's
+	// all the software renderer supports, but hardware acceleration can do
+	// them separately should you want to do that for some reason.
+	STYLEF_RedIsAlpha = 4,
+
+	// Ignore texture for RGB output. Color comes from fillcolor for actors
+	// or DTA_FillColor for DrawTexture().
+	STYLEF_ColorIsFixed = 8,
+
+	// Invert source color, either the texture color or the fixed color.
+	STYLEF_InvertSource = 16,
+
+	// Invert overlay color. This is the fade for actors and DTA_ColorOverlay
+	// for DrawTexture().
+	STYLEF_InvertOverlay = 32,
+
+	// Actors only: Ignore sector fade and fade to black. To fade to white,
+	// combine this with STYLEF_InvertOverlay.
+	STYLEF_FadeToBlack = 64,
+};
+
 // Type definition for the implicit 'callingstate' parameter that gets passed to action functions.
 enum EStateType
 {

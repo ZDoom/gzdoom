@@ -304,6 +304,36 @@ struct Translation version("2.4")
 	}
 }
 
+struct RenderStyle
+{
+	static int CreateLegacy(ERenderStyle style)
+	{
+		switch(style)
+		{
+		case STYLE_None: return Create(STYLEOP_None, STYLEALPHA_Zero, STYLEALPHA_Zero, 0);
+		case STYLE_Normal: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_Alpha1);
+		case STYLE_Fuzzy: return Create(STYLEOP_Fuzz, STYLEALPHA_Src, STYLEALPHA_InvSrc, 0);
+		case STYLE_SoulTrans: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_TransSoulsAlpha);
+		case STYLE_OptFuzzy: return Create(STYLEOP_FuzzOrAdd, STYLEALPHA_Src, STYLEALPHA_InvSrc, 0);
+		case STYLE_Stencil: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_Alpha1 | STYLEF_ColorIsFixed);
+		case STYLE_Translucent: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, 0);
+		case STYLE_Add: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_One, 0);
+		case STYLE_Shaded: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_RedIsAlpha | STYLEF_ColorIsFixed);
+		case STYLE_TranslucentStencil: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_InvSrc, STYLEF_ColorIsFixed);
+		case STYLE_Shadow: return Create(STYLEOP_Shadow, 0, 0, 0);
+		case STYLE_Subtract: return Create(STYLEOP_RevSub, STYLEALPHA_Src, STYLEALPHA_One, 0);
+		case STYLE_AddStencil: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_One, STYLEF_Alpha1 | STYLEF_ColorIsFixed);
+		case STYLE_AddShaded: return Create(STYLEOP_Add, STYLEALPHA_Src, STYLEALPHA_One, STYLEF_RedIsAlpha | STYLEF_ColorIsFixed);
+		default: Object.ThrowAbortException("Unsupported or invalid legacy render style."); return 0;
+		}
+	}
+
+	static int Create(ERenderOp blendOp, ERenderAlpha srcAlpha, ERenderAlpha dstAlpha, ERenderFlags flags)
+	{
+		return blendOp | (srcAlpha << 8) | (dstAlpha << 16) | (flags << 24);
+	}
+}
+
 struct Console native
 {
 	native static void HideConsole();

@@ -137,15 +137,15 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 {
 	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
 
-		// Draw the subsectors belonging to this sector
+	// Draw the subsectors belonging to this sector
 	for (int i=0; i< flat->sector->subsectorcount; i++)
-		{
-			subsector_t * sub = flat->sector->subsectors[i];
+	{
+		subsector_t * sub = flat->sector->subsectors[i];
 		if (ss_renderflags[sub->Index()]& flat->renderflags || istrans)
-			{
-				SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
-			}
+		{
+			SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
 		}
+	}
 
 	// Draw the subsectors assigned to it due to missing textures
 	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
@@ -172,7 +172,6 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans)
 {
 	int dli = flat->dynlightindex;
-	auto vcount = flat->sector->ibocount;
 
 	gl_RenderState.Apply();
 	if (gl.legacyMode) processlights = false;

@@ -65,6 +65,7 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 	UpdateCameraExposure();
 	mCustomPostProcessShaders->Run("beforebloom");
 	BloomScene(fixedcm);
+	mBuffers->BindCurrentFB();
 	afterBloomDrawEndScene2D();
 	TonemapScene();
 	ColormapScene(fixedcm);

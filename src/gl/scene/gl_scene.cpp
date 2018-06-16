@@ -488,7 +488,7 @@ void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 	Reset3DViewport();
 
 	// Delay drawing psprites until after bloom has been applied, if enabled.
-	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom || FixedColormap != CM_DEFAULT)
+	if (!gl_bloom || FixedColormap != CM_DEFAULT)
 	{
 		DrawEndScene2D(di, viewsector);
 	}
@@ -659,7 +659,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		ProcessScene(di, toscreen);
 		if (mainview && toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
 
-		if (mainview && FGLRenderBuffers::IsEnabled())
+		if (mainview)
 		{
 			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(di, lviewsector); });
 
@@ -676,7 +676,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		}
 		FDrawInfo::EndDrawInfo();
 		GLRenderer->mDrawingScene2D = false;
-		if (!stereo3dMode.IsMono() && FGLRenderBuffers::IsEnabled())
+		if (!stereo3dMode.IsMono())
 			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
 		eye->TearDown();
 	}
@@ -716,12 +716,6 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	glDisable(GL_STENCIL_TEST);
 	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
-	if (!FGLRenderBuffers::IsEnabled())
-	{
-		// Since this doesn't do any of the 2D rendering it needs to draw the screen blend itself before extracting the image.
-		screen->DrawBlend(viewsector);
-		screen->Draw2D();
-	}
 	GLRenderer->CopyToBackbuffer(&bounds, false);
 
 	// strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers

@@ -192,7 +192,6 @@ private:
 	int mCurrentShadowMapSize = 0;
 
 	static bool FailedCreate;
-	static bool BuffersActive;
 };
 
 #endif

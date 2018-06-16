@@ -1072,7 +1072,7 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	bool notScaled = ((mScreenViewport.width == ViewportScaledWidth(mScreenViewport.width, mScreenViewport.height)) &&
 		(mScreenViewport.width == ViewportScaledHeight(mScreenViewport.width, mScreenViewport.height)) &&
 		!ViewportIsScaled43());
-	if ((gl_scale_viewport && !IsFullscreen() && notScaled) || !RenderBuffersEnabled())
+	if (gl_scale_viewport && !IsFullscreen() && notScaled)
 	{
 		mScreenViewport.width = mOutputLetterbox.width;
 		mScreenViewport.height = mOutputLetterbox.height;
@@ -1080,15 +1080,6 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 		mSceneViewport.top = (int)round(mSceneViewport.top * scaleY);
 		mSceneViewport.width = (int)round(mSceneViewport.width * scaleX);
 		mSceneViewport.height = (int)round(mSceneViewport.height * scaleY);
-
-		// Without render buffers we have to render directly to the letterbox
-		if (!RenderBuffersEnabled())
-		{
-			mScreenViewport.left += mOutputLetterbox.left;
-			mScreenViewport.top += mOutputLetterbox.top;
-			mSceneViewport.left += mOutputLetterbox.left;
-			mSceneViewport.top += mOutputLetterbox.top;
-		}
 	}
 }
 

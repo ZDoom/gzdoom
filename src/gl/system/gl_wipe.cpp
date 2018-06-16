@@ -128,19 +128,8 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	};
 
-	if (FGLRenderBuffers::IsEnabled())
-	{
-		GLRenderer->mBuffers->BindCurrentFB();
-		copyPixels();
-	}
-	else
-	{
-		GLint readbuffer = 0;
-		glGetIntegerv(GL_READ_BUFFER, &readbuffer);
-		glReadBuffer(GL_FRONT);
-		copyPixels();
-		glReadBuffer(readbuffer);
-	}
+	GLRenderer->mBuffers->BindCurrentFB();
+	copyPixels();
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -166,8 +155,7 @@ void OpenGLFrameBuffer::WipeEndScreen()
 	glFinish();
 	wipeendscreen->Bind(0, false, false);
 
-	if (FGLRenderBuffers::IsEnabled())
-		GLRenderer->mBuffers->BindCurrentFB();
+	GLRenderer->mBuffers->BindCurrentFB();
 
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -199,12 +187,9 @@ bool OpenGLFrameBuffer::WipeDo(int ticks)
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(false);
 
-		if (FGLRenderBuffers::IsEnabled())
-		{
-			GLRenderer->mBuffers->BindCurrentFB();
-			const auto &bounds = screen->mScreenViewport;
-			glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
-		}
+		GLRenderer->mBuffers->BindCurrentFB();
+		const auto &bounds = screen->mScreenViewport;
+		glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 
 		done = ScreenWipe->Run(ticks, this);
 		glDepthMask(true);

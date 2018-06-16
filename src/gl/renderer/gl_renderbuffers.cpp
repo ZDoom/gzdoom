@@ -35,7 +35,6 @@
 #include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 
 //==========================================================================
 //
@@ -173,17 +172,6 @@ void FGLRenderBuffers::DeleteFrameBuffer(PPFrameBuffer &fb)
 
 bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
 {
-	if (gl_renderbuffers != BuffersActive)
-	{
-		if (BuffersActive)
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		BuffersActive = gl_renderbuffers;
-		GLRenderer->mShaderManager->ResetFixedColormap();
-	}
-
-	if (!IsEnabled())
-		return false;
-		
 	if (width <= 0 || height <= 0)
 		I_FatalError("Requested invalid render buffer sizes: screen = %dx%d", width, height);
 
@@ -234,9 +222,10 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		mSamples = 0;
 		mSceneWidth = 0;
 		mSceneHeight = 0;
+		I_FatalError("Unable to create render buffers.");
 	}
 
-	return !FailedCreate;
+	return true;
 }
 
 //==========================================================================
@@ -615,7 +604,7 @@ bool FGLRenderBuffers::CheckFrameBufferCompleteness()
 	if (result == GL_FRAMEBUFFER_COMPLETE)
 		return true;
 
-	FailedCreate = true;
+	bool FailedCreate = true;
 
 	if (gl_debug_level > 0)
 	{
@@ -926,10 +915,4 @@ void FGLRenderBuffers::BindOutputFB()
 //
 //==========================================================================
 
-bool FGLRenderBuffers::IsEnabled()
-{
-	return BuffersActive && !FailedCreate;
-}
-
 bool FGLRenderBuffers::FailedCreate = false;
-bool FGLRenderBuffers::BuffersActive = false;

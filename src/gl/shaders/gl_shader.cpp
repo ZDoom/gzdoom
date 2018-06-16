@@ -179,12 +179,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		{
-		}
-		else
-		{
-			vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-		}
+		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 	}
 	else
 	{

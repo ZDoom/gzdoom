@@ -394,7 +394,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 		blurAmount = gameinfobluramount;
 
 	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
-	if ((blurAmount <= 0.0) || !FGLRenderBuffers::IsEnabled())
+	if (blurAmount <= 0.0)
 		return;
 
 	FGLDebug::PushGroup("BlurScene");
@@ -662,7 +662,7 @@ void FGLRenderer::Flush()
 	const auto &mSceneViewport = screen->mSceneViewport;
 	const auto &mScreenViewport = screen->mScreenViewport;
 
-	if (stereo3dMode.IsMono() || !FGLRenderBuffers::IsEnabled())
+	if (stereo3dMode.IsMono())
 	{
 		CopyToBackbuffer(nullptr, true);
 	}
@@ -701,30 +701,22 @@ void FGLRenderer::CopyToBackbuffer(const IntRect *bounds, bool applyGamma)
 	mCustomPostProcessShaders->Run("screen");
 
 	FGLDebug::PushGroup("CopyToBackbuffer");
-	if (FGLRenderBuffers::IsEnabled())
+	FGLPostProcessState savedState;
+	mBuffers->BindOutputFB();
+
+	IntRect box;
+	if (bounds)
 	{
-		FGLPostProcessState savedState;
-		mBuffers->BindOutputFB();
-
-		IntRect box;
-		if (bounds)
-		{
-			box = *bounds;
-		}
-		else
-		{
-			ClearBorders();
-			box = screen->mOutputLetterbox;
-		}
-
-		mBuffers->BindCurrentTexture(0);
-		DrawPresentTexture(box, applyGamma);
+		box = *bounds;
 	}
-	else if (!bounds)
+	else
 	{
-		FGLPostProcessState savedState;
 		ClearBorders();
+		box = screen->mOutputLetterbox;
 	}
+
+	mBuffers->BindCurrentTexture(0);
+	DrawPresentTexture(box, applyGamma);
 	FGLDebug::PopGroup();
 }
 

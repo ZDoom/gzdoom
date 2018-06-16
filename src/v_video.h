@@ -412,7 +412,6 @@ public:
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
-	virtual bool RenderBuffersEnabled() { return false; };
 	virtual void BlurScene(float amount) {}
     
     // Interface to hardware rendering resources

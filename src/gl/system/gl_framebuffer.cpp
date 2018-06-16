@@ -238,21 +238,13 @@ uint32_t OpenGLFrameBuffer::GetCaps()
 
 	// describe our basic feature set
 	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
-		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL;
+		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL | RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
 	if (r_drawvoxels)
 		FlagSet |= RFF_VOXELS;
 
-	if (!RenderBuffersEnabled())
-	{
-		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
-		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;
-	}
-	else
-	{
-		if (gl_tonemap != 5) // not running palette tonemap shader
-			FlagSet |= RFF_TRUECOLOR;
-		FlagSet |= RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
-	}
+	if (gl_tonemap != 5) // not running palette tonemap shader
+		FlagSet |= RFF_TRUECOLOR;
+
 	return (uint32_t)FlagSet;
 }
 
@@ -391,11 +383,6 @@ void OpenGLFrameBuffer::ResetFixedColormap()
 void OpenGLFrameBuffer::BlurScene(float amount)
 {
 	GLRenderer->BlurScene(amount);
-}
-
-bool OpenGLFrameBuffer::RenderBuffersEnabled()
-{
-	return FGLRenderBuffers::IsEnabled();
 }
 
 void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)

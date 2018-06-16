@@ -236,7 +236,7 @@ bool FRenderState::ApplyShader()
 		}
 		else if ((mColormapState >= CM_FIRSTSPECIALCOLORMAP && mColormapState < CM_MAXCOLORMAPFORCED))
 		{
-			if (FGLRenderBuffers::IsEnabled() && mColormapState < CM_FIRSTSPECIALCOLORMAPFORCED)
+			if (mColormapState < CM_FIRSTSPECIALCOLORMAPFORCED)
 			{
 				// When using postprocessing to apply the colormap, we must render the image fullbright here.
 				activeShader->muFixedColormap.Set(2);

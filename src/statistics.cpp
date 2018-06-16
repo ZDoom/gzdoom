@@ -72,6 +72,7 @@ CVAR(String, statfile, "zdoomstat.txt", CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 struct OneLevel
 {
 	int totalkills, killcount;
+	int totalitems, itemcount;
 	int totalsecrets, secretcount;
 	int leveltime;
 	FString Levelname;
@@ -84,10 +85,10 @@ static FEpisode *StartEpisode;
 // The statistics for one level
 struct FLevelStatistics
 {
-	char info[30];
+	char info[60];
 	short skill;
 	short playerclass;
-	char name[12];
+	char name[24];
 	int timeneeded;
 };
 
@@ -139,9 +140,9 @@ static void ParseStatistics(const char *fn, TArray<FStatistics> &statlist)
 
 				sc.MustGetString();
 				sc.MustGetString();
-				strncpy(session.name, sc.String, 12);
+				strncpy(session.name, sc.String, 24);
 				sc.MustGetString();
-				strncpy(session.info, sc.String, 30);
+				strncpy(session.info, sc.String, 60);
 
 				int h,m,s;
 				sc.MustGetString();
@@ -157,9 +158,9 @@ static void ParseStatistics(const char *fn, TArray<FStatistics> &statlist)
 						FLevelStatistics &lstats = session.levelstats[session.levelstats.Reserve(1)];
 
 						sc.MustGetString();
-						strncpy(lstats.name, sc.String, 12);
+						strncpy(lstats.name, sc.String, 24);
 						sc.MustGetString();
-						strncpy(lstats.info, sc.String, 30);
+						strncpy(lstats.info, sc.String, 60);
 
 						int h,m,s;
 						sc.MustGetString();
@@ -262,7 +263,7 @@ static void SaveStatistics(const char *fn, TArray<FStatistics> &statlist)
 			FSessionStatistics *sst = &ep_stats.stats[j];
 			if (sst->info[0]>0)
 			{
-				fw->Printf("\t%2i. %10s \"%-22s\" %02d:%02d:%02d %i\n", j+1, sst->name, sst->info, 
+				fw->Printf("\t%2i. %10s \"%-33s\" %02d:%02d:%02d %i\n", j+1, sst->name, sst->info, 
 					hours(sst->timeneeded),	minutes(sst->timeneeded), seconds(sst->timeneeded),	sst->skill);
 
 				TArray<FLevelStatistics> &ls = sst->levelstats;
@@ -274,7 +275,7 @@ static void SaveStatistics(const char *fn, TArray<FStatistics> &statlist)
 
 					for(unsigned k=0;k<ls.Size ();k++)
 					{
-						fw->Printf("\t\t%-8s \"%-22s\" %02d:%02d:%02d\n", ls[k].name, ls[k].info, 
+						fw->Printf("\t\t%-8s \"%-33s\" %02d:%02d:%02d\n", ls[k].name, ls[k].info, 
 							hours(ls[k].timeneeded), minutes(ls[k].timeneeded), seconds(ls[k].timeneeded));
 					}
 					fw->Printf("\t}\n");
@@ -404,6 +405,8 @@ static void StoreLevelStats()
 		}
 		LevelData[i].totalkills = level.total_monsters;
 		LevelData[i].killcount = level.killed_monsters;
+		LevelData[i].totalitems = level.total_items;
+		LevelData[i].itemcount = level.found_items;
 		LevelData[i].totalsecrets = level.total_secrets;
 		LevelData[i].secretcount = level.found_secrets;
 		LevelData[i].leveltime = level.maptime;
@@ -464,26 +467,28 @@ void STAT_ChangeLevel(const char *newl)
 			if (*ep_name == '$') ep_name = GStrings[ep_name+1];
 			FStatistics *sl = GetStatisticsList(EpisodeStatistics, section, ep_name);
 
-			int statvals[4] = {0,0,0,0};
+			int statvals[6] = {0,0,0,0,0,0};
 			FString infostring;
 			int validlevels = LevelData.Size();
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{
 				statvals[0] += LevelData[i].killcount;
 				statvals[1] += LevelData[i].totalkills;
-				statvals[2] += LevelData[i].secretcount;
-				statvals[3] += LevelData[i].totalsecrets;
+				statvals[2] += LevelData[i].itemcount;
+				statvals[3] += LevelData[i].totalitems;
+				statvals[4] += LevelData[i].secretcount;
+				statvals[5] += LevelData[i].totalsecrets;
 			}
 
-			infostring.Format("%4d/%4d, %3d/%3d, %2d", statvals[0], statvals[1], statvals[2], statvals[3], validlevels);
+			infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d, %2d", statvals[0], statvals[1], statvals[2], statvals[3], statvals[4], statvals[5], validlevels);
 			FSessionStatistics *es = StatisticsEntry(sl, infostring, level.totaltime);
 
 			for(unsigned i = 0; i < LevelData.Size(); i++)
 			{
 				FString lsection = LevelData[i].Levelname;
 				lsection.ToUpper();
-				infostring.Format("%4d/%4d, %3d/%3d",
-					 LevelData[i].killcount, LevelData[i].totalkills, LevelData[i].secretcount, LevelData[i].totalsecrets);
+				infostring.Format("%4d/%4d, %4d/%4d, %3d/%3d",
+					 LevelData[i].killcount, LevelData[i].totalkills, LevelData[i].itemcount, LevelData[i].totalitems, LevelData[i].secretcount, LevelData[i].totalsecrets);
 
 				LevelStatEntry(es, lsection, infostring, LevelData[i].leveltime);
 			}
@@ -508,6 +513,8 @@ FSerializer &Serialize(FSerializer &arc, const char *key, OneLevel &l, OneLevel 
 	{
 		arc("totalkills", l.totalkills)
 			("killcount", l.killcount)
+			("totalitems", l.totalitems)
+			("itemcount", l.itemcount)
 			("totalsecrets", l.totalsecrets)
 			("secretcount", l.secretcount)
 			("leveltime", l.leveltime)
@@ -561,8 +568,8 @@ FString GetStatString()
 	for(unsigned i = 0; i < LevelData.Size(); i++)
 	{
 		OneLevel *l = &LevelData[i];
-		compose.AppendFormat("Level %s - Kills: %d/%d - Secrets: %d/%d - Time: %d:%02d\n", 
-			l->Levelname.GetChars(), l->killcount, l->totalkills, l->secretcount, l->totalsecrets,
+		compose.AppendFormat("Level %s - Kills: %d/%d - Items: %d/%d - Secrets: %d/%d - Time: %d:%02d\n", 
+			l->Levelname.GetChars(), l->killcount, l->totalkills, l->itemcount, l->totalitems, l->secretcount, l->totalsecrets,
 			l->leveltime/(60*TICRATE), (l->leveltime/TICRATE)%60);
 	}
 	return compose;

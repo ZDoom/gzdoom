@@ -147,7 +147,7 @@ bool GLFlat::SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdat
 
 inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 {
-	if (di->FixedColormap)
+	if (di->isFullbrightScene())
 	{
 		Colormap.Clear();
 	}
@@ -416,7 +416,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 			{
-				if (rover->flags&FF_FOG && di->FixedColormap) continue;
+				if (rover->flags&FF_FOG && di->isFullbrightScene()) continue;
 				if (!rover->top.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
 				{
 					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
@@ -456,7 +456,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 			{
-				if (rover->flags&FF_FOG && di->FixedColormap) continue;
+				if (rover->flags&FF_FOG && di->isFullbrightScene()) continue;
 				if (!rover->bottom.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
 				{
 					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);

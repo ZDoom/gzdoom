@@ -75,9 +75,11 @@ vec4 getTexel(vec2 st)
 			break;
 			
 		case 4:	// TM_REDTOALPHA
+		{
 			float gray = grayscale(texel);
 			texel = vec4(1.0, 1.0, 1.0, gray*texel.a);
 			break;
+		}
 			
 		case 5:	// TM_CLAMPY
 			if (st.t < 0.0 || st.t > 1.0)
@@ -92,6 +94,7 @@ vec4 getTexel(vec2 st)
 			
 		case 7: //TM_FOGLAYER 
 			return texel;
+
 	}
 	if (uObjectColor2.a == 0.0) texel *= uObjectColor;
 	else texel *= mix(uObjectColor, uObjectColor2, glowdist.z);
@@ -431,53 +434,30 @@ void main()
 	if (frag.a <= uAlphaThreshold) discard;
 #endif
 
-	if (uTextureMode == 7)
+	if (uFogEnabled != -3)	// check for special 2D 'fog' mode.
 	{
-		float fogdist;
-		float fogfactor;
+		float fogdist = 0.0;
+		float fogfactor = 0.0;
 		
 		//
 		// calculate fog factor
 		//
-		if (uFogEnabled == -1) 
+		if (uFogEnabled != 0)
 		{
-			fogdist = pixelpos.w;
-		}
-		else 
-		{
-			fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
-		}
-		fogfactor = exp2 (uFogDensity * fogdist);
-		
-		frag = vec4(uFogColor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * vColor.a);
-	}
-	else switch (uFixedColormap)
-	{
-		case 0:	// in-game rendering.
-		{
-			float fogdist = 0.0;
-			float fogfactor = 0.0;
-			
-
-			
-			//
-			// calculate fog factor
-			//
-			if (uFogEnabled != 0)
+			if (uFogEnabled == 1 || uFogEnabled == -1) 
 			{
-				if (uFogEnabled == 1 || uFogEnabled == -1) 
-				{
-					fogdist = pixelpos.w;
-				}
-				else 
-				{
-					fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
-				}
-				fogfactor = exp2 (uFogDensity * fogdist);
+				fogdist = pixelpos.w;
 			}
-			
+			else 
+			{
+				fogdist = max(16.0, distance(pixelpos.xyz, uCameraPos.xyz));
+			}
+			fogfactor = exp2 (uFogDensity * fogdist);
+		}
+		
+		if (uTextureMode != 7)
+		{
 			frag = getLightColor(frag, fogdist, fogfactor);
-
 			//
 			// colored fog
 			//
@@ -485,36 +465,22 @@ void main()
 			{
 				frag = applyFog(frag, fogfactor);
 			}
-			
-			break;
 		}
-		
-		case 1:	// special colormap
+		else
+		{
+			frag = vec4(uFogColor.rgb, (1.0 - fogfactor) * frag.a * 0.75 * vColor.a);
+		}
+	}
+	else // simple 2D (uses the fog color to add a color overlay)
+	{
+		if (uTextureMode == 7)
 		{
 			float gray = grayscale(frag);
-			vec4 cm = uFixedColormapStart + gray * uFixedColormapRange;
-			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a*vColor.a);
-			break;
+			vec4 cm = (uObjectColor + gray * (uObjectColor2 - uObjectColor)) * 2;
+			frag = vec4(clamp(cm.rgb, 0.0, 1.0), frag.a);
 		}
-		
-		case 2:	// fullscreen tint.
-		{
-			frag = vColor * frag * uFixedColormapStart;
-			break;
-		}
-
-		case 3:	// unused
-		{
-			break;
-		}
-		
-		case 4:	// simple 2D (reuses a uniform for the special colormap for the color overlay.)
-		{
-			frag = frag * ProcessLight(vColor);
-			frag.rgb = frag.rgb + uFogColor.rgb;
-			break;
-		}
-			
+		frag = frag * ProcessLight(vColor);
+		frag.rgb = frag.rgb + uFogColor.rgb;
 	}
 	FragColor = frag;
 #ifdef GBUFFER_PASS

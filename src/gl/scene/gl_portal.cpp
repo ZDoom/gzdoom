@@ -1134,14 +1134,14 @@ void GLHorizonPortal::DrawContents(FDrawInfo *di)
 	if (gltexture && gltexture->tex->isFullbright())
 	{
 		// glowing textures are always drawn full bright without color
-		drawer->SetColor(255, 0, origin->colormap, 1.f);
-		drawer->SetFog(255, 0, &origin->colormap, false);
+		di->SetColor(255, 0, origin->colormap, 1.f);
+		di->SetFog(255, 0, &origin->colormap, false);
 	}
 	else 
 	{
 		int rel = getExtraLight();
-		drawer->SetColor(origin->lightlevel, rel, origin->colormap, 1.0f);
-		drawer->SetFog(origin->lightlevel, rel, &origin->colormap, false);
+		di->SetColor(origin->lightlevel, rel, origin->colormap, 1.0f);
+		di->SetFog(origin->lightlevel, rel, &origin->colormap, false);
 	}
 
 

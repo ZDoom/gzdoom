@@ -39,7 +39,6 @@ public:
 	void UnbindTexUnit(int no) override;
 	void FlushTextures() override;
 	void TextureFilterChanged() override;
-	void ResetFixedColormap() override;
 	void BeginFrame() override;
 	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;

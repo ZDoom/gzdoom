@@ -73,6 +73,7 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 	mCustomPostProcessShaders->Run("scene");
 }
 
+
 //-----------------------------------------------------------------------------
 //
 // Adds ambient occlusion to the scene

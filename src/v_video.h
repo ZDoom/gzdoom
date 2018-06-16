@@ -407,7 +407,6 @@ public:
 	virtual void UnbindTexUnit(int no) {}
 	virtual void FlushTextures() {}
 	virtual void TextureFilterChanged() {}
-	virtual void ResetFixedColormap() {}
 	virtual void BeginFrame() {}
 
 	virtual int GetClientWidth() = 0;

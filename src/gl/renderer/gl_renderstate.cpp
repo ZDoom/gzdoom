@@ -77,7 +77,6 @@ void FRenderState::Reset()
 	mObjectColor = 0xffffffff;
 	mObjectColor2 = 0;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
-	mColormapState = CM_DEFAULT;
 	mSoftLight = 0;
 	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 	mLightParms[3] = -1.f;
@@ -144,7 +143,11 @@ bool FRenderState::ApplyShader()
 
 	if (mFogEnabled)
 	{
-		if ((mFogColor & 0xffffff) == 0)
+		if (mFogEnabled == 2)
+		{
+			fogset = -3;	// 2D rendering with 'foggy' overlay.
+		}
+		else if ((mFogColor & 0xffffff) == 0)
 		{
 			fogset = gl_fogmode;
 		}
@@ -221,73 +224,6 @@ bool FRenderState::ApplyShader()
 		activeShader->currentcliplinestate = 0;
 	}
 
-	if (mColormapState == CM_PLAIN2D)	// 2D operations
-	{
-		activeShader->muFixedColormap.Set(4);
-		activeShader->currentfixedcolormap = mColormapState;
-	}
-	else if (mColormapState != activeShader->currentfixedcolormap)
-	{
-		float r, g, b;
-		activeShader->currentfixedcolormap = mColormapState;
-		if (mColormapState == CM_DEFAULT)
-		{
-			activeShader->muFixedColormap.Set(0);
-		}
-		else if ((mColormapState >= CM_FIRSTSPECIALCOLORMAP && mColormapState < CM_MAXCOLORMAPFORCED))
-		{
-			if (mColormapState < CM_FIRSTSPECIALCOLORMAPFORCED)
-			{
-				// When using postprocessing to apply the colormap, we must render the image fullbright here.
-				activeShader->muFixedColormap.Set(2);
-				activeShader->muColormapStart.Set(1, 1, 1, 1.f);
-			}
-			else
-			{
-				if (mColormapState >= CM_FIRSTSPECIALCOLORMAPFORCED)
-				{
-					auto colormapState = mColormapState + CM_FIRSTSPECIALCOLORMAP - CM_FIRSTSPECIALCOLORMAPFORCED;
-					if (colormapState < CM_MAXCOLORMAP)
-					{
-						FSpecialColormap *scm = &SpecialColormaps[colormapState - CM_FIRSTSPECIALCOLORMAP];
-						float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
-							scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
-
-						activeShader->muFixedColormap.Set(1);
-						activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
-						activeShader->muColormapRange.Set(m);
-					}
-				}
-			}
-		}
-		else if (mColormapState == CM_FOGLAYER)
-		{
-			activeShader->muFixedColormap.Set(3);
-		}
-		else if (mColormapState == CM_LITE)
-		{
-			if (gl_enhanced_nightvision)
-			{
-				r = 0.375f, g = 1.0f, b = 0.375f;
-			}
-			else
-			{
-				r = g = b = 1.f;
-			}
-			activeShader->muFixedColormap.Set(2);
-			activeShader->muColormapStart.Set(r, g, b, 1.f);
-		}
-		else if (mColormapState >= CM_TORCH)
-		{
-			int flicker = mColormapState - CM_TORCH;
-			r = (0.8f + (7 - flicker) / 70.0f);
-			if (r > 1.0f) r = 1.0f;
-			b = g = r;
-			if (gl_enhanced_nightvision) b = g * 0.75f;
-			activeShader->muFixedColormap.Set(2);
-			activeShader->muColormapStart.Set(r, g, b, 1.f);
-		}
-	}
 	if (mTextureMatrixEnabled)
 	{
 		matrixToGL(mTextureMatrix, activeShader->texturematrix_index);

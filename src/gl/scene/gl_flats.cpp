@@ -56,7 +56,7 @@
 
 void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli)
 {
-	if (FixedColormap != CM_DEFAULT) return;
+	if (isFullbrightScene()) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -85,7 +85,7 @@ void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, 
 
 void FDrawInfo::SetupSectorLights(GLFlat *flat, int pass, int *dli)
 {
-	if (FixedColormap != CM_DEFAULT) return;
+	if (isFullbrightScene()) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -341,8 +341,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	switch (pass)
 	{
 	case GLPASS_ALL:	// Single-pass rendering
-		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
-		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
+		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (flat->sector->special != GLSector_Skybox)
@@ -369,8 +369,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 
 	case GLPASS_TRANSLUCENT:
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
-		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
+		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture || !flat->gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (!flat->gltexture)

@@ -219,7 +219,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 {
 	// That's a lot of checks...
-	if (modelframe && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && !fullbright)
+	if (modelframe && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 	{
 		hw_GetDynModelLight(actor, lightdata);
 		dynlightindex = di->UploadLights(lightdata);
@@ -407,7 +407,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
 	{
-		if (!(thing->flags & MF_STEALTH) || !di->FixedColormap || !gl_enhanced_nightvision || thing == camera)
+		if (!(thing->flags & MF_STEALTH) || !di->isStealthVision() || thing == camera)
 			return;
 	}
 
@@ -655,19 +655,15 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	RenderStyle = thing->RenderStyle;
 
 	// colormap stuff is a little more complicated here...
-	if (di->FixedColormap)
+	if (di->isFullbrightScene())
 	{
-		if ((gl_enhanced_nv_stealth > 0 && di->FixedColormap == CM_LITE)		// Infrared powerup only
-			|| (gl_enhanced_nv_stealth == 2 && di->FixedColormap >= CM_TORCH)// Also torches
-			|| (gl_enhanced_nv_stealth == 3))								// Any fixed colormap
-			enhancedvision = true;
+		enhancedvision = di->isStealthVision();
 
 		Colormap.Clear();
 
-		if (di->FixedColormap == CM_LITE)
+		if (di->isNightvision())
 		{
-			if (gl_enhanced_nightvision &&
-				(thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
+			if ((thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
 			{
 				RenderStyle.Flags |= STYLEF_InvertSource;
 			}
@@ -811,7 +807,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// 3. any bright object
 	// 4. any with render style shadow (which doesn't use the sector light)
 	// 5. anything with render style reverse subtract (light effect is not what would be desired here)
-	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && di->FixedColormap == CM_DEFAULT && !fullbright &&
+	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright &&
 		RenderStyle.BlendOp != STYLEOP_Shadow && RenderStyle.BlendOp != STYLEOP_RevSub)
 	{
 		if (screen->hwcaps & RFL_NO_CLIP_PLANES)	// on old hardware we are rather limited...
@@ -853,7 +849,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		sector->GetCeilingLight() : sector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
-	if (di->FixedColormap) 
+	if (di->isFullbrightScene()) 
 	{
 		Colormap.Clear();
 	}
@@ -964,7 +960,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	if (gl_particles_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
 	else hw_styleflags = STYLEHW_NoAlphaTest;
 
-	if (sector->e->XFloor.lightlist.Size() != 0 && di->FixedColormap == CM_DEFAULT && !fullbright)
+	if (sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright)
 		lightlist = &sector->e->XFloor.lightlist;
 	else
 		lightlist = nullptr;

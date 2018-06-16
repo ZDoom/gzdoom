@@ -65,10 +65,10 @@ void FDrawInfo::RenderWall(GLWall *wall, int textured)
 
 void FDrawInfo::RenderFogBoundary(GLWall *wall)
 {
-	if (gl_fogmode && mDrawer->FixedColormap == 0)
+	if (gl_fogmode && !isFullbrightScene())
 	{
 		int rel = wall->rellight + getExtraLight();
-		mDrawer->SetFog(wall->lightlevel, rel, &wall->Colormap, false);
+		SetFog(wall->lightlevel, rel, &wall->Colormap, false);
 		gl_RenderState.EnableDrawBuffers(1);
 		gl_RenderState.SetEffect(EFF_FOGBOUNDARY);
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
@@ -99,8 +99,8 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
-	mDrawer->SetColor(wall->lightlevel, 0, wall->Colormap ,0.1f);
-	mDrawer->SetFog(wall->lightlevel, 0, &wall->Colormap, true);
+	SetColor(wall->lightlevel, 0, wall->Colormap ,0.1f);
+	SetFog(wall->lightlevel, 0, &wall->Colormap, true);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA,GL_ONE);
 	gl_RenderState.AlphaFunc(GL_GREATER,0);
 	glDepthFunc(GL_LEQUAL);
@@ -161,7 +161,7 @@ void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 		{
 			if (tmode == TM_MODULATE) gl_RenderState.SetTextureMode(TM_CLAMPY);
 		}
-		mDrawer->SetFog(255, 0, nullptr, false);
+		SetFog(255, 0, nullptr, false);
 	}
 	gl_RenderState.SetObjectColor(wall->seg->frontsector->SpecialColors[sector_t::walltop] | 0xff000000);
 	gl_RenderState.SetObjectColor2(wall->seg->frontsector->SpecialColors[sector_t::wallbottom] | 0xff000000);
@@ -169,8 +169,8 @@ void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 	float absalpha = fabsf(wall->alpha);
 	if (wall->lightlist == nullptr)
 	{
-		if (wall->type != RENDERWALL_M2SNF) mDrawer->SetFog(wall->lightlevel, rel, &wall->Colormap, wall->RenderStyle == STYLE_Add);
-		mDrawer->SetColor(wall->lightlevel, rel, wall->Colormap, absalpha);
+		if (wall->type != RENDERWALL_M2SNF) SetFog(wall->lightlevel, rel, &wall->Colormap, wall->RenderStyle == STYLE_Add);
+		SetColor(wall->lightlevel, rel, wall->Colormap, absalpha);
 		RenderWall(wall, rflags);
 	}
 	else
@@ -191,8 +191,8 @@ void FDrawInfo::RenderTexturedWall(GLWall *wall, int rflags)
 				thiscm.FadeColor = wall->Colormap.FadeColor;
 				thiscm.FogDensity = wall->Colormap.FogDensity;
 				thiscm.CopyFrom3DLight(&(*wall->lightlist)[i]);
-				mDrawer->SetColor(thisll, rel, thiscm, absalpha);
-				if (wall->type != RENDERWALL_M2SNF) mDrawer->SetFog(thisll, rel, &thiscm, wall->RenderStyle == STYLE_Add);
+				SetColor(thisll, rel, thiscm, absalpha);
+				if (wall->type != RENDERWALL_M2SNF) SetFog(thisll, rel, &thiscm, wall->RenderStyle == STYLE_Add);
 				gl_RenderState.SetSplitPlanes((*wall->lightlist)[i].plane, lowplane);
 				RenderWall(wall, rflags);
 			}
@@ -226,8 +226,8 @@ void FDrawInfo::RenderTranslucentWall(GLWall *wall)
 	else
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-		mDrawer->SetColor(wall->lightlevel, 0, wall->Colormap, fabsf(wall->alpha));
-		mDrawer->SetFog(wall->lightlevel, 0, &wall->Colormap, wall->RenderStyle == STYLE_Add);
+		SetColor(wall->lightlevel, 0, wall->Colormap, fabsf(wall->alpha));
+		SetFog(wall->lightlevel, 0, &wall->Colormap, wall->RenderStyle == STYLE_Add);
 		gl_RenderState.EnableTexture(false);
 		RenderWall(wall, GLWall::RWF_NOSPLIT);
 		gl_RenderState.EnableTexture(true);
@@ -243,7 +243,7 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 {
 	if (screen->hwcaps & RFL_BUFFER_STORAGE)
 	{
-		if (level.HasDynamicLights && FixedColormap == CM_DEFAULT && wall->gltexture != nullptr)
+		if (level.HasDynamicLights && !isFullbrightScene() && wall->gltexture != nullptr)
 		{
 			wall->SetupLights(this, lightdata);
 		}
@@ -426,7 +426,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	auto tex = gldecal->gltexture;
 	
 	// calculate dynamic light effect.
-	if (level.HasDynamicLights && !mDrawer->FixedColormap && gl_light_sprites)
+	if (level.HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
 	{
 		// Note: This should be replaced with proper shader based lighting.
 		double x, y;
@@ -451,7 +451,7 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 	else gl_RenderState.AlphaFunc(GL_GREATER, 0.f);
 
 
-	mDrawer->SetColor(gldecal->lightlevel, gldecal->rellight, gldecal->Colormap, gldecal->alpha);
+	SetColor(gldecal->lightlevel, gldecal->rellight, gldecal->Colormap, gldecal->alpha);
 	// for additively drawn decals we must temporarily set the fog color to black.
 	PalEntry fc = gl_RenderState.GetFogColor();
 	if (decal->RenderStyle.BlendOp == STYLEOP_Add && decal->RenderStyle.DestAlpha == STYLEALPHA_One)
@@ -484,9 +484,9 @@ void FDrawInfo::DrawDecal(GLDecal *gldecal)
 				FColormap thiscm;
 				thiscm.FadeColor = gldecal->Colormap.FadeColor;
 				thiscm.CopyFrom3DLight(&lightlist[k]);
-				mDrawer->SetColor(thisll, gldecal->rellight, thiscm, gldecal->alpha);
+				SetColor(thisll, gldecal->rellight, thiscm, gldecal->alpha);
 				if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING) thiscm.Decolorize();
-				mDrawer->SetFog(thisll, gldecal->rellight, &thiscm, false);
+				SetFog(thisll, gldecal->rellight, &thiscm, false);
 				gl_RenderState.SetSplitPlanes(lightlist[k].plane, lowplane);
 
 				gl_RenderState.Apply();
@@ -526,7 +526,7 @@ void FDrawInfo::DrawDecals()
 			{
 				gl_RenderState.EnableSplit(false);
 				splitting = false;
-				mDrawer->SetFog(gldecal->lightlevel, gldecal->rellight, &gldecal->Colormap, false);
+				SetFog(gldecal->lightlevel, gldecal->rellight, &gldecal->Colormap, false);
 			}
 		}
 		DrawDecal(gldecal);
@@ -541,7 +541,7 @@ void FDrawInfo::DrawDecals()
 //==========================================================================
 void FDrawInfo::DrawDecalsForMirror(GLWall *wall)
 {
-	mDrawer->SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
+	SetFog(wall->lightlevel, wall->rellight + getExtraLight(), &wall->Colormap, false);
 	for (auto gldecal : decals[1])
 	{
 		if (gldecal->decal->Side == wall->seg->sidedef)

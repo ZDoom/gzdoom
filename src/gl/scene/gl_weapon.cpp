@@ -56,7 +56,7 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	}
 	else
 	{
-		mDrawer->SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
+		SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
 	}
 	gl_SetRenderStyle(huds->RenderStyle, false, false);
 	gl_RenderState.SetObjectColor(huds->ObjectColor);

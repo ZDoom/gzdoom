@@ -61,7 +61,6 @@ enum EEffect
 	EFF_SPHEREMAP,
 	EFF_BURN,
 	EFF_STENCIL,
-	EFF_SWQUAD,
 
 	MAX_EFFECTS
 };
@@ -77,7 +76,7 @@ class FRenderState
 {
 	friend void gl_SetTextureMode(int type);
 	bool mTextureEnabled;
-	bool mFogEnabled;
+	uint8_t mFogEnabled;
 	bool mGlowEnabled;
 	bool mSplitEnabled;
 	bool mClipLineEnabled;
@@ -116,7 +115,6 @@ class FRenderState
 	float mClipSplit[2];
 
 	int mEffectState;
-	int mColormapState;
 	int mTempTM = TM_MODULATE;
 
 	float stAlphaThreshold;
@@ -276,7 +274,7 @@ public:
 		mTextureEnabled = on;
 	}
 
-	void EnableFog(bool on)
+	void EnableFog(uint8_t on)
 	{
 		mFogEnabled = on;
 	}
@@ -415,16 +413,6 @@ public:
 	{
 		mLightParms[1] = f;
 		mLightParms[0] = d;
-	}
-
-	void SetFixedColormap(int cm)
-	{
-		mColormapState = cm;
-	}
-
-	int GetFixedColormap()
-	{
-		return mColormapState;
 	}
 
 	PalEntry GetFogColor() const

@@ -141,11 +141,11 @@ static FVector2 BobWeapon(WeaponPosition &weap, DPSprite *psp)
 //
 //==========================================================================
 
-static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int FixedColormap, area_t in_area, const DVector3 &playerpos)
+static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &pos, int cm, area_t in_area, const DVector3 &playerpos)
 {
 	WeaponLighting l;
 
-	if (FixedColormap)
+	if (cm)
 	{
 		l.lightlevel = 255;
 		l.cm.Clear();
@@ -438,7 +438,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		return;
 
 	WeaponPosition weap = GetWeaponPosition(camera->player);
-	WeaponLighting light = GetWeaponLighting(viewsector, r_viewpoint.Pos, FixedColormap, in_area, camera->Pos());
+	WeaponLighting light = GetWeaponLighting(viewsector, r_viewpoint.Pos, isFullbrightScene(), in_area, camera->Pos());
 
 	// hack alert! Rather than changing everything in the underlying lighting code let's just temporarily change
 	// light mode here to draw the weapon sprite.
@@ -465,7 +465,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		hudsprite.dynrgb[0] = hudsprite.dynrgb[1] = hudsprite.dynrgb[2] = 0;
 		hudsprite.lightindex = -1;
 		// set the lighting parameters
-		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && FixedColormap == CM_DEFAULT && gl_light_sprites)
+		if (hudsprite.RenderStyle.BlendOp != STYLEOP_Shadow && level.HasDynamicLights && !isFullbrightScene() && gl_light_sprites)
 		{
 			if (!hudModelStep)
 			{

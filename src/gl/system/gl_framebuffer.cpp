@@ -372,14 +372,6 @@ void OpenGLFrameBuffer::TextureFilterChanged()
 	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();
 }
 
-void OpenGLFrameBuffer::ResetFixedColormap()
-{
-	if (GLRenderer != nullptr && GLRenderer->mShaderManager != nullptr)
-	{
-		GLRenderer->mShaderManager->ResetFixedColormap();
-	}
-}
-
 void OpenGLFrameBuffer::BlurScene(float amount)
 {
 	GLRenderer->BlurScene(amount);

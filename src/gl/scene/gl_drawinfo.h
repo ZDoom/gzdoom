@@ -1,6 +1,7 @@
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
+#include "gl/renderer/gl_lightdata.h"
 #include "hwrenderer/scene/hw_drawlist.h"
 #include "hwrenderer/scene/hw_weapon.h"
 
@@ -119,6 +120,17 @@ struct FDrawInfo : public HWDrawInfo
 		if (sector<otherceilingplanes.Size()) return otherceilingplanes[sector];
 		else return NULL;
 	}
+
+	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
+	{
+		gl_SetColor(light, rellight, isFullbrightScene(), cm, alpha, weapon);
+	}
+
+	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
+	{
+		gl_SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
+	}
+
 };
 
 class FDrawInfoList

@@ -326,8 +326,6 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 		GLSceneDrawer drawer;
 
-		drawer.SetFixedColormap(player);
-
 		mShadowMap.Update();
 		retsec = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
@@ -357,8 +355,6 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	bounds.height = FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
 	GLSceneDrawer drawer;
-	drawer.FixedColormap = CM_DEFAULT;
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
 
 	EndOffscreen();
@@ -478,7 +474,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	auto vb = new F2DVertexBuffer;
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.EnableFog(false);
 
 	for(auto &cmd : commands)
@@ -493,6 +488,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.BlendEquation(be); 
 		gl_RenderState.BlendFunc(sb, db);
 		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
+		gl_RenderState.EnableFog(2);	// Special 2D mode 'fog'.
 
 		// Rather than adding remapping code, let's enforce that the constants here are equal.
 		static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
@@ -515,18 +511,13 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		}
 		else glDisable(GL_SCISSOR_TEST);
 
-		if (cmd.mSpecialColormap != nullptr)
+		if (cmd.mSpecialColormap[0].a != 0)
 		{
-			auto index = cmd.mSpecialColormap - &SpecialColormaps[0];
-			if (index < 0 || (unsigned)index >= SpecialColormaps.Size()) index = 0;	// if it isn't in the table FBitmap cannot use it. Shouldn't happen anyway.
-			gl_RenderState.SetFixedColormap(CM_FIRSTSPECIALCOLORMAPFORCED + int(index));
+			gl_RenderState.SetTextureMode(TM_FIXEDCOLORMAP);
+			gl_RenderState.SetObjectColor(cmd.mSpecialColormap[0]);
+			gl_RenderState.SetObjectColor2(cmd.mSpecialColormap[1]);
 		}
-		else
-		{
-				gl_RenderState.SetFog(cmd.mColor1, 0);
-			gl_RenderState.SetFixedColormap(CM_PLAIN2D);
-		}
-
+		gl_RenderState.SetFog(cmd.mColor1, 0);
 		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
@@ -570,7 +561,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			break;
 
 		}
-		gl_RenderState.SetEffect(EFF_NONE);
+		gl_RenderState.SetObjectColor(0xffffffff);
+		gl_RenderState.SetObjectColor2(0);
 		gl_RenderState.EnableTextureMatrix(false);
 	}
 	glDisable(GL_SCISSOR_TEST);
@@ -579,7 +571,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	gl_RenderState.EnableFog(false);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	delete vb;

@@ -197,7 +197,6 @@ FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
 	staticClipper.Clear();
-    di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
 	return di;
 }
@@ -212,6 +211,11 @@ void FDrawInfo::StartScene()
 	decals[0].Clear();
 	decals[1].Clear();
 	hudsprites.Clear();
+
+	// Fullbright information needs to be propagated from the main view.
+	if (next != nullptr) FullbrightFlags = next->FullbrightFlags;
+	else FullbrightFlags = 0;
+
 }
 
 //==========================================================================
@@ -316,7 +320,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 	if (!gltexture) return;
 
-	if (mDrawer->FixedColormap) 
+	if (isFullbrightScene()) 
 	{
 		Colormap.Clear();
 		lightlevel=255;
@@ -333,8 +337,8 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	}
 
 	int rel = getExtraLight();
-	mDrawer->SetColor(lightlevel, rel, Colormap, 1.0f);
-	mDrawer->SetFog(lightlevel, rel, &Colormap, false);
+	SetColor(lightlevel, rel, Colormap, 1.0f);
+	SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
 	float fviewx = r_viewpoint.Pos.X;

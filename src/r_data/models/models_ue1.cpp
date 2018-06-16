@@ -28,11 +28,11 @@ float unpackuvert( uint32_t n, int c )
 {
 	switch( c )
 	{
-	case 2:
+	case 0:
 		return ((int16_t)((n&0x7ff)<<5))/128.f;
 	case 1:
 		return ((int16_t)(((n>>11)&0x7ff)<<5))/128.f;
-	case 0:
+	case 2:
 		return ((int16_t)(((n>>22)&0x3ff)<<6))/128.f;
 	default:
 		return 0.f;
@@ -41,66 +41,74 @@ float unpackuvert( uint32_t n, int c )
 
 bool FUE1Model::Load( const char *filename, int lumpnum, const char *buffer, int length )
 {
-	mLumpNum = lumpnum;
 	int lumpnum2;
-	FMemLump lump2;
-	const char *buffer2;
 	FString realfilename = Wads.GetLumpFullName(lumpnum);
 	if ( (size_t)realfilename.IndexOf("_d.3d") == realfilename.Len()-5 )
 	{
 		realfilename.Substitute("_d.3d","_a.3d");
 		lumpnum2 = Wads.CheckNumForFullName(realfilename);
-		lump2 = Wads.ReadLump(lumpnum2);
-		buffer2 = (char*)lump2.GetMem();
-		// map structures
-		dhead = (d3dhead*)(buffer);
-		dpolys = (d3dpoly*)(buffer+sizeof(d3dhead));
-		ahead = (a3dhead*)(buffer2);
-		averts = (uint32_t*)(buffer2+sizeof(a3dhead));
+		mDataLump = lumpnum;
+		mAnivLump = lumpnum2;
 	}
 	else
 	{
 		realfilename.Substitute("_a.3d","_d.3d");
 		lumpnum2 = Wads.CheckNumForFullName(realfilename);
-		lump2 = Wads.ReadLump(lumpnum2);
-		buffer2 = (char*)lump2.GetMem();
-		// map structures
-		dhead = (d3dhead*)(buffer2);
-		dpolys = (d3dpoly*)(buffer2+sizeof(d3dhead));
-		ahead = (a3dhead*)(buffer);
-		averts = (uint32_t*)(buffer+sizeof(a3dhead));
+		mAnivLump = lumpnum;
+		mDataLump = lumpnum2;
 	}
-	// set counters
-	numVerts = dhead->numverts;
-	numFrames = ahead->numframes;
-	numPolys = dhead->numpolys;
-	numGroups = 0;
-	groupIndices.Reset();
-	uint8_t used[256] = {0};
-	for ( int i=0; i<numPolys; i++ )
-		used[dpolys[i].texnum] = 1;
-	for ( int i=0; i<256; i++ )
-	{
-		if ( !used[i] ) continue;
-		groupIndices.Push(i);
-		numGroups++;
-	}
-	LoadGeometry();
 	return true;
 }
 
 void FUE1Model::LoadGeometry()
 {
+	FMemLump lump, lump2;
+	const char *buffer, *buffer2;
+	lump = Wads.ReadLump(mDataLump);
+	buffer = (char*)lump.GetMem();
+	lump2 = Wads.ReadLump(mAnivLump);
+	buffer2 = (char*)lump2.GetMem();
+	// map structures
+	dhead = (d3dhead*)(buffer);
+	dpolys = (d3dpoly*)(buffer+sizeof(d3dhead));
+	ahead = (a3dhead*)(buffer2);
+	// detect deus ex format
+	if ( (ahead->framesize/dhead->numverts) == 8 )
+	{
+		averts = NULL;
+		dxverts = (dxvert*)(buffer2+sizeof(a3dhead));
+	}
+	else
+	{
+		averts = (uint32_t*)(buffer2+sizeof(a3dhead));
+		dxverts = NULL;
+	}
+	weaponPoly = -1;
+	// set counters
+	numVerts = dhead->numverts;
+	numFrames = ahead->numframes;
+	numPolys = dhead->numpolys;
+	numGroups = 0;
 	// populate vertex arrays
 	for ( int i=0; i<numFrames; i++ )
 	{
 		for ( int j=0; j<numVerts; j++ )
 		{
 			UE1Vertex Vert;
-			// unpack position
-			Vert.Pos = FVector3(unpackuvert(averts[j+i*numVerts],2),
-				unpackuvert(averts[j+i*numVerts],0),
-				-unpackuvert(averts[j+i*numVerts],1));
+			if ( dxverts != NULL )
+			{
+				// convert padded XYZ16
+				Vert.Pos = FVector3(dxverts[j+i*numVerts].x,
+					dxverts[j+i*numVerts].z,
+					-dxverts[j+i*numVerts].y);
+			}
+			else
+			{
+				// convert packed XY11Z10
+				Vert.Pos = FVector3(unpackuvert(averts[j+i*numVerts],0),
+					unpackuvert(averts[j+i*numVerts],2),
+					-unpackuvert(averts[j+i*numVerts],1));
+			}
 			// push vertex (without normals, will be calculated later)
 			verts.Push(Vert);
 		}
@@ -115,7 +123,11 @@ void FUE1Model::LoadGeometry()
 		// unpack coords
 		for ( int j=0; j<3; j++ )
 			Poly.C[j] = FVector2(dpolys[i].uv[j][0]/255.f,dpolys[i].uv[j][1]/255.f);
-		Poly.texNum = dpolys[i].texnum;
+		// compute facet normal
+		FVector3 dir[2];
+		dir[0] = verts[Poly.V[1]].Pos-verts[Poly.V[0]].Pos;
+		dir[1] = verts[Poly.V[2]].Pos-verts[Poly.V[0]].Pos;
+		Poly.Normal = dir[0]^dir[1];
 		// push
 		polys.Push(Poly);
 	}
@@ -130,37 +142,61 @@ void FUE1Model::LoadGeometry()
 			for ( int k=0; k<numPolys; k++ )
 			{
 				if ( (polys[k].V[0] != j) && (polys[k].V[1] != j) && (polys[k].V[2] != j) ) continue;
-				FVector3 vert[3], dir[2], norm;
-				// compute facet normal
-				for ( int l=0; l<3; l++ )
-					vert[l] = verts[polys[k].V[l]+numVerts*i].Pos;
-				dir[0] = vert[1]-vert[0];
-				dir[1] = vert[2]-vert[0];
-				norm = dir[0]^dir[1];
-				nsum += norm.Unit();
+				nsum += polys[k].Normal;
 			}
 			verts[j+numVerts*i].Normal = nsum.Unit();
 		}
 	}
-	// populate skin groups
-	for ( int i=0; i<numGroups; i++ )
+	// populate poly groups (subdivided by texture number and type)
+	// this method minimizes searches in the group list as much as possible
+	// while still doing a single pass through the poly list
+	int curgroup = -1;
+	UE1Group Group;
+	for ( int i=0; i<numPolys; i++ )
 	{
-		UE1Group Group;
-		Group.numPolys = 0;
-		for ( int j=0; j<numPolys; j++ )
+		// while we're at it, look for the weapon triangle
+		if ( dpolys[i].type&PT_WeaponTriangle ) weaponPoly = i;
+		if ( curgroup == -1 )
 		{
-			if ( polys[j].texNum != groupIndices[i] )
-				continue;
-			Group.P.Push(j);
-			Group.numPolys++;
+			// no group, create it
+			Group.P.Reset();
+			Group.numPolys = 0;
+			Group.texNum = dpolys[i].texnum;
+			Group.type = dpolys[i].type;
+			groups.Push(Group);
+			curgroup = numGroups++;
 		}
-		groups.Push(Group);
+		else if ( (dpolys[i].texnum != groups[curgroup].texNum) || (dpolys[i].type != groups[curgroup].type) )
+		{
+			// different attributes than last time
+			// search for existing group with new attributes, create one if not found
+			curgroup = -1;
+			for ( int j=0; j<numGroups; j++ )
+			{
+				if ( (groups[j].texNum != dpolys[i].texnum) || (groups[j].type != dpolys[i].type) ) continue;
+				curgroup = j;
+				break;
+			}
+			// counter the increment that will happen after continuing this loop
+			// otherwise it'll be skipped over
+			i--;
+			continue;
+		}
+		groups[curgroup].P.Push(i);
+		groups[curgroup].numPolys++;
 	}
 	// ... and it's finally done
+	mDataLoaded = true;
 }
 
 void FUE1Model::UnloadGeometry()
 {
+	mDataLoaded = false;
+	weaponPoly = -1;
+	numVerts = 0;
+	numFrames = 0;
+	numPolys = 0;
+	numGroups = 0;
 	verts.Reset();
 	polys.Reset();
 	for ( int i=0; i<numGroups; i++ )
@@ -184,17 +220,25 @@ void FUE1Model::RenderFrame( FModelRenderer *renderer, FTexture *skin, int frame
 	for ( int i=0; i<numGroups; i++ )
 	{
 		vsize = groups[i].numPolys*3;
+		if ( groups[i].type&PT_WeaponTriangle )
+		{
+			// weapon triangle should never be drawn, it only exists to calculate attachment position and orientation
+			vofs += vsize;
+			continue;
+		}
 		FTexture *sskin = skin;
 		if ( !sskin )
 		{
-			if ( curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid() )
-				sskin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i]);
+			if ( curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][groups[i].texNum].isValid() )
+				sskin = TexMan(curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][groups[i].texNum]);
 			if ( !sskin )
 			{
 				vofs += vsize;
 				continue;
 			}
 		}
+		// TODO: Handle per-group render styles and other flags once functions for it are implemented
+		// Future note: poly renderstyles should always be enforced unless the actor itself has a style other than Normal
 		renderer->SetMaterial(sskin,false,translation);
 		GetVertexBuffer(renderer)->SetupFrame(renderer,vofs+frame*fsize,vofs+frame2*fsize,vsize);
 		renderer->DrawArrays(0,vsize);
@@ -207,6 +251,8 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 {
 	if (GetVertexBuffer(renderer))
 		return;
+	if ( !mDataLoaded )
+		LoadGeometry();
 	int vsize = 0;
 	for ( int i=0; i<numGroups; i++ )
 		vsize += groups[i].numPolys*3;
@@ -227,7 +273,13 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 					FVector2 C = polys[groups[j].P[k]].C[l];
 					FModelVertex *vert = &vptr[vidx++];
 					vert->Set(V.Pos.X,V.Pos.Y,V.Pos.Z,C.X,C.Y);
-					vert->SetNormal(V.Normal.X,V.Normal.Y,V.Normal.Z);
+					if ( groups[j].type&PT_Curvy )	// use facet normal
+					{
+						vert->SetNormal(polys[groups[j].P[k]].Normal.X,
+							polys[groups[j].P[k]].Normal.Y,
+							polys[groups[j].P[k]].Normal.Z);
+					}
+					else vert->SetNormal(V.Normal.X,V.Normal.Y,V.Normal.Z);
 				}
 			}
 		}
@@ -238,8 +290,8 @@ void FUE1Model::BuildVertexBuffer( FModelRenderer *renderer )
 void FUE1Model::AddSkins( uint8_t *hitlist )
 {
 	for ( int i=0; i<numGroups; i++ )
-		if ( curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].isValid() )
-			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][i].GetIndex()] |= FTextureManager::HIT_Flat;
+		if ( curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][groups[i].texNum].isValid() )
+			hitlist[curSpriteMDLFrame->surfaceskinIDs[curMDLIndex][groups[i].texNum].GetIndex()] |= FTextureManager::HIT_Flat;
 }
 
 FUE1Model::~FUE1Model()

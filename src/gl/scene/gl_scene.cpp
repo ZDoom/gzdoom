@@ -601,10 +601,10 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		gl_RenderState.ApplyMatrices();
 
 		ProcessScene(di, toscreen);
-		if (mainview && toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
 
 		if (mainview)
 		{
+			if (toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
 			GLRenderer->PostProcessScene(cm, [&]() { DrawEndScene2D(di, lviewsector); });
 
 			// This should be done after postprocessing, not before.

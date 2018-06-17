@@ -137,27 +137,6 @@ public:
 	float Gamma;
 };
 
-class FPaletteTester : public FTexture
-{
-public:
-	FPaletteTester ();
-
-	const uint8_t *GetColumn(FRenderStyle, unsigned int column, const Span **spans_out) override;
-	const uint8_t *GetPixels(FRenderStyle);
-	bool CheckModified(FRenderStyle);
-	void SetTranslation(int num);
-
-protected:
-	uint8_t Pixels[16*16];
-	int CurTranslation;
-	int WantTranslation;
-	static const Span DummySpan[2];
-
-	void MakeTexture();
-};
-
-const FTexture::Span FPaletteTester::DummySpan[2] = { { 0, 16 }, { 0, 0 } };
-
 int DisplayWidth, DisplayHeight, DisplayBits;
 
 FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
@@ -203,6 +182,7 @@ bool	setmodeneeded = false;
 // [RH] Resolution to change to when setmodeneeded is true
 int		NewWidth, NewHeight, NewBits;
 
+void V_DrawPaletteTester(int pal);
 
 //==========================================================================
 //
@@ -691,128 +671,9 @@ void DFrameBuffer::DrawRateStuff ()
 	// draws the palette for debugging
 	if (vid_showpalette)
 	{
-		// This used to just write the palette to the display buffer.
-		// With hardware-accelerated 2D, that doesn't work anymore.
-		// Drawing it as a texture does and continues to show how
-		// well the PalTex shader is working.
-		static FPaletteTester palette;
-		int size = screen->GetHeight() < 800 ? 16 * 7 : 16 * 7 * 2;
-
-		palette.SetTranslation(vid_showpalette);
-		DrawTexture(&palette, 0, 0,
-			DTA_DestWidth, size,
-			DTA_DestHeight, size,
-			DTA_Masked, false,
-			TAG_DONE);
+		V_DrawPaletteTester(vid_showpalette);
 	}
 }
-
-//==========================================================================
-//
-// FPaleteTester Constructor
-//
-// This is just a 16x16 image with every possible color value.
-//
-//==========================================================================
-
-FPaletteTester::FPaletteTester()
-{
-	Width = 16;
-	Height = 16;
-	WidthBits = 4;
-	HeightBits = 4;
-	WidthMask = 15;
-	CurTranslation = 0;
-	WantTranslation = 1;
-	MakeTexture();
-}
-
-//==========================================================================
-//
-// FPaletteTester :: CheckModified
-//
-//==========================================================================
-
-bool FPaletteTester::CheckModified(FRenderStyle)
-{
-	return CurTranslation != WantTranslation;
-}
-
-//==========================================================================
-//
-// FPaletteTester :: SetTranslation
-//
-//==========================================================================
-
-void FPaletteTester::SetTranslation(int num)
-{
-	if (num >= 1 && num <= 9)
-	{
-		WantTranslation = num;
-	}
-}
-
-//==========================================================================
-//
-// FPaletteTester :: GetColumn
-//
-//==========================================================================
-
-const uint8_t *FPaletteTester::GetColumn(FRenderStyle, unsigned int column, const Span **spans_out)
-{
-	if (CurTranslation != WantTranslation)
-	{
-		MakeTexture();
-	}
-	column &= 15;
-	if (spans_out != NULL)
-	{
-		*spans_out = DummySpan;
-	}
-	return Pixels + column*16;
-}
-
-//==========================================================================
-//
-// FPaletteTester :: GetPixels
-//
-//==========================================================================
-
-const uint8_t *FPaletteTester::GetPixels (FRenderStyle)
-{
-	if (CurTranslation != WantTranslation)
-	{
-		MakeTexture();
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-// FPaletteTester :: MakeTexture
-//
-//==========================================================================
-
-void FPaletteTester::MakeTexture()
-{
-	int i, j, k, t;
-	uint8_t *p;
-
-	t = WantTranslation;
-	p = Pixels;
-	k = 0;
-	for (i = 0; i < 16; ++i)
-	{
-		for (j = 0; j < 16; ++j)
-		{
-			*p++ = (t > 1) ? translationtables[TRANSLATION_Standard][t - 2]->Remap[k] : k;
-			k += 16;
-		}
-		k -= 255;
-	}
-	CurTranslation = t;
-}
-
 
 //==========================================================================
 //

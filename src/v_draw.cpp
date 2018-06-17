@@ -1405,7 +1405,7 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
 		}
 	}
-	else if (player && player->fixedlightlevel != -1 && player->fixedcolormap != NOFIXEDCOLORMAP)
+	else if (player && player->fixedlightlevel != -1 && player->fixedcolormap == NOFIXEDCOLORMAP)
 	{
 		// Draw fixedlightlevel effects as a 2D overlay. The hardware renderer just processes such a scene fullbright without any lighting.
 		auto torchtype = PClass::FindActor(NAME_PowerTorch);

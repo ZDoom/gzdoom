@@ -711,9 +711,18 @@ void D_Display ()
 	}
 
 	// change the view size if needed
-	if (setsizeneeded && StatusBar != NULL)
+	if (setsizeneeded)
 	{
-		R_ExecuteSetViewSize (r_viewpoint, r_viewwindow);
+		if (StatusBar == nullptr)
+		{
+			viewwidth = SCREENWIDTH;
+			viewheight = SCREENHEIGHT;
+			setsizeneeded = false;
+		}
+		else
+		{
+			R_ExecuteSetViewSize (r_viewpoint, r_viewwindow);
+		}
 	}
 	setmodeneeded = false;
 

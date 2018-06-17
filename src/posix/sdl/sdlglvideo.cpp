@@ -68,9 +68,10 @@ EXTERN_CVAR (Float, Gamma)
 EXTERN_CVAR (Int, vid_adapter)
 EXTERN_CVAR (Int, vid_displaybits)
 EXTERN_CVAR (Int, vid_maxfps)
+EXTERN_CVAR (Int, vid_defwidth)
+EXTERN_CVAR (Int, vid_defheight)
+EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR (Bool, cl_capfps)
-
-DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
 // PUBLIC DATA DEFINITIONS -------------------------------------------------
 
@@ -102,7 +103,6 @@ public:
 
 SDLGLVideo::SDLGLVideo (int parm)
 {
-	IteratorBits = 0;
     if( SDL_Init( SDL_INIT_VIDEO ) < 0 ) {
         fprintf( stderr, "Video initialization failed: %s\n",
              SDL_GetError( ) );
@@ -217,7 +217,7 @@ SystemFrameBuffer::SystemFrameBuffer (void *, bool fullscreen)
 		Screen = SDL_CreateWindow (caption,
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-			width, height, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_OPENGL
+			vid_defwidth, vid_defheight, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_OPENGL
 		);
 		if (Screen != NULL)
 		{

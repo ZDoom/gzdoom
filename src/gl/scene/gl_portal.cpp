@@ -159,7 +159,7 @@ void GLPortal::DrawPortalStencil()
 //
 //-----------------------------------------------------------------------------
 
-bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
+bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawInfo **pDi)
 {
 	*pDi = nullptr;
 	rendered_portals++;
@@ -246,6 +246,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
 				gl_RenderState.SetEffect(EFF_NONE);
 				glDisable(GL_DEPTH_TEST);
 				glDepthMask(false);							// don't write to Z-buffer!
+				*pDi = outer_di;
 			}
 		}
 		recursion++;
@@ -262,6 +263,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
 		{
 			glDepthMask(false);
 			glDisable(GL_DEPTH_TEST);
+			*pDi = outer_di;
 		}
 	}
 
@@ -458,7 +460,7 @@ static FString indent;
 //
 //-----------------------------------------------------------------------------
 
-void GLPortal::EndFrame()
+void GLPortal::EndFrame(FDrawInfo *outer_di)
 {
 	GLPortal * p;
 
@@ -481,7 +483,7 @@ void GLPortal::EndFrame()
 		}
 		if (p->lines.Size() > 0)
 		{
-			p->RenderPortal(true, usequery);
+			p->RenderPortal(true, usequery, outer_di);
 		}
 		delete p;
 	}
@@ -503,7 +505,7 @@ void GLPortal::EndFrame()
 // the GPU and there's rarely more than one sky visible at a time.
 //
 //-----------------------------------------------------------------------------
-bool GLPortal::RenderFirstSkyPortal(int recursion)
+bool GLPortal::RenderFirstSkyPortal(int recursion, FDrawInfo *outer_di)
 {
 	GLPortal * p;
 	GLPortal * best = NULL;
@@ -531,7 +533,7 @@ bool GLPortal::RenderFirstSkyPortal(int recursion)
 	if (best)
 	{
 		portals.Delete(bestindex);
-		best->RenderPortal(false, false);
+		best->RenderPortal(false, false, outer_di);
 		delete best;
 		return true;
 	}

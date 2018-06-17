@@ -86,7 +86,7 @@ protected:
 	GLPortal(bool local = false) { if (!local) portals.Push(this); }
 	virtual ~GLPortal() { }
 
-	bool Start(bool usestencil, bool doquery, FDrawInfo **pDi);
+	bool Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawInfo **pDi);
 	void End(bool usestencil);
 	virtual void DrawContents(FDrawInfo *di)=0;
 	virtual void * GetSource() const =0;	// GetSource MUST be implemented!
@@ -101,13 +101,13 @@ protected:
 
 public:
 
-	void RenderPortal(bool usestencil, bool doquery)
+	void RenderPortal(bool usestencil, bool doquery, FDrawInfo *outer_di)
 	{
 		// Start may perform an occlusion query. If that returns 0 there
 		// is no need to draw the stencil's contents and there's also no
 		// need to restore the affected area becasue there is none!
 		FDrawInfo *di;
-		if (Start(usestencil, doquery, &di))
+		if (Start(usestencil, doquery, outer_di, &di))
 		{
 			DrawContents(di);
 			End(usestencil);
@@ -130,8 +130,8 @@ public:
 
 	static void BeginScene();
 	static void StartFrame();
-	static bool RenderFirstSkyPortal(int recursion);
-	static void EndFrame();
+	static bool RenderFirstSkyPortal(int recursion, FDrawInfo *outer_di);
+	static void EndFrame(FDrawInfo *outer_di);
 	static GLPortal * FindPortal(const void * src);
 
 	static void Initialize();

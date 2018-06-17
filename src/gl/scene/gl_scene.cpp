@@ -273,7 +273,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	RenderAll.Clock();
 
 	glDepthMask(true);
-	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion);
+	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion, di);
 
 	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
 
@@ -458,7 +458,7 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	GLPortal::EndFrame();
+	GLPortal::EndFrame(di);
 	recursion--;
 	RenderTranslucent(di);
 }

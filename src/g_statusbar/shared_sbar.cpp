@@ -349,8 +349,25 @@ DBaseStatusBar::DBaseStatusBar ()
 	defaultScale = { (double)CleanXfac, (double)CleanYfac };
 }
 
+static void ValidateResolution(int &hres, int &vres)
+{
+	if (hres == 0)
+	{
+		static const int HORIZONTAL_RESOLUTION_DEFAULT = 320;
+		hres = HORIZONTAL_RESOLUTION_DEFAULT;
+	}
+
+	if (vres == 0)
+	{
+		static const int VERTICAL_RESOLUTION_DEFAULT = 200;
+		vres = VERTICAL_RESOLUTION_DEFAULT;
+	}
+}
+
 void DBaseStatusBar::SetSize(int reltop, int hres, int vres, int hhres, int hvres)
 {
+	ValidateResolution(hres, vres);
+
 	BaseRelTop = reltop;
 	BaseSBarHorizontalResolution = hres;
 	BaseSBarVerticalResolution = vres;
@@ -361,6 +378,8 @@ void DBaseStatusBar::SetSize(int reltop, int hres, int vres, int hhres, int hvre
 
 void DBaseStatusBar::SetDrawSize(int reltop, int hres, int vres)
 {
+	ValidateResolution(hres, vres);
+
 	RelTop = reltop;
 	HorizontalResolution = hres;
 	VerticalResolution = vres;
@@ -415,6 +434,8 @@ void DBaseStatusBar::OnDestroy ()
 
 void DBaseStatusBar::SetScale ()
 {
+	ValidateResolution(HorizontalResolution, VerticalResolution);
+
 	int w = SCREENWIDTH;
 	int h = SCREENHEIGHT;
 	if (st_scale < 0 || ForcedScale)
@@ -481,10 +502,14 @@ DVector2 DBaseStatusBar::GetHUDScale() const
 	}
 	scale = GetUIScale(hud_scale);
 
+	int hres = HorizontalResolution;
+	int vres = VerticalResolution;
+	ValidateResolution(hres, vres);
+
 	// Since status bars and HUDs can be designed for non 320x200 screens this needs to be factored in here.
 	// The global scaling factors are for resources at 320x200, so if the actual ones are higher resolution
 	// the resulting scaling factor needs to be reduced accordingly.
-	int realscale = MAX<int>(1, (320 * scale) / HorizontalResolution);
+	int realscale = MAX<int>(1, (320 * scale) / hres);
 	return{ double(realscale), double(realscale * (hud_aspectscale ? 1.2 : 1.)) };
 }
 
@@ -1439,7 +1464,11 @@ void DBaseStatusBar::StatusbarToRealCoords(double &x, double &y, double &w, doub
 {
 	if (SBarScale.X == -1 || ForcedScale)
 	{
-		screen->VirtualToRealCoords(x, y, w, h, HorizontalResolution, VerticalResolution, true, true);
+		int hres = HorizontalResolution;
+		int vres = VerticalResolution;
+		ValidateResolution(hres, vres);
+
+		screen->VirtualToRealCoords(x, y, w, h, hres, vres, true, true);
 	}
 	else
 	{
@@ -1802,7 +1831,7 @@ void DBaseStatusBar::DrawString(FFont *font, const FString &cstring, double x, d
 DEFINE_ACTION_FUNCTION(DBaseStatusBar, DrawString)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
-	PARAM_POINTER(font, DHUDFont);
+	PARAM_POINTER_NOT_NULL(font, DHUDFont);
 	PARAM_STRING(string);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);

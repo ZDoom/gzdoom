@@ -90,10 +90,11 @@
 
 @end
 
-DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
-
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
+EXTERN_CVAR(Int,  vid_defwidth)
+EXTERN_CVAR(Int,  vid_defheight)
+EXTERN_CVAR(Bool, fullscreen)
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -215,15 +216,12 @@ public:
 private:
 	CocoaWindow* m_window;
 
-	int  m_width;
-	int  m_height;
 	bool m_fullscreen;
-	bool m_bgra;
 	bool m_hiDPI;
 
-	void SetFullscreenMode(int width, int height);
-	void SetWindowedMode(int width, int height);
-	void SetMode(int width, int height, bool fullscreen, bool bgra, bool hiDPI);
+	void SetFullscreenMode();
+	void SetWindowedMode();
+	void SetMode(bool fullscreen, bool hiDPI);
 
 	static CocoaVideo* GetInstance();
 };
@@ -318,14 +316,9 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 
 CocoaVideo::CocoaVideo()
 : m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
-, m_width(-1)
-, m_height(-1)
 , m_fullscreen(false)
-, m_bgra(false)
 , m_hiDPI(false)
 {
-	memset(&m_modeIterator, 0, sizeof m_modeIterator);
-
 	// Create OpenGL pixel format
 	NSOpenGLPixelFormatAttribute defaultProfile = NSOpenGLProfileVersion3_2Core;
 
@@ -379,7 +372,7 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer()
 
 	fb->SetFlash(flashColor, flashAmount);
 
-	SetMode(width, height, fullscreen, bgra, vid_hidpi);
+	SetMode(fullscreen, vid_hidpi);
 
 	return fb;
 }
@@ -396,7 +389,7 @@ void CocoaVideo::UseHiDPI(const bool hiDPI)
 {
 	if (CocoaVideo* const video = GetInstance())
 	{
-		video->SetMode(video->m_width, video->m_height, video->m_fullscreen, video->m_bgra, hiDPI);
+		video->SetMode(video->m_fullscreen, hiDPI);
 	}
 }
 
@@ -440,7 +433,7 @@ void CocoaVideo::SetWindowTitle(const char* title)
 }
 
 
-void CocoaVideo::SetFullscreenMode(const int width, const int height)
+void CocoaVideo::SetFullscreenMode()
 {
 	NSScreen* screen = [m_window screen];
 
@@ -460,9 +453,9 @@ void CocoaVideo::SetFullscreenMode(const int width, const int height)
 	[m_window setFrame:screenFrame display:YES];
 }
 
-void CocoaVideo::SetWindowedMode(const int width, const int height)
+void CocoaVideo::SetWindowedMode()
 {
-	const NSSize windowPixelSize = NSMakeSize(width, height);
+	const NSSize windowPixelSize = NSMakeSize(vid_defwidth, vid_defheight);
 	const NSSize windowSize = vid_hidpi
 		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
 		: windowPixelSize;
@@ -481,12 +474,9 @@ void CocoaVideo::SetWindowedMode(const int width, const int height)
 	[m_window exitAppOnClose];
 }
 
-void CocoaVideo::SetMode(const int width, const int height, const bool fullscreen, const bool bgra, const bool hiDPI)
+void CocoaVideo::SetMode(const bool fullscreen, const bool hiDPI)
 {
 	if (fullscreen == m_fullscreen
-		&& bgra    == m_bgra
-		&& width   == m_width
-		&& height  == m_height
 		&& hiDPI   == m_hiDPI)
 	{
 		return;
@@ -497,11 +487,11 @@ void CocoaVideo::SetMode(const int width, const int height, const bool fullscree
 
 	if (fullscreen)
 	{
-		SetFullscreenMode(width, height);
+		SetFullscreenMode();
 	}
 	else
 	{
-		SetWindowedMode(width, height);
+		SetWindowedMode();
 	}
 
 	const NSSize viewSize = I_GetContentViewSize(m_window);
@@ -519,10 +509,7 @@ void CocoaVideo::SetMode(const int width, const int height, const bool fullscree
 		[m_window makeKeyAndOrderFront:nil];
 	}
 
-	m_width      = width;
-	m_height     = height;
 	m_fullscreen = fullscreen;
-	m_bgra       = bgra;
 	m_hiDPI      = hiDPI;
 }
 
@@ -616,7 +603,7 @@ int SystemFrameBuffer::GetClientWidth()
 	NSView *view = [[NSOpenGLContext currentContext] view];
 	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
 	int clientWidth = (int)backingBounds.size.width;
-	return clientWidth > 0 ? clientWidth : Width;
+	return clientWidth > 0 ? clientWidth : GetWidth();
 }
 
 int SystemFrameBuffer::GetClientHeight()
@@ -624,7 +611,7 @@ int SystemFrameBuffer::GetClientHeight()
 	NSView *view = [[NSOpenGLContext currentContext] view];
 	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
 	int clientHeight = (int)backingBounds.size.height;
-	return clientHeight > 0 ? clientHeight : Height;
+	return clientHeight > 0 ? clientHeight : GetHeight();
 }
 
 

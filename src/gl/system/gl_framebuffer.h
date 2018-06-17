@@ -16,7 +16,7 @@ class OpenGLFrameBuffer : public SystemFrameBuffer
 public:
 
 	explicit OpenGLFrameBuffer() {}
-	OpenGLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) ;
+	OpenGLFrameBuffer(void *hMonitor, bool fullscreen) ;
 	~OpenGLFrameBuffer();
 
 	void InitializeState();

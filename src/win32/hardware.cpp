@@ -43,18 +43,13 @@
 #include "version.h"
 #include "swrenderer/r_swrenderer.h"
 
-EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Float, vid_winscale)
-EXTERN_CVAR (Bool, win_borderless)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 extern HWND Window;
-
-bool ForceWindowed;
 
 IVideo *Video;
 
@@ -111,8 +106,6 @@ void I_ShutdownGraphics ()
 
 void I_InitGraphics ()
 {
-	UCVarValue val;
-
 	// todo: implement ATI version of this. this only works for nvidia notebooks, for now.
 	currentgpuswitch = vid_gpuswitch;
 	if (currentgpuswitch == 1)
@@ -135,8 +128,6 @@ void I_InitGraphics ()
 		// not receive a WM_ACTIVATEAPP message, so both games think they
 		// are the active app. Huh?
 	}
-	val.Bool = !!Args->CheckParm ("-devparm");
-	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
 	Video = gl_CreateVideo();
 
@@ -144,46 +135,12 @@ void I_InitGraphics ()
 		I_FatalError ("Failed to initialize display");
 	
 	atterm (I_ShutdownGraphics);
-	
-	Video->SetWindowedScale (vid_winscale);
 }
 
 /** Remaining code is common to Win32 and Linux **/
 
 // VIDEO WRAPPERS ---------------------------------------------------------
 
-DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
-{
-	bool fs = false;
-	switch (Video->GetDisplayType ())
-	{
-	case DISPLAY_WindowOnly:
-		fs = false;
-		break;
-	case DISPLAY_FullscreenOnly:
-		fs = true;
-		break;
-	case DISPLAY_Both:
-		if (ForceWindowed)
-		{
-			fs = false;
-		}
-		else
-		{
-			fs = fullscreen;
-		}
-		break;
-	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, false, fs, old);
-
-	//* Right now, CreateFrameBuffer cannot return NULL
-	if (res == NULL)
-	{
-		I_FatalError ("Mode %dx%d is unavailable\n", width, height);
-	}
-	//*/
-	return res;
-}
 
 static void GetCenteredPos (int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
 {
@@ -290,85 +247,6 @@ void I_RestoreWindowedPos ()
 	}
 	MoveWindow (Window, winx, winy, winw, winh, TRUE);
 
-	if (win_borderless && !Args->CheckParm("-0"))
-	{
-		LONG lStyle = GetWindowLong(Window, GWL_STYLE);
-		lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
-		SetWindowLong(Window, GWL_STYLE, lStyle);
-		SetWindowPos(Window, HWND_TOP, 0, 0, scrwidth, scrheight, 0);
-	}
 	if (win_maximized && !Args->CheckParm("-0"))
 		ShowWindow(Window, SW_MAXIMIZE);
-}
-
-extern int NewWidth, NewHeight, NewBits, DisplayBits;
-
-CUSTOM_CVAR(Bool, win_borderless, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	// Just reinit the window. Saves a lot of trouble.
-	if (!fullscreen)
-	{
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
-		NewBits = DisplayBits;
-		setmodeneeded = true;
-	}
-}
-
-CUSTOM_CVAR (Bool, fullscreen, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
-{
-	NewWidth = screen->VideoWidth;
-	NewHeight = screen->VideoHeight;
-	NewBits = DisplayBits;
-	setmodeneeded = true;
-}
-
-CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 1.f)
-	{
-		self = 1.f;
-	}
-	else if (Video)
-	{
-		Video->SetWindowedScale (self);
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
-		NewBits = DisplayBits;
-		//setmodeneeded = true;	// This CVAR doesn't do anything and only causes problems!
-	}
-}
-
-CCMD (vid_listmodes)
-{
-	static const char *ratios[7] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4", " - 17:10", " - 21:9" };
-	int width, height, bits;
-	bool letterbox;
-
-	if (Video == NULL)
-	{
-		return;
-	}
-
-	for (bits = 1; bits <= 32; bits++)
-	{
-		Video->StartModeIterator (bits, screen->IsFullscreen());
-		while (Video->NextMode (&width, &height, &letterbox))
-		{
-			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
-			int ratio = CheckRatio (width, height);
-			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
-				"%s%4d x%5d x%3d%s%s\n",
-				thisMode || !IsRatioWidescreen(ratio) ? "" : TEXTCOLOR_GOLD,
-				width, height, bits,
-				ratios[ratio],
-				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"
-				);
-		}
-	}
-}
-
-CCMD (vid_currentmode)
-{
-	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }

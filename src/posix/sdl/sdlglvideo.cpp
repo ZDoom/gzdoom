@@ -93,20 +93,9 @@ public:
 	SDLGLVideo (int parm);
 	~SDLGLVideo ();
 
-	EDisplayType GetDisplayType () { return DISPLAY_Both; }
-	void SetWindowedScale (float scale);
-
-	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
-
-	void StartModeIterator (int bits, bool fs);
-	bool NextMode (int *width, int *height, bool *letterbox);
-	bool SetResolution (int width, int height, int bits);
+	DFrameBuffer *CreateFrameBuffer ();
 
 	void SetupPixelFormat(bool allowsoftware, int multisample, const int *glver);
-
-private:
-	int IteratorMode;
-	int IteratorBits;
 };
 
 // CODE --------------------------------------------------------------------
@@ -125,130 +114,11 @@ SDLGLVideo::~SDLGLVideo ()
 	if (GLRenderer != NULL) GLRenderer->FlushTextures();
 }
 
-void SDLGLVideo::StartModeIterator (int bits, bool fs)
+DFrameBuffer *SDLGLVideo::CreateFrameBuffer ()
 {
-	IteratorMode = 0;
-	IteratorBits = bits;
-}
+	SystemFrameBuffer *fb = new OpenGLFrameBuffer(0, fullscreen);
 
-bool SDLGLVideo::NextMode (int *width, int *height, bool *letterbox)
-{
-	if (IteratorBits != 8)
-		return false;
-
-	if ((unsigned)IteratorMode < sizeof(VideoModes)/sizeof(VideoModes[0]))
-	{
-		*width = VideoModes[IteratorMode].width;
-		*height = VideoModes[IteratorMode].height;
-		++IteratorMode;
-		return true;
-	}
-	return false;
-}
-
-DFrameBuffer *SDLGLVideo::CreateFrameBuffer (int width, int height, bool bgra, bool fullscreen, DFrameBuffer *old)
-{
-	static int retry = 0;
-	static int owidth, oheight;
-	
-	PalEntry flashColor;
-//	int flashAmount;
-
-	if (old != NULL)
-	{ // Reuse the old framebuffer if its attributes are the same
-		SystemFrameBuffer *fb = static_cast<SystemFrameBuffer *> (old);
-		if (fb->Width == width &&
-			fb->Height == height)
-		{
-			bool fsnow = (SDL_GetWindowFlags (fb->GetSDLWindow()) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
-	
-			if (fsnow != fullscreen)
-			{
-				SDL_SetWindowFullscreen (fb->GetSDLWindow(), fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
-			}
-			return old;
-		}
-//		old->GetFlash (flashColor, flashAmount);
-		delete old;
-	}
-	else
-	{
-		flashColor = 0;
-//		flashAmount = 0;
-	}
-	
-	SystemFrameBuffer *fb = new OpenGLFrameBuffer(0, width, height, 32, 60, fullscreen);
-
-	retry = 0;
-	
-	// If we could not create the framebuffer, try again with slightly
-	// different parameters in this order:
-	// 1. Try with the closest size
-	// 2. Try in the opposite screen mode with the original size
-	// 3. Try in the opposite screen mode with the closest size
-	// This is a somewhat confusing mass of recursion here.
-
-	while (fb == NULL)
-	{
-		switch (retry)
-		{
-		case 0:
-			owidth = width;
-			oheight = height;
-		case 2:
-			// Try a different resolution. Hopefully that will work.
-			void V_ClosestResolution(int *, int *, int);
-			V_ClosestResolution (&width, &height, 8);
-			break;
-
-		case 1:
-			// Try changing fullscreen mode. Maybe that will work.
-			width = owidth;
-			height = oheight;
-			fullscreen = !fullscreen;
-			break;
-
-		default:
-			// I give up!
-			I_FatalError ("Could not create new screen (%d x %d)", owidth, oheight);
-
-			fprintf( stderr, "!!! [SDLGLVideo::CreateFrameBuffer] Got beyond I_FatalError !!!" );
-			return NULL;	//[C] actually this shouldn't be reached; probably should be replaced with an ASSERT
-		}
-
-		++retry;
-		fb = static_cast<SystemFrameBuffer *>(CreateFrameBuffer (width, height, false, fullscreen, NULL));
-	}
-
-//	fb->SetFlash (flashColor, flashAmount);
 	return fb;
-}
-
-void SDLGLVideo::SetWindowedScale (float scale)
-{
-}
-
-bool SDLGLVideo::SetResolution (int width, int height, int bits)
-{
-	// FIXME: Is it possible to do this without completely destroying the old
-	// interface?
-#ifndef NO_GL
-
-	if (GLRenderer != NULL) GLRenderer->FlushTextures();
-	I_ShutdownGraphics();
-
-	Video = new SDLGLVideo(0);
-	if (Video == NULL) I_FatalError ("Failed to initialize display");
-
-#if (defined(WINDOWS)) || defined(WIN32)
-	bits=32;
-#else
-	bits=24;
-#endif
-	
-	V_DoModeSetup(width, height, bits);
-#endif
-	return true;	// We must return true because the old video context no longer exists.
 }
 
 //==========================================================================
@@ -302,8 +172,8 @@ IVideo *gl_CreateVideo()
 
 // FrameBuffer implementation -----------------------------------------------
 
-SystemFrameBuffer::SystemFrameBuffer (void *, int width, int height, int, int, bool fullscreen, bool bgra)
-	: DFrameBuffer (width, height, bgra)
+SystemFrameBuffer::SystemFrameBuffer (void *, bool fullscreen)
+	: DFrameBuffer (vid_defwidth, vid_defheight)
 {
 	// NOTE: Core profiles were added with GL 3.2, so there's no sense trying
 	// to set core 3.1 or 3.0. We could try a forward-compatible context
@@ -425,10 +295,6 @@ void SystemFrameBuffer::SetVSync( bool vsync )
 		SDL_GL_SetSwapInterval(0);
 	}
 #endif
-}
-
-void SystemFrameBuffer::NewRefreshRate ()
-{
 }
 
 void SystemFrameBuffer::SwapBuffers()

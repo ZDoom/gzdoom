@@ -190,7 +190,6 @@ extern	bool	 		precache;
 //-------
 
 extern bool setsizeneeded;
-extern bool setmodeneeded;
 
 
 EXTERN_CVAR (Float, mouse_sensitivity)

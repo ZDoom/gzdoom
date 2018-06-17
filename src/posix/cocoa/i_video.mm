@@ -92,19 +92,8 @@
 
 DFrameBuffer *CreateGLSWFrameBuffer(int width, int height, bool bgra, bool fullscreen);
 
-EXTERN_CVAR(Bool, ticker   )
 EXTERN_CVAR(Bool, vid_vsync)
 EXTERN_CVAR(Bool, vid_hidpi)
-
-CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-{
-	extern int NewWidth, NewHeight, NewBits, DisplayBits;
-
-	NewWidth      = screen->VideoWidth;
-	NewHeight     = screen->VideoHeight;
-	NewBits       = DisplayBits;
-	setmodeneeded = true;
-}
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -215,13 +204,7 @@ class CocoaVideo : public IVideo
 public:
 	CocoaVideo();
 
-	virtual EDisplayType GetDisplayType() { return DISPLAY_Both; }
-	virtual void SetWindowedScale(float scale);
-
-	virtual DFrameBuffer* CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer* old);
-
-	virtual void StartModeIterator(int bits, bool fullscreen);
-	virtual bool NextMode(int* width, int* height, bool* letterbox);
+	virtual DFrameBuffer* CreateFrameBuffer();
 
 	static bool IsFullscreen();
 	static void UseHiDPI(bool hiDPI);
@@ -230,15 +213,6 @@ public:
 	static void SetWindowTitle(const char* title);
 
 private:
-	struct ModeIterator
-	{
-		size_t index;
-		int    bits;
-		bool   fullscreen;
-	};
-
-	ModeIterator m_modeIterator;
-
 	CocoaWindow* m_window;
 
 	int  m_width;
@@ -394,75 +368,14 @@ CocoaVideo::CocoaVideo()
 	FConsoleWindow::GetInstance().Show(false);
 }
 
-void CocoaVideo::StartModeIterator(const int bits, const bool fullscreen)
-{
-	m_modeIterator.index      = 0;
-	m_modeIterator.bits       = bits;
-	m_modeIterator.fullscreen = fullscreen;
-}
-
-bool CocoaVideo::NextMode(int* const width, int* const height, bool* const letterbox)
-{
-	assert(NULL != width);
-	assert(NULL != height);
-
-	const int bits = m_modeIterator.bits;
-
-	if (8 != bits && 16 != bits && 24 != bits && 32 != bits)
-	{
-		return false;
-	}
-
-	size_t& index = m_modeIterator.index;
-
-	if (index < sizeof(VideoModes) / sizeof(VideoModes[0]))
-	{
-		*width  = VideoModes[index].width;
-		*height = VideoModes[index].height;
-
-		if (m_modeIterator.fullscreen && NULL != letterbox)
-		{
-			const NSSize screenSize  = [[m_window screen] frame].size;
-			const float  screenRatio = screenSize.width / screenSize.height;
-			const float  modeRatio   = float(*width) / *height;
-
-			*letterbox = fabs(screenRatio - modeRatio) > 0.001f;
-		}
-
-		++index;
-
-		return true;
-	}
-
-	return false;
-}
-
-DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, const bool bgra, const bool fullscreen, DFrameBuffer* const old)
+DFrameBuffer* CocoaVideo::CreateFrameBuffer()
 {
 	PalEntry flashColor  = 0;
 	int      flashAmount = 0;
 
-	if (NULL != old)
-	{
-		if (width == m_width && height == m_height && bgra == m_bgra)
-		{
-			SetMode(width, height, fullscreen, bgra, vid_hidpi);
-			return old;
-		}
-
-		old->GetFlash(flashColor, flashAmount);
-
-		if (old == screen)
-		{
-			screen = NULL;
-		}
-
-		delete old;
-	}
-
 	DFrameBuffer* fb = NULL;
 
-	fb = new OpenGLFrameBuffer(NULL, width, height, 32, 60, fullscreen);
+	fb = new OpenGLFrameBuffer(NULL, fullscreen);
 
 	fb->SetFlash(flashColor, flashAmount);
 
@@ -470,11 +383,6 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer(const int width, const int height, c
 
 	return fb;
 }
-
-void CocoaVideo::SetWindowedScale(float scale)
-{
-}
-
 
 bool CocoaVideo::IsFullscreen()
 {
@@ -628,8 +536,8 @@ CocoaVideo* CocoaVideo::GetInstance()
 // ---------------------------------------------------------------------------
 
 
-SystemFrameBuffer::SystemFrameBuffer(void*, const int width, const int height, int, int, const bool fullscreen, bool bgra)
-: DFrameBuffer(width, height, bgra)
+SystemFrameBuffer::SystemFrameBuffer(void*, const bool fullscreen)
+: DFrameBuffer(vid_defwidth, vid_defheight)
 , UpdatePending(false)
 {
 	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
@@ -743,20 +651,10 @@ void I_ShutdownGraphics()
 
 void I_InitGraphics()
 {
-	UCVarValue val;
-
-	val.Bool = !!Args->CheckParm("-devparm");
-	ticker.SetGenericRepDefault(val, CVAR_Bool);
-
 	Video = new CocoaVideo;
 	atterm(I_ShutdownGraphics);
 }
 
-
-DFrameBuffer* I_SetMode(int &width, int &height, DFrameBuffer* old)
-{
-	return Video->CreateFrameBuffer(width, height, false, fullscreen, old);
-}
 
 // ---------------------------------------------------------------------------
 
@@ -773,40 +671,6 @@ void I_SetFPSLimit(int limit)
 CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	CocoaVideo::UseHiDPI(self);
-}
-
-
-// ---------------------------------------------------------------------------
-
-
-CCMD(vid_listmodes)
-{
-	if (Video == NULL)
-	{
-		return;
-	}
-
-	static const char* const ratios[7] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4", "", " - 21:9" };
-	int width, height;
-	bool letterbox;
-
-	Video->StartModeIterator(32, screen->IsFullscreen());
-
-	while (Video->NextMode(&width, &height, &letterbox))
-	{
-		const bool current = width == DisplayWidth && height == DisplayHeight;
-		const int  ratio   = CheckRatio(width, height);
-
-		Printf(current ? PRINT_BOLD : PRINT_HIGH, "%s%4d x%5d x%3d%s%s\n",
-			current || !(ratio & 3) ? "" : TEXTCOLOR_GOLD,
-			width, height, 32, ratios[ratio],
-			current || !letterbox ? "" : TEXTCOLOR_BROWN " LB");
-	}
-}
-
-CCMD(vid_currentmode)
-{
-	Printf("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
 }
 
 

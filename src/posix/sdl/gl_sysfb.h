@@ -11,7 +11,7 @@ class SystemFrameBuffer : public DFrameBuffer
 
 public:
 	// this must have the same parameters as the Windows version, even if they are not used!
-	SystemFrameBuffer (void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
+	SystemFrameBuffer (void *hMonitor, bool fullscreen);
 	~SystemFrameBuffer ();
 
 	void ForceBuffering (bool force);
@@ -21,16 +21,12 @@ public:
 	virtual void SetVSync( bool vsync );
 	void SwapBuffers();
 	
-	void NewRefreshRate ();
-
 	friend class SDLGLVideo;
 
 	int GetClientWidth();
 	int GetClientHeight();
 
 	SDL_Window *GetSDLWindow() { return Screen; }
-
-	virtual int GetTrueHeight() { return GetClientHeight(); }
 
 protected:
 	void SetGammaTable(uint16_t *tbl);

@@ -111,7 +111,6 @@ void D_DoAnonStats();
 
 extern void I_SetWindowTitle(const char* caption);
 extern void ReadStatistics();
-extern void M_RestoreMode ();
 extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
@@ -147,9 +146,7 @@ EXTERN_CVAR (Bool, sv_cheats)
 EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, I_FriendlyWindowTitle)
 
-extern int testingmode;
 extern bool setmodeneeded;
-extern int NewWidth, NewHeight, NewBits, DisplayBits;
 extern bool gameisdead;
 extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
@@ -258,20 +255,6 @@ void D_ProcessEvents (void)
 {
 	event_t *ev;
 		
-	// [RH] If testing mode, do not accept input until test is over
-	if (testingmode)
-	{
-		if (testingmode == 1)
-		{
-			M_SetDefaultMode ();
-		}
-		else if (testingmode <= I_GetTime())
-		{
-			M_RestoreMode ();
-		}
-		return;
-	}
-
 	for (; eventtail != eventhead ; eventtail = (eventtail+1)&(MAXEVENTS-1))
 	{
 		ev = &events[eventtail];
@@ -687,27 +670,16 @@ void D_Display ()
 		R_SetFOV(r_viewpoint, fov);
 	}
 
-	// [RH] change the screen mode if needed
+	// fullscreen toggle has been requested
 	if (setmodeneeded)
 	{
 		// Change screen mode.
-		if (Video->SetResolution (NewWidth, NewHeight, NewBits))
+		/*
+		if (Video->ToggleFullscreen())
 		{
-			// Recalculate various view parameters.
 			setsizeneeded = true;
-			// Let the status bar know the screen size changed
-			if (StatusBar != NULL)
-			{
-				StatusBar->CallScreenSizeChanged ();
-			}
-			// Refresh the console.
-			C_NewModeAdjust ();
-			// Reload crosshair if transitioned to a different size
-			ST_LoadCrosshair (true);
-			AM_NewResolution ();
-			// Reset the mouse cursor in case the bit depth changed
-			vid_cursor.Callback();
 		}
+		*/
 	}
 
 	// change the view size if needed
@@ -2710,7 +2682,6 @@ void D_DoomMain (void)
 			screen->InitPalette();
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
-			M_InitVideoModesMenu();
 			D_StartTitle ();				// start up intro loop
 			setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 		}

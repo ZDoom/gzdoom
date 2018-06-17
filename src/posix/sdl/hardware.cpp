@@ -42,14 +42,10 @@
 #include "m_argv.h"
 #include "swrenderer/r_swrenderer.h"
 
-EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Float, vid_winscale)
 
 IVideo *Video;
 
-extern int NewWidth, NewHeight, NewBits, DisplayBits;
-bool V_DoModeSetup (int width, int height, int bits);
 void I_RestartRenderer();
 
 
@@ -77,11 +73,6 @@ void I_InitGraphics ()
 
 	Printf("Using video driver %s\n", SDL_GetCurrentVideoDriver());
 
-	UCVarValue val;
-
-	val.Bool = !!Args->CheckParm ("-devparm");
-	ticker.SetGenericRepDefault (val, CVAR_Bool);
-
 	extern IVideo *gl_CreateVideo();
 	Video = gl_CreateVideo();
 	
@@ -89,39 +80,11 @@ void I_InitGraphics ()
 		I_FatalError ("Failed to initialize display");
 
 	atterm (I_ShutdownGraphics);
-
-	Video->SetWindowedScale (vid_winscale);
 }
 
 /** Remaining code is common to Win32 and Linux **/
 
 // VIDEO WRAPPERS ---------------------------------------------------------
-
-DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
-{
-	bool fs = false;
-	switch (Video->GetDisplayType ())
-	{
-	case DISPLAY_WindowOnly:
-		fs = false;
-		break;
-	case DISPLAY_FullscreenOnly:
-		fs = true;
-		break;
-	case DISPLAY_Both:
-		fs = fullscreen;
-		break;
-	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, false, fs, old);
-
-	/* Right now, CreateFrameBuffer cannot return NULL
-	if (res == NULL)
-	{
-		I_FatalError ("Mode %dx%d is unavailable\n", width, height);
-	}
-	*/
-	return res;
-}
 
 //==========================================================================
 //
@@ -197,62 +160,3 @@ void I_SetFPSLimit(int limit)
 {
 }
 #endif
-
-extern int NewWidth, NewHeight, NewBits, DisplayBits;
-
-CUSTOM_CVAR (Bool, fullscreen, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
-{
-	NewWidth = screen->VideoWidth;
-	NewHeight = screen->VideoHeight;
-	NewBits = DisplayBits;
-	setmodeneeded = true;
-}
-
-CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 1.f)
-	{
-		self = 1.f;
-	}
-	else if (Video)
-	{
-		Video->SetWindowedScale (self);
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
-		NewBits = DisplayBits;
-		setmodeneeded = true;
-	}
-}
-
-CCMD (vid_listmodes)
-{
-	static const char *ratios[7] = { "", " - 16:9", " - 16:10", "", " - 5:4", "", " - 21:9" };
-	int width, height, bits;
-	bool letterbox;
-
-	if (Video == NULL)
-	{
-		return;
-	}
-	for (bits = 1; bits <= 32; bits++)
-	{
-		Video->StartModeIterator (bits, screen->IsFullscreen());
-		while (Video->NextMode (&width, &height, &letterbox))
-		{
-			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
-			int ratio = CheckRatio (width, height);
-			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
-				"%s%4d x%5d x%3d%s%s\n",
-				thisMode || !IsRatioWidescreen(ratio) ? "" : TEXTCOLOR_GOLD,
-				width, height, bits,
-				ratios[ratio],
-				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"
-				);
-		}
-	}
-}
-
-CCMD (vid_currentmode)
-{
-	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
-}

@@ -46,6 +46,7 @@
 #include "x86.h"
 #include "i_video.h"
 #include "r_state.h"
+#include "am_map.h"
 
 #include "doomstat.h"
 
@@ -123,10 +124,9 @@ class DDummyFrameBuffer : public DFrameBuffer
 	typedef DFrameBuffer Super;
 public:
 	DDummyFrameBuffer (int width, int height)
-		: DFrameBuffer (0, 0, false)
+		: DFrameBuffer (0, 0)
 	{
-		Width = width;
-		Height = height;
+		SetVirtualSize(width, height);
 	}
 	// These methods should never be called.
 	void Update() { DBGBREAK; }
@@ -137,7 +137,7 @@ public:
 	float Gamma;
 };
 
-int DisplayWidth, DisplayHeight, DisplayBits;
+int DisplayWidth, DisplayHeight;
 
 FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
 
@@ -166,14 +166,6 @@ CUSTOM_CVAR (Bool, vid_vsync, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 	if (screen != NULL)
 	{
 		screen->SetVSync (*self);
-	}
-}
-
-CUSTOM_CVAR (Int, vid_refreshrate, 0, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (screen != NULL)
-	{
-		screen->NewRefreshRate();
 	}
 }
 
@@ -598,17 +590,15 @@ DSimpleCanvas::~DSimpleCanvas ()
 //
 //==========================================================================
 
-DFrameBuffer::DFrameBuffer (int width, int height, bool bgra)
-	//: DCanvas 
+DFrameBuffer::DFrameBuffer (int width, int height)
+{
+	SetSize(width, height);
+}
+
+void DFrameBuffer::SetSize(int width, int height)
 {
 	Width = ViewportScaledWidth(width, height);
 	Height = ViewportScaledHeight(width, height);
-	Bgra = bgra;
-
-	LastMS = LastSec = FrameCount = LastCount = LastTic = 0;
-
-	VideoWidth = width;
-	VideoHeight = height;
 }
 
 //==========================================================================
@@ -714,19 +704,6 @@ void DFrameBuffer::GetFlash(PalEntry &rgb, int &amount)
 //==========================================================================
 
 void DFrameBuffer::SetVSync (bool vsync)
-{
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: NewRefreshRate
-//
-// Sets the fullscreen display to the new refresh rate in vid_refreshrate,
-// if possible.
-//
-//==========================================================================
-
-void DFrameBuffer::NewRefreshRate ()
 {
 }
 
@@ -967,10 +944,6 @@ void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 	int letterboxWidth = mOutputLetterbox.width;
 	int letterboxHeight = mOutputLetterbox.height;
 
-	// Subtract the LB video mode letterboxing
-	if (IsFullscreen())
-		y -= (GetTrueHeight() - VideoHeight) / 2;
-
 	x = int16_t((x - letterboxX) * Width / letterboxWidth);
 	y = int16_t((y - letterboxY) * Height / letterboxHeight);
 }
@@ -983,28 +956,6 @@ CCMD(clean)
 	Printf ("CleanXfac: %d\nCleanYfac: %d\n", CleanXfac, CleanYfac);
 }
 
-//
-// V_SetResolution
-//
-bool V_DoModeSetup (int width, int height, int bits)
-{
-	DFrameBuffer *buff = I_SetMode (width, height, screen);
-
-	if (buff == NULL)
-	{
-		return false;
-	}
-
-	screen = buff;
-	screen->SetGamma ();
-
-	DisplayBits = bits;
-	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
-
-	M_RefreshModesList ();
-
-	return true;
-}
 
 void V_UpdateModeSize (int width, int height)
 {
@@ -1062,6 +1013,9 @@ void V_OutputResized (int width, int height)
 		StatusBar->CallScreenSizeChanged();
 	}
 	C_NewModeAdjust();
+	// Reload crosshair if transitioned to a different size
+	ST_LoadCrosshair(true);
+	AM_NewResolution();
 }
 
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *_cx1, int *_cx2)
@@ -1114,142 +1068,21 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	if (_cx2 != NULL)	*_cx2 = cx2;
 }
 
-bool V_CheckResolution(const int width, const int height, const int bits)
+bool IVideo::SetResolution ()
 {
-	int twidth, theight;
+	DFrameBuffer *buff = CreateFrameBuffer();
 
-	Video->StartModeIterator(bits, fullscreen);
-
-	while (Video->NextMode(&twidth, &theight, NULL))
+	if (buff == NULL)	// this cannot really happen
 	{
-		if (width == twidth && height == theight)
-		{
-			return true;
-		}
+		return false;
 	}
 
-	return false;
-}
+	screen = buff;
+	screen->SetGamma();
 
-void V_ClosestResolution(int *width, int *height, int bits)
-{
-	int twidth, theight;
-	int cwidth = 0, cheight = 0;
-	int iteration;
-	uint32_t closest = uint32_t(-1);
+	V_UpdateModeSize(screen->GetWidth(), screen->GetHeight());
 
-	for (iteration = 0; iteration < 2; ++iteration)
-	{
-		Video->StartModeIterator(bits, fullscreen);
-
-		while (Video->NextMode(&twidth, &theight, NULL))
-		{
-			if (twidth == *width && theight == *height)
-			{
-				return;
-			}
-
-			if (iteration == 0 && (twidth < *width || theight < *height))
-			{
-				continue;
-			}
-
-			const uint32_t dist = (twidth - *width) * (twidth - *width)
-				+ (theight - *height) * (theight - *height);
-
-			if (dist < closest)
-			{
-				closest = dist;
-				cwidth = twidth;
-				cheight = theight;
-			}
-		}
-
-		if (closest != uint32_t(-1))
-		{
-			*width = cwidth;
-			*height = cheight;
-			return;
-		}
-	}
-}
-
-bool IVideo::SetResolution (int width, int height, int bits)
-{
-	int oldwidth, oldheight;
-	int oldbits;
-
-	if (screen)
-	{
-		oldwidth = SCREENWIDTH;
-		oldheight = SCREENHEIGHT;
-		oldbits = DisplayBits;
-	}
-	else
-	{ // Harmless if screen wasn't allocated
-		oldwidth = width;
-		oldheight = height;
-		oldbits = bits;
-	}
-
-	V_ClosestResolution (&width, &height, bits);
-	if (!V_CheckResolution (width, height, bits))
-	{ // Try specified resolution
-		if (!V_CheckResolution (oldwidth, oldheight, oldbits))
-		{ // Try previous resolution (if any)
-	   		return false;
-		}
-		else
-		{
-			width = oldwidth;
-			height = oldheight;
-			bits = oldbits;
-		}
-	}
-	return V_DoModeSetup (width, height, bits);
-}
-
-CCMD (vid_setmode)
-{
-	int		width = 0, height = SCREENHEIGHT;
-	int		bits = DisplayBits;
-
-	if (argv.argc() > 1)
-	{
-		width = atoi (argv[1]);
-		if (argv.argc() > 2)
-		{
-			height = atoi (argv[2]);
-			if (argv.argc() > 3)
-			{
-				bits = atoi (argv[3]);
-			}
-		}
-	}
-
-	const bool goodmode = (width > 0 && height > 0)
-		&& (!fullscreen || (Video != nullptr && V_CheckResolution(width, height, bits)));
-
-	if (goodmode)
-	{
-		// The actual change of resolution will take place
-		// near the beginning of D_Display().
-		if (gamestate != GS_STARTUP)
-		{
-			setmodeneeded = true;
-			NewWidth = width;
-			NewHeight = height;
-			NewBits = bits;
-		}
-	}
-	else if (width)
-	{
-		Printf ("Unknown resolution %d x %d x %d\n", width, height, bits);
-	}
-	else
-	{
-		Printf ("Usage: vid_setmode <width> <height> <mode>\n");
-	}
+	return true;
 }
 
 //
@@ -1316,8 +1149,6 @@ void V_Init (bool restart)
 
 void V_Init2()
 {
-	int width = screen->GetWidth();
-	int height = screen->GetHeight();
 	float gamma = static_cast<DDummyFrameBuffer *>(screen)->Gamma;
 
 	{
@@ -1326,18 +1157,20 @@ void V_Init2()
 		delete s;
 	}
 
-	I_InitGraphics();
-	V_ClosestResolution (&width, &height, 8);
+	UCVarValue val;
 
-	if (!Video->SetResolution (width, height, 8))
-		I_FatalError ("Could not set resolution to %d x %d x %d", width, height, 8);
-	else
-		Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
+	val.Bool = !!Args->CheckParm("-devparm");
+	ticker.SetGenericRepDefault(val, CVAR_Bool);
+
+
+	I_InitGraphics();
+
+	Video->SetResolution();	// this only fails via exceptions.
+	Printf ("Resolution: %d x %d\n", SCREENWIDTH, SCREENHEIGHT);
 
 	screen->SetGamma ();
 	FBaseCVar::ResetColors ();
 	C_NewModeAdjust();
-	M_InitVideoModesMenu();
 	setsizeneeded = true;
 }
 
@@ -1520,6 +1353,11 @@ void ScaleWithAspect (int &w, int &h, int Width, int Height)
 void IVideo::DumpAdapters ()
 {
 	Printf("Multi-monitor support unavailable.\n");
+}
+
+CUSTOM_CVAR(Bool, fullscreen, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	setmodeneeded = true;
 }
 
 CCMD(vid_listadapters)

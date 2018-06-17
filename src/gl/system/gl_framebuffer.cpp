@@ -64,8 +64,8 @@ CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITC
 //
 //==========================================================================
 
-OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : 
-	Super(hMonitor, width, height, bits, refreshHz, fullscreen, false) 
+OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) : 
+	Super(hMonitor, fullscreen) 
 {
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
@@ -161,16 +161,15 @@ void OpenGLFrameBuffer::Update()
 	Swap();
 	CheckBench();
 
-	int initialWidth = IsFullscreen() ? VideoWidth : GetClientWidth();
-	int initialHeight = IsFullscreen() ? VideoHeight : GetClientHeight();
+	int initialWidth = GetClientWidth();
+	int initialHeight = GetClientHeight();
 	int clientWidth = ViewportScaledWidth(initialWidth, initialHeight);
 	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
-	if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
+	if (clientWidth > 0 && clientHeight > 0 && (GetWidth() != clientWidth || GetHeight() != clientHeight))
 	{
-		Width = clientWidth;
-		Height = clientHeight;
-		V_OutputResized(Width, Height);
-		GLRenderer->mVBO->OutputResized(Width, Height);
+		SetVirtualSize(clientWidth, clientHeight);
+		V_OutputResized(clientWidth, clientHeight);
+		GLRenderer->mVBO->OutputResized(clientWidth, clientHeight);
 	}
 }
 

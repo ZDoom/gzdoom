@@ -61,8 +61,6 @@ extern "C" {
     __declspec(dllexport) int AmdPowerXpressRequestHighPerformance = 1;	
 }
 
-extern int NewWidth, NewHeight, NewBits, DisplayBits;
-
 // these get used before GLEW is initialized so we have to use separate pointers with different names
 PFNWGLCHOOSEPIXELFORMATARBPROC myWglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXELFORMATARBPROC)wglGetProcAddress("wglChoosePixelFormatARB");
 PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
@@ -83,10 +81,10 @@ CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFI
 	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
 }
 
-EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
 EXTERN_CVAR(Int, vid_adapter)
+EXTERN_CVAR(Bool, fullscreen)
 
 
 //==========================================================================
@@ -101,41 +99,14 @@ public:
 	Win32GLVideo(int parm);
 	virtual ~Win32GLVideo();
 
-	EDisplayType GetDisplayType() { return DISPLAY_Both; }
-	void SetWindowedScale(float scale);
-	void StartModeIterator(int bits, bool fs);
-	bool NextMode(int *width, int *height, bool *letterbox);
-	bool GoFullscreen(bool yes);
-	DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old);
-	virtual bool SetResolution(int width, int height, int bits);
+	DFrameBuffer *CreateFrameBuffer ();
 	void DumpAdapters();
 	bool InitHardware(HWND Window, int multisample);
 	void Shutdown();
-	bool SetFullscreen(const char *devicename, int w, int h, int bits, int hz);
 
 	HDC m_hDC;
 
 protected:
-	struct ModeInfo
-	{
-		ModeInfo(int inX, int inY, int inBits, int inRealY, int inRefresh)
-			: next(NULL),
-			width(inX),
-			height(inY),
-			bits(inBits),
-			refreshHz(inRefresh),
-			realheight(inRealY)
-		{}
-		ModeInfo *next;
-		int width, height, bits, refreshHz, realheight;
-	} *m_Modes;
-
-	ModeInfo *m_IteratorMode;
-	int m_IteratorBits;
-	bool m_IteratorFS;
-	bool m_IsFullscreen;
-	int m_trueHeight;
-	int m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz;
 	HMODULE hmRender;
 
 	char m_DisplayDeviceBuffer[CCHDEVICENAME];
@@ -151,11 +122,7 @@ protected:
 	bool SetupPixelFormat(int multisample);
 
 	void GetDisplayDeviceName();
-	void MakeModesList();
-	void AddMode(int x, int y, int bits, int baseHeight, int refreshHz);
-	void FreeModes();
 public:
-	int GetTrueHeight() { return m_trueHeight; }
 
 };
 
@@ -165,16 +132,11 @@ public:
 //
 //==========================================================================
 
-Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
+Win32GLVideo::Win32GLVideo(int parm)
 {
 	I_SetWndProc();
-	m_DisplayWidth = vid_defwidth;
-	m_DisplayHeight = vid_defheight;
-	m_DisplayBits = 32;
-	m_DisplayHz = 60;
 
 	GetDisplayDeviceName();
-	MakeModesList();
 	SetPixelFormat();
 
 }
@@ -187,18 +149,7 @@ Win32GLVideo::Win32GLVideo(int parm) : m_Modes(NULL), m_IsFullscreen(false)
 
 Win32GLVideo::~Win32GLVideo()
 {
-	FreeModes();
 	if (GLRenderer != NULL) GLRenderer->FlushTextures();
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void Win32GLVideo::SetWindowedScale(float scale)
-{
 }
 
 //==========================================================================
@@ -280,248 +231,12 @@ void Win32GLVideo::GetDisplayDeviceName()
 //
 //==========================================================================
 
-void Win32GLVideo::MakeModesList()
-{
-	ModeInfo *pMode, *nextmode;
-	DEVMODE dm;
-	int mode = 0;
-
-	memset(&dm, 0, sizeof(DEVMODE));
-	dm.dmSize = sizeof(DEVMODE);
-
-	while (EnumDisplaySettings(m_DisplayDeviceName, mode, &dm))
-	{
-		this->AddMode(dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel, dm.dmPelsHeight, dm.dmDisplayFrequency);
-		++mode;
-	}
-
-	for (pMode = m_Modes; pMode != NULL; pMode = nextmode)
-	{
-		nextmode = pMode->next;
-		if (pMode->realheight == pMode->height && pMode->height * 4/3 == pMode->width)
-		{
-			if (pMode->width >= 360)
-			{
-				AddMode (pMode->width, pMode->width * 9/16, pMode->bits, pMode->height, pMode->refreshHz);
-			}
-			if (pMode->width > 640)
-			{
-				AddMode (pMode->width, pMode->width * 10/16, pMode->bits, pMode->height, pMode->refreshHz);
-			}
-		}
-	}
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void Win32GLVideo::StartModeIterator(int bits, bool fs)
-{
-	m_IteratorMode = m_Modes;
-	// I think it's better to ignore the game-side settings of bit depth.
-	// The GL renderer will always default to 32 bits because 16 bit modes cannot have a stencil buffer.
-	m_IteratorBits = 32;	
-	m_IteratorFS = fs;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-bool Win32GLVideo::NextMode(int *width, int *height, bool *letterbox)
-{
-	if (m_IteratorMode)
-	{
-		while (m_IteratorMode && m_IteratorMode->bits != m_IteratorBits)
-		{
-			m_IteratorMode = m_IteratorMode->next;
-		}
-
-		if (m_IteratorMode)
-		{
-			*width = m_IteratorMode->width;
-			*height = m_IteratorMode->height;
-			if (letterbox != NULL) *letterbox = m_IteratorMode->realheight != m_IteratorMode->height;
-			m_IteratorMode = m_IteratorMode->next;
-			return true;
-		}
-	}
-
-	return false;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void Win32GLVideo::AddMode(int x, int y, int bits, int baseHeight, int refreshHz)
-{
-	ModeInfo **probep = &m_Modes;
-	ModeInfo *probe = m_Modes;
-
-	// This mode may have been already added to the list because it is
-	// enumerated multiple times at different refresh rates. If it's
-	// not present, add it to the right spot in the list; otherwise, do nothing.
-	// Modes are sorted first by width, then by height, then by depth. In each
-	// case the order is ascending.
-	if (bits < 32) return;
-	for (; probe != 0; probep = &probe->next, probe = probe->next)
-	{
-		if (probe->width != x)		continue;
-		// Width is equal
-		if (probe->height != y)		continue;
-		// Width is equal
-		if (probe->realheight != baseHeight)	continue;
-		// Height is equal
-		if (probe->bits != bits)	continue;
-		// Bits is equal
-		if (probe->refreshHz > refreshHz) return;
-		probe->refreshHz = refreshHz;
-		return;
-	}
-
-	*probep = new ModeInfo (x, y, bits, baseHeight, refreshHz);
-	(*probep)->next = probe;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void Win32GLVideo::FreeModes()
-{
-	ModeInfo *mode = m_Modes;
-
-	while (mode)
-	{
-		ModeInfo *tempmode = mode;
-		mode = mode->next;
-		delete tempmode;
-	}
-
-	m_Modes = NULL;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-bool Win32GLVideo::GoFullscreen(bool yes)
-{
-	m_IsFullscreen = yes;
-
-	m_trueHeight = m_DisplayHeight;
-
-	if (yes)
-	{
-		// If in windowed mode, any height is good. 
-		for (ModeInfo *mode = m_Modes; mode != NULL; mode = mode->next)
-		{
-			if (mode->width == m_DisplayWidth && mode->height == m_DisplayHeight)
-			{
-				m_trueHeight = mode->realheight;
-				break;
-			}
-		}
-	}
-
-	if (yes)
-	{
-		SetFullscreen(m_DisplayDeviceName, m_DisplayWidth, m_trueHeight, m_DisplayBits, m_DisplayHz);
-	}
-	else
-	{
-		SetFullscreen(m_DisplayDeviceName, 0,0,0,0);
-	}
-	return yes;
-}
-
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-void V_ClosestResolution(int *width, int *height, int bits);
-
-
-DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer *old)
+DFrameBuffer *Win32GLVideo::CreateFrameBuffer()
 {
 	SystemFrameBuffer *fb;
 
-	if (fs)
-	{
-		V_ClosestResolution(&width, &height, 32);
-	}
-
-	m_DisplayWidth = width;
-	m_DisplayHeight = height;
-	m_DisplayBits = 32;
-	m_DisplayHz = 60;
-
-	if (vid_refreshrate == 0)
-	{
-		for (ModeInfo *mode = m_Modes; mode != NULL; mode = mode->next)
-		{
-			if (mode->width == m_DisplayWidth && mode->height == m_DisplayHeight && mode->bits == m_DisplayBits)
-			{
-				m_DisplayHz = MAX<int>(m_DisplayHz, mode->refreshHz);
-			}
-		}
-	}
-	else
-	{
-		m_DisplayHz = vid_refreshrate;
-	}
-
-	if (old != NULL)
-	{ // Reuse the old framebuffer if its attributes are the same
-		fb = static_cast<SystemFrameBuffer *> (old);
-		if (fb->m_Width == m_DisplayWidth &&
-			fb->m_Height == m_DisplayHeight &&
-			fb->m_Bits == m_DisplayBits &&
-			fb->m_RefreshHz == m_DisplayHz &&
-			fb->m_Fullscreen == fs &&
-			fb->m_Bgra == bgra)
-		{
-			return old;
-		}
-		//old->GetFlash(flashColor, flashAmount);
-		delete old;
-	}
-	fb = new OpenGLFrameBuffer(m_hMonitor, m_DisplayWidth, m_DisplayHeight, m_DisplayBits, m_DisplayHz, fs);
+	fb = new OpenGLFrameBuffer(m_hMonitor, fullscreen);
 	return fb;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-bool Win32GLVideo::SetResolution (int width, int height, int bits)
-{
-	if (GLRenderer != NULL) GLRenderer->FlushTextures();
-	I_ShutdownGraphics();
-	
-	Video = new Win32GLVideo(0);
-	if (Video == NULL) I_FatalError ("Failed to initialize display");
-	
-	bits=32;
-	
-	V_DoModeSetup(width, height, bits);
-	return true;	// We must return true because the old video context no longer exists.
 }
 
 //==========================================================================
@@ -936,84 +651,35 @@ void Win32GLVideo::Shutdown()
 	if (m_hDC) ReleaseDC(m_Window, m_hDC);
 }
 
+
 //==========================================================================
 //
 // 
 //
 //==========================================================================
 
-bool Win32GLVideo::SetFullscreen(const char *devicename, int w, int h, int bits, int hz)
+void SystemFrameBuffer::PositionWindow()
 {
-	DEVMODE dm;
-
-	if (w==0)
-	{
-		ChangeDisplaySettingsEx(devicename, 0, 0, 0, 0);
-	}
-	else
-	{
-		dm.dmSize = sizeof(DEVMODE);
-		dm.dmSpecVersion = DM_SPECVERSION;//Somebody owes me...
-		dm.dmDriverExtra = 0;//...1 hour of my life back
-		dm.dmPelsWidth = w;
-		dm.dmPelsHeight = h;
-		dm.dmBitsPerPel = bits;
-		dm.dmDisplayFrequency = hz;
-		dm.dmFields = DM_PELSWIDTH | DM_PELSHEIGHT | DM_BITSPERPEL | DM_DISPLAYFREQUENCY;
-		if (DISP_CHANGE_SUCCESSFUL != ChangeDisplaySettingsEx(devicename, &dm, 0, CDS_FULLSCREEN, 0))
-		{
-			dm.dmFields &= ~DM_DISPLAYFREQUENCY;
-			return DISP_CHANGE_SUCCESSFUL == ChangeDisplaySettingsEx(devicename, &dm, 0, CDS_FULLSCREEN, 0);
-		}
-	}
-	return true;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen, bool bgra) : DFrameBuffer(width, height, bgra)
-{
-	m_Width = width;
-	m_Height = height;
-	m_Bits = bits;
-	m_RefreshHz = refreshHz;
-	m_Fullscreen = fullscreen;
-	m_Bgra = bgra;
-
 	RECT r;
 	LONG style, exStyle;
 
-	static_cast<Win32GLVideo *>(Video)->GoFullscreen(fullscreen);
+	RECT monRect;
 
-	m_displayDeviceName = 0;
-	int monX = 0, monY = 0;
-
-	if (hMonitor)
+	if (m_Monitor)
 	{
 		MONITORINFOEX mi;
 		mi.cbSize = sizeof mi;
 
-		if (GetMonitorInfo(HMONITOR(hMonitor), &mi))
+		if (GetMonitorInfo(HMONITOR(m_Monitor), &mi))
 		{
 			strcpy(m_displayDeviceNameBuffer, mi.szDevice);
 			m_displayDeviceName = m_displayDeviceNameBuffer;
-
-			monX = int(mi.rcMonitor.left);
-			monY = int(mi.rcMonitor.top);
+			monRect = mi.rcMonitor;
 		}
 	}
 
-	ShowWindow (Window, SW_SHOW);
+	ShowWindow(Window, SW_SHOW);
+
 	GetWindowRect(Window, &r);
 	style = WS_VISIBLE | WS_CLIPSIBLINGS;
 	exStyle = 0;
@@ -1032,7 +698,7 @@ SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, int width, int height, int 
 
 	if (fullscreen)
 	{
-		MoveWindow(Window, monX, monY, width, GetTrueHeight(), FALSE);
+		MoveWindow(Window, monRect.left, monRect.top, monRect.right-monRect.left, monRect.bottom-monRect.top, FALSE);
 
 		// And now, seriously, it IS in the right place. Promise.
 	}
@@ -1041,13 +707,31 @@ SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, int width, int height, int 
 		RECT windowRect;
 		windowRect.left = r.left;
 		windowRect.top = r.top;
-		windowRect.right = windowRect.left + width;
-		windowRect.bottom = windowRect.top + height;
+		windowRect.right = windowRect.left + vid_defwidth;
+		windowRect.bottom = windowRect.top + vid_defheight;
 		AdjustWindowRectEx(&windowRect, style, FALSE, exStyle);
 		MoveWindow(Window, windowRect.left, windowRect.top, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, FALSE);
 
 		I_RestoreWindowedPos();
 	}
+	SetSize(GetClientWidth(), GetClientHeight());
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, bool fullscreen) : DFrameBuffer(vid_defwidth, vid_defheight)
+{
+	m_Monitor = hMonitor;
+	m_Fullscreen = fullscreen;
+
+
+	m_displayDeviceName = 0;
+	PositionWindow();
+
 
 	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, 0))
 	{
@@ -1095,8 +779,6 @@ SystemFrameBuffer::~SystemFrameBuffer()
 {
 	ResetGammaTable();
 	I_SaveWindowedPos();
-
-	static_cast<Win32GLVideo *>(Video)->SetFullscreen(m_displayDeviceName, 0,0,0,0);
 
 	ShowWindow (Window, SW_SHOW);
 	SetWindowLong(Window, GWL_STYLE, WS_VISIBLE | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW);
@@ -1184,17 +866,6 @@ void SystemFrameBuffer::SwapBuffers()
 //
 //==========================================================================
 
-void SystemFrameBuffer::NewRefreshRate ()
-{
-	if (m_Fullscreen)
-	{
-		setmodeneeded = true;
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
-		NewBits = DisplayBits;
-	}
-}
-
 int SystemFrameBuffer::GetClientWidth()
 {
 	RECT rect = { 0 };
@@ -1207,11 +878,6 @@ int SystemFrameBuffer::GetClientHeight()
 	RECT rect = { 0 };
 	GetClientRect(Window, &rect);
 	return rect.bottom - rect.top;
-}
-
-int SystemFrameBuffer::GetTrueHeight()
-{ 
-	return static_cast<Win32GLVideo *>(Video)->GetTrueHeight(); 
 }
 
 IVideo *gl_CreateVideo()

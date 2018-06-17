@@ -1069,7 +1069,6 @@ set (PCH_SOURCES
 	menu/messagebox.cpp
 	menu/optionmenu.cpp
 	menu/playermenu.cpp
-	menu/videomenu.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp

@@ -489,7 +489,8 @@ void NSEventToGameMousePosition(NSEvent* inEvent, event_t* outEvent)
 
 	// Compensate letterbox adjustment done by cross-platform code
 	// More elegant solution is a bit problematic due to HiDPI/Retina support
-	outEvent->data2 += (screen->GetTrueHeight() - screen->VideoHeight) / 2;
+	// What does this do? Add 0?
+	//outEvent->data2 += (screen->GetTrueHeight() - screen->ClientHeight()) / 2;
 
 	screen->ScaleCoordsFromWindow(outEvent->data1, outEvent->data2);
 }

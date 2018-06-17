@@ -40,7 +40,7 @@ class SystemFrameBuffer : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SystemFrameBuffer(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
+	SystemFrameBuffer(void *hMonitor, bool fullscreen);
 	~SystemFrameBuffer();
 
 	virtual bool IsFullscreen();
@@ -48,8 +48,6 @@ public:
 
 	int GetClientWidth();
 	int GetClientHeight();
-
-	virtual int GetTrueHeight() { return GetClientHeight(); }
 
 protected:
 	bool                UpdatePending;

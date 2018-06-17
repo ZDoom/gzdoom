@@ -102,9 +102,6 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 }
 
 
-EXTERN_CVAR(Bool, gl_smooth_rendered)
-
-
 // ---------------------------------------------------------------------------
 
 

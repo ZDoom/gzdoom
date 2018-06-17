@@ -453,6 +453,7 @@ bool Win32GLVideo::GoFullscreen(bool yes)
 // 
 //
 //==========================================================================
+void V_ClosestResolution(int *width, int *height, int bits);
 
 
 DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, bool fs, DFrameBuffer *old)
@@ -461,7 +462,7 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer(int width, int height, bool bgra, 
 
 	if (fs)
 	{
-		I_ClosestResolution(&width, &height, 32);
+		V_ClosestResolution(&width, &height, 32);
 	}
 
 	m_DisplayWidth = width;

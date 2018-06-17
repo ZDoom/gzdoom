@@ -1114,6 +1114,66 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	if (_cx2 != NULL)	*_cx2 = cx2;
 }
 
+bool V_CheckResolution(const int width, const int height, const int bits)
+{
+	int twidth, theight;
+
+	Video->StartModeIterator(bits, fullscreen);
+
+	while (Video->NextMode(&twidth, &theight, NULL))
+	{
+		if (width == twidth && height == theight)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void V_ClosestResolution(int *width, int *height, int bits)
+{
+	int twidth, theight;
+	int cwidth = 0, cheight = 0;
+	int iteration;
+	uint32_t closest = uint32_t(-1);
+
+	for (iteration = 0; iteration < 2; ++iteration)
+	{
+		Video->StartModeIterator(bits, fullscreen);
+
+		while (Video->NextMode(&twidth, &theight, NULL))
+		{
+			if (twidth == *width && theight == *height)
+			{
+				return;
+			}
+
+			if (iteration == 0 && (twidth < *width || theight < *height))
+			{
+				continue;
+			}
+
+			const uint32_t dist = (twidth - *width) * (twidth - *width)
+				+ (theight - *height) * (theight - *height);
+
+			if (dist < closest)
+			{
+				closest = dist;
+				cwidth = twidth;
+				cheight = theight;
+			}
+		}
+
+		if (closest != uint32_t(-1))
+		{
+			*width = cwidth;
+			*height = cheight;
+			return;
+		}
+	}
+}
+
 bool IVideo::SetResolution (int width, int height, int bits)
 {
 	int oldwidth, oldheight;
@@ -1132,10 +1192,10 @@ bool IVideo::SetResolution (int width, int height, int bits)
 		oldbits = bits;
 	}
 
-	I_ClosestResolution (&width, &height, bits);
-	if (!I_CheckResolution (width, height, bits))
+	V_ClosestResolution (&width, &height, bits);
+	if (!V_CheckResolution (width, height, bits))
 	{ // Try specified resolution
-		if (!I_CheckResolution (oldwidth, oldheight, oldbits))
+		if (!V_CheckResolution (oldwidth, oldheight, oldbits))
 		{ // Try previous resolution (if any)
 	   		return false;
 		}
@@ -1168,7 +1228,7 @@ CCMD (vid_setmode)
 	}
 
 	const bool goodmode = (width > 0 && height > 0)
-		&& (!fullscreen || (Video != nullptr && I_CheckResolution(width, height, bits)));
+		&& (!fullscreen || (Video != nullptr && V_CheckResolution(width, height, bits)));
 
 	if (goodmode)
 	{
@@ -1267,7 +1327,7 @@ void V_Init2()
 	}
 
 	I_InitGraphics();
-	I_ClosestResolution (&width, &height, 8);
+	V_ClosestResolution (&width, &height, 8);
 
 	if (!Video->SetResolution (width, height, 8))
 		I_FatalError ("Could not set resolution to %d x %d x %d", width, height, 8);

@@ -416,7 +416,7 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 	FullbrightFlags = 0;
 
 	// check for special colormaps
-	player_t * cplayer = player->camera->player;
+	player_t * cplayer = player? player->camera->player : nullptr;
 	if (cplayer)
 	{
 		int cm = CM_DEFAULT;

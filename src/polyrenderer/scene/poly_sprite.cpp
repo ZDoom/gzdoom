@@ -39,13 +39,12 @@ EXTERN_CVAR (Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Int, gl_spriteclip)
 EXTERN_CVAR(Float, gl_sclipthreshold)
 EXTERN_CVAR(Float, gl_sclipfactor)
+
 extern uint32_t r_renderercaps;
+extern double model_distance_cull;
 
 bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 {
-	if (IsThingCulled(thing))
-		return false;
-
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 
@@ -76,12 +75,12 @@ void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector
 {
 	if (r_modelscene)
 	{
+		const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 		int spritenum = thing->sprite;
 		bool isPicnumOverride = thing->picnum.isValid();
 		FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
-		if (modelframe)
+		if (modelframe && (thing->Pos() - viewpoint.Pos).LengthSquared() < model_distance_cull)
 		{
-			const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 			PolyRenderModel(thread, PolyRenderer::Instance()->Scene.CurrentViewpoint->WorldToClip, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
 			return;

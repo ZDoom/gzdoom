@@ -37,6 +37,8 @@
 
 EXTERN_CVAR(Int, r_portal_recursions)
 
+extern double model_distance_cull;
+
 /////////////////////////////////////////////////////////////////////////////
 
 RenderPolyScene::RenderPolyScene()
@@ -71,11 +73,24 @@ void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 		sector_t *sector = &level.sectors[sectorIndex];
 		for (AActor *thing = sector->thinglist; thing != nullptr; thing = thing->snext)
 		{
-			DVector2 left, right;
-			if (!RenderPolySprite::GetLine(thing, left, right))
-				continue;
-			double distanceSquared = (thing->Pos() - rviewpoint.Pos).LengthSquared();
-			AddSprite(thread, thing, distanceSquared, left, right);
+			if (!RenderPolySprite::IsThingCulled(thing))
+			{
+				int spritenum = thing->sprite;
+				bool isPicnumOverride = thing->picnum.isValid();
+				FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+				double distanceSquared = (thing->Pos() - rviewpoint.Pos).LengthSquared();
+				if (r_modelscene && modelframe && distanceSquared < model_distance_cull)
+				{
+					AddModel(thread, thing, distanceSquared, thing->Pos());
+				}
+				else
+				{
+					DVector2 left, right;
+					if (!RenderPolySprite::GetLine(thing, left, right))
+						continue;
+					AddSprite(thread, thing, distanceSquared, left, right);
+				}
+			}
 		}
 	}
 	PolyMaskedCycles.Unclock();
@@ -294,6 +309,37 @@ void RenderPolyScene::AddSprite(PolyRenderThread *thread, AActor *thing, double 
 	
 	if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
 		thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, (float)t1, (float)t2, CurrentViewpoint->StencilValue));
+}
+
+void RenderPolyScene::AddModel(PolyRenderThread *thread, AActor *thing, double sortDistance, DVector2 pos)
+{
+	if (level.nodes.Size() == 0)
+	{
+		subsector_t *sub = &level.subsectors[0];
+		if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
+			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, 0.0f, 1.0f, CurrentViewpoint->StencilValue));
+	}
+	else
+	{
+		void *node = level.HeadNode();
+
+		while (!((size_t)node & 1))  // Keep going until found a subsector
+		{
+			node_t *bsp = (node_t *)node;
+
+			DVector2 planePos(FIXED2DBL(bsp->x), FIXED2DBL(bsp->y));
+			DVector2 planeNormal = DVector2(FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx));
+			double planeD = planeNormal | planePos;
+
+			int side = (pos | planeNormal) > planeD;
+			node = bsp->children[side];
+		}
+
+		subsector_t *sub = (subsector_t *)((uint8_t *)node - 1);
+
+		if (Cull.SubsectorDepths[sub->Index()] != 0xffffffff)
+			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentThing>(thing, sub, Cull.SubsectorDepths[sub->Index()], sortDistance, 0.0f, 1.0f, CurrentViewpoint->StencilValue));
+	}
 }
 
 void RenderPolyScene::RenderLine(PolyRenderThread *thread, subsector_t *sub, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth)

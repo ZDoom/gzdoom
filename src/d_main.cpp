@@ -675,7 +675,7 @@ void D_Display ()
 	if (setmodeneeded)
 	{
 		screen->ToggleFullscreen(fullscreen);
-		setsizeneeded = true;
+		V_OutputResized(screen->GetWidth(), screen->GetHeight());
 		setmodeneeded = false;
 	}
 

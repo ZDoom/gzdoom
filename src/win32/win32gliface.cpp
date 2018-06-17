@@ -70,6 +70,8 @@ CVAR(Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_w, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_h, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
@@ -672,7 +674,7 @@ void Win32GLVideo::Shutdown()
 //
 //==========================================================================
 
-static void GetCenteredPos(int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
+static void GetCenteredPos(int in_w, int in_h, int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
 {
 	DEVMODE displaysettings;
 	RECT rect;
@@ -686,8 +688,12 @@ static void GetCenteredPos(int &winx, int &winy, int &winw, int &winh, int &scrw
 	GetWindowRect(Window, &rect);
 	cx = scrwidth / 2;
 	cy = scrheight / 2;
-	winx = cx - (winw = rect.right - rect.left) / 2;
-	winy = cy - (winh = rect.bottom - rect.top) / 2;
+	if (in_w > 0) winw = in_w;
+	else winw = rect.right - rect.left;
+	if (in_h > 0) winh = in_h;
+	else winh = rect.bottom - rect.top;
+	winx = cx - winw / 2;
+	winy = cy - winh / 2;
 }
 
 //==========================================================================
@@ -741,11 +747,11 @@ void SystemFrameBuffer::SaveWindowedPos()
 		{
 			// If (win_x,win_y) specify to center the window, don't change them
 			// if the window is still centered.
-			if (win_x < 0 || win_y < 0)
+			if (win_x < 0 || win_y < 0 || win_w < 0 || win_h < 0)
 			{
 				int winx, winy, winw, winh, scrwidth, scrheight;
 
-				GetCenteredPos(winx, winy, winw, winh, scrwidth, scrheight);
+				GetCenteredPos(win_w, win_h, winx, winy, winw, winh, scrwidth, scrheight);
 				KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
 				if (win_x < 0 && winx == wrect.left)
 				{
@@ -755,9 +761,14 @@ void SystemFrameBuffer::SaveWindowedPos()
 				{
 					wrect.top = win_y;
 				}
+				wrect.right = winw + wrect.left;
+				wrect.bottom = winh + wrect.top;
 			}
+
 			win_x = wrect.left;
 			win_y = wrect.top;
+			win_w = wrect.right - wrect.left;
+			win_h = wrect.bottom - wrect.top;
 		}
 
 		win_maximized = IsZoomed(Window) == TRUE;
@@ -774,7 +785,7 @@ void SystemFrameBuffer::RestoreWindowedPos()
 {
 	int winx, winy, winw, winh, scrwidth, scrheight;
 
-	GetCenteredPos(winx, winy, winw, winh, scrwidth, scrheight);
+	GetCenteredPos(win_w, win_h, winx, winy, winw, winh, scrwidth, scrheight);
 
 	// Just move to (0,0) if we were run with the -0 option.
 	if (Args->CheckParm("-0"))
@@ -793,7 +804,7 @@ void SystemFrameBuffer::RestoreWindowedPos()
 		}
 		KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
 	}
-	MoveWindow(Window, winx, winy, winw, winh, TRUE);
+	SetWindowPos(Window, nullptr, winx, winy, winw, winh, SWP_NOZORDER | SWP_FRAMECHANGED);
 
 	if (win_maximized && !Args->CheckParm("-0"))
 		ShowWindow(Window, SW_MAXIMIZE);
@@ -842,27 +853,19 @@ void SystemFrameBuffer::PositionWindow(bool fullscreen)
 
 	SetWindowLong(Window, GWL_STYLE, style);
 	SetWindowLong(Window, GWL_EXSTYLE, exStyle);
-	SetWindowPos(Window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
+	m_Fullscreen = fullscreen;
 	if (fullscreen)
 	{
+		SetWindowPos(Window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 		MoveWindow(Window, monRect.left, monRect.top, monRect.right-monRect.left, monRect.bottom-monRect.top, FALSE);
 
 		// And now, seriously, it IS in the right place. Promise.
 	}
 	else
 	{
-		RECT windowRect;
-		windowRect.left = r.left;
-		windowRect.top = r.top;
-		windowRect.right = windowRect.left + vid_defwidth;
-		windowRect.bottom = windowRect.top + vid_defheight;
-		AdjustWindowRectEx(&windowRect, style, FALSE, exStyle);
-		MoveWindow(Window, windowRect.left, windowRect.top, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, FALSE);
-
 		RestoreWindowedPos();
 	}
-	m_Fullscreen = fullscreen;
 	SetSize(GetClientWidth(), GetClientHeight());
 }
 

@@ -66,7 +66,11 @@ PFNWGLCHOOSEPIXELFORMATARBPROC myWglChoosePixelFormatARB; // = (PFNWGLCHOOSEPIXE
 PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
 PFNWGLSWAPINTERVALEXTPROC myWglSwapIntervalExtProc;
 
+CVAR(Int, vid_adapter, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
+CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -652,19 +656,163 @@ void Win32GLVideo::Shutdown()
 }
 
 
+
+
+
+//==========================================================================
+//
+// Windows framebuffer
+//
+//==========================================================================
+
+
 //==========================================================================
 //
 // 
 //
 //==========================================================================
 
-void SystemFrameBuffer::PositionWindow()
+static void GetCenteredPos(int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
+{
+	DEVMODE displaysettings;
+	RECT rect;
+	int cx, cy;
+
+	memset(&displaysettings, 0, sizeof(displaysettings));
+	displaysettings.dmSize = sizeof(displaysettings);
+	EnumDisplaySettings(NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
+	scrwidth = (int)displaysettings.dmPelsWidth;
+	scrheight = (int)displaysettings.dmPelsHeight;
+	GetWindowRect(Window, &rect);
+	cx = scrwidth / 2;
+	cy = scrheight / 2;
+	winx = cx - (winw = rect.right - rect.left) / 2;
+	winy = cy - (winh = rect.bottom - rect.top) / 2;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+static void KeepWindowOnScreen(int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight)
+{
+	// If the window is too large to fit entirely on the screen, at least
+	// keep its upperleft corner visible.
+	if (winx + winw > scrwidth)
+	{
+		winx = scrwidth - winw;
+	}
+	if (winx < 0)
+	{
+		winx = 0;
+	}
+	if (winy + winh > scrheight)
+	{
+		winy = scrheight - winh;
+	}
+	if (winy < 0)
+	{
+		winy = 0;
+	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void SystemFrameBuffer::SaveWindowedPos()
+{
+	// Don't save if we were run with the -0 option.
+	if (Args->CheckParm("-0"))
+	{
+		return;
+	}
+	// Make sure we only save the window position if it's not fullscreen.
+	static const int WINDOW_STYLE = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX;
+	if ((GetWindowLong(Window, GWL_STYLE) & WINDOW_STYLE) == WINDOW_STYLE)
+	{
+		RECT wrect;
+
+		if (GetWindowRect(Window, &wrect))
+		{
+			// If (win_x,win_y) specify to center the window, don't change them
+			// if the window is still centered.
+			if (win_x < 0 || win_y < 0)
+			{
+				int winx, winy, winw, winh, scrwidth, scrheight;
+
+				GetCenteredPos(winx, winy, winw, winh, scrwidth, scrheight);
+				KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
+				if (win_x < 0 && winx == wrect.left)
+				{
+					wrect.left = win_x;
+				}
+				if (win_y < 0 && winy == wrect.top)
+				{
+					wrect.top = win_y;
+				}
+			}
+			win_x = wrect.left;
+			win_y = wrect.top;
+		}
+
+		win_maximized = IsZoomed(Window) == TRUE;
+	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void SystemFrameBuffer::RestoreWindowedPos()
+{
+	int winx, winy, winw, winh, scrwidth, scrheight;
+
+	GetCenteredPos(winx, winy, winw, winh, scrwidth, scrheight);
+
+	// Just move to (0,0) if we were run with the -0 option.
+	if (Args->CheckParm("-0"))
+	{
+		winx = winy = 0;
+	}
+	else
+	{
+		if (win_x >= 0)
+		{
+			winx = win_x;
+		}
+		if (win_y >= 0)
+		{
+			winy = win_y;
+		}
+		KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
+	}
+	MoveWindow(Window, winx, winy, winw, winh, TRUE);
+
+	if (win_maximized && !Args->CheckParm("-0"))
+		ShowWindow(Window, SW_MAXIMIZE);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void SystemFrameBuffer::PositionWindow(bool fullscreen)
 {
 	RECT r;
 	LONG style, exStyle;
 
 	RECT monRect;
 
+	if (!m_Fullscreen) SaveWindowedPos();
 	if (m_Monitor)
 	{
 		MONITORINFOEX mi;
@@ -712,8 +860,9 @@ void SystemFrameBuffer::PositionWindow()
 		AdjustWindowRectEx(&windowRect, style, FALSE, exStyle);
 		MoveWindow(Window, windowRect.left, windowRect.top, windowRect.right - windowRect.left, windowRect.bottom - windowRect.top, FALSE);
 
-		I_RestoreWindowedPos();
+		RestoreWindowedPos();
 	}
+	m_Fullscreen = fullscreen;
 	SetSize(GetClientWidth(), GetClientHeight());
 }
 
@@ -726,12 +875,8 @@ void SystemFrameBuffer::PositionWindow()
 SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, bool fullscreen) : DFrameBuffer(vid_defwidth, vid_defheight)
 {
 	m_Monitor = hMonitor;
-	m_Fullscreen = fullscreen;
-
-
 	m_displayDeviceName = 0;
-	PositionWindow();
-
+	PositionWindow(fullscreen);
 
 	if (!static_cast<Win32GLVideo *>(Video)->InitHardware(Window, 0))
 	{
@@ -778,7 +923,7 @@ SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, bool fullscreen) : DFrameBu
 SystemFrameBuffer::~SystemFrameBuffer()
 {
 	ResetGammaTable();
-	I_SaveWindowedPos();
+	SaveWindowedPos();
 
 	ShowWindow (Window, SW_SHOW);
 	SetWindowLong(Window, GWL_STYLE, WS_VISIBLE | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW);
@@ -835,6 +980,17 @@ void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
 bool SystemFrameBuffer::IsFullscreen()
 {
 	return m_Fullscreen;
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void SystemFrameBuffer::ToggleFullscreen(bool yes)
+{
+	PositionWindow(yes);
 }
 
 //==========================================================================

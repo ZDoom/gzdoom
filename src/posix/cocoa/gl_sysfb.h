@@ -46,8 +46,9 @@ public:
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
 
-	int GetClientWidth();
-	int GetClientHeight();
+	int GetClientWidth() override;
+	int GetClientHeight() override;
+	void ToggleFullscreen(bool yes) override;
 
 protected:
 	bool                UpdatePending;

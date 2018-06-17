@@ -556,6 +556,12 @@ bool SystemFrameBuffer::IsFullscreen()
 	return CocoaVideo::IsFullscreen();
 }
 
+void SystemFrameBuffer::ToggleFullscreen(bool yes)
+{
+	SetMode(...);	// todo
+}
+
+
 void SystemFrameBuffer::SetVSync(bool vsync)
 {
 	const GLint value = vsync ? 1 : 0;

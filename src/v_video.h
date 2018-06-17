@@ -408,6 +408,7 @@ public:
 
 	// Returns true if running fullscreen.
 	virtual bool IsFullscreen () = 0;
+	virtual void ToggleFullscreen(bool yes) {}
 
 	// Changes the vsync setting, if supported by the device.
 	virtual void SetVSync (bool vsync);

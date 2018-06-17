@@ -7,6 +7,9 @@ class SystemFrameBuffer : public DFrameBuffer
 {
 	typedef DFrameBuffer Super;
 
+	void SaveWindowedPos();
+	void RestoreWindowedPos();
+
 public:
 	SystemFrameBuffer() {}
 	// Actually, hMonitor is a HMONITOR, but it's passed as a void * as there
@@ -17,16 +20,17 @@ public:
 	void SetVSync (bool vsync);
 	void SwapBuffers();
 
-	int GetClientWidth();
-	int GetClientHeight();
+	int GetClientWidth() override;
+	int GetClientHeight() override;
 
-	bool IsFullscreen();
+	bool IsFullscreen() override;
+	void ToggleFullscreen(bool yes) override;
 
 	void InitializeState();
 
 protected:
 
-	void PositionWindow();
+	void PositionWindow(bool fullscreen);
 
 	void ResetGammaTable();
 	void SetGammaTable(uint16_t * tbl);

@@ -37,9 +37,6 @@
 #include "i_video.h"
 #include "v_video.h"
 
-void I_SaveWindowedPos ();
-void I_RestoreWindowedPos ();
-
 void I_SetFPSLimit(int limit);
 void I_FPSLimit();
 

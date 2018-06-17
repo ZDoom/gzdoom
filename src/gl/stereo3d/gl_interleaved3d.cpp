@@ -140,11 +140,13 @@ void CheckerInterleaved3D::Present() const
 	int windowHOffset = 0;
 
 #ifdef _WIN32
+	/* this needs to be done differently!
 	if (!fullscreen) {
 		I_SaveWindowedPos(); // update win_y CVAR
 		windowHOffset = (win_x + WINDOW_BORDER_HORIZONTAL_PARITY) % 2;
 		windowVOffset = (win_y + WINDOW_BORDER_VERTICAL_PARITY) % 2;
 	}
+	*/
 #endif // _WIN32
 
 	GLRenderer->mPresent3dCheckerShader->Uniforms->WindowPositionParity =
@@ -184,10 +186,12 @@ void ColumnInterleaved3D::Present() const
 	int windowHOffset = 0;
 
 #ifdef _WIN32
+	/* this needs to be done differently!
 	if (!fullscreen) {
 		I_SaveWindowedPos(); // update win_y CVAR
 		windowHOffset = (win_x + WINDOW_BORDER_HORIZONTAL_PARITY) % 2;
 	}
+	*/
 #endif // _WIN32
 
 	GLRenderer->mPresent3dColumnShader->Uniforms->WindowPositionParity = windowHOffset;
@@ -207,10 +211,12 @@ void RowInterleaved3D::Present() const
 	int windowVOffset = 0;
 	
 #ifdef _WIN32
+	/* this needs to be done differently!
 	if (! fullscreen) {
 		I_SaveWindowedPos(); // update win_y CVAR
 		windowVOffset = (win_y + WINDOW_BORDER_VERTICAL_PARITY) % 2;
 	}
+	*/
 #endif // _WIN32
 
 	GLRenderer->mPresent3dRowShader->Uniforms->WindowPositionParity =

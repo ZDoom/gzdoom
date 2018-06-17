@@ -32,8 +32,10 @@
 **
 */
 
+#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <mmsystem.h>
 
 #include "hardware.h"
 #include "c_dispatch.h"
@@ -44,10 +46,7 @@
 #include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR (Bool, fullscreen)
-
-CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Int, vid_maxfps)
 
 extern HWND Window;
 
@@ -86,10 +85,6 @@ CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 	}
 }
 
-
-CCMD (vid_restart)
-{
-}
 
 
 void I_ShutdownGraphics ()
@@ -137,116 +132,87 @@ void I_InitGraphics ()
 	atterm (I_ShutdownGraphics);
 }
 
-/** Remaining code is common to Win32 and Linux **/
 
-// VIDEO WRAPPERS ---------------------------------------------------------
+static UINT FPSLimitTimer;
+HANDLE FPSLimitEvent;
 
+//==========================================================================
+//
+// SetFPSLimit
+//
+// Initializes an event timer to fire at a rate of <limit>/sec. The video
+// update will wait for this timer to trigger before updating.
+//
+// Pass 0 as the limit for unlimited.
+// Pass a negative value for the limit to use the value of vid_maxfps.
+//
+//==========================================================================
 
-static void GetCenteredPos (int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
+static void StopFPSLimit()
 {
-	DEVMODE displaysettings;
-	RECT rect;
-	int cx, cy;
-
-	memset (&displaysettings, 0, sizeof(displaysettings));
-	displaysettings.dmSize = sizeof(displaysettings);
-	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
-	scrwidth = (int)displaysettings.dmPelsWidth;
-	scrheight = (int)displaysettings.dmPelsHeight;
-	GetWindowRect (Window, &rect);
-	cx = scrwidth / 2;
-	cy = scrheight / 2;
-	winx = cx - (winw = rect.right - rect.left) / 2;
-	winy = cy - (winh = rect.bottom - rect.top) / 2;
+	I_SetFPSLimit(0);
 }
 
-static void KeepWindowOnScreen (int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight)
+void I_SetFPSLimit(int limit)
 {
-	// If the window is too large to fit entirely on the screen, at least
-	// keep its upperleft corner visible.
-	if (winx + winw > scrwidth)
+	if (limit < 0)
 	{
-		winx = scrwidth - winw;
+		limit = vid_maxfps;
 	}
-	if (winx < 0)
+	// Kill any leftover timer.
+	if (FPSLimitTimer != 0)
 	{
-		winx = 0;
+		timeKillEvent(FPSLimitTimer);
+		FPSLimitTimer = 0;
 	}
-	if (winy + winh > scrheight)
-	{
-		winy = scrheight - winh;
-	}
-	if (winy < 0)
-	{
-		winy = 0;
-	}
-}
-
-void I_SaveWindowedPos ()
-{
-	// Don't save if we were run with the -0 option.
-	if (Args->CheckParm ("-0"))
-	{
-		return;
-	}
-	// Make sure we only save the window position if it's not fullscreen.
-	static const int WINDOW_STYLE = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX;
-	if ((GetWindowLong (Window, GWL_STYLE) & WINDOW_STYLE) == WINDOW_STYLE)
-	{
-		RECT wrect;
-
-		if (GetWindowRect (Window, &wrect))
+	if (limit == 0)
+	{ // no limit
+		if (FPSLimitEvent != NULL)
 		{
-			// If (win_x,win_y) specify to center the window, don't change them
-			// if the window is still centered.
-			if (win_x < 0 || win_y < 0)
-			{
-				int winx, winy, winw, winh, scrwidth, scrheight;
-
-				GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
-				KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
-				if (win_x < 0 && winx == wrect.left)
-				{
-					wrect.left = win_x;
-				}
-				if (win_y < 0 && winy == wrect.top)
-				{
-					wrect.top = win_y;
-				}
-			}
-			win_x = wrect.left;
-			win_y = wrect.top;
+			CloseHandle(FPSLimitEvent);
+			FPSLimitEvent = NULL;
 		}
-
-		win_maximized = IsZoomed(Window) == TRUE;
-	}
-}
-
-void I_RestoreWindowedPos ()
-{
-	int winx, winy, winw, winh, scrwidth, scrheight;
-
-	GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
-
-	// Just move to (0,0) if we were run with the -0 option.
-	if (Args->CheckParm ("-0"))
-	{
-		winx = winy = 0;
+		DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
 	}
 	else
 	{
-		if (win_x >= 0)
+		if (FPSLimitEvent == NULL)
 		{
-			winx = win_x;
+			FPSLimitEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+			if (FPSLimitEvent == NULL)
+			{ // Could not create event, so cannot use timer.
+				Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
+				return;
+			}
 		}
-		if (win_y >= 0)
+		atterm(StopFPSLimit);
+		// Set timer event as close as we can to limit/sec, in milliseconds.
+		UINT period = 1000 / limit;
+		FPSLimitTimer = timeSetEvent(period, 0, (LPTIMECALLBACK)FPSLimitEvent, 0, TIME_PERIODIC | TIME_CALLBACK_EVENT_SET);
+		if (FPSLimitTimer == 0)
 		{
-			winy = win_y;
+			CloseHandle(FPSLimitEvent);
+			FPSLimitEvent = NULL;
+			Printf("Failed to create FPS limiter timer\n");
+			return;
 		}
-		KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
+		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", period);
 	}
-	MoveWindow (Window, winx, winy, winw, winh, TRUE);
-
-	if (win_maximized && !Args->CheckParm("-0"))
-		ShowWindow(Window, SW_MAXIMIZE);
 }
+
+//==========================================================================
+//
+// StopFPSLimit
+//
+// Used for cleanup during application shutdown.
+//
+//==========================================================================
+
+void I_FPSLimit()
+{
+	if (FPSLimitEvent != NULL)
+	{
+		WaitForSingleObject(FPSLimitEvent, 1000);
+	}
+}
+

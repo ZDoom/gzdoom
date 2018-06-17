@@ -309,6 +309,11 @@ void SystemFrameBuffer::SwapBuffers()
 	SDL_GL_SwapWindow (Screen);
 }
 
+void SystemFrameBuffer::ToggleFullscreen(bool yes)
+{
+	... // todo
+}
+
 int SystemFrameBuffer::GetClientWidth()
 {
 	int width = 0;

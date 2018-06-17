@@ -99,6 +99,7 @@
 #include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, hud_althud)
+EXTERN_CVAR(Bool, fullscreen)
 void DrawHUD();
 void D_DoAnonStats();
 
@@ -673,13 +674,9 @@ void D_Display ()
 	// fullscreen toggle has been requested
 	if (setmodeneeded)
 	{
-		// Change screen mode.
-		/*
-		if (Video->ToggleFullscreen())
-		{
-			setsizeneeded = true;
-		}
-		*/
+		screen->ToggleFullscreen(fullscreen);
+		setsizeneeded = true;
+		setmodeneeded = false;
 	}
 
 	// change the view size if needed
@@ -696,7 +693,6 @@ void D_Display ()
 			R_ExecuteSetViewSize (r_viewpoint, r_viewwindow);
 		}
 	}
-	setmodeneeded = false;
 
 	// [RH] Allow temporarily disabling wipes
 	if (NoWipe)

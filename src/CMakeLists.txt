@@ -987,6 +987,7 @@ set (PCH_SOURCES
 	v_collection.cpp
 	v_draw.cpp
 	v_font.cpp
+	v_framebuffer.cpp
 	v_palette.cpp
 	v_paltest.cpp
 	v_pfx.cpp

@@ -23,8 +23,9 @@ public:
 	
 	friend class SDLGLVideo;
 
-	int GetClientWidth();
-	int GetClientHeight();
+	int GetClientWidth() override;
+	int GetClientHeight() override;
+	void ToggleFullscreen(bool yes) override;
 
 	SDL_Window *GetSDLWindow() { return Screen; }
 

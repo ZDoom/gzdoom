@@ -364,6 +364,16 @@ public:
 	inline int GetWidth() const { return Width; }
 	inline int GetHeight() const { return Height; }
 
+	FVector2 SceneScale() const
+	{
+		return { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
+	}
+
+	FVector2 SceneOffset() const
+	{
+		return { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
+	}
+
 	// Make the surface visible.
 	virtual void Update () = 0;
 

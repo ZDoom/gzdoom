@@ -76,7 +76,7 @@ public:
 
 		FTexture *mTexture;
 		FRemapTable *mTranslation;
-		FSpecialColormap *mSpecialColormap;
+		PalEntry mSpecialColormap[2];
 		int mScissor[4];
 		int mDesaturate;
 		FRenderStyle mRenderStyle;

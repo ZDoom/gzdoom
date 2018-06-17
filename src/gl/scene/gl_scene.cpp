@@ -291,7 +291,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && FixedColormap == CM_DEFAULT)
+	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && !di->isFullbrightScene())
 	{
 		GLRenderer->mLights->Begin();
 		di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, GLPASS_LIGHTSONLY);
@@ -306,20 +306,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	int pass;
-
-	if (!level.HasDynamicLights || !gl.legacyMode)
-	{
-		pass = GLPASS_ALL;
-	}
-	else // GL 2.x legacy mode
-	{
-		// process everything that needs to handle textured dynamic lights.
-		if (level.HasDynamicLights) RenderMultipassStuff(di);
-
-		// The remaining lists which are unaffected by dynamic lights are just processed as normal.
-		pass = GLPASS_ALL;
-	}
+	int pass = GLPASS_ALL;
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
@@ -500,19 +487,11 @@ void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 
 	Reset3DViewport();
 
-	// Delay drawing psprites until after bloom has been applied, if enabled.
-	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom || FixedColormap != CM_DEFAULT)
-	{
-		DrawEndScene2D(di, viewsector);
-	}
-	else
-	{
-		// Restore standard rendering state
-		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gl_RenderState.ResetColor();
-		gl_RenderState.EnableTexture(true);
-		glDisable(GL_SCISSOR_TEST);
-	}
+	// Restore standard rendering state
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.ResetColor();
+	gl_RenderState.EnableTexture(true);
+	glDisable(GL_SCISSOR_TEST);
 }
 
 void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
@@ -529,12 +508,6 @@ void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
 
  	di->DrawPlayerSprites(false);
 
-	if (gl.legacyMode)
-	{
-		gl_RenderState.DrawColormapOverlay();
-	}
-
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 
 	// Restore standard rendering state
@@ -560,52 +533,6 @@ void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
 	GLRenderer->mCurrentPortal = nullptr;
 	DrawScene(di, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
-}
-
-//-----------------------------------------------------------------------------
-//
-// gl_SetFixedColormap
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::SetFixedColormap (player_t *player)
-{
-	FixedColormap=CM_DEFAULT;
-
-	// check for special colormaps
-	player_t * cplayer = player->camera->player;
-	if (cplayer) 
-	{
-		if (cplayer->extralight == INT_MIN)
-		{
-			FixedColormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
-			r_viewpoint.extralight=0;
-		}
-		else if (cplayer->fixedcolormap != NOFIXEDCOLORMAP)
-		{
-			FixedColormap = CM_FIRSTSPECIALCOLORMAP + cplayer->fixedcolormap;
-		}
-		else if (cplayer->fixedlightlevel != -1)
-		{
-			auto torchtype = PClass::FindActor(NAME_PowerTorch);
-			auto litetype = PClass::FindActor(NAME_PowerLightAmp);
-			for(AInventory * in = cplayer->mo->Inventory; in; in = in->Inventory)
-			{
-				PalEntry color = in->CallGetBlend ();
-
-				// Need special handling for light amplifiers 
-				if (in->IsKindOf(torchtype))
-				{
-					FixedColormap = cplayer->fixedlightlevel + CM_TORCH;
-				}
-				else if (in->IsKindOf(litetype))
-				{
-					FixedColormap = CM_LITE;
-				}
-			}
-		}
-	}
-	gl_RenderState.SetFixedColormap(FixedColormap);
 }
 
 //-----------------------------------------------------------------------------
@@ -652,8 +579,6 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 	stereo3dMode.SetUp();
 	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
 	{
-		if (eye_ix > 0 && camera->player)
-			SetFixedColormap(camera->player); // reiterate color map for each eye, so night vision goggles work in both eyes
 		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
 		screen->SetViewportRects(bounds);
@@ -663,6 +588,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 
 		FDrawInfo *di = FDrawInfo::StartDrawInfo(this);
 		di->SetViewArea();
+		auto cm =  di->SetFullbrightFlags(mainview ? r_viewpoint.camera->player : nullptr);
 
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
@@ -675,11 +601,11 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		gl_RenderState.ApplyMatrices();
 
 		ProcessScene(di, toscreen);
-		if (mainview && toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
 
-		if (mainview && FGLRenderBuffers::IsEnabled())
+		if (mainview)
 		{
-			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(di, lviewsector); });
+			if (toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
+			GLRenderer->PostProcessScene(cm, [&]() { DrawEndScene2D(di, lviewsector); });
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();
@@ -694,7 +620,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		}
 		FDrawInfo::EndDrawInfo();
 		GLRenderer->mDrawingScene2D = false;
-		if (!stereo3dMode.IsMono() && FGLRenderBuffers::IsEnabled())
+		if (!stereo3dMode.IsMono())
 			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
 		eye->TearDown();
 	}
@@ -725,21 +651,13 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	GLRenderer->mBuffers = GLRenderer->mSaveBuffers;
 
 	P_FindParticleSubsectors();	// make sure that all recently spawned particles have a valid subsector.
-	SetFixedColormap(player);
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
 	GLRenderer->mVBO->Reset();
-	if (!gl.legacyMode) GLRenderer->mLights->Clear();
+	GLRenderer->mLights->Clear();
 
 	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
-	if (!FGLRenderBuffers::IsEnabled())
-	{
-		// Since this doesn't do any of the 2D rendering it needs to draw the screen blend itself before extracting the image.
-		screen->DrawBlend(viewsector);
-		screen->Draw2D();
-	}
 	GLRenderer->CopyToBackbuffer(&bounds, false);
 
 	// strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers

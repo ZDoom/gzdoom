@@ -13,8 +13,6 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old);
 // the original DOS version (if the Heretic/Hexen source is any indicator).
 void I_WaitVBL(int count);
 
-bool I_CheckResolution (int width, int height, int bpp);
-void I_ClosestResolution (int *width, int *height, int bits);
 
 enum EDisplayType
 {

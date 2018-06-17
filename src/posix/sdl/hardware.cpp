@@ -123,56 +123,6 @@ DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
 	return res;
 }
 
-bool I_CheckResolution (int width, int height, int bits)
-{
-	int twidth, theight;
-
-	Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-	while (Video->NextMode (&twidth, &theight, NULL))
-	{
-		if (width == twidth && height == theight)
-			return true;
-	}
-	return false;
-}
-
-void I_ClosestResolution (int *width, int *height, int bits)
-{
-	int twidth, theight;
-	int cwidth = 0, cheight = 0;
-	int iteration;
-	uint32_t closest = 4294967295u;
-
-	for (iteration = 0; iteration < 2; iteration++)
-	{
-		Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-		while (Video->NextMode (&twidth, &theight, NULL))
-		{
-			if (twidth == *width && theight == *height)
-				return;
-
-			if (iteration == 0 && (twidth < *width || theight < *height))
-				continue;
-
-			uint32_t dist = (twidth - *width) * (twidth - *width)
-				+ (theight - *height) * (theight - *height);
-
-			if (dist < closest)
-			{
-				closest = dist;
-				cwidth = twidth;
-				cheight = theight;
-			}
-		}
-		if (closest != 4294967295u)
-		{
-			*width = cwidth;
-			*height = cheight;
-			return;
-		}
-	}
-}
-
 //==========================================================================
 //
 // SetFPSLimit

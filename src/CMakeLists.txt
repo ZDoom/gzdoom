@@ -988,6 +988,7 @@ set (PCH_SOURCES
 	v_draw.cpp
 	v_font.cpp
 	v_palette.cpp
+	v_paltest.cpp
 	v_pfx.cpp
 	v_text.cpp
 	v_video.cpp
@@ -1010,8 +1011,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	gl/compatibility/gl_20.cpp
-	gl/compatibility/gl_swshader20.cpp
 	gl/data/gl_vertexbuffer.cpp
 	gl/data/gl_uniformbuffer.cpp
 	gl/dynlights/gl_lightbuffer.cpp

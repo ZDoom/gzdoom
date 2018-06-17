@@ -180,8 +180,12 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 		}
 
 		if (parms.specialcolormap != nullptr)
-		{ // Emulate an invulnerability or similar colormap.
-			quad.mSpecialColormap = parms.specialcolormap;
+		{ // draw with an invulnerability or similar colormap.
+
+			auto scm = parms.specialcolormap;
+
+			quad.mSpecialColormap[0] = PalEntry(255, int(scm->ColorizeStart[0] * 127.5f), int(scm->ColorizeStart[1] * 127.5f), int(scm->ColorizeStart[2] * 127.5f));
+			quad.mSpecialColormap[1] = PalEntry(255, int(scm->ColorizeEnd[0] * 127.5f), int(scm->ColorizeEnd[1] * 127.5f), int(scm->ColorizeEnd[2] * 127.5f));
 			quad.mColor1 = 0;	// this disables the color overlay.
 		}
 		quad.mDesaturate = parms.desaturate;

@@ -151,24 +151,14 @@ void FGLRenderer::Initialize(int width, int height)
 	mShadowMapShader = new FShadowMapShader();
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
 
-	if (gl.legacyMode)
-	{
-		legacyShaders = new LegacyShaderContainer;
-	}
-
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
-	if (!gl.legacyMode)
-	{
-		glGenVertexArrays(1, &mVAOID);
-		glBindVertexArray(mVAOID);
-		FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
-	}
-	else mVAOID = 0;
+	glGenVertexArrays(1, &mVAOID);
+	glBindVertexArray(mVAOID);
+	FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
 
 	mVBO = new FFlatVertexBuffer(width, height);
 	mSkyVBO = new FSkyVertexBuffer;
-	if (!gl.legacyMode) mLights = new FLightBuffer();
-	else mLights = NULL;
+	mLights = new FLightBuffer();
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	mOldFBID = 0;
@@ -187,7 +177,6 @@ FGLRenderer::~FGLRenderer()
 	FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
-	if (legacyShaders) delete legacyShaders;
 	if (mShaderManager != NULL) delete mShaderManager;
 	if (mSamplerManager != NULL) delete mSamplerManager;
 	if (mVBO != NULL) delete mVBO;
@@ -313,7 +302,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 		P_FindParticleSubsectors();
 
-		if (!gl.legacyMode) mLights->Clear();
+		mLights->Clear();
 
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;
@@ -337,8 +326,6 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 		GLSceneDrawer drawer;
 
-		drawer.SetFixedColormap(player);
-
 		mShadowMap.Update();
 		retsec = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
@@ -359,17 +346,8 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	int width = gltex->TextureWidth();
 	int height = gltex->TextureHeight();
 
-	if (gl.legacyMode)
-	{
-		// In legacy mode, fail if the requested texture is too large.
-		if (gltex->GetWidth() > screen->GetWidth() || gltex->GetHeight() > screen->GetHeight()) return;
-		glFlush();
-	}
-	else
-	{
-		StartOffscreen();
-		gltex->BindToFrameBuffer();
-	}
+	StartOffscreen();
+	gltex->BindToFrameBuffer();
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;
@@ -377,20 +355,9 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	bounds.height = FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
 	GLSceneDrawer drawer;
-	drawer.FixedColormap = CM_DEFAULT;
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
 
-	if (gl.legacyMode)
-	{
-		glFlush();
-		gl_RenderState.SetMaterial(gltex, 0, 0, -1, false);
-		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, 0, 0, bounds.width, bounds.height);
-	}
-	else
-	{
-		EndOffscreen();
-	}
+	EndOffscreen();
 
 	tex->SetUpdated();
 }
@@ -460,8 +427,6 @@ public:
 //
 //===========================================================================
 
-void LegacyColorOverlay(F2DDrawer *drawer, F2DDrawer::RenderCommand & cmd);
-int LegacyDesaturation(F2DDrawer::RenderCommand &cmd);
 CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
@@ -509,7 +474,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	auto vb = new F2DVertexBuffer;
 	vb->UploadData(&vertices[0], vertices.Size(), &indices[0], indices.Size());
 	gl_RenderState.SetVertexBuffer(vb);
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.EnableFog(false);
 
 	for(auto &cmd : commands)
@@ -524,6 +488,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		gl_RenderState.BlendEquation(be); 
 		gl_RenderState.BlendFunc(sb, db);
 		gl_RenderState.EnableBrightmap(!(cmd.mRenderStyle.Flags & STYLEF_ColorIsFixed));
+		gl_RenderState.EnableFog(2);	// Special 2D mode 'fog'.
 
 		// Rather than adding remapping code, let's enforce that the constants here are equal.
 		static_assert(int(F2DDrawer::DTM_Normal) == int(TM_MODULATE), "DTM_Normal != TM_MODULATE");
@@ -546,34 +511,13 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		}
 		else glDisable(GL_SCISSOR_TEST);
 
-		if (cmd.mSpecialColormap != nullptr)
+		if (cmd.mSpecialColormap[0].a != 0)
 		{
-			auto index = cmd.mSpecialColormap - &SpecialColormaps[0];
-			if (index < 0 || (unsigned)index >= SpecialColormaps.Size()) index = 0;	// if it isn't in the table FBitmap cannot use it. Shouldn't happen anyway.
-			if (!gl.legacyMode || cmd.mTexture->UseType == ETextureType::SWCanvas)
-			{ 
-				gl_RenderState.SetFixedColormap(CM_FIRSTSPECIALCOLORMAPFORCED + int(index));
-			}
-			else
-			{
-				// map the special colormap to a translation for the legacy renderer.
-				// This only gets used on the software renderer's weapon sprite.
-				gltrans = STRange_Specialcolormap + index;
-			}
+			gl_RenderState.SetTextureMode(TM_FIXEDCOLORMAP);
+			gl_RenderState.SetObjectColor(cmd.mSpecialColormap[0]);
+			gl_RenderState.SetObjectColor2(cmd.mSpecialColormap[1]);
 		}
-		else
-		{
-			if (!gl.legacyMode)
-			{
-				gl_RenderState.SetFog(cmd.mColor1, 0);
-				gl_RenderState.SetFixedColormap(CM_PLAIN2D);
-			}
-			else if (cmd.mDesaturate > 0)
-			{
-				gltrans = LegacyDesaturation(cmd);
-			}
-		}
-
+		gl_RenderState.SetFog(cmd.mColor1, 0);
 		gl_RenderState.SetColor(1, 1, 1, 1, cmd.mDesaturate); 
 
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
@@ -582,12 +526,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		{
 			auto mat = FMaterial::ValidateTexture(cmd.mTexture, false);
 			if (mat == nullptr) continue;
-
-			// This requires very special handling
-			if (gl.legacyMode && cmd.mTexture->UseType == ETextureType::SWCanvas)
-			{
-				gl_RenderState.SetTextureMode(TM_SWCANVAS);
-			}
 
 			if (gltrans == -1 && cmd.mTranslation != nullptr) gltrans = cmd.mTranslation->GetUniqueIndex();
 			gl_RenderState.SetMaterial(mat, cmd.mFlags & F2DDrawer::DTF_Wrap ? CLAMP_NONE : CLAMP_XY_NOMIP, -gltrans, -1, cmd.mDrawMode == F2DDrawer::DTM_AlphaTexture);
@@ -612,11 +550,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		{
 		case F2DDrawer::DrawTypeTriangles:
 			glDrawElements(GL_TRIANGLES, cmd.mIndexCount, GL_UNSIGNED_INT, (const void *)(cmd.mIndexIndex * sizeof(unsigned int)));
-			if (gl.legacyMode && cmd.mColor1 != 0)
-			{
-				// Draw the overlay as a separate operation.
-				LegacyColorOverlay(drawer, cmd);
-			}
 			break;
 
 		case F2DDrawer::DrawTypeLines:
@@ -628,7 +561,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			break;
 
 		}
-		gl_RenderState.SetEffect(EFF_NONE);
+		gl_RenderState.SetObjectColor(0xffffffff);
+		gl_RenderState.SetObjectColor2(0);
 		gl_RenderState.EnableTextureMatrix(false);
 	}
 	glDisable(GL_SCISSOR_TEST);
@@ -637,7 +571,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
+	gl_RenderState.EnableFog(false);
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	delete vb;

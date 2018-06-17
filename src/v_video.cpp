@@ -137,27 +137,6 @@ public:
 	float Gamma;
 };
 
-class FPaletteTester : public FTexture
-{
-public:
-	FPaletteTester ();
-
-	const uint8_t *GetColumn(FRenderStyle, unsigned int column, const Span **spans_out) override;
-	const uint8_t *GetPixels(FRenderStyle);
-	bool CheckModified(FRenderStyle);
-	void SetTranslation(int num);
-
-protected:
-	uint8_t Pixels[16*16];
-	int CurTranslation;
-	int WantTranslation;
-	static const Span DummySpan[2];
-
-	void MakeTexture();
-};
-
-const FTexture::Span FPaletteTester::DummySpan[2] = { { 0, 16 }, { 0, 0 } };
-
 int DisplayWidth, DisplayHeight, DisplayBits;
 
 FFont *SmallFont, *SmallFont2, *BigFont, *ConFont, *IntermissionFont;
@@ -203,6 +182,7 @@ bool	setmodeneeded = false;
 // [RH] Resolution to change to when setmodeneeded is true
 int		NewWidth, NewHeight, NewBits;
 
+void V_DrawPaletteTester(int pal);
 
 //==========================================================================
 //
@@ -691,128 +671,9 @@ void DFrameBuffer::DrawRateStuff ()
 	// draws the palette for debugging
 	if (vid_showpalette)
 	{
-		// This used to just write the palette to the display buffer.
-		// With hardware-accelerated 2D, that doesn't work anymore.
-		// Drawing it as a texture does and continues to show how
-		// well the PalTex shader is working.
-		static FPaletteTester palette;
-		int size = screen->GetHeight() < 800 ? 16 * 7 : 16 * 7 * 2;
-
-		palette.SetTranslation(vid_showpalette);
-		DrawTexture(&palette, 0, 0,
-			DTA_DestWidth, size,
-			DTA_DestHeight, size,
-			DTA_Masked, false,
-			TAG_DONE);
+		V_DrawPaletteTester(vid_showpalette);
 	}
 }
-
-//==========================================================================
-//
-// FPaleteTester Constructor
-//
-// This is just a 16x16 image with every possible color value.
-//
-//==========================================================================
-
-FPaletteTester::FPaletteTester()
-{
-	Width = 16;
-	Height = 16;
-	WidthBits = 4;
-	HeightBits = 4;
-	WidthMask = 15;
-	CurTranslation = 0;
-	WantTranslation = 1;
-	MakeTexture();
-}
-
-//==========================================================================
-//
-// FPaletteTester :: CheckModified
-//
-//==========================================================================
-
-bool FPaletteTester::CheckModified(FRenderStyle)
-{
-	return CurTranslation != WantTranslation;
-}
-
-//==========================================================================
-//
-// FPaletteTester :: SetTranslation
-//
-//==========================================================================
-
-void FPaletteTester::SetTranslation(int num)
-{
-	if (num >= 1 && num <= 9)
-	{
-		WantTranslation = num;
-	}
-}
-
-//==========================================================================
-//
-// FPaletteTester :: GetColumn
-//
-//==========================================================================
-
-const uint8_t *FPaletteTester::GetColumn(FRenderStyle, unsigned int column, const Span **spans_out)
-{
-	if (CurTranslation != WantTranslation)
-	{
-		MakeTexture();
-	}
-	column &= 15;
-	if (spans_out != NULL)
-	{
-		*spans_out = DummySpan;
-	}
-	return Pixels + column*16;
-}
-
-//==========================================================================
-//
-// FPaletteTester :: GetPixels
-//
-//==========================================================================
-
-const uint8_t *FPaletteTester::GetPixels (FRenderStyle)
-{
-	if (CurTranslation != WantTranslation)
-	{
-		MakeTexture();
-	}
-	return Pixels;
-}
-
-//==========================================================================
-//
-// FPaletteTester :: MakeTexture
-//
-//==========================================================================
-
-void FPaletteTester::MakeTexture()
-{
-	int i, j, k, t;
-	uint8_t *p;
-
-	t = WantTranslation;
-	p = Pixels;
-	k = 0;
-	for (i = 0; i < 16; ++i)
-	{
-		for (j = 0; j < 16; ++j)
-		{
-			*p++ = (t > 1) ? translationtables[TRANSLATION_Standard][t - 2]->Remap[k] : k;
-			k += 16;
-		}
-		k -= 255;
-	}
-	CurTranslation = t;
-}
-
 
 //==========================================================================
 //
@@ -1072,7 +933,7 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 	bool notScaled = ((mScreenViewport.width == ViewportScaledWidth(mScreenViewport.width, mScreenViewport.height)) &&
 		(mScreenViewport.width == ViewportScaledHeight(mScreenViewport.width, mScreenViewport.height)) &&
 		!ViewportIsScaled43());
-	if ((gl_scale_viewport && !IsFullscreen() && notScaled) || !RenderBuffersEnabled())
+	if (gl_scale_viewport && !IsFullscreen() && notScaled)
 	{
 		mScreenViewport.width = mOutputLetterbox.width;
 		mScreenViewport.height = mOutputLetterbox.height;
@@ -1080,15 +941,6 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 		mSceneViewport.top = (int)round(mSceneViewport.top * scaleY);
 		mSceneViewport.width = (int)round(mSceneViewport.width * scaleX);
 		mSceneViewport.height = (int)round(mSceneViewport.height * scaleY);
-
-		// Without render buffers we have to render directly to the letterbox
-		if (!RenderBuffersEnabled())
-		{
-			mScreenViewport.left += mOutputLetterbox.left;
-			mScreenViewport.top += mOutputLetterbox.top;
-			mSceneViewport.left += mOutputLetterbox.left;
-			mSceneViewport.top += mOutputLetterbox.top;
-		}
 	}
 }
 
@@ -1262,6 +1114,66 @@ void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int real
 	if (_cx2 != NULL)	*_cx2 = cx2;
 }
 
+bool V_CheckResolution(const int width, const int height, const int bits)
+{
+	int twidth, theight;
+
+	Video->StartModeIterator(bits, fullscreen);
+
+	while (Video->NextMode(&twidth, &theight, NULL))
+	{
+		if (width == twidth && height == theight)
+		{
+			return true;
+		}
+	}
+
+	return false;
+}
+
+void V_ClosestResolution(int *width, int *height, int bits)
+{
+	int twidth, theight;
+	int cwidth = 0, cheight = 0;
+	int iteration;
+	uint32_t closest = uint32_t(-1);
+
+	for (iteration = 0; iteration < 2; ++iteration)
+	{
+		Video->StartModeIterator(bits, fullscreen);
+
+		while (Video->NextMode(&twidth, &theight, NULL))
+		{
+			if (twidth == *width && theight == *height)
+			{
+				return;
+			}
+
+			if (iteration == 0 && (twidth < *width || theight < *height))
+			{
+				continue;
+			}
+
+			const uint32_t dist = (twidth - *width) * (twidth - *width)
+				+ (theight - *height) * (theight - *height);
+
+			if (dist < closest)
+			{
+				closest = dist;
+				cwidth = twidth;
+				cheight = theight;
+			}
+		}
+
+		if (closest != uint32_t(-1))
+		{
+			*width = cwidth;
+			*height = cheight;
+			return;
+		}
+	}
+}
+
 bool IVideo::SetResolution (int width, int height, int bits)
 {
 	int oldwidth, oldheight;
@@ -1280,10 +1192,10 @@ bool IVideo::SetResolution (int width, int height, int bits)
 		oldbits = bits;
 	}
 
-	I_ClosestResolution (&width, &height, bits);
-	if (!I_CheckResolution (width, height, bits))
+	V_ClosestResolution (&width, &height, bits);
+	if (!V_CheckResolution (width, height, bits))
 	{ // Try specified resolution
-		if (!I_CheckResolution (oldwidth, oldheight, oldbits))
+		if (!V_CheckResolution (oldwidth, oldheight, oldbits))
 		{ // Try previous resolution (if any)
 	   		return false;
 		}
@@ -1316,7 +1228,7 @@ CCMD (vid_setmode)
 	}
 
 	const bool goodmode = (width > 0 && height > 0)
-		&& (!fullscreen || (Video != nullptr && I_CheckResolution(width, height, bits)));
+		&& (!fullscreen || (Video != nullptr && V_CheckResolution(width, height, bits)));
 
 	if (goodmode)
 	{
@@ -1415,7 +1327,7 @@ void V_Init2()
 	}
 
 	I_InitGraphics();
-	I_ClosestResolution (&width, &height, 8);
+	V_ClosestResolution (&width, &height, 8);
 
 	if (!Video->SetResolution (width, height, 8))
 		I_FatalError ("Could not set resolution to %d x %d x %d", width, height, 8);

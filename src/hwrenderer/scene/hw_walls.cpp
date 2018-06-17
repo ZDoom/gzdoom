@@ -50,7 +50,6 @@ void GLWall::SetupLights(HWDrawInfo *di, FDynLightData &lightdata)
 {
 	lightdata.Clear();
 
-	if (screen->hwcaps & RFL_NO_SHADERS) return;	// useless in OpenGL 2.
 	if (RenderStyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
 
 	// check for wall types which cannot have dynamic lights on them (portal types never get here so they don't need to be checked.)
@@ -173,19 +172,19 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 		ViewDistance = (r_viewpoint.Pos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
 	}
 	
-	if (di->FixedColormap)
+	if (di->isFullbrightScene())
 	{
 		// light planes don't get drawn with fullbright rendering
 		if (gltexture == NULL) return;
 		Colormap.Clear();
 	}
     
-    if (di->FixedColormap != CM_DEFAULT || (Colormap.LightColor.isWhite() && lightlevel == 255))
+    if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
         flags &= ~GLWF_GLOW;
     
 	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
 	{
-		if (level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && gltexture != nullptr && !(screen->hwcaps & RFL_NO_SHADERS))
+		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
 		{
 			SetupLights(di, lightdata);
 		}
@@ -468,7 +467,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 				hi.colormap.CopyLight(light->extra_colormap);
 			}
 
-			if (di->FixedColormap) hi.colormap.Clear();
+			if (di->isFullbrightScene()) hi.colormap.Clear();
 			horizon = &hi;
 			PutPortal(di, PORTALTYPE_HORIZON);
 		}
@@ -497,7 +496,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 				hi.colormap.CopyLight(light->extra_colormap);
 			}
 
-			if (di->FixedColormap) hi.colormap.Clear();
+			if (di->isFullbrightScene()) hi.colormap.Clear();
 			horizon = &hi;
 			PutPortal(di, PORTALTYPE_HORIZON);
 		}
@@ -765,7 +764,7 @@ void GLWall::DoTexture(HWDrawInfo *di, int _type,seg_t * seg, int peg,
 
 		// Add this wall to the render list
 		sector_t * sec = sub ? sub->sector : seg->frontsector;
-		if (sec->e->XFloor.lightlist.Size()==0 || di->FixedColormap) PutWall(di, false);
+		if (sec->e->XFloor.lightlist.Size()==0 || di->isFullbrightScene()) PutWall(di, false);
 		else SplitWall(di, sec, false);
 	}
 
@@ -1077,7 +1076,7 @@ void GLWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 				// Draw the stuff
 				//
 				//
-				if (front->e->XFloor.lightlist.Size()==0 || di->FixedColormap) split.PutWall(di, translucent);
+				if (front->e->XFloor.lightlist.Size()==0 || di->isFullbrightScene()) split.PutWall(di, translucent);
 				else split.SplitWall(di, front, translucent);
 
 				t=1;
@@ -1091,7 +1090,7 @@ void GLWall::DoMidTexture(HWDrawInfo *di, seg_t * seg, bool drawfogboundary,
 			// Draw the stuff without splitting
 			//
 			//
-			if (front->e->XFloor.lightlist.Size()==0 || di->FixedColormap) PutWall(di, translucent);
+			if (front->e->XFloor.lightlist.Size()==0 || di->isFullbrightScene()) PutWall(di, translucent);
 			else SplitWall(di, front, translucent);
 		}
 		alpha=1.0f;
@@ -1124,7 +1123,7 @@ void GLWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 
 	if (rover->flags&FF_FOG)
 	{
-		if (!di->FixedColormap)
+		if (!di->isFullbrightScene())
 		{
 			// this may not yet be done
 			light = P_GetPlaneLight(rover->target, rover->top.plane, true);
@@ -1203,7 +1202,7 @@ void GLWall::BuildFFBlock(HWDrawInfo *di, seg_t * seg, F3DFloor * rover,
 
 	sector_t * sec = sub ? sub->sector : seg->frontsector;
 
-	if (sec->e->XFloor.lightlist.Size() == 0 || di->FixedColormap) PutWall(di, translucent);
+	if (sec->e->XFloor.lightlist.Size() == 0 || di->isFullbrightScene()) PutWall(di, translucent);
 	else SplitWall(di, sec, translucent);
 
 	alpha = 1.0f;
@@ -1672,7 +1671,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 		bool isportal = seg->linedef->isVisualPortal() && seg->sidedef == seg->linedef->sidedef[0];
 		sector_t *backsec = isportal? seg->linedef->getPortalDestination()->frontsector : backsector;
 
-		bool drawfogboundary = di->FixedColormap == CM_DEFAULT && hw_CheckFog(frontsector, backsec);
+		bool drawfogboundary = !di->isFullbrightScene() && hw_CheckFog(frontsector, backsec);
 		FTexture *tex = TexMan(seg->sidedef->GetTexture(side_t::mid));
 		if (tex != NULL)
 		{

@@ -248,9 +248,6 @@ class FShader
 	FBufferedUniform4f muCameraPos;
 	FBufferedUniform4f muLightParms;
 	FBufferedUniform2f muClipSplit;
-	FUniform1i muFixedColormap;
-	FUniform4f muColormapStart;
-	FUniform4f muColormapRange;
 	FBufferedUniform1i muLightIndex;
 	FBufferedUniformPE muFogColor;
 	FBufferedUniform4f muDynLightColor;
@@ -331,8 +328,6 @@ public:
 	FShader *Get(unsigned int eff, bool alphateston, EPassType passType);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view, EPassType passType);
 
-	void ResetFixedColormap();
-
 private:
 	FShader *mActiveShader = nullptr;
 	TArray<FShaderCollection*> mPassShaders;
@@ -354,18 +349,6 @@ public:
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
 	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
-
-	void ResetFixedColormap()
-	{
-		for (unsigned i = 0; i < mMaterialShaders.Size(); i++)
-		{
-			mMaterialShaders[i]->currentfixedcolormap = -1;
-		}
-		for (unsigned i = 0; i < mMaterialShadersNAT.Size(); i++)
-		{
-			mMaterialShadersNAT[i]->currentfixedcolormap = -1;
-		}
-	}
 
 	FShader *Get(unsigned int eff, bool alphateston)
 	{

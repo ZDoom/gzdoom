@@ -59,51 +59,25 @@ FVertexBuffer::~FVertexBuffer()
 void FSimpleVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (!gl.legacyMode)
-	{
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->u);
-		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSimpleVertex), &VSiO->color);
-		glEnableVertexAttribArray(VATTR_VERTEX);
-		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		glEnableVertexAttribArray(VATTR_COLOR);
-		glDisableVertexAttribArray(VATTR_VERTEX2);
-		glDisableVertexAttribArray(VATTR_NORMAL);
-	}
-	else
-	{
-		glVertexPointer(3, GL_FLOAT, sizeof(FSimpleVertex), &VSiO->x);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(FSimpleVertex), &VSiO->u);
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(FSimpleVertex), &VSiO->color);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glEnableClientState(GL_COLOR_ARRAY);
-	}
+	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->x);
+	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSimpleVertex), &VSiO->u);
+	glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSimpleVertex), &VSiO->color);
+	glEnableVertexAttribArray(VATTR_VERTEX);
+	glEnableVertexAttribArray(VATTR_TEXCOORD);
+	glEnableVertexAttribArray(VATTR_COLOR);
+	glDisableVertexAttribArray(VATTR_VERTEX2);
+	glDisableVertexAttribArray(VATTR_NORMAL);
 }
 
 void FSimpleVertexBuffer::EnableColorArray(bool on)
 {
 	if (on)
 	{
-		if (!gl.legacyMode)
-		{
-			glEnableVertexAttribArray(VATTR_COLOR);
-		}
-		else
-		{
-			glEnableClientState(GL_COLOR_ARRAY);
-		}
+		glEnableVertexAttribArray(VATTR_COLOR);
 	}
 	else
 	{
-		if (!gl.legacyMode)
-		{
-			glDisableVertexAttribArray(VATTR_COLOR);
-		}
-		else
-		{
-			glDisableClientState(GL_COLOR_ARRAY);
-		}
+		glDisableVertexAttribArray(VATTR_COLOR);
 	}
 }
 
@@ -123,38 +97,25 @@ void FSimpleVertexBuffer::set(FSimpleVertex *verts, int count)
 //==========================================================================
 
 FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
-: FVertexBuffer(!gl.legacyMode), FFlatVertexGenerator(width, height)
+: FVertexBuffer(true), FFlatVertexGenerator(width, height)
 {
 	ibo_id = 0;
-	if (gl.buffermethod != BM_LEGACY) glGenBuffers(1, &ibo_id);
-	switch (gl.buffermethod)
-	{
-	case BM_PERSISTENT:
+	glGenBuffers(1, &ibo_id);
+	if (gl.buffermethod == BM_PERSISTENT)
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		DPrintf(DMSG_NOTIFY, "Using persistent buffer\n");
-		break;
 	}
-
-	case BM_DEFERRED:
+	else
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferData(GL_ARRAY_BUFFER, bytesize, NULL, GL_STREAM_DRAW);
 		map = nullptr;
 		DPrintf(DMSG_NOTIFY, "Using deferred buffer\n");
-		break;
-	}
-
-	default:
-	{
-		map = new FFlatVertex[BUFFER_SIZE];
-		DPrintf(DMSG_NOTIFY, "Using client array buffer\n");
-		break;
-	}
 	}
 	mIndex = mCurIndex = 0;
 	mNumReserved = NUM_RESERVED;
@@ -178,10 +139,6 @@ FFlatVertexBuffer::~FFlatVertexBuffer()
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 		glDeleteBuffers(1, &ibo_id);
 	}
-	if (gl.legacyMode)
-	{
-		delete[] map;
-	}
 	map = nullptr;
 }
 
@@ -197,24 +154,13 @@ void FFlatVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
-	if (!gl.legacyMode)
-	{
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
-		glEnableVertexAttribArray(VATTR_VERTEX);
-		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		glDisableVertexAttribArray(VATTR_COLOR);
-		glDisableVertexAttribArray(VATTR_VERTEX2);
-		glDisableVertexAttribArray(VATTR_NORMAL);
-	}
-	else
-	{
-		glVertexPointer(3, GL_FLOAT, sizeof(FFlatVertex), &map->x);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(FFlatVertex), &map->u);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-	}
+	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->x);
+	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FFlatVertex), &VTO->u);
+	glEnableVertexAttribArray(VATTR_VERTEX);
+	glEnableVertexAttribArray(VATTR_TEXCOORD);
+	glDisableVertexAttribArray(VATTR_COLOR);
+	glDisableVertexAttribArray(VATTR_VERTEX2);
+	glDisableVertexAttribArray(VATTR_NORMAL);
 }
 
 void FFlatVertexBuffer::Map()

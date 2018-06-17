@@ -29,9 +29,11 @@
 #include "p_local.h"
 #include "g_levellocals.h"
 #include "a_sharedglobal.h"
+#include "d_player.h"
 #include "r_sky.h"
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "r_utility.h"
 
 
@@ -408,3 +410,55 @@ void HWDrawInfo::SetViewArea()
 	}
 }
 
+
+int HWDrawInfo::SetFullbrightFlags(player_t *player)
+{
+	FullbrightFlags = 0;
+
+	// check for special colormaps
+	player_t * cplayer = player? player->camera->player : nullptr;
+	if (cplayer)
+	{
+		int cm = CM_DEFAULT;
+		if (cplayer->extralight == INT_MIN)
+		{
+			cm = CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
+			r_viewpoint.extralight = 0;
+			FullbrightFlags = Fullbright;
+			// This does never set stealth vision.
+		}
+		else if (cplayer->fixedcolormap != NOFIXEDCOLORMAP)
+		{
+			cm = CM_FIRSTSPECIALCOLORMAP + cplayer->fixedcolormap;
+			FullbrightFlags = Fullbright;
+			if (gl_enhanced_nv_stealth > 2) FullbrightFlags |= StealthVision;
+		}
+		else if (cplayer->fixedlightlevel != -1)
+		{
+			auto torchtype = PClass::FindActor(NAME_PowerTorch);
+			auto litetype = PClass::FindActor(NAME_PowerLightAmp);
+			for (AInventory * in = cplayer->mo->Inventory; in; in = in->Inventory)
+			{
+				//PalEntry color = in->CallGetBlend();
+
+				// Need special handling for light amplifiers 
+				if (in->IsKindOf(torchtype))
+				{
+					FullbrightFlags = Fullbright;
+					if (gl_enhanced_nv_stealth > 1) FullbrightFlags |= StealthVision;
+				}
+				else if (in->IsKindOf(litetype))
+				{
+					FullbrightFlags = Fullbright;
+					if (gl_enhanced_nightvision) FullbrightFlags |= Nightvision;
+					if (gl_enhanced_nv_stealth > 0) FullbrightFlags |= StealthVision;
+				}
+			}
+		}
+		return cm;
+	}
+	else
+	{
+		return CM_DEFAULT;
+	}
+}

@@ -65,6 +65,7 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 	UpdateCameraExposure();
 	mCustomPostProcessShaders->Run("beforebloom");
 	BloomScene(fixedcm);
+	mBuffers->BindCurrentFB();
 	afterBloomDrawEndScene2D();
 	TonemapScene();
 	ColormapScene(fixedcm);
@@ -72,6 +73,7 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 	ApplyFXAA();
 	mCustomPostProcessShaders->Run("scene");
 }
+
 
 //-----------------------------------------------------------------------------
 //
@@ -100,13 +102,8 @@ void FGLRenderer::AmbientOccludeScene()
 
 	float blurSharpness = 1.0f / blurAmount;
 
-	const auto &mSceneViewport = screen->mSceneViewport;
-	const auto &mScreenViewport = screen->mScreenViewport;
-
-	float sceneScaleX = mSceneViewport.width / (float)mScreenViewport.width;
-	float sceneScaleY = mSceneViewport.height / (float)mScreenViewport.height;
-	float sceneOffsetX = mSceneViewport.left / (float)mScreenViewport.width;
-	float sceneOffsetY = mSceneViewport.top / (float)mScreenViewport.height;
+	auto sceneScale = screen->SceneScale();
+	auto sceneOffset = screen->SceneOffset();
 
 	int randomTexture = clamp(gl_ssao - 1, 0, FGLRenderBuffers::NumAmbientRandomTextures - 1);
 
@@ -121,8 +118,8 @@ void FGLRenderer::AmbientOccludeScene()
 	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / GetZNear(), 1.e-8f);
 	mLinearDepthShader->Uniforms->InverseDepthRangeA = 1.0f;
 	mLinearDepthShader->Uniforms->InverseDepthRangeB = 0.0f;
-	mLinearDepthShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
-	mLinearDepthShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
+	mLinearDepthShader->Uniforms->Scale = sceneScale;
+	mLinearDepthShader->Uniforms->Offset = sceneOffset;
 	mLinearDepthShader->Uniforms.Set();
 	RenderScreenQuad();
 
@@ -141,8 +138,8 @@ void FGLRenderer::AmbientOccludeScene()
 	mSSAOShader->Uniforms->RadiusToScreen = aoRadius * 0.5 / tanHalfFovy * mBuffers->AmbientHeight;
 	mSSAOShader->Uniforms->AOMultiplier = 1.0f / (1.0f - nDotVBias);
 	mSSAOShader->Uniforms->AOStrength = aoStrength;
-	mSSAOShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
-	mSSAOShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
+	mSSAOShader->Uniforms->Scale = sceneScale;
+	mSSAOShader->Uniforms->Offset = sceneOffset;
 	mSSAOShader->Uniforms.Set();
 	RenderScreenQuad();
 
@@ -182,8 +179,8 @@ void FGLRenderer::AmbientOccludeScene()
 	mBuffers->BindSceneFogTexture(1);
 	mSSAOCombineShader->Bind(NOQUEUE);
 	if (gl_multisample > 1) mSSAOCombineShader->Uniforms->SampleCount = gl_multisample;
-	mSSAOCombineShader->Uniforms->Scale = { sceneScaleX, sceneScaleY };
-	mSSAOCombineShader->Uniforms->Offset = { sceneOffsetX, sceneOffsetY };
+	mSSAOCombineShader->Uniforms->Scale = screen->SceneScale();
+	mSSAOCombineShader->Uniforms->Offset = screen->SceneOffset();
 	mSSAOCombineShader->Uniforms.Set();
 	RenderScreenQuad();
 
@@ -206,17 +203,14 @@ void FGLRenderer::UpdateCameraExposure()
 	FGLPostProcessState savedState;
 	savedState.SaveTextureBindings(2);
 
-	const auto &mSceneViewport = screen->mSceneViewport;
-	const auto &mScreenViewport = screen->mScreenViewport;
-
 	// Extract light level from scene texture:
 	auto &level0 = mBuffers->ExposureLevels[0];
 	level0.Framebuffer.Bind();
 	glViewport(0, 0, level0.Width, level0.Height);
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
 	mExposureExtractShader->Bind(NOQUEUE);
-	mExposureExtractShader->Uniforms->Scale = { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
-	mExposureExtractShader->Uniforms->Offset = { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
+	mExposureExtractShader->Uniforms->Scale = screen->SceneScale();
+	mExposureExtractShader->Uniforms->Offset = screen->SceneOffset();
 	mExposureExtractShader->Uniforms.Set();
 	RenderScreenQuad();
 
@@ -254,6 +248,8 @@ void FGLRenderer::UpdateCameraExposure()
 	mExposureCombineShader->Uniforms->ExposureSpeed = gl_exposure_speed;
 	mExposureCombineShader->Uniforms.Set();
 	RenderScreenQuad();
+
+	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
 	FGLDebug::PopGroup();
@@ -321,17 +317,14 @@ void FGLRenderer::BloomScene(int fixedcm)
 
 	auto &level0 = mBuffers->BloomLevels[0];
 
-	const auto &mSceneViewport = screen->mSceneViewport;
-	const auto &mScreenViewport = screen->mScreenViewport;
-
 	// Extract blooming pixels from scene texture:
 	level0.VFramebuffer.Bind();
 	glViewport(0, 0, level0.Width, level0.Height);
 	mBuffers->BindCurrentTexture(0, GL_LINEAR);
 	mBuffers->ExposureTexture.Bind(1);
 	mBloomExtractShader->Bind(NOQUEUE);
-	mBloomExtractShader->Uniforms->Scale = { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
-	mBloomExtractShader->Uniforms->Offset = { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
+	mBloomExtractShader->Uniforms->Scale = screen->SceneScale();
+	mBloomExtractShader->Uniforms->Offset = screen->SceneOffset();
 	mBloomExtractShader->Uniforms.Set();
 	RenderScreenQuad();
 
@@ -364,6 +357,9 @@ void FGLRenderer::BloomScene(int fixedcm)
 	RenderBlur(this, blurAmount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height, false);
 	RenderBlur(this, blurAmount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height, true);
 
+	const auto &mSceneViewport = screen->mSceneViewport;
+	const auto &mScreenViewport = screen->mScreenViewport;
+
 	// Add bloom back to scene texture:
 	mBuffers->BindCurrentFB();
 	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
@@ -394,7 +390,7 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 		blurAmount = gameinfobluramount;
 
 	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
-	if ((blurAmount <= 0.0) || !FGLRenderBuffers::IsEnabled())
+	if (blurAmount <= 0.0)
 		return;
 
 	FGLDebug::PushGroup("BlurScene");
@@ -662,7 +658,7 @@ void FGLRenderer::Flush()
 	const auto &mSceneViewport = screen->mSceneViewport;
 	const auto &mScreenViewport = screen->mScreenViewport;
 
-	if (stereo3dMode.IsMono() || !FGLRenderBuffers::IsEnabled())
+	if (stereo3dMode.IsMono())
 	{
 		CopyToBackbuffer(nullptr, true);
 	}
@@ -701,30 +697,22 @@ void FGLRenderer::CopyToBackbuffer(const IntRect *bounds, bool applyGamma)
 	mCustomPostProcessShaders->Run("screen");
 
 	FGLDebug::PushGroup("CopyToBackbuffer");
-	if (FGLRenderBuffers::IsEnabled())
+	FGLPostProcessState savedState;
+	mBuffers->BindOutputFB();
+
+	IntRect box;
+	if (bounds)
 	{
-		FGLPostProcessState savedState;
-		mBuffers->BindOutputFB();
-
-		IntRect box;
-		if (bounds)
-		{
-			box = *bounds;
-		}
-		else
-		{
-			ClearBorders();
-			box = screen->mOutputLetterbox;
-		}
-
-		mBuffers->BindCurrentTexture(0);
-		DrawPresentTexture(box, applyGamma);
+		box = *bounds;
 	}
-	else if (!bounds)
+	else
 	{
-		FGLPostProcessState savedState;
 		ClearBorders();
+		box = screen->mOutputLetterbox;
 	}
+
+	mBuffers->BindCurrentTexture(0);
+	DrawPresentTexture(box, applyGamma);
 	FGLDebug::PopGroup();
 }
 
@@ -760,7 +748,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		mPresentShader->Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);
 		mPresentShader->Uniforms->GrayFormula = static_cast<int>(gl_satformula);
 	}
-	mPresentShader->Uniforms->Scale = { screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight() };
+	mPresentShader->Uniforms->Scale = screen->SceneScale();
 	mPresentShader->Uniforms.Set();
 	RenderScreenQuad();
 }

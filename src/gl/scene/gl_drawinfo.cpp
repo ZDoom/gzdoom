@@ -173,15 +173,10 @@ void FDrawInfoList::Release(FDrawInfo * di)
 FDrawInfo::FDrawInfo()
 {
 	next = NULL;
-	if (gl.legacyMode)
-	{
-		dldrawlists = new HWDrawList[GLLDL_TYPES];
-	}
 }
 
 FDrawInfo::~FDrawInfo()
 {
-	if (dldrawlists != NULL) delete[] dldrawlists;
 	ClearBuffers();
 }
 
@@ -202,7 +197,6 @@ FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
 	staticClipper.Clear();
-    di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
 	return di;
 }
@@ -214,13 +208,14 @@ void FDrawInfo::StartScene()
 	next = gl_drawinfo;
 	gl_drawinfo = this;
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
-	if (dldrawlists != NULL)
-	{
-		for (int i = 0; i < GLLDL_TYPES; i++) dldrawlists[i].Reset();
-	}
 	decals[0].Clear();
 	decals[1].Clear();
 	hudsprites.Clear();
+
+	// Fullbright information needs to be propagated from the main view.
+	if (next != nullptr) FullbrightFlags = next->FullbrightFlags;
+	else FullbrightFlags = 0;
+
 }
 
 //==========================================================================
@@ -233,10 +228,6 @@ void FDrawInfo::EndDrawInfo()
 	FDrawInfo * di = gl_drawinfo;
 
 	for(int i=0;i<GLDL_TYPES;i++) di->drawlists[i].Reset();
-	if (di->dldrawlists != NULL)
-	{
-		for (int i = 0; i < GLLDL_TYPES; i++) di->dldrawlists[i].Reset();
-	}
 	gl_drawinfo=di->next;
 	di_list.Release(di);
 	if (gl_drawinfo == nullptr) 
@@ -329,7 +320,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 	if (!gltexture) return;
 
-	if (mDrawer->FixedColormap) 
+	if (isFullbrightScene()) 
 	{
 		Colormap.Clear();
 		lightlevel=255;
@@ -346,8 +337,8 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	}
 
 	int rel = getExtraLight();
-	mDrawer->SetColor(lightlevel, rel, Colormap, 1.0f);
-	mDrawer->SetFog(lightlevel, rel, &Colormap, false);
+	SetColor(lightlevel, rel, Colormap, 1.0f);
+	SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
 	float fviewx = r_viewpoint.Pos.X;

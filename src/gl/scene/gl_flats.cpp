@@ -56,7 +56,7 @@
 
 void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli)
 {
-	if (FixedColormap != CM_DEFAULT) return;
+	if (isFullbrightScene()) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -85,7 +85,7 @@ void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, 
 
 void FDrawInfo::SetupSectorLights(GLFlat *flat, int pass, int *dli)
 {
-	if (FixedColormap != CM_DEFAULT) return;
+	if (isFullbrightScene()) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -213,11 +213,6 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 	gl_RenderState.Apply();
 	auto iboindex = flat->iboindex;
-	if (gl.legacyMode)
-	{
-		processlights = false;
-		iboindex = -1;
-	}
 
 	if (iboindex >= 0)
 	{
@@ -346,8 +341,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	switch (pass)
 	{
 	case GLPASS_ALL:	// Single-pass rendering
-		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
-		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
+		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (flat->sector->special != GLSector_Skybox)
@@ -374,8 +369,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 
 	case GLPASS_TRANSLUCENT:
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
-		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
+		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture || !flat->gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (!flat->gltexture)
@@ -391,24 +386,11 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, !gl.legacyMode && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
+			DrawSubsectors(flat, pass, (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetObjectColor(0xffffffff);
-		break;
-
-	case GLPASS_LIGHTTEX:
-	case GLPASS_LIGHTTEX_ADDITIVE:
-	case GLPASS_LIGHTTEX_FOGGY:
-		DrawLightsCompat(flat, pass);
-		break;
-
-	case GLPASS_TEXONLY:
-		gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
-		gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-		DrawSubsectors(flat, pass, false, false);
-		gl_RenderState.EnableTextureMatrix(false);
 		break;
 	}
 }
@@ -426,10 +408,6 @@ void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
 {
 	int list;
 
-	if (gl.legacyMode)
-	{
-		if (PutFlatCompat(flat, fog)) return;
-	}
 	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.

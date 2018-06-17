@@ -60,29 +60,6 @@ enum
 	DM_SKYPORTAL
 };
 
-
-// Helper baggage to draw the paletted software renderer output on old hardware.
-// This must be here because the 2D drawer needs to access it, not the scene drawer.
-class LegacyShader;
-struct LegacyShaderContainer
-{
-	enum
-	{
-		NUM_SHADERS = 4
-	};
-
-	LegacyShader *Shaders[NUM_SHADERS];
-
-	LegacyShader* CreatePixelShader(const FString& vertexsrc, const FString& fragmentsrc, const FString &defines);
-	LegacyShaderContainer();
-	~LegacyShaderContainer();
-	bool LoadShaders();
-	void BindShader(int num, const float *p1, const float *p2);
-};
-
-
-
-
 class FGLRenderer
 {
 public:
@@ -135,7 +112,6 @@ public:
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
 	SWSceneDrawer *swdrawer = nullptr;
-	LegacyShaderContainer *legacyShaders = nullptr;
 
 	bool mDrawingScene2D = false;
 	bool buffersActive = false;

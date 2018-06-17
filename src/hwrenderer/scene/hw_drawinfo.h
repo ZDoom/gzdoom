@@ -79,8 +79,19 @@ struct HWDrawInfo
 		subsector_t * sub;
 		uint8_t flags;
 	};
+
+	enum EFullbrightFlags
+	{
+		Fullbright = 1,
+		Nightvision = 2,
+		StealthVision = 4
+	};
+
+	bool isFullbrightScene() const { return !!(FullbrightFlags & Fullbright); }
+	bool isNightvision() const { return !!(FullbrightFlags & Nightvision); }
+	bool isStealthVision() const { return !!(FullbrightFlags & StealthVision); }
     
-    int FixedColormap;
+	int FullbrightFlags;
 	std::atomic<int> spriteindex;
 	IPortal *mClipPortal;
 	FRotator mAngles;
@@ -141,6 +152,7 @@ public:
 
 	void ClearBuffers();
 	void SetViewArea();
+	int SetFullbrightFlags(player_t *player);
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);
@@ -197,6 +209,5 @@ public:
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
-
 };
 

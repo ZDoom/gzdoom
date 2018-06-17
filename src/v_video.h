@@ -55,13 +55,11 @@ enum EHWCaps
 
 	RFL_SHADER_STORAGE_BUFFER = 4,
 	RFL_BUFFER_STORAGE = 8,
-	RFL_SAMPLER_OBJECTS = 16,
 
 	RFL_NO_CLIP_PLANES = 32,
 
 	RFL_INVALIDATE_BUFFER = 64,
 	RFL_DEBUG = 128,
-	RFL_NO_SHADERS = 256
 };
 
 struct IntRect
@@ -366,6 +364,16 @@ public:
 	inline int GetWidth() const { return Width; }
 	inline int GetHeight() const { return Height; }
 
+	FVector2 SceneScale() const
+	{
+		return { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
+	}
+
+	FVector2 SceneOffset() const
+	{
+		return { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
+	}
+
 	// Make the surface visible.
 	virtual void Update () = 0;
 
@@ -409,12 +417,10 @@ public:
 	virtual void UnbindTexUnit(int no) {}
 	virtual void FlushTextures() {}
 	virtual void TextureFilterChanged() {}
-	virtual void ResetFixedColormap() {}
 	virtual void BeginFrame() {}
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
-	virtual bool RenderBuffersEnabled() { return false; };
 	virtual void BlurScene(float amount) {}
     
     // Interface to hardware rendering resources

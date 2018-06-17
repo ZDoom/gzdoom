@@ -218,7 +218,7 @@ void RowInterleaved3D::Present() const
 			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
 		) % 2;
 
-	GLRenderer->mPresent3dColumnShader->Uniforms.Set();
+	GLRenderer->mPresent3dRowShader->Uniforms.Set();
 	GLRenderer->RenderScreenQuad();
 }
 

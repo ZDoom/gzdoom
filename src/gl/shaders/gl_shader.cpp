@@ -70,11 +70,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform float uDesaturationFactor;\n";
 	i_data += "uniform float uInterpolationFactor;\n";
 
-	// Fixed colormap stuff
-	i_data += "uniform int uFixedColormap;\n"; // 0, when no fixed colormap, 1 for a light value, 2 for a color blend, 3 for a fog layer
-	i_data += "uniform vec4 uFixedColormapStart;\n";
-	i_data += "uniform vec4 uFixedColormapRange;\n";
-
 	// Glowing walls stuff
 	i_data += "uniform vec4 uGlowTopPlane;\n";
 	i_data += "uniform vec4 uGlowTopColor;\n";
@@ -179,14 +174,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		if (gl.es)
-		{
-			vp_comb.Format("#version 300 es\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-		}
-		else
-		{
-			vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-		}
+		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 	}
 	else
 	{
@@ -325,8 +313,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muCameraPos.Init(hShader, "uCameraPos");
 	muLightParms.Init(hShader, "uLightAttr");
 	muClipSplit.Init(hShader, "uClipSplit");
-	muColormapStart.Init(hShader, "uFixedColormapStart");
-	muColormapRange.Init(hShader, "uFixedColormapRange");
 	muLightIndex.Init(hShader, "uLightIndex");
 	muFogColor.Init(hShader, "uFogColor");
 	muDynLightColor.Init(hShader, "uDynLightColor");
@@ -339,7 +325,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
 	muClipLine.Init(hShader, "uClipLine");
-	muFixedColormap.Init(hShader, "uFixedColormap");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
 	muClipHeight.Init(hShader, "uClipHeight");
 	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
@@ -360,7 +345,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
-	if (!gl.legacyMode && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
 		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
@@ -422,7 +407,6 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 	FString defines;
 	defines += shaderdefines;
 	// this can't be in the shader code due to ATI strangeness.
-	if (gl.MaxLights() == 128) defines += "#define MAXLIGHTS128\n";
 	if (!usediscard) defines += "#define NO_ALPHATEST\n";
 	if (passType == GBUFFER_PASS) defines += "#define GBUFFER_PASS\n";
 
@@ -513,35 +497,21 @@ static const FEffectShader effectshaders[]=
 	{ "spheremap", "shaders/glsl/main.vp", "shaders/glsl/main.fp", "shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", "#define SPHEREMAP\n#define NO_ALPHATEST\n" },
 	{ "burn", "shaders/glsl/main.vp", "shaders/glsl/burn.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
 	{ "stencil", "shaders/glsl/main.vp", "shaders/glsl/stencil.fp", nullptr, nullptr, "#define SIMPLE\n#define NO_ALPHATEST\n" },
-	{ "swrquad", "shaders/glsl/main.vp", "shaders/glsl/swshader.fp", nullptr, nullptr, "#define SIMPLE\n" },
 };
 
 FShaderManager::FShaderManager()
 {
-	if (!gl.legacyMode)
-	{
-		if (gl.es) // OpenGL ES does not support multiple fragment shader outputs. As a result, no GBUFFER passes are possible.
-		{
-			mPassShaders.Push(new FShaderCollection(NORMAL_PASS));
-		}
-		else
-		{
-			for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
-				mPassShaders.Push(new FShaderCollection((EPassType)passType));
-		}
-	}
+	for (int passType = 0; passType < MAX_PASS_TYPES; passType++)
+		mPassShaders.Push(new FShaderCollection((EPassType)passType));
 }
 
 FShaderManager::~FShaderManager()
 {
-	if (!gl.legacyMode)
-	{
-		glUseProgram(0);
-		mActiveShader = NULL;
+	glUseProgram(0);
+	mActiveShader = NULL;
 
-		for (auto collection : mPassShaders)
-			delete collection;
-	}
+	for (auto collection : mPassShaders)
+		delete collection;
 }
 
 void FShaderManager::SetActiveShader(FShader *sh)
@@ -571,27 +541,11 @@ FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passT
 
 void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view, EPassType passType)
 {
-	if (gl.legacyMode)
-	{
-		glMatrixMode(GL_PROJECTION);
-		glLoadMatrixf(proj->get());
-		glMatrixMode(GL_MODELVIEW);
-		glLoadMatrixf(view->get());
-	}
-	else
-	{
-		if (passType < mPassShaders.Size())
-			mPassShaders[passType]->ApplyMatrices(proj, view);
+	if (passType < mPassShaders.Size())
+		mPassShaders[passType]->ApplyMatrices(proj, view);
 
-		if (mActiveShader)
-			mActiveShader->Bind();
-	}
-}
-
-void FShaderManager::ResetFixedColormap()
-{
-	for (auto &collection : mPassShaders)
-		collection->ResetFixedColormap();
+	if (mActiveShader)
+		mActiveShader->Bind();
 }
 
 //==========================================================================

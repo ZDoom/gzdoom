@@ -217,7 +217,7 @@ SystemFrameBuffer::SystemFrameBuffer (void *, bool fullscreen)
 		Screen = SDL_CreateWindow (caption,
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
 			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-			vid_defwidth, vid_defheight, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0)|SDL_WINDOW_OPENGL
+			vid_defwidth, vid_defheight, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
 		);
 		if (Screen != NULL)
 		{
@@ -311,7 +311,7 @@ void SystemFrameBuffer::SwapBuffers()
 
 void SystemFrameBuffer::ToggleFullscreen(bool yes)
 {
-	... // todo
+	SDL_SetWindowFullscreen(Screen, yes ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
 int SystemFrameBuffer::GetClientWidth()

@@ -204,6 +204,7 @@ public:
 
 	virtual DFrameBuffer* CreateFrameBuffer();
 
+	static void ToggleFullscreen(bool yes);
 	static bool IsFullscreen();
 	static void UseHiDPI(bool hiDPI);
 	static void SetCursor(NSCursor* cursor);
@@ -372,6 +373,14 @@ DFrameBuffer* CocoaVideo::CreateFrameBuffer()
 	SetMode(fullscreen, vid_hidpi);
 
 	return fb;
+}
+
+void CocoaVideo::ToggleFullscreen(bool yes)
+{
+	if (CocoaVideo* const video = GetInstance())
+	{
+		video->SetMode(yes, video->m_hiDPI);
+	}
 }
 
 bool CocoaVideo::IsFullscreen()
@@ -555,7 +564,7 @@ bool SystemFrameBuffer::IsFullscreen()
 
 void SystemFrameBuffer::ToggleFullscreen(bool yes)
 {
-	SetMode(...);	// todo
+	CocoaVideo::ToggleFullscreen(yes);
 }
 
 

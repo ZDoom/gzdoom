@@ -192,7 +192,8 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 	}
 	*/
 	TranslatedTexture * glTex=GetTexID(translation);
-	if (glTex->glTexID==0) glGenTextures(1,&glTex->glTexID);
+	bool firstCall = glTex->glTexID == 0;
+	if (firstCall) glGenTextures(1,&glTex->glTexID);
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
 	glBindTexture(GL_TEXTURE_2D, glTex->glTexID);
 	FGLDebug::LabelObject(GL_TEXTURE, glTex->glTexID, name);
@@ -244,7 +245,10 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 		sourcetype = GL_BGRA;
 	}
 	
-	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, sourcetype, GL_UNSIGNED_BYTE, buffer);
+	if (!firstCall && glBufferID > 0)
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, rw, rh, sourcetype, GL_UNSIGNED_BYTE, buffer);
+	else
+		glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, sourcetype, GL_UNSIGNED_BYTE, buffer);
 
 	if (deletebuffer && buffer) free(buffer);
 	else if (glBufferID)

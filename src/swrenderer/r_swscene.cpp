@@ -86,38 +86,40 @@ public:
 
 SWSceneDrawer::SWSceneDrawer()
 {
-	PaletteTexture = new FSWPaletteTexture;
+	PaletteTexture.reset(new FSWPaletteTexture);
 }
 
 SWSceneDrawer::~SWSceneDrawer()
 {
-	if (PaletteTexture != nullptr) delete PaletteTexture;
-	if (FBTexture != nullptr) delete FBTexture;
 }
 
 sector_t *SWSceneDrawer::RenderView(player_t *player)
 {
+	// Avoid using the pixel buffer from the last frame
+	FBTextureIndex = (FBTextureIndex + 1) % 2;
+	auto &fbtex = FBTexture[FBTextureIndex];
+
 	DCanvas buffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor());
-	if (FBTexture == nullptr || FBTexture->SystemTexture[0] == nullptr || 
-		FBTexture->GetWidth() != screen->GetWidth() || 
-		FBTexture->GetHeight() != screen->GetHeight() || 
-		(V_IsTrueColor() ? 1:0) != FBTexture->WidthBits)
+	if (fbtex == nullptr || fbtex->SystemTexture[0] == nullptr || 
+		fbtex->GetWidth() != screen->GetWidth() || 
+		fbtex->GetHeight() != screen->GetHeight() || 
+		(V_IsTrueColor() ? 1:0) != fbtex->WidthBits)
 	{
 		// This manually constructs its own material here.
-		if (FBTexture != nullptr) delete FBTexture;
-		FBTexture = new FSWSceneTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor());
-		FBTexture->SystemTexture[0]->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
-		auto mat = FMaterial::ValidateTexture(FBTexture, false);
-		mat->AddTextureLayer(PaletteTexture);
+		fbtex.reset();
+		fbtex.reset(new FSWSceneTexture(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor()));
+		fbtex->SystemTexture[0]->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
+		auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
+		mat->AddTextureLayer(PaletteTexture.get());
 	}
-	auto buf = FBTexture->SystemTexture[0]->MapBuffer();
+	auto buf = fbtex->SystemTexture[0]->MapBuffer();
 	if (!buf) I_FatalError("Unable to map buffer for software rendering");
 	buffer.SetBuffer(screen->GetWidth(), screen->GetHeight(), screen->GetWidth(), buf);
 	SWRenderer->RenderView(player, &buffer);
-	FBTexture->SystemTexture[0]->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
+	fbtex->SystemTexture[0]->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
-	screen->DrawTexture(FBTexture, 0, 0, DTA_SpecialColormap, map, TAG_DONE);
+	screen->DrawTexture(fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
 	SWRenderer->DrawRemainingPlayerSprites();
 	return r_viewpoint.sector;
 }

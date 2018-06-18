@@ -41,6 +41,7 @@
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/data/flatvertices.h"
 #include "hw_drawstructs.h"
 
 #ifdef _DEBUG
@@ -86,9 +87,51 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 	return false;
 }
 
+
 //==========================================================================
 //
-// Flats 
+// special handling for skyboxes which need texture clamping.
+// This will find the bounding rectangle of the sector and just
+// draw one single polygon filling that rectangle with a clamped
+// texture.
+//
+//==========================================================================
+
+void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
+{
+	float minx = FLT_MAX, miny = FLT_MAX;
+	float maxx = -FLT_MAX, maxy = -FLT_MAX;
+
+	for (auto ln : sector->Lines)
+	{
+		float x = ln->v1->fX();
+		float y = ln->v1->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+		x = ln->v2->fX();
+		y = ln->v2->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+	}
+
+	float z = plane.plane.ZatPoint(0., 0.) + dz;
+	static float uvals[] = { 0, 0, 1, 1 };
+	static float vvals[] = { 1, 0, 0, 1 };
+	int rot = -xs_FloorToInt(plane.Angle / 90.f);
+
+	vert[0].Set(minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
+	vert[1].Set(minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
+	vert[2].Set(maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
+	vert[3].Set(maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+}
+
+//==========================================================================
+//
+//
 //
 //==========================================================================
 

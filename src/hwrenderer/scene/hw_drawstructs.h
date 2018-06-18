@@ -314,6 +314,7 @@ public:
 
 	int dynlightindex;
 
+	void CreateSkyboxVertices(FFlatVertex *buffer);
 	bool SetupLights(int pass, FLightNode *head, FDynLightData &lightdata, int portalgroup);
 	bool SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata);
 	bool SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdata);

@@ -279,46 +279,14 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 //==========================================================================
 //
-// special handling for skyboxes which need texture clamping.
-// This will find the bounding rectangle of the sector and just
-// draw one single polygon filling that rectangle with a clamped
-// texture.
+//
 //
 //==========================================================================
 
 void FDrawInfo::DrawSkyboxSector(GLFlat *flat, int pass, bool processlights)
 {
-
-	float minx = FLT_MAX, miny = FLT_MAX;
-	float maxx = -FLT_MAX, maxy = -FLT_MAX;
-
-	for (auto ln : flat->sector->Lines)
-	{
-		float x = ln->v1->fX();
-		float y = ln->v1->fY();
-		if (x < minx) minx = x;
-		if (y < miny) miny = y;
-		if (x > maxx) maxx = x;
-		if (y > maxy) maxy = y;
-		x = ln->v2->fX();
-		y = ln->v2->fY();
-		if (x < minx) minx = x;
-		if (y < miny) miny = y;
-		if (x > maxx) maxx = x;
-		if (y > maxy) maxy = y;
-	}
-
-	float z = flat->plane.plane.ZatPoint(0., 0.) + flat->dz;
-	static float uvals[] = { 0, 0, 1, 1 };
-	static float vvals[] = { 1, 0, 0, 1 };
-	int rot = -xs_FloorToInt(flat->plane.Angle / 90.f);
-
 	FQuadDrawer qd;
-
-	qd.Set(0, minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
-	qd.Set(1, minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
-	qd.Set(2, maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
-	qd.Set(3, maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	flat->CreateSkyboxVertices(qd.Pointer());
 	qd.Render(GL_TRIANGLE_FAN);
 
 	flatvertices += 4;

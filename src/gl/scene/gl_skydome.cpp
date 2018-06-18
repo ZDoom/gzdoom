@@ -38,7 +38,6 @@
 #include "gl/shaders/gl_shader.h"
 
 
-EXTERN_CVAR(Float, skyoffset)
 //-----------------------------------------------------------------------------
 //
 //
@@ -118,57 +117,13 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 
 void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
 {
-	int texh = 0;
-	int texw = 0;
-
-	// 57 world units roughly represent one sky texel for the glTranslate call.
-	const float skyoffsetfactor = 57;
-
 	if (tex)
 	{
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
-		texw = tex->TextureWidth();
-		texh = tex->TextureHeight();
 		gl_RenderState.EnableModelMatrix(true);
-
-		gl_RenderState.mModelMatrix.loadIdentity();
-		gl_RenderState.mModelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
-
-		float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
-		float yscale = 1.f;
-		if (texh <= 128 && (level.flags & LEVEL_FORCETILEDSKY))
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
-			yscale = 240.f / texh;
-		}
-		else if (texh < 128)
-		{
-			// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
-			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 128 / 230.f, 1.f);
-			yscale = 128 / texh;	// intentionally left as integer.
-		}
-		else if (texh < 200)
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, texh / 230.f, 1.f);
-		}
-		else if (texh <= 240)
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
-		}
-		else
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
-			yscale = 240.f / texh;
-		}
 		gl_RenderState.EnableTextureMatrix(true);
-		gl_RenderState.mTextureMatrix.loadIdentity();
-		gl_RenderState.mTextureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
-		gl_RenderState.mTextureMatrix.translate(1.f, y_offset / texh, 1.f);
+
+		GLRenderer->mSkyVBO->SetupMatrices(tex, x_offset, y_offset, mirror, mode, gl_RenderState.mModelMatrix, gl_RenderState.mTextureMatrix);
 	}
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);

@@ -28,6 +28,10 @@
 
 // HEADER FILES ------------------------------------------------------------
 
+#ifdef _WIN32
+#include <direct.h>
+#endif
+
 #ifdef HAVE_FPU_CONTROL
 #include <fpu_control.h>
 #endif

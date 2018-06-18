@@ -24,6 +24,12 @@
 **
 */
 
+#ifdef _MSC_VER
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "w_wad.h"
 #include "m_png.h"
 #include "sbar.h"
@@ -32,7 +38,6 @@
 #include "bitmap.h"
 
 #ifndef _WIN32
-#include <unistd.h>
 #define _access(a,b) access(a,b)
 #endif
 

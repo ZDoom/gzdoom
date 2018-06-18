@@ -235,7 +235,7 @@ static unsigned char *hqNxAsmHelper( void (*hqNxFunction) ( int*, unsigned char*
 }
 #endif
 
-static unsigned char *hqNxHelper( void (*hqNxFunction) ( unsigned*, unsigned*, int, int ),
+static unsigned char *hqNxHelper( void (HQX_CALLCONV *hqNxFunction) ( unsigned*, unsigned*, int, int ),
 							  const int N,
 							  unsigned char *inputBuffer,
 							  const int inWidth,

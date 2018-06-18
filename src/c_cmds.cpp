@@ -816,14 +816,23 @@ UNSAFE_CCMD (load)
 
 UNSAFE_CCMD (save)
 {
-    if (argv.argc() < 2 || argv.argc() > 3)
+    if (argv.argc() != 2)
 	{
-        Printf ("usage: save <filename> [description]\n");
+        Printf ("usage: save <description>\n");
         return;
     }
-    FString fname = argv[1];
+
+	FString fname;
+	for (int i = 0;; ++i)
+	{
+		fname = G_BuildSaveName("save", i);
+		if (!FileExists(fname))
+		{
+			break;
+		}
+	}
 	DefaultExtension (fname, "." SAVEGAME_EXT);
-	G_SaveGame (fname, argv.argc() > 2 ? argv[2] : argv[1]);
+	G_SaveGame (fname, argv[1]);
 }
 
 //==========================================================================

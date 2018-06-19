@@ -75,7 +75,7 @@ BEGIN
     "            VALUE ""FileDescription"", ""GZDoom""\r\n"
     "            VALUE ""FileVersion"", RC_FILEVERSION2\r\n"
     "            VALUE ""InternalName"", ""GZDoom""\r\n"
-    "            VALUE ""LegalCopyright"", ""Copyright \\u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
+    "            VALUE ""LegalCopyright"", ""Copyright © 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al.""\r\n"
     "            VALUE ""LegalTrademarks"", ""DoomR is a Registered Trademark of id Software, Inc.""\r\n"
     "            VALUE ""OriginalFilename"", ""gzdoom.exe""\r\n"
     "            VALUE ""ProductName"", ""GZDoom""\r\n"
@@ -224,6 +224,7 @@ IDD_IWADDIALOG DIALOGEX 0, 0, 224, 249
 STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "Welcome"
+#ifndef __MINGW32__
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 FONT 8, "MS Shell Dlg"
 {
@@ -243,6 +244,26 @@ FONT 8, "MS Shell Dlg"
    CONTROL "Play GZDoom", IDOK, BUTTON, BS_DEFPUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 8, 228, 90, 14
    CONTROL "Exit", IDCANCEL, BUTTON, BS_PUSHBUTTON | WS_CHILD | WS_VISIBLE | WS_TABSTOP, 166, 228, 50, 14
 }
+#else
+// [SP] Upstreamed from Zandronum
+FONT 8, "MS Shell Dlg", 0, 0, 0x1
+BEGIN
+    ICON            IDI_ICON1,IDC_STATIC,7,7,21,20
+    LTEXT           "Welcome to GZDoom!",IDC_STATIC,42,8,180,8
+    LTEXT           "<Version info>",IDC_WELCOME_VERSION,42,18,180,8
+    GROUPBOX        "IWAD selection",IDC_STATIC,8,32,208,102
+    LTEXT           "Select which game file (IWAD) to run.",IDC_STATIC,12,44,190,8
+    LISTBOX         IDC_IWADLIST,12,56,200,72,LBS_NOINTEGRALHEIGHT | WS_VSCROLL | WS_TABSTOP
+    GROUPBOX        "Video settings",IDC_STATIC,8,138,208,28
+    CONTROL         "Fullscreen",IDC_WELCOME_FULLSCREEN,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,124,150,48,10
+    CONTROL         "Disable autoload",IDC_WELCOME_NOAUTOLOAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,148,39,65,10
+    CONTROL         "Lights.pk3",IDC_WELCOME_LIGHTS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,46,182,51,10
+    CONTROL         "Brightmaps.pk3",IDC_WELCOME_BRIGHTMAPS,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,111,182,65,10
+    CONTROL         "Don't ask me this again",IDC_DONTASKIWAD,"Button",BS_AUTOCHECKBOX | WS_TABSTOP,73,201,87,10
+    DEFPUSHBUTTON   "Play GZDoom",IDOK,8,228,90,14
+    PUSHBUTTON      "Exit",IDCANCEL,166,228,50,14
+END
+#endif
 
 IDD_EAXPROPERTYLIST DIALOGEX 0, 0, 265, 404
 STYLE DS_SETFONT | DS_3DLOOK | DS_FIXEDSYS | DS_CONTROL | WS_CHILD | WS_VSCROLL
@@ -474,7 +495,7 @@ IDB_DEADGUY             BITMAP                  "deadguy.bmp"
 // Generated from the TEXTINCLUDE 3 resource.
 //
 #ifndef NO_MANIFEST
-//   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "zdoom.exe.manifest"
+   CREATEPROCESS_MANIFEST_RESOURCE_ID RT_MANIFEST "zdoom.exe.manifest"
 #endif
 
 /////////////////////////////////////////////////////////////////////////////
@@ -505,7 +526,7 @@ BEGIN
             VALUE "FileDescription", "GZDoom"
             VALUE "FileVersion", RC_FILEVERSION2
             VALUE "InternalName", "GZDoom"
-            VALUE "LegalCopyright", "Copyright \u00A9 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
+            VALUE "LegalCopyright", "Copyright © 1993-1996 id Software, 1998-2010 Randy Heit, 2002-2010 Christoph Oelckers, et al."
             VALUE "LegalTrademarks", "DoomR is a Registered Trademark of id Software, Inc."
             VALUE "OriginalFilename", "gzdoom.exe"
             VALUE "ProductName", "GZDoom"

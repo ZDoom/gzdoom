@@ -557,7 +557,7 @@ void FMapInfoParser::SkipToNext()
 
 void FMapInfoParser::CheckEndOfFile(const char *block)
 {
-	if (format_type == FMT_New && !sc.Compare("}"))
+	if (format_type == FMT_New && sc.End)
 	{
 		sc.ScriptError("Unexpected end of file in %s definition", block);
 	}

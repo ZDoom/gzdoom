@@ -534,7 +534,7 @@ int FIWadManager::IdentifyVersion (TArray<FString> &wadfiles, const char *iwad, 
 			FixPathSeperator(custwad);
 			DefaultExtension(custwad, ext);
 			bool isAbsolute = (custwad[0] == '/');
-#ifdef WINDOWS
+#ifdef _WIN32
 			isAbsolute |= (custwad.Len() >= 2 && custwad[1] == ':');
 #endif
 			if (isAbsolute)

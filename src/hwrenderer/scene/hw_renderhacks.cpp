@@ -35,63 +35,6 @@
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
-void HWDrawInfo::ClearBuffers()
-{
-	for(unsigned int i=0;i< otherfloorplanes.Size();i++)
-	{
-		gl_subsectorrendernode * node = otherfloorplanes[i];
-		while (node)
-		{
-			gl_subsectorrendernode * n = node;
-			node = node->next;
-			delete n;
-		}
-	}
-	otherfloorplanes.Clear();
-
-	for(unsigned int i=0;i< otherceilingplanes.Size();i++)
-	{
-		gl_subsectorrendernode * node = otherceilingplanes[i];
-		while (node)
-		{
-			gl_subsectorrendernode * n = node;
-			node = node->next;
-			delete n;
-		}
-	}
-	otherceilingplanes.Clear();
-
-	// clear all the lists that might not have been cleared already
-	MissingUpperTextures.Clear();
-	MissingLowerTextures.Clear();
-	MissingUpperSegs.Clear();
-	MissingLowerSegs.Clear();
-	SubsectorHacks.Clear();
-	CeilingStacks.Clear();
-	FloorStacks.Clear();
-	HandledSubsectors.Clear();
-	spriteindex = 0;
-
-	CurrentMapSections.Resize(level.NumMapSections);
-	CurrentMapSections.Zero();
-
-	sectorrenderflags.Resize(level.sectors.Size());
-	ss_renderflags.Resize(level.subsectors.Size());
-	no_renderflags.Resize(level.subsectors.Size());
-
-	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
-	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
-
-	mClipPortal = nullptr;
-}
-
-void HWDrawInfo::UpdateCurrentMapSection()
-{
-	const int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
-	CurrentMapSections.Set(mapsection);
-}
-
 //==========================================================================
 //
 // Adds a subsector plane to a sector's render list

@@ -46,6 +46,8 @@
 // Save name length limit for old binary formats.
 #define OLDSAVESTRINGSIZE		24
 
+CVAR (Bool, oldsaveorder, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
+
 //=============================================================================
 //
 // Save data maintenance 
@@ -116,24 +118,31 @@ DEFINE_ACTION_FUNCTION(FSavegameManager, RemoveSaveSlot)
 
 int FSavegameManager::InsertSaveNode(FSaveGameNode *node)
 {
-	if (SaveGames.Size() == 0)
-	{
-		return SaveGames.Push(node);
-	}
-
-	if (node->bOldVersion)
+	if (SaveGames.Size() == 0 || node->bOldVersion)
 	{ // Add node at bottom of list
 		return SaveGames.Push(node);
 	}
 	else
 	{	// Add node at top of list
 		unsigned int i = 0;
-		if (!strstr(node->Filename.GetChars(),"auto"))
+		if (!oldsaveorder)
 		{
-			for (i = 0; i < SaveGames.Size(); i++)
+			if (!strstr(node->Filename.GetChars(),"auto"))
 			{
-				//if (SaveGames[i]->bOldVersion || node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0)
-				if (!strstr(SaveGames[i]->Filename.GetChars(),"auto") && node->Filename.CompareNoCase(SaveGames[i]->Filename) >= 0)
+				for (i; i < SaveGames.Size(); i++)
+				{
+					if (!strstr(SaveGames[i]->Filename.GetChars(),"auto") && node->Filename.CompareNoCase(SaveGames[i]->Filename) >= 0)
+					{
+						break;
+					}
+				}
+			}
+		}
+		else
+		{
+			for (i; i < SaveGames.Size(); i++)
+			{
+				if (SaveGames[i]->bOldVersion || node->SaveTitle.CompareNoCase(SaveGames[i]->SaveTitle) <= 0)
 				{
 					break;
 				}

@@ -268,27 +268,22 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 	}
 
 	// save viewpoint
-	savedViewPos = r_viewpoint.Pos;
-	savedViewActorPos = r_viewpoint.ActorPos;
-	savedshowviewer = r_viewpoint.showviewer;
-	savedAngles = r_viewpoint.Angles;
-	savedviewactor=GLRenderer->mViewActor;
-	savedviewpath[0] = r_viewpoint.Path[0];
-	savedviewpath[1] = r_viewpoint.Path[1];
+	savedviewpoint = r_viewpoint;
 	savedvisibility = r_viewpoint.camera ? r_viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
 
 
 	PrevPortal = GLRenderer->mCurrentPortal;
 	GLRenderer->mCurrentPortal = this;
 
-	if (PrevPortal != NULL) PrevPortal->PushState();
+	if (PrevPortal != nullptr) PrevPortal->PushState();
 	return true;
 }
 
 
 inline void GLPortal::ClearClipper(FDrawInfo *di)
 {
-	DAngle angleOffset = deltaangle(savedAngles.Yaw, r_viewpoint.Angles.Yaw);
+	FRenderViewpoint &oldvp = savedviewpoint;
+	DAngle angleOffset = deltaangle(oldvp.Angles.Yaw, r_viewpoint.Angles.Yaw);
 
 	di->mClipper->Clear();
 
@@ -296,8 +291,8 @@ inline void GLPortal::ClearClipper(FDrawInfo *di)
 	di->mClipper->SafeAddClipRange(0,0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
-		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - savedViewPos).Angle() + angleOffset;
-		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - savedViewPos).Angle() + angleOffset;
+		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - oldvp.Pos).Angle() + angleOffset;
+		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - oldvp.Pos).Angle() + angleOffset;
 
 		if (deltaangle(endAngle, startAngle) < 0)
 		{
@@ -323,7 +318,7 @@ void GLPortal::End(bool usestencil)
 	bool needdepth = NeedDepthBuffer();
 
 	Clocker c(PortalAll);
-	if (PrevPortal != NULL) PrevPortal->PopState();
+	if (PrevPortal != nullptr) PrevPortal->PopState();
 	GLRenderer->mCurrentPortal = PrevPortal;
 
 	if (usestencil)
@@ -331,13 +326,7 @@ void GLPortal::End(bool usestencil)
 		if (needdepth) FDrawInfo::EndDrawInfo();
 
 		// Restore the old view
-		r_viewpoint.Path[0] = savedviewpath[0];
-		r_viewpoint.Path[1] = savedviewpath[1];
-		r_viewpoint.Pos = savedViewPos;
-		r_viewpoint.showviewer = savedshowviewer;
-		r_viewpoint.ActorPos = savedViewActorPos;
-		r_viewpoint.Angles = savedAngles;
-		GLRenderer->mViewActor=savedviewactor;
+		r_viewpoint = savedviewpoint;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags = (r_viewpoint.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
@@ -391,11 +380,7 @@ void GLPortal::End(bool usestencil)
 			glDepthMask(true);
 		}
 		// Restore the old view
-		r_viewpoint.showviewer = savedshowviewer;
-		r_viewpoint.ActorPos = savedViewActorPos;
-		r_viewpoint.Pos = savedViewPos;
-		r_viewpoint.Angles = savedAngles;
-		GLRenderer->mViewActor=savedviewactor;
+		r_viewpoint = savedviewpoint;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags |= savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
@@ -472,7 +457,7 @@ void GLPortal::EndFrame(FDrawInfo *outer_di)
 
 	// Only use occlusion query if there are more than 2 portals. 
 	// Otherwise there's too much overhead.
-	// (And don't forget to consider the separating NULL pointers!)
+	// (And don't forget to consider the separating nullptr pointers!)
 	bool usequery = portals.Size() > 2 + (unsigned)renderdepth;
 
 	while (portals.Pop(p) && p)
@@ -508,13 +493,13 @@ void GLPortal::EndFrame(FDrawInfo *outer_di)
 bool GLPortal::RenderFirstSkyPortal(int recursion, FDrawInfo *outer_di)
 {
 	GLPortal * p;
-	GLPortal * best = NULL;
+	GLPortal * best = nullptr;
 	unsigned bestindex=0;
 
 	// Find the one with the highest amount of lines.
 	// Normally this is also the one that saves the largest amount
 	// of time by drawing it before the scene itself.
-	for(int i = portals.Size()-1; i >= 0 && portals[i] != NULL; --i)
+	for(int i = portals.Size()-1; i >= 0 && portals[i] != nullptr; --i)
 	{
 		p=portals[i];
 		if (p->lines.Size() > 0 && p->IsSky())
@@ -552,7 +537,7 @@ GLPortal * GLPortal::FindPortal(const void * src)
 	int i=portals.Size()-1;
 
 	while (i>=0 && portals[i] && portals[i]->GetSource()!=src) i--;
-	return i>=0? portals[i]:NULL;
+	return i>=0? portals[i]:nullptr;
 }
 
 
@@ -601,7 +586,7 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 	if (r_viewpoint.Pos.Z < floorh + 4) r_viewpoint.Pos.Z = floorh + 4;
 	if (r_viewpoint.Pos.Z > ceilh - 4) r_viewpoint.Pos.Z = ceilh - 4;
 
-	GLRenderer->mViewActor = origin;
+	r_viewpoint.ViewActor = origin;
 
 	inskybox = true;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
@@ -639,7 +624,7 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 
 GLSectorStackPortal *FSectorPortalGroup::GetRenderState()
 {
-	if (glportal == NULL) glportal = new GLSectorStackPortal(this);
+	if (glportal == nullptr) glportal = new GLSectorStackPortal(this);
 	return glportal;
 }
 
@@ -647,9 +632,9 @@ GLSectorStackPortal *FSectorPortalGroup::GetRenderState()
 
 GLSectorStackPortal::~GLSectorStackPortal()
 {
-	if (origin != NULL && origin->glportal == this)
+	if (origin != nullptr && origin->glportal == this)
 	{
-		origin->glportal = NULL;
+		origin->glportal = nullptr;
 	}
 }
 
@@ -706,7 +691,7 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 
 	r_viewpoint.Pos += origin->mDisplacement;
 	r_viewpoint.ActorPos += origin->mDisplacement;
-	GLRenderer->mViewActor = NULL;
+	r_viewpoint.ViewActor = nullptr;
 
 	// avoid recursions!
 	if (origin->plane != -1) screen->instack[origin->plane]++;
@@ -762,7 +747,7 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 
 	double planez = origin->ZatPoint(r_viewpoint.Pos);
 	r_viewpoint.Pos.Z = 2 * planez - r_viewpoint.Pos.Z;
-	GLRenderer->mViewActor = NULL;
+	r_viewpoint.ViewActor = nullptr;
 	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
 
 	PlaneMirrorFlag++;
@@ -933,7 +918,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 	}
 	r_viewpoint.Angles.Yaw = linedef->Delta().Angle() * 2. - StartAngle;
 
-	GLRenderer->mViewActor = NULL;
+	r_viewpoint.ViewActor = nullptr;
 
 	MirrorFlag++;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
@@ -943,9 +928,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 	angle_t af = drawer->FrustumAngle();
 	if (af<ANGLE_180) di->mClipper->SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs()+af, r_viewpoint.Angles.Yaw.BAMs()-af);
 
-	angle_t a2 = linedef->v1->GetClipAngle();
-	angle_t a1 = linedef->v2->GetClipAngle();
-	di->mClipper->SafeAddClipRange(a1,a2);
+    di->mClipper->SafeAddClipRange(linedef->v1, linedef->v2);
 
 	gl_RenderState.SetClipLine(linedef);
 	gl_RenderState.EnableClipLine(true);
@@ -1014,7 +997,7 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 		di->CurrentMapSections.Set(sub->mapsection);
 	}
 
-	GLRenderer->mViewActor = nullptr;
+	r_viewpoint.ViewActor = nullptr;
 	drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	ClearClipper(di);

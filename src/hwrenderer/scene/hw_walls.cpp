@@ -443,10 +443,11 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 	ztop[1] = ztop[0] = fs->GetPlaneTexZ(sector_t::ceiling);
 	zbottom[1] = zbottom[0] = fs->GetPlaneTexZ(sector_t::floor);
 
-	if (r_viewpoint.Pos.Z < fs->GetPlaneTexZ(sector_t::ceiling))
+    auto vpz = r_viewpoint.Pos.Z;
+	if (vpz < fs->GetPlaneTexZ(sector_t::ceiling))
 	{
-		if (r_viewpoint.Pos.Z > fs->GetPlaneTexZ(sector_t::floor))
-			zbottom[1] = zbottom[0] = r_viewpoint.Pos.Z;
+		if (vpz > fs->GetPlaneTexZ(sector_t::floor))
+			zbottom[1] = zbottom[0] = vpz;
 
 		if (fs->GetTexture(sector_t::ceiling) == skyflatnum)
 		{
@@ -474,7 +475,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 		ztop[1] = ztop[0] = zbottom[0];
 	} 
 
-	if (r_viewpoint.Pos.Z > fs->GetPlaneTexZ(sector_t::floor))
+	if (vpz > fs->GetPlaneTexZ(sector_t::floor))
 	{
 		zbottom[1] = zbottom[0] = fs->GetPlaneTexZ(sector_t::floor);
 		if (fs->GetTexture(sector_t::floor) == skyflatnum)

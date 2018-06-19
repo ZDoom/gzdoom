@@ -154,8 +154,9 @@ void GLWall::SkyPlane(HWDrawInfo *di, sector_t *sector, int plane, bool allowref
 	}
 	else if (allowreflect && sector->GetReflect(plane) > 0)
 	{
-		if ((plane == sector_t::ceiling && r_viewpoint.Pos.Z > sector->ceilingplane.fD()) ||
-			(plane == sector_t::floor && r_viewpoint.Pos.Z < -sector->floorplane.fD())) return;
+        auto vpz = r_viewpoint.Pos.Z;
+		if ((plane == sector_t::ceiling && vpz > sector->ceilingplane.fD()) ||
+			(plane == sector_t::floor && vpz < -sector->floorplane.fD())) return;
 		ptype = PORTALTYPE_PLANEMIRROR;
 		planemirror = plane == sector_t::ceiling ? &sector->ceilingplane : &sector->floorplane;
 	}

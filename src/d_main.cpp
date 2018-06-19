@@ -662,6 +662,7 @@ void D_Display ()
 		players[consoleplayer].camera = players[consoleplayer].mo;
 	}
 
+    auto &vp = r_viewpoint;
 	if (viewactive)
 	{
 		DAngle fov = 90.f;
@@ -672,7 +673,7 @@ void D_Display ()
 				fov = cam->player->FOV;
 			else fov = cam->CameraFOV;
 		}
-		R_SetFOV(r_viewpoint, fov);
+		R_SetFOV(vp, fov);
 	}
 
 	// fullscreen toggle has been requested
@@ -681,7 +682,7 @@ void D_Display ()
 		screen->ToggleFullscreen(fullscreen);
 		V_OutputResized(screen->GetWidth(), screen->GetHeight());
 		setmodeneeded = false;
-	}
+			}
 
 	// change the view size if needed
 	if (setsizeneeded)
@@ -694,8 +695,8 @@ void D_Display ()
 		}
 		else
 		{
-			R_ExecuteSetViewSize (r_viewpoint, r_viewwindow);
-		}
+			R_ExecuteSetViewSize (vp, r_viewwindow);
+	}
 	}
 
 	// [RH] Allow temporarily disabling wipes
@@ -793,7 +794,7 @@ void D_Display ()
 				{
 					StatusBar->DrawCrosshair();
 				}
-				StatusBar->CallDraw (HUD_AltHud);
+				StatusBar->CallDraw (HUD_AltHud, vp.TicFrac);
 				StatusBar->DrawTopStuff (HUD_AltHud);
 			}
 			else 
@@ -801,13 +802,13 @@ void D_Display ()
 			{
 				EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
 				StatusBar->DrawBottomStuff (state);
-				StatusBar->CallDraw (state);
+				StatusBar->CallDraw (state, vp.TicFrac);
 				StatusBar->DrawTopStuff (state);
 			}
 			else
 			{
 				StatusBar->DrawBottomStuff (HUD_StatusBar);
-				StatusBar->CallDraw (HUD_StatusBar);
+				StatusBar->CallDraw (HUD_StatusBar, vp.TicFrac);
 				StatusBar->DrawTopStuff (HUD_StatusBar);
 			}
 			//stb.Unclock();

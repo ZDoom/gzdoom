@@ -314,27 +314,3 @@ void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame
 		}
 	}
 }
-
-//===========================================================================
-//
-// gl_RenderModel
-//
-//===========================================================================
-
-void gl_RenderModel(GLSprite * spr, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor);
-}
-
-//===========================================================================
-//
-// gl_RenderHUDModel
-//
-//===========================================================================
-
-void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderHUDModel(psp, ofsX, ofsY);
-}

@@ -148,12 +148,13 @@ void GLSceneDrawer::Set3DViewport(bool mainview)
 
 void GLSceneDrawer::SetViewAngle(DAngle viewangle)
 {
+	FRenderViewpoint &vp = r_viewpoint;
 	GLRenderer->mAngles.Yaw = float(270.0-viewangle.Degrees);
-	DVector2 v = r_viewpoint.Angles.Yaw.ToVector();
-	GLRenderer->mViewVector.X = v.X;
-	GLRenderer->mViewVector.Y = v.Y;
+	DVector2 v = vp.Angles.Yaw.ToVector();
+	vp.ViewVector.X = v.X;
+	vp.ViewVector.Y = v.Y;
 
-	R_SetViewAngle(r_viewpoint, r_viewwindow);
+	vp.SetViewAngle(r_viewwindow);
 }
 	
 
@@ -235,8 +236,6 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	 
 	di->mAngles = GLRenderer->mAngles;
-	di->mViewVector = GLRenderer->mViewVector;
-	di->mViewActor = GLRenderer->mViewActor;
 	di->mShadowMap = &GLRenderer->mShadowMap;
 
 	di->RenderBSPNode (level.HeadNode());
@@ -560,14 +559,14 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 	GLRenderer->mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
 	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
 
-	if (camera->player && camera->player-players==consoleplayer &&
-		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera==camera->player->mo)
+	if (camera->player && camera->player - players == consoleplayer &&
+		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera == camera->player->mo)
 	{
-		GLRenderer->mViewActor=NULL;
+		r_viewpoint.ViewActor = nullptr;
 	}
 	else
 	{
-		GLRenderer->mViewActor=camera;
+		r_viewpoint.ViewActor = camera;
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.

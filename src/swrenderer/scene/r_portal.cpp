@@ -172,7 +172,7 @@ namespace swrenderer
 			Thread->Viewport->viewpoint.camera = nullptr;
 			Thread->Viewport->viewpoint.sector = port->mDestination;
 			assert(Thread->Viewport->viewpoint.sector != nullptr);
-			R_SetViewAngle(Thread->Viewport->viewpoint, Thread->Viewport->viewwindow);
+			Thread->Viewport->viewpoint.SetViewAngle(Thread->Viewport->viewwindow);
 			Thread->Viewport->SetupPolyViewport(Thread);
 			Thread->OpaquePass->ClearSeenSprites();
 			Thread->Clip3D->ClearFakeFloors();
@@ -260,7 +260,7 @@ namespace swrenderer
 		Thread->Light->SetVisibility(Thread->Viewport.get(), savedvisibility);
 		Thread->Viewport->viewpoint.extralight = savedextralight;
 		Thread->Viewport->viewpoint.Angles = savedangles;
-		R_SetViewAngle(Thread->Viewport->viewpoint, Thread->Viewport->viewwindow);
+		Thread->Viewport->viewpoint.SetViewAngle(Thread->Viewport->viewwindow);
 		Thread->Viewport->SetupPolyViewport(Thread);
 
 		CurrentPortalInSkybox = false;

@@ -427,7 +427,7 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 	player_t * player = playermo->player;
 	const bool hudModelStep = IsHUDModelForPlayerAvailable(player);
     
-    auto &vp = r_viewpoint;
+    const auto &vp = Viewpoint;
 
 	AActor *camera = vp.camera;
 
@@ -507,7 +507,7 @@ void HWDrawInfo::PrepareTargeterSprites()
 {
 	AActor * playermo = players[consoleplayer].camera;
 	player_t * player = playermo->player;
-	AActor *camera = r_viewpoint.camera;
+	AActor *camera = Viewpoint.camera;
 
 	// this is the same as above
 	if (!player ||

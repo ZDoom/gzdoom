@@ -306,7 +306,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	dynlightindex = -1;
 
 	uint8_t &srf = di->sectorrenderflags[sector->sectornum];
-    auto &vp = r_viewpoint;
+    const auto &vp = di->Viewpoint;
 
 	//
 	//

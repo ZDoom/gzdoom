@@ -63,7 +63,7 @@ void FDrawInfo::DoDrawSorted(HWDrawList *dl, SortNode * head)
 	if (dl->drawitems[head->itemindex].rendertype == GLDIT_FLAT)
 	{
 		z = dl->flats[dl->drawitems[head->itemindex].index]->z;
-		relation = z > r_viewpoint.Pos.Z ? 1 : -1;
+		relation = z > Viewpoint.Pos.Z ? 1 : -1;
 	}
 
 
@@ -190,13 +190,14 @@ FDrawInfo::~FDrawInfo()
 // OpenGL has no use for multiple clippers so use the same one for all DrawInfos.
 static Clipper staticClipper;
 
-FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
+FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer, FRenderViewpoint &parentvp)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mDrawer = drawer;
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
-    di->mClipper->SetViewpoint(r_viewpoint);
+	di->Viewpoint = parentvp;
+    di->mClipper->SetViewpoint(di->Viewpoint);
 	staticClipper.Clear();
 	di->StartScene();
 	return di;
@@ -224,7 +225,7 @@ void FDrawInfo::StartScene()
 //
 //
 //==========================================================================
-void FDrawInfo::EndDrawInfo()
+FDrawInfo *FDrawInfo::EndDrawInfo()
 {
 	FDrawInfo * di = gl_drawinfo;
 
@@ -233,6 +234,7 @@ void FDrawInfo::EndDrawInfo()
 	di_list.Release(di);
 	if (gl_drawinfo == nullptr) 
 		ResetRenderDataAllocator();
+	return gl_drawinfo;
 }
 
 
@@ -342,9 +344,9 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
-	float fviewx = r_viewpoint.Pos.X;
-	float fviewy = r_viewpoint.Pos.Y;
-	float fviewz = r_viewpoint.Pos.Z;
+	float fviewx = Viewpoint.Pos.X;
+	float fviewy = Viewpoint.Pos.Y;
+	float fviewz = Viewpoint.Pos.Z;
 
 	gl_RenderState.SetPlaneTextureRotation(&plane, gltexture);
 	gl_RenderState.Apply();
@@ -395,7 +397,7 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 	double frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
 
 	if (fakebsector->GetTexture(sector_t::ceiling)==skyflatnum) return;
-	if (backz < r_viewpoint.Pos.Z) return;
+	if (backz < Viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -448,7 +450,7 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;
-	if (fakebsector->GetPlaneTexZ(sector_t::floor) > r_viewpoint.Pos.Z) return;
+	if (fakebsector->GetPlaneTexZ(sector_t::floor) > Viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{

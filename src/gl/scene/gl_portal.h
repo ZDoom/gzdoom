@@ -72,7 +72,6 @@ private:
 
 	AActor * savedviewactor;
 	ActorRenderFlags savedvisibility;
-	FRenderViewpoint savedviewpoint;
 	GLPortal *PrevPortal;
 	TArray<unsigned int> mPrimIndices;
 
@@ -84,7 +83,7 @@ protected:
 	virtual ~GLPortal() { }
 
 	bool Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawInfo **pDi);
-	void End(bool usestencil);
+	void End(FDrawInfo *di, bool usestencil);
 	virtual void DrawContents(FDrawInfo *di)=0;
 	virtual void * GetSource() const =0;	// GetSource MUST be implemented!
 	void ClearClipper(FDrawInfo *di);
@@ -107,7 +106,7 @@ public:
 		if (Start(usestencil, doquery, outer_di, &di))
 		{
 			DrawContents(di);
-			End(usestencil);
+			End(di, usestencil);
 		}
 	}
 
@@ -179,7 +178,7 @@ struct GLLinePortal : public GLPortal
 		return reinterpret_cast<line_t*>(pv);
 	}
 
-	virtual int ClipSeg(seg_t *seg);
+	virtual int ClipSeg(seg_t *seg, const DVector3 &viewpos);
 	virtual int ClipSubsector(subsector_t *sub);
 	virtual int ClipPoint(const DVector2 &pos);
 	virtual bool NeedCap() { return false; }
@@ -335,7 +334,7 @@ protected:
 
 public:
 	
-	GLHorizonPortal(GLHorizonInfo * pt, bool local = false);
+	GLHorizonPortal(GLHorizonInfo * pt, FRenderViewpoint &vp, bool local = false);
 };
 
 struct GLEEHorizonPortal : public GLPortal

@@ -598,7 +598,8 @@ void R_ResetViewInterpolation ()
 
 //==========================================================================
 //
-// R_SetViewAngle
+// R_SetViewAngle 
+// sets all values derived from the view angle.
 //
 //==========================================================================
 
@@ -609,6 +610,12 @@ void FRenderViewpoint::SetViewAngle (const FViewWindow &viewwindow)
 
 	TanSin = viewwindow.FocalTangent * Sin;
 	TanCos = viewwindow.FocalTangent * Cos;
+
+	DVector2 v = Angles.Yaw.ToVector();
+	ViewVector.X = v.X;
+	ViewVector.Y = v.Y;
+	HWAngles.Yaw = float(270.0 - Angles.Yaw.Degrees);
+
 }
 
 //==========================================================================

@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include "r_defs.h"
+#include "r_utility.h"
 
 
 struct FSectorPortalGroup;
@@ -94,9 +95,10 @@ struct HWDrawInfo
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
 	IPortal *mClipPortal;
-	FRotator mAngles;
+	//FRotator mAngles;
 	IShadowMap *mShadowMap;
 	Clipper *mClipper;
+	FRenderViewpoint Viewpoint;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -186,6 +188,7 @@ public:
 	void PrepareTargeterSprites();
 
 	void UpdateCurrentMapSection();
+	angle_t FrustumAngle();
 
 	virtual void DrawWall(GLWall *wall, int pass) = 0;
 	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;

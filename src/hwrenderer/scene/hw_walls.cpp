@@ -169,7 +169,7 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 	if (translucent)
 	{
 		flags |= GLWF_TRANSLUCENT;
-		ViewDistance = (r_viewpoint.Pos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
+		ViewDistance = (di->Viewpoint.Pos - (seg->linedef->v1->fPos() + seg->linedef->Delta() / 2)).XY().LengthSquared();
 	}
 	
 	if (di->isFullbrightScene())
@@ -443,7 +443,7 @@ bool GLWall::DoHorizon(HWDrawInfo *di, seg_t * seg,sector_t * fs, vertex_t * v1,
 	ztop[1] = ztop[0] = fs->GetPlaneTexZ(sector_t::ceiling);
 	zbottom[1] = zbottom[0] = fs->GetPlaneTexZ(sector_t::floor);
 
-    auto vpz = r_viewpoint.Pos.Z;
+    auto vpz = di->Viewpoint.Pos.Z;
 	if (vpz < fs->GetPlaneTexZ(sector_t::ceiling))
 	{
 		if (vpz > fs->GetPlaneTexZ(sector_t::floor))

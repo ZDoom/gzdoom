@@ -394,7 +394,7 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 //-----------------------------------------------------------------------------
 void HWDrawInfo::SetViewArea()
 {
-    auto &vp = r_viewpoint;
+    auto &vp = Viewpoint;
 	// The render_sector is better suited to represent the current position in GL
 	vp.sector = R_PointInSubsector(vp.Pos)->render_sector;
 
@@ -424,7 +424,7 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 		if (cplayer->extralight == INT_MIN)
 		{
 			cm = CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
-			r_viewpoint.extralight = 0;
+			Viewpoint.extralight = 0;
 			FullbrightFlags = Fullbright;
 			// This does never set stealth vision.
 		}
@@ -463,3 +463,24 @@ int HWDrawInfo::SetFullbrightFlags(player_t *player)
 		return CM_DEFAULT;
 	}
 }
+
+//-----------------------------------------------------------------------------
+//
+// R_FrustumAngle
+//
+//-----------------------------------------------------------------------------
+angle_t HWDrawInfo::FrustumAngle()
+{
+	float tilt = fabs(Viewpoint.HWAngles.Pitch.Degrees);
+
+	// If the pitch is larger than this you can look all around at a FOV of 90°
+	if (tilt > 46.0f) return 0xffffffff;
+
+	// ok, this is a gross hack that barely works...
+	// but at least it doesn't overestimate too much...
+	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*Viewpoint.FieldOfView.Degrees*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
+	angle_t a1 = DAngle(floatangle).BAMs();
+	if (a1 >= ANGLE_180) return 0xffffffff;
+	return a1;
+}
+

@@ -212,6 +212,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 void GLSkyPortal::DrawContents(FDrawInfo *di)
 {
 	bool drawBoth = false;
+	auto &vp = di->Viewpoint;
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
 	int oldlightmode = ::level.lightmode;
@@ -229,7 +230,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
 	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
-	drawer->SetupView(0, 0, 0, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	drawer->SetupView(vp, 0, 0, 0, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)

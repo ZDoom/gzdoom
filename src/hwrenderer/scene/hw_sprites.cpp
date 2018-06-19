@@ -70,6 +70,7 @@ EXTERN_CVAR(Float, transsouls)
 
 bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 {
+	const auto &HWAngles = di->Viewpoint.HWAngles;
 	if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 	{
 		Matrix3x4 mat;
@@ -149,7 +150,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			float xrel = xcenter - vp->X;
 			float yrel = ycenter - vp->Y;
 			float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
-			float counterRotationDeg = 270. - di->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
+			float counterRotationDeg = 270. - HWAngles.Yaw.Degrees; // counteracts existing sprite rotation
 			float relAngleDeg = counterRotationDeg + absAngleDeg;
 
 			mat.Rotate(0, 1, 0, relAngleDeg);
@@ -157,7 +158,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 
 		// [fgsfds] calculate yaw vectors
 		float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
-		float angleRad = (270. - di->mAngles.Yaw).Radians();
+		float angleRad = (270. - HWAngles.Yaw).Radians();
 		if (actor)	rollDegrees = Angles.Roll.Degrees;
 		if (isFlatSprite)
 		{
@@ -181,7 +182,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			if (useOffsets) mat.Translate(xx, zz, yy);
 			if (drawWithXYBillboard)
 			{
-				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -di->mAngles.Pitch.Degrees);
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees);
 			}
 			mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
 			if (useOffsets) mat.Translate(-xx, -zz, -yy);
@@ -191,7 +192,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
 			// in the x/y plane.
-			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -di->mAngles.Pitch.Degrees);
+			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees);
 		}
 
 		mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
@@ -403,7 +404,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		return;
 	}
 
-    auto &vp = r_viewpoint;
+    const auto &vp = di->Viewpoint;
 	AActor *camera = vp.camera;
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
@@ -924,7 +925,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		}
 	}
 
-    auto &vp = r_viewpoint;
+    const auto &vp = di->Viewpoint;
 	double timefrac = vp.TicFrac;
 	if (paused || bglobal.freeze || (level.flags2 & LEVEL2_FROZEN))
 		timefrac = 0.;
@@ -982,7 +983,7 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 	TMap<AActor*, bool> processcheck;
 	if (glport->validcount == validcount) return;	// only process once per frame
 	glport->validcount = validcount;
-    auto &vp = r_viewpoint;
+    const auto &vp = Viewpoint;
 	for (auto port : glport->lines)
 	{
 		line_t *line = port->mOrigin;

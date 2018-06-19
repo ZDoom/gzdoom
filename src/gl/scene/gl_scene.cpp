@@ -74,26 +74,6 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 
 //-----------------------------------------------------------------------------
 //
-// R_FrustumAngle
-//
-//-----------------------------------------------------------------------------
-angle_t GLSceneDrawer::FrustumAngle()
-{
-	float tilt = fabs(GLRenderer->mAngles.Pitch.Degrees);
-
-	// If the pitch is larger than this you can look all around at a FOV of 90°
-	if (tilt > 46.0f) return 0xffffffff;
-
-	// ok, this is a gross hack that barely works...
-	// but at least it doesn't overestimate too much...
-	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*GLRenderer->mCurrentFoV*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
-	angle_t a1 = DAngle(floatangle).BAMs();
-	if (a1 >= ANGLE_180) return 0xffffffff;
-	return a1;
-}
-
-//-----------------------------------------------------------------------------
-//
 // resets the 3D viewport
 //
 //-----------------------------------------------------------------------------
@@ -142,24 +122,6 @@ void GLSceneDrawer::Set3DViewport(bool mainview)
 
 //-----------------------------------------------------------------------------
 //
-// Setup the camera position
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::SetViewAngle(DAngle viewangle)
-{
-	FRenderViewpoint &vp = r_viewpoint;
-	GLRenderer->mAngles.Yaw = float(270.0-viewangle.Degrees);
-	DVector2 v = vp.Angles.Yaw.ToVector();
-	vp.ViewVector.X = v.X;
-	vp.ViewVector.Y = v.Y;
-
-	vp.SetViewAngle(r_viewwindow);
-}
-	
-
-//-----------------------------------------------------------------------------
-//
 // SetProjection
 // sets projection matrix
 //
@@ -177,15 +139,15 @@ void GLSceneDrawer::SetProjection(VSMatrix matrix)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror)
+void GLSceneDrawer::SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	float mult = mirror? -1:1;
 	float planemult = planemirror? -level.info->pixelstretch : level.info->pixelstretch;
 
 	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Yaw.Degrees,   0.0f, mult, 0.0f);
+	gl_RenderState.mViewMatrix.rotate(angles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
+	gl_RenderState.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
+	gl_RenderState.mViewMatrix.rotate(angles.Yaw.Degrees,   0.0f, mult, 0.0f);
 	gl_RenderState.mViewMatrix.translate(vx * mult, -vz * planemult , -vy);
 	gl_RenderState.mViewMatrix.scale(-mult, planemult, 1);
 }
@@ -197,10 +159,10 @@ void GLSceneDrawer::SetViewMatrix(float vx, float vy, float vz, bool mirror, boo
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void GLSceneDrawer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
+void GLSceneDrawer::SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
 {
-	SetViewAngle(va);
-	SetViewMatrix(vx, vy, vz, mirror, planemirror);
+	vp.SetViewAngle(r_viewwindow);
+	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
 	gl_RenderState.ApplyMatrices();
 }
 
@@ -214,8 +176,9 @@ void GLSceneDrawer::SetupView(float vx, float vy, float vz, DAngle va, bool mirr
 
 void GLSceneDrawer::CreateScene(FDrawInfo *di)
 {
-	angle_t a1 = FrustumAngle();
-	di->mClipper->SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
+	const auto &vp = di->Viewpoint;
+	angle_t a1 = di->FrustumAngle();
+	di->mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
 
 	// reset the portal manager
 	GLPortal::StartFrame();
@@ -230,16 +193,15 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	GLRenderer->mLights->Begin();
 
 	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
-	di->viewx = FLOAT2FIXED(r_viewpoint.Pos.X);
-	di->viewy = FLOAT2FIXED(r_viewpoint.Pos.Y);
+	di->viewx = FLOAT2FIXED(vp.Pos.X);
+	di->viewy = FLOAT2FIXED(vp.Pos.Y);
 
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	 
-	di->mAngles = GLRenderer->mAngles;
 	di->mShadowMap = &GLRenderer->mShadowMap;
 
 	di->RenderBSPNode (level.HeadNode());
-	di->PreparePlayerSprites(r_viewpoint.sector, di->in_area);
+	di->PreparePlayerSprites(vp.sector, di->in_area);
 
 	// Process all the sprites on the current portal's back side which touch the portal.
 	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached(di);
@@ -269,12 +231,13 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 
 void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 {
+	const auto &vp = di->Viewpoint;
 	RenderAll.Clock();
 
 	glDepthMask(true);
 	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion, di);
 
-	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
+	gl_RenderState.SetCameraPos(vp.Pos.X, vp.Pos.Y, vp.Pos.Z);
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
@@ -379,9 +342,11 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 
 void GLSceneDrawer::RenderTranslucent(FDrawInfo *di)
 {
+	const auto &vp = di->Viewpoint;
+
 	RenderAll.Clock();
 
-	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
+	gl_RenderState.SetCameraPos(vp.Pos.X, vp.Pos.Y, vp.Pos.Z);
 
 	// final pass: translucent stuff
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
@@ -414,6 +379,7 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 {
 	static int recursion=0;
 	static int ssao_portals_available = 0;
+	const auto &vp = di->Viewpoint;
 
 	bool applySSAO = false;
 	if (drawmode == DM_MAINVIEW)
@@ -431,11 +397,11 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 		ssao_portals_available--;
 	}
 
-	if (r_viewpoint.camera != nullptr)
+	if (vp.camera != nullptr)
 	{
-		ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
+		ActorRenderFlags savedflags = vp.camera->renderflags;
 		CreateScene(di);
-		r_viewpoint.camera->renderflags = savedflags;
+		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
@@ -527,7 +493,7 @@ void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	GLPortal::BeginScene();
 
-	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
+	int mapsection = R_PointInSubsector(di->Viewpoint.Pos)->mapsection;
 	di->CurrentMapSections.Set(mapsection);
 	GLRenderer->mCurrentPortal = nullptr;
 	DrawScene(di, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
@@ -540,37 +506,37 @@ void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
 //
 //-----------------------------------------------------------------------------
 
-sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
+sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {       
 	sector_t * lviewsector;
 	GLRenderer->mSceneClearColor[0] = 0.0f;
 	GLRenderer->mSceneClearColor[1] = 0.0f;
 	GLRenderer->mSceneClearColor[2] = 0.0f;
-	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
+	R_SetupFrame (mainvp, r_viewwindow, camera);
 
 	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
 
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = r_viewpoint.Angles.Pitch.Normalized180().Radians();
+	double radPitch = mainvp.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * level.info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
 
-	GLRenderer->mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
-	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
+	mainvp.HWAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
+	mainvp.HWAngles.Roll.Degrees = mainvp.Angles.Roll.Degrees;
 
 	if (camera->player && camera->player - players == consoleplayer &&
 		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera == camera->player->mo)
 	{
-		r_viewpoint.ViewActor = nullptr;
+		mainvp.ViewActor = nullptr;
 	}
 	else
 	{
-		r_viewpoint.ViewActor = camera;
+		mainvp.ViewActor = camera;
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
-	lviewsector = r_viewpoint.sector;
+	lviewsector = mainvp.sector;
 
 	// Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
@@ -583,20 +549,21 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 		screen->SetViewportRects(bounds);
 		Set3DViewport(mainview);
 		GLRenderer->mDrawingScene2D = true;
-		GLRenderer->mCurrentFoV = fov;
 
-		FDrawInfo *di = FDrawInfo::StartDrawInfo(this);
+		FDrawInfo *di = FDrawInfo::StartDrawInfo(this, mainvp);
+		auto vp = di->Viewpoint;
 		di->SetViewArea();
-		auto cm =  di->SetFullbrightFlags(mainview ? r_viewpoint.camera->player : nullptr);
+		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
+		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
-		SetViewAngle(r_viewpoint.Angles.Yaw);
+		vp.SetViewAngle(r_viewwindow);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
-		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
-		ScopedViewShifter viewShifter(r_viewpoint.Pos, viewShift);
-		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
+		eye->GetViewShift(vp.HWAngles.Yaw.Degrees, viewShift);
+		ScopedViewShifter viewShifter(vp.Pos, viewShift);
+		SetViewMatrix(vp.HWAngles, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
 		ProcessScene(di, toscreen);
@@ -617,7 +584,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 				gl_RenderState.ApplyMatrices();
 			}
 		}
-		FDrawInfo::EndDrawInfo();
+		di->EndDrawInfo();
 		GLRenderer->mDrawingScene2D = false;
 		if (!stereo3dMode.IsMono())
 			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
@@ -654,7 +621,9 @@ void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width,
 	GLRenderer->mVBO->Reset();
 	GLRenderer->mLights->Clear();
 
-	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+	// This shouldn't overwrite the global viewpoint even for a short time.
+	FRenderViewpoint savevp;
+	sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
 	glDisable(GL_STENCIL_TEST);
 	gl_RenderState.SetSoftLightLevel(-1);
 	GLRenderer->CopyToBackbuffer(&bounds, false);

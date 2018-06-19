@@ -349,7 +349,7 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 	case PORTALTYPE_HORIZON:
 		wall->horizon = UniqueHorizons.Get(wall->horizon);
 		portal = GLPortal::FindPortal(wall->horizon);
-		if (!portal) portal = new GLHorizonPortal(wall->horizon);
+		if (!portal) portal = new GLHorizonPortal(wall->horizon, Viewpoint);
 		portal->AddLine(wall);
 		break;
 

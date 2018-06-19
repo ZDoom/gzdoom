@@ -106,8 +106,8 @@ struct FDrawInfo : public HWDrawInfo
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
 
-	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer);
-	static void EndDrawInfo();
+	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer, FRenderViewpoint &parentvp);
+	FDrawInfo *EndDrawInfo();
 	
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
 	{

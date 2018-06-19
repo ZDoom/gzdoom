@@ -79,7 +79,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	bool additivefog = false;
 	bool foglayer = false;
 	int rel = sprite->fullbright? 0 : getExtraLight();
-    auto &vp = r_viewpoint;
+    auto &vp = Viewpoint;
 
 	if (pass==GLPASS_TRANSLUCENT)
 	{

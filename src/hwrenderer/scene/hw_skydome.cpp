@@ -289,7 +289,7 @@ void FSkyDomeCreator::SetupMatrices(FMaterial *tex, float x_offset, float y_offs
 		// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
 		modelMatrix.translate(0.f, -1250.f, 0.f);
 		modelMatrix.scale(1.f, 128 / 230.f, 1.f);
-		yscale = 128 / texh;	// intentionally left as integer.
+		yscale = float(128 / texh);	// intentionally left as integer.
 	}
 	else if (texh < 200)
 	{

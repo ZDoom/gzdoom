@@ -89,7 +89,7 @@ void HWDrawInfo::AddLine (seg_t *seg, bool portalclip)
 
 	if (portalclip)
 	{
-		int clipres = mClipPortal->ClipSeg(seg);
+		int clipres = mClipPortal->ClipSeg(seg, Viewpoint.Pos);
 		if (clipres == PClip_InFront) return;
 	}
 
@@ -353,7 +353,7 @@ void HWDrawInfo::RenderThings(subsector_t * sub, sector_t * sector)
 	SetupSprite.Clock();
 	sector_t * sec=sub->sector;
 	// Handle all things in sector.
-    auto &vp = r_viewpoint;
+    const auto &vp = Viewpoint;
 	for (auto p = sec->touching_renderthings; p != nullptr; p = p->m_snext)
 	{
 		auto thing = p->m_thing;

@@ -461,7 +461,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// don't draw first frame of a player missile
 	if (thing->flags&MF_MISSILE)
 	{
-		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == di->mViewActor && di->mViewActor != nullptr)
+		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == vp.ViewActor && vp.ViewActor != nullptr)
 		{
 			double speed = thing->Vel.Length();
 			if (speed >= thing->target->radius / 2)

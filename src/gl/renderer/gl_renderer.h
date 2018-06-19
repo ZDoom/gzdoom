@@ -93,7 +93,6 @@ public:
 	int mMirrorCount;
 	int mPlaneMirrorCount;
 	float mCurrentFoV;
-	AActor *mViewActor;
 	FShaderManager *mShaderManager;
 	FSamplerManager *mSamplerManager;
 	unsigned int mFBID;

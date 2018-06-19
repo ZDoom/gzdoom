@@ -236,7 +236,6 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	 
 	di->mAngles = GLRenderer->mAngles;
-	di->mViewActor = GLRenderer->mViewActor;
 	di->mShadowMap = &GLRenderer->mShadowMap;
 
 	di->RenderBSPNode (level.HeadNode());
@@ -633,14 +632,14 @@ sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, fl
 	GLRenderer->mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
 	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
 
-	if (camera->player && camera->player-players==consoleplayer &&
-		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera==camera->player->mo)
+	if (camera->player && camera->player - players == consoleplayer &&
+		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera == camera->player->mo)
 	{
-		GLRenderer->mViewActor=NULL;
+		r_viewpoint.ViewActor = nullptr;
 	}
 	else
 	{
-		GLRenderer->mViewActor=camera;
+		r_viewpoint.ViewActor = camera;
 	}
 
 	// 'viewsector' will not survive the rendering so it cannot be used anymore below.

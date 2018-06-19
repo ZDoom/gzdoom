@@ -22,6 +22,7 @@ struct FRenderViewpoint
 	DVector3		ActorPos;		// Camera actor's position
 	DRotator		Angles;			// Camera angles
 	DVector2		ViewVector;		// HWR only: direction the camera is facing.
+	AActor			*ViewActor;		// either the same as camera or nullptr
 
 	DVector3		Path[2];		// View path for portal calculations
 	double			Cos;			// cos(Angles.Yaw)

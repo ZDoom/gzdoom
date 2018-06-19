@@ -84,7 +84,6 @@ struct HWDrawInfo
 	std::atomic<int> spriteindex;
 	IPortal *mClipPortal;
 	FRotator mAngles;
-	AActor *mViewActor;
 	IShadowMap *mShadowMap;
 	Clipper *mClipper;
 

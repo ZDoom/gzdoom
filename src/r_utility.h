@@ -5,6 +5,7 @@
 #include "vectors.h"
 
 class FSerializer;
+struct FViewWindow;
 //
 // Stuff from r_main.h that's needed outside the rendering code.
 
@@ -36,6 +37,10 @@ struct FRenderViewpoint
 	
 	int				extralight;		// extralight to be added to this viewpoint
 	bool			showviewer;		// show the camera actor?
+
+
+	void SetViewAngle(const FViewWindow &viewwindow);
+
 };
 
 extern FRenderViewpoint r_viewpoint;

@@ -148,12 +148,13 @@ void GLSceneDrawer::Set3DViewport(bool mainview)
 
 void GLSceneDrawer::SetViewAngle(DAngle viewangle)
 {
+	FRenderViewpoint &vp = r_viewpoint;
 	GLRenderer->mAngles.Yaw = float(270.0-viewangle.Degrees);
-	DVector2 v = r_viewpoint.Angles.Yaw.ToVector();
+	DVector2 v = vp.Angles.Yaw.ToVector();
 	GLRenderer->mViewVector.X = v.X;
 	GLRenderer->mViewVector.Y = v.Y;
 
-	R_SetViewAngle(r_viewpoint, r_viewwindow);
+	vp.SetViewAngle(r_viewwindow);
 }
 	
 

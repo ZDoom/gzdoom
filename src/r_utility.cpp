@@ -602,13 +602,13 @@ void R_ResetViewInterpolation ()
 //
 //==========================================================================
 
-void R_SetViewAngle (FRenderViewpoint &viewpoint, const FViewWindow &viewwindow)
+void FRenderViewpoint::SetViewAngle (const FViewWindow &viewwindow)
 {
-	viewpoint.Sin = viewpoint.Angles.Yaw.Sin();
-	viewpoint.Cos = viewpoint.Angles.Yaw.Cos();
+	Sin = Angles.Yaw.Sin();
+	Cos = Angles.Yaw.Cos();
 
-	viewpoint.TanSin = viewwindow.FocalTangent * viewpoint.Sin;
-	viewpoint.TanCos = viewwindow.FocalTangent * viewpoint.Cos;
+	TanSin = viewwindow.FocalTangent * Sin;
+	TanCos = viewwindow.FocalTangent * Cos;
 }
 
 //==========================================================================
@@ -844,7 +844,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	}
 	R_InterpolateView (viewpoint, player, viewpoint.TicFrac, iview);
 
-	R_SetViewAngle (viewpoint, viewwindow);
+	viewpoint.SetViewAngle (viewwindow);
 
 	interpolator.DoInterpolations (viewpoint.TicFrac);
 

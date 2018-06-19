@@ -2,6 +2,7 @@
 #include "v_video.h"
 #include "hw_postprocess.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 
 Postprocess hw_postprocess;
 
@@ -45,15 +46,14 @@ void PPBloom::UpdateTextures(int width, int height)
 
 void PPBloom::UpdateSteps(int fixedcm)
 {
-	TArray<PPStep> steps;
-
 	// Only bloom things if enabled and no special fixed light mode is active
 	if (!gl_bloom || fixedcm != CM_DEFAULT || gl_ssao_debug)
 	{
-		hw_postprocess.Effects["BloomScene"] = steps;
+		hw_postprocess.Effects["BloomScene"] = {};
 		return;
 	}
 
+	TArray<PPStep> steps;
 	PPStep step;
 
 	ExtractUniforms extractUniforms;
@@ -68,7 +68,7 @@ void PPBloom::UpdateSteps(int fixedcm)
 	step.ShaderName = "BloomExtract";
 	step.Uniforms.Set(extractUniforms);
 	step.SetOutputTexture(level0.VTexture);
-	step.SetDisabledBlend();
+	step.SetNoBlend();
 	steps.Push(step);
 
 	const float blurAmount = gl_bloom_amount;
@@ -123,7 +123,7 @@ PPStep PPBloom::BlurStep(const BlurUniforms &blurUniforms, PPTextureName input, 
 	step.ShaderName = vertical ? "BlurVertical" : "BlurHorizontal";
 	step.Uniforms.Set(blurUniforms);
 	step.SetOutputTexture(output);
-	step.SetDisabledBlend();
+	step.SetNoBlend();
 	return step;
 }
 
@@ -152,4 +152,133 @@ void PPBloom::ComputeBlurSamples(int sampleCount, float blurAmount, float *sampl
 	{
 		sampleWeights[i] /= totalWeights;
 	}
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPLensDistort::DeclareShaders()
+{
+	hw_postprocess.Shaders["Lens"] = { "shaders/glsl/lensdistortion.fp", "", LensUniforms::Desc() };
+}
+
+void PPLensDistort::UpdateSteps()
+{
+	if (gl_lens == 0)
+	{
+		hw_postprocess.Effects["LensDistortScene"] = {};
+		return;
+	}
+
+	float k[4] =
+	{
+		gl_lens_k,
+		gl_lens_k * gl_lens_chromatic,
+		gl_lens_k * gl_lens_chromatic * gl_lens_chromatic,
+		0.0f
+	};
+	float kcube[4] =
+	{
+		gl_lens_kcube,
+		gl_lens_kcube * gl_lens_chromatic,
+		gl_lens_kcube * gl_lens_chromatic * gl_lens_chromatic,
+		0.0f
+	};
+
+	float aspect = screen->mSceneViewport.width / (float)screen->mSceneViewport.height;
+
+	// Scale factor to keep sampling within the input texture
+	float r2 = aspect * aspect * 0.25f + 0.25f;
+	float sqrt_r2 = sqrt(r2);
+	float f0 = 1.0f + MAX(r2 * (k[0] + kcube[0] * sqrt_r2), 0.0f);
+	float f2 = 1.0f + MAX(r2 * (k[2] + kcube[2] * sqrt_r2), 0.0f);
+	float f = MAX(f0, f2);
+	float scale = 1.0f / f;
+
+	LensUniforms uniforms;
+	uniforms.AspectRatio = aspect;
+	uniforms.Scale = scale;
+	uniforms.LensDistortionCoefficient = k;
+	uniforms.CubicDistortionValue = kcube;
+
+	TArray<PPStep> steps;
+
+	PPStep step;
+	step.SetInputCurrent(0, PPFilterMode::Linear);
+	step.SetOutputNext();
+	step.SetNoBlend();
+	step.Uniforms.Set(uniforms);
+	step.Viewport = screen->mScreenViewport;
+	step.ShaderName = "Lens";
+	steps.Push(step);
+
+	hw_postprocess.Effects["LensDistortScene"] = steps;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPFXAA::DeclareShaders()
+{
+	hw_postprocess.Shaders["FXAALuma"] = { "shaders/glsl/fxaa.fp", "#define FXAA_LUMA_PASS\n", {} };
+	hw_postprocess.Shaders["FXAA"] = { "shaders/glsl/fxaa.fp", GetDefines(), FXAAUniforms::Desc(), GetMaxVersion() };
+}
+
+void PPFXAA::UpdateSteps()
+{
+	if (0 == gl_fxaa)
+	{
+		hw_postprocess.Effects["ApplyFXAA"] = {};
+		return;
+	}
+
+	FXAAUniforms uniforms;
+	uniforms.ReciprocalResolution = { 1.0f / screen->mScreenViewport.width, 1.0f / screen->mScreenViewport.height };
+
+	TArray<PPStep> steps;
+
+	PPStep step;
+	step.SetInputCurrent(0, PPFilterMode::Nearest);
+	step.SetOutputNext();
+	step.SetNoBlend();
+	step.Viewport = screen->mScreenViewport;
+	step.ShaderName = "FXAALuma";
+	steps.Push(step);
+
+	step.SetInputCurrent(0, PPFilterMode::Linear);
+	step.Uniforms.Set(uniforms);
+	step.ShaderName = "FXAA";
+	steps.Push(step);
+
+	hw_postprocess.Effects["ApplyFXAA"] = steps;
+}
+
+int PPFXAA::GetMaxVersion()
+{
+	return screen->glslversion >= 4.f ? 400 : 330;
+}
+
+FString PPFXAA::GetDefines()
+{
+	int quality;
+
+	switch (gl_fxaa)
+	{
+	default:
+	case IFXAAShader::Low:     quality = 10; break;
+	case IFXAAShader::Medium:  quality = 12; break;
+	case IFXAAShader::High:    quality = 29; break;
+	case IFXAAShader::Extreme: quality = 39; break;
+	}
+
+	const int gatherAlpha = GetMaxVersion() >= 400 ? 1 : 0;
+
+	// TODO: enable FXAA_GATHER4_ALPHA on OpenGL earlier than 4.0
+	// when GL_ARB_gpu_shader5/GL_NV_gpu_shader5 extensions are supported
+
+	FString result;
+	result.Format(
+		"#define FXAA_QUALITY__PRESET %i\n"
+		"#define FXAA_GATHER4_ALPHA %i\n",
+		quality, gatherAlpha);
+
+	return result;
 }

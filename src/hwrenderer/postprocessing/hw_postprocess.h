@@ -129,7 +129,7 @@ public:
 		Output.Texture = {};
 	}
 
-	void SetDisabledBlend()
+	void SetNoBlend()
 	{
 		BlendMode.BlendOp = STYLEOP_Add;
 		BlendMode.SrcAlpha = STYLEALPHA_One;
@@ -174,12 +174,13 @@ class PPShader
 {
 public:
 	PPShader() { }
-	PPShader(const FString &fragment, const FString &defines, const std::vector<UniformFieldDesc> &uniforms) : FragmentShader(fragment), Defines(defines), Uniforms(uniforms) { }
+	PPShader(const FString &fragment, const FString &defines, const std::vector<UniformFieldDesc> &uniforms, int version = 330) : FragmentShader(fragment), Defines(defines), Uniforms(uniforms), Version(version) { }
 
 	FString VertexShader = "shaders/glsl/screenquad.vp";
 	FString FragmentShader;
 	FString Defines;
 	std::vector<UniformFieldDesc> Uniforms;
+	int Version = 330;
 };
 
 class Postprocess
@@ -253,4 +254,64 @@ private:
 	static void ComputeBlurSamples(int sampleCount, float blurAmount, float *sampleWeights);
 
 	PPBlurLevel levels[NumBloomLevels];
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+struct LensUniforms
+{
+	float AspectRatio;
+	float Scale;
+	float Padding0, Padding1;
+	FVector4 LensDistortionCoefficient;
+	FVector4 CubicDistortionValue;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "Aspect", UniformType::Float, offsetof(LensUniforms, AspectRatio) },
+			{ "Scale", UniformType::Float, offsetof(LensUniforms, Scale) },
+			{ "Padding0", UniformType::Float, offsetof(LensUniforms, Padding0) },
+			{ "Padding1", UniformType::Float, offsetof(LensUniforms, Padding1) },
+			{ "k", UniformType::Vec4, offsetof(LensUniforms, LensDistortionCoefficient) },
+			{ "kcube", UniformType::Vec4, offsetof(LensUniforms, CubicDistortionValue) }
+		};
+	}
+};
+
+class PPLensDistort
+{
+public:
+	void DeclareShaders();
+	void UpdateSteps();
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+struct FXAAUniforms
+{
+	FVector2 ReciprocalResolution;
+	float Padding0, Padding1;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "ReciprocalResolution", UniformType::Vec2, offsetof(FXAAUniforms, ReciprocalResolution) },
+			{ "Padding0", UniformType::Float, offsetof(FXAAUniforms, Padding0) },
+			{ "Padding1", UniformType::Float, offsetof(FXAAUniforms, Padding1) }
+		};
+	}
+};
+
+class PPFXAA
+{
+public:
+	void DeclareShaders();
+	void UpdateSteps();
+
+private:
+	int GetMaxVersion();
+	FString GetDefines();
 };

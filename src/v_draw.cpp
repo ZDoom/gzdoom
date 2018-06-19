@@ -1341,12 +1341,13 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 	// don't draw sector based blends when any fullbright screen effect is active.
 	if (!fullbright)
 	{
+        const auto &vpp = r_viewpoint.Pos;
 		if (!viewsector->e->XFloor.ffloors.Size())
 		{
 			if (viewsector->GetHeightSec())
 			{
 				auto s = viewsector->heightsec;
-				blendv = s->floorplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->bottommap : s->ceilingplane.PointOnSide(r_viewpoint.Pos) < 0 ? s->topmap : s->midmap;
+				blendv = s->floorplane.PointOnSide(vpp) < 0 ? s->bottommap : s->ceilingplane.PointOnSide(vpp) < 0 ? s->topmap : s->midmap;
 			}
 		}
 		else
@@ -1357,11 +1358,11 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 			{
 				double lightbottom;
 				if (i < lightlist.Size() - 1)
-					lightbottom = lightlist[i + 1].plane.ZatPoint(r_viewpoint.Pos);
+					lightbottom = lightlist[i + 1].plane.ZatPoint(vpp);
 				else
-					lightbottom = viewsector->floorplane.ZatPoint(r_viewpoint.Pos);
+					lightbottom = viewsector->floorplane.ZatPoint(vpp);
 
-				if (lightbottom < r_viewpoint.Pos.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
+				if (lightbottom < vpp.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
 				{
 					// 3d floor 'fog' is rendered as a blending value
 					blendv = lightlist[i].blend;

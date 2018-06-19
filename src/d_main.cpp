@@ -817,7 +817,7 @@ void D_Display ()
 				{
 					StatusBar->DrawCrosshair();
 				}
-				StatusBar->CallDraw (HUD_AltHud);
+				StatusBar->CallDraw (HUD_AltHud, r_viewpoint.TicFrac);
 				StatusBar->DrawTopStuff (HUD_AltHud);
 			}
 			else 
@@ -825,13 +825,13 @@ void D_Display ()
 			{
 				EHudState state = DrawFSHUD ? HUD_Fullscreen : HUD_None;
 				StatusBar->DrawBottomStuff (state);
-				StatusBar->CallDraw (state);
+				StatusBar->CallDraw (state, r_viewpoint.TicFrac);
 				StatusBar->DrawTopStuff (state);
 			}
 			else
 			{
 				StatusBar->DrawBottomStuff (HUD_StatusBar);
-				StatusBar->CallDraw (HUD_StatusBar);
+				StatusBar->CallDraw (HUD_StatusBar, r_viewpoint.TicFrac);
 				StatusBar->DrawTopStuff (HUD_StatusBar);
 			}
 			//stb.Unclock();

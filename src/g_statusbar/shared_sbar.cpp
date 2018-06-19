@@ -1006,7 +1006,7 @@ void DBaseStatusBar::DrawMessages (int layer, int bottom)
 //
 //---------------------------------------------------------------------------
 
-void DBaseStatusBar::Draw (EHudState state)
+void DBaseStatusBar::Draw (EHudState state, double ticFrac)
 {
 	// HUD_AltHud state is for popups only
 	if (state == HUD_AltHud)
@@ -1048,18 +1048,19 @@ DEFINE_ACTION_FUNCTION(DBaseStatusBar, Draw)
 {
 	PARAM_SELF_PROLOGUE(DBaseStatusBar);
 	PARAM_INT(state);
-	self->Draw((EHudState)state);
+    PARAM_FLOAT(ticFrac);
+	self->Draw((EHudState)state, ticFrac);
 	return 0;
 }
 
-void DBaseStatusBar::CallDraw(EHudState state)
+void DBaseStatusBar::CallDraw(EHudState state, double ticFrac)
 {
 	IFVIRTUAL(DBaseStatusBar, Draw)
 	{
-		VMValue params[] = { (DObject*)this, state, r_viewpoint.TicFrac };
+		VMValue params[] = { (DObject*)this, state, ticFrac };
 		VMCall(func, params, countof(params), nullptr, 0);
 	}
-	else Draw(state);
+	else Draw(state, ticFrac);
 	screen->ClearClipRect();	// make sure the scripts don't leave a valid clipping rect behind.
 	BeginStatusBar(BaseSBarHorizontalResolution, BaseSBarVerticalResolution, BaseRelTop, false);
 }

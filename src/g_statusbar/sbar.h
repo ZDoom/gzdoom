@@ -397,10 +397,10 @@ public:
 	void SetScale();
 	virtual void Tick ();
 	void CallTick();
-	virtual void Draw (EHudState state);
-	void CallDraw(EHudState state);
-			void DrawBottomStuff (EHudState state);
-			void DrawTopStuff (EHudState state);
+	virtual void Draw (EHudState state, double ticFrac);
+	void CallDraw(EHudState state, double ticFrac);
+    void DrawBottomStuff (EHudState state);
+    void DrawTopStuff (EHudState state);
 	void FlashItem (const PClass *itemtype);
 	void AttachToPlayer(player_t *player);
 	DVector2 GetHUDScale() const;

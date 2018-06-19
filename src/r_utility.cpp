@@ -872,7 +872,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		FQuakeJiggers jiggers;
 
 		memset(&jiggers, 0, sizeof(jiggers));
-		if (DEarthquake::StaticGetQuakeIntensities(viewpoint.camera, jiggers) > 0)
+		if (DEarthquake::StaticGetQuakeIntensities(viewpoint.TicFrac, viewpoint.camera, jiggers) > 0)
 		{
 			double quakefactor = r_quakeintensity;
 			DAngle an;

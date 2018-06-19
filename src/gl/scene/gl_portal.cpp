@@ -941,9 +941,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 	angle_t af = drawer->FrustumAngle();
 	if (af<ANGLE_180) di->mClipper->SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs()+af, r_viewpoint.Angles.Yaw.BAMs()-af);
 
-	angle_t a2 = linedef->v1->GetClipAngle();
-	angle_t a1 = linedef->v2->GetClipAngle();
-	di->mClipper->SafeAddClipRange(a1,a2);
+    di->mClipper->SafeAddClipRange(linedef->v1, linedef->v2);
 
 	gl_RenderState.SetClipLine(linedef);
 	gl_RenderState.EnableClipLine(true);

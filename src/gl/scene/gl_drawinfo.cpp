@@ -201,6 +201,7 @@ FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
 	di->mDrawer = drawer;
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
+    di->mClipper->SetViewpoint(r_viewpoint);
 	staticClipper.Clear();
     di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();

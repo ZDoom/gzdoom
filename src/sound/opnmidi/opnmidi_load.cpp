@@ -161,7 +161,7 @@ bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
     uint16_t version = 1;
 
     uint16_t count_melodic_banks     = 1;
-    uint16_t count_percusive_banks   = 1;
+    uint16_t count_percussive_banks   = 1;
 
     if(fr.read(magic, 1, 11) != 11)
     {
@@ -194,15 +194,14 @@ bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
         }
     }
 
-    opn.dynamic_instruments.clear();
-    opn.dynamic_metainstruments.clear();
-    if((readU16BE(fr, count_melodic_banks) != 2) || (readU16BE(fr, count_percusive_banks) != 2))
+    opn.cleanInstrumentBanks();
+    if((readU16BE(fr, count_melodic_banks) != 2) || (readU16BE(fr, count_percussive_banks) != 2))
     {
         errorStringOut = "Can't load bank file: Can't read count of banks!";
         return false;
     }
 
-    if((count_melodic_banks < 1) || (count_percusive_banks < 1))
+    if((count_melodic_banks < 1) || (count_percussive_banks < 1))
     {
         errorStringOut = "Custom bank: Too few banks in this file!";
         return false;
@@ -214,8 +213,10 @@ bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
         return false;
     }
 
-    opn.dynamic_melodic_banks.clear();
-    opn.dynamic_percussion_banks.clear();
+    opn.cleanInstrumentBanks();
+
+    std::vector<OPN2::Bank *> banks;
+    banks.reserve(count_melodic_banks + count_percussive_banks);
 
     if(version >= 2)//Read bank meta-entries
     {
@@ -224,49 +225,44 @@ bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
             uint8_t bank_meta[34];
             if(fr.read(bank_meta, 1, 34) != 34)
             {
-                opn.dynamic_melodic_banks.clear();
+                opn.cleanInstrumentBanks();
                 errorStringOut = "Custom bank: Fail to read melodic bank meta-data!";
                 return false;
             }
-            uint16_t bank = uint16_t(bank_meta[33]) * 256 + uint16_t(bank_meta[32]);
-            size_t offset = opn.dynamic_melodic_banks.size();
-            opn.dynamic_melodic_banks[bank] = offset;
-            //strncpy(bankMeta.name, char_p(bank_meta), 32);
+            uint16_t bankno = uint16_t(bank_meta[33]) * 256 + uint16_t(bank_meta[32]);
+            OPN2::Bank &bank = opn.dynamic_banks[bankno];
+            //strncpy(bank.name, char_p(bank_meta), 32);
+            banks.push_back(&bank);
         }
 
-        for(uint16_t i = 0; i < count_percusive_banks; i++)
+        for(uint16_t i = 0; i < count_percussive_banks; i++)
         {
             uint8_t bank_meta[34];
             if(fr.read(bank_meta, 1, 34) != 34)
             {
-                opn.dynamic_melodic_banks.clear();
-                opn.dynamic_percussion_banks.clear();
+                opn.cleanInstrumentBanks();
                 errorStringOut = "Custom bank: Fail to read percussion bank meta-data!";
                 return false;
             }
-            uint16_t bank = uint16_t(bank_meta[33]) * 256 + uint16_t(bank_meta[32]);
-            size_t offset = opn.dynamic_percussion_banks.size();
-            opn.dynamic_percussion_banks[bank] = offset;
-            //strncpy(bankMeta.name, char_p(bank_meta), 32);
+            uint16_t bankno = uint16_t(bank_meta[33]) * 256 + uint16_t(bank_meta[32]) + OPN2::PercussionTag;
+            OPN2::Bank &bank = opn.dynamic_banks[bankno];
+            //strncpy(bank.name, char_p(bank_meta), 32);
+            banks.push_back(&bank);
         }
     }
 
-    opn.dynamic_percussion_offset = count_melodic_banks * 128;
-    uint16_t total = 128 * count_melodic_banks + 128 * count_percusive_banks;
+    size_t total = 128 * opn.dynamic_banks.size();
 
-    for(uint16_t i = 0; i < total; i++)
+    for(size_t i = 0; i < total; i++)
     {
-        opnInstData data;
-        opnInstMeta meta;
+        opnInstMeta2 &meta = banks[i / 128]->ins[i % 128];
+        opnInstData &data = meta.opn[0];
         uint8_t idata[WOPL_INST_SIZE_V2];
 
         size_t readSize = version >= 2 ? WOPL_INST_SIZE_V2 : WOPL_INST_SIZE_V1;
         if(fr.read(idata, 1, readSize) != readSize)
         {
-            opn.dynamic_instruments.clear();
-            opn.dynamic_metainstruments.clear();
-            opn.dynamic_melodic_banks.clear();
-            opn.dynamic_percussion_banks.clear();
+            opn.cleanInstrumentBanks();
             errorStringOut = "Can't load bank file: Failed to read instrument data";
             return false;
         }
@@ -295,15 +291,11 @@ bool OPNMIDIplay::LoadBank(OPNMIDIplay::fileReader &fr)
             meta.ms_sound_koff  = 500;
         }
 
-        meta.opnno1 = uint16_t(opn.dynamic_instruments.size());
-        meta.opnno2 = uint16_t(opn.dynamic_instruments.size());
+        meta.opn[1] = meta.opn[0];
 
         /* Junk, delete later */
         meta.fine_tune      = 0.0;
         /* Junk, delete later */
-
-        opn.dynamic_instruments.push_back(data);
-        opn.dynamic_metainstruments.push_back(meta);
     }
 
     applySetup();
@@ -336,7 +328,7 @@ bool OPNMIDIplay::LoadMIDI(OPNMIDIplay::fileReader &fr)
     AdlMIDI_CPtr<uint8_t> cvt_buf;
     errorString.clear();
 
-    if(opn.dynamic_instruments.empty())
+    if(opn.dynamic_banks.empty())
     {
         errorStringOut = "Bank is not set! Please load any instruments bank by using of adl_openBankFile() or adl_openBankData() functions!";
         return false;
@@ -470,7 +462,6 @@ riffskip:
                 fr.seek(0x7D, SEEK_SET);
                 TrackCount = 1;
                 DeltaTicks = 60;
-                opn.LogarithmicVolumes = true;
                 //opl.CartoonersVolumes = true;
                 opn.m_musicMode = OPN2::MODE_RSXX;
                 opn.m_volumeScale = OPN2::VOLUME_CMF;
@@ -494,11 +485,8 @@ riffskip:
 
     TrackData.clear();
     TrackData.resize(TrackCount, std::vector<uint8_t>());
-    //CurrentPosition.track.clear();
-    //CurrentPosition.track.resize(TrackCount);
     InvDeltaTicks = fraction<uint64_t>(1, 1000000l * static_cast<uint64_t>(DeltaTicks));
-    //Tempo       = 1000000l * InvDeltaTicks;
-    Tempo         = fraction<uint64_t>(1,            static_cast<uint64_t>(DeltaTicks));
+    Tempo         = fraction<uint64_t>(1,            static_cast<uint64_t>(DeltaTicks) * 2);
     static const unsigned char EndTag[4] = {0xFF, 0x2F, 0x00, 0x00};
     size_t totalGotten = 0;
 
@@ -560,14 +548,14 @@ riffskip:
         return false;
     }
 
-    //Build new MIDI events table (ALPHA!!!)
+    //Build new MIDI events table
     if(!buildTrackData())
     {
         errorStringOut = fr._fileName + ": MIDI data parsing error has occouped!\n" + errorString;
         return false;
     }
 
-    opn.Reset(m_setup.PCM_RATE); // Reset AdLib
+    opn.Reset(m_setup.emulator, m_setup.PCM_RATE); // Reset OPN2 chip
     ch.clear();
     ch.resize(opn.NumChannels);
     return true;

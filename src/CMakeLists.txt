@@ -638,8 +638,8 @@ add_definitions(-DOPNMIDI_USE_LEGACY_EMULATOR)
 add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
 add_definitions(-DOPNMIDI_DISABLE_MUS_SUPPORT -DOPNMIDI_DISABLE_XMI_SUPPORT -DOPNMIDI_DISABLE_MIDI_SEQUENCER)
 
-# Disable ADLMIDI's MIDI Sequencer, MUS and XMI converters
-add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
+# Disable OPNMIDI's experimental yet emulator (using of it has some issues and missing notes in playback)
+add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
@@ -855,14 +855,25 @@ set( FASTMATH_SOURCES
 	sound/adlmidi/adlmidi_midiplay.cpp
 	sound/adlmidi/adlmidi_opl3.cpp
 	sound/adlmidi/adlmidi_private.cpp
-	sound/adlmidi/dbopl.cpp
-	sound/adlmidi/nukedopl3.c
+	sound/adlmidi/chips/dosbox/dbopl.cpp
+	sound/adlmidi/chips/dosbox_opl3.cpp
+	sound/adlmidi/chips/nuked/nukedopl3_174.c
+	sound/adlmidi/chips/nuked/nukedopl3.c
+	sound/adlmidi/chips/nuked_opl3.cpp
+	sound/adlmidi/chips/nuked_opl3_v174.cpp
+	sound/adlmidi/wopl/wopl_file.c
+	sound/opnmidi/chips/gens_opn2.cpp
+	sound/opnmidi/chips/gens/Ym2612_Emu.cpp
+	sound/opnmidi/chips/mame/mame_ym2612fm.c
+	sound/opnmidi/chips/mame_opn2.cpp
+	sound/opnmidi/chips/nuked_opn2.cpp
+	sound/opnmidi/chips/nuked/ym3438.c
 	sound/opnmidi/opnmidi.cpp
 	sound/opnmidi/opnmidi_load.cpp
 	sound/opnmidi/opnmidi_midiplay.cpp
 	sound/opnmidi/opnmidi_opn2.cpp
 	sound/opnmidi/opnmidi_private.cpp
-	sound/opnmidi/Ym2612_ChipEmu.cpp
+
 )
 
 set (PCH_SOURCES

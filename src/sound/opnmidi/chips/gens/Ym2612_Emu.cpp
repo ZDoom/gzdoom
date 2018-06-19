@@ -2,7 +2,7 @@
 
 // Based on Gens 2.10 ym2612.c
 
-#include "Ym2612_ChipEmu.h"
+#include "Ym2612_Emu.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -110,7 +110,7 @@ struct state_t
 	int TimerBcnt;      // timerB counter = valeur courante du Timer B
 	int Mode;           // Mode actuel des voie 3 et 6 (normal / special)
 	int DAC;            // DAC enabled flag
-    channel_t CHANNEL[OPNMIDI_Ym2612_Emu::channel_count];   // Les 6 voies du YM2612
+	channel_t CHANNEL[Ym2612_Emu::channel_count];   // Les 6 voies du YM2612
 	int REG[2][0x100];  // Sauvegardes des valeurs de tout les registres, c'est facultatif
 						// cela nous rend le debuggage plus facile
 };
@@ -255,9 +255,9 @@ static const unsigned char LFO_FMS_TAB [8] =
 
 inline void YM2612_Special_Update() { }
 
-struct OPNMIDI_Ym2612_Impl
+struct Ym2612_Impl
 {
-    enum { channel_count = OPNMIDI_Ym2612_Emu::channel_count };
+	enum { channel_count = Ym2612_Emu::channel_count };
 	
 	state_t YM2612;
 	int mute_mask;
@@ -274,10 +274,10 @@ struct OPNMIDI_Ym2612_Impl
 	void write0( int addr, int data );
 	void write1( int addr, int data );
 	void run_timer( int );
-    void run( int pair_count, OPNMIDI_Ym2612_Emu::sample_t* );
+	void run( int pair_count, Ym2612_Emu::sample_t* );
 };
 
-void OPNMIDI_Ym2612_Impl::KEY_ON( channel_t& ch, int nsl)
+void Ym2612_Impl::KEY_ON( channel_t& ch, int nsl)
 {
 	slot_t *SL = &(ch.SLOT [nsl]);  // on recupere le bon pointeur de slot
 	
@@ -300,7 +300,7 @@ void OPNMIDI_Ym2612_Impl::KEY_ON( channel_t& ch, int nsl)
 }
 
 
-void OPNMIDI_Ym2612_Impl::KEY_OFF(channel_t& ch, int nsl)
+void Ym2612_Impl::KEY_OFF(channel_t& ch, int nsl)
 {
 	slot_t *SL = &(ch.SLOT [nsl]);  // on recupere le bon pointeur de slot
 	
@@ -318,7 +318,7 @@ void OPNMIDI_Ym2612_Impl::KEY_OFF(channel_t& ch, int nsl)
 }
 
 
-int OPNMIDI_Ym2612_Impl::SLOT_SET( int Adr, int data )
+int Ym2612_Impl::SLOT_SET( int Adr, int data )
 {
 	int nch = Adr & 3;
 	if ( nch == 3 )
@@ -420,7 +420,7 @@ int OPNMIDI_Ym2612_Impl::SLOT_SET( int Adr, int data )
 }
 
 
-int OPNMIDI_Ym2612_Impl::CHANNEL_SET( int Adr, int data )
+int Ym2612_Impl::CHANNEL_SET( int Adr, int data )
 {
 	int num = Adr & 3;
 	if ( num == 3 )
@@ -522,7 +522,7 @@ int OPNMIDI_Ym2612_Impl::CHANNEL_SET( int Adr, int data )
 }
 
 
-int OPNMIDI_Ym2612_Impl::YM_SET(int Adr, int data)
+int Ym2612_Impl::YM_SET(int Adr, int data)
 {
 	switch ( Adr )
 	{
@@ -628,7 +628,7 @@ int OPNMIDI_Ym2612_Impl::YM_SET(int Adr, int data)
 	return 0;
 }
 
-void OPNMIDI_Ym2612_Impl::set_rate( double sample_rate, double clock_rate )
+void Ym2612_Impl::set_rate( double sample_rate, double clock_rate )
 {
 	assert( sample_rate );
 	assert( clock_rate > sample_rate );
@@ -824,11 +824,11 @@ void OPNMIDI_Ym2612_Impl::set_rate( double sample_rate, double clock_rate )
 	reset();
 }
 
-const char* OPNMIDI_Ym2612_Emu::set_rate( double sample_rate, double clock_rate )
+const char* Ym2612_Emu::set_rate( double sample_rate, double clock_rate )
 {
 	if ( !impl )
 	{
-        impl = (OPNMIDI_Ym2612_Impl*) malloc( sizeof *impl );
+		impl = (Ym2612_Impl*) malloc( sizeof *impl );
 		if ( !impl )
 			return "Out of memory";
 		impl->mute_mask = 0;
@@ -840,12 +840,12 @@ const char* OPNMIDI_Ym2612_Emu::set_rate( double sample_rate, double clock_rate 
 	return 0;
 }
 
-OPNMIDI_Ym2612_Emu::~OPNMIDI_Ym2612_Emu()
+Ym2612_Emu::~Ym2612_Emu()
 {
 	free( impl );
 }
 
-inline void OPNMIDI_Ym2612_Impl::write0( int opn_addr, int data )
+inline void Ym2612_Impl::write0( int opn_addr, int data )
 {
 	assert( (unsigned) data <= 0xFF );
 	
@@ -865,7 +865,7 @@ inline void OPNMIDI_Ym2612_Impl::write0( int opn_addr, int data )
 	}
 }
 
-inline void OPNMIDI_Ym2612_Impl::write1( int opn_addr, int data )
+inline void Ym2612_Impl::write1( int opn_addr, int data )
 {
 	assert( (unsigned) data <= 0xFF );
 	
@@ -880,12 +880,12 @@ inline void OPNMIDI_Ym2612_Impl::write1( int opn_addr, int data )
 	}
 }
 
-void OPNMIDI_Ym2612_Emu::reset()
+void Ym2612_Emu::reset()
 {
 	impl->reset();
 }
 
-void OPNMIDI_Ym2612_Impl::reset()
+void Ym2612_Impl::reset()
 {
 	g.LFOcnt = 0;
 	YM2612.TimerA = 0;
@@ -949,17 +949,17 @@ void OPNMIDI_Ym2612_Impl::reset()
 	write0( 0x2A, 0x80 );
 }
 
-void OPNMIDI_Ym2612_Emu::write0( int addr, int data )
+void Ym2612_Emu::write0( int addr, int data )
 {
 	impl->write0( addr, data );
 }
 
-void OPNMIDI_Ym2612_Emu::write1( int addr, int data )
+void Ym2612_Emu::write1( int addr, int data )
 {
 	impl->write1( addr, data );
 }
 
-void OPNMIDI_Ym2612_Emu::mute_voices( int mask ) { impl->mute_mask = mask; }
+void Ym2612_Emu::mute_voices( int mask ) { impl->mute_mask = mask; }
 
 static void update_envelope_( slot_t* sl )
 {
@@ -1033,14 +1033,14 @@ inline void update_envelope( slot_t& sl )
 
 template<int algo>
 struct ym2612_update_chan {
-    static void func( tables_t&, channel_t&, OPNMIDI_Ym2612_Emu::sample_t*, int );
+	static void func( tables_t&, channel_t&, Ym2612_Emu::sample_t*, int );
 };
 
-typedef void (*ym2612_update_chan_t)( tables_t&, channel_t&, OPNMIDI_Ym2612_Emu::sample_t*, int );
+typedef void (*ym2612_update_chan_t)( tables_t&, channel_t&, Ym2612_Emu::sample_t*, int );
 
 template<int algo>
 void ym2612_update_chan<algo>::func( tables_t& g, channel_t& ch,
-        OPNMIDI_Ym2612_Emu::sample_t* buf, int length )
+		Ym2612_Emu::sample_t* buf, int length )
 {
 	int not_end = ch.SLOT [S3].Ecnt - ENV_END;
 	
@@ -1201,7 +1201,7 @@ static const ym2612_update_chan_t UPDATE_CHAN [8] = {
 	&ym2612_update_chan<7>::func
 };
 
-void OPNMIDI_Ym2612_Impl::run_timer( int length )
+void Ym2612_Impl::run_timer( int length )
 {
 	int const step = 6;
 	int remain = length;
@@ -1247,7 +1247,7 @@ void OPNMIDI_Ym2612_Impl::run_timer( int length )
 	while ( remain > 0 );
 }
 
-void OPNMIDI_Ym2612_Impl::run( int pair_count, OPNMIDI_Ym2612_Emu::sample_t* out )
+void Ym2612_Impl::run( int pair_count, Ym2612_Emu::sample_t* out )
 {
 	if ( pair_count <= 0 )
 		return;
@@ -1316,4 +1316,4 @@ void OPNMIDI_Ym2612_Impl::run( int pair_count, OPNMIDI_Ym2612_Emu::sample_t* out
 	g.LFOcnt += g.LFOinc * pair_count;
 }
 
-void OPNMIDI_Ym2612_Emu::run( int pair_count, sample_t* out ) { impl->run( pair_count, out ); }
+void Ym2612_Emu::run( int pair_count, sample_t* out ) { impl->run( pair_count, out ); }

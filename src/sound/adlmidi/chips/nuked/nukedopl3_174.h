@@ -91,7 +91,7 @@ struct _opl3_slot {
 };
 
 struct _opl3_channel {
-    opl3_slot *slots[2];
+    opl3_slot *slotz[2];/*Don't use "slots" keyword to avoid conflict with Qt applications*/
     opl3_channel *pair;
     opl3_chip *chip;
     Bit16s *out[4];
@@ -139,13 +139,13 @@ struct _opl3_chip {
     opl3_writebuf writebuf[OPL_WRITEBUF_SIZE];
 };
 
-void OPL3_Generate(opl3_chip *chip, Bit16s *buf);
-void OPL3_GenerateResampled(opl3_chip *chip, Bit16s *buf);
-void OPL3_Reset(opl3_chip *chip, Bit32u samplerate);
-void OPL3_WriteReg(opl3_chip *chip, Bit16u reg, Bit8u v);
-void OPL3_WriteRegBuffered(opl3_chip *chip, Bit16u reg, Bit8u v);
-void OPL3_GenerateStream(opl3_chip *chip, Bit16s *sndptr, Bit32u numsamples);
-void OPL3_GenerateStreamMix(opl3_chip *chip, Bit16s *sndptr, Bit32u numsamples);
+void OPL3v17_Generate(opl3_chip *chip, Bit16s *buf);
+void OPL3v17_GenerateResampled(opl3_chip *chip, Bit16s *buf);
+void OPL3v17_Reset(opl3_chip *chip, Bit32u samplerate);
+void OPL3v17_WriteReg(opl3_chip *chip, Bit16u reg, Bit8u v);
+void OPL3v17_WriteRegBuffered(opl3_chip *chip, Bit16u reg, Bit8u v);
+void OPL3v17_GenerateStream(opl3_chip *chip, Bit16s *sndptr, Bit32u numsamples);
+void OPL3v17_GenerateStreamMix(opl3_chip *chip, Bit16s *sndptr, Bit32u numsamples);
 
 #ifdef __cplusplus
 }

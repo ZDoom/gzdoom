@@ -51,5 +51,3 @@ public:
 	void DrawElements(int numIndices, size_t offset) override;
 };
 
-void gl_RenderModel(GLSprite * spr, int mli);
-void gl_RenderHUDModel(DPSprite *psp, float ofsx, float ofsy, int mli);

@@ -276,7 +276,8 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		}
 		else
 		{
-			gl_RenderModel(sprite, sprite->dynlightindex);
+            FGLModelRenderer renderer(sprite->dynlightindex);
+            renderer.RenderModel(sprite->x, sprite->y, sprite->z, sprite->modelframe, sprite->actor, r_viewpoint.TicFrac);
 		}
 	}
 

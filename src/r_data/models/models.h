@@ -60,7 +60,7 @@ class FModelRenderer
 public:
 	virtual ~FModelRenderer() { }
 
-	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor);
+	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor, double ticFrac);
 	void RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
 
 	virtual ModelRendererType GetType() const = 0;

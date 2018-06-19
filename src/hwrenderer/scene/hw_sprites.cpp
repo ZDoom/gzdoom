@@ -68,7 +68,7 @@ EXTERN_CVAR(Float, transsouls)
 //
 //==========================================================================
 
-bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
+bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 {
 	if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 	{
@@ -146,8 +146,8 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 		{
 			// [CMB] Rotate relative to camera XY position, not just camera direction,
 			// which is nicer in VR
-			float xrel = xcenter - r_viewpoint.Pos.X;
-			float yrel = ycenter - r_viewpoint.Pos.Y;
+			float xrel = xcenter - vp->X;
+			float yrel = ycenter - vp->Y;
 			float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
 			float counterRotationDeg = 270. - di->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
 			float relAngleDeg = counterRotationDeg + absAngleDeg;

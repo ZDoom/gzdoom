@@ -597,8 +597,8 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		switch (spritetype)
 		{
 		case RF_FACESPRITE:
-			viewvecX = di->mViewVector.X;
-			viewvecY = di->mViewVector.Y;
+			viewvecX = vp.ViewVector.X;
+			viewvecY = vp.ViewVector.Y;
 
 			x1 = x - viewvecY*leftfac;
 			x2 = x - viewvecY*rightfac;
@@ -946,8 +946,8 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	else factor = 1 / 7.f;
 	float scalefac=particle->size * factor;
 
-	float viewvecX = di->mViewVector.X;
-	float viewvecY = di->mViewVector.Y;
+	float viewvecX = vp.ViewVector.X;
+	float viewvecY = vp.ViewVector.Y;
 
 	x1=x+viewvecY*scalefac;
 	x2=x-viewvecY*scalefac;

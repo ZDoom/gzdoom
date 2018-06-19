@@ -151,8 +151,8 @@ void GLSceneDrawer::SetViewAngle(DAngle viewangle)
 	FRenderViewpoint &vp = r_viewpoint;
 	GLRenderer->mAngles.Yaw = float(270.0-viewangle.Degrees);
 	DVector2 v = vp.Angles.Yaw.ToVector();
-	GLRenderer->mViewVector.X = v.X;
-	GLRenderer->mViewVector.Y = v.Y;
+	vp.ViewVector.X = v.X;
+	vp.ViewVector.Y = v.Y;
 
 	vp.SetViewAngle(r_viewwindow);
 }
@@ -236,7 +236,6 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	 
 	di->mAngles = GLRenderer->mAngles;
-	di->mViewVector = GLRenderer->mViewVector;
 	di->mViewActor = GLRenderer->mViewActor;
 	di->mShadowMap = &GLRenderer->mShadowMap;
 

@@ -129,7 +129,6 @@ public:
 	FShadowMap mShadowMap;
 
 	FRotator mAngles;
-	FVector2 mViewVector;
 
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;

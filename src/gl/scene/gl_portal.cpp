@@ -266,13 +266,8 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
 	}
 
 	// save viewpoint
-	savedViewPos = r_viewpoint.Pos;
-	savedViewActorPos = r_viewpoint.ActorPos;
-	savedshowviewer = r_viewpoint.showviewer;
-	savedAngles = r_viewpoint.Angles;
+	savedviewpoint = r_viewpoint;
 	savedviewactor=GLRenderer->mViewActor;
-	savedviewpath[0] = r_viewpoint.Path[0];
-	savedviewpath[1] = r_viewpoint.Path[1];
 	savedvisibility = r_viewpoint.camera ? r_viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
 
 
@@ -286,7 +281,8 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo **pDi)
 
 inline void GLPortal::ClearClipper(FDrawInfo *di)
 {
-	DAngle angleOffset = deltaangle(savedAngles.Yaw, r_viewpoint.Angles.Yaw);
+	FRenderViewpoint &oldvp = savedviewpoint;
+	DAngle angleOffset = deltaangle(oldvp.Angles.Yaw, r_viewpoint.Angles.Yaw);
 
 	di->mClipper->Clear();
 
@@ -294,8 +290,8 @@ inline void GLPortal::ClearClipper(FDrawInfo *di)
 	di->mClipper->SafeAddClipRange(0,0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
-		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - savedViewPos).Angle() + angleOffset;
-		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - savedViewPos).Angle() + angleOffset;
+		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - oldvp.Pos).Angle() + angleOffset;
+		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - oldvp.Pos).Angle() + angleOffset;
 
 		if (deltaangle(endAngle, startAngle) < 0)
 		{
@@ -329,12 +325,7 @@ void GLPortal::End(bool usestencil)
 		if (needdepth) FDrawInfo::EndDrawInfo();
 
 		// Restore the old view
-		r_viewpoint.Path[0] = savedviewpath[0];
-		r_viewpoint.Path[1] = savedviewpath[1];
-		r_viewpoint.Pos = savedViewPos;
-		r_viewpoint.showviewer = savedshowviewer;
-		r_viewpoint.ActorPos = savedViewActorPos;
-		r_viewpoint.Angles = savedAngles;
+		r_viewpoint = savedviewpoint;
 		GLRenderer->mViewActor=savedviewactor;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags = (r_viewpoint.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
@@ -389,10 +380,7 @@ void GLPortal::End(bool usestencil)
 			glDepthMask(true);
 		}
 		// Restore the old view
-		r_viewpoint.showviewer = savedshowviewer;
-		r_viewpoint.ActorPos = savedViewActorPos;
-		r_viewpoint.Pos = savedViewPos;
-		r_viewpoint.Angles = savedAngles;
+		r_viewpoint = savedviewpoint;
 		GLRenderer->mViewActor=savedviewactor;
 		if (r_viewpoint.camera != nullptr) r_viewpoint.camera->renderflags |= savedvisibility;
 		drawer->SetupView(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, r_viewpoint.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));

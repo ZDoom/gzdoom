@@ -2,28 +2,15 @@
 #include "v_video.h"
 #include "hw_postprocess.h"
 #include "hwrenderer/utility/hw_cvars.h"
-#include "gl_load/gl_load.h" // for GL_RGBA16F - should we create our own enum instead?
 
 Postprocess hw_postprocess;
 
 void PPBloom::DeclareShaders()
 {
-	PPShader shader;
-	shader.VertexShader = "shaders/glsl/screenquad.vp";
-	shader.FragmentShader = "shaders/glsl/bloomcombine.fp";
-	hw_postprocess.Shaders["BloomCombine"] = shader;
-
-	shader.Uniforms = ExtractUniforms::Desc();
-	shader.FragmentShader = "shaders/glsl/bloomextract.fp";
-	hw_postprocess.Shaders["BloomExtract"] = shader;
-
-	shader.Uniforms = BlurUniforms::Desc();
-	shader.FragmentShader = "shaders/glsl/blur.fp";
-	shader.Defines = "#define BLUR_VERTICAL\n";
-	hw_postprocess.Shaders["BlurVertical"] = shader;
-
-	shader.Defines = "#define BLUR_HORIZONTAL\n";
-	hw_postprocess.Shaders["BlurHorizontal"] = shader;
+	hw_postprocess.Shaders["BloomCombine"] = { "shaders/glsl/bloomcombine.fp", "", {} };
+	hw_postprocess.Shaders["BloomExtract"] = { "shaders/glsl/bloomextract.fp", "", ExtractUniforms::Desc() };
+	hw_postprocess.Shaders["BlurVertical"] = { "shaders/glsl/blur.fp", "#define BLUR_VERTICAL\n", BlurUniforms::Desc() };
+	hw_postprocess.Shaders["BlurHorizontal"] = { "shaders/glsl/blur.fp", "#define BLUR_HORIZONTAL\n", BlurUniforms::Desc() };
 }
 
 void PPBloom::UpdateTextures(int width, int height)
@@ -47,11 +34,7 @@ void PPBloom::UpdateTextures(int width, int height)
 		level.Viewport.width = (bloomWidth + 1) / 2;
 		level.Viewport.height = (bloomHeight + 1) / 2;
 
-		PPTextureDesc texture;
-		texture.Width = level.Viewport.width;
-		texture.Height = level.Viewport.height;
-		texture.Format = GL_RGBA16F;
-
+		PPTextureDesc texture = { level.Viewport.width, level.Viewport.height, PixelFormat::Rgba16f };
 		hw_postprocess.Textures[vtexture] = texture;
 		hw_postprocess.Textures[htexture] = texture;
 
@@ -72,7 +55,6 @@ void PPBloom::UpdateSteps(int fixedcm)
 	}
 
 	PPStep step;
-	step.Textures.Resize(1);
 
 	ExtractUniforms extractUniforms;
 	extractUniforms.Scale = screen->SceneScale();
@@ -82,15 +64,11 @@ void PPBloom::UpdateSteps(int fixedcm)
 
 	// Extract blooming pixels from scene texture:
 	step.Viewport = level0.Viewport;
-	step.Textures[0].Type = PPTextureType::CurrentPipelineTexture;
-	step.Textures[0].Filter = PPFilterMode::Linear;
+	step.SetInputCurrent(0, PPFilterMode::Linear);
 	step.ShaderName = "BloomExtract";
 	step.Uniforms.Set(extractUniforms);
-	step.Output.Type = PPTextureType::PPTexture;
-	step.Output.Texture = level0.VTexture;
-	step.BlendMode.BlendOp = STYLEOP_Add;
-	step.BlendMode.SrcAlpha = STYLEALPHA_One;
-	step.BlendMode.DestAlpha = STYLEALPHA_Zero;
+	step.SetOutputTexture(level0.VTexture);
+	step.SetDisabledBlend();
 	steps.Push(step);
 
 	const float blurAmount = gl_bloom_amount;
@@ -116,10 +94,8 @@ void PPBloom::UpdateSteps(int fixedcm)
 		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
 
 		// Linear upscale:
-		step.Textures[0].Type = PPTextureType::PPTexture;
-		step.Textures[0].Filter = PPFilterMode::Linear;
-		step.Textures[0].Texture = next.VTexture;
-		step.Output.Texture = next.HTexture;
+		step.SetInputTexture(0, next.VTexture, PPFilterMode::Linear);
+		step.SetOutputTexture(next.HTexture);
 		step.Viewport = next.Viewport;
 		step.ShaderName = "BloomCombine";
 		steps.Push(step);
@@ -129,16 +105,11 @@ void PPBloom::UpdateSteps(int fixedcm)
 	steps.Push(BlurStep(blurUniforms, level0.HTexture, level0.VTexture, level0.Viewport, true));
 
 	// Add bloom back to scene texture:
-	step.Textures[0].Type = PPTextureType::PPTexture;
-	step.Textures[0].Filter = PPFilterMode::Linear;
-	step.Textures[0].Texture = level0.VTexture;
-	step.Output.Type = PPTextureType::CurrentPipelineTexture;
+	step.SetInputTexture(0, level0.VTexture, PPFilterMode::Linear);
+	step.SetOutputCurrent();
 	step.Viewport = screen->mSceneViewport;
 	step.ShaderName = "BloomCombine";
-	step.BlendMode.BlendOp = STYLEOP_Add;
-	step.BlendMode.SrcAlpha = STYLEALPHA_One;
-	step.BlendMode.DestAlpha = STYLEALPHA_One;
-	step.BlendMode.Flags = 0;
+	step.SetAdditiveBlend();
 	steps.Push(step);
 
 	hw_postprocess.Effects["BloomScene"] = steps;
@@ -147,19 +118,12 @@ void PPBloom::UpdateSteps(int fixedcm)
 PPStep PPBloom::BlurStep(const BlurUniforms &blurUniforms, PPTextureName input, PPTextureName output, PPViewport viewport, bool vertical)
 {
 	PPStep step;
-	step.Textures.Resize(1);
 	step.Viewport = viewport;
-	step.Textures[0].Type = PPTextureType::PPTexture;
-	step.Textures[0].Filter = PPFilterMode::Nearest;
-	step.Textures[0].Texture = input;
+	step.SetInputTexture(0, input);
 	step.ShaderName = vertical ? "BlurVertical" : "BlurHorizontal";
 	step.Uniforms.Set(blurUniforms);
-	step.Output.Type = PPTextureType::PPTexture;
-	step.Output.Texture = output;
-	step.BlendMode.BlendOp = STYLEOP_Add;
-	step.BlendMode.SrcAlpha = STYLEALPHA_One;
-	step.BlendMode.DestAlpha = STYLEALPHA_Zero;
-	step.BlendMode.Flags = 0;
+	step.SetOutputTexture(output);
+	step.SetDisabledBlend();
 	return step;
 }
 

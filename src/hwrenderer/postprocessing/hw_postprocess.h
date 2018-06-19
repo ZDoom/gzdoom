@@ -91,6 +91,60 @@ public:
 class PPStep
 {
 public:
+	void SetInputTexture(int index, PPTextureName texture, PPFilterMode filter = PPFilterMode::Nearest)
+	{
+		if ((int)Textures.Size() < index)
+			Textures.Resize(index + 1);
+		auto &tex = Textures[index];
+		tex.Filter = filter;
+		tex.Type = PPTextureType::PPTexture;
+		tex.Texture = texture;
+	}
+
+	void SetInputCurrent(int index, PPFilterMode filter = PPFilterMode::Nearest)
+	{
+		if ((int)Textures.Size() < index)
+			Textures.Resize(index + 1);
+		auto &tex = Textures[index];
+		tex.Filter = filter;
+		tex.Type = PPTextureType::CurrentPipelineTexture;
+		tex.Texture = {};
+	}
+
+	void SetOutputTexture(PPTextureName texture)
+	{
+		Output.Type = PPTextureType::PPTexture;
+		Output.Texture = texture;
+	}
+
+	void SetOutputCurrent()
+	{
+		Output.Type = PPTextureType::CurrentPipelineTexture;
+		Output.Texture = {};
+	}
+
+	void SetOutputNext()
+	{
+		Output.Type = PPTextureType::NextPipelineTexture;
+		Output.Texture = {};
+	}
+
+	void SetDisabledBlend()
+	{
+		BlendMode.BlendOp = STYLEOP_Add;
+		BlendMode.SrcAlpha = STYLEALPHA_One;
+		BlendMode.DestAlpha = STYLEALPHA_Zero;
+		BlendMode.Flags = 0;
+	}
+
+	void SetAdditiveBlend()
+	{
+		BlendMode.BlendOp = STYLEOP_Add;
+		BlendMode.SrcAlpha = STYLEALPHA_One;
+		BlendMode.DestAlpha = STYLEALPHA_One;
+		BlendMode.Flags = 0;
+	}
+
 	PPShaderName ShaderName;
 	TArray<PPTextureInput> Textures;
 	PPUniforms Uniforms;
@@ -98,6 +152,47 @@ public:
 	PPBlendMode BlendMode;
 	PPOutput Output;
 };
+
+enum class PixelFormat
+{
+	Rgba8,
+	Rgba16f
+};
+
+class PPTextureDesc
+{
+public:
+	PPTextureDesc() { }
+	PPTextureDesc(int width, int height, PixelFormat format) : Width(width), Height(height), Format(format) { }
+
+	int Width;
+	int Height;
+	PixelFormat Format;
+};
+
+class PPShader
+{
+public:
+	PPShader() { }
+	PPShader(const FString &fragment, const FString &defines, const std::vector<UniformFieldDesc> &uniforms) : FragmentShader(fragment), Defines(defines), Uniforms(uniforms) { }
+
+	FString VertexShader = "shaders/glsl/screenquad.vp";
+	FString FragmentShader;
+	FString Defines;
+	std::vector<UniformFieldDesc> Uniforms;
+};
+
+class Postprocess
+{
+public:
+	TMap<FString, TArray<PPStep>> Effects;
+	TMap<FString, PPTextureDesc> Textures;
+	TMap<FString, PPShader> Shaders;
+};
+
+extern Postprocess hw_postprocess;
+
+/////////////////////////////////////////////////////////////////////////////
 
 struct ExtractUniforms
 {
@@ -133,35 +228,6 @@ struct BlurUniforms
 		};
 	}
 };
-
-class PPTextureDesc
-{
-public:
-	int Width;
-	int Height;
-	int Format;
-};
-
-class PPShader
-{
-public:
-	FString VertexShader;
-	FString FragmentShader;
-	FString Defines;
-	std::vector<UniformFieldDesc> Uniforms;
-};
-
-class Postprocess
-{
-public:
-	TMap<FString, TArray<PPStep>> Effects;
-	TMap<FString, PPTextureDesc> Textures;
-	TMap<FString, PPShader> Shaders;
-};
-
-extern Postprocess hw_postprocess;
-
-/////////////////////////////////////////////////////////////////////////////
 
 enum { NumBloomLevels = 4 };
 

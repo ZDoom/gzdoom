@@ -1030,7 +1030,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	double angx = cos(radPitch);
 	double angy = sin(radPitch) * level.info->pixelstretch;
 	double alen = sqrt(angx*angx + angy*angy);
-	viewpoint.HWAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
+	viewpoint.HWAngles.Pitch = RAD2DEG((float)asin(angy / alen));
 	
 	viewpoint.HWAngles.Roll.Degrees = viewpoint.Angles.Roll.Degrees;    // copied for convenience.
 	

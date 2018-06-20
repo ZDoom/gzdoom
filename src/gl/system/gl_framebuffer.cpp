@@ -361,11 +361,6 @@ void OpenGLFrameBuffer::UnbindTexUnit(int no)
 	FHardwareTexture::Unbind(no);
 }
 
-void OpenGLFrameBuffer::FlushTextures()
-{
-	if (GLRenderer) GLRenderer->FlushTextures();
-}
-
 void OpenGLFrameBuffer::TextureFilterChanged()
 {
 	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();

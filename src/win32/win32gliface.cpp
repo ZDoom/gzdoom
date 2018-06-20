@@ -155,7 +155,6 @@ Win32GLVideo::Win32GLVideo(int parm)
 
 Win32GLVideo::~Win32GLVideo()
 {
-	if (GLRenderer != NULL) GLRenderer->FlushTextures();
 }
 
 //==========================================================================

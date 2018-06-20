@@ -111,7 +111,6 @@ SDLGLVideo::SDLGLVideo (int parm)
 
 SDLGLVideo::~SDLGLVideo ()
 {
-	if (GLRenderer != NULL) GLRenderer->FlushTextures();
 }
 
 DFrameBuffer *SDLGLVideo::CreateFrameBuffer ()

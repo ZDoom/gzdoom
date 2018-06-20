@@ -236,17 +236,6 @@ void FGLRenderer::SetupLevel()
 //
 //===========================================================================
 
-void FGLRenderer::FlushTextures()
-{
-	FMaterial::FlushAll();
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
 bool FGLRenderer::StartOffscreen()
 {
 	bool firstBind = (mFBID == 0);
@@ -372,7 +361,7 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     bounds.width = width;
     bounds.height = height;
     
-    // if GLRenderer->mVBO is persistently mapped we must be sure the GPU finished reading from it before we fill it with new data.
+    // if mVBO is persistently mapped we must be sure the GPU finished reading from it before we fill it with new data.
     glFinish();
     
     // Switch to render buffers dimensioned for the savepic
@@ -411,9 +400,9 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 
 void FGLRenderer::BeginFrame()
 {
-	buffersActive = GLRenderer->mScreenBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
+	buffersActive = mScreenBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	if (buffersActive)
-		buffersActive = GLRenderer->mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
+		buffersActive = mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 }
 
 //===========================================================================
@@ -606,7 +595,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	}
 	glDisable(GL_SCISSOR_TEST);
 
-	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
+	gl_RenderState.SetVertexBuffer(mVBO);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);

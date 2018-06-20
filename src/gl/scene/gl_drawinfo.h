@@ -103,7 +103,6 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawSorted(int listindex);
 
 	// These two may be moved to the API independent part of the renderer later.
-	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
 
 	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer, FRenderViewpoint &parentvp);

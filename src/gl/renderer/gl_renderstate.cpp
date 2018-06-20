@@ -308,7 +308,10 @@ void FRenderState::ApplyMatrices()
 {
 	if (GLRenderer->mShaderManager != NULL)
 	{
-		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix, mPassType);
+		VSMatrix norm;
+		norm.computeNormalMatrix(mViewMatrix);
+		
+		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix, &norm, mPassType);
 	}
 }
 

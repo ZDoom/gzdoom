@@ -539,10 +539,10 @@ FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passT
 		return nullptr;
 }
 
-void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view, EPassType passType)
+void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm, EPassType passType)
 {
 	if (passType < mPassShaders.Size())
-		mPassShaders[passType]->ApplyMatrices(proj, view);
+		mPassShaders[passType]->ApplyMatrices(proj, view, norm);
 
 	if (mActiveShader)
 		mActiveShader->Bind();
@@ -687,28 +687,25 @@ FShader *FShaderCollection::BindEffect(int effect)
 //==========================================================================
 EXTERN_CVAR(Int, gl_fuzztype)
 
-void FShaderCollection::ApplyMatrices(VSMatrix *proj, VSMatrix *view)
+void FShaderCollection::ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm)
 {
-	VSMatrix norm;
-	norm.computeNormalMatrix(*view);
-
 	for (int i = 0; i < SHADER_NoTexture; i++)
 	{
-		mMaterialShaders[i]->ApplyMatrices(proj, view, &norm);
-		mMaterialShadersNAT[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[i]->ApplyMatrices(proj, view, norm);
+		mMaterialShadersNAT[i]->ApplyMatrices(proj, view, norm);
 	}
-	mMaterialShaders[SHADER_NoTexture]->ApplyMatrices(proj, view, &norm);
+	mMaterialShaders[SHADER_NoTexture]->ApplyMatrices(proj, view, norm);
 	if (gl_fuzztype != 0)
 	{
-		mMaterialShaders[SHADER_NoTexture + gl_fuzztype]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[SHADER_NoTexture + gl_fuzztype]->ApplyMatrices(proj, view, norm);
 	}
 	for (unsigned i = FIRST_USER_SHADER; i < mMaterialShaders.Size(); i++)
 	{
-		mMaterialShaders[i]->ApplyMatrices(proj, view, &norm);
+		mMaterialShaders[i]->ApplyMatrices(proj, view, norm);
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
-		mEffectShaders[i]->ApplyMatrices(proj, view, &norm);
+		mEffectShaders[i]->ApplyMatrices(proj, view, norm);
 	}
 }
 

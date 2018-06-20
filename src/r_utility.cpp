@@ -1016,6 +1016,31 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		screen->SetClearColor(color);
 		SWRenderer->SetClearColor(color);
 	}
+	
+	
+	// And finally some info that is needed for the hardware renderer
+	
+	// Scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
+	// However, to set up a projection matrix this needs to be adjusted.
+	double radPitch = viewpoint.Angles.Pitch.Normalized180().Radians();
+	double angx = cos(radPitch);
+	double angy = sin(radPitch) * level.info->pixelstretch;
+	double alen = sqrt(angx*angx + angy*angy);
+	viewpoint.HWAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
+	
+	viewpoint.HWAngles.Roll.Degrees = viewpoint.Angles.Roll.Degrees;    // copied for convenience.
+	
+	// ViewActor only gets set, if the camera actor should not be rendered
+	if (actor->player && actor->player - players == consoleplayer &&
+		((actor->player->cheats & CF_CHASECAM) || (r_deathcamera && actor->health <= 0)) && actor == actor->player->mo)
+	{
+		viewpoint.ViewActor = nullptr;
+	}
+	else
+	{
+		viewpoint.ViewActor = actor;
+	}
+	
 }
 
 

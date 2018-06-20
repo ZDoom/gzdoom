@@ -507,8 +507,7 @@ void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
 //-----------------------------------------------------------------------------
 
 sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
-{       
-	sector_t * lviewsector;
+{
 	GLRenderer->mSceneClearColor[0] = 0.0f;
 	GLRenderer->mSceneClearColor[1] = 0.0f;
 	GLRenderer->mSceneClearColor[2] = 0.0f;
@@ -516,29 +515,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 
 	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
 
-	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = mainvp.Angles.Pitch.Normalized180().Radians();
-	double angx = cos(radPitch);
-	double angy = sin(radPitch) * level.info->pixelstretch;
-	double alen = sqrt(angx*angx + angy*angy);
-
-	mainvp.HWAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
-	mainvp.HWAngles.Roll.Degrees = mainvp.Angles.Roll.Degrees;
-
-	if (camera->player && camera->player - players == consoleplayer &&
-		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera == camera->player->mo)
-	{
-		mainvp.ViewActor = nullptr;
-	}
-	else
-	{
-		mainvp.ViewActor = camera;
-	}
-
-	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
-	lviewsector = mainvp.sector;
-
-	// Render (potentially) multiple views for stereo 3d
+    // Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
 	const s3d::Stereo3DMode& stereo3dMode = mainview && toscreen? s3d::Stereo3DMode::getCurrentMode() : s3d::Stereo3DMode::getMonoMode();
 	stereo3dMode.SetUp();
@@ -570,8 +547,8 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 
 		if (mainview)
 		{
-			if (toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
-			GLRenderer->PostProcessScene(cm, [&]() { DrawEndScene2D(di, lviewsector); });
+			if (toscreen) EndDrawScene(di, mainvp.sector); // do not call this for camera textures.
+			GLRenderer->PostProcessScene(cm, [&]() { DrawEndScene2D(di, mainvp.sector); });
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();
@@ -593,7 +570,7 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 	stereo3dMode.TearDown();
 
 	interpolator.RestoreInterpolations ();
-	return lviewsector;
+	return mainvp.sector;
 }
 
 //===========================================================================

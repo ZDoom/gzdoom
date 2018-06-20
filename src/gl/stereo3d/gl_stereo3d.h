@@ -57,7 +57,6 @@ public:
 	virtual Viewport GetViewport(const Viewport& fullViewport) const;
 	virtual void GetViewShift(float yaw, float outViewShift[3]) const;
 	virtual void SetUp() const {};
-	virtual void TearDown() const {};
 };
 
 
@@ -76,7 +75,6 @@ public:
 
 	/* hooks for setup and cleanup operations for each stereo mode */
 	virtual void SetUp() const {};
-	virtual void TearDown() const {};
 
 	virtual bool IsMono() const { return false; }
 	virtual void AdjustViewports() const {};

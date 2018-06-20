@@ -737,59 +737,10 @@ void FGLRenderer::ColormapScene(int fixedcm)
 
 void FGLRenderer::LensDistortScene()
 {
-#if 1
-
 	PPLensDistort lens;
 	lens.DeclareShaders();
 	lens.UpdateSteps();
 	mBuffers->RenderEffect("LensDistortScene");
-
-#else
-	if (gl_lens == 0)
-		return;
-
-	FGLDebug::PushGroup("LensDistortScene");
-
-	float k[4] =
-	{
-		gl_lens_k,
-		gl_lens_k * gl_lens_chromatic,
-		gl_lens_k * gl_lens_chromatic * gl_lens_chromatic,
-		0.0f
-	};
-	float kcube[4] =
-	{
-		gl_lens_kcube,
-		gl_lens_kcube * gl_lens_chromatic,
-		gl_lens_kcube * gl_lens_chromatic * gl_lens_chromatic,
-		0.0f
-	};
-
-	float aspect = screen->mSceneViewport.width / (float)screen->mSceneViewport.height;
-
-	// Scale factor to keep sampling within the input texture
-	float r2 = aspect * aspect * 0.25 + 0.25f;
-	float sqrt_r2 = sqrt(r2);
-	float f0 = 1.0f + MAX(r2 * (k[0] + kcube[0] * sqrt_r2), 0.0f);
-	float f2 = 1.0f + MAX(r2 * (k[2] + kcube[2] * sqrt_r2), 0.0f);
-	float f = MAX(f0, f2);
-	float scale = 1.0f / f;
-
-	FGLPostProcessState savedState;
-
-	mBuffers->BindNextFB();
-	mBuffers->BindCurrentTexture(0, GL_LINEAR);
-	mLensShader->Bind(NOQUEUE);
-	mLensShader->Uniforms->AspectRatio = aspect;
-	mLensShader->Uniforms->Scale = scale;
-	mLensShader->Uniforms->LensDistortionCoefficient = k;
-	mLensShader->Uniforms->CubicDistortionValue = kcube;
-	mLensShader->Uniforms.Set();
-	RenderScreenQuad();
-	mBuffers->NextTexture();
-
-	FGLDebug::PopGroup();
-#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -800,41 +751,10 @@ void FGLRenderer::LensDistortScene()
 
 void FGLRenderer::ApplyFXAA()
 {
-#if 1
-
 	PPFXAA fxaa;
 	fxaa.DeclareShaders();
 	fxaa.UpdateSteps();
 	mBuffers->RenderEffect("ApplyFXAA");
-
-#else
-
-	if (0 == gl_fxaa)
-	{
-		return;
-	}
-
-	FGLDebug::PushGroup("ApplyFXAA");
-
-	FGLPostProcessState savedState;
-
-	mBuffers->BindNextFB();
-	mBuffers->BindCurrentTexture(0);
-	mFXAALumaShader->Bind(NOQUEUE);
-	RenderScreenQuad();
-	mBuffers->NextTexture();
-
-	mBuffers->BindNextFB();
-	mBuffers->BindCurrentTexture(0, GL_LINEAR);
-	mFXAAShader->Bind(NOQUEUE);
-	mFXAAShader->Uniforms->ReciprocalResolution = { 1.0f / mBuffers->GetWidth(), 1.0f / mBuffers->GetHeight() };
-	mFXAAShader->Uniforms.Set();
-	RenderScreenQuad();
-	mBuffers->NextTexture();
-
-	FGLDebug::PopGroup();
-
-#endif
 }
 
 //-----------------------------------------------------------------------------

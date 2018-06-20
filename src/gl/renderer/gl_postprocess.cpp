@@ -44,9 +44,9 @@
 #include "hwrenderer/postprocessing/hw_blurshader.h"
 #include "hwrenderer/postprocessing/hw_tonemapshader.h"
 #include "hwrenderer/postprocessing/hw_colormapshader.h"
-#include "hwrenderer/postprocessing/hw_lensshader.h"
-#include "hwrenderer/postprocessing/hw_fxaashader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
+#include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_hwtexture.h"
@@ -72,6 +72,164 @@ void FGLRenderer::PostProcessScene(int fixedcm, const std::function<void()> &aft
 	LensDistortScene();
 	ApplyFXAA();
 	mCustomPostProcessShaders->Run("scene");
+}
+
+void FGLRenderBuffers::RenderEffect(const FString &name)
+{
+	// Create/update textures (To do: move out of RunEffect)
+	{
+		TMap<FString, PPTextureDesc>::Iterator it(hw_postprocess.Textures);
+		TMap<FString, PPTextureDesc>::Pair *pair;
+		while (it.NextPair(pair))
+		{
+			auto &gltexture = GLTextures[pair->Key];
+			auto &glframebuffer = GLTextureFBs[pair->Key];
+
+			int glformat;
+			switch (pair->Value.Format)
+			{
+			default:
+			case PixelFormat::Rgba8: glformat = GL_RGBA8; break;
+			case PixelFormat::Rgba16f: glformat = GL_RGBA16F; break;
+			}
+
+			if (gltexture && (gltexture.Width != pair->Value.Width || gltexture.Height != pair->Value.Height))
+			{
+				glDeleteTextures(1, &gltexture.handle);
+				glDeleteFramebuffers(1, &glframebuffer.handle);
+				gltexture.handle = 0;
+				glframebuffer.handle = 0;
+			}
+
+			if (!gltexture)
+			{
+				gltexture = Create2DTexture(name.GetChars(), glformat, pair->Value.Width, pair->Value.Height);
+				gltexture.Width = pair->Value.Width;
+				gltexture.Height = pair->Value.Height;
+				glframebuffer = CreateFrameBuffer(name.GetChars(), gltexture);
+			}
+		}
+	}
+
+	// Compile shaders (To do: move out of RunEffect)
+	{
+		TMap<FString, PPShader>::Iterator it(hw_postprocess.Shaders);
+		TMap<FString, PPShader>::Pair *pair;
+		while (it.NextPair(pair))
+		{
+			const auto &desc = pair->Value;
+			auto &glshader = GLShaders[pair->Key];
+			if (!glshader)
+			{
+				glshader = std::make_unique<FShaderProgram>();
+
+				FString prolog;
+				if (!desc.Uniforms.empty())
+					prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, POSTPROCESS_BINDINGPOINT);
+				prolog += desc.Defines;
+
+				glshader->Compile(IShaderProgram::Vertex, desc.VertexShader, "", desc.Version);
+				glshader->Compile(IShaderProgram::Fragment, desc.FragmentShader, prolog, desc.Version);
+				glshader->Link(pair->Key.GetChars());
+				if (!desc.Uniforms.empty())
+					glshader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+			}
+		}
+	}
+
+	// Render the effect
+
+	FGLDebug::PushGroup(name.GetChars());
+
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(3);
+
+	for (const PPStep &step : hw_postprocess.Effects[name])
+	{
+		// Bind input textures
+		for (unsigned int index = 0; index < step.Textures.Size(); index++)
+		{
+			const PPTextureInput &input = step.Textures[index];
+			int filter = (input.Filter == PPFilterMode::Nearest) ? GL_NEAREST : GL_LINEAR;
+
+			switch (input.Type)
+			{
+			default:
+			case PPTextureType::CurrentPipelineTexture:
+				BindCurrentTexture(index, filter);
+				break;
+
+			case PPTextureType::NextPipelineTexture:
+				I_FatalError("PPTextureType::NextPipelineTexture not allowed as input\n");
+				break;
+
+			case PPTextureType::PPTexture:
+				GLTextures[input.Texture].Bind(index, filter);
+				break;
+			}
+		}
+
+		// Set render target
+		switch (step.Output.Type)
+		{
+		default:
+		case PPTextureType::CurrentPipelineTexture:
+			BindCurrentFB();
+			break;
+
+		case PPTextureType::NextPipelineTexture:
+			BindNextFB();
+			break;
+
+		case PPTextureType::PPTexture:
+			GLTextureFBs[step.Output.Texture].Bind();
+			break;
+		}
+
+		// Set blend mode
+		if (step.BlendMode.BlendOp == STYLEOP_Add && step.BlendMode.SrcAlpha == STYLEALPHA_One && step.BlendMode.DestAlpha == STYLEALPHA_Zero && step.BlendMode.Flags == 0)
+		{
+			glDisable(GL_BLEND);
+		}
+		else
+		{
+			// To do: support all the modes
+			glEnable(GL_BLEND);
+			glBlendEquation(GL_FUNC_ADD);
+			if (step.BlendMode.SrcAlpha == STYLEALPHA_One && step.BlendMode.DestAlpha == STYLEALPHA_One)
+				glBlendFunc(GL_ONE, GL_ONE);
+			else
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+
+		// Setup viewport
+		glViewport(step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height);
+
+		auto &shader = GLShaders[step.ShaderName];
+
+		// Set uniforms
+		if (step.Uniforms.Size > 0)
+		{
+			if (!shader->Uniforms)
+				shader->Uniforms.reset(screen->CreateUniformBuffer(step.Uniforms.Size));
+			shader->Uniforms->SetData(step.Uniforms.Data);
+			shader->Uniforms->Bind(POSTPROCESS_BINDINGPOINT);
+		}
+
+		// Set shader
+		shader->Bind(NOQUEUE);
+
+		// Draw the screen quad
+		GLRenderer->RenderScreenQuad();
+
+		// Advance to next PP texture if our output was sent there
+		if (step.Output.Type == PPTextureType::NextPipelineTexture)
+			NextTexture();
+	}
+
+	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
+
+	FGLDebug::PopGroup();
 }
 
 
@@ -304,6 +462,18 @@ static void RenderBlur(FGLRenderer *renderer, float blurAmount, PPTexture input,
 
 void FGLRenderer::BloomScene(int fixedcm)
 {
+#if 0
+
+	if (mBuffers->GetSceneWidth() <= 0 || mBuffers->GetSceneHeight() <= 0)
+		return;
+
+	PPBloom bloom;
+	bloom.DeclareShaders();
+	bloom.UpdateTextures(mBuffers->GetSceneWidth(), mBuffers->GetSceneHeight());
+	bloom.UpdateSteps(fixedcm);
+	mBuffers->RenderEffect("Bloom");
+
+#else
 	// Only bloom things if enabled and no special fixed light mode is active
 	if (!gl_bloom || fixedcm != CM_DEFAULT || gl_ssao_debug)
 		return;
@@ -372,6 +542,7 @@ void FGLRenderer::BloomScene(int fixedcm)
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
 	FGLDebug::PopGroup();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -566,6 +737,14 @@ void FGLRenderer::ColormapScene(int fixedcm)
 
 void FGLRenderer::LensDistortScene()
 {
+#if 1
+
+	PPLensDistort lens;
+	lens.DeclareShaders();
+	lens.UpdateSteps();
+	mBuffers->RenderEffect("LensDistortScene");
+
+#else
 	if (gl_lens == 0)
 		return;
 
@@ -610,6 +789,7 @@ void FGLRenderer::LensDistortScene()
 	mBuffers->NextTexture();
 
 	FGLDebug::PopGroup();
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -620,6 +800,15 @@ void FGLRenderer::LensDistortScene()
 
 void FGLRenderer::ApplyFXAA()
 {
+#if 1
+
+	PPFXAA fxaa;
+	fxaa.DeclareShaders();
+	fxaa.UpdateSteps();
+	mBuffers->RenderEffect("ApplyFXAA");
+
+#else
+
 	if (0 == gl_fxaa)
 	{
 		return;
@@ -644,6 +833,8 @@ void FGLRenderer::ApplyFXAA()
 	mBuffers->NextTexture();
 
 	FGLDebug::PopGroup();
+
+#endif
 }
 
 //-----------------------------------------------------------------------------

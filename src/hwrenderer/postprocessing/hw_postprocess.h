@@ -78,7 +78,7 @@ public:
 			Data = nullptr;
 			Size = 0;
 
-			Data = new uint8_t[Size];
+			Data = new uint8_t[sizeof(T)];
 			Size = sizeof(T);
 			memcpy(Data, &v, Size);
 		}
@@ -93,7 +93,7 @@ class PPStep
 public:
 	void SetInputTexture(int index, PPTextureName texture, PPFilterMode filter = PPFilterMode::Nearest)
 	{
-		if ((int)Textures.Size() < index)
+		if ((int)Textures.Size() < index + 1)
 			Textures.Resize(index + 1);
 		auto &tex = Textures[index];
 		tex.Filter = filter;
@@ -103,7 +103,7 @@ public:
 
 	void SetInputCurrent(int index, PPFilterMode filter = PPFilterMode::Nearest)
 	{
-		if ((int)Textures.Size() < index)
+		if ((int)Textures.Size() < index + 1)
 			Textures.Resize(index + 1);
 		auto &tex = Textures[index];
 		tex.Filter = filter;

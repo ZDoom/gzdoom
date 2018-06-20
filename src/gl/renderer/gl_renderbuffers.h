@@ -2,6 +2,7 @@
 #define __GL_RENDERBUFFERS_H
 
 #include "gl/shaders/gl_shader.h"
+#include "hwrenderer/postprocessing/hw_postprocess.h"
 
 class PPTexture
 {
@@ -15,6 +16,11 @@ public:
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrap);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrap);
 	}
+
+	int Width = -1;
+	int Height = -1;
+
+	explicit operator bool() const { return handle != 0; }
 
 private:
 	GLuint handle = 0;
@@ -30,6 +36,8 @@ public:
 		glBindFramebuffer(GL_FRAMEBUFFER, handle);
 	}
 
+	explicit operator bool() const { return handle != 0; }
+
 private:
 	GLuint handle = 0;
 
@@ -40,6 +48,8 @@ class PPRenderBuffer
 {
 private:
 	GLuint handle = 0;
+
+	explicit operator bool() const { return handle != 0; }
 
 	friend class FGLRenderBuffers;
 };
@@ -64,6 +74,8 @@ public:
 	int Height = 0;
 };
 
+class FShaderProgram;
+
 class FGLRenderBuffers
 {
 public:
@@ -71,6 +83,12 @@ public:
 	~FGLRenderBuffers();
 
 	bool Setup(int width, int height, int sceneWidth, int sceneHeight);
+
+	void RenderEffect(const FString &name);
+
+	TMap<PPTextureName, PPTexture> GLTextures;
+	TMap<PPTextureName, PPFrameBuffer> GLTextureFBs;
+	TMap<PPShaderName, std::shared_ptr<FShaderProgram>> GLShaders;
 
 	void BindSceneFB(bool sceneData);
 	void BindSceneColorTexture(int index);

@@ -25,19 +25,17 @@ void PPBloom::UpdateTextures(int width, int height)
 
 	for (int i = 0; i < NumBloomLevels; i++)
 	{
-		FString vtexture, htexture;
-		vtexture.Format("Bloom.VTexture.%d", i);
-		htexture.Format("Bloom.HTexture.%d", i);
-
 		auto &level = levels[i];
+		level.VTexture.Format("Bloom.VTexture.%d", i);
+		level.HTexture.Format("Bloom.HTexture.%d", i);
 		level.Viewport.left = 0;
 		level.Viewport.top = 0;
 		level.Viewport.width = (bloomWidth + 1) / 2;
 		level.Viewport.height = (bloomHeight + 1) / 2;
 
 		PPTextureDesc texture = { level.Viewport.width, level.Viewport.height, PixelFormat::Rgba16f };
-		hw_postprocess.Textures[vtexture] = texture;
-		hw_postprocess.Textures[htexture] = texture;
+		hw_postprocess.Textures[level.VTexture] = texture;
+		hw_postprocess.Textures[level.HTexture] = texture;
 
 		bloomWidth = level.Viewport.width;
 		bloomHeight = level.Viewport.height;
@@ -65,6 +63,7 @@ void PPBloom::UpdateSteps(int fixedcm)
 	// Extract blooming pixels from scene texture:
 	step.Viewport = level0.Viewport;
 	step.SetInputCurrent(0, PPFilterMode::Linear);
+	step.SetInputTexture(1, "ExposureTexture");
 	step.ShaderName = "BloomExtract";
 	step.Uniforms.Set(extractUniforms);
 	step.SetOutputTexture(level0.VTexture);

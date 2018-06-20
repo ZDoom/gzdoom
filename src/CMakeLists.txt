@@ -1072,8 +1072,6 @@ set (PCH_SOURCES
 	hwrenderer/postprocessing/hw_blurshader.cpp
 	hwrenderer/postprocessing/hw_colormapshader.cpp
 	hwrenderer/postprocessing/hw_tonemapshader.cpp
-	hwrenderer/postprocessing/hw_lensshader.cpp
-	hwrenderer/postprocessing/hw_fxaashader.cpp
 	hwrenderer/textures/hw_material.cpp
 	hwrenderer/textures/hw_precache.cpp
 	hwrenderer/utility/hw_clock.cpp

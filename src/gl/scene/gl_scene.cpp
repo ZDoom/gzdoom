@@ -74,49 +74,12 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 
 //-----------------------------------------------------------------------------
 //
-// sets 3D viewport and initial state
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::Set3DViewport(bool mainview)
-{
-	if (mainview && GLRenderer->buffersActive)
-	{
-		bool useSSAO = (gl_ssao != 0);
-		GLRenderer->mBuffers->BindSceneFB(useSSAO);
-		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
-		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
-		gl_RenderState.Apply();
-	}
-
-	// Always clear all buffers with scissor test disabled.
-	// This is faster on newer hardware because it allows the GPU to skip
-	// reading from slower memory where the full buffers are stored.
-	glDisable(GL_SCISSOR_TEST);
-	glClearColor(GLRenderer->mSceneClearColor[0], GLRenderer->mSceneClearColor[1], GLRenderer->mSceneClearColor[2], 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-	const auto &bounds = screen->mSceneViewport;
-	glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
-	glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
-
-	glEnable(GL_SCISSOR_TEST);
-
-	glEnable(GL_MULTISAMPLE);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_ALWAYS,0,~0);	// default stencil
-	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
-}
-
-//-----------------------------------------------------------------------------
-//
 // SetProjection
 // sets projection matrix
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::SetProjection(VSMatrix matrix)
+void SetProjection(VSMatrix matrix)
 {
 	gl_RenderState.mProjectionMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
@@ -128,7 +91,7 @@ void GLSceneDrawer::SetProjection(VSMatrix matrix)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
+void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	float mult = mirror? -1:1;
 	float planemult = planemirror? -level.info->pixelstretch : level.info->pixelstretch;
@@ -490,15 +453,52 @@ void FDrawInfo::ProcessScene(bool toscreen)
 
 //-----------------------------------------------------------------------------
 //
+// sets 3D viewport and initial state
+//
+//-----------------------------------------------------------------------------
+
+void FGLRenderer::Set3DViewport(bool mainview)
+{
+    if (mainview && buffersActive)
+    {
+        bool useSSAO = (gl_ssao != 0);
+        mBuffers->BindSceneFB(useSSAO);
+        gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
+        gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
+        gl_RenderState.Apply();
+    }
+    
+    // Always clear all buffers with scissor test disabled.
+    // This is faster on newer hardware because it allows the GPU to skip
+    // reading from slower memory where the full buffers are stored.
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(mSceneClearColor[0], mSceneClearColor[1], mSceneClearColor[2], 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    
+    const auto &bounds = screen->mSceneViewport;
+    glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
+    glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
+    
+    glEnable(GL_SCISSOR_TEST);
+    
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS,0,~0);    // default stencil
+    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
+}
+
+//-----------------------------------------------------------------------------
+//
 // Renders one viewpoint in a scene
 //
 //-----------------------------------------------------------------------------
 
-sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
+sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {
 	R_SetupFrame (mainvp, r_viewwindow, camera);
 
-	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
+	mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
 
     // Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
@@ -510,9 +510,8 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 		eye->SetUp();
 		screen->SetViewportRects(bounds);
 		Set3DViewport(mainview);
-		GLRenderer->mDrawingScene2D = true;
 
-		FDrawInfo *di = FDrawInfo::StartDrawInfo(this, mainvp);
+		FDrawInfo *di = FDrawInfo::StartDrawInfo(nullptr, mainvp);
 		auto vp = di->Viewpoint;
 		di->SetViewArea();
 		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
@@ -520,7 +519,6 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 
 		// Stereo mode specific perspective projection
 		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
-		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
 		vp.SetViewAngle(r_viewwindow);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(vp.HWAngles.Yaw.Degrees, viewShift);
@@ -533,12 +531,11 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 		if (mainview)
 		{
 			if (toscreen) di->EndDrawScene(mainvp.sector); // do not call this for camera textures.
-			GLRenderer->PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
+			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
 		}
 		di->EndDrawInfo();
-		GLRenderer->mDrawingScene2D = false;
 		if (!stereo3dMode.IsMono())
-			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
+			mBuffers->BlitToEyeTexture(eye_ix);
 	}
 
 	interpolator.RestoreInterpolations ();

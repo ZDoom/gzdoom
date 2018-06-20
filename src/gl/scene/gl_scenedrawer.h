@@ -19,12 +19,7 @@ public:
 		GLPortal::drawer = this;
 	}
 
-	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
 	void SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
-	void SetProjection(VSMatrix matrix);
-	void Set3DViewport(bool mainview);
 
-	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	sector_t *RenderView(player_t *player);
-	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 };

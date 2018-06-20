@@ -110,7 +110,6 @@ public:
 	FLightBuffer *mLights;
 	SWSceneDrawer *swdrawer = nullptr;
 
-	bool mDrawingScene2D = false;
 	bool buffersActive = false;
 
 	float mSceneClearColor[3];
@@ -148,6 +147,10 @@ public:
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	sector_t *RenderView(player_t *player);
 	void BeginFrame();
+    
+    void Set3DViewport(bool mainview);
+    sector_t *RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
+
 
 	bool StartOffscreen();
 	void EndOffscreen();

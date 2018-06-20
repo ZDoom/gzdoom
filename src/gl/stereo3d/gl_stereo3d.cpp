@@ -36,7 +36,6 @@ VSMatrix EyePose::GetProjection(float fov, float aspectRatio, float fovRatio) co
 {
 	VSMatrix result;
 
-	// Lifted from gl_scene.cpp FGLRenderer::SetProjection()
 	float fovy = (float)(2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovRatio)));
 	result.perspective(fovy, aspectRatio, FGLRenderer::GetZNear(), FGLRenderer::GetZFar());
 

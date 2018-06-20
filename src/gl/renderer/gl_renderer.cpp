@@ -322,10 +322,8 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 			fovratio = ratio;
 		}
 
-		GLSceneDrawer drawer;
-
 		mShadowMap.Update();
-		retsec = drawer.RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
 	All.Unclock();
 	return retsec;
@@ -352,9 +350,8 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	bounds.width = FHardwareTexture::GetTexDimension(gltex->GetWidth());
 	bounds.height = FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
-	GLSceneDrawer drawer;
 	FRenderViewpoint texvp;
-	drawer.RenderViewpoint(texvp, Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
+	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
 
 	EndOffscreen();
 
@@ -387,9 +384,8 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
     mLights->Clear();
     
     // This shouldn't overwrite the global viewpoint even for a short time.
-    GLSceneDrawer drawer;
     FRenderViewpoint savevp;
-    sector_t *viewsector = drawer.RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+    sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
     glDisable(GL_STENCIL_TEST);
     gl_RenderState.SetSoftLightLevel(-1);
     CopyToBackbuffer(&bounds, false);

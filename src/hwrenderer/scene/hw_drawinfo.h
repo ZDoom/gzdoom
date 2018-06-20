@@ -196,7 +196,7 @@ public:
 
 	virtual void FloodUpperGap(seg_t * seg) = 0;
 	virtual void FloodLowerGap(seg_t * seg) = 0;
-	virtual void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) = 0;
+	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
     
     virtual void AddWall(GLWall *w) = 0;

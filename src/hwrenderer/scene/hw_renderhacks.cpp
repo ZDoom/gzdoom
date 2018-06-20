@@ -30,7 +30,8 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 
-#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hw_drawinfo.h"
+#include "hw_drawstructs.h"
 #include "hwrenderer/utility/hw_clock.h"
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
@@ -843,6 +844,18 @@ bool HWDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 // Process the subsectors that have been marked as hacked
 //
 //==========================================================================
+
+void HWDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
+{
+    for(unsigned int j=0;j<lowersegs.Size();j++)
+    {
+        seg_t * seg=lowersegs[j];
+        GLWall wall;
+        wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+        rendered_lines++;
+    }
+}
+
 
 void HWDrawInfo::HandleHackedSubsectors()
 {

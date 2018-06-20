@@ -361,13 +361,57 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	tex->SetUpdated();
 }
 
-void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+//===========================================================================
+//
+// Render the view to a savegame picture
+//
+//===========================================================================
+
+void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	// Todo: This needs to call the software renderer and process the returned image, if so desired.
-	// This also needs to take out parts of the scene drawer so they can be shared between renderers.
-	GLSceneDrawer drawer;
-	drawer.WriteSavePic(player, file, width, height);
+    IntRect bounds;
+    bounds.left = 0;
+    bounds.top = 0;
+    bounds.width = width;
+    bounds.height = height;
+    
+    // if GLRenderer->mVBO is persistently mapped we must be sure the GPU finished reading from it before we fill it with new data.
+    glFinish();
+    
+    // Switch to render buffers dimensioned for the savepic
+    mBuffers = mSaveBuffers;
+    
+    P_FindParticleSubsectors();    // make sure that all recently spawned particles have a valid subsector.
+    gl_RenderState.SetVertexBuffer(mVBO);
+    mVBO->Reset();
+    mLights->Clear();
+    
+    // This shouldn't overwrite the global viewpoint even for a short time.
+    GLSceneDrawer drawer;
+    FRenderViewpoint savevp;
+    sector_t *viewsector = drawer.RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+    glDisable(GL_STENCIL_TEST);
+    gl_RenderState.SetSoftLightLevel(-1);
+    CopyToBackbuffer(&bounds, false);
+    
+    // strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
+    glFinish();
+    
+    uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
+    glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
+    M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width * 3, Gamma);
+    M_Free(scr);
+    
+    // Switch back the screen render buffers
+    screen->SetViewportRects(nullptr);
+    mBuffers = mScreenBuffers;
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 void FGLRenderer::BeginFrame()
 {

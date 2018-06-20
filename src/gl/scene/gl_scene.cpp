@@ -74,17 +74,6 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 
 //-----------------------------------------------------------------------------
 //
-// resets the 3D viewport
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::Reset3DViewport()
-{
-	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
-}
-
-//-----------------------------------------------------------------------------
-//
 // sets 3D viewport and initial state
 //
 //-----------------------------------------------------------------------------
@@ -375,11 +364,11 @@ void FDrawInfo::RenderTranslucent()
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
+void FDrawInfo::DrawScene(int drawmode)
 {
 	static int recursion=0;
 	static int ssao_portals_available = 0;
-	const auto &vp = di->Viewpoint;
+	const auto &vp = Viewpoint;
 
 	bool applySSAO = false;
 	if (drawmode == DM_MAINVIEW)
@@ -400,15 +389,15 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 	if (vp.camera != nullptr)
 	{
 		ActorRenderFlags savedflags = vp.camera->renderflags;
-		di->CreateScene();
+		CreateScene();
 		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
-		di->CreateScene();
+		CreateScene();
 	}
 
-	di->RenderScene(recursion);
+	RenderScene(recursion);
 
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
@@ -423,9 +412,9 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	GLPortal::EndFrame(di);
+	GLPortal::EndFrame(this);
 	recursion--;
-	di->RenderTranslucent();
+	RenderTranslucent();
 }
 
 //-----------------------------------------------------------------------------
@@ -435,7 +424,7 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 //-----------------------------------------------------------------------------
 
 
-void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
+void FDrawInfo::EndDrawScene(sector_t * viewsector)
 {
 	gl_RenderState.EnableFog(false);
 
@@ -445,12 +434,11 @@ void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
 		glClear(GL_DEPTH_BUFFER_BIT);
-		di->DrawPlayerSprites(true);
+		DrawPlayerSprites(true);
 	}
 
 	glDisable(GL_STENCIL_TEST);
-
-	Reset3DViewport();
+    glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
 
 	// Restore standard rendering state
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -459,7 +447,7 @@ void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 	glDisable(GL_SCISSOR_TEST);
 }
 
-void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
+void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 {
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
@@ -471,7 +459,7 @@ void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
 	glDisable(GL_MULTISAMPLE);
 
 
- 	di->DrawPlayerSprites(false);
+ 	DrawPlayerSprites(false);
 
 	gl_RenderState.SetSoftLightLevel(-1);
 
@@ -488,15 +476,15 @@ void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
+void FDrawInfo::ProcessScene(bool toscreen)
 {
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	GLPortal::BeginScene();
 
-	int mapsection = R_PointInSubsector(di->Viewpoint.Pos)->mapsection;
-	di->CurrentMapSections.Set(mapsection);
+	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	CurrentMapSections.Set(mapsection);
 	GLRenderer->mCurrentPortal = nullptr;
-	DrawScene(di, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
+	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }
 
@@ -540,12 +528,12 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 		SetViewMatrix(vp.HWAngles, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
-		ProcessScene(di, toscreen);
+		di->ProcessScene(toscreen);
 
 		if (mainview)
 		{
-			if (toscreen) EndDrawScene(di, mainvp.sector); // do not call this for camera textures.
-			GLRenderer->PostProcessScene(cm, [&]() { DrawEndScene2D(di, mainvp.sector); });
+			if (toscreen) di->EndDrawScene(mainvp.sector); // do not call this for camera textures.
+			GLRenderer->PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
 
 			// This should be done after postprocessing, not before.
 			GLRenderer->mBuffers->BindCurrentFB();

@@ -23,11 +23,6 @@ public:
 	void SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
 	void SetProjection(VSMatrix matrix);
 	void Set3DViewport(bool mainview);
-	void Reset3DViewport();
-	void DrawScene(FDrawInfo *di, int drawmode);
-	void ProcessScene(FDrawInfo *di, bool toscreen = false);
-	void EndDrawScene(FDrawInfo *di, sector_t * viewsector);
-	void DrawEndScene2D(FDrawInfo *di, sector_t * viewsector);
 
 	sector_t *RenderViewpoint(FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 	sector_t *RenderView(player_t *player);

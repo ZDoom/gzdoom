@@ -13,15 +13,6 @@ struct HUDSprite;
 
 class GLSceneDrawer
 {
-	TMap<DPSprite*, int> weapondynlightindex;
-
-	void RenderMultipassStuff(FDrawInfo *di);
-	
-	void RenderScene(FDrawInfo *di, int recursion);
-	void RenderTranslucent(FDrawInfo *di);
-
-	void CreateScene(FDrawInfo *di);
-
 public:
 	GLSceneDrawer()
 	{

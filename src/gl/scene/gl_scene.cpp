@@ -174,11 +174,11 @@ void GLSceneDrawer::SetupView(FRenderViewpoint &vp, float vx, float vy, float vz
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::CreateScene(FDrawInfo *di)
+void FDrawInfo::CreateScene()
 {
-	const auto &vp = di->Viewpoint;
-	angle_t a1 = di->FrustumAngle();
-	di->mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
+	const auto &vp = Viewpoint;
+	angle_t a1 = FrustumAngle();
+	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
 
 	// reset the portal manager
 	GLPortal::StartFrame();
@@ -193,27 +193,27 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 	GLRenderer->mLights->Begin();
 
 	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
-	di->viewx = FLOAT2FIXED(vp.Pos.X);
-	di->viewy = FLOAT2FIXED(vp.Pos.Y);
+	viewx = FLOAT2FIXED(vp.Pos.X);
+	viewy = FLOAT2FIXED(vp.Pos.Y);
 
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	 
-	di->mShadowMap = &GLRenderer->mShadowMap;
+	mShadowMap = &GLRenderer->mShadowMap;
 
-	di->RenderBSPNode (level.HeadNode());
-	di->PreparePlayerSprites(vp.sector, di->in_area);
+	RenderBSPNode (level.HeadNode());
+	PreparePlayerSprites(vp.sector, in_area);
 
 	// Process all the sprites on the current portal's back side which touch the portal.
-	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached(di);
+	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached(this);
 	Bsp.Unclock();
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend
 	// on the global 'validcount' variable.
 
-	di->HandleMissingTextures(di->in_area);	// Missing upper/lower textures
-	di->HandleHackedSubsectors();	// open sector hacks for deep water
-	di->ProcessSectorStacks(di->in_area);		// merge visplanes of sector stacks
+	HandleMissingTextures(in_area);	// Missing upper/lower textures
+	HandleHackedSubsectors();	// open sector hacks for deep water
+	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
 	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();
 
@@ -229,13 +229,13 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
+void FDrawInfo::RenderScene(int recursion)
 {
-	const auto &vp = di->Viewpoint;
+	const auto &vp = Viewpoint;
 	RenderAll.Clock();
 
 	glDepthMask(true);
-	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion, di);
+	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion, this);
 
 	gl_RenderState.SetCameraPos(vp.Pos.X, vp.Pos.Y, vp.Pos.Z);
 
@@ -244,22 +244,22 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 
 	if (gl_sort_textures)
 	{
-		di->drawlists[GLDL_PLAINWALLS].SortWalls();
-		di->drawlists[GLDL_PLAINFLATS].SortFlats();
-		di->drawlists[GLDL_MASKEDWALLS].SortWalls();
-		di->drawlists[GLDL_MASKEDFLATS].SortFlats();
-		di->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
+		drawlists[GLDL_PLAINWALLS].SortWalls();
+		drawlists[GLDL_PLAINFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLS].SortWalls();
+		drawlists[GLDL_MASKEDFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
 	}
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && !di->isFullbrightScene())
+	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && !isFullbrightScene())
 	{
 		GLRenderer->mLights->Begin();
-		di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, GLPASS_LIGHTSONLY);
-		di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, GLPASS_LIGHTSONLY);
-		di->drawlists[GLDL_TRANSLUCENTBORDER].Draw(di, GLPASS_LIGHTSONLY);
-		di->drawlists[GLDL_TRANSLUCENT].Draw(di, GLPASS_LIGHTSONLY, true);
+		drawlists[GLDL_PLAINFLATS].DrawFlats(this, GLPASS_LIGHTSONLY);
+		drawlists[GLDL_MASKEDFLATS].DrawFlats(this, GLPASS_LIGHTSONLY);
+		drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, GLPASS_LIGHTSONLY);
+		drawlists[GLDL_TRANSLUCENT].Draw(this, GLPASS_LIGHTSONLY, true);
 		GLRenderer->mLights->Finish();
 	}
 
@@ -272,8 +272,8 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
-	di->drawlists[GLDL_PLAINWALLS].DrawWalls(di, pass);
-	di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, pass);
+	drawlists[GLDL_PLAINWALLS].DrawWalls(this, pass);
+	drawlists[GLDL_PLAINFLATS].DrawFlats(this, pass);
 
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -283,20 +283,20 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	di->drawlists[GLDL_MASKEDWALLS].DrawWalls(di, pass);
-	di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, pass);
+	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, pass);
+	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, pass);
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
-	if (di->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
+	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
-		di->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(di, pass);
+		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, pass);
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(0, 0);
 	}
 
-	di->drawlists[GLDL_MODELS].Draw(di, pass);
+	drawlists[GLDL_MODELS].Draw(this, pass);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -305,7 +305,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
-	di->DrawDecals();
+	DrawDecals();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -323,7 +323,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
-	di->DrawUnhandledMissingTextures();
+	DrawUnhandledMissingTextures();
 	glDepthMask(true);
 
 	glPolygonOffset(0.0f, 0.0f);
@@ -340,9 +340,9 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::RenderTranslucent(FDrawInfo *di)
+void FDrawInfo::RenderTranslucent()
 {
-	const auto &vp = di->Viewpoint;
+	const auto &vp = Viewpoint;
 
 	RenderAll.Clock();
 
@@ -353,9 +353,9 @@ void GLSceneDrawer::RenderTranslucent(FDrawInfo *di)
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl_RenderState.EnableBrightmap(true);
-	di->drawlists[GLDL_TRANSLUCENTBORDER].Draw(di, GLPASS_TRANSLUCENT);
+	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, GLPASS_TRANSLUCENT);
 	glDepthMask(false);
-	di->DrawSorted(GLDL_TRANSLUCENT);
+	DrawSorted(GLDL_TRANSLUCENT);
 	gl_RenderState.EnableBrightmap(false);
 
 
@@ -400,15 +400,15 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 	if (vp.camera != nullptr)
 	{
 		ActorRenderFlags savedflags = vp.camera->renderflags;
-		CreateScene(di);
+		di->CreateScene();
 		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
-		CreateScene(di);
+		di->CreateScene();
 	}
 
-	RenderScene(di, recursion);
+	di->RenderScene(recursion);
 
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
@@ -425,7 +425,7 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 	recursion++;
 	GLPortal::EndFrame(di);
 	recursion--;
-	RenderTranslucent(di);
+	di->RenderTranslucent();
 }
 
 //-----------------------------------------------------------------------------
@@ -508,9 +508,6 @@ void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
 
 sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
 {
-	GLRenderer->mSceneClearColor[0] = 0.0f;
-	GLRenderer->mSceneClearColor[1] = 0.0f;
-	GLRenderer->mSceneClearColor[2] = 0.0f;
 	R_SetupFrame (mainvp, r_viewwindow, camera);
 
 	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);

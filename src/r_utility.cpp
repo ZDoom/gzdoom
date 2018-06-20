@@ -1016,6 +1016,10 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		screen->SetClearColor(color);
 		SWRenderer->SetClearColor(color);
 	}
+    else
+	{
+		screen->SetClearColor(GPalette.BlackIndex);
+    }
 	
 	
 	// And finally some info that is needed for the hardware renderer

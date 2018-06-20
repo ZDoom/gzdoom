@@ -104,6 +104,10 @@ struct FDrawInfo : public HWDrawInfo
 
 	// These two may be moved to the API independent part of the renderer later.
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
+    
+    void CreateScene();
+    void RenderScene(int recursion);
+    void RenderTranslucent();
 
 	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer, FRenderViewpoint &parentvp);
 	FDrawInfo *EndDrawInfo();

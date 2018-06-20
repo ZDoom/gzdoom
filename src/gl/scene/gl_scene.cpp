@@ -534,25 +534,12 @@ sector_t * GLSceneDrawer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * ca
 		{
 			if (toscreen) di->EndDrawScene(mainvp.sector); // do not call this for camera textures.
 			GLRenderer->PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
-
-			// This should be done after postprocessing, not before.
-			GLRenderer->mBuffers->BindCurrentFB();
-			glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
-
-			if (!toscreen)
-			{
-				gl_RenderState.mViewMatrix.loadIdentity();
-				gl_RenderState.mProjectionMatrix.ortho(screen->mScreenViewport.left, screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mScreenViewport.top, -1.0f, 1.0f);
-				gl_RenderState.ApplyMatrices();
-			}
 		}
 		di->EndDrawInfo();
 		GLRenderer->mDrawingScene2D = false;
 		if (!stereo3dMode.IsMono())
 			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
-		eye->TearDown();
 	}
-	stereo3dMode.TearDown();
 
 	interpolator.RestoreInterpolations ();
 	return mainvp.sector;

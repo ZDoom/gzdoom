@@ -48,7 +48,6 @@ extern UniqueList<GLSkyInfo> UniqueSkies;
 extern UniqueList<GLHorizonInfo> UniqueHorizons;
 extern UniqueList<secplane_t> UniquePlaneMirrors;
 struct GLEEHorizonPortal;
-class GLSceneDrawer;
 
 class GLPortal : public IPortal
 {
@@ -62,7 +61,6 @@ protected:
 	static int renderdepth;
 
 public:
-	static GLSceneDrawer *drawer;
 	static int PlaneMirrorMode;
 	static int inupperstack;
 	static bool	inskybox;

@@ -42,7 +42,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/stereo3d/scoped_color_mask.h"
 
 //-----------------------------------------------------------------------------
@@ -59,7 +58,6 @@ EXTERN_CVAR(Bool, gl_portals)
 EXTERN_CVAR(Bool, gl_noquery)
 EXTERN_CVAR(Int, r_mirror_recursions)
 
-GLSceneDrawer *GLPortal::drawer;
 TArray<GLPortal *> GLPortal::portals;
 TArray<float> GLPortal::planestack;
 int GLPortal::recursion;
@@ -228,7 +226,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 						return false;
 					}
 				}
-				*pDi = FDrawInfo::StartDrawInfo(drawer, outer_di->Viewpoint);
+				*pDi = FDrawInfo::StartDrawInfo(outer_di->Viewpoint);
 			}
 			else
 			{
@@ -257,7 +255,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 	{
 		if (NeedDepthBuffer())
 		{
-			*pDi = FDrawInfo::StartDrawInfo(drawer, outer_di->Viewpoint);
+			*pDi = FDrawInfo::StartDrawInfo(outer_di->Viewpoint);
 		}
 		else
 		{
@@ -327,7 +325,7 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 
 		// Restore the old view
 		if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
-		drawer->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+		di->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 		{
 			ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0, 0, 0, 0);						// no graphics
@@ -382,7 +380,7 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 
 		// Restore the old view
 		if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
-		drawer->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+		di->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 		// This draws a valid z-buffer into the stencil's contents to ensure it
 		// doesn't get overwritten by the level's geometry.
@@ -589,13 +587,13 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 	vp.ViewActor = origin;
 
 	inskybox = true;
-	drawer->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	di->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	di->SetViewArea();
 	ClearClipper(di);
 
 	di->UpdateCurrentMapSection();
 
-	drawer->DrawScene(di, DM_SKYPORTAL);
+	di->DrawScene(DM_SKYPORTAL);
 	portal->mFlags &= ~PORTSF_INSKYBOX;
 	inskybox = false;
 	gl_RenderState.SetDepthClamp(oldclamp);
@@ -696,7 +694,7 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 	// avoid recursions!
 	if (origin->plane != -1) screen->instack[origin->plane]++;
 
-	drawer->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	di->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 	SetupCoverage(di);
 	ClearClipper(di);
 	
@@ -709,7 +707,7 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 		di->mClipper->SetBlocked(true);
 	}
 
-	drawer->DrawScene(di, DM_PORTAL);
+	di->DrawScene(DM_PORTAL);
 
 	if (origin->plane != -1) screen->instack[origin->plane]--;
 }
@@ -752,13 +750,13 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
 
 	PlaneMirrorFlag++;
-	drawer->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	di->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	ClearClipper(di);
 
 	di->UpdateCurrentMapSection();
 
 	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
-	drawer->DrawScene(di, DM_PORTAL);
+	di->DrawScene(DM_PORTAL);
 	gl_RenderState.SetClipHeight(0.f, 0.f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode = old_pm;
@@ -923,7 +921,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 	vp.ViewActor = nullptr;
 
 	MirrorFlag++;
-	drawer->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	di->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	di->mClipper->Clear();
 
@@ -934,7 +932,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 
 	gl_RenderState.SetClipLine(linedef);
 	gl_RenderState.EnableClipLine(true);
-	drawer->DrawScene(di, DM_PORTAL);
+	di->DrawScene(DM_PORTAL);
 	gl_RenderState.EnableClipLine(false);
 
 	MirrorFlag--;
@@ -1000,12 +998,12 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 	}
 
 	vp.ViewActor = nullptr;
-	drawer->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	di->SetupView(vp, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, vp.Angles.Yaw, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	ClearClipper(di);
 	gl_RenderState.SetClipLine(glport->lines[0]->mDestination);
 	gl_RenderState.EnableClipLine(true);
-	drawer->DrawScene(di, DM_PORTAL);
+	di->DrawScene(DM_PORTAL);
 	gl_RenderState.EnableClipLine(false);
 }
 

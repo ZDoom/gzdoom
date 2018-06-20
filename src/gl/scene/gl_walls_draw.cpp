@@ -37,7 +37,6 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 

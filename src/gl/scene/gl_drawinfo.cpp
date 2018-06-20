@@ -37,8 +37,8 @@
 
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/stereo3d/scoped_color_mask.h"
 #include "gl/renderer/gl_quaddrawer.h"
@@ -190,10 +190,9 @@ FDrawInfo::~FDrawInfo()
 // OpenGL has no use for multiple clippers so use the same one for all DrawInfos.
 static Clipper staticClipper;
 
-FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer, FRenderViewpoint &parentvp)
+FDrawInfo *FDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp)
 {
 	FDrawInfo *di=di_list.GetNew();
-	di->mDrawer = drawer;
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
 	di->Viewpoint = parentvp;

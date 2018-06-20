@@ -9,8 +9,6 @@
 #pragma warning(disable:4244)
 #endif
 
-class GLSceneDrawer;
-
 enum DrawListType
 {
 	GLDL_PLAINWALLS,
@@ -36,8 +34,6 @@ enum Drawpasses
 
 struct FDrawInfo : public HWDrawInfo
 {
-	GLSceneDrawer *mDrawer;
-	
 	FDrawInfo * next;
 	HWDrawList drawlists[GLDL_TYPES];
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
@@ -112,8 +108,14 @@ struct FDrawInfo : public HWDrawInfo
     void ProcessScene(bool toscreen = false);
     void EndDrawScene(sector_t * viewsector);
     void DrawEndScene2D(sector_t * viewsector);
+    
+    // These should go into hwrenderer later.
+    void SetProjection(VSMatrix matrix);
+    void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
+    void SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
 
-	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer, FRenderViewpoint &parentvp);
+
+	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp);
 	FDrawInfo *EndDrawInfo();
 	
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)

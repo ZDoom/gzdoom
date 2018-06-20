@@ -48,8 +48,8 @@ class FGL2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
 class FCustomPostProcessShaders;
-class GLSceneDrawer;
 class SWSceneDrawer;
+struct FRenderViewpoint;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
 enum

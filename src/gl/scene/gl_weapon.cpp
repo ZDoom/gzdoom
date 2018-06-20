@@ -37,7 +37,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/models/gl_models.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/dynlights/gl_lightbuffer.h"

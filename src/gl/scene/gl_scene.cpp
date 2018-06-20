@@ -52,7 +52,6 @@
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/stereo3d/gl_stereo3d.h"
 #include "hwrenderer/utility/scoped_view_shifter.h"
 
@@ -79,7 +78,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 //
 //-----------------------------------------------------------------------------
 
-void SetProjection(VSMatrix matrix)
+void FDrawInfo::SetProjection(VSMatrix matrix)
 {
 	gl_RenderState.mProjectionMatrix.loadIdentity();
 	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
@@ -91,7 +90,7 @@ void SetProjection(VSMatrix matrix)
 //
 //-----------------------------------------------------------------------------
 
-void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
+void FDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	float mult = mirror? -1:1;
 	float planemult = planemirror? -level.info->pixelstretch : level.info->pixelstretch;
@@ -111,7 +110,7 @@ void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mi
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void GLSceneDrawer::SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
+void FDrawInfo::SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
 {
 	vp.SetViewAngle(r_viewwindow);
 	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
@@ -511,19 +510,19 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		screen->SetViewportRects(bounds);
 		Set3DViewport(mainview);
 
-		FDrawInfo *di = FDrawInfo::StartDrawInfo(nullptr, mainvp);
+		FDrawInfo *di = FDrawInfo::StartDrawInfo(mainvp);
 		auto vp = di->Viewpoint;
 		di->SetViewArea();
 		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
 		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
 		// Stereo mode specific perspective projection
-		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
+		di->SetProjection( eye->GetProjection(fov, ratio, fovratio) );
 		vp.SetViewAngle(r_viewwindow);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(vp.HWAngles.Yaw.Degrees, viewShift);
 		ScopedViewShifter viewShifter(vp.Pos, viewShift);
-		SetViewMatrix(vp.HWAngles, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
+		di->SetViewMatrix(vp.HWAngles, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 		gl_RenderState.ApplyMatrices();
 
 		di->ProcessScene(toscreen);

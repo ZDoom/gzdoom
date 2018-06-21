@@ -478,3 +478,39 @@ void PPCameraExposure::UpdateSteps()
 
 	hw_postprocess.Effects["UpdateCameraExposure"] = steps;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPColormap::DeclareShaders()
+{
+	hw_postprocess.Shaders["Colormap"] = { "shaders/glsl/colormap.fp", "", ColormapUniforms::Desc() };
+}
+
+void PPColormap::UpdateSteps(int fixedcm)
+{
+	if (fixedcm < CM_FIRSTSPECIALCOLORMAP || fixedcm >= CM_MAXCOLORMAP)
+	{
+		hw_postprocess.Effects["ColormapScene"] = {};
+		return;
+	}
+
+	FSpecialColormap *scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
+	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
+		scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
+
+	ColormapUniforms uniforms;
+	uniforms.MapStart = { scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f };
+	uniforms.MapRange = m;
+
+	PPStep step;
+	step.ShaderName = "Colormap";
+	step.Uniforms.Set(uniforms);
+	step.Viewport = screen->mScreenViewport;
+	step.SetInputCurrent(0);
+	step.SetOutputNext();
+	step.SetNoBlend();
+
+	TArray<PPStep> steps;
+	steps.Push(step);
+	hw_postprocess.Effects["ColormapScene"] = steps;
+}

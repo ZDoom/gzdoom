@@ -52,7 +52,6 @@
 #include "gl/scene/gl_scenedrawer.h"
 #include "hwrenderer/postprocessing/hw_ambientshader.h"
 #include "hwrenderer/postprocessing/hw_tonemapshader.h"
-#include "hwrenderer/postprocessing/hw_colormapshader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 #include "hwrenderer/postprocessing/hw_shadowmapshader.h"
@@ -101,7 +100,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mPresent3dRowShader = nullptr;
 	mTonemapShader = nullptr;
 	mTonemapPalette = nullptr;
-	mColormapShader = nullptr;
 	mLinearDepthShader = nullptr;
 	mDepthBlurShader = nullptr;
 	mSSAOShader = nullptr;
@@ -120,7 +118,6 @@ void FGLRenderer::Initialize(int width, int height)
 	mSSAOShader = new FSSAOShader();
 	mSSAOCombineShader = new FSSAOCombineShader();
 	mTonemapShader = new FTonemapShader();
-	mColormapShader = new FColormapShader();
 	mTonemapPalette = nullptr;
 	mPresentShader = new FPresentShader();
 	mPresent3dCheckerShader = new FPresent3DCheckerShader();
@@ -178,7 +175,6 @@ FGLRenderer::~FGLRenderer()
 	if (mPresent3dRowShader) delete mPresent3dRowShader;
 	if (mTonemapShader) delete mTonemapShader;
 	if (mTonemapPalette) delete mTonemapPalette;
-	if (mColormapShader) delete mColormapShader;
 	if (mShadowMapShader) delete mShadowMapShader;
 	delete mCustomPostProcessShaders;
 }

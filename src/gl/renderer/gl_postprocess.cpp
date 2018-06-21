@@ -41,7 +41,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/postprocessing/hw_ambientshader.h"
 #include "hwrenderer/postprocessing/hw_tonemapshader.h"
-#include "hwrenderer/postprocessing/hw_colormapshader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
@@ -451,44 +450,13 @@ void FGLRenderer::ClearTonemapPalette()
 	}
 }
 
-//-----------------------------------------------------------------------------
-//
-// Colormap scene texture and place the result in the HUD/2D texture
-//
-//-----------------------------------------------------------------------------
-
 void FGLRenderer::ColormapScene(int fixedcm)
 {
-	if (fixedcm < CM_FIRSTSPECIALCOLORMAP || fixedcm >= CM_MAXCOLORMAP)
-		return;
-
-	FGLDebug::PushGroup("ColormapScene");
-
-	FGLPostProcessState savedState;
-
-	mBuffers->BindNextFB();
-	mBuffers->BindCurrentTexture(0);
-	mColormapShader->Bind(NOQUEUE);
-	
-	FSpecialColormap *scm = &SpecialColormaps[fixedcm - CM_FIRSTSPECIALCOLORMAP];
-	float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
-		scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
-
-	mColormapShader->Uniforms->MapStart = { scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f };
-	mColormapShader->Uniforms->MapRange = m;
-	mColormapShader->Uniforms.Set();
-
-	RenderScreenQuad();
-	mBuffers->NextTexture();
-
-	FGLDebug::PopGroup();
+	PPColormap colormap;
+	colormap.DeclareShaders();
+	colormap.UpdateSteps(fixedcm);
+	mBuffers->RenderEffect("ColormapScene");
 }
-
-//-----------------------------------------------------------------------------
-//
-// Apply lens distortion and place the result in the HUD/2D texture
-//
-//-----------------------------------------------------------------------------
 
 void FGLRenderer::LensDistortScene()
 {
@@ -497,12 +465,6 @@ void FGLRenderer::LensDistortScene()
 	lens.UpdateSteps();
 	mBuffers->RenderEffect("LensDistortScene");
 }
-
-//-----------------------------------------------------------------------------
-//
-// Apply FXAA and place the result in the HUD/2D texture
-//
-//-----------------------------------------------------------------------------
 
 void FGLRenderer::ApplyFXAA()
 {

@@ -30,7 +30,6 @@ class FDepthBlurShader;
 class FSSAOShader;
 class FSSAOCombineShader;
 class FTonemapShader;
-class FColormapShader;
 class FPresentShader;
 class FPresent3DCheckerShader;
 class FPresent3DColumnShader; 
@@ -76,7 +75,6 @@ public:
 	FDepthBlurShader *mDepthBlurShader;
 	FSSAOCombineShader *mSSAOCombineShader;
 	FTonemapShader *mTonemapShader;
-	FColormapShader *mColormapShader;
 	FHardwareTexture *mTonemapPalette;
 	FPresentShader *mPresentShader;
 	FPresent3DCheckerShader *mPresent3dCheckerShader;

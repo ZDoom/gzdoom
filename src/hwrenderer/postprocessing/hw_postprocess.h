@@ -387,3 +387,27 @@ private:
 	TArray<PPExposureLevel> ExposureLevels;
 	bool FirstExposureFrame = true;
 };
+
+/////////////////////////////////////////////////////////////////////////////
+
+struct ColormapUniforms
+{
+	FVector4 MapStart;
+	FVector4 MapRange;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "uFixedColormapStart", UniformType::Vec4, offsetof(ColormapUniforms, MapStart) },
+			{ "uFixedColormapRange", UniformType::Vec4, offsetof(ColormapUniforms, MapRange) },
+		};
+	}
+};
+
+class PPColormap
+{
+public:
+	void DeclareShaders();
+	void UpdateSteps(int fixedcm);
+};

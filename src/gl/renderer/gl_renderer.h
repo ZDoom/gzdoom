@@ -128,7 +128,7 @@ public:
 
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
-	void AmbientOccludeScene();
+	void AmbientOccludeScene(float m5);
 	void UpdateCameraExposure();
 	void BloomScene(int fixedcm);
 	void TonemapScene();

@@ -107,8 +107,6 @@ void FRenderState::Reset()
 	mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mEffectState = 0;
 	activeShader = nullptr;
-	mProjectionMatrix.loadIdentity();
-	mViewMatrix.loadIdentity();
 	mModelMatrix.loadIdentity();
 	mTextureMatrix.loadIdentity();
 	mPassType = NORMAL_PASS;
@@ -301,17 +299,6 @@ void FRenderState::ApplyColorMask()
 		currentColorMask[1] = mColorMask[1];
 		currentColorMask[2] = mColorMask[2];
 		currentColorMask[3] = mColorMask[3];
-	}
-}
-
-void FRenderState::ApplyMatrices()
-{
-	if (GLRenderer->mShaderManager != NULL)
-	{
-		VSMatrix norm;
-		norm.computeNormalMatrix(mViewMatrix);
-		
-		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix, &norm, mPassType);
 	}
 }
 

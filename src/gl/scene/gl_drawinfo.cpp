@@ -190,12 +190,14 @@ FDrawInfo::~FDrawInfo()
 // OpenGL has no use for multiple clippers so use the same one for all DrawInfos.
 static Clipper staticClipper;
 
-FDrawInfo *FDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp)
+FDrawInfo *FDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	FDrawInfo *di=di_list.GetNew();
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
 	di->Viewpoint = parentvp;
+	if (uniforms) di->VPUniforms = *uniforms;
+	else di->VPUniforms.SetDefaults();
     di->mClipper->SetViewpoint(di->Viewpoint);
 	staticClipper.Clear();
 	di->StartScene();

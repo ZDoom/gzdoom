@@ -3,6 +3,7 @@
 #include <atomic>
 #include "r_defs.h"
 #include "r_utility.h"
+#include "hw_viewpointuniforms.h"
 
 
 struct FSectorPortalGroup;
@@ -19,6 +20,7 @@ struct HUDSprite;
 class Clipper;
 class IPortal;
 class FFlatVertexGenerator;
+class IRenderQueue;
 
 //==========================================================================
 //
@@ -99,6 +101,7 @@ struct HWDrawInfo
 	IShadowMap *mShadowMap;
 	Clipper *mClipper;
 	FRenderViewpoint Viewpoint;
+	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -207,6 +210,7 @@ public:
 	virtual void AddHUDSprite(HUDSprite *huds) = 0;
 
 	virtual int UploadLights(FDynLightData &data) = 0;
+	virtual void ApplyVPUniforms() = 0;
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;

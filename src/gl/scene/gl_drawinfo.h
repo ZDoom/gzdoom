@@ -4,6 +4,7 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "hwrenderer/scene/hw_drawlist.h"
 #include "hwrenderer/scene/hw_weapon.h"
+#include "hwrenderer/scene/hw_viewpointuniforms.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
@@ -42,6 +43,8 @@ struct FDrawInfo : public HWDrawInfo
 	FDrawInfo();
 	~FDrawInfo();
 	
+	void ApplyVPUniforms() override;
+
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
 	GLDecal *AddDecal(bool onmirror) override;
@@ -110,12 +113,11 @@ struct FDrawInfo : public HWDrawInfo
     void DrawEndScene2D(sector_t * viewsector);
     
     // These should go into hwrenderer later.
-    void SetProjection(VSMatrix matrix);
     void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
     void SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
 
 
-	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp);
+	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	FDrawInfo *EndDrawInfo();
 	
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)

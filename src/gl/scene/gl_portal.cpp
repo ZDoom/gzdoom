@@ -93,15 +93,13 @@ void GLPortal::BeginScene()
 //
 //
 //==========================================================================
-void GLPortal::ClearScreen()
+void GLPortal::ClearScreen(FDrawInfo *di)
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
-	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
-	gl_MatrixStack.Push(gl_RenderState.mProjectionMatrix);
 
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.ortho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1.0f, 1.0f);
-	gl_RenderState.ApplyMatrices();
+	di->VPUniforms.mViewMatrix.loadIdentity();
+	di->VPUniforms.mProjectionMatrix.ortho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1.0f, 1.0f);
+	di->ApplyVPUniforms();
 	gl_RenderState.SetColor(0, 0, 0);
 	gl_RenderState.Apply();
 
@@ -111,9 +109,6 @@ void GLPortal::ClearScreen()
 	glDrawArrays(GL_TRIANGLE_STRIP, FFlatVertexBuffer::FULLSCREEN_INDEX, 4);
 
 	glEnable(GL_DEPTH_TEST);
-	gl_MatrixStack.Pop(gl_RenderState.mProjectionMatrix);
-	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
-	gl_RenderState.ApplyMatrices();
 	if (multi) glEnable(GL_MULTISAMPLE);
 }
 
@@ -162,6 +157,8 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 	*pDi = nullptr;
 	rendered_portals++;
 	Clocker c(PortalAll);
+
+	*pDi = FDrawInfo::StartDrawInfo(outer_di->Viewpoint, &outer_di->VPUniforms);
 	if (usestencil)
 	{
 		if (!gl_portals) 
@@ -226,7 +223,6 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 						return false;
 					}
 				}
-				*pDi = FDrawInfo::StartDrawInfo(outer_di->Viewpoint);
 			}
 			else
 			{
@@ -244,7 +240,6 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 				gl_RenderState.SetEffect(EFF_NONE);
 				glDisable(GL_DEPTH_TEST);
 				glDepthMask(false);							// don't write to Z-buffer!
-				*pDi = outer_di;
 			}
 		}
 		recursion++;
@@ -253,15 +248,10 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 	}
 	else
 	{
-		if (NeedDepthBuffer())
-		{
-			*pDi = FDrawInfo::StartDrawInfo(outer_di->Viewpoint);
-		}
-		else
+		if (!NeedDepthBuffer())
 		{
 			glDepthMask(false);
 			glDisable(GL_DEPTH_TEST);
-			*pDi = outer_di;
 		}
 	}
 
@@ -318,9 +308,10 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 	if (PrevPortal != nullptr) PrevPortal->PopState();
 	GLRenderer->mCurrentPortal = PrevPortal;
 
+	di = di->EndDrawInfo();
+	di->ApplyVPUniforms();
 	if (usestencil)
 	{
-		if (needdepth) di = di->EndDrawInfo();
 		auto &vp = di->Viewpoint;
 
 		// Restore the old view
@@ -368,7 +359,6 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 	{
 		if (needdepth) 
 		{
-			di = di->EndDrawInfo();
 			glClear(GL_DEPTH_BUFFER_BIT);
 		}
 		else
@@ -561,7 +551,7 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 
 	if (skyboxrecursion >= 3)
 	{
-		ClearScreen();
+		ClearScreen(di);
 		return;
 	}
 	auto &vp = di->Viewpoint;
@@ -732,7 +722,7 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 {
 	if (renderdepth > r_mirror_recursions)
 	{
-		ClearScreen();
+		ClearScreen(di);
 		return;
 	}
 	// A plane mirror needs to flip the portal exclusion logic because inside the mirror, up is down and down is up.
@@ -856,7 +846,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 {
 	if (renderdepth>r_mirror_recursions) 
 	{
-		ClearScreen();
+		ClearScreen(di);
 		return;
 	}
 
@@ -958,7 +948,7 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 	// TODO: Handle recursion more intelligently
 	if (renderdepth>r_mirror_recursions) 
 	{
-		ClearScreen();
+		ClearScreen(di);
 		return;
 	}
 	auto &vp = di->Viewpoint;
@@ -1111,7 +1101,7 @@ void GLHorizonPortal::DrawContents(FDrawInfo *di)
 	gltexture=FMaterial::ValidateTexture(sp->texture, false, true);
 	if (!gltexture) 
 	{
-		ClearScreen();
+		ClearScreen(di);
 		return;
 	}
 	gl_RenderState.SetCameraPos(vp.Pos.X, vp.Pos.Y, vp.Pos.Z);

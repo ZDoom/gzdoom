@@ -8,6 +8,7 @@ class AActor;
 enum area_t : int;
 struct FSpriteModelFrame;
 struct HWDrawInfo;
+class FMaterial;
 
 
 struct WeaponPosition

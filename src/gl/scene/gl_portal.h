@@ -88,7 +88,7 @@ protected:
 	virtual bool IsSky() { return false; }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
-	void ClearScreen();
+	void ClearScreen(FDrawInfo *di);
 	virtual const char *GetName() = 0;
 	virtual void PushState() {}
 	virtual void PopState() {}

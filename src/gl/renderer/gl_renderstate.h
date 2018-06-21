@@ -131,11 +131,8 @@ class FRenderState
 
 public:
 
-	VSMatrix mProjectionMatrix;
-	VSMatrix mViewMatrix;
 	VSMatrix mModelMatrix;
 	VSMatrix mTextureMatrix;
-	VSMatrix mNormalViewMatrix;
 
 	FRenderState()
 	{
@@ -162,7 +159,6 @@ public:
 
 	void Apply();
 	void ApplyColorMask();
-	void ApplyMatrices();
 	void ApplyLightIndex(int index);
 
 	void SetVertexBuffer(FVertexBuffer *vb)

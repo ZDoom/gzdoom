@@ -71,17 +71,11 @@ EXTERN_CVAR (Bool, r_deathcamera)
 EXTERN_CVAR (Float, r_visibility)
 EXTERN_CVAR (Bool, r_drawvoxels)
 
-//-----------------------------------------------------------------------------
-//
-// SetProjection
-// sets projection matrix
-//
-//-----------------------------------------------------------------------------
 
-void FDrawInfo::SetProjection(VSMatrix matrix)
+void FDrawInfo::ApplyVPUniforms()
 {
-	gl_RenderState.mProjectionMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
+	VPUniforms.CalcDependencies();
+	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms.mProjectionMatrix, &VPUniforms.mViewMatrix, &VPUniforms.mNormalViewMatrix, NORMAL_PASS);
 }
 
 //-----------------------------------------------------------------------------
@@ -95,12 +89,12 @@ void FDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float 
 	float mult = mirror? -1:1;
 	float planemult = planemirror? -level.info->pixelstretch : level.info->pixelstretch;
 
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mViewMatrix.rotate(angles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
-	gl_RenderState.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
-	gl_RenderState.mViewMatrix.rotate(angles.Yaw.Degrees,   0.0f, mult, 0.0f);
-	gl_RenderState.mViewMatrix.translate(vx * mult, -vz * planemult , -vy);
-	gl_RenderState.mViewMatrix.scale(-mult, planemult, 1);
+	VPUniforms.mViewMatrix.loadIdentity();
+	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees,   0.0f, mult, 0.0f);
+	VPUniforms.mViewMatrix.translate(vx * mult, -vz * planemult , -vy);
+	VPUniforms.mViewMatrix.scale(-mult, planemult, 1);
 }
 
 
@@ -114,7 +108,7 @@ void FDrawInfo::SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DA
 {
 	vp.SetViewAngle(r_viewwindow);
 	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
-	gl_RenderState.ApplyMatrices();
+	ApplyVPUniforms();
 }
 
 //-----------------------------------------------------------------------------
@@ -364,11 +358,11 @@ void FDrawInfo::DrawScene(int drawmode)
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
-		GLRenderer->AmbientOccludeScene();
+		GLRenderer->AmbientOccludeScene(VPUniforms.mProjectionMatrix.get()[5]);
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
-		gl_RenderState.ApplyMatrices();
+		ApplyVPUniforms();
 	}
 
 	// Handle all portals after rendering the opaque objects but before
@@ -414,9 +408,9 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 
 	// This should be removed once all 2D stuff is really done through the 2D interface.
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
-	gl_RenderState.ApplyMatrices();
+	VPUniforms.mViewMatrix.loadIdentity();
+	VPUniforms.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
+	ApplyVPUniforms();
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);
 
@@ -510,20 +504,20 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		screen->SetViewportRects(bounds);
 		Set3DViewport(mainview);
 
-		FDrawInfo *di = FDrawInfo::StartDrawInfo(mainvp);
+		FDrawInfo *di = FDrawInfo::StartDrawInfo(mainvp, nullptr);
 		auto vp = di->Viewpoint;
 		di->SetViewArea();
 		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
 		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
 		// Stereo mode specific perspective projection
-		di->SetProjection( eye->GetProjection(fov, ratio, fovratio) );
+		di->VPUniforms.mProjectionMatrix = eye->GetProjection(fov, ratio, fovratio);
 		vp.SetViewAngle(r_viewwindow);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(vp.HWAngles.Yaw.Degrees, viewShift);
 		ScopedViewShifter viewShifter(vp.Pos, viewShift);
 		di->SetViewMatrix(vp.HWAngles, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
-		gl_RenderState.ApplyMatrices();
+		di->ApplyVPUniforms();
 
 		di->ProcessScene(toscreen);
 

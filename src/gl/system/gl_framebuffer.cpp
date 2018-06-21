@@ -342,7 +342,7 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex)
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
 {
-	return new FGLModelRenderer(mli);
+	return new FGLModelRenderer(nullptr, mli);
 }
 
 IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticuse)

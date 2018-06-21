@@ -93,7 +93,6 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 
 	// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
 	gl_RenderState.EnableTextureMatrix(true);
-	gl_RenderState.mTextureMatrix.computeNormalMatrix(gl_RenderState.mViewMatrix);
 
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);

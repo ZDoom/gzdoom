@@ -50,7 +50,7 @@ CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
 VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 {
 	VSMatrix objectToWorldMatrix;
-	gl_RenderState.mViewMatrix.inverseMatrix(objectToWorldMatrix);
+	di->VPUniforms.mViewMatrix.inverseMatrix(objectToWorldMatrix);
 	return objectToWorldMatrix;
 }
 

@@ -467,9 +467,11 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
-	gl_RenderState.ApplyMatrices();
+	HWViewpointUniforms matrices;
+	matrices.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
+	matrices.mViewMatrix.loadIdentity();
+	matrices.CalcDependencies();
+	GLRenderer->mShaderManager->ApplyMatrices(&matrices.mProjectionMatrix, &matrices.mViewMatrix, &matrices.mNormalViewMatrix, NORMAL_PASS);
 
 	glDisable(GL_DEPTH_TEST);
 

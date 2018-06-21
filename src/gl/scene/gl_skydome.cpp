@@ -230,7 +230,6 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
-	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
 	di->SetupView(vp, 0, 0, 0, vp.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
@@ -270,8 +269,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 		}
 	}
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
-	gl_RenderState.ApplyMatrices();
+	di->ApplyVPUniforms();
 	::level.lightmode = oldlightmode;
 	gl_RenderState.SetDepthClamp(oldClamp);
 }

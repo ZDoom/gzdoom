@@ -33,6 +33,7 @@
 **
 */
 
+#include "gl/scene/gl_drawinfo.h"
 #include "gl_sidebyside3d.h"
 #include "gl/renderer/gl_renderbuffers.h"
 
@@ -98,13 +99,13 @@ SideBySideFull::SideBySideFull(double ipdMeters)
 }
 
 /* virtual */
-void SideBySideFull::AdjustPlayerSprites() const /* override */ 
+void SideBySideFull::AdjustPlayerSprites(FDrawInfo *di) const /* override */
 {
 	// Show weapon at double width, so it would appear normal width after rescaling
 	int w = screen->mScreenViewport.width;
 	int h = screen->mScreenViewport.height;
-	gl_RenderState.mProjectionMatrix.ortho(w/2, w + w/2, h, 0, -1.0f, 1.0f);
-	gl_RenderState.ApplyMatrices();
+	di->VPUniforms.mProjectionMatrix.ortho(w/2, w + w/2, h, 0, -1.0f, 1.0f);
+	di->ApplyVPUniforms();
 }
 
 /* static */

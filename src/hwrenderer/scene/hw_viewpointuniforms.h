@@ -12,4 +12,12 @@ struct HWViewpointUniforms
   {
     mNormalViewMatrix.computeNormalMatrix(mViewMatrix);
   }
+
+  void SetDefaults()
+  {
+	  mProjectionMatrix.loadIdentity();
+	  mViewMatrix.loadIdentity();
+	  mNormalViewMatrix.loadIdentity();
+  }
+
 };

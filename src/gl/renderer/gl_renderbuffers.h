@@ -54,26 +54,6 @@ private:
 	friend class FGLRenderBuffers;
 };
 
-class FGLBloomTextureLevel
-{
-public:
-	PPTexture VTexture;
-	PPFrameBuffer VFramebuffer;
-	PPTexture HTexture;
-	PPFrameBuffer HFramebuffer;
-	int Width = 0;
-	int Height = 0;
-};
-
-class FGLExposureTextureLevel
-{
-public:
-	PPTexture Texture;
-	PPFrameBuffer Framebuffer;
-	int Width = 0;
-	int Height = 0;
-};
-
 class FShaderProgram;
 
 class FGLRenderBuffers
@@ -115,14 +95,6 @@ public:
 	void BindShadowMapFB();
 	void BindShadowMapTexture(int index);
 
-	enum { NumBloomLevels = 4 };
-	FGLBloomTextureLevel BloomLevels[NumBloomLevels];
-
-	TArray<FGLExposureTextureLevel> ExposureLevels;
-	PPTexture ExposureTexture;
-	PPFrameBuffer ExposureFB;
-	bool FirstExposureFrame = true;
-
 	// Ambient occlusion buffers
 	PPTexture LinearDepthTexture;
 	PPFrameBuffer LinearDepthFB;
@@ -147,14 +119,10 @@ private:
 	void ClearScene();
 	void ClearPipeline();
 	void ClearEyeBuffers();
-	void ClearBloom();
-	void ClearExposureLevels();
 	void ClearAmbientOcclusion();
 	void ClearShadowMap();
 	void CreateScene(int width, int height, int samples, bool needsSceneTextures);
 	void CreatePipeline(int width, int height);
-	void CreateBloom(int width, int height);
-	void CreateExposureLevels(int width, int height);
 	void CreateEyeBuffers(int eye);
 	void CreateShadowMap();
 	void CreateAmbientOcclusion(int width, int height);

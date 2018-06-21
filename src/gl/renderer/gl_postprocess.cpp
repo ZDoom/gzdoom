@@ -40,8 +40,6 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/postprocessing/hw_ambientshader.h"
-#include "hwrenderer/postprocessing/hw_bloomshader.h"
-#include "hwrenderer/postprocessing/hw_blurshader.h"
 #include "hwrenderer/postprocessing/hw_tonemapshader.h"
 #include "hwrenderer/postprocessing/hw_colormapshader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
@@ -91,6 +89,7 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 			default:
 			case PixelFormat::Rgba8: glformat = GL_RGBA8; break;
 			case PixelFormat::Rgba16f: glformat = GL_RGBA16F; break;
+			case PixelFormat::R32f: glformat = GL_R32F; break;
 			}
 
 			if (gltexture && (gltexture.Width != pair->Value.Width || gltexture.Height != pair->Value.Height))
@@ -345,125 +344,17 @@ void FGLRenderer::AmbientOccludeScene()
 	FGLDebug::PopGroup();
 }
 
-//-----------------------------------------------------------------------------
-//
-// Extracts light average from the scene and updates the camera exposure texture
-//
-//-----------------------------------------------------------------------------
-
 void FGLRenderer::UpdateCameraExposure()
 {
-	if (!gl_bloom && gl_tonemap == 0)
-		return;
-
-	FGLDebug::PushGroup("UpdateCameraExposure");
-
-	FGLPostProcessState savedState;
-	savedState.SaveTextureBindings(2);
-
-	// Extract light level from scene texture:
-	auto &level0 = mBuffers->ExposureLevels[0];
-	level0.Framebuffer.Bind();
-	glViewport(0, 0, level0.Width, level0.Height);
-	mBuffers->BindCurrentTexture(0, GL_LINEAR);
-	mExposureExtractShader->Bind(NOQUEUE);
-	mExposureExtractShader->Uniforms->Scale = screen->SceneScale();
-	mExposureExtractShader->Uniforms->Offset = screen->SceneOffset();
-	mExposureExtractShader->Uniforms.Set();
-	RenderScreenQuad();
-
-	// Find the average value:
-	for (unsigned int i = 0; i + 1 < mBuffers->ExposureLevels.Size(); i++)
-	{
-		auto &level = mBuffers->ExposureLevels[i];
-		auto &next = mBuffers->ExposureLevels[i + 1];
-
-		next.Framebuffer.Bind();
-		glViewport(0, 0, next.Width, next.Height);
-		level.Texture.Bind(0);
-		mExposureAverageShader->Bind(NOQUEUE);
-		RenderScreenQuad();
-	}
-
-	// Combine average value with current camera exposure:
-	mBuffers->ExposureFB.Bind();
-	glViewport(0, 0, 1, 1);
-	if (!mBuffers->FirstExposureFrame)
-	{
-		glEnable(GL_BLEND);
-		glBlendEquation(GL_FUNC_ADD);
-		glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	}
-	else
-	{
-		mBuffers->FirstExposureFrame = false;
-	}
-	mBuffers->ExposureLevels.Last().Texture.Bind(0);
-	mExposureCombineShader->Bind(NOQUEUE);
-	mExposureCombineShader->Uniforms->ExposureBase = gl_exposure_base;
-	mExposureCombineShader->Uniforms->ExposureMin = gl_exposure_min;
-	mExposureCombineShader->Uniforms->ExposureScale = gl_exposure_scale;
-	mExposureCombineShader->Uniforms->ExposureSpeed = gl_exposure_speed;
-	mExposureCombineShader->Uniforms.Set();
-	RenderScreenQuad();
-
-	const auto &mScreenViewport = screen->mScreenViewport;
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-
-	FGLDebug::PopGroup();
-}
-
-//-----------------------------------------------------------------------------
-//
-// Adds bloom contribution to scene texture
-//
-//-----------------------------------------------------------------------------
-
-static float ComputeBlurGaussian(float n, float theta) // theta = Blur Amount
-{
-	return (float)((1.0f / sqrtf(2 * (float)M_PI * theta)) * expf(-(n * n) / (2.0f * theta * theta)));
-}
-
-static void ComputeBlurSamples(int sampleCount, float blurAmount, float *sampleWeights)
-{
-	sampleWeights[0] = ComputeBlurGaussian(0, blurAmount);
-
-	float totalWeights = sampleWeights[0];
-
-	for (int i = 0; i < sampleCount / 2; i++)
-	{
-		float weight = ComputeBlurGaussian(i + 1.0f, blurAmount);
-
-		sampleWeights[i * 2 + 1] = weight;
-		sampleWeights[i * 2 + 2] = weight;
-
-		totalWeights += weight * 2;
-	}
-
-	for (int i = 0; i < sampleCount; i++)
-	{
-		sampleWeights[i] /= totalWeights;
-	}
-}
-
-static void RenderBlur(FGLRenderer *renderer, float blurAmount, PPTexture input, PPFrameBuffer output, int width, int height, bool vertical)
-{
-	ComputeBlurSamples(7, blurAmount, renderer->mBlurShader->Uniforms[vertical]->SampleWeights);
-
-	renderer->mBlurShader->Bind(NOQUEUE, vertical);
-	renderer->mBlurShader->Uniforms[vertical].Set(POSTPROCESS_BINDINGPOINT);
-
-	input.Bind(0);
-	output.Bind();
-	glViewport(0, 0, width, height);
-	glDisable(GL_BLEND);
-	renderer->RenderScreenQuad();
+	PPCameraExposure exposure;
+	exposure.DeclareShaders();
+	exposure.UpdateTextures(mBuffers->GetSceneWidth(), mBuffers->GetSceneHeight());
+	exposure.UpdateSteps();
+	mBuffers->RenderEffect("UpdateCameraExposure");
 }
 
 void FGLRenderer::BloomScene(int fixedcm)
 {
-#if 0
-
 	if (mBuffers->GetSceneWidth() <= 0 || mBuffers->GetSceneHeight() <= 0)
 		return;
 
@@ -471,156 +362,20 @@ void FGLRenderer::BloomScene(int fixedcm)
 	bloom.DeclareShaders();
 	bloom.UpdateTextures(mBuffers->GetSceneWidth(), mBuffers->GetSceneHeight());
 	bloom.UpdateSteps(fixedcm);
-	mBuffers->RenderEffect("Bloom");
-
-#else
-	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || fixedcm != CM_DEFAULT || gl_ssao_debug)
-		return;
-
-	FGLDebug::PushGroup("BloomScene");
-
-	FGLPostProcessState savedState;
-	savedState.SaveTextureBindings(2);
-
-	const float blurAmount = gl_bloom_amount;
-
-	auto &level0 = mBuffers->BloomLevels[0];
-
-	// Extract blooming pixels from scene texture:
-	level0.VFramebuffer.Bind();
-	glViewport(0, 0, level0.Width, level0.Height);
-	mBuffers->BindCurrentTexture(0, GL_LINEAR);
-	mBuffers->ExposureTexture.Bind(1);
-	mBloomExtractShader->Bind(NOQUEUE);
-	mBloomExtractShader->Uniforms->Scale = screen->SceneScale();
-	mBloomExtractShader->Uniforms->Offset = screen->SceneOffset();
-	mBloomExtractShader->Uniforms.Set();
-	RenderScreenQuad();
-
-	// Blur and downscale:
-	for (int i = 0; i < FGLRenderBuffers::NumBloomLevels - 1; i++)
-	{
-		auto &level = mBuffers->BloomLevels[i];
-		auto &next = mBuffers->BloomLevels[i + 1];
-		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
-		RenderBlur(this, blurAmount, level.HTexture, next.VFramebuffer, next.Width, next.Height, true);
-	}
-
-	// Blur and upscale:
-	for (int i = FGLRenderBuffers::NumBloomLevels - 1; i > 0; i--)
-	{
-		auto &level = mBuffers->BloomLevels[i];
-		auto &next = mBuffers->BloomLevels[i - 1];
-
-		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
-		RenderBlur(this, blurAmount, level.HTexture, level.VFramebuffer, level.Width, level.Height, true);
-
-		// Linear upscale:
-		next.VFramebuffer.Bind();
-		glViewport(0, 0, next.Width, next.Height);
-		level.VTexture.Bind(0, GL_LINEAR);
-		mBloomCombineShader->Bind(NOQUEUE);
-		RenderScreenQuad();
-	}
-
-	RenderBlur(this, blurAmount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height, false);
-	RenderBlur(this, blurAmount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height, true);
-
-	const auto &mSceneViewport = screen->mSceneViewport;
-	const auto &mScreenViewport = screen->mScreenViewport;
-
-	// Add bloom back to scene texture:
-	mBuffers->BindCurrentFB();
-	glViewport(mSceneViewport.left, mSceneViewport.top, mSceneViewport.width, mSceneViewport.height);
-	glEnable(GL_BLEND);
-	glBlendEquation(GL_FUNC_ADD);
-	glBlendFunc(GL_ONE, GL_ONE);
-	level0.VTexture.Bind(0, GL_LINEAR);
-	mBloomCombineShader->Bind(NOQUEUE);
-	RenderScreenQuad();
-	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
-
-	FGLDebug::PopGroup();
-#endif
+	mBuffers->RenderEffect("BloomScene");
 }
-
-//-----------------------------------------------------------------------------
-//
-// Blur the scene
-//
-//-----------------------------------------------------------------------------
 
 void FGLRenderer::BlurScene(float gameinfobluramount)
 {
-	// first, respect the CVar
-	float blurAmount = gl_menu_blur;
-
-	// if CVar is negative, use the gameinfo entry
-	if (gl_menu_blur < 0)
-		blurAmount = gameinfobluramount;
-
-	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
-	if (blurAmount <= 0.0)
+	if (mBuffers->GetSceneWidth() <= 0 || mBuffers->GetSceneHeight() <= 0)
 		return;
 
-	FGLDebug::PushGroup("BlurScene");
-
-	FGLPostProcessState savedState;
-	savedState.SaveTextureBindings(2);
-
-	int numLevels = 3; // Must be 4 or less (since FGLRenderBuffers::NumBloomLevels is 4 and we are using its buffers).
-	assert(numLevels <= FGLRenderBuffers::NumBloomLevels);
-
-	const auto &viewport = screen->mScreenViewport; // The area we want to blur. Could also be mSceneViewport if only the scene area is to be blured
-
-	const auto &level0 = mBuffers->BloomLevels[0];
-
-	// Grab the area we want to bloom:
-	mBuffers->BlitLinear(mBuffers->GetCurrentFB(), level0.VFramebuffer, viewport.left, viewport.top, viewport.width, viewport.height, 0, 0, level0.Width, level0.Height);
-
-	// Blur and downscale:
-	for (int i = 0; i < numLevels - 1; i++)
-	{
-		auto &level = mBuffers->BloomLevels[i];
-		auto &next = mBuffers->BloomLevels[i + 1];
-		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
-		RenderBlur(this, blurAmount, level.HTexture, next.VFramebuffer, next.Width, next.Height, true);
-	}
-
-	// Blur and upscale:
-	for (int i = numLevels - 1; i > 0; i--)
-	{
-		auto &level = mBuffers->BloomLevels[i];
-		auto &next = mBuffers->BloomLevels[i - 1];
-
-		RenderBlur(this, blurAmount, level.VTexture, level.HFramebuffer, level.Width, level.Height, false);
-		RenderBlur(this, blurAmount, level.HTexture, level.VFramebuffer, level.Width, level.Height, true);
-
-		// Linear upscale:
-		next.VFramebuffer.Bind();
-		glViewport(0, 0, next.Width, next.Height);
-		level.VTexture.Bind(0, GL_LINEAR);
-		mBloomCombineShader->Bind(NOQUEUE);
-		RenderScreenQuad();
-	}
-
-	RenderBlur(this, blurAmount, level0.VTexture, level0.HFramebuffer, level0.Width, level0.Height, false);
-	RenderBlur(this, blurAmount, level0.HTexture, level0.VFramebuffer, level0.Width, level0.Height, true);
-
-	// Copy blur back to scene texture:
-	mBuffers->BlitLinear(level0.VFramebuffer, mBuffers->GetCurrentFB(), 0, 0, level0.Width, level0.Height, viewport.left, viewport.top, viewport.width, viewport.height);
-
-	glViewport(viewport.left, viewport.top, viewport.width, viewport.height);
-
-	FGLDebug::PopGroup();
+	PPBloom blur;
+	blur.DeclareShaders();
+	blur.UpdateTextures(mBuffers->GetSceneWidth(), mBuffers->GetSceneHeight());
+	blur.UpdateBlurSteps(gameinfobluramount);
+	mBuffers->RenderEffect("BlurScene");
 }
-
-//-----------------------------------------------------------------------------
-//
-// Tonemap scene texture and place the result in the HUD/2D texture
-//
-//-----------------------------------------------------------------------------
 
 void FGLRenderer::TonemapScene()
 {
@@ -650,7 +405,7 @@ void FGLRenderer::TonemapScene()
 	}
 	else
 	{
-		mBuffers->ExposureTexture.Bind(1);
+		//mBuffers->ExposureTexture.Bind(1);
 	}
 
 	RenderScreenQuad();

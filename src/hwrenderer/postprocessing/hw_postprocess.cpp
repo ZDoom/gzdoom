@@ -61,11 +61,11 @@ void PPBloom::UpdateSteps(int fixedcm)
 	auto &level0 = levels[0];
 
 	// Extract blooming pixels from scene texture:
-	step.Viewport = level0.Viewport;
-	step.SetInputCurrent(0, PPFilterMode::Linear);
-	step.SetInputTexture(1, "ExposureTexture");
 	step.ShaderName = "BloomExtract";
 	step.Uniforms.Set(extractUniforms);
+	step.Viewport = level0.Viewport;
+	step.SetInputCurrent(0, PPFilterMode::Linear);
+	step.SetInputTexture(1, "Exposure.CameraTexture");
 	step.SetOutputTexture(level0.VTexture);
 	step.SetNoBlend();
 	steps.Push(step);
@@ -93,10 +93,12 @@ void PPBloom::UpdateSteps(int fixedcm)
 		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
 
 		// Linear upscale:
-		step.SetInputTexture(0, next.VTexture, PPFilterMode::Linear);
-		step.SetOutputTexture(next.HTexture);
-		step.Viewport = next.Viewport;
 		step.ShaderName = "BloomCombine";
+		step.Uniforms.Clear();
+		step.Viewport = next.Viewport;
+		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetOutputTexture(next.VTexture);
+		step.SetNoBlend();
 		steps.Push(step);
 	}
 
@@ -104,23 +106,103 @@ void PPBloom::UpdateSteps(int fixedcm)
 	steps.Push(BlurStep(blurUniforms, level0.HTexture, level0.VTexture, level0.Viewport, true));
 
 	// Add bloom back to scene texture:
+	step.ShaderName = "BloomCombine";
+	step.Uniforms.Clear();
+	step.Viewport = screen->mSceneViewport;
 	step.SetInputTexture(0, level0.VTexture, PPFilterMode::Linear);
 	step.SetOutputCurrent();
-	step.Viewport = screen->mSceneViewport;
-	step.ShaderName = "BloomCombine";
 	step.SetAdditiveBlend();
 	steps.Push(step);
 
 	hw_postprocess.Effects["BloomScene"] = steps;
 }
 
+void PPBloom::UpdateBlurSteps(float gameinfobluramount)
+{
+	// first, respect the CVar
+	float blurAmount = gl_menu_blur;
+
+	// if CVar is negative, use the gameinfo entry
+	if (gl_menu_blur < 0)
+		blurAmount = gameinfobluramount;
+
+	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
+	if (blurAmount <= 0.0)
+	{
+		hw_postprocess.Effects["BlurScene"] = {};
+		return;
+	}
+
+	TArray<PPStep> steps;
+	PPStep step;
+
+	int numLevels = 3;
+	assert(numLevels <= NumBloomLevels);
+
+	const auto &level0 = levels[0];
+
+	// Grab the area we want to bloom:
+	step.ShaderName = "BloomCombine";
+	step.Uniforms.Clear();
+	step.Viewport = level0.Viewport;
+	step.SetInputCurrent(0, PPFilterMode::Linear);
+	step.SetOutputTexture(level0.VTexture);
+	step.SetNoBlend();
+	steps.Push(step);
+
+	BlurUniforms blurUniforms;
+	ComputeBlurSamples(7, blurAmount, blurUniforms.SampleWeights);
+
+	// Blur and downscale:
+	for (int i = 0; i < numLevels - 1; i++)
+	{
+		auto &level = levels[i];
+		auto &next = levels[i + 1];
+		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
+		steps.Push(BlurStep(blurUniforms, level.HTexture, next.VTexture, next.Viewport, true));
+	}
+
+	// Blur and upscale:
+	for (int i = numLevels - 1; i > 0; i--)
+	{
+		auto &level = levels[i];
+		auto &next = levels[i - 1];
+
+		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
+		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
+
+		// Linear upscale:
+		step.ShaderName = "BloomCombine";
+		step.Uniforms.Clear();
+		step.Viewport = next.Viewport;
+		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetOutputTexture(next.VTexture);
+		step.SetNoBlend();
+		steps.Push(step);
+	}
+
+	steps.Push(BlurStep(blurUniforms, level0.VTexture, level0.HTexture, level0.Viewport, false));
+	steps.Push(BlurStep(blurUniforms, level0.HTexture, level0.VTexture, level0.Viewport, true));
+
+	// Copy blur back to scene texture:
+	step.ShaderName = "BloomCombine";
+	step.Uniforms.Clear();
+	step.Viewport = screen->mScreenViewport;
+	step.SetInputTexture(0, level0.VTexture, PPFilterMode::Linear);
+	step.SetOutputCurrent();
+	step.SetNoBlend();
+	steps.Push(step);
+
+	hw_postprocess.Effects["BlurScene"] = steps;
+}
+
 PPStep PPBloom::BlurStep(const BlurUniforms &blurUniforms, PPTextureName input, PPTextureName output, PPViewport viewport, bool vertical)
 {
 	PPStep step;
-	step.Viewport = viewport;
-	step.SetInputTexture(0, input);
 	step.ShaderName = vertical ? "BlurVertical" : "BlurHorizontal";
 	step.Uniforms.Set(blurUniforms);
+	step.Viewport = viewport;
+	step.SetInputTexture(0, input);
 	step.SetOutputTexture(output);
 	step.SetNoBlend();
 	return step;
@@ -202,12 +284,12 @@ void PPLensDistort::UpdateSteps()
 	TArray<PPStep> steps;
 
 	PPStep step;
+	step.ShaderName = "Lens";
+	step.Uniforms.Set(uniforms);
+	step.Viewport = screen->mScreenViewport;
 	step.SetInputCurrent(0, PPFilterMode::Linear);
 	step.SetOutputNext();
 	step.SetNoBlend();
-	step.Uniforms.Set(uniforms);
-	step.Viewport = screen->mScreenViewport;
-	step.ShaderName = "Lens";
 	steps.Push(step);
 
 	hw_postprocess.Effects["LensDistortScene"] = steps;
@@ -235,16 +317,20 @@ void PPFXAA::UpdateSteps()
 	TArray<PPStep> steps;
 
 	PPStep step;
+	step.ShaderName = "FXAALuma";
+	step.Uniforms.Clear();
+	step.Viewport = screen->mScreenViewport;
 	step.SetInputCurrent(0, PPFilterMode::Nearest);
 	step.SetOutputNext();
 	step.SetNoBlend();
-	step.Viewport = screen->mScreenViewport;
-	step.ShaderName = "FXAALuma";
 	steps.Push(step);
 
-	step.SetInputCurrent(0, PPFilterMode::Linear);
-	step.Uniforms.Set(uniforms);
 	step.ShaderName = "FXAA";
+	step.Uniforms.Set(uniforms);
+	step.Viewport = screen->mScreenViewport;
+	step.SetInputCurrent(0, PPFilterMode::Linear);
+	step.SetOutputNext();
+	step.SetNoBlend();
 	steps.Push(step);
 
 	hw_postprocess.Effects["ApplyFXAA"] = steps;
@@ -280,4 +366,115 @@ FString PPFXAA::GetDefines()
 		quality, gatherAlpha);
 
 	return result;
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPCameraExposure::DeclareShaders()
+{
+	hw_postprocess.Shaders["ExposureExtract"] = { "shaders/glsl/exposureextract.fp", "", ExposureExtractUniforms::Desc() };
+	hw_postprocess.Shaders["ExposureAverage"] = { "shaders/glsl/exposureaverage.fp", "", {}, 400 };
+	hw_postprocess.Shaders["ExposureCombine"] = { "shaders/glsl/exposurecombine.fp", "", ExposureCombineUniforms::Desc() };
+}
+
+void PPCameraExposure::UpdateTextures(int width, int height)
+{
+	if (ExposureLevels.Size() > 0 && ExposureLevels[0].Viewport.width == width && ExposureLevels[0].Viewport.height == height)
+	{
+		return;
+	}
+
+	ExposureLevels.Clear();
+
+	int i = 0;
+	do
+	{
+		width = MAX(width / 2, 1);
+		height = MAX(height / 2, 1);
+
+		PPExposureLevel level;
+		level.Viewport.left = 0;
+		level.Viewport.top = 0;
+		level.Viewport.width = width;
+		level.Viewport.height = height;
+		level.Texture.Format("Exposure.Level.%d", i);
+		ExposureLevels.Push(level);
+
+		PPTextureDesc texture = { level.Viewport.width, level.Viewport.height, PixelFormat::R32f };
+		hw_postprocess.Textures[level.Texture] = texture;
+
+		i++;
+
+	} while (width > 1 || height > 1);
+
+	hw_postprocess.Textures["Exposure.CameraTexture"] = { 1, 1, PixelFormat::R32f };
+
+	FirstExposureFrame = true;
+}
+
+void PPCameraExposure::UpdateSteps()
+{
+	if (!gl_bloom && gl_tonemap == 0)
+	{
+		hw_postprocess.Effects["UpdateCameraExposure"] = {};
+		return;
+	}
+
+	TArray<PPStep> steps;
+	PPStep step;
+
+	ExposureExtractUniforms extractUniforms;
+	extractUniforms.Scale = screen->SceneScale();
+	extractUniforms.Offset = screen->SceneOffset();
+
+	ExposureCombineUniforms combineUniforms;
+	combineUniforms.ExposureBase = gl_exposure_base;
+	combineUniforms.ExposureMin = gl_exposure_min;
+	combineUniforms.ExposureScale = gl_exposure_scale;
+	combineUniforms.ExposureSpeed = gl_exposure_speed;
+
+	auto &level0 = ExposureLevels[0];
+
+	// Extract light level from scene texture:
+	step.ShaderName = "ExposureExtract";
+	step.Uniforms.Set(extractUniforms);
+	step.Viewport = level0.Viewport;
+	step.SetInputCurrent(0, PPFilterMode::Linear);
+	step.SetOutputTexture(level0.Texture);
+	step.SetNoBlend();
+	steps.Push(step);
+
+	// Find the average value:
+	for (unsigned int i = 0; i + 1 < ExposureLevels.Size(); i++)
+	{
+		auto &level = ExposureLevels[i];
+		auto &next = ExposureLevels[i + 1];
+
+		step.ShaderName = "ExposureAverage";
+		step.Uniforms.Clear();
+		step.Viewport = next.Viewport;
+		step.SetInputTexture(0, level.Texture, PPFilterMode::Linear);
+		step.SetOutputTexture(next.Texture);
+		step.SetNoBlend();
+		steps.Push(step);
+	}
+
+	// Combine average value with current camera exposure:
+	step.ShaderName = "ExposureCombine";
+	step.Uniforms.Set(combineUniforms);
+	step.Viewport.left = 0;
+	step.Viewport.top = 0;
+	step.Viewport.width = 1;
+	step.Viewport.height = 1;
+	step.SetInputTexture(0, ExposureLevels.Last().Texture, PPFilterMode::Linear);
+	step.SetOutputTexture("Exposure.CameraTexture");
+	if (!FirstExposureFrame)
+		step.SetAlphaBlend();
+	else
+		step.SetNoBlend();
+	steps.Push(step);
+
+	FirstExposureFrame = false;
+
+	hw_postprocess.Effects["UpdateCameraExposure"] = steps;
 }

@@ -58,8 +58,6 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearScene();
 	ClearPipeline();
 	ClearEyeBuffers();
-	ClearBloom();
-	ClearExposureLevels();
 	ClearAmbientOcclusion();
 	ClearShadowMap();
 }
@@ -91,31 +89,6 @@ void FGLRenderBuffers::ClearPipeline()
 		DeleteFrameBuffer(mPipelineFB[i]);
 		DeleteTexture(mPipelineTexture[i]);
 	}
-}
-
-void FGLRenderBuffers::ClearBloom()
-{
-	for (int i = 0; i < NumBloomLevels; i++)
-	{
-		auto &level = BloomLevels[i];
-		DeleteFrameBuffer(level.HFramebuffer);
-		DeleteFrameBuffer(level.VFramebuffer);
-		DeleteTexture(level.HTexture);
-		DeleteTexture(level.VTexture);
-		level = FGLBloomTextureLevel();
-	}
-}
-
-void FGLRenderBuffers::ClearExposureLevels()
-{
-	for (auto &level : ExposureLevels)
-	{
-		DeleteTexture(level.Texture);
-		DeleteFrameBuffer(level.Framebuffer);
-	}
-	ExposureLevels.Clear();
-	DeleteTexture(ExposureTexture);
-	DeleteFrameBuffer(ExposureFB);
 }
 
 void FGLRenderBuffers::ClearEyeBuffers()
@@ -198,8 +171,6 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	// Bloom bluring buffers need to match the scene to avoid bloom bleeding artifacts
 	if (mSceneWidth != sceneWidth || mSceneHeight != sceneHeight)
 	{
-		CreateBloom(sceneWidth, sceneHeight);
-		CreateExposureLevels(sceneWidth, sceneHeight);
 		CreateAmbientOcclusion(sceneWidth, sceneHeight);
 		mSceneWidth = sceneWidth;
 		mSceneHeight = sceneHeight;
@@ -215,8 +186,6 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		ClearScene();
 		ClearPipeline();
 		ClearEyeBuffers();
-		ClearBloom();
-		ClearExposureLevels();
 		mWidth = 0;
 		mHeight = 0;
 		mSamples = 0;
@@ -296,38 +265,6 @@ void FGLRenderBuffers::CreatePipeline(int width, int height)
 
 //==========================================================================
 //
-// Creates bloom pass working buffers
-//
-//==========================================================================
-
-void FGLRenderBuffers::CreateBloom(int width, int height)
-{
-	ClearBloom();
-	
-	// No scene, no bloom!
-	if (width <= 0 || height <= 0)
-		return;
-
-	int bloomWidth = (width + 1) / 2;
-	int bloomHeight = (height + 1) / 2;
-	for (int i = 0; i < NumBloomLevels; i++)
-	{
-		auto &level = BloomLevels[i];
-		level.Width = (bloomWidth + 1) / 2;
-		level.Height = (bloomHeight + 1) / 2;
-
-		level.VTexture = Create2DTexture("Bloom.VTexture", GL_RGBA16F, level.Width, level.Height);
-		level.HTexture = Create2DTexture("Bloom.HTexture", GL_RGBA16F, level.Width, level.Height);
-		level.VFramebuffer = CreateFrameBuffer("Bloom.VFramebuffer", level.VTexture);
-		level.HFramebuffer = CreateFrameBuffer("Bloom.HFramebuffer", level.HTexture);
-
-		bloomWidth = level.Width;
-		bloomHeight = level.Height;
-	}
-}
-
-//==========================================================================
-//
 // Creates ambient occlusion working buffers
 //
 //==========================================================================
@@ -373,41 +310,6 @@ void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
 
 		AmbientRandomTexture[quality] = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
 	}
-}
-
-//==========================================================================
-//
-// Creates camera exposure level buffers
-//
-//==========================================================================
-
-void FGLRenderBuffers::CreateExposureLevels(int width, int height)
-{
-	ClearExposureLevels();
-
-	int i = 0;
-	do
-	{
-		width = MAX(width / 2, 1);
-		height = MAX(height / 2, 1);
-
-		FString textureName, fbName;
-		textureName.Format("Exposure.Texture%d", i);
-		fbName.Format("Exposure.Framebuffer%d", i);
-		i++;
-
-		FGLExposureTextureLevel level;
-		level.Width = width;
-		level.Height = height;
-		level.Texture = Create2DTexture(textureName.GetChars(), GL_R32F, level.Width, level.Height);
-		level.Framebuffer = CreateFrameBuffer(fbName.GetChars(), level.Texture);
-		ExposureLevels.Push(level);
-	} while (width > 1 || height > 1);
-
-	ExposureTexture = Create2DTexture("Exposure.CameraTexture", GL_R32F, 1, 1);
-	ExposureFB = CreateFrameBuffer("Exposure.CameraFB", ExposureTexture);
-
-	FirstExposureFrame = true;
 }
 
 //==========================================================================

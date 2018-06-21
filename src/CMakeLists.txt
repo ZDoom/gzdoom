@@ -1067,9 +1067,7 @@ set (PCH_SOURCES
 	hwrenderer/postprocessing/hw_shadowmapshader.cpp
 	hwrenderer/postprocessing/hw_presentshader.cpp
 	hwrenderer/postprocessing/hw_present3dRowshader.cpp
-	hwrenderer/postprocessing/hw_bloomshader.cpp
 	hwrenderer/postprocessing/hw_ambientshader.cpp
-	hwrenderer/postprocessing/hw_blurshader.cpp
 	hwrenderer/postprocessing/hw_colormapshader.cpp
 	hwrenderer/postprocessing/hw_tonemapshader.cpp
 	hwrenderer/textures/hw_material.cpp

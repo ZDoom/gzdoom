@@ -51,8 +51,6 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_scenedrawer.h"
 #include "hwrenderer/postprocessing/hw_ambientshader.h"
-#include "hwrenderer/postprocessing/hw_bloomshader.h"
-#include "hwrenderer/postprocessing/hw_blurshader.h"
 #include "hwrenderer/postprocessing/hw_tonemapshader.h"
 #include "hwrenderer/postprocessing/hw_colormapshader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
@@ -101,12 +99,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mPresent3dCheckerShader = nullptr;
 	mPresent3dColumnShader = nullptr;
 	mPresent3dRowShader = nullptr;
-	mBloomExtractShader = nullptr;
-	mBloomCombineShader = nullptr;
-	mExposureExtractShader = nullptr;
-	mExposureAverageShader = nullptr;
-	mExposureCombineShader = nullptr;
-	mBlurShader = nullptr;
 	mTonemapShader = nullptr;
 	mTonemapPalette = nullptr;
 	mColormapShader = nullptr;
@@ -127,12 +119,6 @@ void FGLRenderer::Initialize(int width, int height)
 	mDepthBlurShader = new FDepthBlurShader();
 	mSSAOShader = new FSSAOShader();
 	mSSAOCombineShader = new FSSAOCombineShader();
-	mBloomExtractShader = new FBloomExtractShader();
-	mBloomCombineShader = new FBloomCombineShader();
-	mExposureExtractShader = new FExposureExtractShader();
-	mExposureAverageShader = new FExposureAverageShader();
-	mExposureCombineShader = new FExposureCombineShader();
-	mBlurShader = new FBlurShader();
 	mTonemapShader = new FTonemapShader();
 	mColormapShader = new FColormapShader();
 	mTonemapPalette = nullptr;
@@ -190,12 +176,6 @@ FGLRenderer::~FGLRenderer()
 	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
 	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
 	if (mPresent3dRowShader) delete mPresent3dRowShader;
-	if (mBloomExtractShader) delete mBloomExtractShader;
-	if (mBloomCombineShader) delete mBloomCombineShader;
-	if (mExposureExtractShader) delete mExposureExtractShader;
-	if (mExposureAverageShader) delete mExposureAverageShader;
-	if (mExposureCombineShader) delete mExposureCombineShader;
-	if (mBlurShader) delete mBlurShader;
 	if (mTonemapShader) delete mTonemapShader;
 	if (mTonemapPalette) delete mTonemapPalette;
 	if (mColormapShader) delete mColormapShader;

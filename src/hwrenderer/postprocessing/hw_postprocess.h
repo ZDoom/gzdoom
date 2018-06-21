@@ -45,7 +45,7 @@ public:
 
 	~PPUniforms()
 	{
-		delete[] Data;
+		Clear();
 	}
 
 	PPUniforms &operator=(const PPUniforms &src)
@@ -67,6 +67,13 @@ public:
 		}
 
 		return *this;
+	}
+
+	void Clear()
+	{
+		delete[] Data;
+		Data = nullptr;
+		Size = 0;
 	}
 
 	template<typename T>
@@ -145,6 +152,14 @@ public:
 		BlendMode.Flags = 0;
 	}
 
+	void SetAlphaBlend()
+	{
+		BlendMode.BlendOp = STYLEOP_Add;
+		BlendMode.SrcAlpha = STYLEALPHA_Src;
+		BlendMode.DestAlpha = STYLEALPHA_InvSrc;
+		BlendMode.Flags = 0;
+	}
+
 	PPShaderName ShaderName;
 	TArray<PPTextureInput> Textures;
 	PPUniforms Uniforms;
@@ -156,7 +171,8 @@ public:
 enum class PixelFormat
 {
 	Rgba8,
-	Rgba16f
+	Rgba16f,
+	R32f
 };
 
 class PPTextureDesc
@@ -246,6 +262,7 @@ public:
 	void DeclareShaders();
 	void UpdateTextures(int sceneWidth, int sceneHeight);
 	void UpdateSteps(int fixedcm);
+	void UpdateBlurSteps(float gameinfobluramount);
 
 private:
 	PPStep BlurStep(const BlurUniforms &blurUniforms, PPTextureName input, PPTextureName output, PPViewport viewport, bool vertical);
@@ -314,4 +331,59 @@ public:
 private:
 	int GetMaxVersion();
 	FString GetDefines();
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+struct ExposureExtractUniforms
+{
+	FVector2 Scale;
+	FVector2 Offset;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "Scale", UniformType::Vec2, offsetof(ExposureExtractUniforms, Scale) },
+			{ "Offset", UniformType::Vec2, offsetof(ExposureExtractUniforms, Offset) }
+		};
+	}
+};
+
+struct ExposureCombineUniforms
+{
+	float ExposureBase;
+	float ExposureMin;
+	float ExposureScale;
+	float ExposureSpeed;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "ExposureBase", UniformType::Float, offsetof(ExposureCombineUniforms, ExposureBase) },
+			{ "ExposureMin", UniformType::Float, offsetof(ExposureCombineUniforms, ExposureMin) },
+			{ "ExposureScale", UniformType::Float, offsetof(ExposureCombineUniforms, ExposureScale) },
+			{ "ExposureSpeed", UniformType::Float, offsetof(ExposureCombineUniforms, ExposureSpeed) }
+		};
+	}
+};
+
+class PPExposureLevel
+{
+public:
+	PPViewport Viewport;
+	PPTextureName Texture;
+};
+
+class PPCameraExposure
+{
+public:
+	void DeclareShaders();
+	void UpdateTextures(int sceneWidth, int sceneHeight);
+	void UpdateSteps();
+
+private:
+	TArray<PPExposureLevel> ExposureLevels;
+	bool FirstExposureFrame = true;
 };

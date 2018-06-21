@@ -38,6 +38,7 @@ enum
 };
 
 class FShaderCollection;
+struct HWViewpointUniforms;
 
 //==========================================================================
 //
@@ -306,7 +307,7 @@ public:
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
 
-	void ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm);
+	void ApplyMatrices(HWViewpointUniforms *u);
 
 };
 
@@ -326,7 +327,7 @@ public:
 
 	FShader *BindEffect(int effect, EPassType passType);
 	FShader *Get(unsigned int eff, bool alphateston, EPassType passType);
-	void ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm, EPassType passType);
+	void ApplyMatrices(HWViewpointUniforms *u, EPassType passType);
 
 private:
 	FShader *mActiveShader = nullptr;
@@ -348,7 +349,7 @@ public:
 	FShader *Compile(const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
-	void ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm);
+	void ApplyMatrices(HWViewpointUniforms *u);
 
 	FShader *Get(unsigned int eff, bool alphateston)
 	{

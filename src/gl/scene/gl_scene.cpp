@@ -75,7 +75,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 void FDrawInfo::ApplyVPUniforms()
 {
 	VPUniforms.CalcDependencies();
-	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms.mProjectionMatrix, &VPUniforms.mViewMatrix, &VPUniforms.mNormalViewMatrix, NORMAL_PASS);
+	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, NORMAL_PASS);
 }
 
 //-----------------------------------------------------------------------------

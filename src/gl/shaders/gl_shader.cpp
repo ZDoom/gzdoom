@@ -34,6 +34,7 @@
 #include "cmdlib.h"
 #include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "hwrenderer/data/shaderuniforms.h"
+#include "hwrenderer/scene/hw_viewpointuniforms.h"
 
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_debug.h"
@@ -434,12 +435,12 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 //
 //==========================================================================
 
-void FShader::ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm)
+void FShader::ApplyMatrices(HWViewpointUniforms *u)
 {
 	Bind();
-	glUniformMatrix4fv(projectionmatrix_index, 1, false, proj->get());
-	glUniformMatrix4fv(viewmatrix_index, 1, false, view->get());
-	glUniformMatrix4fv(normalviewmatrix_index, 1, false, norm->get());
+	glUniformMatrix4fv(projectionmatrix_index, 1, false, u->mProjectionMatrix.get());
+	glUniformMatrix4fv(viewmatrix_index, 1, false, u->mViewMatrix.get());
+	glUniformMatrix4fv(normalviewmatrix_index, 1, false, u->mNormalViewMatrix.get());
 }
 
 //==========================================================================
@@ -539,10 +540,10 @@ FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passT
 		return nullptr;
 }
 
-void FShaderManager::ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm, EPassType passType)
+void FShaderManager::ApplyMatrices(HWViewpointUniforms *u, EPassType passType)
 {
 	if (passType < mPassShaders.Size())
-		mPassShaders[passType]->ApplyMatrices(proj, view, norm);
+		mPassShaders[passType]->ApplyMatrices(u);
 
 	if (mActiveShader)
 		mActiveShader->Bind();
@@ -687,25 +688,25 @@ FShader *FShaderCollection::BindEffect(int effect)
 //==========================================================================
 EXTERN_CVAR(Int, gl_fuzztype)
 
-void FShaderCollection::ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm)
+void FShaderCollection::ApplyMatrices(HWViewpointUniforms *u)
 {
 	for (int i = 0; i < SHADER_NoTexture; i++)
 	{
-		mMaterialShaders[i]->ApplyMatrices(proj, view, norm);
-		mMaterialShadersNAT[i]->ApplyMatrices(proj, view, norm);
+		mMaterialShaders[i]->ApplyMatrices(u);
+		mMaterialShadersNAT[i]->ApplyMatrices(u);
 	}
-	mMaterialShaders[SHADER_NoTexture]->ApplyMatrices(proj, view, norm);
+	mMaterialShaders[SHADER_NoTexture]->ApplyMatrices(u);
 	if (gl_fuzztype != 0)
 	{
-		mMaterialShaders[SHADER_NoTexture + gl_fuzztype]->ApplyMatrices(proj, view, norm);
+		mMaterialShaders[SHADER_NoTexture + gl_fuzztype]->ApplyMatrices(u);
 	}
 	for (unsigned i = FIRST_USER_SHADER; i < mMaterialShaders.Size(); i++)
 	{
-		mMaterialShaders[i]->ApplyMatrices(proj, view, norm);
+		mMaterialShaders[i]->ApplyMatrices(u);
 	}
 	for (int i = 0; i < MAX_EFFECTS; i++)
 	{
-		mEffectShaders[i]->ApplyMatrices(proj, view, norm);
+		mEffectShaders[i]->ApplyMatrices(u);
 	}
 }
 

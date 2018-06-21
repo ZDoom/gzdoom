@@ -471,7 +471,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	matrices.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
 	matrices.mViewMatrix.loadIdentity();
 	matrices.CalcDependencies();
-	GLRenderer->mShaderManager->ApplyMatrices(&matrices.mProjectionMatrix, &matrices.mViewMatrix, &matrices.mNormalViewMatrix, NORMAL_PASS);
+	GLRenderer->mShaderManager->ApplyMatrices(&matrices, NORMAL_PASS);
 
 	glDisable(GL_DEPTH_TEST);
 

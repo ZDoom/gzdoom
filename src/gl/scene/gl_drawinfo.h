@@ -114,7 +114,7 @@ struct FDrawInfo : public HWDrawInfo
     
     // These should go into hwrenderer later.
     void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
-    void SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
+    void SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
 
 
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
@@ -142,16 +142,6 @@ struct FDrawInfo : public HWDrawInfo
 		gl_SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
 	}
 
-};
-
-class FDrawInfoList
-{
-	TDeletingArray<FDrawInfo *> mList;
-	
-public:
-	
-	FDrawInfo *GetNew();
-	void Release(FDrawInfo *);
 };
 
 

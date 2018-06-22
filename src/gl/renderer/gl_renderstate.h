@@ -103,7 +103,6 @@ class FRenderState
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mNormal;
 	FStateVec4 mColor;
-	FStateVec4 mCameraPos;
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	FStateVec4 mSplitTopPlane, mSplitBottomPlane;
@@ -342,11 +341,6 @@ public:
 	void EnableTextureMatrix(bool on)
 	{
 		mTextureMatrixEnabled = on;
-	}
-
-	void SetCameraPos(float x, float y, float z)
-	{
-		mCameraPos.Set(x, z, y, 0);
 	}
 
 	void SetGlowParams(float *t, float *b)

@@ -1,13 +1,17 @@
 #pragma once
 
 #include "r_data/matrix.h"
+#include "r_utility.h"
 
 struct HWViewpointUniforms
 {
-  VSMatrix mProjectionMatrix;
-  VSMatrix mViewMatrix;
-  VSMatrix mNormalViewMatrix;
+	VSMatrix mProjectionMatrix;
+	VSMatrix mViewMatrix;
+	VSMatrix mNormalViewMatrix;
+	FVector4 mCameraPos;
+	FVector4 mClipLine;
 
+	int mViewHeight;
   void CalcDependencies()
   {
     mNormalViewMatrix.computeNormalMatrix(mViewMatrix);
@@ -18,6 +22,7 @@ struct HWViewpointUniforms
 	  mProjectionMatrix.loadIdentity();
 	  mViewMatrix.loadIdentity();
 	  mNormalViewMatrix.loadIdentity();
+	  mViewHeight = viewheight;
   }
 
 };

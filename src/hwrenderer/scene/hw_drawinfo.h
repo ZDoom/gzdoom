@@ -1,6 +1,7 @@
 #pragma once
 
 #include <atomic>
+#include "vectors.h"
 #include "r_defs.h"
 #include "r_utility.h"
 #include "hw_viewpointuniforms.h"
@@ -151,6 +152,12 @@ private:
 	void RenderThings(subsector_t * sub, sector_t * sector);
 	void DoSubsector(subsector_t * sub);
 public:
+
+	void SetCameraPos(const DVector3 &pos)
+	{
+		VPUniforms.mCameraPos = { (float)pos.X, (float)pos.Z, (float)pos.Y, 0.f };
+	}
+
 	void RenderBSPNode(void *node);
 
 	void ClearBuffers();

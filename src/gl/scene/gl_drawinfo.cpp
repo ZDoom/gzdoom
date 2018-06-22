@@ -44,6 +44,17 @@
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
+class FDrawInfoList
+{
+public:
+	TDeletingArray<FDrawInfo *> mList;
+
+
+	FDrawInfo * GetNew();
+	void Release(FDrawInfo *);
+};
+
+
 static FDrawInfo * gl_drawinfo;
 FDrawInfoList di_list;
 
@@ -228,11 +239,10 @@ void FDrawInfo::StartScene()
 //==========================================================================
 FDrawInfo *FDrawInfo::EndDrawInfo()
 {
-	FDrawInfo * di = gl_drawinfo;
-
-	for(int i=0;i<GLDL_TYPES;i++) di->drawlists[i].Reset();
-	gl_drawinfo=di->next;
-	di_list.Release(di);
+	assert(this == gl_drawinfo);
+	for(int i=0;i<GLDL_TYPES;i++) drawlists[i].Reset();
+	gl_drawinfo=next;
+	di_list.Release(this);
 	if (gl_drawinfo == nullptr) 
 		ResetRenderDataAllocator();
 	return gl_drawinfo;

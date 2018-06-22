@@ -311,7 +311,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muPalLightLevels.Init(hShader, "uPalLightLevels");
 	muGlobVis.Init(hShader, "uGlobVis");
 	muTextureMode.Init(hShader, "uTextureMode");
-	muCameraPos.Init(hShader, "uCameraPos");
 	muLightParms.Init(hShader, "uLightAttr");
 	muClipSplit.Init(hShader, "uClipSplit");
 	muLightIndex.Init(hShader, "uLightIndex");
@@ -331,7 +330,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
-	muViewHeight.Init(hShader, "uViewHeight");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
@@ -345,6 +343,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	normalviewmatrix_index = glGetUniformLocation(hShader, "NormalViewMatrix");
 	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
+	viewheight_index = glGetUniformLocation(hShader, "uViewHeight");
+	camerapos_index = glGetUniformLocation(hShader, "uCameraPos");
 
 	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
@@ -441,6 +441,9 @@ void FShader::ApplyMatrices(HWViewpointUniforms *u)
 	glUniformMatrix4fv(projectionmatrix_index, 1, false, u->mProjectionMatrix.get());
 	glUniformMatrix4fv(viewmatrix_index, 1, false, u->mViewMatrix.get());
 	glUniformMatrix4fv(normalviewmatrix_index, 1, false, u->mNormalViewMatrix.get());
+	
+	glUniform4fv(camerapos_index, 1, &u->mCameraPos[0]);
+	glUniform1i(viewheight_index, u->mViewHeight);
 }
 
 //==========================================================================

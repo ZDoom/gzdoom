@@ -96,7 +96,6 @@ void FRenderState::Reset()
 	mInterpolationFactor = 0.0f;
 
 	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
-	mCameraPos.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
@@ -163,7 +162,6 @@ bool FRenderState::ApplyShader()
 	activeShader->muPalLightLevels.Set(static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8));
 	activeShader->muGlobVis.Set(GLRenderer->mGlobVis / 32.0f);
 	activeShader->muTextureMode.Set(mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
-	activeShader->muCameraPos.Set(mCameraPos.vec);
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
@@ -176,7 +174,6 @@ bool FRenderState::ApplyShader()
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
-	activeShader->muViewHeight.Set(viewheight);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 
 	if (mGlowEnabled)

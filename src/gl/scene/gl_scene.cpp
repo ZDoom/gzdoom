@@ -104,10 +104,12 @@ void FDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float 
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void FDrawInfo::SetupView(FRenderViewpoint &vp, float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
+void FDrawInfo::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
 {
+	auto &vp = Viewpoint;
 	vp.SetViewAngle(r_viewwindow);
 	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
+	SetCameraPos(vp.Pos);
 	ApplyVPUniforms();
 }
 
@@ -181,8 +183,6 @@ void FDrawInfo::RenderScene(int recursion)
 
 	glDepthMask(true);
 	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion, this);
-
-	gl_RenderState.SetCameraPos(vp.Pos.X, vp.Pos.Y, vp.Pos.Z);
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
@@ -287,11 +287,7 @@ void FDrawInfo::RenderScene(int recursion)
 
 void FDrawInfo::RenderTranslucent()
 {
-	const auto &vp = Viewpoint;
-
 	RenderAll.Clock();
-
-	gl_RenderState.SetCameraPos(vp.Pos.X, vp.Pos.Y, vp.Pos.Z);
 
 	// final pass: translucent stuff
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);

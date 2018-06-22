@@ -246,7 +246,6 @@ class FShader
 	FBufferedUniform1i muPalLightLevels;
 	FBufferedUniform1f muGlobVis;
 	FBufferedUniform1i muTextureMode;
-	FBufferedUniform4f muCameraPos;
 	FBufferedUniform4f muLightParms;
 	FBufferedUniform2f muClipSplit;
 	FBufferedUniform1i muLightIndex;
@@ -265,17 +264,20 @@ class FShader
 	FBufferedUniform1f muClipHeight;
 	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
-	FBufferedUniform1i muViewHeight;
 	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;
-	int projectionmatrix_index;
-	int viewmatrix_index;
-	int normalviewmatrix_index;
 	int modelmatrix_index;
 	int normalmodelmatrix_index;
 	int texturematrix_index;
+
+	int projectionmatrix_index;
+	int viewmatrix_index;
+	int normalviewmatrix_index;
+	int viewheight_index;
+	int camerapos_index;
+
 public:
 	int vertexmatrix_index;
 	int texcoordmatrix_index;

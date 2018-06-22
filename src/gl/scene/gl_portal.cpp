@@ -740,12 +740,12 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
 
 	PlaneMirrorFlag++;
+	di->SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
 	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 	ClearClipper(di);
 
 	di->UpdateCurrentMapSection();
 
-	di->SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
 	di->DrawScene(DM_PORTAL);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode = old_pm;

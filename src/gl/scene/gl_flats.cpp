@@ -166,7 +166,7 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 {
 	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
 	
-	if (flat->sector->ibocount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
+	if (flat->sector->ibocount > 0 && !ClipLineShouldBeActive())
 	{
 		SetupSectorLights(flat, GLPASS_LIGHTSONLY, nullptr);
 	}
@@ -215,7 +215,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 	if (iboindex >= 0)
 	{
-		if (vcount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
+		if (vcount > 0 && !ClipLineShouldBeActive())
 		{
 			if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
 			drawcalls.Clock();

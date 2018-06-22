@@ -207,7 +207,13 @@ FDrawInfo *FDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUnifo
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
 	di->Viewpoint = parentvp;
-	if (uniforms) di->VPUniforms = *uniforms;
+	if (uniforms)
+	{
+		di->VPUniforms = *uniforms;
+		// The clip planes will never be inherited from the parent drawinfo.
+		di->VPUniforms.mClipLine.X = -1000001.f;
+		di->VPUniforms.mClipHeight = 0;
+	}
 	else di->VPUniforms.SetDefaults();
     di->mClipper->SetViewpoint(di->Viewpoint);
 	staticClipper.Clear();

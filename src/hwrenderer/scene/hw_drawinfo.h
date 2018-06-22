@@ -5,6 +5,7 @@
 #include "r_defs.h"
 #include "r_utility.h"
 #include "hw_viewpointuniforms.h"
+#include "v_video.h"
 
 
 struct FSectorPortalGroup;
@@ -162,6 +163,18 @@ public:
 	{
 		VPUniforms.mClipHeight = h;
 		VPUniforms.mClipHeightDirection = d;
+		VPUniforms.mClipLine.X = -1000001.f;
+	}
+
+	void SetClipLine(line_t *line)
+	{
+		VPUniforms.mClipLine = { (float)line->v1->fX(), (float)line->v1->fY(), (float)line->Delta().X, (float)line->Delta().Y };
+		VPUniforms.mClipHeight = 0;
+	}
+
+	bool ClipLineShouldBeActive()
+	{
+		return (screen->hwcaps & RFL_NO_CLIP_PLANES) && VPUniforms.mClipLine.X > -1000000.f;
 	}
 
 	void RenderBSPNode(void *node);

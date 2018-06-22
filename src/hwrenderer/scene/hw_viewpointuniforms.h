@@ -25,3 +25,6 @@ struct HWViewpointUniforms
 	void SetDefaults();
 
 };
+
+
+

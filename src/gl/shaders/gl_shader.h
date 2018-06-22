@@ -257,7 +257,6 @@ class FShader
 	FUniform4f muGlowTopPlane;
 	FUniform4f muSplitBottomPlane;
 	FUniform4f muSplitTopPlane;
-	FUniform4f muClipLine;
 	FBufferedUniform1f muInterpolationFactor;
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform2f muSpecularMaterial;
@@ -277,6 +276,7 @@ class FShader
 	int globvis_index;
 	int clipheight_index;
 	int clipheightdirection_index;
+	int clipline_index;
 
 public:
 	int vertexmatrix_index;

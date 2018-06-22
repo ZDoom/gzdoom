@@ -226,7 +226,8 @@ void HWViewpointUniforms::SetDefaults()
 	mViewMatrix.loadIdentity();
 	mNormalViewMatrix.loadIdentity();
 	mViewHeight = viewheight;
-	mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
+	mGlobVis = (float)R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
 	mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8);
+	mClipLine.X = -10000000.0f;
 
 }

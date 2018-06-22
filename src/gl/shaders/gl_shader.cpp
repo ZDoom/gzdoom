@@ -322,7 +322,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muGlowTopPlane.Init(hShader, "uGlowTopPlane");
 	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
-	muClipLine.Init(hShader, "uClipLine");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
@@ -345,6 +344,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	globvis_index = glGetUniformLocation(hShader, "uGlobVis");
 	clipheight_index = glGetUniformLocation(hShader, "uClipHeight");
 	clipheightdirection_index = glGetUniformLocation(hShader, "uClipHeightDirection");
+	clipline_index = glGetUniformLocation(hShader, "uClipLine");
 
 	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{

@@ -61,7 +61,7 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 void FRenderState::Reset()
 {
 	mTextureEnabled = true;
-	mClipLineShouldBeActive = mClipLineEnabled = mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
 	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
@@ -99,7 +99,6 @@ void FRenderState::Reset()
 	mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mClipLine.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mEffectState = 0;
 	activeShader = nullptr;
@@ -199,17 +198,6 @@ bool FRenderState::ApplyShader()
 		activeShader->muSplitTopPlane.Set(nulvec);
 		activeShader->muSplitBottomPlane.Set(nulvec);
 		activeShader->currentsplitstate = 0;
-	}
-
-	if (mClipLineEnabled)
-	{
-		activeShader->muClipLine.Set(mClipLine.vec);
-		activeShader->currentcliplinestate = 1;
-	}
-	else if (activeShader->currentcliplinestate)
-	{
-		activeShader->muClipLine.Set(-10000000.0, 0, 0, 0);
-		activeShader->currentcliplinestate = 0;
 	}
 
 	if (mTextureMatrixEnabled)

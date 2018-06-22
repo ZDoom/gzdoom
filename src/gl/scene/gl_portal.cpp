@@ -758,29 +758,6 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 //
 //-----------------------------------------------------------------------------
 
-void GLLinePortal::PushState()
-{
-	FStateVec4 &v = gl_RenderState.GetClipLine();
-	planestack.Push(v.vec[0]);
-	planestack.Push(v.vec[1]);
-	planestack.Push(v.vec[2]);
-	planestack.Push(v.vec[3]);
-	planestack.Push(gl_RenderState.GetClipLineState());
-	gl_RenderState.EnableClipLine(false);
-}
-
-void GLLinePortal::PopState()
-{
-	FStateVec4 &v = gl_RenderState.GetClipLine();
-	float e = 0;
-	planestack.Pop(e);
-	planestack.Pop(v.vec[3]);
-	planestack.Pop(v.vec[2]);
-	planestack.Pop(v.vec[1]);
-	planestack.Pop(v.vec[0]);
-	gl_RenderState.EnableClipLine(e != 0);
-}
-
 int GLLinePortal::ClipSeg(seg_t *seg, const DVector3 &viewpos)
 { 
 	line_t *linedef = seg->linedef;
@@ -793,7 +770,7 @@ int GLLinePortal::ClipSeg(seg_t *seg, const DVector3 &viewpos)
 
 int GLLinePortal::ClipSubsector(subsector_t *sub)
 { 
-	// this seg is completely behind the mirror!
+	// this seg is completely behind the mirror
 	for(unsigned int i=0;i<sub->numlines;i++)
 	{
 		if (P_PointOnLineSidePrecise(sub->firstline[i].v1->fPos(), line()) == 0) return PClip_Inside;
@@ -895,6 +872,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 	vp.ViewActor = nullptr;
 
 	MirrorFlag++;
+	di->SetClipLine(linedef);
 	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	di->mClipper->Clear();
@@ -904,10 +882,7 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 
     di->mClipper->SafeAddClipRange(linedef->v1, linedef->v2);
 
-	gl_RenderState.SetClipLine(linedef);
-	gl_RenderState.EnableClipLine(true);
 	di->DrawScene(DM_PORTAL);
-	gl_RenderState.EnableClipLine(false);
 
 	MirrorFlag--;
 }
@@ -972,13 +947,11 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 	}
 
 	vp.ViewActor = nullptr;
+	di->SetClipLine(glport->lines[0]->mDestination);
 	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
 
 	ClearClipper(di);
-	gl_RenderState.SetClipLine(glport->lines[0]->mDestination);
-	gl_RenderState.EnableClipLine(true);
 	di->DrawScene(DM_PORTAL);
-	gl_RenderState.EnableClipLine(false);
 }
 
 void GLLineToLinePortal::RenderAttached(FDrawInfo *di)

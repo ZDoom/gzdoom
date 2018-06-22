@@ -79,8 +79,6 @@ class FRenderState
 	uint8_t mFogEnabled;
 	bool mGlowEnabled;
 	bool mSplitEnabled;
-	bool mClipLineEnabled;
-	bool mClipLineShouldBeActive;
 	bool mBrightmapEnabled;
 	bool mColorMask[4];
 	bool currentColorMask[4];
@@ -96,7 +94,6 @@ class FRenderState
 	bool mTextureMatrixEnabled;
 	bool mLastDepthClamp;
 	float mInterpolationFactor;
-	float mClipHeight, mClipHeightDirection;
 	float mGlossiness, mSpecularLevel;
 	float mShaderTimer;
 
@@ -106,7 +103,6 @@ class FRenderState
 	FStateVec4 mGlowTop, mGlowBottom;
 	FStateVec4 mGlowTopPlane, mGlowBottomPlane;
 	FStateVec4 mSplitTopPlane, mSplitBottomPlane;
-	FStateVec4 mClipLine;
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
 	PalEntry mObjectColor2;
@@ -169,31 +165,6 @@ public:
 	{
 		// forces rebinding with the next 'apply' call.
 		mCurrentVertexBuffer = NULL;
-	}
-
-	float GetClipHeight()
-	{
-		return mClipHeight;
-	}
-
-	float GetClipHeightDirection()
-	{
-		return mClipHeightDirection;
-	}
-
-	FStateVec4 &GetClipLine()
-	{
-		return mClipLine;
-	}
-
-	bool GetClipLineState()
-	{
-		return mClipLineEnabled;
-	}
-
-	bool GetClipLineShouldBeActive()
-	{
-		return mClipLineShouldBeActive;
 	}
 
 	void SetNormal(FVector3 norm)
@@ -297,32 +268,6 @@ public:
 				glDisable(GL_CLIP_DISTANCE3);
 				glDisable(GL_CLIP_DISTANCE4);
 			}
-		}
-	}
-
-	void SetClipLine(line_t *line)
-	{
-		mClipLine.Set(line->v1->fX(), line->v1->fY(), line->Delta().X, line->Delta().Y);
-	}
-
-	void EnableClipLine(bool on)
-	{
-		if (!(gl.flags & RFL_NO_CLIP_PLANES))
-		{
-			mClipLineEnabled = on;
-			if (on)
-			{
-				glEnable(GL_CLIP_DISTANCE0);
-			}
-			else
-			{
-				glDisable(GL_CLIP_DISTANCE0);
-			}
-		}
-		else
-		{
-			// this needs to be flagged because in this case per-sector plane rendering needs to be disabled if a clip plane is active.
-			mClipLineShouldBeActive = on;
 		}
 	}
 

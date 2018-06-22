@@ -79,7 +79,7 @@ void FDrawInfo::ApplyVPUniforms()
 
 	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{
-		if (VPUniforms.mClipHeightDirection != 0.f)
+		if (VPUniforms.mClipHeightDirection != 0.f || VPUniforms.mClipLine.X > -10000000.0f)
 		{
 			glEnable(GL_CLIP_DISTANCE0);
 		}
@@ -89,6 +89,7 @@ void FDrawInfo::ApplyVPUniforms()
 		}
 	}
 }
+
 
 //-----------------------------------------------------------------------------
 //

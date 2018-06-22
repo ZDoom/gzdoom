@@ -243,8 +243,6 @@ class FShader
 
 	FBufferedUniform1f muDesaturation;
 	FBufferedUniform1i muFogEnabled;
-	FBufferedUniform1i muPalLightLevels;
-	FBufferedUniform1f muGlobVis;
 	FBufferedUniform1i muTextureMode;
 	FBufferedUniform4f muLightParms;
 	FBufferedUniform2f muClipSplit;
@@ -277,6 +275,8 @@ class FShader
 	int normalviewmatrix_index;
 	int viewheight_index;
 	int camerapos_index;
+	int pallightlevels_index;
+	int globvis_index;
 
 public:
 	int vertexmatrix_index;

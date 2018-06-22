@@ -11,18 +11,15 @@ struct HWViewpointUniforms
 	FVector4 mCameraPos;
 	FVector4 mClipLine;
 
+	float mGlobVis;
+	int mPalLightLevels;
 	int mViewHeight;
-  void CalcDependencies()
-  {
-    mNormalViewMatrix.computeNormalMatrix(mViewMatrix);
-  }
 
-  void SetDefaults()
-  {
-	  mProjectionMatrix.loadIdentity();
-	  mViewMatrix.loadIdentity();
-	  mNormalViewMatrix.loadIdentity();
-	  mViewHeight = viewheight;
-  }
+	void CalcDependencies()
+	{
+		mNormalViewMatrix.computeNormalMatrix(mViewMatrix);
+	}
+
+	void SetDefaults();
 
 };

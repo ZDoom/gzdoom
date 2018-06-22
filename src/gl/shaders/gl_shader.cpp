@@ -308,8 +308,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	muDesaturation.Init(hShader, "uDesaturationFactor");
 	muFogEnabled.Init(hShader, "uFogEnabled");
-	muPalLightLevels.Init(hShader, "uPalLightLevels");
-	muGlobVis.Init(hShader, "uGlobVis");
 	muTextureMode.Init(hShader, "uTextureMode");
 	muLightParms.Init(hShader, "uLightAttr");
 	muClipSplit.Init(hShader, "uClipSplit");
@@ -345,6 +343,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 	viewheight_index = glGetUniformLocation(hShader, "uViewHeight");
 	camerapos_index = glGetUniformLocation(hShader, "uCameraPos");
+	pallightlevels_index = glGetUniformLocation(hShader, "uPalLightLevels");
+	globvis_index = glGetUniformLocation(hShader, "uGlobVis");
 
 	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
@@ -444,6 +444,8 @@ void FShader::ApplyMatrices(HWViewpointUniforms *u)
 	
 	glUniform4fv(camerapos_index, 1, &u->mCameraPos[0]);
 	glUniform1i(viewheight_index, u->mViewHeight);
+	glUniform1i(pallightlevels_index, u->mPalLightLevels);
+	glUniform1f(globvis_index, u->mGlobVis);
 }
 
 //==========================================================================

@@ -35,6 +35,9 @@
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
 
+EXTERN_CVAR(Float, r_visibility)
+CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
+
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
 
 //==========================================================================
@@ -211,3 +214,19 @@ angle_t HWDrawInfo::FrustumAngle()
 	return a1;
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
+void HWViewpointUniforms::SetDefaults()
+{
+	mProjectionMatrix.loadIdentity();
+	mViewMatrix.loadIdentity();
+	mNormalViewMatrix.loadIdentity();
+	mViewHeight = viewheight;
+	mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility) / 32.f;
+	mPalLightLevels = static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8);
+
+}

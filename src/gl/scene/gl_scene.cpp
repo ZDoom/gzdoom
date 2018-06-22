@@ -487,8 +487,6 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 {
 	R_SetupFrame (mainvp, r_viewwindow, camera);
 
-	mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
-
     // Render (potentially) multiple views for stereo 3d
 	float viewShift[3];
 	const s3d::Stereo3DMode& stereo3dMode = mainview && toscreen? s3d::Stereo3DMode::getCurrentMode() : s3d::Stereo3DMode::getMonoMode();

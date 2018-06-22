@@ -158,6 +158,12 @@ public:
 		VPUniforms.mCameraPos = { (float)pos.X, (float)pos.Z, (float)pos.Y, 0.f };
 	}
 
+	void SetClipHeight(float h, float d)
+	{
+		VPUniforms.mClipHeight = h;
+		VPUniforms.mClipHeightDirection = d;
+	}
+
 	void RenderBSPNode(void *node);
 
 	void ClearBuffers();

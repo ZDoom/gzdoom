@@ -76,6 +76,18 @@ void FDrawInfo::ApplyVPUniforms()
 {
 	VPUniforms.CalcDependencies();
 	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, NORMAL_PASS);
+
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
+	{
+		if (VPUniforms.mClipHeightDirection != 0.f)
+		{
+			glEnable(GL_CLIP_DISTANCE0);
+		}
+		else
+		{
+			glDisable(GL_CLIP_DISTANCE0);
+		}
+	}
 }
 
 //-----------------------------------------------------------------------------

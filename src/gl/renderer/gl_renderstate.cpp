@@ -80,8 +80,6 @@ void FRenderState::Reset()
 	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
-	mClipHeight = 0.f;
-	mClipHeightDirection = 0.f;
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
@@ -165,8 +163,6 @@ bool FRenderState::ApplyShader()
 	activeShader->muObjectColor2.Set(mObjectColor2);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
-	activeShader->muClipHeight.Set(mClipHeight);
-	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
@@ -303,21 +299,4 @@ void FRenderState::ApplyLightIndex(int index)
 		index = GLRenderer->mLights->BindUBO(index);
 	}
 	activeShader->muLightIndex.Set(index);
-}
-
-void FRenderState::SetClipHeight(float height, float direction)
-{
-	mClipHeight = height;
-	mClipHeightDirection = direction;
-
-	if (gl.flags & RFL_NO_CLIP_PLANES) return;
-
-	if (direction != 0.f)
-	{
-		glEnable(GL_CLIP_DISTANCE0);
-	}
-	else
-	{
-		glDisable(GL_CLIP_DISTANCE0);	// GL_CLIP_PLANE0 is the same value so no need to make a distinction
-	}
 }

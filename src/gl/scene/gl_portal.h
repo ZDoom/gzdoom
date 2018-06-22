@@ -302,8 +302,6 @@ protected:
 	virtual void DrawContents(FDrawInfo *di);
 	virtual void * GetSource() const { return origin; }
 	virtual const char *GetName();
-	virtual void PushState();
-	virtual void PopState();
 	secplane_t * origin;
 
 public:

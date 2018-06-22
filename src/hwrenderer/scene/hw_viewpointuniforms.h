@@ -11,9 +11,11 @@ struct HWViewpointUniforms
 	FVector4 mCameraPos;
 	FVector4 mClipLine;
 
-	float mGlobVis;
-	int mPalLightLevels;
-	int mViewHeight;
+	float mGlobVis = 1.f;
+	int mPalLightLevels = 0;
+	int mViewHeight = 0;
+	float mClipHeight = 0.f;
+	float mClipHeightDirection = 0.f;
 
 	void CalcDependencies()
 	{

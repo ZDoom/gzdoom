@@ -196,8 +196,6 @@ public:
 		return mClipLineShouldBeActive;
 	}
 
-	void SetClipHeight(float height, float direction);
-
 	void SetNormal(FVector3 norm)
 	{
 		mNormal.Set(norm.X, norm.Y, norm.Z, 0.f);

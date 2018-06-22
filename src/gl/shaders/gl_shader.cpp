@@ -324,8 +324,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
 	muClipLine.Init(hShader, "uClipLine");
 	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
-	muClipHeight.Init(hShader, "uClipHeight");
-	muClipHeightDirection.Init(hShader, "uClipHeightDirection");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muTimer.Init(hShader, "timer");
@@ -345,6 +343,8 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	camerapos_index = glGetUniformLocation(hShader, "uCameraPos");
 	pallightlevels_index = glGetUniformLocation(hShader, "uPalLightLevels");
 	globvis_index = glGetUniformLocation(hShader, "uGlobVis");
+	clipheight_index = glGetUniformLocation(hShader, "uClipHeight");
+	clipheightdirection_index = glGetUniformLocation(hShader, "uClipHeightDirection");
 
 	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
@@ -446,6 +446,8 @@ void FShader::ApplyMatrices(HWViewpointUniforms *u)
 	glUniform1i(viewheight_index, u->mViewHeight);
 	glUniform1i(pallightlevels_index, u->mPalLightLevels);
 	glUniform1f(globvis_index, u->mGlobVis);
+	glUniform1f(clipheight_index, u->mClipHeight);
+	glUniform1f(clipheightdirection_index, u->mClipHeightDirection);
 }
 
 //==========================================================================

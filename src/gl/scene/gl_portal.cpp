@@ -745,27 +745,11 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 
 	di->UpdateCurrentMapSection();
 
-	gl_RenderState.SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
+	di->SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
 	di->DrawScene(DM_PORTAL);
-	gl_RenderState.SetClipHeight(0.f, 0.f);
 	PlaneMirrorFlag--;
 	PlaneMirrorMode = old_pm;
 	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
-}
-
-void GLPlaneMirrorPortal::PushState()
-{
-	planestack.Push(gl_RenderState.GetClipHeight());
-	planestack.Push(gl_RenderState.GetClipHeightDirection());
-	gl_RenderState.SetClipHeight(0.f, 0.f);
-}
-
-void GLPlaneMirrorPortal::PopState()
-{
-	float d, f;
-	planestack.Pop(d);
-	planestack.Pop(f);
-	gl_RenderState.SetClipHeight(f, d);
 }
 
 //-----------------------------------------------------------------------------

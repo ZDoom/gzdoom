@@ -114,7 +114,7 @@ struct FDrawInfo : public HWDrawInfo
     
     // These should go into hwrenderer later.
     void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
-    void SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror);
+    void SetupView(float vx, float vy, float vz, bool mirror, bool planemirror);
 
 
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);

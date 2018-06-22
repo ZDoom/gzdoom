@@ -104,7 +104,7 @@ void FDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float 
 // Setup the view rotation matrix for the given viewpoint
 //
 //-----------------------------------------------------------------------------
-void FDrawInfo::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
+void FDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool planemirror)
 {
 	auto &vp = Viewpoint;
 	vp.SetViewAngle(r_viewwindow);
@@ -506,12 +506,11 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 
 		// Stereo mode specific perspective projection
 		di->VPUniforms.mProjectionMatrix = eye->GetProjection(fov, ratio, fovratio);
-		vp.SetViewAngle(r_viewwindow);
 		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
 		eye->GetViewShift(vp.HWAngles.Yaw.Degrees, viewShift);
 		ScopedViewShifter viewShifter(vp.Pos, viewShift);
-		di->SetViewMatrix(vp.HWAngles, vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
-		di->ApplyVPUniforms();
+		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
+
 
 		di->ProcessScene(toscreen);
 

@@ -49,7 +49,6 @@
 #include "st_console.h"
 #include "v_text.h"
 #include "version.h"
-#include "videomodes.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
@@ -95,6 +94,11 @@ EXTERN_CVAR(Bool, vid_hidpi)
 EXTERN_CVAR(Int,  vid_defwidth)
 EXTERN_CVAR(Int,  vid_defheight)
 EXTERN_CVAR(Bool, fullscreen)
+
+CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_w, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_h, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -152,6 +156,15 @@ namespace
 	}
 
 	[super setTitle:m_title];
+}
+
+- (void)frameDidChange:(NSNotification*)notification
+{
+	const NSRect frame = [self frame];
+	win_x = frame.origin.x;
+	win_y = frame.origin.y;
+	win_w = frame.size.width;
+	win_h = frame.size.height;
 }
 
 @end
@@ -266,17 +279,24 @@ namespace
 
 CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
 {
-	static const CGFloat TEMP_WIDTH  = VideoModes[0].width  - 1;
-	static const CGFloat TEMP_HEIGHT = VideoModes[0].height - 1;
-
 	CocoaWindow* const window = [CocoaWindow alloc];
-	[window initWithContentRect:NSMakeRect(0, 0, TEMP_WIDTH, TEMP_HEIGHT)
+	[window initWithContentRect:NSMakeRect(0, 0, vid_defwidth, vid_defheight)
 					  styleMask:styleMask
 						backing:NSBackingStoreBuffered
 						  defer:NO];
 	[window setOpaque:YES];
 	[window makeFirstResponder:appCtrl];
 	[window setAcceptsMouseMovedEvents:YES];
+
+	NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+	[nc addObserver:window
+		   selector:@selector(frameDidChange:)
+			   name:NSWindowDidEndLiveResizeNotification
+			 object:nil];
+	[nc addObserver:window
+		   selector:@selector(frameDidChange:)
+			   name:NSWindowDidMoveNotification
+			 object:nil];
 
 	return window;
 }
@@ -441,13 +461,6 @@ void CocoaVideo::SetWindowTitle(const char* title)
 
 void CocoaVideo::SetFullscreenMode()
 {
-	NSScreen* screen = [m_window screen];
-
-	const NSRect screenFrame = [screen frame];
-	const NSRect displayRect = vid_hidpi
-		? [screen convertRectToBacking:screenFrame]
-		: screenFrame;
-
 	if (!m_fullscreen)
 	{
 		[m_window setLevel:LEVEL_FULLSCREEN];
@@ -456,16 +469,12 @@ void CocoaVideo::SetFullscreenMode()
 		[m_window setHidesOnDeactivate:YES];
 	}
 
+	const NSRect screenFrame = [[m_window screen] frame];
 	[m_window setFrame:screenFrame display:YES];
 }
 
 void CocoaVideo::SetWindowedMode()
 {
-	const NSSize windowPixelSize = NSMakeSize(vid_defwidth, vid_defheight);
-	const NSSize windowSize = vid_hidpi
-		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
-		: windowPixelSize;
-
 	if (m_fullscreen)
 	{
 		[m_window setLevel:LEVEL_WINDOWED];
@@ -474,20 +483,18 @@ void CocoaVideo::SetWindowedMode()
 		[m_window setHidesOnDeactivate:NO];
 	}
 
-	[m_window setContentSize:windowSize];
-	[m_window center];
+	const bool isFrameValid = win_x >= 0 && win_y >= 0 && win_w > 320 && win_h > 200;
+	const NSRect frameSize = isFrameValid
+		? NSMakeRect(win_x, win_y, win_w, win_h)
+		: NSMakeRect(0, 0, vid_defwidth, vid_defheight);
+
+	[m_window setFrame:frameSize display:YES];
 	[m_window enterFullscreenOnZoom];
 	[m_window exitAppOnClose];
 }
 
 void CocoaVideo::SetMode(const bool fullscreen, const bool hiDPI)
 {
-	if (fullscreen == m_fullscreen
-		&& hiDPI   == m_hiDPI)
-	{
-		return;
-	}
-
 	NSOpenGLView* const glView = [m_window contentView];
 	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
 

@@ -40,7 +40,6 @@
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/postprocessing/hw_ambientshader.h"
-#include "hwrenderer/postprocessing/hw_tonemapshader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
@@ -101,10 +100,13 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 
 			if (!gltexture)
 			{
-				gltexture = Create2DTexture(name.GetChars(), glformat, pair->Value.Width, pair->Value.Height);
+				if (pair->Value.Data)
+					gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height, pair->Value.Data.get());
+				else
+					gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height);
 				gltexture.Width = pair->Value.Width;
 				gltexture.Height = pair->Value.Height;
-				glframebuffer = CreateFrameBuffer(name.GetChars(), gltexture);
+				glframebuffer = CreateFrameBuffer(pair->Key.GetChars(), gltexture);
 			}
 		}
 	}
@@ -378,76 +380,16 @@ void FGLRenderer::BlurScene(float gameinfobluramount)
 
 void FGLRenderer::TonemapScene()
 {
-	if (gl_tonemap == 0)
-		return;
-
-	FGLDebug::PushGroup("TonemapScene");
-
-	CreateTonemapPalette();
-
-	FGLPostProcessState savedState;
-	savedState.SaveTextureBindings(2);
-
-	mBuffers->BindNextFB();
-	mBuffers->BindCurrentTexture(0);
-	mTonemapShader->Bind(NOQUEUE);
-
-	if (mTonemapShader->IsPaletteMode())
-	{
-		glActiveTexture(GL_TEXTURE2);
-		glBindTexture(GL_TEXTURE_2D, mTonemapPalette->GetTextureHandle(0));
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-		glActiveTexture(GL_TEXTURE0);
-	}
-	else
-	{
-		//mBuffers->ExposureTexture.Bind(1);
-	}
-
-	RenderScreenQuad();
-	mBuffers->NextTexture();
-
-	FGLDebug::PopGroup();
-}
-
-void FGLRenderer::CreateTonemapPalette()
-{
-	if (!mTonemapPalette)
-	{
-		TArray<unsigned char> lut;
-		lut.Resize(512 * 512 * 4);
-		for (int r = 0; r < 64; r++)
-		{
-			for (int g = 0; g < 64; g++)
-			{
-				for (int b = 0; b < 64; b++)
-				{
-					PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4), 
-						gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256)];
-					int index = ((r * 64 + g) * 64 + b) * 4;
-					lut[index] = color.b;
-					lut[index + 1] = color.g;
-					lut[index + 2] = color.r;
-					lut[index + 3] = 255;
-				}
-			}
-		}
-
-		mTonemapPalette = new FHardwareTexture(true);
-		mTonemapPalette->CreateTexture(&lut[0], 512, 512, 0, false, 0, "mTonemapPalette");
-	}
+	PPTonemap tonemap;
+	tonemap.DeclareShaders();
+	tonemap.UpdateTextures();
+	tonemap.UpdateSteps();
+	mBuffers->RenderEffect("TonemapScene");
 }
 
 void FGLRenderer::ClearTonemapPalette()
 {
-	if (mTonemapPalette)
-	{
-		delete mTonemapPalette;
-		mTonemapPalette = nullptr;
-	}
+	hw_postprocess.Textures.Remove("Tonemap.Palette");
 }
 
 void FGLRenderer::ColormapScene(int fixedcm)

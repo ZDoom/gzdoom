@@ -514,3 +514,79 @@ void PPColormap::UpdateSteps(int fixedcm)
 	steps.Push(step);
 	hw_postprocess.Effects["ColormapScene"] = steps;
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPTonemap::DeclareShaders()
+{
+	hw_postprocess.Shaders["Tonemap.Linear"] = { "shaders/glsl/tonemap.fp", "#define LINEAR\n", {} };
+	hw_postprocess.Shaders["Tonemap.Reinhard"] = { "shaders/glsl/tonemap.fp", "#define REINHARD\n", {} };
+	hw_postprocess.Shaders["Tonemap.HejlDawson"] = { "shaders/glsl/tonemap.fp", "#define HEJLDAWSON\n", {} };
+	hw_postprocess.Shaders["Tonemap.Uncharted2"] = { "shaders/glsl/tonemap.fp", "#define UNCHARTED2\n", {} };
+	hw_postprocess.Shaders["Tonemap.Palette"] = { "shaders/glsl/tonemap.fp", "#define PALETTE\n", {} };
+}
+
+void PPTonemap::UpdateTextures()
+{
+	if (gl_tonemap == Palette)
+	{
+		auto &texture = hw_postprocess.Textures["Tonemap.Palette"];
+		if (!texture.Data)
+		{
+			std::shared_ptr<void> data(new uint32_t[512 * 512], [](void *p) { delete[](uint32_t*)p; });
+
+			uint8_t *lut = (uint8_t *)data.get();
+			for (int r = 0; r < 64; r++)
+			{
+				for (int g = 0; g < 64; g++)
+				{
+					for (int b = 0; b < 64; b++)
+					{
+						PalEntry color = GPalette.BaseColors[(uint8_t)PTM_BestColor((uint32_t *)GPalette.BaseColors, (r << 2) | (r >> 4), (g << 2) | (g >> 4), (b << 2) | (b >> 4),
+							gl_paltonemap_reverselookup, gl_paltonemap_powtable, 0, 256)];
+						int index = ((r * 64 + g) * 64 + b) * 4;
+						lut[index] = color.r;
+						lut[index + 1] = color.g;
+						lut[index + 2] = color.b;
+						lut[index + 3] = 255;
+					}
+				}
+			}
+
+			texture = { 512, 512, PixelFormat::Rgba8, data };
+		}
+	}
+}
+
+void PPTonemap::UpdateSteps()
+{
+	if (gl_tonemap == 0)
+	{
+		hw_postprocess.Effects["TonemapScene"] = {};
+		return;
+	}
+
+	PPShaderName shader;
+	switch (gl_tonemap)
+	{
+	default:
+	case Linear:		shader = "Tonemap.Linear"; break;
+	case Reinhard:		shader = "Tonemap.Reinhard"; break;
+	case HejlDawson:	shader = "Tonemap.HejlDawson"; break;
+	case Uncharted2:	shader = "Tonemap.Uncharted2"; break;
+	case Palette:		shader = "Tonemap.Palette"; break;
+	}
+
+	PPStep step;
+	step.ShaderName = shader;
+	step.Viewport = screen->mScreenViewport;
+	step.SetInputCurrent(0);
+	if (gl_tonemap == Palette)
+		step.SetInputTexture(1, "Tonemap.Palette");
+	step.SetOutputNext();
+	step.SetNoBlend();
+
+	TArray<PPStep> steps;
+	steps.Push(step);
+	hw_postprocess.Effects["TonemapScene"] = steps;
+}

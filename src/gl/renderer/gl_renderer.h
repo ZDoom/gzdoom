@@ -29,7 +29,6 @@ class FLinearDepthShader;
 class FDepthBlurShader;
 class FSSAOShader;
 class FSSAOCombineShader;
-class FTonemapShader;
 class FPresentShader;
 class FPresent3DCheckerShader;
 class FPresent3DColumnShader; 
@@ -74,8 +73,6 @@ public:
 	FSSAOShader *mSSAOShader;
 	FDepthBlurShader *mDepthBlurShader;
 	FSSAOCombineShader *mSSAOCombineShader;
-	FTonemapShader *mTonemapShader;
-	FHardwareTexture *mTonemapPalette;
 	FPresentShader *mPresentShader;
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
@@ -118,7 +115,6 @@ public:
 	void BloomScene(int fixedcm);
 	void TonemapScene();
 	void ColormapScene(int fixedcm);
-	void CreateTonemapPalette();
 	void ClearTonemapPalette();
 	void LensDistortScene();
 	void ApplyFXAA();

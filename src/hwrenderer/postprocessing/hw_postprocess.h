@@ -179,11 +179,12 @@ class PPTextureDesc
 {
 public:
 	PPTextureDesc() { }
-	PPTextureDesc(int width, int height, PixelFormat format) : Width(width), Height(height), Format(format) { }
+	PPTextureDesc(int width, int height, PixelFormat format, std::shared_ptr<void> data = {}) : Width(width), Height(height), Format(format), Data(data) { }
 
 	int Width;
 	int Height;
 	PixelFormat Format;
+	std::shared_ptr<void> Data;
 };
 
 class PPShader
@@ -410,4 +411,25 @@ class PPColormap
 public:
 	void DeclareShaders();
 	void UpdateSteps(int fixedcm);
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+class PPTonemap
+{
+public:
+	void DeclareShaders();
+	void UpdateTextures();
+	void UpdateSteps();
+
+	enum TonemapMode
+	{
+		None,
+		Uncharted2,
+		HejlDawson,
+		Reinhard,
+		Linear,
+		Palette,
+		NumTonemapModes
+	};
 };

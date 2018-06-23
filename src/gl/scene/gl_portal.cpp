@@ -213,13 +213,10 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 		}
 	}
 	*pDi = FDrawInfo::StartDrawInfo(outer_di->Viewpoint, &outer_di->VPUniforms);
+	(*pDi)->mCurrentPortal = this;
 
 	// save viewpoint
 	savedvisibility = outer_di->Viewpoint.camera ? outer_di->Viewpoint.camera->renderflags & RF_MAYBEINVISIBLE : ActorRenderFlags::FromInt(0);
-
-
-	PrevPortal = GLRenderer->mCurrentPortal;
-	GLRenderer->mCurrentPortal = this;
 
 	return true;
 }
@@ -263,7 +260,6 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 	bool needdepth = NeedDepthBuffer();
 
 	Clocker c(PortalAll);
-	GLRenderer->mCurrentPortal = PrevPortal;
 
 	di = static_cast<FDrawInfo*>(di)->EndDrawInfo();
 	di->ApplyVPUniforms();

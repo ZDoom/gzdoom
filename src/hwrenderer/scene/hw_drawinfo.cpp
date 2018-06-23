@@ -95,6 +95,7 @@ void HWDrawInfo::ClearBuffers()
 	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
 
 	mClipPortal = nullptr;
+	mCurrentPortal = nullptr;
 }
 
 //==========================================================================

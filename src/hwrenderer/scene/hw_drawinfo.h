@@ -99,6 +99,7 @@ struct HWDrawInfo
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
 	IPortal *mClipPortal;
+	IPortal *mCurrentPortal;
 	//FRotator mAngles;
 	IShadowMap *mShadowMap;
 	Clipper *mClipper;

@@ -53,7 +53,6 @@ private:
 	void DrawPortalStencil();
 
 	ActorRenderFlags savedvisibility;
-	GLPortal *PrevPortal;
 	TArray<unsigned int> mPrimIndices;
 
 protected:

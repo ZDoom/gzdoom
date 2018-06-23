@@ -1823,18 +1823,36 @@ OptionMenu ModReplayerOptions protected
 	5, "$ADLVLMODEL_WIN9X"
  }
 
+ OptionValue ADLOplCores
+ {
+	0, "$OPTVAL_NUKEDOPL3"
+	1, "$OPTVAL_NUKEDOPL3174"
+	2, "$OPTVAL_DOSBOXOPL3"
+ }
+
+ OptionValue OpnCores
+ {
+	0, "$OPTVAL_MAMEOPN2"
+	1, "$OPTVAL_NUKEDOPN2"
+	2, "$OPTVAL_GENSOPN2"
+ }
+
  OptionMenu ADLOptions protected
  {
- 	Title "$ADVSNDMNU_ADLMIDI"
- 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
- 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
- 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+	Title "$ADVSNDMNU_ADLMIDI"
+	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
+	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
+	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
+	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
+	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
  }
 
  OptionMenu OPNOptions protected
  {
- 	Title "$ADVSNDMNU_OPNMIDI"
- 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
+	Title "$ADVSNDMNU_OPNMIDI"
+	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
+	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
+	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
  }
 
 /*=======================================

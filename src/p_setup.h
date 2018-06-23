@@ -36,6 +36,25 @@
 struct MapData
 {
 private:
+	struct ResourceHolder
+	{
+		FResourceFile *data = nullptr;
+
+		~ResourceHolder()
+		{
+			delete data;
+		}
+
+		ResourceHolder &operator=(FResourceFile *other) { data = other; return *this; }
+		FResourceFile *operator->() { return data; }
+		operator FResourceFile *() const { return data; }
+	};
+
+	// The order of members here is important
+	// Resource should be destructed after MapLumps as readers may share FResourceLump objects
+	// For example, this is the case when map .wad is loaded from .pk3 file
+	ResourceHolder resource;
+
 	struct MapLump
 	{
 		char Name[8] = { 0 };
@@ -48,13 +67,6 @@ public:
 	bool isText = false;
 	bool InWad = false;
 	int lumpnum = -1;
-	FResourceFile * resource = nullptr;
-	
-	~MapData()
-	{
-		if (resource != nullptr) delete resource;
-		resource = nullptr;
-	}
 
 	/*
 	void Seek(unsigned int lumpindex)

@@ -66,115 +66,30 @@ protected:
 	void ClearScreen(HWDrawInfo *di);
 };
 
-struct GLLinePortal : public GLPortal
+class GLScenePortal : public GLPortal
 {
-	// this must be the same as at the start of line_t, so that we can pass in this structure directly to P_ClipLineToPortal.
-	vertex_t	*v1, *v2;	// vertices, from v1 to v2
-	DVector2	delta;		// precalculated v2 - v1 for side checking
-
-	angle_t		angv1, angv2;	// for quick comparisons with a line or subsector
-
-	GLLinePortal(FPortalSceneState *state, line_t *line) : GLPortal(state)
+public:
+	HWScenePortalBase *mScene;
+	GLScenePortal(FPortalSceneState *state, HWScenePortalBase *handler) : GLPortal(state)
 	{
-		v1 = line->v1;
-		v2 = line->v2;
-		CalcDelta();
+		mScene = handler;
+		handler->SetOwner(this);
 	}
-
-	GLLinePortal(FPortalSceneState *state, FLinePortalSpan *line) : GLPortal(state)
-	{
-		if (line->lines[0]->mType != PORTT_LINKED || line->v1 == nullptr)
+	~GLScenePortal() { delete mScene; }
+	virtual void * GetSource() const { return mScene->GetSource(); }
+	virtual const char *GetName() { return mScene->GetName(); }
+	virtual bool IsSky() { return false; }
+	virtual bool NeedCap() { return true; }
+	virtual bool NeedDepthBuffer() { return true; }
+	virtual void DrawContents(HWDrawInfo *di) 
+	{ 
+		if (mScene->Setup(di, di->mClipper))
 		{
-			// For non-linked portals we must check the actual linedef.
-			line_t *lline = line->lines[0]->mDestination;
-			v1 = lline->v1;
-			v2 = lline->v2;
+			static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
+			mScene->Shutdown(di);
 		}
-		else
-		{
-			// For linked portals we can check the merged span.
-			v1 = line->v1;
-			v2 = line->v2;
-		}
-		CalcDelta();
 	}
-
-	void CalcDelta()
-	{
-		delta = v2->fPos() - v1->fPos();
-	}
-
-	line_t *line()
-	{
-		vertex_t **pv = &v1;
-		return reinterpret_cast<line_t*>(pv);
-	}
-
-	virtual int ClipSeg(seg_t *seg, const DVector3 &viewpos);
-	virtual int ClipSubsector(subsector_t *sub);
-	virtual int ClipPoint(const DVector2 &pos);
-	virtual bool NeedCap() { return false; }
-};
-
-
-struct GLMirrorPortal : public GLLinePortal
-{
-	// mirror portals always consist of single linedefs!
-	line_t * linedef;
-
-protected:
-	virtual void DrawContents(HWDrawInfo *di);
-	virtual void * GetSource() const { return linedef; }
-	virtual const char *GetName();
-
-public:
-	
-	GLMirrorPortal(FPortalSceneState *state, line_t * line)
-		: GLLinePortal(state, line)
-	{
-		linedef=line;
-	}
-};
-
-
-struct GLLineToLinePortal : public GLLinePortal
-{
-	FLinePortalSpan *glport;
-protected:
-	virtual void DrawContents(HWDrawInfo *di);
-	virtual void * GetSource() const { return glport; }
-	virtual const char *GetName();
-	virtual line_t *ClipLine() { return line(); }
-	virtual void RenderAttached(HWDrawInfo *di);
-
-public:
-	
-	GLLineToLinePortal(FPortalSceneState *state, FLinePortalSpan *ll)
-		: GLLinePortal(state, ll)
-	{
-		glport = ll;
-	}
-};
-
-
-struct GLSkyboxPortal : public GLPortal
-{
-	FSectorPortal * portal;
-
-protected:
-	virtual void DrawContents(HWDrawInfo *di);
-	virtual void * GetSource() const { return portal; }
-	virtual bool IsSky() { return true; }
-	virtual const char *GetName();
-
-public:
-
-	
-	GLSkyboxPortal(FPortalSceneState *state, FSectorPortal * pt) : GLPortal(state)
-	{
-		portal=pt;
-	}
-
+	virtual void RenderAttached(HWDrawInfo *di) { return mScene->RenderAttached(di); }
 };
 
 
@@ -200,51 +115,6 @@ public:
 	}
 
 };
-
-
-
-struct GLSectorStackPortal : public GLPortal
-{
-	TArray<subsector_t *> subsectors;
-protected:
-	virtual ~GLSectorStackPortal();
-	virtual void DrawContents(HWDrawInfo *di);
-	virtual void * GetSource() const { return origin; }
-	virtual bool IsSky() { return true; }	// although this isn't a real sky it can be handled as one.
-	virtual const char *GetName();
-	FSectorPortalGroup *origin;
-
-public:
-	
-	GLSectorStackPortal(FPortalSceneState *state, FSectorPortalGroup *pt) : GLPortal(state)
-	{
-		origin=pt;
-	}
-	void SetupCoverage(HWDrawInfo *di);
-	void AddSubsector(subsector_t *sub)
-	{
-		subsectors.Push(sub);
-	}
-
-};
-
-struct GLPlaneMirrorPortal : public GLPortal
-{
-protected:
-	virtual void DrawContents(HWDrawInfo *di);
-	virtual void * GetSource() const { return origin; }
-	virtual const char *GetName();
-	secplane_t * origin;
-
-public:
-
-	GLPlaneMirrorPortal(FPortalSceneState *state, secplane_t * pt) : GLPortal(state)
-	{
-		origin=pt;
-	}
-
-};
-
 
 struct GLHorizonPortal : public GLPortal
 {

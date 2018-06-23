@@ -223,7 +223,7 @@ angle_t HWDrawInfo::FrustumAngle()
 
 void HWDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
 {
-	float mult = mirror ? -1 : 1;
+	float mult = mirror ? -1.f : 1.f;
 	float planemult = planemirror ? -level.info->pixelstretch : level.info->pixelstretch;
 
 	VPUniforms.mViewMatrix.loadIdentity();
@@ -250,7 +250,6 @@ void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool plane
 	ApplyVPUniforms();
 }
 
-
 //-----------------------------------------------------------------------------
 //
 //
@@ -268,3 +267,4 @@ void HWViewpointUniforms::SetDefaults()
 	mClipLine.X = -10000000.0f;
 
 }
+

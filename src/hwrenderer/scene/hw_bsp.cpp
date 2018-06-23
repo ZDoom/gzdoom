@@ -538,13 +538,13 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 				portal = fakesector->GetPortalGroup(sector_t::ceiling);
 				if (portal != nullptr)
 				{
-					portal->AddSubsector(sub);
+					AddSubsectorToPortal(portal, sub);
 				}
 
 				portal = fakesector->GetPortalGroup(sector_t::floor);
 				if (portal != nullptr)
 				{
-					portal->AddSubsector(sub);
+					AddSubsectorToPortal(portal, sub);
 				}
 			}
 		}

@@ -23,6 +23,7 @@ class Clipper;
 class IPortal;
 class FFlatVertexGenerator;
 class IRenderQueue;
+class HWScenePortalBase;
 
 //==========================================================================
 //
@@ -58,7 +59,10 @@ enum EPortalClip
 
 struct HWDrawInfo
 {
-	virtual ~HWDrawInfo() {}
+	virtual ~HWDrawInfo() 
+	{
+		ClearBuffers();
+	}
 
 	struct wallseg
 	{
@@ -96,9 +100,10 @@ struct HWDrawInfo
 	bool isNightvision() const { return !!(FullbrightFlags & Nightvision); }
 	bool isStealthVision() const { return !!(FullbrightFlags & StealthVision); }
     
+	HWDrawInfo * outer = nullptr;
 	int FullbrightFlags;
 	std::atomic<int> spriteindex;
-	IPortal *mClipPortal;
+	HWScenePortalBase *mClipPortal;
 	IPortal *mCurrentPortal;
 	//FRotator mAngles;
 	IShadowMap *mShadowMap;
@@ -240,6 +245,7 @@ public:
 
 	virtual int UploadLights(FDynLightData &data) = 0;
 	virtual void ApplyVPUniforms() = 0;
+	virtual bool SetDepthClamp(bool on) = 0;
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;

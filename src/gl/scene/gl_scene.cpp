@@ -113,7 +113,6 @@ void FDrawInfo::CreateScene()
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
-	for(auto p : level.portalGroups) p->glportal = nullptr;
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
 	GLRenderer->mLights->Begin();

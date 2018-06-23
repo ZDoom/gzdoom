@@ -177,23 +177,6 @@ void FDrawInfoList::Release(FDrawInfo * di)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-FDrawInfo::FDrawInfo()
-{
-	next = NULL;
-}
-
-FDrawInfo::~FDrawInfo()
-{
-	ClearBuffers();
-}
-
-
-//==========================================================================
-//
 // Sets up a new drawinfo struct
 //
 //==========================================================================
@@ -225,7 +208,7 @@ void FDrawInfo::StartScene()
 {
 	ClearBuffers();
 
-	next = gl_drawinfo;
+	outer = gl_drawinfo;
 	gl_drawinfo = this;
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
 	decals[0].Clear();
@@ -233,7 +216,7 @@ void FDrawInfo::StartScene()
 	hudsprites.Clear();
 
 	// Fullbright information needs to be propagated from the main view.
-	if (next != nullptr) FullbrightFlags = next->FullbrightFlags;
+	if (outer != nullptr) FullbrightFlags = outer->FullbrightFlags;
 	else FullbrightFlags = 0;
 
 }
@@ -247,7 +230,7 @@ FDrawInfo *FDrawInfo::EndDrawInfo()
 {
 	assert(this == gl_drawinfo);
 	for(int i=0;i<GLDL_TYPES;i++) drawlists[i].Reset();
-	gl_drawinfo=next;
+	gl_drawinfo=static_cast<FDrawInfo*>(outer);
 	di_list.Release(this);
 	if (gl_drawinfo == nullptr) 
 		ResetRenderDataAllocator();
@@ -499,9 +482,15 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 }
 
 // Same here for the dependency on the portal.
-void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub)
+void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 {
-	portal->GetRenderState()->AddSubsector(sub);
+	auto portal = GLRenderer->mPortalState.FindPortal(ptg);
+	if (!portal)
+	{
+		portal = new GLScenePortal(&GLRenderer->mPortalState, new HWSectorStackPortal(ptg));
+	}
+	auto ptl = static_cast<HWSectorStackPortal*>(static_cast<GLScenePortal*>(portal)->mScene);
+	ptl->AddSubsector(sub);
 }
 
 std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
@@ -521,6 +510,11 @@ GLDecal *FDrawInfo::AddDecal(bool onmirror)
 int FDrawInfo::UploadLights(FDynLightData &data)
 {
 	return GLRenderer->mLights->UploadLights(data);
+}
+
+bool FDrawInfo::SetDepthClamp(bool on)
+{
+	return gl_RenderState.SetDepthClamp(on);
 }
 
 

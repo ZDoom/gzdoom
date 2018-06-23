@@ -35,13 +35,9 @@ enum Drawpasses
 
 struct FDrawInfo : public HWDrawInfo
 {
-	FDrawInfo * next;
 	HWDrawList drawlists[GLDL_TYPES];
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
-	
-	FDrawInfo();
-	~FDrawInfo();
 	
 	void ApplyVPUniforms() override;
 
@@ -55,15 +51,6 @@ struct FDrawInfo : public HWDrawInfo
 
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 	int UploadLights(FDynLightData &data) override;
-
-	// Legacy GL only. 
-	bool PutWallCompat(GLWall *wall, int passflag);
-	bool PutFlatCompat(GLFlat *flat, bool fog);
-	void RenderFogBoundaryCompat(GLWall *wall);
-	void RenderLightsCompat(GLWall *wall, int pass);
-	void DrawSubsectorLights(GLFlat *flat, subsector_t * sub, int pass);
-	void DrawLightsCompat(GLFlat *flat, int pass);
-
 
 	void DrawDecal(GLDecal *gldecal);
 	void DrawDecals();
@@ -111,7 +98,8 @@ struct FDrawInfo : public HWDrawInfo
     void ProcessScene(bool toscreen = false);
     void EndDrawScene(sector_t * viewsector);
     void DrawEndScene2D(sector_t * viewsector);
-    
+	bool SetDepthClamp(bool on) override;
+
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	FDrawInfo *EndDrawInfo();
 	

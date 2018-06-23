@@ -254,11 +254,6 @@ struct FSectorPortalGroup
 {
 	DVector2 mDisplacement;
 	int plane;
-	GLSectorStackPortal *glportal;	// for quick access to the render data. This is only valid during BSP traversal!
-
-	GLSectorStackPortal *GetRenderState();
-
-	void AddSubsector(subsector_t *sub);
 };
 
 

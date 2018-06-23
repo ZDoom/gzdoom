@@ -79,7 +79,6 @@ public:
 
 struct FPortalSceneState
 {
-	TArray<IPortal *> portals;
 	int recursion = 0;
 
 	int MirrorFlag = 0;
@@ -112,7 +111,6 @@ struct FPortalSceneState
 		return !!((MirrorFlag ^ PlaneMirrorFlag) & 1);
 	}
 
-	IPortal * FindPortal(const void * src);
 	void StartFrame();
 	bool RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di);
 	void EndFrame(HWDrawInfo *outer_di);
@@ -122,7 +120,7 @@ struct FPortalSceneState
 
 inline IPortal::IPortal(FPortalSceneState *s, bool local) : mState(s)
 {
-	if (!local) s->portals.Push(this);
+	//if (!local) s->portals.Push(this);
 }
 
 
@@ -134,7 +132,7 @@ public:
 	HWScenePortalBase() {}
 	virtual ~HWScenePortalBase() {}
 	void SetOwner(IPortal *p) { mOwner = p; }
-	void ClearClipper(HWDrawInfo *di);
+	void ClearClipper(HWDrawInfo *di, Clipper *clipper);
 
 	virtual int ClipSeg(seg_t *seg, const DVector3 &viewpos) { return PClip_Inside; }
 	virtual int ClipSubsector(subsector_t *sub) { return PClip_Inside; }

@@ -110,6 +110,7 @@ struct HWDrawInfo
 	Clipper *mClipper;
 	FRenderViewpoint Viewpoint;
 	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
+	TArray<IPortal *> Portals;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -149,6 +150,7 @@ private:
 
     sector_t fakesec;    // this is a struct member because it gets used in recursively called functions so it cannot be put on the stack.
 
+
 	void UnclipSubsector(subsector_t *sub);
 	void AddLine(seg_t *seg, bool portalclip);
 	void PolySubsector(subsector_t * sub);
@@ -183,6 +185,7 @@ public:
 		return (screen->hwcaps & RFL_NO_CLIP_PLANES) && VPUniforms.mClipLine.X > -1000000.f;
 	}
 
+	IPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
 
 	void ClearBuffers();

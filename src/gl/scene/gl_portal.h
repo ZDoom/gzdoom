@@ -62,7 +62,6 @@ protected:
 
 	bool Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDrawInfo **pDi) override;
 	void End(HWDrawInfo *di, bool usestencil) override;
-	void ClearClipper(HWDrawInfo *di);
 	void ClearScreen(HWDrawInfo *di);
 };
 
@@ -88,6 +87,7 @@ public:
 			static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
 			mScene->Shutdown(di);
 		}
+		else ClearScreen(di);
 	}
 	virtual void RenderAttached(HWDrawInfo *di) { return mScene->RenderAttached(di); }
 };

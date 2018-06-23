@@ -484,10 +484,11 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 // Same here for the dependency on the portal.
 void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 {
-	auto portal = GLRenderer->mPortalState.FindPortal(ptg);
+	auto portal = FindPortal(ptg);
 	if (!portal)
 	{
 		portal = new GLScenePortal(&GLRenderer->mPortalState, new HWSectorStackPortal(ptg));
+		Portals.Push(portal);
 	}
 	auto ptl = static_cast<HWSectorStackPortal*>(static_cast<GLScenePortal*>(portal)->mScene);
 	ptl->AddSubsector(sub);

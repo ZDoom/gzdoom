@@ -347,27 +347,36 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		// Instead they are added to the portal manager
 	case PORTALTYPE_HORIZON:
 		wall->horizon = pstate.UniqueHorizons.Get(wall->horizon);
-		portal = pstate.FindPortal(wall->horizon);
-		if (!portal) portal = new GLHorizonPortal(&pstate, wall->horizon, Viewpoint);
+		portal = FindPortal(wall->horizon);
+		if (!portal)
+		{
+			portal = new GLHorizonPortal(&pstate, wall->horizon, Viewpoint);
+			Portals.Push(portal);
+		}
 		portal->AddLine(wall);
 		break;
 
 	case PORTALTYPE_SKYBOX:
-		portal = pstate.FindPortal(wall->secportal);
+		portal = FindPortal(wall->secportal);
 		if (!portal)
 		{
 			// either a regular skybox or an Eternity-style horizon
 			if (wall->secportal->mType != PORTS_SKYVIEWPOINT) portal = new GLEEHorizonPortal(&pstate, wall->secportal);
-			else portal = new GLScenePortal(&pstate, new HWSkyboxPortal(wall->secportal));
+			else
+			{
+				portal = new GLScenePortal(&pstate, new HWSkyboxPortal(wall->secportal));
+				Portals.Push(portal);
+			}
 		}
 		portal->AddLine(wall);
 		break;
 
 	case PORTALTYPE_SECTORSTACK:
-		portal = pstate.FindPortal(wall->portal);
+		portal = FindPortal(wall->portal);
 		if (!portal)
 		{
 			portal = new GLScenePortal(&pstate, new HWSectorStackPortal(wall->portal));
+			Portals.Push(portal);
 		}
 		portal->AddLine(wall);
 		break;
@@ -377,15 +386,23 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		{
 			//@sync-portal
 			wall->planemirror = pstate.UniquePlaneMirrors.Get(wall->planemirror);
-			portal = pstate.FindPortal(wall->planemirror);
-			if (!portal) portal = new GLScenePortal(&pstate, new HWPlaneMirrorPortal(wall->planemirror));
+			portal = FindPortal(wall->planemirror);
+			if (!portal)
+			{
+				portal = new GLScenePortal(&pstate, new HWPlaneMirrorPortal(wall->planemirror));
+				Portals.Push(portal);
+			}
 			portal->AddLine(wall);
 		}
 		break;
 
 	case PORTALTYPE_MIRROR:
-		portal = pstate.FindPortal(wall->seg->linedef);
-		if (!portal) portal = new GLScenePortal(&pstate, new HWMirrorPortal(wall->seg->linedef));
+		portal = FindPortal(wall->seg->linedef);
+		if (!portal)
+		{
+			portal = new GLScenePortal(&pstate, new HWMirrorPortal(wall->seg->linedef));
+			Portals.Push(portal);
+		}
 		portal->AddLine(wall);
 		if (gl_mirror_envmap)
 		{
@@ -395,23 +412,28 @@ void FDrawInfo::AddPortal(GLWall *wall, int ptype)
 		break;
 
 	case PORTALTYPE_LINETOLINE:
-		portal = pstate.FindPortal(wall->lineportal);
+		portal = FindPortal(wall->lineportal);
 		if (!portal)
 		{
 			line_t *otherside = wall->lineportal->lines[0]->mDestination;
-			if (otherside != NULL && otherside->portalindex < level.linePortals.Size())
+			if (otherside != nullptr && otherside->portalindex < level.linePortals.Size())
 			{
 				ProcessActorsInPortal(otherside->getPortal()->mGroup, in_area);
 			}
 			portal = new GLScenePortal(&pstate, new HWLineToLinePortal(wall->lineportal));
+			Portals.Push(portal);
 		}
 		portal->AddLine(wall);
 		break;
 
 	case PORTALTYPE_SKY:
 		wall->sky = pstate.UniqueSkies.Get(wall->sky);
-		portal = pstate.FindPortal(wall->sky);
-		if (!portal) portal = new GLSkyPortal(&pstate, wall->sky);
+		portal = FindPortal(wall->sky);
+		if (!portal) 
+		{
+			portal = new GLSkyPortal(&pstate, wall->sky);
+			Portals.Push(portal);
+		}
 		portal->AddLine(wall);
 		break;
 	}

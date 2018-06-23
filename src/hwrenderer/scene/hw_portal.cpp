@@ -35,14 +35,6 @@
 
 EXTERN_CVAR(Int, r_mirror_recursions)
 
-IPortal * FPortalSceneState::FindPortal(const void * src)
-{
-	int i = portals.Size() - 1;
-
-	while (i >= 0 && portals[i] && portals[i]->GetSource() != src) i--;
-	return i >= 0 ? portals[i] : nullptr;
-}
-
 //-----------------------------------------------------------------------------
 //
 // StartFrame
@@ -51,8 +43,6 @@ IPortal * FPortalSceneState::FindPortal(const void * src)
 
 void FPortalSceneState::StartFrame()
 {
-	IPortal * p = nullptr;
-	portals.Push(p);
 	if (renderdepth == 0)
 	{
 		inskybox = false;
@@ -82,22 +72,22 @@ static FString indent;
 //
 //-----------------------------------------------------------------------------
 
-void FPortalSceneState::EndFrame(HWDrawInfo *outer_di)
+void FPortalSceneState::EndFrame(HWDrawInfo *di)
 {
 	IPortal * p;
 
 	if (gl_portalinfo)
 	{
-		Printf("%s%d portals, depth = %d\n%s{\n", indent.GetChars(), portals.Size(), renderdepth, indent.GetChars());
+		Printf("%s%d portals, depth = %d\n%s{\n", indent.GetChars(), di->Portals.Size(), renderdepth, indent.GetChars());
 		indent += "  ";
 	}
 
 	// Only use occlusion query if there are more than 2 portals. 
 	// Otherwise there's too much overhead.
 	// (And don't forget to consider the separating null pointers!)
-	bool usequery = portals.Size() > 2 + (unsigned)renderdepth;
+	bool usequery = di->Portals.Size() > 2 + (unsigned)renderdepth;
 
-	while (portals.Pop(p) && p)
+	while (di->Portals.Pop(p) && p)
 	{
 		if (gl_portalinfo) 
 		{
@@ -105,7 +95,7 @@ void FPortalSceneState::EndFrame(HWDrawInfo *outer_di)
 		}
 		if (p->lines.Size() > 0)
 		{
-			p->RenderPortal(true, usequery, outer_di);
+			p->RenderPortal(true, usequery, di);
 		}
 		delete p;
 	}
@@ -115,7 +105,7 @@ void FPortalSceneState::EndFrame(HWDrawInfo *outer_di)
 	{
 		indent.Truncate(long(indent.Len()-2));
 		Printf("%s}\n", indent.GetChars());
-		if (portals.Size() == 0) gl_portalinfo = false;
+		if (indent.Len() == 0) gl_portalinfo = false;
 	}
 }
 
@@ -131,23 +121,24 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 {
 	IPortal * p;
 	IPortal * best = nullptr;
-	unsigned bestindex=0;
+	unsigned bestindex = 0;
 
 	// Find the one with the highest amount of lines.
 	// Normally this is also the one that saves the largest amount
 	// of time by drawing it before the scene itself.
-	for(int i = portals.Size()-1; i >= 0 && portals[i] != nullptr; --i)
+	auto &portals = outer_di->Portals;
+	for (int i = portals.Size() - 1; i >= 0; --i)
 	{
-		p=portals[i];
+		p = portals[i];
 		if (p->lines.Size() > 0 && p->IsSky())
 		{
 			// Cannot clear the depth buffer inside a portal recursion
 			if (recursion && p->NeedDepthBuffer()) continue;
 
-			if (!best || p->lines.Size()>best->lines.Size())
+			if (!best || p->lines.Size() > best->lines.Size())
 			{
-				best=p;
-				bestindex=i;
+				best = p;
+				bestindex = i;
 			}
 		}
 	}
@@ -168,16 +159,16 @@ bool FPortalSceneState::RenderFirstSkyPortal(int recursion, HWDrawInfo *outer_di
 //
 //-----------------------------------------------------------------------------
 
-void HWScenePortalBase::ClearClipper(HWDrawInfo *di)
+void HWScenePortalBase::ClearClipper(HWDrawInfo *di, Clipper *clipper)
 {
 	auto outer_di = di->outer;
 	DAngle angleOffset = deltaangle(outer_di->Viewpoint.Angles.Yaw, di->Viewpoint.Angles.Yaw);
 
-	di->mClipper->Clear();
+	clipper->Clear();
 
 	auto &lines = mOwner->lines;
 	// Set the clipper to the minimal visible area
-	di->mClipper->SafeAddClipRange(0, 0xffffffff);
+	clipper->SafeAddClipRange(0, 0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
 		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
@@ -185,16 +176,16 @@ void HWScenePortalBase::ClearClipper(HWDrawInfo *di)
 
 		if (deltaangle(endAngle, startAngle) < 0)
 		{
-			di->mClipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
+			clipper->SafeRemoveClipRangeRealAngles(startAngle.BAMs(), endAngle.BAMs());
 		}
 	}
 
 	// and finally clip it to the visible area
 	angle_t a1 = di->FrustumAngle();
-	if (a1 < ANGLE_180) di->mClipper->SafeAddClipRangeRealAngles(di->Viewpoint.Angles.Yaw.BAMs() + a1, di->Viewpoint.Angles.Yaw.BAMs() - a1);
+	if (a1 < ANGLE_180) clipper->SafeAddClipRangeRealAngles(di->Viewpoint.Angles.Yaw.BAMs() + a1, di->Viewpoint.Angles.Yaw.BAMs() - a1);
 
 	// lock the parts that have just been clipped out.
-	di->mClipper->SetSilhouette();
+	clipper->SetSilhouette();
 }
 
 
@@ -406,7 +397,7 @@ bool HWLineToLinePortal::Setup(HWDrawInfo *di, Clipper *clipper)
 	di->SetClipLine(glport->lines[0]->mDestination);
 	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(state->MirrorFlag & 1), !!(state->PlaneMirrorFlag & 1));
 
-	ClearClipper(di);
+	ClearClipper(di, clipper);
 	return true;
 }
 
@@ -469,7 +460,7 @@ bool HWSkyboxPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 
 	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(state->MirrorFlag & 1), !!(state->PlaneMirrorFlag & 1));
 	di->SetViewArea();
-	ClearClipper(di);
+	ClearClipper(di, clipper);
 	di->UpdateCurrentMapSection();
 	return true;
 }
@@ -559,15 +550,15 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 
 	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(state->MirrorFlag & 1), !!(state->PlaneMirrorFlag & 1));
 	SetupCoverage(di);
-	ClearClipper(di);
+	ClearClipper(di, clipper);
 
 	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.
 	// The portal will re-validate the necessary parts when its subsectors get traversed.
 	subsector_t *sub = R_PointInSubsector(vp.Pos);
 	if (!(di->ss_renderflags[sub->Index()] & SSRF_SEEN))
 	{
-		di->mClipper->SafeAddClipRange(0, ANGLE_MAX);
-		di->mClipper->SetBlocked(true);
+		clipper->SafeAddClipRange(0, ANGLE_MAX);
+		clipper->SetBlocked(true);
 	}
 	return true;
 }
@@ -607,7 +598,7 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
 
 	auto &vp = di->Viewpoint;
-	int old_pm = state->PlaneMirrorMode;
+	old_pm = state->PlaneMirrorMode;
 
 	// the player is always visible in a mirror.
 	vp.showviewer = true;
@@ -620,7 +611,7 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 	state->PlaneMirrorFlag++;
 	di->SetClipHeight(planez, state->PlaneMirrorMode < 0 ? -1.f : 1.f);
 	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(state->MirrorFlag & 1), !!(state->PlaneMirrorFlag & 1));
-	ClearClipper(di);
+	ClearClipper(di, clipper);
 
 	di->UpdateCurrentMapSection();
 	return true;
@@ -634,4 +625,4 @@ void HWPlaneMirrorPortal::Shutdown(HWDrawInfo *di)
 	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
 }
 
-const char *HWPlaneMirrorPortal::GetName() { return "Planemirror"; }
+const char *HWPlaneMirrorPortal::GetName() { return origin->fC() < 0? "Planemirror ceiling" : "Planemirror floor"; }

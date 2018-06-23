@@ -1458,7 +1458,7 @@ void GLWall::Process(HWDrawInfo *di, seg_t *seg, sector_t * frontsector, sector_
 	sector_t * segback;
 
 #ifdef _DEBUG
-	if (seg->linedef->Index() == 10)
+	if (seg->linedef->Index() == 3407)
 	{
 		int a = 0;
 	}

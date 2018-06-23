@@ -32,6 +32,7 @@
 #include "g_levellocals.h"
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
+#include "hw_portal.h"
 #include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/utility/hw_cvars.h"
 
@@ -256,6 +257,20 @@ void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool plane
 //
 //-----------------------------------------------------------------------------
 
+IPortal * HWDrawInfo::FindPortal(const void * src)
+{
+	int i = Portals.Size() - 1;
+
+	while (i >= 0 && Portals[i] && Portals[i]->GetSource() != src) i--;
+	return i >= 0 ? Portals[i] : nullptr;
+}
+
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
+
 void HWViewpointUniforms::SetDefaults()
 {
 	mProjectionMatrix.loadIdentity();
@@ -267,4 +282,3 @@ void HWViewpointUniforms::SetDefaults()
 	mClipLine.X = -10000000.0f;
 
 }
-

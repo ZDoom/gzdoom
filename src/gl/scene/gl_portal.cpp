@@ -149,11 +149,11 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				else if (gl_noquery) doquery = false;
 
 				// Use occlusion query to avoid rendering portals that aren't visible
-				glBeginQuery(GL_SAMPLES_PASSED, GLRenderer->PortalQueryObject);
+				if (doquery) glBeginQuery(GL_SAMPLES_PASSED, GLRenderer->PortalQueryObject);
 
 				DrawPortalStencil();
 
-				glEndQuery(GL_SAMPLES_PASSED);
+				if (doquery) glEndQuery(GL_SAMPLES_PASSED);
 
 				// Clear Z-buffer
 				glStencilFunc(GL_EQUAL, mState->recursion + 1, ~0);		// draw sky into stencil
@@ -170,9 +170,9 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				gl_RenderState.SetEffect(EFF_NONE);
 				glDepthRange(0, 1);
 
-				GLuint sampleCount;
+				GLuint sampleCount = 1;
 
-				glGetQueryObjectuiv(GLRenderer->PortalQueryObject, GL_QUERY_RESULT, &sampleCount);
+				if (doquery) glGetQueryObjectuiv(GLRenderer->PortalQueryObject, GL_QUERY_RESULT, &sampleCount);
 
 				if (sampleCount == 0) 	// not visible
 				{

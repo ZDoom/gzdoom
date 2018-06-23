@@ -210,7 +210,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 //
 //
 //-----------------------------------------------------------------------------
-void GLSkyPortal::DrawContents(FDrawInfo *di)
+void GLSkyPortal::DrawContents(HWDrawInfo *di)
 {
 	bool drawBoth = false;
 	auto &vp = di->Viewpoint;
@@ -230,7 +230,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
-	di->SetupView(0, 0, 0, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)

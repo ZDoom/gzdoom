@@ -217,6 +217,8 @@ public:
 	void PrepareTargeterSprites();
 
 	void UpdateCurrentMapSection();
+	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
+	void SetupView(float vx, float vy, float vz, bool mirror, bool planemirror);
 	angle_t FrustumAngle();
 
 	virtual void DrawWall(GLWall *wall, int pass) = 0;

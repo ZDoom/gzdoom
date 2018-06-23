@@ -112,11 +112,6 @@ struct FDrawInfo : public HWDrawInfo
     void EndDrawScene(sector_t * viewsector);
     void DrawEndScene2D(sector_t * viewsector);
     
-    // These should go into hwrenderer later.
-    void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
-    void SetupView(float vx, float vy, float vz, bool mirror, bool planemirror);
-
-
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	FDrawInfo *EndDrawInfo();
 	

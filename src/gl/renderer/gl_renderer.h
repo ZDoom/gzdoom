@@ -6,6 +6,7 @@
 #include "vectors.h"
 #include "r_renderer.h"
 #include "r_data/matrix.h"
+#include "hwrenderer/scene/hw_portal.h"
 #include "gl/dynlights/gl_shadowmap.h"
 #include <functional>
 
@@ -73,6 +74,8 @@ public:
 	FSamplerManager *mSamplerManager;
 	unsigned int mFBID;
 	unsigned int mVAOID;
+	unsigned int PortalQueryObject;
+
 	int mOldFBID;
 
 	FGLRenderBuffers *mBuffers;
@@ -109,6 +112,8 @@ public:
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
 	SWSceneDrawer *swdrawer = nullptr;
+
+	FPortalSceneState mPortalState;
 
 	bool buffersActive = false;
 

@@ -265,7 +265,7 @@ FDrawInfo *FDrawInfo::EndDrawInfo()
 
 void FDrawInfo::SetupFloodStencil(wallseg * ws)
 {
-	int recursion = GLPortal::GetRecursion();
+	int recursion = GLRenderer->mPortalState.GetRecursion();
 
 	// Create stencil 
 	glStencilFunc(GL_EQUAL, recursion, ~0);		// create stencil
@@ -297,7 +297,7 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 
 void FDrawInfo::ClearFloodStencil(wallseg * ws)
 {
-	int recursion = GLPortal::GetRecursion();
+	int recursion = GLRenderer->mPortalState.GetRecursion();
 
 	glStencilOp(GL_KEEP,GL_KEEP,GL_DECR);
 	gl_RenderState.EnableTexture(false);

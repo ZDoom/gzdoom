@@ -58,42 +58,12 @@ EXTERN_CVAR(Bool, gl_portals)
 EXTERN_CVAR(Bool, gl_noquery)
 EXTERN_CVAR(Int, r_mirror_recursions)
 
-TArray<GLPortal *> GLPortal::portals;
-TArray<float> GLPortal::planestack;
-int GLPortal::recursion;
-int GLPortal::MirrorFlag;
-int GLPortal::PlaneMirrorFlag;
-int GLPortal::renderdepth;
-int GLPortal::PlaneMirrorMode;
-GLuint GLPortal::QueryObject;
-
-bool	 GLPortal::inskybox;
-
-UniqueList<GLSkyInfo> UniqueSkies;
-UniqueList<GLHorizonInfo> UniqueHorizons;
-UniqueList<secplane_t> UniquePlaneMirrors;
-
-int skyboxrecursion = 0;
-
 //==========================================================================
 //
 //
 //
 //==========================================================================
-
-void GLPortal::BeginScene()
-{
-	UniqueSkies.Clear();
-	UniqueHorizons.Clear();
-	UniquePlaneMirrors.Clear();
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-void GLPortal::ClearScreen(FDrawInfo *di)
+void GLPortal::ClearScreen(HWDrawInfo *di)
 {
 	bool multi = !!glIsEnabled(GL_MULTISAMPLE);
 
@@ -142,17 +112,13 @@ void GLPortal::DrawPortalStencil()
 }
 
 
-
-
-
-
 //-----------------------------------------------------------------------------
 //
 // Start
 //
 //-----------------------------------------------------------------------------
 
-bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawInfo **pDi)
+bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDrawInfo **pDi)
 {
 	*pDi = nullptr;
 	rendered_portals++;
@@ -166,7 +132,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 		}
 	
 		// Create stencil 
-		glStencilFunc(GL_EQUAL,recursion,~0);		// create stencil
+		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// create stencil
 		glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
 		{
 			ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0,0,0,0);						// don't write to the graphics buffer
@@ -182,19 +148,15 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 				if (!NeedDepthBuffer()) doquery = false;		// too much overhead and nothing to gain.
 				else if (gl_noquery) doquery = false;
 
-				// If occlusion query is supported let's use it to avoid rendering portals that aren't visible
-				if (QueryObject)
-				{
-					glBeginQuery(GL_SAMPLES_PASSED, QueryObject);
-				}
-				else doquery = false;	// some kind of error happened
+				// Use occlusion query to avoid rendering portals that aren't visible
+				glBeginQuery(GL_SAMPLES_PASSED, GLRenderer->PortalQueryObject);
 
 				DrawPortalStencil();
 
 				glEndQuery(GL_SAMPLES_PASSED);
 
 				// Clear Z-buffer
-				glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
+				glStencilFunc(GL_EQUAL, mState->recursion + 1, ~0);		// draw sky into stencil
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 				glDepthMask(true);							// enable z-buffer again
 				glDepthRange(1, 1);
@@ -210,17 +172,14 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 
 				GLuint sampleCount;
 
-				if (QueryObject)
-				{
-					glGetQueryObjectuiv(QueryObject, GL_QUERY_RESULT, &sampleCount);
+				glGetQueryObjectuiv(GLRenderer->PortalQueryObject, GL_QUERY_RESULT, &sampleCount);
 
-					if (sampleCount == 0) 	// not visible
-					{
-						// restore default stencil op.
-						glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-						glStencilFunc(GL_EQUAL, recursion, ~0);		// draw sky into stencil
-						return false;
-					}
+				if (sampleCount == 0) 	// not visible
+				{
+					// restore default stencil op.
+					glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+					glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
+					return false;
 				}
 			}
 			else
@@ -232,7 +191,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 
 				glDepthMask(true);
 				DrawPortalStencil();
-				glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
+				glStencilFunc(GL_EQUAL, mState->recursion + 1, ~0);		// draw sky into stencil
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 				gl_RenderState.EnableTexture(true);
 				// glColorMask(1,1,1,1);
@@ -241,7 +200,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 				glDepthMask(false);							// don't write to Z-buffer!
 			}
 		}
-		recursion++;
+		mState->recursion++;
 
 
 	}
@@ -262,14 +221,13 @@ bool GLPortal::Start(bool usestencil, bool doquery, FDrawInfo *outer_di, FDrawIn
 	PrevPortal = GLRenderer->mCurrentPortal;
 	GLRenderer->mCurrentPortal = this;
 
-	if (PrevPortal != nullptr) PrevPortal->PushState();
 	return true;
 }
 
 
-inline void GLPortal::ClearClipper(FDrawInfo *di)
+inline void GLPortal::ClearClipper(HWDrawInfo *di)
 {
-	auto outer_di = di->next;
+	auto outer_di = static_cast<FDrawInfo*>(di)->next;
 	DAngle angleOffset = deltaangle(outer_di->Viewpoint.Angles.Yaw, di->Viewpoint.Angles.Yaw);
 
 	di->mClipper->Clear();
@@ -300,15 +258,14 @@ inline void GLPortal::ClearClipper(FDrawInfo *di)
 // End
 //
 //-----------------------------------------------------------------------------
-void GLPortal::End(FDrawInfo *di, bool usestencil)
+void GLPortal::End(HWDrawInfo *di, bool usestencil)
 {
 	bool needdepth = NeedDepthBuffer();
 
 	Clocker c(PortalAll);
-	if (PrevPortal != nullptr) PrevPortal->PopState();
 	GLRenderer->mCurrentPortal = PrevPortal;
 
-	di = di->EndDrawInfo();
+	di = static_cast<FDrawInfo*>(di)->EndDrawInfo();
 	di->ApplyVPUniforms();
 	if (usestencil)
 	{
@@ -316,7 +273,6 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 
 		// Restore the old view
 		if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
-		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
 
 		{
 			ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0, 0, 0, 0);						// no graphics
@@ -341,7 +297,7 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 			glDepthFunc(GL_LEQUAL);
 			glDepthRange(0, 1);
 			glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-			glStencilFunc(GL_EQUAL, recursion, ~0);		// draw sky into stencil
+			glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
 			DrawPortalStencil();
 			glDepthFunc(GL_LESS);
 
@@ -349,11 +305,11 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 			gl_RenderState.EnableTexture(true);
 			gl_RenderState.SetEffect(EFF_NONE);
 		}  // glColorMask(1, 1, 1, 1);
-		recursion--;
+		mState->recursion--;
 
 		// restore old stencil op.
 		glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-		glStencilFunc(GL_EQUAL,recursion,~0);		// draw sky into stencil
+		glStencilFunc(GL_EQUAL, mState->recursion,~0);		// draw sky into stencil
 	}
 	else
 	{
@@ -370,7 +326,7 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 
 		// Restore the old view
 		if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
-		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 		// This draws a valid z-buffer into the stencil's contents to ensure it
 		// doesn't get overwritten by the level's geometry.
@@ -395,141 +351,6 @@ void GLPortal::End(FDrawInfo *di, bool usestencil)
 
 
 //-----------------------------------------------------------------------------
-//
-// StartFrame
-//
-//-----------------------------------------------------------------------------
-void GLPortal::StartFrame()
-{
-	GLPortal * p = nullptr;
-	portals.Push(p);
-	if (renderdepth == 0)
-	{
-		inskybox = false;
-		screen->instack[sector_t::floor] = screen->instack[sector_t::ceiling] = 0;
-	}
-	renderdepth++;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// printing portal info
-//
-//-----------------------------------------------------------------------------
-
-static bool gl_portalinfo;
-
-CCMD(gl_portalinfo)
-{
-	gl_portalinfo = true;
-}
-
-static FString indent;
-
-//-----------------------------------------------------------------------------
-//
-// EndFrame
-//
-//-----------------------------------------------------------------------------
-
-void GLPortal::EndFrame(FDrawInfo *outer_di)
-{
-	GLPortal * p;
-
-	if (gl_portalinfo)
-	{
-		Printf("%s%d portals, depth = %d\n%s{\n", indent.GetChars(), portals.Size(), renderdepth, indent.GetChars());
-		indent += "  ";
-	}
-
-	// Only use occlusion query if there are more than 2 portals. 
-	// Otherwise there's too much overhead.
-	// (And don't forget to consider the separating nullptr pointers!)
-	bool usequery = portals.Size() > 2 + (unsigned)renderdepth;
-
-	while (portals.Pop(p) && p)
-	{
-		if (gl_portalinfo) 
-		{
-			Printf("%sProcessing %s, depth = %d, query = %d\n", indent.GetChars(), p->GetName(), renderdepth, usequery);
-		}
-		if (p->lines.Size() > 0)
-		{
-			p->RenderPortal(true, usequery, outer_di);
-		}
-		delete p;
-	}
-	renderdepth--;
-
-	if (gl_portalinfo)
-	{
-		indent.Truncate(long(indent.Len()-2));
-		Printf("%s}\n", indent.GetChars());
-		if (portals.Size() == 0) gl_portalinfo = false;
-	}
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// Renders one sky portal without a stencil.
-// In more complex scenes using a stencil for skies can severely stall
-// the GPU and there's rarely more than one sky visible at a time.
-//
-//-----------------------------------------------------------------------------
-bool GLPortal::RenderFirstSkyPortal(int recursion, FDrawInfo *outer_di)
-{
-	GLPortal * p;
-	GLPortal * best = nullptr;
-	unsigned bestindex=0;
-
-	// Find the one with the highest amount of lines.
-	// Normally this is also the one that saves the largest amount
-	// of time by drawing it before the scene itself.
-	for(int i = portals.Size()-1; i >= 0 && portals[i] != nullptr; --i)
-	{
-		p=portals[i];
-		if (p->lines.Size() > 0 && p->IsSky())
-		{
-			// Cannot clear the depth buffer inside a portal recursion
-			if (recursion && p->NeedDepthBuffer()) continue;
-
-			if (!best || p->lines.Size()>best->lines.Size())
-			{
-				best=p;
-				bestindex=i;
-			}
-		}
-	}
-
-	if (best)
-	{
-		portals.Delete(bestindex);
-		best->RenderPortal(false, false, outer_di);
-		delete best;
-		return true;
-	}
-	return false;
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// FindPortal
-//
-//-----------------------------------------------------------------------------
-
-GLPortal * GLPortal::FindPortal(const void * src)
-{
-	int i=portals.Size()-1;
-
-	while (i>=0 && portals[i] && portals[i]->GetSource()!=src) i--;
-	return i>=0? portals[i]:nullptr;
-}
-
-
-//-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 //
 //
@@ -545,23 +366,23 @@ GLPortal * GLPortal::FindPortal(const void * src)
 //
 //-----------------------------------------------------------------------------
 
-void GLSkyboxPortal::DrawContents(FDrawInfo *di)
+void GLSkyboxPortal::DrawContents(HWDrawInfo *di)
 {
-	int old_pm = PlaneMirrorMode;
+	int old_pm = mState->PlaneMirrorMode;
 
-	if (skyboxrecursion >= 3)
+	if (mState->skyboxrecursion >= 3)
 	{
 		ClearScreen(di);
 		return;
 	}
 	auto &vp = di->Viewpoint;
 
-	skyboxrecursion++;
+	mState->skyboxrecursion++;
 	AActor *origin = portal->mSkybox;
 	portal->mFlags |= PORTSF_INSKYBOX;
 	vp.extralight = 0;
 
-	PlaneMirrorMode = 0;
+	mState->PlaneMirrorMode = 0;
 
 	bool oldclamp = gl_RenderState.SetDepthClamp(false);
 	vp.Pos = origin->InterpolatedPosition(vp.TicFrac);
@@ -576,20 +397,20 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 
 	vp.ViewActor = origin;
 
-	inskybox = true;
-	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	mState->inskybox = true;
+	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 	di->SetViewArea();
 	ClearClipper(di);
 
 	di->UpdateCurrentMapSection();
 
-	di->DrawScene(DM_SKYPORTAL);
+	static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
 	portal->mFlags &= ~PORTSF_INSKYBOX;
-	inskybox = false;
+	mState->inskybox = false;
 	gl_RenderState.SetDepthClamp(oldclamp);
-	skyboxrecursion--;
+	mState->skyboxrecursion--;
 
-	PlaneMirrorMode = old_pm;
+	mState->PlaneMirrorMode = old_pm;
 }
 
 //-----------------------------------------------------------------------------
@@ -611,7 +432,7 @@ void GLSkyboxPortal::DrawContents(FDrawInfo *di)
 
 GLSectorStackPortal *FSectorPortalGroup::GetRenderState()
 {
-	if (glportal == nullptr) glportal = new GLSectorStackPortal(this);
+	if (glportal == nullptr) glportal = new GLSectorStackPortal(&GLRenderer->mPortalState, this);
 	return glportal;
 }
 
@@ -631,7 +452,7 @@ GLSectorStackPortal::~GLSectorStackPortal()
 //
 //-----------------------------------------------------------------------------
 
-static uint8_t SetCoverage(FDrawInfo *di, void *node)
+static uint8_t SetCoverage(HWDrawInfo *di, void *node)
 {
 	if (level.nodes.Size() == 0)
 	{
@@ -651,7 +472,7 @@ static uint8_t SetCoverage(FDrawInfo *di, void *node)
 	}
 }
 
-void GLSectorStackPortal::SetupCoverage(FDrawInfo *di)
+void GLSectorStackPortal::SetupCoverage(HWDrawInfo *di)
 {
 	for(unsigned i=0; i<subsectors.Size(); i++)
 	{
@@ -672,7 +493,7 @@ void GLSectorStackPortal::SetupCoverage(FDrawInfo *di)
 // GLSectorStackPortal::DrawContents
 //
 //-----------------------------------------------------------------------------
-void GLSectorStackPortal::DrawContents(FDrawInfo *di)
+void GLSectorStackPortal::DrawContents(HWDrawInfo *di)
 {
 	FSectorPortalGroup *portal = origin;
 	auto &vp = di->Viewpoint;
@@ -684,7 +505,7 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 	// avoid recursions!
 	if (origin->plane != -1) screen->instack[origin->plane]++;
 
-	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(mState->MirrorFlag&1), !!(mState->PlaneMirrorFlag&1));
 	SetupCoverage(di);
 	ClearClipper(di);
 	
@@ -697,7 +518,7 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 		di->mClipper->SetBlocked(true);
 	}
 
-	di->DrawScene(DM_PORTAL);
+	static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
 
 	if (origin->plane != -1) screen->instack[origin->plane]--;
 }
@@ -718,9 +539,9 @@ void GLSectorStackPortal::DrawContents(FDrawInfo *di)
 //
 //-----------------------------------------------------------------------------
 
-void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
+void GLPlaneMirrorPortal::DrawContents(HWDrawInfo *di)
 {
-	if (renderdepth > r_mirror_recursions)
+	if (mState->renderdepth > r_mirror_recursions)
 	{
 		ClearScreen(di);
 		return;
@@ -729,7 +550,7 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
 
 	auto &vp = di->Viewpoint;
-	int old_pm = PlaneMirrorMode;
+	int old_pm = mState->PlaneMirrorMode;
 
 	// the player is always visible in a mirror.
 	vp.showviewer = true;
@@ -737,18 +558,18 @@ void GLPlaneMirrorPortal::DrawContents(FDrawInfo *di)
 	double planez = origin->ZatPoint(vp.Pos);
 	vp.Pos.Z = 2 * planez - vp.Pos.Z;
 	vp.ViewActor = nullptr;
-	PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
+	mState->PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;
 
-	PlaneMirrorFlag++;
-	di->SetClipHeight(planez, PlaneMirrorMode < 0 ? -1.f : 1.f);
-	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	mState->PlaneMirrorFlag++;
+	di->SetClipHeight(planez, mState->PlaneMirrorMode < 0 ? -1.f : 1.f);
+	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 	ClearClipper(di);
 
 	di->UpdateCurrentMapSection();
 
-	di->DrawScene(DM_PORTAL);
-	PlaneMirrorFlag--;
-	PlaneMirrorMode = old_pm;
+	static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
+	mState->PlaneMirrorFlag--;
+	mState->PlaneMirrorMode = old_pm;
 	std::swap(screen->instack[sector_t::floor], screen->instack[sector_t::ceiling]);
 }
 
@@ -803,9 +624,9 @@ int GLLinePortal::ClipPoint(const DVector2 &pos)
 // R_EnterMirror
 //
 //-----------------------------------------------------------------------------
-void GLMirrorPortal::DrawContents(FDrawInfo *di)
+void GLMirrorPortal::DrawContents(HWDrawInfo *di)
 {
-	if (renderdepth>r_mirror_recursions) 
+	if (mState->renderdepth>r_mirror_recursions)
 	{
 		ClearScreen(di);
 		return;
@@ -864,16 +685,16 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 		FVector2 v(-dx, dy);
 		v.MakeUnit();
 
-		vp.Pos.X+= v[1] * renderdepth / 2;
-		vp.Pos.Y+= v[0] * renderdepth / 2;
+		vp.Pos.X+= v[1] * mState->renderdepth / 2;
+		vp.Pos.Y+= v[0] * mState->renderdepth / 2;
 	}
 	vp.Angles.Yaw = linedef->Delta().Angle() * 2. - StartAngle;
 
 	vp.ViewActor = nullptr;
 
-	MirrorFlag++;
+	mState->MirrorFlag++;
 	di->SetClipLine(linedef);
-	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(mState->MirrorFlag&1), !!(mState->PlaneMirrorFlag&1));
 
 	di->mClipper->Clear();
 
@@ -882,9 +703,9 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 
     di->mClipper->SafeAddClipRange(linedef->v1, linedef->v2);
 
-	di->DrawScene(DM_PORTAL);
+	static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
 
-	MirrorFlag--;
+	mState->MirrorFlag--;
 }
 
 //-----------------------------------------------------------------------------
@@ -902,10 +723,10 @@ void GLMirrorPortal::DrawContents(FDrawInfo *di)
 //
 //
 //-----------------------------------------------------------------------------
-void GLLineToLinePortal::DrawContents(FDrawInfo *di)
+void GLLineToLinePortal::DrawContents(HWDrawInfo *di)
 {
 	// TODO: Handle recursion more intelligently
-	if (renderdepth>r_mirror_recursions) 
+	if (mState->renderdepth>r_mirror_recursions)
 	{
 		ClearScreen(di);
 		return;
@@ -948,13 +769,13 @@ void GLLineToLinePortal::DrawContents(FDrawInfo *di)
 
 	vp.ViewActor = nullptr;
 	di->SetClipLine(glport->lines[0]->mDestination);
-	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(MirrorFlag&1), !!(PlaneMirrorFlag&1));
+	di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, !!(mState->MirrorFlag&1), !!(mState->PlaneMirrorFlag&1));
 
 	ClearClipper(di);
-	di->DrawScene(DM_PORTAL);
+	static_cast<FDrawInfo*>(di)->DrawScene(DM_PORTAL);
 }
 
-void GLLineToLinePortal::RenderAttached(FDrawInfo *di)
+void GLLineToLinePortal::RenderAttached(HWDrawInfo *di)
 {
 	di->ProcessActorsInPortal(glport, di->in_area);
 }
@@ -981,8 +802,8 @@ void GLLineToLinePortal::RenderAttached(FDrawInfo *di)
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
 
-GLHorizonPortal::GLHorizonPortal(GLHorizonInfo * pt, FRenderViewpoint &vp, bool local)
-	: GLPortal(local)
+GLHorizonPortal::GLHorizonPortal(FPortalSceneState *s, GLHorizonInfo * pt, FRenderViewpoint &vp, bool local)
+	: GLPortal(s, local)
 {
 	origin = pt;
 
@@ -1045,8 +866,9 @@ GLHorizonPortal::GLHorizonPortal(GLHorizonInfo * pt, FRenderViewpoint &vp, bool 
 // GLHorizonPortal::DrawContents
 //
 //-----------------------------------------------------------------------------
-void GLHorizonPortal::DrawContents(FDrawInfo *di)
+void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 {
+	auto di = static_cast<FDrawInfo *>(hwdi);
 	Clocker c(PortalAll);
 
 	FMaterial * gltexture;
@@ -1117,7 +939,7 @@ void GLHorizonPortal::DrawContents(FDrawInfo *di)
 //
 //-----------------------------------------------------------------------------
 
-void GLEEHorizonPortal::DrawContents(FDrawInfo *di)
+void GLEEHorizonPortal::DrawContents(HWDrawInfo *di)
 {
 	auto &vp = di->Viewpoint;
 	sector_t *sector = portal->mOrigin;
@@ -1126,7 +948,7 @@ void GLEEHorizonPortal::DrawContents(FDrawInfo *di)
 	{
 		GLSkyInfo skyinfo;
 		skyinfo.init(sector->sky, 0);
-		GLSkyPortal sky(&skyinfo, true);
+		GLSkyPortal sky(mState, &skyinfo, true);
 		sky.DrawContents(di);
 	}
 	if (sector->GetTexture(sector_t::ceiling) != skyflatnum)
@@ -1140,7 +962,7 @@ void GLEEHorizonPortal::DrawContents(FDrawInfo *di)
 		{
 			horz.plane.Texheight = vp.Pos.Z + fabs(horz.plane.Texheight);
 		}
-		GLHorizonPortal ceil(&horz, di->Viewpoint, true);
+		GLHorizonPortal ceil(mState, &horz, di->Viewpoint, true);
 		ceil.DrawContents(di);
 	}
 	if (sector->GetTexture(sector_t::floor) != skyflatnum)
@@ -1154,23 +976,8 @@ void GLEEHorizonPortal::DrawContents(FDrawInfo *di)
 		{
 			horz.plane.Texheight = vp.Pos.Z - fabs(horz.plane.Texheight);
 		}
-		GLHorizonPortal floor(&horz, di->Viewpoint, true);
+		GLHorizonPortal floor(mState, &horz, di->Viewpoint, true);
 		floor.DrawContents(di);
-	}
-}
-
-void GLPortal::Initialize()
-{
-	assert(0 == QueryObject);
-	glGenQueries(1, &QueryObject);
-}
-
-void GLPortal::Shutdown()
-{
-	if (0 != QueryObject)
-	{
-		glDeleteQueries(1, &QueryObject);
-		QueryObject = 0;
 	}
 }
 

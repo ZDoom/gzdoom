@@ -216,6 +216,42 @@ angle_t HWDrawInfo::FrustumAngle()
 
 //-----------------------------------------------------------------------------
 //
+// Setup the modelview matrix
+//
+//-----------------------------------------------------------------------------
+
+void HWDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
+{
+	float mult = mirror ? -1 : 1;
+	float planemult = planemirror ? -level.info->pixelstretch : level.info->pixelstretch;
+
+	VPUniforms.mViewMatrix.loadIdentity();
+	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees, 0.0f, 0.0f, 1.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
+	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees, 0.0f, mult, 0.0f);
+	VPUniforms.mViewMatrix.translate(vx * mult, -vz * planemult, -vy);
+	VPUniforms.mViewMatrix.scale(-mult, planemult, 1);
+}
+
+
+//-----------------------------------------------------------------------------
+//
+// SetupView
+// Setup the view rotation matrix for the given viewpoint
+//
+//-----------------------------------------------------------------------------
+void HWDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool planemirror)
+{
+	auto &vp = Viewpoint;
+	vp.SetViewAngle(r_viewwindow);
+	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
+	SetCameraPos(vp.Pos);
+	ApplyVPUniforms();
+}
+
+
+//-----------------------------------------------------------------------------
+//
 //
 //
 //-----------------------------------------------------------------------------

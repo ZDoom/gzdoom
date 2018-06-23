@@ -841,6 +841,7 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_drawlist.cpp
 	hwrenderer/scene/hw_clipper.cpp
 	hwrenderer/scene/hw_flats.cpp
+	hwrenderer/scene/hw_portal.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_sky.cpp
 	hwrenderer/scene/hw_sprites.cpp

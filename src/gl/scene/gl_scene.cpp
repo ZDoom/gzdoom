@@ -50,6 +50,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
+#include "hwrenderer/scene/hw_portal.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/stereo3d/gl_stereo3d.h"
@@ -93,41 +94,6 @@ void FDrawInfo::ApplyVPUniforms()
 
 //-----------------------------------------------------------------------------
 //
-// Setup the modelview matrix
-//
-//-----------------------------------------------------------------------------
-
-void FDrawInfo::SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror)
-{
-	float mult = mirror? -1:1;
-	float planemult = planemirror? -level.info->pixelstretch : level.info->pixelstretch;
-
-	VPUniforms.mViewMatrix.loadIdentity();
-	VPUniforms.mViewMatrix.rotate(angles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
-	VPUniforms.mViewMatrix.rotate(angles.Yaw.Degrees,   0.0f, mult, 0.0f);
-	VPUniforms.mViewMatrix.translate(vx * mult, -vz * planemult , -vy);
-	VPUniforms.mViewMatrix.scale(-mult, planemult, 1);
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// SetupView
-// Setup the view rotation matrix for the given viewpoint
-//
-//-----------------------------------------------------------------------------
-void FDrawInfo::SetupView(float vx, float vy, float vz, bool mirror, bool planemirror)
-{
-	auto &vp = Viewpoint;
-	vp.SetViewAngle(r_viewwindow);
-	SetViewMatrix(vp.HWAngles, vx, vy, vz, mirror, planemirror);
-	SetCameraPos(vp.Pos);
-	ApplyVPUniforms();
-}
-
-//-----------------------------------------------------------------------------
-//
 // CreateScene
 //
 // creates the draw lists for the current scene
@@ -141,7 +107,7 @@ void FDrawInfo::CreateScene()
 	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
 
 	// reset the portal manager
-	GLPortal::StartFrame();
+	GLRenderer->mPortalState.StartFrame();
 	PO_LinkToSubsectors();
 
 	ProcessAll.Clock();
@@ -195,7 +161,7 @@ void FDrawInfo::RenderScene(int recursion)
 	RenderAll.Clock();
 
 	glDepthMask(true);
-	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion, this);
+ 	if (!gl_no_skyclear) GLRenderer->mPortalState.RenderFirstSkyPortal(recursion, this);
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
@@ -377,7 +343,7 @@ void FDrawInfo::DrawScene(int drawmode)
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	GLPortal::EndFrame(this);
+	GLRenderer->mPortalState.EndFrame(this);
 	recursion--;
 	RenderTranslucent();
 }
@@ -444,7 +410,7 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 void FDrawInfo::ProcessScene(bool toscreen)
 {
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
-	GLPortal::BeginScene();
+	GLRenderer->mPortalState.BeginScene();
 
 	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
 	CurrentMapSections.Set(mapsection);

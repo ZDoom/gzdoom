@@ -150,6 +150,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
+	glGenQueries(1, &PortalQueryObject);
+
 	glGenVertexArrays(1, &mVAOID);
 	glBindVertexArray(mVAOID);
 	FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
@@ -164,14 +166,10 @@ void FGLRenderer::Initialize(int width, int height)
 	SetupLevel();
 	mShaderManager = new FShaderManager;
 	mSamplerManager = new FSamplerManager;
-
-	GLPortal::Initialize();
 }
 
 FGLRenderer::~FGLRenderer() 
 {
-	GLPortal::Shutdown();
-
 	FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
@@ -186,6 +184,8 @@ FGLRenderer::~FGLRenderer()
 		glBindVertexArray(0);
 		glDeleteVertexArrays(1, &mVAOID);
 	}
+	if (PortalQueryObject != 0) glDeleteQueries(1, &PortalQueryObject);
+
 	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;

@@ -43,7 +43,6 @@
 #include "c_console.h"
 #include "c_dispatch.h"
 #include "dikeys.h"
-#include "s_sound.h"
 #include "events.h"
 
 static void I_CheckGUICapture ();
@@ -57,7 +56,6 @@ extern int paused;
 CVAR (Bool,  use_mouse,				true, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,  m_noprescale,			false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR (Bool,	 m_filter,				false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-CVAR (Bool, i_soundinbackground, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR (Bool, fullscreen)
 
@@ -305,20 +303,8 @@ void MessagePump (const SDL_Event &sev)
 		exit (0);
 
 	case SDL_WINDOWEVENT:
-		switch (sev.window.event)
-		{
-			extern bool AppActive;
-
-			case SDL_WINDOWEVENT_FOCUS_GAINED:
-				S_SetSoundPaused(1);
-				AppActive = true;
-				break;
-
-			case SDL_WINDOWEVENT_FOCUS_LOST:
-				S_SetSoundPaused(i_soundinbackground);
-				AppActive = false;
-				break;
-		}
+		extern void ProcessSDLWindowEvent(const SDL_WindowEvent &);
+		ProcessSDLWindowEvent(sev.window);
 		break;
 
 	case SDL_MOUSEBUTTONDOWN:

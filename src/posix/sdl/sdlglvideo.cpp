@@ -41,6 +41,7 @@
 #include "v_video.h"
 #include "version.h"
 #include "c_console.h"
+#include "s_sound.h"
 
 #include "videomodes.h"
 #include "hardware.h"
@@ -83,6 +84,13 @@ CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCA
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
+
+CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_w, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CVAR(Int, win_h, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+
+CVAR(Bool, i_soundinbackground, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -226,6 +234,20 @@ SystemFrameBuffer::SystemFrameBuffer (void *, bool fullscreen)
 				m_supportsGamma = -1 != SDL_GetWindowGammaRamp(Screen,
 					 m_origGamma[0], m_origGamma[1], m_origGamma[2]
 				);
+
+				if (!fullscreen)
+				{
+					if (win_x >= 0 && win_y >= 0)
+					{
+						SDL_SetWindowPosition(Screen, win_x, win_y);
+					}
+
+					if (win_h > 320 && win_w > 200)
+					{
+						SDL_SetWindowSize(Screen, win_w, win_h);
+					}
+				}
+
 				return;
 			}
 
@@ -325,6 +347,41 @@ int SystemFrameBuffer::GetClientHeight()
 	int height = 0;
 	SDL_GL_GetDrawableSize(Screen, nullptr, &height);
 	return height;
+}
+
+
+void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
+{
+	switch (event.event)
+	{
+	extern bool AppActive;
+
+	case SDL_WINDOWEVENT_FOCUS_GAINED:
+		S_SetSoundPaused(1);
+		AppActive = true;
+		break;
+
+	case SDL_WINDOWEVENT_FOCUS_LOST:
+		S_SetSoundPaused(i_soundinbackground);
+		AppActive = false;
+		break;
+
+	case SDL_WINDOWEVENT_MOVED:
+		if (!fullscreen)
+		{
+			win_x = event.data1;
+			win_y = event.data2;
+		}
+		break;
+
+	case SDL_WINDOWEVENT_RESIZED:
+		if (!fullscreen)
+		{
+			win_w = event.data1;
+			win_h = event.data2;
+		}
+		break;
+	}
 }
 
 

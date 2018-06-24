@@ -97,7 +97,7 @@ EXTERN_CVAR(Int, vid_defheight)
 //
 //==========================================================================
 
-static void GetCenteredPos(int in_w, int in_h, int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
+ void SystemGLFrameBuffer::GetCenteredPos(int in_w, int in_h, int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
 {
 	DEVMODE displaysettings;
 	RECT rect;
@@ -125,7 +125,7 @@ static void GetCenteredPos(int in_w, int in_h, int &winx, int &winy, int &winw, 
 //
 //==========================================================================
 
-static void KeepWindowOnScreen(int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight)
+void SystemGLFrameBuffer::KeepWindowOnScreen(int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight)
 {
 	// If the window is too large to fit entirely on the screen, at least
 	// keep its upperleft corner visible.
@@ -153,7 +153,7 @@ static void KeepWindowOnScreen(int &winx, int &winy, int winw, int winh, int scr
 //
 //==========================================================================
 
-void SystemFrameBuffer::SaveWindowedPos()
+void SystemGLFrameBuffer::SaveWindowedPos()
 {
 	// Don't save if we were run with the -0 option.
 	if (Args->CheckParm("-0"))
@@ -204,7 +204,7 @@ void SystemFrameBuffer::SaveWindowedPos()
 //
 //==========================================================================
 
-void SystemFrameBuffer::RestoreWindowedPos()
+void SystemGLFrameBuffer::RestoreWindowedPos()
 {
 	int winx, winy, winw, winh, scrwidth, scrheight;
 
@@ -239,7 +239,7 @@ void SystemFrameBuffer::RestoreWindowedPos()
 //
 //==========================================================================
 
-void SystemFrameBuffer::PositionWindow(bool fullscreen)
+void SystemGLFrameBuffer::PositionWindow(bool fullscreen)
 {
 	RECT r;
 	LONG style, exStyle;
@@ -298,7 +298,7 @@ void SystemFrameBuffer::PositionWindow(bool fullscreen)
 //
 //==========================================================================
 
-SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, bool fullscreen) : DFrameBuffer(vid_defwidth, vid_defheight)
+SystemGLFrameBuffer::SystemGLFrameBuffer(void *hMonitor, bool fullscreen) : DFrameBuffer(vid_defwidth, vid_defheight)
 {
 	m_Monitor = hMonitor;
 	m_displayDeviceName = 0;
@@ -346,7 +346,7 @@ SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, bool fullscreen) : DFrameBu
 //
 //==========================================================================
 
-SystemFrameBuffer::~SystemFrameBuffer()
+SystemGLFrameBuffer::~SystemGLFrameBuffer()
 {
 	ResetGammaTable();
 	SaveWindowedPos();
@@ -367,7 +367,7 @@ SystemFrameBuffer::~SystemFrameBuffer()
 //
 //==========================================================================
 
-void SystemFrameBuffer::InitializeState()
+void SystemGLFrameBuffer::InitializeState()
 {
 }
 
@@ -377,7 +377,7 @@ void SystemFrameBuffer::InitializeState()
 //
 //==========================================================================
 
-void SystemFrameBuffer::ResetGammaTable()
+void SystemGLFrameBuffer::ResetGammaTable()
 {
 	if (m_supportsGamma)
 	{
@@ -387,7 +387,7 @@ void SystemFrameBuffer::ResetGammaTable()
 	}
 }
 
-void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
+void SystemGLFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)
 	{
@@ -403,7 +403,7 @@ void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
 //
 //==========================================================================
 
-bool SystemFrameBuffer::IsFullscreen()
+bool SystemGLFrameBuffer::IsFullscreen()
 {
 	return m_Fullscreen;
 }
@@ -414,7 +414,7 @@ bool SystemFrameBuffer::IsFullscreen()
 //
 //==========================================================================
 
-void SystemFrameBuffer::ToggleFullscreen(bool yes)
+void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
 {
 	PositionWindow(yes);
 }
@@ -430,12 +430,12 @@ CUSTOM_CVAR(Bool, gl_control_tear, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	vid_vsync.Callback();
 }
 
-void SystemFrameBuffer::SetVSync (bool vsync)
+void SystemGLFrameBuffer::SetVSync (bool vsync)
 {
 	if (myWglSwapIntervalExtProc != NULL) myWglSwapIntervalExtProc(vsync ? (gl_control_tear? SwapInterval : 1) : 0);
 }
 
-void SystemFrameBuffer::SwapBuffers()
+void SystemGLFrameBuffer::SwapBuffers()
 {
 	// Limiting the frame rate is as simple as waiting for the timer to signal this event.
 	I_FPSLimit();
@@ -448,14 +448,14 @@ void SystemFrameBuffer::SwapBuffers()
 //
 //==========================================================================
 
-int SystemFrameBuffer::GetClientWidth()
+int SystemGLFrameBuffer::GetClientWidth()
 {
 	RECT rect = { 0 };
 	GetClientRect(Window, &rect);
 	return rect.right - rect.left;
 }
 
-int SystemFrameBuffer::GetClientHeight()
+int SystemGLFrameBuffer::GetClientHeight()
 {
 	RECT rect = { 0 };
 	GetClientRect(Window, &rect);

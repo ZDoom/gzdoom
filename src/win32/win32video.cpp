@@ -173,7 +173,7 @@ void Win32GLVideo::GetDisplayDeviceName()
 
 DFrameBuffer *Win32GLVideo::CreateFrameBuffer()
 {
-	SystemFrameBuffer *fb;
+	SystemGLFrameBuffer *fb;
 
 	fb = new OpenGLFrameBuffer(m_hMonitor, fullscreen);
 	return fb;

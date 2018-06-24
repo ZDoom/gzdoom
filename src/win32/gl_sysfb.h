@@ -3,7 +3,7 @@
 
 #include "v_video.h"
 
-class SystemFrameBuffer : public DFrameBuffer
+class SystemGLFrameBuffer : public DFrameBuffer
 {
 	typedef DFrameBuffer Super;
 
@@ -11,11 +11,11 @@ class SystemFrameBuffer : public DFrameBuffer
 	void RestoreWindowedPos();
 
 public:
-	SystemFrameBuffer() {}
+	SystemGLFrameBuffer() {}
 	// Actually, hMonitor is a HMONITOR, but it's passed as a void * as there
     // look to be some cross-platform bits in the way.
-	SystemFrameBuffer(void *hMonitor, bool fullscreen);
-	virtual ~SystemFrameBuffer();
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
+	virtual ~SystemGLFrameBuffer();
 
 	void SetVSync (bool vsync);
 	void SwapBuffers();

@@ -104,6 +104,7 @@
 
 EXTERN_CVAR(Bool, hud_althud)
 EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Int, vr_mode)
 void DrawHUD();
 void D_DoAnonStats();
 
@@ -706,7 +707,7 @@ void D_Display ()
 		wipe = false;
 		wipegamestate = gamestate;
 	}
-	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
+	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL && (vr_mode == 0 || vid_rendermode != 4))
 	{ // save the current screen if about to wipe
 		switch (wipegamestate)
 		{

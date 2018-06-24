@@ -2,7 +2,7 @@
  ** i_video.mm
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2015 Alexey Lysiuk
+ ** Copyright 2012-2018 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -213,28 +213,15 @@ namespace
 class CocoaVideo : public IVideo
 {
 public:
-	CocoaVideo();
+	virtual DFrameBuffer* CreateFrameBuffer() override
+	{
+		auto fb = new OpenGLFrameBuffer(nullptr, fullscreen);
 
-	virtual DFrameBuffer* CreateFrameBuffer();
+		fb->SetMode(fullscreen, vid_hidpi);
+		fb->SetSize(fb->GetClientWidth(), fb->GetClientHeight());
 
-	static void ToggleFullscreen(bool yes);
-	static bool IsFullscreen();
-	static void UseHiDPI(bool hiDPI);
-	static void SetCursor(NSCursor* cursor);
-	static void SetWindowVisible(bool visible);
-	static void SetWindowTitle(const char* title);
-
-private:
-	CocoaWindow* m_window;
-
-	bool m_fullscreen;
-	bool m_hiDPI;
-
-	void SetFullscreenMode();
-	void SetWindowedMode();
-	void SetMode(bool fullscreen, bool hiDPI);
-
-	static CocoaVideo* GetInstance();
+		return fb;
+	}
 };
 
 
@@ -277,7 +264,7 @@ extern id appCtrl;
 namespace
 {
 
-CocoaWindow* CreateCocoaWindow(const NSUInteger styleMask)
+CocoaWindow* CreateWindow(const NSUInteger styleMask)
 {
 	CocoaWindow* const window = [CocoaWindow alloc];
 	[window initWithContentRect:NSMakeRect(0, 0, vid_defwidth, vid_defheight)
@@ -332,11 +319,14 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 // ---------------------------------------------------------------------------
 
 
-CocoaVideo::CocoaVideo()
-: m_window(CreateCocoaWindow(STYLE_MASK_WINDOWED))
+SystemFrameBuffer::SystemFrameBuffer(void*, const bool fullscreen)
+: DFrameBuffer(vid_defwidth, vid_defheight)
+, m_window(CreateWindow(STYLE_MASK_WINDOWED))
 , m_fullscreen(false)
 , m_hiDPI(false)
 {
+	SetFlash(0, 0);
+
 	// Create OpenGL pixel format
 	NSOpenGLPixelFormatAttribute defaultProfile = NSOpenGLProfileVersion3_2Core;
 
@@ -376,170 +366,8 @@ CocoaVideo::CocoaVideo()
 
 	[m_window setContentView:glView];
 
-	FConsoleWindow::GetInstance().Show(false);
-}
+	// Create table for system-wide gamma correction
 
-DFrameBuffer* CocoaVideo::CreateFrameBuffer()
-{
-	PalEntry flashColor  = 0;
-	int      flashAmount = 0;
-
-	DFrameBuffer* fb = NULL;
-
-	fb = new OpenGLFrameBuffer(NULL, fullscreen);
-
-	fb->SetFlash(flashColor, flashAmount);
-
-	SetMode(fullscreen, vid_hidpi);
-
-	return fb;
-}
-
-void CocoaVideo::ToggleFullscreen(bool yes)
-{
-	if (CocoaVideo* const video = GetInstance())
-	{
-		video->SetMode(yes, video->m_hiDPI);
-	}
-}
-
-bool CocoaVideo::IsFullscreen()
-{
-	CocoaVideo* const video = GetInstance();
-	return NULL == video
-		? false
-		: video->m_fullscreen;
-}
-
-void CocoaVideo::UseHiDPI(const bool hiDPI)
-{
-	if (CocoaVideo* const video = GetInstance())
-	{
-		video->SetMode(video->m_fullscreen, hiDPI);
-	}
-}
-
-void CocoaVideo::SetCursor(NSCursor* cursor)
-{
-	if (CocoaVideo* const video = GetInstance())
-	{
-		NSWindow*  const window = video->m_window;
-		CocoaView* const view   = [window contentView];
-
-		[view setCursor:cursor];
-		[window invalidateCursorRectsForView:view];
-	}
-}
-
-void CocoaVideo::SetWindowVisible(bool visible)
-{
-	if (CocoaVideo* const video = GetInstance())
-	{
-		if (visible)
-		{
-			[video->m_window orderFront:nil];
-		}
-		else
-		{
-			[video->m_window orderOut:nil];
-		}
-
-		I_SetNativeMouse(!visible);
-	}
-}
-
-void CocoaVideo::SetWindowTitle(const char* title)
-{
-	if (CocoaVideo* const video = GetInstance())
-	{
-		NSString* const nsTitle = nullptr == title ? nil :
-			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
-		[video->m_window setTitle:nsTitle];
-	}
-}
-
-
-void CocoaVideo::SetFullscreenMode()
-{
-	if (!m_fullscreen)
-	{
-		[m_window setLevel:LEVEL_FULLSCREEN];
-		[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
-
-		[m_window setHidesOnDeactivate:YES];
-	}
-
-	const NSRect screenFrame = [[m_window screen] frame];
-	[m_window setFrame:screenFrame display:YES];
-}
-
-void CocoaVideo::SetWindowedMode()
-{
-	if (m_fullscreen)
-	{
-		[m_window setLevel:LEVEL_WINDOWED];
-		[m_window setStyleMask:STYLE_MASK_WINDOWED];
-
-		[m_window setHidesOnDeactivate:NO];
-	}
-
-	const bool isFrameValid = win_x >= 0 && win_y >= 0 && win_w > 320 && win_h > 200;
-	const NSRect frameSize = isFrameValid
-		? NSMakeRect(win_x, win_y, win_w, win_h)
-		: NSMakeRect(0, 0, vid_defwidth, vid_defheight);
-
-	[m_window setFrame:frameSize display:YES];
-	[m_window enterFullscreenOnZoom];
-	[m_window exitAppOnClose];
-}
-
-void CocoaVideo::SetMode(const bool fullscreen, const bool hiDPI)
-{
-	NSOpenGLView* const glView = [m_window contentView];
-	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
-
-	if (fullscreen)
-	{
-		SetFullscreenMode();
-	}
-	else
-	{
-		SetWindowedMode();
-	}
-
-	const NSSize viewSize = I_GetContentViewSize(m_window);
-
-	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT);
-
-	[[NSOpenGLContext currentContext] flushBuffer];
-
-	[m_window updateTitle];
-
-	if (![m_window isKeyWindow])
-	{
-		[m_window makeKeyAndOrderFront:nil];
-	}
-
-	m_fullscreen = fullscreen;
-	m_hiDPI      = hiDPI;
-}
-
-
-CocoaVideo* CocoaVideo::GetInstance()
-{
-	return static_cast<CocoaVideo*>(Video);
-}
-
-
-// ---------------------------------------------------------------------------
-
-
-SystemFrameBuffer::SystemFrameBuffer(void*, const bool fullscreen)
-: DFrameBuffer(vid_defwidth, vid_defheight)
-, UpdatePending(false)
-{
 	CGGammaValue gammaTable[GAMMA_TABLE_SIZE];
 	uint32_t actualChannelSize;
 
@@ -554,24 +382,29 @@ SystemFrameBuffer::SystemFrameBuffer(void*, const bool fullscreen)
 			m_originalGamma[i] = static_cast<uint16_t>(gammaTable[i] * 65535.0f);
 		}
 	}
-}
 
-SystemFrameBuffer::SystemFrameBuffer()
-{
+	FConsoleWindow::GetInstance().Show(false);
 }
 
 SystemFrameBuffer::~SystemFrameBuffer()
 {
+	NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+	[nc removeObserver:m_window
+				  name:NSWindowDidMoveNotification
+				object:nil];
+	[nc removeObserver:m_window
+				  name:NSWindowDidEndLiveResizeNotification
+				object:nil];
 }
 
 bool SystemFrameBuffer::IsFullscreen()
 {
-	return CocoaVideo::IsFullscreen();
+	return m_fullscreen;
 }
 
 void SystemFrameBuffer::ToggleFullscreen(bool yes)
 {
-	CocoaVideo::ToggleFullscreen(yes);
+	SetMode(yes, m_hiDPI);
 }
 
 
@@ -617,20 +450,138 @@ void SystemFrameBuffer::ResetGammaTable()
 	}
 }
 
+
 int SystemFrameBuffer::GetClientWidth()
 {
-	NSView *view = [[NSOpenGLContext currentContext] view];
-	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
-	int clientWidth = (int)backingBounds.size.width;
+	const int clientWidth = I_GetContentViewSize(m_window).width;
 	return clientWidth > 0 ? clientWidth : GetWidth();
 }
 
 int SystemFrameBuffer::GetClientHeight()
 {
-	NSView *view = [[NSOpenGLContext currentContext] view];
-	NSRect backingBounds = [view convertRectToBacking: [view bounds]];
-	int clientHeight = (int)backingBounds.size.height;
+	const int clientHeight = I_GetContentViewSize(m_window).height;
 	return clientHeight > 0 ? clientHeight : GetHeight();
+}
+
+
+void SystemFrameBuffer::SetFullscreenMode()
+{
+	if (!m_fullscreen)
+	{
+		[m_window setLevel:LEVEL_FULLSCREEN];
+		[m_window setStyleMask:STYLE_MASK_FULLSCREEN];
+
+		[m_window setHidesOnDeactivate:YES];
+	}
+
+	const NSRect screenFrame = [[m_window screen] frame];
+	[m_window setFrame:screenFrame display:YES];
+}
+
+void SystemFrameBuffer::SetWindowedMode()
+{
+	if (m_fullscreen)
+	{
+		[m_window setLevel:LEVEL_WINDOWED];
+		[m_window setStyleMask:STYLE_MASK_WINDOWED];
+
+		[m_window setHidesOnDeactivate:NO];
+	}
+
+	const bool isFrameValid = win_x >= 0 && win_y >= 0 && win_w > 320 && win_h > 200;
+	const NSRect frameSize = isFrameValid
+		? NSMakeRect(win_x, win_y, win_w, win_h)
+		: NSMakeRect(0, 0, vid_defwidth, vid_defheight);
+
+	[m_window setFrame:frameSize display:YES];
+	[m_window enterFullscreenOnZoom];
+	[m_window exitAppOnClose];
+}
+
+void SystemFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
+{
+	NSOpenGLView* const glView = [m_window contentView];
+	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
+
+	if (fullscreen)
+	{
+		SetFullscreenMode();
+	}
+	else
+	{
+		SetWindowedMode();
+	}
+
+	const NSSize viewSize = I_GetContentViewSize(m_window);
+
+	glViewport(0, 0, static_cast<GLsizei>(viewSize.width), static_cast<GLsizei>(viewSize.height));
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT);
+
+	[[NSOpenGLContext currentContext] flushBuffer];
+
+	[m_window updateTitle];
+
+	if (![m_window isKeyWindow])
+	{
+		[m_window makeKeyAndOrderFront:nil];
+	}
+
+	m_fullscreen = fullscreen;
+	m_hiDPI      = hiDPI;
+}
+
+
+static SystemFrameBuffer* GetSystemFrameBuffer()
+{
+	return static_cast<SystemFrameBuffer*>(screen);
+}
+
+void SystemFrameBuffer::UseHiDPI(const bool hiDPI)
+{
+	if (auto fb = GetSystemFrameBuffer())
+	{
+		fb->SetMode(fb->m_fullscreen, hiDPI);
+	}
+}
+
+void SystemFrameBuffer::SetCursor(NSCursor* cursor)
+{
+	if (auto fb = GetSystemFrameBuffer())
+	{
+		NSWindow*  const window = fb->m_window;
+		CocoaView* const view   = [window contentView];
+
+		[view setCursor:cursor];
+		[window invalidateCursorRectsForView:view];
+	}
+}
+
+void SystemFrameBuffer::SetWindowVisible(bool visible)
+{
+	if (auto fb = GetSystemFrameBuffer())
+	{
+		if (visible)
+		{
+			[fb->m_window orderFront:nil];
+		}
+		else
+		{
+			[fb->m_window orderOut:nil];
+		}
+
+		I_SetNativeMouse(!visible);
+	}
+}
+
+void SystemFrameBuffer::SetWindowTitle(const char* title)
+{
+	if (auto fb = GetSystemFrameBuffer())
+	{
+		NSString* const nsTitle = nullptr == title ? nil :
+			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
+		[fb->m_window setTitle:nsTitle];
+	}
 }
 
 
@@ -674,9 +625,9 @@ void I_SetFPSLimit(int limit)
 {
 }
 
-CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	CocoaVideo::UseHiDPI(self);
+	SystemFrameBuffer::UseHiDPI(self);
 }
 
 
@@ -737,7 +688,7 @@ bool I_SetCursor(FTexture* cursorpic)
 										 hotSpot:NSMakePoint(0.0f, 0.0f)];
 	}
 	
-	CocoaVideo::SetCursor(cursor);
+	SystemFrameBuffer::SetCursor(cursor);
 	
 	[pool release];
 	
@@ -757,11 +708,11 @@ NSSize I_GetContentViewSize(const NSWindow* const window)
 
 void I_SetMainWindowVisible(bool visible)
 {
-	CocoaVideo::SetWindowVisible(visible);
+	SystemFrameBuffer::SetWindowVisible(visible);
 }
 
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* title)
 {
-	CocoaVideo::SetWindowTitle(title);
+	SystemFrameBuffer::SetWindowTitle(title);
 }

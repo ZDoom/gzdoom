@@ -36,6 +36,14 @@
 
 #include "v_video.h"
 
+#ifdef __OBJC__
+@class NSCursor;
+@class CocoaWindow;
+#else
+typedef struct objc_object NSCursor;
+typedef struct objc_object CocoaWindow;
+#endif
+
 class SystemFrameBuffer : public DFrameBuffer
 {
 public:
@@ -50,8 +58,18 @@ public:
 	int GetClientHeight() override;
 	void ToggleFullscreen(bool yes) override;
 
+	void SetMode(bool fullscreen, bool hiDPI);
+
+	static void UseHiDPI(bool hiDPI);
+	static void SetCursor(NSCursor* cursor);
+	static void SetWindowVisible(bool visible);
+	static void SetWindowTitle(const char* title);
+
 protected:
-	bool                UpdatePending;
+	CocoaWindow* m_window;
+
+	bool m_fullscreen;
+	bool m_hiDPI;
 
 	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
 	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
@@ -60,7 +78,10 @@ protected:
 	bool				m_supportsGamma;
 	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
 
-	SystemFrameBuffer();
+	SystemFrameBuffer() {}
+
+	void SetFullscreenMode();
+	void SetWindowedMode();
 
 	void InitializeState();
 

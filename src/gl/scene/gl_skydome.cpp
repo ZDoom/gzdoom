@@ -32,9 +32,10 @@
 #include "gl_load/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_lightdata.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
+#include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 
 
@@ -209,9 +210,10 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 //
 //
 //-----------------------------------------------------------------------------
-void GLSkyPortal::DrawContents(FDrawInfo *di)
+void GLSkyPortal::DrawContents(HWDrawInfo *di)
 {
 	bool drawBoth = false;
+	auto &vp = di->Viewpoint;
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
 	int oldlightmode = ::level.lightmode;
@@ -228,8 +230,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
-	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
-	drawer->SetupView(0, 0, 0, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
@@ -268,8 +269,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 		}
 	}
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
-	gl_RenderState.ApplyMatrices();
+	di->ApplyVPUniforms();
 	::level.lightmode = oldlightmode;
 	gl_RenderState.SetDepthClamp(oldClamp);
 }

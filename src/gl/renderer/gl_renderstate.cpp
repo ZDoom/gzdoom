@@ -42,7 +42,6 @@ void gl_SetTextureMode(int type);
 FRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
-CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
 
 
 static VSMatrix identityMatrix(1);
@@ -62,7 +61,7 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 void FRenderState::Reset()
 {
 	mTextureEnabled = true;
-	mClipLineShouldBeActive = mClipLineEnabled = mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
 	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
@@ -81,8 +80,6 @@ void FRenderState::Reset()
 	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
-	mClipHeight = 0.f;
-	mClipHeightDirection = 0.f;
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
@@ -96,19 +93,15 @@ void FRenderState::Reset()
 	mInterpolationFactor = 0.0f;
 
 	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
-	mCameraPos.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mClipLine.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mEffectState = 0;
 	activeShader = nullptr;
-	mProjectionMatrix.loadIdentity();
-	mViewMatrix.loadIdentity();
 	mModelMatrix.loadIdentity();
 	mTextureMatrix.loadIdentity();
 	mPassType = NORMAL_PASS;
@@ -162,23 +155,17 @@ bool FRenderState::ApplyShader()
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
-	activeShader->muPalLightLevels.Set(static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8));
-	activeShader->muGlobVis.Set(GLRenderer->mGlobVis / 32.0f);
 	activeShader->muTextureMode.Set(mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
-	activeShader->muCameraPos.Set(mCameraPos.vec);
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muObjectColor2.Set(mObjectColor2);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
-	activeShader->muClipHeight.Set(mClipHeight);
-	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
-	activeShader->muViewHeight.Set(viewheight);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 
 	if (mGlowEnabled)
@@ -211,17 +198,6 @@ bool FRenderState::ApplyShader()
 		activeShader->muSplitTopPlane.Set(nulvec);
 		activeShader->muSplitBottomPlane.Set(nulvec);
 		activeShader->currentsplitstate = 0;
-	}
-
-	if (mClipLineEnabled)
-	{
-		activeShader->muClipLine.Set(mClipLine.vec);
-		activeShader->currentcliplinestate = 1;
-	}
-	else if (activeShader->currentcliplinestate)
-	{
-		activeShader->muClipLine.Set(-10000000.0, 0, 0, 0);
-		activeShader->currentcliplinestate = 0;
 	}
 
 	if (mTextureMatrixEnabled)
@@ -304,14 +280,6 @@ void FRenderState::ApplyColorMask()
 	}
 }
 
-void FRenderState::ApplyMatrices()
-{
-	if (GLRenderer->mShaderManager != NULL)
-	{
-		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix, mPassType);
-	}
-}
-
 void FRenderState::ApplyLightIndex(int index)
 {
 	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
@@ -319,21 +287,4 @@ void FRenderState::ApplyLightIndex(int index)
 		index = GLRenderer->mLights->BindUBO(index);
 	}
 	activeShader->muLightIndex.Set(index);
-}
-
-void FRenderState::SetClipHeight(float height, float direction)
-{
-	mClipHeight = height;
-	mClipHeightDirection = direction;
-
-	if (gl.flags & RFL_NO_CLIP_PLANES) return;
-
-	if (direction != 0.f)
-	{
-		glEnable(GL_CLIP_DISTANCE0);
-	}
-	else
-	{
-		glDisable(GL_CLIP_DISTANCE0);	// GL_CLIP_PLANE0 is the same value so no need to make a distinction
-	}
 }

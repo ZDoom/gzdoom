@@ -638,8 +638,8 @@ add_definitions(-DOPNMIDI_USE_LEGACY_EMULATOR)
 add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
 add_definitions(-DOPNMIDI_DISABLE_MUS_SUPPORT -DOPNMIDI_DISABLE_XMI_SUPPORT -DOPNMIDI_DISABLE_MIDI_SEQUENCER)
 
-# Disable ADLMIDI's MIDI Sequencer, MUS and XMI converters
-add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
+# Disable OPNMIDI's experimental yet emulator (using of it has some issues and missing notes in playback)
+add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
@@ -705,7 +705,6 @@ file( GLOB HEADER_FILES
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
-	gl/stereo3d/*.h
 	gl/shaders/*.h
 	gl/system/*.h
 	gl/textures/*.h
@@ -837,9 +836,11 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_bsp.cpp
 	hwrenderer/scene/hw_fakeflat.cpp
 	hwrenderer/scene/hw_decal.cpp
+	hwrenderer/scene/hw_drawinfo.cpp
 	hwrenderer/scene/hw_drawlist.cpp
 	hwrenderer/scene/hw_clipper.cpp
 	hwrenderer/scene/hw_flats.cpp
+	hwrenderer/scene/hw_portal.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_sky.cpp
 	hwrenderer/scene/hw_sprites.cpp
@@ -855,14 +856,25 @@ set( FASTMATH_SOURCES
 	sound/adlmidi/adlmidi_midiplay.cpp
 	sound/adlmidi/adlmidi_opl3.cpp
 	sound/adlmidi/adlmidi_private.cpp
-	sound/adlmidi/dbopl.cpp
-	sound/adlmidi/nukedopl3.c
+	sound/adlmidi/chips/dosbox/dbopl.cpp
+	sound/adlmidi/chips/dosbox_opl3.cpp
+	sound/adlmidi/chips/nuked/nukedopl3_174.c
+	sound/adlmidi/chips/nuked/nukedopl3.c
+	sound/adlmidi/chips/nuked_opl3.cpp
+	sound/adlmidi/chips/nuked_opl3_v174.cpp
+	sound/adlmidi/wopl/wopl_file.c
+	sound/opnmidi/chips/gens_opn2.cpp
+	sound/opnmidi/chips/gens/Ym2612_Emu.cpp
+	sound/opnmidi/chips/mame/mame_ym2612fm.c
+	sound/opnmidi/chips/mame_opn2.cpp
+	sound/opnmidi/chips/nuked_opn2.cpp
+	sound/opnmidi/chips/nuked/ym3438.c
 	sound/opnmidi/opnmidi.cpp
 	sound/opnmidi/opnmidi_load.cpp
 	sound/opnmidi/opnmidi_midiplay.cpp
 	sound/opnmidi/opnmidi_opn2.cpp
 	sound/opnmidi/opnmidi_private.cpp
-	sound/opnmidi/Ym2612_ChipEmu.cpp
+
 )
 
 set (PCH_SOURCES
@@ -1041,16 +1053,10 @@ set (PCH_SOURCES
 	gl/renderer/gl_lightdata.cpp
 	gl/renderer/gl_postprocess.cpp
 	gl/renderer/gl_postprocessstate.cpp
+	gl/renderer/gl_stereo3d.cpp
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
-	gl/stereo3d/gl_stereo3d.cpp
-	gl/stereo3d/gl_stereo_cvars.cpp
-	gl/stereo3d/gl_stereo_leftright.cpp
-	gl/stereo3d/gl_anaglyph.cpp
-	gl/stereo3d/gl_quadstereo.cpp
-	gl/stereo3d/gl_sidebyside3d.cpp
-	gl/stereo3d/gl_interleaved3d.cpp
 	gl_load/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_debug.cpp
@@ -1074,6 +1080,7 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_cvars.cpp
 	hwrenderer/utility/hw_lighting.cpp
 	hwrenderer/utility/hw_shaderpatcher.cpp
+	hwrenderer/utility/hw_vrmodes.cpp
 
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
@@ -1404,7 +1411,6 @@ source_group("Hardware Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SO
 source_group("Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/postprocessing/.+")
 source_group("Hardware Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/renderer/.+")
 source_group("Hardware Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/scene/.+")
-source_group("Hardware Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/stereo3d/.+")
 source_group("Hardware Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/shaders/.+")
 source_group("Hardware Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/system/.+")
 source_group("Hardware Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/textures/.+")
@@ -1416,7 +1422,6 @@ source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURR
 source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
 source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
 source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
-source_group("OpenGL Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/stereo3d/.+")
 source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")
 source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
 source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")

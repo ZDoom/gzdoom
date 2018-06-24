@@ -47,7 +47,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/models/gl_models.h"
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
@@ -79,6 +78,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	bool additivefog = false;
 	bool foglayer = false;
 	int rel = sprite->fullbright? 0 : getExtraLight();
+    auto &vp = Viewpoint;
 
 	if (pass==GLPASS_TRANSLUCENT)
 	{
@@ -112,7 +112,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			// fog + fuzz don't work well without some fiddling with the alpha value!
 			if (!sprite->Colormap.FadeColor.isBlack())
 			{
-				float dist=Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, sprite->x, sprite->y);
+				float dist=Dist2(vp.Pos.X, vp.Pos.Y, sprite->x, sprite->y);
 				int fogd = hw_GetFogDensity(sprite->lightlevel, sprite->Colormap.FadeColor, sprite->Colormap.FogDensity);
 
 				// this value was determined by trial and error and is scale dependent!
@@ -221,7 +221,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
 			int thislight = (*lightlist)[i].caster != nullptr ? hw_ClampLight(*(*lightlist)[i].p_lightlevel) : sprite->lightlevel;
-			int thisll = sprite->actor == nullptr? thislight : (uint8_t)sprite->actor->Sector->CheckSpriteGlow(thislight, sprite->actor->InterpolatedPosition(r_viewpoint.TicFrac));
+			int thisll = sprite->actor == nullptr? thislight : (uint8_t)sprite->actor->Sector->CheckSpriteGlow(thislight, sprite->actor->InterpolatedPosition(vp.TicFrac));
 
 			FColormap thiscm;
 			thiscm.CopyFog(sprite->Colormap);
@@ -249,7 +249,8 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 
 			FVector3 v[4];
 			gl_RenderState.SetNormal(0, 0, 0);
-			if (sprite->CalculateVertices(this, v))
+            
+			if (sprite->CalculateVertices(this, v, &vp.Pos))
 			{
 				glEnable(GL_POLYGON_OFFSET_FILL);
 				glPolygonOffset(-1.0f, -128.0f);
@@ -276,7 +277,8 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		}
 		else
 		{
-			gl_RenderModel(sprite, sprite->dynlightindex);
+            FGLModelRenderer renderer(this, sprite->dynlightindex);
+            renderer.RenderModel(sprite->x, sprite->y, sprite->z, sprite->modelframe, sprite->actor, vp.TicFrac);
 		}
 	}
 

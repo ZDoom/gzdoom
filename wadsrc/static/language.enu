@@ -2158,6 +2158,7 @@ ADVSNDMNU_OPLSYNTHESIS		= "OPL Synthesis";
 ADVSNDMNU_OPLNUMCHIPS		= "Number of emulated OPL chips";
 ADVSNDMNU_OPLFULLPAN		= "Full MIDI stereo panning";
 ADVSNDMNU_OPLCORES			= "OPL Emulator Core";
+ADVSNDMNU_OPNCORES			= "OPN2 Emulator Core";
 ADVSNDMNU_GUSEMULATION		= "GUS Emulation";
 ADVSNDMNU_GUSCONFIG			= "GUS config file";
 ADVSNDMNU_MIDIVOICES		= "MIDI voices";
@@ -2183,9 +2184,13 @@ ADVSNDMNU_FREEVERB			= "Freeverb";
 ADVSNDMNU_GLOBAL_FREEVERB	= "Global Freeverb";
 ADVSNDMNU_ADVRESAMPLING		= "Advanced Resampling";
 ADVSNDMNU_OPLBANK			= "OPL Bank";
+ADVSNDMNU_ADLOPLCORES		= "OPL Emulator Core";
+ADVSNDMNU_RUNPCMRATE		= "Run emulator at PCM rate";
 ADVSNDMNU_ADLNUMCHIPS		= "Number of emulated OPL chips";
 ADVSNDMNU_VLMODEL			= "Volume model";
 ADVSNDMNU_OPNNUMCHIPS		= "Number of emulated OPN chips";
+
+// ADLMIDI's emulation cores
 
 // ADLMIDI's volume models
 ADLVLMODEL_AUTO				= "Auto (Use setup of bank)";
@@ -2373,9 +2378,13 @@ OPTVAL_512K					= "512K";
 OPTVAL_768K					= "768K";
 OPTVAL_1024K				= "1024K";
 OPTVAL_MAMEOPL2				= "MAME OPL2";
+OPTVAL_MAMEOPN2				= "MAME YM2612";
 OPTVAL_DOSBOXOPL3			= "DOSBox OPL3";
 OPTVAL_JAVAOPL3				= "Java OPL3";
 OPTVAL_NUKEDOPL3			= "Nuked OPL3";
+OPTVAL_NUKEDOPL3174			= "Nuked OPL3 v1.7.4";
+OPTVAL_NUKEDOPN2			= "Nuked OPN2";
+OPTVAL_GENSOPN2				= "GENS YM2612";
 OPTVAL_SOUNDSYSTEM			= "Sound System";
 OPTVAL_FOO_DUMB				= "foo_dumb";
 OPTVAL_ALIASING				= "Aliasing";

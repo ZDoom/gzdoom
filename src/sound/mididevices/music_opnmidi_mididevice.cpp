@@ -58,6 +58,38 @@ CUSTOM_CVAR(Int, opn_chips_count, 8, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
+CUSTOM_CVAR(Int, opn_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, opn_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, opn_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(String, opn_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (opn_use_custom_bank && currSong != nullptr && currSong->GetDeviceType() == MDEV_OPN)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 //==========================================================================
 //
 // OPNMIDIDevice Constructor
@@ -70,6 +102,17 @@ OPNMIDIDevice::OPNMIDIDevice(const char *args)
 	Renderer = opn2_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
+		opn2_switchEmulator(Renderer, (int)opn_emulator_id);
+		opn2_setRunAtPcmRate(Renderer, (int)opn_run_at_pcm_rate);
+// todo: Implement handling of external or in-resources WOPN bank files and load
+/*
+		if(opn_use_custom_bank)
+		{
+			opn2_openBankFile(Renderer, (char*)opn_bank_file);
+			opn2_openBankData(Renderer, (char*)opn_bank, (long)size);
+		}
+		else
+ */
 		int lump = Wads.CheckNumForFullName("xg.wopn");
 		if (lump < 0)
 		{
@@ -167,6 +210,13 @@ void OPNMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 {
 }
 
+static const OPNMIDI_AudioFormat audio_output_format =
+{
+	OPNMIDI_SampleType_F32,
+	sizeof(float),
+	2 * sizeof(float)
+};
+
 //==========================================================================
 //
 // OPNMIDIDevice :: ComputeOutput
@@ -175,11 +225,7 @@ void OPNMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void OPNMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	if ((int)shortbuffer.Size() < len*2) shortbuffer.Resize(len*2);
-	auto result = opn2_generate(Renderer, len*2, &shortbuffer[0]);
-	for(int i=0; i<result; i++)
-	{
-		buffer[i] = shortbuffer[i] * (1.f/32768.f);
-	}
+	OPN2_UInt8* left = reinterpret_cast<OPN2_UInt8*>(buffer);
+	OPN2_UInt8* right = reinterpret_cast<OPN2_UInt8*>(buffer + 1);
+	opn2_generateFormat(Renderer, len * 2, left, right, &audio_output_format);
 }
-

@@ -68,7 +68,7 @@ void main()
 	
 	#ifdef SPHEREMAP
 		vec3 u = normalize(eyeCoordPos.xyz);
-		vec4 n = normalize(TextureMatrix * vec4(parmTexCoord.x, 0.0, parmTexCoord.y, 0.0));	// use texture matrix and coordinates for our normal. Since this is only used on walls, the normal's y coordinate is always 0.
+		vec4 n = normalize(NormalViewMatrix * vec4(parmTexCoord.x, 0.0, parmTexCoord.y, 0.0));
 		vec3 r = reflect(u, n.xyz);
 		float m = 2.0 * sqrt( r.x*r.x + r.y*r.y + (r.z+1.0)*(r.z+1.0) );
 		vec2 sst = vec2(r.x/m + 0.5,  r.y/m + 0.5);

@@ -30,67 +30,11 @@
 #include "r_sky.h"
 #include "g_levellocals.h"
 
-#include "hwrenderer/scene/hw_drawinfo.h"
+#include "hw_drawinfo.h"
+#include "hw_drawstructs.h"
 #include "hwrenderer/utility/hw_clock.h"
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
-
-void HWDrawInfo::ClearBuffers()
-{
-	for(unsigned int i=0;i< otherfloorplanes.Size();i++)
-	{
-		gl_subsectorrendernode * node = otherfloorplanes[i];
-		while (node)
-		{
-			gl_subsectorrendernode * n = node;
-			node = node->next;
-			delete n;
-		}
-	}
-	otherfloorplanes.Clear();
-
-	for(unsigned int i=0;i< otherceilingplanes.Size();i++)
-	{
-		gl_subsectorrendernode * node = otherceilingplanes[i];
-		while (node)
-		{
-			gl_subsectorrendernode * n = node;
-			node = node->next;
-			delete n;
-		}
-	}
-	otherceilingplanes.Clear();
-
-	// clear all the lists that might not have been cleared already
-	MissingUpperTextures.Clear();
-	MissingLowerTextures.Clear();
-	MissingUpperSegs.Clear();
-	MissingLowerSegs.Clear();
-	SubsectorHacks.Clear();
-	CeilingStacks.Clear();
-	FloorStacks.Clear();
-	HandledSubsectors.Clear();
-	spriteindex = 0;
-
-	CurrentMapSections.Resize(level.NumMapSections);
-	CurrentMapSections.Zero();
-
-	sectorrenderflags.Resize(level.sectors.Size());
-	ss_renderflags.Resize(level.subsectors.Size());
-	no_renderflags.Resize(level.subsectors.Size());
-
-	memset(&sectorrenderflags[0], 0, level.sectors.Size() * sizeof(sectorrenderflags[0]));
-	memset(&ss_renderflags[0], 0, level.subsectors.Size() * sizeof(ss_renderflags[0]));
-	memset(&no_renderflags[0], 0, level.nodes.Size() * sizeof(no_renderflags[0]));
-
-	mClipPortal = nullptr;
-}
-
-void HWDrawInfo::UpdateCurrentMapSection()
-{
-	const int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
-	CurrentMapSections.Set(mapsection);
-}
 
 //==========================================================================
 //
@@ -484,7 +428,7 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingUpperTextures[i].Planez > r_viewpoint.Pos.Z)
+		if (MissingUpperTextures[i].Planez > Viewpoint.Pos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
@@ -556,7 +500,7 @@ void HWDrawInfo::HandleMissingTextures(area_t in_area)
 		HandledSubsectors.Clear();
 		validcount++;
 
-		if (MissingLowerTextures[i].Planez < r_viewpoint.Pos.Z)
+		if (MissingLowerTextures[i].Planez < Viewpoint.Pos.Z)
 		{
 			// close the hole only if all neighboring sectors are an exact height match
 			// Otherwise just fill in the missing textures.
@@ -642,7 +586,7 @@ void HWDrawInfo::DrawUnhandledMissingTextures()
 		// already done!
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
-		if (seg->frontsector->GetPlaneTexZ(sector_t::ceiling) < r_viewpoint.Pos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::ceiling) < Viewpoint.Pos.Z) continue;	// out of sight
 
 		// FIXME: The check for degenerate subsectors should be more precise
 		if (seg->PartnerSeg && (seg->PartnerSeg->Subsector->flags & SSECF_DEGENERATE)) continue;
@@ -664,7 +608,7 @@ void HWDrawInfo::DrawUnhandledMissingTextures()
 		if (seg->linedef->validcount == validcount) continue;		// already done
 		seg->linedef->validcount = validcount;
 		if (!(sectorrenderflags[seg->backsector->sectornum] & SSRF_RENDERFLOOR)) continue;
-		if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > r_viewpoint.Pos.Z) continue;	// out of sight
+		if (seg->frontsector->GetPlaneTexZ(sector_t::floor) > Viewpoint.Pos.Z) continue;	// out of sight
 		if (seg->backsector->transdoor) continue;
 		if (seg->backsector->GetTexture(sector_t::floor) == skyflatnum) continue;
 		if (seg->backsector->ValidatePortal(sector_t::floor) != NULL) continue;
@@ -757,7 +701,7 @@ bool HWDrawInfo::CollectSubsectorsFloor(subsector_t * sub, sector_t * anchor)
 			sub->render_sector->GetPlaneTexZ(sector_t::floor) != anchor->GetPlaneTexZ(sector_t::floor) ||
 			sub->render_sector->GetFloorLight() != anchor->GetFloorLight())
 		{
-			if (sub == viewsubsector && r_viewpoint.Pos.Z < anchor->GetPlaneTexZ(sector_t::floor)) inview = true;
+			if (sub == viewsubsector && Viewpoint.Pos.Z < anchor->GetPlaneTexZ(sector_t::floor)) inview = true;
 			HandledSubsectors.Push(sub);
 		}
 	}
@@ -901,9 +845,21 @@ bool HWDrawInfo::CollectSubsectorsCeiling(subsector_t * sub, sector_t * anchor)
 //
 //==========================================================================
 
+void HWDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
+{
+    for(unsigned int j=0;j<lowersegs.Size();j++)
+    {
+        seg_t * seg=lowersegs[j];
+        GLWall wall;
+        wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
+        rendered_lines++;
+    }
+}
+
+
 void HWDrawInfo::HandleHackedSubsectors()
 {
-	viewsubsector = R_PointInSubsector(r_viewpoint.Pos);
+	viewsubsector = R_PointInSubsector(Viewpoint.Pos);
 
 	// Each subsector may only be processed once in this loop!
 	validcount++;

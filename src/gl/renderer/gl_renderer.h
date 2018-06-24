@@ -6,6 +6,7 @@
 #include "vectors.h"
 #include "r_renderer.h"
 #include "r_data/matrix.h"
+#include "hwrenderer/scene/hw_portal.h"
 #include "gl/dynlights/gl_shadowmap.h"
 #include <functional>
 
@@ -37,8 +38,8 @@ class FGL2DDrawer;
 class FHardwareTexture;
 class FShadowMapShader;
 class FCustomPostProcessShaders;
-class GLSceneDrawer;
 class SWSceneDrawer;
+struct FRenderViewpoint;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
 enum
@@ -54,16 +55,14 @@ class FGLRenderer
 public:
 
 	OpenGLFrameBuffer *framebuffer;
-	//GLPortal *mClipPortal;
-	GLPortal *mCurrentPortal;
 	int mMirrorCount;
 	int mPlaneMirrorCount;
-	float mCurrentFoV;
-	AActor *mViewActor;
 	FShaderManager *mShaderManager;
 	FSamplerManager *mSamplerManager;
 	unsigned int mFBID;
 	unsigned int mVAOID;
+	unsigned int PortalQueryObject;
+
 	int mOldFBID;
 
 	FGLRenderBuffers *mBuffers;
@@ -82,20 +81,18 @@ public:
 
 	FShadowMap mShadowMap;
 
-	FRotator mAngles;
-	FVector2 mViewVector;
+	//FRotator mAngles;
 
 	FFlatVertexBuffer *mVBO;
 	FSkyVertexBuffer *mSkyVBO;
 	FLightBuffer *mLights;
 	SWSceneDrawer *swdrawer = nullptr;
 
-	bool mDrawingScene2D = false;
+	FPortalSceneState mPortalState;
+
 	bool buffersActive = false;
 
 	float mSceneClearColor[3];
-
-	float mGlobVis = 0.0f;
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
 	~FGLRenderer() ;
@@ -104,13 +101,13 @@ public:
 
 	void ClearBorders();
 
-	void FlushTextures();
 	void SetupLevel();
 	void ResetSWScene();
 
+	void PresentStereo();
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
-	void AmbientOccludeScene();
+	void AmbientOccludeScene(float m5);
 	void UpdateCameraExposure();
 	void BloomScene(int fixedcm);
 	void TonemapScene();
@@ -127,6 +124,10 @@ public:
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	sector_t *RenderView(player_t *player);
 	void BeginFrame();
+    
+    void Set3DViewport(bool mainview);
+    sector_t *RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
+
 
 	bool StartOffscreen();
 	void EndOffscreen();
@@ -134,9 +135,6 @@ public:
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
-
-	static float GetZNear() { return 5.f; }
-	static float GetZFar() { return 65536.f; }
 };
 
 #include "hwrenderer/scene/hw_fakeflat.h"

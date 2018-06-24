@@ -43,8 +43,8 @@
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
-#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
 
@@ -239,7 +239,7 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::AmbientOccludeScene()
+void FGLRenderer::AmbientOccludeScene(float m5)
 {
 	FGLDebug::PushGroup("AmbientOccludeScene");
 
@@ -252,7 +252,7 @@ void FGLRenderer::AmbientOccludeScene()
 	float aoStrength = gl_ssao_strength;
 
 	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
-	float tanHalfFovy = 1.0f / gl_RenderState.mProjectionMatrix.get()[5];
+	float tanHalfFovy = 1.0f / m5;
 	float invFocalLenX = tanHalfFovy * (mBuffers->GetSceneWidth() / (float)mBuffers->GetSceneHeight());
 	float invFocalLenY = tanHalfFovy;
 	float nDotVBias = clamp(bias, 0.0f, 1.0f);
@@ -272,8 +272,8 @@ void FGLRenderer::AmbientOccludeScene()
 	mBuffers->BindSceneColorTexture(1);
 	mLinearDepthShader->Bind(NOQUEUE);
 	if (gl_multisample > 1) mLinearDepthShader->Uniforms->SampleIndex = 0;
-	mLinearDepthShader->Uniforms->LinearizeDepthA = 1.0f / GetZFar() - 1.0f / GetZNear();
-	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / GetZNear(), 1.e-8f);
+	mLinearDepthShader->Uniforms->LinearizeDepthA = 1.0f / screen->GetZFar() - 1.0f / screen->GetZNear();
+	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / screen->GetZNear(), 1.e-8f);
 	mLinearDepthShader->Uniforms->InverseDepthRangeA = 1.0f;
 	mLinearDepthShader->Uniforms->InverseDepthRangeB = 0.0f;
 	mLinearDepthShader->Uniforms->Scale = sceneScale;
@@ -424,18 +424,18 @@ void FGLRenderer::ApplyFXAA()
 
 void FGLRenderer::Flush()
 {
-	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+	auto vrmode = VRMode::GetVRMode(true);
 	const auto &mSceneViewport = screen->mSceneViewport;
 	const auto &mScreenViewport = screen->mScreenViewport;
 
-	if (stereo3dMode.IsMono())
+	if (vrmode->mEyeCount == 1)
 	{
 		CopyToBackbuffer(nullptr, true);
 	}
 	else
 	{
 		// Render 2D to eye textures
-		for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
+		for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
 		{
 			FGLDebug::PushGroup("Eye2D");
 			mBuffers->BindEyeFB(eye_ix);
@@ -448,7 +448,9 @@ void FGLRenderer::Flush()
 
 		FGLPostProcessState savedState;
 		FGLDebug::PushGroup("PresentEyes");
-		stereo3dMode.Present();
+		// Note: This here is the ONLY place in the entire engine where the OpenGL dependent parts of the Stereo3D code need to be dealt with.
+		// There's absolutely no need to create a overly complex class hierarchy for just this.
+		GLRenderer->PresentStereo();
 		FGLDebug::PopGroup();
 	}
 }

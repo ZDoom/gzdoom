@@ -173,7 +173,7 @@ void gl_SetFog(int lightlevel, int rellight, bool fullbright, const FColormap *c
 	}
 
 	// Make fog a little denser when inside a skybox
-	if (GLPortal::inskybox) fogdensity+=fogdensity/2;
+	if (GLRenderer->mPortalState.inskybox) fogdensity+=fogdensity/2;
 
 
 	// no fog in enhanced vision modes!

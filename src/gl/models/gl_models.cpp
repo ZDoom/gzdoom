@@ -50,7 +50,7 @@ CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
 VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 {
 	VSMatrix objectToWorldMatrix;
-	gl_RenderState.mViewMatrix.inverseMatrix(objectToWorldMatrix);
+	di->VPUniforms.mViewMatrix.inverseMatrix(objectToWorldMatrix);
 	return objectToWorldMatrix;
 }
 
@@ -65,7 +65,7 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CCW : GL_CW);
+		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CCW : GL_CW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -91,7 +91,7 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CW : GL_CCW);
+		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CW : GL_CCW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -313,28 +313,4 @@ void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame
 			iBuffer[i].z = vbo_ptr[frame1 + i].z * (1.f - frac) + vbo_ptr[frame2 + i].z * frac;
 		}
 	}
-}
-
-//===========================================================================
-//
-// gl_RenderModel
-//
-//===========================================================================
-
-void gl_RenderModel(GLSprite * spr, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor);
-}
-
-//===========================================================================
-//
-// gl_RenderHUDModel
-//
-//===========================================================================
-
-void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderHUDModel(psp, ofsX, ofsY);
 }

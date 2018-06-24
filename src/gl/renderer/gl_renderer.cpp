@@ -42,6 +42,7 @@
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
 #include "hwrenderer/utility/hw_cvars.h"
+#include "gl/scene/gl_portal.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_lightdata.h"
@@ -49,13 +50,11 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "hwrenderer/postprocessing/hw_ambientshader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 #include "hwrenderer/postprocessing/hw_shadowmapshader.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
-#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "r_videoscale.h"
@@ -80,11 +79,8 @@ extern bool NoInterpolateView;
 FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb) 
 {
 	framebuffer = fb;
-	mCurrentPortal = nullptr;
 	mMirrorCount = 0;
 	mPlaneMirrorCount = 0;
-	mAngles = FRotator(0.f, 0.f, 0.f);
-	mViewVector = FVector2(0,0);
 	mVBO = nullptr;
 	mSkyVBO = nullptr;
 	mShaderManager = nullptr;
@@ -121,6 +117,8 @@ void FGLRenderer::Initialize(int width, int height)
 	mCustomPostProcessShaders = new FCustomPostProcessShaders();
 
 	// needed for the core profile, because someone decided it was a good idea to remove the default VAO.
+	glGenQueries(1, &PortalQueryObject);
+
 	glGenVertexArrays(1, &mVAOID);
 	glBindVertexArray(mVAOID);
 	FGLDebug::LabelObject(GL_VERTEX_ARRAY, mVAOID, "FGLRenderer.mVAOID");
@@ -135,14 +133,10 @@ void FGLRenderer::Initialize(int width, int height)
 	SetupLevel();
 	mShaderManager = new FShaderManager;
 	mSamplerManager = new FSamplerManager;
-
-	GLPortal::Initialize();
 }
 
 FGLRenderer::~FGLRenderer() 
 {
-	GLPortal::Shutdown();
-
 	FlushModels();
 	AActor::DeleteAllAttachedLights();
 	FMaterial::FlushAll();
@@ -157,6 +151,8 @@ FGLRenderer::~FGLRenderer()
 		glBindVertexArray(0);
 		glDeleteVertexArrays(1, &mVAOID);
 	}
+	if (PortalQueryObject != 0) glDeleteQueries(1, &PortalQueryObject);
+
 	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
@@ -187,17 +183,6 @@ void FGLRenderer::ResetSWScene()
 void FGLRenderer::SetupLevel()
 {
 	mVBO->CreateVBO();
-}
-
-//===========================================================================
-// 
-//
-//
-//===========================================================================
-
-void FGLRenderer::FlushTextures()
-{
-	FMaterial::FlushAll();
 }
 
 //===========================================================================
@@ -281,10 +266,8 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 			fovratio = ratio;
 		}
 
-		GLSceneDrawer drawer;
-
 		mShadowMap.Update();
-		retsec = drawer.RenderViewpoint(player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
+		retsec = RenderViewpoint(r_viewpoint, player->camera, NULL, r_viewpoint.FieldOfView.Degrees, ratio, fovratio, true, true);
 	}
 	All.Unclock();
 	return retsec;
@@ -311,27 +294,70 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	bounds.width = FHardwareTexture::GetTexDimension(gltex->GetWidth());
 	bounds.height = FHardwareTexture::GetTexDimension(gltex->GetHeight());
 
-	GLSceneDrawer drawer;
-	drawer.RenderViewpoint(Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
+	FRenderViewpoint texvp;
+	RenderViewpoint(texvp, Viewpoint, &bounds, FOV, (float)width / height, (float)width / height, false, false);
 
 	EndOffscreen();
 
 	tex->SetUpdated();
 }
 
-void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)
+//===========================================================================
+//
+// Render the view to a savegame picture
+//
+//===========================================================================
+
+void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
 {
-	// Todo: This needs to call the software renderer and process the returned image, if so desired.
-	// This also needs to take out parts of the scene drawer so they can be shared between renderers.
-	GLSceneDrawer drawer;
-	drawer.WriteSavePic(player, file, width, height);
+    IntRect bounds;
+    bounds.left = 0;
+    bounds.top = 0;
+    bounds.width = width;
+    bounds.height = height;
+    
+    // if mVBO is persistently mapped we must be sure the GPU finished reading from it before we fill it with new data.
+    glFinish();
+    
+    // Switch to render buffers dimensioned for the savepic
+    mBuffers = mSaveBuffers;
+    
+    P_FindParticleSubsectors();    // make sure that all recently spawned particles have a valid subsector.
+    gl_RenderState.SetVertexBuffer(mVBO);
+    mVBO->Reset();
+    mLights->Clear();
+    
+    // This shouldn't overwrite the global viewpoint even for a short time.
+    FRenderViewpoint savevp;
+    sector_t *viewsector = RenderViewpoint(savevp, players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
+    glDisable(GL_STENCIL_TEST);
+    gl_RenderState.SetSoftLightLevel(-1);
+    CopyToBackbuffer(&bounds, false);
+    
+    // strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
+    glFinish();
+    
+    uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
+    glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
+    M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width * 3, Gamma);
+    M_Free(scr);
+    
+    // Switch back the screen render buffers
+    screen->SetViewportRects(nullptr);
+    mBuffers = mScreenBuffers;
 }
+
+//===========================================================================
+//
+//
+//
+//===========================================================================
 
 void FGLRenderer::BeginFrame()
 {
-	buffersActive = GLRenderer->mScreenBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
+	buffersActive = mScreenBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
 	if (buffersActive)
-		buffersActive = GLRenderer->mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
+		buffersActive = mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 }
 
 //===========================================================================
@@ -396,9 +422,11 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
-	gl_RenderState.ApplyMatrices();
+	HWViewpointUniforms matrices;
+	matrices.SetDefaults();
+	matrices.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
+	matrices.CalcDependencies();
+	GLRenderer->mShaderManager->ApplyMatrices(&matrices, NORMAL_PASS);
 
 	glDisable(GL_DEPTH_TEST);
 
@@ -524,7 +552,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	}
 	glDisable(GL_SCISSOR_TEST);
 
-	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
+	gl_RenderState.SetVertexBuffer(mVBO);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableBrightmap(true);
 	gl_RenderState.SetTextureMode(TM_MODULATE);

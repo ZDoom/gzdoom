@@ -419,7 +419,6 @@ public:
 	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual void UnbindTexUnit(int no) {}
-	virtual void FlushTextures() {}
 	virtual void TextureFilterChanged() {}
 	virtual void BeginFrame() {}
 
@@ -527,6 +526,9 @@ public:
 	// Hint: Pitch can be negative for upside-down images, in which case buffer
 	// points to the last row in the buffer, which will be the first row output.
 	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) {}
+
+	static float GetZNear() { return 5.f; }
+	static float GetZFar() { return 65536.f; }
 
 	// The original size of the framebuffer as selected in the video menu.
 	uint64_t FrameTime = 0;

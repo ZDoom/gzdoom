@@ -37,10 +37,10 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_samplers.h"
 #include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_uniformbuffer.h"
 #include "gl/models/gl_models.h"
-#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
@@ -342,7 +342,7 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex)
 
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
 {
-	return new FGLModelRenderer(mli);
+	return new FGLModelRenderer(nullptr, mli);
 }
 
 IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticuse)
@@ -361,11 +361,6 @@ void OpenGLFrameBuffer::UnbindTexUnit(int no)
 	FHardwareTexture::Unbind(no);
 }
 
-void OpenGLFrameBuffer::FlushTextures()
-{
-	if (GLRenderer) GLRenderer->FlushTextures();
-}
-
 void OpenGLFrameBuffer::TextureFilterChanged()
 {
 	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();
@@ -380,7 +375,10 @@ void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)
 {
 	Super::SetViewportRects(bounds);
 	if (!bounds)
-		s3d::Stereo3DMode::getCurrentMode().AdjustViewports();
+	{
+		auto vrmode = VRMode::GetVRMode(true);
+		vrmode->AdjustViewport(this);
+	}
 }
 
 

@@ -37,7 +37,7 @@ void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_
 {
 	PolyModelRenderer renderer(thread, worldToClip, stencilValue);
 	renderer.AddLights(actor);
-	renderer.RenderModel(x, y, z, smf, actor);
+	renderer.RenderModel(x, y, z, smf, actor, r_viewpoint.TicFrac);
 	PolyTriangleDrawer::SetModelVertexShader(thread->DrawQueue, -1, -1, 0.0f);
 }
 

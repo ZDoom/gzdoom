@@ -319,7 +319,6 @@ protected:
 class ADLMIDIDevice : public SoftSynthMIDIDevice
 {
 	struct ADL_MIDIPlayer *Renderer;
-	TArray<int16_t> shortbuffer;
 public:
 	ADLMIDIDevice(const char *args);
 	~ADLMIDIDevice();
@@ -338,7 +337,6 @@ protected:
 class OPNMIDIDevice : public SoftSynthMIDIDevice
 {
 	struct OPN2_MIDIPlayer *Renderer;
-	TArray<int16_t> shortbuffer;
 public:
 	OPNMIDIDevice(const char *args);
 	~OPNMIDIDevice();

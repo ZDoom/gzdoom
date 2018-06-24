@@ -4,12 +4,11 @@
 #include "gl/renderer/gl_lightdata.h"
 #include "hwrenderer/scene/hw_drawlist.h"
 #include "hwrenderer/scene/hw_weapon.h"
+#include "hwrenderer/scene/hw_viewpointuniforms.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-
-class GLSceneDrawer;
 
 enum DrawListType
 {
@@ -36,16 +35,12 @@ enum Drawpasses
 
 struct FDrawInfo : public HWDrawInfo
 {
-	GLSceneDrawer *mDrawer;
-	
-	FDrawInfo * next;
 	HWDrawList drawlists[GLDL_TYPES];
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
 	
-	FDrawInfo();
-	~FDrawInfo();
-	
+	void ApplyVPUniforms() override;
+
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
 	GLDecal *AddDecal(bool onmirror) override;
@@ -56,15 +51,6 @@ struct FDrawInfo : public HWDrawInfo
 
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 	int UploadLights(FDynLightData &data) override;
-
-	// Legacy GL only. 
-	bool PutWallCompat(GLWall *wall, int passflag);
-	bool PutFlatCompat(GLFlat *flat, bool fog);
-	void RenderFogBoundaryCompat(GLWall *wall);
-	void RenderLightsCompat(GLWall *wall, int pass);
-	void DrawSubsectorLights(GLFlat *flat, subsector_t * sub, int pass);
-	void DrawLightsCompat(GLFlat *flat, int pass);
-
 
 	void DrawDecal(GLDecal *gldecal);
 	void DrawDecals();
@@ -103,11 +89,19 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawSorted(int listindex);
 
 	// These two may be moved to the API independent part of the renderer later.
-	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
+    
+    void CreateScene();
+    void RenderScene(int recursion);
+    void RenderTranslucent();
+    void DrawScene(int drawmode);
+    void ProcessScene(bool toscreen = false);
+    void EndDrawScene(sector_t * viewsector);
+    void DrawEndScene2D(sector_t * viewsector);
+	bool SetDepthClamp(bool on) override;
 
-	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer);
-	static void EndDrawInfo();
+	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
+	FDrawInfo *EndDrawInfo();
 	
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
 	{
@@ -131,16 +125,6 @@ struct FDrawInfo : public HWDrawInfo
 		gl_SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
 	}
 
-};
-
-class FDrawInfoList
-{
-	TDeletingArray<FDrawInfo *> mList;
-	
-public:
-	
-	FDrawInfo *GetNew();
-	void Release(FDrawInfo *);
 };
 
 

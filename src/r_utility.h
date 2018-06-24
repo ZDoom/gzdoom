@@ -5,6 +5,7 @@
 #include "vectors.h"
 
 class FSerializer;
+struct FViewWindow;
 //
 // Stuff from r_main.h that's needed outside the rendering code.
 
@@ -20,6 +21,9 @@ struct FRenderViewpoint
 	DVector3		Pos;			// Camera position
 	DVector3		ActorPos;		// Camera actor's position
 	DRotator		Angles;			// Camera angles
+	FRotator		HWAngles;		// Actual rotation angles for the hardware renderer
+	DVector2		ViewVector;		// HWR only: direction the camera is facing.
+	AActor			*ViewActor;		// either the same as camera or nullptr
 
 	DVector3		Path[2];		// View path for portal calculations
 	double			Cos;			// cos(Angles.Yaw)
@@ -36,6 +40,10 @@ struct FRenderViewpoint
 	
 	int				extralight;		// extralight to be added to this viewpoint
 	bool			showviewer;		// show the camera actor?
+
+
+	void SetViewAngle(const FViewWindow &viewwindow);
+
 };
 
 extern FRenderViewpoint r_viewpoint;

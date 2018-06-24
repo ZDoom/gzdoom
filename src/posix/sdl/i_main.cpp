@@ -169,10 +169,11 @@ static int DoomSpecificInfo (char *buffer, char *end)
 		}
 		else
 		{
-			p += snprintf (buffer+p, size-p, "\n\nviewx = %f", r_viewpoint.Pos.X);
-			p += snprintf (buffer+p, size-p, "\nviewy = %f", r_viewpoint.Pos.Y);
-			p += snprintf (buffer+p, size-p, "\nviewz = %f", r_viewpoint.Pos.Z);
-			p += snprintf (buffer+p, size-p, "\nviewangle = %f", r_viewpoint.Angles.Yaw.Degrees);
+            auto &vp = r_viewpoint;
+			p += snprintf (buffer+p, size-p, "\n\nviewx = %f", vp.Pos.X);
+			p += snprintf (buffer+p, size-p, "\nviewy = %f", vp.Pos.Y);
+			p += snprintf (buffer+p, size-p, "\nviewz = %f", vp.Pos.Z);
+			p += snprintf (buffer+p, size-p, "\nviewangle = %f", vp.Angles.Yaw.Degrees);
 		}
 	}
 	buffer[p++] = '\n';

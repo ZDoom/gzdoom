@@ -21,6 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifndef OPNMIDI_OPNBANK_H
+#define OPNMIDI_OPNBANK_H
+
+#include <string.h>
 #include <stdint.h>
 
 #ifdef ADLMIDI_buildAsApp
@@ -36,12 +40,24 @@ public:
 };
 #endif
 
+enum { opnNoteOnMaxTime = 40000 };
+
 /* *********** FM Operator indexes *********** */
-#define OPERATOR1    0
-#define OPERATOR2    1
-#define OPERATOR3    2
-#define OPERATOR4    3
+enum
+{
+    OPERATOR1 = 0,
+    OPERATOR2 = 1,
+    OPERATOR3 = 2,
+    OPERATOR4 = 3,
+};
 /* *********** FM Operator indexes *end******* */
+
+#pragma pack(push, 1)
+#define OPNDATA_BYTE_COMPARABLE(T)                      \
+    inline bool operator==(const T &a, const T &b)      \
+    { return !memcmp(&a, &b, sizeof(T)); }              \
+    inline bool operator!=(const T &a, const T &b)      \
+    { return !operator==(a, b); }
 
 struct OPN_Operator
 {
@@ -58,6 +74,7 @@ struct OPN_Operator
         6 - SSG-EG byte
     */
 };
+OPNDATA_BYTE_COMPARABLE(struct OPN_Operator)
 
 struct opnInstData
 {
@@ -68,6 +85,7 @@ struct opnInstData
     //! Note offset
     int16_t         finetune;
 };
+OPNDATA_BYTE_COMPARABLE(struct opnInstData)
 
 struct opnInstMeta
 {
@@ -79,3 +97,41 @@ struct opnInstMeta
     uint16_t ms_sound_koff;
     double   fine_tune;
 };
+OPNDATA_BYTE_COMPARABLE(struct opnInstMeta)
+
+/**
+ * @brief Instrument data with operators included
+ */
+struct opnInstMeta2
+{
+    opnInstData opn[2];
+    uint8_t  tone;
+    uint8_t  flags;
+    uint16_t ms_sound_kon;  // Number of milliseconds it produces sound;
+    uint16_t ms_sound_koff;
+    double   fine_tune;
+#if 0
+    opnInstMeta2() {}
+    explicit opnInstMeta2(const opnInstMeta &d);
+#endif
+};
+OPNDATA_BYTE_COMPARABLE(struct opnInstMeta2)
+
+#undef OPNDATA_BYTE_COMPARABLE
+#pragma pack(pop)
+
+#if 0
+/**
+ * @brief Conversion of storage formats
+ */
+inline opnInstMeta2::opnInstMeta2(const opnInstMeta &d)
+    : tone(d.tone), flags(d.flags),
+      ms_sound_kon(d.ms_sound_kon), ms_sound_koff(d.ms_sound_koff),
+      fine_tune(d.fine_tune)
+{
+    opn[0] = ::opn[d.opnno1];
+    opn[1] = ::opn[d.opnno2];
+}
+#endif
+
+#endif  // OPNMIDI_OPNBANK_H

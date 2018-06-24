@@ -33,40 +33,6 @@
 namespace s3d {
 
 
-class ShiftedEyePose : public EyePose
-{
-public:
-	ShiftedEyePose(float shift) : shift(shift) {};
-	float getShift() const;
-	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const;
-	virtual void GetViewShift(float yaw, float outViewShift[3]) const;
-
-protected:
-	void setShift(float shift) { this->shift = shift; }
-
-private:
-	float shift;
-};
-
-
-class LeftEyePose : public ShiftedEyePose
-{
-public:
-	LeftEyePose(float ipd) : ShiftedEyePose( float(-0.5) * ipd) {}
-	float getIpd() const { return float(fabs(2.0f*getShift())); }
-	void setIpd(float ipd) { setShift(float(-0.5)*ipd); }
-};
-
-
-class RightEyePose : public ShiftedEyePose
-{
-public:
-	RightEyePose(float ipd) : ShiftedEyePose(float(+0.5)*ipd) {}
-	float getIpd() const { return float(fabs(2.0f*getShift())); }
-	void setIpd(float ipd) { setShift(float(+0.5)*ipd); }
-};
-
-
 /**
  * As if viewed through the left eye only
  */
@@ -76,7 +42,6 @@ public:
 	static const LeftEyeView& getInstance(float ipd);
 
 	LeftEyeView(float ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
-	float getIpd() const { return eye.getIpd(); }
 	void setIpd(float ipd) { eye.setIpd(ipd); }
 	void Present() const override;
 protected:
@@ -90,7 +55,6 @@ public:
 	static const RightEyeView& getInstance(float ipd);
 
 	RightEyeView(float ipd) : eye(ipd) { eye_ptrs.Push(&eye); }
-	float getIpd() const { return eye.getIpd(); }
 	void setIpd(float ipd) { eye.setIpd(ipd); }
 	void Present() const override;
 protected:

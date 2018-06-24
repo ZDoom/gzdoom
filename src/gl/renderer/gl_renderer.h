@@ -158,9 +158,6 @@ public:
 	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
-
-	static float GetZNear() { return 5.f; }
-	static float GetZFar() { return 65536.f; }
 };
 
 #include "hwrenderer/scene/hw_fakeflat.h"

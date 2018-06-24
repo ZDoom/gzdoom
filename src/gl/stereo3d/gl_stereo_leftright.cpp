@@ -34,51 +34,8 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 
-EXTERN_CVAR(Float, vr_screendist)
-EXTERN_CVAR(Float, vr_hunits_per_meter)
-EXTERN_CVAR(Bool, vr_swap_eyes)
-
 namespace s3d {
 
-
-/* virtual */
-VSMatrix ShiftedEyePose::GetProjection(float fov, float aspectRatio, float fovRatio) const
-{
-	double zNear = 5.0;
-	double zFar = 65536.0;
-
-	// For stereo 3D, use asymmetric frustum shift in projection matrix
-	// Q: shouldn't shift vary with roll angle, at least for desktop display?
-	// A: No. (lab) roll is not measured on desktop display (yet)
-	double frustumShift = zNear * getShift() / vr_screendist; // meters cancel, leaving doom units
-	// double frustumShift = 0; // Turning off shift for debugging
-	double fH = zNear * tan(DEG2RAD(fov) / 2) / fovRatio;
-	double fW = fH * aspectRatio;
-	double left = -fW - frustumShift;
-	double right = fW - frustumShift;
-	double bottom = -fH;
-	double top = fH;
-
-	VSMatrix result(1);
-	result.frustum(left, right, bottom, top, zNear, zFar);
-	return result;
-}
-
-
-/* virtual */
-void ShiftedEyePose::GetViewShift(float yaw, float outViewShift[3]) const
-{
-	float dx = -cos(DEG2RAD(yaw)) * vr_hunits_per_meter * getShift();
-	float dy = sin(DEG2RAD(yaw)) * vr_hunits_per_meter * getShift();
-	outViewShift[0] = dx;
-	outViewShift[1] = dy;
-	outViewShift[2] = 0;
-}
-
-float ShiftedEyePose::getShift() const 
-{
-	return vr_swap_eyes ? -shift : shift;
-}
 
 /* static */
 const LeftEyeView& LeftEyeView::getInstance(float ipd)

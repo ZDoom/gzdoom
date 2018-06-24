@@ -61,22 +61,6 @@ private:
 	RightEyePose rightEye;
 };
 
-class SBSFLeftEyePose : public LeftEyePose {
-public:
-	SBSFLeftEyePose(double ipdMeters) : LeftEyePose(ipdMeters) {}
-	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const override {
-		return LeftEyePose::GetProjection(fov, 0.5f * aspectRatio, fovRatio);
-	}
-};
-
-class SBSFRightEyePose : public RightEyePose {
-public:
-	SBSFRightEyePose(double ipdMeters) : RightEyePose(ipdMeters) {}
-	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const override {
-		return RightEyePose::GetProjection(fov, 0.5f * aspectRatio, fovRatio);
-	}
-};
-
 class SideBySideFull : public SideBySideBase
 {
 public:

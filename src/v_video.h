@@ -527,6 +527,9 @@ public:
 	// points to the last row in the buffer, which will be the first row output.
 	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) {}
 
+	static float GetZNear() { return 5.f; }
+	static float GetZFar() { return 65536.f; }
+
 	// The original size of the framebuffer as selected in the video menu.
 	uint64_t FrameTime = 0;
 

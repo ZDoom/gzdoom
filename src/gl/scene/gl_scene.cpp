@@ -470,7 +470,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 	stereo3dMode.SetUp();
 	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
 	{
-		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
+		const auto eye = stereo3dMode.getEyePose(eye_ix);
 		eye->SetUp();
 		screen->SetViewportRects(bounds);
 		Set3DViewport(mainview);

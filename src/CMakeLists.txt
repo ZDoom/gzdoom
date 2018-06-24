@@ -697,6 +697,7 @@ file( GLOB HEADER_FILES
 	hwrenderer/dynlights/*.h
 	hwrenderer/postprocessing/*.h
 	hwrenderer/scene/*.h
+	hwrenderer/stereo3d/*.h
 	hwrenderer/textures/*.h
 	hwrenderer/utility/*.h
 	gl/*.h
@@ -1073,6 +1074,7 @@ set (PCH_SOURCES
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	hwrenderer/dynlights/hw_shadowmap.cpp
+	hwrenderer/stereo3d/hw_eyepose.cpp
 	hwrenderer/scene/hw_skydome.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp

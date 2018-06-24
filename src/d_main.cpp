@@ -707,6 +707,7 @@ void D_Display ()
 		wipe = false;
 		wipegamestate = gamestate;
 	}
+	// No wipes when in a stereo3D VR mode
 	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL && (vr_mode == 0 || vid_rendermode != 4))
 	{ // save the current screen if about to wipe
 		switch (wipegamestate)

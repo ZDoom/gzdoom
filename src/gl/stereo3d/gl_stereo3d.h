@@ -32,33 +32,10 @@
 #include "tarray.h"
 #include "r_data/matrix.h"
 #include "gl/renderer/gl_renderer.h"
-
+#include "hwrenderer/stereo3d/hw_eyepose.h"
 
 /* stereoscopic 3D API */
 namespace s3d {
-
-
-/* Subregion of current display window */
-class Viewport
-{
-public:
-	int x, y;
-	int width, height;
-};
-
-
-/* Viewpoint of one eye */
-class EyePose 
-{
-public:
-	EyePose() {}
-	virtual ~EyePose() {}
-	virtual VSMatrix GetProjection(float fov, float aspectRatio, float fovRatio) const;
-	virtual Viewport GetViewport(const Viewport& fullViewport) const;
-	virtual void GetViewShift(float yaw, float outViewShift[3]) const;
-	virtual void SetUp() const {};
-};
-
 
 /* Base class for stereoscopic 3D rendering modes */
 class Stereo3DMode

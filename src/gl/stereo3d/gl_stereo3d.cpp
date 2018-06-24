@@ -31,34 +31,6 @@
 namespace s3d {
 
 
-/* virtual */
-VSMatrix EyePose::GetProjection(float fov, float aspectRatio, float fovRatio) const
-{
-	VSMatrix result;
-
-	float fovy = (float)(2 * RAD2DEG(atan(tan(DEG2RAD(fov) / 2) / fovRatio)));
-	result.perspective(fovy, aspectRatio, FGLRenderer::GetZNear(), FGLRenderer::GetZFar());
-
-	return result;
-}
-
-/* virtual */
-Viewport EyePose::GetViewport(const Viewport& fullViewport) const 
-{
-	return fullViewport;
-}
-
-
-/* virtual */
-void EyePose::GetViewShift(float yaw, float outViewShift[3]) const
-{
-	// pass-through for Mono view
-	outViewShift[0] = 0;
-	outViewShift[1] = 0;
-	outViewShift[2] = 0;
-}
-
-
 Stereo3DMode::Stereo3DMode()
 {
 }

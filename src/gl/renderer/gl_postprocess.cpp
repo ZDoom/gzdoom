@@ -114,8 +114,8 @@ void FGLRenderer::AmbientOccludeScene(float m5)
 	mBuffers->BindSceneColorTexture(1);
 	mLinearDepthShader->Bind(NOQUEUE);
 	if (gl_multisample > 1) mLinearDepthShader->Uniforms->SampleIndex = 0;
-	mLinearDepthShader->Uniforms->LinearizeDepthA = 1.0f / GetZFar() - 1.0f / GetZNear();
-	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / GetZNear(), 1.e-8f);
+	mLinearDepthShader->Uniforms->LinearizeDepthA = 1.0f / screen->GetZFar() - 1.0f / screen->GetZNear();
+	mLinearDepthShader->Uniforms->LinearizeDepthB = MAX(1.0f / screen->GetZNear(), 1.e-8f);
 	mLinearDepthShader->Uniforms->InverseDepthRangeA = 1.0f;
 	mLinearDepthShader->Uniforms->InverseDepthRangeB = 0.0f;
 	mLinearDepthShader->Uniforms->Scale = sceneScale;

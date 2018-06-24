@@ -2686,7 +2686,7 @@ ADLMIDI_EXPORT void AdlInstrumentTester::NextAdl(int offset)
     std::fflush(stderr);
 #endif
 
-    for(unsigned a = 0, n = P->adl_ins_list.size(); a < n; ++a)
+    for(unsigned a = 0, n = (unsigned)P->adl_ins_list.size(); a < n; ++a)
     {
         const unsigned i = P->adl_ins_list[a];
         const adlinsdata2 ains(adlins[i]);

@@ -324,7 +324,7 @@ void FGLRenderer::PresentStereo()
 		return;
 
 	case VR_GREENMAGENTA:
-		PresentAnaglyph(false, true, true);
+		PresentAnaglyph(false, true, false);
 		break;
 
 	case VR_REDCYAN:

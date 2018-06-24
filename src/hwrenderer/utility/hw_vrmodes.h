@@ -2,6 +2,7 @@
 
 #include "r_data/matrix.h"
 
+class DFrameBuffer;
 
 enum
 {
@@ -41,6 +42,6 @@ struct VRMode
 	VREyeInfo mEyes[2];
 
 	static const VRMode *GetVRMode(bool toscreen = true);
-	void AdjustViewport() const;
+	void AdjustViewport(DFrameBuffer *fb) const;
 	VSMatrix GetHUDSpriteProjection() const;
 };

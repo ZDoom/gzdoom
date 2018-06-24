@@ -28,5 +28,6 @@ protected:
 
 	void GetDisplayDeviceName();
 public:
+	virtual void Shutdown() = 0;
 
 };

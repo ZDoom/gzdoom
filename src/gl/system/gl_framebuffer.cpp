@@ -114,7 +114,6 @@ void OpenGLFrameBuffer::InitializeState()
 	}
 
 	gl_LoadExtensions();
-	Super::InitializeState();
 
 	if (first)
 	{

@@ -26,6 +26,7 @@ class HereticImp : Actor
 		ActiveSound "himp/active";
 		Obituary "$OB_HERETICIMP";
 		HitObituary "$OB_HERETICIMPHIT";
+		Tag "$FN_HERETICIMP";
 	}
 	
 	States

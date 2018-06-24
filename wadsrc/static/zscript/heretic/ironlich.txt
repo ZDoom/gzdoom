@@ -23,6 +23,7 @@ class Ironlich : Actor
 		ActiveSound "ironlich/active";
 		Obituary "$OB_IRONLICH";
 		HitObituary "$OB_IRONLICHHIT";
+		Tag "$FN_IRONLICH";
 		DropItem "BlasterAmmo", 84, 10;
 		DropItem "ArtiEgg", 51, 0;
 	}

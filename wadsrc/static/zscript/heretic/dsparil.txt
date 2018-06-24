@@ -36,6 +36,7 @@ class Sorcerer1 : Actor
 		ActiveSound "dsparilserpent/active";
 		Obituary "$OB_DSPARIL1";
 		HitObituary "$OB_DSPARIL1HIT";
+		Tag "$FN_DSPARIL";
 	}
 
 
@@ -237,6 +238,7 @@ class Sorcerer2 : Actor
 		ActiveSound "dsparil/active";
 		Obituary "$OB_DSPARIL2";
 		HitObituary "$OB_DSPARIL2HIT";
+		Tag "$FN_DSPARIL";
 	}
 
 

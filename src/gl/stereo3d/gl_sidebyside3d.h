@@ -68,8 +68,8 @@ public:
 	SideBySideFull(double ipdMeters);
 	virtual void AdjustPlayerSprites(FDrawInfo *di) const override;
 private:
-	SBSFLeftEyePose leftEye;
-	SBSFRightEyePose rightEye;
+	LeftEyePose leftEye;
+	RightEyePose rightEye;
 };
 
 class TopBottom3D : public SideBySideSquished

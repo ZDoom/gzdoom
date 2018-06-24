@@ -92,7 +92,7 @@ const SideBySideFull& SideBySideFull::getInstance(float ipd)
 }
 
 SideBySideFull::SideBySideFull(double ipdMeters)
-	: leftEye(ipdMeters), rightEye(ipdMeters)
+	: leftEye(ipdMeters, 0.5f), rightEye(ipdMeters, 0.5f)
 {
 	eye_ptrs.Push(&leftEye);
 	eye_ptrs.Push(&rightEye);

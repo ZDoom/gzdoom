@@ -68,7 +68,7 @@ VSMatrix ShiftedEyePose::GetProjection(float fov, float aspectRatio, float fovRa
 	double frustumShift = zNear * getShift() / vr_screendist; // meters cancel, leaving doom units
 	// double frustumShift = 0; // Turning off shift for debugging
 	double fH = zNear * tan(DEG2RAD(fov) / 2) / fovRatio;
-	double fW = fH * aspectRatio;
+	double fW = fH * aspectRatio * squish;
 	double left = -fW - frustumShift;
 	double right = fW - frustumShift;
 	double bottom = -fH;

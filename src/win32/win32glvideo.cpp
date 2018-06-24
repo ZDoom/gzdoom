@@ -73,96 +73,9 @@ PFNWGLCREATECONTEXTATTRIBSARBPROC myWglCreateContextAttribsARB;
 //
 //==========================================================================
 
-Win32GLVideo::Win32GLVideo(int parm)
+Win32GLVideo::Win32GLVideo()
 {
-	I_SetWndProc();
-
-	GetDisplayDeviceName();
 	SetPixelFormat();
-
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-Win32GLVideo::~Win32GLVideo()
-{
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-struct MonitorEnumState
-{
-	int curIdx;
-	HMONITOR hFoundMonitor;
-};
-
-static BOOL CALLBACK GetDisplayDeviceNameMonitorEnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM dwData)
-{
-	MonitorEnumState *state = reinterpret_cast<MonitorEnumState *>(dwData);
-
-	MONITORINFOEX mi;
-	mi.cbSize = sizeof mi;
-	GetMonitorInfo(hMonitor, &mi);
-
-	// This assumes the monitors are returned by EnumDisplayMonitors in the
-	// order they're found in the Direct3D9 adapters list. Fingers crossed...
-	if (state->curIdx == vid_adapter)
-	{
-		state->hFoundMonitor = hMonitor;
-
-		// Don't stop enumeration; this makes EnumDisplayMonitors fail. I like
-		// proper fails.
-	}
-
-	++state->curIdx;
-
-	return TRUE;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void Win32GLVideo::GetDisplayDeviceName()
-{
-	// If anything goes wrong, anything at all, everything uses the primary
-	// monitor.
-	m_DisplayDeviceName = 0;
-	m_hMonitor = 0;
-
-	MonitorEnumState mes;
-
-	mes.curIdx = 1;
-	mes.hFoundMonitor = 0;
-
-	// Could also use EnumDisplayDevices, I guess. That might work.
-	if (EnumDisplayMonitors(0, 0, &GetDisplayDeviceNameMonitorEnumProc, LPARAM(&mes)))
-	{
-		if (mes.hFoundMonitor)
-		{
-			MONITORINFOEX mi;
-
-			mi.cbSize = sizeof mi;
-
-			if (GetMonitorInfo(mes.hFoundMonitor, &mi))
-			{
-				strcpy(m_DisplayDeviceBuffer, mi.szDevice);
-				m_DisplayDeviceName = m_DisplayDeviceBuffer;
-
-				m_hMonitor = mes.hFoundMonitor;
-			}
-		}
-	}
 }
 
 //==========================================================================
@@ -177,71 +90,6 @@ DFrameBuffer *Win32GLVideo::CreateFrameBuffer()
 
 	fb = new OpenGLFrameBuffer(m_hMonitor, fullscreen);
 	return fb;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-struct DumpAdaptersState
-{
-	unsigned index;
-	char *displayDeviceName;
-};
-
-static BOOL CALLBACK DumpAdaptersMonitorEnumProc(HMONITOR hMonitor, HDC, LPRECT, LPARAM dwData)
-{
-	DumpAdaptersState *state = reinterpret_cast<DumpAdaptersState *>(dwData);
-
-	MONITORINFOEX mi;
-	mi.cbSize = sizeof mi;
-
-	char moreinfo[64] = "";
-
-	bool active = true;
-
-	if (GetMonitorInfo(hMonitor, &mi))
-	{
-		bool primary = !!(mi.dwFlags & MONITORINFOF_PRIMARY);
-
-		mysnprintf(moreinfo, countof(moreinfo), " [%ldx%ld @ (%ld,%ld)]%s",
-			mi.rcMonitor.right - mi.rcMonitor.left,
-			mi.rcMonitor.bottom - mi.rcMonitor.top,
-			mi.rcMonitor.left, mi.rcMonitor.top,
-			primary ? " (Primary)" : "");
-
-		if (!state->displayDeviceName && !primary)
-			active = false;//primary selected, but this ain't primary
-		else if (state->displayDeviceName && strcmp(state->displayDeviceName, mi.szDevice) != 0)
-			active = false;//this isn't the selected one
-	}
-
-	Printf("%s%u. %s\n",
-		active ? TEXTCOLOR_BOLD : "",
-		state->index,
-		moreinfo);
-
-	++state->index;
-
-	return TRUE;
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-void Win32GLVideo::DumpAdapters()
-{
-	DumpAdaptersState das;
-
-	das.index = 1;
-	das.displayDeviceName = m_DisplayDeviceName;
-
-	EnumDisplayMonitors(0, 0, DumpAdaptersMonitorEnumProc, LPARAM(&das));
 }
 
 //==========================================================================

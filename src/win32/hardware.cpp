@@ -43,6 +43,7 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "version.h"
+#include "win32glvideo.h"
 #include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR (Bool, fullscreen)
@@ -124,7 +125,7 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-	Video = gl_CreateVideo();
+	Video = new Win32GLVideo();
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

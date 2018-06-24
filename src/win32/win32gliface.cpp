@@ -461,8 +461,3 @@ int SystemGLFrameBuffer::GetClientHeight()
 	GetClientRect(Window, &rect);
 	return rect.bottom - rect.top;
 }
-
-IVideo *gl_CreateVideo()
-{
-	return new Win32GLVideo(0);
-}

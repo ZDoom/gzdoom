@@ -17,6 +17,7 @@ class Clink : Actor
 		DeathSound "clink/death";
 		ActiveSound "clink/active";
 		Obituary "$OB_CLINK";
+		Tag "$FN_CLINK";
 		DropItem "SkullRodAmmo", 84, 20;
 	}
 	States

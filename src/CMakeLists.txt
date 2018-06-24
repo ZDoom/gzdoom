@@ -832,6 +832,7 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
 	gl_load/gl_load.c
+	vulkan/system/vk_init.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
 	hwrenderer/dynlights/hw_dynlightdata.cpp
@@ -876,6 +877,9 @@ set( FASTMATH_SOURCES
 	sound/opnmidi/opnmidi_midiplay.cpp
 	sound/opnmidi/opnmidi_opn2.cpp
 	sound/opnmidi/opnmidi_private.cpp
+
+	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+	vulkan/thirdparty/volk/volk.c
 
 )
 
@@ -1307,6 +1311,8 @@ include_directories( .
 	xlat
 	scripting
 	scripting/vm
+	vulkan/thirdparty
+	c:/VulkanSDK_/1.1.77.0/Include # just to get going for now.
 	../gdtoa
 	../dumb/include
 	${CMAKE_BINARY_DIR}/gdtoa

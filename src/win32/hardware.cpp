@@ -125,6 +125,14 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
+	bool InitVulkan();
+
+	if (InitVulkan())
+	{
+		Printf("Vulkan found\n");
+	}
+
+
 	Video = new Win32GLVideo();
 
 	if (Video == NULL)

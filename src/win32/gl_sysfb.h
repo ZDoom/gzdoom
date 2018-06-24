@@ -30,6 +30,9 @@ public:
 
 protected:
 
+	void GetCenteredPos(int in_w, int in_h, int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight);
+	void KeepWindowOnScreen(int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight);
+
 	void PositionWindow(bool fullscreen);
 
 	void ResetGammaTable();

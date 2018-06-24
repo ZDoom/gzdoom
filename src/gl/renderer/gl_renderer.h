@@ -127,6 +127,7 @@ public:
 	void SetupLevel();
 	void ResetSWScene();
 
+	void PresentStereo();
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
 	void AmbientOccludeScene(float m5);

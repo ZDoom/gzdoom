@@ -38,7 +38,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/models/gl_models.h"
-#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
 //==========================================================================
@@ -91,8 +90,6 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 
 void FDrawInfo::DrawPlayerSprites(bool hudModelStep)
 {
-	s3d::Stereo3DMode::getCurrentMode().AdjustPlayerSprites(this);
-
 	int oldlightmode = level.lightmode;
 	if (!hudModelStep && level.lightmode == 8) level.lightmode = 2;	// Software lighting cannot handle 2D content so revert to lightmode 2 for that.
 	for(auto &hudsprite : hudsprites)

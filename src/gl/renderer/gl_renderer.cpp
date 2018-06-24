@@ -61,7 +61,6 @@
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 #include "hwrenderer/postprocessing/hw_shadowmapshader.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
-#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "r_videoscale.h"

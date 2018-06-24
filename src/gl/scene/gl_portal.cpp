@@ -42,7 +42,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/stereo3d/scoped_color_mask.h"
 
 //-----------------------------------------------------------------------------
 //-----------------------------------------------------------------------------
@@ -135,7 +134,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// create stencil
 		glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
 		{
-			ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0,0,0,0);						// don't write to the graphics buffer
+			glColorMask(0,0,0,0);						// don't write to the graphics buffer
 			gl_RenderState.SetEffect(EFF_STENCIL);
 			gl_RenderState.EnableTexture(false);
 			gl_RenderState.ResetColor();
@@ -166,7 +165,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				// set normal drawing mode
 				gl_RenderState.EnableTexture(true);
 				glDepthFunc(GL_LESS);
-				// glColorMask(1, 1, 1, 1);
+				glColorMask(1, 1, 1, 1);
 				gl_RenderState.SetEffect(EFF_NONE);
 				glDepthRange(0, 1);
 
@@ -194,7 +193,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				glStencilFunc(GL_EQUAL, mState->recursion + 1, ~0);		// draw sky into stencil
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 				gl_RenderState.EnableTexture(true);
-				// glColorMask(1,1,1,1);
+				glColorMask(1,1,1,1);
 				gl_RenderState.SetEffect(EFF_NONE);
 				glDisable(GL_DEPTH_TEST);
 				glDepthMask(false);							// don't write to Z-buffer!
@@ -242,46 +241,45 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		// Restore the old view
 		if (vp.camera != nullptr) vp.camera->renderflags = (vp.camera->renderflags & ~RF_MAYBEINVISIBLE) | savedvisibility;
 
+		glColorMask(0, 0, 0, 0);						// no graphics
+		gl_RenderState.SetEffect(EFF_NONE);
+		gl_RenderState.ResetColor();
+		gl_RenderState.EnableTexture(false);
+		gl_RenderState.Apply();
+
+		if (needdepth)
 		{
-			ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0, 0, 0, 0);						// no graphics
-			gl_RenderState.SetEffect(EFF_NONE);
-			gl_RenderState.ResetColor();
-			gl_RenderState.EnableTexture(false);
-			gl_RenderState.Apply();
-
-			if (needdepth)
-			{
-				// first step: reset the depth buffer to max. depth
-				glDepthRange(1, 1);							// always
-				glDepthFunc(GL_ALWAYS);						// write the farthest depth value
-				DrawPortalStencil();
-			}
-			else
-			{
-				glEnable(GL_DEPTH_TEST);
-			}
-
-			// second step: restore the depth buffer to the previous values and reset the stencil
-			glDepthFunc(GL_LEQUAL);
-			glDepthRange(0, 1);
-			glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
-			glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
+			// first step: reset the depth buffer to max. depth
+			glDepthRange(1, 1);							// always
+			glDepthFunc(GL_ALWAYS);						// write the farthest depth value
 			DrawPortalStencil();
-			glDepthFunc(GL_LESS);
+		}
+		else
+		{
+			glEnable(GL_DEPTH_TEST);
+		}
+
+		// second step: restore the depth buffer to the previous values and reset the stencil
+		glDepthFunc(GL_LEQUAL);
+		glDepthRange(0, 1);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
+		DrawPortalStencil();
+		glDepthFunc(GL_LESS);
 
 
-			gl_RenderState.EnableTexture(true);
-			gl_RenderState.SetEffect(EFF_NONE);
-		}  // glColorMask(1, 1, 1, 1);
+		gl_RenderState.EnableTexture(true);
+		gl_RenderState.SetEffect(EFF_NONE);
+		glColorMask(1, 1, 1, 1);
 		mState->recursion--;
 
 		// restore old stencil op.
-		glStencilOp(GL_KEEP,GL_KEEP,GL_KEEP);
-		glStencilFunc(GL_EQUAL, mState->recursion,~0);		// draw sky into stencil
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
 	}
 	else
 	{
-		if (needdepth) 
+		if (needdepth)
 		{
 			glClear(GL_DEPTH_BUFFER_BIT);
 		}
@@ -302,17 +300,17 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		gl_RenderState.ResetColor();
 		glDepthFunc(GL_LEQUAL);
 		glDepthRange(0, 1);
-		{
-			ScopedColorMask colorMask(0, 0, 0, 1); // mark portal in alpha channel but don't touch color
-			gl_RenderState.SetEffect(EFF_STENCIL);
-			gl_RenderState.EnableTexture(false);
-			gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
-			gl_RenderState.BlendEquation(GL_FUNC_ADD);
-			gl_RenderState.Apply();
-			DrawPortalStencil();
-			gl_RenderState.SetEffect(EFF_NONE);
-			gl_RenderState.EnableTexture(true);
-		}
+		glColorMask(0, 0, 0, 1); // mark portal in alpha channel but don't touch color
+		gl_RenderState.SetEffect(EFF_STENCIL);
+		gl_RenderState.EnableTexture(false);
+		gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
+		gl_RenderState.BlendEquation(GL_FUNC_ADD);
+		gl_RenderState.Apply();
+		DrawPortalStencil();
+		gl_RenderState.SetEffect(EFF_NONE);
+		gl_RenderState.EnableTexture(true);
+		glColorMask(1, 1, 1, 1); // mark portal in alpha channel but don't touch color
+
 		glDepthFunc(GL_LESS);
 	}
 }

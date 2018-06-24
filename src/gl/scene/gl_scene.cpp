@@ -53,8 +53,7 @@
 #include "hwrenderer/scene/hw_portal.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/stereo3d/gl_stereo3d.h"
-#include "hwrenderer/utility/scoped_view_shifter.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 
 //==========================================================================
 //
@@ -380,10 +379,10 @@ void FDrawInfo::EndDrawScene(sector_t * viewsector)
 void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 {
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	auto vrmode = VRMode::GetVRMode(true);
 
-	// This should be removed once all 2D stuff is really done through the 2D interface.
 	VPUniforms.mViewMatrix.loadIdentity();
-	VPUniforms.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
+	VPUniforms.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
 	ApplyVPUniforms();
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);
@@ -465,27 +464,24 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 	R_SetupFrame (mainvp, r_viewwindow, camera);
 
     // Render (potentially) multiple views for stereo 3d
-	float viewShift[3];
-	const s3d::Stereo3DMode& stereo3dMode = mainview && toscreen? s3d::Stereo3DMode::getCurrentMode() : s3d::Stereo3DMode::getMonoMode();
-	stereo3dMode.SetUp();
-	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
+	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
+	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
+	for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
 	{
-		const auto eye = stereo3dMode.getEyePose(eye_ix);
-		eye->SetUp();
+		const auto &eye = vrmode->mEyes[eye_ix];
 		screen->SetViewportRects(bounds);
 		Set3DViewport(mainview);
 
 		FDrawInfo *di = FDrawInfo::StartDrawInfo(mainvp, nullptr);
-		auto vp = di->Viewpoint;
+		auto &vp = di->Viewpoint;
 		di->SetViewArea();
 		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
 		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
 		// Stereo mode specific perspective projection
-		di->VPUniforms.mProjectionMatrix = eye->GetProjection(fov, ratio, fovratio);
-		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
-		eye->GetViewShift(vp.HWAngles.Yaw.Degrees, viewShift);
-		ScopedViewShifter viewShifter(vp.Pos, viewShift);
+		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
+		// Stereo mode specific viewpoint adjustment
+		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
 		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
 
@@ -497,7 +493,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
 		}
 		di->EndDrawInfo();
-		if (!stereo3dMode.IsMono())
+		if (vrmode->mEyeCount > 1)
 			mBuffers->BlitToEyeTexture(eye_ix);
 	}
 

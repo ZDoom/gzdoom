@@ -47,8 +47,8 @@
 #include "hwrenderer/postprocessing/hw_lensshader.h"
 #include "hwrenderer/postprocessing/hw_fxaashader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/shaders/gl_postprocessshaderinstance.h"
-#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/textures/gl_hwtexture.h"
 #include "r_videoscale.h"
 
@@ -654,18 +654,18 @@ void FGLRenderer::ApplyFXAA()
 
 void FGLRenderer::Flush()
 {
-	const s3d::Stereo3DMode& stereo3dMode = s3d::Stereo3DMode::getCurrentMode();
+	auto vrmode = VRMode::GetVRMode(true);
 	const auto &mSceneViewport = screen->mSceneViewport;
 	const auto &mScreenViewport = screen->mScreenViewport;
 
-	if (stereo3dMode.IsMono())
+	if (vrmode->mEyeCount == 1)
 	{
 		CopyToBackbuffer(nullptr, true);
 	}
 	else
 	{
 		// Render 2D to eye textures
-		for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
+		for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
 		{
 			FGLDebug::PushGroup("Eye2D");
 			mBuffers->BindEyeFB(eye_ix);
@@ -678,7 +678,9 @@ void FGLRenderer::Flush()
 
 		FGLPostProcessState savedState;
 		FGLDebug::PushGroup("PresentEyes");
-		stereo3dMode.Present();
+		// Note: This here is the ONLY place in the entire engine where the OpenGL dependent parts of the Stereo3D code need to be dealt with.
+		// There's absolutely no need to create a overly complex class hierarchy for just this.
+		GLRenderer->PresentStereo();
 		FGLDebug::PopGroup();
 	}
 }

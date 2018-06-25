@@ -151,6 +151,7 @@ public:
 void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, double x, double y)
 {
 	open.portalflags = 0;
+	open.bottom = open.top = 0;
 	sector_t *front = linedef->frontsector;
 	sector_t *back = linedef->backsector;
 
@@ -159,8 +160,10 @@ void SightCheck::P_SightOpening(SightOpening &open, const line_t *linedef, doubl
 		// single sided line
 		if (linedef->flags & ML_PORTALCONNECT)
 		{
-			if (!front->PortalBlocksSight(sector_t::ceiling)) open.portalflags |= SO_TOPFRONT;
-			if (!front->PortalBlocksSight(sector_t::floor)) open.portalflags |= SO_BOTTOMFRONT;
+			if (!front->PortalBlocksSight(sector_t::ceiling)) open.top = LINEOPEN_MAX, open.portalflags |= SO_TOPFRONT;
+			if (!front->PortalBlocksSight(sector_t::floor)) open.bottom = LINEOPEN_MIN, open.portalflags |= SO_BOTTOMFRONT;
+			if (open.top == 0) open.top = front->floorplane.ZatPoint(x, y);
+			if (open.bottom == 0) open.bottom = front->ceilingplane.ZatPoint(x, y);
 		}
 
 		open.range = 0;
@@ -213,7 +216,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 //
 
 	// ignore self referencing sectors if COMPAT_TRACE is on
-	if ((i_compatflags & COMPATF_TRACE) && li->frontsector == li->backsector) 
+	if ((i_compatflags & COMPATF_TRACE) && li->frontsector == li->backsector)
 		return true;
 
 	double trX = Trace.x + Trace.dx * in->frac;
@@ -224,7 +227,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	{
 		// This may not skip P_SightOpening, but only reduce the open range to 0.
 		open.range = 0;
-		open.bottom = open.top;
+		if (open.bottom != LINEOPEN_MIN) open.bottom = open.top;
 	}
 
 	FLinePortal *lport = li->getPortal();

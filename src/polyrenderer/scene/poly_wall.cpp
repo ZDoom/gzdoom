@@ -374,6 +374,12 @@ void RenderPolyWall::Render(PolyRenderThread *thread)
 
 void RenderPolyWall::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args)
 {
+	if (!r_dynlights)
+	{
+		args.SetLights(nullptr, 0);
+		return;
+	}
+
 	FLightNode *light_list = (LineSeg && LineSeg->sidedef) ? LineSeg->sidedef->lighthead : nullptr;
 
 	auto cameraLight = PolyCameraLight::Instance();

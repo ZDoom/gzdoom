@@ -98,7 +98,7 @@ namespace swrenderer
 
 	void SWModelRenderer::AddLights(AActor *actor)
 	{
-		if (gl_lights && actor)
+		if (r_dynlights && actor)
 		{
 			auto &addedLights = Thread->AddedLightsArray;
 

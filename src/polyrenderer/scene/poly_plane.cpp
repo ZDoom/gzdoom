@@ -269,6 +269,12 @@ void RenderPolyPlane::SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args
 
 void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling)
 {
+	if (!r_dynlights)
+	{
+		args.SetLights(nullptr, 0);
+		return;
+	}
+
 	FLightNode *light_list = sub->lighthead;
 
 	auto cameraLight = PolyCameraLight::Instance();

@@ -786,7 +786,7 @@ void D_Display ()
 			//
 
 			// Check for the presence of dynamic lights at the start of the frame once.
-			if (gl_lights)
+			if ((gl_lights && vid_rendermode == 4) || (r_dynlights && vid_rendermode != 4))
 			{
 				TThinkerIterator<ADynamicLight> it(STAT_DLIGHT);
 				level.HasDynamicLights = !!it.Next();

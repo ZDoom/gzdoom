@@ -1,6 +1,7 @@
 #pragma once
 
 #include "hwrenderer/data/shaderuniforms.h"
+#include <memory>
 
 typedef FString PPTextureName;
 typedef FString PPShaderName;

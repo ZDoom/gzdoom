@@ -9,9 +9,9 @@ class FHardwareTexture;
 class FSimpleVertexBuffer;
 class FGLDebug;
 
-class OpenGLFrameBuffer : public SystemFrameBuffer
+class OpenGLFrameBuffer : public SystemGLFrameBuffer
 {
-	typedef SystemFrameBuffer Super;
+	typedef SystemGLFrameBuffer Super;
 
 public:
 

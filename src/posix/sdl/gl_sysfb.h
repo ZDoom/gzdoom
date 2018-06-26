@@ -5,14 +5,14 @@
 
 #include "v_video.h"
 
-class SystemFrameBuffer : public DFrameBuffer
+class SystemGLFrameBuffer : public DFrameBuffer
 {
 	typedef DFrameBuffer Super;
 
 public:
 	// this must have the same parameters as the Windows version, even if they are not used!
-	SystemFrameBuffer (void *hMonitor, bool fullscreen);
-	~SystemFrameBuffer ();
+	SystemGLFrameBuffer (void *hMonitor, bool fullscreen);
+	~SystemGLFrameBuffer ();
 
 	void ForceBuffering (bool force);
 
@@ -34,7 +34,7 @@ protected:
 	void ResetGammaTable();
 	void InitializeState();
 
-	SystemFrameBuffer () {}
+	SystemGLFrameBuffer () {}
 	uint8_t GammaTable[3][256];
 	bool UpdatePending;
 

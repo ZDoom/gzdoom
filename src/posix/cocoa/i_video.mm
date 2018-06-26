@@ -319,7 +319,7 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 // ---------------------------------------------------------------------------
 
 
-SystemFrameBuffer::SystemFrameBuffer(void*, const bool fullscreen)
+SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 : DFrameBuffer(vid_defwidth, vid_defheight)
 , m_window(CreateWindow(STYLE_MASK_WINDOWED))
 , m_fullscreen(false)
@@ -386,7 +386,7 @@ SystemFrameBuffer::SystemFrameBuffer(void*, const bool fullscreen)
 	FConsoleWindow::GetInstance().Show(false);
 }
 
-SystemFrameBuffer::~SystemFrameBuffer()
+SystemGLFrameBuffer::~SystemGLFrameBuffer()
 {
 	NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 	[nc removeObserver:m_window
@@ -397,18 +397,18 @@ SystemFrameBuffer::~SystemFrameBuffer()
 				object:nil];
 }
 
-bool SystemFrameBuffer::IsFullscreen()
+bool SystemGLFrameBuffer::IsFullscreen()
 {
 	return m_fullscreen;
 }
 
-void SystemFrameBuffer::ToggleFullscreen(bool yes)
+void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
 {
 	SetMode(yes, m_hiDPI);
 }
 
 
-void SystemFrameBuffer::SetVSync(bool vsync)
+void SystemGLFrameBuffer::SetVSync(bool vsync)
 {
 	const GLint value = vsync ? 1 : 0;
 
@@ -417,16 +417,16 @@ void SystemFrameBuffer::SetVSync(bool vsync)
 }
 
 
-void SystemFrameBuffer::InitializeState()
+void SystemGLFrameBuffer::InitializeState()
 {
 }
 
-void SystemFrameBuffer::SwapBuffers()
+void SystemGLFrameBuffer::SwapBuffers()
 {
 	[[NSOpenGLContext currentContext] flushBuffer];
 }
 
-void SystemFrameBuffer::SetGammaTable(uint16_t* table)
+void SystemGLFrameBuffer::SetGammaTable(uint16_t* table)
 {
 	if (m_supportsGamma)
 	{
@@ -442,7 +442,7 @@ void SystemFrameBuffer::SetGammaTable(uint16_t* table)
 	}
 }
 
-void SystemFrameBuffer::ResetGammaTable()
+void SystemGLFrameBuffer::ResetGammaTable()
 {
 	if (m_supportsGamma)
 	{
@@ -451,20 +451,20 @@ void SystemFrameBuffer::ResetGammaTable()
 }
 
 
-int SystemFrameBuffer::GetClientWidth()
+int SystemGLFrameBuffer::GetClientWidth()
 {
 	const int clientWidth = I_GetContentViewSize(m_window).width;
 	return clientWidth > 0 ? clientWidth : GetWidth();
 }
 
-int SystemFrameBuffer::GetClientHeight()
+int SystemGLFrameBuffer::GetClientHeight()
 {
 	const int clientHeight = I_GetContentViewSize(m_window).height;
 	return clientHeight > 0 ? clientHeight : GetHeight();
 }
 
 
-void SystemFrameBuffer::SetFullscreenMode()
+void SystemGLFrameBuffer::SetFullscreenMode()
 {
 	if (!m_fullscreen)
 	{
@@ -478,7 +478,7 @@ void SystemFrameBuffer::SetFullscreenMode()
 	[m_window setFrame:screenFrame display:YES];
 }
 
-void SystemFrameBuffer::SetWindowedMode()
+void SystemGLFrameBuffer::SetWindowedMode()
 {
 	if (m_fullscreen)
 	{
@@ -498,7 +498,7 @@ void SystemFrameBuffer::SetWindowedMode()
 	[m_window exitAppOnClose];
 }
 
-void SystemFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
+void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 {
 	NSOpenGLView* const glView = [m_window contentView];
 	[glView setWantsBestResolutionOpenGLSurface:hiDPI];
@@ -532,12 +532,12 @@ void SystemFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 }
 
 
-static SystemFrameBuffer* GetSystemFrameBuffer()
+static SystemGLFrameBuffer* GetSystemFrameBuffer()
 {
-	return static_cast<SystemFrameBuffer*>(screen);
+	return static_cast<SystemGLFrameBuffer*>(screen);
 }
 
-void SystemFrameBuffer::UseHiDPI(const bool hiDPI)
+void SystemGLFrameBuffer::UseHiDPI(const bool hiDPI)
 {
 	if (auto fb = GetSystemFrameBuffer())
 	{
@@ -545,7 +545,7 @@ void SystemFrameBuffer::UseHiDPI(const bool hiDPI)
 	}
 }
 
-void SystemFrameBuffer::SetCursor(NSCursor* cursor)
+void SystemGLFrameBuffer::SetCursor(NSCursor* cursor)
 {
 	if (auto fb = GetSystemFrameBuffer())
 	{
@@ -557,7 +557,7 @@ void SystemFrameBuffer::SetCursor(NSCursor* cursor)
 	}
 }
 
-void SystemFrameBuffer::SetWindowVisible(bool visible)
+void SystemGLFrameBuffer::SetWindowVisible(bool visible)
 {
 	if (auto fb = GetSystemFrameBuffer())
 	{
@@ -574,7 +574,7 @@ void SystemFrameBuffer::SetWindowVisible(bool visible)
 	}
 }
 
-void SystemFrameBuffer::SetWindowTitle(const char* title)
+void SystemGLFrameBuffer::SetWindowTitle(const char* title)
 {
 	if (auto fb = GetSystemFrameBuffer())
 	{
@@ -627,7 +627,7 @@ void I_SetFPSLimit(int limit)
 
 CUSTOM_CVAR(Bool, vid_hidpi, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	SystemFrameBuffer::UseHiDPI(self);
+	SystemGLFrameBuffer::UseHiDPI(self);
 }
 
 
@@ -688,7 +688,7 @@ bool I_SetCursor(FTexture* cursorpic)
 										 hotSpot:NSMakePoint(0.0f, 0.0f)];
 	}
 	
-	SystemFrameBuffer::SetCursor(cursor);
+	SystemGLFrameBuffer::SetCursor(cursor);
 	
 	[pool release];
 	
@@ -708,11 +708,11 @@ NSSize I_GetContentViewSize(const NSWindow* const window)
 
 void I_SetMainWindowVisible(bool visible)
 {
-	SystemFrameBuffer::SetWindowVisible(visible);
+	SystemGLFrameBuffer::SetWindowVisible(visible);
 }
 
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* title)
 {
-	SystemFrameBuffer::SetWindowTitle(title);
+	SystemGLFrameBuffer::SetWindowTitle(title);
 }

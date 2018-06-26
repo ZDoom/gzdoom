@@ -44,12 +44,12 @@ typedef struct objc_object NSCursor;
 typedef struct objc_object CocoaWindow;
 #endif
 
-class SystemFrameBuffer : public DFrameBuffer
+class SystemGLFrameBuffer : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SystemFrameBuffer(void *hMonitor, bool fullscreen);
-	~SystemFrameBuffer();
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
+	~SystemGLFrameBuffer();
 
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
@@ -78,7 +78,7 @@ protected:
 	bool				m_supportsGamma;
 	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
 
-	SystemFrameBuffer() {}
+	SystemGLFrameBuffer() {}
 
 	void SetFullscreenMode();
 	void SetWindowedMode();

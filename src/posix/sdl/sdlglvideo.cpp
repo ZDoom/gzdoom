@@ -123,7 +123,7 @@ SDLGLVideo::~SDLGLVideo ()
 
 DFrameBuffer *SDLGLVideo::CreateFrameBuffer ()
 {
-	SystemFrameBuffer *fb = new OpenGLFrameBuffer(0, fullscreen);
+	SystemGLFrameBuffer *fb = new OpenGLFrameBuffer(0, fullscreen);
 
 	return fb;
 }
@@ -179,7 +179,7 @@ IVideo *gl_CreateVideo()
 
 // FrameBuffer implementation -----------------------------------------------
 
-SystemFrameBuffer::SystemFrameBuffer (void *, bool fullscreen)
+SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 	: DFrameBuffer (vid_defwidth, vid_defheight)
 {
 	// NOTE: Core profiles were added with GL 3.2, so there's no sense trying
@@ -257,7 +257,7 @@ SystemFrameBuffer::SystemFrameBuffer (void *, bool fullscreen)
 	}
 }
 
-SystemFrameBuffer::~SystemFrameBuffer ()
+SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 {
 	if (Screen)
 	{
@@ -275,11 +275,11 @@ SystemFrameBuffer::~SystemFrameBuffer ()
 
 
 
-void SystemFrameBuffer::InitializeState()
+void SystemGLFrameBuffer::InitializeState()
 {
 }
 
-void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
+void SystemGLFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)
 	{
@@ -287,7 +287,7 @@ void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)
 	}
 }
 
-void SystemFrameBuffer::ResetGammaTable()
+void SystemGLFrameBuffer::ResetGammaTable()
 {
 	if (m_supportsGamma)
 	{
@@ -295,12 +295,12 @@ void SystemFrameBuffer::ResetGammaTable()
 	}
 }
 
-bool SystemFrameBuffer::IsFullscreen ()
+bool SystemGLFrameBuffer::IsFullscreen ()
 {
 	return (SDL_GetWindowFlags (Screen) & SDL_WINDOW_FULLSCREEN_DESKTOP) != 0;
 }
 
-void SystemFrameBuffer::SetVSync( bool vsync )
+void SystemGLFrameBuffer::SetVSync( bool vsync )
 {
 #if defined (__APPLE__)
 	const GLint value = vsync ? 1 : 0;
@@ -318,7 +318,7 @@ void SystemFrameBuffer::SetVSync( bool vsync )
 #endif
 }
 
-void SystemFrameBuffer::SwapBuffers()
+void SystemGLFrameBuffer::SwapBuffers()
 {
 #if !defined(__APPLE__) && !defined(__OpenBSD__)
 	if (vid_maxfps && !cl_capfps)
@@ -330,19 +330,19 @@ void SystemFrameBuffer::SwapBuffers()
 	SDL_GL_SwapWindow (Screen);
 }
 
-void SystemFrameBuffer::ToggleFullscreen(bool yes)
+void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
 {
 	SDL_SetWindowFullscreen(Screen, yes ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 }
 
-int SystemFrameBuffer::GetClientWidth()
+int SystemGLFrameBuffer::GetClientWidth()
 {
 	int width = 0;
 	SDL_GL_GetDrawableSize(Screen, &width, nullptr);
 	return width;
 }
 
-int SystemFrameBuffer::GetClientHeight()
+int SystemGLFrameBuffer::GetClientHeight()
 {
 	int height = 0;
 	SDL_GL_GetDrawableSize(Screen, nullptr, &height);
@@ -388,7 +388,7 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 // each platform has its own specific version of this function.
 void I_SetWindowTitle(const char* caption)
 {
-	auto window = static_cast<SystemFrameBuffer *>(screen)->GetSDLWindow();
+	auto window = static_cast<SystemGLFrameBuffer *>(screen)->GetSDLWindow();
 	if (caption)
 		SDL_SetWindowTitle(window, caption);
 	else

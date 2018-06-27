@@ -759,7 +759,6 @@ class LevelCompatibility play
 			{
 				// Can press use behind bookshelf in case of getting stuck.
 				SetLineSpecial(4884, Plat_DownWaitUpStayLip, 15, 32, 105, 0);
-				SetLineActivation(4884, SPAC_Use);
 				SetLineActivation(4884, SPAC_UseBack);
 				SetLineFlags(4884, Line.ML_REPEAT_SPECIAL);
 				break;

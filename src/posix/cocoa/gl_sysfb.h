@@ -83,8 +83,6 @@ protected:
 	void SetFullscreenMode();
 	void SetWindowedMode();
 
-	void InitializeState();
-
 	void SwapBuffers();
 
 	void SetGammaTable(uint16_t* table);

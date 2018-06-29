@@ -32,7 +32,6 @@ public:
 protected:
 	void SetGammaTable(uint16_t *tbl);
 	void ResetGammaTable();
-	void InitializeState();
 
 	SystemGLFrameBuffer () {}
 	uint8_t GammaTable[3][256];

@@ -422,10 +422,6 @@ void SystemGLFrameBuffer::SetVSync(bool vsync)
 }
 
 
-void SystemGLFrameBuffer::InitializeState()
-{
-}
-
 void SystemGLFrameBuffer::SwapBuffers()
 {
 	[[NSOpenGLContext currentContext] flushBuffer];

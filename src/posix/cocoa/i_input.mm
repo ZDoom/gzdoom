@@ -555,11 +555,13 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 		return;
 	}
 
+	const bool isARepeat = [theEvent isARepeat];
+
 	if (k_allowfullscreentoggle
 		&& (kVK_ANSI_F == keyCode)
 		&& (NSCommandKeyMask & [theEvent modifierFlags])
 		&& (NSKeyDown == [theEvent type])
-		&& ![theEvent isARepeat])
+		&& !isARepeat)
 	{
 		ToggleFullscreen = !ToggleFullscreen;
 		return;
@@ -569,7 +571,7 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 	{
 		ProcessKeyboardEventInMenu(theEvent);
 	}
-	else
+	else if (!isARepeat)
 	{
 		event_t event = {};
 

@@ -19,6 +19,7 @@ class Mummy : Actor
 		DeathSound "mummy/death";
 		ActiveSound "mummy/active";
 		HitObituary "$OB_MUMMY";
+		Tag "$FN_MUMMY";
 		DropItem "GoldWandAmmo", 84, 3;
 	}
 	States
@@ -60,6 +61,7 @@ class MummyLeader : Mummy
 		Health 100;
 		Painchance 64;
 		Obituary "$OB_MUMMYLEADER";
+		Tag "$FN_MUMMYLEADER";
 	}
 	States
 	{

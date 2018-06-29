@@ -21,6 +21,7 @@ class DoomImp : Actor
 		ActiveSound "imp/active";
 		HitObituary "$OB_IMPHIT";
 		Obituary "$OB_IMP";
+		Tag "$FN_IMP";
 	}
 	States
 	{

@@ -598,6 +598,27 @@ CC_SPIDER = "THE SPIDER MASTERMIND";
 CC_CYBER = "THE CYBERDEMON";
 CC_HERO = "OUR HERO";
 
+// Friendly names
+FN_ZOMBIE = "Zombieman";
+FN_SHOTGUN = "Sergeant";
+FN_HEAVY = "Chaingunner";
+FN_IMP = "Imp";
+FN_DEMON = "Demon";
+FN_SPECTRE = "Spectre";
+FN_LOST = "Lost Soul";
+FN_CACO = "Cacodemon";
+FN_HELL = "Hell Knight";
+FN_BARON = "Baron of Hell";
+FN_ARACH = "Arachnotron";
+FN_PAIN = "Pain Elemental";
+FN_REVEN = "Revenant";
+FN_MANCU = "Mancubus";
+FN_ARCH = "Arch-vile";
+FN_SPIDER = "Spider Mastermind";
+FN_CYBER = "Cyberdemon";
+FN_WOLFSS = "Nazi";
+FN_DOG = "Dog";
+
 // New strings from BOOM
 PD_BLUEC = "You need a blue card to open this door";
 PD_REDC = "You need a red card to open this door";
@@ -1299,6 +1320,20 @@ TXT_IMSECRETS = "SECRETS";
 TXT_IMTIME = "TIME";
 
 RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
+
+// Friendly names
+FN_CHICKEN = "Chicken";
+FN_BEAST = "Weredragon";
+FN_CLINK = "Sabreclaw";
+FN_DSPARIL = "D'Sparil";
+FN_HERETICIMP = "Gargoyle";
+FN_IRONLICH = "Ironlich";
+FN_BONEKNIGHT = "Undead Warrior";
+FN_MINOTAUR = "Maulotaur";
+FN_MUMMY = "Golem";
+FN_MUMMYLEADER = "Nitrogolem";
+FN_SNAKE = "Ophidian";
+FN_WIZARD = "Wizard";
 
 // Hexen strings
 

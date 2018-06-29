@@ -20,6 +20,7 @@ class PainElemental : Actor
 		PainSound "pain/pain";
 		DeathSound "pain/death";
 		ActiveSound "pain/active";
+		Tag "$FN_PAIN";
 	}
 	States
 	{

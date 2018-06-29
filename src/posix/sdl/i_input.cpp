@@ -407,6 +407,11 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_KEYUP:
 		if (!GUICapture)
 		{
+			if (sev.key.repeat)
+			{
+				break;
+			}
+			
 			event.type = sev.type == SDL_KEYDOWN ? EV_KeyDown : EV_KeyUp;
 
 			// Try to look up our key mapped key for conversion to DirectInput.

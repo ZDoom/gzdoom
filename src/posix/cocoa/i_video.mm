@@ -319,6 +319,9 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 // ---------------------------------------------------------------------------
 
 
+static SystemGLFrameBuffer* frameBuffer;
+
+
 SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 : DFrameBuffer(vid_defwidth, vid_defheight)
 , m_window(CreateWindow(STYLE_MASK_WINDOWED))
@@ -382,6 +385,8 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 			m_originalGamma[i] = static_cast<uint16_t>(gammaTable[i] * 65535.0f);
 		}
 	}
+
+	frameBuffer = this;
 
 	FConsoleWindow::GetInstance().Show(false);
 }
@@ -532,24 +537,19 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 }
 
 
-static SystemGLFrameBuffer* GetSystemFrameBuffer()
-{
-	return static_cast<SystemGLFrameBuffer*>(screen);
-}
-
 void SystemGLFrameBuffer::UseHiDPI(const bool hiDPI)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
-		fb->SetMode(fb->m_fullscreen, hiDPI);
+		frameBuffer->SetMode(frameBuffer->m_fullscreen, hiDPI);
 	}
 }
 
 void SystemGLFrameBuffer::SetCursor(NSCursor* cursor)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
-		NSWindow*  const window = fb->m_window;
+		NSWindow*  const window = frameBuffer->m_window;
 		CocoaView* const view   = [window contentView];
 
 		[view setCursor:cursor];
@@ -559,15 +559,15 @@ void SystemGLFrameBuffer::SetCursor(NSCursor* cursor)
 
 void SystemGLFrameBuffer::SetWindowVisible(bool visible)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
 		if (visible)
 		{
-			[fb->m_window orderFront:nil];
+			[frameBuffer->m_window orderFront:nil];
 		}
 		else
 		{
-			[fb->m_window orderOut:nil];
+			[frameBuffer->m_window orderOut:nil];
 		}
 
 		I_SetNativeMouse(!visible);
@@ -576,11 +576,11 @@ void SystemGLFrameBuffer::SetWindowVisible(bool visible)
 
 void SystemGLFrameBuffer::SetWindowTitle(const char* title)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
 		NSString* const nsTitle = nullptr == title ? nil :
 			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
-		[fb->m_window setTitle:nsTitle];
+		[frameBuffer->m_window setTitle:nsTitle];
 	}
 }
 

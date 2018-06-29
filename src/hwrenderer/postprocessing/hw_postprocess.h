@@ -201,12 +201,34 @@ public:
 	int Version = 330;
 };
 
+class PPEffectManager
+{
+public:
+	virtual void DeclareShaders() { }
+	virtual void UpdateTextures() { }
+	virtual void UpdateSteps() { }
+};
+
 class Postprocess
 {
 public:
+	Postprocess();
+	~Postprocess();
+
+	void DeclareShaders() { for (unsigned int i = 0; i < Managers.Size(); i++) Managers[i]->DeclareShaders(); }
+	void UpdateTextures() { for (unsigned int i = 0; i < Managers.Size(); i++) Managers[i]->UpdateTextures(); }
+	void UpdateSteps() { for (unsigned int i = 0; i < Managers.Size(); i++) Managers[i]->UpdateSteps(); }
+
+	int SceneWidth = 0;
+	int SceneHeight = 0;
+	int fixedcm;
+	float gameinfobluramount;
+
 	TMap<FString, TArray<PPStep>> Effects;
 	TMap<FString, PPTextureDesc> Textures;
 	TMap<FString, PPShader> Shaders;
+
+	TArray<PPEffectManager*> Managers;
 };
 
 extern Postprocess hw_postprocess;
@@ -258,15 +280,16 @@ public:
 	PPTextureName HTexture;
 };
 
-class PPBloom
+class PPBloom : public PPEffectManager
 {
 public:
-	void DeclareShaders();
-	void UpdateTextures(int sceneWidth, int sceneHeight);
-	void UpdateSteps(int fixedcm);
-	void UpdateBlurSteps(float gameinfobluramount);
+	void DeclareShaders() override;
+	void UpdateTextures() override;
+	void UpdateSteps() override;
 
 private:
+	void UpdateBlurSteps();
+
 	PPStep BlurStep(const BlurUniforms &blurUniforms, PPTextureName input, PPTextureName output, PPViewport viewport, bool vertical);
 
 	static float ComputeBlurGaussian(float n, float theta);
@@ -299,11 +322,11 @@ struct LensUniforms
 	}
 };
 
-class PPLensDistort
+class PPLensDistort : public PPEffectManager
 {
 public:
-	void DeclareShaders();
-	void UpdateSteps();
+	void DeclareShaders() override;
+	void UpdateSteps() override;
 };
 
 /////////////////////////////////////////////////////////////////////////////
@@ -324,11 +347,11 @@ struct FXAAUniforms
 	}
 };
 
-class PPFXAA
+class PPFXAA : public PPEffectManager
 {
 public:
-	void DeclareShaders();
-	void UpdateSteps();
+	void DeclareShaders() override;
+	void UpdateSteps() override;
 
 private:
 	int GetMaxVersion();
@@ -378,12 +401,12 @@ public:
 	PPTextureName Texture;
 };
 
-class PPCameraExposure
+class PPCameraExposure : public PPEffectManager
 {
 public:
-	void DeclareShaders();
-	void UpdateTextures(int sceneWidth, int sceneHeight);
-	void UpdateSteps();
+	void DeclareShaders() override;
+	void UpdateTextures() override;
+	void UpdateSteps() override;
 
 private:
 	TArray<PPExposureLevel> ExposureLevels;
@@ -407,21 +430,21 @@ struct ColormapUniforms
 	}
 };
 
-class PPColormap
+class PPColormap : public PPEffectManager
 {
 public:
-	void DeclareShaders();
-	void UpdateSteps(int fixedcm);
+	void DeclareShaders() override;
+	void UpdateSteps() override;
 };
 
 /////////////////////////////////////////////////////////////////////////////
 
-class PPTonemap
+class PPTonemap : public PPEffectManager
 {
 public:
-	void DeclareShaders();
-	void UpdateTextures();
-	void UpdateSteps();
+	void DeclareShaders() override;
+	void UpdateTextures() override;
+	void UpdateSteps() override;
 
 	enum TonemapMode
 	{

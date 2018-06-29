@@ -6,6 +6,24 @@
 
 Postprocess hw_postprocess;
 
+Postprocess::Postprocess()
+{
+	Managers.Push(new PPBloom());
+	Managers.Push(new PPLensDistort());
+	Managers.Push(new PPFXAA());
+	Managers.Push(new PPCameraExposure());
+	Managers.Push(new PPColormap());
+	Managers.Push(new PPTonemap());
+}
+
+Postprocess::~Postprocess()
+{
+	for (unsigned int i = 0; i < Managers.Size(); i++)
+		delete Managers[i];
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 void PPBloom::DeclareShaders()
 {
 	hw_postprocess.Shaders["BloomCombine"] = { "shaders/glsl/bloomcombine.fp", "", {} };
@@ -14,8 +32,11 @@ void PPBloom::DeclareShaders()
 	hw_postprocess.Shaders["BlurHorizontal"] = { "shaders/glsl/blur.fp", "#define BLUR_HORIZONTAL\n", BlurUniforms::Desc() };
 }
 
-void PPBloom::UpdateTextures(int width, int height)
+void PPBloom::UpdateTextures()
 {
+	int width = hw_postprocess.SceneWidth;
+	int height = hw_postprocess.SceneHeight;
+
 	// No scene, no bloom!
 	if (width <= 0 || height <= 0)
 		return;
@@ -42,10 +63,12 @@ void PPBloom::UpdateTextures(int width, int height)
 	}
 }
 
-void PPBloom::UpdateSteps(int fixedcm)
+void PPBloom::UpdateSteps()
 {
+	UpdateBlurSteps();
+
 	// Only bloom things if enabled and no special fixed light mode is active
-	if (!gl_bloom || fixedcm != CM_DEFAULT || gl_ssao_debug)
+	if (!gl_bloom || hw_postprocess.fixedcm != CM_DEFAULT || gl_ssao_debug || hw_postprocess.SceneWidth <= 0 || hw_postprocess.SceneHeight <= 0)
 	{
 		hw_postprocess.Effects["BloomScene"] = {};
 		return;
@@ -117,14 +140,14 @@ void PPBloom::UpdateSteps(int fixedcm)
 	hw_postprocess.Effects["BloomScene"] = steps;
 }
 
-void PPBloom::UpdateBlurSteps(float gameinfobluramount)
+void PPBloom::UpdateBlurSteps()
 {
 	// first, respect the CVar
 	float blurAmount = gl_menu_blur;
 
 	// if CVar is negative, use the gameinfo entry
 	if (gl_menu_blur < 0)
-		blurAmount = gameinfobluramount;
+		blurAmount = hw_postprocess.gameinfobluramount;
 
 	// if blurAmount == 0 or somehow still returns negative, exit to prevent a crash, clearly we don't want this
 	if (blurAmount <= 0.0)
@@ -377,8 +400,11 @@ void PPCameraExposure::DeclareShaders()
 	hw_postprocess.Shaders["ExposureCombine"] = { "shaders/glsl/exposurecombine.fp", "", ExposureCombineUniforms::Desc() };
 }
 
-void PPCameraExposure::UpdateTextures(int width, int height)
+void PPCameraExposure::UpdateTextures()
 {
+	int width = hw_postprocess.SceneWidth;
+	int height = hw_postprocess.SceneHeight;
+
 	if (ExposureLevels.Size() > 0 && ExposureLevels[0].Viewport.width == width && ExposureLevels[0].Viewport.height == height)
 	{
 		return;
@@ -486,8 +512,10 @@ void PPColormap::DeclareShaders()
 	hw_postprocess.Shaders["Colormap"] = { "shaders/glsl/colormap.fp", "", ColormapUniforms::Desc() };
 }
 
-void PPColormap::UpdateSteps(int fixedcm)
+void PPColormap::UpdateSteps()
 {
+	int fixedcm = hw_postprocess.fixedcm;
+
 	if (fixedcm < CM_FIRSTSPECIALCOLORMAP || fixedcm >= CM_MAXCOLORMAP)
 	{
 		hw_postprocess.Effects["ColormapScene"] = {};

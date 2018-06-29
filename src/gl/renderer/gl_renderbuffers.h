@@ -64,6 +64,8 @@ public:
 
 	bool Setup(int width, int height, int sceneWidth, int sceneHeight);
 
+	void UpdateEffectTextures();
+	void CompileEffectShaders();
 	void RenderEffect(const FString &name);
 
 	TMap<PPTextureName, PPTexture> GLTextures;
@@ -76,8 +78,6 @@ public:
 	void BindSceneNormalTexture(int index);
 	void BindSceneDepthTexture(int index);
 	void BlitSceneToTexture();
-
-	void BlitLinear(PPFrameBuffer src, PPFrameBuffer dest, int sx0, int sy0, int sx1, int sy1, int dx0, int dy0, int dx1, int dy1);
 
 	void BindCurrentTexture(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE);
 	void BindCurrentFB();
@@ -106,8 +106,6 @@ public:
 	int AmbientHeight = 0;
 	enum { NumAmbientRandomTextures = 3 };
 	PPTexture AmbientRandomTexture[NumAmbientRandomTextures];
-
-	static bool IsEnabled();
 
 	int GetWidth() const { return mWidth; }
 	int GetHeight() const { return mHeight; }

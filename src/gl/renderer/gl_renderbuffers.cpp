@@ -32,6 +32,8 @@
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
+#include "gl/renderer/gl_postprocessstate.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
@@ -586,13 +588,6 @@ void FGLRenderBuffers::BlitSceneToTexture()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
 
-void FGLRenderBuffers::BlitLinear(PPFrameBuffer src, PPFrameBuffer dest, int sx0, int sy0, int sx1, int sy1, int dx0, int dy0, int dx1, int dy1)
-{
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, src.handle);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.handle);
-	glBlitFramebuffer(sx0, sy0, sx1, sy1, dx0, dy0, dx1, dy1, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-}
-
 //==========================================================================
 //
 // Eye textures and their frame buffers
@@ -818,3 +813,183 @@ void FGLRenderBuffers::BindOutputFB()
 //==========================================================================
 
 bool FGLRenderBuffers::FailedCreate = false;
+
+//==========================================================================
+//
+// Creates or updates textures used by postprocess effects
+//
+//==========================================================================
+
+void FGLRenderBuffers::UpdateEffectTextures()
+{
+	TMap<FString, PPTextureDesc>::Iterator it(hw_postprocess.Textures);
+	TMap<FString, PPTextureDesc>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto &gltexture = GLTextures[pair->Key];
+		auto &glframebuffer = GLTextureFBs[pair->Key];
+
+		int glformat;
+		switch (pair->Value.Format)
+		{
+		default:
+		case PixelFormat::Rgba8: glformat = GL_RGBA8; break;
+		case PixelFormat::Rgba16f: glformat = GL_RGBA16F; break;
+		case PixelFormat::R32f: glformat = GL_R32F; break;
+		}
+
+		if (gltexture && (gltexture.Width != pair->Value.Width || gltexture.Height != pair->Value.Height))
+		{
+			glDeleteTextures(1, &gltexture.handle);
+			glDeleteFramebuffers(1, &glframebuffer.handle);
+			gltexture.handle = 0;
+			glframebuffer.handle = 0;
+		}
+
+		if (!gltexture)
+		{
+			FGLPostProcessState savedState;
+
+			if (pair->Value.Data)
+				gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height, pair->Value.Data.get());
+			else
+				gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height);
+			gltexture.Width = pair->Value.Width;
+			gltexture.Height = pair->Value.Height;
+			glframebuffer = CreateFrameBuffer(pair->Key.GetChars(), gltexture);
+		}
+	}
+}
+
+//==========================================================================
+//
+// Compile the shaders declared by post process effects
+//
+//==========================================================================
+
+void FGLRenderBuffers::CompileEffectShaders()
+{
+	TMap<FString, PPShader>::Iterator it(hw_postprocess.Shaders);
+	TMap<FString, PPShader>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		const auto &desc = pair->Value;
+		auto &glshader = GLShaders[pair->Key];
+		if (!glshader)
+		{
+			glshader = std::make_unique<FShaderProgram>();
+
+			FString prolog;
+			if (!desc.Uniforms.empty())
+				prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, POSTPROCESS_BINDINGPOINT);
+			prolog += desc.Defines;
+
+			glshader->Compile(IShaderProgram::Vertex, desc.VertexShader, "", desc.Version);
+			glshader->Compile(IShaderProgram::Fragment, desc.FragmentShader, prolog, desc.Version);
+			glshader->Link(pair->Key.GetChars());
+			if (!desc.Uniforms.empty())
+				glshader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		}
+	}
+}
+
+//==========================================================================
+//
+// Renders one post process effect
+//
+//==========================================================================
+
+void FGLRenderBuffers::RenderEffect(const FString &name)
+{
+	FGLDebug::PushGroup(name.GetChars());
+
+	FGLPostProcessState savedState;
+	savedState.SaveTextureBindings(3);
+
+	for (const PPStep &step : hw_postprocess.Effects[name])
+	{
+		// Bind input textures
+		for (unsigned int index = 0; index < step.Textures.Size(); index++)
+		{
+			const PPTextureInput &input = step.Textures[index];
+			int filter = (input.Filter == PPFilterMode::Nearest) ? GL_NEAREST : GL_LINEAR;
+
+			switch (input.Type)
+			{
+			default:
+			case PPTextureType::CurrentPipelineTexture:
+				BindCurrentTexture(index, filter);
+				break;
+
+			case PPTextureType::NextPipelineTexture:
+				I_FatalError("PPTextureType::NextPipelineTexture not allowed as input\n");
+				break;
+
+			case PPTextureType::PPTexture:
+				GLTextures[input.Texture].Bind(index, filter);
+				break;
+			}
+		}
+
+		// Set render target
+		switch (step.Output.Type)
+		{
+		default:
+		case PPTextureType::CurrentPipelineTexture:
+			BindCurrentFB();
+			break;
+
+		case PPTextureType::NextPipelineTexture:
+			BindNextFB();
+			break;
+
+		case PPTextureType::PPTexture:
+			GLTextureFBs[step.Output.Texture].Bind();
+			break;
+		}
+
+		// Set blend mode
+		if (step.BlendMode.BlendOp == STYLEOP_Add && step.BlendMode.SrcAlpha == STYLEALPHA_One && step.BlendMode.DestAlpha == STYLEALPHA_Zero && step.BlendMode.Flags == 0)
+		{
+			glDisable(GL_BLEND);
+		}
+		else
+		{
+			// To do: support all the modes
+			glEnable(GL_BLEND);
+			glBlendEquation(GL_FUNC_ADD);
+			if (step.BlendMode.SrcAlpha == STYLEALPHA_One && step.BlendMode.DestAlpha == STYLEALPHA_One)
+				glBlendFunc(GL_ONE, GL_ONE);
+			else
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+
+		// Setup viewport
+		glViewport(step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height);
+
+		auto &shader = GLShaders[step.ShaderName];
+
+		// Set uniforms
+		if (step.Uniforms.Size > 0)
+		{
+			if (!shader->Uniforms)
+				shader->Uniforms.reset(screen->CreateUniformBuffer(step.Uniforms.Size));
+			shader->Uniforms->SetData(step.Uniforms.Data);
+			shader->Uniforms->Bind(POSTPROCESS_BINDINGPOINT);
+		}
+
+		// Set shader
+		shader->Bind(NOQUEUE);
+
+		// Draw the screen quad
+		GLRenderer->RenderScreenQuad();
+
+		// Advance to next PP texture if our output was sent there
+		if (step.Output.Type == PPTextureType::NextPipelineTexture)
+			NextTexture();
+	}
+
+	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
+
+	FGLDebug::PopGroup();
+}

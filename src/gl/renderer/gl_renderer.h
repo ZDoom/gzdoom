@@ -108,13 +108,7 @@ public:
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
 	void AmbientOccludeScene(float m5);
-	void UpdateCameraExposure();
-	void BloomScene(int fixedcm);
-	void TonemapScene();
-	void ColormapScene(int fixedcm);
 	void ClearTonemapPalette();
-	void LensDistortScene();
-	void ApplyFXAA();
 	void BlurScene(float gameinfobluramount);
 	void CopyToBackbuffer(const IntRect *bounds, bool applyGamma);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma);

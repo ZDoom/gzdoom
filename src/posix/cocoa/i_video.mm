@@ -386,6 +386,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 		}
 	}
 
+	assert(frameBuffer == nullptr);
 	frameBuffer = this;
 
 	FConsoleWindow::GetInstance().Show(false);
@@ -393,6 +394,9 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 
 SystemGLFrameBuffer::~SystemGLFrameBuffer()
 {
+	assert(frameBuffer == this);
+	frameBuffer = nullptr;
+
 	NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 	[nc removeObserver:m_window
 				  name:NSWindowDidMoveNotification

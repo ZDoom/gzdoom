@@ -76,7 +76,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 void FDrawInfo::ApplyVPUniforms()
 {
 	VPUniforms.CalcDependencies();
-	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, NORMAL_PASS);
+	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, gl_RenderState.GetPassType());
 
 	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{

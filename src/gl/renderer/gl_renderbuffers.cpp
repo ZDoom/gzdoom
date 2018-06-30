@@ -833,6 +833,9 @@ void FGLRenderBuffers::CompileEffectShaders()
 
 void FGLRenderBuffers::RenderEffect(const FString &name)
 {
+	if (hw_postprocess.Effects[name].Size() == 0)
+		return;
+
 	FGLDebug::PushGroup(name.GetChars());
 
 	FGLPostProcessState savedState;

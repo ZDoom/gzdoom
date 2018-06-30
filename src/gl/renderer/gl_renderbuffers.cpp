@@ -902,7 +902,7 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 			GLTextureFBs[step.Output.Texture].Bind();
 			break;
 
-		case PPTextureType::SceneNormal:
+		case PPTextureType::SceneColor:
 			BindSceneFB(false);
 			break;
 		}

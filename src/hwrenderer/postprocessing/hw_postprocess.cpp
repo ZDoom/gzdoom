@@ -15,6 +15,7 @@ Postprocess::Postprocess()
 	Managers.Push(new PPCameraExposure());
 	Managers.Push(new PPColormap());
 	Managers.Push(new PPTonemap());
+	Managers.Push(new PPAmbientOcclusion());
 }
 
 Postprocess::~Postprocess()

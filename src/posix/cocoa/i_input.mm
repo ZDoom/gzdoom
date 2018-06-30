@@ -35,9 +35,6 @@
 
 #import <Carbon/Carbon.h>
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -48,8 +45,6 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "events.h"
-
-#undef Class
 
 
 EXTERN_CVAR(Int, m_use_mouse)

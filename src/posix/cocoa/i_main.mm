@@ -36,9 +36,6 @@
 
 #include <sys/sysctl.h>
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "c_console.h"
 #include "c_cvars.h"
 #include "cmdlib.h"
@@ -47,8 +44,6 @@
 #include "m_argv.h"
 #include "st_console.h"
 #include "version.h"
-
-#undef Class
 
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))

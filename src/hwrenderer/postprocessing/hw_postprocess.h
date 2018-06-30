@@ -92,7 +92,7 @@ public:
 		}
 	}
 
-	void *Data = nullptr;
+	uint8_t *Data = nullptr;
 	int Size = 0;
 };
 
@@ -204,6 +204,7 @@ public:
 class PPEffectManager
 {
 public:
+	virtual ~PPEffectManager() { }
 	virtual void DeclareShaders() { }
 	virtual void UpdateTextures() { }
 	virtual void UpdateSteps() { }

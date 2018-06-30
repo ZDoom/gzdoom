@@ -1418,7 +1418,11 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 		V_AddBlend(player->BlendR, player->BlendG, player->BlendB, player->BlendA, blend);
 	}
 
-	screen->Dim(PalEntry(255, uint8_t(blend[0] * 255), uint8_t(blend[1] * 255), uint8_t(blend[2] * 255)), blend[3], 0, 0, screen->GetWidth(), screen->GetHeight());
+	const float br = clamp(blend[0] * 255.f, 0.f, 255.f);
+	const float bg = clamp(blend[1] * 255.f, 0.f, 255.f);
+	const float bb = clamp(blend[2] * 255.f, 0.f, 255.f);
+	const PalEntry bcolor(255, uint8_t(br), uint8_t(bg), uint8_t(bb));
+	screen->Dim(bcolor, blend[3], 0, 0, screen->GetWidth(), screen->GetHeight());
 }
 
 

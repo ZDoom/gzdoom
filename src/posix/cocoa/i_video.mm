@@ -288,7 +288,7 @@ CocoaWindow* CreateWindow(const NSUInteger styleMask)
 	return window;
 }
 
-NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profile)
+NSOpenGLPixelFormat* CreatePixelFormat()
 {
 	NSOpenGLPixelFormatAttribute attributes[16];
 	size_t i = 0;
@@ -301,7 +301,7 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
 	attributes[i++] = NSOpenGLPFAOpenGLProfile;
-	attributes[i++] = profile;
+	attributes[i++] = NSOpenGLProfileVersion3_2Core;
 	
 	if (!vid_autoswitch)
 	{
@@ -330,30 +330,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 {
 	SetFlash(0, 0);
 
-	// Create OpenGL pixel format
-	NSOpenGLPixelFormatAttribute defaultProfile = NSOpenGLProfileVersion3_2Core;
-
-	if (NSAppKitVersionNumber < AppKit10_9)
-	{
-		// There is no support for OpenGL 3.3 before Mavericks
-		defaultProfile = NSOpenGLProfileVersionLegacy;
-	}
-	else if (const char* const glversion = Args->CheckValue("-glversion"))
-	{
-		// Check for explicit version specified in command line
-		const double version = strtod(glversion, nullptr) + 0.01;
-		if (version < 3.3)
-		{
-			defaultProfile = NSOpenGLProfileVersionLegacy;
-		}
-	}
-
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(defaultProfile);
-
-	if (nil == pixelFormat && NSOpenGLProfileVersion3_2Core == defaultProfile)
-	{
-		pixelFormat = CreatePixelFormat(NSOpenGLProfileVersionLegacy);
-	}
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
 
 	if (nil == pixelFormat)
 	{

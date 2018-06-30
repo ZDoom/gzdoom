@@ -10,12 +10,14 @@ typedef FRenderStyle PPBlendMode;
 typedef IntRect PPViewport;
 
 enum class PPFilterMode { Nearest, Linear };
-enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture };
+enum class PPWrapMode { Clamp, Repeat };
+enum class PPTextureType { CurrentPipelineTexture, NextPipelineTexture, PPTexture, SceneColor, SceneFog, SceneNormal, SceneDepth };
 
 class PPTextureInput
 {
 public:
 	PPFilterMode Filter;
+	PPWrapMode Wrap;
 	PPTextureType Type;
 	PPTextureName Texture;
 };
@@ -99,23 +101,50 @@ public:
 class PPStep
 {
 public:
-	void SetInputTexture(int index, PPTextureName texture, PPFilterMode filter = PPFilterMode::Nearest)
+	void SetInputTexture(int index, PPTextureName texture, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
 	{
 		if ((int)Textures.Size() < index + 1)
 			Textures.Resize(index + 1);
 		auto &tex = Textures[index];
 		tex.Filter = filter;
+		tex.Wrap = wrap;
 		tex.Type = PPTextureType::PPTexture;
 		tex.Texture = texture;
 	}
 
-	void SetInputCurrent(int index, PPFilterMode filter = PPFilterMode::Nearest)
+	void SetInputCurrent(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
+	{
+		SetInputSpecialType(index, PPTextureType::CurrentPipelineTexture, filter, wrap);
+	}
+
+	void SetInputSceneColor(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
+	{
+		SetInputSpecialType(index, PPTextureType::SceneColor, filter, wrap);
+	}
+
+	void SetInputSceneFog(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
+	{
+		SetInputSpecialType(index, PPTextureType::SceneFog, filter, wrap);
+	}
+
+	void SetInputSceneNormal(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
+	{
+		SetInputSpecialType(index, PPTextureType::SceneNormal, filter, wrap);
+	}
+
+	void SetInputSceneDepth(int index, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
+	{
+		SetInputSpecialType(index, PPTextureType::SceneDepth, filter, wrap);
+	}
+
+	void SetInputSpecialType(int index, PPTextureType type, PPFilterMode filter = PPFilterMode::Nearest, PPWrapMode wrap = PPWrapMode::Clamp)
 	{
 		if ((int)Textures.Size() < index + 1)
 			Textures.Resize(index + 1);
 		auto &tex = Textures[index];
 		tex.Filter = filter;
-		tex.Type = PPTextureType::CurrentPipelineTexture;
+		tex.Wrap = wrap;
+		tex.Type = type;
 		tex.Texture = {};
 	}
 
@@ -134,6 +163,12 @@ public:
 	void SetOutputNext()
 	{
 		Output.Type = PPTextureType::NextPipelineTexture;
+		Output.Texture = {};
+	}
+
+	void SetOutputSceneColor()
+	{
+		Output.Type = PPTextureType::SceneColor;
 		Output.Texture = {};
 	}
 
@@ -173,7 +208,9 @@ enum class PixelFormat
 {
 	Rgba8,
 	Rgba16f,
-	R32f
+	R32f,
+	Rg16f,
+	Rgba16_snorm
 };
 
 class PPTextureDesc
@@ -221,8 +258,9 @@ public:
 
 	int SceneWidth = 0;
 	int SceneHeight = 0;
-	int fixedcm;
-	float gameinfobluramount;
+	int fixedcm = 0;
+	float gameinfobluramount = 0.0f;
+	float m5 = 0.0f;
 
 	TMap<FString, TArray<PPStep>> Effects;
 	TMap<FString, PPTextureDesc> Textures;
@@ -456,4 +494,133 @@ public:
 		Palette,
 		NumTonemapModes
 	};
+};
+
+/////////////////////////////////////////////////////////////////////////////
+
+struct LinearDepthUniforms
+{
+	int SampleIndex;
+	float LinearizeDepthA;
+	float LinearizeDepthB;
+	float InverseDepthRangeA;
+	float InverseDepthRangeB;
+	float Padding0, Padding1, Padding2;
+	FVector2 Scale;
+	FVector2 Offset;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "SampleIndex", UniformType::Int, offsetof(LinearDepthUniforms, SampleIndex) },
+			{ "LinearizeDepthA", UniformType::Float, offsetof(LinearDepthUniforms, LinearizeDepthA) },
+			{ "LinearizeDepthB", UniformType::Float, offsetof(LinearDepthUniforms, LinearizeDepthB) },
+			{ "InverseDepthRangeA", UniformType::Float, offsetof(LinearDepthUniforms, InverseDepthRangeA) },
+			{ "InverseDepthRangeB", UniformType::Float, offsetof(LinearDepthUniforms, InverseDepthRangeB) },
+			{ "Padding0", UniformType::Float, offsetof(LinearDepthUniforms, Padding0) },
+			{ "Padding1", UniformType::Float, offsetof(LinearDepthUniforms, Padding1) },
+			{ "Padding2", UniformType::Float, offsetof(LinearDepthUniforms, Padding2) },
+			{ "Scale", UniformType::Vec2, offsetof(LinearDepthUniforms, Scale) },
+			{ "Offset", UniformType::Vec2, offsetof(LinearDepthUniforms, Offset) }
+		};
+	}
+};
+
+struct SSAOUniforms
+{
+	FVector2 UVToViewA;
+	FVector2 UVToViewB;
+	FVector2 InvFullResolution;
+	float NDotVBias;
+	float NegInvR2;
+	float RadiusToScreen;
+	float AOMultiplier;
+	float AOStrength;
+	int SampleIndex;
+	float Padding0, Padding1;
+	FVector2 Scale;
+	FVector2 Offset;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "UVToViewA", UniformType::Vec2, offsetof(SSAOUniforms, UVToViewA) },
+			{ "UVToViewB", UniformType::Vec2, offsetof(SSAOUniforms, UVToViewB) },
+			{ "InvFullResolution", UniformType::Vec2, offsetof(SSAOUniforms, InvFullResolution) },
+			{ "NDotVBias", UniformType::Float, offsetof(SSAOUniforms, NDotVBias) },
+			{ "NegInvR2", UniformType::Float, offsetof(SSAOUniforms, NegInvR2) },
+			{ "RadiusToScreen", UniformType::Float, offsetof(SSAOUniforms, RadiusToScreen) },
+			{ "AOMultiplier", UniformType::Float, offsetof(SSAOUniforms, AOMultiplier) },
+			{ "AOStrength", UniformType::Float, offsetof(SSAOUniforms, AOStrength) },
+			{ "SampleIndex", UniformType::Int, offsetof(SSAOUniforms, SampleIndex) },
+			{ "Padding0", UniformType::Float, offsetof(SSAOUniforms, Padding0) },
+			{ "Padding1", UniformType::Float, offsetof(SSAOUniforms, Padding1) },
+			{ "Scale", UniformType::Vec2, offsetof(SSAOUniforms, Scale) },
+			{ "Offset", UniformType::Vec2, offsetof(SSAOUniforms, Offset) },
+		};
+	}
+};
+
+struct DepthBlurUniforms
+{
+	float BlurSharpness;
+	float PowExponent;
+	FVector2 InvFullResolution;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "BlurSharpness", UniformType::Float, offsetof(DepthBlurUniforms, BlurSharpness) },
+			{ "PowExponent", UniformType::Float, offsetof(DepthBlurUniforms, PowExponent) },
+			{ "InvFullResolution", UniformType::Vec2, offsetof(DepthBlurUniforms, InvFullResolution) }
+		};
+	}
+};
+
+struct AmbientCombineUniforms
+{
+	int SampleCount;
+	int Padding0, Padding1, Padding2;
+	FVector2 Scale;
+	FVector2 Offset;
+
+	static std::vector<UniformFieldDesc> Desc()
+	{
+		return
+		{
+			{ "SampleCount", UniformType::Int, offsetof(AmbientCombineUniforms, SampleCount) },
+			{ "Padding0", UniformType::Int, offsetof(AmbientCombineUniforms, Padding0) },
+			{ "Padding1", UniformType::Int, offsetof(AmbientCombineUniforms, Padding1) },
+			{ "Padding2", UniformType::Int, offsetof(AmbientCombineUniforms, Padding2) },
+			{ "Scale", UniformType::Vec2, offsetof(AmbientCombineUniforms, Scale) },
+			{ "Offset", UniformType::Vec2, offsetof(AmbientCombineUniforms, Offset) }
+		};
+	}
+};
+
+class PPAmbientOcclusion : public PPEffectManager
+{
+public:
+	void DeclareShaders() override;
+	void UpdateTextures() override;
+	void UpdateSteps() override;
+
+private:
+	enum Quality
+	{
+		Off,
+		LowQuality,
+		MediumQuality,
+		HighQuality,
+		NumQualityModes
+	};
+
+	int AmbientWidth = 0;
+	int AmbientHeight = 0;
+
+	enum { NumAmbientRandomTextures = 3 };
+	PPTextureName AmbientRandomTexture[NumAmbientRandomTextures];
 };

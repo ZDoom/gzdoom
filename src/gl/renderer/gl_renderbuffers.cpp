@@ -60,7 +60,6 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearScene();
 	ClearPipeline();
 	ClearEyeBuffers();
-	ClearAmbientOcclusion();
 	ClearShadowMap();
 }
 
@@ -105,18 +104,6 @@ void FGLRenderBuffers::ClearEyeBuffers()
 	mEyeFBs.Clear();
 }
 
-void FGLRenderBuffers::ClearAmbientOcclusion()
-{
-	DeleteFrameBuffer(LinearDepthFB);
-	DeleteFrameBuffer(AmbientFB0);
-	DeleteFrameBuffer(AmbientFB1);
-	DeleteTexture(LinearDepthTexture);
-	DeleteTexture(AmbientTexture0);
-	DeleteTexture(AmbientTexture1);
-	for (int i = 0; i < NumAmbientRandomTextures; i++)
-		DeleteTexture(AmbientRandomTexture[i]);
-}
-
 void FGLRenderBuffers::DeleteTexture(PPTexture &tex)
 {
 	if (tex.handle != 0)
@@ -145,7 +132,7 @@ void FGLRenderBuffers::DeleteFrameBuffer(PPFrameBuffer &fb)
 //
 //==========================================================================
 
-bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
+void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
 {
 	if (width <= 0 || height <= 0)
 		I_FatalError("Requested invalid render buffer sizes: screen = %dx%d", width, height);
@@ -169,14 +156,8 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	mHeight = height;
 	mSamples = samples;
 	mSceneUsesTextures = needsSceneTextures;
-
-	// Bloom bluring buffers need to match the scene to avoid bloom bleeding artifacts
-	if (mSceneWidth != sceneWidth || mSceneHeight != sceneHeight)
-	{
-		CreateAmbientOcclusion(sceneWidth, sceneHeight);
-		mSceneWidth = sceneWidth;
-		mSceneHeight = sceneHeight;
-	}
+	mSceneWidth = sceneWidth;
+	mSceneHeight = sceneHeight;
 
 	glBindTexture(GL_TEXTURE_2D, textureBinding);
 	glActiveTexture(activeTex);
@@ -195,8 +176,6 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		mSceneHeight = 0;
 		I_FatalError("Unable to create render buffers.");
 	}
-
-	return true;
 }
 
 //==========================================================================
@@ -262,55 +241,6 @@ void FGLRenderBuffers::CreatePipeline(int width, int height)
 	{
 		mPipelineTexture[i] = Create2DTexture("PipelineTexture", GL_RGBA16F, width, height);
 		mPipelineFB[i] = CreateFrameBuffer("PipelineFB", mPipelineTexture[i]);
-	}
-}
-
-//==========================================================================
-//
-// Creates ambient occlusion working buffers
-//
-//==========================================================================
-
-void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
-{
-	ClearAmbientOcclusion();
-
-	if (width <= 0 || height <= 0)
-		return;
-
-	AmbientWidth = (width + 1) / 2;
-	AmbientHeight = (height + 1) / 2;
-	LinearDepthTexture = Create2DTexture("LinearDepthTexture", GL_R32F, AmbientWidth, AmbientHeight);
-	AmbientTexture0 = Create2DTexture("AmbientTexture0", GL_RG16F, AmbientWidth, AmbientHeight);
-	AmbientTexture1 = Create2DTexture("AmbientTexture1", GL_RG16F, AmbientWidth, AmbientHeight);
-	LinearDepthFB = CreateFrameBuffer("LinearDepthFB", LinearDepthTexture);
-	AmbientFB0 = CreateFrameBuffer("AmbientFB0", AmbientTexture0);
-	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
-
-	// Must match quality enum in FSSAOShader::GetDefines
-	double numDirections[NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
-
-	std::mt19937 generator(1337);
-	std::uniform_real_distribution<double> distribution(0.0, 1.0);
-	for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
-	{
-		int16_t randomValues[16 * 4];
-
-		for (int i = 0; i < 16; i++)
-		{
-			double angle = 2.0 * M_PI * distribution(generator) / numDirections[quality];
-			double x = cos(angle);
-			double y = sin(angle);
-			double z = distribution(generator);
-			double w = distribution(generator);
-
-			randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
-			randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
-			randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
-			randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
-		}
-
-		AmbientRandomTexture[quality] = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
 	}
 }
 
@@ -563,7 +493,7 @@ void FGLRenderBuffers::ClearFrameBuffer(bool stencil, bool depth)
 
 //==========================================================================
 //
-// Resolves the multisample frame buffer by copying it to the scene texture
+// Resolves the multisample frame buffer by copying it to the first pipeline texture
 //
 //==========================================================================
 
@@ -836,6 +766,8 @@ void FGLRenderBuffers::UpdateEffectTextures()
 		case PixelFormat::Rgba8: glformat = GL_RGBA8; break;
 		case PixelFormat::Rgba16f: glformat = GL_RGBA16F; break;
 		case PixelFormat::R32f: glformat = GL_R32F; break;
+		case PixelFormat::Rg16f: glformat = GL_RG16F; break;
+		case PixelFormat::Rgba16_snorm: glformat = GL_RGBA16_SNORM; break;
 		}
 
 		if (gltexture && (gltexture.Width != pair->Value.Width || gltexture.Height != pair->Value.Height))
@@ -913,12 +845,13 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 		{
 			const PPTextureInput &input = step.Textures[index];
 			int filter = (input.Filter == PPFilterMode::Nearest) ? GL_NEAREST : GL_LINEAR;
+			int wrap = (input.Wrap == PPWrapMode::Clamp) ? GL_CLAMP : GL_REPEAT;
 
 			switch (input.Type)
 			{
 			default:
 			case PPTextureType::CurrentPipelineTexture:
-				BindCurrentTexture(index, filter);
+				BindCurrentTexture(index, filter, wrap);
 				break;
 
 			case PPTextureType::NextPipelineTexture:
@@ -926,7 +859,23 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 				break;
 
 			case PPTextureType::PPTexture:
-				GLTextures[input.Texture].Bind(index, filter);
+				GLTextures[input.Texture].Bind(index, filter, wrap);
+				break;
+
+			case PPTextureType::SceneColor:
+				BindSceneColorTexture(index);
+				break;
+
+			case PPTextureType::SceneFog:
+				BindSceneFogTexture(index);
+				break;
+
+			case PPTextureType::SceneNormal:
+				BindSceneNormalTexture(index);
+				break;
+
+			case PPTextureType::SceneDepth:
+				BindSceneDepthTexture(index);
 				break;
 			}
 		}
@@ -935,6 +884,9 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 		switch (step.Output.Type)
 		{
 		default:
+			I_FatalError("Unsupported postprocess output type\n");
+			break;
+
 		case PPTextureType::CurrentPipelineTexture:
 			BindCurrentFB();
 			break;
@@ -945,6 +897,10 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 
 		case PPTextureType::PPTexture:
 			GLTextureFBs[step.Output.Texture].Bind();
+			break;
+
+		case PPTextureType::SceneNormal:
+			BindSceneFB(false);
 			break;
 		}
 

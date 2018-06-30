@@ -26,10 +26,6 @@ class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
-class FLinearDepthShader;
-class FDepthBlurShader;
-class FSSAOShader;
-class FSSAOCombineShader;
 class FPresentShader;
 class FPresent3DCheckerShader;
 class FPresent3DColumnShader; 
@@ -68,10 +64,6 @@ public:
 	FGLRenderBuffers *mBuffers;
 	FGLRenderBuffers *mScreenBuffers;
 	FGLRenderBuffers *mSaveBuffers;
-	FLinearDepthShader *mLinearDepthShader;
-	FSSAOShader *mSSAOShader;
-	FDepthBlurShader *mDepthBlurShader;
-	FSSAOCombineShader *mSSAOCombineShader;
 	FPresentShader *mPresentShader;
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
@@ -89,8 +81,6 @@ public:
 	SWSceneDrawer *swdrawer = nullptr;
 
 	FPortalSceneState mPortalState;
-
-	bool buffersActive = false;
 
 	float mSceneClearColor[3];
 
@@ -119,7 +109,7 @@ public:
 	sector_t *RenderView(player_t *player);
 	void BeginFrame();
     
-    void Set3DViewport(bool mainview);
+    void Set3DViewport();
     sector_t *RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 
 

@@ -62,7 +62,7 @@ public:
 	FGLRenderBuffers();
 	~FGLRenderBuffers();
 
-	bool Setup(int width, int height, int sceneWidth, int sceneHeight);
+	void Setup(int width, int height, int sceneWidth, int sceneHeight);
 
 	void UpdateEffectTextures();
 	void CompileEffectShaders();
@@ -95,18 +95,6 @@ public:
 	void BindShadowMapFB();
 	void BindShadowMapTexture(int index);
 
-	// Ambient occlusion buffers
-	PPTexture LinearDepthTexture;
-	PPFrameBuffer LinearDepthFB;
-	PPTexture AmbientTexture0;
-	PPTexture AmbientTexture1;
-	PPFrameBuffer AmbientFB0;
-	PPFrameBuffer AmbientFB1;
-	int AmbientWidth = 0;
-	int AmbientHeight = 0;
-	enum { NumAmbientRandomTextures = 3 };
-	PPTexture AmbientRandomTexture[NumAmbientRandomTextures];
-
 	int GetWidth() const { return mWidth; }
 	int GetHeight() const { return mHeight; }
 
@@ -117,13 +105,11 @@ private:
 	void ClearScene();
 	void ClearPipeline();
 	void ClearEyeBuffers();
-	void ClearAmbientOcclusion();
 	void ClearShadowMap();
 	void CreateScene(int width, int height, int samples, bool needsSceneTextures);
 	void CreatePipeline(int width, int height);
 	void CreateEyeBuffers(int eye);
 	void CreateShadowMap();
-	void CreateAmbientOcclusion(int width, int height);
 
 	PPTexture Create2DTexture(const char *name, GLuint format, int width, int height, const void *data = nullptr);
 	PPTexture Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);

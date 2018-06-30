@@ -3,6 +3,7 @@
 #include "hw_postprocess.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "hwrenderer/postprocessing/hw_postprocess_cvars.h"
+#include <random>
 
 Postprocess hw_postprocess;
 
@@ -558,8 +559,7 @@ void PPTonemap::UpdateTextures()
 {
 	if (gl_tonemap == Palette)
 	{
-		auto &texture = hw_postprocess.Textures["Tonemap.Palette"];
-		if (!texture.Data)
+		if (!hw_postprocess.Textures.CheckKey("Tonemap.Palette"))
 		{
 			std::shared_ptr<void> data(new uint32_t[512 * 512], [](void *p) { delete[](uint32_t*)p; });
 
@@ -581,7 +581,7 @@ void PPTonemap::UpdateTextures()
 				}
 			}
 
-			texture = { 512, 512, PixelFormat::Rgba8, data };
+			hw_postprocess.Textures["Tonemap.Palette"] = { 512, 512, PixelFormat::Rgba8, data };
 		}
 	}
 }
@@ -617,4 +617,219 @@ void PPTonemap::UpdateSteps()
 	TArray<PPStep> steps;
 	steps.Push(step);
 	hw_postprocess.Effects["TonemapScene"] = steps;
+}
+
+
+/////////////////////////////////////////////////////////////////////////////
+
+void PPAmbientOcclusion::DeclareShaders()
+{
+	// Must match quality values in PPAmbientOcclusion::UpdateTextures
+	int numDirections, numSteps;
+	switch (gl_ssao)
+	{
+	default:
+	case LowQuality:    numDirections = 2; numSteps = 4; break;
+	case MediumQuality: numDirections = 4; numSteps = 4; break;
+	case HighQuality:   numDirections = 8; numSteps = 4; break;
+	}
+
+	FString defines;
+	defines.Format(R"(
+		#define USE_RANDOM_TEXTURE
+		#define RANDOM_TEXTURE_WIDTH 4.0
+		#define NUM_DIRECTIONS %d.0
+		#define NUM_STEPS %d.0
+	)", numDirections, numSteps);
+
+	hw_postprocess.Shaders["SSAO.LinearDepth"] = { "shaders/glsl/lineardepth.fp", "", LinearDepthUniforms::Desc() };
+	hw_postprocess.Shaders["SSAO.LinearDepthMS"] = { "shaders/glsl/lineardepth.fp", "#define MULTISAMPLE\n", LinearDepthUniforms::Desc() };
+	hw_postprocess.Shaders["SSAO.AmbientOcclude"] = { "shaders/glsl/ssao.fp", defines, SSAOUniforms::Desc() };
+	hw_postprocess.Shaders["SSAO.AmbientOccludeMS"] = { "shaders/glsl/ssao.fp", defines + "\n#define MULTISAMPLE\n", SSAOUniforms::Desc() };
+	hw_postprocess.Shaders["SSAO.BlurVertical"] = { "shaders/glsl/depthblur.fp", "#define BLUR_VERTICAL\n", DepthBlurUniforms::Desc() };
+	hw_postprocess.Shaders["SSAO.BlurHorizontal"] = { "shaders/glsl/depthblur.fp", "#define BLUR_HORIZONTAL\n", DepthBlurUniforms::Desc() };
+	hw_postprocess.Shaders["SSAO.Combine"] = { "shaders/glsl/ssaocombine.fp", "", AmbientCombineUniforms::Desc() };
+	hw_postprocess.Shaders["SSAO.CombineMS"] = { "shaders/glsl/ssaocombine.fp", "#define MULTISAMPLE\n", AmbientCombineUniforms::Desc() };
+}
+
+void PPAmbientOcclusion::UpdateTextures()
+{
+	int width = hw_postprocess.SceneWidth;
+	int height = hw_postprocess.SceneHeight;
+
+	if (width <= 0 || height <= 0)
+		return;
+
+	AmbientWidth = (width + 1) / 2;
+	AmbientHeight = (height + 1) / 2;
+
+	hw_postprocess.Textures["SSAO.LinearDepth"] = { AmbientWidth, AmbientHeight, PixelFormat::R32f };
+	hw_postprocess.Textures["SSAO.Ambient0"] = { AmbientWidth, AmbientHeight, PixelFormat::Rg16f };
+	hw_postprocess.Textures["SSAO.Ambient1"] = { AmbientWidth, AmbientHeight, PixelFormat::Rg16f };
+
+	// We only need to create the random texture once
+	if (!hw_postprocess.Textures.CheckKey("SSAO.Random0"))
+	{
+		// Must match quality enum in PPAmbientOcclusion::DeclareShaders
+		double numDirections[NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
+
+		std::mt19937 generator(1337);
+		std::uniform_real_distribution<double> distribution(0.0, 1.0);
+		for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
+		{
+			std::shared_ptr<void> data(new int16_t[16 * 4], [](void *p) { delete[](int16_t*)p; });
+			int16_t *randomValues = (int16_t *)data.get();
+
+			for (int i = 0; i < 16; i++)
+			{
+				double angle = 2.0 * M_PI * distribution(generator) / numDirections[quality];
+				double x = cos(angle);
+				double y = sin(angle);
+				double z = distribution(generator);
+				double w = distribution(generator);
+
+				randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
+				randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
+				randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
+				randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
+			}
+
+			FString name;
+			name.Format("SSAO.Random%d", quality);
+
+			hw_postprocess.Textures[name] = { 4, 4, PixelFormat::Rgba16_snorm, data };
+			AmbientRandomTexture[quality] = name;
+		}
+	}
+}
+
+void PPAmbientOcclusion::UpdateSteps()
+{
+	if (gl_ssao == 0 || hw_postprocess.SceneWidth == 0 || hw_postprocess.SceneHeight == 0)
+	{
+		hw_postprocess.Effects["AmbientOccludeScene"] = {};
+		return;
+	}
+
+	float bias = gl_ssao_bias;
+	float aoRadius = gl_ssao_radius;
+	const float blurAmount = gl_ssao_blur;
+	float aoStrength = gl_ssao_strength;
+
+	//float tanHalfFovy = tan(fovy * (M_PI / 360.0f));
+	float tanHalfFovy = 1.0f / hw_postprocess.m5;
+	float invFocalLenX = tanHalfFovy * (hw_postprocess.SceneWidth / (float)hw_postprocess.SceneHeight);
+	float invFocalLenY = tanHalfFovy;
+	float nDotVBias = clamp(bias, 0.0f, 1.0f);
+	float r2 = aoRadius * aoRadius;
+
+	float blurSharpness = 1.0f / blurAmount;
+
+	auto sceneScale = screen->SceneScale();
+	auto sceneOffset = screen->SceneOffset();
+
+	int randomTexture = clamp(gl_ssao - 1, 0, NumAmbientRandomTextures - 1);
+
+	LinearDepthUniforms linearUniforms;
+	linearUniforms.SampleIndex = 0;
+	linearUniforms.LinearizeDepthA = 1.0f / screen->GetZFar() - 1.0f / screen->GetZNear();
+	linearUniforms.LinearizeDepthB = MAX(1.0f / screen->GetZNear(), 1.e-8f);
+	linearUniforms.InverseDepthRangeA = 1.0f;
+	linearUniforms.InverseDepthRangeB = 0.0f;
+	linearUniforms.Scale = sceneScale;
+	linearUniforms.Offset = sceneOffset;
+
+	SSAOUniforms ssaoUniforms;
+	ssaoUniforms.SampleIndex = 0;
+	ssaoUniforms.UVToViewA = { 2.0f * invFocalLenX, 2.0f * invFocalLenY };
+	ssaoUniforms.UVToViewB = { -invFocalLenX, -invFocalLenY };
+	ssaoUniforms.InvFullResolution = { 1.0f / AmbientWidth, 1.0f / AmbientHeight };
+	ssaoUniforms.NDotVBias = nDotVBias;
+	ssaoUniforms.NegInvR2 = -1.0f / r2;
+	ssaoUniforms.RadiusToScreen = aoRadius * 0.5f / tanHalfFovy * AmbientHeight;
+	ssaoUniforms.AOMultiplier = 1.0f / (1.0f - nDotVBias);
+	ssaoUniforms.AOStrength = aoStrength;
+	ssaoUniforms.Scale = sceneScale;
+	ssaoUniforms.Offset = sceneOffset;
+
+	DepthBlurUniforms blurUniforms;
+	blurUniforms.BlurSharpness = blurSharpness;
+	blurUniforms.InvFullResolution = { 1.0f / AmbientWidth, 1.0f / AmbientHeight };
+	blurUniforms.PowExponent = gl_ssao_exponent;
+
+	AmbientCombineUniforms combineUniforms;
+	combineUniforms.SampleCount = gl_multisample;
+	combineUniforms.Scale = screen->SceneScale();
+	combineUniforms.Offset = screen->SceneOffset();
+
+	IntRect ambientViewport;
+	ambientViewport.left = 0;
+	ambientViewport.top = 0;
+	ambientViewport.width = AmbientWidth;
+	ambientViewport.height = AmbientHeight;
+
+	TArray<PPStep> steps;
+
+	// Calculate linear depth values
+	{
+		PPStep step;
+		step.ShaderName = gl_multisample ? "SSAO.LinearDepthMS" : "SSAO.LinearDepth";
+		step.Uniforms.Set(linearUniforms);
+		step.Viewport = ambientViewport;
+		step.SetInputSceneDepth(0);
+		step.SetInputSceneColor(1);
+		step.SetOutputTexture("SSAO.LinearDepth");
+		step.SetNoBlend();
+		steps.Push(step);
+	}
+
+	// Apply ambient occlusion
+	{
+		PPStep step;
+		step.ShaderName = gl_multisample ? "SSAO.AmbientOccludeMS" : "SSAO.AmbientOcclude";
+		step.Uniforms.Set(ssaoUniforms);
+		step.Viewport = ambientViewport;
+		step.SetInputTexture(0, "SSAO.LinearDepth");
+		step.SetInputSceneNormal(1);
+		step.SetInputTexture(2, AmbientRandomTexture[randomTexture], PPFilterMode::Nearest, PPWrapMode::Repeat);
+		step.SetOutputTexture("SSAO.Ambient0");
+		step.SetNoBlend();
+		steps.Push(step);
+	}
+
+	// Blur SSAO texture
+	if (gl_ssao_debug < 2)
+	{
+		PPStep step;
+		step.ShaderName = "SSAO.BlurHorizontal";
+		step.Uniforms.Set(blurUniforms);
+		step.Viewport = ambientViewport;
+		step.SetInputTexture(0, "SSAO.Ambient0");
+		step.SetOutputTexture("SSAO.Ambient1");
+		step.SetNoBlend();
+		steps.Push(step);
+
+		step.ShaderName = "SSAO.BlurVertical";
+		step.SetInputTexture(0, "SSAO.Ambient1");
+		step.SetOutputTexture("SSAO.Ambient0");
+		steps.Push(step);
+	}
+
+	// Add SSAO back to scene texture:
+	{
+		PPStep step;
+		step.ShaderName = gl_multisample ? "SSAO.CombineMS" : "SSAO.Combine";
+		step.Uniforms.Set(combineUniforms);
+		step.Viewport = screen->mSceneViewport;
+		step.SetInputTexture(0, "SSAO.Ambient0", PPFilterMode::Linear);
+		step.SetInputSceneFog(1);
+		step.SetOutputSceneColor();
+		if (gl_ssao_debug != 0)
+			step.SetNoBlend();
+		else
+			step.SetAlphaBlend();
+		steps.Push(step);
+	}
+
+	hw_postprocess.Effects["AmbientOccludeScene"] = steps;
 }

@@ -148,8 +148,6 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 	sector_t *frontsector = sub->sector;
 	frontsector->MoreFlags |= SECMF_DRAWN;
 
-	bool mainBSP = sub->polys == nullptr;
-
 	if (sub->polys)
 	{
 		if (sub->BSP == nullptr || sub->BSP->bDirty)
@@ -172,35 +170,27 @@ void RenderPolyScene::RenderSubsector(PolyRenderThread *thread, subsector_t *sub
 		{
 			RenderPolyNode(thread, &sub->BSP->Nodes.Last(), subsectorDepth, frontsector);
 		}
-
-		Render3DFloorPlane::RenderPlanes(thread, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(thread, sub, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals, CurrentViewpoint->SectorPortalsStart);
 	}
-	else
+
+	PolyTransferHeights fakeflat(sub);
+
+	Render3DFloorPlane::RenderPlanes(thread, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
+	RenderPolyPlane::RenderPlanes(thread, fakeflat, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals, CurrentViewpoint->SectorPortalsStart);
+
+	for (uint32_t i = 0; i < sub->numlines; i++)
 	{
-		PolyTransferHeights fakeflat(sub);
-
-		Render3DFloorPlane::RenderPlanes(thread, sub, CurrentViewpoint->StencilValue, subsectorDepth, thread->TranslucentObjects);
-		RenderPolyPlane::RenderPlanes(thread, fakeflat, CurrentViewpoint->StencilValue, Cull.MaxCeilingHeight, Cull.MinFloorHeight, thread->SectorPortals, CurrentViewpoint->SectorPortalsStart);
-
-		for (uint32_t i = 0; i < sub->numlines; i++)
+		if (Cull.IsLineSegVisible(subsectorDepth, i))
 		{
-			if (Cull.IsLineSegVisible(subsectorDepth, i))
-			{
-				seg_t *line = &sub->firstline[i];
-				RenderLine(thread, sub, line, fakeflat.FrontSector, subsectorDepth);
-			}
+			seg_t *line = &sub->firstline[i];
+			RenderLine(thread, sub, line, fakeflat.FrontSector, subsectorDepth);
 		}
 	}
 
-	if (mainBSP)
+	int subsectorIndex = sub->Index();
+	for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
 	{
-		int subsectorIndex = sub->Index();
-		for (int i = ParticlesInSubsec[subsectorIndex]; i != NO_PARTICLE; i = Particles[i].snext)
-		{
-			particle_t *particle = Particles + i;
-			thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, CurrentViewpoint->StencilValue));
-		}
+		particle_t *particle = Particles + i;
+		thread->TranslucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucentParticle>(particle, sub, subsectorDepth, CurrentViewpoint->StencilValue));
 	}
 }
 

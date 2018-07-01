@@ -839,13 +839,14 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 	FGLDebug::PushGroup(name.GetChars());
 
 	FGLPostProcessState savedState;
-	savedState.SaveTextureBindings(3);
 
 	for (const PPStep &step : hw_postprocess.Effects[name])
 	{
 		// Bind input textures
 		for (unsigned int index = 0; index < step.Textures.Size(); index++)
 		{
+			savedState.SaveTextureBindings(index + 1);
+
 			const PPTextureInput &input = step.Textures[index];
 			int filter = (input.Filter == PPFilterMode::Nearest) ? GL_NEAREST : GL_LINEAR;
 			int wrap = (input.Wrap == PPWrapMode::Clamp) ? GL_CLAMP : GL_REPEAT;

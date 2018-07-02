@@ -25,7 +25,7 @@ vec3 ProcessMaterial(vec3 material, vec3 color);
 
 float grayscale(vec4 color)
 {
-	return dot(color.rgb, vec3(0.4, 0.56, 0.14));
+	return dot(color.rgb, vec3(0.3, 0.56, 0.14));
 }
 
 //===========================================================================

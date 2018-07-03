@@ -1,5 +1,5 @@
-#ifndef __GL_RENDERBUFFERS_H
-#define __GL_RENDERBUFFERS_H
+
+#pragma once
 
 #include "gl/shaders/gl_shader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
@@ -67,10 +67,6 @@ public:
 	void UpdateEffectTextures();
 	void CompileEffectShaders();
 	void RenderEffect(const FString &name);
-
-	TMap<PPTextureName, PPGLTexture> GLTextures;
-	TMap<PPTextureName, PPGLFrameBuffer> GLTextureFBs;
-	TMap<PPShaderName, std::shared_ptr<FShaderProgram>> GLShaders;
 
 	void BindSceneFB(bool sceneData);
 	void BindSceneColorTexture(int index);
@@ -161,7 +157,10 @@ private:
 	PPGLFrameBuffer mShadowMapFB;
 	int mCurrentShadowMapSize = 0;
 
+	// Postprocess OpenGL objects
+	TMap<PPTextureName, PPGLTexture> GLTextures;
+	TMap<PPTextureName, PPGLFrameBuffer> GLTextureFBs;
+	TMap<PPShaderName, std::shared_ptr<FShaderProgram>> GLShaders;
+
 	static bool FailedCreate;
 };
-
-#endif

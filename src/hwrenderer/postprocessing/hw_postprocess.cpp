@@ -794,7 +794,7 @@ void PPAmbientOcclusion::UpdateSteps()
 	// Calculate linear depth values
 	{
 		PPStep step;
-		step.ShaderName = gl_multisample ? "SSAO.LinearDepthMS" : "SSAO.LinearDepth";
+		step.ShaderName = gl_multisample > 1 ? "SSAO.LinearDepthMS" : "SSAO.LinearDepth";
 		step.Uniforms.Set(linearUniforms);
 		step.Viewport = ambientViewport;
 		step.SetInputSceneDepth(0);
@@ -807,7 +807,7 @@ void PPAmbientOcclusion::UpdateSteps()
 	// Apply ambient occlusion
 	{
 		PPStep step;
-		step.ShaderName = gl_multisample ? "SSAO.AmbientOccludeMS" : "SSAO.AmbientOcclude";
+		step.ShaderName = gl_multisample > 1 ? "SSAO.AmbientOccludeMS" : "SSAO.AmbientOcclude";
 		step.Uniforms.Set(ssaoUniforms);
 		step.Viewport = ambientViewport;
 		step.SetInputTexture(0, "SSAO.LinearDepth");
@@ -839,7 +839,7 @@ void PPAmbientOcclusion::UpdateSteps()
 	// Add SSAO back to scene texture:
 	{
 		PPStep step;
-		step.ShaderName = gl_multisample ? "SSAO.CombineMS" : "SSAO.Combine";
+		step.ShaderName = gl_multisample > 1 ? "SSAO.CombineMS" : "SSAO.Combine";
 		step.Uniforms.Set(combineUniforms);
 		step.Viewport = screen->mSceneViewport;
 		step.SetInputTexture(0, "SSAO.Ambient0", PPFilterMode::Linear);

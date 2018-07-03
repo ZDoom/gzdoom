@@ -104,8 +104,18 @@ void PPBloom::UpdateSteps()
 	{
 		auto &level = levels[i];
 		auto &next = levels[i + 1];
+
 		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, level.HTexture, next.VTexture, next.Viewport, true));
+		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
+
+		// Linear downscale:
+		step.ShaderName = "BloomCombine";
+		step.Uniforms.Clear();
+		step.Viewport = next.Viewport;
+		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetOutputTexture(next.VTexture);
+		step.SetNoBlend();
+		steps.Push(step);
 	}
 
 	// Blur and upscale:
@@ -183,8 +193,18 @@ void PPBloom::UpdateBlurSteps()
 	{
 		auto &level = levels[i];
 		auto &next = levels[i + 1];
+
 		steps.Push(BlurStep(blurUniforms, level.VTexture, level.HTexture, level.Viewport, false));
-		steps.Push(BlurStep(blurUniforms, level.HTexture, next.VTexture, next.Viewport, true));
+		steps.Push(BlurStep(blurUniforms, level.HTexture, level.VTexture, level.Viewport, true));
+
+		// Linear downscale:
+		step.ShaderName = "BloomCombine";
+		step.Uniforms.Clear();
+		step.Viewport = next.Viewport;
+		step.SetInputTexture(0, level.VTexture, PPFilterMode::Linear);
+		step.SetOutputTexture(next.VTexture);
+		step.SetNoBlend();
+		steps.Push(step);
 	}
 
 	// Blur and upscale:

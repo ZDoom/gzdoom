@@ -442,7 +442,7 @@ void PPCameraExposure::UpdateTextures()
 
 void PPCameraExposure::UpdateSteps()
 {
-	if (!gl_bloom && gl_tonemap == 0)
+	if (!gl_bloom)
 	{
 		hw_postprocess.Effects["UpdateCameraExposure"] = {};
 		return;

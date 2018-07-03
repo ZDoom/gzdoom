@@ -282,6 +282,8 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 PPTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int width, int height, const void *data)
 {
 	PPTexture tex;
+	tex.Width = width;
+	tex.Height = height;
 	glGenTextures(1, &tex.handle);
 	glBindTexture(GL_TEXTURE_2D, tex.handle);
 	FGLDebug::LabelObject(GL_TEXTURE, tex.handle, name);
@@ -316,6 +318,8 @@ PPTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int
 PPTexture FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
 {
 	PPTexture tex;
+	tex.Width = width;
+	tex.Height = height;
 	glGenTextures(1, &tex.handle);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex.handle);
 	FGLDebug::LabelObject(GL_TEXTURE, tex.handle, name);
@@ -752,6 +756,8 @@ bool FGLRenderBuffers::FailedCreate = false;
 
 void FGLRenderBuffers::UpdateEffectTextures()
 {
+	FGLPostProcessState savedState;
+
 	TMap<FString, PPTextureDesc>::Iterator it(hw_postprocess.Textures);
 	TMap<FString, PPTextureDesc>::Pair *pair;
 	while (it.NextPair(pair))
@@ -772,23 +778,24 @@ void FGLRenderBuffers::UpdateEffectTextures()
 
 		if (gltexture && (gltexture.Width != pair->Value.Width || gltexture.Height != pair->Value.Height))
 		{
-			glDeleteTextures(1, &gltexture.handle);
-			glDeleteFramebuffers(1, &glframebuffer.handle);
-			gltexture.handle = 0;
-			glframebuffer.handle = 0;
+			if (gltexture.handle != 0)
+			{
+				glDeleteTextures(1, &gltexture.handle);
+				gltexture.handle = 0;
+			}
+			if (glframebuffer.handle != 0)
+			{
+				glDeleteFramebuffers(1, &glframebuffer.handle);
+				glframebuffer.handle = 0;
+			}
 		}
 
 		if (!gltexture)
 		{
-			FGLPostProcessState savedState;
-
 			if (pair->Value.Data)
 				gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height, pair->Value.Data.get());
 			else
 				gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height);
-			gltexture.Width = pair->Value.Width;
-			gltexture.Height = pair->Value.Height;
-			glframebuffer = CreateFrameBuffer(pair->Key.GetChars(), gltexture);
 		}
 	}
 }
@@ -900,7 +907,10 @@ void FGLRenderBuffers::RenderEffect(const FString &name)
 			break;
 
 		case PPTextureType::PPTexture:
-			GLTextureFBs[step.Output.Texture].Bind();
+			if (GLTextureFBs[step.Output.Texture])
+				GLTextureFBs[step.Output.Texture].Bind();
+			else
+				GLTextureFBs[step.Output.Texture] = CreateFrameBuffer(step.Output.Texture.GetChars(), GLTextures[step.Output.Texture]);
 			break;
 
 		case PPTextureType::SceneColor:

@@ -104,21 +104,21 @@ void FGLRenderBuffers::ClearEyeBuffers()
 	mEyeFBs.Clear();
 }
 
-void FGLRenderBuffers::DeleteTexture(PPTexture &tex)
+void FGLRenderBuffers::DeleteTexture(PPGLTexture &tex)
 {
 	if (tex.handle != 0)
 		glDeleteTextures(1, &tex.handle);
 	tex.handle = 0;
 }
 
-void FGLRenderBuffers::DeleteRenderBuffer(PPRenderBuffer &buf)
+void FGLRenderBuffers::DeleteRenderBuffer(PPGLRenderBuffer &buf)
 {
 	if (buf.handle != 0)
 		glDeleteRenderbuffers(1, &buf.handle);
 	buf.handle = 0;
 }
 
-void FGLRenderBuffers::DeleteFrameBuffer(PPFrameBuffer &fb)
+void FGLRenderBuffers::DeleteFrameBuffer(PPGLFrameBuffer &fb)
 {
 	if (fb.handle != 0)
 		glDeleteFramebuffers(1, &fb.handle);
@@ -263,7 +263,7 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 
 	while (mEyeFBs.Size() <= unsigned(eye))
 	{
-		PPTexture texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
+		PPGLTexture texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
 		mEyeTextures.Push(texture);
 		mEyeFBs.Push(CreateFrameBuffer("EyeFB", texture));
 	}
@@ -279,9 +279,9 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 //
 //==========================================================================
 
-PPTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int width, int height, const void *data)
+PPGLTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int width, int height, const void *data)
 {
-	PPTexture tex;
+	PPGLTexture tex;
 	tex.Width = width;
 	tex.Height = height;
 	glGenTextures(1, &tex.handle);
@@ -315,9 +315,9 @@ PPTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int
 	return tex;
 }
 
-PPTexture FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
+PPGLTexture FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
 {
-	PPTexture tex;
+	PPGLTexture tex;
 	tex.Width = width;
 	tex.Height = height;
 	glGenTextures(1, &tex.handle);
@@ -334,9 +334,9 @@ PPTexture FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint 
 //
 //==========================================================================
 
-PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height)
+PPGLRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height)
 {
-	PPRenderBuffer buf;
+	PPGLRenderBuffer buf;
 	glGenRenderbuffers(1, &buf.handle);
 	glBindRenderbuffer(GL_RENDERBUFFER, buf.handle);
 	FGLDebug::LabelObject(GL_RENDERBUFFER, buf.handle, name);
@@ -344,12 +344,12 @@ PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint for
 	return buf;
 }
 
-PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples)
+PPGLRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples)
 {
 	if (samples <= 1)
 		return CreateRenderBuffer(name, format, width, height);
 
-	PPRenderBuffer buf;
+	PPGLRenderBuffer buf;
 	glGenRenderbuffers(1, &buf.handle);
 	glBindRenderbuffer(GL_RENDERBUFFER, buf.handle);
 	FGLDebug::LabelObject(GL_RENDERBUFFER, buf.handle, name);
@@ -363,9 +363,9 @@ PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint for
 //
 //==========================================================================
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture colorbuffer)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLTexture colorbuffer)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);
@@ -375,9 +375,9 @@ PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture co
 	return fb;
 }
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture colorbuffer, PPRenderBuffer depthstencil)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLTexture colorbuffer, PPGLRenderBuffer depthstencil)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);
@@ -388,9 +388,9 @@ PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture co
 	return fb;
 }
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPRenderBuffer colorbuffer, PPRenderBuffer depthstencil)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLRenderBuffer colorbuffer, PPGLRenderBuffer depthstencil)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);
@@ -401,9 +401,9 @@ PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPRenderBuff
 	return fb;
 }
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture colorbuffer0, PPTexture colorbuffer1, PPTexture colorbuffer2, PPTexture depthstencil, bool multisample)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLTexture colorbuffer0, PPGLTexture colorbuffer1, PPGLTexture colorbuffer2, PPGLTexture depthstencil, bool multisample)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);

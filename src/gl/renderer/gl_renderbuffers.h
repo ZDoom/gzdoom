@@ -4,7 +4,7 @@
 #include "gl/shaders/gl_shader.h"
 #include "hwrenderer/postprocessing/hw_postprocess.h"
 
-class PPTexture
+class PPGLTexture
 {
 public:
 	void Bind(int index, int filter = GL_NEAREST, int wrap = GL_CLAMP_TO_EDGE)
@@ -28,7 +28,7 @@ private:
 	friend class FGLRenderBuffers;
 };
 
-class PPFrameBuffer
+class PPGLFrameBuffer
 {
 public:
 	void Bind()
@@ -44,7 +44,7 @@ private:
 	friend class FGLRenderBuffers;
 };
 
-class PPRenderBuffer
+class PPGLRenderBuffer
 {
 private:
 	GLuint handle = 0;
@@ -68,8 +68,8 @@ public:
 	void CompileEffectShaders();
 	void RenderEffect(const FString &name);
 
-	TMap<PPTextureName, PPTexture> GLTextures;
-	TMap<PPTextureName, PPFrameBuffer> GLTextureFBs;
+	TMap<PPTextureName, PPGLTexture> GLTextures;
+	TMap<PPTextureName, PPGLFrameBuffer> GLTextureFBs;
 	TMap<PPShaderName, std::shared_ptr<FShaderProgram>> GLShaders;
 
 	void BindSceneFB(bool sceneData);
@@ -84,7 +84,7 @@ public:
 	void BindNextFB();
 	void NextTexture();
 
-	PPFrameBuffer GetCurrentFB() const { return mPipelineFB[mCurrentPipelineTexture]; }
+	PPGLFrameBuffer GetCurrentFB() const { return mPipelineFB[mCurrentPipelineTexture]; }
 
 	void BindOutputFB();
 
@@ -111,19 +111,19 @@ private:
 	void CreateEyeBuffers(int eye);
 	void CreateShadowMap();
 
-	PPTexture Create2DTexture(const char *name, GLuint format, int width, int height, const void *data = nullptr);
-	PPTexture Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
-	PPRenderBuffer CreateRenderBuffer(const char *name, GLuint format, int width, int height);
-	PPRenderBuffer CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples);
-	PPFrameBuffer CreateFrameBuffer(const char *name, PPTexture colorbuffer);
-	PPFrameBuffer CreateFrameBuffer(const char *name, PPTexture colorbuffer, PPRenderBuffer depthstencil);
-	PPFrameBuffer CreateFrameBuffer(const char *name, PPRenderBuffer colorbuffer, PPRenderBuffer depthstencil);
-	PPFrameBuffer CreateFrameBuffer(const char *name, PPTexture colorbuffer0, PPTexture colorbuffer1, PPTexture colorbuffer2, PPTexture depthstencil, bool multisample);
+	PPGLTexture Create2DTexture(const char *name, GLuint format, int width, int height, const void *data = nullptr);
+	PPGLTexture Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations);
+	PPGLRenderBuffer CreateRenderBuffer(const char *name, GLuint format, int width, int height);
+	PPGLRenderBuffer CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples);
+	PPGLFrameBuffer CreateFrameBuffer(const char *name, PPGLTexture colorbuffer);
+	PPGLFrameBuffer CreateFrameBuffer(const char *name, PPGLTexture colorbuffer, PPGLRenderBuffer depthstencil);
+	PPGLFrameBuffer CreateFrameBuffer(const char *name, PPGLRenderBuffer colorbuffer, PPGLRenderBuffer depthstencil);
+	PPGLFrameBuffer CreateFrameBuffer(const char *name, PPGLTexture colorbuffer0, PPGLTexture colorbuffer1, PPGLTexture colorbuffer2, PPGLTexture depthstencil, bool multisample);
 	bool CheckFrameBufferCompleteness();
 	void ClearFrameBuffer(bool stencil, bool depth);
-	void DeleteTexture(PPTexture &handle);
-	void DeleteRenderBuffer(PPRenderBuffer &handle);
-	void DeleteFrameBuffer(PPFrameBuffer &handle);
+	void DeleteTexture(PPGLTexture &handle);
+	void DeleteRenderBuffer(PPGLRenderBuffer &handle);
+	void DeleteFrameBuffer(PPGLFrameBuffer &handle);
 
 	int mWidth = 0;
 	int mHeight = 0;
@@ -136,29 +136,29 @@ private:
 	int mCurrentPipelineTexture = 0;
 
 	// Buffers for the scene
-	PPTexture mSceneMultisampleTex;
-	PPTexture mSceneDepthStencilTex;
-	PPTexture mSceneFogTex;
-	PPTexture mSceneNormalTex;
-	PPRenderBuffer mSceneMultisampleBuf;
-	PPRenderBuffer mSceneDepthStencilBuf;
-	PPRenderBuffer mSceneFogBuf;
-	PPRenderBuffer mSceneNormalBuf;
-	PPFrameBuffer mSceneFB;
-	PPFrameBuffer mSceneDataFB;
+	PPGLTexture mSceneMultisampleTex;
+	PPGLTexture mSceneDepthStencilTex;
+	PPGLTexture mSceneFogTex;
+	PPGLTexture mSceneNormalTex;
+	PPGLRenderBuffer mSceneMultisampleBuf;
+	PPGLRenderBuffer mSceneDepthStencilBuf;
+	PPGLRenderBuffer mSceneFogBuf;
+	PPGLRenderBuffer mSceneNormalBuf;
+	PPGLFrameBuffer mSceneFB;
+	PPGLFrameBuffer mSceneDataFB;
 	bool mSceneUsesTextures = false;
 
 	// Effect/HUD buffers
-	PPTexture mPipelineTexture[NumPipelineTextures];
-	PPFrameBuffer mPipelineFB[NumPipelineTextures];
+	PPGLTexture mPipelineTexture[NumPipelineTextures];
+	PPGLFrameBuffer mPipelineFB[NumPipelineTextures];
 
 	// Eye buffers
-	TArray<PPTexture> mEyeTextures;
-	TArray<PPFrameBuffer> mEyeFBs;
+	TArray<PPGLTexture> mEyeTextures;
+	TArray<PPGLFrameBuffer> mEyeFBs;
 
 	// Shadow map texture
-	PPTexture mShadowMapTexture;
-	PPFrameBuffer mShadowMapFB;
+	PPGLTexture mShadowMapTexture;
+	PPGLFrameBuffer mShadowMapFB;
 	int mCurrentShadowMapSize = 0;
 
 	static bool FailedCreate;

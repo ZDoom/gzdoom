@@ -154,6 +154,12 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	{
 		if (tx->shaderindex >= FIRST_USER_SHADER)
 		{
+			for (auto &texture : tx->CustomShaderTextures)
+			{
+				if(texture == nullptr) continue;
+				ValidateSysTexture(texture, expanded);
+				mTextureLayers.Push({ texture, false });
+			}
 			mShaderIndex = tx->shaderindex;
 		}
 		else

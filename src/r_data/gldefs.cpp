@@ -1350,7 +1350,7 @@ class GLDefsParser
 					sc.MustGetString();
 					FString textureSource = sc.String;
 
-
+					shaderdesc.Textures[textureName] = textureSource;
 				}
 				else if (sc.Compare("enabled"))
 				{

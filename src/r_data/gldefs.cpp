@@ -1350,7 +1350,7 @@ class GLDefsParser
 					sc.MustGetString();
 					FString textureSource = sc.String;
 
-					shaderdesc.Textures[textureName] = textureSource;
+
 				}
 				else if (sc.Compare("enabled"))
 				{
@@ -1397,6 +1397,24 @@ class GLDefsParser
 				{
 					sc.MustGetFloat();
 					speed = float(sc.Float);
+				}
+				else if (sc.Compare("texture"))
+				{
+					sc.MustGetString();
+					bool okay = false;
+					for(int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++) {
+						if(!tex->CustomShaderTextures[i]) {
+							tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+							if (!tex->CustomShaderTextures[i]) {
+								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
+							}
+							okay = true;
+							break;
+						}
+					}
+					if(!okay) {
+						sc.ScriptError("Error: out of texture units in texture '%s'", tex? tex->Name.GetChars() : "(null)");
+					}
 				}
 			}
 			if (!tex)

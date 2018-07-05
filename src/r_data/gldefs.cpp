@@ -52,6 +52,7 @@ void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
 
 extern TArray<FString> usershaders;
 extern TArray<FString> usermaterials;
+extern TArray<FString> usershaderdefs;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 
 
@@ -1380,6 +1381,8 @@ class GLDefsParser
 			int maplump = -1;
 			FString maplumpname;
 			FString materiallumpname = "shaders/glsl/material_normal.fp";
+			FString texnameDefs = "";
+			TArray<FString> texNameList;
 			float speed = 1.f;
 
 			sc.MustGetString();
@@ -1408,18 +1411,34 @@ class GLDefsParser
 				else if (sc.Compare("texture"))
 				{
 					sc.MustGetString();
+					FString textureName = sc.String;
+					for(FString &texName : texNameList)
+					{
+						if(!texName.Compare(textureName))
+						{
+							sc.ScriptError("Trying to redefine custom hardware shader texture '%s' in texture '%s'\n", textureName.GetChars(), tex? tex->Name.GetChars() : "(null)");
+						}
+					}
+					texNameList.Push(textureName);
+					sc.MustGetString();
 					bool okay = false;
-					for(int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++) {
-						if(!tex->CustomShaderTextures[i]) {
+					for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+					{
+						if (!tex->CustomShaderTextures[i])
+						{
 							tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
-							if (!tex->CustomShaderTextures[i]) {
+							if (!tex->CustomShaderTextures[i])
+							{
 								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
 							}
+
+							texnameDefs.AppendFormat("#define %s texture%d\n", textureName.GetChars(), i + 2);
 							okay = true;
 							break;
 						}
 					}
-					if(!okay) {
+					if(!okay)
+					{
 						sc.ScriptError("Error: out of texture units in texture '%s'", tex? tex->Name.GetChars() : "(null)");
 					}
 				}
@@ -1439,7 +1458,9 @@ class GLDefsParser
 				tex->shaderspeed = speed;
 				for (unsigned i = 0; i < usershaders.Size(); i++)
 				{
-					if (!usershaders[i].CompareNoCase(maplumpname) && !usermaterials[i].CompareNoCase(materiallumpname))
+					if (!usershaders[i].CompareNoCase(maplumpname) &&
+						!usermaterials[i].CompareNoCase(materiallumpname) &&
+						!usershaderdefs[i].Compare(texnameDefs))
 					{
 						tex->shaderindex = i + FIRST_USER_SHADER;
 						return;
@@ -1447,6 +1468,7 @@ class GLDefsParser
 				}
 				tex->shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
 				usermaterials.Push(materiallumpname);
+				usershaderdefs.Push(texnameDefs);
 			}
 		}
 	}

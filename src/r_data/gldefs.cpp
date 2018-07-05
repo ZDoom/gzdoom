@@ -1442,6 +1442,18 @@ class GLDefsParser
 						sc.ScriptError("Error: out of texture units in texture '%s'", tex? tex->Name.GetChars() : "(null)");
 					}
 				}
+				else if(sc.Compare("define"))
+				{
+					sc.MustGetString();
+					FString defineName = sc.String;
+					FString defineValue = "";
+					if(sc.CheckToken('='))
+					{
+						sc.MustGetString();
+						defineValue = sc.String;
+					}
+					texnameDefs.AppendFormat("#define %s %s\n", defineName.GetChars(), defineValue.GetChars());
+				}
 			}
 			if (!tex)
 			{

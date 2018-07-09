@@ -75,7 +75,6 @@ protected:
 	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
 	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
 
-	bool				m_supportsGamma;
 	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
 
 	SystemGLFrameBuffer() {}

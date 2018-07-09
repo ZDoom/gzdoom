@@ -336,6 +336,8 @@ protected:
 	bool ParseDrawTextureTags(FTexture *img, double x, double y, uint32_t tag, T& tags, DrawParms *parms, bool fortext) const;
 	void DrawTextCommon(FFont *font, int normalcolor, double x, double y, const char *string, DrawParms &parms);
 	void BuildGammaTable(uint16_t *gt);
+	virtual void SetGammaTable(uint16_t *) {}
+	virtual void ResetGammaTable() {}
 
 	F2DDrawer m2DDrawer;
 private:
@@ -346,6 +348,9 @@ protected:
 
 	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
 	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
+
+	bool HWGammaActive = false;			// Are we using hardware or software gamma?
+	bool m_supportsGamma = false;
 
 public:
 	int hwcaps = 0;
@@ -360,6 +365,8 @@ public:
 public:
 	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer() {}
+
+	bool IsHWGammaActive() const { return HWGammaActive; }
 
 	void SetSize(int width, int height);
 	void SetVirtualSize(int width, int height)
@@ -392,10 +399,8 @@ public:
 	// Mark the palette as changed. It will be updated on the next Update().
 	virtual void UpdatePalette() {}
 
-	// Sets the gamma level. Returns false if the hardware does not support
-	// gamma changing. (Always true for now, since palettes can always be
-	// gamma adjusted.)
-	virtual void SetGamma() {}
+	// Sets the gamma level.
+	void SetGamma();
 
 	// Sets a color flash. RGB is the color, and amount is 0-256, with 256
 	// being all flash and 0 being no flash. Returns false if the hardware
@@ -517,7 +522,7 @@ public:
 	// Calculate gamma table
 	void CalcGamma(float gamma, uint8_t gammalookup[256]);
 
-	virtual void SetViewportRects(IntRect *bounds);
+	void SetViewportRects(IntRect *bounds);
 	int ScreenToWindowX(int x);
 	int ScreenToWindowY(int y);
 

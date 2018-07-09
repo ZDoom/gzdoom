@@ -48,6 +48,7 @@
 #include "vm.h"
 #include "r_videoscale.h"
 #include "i_time.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 
 
 CVAR(Bool, gl_scale_viewport, true, CVAR_ARCHIVE);
@@ -60,6 +61,12 @@ EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Int, screenblocks)
 
 void V_DrawPaletteTester(int pal);
+
+CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	if (self < 0 || self > 2) self = 2;
+	if (screen != nullptr) screen->SetGamma();
+}
 
 //==========================================================================
 //
@@ -378,6 +385,36 @@ void DFrameBuffer::BuildGammaTable(uint16_t *gammaTable)
 	}
 }
 
+//===========================================================================
+//
+// DoSetGamma
+//
+// (Unfortunately Windows has some safety precautions that block gamma ramps
+//  that are considered too extreme. As a result this doesn't work flawlessly)
+//
+//===========================================================================
+
+void DFrameBuffer::SetGamma()
+{
+	bool useHWGamma = m_supportsGamma && ((vid_hwgamma == 0) || (vid_hwgamma == 2 && IsFullscreen()));
+	if (useHWGamma)
+	{
+		uint16_t gammaTable[768];
+
+		// This formula is taken from Doomsday
+		BuildGammaTable(gammaTable);
+		SetGammaTable(gammaTable);
+
+		HWGammaActive = true;
+	}
+	else if (HWGammaActive)
+	{
+		ResetGammaTable();
+		HWGammaActive = false;
+	}
+}
+
+
 //==========================================================================
 //
 // DFrameBuffer :: GetCaps
@@ -500,6 +537,8 @@ void DFrameBuffer::SetViewportRects(IntRect *bounds)
 		mSceneViewport.width = (int)round(mSceneViewport.width * scaleX);
 		mSceneViewport.height = (int)round(mSceneViewport.height * scaleY);
 	}
+	auto vrmode = VRMode::GetVRMode(true);
+	vrmode->AdjustViewport(this);
 }
 
 //===========================================================================
@@ -528,6 +567,7 @@ void DFrameBuffer::ScaleCoordsFromWindow(int16_t &x, int16_t &y)
 	x = int16_t((x - letterboxX) * Width / letterboxWidth);
 	y = int16_t((y - letterboxY) * Height / letterboxHeight);
 }
+
 
 //===========================================================================
 // 

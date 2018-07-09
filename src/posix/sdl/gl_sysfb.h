@@ -45,7 +45,6 @@ protected:
 	void UpdateColors ();
 
 	Uint16 m_origGamma[3][256];
-	bool m_supportsGamma;
 };
 
 #endif // __POSIX_SDL_GL_SYSFB_H__

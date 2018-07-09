@@ -1,3 +1,7 @@
+#ifdef _WIN32
+#define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
 /* This file is part of volk library; see volk.h for version/license details */
 #include "volk.h"
 

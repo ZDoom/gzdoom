@@ -832,7 +832,6 @@ set( FASTMATH_SOURCES
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
 	gl_load/gl_load.c
-	vulkan/system/vk_init.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
 	hwrenderer/dynlights/hw_dynlightdata.cpp
@@ -879,6 +878,7 @@ set( FASTMATH_SOURCES
 	sound/opnmidi/opnmidi_private.cpp
 
 	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+	vulkan/system/vulkan_test.cpp
 	vulkan/thirdparty/volk/volk.c
 
 )
@@ -921,6 +921,7 @@ set (PCH_SOURCES
 	dsectoreffect.cpp
 	dthinker.cpp
 	edata.cpp
+	events.cpp
 	f_wipe.cpp
 	files.cpp
 	files_decompress.cpp
@@ -1092,7 +1093,6 @@ set (PCH_SOURCES
 	hwrenderer/utility/hw_lighting.cpp
 	hwrenderer/utility/hw_shaderpatcher.cpp
 	hwrenderer/utility/hw_vrmodes.cpp
-
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
@@ -1249,7 +1249,10 @@ set (PCH_SOURCES
 	sound/wildmidi/reverb.cpp
 	sound/wildmidi/wildmidi_lib.cpp
 	sound/wildmidi/wm_error.cpp
-	events.cpp
+	
+	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
+	vulkan/system/vk_framebuffer.cpp
+	
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )

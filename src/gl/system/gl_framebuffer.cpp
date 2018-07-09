@@ -46,17 +46,12 @@
 #include "r_videoscale.h"
 
 EXTERN_CVAR (Bool, vid_vsync)
+EXTERN_CVAR(Int, vid_hwgamma)
 
 FGLRenderer *GLRenderer;
 
 void gl_LoadExtensions();
 void gl_PrintStartupLog();
-
-CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
-{
-	if (self < 0 || self > 2) self = 2;
-	if (screen != nullptr) screen->SetGamma();
-}
 
 //==========================================================================
 //
@@ -291,35 +286,6 @@ void OpenGLFrameBuffer::SetVSync(bool vsync)
 
 //===========================================================================
 //
-// DoSetGamma
-//
-// (Unfortunately Windows has some safety precautions that block gamma ramps
-//  that are considered too extreme. As a result this doesn't work flawlessly)
-//
-//===========================================================================
-
-void OpenGLFrameBuffer::SetGamma()
-{
-	bool useHWGamma = m_supportsGamma && ((vid_hwgamma == 0) || (vid_hwgamma == 2 && IsFullscreen()));
-	if (useHWGamma)
-	{
-		uint16_t gammaTable[768];
-
-		// This formula is taken from Doomsday
-		BuildGammaTable(gammaTable);
-		SetGammaTable(gammaTable);
-
-		HWGammaActive = true;
-	}
-	else if (HWGammaActive)
-	{
-		ResetGammaTable();
-		HWGammaActive = false;
-	}
-}
-
-//===========================================================================
-//
 //
 //===========================================================================
 
@@ -369,17 +335,6 @@ void OpenGLFrameBuffer::BlurScene(float amount)
 {
 	GLRenderer->BlurScene(amount);
 }
-
-void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)
-{
-	Super::SetViewportRects(bounds);
-	if (!bounds)
-	{
-		auto vrmode = VRMode::GetVRMode(true);
-		vrmode->AdjustViewport(this);
-	}
-}
-
 
 void OpenGLFrameBuffer::InitForLevel()
 {

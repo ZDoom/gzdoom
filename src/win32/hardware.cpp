@@ -43,7 +43,9 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "version.h"
+#include "doomerrors.h"
 #include "win32glvideo.h"
+#include "win32vulkanvideo.h"
 #include "swrenderer/r_swrenderer.h"
 
 EXTERN_CVAR (Bool, fullscreen)
@@ -52,9 +54,6 @@ EXTERN_CVAR(Int, vid_maxfps)
 extern HWND Window;
 
 IVideo *Video;
-
-// do not include GL headers here, only declare the necessary functions.
-IVideo *gl_CreateVideo();
 
 void I_RestartRenderer();
 int currentcanvas = -1;
@@ -125,15 +124,27 @@ void I_InitGraphics ()
 		// are the active app. Huh?
 	}
 
-	bool InitVulkan();
 
-	if (InitVulkan())
+	// if (vid_backend == 0)
 	{
-		Printf("Vulkan found\n");
+		// first try Vulkan, if that fails OpenGL
+		try
+		{
+			Video = new Win32VulkanVideo;
+		}
+		catch (CRecoverableError &)
+		{
+			Video = new Win32GLVideo();
+		}
 	}
+	/*
+	else
+	{
+		Video = new Win32GLVideo();
+	}
+	*/
 
 
-	Video = new Win32GLVideo();
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");

@@ -22,9 +22,6 @@ public:
 	void InitializeState();
 	void Update();
 
-	// Color correction
-	void SetGamma();
-
 	void CleanForRestart() override;
 	void UpdatePalette() override;
 	void InitForLevel() override;
@@ -39,7 +36,6 @@ public:
 	void UnbindTexUnit(int no) override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;
-	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;
     IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) override;
 	IShaderProgram *CreateShaderProgram() override;
@@ -55,13 +51,11 @@ public:
 	bool WipeDo(int ticks);
 	void WipeCleanup();
 	void Swap();
-	bool IsHWGammaActive() const { return HWGammaActive; }
 
 	void SetVSync(bool vsync);
 
 	void Draw2D() override;
 
-	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	std::shared_ptr<FGLDebug> mDebug;	// Debug API
 private:
 	int camtexcount = 0;

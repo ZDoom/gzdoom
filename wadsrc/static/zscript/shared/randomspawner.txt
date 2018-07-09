@@ -84,7 +84,7 @@ class RandomSpawner : Actor
 				}
 			}
 			// So now we can spawn the dropped item.
-			if (di == null || bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
+			if (di == null)
 			{
 				Spawn("Unknown", Pos, NO_REPLACE);		// Show that there's a problem.
 				Destroy();
@@ -130,6 +130,13 @@ class RandomSpawner : Actor
 
 		Actor newmobj = null;
 		bool boss = false;
+
+		if (bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
+		{
+			Spawn("Unknown", Pos, NO_REPLACE);		// Show that there's a problem.
+			Destroy();
+			return;
+		}
 
 		if (Species == 'None')
 		{

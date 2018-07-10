@@ -879,6 +879,8 @@ set( FASTMATH_SOURCES
 
 	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
 	vulkan/system/vulkan_test.cpp
+	vulkan/system/vk_device.cpp
+	vulkan/system/vk_framebuffer.cpp
 	vulkan/thirdparty/volk/volk.c
 
 )
@@ -1249,10 +1251,6 @@ set (PCH_SOURCES
 	sound/wildmidi/reverb.cpp
 	sound/wildmidi/wildmidi_lib.cpp
 	sound/wildmidi/wm_error.cpp
-	
-	#Vulkan stuff must go into a separate list later because it needs to be disabled for some platforms
-	vulkan/system/vk_framebuffer.cpp
-	
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )

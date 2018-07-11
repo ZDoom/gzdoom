@@ -37,6 +37,7 @@
 #include "hwrenderer/utility/hw_vrmodes.h"
 
 #include "vk_framebuffer.h"
+#include "vulkan/textures/vk_samplers.h"
 
 EXTERN_CVAR(Bool, vid_vsync)
 
@@ -55,31 +56,18 @@ void vulkantest_closeit();
 VulkanFrameBuffer::VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev) : 
 	Super(hMonitor, fullscreen) 
 {
+	screen = this;	// temporary hack to make the tutorial code work.
+
 	device = dev;
+	mSamplerManager = new VkSamplerManager(device);
 	vulkantest_startup(dev);
+	SetViewportRects(nullptr);
 }
 
 VulkanFrameBuffer::~VulkanFrameBuffer()
 {
 	vulkantest_closeit();
-}
-
-//==========================================================================
-//
-// Initializes the GL renderer
-//
-//==========================================================================
-
-void VulkanFrameBuffer::InitializeState()
-{
-	static bool first=true;
-
-	if (first)
-	{
-	}
-
-	//...
-	SetViewportRects(nullptr);
+	delete mSamplerManager;
 }
 
 //==========================================================================
@@ -205,10 +193,6 @@ void VulkanFrameBuffer::SetVSync(bool vsync)
 //===========================================================================
 
 void VulkanFrameBuffer::CleanForRestart()
-{
-}
-
-void VulkanFrameBuffer::SetTextureFilterMode()
 {
 }
 

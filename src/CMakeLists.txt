@@ -881,6 +881,7 @@ set( FASTMATH_SOURCES
 	vulkan/system/vulkan_test.cpp
 	vulkan/system/vk_device.cpp
 	vulkan/system/vk_framebuffer.cpp
+	vulkan/textures/vk_samplers.cpp
 	vulkan/thirdparty/volk/volk.c
 
 )

@@ -295,11 +295,6 @@ void OpenGLFrameBuffer::CleanForRestart()
 		GLRenderer->ResetSWScene();
 }
 
-void OpenGLFrameBuffer::SetTextureFilterMode()
-{
-	if (GLRenderer != nullptr && GLRenderer->mSamplerManager != nullptr) GLRenderer->mSamplerManager->SetTextureFilterMode();
-}
-
 IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex) 
 { 
 	return new FHardwareTexture(tex->bNoCompress);
@@ -328,7 +323,7 @@ void OpenGLFrameBuffer::UnbindTexUnit(int no)
 
 void OpenGLFrameBuffer::TextureFilterChanged()
 {
-	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();
+	if (GLRenderer != nullptr && GLRenderer->mSamplerManager != nullptr) GLRenderer->mSamplerManager->SetTextureFilterMode();
 }
 
 void OpenGLFrameBuffer::BlurScene(float amount)

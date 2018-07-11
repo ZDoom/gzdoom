@@ -26,6 +26,7 @@
 #include <set>
 #include <unordered_map>
 #include "vk_framebuffer.h"
+#include "vulkan/textures/vk_samplers.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -122,7 +123,6 @@ public:
     VkImage textureImage;
     VkDeviceMemory textureImageMemory;
     VkImageView textureImageView;
-    VkSampler textureSampler;
 
     std::vector<Vertex> vertices;
     std::vector<uint32_t> indices;
@@ -160,7 +160,6 @@ public:
         createFramebuffers();
         createTextureImage();
         createTextureImageView();
-        createTextureSampler();
         loadModel();
         createVertexBuffer();
         createIndexBuffer();
@@ -198,7 +197,6 @@ public:
 
         cleanupSwapChain();
 
-        vkDestroySampler(vDevice->vkDevice, textureSampler, nullptr);
         vkDestroyImageView(vDevice->vkDevice, textureImageView, nullptr);
 
         vkDestroyImage(vDevice->vkDevice, textureImage, nullptr);
@@ -702,30 +700,6 @@ public:
         textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
     }
 
-    void createTextureSampler() {
-        VkSamplerCreateInfo samplerInfo = {};
-        samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-        samplerInfo.magFilter = VK_FILTER_LINEAR;
-        samplerInfo.minFilter = VK_FILTER_LINEAR;
-        samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerInfo.anisotropyEnable = VK_TRUE;
-        samplerInfo.maxAnisotropy = 16;
-        samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-        samplerInfo.unnormalizedCoordinates = VK_FALSE;
-        samplerInfo.compareEnable = VK_FALSE;
-        samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-        samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        samplerInfo.minLod = 0;
-        samplerInfo.maxLod = static_cast<float>(mipLevels);
-        samplerInfo.mipLodBias = 0;
-
-        if (vkCreateSampler(vDevice->vkDevice, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create texture sampler!");
-        }
-    }
-
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {
         VkImageViewCreateInfo viewInfo = {};
         viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -989,7 +963,7 @@ public:
         VkDescriptorImageInfo imageInfo = {};
         imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
         imageInfo.imageView = textureImageView;
-        imageInfo.sampler = textureSampler;
+		imageInfo.sampler = static_cast<VulkanFrameBuffer*>(screen)->mSamplerManager->Get(0);
 
         std::array<VkWriteDescriptorSet, 2> descriptorWrites = {};
 

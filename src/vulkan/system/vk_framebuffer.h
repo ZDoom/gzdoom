@@ -2,6 +2,8 @@
 
 #include "vk_device.h"
 
+class VkSamplerManager;
+
 class VulkanFrameBuffer : public SystemBaseFrameBuffer
 {
 	typedef SystemBaseFrameBuffer Super;
@@ -9,12 +11,12 @@ class VulkanFrameBuffer : public SystemBaseFrameBuffer
 
 public:
 	VulkanDevice *device;
+	VkSamplerManager *mSamplerManager;
 
 	explicit VulkanFrameBuffer() {}
 	VulkanFrameBuffer(void *hMonitor, bool fullscreen, VulkanDevice *dev);
 	~VulkanFrameBuffer();
 
-	void InitializeState();
 	void Update();
 
 	// Color correction
@@ -28,7 +30,6 @@ public:
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV) override;
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
-	void SetTextureFilterMode() override;
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
 	void UnbindTexUnit(int no) override;

@@ -737,6 +737,15 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 		else if (classname != mo->GetClass())
 			continue;
 
+		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
+		{
+			// Skip owned item because its position could remain unchanged since attachment to owner
+			// Most likely it is the last location of this item in the world before pick up
+			AInventory *const inventory = static_cast<AInventory*>(mo);
+			if (inventory != nullptr && inventory->Owner != nullptr)
+				continue;
+		}
+
 		// [MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
 		// Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.
 		// Ripped from sphere checking in A_RadiusGive (along with a number of things).

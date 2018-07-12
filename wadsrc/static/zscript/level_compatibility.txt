@@ -135,6 +135,26 @@ class LevelCompatibility play
 				}
 				break;
 			}
+			
+			case '0F898F0688AECD42F2CD102FAE06F271': // TNT: Evilution MAP07
+			{
+				// Dropping onto the outdoor lava now also raises the
+				// triangle sectors.
+				SetLineSpecial(320, Floor_RaiseToNearest, 16, 32);
+				SetLineActivation(320, SPAC_Cross);
+				SetLineSpecial(959, Floor_RaiseToNearest, 16, 32);
+				SetLineActivation(959, SPAC_Cross);
+				SetLineSpecial(960, Floor_RaiseToNearest, 16, 32);
+				SetLineActivation(960, SPAC_Cross);
+				break;
+			}
+			
+			case '1E785E841A5247B6223C042EC712EBB3': // TNT: Evilution MAP08
+			{
+				// Missing texture when lowering sector to red keycard
+				SetWallTexture(480, Line.back, Side.Bottom, "METAL2");
+				break;
+			}
 
 			case 'DFC18B92BF3E8142B8684ECD8BD2EF06': // TNT: Evilution map15
 			{

@@ -94,7 +94,7 @@ void VkSamplerManager::Create()
 		samplerInfo.addressModeV = TexClamp[i].clamp_v;
 		samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 		samplerInfo.anisotropyEnable = TexFilter[filter].mipmapping;
-		samplerInfo.maxAnisotropy = TexFilter[filter].mipmapping? gl_texture_filter_anisotropic : 1;
+		samplerInfo.maxAnisotropy = TexFilter[filter].mipmapping? *gl_texture_filter_anisotropic : 1.f;
 		samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 		samplerInfo.unnormalizedCoordinates = VK_FALSE;
 		samplerInfo.compareEnable = VK_FALSE;

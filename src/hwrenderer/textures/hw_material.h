@@ -177,6 +177,8 @@ public:
 	static void InitGlobalState();
 };
 
+void ResizeTexture(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data);
+
 #endif
 
 

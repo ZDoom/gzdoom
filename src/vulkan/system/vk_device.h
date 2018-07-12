@@ -1,6 +1,7 @@
 #pragma once
 
 #include "volk/volk.h"
+#include "vk_mem_alloc/vk_mem_alloc.h"
 #include "base_sysfb.h"
 
 struct QueueFamilyIndices
@@ -31,6 +32,9 @@ public:
 	VkDebugReportCallbackEXT vkCallback = VK_NULL_HANDLE;
 	VkQueue vkGraphicsQueue = VK_NULL_HANDLE;
 	VkQueue vkPresentQueue = VK_NULL_HANDLE;
+	VmaAllocator vkAllocator = VK_NULL_HANDLE;
+	VkCommandPool vkCommandPool = VK_NULL_HANDLE;
+	int numAllocatorExtensions = 0;
 private:
 	void CreateInstance();
 	bool CheckValidationLayerSupport();
@@ -40,6 +44,9 @@ private:
 	bool IsDeviceSuitable(VkPhysicalDevice device);
 	bool CheckDeviceExtensionSupport(VkPhysicalDevice device);
 	void CreateLogicalDevice();
+	void CreateAllocator();
+	void CreateCommandPool();
+
 	std::vector<const char*> GetRequiredExtensions();
 
 public:
@@ -52,4 +59,9 @@ public:
 	{
 		DestroyDevice();
 	}
+
+	VkCommandBuffer BeginSingleTimeCommands();
+	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
+	VkResult TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
+
 };

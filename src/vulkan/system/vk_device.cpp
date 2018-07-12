@@ -53,14 +53,13 @@ CVAR(Bool, vk_debug, false, 0);
 CVAR(Bool, vk_debug, true, 0);
 #endif
 
-const std::array<const char*, 1> validationLayers = {
+static const std::array<const char*, 1> validationLayers = {
 	"VK_LAYER_LUNARG_standard_validation"
 };
 
-const std::array<const char*, 1> deviceExtensions = {
+static std::vector<const char*> deviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
-
 
 //==========================================================================
 //
@@ -295,9 +294,21 @@ bool VulkanDevice::CheckDeviceExtensionSupport(VkPhysicalDevice device)
 	for (const auto& extension : availableExtensions) 
 	{
 		requiredExtensions.erase(extension.extensionName);
+
+		if (!strcmp(extension.extensionName, "VK_KHR_get_memory_requirements2")) numAllocatorExtensions++;
+		else if (!strcmp(extension.extensionName, "VK_KHR_dedicated_allocation")) numAllocatorExtensions++;
 	}
 
-	return requiredExtensions.empty();
+	if (requiredExtensions.empty())
+	{
+		if (numAllocatorExtensions == 2)
+		{
+			deviceExtensions.push_back("VK_KHR_get_memory_requirements2");
+			deviceExtensions.push_back("VK_KHR_dedicated_allocation");
+		}
+		return true;
+	}
+	return false;
 }
 
 //==========================================================================
@@ -451,6 +462,46 @@ void VulkanDevice::CreateLogicalDevice()
 	vkGetDeviceQueue(vkDevice, indices.presentFamily, 0, &vkPresentQueue);
 }
 
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void VulkanDevice::CreateAllocator()
+{
+	VmaAllocatorCreateInfo allocinfo = {};
+
+	allocinfo.flags = VMA_ALLOCATOR_CREATE_KHR_DEDICATED_ALLOCATION_BIT;
+	allocinfo.physicalDevice = vkPhysicalDevice;
+	allocinfo.device = vkDevice;
+	allocinfo.preferredLargeHeapBlockSize = 64 * 1024 * 1024;	// 64 MiB.
+	if (vmaCreateAllocator(&allocinfo, &vkAllocator) != VK_SUCCESS)
+	{
+		I_Error("Unable to create allocator");
+	}
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void VulkanDevice::CreateCommandPool() 
+{
+	QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(vkPhysicalDevice);
+
+	VkCommandPoolCreateInfo poolInfo = {};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily;
+
+	if (vkCreateCommandPool(vkDevice, &poolInfo, nullptr, &vkCommandPool) != VK_SUCCESS) 
+	{
+		I_Error("failed to create graphics command pool!");
+	}
+}
+
 
 //==========================================================================
 //
@@ -475,6 +526,8 @@ void VulkanDevice::CreateDevice()
 	CreateSurface();
 	PickPhysicalDevice();
 	CreateLogicalDevice();
+	CreateCommandPool();
+	CreateAllocator();
 }
 
 //==========================================================================
@@ -485,6 +538,12 @@ void VulkanDevice::CreateDevice()
 
 void VulkanDevice::DestroyDevice()
 {
+	if (vkAllocator != VK_NULL_HANDLE)
+		vmaDestroyAllocator(vkAllocator);
+
+	if (vkCommandPool != VK_NULL_HANDLE)
+		vkDestroyCommandPool(vkDevice, vkCommandPool, nullptr);
+
 	if (vkDevice != VK_NULL_HANDLE)
 		vkDestroyDevice(vkDevice, nullptr);
 
@@ -496,5 +555,142 @@ void VulkanDevice::DestroyDevice()
 
 	if (vkInstance != VK_NULL_HANDLE)
 		vkDestroyInstance(vkInstance, nullptr);
+}
+
+//==========================================================================
+//
+// Utilities
+//
+//==========================================================================
+
+static bool hasStencilComponent(VkFormat format) 
+{
+	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+VkCommandBuffer VulkanDevice::BeginSingleTimeCommands() 
+{
+	VkCommandBufferAllocateInfo allocInfo = {};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandPool = vkCommandPool;
+	allocInfo.commandBufferCount = 1;
+
+	VkCommandBuffer commandBuffer;
+	vkAllocateCommandBuffers(vkDevice, &allocInfo, &commandBuffer);
+
+	VkCommandBufferBeginInfo beginInfo = {};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+	vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+	return commandBuffer;
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void VulkanDevice::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
+{
+	vkEndCommandBuffer(commandBuffer);
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+
+	vkQueueSubmit(vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+	vkQueueWaitIdle(vkGraphicsQueue);
+
+	vkFreeCommandBuffers(vkDevice, vkCommandPool, 1, &commandBuffer);
+}
+
+
+//==========================================================================
+//
+// This function gets used from multiple places
+//
+//==========================================================================
+
+VkResult VulkanDevice::TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels)
+{
+	VkImageMemoryBarrier barrier = {};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	barrier.oldLayout = oldLayout;
+	barrier.newLayout = newLayout;
+	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	barrier.image = image;
+
+	if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+		if (hasStencilComponent(format)) {
+			barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+	}
+	else {
+		barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	}
+
+	barrier.subresourceRange.baseMipLevel = 0;
+	barrier.subresourceRange.levelCount = mipLevels;
+	barrier.subresourceRange.baseArrayLayer = 0;
+	barrier.subresourceRange.layerCount = 1;
+
+	VkPipelineStageFlags sourceStage;
+	VkPipelineStageFlags destinationStage;
+
+	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
+	{
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destinationStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
+	else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+	{
+		barrier.srcAccessMask = 0;
+		barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+		sourceStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		destinationStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	}
+	else 
+	{
+		return VK_ERROR_FORMAT_NOT_SUPPORTED;
+	}
+	VkCommandBuffer commandBuffer = BeginSingleTimeCommands();
+
+	vkCmdPipelineBarrier(
+		commandBuffer,
+		sourceStage, destinationStage,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1, &barrier
+	);
+
+	EndSingleTimeCommands(commandBuffer);
+	return VK_SUCCESS;
 }
 

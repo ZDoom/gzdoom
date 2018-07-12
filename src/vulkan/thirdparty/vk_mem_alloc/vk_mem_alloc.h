@@ -7459,20 +7459,20 @@ VmaAllocator_T::~VmaAllocator_T()
 void VmaAllocator_T::ImportVulkanFunctions(const VmaVulkanFunctions* pVulkanFunctions)
 {
 #if VMA_STATIC_VULKAN_FUNCTIONS == 1
-    m_VulkanFunctions.vkGetPhysicalDeviceProperties = &vkGetPhysicalDeviceProperties;
-    m_VulkanFunctions.vkGetPhysicalDeviceMemoryProperties = &vkGetPhysicalDeviceMemoryProperties;
-    m_VulkanFunctions.vkAllocateMemory = &vkAllocateMemory;
-    m_VulkanFunctions.vkFreeMemory = &vkFreeMemory;
-    m_VulkanFunctions.vkMapMemory = &vkMapMemory;
-    m_VulkanFunctions.vkUnmapMemory = &vkUnmapMemory;
-    m_VulkanFunctions.vkBindBufferMemory = &vkBindBufferMemory;
-    m_VulkanFunctions.vkBindImageMemory = &vkBindImageMemory;
-    m_VulkanFunctions.vkGetBufferMemoryRequirements = &vkGetBufferMemoryRequirements;
-    m_VulkanFunctions.vkGetImageMemoryRequirements = &vkGetImageMemoryRequirements;
-    m_VulkanFunctions.vkCreateBuffer = &vkCreateBuffer;
-    m_VulkanFunctions.vkDestroyBuffer = &vkDestroyBuffer;
-    m_VulkanFunctions.vkCreateImage = &vkCreateImage;
-    m_VulkanFunctions.vkDestroyImage = &vkDestroyImage;
+    m_VulkanFunctions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
+    m_VulkanFunctions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+    m_VulkanFunctions.vkAllocateMemory = vkAllocateMemory;
+    m_VulkanFunctions.vkFreeMemory = vkFreeMemory;
+    m_VulkanFunctions.vkMapMemory = vkMapMemory;
+    m_VulkanFunctions.vkUnmapMemory = vkUnmapMemory;
+    m_VulkanFunctions.vkBindBufferMemory = vkBindBufferMemory;
+    m_VulkanFunctions.vkBindImageMemory = vkBindImageMemory;
+    m_VulkanFunctions.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements;
+    m_VulkanFunctions.vkGetImageMemoryRequirements = vkGetImageMemoryRequirements;
+    m_VulkanFunctions.vkCreateBuffer = vkCreateBuffer;
+    m_VulkanFunctions.vkDestroyBuffer = vkDestroyBuffer;
+    m_VulkanFunctions.vkCreateImage = vkCreateImage;
+    m_VulkanFunctions.vkDestroyImage = vkDestroyImage;
     if(m_UseKhrDedicatedAllocation)
     {
         m_VulkanFunctions.vkGetBufferMemoryRequirements2KHR =

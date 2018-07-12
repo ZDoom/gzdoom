@@ -86,17 +86,21 @@ CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 }
 
 
-
+// This function can be called recursively so the pointers here must be cleared before their content gets destroyed.
 void I_ShutdownGraphics ()
 {
 	if (screen)
 	{
 		DFrameBuffer *s = screen;
-		screen = NULL;
+		screen = nullptr;
 		delete s;
 	}
 	if (Video)
-		delete Video, Video = NULL;
+	{
+		IVideo *v = Video;
+		Video = nullptr;
+		delete v;
+	}
 }
 
 void I_InitGraphics ()

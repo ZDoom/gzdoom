@@ -66,7 +66,6 @@ private:
 	TranslatedTexture * GetTexID(int translation);
 
 	int GetDepthBuffer(int w, int h);
-	void Resize(int swidth, int sheight, int width, int height, unsigned char *src_data, unsigned char *dst_data);
 
 public:
 	FHardwareTexture(bool nocompress);

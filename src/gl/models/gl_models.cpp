@@ -26,29 +26,22 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "w_wad.h"
-#include "cmdlib.h"
-#include "sc_man.h"
-#include "m_crc32.h"
-#include "c_console.h"
 #include "g_game.h"
 #include "doomstat.h"
 #include "g_level.h"
 #include "r_state.h"
 #include "d_player.h"
 #include "g_levellocals.h"
-#include "r_utility.h"
 #include "i_time.h"
-//#include "resources/voxels.h"
-//#include "gl/gl_intern.h"
+#include "hwrenderer/textures/hw_material.h"
 
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/models/gl_models.h"
-#include "gl/textures/gl_material.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 
@@ -61,7 +54,7 @@ VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 	return objectToWorldMatrix;
 }
 
-void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix)
+void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
 	glDepthFunc(GL_LEQUAL);
 	gl_RenderState.EnableTexture(true);
@@ -72,7 +65,7 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace(GL_CW);
+		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CCW : GL_CW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -88,7 +81,7 @@ void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 		glDisable(GL_CULL_FACE);
 }
 
-void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix)
+void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
 {
 	glDepthFunc(GL_LEQUAL);
 
@@ -98,7 +91,7 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace(GLPortal::isMirrored()? GL_CW : GL_CCW);
+		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CW : GL_CCW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -151,11 +144,6 @@ void FGLModelRenderer::DrawArrays(int start, int count)
 void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 {
 	glDrawElements(GL_TRIANGLES, numIndices, GL_UNSIGNED_INT, (void*)(intptr_t)offset);
-}
-
-double FGLModelRenderer::GetTimeFloat()
-{
-	return (double)I_msTime() * (double)TICRATE / 1000.;
 }
 
 //===========================================================================
@@ -349,28 +337,4 @@ void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame
 			iBuffer[i].z = vbo_ptr[frame1 + i].z * (1.f - frac) + vbo_ptr[frame2 + i].z * frac;
 		}
 	}
-}
-
-//===========================================================================
-//
-// gl_RenderModel
-//
-//===========================================================================
-
-void gl_RenderModel(GLSprite * spr, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor);
-}
-
-//===========================================================================
-//
-// gl_RenderHUDModel
-//
-//===========================================================================
-
-void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderHUDModel(psp, ofsX, ofsY);
 }

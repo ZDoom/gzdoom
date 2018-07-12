@@ -25,14 +25,11 @@
 
 
 #include "w_wad.h"
-#include "tarray.h"
 #include "g_level.h"
-#include "sc_man.h"
 #include "s_sound.h"
 #include "r_sky.h"
 #include "t_script.h"
 #include "cmdlib.h"
-#include "p_lnspec.h"
 #include "gi.h"
 #include "g_levellocals.h"
 #include "xlat/xlat.h"

@@ -26,41 +26,45 @@
 #include "r_data/matrix.h"
 #include "r_data/models/models.h"
 
-void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor);
-void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy);
+void PolyRenderModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor);
+void PolyRenderHUDModel(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue, DPSprite *psp, float ofsx, float ofsy);
 
 class PolyModelRenderer : public FModelRenderer
 {
 public:
-	PolyModelRenderer(PolyRenderThread *thread, const Mat4f &worldToClip, const PolyClipPlane &clipPlane, uint32_t stencilValue);
+	PolyModelRenderer(PolyRenderThread *thread, const Mat4f &worldToClip, uint32_t stencilValue);
 
-	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) override;
+	void AddLights(AActor *actor);
+
+	ModelRendererType GetType() const override { return PolyModelRendererType; }
+
+	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
 	void SetVertexBuffer(IModelVertexBuffer *buffer) override;
 	void ResetVertexBuffer() override;
 	VSMatrix GetViewToWorldMatrix() override;
-	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix) override;
+	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 	void EndDrawHUDModel(AActor *actor) override;
 	void SetInterpolation(double interpolation) override;
 	void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) override;
 	void DrawArrays(int start, int count) override;
 	void DrawElements(int numIndices, size_t offset) override;
-	double GetTimeFloat() override;
 
 	void SetTransform();
 
 	PolyRenderThread *Thread = nullptr;
 	const Mat4f &WorldToClip;
-	const PolyClipPlane &ClipPlane;
 	uint32_t StencilValue = 0;
 
 	AActor *ModelActor = nullptr;
 	Mat4f ObjectToWorld;
 	FTexture *SkinTexture = nullptr;
 	unsigned int *IndexBuffer = nullptr;
-	TriVertex *VertexBuffer = nullptr;
+	FModelVertex *VertexBuffer = nullptr;
 	float InterpolationFactor = 0.0;
+	PolyLight *Lights = nullptr;
+	int NumLights = 0;
 };
 
 class PolyModelVertexBuffer : public IModelVertexBuffer
@@ -78,7 +82,6 @@ public:
 	void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
 
 private:
-	int mIndexFrame[2];
 	TArray<FModelVertex> mVertexBuffer;
 	TArray<unsigned int> mIndexBuffer;
 };

@@ -36,13 +36,8 @@
 #include "info.h"
 #include "actor.h"
 #include "p_lnspec.h"
-#include "m_fixed.h"
 #include "c_dispatch.h"
-#include "templates.h"
-#include "cmdlib.h"
-#include "g_level.h"
 #include "v_text.h"
-#include "i_system.h"
 
 
 const char *SpecialMapthingNames[] = {
@@ -186,6 +181,7 @@ void FMapInfoParser::ParseDoomEdNums()
 			memset(editem.args, 0, sizeof(editem.args));
 			editem.argsdefined = 0;
 			editem.noskillflags = false;
+			editem.linenum = sc.Line;
 
 			int minargs = 0;
 			int maxargs = 5;

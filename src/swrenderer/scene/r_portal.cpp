@@ -172,7 +172,8 @@ namespace swrenderer
 			Thread->Viewport->viewpoint.camera = nullptr;
 			Thread->Viewport->viewpoint.sector = port->mDestination;
 			assert(Thread->Viewport->viewpoint.sector != nullptr);
-			R_SetViewAngle(Thread->Viewport->viewpoint, Thread->Viewport->viewwindow);
+			Thread->Viewport->viewpoint.SetViewAngle(Thread->Viewport->viewwindow);
+			Thread->Viewport->SetupPolyViewport(Thread);
 			Thread->OpaquePass->ClearSeenSprites();
 			Thread->Clip3D->ClearFakeFloors();
 
@@ -239,6 +240,7 @@ namespace swrenderer
 			// Masked textures and planes need the view coordinates restored for proper positioning.
 			viewposStack.Pop(Thread->Viewport->viewpoint.Pos);
 			
+			Thread->Viewport->SetupPolyViewport(Thread);
 			Thread->TranslucentPass->Render();
 
 			VisiblePlane *pl = nullptr;	// quiet, GCC!
@@ -258,7 +260,8 @@ namespace swrenderer
 		Thread->Light->SetVisibility(Thread->Viewport.get(), savedvisibility);
 		Thread->Viewport->viewpoint.extralight = savedextralight;
 		Thread->Viewport->viewpoint.Angles = savedangles;
-		R_SetViewAngle(Thread->Viewport->viewpoint, Thread->Viewport->viewwindow);
+		Thread->Viewport->viewpoint.SetViewAngle(Thread->Viewport->viewwindow);
+		Thread->Viewport->SetupPolyViewport(Thread);
 
 		CurrentPortalInSkybox = false;
 		Thread->Clip3D->LeaveSkybox();
@@ -426,6 +429,8 @@ namespace swrenderer
 			else MirrorFlags |= RF_XFLIP;
 		}
 
+		Thread->Viewport->SetupPolyViewport(Thread);
+
 		// some portals have height differences, account for this here
 		Thread->Clip3D->EnterSkybox(); // push 3D floor height map
 		CurrentPortalInSkybox = false; // first portal in a skybox should set this variable to false for proper clipping in skyboxes.
@@ -478,6 +483,8 @@ namespace swrenderer
 		viewpoint.Pos = startpos;
 		viewpoint.Path[0] = savedpath[0];
 		viewpoint.Path[1] = savedpath[1];
+
+		viewport->SetupPolyViewport(Thread);
 	}
 
 #if 0

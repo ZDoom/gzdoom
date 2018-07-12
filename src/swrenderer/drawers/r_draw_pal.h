@@ -15,7 +15,6 @@ namespace swrenderer
 	{
 	public:
 		PalWall1Command(const WallDrawerArgs &args);
-		FString DebugInfo() override { return "PalWallCommand"; }
 
 	protected:
 		inline static uint8_t AddLights(const DrawerLight *lights, int num_lights, float viewpos_z, uint8_t fg, uint8_t material);
@@ -34,7 +33,6 @@ namespace swrenderer
 	{
 	public:
 		PalSkyCommand(const SkyDrawerArgs &args);
-		FString DebugInfo() override { return "PalSkyCommand"; }
 
 	protected:
 		SkyDrawerArgs args;
@@ -47,7 +45,6 @@ namespace swrenderer
 	{
 	public:
 		PalColumnCommand(const SpriteDrawerArgs &args);
-		FString DebugInfo() override { return "PalColumnCommand"; }
 
 		SpriteDrawerArgs args;
 
@@ -78,7 +75,6 @@ namespace swrenderer
 	public:
 		DrawFuzzColumnPalCommand(const SpriteDrawerArgs &args);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "DrawFuzzColumnPalCommand"; }
 
 	private:
 		int _yl;
@@ -95,7 +91,6 @@ namespace swrenderer
 	public:
 		DrawScaledFuzzColumnPalCommand(const SpriteDrawerArgs &drawerargs);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "DrawScaledFuzzColumnPalCommand"; }
 
 	private:
 		int _x;
@@ -111,7 +106,6 @@ namespace swrenderer
 	{
 	public:
 		PalSpanCommand(const SpanDrawerArgs &args);
-		FString DebugInfo() override { return "PalSpanCommand"; }
 
 	protected:
 		inline static uint8_t AddLights(const DrawerLight *lights, int num_lights, float viewpos_x, uint8_t fg, uint8_t material);
@@ -152,7 +146,6 @@ namespace swrenderer
 	public:
 		DrawTiltedSpanPalCommand(const SpanDrawerArgs &args, const FVector3 &plane_sz, const FVector3 &plane_su, const FVector3 &plane_sv, bool plane_shade, int planeshade, float planelightfloat, fixed_t pviewx, fixed_t pviewy, FDynamicColormap *basecolormap);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "DrawTiltedSpanPalCommand"; }
 
 	private:
 		void CalcTiltedLighting(double lval, double lend, int width, DrawerThread *thread);
@@ -183,7 +176,6 @@ namespace swrenderer
 	public:
 		DrawColoredSpanPalCommand(const SpanDrawerArgs &args);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override { return "DrawColoredSpanPalCommand"; }
 
 	private:
 		int y;
@@ -210,7 +202,6 @@ namespace swrenderer
 	public:
 		DrawParticleColumnPalCommand(uint8_t *dest, int dest_y, int pitch, int count, uint32_t fg, uint32_t alpha, uint32_t fracposx);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 
 	private:
 		uint8_t *_dest;
@@ -227,7 +218,6 @@ namespace swrenderer
 	public:
 		DrawVoxelBlocksPalCommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount);
 		void Execute(DrawerThread *thread) override;
-		FString DebugInfo() override;
 
 	private:
 		SpriteDrawerArgs args;

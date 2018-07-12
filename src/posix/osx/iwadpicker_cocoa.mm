@@ -33,9 +33,6 @@
  **
  */
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "cmdlib.h"
 #include "d_main.h"
 #include "version.h"
@@ -44,11 +41,8 @@
 #include "m_misc.h"
 #include "gameconfigfile.h"
 
-#undef Class
-
 #include <Cocoa/Cocoa.h>
 #include <wordexp.h>
-#include <unistd.h>
 
 
 CVAR(String, osx_additional_parameters, "", CVAR_ARCHIVE | CVAR_NOSET | CVAR_GLOBALCONFIG);

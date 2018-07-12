@@ -39,8 +39,6 @@
 #include "g_levellocals.h"
 
 // State.
-#include "r_state.h"
-#include "statnums.h"
 #include "serializer.h"
 
 static FRandom pr_flicker ("Flicker");

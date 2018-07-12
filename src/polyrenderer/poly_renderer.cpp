@@ -27,6 +27,7 @@
 #include "st_stuff.h"
 #include "r_data/r_translate.h"
 #include "r_data/r_interpolate.h"
+#include "r_data/models/models.h"
 #include "poly_renderer.h"
 #include "d_net.h"
 #include "po_man.h"
@@ -41,6 +42,9 @@
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Float, r_visibility)
+EXTERN_CVAR(Bool, r_models)
+
+extern bool r_modelscene;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -156,19 +160,24 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 
 	ScreenTriangle::FuzzStart = (ScreenTriangle::FuzzStart + 14) % FUZZTABLE;
 
-	ClearBuffers();
-	SetSceneViewport();
-	SetupPerspectiveMatrix();
+	r_modelscene = r_models && Models.Size() > 0;
 
-	PolyPortalViewpoint mainViewpoint;
-	mainViewpoint.WorldToView = WorldToView;
-	mainViewpoint.WorldToClip = WorldToClip;
+	NextStencilValue = 0;
+	Threads.Clear();
+	Threads.MainThread()->SectorPortals.clear();
+	Threads.MainThread()->LinePortals.clear();
+	Threads.MainThread()->TranslucentObjects.clear();
+
+	PolyTriangleDrawer::ResizeBuffers(RenderTarget);
+	PolyTriangleDrawer::ClearStencil(Threads.MainThread()->DrawQueue, 0);
+	SetSceneViewport();
+
+	PolyPortalViewpoint mainViewpoint = SetupPerspectiveMatrix();
 	mainViewpoint.StencilValue = GetNextStencilValue();
-	mainViewpoint.PortalPlane = PolyClipPlane(0.0f, 0.0f, 0.0f, 1.0f);
+	Scene.CurrentViewpoint = &mainViewpoint;
 	Scene.Render(&mainViewpoint);
-	Skydome.Render(Threads.MainThread(), WorldToView, WorldToClip);
-	Scene.RenderTranslucent(&mainViewpoint);
 	PlayerSprites.Render(Threads.MainThread());
+	Scene.CurrentViewpoint = nullptr;
 
 	if (Viewpoint.camera)
 		Viewpoint.camera->renderflags = savedflags;
@@ -180,16 +189,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 void PolyRenderer::RenderRemainingPlayerSprites()
 {
 	PlayerSprites.RenderRemainingSprites();
-}
-
-void PolyRenderer::ClearBuffers()
-{
-	Threads.Clear();
-	PolyTriangleDrawer::ClearBuffers(RenderTarget);
-	NextStencilValue = 0;
-	Threads.MainThread()->SectorPortals.clear();
-	Threads.MainThread()->LinePortals.clear();
-	Threads.MainThread()->TranslucentObjects.clear();
 }
 
 void PolyRenderer::SetSceneViewport()
@@ -205,23 +204,16 @@ void PolyRenderer::SetSceneViewport()
 			height = (screenblocks*SCREENHEIGHT / 10) & ~7;
 
 		int bottom = SCREENHEIGHT - (height + viewwindowy - ((height - viewheight) / 2));
-		PolyTriangleDrawer::SetViewport(Threads.MainThread()->DrawQueue, viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget, false);
+		PolyTriangleDrawer::SetViewport(Threads.MainThread()->DrawQueue, viewwindowx, SCREENHEIGHT - bottom - height, viewwidth, height, RenderTarget);
 	}
 	else // Rendering to camera texture
 	{
-		PolyTriangleDrawer::SetViewport(Threads.MainThread()->DrawQueue, 0, 0, RenderTarget->GetWidth(), RenderTarget->GetHeight(), RenderTarget, false);
+		PolyTriangleDrawer::SetViewport(Threads.MainThread()->DrawQueue, 0, 0, RenderTarget->GetWidth(), RenderTarget->GetHeight(), RenderTarget);
 	}
 }
 
-void PolyRenderer::SetupPerspectiveMatrix()
+PolyPortalViewpoint PolyRenderer::SetupPerspectiveMatrix(bool mirror)
 {
-	static bool bDidSetup = false;
-
-	if (!bDidSetup)
-	{
-		bDidSetup = true;
-	}
-
 	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
 	double radPitch = Viewpoint.Angles.Pitch.Normalized180().Radians();
 	double angx = cos(radPitch);
@@ -232,9 +224,12 @@ void PolyRenderer::SetupPerspectiveMatrix()
 
 	float ratio = Viewwindow.WidescreenRatio;
 	float fovratio = (Viewwindow.WidescreenRatio >= 1.3f) ? 1.333333f : ratio;
+
 	float fovy = (float)(2 * DAngle::ToDegrees(atan(tan(Viewpoint.FieldOfView.Radians() / 2) / fovratio)).Degrees);
 
-	WorldToView =
+	PolyPortalViewpoint portalViewpoint;
+
+	portalViewpoint.WorldToView =
 		Mat4f::Rotate((float)Viewpoint.Angles.Roll.Radians(), 0.0f, 0.0f, 1.0f) *
 		Mat4f::Rotate(adjustedPitch, 1.0f, 0.0f, 0.0f) *
 		Mat4f::Rotate(adjustedViewAngle, 0.0f, -1.0f, 0.0f) *
@@ -242,7 +237,14 @@ void PolyRenderer::SetupPerspectiveMatrix()
 		Mat4f::SwapYZ() *
 		Mat4f::Translate((float)-Viewpoint.Pos.X, (float)-Viewpoint.Pos.Y, (float)-Viewpoint.Pos.Z);
 
-	WorldToClip = Mat4f::Perspective(fovy, ratio, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * WorldToView;
+	portalViewpoint.Mirror = mirror;
+
+	if (mirror)
+		portalViewpoint.WorldToView = Mat4f::Scale(-1.0f, 1.0f, 1.0f) * portalViewpoint.WorldToView;
+
+	portalViewpoint.WorldToClip = Mat4f::Perspective(fovy, ratio, 5.0f, 65535.0f, Handedness::Right, ClipZRange::NegativePositiveW) * portalViewpoint.WorldToView;
+
+	return portalViewpoint;
 }
 
 cycle_t PolyCullCycles, PolyOpaqueCycles, PolyMaskedCycles, PolyDrawerWaitCycles;

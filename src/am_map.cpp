@@ -30,14 +30,11 @@
 #include "doomdef.h"
 #include "templates.h"
 #include "g_level.h"
-#include "doomdef.h"
 #include "st_stuff.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "w_wad.h"
 #include "a_sharedglobal.h"
-#include "statnums.h"
-#include "r_data/r_translate.h"
 #include "d_event.h"
 #include "gi.h"
 #include "p_setup.h"
@@ -50,19 +47,10 @@
 #include "p_blockmap.h"
 
 #include "m_cheat.h"
-#include "i_system.h"
 #include "c_dispatch.h"
-#include "colormatcher.h"
 #include "d_netinf.h"
 
-// Needs access to LFB.
-#include "v_video.h"
-#include "v_palette.h"
-
-#include "v_text.h"
-
 // State.
-#include "doomstat.h"
 #include "r_state.h"
 #include "r_utility.h"
 
@@ -72,7 +60,6 @@
 #include "am_map.h"
 #include "po_man.h"
 #include "a_keys.h"
-#include "r_data/colormaps.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 
@@ -335,6 +322,30 @@ struct AMColorset
 	{
 		return c[index].isValid();
 	}
+};
+
+//=============================================================================
+//
+// automap colors forced by linedef
+//
+//=============================================================================
+
+static const int AUTOMAP_LINE_COLORS[AMLS_COUNT] =
+{
+	-1, 								// AMLS_Default (unused)
+	AMColorset::WallColor, 				// AMLS_OneSided,
+	AMColorset::TSWallColor, 			// AMLS_TwoSided
+	AMColorset::FDWallColor, 			// AMLS_FloorDiff
+	AMColorset::CDWallColor, 			// AMLS_CeilingDiff
+	AMColorset::EFWallColor, 			// AMLS_ExtraFloor
+	AMColorset::SpecialWallColor, 		// AMLS_Special
+	AMColorset::SecretWallColor, 		// AMLS_Secret
+	AMColorset::NotSeenColor, 			// AMLS_NotSeen
+	AMColorset::LockedColor, 			// AMLS_Locked
+	AMColorset::IntraTeleportColor, 	// AMLS_IntraTeleport
+	AMColorset::InterTeleportColor, 	// AMLS_InterTeleport
+	AMColorset::UnexploredSecretColor, 	// AMLS_UnexploredSecret
+	AMColorset::PortalColor, 			// AMLS_Portal
 };
 
 //=============================================================================
@@ -1948,10 +1959,10 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	else
 	{
 		in_area = pos.Z <= viewer->Sector->heightsec->floorplane.ZatPoint(pos) ? -1 :
-			(pos.Z > viewer->Sector->heightsec->ceilingplane.ZatPoint(pos) && !(viewer->Sector->heightsec->MoreFlags&SECF_FAKEFLOORONLY)) ? 1 : 0;
+			(pos.Z > viewer->Sector->heightsec->ceilingplane.ZatPoint(pos) && !(viewer->Sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? 1 : 0;
 	}
 
-	int diffTex = (sec->heightsec->MoreFlags & SECF_CLIPFAKEPLANES);
+	int diffTex = (sec->heightsec->MoreFlags & SECMF_CLIPFAKEPLANES);
 	sector_t * s = sec->heightsec;
 
 	memcpy(dest, sec, sizeof(sector_t));
@@ -1963,14 +1974,14 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 		if (s->floorplane.CopyPlaneIfValid(&dest->floorplane, &sec->ceilingplane))
 		{
 			dest->SetTexture(sector_t::floor, s->GetTexture(sector_t::floor), false);
-			dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
+			dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
 		}
-		else if (s->MoreFlags & SECF_FAKEFLOORONLY)
+		else if (s->MoreFlags & SECMF_FAKEFLOORONLY)
 		{
 			if (in_area == -1)
 			{
 				dest->Colormap = s->Colormap;
-				if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+				if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 				{
 					dest->lightlevel = s->lightlevel;
 					dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
@@ -1983,16 +1994,16 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	}
 	else
 	{
-		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
+		dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::floor));
 		dest->floorplane = s->floorplane;
 	}
 
 	if (in_area == -1)
 	{
 		dest->Colormap = s->Colormap;
-		dest->SetPlaneTexZ(sector_t::floor, sec->GetPlaneTexZ(sector_t::floor));
+		dest->SetPlaneTexZQuick(sector_t::floor, sec->GetPlaneTexZ(sector_t::floor));
 		dest->floorplane = sec->floorplane;
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->lightlevel = s->lightlevel;
 		}
@@ -2000,7 +2011,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 		dest->SetTexture(sector_t::floor, diffTex ? sec->GetTexture(sector_t::floor) : s->GetTexture(sector_t::floor), false);
 		dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
 			dest->ChangeFlags(sector_t::floor, -1, s->GetFlags(sector_t::floor));
@@ -2009,9 +2020,9 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	else if (in_area == 1)
 	{
 		dest->Colormap = s->Colormap;
-		dest->SetPlaneTexZ(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
+		dest->SetPlaneTexZQuick(sector_t::floor, s->GetPlaneTexZ(sector_t::ceiling));
 		dest->floorplane = s->ceilingplane;
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->lightlevel = s->lightlevel;
 		}
@@ -2024,7 +2035,7 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 			dest->planes[sector_t::floor].xform = s->planes[sector_t::floor].xform;
 		}
 
-		if (!(s->MoreFlags & SECF_NOFAKELIGHT))
+		if (!(s->MoreFlags & SECMF_NOFAKELIGHT))
 		{
 			dest->lightlevel = s->lightlevel;
 			dest->SetPlaneLight(sector_t::floor, s->GetPlaneLight(sector_t::floor));
@@ -2061,7 +2072,7 @@ void AM_drawSubsectors()
 			continue;
 		}
 
-		if ((!(subsectors[i].flags & SSECF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECF_HIDDEN)) && am_cheat == 0)
+		if ((!(subsectors[i].flags & SSECMF_DRAWN) || (subsectors[i].render_sector->MoreFlags & SECMF_HIDDEN)) && am_cheat == 0)
 		{
 			continue;
 		}
@@ -2112,13 +2123,14 @@ void AM_drawSubsectors()
 			double secx;
 			double secy;
 			double seczb, seczt;
-			double cmpz = r_viewpoint.Pos.Z;
+            auto &vp = r_viewpoint;
+			double cmpz = vp.Pos.Z;
 
 			if (players[consoleplayer].camera && sec == players[consoleplayer].camera->Sector)
 			{
 				// For the actual camera sector use the current viewpoint as reference.
-				secx = r_viewpoint.Pos.X;
-				secy = r_viewpoint.Pos.Y;
+				secx = vp.Pos.X;
+				secy = vp.Pos.Y;
 			}
 			else
 			{
@@ -2182,7 +2194,7 @@ void AM_drawSubsectors()
 
 		// If this subsector has not actually been seen yet (because you are cheating
 		// to see it on the map), tint and desaturate it.
-		if (!(subsectors[i].flags & SSECF_DRAWN))
+		if (!(subsectors[i].flags & SSECMF_DRAWN))
 		{
 			colormap.LightColor = PalEntry(
 				(colormap.LightColor.r + 255) / 2,
@@ -2596,6 +2608,13 @@ void AM_drawWalls (bool allmap)
 					}
 				}
 
+				if (line.automapstyle > AMLS_Default && line.automapstyle < AMLS_COUNT
+					&& (am_cheat == 0 || am_cheat >= 4))
+				{
+					AM_drawMline(&l, AUTOMAP_LINE_COLORS[line.automapstyle]);
+					continue;
+				}
+
 				if (portalmode)
 				{
 					AM_drawMline(&l, AMColors.PortalColor);
@@ -2671,7 +2690,7 @@ void AM_drawWalls (bool allmap)
 					AM_drawMline(&l, AMColors.TSWallColor);
 				}
 			}
-			else if (allmap)
+			else if (allmap || (line.flags & ML_REVEALED))
 			{
 				if ((line.flags & ML_DONTDRAW) && (am_cheat == 0 || am_cheat >= 4))
 				{
@@ -3176,8 +3195,8 @@ void AM_drawAuthorMarkers ()
 			// Use more correct info if we have GL nodes available
 			if (mark->args[1] == 0 ||
 				(mark->args[1] == 1 && (hasglnodes ?
-				 marked->subsector->flags & SSECF_DRAWN :
-				 marked->Sector->MoreFlags & SECF_DRAWN)))
+				 marked->subsector->flags & SSECMF_DRAWN :
+				 marked->Sector->MoreFlags & SECMF_DRAWN)))
 			{
 				DrawMarker (tex, marked->X(), marked->Y(), 0, flip, mark->Scale.X, mark->Scale.Y, mark->Translation,
 					mark->Alpha, mark->fillcolor, mark->RenderStyle);

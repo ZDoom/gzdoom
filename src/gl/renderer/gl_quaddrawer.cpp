@@ -20,12 +20,10 @@
 //--------------------------------------------------------------------------
 //
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_quaddrawer.h"
-#include "r_data/matrix.h"
 
 /*
 ** For handling of dynamically created quads when no persistently mapped

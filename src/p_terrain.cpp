@@ -43,9 +43,7 @@
 #include "r_state.h"
 #include "w_wad.h"
 #include "sc_man.h"
-#include "s_sound.h"
 #include "p_local.h"
-#include "templates.h"
 #include "actor.h"
 #include "vm.h"
 

@@ -20,6 +20,7 @@ class Knight : Actor
 		ActiveSound "hknight/active";
 		Obituary "$OB_BONEKNIGHT";
 		HitObituary "$OB_BONEKNIGHTHIT";
+		Tag "$FN_BONEKNIGHT";
 		DropItem "CrossbowAmmo", 84, 5;
 	}
 	

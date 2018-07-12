@@ -75,11 +75,7 @@
 #include "gstrings.h"
 #include "events.h"
 
-#include "i_system.h"
-#include "m_argv.h"
 #include "m_random.h"
-#include "m_bbox.h"
-#include "w_wad.h"
 
 #include "p_local.h"
 #include "p_spec.h"
@@ -91,20 +87,11 @@
 
 #include "g_game.h"
 
-#include "s_sound.h"
-#include "sc_man.h"
-#include "gi.h"
-#include "statnums.h"
-#include "g_level.h"
-#include "v_font.h"
 #include "a_sharedglobal.h"
-#include "serializer.h"
 #include "a_keys.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
 #include "d_player.h"
-#include "p_maputl.h"
-#include "p_blockmap.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #ifndef NO_EDATA
@@ -112,12 +99,7 @@
 #endif
 #include "vm.h"
 
-// State.
-#include "r_state.h"
-
 #include "c_console.h"
-
-#include "r_data/r_interpolate.h"
 
 static FRandom pr_playerinspecialsector ("PlayerInSpecialSector");
 
@@ -607,7 +589,15 @@ void P_GiveSecret(AActor *actor, bool printmessage, bool playsound, int sectornu
 		{
 			actor->player->secretcount++;
 		}
-		if (cl_showsecretmessage && actor->CheckLocalView(consoleplayer))
+		int retval = 1;
+		IFVIRTUALPTR(actor, AActor, OnGiveSecret)
+		{
+			VMValue params[] = { actor, printmessage, playsound };
+			VMReturn ret;
+			ret.IntAt(&retval);
+			VMCall(func, params, countof(params), &ret, 1);
+		}
+		if (retval && cl_showsecretmessage && actor->CheckLocalView(consoleplayer))
 		{
 			if (printmessage)
 			{
@@ -633,6 +623,7 @@ DEFINE_ACTION_FUNCTION(AActor, GiveSecret)
 	P_GiveSecret(self, printmessage, playsound, -1);
 	return 0;
 }
+
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, GiveSecret)
 {
@@ -716,15 +707,15 @@ CUSTOM_CVAR (Bool, forcewater, false, CVAR_ARCHIVE|CVAR_SERVERINFO)
 		for (auto &sec : level.sectors)
 		{
 			sector_t *hsec = sec.GetHeightSec();
-			if (hsec && !(hsec->MoreFlags & SECF_UNDERWATER))
+			if (hsec && !(hsec->MoreFlags & SECMF_UNDERWATER))
 			{
 				if (self)
 				{
-					hsec->MoreFlags |= SECF_FORCEDUNDERWATER;
+					hsec->MoreFlags |= SECMF_FORCEDUNDERWATER;
 				}
 				else
 				{
-					hsec->MoreFlags &= ~SECF_FORCEDUNDERWATER;
+					hsec->MoreFlags &= ~SECMF_FORCEDUNDERWATER;
 				}
 			}
 		}
@@ -1266,7 +1257,7 @@ void P_InitSectorSpecial(sector_t *sector, int special)
 		break;
 
 	case Sector_Hidden:
-		sector->MoreFlags |= SECF_HIDDEN;
+		sector->MoreFlags |= SECMF_HIDDEN;
 		break;
 
 	case Sector_Heal:
@@ -1361,35 +1352,38 @@ void P_SpawnSpecials (void)
 		case Transfer_Heights:
 			{
 				sec = line.frontsector;
+				
 				if (line.args[1] & 2)
 				{
-					sec->MoreFlags |= SECF_FAKEFLOORONLY;
+					sec->MoreFlags |= SECMF_FAKEFLOORONLY;
 				}
 				if (line.args[1] & 4)
 				{
-					sec->MoreFlags |= SECF_CLIPFAKEPLANES;
+					sec->MoreFlags |= SECMF_CLIPFAKEPLANES;
 				}
 				if (line.args[1] & 8)
 				{
-					sec->MoreFlags |= SECF_UNDERWATER;
+					sec->MoreFlags |= SECMF_UNDERWATER;
 				}
 				else if (forcewater)
 				{
-					sec->MoreFlags |= SECF_FORCEDUNDERWATER;
+					sec->MoreFlags |= SECMF_FORCEDUNDERWATER;
 				}
 				if (line.args[1] & 16)
 				{
-					sec->MoreFlags |= SECF_IGNOREHEIGHTSEC;
+					sec->MoreFlags |= SECMF_IGNOREHEIGHTSEC;
 				}
+				else level.HasHeightSecs = true;
 				if (line.args[1] & 32)
 				{
-					sec->MoreFlags |= SECF_NOFAKELIGHT;
+					sec->MoreFlags |= SECMF_NOFAKELIGHT;
 				}
 				FSectorTagIterator itr(line.args[0]);
 				while ((s = itr.Next()) >= 0)
 				{
 					level.sectors[s].heightsec = sec;
 					sec->e->FakeFloor.Sectors.Push(&level.sectors[s]);
+					level.sectors[s].MoreFlags |= (sec->MoreFlags & SECMF_IGNOREHEIGHTSEC);	// copy this to the destination sector for easier checking.
 					level.sectors[s].AdjustFloorClip();
 				}
 				break;

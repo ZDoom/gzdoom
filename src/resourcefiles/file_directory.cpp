@@ -43,7 +43,6 @@
 
 #include "resourcefile.h"
 #include "cmdlib.h"
-#include "doomerrors.h"
 
 
 

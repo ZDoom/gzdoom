@@ -32,8 +32,6 @@
 */
 #include "sndfile_decoder.h"
 #include "templates.h"
-#include "files.h"
-#include "xs_Float.h"
 #include "i_module.h"
 #include "cmdlib.h"
 

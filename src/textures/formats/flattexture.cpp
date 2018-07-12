@@ -36,7 +36,6 @@
 #include "doomtype.h"
 #include "files.h"
 #include "w_wad.h"
-#include "v_palette.h"
 #include "textures/textures.h"
 
 //==========================================================================

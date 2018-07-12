@@ -26,20 +26,13 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
 #include "doomtype.h"
-#include "colormatcher.h"
-#include "i_system.h"
 #include "p_local.h"
 #include "p_spec.h"
 #include "p_lnspec.h"
 #include "c_dispatch.h"
 #include "r_sky.h"
-#include "sc_man.h"
-#include "w_wad.h"
-#include "gi.h"
 #include "p_setup.h"
-#include "g_level.h"
 #include "g_levellocals.h"
 
 //==========================================================================
@@ -254,7 +247,7 @@ static void PrepareSectorData()
 
 	for (auto &sub : level.subsectors)
 	{
-		sub.render_sector->subsectorcount++;
+		sub.sectorindex = (uint16_t)sub.render_sector->subsectorcount++;
 	}
 
 	for (auto &sec : level.sectors) 

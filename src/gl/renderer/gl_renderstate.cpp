@@ -27,17 +27,15 @@
 
 #include "templates.h"
 #include "doomstat.h"
-#include "gl/system/gl_system.h"
-#include "gl/system/gl_interface.h"
+#include "r_data/colormaps.h"
+#include "gl_load/gl_system.h"
+#include "gl_load/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
-#include "gl/system/gl_cvars.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_colormap.h"
 #include "gl/dynlights//gl_lightbuffer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "g_levellocals.h"
 
 void gl_SetTextureMode(int type);
 
@@ -64,7 +62,7 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 void FRenderState::Reset()
 {
 	mTextureEnabled = true;
-	mClipLineEnabled = mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+	mClipLineShouldBeActive = mClipLineEnabled = mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
 	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
@@ -223,25 +221,9 @@ bool FRenderState::ApplyShader()
 		activeShader->currentcliplinestate = 0;
 	}
 
-	if (mColormapState < -1)	// 2D operations
+	if (mColormapState == CM_PLAIN2D)	// 2D operations
 	{
-		if (mColormapState != CM_SPECIAL2D)
-		{
-			activeShader->muColormapStart.Set(m2DColors[0]);
-			activeShader->muFixedColormap.Set(4);
-		}
-		else
-		{
-			float startr = m2DColors[0].r / 255.f;
-			float startg = m2DColors[0].g / 255.f;
-			float startb = m2DColors[0].b / 255.f;
-			float ranger = m2DColors[1].r / 255.f - startr;
-			float rangeg = m2DColors[1].g / 255.f - startg;
-			float rangeb = m2DColors[1].b / 255.f - startb;
-			activeShader->muColormapStart.Set(startr, startg, startb, 0.f);
-			activeShader->muColormapRange.Set(ranger, rangeg, rangeb, 0.f);
-			activeShader->muFixedColormap.Set(1);
-		}
+		activeShader->muFixedColormap.Set(4);
 		activeShader->currentfixedcolormap = mColormapState;
 	}
 	else if (mColormapState != activeShader->currentfixedcolormap)

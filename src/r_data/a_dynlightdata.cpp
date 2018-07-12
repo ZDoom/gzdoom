@@ -33,25 +33,9 @@
 **
 */
 
-
-#include <ctype.h>
-#include "i_system.h"
-#include "doomtype.h"
-#include "c_cvars.h"
-#include "c_dispatch.h"
-#include "m_random.h"
-#include "sc_man.h"
-#include "templates.h"
-#include "w_wad.h"
-#include "gi.h"
 #include "r_state.h"
-#include "stats.h"
-#include "zstring.h"
-#include "d_dehacked.h"
-#include "v_text.h"
 #include "g_levellocals.h"
 #include "a_dynlight.h"
-#include "textures/skyboxtexture.h"
 
 
 //==========================================================================
@@ -137,7 +121,7 @@ void FLightDefaults::ApplyProperties(ADynamicLight * light) const
 
 extern int ScriptDepth;
 
-void AddLightDefaults(FLightDefaults *defaults)
+void AddLightDefaults(FLightDefaults *defaults, double attnFactor)
 {
    FLightDefaults *temp;
    unsigned int i;
@@ -152,6 +136,11 @@ void AddLightDefaults(FLightDefaults *defaults)
          LightDefaults.Delete(i);
          break;
       }
+   }
+   if (defaults->GetAttenuate())
+   {
+	   defaults->SetArg(LIGHT_INTENSITY, int(defaults->GetArg(LIGHT_INTENSITY) * attnFactor));
+	   defaults->SetArg(LIGHT_SECONDARY_INTENSITY, int(defaults->GetArg(LIGHT_SECONDARY_INTENSITY) * attnFactor));
    }
 
    LightDefaults.Push(defaults);

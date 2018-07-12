@@ -39,24 +39,16 @@
 
 // State.
 #include "d_player.h"
-#include "dobject.h"
-#include "doomstat.h"
-#include "r_state.h"
-#include "m_random.h"
 #include "p_saveg.h"
 #include "s_sndseq.h"
-#include "v_palette.h"
 #include "a_sharedglobal.h"
 #include "r_data/r_interpolate.h"
-#include "g_level.h"
 #include "po_man.h"
 #include "p_setup.h"
-#include "r_data/colormaps.h"
 #include "p_lnspec.h"
 #include "p_acs.h"
 #include "p_terrain.h"
 #include "am_map.h"
-#include "r_data/r_translate.h"
 #include "sbar.h"
 #include "r_utility.h"
 #include "r_sky.h"
@@ -335,7 +327,7 @@ void RecalculateDrawnSubsectors()
 			if (sub.firstline[j].linedef != NULL &&
 				(sub.firstline[j].linedef->flags & ML_MAPPED))
 			{
-				sub.flags |= SSECF_DRAWN;
+				sub.flags |= SSECMF_DRAWN;
 			}
 		}
 	}
@@ -364,7 +356,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 				by = 0;
 				for (unsigned j = 0; j < 6; j++)
 				{
-					if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECF_DRAWN))
+					if (i + j < numsubsectors && (level.subsectors[i + j].flags & SSECMF_DRAWN))
 					{
 						by |= (1 << j);
 					}
@@ -420,7 +412,7 @@ FSerializer &SerializeSubsectors(FSerializer &arc, const char *key)
 					{
 						if (sub + s < (int)numsubsectors && (by & (1 << s)))
 						{
-							level.subsectors[sub + s].flags |= SSECF_DRAWN;
+							level.subsectors[sub + s].flags |= SSECMF_DRAWN;
 						}
 					}
 					sub += 6;

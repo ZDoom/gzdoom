@@ -24,9 +24,10 @@
 #define __GL_RENDERSTATE_H
 
 #include <string.h>
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "r_data/matrix.h"
-#include "gl/textures/gl_material.h"
+#include "hwrenderer/scene//hw_drawstructs.h"
+#include "hwrenderer/textures/hw_material.h"
 #include "c_cvars.h"
 #include "r_defs.h"
 #include "r_data/r_translate.h"
@@ -34,6 +35,7 @@
 
 class FVertexBuffer;
 class FShader;
+struct GLSectorPlane;
 extern TArray<VSMatrix> gl_MatrixStack;
 
 EXTERN_CVAR(Bool, gl_direct_state_change)
@@ -79,6 +81,7 @@ class FRenderState
 	bool mGlowEnabled;
 	bool mSplitEnabled;
 	bool mClipLineEnabled;
+	bool mClipLineShouldBeActive;
 	bool mBrightmapEnabled;
 	bool mColorMask[4];
 	bool currentColorMask[4];
@@ -109,7 +112,6 @@ class FRenderState
 	PalEntry mFogColor;
 	PalEntry mObjectColor;
 	PalEntry mObjectColor2;
-	PalEntry m2DColors[2];	// in the shader these will reuse the colormap ramp uniforms.
 	FStateVec4 mDynColor;
 	float mClipSplit[2];
 
@@ -197,6 +199,11 @@ public:
 	bool GetClipLineState()
 	{
 		return mClipLineEnabled;
+	}
+
+	bool GetClipLineShouldBeActive()
+	{
+		return mClipLineShouldBeActive;
 	}
 
 	void SetClipHeight(float height, float direction);
@@ -324,6 +331,11 @@ public:
 				glDisable(GL_CLIP_DISTANCE0);
 			}
 		}
+		else
+		{
+			// this needs to be flagged because in this case per-sector plane rendering needs to be disabled if a clip plane is active.
+			mClipLineShouldBeActive = on;
+		}
 	}
 
 	void EnableBrightmap(bool on)
@@ -387,11 +399,6 @@ public:
 	void SetObjectColor2(PalEntry pe)
 	{
 		mObjectColor2 = pe;
-	}
-
-	void Set2DOverlayColor(PalEntry pe)
-	{
-		m2DColors[0] = pe;
 	}
 
 	void SetSpecular(float glossiness, float specularLevel)
@@ -530,6 +537,15 @@ public:
 	// Backwards compatibility crap follows
 	void ApplyFixedFunction();
 	void DrawColormapOverlay();
+
+	void SetPlaneTextureRotation(GLSectorPlane *plane, FMaterial *texture)
+	{
+		if (hw_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
+		{
+			EnableTextureMatrix(true);
+		}
+	}
+
 };
 
 extern FRenderState gl_RenderState;

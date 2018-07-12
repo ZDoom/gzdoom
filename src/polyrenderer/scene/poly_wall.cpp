@@ -40,7 +40,7 @@
 EXTERN_CVAR(Bool, r_drawmirrors)
 EXTERN_CVAR(Bool, r_fogboundary)
 
-bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const PolyClipPlane &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals, line_t *lastPortalLine)
+bool RenderPolyWall::RenderLine(PolyRenderThread *thread, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, std::vector<PolyTranslucentObject*> &translucentWallsOutput, std::vector<std::unique_ptr<PolyDrawLinePortal>> &linePortals, size_t linePortalsStart, line_t *portalEnterLine)
 {
 	double frontceilz1 = frontsector->ceilingplane.ZatPoint(line->v1);
 	double frontfloorz1 = frontsector->floorplane.ZatPoint(line->v1);
@@ -52,9 +52,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const PolyClipPlane &c
 	PolyDrawLinePortal *polyportal = nullptr;
 	if (line->backsector == nullptr && line->linedef && line->sidedef == line->linedef->sidedef[0] && (line->linedef->special == Line_Mirror && r_drawmirrors))
 	{
-		if (lastPortalLine == line->linedef ||
-			(line->linedef->v1->fX() * clipPlane.A + line->linedef->v1->fY() * clipPlane.B + clipPlane.D <= 0.0f) ||
-			(line->linedef->v2->fX() * clipPlane.A + line->linedef->v2->fY() * clipPlane.B + clipPlane.D <= 0.0f))
+		if (portalEnterLine == line->linedef)
 		{
 			return false;
 		}
@@ -64,19 +62,17 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const PolyClipPlane &c
 	}
 	else if (line->linedef && line->linedef->isVisualPortal())
 	{
-		if (lastPortalLine == line->linedef ||
-			(line->linedef->v1->fX() * clipPlane.A + line->linedef->v1->fY() * clipPlane.B + clipPlane.D <= 0.0f) ||
-			(line->linedef->v2->fX() * clipPlane.A + line->linedef->v2->fY() * clipPlane.B + clipPlane.D <= 0.0f))
+		if (portalEnterLine == line->linedef)
 		{
 			return false;
 		}
 
 		FLinePortal *portal = line->linedef->getPortal();
-		for (auto &p : linePortals)
+		for (size_t i = linePortalsStart; i < linePortals.size(); i++)
 		{
-			if (p->Portal == portal) // To do: what other criterias do we need to check for?
+			if (linePortals[i]->Portal == portal) // To do: what other criteria do we need to check for?
 			{
-				polyportal = p.get();
+				polyportal = linePortals[i].get();
 				break;
 			}
 		}
@@ -108,11 +104,11 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const PolyClipPlane &c
 			wall.Wallpart = side_t::mid;
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 			wall.Polyportal = polyportal;
-			wall.Render(thread, clipPlane);
+			wall.Render(thread);
 			return true;
 		}
 	}
-	else if (line->PartnerSeg)
+	else if (line->PartnerSeg && line->PartnerSeg->Subsector)
 	{
 		PolyTransferHeights fakeback(line->PartnerSeg->Subsector);
 		sector_t *backsector = fakeback.FrontSector;
@@ -145,7 +141,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const PolyClipPlane &c
 			wall.BottomTexZ = MIN(MIN(backceilz1, frontceilz1), MIN(backceilz2, frontceilz2));
 			wall.Wallpart = side_t::top;
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::top);
-			wall.Render(thread, clipPlane);
+			wall.Render(thread);
 		}
 
 		if ((bottomfloorz1 < bottomceilz1 || bottomfloorz2 < bottomceilz2) && line->sidedef && !bothSkyFloor)
@@ -157,7 +153,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const PolyClipPlane &c
 			wall.UnpeggedCeil2 = topceilz2;
 			wall.Wallpart = side_t::bottom;
 			wall.Texture = GetTexture(wall.Line, wall.Side, side_t::bottom);
-			wall.Render(thread, clipPlane);
+			wall.Render(thread);
 		}
 
 		if (line->sidedef)
@@ -179,7 +175,7 @@ bool RenderPolyWall::RenderLine(PolyRenderThread *thread, const PolyClipPlane &c
 			if (polyportal)
 			{
 				wall.Polyportal = polyportal;
-				wall.Render(thread, clipPlane);
+				wall.Render(thread);
 			}
 		}
 	}
@@ -193,7 +189,7 @@ bool RenderPolyWall::IsFogBoundary(sector_t *front, sector_t *back)
 		(front->GetTexture(sector_t::ceiling) != skyflatnum || back->GetTexture(sector_t::ceiling) != skyflatnum);
 }
 
-void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, const PolyClipPlane &clipPlane, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
+void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, seg_t *line, sector_t *frontsector, uint32_t subsectorDepth, uint32_t stencilValue, F3DFloor *fakeFloor, std::vector<PolyTranslucentObject*> &translucentWallsOutput)
 {
 	if (!(fakeFloor->flags & FF_EXISTS)) return;
 	if (!(fakeFloor->flags & FF_RENDERPLANES)) return;
@@ -243,7 +239,7 @@ void RenderPolyWall::Render3DFloorLine(PolyRenderThread *thread, const PolyClipP
 		wall.Texture = GetTexture(wall.Line, wall.Side, side_t::mid);
 
 	if (!wall.Masked)
-		wall.Render(thread, clipPlane);
+		wall.Render(thread);
 	else
 		translucentWallsOutput.push_back(thread->FrameMemory->NewObject<PolyTranslucentWall>(wall));
 }
@@ -258,7 +254,7 @@ void RenderPolyWall::SetCoords(const DVector2 &v1, const DVector2 &v2, double ce
 	this->floor2 = floor2;
 }
 
-void RenderPolyWall::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane)
+void RenderPolyWall::Render(PolyRenderThread *thread)
 {
 	bool foggy = false;
 	if (!Texture && !Polyportal && !FogBoundary)
@@ -322,55 +318,68 @@ void RenderPolyWall::Render(PolyRenderThread *thread, const PolyClipPlane &clipP
 
 	PolyDrawArgs args;
 	args.SetLight(Colormap, GetLightLevel(), PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
-	args.SetStencilTestValue(StencilValue);
 	if (Texture && !Polyportal)
 		args.SetTexture(Texture, DefaultRenderStyle());
-	args.SetClipPlane(0, clipPlane);
 
 	SetDynLights(thread, args);
 
 	if (FogBoundary)
 	{
+		args.SetStencilTestValue(StencilValue + 1);
 		args.SetStyle(TriBlendMode::FogBoundary);
 		args.SetColor(0xffffffff, 254);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 		if (!Texture)
 			return;
 	}
 
 	if (Polyportal)
 	{
+		args.SetStencilTestValue(StencilValue);
 		args.SetWriteStencil(true, Polyportal->StencilValue);
 		args.SetWriteColor(false);
 		args.SetWriteDepth(false);
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 		Polyportal->Shape.push_back({ vertices, 4 });
 	}
 	else if (!Masked)
 	{
+		args.SetStencilTestValue(StencilValue);
 		args.SetWriteStencil(true, StencilValue + 1);
-		args.SetStyle(TriBlendMode::TextureOpaque);
+		args.SetStyle(TriBlendMode::Opaque);
 		DrawStripes(thread, args, vertices);
 	}
 	else
 	{
-		double srcalpha = MIN(Alpha, 1.0);
-		double destalpha = Additive ? 1.0 : 1.0 - srcalpha;
-		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
+		double a = MIN(Alpha, 1.0);
+		if (Additive)
+			args.SetStyle(TriBlendMode::Add, a);
+		else if (a < 1.0)
+			args.SetStyle(TriBlendMode::Translucent, a);
+		else
+			args.SetStyle(TriBlendMode::Normal);
+
+		args.SetStencilTestValue(StencilValue + 1);
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 		args.SetWriteStencil(false);
 		DrawStripes(thread, args, vertices);
 	}
 
-	RenderPolyDecal::RenderWallDecals(thread, clipPlane, LineSeg, StencilValue);
+	RenderPolyDecal::RenderWallDecals(thread, LineSeg, StencilValue + 1);
 }
 
 void RenderPolyWall::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args)
 {
+	if (!r_dynlights)
+	{
+		args.SetLights(nullptr, 0);
+		return;
+	}
+
 	FLightNode *light_list = (LineSeg && LineSeg->sidedef) ? LineSeg->sidedef->lighthead : nullptr;
 
 	auto cameraLight = PolyCameraLight::Instance();
@@ -463,7 +472,7 @@ void RenderPolyWall::DrawStripes(PolyRenderThread *thread, PolyDrawArgs &args, T
 
 			args.SetClipPlane(1, topPlane);
 			args.SetClipPlane(2, bottomPlane);
-			args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+			PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 
 			FDynamicColormap *basecolormap = GetColorTable(lit->extra_colormap, Line->frontsector->SpecialColors[sector_t::walltop]);
 
@@ -486,11 +495,11 @@ void RenderPolyWall::DrawStripes(PolyRenderThread *thread, PolyDrawArgs &args, T
 
 		args.SetClipPlane(1, topPlane);
 		args.SetClipPlane(2, PolyClipPlane());
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
-		args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 	}
 }
 

@@ -55,7 +55,7 @@ namespace
 
 CUSTOM_CVAR(Float, vid_scalefactor, 1.0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
-	if (self <= 0.0 || self > 2.0)
+	if (self < 0.05 || self > 2.0)
 		self = 1.0;
 }
 
@@ -98,4 +98,48 @@ bool ViewportIsScaled43()
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
 	return vScaleTable[vid_scalemode].isScaled43;
+}
+
+void R_ShowCurrentScaling()
+{
+	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = int(x1 * vid_scalefactor), y2 = int(y1 * vid_scalefactor);
+	Printf("Current Scale: %f\n", (float)(vid_scalefactor));
+	Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
+}
+
+bool R_CalcsShouldBeBlocked()
+{
+	if (vid_scalemode < 0 || vid_scalemode > 1)
+	{
+		Printf("vid_scalemode should be 0 or 1 before using this command.\n");
+		return true;
+	}
+	return false;	
+}
+
+CCMD (vid_showcurrentscaling)
+{
+	R_ShowCurrentScaling();
+}
+
+CCMD (vid_scaletowidth)
+{
+	if (R_CalcsShouldBeBlocked())
+		return;	
+
+	if (argv.argc() > 1)
+		vid_scalefactor = (float)((double)atof(argv[1]) / screen->GetClientWidth());
+
+	R_ShowCurrentScaling();
+}
+
+CCMD (vid_scaletoheight)
+{
+	if (R_CalcsShouldBeBlocked())
+		return;	
+
+	if (argv.argc() > 1)
+		vid_scalefactor = (float)((double)atof(argv[1]) / screen->GetClientHeight());
+
+	R_ShowCurrentScaling();
 }

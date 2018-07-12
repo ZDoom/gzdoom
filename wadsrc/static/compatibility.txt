@@ -59,6 +59,7 @@ F84AB4557464A383E93F37CD3A82AC48 // MM2 map03
 71C2E6D9CFA3D8750C6A9599FB2453BD // Hacx map03: There are some switches behind 
 96368EB950E33AF62EA6423434E3CEF7 // HacX map17: shootable covers in these levels
 BA530202AF0BA0C6CBAE6A0C7076FB72 // Requiem map04
+E2819F69CB79BA66E0ACBCD7DE652F9D // Hell to Pay MAP32: Exit switch pressable through lasers
 {
 	useblocking
 }

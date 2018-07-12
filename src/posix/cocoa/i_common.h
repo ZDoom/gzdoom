@@ -37,22 +37,6 @@
 #import <AppKit/AppKit.h>
 
 
-struct RenderBufferOptions
-{
-	float pixelScale;
-
-	float shiftX;
-	float shiftY;
-
-	float width;
-	float height;
-
-	bool dirty;
-};
-
-extern RenderBufferOptions rbOpts;
-
-
 // Version of AppKit framework we are interested in
 // The following values are needed to build with earlier SDKs
 

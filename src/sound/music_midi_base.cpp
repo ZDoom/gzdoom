@@ -36,14 +36,7 @@
 
 #include "i_musicinterns.h"
 #include "c_dispatch.h"
-#include "i_music.h"
-#include "i_system.h"
-#include "gameconfigfile.h"
-#include "cmdlib.h"
-#include "m_misc.h"
-#include "s_sound.h"
 
-#include "templates.h"
 #include "v_text.h"
 #include "menu/menu.h"
 
@@ -248,8 +241,8 @@ void I_BuildMIDIMenuList (FOptionValues *opt)
 
 CCMD (snd_listmididevices)
 {
-	Printf("%s-8. libOPN\n", -7 == snd_mididevice ? TEXTCOLOR_BOLD : "");
-	Printf("%s-7. libADL\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-8. libOPN\n", -8 == snd_mididevice ? TEXTCOLOR_BOLD : "");
+	Printf("%s-7. libADL\n", -7 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-6. WildMidi\n", -6 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-5. FluidSynth\n", -5 == snd_mididevice ? TEXTCOLOR_BOLD : "");
 	Printf("%s-4. Gravis Ultrasound Emulation\n", -4 == snd_mididevice ? TEXTCOLOR_BOLD : "");

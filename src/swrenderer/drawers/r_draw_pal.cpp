@@ -2822,7 +2822,7 @@ namespace swrenderer
 		}
 		else
 		{
-			for (int i = 0; i < width; ++i)
+			for (int i = 0; i <= width; ++i)
 			{
 				tiltlighting[i] = _colormap;
 			}
@@ -3060,11 +3060,6 @@ namespace swrenderer
 		}
 	}
 
-	FString DrawParticleColumnPalCommand::DebugInfo()
-	{
-		return "DrawParticle";
-	}
-
 	/////////////////////////////////////////////////////////////////////////////
 
 	DrawVoxelBlocksPalCommand::DrawVoxelBlocksPalCommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) : args(args), blocks(blocks), blockcount(blockcount)
@@ -3161,10 +3156,5 @@ namespace swrenderer
 				}
 			}
 		}
-	}
-
-	FString DrawVoxelBlocksPalCommand::DebugInfo()
-	{
-		return "DrawVoxelBlocks";
 	}
 }

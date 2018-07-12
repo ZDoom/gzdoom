@@ -35,7 +35,6 @@
 */
 
 #include "SDL.h"
-#include "SDL_thread.h"
 #include "i_system.h"
 
 class FInternalCriticalSection

@@ -34,7 +34,6 @@
 */
 
 #include "gl_sidebyside3d.h"
-#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 
 namespace s3d {
@@ -45,11 +44,11 @@ void SideBySideBase::Present() const
 	GLRenderer->ClearBorders();
 
 	// Compute screen regions to use for left and right eye views
-	int leftWidth = GLRenderer->mOutputLetterbox.width / 2;
-	int rightWidth = GLRenderer->mOutputLetterbox.width - leftWidth;
-	GL_IRECT leftHalfScreen = GLRenderer->mOutputLetterbox;
+	int leftWidth = screen->mOutputLetterbox.width / 2;
+	int rightWidth = screen->mOutputLetterbox.width - leftWidth;
+	IntRect leftHalfScreen = screen->mOutputLetterbox;
 	leftHalfScreen.width = leftWidth;
-	GL_IRECT rightHalfScreen = GLRenderer->mOutputLetterbox;
+	IntRect rightHalfScreen = screen->mOutputLetterbox;
 	rightHalfScreen.width = rightWidth;
 	rightHalfScreen.left += leftWidth;
 
@@ -64,10 +63,10 @@ void SideBySideBase::Present() const
 void SideBySideBase::AdjustViewports() const
 {
 	// Change size of renderbuffer, and align to screen
-	GLRenderer->mSceneViewport.width /= 2;
-	GLRenderer->mSceneViewport.left /= 2;
-	GLRenderer->mScreenViewport.width /= 2;
-	GLRenderer->mScreenViewport.left /= 2;
+	screen->mSceneViewport.width /= 2;
+	screen->mSceneViewport.left /= 2;
+	screen->mScreenViewport.width /= 2;
+	screen->mScreenViewport.left /= 2;
 }
 
 /* static */
@@ -102,8 +101,8 @@ SideBySideFull::SideBySideFull(double ipdMeters)
 void SideBySideFull::AdjustPlayerSprites() const /* override */ 
 {
 	// Show weapon at double width, so it would appear normal width after rescaling
-	int w = GLRenderer->mScreenViewport.width;
-	int h = GLRenderer->mScreenViewport.height;
+	int w = screen->mScreenViewport.width;
+	int h = screen->mScreenViewport.height;
 	gl_RenderState.mProjectionMatrix.ortho(w/2, w + w/2, h, 0, -1.0f, 1.0f);
 	gl_RenderState.ApplyMatrices();
 }
@@ -121,12 +120,12 @@ void TopBottom3D::Present() const
 	GLRenderer->ClearBorders();
 
 	// Compute screen regions to use for left and right eye views
-	int topHeight = GLRenderer->mOutputLetterbox.height / 2;
-	int bottomHeight = GLRenderer->mOutputLetterbox.height - topHeight;
-	GL_IRECT topHalfScreen = GLRenderer->mOutputLetterbox;
+	int topHeight = screen->mOutputLetterbox.height / 2;
+	int bottomHeight = screen->mOutputLetterbox.height - topHeight;
+	IntRect topHalfScreen = screen->mOutputLetterbox;
 	topHalfScreen.height = topHeight;
 	topHalfScreen.top = topHeight;
-	GL_IRECT bottomHalfScreen = GLRenderer->mOutputLetterbox;
+	IntRect bottomHalfScreen = screen->mOutputLetterbox;
 	bottomHalfScreen.height = bottomHeight;
 	bottomHalfScreen.top = 0;
 
@@ -141,10 +140,10 @@ void TopBottom3D::Present() const
 void TopBottom3D::AdjustViewports() const
 {
 	// Change size of renderbuffer, and align to screen
-	GLRenderer->mSceneViewport.height /= 2;
-	GLRenderer->mSceneViewport.top /= 2;
-	GLRenderer->mScreenViewport.height /= 2;
-	GLRenderer->mScreenViewport.top /= 2;
+	screen->mSceneViewport.height /= 2;
+	screen->mSceneViewport.top /= 2;
+	screen->mScreenViewport.height /= 2;
+	screen->mScreenViewport.top /= 2;
 }
 
 } /* namespace s3d */

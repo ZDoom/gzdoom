@@ -58,7 +58,6 @@
 #ifdef _WIN32
 #include <io.h>
 #endif
-#include <fcntl.h>
 
 #include "i_system.h"
 #include "i_sound.h"
@@ -70,7 +69,6 @@
 #include "c_dispatch.h"
 #include "m_random.h"
 #include "w_wad.h"
-#include "doomdef.h"
 #include "p_local.h"
 #include "doomstat.h"
 #include "cmdlib.h"
@@ -79,13 +77,9 @@
 #include "a_sharedglobal.h"
 #include "gstrings.h"
 #include "gi.h"
-#include "templates.h"
-#include "timidity/timidity.h"
-#include "g_level.h"
 #include "po_man.h"
 #include "serializer.h"
 #include "d_player.h"
-#include "r_state.h"
 #include "g_levellocals.h"
 #include "vm.h"
 
@@ -476,7 +470,7 @@ void S_Start ()
 
 	// Don't start the music if loading a savegame, because the music is stored there.
 	// Don't start the music if revisiting a level in a hub for the same reason.
-	if (!savegamerestore && (level.info == nullptr || level.info->Snapshot.mBuffer == nullptr || !level.info->isValid()))
+	if (!level.IsReentering())
 	{
 		if (level.cdtrack == 0 || !S_ChangeCDMusic (level.cdtrack, level.cdid))
 			S_ChangeMusic (level.Music, level.musicorder);
@@ -763,8 +757,8 @@ static void CalcPosVel(int type, const AActor *actor, const sector_t *sector,
 					{
 						// listener must be reversely offset to calculate the proper sound origin.
 						CalcSectorSoundOrg(listenpos + disp, sector, channum, *pos);
-						pos->X += (float)disp.X;
-						pos->Z += (float)disp.Y;
+						pos->X -= (float)disp.X;
+						pos->Z -= (float)disp.Y;
 					}
 					else
 					{
@@ -830,7 +824,8 @@ static bool Validate(const FVector3 &value, const float limit, const char *const
 
 	if (!valid)
 	{
-		Printf(TEXTCOLOR_RED "Invalid sound %s " TEXTCOLOR_WHITE "(%f, %f, %f)", name, value.X, value.Y, value.Z);
+		// Sound position and velocity have Y and Z axes swapped comparing to map coordinate system
+		Printf(TEXTCOLOR_RED "Invalid sound %s " TEXTCOLOR_WHITE "(%f, %f, %f)", name, value.X, value.Z, value.Y);
 
 		if (actor == nullptr)
 		{

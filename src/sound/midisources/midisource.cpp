@@ -35,7 +35,6 @@
 
 
 #include "i_musicinterns.h"
-#include "midisource.h"
 
 
 char MIDI_EventLengths[7] = { 2, 2, 2, 2, 1, 1, 2 };

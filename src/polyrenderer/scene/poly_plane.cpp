@@ -36,30 +36,30 @@
 
 EXTERN_CVAR(Int, r_3dfloors)
 
-void RenderPolyPlane::RenderPlanes(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPlanes(PolyRenderThread *thread, const PolyTransferHeights &fakeflat, uint32_t stencilValue, double skyCeilingHeight, double skyFloorHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals, size_t sectorPortalsStart)
 {
 	if (fakeflat.FrontSector->CenterFloor() == fakeflat.FrontSector->CenterCeiling())
 		return;
 
 	RenderPolyPlane plane;
-	plane.Render(thread, clipPlane, fakeflat, stencilValue, true, skyCeilingHeight, sectorPortals);
-	plane.Render(thread, clipPlane, fakeflat, stencilValue, false, skyFloorHeight, sectorPortals);
+	plane.Render(thread, fakeflat, stencilValue, true, skyCeilingHeight, sectorPortals, sectorPortalsStart);
+	plane.Render(thread, fakeflat, stencilValue, false, skyFloorHeight, sectorPortals, sectorPortalsStart);
 }
 
-void RenderPolyPlane::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::Render(PolyRenderThread *thread, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals, size_t sectorPortalsStart)
 {
 	FSectorPortal *portal = fakeflat.FrontSector->ValidatePortal(ceiling ? sector_t::ceiling : sector_t::floor);
 	if (!portal || (portal->mFlags & PORTSF_INSKYBOX) == PORTSF_INSKYBOX) // Do not recurse into portals we already recursed into
 	{
-		RenderNormal(thread, clipPlane, fakeflat, stencilValue, ceiling, skyHeight);
+		RenderNormal(thread, fakeflat, stencilValue, ceiling, skyHeight);
 	}
 	else
 	{
-		RenderPortal(thread, clipPlane, fakeflat, stencilValue, ceiling, skyHeight, portal, sectorPortals);
+		RenderPortal(thread, fakeflat, stencilValue, ceiling, skyHeight, portal, sectorPortals, sectorPortalsStart);
 	}
 }
 
-void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight)
+void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -78,10 +78,9 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyClipPlane
 		SetDynLights(thread, args, fakeflat.Subsector, ceiling);
 		args.SetStencilTestValue(stencilValue);
 		args.SetWriteStencil(true, stencilValue + 1);
-		args.SetClipPlane(0, clipPlane);
 		args.SetTexture(tex, DefaultRenderStyle());
-		args.SetStyle(TriBlendMode::TextureOpaque);
-		args.DrawArray(thread->DrawQueue, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
+		args.SetStyle(TriBlendMode::Opaque);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
@@ -89,17 +88,16 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyClipPlane
 
 		PolyDrawArgs args;
 		args.SetStencilTestValue(stencilValue);
-		args.SetClipPlane(0, clipPlane);
 		args.SetWriteStencil(true, 255);
 		args.SetWriteColor(false);
 		args.SetWriteDepth(false);
-		args.DrawArray(thread->DrawQueue, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 
 		RenderSkyWalls(thread, args, fakeflat.Subsector, nullptr, ceiling, skyHeight);
 	}
 }
 
-void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyClipPlane &clipPlane, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals)
+void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyTransferHeights &fakeflat, uint32_t stencilValue, bool ceiling, double skyHeight, FSectorPortal *portal, std::vector<std::unique_ptr<PolyDrawSectorPortal>> &sectorPortals, size_t sectorPortalsStart)
 {
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 
@@ -113,11 +111,11 @@ void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyClipPlane
 		return;
 	}
 
-	for (auto &p : sectorPortals)
+	for (size_t i = sectorPortalsStart; i < sectorPortals.size(); i++)
 	{
-		if (p->Portal == portal) // To do: what other criteria do we need to check for?
+		if (sectorPortals[i]->Portal == portal) // To do: what other criteria do we need to check for?
 		{
-			polyportal = p.get();
+			polyportal = sectorPortals[i].get();
 			break;
 		}
 	}
@@ -156,11 +154,10 @@ void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyClipPlane
 
 	PolyDrawArgs args;
 	args.SetStencilTestValue(stencilValue);
-	args.SetClipPlane(0, clipPlane);
 	args.SetWriteStencil(true, polyportal->StencilValue);
 	args.SetWriteColor(false);
 	args.SetWriteDepth(false);
-	args.DrawArray(thread->DrawQueue, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 
 	RenderSkyWalls(thread, args, fakeflat.Subsector, polyportal, ceiling, skyHeight);
 
@@ -238,7 +235,7 @@ void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &arg
 			wallvert[3] = GetSkyVertex(line->v1, skyHeight);
 		}
 
-		args.DrawArray(thread->DrawQueue, wallvert, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, wallvert, 4, PolyDrawMode::TriangleFan);
 
 		if (polyportal)
 		{
@@ -272,6 +269,12 @@ void RenderPolyPlane::SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args
 
 void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling)
 {
+	if (!r_dynlights)
+	{
+		args.SetLights(nullptr, 0);
+		return;
+	}
+
 	FLightNode *light_list = sub->lighthead;
 
 	auto cameraLight = PolyCameraLight::Instance();
@@ -413,7 +416,7 @@ PolyPlaneUVTransform::PolyPlaneUVTransform(const FTransform &transform, FTexture
 
 /////////////////////////////////////////////////////////////////////////////
 
-void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, const PolyClipPlane &clipPlane, subsector_t *sub, uint32_t stencilValue, uint32_t subsectorDepth, std::vector<PolyTranslucentObject *> &translucentObjects)
+void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, subsector_t *sub, uint32_t stencilValue, uint32_t subsectorDepth, std::vector<PolyTranslucentObject *> &translucentObjects)
 {
 	if (!r_3dfloors || sub->sector->CenterFloor() == sub->sector->CenterCeiling())
 		return;
@@ -457,7 +460,7 @@ void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, const PolyClipPl
 			}
 
 			if (!plane.Masked)
-				plane.Render(thread, clipPlane);
+				plane.Render(thread);
 			else
 				translucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
 		}
@@ -497,14 +500,14 @@ void Render3DFloorPlane::RenderPlanes(PolyRenderThread *thread, const PolyClipPl
 			}
 
 			if (!plane.Masked)
-				plane.Render(thread, clipPlane);
+				plane.Render(thread);
 			else
 				translucentObjects.push_back(thread->FrameMemory->NewObject<PolyTranslucent3DFloorPlane>(plane, subsectorDepth));
 		}
 	}
 }
 
-void Render3DFloorPlane::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane)
+void Render3DFloorPlane::Render(PolyRenderThread *thread)
 {
 	FTextureID picnum = ceiling ? *fakeFloor->bottom.texture : *fakeFloor->top.texture;
 	FTexture *tex = TexMan(picnum);
@@ -549,19 +552,16 @@ void Render3DFloorPlane::Render(PolyRenderThread *thread, const PolyClipPlane &c
 	args.SetLight(GetColorTable(sub->sector->Colormap), lightlevel, PolyRenderer::Instance()->Light.WallGlobVis(foggy), false);
 	if (!Masked)
 	{
-		args.SetStyle(TriBlendMode::TextureOpaque);
+		args.SetStyle(TriBlendMode::Opaque);
 	}
 	else
 	{
-		double srcalpha = MIN(Alpha, 1.0);
-		double destalpha = Additive ? 1.0 : 1.0 - srcalpha;
-		args.SetStyle(TriBlendMode::TextureAdd, srcalpha, destalpha);
+		args.SetStyle(Additive ? TriBlendMode::Add : TriBlendMode::Normal, MIN(Alpha, 1.0));
 		args.SetDepthTest(true);
 		args.SetWriteDepth(true);
 	}
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
 	args.SetTexture(tex, DefaultRenderStyle());
-	args.SetClipPlane(0, clipPlane);
-	args.DrawArray(thread->DrawQueue, vertices, sub->numlines, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }

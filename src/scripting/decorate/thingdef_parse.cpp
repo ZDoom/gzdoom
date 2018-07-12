@@ -41,17 +41,10 @@
 #include "doomtype.h"
 #include "actor.h"
 #include "a_pickups.h"
-#include "sc_man.h"
 #include "thingdef.h"
 #include "a_morph.h"
-#include "cmdlib.h"
-#include "templates.h"
-#include "v_palette.h"
-#include "doomerrors.h"
-#include "i_system.h"
 #include "backend/codegen.h"
 #include "w_wad.h"
-#include "v_video.h"
 #include "v_text.h"
 #include "m_argv.h"
 
@@ -69,7 +62,14 @@ EXTERN_CVAR(Bool, strictdecorate);
 
 PClassActor *DecoDerivedClass(const FScriptPosition &sc, PClassActor *parent, FName typeName)
 {
-	if (parent->VMType->mVersion > MakeVersion(2, 0))
+	const PClassType *const parentVMType = parent->VMType;
+
+	if (parentVMType == nullptr)
+	{
+		// Abort when forward declared class is used as a parent. This edge case cannot be handled gracefully.
+		sc.Message(MSG_FATAL, "Tried to define class '%s' without definition of parent class '%s'.", typeName.GetChars(), parent->TypeName.GetChars());
+	}
+	else if (parentVMType->mVersion > MakeVersion(2, 0))
 	{
 		sc.Message(MSG_ERROR, "Parent class %s of %s not accessible to DECORATE", parent->TypeName.GetChars(), typeName.GetChars());
 	}

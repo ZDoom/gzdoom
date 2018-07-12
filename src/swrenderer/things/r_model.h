@@ -28,6 +28,8 @@
 #include "swrenderer/r_renderthread.h"
 #include "swrenderer/things/r_visiblesprite.h"
 
+struct PolyLight;
+
 namespace swrenderer
 {
 	void RenderHUDModel(RenderThread *thread, DPSprite *psp, float ofsx, float ofsy);
@@ -47,37 +49,48 @@ namespace swrenderer
 		float x, y, z;
 		FSpriteModelFrame *smf;
 		AActor *actor;
+		Mat4f WorldToClip;
+		bool MirrorWorldToClip;
 	};
 
 	class SWModelRenderer : public FModelRenderer
 	{
 	public:
-		SWModelRenderer(RenderThread *thread);
+		SWModelRenderer(RenderThread *thread, Fake3DTranslucent clip3DFloor, Mat4f *worldToClip, bool mirrorWorldToClip);
 
-		void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix) override;
+		void AddLights(AActor *actor);
+
+		ModelRendererType GetType() const override { return SWModelRendererType; }
+
+		void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 		void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
 		IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
 		void SetVertexBuffer(IModelVertexBuffer *buffer) override;
 		void ResetVertexBuffer() override;
 		VSMatrix GetViewToWorldMatrix() override;
-		void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix) override;
+		void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
 		void EndDrawHUDModel(AActor *actor) override;
 		void SetInterpolation(double interpolation) override;
 		void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) override;
 		void DrawArrays(int start, int count) override;
 		void DrawElements(int numIndices, size_t offset) override;
-		double GetTimeFloat() override;
 
 		void SetTransform();
 
 		RenderThread *Thread = nullptr;
+		Fake3DTranslucent Clip3DFloor;
 
 		AActor *ModelActor = nullptr;
 		Mat4f ObjectToWorld;
+		PolyClipPlane ClipTop, ClipBottom;
 		FTexture *SkinTexture = nullptr;
 		unsigned int *IndexBuffer = nullptr;
-		TriVertex *VertexBuffer = nullptr;
+		FModelVertex *VertexBuffer = nullptr;
 		float InterpolationFactor = 0.0;
+		Mat4f *WorldToClip = nullptr;
+		bool MirrorWorldToClip = false;
+		PolyLight *Lights = nullptr;
+		int NumLights = 0;
 	};
 
 	class SWModelVertexBuffer : public IModelVertexBuffer
@@ -95,7 +108,6 @@ namespace swrenderer
 		void SetupFrame(FModelRenderer *renderer, unsigned int frame1, unsigned int frame2, unsigned int size) override;
 
 	private:
-		int mIndexFrame[2];
 		TArray<FModelVertex> mVertexBuffer;
 		TArray<unsigned int> mIndexBuffer;
 	};

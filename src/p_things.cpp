@@ -35,21 +35,13 @@
 #include "doomtype.h"
 #include "p_local.h"
 #include "info.h"
-#include "s_sound.h"
 #include "doomstat.h"
-#include "m_random.h"
-#include "c_console.h"
 #include "c_dispatch.h"
 #include "a_sharedglobal.h"
-#include "gi.h"
-#include "templates.h"
-#include "g_level.h"
 #include "v_text.h"
-#include "i_system.h"
 #include "d_player.h"
 #include "r_utility.h"
 #include "p_spec.h"
-#include "math/cmath.h"
 #include "actorptrselect.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
@@ -744,6 +736,15 @@ int P_Thing_CheckProximity(AActor *self, PClass *classname, double distance, int
 		// Otherwise, just check for the regular class name.
 		else if (classname != mo->GetClass())
 			continue;
+
+		if (mo->IsKindOf(RUNTIME_CLASS(AInventory)))
+		{
+			// Skip owned item because its position could remain unchanged since attachment to owner
+			// Most likely it is the last location of this item in the world before pick up
+			AInventory *const inventory = static_cast<AInventory*>(mo);
+			if (inventory != nullptr && inventory->Owner != nullptr)
+				continue;
+		}
 
 		// [MC]Make sure it's in range and respect the desire for Z or not. The function forces it to use
 		// Z later for ensuring CLOSEST and FARTHEST flags are respected perfectly.

@@ -41,48 +41,33 @@
 #include "gi.h"
 #include "g_level.h"
 #include "actor.h"
-#include "info.h"
-#include "sc_man.h"
-#include "tarray.h"
-#include "w_wad.h"
-#include "templates.h"
 #include "r_defs.h"
 #include "a_pickups.h"
-#include "s_sound.h"
 #include "cmdlib.h"
 #include "p_lnspec.h"
 #include "p_effect.h"
 #include "p_enemy.h"
 #include "decallib.h"
-#include "m_random.h"
-#include "i_system.h"
 #include "p_local.h"
 #include "c_console.h"
 #include "doomerrors.h"
 #include "a_sharedglobal.h"
-#include "v_video.h"
 #include "v_font.h"
 #include "doomstat.h"
-#include "v_palette.h"
 #include "g_shared/a_specialspot.h"
 #include "actorptrselect.h"
-#include "m_bbox.h"
-#include "r_data/r_translate.h"
 #include "p_trace.h"
 #include "p_setup.h"
 #include "gstrings.h"
 #include "d_player.h"
 #include "p_maputl.h"
 #include "p_spec.h"
-#include "templates.h"
 #include "v_text.h"
 #include "thingdef.h"
-#include "math/cmath.h"
 #include "g_levellocals.h"
 #include "r_utility.h"
 #include "sbar.h"
 #include "actorinlines.h"
-#include "vm.h"
 #include "types.h"
 
 AActor *SingleActorFromTID(int tid, AActor *defactor);
@@ -2012,7 +1997,7 @@ DEFINE_ACTION_FUNCTION(AStateProvider, A_CustomPunch)
 
 	angle = self->Angles.Yaw + pr_cwpunch.Random2() * (5.625 / 256);
 	if (range == 0) range = DEFMELEERANGE;
-	pitch = P_AimLineAttack (self, angle, range, &t);
+	pitch = P_AimLineAttack (self, angle, range, &t, 0., ALF_CHECK3D);
 
 	// only use ammo when actually hitting something!
 	if ((flags & CPF_USEAMMO) && t.linetarget && weapon && ACTION_CALL_FROM_PSPRITE())

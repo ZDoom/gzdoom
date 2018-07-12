@@ -53,7 +53,6 @@ void DumpCPUInfo(const CPUInfo *cpu)
 #ifdef _MSC_VER
 #include <intrin.h>
 #endif
-#include <mmintrin.h>
 #include <emmintrin.h>
 
 

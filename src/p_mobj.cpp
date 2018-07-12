@@ -67,15 +67,10 @@
 #include "p_lnspec.h"
 #include "p_effect.h"
 #include "p_terrain.h"
-#include "st_stuff.h"
 #include "hu_stuff.h"
-#include "s_sound.h"
-#include "doomstat.h"
 #include "v_video.h"
-#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "b_bot.h"	//Added by MC:
-#include "stats.h"
 #include "a_sharedglobal.h"
 #include "gi.h"
 #include "sbar.h"
@@ -86,15 +81,10 @@
 #include "p_conversation.h"
 #include "g_game.h"
 #include "teaminfo.h"
-#include "r_data/r_translate.h"
 #include "r_sky.h"
-#include "g_level.h"
 #include "d_event.h"
-#include "colormatcher.h"
-#include "v_palette.h"
 #include "p_enemy.h"
 #include "gstrings.h"
-#include "r_data/colormaps.h"
 #include "r_renderer.h"
 #include "po_man.h"
 #include "p_spec.h"
@@ -103,7 +93,6 @@
 #include "r_utility.h"
 #include "thingdef.h"
 #include "d_player.h"
-#include "vm.h"
 #include "g_levellocals.h"
 #include "a_morph.h"
 #include "events.h"
@@ -495,6 +484,7 @@ void AActor::Serialize(FSerializer &arc)
 		A("score", Score)
 		A("designatedteam", DesignatedTeam)
 		A("lastpush", lastpush)
+		A("activationtype", activationtype)
 		A("lastbump", lastbump)
 		A("painthreshold", PainThreshold)
 		A("damagefactor", DamageFactor)
@@ -3271,7 +3261,7 @@ void P_CheckFakeFloorTriggers (AActor *mo, double oldz, bool oldz_has_viewheight
 			sec->TriggerSectorActions (mo, SECSPAC_EyesDive);
 		}
 
-		if (!(hs->MoreFlags & SECF_FAKEFLOORONLY))
+		if (!(hs->MoreFlags & SECMF_FAKEFLOORONLY))
 		{
 			waterz = hs->ceilingplane.ZatPoint(mo);
 			if (oldz <= waterz && newz > waterz)
@@ -4741,7 +4731,7 @@ void AActor::SplashCheck()
 		return;
 	}
 
-	if (Sector->MoreFlags & SECF_UNDERWATER)	// intentionally not SECF_UNDERWATERMASK
+	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 	{
 		waterlevel = 3;
 	}
@@ -4751,7 +4741,7 @@ void AActor::SplashCheck()
 		if (hsec != NULL)
 		{
 			fh = hsec->floorplane.ZatPoint(this);
-			//if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
+			//if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 			{
 				if (Z() < fh)
 				{
@@ -4766,7 +4756,7 @@ void AActor::SplashCheck()
 						}
 					}
 				}
-				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
+				else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
 				{
 					waterlevel = 3;
 				}
@@ -4843,7 +4833,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 		return false;
 	}
 
-	if (Sector->MoreFlags & SECF_UNDERWATER)	// intentionally not SECF_UNDERWATERMASK
+	if (Sector->MoreFlags & SECMF_UNDERWATER)	// intentionally not SECMF_UNDERWATERMASK
 	{
 		waterlevel = 3;
 	}
@@ -4853,7 +4843,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 		if (hsec != NULL)
 		{
 			fh = hsec->floorplane.ZatPoint(this);
-			if (hsec->MoreFlags & SECF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
+			if (hsec->MoreFlags & SECMF_UNDERWATERMASK)	// also check Boom-style non-swimmable sectors
 			{
 				if (Z() < fh)
 				{
@@ -4868,7 +4858,7 @@ bool AActor::UpdateWaterLevel(bool dosplash)
 						}
 					}
 				}
-				else if (!(hsec->MoreFlags & SECF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
+				else if (!(hsec->MoreFlags & SECMF_FAKEFLOORONLY) && (Top() > hsec->ceilingplane.ZatPoint(this)))
 				{
 					waterlevel = 3;
 				}
@@ -6514,9 +6504,6 @@ DEFINE_ACTION_FUNCTION(AActor, GetFloorTerrain)
 
 bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool checkabove, bool alert, bool force)
 {
-	if (thing->flags3 & MF3_DONTSPLASH)
-		return false;
-
 	if (thing->player && (thing->player->cheats & CF_PREDICTING))
 		return false;
 
@@ -6572,7 +6559,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool check
 		}
 	}
 	hsec = sec->GetHeightSec();
-	if (force || hsec == NULL || !(hsec->MoreFlags & SECF_CLIPFAKEPLANES))
+	if (force || hsec == NULL || !(hsec->MoreFlags & SECMF_CLIPFAKEPLANES))
 	{
 		terrainnum = sec->GetTerrain(sector_t::floor);
 	}
@@ -6605,47 +6592,50 @@ foundone:
 	if (thing->Mass < 10)
 		smallsplash = true;
 
-	if (smallsplash && splash->SmallSplash)
+	if (!(thing->flags3 & MF3_DONTSPLASH))
 	{
-		mo = Spawn (splash->SmallSplash, pos, ALLOW_REPLACE);
-		if (mo) mo->Floorclip += splash->SmallSplashClip;
-	}
-	else
-	{
-		if (splash->SplashChunk)
+		if (smallsplash && splash->SmallSplash)
 		{
-			mo = Spawn (splash->SplashChunk, pos, ALLOW_REPLACE);
-			mo->target = thing;
-			if (splash->ChunkXVelShift != 255)
+			mo = Spawn(splash->SmallSplash, pos, ALLOW_REPLACE);
+			if (mo) mo->Floorclip += splash->SmallSplashClip;
+		}
+		else
+		{
+			if (splash->SplashChunk)
 			{
-				mo->Vel.X = (pr_chunk.Random2() << splash->ChunkXVelShift) / 65536.;
+				mo = Spawn(splash->SplashChunk, pos, ALLOW_REPLACE);
+				mo->target = thing;
+				if (splash->ChunkXVelShift != 255)
+				{
+					mo->Vel.X = (pr_chunk.Random2() << splash->ChunkXVelShift) / 65536.;
+				}
+				if (splash->ChunkYVelShift != 255)
+				{
+					mo->Vel.Y = (pr_chunk.Random2() << splash->ChunkYVelShift) / 65536.;
+				}
+				mo->Vel.Z = splash->ChunkBaseZVel + (pr_chunk() << splash->ChunkZVelShift) / 65536.;
 			}
-			if (splash->ChunkYVelShift != 255)
+			if (splash->SplashBase)
 			{
-				mo->Vel.Y = (pr_chunk.Random2() << splash->ChunkYVelShift) / 65536.;
+				mo = Spawn(splash->SplashBase, pos, ALLOW_REPLACE);
 			}
-			mo->Vel.Z = splash->ChunkBaseZVel + (pr_chunk() << splash->ChunkZVelShift) / 65536.;
+			if (thing->player && !splash->NoAlert && alert)
+			{
+				P_NoiseAlert(thing, thing, true);
+			}
 		}
-		if (splash->SplashBase)
+		if (mo)
 		{
-			mo = Spawn (splash->SplashBase, pos, ALLOW_REPLACE);
+			S_Sound(mo, CHAN_ITEM, smallsplash ?
+				splash->SmallSplashSound : splash->NormalSplashSound,
+				1, ATTN_IDLE);
 		}
-		if (thing->player && !splash->NoAlert && alert)
+		else
 		{
-			P_NoiseAlert (thing, thing, true);
+			S_Sound(pos, CHAN_ITEM, smallsplash ?
+				splash->SmallSplashSound : splash->NormalSplashSound,
+				1, ATTN_IDLE);
 		}
-	}
-	if (mo)
-	{
-		S_Sound (mo, CHAN_ITEM, smallsplash ?
-			splash->SmallSplashSound : splash->NormalSplashSound,
-			1, ATTN_IDLE);
-	}
-	else
-	{
-		S_Sound (pos, CHAN_ITEM, smallsplash ?
-			splash->SmallSplashSound : splash->NormalSplashSound,
-			1, ATTN_IDLE);
 	}
 
 	// Don't let deep water eat missiles
@@ -6685,9 +6675,6 @@ bool P_HitFloor (AActor *thing)
 		P_DamageMobj (thing, NULL, NULL, thing->health, NAME_Crush, DMG_FORCED);  // kill object
 		return false;
 	}
-
-	if (thing->flags3 & MF3_DONTSPLASH)
-		return false;
 
 	// don't splash if landing on the edge above water/lava/etc....
 	DVector3 pos;

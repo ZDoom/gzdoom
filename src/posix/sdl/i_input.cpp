@@ -31,23 +31,18 @@
 **
 */
 #include <SDL.h>
-#include <ctype.h>
 #include "doomtype.h"
-#include "c_dispatch.h"
 #include "doomdef.h"
 #include "doomstat.h"
 #include "m_argv.h"
-#include "i_input.h"
 #include "v_video.h"
 
 #include "d_main.h"
 #include "d_event.h"
 #include "d_gui.h"
 #include "c_console.h"
-#include "c_cvars.h"
-#include "i_system.h"
+#include "c_dispatch.h"
 #include "dikeys.h"
-#include "templates.h"
 #include "s_sound.h"
 #include "events.h"
 
@@ -68,8 +63,6 @@ EXTERN_CVAR (Bool, fullscreen)
 
 extern int WaitingForKey, chatmodeon;
 extern constate_e ConsoleState;
-
-static bool DownState[SDL_NUM_SCANCODES];
 
 static const SDL_Keycode DIKToKeySym[256] =
 {
@@ -195,10 +188,7 @@ static void I_CheckGUICapture ()
 	if (wantCapt != GUICapture)
 	{
 		GUICapture = wantCapt;
-		if (wantCapt)
-		{
-			memset (DownState, 0, sizeof(DownState));
-		}
+		ResetButtonStates();
 	}
 }
 
@@ -311,9 +301,16 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_WINDOWEVENT:
 		switch (sev.window.event)
 		{
+			extern bool AppActive;
+
 			case SDL_WINDOWEVENT_FOCUS_GAINED:
+				S_SetSoundPaused(1);
+				AppActive = true;
+				break;
+
 			case SDL_WINDOWEVENT_FOCUS_LOST:
-				S_SetSoundPaused((!!i_soundinbackground) || sev.window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
+				S_SetSoundPaused(i_soundinbackground);
+				AppActive = false;
 				break;
 		}
 		break;
@@ -404,6 +401,11 @@ void MessagePump (const SDL_Event &sev)
 	case SDL_KEYUP:
 		if (!GUICapture)
 		{
+			if (sev.key.repeat)
+			{
+				break;
+			}
+			
 			event.type = sev.type == SDL_KEYDOWN ? EV_KeyDown : EV_KeyUp;
 
 			// Try to look up our key mapped key for conversion to DirectInput.
@@ -433,17 +435,9 @@ void MessagePump (const SDL_Event &sev)
 				((kmod & KMOD_CTRL) ? GKM_CTRL : 0) |
 				((kmod & KMOD_ALT) ? GKM_ALT : 0);
 
-			if (event.subtype == EV_GUI_KeyDown)
+			if (event.subtype == EV_GUI_KeyDown && sev.key.repeat)
 			{
-				if (DownState[sev.key.keysym.scancode])
-				{
-					event.subtype = EV_GUI_KeyRepeat;
-				}
-				DownState[sev.key.keysym.scancode] = 1;
-			}
-			else
-			{
-				DownState[sev.key.keysym.scancode] = 0;
+				event.subtype = EV_GUI_KeyRepeat;
 			}
 
 			switch (sev.key.keysym.sym)

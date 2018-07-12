@@ -37,8 +37,6 @@
 
 #include "i_musicinterns.h"
 #include "templates.h"
-#include "doomdef.h"
-#include "m_swap.h"
 #include "doomerrors.h"
 #include "v_text.h"
 
@@ -255,7 +253,7 @@ MIDIDevice *MIDIStreamer::CreateMIDIDevice(EMidiDevice devtype, int samplerate)
 
 			if (devtype == MDEV_DEFAULT)
 			{
-				Printf("Failed to play music: Unable to open any MIDI Device.");
+				Printf("Failed to play music: Unable to open any MIDI Device.\n");
 				return nullptr;
 			}
 		}
@@ -332,7 +330,7 @@ bool MIDIStreamer::DumpWave(const char *filename, int subsong, int samplerate)
 	auto devtype = SelectMIDIDevice(DeviceType);
 	if (devtype == MDEV_MMAPI)
 	{
-		Printf("MMAPI device is not supported");
+		Printf("MMAPI device is not supported\n");
 		return false;
 	}
 	MIDI = CreateMIDIDevice(devtype, samplerate);

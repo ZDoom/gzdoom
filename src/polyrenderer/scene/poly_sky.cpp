@@ -30,6 +30,9 @@
 #include "g_levellocals.h"
 #include "polyrenderer/scene/poly_light.h"
 
+EXTERN_CVAR(Float, skyoffset)
+
+
 PolySkyDome::PolySkyDome()
 {
 	CreateDome();
@@ -80,7 +83,7 @@ void PolySkyDome::Render(PolyRenderThread *thread, const Mat4f &worldToView, con
 
 	int rc = mRows + 1;
 
-	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip * objectToWorld));
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip * objectToWorld), nullptr);
 
 	PolyDrawArgs args;
 	args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(false), true);
@@ -109,7 +112,7 @@ void PolySkyDome::RenderRow(PolyRenderThread *thread, PolyDrawArgs &args, int ro
 {
 	args.SetColor(capcolor, capcolorindex);
 	args.SetStyle(TriBlendMode::Skycap);
-	args.DrawArray(thread->DrawQueue, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
 }
 
 void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
@@ -118,8 +121,8 @@ void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args
 	uint8_t palsolid = RGB32k.RGB[(RPART(solid) >> 3)][(GPART(solid) >> 3)][(BPART(solid) >> 3)];
 
 	args.SetColor(solid, palsolid);
-	args.SetStyle(TriBlendMode::FillOpaque);
-	args.DrawArray(thread->DrawQueue, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
+	args.SetStyle(TriBlendMode::Fill);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
 }
 
 void PolySkyDome::CreateDome()
@@ -212,7 +215,6 @@ Mat4f PolySkyDome::GLSkyMath()
 	float y_offset = 0.0f;
 	bool mirror = false;
 	FTexture *tex = mCurrentSetup.frontskytex;
-	float skyoffset = 0.0f; // skyoffset debugging CVAR in GL renderer
 
 	int texh = 0;
 	int texw = 0;

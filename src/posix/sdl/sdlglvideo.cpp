@@ -35,27 +35,22 @@
 
 #include "doomtype.h"
 
-#include "templates.h"
 #include "i_system.h"
 #include "i_video.h"
 #include "m_argv.h"
 #include "v_video.h"
-#include "v_pfx.h"
-#include "stats.h"
 #include "version.h"
 #include "c_console.h"
 
 #include "videomodes.h"
 #include "hardware.h"
 #include "gl_sysfb.h"
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "r_defs.h"
 
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
-#include "gl/system/gl_cvars.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -83,17 +78,10 @@ CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
-#ifdef __arm__
-CUSTOM_CVAR(Bool, gl_es, false, CVAR_NOINITCALL)
-{
-	Printf("This won't take effect until " GAMENAME " is restarted.\n");
-}
-#else
 CUSTOM_CVAR(Bool, gl_es, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
-#endif
 
 CVAR (Int, vid_adapter, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
@@ -397,11 +385,6 @@ SystemFrameBuffer::~SystemFrameBuffer ()
 
 void SystemFrameBuffer::InitializeState()
 {
-}
-
-bool SystemFrameBuffer::CanUpdate ()
-{
-	return true;
 }
 
 void SystemFrameBuffer::SetGammaTable(uint16_t *tbl)

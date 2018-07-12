@@ -23,14 +23,8 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <errno.h>
 #include "timidity.h"
-#include "tarray.h"
 #include "i_system.h"
-#include "w_wad.h"
-#include "files.h"
-#include "cmdlib.h"
 
 namespace Timidity
 {

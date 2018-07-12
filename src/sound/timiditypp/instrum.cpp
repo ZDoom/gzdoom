@@ -36,7 +36,6 @@
 #include "filter.h"
 #include "quantity.h"
 #include "freq.h"
-#include "i_soundfont.h"
 
 namespace TimidityPlus
 {

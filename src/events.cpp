@@ -35,7 +35,6 @@
 #include "r_utility.h"
 #include "g_levellocals.h"
 #include "gi.h"
-#include "v_text.h"
 #include "actor.h"
 #include "c_dispatch.h"
 #include "d_net.h"
@@ -858,12 +857,13 @@ void DStaticEventHandler::WorldTick()
 static FRenderEvent E_SetupRenderEvent()
 {
 	FRenderEvent e;
-	e.ViewPos = r_viewpoint.Pos;
-	e.ViewAngle = r_viewpoint.Angles.Yaw;
-	e.ViewPitch = r_viewpoint.Angles.Pitch;
-	e.ViewRoll = r_viewpoint.Angles.Roll;
-	e.FracTic = r_viewpoint.TicFrac;
-	e.Camera = r_viewpoint.camera;
+    auto &vp = r_viewpoint;
+	e.ViewPos = vp.Pos;
+	e.ViewAngle = vp.Angles.Yaw;
+	e.ViewPitch = vp.Angles.Pitch;
+	e.ViewRoll = vp.Angles.Roll;
+	e.FracTic = vp.TicFrac;
+	e.Camera = vp.camera;
 	return e;
 }
 

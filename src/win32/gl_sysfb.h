@@ -30,7 +30,6 @@ public:
 
 protected:
 
-	bool CanUpdate();
 	void ResetGammaTable();
 	void SetGammaTable(uint16_t * tbl);
 

@@ -37,9 +37,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_WINNT 0x0501
 #include <windows.h>
-#include <winnt.h>
 #include <richedit.h>
-#include <winuser.h>
 #include <tlhelp32.h>
 #ifndef _M_IX86
 #include <winternl.h>
@@ -55,22 +53,14 @@
 #endif
 #include <commctrl.h>
 #include <commdlg.h>
-#include <winsock2.h>
-#include <ws2tcpip.h>
-#include <setupapi.h>
 #include <uxtheme.h>
 #include <shellapi.h>
-#include <uxtheme.h>
-#include <stddef.h>
 
 #include "doomtype.h"
 #include "resource.h"
 #include "version.h"
 #include "m_swap.h"
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <stdarg.h>
 #include <time.h>
 #include <zlib.h>
 
@@ -3350,112 +3340,4 @@ void DisplayCrashLog ()
 		}
 	}
 	CloseTarFiles ();
-}
-
-/////////////////////////////////////////////////////////////////////////////
-
-namespace
-{
-	bool __declspec(thread) DrawerExceptionSetJumpResult;
-	CONTEXT __declspec(thread) DrawerExceptionSetJumpContext;
-	PVOID __declspec(thread) DrawerExceptionHandlerHandle;
-	const char __declspec(thread) *DrawerExceptionReason;
-	bool __declspec(thread) DrawerExceptionFatal;
-
-	LONG WINAPI DrawerExceptionHandler(_EXCEPTION_POINTERS *exceptionInfo)
-	{
-		*exceptionInfo->ContextRecord = DrawerExceptionSetJumpContext;
-
-		DrawerExceptionFatal = false;
-		switch (exceptionInfo->ExceptionRecord->ExceptionCode)
-		{
-		default: DrawerExceptionReason = "Unknown exception code"; break;
-		case EXCEPTION_ARRAY_BOUNDS_EXCEEDED: DrawerExceptionReason = "Array bounds exceeded"; break;
-		case EXCEPTION_BREAKPOINT: DrawerExceptionReason = "Breakpoint"; break;
-		case EXCEPTION_DATATYPE_MISALIGNMENT: DrawerExceptionReason = "Datatype misalignment"; break;
-		case EXCEPTION_FLT_DENORMAL_OPERAND: DrawerExceptionReason = "Float denormal operand"; break;
-		case EXCEPTION_FLT_DIVIDE_BY_ZERO: DrawerExceptionReason = "Float divide by zero"; break;
-		case EXCEPTION_FLT_INEXACT_RESULT: DrawerExceptionReason = "Float inexact result"; break;
-		case EXCEPTION_FLT_INVALID_OPERATION: DrawerExceptionReason = "Float invalid operation"; break;
-		case EXCEPTION_FLT_OVERFLOW: DrawerExceptionReason = "Float overflow"; break;
-		case EXCEPTION_FLT_STACK_CHECK: DrawerExceptionReason = "Float stack check"; break;
-		case EXCEPTION_FLT_UNDERFLOW: DrawerExceptionReason = "Float underflow"; break;
-		case EXCEPTION_INT_DIVIDE_BY_ZERO: DrawerExceptionReason = "Int divide by zero"; break;
-		case EXCEPTION_INT_OVERFLOW: DrawerExceptionReason = "Int overflow"; break;
-		case EXCEPTION_INVALID_DISPOSITION: DrawerExceptionReason = "Invalid disposition"; break;
-		case EXCEPTION_NONCONTINUABLE_EXCEPTION: DrawerExceptionReason = "Noncontinuable exception"; break;
-		case EXCEPTION_PRIV_INSTRUCTION: DrawerExceptionReason = "Priv instruction"; break;
-		case EXCEPTION_SINGLE_STEP: DrawerExceptionReason = "Single step"; break;
-		case EXCEPTION_STACK_OVERFLOW: DrawerExceptionReason = "Stack overflow"; break;
-
-		case EXCEPTION_ILLEGAL_INSTRUCTION:
-			DrawerExceptionReason = "Illegal instruction";
-			DrawerExceptionFatal = true;
-			break;
-
-		case EXCEPTION_ACCESS_VIOLATION:
-			if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 0)
-			{
-				DrawerExceptionReason = "Read access violation";
-			}
-			else if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 1)
-			{
-				DrawerExceptionReason = "Write access violation";
-				DrawerExceptionFatal = true;
-			}
-			else if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 8)
-			{
-				DrawerExceptionReason = "User-mode data execution prevention (DEP) violation";
-				DrawerExceptionFatal = true;
-			}
-			else
-			{
-				DrawerExceptionReason = "Unknown access violation";
-				DrawerExceptionFatal = true;
-			}
-			break;
-
-		case EXCEPTION_IN_PAGE_ERROR:
-			if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 0)
-			{
-				DrawerExceptionReason = "In page read error";
-			}
-			else if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 1)
-			{
-				DrawerExceptionReason = "In page write error";
-				DrawerExceptionFatal = true;
-			}
-			else if (exceptionInfo->ExceptionRecord->ExceptionInformation[0] == 8)
-			{
-				DrawerExceptionReason = "In page user-mode data execution prevention (DEP) error";
-				DrawerExceptionFatal = true;
-			}
-			else
-			{
-				DrawerExceptionReason = "Unknown in page read error";
-				DrawerExceptionFatal = true;
-			}
-			break;
-		}
-
-		return EXCEPTION_CONTINUE_EXECUTION;
-	}
-}
-
-void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal))
-{
-	DrawerExceptionSetJumpResult = false;
-	RtlCaptureContext(&DrawerExceptionSetJumpContext);
-	if (DrawerExceptionSetJumpResult)
-	{
-		RemoveVectoredExceptionHandler(DrawerExceptionHandlerHandle);
-		catchBlock(data, DrawerExceptionReason, DrawerExceptionFatal);
-	}
-	else
-	{
-		DrawerExceptionSetJumpResult = true;
-		DrawerExceptionHandlerHandle = AddVectoredExceptionHandler(1, DrawerExceptionHandler);
-		tryBlock(data);
-		RemoveVectoredExceptionHandler(DrawerExceptionHandlerHandle);
-	}
 }

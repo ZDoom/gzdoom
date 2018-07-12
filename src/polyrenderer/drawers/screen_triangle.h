@@ -52,14 +52,13 @@ struct TriDrawTriangleArgs
 	ShadedTriVertex *v3;
 	int32_t clipright;
 	int32_t clipbottom;
-	uint8_t *stencilValues;
-	uint32_t *stencilMasks;
-	int32_t stencilPitch;
+	uint8_t *stencilbuffer;
 	float *zbuffer;
 	const PolyDrawArgs *uniforms;
 	bool destBgra;
 	ScreenTriangleStepVariables gradientX;
 	ScreenTriangleStepVariables gradientY;
+	float depthOffset;
 
 	bool CalculateGradients()
 	{
@@ -107,42 +106,43 @@ class RectDrawArgs;
 
 enum class TriBlendMode
 {
-	TextureOpaque,
-	TextureMasked,
-	TextureAdd,
-	TextureSub,
-	TextureRevSub,
-	TextureAddSrcColor,
-	TranslatedOpaque,
-	TranslatedMasked,
-	TranslatedAdd,
-	TranslatedSub,
-	TranslatedRevSub,
-	TranslatedAddSrcColor,
-	Shaded,
-	AddShaded,
-	Stencil,
-	AddStencil,
-	FillOpaque,
-	FillAdd,
-	FillSub,
-	FillRevSub,
-	FillAddSrcColor,
+	Opaque,
 	Skycap,
-	Fuzz,
-	FogBoundary
+	FogBoundary,
+	SrcColor,
+	Fill,
+	Normal,
+	Fuzzy,
+	Stencil,
+	Translucent,
+	Add,
+	Shaded,
+	TranslucentStencil,
+	Shadow,
+	Subtract,
+	AddStencil,
+	AddShaded,
+	OpaqueTranslated,
+	SrcColorTranslated,
+	NormalTranslated,
+	StencilTranslated,
+	TranslucentTranslated,
+	AddTranslated,
+	ShadedTranslated,
+	TranslucentStencilTranslated,
+	ShadowTranslated,
+	SubtractTranslated,
+	AddStencilTranslated,
+	AddShadedTranslated
 };
 
 class ScreenTriangle
 {
 public:
 	static void Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
-	static void DrawSWRender(const TriDrawTriangleArgs *args, PolyTriangleThreadData *thread);
-	static void DrawSpan8(int y, int x0, int x1, const TriDrawTriangleArgs *args);
-	static void DrawSpan32(int y, int x0, int x1, const TriDrawTriangleArgs *args);
 
-	static void(*TriDrawers8[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
-	static void(*TriDrawers32[])(int, int, uint32_t, uint32_t, const TriDrawTriangleArgs *);
+	static void(*SpanDrawers8[])(int y, int x0, int x1, const TriDrawTriangleArgs *args);
+	static void(*SpanDrawers32[])(int y, int x0, int x1, const TriDrawTriangleArgs *args);
 	static void(*RectDrawers8[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
 	static void(*RectDrawers32[])(const void *, int, int, int, const RectDrawArgs *, PolyTriangleThreadData *);
 
@@ -151,34 +151,61 @@ public:
 
 namespace TriScreenDrawerModes
 {
-	enum class BlendModes { Opaque, Masked, AddClamp, SubClamp, RevSubClamp, AddSrcColorOneMinusSrcColor, Shaded, AddClampShaded };
-	struct OpaqueBlend { static const int Mode = (int)BlendModes::Opaque; };
-	struct MaskedBlend { static const int Mode = (int)BlendModes::Masked; };
-	struct AddClampBlend { static const int Mode = (int)BlendModes::AddClamp; };
-	struct SubClampBlend { static const int Mode = (int)BlendModes::SubClamp; };
-	struct RevSubClampBlend { static const int Mode = (int)BlendModes::RevSubClamp; };
-	struct AddSrcColorBlend { static const int Mode = (int)BlendModes::AddSrcColorOneMinusSrcColor; };
-	struct ShadedBlend { static const int Mode = (int)BlendModes::Shaded; };
-	struct AddClampShadedBlend { static const int Mode = (int)BlendModes::AddClampShaded; };
+	enum SWStyleFlags
+	{
+		SWSTYLEF_Translated = 1,
+		SWSTYLEF_Skycap = 2,
+		SWSTYLEF_FogBoundary = 4,
+		SWSTYLEF_Fill = 8,
+		SWSTYLEF_SrcColorOneMinusSrcColor = 16
+	};
 
-	enum class FilterModes { Nearest, Linear };
-	struct NearestFilter { static const int Mode = (int)FilterModes::Nearest; };
-	struct LinearFilter { static const int Mode = (int)FilterModes::Linear; };
+	struct StyleOpaque             { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = 0; };
+	struct StyleSkycap             { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Skycap; };
+	struct StyleFogBoundary        { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_FogBoundary; };
+	struct StyleSrcColor           { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_SrcColorOneMinusSrcColor; };
+	struct StyleFill               { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Fill; };
 
-	enum class ShadeMode { None, Simple, Advanced };
-	struct NoShade { static const int Mode = (int)ShadeMode::None; };
-	struct SimpleShade { static const int Mode = (int)ShadeMode::Simple; };
-	struct AdvancedShade { static const int Mode = (int)ShadeMode::Advanced; };
+	struct StyleNormal             { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = 0; };
+	struct StyleFuzzy              { static const int BlendOp = STYLEOP_Fuzz,   BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = 0; };
+	struct StyleStencil            { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1 | STYLEF_ColorIsFixed, SWFlags = 0; };
+	struct StyleTranslucent        { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = 0; };
+	struct StyleAdd                { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = 0, SWFlags = 0; };
+	struct StyleShaded             { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_RedIsAlpha | STYLEF_ColorIsFixed, SWFlags = 0; };
+	struct StyleTranslucentStencil { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_ColorIsFixed, SWFlags = 0; };
+	struct StyleShadow             { static const int BlendOp = STYLEOP_Shadow, BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = 0; };
+	struct StyleSubtract           { static const int BlendOp = STYLEOP_RevSub, BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = 0, SWFlags = 0; };
+	struct StyleAddStencil         { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = STYLEF_ColorIsFixed, SWFlags = 0; };
+	struct StyleAddShaded          { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = STYLEF_RedIsAlpha | STYLEF_ColorIsFixed, SWFlags = 0; };
 
-	enum class Samplers { Texture, Fill, Shaded, Stencil, Translated, Skycap, Fuzz, FogBoundary };
-	struct TextureSampler { static const int Mode = (int)Samplers::Texture; };
-	struct FillSampler { static const int Mode = (int)Samplers::Fill; };
-	struct ShadedSampler { static const int Mode = (int)Samplers::Shaded; };
-	struct StencilSampler { static const int Mode = (int)Samplers::Stencil; };
-	struct TranslatedSampler { static const int Mode = (int)Samplers::Translated; };
-	struct SkycapSampler { static const int Mode = (int)Samplers::Skycap; };
-	struct FuzzSampler { static const int Mode = (int)Samplers::Fuzz; };
-	struct FogBoundarySampler { static const int Mode = (int)Samplers::FogBoundary; };
+	struct StyleOpaqueTranslated   { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_One, BlendDest = STYLEALPHA_Zero,   Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Translated; };
+	struct StyleSrcColorTranslated { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Translated|SWSTYLEF_SrcColorOneMinusSrcColor; };
+	struct StyleNormalTranslated   { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1, SWFlags = SWSTYLEF_Translated; };
+	struct StyleStencilTranslated  { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_Alpha1 | STYLEF_ColorIsFixed, SWFlags = SWSTYLEF_Translated; };
+	struct StyleTranslucentTranslated { static const int BlendOp = STYLEOP_Add, BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = SWSTYLEF_Translated; };
+	struct StyleAddTranslated      { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = 0, SWFlags = SWSTYLEF_Translated; };
+	struct StyleShadedTranslated   { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_RedIsAlpha | STYLEF_ColorIsFixed, SWFlags = SWSTYLEF_Translated; };
+	struct StyleTranslucentStencilTranslated { static const int BlendOp = STYLEOP_Add,    BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = STYLEF_ColorIsFixed, SWFlags = SWSTYLEF_Translated; };
+	struct StyleShadowTranslated   { static const int BlendOp = STYLEOP_Shadow, BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_InvSrc, Flags = 0, SWFlags = SWSTYLEF_Translated; };
+	struct StyleSubtractTranslated { static const int BlendOp = STYLEOP_RevSub, BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = 0, SWFlags = SWSTYLEF_Translated; };
+	struct StyleAddStencilTranslated { static const int BlendOp = STYLEOP_Add,  BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = STYLEF_ColorIsFixed, SWFlags = SWSTYLEF_Translated; };
+	struct StyleAddShadedTranslated { static const int BlendOp = STYLEOP_Add,   BlendSrc = STYLEALPHA_Src, BlendDest = STYLEALPHA_One,    Flags = STYLEF_RedIsAlpha | STYLEF_ColorIsFixed, SWFlags = SWSTYLEF_Translated; };
+
+	enum SWOptFlags
+	{
+		SWOPT_DynLights = 1,
+		SWOPT_ColoredFog = 2,
+		SWOPT_FixedLight = 4
+	};
+
+	struct DrawerOpt { static const int Flags = 0; };
+	struct DrawerOptF { static const int Flags = SWOPT_FixedLight; };
+	struct DrawerOptC { static const int Flags = SWOPT_ColoredFog; };
+	struct DrawerOptCF { static const int Flags = SWOPT_ColoredFog | SWOPT_FixedLight; };
+	struct DrawerOptL { static const int Flags = SWOPT_DynLights; };
+	struct DrawerOptLC { static const int Flags = SWOPT_DynLights | SWOPT_ColoredFog; };
+	struct DrawerOptLF { static const int Flags = SWOPT_DynLights | SWOPT_FixedLight; };
+	struct DrawerOptLCF { static const int Flags = SWOPT_DynLights | SWOPT_ColoredFog | SWOPT_FixedLight; };
 
 	static const int fuzzcolormap[FUZZTABLE] =
 	{

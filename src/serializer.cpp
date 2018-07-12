@@ -41,27 +41,20 @@
 #include "rapidjson/rapidjson.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/prettywriter.h"
-#include "rapidjson/stringbuffer.h"
 #include "rapidjson/document.h"
 #include "serializer.h"
-#include "r_data/colormaps.h"
 #include "r_data/r_interpolate.h"
-#include "r_defs.h"
 #include "r_state.h"
 #include "p_lnspec.h"
-#include "i_system.h"
 #include "w_wad.h"
 #include "p_terrain.h"
-#include "c_dispatch.h"
 #include "p_setup.h"
 #include "p_conversation.h"
 #include "dsectoreffect.h"
 #include "d_player.h"
-#include "r_data/r_interpolate.h"
 #include "g_shared/a_sharedglobal.h"
 #include "po_man.h"
 #include "v_font.h"
-#include "w_zip.h"
 #include "doomerrors.h"
 #include "v_text.h"
 #include "cmdlib.h"
@@ -996,6 +989,11 @@ void FSerializer::ReadObjects(bool hubtravel)
 		{
 			DThinker::bSerialOverride = true;
 			r->mDObjects.Resize(ArraySize());
+			for (auto &p : r->mDObjects)
+			{
+				p = nullptr;
+			}
+
 			// First iteration: create all the objects but do nothing with them yet.
 			for (unsigned i = 0; i < r->mDObjects.Size(); i++)
 			{
@@ -1067,7 +1065,7 @@ void FSerializer::ReadObjects(bool hubtravel)
 			// nuke all objects we created here.
 			for (auto obj : r->mDObjects)
 			{
-				if (!(obj->ObjectFlags & OF_EuthanizeMe)) obj->Destroy();
+				if (obj != nullptr && !(obj->ObjectFlags & OF_EuthanizeMe)) obj->Destroy();
 			}
 			r->mDObjects.Clear();
 

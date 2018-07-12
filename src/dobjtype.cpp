@@ -35,19 +35,15 @@
 
 // HEADER FILES ------------------------------------------------------------
 
-#include <float.h>
 #include <limits>
 
 #include "dobject.h"
-#include "i_system.h"
 #include "serializer.h"
 #include "actor.h"
-#include "templates.h"
 #include "autosegs.h"
 #include "v_text.h"
 #include "a_pickups.h"
 #include "d_player.h"
-#include "doomerrors.h"
 #include "fragglescript/t_fs.h"
 #include "a_keys.h"
 #include "vm.h"
@@ -146,7 +142,7 @@ bool PClass::ReadAllFields(FSerializer &ar, void *addr) const
 	if (strcmp(key, "classtype"))
 	{
 		// this does not represent a DObject
-		Printf(TEXTCOLOR_RED "trying to read user variables but got a non-object (first key is '%s')", key);
+		Printf(TEXTCOLOR_RED "trying to read user variables but got a non-object (first key is '%s')\n", key);
 		ar.mErrors++;
 		return false;
 	}

@@ -43,17 +43,12 @@
 #include "s_sound.h"
 #include "doomstat.h"
 #include "r_state.h"
-#include "w_wad.h"
-#include "tarray.h"
-#include "cmdlib.h"
 #include "serializer.h"
 #include "p_maputl.h"
 #include "p_spec.h"
 #include "textures.h"
 #include "actor.h"
 #include "actorinlines.h"
-
-#include "gi.h"
 
 static FRandom pr_switchanim ("AnimSwitch");
 

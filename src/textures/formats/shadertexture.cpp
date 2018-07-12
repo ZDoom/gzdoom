@@ -35,21 +35,9 @@
 */
 
 #include "doomtype.h"
-#include "doomstat.h"
 #include "d_player.h"
-#include "templates.h"
 #include "menu/menu.h"
-#include "colormatcher.h"
-#include "textures/textures.h"
 #include "w_wad.h"
-#include "v_font.h"
-#include "v_video.h"
-#include "g_level.h"
-#include "gi.h"
-#include "r_defs.h"
-#include "r_state.h"
-#include "r_data/r_translate.h"
-#include "r_data/renderstyle.h"
 #include "bitmap.h"
 
 

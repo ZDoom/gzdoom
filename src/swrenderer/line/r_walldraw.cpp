@@ -189,7 +189,12 @@ namespace swrenderer
 		{
 			auto viewport = Thread->Viewport.get();
 			
-			drawerargs.dc_viewpos.X = (float)((x + 0.5 - viewport->CenterX) / viewport->CenterX * zcol);
+			int tx = x;
+			bool mirror = !!(Thread->Portal->MirrorFlags & RF_XFLIP);
+			if (mirror)
+				tx = viewwidth - tx - 1;
+
+			drawerargs.dc_viewpos.X = (float)((tx + 0.5 - viewport->CenterX) / viewport->CenterX * zcol);
 			drawerargs.dc_viewpos.Y = zcol;
 			drawerargs.dc_viewpos.Z = (float)((viewport->CenterY - y1 - 0.5) / viewport->InvZtoScale * zcol);
 			drawerargs.dc_viewpos_step.Z = (float)(-zcol / viewport->InvZtoScale);
@@ -262,7 +267,7 @@ namespace swrenderer
 			drawerargs.SetTextureVStep(sampler.uv_step);
 			drawerargs.SetTextureVPos(sampler.uv_pos);
 			drawerargs.DrawColumn(Thread);
-			if (r_models)
+			if (r_modelscene)
 				drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 			uint64_t step64 = sampler.uv_step;
@@ -282,7 +287,7 @@ namespace swrenderer
 				drawerargs.SetTextureVStep(sampler.uv_step);
 				drawerargs.SetTextureVPos(sampler.uv_pos);
 				drawerargs.DrawColumn(Thread);
-				if (r_models)
+				if (r_modelscene)
 					drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 				uint64_t step64 = sampler.uv_step;
@@ -310,7 +315,7 @@ namespace swrenderer
 					drawerargs.SetTextureVStep(sampler.uv_step);
 					drawerargs.SetTextureVPos(uv_pos);
 					drawerargs.DrawColumn(Thread);
-					if (r_models)
+					if (r_modelscene)
 						drawerargs.DrawDepthColumn(Thread, zbufferdepth);
 
 					y += count;

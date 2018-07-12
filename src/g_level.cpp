@@ -52,7 +52,6 @@
 #include "r_sky.h"
 #include "c_console.h"
 #include "intermission/intermission.h"
-#include "gstrings.h"
 #include "v_video.h"
 #include "st_stuff.h"
 #include "hu_stuff.h"
@@ -62,31 +61,22 @@
 #include "v_text.h"
 #include "s_sndseq.h"
 #include "b_bot.h"
-#include "sc_man.h"
 #include "sbar.h"
 #include "a_lightning.h"
-#include "m_png.h"
-#include "m_random.h"
 #include "version.h"
-#include "statnums.h"
 #include "sbarinfo.h"
-#include "r_data/r_translate.h"
 #include "p_lnspec.h"
-#include "r_data/r_interpolate.h"
 #include "cmdlib.h"
 #include "d_net.h"
 #include "d_netinf.h"
-#include "v_palette.h"
 #include "menu/menu.h"
 #include "a_sharedglobal.h"
-#include "r_data/colormaps.h"
 #include "r_renderer.h"
 #include "r_utility.h"
 #include "p_spec.h"
 #include "serializer.h"
 #include "vm.h"
 #include "events.h"
-#include "dobjgc.h"
 #include "i_music.h"
 
 #include "gi.h"
@@ -94,10 +84,7 @@
 #include "g_hub.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
-#include "vm.h"
 #include "i_time.h"
-
-#include <string.h>
 
 void STAT_StartNewGame(const char *lev);
 void STAT_ChangeLevel(const char *newl);
@@ -119,17 +106,17 @@ void G_VerifySkill();
 
 CUSTOM_CVAR(Bool, gl_brightfog, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	if (level.info->brightfog == -1) level.brightfog = self;
+	if (level.info == nullptr || level.info->brightfog == -1) level.brightfog = self;
 }
 
 CUSTOM_CVAR(Bool, gl_lightadditivesurfaces, false, CVAR_ARCHIVE | CVAR_NOINITCALL)
 {
-	if (level.info->lightadditivesurfaces == -1) level.lightadditivesurfaces = self;
+	if (level.info == nullptr || level.info->lightadditivesurfaces == -1) level.lightadditivesurfaces = self;
 }
 
 CUSTOM_CVAR(Bool, gl_notexturefill, false, CVAR_NOINITCALL)
 {
-	if (level.info->notexturefill == -1) level.notexturefill = self;
+	if (level.info == nullptr || level.info->notexturefill == -1) level.notexturefill = self;
 }
 
 CUSTOM_CVAR(Int, gl_lightmode, 3, CVAR_ARCHIVE | CVAR_NOINITCALL)
@@ -254,7 +241,7 @@ UNSAFE_CCMD(recordmap)
 {
 	if (netgame)
 	{
-		Printf("You cannot record a new game while in a netgame.");
+		Printf("You cannot record a new game while in a netgame.\n");
 		return;
 	}
 	if (argv.argc() > 2)
@@ -1496,6 +1483,7 @@ void G_InitLevelLocals ()
 	level.Music = info->Music;
 	level.musicorder = info->musicorder;
 	level.MusicVolume = 1.f;
+	level.HasHeightSecs = false;
 
 	level.LevelName = level.info->LookupLevelName();
 	level.NextMap = info->NextMap;
@@ -2044,6 +2032,67 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
 	PARAM_FLOAT(z2);
 	ACTION_RETURN_VEC3(VecDiff(DVector3(x1, y1, z1), DVector3(x2, y2, z2)));
 }
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Offset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_BOOL_DEF(absolute);
+	if (absolute)
+	{
+		ACTION_RETURN_VEC2(DVector2(x + dx, y + dy));
+	}
+	else
+	{
+		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		ACTION_RETURN_VEC2(v);
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2OffsetZ)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_FLOAT(atz);
+	PARAM_BOOL_DEF(absolute);
+	if (absolute)
+	{
+		ACTION_RETURN_VEC3(DVector3(x + dx, y + dy, atz));
+	}
+	else
+	{
+		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		ACTION_RETURN_VEC3(DVector3(v, atz));
+	}
+}
+
+DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Offset)
+{
+	PARAM_PROLOGUE;
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_FLOAT(dx);
+	PARAM_FLOAT(dy);
+	PARAM_FLOAT(dz);
+	PARAM_BOOL_DEF(absolute);
+	if (absolute)
+	{
+		ACTION_RETURN_VEC3(DVector3(x + dx, y + dy, z + dz));
+	}
+	else
+	{
+		DVector2 v = P_GetOffsetPosition(x, y, dx, dy);
+		ACTION_RETURN_VEC3(DVector3(v, z + dz));
+	}
+}
+
 
 //==========================================================================
 //

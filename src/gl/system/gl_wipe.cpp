@@ -24,22 +24,18 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "f_wipe.h"
 #include "m_random.h"
 #include "w_wad.h"
 #include "v_palette.h"
 #include "templates.h"
-#include "vectors.h"
 
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_cvars.h"
-#include "gl/shaders/gl_shader.h"
-#include "gl/textures/gl_material.h"
 #include "gl/textures/gl_samplers.h"
 #include "gl/data/gl_vertexbuffer.h"
 
@@ -119,7 +115,7 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 		return false;
 	}
 
-	const auto &viewport = GLRenderer->mScreenViewport;
+	const auto &viewport = screen->mScreenViewport;
 	wipestartscreen = new FHardwareTexture(true);
 	wipestartscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeStartScreen");
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
@@ -167,7 +163,7 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 void OpenGLFrameBuffer::WipeEndScreen()
 {
 	GLRenderer->Flush();
-	const auto &viewport = GLRenderer->mScreenViewport;
+	const auto &viewport = screen->mScreenViewport;
 	wipeendscreen = new FHardwareTexture(true);
 	wipeendscreen->CreateTexture(NULL, viewport.width, viewport.height, 0, false, 0, "WipeEndScreen");
 	GLRenderer->mSamplerManager->Bind(0, CLAMP_NOFILTER, -1);
@@ -210,7 +206,7 @@ bool OpenGLFrameBuffer::WipeDo(int ticks)
 		if (FGLRenderBuffers::IsEnabled())
 		{
 			GLRenderer->mBuffers->BindCurrentFB();
-			const auto &bounds = GLRenderer->mScreenViewport;
+			const auto &bounds = screen->mScreenViewport;
 			glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 		}
 

@@ -28,27 +28,19 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
-#include <fcntl.h>
 #include <stdlib.h>
 #include <errno.h>
-#include <stdlib.h>
 #include <time.h>
 
 #include "r_defs.h"
 
-#include "doomtype.h"
 #include "version.h"
 
 #if defined(_WIN32)
 #include <io.h>
 #else
-#include <unistd.h>
 #endif
 
-
-#include <ctype.h>
-
-#include "doomdef.h"
 
 #include "m_swap.h"
 #include "m_argv.h"
@@ -59,14 +51,8 @@
 #include "c_dispatch.h"
 #include "c_bind.h"
 
-#include "i_system.h"
 #include "i_video.h"
 #include "v_video.h"
-
-#include "hu_stuff.h"
-
-// State.
-#include "doomstat.h"
 
 // Data.
 #include "m_misc.h"
@@ -641,7 +627,7 @@ void M_ScreenShot (const char *filename)
 		if (file == NULL)
 		{
 			Printf ("Could not open %s\n", autoname.GetChars());
-			screen->ReleaseScreenshotBuffer();
+			delete[] buffer;
 			return;
 		}
 		if (writepcx)
@@ -655,7 +641,7 @@ void M_ScreenShot (const char *filename)
 				screen->GetWidth(), screen->GetHeight(), pitch, gamma);
 		}
 		delete file;
-		screen->ReleaseScreenshotBuffer();
+		delete[] buffer;
 
 		if (!screenshot_quiet)
 		{

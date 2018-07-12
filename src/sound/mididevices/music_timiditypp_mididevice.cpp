@@ -33,14 +33,8 @@
 */
 
 #include <string>
-#include <vector>
 
 #include "i_musicinterns.h"
-#include "c_cvars.h"
-#include "cmdlib.h"
-#include "templates.h"
-#include "version.h"
-#include "m_misc.h"
 #include "v_text.h"
 #include "i_system.h"
 

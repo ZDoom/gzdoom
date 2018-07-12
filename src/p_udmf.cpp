@@ -36,15 +36,12 @@
 #include "doomstat.h"
 #include "p_setup.h"
 #include "p_lnspec.h"
-#include "templates.h"
 #include "i_system.h"
 #include "gi.h"
 #include "r_sky.h"
 #include "g_level.h"
-#include "v_palette.h"
 #include "p_udmf.h"
 #include "r_state.h"
-#include "r_data/colormaps.h"
 #include "w_wad.h"
 #include "p_tags.h"
 #include "p_terrain.h"
@@ -1110,6 +1107,14 @@ public:
 				Flag(ld->flags, ML_3DMIDTEX_IMPASS, key);
 				continue;
 
+			case NAME_Revealed:
+				Flag(ld->flags, ML_REVEALED, key);
+				continue;
+
+			case NAME_AutomapStyle:
+				ld->automapstyle = AutomapLineStyle(CheckInt(key));
+				continue;
+
 			case NAME_MoreIds:
 				// delay parsing of the tag string until parsing of the sector is complete
 				// This ensures that the ID is always the first tag in the list.
@@ -1378,6 +1383,7 @@ public:
 		sec->sectornum = index;
 		sec->damageinterval = 32;
 		sec->terrainnum[sector_t::ceiling] = sec->terrainnum[sector_t::floor] = -1;
+		sec->ibocount = -1;
 		memset(sec->SpecialColors, -1, sizeof(sec->SpecialColors));
 		if (floordrop) sec->Flags = SECF_FLOORDROP;
 		// killough 3/7/98: end changes
@@ -1581,11 +1587,11 @@ public:
 					continue;
 
 				case NAME_hidden:
-					Flag(sec->MoreFlags, SECF_HIDDEN, key);
+					Flag(sec->MoreFlags, SECMF_HIDDEN, key);
 					break;
 
 				case NAME_Waterzone:
-					Flag(sec->MoreFlags, SECF_UNDERWATER, key);
+					Flag(sec->MoreFlags, SECMF_UNDERWATER, key);
 					break;
 
 				case NAME_floorplane_a:

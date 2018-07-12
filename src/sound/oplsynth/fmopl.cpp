@@ -82,7 +82,6 @@ Revision History:
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 #include <math.h>
 //#include "driver.h"		/* use M.A.M.E. */
 #include "opl.h"

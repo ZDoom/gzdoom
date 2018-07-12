@@ -35,37 +35,22 @@
 
 #include "i_common.h"
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "bitmap.h"
 #include "c_dispatch.h"
 #include "doomstat.h"
 #include "hardware.h"
-#include "i_system.h"
 #include "m_argv.h"
 #include "m_png.h"
 #include "r_renderer.h"
 #include "swrenderer/r_swrenderer.h"
 #include "st_console.h"
-#include "stats.h"
-#include "textures.h"
-#include "v_palette.h"
-#include "v_pfx.h"
 #include "v_text.h"
-#include "v_video.h"
 #include "version.h"
 #include "videomodes.h"
 
-#include "gl/system/gl_system.h"
-#include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/system/gl_interface.h"
 #include "gl/textures/gl_samplers.h"
-#include "gl/utility/gl_clock.h"
-
-#undef Class
 
 
 @implementation NSWindow(ExitAppOnClose)
@@ -120,12 +105,6 @@ CUSTOM_CVAR(Bool, vid_autoswitch, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_
 {
 	Printf("You must restart " GAMENAME " to apply graphics switching mode\n");
 }
-
-
-EXTERN_CVAR(Bool, gl_smooth_rendered)
-
-
-RenderBufferOptions rbOpts;
 
 
 // ---------------------------------------------------------------------------
@@ -277,7 +256,7 @@ CUSTOM_CVAR(Float, rgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
-		screen->SetGamma(Gamma);
+		screen->SetGamma();
 	}
 }
 
@@ -285,7 +264,7 @@ CUSTOM_CVAR(Float, ggamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
-		screen->SetGamma(Gamma);
+		screen->SetGamma();
 	}
 }
 
@@ -293,7 +272,7 @@ CUSTOM_CVAR(Float, bgamma, 1.0f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (NULL != screen)
 	{
-		screen->SetGamma(Gamma);
+		screen->SetGamma();
 	}
 }
 
@@ -388,11 +367,11 @@ CocoaVideo::CocoaVideo()
 	if (nil == pixelFormat && NSOpenGLProfileVersion3_2Core == defaultProfile)
 	{
 		pixelFormat = CreatePixelFormat(NSOpenGLProfileVersionLegacy);
+	}
 
-		if (nil == pixelFormat)
-		{
-			I_FatalError("Cannot OpenGL create pixel format, graphics hardware is not supported");
-		}
+	if (nil == pixelFormat)
+	{
+		I_FatalError("Cannot create OpenGL pixel format, graphics hardware is not supported");
 	}
 
 	// Create OpenGL context and view
@@ -554,20 +533,6 @@ void CocoaVideo::SetFullscreenMode(const int width, const int height)
 		? [screen convertRectToBacking:screenFrame]
 		: screenFrame;
 
-	const float  displayWidth  = displayRect.size.width;
-	const float  displayHeight = displayRect.size.height;
-
-	const float pixelScaleFactorX = displayWidth  / static_cast<float>(width );
-	const float pixelScaleFactorY = displayHeight / static_cast<float>(height);
-
-	rbOpts.pixelScale = MIN(pixelScaleFactorX, pixelScaleFactorY);
-
-	rbOpts.width  = width  * rbOpts.pixelScale;
-	rbOpts.height = height * rbOpts.pixelScale;
-
-	rbOpts.shiftX = (displayWidth  - rbOpts.width ) / 2.0f;
-	rbOpts.shiftY = (displayHeight - rbOpts.height) / 2.0f;
-
 	if (!m_fullscreen)
 	{
 		[m_window setLevel:LEVEL_FULLSCREEN];
@@ -581,14 +546,6 @@ void CocoaVideo::SetFullscreenMode(const int width, const int height)
 
 void CocoaVideo::SetWindowedMode(const int width, const int height)
 {
-	rbOpts.pixelScale = 1.0f;
-
-	rbOpts.width  = static_cast<float>(width );
-	rbOpts.height = static_cast<float>(height);
-
-	rbOpts.shiftX = 0.0f;
-	rbOpts.shiftY = 0.0f;
-
 	const NSSize windowPixelSize = NSMakeSize(width, height);
 	const NSSize windowSize = vid_hidpi
 		? [[m_window contentView] convertSizeFromBacking:windowPixelSize]
@@ -630,8 +587,6 @@ void CocoaVideo::SetMode(const int width, const int height, const bool fullscree
 	{
 		SetWindowedMode(width, height);
 	}
-
-	rbOpts.dirty = true;
 
 	const NSSize viewSize = I_GetContentViewSize(m_window);
 
@@ -709,11 +664,6 @@ void SystemFrameBuffer::SetVSync(bool vsync)
 
 void SystemFrameBuffer::InitializeState()
 {
-}
-
-bool SystemFrameBuffer::CanUpdate()
-{
-	return true;
 }
 
 void SystemFrameBuffer::SwapBuffers()

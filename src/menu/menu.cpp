@@ -37,27 +37,20 @@
 #include "c_dispatch.h"
 #include "d_gui.h"
 #include "d_player.h"
-#include "g_level.h"
 #include "c_console.h"
 #include "c_bind.h"
-#include "s_sound.h"
 #include "p_tick.h"
 #include "g_game.h"
-#include "c_cvars.h"
 #include "d_event.h"
-#include "v_video.h"
 #include "hu_stuff.h"
 #include "gi.h"
-#include "v_palette.h"
 #include "g_input.h"
 #include "gameconfigfile.h"
 #include "gstrings.h"
 #include "r_utility.h"
 #include "menu/menu.h"
-#include "textures/textures.h"
 #include "vm.h"
 #include "events.h"
-#include "gl/renderer/gl_renderer.h" // for menu blur
 #include "scripting/types.h"
 
 //
@@ -829,8 +822,7 @@ void M_Drawer (void)
 
 	if (CurrentMenu != nullptr && menuactive != MENU_Off) 
 	{
-		if (GLRenderer)
-			GLRenderer->BlurScene(gameinfo.bluramount);
+		screen->BlurScene(gameinfo.bluramount);
 		if (!CurrentMenu->DontDim)
 		{
 			M_Dim();
@@ -1030,7 +1022,7 @@ CCMD (openmenu)
 {
 	if (argv.argc() < 2)
 	{
-		Printf("Usage: openmenu \"menu_name\"");
+		Printf("Usage: openmenu \"menu_name\"\n");
 		return;
 	}
 	M_StartControlPanel (true);

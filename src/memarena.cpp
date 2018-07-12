@@ -38,16 +38,15 @@
 */
 
 #include "doomtype.h"
-#include "m_alloc.h"
 #include "memarena.h"
 #include "c_dispatch.h"
-#include "zstring.h"
 
 struct FMemArena::Block
 {
 	Block *NextBlock;
 	void *Limit;			// End of this block
 	void *Avail;			// Start of free space in this block
+	void *alignme;			// align to 16 bytes.
 
 	void Reset();
 	void *Alloc(size_t size);
@@ -96,7 +95,7 @@ FMemArena::~FMemArena()
 //
 //==========================================================================
 
-void *FMemArena::Alloc(size_t size)
+void *FMemArena::iAlloc(size_t size)
 {
 	Block *block;
 
@@ -110,6 +109,11 @@ void *FMemArena::Alloc(size_t size)
 	}
 	block = AddBlock(size);
 	return block->Alloc(size);
+}
+
+void *FMemArena::Alloc(size_t size)
+{
+	return iAlloc((size + 15) & ~15);
 }
 
 //==========================================================================
@@ -318,7 +322,7 @@ FString *FSharedStringArena::Alloc(const FString &source)
 	strnode = FindString(source, source.Len(), hash);
 	if (strnode == NULL)
 	{
-		strnode = (Node *)FMemArena::Alloc(sizeof(Node));
+		strnode = (Node *)iAlloc(sizeof(Node));
 		::new(&strnode->String) FString(source);
 		strnode->Hash = hash;
 		hash %= countof(Buckets);
@@ -353,7 +357,7 @@ FString *FSharedStringArena::Alloc(const char *source, size_t strlen)
 	strnode = FindString(source, strlen, hash);
 	if (strnode == NULL)
 	{
-		strnode = (Node *)FMemArena::Alloc(sizeof(Node));
+		strnode = (Node *)iAlloc(sizeof(Node));
 		::new(&strnode->String) FString(source, strlen);
 		strnode->Hash = hash;
 		hash %= countof(Buckets);

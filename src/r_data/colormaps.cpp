@@ -40,20 +40,9 @@
 
 #include "i_system.h"
 #include "w_wad.h"
-#include "doomdef.h"
 #include "r_sky.h"
-#include "c_dispatch.h"
-#include "sc_man.h"
-#include "v_text.h"
-#include "st_start.h"
-#include "doomstat.h"
-#include "v_palette.h"
-#include "colormatcher.h"
 #include "colormaps.h"
-#include "v_video.h"
 #include "templates.h"
-#include "r_utility.h"
-#include "r_renderer.h"
 
 TArray<FakeCmap> fakecmaps;
 

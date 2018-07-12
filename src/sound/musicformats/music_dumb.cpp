@@ -37,14 +37,7 @@
 
 #include <math.h>
 #include "i_musicinterns.h"
-#include "doomtype.h"
-#include "doomdef.h"
-#include "m_swap.h"
-#include "m_fixed.h"
-#include "c_cvars.h"
-#include "i_sound.h"
 #include "i_system.h"
-#include "files.h"
 
 #undef CDECL	// w32api's windef.h defines this
 #include "../dumb/include/dumb.h"

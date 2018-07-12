@@ -34,12 +34,10 @@
 */
 
 #include "gl_interleaved3d.h"
-#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/system/gl_framebuffer.h"
-#include "gl/shaders/gl_present3dRowshader.h"
+#include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 
 #ifdef _WIN32
 #include "hardware.h"
@@ -76,7 +74,7 @@ const RowInterleaved3D& RowInterleaved3D::getInstance(float ipd)
 	return instance;
 }
 
-static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
+static void prepareInterleavedPresent(FPresentShaderBase& shader)
 {
 	GLRenderer->mBuffers->BindOutputFB();
 	GLRenderer->ClearBorders();
@@ -94,31 +92,31 @@ static void prepareInterleavedPresent(FPresentStereoShaderBase& shader)
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
-	const GL_IRECT& box = GLRenderer->mOutputLetterbox;
+	const IntRect& box = screen->mOutputLetterbox;
 	glViewport(box.left, box.top, box.width, box.height);
 
-	shader.Bind();
-	shader.LeftEyeTexture.Set(0);
-	shader.RightEyeTexture.Set(1);
+	shader.Bind(NOQUEUE);
 
 	if ( GLRenderer->framebuffer->IsHWGammaActive() )
 	{
-		shader.InvGamma.Set(1.0f);
-		shader.Contrast.Set(1.0f);
-		shader.Brightness.Set(0.0f);
-		shader.Saturation.Set(1.0f);
+		shader.Uniforms->InvGamma = 1.0f;
+		shader.Uniforms->Contrast = 1.0f;
+		shader.Uniforms->Brightness = 0.0f;
+		shader.Uniforms->Saturation = 1.0f;
 	}
 	else
 	{
-		shader.InvGamma.Set(1.0f / clamp<float>(Gamma, 0.1f, 4.f));
-		shader.Contrast.Set(clamp<float>(vid_contrast, 0.1f, 3.f));
-		shader.Brightness.Set(clamp<float>(vid_brightness, -0.8f, 0.8f));
-		shader.Saturation.Set(clamp<float>(vid_saturation, -15.0f, 15.0f));
-		shader.GrayFormula.Set(static_cast<int>(gl_satformula));
+		shader.Uniforms->InvGamma = 1.0f / clamp<float>(Gamma, 0.1f, 4.f);
+		shader.Uniforms->Contrast = clamp<float>(vid_contrast, 0.1f, 3.f);
+		shader.Uniforms->Brightness = clamp<float>(vid_brightness, -0.8f, 0.8f);
+		shader.Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.0f);
+		shader.Uniforms->GrayFormula = static_cast<int>(gl_satformula);
 	}
-	shader.Scale.Set(
-		GLRenderer->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
-		GLRenderer->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight());
+	shader.Uniforms->Scale = {
+		screen->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
+		screen->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight()
+	};
+	shader.Uniforms.Set();
 }
 
 // fixme: I don't know how to get absolute window position on Mac and Linux
@@ -149,13 +147,13 @@ void CheckerInterleaved3D::Present() const
 	}
 #endif // _WIN32
 
-	GLRenderer->mPresent3dCheckerShader->WindowPositionParity.Set(
+	GLRenderer->mPresent3dCheckerShader->Uniforms->WindowPositionParity =
 		(windowVOffset
 			+ windowHOffset
-			+ GLRenderer->mOutputLetterbox.height + 1 // +1 because of origin at bottom
-		) % 2 // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
-	);
+			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
+		) % 2; // because we want the top pixel offset, but gl_FragCoord.y is the bottom pixel offset
 
+	GLRenderer->mPresent3dCheckerShader->Uniforms.Set();
 	GLRenderer->RenderScreenQuad();
 }
 
@@ -164,15 +162,15 @@ void s3d::CheckerInterleaved3D::AdjustViewports() const
 	// decrease the total pixel count by 2, but keep the same aspect ratio
 	const float sqrt2 = 1.41421356237f;
 	// Change size of renderbuffer, and align to screen
-	GLRenderer->mSceneViewport.height /= sqrt2;
-	GLRenderer->mSceneViewport.top /= sqrt2;
-	GLRenderer->mSceneViewport.width /= sqrt2;
-	GLRenderer->mSceneViewport.left /= sqrt2;
+	screen->mSceneViewport.height /= sqrt2;
+	screen->mSceneViewport.top /= sqrt2;
+	screen->mSceneViewport.width /= sqrt2;
+	screen->mSceneViewport.left /= sqrt2;
 
-	GLRenderer->mScreenViewport.height /= sqrt2;
-	GLRenderer->mScreenViewport.top /= sqrt2;
-	GLRenderer->mScreenViewport.width /= sqrt2;
-	GLRenderer->mScreenViewport.left /= sqrt2;
+	screen->mScreenViewport.height /= sqrt2;
+	screen->mScreenViewport.top /= sqrt2;
+	screen->mScreenViewport.width /= sqrt2;
+	screen->mScreenViewport.left /= sqrt2;
 }
 
 void ColumnInterleaved3D::Present() const
@@ -192,7 +190,8 @@ void ColumnInterleaved3D::Present() const
 	}
 #endif // _WIN32
 
-	GLRenderer->mPresent3dColumnShader->WindowPositionParity.Set(windowHOffset);
+	GLRenderer->mPresent3dColumnShader->Uniforms->WindowPositionParity = windowHOffset;
+	GLRenderer->mPresent3dColumnShader->Uniforms.Set();
 
 	GLRenderer->RenderScreenQuad();
 }
@@ -214,12 +213,12 @@ void RowInterleaved3D::Present() const
 	}
 #endif // _WIN32
 
-	GLRenderer->mPresent3dRowShader->WindowPositionParity.Set(
+	GLRenderer->mPresent3dRowShader->Uniforms->WindowPositionParity =
 		(windowVOffset
-			+ GLRenderer->mOutputLetterbox.height + 1 // +1 because of origin at bottom
-		) % 2
-	);
+			+ screen->mOutputLetterbox.height + 1 // +1 because of origin at bottom
+		) % 2;
 
+	GLRenderer->mPresent3dColumnShader->Uniforms.Set();
 	GLRenderer->RenderScreenQuad();
 }
 

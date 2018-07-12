@@ -63,11 +63,8 @@
 #include "m_random.h"
 #include "serializer.h"
 #include "b_bot.h"
-#include "m_png.h"
 #include "m_crc32.h"
-#include "i_system.h"
 #include "c_dispatch.h"
-#include "files.h"
 
 // MACROS ------------------------------------------------------------------
 

@@ -19,11 +19,8 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <ctype.h>
-#include <assert.h>
 #include "w_wad.h"
 #include "g_level.h"
-#include "sc_man.h"
 #include "r_defs.h"
 #include "p_setup.h"
 #include "gi.h"

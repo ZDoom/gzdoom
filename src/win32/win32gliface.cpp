@@ -55,7 +55,6 @@
 #include "gl/system/gl_framebuffer.h"
 
 extern HWND			Window;
-extern BOOL AppActive;
 
 extern "C" {
     __declspec(dllexport) DWORD NvOptimusEnablement = 0x00000001;
@@ -71,13 +70,19 @@ PFNWGLSWAPINTERVALEXTPROC myWglSwapIntervalExtProc;
 
 
 
-
 CUSTOM_CVAR(Bool, gl_debug, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	Printf("This won't take effect until " GAMENAME " is restarted.\n");
 }
 
-EXTERN_CVAR(Bool, vr_enable_quadbuffered)
+// For broadest GL compatibility, require user to explicitly enable quad-buffered stereo mode.
+// Setting vr_enable_quadbuffered_stereo does not automatically invoke quad-buffered stereo,
+// but makes it possible for subsequent "vr_mode 7" to invoke quad-buffered stereo
+CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+{
+	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
+}
+
 EXTERN_CVAR(Int, vid_refreshrate)
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
@@ -1076,6 +1081,7 @@ SystemFrameBuffer::SystemFrameBuffer(void *hMonitor, int width, int height, int 
 
 	m_supportsGamma = !!GetDeviceGammaRamp(hDC, (void *)m_origGamma);
 	ReleaseDC(Window, hDC);
+    enable_quadbuffered = vr_enable_quadbuffered;
 }
 
 //==========================================================================
@@ -1109,18 +1115,6 @@ SystemFrameBuffer::~SystemFrameBuffer()
 
 void SystemFrameBuffer::InitializeState()
 {
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
-bool SystemFrameBuffer::CanUpdate()
-{
-	if (!AppActive && IsFullscreen()) return false;
-	return true;
 }
 
 //==========================================================================
@@ -1165,10 +1159,15 @@ bool SystemFrameBuffer::IsFullscreen()
 // 
 //
 //==========================================================================
+EXTERN_CVAR(Bool, vid_vsync);
+CUSTOM_CVAR(Bool, gl_control_tear, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	vid_vsync.Callback();
+}
 
 void SystemFrameBuffer::SetVSync (bool vsync)
 {
-	if (myWglSwapIntervalExtProc != NULL) myWglSwapIntervalExtProc(vsync ? SwapInterval : 0);
+	if (myWglSwapIntervalExtProc != NULL) myWglSwapIntervalExtProc(vsync ? (gl_control_tear? SwapInterval : 1) : 0);
 }
 
 void SystemFrameBuffer::SwapBuffers()

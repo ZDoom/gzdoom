@@ -3,8 +3,12 @@
 #include "actor.h"
 #include "cycler.h"
 
+EXTERN_CVAR(Bool, r_dynlights)
 EXTERN_CVAR(Bool, gl_lights)
 EXTERN_CVAR(Bool, gl_attachedlights)
+
+struct side_t;
+struct seg_t;
 
 class ADynamicLight;
 class FSerializer;
@@ -227,9 +231,9 @@ public:
 	bool shadowmapped;
 	int bufferindex;
 	LightFlags lightflags;
-	DAngle SpotInnerAngle = 10.0;
-	DAngle SpotOuterAngle = 25.0;
+	DAngle SpotInnerAngle;
+	DAngle SpotOuterAngle;
     
-    int mShadowmapIndex = 1024;
+    int mShadowmapIndex;
 
 };

@@ -26,22 +26,41 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "templates.h"
-#include "m_crc32.h"
 #include "c_cvars.h"
-#include "c_dispatch.h"
-#include "v_palette.h"
+#include "r_data/colormaps.h"
+#include "hwrenderer/textures/hw_material.h"
 
-#include "gl/system/gl_interface.h"
-#include "gl/system/gl_cvars.h"
+#include "gl_load/gl_interface.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
-#include "gl/textures/gl_material.h"
+#include "gl/textures/gl_samplers.h"
 
 
-extern TexFilter_s TexFilter[];
-extern int TexFormat[];
+TexFilter_s TexFilter[]={
+	{GL_NEAREST,					GL_NEAREST,		false},
+	{GL_NEAREST_MIPMAP_NEAREST,		GL_NEAREST,		true},
+	{GL_LINEAR,						GL_LINEAR,		false},
+	{GL_LINEAR_MIPMAP_NEAREST,		GL_LINEAR,		true},
+	{GL_LINEAR_MIPMAP_LINEAR,		GL_LINEAR,		true},
+	{GL_NEAREST_MIPMAP_LINEAR,		GL_NEAREST,		true},
+	{GL_LINEAR_MIPMAP_LINEAR,		GL_NEAREST,		true},
+};
+
+int TexFormat[]={
+	GL_RGBA8,
+	GL_RGB5_A1,
+	GL_RGBA4,
+	GL_RGBA2,
+	// [BB] Added compressed texture formats.
+	GL_COMPRESSED_RGBA_ARB,
+	GL_COMPRESSED_RGBA_S3TC_DXT1_EXT,
+	GL_COMPRESSED_RGBA_S3TC_DXT3_EXT,
+	GL_COMPRESSED_RGBA_S3TC_DXT5_EXT,
+};
+
 
 
 //===========================================================================
@@ -163,15 +182,18 @@ void FHardwareTexture::Resize(int swidth, int sheight, int width, int height, un
 unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, int texunit, bool mipmap, int translation, const char *name)
 {
 	int rh,rw;
-	int texformat=TexFormat[gl_texture_format];
+	int texformat = GL_RGBA8;// TexFormat[gl_texture_format];
 	bool deletebuffer=false;
 
+	/*
 	if (forcenocompression)
 	{
 		texformat = GL_RGBA8;
 	}
+	*/
 	TranslatedTexture * glTex=GetTexID(translation);
-	if (glTex->glTexID==0) glGenTextures(1,&glTex->glTexID);
+	bool firstCall = glTex->glTexID == 0;
+	if (firstCall) glGenTextures(1,&glTex->glTexID);
 	if (texunit != 0) glActiveTexture(GL_TEXTURE0+texunit);
 	glBindTexture(GL_TEXTURE_2D, glTex->glTexID);
 	FGLDebug::LabelObject(GL_TEXTURE, glTex->glTexID, name);
@@ -235,7 +257,10 @@ unsigned int FHardwareTexture::CreateTexture(unsigned char * buffer, int w, int 
 		sourcetype = GL_BGRA;
 	}
 	
-	glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, sourcetype, GL_UNSIGNED_BYTE, buffer);
+	if (!firstCall && glBufferID > 0)
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, rw, rh, sourcetype, GL_UNSIGNED_BYTE, buffer);
+	else
+		glTexImage2D(GL_TEXTURE_2D, 0, texformat, rw, rh, 0, sourcetype, GL_UNSIGNED_BYTE, buffer);
 
 	if (deletebuffer && buffer) free(buffer);
 	else if (glBufferID)
@@ -492,5 +517,66 @@ void FHardwareTexture::BindToFrameBuffer(int width, int height)
 	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, glDefTex.glTexID, 0);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer(width, height));
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_STENCIL_ATTACHMENT, GL_RENDERBUFFER, GetDepthBuffer(width, height));
+}
+
+
+//===========================================================================
+// 
+//	Binds a texture to the renderer
+//
+//===========================================================================
+
+bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags)
+{
+	int usebright = false;
+
+	if (translation <= 0)
+	{
+		translation = -translation;
+	}
+	else
+	{
+		auto remap = TranslationToTable(translation);
+		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
+	}
+
+	bool needmipmap = (clampmode <= CLAMP_XY);
+
+	// Texture has become invalid
+	if ((!tex->bHasCanvas && (!tex->bWarped || gl.legacyMode)) && tex->CheckModified(DefaultRenderStyle()))
+	{
+		Clean(true);
+	}
+
+	// Bind it to the system.
+	if (!Bind(texunit, translation, needmipmap))
+	{
+
+		int w = 0, h = 0;
+
+		// Create this texture
+		unsigned char * buffer = nullptr;
+
+		if (!tex->bHasCanvas)
+		{
+			if (gl.legacyMode) flags |= CTF_MaybeWarped;
+			buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
+		}
+		else
+		{
+			w = tex->GetWidth();
+			h = tex->GetHeight();
+		}
+		if (!CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FHardwareTexture.BindOrCreate"))
+		{
+			// could not create texture
+			delete[] buffer;
+			return false;
+		}
+		delete[] buffer;
+	}
+	if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
+	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
+	return true;
 }
 

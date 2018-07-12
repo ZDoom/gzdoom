@@ -26,112 +26,22 @@
 **
 */
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "c_cvars.h"
 #include "v_video.h"
-#include "name.h"
 #include "w_wad.h"
-#include "i_system.h"
 #include "doomerrors.h"
-#include "v_palette.h"
-#include "sc_man.h"
 #include "cmdlib.h"
-#include "vm.h"
-#include "d_player.h"
+#include "hwrenderer/utility/hw_shaderpatcher.h"
+#include "hwrenderer/data/shaderuniforms.h"
 
-#include "gl/system/gl_interface.h"
+#include "gl_load/gl_interface.h"
 #include "gl/system/gl_debug.h"
 #include "r_data/matrix.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/system/gl_cvars.h"
 #include "gl/shaders/gl_shader.h"
-#include "gl/shaders/gl_shaderprogram.h"
-#include "gl/shaders/gl_postprocessshader.h"
-#include "gl/textures/gl_material.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-
-static bool IsGlslWhitespace(char c)
-{
-	switch (c)
-	{
-	case ' ':
-	case '\r':
-	case '\n':
-	case '\t':
-	case '\f':
-		return true;
-	default:
-		return false;
-	}
-}
-
-static FString NextGlslToken(const char *chars, long len, long &pos)
-{
-	// Eat whitespace
-	long tokenStart = pos;
-	while (tokenStart != len && IsGlslWhitespace(chars[tokenStart]))
-		tokenStart++;
-
-	// Find token end
-	long tokenEnd = tokenStart;
-	while (tokenEnd != len && !IsGlslWhitespace(chars[tokenEnd]) && chars[tokenEnd] != ';')
-		tokenEnd++;
-
-	pos = tokenEnd;
-	return FString(chars + tokenStart, tokenEnd - tokenStart);
-}
-
-static FString RemoveLegacyUserUniforms(FString code)
-{
-	// User shaders must declare their uniforms via the GLDEFS file.
-	// The following code searches for legacy uniform declarations in the shader itself and replaces them with whitespace.
-
-	long len = (long)code.Len();
-	char *chars = code.LockBuffer();
-
-	long startIndex = 0;
-	while (true)
-	{
-		long matchIndex = code.IndexOf("uniform", startIndex);
-		if (matchIndex == -1)
-			break;
-
-		bool isLegacyUniformName = false;
-
-		bool isKeywordStart = matchIndex == 0 || IsGlslWhitespace(chars[matchIndex - 1]);
-		bool isKeywordEnd = matchIndex + 7 == len || IsGlslWhitespace(chars[matchIndex + 7]);
-		if (isKeywordStart && isKeywordEnd)
-		{
-			long pos = matchIndex + 7;
-			FString type = NextGlslToken(chars, len, pos);
-			FString identifier = NextGlslToken(chars, len, pos);
-
-			isLegacyUniformName = type.Compare("float") == 0 && identifier.Compare("timer") == 0;
-		}
-
-		if (isLegacyUniformName)
-		{
-			long statementEndIndex = code.IndexOf(';', matchIndex + 7);
-			if (statementEndIndex == -1)
-				statementEndIndex = len;
-			for (long i = matchIndex; i <= statementEndIndex; i++)
-			{
-				if (!IsGlslWhitespace(chars[i]))
-					chars[i] = ' ';
-			}
-			startIndex = statementEndIndex;
-		}
-		else
-		{
-			startIndex = matchIndex + 7;
-		}
-	}
-
-	code.UnlockBuffer();
-
-	return code;
-}
 
 bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {
@@ -276,13 +186,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		{
 			vp_comb.Format("#version 300 es\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
-		else if (gl.glslversion < 1.4f) // This differentiation is for some Intel drivers which fail on #extension, so use of #version 140 is necessary
-		{
-			vp_comb.Format("#version 130\n#extension GL_ARB_uniform_buffer_object : require\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
-		}
 		else
 		{
-			vp_comb.Format("#version 140\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
+			vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
 		}
 	}
 	else
@@ -386,16 +292,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	glAttachShader(hShader, hVertProg);
 	glAttachShader(hShader, hFragProg);
-
-	glBindAttribLocation(hShader, VATTR_VERTEX, "aPosition");
-	glBindAttribLocation(hShader, VATTR_TEXCOORD, "aTexCoord");
-	glBindAttribLocation(hShader, VATTR_COLOR, "aColor");
-	glBindAttribLocation(hShader, VATTR_VERTEX2, "aVertex2");
-	glBindAttribLocation(hShader, VATTR_NORMAL, "aNormal");
-
-	glBindFragDataLocation(hShader, 0, "FragColor");
-	glBindFragDataLocation(hShader, 1, "FragFog");
-	glBindFragDataLocation(hShader, 2, "FragNormal");
 
 	glLinkProgram(hShader);
 
@@ -960,136 +856,3 @@ void gl_DestroyUserShaders()
 	// todo
 }
 
-static bool IsConsolePlayer(player_t *player)
-{
-	AActor *activator = player ? player->mo : nullptr;
-	if (activator == nullptr || activator->player == nullptr)
-		return false;
-	return int(activator->player - players) == consoleplayer;
-}
-
-DEFINE_ACTION_FUNCTION(_Shader, SetEnabled)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_BOOL_DEF(value);
-
-	if (IsConsolePlayer(player))
-	{
-		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
-		{
-			PostProcessShader &shader = PostProcessShaders[i];
-			if (shader.Name == shaderName)
-				shader.Enabled = value;
-		}
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(_Shader, SetUniform1f)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_STRING(uniformName);
-	PARAM_FLOAT_DEF(value);
-
-	if (IsConsolePlayer(player))
-	{
-		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
-		{
-			PostProcessShader &shader = PostProcessShaders[i];
-			if (shader.Name == shaderName)
-			{
-				double *vec4 = shader.Uniforms[uniformName].Values;
-				vec4[0] = value;
-				vec4[1] = 0.0;
-				vec4[2] = 0.0;
-				vec4[3] = 1.0;
-			}
-		}
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(_Shader, SetUniform2f)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_STRING(uniformName);
-	PARAM_FLOAT_DEF(x);
-	PARAM_FLOAT_DEF(y);
-
-	if (IsConsolePlayer(player))
-	{
-		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
-		{
-			PostProcessShader &shader = PostProcessShaders[i];
-			if (shader.Name == shaderName)
-			{
-				double *vec4 = shader.Uniforms[uniformName].Values;
-				vec4[0] = x;
-				vec4[1] = y;
-				vec4[2] = 0.0;
-				vec4[3] = 1.0;
-			}
-		}
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(_Shader, SetUniform3f)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_STRING(uniformName);
-	PARAM_FLOAT_DEF(x);
-	PARAM_FLOAT_DEF(y);
-	PARAM_FLOAT_DEF(z);
-
-	if (IsConsolePlayer(player))
-	{
-		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
-		{
-			PostProcessShader &shader = PostProcessShaders[i];
-			if (shader.Name == shaderName)
-			{
-				double *vec4 = shader.Uniforms[uniformName].Values;
-				vec4[0] = x;
-				vec4[1] = y;
-				vec4[2] = z;
-				vec4[3] = 1.0;
-			}
-		}
-	}
-	return 0;
-}
-
-DEFINE_ACTION_FUNCTION(_Shader, SetUniform1i)
-{
-	PARAM_PROLOGUE;
-	PARAM_POINTER_DEF(player, player_t);
-	PARAM_STRING(shaderName);
-	PARAM_STRING(uniformName);
-	PARAM_INT_DEF(value);
-
-	if (IsConsolePlayer(player))
-	{
-		for (unsigned int i = 0; i < PostProcessShaders.Size(); i++)
-		{
-			PostProcessShader &shader = PostProcessShaders[i];
-			if (shader.Name == shaderName)
-			{
-				double *vec4 = shader.Uniforms[uniformName].Values;
-				vec4[0] = (double)value;
-				vec4[1] = 0.0;
-				vec4[2] = 0.0;
-				vec4[3] = 1.0;
-			}
-		}
-	}
-	return 0;
-}

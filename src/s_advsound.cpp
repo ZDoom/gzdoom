@@ -36,19 +36,11 @@
 
 #include "templates.h"
 #include "actor.h"
-#include "a_sharedglobal.h"
-#include "s_sound.h"
 #include "c_dispatch.h"
 #include "w_wad.h"
-#include "sc_man.h"
-#include "g_level.h"
-#include "cmdlib.h"
 #include "gi.h"
-#include "doomstat.h"
 #include "i_sound.h"
-#include "m_random.h"
 #include "d_netinf.h"
-#include "i_system.h"
 #include "d_player.h"
 #include "serializer.h"
 #include "v_text.h"
@@ -1405,7 +1397,7 @@ static void S_AddSNDINFO (int lump)
 					uint16_t sfxto = S_FindSoundTentative (sc.String);
 					if (sfxto == random.SfxHead)
 					{
-						Printf("Definition of random sound '%s' refers to itself recursively.", sc.String);
+						Printf("Definition of random sound '%s' refers to itself recursively.\n", sc.String);
 						continue;
 					}
 					list.Push (sfxto);

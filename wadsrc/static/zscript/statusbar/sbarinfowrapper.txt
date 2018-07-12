@@ -12,7 +12,7 @@ struct SBarInfo native ui
 }
 
 
-// The sole purpose of this wrapper is to elimintate the native dependencies of the status bar object
+// The sole purpose of this wrapper is to eliminate the native dependencies of the status bar object
 // because those would seriously impede the script conversion of the base class.
 
 class SBarInfoWrapper : BaseStatusBar

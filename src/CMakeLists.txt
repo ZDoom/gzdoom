@@ -62,21 +62,6 @@ if( WIN32 )
 		set( DX_dinput8_LIBRARY dinput8 )
 	else()
 
-		find_path( D3D_INCLUDE_DIR d3d9.h
-			PATHS ENV DXSDK_DIR
-			PATH_SUFFIXES Include )
-		if( NOT D3D_INCLUDE_DIR )
-			# Modern versions of the Windows SDK include d3d9.h. Unfortunately,
-			# CMake cannot find this file via find_path, so we check for it using
-			# CHECK_INCLUDE_FILE.
-			CHECK_INCLUDE_FILE( d3d9.h D3D9_H_FOUND )
-			if ( NOT D3D9_H_FOUND )
-				message( SEND_ERROR "Could not find DirectX 9 header files" )
-			endif()
-		else()
-			include_directories( ${D3D_INCLUDE_DIR} )
-		endif()
-
 		find_path( XINPUT_INCLUDE_DIR xinput.h
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Include )
@@ -96,6 +81,11 @@ if( WIN32 )
 		find_library( DX_dinput8_LIBRARY dinput8
 			PATHS ENV DXSDK_DIR
 			PATH_SUFFIXES Lib Lib/${XBITS} )
+		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+			find_library( DX_dxguid_LIBRARY dxguid
+				PATHS ENV DXSDK_DIR
+				PATH_SUFFIXES Lib Lib/${XBITS} )
+		endif()
 
 		# Modern versions of the Windows SDK include dinput8.lib. Unfortunately,
 		# CMake cannot find these libraries via find_library.
@@ -104,6 +94,13 @@ if( WIN32 )
 			set( DX_dinput8_LIBRARY dinput8 )
 		endif()
 
+		if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+			# Modern versions of the Windows SDK do NOT include dxguid.lib. Its contents
+			# were moved to dinput8.lib.
+			if( NOT DX_dxguid_LIBRARY )
+				message( STATUS "Could not find dxguid.lib. Build may fail on old Windows SDKs.")
+			endif()
+		endif()
 	endif()
 
 	set( ZDOOM_LIBS
@@ -124,6 +121,11 @@ if( WIN32 )
 		set( ZDOOM_LIBS ${ZDOOM_LIBS} DelayImp )
 	endif()
 
+	if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
+		if( DX_dxguid_LIBRARY )
+			list( APPEND ZDOOM_LIBS "${DX_dxguid_LIBRARY}" )
+		endif()
+	endif()
 else()
 	if( APPLE )
 		set( NO_GTK ON )
@@ -325,6 +327,7 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 
 	set( CMAKE_CXX_FLAGS "${SANITIZER_FLAG} ${CMAKE_CXX_FLAGS}" )
 	set( CMAKE_C_FLAGS "${SANITIZER_FLAG} ${CMAKE_C_FLAGS}" )
+	set( CMAKE_EXE_LINKER_FLAGS "${SANITIZER_FLAG} ${CMAKE_EXE_LINKER_FLAGS}" )
 
 	if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "4.5")
 		set( CMAKE_C_FLAGS "-Wno-unused-result ${CMAKE_C_FLAGS}" )
@@ -375,13 +378,6 @@ if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )
 				endif ()
 			endif ()
 		endif ()
-	endif ()
-
-	# With standard Apple tools -stdlib=libc++ needs to be specified in order to get
-	# C++11 support using SDKs 10.7 and 10.8.
-	if ( APPLE AND CMAKE_CXX_COMPILER_ID STREQUAL "Clang" )
-		set( CMAKE_CXX_FLAGS "-stdlib=libc++ ${CMAKE_CXX_FLAGS}" )
-		set( CMAKE_EXE_LINKER_FLAGS "-stdlib=libc++ ${CMAKE_EXE_LINKER_FLAGS}" )
 	endif ()
 
 	# Remove extra warnings when using the official DirectX headers.
@@ -436,11 +432,6 @@ endif()
 
 if( NOT MSVC )
 	add_definitions( -D__forceinline=inline )
-endif()
-
-# Fix stat in v140_xp (broken in RTM and Update 1 so far)
-if( MSVC AND MSVC_VERSION EQUAL 1900 AND CMAKE_GENERATOR_TOOLSET STREQUAL "v140_xp" )
-	add_definitions( -D_stat64i32=VS14Stat )
 endif()
 
 if( UNIX )
@@ -647,24 +638,12 @@ add_definitions(-DOPNMIDI_USE_LEGACY_EMULATOR)
 add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
 add_definitions(-DOPNMIDI_DISABLE_MUS_SUPPORT -DOPNMIDI_DISABLE_XMI_SUPPORT -DOPNMIDI_DISABLE_MIDI_SEQUENCER)
 
-# Disable ADLMIDI's MIDI Sequencer, MUS and XMI converters
-add_definitions(-DADLMIDI_DISABLE_MUS_SUPPORT -DADLMIDI_DISABLE_XMI_SUPPORT -DADLMIDI_DISABLE_MIDI_SEQUENCER)
+# Disable OPNMIDI's experimental yet emulator (using of it has some issues and missing notes in playback)
+add_definitions(-DOPNMIDI_DISABLE_GX_EMULATOR)
 
 # Project files should be aware of the header files. We can GLOB these since
 # there's generally a new cpp for every header so this file will get changed
-if( WIN32 )
-	set( EXTRA_HEADER_DIRS win32/*.h )
-elseif( APPLE )
-	if( OSX_COCOA_BACKEND )
-		set( EXTRA_HEADER_DIRS posix/*.h posix/cocoa/*.h )
-	else()
-		set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
-	endif()
-else()
-	set( EXTRA_HEADER_DIRS posix/*.h posix/sdl/*.h )
-endif()
 file( GLOB HEADER_FILES
-	${EXTRA_HEADER_DIRS}
 	fragglescript/*.h
 	g_shared/*.h
 	g_statusbar/*.h
@@ -678,6 +657,7 @@ file( GLOB HEADER_FILES
 	posix/*.h
 	posix/cocoa/*.h
 	posix/sdl/*.h
+	win32/*.h
 	r_data/*.h
 	r_data/models/*.h
 	rapidjson/*.h
@@ -713,8 +693,13 @@ file( GLOB HEADER_FILES
 	polyrenderer/math/*.h
 	polyrenderer/drawers/*.h
 	polyrenderer/scene/*.h
+	hwrenderer/data/*.h
+	hwrenderer/dynlights/*.h
+	hwrenderer/postprocessing/*.h
+	hwrenderer/scene/*.h
+	hwrenderer/textures/*.h
+	hwrenderer/utility/*.h
 	gl/*.h
-	gl/api/*.h
 	gl/data/*.h
 	gl/dynlights/*.h
 	gl/models/*.h
@@ -724,7 +709,6 @@ file( GLOB HEADER_FILES
 	gl/shaders/*.h
 	gl/system/*.h
 	gl/textures/*.h
-	gl/utility/*.h
 	gl_load/*.h
 	*.h
 )
@@ -817,12 +801,13 @@ set( NOT_COMPILED_SOURCE_FILES
 )
 
 # This is disabled for now because I cannot find a way to give the .pch file a different name.
-# Visual C++ 2015 seems hell-bent of only allowing one .pch file with the same name as the executable.
+# Visual C++ 2015 seems hell-bent on only allowing one .pch file with the same name as the executable.
 #enable_precompiled_headers( g_pch2.h FASTMATH_PCH_SOURCES )
 
 # Enable fast math for some sources
 set( FASTMATH_SOURCES
 	swrenderer/r_all.cpp
+	swrenderer/r_swscene.cpp
 	polyrenderer/poly_all.cpp
 	sound/oplsynth/opl_mus_player.cpp
 	sound/mpg123_decoder.cpp
@@ -831,34 +816,37 @@ set( FASTMATH_SOURCES
 	sound/sndfile_decoder.cpp
 	sound/timiditypp/fft4g.cpp
 	sound/timiditypp/reverb.cpp
-	gl/utility/gl_clock.cpp
 	textures/hires/hqnx/init.cpp
 	textures/hires/hqnx/hq2x.cpp
 	textures/hires/hqnx/hq3x.cpp
 	textures/hires/hqnx/hq4x.cpp
 	textures/hires/xbr/xbrz.cpp
 	textures/hires/xbr/xbrz_old.cpp
-	gl/scene/gl_bsp.cpp
-	gl/scene/gl_fakeflat.cpp
-	gl/scene/gl_clipper.cpp
-	gl/scene/gl_decal.cpp
 	gl/scene/gl_drawinfo.cpp
 	gl/scene/gl_flats.cpp
-	gl/scene/gl_walls.cpp
 	gl/scene/gl_sprite.cpp
 	gl/scene/gl_skydome.cpp
-	gl/scene/gl_renderhacks.cpp
 	gl/scene/gl_weapon.cpp
 	gl/scene/gl_scene.cpp
-	gl/scene/gl_swscene.cpp
-	gl/scene/gl_sky.cpp
 	gl/scene/gl_portal.cpp
 	gl/scene/gl_walls_draw.cpp
-	gl/scene/gl_vertex.cpp
-	gl/scene/gl_spritelight.cpp
 	gl_load/gl_load.c
-	gl/models/gl_models.cpp
+	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
+	hwrenderer/postprocessing/hw_postprocessshader.cpp
 	hwrenderer/dynlights/hw_dynlightdata.cpp
+	hwrenderer/scene/hw_bsp.cpp
+	hwrenderer/scene/hw_fakeflat.cpp
+	hwrenderer/scene/hw_decal.cpp
+	hwrenderer/scene/hw_drawlist.cpp
+	hwrenderer/scene/hw_clipper.cpp
+	hwrenderer/scene/hw_flats.cpp
+	hwrenderer/scene/hw_renderhacks.cpp
+	hwrenderer/scene/hw_sky.cpp
+	hwrenderer/scene/hw_sprites.cpp
+	hwrenderer/scene/hw_spritelight.cpp
+	hwrenderer/scene/hw_walls.cpp
+	hwrenderer/scene/hw_walls_vertex.cpp
+	hwrenderer/scene/hw_weapon.cpp
 	r_data/models/models.cpp
 	r_data/matrix.cpp
 	sound/adlmidi/adldata.cpp
@@ -867,14 +855,25 @@ set( FASTMATH_SOURCES
 	sound/adlmidi/adlmidi_midiplay.cpp
 	sound/adlmidi/adlmidi_opl3.cpp
 	sound/adlmidi/adlmidi_private.cpp
-	sound/adlmidi/dbopl.cpp
-	sound/adlmidi/nukedopl3.c
+	sound/adlmidi/chips/dosbox/dbopl.cpp
+	sound/adlmidi/chips/dosbox_opl3.cpp
+	sound/adlmidi/chips/nuked/nukedopl3_174.c
+	sound/adlmidi/chips/nuked/nukedopl3.c
+	sound/adlmidi/chips/nuked_opl3.cpp
+	sound/adlmidi/chips/nuked_opl3_v174.cpp
+	sound/adlmidi/wopl/wopl_file.c
+	sound/opnmidi/chips/gens_opn2.cpp
+	sound/opnmidi/chips/gens/Ym2612_Emu.cpp
+	sound/opnmidi/chips/mame/mame_ym2612fm.c
+	sound/opnmidi/chips/mame_opn2.cpp
+	sound/opnmidi/chips/nuked_opn2.cpp
+	sound/opnmidi/chips/nuked/ym3438.c
 	sound/opnmidi/opnmidi.cpp
 	sound/opnmidi/opnmidi_load.cpp
 	sound/opnmidi/opnmidi_midiplay.cpp
 	sound/opnmidi/opnmidi_opn2.cpp
 	sound/opnmidi/opnmidi_private.cpp
-	sound/opnmidi/Ym2612_ChipEmu.cpp
+
 )
 
 set (PCH_SOURCES
@@ -933,7 +932,6 @@ set (PCH_SOURCES
 	i_time.cpp
 	info.cpp
 	keysections.cpp
-	lumpconfigfile.cpp
 	m_alloc.cpp
 	m_argv.cpp
 	m_bbox.cpp
@@ -1043,8 +1041,10 @@ set (PCH_SOURCES
 	gl/compatibility/gl_20.cpp
 	gl/compatibility/gl_swshader20.cpp
 	gl/data/gl_vertexbuffer.cpp
+	gl/data/gl_uniformbuffer.cpp
 	gl/dynlights/gl_lightbuffer.cpp
 	gl/dynlights/gl_shadowmap.cpp
+	gl/models/gl_models.cpp
 	gl/renderer/gl_quaddrawer.cpp
 	gl/renderer/gl_renderer.cpp
 	gl/renderer/gl_renderstate.cpp
@@ -1055,36 +1055,42 @@ set (PCH_SOURCES
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
-	gl/shaders/gl_shadowmapshader.cpp
-	gl/shaders/gl_presentshader.cpp
-	gl/shaders/gl_present3dRowshader.cpp
-	gl/shaders/gl_bloomshader.cpp
-	gl/shaders/gl_ambientshader.cpp
-	gl/shaders/gl_blurshader.cpp
-	gl/shaders/gl_colormapshader.cpp
-	gl/shaders/gl_tonemapshader.cpp
-	gl/shaders/gl_lensshader.cpp
-	gl/shaders/gl_fxaashader.cpp
 	gl/stereo3d/gl_stereo3d.cpp
 	gl/stereo3d/gl_stereo_cvars.cpp
 	gl/stereo3d/gl_stereo_leftright.cpp
-	gl/stereo3d/scoped_view_shifter.cpp
 	gl/stereo3d/gl_anaglyph.cpp
 	gl/stereo3d/gl_quadstereo.cpp
 	gl/stereo3d/gl_sidebyside3d.cpp
 	gl/stereo3d/gl_interleaved3d.cpp
-	gl/system/gl_interface.cpp
+	gl_load/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_debug.cpp
-	gl/system/gl_menu.cpp
 	gl/system/gl_wipe.cpp
 	gl/textures/gl_hwtexture.cpp
-	gl/textures/gl_texture.cpp
-	gl/textures/gl_material.cpp
 	gl/textures/gl_samplers.cpp
 	hwrenderer/data/flatvertices.cpp
 	hwrenderer/dynlights/hw_aabbtree.cpp
-	
+	hwrenderer/dynlights/hw_shadowmap.cpp
+	hwrenderer/scene/hw_skydome.cpp
+	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
+	hwrenderer/postprocessing/hw_postprocessshader.cpp
+	hwrenderer/postprocessing/hw_shadowmapshader.cpp
+	hwrenderer/postprocessing/hw_presentshader.cpp
+	hwrenderer/postprocessing/hw_present3dRowshader.cpp
+	hwrenderer/postprocessing/hw_bloomshader.cpp
+	hwrenderer/postprocessing/hw_ambientshader.cpp
+	hwrenderer/postprocessing/hw_blurshader.cpp
+	hwrenderer/postprocessing/hw_colormapshader.cpp
+	hwrenderer/postprocessing/hw_tonemapshader.cpp
+	hwrenderer/postprocessing/hw_lensshader.cpp
+	hwrenderer/postprocessing/hw_fxaashader.cpp
+	hwrenderer/textures/hw_material.cpp
+	hwrenderer/textures/hw_precache.cpp
+	hwrenderer/utility/hw_clock.cpp
+	hwrenderer/utility/hw_cvars.cpp
+	hwrenderer/utility/hw_lighting.cpp
+	hwrenderer/utility/hw_shaderpatcher.cpp
+
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
 	menu/menu.cpp
@@ -1157,6 +1163,7 @@ set (PCH_SOURCES
 	r_data/models/models_md3.cpp
 	r_data/models/models_md2.cpp
 	r_data/models/models_voxel.cpp
+	r_data/models/models_ue1.cpp
 	scripting/symbols.cpp
 	scripting/types.cpp
 	scripting/thingdef.cpp
@@ -1242,8 +1249,6 @@ set (PCH_SOURCES
 	sound/wildmidi/wildmidi_lib.cpp
 	sound/wildmidi/wm_error.cpp
 	events.cpp
-	GuillotineBinPack.cpp
-	SkylineBinPack.cpp
 )
 
 enable_precompiled_headers( g_pch.h PCH_SOURCES )
@@ -1284,9 +1289,6 @@ set_source_files_properties( ${FASTMATH_SOURCES} PROPERTIES COMPILE_FLAGS ${ZD_F
 set_source_files_properties( xlat/parse_xlat.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/xlat_parser.c" )
 set_source_files_properties( sc_man.cpp PROPERTIES OBJECT_DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_man_scanner.h" )
 set_source_files_properties( ${NOT_COMPILED_SOURCE_FILES} PROPERTIES HEADER_FILE_ONLY TRUE )
-if ( WIN32 )
-	set_source_files_properties( win32/fb_d3d9.cpp win32/fb_d3d9_wipe.cpp PROPERTIES COMPILE_FLAGS ${ZD_FASTMATH_FLAG} )
-endif()
 
 
 if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
@@ -1416,6 +1418,7 @@ source_group("Hardware Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR
 source_group("Hardware Renderer\\Data" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/data/.+")
 source_group("Hardware Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/dynlights/.+")
 source_group("Hardware Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/models/.+")
+source_group("Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/postprocessing/.+")
 source_group("Hardware Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/renderer/.+")
 source_group("Hardware Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/scene/.+")
 source_group("Hardware Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/stereo3d/.+")

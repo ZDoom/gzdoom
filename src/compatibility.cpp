@@ -41,20 +41,17 @@
 
 #include "compatibility.h"
 #include "sc_man.h"
-#include "cmdlib.h"
-#include "doomdef.h"
-#include "doomdata.h"
 #include "doomstat.h"
 #include "c_dispatch.h"
 #include "gi.h"
 #include "g_level.h"
 #include "p_lnspec.h"
 #include "p_tags.h"
-#include "r_state.h"
 #include "w_wad.h"
 #include "textures.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "actor.h"
 
 // MACROS ------------------------------------------------------------------
 
@@ -451,6 +448,13 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetLineSectorRef)
 	}
 	ForceNodeBuild = true;
 	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DLevelCompatibility, GetDefaultActor)
+{
+	PARAM_PROLOGUE;
+	PARAM_NAME(actorclass);
+	ACTION_RETURN_OBJECT(GetDefaultByName(actorclass));
 }
 
 

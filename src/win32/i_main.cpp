@@ -49,7 +49,6 @@
 //#include <wtsapi32.h>
 #define NOTIFY_FOR_THIS_SESSION 0
 
-#include <stdlib.h>
 #ifdef _MSC_VER
 #include <eh.h>
 #include <new.h>
@@ -57,27 +56,17 @@
 #endif
 #include "resource.h"
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <math.h>
-
 #include "doomerrors.h"
 #include "hardware.h"
 
-#include "doomtype.h"
 #include "m_argv.h"
 #include "d_main.h"
 #include "i_module.h"
-#include "i_system.h"
 #include "c_console.h"
 #include "version.h"
-#include "i_video.h"
-#include "i_sound.h"
 #include "i_input.h"
 #include "w_wad.h"
-#include "templates.h"
 #include "cmdlib.h"
-#include "g_level.h"
 #include "doomstat.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
@@ -87,8 +76,6 @@
 #include "st_start.h"
 
 #include "optwin32.h"
-
-#include <assert.h>
 
 // MACROS ------------------------------------------------------------------
 
@@ -928,23 +915,20 @@ void DoMain (HINSTANCE hInstance)
 		atterm (I_Quit);
 
 		// Figure out what directory the program resides in.
-		char *program;
-
-#ifdef _MSC_VER
-		if (_get_pgmptr(&program) != 0)
+		char progbuff[1024];
+		if (GetModuleFileName(nullptr, progbuff, sizeof progbuff) == 0)
 		{
 			I_FatalError("Could not determine program location.");
 		}
-#else
-		char progbuff[1024];
-		GetModuleFileName(0, progbuff, sizeof(progbuff));
 		progbuff[1023] = '\0';
-		program = progbuff;
-#endif
 
+		char *program = progbuff;
 		progdir = program;
 		program = progdir.LockBuffer();
-		*(strrchr(program, '\\') + 1) = '\0';
+		if (char *lastsep = strrchr(program, '\\'))
+		{
+			lastsep[1] = '\0';
+		}
 		FixPathSeperator(program);
 		progdir.Truncate((long)strlen(program));
 		progdir.UnlockBuffer();
@@ -1121,10 +1105,11 @@ void DoomSpecificInfo (char *buffer, size_t bufflen)
 		}
 		else
 		{
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", r_viewpoint.Pos.X);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", r_viewpoint.Pos.Y);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", r_viewpoint.Pos.Z);
-			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", r_viewpoint.Angles.Yaw);
+			auto &vp = r_viewpoint;
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\n\r\nviewx = %f", vp.Pos.X);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewy = %f", vp.Pos.Y);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewz = %f", vp.Pos.Z);
+			buffer += mysnprintf (buffer, buffend - buffer, "\r\nviewangle = %f", vp.Angles.Yaw);
 		}
 	}
 	*buffer++ = '\r';

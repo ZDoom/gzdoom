@@ -26,22 +26,18 @@
 //-----------------------------------------------------------------------------
 
 #include <stddef.h>
+#define __STDC_FORMAT_MACROS
 #include <inttypes.h>
 
 #include "version.h"
 #include "menu/menu.h"
-#include "m_random.h"
-#include "i_system.h"
 #include "i_video.h"
 #include "i_net.h"
 #include "g_game.h"
-#include "doomdef.h"
-#include "doomstat.h"
 #include "c_console.h"
 #include "d_netinf.h"
 #include "d_net.h"
 #include "cmdlib.h"
-#include "s_sound.h"
 #include "m_cheat.h"
 #include "p_local.h"
 #include "c_dispatch.h"
@@ -49,19 +45,15 @@
 #include "gi.h"
 #include "m_misc.h"
 #include "gameconfigfile.h"
-#include "d_gui.h"
-#include "templates.h"
 #include "p_acs.h"
 #include "p_trace.h"
 #include "a_sharedglobal.h"
 #include "st_start.h"
 #include "teaminfo.h"
 #include "p_conversation.h"
-#include "g_level.h"
 #include "d_event.h"
 #include "m_argv.h"
 #include "p_lnspec.h"
-#include "v_video.h"
 #include "p_spec.h"
 #include "hardware.h"
 #include "r_utility.h"
@@ -2372,16 +2364,17 @@ void Net_DoCommand (int type, uint8_t **stream, int player)
 								spawned->flags &= ~MF_FRIENDLY;
 								spawned->health = spawned->SpawnHealth();
 							}
-						}
-						if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
-						{
-							spawned->Angles.Yaw = source->Angles.Yaw - angle;
-							spawned->tid = tid;
-							spawned->special = special;
-							for(i = 0; i < 5; i++) {
-								spawned->args[i] = args[i];
+
+							if (type >= DEM_SUMMON2 && type <= DEM_SUMMONFOE2)
+							{
+								spawned->Angles.Yaw = source->Angles.Yaw - angle;
+								spawned->tid = tid;
+								spawned->special = special;
+								for(i = 0; i < 5; i++) {
+									spawned->args[i] = args[i];
+								}
+								if(tid) spawned->AddToHash();
 							}
-							if(tid) spawned->AddToHash();
 						}
 					}
 				}

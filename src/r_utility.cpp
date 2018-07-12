@@ -40,23 +40,18 @@
 #include "m_bbox.h"
 #include "r_sky.h"
 #include "st_stuff.h"
-#include "c_cvars.h"
 #include "c_dispatch.h"
 #include "v_video.h"
 #include "stats.h"
 #include "i_video.h"
-#include "i_system.h"
 #include "a_sharedglobal.h"
-#include "r_data/r_translate.h"
 #include "p_3dmidtex.h"
 #include "r_data/r_interpolate.h"
-#include "v_palette.h"
 #include "po_man.h"
 #include "p_effect.h"
 #include "st_start.h"
 #include "v_font.h"
 #include "r_renderer.h"
-#include "r_data/colormaps.h"
 #include "serializer.h"
 #include "r_utility.h"
 #include "d_player.h"
@@ -64,7 +59,6 @@
 #include "g_levellocals.h"
 #include "p_maputl.h"
 #include "sbar.h"
-#include "math/cmath.h"
 #include "vm.h"
 #include "i_time.h"
 
@@ -608,13 +602,13 @@ void R_ResetViewInterpolation ()
 //
 //==========================================================================
 
-void R_SetViewAngle (FRenderViewpoint &viewpoint, const FViewWindow &viewwindow)
+void FRenderViewpoint::SetViewAngle (const FViewWindow &viewwindow)
 {
-	viewpoint.Sin = viewpoint.Angles.Yaw.Sin();
-	viewpoint.Cos = viewpoint.Angles.Yaw.Cos();
+	Sin = Angles.Yaw.Sin();
+	Cos = Angles.Yaw.Cos();
 
-	viewpoint.TanSin = viewwindow.FocalTangent * viewpoint.Sin;
-	viewpoint.TanCos = viewwindow.FocalTangent * viewpoint.Cos;
+	TanSin = viewwindow.FocalTangent * Sin;
+	TanCos = viewwindow.FocalTangent * Cos;
 }
 
 //==========================================================================
@@ -850,7 +844,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	}
 	R_InterpolateView (viewpoint, player, viewpoint.TicFrac, iview);
 
-	R_SetViewAngle (viewpoint, viewwindow);
+	viewpoint.SetViewAngle (viewwindow);
 
 	interpolator.DoInterpolations (viewpoint.TicFrac);
 
@@ -878,7 +872,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 		FQuakeJiggers jiggers;
 
 		memset(&jiggers, 0, sizeof(jiggers));
-		if (DEarthquake::StaticGetQuakeIntensities(viewpoint.camera, jiggers) > 0)
+		if (DEarthquake::StaticGetQuakeIntensities(viewpoint.TicFrac, viewpoint.camera, jiggers) > 0)
 		{
 			double quakefactor = r_quakeintensity;
 			DAngle an;

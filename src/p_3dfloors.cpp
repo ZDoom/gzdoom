@@ -40,13 +40,10 @@
 #include "p_lnspec.h"
 #include "p_maputl.h"
 #include "w_wad.h"
-#include "sc_man.h"
 #include "g_level.h"
 #include "p_terrain.h"
 #include "d_player.h"
-#include "r_utility.h"
 #include "p_spec.h"
-#include "r_data/colormaps.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 
@@ -123,6 +120,7 @@ static void P_Add3DFloor(sector_t* sec, sector_t* sec2, line_t* master, int flag
 	ffloor->top.copied = ffloor->bottom.copied = false;
 	ffloor->top.model = ffloor->bottom.model = ffloor->model = sec2;
 	ffloor->target = sec;
+	ffloor->top.vindex = ffloor->bottom.vindex = -1;
 
 	if (!(flags&FF_THINFLOOR))
 	{

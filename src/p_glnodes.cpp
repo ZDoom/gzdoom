@@ -47,26 +47,18 @@
 
 #include <zlib.h>
 #include "templates.h"
-#include "m_alloc.h"
 #include "m_argv.h"
 #include "c_dispatch.h"
 #include "m_swap.h"
-#include "g_game.h"
-#include "i_system.h"
 #include "w_wad.h"
-#include "doomdef.h"
 #include "p_local.h"
 #include "nodebuild.h"
 #include "doomstat.h"
-#include "vectors.h"
-#include "stats.h"
 #include "doomerrors.h"
 #include "p_setup.h"
-#include "x86.h"
 #include "version.h"
 #include "md5.h"
 #include "m_misc.h"
-#include "r_utility.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "i_time.h"
@@ -1337,7 +1329,7 @@ void P_SetRenderSector()
 	}
 	for(i = 0; i < numsectors; i++)
 	{
-		if (hidesec[i]) sectors[i].MoreFlags |= SECF_HIDDEN;
+		if (hidesec[i]) sectors[i].MoreFlags |= SECMF_HIDDEN;
 	}
 	delete [] hidesec;
 #endif
@@ -1445,27 +1437,4 @@ void P_SetRenderSector()
 			break;
 		}
 	}
-
-#if 0	// may be useful later so let's keep it here for now
-	// now group the subsectors by sector
-	subsector_t ** subsectorbuffer = new subsector_t * [numsubsectors];
-
-	for(i=0, ss=subsectors; i<numsubsectors; i++, ss++)
-	{
-		ss->render_sector->subsectorcount++;
-	}
-
-	for (i=0; i<numsectors; i++) 
-	{
-		sectors[i].subsectors = subsectorbuffer;
-		subsectorbuffer += sectors[i].subsectorcount;
-		sectors[i].subsectorcount = 0;
-	}
-	
-	for(i=0, ss = subsectors; i<numsubsectors; i++, ss++)
-	{
-		ss->render_sector->subsectors[ss->render_sector->subsectorcount++]=ss;
-	}
-#endif
-
 }

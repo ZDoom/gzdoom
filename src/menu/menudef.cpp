@@ -34,20 +34,9 @@
 #include <float.h>
 
 #include "menu/menu.h"
-#include "c_dispatch.h"
 #include "w_wad.h"
-#include "sc_man.h"
-#include "v_font.h"
-#include "g_level.h"
-#include "d_player.h"
-#include "v_video.h"
-#include "i_system.h"
 #include "c_bind.h"
-#include "v_palette.h"
-#include "d_event.h"
-#include "d_gui.h"
 #include "i_music.h"
-#include "m_joy.h"
 #include "gi.h"
 #include "i_sound.h"
 #include "cmdlib.h"
@@ -250,6 +239,12 @@ static bool CheckSkipOptionBlock(FScanner &sc)
 		else if (sc.Compare("OpenAL"))
 		{
 			filter |= IsOpenALPresent();
+		}
+		else if (sc.Compare("MMX"))
+		{
+			#ifdef HAVE_MMX
+				filter = true;
+			#endif
 		}
 	}
 	while (sc.CheckString(","));

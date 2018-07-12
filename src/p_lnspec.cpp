@@ -40,17 +40,11 @@
 #include "p_enemy.h"
 #include "g_level.h"
 #include "v_palette.h"
-#include "i_system.h"
 #include "a_sharedglobal.h"
 #include "a_lightning.h"
-#include "statnums.h"
-#include "s_sound.h"
-#include "templates.h"
 #include "a_keys.h"
 #include "gi.h"
-#include "m_random.h"
 #include "p_conversation.h"
-#include "r_data/r_translate.h"
 #include "p_3dmidtex.h"
 #include "d_net.h"
 #include "d_event.h"
@@ -58,7 +52,6 @@
 #include "po_man.h"
 #include "d_player.h"
 #include "r_utility.h"
-#include "r_data/colormaps.h"
 #include "fragglescript/t_fs.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
@@ -2772,6 +2765,55 @@ FUNC(LS_Line_SetBlocking)
 	return true;
 }
 
+FUNC(LS_Line_SetAutomapFlags)
+// Line_SetAutomapFlags (id, setflags, clearflags)
+{
+	static const int flagtrans[] =
+	{
+		ML_SECRET,
+		ML_DONTDRAW,
+		ML_MAPPED,
+		ML_REVEALED,
+		-1
+	};
+
+	if (arg0 == 0) return false;
+
+	int setflags = 0;
+	int clearflags = 0;
+
+	for (int i = 0; flagtrans[i] != -1; i++, arg1 >>= 1, arg2 >>= 1)
+	{
+		if (arg1 & 1) setflags |= flagtrans[i];
+		if (arg2 & 1) clearflags |= flagtrans[i];
+	}
+
+	FLineIdIterator itr(arg0);
+	int line;
+	while ((line = itr.Next()) >= 0)
+	{
+		level.lines[line].flags = (level.lines[line].flags & ~clearflags) | setflags;
+	}
+
+	return true;
+}
+
+FUNC(LS_Line_SetAutomapStyle)
+// Line_SetAutomapStyle (id, style)
+{
+	if (arg1 < AMLS_COUNT && arg1 >= 0)
+	{
+		FLineIdIterator itr(arg0);
+		int line;
+		while ((line = itr.Next()) >= 0)
+		{
+			level.lines[line].automapstyle = (AutomapLineStyle) arg1;
+		}
+
+		return true;
+	}
+	return false;
+}
 
 
 FUNC(LS_ChangeCamera)
@@ -3720,6 +3762,8 @@ static lnSpecFunc LineSpecials[] =
 	/* 278 */ LS_Sector_SetCeilingGlow,
 	/* 279 */ LS_Floor_MoveToValueAndCrush,
 	/* 280 */ LS_Ceiling_MoveToValueAndCrush,
+	/* 281 */ LS_Line_SetAutomapFlags,
+	/* 282 */ LS_Line_SetAutomapStyle,
 
 
 };

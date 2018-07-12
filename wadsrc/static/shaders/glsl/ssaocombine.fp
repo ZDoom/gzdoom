@@ -1,18 +1,14 @@
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform sampler2D AODepthTexture;
+layout(binding=0) uniform sampler2D AODepthTexture;
 
 #if defined(MULTISAMPLE)
-uniform sampler2DMS SceneFogTexture;
-uniform int SampleCount;
+layout(binding=1) uniform sampler2DMS SceneFogTexture;
 #else
-uniform sampler2D SceneFogTexture;
+layout(binding=1) uniform sampler2D SceneFogTexture;
 #endif
-
-uniform vec2 Scale;
-uniform vec2 Offset;
 
 void main()
 {

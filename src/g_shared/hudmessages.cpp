@@ -38,7 +38,6 @@
 #include "c_cvars.h"
 #include "v_video.h"
 #include "cmdlib.h"
-#include "doomstat.h"
 #include "serializer.h"
 #include "vm.h"
 

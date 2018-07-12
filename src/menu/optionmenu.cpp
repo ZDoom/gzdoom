@@ -33,19 +33,6 @@
 */
 
 #include "v_video.h"
-#include "v_font.h"
-#include "cmdlib.h"
-#include "gstrings.h"
-#include "g_level.h"
-#include "gi.h"
-#include "v_palette.h"
-#include "d_gui.h"
-#include "d_event.h"
-#include "c_dispatch.h"
-#include "c_console.h"
-#include "c_cvars.h"
-#include "c_bind.h"
-#include "gameconfigfile.h"
 #include "menu/menu.h"
 
 

@@ -34,8 +34,6 @@
 
 #include <string.h>
 #include "m_argv.h"
-#include "cmdlib.h"
-#include "i_system.h"
 
 //===========================================================================
 //

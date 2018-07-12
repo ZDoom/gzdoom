@@ -27,18 +27,11 @@
 **/
 
 #include "w_wad.h"
-#include "cmdlib.h"
-#include "sc_man.h"
-#include "m_crc32.h"
-#include "c_console.h"
-#include "g_game.h"
-#include "doomstat.h"
 #include "g_level.h"
 #include "colormatcher.h"
 #include "textures/bitmap.h"
 #include "g_levellocals.h"
 #include "models.h"
-#include "v_palette.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244) // warning C4244: conversion from 'double' to 'float', possible loss of data
@@ -328,19 +321,21 @@ void FVoxelModel::Initialize()
 
 void FVoxelModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (mVBuf == NULL)
+	if (!GetVertexBuffer(renderer))
 	{
 		Initialize();
 
-		mVBuf = renderer->CreateVertexBuffer(true, true);
-		FModelVertex *vertptr = mVBuf->LockVertexBuffer(mVertices.Size());
-		unsigned int *indxptr = mVBuf->LockIndexBuffer(mIndices.Size());
+		auto vbuf = renderer->CreateVertexBuffer(true, true);
+		SetVertexBuffer(renderer, vbuf);
+
+		FModelVertex *vertptr = vbuf->LockVertexBuffer(mVertices.Size());
+		unsigned int *indxptr = vbuf->LockIndexBuffer(mIndices.Size());
 
 		memcpy(vertptr, &mVertices[0], sizeof(FModelVertex)* mVertices.Size());
 		memcpy(indxptr, &mIndices[0], sizeof(unsigned int)* mIndices.Size());
 
-		mVBuf->UnlockVertexBuffer();
-		mVBuf->UnlockIndexBuffer();
+		vbuf->UnlockVertexBuffer();
+		vbuf->UnlockIndexBuffer();
 		mNumIndices = mIndices.Size();
 
 		// delete our temporary buffers
@@ -405,7 +400,7 @@ float FVoxelModel::getAspectFactor()
 void FVoxelModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation)
 {
 	renderer->SetMaterial(skin, true, translation);
-	mVBuf->SetupFrame(renderer, 0, 0, 0);
+	GetVertexBuffer(renderer)->SetupFrame(renderer, 0, 0, 0);
 	renderer->DrawElements(mNumIndices, 0);
 }
 

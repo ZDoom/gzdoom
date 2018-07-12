@@ -28,13 +28,11 @@
 
 #include "i_system.h"
 #include "m_random.h"
-#include "doomdef.h"
 #include "p_local.h"
 #include "p_lnspec.h"
 #include "s_sndseq.h"
 #include "doomstat.h"
 #include "r_state.h"
-#include "gi.h"
 #include "serializer.h"
 #include "p_spec.h"
 #include "g_levellocals.h"

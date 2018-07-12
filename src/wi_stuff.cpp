@@ -39,27 +39,18 @@
 #include "m_swap.h"
 #include "i_system.h"
 #include "w_wad.h"
-#include "g_game.h"
 #include "g_level.h"
 #include "s_sound.h"
 #include "doomstat.h"
 #include "v_video.h"
 #include "i_video.h"
 #include "wi_stuff.h"
-#include "c_console.h"
 #include "hu_stuff.h"
-#include "v_palette.h"
 #include "s_sndseq.h"
-#include "sc_man.h"
 #include "v_text.h"
 #include "gi.h"
 #include "d_player.h"
 #include "d_netinf.h"
-#include "b_bot.h"
-#include "textures/textures.h"
-#include "r_data/r_translate.h"
-#include "templates.h"
-#include "gstrings.h"
 #include "cmdlib.h"
 #include "g_levellocals.h"
 #include "vm.h"
@@ -763,7 +754,7 @@ void WI_Start(wbstartstruct_t *wbstartstruct)
 		cls = PClass::FindClass(screenclass);
 		if (cls == nullptr)
 		{
-			I_FatalError("Cannot create statis screen");
+			I_FatalError("Cannot create status screen");
 		}
 	}
 	// Set up some global stuff that is always needed.

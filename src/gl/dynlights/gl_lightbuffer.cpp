@@ -25,12 +25,12 @@
 **
 **/
 
-#include "gl/system/gl_system.h"
+#include "gl_load/gl_system.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
-#include "gl/system/gl_interface.h"
-#include "gl/utility//gl_clock.h"
+#include "hwrenderer/utility/hw_clock.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hwrenderer/data/shaderuniforms.h"
 
 static const int INITIAL_BUFFER_SIZE = 160000;	// This means 80000 lights per frame and 160000*16 bytes == 2.56 MB.
 

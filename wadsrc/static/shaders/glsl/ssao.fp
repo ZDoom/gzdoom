@@ -1,32 +1,17 @@
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform vec2 UVToViewA;
-uniform vec2 UVToViewB;
-uniform vec2 InvFullResolution;
-
-uniform float NDotVBias;
-uniform float NegInvR2;
-uniform float RadiusToScreen;
-uniform float AOMultiplier;
-
-uniform float AOStrength;
-
-uniform vec2 Scale;
-uniform vec2 Offset;
-
-uniform sampler2D DepthTexture;
+layout(binding=0) uniform sampler2D DepthTexture;
 
 #if defined(MULTISAMPLE)
-uniform sampler2DMS NormalTexture;
-uniform int SampleIndex;
+layout(binding=1) uniform sampler2DMS NormalTexture;
 #else
-uniform sampler2D NormalTexture;
+layout(binding=1) uniform sampler2D NormalTexture;
 #endif
 
 #if defined(USE_RANDOM_TEXTURE)
-uniform sampler2D RandomTexture;
+layout(binding=2) uniform sampler2D RandomTexture;
 #endif
 
 #define PI 3.14159265358979323846

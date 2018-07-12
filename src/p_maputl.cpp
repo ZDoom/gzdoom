@@ -77,10 +77,7 @@
 #include "actorinlines.h"
 
 // State.
-#include "r_state.h"
-#include "templates.h"
 #include "po_man.h"
-#include "g_levellocals.h"
 #include "vm.h"
 
 sector_t *P_PointInSectorBuggy(double x, double y);

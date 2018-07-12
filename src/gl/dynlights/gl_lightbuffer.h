@@ -2,7 +2,7 @@
 #define __GL_LIGHTBUFFER_H
 
 #include "tarray.h"
-struct FDynLightData;
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 class FLightBuffer
 {
@@ -34,6 +34,8 @@ public:
 	void StoreIndex(int index) { mIndices.Push(index); }
 	int GetIndex(int i) const { return mIndices[i];	}
 };
+
+int gl_SetDynModelLight(AActor *self, int dynlightindex);
 
 #endif
 

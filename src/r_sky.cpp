@@ -37,7 +37,6 @@
 #include "r_sky.h"
 #include "r_utility.h"
 #include "v_text.h"
-#include "gi.h"
 #include "g_levellocals.h"
 
 //
@@ -52,6 +51,7 @@ bool		skystretch;
 
 fixed_t		sky1cyl,		sky2cyl;
 double		sky1pos,		sky2pos;
+float		hw_sky1pos, hw_sky2pos;
 
 CUSTOM_CVAR(Int, testskyoffset, 0, 0)
 {
@@ -64,6 +64,9 @@ CUSTOM_CVAR (Int, r_skymode, 2, CVAR_ARCHIVE)
 {
 	R_InitSkyMap ();
 }
+
+CVAR(Float, skyoffset, 0, 0)	// for testing
+
 
 
 int			freelookviewheight;
@@ -171,5 +174,10 @@ void R_UpdateSky (uint64_t mstime)
 	double ms = (double)mstime * FRACUNIT;
 	sky1pos = ms * level.skyspeed1;
 	sky2pos = ms * level.skyspeed2;
+
+	// The hardware renderer uses a different value range and clamps it to a single rotation
+	hw_sky1pos = (float)(fmod((double(mstime) * level.skyspeed1), 1024.) * (90. / 256.));
+	hw_sky2pos = (float)(fmod((double(mstime) * level.skyspeed2), 1024.) * (90. / 256.));
+
 }
 

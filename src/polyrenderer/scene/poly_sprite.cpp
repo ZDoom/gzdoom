@@ -39,13 +39,12 @@ EXTERN_CVAR (Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Int, gl_spriteclip)
 EXTERN_CVAR(Float, gl_sclipthreshold)
 EXTERN_CVAR(Float, gl_sclipfactor)
+
 extern uint32_t r_renderercaps;
+extern double model_distance_cull;
 
 bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 {
-	if (IsThingCulled(thing))
-		return false;
-
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 
@@ -72,18 +71,18 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 	return true;
 }
 
-void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &clipPlane, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
+void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
 {
-	if (r_models)
+	if (r_modelscene)
 	{
+		const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 		int spritenum = thing->sprite;
 		bool isPicnumOverride = thing->picnum.isValid();
-		FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : gl_FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
-		if (modelframe)
+		FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+		if (modelframe && (thing->Pos() - viewpoint.Pos).LengthSquared() < model_distance_cull)
 		{
-			const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
-			PolyRenderModel(thread, PolyRenderer::Instance()->WorldToClip, clipPlane, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
+			PolyRenderModel(thread, PolyRenderer::Instance()->Scene.CurrentViewpoint->WorldToClip, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
 			return;
 		}
 	}
@@ -161,7 +160,6 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &cli
 	SetDynlight(thing, args);
 	args.SetLight(GetColorTable(sub->sector->Colormap, sub->sector->SpecialColors[sector_t::sprites], true), lightlevel, PolyRenderer::Instance()->Light.SpriteGlobVis(foggy), fullbrightSprite);
 	args.SetStencilTestValue(stencilValue);
-	args.SetClipPlane(0, clipPlane);
 	if ((thing->renderflags & RF_ZDOOMTRANS) && r_UseVanillaTransparency)
 		args.SetStyle(LegacyRenderStyles[STYLE_Normal], 1.0f, thing->fillcolor, thing->Translation, tex, fullbrightSprite);
 	else
@@ -169,7 +167,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, const PolyClipPlane &cli
 	args.SetDepthTest(true);
 	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
-	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 double RenderPolySprite::GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos)
@@ -183,7 +181,7 @@ double RenderPolySprite::GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos
 			return floorh;
 	}
 
-	if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (thing->Sector->GetHeightSec())
 	{
 		if (thing->flags2&MF2_ONMOBJ && thing->floorz == thing->Sector->heightsec->floorplane.ZatPoint(thingpos))
 		{
@@ -205,7 +203,7 @@ double RenderPolySprite::GetSpriteCeilingZ(AActor *thing, const DVector2 &thingp
 			return ceilingh;
 	}
 
-	if (thing->Sector->heightsec && !(thing->Sector->heightsec->MoreFlags & SECF_IGNOREHEIGHTSEC))
+	if (thing->Sector->GetHeightSec())
 	{
 		if (thing->flags2&MF2_ONMOBJ && thing->ceilingz == thing->Sector->heightsec->ceilingplane.ZatPoint(thingpos))
 		{
@@ -374,7 +372,7 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 void RenderPolySprite::SetDynlight(AActor *thing, PolyDrawArgs &args)
 {
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
-	if (fullbrightSprite)
+	if (fullbrightSprite || !r_dynlights)
 	{
 		args.SetDynLightColor(0);
 		return;

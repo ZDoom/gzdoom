@@ -45,9 +45,32 @@ class FFlatVertexGenerator
 {
 protected:
 	TArray<FFlatVertex> vbo_shadowdata;
+	TArray<uint32_t> ibo_data;
+	FFlatVertex *mMap;
 
+	// Temporary data for creating an indexed buffer
+	struct FIndexGenerationInfo
+	{
+		TArray<vertex_t *> vertices;
+		TMap<vertex_t*, uint32_t> vertexmap;
 
-	void CheckPlanes(sector_t *sector);
+		uint32_t AddVertex(vertex_t *vert)
+		{
+			auto check = vertexmap.CheckKey(vert);
+			if (check != nullptr) return *check;
+			auto index = vertices.Push(vert);
+			vertexmap[vert] = index;
+			return index;
+		}
+
+		uint32_t GetIndex(vertex_t *vert)
+		{
+			auto check = vertexmap.CheckKey(vert);
+			if (check != nullptr) return *check;
+			return ~0;
+		}
+	};
+
 
 public:
 	enum
@@ -66,16 +89,17 @@ public:
 	void OutputResized(int width, int height);
 
 private:
-	int CreateSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor);
-	int CreateSectorVertices(sector_t *sec, const secplane_t &plane, int floor);
-	int CreateVertices(int h, sector_t *sec, const secplane_t &plane, int floor);
-	void CreateFlatVertices();
-	void UpdatePlaneVertices(sector_t *sec, int plane, FFlatVertex *map);
+	int CreateIndexedSubsectorVertices(subsector_t *sub, const secplane_t &plane, int floor, int vi, FIndexGenerationInfo &gen);
+	int CreateIndexedSectorVertices(sector_t *sec, const secplane_t &plane, int floor, FIndexGenerationInfo &gen);
+	int CreateIndexedVertices(int h, sector_t *sec, const secplane_t &plane, int floor, TArray<FIndexGenerationInfo> &gen);
+	void CreateIndexedFlatVertices();
+
+	void UpdatePlaneVertices(sector_t *sec, int plane);
 protected:
 	void CreateVertices();
-	void CheckPlanes(sector_t *sector, FFlatVertex *map);
-	void CheckUpdate(sector_t *sector, FFlatVertex *map);
-
+	void CheckPlanes(sector_t *sector);
+public:
+	void CheckUpdate(sector_t *sector);
 };
 
 #endif

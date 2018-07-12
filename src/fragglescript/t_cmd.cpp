@@ -27,7 +27,6 @@
 
 
 #include <string.h>
-#include <stdio.h>
 #include "p_local.h"
 #include "doomdef.h"
 #include "doomstat.h"

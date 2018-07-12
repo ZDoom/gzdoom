@@ -25,20 +25,16 @@
 #include "w_wad.h"
 #include "i_system.h"
 #include "s_sound.h"
-#include "c_console.h"
 #include "d_player.h"
 #include "d_netinf.h"
 #include "gi.h"
-#include "colormatcher.h"
 #include "c_dispatch.h"
-#include "r_defs.h"
 #include "v_text.h"
 #include "r_data/sprites.h"
 #include "r_data/voxels.h"
-#include "textures/textures.h"
 #include "vm.h"
 
-void gl_InitModels();
+void InitModels();
 
 // variables used to look up
 //	and range check thing_t sprites patches
@@ -1052,7 +1048,7 @@ void R_InitSprites ()
 	// [RH] Sort the skins, but leave base as skin 0
 	//qsort (&skins[PlayerClasses.Size ()], numskins-PlayerClasses.Size (), sizeof(FPlayerSkin), skinsorter);
 
-	gl_InitModels();
+	InitModels();
 }
 
 

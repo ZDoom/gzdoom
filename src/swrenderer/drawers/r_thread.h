@@ -52,6 +52,8 @@ public:
 
 	std::shared_ptr<PolyTriangleThreadData> poly;
 
+	size_t debug_draw_pos = 0;
+
 	// Checks if a line is rendered by this thread
 	bool line_skipped_by_thread(int line)
 	{
@@ -93,10 +95,19 @@ public:
 	virtual ~DrawerCommand() { }
 
 	virtual void Execute(DrawerThread *thread) = 0;
-	virtual FString DebugInfo() = 0;
 };
 
-void VectoredTryCatch(void *data, void(*tryBlock)(void *data), void(*catchBlock)(void *data, const char *reason, bool fatal));
+// Wait for all worker threads before executing next command
+class GroupMemoryBarrierCommand : public DrawerCommand
+{
+public:
+	void Execute(DrawerThread *thread);
+
+private:
+	std::mutex mutex;
+	std::condition_variable condition;
+	size_t count = 0;
+};
 
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
@@ -109,6 +120,8 @@ public:
 
 	// Waits for all commands to finish executing
 	static void WaitForWorkers();
+
+	static void ResetDebugDrawPos();
 	
 private:
 	DrawerThreads();
@@ -119,7 +132,6 @@ private:
 	void WorkerMain(DrawerThread *thread);
 
 	static DrawerThreads *Instance();
-	static void ReportDrawerError(DrawerCommand *command, bool worker_thread, const char *reason, bool fatal);
 	
 	std::vector<DrawerThread> threads;
 
@@ -131,6 +143,8 @@ private:
 	std::mutex end_mutex;
 	std::condition_variable end_condition;
 	size_t tasks_left = 0;
+
+	size_t debug_draw_end = 0;
 
 	DrawerThread single_core_thread;
 	

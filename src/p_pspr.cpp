@@ -35,7 +35,6 @@
 #include "p_local.h"
 #include "s_sound.h"
 #include "doomstat.h"
-#include "gi.h"
 #include "p_pspr.h"
 #include "templates.h"
 #include "g_level.h"

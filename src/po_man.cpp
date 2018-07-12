@@ -24,24 +24,18 @@
 
 #include "doomdef.h"
 #include "p_local.h"
-#include "i_system.h"
-#include "w_wad.h"
-#include "m_swap.h"
 #include "m_bbox.h"
 #include "s_sndseq.h"
 #include "a_sharedglobal.h"
 #include "p_3dmidtex.h"
 #include "p_lnspec.h"
 #include "r_data/r_interpolate.h"
-#include "g_level.h"
 #include "po_man.h"
 #include "p_setup.h"
-#include "vectors.h"
 #include "serializer.h"
 #include "p_blockmap.h"
 #include "p_maputl.h"
 #include "r_utility.h"
-#include "p_blockmap.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
 #include "v_text.h"
@@ -1163,7 +1157,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						// [TN] Check wether this actor gets blocked by the line.
 						if (ld->backsector != NULL &&
 							!(ld->flags & (ML_BLOCKING|ML_BLOCKEVERYTHING))
-							&& !(ld->flags & ML_BLOCK_PLAYERS && mobj->player) 
+							&& !(ld->flags & ML_BLOCK_PLAYERS && (mobj->player || (mobj->flags8 & MF8_BLOCKASPLAYER))) 
 							&& !(ld->flags & ML_BLOCKMONSTERS && mobj->flags3 & MF3_ISMONSTER)
 							&& !((mobj->flags & MF_FLOAT) && (ld->flags & ML_BLOCK_FLOATERS))
 							&& (!(ld->flags & ML_3DMIDTEX) ||

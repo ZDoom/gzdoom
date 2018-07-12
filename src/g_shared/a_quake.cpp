@@ -27,11 +27,7 @@
 #include "doomstat.h"
 #include "p_local.h"
 #include "actor.h"
-#include "m_bbox.h"
-#include "m_random.h"
-#include "s_sound.h"
 #include "a_sharedglobal.h"
-#include "statnums.h"
 #include "serializer.h"
 #include "d_player.h"
 #include "r_utility.h"
@@ -181,9 +177,9 @@ void DEarthquake::Tick ()
 //
 //==========================================================================
 
-double DEarthquake::GetModWave(double waveMultiplier) const
+double DEarthquake::GetModWave(double ticFrac, double waveMultiplier) const
 {
-	double time = m_Countdown - r_viewpoint.TicFrac;
+	double time = m_Countdown - ticFrac;
 	return g_sin(waveMultiplier * time * (M_PI * 2 / TICRATE));
 }
 
@@ -296,7 +292,7 @@ double DEarthquake::GetFalloff(double dist) const
 //
 //==========================================================================
 
-int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jiggers)
+int DEarthquake::StaticGetQuakeIntensities(double ticFrac, AActor *victim, FQuakeJiggers &jiggers)
 {
 	if (victim->player != NULL && (victim->player->cheats & CF_NOCLIP))
 	{
@@ -343,12 +339,12 @@ int DEarthquake::StaticGetQuakeIntensities(AActor *victim, FQuakeJiggers &jigger
 				}
 				else
 				{
-					jiggers.RollWave = r * quake->GetModWave(quake->m_RollWave) * falloff * strength;
+					jiggers.RollWave = r * quake->GetModWave(ticFrac, quake->m_RollWave) * falloff * strength;
 
 					
-					intensity.X *= quake->GetModWave(quake->m_WaveSpeed.X);
-					intensity.Y *= quake->GetModWave(quake->m_WaveSpeed.Y);
-					intensity.Z *= quake->GetModWave(quake->m_WaveSpeed.Z);
+					intensity.X *= quake->GetModWave(ticFrac, quake->m_WaveSpeed.X);
+					intensity.Y *= quake->GetModWave(ticFrac, quake->m_WaveSpeed.Y);
+					intensity.Z *= quake->GetModWave(ticFrac, quake->m_WaveSpeed.Z);
 					intensity *= strength * falloff;
 
 					// [RH] This only gives effect to the last sine quake. I would

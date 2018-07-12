@@ -23,7 +23,6 @@
 #ifndef __GLC_DYNLIGHT_H
 #define __GLC_DYNLIGHT_H
 
-#include "c_cvars.h"
 #include "a_dynlight.h"
 
 
@@ -55,9 +54,11 @@ struct FDynLightData
 	}
     
     bool GetLight(int group, Plane & p, ADynamicLight * light, bool checkside);
-    void AddLightToList(int group, ADynamicLight * light);
+    void AddLightToList(int group, ADynamicLight * light, bool forceAttenuate);
 
 };
+
+extern thread_local FDynLightData lightdata;
 
 
 #endif

@@ -24,18 +24,14 @@
 //
 //-----------------------------------------------------------------------------
 
-#include <float.h>
 #include "p_local.h"
 #include "p_effect.h"
 #include "c_console.h"
 #include "b_bot.h"
-#include "s_sound.h"
 #include "doomstat.h"
 #include "sbar.h"
 #include "r_data/r_interpolate.h"
-#include "i_sound.h"
 #include "d_player.h"
-#include "g_level.h"
 #include "r_utility.h"
 #include "p_spec.h"
 #include "g_levellocals.h"

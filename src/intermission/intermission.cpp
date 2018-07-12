@@ -38,16 +38,13 @@
 #include "w_wad.h"
 #include "gi.h"
 #include "v_video.h"
-#include "v_palette.h"
 #include "d_main.h"
 #include "gstrings.h"
 #include "intermission/intermission.h"
 #include "actor.h"
 #include "d_player.h"
 #include "r_state.h"
-#include "r_data/r_translate.h"
 #include "c_bind.h"
-#include "g_level.h"
 #include "p_conversation.h"
 #include "menu/menu.h"
 #include "d_net.h"
@@ -232,21 +229,13 @@ void DIntermissionScreenFader::Drawer ()
 		if (mType == FADE_In) factor = 1.0 - factor;
 		int color = MAKEARGB(int(factor*255), 0,0,0);
 
-		if (screen->Begin2D(false))
+		screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
+		for (unsigned i=0; i < mOverlays.Size(); i++)
 		{
-			screen->DrawTexture (TexMan[mBackground], 0, 0, DTA_Fullscreen, true, DTA_ColorOverlay, color, TAG_DONE);
-			for (unsigned i=0; i < mOverlays.Size(); i++)
-			{
-				if (CheckOverlay(i))
-					screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
-			}
-			screen->FillBorder (NULL);
+			if (CheckOverlay(i))
+				screen->DrawTexture (TexMan[mOverlays[i].mPic], mOverlays[i].x, mOverlays[i].y, DTA_320x200, true, DTA_ColorOverlay, color, TAG_DONE);
 		}
-		else
-		{
-			V_SetBlend (0,0,0,int(256*factor));
-			Super::Drawer();
-		}
+		screen->FillBorder (NULL);
 	}
 }
 

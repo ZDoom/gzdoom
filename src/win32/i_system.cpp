@@ -47,15 +47,11 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-#include <io.h>
-#include <direct.h>
 #include <string.h>
 #include <process.h>
 #include <time.h>
 
 #include <stdarg.h>
-#include <sys/types.h>
-#include <sys/timeb.h>
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -65,17 +61,10 @@
 
 #include "hardware.h"
 #include "doomerrors.h"
-#include <math.h>
 
-#include "doomtype.h"
 #include "version.h"
-#include "doomdef.h"
-#include "cmdlib.h"
-#include "m_argv.h"
 #include "m_misc.h"
-#include "i_video.h"
 #include "i_sound.h"
-#include "i_music.h"
 #include "resource.h"
 #include "x86.h"
 #include "stats.h"
@@ -84,17 +73,13 @@
 #include "d_net.h"
 #include "g_game.h"
 #include "i_input.h"
-#include "i_system.h"
 #include "c_dispatch.h"
 #include "templates.h"
 #include "gameconfigfile.h"
 #include "v_font.h"
 #include "g_level.h"
 #include "doomstat.h"
-#include "v_palette.h"
-#include "stats.h"
 #include "textures/bitmap.h"
-#include "textures/textures.h"
 
 #include "optwin32.h"
 
@@ -1455,19 +1440,18 @@ FString I_GetLongPathName(FString shortpath)
 	return longpath;
 }
 
-#if _MSC_VER == 1900 && defined(_USING_V110_SDK71_)
+#ifdef _USING_V110_SDK71_
 //==========================================================================
 //
-// VS14Stat
+// _stat64i32
 //
-// Work around an issue where stat doesn't work with v140_xp. This was
-// supposedly fixed, but as of Update 1 continues to not function on XP.
+// Work around an issue where stat() function doesn't work 
+// with Windows XP compatible toolset.
+// It uses GetFileInformationByHandleEx() which requires Windows Vista.
 //
 //==========================================================================
 
-#include <sys/stat.h>
-
-int VS14Stat(const char *path, struct _stat64i32 *buffer)
+int _stat64i32(const char *path, struct _stat64i32 *buffer)
 {
 	WIN32_FILE_ATTRIBUTE_DATA data;
 	if(!GetFileAttributesEx(path, GetFileExInfoStandard, &data))

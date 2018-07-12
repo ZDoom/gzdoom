@@ -453,7 +453,9 @@ class Actor : Thinker native
 		return -1;
 	}
 
-	// Called when the player presses 'use' and an actor is found
+	// Called when the player presses 'use' and an actor is found, except if the
+	// UseSpecial flag is set. Use level.ExecuteSpecial to call action specials
+	// instead.
 	virtual bool Used(Actor user)
 	{
 		return false;
@@ -537,6 +539,9 @@ class Actor : Thinker native
 	{
 		return damage;
 	}
+
+	// called on getting a secret, return false to disable default "secret found" message/sound
+	virtual bool OnGiveSecret(bool printmsg, bool playsound) { return true; }
 	
 	native virtual bool OkayToSwitchTarget(Actor other);
 	native static class<Actor> GetReplacement(class<Actor> cls);

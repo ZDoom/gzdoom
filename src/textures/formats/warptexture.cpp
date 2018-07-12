@@ -34,12 +34,9 @@
 */
 
 #include "doomtype.h"
-#include "files.h"
-#include "templates.h"
 #include "r_utility.h"
 #include "textures/textures.h"
 #include "warpbuffer.h"
-#include "v_palette.h"
 #include "v_video.h"
 
 
@@ -125,27 +122,21 @@ int FWarpTexture::NextPo2 (int v)
 
 //==========================================================================
 //
-// FMultiPatchTexture :: TexPart :: TexPart
-//
-//==========================================================================
-
-FTexture *FWarpTexture::GetRedirect(bool wantwarped)
-{
-	if (!wantwarped) return SourcePic->GetRedirect(false);
-	else return this;
-}
-
-//==========================================================================
-//
 // FMultiPatchTexture :: CopyTrueColorPixels
 //
-// This doesn't warp. It's just here in case someone tries to use a warp
-// texture for compositing a multipatch texture
+// True color texture generation must never hit the paletted path which
+// always warps the buffer.
+// As a result even CopyTrueColorTranslated must be overrideen here.
 //
 //==========================================================================
 
 int FWarpTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
 	return SourcePic->CopyTrueColorPixels(bmp, x, y, rotate, inf);
+}
+
+int FWarpTexture::CopyTrueColorTranslated(FBitmap *bmp, int x, int y, int rotate, PalEntry *remap, FCopyInfo *inf)
+{
+	return SourcePic->CopyTrueColorTranslated(bmp, x, y, rotate, remap, inf);
 }
 

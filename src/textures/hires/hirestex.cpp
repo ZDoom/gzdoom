@@ -24,20 +24,20 @@
 **
 */
 
+#ifdef _MSC_VER
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
+
 #include "w_wad.h"
 #include "m_png.h"
 #include "sbar.h"
 #include "gi.h"
 #include "cmdlib.h"
-#include "sc_man.h"
-#include "doomstat.h"
-#include "d_main.h"
-#include "zstring.h"
 #include "bitmap.h"
-#include "textures.h"
 
 #ifndef _WIN32
-#include <unistd.h>
 #define _access(a,b) access(a,b)
 #endif
 

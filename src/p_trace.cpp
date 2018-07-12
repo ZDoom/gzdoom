@@ -34,11 +34,9 @@
 
 #include "p_trace.h"
 #include "p_local.h"
-#include "i_system.h"
 #include "r_sky.h"
 #include "doomstat.h"
 #include "p_maputl.h"
-#include "r_defs.h"
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "p_terrain.h"
@@ -76,7 +74,7 @@ struct FTraceInfo
 	int sectorsel;		
 
 	void Setup3DFloors();
-	bool LineCheck(intercept_t *in, double dist, DVector3 hit);
+	bool LineCheck(intercept_t *in, double dist, DVector3 hit, bool special3dpass);
 	bool ThingCheck(intercept_t *in, double dist, DVector3 hit);
 	bool TraceTraverse (int ptflags);
 	bool CheckPlane(const secplane_t &plane);
@@ -382,7 +380,7 @@ void FTraceInfo::Setup3DFloors()
 //
 //==========================================================================
 
-bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
+bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit, bool special3dpass)
 {
 	int lineside;
 	sector_t *entersector;
@@ -421,7 +419,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 
 		// For backwards compatibility: Ignore lines with the same sector on both sides.
 		// This is the way Doom.exe did it and some WADs (e.g. Alien Vendetta MAP15) need it.
-		if (i_compatflags & COMPATF_TRACE && in->d.line->backsector == in->d.line->frontsector)
+		if (i_compatflags & COMPATF_TRACE && in->d.line->backsector == in->d.line->frontsector && !special3dpass)
 		{
 			// We must check special activation here because the code below is never reached.
 			if (TraceFlags & TRACE_PCross)
@@ -474,7 +472,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 	}
 	else if (entersector == NULL ||
 		hit.Z < bf || hit.Z > bc ||
-		in->d.line->flags & WallMask)
+		((in->d.line->flags & WallMask) && !special3dpass))
 	{
 		// hit the wall
 		Results->HitType = TRACE_HitWall;
@@ -482,7 +480,7 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 			entersector == NULL ? TIER_Middle :
 			hit.Z <= bf ? TIER_Lower :
 			hit.Z >= bc ? TIER_Upper : TIER_Middle;
-		if (TraceFlags & TRACE_Impact)
+		if ((TraceFlags & TRACE_Impact) && !special3dpass)
 		{
 			P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_Impact);
 		}
@@ -567,14 +565,17 @@ bool FTraceInfo::LineCheck(intercept_t *in, double dist, DVector3 hit)
 		}
 
 		Results->HitType = TRACE_HitNone;
-		if (TraceFlags & TRACE_PCross)
+		if (!special3dpass)
 		{
-			P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_PCross);
-		}
-		if (TraceFlags & TRACE_Impact)
-		{ // This is incorrect for "impact", but Hexen did this, so
-		  // we need to as well, for compatibility
-			P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_Impact);
+			if (TraceFlags & TRACE_PCross)
+			{
+				P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_PCross);
+			}
+			if (TraceFlags & TRACE_Impact)
+			{ // This is incorrect for "impact", but Hexen did this, so
+			  // we need to as well, for compatibility
+				P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_Impact);
+			}
 		}
 	}
 cont:
@@ -606,7 +607,7 @@ cont:
 					Results->HitType = TRACE_HitNone;
 				}
 			}
-			if (Results->HitType == TRACE_HitWall && TraceFlags & TRACE_Impact)
+			if (Results->HitType == TRACE_HitWall && TraceFlags & TRACE_Impact && (!special3dpass || Results->Tier != TIER_FFloor))
 			{
 				P_ActivateLine(in->d.line, IgnoreThis, lineside, SPAC_Impact);
 			}
@@ -627,14 +628,25 @@ cont:
 	{
 		switch (TraceCallback(*Results, TraceCallbackData))
 		{
-		case TRACE_Stop:	return false;
-		case TRACE_Abort:	Results->HitType = TRACE_HitNone; return false;
-		case TRACE_Skip:	Results->HitType = TRACE_HitNone; break;
-		default:			break;
+		case TRACE_Stop:
+			return false;
+
+		case TRACE_Abort:
+			Results->HitType = TRACE_HitNone;
+			return false;
+
+		case TRACE_Skip:
+			Results->HitType = TRACE_HitNone;
+			if (!special3dpass && (TraceFlags & TRACE_3DCallback) && entersector && entersector->e->XFloor.ffloors.Size())
+				return LineCheck(in, dist, hit, true);
+			break;
+
+		default:
+			break;
 		}
 	}
 
-	if (Results->HitType == TRACE_HitNone)
+	if (Results->HitType == TRACE_HitNone && entersector)
 	{
 		CurSector = entersector;
 		EnterDist = dist;
@@ -837,7 +849,7 @@ bool FTraceInfo::TraceTraverse (int ptflags)
 					}
 				}
 			}
-			if (!LineCheck(in, dist, hit)) break;
+			if (!LineCheck(in, dist, hit, false)) break;
 		}
 		else if ((in->d.thing->flags & ActorMask) && in->d.thing != IgnoreThis)
 		{
@@ -998,6 +1010,8 @@ DEFINE_ACTION_FUNCTION(DLineTracer, Trace)
 
 	// these are internal hacks.
 	traceFlags &= ~(TRACE_PCross | TRACE_Impact);
+	// this too
+	traceFlags |= TRACE_3DCallback;
 
 	// Trace(vector3 start, Sector sector, vector3 direction, double maxDist, ETraceFlags traceFlags)
 	bool res = Trace(DVector3(start_x, start_y, start_z), sector, DVector3(direction_x, direction_y, direction_z), maxDist,

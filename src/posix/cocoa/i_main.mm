@@ -35,23 +35,15 @@
 #include "s_sound.h"
 
 #include <sys/sysctl.h>
-#include <unistd.h>
-
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
 
 #include "c_console.h"
 #include "c_cvars.h"
 #include "cmdlib.h"
 #include "d_main.h"
-#include "doomerrors.h"
 #include "i_system.h"
 #include "m_argv.h"
-#include "s_sound.h"
 #include "st_console.h"
 #include "version.h"
-
-#undef Class
 
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
@@ -148,9 +140,6 @@ static void I_DetectOS()
 	
 	if (10 == majorVersion) switch (minorVersion)
 	{
-		case  4: name = "Mac OS X Tiger";        break;
-		case  5: name = "Mac OS X Leopard";      break;
-		case  6: name = "Mac OS X Snow Leopard"; break;
 		case  7: name = "Mac OS X Lion";         break;
 		case  8: name = "OS X Mountain Lion";    break;
 		case  9: name = "OS X Mavericks";        break;
@@ -158,6 +147,7 @@ static void I_DetectOS()
 		case 11: name = "OS X El Capitan";       break;
 		case 12: name = "macOS Sierra";          break;
 		case 13: name = "macOS High Sierra";     break;
+		case 14: name = "macOS Mojave";          break;
 	}
 
 	char release[16] = "unknown";
@@ -302,18 +292,24 @@ ApplicationController* appCtrl;
 }
 
 
+extern bool AppActive;
+
 - (void)applicationDidBecomeActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
 	
 	S_SetSoundPaused(1);
+
+	AppActive = true;
 }
 
 - (void)applicationWillResignActive:(NSNotification*)aNotification
 {
 	ZD_UNUSED(aNotification);
 	
-	S_SetSoundPaused((!!i_soundinbackground) || 0);
+	S_SetSoundPaused(i_soundinbackground);
+
+	AppActive = false;
 }
 
 
@@ -369,8 +365,17 @@ ApplicationController* appCtrl;
 		}
 	}
 
-	s_argv.Push("-file");
-	s_argv.Push([filename UTF8String]);
+	bool iwad = false;
+
+	if (const char* const extPos = strrchr(charFileName, '.'))
+	{
+		iwad = 0 == stricmp(extPos, ".iwad")
+			|| 0 == stricmp(extPos, ".ipk3")
+			|| 0 == stricmp(extPos, ".ipk7");
+	}
+
+	s_argv.Push(iwad ? "-iwad" : "-file");
+	s_argv.Push(charFileName);
 
 	return TRUE;
 }

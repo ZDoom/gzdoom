@@ -24,6 +24,7 @@ class Revenant : Actor
 		MeleeSound "skeleton/melee";
 		HitObituary "$OB_UNDEADHIT";
 		Obituary "$OB_UNDEAD";
+		Tag "$FN_REVEN";
 	}
 	States
 	{

@@ -49,9 +49,6 @@
 #include "v_video.h"
 #include "v_text.h"
 #include "cmdlib.h"
-#include "m_fixed.h"
-#include "textures/textures.h"
-#include "r_data/colormaps.h"
 
 // On the Alpha, accessing the shorts directly if they aren't aligned on a
 // 4-byte boundary causes unaligned access warnings. Why it does this at
@@ -161,7 +158,7 @@ public:
 
 	int CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf = NULL) override;
 	int GetSourceLump() override { return DefinitionLump; }
-	FTexture *GetRedirect(bool wantwarped) override;
+	FTexture *GetRedirect() override;
 	FTexture *GetRawTexture() override;
 	void ResolvePatches();
 
@@ -695,7 +692,7 @@ void FMultiPatchTexture::CheckForHacks ()
 //
 //==========================================================================
 
-FTexture *FMultiPatchTexture::GetRedirect(bool wantwarped)
+FTexture *FMultiPatchTexture::GetRedirect()
 {
 	return bRedirect ? Parts->Texture : this;
 }
@@ -743,7 +740,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		// Check whether the amount of names reported is correct.
 		if ((signed)numpatches < 0)
 		{
-			Printf("Corrupt PNAMES lump found (negative amount of entries reported)");
+			Printf("Corrupt PNAMES lump found (negative amount of entries reported)\n");
 			return;
 		}
 
@@ -781,7 +778,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 
 	if (maxoff < uint32_t(numtextures+1)*4)
 	{
-		Printf ("Texture directory is too short");
+		Printf ("Texture directory is too short\n");
 		delete[] patchlookup;
 		return;
 	}
@@ -792,7 +789,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		offset = LittleLong(directory[i]);
 		if (offset > maxoff)
 		{
-			Printf ("Bad texture directory");
+			Printf ("Bad texture directory\n");
 			delete[] patchlookup;
 			return;
 		}
@@ -828,7 +825,7 @@ void FTextureManager::AddTexturesLump (const void *lumpdata, int lumpsize, int d
 		offset = LittleLong(directory[i]);
 		if (offset > maxoff)
 		{
-			Printf ("Bad texture directory");
+			Printf ("Bad texture directory\n");
 			delete[] patchlookup;
 			return;
 		}

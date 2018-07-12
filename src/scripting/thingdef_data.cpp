@@ -42,26 +42,18 @@
 #include "actor.h"
 #include "d_player.h"
 #include "p_effect.h"
-#include "autosegs.h"
-#include "p_maputl.h"
 #include "gi.h"
 #include "p_terrain.h"
 #include "gstrings.h"
-#include "zstring.h"
-#include "d_event.h"
 #include "g_levellocals.h"
 #include "p_checkposition.h"
-#include "r_sky.h"
 #include "v_font.h"
-#include "v_video.h"
-#include "c_bind.h"
 #include "menu/menu.h"
 #include "teaminfo.h"
 #include "r_data/sprites.h"
 #include "serializer.h"
 #include "wi_stuff.h"
 #include "a_dynlight.h"
-#include "vm.h"
 #include "types.h"
 
 static TArray<FPropertyInfo*> properties;
@@ -324,6 +316,7 @@ static FFlagDef ActorFlagDefs[]=
 	DEFINE_FLAG(MF7, FORCEINFIGHTING, AActor, flags7),
 
 	DEFINE_FLAG(MF8, FRIGHTENING, AActor, flags8),
+	DEFINE_FLAG(MF8, BLOCKASPLAYER, AActor, flags8),
 
 	// Effect flags
 	DEFINE_FLAG(FX, VISIBILITYPULSE, AActor, effects),

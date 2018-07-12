@@ -33,19 +33,13 @@
 */
 
 #include <stdlib.h>
-#include <string.h>
 
 #include "cmdlib.h"
 #include "actor.h"
-#include "dobject.h"
 #include "doomstat.h"		// Ideally, DObjects can be used independant of Doom.
 #include "d_player.h"		// See p_user.cpp to find out why this doesn't work.
 #include "g_game.h"			// Needed for bodyque.
 #include "c_dispatch.h"
-#include "i_system.h"
-#include "r_state.h"
-#include "stats.h"
-#include "a_sharedglobal.h"
 #include "dsectoreffect.h"
 #include "serializer.h"
 #include "vm.h"
@@ -590,13 +584,20 @@ void DObject::SerializeUserVars(FSerializer &arc)
 
 void DObject::Serialize(FSerializer &arc)
 {
-	int fresh = ObjectFlags & OF_JustSpawned;
-	int freshdef = 0;
-	arc("justspawned", fresh, freshdef);
-	if (arc.isReading())
+	const auto SerializeFlag = [&](const char *const name, const EObjectFlags flag)
 	{
-		ObjectFlags |= fresh;
-	}
+		int value = ObjectFlags & flag;
+		int defaultvalue = 0;
+		arc(name, value, defaultvalue);
+		if (arc.isReading())
+		{
+			ObjectFlags |= value;
+		}
+	};
+
+	SerializeFlag("justspawned", OF_JustSpawned);
+	SerializeFlag("spawned", OF_Spawned);
+
 	ObjectFlags |= OF_SerialSuccess;
 }
 

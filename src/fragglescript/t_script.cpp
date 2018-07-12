@@ -33,14 +33,10 @@
 //
 
 #include "t_script.h"
-#include "p_lnspec.h"
 #include "a_keys.h"
 #include "d_player.h"
 #include "p_spec.h"
 #include "c_dispatch.h"
-#include "i_system.h"
-#include "doomerrors.h"
-#include "doomstat.h"
 #include "serializer.h"
 #include "g_levellocals.h"
 

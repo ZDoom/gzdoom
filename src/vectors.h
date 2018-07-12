@@ -1362,7 +1362,7 @@ struct TAngle
 
 	vec_t Radians() const
 	{
-		return Degrees * (pi::pi() / 180.0);
+		return vec_t(Degrees * (pi::pi() / 180.0));
 	}
 
 	unsigned BAMs() const
@@ -1704,7 +1704,6 @@ public:
 	}
 
 	bool PointOnSide(FVector3 &v) { return PointOnSide(v.X, v.Y, v.Z); }
-	bool ValidNormal() { return m_normal.LengthSquared() == 1.f; }
 
 	float A() { return m_normal.X; }
 	float B() { return m_normal.Y; }

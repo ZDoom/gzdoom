@@ -38,24 +38,13 @@
 #include "v_font.h"
 #include "v_video.h"
 #include "sbar.h"
-#include "r_defs.h"
 #include "w_wad.h"
-#include "m_random.h"
 #include "d_player.h"
-#include "st_stuff.h"
-#include "m_swap.h"
 #include "a_keys.h"
-#include "templates.h"
-#include "i_system.h"
-#include "sbar.h"
 #include "sbarinfo.h"
 #include "gi.h"
-#include "r_data/r_translate.h"
-#include "g_level.h"
-#include "v_palette.h"
 #include "p_acs.h"
 #include "gstrings.h"
-#include "cmdlib.h"
 #include "g_levellocals.h"
 #include "vm.h"
 
@@ -1578,7 +1567,11 @@ DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 	auto script = SBarInfoScript[scriptno];
 	if (script == nullptr) return nullptr;
 
-	auto sbar = (DBaseStatusBar*)PClass::FindClass("SBarInfoWrapper")->CreateNew();
+	PClass *sbarclass = PClass::FindClass("SBarInfoWrapper");
+	assert(sbarclass != nullptr);
+	assert(sbarclass->IsDescendantOf(RUNTIME_CLASS(DBaseStatusBar)));
+	auto sbar = (DBaseStatusBar*)sbarclass->CreateNew();
+
 	auto core = new DSBarInfo(sbar, script);
 	sbar->PointerVar<DSBarInfo>("core") = core;
 	sbar->SetSize(script->height, script->_resW, script->_resH);

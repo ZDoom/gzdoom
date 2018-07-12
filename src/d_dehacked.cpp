@@ -48,33 +48,23 @@
 #include "doomstat.h"
 #include "info.h"
 #include "d_dehacked.h"
-#include "s_sound.h"
 #include "g_level.h"
 #include "cmdlib.h"
 #include "gstrings.h"
-#include "m_alloc.h"
-#include "m_misc.h"
 #include "w_wad.h"
 #include "d_player.h"
 #include "r_state.h"
-#include "gi.h"
 #include "c_dispatch.h"
 #include "decallib.h"
-#include "v_palette.h"
 #include "a_sharedglobal.h"
-#include "vectors.h"
-#include "dobject.h"
-#include "r_data/r_translate.h"
-#include "sc_man.h"
-#include "i_system.h"
 #include "doomerrors.h"
 #include "p_effect.h"
 #include "serializer.h"
 #include "thingdef.h"
-#include "info.h"
 #include "v_text.h"
 #include "backend/vmbuilder.h"
 #include "types.h"
+#include "m_argv.h"
 
 // [SO] Just the way Randy said to do it :)
 // [RH] Made this CVAR_SERVERINFO
@@ -824,6 +814,16 @@ void SetDehParams(FState *state, int codepointer)
 		sfunc->ImplicitArgs = numargs;
 		state->SetAction(sfunc);
 		sfunc->PrintableName.Format("Dehacked.%s.%d.%d", MBFCodePointers[codepointer].name.GetChars(), value1, value2);
+
+		if (Args->CheckParm("-dumpdisasm"))
+		{
+			FILE *dump = fopen("disasm.txt", "a");
+			if (dump != nullptr)
+			{
+				DumpFunction(dump, sfunc, sfunc->PrintableName.GetChars(), (int)sfunc->PrintableName.Len());
+			}
+			fclose(dump);
+		}
 	}
 }
 
@@ -2114,12 +2114,15 @@ static int PatchCodePtrs (int dummy)
 					symname.Format("A_%s", Line2);
 
 				// Let's consider as aliases some redundant MBF pointer
+				bool ismbfcp = false;
 				for (unsigned int i = 0; i < MBFCodePointers.Size(); i++)
 				{
 					if (!symname.CompareNoCase(MBFCodePointers[i].alias))
 					{
 						symname = MBFCodePointers[i].name;
 						DPrintf(DMSG_SPAMMY, "%s --> %s\n", MBFCodePointers[i].alias, MBFCodePointers[i].name.GetChars());
+						ismbfcp = true;
+						break;
 					}
 				}
 
@@ -2130,7 +2133,7 @@ static int PatchCodePtrs (int dummy)
 				{
 					Printf(TEXTCOLOR_RED "Frame %d: Unknown code pointer '%s'\n", frame, Line2);
 				}
-				else
+				else if (!ismbfcp)	// MBF special code pointers will produce errors here because they will receive some args and won't match the conditions here.
 				{
 					TArray<uint32_t> &args = sym->Variants[0].ArgFlags;
 					unsigned numargs = sym->GetImplicitArgs();

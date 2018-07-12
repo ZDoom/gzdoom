@@ -36,7 +36,6 @@
 
 #include <SDL.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <signal.h>
 #include <new>
 #include <sys/param.h>
@@ -45,15 +44,11 @@
 #include "doomerrors.h"
 #include "m_argv.h"
 #include "d_main.h"
-#include "i_system.h"
-#include "i_video.h"
 #include "c_console.h"
-#include "errors.h"
 #include "version.h"
 #include "w_wad.h"
 #include "g_level.h"
 #include "g_levellocals.h"
-#include "r_state.h"
 #include "cmdlib.h"
 #include "r_utility.h"
 #include "doomstat.h"
@@ -174,10 +169,11 @@ static int DoomSpecificInfo (char *buffer, char *end)
 		}
 		else
 		{
-			p += snprintf (buffer+p, size-p, "\n\nviewx = %f", r_viewpoint.Pos.X);
-			p += snprintf (buffer+p, size-p, "\nviewy = %f", r_viewpoint.Pos.Y);
-			p += snprintf (buffer+p, size-p, "\nviewz = %f", r_viewpoint.Pos.Z);
-			p += snprintf (buffer+p, size-p, "\nviewangle = %f", r_viewpoint.Angles.Yaw.Degrees);
+            auto &vp = r_viewpoint;
+			p += snprintf (buffer+p, size-p, "\n\nviewx = %f", vp.Pos.X);
+			p += snprintf (buffer+p, size-p, "\nviewy = %f", vp.Pos.Y);
+			p += snprintf (buffer+p, size-p, "\nviewz = %f", vp.Pos.Z);
+			p += snprintf (buffer+p, size-p, "\nviewangle = %f", vp.Angles.Yaw.Degrees);
 		}
 	}
 	buffer[p++] = '\n';

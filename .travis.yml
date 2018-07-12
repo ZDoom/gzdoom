@@ -11,7 +11,12 @@ git:
 matrix:
   include:
     - os: osx
-      osx_image: xcode9.2
+      osx_image: xcode8
+      env:
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
+
+    - os: osx
+      osx_image: xcode9.3
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
 
@@ -27,6 +32,7 @@ matrix:
           packages:
             - g++-4.9
             - libsdl2-dev
+            - libgtk2.0-dev
 
     - os: linux
       compiler: gcc
@@ -40,6 +46,7 @@ matrix:
           packages:
             - g++-5
             - libsdl2-dev
+            - libgtk-3-dev
 
     - os: linux
       compiler: gcc
@@ -53,6 +60,7 @@ matrix:
           packages:
             - g++-6
             - libsdl2-dev
+            - libgtk2.0-dev
 
     - os: linux
       compiler: gcc
@@ -66,6 +74,7 @@ matrix:
           packages:
             - g++-7
             - libsdl2-dev
+            - libgtk-3-dev
 
     - os: linux
       compiler: clang
@@ -98,7 +107,14 @@ script:
   - echo ${TRAVIS_BUILD_DIR}
   - mkdir build
   - cd build
-  - cmake ${CMAKE_OPTIONS} -DPK3_QUIET_ZIPDIR=YES ..
+  - >
+    cmake ${CMAKE_OPTIONS}       \
+      -DFORCE_INTERNAL_ZLIB=YES  \
+      -DFORCE_INTERNAL_JPEG=YES  \
+      -DFORCE_INTERNAL_BZIP2=YES \
+      -DFORCE_INTERNAL_GME=YES   \
+      -DPK3_QUIET_ZIPDIR=YES     \
+      ..
   - make -j2 -k
 
 notifications:

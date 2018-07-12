@@ -35,9 +35,6 @@
 
 #import <Carbon/Carbon.h>
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "c_console.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -48,8 +45,6 @@
 #include "doomstat.h"
 #include "v_video.h"
 #include "events.h"
-
-#undef Class
 
 
 EXTERN_CVAR(Int, m_use_mouse)
@@ -484,11 +479,14 @@ void NSEventToGameMousePosition(NSEvent* inEvent, event_t* outEvent)
 	const NSPoint   viewPos = [view convertPointToBacking:windowRect.origin];
 	const CGFloat frameHeight = I_GetContentViewSize(window).height;
 
-	const CGFloat posX = (              viewPos.x - rbOpts.shiftX) / rbOpts.pixelScale;
-	const CGFloat posY = (frameHeight - viewPos.y - rbOpts.shiftY) / rbOpts.pixelScale;
+	outEvent->data1 = static_cast<int16_t>(              viewPos.x);
+	outEvent->data2 = static_cast<int16_t>(frameHeight - viewPos.y);
 
-	outEvent->data1 = static_cast<int>(posX);
-	outEvent->data2 = static_cast<int>(posY);
+	// Compensate letterbox adjustment done by cross-platform code
+	// More elegant solution is a bit problematic due to HiDPI/Retina support
+	outEvent->data2 += (screen->GetTrueHeight() - screen->VideoHeight) / 2;
+
+	screen->ScaleCoordsFromWindow(outEvent->data1, outEvent->data2);
 }
 
 void ProcessMouseMoveInMenu(NSEvent* theEvent)
@@ -556,11 +554,13 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 		return;
 	}
 
+	const bool isARepeat = [theEvent isARepeat];
+
 	if (k_allowfullscreentoggle
 		&& (kVK_ANSI_F == keyCode)
 		&& (NSCommandKeyMask & [theEvent modifierFlags])
 		&& (NSKeyDown == [theEvent type])
-		&& ![theEvent isARepeat])
+		&& !isARepeat)
 	{
 		ToggleFullscreen = !ToggleFullscreen;
 		return;
@@ -570,7 +570,7 @@ void ProcessKeyboardEvent(NSEvent* theEvent)
 	{
 		ProcessKeyboardEventInMenu(theEvent);
 	}
-	else
+	else if (!isARepeat)
 	{
 		event_t event = {};
 

@@ -1,14 +1,9 @@
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include <memory>
 
-#include "doomdef.h"
-#include "m_swap.h"
-#include "templates.h"
 #include "timidity.h"
 #include "sf2.h"
-#include "files.h"
 #include "i_soundfont.h"
 
 namespace Timidity

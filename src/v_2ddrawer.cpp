@@ -323,12 +323,16 @@ void F2DDrawer::AddPoly(FTexture *texture, FVector2 *points, int npoints,
 	// Convert a light level into an unbounded colormap index (shade). 
 	// Why the +12? I wish I knew, but experimentation indicates it
 	// is necessary in order to best reproduce Doom's original lighting.
-	double map = (NUMCOLORMAPS * 2.) - ((lightlevel + 12) * (NUMCOLORMAPS / 128.));
-	double fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);
-	// handle the brighter light modes of the hardware renderer.
-	if (vid_rendermode == 4 && (level.lightmode < 2 || level.lightmode == 4))
+	double fadelevel;
+
+	if (vid_rendermode != 4 || (level.lightmode >= 2 && level.lightmode != 4))
 	{
-		fadelevel = pow(fadelevel, 1.3);
+		double map = (NUMCOLORMAPS * 2.) - ((lightlevel + 12) * (NUMCOLORMAPS / 128.));
+		fadelevel = clamp((map - 12) / NUMCOLORMAPS, 0.0, 1.0);
+	}
+	else
+	{
+		fadelevel = 1. - clamp(lightlevel, 0, 255) / 255.f;
 	}
 
 	RenderCommand poly;

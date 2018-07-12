@@ -14,7 +14,7 @@ environment:
       APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
     - GENERATOR: "Visual Studio 14 2015 Win64"
       CONFIGURATION: Release
-      TOOLSET: v140_xp
+      TOOLSET: v140
       APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
     - GENERATOR: "Visual Studio 15 2017"
       CONFIGURATION: Release
@@ -22,11 +22,11 @@ environment:
       APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
     - GENERATOR: "Visual Studio 15 2017 Win64"
       CONFIGURATION: Release
-      TOOLSET: v141_xp
+      TOOLSET: v141
       APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2017"
     - GENERATOR: "Visual Studio 14 2015 Win64"
       CONFIGURATION: Debug
-      TOOLSET: v140
+      TOOLSET: v140_xp
       APPVEYOR_BUILD_WORKER_IMAGE: "Visual Studio 2015"
 
 build_script:

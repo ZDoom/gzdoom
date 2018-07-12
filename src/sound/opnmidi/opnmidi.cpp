@@ -32,6 +32,13 @@ static OPN2_Version opn2_version = {
     OPNMIDI_VERSION_PATCHLEVEL
 };
 
+static const OPNMIDI_AudioFormat opn2_DefaultAudioFormat =
+{
+    OPNMIDI_SampleType_S16,
+    sizeof(int16_t),
+    2 * sizeof(int16_t),
+};
+
 /*---------------------------EXPORTS---------------------------*/
 
 OPNMIDI_EXPORT struct OPN2_MIDIPlayer *opn2_init(long sample_rate)
@@ -129,7 +136,14 @@ OPNMIDI_EXPORT void opn2_setScaleModulators(OPN2_MIDIPlayer *device, int smod)
     if(!device) return;
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     play->m_setup.ScaleModulators = smod;
-    play->opn.ScaleModulators = play->m_setup.ScaleModulators;
+    play->opn.ScaleModulators = (play->m_setup.ScaleModulators != 0);
+}
+
+OPNMIDI_EXPORT void opn2_setFullRangeBrightness(struct OPN2_MIDIPlayer *device, int fr_brightness)
+{
+    if(!device) return;
+    OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
+    play->m_setup.fullRangeBrightnessCC74 = (fr_brightness != 0);
 }
 
 OPNMIDI_EXPORT void opn2_setLoopEnabled(OPN2_MIDIPlayer *device, int loopEn)
@@ -139,12 +153,16 @@ OPNMIDI_EXPORT void opn2_setLoopEnabled(OPN2_MIDIPlayer *device, int loopEn)
     play->m_setup.loopingIsEnabled = (loopEn != 0);
 }
 
+/* !!!DEPRECATED!!! */
 OPNMIDI_EXPORT void opn2_setLogarithmicVolumes(struct OPN2_MIDIPlayer *device, int logvol)
 {
     if(!device) return;
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     play->m_setup.LogarithmicVolumes = static_cast<unsigned int>(logvol);
-    play->opn.LogarithmicVolumes = play->m_setup.LogarithmicVolumes;
+    if(play->m_setup.LogarithmicVolumes != 0)
+        play->opn.ChangeVolumeRangesModel(OPNMIDI_VolumeModel_CMF);
+    else
+        play->opn.ChangeVolumeRangesModel(static_cast<OPNMIDI_VolumeModels>(play->m_setup.VolumeModel));
 }
 
 OPNMIDI_EXPORT void opn2_setVolumeRangeModel(OPN2_MIDIPlayer *device, int volumeModel)
@@ -209,16 +227,60 @@ OPNMIDI_EXPORT int opn2_openData(OPN2_MIDIPlayer *device, const void *mem, unsig
 
 OPNMIDI_EXPORT const char *opn2_emulatorName()
 {
-    #ifdef OPNMIDI_USE_LEGACY_EMULATOR
-    return "GENS 2.10 YM2612";
-    #else
-    return "Nuked OPN2 YM3438";
-    #endif
+    return "<opn2_emulatorName() is deprecated! Use opn2_chipEmulatorName() instead!>";
 }
+
+OPNMIDI_EXPORT const char *opn2_chipEmulatorName(struct OPN2_MIDIPlayer *device)
+{
+    if(device)
+    {
+        OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
+        if(play && !play->opn.cardsOP2.empty())
+            return play->opn.cardsOP2[0]->emulatorName();
+    }
+    return "Unknown";
+}
+
+OPNMIDI_EXPORT int opn2_switchEmulator(struct OPN2_MIDIPlayer *device, int emulator)
+{
+    if(device)
+    {
+        OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
+        if(play && (emulator >= 0) && (emulator < OPNMIDI_EMU_end))
+        {
+            play->m_setup.emulator = emulator;
+            opn2_reset(device);
+            return 0;
+        }
+        play->setErrorString("OPN2 MIDI: Unknown emulation core!");
+    }
+    return -1;
+}
+
+
+OPNMIDI_EXPORT int opn2_setRunAtPcmRate(OPN2_MIDIPlayer *device, int enabled)
+{
+    if(device)
+    {
+        OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
+        if(play)
+        {
+            play->m_setup.runAtPcmRate = (enabled != 0);
+            opn2_reset(device);
+            return 0;
+        }
+    }
+    return -1;
+}
+
 
 OPNMIDI_EXPORT const char *opn2_linkedLibraryVersion()
 {
+#if !defined(OPNMIDI_ENABLE_HQ_RESAMPLER)
     return OPNMIDI_VERSION;
+#else
+    return OPNMIDI_VERSION " (HQ)";
+#endif
 }
 
 OPNMIDI_EXPORT const OPN2_Version *opn2_linkedVersion()
@@ -270,7 +332,8 @@ OPNMIDI_EXPORT void opn2_reset(OPN2_MIDIPlayer *device)
         return;
     OPNMIDIplay *play = reinterpret_cast<OPNMIDIplay *>(device->opn2_midiPlayer);
     play->m_setup.tick_skip_samples_delay = 0;
-    play->opn.Reset(play->m_setup.PCM_RATE);
+    play->opn.runAtPcmRate = play->m_setup.runAtPcmRate;
+    play->opn.Reset(play->m_setup.emulator, play->m_setup.PCM_RATE);
     play->ch.clear();
     play->ch.resize(play->opn.NumChannels);
 }
@@ -491,24 +554,139 @@ OPNMIDI_EXPORT void opn2_setDebugMessageHook(struct OPN2_MIDIPlayer *device, OPN
 }
 
 
+template <class Dst>
+static void CopySamplesRaw(OPN2_UInt8 *dstLeft, OPN2_UInt8 *dstRight, const int32_t *src,
+                           size_t frameCount, unsigned sampleOffset)
+{
+    for(size_t i = 0; i < frameCount; ++i) {
+        *(Dst *)(dstLeft + (i * sampleOffset)) = src[2 * i];
+        *(Dst *)(dstRight + (i * sampleOffset)) = src[(2 * i) + 1];
+    }
+}
 
-inline static void SendStereoAudio(int      &samples_requested,
-                                   ssize_t  &in_size,
-                                   short    *_in,
-                                   ssize_t   out_pos,
-                                   short    *_out)
+template <class Dst, class Ret>
+static void CopySamplesTransformed(OPN2_UInt8 *dstLeft, OPN2_UInt8 *dstRight, const int32_t *src,
+                                   size_t frameCount, unsigned sampleOffset,
+                                   Ret(&transform)(int32_t))
+{
+    for(size_t i = 0; i < frameCount; ++i) {
+        *(Dst *)(dstLeft + (i * sampleOffset)) = transform(src[2 * i]);
+        *(Dst *)(dstRight + (i * sampleOffset)) = transform(src[(2 * i) + 1]);
+    }
+}
+
+static int SendStereoAudio(int         samples_requested,
+                           ssize_t     in_size,
+                           int32_t    *_in,
+                           ssize_t     out_pos,
+                           OPN2_UInt8 *left,
+                           OPN2_UInt8 *right,
+                           const OPNMIDI_AudioFormat *format)
 {
     if(!in_size)
-        return;
-    size_t offset       = static_cast<size_t>(out_pos);
+        return 0;
+    size_t outputOffset = static_cast<size_t>(out_pos);
     size_t inSamples    = static_cast<size_t>(in_size * 2);
-    size_t maxSamples   = static_cast<size_t>(samples_requested) - offset;
+    size_t maxSamples   = static_cast<size_t>(samples_requested) - outputOffset;
     size_t toCopy       = std::min(maxSamples, inSamples);
-    std::memcpy(_out + out_pos, _in, toCopy * sizeof(short));
+
+    OPNMIDI_SampleType sampleType = format->type;
+    const unsigned containerSize = format->containerSize;
+    const unsigned sampleOffset = format->sampleOffset;
+
+    left  += (outputOffset / 2) * sampleOffset;
+    right += (outputOffset / 2) * sampleOffset;
+
+    typedef int32_t(&pfnConvert)(int32_t);
+
+    switch(sampleType) {
+    case OPNMIDI_SampleType_S8:
+    case OPNMIDI_SampleType_U8:
+    {
+        pfnConvert cvt = (sampleType == OPNMIDI_SampleType_S8) ? opn2_cvtS8 : opn2_cvtU8;
+        switch(containerSize) {
+        case sizeof(int8_t):
+            CopySamplesTransformed<int8_t>(left, right, _in, toCopy / 2, sampleOffset, cvt);
+            break;
+        case sizeof(int16_t):
+            CopySamplesTransformed<int16_t>(left, right, _in, toCopy / 2, sampleOffset, cvt);
+            break;
+        case sizeof(int32_t):
+            CopySamplesTransformed<int32_t>(left, right, _in, toCopy / 2, sampleOffset, cvt);
+            break;
+        default:
+            return -1;
+        }
+        break;
+    }
+    case OPNMIDI_SampleType_S16:
+    case OPNMIDI_SampleType_U16:
+    {
+        pfnConvert cvt = (sampleType == OPNMIDI_SampleType_S16) ? opn2_cvtS16 : opn2_cvtU16;
+        switch(containerSize) {
+        case sizeof(int16_t):
+            CopySamplesTransformed<int16_t>(left, right, _in, toCopy / 2, sampleOffset, cvt);
+            break;
+        case sizeof(int32_t):
+            CopySamplesRaw<int32_t>(left, right, _in, toCopy / 2, sampleOffset);
+            break;
+        default:
+            return -1;
+        }
+        break;
+    }
+    case OPNMIDI_SampleType_S24:
+    case OPNMIDI_SampleType_U24:
+    {
+        pfnConvert cvt = (sampleType == OPNMIDI_SampleType_S24) ? opn2_cvtS24 : opn2_cvtU24;
+        switch(containerSize) {
+        case sizeof(int32_t):
+            CopySamplesTransformed<int32_t>(left, right, _in, toCopy / 2, sampleOffset, cvt);
+            break;
+        default:
+            return -1;
+        }
+        break;
+    }
+    case OPNMIDI_SampleType_S32:
+    case OPNMIDI_SampleType_U32:
+    {
+        pfnConvert cvt = (sampleType == OPNMIDI_SampleType_S32) ? opn2_cvtS32 : opn2_cvtU32;
+        switch(containerSize) {
+        case sizeof(int32_t):
+            CopySamplesTransformed<int32_t>(left, right, _in, toCopy / 2, sampleOffset, cvt);
+            break;
+        default:
+            return -1;
+        }
+        break;
+    }
+    case OPNMIDI_SampleType_F32:
+        if(containerSize != sizeof(float))
+            return -1;
+        CopySamplesTransformed<float>(left, right, _in, toCopy / 2, sampleOffset, opn2_cvtReal<float>);
+        break;
+    case OPNMIDI_SampleType_F64:
+        if(containerSize != sizeof(double))
+            return -1;
+        CopySamplesTransformed<double>(left, right, _in, toCopy / 2, sampleOffset, opn2_cvtReal<double>);
+        break;
+    default:
+        return -1;
+    }
+
+    return 0;
 }
 
 
-OPNMIDI_EXPORT int opn2_play(OPN2_MIDIPlayer *device, int sampleCount, short *out)
+OPNMIDI_EXPORT int opn2_play(struct OPN2_MIDIPlayer *device, int sampleCount, short *out)
+{
+    return opn2_playFormat(device, sampleCount, (OPN2_UInt8 *)out, (OPN2_UInt8 *)(out + 1), &opn2_DefaultAudioFormat);
+}
+
+OPNMIDI_EXPORT int opn2_playFormat(OPN2_MIDIPlayer *device, int sampleCount,
+                                   OPN2_UInt8 *out_left, OPN2_UInt8 *out_right,
+                                   const OPNMIDI_AudioFormat *format)
 {
 #ifndef OPNMIDI_DISABLE_MIDI_SEQUENCER
     sampleCount -= sampleCount % 2; //Avoid even sample requests
@@ -562,31 +740,20 @@ OPNMIDI_EXPORT int opn2_play(OPN2_MIDIPlayer *device, int sampleCount, short *ou
                 ssize_t in_generatedPhys = in_generatedStereo * 2;
                 //! Unsigned total sample count
                 //fill buffer with zeros
-                int16_t *out_buf = player->outBuf;
-                std::memset(out_buf, 0, static_cast<size_t>(in_generatedPhys) * sizeof(int16_t));
+                int32_t *out_buf = player->outBuf;
+                std::memset(out_buf, 0, static_cast<size_t>(in_generatedPhys) * sizeof(out_buf[0]));
                 unsigned int chips = player->opn.NumCards;
                 if(chips == 1)
-                {
-                    #ifdef OPNMIDI_USE_LEGACY_EMULATOR
-                    player->opn.cardsOP2[0]->run(int(in_generatedStereo), out_buf);
-                    #else
-                    OPN2_GenerateStream(player->opn.cardsOP2[0], out_buf, (Bit32u)in_generatedStereo);
-                    #endif
-                }
+                    player->opn.cardsOP2[0]->generate32(out_buf, (size_t)in_generatedStereo);
                 else/* if(n_periodCountStereo > 0)*/
                 {
                     /* Generate data from every chip and mix result */
-                    for(unsigned card = 0; card < chips; ++card)
-                    {
-                        #ifdef OPNMIDI_USE_LEGACY_EMULATOR
-                        player->opn.cardsOP2[card]->run(int(in_generatedStereo), out_buf);
-                        #else
-                        OPN2_GenerateStreamMix(player->opn.cardsOP2[card], out_buf, (Bit32u)in_generatedStereo);
-                        #endif
-                    }
+                    for(size_t card = 0; card < chips; ++card)
+                        player->opn.cardsOP2[card]->generateAndMix32(out_buf, (size_t)in_generatedStereo);
                 }
                 /* Process it */
-                SendStereoAudio(sampleCount, in_generatedStereo, out_buf, gotten_len, out);
+                if(SendStereoAudio(sampleCount, in_generatedStereo, out_buf, gotten_len, out_left, out_right, format) == -1)
+                    return 0;
 
                 left -= (int)in_generatedPhys;
                 gotten_len += (in_generatedPhys) /* - setup.stored_samples*/;
@@ -609,6 +776,13 @@ OPNMIDI_EXPORT int opn2_play(OPN2_MIDIPlayer *device, int sampleCount, short *ou
 
 
 OPNMIDI_EXPORT int opn2_generate(struct OPN2_MIDIPlayer *device, int sampleCount, short *out)
+{
+    return opn2_generateFormat(device, sampleCount, (OPN2_UInt8 *)out, (OPN2_UInt8 *)(out + 1), &opn2_DefaultAudioFormat);
+}
+
+OPNMIDI_EXPORT int opn2_generateFormat(struct OPN2_MIDIPlayer *device, int sampleCount,
+                                       OPN2_UInt8 *out_left, OPN2_UInt8 *out_right,
+                                       const OPNMIDI_AudioFormat *format)
 {
     sampleCount -= sampleCount % 2; //Avoid even sample requests
     if(sampleCount < 0)
@@ -644,31 +818,20 @@ OPNMIDI_EXPORT int opn2_generate(struct OPN2_MIDIPlayer *device, int sampleCount
                 ssize_t in_generatedPhys = in_generatedStereo * 2;
                 //! Unsigned total sample count
                 //fill buffer with zeros
-                int16_t *out_buf = player->outBuf;
-                std::memset(out_buf, 0, static_cast<size_t>(in_generatedPhys) * sizeof(int16_t));
+                int32_t *out_buf = player->outBuf;
+                std::memset(out_buf, 0, static_cast<size_t>(in_generatedPhys) * sizeof(out_buf[0]));
                 unsigned int chips = player->opn.NumCards;
                 if(chips == 1)
-                {
-                    #ifdef OPNMIDI_USE_LEGACY_EMULATOR
-                    player->opn.cardsOP2[0]->run(int(in_generatedStereo), out_buf);
-                    #else
-                    OPN2_GenerateStream(player->opn.cardsOP2[0], out_buf, (Bit32u)in_generatedStereo);
-                    #endif
-                }
+                    player->opn.cardsOP2[0]->generate32(out_buf, (size_t)in_generatedStereo);
                 else/* if(n_periodCountStereo > 0)*/
                 {
                     /* Generate data from every chip and mix result */
-                    for(unsigned card = 0; card < chips; ++card)
-                    {
-                        #ifdef OPNMIDI_USE_LEGACY_EMULATOR
-                        player->opn.cardsOP2[card]->run(int(in_generatedStereo), out_buf);
-                        #else
-                        OPN2_GenerateStreamMix(player->opn.cardsOP2[card], out_buf, (Bit32u)in_generatedStereo);
-                        #endif
-                    }
+                    for(size_t card = 0; card < chips; ++card)
+                        player->opn.cardsOP2[card]->generateAndMix32(out_buf, (size_t)in_generatedStereo);
                 }
                 /* Process it */
-                SendStereoAudio(sampleCount, in_generatedStereo, out_buf, gotten_len, out);
+                if(SendStereoAudio(sampleCount, in_generatedStereo, out_buf, gotten_len, out_left, out_right, format) == -1)
+                    return 0;
 
                 left -= (int)in_generatedPhys;
                 gotten_len += (in_generatedPhys) /* - setup.stored_samples*/;

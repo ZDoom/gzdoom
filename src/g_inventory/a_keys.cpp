@@ -37,11 +37,7 @@
 #include "gstrings.h"
 #include "d_player.h"
 #include "c_console.h"
-#include "s_sound.h"
-#include "sc_man.h"
-#include "v_palette.h"
 #include "w_wad.h"
-#include "doomstat.h"
 #include "v_font.h"
 #include "vm.h"
 

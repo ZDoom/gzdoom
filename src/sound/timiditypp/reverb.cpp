@@ -35,8 +35,6 @@
 #include "common.h"
 #include "reverb.h"
 #include "optcode.h"
-#include <math.h>
-#include <stdlib.h>
 
 namespace TimidityPlus
 {

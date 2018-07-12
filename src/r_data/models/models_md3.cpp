@@ -22,8 +22,6 @@
 
 #include "w_wad.h"
 #include "cmdlib.h"
-#include "sc_man.h"
-#include "m_crc32.h"
 #include "r_data/models/models.h"
 
 #define MAX_QPATH 64
@@ -239,7 +237,7 @@ void FMD3Model::LoadGeometry()
 
 void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (mVBuf == nullptr)
+	if (!GetVertexBuffer(renderer))
 	{
 		LoadGeometry();
 
@@ -253,9 +251,11 @@ void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 			ibufsize += 3 * surf->numTriangles;
 		}
 
-		mVBuf = renderer->CreateVertexBuffer(true, numFrames == 1);
-		FModelVertex *vertptr = mVBuf->LockVertexBuffer(vbufsize);
-		unsigned int *indxptr = mVBuf->LockIndexBuffer(ibufsize);
+		auto vbuf = renderer->CreateVertexBuffer(true, numFrames == 1);
+		SetVertexBuffer(renderer, vbuf);
+
+		FModelVertex *vertptr = vbuf->LockVertexBuffer(vbufsize);
+		unsigned int *indxptr = vbuf->LockIndexBuffer(ibufsize);
 
 		assert(vertptr != nullptr && indxptr != nullptr);
 
@@ -287,8 +287,8 @@ void FMD3Model::BuildVertexBuffer(FModelRenderer *renderer)
 			}
 			surf->UnloadGeometry();
 		}
-		mVBuf->UnlockVertexBuffer();
-		mVBuf->UnlockIndexBuffer();
+		vbuf->UnlockVertexBuffer();
+		vbuf->UnlockIndexBuffer();
 	}
 }
 
@@ -367,7 +367,7 @@ void FMD3Model::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 		}
 
 		renderer->SetMaterial(surfaceSkin, false, translation);
-		mVBuf->SetupFrame(renderer, surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, surf->numVertices);
+		GetVertexBuffer(renderer)->SetupFrame(renderer, surf->vindex + frameno * surf->numVertices, surf->vindex + frameno2 * surf->numVertices, surf->numVertices);
 		renderer->DrawElements(surf->numTriangles * 3, surf->iindex * sizeof(unsigned int));
 	}
 	renderer->SetInterpolation(0.f);

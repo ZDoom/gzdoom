@@ -32,10 +32,17 @@
 class PolyTriangleDrawer
 {
 public:
-	static void ClearBuffers(DCanvas *canvas);
-	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas, bool span_drawers);
-	static void ToggleMirror(const DrawerCommandQueuePtr &queue);
-	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip);
+	static void ResizeBuffers(DCanvas *canvas);
+	static void ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value);
+	static void SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas);
+	static void SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw);
+	static void SetTwoSided(const DrawerCommandQueuePtr &queue, bool twosided);
+	static void SetWeaponScene(const DrawerCommandQueuePtr &queue, bool enable);
+	static void SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor);
+	static void SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld);
+	static void DrawArray(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode = PolyDrawMode::Triangles);
+	static void DrawElements(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode = PolyDrawMode::Triangles);
+	static bool IsBgra();
 };
 
 class PolyTriangleThreadData
@@ -43,12 +50,16 @@ class PolyTriangleThreadData
 public:
 	PolyTriangleThreadData(int32_t core, int32_t num_cores) : core(core), num_cores(num_cores) { }
 
-	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, bool span_drawers);
-	void SetTransform(const Mat4f *objectToClip);
-	void ToggleMirror() { mirror = !mirror; }
+	void ClearStencil(uint8_t value);
+	void SetViewport(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
+	void SetTransform(const Mat4f *objectToClip, const Mat4f *objectToWorld);
+	void SetCullCCW(bool value) { ccw = value; }
+	void SetTwoSided(bool value) { twosided = value; }
+	void SetWeaponScene(bool value) { weaponScene = value; }
+	void SetModelVertexShader(int frame1, int frame2, float interpolationFactor) { modelFrame1 = frame1; modelFrame2 = frame2; modelInterpolationFactor = interpolationFactor; }
 
-	void DrawElements(const PolyDrawArgs &args);
-	void DrawArrays(const PolyDrawArgs &args);
+	void DrawElements(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode);
+	void DrawArray(const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode);
 
 	int32_t core;
 	int32_t num_cores;
@@ -63,7 +74,7 @@ public:
 	static PolyTriangleThreadData *Get(DrawerThread *thread);
 
 private:
-	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const TriVertex &v);
+	ShadedTriVertex ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index);
 	void DrawShadedTriangle(const ShadedTriVertex *vertices, bool ccw, TriDrawTriangleArgs *args);
 	static bool IsDegenerate(const ShadedTriVertex *vertices);
 	static bool IsFrontfacing(TriDrawTriangleArgs *args);
@@ -78,9 +89,14 @@ private:
 	int dest_height = 0;
 	bool dest_bgra = false;
 	uint8_t *dest = nullptr;
-	bool mirror = false;
+	bool ccw = true;
+	bool twosided = false;
+	bool weaponScene = false;
 	const Mat4f *objectToClip = nullptr;
-	bool span_drawers = false;
+	const Mat4f *objectToWorld = nullptr;
+	int modelFrame1 = -1;
+	int modelFrame2 = -1;
+	float modelInterpolationFactor = 0.0f;
 
 	enum { max_additional_vertices = 16 };
 };
@@ -88,29 +104,78 @@ private:
 class PolySetTransformCommand : public DrawerCommand
 {
 public:
-	PolySetTransformCommand(const Mat4f *objectToClip);
+	PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolySetTransform"; }
 
 private:
 	const Mat4f *objectToClip;
+	const Mat4f *objectToWorld;
 };
 
-class PolyToggleMirrorCommand : public DrawerCommand
+class PolySetCullCCWCommand : public DrawerCommand
 {
 public:
+	PolySetCullCCWCommand(bool ccw);
+
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolyToggleMirror"; }
+
+private:
+	bool ccw;
+};
+
+class PolySetTwoSidedCommand : public DrawerCommand
+{
+public:
+	PolySetTwoSidedCommand(bool twosided);
+
+	void Execute(DrawerThread *thread) override;
+
+private:
+	bool twosided;
+};
+
+class PolySetWeaponSceneCommand : public DrawerCommand
+{
+public:
+	PolySetWeaponSceneCommand(bool value);
+
+	void Execute(DrawerThread *thread) override;
+
+private:
+	bool value;
+};
+
+class PolySetModelVertexShaderCommand : public DrawerCommand
+{
+public:
+	PolySetModelVertexShaderCommand(int frame1, int frame2, float interpolationFactor);
+
+	void Execute(DrawerThread *thread) override;
+
+private:
+	int frame1;
+	int frame2;
+	float interpolationFactor;
+};
+
+class PolyClearStencilCommand : public DrawerCommand
+{
+public:
+	PolyClearStencilCommand(uint8_t value);
+
+	void Execute(DrawerThread *thread) override;
+
+private:
+	uint8_t value;
 };
 
 class PolySetViewportCommand : public DrawerCommand
 {
 public:
-	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra, bool span_drawers);
+	PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "PolySetViewport"; }
 
 private:
 	int x;
@@ -122,19 +187,21 @@ private:
 	int dest_height;
 	int dest_pitch;
 	bool dest_bgra;
-	bool span_drawers;
 };
 
 class DrawPolyTrianglesCommand : public DrawerCommand
 {
 public:
-	DrawPolyTrianglesCommand(const PolyDrawArgs &args);
+	DrawPolyTrianglesCommand(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode);
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "DrawPolyTriangles"; }
 
 private:
 	PolyDrawArgs args;
+	const void *vertices;
+	const unsigned int *elements;
+	int count;
+	PolyDrawMode mode;
 };
 
 class DrawRectCommand : public DrawerCommand
@@ -143,7 +210,6 @@ public:
 	DrawRectCommand(const RectDrawArgs &args) : args(args) { }
 
 	void Execute(DrawerThread *thread) override;
-	FString DebugInfo() override { return "DrawRect"; }
 
 private:
 	RectDrawArgs args;

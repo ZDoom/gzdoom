@@ -34,11 +34,7 @@
 #include <math.h>
 #include <v_video.h>
 #include <s_sound.h>
-#include "dobject.h"
-#include "xs_Float.h"
 #include "r_state.h"
-#include "textures/textures.h"
-#include "math/cmath.h"
 #include "stats.h"
 #include "vmintern.h"
 #include "types.h"

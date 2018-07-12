@@ -267,12 +267,10 @@ namespace swrenderer
 			count = args.Count();
 		}
 
-		FString DebugInfo() override { return "DepthColumnCommand"; }
-
 		void Execute(DrawerThread *thread) override
 		{
 			auto zbuffer = PolyZBuffer::Instance();
-			int pitch = PolyStencilBuffer::Instance()->BlockWidth() * 8;
+			int pitch = PolyStencilBuffer::Instance()->Width();
 			float *values = zbuffer->Values() + y * pitch + x;
 			int cnt = count;
 
@@ -308,15 +306,13 @@ namespace swrenderer
 			#endif
 		}
 
-		FString DebugInfo() override { return "DepthSpanCommand"; }
-
 		void Execute(DrawerThread *thread) override
 		{
 			if (thread->skipped_by_thread(y))
 				return;
 
 			auto zbuffer = PolyZBuffer::Instance();
-			int pitch = PolyStencilBuffer::Instance()->BlockWidth() * 8;
+			int pitch = PolyStencilBuffer::Instance()->Width();
 			float *values = zbuffer->Values() + y * pitch;
 			int end = x2;
 

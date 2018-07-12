@@ -34,10 +34,7 @@
 */
 
 #include "doomtype.h"
-#include "files.h"
-#include "v_palette.h"
 #include "v_video.h"
-#include "textures/textures.h"
 
 FCanvasTexture::FCanvasTexture (const char *name, int width, int height)
 {

@@ -724,6 +724,7 @@ OptionMenu "SWROptions" protected
 	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
 	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
 	Option "$DSPLYMNU_SCALEFUZZ",				"r_fuzzscale", "OnOff"
+	Option "$DSPLYMNU_MODELS",					"r_models", "OnOff"
 }
 
 OptionMenu "VideoOptions" protected
@@ -1822,18 +1823,36 @@ OptionMenu ModReplayerOptions protected
 	5, "$ADLVLMODEL_WIN9X"
  }
 
+ OptionValue ADLOplCores
+ {
+	0, "$OPTVAL_NUKEDOPL3"
+	1, "$OPTVAL_NUKEDOPL3174"
+	2, "$OPTVAL_DOSBOXOPL3"
+ }
+
+ OptionValue OpnCores
+ {
+	0, "$OPTVAL_MAMEOPN2"
+	1, "$OPTVAL_NUKEDOPN2"
+	2, "$OPTVAL_GENSOPN2"
+ }
+
  OptionMenu ADLOptions protected
  {
- 	Title "$ADVSNDMNU_ADLMIDI"
- 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
- 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
- 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+	Title "$ADVSNDMNU_ADLMIDI"
+	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
+	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
+	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
+	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
+	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
  }
 
  OptionMenu OPNOptions protected
  {
- 	Title "$ADVSNDMNU_OPNMIDI"
- 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
+	Title "$ADVSNDMNU_OPNMIDI"
+	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
+	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
+	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
  }
 
 /*=======================================
@@ -2025,19 +2044,6 @@ OptionValue "FXAAQuality"
 	4, "$OPTVAL_EXTREME"
 }
 
-OptionValue "TextureFormats"
-{
-	0, "$OPTVAL_RGBA8"
-	1, "$OPTVAL_RGB5A1"
-	2, "$OPTVAL_RGBA4"
-	3, "$OPTVAL_RGBA2"
-	// [BB] Added modes for texture compression.
-	4, "$OPTVAL_COMPRRGBA"
-	5, "$OPTVAL_S3TCDXT1"
-	6, "$OPTVAL_S3TCDXT3"
-	7, "$OPTVAL_S3TCDXT5"
-}
-
 OptionValue "Anisotropy"
 {
 	1, "$OPTVAL_OFF"
@@ -2125,6 +2131,23 @@ OptionValue "HqResizeModes"
    15, "xBRZ_old 4x"
 }
 
+OptionValue "HqResizeModesNoMMX"
+{
+   0, "$OPTVAL_OFF"
+   1, "$OPTVAL_SCALE2X"
+   2, "$OPTVAL_SCALE3X"
+   3, "$OPTVAL_SCALE4X"
+   4, "$OPTVAL_HQ2X"
+   5, "$OPTVAL_HQ3X"
+   6, "$OPTVAL_HQ4X"
+   10, "xBRZ 2x"
+   11, "xBRZ 3x"
+   12, "xBRZ 4x"
+   13, "xBRZ_old 2x"
+   14, "xBRZ_old 3x"
+   15, "xBRZ_old 4x"
+}
+
 OptionValue "FogMode"
 {
 	0, "$OPTVAL_OFF"
@@ -2176,9 +2199,16 @@ OptionMenu "GLTextureGLOptions" protected
 	Option "$GLTEXMNU_TEXENABLED",		gl_texture,						"YesNo"
 	Option "$GLTEXMNU_TEXFILTER",		gl_texture_filter,				"FilterModes"
 	Option "$GLTEXMNU_ANISOTROPIC",		gl_texture_filter_anisotropic,	"Anisotropy"
-	Option "$GLTEXMNU_TEXFORMAT",		gl_texture_format,				"TextureFormats"
 	Option "$GLTEXMNU_ENABLEHIRES",		gl_texture_usehires,			"YesNo"
-	Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModes"
+	
+	ifOption(MMX)
+	{
+		Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModes"
+	}
+	else
+	{
+		Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModesNoMMX"
+	}
 	Option "$GLTEXMNU_RESIZETEX",		gl_texture_hqresize_textures,	"OnOff"
 	Option "$GLTEXMNU_RESIZESPR",		gl_texture_hqresize_sprites,	"OnOff"
 	Option "$GLTEXMNU_RESIZEFNT",		gl_texture_hqresize_fonts,		"OnOff"
@@ -2224,7 +2254,10 @@ OptionMenu "OpenGLOptions" protected
 	Slider "$GLPREFMNU_MENUBLUR",				gl_menu_blur, 0, 5.0, 0.5, 2
 	StaticText " "
 	Option "$GLPREFMNU_VRMODE",					vr_mode, 						"VRMode"
-	Option "$GLPREFMNU_VRQUADSTEREO",			vr_enable_quadbuffered,			"OnOff"
+	IfOption(Windows)
+	{
+		Option "$GLPREFMNU_VRQUADSTEREO",			vr_enable_quadbuffered,			"OnOff"
+	}
 	StaticText " "
 	Option "$GLPREFMNU_MULTISAMPLE", 			gl_multisample,					"Multisample"
 	Option "$GLPREFMNU_TONEMAP", 				gl_tonemap,						"TonemapModes"

@@ -26,12 +26,10 @@
 //-----------------------------------------------------------------------------
 
 #include "dsectoreffect.h"
-#include "gi.h"
 #include "p_local.h"
 #include "g_levellocals.h"
 #include "p_3dmidtex.h"
 #include "r_data/r_interpolate.h"
-#include "statnums.h"
 #include "serializer.h"
 #include "doomstat.h"
 #include "vm.h"

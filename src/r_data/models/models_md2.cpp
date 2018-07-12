@@ -27,9 +27,6 @@
 **/
 
 #include "w_wad.h"
-#include "cmdlib.h"
-#include "sc_man.h"
-#include "m_crc32.h"
 #include "r_data/models/models.h"
 
 #ifdef _MSC_VER
@@ -282,15 +279,17 @@ FDMDModel::~FDMDModel()
 
 void FDMDModel::BuildVertexBuffer(FModelRenderer *renderer)
 {
-	if (mVBuf == NULL)
+	if (!GetVertexBuffer(renderer))
 	{
 		LoadGeometry();
 
 		int VertexBufferSize = info.numFrames * lodInfo[0].numTriangles * 3;
 		unsigned int vindex = 0;
 
-		mVBuf = renderer->CreateVertexBuffer(false, info.numFrames == 1);
-		FModelVertex *vertptr = mVBuf->LockVertexBuffer(VertexBufferSize);
+		auto vbuf = renderer->CreateVertexBuffer(false, info.numFrames == 1);
+		SetVertexBuffer(renderer, vbuf);
+
+		FModelVertex *vertptr = vbuf->LockVertexBuffer(VertexBufferSize);
 
 		for (int i = 0; i < info.numFrames; i++)
 		{
@@ -316,7 +315,7 @@ void FDMDModel::BuildVertexBuffer(FModelRenderer *renderer)
 				tri++;
 			}
 		}
-		mVBuf->UnlockVertexBuffer();
+		vbuf->UnlockVertexBuffer();
 		UnloadGeometry();
 	}
 }
@@ -371,7 +370,7 @@ void FDMDModel::RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame
 
 	renderer->SetInterpolation(inter);
 	renderer->SetMaterial(skin, false, translation);
-	mVBuf->SetupFrame(renderer, frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
+	GetVertexBuffer(renderer)->SetupFrame(renderer, frames[frameno].vindex, frames[frameno2].vindex, lodInfo[0].numTriangles * 3);
 	renderer->DrawArrays(0, lodInfo[0].numTriangles * 3);
 	renderer->SetInterpolation(0.f);
 }

@@ -40,9 +40,7 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "timidity.h"
 #include "common.h"
-#include "sffile.h"
 #include "sfitem.h"
 
 

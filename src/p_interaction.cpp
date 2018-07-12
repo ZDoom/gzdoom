@@ -52,13 +52,8 @@
 #include "b_bot.h"	//Added by MC:
 
 #include "d_player.h"
-#include "a_sharedglobal.h"
-#include "a_pickups.h"
 #include "gi.h"
-#include "templates.h"
 #include "sbar.h"
-#include "s_sound.h"
-#include "g_level.h"
 #include "d_net.h"
 #include "d_netinf.h"
 #include "a_morph.h"
@@ -719,7 +714,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 				tics = 1;
 		}
 	}
-	else
+	// The following condition is needed to avoid crash when player class has no death states
+	// Instance of player pawn will be garbage collected on reloading of level
+	else if (player == nullptr)
 	{
 		Destroy();
 	}
@@ -914,7 +911,7 @@ static inline bool isFakePain(AActor *target, AActor *inflictor, int damage)
 
 // Returns the amount of damage actually inflicted upon the target, or -1 if
 // the damage was cancelled.
-static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle)
+static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int damage, FName mod, int flags, DAngle angle, bool& needevent)
 {
 	DAngle ang;
 	player_t *player = NULL;
@@ -1508,8 +1505,13 @@ static int DamageMobj (AActor *target, AActor *inflictor, AActor *source, int da
 					source = source->tracer;
 				}
 			}
+
+			const int realdamage = MAX(0, damage);
+			E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+			needevent = false;
+
 			target->CallDie (source, inflictor, flags);
-			return MAX(0, damage);
+			return realdamage;
 		}
 	}
 
@@ -1635,9 +1637,12 @@ DEFINE_ACTION_FUNCTION(AActor, DamageMobj)
 	PARAM_FLOAT_DEF(angle);
 
 	// [ZZ] event handlers need the result.
-	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle);
-	if (!realdamage) ACTION_RETURN_INT(0);
-	E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
+	bool needevent = true;
+	int realdamage = DamageMobj(self, inflictor, source, damage, mod, flags, angle, needevent);
+	if (realdamage && needevent)
+	{
+		E_WorldThingDamaged(self, inflictor, source, realdamage, mod, flags, angle);
+	}
 	ACTION_RETURN_INT(realdamage);
 }
 
@@ -1654,10 +1659,13 @@ int P_DamageMobj(AActor *target, AActor *inflictor, AActor *source, int damage, 
 	}
 	else
 	{
-		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle);
-		if (!realdamage) return 0;
-		// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
-		E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+		bool needevent = true;
+		int realdamage = DamageMobj(target, inflictor, source, damage, mod, flags, angle, needevent);
+		if (realdamage && needevent)
+		{
+			// [ZZ] event handlers only need the resultant damage (they can't do anything about it anyway)
+			E_WorldThingDamaged(target, inflictor, source, realdamage, mod, flags, angle);
+		}
 		return realdamage;
 	}
 }

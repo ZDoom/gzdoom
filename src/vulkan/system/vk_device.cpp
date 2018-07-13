@@ -48,7 +48,7 @@ extern HWND Window;
 #include "version.h"
 
 #ifdef NDEBUG
-CVAR(Bool, vk_debug, false, 0);
+CVAR(Bool, vk_debug, true, 0);	// this should be false, once the oversized model can be removed.
 #else
 CVAR(Bool, vk_debug, true, 0);
 #endif

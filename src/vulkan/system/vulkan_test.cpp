@@ -6,9 +6,6 @@
 #undef max
 #undef min
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
@@ -27,6 +24,7 @@
 #include <unordered_map>
 #include "vk_framebuffer.h"
 #include "vulkan/textures/vk_samplers.h"
+#include "textures/textures.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;
@@ -569,35 +567,39 @@ public:
 
     void createTextureImage() {
         int texWidth, texHeight, texChannels;
-        stbi_uc* pixels = stbi_load(TEXTURE_PATH.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-        VkDeviceSize imageSize = texWidth * texHeight * 4;
-        mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-        if (!pixels) {
-            throw std::runtime_error("failed to load texture image!");
-        }
+		FTextureID texno = TexMan.CheckForTexture("chalet", ETextureType::Any);
+		if (texno.isValid())
+		{
+			FTexture *tex = TexMan[texno];
+			int w, h;
+			auto buffer = tex->CreateTexBuffer(0, texWidth, texHeight);
 
-        VkBuffer stagingBuffer;
-        VkDeviceMemory stagingBufferMemory;
-        createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+			VkDeviceSize imageSize = texWidth * texHeight * 4;
+			mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-        void* data;
-        vkMapMemory(vDevice->vkDevice, stagingBufferMemory, 0, imageSize, 0, &data);
-            memcpy(data, pixels, static_cast<size_t>(imageSize));
-        vkUnmapMemory(vDevice->vkDevice, stagingBufferMemory);
+			VkBuffer stagingBuffer;
+			VkDeviceMemory stagingBufferMemory;
+			createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-        stbi_image_free(pixels);
+			void* data;
+			vkMapMemory(vDevice->vkDevice, stagingBufferMemory, 0, imageSize, 0, &data);
+			memcpy(data, buffer, static_cast<size_t>(imageSize));
+			vkUnmapMemory(vDevice->vkDevice, stagingBufferMemory);
 
-        createImage(texWidth, texHeight, mipLevels, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+			delete[] buffer;
 
-		vDevice->TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
-        copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-        //transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
+			createImage(texWidth, texHeight, mipLevels, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
-        vkDestroyBuffer(vDevice->vkDevice, stagingBuffer, nullptr);
-        vkFreeMemory(vDevice->vkDevice, stagingBufferMemory, nullptr);
+			vDevice->TransitionImageLayout(textureImage, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+			copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+			//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 
-        generateMipmaps(textureImage, texWidth, texHeight, mipLevels);
+			vkDestroyBuffer(vDevice->vkDevice, stagingBuffer, nullptr);
+			vkFreeMemory(vDevice->vkDevice, stagingBufferMemory, nullptr);
+
+			generateMipmaps(textureImage, texWidth, texHeight, mipLevels);
+		}
     }
 
     void generateMipmaps(VkImage image, int32_t texWidth, int32_t texHeight, uint32_t mipLevels) {
@@ -680,7 +682,7 @@ public:
     }
 
     void createTextureImageView() {
-        textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+        textureImageView = createImageView(textureImage, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
     }
 
     VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) {

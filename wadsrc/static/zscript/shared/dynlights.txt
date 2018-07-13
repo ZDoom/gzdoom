@@ -408,4 +408,30 @@ class VavoomLightColor : VavoomLight
 	}
 }
 
+class ReflectionCapture : Actor native
+{
+}
 
+class BoxReflectionCapture : ReflectionCapture
+{
+	Default
+	{
+		ReflectionCapture.Type "Box";
+	}
+}
+
+class SphereReflectionCapture : ReflectionCapture
+{
+	Default
+	{
+		ReflectionCapture.Type "Sphere";
+	}
+}
+
+class PlaneReflectionCapture : ReflectionCapture
+{
+	Default
+	{
+		ReflectionCapture.Type "Plane";
+	}
+}

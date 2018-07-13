@@ -237,3 +237,17 @@ public:
     int mShadowmapIndex;
 
 };
+
+enum EReflectionCaptureType
+{
+	BoxReflectionCapture,
+	SphereReflectionCapture,
+	PlaneReflectionCapture
+};
+
+class AReflectionCapture : public AActor
+{
+	DECLARE_CLASS(AReflectionCapture, AActor)
+public:
+	uint8_t capturetype;
+};

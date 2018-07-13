@@ -45,6 +45,13 @@ vec3 fresnelSchlickRoughness(float cosTheta, vec3 F0, float roughness)
 	return F0 + (max(vec3(1.0 - roughness), F0) - F0) * pow(1.0 - cosTheta, 5.0);
 }
 
+float linearDistanceAttenuation(vec4 lightpos)
+{
+	float lightdistance = distance(lightpos.xyz, pixelpos.xyz);
+	return clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
+}
+
+/*
 float quadraticDistanceAttenuation(vec4 lightpos)
 {
 	float strength = (1.0 + lightpos.w * lightpos.w * 0.25) * 0.5;
@@ -55,6 +62,7 @@ float quadraticDistanceAttenuation(vec4 lightpos)
 
 	return attenuation;
 }
+*/
 
 vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 {
@@ -69,14 +77,11 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 
 	vec3 N = ApplyNormalMap();
 	vec3 V = normalize(uCameraPos.xyz - worldpos);
+	vec3 R = reflect(-V, N);
 
 	vec3 F0 = mix(vec3(0.04), albedo, metallic);
 
 	vec3 Lo = uDynLightColor.rgb;
-	vec3 envWest = vec3(0.0);
-	vec3 envEast = vec3(0.0);
-	vec3 envNorth = vec3(0.0);
-	vec3 envSouth = vec3(0.0);
 
 	if (uLightIndex >= 0)
 	{
@@ -93,50 +98,34 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 				vec4 lightspot1 = lights[i+2];
 				vec4 lightspot2 = lights[i+3];
 
-				if (lightcolor.a < 0.0) // Attenuated lights act as true point lights
+				vec3 L = normalize(lightpos.xyz - worldpos);
+				vec3 H = normalize(V + L);
+
+				float attenuation = linearDistanceAttenuation(lightpos);
+				if (lightspot1.w == 1.0)
+					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
+				if (lightcolor.a < 0.0)
+					attenuation *= clamp(dot(N, L), 0.0, 1.0); // Sign bit is the attenuated light flag
+
+				if (attenuation > 0.0)
 				{
-					vec3 L = normalize(lightpos.xyz - worldpos);
-					vec3 H = normalize(V + L);
+					attenuation *= shadowAttenuation(lightpos, lightcolor.a);
 
-					float attenuation = quadraticDistanceAttenuation(lightpos);
-					if (lightspot1.w == 1.0)
-						attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
-					if (lightcolor.a < 0.0)
-						attenuation *= clamp(dot(N, L), 0.0, 1.0); // Sign bit is the attenuated light flag
+					vec3 radiance = lightcolor.rgb * attenuation;
 
-					if (attenuation > 0.0)
-					{
-						attenuation *= shadowAttenuation(lightpos, lightcolor.a);
+					// cook-torrance brdf
+					float NDF = DistributionGGX(N, H, roughness);
+					float G = GeometrySmith(N, V, L, roughness);
+					vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
 
-						vec3 radiance = lightcolor.rgb * attenuation;
+					vec3 kS = F;
+					vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
 
-						// cook-torrance brdf
-						float NDF = DistributionGGX(N, H, roughness);
-						float G = GeometrySmith(N, V, L, roughness);
-						vec3 F = fresnelSchlick(clamp(dot(H, V), 0.0, 1.0), F0);
+					vec3 nominator = NDF * G * F;
+					float denominator = 4.0 * clamp(dot(N, V), 0.0, 1.0) * clamp(dot(N, L), 0.0, 1.0);
+					vec3 specular = nominator / max(denominator, 0.001);
 
-						vec3 kS = F;
-						vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
-
-						vec3 nominator = NDF * G * F;
-						float denominator = 4.0 * clamp(dot(N, V), 0.0, 1.0) * clamp(dot(N, L), 0.0, 1.0);
-						vec3 specular = nominator / max(denominator, 0.001);
-
-						Lo += (kD * albedo / PI + specular) * radiance;
-					}
-				}
-				else // Non-attenuated lights act as environmental lights
-				{
-					float lightdistance = distance(lightpos.xyz, pixelpos.xyz);
-					float attenuation = clamp((lightpos.w - lightdistance) / lightpos.w, 0.0, 1.0);
-					vec3 L = normalize(lightpos.xyz - worldpos);
-
-					float cx = L.x * attenuation;
-					float cz = L.z * attenuation;
-					envEast += lightcolor.rgb * clamp(cx, 0.0, 1.0);
-					envWest += lightcolor.rgb * clamp(-cx, 0.0, 1.0);
-					envNorth += lightcolor.rgb * clamp(cz, 0.0, 1.0);
-					envSouth += lightcolor.rgb * clamp(-cz, 0.0, 1.0);
+					Lo += (kD * albedo / PI + specular) * radiance;
 				}
 			}
 			//
@@ -152,7 +141,7 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 				vec3 L = normalize(lightpos.xyz - worldpos);
 				vec3 H = normalize(V + L);
 
-				float attenuation = quadraticDistanceAttenuation(lightpos);
+				float attenuation = linearDistanceAttenuation(lightpos);
 				if (lightspot1.w == 1.0)
 					attenuation *= spotLightAttenuation(lightpos, lightspot1.xyz, lightspot2.x, lightspot2.y);
 				if (lightcolor.a < 0.0)
@@ -182,29 +171,31 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 		}
 	}
 
-	// Calculate environmental light contribution using four directional colors:
+	float clampNdotV = clamp(dot(N, V), 0.0, 1.0);
 
-	// To do: add ambientLight 
+	vec3 F = fresnelSchlickRoughness(clampNdotV, F0, roughness);
 
-	vec3 F = fresnelSchlickRoughness(clamp(dot(N, V), 0.0, 1.0), F0, roughness);
-
+//#define USE_LIGHTLEVEL
+#if defined(USE_LIGHTLEVEL)
 	vec3 kS = F;
 	vec3 kD = 1.0 - kS;
-	kD *= 1.0 - metallic;
+	vec3 irradiance = ambientLight;
+	vec3 diffuse = irradiance * albedo;
+	vec3 ambient = (kD * diffuse) * ao;
+#else
+	vec3 kS = F;
+	vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
 
-	const float MAX_REFLECTION_LOD = 4.0;
-	vec3 R = reflect(-V, N);
-	vec4 irradianceData = texture(IrradianceMap, N);
-	vec4 prefilterData = textureLod(PrefilterMap, R, roughness * MAX_REFLECTION_LOD);
-
-	vec3 irradiance = irradianceData.x * envEast + irradianceData.y * envWest + irradianceData.z * envNorth + irradianceData.w * envSouth;
+	vec3 irradiance = texture(IrradianceMap, N).rgb;
 	vec3 diffuse = irradiance * albedo;
 
-	vec3 prefilteredColor = prefilterData.x * envEast + prefilterData.y * envWest + prefilterData.z * envNorth + prefilterData.w * envSouth;
-	vec2 envBRDF = texture(BrdfLUT, vec2(clamp(dot(N, V), 0.0, 1.0), roughness)).rg;
+	const float MAX_REFLECTION_LOD = 4.0;
+	vec3 prefilteredColor = textureLod(PrefilterMap, R, roughness * MAX_REFLECTION_LOD).rgb;
+	vec2 envBRDF = texture(BrdfLUT, vec2(clampNdotV, roughness)).rg;
 	vec3 specular = prefilteredColor * (F * envBRDF.x + envBRDF.y);
 
 	vec3 ambient = (kD * diffuse + specular) * ao;
+#endif
 
 	vec3 color = max(ambient + Lo, vec3(0.0));
 

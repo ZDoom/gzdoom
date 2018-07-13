@@ -317,6 +317,7 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 		// NoInterpolateView should have no bearing on camera textures, but needs to be preserved for the main view below.
 		bool saved_niv = NoInterpolateView;
 		NoInterpolateView = false;
+		RenderReflectionCaptures();
 		// prepare all camera textures that have been used in the last frame
 		FCanvasTextureInfo::UpdateAll();
 		NoInterpolateView = saved_niv;
@@ -392,6 +393,74 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	}
 
 	tex->SetUpdated();
+}
+
+void FGLRenderer::RenderReflectionCaptures()
+{
+	static bool captured = false;
+	if (captured)
+		return;
+
+	int width = 512;
+	int height = 512;
+
+	FHardwareTexture texture(true);
+	texture.CreateTexture(nullptr, width, height, 0, false, 0, "ReflectionCapture");
+
+	StartOffscreen();
+
+	texture.BindToFrameBuffer(width, height);
+
+	DRotator sideRotations[6] =
+	{
+		{   0.0,   0.0, 0.0 }, // pos x
+		{ -90.0,   0.0, 0.0 }, // pos y
+		{   0.0,  90.0, 0.0 }, // pos z
+		{   0.0, 180.0, 0.0 }, // neg x
+		{  90.0,   0.0, 0.0 }, // neg y
+		{   0.0, 270.0, 0.0 }, // neg z
+	};
+
+	const char *sideNames[6] = { "pos_x", "pos_y", "pos_z", "neg_x", "neg_y", "neg_z" };
+
+	TThinkerIterator<AReflectionCapture> it(STAT_DEFAULT);
+	while (auto actor = it.Next())
+	{
+		for (int side = 0; side < 6; side++)
+		{
+			actor->Angles = sideRotations[side];
+
+			IntRect bounds;
+			bounds.left = 0;
+			bounds.top = 0;
+			bounds.width = FHardwareTexture::GetTexDimension(width);
+			bounds.height = FHardwareTexture::GetTexDimension(height);
+
+			bool oldValue = r_NoInterpolate;
+			r_NoInterpolate = true;
+
+			GLSceneDrawer drawer;
+			drawer.FixedColormap = CM_DEFAULT;
+			gl_RenderState.SetFixedColormap(CM_DEFAULT);
+			drawer.RenderViewpoint(actor, &bounds, 90.0f, (float)width / height, (float)width / height, false, false);
+
+			r_NoInterpolate = oldValue;
+
+			FString filename;
+			filename.Format("c:\\development\\cube_%s.png", sideNames[side]);
+			std::unique_ptr<FileWriter> file(FileWriter::Open(filename));
+
+			uint8_t *scr = (uint8_t *)M_Malloc(width * height * 4);
+			glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, scr);
+			M_CreatePNG(file.get(), scr + ((height - 1) * width * 4), NULL, SS_BGRA, width, height, -width * 4, 2.2f);
+			M_Free(scr);
+		}
+
+		captured = true;
+		break;
+	}
+
+	EndOffscreen();
 }
 
 void FGLRenderer::WriteSavePic(player_t *player, FileWriter *file, int width, int height)

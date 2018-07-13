@@ -170,6 +170,7 @@ public:
 	void Flush();
 	void Draw2D(F2DDrawer *data);
 	void RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, double FOV);
+	void RenderReflectionCaptures();
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height);
 	sector_t *RenderView(player_t *player);
 	void BeginFrame();

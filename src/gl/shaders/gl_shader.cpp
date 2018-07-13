@@ -370,7 +370,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	}
 
 	glUseProgram(hShader);
-	if (quadmode_index > 0) glUniform1i(quadmode_index, 0);
+	if (quadmode_index >= 0) glUniform1i(quadmode_index, 0);
 
 	// set up other texture units (if needed by the shader)
 	for (int i = 2; i<16; i++)
@@ -378,20 +378,20 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		char stringbuf[20];
 		mysnprintf(stringbuf, 20, "texture%d", i);
 		int tempindex = glGetUniformLocation(hShader, stringbuf);
-		if (tempindex > 0) glUniform1i(tempindex, i - 1);
+		if (tempindex >= 0) glUniform1i(tempindex, i - 1);
 	}
 
 	int shadowmapindex = glGetUniformLocation(hShader, "ShadowMap");
-	if (shadowmapindex > 0) glUniform1i(shadowmapindex, 16);
+	if (shadowmapindex >= 0) glUniform1i(shadowmapindex, 16);
 
 	int brdfindex = glGetUniformLocation(hShader, "BrdfLUT");
-	if (brdfindex > 0) glUniform1i(brdfindex, 17);
+	if (brdfindex >= 0) glUniform1i(brdfindex, 17);
 
 	int irradianceindex = glGetUniformLocation(hShader, "IrradianceMap");
-	if (irradianceindex > 0) glUniform1i(irradianceindex, 18);
+	if (irradianceindex >= 0) glUniform1i(irradianceindex, 18);
 
 	int prefilterindex = glGetUniformLocation(hShader, "PrefilterMap");
-	if (prefilterindex > 0) glUniform1i(prefilterindex, 19);
+	if (prefilterindex >= 0) glUniform1i(prefilterindex, 19);
 
 	glUseProgram(0);
 	return !!linked;
@@ -586,6 +586,7 @@ FShaderManager::FShaderManager()
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
 
 			glActiveTexture(GL_TEXTURE0 + 19);
 			glGenTextures(1, (GLuint*)&mPrefilterMap);
@@ -599,6 +600,11 @@ FShaderManager::FShaderManager()
 					prefilter += size * size * 8;
 					size >>= 1;
 				}
+
+				int16_t zero[4 * 4 * 4] = { 0 };
+				glTexImage2D(side, 5, GL_RGBA16F, 4, 4, 0, GL_RGBA, GL_HALF_FLOAT, zero);
+				glTexImage2D(side, 6, GL_RGBA16F, 2, 2, 0, GL_RGBA, GL_HALF_FLOAT, zero);
+				glTexImage2D(side, 7, GL_RGBA16F, 1, 1, 0, GL_RGBA, GL_HALF_FLOAT, zero);
 			}
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 			glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);

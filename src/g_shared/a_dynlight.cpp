@@ -995,3 +995,16 @@ CCMD(listsublights)
 }
 
 
+IMPLEMENT_CLASS(AReflectionCapture, false, false)
+
+DEFINE_CLASS_PROPERTY(type, S, ReflectionCapture)
+{
+	PROP_STRING_PARM(str, 0);
+
+	static const char * ctype_names[] = { "Box","Sphere","Plane", nullptr };
+	static const int ctype_values[] = { BoxReflectionCapture, SphereReflectionCapture, PlaneReflectionCapture };
+
+	int style = MatchString(str, ctype_names);
+	if (style < 0) I_Error("Unknown reflection capture type '%s'", str);
+	defaults->capturetype = ctype_values[style];
+}

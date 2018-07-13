@@ -77,7 +77,7 @@ VkResult VkTexture::CreateImage(uint32_t texWidth, uint32_t texHeight, int miple
 	imageInfo.extent.depth = 1;
 	imageInfo.mipLevels = miplevels;
 	imageInfo.arrayLayers = 1;
-	imageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+	imageInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
 	imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -220,7 +220,7 @@ VkResult VkTexture::CreateImageView(VkImage image, uint32_t mipLevels)
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = image;
 	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	viewInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
+	viewInfo.format = VK_FORMAT_B8G8R8A8_UNORM;
 	viewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = mipLevels;
@@ -236,7 +236,7 @@ VkResult VkTexture::CreateImageView(VkImage image, uint32_t mipLevels)
 //
 //==========================================================================
 
-VkResult VkTexture::Create(const char *pixels, int texWidth, int texHeight, bool mipmapped) 
+VkResult VkTexture::Create(const uint8_t *pixels, int texWidth, int texHeight, bool mipmapped)
 {
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 	int mipLevels = mipmapped ? static_cast<uint32_t>(floor(log2(std::max(texWidth, texHeight)))) + 1 : 1;
@@ -253,10 +253,10 @@ VkResult VkTexture::Create(const char *pixels, int texWidth, int texHeight, bool
 			memcpy(data, pixels, static_cast<size_t>(imageSize));
 			vmaUnmapMemory(vDevice->vkAllocator, stagingBufferAllocation);
 
-			res = CreateImage(texWidth, texHeight, mipmapped, textureImage, textureImageAllocation);
+			res = CreateImage(texWidth, texHeight, mipLevels, textureImage, textureImageAllocation);
 			if (res == VK_SUCCESS)
 			{
-				vDevice->TransitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+				vDevice->TransitionImageLayout(textureImage, VK_FORMAT_B8G8R8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
 				CopyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 				//transitioned to VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL while generating mipmaps
 

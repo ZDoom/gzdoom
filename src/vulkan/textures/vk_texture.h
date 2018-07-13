@@ -27,7 +27,7 @@ public:
 		Destroy();
 	}
 
-	VkResult Create(const char *pixels, int texWidth, int texHeight, bool mipmapped);
+	VkResult Create(const uint8_t *pixels, int texWidth, int texHeight, bool mipmapped);
 
 	VkImageView Handle() const { return textureImageView; }
 };

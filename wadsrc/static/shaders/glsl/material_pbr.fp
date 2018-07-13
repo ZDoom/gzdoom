@@ -175,8 +175,8 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 
 	vec3 F = fresnelSchlickRoughness(clampNdotV, F0, roughness);
 
-//#define USE_LIGHTLEVEL
-#if defined(USE_LIGHTLEVEL)
+//#define GENERATE_ENVMAP
+#if defined(GENERATE_ENVMAP)
 	vec3 kS = F;
 	vec3 kD = 1.0 - kS;
 	vec3 irradiance = ambientLight;
@@ -186,7 +186,7 @@ vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
 	vec3 kS = F;
 	vec3 kD = (vec3(1.0) - kS) * (1.0 - metallic);
 
-	vec3 irradiance = texture(IrradianceMap, N).rgb;
+	vec3 irradiance = ambientLight; //texture(IrradianceMap, N).rgb;
 	vec3 diffuse = irradiance * albedo;
 
 	const float MAX_REFLECTION_LOD = 4.0;

@@ -223,7 +223,7 @@ void OpenGLFrameBuffer::WipeCleanup()
 		delete wipeendscreen;
 		wipeendscreen = NULL;
 	}
-	FMaterial::ClearLastTexture();
+	gl_RenderState.ClearLastMaterial();
 }
 
 //==========================================================================

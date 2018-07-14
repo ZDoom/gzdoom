@@ -73,7 +73,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) :
 
 	// Make sure all global variables tracking OpenGL context state are reset..
 	FHardwareTexture::InitGlobalState();
-	FMaterial::InitGlobalState();
 	gl_RenderState.Reset();
 
 	GLRenderer = new FGLRenderer(this);
@@ -339,6 +338,11 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex)
 	return new FHardwareTexture(tex->bNoCompress);
 }
 
+void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
+{
+	gl_RenderState.SetMaterial(mat, CLAMP_NONE, translation, false, false);
+}
+
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
 {
 	return new FGLModelRenderer(nullptr, mli);
@@ -354,11 +358,6 @@ IShaderProgram *OpenGLFrameBuffer::CreateShaderProgram()
 	return new FShaderProgram; 
 }
 
-
-void OpenGLFrameBuffer::UnbindTexUnit(int no)
-{
-	FHardwareTexture::Unbind(no);
-}
 
 void OpenGLFrameBuffer::TextureFilterChanged()
 {

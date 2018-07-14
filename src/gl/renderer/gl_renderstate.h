@@ -124,6 +124,13 @@ class FRenderState
 
 	bool ApplyShader();
 
+	// Texture binding state
+	FMaterial *lastMaterial = nullptr;
+	int lastClamp = 0;
+	int lastTranslation = 0;
+	int maxBoundMaterial = -1;
+
+
 public:
 
 	VSMatrix mModelMatrix;
@@ -136,21 +143,12 @@ public:
 
 	void Reset();
 
-	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
+	void ClearLastMaterial()
 	{
-		if (mat->tex->bHasCanvas)
-		{
-			mTempTM = TM_OPAQUE;
-		}
-		else
-		{
-			mTempTM = TM_MODULATE;
-		}
-		mEffectState = overrideshader >= 0? overrideshader : mat->mShaderIndex;
-		mShaderTimer = mat->tex->shaderspeed;
-		SetSpecular(mat->tex->Glossiness, mat->tex->SpecularLevel);
-		mat->Bind(clampmode, translation);
+		lastMaterial = nullptr;
 	}
+
+	void SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture);
 
 	void Apply();
 	void ApplyColorMask();

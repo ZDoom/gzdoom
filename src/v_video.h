@@ -417,6 +417,7 @@ public:
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
 	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual void UnbindTexUnit(int no) {}
 	virtual void TextureFilterChanged() {}

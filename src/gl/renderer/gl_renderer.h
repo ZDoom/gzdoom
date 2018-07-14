@@ -177,10 +177,8 @@ public:
 	bool StartOffscreen();
 	void EndOffscreen();
 
-	void FillSimplePoly(FTexture *texture, FVector2 *points, int npoints,
-		double originx, double originy, double scalex, double scaley,
-		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel, int bottomclip);
-
+	void BindToFrameBuffer(FMaterial *mat);
+		
 	static float GetZNear() { return 5.f; }
 	static float GetZFar() { return 65536.f; }
 };

@@ -1079,18 +1079,12 @@ set (PCH_SOURCES
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	hwrenderer/dynlights/hw_shadowmap.cpp
 	hwrenderer/scene/hw_skydome.cpp
+	hwrenderer/postprocessing/hw_postprocess.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
 	hwrenderer/postprocessing/hw_shadowmapshader.cpp
 	hwrenderer/postprocessing/hw_presentshader.cpp
 	hwrenderer/postprocessing/hw_present3dRowshader.cpp
-	hwrenderer/postprocessing/hw_bloomshader.cpp
-	hwrenderer/postprocessing/hw_ambientshader.cpp
-	hwrenderer/postprocessing/hw_blurshader.cpp
-	hwrenderer/postprocessing/hw_colormapshader.cpp
-	hwrenderer/postprocessing/hw_tonemapshader.cpp
-	hwrenderer/postprocessing/hw_lensshader.cpp
-	hwrenderer/postprocessing/hw_fxaashader.cpp
 	hwrenderer/textures/hw_material.cpp
 	hwrenderer/textures/hw_precache.cpp
 	hwrenderer/utility/hw_clock.cpp

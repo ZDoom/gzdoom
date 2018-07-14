@@ -16,6 +16,7 @@ class MBFHelperDog : Actor
 		PainSound "dog/pain";
 		SeeSound "dog/sight";
 		Obituary "$OB_DOG";
+		Tag "$FN_DOG";
 	}
 	States
 	{

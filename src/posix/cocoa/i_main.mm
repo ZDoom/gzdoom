@@ -36,9 +36,6 @@
 
 #include <sys/sysctl.h>
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "c_console.h"
 #include "c_cvars.h"
 #include "cmdlib.h"
@@ -47,8 +44,6 @@
 #include "m_argv.h"
 #include "st_console.h"
 #include "version.h"
-
-#undef Class
 
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
@@ -152,6 +147,7 @@ static void I_DetectOS()
 		case 11: name = "OS X El Capitan";       break;
 		case 12: name = "macOS Sierra";          break;
 		case 13: name = "macOS High Sierra";     break;
+		case 14: name = "macOS Mojave";          break;
 	}
 
 	char release[16] = "unknown";

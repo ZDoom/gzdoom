@@ -26,21 +26,6 @@ class FLightBuffer;
 class FSamplerManager;
 class DPSprite;
 class FGLRenderBuffers;
-class FLinearDepthShader;
-class FDepthBlurShader;
-class FSSAOShader;
-class FSSAOCombineShader;
-class FBloomExtractShader;
-class FBloomCombineShader;
-class FExposureExtractShader;
-class FExposureAverageShader;
-class FExposureCombineShader;
-class FBlurShader;
-class FTonemapShader;
-class FColormapShader;
-class FLensShader;
-class FFXAALumaShader;
-class FFXAAShader;
 class FPresentShader;
 class FPresent3DCheckerShader;
 class FPresent3DColumnShader; 
@@ -79,22 +64,6 @@ public:
 	FGLRenderBuffers *mBuffers;
 	FGLRenderBuffers *mScreenBuffers;
 	FGLRenderBuffers *mSaveBuffers;
-	FLinearDepthShader *mLinearDepthShader;
-	FSSAOShader *mSSAOShader;
-	FDepthBlurShader *mDepthBlurShader;
-	FSSAOCombineShader *mSSAOCombineShader;
-	FBloomExtractShader *mBloomExtractShader;
-	FBloomCombineShader *mBloomCombineShader;
-	FExposureExtractShader *mExposureExtractShader;
-	FExposureAverageShader *mExposureAverageShader;
-	FExposureCombineShader *mExposureCombineShader;
-	FBlurShader *mBlurShader;
-	FTonemapShader *mTonemapShader;
-	FColormapShader *mColormapShader;
-	FHardwareTexture *mTonemapPalette;
-	FLensShader *mLensShader;
-	FFXAALumaShader *mFXAALumaShader;
-	FFXAAShader *mFXAAShader;
 	FPresentShader *mPresentShader;
 	FPresent3DCheckerShader *mPresent3dCheckerShader;
 	FPresent3DColumnShader *mPresent3dColumnShader;
@@ -113,8 +82,6 @@ public:
 
 	FPortalSceneState mPortalState;
 
-	bool buffersActive = false;
-
 	float mSceneClearColor[3];
 
 	FGLRenderer(OpenGLFrameBuffer *fb);
@@ -131,14 +98,7 @@ public:
 	void RenderScreenQuad();
 	void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D);
 	void AmbientOccludeScene(float m5);
-	void UpdateCameraExposure();
-	void BloomScene(int fixedcm);
-	void TonemapScene();
-	void ColormapScene(int fixedcm);
-	void CreateTonemapPalette();
 	void ClearTonemapPalette();
-	void LensDistortScene();
-	void ApplyFXAA();
 	void BlurScene(float gameinfobluramount);
 	void CopyToBackbuffer(const IntRect *bounds, bool applyGamma);
 	void DrawPresentTexture(const IntRect &box, bool applyGamma);
@@ -149,7 +109,7 @@ public:
 	sector_t *RenderView(player_t *player);
 	void BeginFrame();
     
-    void Set3DViewport(bool mainview);
+    void Set3DViewport();
     sector_t *RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen);
 
 

@@ -55,7 +55,6 @@
 
 void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli)
 {
-	if (isFullbrightScene()) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -84,7 +83,6 @@ void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, 
 
 void FDrawInfo::SetupSectorLights(GLFlat *flat, int pass, int *dli)
 {
-	if (isFullbrightScene()) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -303,6 +301,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	int rel = getExtraLight();
 
 	auto &plane = flat->plane;
+    auto processLights = level.HasDynamicLights && !isFullbrightScene();
 	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 
 	switch (pass)
@@ -316,19 +315,19 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, (pass == GLPASS_ALL || flat->dynlightindex > -1), false);
+			DrawSubsectors(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), false);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		else
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			DrawSkyboxSector(flat, pass, (pass == GLPASS_ALL || flat->dynlightindex > -1));
+			DrawSkyboxSector(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1));
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;
 
 	case GLPASS_LIGHTSONLY:
-		if (!trans || flat->gltexture)
+		if ((!trans || flat->gltexture) && processLights)
 		{
 			ProcessLights(flat, trans);
 		}
@@ -353,7 +352,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
+			DrawSubsectors(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

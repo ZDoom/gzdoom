@@ -256,6 +256,7 @@ class Chicken : MorphedMonster
 		DeathSound "chicken/death";
 		ActiveSound "chicken/active";
 		Obituary "$OB_CHICKEN";
+		Tag "$FN_CHICKEN";
 	}
 	States
 	{

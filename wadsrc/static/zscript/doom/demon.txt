@@ -21,6 +21,7 @@ class Demon : Actor
 		DeathSound "demon/death";
 		ActiveSound "demon/active";
 		Obituary "$OB_DEMONHIT";
+		Tag "$FN_DEMON";
 	}
 	States
 	{
@@ -71,6 +72,7 @@ class Spectre : Demon
 		DeathSound "spectre/death";
 		ActiveSound "spectre/active";
 		HitObituary "$OB_SPECTREHIT";
+		Tag "$FN_SPECTRE";
 	}
 }
 

@@ -273,12 +273,6 @@ SystemGLFrameBuffer::~SystemGLFrameBuffer ()
 }
 
 
-
-
-void SystemGLFrameBuffer::InitializeState()
-{
-}
-
 void SystemGLFrameBuffer::SetGammaTable(uint16_t *tbl)
 {
 	if (m_supportsGamma)

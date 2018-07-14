@@ -35,9 +35,6 @@
 
 #include "i_common.h"
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "bitmap.h"
 #include "c_dispatch.h"
 #include "doomstat.h"
@@ -53,8 +50,6 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/system/gl_framebuffer.h"
 #include "gl/textures/gl_samplers.h"
-
-#undef Class
 
 
 @implementation NSWindow(ExitAppOnClose)
@@ -288,7 +283,7 @@ CocoaWindow* CreateWindow(const NSUInteger styleMask)
 	return window;
 }
 
-NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profile)
+NSOpenGLPixelFormat* CreatePixelFormat()
 {
 	NSOpenGLPixelFormatAttribute attributes[16];
 	size_t i = 0;
@@ -301,7 +296,7 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 	attributes[i++] = NSOpenGLPFAStencilSize;
 	attributes[i++] = NSOpenGLPixelFormatAttribute(8);
 	attributes[i++] = NSOpenGLPFAOpenGLProfile;
-	attributes[i++] = profile;
+	attributes[i++] = NSOpenGLProfileVersion3_2Core;
 	
 	if (!vid_autoswitch)
 	{
@@ -319,6 +314,9 @@ NSOpenGLPixelFormat* CreatePixelFormat(const NSOpenGLPixelFormatAttribute profil
 // ---------------------------------------------------------------------------
 
 
+static SystemGLFrameBuffer* frameBuffer;
+
+
 SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 : DFrameBuffer(vid_defwidth, vid_defheight)
 , m_window(CreateWindow(STYLE_MASK_WINDOWED))
@@ -327,30 +325,7 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 {
 	SetFlash(0, 0);
 
-	// Create OpenGL pixel format
-	NSOpenGLPixelFormatAttribute defaultProfile = NSOpenGLProfileVersion3_2Core;
-
-	if (NSAppKitVersionNumber < AppKit10_9)
-	{
-		// There is no support for OpenGL 3.3 before Mavericks
-		defaultProfile = NSOpenGLProfileVersionLegacy;
-	}
-	else if (const char* const glversion = Args->CheckValue("-glversion"))
-	{
-		// Check for explicit version specified in command line
-		const double version = strtod(glversion, nullptr) + 0.01;
-		if (version < 3.3)
-		{
-			defaultProfile = NSOpenGLProfileVersionLegacy;
-		}
-	}
-
-	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat(defaultProfile);
-
-	if (nil == pixelFormat && NSOpenGLProfileVersion3_2Core == defaultProfile)
-	{
-		pixelFormat = CreatePixelFormat(NSOpenGLProfileVersionLegacy);
-	}
+	NSOpenGLPixelFormat* pixelFormat = CreatePixelFormat();
 
 	if (nil == pixelFormat)
 	{
@@ -383,11 +358,17 @@ SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 		}
 	}
 
+	assert(frameBuffer == nullptr);
+	frameBuffer = this;
+
 	FConsoleWindow::GetInstance().Show(false);
 }
 
 SystemGLFrameBuffer::~SystemGLFrameBuffer()
 {
+	assert(frameBuffer == this);
+	frameBuffer = nullptr;
+
 	NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
 	[nc removeObserver:m_window
 				  name:NSWindowDidMoveNotification
@@ -416,10 +397,6 @@ void SystemGLFrameBuffer::SetVSync(bool vsync)
 								   forParameter:NSOpenGLCPSwapInterval];
 }
 
-
-void SystemGLFrameBuffer::InitializeState()
-{
-}
 
 void SystemGLFrameBuffer::SwapBuffers()
 {
@@ -532,24 +509,19 @@ void SystemGLFrameBuffer::SetMode(const bool fullscreen, const bool hiDPI)
 }
 
 
-static SystemGLFrameBuffer* GetSystemFrameBuffer()
-{
-	return static_cast<SystemGLFrameBuffer*>(screen);
-}
-
 void SystemGLFrameBuffer::UseHiDPI(const bool hiDPI)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
-		fb->SetMode(fb->m_fullscreen, hiDPI);
+		frameBuffer->SetMode(frameBuffer->m_fullscreen, hiDPI);
 	}
 }
 
 void SystemGLFrameBuffer::SetCursor(NSCursor* cursor)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
-		NSWindow*  const window = fb->m_window;
+		NSWindow*  const window = frameBuffer->m_window;
 		CocoaView* const view   = [window contentView];
 
 		[view setCursor:cursor];
@@ -559,15 +531,15 @@ void SystemGLFrameBuffer::SetCursor(NSCursor* cursor)
 
 void SystemGLFrameBuffer::SetWindowVisible(bool visible)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
 		if (visible)
 		{
-			[fb->m_window orderFront:nil];
+			[frameBuffer->m_window orderFront:nil];
 		}
 		else
 		{
-			[fb->m_window orderOut:nil];
+			[frameBuffer->m_window orderOut:nil];
 		}
 
 		I_SetNativeMouse(!visible);
@@ -576,11 +548,11 @@ void SystemGLFrameBuffer::SetWindowVisible(bool visible)
 
 void SystemGLFrameBuffer::SetWindowTitle(const char* title)
 {
-	if (auto fb = GetSystemFrameBuffer())
+	if (frameBuffer != nullptr)
 	{
 		NSString* const nsTitle = nullptr == title ? nil :
 			[NSString stringWithCString:title encoding:NSISOLatin1StringEncoding];
-		[fb->m_window setTitle:nsTitle];
+		[frameBuffer->m_window setTitle:nsTitle];
 	}
 }
 

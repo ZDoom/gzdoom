@@ -50,13 +50,6 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "hwrenderer/postprocessing/hw_ambientshader.h"
-#include "hwrenderer/postprocessing/hw_bloomshader.h"
-#include "hwrenderer/postprocessing/hw_blurshader.h"
-#include "hwrenderer/postprocessing/hw_tonemapshader.h"
-#include "hwrenderer/postprocessing/hw_colormapshader.h"
-#include "hwrenderer/postprocessing/hw_lensshader.h"
-#include "hwrenderer/postprocessing/hw_fxaashader.h"
 #include "hwrenderer/postprocessing/hw_presentshader.h"
 #include "hwrenderer/postprocessing/hw_present3dRowshader.h"
 #include "hwrenderer/postprocessing/hw_shadowmapshader.h"
@@ -91,7 +84,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mSkyVBO = nullptr;
 	mShaderManager = nullptr;
 	mLights = nullptr;
-	mTonemapPalette = nullptr;
 	mBuffers = nullptr;
 	mScreenBuffers = nullptr;
 	mSaveBuffers = nullptr;
@@ -99,22 +91,6 @@ FGLRenderer::FGLRenderer(OpenGLFrameBuffer *fb)
 	mPresent3dCheckerShader = nullptr;
 	mPresent3dColumnShader = nullptr;
 	mPresent3dRowShader = nullptr;
-	mBloomExtractShader = nullptr;
-	mBloomCombineShader = nullptr;
-	mExposureExtractShader = nullptr;
-	mExposureAverageShader = nullptr;
-	mExposureCombineShader = nullptr;
-	mBlurShader = nullptr;
-	mTonemapShader = nullptr;
-	mTonemapPalette = nullptr;
-	mColormapShader = nullptr;
-	mLensShader = nullptr;
-	mLinearDepthShader = nullptr;
-	mDepthBlurShader = nullptr;
-	mSSAOShader = nullptr;
-	mSSAOCombineShader = nullptr;
-	mFXAAShader = nullptr;
-	mFXAALumaShader = nullptr;
 	mShadowMapShader = nullptr;
 	mCustomPostProcessShaders = nullptr;
 }
@@ -124,22 +100,6 @@ void FGLRenderer::Initialize(int width, int height)
 	mScreenBuffers = new FGLRenderBuffers();
 	mSaveBuffers = new FGLRenderBuffers();
 	mBuffers = mScreenBuffers;
-	mLinearDepthShader = new FLinearDepthShader();
-	mDepthBlurShader = new FDepthBlurShader();
-	mSSAOShader = new FSSAOShader();
-	mSSAOCombineShader = new FSSAOCombineShader();
-	mBloomExtractShader = new FBloomExtractShader();
-	mBloomCombineShader = new FBloomCombineShader();
-	mExposureExtractShader = new FExposureExtractShader();
-	mExposureAverageShader = new FExposureAverageShader();
-	mExposureCombineShader = new FExposureCombineShader();
-	mBlurShader = new FBlurShader();
-	mTonemapShader = new FTonemapShader();
-	mColormapShader = new FColormapShader();
-	mTonemapPalette = nullptr;
-	mLensShader = new FLensShader();
-	mFXAAShader = new FFXAAShader;
-	mFXAALumaShader = new FFXAALumaShader;
 	mPresentShader = new FPresentShader();
 	mPresent3dCheckerShader = new FPresent3DCheckerShader();
 	mPresent3dColumnShader = new FPresent3DColumnShader();
@@ -187,27 +147,11 @@ FGLRenderer::~FGLRenderer()
 	if (swdrawer) delete swdrawer;
 	if (mBuffers) delete mBuffers;
 	if (mPresentShader) delete mPresentShader;
-	if (mLinearDepthShader) delete mLinearDepthShader;
-	if (mDepthBlurShader) delete mDepthBlurShader;
-	if (mSSAOShader) delete mSSAOShader;
-	if (mSSAOCombineShader) delete mSSAOCombineShader;
 	if (mPresent3dCheckerShader) delete mPresent3dCheckerShader;
 	if (mPresent3dColumnShader) delete mPresent3dColumnShader;
 	if (mPresent3dRowShader) delete mPresent3dRowShader;
-	if (mBloomExtractShader) delete mBloomExtractShader;
-	if (mBloomCombineShader) delete mBloomCombineShader;
-	if (mExposureExtractShader) delete mExposureExtractShader;
-	if (mExposureAverageShader) delete mExposureAverageShader;
-	if (mExposureCombineShader) delete mExposureCombineShader;
-	if (mBlurShader) delete mBlurShader;
-	if (mTonemapShader) delete mTonemapShader;
-	if (mTonemapPalette) delete mTonemapPalette;
-	if (mColormapShader) delete mColormapShader;
-	if (mLensShader) delete mLensShader;
 	if (mShadowMapShader) delete mShadowMapShader;
 	delete mCustomPostProcessShaders;
-	delete mFXAAShader;
-	delete mFXAALumaShader;
 }
 
 //===========================================================================
@@ -398,9 +342,8 @@ void FGLRenderer::WriteSavePic (player_t *player, FileWriter *file, int width, i
 
 void FGLRenderer::BeginFrame()
 {
-	buffersActive = mScreenBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
-	if (buffersActive)
-		buffersActive = mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
+	mScreenBuffers->Setup(screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mSceneViewport.width, screen->mSceneViewport.height);
+	mSaveBuffers->Setup(SAVEPICWIDTH, SAVEPICHEIGHT, SAVEPICWIDTH, SAVEPICHEIGHT);
 }
 
 //===========================================================================
@@ -458,10 +401,8 @@ CVAR(Bool, gl_aalines, false, CVAR_ARCHIVE)
 void FGLRenderer::Draw2D(F2DDrawer *drawer)
 {
 	twoD.Clock();
-	if (buffersActive)
-	{
-		mBuffers->BindCurrentFB();
-	}
+	FGLDebug::PushGroup("Draw2D");
+	mBuffers->BindCurrentFB();
 	const auto &mScreenViewport = screen->mScreenViewport;
 	glViewport(mScreenViewport.left, mScreenViewport.top, mScreenViewport.width, mScreenViewport.height);
 
@@ -603,5 +544,6 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	gl_RenderState.ResetColor();
 	gl_RenderState.Apply();
 	delete vb;
+	FGLDebug::PopGroup();
 	twoD.Unclock();
 }

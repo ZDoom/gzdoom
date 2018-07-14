@@ -5,6 +5,23 @@
 class FUE1Model : public FModel
 {
 public:
+	enum EPolyType
+	{
+		PT_Normal = 0,		// normal renderstyle
+		PT_TwoSided = 1,	// like normal, but don't cull backfaces
+		PT_Translucent = 2,	// additive blending
+		PT_Masked = 3,		// draw with alpha testing
+		PT_Modulated = 4,	// overlay-like blending (rgb values below 128 darken, 128 is unchanged, and above 128 lighten)
+		// types mask
+		PT_Type = 7,
+		// flags
+		PT_WeaponTriangle = 0x08,	// this poly is used for positioning a weapon attachment and should not be drawn
+		PT_Unlit = 0x10,		// this poly is fullbright
+		PT_Curvy = 0x20,		// this poly uses the facet normal
+		PT_EnvironmentMap = 0x40,	// vertex UVs are remapped to their view-space X and Z normals, fake cubemap look
+		PT_NoSmooth = 0x80		// this poly forcibly uses nearest filtering
+	};
+
 	bool Load(const char * fn, int lumpnum, const char * buffer, int length) override;
 	int FindFrame(const char * name) override;
 	void RenderFrame(FModelRenderer *renderer, FTexture * skin, int frame, int frame2, double inter, int translation=0) override;
@@ -14,7 +31,9 @@ public:
 	void UnloadGeometry();
 	FUE1Model()
 	{
-		mLumpNum = -1;
+		mDataLump = -1;
+		mAnivLump = -1;
+		mDataLoaded = false;
 		dhead = NULL;
 		dpolys = NULL;
 		ahead = NULL;
@@ -27,7 +46,8 @@ public:
 	~FUE1Model();
 
 private:
-	int mLumpNum;
+	int mDataLump, mAnivLump;
+	bool mDataLoaded;
 
 	// raw data structures
 	struct d3dhead
@@ -54,6 +74,11 @@ private:
 	d3dpoly * dpolys;
 	a3dhead * ahead;
 	uint32_t * averts;
+	struct dxvert
+	{
+		int16_t x, y, z, pad;
+	};
+	dxvert * dxverts;
 
 	// converted data structures
 	struct UE1Vertex
@@ -64,21 +89,21 @@ private:
 	{
 		int V[3];
 		FVector2 C[3];
-		int texNum;
+		FVector3 Normal;
 	};
 	struct UE1Group
 	{
 		TArray<int> P;
-		int numPolys;
+		int numPolys, texNum, type;
 	};
 
 	int numVerts;
 	int numFrames;
 	int numPolys;
 	int numGroups;
+	int weaponPoly;	// for future model attachment support, unused for now
 
 	TArray<UE1Vertex> verts;
 	TArray<UE1Poly> polys;
 	TArray<UE1Group> groups;
-	TArray<int> groupIndices;
 };

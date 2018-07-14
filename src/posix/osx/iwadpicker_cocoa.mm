@@ -33,9 +33,6 @@
  **
  */
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "cmdlib.h"
 #include "d_main.h"
 #include "version.h"
@@ -43,8 +40,6 @@
 #include "m_argv.h"
 #include "m_misc.h"
 #include "gameconfigfile.h"
-
-#undef Class
 
 #include <Cocoa/Cocoa.h>
 #include <wordexp.h>

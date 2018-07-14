@@ -16,6 +16,7 @@ class Snake : Actor
 		DeathSound "snake/death";
 		ActiveSound "snake/active";
 		Obituary "$OB_SNAKE";
+		Tag "$FN_SNAKE";
 		DropItem "PhoenixRodAmmo", 84, 5;
 	}
 	States

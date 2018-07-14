@@ -44,6 +44,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_debug.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -75,7 +76,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 void FDrawInfo::ApplyVPUniforms()
 {
 	VPUniforms.CalcDependencies();
-	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, NORMAL_PASS);
+	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, gl_RenderState.GetPassType());
 
 	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{
@@ -422,17 +423,8 @@ void FDrawInfo::ProcessScene(bool toscreen)
 //
 //-----------------------------------------------------------------------------
 
-void FGLRenderer::Set3DViewport(bool mainview)
+void FGLRenderer::Set3DViewport()
 {
-    if (mainview && buffersActive)
-    {
-        bool useSSAO = (gl_ssao != 0);
-        mBuffers->BindSceneFB(useSSAO);
-        gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
-        gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
-        gl_RenderState.Apply();
-    }
-    
     // Always clear all buffers with scissor test disabled.
     // This is faster on newer hardware because it allows the GPU to skip
     // reading from slower memory where the full buffers are stored.
@@ -470,7 +462,19 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 	{
 		const auto &eye = vrmode->mEyes[eye_ix];
 		screen->SetViewportRects(bounds);
-		Set3DViewport(mainview);
+
+		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
+		{
+			FGLDebug::PushGroup("MainView");
+
+			bool useSSAO = (gl_ssao != 0);
+			mBuffers->BindSceneFB(useSSAO);
+			gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
+			gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
+			gl_RenderState.Apply();
+		}
+
+		Set3DViewport();
 
 		FDrawInfo *di = FDrawInfo::StartDrawInfo(mainvp, nullptr);
 		auto &vp = di->Viewpoint;
@@ -484,12 +488,22 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
 		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
 		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
-
 		di->ProcessScene(toscreen);
 
 		if (mainview)
 		{
 			if (toscreen) di->EndDrawScene(mainvp.sector); // do not call this for camera textures.
+
+			if (gl_RenderState.GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
+			{
+				gl_RenderState.SetPassType(NORMAL_PASS);
+				gl_RenderState.EnableDrawBuffers(1);
+			}
+
+			mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
+
+			FGLDebug::PopGroup(); // MainView
+
 			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
 		}
 		di->EndDrawInfo();

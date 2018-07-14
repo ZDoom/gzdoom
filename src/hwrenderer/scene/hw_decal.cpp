@@ -112,7 +112,7 @@ void GLWall::ProcessDecal(HWDrawInfo *di, DBaseDecal *decal, const FVector3 &nor
 				zpos = decal->Z + frontsector->GetPlaneTexZ(sector_t::ceiling);
 			}
 	}
-	FMaterial *tex = FMaterial::ValidateTexture(texture, true);
+	FMaterial *tex = FMaterial::ValidateTexture(texture, false);
 
 	// now clip the decal to the actual polygon
 

@@ -27,18 +27,16 @@ class RandomSpawner : Actor
 
 		return GetDefaultByType(pclass).bIsMonster;
 	}
-	
-	// To handle "RandomSpawning" missiles, the code has to be split in two parts.
-	// If the following code is not done in BeginPlay, missiles will use the
-	// random spawner's velocity (0...) instead of their own.
-	override void BeginPlay()
+
+	// Override this to decide what to spawn in some other way.
+	// Return the class name, or 'None' to spawn nothing, or 'Unknown' to spawn an error marker.
+	virtual Name ChooseSpawn()
 	{
 		DropItem di;   // di will be our drop item list iterator
 		DropItem drop; // while drop stays as the reference point.
 		int n = 0;
 		bool nomonsters = sv_nomonsters || level.nomonsters;
 
-		Super.BeginPlay();
 		drop = di = GetDropItems();
 		if (di != null)
 		{
@@ -57,8 +55,7 @@ class RandomSpawner : Actor
 			}
 			if (n == 0)
 			{ // Nothing left to spawn. They must have all been monsters, and monsters are disabled.
-				Destroy();
-				return;
+				return 'None';
 			}
 			// Then we reset the iterator to the start position...
 			di = drop;
@@ -83,39 +80,68 @@ class RandomSpawner : Actor
 					di = di.Next;
 				}
 			}
-			// So now we can spawn the dropped item.
-			if (di == null || bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
+			if (di == null)
 			{
-				Spawn("Unknown", Pos, NO_REPLACE);		// Show that there's a problem.
-				Destroy();
-				return;
+				return 'Unknown';
 			}
 			else if (random[randomspawn]() <= di.Probability)	// prob 255 = always spawn, prob 0 = almost never spawn.
 			{
-				// Handle replacement here so as to get the proper speed and flags for missiles
-				Class<Actor> cls = di.Name;
-				if (cls != null)
+				return di.Name;
+			}
+			else
+			{
+				return 'None';
+			}
+		}
+		else
+		{
+			return 'None';
+		}
+	}
+	
+	// To handle "RandomSpawning" missiles, the code has to be split in two parts.
+	// If the following code is not done in BeginPlay, missiles will use the
+	// random spawner's velocity (0...) instead of their own.
+	override void BeginPlay()
+	{
+		Super.BeginPlay();
+		let s = ChooseSpawn();
+
+		if (s == 'Unknown') // Spawn error markers immediately.
+		{
+			Spawn(s, Pos, NO_REPLACE);
+			Destroy();
+		}
+		else if (s == 'None') // ChooseSpawn chose to spawn nothing.
+		{
+			Destroy();
+		}
+		else
+		{
+			// So now we can spawn the dropped item.
+			// Handle replacement here so as to get the proper speed and flags for missiles
+			Class<Actor> cls = s;
+			if (cls != null)
+			{
+				Class<Actor> rep = GetReplacement(cls);
+				if (rep != null)
 				{
-					Class<Actor> rep = GetReplacement(cls);
-					if (rep != null)
-					{
-						cls = rep;
-					}
+					cls = rep;
 				}
-				if (cls != null)
-				{
-					Species = Name(cls);
-					readonly<Actor> defmobj = GetDefaultByType(cls);
-					Speed = defmobj.Speed;
-					bMissile |= defmobj.bMissile;
-					bSeekerMissile |= defmobj.bSeekerMissile;
-					bSpectral |= defmobj.bSpectral;
-				}
-				else
-				{
-					A_Log(TEXTCOLOR_RED .. "Unknown item class ".. di.Name .." to drop from a random spawner\n");
-					Species = 'None';
-				}
+			}
+			if (cls != null)
+			{
+				Species = Name(cls);
+				readonly<Actor> defmobj = GetDefaultByType(cls);
+				Speed = defmobj.Speed;
+				bMissile |= defmobj.bMissile;
+				bSeekerMissile |= defmobj.bSeekerMissile;
+				bSpectral |= defmobj.bSpectral;
+			}
+			else
+			{
+				A_Log(TEXTCOLOR_RED .. "Unknown item class ".. s .." to drop from a random spawner\n");
+				Species = 'None';
 			}
 		}
 	}
@@ -127,6 +153,13 @@ class RandomSpawner : Actor
 	override void PostBeginPlay()
 	{
 		Super.PostBeginPlay();
+
+		if (bouncecount >= MAX_RANDOMSPAWNERS_RECURSION)	// Prevents infinite recursions
+		{
+			Spawn("Unknown", Pos, NO_REPLACE);		// Show that there's a problem.
+			Destroy();
+			return;
+		}
 
 		Actor newmobj = null;
 		bool boss = false;

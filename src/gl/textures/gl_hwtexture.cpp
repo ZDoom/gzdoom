@@ -531,12 +531,6 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 
 	bool needmipmap = (clampmode <= CLAMP_XY);
 
-	// Texture has become invalid
-	if (!tex->bHasCanvas && !tex->bWarped && tex->CheckModified(DefaultRenderStyle()))
-	{
-		Clean(true);
-	}
-
 	// Bind it to the system.
 	if (!Bind(texunit, translation, needmipmap))
 	{

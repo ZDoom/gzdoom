@@ -297,6 +297,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	dg.mType = DrawTypeTriangles;
 	dg.mVertCount = 4;
 	dg.mTexture = img;
+	if (img->bWarped) dg.mFlags |= DTF_Wrap;
 
 	dg.mTranslation = 0;
 	SetStyle(img, parms, vertexcolor, dg);

@@ -1120,7 +1120,6 @@ set (PCH_SOURCES
 	textures/formats/pngtexture.cpp
 	textures/formats/rawpagetexture.cpp
 	textures/formats/emptytexture.cpp
-	textures/formats/backdroptexture.cpp
 	textures/formats/shadertexture.cpp
 	textures/formats/tgatexture.cpp
 	textures/formats/worldtexture.cpp

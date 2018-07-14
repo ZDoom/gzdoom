@@ -158,7 +158,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			{
 				if(texture == nullptr) continue;
 				ValidateSysTexture(texture, expanded);
-				mTextureLayers.Push({ texture, false });
+				mTextureLayers.Push(texture);
 			}
 			mShaderIndex = tx->shaderindex;
 		}
@@ -169,7 +169,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 				for (auto &texture : { tx->Normal, tx->Specular })
 				{
 					ValidateSysTexture(texture, expanded);
-					mTextureLayers.Push({ texture, false });
+					mTextureLayers.Push(texture);
 				}
 				mShaderIndex = SHADER_Specular;
 			}
@@ -178,7 +178,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 				for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 				{
 					ValidateSysTexture(texture, expanded);
-					mTextureLayers.Push({ texture, false });
+					mTextureLayers.Push(texture);
 				}
 				mShaderIndex = SHADER_PBR;
 			}
@@ -187,8 +187,7 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 			if (tx->Brightmap != NULL)
 			{
 				ValidateSysTexture(tx->Brightmap, expanded);
-				FTextureLayer layer = {tx->Brightmap, false};
-				mTextureLayers.Push(layer);
+				mTextureLayers.Push(tx->Brightmap);
 				if (mShaderIndex == SHADER_Specular)
 					mShaderIndex = SHADER_SpecularBrightmap;
 				else if (mShaderIndex == SHADER_PBR)
@@ -448,16 +447,7 @@ void FMaterial::Bind(int clampmode, int translation)
 	{
 		for(unsigned i=0;i<mTextureLayers.Size();i++)
 		{
-			FTexture *layer;
-			if (mTextureLayers[i].animated)
-			{
-				FTextureID id = mTextureLayers[i].texture->id;
-				layer = TexMan(id);
-			}
-			else
-			{
-				layer = mTextureLayers[i].texture;
-			}
+			FTexture *layer = mTextureLayers[i];
 			auto systex = ValidateSysTexture(layer, mExpanded);
 			systex->BindOrCreate(layer, i+1, clampmode, 0, mExpanded ? CTF_Expand : 0);
 			maxbound = i+1;

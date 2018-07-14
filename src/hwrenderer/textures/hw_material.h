@@ -52,12 +52,6 @@ class FMaterial
 {
 	friend class FRenderState;
 
-	struct FTextureLayer
-	{
-		FTexture *texture;
-		bool animated;
-	};
-
 	// This array is needed because not all textures are managed by the texture manager
 	// but some code needs to discard all hardware dependent data attached to any created texture.
 	// Font characters are not, for example.
@@ -65,7 +59,7 @@ class FMaterial
 	static int mMaxBound;
 
 	IHardwareTexture *mBaseLayer;	
-	TArray<FTextureLayer> mTextureLayers;
+	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 
 	short mLeftOffset;
@@ -95,9 +89,8 @@ public:
 	void PrecacheList(SpriteHits &translations);
 	void AddTextureLayer(FTexture *tex)
 	{
-		FTextureLayer layer = { tex, false };
 		ValidateTexture(tex, false);
-		mTextureLayers.Push(layer);
+		mTextureLayers.Push(tex);
 	}
 	bool isMasked() const
 	{

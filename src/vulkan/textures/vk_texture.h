@@ -9,6 +9,8 @@ class VkTexture
     VkImage textureImage = VK_NULL_HANDLE;
     VmaAllocation textureImageAllocation = VK_NULL_HANDLE;
     VkImageView textureImageView = VK_NULL_HANDLE;
+	VkFormat textureFormat;
+	bool mipmapped = false;
 	
 	VkResult CreateBuffer(VkDeviceSize size, VkBuffer& buffer, VmaAllocation& allocation);
 	VkResult CreateImage(uint32_t width, uint32_t height, int mipmaps, VkImage& image, VmaAllocation& allocation);
@@ -26,8 +28,12 @@ public:
 	{
 		Destroy();
 	}
+	bool isMipmapped() const
+	{
+		return mipmapped;
+	}
 
-	VkResult Create(const uint8_t *pixels, int texWidth, int texHeight, bool mipmapped);
+	VkResult Create(const uint8_t *pixels, int texWidth, int texHeight, bool mipmapped, int numchannels = 4);
 
 	VkImageView Handle() const { return textureImageView; }
 };

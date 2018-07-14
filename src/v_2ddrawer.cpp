@@ -40,7 +40,7 @@ IMPLEMENT_CLASS(DShape2D, false, false)
 DEFINE_ACTION_FUNCTION(DShape2D, Clear)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
-	PARAM_INT(which);
+	PARAM_INT_DEF(which);
 	if ( which&C_Verts ) self->mVertices.Clear();
 	if ( which&C_Coords ) self->mCoords.Clear();
 	if ( which&C_Indices ) self->mIndices.Clear();

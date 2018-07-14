@@ -195,7 +195,8 @@ enum
 	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
 	DTA_SrcY,
 	DTA_SrcWidth,
-	DTA_SrcHeight
+	DTA_SrcHeight,
+	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
 
 };
 

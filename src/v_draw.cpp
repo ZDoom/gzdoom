@@ -839,6 +839,10 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			parms->style.AsDWORD = ListGetInt(tags);
 			break;
 
+		case DTA_LegacyRenderStyle:	// mainly for ZScript which does not handle FRenderStyle that well.
+			parms->style = (ERenderStyle)ListGetInt(tags);
+			break;
+
 		case DTA_SpecialColormap:
 			parms->specialcolormap = ListGetSpecialColormap(tags);
 			break;

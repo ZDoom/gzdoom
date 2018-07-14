@@ -31,8 +31,8 @@ public:
 	void WriteSavePic(player_t *player, FileWriter *file, int width, int height) override;
 	sector_t *RenderView(player_t *player) override;
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
+	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
-	void UnbindTexUnit(int no) override;
 	void TextureFilterChanged() override;
 	void BeginFrame() override;
 	void BlurScene(float amount) override;

@@ -421,6 +421,7 @@ public:
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
 	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual void UnbindTexUnit(int no) {}
 	virtual void TextureFilterChanged() {}

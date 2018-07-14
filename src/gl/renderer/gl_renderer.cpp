@@ -262,6 +262,26 @@ sector_t *FGLRenderer::RenderView(player_t* player)
 
 //===========================================================================
 //
+//
+//
+//===========================================================================
+
+void FGLRenderer::BindToFrameBuffer(FMaterial *mat)
+{
+	auto BaseLayer = static_cast<FHardwareTexture*>(mat->GetLayer(0));
+
+	if (BaseLayer == nullptr)
+	{
+		// must create the hardware texture first
+		BaseLayer->BindOrCreate(mat->sourcetex, 0, 0, 0, 0);
+		FHardwareTexture::Unbind(0);
+		gl_RenderState.ClearLastMaterial();
+	}
+	BaseLayer->BindToFrameBuffer(mat->GetWidth(), mat->GetHeight());
+}
+
+//===========================================================================
+//
 // Camera texture rendering
 //
 //===========================================================================
@@ -274,7 +294,7 @@ void FGLRenderer::RenderTextureView(FCanvasTexture *tex, AActor *Viewpoint, doub
 	int height = gltex->TextureHeight();
 
 	StartOffscreen();
-	gltex->BindToFrameBuffer();
+	BindToFrameBuffer(gltex);
 
 	IntRect bounds;
 	bounds.left = bounds.top = 0;

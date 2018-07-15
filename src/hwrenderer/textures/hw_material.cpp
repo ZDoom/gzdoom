@@ -31,6 +31,8 @@
 
 EXTERN_CVAR(Bool, gl_texture_usehires)
 
+extern TArray<UserShaderDesc> usershaders;
+
 //===========================================================================
 //
 //
@@ -127,12 +129,6 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	mShaderIndex = SHADER_Default;
 	sourcetex = tex = tx;
 
-	// TODO: apply custom shader object here
-	/* if (tx->CustomShaderDefinition)
-	{
-	}
-	else
-	*/
 	if (tx->UseType == ETextureType::SWCanvas && tx->WidthBits == 0)
 	{
 		mShaderIndex = SHADER_Paletted;
@@ -152,48 +148,50 @@ FMaterial::FMaterial(FTexture * tx, bool expanded)
 	}
 	else
 	{
-		if (tx->shaderindex >= FIRST_USER_SHADER)
+		if (tx->Normal && tx->Specular)
 		{
-			for (auto &texture : tx->CustomShaderTextures)
+			for (auto &texture : { tx->Normal, tx->Specular })
 			{
-				if(texture == nullptr) continue;
 				ValidateSysTexture(texture, expanded);
 				mTextureLayers.Push(texture);
 			}
-			mShaderIndex = tx->shaderindex;
+			mShaderIndex = SHADER_Specular;
 		}
-		else
+		else if (tx->Normal && tx->Metallic && tx->Roughness && tx->AmbientOcclusion)
 		{
-			if (tx->Normal && tx->Specular)
+			for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
 			{
-				for (auto &texture : { tx->Normal, tx->Specular })
-				{
-					ValidateSysTexture(texture, expanded);
-					mTextureLayers.Push(texture);
-				}
-				mShaderIndex = SHADER_Specular;
+				ValidateSysTexture(texture, expanded);
+				mTextureLayers.Push(texture);
 			}
-			else if (tx->Normal && tx->Metallic && tx->Roughness && tx->AmbientOcclusion)
-			{
-				for (auto &texture : { tx->Normal, tx->Metallic, tx->Roughness, tx->AmbientOcclusion })
-				{
-					ValidateSysTexture(texture, expanded);
-					mTextureLayers.Push(texture);
-				}
-				mShaderIndex = SHADER_PBR;
-			}
+			mShaderIndex = SHADER_PBR;
+		}
 
-			tx->CreateDefaultBrightmap();
-			if (tx->Brightmap != NULL)
+		tx->CreateDefaultBrightmap();
+		if (tx->Brightmap)
+		{
+			ValidateSysTexture(tx->Brightmap, expanded);
+			mTextureLayers.Push(tx->Brightmap);
+			if (mShaderIndex == SHADER_Specular)
+				mShaderIndex = SHADER_SpecularBrightmap;
+			else if (mShaderIndex == SHADER_PBR)
+				mShaderIndex = SHADER_PBRBrightmap;
+			else
+				mShaderIndex = SHADER_Brightmap;
+		}
+
+		if (tx->shaderindex >= FIRST_USER_SHADER)
+		{
+			const UserShaderDesc &usershader = usershaders[tx->shaderindex - FIRST_USER_SHADER];
+			if (usershader.shaderType == mShaderIndex) // Only apply user shader if it matches the expected material
 			{
-				ValidateSysTexture(tx->Brightmap, expanded);
-				mTextureLayers.Push(tx->Brightmap);
-				if (mShaderIndex == SHADER_Specular)
-					mShaderIndex = SHADER_SpecularBrightmap;
-				else if (mShaderIndex == SHADER_PBR)
-					mShaderIndex = SHADER_PBRBrightmap;
-				else
-					mShaderIndex = SHADER_Brightmap;
+				for (auto &texture : tx->CustomShaderTextures)
+				{
+					if (texture == nullptr) continue;
+					ValidateSysTexture(texture, expanded);
+					mTextureLayers.Push(texture);
+				}
+				mShaderIndex = tx->shaderindex;
 			}
 		}
 	}

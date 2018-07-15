@@ -12,10 +12,24 @@ layout(location=1) out vec4 FragFog;
 layout(location=2) out vec4 FragNormal;
 #endif
 
+struct Material
+{
+	vec4 Base;
+	vec4 Bright;
+	vec3 Normal;
+	vec3 Specular;
+	float Glossiness;
+	float SpecularLevel;
+	float Metallic;
+	float Roughness;
+	float AO;
+};
+
 vec4 Process(vec4 color);
 vec4 ProcessTexel();
-vec4 ProcessLight(vec4 color);
-vec3 ProcessMaterial(vec3 material, vec3 color);
+Material ProcessMaterial();
+vec4 ProcessLight(Material mat, vec4 color);
+vec3 ProcessMaterialLight(Material material, vec3 color);
 
 //===========================================================================
 //
@@ -288,7 +302,7 @@ mat3 cotangent_frame(vec3 n, vec3 p, vec2 uv)
 	return mat3(t * invmax, b * invmax, n);
 }
 
-vec3 ApplyNormalMap()
+vec3 ApplyNormalMap(vec2 texcoord)
 {
 	#define WITH_NORMALMAP_UNSIGNED
 	#define WITH_NORMALMAP_GREEN_UP
@@ -296,7 +310,7 @@ vec3 ApplyNormalMap()
 
 	vec3 interpolatedNormal = normalize(vWorldNormal.xyz);
 
-	vec3 map = texture(normaltexture, vTexCoord.st).xyz;
+	vec3 map = texture(normaltexture, texcoord).xyz;
 	#if defined(WITH_NORMALMAP_UNSIGNED)
 	map = map * 255./127. - 128./127.; // Math so "odd" because 0.5 cannot be precisely described in an unsigned format
 	#endif
@@ -312,7 +326,7 @@ vec3 ApplyNormalMap()
 	return bumpedNormal;
 }
 #else
-vec3 ApplyNormalMap()
+vec3 ApplyNormalMap(vec2 texcoord)
 {
 	return normalize(vWorldNormal.xyz);
 }
@@ -332,7 +346,7 @@ vec3 ApplyNormalMap()
 //
 //===========================================================================
 
-vec4 getLightColor(vec4 material, float fogdist, float fogfactor)
+vec4 getLightColor(Material material, float fogdist, float fogfactor)
 {
 	vec4 color = vColor;
 	
@@ -371,12 +385,12 @@ vec4 getLightColor(vec4 material, float fogdist, float fogfactor)
 	//
 	// apply brightmaps (or other light manipulation by custom shaders.
 	//
-	color = ProcessLight(color);
+	color = ProcessLight(material, color);
 
 	//
 	// apply dynamic lights
 	//
-	return vec4(ProcessMaterial(material.rgb, color.rgb), material.a * vColor.a);
+	return vec4(ProcessMaterialLight(material, color.rgb), material.Base.a * vColor.a);
 }
 
 //===========================================================================
@@ -425,7 +439,8 @@ vec3 AmbientOcclusionColor()
 
 void main()
 {
-	vec4 frag = ProcessTexel();
+	Material material = ProcessMaterial();
+	vec4 frag = material.Base;
 	
 #ifndef NO_ALPHATEST
 	if (frag.a <= uAlphaThreshold) discard;
@@ -476,7 +491,7 @@ void main()
 				fogfactor = exp2 (uFogDensity * fogdist);
 			}
 			
-			frag = getLightColor(frag, fogdist, fogfactor);
+			frag = getLightColor(material, fogdist, fogfactor);
 
 			//
 			// colored fog
@@ -510,7 +525,7 @@ void main()
 		
 		case 4:	// simple 2D (reuses a uniform for the special colormap for the color overlay.)
 		{
-			frag = frag * ProcessLight(vColor);
+			frag = frag * ProcessLight(material, vColor);
 			frag.rgb = frag.rgb + uFogColor.rgb;
 			break;
 		}
@@ -522,4 +537,3 @@ void main()
 	FragNormal = vec4(vEyeNormal.xyz * 0.5 + 0.5, 1.0);
 #endif
 }
-

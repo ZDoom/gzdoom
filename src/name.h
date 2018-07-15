@@ -52,7 +52,7 @@ public:
 	FName (const char *text, size_t textlen, bool noCreate) { Index = NameData.FindName (text, textlen, noCreate); }
 	FName (const FString &text);
 	FName (const FString &text, bool noCreate);
-	FName (const FName &other) { Index = other.Index; }
+	FName (const FName &other) = default;
 	FName (ENamedName index) { Index = index; }
  //   ~FName () {}	// Names can be added but never removed.
 
@@ -63,7 +63,7 @@ public:
 
 	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
 	FName &operator = (const FString &text);
-	FName &operator = (const FName &other) { Index = other.Index; return *this; }
+	FName &operator = (const FName &other) = default;
 	FName &operator = (ENamedName index) { Index = index; return *this; }
 
 	int SetName (const char *text, bool noCreate=false) { return Index = NameData.FindName (text, noCreate); }
@@ -130,10 +130,7 @@ class FNameNoInit : public FName
 public:
 	FNameNoInit() : FName(NoInit) {}
 
-	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
-	FName &operator = (const FString &text);
-	FName &operator = (const FName &other) { Index = int(other); return *this; }
-	FName &operator = (ENamedName index) { Index = index; return *this; }
+	using FName::operator=;
 };
 
 #endif

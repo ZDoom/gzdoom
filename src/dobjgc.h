@@ -167,17 +167,13 @@ class TObjPtr
 		DObject *o;
 	};
 public:
-	TObjPtr() throw()
-	{
-	}
+	TObjPtr() = default;
 	TObjPtr(T q) throw()
 		: pp(q)
 	{
 	}
-	TObjPtr(const TObjPtr<T> &q) throw()
-		: pp(q.pp)
-	{
-	}
+	TObjPtr(const TObjPtr<T> &q) = default;
+	TObjPtr<T> &operator=(const TObjPtr<T> &q) = default;
 	T operator=(T q) throw()
 	{
 		return pp = q;

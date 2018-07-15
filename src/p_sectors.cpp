@@ -111,7 +111,12 @@ double sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 	double ofloor;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::floor);
+	}
 
 	spot = Lines[0]->v1;
 	floor = floorplane.ZatPoint(spot);
@@ -134,7 +139,7 @@ double sector_t::FindLowestFloorSurrounding (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return floor;
 }
@@ -160,7 +165,12 @@ double sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 	double ofloor;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::floor);
+	}
 
 	spot = Lines[0]->v1;
 	floor = -FLT_MAX;
@@ -183,7 +193,7 @@ double sector_t::FindHighestFloorSurrounding (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return floor;
 }
@@ -218,7 +228,12 @@ double sector_t::FindNextHighestFloor (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::floor);
+	}
 
 	spot = Lines[0]->v1;
 	height = floorplane.ZatPoint(spot);
@@ -246,7 +261,7 @@ double sector_t::FindNextHighestFloor (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -280,7 +295,12 @@ double sector_t::FindNextLowestFloor (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::floor);
+	}
 
 	spot = Lines[0]->v1;
 	height = floorplane.ZatPoint (spot);
@@ -308,7 +328,7 @@ double sector_t::FindNextLowestFloor (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -342,7 +362,12 @@ double sector_t::FindNextLowestCeiling (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::floor);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::floor);
+	}
 
 	spot = Lines[0]->v1;
 	height = ceilingplane.ZatPoint(spot);
@@ -370,7 +395,7 @@ double sector_t::FindNextLowestCeiling (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -404,7 +429,12 @@ double sector_t::FindNextHighestCeiling (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::ceiling);
+	}
 
 	spot = Lines[0]->v1;
 	height = ceilingplane.ZatPoint(spot);
@@ -432,7 +462,7 @@ double sector_t::FindNextHighestCeiling (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -458,7 +488,12 @@ double sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::ceiling);
+	}
 
 	spot = Lines[0]->v1;
 	height = FLT_MAX;
@@ -481,7 +516,7 @@ double sector_t::FindLowestCeilingSurrounding (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }
@@ -507,7 +542,12 @@ double sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 	sector_t *other;
 	vertex_t *spot;
 
-	if (Lines.Size() == 0) return GetPlaneTexZ(sector_t::ceiling);
+	if (Lines.Size() == 0)
+	{
+		if (v != nullptr)
+			*v = nullptr;
+		return GetPlaneTexZ(sector_t::ceiling);
+	}
 
 	spot = Lines[0]->v1;
 	height = -FLT_MAX;
@@ -530,7 +570,7 @@ double sector_t::FindHighestCeilingSurrounding (vertex_t **v) const
 			}
 		}
 	}
-	if (v != NULL)
+	if (v != nullptr)
 		*v = spot;
 	return height;
 }

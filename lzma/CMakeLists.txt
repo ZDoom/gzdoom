@@ -3,7 +3,7 @@ cmake_minimum_required( VERSION 2.8.7 )
 make_release_only()
 
 if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra -fomit-frame-pointer" )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -fomit-frame-pointer" )
 endif()
 
 set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -D_7ZIP_PPMD_SUPPPORT" )

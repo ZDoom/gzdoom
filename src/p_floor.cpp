@@ -323,6 +323,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorLowerInstant:
 		floor->m_Speed = height;
+		// fallthrough
 	case DFloor::floorLowerByValue:
 		floor->m_Direction = -1;
 		newheight = sec->CenterFloor() - height;
@@ -331,6 +332,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorRaiseInstant:
 		floor->m_Speed = height;
+		// fallthrough
 	case DFloor::floorRaiseByValue:
 		floor->m_Direction = 1;
 		newheight = sec->CenterFloor() + height;
@@ -345,6 +347,7 @@ bool P_CreateFloor(sector_t *sec, DFloor::EFloor floortype, line_t *line,
 
 	case DFloor::floorRaiseAndCrushDoom:
 		height = 8;
+		// fallthrough
 	case DFloor::floorRaiseToLowestCeiling:
 		floor->m_Direction = 1;
 		newheight = sec->FindLowestCeilingSurrounding(&spot) - height;

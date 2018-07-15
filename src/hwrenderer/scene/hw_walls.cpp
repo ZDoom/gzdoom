@@ -180,8 +180,8 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 		Colormap.Clear();
 	}
     
-    if (di->FixedColormap != CM_DEFAULT || (Colormap.LightColor.isWhite() && lightlevel == 255))
-        flags &= ~GLWF_GLOW;
+	if (di->FixedColormap != CM_DEFAULT || (Colormap.LightColor.isWhite() && lightlevel == 255))
+		flags &= ~GLWF_GLOW;
     
 	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
 	{

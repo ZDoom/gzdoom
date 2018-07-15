@@ -394,4 +394,10 @@ enum
 #define MAKE_ID(a,b,c,d)	((uint32_t)((d)|((c)<<8)|((b)<<16)|((a)<<24)))
 #endif
 
+#ifdef __GNUC__
+#define ASSUME(e) do { if(!(e)) __builtin_unreachable(); } while(0)
+#else
+#define ASSUME(e) __assume((e))
+#endif
+
 #endif	// __DOOMDEF_H__

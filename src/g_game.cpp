@@ -1066,7 +1066,8 @@ void G_Ticker ()
 			G_CheckDemoStatus();
 			G_RecordDemo(newdemoname);
 			G_BeginRecording(newdemomap);
-		case ga_newgame2:	// Silence GCC (see above)
+			// fallthrough
+		case ga_newgame2:
 		case ga_newgame:
 			G_DoNewGame ();
 			break;

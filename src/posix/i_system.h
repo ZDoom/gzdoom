@@ -97,7 +97,7 @@ void I_Quit (void);
 
 void I_Tactile (int on, int off, int total);
 
-void I_Error (const char *error, ...) GCCPRINTF(1,2);
+[[noreturn]] void I_Error (const char *error, ...) GCCPRINTF(1,2);
 void I_FatalError (const char *error, ...) GCCPRINTF(1,2);
 
 void addterm (void (*func)(void), const char *name);

@@ -297,7 +297,7 @@ static void RenderBlur(FGLRenderer *renderer, float blurAmount, PPTexture input,
 	ComputeBlurSamples(7, blurAmount, renderer->mBlurShader->Uniforms[vertical]->SampleWeights);
 
 	renderer->mBlurShader->Bind(NOQUEUE, vertical);
-	renderer->mBlurShader->Uniforms[vertical].Set(POSTPROCESS_BINDINGPOINT);
+	renderer->mBlurShader->Uniforms[vertical].Set(true);
 
 	input.Bind(0);
 	output.Bind();

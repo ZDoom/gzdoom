@@ -66,19 +66,14 @@ struct TVector2
 {
 	vec_t X, Y;
 
-	TVector2 ()
-	{
-	}
+	TVector2 () = default;
 
 	TVector2 (vec_t a, vec_t b)
 		: X(a), Y(b)
 	{
 	}
 
-	TVector2 (const TVector2 &other)
-		: X(other.X), Y(other.Y)
-	{
-	}
+	TVector2 (const TVector2 &other) = default;
 
 	TVector2 (const TVector3<vec_t> &other)	// Copy the X and Y from the 3D vector and discard the Z
 		: X(other.X), Y(other.Y)
@@ -95,18 +90,16 @@ struct TVector2
 		return X == 0 && Y == 0;
 	}
 
-	TVector2 &operator= (const TVector2 &other)
-	{
-		// This might seem backwards, but this helps produce smaller code when a newly
-		// created vector is assigned, because the components can just be popped off
-		// the FPU stack in order without the need for fxch. For platforms with a
-		// more sensible registered-based FPU, of course, the order doesn't matter.
-		// (And, yes, I know fxch can improve performance in the right circumstances,
-		// but this isn't one of those times. Here, it's little more than a no-op that
-		// makes the exe 2 bytes larger whenever you assign one vector to another.)
-		Y = other.Y, X = other.X;
-		return *this;
-	}
+	// [BL 2018-07-15] There used to be an optimization here whereby the
+	// assignments were done in reverse order to optimize x87 instructions.
+	// On 64-bit MSVC/Clang/GCC this optimization sees to either generate longer
+	// code or block SSE (regardless of assignment order). Oddly, on 32-bit
+	// Clang/GCC it seems to allow SSE to be used if enabled. In either case
+	// fxch appears to no longer be generated. (It may also still be helpful on
+	// POWER based on assembly output but we don't currently support POWER
+	// platforms.)  Profiling would need to be done to determine if there's
+	// actually still any benefit.
+	TVector2 &operator= (const TVector2 &other) = default;
 
 	// Access X and Y as an array
 	vec_t &operator[] (int index)
@@ -317,9 +310,7 @@ struct TVector3
 
 	vec_t X, Y, Z;
 
-	TVector3 ()
-	{
-	}
+	TVector3 () = default;
 
 	TVector3 (vec_t a, vec_t b, vec_t c)
 		: X(a), Y(b), Z(c)
@@ -331,10 +322,7 @@ struct TVector3
 	{
 	}
 
-	TVector3 (const TVector3 &other)
-		: X(other.X), Y(other.Y), Z(other.Z)
-	{
-	}
+	TVector3 (const TVector3 &other) = default;
 
 	TVector3 (const Vector2 &xy, vec_t z)
 		: X(xy.X), Y(xy.Y), Z(z)
@@ -353,11 +341,7 @@ struct TVector3
 		return X == 0 && Y == 0 && Z == 0;
 	}
 
-	TVector3 &operator= (const TVector3 &other)
-	{
-		Z = other.Z, Y = other.Y, X = other.X;
-		return *this;
-	}
+	TVector3 &operator= (const TVector3 &other) = default;
 
 	// Access X and Y and Z as an array
 	vec_t &operator[] (int index)
@@ -547,12 +531,13 @@ struct TVector3
 				right = { 0.f, 0.f, 1.f };
 			}
 
-			if (major == 1 || (major == 2 && n[2] > 0.f))
+			else if (major == 1 || (major == 2 && n[2] > 0.f))
 			{
 				right = { 1.f, 0.f, 0.f };
 			}
 
-			if (major == 2 && n[2] < 0.0f)
+			// Unconditional to ease static analysis
+			else // major == 2 && n[2] <= 0.0f
 			{
 				right = { -1.f, 0.f, 0.f };
 			}
@@ -662,9 +647,7 @@ struct TVector4
 
 	vec_t X, Y, Z, W;
 
-	TVector4()
-	{
-	}
+	TVector4() = default;
 
 	TVector4(vec_t a, vec_t b, vec_t c, vec_t d)
 		: X(a), Y(b), Z(c), W(d)
@@ -676,10 +659,7 @@ struct TVector4
 	{
 	}
 
-	TVector4(const TVector4 &other)
-		: X(other.X), Y(other.Y), Z(other.Z), W(other.W)
-	{
-	}
+	TVector4(const TVector4 &other) = default;
 
 	TVector4(const Vector3 &xyz, vec_t w)
 		: X(xyz.X), Y(xyz.Y), Z(xyz.Z), W(w)
@@ -696,11 +676,7 @@ struct TVector4
 		return X == 0 && Y == 0 && Z == 0 && W == 0;
 	}
 
-	TVector4 &operator= (const TVector4 &other)
-	{
-		W = other.W, Z = other.Z, Y = other.Y, X = other.X;
-		return *this;
-	}
+	TVector4 &operator= (const TVector4 &other) = default;
 
 	// Access X and Y and Z as an array
 	vec_t &operator[] (int index)
@@ -939,9 +915,7 @@ struct TMatrix3x3
 
 	vec_t Cells[3][3];
 
-	TMatrix3x3()
-	{
-	}
+	TMatrix3x3() = default;
 
 	TMatrix3x3(const TMatrix3x3 &other)
 	{
@@ -1151,9 +1125,7 @@ struct TAngle
 	TAngle &operator= (long other) = delete;
 	TAngle &operator= (unsigned long other) = delete;
 
-	TAngle ()
-	{
-	}
+	TAngle () = default;
 
 	TAngle (vec_t amt)
 		: Degrees(amt)
@@ -1167,16 +1139,9 @@ struct TAngle
 	}
 	*/
 
-	TAngle (const TAngle &other)
-		: Degrees(other.Degrees)
-	{
-	}
+	TAngle (const TAngle &other) = default;
 
-	TAngle &operator= (const TAngle &other)
-	{
-		Degrees = other.Degrees;
-		return *this;
-	}
+	TAngle &operator= (const TAngle &other) = default;
 
 	TAngle &operator= (double other)
 	{
@@ -1491,25 +1456,16 @@ struct TRotator
 	Angle Roll;		// rotation about the forward axis.
 	Angle CamRoll;	// Roll specific to actor cameras. Used by quakes.
 
-	TRotator ()
-	{
-	}
+	TRotator () = default;
 
 	TRotator (const Angle &p, const Angle &y, const Angle &r)
 		: Pitch(p), Yaw(y), Roll(r)
 	{
 	}
 
-	TRotator (const TRotator &other)
-		: Pitch(other.Pitch), Yaw(other.Yaw), Roll(other.Roll)
-	{
-	}
+	TRotator (const TRotator &other) = default;
 
-	TRotator &operator= (const TRotator &other)
-	{
-		Roll = other.Roll, Yaw = other.Yaw, Pitch = other.Pitch;
-		return *this;
-	}
+	TRotator &operator= (const TRotator &other) = default;
 
 	// Access angles as an array
 	Angle &operator[] (int index)

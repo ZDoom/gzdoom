@@ -256,6 +256,7 @@ bool P_CreateCeiling(sector_t *sec, DCeiling::ECeiling type, line_t *line, int t
 	case DCeiling::ceilCrushAndRaise:
 	case DCeiling::ceilCrushRaiseAndStay:
 		ceiling->m_TopHeight = sec->ceilingplane.fD();
+		// fallthrough
 	case DCeiling::ceilLowerAndCrush:
 		targheight = sec->FindHighestFloorPoint (&spot);
 		targheight += height;

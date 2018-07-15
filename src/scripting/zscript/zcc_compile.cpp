@@ -295,7 +295,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 	if (ast.TopNode != NULL)
 	{
 		ZCC_TreeNode *node = ast.TopNode;
-		PSymbolTreeNode *tnode;
+		PSymbolTreeNode *tnode = nullptr;
 		PType *enumType = nullptr;
 		ZCC_Enum *zenumType = nullptr;
 
@@ -310,6 +310,7 @@ ZCCCompiler::ZCCCompiler(ZCC_AST &ast, DObject *_outer, PSymbolTable &_symbols, 
 					ProcessClass(static_cast<ZCC_Class *>(node), tnode);
 					break;
 				}
+				// fallthrough
 			case AST_Struct:
 			case AST_ConstantDef:
 			case AST_Enum:
@@ -1845,6 +1846,7 @@ void ZCCCompiler::DispatchProperty(FPropertyInfo *prop, ZCC_PropertyStmt *proper
 
 			case 'C':	// this parser accepts colors only in string form.
 				pref.i = 1;
+				// fallthrough
 			case 'S':
 			case 'T': // a filtered string (ZScript only parses filtered strings so there's nothing to do here.)
 				conv.s = GetStringConst(ex, ctx);

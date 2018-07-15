@@ -3052,6 +3052,7 @@ FxExpression *FxMulDiv::Resolve(FCompileContext& ctx)
 		case '/':
 			// For division, the vector must be the first operand.
 			if (right->IsVector()) goto error;
+			// fallthrough
 
 		case '*':
 			if (left->IsVector() && right->IsNumeric())

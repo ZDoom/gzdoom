@@ -6499,11 +6499,10 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 		case ACSF_IsPointerEqual:
 			{
 				int tid1 = 0, tid2 = 0;
-				switch (argCount)
-				{
-				case 4: tid2 = args[3];
-				case 3: tid1 = args[2];
-				}
+				if (argCount >= 4)
+					tid2 = args[3];
+				if (argCount >= 3)
+					tid1 = args[2];
 
 				actor = SingleActorFromTID(tid1, activator);
 				AActor * actor2 = tid2 == tid1 ? actor : SingleActorFromTID(tid2, activator);
@@ -8283,8 +8282,8 @@ int DLevelScript::RunScript ()
 			break;
 
 		case PCD_SETRESULTVALUE:
-			resultValue = STACK(1);
-		case PCD_DROP: //fall through.
+			resultValue = STACK(1); //fall through.
+		case PCD_DROP:
 			sp--;
 			break;
 

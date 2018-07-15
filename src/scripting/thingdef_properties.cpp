@@ -1492,7 +1492,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, colorsetfile, ISSI, PlayerPawn)
 	PROP_STRING_PARM(rangefile, 2);
 	PROP_INT_PARM(representative_color, 3);
 
-	FPlayerColorSet color;
+	FPlayerColorSet color{};
 	color.Name = setname;
 	color.Lump = Wads.CheckNumForName(rangefile);
 	color.RepresentativeColor = representative_color;
@@ -1521,8 +1521,7 @@ DEFINE_CLASS_PROPERTY_PREFIX(player, clearcolorset, I, PlayerPawn)
 	}
 	else
 	{
-		FPlayerColorSet color;
-		memset(&color, 0, sizeof(color));
+		FPlayerColorSet color{};
 		ColorSets.Push(std::make_tuple(info, setnum, color));
 	}
 }

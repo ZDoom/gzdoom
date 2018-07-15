@@ -125,20 +125,36 @@ void Mac_I_FatalError(const char* const message)
 }
 
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+
+// Available since 10.9 with no public declaration/definition until 10.10
+
+struct NSOperatingSystemVersion
+{
+	NSInteger majorVersion;
+	NSInteger minorVersion;
+	NSInteger patchVersion;
+};
+
+@interface NSProcessInfo(OperatingSystemVersion)
+- (NSOperatingSystemVersion)operatingSystemVersion;
+@end
+
+#endif // before 10.10
+
 static void I_DetectOS()
 {
-	SInt32 majorVersion = 0;
-	Gestalt(gestaltSystemVersionMajor, &majorVersion);
-	
-	SInt32 minorVersion = 0;
-	Gestalt(gestaltSystemVersionMinor, &minorVersion);
-	
-	SInt32 bugFixVersion = 0;
-	Gestalt(gestaltSystemVersionBugFix, &bugFixVersion);
-	
+	NSOperatingSystemVersion version = {};
+	NSProcessInfo* const processInfo = [NSProcessInfo processInfo];
+
+	if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+	{
+		version = [processInfo operatingSystemVersion];
+	}
+
 	const char* name = "Unknown version";
 	
-	if (10 == majorVersion) switch (minorVersion)
+	if (10 == version.majorVersion) switch (version.minorVersion)
 	{
 		case  7: name = "Mac OS X Lion";         break;
 		case  8: name = "OS X Mountain Lion";    break;
@@ -163,9 +179,9 @@ static void I_DetectOS()
 		"Unknown";
 #endif
 	
-	Printf("OS: %s %d.%d.%d (%s) %s\n", name, 
-		int(majorVersion), int(minorVersion), int(bugFixVersion),
-		release, architecture);
+	Printf("OS: %s %d.%d.%d (%s) %s\n", name,
+		   int(version.majorVersion), int(version.minorVersion), int(version.patchVersion),
+		   release, architecture);
 }
 
 

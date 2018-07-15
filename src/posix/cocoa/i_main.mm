@@ -169,7 +169,11 @@ static void I_DetectOS()
 	char release[16] = "unknown";
 	size_t size = sizeof release - 1;
 	sysctlbyname("kern.osversion", release, &size, nullptr, 0);
-	
+
+	char model[64] = "Unknown Mac model";
+	size = sizeof model - 1;
+	sysctlbyname("hw.model", model, &size, nullptr, 0);
+
 	const char* const architecture =
 #ifdef __i386__
 		"32-bit Intel";
@@ -179,7 +183,7 @@ static void I_DetectOS()
 		"Unknown";
 #endif
 	
-	Printf("OS: %s %d.%d.%d (%s) %s\n", name,
+	Printf("%s running %s %d.%d.%d (%s) %s\n", model, name,
 		   int(version.majorVersion), int(version.minorVersion), int(version.patchVersion),
 		   release, architecture);
 }

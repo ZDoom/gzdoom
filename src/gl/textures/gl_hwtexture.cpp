@@ -353,6 +353,7 @@ void FHardwareTexture::Clean(bool all)
 	}
 	glTex_Translated.Clear();
 	if (glDepthID != 0) glDeleteRenderbuffers(1, &glDepthID);
+	glDepthID = 0;
 }
 
 //===========================================================================

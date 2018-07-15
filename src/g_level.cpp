@@ -1045,6 +1045,16 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	G_UnSnapshotLevel (!savegamerestore);	// [RH] Restore the state of the level.
 	int pnumerr = G_FinishTravel ();
+
+	if (!level.FromSnapshot)
+	{
+		for (int i = 0; i<MAXPLAYERS; i++)
+		{
+			if (playeringame[i] && players[i].mo != NULL)
+				P_PlayerStartStomp(players[i].mo);
+		}
+	}
+
 	// For each player, if they are viewing through a player, make sure it is themselves.
 	for (int ii = 0; ii < MAXPLAYERS; ++ii)
 	{

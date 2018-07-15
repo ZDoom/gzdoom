@@ -1845,11 +1845,6 @@ void P_SpawnThings (int position)
 			SetMapThingUserData(actor, *udi);
 		}
 	}
-	for(int i=0; i<MAXPLAYERS; i++)
-	{
-		if (playeringame[i] && players[i].mo != NULL)
-			P_PlayerStartStomp(players[i].mo);
-	}
 }
 
 

@@ -27,9 +27,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <memory>
-#ifdef __APPLE__
-#include <CoreServices/CoreServices.h>
-#endif
 
 #include "i_time.h"
 #include "templates.h"

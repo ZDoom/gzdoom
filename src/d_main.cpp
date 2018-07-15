@@ -225,8 +225,8 @@ int eventhead;
 int eventtail;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
-FTexture *Page;
 FTexture *Advisory;
+FTextureID Page;
 bool nospriterename;
 FStartupInfo DoomStartupInfo;
 FString lastIWAD;
@@ -971,7 +971,8 @@ void D_DoomLoop ()
 
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
-	Page = Advisory = NULL;
+	Page.SetInvalid();
+	Advisory = nullptr;
 
 	vid_cursor.Callback();
 
@@ -1056,9 +1057,9 @@ void D_PageTicker (void)
 void D_PageDrawer (void)
 {
 	screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
-	if (Page != NULL)
+	if (Page.Exists())
 	{
-		screen->DrawTexture (Page, 0, 0,
+		screen->DrawTexture (TexMan(Page), 0, 0,
 			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
@@ -1200,18 +1201,7 @@ void D_DoStrifeAdvanceDemo ()
 	if (demosequence == 9 && !(gameinfo.flags & GI_SHAREWARE))
 		demosequence = 10;
 
-	if (pagename)
-	{
-		if (Page != NULL)
-		{
-			Page->Unload ();
-			Page = NULL;
-		}
-		if (pagename[0])
-		{
-			Page = TexMan[pagename];
-		}
-	}
+	if (pagename != nullptr) Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
 }
 
 //==========================================================================
@@ -1309,13 +1299,10 @@ void D_DoAdvanceDemo (void)
 		break;
 	}
 
+
 	if (pagename.IsNotEmpty())
 	{
-		if (Page != NULL)
-		{
-			Page->Unload ();
-		}
-		Page = TexMan(pagename);
+		Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
 	}
 }
 

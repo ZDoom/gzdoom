@@ -33,11 +33,58 @@
 **
 */
 
-#include <CoreServices/CoreServices.h>
+#import <Foundation/NSFileManager.h>
 
 #include "cmdlib.h"
 #include "m_misc.h"
 #include "version.h"	// for GAMENAME
+
+
+static FString GetSpecialPath(const NSSearchPathDirectory kind, const BOOL create = YES, const NSSearchPathDomainMask domain = NSUserDomainMask)
+{
+	NSURL* url = [[NSFileManager defaultManager] URLForDirectory:kind
+														inDomain:domain
+											   appropriateForURL:nil
+														  create:create
+														   error:nil];
+	char utf8path[PATH_MAX];
+
+	if ([url getFileSystemRepresentation:utf8path
+							   maxLength:sizeof utf8path])
+	{
+		return utf8path;
+	}
+
+	return FString();
+}
+
+FString M_GetMacAppSupportPath(const bool create)
+{
+	return GetSpecialPath(NSApplicationSupportDirectory, create);
+}
+
+void M_GetMacSearchDirectories(FString& user_docs, FString& user_app_support, FString& local_app_support)
+{
+	FString path = GetSpecialPath(NSDocumentDirectory);
+	user_docs = path.IsEmpty()
+		? "~/" GAME_DIR
+		: (path + "/" GAME_DIR);
+
+#define LIBRARY_APPSUPPORT "/Library/Application Support/"
+
+	path = M_GetMacAppSupportPath();
+	user_app_support = path.IsEmpty()
+		? "~" LIBRARY_APPSUPPORT GAME_DIR
+		: (path + "/" GAME_DIR);
+
+	path = GetSpecialPath(NSApplicationSupportDirectory, YES, NSLocalDomainMask);
+	local_app_support = path.IsEmpty()
+		? LIBRARY_APPSUPPORT GAME_DIR
+		: (path + "/" GAME_DIR);
+
+#undef LIBRARY_APPSUPPORT
+}
+
 
 //===========================================================================
 //
@@ -49,20 +96,13 @@
 
 FString M_GetAppDataPath(bool create)
 {
-	FString path;
+	FString path = M_GetMacAppSupportPath(create);
 
-	char pathstr[PATH_MAX];
-	FSRef folder;
-
-	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, create ? kCreateFolder : 0, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
-	{
-		path = pathstr;
-	}
-	else
+	if (path.IsEmpty())
 	{
 		path = progdir;
 	}
+
 	path += "/" GAMENAMELOWERCASE;
 	if (create) CreatePath(path);
 	return path;
@@ -78,20 +118,13 @@ FString M_GetAppDataPath(bool create)
 
 FString M_GetCachePath(bool create)
 {
-	FString path;
+	FString path = M_GetMacAppSupportPath(create);
 
-	char pathstr[PATH_MAX];
-	FSRef folder;
-
-	if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, create ? kCreateFolder : 0, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)pathstr, PATH_MAX))
-	{
-		path = pathstr;
-	}
-	else
+	if (path.IsEmpty())
 	{
 		path = progdir;
 	}
+
 	path += "/zdoom/cache";
 	if (create) CreatePath(path);
 	return path;
@@ -107,16 +140,13 @@ FString M_GetCachePath(bool create)
 
 FString M_GetAutoexecPath()
 {
-	FString path;
+	FString path = GetSpecialPath(NSDocumentDirectory);
 
-	char cpath[PATH_MAX];
-	FSRef folder;
-	
-	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	if (path.IsNotEmpty())
 	{
-		path << cpath << "/" GAME_DIR "/autoexec.cfg";
+		path += "/" GAME_DIR "/autoexec.cfg";
 	}
+
 	return path;
 }
 
@@ -153,18 +183,21 @@ FString M_GetCajunPath(const char *botfilename)
 
 FString M_GetConfigPath(bool for_reading)
 {
-	char cpath[PATH_MAX];
-	FSRef folder;
-	
-	if (noErr == FSFindFolder(kUserDomain, kPreferencesFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	FString path = GetSpecialPath(NSLibraryDirectory);
+
+	if (path.IsNotEmpty())
 	{
-		FString path;
-		path << cpath << "/" GAMENAMELOWERCASE ".ini";
-		return path;
+		// There seems to be no way to get Preferences path via NSFileManager
+		path += "/Preferences/";
+		CreatePath(path);
+
+		if (!DirExists(path))
+		{
+			path = FString();
+		}
 	}
-	// Ungh.
-	return GAMENAMELOWERCASE ".ini";
+
+	return path + GAMENAMELOWERCASE ".ini";
 }
 
 //===========================================================================
@@ -177,19 +210,17 @@ FString M_GetConfigPath(bool for_reading)
 
 FString M_GetScreenshotsPath()
 {
-	FString path;
-	char cpath[PATH_MAX];
-	FSRef folder;
-	
-	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-	{
-		path << cpath << "/" GAME_DIR "/Screenshots/";
-	}
-	else
+	FString path = GetSpecialPath(NSDocumentDirectory);
+
+	if (path.IsEmpty())
 	{
 		path = "~/";
 	}
+	else
+	{
+		path += "/" GAME_DIR "/Screenshots/";
+	}
+
 	return path;
 }
 
@@ -203,21 +234,19 @@ FString M_GetScreenshotsPath()
 
 FString M_GetSavegamesPath()
 {
-	FString path;
-	char cpath[PATH_MAX];
-	FSRef folder;
+	FString path = GetSpecialPath(NSDocumentDirectory);
 
-	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	if (path.IsNotEmpty())
 	{
-		path << cpath << "/" GAME_DIR "/Savegames/";
+		path += "/" GAME_DIR "/Savegames/";
 	}
+
 	return path;
 }
 
 //===========================================================================
 //
-// M_GetDocumentsPath												Unix
+// M_GetDocumentsPath												macOS
 //
 // Returns the path to the default documents directory.
 //
@@ -225,14 +254,12 @@ FString M_GetSavegamesPath()
 
 FString M_GetDocumentsPath()
 {
-	FString path;
-	char cpath[PATH_MAX];
-	FSRef folder;
+	FString path = GetSpecialPath(NSDocumentDirectory);
 
-	if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-		noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
+	if (path.IsNotEmpty())
 	{
-		path << cpath << "/" GAME_DIR "/";
+		path += "/" GAME_DIR "/";
 	}
+
 	return path;
 }

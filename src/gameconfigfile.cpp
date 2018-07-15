@@ -34,10 +34,6 @@
 
 #include <stdio.h>
 
-#ifdef __APPLE__
-#include <CoreServices/CoreServices.h>
-#endif
-
 #include "gameconfigfile.h"
 #include "c_cvars.h"
 #include "c_dispatch.h"
@@ -69,39 +65,9 @@ FGameConfigFile::FGameConfigFile ()
 {
 #ifdef __APPLE__
 	FString user_docs, user_app_support, local_app_support;
-	{
-		char cpath[PATH_MAX];
-		FSRef folder;
-
-		if (noErr == FSFindFolder(kUserDomain, kDocumentsFolderType, kCreateFolder, &folder) &&
-			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-		{
-			user_docs << cpath << "/" GAME_DIR;
-		}
-		else
-		{
-			user_docs = "~/" GAME_DIR;
-		}
-		if (noErr == FSFindFolder(kUserDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-		{
-			user_app_support << cpath << "/" GAME_DIR;
-		}
-		else
-		{
-			user_app_support = "~/Library/Application Support/" GAME_DIR;
-		}
-		if (noErr == FSFindFolder(kLocalDomain, kApplicationSupportFolderType, kCreateFolder, &folder) &&
-			noErr == FSRefMakePath(&folder, (UInt8*)cpath, PATH_MAX))
-		{
-			local_app_support << cpath << "/" GAME_DIR;
-		}
-		else
-		{
-			local_app_support = "Library/Application Support/" GAME_DIR;
-		}
-	}
+	M_GetMacSearchDirectories(user_docs, user_app_support, local_app_support);
 #endif
+
 	FString pathname;
 
 	OkayToWrite = false;	// Do not allow saving of the config before DoGameSetup()

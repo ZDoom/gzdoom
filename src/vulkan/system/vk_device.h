@@ -4,6 +4,8 @@
 #include "vk_mem_alloc/vk_mem_alloc.h"
 #include "base_sysfb.h"
 
+#include <mutex>
+
 struct QueueFamilyIndices
 {
 	int graphicsFamily = -1;
@@ -31,6 +33,7 @@ public:
 	VkDevice vkDevice = VK_NULL_HANDLE;
 	VkDebugReportCallbackEXT vkCallback = VK_NULL_HANDLE;
 	VkQueue vkGraphicsQueue = VK_NULL_HANDLE;
+	VkQueue vkTransferQueue = VK_NULL_HANDLE;	// for image transfers only.
 	VkQueue vkPresentQueue = VK_NULL_HANDLE;
 	VmaAllocator vkAllocator = VK_NULL_HANDLE;
 	VkCommandPool vkCommandPool = VK_NULL_HANDLE;
@@ -48,6 +51,8 @@ private:
 	void CreateCommandPool();
 
 	std::vector<const char*> GetRequiredExtensions();
+
+	std::mutex vkSingleTimeQueueMutex;
 
 public:
 	// This cannot be set up in the constructor because it may throw exceptions when initialization fails.

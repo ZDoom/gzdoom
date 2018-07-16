@@ -424,7 +424,7 @@ void VulkanDevice::CreateLogicalDevice()
 		VkDeviceQueueCreateInfo queueCreateInfo = {};
 		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 		queueCreateInfo.queueFamilyIndex = queueFamily;
-		queueCreateInfo.queueCount = 1;
+		queueCreateInfo.queueCount = queueFamily == indices.graphicsFamily? 2 : 1;
 		queueCreateInfo.pQueuePriorities = &queuePriority;
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
@@ -459,6 +459,7 @@ void VulkanDevice::CreateLogicalDevice()
 	volkLoadDevice(vkDevice);
 
 	vkGetDeviceQueue(vkDevice, indices.graphicsFamily, 0, &vkGraphicsQueue);
+	vkGetDeviceQueue(vkDevice, indices.graphicsFamily, 1, &vkTransferQueue);
 	vkGetDeviceQueue(vkDevice, indices.presentFamily, 0, &vkPresentQueue);
 }
 
@@ -570,7 +571,7 @@ static bool hasStencilComponent(VkFormat format)
 
 //==========================================================================
 //
-//
+// helpers for image/texture uploads
 //
 //==========================================================================
 
@@ -609,8 +610,11 @@ void VulkanDevice::EndSingleTimeCommands(VkCommandBuffer commandBuffer)
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffer;
 
-	vkQueueSubmit(vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(vkGraphicsQueue);
+	{
+		std::lock_guard<std::mutex> lock(vkSingleTimeQueueMutex);
+		vkQueueSubmit(vkTransferQueue, 1, &submitInfo, VK_NULL_HANDLE);
+		vkQueueWaitIdle(vkTransferQueue);
+	}
 
 	vkFreeCommandBuffers(vkDevice, vkCommandPool, 1, &commandBuffer);
 }

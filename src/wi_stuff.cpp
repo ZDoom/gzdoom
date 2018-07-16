@@ -454,6 +454,7 @@ bool DInterBackground::LoadBackground(bool isenterpic)
 					an.LevelName = sc.String;
 					sc.MustGetString();
 					caseval = sc.MustMatchString(WI_Cmd);
+					// fallthrough
 
 				default:
 					switch (caseval)

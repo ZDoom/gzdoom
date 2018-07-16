@@ -1307,6 +1307,7 @@ void D_DoAdvanceDemo (void)
 				break;
 			}
 		}
+		// fallthrough
 
 	default:
 	case 0:

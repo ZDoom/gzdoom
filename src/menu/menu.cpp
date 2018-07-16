@@ -417,6 +417,7 @@ void M_SetMenu(FName menu, int param)
 		// sent either from skill menu or confirmation screen. Skill gets only set if sent from skill menu
 		// Now we can finally start the game. Ugh...
 		GameStartupInfo.Skill = param;
+		// fallthrough
 	case NAME_StartgameConfirmed:
 
 		G_DeferedInitNew (&GameStartupInfo);
@@ -435,6 +436,7 @@ void M_SetMenu(FName menu, int param)
 			M_StartMessage (GStrings("SAVEDEAD"), 1);
 			return;
 		}
+		break;
 
 	case NAME_VideoModeMenu:
 		M_InitVideoModes();

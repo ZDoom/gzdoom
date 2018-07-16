@@ -264,9 +264,8 @@ void P_InitTerrainTypes ()
 
 static void MakeDefaultTerrain ()
 {
-	FTerrainDef def;
+	FTerrainDef def{};
 
-	memset (&def, 0, sizeof(def));
 	def.Name = "Solid";
 	def.Splash = -1;
 	Terrains.Push (def);
@@ -429,8 +428,7 @@ void ParseTerrain (FScanner &sc)
 	terrainnum = (int)P_FindTerrain (name);
 	if (terrainnum < 0)
 	{
-		FTerrainDef def;
-		memset (&def, 0, sizeof(def));
+		FTerrainDef def{};
 		def.Splash = -1;
 		def.Name = name;
 		terrainnum = (int)Terrains.Push (def);
@@ -441,7 +439,7 @@ void ParseTerrain (FScanner &sc)
 	if (!sc.Compare ("modify"))
 	{
 		name = Terrains[terrainnum].Name;
-		memset (&Terrains[terrainnum], 0, sizeof(FTerrainDef));
+		Terrains[terrainnum] = FTerrainDef{};
 		Terrains[terrainnum].Splash = -1;
 		Terrains[terrainnum].Name = name;
 	}

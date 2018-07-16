@@ -540,6 +540,7 @@ bool Host_CheckForConnects (void *userdata)
 			{
 				StartScreen->NetMessage ("Got disconnect from node %d.", node);
 				doomcom.numnodes--;
+				ASSUME(doomcom.numnodes < MAXNETNODES);
 				while (node < doomcom.numnodes)
 				{
 					sendaddress[node] = sendaddress[node+1];

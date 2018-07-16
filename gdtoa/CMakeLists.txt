@@ -9,7 +9,7 @@ if( MSVC )
 endif()
 
 if( ZD_CMAKE_COMPILER_IS_GNUC_COMPATIBLE )
-	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wextra" )
+	set( CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall" )
 endif()
 
 include_directories( ${CMAKE_CURRENT_BINARY_DIR} )

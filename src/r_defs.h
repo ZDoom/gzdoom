@@ -596,7 +596,12 @@ struct secspecial_t
 
 	void Clear()
 	{
-		memset(this, 0, sizeof(*this));
+		damagetype = NAME_None;
+		damageamount = 0;
+		special = 0;
+		damageinterval = 0;
+		leakydamage = 0;
+		Flags = 0;
 	}
 };
 

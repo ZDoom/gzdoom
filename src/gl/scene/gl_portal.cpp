@@ -771,6 +771,8 @@ void GLPlaneMirrorPortal::PushState()
 
 void GLPlaneMirrorPortal::PopState()
 {
+	ASSUME(planestack.Size() >= 2);
+
 	float d, f;
 	planestack.Pop(d);
 	planestack.Pop(f);

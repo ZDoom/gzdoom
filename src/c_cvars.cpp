@@ -566,15 +566,18 @@ UCVarValue FBaseCVar::FromString (const char *value, ECVarType type)
 			case 0:
 				if (value[i] != '{')
 					break;
+				// fallthrough
 			case 9:
 			case 14:
 			case 19:
 			case 24:
 				if (value[i] != '-')
 					break;
+				// fallthrough
 			case 37:
 				if (value[i] != '}')
 					break;
+				// fallthrough
 			default:
 				if (value[i] < '0' || 
 					(value[i] > '9' && value[i] < 'A') || 

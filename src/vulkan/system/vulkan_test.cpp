@@ -25,6 +25,7 @@
 #include "vk_framebuffer.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_texture.h"
+#include "vulkan/textures/vk_depthbuffer.h"
 #include "textures/textures.h"
 
 const int WIDTH = 800;
@@ -111,10 +112,7 @@ public:
     VkPipelineLayout pipelineLayout;
     VkPipeline graphicsPipeline;
 
-    VkImage depthImage;
-    VkDeviceMemory depthImageMemory;
-    VkImageView depthImageView;
-
+	VkDepthBuffer *vk_depthbuffer;
 	VkTexture *vk_texture;
 
     std::vector<Vertex> vertices;
@@ -162,9 +160,7 @@ public:
     }
 
     void cleanupSwapChain() {
-        vkDestroyImageView(vDevice->vkDevice, depthImageView, nullptr);
-        vkDestroyImage(vDevice->vkDevice, depthImage, nullptr);
-        vkFreeMemory(vDevice->vkDevice, depthImageMemory, nullptr);
+		delete vk_depthbuffer;
 
         for (auto framebuffer : swapChainFramebuffers) {
             vkDestroyFramebuffer(vDevice->vkDevice, framebuffer, nullptr);
@@ -299,7 +295,7 @@ public:
         colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
         VkAttachmentDescription depthAttachment = {};
-        depthAttachment.format = findDepthFormat();
+        depthAttachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
         depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
         depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
         depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -504,7 +500,7 @@ public:
         for (size_t i = 0; i < swapChainImageViews.size(); i++) {
             std::array<VkImageView, 2> attachments = {
                 swapChainImageViews[i],
-                depthImageView
+                vk_depthbuffer->Handle()
             };
 
             VkFramebufferCreateInfo framebufferInfo = {};
@@ -523,36 +519,10 @@ public:
     }
 
     void createDepthResources() {
-        VkFormat depthFormat = findDepthFormat();
-
-        createImage(swapChainExtent.width, swapChainExtent.height, 1, depthFormat, VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
-        depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
-
-        vDevice->TransitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+		vk_depthbuffer = new VkDepthBuffer(vDevice);
+		vk_depthbuffer->Create(swapChainExtent.width, swapChainExtent.height);
     }
 
-    VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features) {
-        for (VkFormat format : candidates) {
-            VkFormatProperties props;
-            vkGetPhysicalDeviceFormatProperties(vDevice->vkPhysicalDevice, format, &props);
-
-            if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
-                return format;
-            } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
-                return format;
-            }
-        }
-
-        throw std::runtime_error("failed to find supported format!");
-    }
-
-    VkFormat findDepthFormat() {
-        return findSupportedFormat(
-            {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
-            VK_IMAGE_TILING_OPTIMAL,
-            VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-        );
-    }
 
     void createTextureImage() {
         int texWidth, texHeight;
@@ -622,29 +592,6 @@ public:
         }
 
         vkBindImageMemory(vDevice->vkDevice, image, imageMemory, 0);
-    }
-
-    void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height) {
-        VkCommandBuffer commandBuffer = vDevice->BeginSingleTimeCommands();
-
-        VkBufferImageCopy region = {};
-        region.bufferOffset = 0;
-        region.bufferRowLength = 0;
-        region.bufferImageHeight = 0;
-        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.imageSubresource.mipLevel = 0;
-        region.imageSubresource.baseArrayLayer = 0;
-        region.imageSubresource.layerCount = 1;
-        region.imageOffset = {0, 0, 0};
-        region.imageExtent = {
-            width,
-            height,
-            1
-        };
-
-        vkCmdCopyBufferToImage(commandBuffer, buffer, image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-
-        vDevice->EndSingleTimeCommands(commandBuffer);
     }
 
     void loadModel() {

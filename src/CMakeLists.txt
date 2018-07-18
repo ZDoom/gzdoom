@@ -888,6 +888,7 @@ set( FASTMATH_SOURCES
 	vulkan/textures/vk_samplers.cpp
 	vulkan/textures/vk_hwtexture.cpp
 	vulkan/textures/vk_texture.cpp
+	vulkan/textures/vk_depthbuffer.cpp
 	vulkan/thirdparty/volk/volk.c
 	vulkan/thirdparty/vk_mem_alloc/vk_mem_alloc.cpp
 

@@ -69,4 +69,9 @@ public:
 	void EndSingleTimeCommands(VkCommandBuffer commandBuffer);
 	VkResult TransitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, uint32_t mipLevels);
 
+	int GetTexDimension(int d)
+	{
+		// to do!
+		return d > 32768 ? 32768 : d;
+	}
 };

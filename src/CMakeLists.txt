@@ -701,6 +701,10 @@ file( GLOB HEADER_FILES
 	hwrenderer/scene/*.h
 	hwrenderer/textures/*.h
 	hwrenderer/utility/*.h
+	vulkan/system/*.h
+	vulkan/textures/*.h
+	vulkan/thirdparty/volk/*.h
+	vulkan/thirdparty/vk_mem_alloc/*.h
 	gl/*.h
 	gl/data/*.h
 	gl/dynlights/*.h

@@ -31,18 +31,19 @@
 
 #include "hwrenderer/utility/hw_cvars.h"
 #include "vk_hwtexture.h"
+#include "vk_texture.h"
 
-#if 0
 //===========================================================================
 // 
 //	Creates the low level texture object
 //
 //===========================================================================
 
-VKResult VkHardwareTexture::CreateTexture(VulkanDevice *vDevice, unsigned char * buffer, int w, int h, bool mipmap, int translation)
+VkResult VkHardwareTexture::CreateTexture(unsigned char * buffer, int w, int h, bool mipmap, int translation)
 {
 	int rh,rw;
 	bool deletebuffer=false;
+	auto tTex = GetTexID(translation);
 
 	// We cannot determine if the old texture is still needed, so if something is trying to recreate a still existing texture this must fail.
 	// Normally it should never occur that a texture needs to be recreated in the middle of a frame.
@@ -64,7 +65,7 @@ VKResult VkHardwareTexture::CreateTexture(VulkanDevice *vDevice, unsigned char *
 		}
 	}
 
-	auto res = tTex->vkTexture->Create(buffer, w, h, mipmap, vkTextureBytes)
+	auto res = tTex->vkTexture->Create(buffer, w, h, mipmap, vkTextureBytes);
 	if (res != VK_SUCCESS)
 	{
 		delete tTex->vkTexture;
@@ -73,20 +74,20 @@ VKResult VkHardwareTexture::CreateTexture(VulkanDevice *vDevice, unsigned char *
 	return res;
 }
 
-
 //===========================================================================
 // 
 //	Creates a texture
 //
 //===========================================================================
 
-VkHardwareTexture::VkHardwareTexture(bool nocompression) 
+VkHardwareTexture::VkHardwareTexture(VulkanDevice *dev, bool nocompression)
 {
 	forcenocompression = nocompression;
 
 	vkDefTex.vkTexture = nullptr;
 	vkDefTex.translation = 0;
 	vkDefTex.mipmapped = false;
+	vDevice = dev;
 }
 
 
@@ -120,7 +121,7 @@ void VkHardwareTexture::Clean(bool all)
 	{
 		vkDefTex.Delete();
 	}
-	for(unsigned int i=0;i<glTex_Translated.Size();i++)
+	for(unsigned int i=0;i<vkTex_Translated.Size();i++)
 	{
 		vkTex_Translated[i].Delete();
 	}
@@ -198,41 +199,7 @@ VkHardwareTexture::TranslatedTexture *VkHardwareTexture::GetTexID(int translatio
 //
 //===========================================================================
 
-unsigned int FHardwareTexture::Bind(int texunit, int translation, bool needmipmap)
-{
-	TranslatedTexture *pTex = GetTexID(translation);
-
-	if (pTex->glTexID != 0)
-	{
-		if (lastbound[texunit] == pTex->glTexID) return pTex->glTexID;
-		lastbound[texunit] = pTex->glTexID;
-		if (texunit != 0) glActiveTexture(GL_TEXTURE0 + texunit);
-		glBindTexture(GL_TEXTURE_2D, pTex->glTexID);
-		// Check if we need mipmaps on a texture that was creted without them.
-		if (needmipmap && !pTex->mipmapped && TexFilter[gl_texture_filter].mipmapping)
-		{
-			glGenerateMipmap(GL_TEXTURE_2D);
-			pTex->mipmapped = true;
-		}
-		if (texunit != 0) glActiveTexture(GL_TEXTURE0);
-		return pTex->glTexID;
-	}
-	return 0;
-}
-
-VkTexture *VkHardwareTexture::GetVkTexture(int translation)
-{
-	TranslatedTexture *pTex = GetTexID(translation);
-	return pTex->vkTexture;
-}
-
-//===========================================================================
-// 
-//	Binds a texture to the renderer
-//
-//===========================================================================
-
-bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags)
+VkTexture *VkHardwareTexture::GetVkTexture(FTexture *tex, int translation, bool needmipmap, int flags)
 {
 	int usebright = false;
 
@@ -246,43 +213,14 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 		translation = remap == nullptr ? 0 : remap->GetUniqueIndex();
 	}
 
-	bool needmipmap = (clampmode <= CLAMP_XY);
+	TranslatedTexture *pTex = GetTexID(translation);
 
-	// Texture has become invalid
-	if (!tex->bHasCanvas && !tex->bWarped && tex->CheckModified(DefaultRenderStyle()))
+	if (pTex->vkTexture == nullptr)
 	{
-		Clean(true);
-	}
-
-	// Bind it to the system.
-	if (!Bind(texunit, translation, needmipmap))
-	{
-
-		int w = 0, h = 0;
-
-		// Create this texture
-		unsigned char * buffer = nullptr;
-
-		if (!tex->bHasCanvas)
-		{
-			buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
-		}
-		else
-		{
-			w = tex->GetWidth();
-			h = tex->GetHeight();
-		}
-		if (!CreateTexture(buffer, w, h, texunit, needmipmap, translation, "FHardwareTexture.BindOrCreate"))
-		{
-			// could not create texture
-			delete[] buffer;
-			return false;
-		}
+		int w, h;
+		auto buffer = tex->CreateTexBuffer(translation, w, h, flags | CTF_ProcessData);
+		auto res = CreateTexture(buffer, w, h, needmipmap, translation);
 		delete[] buffer;
 	}
-	if (tex->bHasCanvas) static_cast<FCanvasTexture*>(tex)->NeedUpdate();
-	GLRenderer->mSamplerManager->Bind(texunit, clampmode, 255);
-	return true;
+	return pTex->vkTexture;
 }
-
-#endif

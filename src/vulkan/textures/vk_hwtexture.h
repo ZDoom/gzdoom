@@ -60,12 +60,14 @@ public:
 	//unsigned int Bind(int texunit, int translation, bool needmipmap);
 	//bool BindOrCreate(FTexture *tex, int texunit, int clampmode, int translation, int flags);
 
-	void AllocateBuffer(int w, int h, int texelsize);
-	uint8_t *MapBuffer();
+	//void AllocateBuffer(int w, int h, int texelsize);
+	//uint8_t *MapBuffer();
 
-	VkResult CreateTexture(VulkanDevice *vDevice, unsigned char * buffer, int w, int h, bool mipmap, int translation, const char *name);
+	VkResult CreateTexture(unsigned char * buffer, int w, int h, bool mipmap, int translation);
 
 	void Clean(bool all);
 	void CleanUnused(SpriteHits &usedtranslations);
+
+	VkTexture *GetVkTexture(FTexture *tex, int translation, bool needmipmap, int flags);
 };
 

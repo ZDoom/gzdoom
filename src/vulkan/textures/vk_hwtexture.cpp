@@ -30,9 +30,9 @@
 #include "hwrenderer/textures/hw_material.h"
 
 #include "hwrenderer/utility/hw_cvars.h"
-#include "vk/textures/vk_hwtexture.h"
+#include "vk_hwtexture.h"
 
-
+#if 0
 //===========================================================================
 // 
 //	Creates the low level texture object
@@ -285,3 +285,4 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 	return true;
 }
 
+#endif

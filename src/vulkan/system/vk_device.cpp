@@ -418,14 +418,14 @@ void VulkanDevice::CreateLogicalDevice()
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 	std::set<int> uniqueQueueFamilies = { indices.graphicsFamily, indices.presentFamily };
 
-	float queuePriority = 1.0f;
+	float queuePriority[] = {1.0f, 1.0f};
 	for (int queueFamily : uniqueQueueFamilies) 
 	{
 		VkDeviceQueueCreateInfo queueCreateInfo = {};
 		queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 		queueCreateInfo.queueFamilyIndex = queueFamily;
 		queueCreateInfo.queueCount = queueFamily == indices.graphicsFamily? 2 : 1;
-		queueCreateInfo.pQueuePriorities = &queuePriority;
+		queueCreateInfo.pQueuePriorities = queuePriority;
 		queueCreateInfos.push_back(queueCreateInfo);
 	}
 

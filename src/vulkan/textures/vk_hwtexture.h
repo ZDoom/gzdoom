@@ -9,6 +9,7 @@
 
 #include "tarray.h"
 #include "hwrenderer/textures/hw_ihwtexture.h"
+#include "volk/volk.h"
 
 class FCanvasTexture;
 class AActor;
@@ -68,4 +69,3 @@ public:
 	void CleanUnused(SpriteHits &usedtranslations);
 };
 
-#endif

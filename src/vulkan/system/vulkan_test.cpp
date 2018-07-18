@@ -31,8 +31,7 @@ const int WIDTH = 800;
 const int HEIGHT = 600;
 HWND hWnd;
 
-const std::string MODEL_PATH = "vulkan_test/chalet.obj";
-const std::string TEXTURE_PATH = "vulkan_test/chalet.jpg";
+const std::string MODEL_PATH = "vulkan_test/cow.obj";
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -562,7 +561,7 @@ public:
     void createTextureImage() {
         int texWidth, texHeight;
 
-		FTextureID texno = TexMan.CheckForTexture("chalet", ETextureType::Any);
+		FTextureID texno = TexMan.CheckForTexture("titlepic", ETextureType::Any);
 		if (texno.isValid())
 		{
 			FTexture *tex = TexMan[texno];
@@ -674,10 +673,10 @@ public:
                     attrib.vertices[3 * index.vertex_index + 2]
                 };
 
-                vertex.texCoord = {
+				vertex.texCoord = index.texcoord_index == -1 ? FVector2(0.f, 0.f) : FVector2(
                     attrib.texcoords[2 * index.texcoord_index + 0],
                     1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-                };
+                );
 
                 vertex.color = {1.0f, 1.0f, 1.0f};
 
@@ -935,8 +934,8 @@ public:
 		ubo.model.loadIdentity();
 		ubo.model.rotate(time * 90.f, 0, 0, 1);
 		ubo.view.loadIdentity();
-		ubo.view.lookAt(2, 2, 2, 0, 0, 0, 0, 0, 1);
-		ubo.proj.perspective(45, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 10.0f);
+		ubo.view.lookAt(8, 28, 8, 0, 0, 0, 0, 0, 1);
+		ubo.proj.perspective(45, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 1000.0f);
 		ubo.proj.scale(1, -1, 1);
 
         void* data;

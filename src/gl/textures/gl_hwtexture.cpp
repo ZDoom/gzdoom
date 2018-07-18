@@ -296,7 +296,7 @@ void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 	{
 		glGenBuffers(1, &glBufferID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glBufferID);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, w*h*texelsize, nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, w*h*texelsize, nullptr, GL_STREAM_DRAW);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	}
 }

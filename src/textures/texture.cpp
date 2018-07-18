@@ -877,7 +877,7 @@ void FTexture::FillBuffer(uint8_t *buff, int pitch, int height, FTextureFormat f
 
 int FTexture::CopyTrueColorPixels(FBitmap *bmp, int x, int y, int rotate, FCopyInfo *inf)
 {
-	PalEntry *palette = screen->GetPalette();
+	PalEntry *palette = GPalette.BaseColors;
 	for(int i=1;i<256;i++) palette[i].a = 255;	// set proper alpha values
 	bmp->CopyPixelData(x, y, GetPixels(DefaultRenderStyle()), Width, Height, Height, 1, rotate, palette, inf);
 	for(int i=1;i<256;i++) palette[i].a = 0;

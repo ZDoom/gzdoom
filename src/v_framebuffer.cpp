@@ -261,12 +261,7 @@ void DFrameBuffer::DrawRateStuff ()
 
 void DFrameBuffer::GetFlashedPalette(PalEntry pal[256])
 {
-	DoBlending(SourcePalette, pal, 256, Flash.r, Flash.g, Flash.b, Flash.a);
-}
-
-PalEntry *DFrameBuffer::GetPalette()
-{
-	return SourcePalette;
+	DoBlending(GPalette.BaseColors, pal, 256, Flash.r, Flash.g, Flash.b, Flash.a);
 }
 
 bool DFrameBuffer::SetFlash(PalEntry rgb, int amount)
@@ -346,18 +341,6 @@ bool DFrameBuffer::WipeDo(int ticks)
 
 void DFrameBuffer::WipeCleanup()
 {
-}
-
-//==========================================================================
-//
-// DFrameBuffer :: InitPalette
-//
-//==========================================================================
-
-void DFrameBuffer::InitPalette()
-{
-	memcpy(SourcePalette, GPalette.BaseColors, sizeof(PalEntry) * 256);
-	UpdatePalette();
 }
 
 //==========================================================================

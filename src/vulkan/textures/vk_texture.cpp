@@ -166,7 +166,9 @@ void VkTexture::GenerateMipmaps(VkImage image, int32_t texWidth, int32_t texHeig
 		blit.srcSubresource.baseArrayLayer = 0;
 		blit.srcSubresource.layerCount = 1;
 		blit.dstOffsets[0] = { 0, 0, 0 };
-		blit.dstOffsets[1] = { mipWidth / 2, mipHeight / 2, 1 };
+		if (mipWidth > 1) mipWidth /= 2;
+		if (mipHeight > 1) mipHeight /= 2;
+		blit.dstOffsets[1] = { mipWidth, mipHeight, 1 };
 		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		blit.dstSubresource.mipLevel = i;
 		blit.dstSubresource.baseArrayLayer = 0;
@@ -189,8 +191,6 @@ void VkTexture::GenerateMipmaps(VkImage image, int32_t texWidth, int32_t texHeig
 			0, nullptr,
 			1, &barrier);
 
-		if (mipWidth > 1) mipWidth /= 2;
-		if (mipHeight > 1) mipHeight /= 2;
 	}
 
 	barrier.subresourceRange.baseMipLevel = mipLevels - 1;
@@ -240,7 +240,7 @@ VkResult VkTexture::Create(const uint8_t *pixels, int texWidth, int texHeight, b
 {
 	static const VkFormat FormatForChannel[] = {VK_FORMAT_R8_UNORM, VK_FORMAT_R8G8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_B8G8R8A8_UNORM};
 	if (numchannels < 1 || numchannels > 4) return VK_ERROR_FORMAT_NOT_SUPPORTED;
-	textureFormat = FormatForChannel[numchannels];
+	textureFormat = FormatForChannel[numchannels-1];
 
 	VkDeviceSize imageSize = texWidth * texHeight * numchannels;
 	int mipLevels = mipmapped ? static_cast<uint32_t>(floor(log2(std::max(texWidth, texHeight)))) + 1 : 1;

@@ -347,7 +347,6 @@ protected:
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
-	PalEntry SourcePalette[256];		// This is where unpaletted textures get their palette from
 
 	bool HWGammaActive = false;			// Are we using hardware or software gamma?
 	bool m_supportsGamma = false;
@@ -390,13 +389,10 @@ public:
 	// Make the surface visible.
 	virtual void Update () = 0;
 
-	// Return a pointer to 256 palette entries that can be written to.
-	PalEntry *GetPalette ();
-
 	// Stores the palette with flash blended in into 256 dwords
 	void GetFlashedPalette (PalEntry palette[256]);
 
-	// Mark the palette as changed. It will be updated on the next Update().
+	// Mark the palette as changed.
 	virtual void UpdatePalette() {}
 
 	// Sets the gamma level.
@@ -445,7 +441,6 @@ public:
 
 
 	// Report a game restart
-	void InitPalette();
 	virtual void InitForLevel() {}
 	virtual void SetClearColor(int color) {}
 	virtual uint32_t GetCaps();

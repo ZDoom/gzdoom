@@ -2681,8 +2681,6 @@ void D_DoomMain (void)
 		}
 		else
 		{
-			// let the renderer reinitialize some stuff if needed
-			screen->InitPalette();
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
 			D_StartTitle ();				// start up intro loop

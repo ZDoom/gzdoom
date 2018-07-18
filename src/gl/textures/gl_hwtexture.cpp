@@ -305,7 +305,7 @@ void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 uint8_t *FHardwareTexture::MapBuffer()
 {
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glBufferID);
-	return (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+	return (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
 }
 
 //===========================================================================

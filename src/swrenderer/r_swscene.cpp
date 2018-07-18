@@ -111,17 +111,12 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 		fbtex->SystemTexture[0]->AllocateBuffer(screen->GetWidth(), screen->GetHeight(), V_IsTrueColor() ? 4 : 1);
 		auto mat = FMaterial::ValidateTexture(fbtex.get(), false);
 		mat->AddTextureLayer(PaletteTexture.get());
-
-		FBBuffer.Resize(screen->GetWidth() * screen->GetHeight());
 	}
 
-	auto buf = (uint8_t*)&FBBuffer[0];
+	auto buf = fbtex->SystemTexture[0]->MapBuffer();
+	if (!buf) I_FatalError("Unable to map buffer for software rendering");
 	buffer.SetBuffer(screen->GetWidth(), screen->GetHeight(), screen->GetWidth(), buf);
 	SWRenderer->RenderView(player, &buffer);
-
-	auto pbobuf = fbtex->SystemTexture[0]->MapBuffer();
-	if (!pbobuf) I_FatalError("Unable to map buffer for software rendering");
-	memcpy(pbobuf, buf, FBBuffer.Size() * (V_IsTrueColor() ? 4 : 1));
 	fbtex->SystemTexture[0]->CreateTexture(nullptr, screen->GetWidth(), screen->GetHeight(), 0, false, 0, "swbuffer");
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();

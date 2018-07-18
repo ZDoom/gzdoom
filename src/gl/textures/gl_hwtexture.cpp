@@ -296,7 +296,10 @@ void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 	{
 		glGenBuffers(1, &glBufferID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glBufferID);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, w*h*texelsize, nullptr, GL_STREAM_DRAW);
+		if (screen->hwcaps & RFL_BUFFER_STORAGE)
+			glBufferStorage(GL_PIXEL_UNPACK_BUFFER, w*h*texelsize, nullptr, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT | GL_CLIENT_STORAGE_BIT);
+		else
+			glBufferData(GL_PIXEL_UNPACK_BUFFER, w*h*texelsize, nullptr, GL_STREAM_DRAW);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	}
 }
@@ -305,7 +308,16 @@ void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 uint8_t *FHardwareTexture::MapBuffer()
 {
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glBufferID);
-	return (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+	if (screen->hwcaps & RFL_BUFFER_STORAGE)
+	{
+		GLint size = -1;
+		glGetBufferParameteriv(GL_PIXEL_UNPACK_BUFFER, GL_BUFFER_SIZE, &size);
+		return (uint8_t*)glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, size, GL_MAP_READ_BIT | GL_MAP_WRITE_BIT);
+	}
+	else
+	{
+		return (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+	}
 }
 
 //===========================================================================

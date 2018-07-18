@@ -14,7 +14,6 @@ class SWSceneDrawer
 {
 	std::unique_ptr<FTexture> PaletteTexture;
 	std::unique_ptr<FSWSceneTexture> FBTexture[2];
-	TArray<uint32_t> FBBuffer;
 	int FBTextureIndex = 0;
 	bool FBIsTruecolor = false;
 

@@ -6,13 +6,8 @@
 #undef max
 #undef min
 
-#define TINYOBJLOADER_IMPLEMENTATION
-#include "tiny_obj_loader.h"
-
 #include "r_data/matrix.h"
 
-#include <iostream>
-#include <fstream>
 #include <stdexcept>
 #include <algorithm>
 #include <chrono>
@@ -23,6 +18,7 @@
 #include <set>
 #include <unordered_map>
 #include "vk_framebuffer.h"
+#include "files.h"
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_texture.h"
 #include "vulkan/textures/vk_depthbuffer.h"
@@ -429,8 +425,8 @@ public:
         rasterizer.rasterizerDiscardEnable = VK_FALSE;
         rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
         rasterizer.lineWidth = 1.0f;
-        rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-        rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+        rasterizer.cullMode = VK_CULL_MODE_NONE;
+        //rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
         rasterizer.depthBiasEnable = VK_FALSE;
 
         VkPipelineMultisampleStateCreateInfo multisampling = {};
@@ -594,43 +590,23 @@ public:
         vkBindImageMemory(vDevice->vkDevice, image, imageMemory, 0);
     }
 
-    void loadModel() {
-        tinyobj::attrib_t attrib;
-        std::vector<tinyobj::shape_t> shapes;
-        std::vector<tinyobj::material_t> materials;
-        std::string err;
+    void loadModel() 
+	{
+		vertices = {
+		{ FVector3( 1.f, 1.f, 1.f ), FVector3(1.f, 1.f, 1.f), FVector2(0.f, 0.f ) },
+		{ FVector3(1.f, -1.f, 1.f), FVector3(1.f, 1.f, 1.f), FVector2(0.f, 1.f) },
+		{ FVector3(-1.f, 1.f, 1.f), FVector3(1.f, 1.f, 1.f), FVector2(1.f, 0.f) },
+		{ FVector3(-1.f, -1.f, 1.f), FVector3(1.f, 1.f, 1.f), FVector2(1.f, 1.f) },
 
-        if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &err, MODEL_PATH.c_str())) {
-            throw std::runtime_error(err);
-        }
+		{ FVector3(1.f, 1.f, -1.f), FVector3(1.f, 1.f, .5f), FVector2(0.f, 0.f) },
+		{ FVector3(-1.f, 1.f, -1.f), FVector3(1.f, 1.f, .5f), FVector2(0.f, 1.f) },
+		{ FVector3(1.f, -1.f, -1.f), FVector3(1.f, 1.f, .5f), FVector2(1.f, 0.f) },
+		{ FVector3(-1.f, -1.f, -1.f), FVector3(1.f, 1.f, .5f), FVector2(1.f, 1.f) }
 
-        std::unordered_map<Vertex, uint32_t> uniqueVertices = {};
+		};
 
-        for (const auto& shape : shapes) {
-            for (const auto& index : shape.mesh.indices) {
-                Vertex vertex = {};
+		indices = { 0, 1, 2, 1, 2, 3, 4, 5, 6, 5, 6, 7 };
 
-                vertex.pos = {
-                    attrib.vertices[3 * index.vertex_index + 0],
-                    attrib.vertices[3 * index.vertex_index + 1],
-                    attrib.vertices[3 * index.vertex_index + 2]
-                };
-
-				vertex.texCoord = index.texcoord_index == -1 ? FVector2(0.f, 0.f) : FVector2(
-                    attrib.texcoords[2 * index.texcoord_index + 0],
-                    1.0f - attrib.texcoords[2 * index.texcoord_index + 1]
-                );
-
-                vertex.color = {1.0f, 1.0f, 1.0f};
-
-                if (uniqueVertices.count(vertex) == 0) {
-                    uniqueVertices[vertex] = static_cast<uint32_t>(vertices.size());
-                    vertices.push_back(vertex);
-                }
-
-                indices.push_back(uniqueVertices[vertex]);
-            }
-        }
     }
 
     void createVertexBuffer() {
@@ -877,7 +853,7 @@ public:
 		ubo.model.loadIdentity();
 		ubo.model.rotate(time * 90.f, 0, 0, 1);
 		ubo.view.loadIdentity();
-		ubo.view.lookAt(8, 28, 8, 0, 0, 0, 0, 0, 1);
+		ubo.view.lookAt(2, 4, 2, 0, 0, 0, 0, 0, 1);
 		ubo.proj.perspective(45, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 1000.0f);
 		ubo.proj.scale(1, -1, 1);
 
@@ -1013,21 +989,17 @@ public:
         }
     }
 
-    static std::vector<char> readFile(const std::string& filename) {
-        std::ifstream file(filename, std::ios::ate | std::ios::binary);
+    static std::vector<char> readFile(const char *filename) 
+	{
+		FileReader fr;
+		
+		if (!fr.OpenFile(filename))
+		{
+			throw std::runtime_error("failed to open file!");
+		}
 
-        if (!file.is_open()) {
-            throw std::runtime_error("failed to open file!");
-        }
-
-        size_t fileSize = (size_t) file.tellg();
-        std::vector<char> buffer(fileSize);
-
-        file.seekg(0);
-        file.read(buffer.data(), fileSize);
-
-        file.close();
-
+        std::vector<char> buffer(fr.GetLength());
+		fr.Read(buffer.data(), fr.GetLength());
         return buffer;
     }
 

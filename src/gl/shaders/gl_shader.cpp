@@ -247,6 +247,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 				if (pp_data.GetString().IndexOf("ProcessLight") >= 0)
 				{
 					// The ProcessLight signatured changed. Forward to the old one.
+					fp_comb << "\nvec4 ProcessLight(vec4 color);\n";
 					fp_comb << "\nvec4 ProcessLight(Material material, vec4 color) { return ProcessLight(color); }\n";
 				}
 			}

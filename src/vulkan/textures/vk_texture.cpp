@@ -22,6 +22,7 @@
 // Texture creation - mainly based on www.vulkan-tutorial.com's demo code.
 
 #include "vk_texture.h"
+#include <algorithm>
 
 //==========================================================================
 //

@@ -45,6 +45,7 @@ extern HWND Window;
 
 #include "vk_device.h"
 #include "c_cvars.h"
+#include "i_system.h"
 #include "version.h"
 
 #ifdef NDEBUG
@@ -529,6 +530,7 @@ void VulkanDevice::CreateDevice()
 	CreateLogicalDevice();
 	CreateCommandPool();
 	CreateAllocator();
+	vkGetPhysicalDeviceProperties(vkPhysicalDevice, &physicalProperties);	
 }
 
 //==========================================================================

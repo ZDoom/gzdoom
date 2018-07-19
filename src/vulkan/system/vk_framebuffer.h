@@ -1,5 +1,6 @@
 #pragma once
 
+#include "gl_sysfb.h"
 #include "vk_device.h"
 
 class VkSamplerManager;

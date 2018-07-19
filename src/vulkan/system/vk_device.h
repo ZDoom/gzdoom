@@ -2,9 +2,9 @@
 
 #include "volk/volk.h"
 #include "vk_mem_alloc/vk_mem_alloc.h"
-#include "base_sysfb.h"
-
 #include <mutex>
+#include <vector>
+#include <algorithm>
 
 struct QueueFamilyIndices
 {
@@ -38,6 +38,8 @@ public:
 	VmaAllocator vkAllocator = VK_NULL_HANDLE;
 	VkCommandPool vkCommandPool = VK_NULL_HANDLE;
 	int numAllocatorExtensions = 0;
+	VkPhysicalDeviceProperties physicalProperties = {};
+
 private:
 	void CreateInstance();
 	bool CheckValidationLayerSupport();
@@ -71,7 +73,11 @@ public:
 
 	int GetTexDimension(int d)
 	{
-		// to do!
-		return d > 32768 ? 32768 : d;
+		return std::min<int>(d, physicalProperties.limits.maxImageDimension2D);
+	}
+
+	int GetUniformBufferAlignment()
+	{
+		return (int)physicalProperties.limits.minUniformBufferOffsetAlignment; 
 	}
 };

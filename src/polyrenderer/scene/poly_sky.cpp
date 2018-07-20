@@ -219,9 +219,6 @@ Mat4f PolySkyDome::GLSkyMath()
 	int texh = 0;
 	int texw = 0;
 
-	// 57 world units roughly represent one sky texel for the glTranslate call.
-	const float skyoffsetfactor = 57;
-
 	Mat4f modelMatrix = Mat4f::Identity();
 	if (tex)
 	{

@@ -45,7 +45,6 @@
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
 //==========================================================================
@@ -56,7 +55,6 @@
 
 void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli)
 {
-	if (FixedColormap != CM_DEFAULT) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -85,7 +83,6 @@ void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, 
 
 void FDrawInfo::SetupSectorLights(GLFlat *flat, int pass, int *dli)
 {
-	if (FixedColormap != CM_DEFAULT) return;
 	if (dli != NULL && *dli != -1)
 	{
 		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
@@ -167,7 +164,7 @@ void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
 {
 	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
 	
-	if (flat->sector->ibocount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
+	if (flat->sector->ibocount > 0 && !ClipLineShouldBeActive())
 	{
 		SetupSectorLights(flat, GLPASS_LIGHTSONLY, nullptr);
 	}
@@ -213,15 +210,10 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 	gl_RenderState.Apply();
 	auto iboindex = flat->iboindex;
-	if (gl.legacyMode)
-	{
-		processlights = false;
-		iboindex = -1;
-	}
 
 	if (iboindex >= 0)
 	{
-		if (vcount > 0 && !gl_RenderState.GetClipLineShouldBeActive())
+		if (vcount > 0 && !ClipLineShouldBeActive())
 		{
 			if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
 			drawcalls.Clock();
@@ -284,46 +276,14 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 //==========================================================================
 //
-// special handling for skyboxes which need texture clamping.
-// This will find the bounding rectangle of the sector and just
-// draw one single polygon filling that rectangle with a clamped
-// texture.
+//
 //
 //==========================================================================
 
 void FDrawInfo::DrawSkyboxSector(GLFlat *flat, int pass, bool processlights)
 {
-
-	float minx = FLT_MAX, miny = FLT_MAX;
-	float maxx = -FLT_MAX, maxy = -FLT_MAX;
-
-	for (auto ln : flat->sector->Lines)
-	{
-		float x = ln->v1->fX();
-		float y = ln->v1->fY();
-		if (x < minx) minx = x;
-		if (y < miny) miny = y;
-		if (x > maxx) maxx = x;
-		if (y > maxy) maxy = y;
-		x = ln->v2->fX();
-		y = ln->v2->fY();
-		if (x < minx) minx = x;
-		if (y < miny) miny = y;
-		if (x > maxx) maxx = x;
-		if (y > maxy) maxy = y;
-	}
-
-	float z = flat->plane.plane.ZatPoint(0., 0.) + flat->dz;
-	static float uvals[] = { 0, 0, 1, 1 };
-	static float vvals[] = { 1, 0, 0, 1 };
-	int rot = -xs_FloorToInt(flat->plane.Angle / 90.f);
-
 	FQuadDrawer qd;
-
-	qd.Set(0, minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
-	qd.Set(1, minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
-	qd.Set(2, maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
-	qd.Set(3, maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+	flat->CreateSkyboxVertices(qd.Pointer());
 	qd.Render(GL_TRIANGLE_FAN);
 
 	flatvertices += 4;
@@ -341,32 +301,33 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	int rel = getExtraLight();
 
 	auto &plane = flat->plane;
+    auto processLights = level.HasDynamicLights && !isFullbrightScene();
 	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 
 	switch (pass)
 	{
 	case GLPASS_ALL:	// Single-pass rendering
-		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
-		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		SetColor(flat->lightlevel, rel, flat->Colormap,1.0f);
+		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (flat->sector->special != GLSector_Skybox)
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, (pass == GLPASS_ALL || flat->dynlightindex > -1), false);
+			DrawSubsectors(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), false);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		else
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			DrawSkyboxSector(flat, pass, (pass == GLPASS_ALL || flat->dynlightindex > -1));
+			DrawSkyboxSector(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1));
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;
 
 	case GLPASS_LIGHTSONLY:
-		if (!trans || flat->gltexture)
+		if ((!trans || flat->gltexture) && processLights)
 		{
 			ProcessLights(flat, trans);
 		}
@@ -374,8 +335,8 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 
 	case GLPASS_TRANSLUCENT:
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE);
-		mDrawer->SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
-		mDrawer->SetFog(flat->lightlevel, rel, &flat->Colormap, false);
+		SetColor(flat->lightlevel, rel, flat->Colormap, flat->alpha);
+		SetFog(flat->lightlevel, rel, &flat->Colormap, false);
 		if (!flat->gltexture || !flat->gltexture->tex->isFullbright())
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (!flat->gltexture)
@@ -391,24 +352,11 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, !gl.legacyMode && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
+			DrawSubsectors(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetObjectColor(0xffffffff);
-		break;
-
-	case GLPASS_LIGHTTEX:
-	case GLPASS_LIGHTTEX_ADDITIVE:
-	case GLPASS_LIGHTTEX_FOGGY:
-		DrawLightsCompat(flat, pass);
-		break;
-
-	case GLPASS_TEXONLY:
-		gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
-		gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-		DrawSubsectors(flat, pass, false, false);
-		gl_RenderState.EnableTextureMatrix(false);
 		break;
 	}
 }
@@ -426,10 +374,6 @@ void FDrawInfo::AddFlat(GLFlat *flat, bool fog)
 {
 	int list;
 
-	if (gl.legacyMode)
-	{
-		if (PutFlatCompat(flat, fog)) return;
-	}
 	if (flat->renderstyle != STYLE_Translucent || flat->alpha < 1.f - FLT_EPSILON || fog || flat->gltexture == nullptr)
 	{
 		// translucent 3D floors go into the regular translucent list, translucent portals go into the translucent border list.

@@ -495,8 +495,10 @@ set( PLAT_WIN32_SOURCES
 	win32/i_system.cpp
 	win32/i_specialpaths.cpp
 	win32/st_start.cpp
-	win32/win32gliface.cpp
-	win32/win32video.cpp )
+	win32/gl_sysfb.cpp
+	win32/base_sysfb.cpp
+	win32/win32basevideo.cpp
+	win32/win32glvideo.cpp )
 set( PLAT_POSIX_SOURCES
 	posix/i_cd.cpp
 	posix/i_steam.cpp )
@@ -705,7 +707,6 @@ file( GLOB HEADER_FILES
 	gl/models/*.h
 	gl/renderer/*.h
 	gl/scene/*.h
-	gl/stereo3d/*.h
 	gl/shaders/*.h
 	gl/system/*.h
 	gl/textures/*.h
@@ -837,9 +838,11 @@ set( FASTMATH_SOURCES
 	hwrenderer/scene/hw_bsp.cpp
 	hwrenderer/scene/hw_fakeflat.cpp
 	hwrenderer/scene/hw_decal.cpp
+	hwrenderer/scene/hw_drawinfo.cpp
 	hwrenderer/scene/hw_drawlist.cpp
 	hwrenderer/scene/hw_clipper.cpp
 	hwrenderer/scene/hw_flats.cpp
+	hwrenderer/scene/hw_portal.cpp
 	hwrenderer/scene/hw_renderhacks.cpp
 	hwrenderer/scene/hw_sky.cpp
 	hwrenderer/scene/hw_sprites.cpp
@@ -1015,6 +1018,7 @@ set (PCH_SOURCES
 	v_collection.cpp
 	v_draw.cpp
 	v_font.cpp
+	v_framebuffer.cpp
 	v_palette.cpp
 	v_pfx.cpp
 	v_text.cpp
@@ -1038,8 +1042,6 @@ set (PCH_SOURCES
 	g_statusbar/sbarinfo.cpp
 	g_statusbar/sbar_mugshot.cpp
 	g_statusbar/shared_sbar.cpp
-	gl/compatibility/gl_20.cpp
-	gl/compatibility/gl_swshader20.cpp
 	gl/data/gl_vertexbuffer.cpp
 	gl/data/gl_uniformbuffer.cpp
 	gl/dynlights/gl_lightbuffer.cpp
@@ -1052,16 +1054,10 @@ set (PCH_SOURCES
 	gl/renderer/gl_lightdata.cpp
 	gl/renderer/gl_postprocess.cpp
 	gl/renderer/gl_postprocessstate.cpp
+	gl/renderer/gl_stereo3d.cpp
 	gl/shaders/gl_shader.cpp
 	gl/shaders/gl_shaderprogram.cpp
 	gl/shaders/gl_postprocessshader.cpp
-	gl/stereo3d/gl_stereo3d.cpp
-	gl/stereo3d/gl_stereo_cvars.cpp
-	gl/stereo3d/gl_stereo_leftright.cpp
-	gl/stereo3d/gl_anaglyph.cpp
-	gl/stereo3d/gl_quadstereo.cpp
-	gl/stereo3d/gl_sidebyside3d.cpp
-	gl/stereo3d/gl_interleaved3d.cpp
 	gl_load/gl_interface.cpp
 	gl/system/gl_framebuffer.cpp
 	gl/system/gl_debug.cpp
@@ -1072,24 +1068,19 @@ set (PCH_SOURCES
 	hwrenderer/dynlights/hw_aabbtree.cpp
 	hwrenderer/dynlights/hw_shadowmap.cpp
 	hwrenderer/scene/hw_skydome.cpp
+	hwrenderer/postprocessing/hw_postprocess.cpp
 	hwrenderer/postprocessing/hw_postprocess_cvars.cpp
 	hwrenderer/postprocessing/hw_postprocessshader.cpp
 	hwrenderer/postprocessing/hw_shadowmapshader.cpp
 	hwrenderer/postprocessing/hw_presentshader.cpp
 	hwrenderer/postprocessing/hw_present3dRowshader.cpp
-	hwrenderer/postprocessing/hw_bloomshader.cpp
-	hwrenderer/postprocessing/hw_ambientshader.cpp
-	hwrenderer/postprocessing/hw_blurshader.cpp
-	hwrenderer/postprocessing/hw_colormapshader.cpp
-	hwrenderer/postprocessing/hw_tonemapshader.cpp
-	hwrenderer/postprocessing/hw_lensshader.cpp
-	hwrenderer/postprocessing/hw_fxaashader.cpp
 	hwrenderer/textures/hw_material.cpp
 	hwrenderer/textures/hw_precache.cpp
 	hwrenderer/utility/hw_clock.cpp
 	hwrenderer/utility/hw_cvars.cpp
 	hwrenderer/utility/hw_lighting.cpp
 	hwrenderer/utility/hw_shaderpatcher.cpp
+	hwrenderer/utility/hw_vrmodes.cpp
 
 	menu/joystickmenu.cpp
 	menu/loadsavemenu.cpp
@@ -1098,7 +1089,6 @@ set (PCH_SOURCES
 	menu/messagebox.cpp
 	menu/optionmenu.cpp
 	menu/playermenu.cpp
-	menu/videomenu.cpp
 	resourcefiles/ancientzip.cpp
 	resourcefiles/file_7z.cpp
 	resourcefiles/file_grp.cpp
@@ -1130,7 +1120,6 @@ set (PCH_SOURCES
 	textures/formats/pngtexture.cpp
 	textures/formats/rawpagetexture.cpp
 	textures/formats/emptytexture.cpp
-	textures/formats/backdroptexture.cpp
 	textures/formats/shadertexture.cpp
 	textures/formats/tgatexture.cpp
 	textures/formats/worldtexture.cpp
@@ -1421,7 +1410,6 @@ source_group("Hardware Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SO
 source_group("Hardware Renderer\\Postprocessing" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/postprocessing/.+")
 source_group("Hardware Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/renderer/.+")
 source_group("Hardware Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/scene/.+")
-source_group("Hardware Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/stereo3d/.+")
 source_group("Hardware Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/shaders/.+")
 source_group("Hardware Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/system/.+")
 source_group("Hardware Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/hwrenderer/textures/.+")
@@ -1433,7 +1421,6 @@ source_group("OpenGL Renderer\\Dynamic Lights" REGULAR_EXPRESSION "^${CMAKE_CURR
 source_group("OpenGL Renderer\\Models" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/models/.+")
 source_group("OpenGL Renderer\\Renderer" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/renderer/.+")
 source_group("OpenGL Renderer\\Scene" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/scene/.+")
-source_group("OpenGL Renderer\\Stereo3D" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/stereo3d/.+")
 source_group("OpenGL Renderer\\Shaders" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/shaders/.+")
 source_group("OpenGL Renderer\\System" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/system/.+")
 source_group("OpenGL Renderer\\Textures" REGULAR_EXPRESSION "^${CMAKE_CURRENT_SOURCE_DIR}/gl/textures/.+")

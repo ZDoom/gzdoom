@@ -1922,31 +1922,10 @@ OptionMenu VideoModeMenu protected
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
 	}
 
-	IfOption(Windows)
-	{
-		Option "$VIDMNU_BRDLSS",		"win_borderless", "YesNo"
-	}
-
-	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
-	StaticText " "
-	ScreenResolution "res_0"
-	ScreenResolution "res_1"
-	ScreenResolution "res_2"
-	ScreenResolution "res_3"
-	ScreenResolution "res_4"
-	ScreenResolution "res_5"
-	ScreenResolution "res_6"
-	ScreenResolution "res_7"
-	ScreenResolution "res_8"
-	ScreenResolution "res_9"
-	StaticTextSwitchable "$VIDMNU_ENTERTEXT", "", "VMEnterText"
-	StaticText " "
-	StaticTextSwitchable "$VIDMNU_TESTTEXT1", "$VIDMNU_TESTTEXT2", "VMTestText"
-	class VideoModeMenu
 }
 
 /*=======================================

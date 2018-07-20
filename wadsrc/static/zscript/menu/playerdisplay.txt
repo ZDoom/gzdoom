@@ -53,7 +53,8 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 	int mRandomClass;
 	int mRandomTimer;
 	int mClassNum;
-	int mTranslation;
+	Color mBaseColor;
+	Color mAddColor;
 
 	enum EPDFlags
 	{
@@ -73,18 +74,10 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 	{
 		Super.Init(x, y, command);
 		mOwner = menu;
+		mBaseColor = c1;
+		mAddColor = c2;
 
-		Translation trans;
-		for (int i = 0; i < 256; i++)
-		{
-			int r = c1.r + c2.r * i / 255;
-			int g = c1.g + c2.g * i / 255;
-			int b = c1.b + c2.b * i / 255;
-			trans.colors[i] = Color(255, r, g, b);
-		}
-		mTranslation = trans.AddTranslation();
-
-		mBackdrop = TexMan.CheckForTexture("PlayerBackdrop", TexMan.Type_MiscPatch);
+		mBackdrop = TexMan.CheckForTexture("B@CKDROP", TexMan.Type_MiscPatch);	// The weird name is to avoid clashes with mods.
 		mPlayerClass = NULL;
 		mPlayerState = NULL;
 		mNoportrait = np;
@@ -255,10 +248,19 @@ class ListMenuItemPlayerDisplay : ListMenuItem
 			int x = int(mXpos - 160) * CleanXfac + (screen.GetWidth() >> 1);
 			int y = int(mYpos - 100) * CleanYfac + (screen.GetHeight() >> 1);
 
+			int r = mBaseColor.r + mAddColor.r;
+			int g = mBaseColor.g + mAddColor.g;
+			int b = mBaseColor.b + mAddColor.b;
+			int m = max(r, g, b);
+			r = r * 255 / m;
+			g = g * 255 / m;
+			b = b * 255 / m;
+			Color c = Color(255, r, g, b);
+			
 			screen.DrawTexture(mBackdrop, false, x, y - 1,
 				DTA_DestWidth, 72 * CleanXfac,
 				DTA_DestHeight, 80 * CleanYfac,
-				DTA_TranslationIndex, mTranslation,
+				DTA_Color, c,
 				DTA_Masked, true);
 
 			Screen.DrawFrame (x, y, 72*CleanXfac, 80*CleanYfac-1);

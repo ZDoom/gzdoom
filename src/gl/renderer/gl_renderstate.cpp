@@ -43,7 +43,6 @@ void gl_SetTextureMode(int type);
 FRenderState gl_RenderState;
 
 CVAR(Bool, gl_direct_state_change, true, 0)
-CVAR(Bool, gl_bandedswlight, false, CVAR_ARCHIVE)
 
 
 static VSMatrix identityMatrix(1);
@@ -63,7 +62,7 @@ static void matrixToGL(const VSMatrix &mat, int loc)
 void FRenderState::Reset()
 {
 	mTextureEnabled = true;
-	mClipLineShouldBeActive = mClipLineEnabled = mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
+	mSplitEnabled = mBrightmapEnabled = mFogEnabled = mGlowEnabled = false;
 	mColorMask[0] = mColorMask[1] = mColorMask[2] = mColorMask[3] = true;
 	currentColorMask[0] = currentColorMask[1] = currentColorMask[2] = currentColorMask[3] = true;
 	mFogColor.d = -1;
@@ -78,13 +77,10 @@ void FRenderState::Reset()
 	mObjectColor = 0xffffffff;
 	mObjectColor2 = 0;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
-	mColormapState = CM_DEFAULT;
 	mSoftLight = 0;
 	mLightParms[0] = mLightParms[1] = mLightParms[2] = 0.0f;
 	mLightParms[3] = -1.f;
 	mSpecialEffect = EFF_NONE;
-	mClipHeight = 0.f;
-	mClipHeightDirection = 0.f;
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
@@ -98,19 +94,15 @@ void FRenderState::Reset()
 	mInterpolationFactor = 0.0f;
 
 	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
-	mCameraPos.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowBottom.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mGlowBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mSplitTopPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mSplitBottomPlane.Set(0.0f, 0.0f, 0.0f, 0.0f);
-	mClipLine.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mDynColor.Set(0.0f, 0.0f, 0.0f, 0.0f);
 	mEffectState = 0;
 	activeShader = nullptr;
-	mProjectionMatrix.loadIdentity();
-	mViewMatrix.loadIdentity();
 	mModelMatrix.loadIdentity();
 	mTextureMatrix.loadIdentity();
 	mPassType = NORMAL_PASS;
@@ -145,7 +137,11 @@ bool FRenderState::ApplyShader()
 
 	if (mFogEnabled)
 	{
-		if ((mFogColor & 0xffffff) == 0)
+		if (mFogEnabled == 2)
+		{
+			fogset = -3;	// 2D rendering with 'foggy' overlay.
+		}
+		else if ((mFogColor & 0xffffff) == 0)
 		{
 			fogset = gl_fogmode;
 		}
@@ -160,23 +156,17 @@ bool FRenderState::ApplyShader()
 
 	activeShader->muDesaturation.Set(mDesaturation / 255.f);
 	activeShader->muFogEnabled.Set(fogset);
-	activeShader->muPalLightLevels.Set(static_cast<int>(gl_bandedswlight) | (static_cast<int>(gl_fogmode) << 8));
-	activeShader->muGlobVis.Set(GLRenderer->mGlobVis / 32.0f);
 	activeShader->muTextureMode.Set(mTextureMode == TM_MODULATE && mTempTM == TM_OPAQUE ? TM_OPAQUE : mTextureMode);
-	activeShader->muCameraPos.Set(mCameraPos.vec);
 	activeShader->muLightParms.Set(mLightParms);
 	activeShader->muFogColor.Set(mFogColor);
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muObjectColor2.Set(mObjectColor2);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
 	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
-	activeShader->muClipHeight.Set(mClipHeight);
-	activeShader->muClipHeightDirection.Set(mClipHeightDirection);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
-	activeShader->muViewHeight.Set(viewheight);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
 
 	if (mGlowEnabled)
@@ -211,84 +201,6 @@ bool FRenderState::ApplyShader()
 		activeShader->currentsplitstate = 0;
 	}
 
-	if (mClipLineEnabled)
-	{
-		activeShader->muClipLine.Set(mClipLine.vec);
-		activeShader->currentcliplinestate = 1;
-	}
-	else if (activeShader->currentcliplinestate)
-	{
-		activeShader->muClipLine.Set(-10000000.0, 0, 0, 0);
-		activeShader->currentcliplinestate = 0;
-	}
-
-	if (mColormapState == CM_PLAIN2D)	// 2D operations
-	{
-		activeShader->muFixedColormap.Set(4);
-		activeShader->currentfixedcolormap = mColormapState;
-	}
-	else if (mColormapState != activeShader->currentfixedcolormap)
-	{
-		float r, g, b;
-		activeShader->currentfixedcolormap = mColormapState;
-		if (mColormapState == CM_DEFAULT)
-		{
-			activeShader->muFixedColormap.Set(0);
-		}
-		else if ((mColormapState >= CM_FIRSTSPECIALCOLORMAP && mColormapState < CM_MAXCOLORMAPFORCED))
-		{
-			if (FGLRenderBuffers::IsEnabled() && mColormapState < CM_FIRSTSPECIALCOLORMAPFORCED)
-			{
-				// When using postprocessing to apply the colormap, we must render the image fullbright here.
-				activeShader->muFixedColormap.Set(2);
-				activeShader->muColormapStart.Set(1, 1, 1, 1.f);
-			}
-			else
-			{
-				if (mColormapState >= CM_FIRSTSPECIALCOLORMAPFORCED)
-				{
-					auto colormapState = mColormapState + CM_FIRSTSPECIALCOLORMAP - CM_FIRSTSPECIALCOLORMAPFORCED;
-					if (colormapState < CM_MAXCOLORMAP)
-					{
-						FSpecialColormap *scm = &SpecialColormaps[colormapState - CM_FIRSTSPECIALCOLORMAP];
-						float m[] = { scm->ColorizeEnd[0] - scm->ColorizeStart[0],
-							scm->ColorizeEnd[1] - scm->ColorizeStart[1], scm->ColorizeEnd[2] - scm->ColorizeStart[2], 0.f };
-
-						activeShader->muFixedColormap.Set(1);
-						activeShader->muColormapStart.Set(scm->ColorizeStart[0], scm->ColorizeStart[1], scm->ColorizeStart[2], 0.f);
-						activeShader->muColormapRange.Set(m);
-					}
-				}
-			}
-		}
-		else if (mColormapState == CM_FOGLAYER)
-		{
-			activeShader->muFixedColormap.Set(3);
-		}
-		else if (mColormapState == CM_LITE)
-		{
-			if (gl_enhanced_nightvision)
-			{
-				r = 0.375f, g = 1.0f, b = 0.375f;
-			}
-			else
-			{
-				r = g = b = 1.f;
-			}
-			activeShader->muFixedColormap.Set(2);
-			activeShader->muColormapStart.Set(r, g, b, 1.f);
-		}
-		else if (mColormapState >= CM_TORCH)
-		{
-			int flicker = mColormapState - CM_TORCH;
-			r = (0.8f + (7 - flicker) / 70.0f);
-			if (r > 1.0f) r = 1.0f;
-			b = g = r;
-			if (gl_enhanced_nightvision) b = g * 0.75f;
-			activeShader->muFixedColormap.Set(2);
-			activeShader->muColormapStart.Set(r, g, b, 1.f);
-		}
-	}
 	if (mTextureMatrixEnabled)
 	{
 		matrixToGL(mTextureMatrix, activeShader->texturematrix_index);
@@ -349,14 +261,7 @@ void FRenderState::Apply()
 		else mVertexBuffer->BindVBO();
 		mCurrentVertexBuffer = mVertexBuffer;
 	}
-	if (!gl.legacyMode) 
-	{
-		ApplyShader();
-	}
-	else
-	{
-		ApplyFixedFunction();
-	}
+	ApplyShader();
 }
 
 
@@ -376,54 +281,13 @@ void FRenderState::ApplyColorMask()
 	}
 }
 
-void FRenderState::ApplyMatrices()
-{
-	if (GLRenderer->mShaderManager != NULL)
-	{
-		GLRenderer->mShaderManager->ApplyMatrices(&mProjectionMatrix, &mViewMatrix, mPassType);
-	}
-}
-
 void FRenderState::ApplyLightIndex(int index)
 {
-	if (!gl.legacyMode)
+	if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
 	{
-		if (index > -1 && GLRenderer->mLights->GetBufferType() == GL_UNIFORM_BUFFER)
-		{
-			index = GLRenderer->mLights->BindUBO(index);
-		}
-		activeShader->muLightIndex.Set(index);
+		index = GLRenderer->mLights->BindUBO(index);
 	}
-}
-
-void FRenderState::SetClipHeight(float height, float direction)
-{
-	mClipHeight = height;
-	mClipHeightDirection = direction;
-#if 1
-	// This still doesn't work... :(
-	if (gl.flags & RFL_NO_CLIP_PLANES) return;
-#endif
-	if (direction != 0.f)
-	{
-		/*
-		if (gl.flags & RFL_NO_CLIP_PLANES)
-		{
-			glMatrixMode(GL_MODELVIEW);
-			glPushMatrix();
-			glLoadMatrixf(mViewMatrix.get());
-			// Plane mirrors never are slopes.
-			double d[4] = { 0, direction, 0, -direction * height };
-			glClipPlane(GL_CLIP_PLANE0, d);
-			glPopMatrix();
-		}
-		*/
-		glEnable(GL_CLIP_DISTANCE0);
-	}
-	else
-	{
-		glDisable(GL_CLIP_DISTANCE0);	// GL_CLIP_PLANE0 is the same value so no need to make a distinction
-	}
+	activeShader->muLightIndex.Set(index);
 }
 
 //===========================================================================
@@ -434,9 +298,6 @@ void FRenderState::SetClipHeight(float height, float direction)
 
 void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, int overrideshader, bool alphatexture)
 {
-	// alpha textures need special treatment in the legacy renderer because without shaders they need a different texture. This will also override all other translations.
-	if (alphatexture &&  gl.legacyMode) translation = -STRange_AlphaTexture;
-
 	if (mat->tex->bHasCanvas)
 	{
 		mTempTM = TM_OPAQUE;

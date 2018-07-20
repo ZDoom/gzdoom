@@ -36,23 +36,40 @@
 
 #include "v_video.h"
 
-class SystemFrameBuffer : public DFrameBuffer
+#ifdef __OBJC__
+@class NSCursor;
+@class CocoaWindow;
+#else
+typedef struct objc_object NSCursor;
+typedef struct objc_object CocoaWindow;
+#endif
+
+class SystemGLFrameBuffer : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SystemFrameBuffer(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
-	~SystemFrameBuffer();
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
+	~SystemGLFrameBuffer();
 
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
 
-	int GetClientWidth();
-	int GetClientHeight();
+	int GetClientWidth() override;
+	int GetClientHeight() override;
+	void ToggleFullscreen(bool yes) override;
 
-	virtual int GetTrueHeight() { return GetClientHeight(); }
+	void SetMode(bool fullscreen, bool hiDPI);
+
+	static void UseHiDPI(bool hiDPI);
+	static void SetCursor(NSCursor* cursor);
+	static void SetWindowVisible(bool visible);
+	static void SetWindowTitle(const char* title);
 
 protected:
-	bool                UpdatePending;
+	CocoaWindow* m_window;
+
+	bool m_fullscreen;
+	bool m_hiDPI;
 
 	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
 	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
@@ -61,9 +78,10 @@ protected:
 	bool				m_supportsGamma;
 	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
 
-	SystemFrameBuffer();
+	SystemGLFrameBuffer() {}
 
-	void InitializeState();
+	void SetFullscreenMode();
+	void SetWindowedMode();
 
 	void SwapBuffers();
 

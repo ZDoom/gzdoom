@@ -35,7 +35,6 @@
 #include "gl_load/gl_interface.h"
 #include "hwrenderer/utility/hw_cvars.h"
 
-void gl_PatchMenu();
 static TArray<FString>  m_Extensions;
 RenderContext gl;
 static double realglversion;	// this is public so the statistics code can access it.
@@ -129,13 +128,6 @@ void gl_LoadExtensions()
 	CollectExtensions();
 
 	const char *glversion = (const char*)glGetString(GL_VERSION);
-	gl.es = false;
-	
-	if (glversion && strlen(glversion) > 10 && memcmp(glversion, "OpenGL ES ", 10) == 0)
-	{
-		glversion += 10;
-		gl.es = true;
-	}
 
 	const char *version = Args->CheckValue("-glversion");
 	realglversion = strtod(glversion, NULL);
@@ -148,138 +140,96 @@ void gl_LoadExtensions()
 	else
 	{
 		double v1 = strtod(version, NULL);
-		if (v1 >= 3.0 && v1 < 3.3) v1 = 3.3;	// promote '3' to 3.3 to avoid falling back to the legacy path.
+		if (v1 >= 3.0 && v1 < 3.3)
+		{
+			v1 = 3.3;	// promote '3' to 3.3 to avoid falling back to the legacy path.
+			version = "3.3";
+		}
 		if (realglversion < v1) version = glversion;
 		else Printf("Emulating OpenGL v %s\n", version);
 	}
 
 	float gl_version = (float)strtod(version, NULL) + 0.01f;
 
-	if (gl.es)
+	// Don't even start if it's lower than 2.0 or no framebuffers are available (The framebuffer extension is needed for glGenerateMipmapsEXT!)
+	if (gl_version < 3.3f)
 	{
-		if (gl_version < 2.0f)
-		{
-			I_FatalError("Unsupported OpenGL ES version.\nAt least OpenGL ES 2.0 is required to run " GAMENAME ".\n");
-		}
-		
-		const char *glslversion = (const char*)glGetString(GL_SHADING_LANGUAGE_VERSION);
-		if (glslversion && strlen(glslversion) > 18 && memcmp(glslversion, "OpenGL ES GLSL ES ", 10) == 0)
-		{
-			glslversion += 18;
-		}
-		
-		// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version
-		gl.glslversion = strtod(glslversion, NULL) + 0.01f;
-		gl.vendorstring = (char*)glGetString(GL_VENDOR);
+		I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 3.3 with framebuffer support is required to run " GAMENAME ".\nFor older versions of OpenGL please download the vintage build of " GAMENAME ".\n");
+	}
 
-		// Use the slowest/oldest modern path for now
-		gl.legacyMode = false;
-		gl.lightmethod = LM_DEFERRED;
-		gl.buffermethod = BM_DEFERRED;
-		gl.flags |= RFL_NO_CLIP_PLANES;
+
+	// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version
+	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL) + 0.01f;
+
+	gl.vendorstring = (char*)glGetString(GL_VENDOR);
+
+	// first test for optional features
+	if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;
+	if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags |= RFL_TEXTURE_COMPRESSION_S3TC;
+
+	gl.lightmethod = LM_DEFERRED;
+	gl.buffermethod = BM_DEFERRED;
+	if (gl_version < 4.f)
+	{
+#ifdef _WIN32
+		if (strstr(gl.vendorstring, "ATI Tech"))
+		{
+			gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows. (TBD: Relegate to vintage build? Maybe after the next survey.)
+		}
+#endif
+				gl.glslversion = 3.31f;	// Force GLSL down to 3.3.
+	}
+	else if (gl_version < 4.5f)
+	{
+		// don't use GL 4.x features when running a GL 3.x context.
+		if (CheckExtension("GL_ARB_buffer_storage"))
+		{
+			// work around a problem with older AMD drivers: Their implementation of shader storage buffer objects is piss-poor and does not match uniform buffers even closely.
+			// Recent drivers, GL 4.4 don't have this problem, these can easily be recognized by also supporting the GL_ARB_buffer_storage extension.
+			if (CheckExtension("GL_ARB_shader_storage_buffer_object"))
+			{
+				// Intel's GLSL compiler is a bit broken with extensions, so unlock the feature only if not on Intel or having GL 4.3.
+				if (strstr(gl.vendorstring, "Intel") == NULL || gl_version >= 4.3f)
+				{
+					// Mesa implements shader storage only for fragment shaders.
+					// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
+					int v;
+					glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
+					if (v > 0)
+						gl.flags |= RFL_SHADER_STORAGE_BUFFER;
+				}
+			}
+			gl.flags |= RFL_BUFFER_STORAGE;
+			gl.lightmethod = LM_DIRECT;
+			gl.buffermethod = BM_PERSISTENT;
+		}
 	}
 	else
 	{
-		// Don't even start if it's lower than 2.0 or no framebuffers are available (The framebuffer extension is needed for glGenerateMipmapsEXT!)
-		if ((gl_version < 2.0f || !CheckExtension("GL_EXT_framebuffer_object")) && gl_version < 3.0f)
-		{
-			I_FatalError("Unsupported OpenGL version.\nAt least OpenGL 2.0 with framebuffer support is required to run " GAMENAME ".\n");
-		}
-		
-		gl.es = false;
+		// Assume that everything works without problems on GL 4.5 drivers where these things are core features.
+		gl.flags |= RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+		gl.lightmethod = LM_DIRECT;
+		gl.buffermethod = BM_PERSISTENT;
+	}
 
-		// add 0.01 to account for roundoff errors making the number a tad smaller than the actual version
-		gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL) + 0.01f;
+	if (gl_version >= 4.3f || CheckExtension("GL_ARB_invalidate_subdata")) gl.flags |= RFL_INVALIDATE_BUFFER;
+	if (gl_version >= 4.3f || CheckExtension("GL_KHR_debug")) gl.flags |= RFL_DEBUG;
 
-		gl.vendorstring = (char*)glGetString(GL_VENDOR);
+	const char *lm = Args->CheckValue("-lightmethod");
+	if (lm != NULL)
+	{
+		if (!stricmp(lm, "deferred") && gl.lightmethod == LM_DIRECT) gl.lightmethod = LM_DEFERRED;
+	}
 
-		// first test for optional features
-		if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;
-		if (CheckExtension("GL_EXT_texture_compression_s3tc")) gl.flags |= RFL_TEXTURE_COMPRESSION_S3TC;
-
-		if ((gl_version >= 3.3f || CheckExtension("GL_ARB_sampler_objects")) && !Args->CheckParm("-nosampler"))
-		{
-			gl.flags |= RFL_SAMPLER_OBJECTS;
-		}
-	
-		// The minimum requirement for the modern render path is GL 3.3.
-		// Although some GL 3.1 or 3.2 solutions may theoretically work they are usually too broken or too slow.
-		if (gl_version < 3.3f)
-		{
-			gl.legacyMode = true;
-			gl.lightmethod = LM_LEGACY;
-			gl.buffermethod = BM_LEGACY;
-			gl.glslversion = 0;
-			gl.flags |= RFL_NO_CLIP_PLANES;
-		}
-		else
-		{
-			gl.legacyMode = false;
-			gl.lightmethod = LM_DEFERRED;
-			gl.buffermethod = BM_DEFERRED;
-			if (gl_version < 4.f)
-			{
-#ifdef _WIN32
-				if (strstr(gl.vendorstring, "ATI Tech"))
-				{
-					gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows.
-				}
-#endif
-				gl.glslversion = 3.31f;	// Force GLSL down to 3.3.
-			}
-			else if (gl_version < 4.5f)
-			{
-				// don't use GL 4.x features when running a GL 3.x context.
-				if (CheckExtension("GL_ARB_buffer_storage"))
-				{
-					// work around a problem with older AMD drivers: Their implementation of shader storage buffer objects is piss-poor and does not match uniform buffers even closely.
-					// Recent drivers, GL 4.4 don't have this problem, these can easily be recognized by also supporting the GL_ARB_buffer_storage extension.
-					if (CheckExtension("GL_ARB_shader_storage_buffer_object"))
-					{
-						// Intel's GLSL compiler is a bit broken with extensions, so unlock the feature only if not on Intel or having GL 4.3.
-						if (strstr(gl.vendorstring, "Intel") == NULL || gl_version >= 4.3f)
-						{
-							// Mesa implements shader storage only for fragment shaders.
-							// Just disable the feature there. The light buffer may just use a uniform buffer without any adverse effects.
-							int v;
-							glGetIntegerv(GL_MAX_VERTEX_SHADER_STORAGE_BLOCKS, &v);
-							if (v > 0)
-								gl.flags |= RFL_SHADER_STORAGE_BUFFER;
-						}
-					}
-					gl.flags |= RFL_BUFFER_STORAGE;
-					gl.lightmethod = LM_DIRECT;
-					gl.buffermethod = BM_PERSISTENT;
-				}
-			}
-			else
-			{
-				// Assume that everything works without problems on GL 4.5 drivers where these things are core features.
-				gl.flags |= RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
-				gl.lightmethod =	LM_DIRECT;
-				gl.buffermethod = BM_PERSISTENT;
-			}
-
-			if (gl_version >= 4.3f || CheckExtension("GL_ARB_invalidate_subdata")) gl.flags |= RFL_INVALIDATE_BUFFER;
-			if (gl_version >= 4.3f || CheckExtension("GL_KHR_debug")) gl.flags |= RFL_DEBUG;
-
-			const char *lm = Args->CheckValue("-lightmethod");
-			if (lm != NULL)
-			{
-				if (!stricmp(lm, "deferred") && gl.lightmethod == LM_DIRECT) gl.lightmethod = LM_DEFERRED;
-			}
-
-			lm = Args->CheckValue("-buffermethod");
-			if (lm != NULL)
-			{
-				if (!stricmp(lm, "deferred") && gl.buffermethod == BM_PERSISTENT) gl.buffermethod = BM_DEFERRED;
-			}
-		}
+	lm = Args->CheckValue("-buffermethod");
+	if (lm != NULL)
+	{
+		if (!stricmp(lm, "deferred") && gl.buffermethod == BM_PERSISTENT) gl.buffermethod = BM_DEFERRED;
 	}
 
 	int v;
-	
-	if (!gl.legacyMode && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+
+	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
 		glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
 		gl.maxuniforms = v;
@@ -294,34 +244,10 @@ void gl_LoadExtensions()
 		gl.maxuniformblock = 0;
 		gl.uniformblockalignment = 0;
 	}
-	
+
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-
-	if (gl.legacyMode)
-	{
-		// fudge a bit with the framebuffer stuff to avoid redundancies in the main code. Some of the older cards do not have the ARB stuff but the calls are nearly identical.
-		FUDGE_FUNC(glGenerateMipmap, EXT);
-		FUDGE_FUNC(glGenFramebuffers, EXT);
-		FUDGE_FUNC(glBindFramebuffer, EXT);
-		FUDGE_FUNC(glDeleteFramebuffers, EXT);
-		FUDGE_FUNC(glFramebufferTexture2D, EXT);
-		FUDGE_FUNC(glGenerateMipmap, EXT);
-		FUDGE_FUNC(glGenFramebuffers, EXT);
-		FUDGE_FUNC(glBindFramebuffer, EXT);
-		FUDGE_FUNC(glDeleteFramebuffers, EXT);
-		FUDGE_FUNC(glFramebufferTexture2D, EXT);
-		FUDGE_FUNC(glFramebufferRenderbuffer, EXT);
-		FUDGE_FUNC(glGenRenderbuffers, EXT);
-		FUDGE_FUNC(glDeleteRenderbuffers, EXT);
-		FUDGE_FUNC(glRenderbufferStorage, EXT);
-		FUDGE_FUNC(glBindRenderbuffer, EXT);
-		FUDGE_FUNC(glCheckFramebufferStatus, EXT);
-	}
-
-	UCVarValue value;
-	value.Bool = gl.legacyMode;
 }
 
 //==========================================================================
@@ -333,7 +259,7 @@ void gl_LoadExtensions()
 void gl_PrintStartupLog()
 {
 	int v = 0;
-	if (!gl.legacyMode) glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &v);
+	glGetIntegerv(GL_CONTEXT_PROFILE_MASK, &v);
 
 	Printf ("GL_VENDOR: %s\n", glGetString(GL_VENDOR));
 	Printf ("GL_RENDERER: %s\n", glGetString(GL_RENDERER));
@@ -352,7 +278,7 @@ void gl_PrintStartupLog()
 	glGetIntegerv(GL_MAX_VARYING_FLOATS, &v);
 	Printf ("Max. varying: %d\n", v);
 	
-	if (!gl.legacyMode && !(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
 	{
 		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
 		Printf ("Max. uniform block size: %d\n", v);

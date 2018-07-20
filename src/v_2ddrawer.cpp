@@ -40,7 +40,7 @@ IMPLEMENT_CLASS(DShape2D, false, false)
 DEFINE_ACTION_FUNCTION(DShape2D, Clear)
 {
 	PARAM_SELF_PROLOGUE(DShape2D);
-	PARAM_INT(which);
+	PARAM_INT_DEF(which);
 	if ( which&C_Verts ) self->mVertices.Clear();
 	if ( which&C_Coords ) self->mCoords.Clear();
 	if ( which&C_Indices ) self->mIndices.Clear();
@@ -222,8 +222,12 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 		}
 
 		if (parms.specialcolormap != nullptr)
-		{ // Emulate an invulnerability or similar colormap.
-			quad.mSpecialColormap = parms.specialcolormap;
+		{ // draw with an invulnerability or similar colormap.
+
+			auto scm = parms.specialcolormap;
+
+			quad.mSpecialColormap[0] = PalEntry(255, int(scm->ColorizeStart[0] * 127.5f), int(scm->ColorizeStart[1] * 127.5f), int(scm->ColorizeStart[2] * 127.5f));
+			quad.mSpecialColormap[1] = PalEntry(255, int(scm->ColorizeEnd[0] * 127.5f), int(scm->ColorizeEnd[1] * 127.5f), int(scm->ColorizeEnd[2] * 127.5f));
 			quad.mColor1 = 0;	// this disables the color overlay.
 		}
 		quad.mDesaturate = parms.desaturate;
@@ -293,6 +297,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	dg.mType = DrawTypeTriangles;
 	dg.mVertCount = 4;
 	dg.mTexture = img;
+	if (img->bWarped) dg.mFlags |= DTF_Wrap;
 
 	dg.mTranslation = 0;
 	SetStyle(img, parms, vertexcolor, dg);

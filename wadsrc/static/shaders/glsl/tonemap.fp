@@ -3,7 +3,6 @@ in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
 layout(binding=0) uniform sampler2D InputTexture;
-layout(binding=1) uniform sampler2D ExposureTexture;
 
 vec3 Linear(vec3 c)
 {
@@ -65,7 +64,7 @@ vec3 Tonemap(vec3 color)
 
 #elif defined(PALETTE)
 
-layout(binding=2) uniform sampler2D PaletteLUT;
+layout(binding=1) uniform sampler2D PaletteLUT;
 
 vec3 Tonemap(vec3 color)
 {
@@ -84,8 +83,6 @@ void main()
 {
 	vec3 color = texture(InputTexture, TexCoord).rgb;
 #ifndef PALETTE
-	float exposureAdjustment = texture(ExposureTexture, vec2(0.5)).x;
-	color = color * exposureAdjustment;
 	color = Linear(color); // needed because gzdoom's scene texture is not linear at the moment
 #endif
 	FragColor = vec4(Tonemap(color), 1.0);

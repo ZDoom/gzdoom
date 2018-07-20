@@ -32,8 +32,10 @@
 **
 */
 
+#define _WIN32_WINNT 0x0501
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <mmsystem.h>
 
 #include "hardware.h"
 #include "c_dispatch.h"
@@ -41,20 +43,13 @@
 #include "doomstat.h"
 #include "m_argv.h"
 #include "version.h"
+#include "win32glvideo.h"
 #include "swrenderer/r_swrenderer.h"
 
-EXTERN_CVAR (Bool, ticker)
 EXTERN_CVAR (Bool, fullscreen)
-EXTERN_CVAR (Float, vid_winscale)
-EXTERN_CVAR (Bool, win_borderless)
-
-CVAR(Int, win_x, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, win_y, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+EXTERN_CVAR(Int, vid_maxfps)
 
 extern HWND Window;
-
-bool ForceWindowed;
 
 IVideo *Video;
 
@@ -92,10 +87,6 @@ CUSTOM_CVAR(Int, vid_gpuswitch, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINI
 }
 
 
-CCMD (vid_restart)
-{
-}
-
 
 void I_ShutdownGraphics ()
 {
@@ -111,8 +102,6 @@ void I_ShutdownGraphics ()
 
 void I_InitGraphics ()
 {
-	UCVarValue val;
-
 	// todo: implement ATI version of this. this only works for nvidia notebooks, for now.
 	currentgpuswitch = vid_gpuswitch;
 	if (currentgpuswitch == 1)
@@ -135,290 +124,96 @@ void I_InitGraphics ()
 		// not receive a WM_ACTIVATEAPP message, so both games think they
 		// are the active app. Huh?
 	}
-	val.Bool = !!Args->CheckParm ("-devparm");
-	ticker.SetGenericRepDefault (val, CVAR_Bool);
 
-	Video = gl_CreateVideo();
+	Video = new Win32GLVideo();
 
 	if (Video == NULL)
 		I_FatalError ("Failed to initialize display");
 	
 	atterm (I_ShutdownGraphics);
-	
-	Video->SetWindowedScale (vid_winscale);
 }
 
-/** Remaining code is common to Win32 and Linux **/
 
-// VIDEO WRAPPERS ---------------------------------------------------------
+static UINT FPSLimitTimer;
+HANDLE FPSLimitEvent;
 
-DFrameBuffer *I_SetMode (int &width, int &height, DFrameBuffer *old)
+//==========================================================================
+//
+// SetFPSLimit
+//
+// Initializes an event timer to fire at a rate of <limit>/sec. The video
+// update will wait for this timer to trigger before updating.
+//
+// Pass 0 as the limit for unlimited.
+// Pass a negative value for the limit to use the value of vid_maxfps.
+//
+//==========================================================================
+
+static void StopFPSLimit()
 {
-	bool fs = false;
-	switch (Video->GetDisplayType ())
+	I_SetFPSLimit(0);
+}
+
+void I_SetFPSLimit(int limit)
+{
+	if (limit < 0)
 	{
-	case DISPLAY_WindowOnly:
-		fs = false;
-		break;
-	case DISPLAY_FullscreenOnly:
-		fs = true;
-		break;
-	case DISPLAY_Both:
-		if (ForceWindowed)
+		limit = vid_maxfps;
+	}
+	// Kill any leftover timer.
+	if (FPSLimitTimer != 0)
+	{
+		timeKillEvent(FPSLimitTimer);
+		FPSLimitTimer = 0;
+	}
+	if (limit == 0)
+	{ // no limit
+		if (FPSLimitEvent != NULL)
 		{
-			fs = false;
+			CloseHandle(FPSLimitEvent);
+			FPSLimitEvent = NULL;
 		}
-		else
-		{
-			fs = fullscreen;
-		}
-		break;
-	}
-	DFrameBuffer *res = Video->CreateFrameBuffer (width, height, false, fs, old);
-
-	//* Right now, CreateFrameBuffer cannot return NULL
-	if (res == NULL)
-	{
-		I_FatalError ("Mode %dx%d is unavailable\n", width, height);
-	}
-	//*/
-	return res;
-}
-
-bool I_CheckResolution (int width, int height, int bits)
-{
-	int twidth, theight;
-
-	Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-	while (Video->NextMode (&twidth, &theight, NULL))
-	{
-		if (width == twidth && height == theight)
-			return true;
-	}
-	return false;
-}
-
-void I_ClosestResolution (int *width, int *height, int bits)
-{
-	int twidth, theight;
-	int cwidth = 0, cheight = 0;
-	int iteration;
-	DWORD closest = 4294967295u;
-
-	for (iteration = 0; iteration < 2; iteration++)
-	{
-		Video->StartModeIterator (bits, screen ? screen->IsFullscreen() : fullscreen);
-		while (Video->NextMode (&twidth, &theight, NULL))
-		{
-			if (twidth == *width && theight == *height)
-				return;
-
-			if (iteration == 0 && (twidth < *width || theight < *height))
-				continue;
-
-			DWORD dist = (twidth - *width) * (twidth - *width)
-				+ (theight - *height) * (theight - *height);
-
-			if (dist < closest)
-			{
-				closest = dist;
-				cwidth = twidth;
-				cheight = theight;
-			}
-		}
-		if (closest != 4294967295u)
-		{
-			*width = cwidth;
-			*height = cheight;
-			return;
-		}
-	}
-}	
-
-static void GetCenteredPos (int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight)
-{
-	DEVMODE displaysettings;
-	RECT rect;
-	int cx, cy;
-
-	memset (&displaysettings, 0, sizeof(displaysettings));
-	displaysettings.dmSize = sizeof(displaysettings);
-	EnumDisplaySettings (NULL, ENUM_CURRENT_SETTINGS, &displaysettings);
-	scrwidth = (int)displaysettings.dmPelsWidth;
-	scrheight = (int)displaysettings.dmPelsHeight;
-	GetWindowRect (Window, &rect);
-	cx = scrwidth / 2;
-	cy = scrheight / 2;
-	winx = cx - (winw = rect.right - rect.left) / 2;
-	winy = cy - (winh = rect.bottom - rect.top) / 2;
-}
-
-static void KeepWindowOnScreen (int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight)
-{
-	// If the window is too large to fit entirely on the screen, at least
-	// keep its upperleft corner visible.
-	if (winx + winw > scrwidth)
-	{
-		winx = scrwidth - winw;
-	}
-	if (winx < 0)
-	{
-		winx = 0;
-	}
-	if (winy + winh > scrheight)
-	{
-		winy = scrheight - winh;
-	}
-	if (winy < 0)
-	{
-		winy = 0;
-	}
-}
-
-void I_SaveWindowedPos ()
-{
-	// Don't save if we were run with the -0 option.
-	if (Args->CheckParm ("-0"))
-	{
-		return;
-	}
-	// Make sure we only save the window position if it's not fullscreen.
-	static const int WINDOW_STYLE = WS_OVERLAPPEDWINDOW & ~WS_MAXIMIZEBOX;
-	if ((GetWindowLong (Window, GWL_STYLE) & WINDOW_STYLE) == WINDOW_STYLE)
-	{
-		RECT wrect;
-
-		if (GetWindowRect (Window, &wrect))
-		{
-			// If (win_x,win_y) specify to center the window, don't change them
-			// if the window is still centered.
-			if (win_x < 0 || win_y < 0)
-			{
-				int winx, winy, winw, winh, scrwidth, scrheight;
-
-				GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
-				KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
-				if (win_x < 0 && winx == wrect.left)
-				{
-					wrect.left = win_x;
-				}
-				if (win_y < 0 && winy == wrect.top)
-				{
-					wrect.top = win_y;
-				}
-			}
-			win_x = wrect.left;
-			win_y = wrect.top;
-		}
-
-		win_maximized = IsZoomed(Window) == TRUE;
-	}
-}
-
-void I_RestoreWindowedPos ()
-{
-	int winx, winy, winw, winh, scrwidth, scrheight;
-
-	GetCenteredPos (winx, winy, winw, winh, scrwidth, scrheight);
-
-	// Just move to (0,0) if we were run with the -0 option.
-	if (Args->CheckParm ("-0"))
-	{
-		winx = winy = 0;
+		DPrintf(DMSG_NOTIFY, "FPS timer disabled\n");
 	}
 	else
 	{
-		if (win_x >= 0)
+		if (FPSLimitEvent == NULL)
 		{
-			winx = win_x;
+			FPSLimitEvent = CreateEvent(NULL, FALSE, TRUE, NULL);
+			if (FPSLimitEvent == NULL)
+			{ // Could not create event, so cannot use timer.
+				Printf(DMSG_WARNING, "Failed to create FPS limitter event\n");
+				return;
+			}
 		}
-		if (win_y >= 0)
+		atterm(StopFPSLimit);
+		// Set timer event as close as we can to limit/sec, in milliseconds.
+		UINT period = 1000 / limit;
+		FPSLimitTimer = timeSetEvent(period, 0, (LPTIMECALLBACK)FPSLimitEvent, 0, TIME_PERIODIC | TIME_CALLBACK_EVENT_SET);
+		if (FPSLimitTimer == 0)
 		{
-			winy = win_y;
+			CloseHandle(FPSLimitEvent);
+			FPSLimitEvent = NULL;
+			Printf("Failed to create FPS limiter timer\n");
+			return;
 		}
-		KeepWindowOnScreen (winx, winy, winw, winh, scrwidth, scrheight);
+		DPrintf(DMSG_NOTIFY, "FPS timer set to %u ms\n", period);
 	}
-	MoveWindow (Window, winx, winy, winw, winh, TRUE);
-
-	if (win_borderless && !Args->CheckParm("-0"))
-	{
-		LONG lStyle = GetWindowLong(Window, GWL_STYLE);
-		lStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
-		SetWindowLong(Window, GWL_STYLE, lStyle);
-		SetWindowPos(Window, HWND_TOP, 0, 0, scrwidth, scrheight, 0);
-	}
-	if (win_maximized && !Args->CheckParm("-0"))
-		ShowWindow(Window, SW_MAXIMIZE);
 }
 
-extern int NewWidth, NewHeight, NewBits, DisplayBits;
+//==========================================================================
+//
+// StopFPSLimit
+//
+// Used for cleanup during application shutdown.
+//
+//==========================================================================
 
-CUSTOM_CVAR(Bool, win_borderless, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+void I_FPSLimit()
 {
-	// Just reinit the window. Saves a lot of trouble.
-	if (!fullscreen)
+	if (FPSLimitEvent != NULL)
 	{
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
-		NewBits = DisplayBits;
-		setmodeneeded = true;
+		WaitForSingleObject(FPSLimitEvent, 1000);
 	}
 }
 
-CUSTOM_CVAR (Bool, fullscreen, false, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOINITCALL)
-{
-	NewWidth = screen->VideoWidth;
-	NewHeight = screen->VideoHeight;
-	NewBits = DisplayBits;
-	setmodeneeded = true;
-}
-
-CUSTOM_CVAR (Float, vid_winscale, 1.f, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
-{
-	if (self < 1.f)
-	{
-		self = 1.f;
-	}
-	else if (Video)
-	{
-		Video->SetWindowedScale (self);
-		NewWidth = screen->VideoWidth;
-		NewHeight = screen->VideoHeight;
-		NewBits = DisplayBits;
-		//setmodeneeded = true;	// This CVAR doesn't do anything and only causes problems!
-	}
-}
-
-CCMD (vid_listmodes)
-{
-	static const char *ratios[7] = { "", " - 16:9", " - 16:10", " - 17:10", " - 5:4", " - 17:10", " - 21:9" };
-	int width, height, bits;
-	bool letterbox;
-
-	if (Video == NULL)
-	{
-		return;
-	}
-
-	for (bits = 1; bits <= 32; bits++)
-	{
-		Video->StartModeIterator (bits, screen->IsFullscreen());
-		while (Video->NextMode (&width, &height, &letterbox))
-		{
-			bool thisMode = (width == DisplayWidth && height == DisplayHeight && bits == DisplayBits);
-			int ratio = CheckRatio (width, height);
-			Printf (thisMode ? PRINT_BOLD : PRINT_HIGH,
-				"%s%4d x%5d x%3d%s%s\n",
-				thisMode || !IsRatioWidescreen(ratio) ? "" : TEXTCOLOR_GOLD,
-				width, height, bits,
-				ratios[ratio],
-				thisMode || !letterbox ? "" : TEXTCOLOR_BROWN " LB"
-				);
-		}
-	}
-}
-
-CCMD (vid_currentmode)
-{
-	Printf ("%dx%dx%d\n", DisplayWidth, DisplayHeight, DisplayBits);
-}

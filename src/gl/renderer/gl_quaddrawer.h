@@ -23,6 +23,10 @@ public:
 			p = GLRenderer->mVBO->Alloc(4, &ndx);
 		}
 	}
+	FFlatVertex *Pointer()
+	{
+		return p;
+	}
 	void Set(int ndx, float x, float y, float z, float s, float t)
 	{
 		p[ndx].Set(x, y, z, s, t);

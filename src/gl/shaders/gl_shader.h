@@ -38,6 +38,7 @@ enum
 };
 
 class FShaderCollection;
+struct HWViewpointUniforms;
 
 //==========================================================================
 //
@@ -242,15 +243,9 @@ class FShader
 
 	FBufferedUniform1f muDesaturation;
 	FBufferedUniform1i muFogEnabled;
-	FBufferedUniform1i muPalLightLevels;
-	FBufferedUniform1f muGlobVis;
 	FBufferedUniform1i muTextureMode;
-	FBufferedUniform4f muCameraPos;
 	FBufferedUniform4f muLightParms;
 	FBufferedUniform2f muClipSplit;
-	FUniform1i muFixedColormap;
-	FUniform4f muColormapStart;
-	FUniform4f muColormapRange;
 	FBufferedUniform1i muLightIndex;
 	FBufferedUniformPE muFogColor;
 	FBufferedUniform4f muDynLightColor;
@@ -262,22 +257,27 @@ class FShader
 	FUniform4f muGlowTopPlane;
 	FUniform4f muSplitBottomPlane;
 	FUniform4f muSplitTopPlane;
-	FUniform4f muClipLine;
 	FBufferedUniform1f muInterpolationFactor;
-	FBufferedUniform1f muClipHeight;
-	FBufferedUniform1f muClipHeightDirection;
 	FBufferedUniform1f muAlphaThreshold;
-	FBufferedUniform1i muViewHeight;
 	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;
-	int projectionmatrix_index;
-	int viewmatrix_index;
-	int normalviewmatrix_index;
 	int modelmatrix_index;
 	int normalmodelmatrix_index;
 	int texturematrix_index;
+
+	int projectionmatrix_index;
+	int viewmatrix_index;
+	int normalviewmatrix_index;
+	int viewheight_index;
+	int camerapos_index;
+	int pallightlevels_index;
+	int globvis_index;
+	int clipheight_index;
+	int clipheightdirection_index;
+	int clipline_index;
+
 public:
 	int vertexmatrix_index;
 	int texcoordmatrix_index;
@@ -309,7 +309,7 @@ public:
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
 
-	void ApplyMatrices(VSMatrix *proj, VSMatrix *view, VSMatrix *norm);
+	void ApplyMatrices(HWViewpointUniforms *u);
 
 };
 
@@ -329,9 +329,7 @@ public:
 
 	FShader *BindEffect(int effect, EPassType passType);
 	FShader *Get(unsigned int eff, bool alphateston, EPassType passType);
-	void ApplyMatrices(VSMatrix *proj, VSMatrix *view, EPassType passType);
-
-	void ResetFixedColormap();
+	void ApplyMatrices(HWViewpointUniforms *u, EPassType passType);
 
 private:
 	FShader *mActiveShader = nullptr;
@@ -353,19 +351,7 @@ public:
 	FShader *Compile(const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
-	void ApplyMatrices(VSMatrix *proj, VSMatrix *view);
-
-	void ResetFixedColormap()
-	{
-		for (unsigned i = 0; i < mMaterialShaders.Size(); i++)
-		{
-			mMaterialShaders[i]->currentfixedcolormap = -1;
-		}
-		for (unsigned i = 0; i < mMaterialShadersNAT.Size(); i++)
-		{
-			mMaterialShadersNAT[i]->currentfixedcolormap = -1;
-		}
-	}
+	void ApplyMatrices(HWViewpointUniforms *u);
 
 	FShader *Get(unsigned int eff, bool alphateston)
 	{

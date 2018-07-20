@@ -1,6 +1,9 @@
 #pragma once
 
 #include "v_palette.h"
+#include "r_data/matrix.h"
+
+class FMaterial;
 
 struct FSkyVertex
 {
@@ -60,7 +63,7 @@ public:
 
 	FSkyDomeCreator();
 	virtual ~FSkyDomeCreator();
-	void RenderDome(FMaterial *tex, int mode);
+	void SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelmatrix, VSMatrix &textureMatrix);
 
 	int FaceStart(int i)
 	{

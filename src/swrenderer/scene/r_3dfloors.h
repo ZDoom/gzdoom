@@ -1,7 +1,7 @@
 
 #pragma once
 
-#include "p_3dfloors.h"
+#include "r_defs.h"
 #include <unordered_map>
 
 EXTERN_CVAR(Int, r_3dfloors);

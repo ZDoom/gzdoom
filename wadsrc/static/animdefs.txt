@@ -403,3 +403,5 @@ animateddoor DORALN01
 	pic DORALN06 
 	pic DORALN07 
 	pic DORALN08 
+
+warp texture b@ckdrop 0.83445

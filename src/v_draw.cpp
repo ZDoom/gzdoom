@@ -49,6 +49,7 @@
 #include "i_video.h"
 #include "g_levellocals.h"
 #include "vm.h"
+#include "hwrenderer/utility/hw_cvars.h"
 
 CVAR(Float, underwater_fade_scalar, 1.0f, CVAR_ARCHIVE) // [Nash] user-settable underwater blend intensity
 
@@ -838,6 +839,10 @@ bool DFrameBuffer::ParseDrawTextureTags(FTexture *img, double x, double y, uint3
 			parms->style.AsDWORD = ListGetInt(tags);
 			break;
 
+		case DTA_LegacyRenderStyle:	// mainly for ZScript which does not handle FRenderStyle that well.
+			parms->style = (ERenderStyle)ListGetInt(tags);
+			break;
+
 		case DTA_SpecialColormap:
 			parms->specialcolormap = ListGetSpecialColormap(tags);
 			break;
@@ -1447,6 +1452,38 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 			cnt = (int)(cnt * underwater_fade_scalar);
 
 			V_AddBlend(blendv.r / 255.f, blendv.g / 255.f, blendv.b / 255.f, cnt / 255.0f, blend);
+		}
+	}
+	else if (player && player->fixedlightlevel != -1 && player->fixedcolormap == NOFIXEDCOLORMAP)
+	{
+		// Draw fixedlightlevel effects as a 2D overlay. The hardware renderer just processes such a scene fullbright without any lighting.
+		auto torchtype = PClass::FindActor(NAME_PowerTorch);
+		auto litetype = PClass::FindActor(NAME_PowerLightAmp);
+		PalEntry color = 0xffffffff;
+		for (AInventory * in = player->mo->Inventory; in; in = in->Inventory)
+		{
+			// Need special handling for light amplifiers 
+			if (in->IsKindOf(torchtype))
+			{
+				// The software renderer already bakes the torch flickering into its output, so this must be omitted here.
+				float r = vid_rendermode < 4? 1.f : (0.8f + (7 - player->fixedlightlevel) / 70.0f);
+				if (r > 1.0f) r = 1.0f;
+				int rr = (int)(r * 255);
+				int b = rr;
+				if (gl_enhanced_nightvision) b = b * 3 / 4;
+				color = PalEntry(255, rr, rr, b);
+			}
+			else if (in->IsKindOf(litetype))
+			{
+				if (gl_enhanced_nightvision)
+				{
+					color = PalEntry(255, 104, 255, 104);
+				}
+			}
+		}
+		if (color != 0xffffffff)
+		{
+			screen->Dim(color, 1, 0, 0, screen->GetWidth(), screen->GetHeight(), &LegacyRenderStyles[STYLE_Multiply]);
 		}
 	}
 

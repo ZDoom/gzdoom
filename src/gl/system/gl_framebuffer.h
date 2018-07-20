@@ -9,14 +9,14 @@ class FHardwareTexture;
 class FSimpleVertexBuffer;
 class FGLDebug;
 
-class OpenGLFrameBuffer : public SystemFrameBuffer
+class OpenGLFrameBuffer : public SystemGLFrameBuffer
 {
-	typedef SystemFrameBuffer Super;
+	typedef SystemGLFrameBuffer Super;
 
 public:
 
 	explicit OpenGLFrameBuffer() {}
-	OpenGLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) ;
+	OpenGLFrameBuffer(void *hMonitor, bool fullscreen) ;
 	~OpenGLFrameBuffer();
 
 	void InitializeState();
@@ -37,11 +37,8 @@ public:
 	IHardwareTexture *CreateHardwareTexture(FTexture *tex) override;
 	void PrecacheMaterial(FMaterial *mat, int translation) override;
 	FModelRenderer *CreateModelRenderer(int mli) override;
-	void FlushTextures() override;
 	void TextureFilterChanged() override;
-	void ResetFixedColormap() override;
 	void BeginFrame() override;
-	bool RenderBuffersEnabled() override;
 	void SetViewportRects(IntRect *bounds) override;
 	void BlurScene(float amount) override;
     IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) override;

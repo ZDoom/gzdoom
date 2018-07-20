@@ -29,9 +29,11 @@
 #include "p_local.h"
 #include "g_levellocals.h"
 #include "a_sharedglobal.h"
+#include "d_player.h"
 #include "r_sky.h"
 #include "hw_fakeflat.h"
 #include "hw_drawinfo.h"
+#include "hwrenderer/utility/hw_cvars.h"
 #include "r_utility.h"
 
 
@@ -384,28 +386,3 @@ sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool bac
 	}
 	return dest;
 }
-
-//-----------------------------------------------------------------------------
-//
-// Sets the area the camera is in
-//
-//-----------------------------------------------------------------------------
-void HWDrawInfo::SetViewArea()
-{
-    auto &vp = r_viewpoint;
-	// The render_sector is better suited to represent the current position in GL
-	vp.sector = R_PointInSubsector(vp.Pos)->render_sector;
-
-	// Get the heightsec state from the render sector, not the current one!
-	if (vp.sector->GetHeightSec())
-	{
-		in_area = vp.Pos.Z <= vp.sector->heightsec->floorplane.ZatPoint(vp.Pos) ? area_below :
-			(vp.Pos.Z > vp.sector->heightsec->ceilingplane.ZatPoint(vp.Pos) &&
-				!(vp.sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? area_above : area_normal;
-	}
-	else
-	{
-		in_area = level.HasHeightSecs ? area_default : area_normal;	// depends on exposed lower sectors, if map contains heightsecs.
-	}
-}
-

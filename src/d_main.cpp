@@ -103,6 +103,8 @@
 #include "r_data/r_vanillatrans.h"
 
 EXTERN_CVAR(Bool, hud_althud)
+EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Int, vr_mode)
 void DrawHUD();
 void D_DoAnonStats();
 
@@ -115,12 +117,10 @@ void D_DoAnonStats();
 
 extern void I_SetWindowTitle(const char* caption);
 extern void ReadStatistics();
-extern void M_RestoreMode ();
 extern void M_SetDefaultMode ();
 extern void G_NewInit ();
 extern void SetupPlayerClasses ();
 extern void HUD_InitHud();
-void gl_PatchMenu();	// remove modern OpenGL options on old hardware.
 void DeinitMenus();
 const FIWADInfo *D_FindIWAD(TArray<FString> &wadfiles, const char *iwad, const char *basewad);
 
@@ -152,9 +152,7 @@ EXTERN_CVAR (Bool, sv_cheats)
 EXTERN_CVAR (Bool, sv_unlimited_pickup)
 EXTERN_CVAR (Bool, I_FriendlyWindowTitle)
 
-extern int testingmode;
 extern bool setmodeneeded;
-extern int NewWidth, NewHeight, NewBits, DisplayBits;
 extern bool gameisdead;
 extern bool demorecording;
 extern bool M_DemoNoPlay;	// [RH] if true, then skip any demos in the loop
@@ -227,8 +225,8 @@ int eventhead;
 int eventtail;
 gamestate_t wipegamestate = GS_DEMOSCREEN;	// can be -1 to force a wipe
 bool PageBlank;
-FTexture *Page;
 FTexture *Advisory;
+FTextureID Page;
 bool nospriterename;
 FStartupInfo DoomStartupInfo;
 FString lastIWAD;
@@ -263,20 +261,6 @@ void D_ProcessEvents (void)
 {
 	event_t *ev;
 		
-	// [RH] If testing mode, do not accept input until test is over
-	if (testingmode)
-	{
-		if (testingmode == 1)
-		{
-			M_SetDefaultMode ();
-		}
-		else if (testingmode <= I_GetTime())
-		{
-			M_RestoreMode ();
-		}
-		return;
-	}
-
 	for (; eventtail != eventhead ; eventtail = (eventtail+1)&(MAXEVENTS-1))
 	{
 		ev = &events[eventtail];
@@ -693,35 +677,28 @@ void D_Display ()
 		R_SetFOV(vp, fov);
 	}
 
-	// [RH] change the screen mode if needed
+	// fullscreen toggle has been requested
 	if (setmodeneeded)
 	{
-		// Change screen mode.
-		if (Video->SetResolution (NewWidth, NewHeight, NewBits))
-		{
-			// Recalculate various view parameters.
-			setsizeneeded = true;
-			// Let the status bar know the screen size changed
-			if (StatusBar != NULL)
-			{
-				StatusBar->CallScreenSizeChanged ();
+		screen->ToggleFullscreen(fullscreen);
+		V_OutputResized(screen->GetWidth(), screen->GetHeight());
+		setmodeneeded = false;
 			}
-			// Refresh the console.
-			C_NewModeAdjust ();
-			// Reload crosshair if transitioned to a different size
-			ST_LoadCrosshair (true);
-			AM_NewResolution ();
-			// Reset the mouse cursor in case the bit depth changed
-			vid_cursor.Callback();
-		}
-	}
 
 	// change the view size if needed
-	if (setsizeneeded && StatusBar != NULL)
+	if (setsizeneeded)
 	{
-		R_ExecuteSetViewSize (vp, r_viewwindow);
+		if (StatusBar == nullptr)
+		{
+			viewwidth = SCREENWIDTH;
+			viewheight = SCREENHEIGHT;
+			setsizeneeded = false;
+		}
+		else
+		{
+			R_ExecuteSetViewSize (vp, r_viewwindow);
 	}
-	setmodeneeded = false;
+	}
 
 	// [RH] Allow temporarily disabling wipes
 	if (NoWipe)
@@ -730,7 +707,8 @@ void D_Display ()
 		wipe = false;
 		wipegamestate = gamestate;
 	}
-	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL)
+	// No wipes when in a stereo3D VR mode
+	else if (gamestate != wipegamestate && gamestate != GS_FULLCONSOLE && gamestate != GS_TITLELEVEL && (vr_mode == 0 || vid_rendermode != 4))
 	{ // save the current screen if about to wipe
 		switch (wipegamestate)
 		{
@@ -993,7 +971,8 @@ void D_DoomLoop ()
 
 	// Clamp the timer to TICRATE until the playloop has been entered.
 	r_NoInterpolate = true;
-	Page = Advisory = NULL;
+	Page.SetInvalid();
+	Advisory = nullptr;
 
 	vid_cursor.Callback();
 
@@ -1078,9 +1057,9 @@ void D_PageTicker (void)
 void D_PageDrawer (void)
 {
 	screen->Clear(0, 0, SCREENWIDTH, SCREENHEIGHT, 0, 0);
-	if (Page != NULL)
+	if (Page.Exists())
 	{
-		screen->DrawTexture (Page, 0, 0,
+		screen->DrawTexture (TexMan(Page), 0, 0,
 			DTA_Fullscreen, true,
 			DTA_Masked, false,
 			DTA_BilinearFilter, true,
@@ -1222,18 +1201,7 @@ void D_DoStrifeAdvanceDemo ()
 	if (demosequence == 9 && !(gameinfo.flags & GI_SHAREWARE))
 		demosequence = 10;
 
-	if (pagename)
-	{
-		if (Page != NULL)
-		{
-			Page->Unload ();
-			Page = NULL;
-		}
-		if (pagename[0])
-		{
-			Page = TexMan[pagename];
-		}
-	}
+	if (pagename != nullptr) Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
 }
 
 //==========================================================================
@@ -1331,13 +1299,10 @@ void D_DoAdvanceDemo (void)
 		break;
 	}
 
+
 	if (pagename.IsNotEmpty())
 	{
-		if (Page != NULL)
-		{
-			Page->Unload ();
-		}
-		Page = TexMan(pagename);
+		Page = TexMan.CheckForTexture(pagename, ETextureType::MiscPatch);
 	}
 }
 
@@ -2640,7 +2605,6 @@ void D_DoomMain (void)
 			}
 
 			V_Init2();
-			gl_PatchMenu();	// removes unapplicable entries for old hardware. This cannot be done in MENUDEF because at the point it gets parsed it doesn't have the needed info.
 			UpdateJoystickMenu(NULL);
 
 			v = Args->CheckValue ("-loadgame");
@@ -2708,7 +2672,6 @@ void D_DoomMain (void)
 			screen->InitPalette();
 			// These calls from inside V_Init2 are still necessary
 			C_NewModeAdjust();
-			M_InitVideoModesMenu();
 			D_StartTitle ();				// start up intro loop
 			setmodeneeded = false;			// This may be set to true here, but isn't needed for a restart
 		}

@@ -59,7 +59,10 @@
 #include "r_state.h"
 #include "r_utility.h"
 #include "g_levellocals.h"
+#include "r_sky.h"
+
 #include "textures/skyboxtexture.h"
+#include "hwrenderer/textures/hw_material.h"
 #include "hw_skydome.h"
 
 //-----------------------------------------------------------------------------
@@ -68,6 +71,7 @@
 // also shamelessly lifted from ZDoomGL! ;)
 //
 //-----------------------------------------------------------------------------
+EXTERN_CVAR(Float, skyoffset)
 
 //-----------------------------------------------------------------------------
 //
@@ -258,4 +262,52 @@ void FSkyDomeCreator::CreateDome()
 	ptr[37].SetXYZ(-128.f, 128.f, 128.f, 1, 0);
 }
 
+//-----------------------------------------------------------------------------
+//
+//
+//
+//-----------------------------------------------------------------------------
 
+void FSkyDomeCreator::SetupMatrices(FMaterial *tex, float x_offset, float y_offset, bool mirror, int mode, VSMatrix &modelMatrix, VSMatrix &textureMatrix)
+{
+	int texw = tex->TextureWidth();
+	int texh = tex->TextureHeight();
+
+	modelMatrix.loadIdentity();
+	modelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
+
+	float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
+	float yscale = 1.f;
+	if (texh <= 128 && (level.flags & LEVEL_FORCETILEDSKY))
+	{
+		modelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
+		yscale = 240.f / texh;
+	}
+	else if (texh < 128)
+	{
+		// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
+		modelMatrix.translate(0.f, -1250.f, 0.f);
+		modelMatrix.scale(1.f, 128 / 230.f, 1.f);
+		yscale = float(128 / texh);	// intentionally left as integer.
+	}
+	else if (texh < 200)
+	{
+		modelMatrix.translate(0.f, -1250.f, 0.f);
+		modelMatrix.scale(1.f, texh / 230.f, 1.f);
+	}
+	else if (texh <= 240)
+	{
+		modelMatrix.translate(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+		modelMatrix.scale(1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
+	}
+	else
+	{
+		modelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
+		modelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
+		yscale = 240.f / texh;
+	}
+	textureMatrix.loadIdentity();
+	textureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
+	textureMatrix.translate(1.f, y_offset / texh, 1.f);
+}

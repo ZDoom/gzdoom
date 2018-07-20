@@ -13,12 +13,12 @@ matrix:
     - os: osx
       osx_image: xcode8
       env:
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
     - os: osx
       osx_image: xcode9.3
       env:
-        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.7"
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
     - os: linux
       compiler: gcc

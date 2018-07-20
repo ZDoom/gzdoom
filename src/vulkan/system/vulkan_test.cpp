@@ -22,6 +22,7 @@
 #include "vulkan/textures/vk_samplers.h"
 #include "vulkan/textures/vk_texture.h"
 #include "vulkan/textures/vk_depthbuffer.h"
+#include "vulkan/textures/vk_uniformbuffer.h"
 #include "textures/textures.h"
 
 const int WIDTH = 800;
@@ -118,8 +119,7 @@ public:
     VkBuffer indexBuffer;
     VkDeviceMemory indexBufferMemory;
 
-    VkBuffer uniformBuffer;
-    VkDeviceMemory uniformBufferMemory;
+	VkUniformBuffer *uniforms;
 
     VkDescriptorPool descriptorPool;
     VkDescriptorSet descriptorSet;
@@ -185,8 +185,7 @@ public:
 		vkDestroyDescriptorPool(vDevice->vkDevice, descriptorPool, nullptr);
 
         vkDestroyDescriptorSetLayout(vDevice->vkDevice, descriptorSetLayout, nullptr);
-        vkDestroyBuffer(vDevice->vkDevice, uniformBuffer, nullptr);
-        vkFreeMemory(vDevice->vkDevice, uniformBufferMemory, nullptr);
+		if (uniforms) delete uniforms;
 
         vkDestroyBuffer(vDevice->vkDevice, indexBuffer, nullptr);
         vkFreeMemory(vDevice->vkDevice, indexBufferMemory, nullptr);
@@ -649,9 +648,9 @@ public:
         vkFreeMemory(vDevice->vkDevice, stagingBufferMemory, nullptr);
     }
 
-    void createUniformBuffer() {
-        VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-        createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffer, uniformBufferMemory);
+    void createUniformBuffer() 
+	{
+		uniforms = new VkUniformBuffer(vDevice);
     }
 
     void createDescriptorPool() {
@@ -685,7 +684,7 @@ public:
         }
 
         VkDescriptorBufferInfo bufferInfo = {};
-        bufferInfo.buffer = uniformBuffer;
+        bufferInfo.buffer =  uniforms->Handle();
         bufferInfo.offset = 0;
         bufferInfo.range = sizeof(UniformBufferObject);
 
@@ -857,10 +856,9 @@ public:
 		ubo.proj.perspective(45, swapChainExtent.width / (float) swapChainExtent.height, 0.1f, 1000.0f);
 		ubo.proj.scale(1, -1, 1);
 
-        void* data;
-        vkMapMemory(vDevice->vkDevice, uniformBufferMemory, 0, sizeof(ubo), 0, &data);
-            memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(vDevice->vkDevice, uniformBufferMemory);
+		void* data = uniforms->Map();
+        memcpy(data, &ubo, sizeof(ubo));
+		uniforms->Unmap();
     }
 
     void drawFrame() {

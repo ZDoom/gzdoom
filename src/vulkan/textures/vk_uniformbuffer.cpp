@@ -70,5 +70,6 @@ void VkUniformBuffer::Unmap()
 	if (mapcnt <= 0 && map)
 	{
 		vmaUnmapMemory(vDevice->vkAllocator, uniformBufferAllocation);
-	}		
+	}	
+	map = nullptr;
 }

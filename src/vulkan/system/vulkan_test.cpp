@@ -201,7 +201,7 @@ public:
 	}
 
     void recreateSwapChain() {
-        int width=0, height=0;
+        int width=screen->GetWidth(), height=screen->GetHeight();
         if (width == 0 || height == 0) return;
 
         vkDeviceWaitIdle(vDevice->vkDevice);
@@ -651,6 +651,7 @@ public:
     void createUniformBuffer() 
 	{
 		uniforms = new VkUniformBuffer(vDevice);
+		uniforms->Create(sizeof(UniformBufferObject));
     }
 
     void createDescriptorPool() {

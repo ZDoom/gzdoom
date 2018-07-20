@@ -9057,7 +9057,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 	{
 		assert(Self != nullptr);
 		selfemit = Self->Emit(build);
-		assert((selfemit.RegType == REGT_POINTER) || (selfemit.Fixed && selfemit.Target));
+		assert(selfemit.RegType == REGT_POINTER || selfemit.RegType == REGT_STRING || (selfemit.Fixed && selfemit.Target));
 
 		int innerside = FScopeBarrier::SideFromFlags(Function->Variants[0].Flags);
 
@@ -9077,7 +9077,7 @@ ExpEmit FxVMFunctionCall::Emit(VMFunctionBuilder *build)
 			}
 		}
 
-		if (selfemit.Fixed && selfemit.Target)
+		if ((selfemit.Fixed && selfemit.Target) || selfemit.RegType == REGT_STRING)
 		{
 			// Address of a local variable.
 			build->Emit(OP_PARAM, 0, selfemit.RegType | REGT_ADDROF, selfemit.RegNum);

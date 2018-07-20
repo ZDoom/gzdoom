@@ -53,6 +53,7 @@ struct TriDrawTriangleArgs
 	int32_t clipright;
 	int32_t clipbottom;
 	uint8_t *stencilbuffer;
+	int stencilpitch;
 	float *zbuffer;
 	const PolyDrawArgs *uniforms;
 	bool destBgra;

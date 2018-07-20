@@ -90,7 +90,7 @@ namespace swrenderer
 		clearcolor = color;
 	}
 
-	void RenderScene::RenderView(player_t *player, DCanvas *target)
+	void RenderScene::RenderView(player_t *player, DCanvas *target, void *videobuffer)
 	{
 		auto viewport = MainThread()->Viewport.get();
 		viewport->RenderTarget = target;
@@ -130,6 +130,10 @@ namespace swrenderer
 		}
 
 		RenderActorView(player->mo);
+
+		auto copyqueue = std::make_shared<DrawerCommandQueue>(MainThread()->FrameMemory.get());
+		copyqueue->Push<MemcpyCommand>(videobuffer, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
+		DrawerThreads::Execute(copyqueue);
 
 		DrawerWaitCycles.Clock();
 		DrawerThreads::WaitForWorkers();

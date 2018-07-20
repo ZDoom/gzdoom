@@ -72,6 +72,12 @@ enum MaterialShaderIndex
 	FIRST_USER_SHADER
 };
 
+struct UserShaderDesc
+{
+	FString shader;
+	MaterialShaderIndex shaderType;
+	FString defines;
+};
 
 struct FloatRect
 {

@@ -16,6 +16,7 @@ class SWSceneDrawer
 	std::unique_ptr<FSWSceneTexture> FBTexture[2];
 	int FBTextureIndex = 0;
 	bool FBIsTruecolor = false;
+	std::unique_ptr<DSimpleCanvas> Canvas;
 
 public:
 	SWSceneDrawer();

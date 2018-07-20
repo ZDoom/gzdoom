@@ -187,25 +187,27 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 	}
 	else
 	{
-		if (strnicmp (mapname, "MAP", 3) != 0)
+		if (strnicmp (mapname, "MAP", 3) == 0)
 		{
-			return;
-		}
-		char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
-		char scriptname_t[9] = { 'D','I','A','L','O','G',mapname[3],mapname[4],0 };
+			char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
+			char scriptname_t[9] = { 'D','I','A','L','O','G',mapname[3],mapname[4],0 };
 
-		if (!LoadScriptFile(scriptname_t, false, 2))
-		{
-			if (!LoadScriptFile (scriptname_b, false, 1))
+			if (   LoadScriptFile(scriptname_t, false, 2)
+				|| LoadScriptFile(scriptname_b, false, 1))
 			{
-				if (gameinfo.Dialogue.IsNotEmpty())
-				{
-					if (LoadScriptFile(gameinfo.Dialogue, false, 0)) return;
-				}
-
-				LoadScriptFile ("SCRIPT00", false, 1);
+				return;
 			}
 		}
+
+		if (gameinfo.Dialogue.IsNotEmpty())
+		{
+			if (LoadScriptFile(gameinfo.Dialogue, false, 0))
+			{
+				return;
+			}
+		}
+
+		LoadScriptFile("SCRIPT00", false, 1);
 	}
 }
 

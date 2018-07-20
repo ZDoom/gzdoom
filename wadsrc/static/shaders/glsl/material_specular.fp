@@ -34,12 +34,12 @@ vec2 lightAttenuation(int i, vec3 normal, vec3 viewdir, float lightcolorA)
 	return vec2(attenuation, attenuation * specularLevel * pow(specAngle, phExp));
 }
 
-vec3 ProcessMaterial(vec3 material, vec3 color)
+vec3 ProcessMaterialLight(Material material, vec3 color)
 {
 	vec4 dynlight = uDynLightColor;
 	vec4 specular = vec4(0.0, 0.0, 0.0, 1.0);
 
-	vec3 normal = ApplyNormalMap();
+	vec3 normal = material.Normal;
 	vec3 viewdir = normalize(uCameraPos.xyz - pixelpos.xyz);
 
 	if (uLightIndex >= 0)
@@ -70,8 +70,7 @@ vec3 ProcessMaterial(vec3 material, vec3 color)
 	dynlight.rgb = clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
 	specular.rgb = clamp(desaturate(specular).rgb, 0.0, 1.4);
 
-	vec4 materialSpec = texture(speculartexture, vTexCoord.st);
-	vec3 frag = material * dynlight.rgb + materialSpec.rgb * specular.rgb;
+	vec3 frag = material.Base.rgb * dynlight.rgb + material.Specular * specular.rgb;
 
 	if (uLightIndex >= 0)
 	{

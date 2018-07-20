@@ -60,8 +60,6 @@ EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Int, screenblocks)
 
-void V_DrawPaletteTester(int pal);
-
 CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self < 0 || self > 2) self = 2;
@@ -187,6 +185,30 @@ void DFrameBuffer::SetSize(int width, int height)
 {
 	Width = ViewportScaledWidth(width, height);
 	Height = ViewportScaledHeight(width, height);
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
+void V_DrawPaletteTester(int paletteno)
+{
+	int blocksize = screen->GetHeight() / 50;
+
+	int t = paletteno;
+	int k = 0;
+	for (int i = 0; i < 16; ++i)
+	{
+		for (int j = 0; j < 16; ++j)
+		{
+			int palindex = (t > 1) ? translationtables[TRANSLATION_Standard][t - 2]->Remap[k] : k;
+			PalEntry pe = GPalette.BaseColors[palindex];
+			k++;
+			screen->Dim(pe, 1.f, j*blocksize, i*blocksize, blocksize, blocksize);
+		}
+	}
 }
 
 //==========================================================================

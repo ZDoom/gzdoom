@@ -153,8 +153,8 @@ void ScreenTriangle::Draw(const TriDrawTriangleArgs *args, PolyTriangleThreadDat
 		int x = leftEdge[y];
 		int xend = rightEdge[y];
 
-		float *zbufferLine = args->zbuffer + args->pitch * y;
-		uint8_t *stencilLine = args->stencilbuffer + args->pitch * y;
+		float *zbufferLine = args->zbuffer + args->stencilpitch * y;
+		uint8_t *stencilLine = args->stencilbuffer + args->stencilpitch * y;
 
 		float startX = x + (0.5f - v1X);
 		float startY = y + (0.5f - v1Y);

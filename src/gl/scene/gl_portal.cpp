@@ -86,7 +86,7 @@ void GLPortal::ClearScreen(HWDrawInfo *di)
 // DrawPortalStencil
 //
 //-----------------------------------------------------------------------------
-void GLPortal::DrawPortalStencil()
+void GLPortal::DrawPortalStencil(int pass)
 {
 	if (mPrimIndices.Size() == 0)
 	{
@@ -105,8 +105,11 @@ void GLPortal::DrawPortalStencil()
 	}
 	if (NeedCap() && lines.Size() > 1)
 	{
+		if (pass == STP_AllInOne) glDepthMask(false);
+		else if (pass == STP_DepthRestore) glDepthRange(1, 1);
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILTOP_INDEX, 4);
 		GLRenderer->mVBO->RenderArray(GL_TRIANGLE_FAN, FFlatVertexBuffer::STENCILBOTTOM_INDEX, 4);
+		if (pass == STP_DepthRestore) glDepthRange(0, 1);
 	}
 }
 
@@ -150,7 +153,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				// Use occlusion query to avoid rendering portals that aren't visible
 				if (doquery) glBeginQuery(GL_SAMPLES_PASSED, GLRenderer->PortalQueryObject);
 
-				DrawPortalStencil();
+				DrawPortalStencil(STP_Stencil);
 
 				if (doquery) glEndQuery(GL_SAMPLES_PASSED);
 
@@ -160,7 +163,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				glDepthMask(true);							// enable z-buffer again
 				glDepthRange(1, 1);
 				glDepthFunc(GL_ALWAYS);
-				DrawPortalStencil();
+				DrawPortalStencil(STP_DepthClear);
 
 				// set normal drawing mode
 				gl_RenderState.EnableTexture(true);
@@ -189,7 +192,7 @@ bool GLPortal::Start(bool usestencil, bool doquery, HWDrawInfo *outer_di, HWDraw
 				// Note: We must draw the stencil with z-write enabled here because there is no second pass!
 
 				glDepthMask(true);
-				DrawPortalStencil();
+				DrawPortalStencil(STP_AllInOne);
 				glStencilFunc(GL_EQUAL, mState->recursion + 1, ~0);		// draw sky into stencil
 				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 				gl_RenderState.EnableTexture(true);
@@ -252,7 +255,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 			// first step: reset the depth buffer to max. depth
 			glDepthRange(1, 1);							// always
 			glDepthFunc(GL_ALWAYS);						// write the farthest depth value
-			DrawPortalStencil();
+			DrawPortalStencil(STP_DepthClear);
 		}
 		else
 		{
@@ -264,7 +267,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		glDepthRange(0, 1);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
 		glStencilFunc(GL_EQUAL, mState->recursion, ~0);		// draw sky into stencil
-		DrawPortalStencil();
+		DrawPortalStencil(STP_DepthRestore);
 		glDepthFunc(GL_LESS);
 
 
@@ -306,7 +309,7 @@ void GLPortal::End(HWDrawInfo *di, bool usestencil)
 		gl_RenderState.BlendFunc(GL_ONE, GL_ZERO);
 		gl_RenderState.BlendEquation(GL_FUNC_ADD);
 		gl_RenderState.Apply();
-		DrawPortalStencil();
+		DrawPortalStencil(STP_DepthRestore);
 		gl_RenderState.SetEffect(EFF_NONE);
 		gl_RenderState.EnableTexture(true);
 		glColorMask(1, 1, 1, 1); // mark portal in alpha channel but don't touch color

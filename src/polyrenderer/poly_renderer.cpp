@@ -58,7 +58,7 @@ PolyRenderer::PolyRenderer()
 {
 }
 
-void PolyRenderer::RenderView(player_t *player, DCanvas *target)
+void PolyRenderer::RenderView(player_t *player, DCanvas *target, void *videobuffer)
 {
 	using namespace swrenderer;
 	
@@ -70,6 +70,11 @@ void PolyRenderer::RenderView(player_t *player, DCanvas *target)
 	RenderActorView(player->mo, false);
 
 	Threads.MainThread()->FlushDrawQueue();
+
+	auto copyqueue = std::make_shared<DrawerCommandQueue>(Threads.MainThread()->FrameMemory.get());
+	copyqueue->Push<MemcpyCommand>(videobuffer, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
+	DrawerThreads::Execute(copyqueue);
+
 	PolyDrawerWaitCycles.Clock();
 	DrawerThreads::WaitForWorkers();
 	PolyDrawerWaitCycles.Unclock();

@@ -186,7 +186,7 @@ void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 	{
 		glGenBuffers(1, &glBufferID);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glBufferID);
-		glBufferData(GL_PIXEL_UNPACK_BUFFER, w*h*texelsize, nullptr, GL_DYNAMIC_DRAW);
+		glBufferData(GL_PIXEL_UNPACK_BUFFER, w*h*texelsize, nullptr, GL_STREAM_DRAW);
 		glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 	}
 }
@@ -195,7 +195,7 @@ void FHardwareTexture::AllocateBuffer(int w, int h, int texelsize)
 uint8_t *FHardwareTexture::MapBuffer()
 {
 	glBindBuffer(GL_PIXEL_UNPACK_BUFFER, glBufferID);
-	return (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_READ_WRITE);
+	return (uint8_t*)glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
 }
 
 //===========================================================================
@@ -255,6 +255,7 @@ void FHardwareTexture::Clean(bool all)
 	}
 	glTex_Translated.Clear();
 	if (glDepthID != 0) glDeleteRenderbuffers(1, &glDepthID);
+	glDepthID = 0;
 }
 
 //===========================================================================
@@ -432,12 +433,6 @@ bool FHardwareTexture::BindOrCreate(FTexture *tex, int texunit, int clampmode, i
 	}
 
 	bool needmipmap = (clampmode <= CLAMP_XY);
-
-	// Texture has become invalid
-	if (!tex->bHasCanvas && !tex->bWarped && tex->CheckModified(DefaultRenderStyle()))
-	{
-		Clean(true);
-	}
 
 	// Bind it to the system.
 	if (!Bind(texunit, translation, needmipmap))

@@ -215,13 +215,32 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			if (pp_lump == -1) I_Error("Unable to load '%s'", proc_prog_lump);
 			FMemLump pp_data = Wads.ReadLump(pp_lump);
 
-			if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
+			if (pp_data.GetString().IndexOf("ProcessMaterial") < 0)
 			{
 				// this looks like an old custom hardware shader.
-				// We need to replace the ProcessTexel call to make it work.
 
-				fp_comb.Substitute("vec4 frag = ProcessTexel();", "vec4 frag = Process(vec4(1.0));");
+				// add ProcessMaterial function that calls the older ProcessTexel function
+				int pl_lump = Wads.CheckNumForFullName("shaders/glsl/func_defaultmat.fp");
+				if (pl_lump == -1) I_Error("Unable to load '%s'", "shaders/glsl/func_defaultmat.fp");
+				FMemLump pl_data = Wads.ReadLump(pl_lump);
+				fp_comb << "\n" << pl_data.GetString().GetChars();
+
+				if (pp_data.GetString().IndexOf("ProcessTexel") < 0)
+				{
+					// this looks like an even older custom hardware shader.
+					// We need to replace the ProcessTexel call to make it work.
+
+					fp_comb.Substitute("material.Base = ProcessTexel();", "material.Base = Process(vec4(1.0));");
+				}
+
+				if (pp_data.GetString().IndexOf("ProcessLight") >= 0)
+				{
+					// The ProcessLight signatured changed. Forward to the old one.
+					fp_comb << "\nvec4 ProcessLight(vec4 color);\n";
+					fp_comb << "\nvec4 ProcessLight(Material material, vec4 color) { return ProcessLight(color); }\n";
+				}
 			}
+
 			fp_comb << RemoveLegacyUserUniforms(pp_data.GetString()).GetChars();
 			fp_comb.Substitute("gl_TexCoord[0]", "vTexCoord");	// fix old custom shaders.
 
@@ -469,11 +488,11 @@ static const FDefaultShader defaultshaders[]=
 	{"Default",	"shaders/glsl/func_normal.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Warp 1",	"shaders/glsl/func_warp1.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Warp 2",	"shaders/glsl/func_warp2.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Brightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_normal.fp", ""},
-	{"Specular", "shaders/glsl/func_normal.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
-	{"SpecularBrightmap", "shaders/glsl/func_brightmap.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
-	{"PBR","shaders/glsl/func_normal.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
-	{"PBRBrightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"Brightmap","shaders/glsl/func_brightmap.fp", "shaders/glsl/material_normal.fp", "#define BRIGHTMAP\n"},
+	{"Specular", "shaders/glsl/func_spec.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n"},
+	{"SpecularBrightmap", "shaders/glsl/func_spec.fp", "shaders/glsl/material_specular.fp", "#define SPECULAR\n#define NORMALMAP\n#define BRIGHTMAP\n"},
+	{"PBR","shaders/glsl/func_pbr.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n"},
+	{"PBRBrightmap","shaders/glsl/func_pbr.fp", "shaders/glsl/material_pbr.fp", "#define PBR\n#define NORMALMAP\n#define BRIGHTMAP\n"},
 	{"Paletted",	"shaders/glsl/func_paletted.fp", "shaders/glsl/material_nolight.fp", ""},
 	{"No Texture", "shaders/glsl/func_notexture.fp", "shaders/glsl/material_normal.fp", ""},
 	{"Basic Fuzz", "shaders/glsl/fuzz_standard.fp", "shaders/glsl/material_normal.fp", ""},
@@ -487,9 +506,7 @@ static const FDefaultShader defaultshaders[]=
 	{nullptr,nullptr,nullptr,nullptr}
 };
 
-TArray<FString> usershaders;
-TArray<FString> usermaterials;
-TArray<FString> usershaderdefs;
+TArray<UserShaderDesc> usershaders;
 
 struct FEffectShader
 {
@@ -608,10 +625,9 @@ void FShaderCollection::CompileShaders(EPassType passType)
 
 	for(unsigned i = 0; i < usershaders.Size(); i++)
 	{
-		FString name = ExtractFileBase(usershaders[i]);
-		FName sfn = name;
-
-		FShader *shc = Compile(sfn, usershaders[i], usermaterials[i], usershaderdefs[i], true, passType);
+		FString name = ExtractFileBase(usershaders[i].shader);
+		FString defines = defaultshaders[usershaders[i].shaderType].Defines + usershaders[i].defines;
+		FShader *shc = Compile(name, usershaders[i].shader, defaultshaders[usershaders[i].shaderType].lightfunc, defines, true, passType);
 		mMaterialShaders.Push(shc);
 	}
 

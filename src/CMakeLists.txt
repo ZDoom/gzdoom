@@ -1037,7 +1037,6 @@ set (PCH_SOURCES
 	v_font.cpp
 	v_framebuffer.cpp
 	v_palette.cpp
-	v_paltest.cpp
 	v_pfx.cpp
 	v_text.cpp
 	v_video.cpp
@@ -1137,7 +1136,6 @@ set (PCH_SOURCES
 	textures/formats/pngtexture.cpp
 	textures/formats/rawpagetexture.cpp
 	textures/formats/emptytexture.cpp
-	textures/formats/backdroptexture.cpp
 	textures/formats/shadertexture.cpp
 	textures/formats/tgatexture.cpp
 	textures/formats/worldtexture.cpp

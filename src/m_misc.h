@@ -62,4 +62,9 @@ FString M_GetScreenshotsPath();
 FString M_GetSavegamesPath();
 FString M_GetDocumentsPath();
 
+#ifdef __APPLE__
+FString M_GetMacAppSupportPath(const bool create = true);
+void M_GetMacSearchDirectories(FString& user_docs, FString& user_app_support, FString& local_app_support);
+#endif // __APPLE__
+
 #endif

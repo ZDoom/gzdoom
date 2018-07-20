@@ -223,3 +223,27 @@ void GroupMemoryBarrierCommand::Execute(DrawerThread *thread)
 	condition.notify_all();
 	condition.wait(lock, [&]() { return count >= (size_t)thread->num_cores; });
 }
+
+/////////////////////////////////////////////////////////////////////////////
+
+MemcpyCommand::MemcpyCommand(void *dest, const void *src, int width, int height, int srcpitch, int pixelsize)
+	: dest(dest), src(src), width(width), height(height), srcpitch(srcpitch), pixelsize(pixelsize)
+{
+}
+
+void MemcpyCommand::Execute(DrawerThread *thread)
+{
+	int start = thread->skipped_by_thread(0);
+	int count = thread->count_for_thread(0, height);
+	int sstep = thread->num_cores * srcpitch * pixelsize;
+	int dstep = thread->num_cores * width * pixelsize;
+	int size = width * pixelsize;
+	uint8_t *d = (uint8_t*)dest + start * width * pixelsize;
+	const uint8_t *s = (const uint8_t*)src + start * srcpitch * pixelsize;
+	for (int i = 0; i < count; i++)
+	{
+		memcpy(d, s, size);
+		d += dstep;
+		s += sstep;
+	}
+}

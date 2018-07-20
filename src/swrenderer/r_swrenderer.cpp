@@ -157,13 +157,13 @@ void FSoftwareRenderer::Precache(uint8_t *texhitlist, TMap<PClassActor*, bool> &
 	}
 }
 
-void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target)
+void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target, void *videobuffer)
 {
 	if (V_IsPolyRenderer())
 	{
 		PolyRenderer::Instance()->Viewpoint = r_viewpoint;
 		PolyRenderer::Instance()->Viewwindow = r_viewwindow;
-		PolyRenderer::Instance()->RenderView(player, target);
+		PolyRenderer::Instance()->RenderView(player, target, videobuffer);
 		r_viewpoint = PolyRenderer::Instance()->Viewpoint;
 		r_viewwindow = PolyRenderer::Instance()->Viewwindow;
 	}
@@ -171,7 +171,7 @@ void FSoftwareRenderer::RenderView(player_t *player, DCanvas *target)
 	{
 		mScene.MainThread()->Viewport->viewpoint = r_viewpoint;
 		mScene.MainThread()->Viewport->viewwindow = r_viewwindow;
-		mScene.RenderView(player, target);
+		mScene.RenderView(player, target, videobuffer);
 		r_viewpoint = mScene.MainThread()->Viewport->viewpoint;
 		r_viewwindow = mScene.MainThread()->Viewport->viewwindow;
 	}

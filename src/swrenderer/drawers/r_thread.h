@@ -109,6 +109,22 @@ private:
 	size_t count = 0;
 };
 
+// Copy finished rows to video memory
+class MemcpyCommand : public DrawerCommand
+{
+public:
+	MemcpyCommand(void *dest, const void *src, int width, int height, int srcpitch, int pixelsize);
+	void Execute(DrawerThread *thread);
+
+private:
+	void *dest;
+	const void *src;
+	int width;
+	int height;
+	int srcpitch;
+	int pixelsize;
+};
+
 class DrawerCommandQueue;
 typedef std::shared_ptr<DrawerCommandQueue> DrawerCommandQueuePtr;
 

@@ -169,6 +169,7 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs, const vo
 	args.uniforms = &drawargs;
 	args.destBgra = dest_bgra;
 	args.stencilbuffer = PolyStencilBuffer::Instance()->Values();
+	args.stencilpitch = PolyStencilBuffer::Instance()->Width();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
 	args.depthOffset = weaponScene ? 1.0f : 0.0f;
 
@@ -222,6 +223,7 @@ void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void 
 	args.uniforms = &drawargs;
 	args.destBgra = dest_bgra;
 	args.stencilbuffer = PolyStencilBuffer::Instance()->Values();
+	args.stencilpitch = PolyStencilBuffer::Instance()->Width();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
 	args.depthOffset = weaponScene ? 1.0f : 0.0f;
 

@@ -556,6 +556,8 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 	}
 	glDisable(GL_SCISSOR_TEST);
 
+	gl_RenderState.BlendEquation(GL_FUNC_ADD);
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	gl_RenderState.SetVertexBuffer(mVBO);
 	gl_RenderState.EnableTexture(true);
 	gl_RenderState.EnableBrightmap(true);

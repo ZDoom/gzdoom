@@ -162,6 +162,7 @@ void gl_LoadExtensions()
 	gl.glslversion = strtod((char*)glGetString(GL_SHADING_LANGUAGE_VERSION), NULL) + 0.01f;
 
 	gl.vendorstring = (char*)glGetString(GL_VENDOR);
+	gl.modelstring = (char*)glGetString(GL_RENDERER);
 
 	// first test for optional features
 	if (CheckExtension("GL_ARB_texture_compression")) gl.flags |= RFL_TEXTURE_COMPRESSION;

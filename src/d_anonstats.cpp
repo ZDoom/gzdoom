@@ -34,6 +34,7 @@ extern int sys_ostype;
 #include "x86.h"
 #include "version.h"
 #include "v_video.h"
+#include "gl_load/gl_interface.h"
 
 CVAR(Int, sys_statsenabled, -1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(String, sys_statshost, "gzstats.drdteam.org", CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
@@ -42,11 +43,30 @@ CVAR(Int, sys_statsport, 80, CVAR_ARCHIVE|CVAR_GLOBALCONFIG|CVAR_NOSET)
 // Each machine will only send two  reports, one when started with hardware rendering and one when started with software rendering.
 #define CHECKVERSION 350
 #define CHECKVERSIONSTR "350"
-CVAR(Int, sentstats_swr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 CVAR(Int, sentstats_hwr_done, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOSET)
 
 std::pair<double, bool> gl_getInfo();
 
+
+
+FString URLencode(const char *s)
+{
+	const char * unreserved = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~";
+
+	FString out;
+	for (size_t i = 0; s[i]; i++)
+	{
+		if (strchr(unreserved, s[i]))
+		{
+			out += s[i];
+		}
+		else
+		{
+			out.AppendFormat("%%%02X", s[i]&255);
+		}
+	}
+	return out;
+}
 
 #ifdef _WIN32
 
@@ -255,6 +275,12 @@ static int GetRenderInfo()
 	return 5;
 }
 
+static int GetGLVersion()
+{
+	auto info = gl_getInfo();
+	return int(info.first * 10);
+}
+
 static void D_DoHTTPRequest(const char *request)
 {
 	if (I_HTTPRequest(request))
@@ -278,8 +304,8 @@ void D_DoAnonStats()
 	if (sentstats_hwr_done >= CHECKVERSION) return;
 
 	static char requeststring[1024];
-	mysnprintf(requeststring, sizeof requeststring, "GET /stats_35.py?render=%i&cores=%i&os=%i&renderconfig=%i HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
-		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), V_IsHardwareRenderer(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
+	mysnprintf(requeststring, sizeof requeststring, "GET /stats_35.py?render=%i&cores=%i&os=%i&glversion=%i&vendor=%s&model=%s HTTP/1.1\nHost: %s\nConnection: close\nUser-Agent: %s %s\n\n",
+		GetRenderInfo(), GetCoreInfo(), GetOSVersion(), GetGLVersion(), URLencode(gl.vendorstring).GetChars(), URLencode(gl.modelstring).GetChars(), sys_statshost.GetHumanString(), GAMENAME, VERSIONSTR);
 	DPrintf(DMSG_NOTIFY, "Sending %s", requeststring);
 	std::thread t1(D_DoHTTPRequest, requeststring);
 	t1.detach();
@@ -300,11 +326,11 @@ void D_ConfirmSendStats()
 		"The three items we would like to know about are:\n" \
 		"- Operating system\n" \
 		"- Number of processor cores\n" \
-		"- Currently used renderer\n\n" \
-		"All information sent will be anonymous. We will NOT be sending this information to any third party.\n" \
+		"- OpenGL version and your graphics card's name\n\n" \
+		"All information sent will be anonymously. We will NOT be sending this information to any third party.\n" \
 		"It will merely be used for decision-making about GZDoom's future development.\n" \
-		"Data will only be sent at most twice per system, once for the software renderer and once for the hardware renderer.\n" \
-		"If you are getting this notice more than once per renderer, please let us know on the forums. Thanks!\n\n" \
+		"Data will only be sent once per system.\n" \
+		"If you are getting this notice more than once, please let us know on the forums. Thanks!\n\n" \
 		"May we send this data? If you click 'no', nothing will be sent and you will not be asked again.";
 
 	static const char *const TITLE_TEXT = "GZDoom needs your help!";

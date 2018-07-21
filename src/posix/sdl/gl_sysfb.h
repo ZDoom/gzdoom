@@ -26,8 +26,10 @@ public:
 	int GetClientWidth() override;
 	int GetClientHeight() override;
 	void ToggleFullscreen(bool yes) override;
+	void SetWindowSize(int client_w, int client_h);
 
 	SDL_Window *GetSDLWindow() { return Screen; }
+	void GetWindowBordersSize(int &top, int &left);
 
 protected:
 	void SetGammaTable(uint16_t *tbl);
@@ -45,6 +47,14 @@ protected:
 
 	Uint16 m_origGamma[3][256];
 	bool m_supportsGamma;
+
+	static const int MIN_WIDTH = 320;
+	static const int MIN_HEIGHT = 200;
+
+	typedef DECLSPEC int SDLCALL (*SDL_GetWindowBordersSizePtr)(SDL_Window *, int *, int *, int *, int *);
+
+	SDL_GetWindowBordersSizePtr SDL_GetWindowBordersSize_;
+	void *sdl_lib;
 };
 
 #endif // __POSIX_SDL_GL_SYSFB_H__

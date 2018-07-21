@@ -857,6 +857,20 @@ void ScaleWithAspect (int &w, int &h, int Width, int Height)
 		h = static_cast<int>(y);
 }
 
+CCMD(vid_setsize)
+{
+	if (argv.argc() < 2)
+	{
+		Printf("Usage: vid_setsize width height\n");
+	}
+	else
+	{
+		screen->SetWindowSize((int)strtol(argv[1], nullptr, 0), (int)strtol(argv[2], nullptr, 0));
+		V_OutputResized(screen->GetClientWidth(), screen->GetClientHeight());
+	}
+}
+
+
 void IVideo::DumpAdapters ()
 {
 	Printf("Multi-monitor support unavailable.\n");

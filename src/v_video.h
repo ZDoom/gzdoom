@@ -423,6 +423,7 @@ public:
 	virtual void UnbindTexUnit(int no) {}
 	virtual void TextureFilterChanged() {}
 	virtual void BeginFrame() {}
+	virtual void SetWindowSize(int w, int h) {}
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;

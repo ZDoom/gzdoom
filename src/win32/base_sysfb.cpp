@@ -52,6 +52,7 @@
 #include "doomerrors.h"
 #include "base_sysfb.h"
 #include "win32basevideo.h"
+#include "c_dispatch.h"
 
 
 extern HWND			Window;
@@ -69,6 +70,7 @@ CVAR(Bool, win_maximized, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 EXTERN_CVAR(Int, vid_defwidth)
 EXTERN_CVAR(Int, vid_defheight)
+EXTERN_CVAR(Bool, fullscreen)
 
 
 //==========================================================================
@@ -226,6 +228,64 @@ void SystemBaseFrameBuffer::RestoreWindowedPos()
 //
 //==========================================================================
 
+void SystemBaseFrameBuffer::SetWindowSize(int w, int h)
+{
+	if (w < 0 || h < 0)
+	{
+		RestoreWindowedPos();
+	}
+	else
+	{
+		LONG style = WS_VISIBLE | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW;
+		LONG exStyle = WS_EX_WINDOWEDGE;
+		SetWindowLong(Window, GWL_STYLE, style);
+		SetWindowLong(Window, GWL_EXSTYLE, exStyle);
+
+		int winx, winy, winw, winh, scrwidth, scrheight;
+
+		RECT r = { 0, 0, w, h };
+		AdjustWindowRectEx(&r, style, false, exStyle);
+		w = int(r.right - r.left);
+		h = int(r.bottom - r.top);
+
+		GetCenteredPos(w, h, winx, winy, winw, winh, scrwidth, scrheight);
+
+		// Just move to (0,0) if we were run with the -0 option.
+		if (Args->CheckParm("-0"))
+		{
+			winx = winy = 0;
+		}
+		else
+		{
+			KeepWindowOnScreen(winx, winy, winw, winh, scrwidth, scrheight);
+		}
+
+		if (!fullscreen)
+		{
+			ShowWindow(Window, SW_SHOWNORMAL);
+			SetWindowPos(Window, nullptr, winx, winy, winw, winh, SWP_NOZORDER | SWP_FRAMECHANGED);
+			win_maximized = false;
+			SetSize(GetClientWidth(), GetClientHeight());
+			SaveWindowedPos();
+		}
+		else
+		{
+			win_x = winx;
+			win_y = winy;
+			win_w = winw;
+			win_h = winh;
+			win_maximized = false;
+			fullscreen = false;
+		}
+	}
+}
+
+//==========================================================================
+//
+// 
+//
+//==========================================================================
+
 void SystemBaseFrameBuffer::PositionWindow(bool fullscreen)
 {
 	RECT r;
@@ -233,7 +293,7 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen)
 
 	RECT monRect;
 
-	if (!m_Fullscreen) SaveWindowedPos();
+	if (!m_Fullscreen && fullscreen) SaveWindowedPos();
 	if (m_Monitor)
 	{
 		MONITORINFOEX mi;
@@ -264,7 +324,6 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen)
 	SetWindowLong(Window, GWL_STYLE, style);
 	SetWindowLong(Window, GWL_EXSTYLE, exStyle);
 
-	m_Fullscreen = fullscreen;
 	if (fullscreen)
 	{
 		SetWindowPos(Window, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
@@ -275,7 +334,14 @@ void SystemBaseFrameBuffer::PositionWindow(bool fullscreen)
 	else
 	{
 		RestoreWindowedPos();
+		// This doesn't restore the window size properly so we must force a set size the next tic.
+		if (m_Fullscreen)
+		{
+			::fullscreen = false;
+		}
+
 	}
+	m_Fullscreen = fullscreen;
 	SetSize(GetClientWidth(), GetClientHeight());
 }
 
@@ -306,7 +372,7 @@ SystemBaseFrameBuffer::SystemBaseFrameBuffer(void *hMonitor, bool fullscreen) : 
 SystemBaseFrameBuffer::~SystemBaseFrameBuffer()
 {
 	ResetGammaTable();
-	SaveWindowedPos();
+	if (!m_Fullscreen) SaveWindowedPos();
 
 	ShowWindow (Window, SW_SHOW);
 	SetWindowLong(Window, GWL_STYLE, WS_VISIBLE | WS_CLIPSIBLINGS | WS_OVERLAPPEDWINDOW);

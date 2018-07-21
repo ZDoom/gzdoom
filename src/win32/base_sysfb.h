@@ -21,6 +21,7 @@ public:
 
 	bool IsFullscreen() override;
 	void ToggleFullscreen(bool yes) override;
+	void SetWindowSize(int client_w, int client_h);
 
 protected:
 
@@ -35,7 +36,7 @@ protected:
 	float m_Gamma, m_Brightness, m_Contrast;
 	uint16_t m_origGamma[768];
 	bool m_supportsGamma;
-	bool m_Fullscreen;
+	bool m_Fullscreen = false;
 	char m_displayDeviceNameBuffer[32/*CCHDEVICENAME*/];	// do not use windows.h constants here!
 	char *m_displayDeviceName;
 	void *m_Monitor;

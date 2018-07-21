@@ -878,6 +878,7 @@ set (PCH_SOURCES
 	d_net.cpp
 	d_netsingle.cpp
 	d_netserver.cpp
+	d_netsync.cpp
 	d_netclient.cpp
 	d_netinfo.cpp
 	d_protocol.cpp

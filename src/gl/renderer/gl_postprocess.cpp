@@ -224,7 +224,7 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		mPresentShader->Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.f);
 		mPresentShader->Uniforms->GrayFormula = static_cast<int>(gl_satformula);
 	}
-	mPresentShader->Uniforms->Scale = screen->SceneScale();
+	mPresentShader->Uniforms->Scale = { screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight() };
 	mPresentShader->Uniforms.Set();
 	RenderScreenQuad();
 }

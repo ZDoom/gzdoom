@@ -248,10 +248,12 @@ void NetServer::OnConnectRequest(NetNode &node, const NetPacket &packet)
 
 		NetPacket response;
 		response.node = packet.node;
-		response[0] = (uint8_t)NetPacketType::ConnectResponse;
-		response[1] = 1; // Protocol version
-		response[2] = node.Player;
-		response.size = 3;
+
+		NetCommand cmd ( NetPacketType::ConnectResponse );
+		cmd.addByte ( 1 ); // Protocol version
+		cmd.addByte ( node.Player );
+		cmd.writeCommandToPacket ( response );
+
 		mComm->PacketSend(response);
 
 		node.Status = NodeStatus::InGame;

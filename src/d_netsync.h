@@ -119,6 +119,7 @@ public:
 	void addVariable ( const int value );
 	void addShortByte ( int value, int bits );
 	void writeCommandToStream ( BYTESTREAM_s &ByteStream ) const;
+	void writeCommandToPacket ( NetPacket &response ) const;
 	bool isUnreliable() const;
 	void setUnreliable ( bool a );
 	int calcSize() const;

@@ -462,6 +462,15 @@ void NetCommand::writeCommandToStream ( BYTESTREAM_s &ByteStream ) const
 }
 
 //*****************************************************************************
+//
+void NetCommand::writeCommandToPacket ( NetPacket &response ) const
+{
+	const int size = _buffer.CalcSize();
+	memcpy( response.data + response.size, _buffer.pbData, _buffer.CalcSize() );
+	response.size += _buffer.CalcSize();
+}
+
+//*****************************************************************************
 // [TP]
 //
 bool NetCommand::isUnreliable() const

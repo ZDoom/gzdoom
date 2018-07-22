@@ -25,6 +25,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "v_video.h"
+#include "templates.h"
 
 #define NUMSCALEMODES 6
 
@@ -101,18 +102,13 @@ bool ViewportLinearScale()
 	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
 }
 
-inline int min(int a, int b)
-{
-	return (a > b) ? a : b;
-}
-
 int ViewportScaledWidth(int width, int height)
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
-	return min(320, vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor)));
+	return (int)MAX((int32_t)320, (int32_t)vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -121,7 +117,7 @@ int ViewportScaledHeight(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
-	return min(200, vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor)));
+	return (int)MAX((int32_t)200, (int32_t)vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor)));
 }
 
 bool ViewportIsScaled43()

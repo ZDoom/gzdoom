@@ -36,6 +36,23 @@ struct NetSyncData {
 	void FreeNetID ();
 };
 
+//*****************************************************************************
+struct BYTESTREAM_s
+{
+	BYTESTREAM_s();
+	void EnsureBitSpace( int bits, bool writing );
+
+	// Pointer to our stream of data.
+	uint8_t		*pbStream;
+
+	// Pointer to the end of the stream. When pbStream > pbStreamEnd, the
+	// entire stream has been read.
+	uint8_t		*pbStreamEnd;
+
+	uint8_t		*bitBuffer;
+	int			bitShift;
+};
+
 //==========================================================================
 //
 // IDList

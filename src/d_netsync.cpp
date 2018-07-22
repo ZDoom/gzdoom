@@ -24,7 +24,57 @@
 
 extern bool netserver, netclient;
 
+//*****************************************************************************
+//	VARIABLES
+
+// [BB] Are we measuring outbound traffic?
+static	bool	g_MeasuringOutboundTraffic = false;
+// [BB] Number of bytes sent by NETWORK_Write* since NETWORK_StartTrafficMeasurement() was called.
+static	int		g_OutboundBytesMeasured = 0;
+
 IDList<AActor> g_NetIDList;
+
+//*****************************************************************************
+//
+void NETWORK_AdvanceByteStreamPointer( BYTESTREAM_s *pByteStream, const int NumBytes, const bool OutboundTraffic )
+{
+	pByteStream->pbStream += NumBytes;
+
+	// [BB]
+	if ( g_MeasuringOutboundTraffic && OutboundTraffic )
+		g_OutboundBytesMeasured += NumBytes;
+}
+
+//*****************************************************************************
+//
+int NETWORK_ReadByte( BYTESTREAM_s *pByteStream )
+{
+	int	Byte = -1;
+
+	if (( pByteStream->pbStream + 1 ) <= pByteStream->pbStreamEnd )
+		Byte = *pByteStream->pbStream;
+
+	// Advance the pointer.
+	pByteStream->pbStream += 1;
+
+	return ( Byte );
+}
+
+//*****************************************************************************
+//
+void NETWORK_WriteByte( BYTESTREAM_s *pByteStream, int Byte )
+{
+	if (( pByteStream->pbStream + 1 ) > pByteStream->pbStreamEnd )
+	{
+		Printf( "NETWORK_WriteByte: Overflow!\n" );
+		return;
+	}
+
+	*pByteStream->pbStream = Byte;
+
+	// Advance the pointer.
+	NETWORK_AdvanceByteStreamPointer ( pByteStream, 1, true );
+}
 
 //*****************************************************************************
 //
@@ -44,6 +94,44 @@ void NetSyncData::AssignNetID ( AActor *pActor )
 void NetSyncData::FreeNetID ( )
 {
 	g_NetIDList.freeID ( NetID );
+}
+
+//*****************************************************************************
+//
+BYTESTREAM_s::BYTESTREAM_s() :
+	bitBuffer( NULL ),
+	bitShift( -1 ) {}
+
+//*****************************************************************************
+//
+void BYTESTREAM_s::EnsureBitSpace( int bits, bool writing )
+{
+	if ( ( bitBuffer == NULL ) || ( bitShift < 0 ) || ( bitShift + bits > 8 ) )
+	{
+		if ( writing )
+		{
+			// Not enough bits left in our current byte, we need a new one.
+			NETWORK_WriteByte( this, 0 );
+			bitBuffer = pbStream - 1;
+		}
+		else
+		{
+			// No room for the value in this byte, so we need a new one.
+			if ( NETWORK_ReadByte( this ) != -1 )
+			{
+				bitBuffer = pbStream - 1;
+			}
+			else
+			{
+				// Argh! No bytes left!
+				Printf("BYTESTREAM_s::EnsureBitSpace: out of bytes to use\n");
+				static uint8_t fallback = 0;
+				bitBuffer = &fallback;
+			}
+		}
+
+		bitShift = 0;
+	}
 }
 
 //*****************************************************************************

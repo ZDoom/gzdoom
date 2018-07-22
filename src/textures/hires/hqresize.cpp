@@ -43,6 +43,7 @@
 #include "xbr/xbrz.h"
 #include "xbr/xbrz_old.h"
 #include "parallel_for.h"
+#include "hwrenderer/textures/hw_material.h"
 
 CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
@@ -56,18 +57,18 @@ CUSTOM_CVAR(Int, gl_texture_hqresize, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR
 		if (self == 8) self = 10;
 		if (self == 9) self = 6;
 	#endif
-	screen->FlushTextures();
+	FMaterial::FlushAll();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_maxinputsize, 512, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
 	if (self > 1024) self = 1024;
-	screen->FlushTextures();
+	FMaterial::FlushAll();
 }
 
 CUSTOM_CVAR(Int, gl_texture_hqresize_targets, 7, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 {
-	screen->FlushTextures();
+	FMaterial::FlushAll();
 }
 
 CVAR (Flag, gl_texture_hqresize_textures, gl_texture_hqresize_targets, 1);
@@ -235,7 +236,7 @@ static unsigned char *hqNxAsmHelper( void (*hqNxFunction) ( int*, unsigned char*
 }
 #endif
 
-static unsigned char *hqNxHelper( void (*hqNxFunction) ( unsigned*, unsigned*, int, int ),
+static unsigned char *hqNxHelper( void (HQX_CALLCONV *hqNxFunction) ( unsigned*, unsigned*, int, int ),
 							  const int N,
 							  unsigned char *inputBuffer,
 							  const int inWidth,

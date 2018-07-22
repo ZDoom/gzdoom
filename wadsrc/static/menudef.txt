@@ -724,6 +724,7 @@ OptionMenu "SWROptions" protected
 	Option "$DSPLYMNU_LINEARSKY",				"r_linearsky", "OnOff"
 	Option "$DSPLYMNU_GZDFULLBRIGHT",			"r_fullbrightignoresectorcolor", "OnOff"
 	Option "$DSPLYMNU_SCALEFUZZ",				"r_fuzzscale", "OnOff"
+	Option "$DSPLYMNU_MODELS",					"r_models", "OnOff"
 }
 
 OptionMenu "VideoOptions" protected
@@ -1822,18 +1823,36 @@ OptionMenu ModReplayerOptions protected
 	5, "$ADLVLMODEL_WIN9X"
  }
 
+ OptionValue ADLOplCores
+ {
+	0, "$OPTVAL_NUKEDOPL3"
+	1, "$OPTVAL_NUKEDOPL3174"
+	2, "$OPTVAL_DOSBOXOPL3"
+ }
+
+ OptionValue OpnCores
+ {
+	0, "$OPTVAL_MAMEOPN2"
+	1, "$OPTVAL_NUKEDOPN2"
+	2, "$OPTVAL_GENSOPN2"
+ }
+
  OptionMenu ADLOptions protected
  {
- 	Title "$ADVSNDMNU_ADLMIDI"
- 	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
- 	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
- 	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
+	Title "$ADVSNDMNU_ADLMIDI"
+	LabeledSubmenu "$ADVSNDMNU_OPLBANK", "adl_bank", "ADLBankMenu"
+	Option "$ADVSNDMNU_OPLCORES",		 "adl_emulator_id", "ADLOplCores"
+	Option "$ADVSNDMNU_RUNPCMRATE",		 "adl_run_at_pcm_rate", "OnOff"
+	Slider "$ADVSNDMNU_ADLNUMCHIPS", 	 "adl_chips_count", 1, 32, 1, 0
+	Option "$ADVSNDMNU_VLMODEL",		 "adl_volume_model", "AdlVolumeModels"
  }
 
  OptionMenu OPNOptions protected
  {
- 	Title "$ADVSNDMNU_OPNMIDI"
- 	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
+	Title "$ADVSNDMNU_OPNMIDI"
+	Option "$ADVSNDMNU_OPNCORES",		 "opn_emulator_id", "OpnCores"
+	Option "$ADVSNDMNU_RUNPCMRATE",		 "opn_run_at_pcm_rate", "OnOff"
+	Slider "$ADVSNDMNU_OPNNUMCHIPS", 	 "opn_chips_count", 1, 32, 1, 0
  }
 
 /*=======================================
@@ -1884,6 +1903,7 @@ OptionValue ScaleModes
 	2, "320x200"
 	3, "640x400"
 	4, "1280x800"
+	5, "$OPTVAL_CUSTOM"
 }
 OptionValue CropAspect
 {
@@ -1903,31 +1923,10 @@ OptionMenu VideoModeMenu protected
 		Option "$VIDMNU_HIDPI",			"vid_hidpi", "YesNo"
 	}
 
-	IfOption(Windows)
-	{
-		Option "$VIDMNU_BRDLSS",		"win_borderless", "YesNo"
-	}
-
-	Option "$VIDMNU_ASPECTRATIO",		"menu_screenratios", "Ratios"
 	Option "$VIDMNU_FORCEASPECT",		"vid_aspect", "ForceRatios"
 	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
-	StaticText " "
-	ScreenResolution "res_0"
-	ScreenResolution "res_1"
-	ScreenResolution "res_2"
-	ScreenResolution "res_3"
-	ScreenResolution "res_4"
-	ScreenResolution "res_5"
-	ScreenResolution "res_6"
-	ScreenResolution "res_7"
-	ScreenResolution "res_8"
-	ScreenResolution "res_9"
-	StaticTextSwitchable "$VIDMNU_ENTERTEXT", "", "VMEnterText"
-	StaticText " "
-	StaticTextSwitchable "$VIDMNU_TESTTEXT1", "$VIDMNU_TESTTEXT2", "VMTestText"
-	class VideoModeMenu
 }
 
 /*=======================================

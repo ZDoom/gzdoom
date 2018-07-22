@@ -1,14 +1,14 @@
 #ifndef __GL_DRAWINFO_H
 #define __GL_DRAWINFO_H
 
+#include "gl/renderer/gl_lightdata.h"
 #include "hwrenderer/scene/hw_drawlist.h"
 #include "hwrenderer/scene/hw_weapon.h"
+#include "hwrenderer/scene/hw_viewpointuniforms.h"
 
 #ifdef _MSC_VER
 #pragma warning(disable:4244)
 #endif
-
-class GLSceneDrawer;
 
 enum DrawListType
 {
@@ -25,56 +25,22 @@ enum DrawListType
 	GLDL_TYPES,
 };
 
-// more lists for handling of dynamic lights
-enum DLDrawListType
-{
-	// These are organized so that the various multipass rendering modes have to be set as few times as possible
-	GLLDL_WALLS_PLAIN,			// dynamic lights on normal walls
-	GLLDL_WALLS_MASKED,			// dynamic lights on masked midtextures
-	
-	GLLDL_FLATS_PLAIN,			// dynamic lights on normal flats
-	GLLDL_FLATS_MASKED,			// dynamic lights on masked flats
-	
-	GLLDL_WALLS_FOG,			// lights on fogged walls
-	GLLDL_WALLS_FOGMASKED,		// lights on fogged masked midtextures
-	
-	GLLDL_FLATS_FOG,			// lights on fogged walls
-	GLLDL_FLATS_FOGMASKED,		// lights on fogged masked midtextures
-	
-	GLLDL_TYPES,
-};
-
-
 enum Drawpasses
 {
 	GLPASS_ALL,			// Main pass with dynamic lights
 	GLPASS_LIGHTSONLY,	// only collect dynamic lights
 	GLPASS_DECALS,		// Draws a decal
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
-	
-	// these are only used with texture based dynamic lights
-	GLPASS_BASE,		// untextured base for dynamic lights
-	GLPASS_BASE_MASKED,	// same but with active texture
-	GLPASS_LIGHTTEX,	// lighttexture pass
-	GLPASS_TEXONLY,		// finishing texture pass
-	GLPASS_LIGHTTEX_ADDITIVE,	// lighttexture pass (additive)
-	GLPASS_LIGHTTEX_FOGGY,	// lighttexture pass on foggy surfaces (forces all lights to be additive)
-	
 };
 
 struct FDrawInfo : public HWDrawInfo
 {
-	GLSceneDrawer *mDrawer;
-	
-	FDrawInfo * next;
 	HWDrawList drawlists[GLDL_TYPES];
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
-	HWDrawList *dldrawlists = NULL;	// only gets allocated when needed.
 	
-	FDrawInfo();
-	~FDrawInfo();
-	
+	void ApplyVPUniforms() override;
+
 	void AddWall(GLWall *wall) override;
     void AddMirrorSurface(GLWall *w) override;
 	GLDecal *AddDecal(bool onmirror) override;
@@ -85,15 +51,6 @@ struct FDrawInfo : public HWDrawInfo
 
 	std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) override;
 	int UploadLights(FDynLightData &data) override;
-
-	// Legacy GL only. 
-	bool PutWallCompat(GLWall *wall, int passflag);
-	bool PutFlatCompat(GLFlat *flat, bool fog);
-	void RenderFogBoundaryCompat(GLWall *wall);
-	void RenderLightsCompat(GLWall *wall, int pass);
-	void DrawSubsectorLights(GLFlat *flat, subsector_t * sub, int pass);
-	void DrawLightsCompat(GLFlat *flat, int pass);
-
 
 	void DrawDecal(GLDecal *gldecal);
 	void DrawDecals();
@@ -132,11 +89,19 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawSorted(int listindex);
 
 	// These two may be moved to the API independent part of the renderer later.
-	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) override;
 	void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) override;
+    
+    void CreateScene();
+    void RenderScene(int recursion);
+    void RenderTranslucent();
+    void DrawScene(int drawmode);
+    void ProcessScene(bool toscreen = false);
+    void EndDrawScene(sector_t * viewsector);
+    void DrawEndScene2D(sector_t * viewsector);
+	bool SetDepthClamp(bool on) override;
 
-	static FDrawInfo *StartDrawInfo(GLSceneDrawer *drawer);
-	static void EndDrawInfo();
+	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
+	FDrawInfo *EndDrawInfo();
 	
 	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
 	{
@@ -149,16 +114,17 @@ struct FDrawInfo : public HWDrawInfo
 		if (sector<otherceilingplanes.Size()) return otherceilingplanes[sector];
 		else return NULL;
 	}
-};
 
-class FDrawInfoList
-{
-	TDeletingArray<FDrawInfo *> mList;
-	
-public:
-	
-	FDrawInfo *GetNew();
-	void Release(FDrawInfo *);
+	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
+	{
+		gl_SetColor(light, rellight, isFullbrightScene(), cm, alpha, weapon);
+	}
+
+	void SetFog(int lightlevel, int rellight, const FColormap *cmap, bool isadditive)
+	{
+		gl_SetFog(lightlevel, rellight, isFullbrightScene(), cmap, isadditive);
+	}
+
 };
 
 

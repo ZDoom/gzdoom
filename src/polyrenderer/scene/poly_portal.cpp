@@ -88,7 +88,7 @@ void PolyDrawSectorPortal::SaveGlobals()
 
 	viewpoint.camera = nullptr;
 	viewpoint.sector = Portal->mDestination;
-	R_SetViewAngle(viewpoint, viewwindow);
+	viewpoint.SetViewAngle(viewwindow);
 
 	Portal->mFlags |= PORTSF_INSKYBOX;
 	if (Portal->mPartner > 0) level.sectorPortals[Portal->mPartner].mFlags |= PORTSF_INSKYBOX;
@@ -114,7 +114,7 @@ void PolyDrawSectorPortal::RestoreGlobals()
 
 	//PolyRenderer::Instance()->Light.SetVisibility(savedvisibility);
 
-	R_SetViewAngle(viewpoint, viewwindow);
+	viewpoint.SetViewAngle(viewwindow);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -236,7 +236,7 @@ void PolyDrawLinePortal::SaveGlobals()
 	viewpoint.camera = nullptr;
 	viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
 
-	R_SetViewAngle(viewpoint, viewwindow);
+	viewpoint.SetViewAngle(viewwindow);
 }
 
 void PolyDrawLinePortal::RestoreGlobals()
@@ -254,5 +254,5 @@ void PolyDrawLinePortal::RestoreGlobals()
 			viewpoint.camera->renderflags &= ~RF_INVISIBLE;
 	}
 
-	R_SetViewAngle(viewpoint, viewwindow);
+	viewpoint.SetViewAngle(viewwindow);
 }

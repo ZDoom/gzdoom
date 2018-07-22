@@ -31,9 +31,51 @@
 #include "r_utility.h"
 #include "v_video.h"
 #include "g_levellocals.h"
+#include "vm.h"
 
 EXTERN_CVAR(Float, transsouls)
 
+IMPLEMENT_CLASS(DShape2D, false, false)
+
+DEFINE_ACTION_FUNCTION(DShape2D, Clear)
+{
+	PARAM_SELF_PROLOGUE(DShape2D);
+	PARAM_INT_DEF(which);
+	if ( which&C_Verts ) self->mVertices.Clear();
+	if ( which&C_Coords ) self->mCoords.Clear();
+	if ( which&C_Indices ) self->mIndices.Clear();
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DShape2D, PushVertex)
+{
+	PARAM_SELF_PROLOGUE(DShape2D);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	self->mVertices.Push(DVector2(x,y));
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DShape2D, PushCoord)
+{
+	PARAM_SELF_PROLOGUE(DShape2D);
+	PARAM_FLOAT(u);
+	PARAM_FLOAT(v);
+	self->mCoords.Push(DVector2(u,v));
+	return 0;
+}
+
+DEFINE_ACTION_FUNCTION(DShape2D, PushTriangle)
+{
+	PARAM_SELF_PROLOGUE(DShape2D);
+	PARAM_INT(a);
+	PARAM_INT(b);
+	PARAM_INT(c);
+	self->mIndices.Push(a);
+	self->mIndices.Push(b);
+	self->mIndices.Push(c);
+	return 0;
+}
 
 //==========================================================================
 //
@@ -180,8 +222,12 @@ bool F2DDrawer::SetStyle(FTexture *tex, DrawParms &parms, PalEntry &vertexcolor,
 		}
 
 		if (parms.specialcolormap != nullptr)
-		{ // Emulate an invulnerability or similar colormap.
-			quad.mSpecialColormap = parms.specialcolormap;
+		{ // draw with an invulnerability or similar colormap.
+
+			auto scm = parms.specialcolormap;
+
+			quad.mSpecialColormap[0] = PalEntry(255, int(scm->ColorizeStart[0] * 127.5f), int(scm->ColorizeStart[1] * 127.5f), int(scm->ColorizeStart[2] * 127.5f));
+			quad.mSpecialColormap[1] = PalEntry(255, int(scm->ColorizeEnd[0] * 127.5f), int(scm->ColorizeEnd[1] * 127.5f), int(scm->ColorizeEnd[2] * 127.5f));
 			quad.mColor1 = 0;	// this disables the color overlay.
 		}
 		quad.mDesaturate = parms.desaturate;
@@ -251,6 +297,7 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	dg.mType = DrawTypeTriangles;
 	dg.mVertCount = 4;
 	dg.mTexture = img;
+	if (img->bWarped) dg.mFlags |= DTF_Wrap;
 
 	dg.mTranslation = 0;
 	SetStyle(img, parms, vertexcolor, dg);
@@ -305,6 +352,61 @@ void F2DDrawer::AddTexture(FTexture *img, DrawParms &parms)
 	dg.mIndexIndex = mIndices.Size();
 	dg.mIndexCount += 6;
 	AddIndices(dg.mVertIndex, 6, 0, 1, 2, 1, 3, 2);
+	AddCommand(&dg);
+}
+
+//==========================================================================
+//
+//
+//
+//==========================================================================
+
+void F2DDrawer::AddShape( FTexture *img, DShape2D *shape, DrawParms &parms )
+{
+	if (parms.style.BlendOp == STYLEOP_None) return;	// not supposed to be drawn.
+
+	PalEntry vertexcolor;
+
+	RenderCommand dg;
+
+	dg.mType = DrawTypeTriangles;
+	dg.mVertCount = shape->mVertices.Size();
+	dg.mFlags |= DTF_Wrap;
+	dg.mTexture = img;
+
+	dg.mTranslation = 0;
+	SetStyle(img, parms, vertexcolor, dg);
+
+	if (!img->bHasCanvas && parms.remap != nullptr && !parms.remap->Inactive)
+		dg.mTranslation = parms.remap;
+
+	double minx = 16383, miny = 16383, maxx = -16384, maxy = -16384;
+	for ( int i=0; i<dg.mVertCount; i++ )
+	{
+		if ( shape->mVertices[i].X < minx ) minx = shape->mVertices[i].X;
+		if ( shape->mVertices[i].Y < miny ) miny = shape->mVertices[i].Y;
+		if ( shape->mVertices[i].X > maxx ) maxx = shape->mVertices[i].X;
+		if ( shape->mVertices[i].Y > maxy ) maxy = shape->mVertices[i].Y;
+	}
+	if (minx < (double)parms.lclip || miny < (double)parms.uclip || maxx >(double)parms.rclip || maxy >(double)parms.dclip)
+	{
+		dg.mScissor[0] = parms.lclip;
+		dg.mScissor[1] = parms.uclip;
+		dg.mScissor[2] = parms.rclip;
+		dg.mScissor[3] = parms.dclip;
+		dg.mFlags |= DTF_Scissor;
+	}
+	else
+		memset(dg.mScissor, 0, sizeof(dg.mScissor));
+
+	dg.mVertIndex = (int)mVertices.Reserve(dg.mVertCount);
+	TwoDVertex *ptr = &mVertices[dg.mVertIndex];
+	for ( int i=0; i<dg.mVertCount; i++ )
+		ptr[i].Set(shape->mVertices[i].X, shape->mVertices[i].Y, 0, shape->mCoords[i].X, shape->mCoords[i].Y, vertexcolor);
+	dg.mIndexIndex = mIndices.Size();
+	dg.mIndexCount += shape->mIndices.Size();
+	for ( int i=0; i<int(shape->mIndices.Size()); i+=3 )
+		AddIndices(dg.mVertIndex, 3, shape->mIndices[i], shape->mIndices[i+1], shape->mIndices[i+2]);
 	AddCommand(&dg);
 }
 

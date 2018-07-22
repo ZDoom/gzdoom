@@ -45,6 +45,7 @@
 #include "v_2ddrawer.h"
 
 struct sector_t;
+class IShaderProgram;
 
 enum EHWCaps
 {
@@ -54,13 +55,11 @@ enum EHWCaps
 
 	RFL_SHADER_STORAGE_BUFFER = 4,
 	RFL_BUFFER_STORAGE = 8,
-	RFL_SAMPLER_OBJECTS = 16,
 
 	RFL_NO_CLIP_PLANES = 32,
 
 	RFL_INVALIDATE_BUFFER = 64,
 	RFL_DEBUG = 128,
-	RFL_NO_SHADERS = 256
 };
 
 struct IntRect
@@ -82,9 +81,8 @@ struct IntRect
 
 extern int CleanWidth, CleanHeight, CleanXfac, CleanYfac;
 extern int CleanWidth_1, CleanHeight_1, CleanXfac_1, CleanYfac_1;
-extern int DisplayWidth, DisplayHeight, DisplayBits;
+extern int DisplayWidth, DisplayHeight;
 
-bool V_DoModeSetup (int width, int height, int bits);
 void V_UpdateModeSize (int width, int height);
 void V_OutputResized (int width, int height);
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
@@ -117,6 +115,7 @@ struct FColormap;
 class FileWriter;
 enum FTextureFormat : uint32_t;
 class FModelRenderer;
+struct SamplerUniform;
 
 // TagItem definitions for DrawTexture. As far as I know, tag lists
 // originated on the Amiga.
@@ -196,7 +195,8 @@ enum
 	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
 	DTA_SrcY,
 	DTA_SrcWidth,
-	DTA_SrcHeight
+	DTA_SrcHeight,
+	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
 
 };
 
@@ -319,6 +319,7 @@ public:
 class FUniquePalette;
 class IHardwareTexture;
 class FTexture;
+class IUniformBuffer;
 
 // A canvas that represents the actual display. The video code is responsible
 // for actually implementing this. Built on top of SimpleCanvas, because it
@@ -338,9 +339,10 @@ protected:
 	void BuildGammaTable(uint16_t *gt);
 
 	F2DDrawer m2DDrawer;
+private:
 	int Width = 0;
 	int Height = 0;
-	bool Bgra = 0;
+protected:
 	int clipleft = 0, cliptop = 0, clipwidth = -1, clipheight = -1;
 
 	PalEntry Flash;						// Only needed to support some cruft in the interface that only makes sense for the software renderer
@@ -348,6 +350,7 @@ protected:
 
 public:
 	int hwcaps = 0;
+	float glslversion = 0;			// This is here so that the differences between old OpenGL and new OpenGL/Vulkan can be handled by platform independent code.
 	int instack[2] = { 0,0 };	// this is globally maintained state for portal recursion avoidance.
 	bool enable_quadbuffered = false;
 
@@ -356,11 +359,27 @@ public:
 	IntRect mOutputLetterbox;
 
 public:
-	DFrameBuffer (int width, int height, bool bgra);
+	DFrameBuffer (int width=1, int height=1);
 	virtual ~DFrameBuffer() {}
 
+	void SetSize(int width, int height);
+	void SetVirtualSize(int width, int height)
+	{
+		Width = width;
+		Height = height;
+	}
 	inline int GetWidth() const { return Width; }
 	inline int GetHeight() const { return Height; }
+
+	FVector2 SceneScale() const
+	{
+		return { mSceneViewport.width / (float)mScreenViewport.width, mSceneViewport.height / (float)mScreenViewport.height };
+	}
+
+	FVector2 SceneOffset() const
+	{
+		return { mSceneViewport.left / (float)mScreenViewport.width, mSceneViewport.top / (float)mScreenViewport.height };
+	}
 
 	// Make the surface visible.
 	virtual void Update () = 0;
@@ -390,28 +409,29 @@ public:
 
 	// Returns true if running fullscreen.
 	virtual bool IsFullscreen () = 0;
+	virtual void ToggleFullscreen(bool yes) {}
 
 	// Changes the vsync setting, if supported by the device.
 	virtual void SetVSync (bool vsync);
-
-	// Tells the device to recreate itself with the new setting from vid_refreshrate.
-	virtual void NewRefreshRate ();
 
 	// Delete any resources that need to be deleted after restarting with a different IWAD
 	virtual void CleanForRestart() {}
 	virtual void SetTextureFilterMode() {}
 	virtual IHardwareTexture *CreateHardwareTexture(FTexture *tex) { return nullptr; }
+	virtual void PrecacheMaterial(FMaterial *mat, int translation) {}
 	virtual FModelRenderer *CreateModelRenderer(int mli) { return nullptr; }
 	virtual void UnbindTexUnit(int no) {}
-	virtual void FlushTextures() {}
 	virtual void TextureFilterChanged() {}
-	virtual void ResetFixedColormap() {}
 	virtual void BeginFrame() {}
+	virtual void SetWindowSize(int w, int h) {}
 
 	virtual int GetClientWidth() = 0;
 	virtual int GetClientHeight() = 0;
-	virtual bool RenderBuffersEnabled() { return false; };
 	virtual void BlurScene(float amount) {}
+    
+    // Interface to hardware rendering resources
+    virtual IUniformBuffer *CreateUniformBuffer(size_t size, bool staticuse = false) { return nullptr; }
+	virtual IShaderProgram *CreateShaderProgram() { return nullptr; }
 
 	// Begin 2D drawing operations.
 	// Returns true if hardware-accelerated 2D has been entered, false if not.
@@ -437,7 +457,6 @@ public:
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
 
-	virtual int GetTrueHeight() { return GetHeight(); }
 	void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 
 	uint64_t GetLastFPS() const { return LastCount; }
@@ -476,6 +495,8 @@ public:
 	bool SetTextureParms(DrawParms *parms, FTexture *img, double x, double y) const;
 	void DrawTexture(FTexture *img, double x, double y, int tags, ...);
 	void DrawTexture(FTexture *img, double x, double y, VMVa_List &);
+	void DrawShape(FTexture *img, DShape2D *shape, int tags, ...);
+	void DrawShape(FTexture *img, DShape2D *shape, VMVa_List &);
 	void FillBorder(FTexture *img);	// Fills the border around a 4:3 part of the screen on non-4:3 displays
 	void VirtualToRealCoords(double &x, double &y, double &w, double &h, double vwidth, double vheight, bool vbottom = false, bool handleaspect = true) const;
 
@@ -511,18 +532,19 @@ public:
 	// points to the last row in the buffer, which will be the first row output.
 	virtual void GetScreenshotBuffer(const uint8_t *&buffer, int &pitch, ESSType &color_type, float &gamma) {}
 
+	static float GetZNear() { return 5.f; }
+	static float GetZFar() { return 65536.f; }
+
 	// The original size of the framebuffer as selected in the video menu.
-	int VideoWidth = 0;
-	int VideoHeight = 0;
 	uint64_t FrameTime = 0;
 
 protected:
 	void DrawRateStuff ();
 
-	DFrameBuffer () {}
-
 private:
-	uint64_t LastMS, LastSec, FrameCount, LastCount, LastTic;
+
+	uint64_t LastMS = 0, LastSec = 0, FrameCount = 0, LastCount = 0, LastTic = 0;
+
 	bool isIn2D = false;
 };
 

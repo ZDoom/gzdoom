@@ -45,12 +45,13 @@
 #include "a_dynlight.h"
 #include "textures/skyboxtexture.h"
 #include "hwrenderer/postprocessing/hw_postprocessshader.h"
+#include "hwrenderer/textures/hw_material.h"
 
 void AddLightDefaults(FLightDefaults *defaults, double attnFactor);
 void AddLightAssociation(const char *actor, const char *frame, const char *light);
 void InitializeActorLights(TArray<FLightAssociation> &LightAssociations);
 
-extern TArray<FString> usershaders;
+extern TArray<UserShaderDesc> usershaders;
 extern TDeletingArray<FLightDefaults *> LightDefaults;
 
 
@@ -1168,6 +1169,11 @@ class GLDefsParser
 		bool thiswad = false;
 		bool iwad = false;
 
+		UserShaderDesc usershader;
+		TArray<FString> texNameList;
+		TArray<int> texNameIndex;
+		float speed = 1.f;
+
 		FTexture *textures[6];
 		const char *keywords[7] = { "brightmap", "normal", "specular", "metallic", "roughness", "ao", nullptr };
 		const char *notFound[6] = { "Brightmap", "Normalmap", "Specular texture", "Metallic texture", "Roughness texture", "Ambient occlusion texture" };
@@ -1216,6 +1222,62 @@ class GLDefsParser
 				sc.MustGetFloat();
 				if (tex)
 					tex->SpecularLevel = (float)sc.Float;
+			}
+			else if (sc.Compare("speed"))
+			{
+				sc.MustGetFloat();
+				speed = float(sc.Float);
+			}
+			else if (sc.Compare("shader"))
+			{
+				sc.MustGetString();
+				usershader.shader = sc.String;
+			}
+			else if (sc.Compare("texture"))
+			{
+				sc.MustGetString();
+				FString textureName = sc.String;
+				for (FString &texName : texNameList)
+				{
+					if (!texName.Compare(textureName))
+					{
+						sc.ScriptError("Trying to redefine custom hardware shader texture '%s' in texture '%s'\n", textureName.GetChars(), tex ? tex->Name.GetChars() : "(null)");
+					}
+				}
+				sc.MustGetString();
+				bool okay = false;
+				for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+				{
+					if (!tex->CustomShaderTextures[i])
+					{
+						tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+						if (!tex->CustomShaderTextures[i])
+						{
+							sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex ? tex->Name.GetChars() : "(null)");
+						}
+
+						texNameList.Push(textureName);
+						texNameIndex.Push(i);
+						okay = true;
+						break;
+					}
+				}
+				if (!okay)
+				{
+					sc.ScriptError("Error: out of texture units in texture '%s'", tex ? tex->Name.GetChars() : "(null)");
+				}
+			}
+			else if (sc.Compare("define"))
+			{
+				sc.MustGetString();
+				FString defineName = sc.String;
+				FString defineValue = "";
+				if (sc.CheckToken('='))
+				{
+					sc.MustGetString();
+					defineValue = sc.String;
+				}
+				usershader.defines.AppendFormat("#define %s %s\n", defineName.GetChars(), defineValue.GetChars());
 			}
 			else
 			{
@@ -1271,6 +1333,49 @@ class GLDefsParser
 
 		if (disable_fullbright_specified)
 			tex->bDisableFullbright = disable_fullbright;
+
+		if (usershader.shader.IsNotEmpty())
+		{
+			int firstUserTexture;
+			if (tex->Normal && tex->Specular)
+			{
+				usershader.shaderType = tex->Brightmap ? SHADER_SpecularBrightmap : SHADER_Specular;
+				firstUserTexture = tex->Brightmap ? 5 : 4;
+			}
+			else if (tex->Normal && tex->Metallic && tex->Roughness && tex->AmbientOcclusion)
+			{
+				usershader.shaderType = tex->Brightmap ? SHADER_PBRBrightmap : SHADER_PBR;
+				firstUserTexture = tex->Brightmap ? 7 : 6;
+			}
+			else
+			{
+				usershader.shaderType = tex->Brightmap ? SHADER_Brightmap : SHADER_Default;
+				firstUserTexture = tex->Brightmap ? 3 : 2;
+			}
+
+			for (unsigned int i = 0; i < texNameList.Size(); i++)
+			{
+				usershader.defines.AppendFormat("#define %s texture%d\n", texNameList[i].GetChars(), texNameIndex[i] + firstUserTexture);
+			}
+
+			if (tex->bWarped != 0)
+			{
+				Printf("Cannot combine warping with hardware shader on texture '%s'\n", tex->Name.GetChars());
+				return;
+			}
+			tex->shaderspeed = speed;
+			for (unsigned i = 0; i < usershaders.Size(); i++)
+			{
+				if (!usershaders[i].shader.CompareNoCase(usershader.shader) &&
+					usershaders[i].shaderType == usershader.shaderType &&
+					!usershaders[i].defines.Compare(usershader.defines))
+				{
+					tex->shaderindex = i + FIRST_USER_SHADER;
+					return;
+				}
+			}
+			tex->shaderindex = usershaders.Push(usershader) + FIRST_USER_SHADER;
+		}
 	}
 
 
@@ -1377,7 +1482,10 @@ class GLDefsParser
 			bool thiswad = false;
 			bool iwad = false;
 			int maplump = -1;
-			FString maplumpname;
+			UserShaderDesc desc;
+			desc.shaderType = SHADER_Default;
+			TArray<FString> texNameList;
+			TArray<int> texNameIndex;
 			float speed = 1.f;
 
 			sc.MustGetString();
@@ -1391,12 +1499,76 @@ class GLDefsParser
 				if (sc.Compare("shader"))
 				{
 					sc.MustGetString();
-					maplumpname = sc.String;
+					desc.shader = sc.String;
+				}
+				else if (sc.Compare("material"))
+				{
+					sc.MustGetString();
+					MaterialShaderIndex typeIndex[6] = { SHADER_Default, SHADER_Brightmap, SHADER_Specular, SHADER_SpecularBrightmap, SHADER_PBR, SHADER_PBRBrightmap };
+					const char *typeName[6] = { "normal", "brightmap", "specular", "specularbrightmap", "pbr", "pbrbrightmap" };
+					bool found = false;
+					for (int i = 0; i < 6; i++)
+					{
+						if (sc.Compare(typeName[i]))
+						{
+							desc.shaderType = typeIndex[i];
+							found = true;
+							break;
+						}
+					}
+					if (!found)
+						sc.ScriptError("Unknown material type '%s' specified\n", sc.String);
 				}
 				else if (sc.Compare("speed"))
 				{
 					sc.MustGetFloat();
 					speed = float(sc.Float);
+				}
+				else if (sc.Compare("texture"))
+				{
+					sc.MustGetString();
+					FString textureName = sc.String;
+					for(FString &texName : texNameList)
+					{
+						if(!texName.Compare(textureName))
+						{
+							sc.ScriptError("Trying to redefine custom hardware shader texture '%s' in texture '%s'\n", textureName.GetChars(), tex? tex->Name.GetChars() : "(null)");
+						}
+					}
+					sc.MustGetString();
+					bool okay = false;
+					for (int i = 0; i < MAX_CUSTOM_HW_SHADER_TEXTURES; i++)
+					{
+						if (!tex->CustomShaderTextures[i])
+						{
+							tex->CustomShaderTextures[i] = TexMan.FindTexture(sc.String, ETextureType::Any, FTextureManager::TEXMAN_TryAny);
+							if (!tex->CustomShaderTextures[i])
+							{
+								sc.ScriptError("Custom hardware shader texture '%s' not found in texture '%s'\n", sc.String, tex? tex->Name.GetChars() : "(null)");
+							}
+
+							texNameList.Push(textureName);
+							texNameIndex.Push(i);
+							okay = true;
+							break;
+						}
+					}
+					if(!okay)
+					{
+						sc.ScriptError("Error: out of texture units in texture '%s'", tex? tex->Name.GetChars() : "(null)");
+					}
+				}
+				else if(sc.Compare("define"))
+				{
+					sc.MustGetString();
+					FString defineName = sc.String;
+					FString defineValue = "";
+					if(sc.CheckToken('='))
+					{
+						sc.MustGetString();
+						defineValue = sc.String;
+					}
+					desc.defines.AppendFormat("#define %s %s\n", defineName.GetChars(), defineValue.GetChars());
 				}
 			}
 			if (!tex)
@@ -1404,7 +1576,24 @@ class GLDefsParser
 				return;
 			}
 
-			if (maplumpname.IsNotEmpty())
+			int firstUserTexture;
+			switch (desc.shaderType)
+			{
+			default:
+			case SHADER_Default: firstUserTexture = 2; break;
+			case SHADER_Brightmap: firstUserTexture = 3; break;
+			case SHADER_Specular: firstUserTexture = 4; break;
+			case SHADER_SpecularBrightmap: firstUserTexture = 5; break;
+			case SHADER_PBR: firstUserTexture = 6; break;
+			case SHADER_PBRBrightmap: firstUserTexture = 7; break;
+			}
+
+			for (unsigned int i = 0; i < texNameList.Size(); i++)
+			{
+				desc.defines.AppendFormat("#define %s texture%d\n", texNameList[i].GetChars(), texNameIndex[i] + firstUserTexture);
+			}
+
+			if (desc.shader.IsNotEmpty())
 			{
 				if (tex->bWarped != 0)
 				{
@@ -1414,13 +1603,15 @@ class GLDefsParser
 				tex->shaderspeed = speed;
 				for (unsigned i = 0; i < usershaders.Size(); i++)
 				{
-					if (!usershaders[i].CompareNoCase(maplumpname))
+					if (!usershaders[i].shader.CompareNoCase(desc.shader) &&
+						usershaders[i].shaderType == desc.shaderType &&
+						!usershaders[i].defines.Compare(desc.defines))
 					{
 						tex->shaderindex = i + FIRST_USER_SHADER;
 						return;
 					}
 				}
-				tex->shaderindex = usershaders.Push(maplumpname) + FIRST_USER_SHADER;
+				tex->shaderindex = usershaders.Push(desc) + FIRST_USER_SHADER;
 			}
 		}
 	}

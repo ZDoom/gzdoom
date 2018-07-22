@@ -373,10 +373,10 @@ angle_t Clipper::AngleToPseudo(angle_t ang)
 //
 //-----------------------------------------------------------------------------
 
-angle_t R_PointToPseudoAngle(double x, double y)
+angle_t Clipper::PointToPseudoAngle(double x, double y)
 {
-	double vecx = x - r_viewpoint.Pos.X;
-	double vecy = y - r_viewpoint.Pos.Y;
+	double vecx = x - viewpoint->Pos.X;
+	double vecy = y - viewpoint->Pos.Y;
 
 	if (vecx == 0 && vecy == 0)
 	{
@@ -427,14 +427,15 @@ bool Clipper::CheckBox(const float *bspcoord)
 	
 	// Find the corners of the box
 	// that define the edges from current viewpoint.
-	boxpos = (r_viewpoint.Pos.X <= bspcoord[BOXLEFT] ? 0 : r_viewpoint.Pos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
-		(r_viewpoint.Pos.Y >= bspcoord[BOXTOP ] ? 0 : r_viewpoint.Pos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
+    auto &vp = viewpoint;
+	boxpos = (vp->Pos.X <= bspcoord[BOXLEFT] ? 0 : vp->Pos.X < bspcoord[BOXRIGHT ] ? 1 : 2) +
+		(vp->Pos.Y >= bspcoord[BOXTOP ] ? 0 : vp->Pos.Y > bspcoord[BOXBOTTOM] ? 4 : 8);
 	
 	if (boxpos == 5) return true;
 	
 	check = checkcoord[boxpos];
-	angle1 = R_PointToPseudoAngle (bspcoord[check[0]], bspcoord[check[1]]);
-	angle2 = R_PointToPseudoAngle (bspcoord[check[2]], bspcoord[check[3]]);
+	angle1 = PointToPseudoAngle (bspcoord[check[0]], bspcoord[check[1]]);
+	angle2 = PointToPseudoAngle (bspcoord[check[2]], bspcoord[check[3]]);
 	
 	return SafeCheckRange(angle2, angle1);
 }

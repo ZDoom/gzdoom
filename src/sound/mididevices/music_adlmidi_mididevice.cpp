@@ -56,9 +56,41 @@ CUSTOM_CVAR(Int, adl_chips_count, 6, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 	}
 }
 
+CUSTOM_CVAR(Int, adl_emulator_id, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, adl_run_at_pcm_rate, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
 CUSTOM_CVAR(Int, adl_bank, 14, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 {
 	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(Bool, adl_use_custom_bank, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
+	{
+		MIDIDeviceChanged(-1, true);
+	}
+}
+
+CUSTOM_CVAR(String, adl_custom_bank, "", CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (adl_use_custom_bank && currSong != nullptr && currSong->GetDeviceType() == MDEV_ADL)
 	{
 		MIDIDeviceChanged(-1, true);
 	}
@@ -84,7 +116,18 @@ ADLMIDIDevice::ADLMIDIDevice(const char *args)
 	Renderer = adl_init(44100);	// todo: make it configurable
 	if (Renderer != nullptr)
 	{
-		adl_setBank(Renderer, (int)adl_bank);
+		adl_switchEmulator(Renderer, (int)adl_emulator_id);
+		adl_setRunAtPcmRate(Renderer, (int)adl_run_at_pcm_rate);
+// todo: Implement handling of external or in-resources WOPL bank files and load
+/*
+		if(adl_use_custom_bank)
+		{
+			adl_openBankFile(Renderer, (char*)adl_bank_file);
+			adl_openBankData(Renderer, (char*)adl_bank, (unsigned long)size);
+		}
+		else
+*/
+			adl_setBank(Renderer, (int)adl_bank);
 		adl_setNumChips(Renderer, (int)adl_chips_count);
 		adl_setVolumeRangeModel(Renderer, (int)adl_volume_model);
 	}
@@ -176,6 +219,13 @@ void ADLMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 {
 }
 
+static const ADLMIDI_AudioFormat audio_output_format =
+{
+	ADLMIDI_SampleType_F32,
+	sizeof(float),
+	2 * sizeof(float)
+};
+
 //==========================================================================
 //
 // ADLMIDIDevice :: ComputeOutput
@@ -184,11 +234,12 @@ void ADLMIDIDevice::HandleLongEvent(const uint8_t *data, int len)
 
 void ADLMIDIDevice::ComputeOutput(float *buffer, int len)
 {
-	if ((int)shortbuffer.Size() < len*2) shortbuffer.Resize(len*2);
-	auto result = adl_generate(Renderer, len*2, &shortbuffer[0]);
-	for(int i=0; i<result; i++)
+	ADL_UInt8* left = reinterpret_cast<ADL_UInt8*>(buffer);
+	ADL_UInt8* right = reinterpret_cast<ADL_UInt8*>(buffer + 1);
+	auto result = adl_generateFormat(Renderer, len * 2, left, right, &audio_output_format);
+	for(int i=0; i < result; i++)
 	{
-		buffer[i] = shortbuffer[i] * (3.5f/32768.f);
+		buffer[i] *= 3.5f;
 	}
 }
 

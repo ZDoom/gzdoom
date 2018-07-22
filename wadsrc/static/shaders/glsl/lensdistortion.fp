@@ -30,13 +30,9 @@
 */
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform sampler2D InputTexture;
-uniform float Aspect; // image width/height
-uniform float Scale;  // 1/max(f)
-uniform vec4 k;       // lens distortion coefficient 
-uniform vec4 kcube;   // cubic distortion value
+layout(binding=0) uniform sampler2D InputTexture;
 
 void main()
 {

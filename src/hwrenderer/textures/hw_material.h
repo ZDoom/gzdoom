@@ -52,12 +52,6 @@ class FMaterial
 {
 	friend class FRenderState;
 
-	struct FTextureLayer
-	{
-		FTexture *texture;
-		bool animated;
-	};
-
 	// This array is needed because not all textures are managed by the texture manager
 	// but some code needs to discard all hardware dependent data attached to any created texture.
 	// Font characters are not, for example.
@@ -65,7 +59,7 @@ class FMaterial
 	static int mMaxBound;
 
 	IHardwareTexture *mBaseLayer;	
-	TArray<FTextureLayer> mTextureLayers;
+	TArray<FTexture*> mTextureLayers;
 	int mShaderIndex;
 
 	short mLeftOffset;
@@ -81,7 +75,6 @@ class FMaterial
 	float mSpriteU[2], mSpriteV[2];
 	FloatRect mSpriteRect;
 
-	IHardwareTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	bool TrimBorders(uint16_t *rect);
 
 public:
@@ -93,15 +86,19 @@ public:
 	void SetSpriteRect();
 	void Precache();
 	void PrecacheList(SpriteHits &translations);
+	IHardwareTexture * ValidateSysTexture(FTexture * tex, bool expand);
 	void AddTextureLayer(FTexture *tex)
 	{
-		FTextureLayer layer = { tex, false };
 		ValidateTexture(tex, false);
-		mTextureLayers.Push(layer);
+		mTextureLayers.Push(tex);
 	}
 	bool isMasked() const
 	{
 		return !!sourcetex->bMasked;
+	}
+	bool isExpanded() const
+	{
+		return mExpanded;
 	}
 
 	int GetLayers() const
@@ -109,11 +106,24 @@ public:
 		return mTextureLayers.Size() + 1;
 	}
 
-	void Bind(int clamp, int translation);
+	IHardwareTexture *GetLayer(int i, FTexture **pLayer = nullptr)
+	{
+		if (i == 0)
+		{
+			if (pLayer) *pLayer = tex;
+			return mBaseLayer;
+		}
+		else
+		{
+			i--;
+			FTexture *layer = mTextureLayers[i];
+			if (pLayer) *pLayer = layer;
+			return ValidateSysTexture(layer, isExpanded());
+		}
+	}
 
 	void Clean(bool f);
 
-	void BindToFrameBuffer();
 	// Patch drawing utilities
 
 	void GetSpriteRect(FloatRect * r) const
@@ -172,9 +182,6 @@ public:
 	static void FlushAll();
 	static FMaterial *ValidateTexture(FTexture * tex, bool expand);
 	static FMaterial *ValidateTexture(FTextureID no, bool expand, bool trans);
-	static void ClearLastTexture();
-
-	static void InitGlobalState();
 };
 
 #endif

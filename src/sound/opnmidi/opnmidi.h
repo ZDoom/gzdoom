@@ -29,10 +29,11 @@ extern "C" {
 #endif
 
 #define OPNMIDI_VERSION_MAJOR       1
-#define OPNMIDI_VERSION_MINOR       1
-#define OPNMIDI_VERSION_PATCHLEVEL  1
+#define OPNMIDI_VERSION_MINOR       3
+#define OPNMIDI_VERSION_PATCHLEVEL  0
 
-#define OPNMIDI_TOSTR(s) #s
+#define OPNMIDI_TOSTR_I(s) #s
+#define OPNMIDI_TOSTR(s) OPNMIDI_TOSTR_I(s)
 #define OPNMIDI_VERSION \
         OPNMIDI_TOSTR(OPNMIDI_VERSION_MAJOR) "." \
         OPNMIDI_TOSTR(OPNMIDI_VERSION_MINOR) "." \
@@ -63,6 +64,28 @@ enum OPNMIDI_VolumeModels
     OPNMIDI_VolumeModel_9X
 };
 
+enum OPNMIDI_SampleType
+{
+    OPNMIDI_SampleType_S16 = 0,  /* signed PCM 16-bit */
+    OPNMIDI_SampleType_S8,       /* signed PCM 8-bit */
+    OPNMIDI_SampleType_F32,      /* float 32-bit */
+    OPNMIDI_SampleType_F64,      /* float 64-bit */
+    OPNMIDI_SampleType_S24,      /* signed PCM 24-bit */
+    OPNMIDI_SampleType_S32,      /* signed PCM 32-bit */
+    OPNMIDI_SampleType_U8,       /* unsigned PCM 8-bit */
+    OPNMIDI_SampleType_U16,      /* unsigned PCM 16-bit */
+    OPNMIDI_SampleType_U24,      /* unsigned PCM 24-bit */
+    OPNMIDI_SampleType_U32,      /* unsigned PCM 32-bit */
+    OPNMIDI_SampleType_Count,
+};
+
+struct OPNMIDI_AudioFormat
+{
+    enum OPNMIDI_SampleType type;  /* type of sample */
+    unsigned containerSize;        /* size in bytes of the storage type */
+    unsigned sampleOffset;         /* distance in bytes between consecutive samples */
+};
+
 struct OPN2_MIDIPlayer
 {
     void *opn2_midiPlayer;
@@ -80,10 +103,16 @@ extern int  opn2_getNumChips(struct OPN2_MIDIPlayer *device);
 /*Enable or disable Enables scaling of modulator volumes*/
 extern void opn2_setScaleModulators(struct OPN2_MIDIPlayer *device, int smod);
 
+/*Enable(1) or Disable(0) full-range brightness (MIDI CC74 used in XG music to filter result sounding) scaling.
+    By default, brightness affects sound between 0 and 64.
+    When this option is enabled, the range will use a full range from 0 up to 127.
+*/
+extern void opn2_setFullRangeBrightness(struct OPN2_MIDIPlayer *device, int fr_brightness);
+
 /*Enable or disable built-in loop (built-in loop supports 'loopStart' and 'loopEnd' tags to loop specific part)*/
 extern void opn2_setLoopEnabled(struct OPN2_MIDIPlayer *device, int loopEn);
 
-/*Enable or disable Logariphmic volume changer (-1 sets default per bank, 0 disable, 1 enable) */
+/* !!!DEPRECATED!!! */
 extern void opn2_setLogarithmicVolumes(struct OPN2_MIDIPlayer *device, int logvol);
 
 /*Set different volume range model */
@@ -96,14 +125,32 @@ extern int opn2_openBankFile(struct OPN2_MIDIPlayer *device, const char *filePat
 extern int opn2_openBankData(struct OPN2_MIDIPlayer *device, const void *mem, long size);
 
 
-/*Returns chip emulator name string*/
+/* DEPRECATED */
 extern const char *opn2_emulatorName();
+
+/*Returns chip emulator name string*/
+extern const char *opn2_chipEmulatorName(struct OPN2_MIDIPlayer *device);
+
+enum Opn2_Emulator
+{
+    OPNMIDI_EMU_MAME = 0,
+    OPNMIDI_EMU_NUKED,
+    OPNMIDI_EMU_GENS,
+    OPNMIDI_EMU_GX,
+    OPNMIDI_EMU_end
+};
+
+/* Switch the emulation core */
+extern int opn2_switchEmulator(struct OPN2_MIDIPlayer *device, int emulator);
 
 typedef struct {
     OPN2_UInt16 major;
     OPN2_UInt16 minor;
     OPN2_UInt16 patch;
 } OPN2_Version;
+
+/*Run emulator with PCM rate to reduce CPU usage on slow devices. May decrease sounding accuracy.*/
+extern int opn2_setRunAtPcmRate(struct OPN2_MIDIPlayer *device, int enabled);
 
 /*Returns string which contains a version number*/
 extern const char *opn2_linkedLibraryVersion();
@@ -186,10 +233,16 @@ extern struct Opn2_MarkerEntry opn2_metaMarker(struct OPN2_MIDIPlayer *device, s
 
 
 /*Take a sample buffer and iterate MIDI timers */
-extern int  opn2_play(struct OPN2_MIDIPlayer *device, int sampleCount, short out[]);
+extern int  opn2_play(struct OPN2_MIDIPlayer *device, int sampleCount, short *out);
+
+/*Take a sample buffer and iterate MIDI timers */
+extern int  opn2_playFormat(struct OPN2_MIDIPlayer *device, int sampleCount, OPN2_UInt8 *left, OPN2_UInt8 *right, const struct OPNMIDI_AudioFormat *format);
 
 /*Generate audio output from chip emulators without iteration of MIDI timers.*/
 extern int  opn2_generate(struct OPN2_MIDIPlayer *device, int sampleCount, short *out);
+
+/*Generate audio output from chip emulators without iteration of MIDI timers.*/
+extern int  opn2_generateFormat(struct OPN2_MIDIPlayer *device, int sampleCount, OPN2_UInt8 *left, OPN2_UInt8 *right, const struct OPNMIDI_AudioFormat *format);
 
 /**
  * @brief Periodic tick handler.

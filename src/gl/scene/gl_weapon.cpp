@@ -37,9 +37,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/models/gl_models.h"
-#include "gl/stereo3d/gl_stereo3d.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
 //==========================================================================
@@ -56,7 +54,7 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	}
 	else
 	{
-		mDrawer->SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
+		SetColor(huds->lightlevel, 0, huds->cm, huds->alpha, true);
 	}
 	gl_SetRenderStyle(huds->RenderStyle, false, false);
 	gl_RenderState.SetObjectColor(huds->ObjectColor);
@@ -66,7 +64,8 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	if (huds->mframe)
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
-		gl_RenderHUDModel(huds->weapon, huds->mx, huds->my, huds->lightindex);
+        FGLModelRenderer renderer(this, huds->lightindex);
+        renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
 	}
 	else
 	{
@@ -91,8 +90,6 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 
 void FDrawInfo::DrawPlayerSprites(bool hudModelStep)
 {
-	s3d::Stereo3DMode::getCurrentMode().AdjustPlayerSprites();
-
 	int oldlightmode = level.lightmode;
 	if (!hudModelStep && level.lightmode == 8) level.lightmode = 2;	// Software lighting cannot handle 2D content so revert to lightmode 2 for that.
 	for(auto &hudsprite : hudsprites)

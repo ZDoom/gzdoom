@@ -714,7 +714,9 @@ void AActor::Die (AActor *source, AActor *inflictor, int dmgflags)
 				tics = 1;
 		}
 	}
-	else
+	// The following condition is needed to avoid crash when player class has no death states
+	// Instance of player pawn will be garbage collected on reloading of level
+	else if (player == nullptr)
 	{
 		Destroy();
 	}

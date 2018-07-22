@@ -183,6 +183,12 @@ struct FLevelLocals
 		return headgamenode;
 	}
 
+	// Returns true if level is loaded from saved game or is being revisited as a part of a hub
+	bool		IsReentering() const
+	{
+		return savegamerestore 
+			|| (info != nullptr && info->Snapshot.mBuffer != nullptr && info->isValid());
+	}
 };
 
 extern FLevelLocals level;

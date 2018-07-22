@@ -32,10 +32,11 @@
 #include "gl/system/gl_debug.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderbuffers.h"
+#include "gl/renderer/gl_postprocessstate.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include <random>
 
 CVAR(Int, gl_multisample, 1, CVAR_ARCHIVE|CVAR_GLOBALCONFIG);
-CVAR(Bool, gl_renderbuffers, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 
 //==========================================================================
 //
@@ -59,9 +60,6 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearScene();
 	ClearPipeline();
 	ClearEyeBuffers();
-	ClearBloom();
-	ClearExposureLevels();
-	ClearAmbientOcclusion();
 	ClearShadowMap();
 }
 
@@ -94,31 +92,6 @@ void FGLRenderBuffers::ClearPipeline()
 	}
 }
 
-void FGLRenderBuffers::ClearBloom()
-{
-	for (int i = 0; i < NumBloomLevels; i++)
-	{
-		auto &level = BloomLevels[i];
-		DeleteFrameBuffer(level.HFramebuffer);
-		DeleteFrameBuffer(level.VFramebuffer);
-		DeleteTexture(level.HTexture);
-		DeleteTexture(level.VTexture);
-		level = FGLBloomTextureLevel();
-	}
-}
-
-void FGLRenderBuffers::ClearExposureLevels()
-{
-	for (auto &level : ExposureLevels)
-	{
-		DeleteTexture(level.Texture);
-		DeleteFrameBuffer(level.Framebuffer);
-	}
-	ExposureLevels.Clear();
-	DeleteTexture(ExposureTexture);
-	DeleteFrameBuffer(ExposureFB);
-}
-
 void FGLRenderBuffers::ClearEyeBuffers()
 {
 	for (auto handle : mEyeFBs)
@@ -131,33 +104,21 @@ void FGLRenderBuffers::ClearEyeBuffers()
 	mEyeFBs.Clear();
 }
 
-void FGLRenderBuffers::ClearAmbientOcclusion()
-{
-	DeleteFrameBuffer(LinearDepthFB);
-	DeleteFrameBuffer(AmbientFB0);
-	DeleteFrameBuffer(AmbientFB1);
-	DeleteTexture(LinearDepthTexture);
-	DeleteTexture(AmbientTexture0);
-	DeleteTexture(AmbientTexture1);
-	for (int i = 0; i < NumAmbientRandomTextures; i++)
-		DeleteTexture(AmbientRandomTexture[i]);
-}
-
-void FGLRenderBuffers::DeleteTexture(PPTexture &tex)
+void FGLRenderBuffers::DeleteTexture(PPGLTexture &tex)
 {
 	if (tex.handle != 0)
 		glDeleteTextures(1, &tex.handle);
 	tex.handle = 0;
 }
 
-void FGLRenderBuffers::DeleteRenderBuffer(PPRenderBuffer &buf)
+void FGLRenderBuffers::DeleteRenderBuffer(PPGLRenderBuffer &buf)
 {
 	if (buf.handle != 0)
 		glDeleteRenderbuffers(1, &buf.handle);
 	buf.handle = 0;
 }
 
-void FGLRenderBuffers::DeleteFrameBuffer(PPFrameBuffer &fb)
+void FGLRenderBuffers::DeleteFrameBuffer(PPGLFrameBuffer &fb)
 {
 	if (fb.handle != 0)
 		glDeleteFramebuffers(1, &fb.handle);
@@ -171,19 +132,8 @@ void FGLRenderBuffers::DeleteFrameBuffer(PPFrameBuffer &fb)
 //
 //==========================================================================
 
-bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
+void FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHeight)
 {
-	if (gl_renderbuffers != BuffersActive)
-	{
-		if (BuffersActive)
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-		BuffersActive = gl_renderbuffers;
-		GLRenderer->mShaderManager->ResetFixedColormap();
-	}
-
-	if (!IsEnabled())
-		return false;
-		
 	if (width <= 0 || height <= 0)
 		I_FatalError("Requested invalid render buffer sizes: screen = %dx%d", width, height);
 
@@ -206,16 +156,8 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 	mHeight = height;
 	mSamples = samples;
 	mSceneUsesTextures = needsSceneTextures;
-
-	// Bloom bluring buffers need to match the scene to avoid bloom bleeding artifacts
-	if (mSceneWidth != sceneWidth || mSceneHeight != sceneHeight)
-	{
-		CreateBloom(sceneWidth, sceneHeight);
-		CreateExposureLevels(sceneWidth, sceneHeight);
-		CreateAmbientOcclusion(sceneWidth, sceneHeight);
-		mSceneWidth = sceneWidth;
-		mSceneHeight = sceneHeight;
-	}
+	mSceneWidth = sceneWidth;
+	mSceneHeight = sceneHeight;
 
 	glBindTexture(GL_TEXTURE_2D, textureBinding);
 	glActiveTexture(activeTex);
@@ -227,16 +169,13 @@ bool FGLRenderBuffers::Setup(int width, int height, int sceneWidth, int sceneHei
 		ClearScene();
 		ClearPipeline();
 		ClearEyeBuffers();
-		ClearBloom();
-		ClearExposureLevels();
 		mWidth = 0;
 		mHeight = 0;
 		mSamples = 0;
 		mSceneWidth = 0;
 		mSceneHeight = 0;
+		I_FatalError("Unable to create render buffers.");
 	}
-
-	return !FailedCreate;
 }
 
 //==========================================================================
@@ -307,122 +246,6 @@ void FGLRenderBuffers::CreatePipeline(int width, int height)
 
 //==========================================================================
 //
-// Creates bloom pass working buffers
-//
-//==========================================================================
-
-void FGLRenderBuffers::CreateBloom(int width, int height)
-{
-	ClearBloom();
-	
-	// No scene, no bloom!
-	if (width <= 0 || height <= 0)
-		return;
-
-	int bloomWidth = (width + 1) / 2;
-	int bloomHeight = (height + 1) / 2;
-	for (int i = 0; i < NumBloomLevels; i++)
-	{
-		auto &level = BloomLevels[i];
-		level.Width = (bloomWidth + 1) / 2;
-		level.Height = (bloomHeight + 1) / 2;
-
-		level.VTexture = Create2DTexture("Bloom.VTexture", GL_RGBA16F, level.Width, level.Height);
-		level.HTexture = Create2DTexture("Bloom.HTexture", GL_RGBA16F, level.Width, level.Height);
-		level.VFramebuffer = CreateFrameBuffer("Bloom.VFramebuffer", level.VTexture);
-		level.HFramebuffer = CreateFrameBuffer("Bloom.HFramebuffer", level.HTexture);
-
-		bloomWidth = level.Width;
-		bloomHeight = level.Height;
-	}
-}
-
-//==========================================================================
-//
-// Creates ambient occlusion working buffers
-//
-//==========================================================================
-
-void FGLRenderBuffers::CreateAmbientOcclusion(int width, int height)
-{
-	ClearAmbientOcclusion();
-
-	if (width <= 0 || height <= 0)
-		return;
-
-	AmbientWidth = (width + 1) / 2;
-	AmbientHeight = (height + 1) / 2;
-	LinearDepthTexture = Create2DTexture("LinearDepthTexture", GL_R32F, AmbientWidth, AmbientHeight);
-	AmbientTexture0 = Create2DTexture("AmbientTexture0", GL_RG16F, AmbientWidth, AmbientHeight);
-	AmbientTexture1 = Create2DTexture("AmbientTexture1", GL_RG16F, AmbientWidth, AmbientHeight);
-	LinearDepthFB = CreateFrameBuffer("LinearDepthFB", LinearDepthTexture);
-	AmbientFB0 = CreateFrameBuffer("AmbientFB0", AmbientTexture0);
-	AmbientFB1 = CreateFrameBuffer("AmbientFB1", AmbientTexture1);
-
-	// Must match quality enum in FSSAOShader::GetDefines
-	double numDirections[NumAmbientRandomTextures] = { 2.0, 4.0, 8.0 };
-
-	std::mt19937 generator(1337);
-	std::uniform_real_distribution<double> distribution(0.0, 1.0);
-	for (int quality = 0; quality < NumAmbientRandomTextures; quality++)
-	{
-		int16_t randomValues[16 * 4];
-
-		for (int i = 0; i < 16; i++)
-		{
-			double angle = 2.0 * M_PI * distribution(generator) / numDirections[quality];
-			double x = cos(angle);
-			double y = sin(angle);
-			double z = distribution(generator);
-			double w = distribution(generator);
-
-			randomValues[i * 4 + 0] = (int16_t)clamp(x * 32767.0, -32768.0, 32767.0);
-			randomValues[i * 4 + 1] = (int16_t)clamp(y * 32767.0, -32768.0, 32767.0);
-			randomValues[i * 4 + 2] = (int16_t)clamp(z * 32767.0, -32768.0, 32767.0);
-			randomValues[i * 4 + 3] = (int16_t)clamp(w * 32767.0, -32768.0, 32767.0);
-		}
-
-		AmbientRandomTexture[quality] = Create2DTexture("AmbientRandomTexture", GL_RGBA16_SNORM, 4, 4, randomValues);
-	}
-}
-
-//==========================================================================
-//
-// Creates camera exposure level buffers
-//
-//==========================================================================
-
-void FGLRenderBuffers::CreateExposureLevels(int width, int height)
-{
-	ClearExposureLevels();
-
-	int i = 0;
-	do
-	{
-		width = MAX(width / 2, 1);
-		height = MAX(height / 2, 1);
-
-		FString textureName, fbName;
-		textureName.Format("Exposure.Texture%d", i);
-		fbName.Format("Exposure.Framebuffer%d", i);
-		i++;
-
-		FGLExposureTextureLevel level;
-		level.Width = width;
-		level.Height = height;
-		level.Texture = Create2DTexture(textureName.GetChars(), GL_R32F, level.Width, level.Height);
-		level.Framebuffer = CreateFrameBuffer(fbName.GetChars(), level.Texture);
-		ExposureLevels.Push(level);
-	} while (width > 1 || height > 1);
-
-	ExposureTexture = Create2DTexture("Exposure.CameraTexture", GL_R32F, 1, 1);
-	ExposureFB = CreateFrameBuffer("Exposure.CameraFB", ExposureTexture);
-
-	FirstExposureFrame = true;
-}
-
-//==========================================================================
-//
 // Creates eye buffers if needed
 //
 //==========================================================================
@@ -440,7 +263,7 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 
 	while (mEyeFBs.Size() <= unsigned(eye))
 	{
-		PPTexture texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
+		PPGLTexture texture = Create2DTexture("EyeTexture", GL_RGBA16F, mWidth, mHeight);
 		mEyeTextures.Push(texture);
 		mEyeFBs.Push(CreateFrameBuffer("EyeFB", texture));
 	}
@@ -456,9 +279,11 @@ void FGLRenderBuffers::CreateEyeBuffers(int eye)
 //
 //==========================================================================
 
-PPTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int width, int height, const void *data)
+PPGLTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int width, int height, const void *data)
 {
-	PPTexture tex;
+	PPGLTexture tex;
+	tex.Width = width;
+	tex.Height = height;
 	glGenTextures(1, &tex.handle);
 	glBindTexture(GL_TEXTURE_2D, tex.handle);
 	FGLDebug::LabelObject(GL_TEXTURE, tex.handle, name);
@@ -490,9 +315,11 @@ PPTexture FGLRenderBuffers::Create2DTexture(const char *name, GLuint format, int
 	return tex;
 }
 
-PPTexture FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
+PPGLTexture FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint format, int width, int height, int samples, bool fixedSampleLocations)
 {
-	PPTexture tex;
+	PPGLTexture tex;
+	tex.Width = width;
+	tex.Height = height;
 	glGenTextures(1, &tex.handle);
 	glBindTexture(GL_TEXTURE_2D_MULTISAMPLE, tex.handle);
 	FGLDebug::LabelObject(GL_TEXTURE, tex.handle, name);
@@ -507,9 +334,9 @@ PPTexture FGLRenderBuffers::Create2DMultisampleTexture(const char *name, GLuint 
 //
 //==========================================================================
 
-PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height)
+PPGLRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height)
 {
-	PPRenderBuffer buf;
+	PPGLRenderBuffer buf;
 	glGenRenderbuffers(1, &buf.handle);
 	glBindRenderbuffer(GL_RENDERBUFFER, buf.handle);
 	FGLDebug::LabelObject(GL_RENDERBUFFER, buf.handle, name);
@@ -517,12 +344,12 @@ PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint for
 	return buf;
 }
 
-PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples)
+PPGLRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint format, int width, int height, int samples)
 {
 	if (samples <= 1)
 		return CreateRenderBuffer(name, format, width, height);
 
-	PPRenderBuffer buf;
+	PPGLRenderBuffer buf;
 	glGenRenderbuffers(1, &buf.handle);
 	glBindRenderbuffer(GL_RENDERBUFFER, buf.handle);
 	FGLDebug::LabelObject(GL_RENDERBUFFER, buf.handle, name);
@@ -536,9 +363,9 @@ PPRenderBuffer FGLRenderBuffers::CreateRenderBuffer(const char *name, GLuint for
 //
 //==========================================================================
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture colorbuffer)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLTexture colorbuffer)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);
@@ -548,9 +375,9 @@ PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture co
 	return fb;
 }
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture colorbuffer, PPRenderBuffer depthstencil)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLTexture colorbuffer, PPGLRenderBuffer depthstencil)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);
@@ -561,9 +388,9 @@ PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture co
 	return fb;
 }
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPRenderBuffer colorbuffer, PPRenderBuffer depthstencil)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLRenderBuffer colorbuffer, PPGLRenderBuffer depthstencil)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);
@@ -574,9 +401,9 @@ PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPRenderBuff
 	return fb;
 }
 
-PPFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPTexture colorbuffer0, PPTexture colorbuffer1, PPTexture colorbuffer2, PPTexture depthstencil, bool multisample)
+PPGLFrameBuffer FGLRenderBuffers::CreateFrameBuffer(const char *name, PPGLTexture colorbuffer0, PPGLTexture colorbuffer1, PPGLTexture colorbuffer2, PPGLTexture depthstencil, bool multisample)
 {
-	PPFrameBuffer fb;
+	PPGLFrameBuffer fb;
 	glGenFramebuffers(1, &fb.handle);
 	glBindFramebuffer(GL_FRAMEBUFFER, fb.handle);
 	FGLDebug::LabelObject(GL_FRAMEBUFFER, fb.handle, name);
@@ -615,7 +442,7 @@ bool FGLRenderBuffers::CheckFrameBufferCompleteness()
 	if (result == GL_FRAMEBUFFER_COMPLETE)
 		return true;
 
-	FailedCreate = true;
+	bool FailedCreate = true;
 
 	if (gl_debug_level > 0)
 	{
@@ -670,7 +497,7 @@ void FGLRenderBuffers::ClearFrameBuffer(bool stencil, bool depth)
 
 //==========================================================================
 //
-// Resolves the multisample frame buffer by copying it to the scene texture
+// Resolves the multisample frame buffer by copying it to the first pipeline texture
 //
 //==========================================================================
 
@@ -693,13 +520,6 @@ void FGLRenderBuffers::BlitSceneToTexture()
 
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-}
-
-void FGLRenderBuffers::BlitLinear(PPFrameBuffer src, PPFrameBuffer dest, int sx0, int sy0, int sx1, int sy1, int dx0, int dy0, int dx1, int dy1)
-{
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, src.handle);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, dest.handle);
-	glBlitFramebuffer(sx0, sy0, sx1, sy1, dx0, dy0, dx1, dy1, GL_COLOR_BUFFER_BIT, GL_LINEAR);
 }
 
 //==========================================================================
@@ -926,10 +746,220 @@ void FGLRenderBuffers::BindOutputFB()
 //
 //==========================================================================
 
-bool FGLRenderBuffers::IsEnabled()
+bool FGLRenderBuffers::FailedCreate = false;
+
+//==========================================================================
+//
+// Creates or updates textures used by postprocess effects
+//
+//==========================================================================
+
+void FGLRenderBuffers::UpdateEffectTextures()
 {
-	return BuffersActive && !gl.legacyMode && !FailedCreate;
+	FGLPostProcessState savedState;
+
+	TMap<FString, PPTextureDesc>::Iterator it(hw_postprocess.Textures);
+	TMap<FString, PPTextureDesc>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		auto &gltexture = GLTextures[pair->Key];
+		auto &glframebuffer = GLTextureFBs[pair->Key];
+
+		int glformat;
+		switch (pair->Value.Format)
+		{
+		default:
+		case PixelFormat::Rgba8: glformat = GL_RGBA8; break;
+		case PixelFormat::Rgba16f: glformat = GL_RGBA16F; break;
+		case PixelFormat::R32f: glformat = GL_R32F; break;
+		case PixelFormat::Rg16f: glformat = GL_RG16F; break;
+		case PixelFormat::Rgba16_snorm: glformat = GL_RGBA16_SNORM; break;
+		}
+
+		if (gltexture && (gltexture.Width != pair->Value.Width || gltexture.Height != pair->Value.Height))
+		{
+			if (gltexture.handle != 0)
+			{
+				glDeleteTextures(1, &gltexture.handle);
+				gltexture.handle = 0;
+			}
+			if (glframebuffer.handle != 0)
+			{
+				glDeleteFramebuffers(1, &glframebuffer.handle);
+				glframebuffer.handle = 0;
+			}
+		}
+
+		if (!gltexture)
+		{
+			if (pair->Value.Data)
+				gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height, pair->Value.Data.get());
+			else
+				gltexture = Create2DTexture(pair->Key.GetChars(), glformat, pair->Value.Width, pair->Value.Height);
+		}
+	}
 }
 
-bool FGLRenderBuffers::FailedCreate = false;
-bool FGLRenderBuffers::BuffersActive = false;
+//==========================================================================
+//
+// Compile the shaders declared by post process effects
+//
+//==========================================================================
+
+void FGLRenderBuffers::CompileEffectShaders()
+{
+	TMap<FString, PPShader>::Iterator it(hw_postprocess.Shaders);
+	TMap<FString, PPShader>::Pair *pair;
+	while (it.NextPair(pair))
+	{
+		const auto &desc = pair->Value;
+		auto &glshader = GLShaders[pair->Key];
+		if (!glshader)
+		{
+			glshader = std::make_unique<FShaderProgram>();
+
+			FString prolog;
+			if (!desc.Uniforms.empty())
+				prolog = UniformBlockDecl::Create("Uniforms", desc.Uniforms, POSTPROCESS_BINDINGPOINT);
+			prolog += desc.Defines;
+
+			glshader->Compile(IShaderProgram::Vertex, desc.VertexShader, "", desc.Version);
+			glshader->Compile(IShaderProgram::Fragment, desc.FragmentShader, prolog, desc.Version);
+			glshader->Link(pair->Key.GetChars());
+			if (!desc.Uniforms.empty())
+				glshader->SetUniformBufferLocation(POSTPROCESS_BINDINGPOINT, "Uniforms");
+		}
+	}
+}
+
+//==========================================================================
+//
+// Renders one post process effect
+//
+//==========================================================================
+
+void FGLRenderBuffers::RenderEffect(const FString &name)
+{
+	if (hw_postprocess.Effects[name].Size() == 0)
+		return;
+
+	FGLDebug::PushGroup(name.GetChars());
+
+	FGLPostProcessState savedState;
+
+	for (const PPStep &step : hw_postprocess.Effects[name])
+	{
+		// Bind input textures
+		for (unsigned int index = 0; index < step.Textures.Size(); index++)
+		{
+			savedState.SaveTextureBindings(index + 1);
+
+			const PPTextureInput &input = step.Textures[index];
+			int filter = (input.Filter == PPFilterMode::Nearest) ? GL_NEAREST : GL_LINEAR;
+			int wrap = (input.Wrap == PPWrapMode::Clamp) ? GL_CLAMP : GL_REPEAT;
+
+			switch (input.Type)
+			{
+			default:
+			case PPTextureType::CurrentPipelineTexture:
+				BindCurrentTexture(index, filter, wrap);
+				break;
+
+			case PPTextureType::NextPipelineTexture:
+				I_FatalError("PPTextureType::NextPipelineTexture not allowed as input\n");
+				break;
+
+			case PPTextureType::PPTexture:
+				GLTextures[input.Texture].Bind(index, filter, wrap);
+				break;
+
+			case PPTextureType::SceneColor:
+				BindSceneColorTexture(index);
+				break;
+
+			case PPTextureType::SceneFog:
+				BindSceneFogTexture(index);
+				break;
+
+			case PPTextureType::SceneNormal:
+				BindSceneNormalTexture(index);
+				break;
+
+			case PPTextureType::SceneDepth:
+				BindSceneDepthTexture(index);
+				break;
+			}
+		}
+
+		// Set render target
+		switch (step.Output.Type)
+		{
+		default:
+			I_FatalError("Unsupported postprocess output type\n");
+			break;
+
+		case PPTextureType::CurrentPipelineTexture:
+			BindCurrentFB();
+			break;
+
+		case PPTextureType::NextPipelineTexture:
+			BindNextFB();
+			break;
+
+		case PPTextureType::PPTexture:
+			if (GLTextureFBs[step.Output.Texture])
+				GLTextureFBs[step.Output.Texture].Bind();
+			else
+				GLTextureFBs[step.Output.Texture] = CreateFrameBuffer(step.Output.Texture.GetChars(), GLTextures[step.Output.Texture]);
+			break;
+
+		case PPTextureType::SceneColor:
+			BindSceneFB(false);
+			break;
+		}
+
+		// Set blend mode
+		if (step.BlendMode.BlendOp == STYLEOP_Add && step.BlendMode.SrcAlpha == STYLEALPHA_One && step.BlendMode.DestAlpha == STYLEALPHA_Zero && step.BlendMode.Flags == 0)
+		{
+			glDisable(GL_BLEND);
+		}
+		else
+		{
+			// To do: support all the modes
+			glEnable(GL_BLEND);
+			glBlendEquation(GL_FUNC_ADD);
+			if (step.BlendMode.SrcAlpha == STYLEALPHA_One && step.BlendMode.DestAlpha == STYLEALPHA_One)
+				glBlendFunc(GL_ONE, GL_ONE);
+			else
+				glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		}
+
+		// Setup viewport
+		glViewport(step.Viewport.left, step.Viewport.top, step.Viewport.width, step.Viewport.height);
+
+		auto &shader = GLShaders[step.ShaderName];
+
+		// Set uniforms
+		if (step.Uniforms.Size > 0)
+		{
+			if (!shader->Uniforms)
+				shader->Uniforms.reset(screen->CreateUniformBuffer(step.Uniforms.Size));
+			shader->Uniforms->SetData(step.Uniforms.Data);
+			shader->Uniforms->Bind(POSTPROCESS_BINDINGPOINT);
+		}
+
+		// Set shader
+		shader->Bind(NOQUEUE);
+
+		// Draw the screen quad
+		GLRenderer->RenderScreenQuad();
+
+		// Advance to next PP texture if our output was sent there
+		if (step.Output.Type == PPTextureType::NextPipelineTexture)
+			NextTexture();
+	}
+
+	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
+
+	FGLDebug::PopGroup();
+}

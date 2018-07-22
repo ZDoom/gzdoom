@@ -50,12 +50,6 @@ CUSTOM_CVAR(Int, gl_tonemap, 0, CVAR_ARCHIVE)
 		self = 0;
 }
 
-CUSTOM_CVAR(Int, gl_bloom_kernel_size, 7, CVAR_ARCHIVE)
-{
-	if (self < 3 || self > 15 || self % 2 == 0)
-		self = 7;
-}
-
 CVAR(Bool, gl_lens, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 
 CVAR(Float, gl_lens_k, -0.12f, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)

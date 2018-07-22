@@ -11,7 +11,7 @@ public:
 	PostProcessShaderInstance(PostProcessShader *desc) : Desc(desc) { }
 	~PostProcessShaderInstance();
 
-	void Run();
+	void Run(IRenderQueue *q);
 
 	PostProcessShader *Desc;
 
@@ -22,7 +22,7 @@ private:
 	void BindTextures();
 
 	FShaderProgram mProgram;
-	FBufferedUniformSampler mInputTexture;
+	FUniform1i mInputTexture;
 	std::map<FTexture*, int> mTextureHandles;
 };
 

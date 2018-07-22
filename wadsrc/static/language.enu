@@ -598,6 +598,27 @@ CC_SPIDER = "THE SPIDER MASTERMIND";
 CC_CYBER = "THE CYBERDEMON";
 CC_HERO = "OUR HERO";
 
+// Friendly names
+FN_ZOMBIE = "Zombieman";
+FN_SHOTGUN = "Sergeant";
+FN_HEAVY = "Chaingunner";
+FN_IMP = "Imp";
+FN_DEMON = "Demon";
+FN_SPECTRE = "Spectre";
+FN_LOST = "Lost Soul";
+FN_CACO = "Cacodemon";
+FN_HELL = "Hell Knight";
+FN_BARON = "Baron of Hell";
+FN_ARACH = "Arachnotron";
+FN_PAIN = "Pain Elemental";
+FN_REVEN = "Revenant";
+FN_MANCU = "Mancubus";
+FN_ARCH = "Arch-vile";
+FN_SPIDER = "Spider Mastermind";
+FN_CYBER = "Cyberdemon";
+FN_WOLFSS = "Nazi";
+FN_DOG = "Dog";
+
 // New strings from BOOM
 PD_BLUEC = "You need a blue card to open this door";
 PD_REDC = "You need a red card to open this door";
@@ -1300,6 +1321,20 @@ TXT_IMTIME = "TIME";
 
 RAVENQUITMSG = "ARE YOU SURE YOU WANT TO QUIT?";
 
+// Friendly names
+FN_CHICKEN = "Chicken";
+FN_BEAST = "Weredragon";
+FN_CLINK = "Sabreclaw";
+FN_DSPARIL = "D'Sparil";
+FN_HERETICIMP = "Gargoyle";
+FN_IRONLICH = "Ironlich";
+FN_BONEKNIGHT = "Undead Warrior";
+FN_MINOTAUR = "Maulotaur";
+FN_MUMMY = "Golem";
+FN_MUMMYLEADER = "Nitrogolem";
+FN_SNAKE = "Ophidian";
+FN_WIZARD = "Wizard";
+
 // Hexen strings
 
 // Mana
@@ -1818,6 +1853,7 @@ DSPLYMNU_ATTACHEDSURFACES		= "Use attached surfaces"; // Not used
 DSPLYMNU_SKYMODE				= "Sky render mode";
 DSPLYMNU_LINEARSKY				= "Linear skies";
 DSPLYMNU_GZDFULLBRIGHT			= "Fullbright overrides sector color";
+DSPLYMNU_MODELS					= "Models";
 DSPLYMNU_SCALEFUZZ				= "Scale fuzz effect";
 DSPLYMNU_DRAWFUZZ				= "Use fuzz effect";
 DSPLYMNU_OLDTRANS				= "Classic Transparency";
@@ -2157,6 +2193,7 @@ ADVSNDMNU_OPLSYNTHESIS		= "OPL Synthesis";
 ADVSNDMNU_OPLNUMCHIPS		= "Number of emulated OPL chips";
 ADVSNDMNU_OPLFULLPAN		= "Full MIDI stereo panning";
 ADVSNDMNU_OPLCORES			= "OPL Emulator Core";
+ADVSNDMNU_OPNCORES			= "OPN2 Emulator Core";
 ADVSNDMNU_GUSEMULATION		= "GUS Emulation";
 ADVSNDMNU_GUSCONFIG			= "GUS config file";
 ADVSNDMNU_MIDIVOICES		= "MIDI voices";
@@ -2182,9 +2219,13 @@ ADVSNDMNU_FREEVERB			= "Freeverb";
 ADVSNDMNU_GLOBAL_FREEVERB	= "Global Freeverb";
 ADVSNDMNU_ADVRESAMPLING		= "Advanced Resampling";
 ADVSNDMNU_OPLBANK			= "OPL Bank";
+ADVSNDMNU_ADLOPLCORES		= "OPL Emulator Core";
+ADVSNDMNU_RUNPCMRATE		= "Run emulator at PCM rate";
 ADVSNDMNU_ADLNUMCHIPS		= "Number of emulated OPL chips";
 ADVSNDMNU_VLMODEL			= "Volume model";
 ADVSNDMNU_OPNNUMCHIPS		= "Number of emulated OPN chips";
+
+// ADLMIDI's emulation cores
 
 // ADLMIDI's volume models
 ADLVLMODEL_AUTO				= "Auto (Use setup of bank)";
@@ -2372,9 +2413,13 @@ OPTVAL_512K					= "512K";
 OPTVAL_768K					= "768K";
 OPTVAL_1024K				= "1024K";
 OPTVAL_MAMEOPL2				= "MAME OPL2";
+OPTVAL_MAMEOPN2				= "MAME YM2612";
 OPTVAL_DOSBOXOPL3			= "DOSBox OPL3";
 OPTVAL_JAVAOPL3				= "Java OPL3";
 OPTVAL_NUKEDOPL3			= "Nuked OPL3";
+OPTVAL_NUKEDOPL3174			= "Nuked OPL3 v1.7.4";
+OPTVAL_NUKEDOPN2			= "Nuked OPN2";
+OPTVAL_GENSOPN2				= "GENS YM2612";
 OPTVAL_SOUNDSYSTEM			= "Sound System";
 OPTVAL_FOO_DUMB				= "foo_dumb";
 OPTVAL_ALIASING				= "Aliasing";

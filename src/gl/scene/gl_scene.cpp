@@ -44,17 +44,17 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl_load/gl_interface.h"
 #include "gl/system/gl_framebuffer.h"
+#include "gl/system/gl_debug.h"
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
+#include "hwrenderer/scene/hw_portal.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
-#include "gl/stereo3d/gl_stereo3d.h"
-#include "gl/stereo3d/scoped_view_shifter.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 
 //==========================================================================
 //
@@ -72,136 +72,25 @@ EXTERN_CVAR (Bool, r_deathcamera)
 EXTERN_CVAR (Float, r_visibility)
 EXTERN_CVAR (Bool, r_drawvoxels)
 
-//-----------------------------------------------------------------------------
-//
-// R_FrustumAngle
-//
-//-----------------------------------------------------------------------------
-angle_t GLSceneDrawer::FrustumAngle()
+
+void FDrawInfo::ApplyVPUniforms()
 {
-	float tilt = fabs(GLRenderer->mAngles.Pitch.Degrees);
+	VPUniforms.CalcDependencies();
+	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, gl_RenderState.GetPassType());
 
-	// If the pitch is larger than this you can look all around at a FOV of 90°
-	if (tilt > 46.0f) return 0xffffffff;
-
-	// ok, this is a gross hack that barely works...
-	// but at least it doesn't overestimate too much...
-	double floatangle = 2.0 + (45.0 + ((tilt / 1.9)))*GLRenderer->mCurrentFoV*48.0 / AspectMultiplier(r_viewwindow.WidescreenRatio) / 90.0;
-	angle_t a1 = DAngle(floatangle).BAMs();
-	if (a1 >= ANGLE_180) return 0xffffffff;
-	return a1;
-}
-
-//-----------------------------------------------------------------------------
-//
-// resets the 3D viewport
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::Reset3DViewport()
-{
-	glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
-}
-
-//-----------------------------------------------------------------------------
-//
-// sets 3D viewport and initial state
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::Set3DViewport(bool mainview)
-{
-	if (mainview && GLRenderer->buffersActive)
+	if (!(gl.flags & RFL_NO_CLIP_PLANES))
 	{
-		bool useSSAO = (gl_ssao != 0);
-		GLRenderer->mBuffers->BindSceneFB(useSSAO);
-		gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
-		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
-		gl_RenderState.Apply();
+		if (VPUniforms.mClipHeightDirection != 0.f || VPUniforms.mClipLine.X > -10000000.0f)
+		{
+			glEnable(GL_CLIP_DISTANCE0);
+		}
+		else
+		{
+			glDisable(GL_CLIP_DISTANCE0);
+		}
 	}
-
-	// Always clear all buffers with scissor test disabled.
-	// This is faster on newer hardware because it allows the GPU to skip
-	// reading from slower memory where the full buffers are stored.
-	glDisable(GL_SCISSOR_TEST);
-	glClearColor(GLRenderer->mSceneClearColor[0], GLRenderer->mSceneClearColor[1], GLRenderer->mSceneClearColor[2], 1.0f);
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-
-	const auto &bounds = screen->mSceneViewport;
-	glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
-	glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
-
-	glEnable(GL_SCISSOR_TEST);
-
-	glEnable(GL_MULTISAMPLE);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_STENCIL_TEST);
-	glStencilFunc(GL_ALWAYS,0,~0);	// default stencil
-	glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 }
 
-//-----------------------------------------------------------------------------
-//
-// Setup the camera position
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::SetViewAngle(DAngle viewangle)
-{
-	GLRenderer->mAngles.Yaw = float(270.0-viewangle.Degrees);
-	DVector2 v = r_viewpoint.Angles.Yaw.ToVector();
-	GLRenderer->mViewVector.X = v.X;
-	GLRenderer->mViewVector.Y = v.Y;
-
-	R_SetViewAngle(r_viewpoint, r_viewwindow);
-}
-	
-
-//-----------------------------------------------------------------------------
-//
-// SetProjection
-// sets projection matrix
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::SetProjection(VSMatrix matrix)
-{
-	gl_RenderState.mProjectionMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.multMatrix(matrix);
-}
-
-//-----------------------------------------------------------------------------
-//
-// Setup the modelview matrix
-//
-//-----------------------------------------------------------------------------
-
-void GLSceneDrawer::SetViewMatrix(float vx, float vy, float vz, bool mirror, bool planemirror)
-{
-	float mult = mirror? -1:1;
-	float planemult = planemirror? -level.info->pixelstretch : level.info->pixelstretch;
-
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Roll.Degrees,  0.0f, 0.0f, 1.0f);
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Pitch.Degrees, 1.0f, 0.0f, 0.0f);
-	gl_RenderState.mViewMatrix.rotate(GLRenderer->mAngles.Yaw.Degrees,   0.0f, mult, 0.0f);
-	gl_RenderState.mViewMatrix.translate(vx * mult, -vz * planemult , -vy);
-	gl_RenderState.mViewMatrix.scale(-mult, planemult, 1);
-}
-
-
-//-----------------------------------------------------------------------------
-//
-// SetupView
-// Setup the view rotation matrix for the given viewpoint
-//
-//-----------------------------------------------------------------------------
-void GLSceneDrawer::SetupView(float vx, float vy, float vz, DAngle va, bool mirror, bool planemirror)
-{
-	SetViewAngle(va);
-	SetViewMatrix(vx, vy, vz, mirror, planemirror);
-	gl_RenderState.ApplyMatrices();
-}
 
 //-----------------------------------------------------------------------------
 //
@@ -211,48 +100,45 @@ void GLSceneDrawer::SetupView(float vx, float vy, float vz, DAngle va, bool mirr
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::CreateScene(FDrawInfo *di)
+void FDrawInfo::CreateScene()
 {
+	const auto &vp = Viewpoint;
 	angle_t a1 = FrustumAngle();
-	di->mClipper->SafeAddClipRangeRealAngles(r_viewpoint.Angles.Yaw.BAMs() + a1, r_viewpoint.Angles.Yaw.BAMs() - a1);
+	mClipper->SafeAddClipRangeRealAngles(vp.Angles.Yaw.BAMs() + a1, vp.Angles.Yaw.BAMs() - a1);
 
 	// reset the portal manager
-	GLPortal::StartFrame();
+	GLRenderer->mPortalState.StartFrame();
 	PO_LinkToSubsectors();
 
 	ProcessAll.Clock();
 
 	// clip the scene and fill the drawlists
-	for(auto p : level.portalGroups) p->glportal = nullptr;
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
 	GLRenderer->mLights->Begin();
 
 	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
-	di->viewx = FLOAT2FIXED(r_viewpoint.Pos.X);
-	di->viewy = FLOAT2FIXED(r_viewpoint.Pos.Y);
+	viewx = FLOAT2FIXED(vp.Pos.X);
+	viewy = FLOAT2FIXED(vp.Pos.Y);
 
 	validcount++;	// used for processing sidedefs only once by the renderer.
 	 
-	di->mAngles = GLRenderer->mAngles;
-	di->mViewVector = GLRenderer->mViewVector;
-	di->mViewActor = GLRenderer->mViewActor;
-	di->mShadowMap = &GLRenderer->mShadowMap;
+	mShadowMap = &GLRenderer->mShadowMap;
 
-	di->RenderBSPNode (level.HeadNode());
-	di->PreparePlayerSprites(r_viewpoint.sector, di->in_area);
+	RenderBSPNode (level.HeadNode());
+	PreparePlayerSprites(vp.sector, in_area);
 
 	// Process all the sprites on the current portal's back side which touch the portal.
-	if (GLRenderer->mCurrentPortal != NULL) GLRenderer->mCurrentPortal->RenderAttached(di);
+	if (mCurrentPortal != nullptr) mCurrentPortal->RenderAttached(this);
 	Bsp.Unclock();
 
 	// And now the crappy hacks that have to be done to avoid rendering anomalies.
 	// These cannot be multithreaded when the time comes because all these depend
 	// on the global 'validcount' variable.
 
-	di->HandleMissingTextures(di->in_area);	// Missing upper/lower textures
-	di->HandleHackedSubsectors();	// open sector hacks for deep water
-	di->ProcessSectorStacks(di->in_area);		// merge visplanes of sector stacks
+	HandleMissingTextures(in_area);	// Missing upper/lower textures
+	HandleHackedSubsectors();	// open sector hacks for deep water
+	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
 	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();
 
@@ -268,36 +154,35 @@ void GLSceneDrawer::CreateScene(FDrawInfo *di)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
+void FDrawInfo::RenderScene(int recursion)
 {
+	const auto &vp = Viewpoint;
 	RenderAll.Clock();
 
 	glDepthMask(true);
-	if (!gl_no_skyclear) GLPortal::RenderFirstSkyPortal(recursion);
-
-	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
+ 	if (!gl_no_skyclear) GLRenderer->mPortalState.RenderFirstSkyPortal(recursion, this);
 
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 
 	if (gl_sort_textures)
 	{
-		di->drawlists[GLDL_PLAINWALLS].SortWalls();
-		di->drawlists[GLDL_PLAINFLATS].SortFlats();
-		di->drawlists[GLDL_MASKEDWALLS].SortWalls();
-		di->drawlists[GLDL_MASKEDFLATS].SortFlats();
-		di->drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
+		drawlists[GLDL_PLAINWALLS].SortWalls();
+		drawlists[GLDL_PLAINFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLS].SortWalls();
+		drawlists[GLDL_MASKEDFLATS].SortFlats();
+		drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
 	}
 
 	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
 	// so that we don't have to do repeated map/unmap calls on the buffer.
-	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && FixedColormap == CM_DEFAULT)
+	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && !isFullbrightScene())
 	{
 		GLRenderer->mLights->Begin();
-		di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, GLPASS_LIGHTSONLY);
-		di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, GLPASS_LIGHTSONLY);
-		di->drawlists[GLDL_TRANSLUCENTBORDER].Draw(di, GLPASS_LIGHTSONLY);
-		di->drawlists[GLDL_TRANSLUCENT].Draw(di, GLPASS_LIGHTSONLY, true);
+		drawlists[GLDL_PLAINFLATS].DrawFlats(this, GLPASS_LIGHTSONLY);
+		drawlists[GLDL_MASKEDFLATS].DrawFlats(this, GLPASS_LIGHTSONLY);
+		drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, GLPASS_LIGHTSONLY);
+		drawlists[GLDL_TRANSLUCENT].Draw(this, GLPASS_LIGHTSONLY, true);
 		GLRenderer->mLights->Finish();
 	}
 
@@ -306,25 +191,12 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
 
-	int pass;
-
-	if (!level.HasDynamicLights || !gl.legacyMode)
-	{
-		pass = GLPASS_ALL;
-	}
-	else // GL 2.x legacy mode
-	{
-		// process everything that needs to handle textured dynamic lights.
-		if (level.HasDynamicLights) RenderMultipassStuff(di);
-
-		// The remaining lists which are unaffected by dynamic lights are just processed as normal.
-		pass = GLPASS_ALL;
-	}
+	int pass = GLPASS_ALL;
 
 	gl_RenderState.EnableTexture(gl_texture);
 	gl_RenderState.EnableBrightmap(true);
-	di->drawlists[GLDL_PLAINWALLS].DrawWalls(di, pass);
-	di->drawlists[GLDL_PLAINFLATS].DrawFlats(di, pass);
+	drawlists[GLDL_PLAINWALLS].DrawWalls(this, pass);
+	drawlists[GLDL_PLAINFLATS].DrawFlats(this, pass);
 
 
 	// Part 2: masked geometry. This is set up so that only pixels with alpha>gl_mask_threshold will show
@@ -334,20 +206,20 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 		gl_RenderState.SetTextureMode(TM_MASK);
 	}
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
-	di->drawlists[GLDL_MASKEDWALLS].DrawWalls(di, pass);
-	di->drawlists[GLDL_MASKEDFLATS].DrawFlats(di, pass);
+	drawlists[GLDL_MASKEDWALLS].DrawWalls(this, pass);
+	drawlists[GLDL_MASKEDFLATS].DrawFlats(this, pass);
 
 	// Part 3: masked geometry with polygon offset. This list is empty most of the time so only waste time on it when in use.
-	if (di->drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
+	if (drawlists[GLDL_MASKEDWALLSOFS].Size() > 0)
 	{
 		glEnable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(-1.0f, -128.0f);
-		di->drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(di, pass);
+		drawlists[GLDL_MASKEDWALLSOFS].DrawWalls(this, pass);
 		glDisable(GL_POLYGON_OFFSET_FILL);
 		glPolygonOffset(0, 0);
 	}
 
-	di->drawlists[GLDL_MODELS].Draw(di, pass);
+	drawlists[GLDL_MODELS].Draw(this, pass);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -356,7 +228,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	glEnable(GL_POLYGON_OFFSET_FILL);
 	glPolygonOffset(-1.0f, -128.0f);
 	glDepthMask(false);
-	di->DrawDecals();
+	DrawDecals();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
 
@@ -374,7 +246,7 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 	gl_RenderState.EnableFog(true);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
-	di->DrawUnhandledMissingTextures();
+	DrawUnhandledMissingTextures();
 	glDepthMask(true);
 
 	glPolygonOffset(0.0f, 0.0f);
@@ -391,20 +263,18 @@ void GLSceneDrawer::RenderScene(FDrawInfo *di, int recursion)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::RenderTranslucent(FDrawInfo *di)
+void FDrawInfo::RenderTranslucent()
 {
 	RenderAll.Clock();
-
-	gl_RenderState.SetCameraPos(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z);
 
 	// final pass: translucent stuff
 	gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_sprite_threshold);
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	gl_RenderState.EnableBrightmap(true);
-	di->drawlists[GLDL_TRANSLUCENTBORDER].Draw(di, GLPASS_TRANSLUCENT);
+	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, GLPASS_TRANSLUCENT);
 	glDepthMask(false);
-	di->DrawSorted(GLDL_TRANSLUCENT);
+	DrawSorted(GLDL_TRANSLUCENT);
 	gl_RenderState.EnableBrightmap(false);
 
 
@@ -424,10 +294,11 @@ void GLSceneDrawer::RenderTranslucent(FDrawInfo *di)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
+void FDrawInfo::DrawScene(int drawmode)
 {
 	static int recursion=0;
 	static int ssao_portals_available = 0;
+	const auto &vp = Viewpoint;
 
 	bool applySSAO = false;
 	if (drawmode == DM_MAINVIEW)
@@ -445,35 +316,35 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 		ssao_portals_available--;
 	}
 
-	if (r_viewpoint.camera != nullptr)
+	if (vp.camera != nullptr)
 	{
-		ActorRenderFlags savedflags = r_viewpoint.camera->renderflags;
-		CreateScene(di);
-		r_viewpoint.camera->renderflags = savedflags;
+		ActorRenderFlags savedflags = vp.camera->renderflags;
+		CreateScene();
+		vp.camera->renderflags = savedflags;
 	}
 	else
 	{
-		CreateScene(di);
+		CreateScene();
 	}
 
-	RenderScene(di, recursion);
+	RenderScene(recursion);
 
 	if (applySSAO && gl_RenderState.GetPassType() == GBUFFER_PASS)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
-		GLRenderer->AmbientOccludeScene();
+		GLRenderer->AmbientOccludeScene(VPUniforms.mProjectionMatrix.get()[5]);
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
-		gl_RenderState.ApplyMatrices();
+		ApplyVPUniforms();
 	}
 
 	// Handle all portals after rendering the opaque objects but before
 	// doing all translucent stuff
 	recursion++;
-	GLPortal::EndFrame();
+	GLRenderer->mPortalState.EndFrame(this);
 	recursion--;
-	RenderTranslucent(di);
+	RenderTranslucent();
 }
 
 //-----------------------------------------------------------------------------
@@ -483,7 +354,7 @@ void GLSceneDrawer::DrawScene(FDrawInfo *di, int drawmode)
 //-----------------------------------------------------------------------------
 
 
-void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
+void FDrawInfo::EndDrawScene(sector_t * viewsector)
 {
 	gl_RenderState.EnableFog(false);
 
@@ -493,48 +364,33 @@ void GLSceneDrawer::EndDrawScene(FDrawInfo *di, sector_t * viewsector)
 	{
 		// [BB] The HUD model should be drawn over everything else already drawn.
 		glClear(GL_DEPTH_BUFFER_BIT);
-		di->DrawPlayerSprites(true);
+		DrawPlayerSprites(true);
 	}
 
 	glDisable(GL_STENCIL_TEST);
+    glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
 
-	Reset3DViewport();
-
-	// Delay drawing psprites until after bloom has been applied, if enabled.
-	if (!FGLRenderBuffers::IsEnabled() || !gl_bloom || FixedColormap != CM_DEFAULT)
-	{
-		DrawEndScene2D(di, viewsector);
-	}
-	else
-	{
-		// Restore standard rendering state
-		gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		gl_RenderState.ResetColor();
-		gl_RenderState.EnableTexture(true);
-		glDisable(GL_SCISSOR_TEST);
-	}
+	// Restore standard rendering state
+	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	gl_RenderState.ResetColor();
+	gl_RenderState.EnableTexture(true);
+	glDisable(GL_SCISSOR_TEST);
 }
 
-void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
+void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 {
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
+	auto vrmode = VRMode::GetVRMode(true);
 
-	// This should be removed once all 2D stuff is really done through the 2D interface.
-	gl_RenderState.mViewMatrix.loadIdentity();
-	gl_RenderState.mProjectionMatrix.ortho(0, screen->GetWidth(), screen->GetHeight(), 0, -1.0f, 1.0f);
-	gl_RenderState.ApplyMatrices();
+	VPUniforms.mViewMatrix.loadIdentity();
+	VPUniforms.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
+	ApplyVPUniforms();
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);
 
 
- 	di->DrawPlayerSprites(false);
+ 	DrawPlayerSprites(false);
 
-	if (gl.legacyMode)
-	{
-		gl_RenderState.DrawColormapOverlay();
-	}
-
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
 	gl_RenderState.SetSoftLightLevel(-1);
 
 	// Restore standard rendering state
@@ -550,62 +406,43 @@ void GLSceneDrawer::DrawEndScene2D(FDrawInfo *di, sector_t * viewsector)
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::ProcessScene(FDrawInfo *di, bool toscreen)
+void FDrawInfo::ProcessScene(bool toscreen)
 {
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
-	GLPortal::BeginScene();
+	GLRenderer->mPortalState.BeginScene();
 
-	int mapsection = R_PointInSubsector(r_viewpoint.Pos)->mapsection;
-	di->CurrentMapSections.Set(mapsection);
-	GLRenderer->mCurrentPortal = nullptr;
-	DrawScene(di, toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
+	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	CurrentMapSections.Set(mapsection);
+	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 
 }
 
 //-----------------------------------------------------------------------------
 //
-// gl_SetFixedColormap
+// sets 3D viewport and initial state
 //
 //-----------------------------------------------------------------------------
 
-void GLSceneDrawer::SetFixedColormap (player_t *player)
+void FGLRenderer::Set3DViewport()
 {
-	FixedColormap=CM_DEFAULT;
-
-	// check for special colormaps
-	player_t * cplayer = player->camera->player;
-	if (cplayer) 
-	{
-		if (cplayer->extralight == INT_MIN)
-		{
-			FixedColormap=CM_FIRSTSPECIALCOLORMAP + INVERSECOLORMAP;
-			r_viewpoint.extralight=0;
-		}
-		else if (cplayer->fixedcolormap != NOFIXEDCOLORMAP)
-		{
-			FixedColormap = CM_FIRSTSPECIALCOLORMAP + cplayer->fixedcolormap;
-		}
-		else if (cplayer->fixedlightlevel != -1)
-		{
-			auto torchtype = PClass::FindActor(NAME_PowerTorch);
-			auto litetype = PClass::FindActor(NAME_PowerLightAmp);
-			for(AInventory * in = cplayer->mo->Inventory; in; in = in->Inventory)
-			{
-				PalEntry color = in->CallGetBlend ();
-
-				// Need special handling for light amplifiers 
-				if (in->IsKindOf(torchtype))
-				{
-					FixedColormap = cplayer->fixedlightlevel + CM_TORCH;
-				}
-				else if (in->IsKindOf(litetype))
-				{
-					FixedColormap = CM_LITE;
-				}
-			}
-		}
-	}
-	gl_RenderState.SetFixedColormap(FixedColormap);
+    // Always clear all buffers with scissor test disabled.
+    // This is faster on newer hardware because it allows the GPU to skip
+    // reading from slower memory where the full buffers are stored.
+    glDisable(GL_SCISSOR_TEST);
+    glClearColor(mSceneClearColor[0], mSceneClearColor[1], mSceneClearColor[2], 1.0f);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+    
+    const auto &bounds = screen->mSceneViewport;
+    glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
+    glScissor(bounds.left, bounds.top, bounds.width, bounds.height);
+    
+    glEnable(GL_SCISSOR_TEST);
+    
+    glEnable(GL_MULTISAMPLE);
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_STENCIL_TEST);
+    glStencilFunc(GL_ALWAYS,0,~0);    // default stencil
+    glStencilOp(GL_KEEP,GL_KEEP,GL_REPLACE);
 }
 
 //-----------------------------------------------------------------------------
@@ -614,143 +451,67 @@ void GLSceneDrawer::SetFixedColormap (player_t *player)
 //
 //-----------------------------------------------------------------------------
 
-sector_t * GLSceneDrawer::RenderViewpoint (AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
-{       
-	sector_t * lviewsector;
-	GLRenderer->mSceneClearColor[0] = 0.0f;
-	GLRenderer->mSceneClearColor[1] = 0.0f;
-	GLRenderer->mSceneClearColor[2] = 0.0f;
-	R_SetupFrame (r_viewpoint, r_viewwindow, camera);
+sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * camera, IntRect * bounds, float fov, float ratio, float fovratio, bool mainview, bool toscreen)
+{
+	R_SetupFrame (mainvp, r_viewwindow, camera);
 
-	GLRenderer->mGlobVis = R_GetGlobVis(r_viewwindow, r_visibility);
-
-	// We have to scale the pitch to account for the pixel stretching, because the playsim doesn't know about this and treats it as 1:1.
-	double radPitch = r_viewpoint.Angles.Pitch.Normalized180().Radians();
-	double angx = cos(radPitch);
-	double angy = sin(radPitch) * level.info->pixelstretch;
-	double alen = sqrt(angx*angx + angy*angy);
-
-	GLRenderer->mAngles.Pitch = (float)RAD2DEG(asin(angy / alen));
-	GLRenderer->mAngles.Roll.Degrees = r_viewpoint.Angles.Roll.Degrees;
-
-	if (camera->player && camera->player-players==consoleplayer &&
-		((camera->player->cheats & CF_CHASECAM) || (r_deathcamera && camera->health <= 0)) && camera==camera->player->mo)
+    // Render (potentially) multiple views for stereo 3d
+	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
+	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
+	for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
 	{
-		GLRenderer->mViewActor=NULL;
-	}
-	else
-	{
-		GLRenderer->mViewActor=camera;
-	}
-
-	// 'viewsector' will not survive the rendering so it cannot be used anymore below.
-	lviewsector = r_viewpoint.sector;
-
-	// Render (potentially) multiple views for stereo 3d
-	float viewShift[3];
-	const s3d::Stereo3DMode& stereo3dMode = mainview && toscreen? s3d::Stereo3DMode::getCurrentMode() : s3d::Stereo3DMode::getMonoMode();
-	stereo3dMode.SetUp();
-	for (int eye_ix = 0; eye_ix < stereo3dMode.eye_count(); ++eye_ix)
-	{
-		if (eye_ix > 0 && camera->player)
-			SetFixedColormap(camera->player); // reiterate color map for each eye, so night vision goggles work in both eyes
-		const s3d::EyePose * eye = stereo3dMode.getEyePose(eye_ix);
-		eye->SetUp();
+		const auto &eye = vrmode->mEyes[eye_ix];
 		screen->SetViewportRects(bounds);
-		Set3DViewport(mainview);
-		GLRenderer->mDrawingScene2D = true;
-		GLRenderer->mCurrentFoV = fov;
 
-		FDrawInfo *di = FDrawInfo::StartDrawInfo(this);
+		if (mainview) // Bind the scene frame buffer and turn on draw buffers used by ssao
+		{
+			FGLDebug::PushGroup("MainView");
+
+			bool useSSAO = (gl_ssao != 0);
+			mBuffers->BindSceneFB(useSSAO);
+			gl_RenderState.SetPassType(useSSAO ? GBUFFER_PASS : NORMAL_PASS);
+			gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
+			gl_RenderState.Apply();
+		}
+
+		Set3DViewport();
+
+		FDrawInfo *di = FDrawInfo::StartDrawInfo(mainvp, nullptr);
+		auto &vp = di->Viewpoint;
 		di->SetViewArea();
+		auto cm =  di->SetFullbrightFlags(mainview ? vp.camera->player : nullptr);
+		di->Viewpoint.FieldOfView = fov;	// Set the real FOV for the current scene (it's not necessarily the same as the global setting in r_viewpoint)
 
 		// Stereo mode specific perspective projection
-		SetProjection( eye->GetProjection(fov, ratio, fovratio) );
-		// SetProjection(fov, ratio, fovratio);	// switch to perspective mode and set up clipper
-		SetViewAngle(r_viewpoint.Angles.Yaw);
-		// Stereo mode specific viewpoint adjustment - temporarily shifts global ViewPos
-		eye->GetViewShift(GLRenderer->mAngles.Yaw.Degrees, viewShift);
-		s3d::ScopedViewShifter viewShifter(viewShift);
-		SetViewMatrix(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, r_viewpoint.Pos.Z, false, false);
-		gl_RenderState.ApplyMatrices();
+		di->VPUniforms.mProjectionMatrix = eye.GetProjection(fov, ratio, fovratio);
+		// Stereo mode specific viewpoint adjustment
+		vp.Pos += eye.GetViewShift(vp.HWAngles.Yaw.Degrees);
+		di->SetupView(vp.Pos.X, vp.Pos.Y, vp.Pos.Z, false, false);
 
-		ProcessScene(di, toscreen);
-		if (mainview && toscreen) EndDrawScene(di, lviewsector); // do not call this for camera textures.
+		di->ProcessScene(toscreen);
 
-		if (mainview && FGLRenderBuffers::IsEnabled())
+		if (mainview)
 		{
-			GLRenderer->PostProcessScene(FixedColormap, [&]() { if (gl_bloom && FixedColormap == CM_DEFAULT) DrawEndScene2D(di, lviewsector); });
+			if (toscreen) di->EndDrawScene(mainvp.sector); // do not call this for camera textures.
 
-			// This should be done after postprocessing, not before.
-			GLRenderer->mBuffers->BindCurrentFB();
-			glViewport(screen->mScreenViewport.left, screen->mScreenViewport.top, screen->mScreenViewport.width, screen->mScreenViewport.height);
-
-			if (!toscreen)
+			if (gl_RenderState.GetPassType() == GBUFFER_PASS) // Turn off ssao draw buffers
 			{
-				gl_RenderState.mViewMatrix.loadIdentity();
-				gl_RenderState.mProjectionMatrix.ortho(screen->mScreenViewport.left, screen->mScreenViewport.width, screen->mScreenViewport.height, screen->mScreenViewport.top, -1.0f, 1.0f);
-				gl_RenderState.ApplyMatrices();
+				gl_RenderState.SetPassType(NORMAL_PASS);
+				gl_RenderState.EnableDrawBuffers(1);
 			}
+
+			mBuffers->BlitSceneToTexture(); // Copy the resulting scene to the current post process texture
+
+			FGLDebug::PopGroup(); // MainView
+
+			PostProcessScene(cm, [&]() { di->DrawEndScene2D(mainvp.sector); });
 		}
-		FDrawInfo::EndDrawInfo();
-		GLRenderer->mDrawingScene2D = false;
-		if (!stereo3dMode.IsMono() && FGLRenderBuffers::IsEnabled())
-			GLRenderer->mBuffers->BlitToEyeTexture(eye_ix);
-		eye->TearDown();
+		di->EndDrawInfo();
+		if (vrmode->mEyeCount > 1)
+			mBuffers->BlitToEyeTexture(eye_ix);
 	}
-	stereo3dMode.TearDown();
 
 	interpolator.RestoreInterpolations ();
-	return lviewsector;
+	return mainvp.sector;
 }
 
-//===========================================================================
-//
-// Render the view to a savegame picture
-//
-//===========================================================================
-
-void GLSceneDrawer::WriteSavePic (player_t *player, FileWriter *file, int width, int height)
-{
-	IntRect bounds;
-	bounds.left = 0;
-	bounds.top = 0;
-	bounds.width = width;
-	bounds.height = height;
-
-	// if GLRenderer->mVBO is persistently mapped we must be sure the GPU finished reading from it before we fill it with new data.
-	glFinish();
-
-	// Switch to render buffers dimensioned for the savepic
-	GLRenderer->mBuffers = GLRenderer->mSaveBuffers;
-
-	P_FindParticleSubsectors();	// make sure that all recently spawned particles have a valid subsector.
-	SetFixedColormap(player);
-	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-	GLRenderer->mVBO->Reset();
-	if (!gl.legacyMode) GLRenderer->mLights->Clear();
-
-	sector_t *viewsector = RenderViewpoint(players[consoleplayer].camera, &bounds, r_viewpoint.FieldOfView.Degrees, 1.6f, 1.6f, true, false);
-	glDisable(GL_STENCIL_TEST);
-	gl_RenderState.SetFixedColormap(CM_DEFAULT);
-	gl_RenderState.SetSoftLightLevel(-1);
-	if (!FGLRenderBuffers::IsEnabled())
-	{
-		// Since this doesn't do any of the 2D rendering it needs to draw the screen blend itself before extracting the image.
-		screen->DrawBlend(viewsector);
-		screen->Draw2D();
-	}
-	GLRenderer->CopyToBackbuffer(&bounds, false);
-
-	// strictly speaking not needed as the glReadPixels should block until the scene is rendered, but this is to safeguard against shitty drivers
-	glFinish();
-
-	uint8_t * scr = (uint8_t *)M_Malloc(width * height * 3);
-	glReadPixels(0,0,width, height,GL_RGB,GL_UNSIGNED_BYTE,scr);
-	M_CreatePNG (file, scr + ((height-1) * width * 3), NULL, SS_RGB, width, height, -width * 3, Gamma);
-	M_Free(scr);
-
-	// Switch back the screen render buffers
-	screen->SetViewportRects(nullptr);
-	GLRenderer->mBuffers = GLRenderer->mScreenBuffers;
-}

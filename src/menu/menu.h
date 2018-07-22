@@ -342,8 +342,6 @@ void M_StartControlPanel (bool makeSound);
 void M_SetMenu(FName menu, int param = -1);
 void M_StartMessage(const char *message, int messagemode, FName action = NAME_None);
 DMenu *StartPickerMenu(DMenu *parent, const char *name, FColorCVar *cvar);
-void M_RefreshModesList ();
-void M_InitVideoModesMenu ();
 void M_MarkMenus();
 
 

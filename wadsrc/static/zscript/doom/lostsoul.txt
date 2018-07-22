@@ -22,6 +22,7 @@ class LostSoul : Actor
 		ActiveSound "skull/active";
 		RenderStyle "SoulTrans";
 		Obituary "$OB_SKULL";
+		Tag "$FN_LOST";
 	}
 	States
 	{

@@ -1,36 +1,33 @@
-#ifndef __GL_SHADERPROGRAM_H
-#define __GL_SHADERPROGRAM_H
 
+#pragma once
+
+#include "gl_load/gl_system.h"
 #include "gl_shader.h"
+#include "hwrenderer/postprocessing/hw_shaderprogram.h"
 
-class FShaderProgram
+class FShaderProgram : public IShaderProgram
 {
 public:
 	FShaderProgram();
 	~FShaderProgram();
 
-	enum ShaderType
-	{
-		Vertex,
-		Fragment,
-		NumShaderTypes
-	};
-
-	void Compile(ShaderType type, const char *lumpName, const char *defines, int maxGlslVersion);
-	void Compile(ShaderType type, const char *name, const FString &code, const char *defines, int maxGlslVersion);
-	void SetFragDataLocation(int index, const char *name);
+	void Compile(ShaderType type, const char *lumpName, const char *defines, int maxGlslVersion) override;
+	void Compile(ShaderType type, const char *name, const FString &code, const char *defines, int maxGlslVersion) override;
 	void Link(const char *name);
-	void SetAttribLocation(int index, const char *name);
-	void Bind();
+	void SetUniformBufferLocation(int index, const char *name);
 
-	operator GLuint() const { return mProgram; }
-	explicit operator bool() const { return mProgram != 0; }
+	void Bind(IRenderQueue *q) override;	// the parameter here is just a preparation for Vulkan
+
+	GLuint Handle() { return mProgram; }
+	//explicit operator bool() const { return mProgram != 0; }
+
+	std::unique_ptr<IUniformBuffer> Uniforms;
 
 private:
 	FShaderProgram(const FShaderProgram &) = delete;
 	FShaderProgram &operator=(const FShaderProgram &) = delete;
 
-	static FString PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion);
+	FString PatchShader(ShaderType type, const FString &code, const char *defines, int maxGlslVersion);
 
 	void CreateShader(ShaderType type);
 	FString GetShaderInfoLog(GLuint handle);
@@ -38,6 +35,5 @@ private:
 
 	GLuint mProgram = 0;
 	GLuint mShaders[NumShaderTypes];
+	TArray<std::pair<FString, int>> samplerstobind;
 };
-
-#endif

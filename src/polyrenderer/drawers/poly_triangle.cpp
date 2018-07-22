@@ -31,6 +31,7 @@
 #include "g_game.h"
 #include "g_level.h"
 #include "r_data/r_translate.h"
+#include "r_data/models/models.h"
 #include "v_palette.h"
 #include "r_data/colormaps.h"
 #include "poly_triangle.h"
@@ -41,15 +42,20 @@
 
 static bool isBgraRenderTarget = false;
 
-void PolyTriangleDrawer::ClearBuffers(DCanvas *canvas)
+void PolyTriangleDrawer::ResizeBuffers(DCanvas *canvas)
 {
-	PolyStencilBuffer::Instance()->Clear(canvas->GetWidth(), canvas->GetHeight(), 0);
+	PolyStencilBuffer::Instance()->Resize(canvas->GetWidth(), canvas->GetHeight());
 	PolyZBuffer::Instance()->Resize(canvas->GetPitch(), canvas->GetHeight());
 }
 
 bool PolyTriangleDrawer::IsBgra()
 {
 	return isBgraRenderTarget;
+}
+
+void PolyTriangleDrawer::ClearStencil(const DrawerCommandQueuePtr &queue, uint8_t value)
+{
+	queue->Push<PolyClearStencilCommand>(value);
 }
 
 void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, int y, int width, int height, DCanvas *canvas)
@@ -77,9 +83,9 @@ void PolyTriangleDrawer::SetViewport(const DrawerCommandQueuePtr &queue, int x, 
 	queue->Push<PolySetViewportCommand>(viewport_x, viewport_y, viewport_width, viewport_height, dest, dest_width, dest_height, dest_pitch, dest_bgra);
 }
 
-void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip)
+void PolyTriangleDrawer::SetTransform(const DrawerCommandQueuePtr &queue, const Mat4f *objectToClip, const Mat4f *objectToWorld)
 {
-	queue->Push<PolySetTransformCommand>(objectToClip);
+	queue->Push<PolySetTransformCommand>(objectToClip, objectToWorld);
 }
 
 void PolyTriangleDrawer::SetCullCCW(const DrawerCommandQueuePtr &queue, bool ccw)
@@ -97,7 +103,37 @@ void PolyTriangleDrawer::SetWeaponScene(const DrawerCommandQueuePtr &queue, bool
 	queue->Push<PolySetWeaponSceneCommand>(enable);
 }
 
+void PolyTriangleDrawer::SetModelVertexShader(const DrawerCommandQueuePtr &queue, int frame1, int frame2, float interpolationFactor)
+{
+	queue->Push<PolySetModelVertexShaderCommand>(frame1, frame2, interpolationFactor);
+}
+
+void PolyTriangleDrawer::DrawArray(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, int vcount, PolyDrawMode mode)
+{
+	queue->Push<DrawPolyTrianglesCommand>(args, vertices, nullptr, vcount, mode);
+}
+
+void PolyTriangleDrawer::DrawElements(const DrawerCommandQueuePtr &queue, const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode)
+{
+	queue->Push<DrawPolyTrianglesCommand>(args, vertices, elements, count, mode);
+}
+
 /////////////////////////////////////////////////////////////////////////////
+
+void PolyTriangleThreadData::ClearStencil(uint8_t value)
+{
+	auto buffer = PolyStencilBuffer::Instance();
+	int width = buffer->Width();
+	int height = buffer->Height();
+	uint8_t *data = buffer->Values();
+
+	data += core * width;
+	for (int y = core; y < height; y += num_cores)
+	{
+		memset(data, value, width);
+		data += num_cores * width;
+	}
+}
 
 void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, uint8_t *new_dest, int new_dest_width, int new_dest_height, int new_dest_pitch, bool new_dest_bgra)
 {
@@ -114,14 +150,15 @@ void PolyTriangleThreadData::SetViewport(int x, int y, int width, int height, ui
 	weaponScene = false;
 }
 
-void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip)
+void PolyTriangleThreadData::SetTransform(const Mat4f *newObjectToClip, const Mat4f *newObjectToWorld)
 {
 	objectToClip = newObjectToClip;
+	objectToWorld = newObjectToWorld;
 }
 
-void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
+void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs, const void *vertices, const unsigned int *elements, int vcount, PolyDrawMode drawmode)
 {
-	if (drawargs.VertexCount() < 3)
+	if (vcount < 3)
 		return;
 
 	TriDrawTriangleArgs args;
@@ -132,30 +169,27 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
 	args.uniforms = &drawargs;
 	args.destBgra = dest_bgra;
 	args.stencilbuffer = PolyStencilBuffer::Instance()->Values();
+	args.stencilpitch = PolyStencilBuffer::Instance()->Width();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
 	args.depthOffset = weaponScene ? 1.0f : 0.0f;
 
-	const TriVertex *vinput = drawargs.Vertices();
-	const unsigned int *elements = drawargs.Elements();
-	int vcount = drawargs.VertexCount();
-
 	ShadedTriVertex vert[3];
-	if (drawargs.DrawMode() == PolyDrawMode::Triangles)
+	if (drawmode == PolyDrawMode::Triangles)
 	{
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = ShadeVertex(drawargs, vinput[*(elements++)]);
+				vert[j] = ShadeVertex(drawargs, vertices, *(elements++));
 			DrawShadedTriangle(vert, ccw, &args);
 		}
 	}
-	else if (drawargs.DrawMode() == PolyDrawMode::TriangleFan)
+	else if (drawmode == PolyDrawMode::TriangleFan)
 	{
-		vert[0] = ShadeVertex(drawargs, vinput[*(elements++)]);
-		vert[1] = ShadeVertex(drawargs, vinput[*(elements++)]);
+		vert[0] = ShadeVertex(drawargs, vertices, *(elements++));
+		vert[1] = ShadeVertex(drawargs, vertices, *(elements++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, vinput[*(elements++)]);
+			vert[2] = ShadeVertex(drawargs, vertices, *(elements++));
 			DrawShadedTriangle(vert, ccw, &args);
 			vert[1] = vert[2];
 		}
@@ -163,11 +197,11 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
 	else // TriangleDrawMode::TriangleStrip
 	{
 		bool toggleccw = ccw;
-		vert[0] = ShadeVertex(drawargs, vinput[*(elements++)]);
-		vert[1] = ShadeVertex(drawargs, vinput[*(elements++)]);
+		vert[0] = ShadeVertex(drawargs, vertices, *(elements++));
+		vert[1] = ShadeVertex(drawargs, vertices, *(elements++));
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, vinput[*(elements++)]);
+			vert[2] = ShadeVertex(drawargs, vertices, *(elements++));
 			DrawShadedTriangle(vert, toggleccw, &args);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -176,9 +210,9 @@ void PolyTriangleThreadData::DrawElements(const PolyDrawArgs &drawargs)
 	}
 }
 
-void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
+void PolyTriangleThreadData::DrawArray(const PolyDrawArgs &drawargs, const void *vertices, int vcount, PolyDrawMode drawmode)
 {
-	if (drawargs.VertexCount() < 3)
+	if (vcount < 3)
 		return;
 
 	TriDrawTriangleArgs args;
@@ -189,29 +223,29 @@ void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
 	args.uniforms = &drawargs;
 	args.destBgra = dest_bgra;
 	args.stencilbuffer = PolyStencilBuffer::Instance()->Values();
+	args.stencilpitch = PolyStencilBuffer::Instance()->Width();
 	args.zbuffer = PolyZBuffer::Instance()->Values();
 	args.depthOffset = weaponScene ? 1.0f : 0.0f;
 
-	const TriVertex *vinput = drawargs.Vertices();
-	int vcount = drawargs.VertexCount();
+	int vinput = 0;
 
 	ShadedTriVertex vert[3];
-	if (drawargs.DrawMode() == PolyDrawMode::Triangles)
+	if (drawmode == PolyDrawMode::Triangles)
 	{
 		for (int i = 0; i < vcount / 3; i++)
 		{
 			for (int j = 0; j < 3; j++)
-				vert[j] = ShadeVertex(drawargs, *(vinput++));
+				vert[j] = ShadeVertex(drawargs, vertices, vinput++);
 			DrawShadedTriangle(vert, ccw, &args);
 		}
 	}
-	else if (drawargs.DrawMode() == PolyDrawMode::TriangleFan)
+	else if (drawmode == PolyDrawMode::TriangleFan)
 	{
-		vert[0] = ShadeVertex(drawargs, *(vinput++));
-		vert[1] = ShadeVertex(drawargs, *(vinput++));
+		vert[0] = ShadeVertex(drawargs, vertices, vinput++);
+		vert[1] = ShadeVertex(drawargs, vertices, vinput++);
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, *(vinput++));
+			vert[2] = ShadeVertex(drawargs, vertices, vinput++);
 			DrawShadedTriangle(vert, ccw, &args);
 			vert[1] = vert[2];
 		}
@@ -219,11 +253,11 @@ void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
 	else // TriangleDrawMode::TriangleStrip
 	{
 		bool toggleccw = ccw;
-		vert[0] = ShadeVertex(drawargs, *(vinput++));
-		vert[1] = ShadeVertex(drawargs, *(vinput++));
+		vert[0] = ShadeVertex(drawargs, vertices, vinput++);
+		vert[1] = ShadeVertex(drawargs, vertices, vinput++);
 		for (int i = 2; i < vcount; i++)
 		{
-			vert[2] = ShadeVertex(drawargs, *(vinput++));
+			vert[2] = ShadeVertex(drawargs, vertices, vinput++);
 			DrawShadedTriangle(vert, toggleccw, &args);
 			vert[0] = vert[1];
 			vert[1] = vert[2];
@@ -232,27 +266,65 @@ void PolyTriangleThreadData::DrawArrays(const PolyDrawArgs &drawargs)
 	}
 }
 
-ShadedTriVertex PolyTriangleThreadData::ShadeVertex(const PolyDrawArgs &drawargs, const TriVertex &v)
+ShadedTriVertex PolyTriangleThreadData::ShadeVertex(const PolyDrawArgs &drawargs, const void *vertices, int index)
 {
-	// Apply transform to get clip coordinates:
-	Vec4f position = (*objectToClip) * Vec4f(v.x, v.y, v.z, v.w);
-
 	ShadedTriVertex sv;
-	sv.x = position.X;
-	sv.y = position.Y;
-	sv.z = position.Z;
-	sv.w = position.W;
-	sv.u = v.u;
-	sv.v = v.v;
-	sv.worldX = v.x;
-	sv.worldY = v.y;
-	sv.worldZ = v.z;
+	Vec4f objpos;
+
+	if (modelFrame1 == -1)
+	{
+		const TriVertex &v = static_cast<const TriVertex*>(vertices)[index];
+		objpos = Vec4f(v.x, v.y, v.z, v.w);
+		sv.u = v.u;
+		sv.v = v.v;
+	}
+	else if (modelFrame1 == modelFrame2 || modelInterpolationFactor == 0.f)
+	{
+		const FModelVertex &v = static_cast<const FModelVertex*>(vertices)[modelFrame1 + index];
+		objpos = Vec4f(v.x, v.y, v.z, 1.0f);
+		sv.u = v.u;
+		sv.v = v.v;
+	}
+	else
+	{
+		const FModelVertex &v1 = static_cast<const FModelVertex*>(vertices)[modelFrame1 + index];
+		const FModelVertex &v2 = static_cast<const FModelVertex*>(vertices)[modelFrame2 + index];
+
+		float frac = modelInterpolationFactor;
+		float inv_frac = 1.0f - frac;
+
+		objpos = Vec4f(v1.x * inv_frac + v2.x * frac, v1.y * inv_frac + v2.y * frac, v1.z * inv_frac + v2.z * frac, 1.0f);
+		sv.u = v1.u;
+		sv.v = v1.v;
+	}
+
+	// Apply transform to get clip coordinates:
+	Vec4f clippos = (*objectToClip) * objpos;
+
+	sv.x = clippos.X;
+	sv.y = clippos.Y;
+	sv.z = clippos.Z;
+	sv.w = clippos.W;
+
+	if (!objectToWorld) // Identity matrix
+	{
+		sv.worldX = objpos.X;
+		sv.worldY = objpos.Y;
+		sv.worldZ = objpos.Z;
+	}
+	else
+	{
+		Vec4f worldpos = (*objectToWorld) * objpos;
+		sv.worldX = worldpos.X;
+		sv.worldY = worldpos.Y;
+		sv.worldZ = worldpos.Z;
+	}
 
 	// Calculate gl_ClipDistance[i]
 	for (int i = 0; i < 3; i++)
 	{
 		const auto &clipPlane = drawargs.ClipPlane(i);
-		sv.clipDistance[i] = v.x * clipPlane.A + v.y * clipPlane.B + v.z * clipPlane.C + v.w * clipPlane.D;
+		sv.clipDistance[i] = objpos.X * clipPlane.A + objpos.Y * clipPlane.B + objpos.Z * clipPlane.C + objpos.W * clipPlane.D;
 	}
 
 	return sv;
@@ -576,13 +648,13 @@ PolyTriangleThreadData *PolyTriangleThreadData::Get(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
-PolySetTransformCommand::PolySetTransformCommand(const Mat4f *objectToClip) : objectToClip(objectToClip)
+PolySetTransformCommand::PolySetTransformCommand(const Mat4f *objectToClip, const Mat4f *objectToWorld) : objectToClip(objectToClip), objectToWorld(objectToWorld)
 {
 }
 
 void PolySetTransformCommand::Execute(DrawerThread *thread)
 {
-	PolyTriangleThreadData::Get(thread)->SetTransform(objectToClip);
+	PolyTriangleThreadData::Get(thread)->SetTransform(objectToClip, objectToWorld);
 }
 
 /////////////////////////////////////////////////////////////////////////////
@@ -620,6 +692,28 @@ void PolySetWeaponSceneCommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
+PolySetModelVertexShaderCommand::PolySetModelVertexShaderCommand(int frame1, int frame2, float interpolationFactor) : frame1(frame1), frame2(frame2), interpolationFactor(interpolationFactor)
+{
+}
+
+void PolySetModelVertexShaderCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->SetModelVertexShader(frame1, frame2, interpolationFactor);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
+PolyClearStencilCommand::PolyClearStencilCommand(uint8_t value) : value(value)
+{
+}
+
+void PolyClearStencilCommand::Execute(DrawerThread *thread)
+{
+	PolyTriangleThreadData::Get(thread)->ClearStencil(value);
+}
+
+/////////////////////////////////////////////////////////////////////////////
+
 PolySetViewportCommand::PolySetViewportCommand(int x, int y, int width, int height, uint8_t *dest, int dest_width, int dest_height, int dest_pitch, bool dest_bgra)
 	: x(x), y(y), width(width), height(height), dest(dest), dest_width(dest_width), dest_height(dest_height), dest_pitch(dest_pitch), dest_bgra(dest_bgra)
 {
@@ -632,16 +726,16 @@ void PolySetViewportCommand::Execute(DrawerThread *thread)
 
 /////////////////////////////////////////////////////////////////////////////
 
-DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args) : args(args)
+DrawPolyTrianglesCommand::DrawPolyTrianglesCommand(const PolyDrawArgs &args, const void *vertices, const unsigned int *elements, int count, PolyDrawMode mode) : args(args), vertices(vertices), elements(elements), count(count), mode(mode)
 {
 }
 
 void DrawPolyTrianglesCommand::Execute(DrawerThread *thread)
 {
-	if (!args.Elements())
-		PolyTriangleThreadData::Get(thread)->DrawArrays(args);
+	if (!elements)
+		PolyTriangleThreadData::Get(thread)->DrawArray(args, vertices, count, mode);
 	else
-		PolyTriangleThreadData::Get(thread)->DrawElements(args);
+		PolyTriangleThreadData::Get(thread)->DrawElements(args, vertices, elements, count, mode);
 }
 
 /////////////////////////////////////////////////////////////////////////////

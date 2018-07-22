@@ -44,6 +44,9 @@
 #include "r_data/r_translate.h"
 #include <vector>
 
+// 15 because 0th texture is our texture
+#define MAX_CUSTOM_HW_SHADER_TEXTURES 15
+
 typedef TMap<int, bool> SpriteHits;
 
 enum MaterialShaderIndex
@@ -69,6 +72,12 @@ enum MaterialShaderIndex
 	FIRST_USER_SHADER
 };
 
+struct UserShaderDesc
+{
+	FString shader;
+	MaterialShaderIndex shaderType;
+	FString defines;
+};
 
 struct FloatRect
 {
@@ -90,21 +99,11 @@ struct FloatRect
 	}
 };
 
-// Special translation values for CreateTexBuffer
-enum ESpecialTranslations : int32_t
-{
-	STRange_Min = 0x10000000,
-	STRange_Desaturate = 0x10000000,
-	STRange_Specialcolormap = 0x20000000,
-	STRange_AlphaTexture = 0x30000000
-};
-
 enum ECreateTexBufferFlags
 {
 	CTF_CheckHires = 1,		// use external hires replacement if found
 	CTF_Expand = 2,			// create buffer with a one-pixel wide border
 	CTF_ProcessData = 4,	// run postprocessing on the generated buffer. This is only needed when using the data for a hardware texture.
-	CTF_MaybeWarped = 8		// may be warped if needed
 };
 
 
@@ -244,6 +243,8 @@ public:
 	FTexture *Metallic = nullptr;						// Metalness texture for the physically based rendering (PBR) light model
 	FTexture *Roughness = nullptr;						// Roughness texture for PBR
 	FTexture *AmbientOcclusion = nullptr;				// Ambient occlusion texture for PBR
+	
+	FTexture *CustomShaderTextures[MAX_CUSTOM_HW_SHADER_TEXTURES] = { nullptr }; // Custom texture maps for custom hardware shaders
 
 	FString Name;
 	ETextureType UseType;	// This texture's primary purpose

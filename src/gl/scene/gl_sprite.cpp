@@ -47,7 +47,6 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/models/gl_models.h"
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
@@ -79,6 +78,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	bool additivefog = false;
 	bool foglayer = false;
 	int rel = sprite->fullbright? 0 : getExtraLight();
+    auto &vp = Viewpoint;
 
 	if (pass==GLPASS_TRANSLUCENT)
 	{
@@ -92,7 +92,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 
 		gl_SetRenderStyle(RenderStyle, false, 
 			// The rest of the needed checks are done inside gl_SetRenderStyle
-			sprite->trans > 1.f - FLT_EPSILON && gl_usecolorblending && mDrawer->FixedColormap == CM_DEFAULT && sprite->actor &&
+			sprite->trans > 1.f - FLT_EPSILON && gl_usecolorblending && !isFullbrightScene() && sprite->actor &&
 			sprite->fullbright && sprite->gltexture && !sprite->gltexture->tex->GetTranslucency());
 
 		if (sprite->hw_styleflags == STYLEHW_NoAlphaTest)
@@ -112,7 +112,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			// fog + fuzz don't work well without some fiddling with the alpha value!
 			if (!sprite->Colormap.FadeColor.isBlack())
 			{
-				float dist=Dist2(r_viewpoint.Pos.X, r_viewpoint.Pos.Y, sprite->x, sprite->y);
+				float dist=Dist2(vp.Pos.X, vp.Pos.Y, sprite->x, sprite->y);
 				int fogd = hw_GetFogDensity(sprite->lightlevel, sprite->Colormap.FadeColor, sprite->Colormap.FogDensity);
 
 				// this value was determined by trial and error and is scale dependent!
@@ -144,7 +144,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	}
 	if (RenderStyle.BlendOp != STYLEOP_Shadow)
 	{
-		if (level.HasDynamicLights && mDrawer->FixedColormap == CM_DEFAULT && !sprite->fullbright)
+		if (level.HasDynamicLights && !isFullbrightScene() && !sprite->fullbright)
 		{
 			if ( sprite->dynlightindex == -1)	// only set if we got no light buffer index. This covers all cases where sprite lighting is used.
 			{
@@ -162,7 +162,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 
 			gl_RenderState.SetObjectColor(finalcol);
 		}
-		mDrawer->SetColor(sprite->lightlevel, rel, sprite->Colormap, sprite->trans);
+		SetColor(sprite->lightlevel, rel, sprite->Colormap, sprite->trans);
 	}
 
 
@@ -189,7 +189,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		else RenderStyle.BlendOp = STYLEOP_Fuzz;	// subtractive with models is not going to work.
 	}
 
-	if (!foglayer) mDrawer->SetFog(sprite->foglevel, rel, &sprite->Colormap, additivefog);
+	if (!foglayer) SetFog(sprite->foglevel, rel, &sprite->Colormap, additivefog);
 	else
 	{
 		gl_RenderState.EnableFog(false);
@@ -199,7 +199,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 	if (sprite->gltexture) gl_RenderState.SetMaterial(sprite->gltexture, CLAMP_XY, sprite->translation, sprite->OverrideShader, !!(RenderStyle.Flags & STYLEF_RedIsAlpha));
 	else if (!sprite->modelframe) gl_RenderState.EnableTexture(false);
 
-		//mDrawer->SetColor(lightlevel, rel, Colormap, trans);
+		//SetColor(lightlevel, rel, Colormap, trans);
 
 	unsigned int iter = sprite->lightlist? sprite->lightlist->Size() : 1;
 	bool clipping = false;
@@ -221,7 +221,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			secplane_t *lowplane = i == (*lightlist).Size() - 1 ? &bottomp : &(*lightlist)[i + 1].plane;
 
 			int thislight = (*lightlist)[i].caster != nullptr ? hw_ClampLight(*(*lightlist)[i].p_lightlevel) : sprite->lightlevel;
-			int thisll = sprite->actor == nullptr? thislight : (uint8_t)sprite->actor->Sector->CheckSpriteGlow(thislight, sprite->actor->InterpolatedPosition(r_viewpoint.TicFrac));
+			int thisll = sprite->actor == nullptr? thislight : (uint8_t)sprite->actor->Sector->CheckSpriteGlow(thislight, sprite->actor->InterpolatedPosition(vp.TicFrac));
 
 			FColormap thiscm;
 			thiscm.CopyFog(sprite->Colormap);
@@ -231,10 +231,10 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 				thiscm.Decolorize();
 			}
 
-			mDrawer->SetColor(thisll, rel, thiscm, sprite->trans);
+			SetColor(thisll, rel, thiscm, sprite->trans);
 			if (!foglayer)
 			{
-				mDrawer->SetFog(thislight, rel, &thiscm, additivefog);
+				SetFog(thislight, rel, &thiscm, additivefog);
 			}
 			gl_RenderState.SetSplitPlanes(*topplane, *lowplane);
 		}
@@ -249,7 +249,8 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 
 			FVector3 v[4];
 			gl_RenderState.SetNormal(0, 0, 0);
-			if (sprite->CalculateVertices(this, v))
+            
+			if (sprite->CalculateVertices(this, v, &vp.Pos))
 			{
 				glEnable(GL_POLYGON_OFFSET_FILL);
 				glPolygonOffset(-1.0f, -128.0f);
@@ -265,18 +266,19 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			if (foglayer)
 			{
 				// If we get here we know that we have colored fog and no fixed colormap.
-				mDrawer->SetFog(sprite->foglevel, rel, &sprite->Colormap, additivefog);
-				gl_RenderState.SetFixedColormap(CM_FOGLAYER);
+				SetFog(sprite->foglevel, rel, &sprite->Colormap, additivefog);
+				gl_RenderState.SetTextureMode(TM_FOGLAYER);
 				gl_RenderState.BlendEquation(GL_FUNC_ADD);
 				gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 				gl_RenderState.Apply();
 				qd.Render(GL_TRIANGLE_STRIP);
-				gl_RenderState.SetFixedColormap(CM_DEFAULT);
+				gl_RenderState.SetTextureMode(TM_MODULATE);
 			}
 		}
 		else
 		{
-			gl_RenderModel(sprite, sprite->dynlightindex);
+            FGLModelRenderer renderer(this, sprite->dynlightindex);
+            renderer.RenderModel(sprite->x, sprite->y, sprite->z, sprite->modelframe, sprite->actor, vp.TicFrac);
 		}
 	}
 

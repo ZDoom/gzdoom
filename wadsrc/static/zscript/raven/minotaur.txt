@@ -30,6 +30,7 @@ class Minotaur : Actor
 		DropItem "PhoenixRodAmmo", 84, 10;
 		Obituary "$OB_MINOTAUR";
 		HitObituary "$OB_MINOTAURHIT";
+		Tag "$FN_MINOTAUR";
 	}
 
 	States

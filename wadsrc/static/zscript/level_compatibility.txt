@@ -135,6 +135,26 @@ class LevelCompatibility play
 				}
 				break;
 			}
+			
+			case '0F898F0688AECD42F2CD102FAE06F271': // TNT: Evilution MAP07
+			{
+				// Dropping onto the outdoor lava now also raises the
+				// triangle sectors.
+				SetLineSpecial(320, Floor_RaiseToNearest, 16, 32);
+				SetLineActivation(320, SPAC_Cross);
+				SetLineSpecial(959, Floor_RaiseToNearest, 16, 32);
+				SetLineActivation(959, SPAC_Cross);
+				SetLineSpecial(960, Floor_RaiseToNearest, 16, 32);
+				SetLineActivation(960, SPAC_Cross);
+				break;
+			}
+			
+			case '1E785E841A5247B6223C042EC712EBB3': // TNT: Evilution MAP08
+			{
+				// Missing texture when lowering sector to red keycard
+				SetWallTexture(480, Line.back, Side.Bottom, "METAL2");
+				break;
+			}
 
 			case 'DFC18B92BF3E8142B8684ECD8BD2EF06': // TNT: Evilution map15
 			{
@@ -401,6 +421,26 @@ class LevelCompatibility play
 				}
 				break;
 			}
+			
+			case '915409A89746D6BFD92C7956BE6A0A2D': // Doom II: BFG Edition MAP33
+			{
+				// Missing textures on sector with a Super Shotgun at map start.
+				TextureID rock2 = TexMan.CheckForTexture("ROCK2", TexMan.Type_Wall);
+				for(int i=0; i<4; i++)
+				{
+					SetWallTextureID(567+i, Line.front, Side.bottom, ROCK2);
+					SetWallTextureID(567+i, Line.back, Side.top, ROCK2);
+				}
+				// Tags the linedefs on the teleporter at the end of the level so that
+				// it's possible to leave the room near the yellow keycard door.
+				for(int i=0; i<2; i++)
+				{
+					SetLineSpecial(400+i, Teleport, 0, 36);
+					SetLineSpecial(559+i, Teleport, 0, 36);
+				}
+				break;
+			}
+
 			case 'ABC4EB5A1535ECCD0061AD14F3547908': // Plutonia Experiment, map26
 			{
 				SetSectorSpecial(156, 0);
@@ -700,6 +740,47 @@ class LevelCompatibility play
 			{
 				// Restore monster cross flag for DeHackEd friendly marine
 				GetDefaultActor('WolfensteinSS').bActivateMCross = true;
+				break;
+			}
+			
+			case 'D67CECE3F60083383DF992B8C824E4AC': // Icarus: Alien Vanuguard MAP13
+			{
+				// Moves sector special to platform with Berserk powerup. The
+				// map's only secret can now be scored.
+				SetSectorSpecial(119, 0);
+				SetSectorSpecial(122, 1024);
+				break;
+			}
+			
+			case '61373587339A768854E2912CC99A4781': // Icarus: Alien Vanuguard MAP15
+			{
+				// Can press use on the lift to reveal the secret Shotgun,
+				// making 100% secrets possible.
+				SetLineSpecial(222, Plat_DownWaitUpStayLip, 11, 64, 105, 0);
+				SetLineActivation(222, SPAC_Use);
+				SetLineFlags(222, Line.ML_REPEAT_SPECIAL);
+				break;
+			}
+			
+			case '9F66B0797925A09D4DC0725540F8EEF7': // Icarus: Alien Vanuguard MAP16
+			{
+				// Can press use on the walls at the secret Rocket Launcher in
+				// case of getting stuck.
+				for(int i=0; i<7; i++)
+				{
+					SetLineSpecial(703+i, Plat_DownWaitUpStayLip, 14, 64, 105, 0);
+					SetLineActivation(703+i, SPAC_Use);
+					SetLineFlags(703+i, Line.ML_REPEAT_SPECIAL);
+				}
+				break;
+			}
+			
+			case '09645D198010BF634EF0DE3EFCB0052C': // Flashback to Hell MAP12
+			{
+				// Can press use behind bookshelf in case of getting stuck.
+				SetLineSpecial(4884, Plat_DownWaitUpStayLip, 15, 32, 105, 0);
+				SetLineActivation(4884, SPAC_UseBack);
+				SetLineFlags(4884, Line.ML_REPEAT_SPECIAL);
 				break;
 			}
 		}

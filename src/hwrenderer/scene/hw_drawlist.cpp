@@ -121,7 +121,7 @@ inline void SortNode::AddToEqual(SortNode *child)
 {
 	child->UnlinkFromChain();
 	child->equal=equal;
-	equal=child;			
+	equal=child;
 }
 
 //==========================================================================
@@ -269,7 +269,7 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 	GLFlat * fh = flats[drawitems[head->itemindex].index];
 	GLWall * ws = walls[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > r_viewpoint.Pos.Z;
+	bool ceiling = fh->z > SortZ;
 
 	if ((ws->ztop[0] > fh->z || ws->ztop[1] > fh->z) && (ws->zbottom[0] < fh->z || ws->zbottom[1] < fh->z))
 	{
@@ -327,7 +327,7 @@ void HWDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 	GLFlat * fh = flats[drawitems[head->itemindex].index];
 	GLSprite * ss = sprites[drawitems[sort->itemindex].index];
 
-	bool ceiling = fh->z > r_viewpoint.Pos.Z;
+	bool ceiling = fh->z > SortZ;
 
 	auto hiz = ss->z1 > ss->z2 ? ss->z1 : ss->z2;
 	auto loz = ss->z1 < ss->z2 ? ss->z1 : ss->z2;
@@ -688,6 +688,7 @@ SortNode * HWDrawList::DoSort(HWDrawInfo *di, SortNode * head)
 //==========================================================================
 void HWDrawList::Sort(HWDrawInfo *di)
 {
+    SortZ = di->Viewpoint.Pos.Z;
 	MakeSortList();
 	sorted = DoSort(di, SortNodes[SortNodeStart]);
 }

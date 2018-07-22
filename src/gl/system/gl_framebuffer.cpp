@@ -37,9 +37,11 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_samplers.h"
 #include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/utility/hw_vrmodes.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/data/gl_uniformbuffer.h"
 #include "gl/models/gl_models.h"
-#include "gl/stereo3d/gl_stereo3d.h"
+#include "gl/shaders/gl_shaderprogram.h"
 #include "gl_debug.h"
 #include "r_videoscale.h"
 
@@ -62,8 +64,8 @@ CUSTOM_CVAR(Int, vid_hwgamma, 2, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITC
 //
 //==========================================================================
 
-OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int bits, int refreshHz, bool fullscreen) : 
-	Super(hMonitor, width, height, bits, refreshHz, fullscreen, false) 
+OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, bool fullscreen) : 
+	Super(hMonitor, fullscreen) 
 {
 	// SetVSync needs to be at the very top to workaround a bug in Nvidia's OpenGL driver.
 	// If wglSwapIntervalEXT is called after glBindFramebuffer in a frame the setting is not changed!
@@ -71,7 +73,6 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 
 	// Make sure all global variables tracking OpenGL context state are reset..
 	FHardwareTexture::InitGlobalState();
-	FMaterial::InitGlobalState();
 	gl_RenderState.Reset();
 
 	GLRenderer = new FGLRenderer(this);
@@ -81,8 +82,10 @@ OpenGLFrameBuffer::OpenGLFrameBuffer(void *hMonitor, int width, int height, int 
 	mDebug = std::make_shared<FGLDebug>();
 	mDebug->Update();
 	SetGamma();
+
+	// Move some state to the framebuffer object for easier access.
 	hwcaps = gl.flags;
-	if (gl.legacyMode) hwcaps |= RFL_NO_SHADERS;
+	glslversion = gl.glslversion;
 }
 
 OpenGLFrameBuffer::~OpenGLFrameBuffer()
@@ -110,7 +113,6 @@ void OpenGLFrameBuffer::InitializeState()
 	}
 
 	gl_LoadExtensions();
-	Super::InitializeState();
 
 	if (first)
 	{
@@ -129,7 +131,6 @@ void OpenGLFrameBuffer::InitializeState()
 	glEnable(GL_BLEND);
 	glEnable(GL_DEPTH_CLAMP);
 	glDisable(GL_DEPTH_TEST);
-	if (gl.legacyMode) glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LINE_SMOOTH);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -158,16 +159,17 @@ void OpenGLFrameBuffer::Update()
 	Swap();
 	CheckBench();
 
-	int initialWidth = IsFullscreen() ? VideoWidth : GetClientWidth();
-	int initialHeight = IsFullscreen() ? VideoHeight : GetClientHeight();
+	int initialWidth = GetClientWidth();
+	int initialHeight = GetClientHeight();
 	int clientWidth = ViewportScaledWidth(initialWidth, initialHeight);
 	int clientHeight = ViewportScaledHeight(initialWidth, initialHeight);
-	if (clientWidth > 0 && clientHeight > 0 && (Width != clientWidth || Height != clientHeight))
+	if (clientWidth < 320) clientWidth = 320;
+	if (clientHeight < 200) clientHeight = 200;
+	if (clientWidth > 0 && clientHeight > 0 && (GetWidth() != clientWidth || GetHeight() != clientHeight))
 	{
-		Width = clientWidth;
-		Height = clientHeight;
-		V_OutputResized(Width, Height);
-		GLRenderer->mVBO->OutputResized(Width, Height);
+		SetVirtualSize(clientWidth, clientHeight);
+		V_OutputResized(clientWidth, clientHeight);
+		GLRenderer->mVBO->OutputResized(clientWidth, clientHeight);
 	}
 }
 
@@ -235,25 +237,13 @@ uint32_t OpenGLFrameBuffer::GetCaps()
 
 	// describe our basic feature set
 	ActorRenderFeatureFlags FlagSet = RFF_FLATSPRITES | RFF_MODELS | RFF_SLOPE3DFLOORS |
-		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL;
+		RFF_TILTPITCH | RFF_ROLLSPRITES | RFF_POLYGONAL | RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
 	if (r_drawvoxels)
 		FlagSet |= RFF_VOXELS;
-	if (gl.legacyMode)
-	{
-		// legacy mode always has truecolor because palette tonemap is not available
+
+	if (gl_tonemap != 5) // not running palette tonemap shader
 		FlagSet |= RFF_TRUECOLOR;
-	}
-	else if (!RenderBuffersEnabled())
-	{
-		// truecolor is always available when renderbuffers are unavailable because palette tonemap is not possible
-		FlagSet |= RFF_TRUECOLOR | RFF_MATSHADER | RFF_BRIGHTMAP;
-	}
-	else
-	{
-		if (gl_tonemap != 5) // not running palette tonemap shader
-			FlagSet |= RFF_TRUECOLOR;
-		FlagSet |= RFF_MATSHADER | RFF_POSTSHADER | RFF_BRIGHTMAP;
-	}
+
 	return (uint32_t)FlagSet;
 }
 
@@ -350,33 +340,30 @@ IHardwareTexture *OpenGLFrameBuffer::CreateHardwareTexture(FTexture *tex)
 	return new FHardwareTexture(tex->bNoCompress);
 }
 
+void OpenGLFrameBuffer::PrecacheMaterial(FMaterial *mat, int translation)
+{
+	gl_RenderState.SetMaterial(mat, CLAMP_NONE, translation, false, false);
+}
+
 FModelRenderer *OpenGLFrameBuffer::CreateModelRenderer(int mli) 
 {
-	return new FGLModelRenderer(mli);
+	return new FGLModelRenderer(nullptr, mli);
 }
 
-
-void OpenGLFrameBuffer::UnbindTexUnit(int no)
+IUniformBuffer *OpenGLFrameBuffer::CreateUniformBuffer(size_t size, bool staticuse)
 {
-	FHardwareTexture::Unbind(no);
+    return new GLUniformBuffer(size, staticuse);
 }
 
-void OpenGLFrameBuffer::FlushTextures()
-{
-	if (GLRenderer) GLRenderer->FlushTextures();
+IShaderProgram *OpenGLFrameBuffer::CreateShaderProgram() 
+{ 
+	return new FShaderProgram; 
 }
+
 
 void OpenGLFrameBuffer::TextureFilterChanged()
 {
 	if (GLRenderer != NULL && GLRenderer->mSamplerManager != NULL) GLRenderer->mSamplerManager->SetTextureFilterMode();
-}
-
-void OpenGLFrameBuffer::ResetFixedColormap()
-{
-	if (GLRenderer != nullptr && GLRenderer->mShaderManager != nullptr)
-	{
-		GLRenderer->mShaderManager->ResetFixedColormap();
-	}
 }
 
 void OpenGLFrameBuffer::BlurScene(float amount)
@@ -384,16 +371,14 @@ void OpenGLFrameBuffer::BlurScene(float amount)
 	GLRenderer->BlurScene(amount);
 }
 
-bool OpenGLFrameBuffer::RenderBuffersEnabled()
-{
-	return FGLRenderBuffers::IsEnabled();
-}
-
 void OpenGLFrameBuffer::SetViewportRects(IntRect *bounds)
 {
 	Super::SetViewportRects(bounds);
 	if (!bounds)
-		s3d::Stereo3DMode::getCurrentMode().AdjustViewports();
+	{
+		auto vrmode = VRMode::GetVRMode(true);
+		vrmode->AdjustViewport(this);
+	}
 }
 
 

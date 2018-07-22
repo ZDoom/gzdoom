@@ -28,7 +28,7 @@
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_postprocessstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
-#include "gl/shaders/gl_shadowmapshader.h"
+#include "hwrenderer/postprocessing/hw_shadowmapshader.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "stats.h"
 
@@ -51,8 +51,9 @@ void FShadowMap::Update()
 
 	GLRenderer->mBuffers->BindShadowMapFB();
 
-	GLRenderer->mShadowMapShader->Bind();
-	GLRenderer->mShadowMapShader->ShadowmapQuality.Set(gl_shadowmap_quality);
+	GLRenderer->mShadowMapShader->Bind(NOQUEUE);
+	GLRenderer->mShadowMapShader->Uniforms->ShadowmapQuality = gl_shadowmap_quality;
+	GLRenderer->mShadowMapShader->Uniforms.Set();
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, mLightList);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, mNodesBuffer);
 	glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, mLinesBuffer);

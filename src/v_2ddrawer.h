@@ -9,6 +9,25 @@
 
 struct DrawParms;
 
+// intermediate struct for shape drawing
+
+enum EClearWhich
+{
+	C_Verts = 1,
+	C_Coords = 2,
+	C_Indices = 4,
+};
+
+class DShape2D : public DObject
+{
+
+	DECLARE_CLASS(DShape2D,DObject)
+public:
+	TArray<int> mIndices;
+	TArray<DVector2> mVertices;
+	TArray<DVector2> mCoords;
+};
+
 class F2DDrawer
 {
 public:
@@ -76,7 +95,7 @@ public:
 
 		FTexture *mTexture;
 		FRemapTable *mTranslation;
-		FSpecialColormap *mSpecialColormap;
+		PalEntry mSpecialColormap[2];
 		int mScissor[4];
 		int mDesaturate;
 		FRenderStyle mRenderStyle;
@@ -117,6 +136,7 @@ public:
 
 public:
 	void AddTexture(FTexture *img, DrawParms &parms);
+	void AddShape(FTexture *img, DShape2D *shape, DrawParms &parms);
 	void AddPoly(FTexture *texture, FVector2 *points, int npoints,
 		double originx, double originy, double scalex, double scaley,
 		DAngle rotation, const FColormap &colormap, PalEntry flatcolor, int lightlevel);

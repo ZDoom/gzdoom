@@ -1,12 +1,8 @@
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform sampler2D ExposureTexture;
-uniform float ExposureBase;
-uniform float ExposureMin;
-uniform float ExposureScale;
-uniform float ExposureSpeed;
+layout(binding=0) uniform sampler2D ExposureTexture;
 
 void main()
 {

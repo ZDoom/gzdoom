@@ -27,9 +27,6 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <memory>
-#ifdef __APPLE__
-#include <CoreServices/CoreServices.h>
-#endif
 
 #include "i_time.h"
 #include "templates.h"
@@ -1016,9 +1013,6 @@ bool G_Responder (event_t *ev)
 // G_Ticker
 // Make ticcmd_ts for the players.
 //
-extern FTexture *Page;
-
-
 void G_Ticker ()
 {
 	int i;
@@ -1120,12 +1114,7 @@ void G_Ticker ()
 
 	if (oldgamestate != gamestate)
 	{
-		if (oldgamestate == GS_DEMOSCREEN && Page != NULL)
-		{
-			Page->Unload();
-			Page = NULL;
-		}
-		else if (oldgamestate == GS_FINALE)
+		if (oldgamestate == GS_FINALE)
 		{
 			F_EndFinale ();
 		}

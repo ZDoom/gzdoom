@@ -22,6 +22,7 @@ class Wizard : Actor
 		ActiveSound "wizard/active";
 		Obituary "$OB_WIZARD";
 		HitObituary "$OB_WIZARDHIT";
+		Tag "$FN_WIZARD";
 		DropItem "BlasterAmmo", 84, 10;
 		DropItem "ArtiTomeOfPower", 4, 0;
 	}

@@ -1,11 +1,8 @@
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform sampler2D AODepthTexture;
-uniform float BlurSharpness;
-uniform vec2 InvFullResolution;
-uniform float PowExponent;
+layout(binding=0) uniform sampler2D AODepthTexture;
 
 #define KERNEL_RADIUS 3.0
 

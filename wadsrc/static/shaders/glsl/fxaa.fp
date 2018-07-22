@@ -33,9 +33,9 @@
 //----------------------------------------------------------------------------------
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform sampler2D InputTexture;
+layout(binding=0) uniform sampler2D InputTexture;
 
 #ifdef FXAA_LUMA_PASS
 
@@ -604,8 +604,6 @@ FxaaFloat4 FxaaPixelShader(FxaaFloat2 pos, FxaaTex tex, FxaaFloat2 fxaaQualityRc
 		return FxaaFloat4(FxaaTexTop(tex, posM).xyz, lumaM);
 	#endif
 }
-
-uniform vec2 ReciprocalResolution;
 
 void main()
 {

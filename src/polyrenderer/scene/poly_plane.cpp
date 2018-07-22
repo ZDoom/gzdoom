@@ -80,7 +80,7 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyTransferH
 		args.SetWriteStencil(true, stencilValue + 1);
 		args.SetTexture(tex, DefaultRenderStyle());
 		args.SetStyle(TriBlendMode::Opaque);
-		args.DrawArray(thread->DrawQueue, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 	}
 	else
 	{
@@ -91,7 +91,7 @@ void RenderPolyPlane::RenderNormal(PolyRenderThread *thread, const PolyTransferH
 		args.SetWriteStencil(true, 255);
 		args.SetWriteColor(false);
 		args.SetWriteDepth(false);
-		args.DrawArray(thread->DrawQueue, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 
 		RenderSkyWalls(thread, args, fakeflat.Subsector, nullptr, ceiling, skyHeight);
 	}
@@ -157,7 +157,7 @@ void RenderPolyPlane::RenderPortal(PolyRenderThread *thread, const PolyTransferH
 	args.SetWriteStencil(true, polyportal->StencilValue);
 	args.SetWriteColor(false);
 	args.SetWriteDepth(false);
-	args.DrawArray(thread->DrawQueue, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, fakeflat.Subsector->numlines, PolyDrawMode::TriangleFan);
 
 	RenderSkyWalls(thread, args, fakeflat.Subsector, polyportal, ceiling, skyHeight);
 
@@ -235,7 +235,7 @@ void RenderPolyPlane::RenderSkyWalls(PolyRenderThread *thread, PolyDrawArgs &arg
 			wallvert[3] = GetSkyVertex(line->v1, skyHeight);
 		}
 
-		args.DrawArray(thread->DrawQueue, wallvert, 4, PolyDrawMode::TriangleFan);
+		PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, wallvert, 4, PolyDrawMode::TriangleFan);
 
 		if (polyportal)
 		{
@@ -269,6 +269,12 @@ void RenderPolyPlane::SetLightLevel(PolyRenderThread *thread, PolyDrawArgs &args
 
 void RenderPolyPlane::SetDynLights(PolyRenderThread *thread, PolyDrawArgs &args, subsector_t *sub, bool ceiling)
 {
+	if (!r_dynlights)
+	{
+		args.SetLights(nullptr, 0);
+		return;
+	}
+
 	FLightNode *light_list = sub->lighthead;
 
 	auto cameraLight = PolyCameraLight::Instance();
@@ -557,5 +563,5 @@ void Render3DFloorPlane::Render(PolyRenderThread *thread)
 	args.SetStencilTestValue(stencilValue);
 	args.SetWriteStencil(true, stencilValue + 1);
 	args.SetTexture(tex, DefaultRenderStyle());
-	args.DrawArray(thread->DrawQueue, vertices, sub->numlines, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, sub->numlines, PolyDrawMode::TriangleFan);
 }

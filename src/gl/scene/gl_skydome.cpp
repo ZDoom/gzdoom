@@ -32,13 +32,13 @@
 #include "gl_load/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/renderer/gl_lightdata.h"
+#include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/scene/gl_drawinfo.h"
-#include "gl/scene/gl_scenedrawer.h"
+#include "gl/scene/gl_portal.h"
 #include "gl/shaders/gl_shader.h"
 
 
-EXTERN_CVAR(Float, skyoffset)
 //-----------------------------------------------------------------------------
 //
 //
@@ -54,26 +54,14 @@ FSkyVertexBuffer::FSkyVertexBuffer()
 void FSkyVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (!gl.legacyMode)
-	{
-		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->x);
-		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
-		glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSkyVertex), &VSO->color);
-		glEnableVertexAttribArray(VATTR_VERTEX);
-		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		glEnableVertexAttribArray(VATTR_COLOR);
-		glDisableVertexAttribArray(VATTR_VERTEX2);
-		glDisableVertexAttribArray(VATTR_NORMAL);
-	}
-	else
-	{
-		glVertexPointer(3, GL_FLOAT, sizeof(FSkyVertex), &VSO->x);
-		glTexCoordPointer(2, GL_FLOAT, sizeof(FSkyVertex), &VSO->u);
-		glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(FSkyVertex), &VSO->color);
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-	}
+	glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->x);
+	glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FSkyVertex), &VSO->u);
+	glVertexAttribPointer(VATTR_COLOR, 4, GL_UNSIGNED_BYTE, true, sizeof(FSkyVertex), &VSO->color);
+	glEnableVertexAttribArray(VATTR_VERTEX);
+	glEnableVertexAttribArray(VATTR_TEXCOORD);
+	glEnableVertexAttribArray(VATTR_COLOR);
+	glDisableVertexAttribArray(VATTR_VERTEX2);
+	glDisableVertexAttribArray(VATTR_NORMAL);
 }
 
 //-----------------------------------------------------------------------------
@@ -111,11 +99,6 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 		gl_RenderState.Apply();
 		RenderRow(GL_TRIANGLE_FAN, rc);
 		gl_RenderState.EnableTexture(true);
-		// The color array can only be activated now if this is drawn without shader
-		if (gl.legacyMode)
-		{
-			glEnableClientState(GL_COLOR_ARRAY);
-		}
 	}
 	gl_RenderState.SetObjectColor(0xffffffff);
 	gl_RenderState.Apply();
@@ -135,57 +118,13 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 
 void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
 {
-	int texh = 0;
-	int texw = 0;
-
-	// 57 world units roughly represent one sky texel for the glTranslate call.
-	const float skyoffsetfactor = 57;
-
 	if (tex)
 	{
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
-		texw = tex->TextureWidth();
-		texh = tex->TextureHeight();
 		gl_RenderState.EnableModelMatrix(true);
-
-		gl_RenderState.mModelMatrix.loadIdentity();
-		gl_RenderState.mModelMatrix.rotate(-180.0f + x_offset, 0.f, 1.f, 0.f);
-
-		float xscale = texw < 1024.f ? floor(1024.f / float(texw)) : 1.f;
-		float yscale = 1.f;
-		if (texh <= 128 && (level.flags & LEVEL_FORCETILEDSKY))
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
-			yscale = 240.f / texh;
-		}
-		else if (texh < 128)
-		{
-			// smaller sky textures must be tiled. We restrict it to 128 sky pixels, though
-			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 128 / 230.f, 1.f);
-			yscale = 128 / texh;	// intentionally left as integer.
-		}
-		else if (texh < 200)
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, -1250.f, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, texh / 230.f, 1.f);
-		}
-		else if (texh <= 240)
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, (200 - texh + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 1.f + ((texh - 200.f) / 200.f) * 1.17f, 1.f);
-		}
-		else
-		{
-			gl_RenderState.mModelMatrix.translate(0.f, (-40 + tex->tex->SkyOffset + skyoffset)*skyoffsetfactor, 0.f);
-			gl_RenderState.mModelMatrix.scale(1.f, 1.2f * 1.17f, 1.f);
-			yscale = 240.f / texh;
-		}
 		gl_RenderState.EnableTextureMatrix(true);
-		gl_RenderState.mTextureMatrix.loadIdentity();
-		gl_RenderState.mTextureMatrix.scale(mirror ? -xscale : xscale, yscale, 1.f);
-		gl_RenderState.mTextureMatrix.translate(1.f, y_offset / texh, 1.f);
+
+		GLRenderer->mSkyVBO->SetupMatrices(tex, x_offset, y_offset, mirror, mode, gl_RenderState.mModelMatrix, gl_RenderState.mTextureMatrix);
 	}
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);
@@ -271,9 +210,10 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 //
 //
 //-----------------------------------------------------------------------------
-void GLSkyPortal::DrawContents(FDrawInfo *di)
+void GLSkyPortal::DrawContents(HWDrawInfo *di)
 {
 	bool drawBoth = false;
+	auto &vp = di->Viewpoint;
 
 	// We have no use for Doom lighting special handling here, so disable it for this function.
 	int oldlightmode = ::level.lightmode;
@@ -290,8 +230,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	bool oldClamp = gl_RenderState.SetDepthClamp(true);
 
-	gl_MatrixStack.Push(gl_RenderState.mViewMatrix);
-	drawer->SetupView(0, 0, 0, r_viewpoint.Angles.Yaw, !!(MirrorFlag & 1), !!(PlaneMirrorFlag & 1));
+	di->SetupView(0, 0, 0, !!(mState->MirrorFlag & 1), !!(mState->PlaneMirrorFlag & 1));
 
 	gl_RenderState.SetVertexBuffer(GLRenderer->mSkyVBO);
 	if (origin->texture[0] && origin->texture[0]->tex->bSkybox)
@@ -316,7 +255,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 			RenderDome(origin->texture[1], origin->x_offset[1], origin->y_offset, false, FSkyVertexBuffer::SKYMODE_SECONDLAYER);
 		}
 
-		if (::level.skyfog>0 && drawer->FixedColormap == CM_DEFAULT && (origin->fadecolor & 0xffffff) != 0)
+		if (::level.skyfog>0 && !di->isFullbrightScene()  && (origin->fadecolor & 0xffffff) != 0)
 		{
 			PalEntry FadeColor = origin->fadecolor;
 			FadeColor.a = clamp<int>(::level.skyfog, 0, 255);
@@ -330,8 +269,7 @@ void GLSkyPortal::DrawContents(FDrawInfo *di)
 		}
 	}
 	gl_RenderState.SetVertexBuffer(GLRenderer->mVBO);
-	gl_MatrixStack.Pop(gl_RenderState.mViewMatrix);
-	gl_RenderState.ApplyMatrices();
+	di->ApplyVPUniforms();
 	::level.lightmode = oldlightmode;
 	gl_RenderState.SetDepthClamp(oldClamp);
 }

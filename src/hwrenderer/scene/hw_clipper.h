@@ -6,14 +6,6 @@
 #include "r_utility.h"
 #include "memarena.h"
 
-angle_t R_PointToPseudoAngle(double x, double y);
-
-// Used to speed up angle calculations during clipping
-inline angle_t vertex_t::GetClipAngle()
-{
-	return  R_PointToPseudoAngle(p.X, p.Y);
-}
-
 class ClipNode
 {
 	friend class Clipper;
@@ -37,6 +29,7 @@ class Clipper
 	ClipNode * clipnodes = nullptr;
 	ClipNode * cliphead = nullptr;
 	ClipNode * silhouette = nullptr;	// will be preserved even when RemoveClipRange is called
+    const FRenderViewpoint *viewpoint = nullptr;
 	bool blocked = false;
 
 	static angle_t AngleToPseudo(angle_t ang);
@@ -78,6 +71,11 @@ public:
 		c->next = c->prev = NULL;
 		return c;
 	}
+    
+    void SetViewpoint(const FRenderViewpoint &vp)
+    {
+        viewpoint = &vp;
+    }
 
 	void SetSilhouette();
 
@@ -105,6 +103,13 @@ public:
 			AddClipRange(startangle, endangle);
 		}
 	}
+    
+    void SafeAddClipRange(const vertex_t *v1, const vertex_t *v2)
+    {
+        angle_t a2 = PointToPseudoAngle(v1->p.X, v1->p.Y);
+        angle_t a1 = PointToPseudoAngle(v2->p.X, v2->p.Y);
+        SafeAddClipRange(a1,a2);
+    }
 
 	void SafeAddClipRangeRealAngles(angle_t startangle, angle_t endangle)
 	{
@@ -141,13 +146,15 @@ public:
 	{
 		return blocked;
 	}
+    
+    angle_t PointToPseudoAngle(double x, double y);
 
 	bool CheckBox(const float *bspcoord);
 
 	// Used to speed up angle calculations during clipping
 	inline angle_t GetClipAngle(vertex_t *v)
 	{
-		return unsigned(v->angletime) == starttime ? v->viewangle : (v->angletime = starttime, v->viewangle = R_PointToPseudoAngle(v->p.X, v->p.Y));
+		return unsigned(v->angletime) == starttime ? v->viewangle : (v->angletime = starttime, v->viewangle = PointToPseudoAngle(v->p.X, v->p.Y));
 	}
 
 };

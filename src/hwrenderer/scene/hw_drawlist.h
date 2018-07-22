@@ -61,6 +61,7 @@ struct HWDrawList
 	TArray<GLSprite*> sprites;
 	TArray<GLDrawItem> drawitems;
 	int SortNodeStart;
+    float SortZ;
 	SortNode * sorted;
 	
 public:

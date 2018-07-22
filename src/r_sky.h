@@ -47,4 +47,11 @@ extern int		freelookviewheight;
 void R_InitSkyMap		();
 void R_UpdateSky (uint64_t mstime);
 
+// 57 world units roughly represent one sky texel for the glTranslate call.
+enum
+{
+	skyoffsetfactor = 57
+};
+
+
 #endif //__R_SKY_H__

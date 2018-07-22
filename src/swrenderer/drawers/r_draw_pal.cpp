@@ -3060,11 +3060,6 @@ namespace swrenderer
 		}
 	}
 
-	FString DrawParticleColumnPalCommand::DebugInfo()
-	{
-		return "DrawParticle";
-	}
-
 	/////////////////////////////////////////////////////////////////////////////
 
 	DrawVoxelBlocksPalCommand::DrawVoxelBlocksPalCommand(const SpriteDrawerArgs &args, const VoxelBlock *blocks, int blockcount) : args(args), blocks(blocks), blockcount(blockcount)
@@ -3161,10 +3156,5 @@ namespace swrenderer
 				}
 			}
 		}
-	}
-
-	FString DrawVoxelBlocksPalCommand::DebugInfo()
-	{
-		return "DrawVoxelBlocks";
 	}
 }

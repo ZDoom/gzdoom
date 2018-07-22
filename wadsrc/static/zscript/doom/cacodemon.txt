@@ -21,6 +21,7 @@ class Cacodemon : Actor
 		ActiveSound "caco/active";
 		Obituary "$OB_CACO";
 		HitObituary "$OB_CACOHIT";
+		Tag "$FN_CACO";
 	}
 	States
 	{

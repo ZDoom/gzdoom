@@ -31,6 +31,7 @@
 #include "hwrenderer/utility/hw_cvars.h"
 #include "gl/system/gl_debug.h"
 #include "gl/shaders/gl_shaderprogram.h"
+#include "hwrenderer/utility/hw_shaderpatcher.h"
 #include "w_wad.h"
 
 FShaderProgram::FShaderProgram()
@@ -120,17 +121,6 @@ void FShaderProgram::Compile(ShaderType type, const char *name, const FString &c
 
 //==========================================================================
 //
-// Binds a fragment output variable to a frame buffer render target
-//
-//==========================================================================
-
-void FShaderProgram::SetFragDataLocation(int index, const char *name)
-{
-	glBindFragDataLocation(mProgram, index, name);
-}
-
-//==========================================================================
-//
 // Links a program with the compiled shaders
 //
 //==========================================================================
@@ -146,17 +136,38 @@ void FShaderProgram::Link(const char *name)
 	{
 		I_FatalError("Link Shader '%s':\n%s\n", name, GetProgramInfoLog(mProgram).GetChars());
 	}
+
+	// This is only for old OpenGL which didn't allow to set the binding from within the shader.
+	if (screen->glslversion < 4.20)
+	{
+		glUseProgram(mProgram);
+		for (auto &uni : samplerstobind)
+		{
+			auto index = glGetUniformLocation(mProgram, uni.first);
+			if (index >= 0)
+			{
+				glUniform1i(index, uni.second);
+			}
+		}
+	}
+	samplerstobind.Clear();
+	samplerstobind.ShrinkToFit();
 }
 
 //==========================================================================
 //
-// Set vertex attribute location
+// Set uniform buffer location (only useful for GL 3.3)
 //
 //==========================================================================
 
-void FShaderProgram::SetAttribLocation(int index, const char *name)
+void FShaderProgram::SetUniformBufferLocation(int index, const char *name)
 {
-	glBindAttribLocation(mProgram, index, name);
+	if (screen->glslversion < 4.20)
+	{
+		GLuint uniformBlockIndex = glGetUniformBlockIndex(mProgram, name);
+		if (uniformBlockIndex != GL_INVALID_INDEX)
+			glUniformBlockBinding(mProgram, uniformBlockIndex, index);
+	}
 }
 
 //==========================================================================
@@ -165,7 +176,7 @@ void FShaderProgram::SetAttribLocation(int index, const char *name)
 //
 //==========================================================================
 
-void FShaderProgram::Bind()
+void FShaderProgram::Bind(IRenderQueue *)
 {
 	glUseProgram(mProgram);
 }
@@ -210,11 +221,10 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 {
 	FString patchedCode;
 
+	// If we have 4.2, always use it because it adds important new syntax.
+	if (maxGlslVersion < 420 && gl.glslversion >= 4.2f) maxGlslVersion = 420;
 	int shaderVersion = MIN((int)round(gl.glslversion * 10) * 10, maxGlslVersion);
-	if (gl.es)
-		patchedCode.AppendFormat("#version %d es\n", shaderVersion);
-	else
-		patchedCode.AppendFormat("#version %d\n", shaderVersion);
+	patchedCode.AppendFormat("#version %d\n", shaderVersion);
 
 	// TODO: Find some way to add extension requirements to the patching
 	//
@@ -231,13 +241,11 @@ FString FShaderProgram::PatchShader(ShaderType type, const FString &code, const 
 	patchedCode << "#line 1\n";
 	patchedCode << code;
 
+	if (maxGlslVersion < 420)
+	{
+		// Here we must strip out all layout(binding) declarations for sampler uniforms and store them in 'samplerstobind' which can then be processed by the link function.
+		patchedCode = RemoveSamplerBindings(patchedCode, samplerstobind);
+	}
+
 	return patchedCode;
 }
-
-//==========================================================================
-//
-// patch the shader source to work with 
-// GLSL 1.2 keywords and identifiers
-//
-//==========================================================================
-

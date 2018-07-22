@@ -161,9 +161,25 @@ enum DrawTextureTags
 	DTA_SrcX,			// specify a source rectangle (this supersedes the poorly implemented DTA_WindowLeft/Right
 	DTA_SrcY,
 	DTA_SrcWidth,
-	DTA_SrcHeight
+	DTA_SrcHeight,
+	DTA_LegacyRenderStyle,	// takes an old-style STYLE_* constant instead of an FRenderStyle
 
 };
+
+class Shape2D : Object native
+{
+	enum EClearWhich
+	{
+		C_Verts = 1,
+		C_Coords = 2,
+		C_Indices = 4,
+	};
+
+	native void Clear( int which = C_Verts|C_Coords|C_Indices );
+	native void PushVertex( Vector2 v );
+	native void PushCoord( Vector2 c );
+	native void PushTriangle( int a, int b, int c );
+}
 
 struct Screen native
 {
@@ -174,6 +190,7 @@ struct Screen native
 	native static void Dim(Color col, double amount, int x, int y, int w, int h);
 
 	native static vararg void DrawTexture(TextureID tex, bool animate, double x, double y, ...);
+	native static vararg void DrawShape(TextureID tex, bool animate, Shape2D s, ...);
 	native static vararg void DrawChar(Font font, int normalcolor, double x, double y, int character, ...);
 	native static vararg void DrawText(Font font, int normalcolor, double x, double y, String text, ...);
 	native static void DrawLine(int x0, int y0, int x1, int y1, Color color);

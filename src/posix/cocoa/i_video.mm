@@ -494,9 +494,13 @@ void SystemGLFrameBuffer::SetWindowedMode()
 		[m_window setHidesOnDeactivate:NO];
 	}
 
+	const int minimumFrameWidth  = MINIMUM_WIDTH;
+	const int minimumFrameHeight = MINIMUM_HEIGHT + GetTitleBarHeight();
+	const NSSize minimumFrameSize = NSMakeSize(minimumFrameWidth, minimumFrameHeight);
+	[m_window setMinSize:minimumFrameSize];
+
 	const bool isFrameValid = win_x >= 0 && win_y >= 0
-		&& win_w >= MINIMUM_WIDTH
-		&& win_h - GetTitleBarHeight() >= MINIMUM_HEIGHT;
+		&& win_w >= minimumFrameWidth && win_h >= minimumFrameHeight;
 	const NSRect frameSize = isFrameValid
 		? NSMakeRect(win_x, win_y, win_w, win_h)
 		: NSMakeRect(0, 0, vid_defwidth, vid_defheight);

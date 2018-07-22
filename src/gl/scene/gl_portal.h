@@ -85,7 +85,7 @@ public:
 	~GLScenePortal() { delete mScene; }
 	virtual void * GetSource() const { return mScene->GetSource(); }
 	virtual const char *GetName() { return mScene->GetName(); }
-	virtual bool IsSky() { return false; }
+	virtual bool IsSky() { return mScene->IsSky(); }
 	virtual bool NeedCap() { return true; }
 	virtual bool NeedDepthBuffer() { return true; }
 	virtual void DrawContents(HWDrawInfo *di) 

@@ -24,6 +24,7 @@
 #include "vulkan/textures/vk_depthbuffer.h"
 #include "vulkan/textures/vk_uniformbuffer.h"
 #include "textures/textures.h"
+#include "ShaderLang.h"
 
 const int WIDTH = 800;
 const int HEIGHT = 600;

@@ -459,7 +459,7 @@ add_custom_target( revision_check ALL
 # Libraries ZDoom needs
 
 message( STATUS "Fluid synth libs: ${FLUIDSYNTH_LIBRARIES}" )
-set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" )
+set( ZDOOM_LIBS ${ZDOOM_LIBS} "${ZLIB_LIBRARIES}" "${JPEG_LIBRARIES}" "${BZIP2_LIBRARIES}" "${GME_LIBRARIES}" "${CMAKE_DL_LIBS}" "glslang" "SPIRV" "OGLCompiler" )
 include_directories( "${ZLIB_INCLUDE_DIR}" "${BZIP2_INCLUDE_DIR}" "${LZMA_INCLUDE_DIR}" "${JPEG_INCLUDE_DIR}" "${GME_INCLUDE_DIR}" )
 
 if( SNDFILE_FOUND )
@@ -921,7 +921,7 @@ set (PCH_SOURCES
 	d_dehacked.cpp
 	d_iwad.cpp
 	d_main.cpp
-	d_stats.cpp
+	d_anonstats.cpp
 	d_net.cpp
 	d_netinfo.cpp
 	d_protocol.cpp
@@ -1300,7 +1300,7 @@ if(${CMAKE_SYSTEM_NAME} STREQUAL "SunOS")
 	set( ZDOOM_LIBS ${ZDOOM_LIBS} nsl socket)
 endif()
 
-target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma )
+target_link_libraries( zdoom ${ZDOOM_LIBS} gdtoa dumb lzma  )
 
 include_directories( .
 	g_statusbar
@@ -1318,6 +1318,8 @@ include_directories( .
 	c:/VulkanSDK_/1.1.77.0/Include # just to get going for now.
 	../gdtoa
 	../dumb/include
+	../glslang/glslang/Public
+	../glslang/spirv
 	${CMAKE_BINARY_DIR}/gdtoa
 	${SYSTEM_SOURCES_DIR} )
 

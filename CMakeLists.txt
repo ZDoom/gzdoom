@@ -272,6 +272,10 @@ option(FORCE_INTERNAL_JPEG "Use internal jpeg")
 option(FORCE_INTERNAL_BZIP2 "Use internal bzip2")
 option(FORCE_INTERNAL_GME "Use internal gme")
 
+add_subdirectory( glslang/glslang)
+add_subdirectory( glslang/spirv )
+add_subdirectory( glslang/OGLCompilersDLL )
+
 # Fast math flags, required by some subprojects
 set( ZD_FASTMATH_FLAG "" )
 if( ZD_CMAKE_COMPILER_IS_GNUCXX_COMPATIBLE )

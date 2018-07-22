@@ -680,10 +680,10 @@ void D_Display ()
 	// fullscreen toggle has been requested
 	if (setmodeneeded)
 	{
+		setmodeneeded = false;
 		screen->ToggleFullscreen(fullscreen);
 		V_OutputResized(screen->GetWidth(), screen->GetHeight());
-		setmodeneeded = false;
-			}
+	}
 
 	// change the view size if needed
 	if (setsizeneeded)

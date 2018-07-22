@@ -28,7 +28,6 @@
 
 #define NUMSCALEMODES 6
 
-EXTERN_CVAR(Int, vid_scalemode)
 EXTERN_CVAR(Int, vid_aspect)
 CVAR(Int, vid_scale_customwidth, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
 CVAR(Int, vid_scale_customheight, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -58,7 +57,7 @@ namespace
 	};
 	bool isOutOfBounds(int x)
 	{
-        if (vScaleTable[vid_scalemode].isCustom)
+        if (vScaleTable[x].isCustom)
             return ((vid_scale_customwidth < 80) || (vid_scale_customheight < 50));
 		return (x < 0 || x >= NUMSCALEMODES || vScaleTable[x].isValid == false);
 	}

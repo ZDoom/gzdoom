@@ -36,9 +36,6 @@
 
 #include <sys/sysctl.h>
 
-// Avoid collision between DObject class and Objective-C
-#define Class ObjectClass
-
 #include "c_console.h"
 #include "c_cvars.h"
 #include "cmdlib.h"
@@ -47,8 +44,6 @@
 #include "m_argv.h"
 #include "st_console.h"
 #include "version.h"
-
-#undef Class
 
 
 #define ZD_UNUSED(VARIABLE) ((void)(VARIABLE))
@@ -130,20 +125,36 @@ void Mac_I_FatalError(const char* const message)
 }
 
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+
+// Available since 10.9 with no public declaration/definition until 10.10
+
+struct NSOperatingSystemVersion
+{
+	NSInteger majorVersion;
+	NSInteger minorVersion;
+	NSInteger patchVersion;
+};
+
+@interface NSProcessInfo(OperatingSystemVersion)
+- (NSOperatingSystemVersion)operatingSystemVersion;
+@end
+
+#endif // before 10.10
+
 static void I_DetectOS()
 {
-	SInt32 majorVersion = 0;
-	Gestalt(gestaltSystemVersionMajor, &majorVersion);
-	
-	SInt32 minorVersion = 0;
-	Gestalt(gestaltSystemVersionMinor, &minorVersion);
-	
-	SInt32 bugFixVersion = 0;
-	Gestalt(gestaltSystemVersionBugFix, &bugFixVersion);
-	
+	NSOperatingSystemVersion version = {};
+	NSProcessInfo* const processInfo = [NSProcessInfo processInfo];
+
+	if ([processInfo respondsToSelector:@selector(operatingSystemVersion)])
+	{
+		version = [processInfo operatingSystemVersion];
+	}
+
 	const char* name = "Unknown version";
 	
-	if (10 == majorVersion) switch (minorVersion)
+	if (10 == version.majorVersion) switch (version.minorVersion)
 	{
 		case  7: name = "Mac OS X Lion";         break;
 		case  8: name = "OS X Mountain Lion";    break;
@@ -152,12 +163,17 @@ static void I_DetectOS()
 		case 11: name = "OS X El Capitan";       break;
 		case 12: name = "macOS Sierra";          break;
 		case 13: name = "macOS High Sierra";     break;
+		case 14: name = "macOS Mojave";          break;
 	}
 
 	char release[16] = "unknown";
 	size_t size = sizeof release - 1;
 	sysctlbyname("kern.osversion", release, &size, nullptr, 0);
-	
+
+	char model[64] = "Unknown Mac model";
+	size = sizeof model - 1;
+	sysctlbyname("hw.model", model, &size, nullptr, 0);
+
 	const char* const architecture =
 #ifdef __i386__
 		"32-bit Intel";
@@ -167,9 +183,9 @@ static void I_DetectOS()
 		"Unknown";
 #endif
 	
-	Printf("OS: %s %d.%d.%d (%s) %s\n", name, 
-		int(majorVersion), int(minorVersion), int(bugFixVersion),
-		release, architecture);
+	Printf("%s running %s %d.%d.%d (%s) %s\n", model, name,
+		   int(version.majorVersion), int(version.minorVersion), int(version.patchVersion),
+		   release, architecture);
 }
 
 

@@ -24,7 +24,15 @@
 #ifndef ADLDATA_H
 #define ADLDATA_H
 
+#include <string.h>
 #include <stdint.h>
+
+#pragma pack(push, 1)
+#define ADLDATA_BYTE_COMPARABLE(T)                      \
+    inline bool operator==(const T &a, const T &b)      \
+    { return !memcmp(&a, &b, sizeof(T)); }              \
+    inline bool operator!=(const T &a, const T &b)      \
+    { return !operator==(a, b); }
 
 extern const struct adldata
 {
@@ -34,21 +42,45 @@ extern const struct adldata
 
     int8_t      finetune;
 } adl[];
+ADLDATA_BYTE_COMPARABLE(struct adldata)
+enum { adlDefaultNumber = 189 };
 
 extern const struct adlinsdata
 {
-    enum { Flag_Pseudo4op = 0x01, Flag_NoSound = 0x02 };
+    enum { Flag_Pseudo4op = 0x01, Flag_NoSound = 0x02, Flag_Real4op = 0x04 };
 
     uint16_t    adlno1, adlno2;
     uint8_t     tone;
     uint8_t     flags;
     uint16_t    ms_sound_kon;  // Number of milliseconds it produces sound;
     uint16_t    ms_sound_koff;
-    double voice2_fine_tune;
+    double      voice2_fine_tune;
 } adlins[];
+ADLDATA_BYTE_COMPARABLE(struct adlinsdata)
 int maxAdlBanks();
 extern const unsigned short banks[][256];
 extern const char* const banknames[];
+
+enum { adlNoteOnMaxTime = 40000 };
+
+/**
+ * @brief Instrument data with operators included
+ */
+struct adlinsdata2
+{
+    adldata     adl[2];
+    uint8_t     tone;
+    uint8_t     flags;
+    uint16_t    ms_sound_kon;  // Number of milliseconds it produces sound;
+    uint16_t    ms_sound_koff;
+    double      voice2_fine_tune;
+    adlinsdata2() {}
+    explicit adlinsdata2(const adlinsdata &d);
+};
+ADLDATA_BYTE_COMPARABLE(struct adlinsdata2)
+
+#undef ADLDATA_BYTE_COMPARABLE
+#pragma pack(pop)
 
 /**
  * @brief Bank global setup
@@ -61,5 +93,27 @@ extern const struct AdlBankSetup
     bool    adLibPercussions;
     bool    scaleModulators;
 } adlbanksetup[];
+
+/**
+ * @brief Conversion of storage formats
+ */
+inline adlinsdata2::adlinsdata2(const adlinsdata &d)
+    : tone(d.tone), flags(d.flags),
+      ms_sound_kon(d.ms_sound_kon), ms_sound_koff(d.ms_sound_koff),
+      voice2_fine_tune(d.voice2_fine_tune)
+{
+    adl[0] = ::adl[d.adlno1];
+    adl[1] = ::adl[d.adlno2];
+}
+
+/**
+ * @brief Convert external instrument to internal instrument
+ */
+void cvt_ADLI_to_FMIns(adlinsdata2 &dst, const struct ADL_Instrument &src);
+
+/**
+ * @brief Convert internal instrument to external instrument
+ */
+void cvt_FMIns_to_ADLI(struct ADL_Instrument &dst, const adlinsdata2 &src);
 
 #endif //ADLDATA_H

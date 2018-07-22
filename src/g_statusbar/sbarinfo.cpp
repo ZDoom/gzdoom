@@ -1567,7 +1567,11 @@ DBaseStatusBar *CreateCustomStatusBar(int scriptno)
 	auto script = SBarInfoScript[scriptno];
 	if (script == nullptr) return nullptr;
 
-	auto sbar = (DBaseStatusBar*)PClass::FindClass("SBarInfoWrapper")->CreateNew();
+	PClass *sbarclass = PClass::FindClass("SBarInfoWrapper");
+	assert(sbarclass != nullptr);
+	assert(sbarclass->IsDescendantOf(RUNTIME_CLASS(DBaseStatusBar)));
+	auto sbar = (DBaseStatusBar*)sbarclass->CreateNew();
+
 	auto core = new DSBarInfo(sbar, script);
 	sbar->PointerVar<DSBarInfo>("core") = core;
 	sbar->SetSize(script->height, script->_resW, script->_resH);

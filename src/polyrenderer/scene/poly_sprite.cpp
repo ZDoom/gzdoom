@@ -39,13 +39,12 @@ EXTERN_CVAR (Bool, r_debug_disable_vis_filter)
 EXTERN_CVAR(Int, gl_spriteclip)
 EXTERN_CVAR(Float, gl_sclipthreshold)
 EXTERN_CVAR(Float, gl_sclipfactor)
+
 extern uint32_t r_renderercaps;
+extern double model_distance_cull;
 
 bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 {
-	if (IsThingCulled(thing))
-		return false;
-
 	const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 	DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 
@@ -74,14 +73,14 @@ bool RenderPolySprite::GetLine(AActor *thing, DVector2 &left, DVector2 &right)
 
 void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector_t *sub, uint32_t stencilValue, float t1, float t2)
 {
-	if (r_models)
+	if (r_modelscene)
 	{
+		const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 		int spritenum = thing->sprite;
 		bool isPicnumOverride = thing->picnum.isValid();
 		FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
-		if (modelframe)
+		if (modelframe && (thing->Pos() - viewpoint.Pos).LengthSquared() < model_distance_cull)
 		{
-			const auto &viewpoint = PolyRenderer::Instance()->Viewpoint;
 			DVector3 pos = thing->InterpolatedPosition(viewpoint.TicFrac);
 			PolyRenderModel(thread, PolyRenderer::Instance()->Scene.CurrentViewpoint->WorldToClip, stencilValue, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
 			return;
@@ -168,7 +167,7 @@ void RenderPolySprite::Render(PolyRenderThread *thread, AActor *thing, subsector
 	args.SetDepthTest(true);
 	args.SetWriteDepth(false);
 	args.SetWriteStencil(false);
-	args.DrawArray(thread->DrawQueue, vertices, 4, PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, vertices, 4, PolyDrawMode::TriangleFan);
 }
 
 double RenderPolySprite::GetSpriteFloorZ(AActor *thing, const DVector2 &thingpos)
@@ -373,7 +372,7 @@ FTexture *RenderPolySprite::GetSpriteTexture(AActor *thing, /*out*/ bool &flipX)
 void RenderPolySprite::SetDynlight(AActor *thing, PolyDrawArgs &args)
 {
 	bool fullbrightSprite = ((thing->renderflags & RF_FULLBRIGHT) || (thing->flags5 & MF5_BRIGHT));
-	if (fullbrightSprite)
+	if (fullbrightSprite || !r_dynlights)
 	{
 		args.SetDynLightColor(0);
 		return;

@@ -19,6 +19,7 @@ class Beast : Actor
 		DeathSound "beast/death";
 		ActiveSound "beast/active";
 		Obituary "$OB_BEAST";
+		Tag "$FN_BEAST";
 		DropItem "CrossbowAmmo", 84, 10;
 	}
 	States

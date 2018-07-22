@@ -83,7 +83,7 @@ void PolySkyDome::Render(PolyRenderThread *thread, const Mat4f &worldToView, con
 
 	int rc = mRows + 1;
 
-	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip * objectToWorld));
+	PolyTriangleDrawer::SetTransform(thread->DrawQueue, thread->FrameMemory->NewObject<Mat4f>(worldToClip * objectToWorld), nullptr);
 
 	PolyDrawArgs args;
 	args.SetLight(&NormalLight, 255, PolyRenderer::Instance()->Light.WallGlobVis(false), true);
@@ -112,7 +112,7 @@ void PolySkyDome::RenderRow(PolyRenderThread *thread, PolyDrawArgs &args, int ro
 {
 	args.SetColor(capcolor, capcolorindex);
 	args.SetStyle(TriBlendMode::Skycap);
-	args.DrawArray(thread->DrawQueue, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleStrip);
 }
 
 void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args, FTexture *skytex, int row, bool bottomCap)
@@ -122,7 +122,7 @@ void PolySkyDome::RenderCapColorRow(PolyRenderThread *thread, PolyDrawArgs &args
 
 	args.SetColor(solid, palsolid);
 	args.SetStyle(TriBlendMode::Fill);
-	args.DrawArray(thread->DrawQueue, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
+	PolyTriangleDrawer::DrawArray(thread->DrawQueue, args, &mVertices[mPrimStart[row]], mPrimStart[row + 1] - mPrimStart[row], PolyDrawMode::TriangleFan);
 }
 
 void PolySkyDome::CreateDome()
@@ -218,9 +218,6 @@ Mat4f PolySkyDome::GLSkyMath()
 
 	int texh = 0;
 	int texw = 0;
-
-	// 57 world units roughly represent one sky texel for the glTranslate call.
-	const float skyoffsetfactor = 57;
 
 	Mat4f modelMatrix = Mat4f::Identity();
 	if (tex)

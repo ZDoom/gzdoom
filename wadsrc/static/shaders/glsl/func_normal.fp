@@ -1,6 +1,8 @@
 
-vec4 ProcessTexel()
+Material ProcessMaterial()
 {
-	return getTexel(vTexCoord.st);
+	Material material;
+	material.Base = getTexel(vTexCoord.st);
+	material.Normal = ApplyNormalMap(vTexCoord.st);
+	return material;
 }
-

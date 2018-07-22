@@ -152,6 +152,7 @@ void ADynamicLight::PostSerialize()
 	// The default constructor which is used for creating objects before deserialization will not set this variable.
 	// It needs to be true for all placed lights.
 	visibletoplayer = true;
+	mShadowmapIndex = 1024;
 	LinkLight();
 }
 

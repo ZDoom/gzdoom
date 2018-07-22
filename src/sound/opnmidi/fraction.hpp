@@ -82,6 +82,10 @@ public:
     self &operator= (long double orig);
 };
 
+#ifdef _MSC_VER
+#pragma warning(disable:4146)
+#endif
+
 template<typename inttype>
 void fraction<inttype>::Optim()
 {
@@ -109,6 +113,10 @@ void fraction<inttype>::Optim()
     num2 /= n1;
     //fprintf(stderr, "result: %d/%d\n\n", nom(), denom());
 }
+
+#ifdef _MSC_VER
+#pragma warning(default:4146)
+#endif
 
 template<typename inttype>
 inline const fraction<inttype> abs(const fraction<inttype> &f)

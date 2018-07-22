@@ -267,8 +267,6 @@ namespace swrenderer
 			count = args.Count();
 		}
 
-		FString DebugInfo() override { return "DepthColumnCommand"; }
-
 		void Execute(DrawerThread *thread) override
 		{
 			auto zbuffer = PolyZBuffer::Instance();
@@ -307,8 +305,6 @@ namespace swrenderer
 			dest = (uint32_t*)args.Viewport()->GetDest(0, args.DestY());
 			#endif
 		}
-
-		FString DebugInfo() override { return "DepthSpanCommand"; }
 
 		void Execute(DrawerThread *thread) override
 		{

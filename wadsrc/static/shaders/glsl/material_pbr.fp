@@ -56,18 +56,19 @@ float quadraticDistanceAttenuation(vec4 lightpos)
 	return attenuation;
 }
 
-vec3 ProcessMaterial(vec3 albedo, vec3 ambientLight)
+
+vec3 ProcessMaterialLight(Material material, vec3 ambientLight)
 {
 	vec3 worldpos = pixelpos.xyz;
 
-	albedo = pow(albedo, vec3(2.2)); // sRGB to linear
+	vec3 albedo = pow(material.Base.rgb, vec3(2.2)); // sRGB to linear
 	ambientLight = pow(ambientLight, vec3(2.2));
 
-	float metallic = texture(metallictexture, vTexCoord.st).r;
-	float roughness = texture(roughnesstexture, vTexCoord.st).r;
-	float ao = texture(aotexture, vTexCoord.st).r;
+	float metallic = material.Metallic;
+	float roughness = material.Roughness;
+	float ao = material.AO;
 
-	vec3 N = ApplyNormalMap();
+	vec3 N = material.Normal;
 	vec3 V = normalize(uCameraPos.xyz - worldpos);
 
 	vec3 F0 = mix(vec3(0.04), albedo, metallic);

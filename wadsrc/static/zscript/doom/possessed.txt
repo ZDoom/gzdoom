@@ -21,6 +21,7 @@ class ZombieMan : Actor
 		DeathSound "grunt/death";
 		ActiveSound "grunt/active";
 		Obituary "$OB_ZOMBIE";
+		Tag "$FN_ZOMBIE";
 		DropItem "Clip";
 	}
 	States
@@ -84,6 +85,7 @@ class ShotgunGuy : Actor
 		DeathSound "shotguy/death";
 		ActiveSound "shotguy/active";
 		Obituary "$OB_SHOTGUY";
+		Tag "$FN_SHOTGUN";
 		DropItem "Shotgun";
 	}
 	States
@@ -147,6 +149,7 @@ class ChaingunGuy : Actor
 		ActiveSound "chainguy/active";
 		AttackSound "chainguy/attack";
 		Obituary "$OB_CHAINGUY";
+		Tag "$FN_HEAVY";
 		Dropitem "Chaingun";
 	}
 	States
@@ -209,6 +212,7 @@ class WolfensteinSS : Actor
 		ActiveSound "wolfss/active";
 		AttackSound "wolfss/attack";
 		Obituary "$OB_WOLFSS";
+		Tag "$FN_WOLFSS";
 		Dropitem "Clip";
 	}
 	States

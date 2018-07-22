@@ -2524,6 +2524,11 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					}
 					else if (p->Default != nullptr)
 					{
+						if (flags & VARF_Out)
+						{
+							Error(p, "Out parameters cannot have default values");
+						}
+
 						flags |= VARF_Optional;
 						hasoptionals = true;
 						

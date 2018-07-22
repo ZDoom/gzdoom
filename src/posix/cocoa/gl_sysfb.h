@@ -36,39 +36,65 @@
 
 #include "v_video.h"
 
-class SystemFrameBuffer : public DFrameBuffer
+#ifdef __OBJC__
+@class NSCursor;
+@class CocoaWindow;
+#else
+typedef struct objc_object NSCursor;
+typedef struct objc_object CocoaWindow;
+#endif
+
+class SystemGLFrameBuffer : public DFrameBuffer
 {
 public:
 	// This must have the same parameters as the Windows version, even if they are not used!
-	SystemFrameBuffer(void *hMonitor, int width, int height, int, int, bool fullscreen, bool bgra);
-	~SystemFrameBuffer();
+	SystemGLFrameBuffer(void *hMonitor, bool fullscreen);
+	~SystemGLFrameBuffer();
 
 	virtual bool IsFullscreen();
 	virtual void SetVSync(bool vsync);
 
-	int GetClientWidth();
-	int GetClientHeight();
+	int GetClientWidth() override;
+	int GetClientHeight() override;
+	void ToggleFullscreen(bool yes) override;
+	void SetWindowSize(int width, int height) override;
 
-	virtual int GetTrueHeight() { return GetClientHeight(); }
+	void SetMode(bool fullscreen, bool hiDPI);
+
+	static void UseHiDPI(bool hiDPI);
+	static void SetCursor(NSCursor* cursor);
+	static void SetWindowVisible(bool visible);
+	static void SetWindowTitle(const char* title);
 
 protected:
-	bool                UpdatePending;
-
-	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
-	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
-	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
-
-	bool				m_supportsGamma;
-	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
-
-	SystemFrameBuffer();
-
-	void InitializeState();
+	SystemGLFrameBuffer() {}
 
 	void SwapBuffers();
 
 	void SetGammaTable(uint16_t* table);
 	void ResetGammaTable();
+
+	bool m_supportsGamma;
+
+private:
+	void SetFullscreenMode();
+	void SetWindowedMode();
+
+	bool m_fullscreen;
+	bool m_hiDPI;
+
+	CocoaWindow* m_window;
+
+	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
+	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
+	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
+
+	uint16_t m_originalGamma[GAMMA_TABLE_SIZE];
+
+	int GetTitleBarHeight() const;
+
+	static const int MINIMUM_WIDTH  = 320;
+	static const int MINIMUM_HEIGHT = 200;
 };
 
 #endif // COCOA_GL_SYSFB_H_INCLUDED

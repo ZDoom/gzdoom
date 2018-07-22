@@ -1,7 +1,6 @@
 
-in vec4 PositionInProjection;
-in vec2 UV;
-uniform vec2 UVScale;
+layout (location = 0) in vec4 PositionInProjection;
+layout (location = 1) in vec2 UV;
 out vec2 TexCoord;
 
 void main()

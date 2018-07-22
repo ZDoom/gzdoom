@@ -2,7 +2,7 @@
 //---------------------------------------------------------------------------
 //
 // Copyright(C) 2017 Magnus Norddahl
-// Copyright(C) 2017 Rachael Alexanderson
+// Copyright(C) 2018 Rachael Alexanderson
 // All rights reserved.
 //
 // This program is free software: you can redistribute it and/or modify
@@ -26,7 +26,28 @@
 #include "c_cvars.h"
 #include "v_video.h"
 
-#define NUMSCALEMODES 5
+#define NUMSCALEMODES 6
+
+extern bool setsizeneeded;
+
+EXTERN_CVAR(Int, vid_aspect)
+CUSTOM_CVAR(Int, vid_scale_customwidth, 320, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 320)
+		self = 320;
+	setsizeneeded = true;
+}
+CUSTOM_CVAR(Int, vid_scale_customheight, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 200)
+		self = 200;
+	setsizeneeded = true;
+}
+CVAR(Bool, vid_scale_customlinear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, vid_scale_customstretched, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	setsizeneeded = true;
+}
 
 namespace
 {
@@ -37,15 +58,17 @@ namespace
 		uint32_t(*GetScaledWidth)(uint32_t Width);
 		uint32_t(*GetScaledHeight)(uint32_t Height);
 		bool isScaled43;
+		bool isCustom;
 	};
 	v_ScaleTable vScaleTable[NUMSCALEMODES] =
 	{
-		//	isValid,	isLinear,	GetScaledWidth(),										GetScaledHeight(),											isScaled43
-		{ true,			false,		[](uint32_t Width)->uint32_t { return Width; },			[](uint32_t Height)->uint32_t { return Height; },			false	},	// 0  - Native
-		{ true,			true,		[](uint32_t Width)->uint32_t { return Width; },			[](uint32_t Height)->uint32_t { return Height; },			false	},	// 1  - Native (Linear)
-		{ true,			false,		[](uint32_t Width)->uint32_t { return 320; },			[](uint32_t Height)->uint32_t { return 200; },				true	},	// 2  - 320x200
-		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },			[](uint32_t Height)->uint32_t { return 400; },				true	},	// 3  - 640x400
-		{ true,			true,		[](uint32_t Width)->uint32_t { return 1280; },			[](uint32_t Height)->uint32_t { return 800; },				true	},	// 4  - 1280x800		
+		//	isValid,	isLinear,	GetScaledWidth(),									            	GetScaledHeight(),										        	isScaled43, isCustom
+		{ true,			false,		[](uint32_t Width)->uint32_t { return Width; },		        	[](uint32_t Height)->uint32_t { return Height; },	        		false,  	false   },	// 0  - Native
+		{ true,			true,		[](uint32_t Width)->uint32_t { return Width; },			        [](uint32_t Height)->uint32_t { return Height; },	        		false,  	false   },	// 1  - Native (Linear)
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 320; },		            	[](uint32_t Height)->uint32_t { return 200; },			        	true,   	false   },	// 2  - 320x200
+		{ true,			false,		[](uint32_t Width)->uint32_t { return 640; },		            	[](uint32_t Height)->uint32_t { return 400; },				        true,   	false   },	// 3  - 640x400
+		{ true,			true,		[](uint32_t Width)->uint32_t { return 1280; },		            	[](uint32_t Height)->uint32_t { return 800; },	        			true,   	false   },	// 4  - 1280x800		
+		{ true,			true,		[](uint32_t Width)->uint32_t { return vid_scale_customwidth; },	[](uint32_t Height)->uint32_t { return vid_scale_customheight; },	true,   	true    },	// 5  - Custom
 	};
 	bool isOutOfBounds(int x)
 	{
@@ -71,8 +94,16 @@ bool ViewportLinearScale()
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
+	// hack - use custom scaling if in "custom" mode
+	if (vScaleTable[vid_scalemode].isCustom)
+		return vid_scale_customlinear;
 	// vid_scalefactor > 1 == forced linear scale
 	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
+}
+
+inline int min(int a, int b)
+{
+	return (a > b) ? a : b;
 }
 
 int ViewportScaledWidth(int width, int height)
@@ -81,7 +112,7 @@ int ViewportScaledWidth(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
-	return vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor));
+	return min(320, vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -90,20 +121,23 @@ int ViewportScaledHeight(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
-	return vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor));
+	return min(200, vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor)));
 }
 
 bool ViewportIsScaled43()
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
+	// hack - use custom scaling if in "custom" mode
+	if (vScaleTable[vid_scalemode].isCustom)
+		return vid_scale_customstretched;
 	return vScaleTable[vid_scalemode].isScaled43;
 }
 
 void R_ShowCurrentScaling()
 {
-	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = int(x1 * vid_scalefactor), y2 = int(y1 * vid_scalefactor);
-	Printf("Current Scale: %f\n", (float)(vid_scalefactor));
+	int x1 = screen->GetClientWidth(), y1 = screen->GetClientHeight(), x2 = ViewportScaledWidth(x1, y1), y2 = ViewportScaledHeight(x1, y1);
+	Printf("Current vid_scalefactor: %f\n", (float)(vid_scalefactor));
 	Printf("Real resolution: %i x %i\nEmulated resolution: %i x %i\n", x1, y1, x2, y2);
 }
 
@@ -113,6 +147,11 @@ bool R_CalcsShouldBeBlocked()
 	{
 		Printf("vid_scalemode should be 0 or 1 before using this command.\n");
 		return true;
+	}
+	if (vid_aspect != 0 && vid_cropaspect == true)
+	{   // just warn ... I'm not going to fix this, it's a pretty niche condition anyway.
+        Printf("Warning: Using this command while vid_aspect is not 0 will yield results based on FULL screen geometry, NOT cropped!.\n");
+		return false;
 	}
 	return false;	
 }
@@ -142,4 +181,33 @@ CCMD (vid_scaletoheight)
 		vid_scalefactor = (float)((double)atof(argv[1]) / screen->GetClientHeight());
 
 	R_ShowCurrentScaling();
+}
+
+inline bool atob(char* I)
+{
+    if (stricmp (I, "true") == 0 || stricmp (I, "1") == 0)
+        return true;
+    return false;
+}
+
+CCMD (vid_setscale)
+{
+    if (argv.argc() > 2)
+    {
+        vid_scale_customwidth = atoi(argv[1]);
+        vid_scale_customheight = atoi(argv[2]);
+        if (argv.argc() > 3)
+        {
+            vid_scale_customlinear = atob(argv[3]);
+            if (argv.argc() > 4)
+            {
+                vid_scale_customstretched = atob(argv[4]);
+            }
+        }
+        vid_scalemode = 5;
+    }
+    else
+    {
+        Printf("Usage: vid_setscale <x> <y> [bool linear] [bool long-pixel-shape]\nThis command will create a custom viewport scaling mode.\n");
+    }
 }

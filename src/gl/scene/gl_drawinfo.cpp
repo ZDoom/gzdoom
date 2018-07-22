@@ -37,12 +37,22 @@
 
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
+#include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
-#include "gl/scene/gl_scenedrawer.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/stereo3d/scoped_color_mask.h"
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+
+class FDrawInfoList
+{
+public:
+	TDeletingArray<FDrawInfo *> mList;
+
+
+	FDrawInfo * GetNew();
+	void Release(FDrawInfo *);
+};
+
 
 static FDrawInfo * gl_drawinfo;
 FDrawInfoList di_list;
@@ -63,7 +73,7 @@ void FDrawInfo::DoDrawSorted(HWDrawList *dl, SortNode * head)
 	if (dl->drawitems[head->itemindex].rendertype == GLDIT_FLAT)
 	{
 		z = dl->flats[dl->drawitems[head->itemindex].index]->z;
-		relation = z > r_viewpoint.Pos.Z ? 1 : -1;
+		relation = z > Viewpoint.Pos.Z ? 1 : -1;
 	}
 
 
@@ -166,28 +176,6 @@ void FDrawInfoList::Release(FDrawInfo * di)
 
 //==========================================================================
 //
-//
-//
-//==========================================================================
-
-FDrawInfo::FDrawInfo()
-{
-	next = NULL;
-	if (gl.legacyMode)
-	{
-		dldrawlists = new HWDrawList[GLLDL_TYPES];
-	}
-}
-
-FDrawInfo::~FDrawInfo()
-{
-	if (dldrawlists != NULL) delete[] dldrawlists;
-	ClearBuffers();
-}
-
-
-//==========================================================================
-//
 // Sets up a new drawinfo struct
 //
 //==========================================================================
@@ -195,14 +183,22 @@ FDrawInfo::~FDrawInfo()
 // OpenGL has no use for multiple clippers so use the same one for all DrawInfos.
 static Clipper staticClipper;
 
-FDrawInfo *FDrawInfo::StartDrawInfo(GLSceneDrawer *drawer)
+FDrawInfo *FDrawInfo::StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms)
 {
 	FDrawInfo *di=di_list.GetNew();
-	di->mDrawer = drawer;
 	di->mVBO = GLRenderer->mVBO;
 	di->mClipper = &staticClipper;
+	di->Viewpoint = parentvp;
+	if (uniforms)
+	{
+		di->VPUniforms = *uniforms;
+		// The clip planes will never be inherited from the parent drawinfo.
+		di->VPUniforms.mClipLine.X = -1000001.f;
+		di->VPUniforms.mClipHeight = 0;
+	}
+	else di->VPUniforms.SetDefaults();
+    di->mClipper->SetViewpoint(di->Viewpoint);
 	staticClipper.Clear();
-    di->FixedColormap = drawer->FixedColormap;
 	di->StartScene();
 	return di;
 }
@@ -211,16 +207,17 @@ void FDrawInfo::StartScene()
 {
 	ClearBuffers();
 
-	next = gl_drawinfo;
+	outer = gl_drawinfo;
 	gl_drawinfo = this;
 	for (int i = 0; i < GLDL_TYPES; i++) drawlists[i].Reset();
-	if (dldrawlists != NULL)
-	{
-		for (int i = 0; i < GLLDL_TYPES; i++) dldrawlists[i].Reset();
-	}
 	decals[0].Clear();
 	decals[1].Clear();
 	hudsprites.Clear();
+
+	// Fullbright information needs to be propagated from the main view.
+	if (outer != nullptr) FullbrightFlags = outer->FullbrightFlags;
+	else FullbrightFlags = 0;
+
 }
 
 //==========================================================================
@@ -228,19 +225,15 @@ void FDrawInfo::StartScene()
 //
 //
 //==========================================================================
-void FDrawInfo::EndDrawInfo()
+FDrawInfo *FDrawInfo::EndDrawInfo()
 {
-	FDrawInfo * di = gl_drawinfo;
-
-	for(int i=0;i<GLDL_TYPES;i++) di->drawlists[i].Reset();
-	if (di->dldrawlists != NULL)
-	{
-		for (int i = 0; i < GLLDL_TYPES; i++) di->dldrawlists[i].Reset();
-	}
-	gl_drawinfo=di->next;
-	di_list.Release(di);
+	assert(this == gl_drawinfo);
+	for(int i=0;i<GLDL_TYPES;i++) drawlists[i].Reset();
+	gl_drawinfo=static_cast<FDrawInfo*>(outer);
+	di_list.Release(this);
 	if (gl_drawinfo == nullptr) 
 		ResetRenderDataAllocator();
+	return gl_drawinfo;
 }
 
 
@@ -254,31 +247,30 @@ void FDrawInfo::EndDrawInfo()
 
 void FDrawInfo::SetupFloodStencil(wallseg * ws)
 {
-	int recursion = GLPortal::GetRecursion();
+	int recursion = GLRenderer->mPortalState.GetRecursion();
 
 	// Create stencil 
 	glStencilFunc(GL_EQUAL, recursion, ~0);		// create stencil
 	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
-	{
 		// Use revertible color mask, to avoid stomping on anaglyph 3D state
-		ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
-		gl_RenderState.EnableTexture(false);
-		gl_RenderState.ResetColor();
-		glEnable(GL_DEPTH_TEST);
-		glDepthMask(true);
+	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.ResetColor();
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
 
-		gl_RenderState.Apply();
-		FQuadDrawer qd;
-		qd.Set(0, ws->x1, ws->z1, ws->y1, 0, 0);
-		qd.Set(1, ws->x1, ws->z2, ws->y1, 0, 0);
-		qd.Set(2, ws->x2, ws->z2, ws->y2, 0, 0);
-		qd.Set(3, ws->x2, ws->z1, ws->y2, 0, 0);
-		qd.Render(GL_TRIANGLE_FAN);
+	gl_RenderState.Apply();
+	FQuadDrawer qd;
+	qd.Set(0, ws->x1, ws->z1, ws->y1, 0, 0);
+	qd.Set(1, ws->x1, ws->z2, ws->y1, 0, 0);
+	qd.Set(2, ws->x2, ws->z2, ws->y2, 0, 0);
+	qd.Set(3, ws->x2, ws->z1, ws->y2, 0, 0);
+	qd.Render(GL_TRIANGLE_FAN);
 
-		glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
-		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
+	glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
 
-	} // glColorMask(1, 1, 1, 1);						// don't write to the graphics buffer
+	glColorMask(1, 1, 1, 1);						// don't write to the graphics buffer
 	gl_RenderState.EnableTexture(true);
 	glDisable(GL_DEPTH_TEST);
 	glDepthMask(false);
@@ -286,28 +278,27 @@ void FDrawInfo::SetupFloodStencil(wallseg * ws)
 
 void FDrawInfo::ClearFloodStencil(wallseg * ws)
 {
-	int recursion = GLPortal::GetRecursion();
+	int recursion = GLRenderer->mPortalState.GetRecursion();
 
-	glStencilOp(GL_KEEP,GL_KEEP,GL_DECR);
+	glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
 	gl_RenderState.EnableTexture(false);
-	{
-		// Use revertible color mask, to avoid stomping on anaglyph 3D state
-		ScopedColorMask colorMask(0, 0, 0, 0); // glColorMask(0,0,0,0);						// don't write to the graphics buffer
-		gl_RenderState.ResetColor();
+	// Use revertible color mask, to avoid stomping on anaglyph 3D state
+	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
+	gl_RenderState.ResetColor();
 
-		gl_RenderState.Apply();
-		FQuadDrawer qd;
-		qd.Set(0, ws->x1, ws->z1, ws->y1, 0, 0);
-		qd.Set(1, ws->x1, ws->z2, ws->y1, 0, 0);
-		qd.Set(2, ws->x2, ws->z2, ws->y2, 0, 0);
-		qd.Set(3, ws->x2, ws->z1, ws->y2, 0, 0);
-		qd.Render(GL_TRIANGLE_FAN);
+	gl_RenderState.Apply();
+	FQuadDrawer qd;
+	qd.Set(0, ws->x1, ws->z1, ws->y1, 0, 0);
+	qd.Set(1, ws->x1, ws->z2, ws->y1, 0, 0);
+	qd.Set(2, ws->x2, ws->z2, ws->y2, 0, 0);
+	qd.Set(3, ws->x2, ws->z1, ws->y2, 0, 0);
+	qd.Render(GL_TRIANGLE_FAN);
 
-		// restore old stencil op.
-		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		glStencilFunc(GL_EQUAL, recursion, ~0);
-		gl_RenderState.EnableTexture(true);
-	} // glColorMask(1, 1, 1, 1);
+	// restore old stencil op.
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glStencilFunc(GL_EQUAL, recursion, ~0);
+	gl_RenderState.EnableTexture(true);
+	glColorMask(1, 1, 1, 1);
 	glEnable(GL_DEPTH_TEST);
 	glDepthMask(true);
 }
@@ -329,7 +320,7 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	gltexture=FMaterial::ValidateTexture(plane.texture, false, true);
 	if (!gltexture) return;
 
-	if (mDrawer->FixedColormap) 
+	if (isFullbrightScene()) 
 	{
 		Colormap.Clear();
 		lightlevel=255;
@@ -346,13 +337,13 @@ void FDrawInfo::DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, boo
 	}
 
 	int rel = getExtraLight();
-	mDrawer->SetColor(lightlevel, rel, Colormap, 1.0f);
-	mDrawer->SetFog(lightlevel, rel, &Colormap, false);
+	SetColor(lightlevel, rel, Colormap, 1.0f);
+	SetFog(lightlevel, rel, &Colormap, false);
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 
-	float fviewx = r_viewpoint.Pos.X;
-	float fviewy = r_viewpoint.Pos.Y;
-	float fviewz = r_viewpoint.Pos.Z;
+	float fviewx = Viewpoint.Pos.X;
+	float fviewy = Viewpoint.Pos.Y;
+	float fviewz = Viewpoint.Pos.Z;
 
 	gl_RenderState.SetPlaneTextureRotation(&plane, gltexture);
 	gl_RenderState.Apply();
@@ -403,7 +394,7 @@ void FDrawInfo::FloodUpperGap(seg_t * seg)
 	double frontz = fakefsector->ceilingplane.ZatPoint(seg->v1);
 
 	if (fakebsector->GetTexture(sector_t::ceiling)==skyflatnum) return;
-	if (backz < r_viewpoint.Pos.Z) return;
+	if (backz < Viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -456,7 +447,7 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 
 
 	if (fakebsector->GetTexture(sector_t::floor) == skyflatnum) return;
-	if (fakebsector->GetPlaneTexZ(sector_t::floor) > r_viewpoint.Pos.Z) return;
+	if (fakebsector->GetPlaneTexZ(sector_t::floor) > Viewpoint.Pos.Z) return;
 
 	if (seg->sidedef == seg->linedef->sidedef[0])
 	{
@@ -487,22 +478,17 @@ void FDrawInfo::FloodLowerGap(seg_t * seg)
 	ClearFloodStencil(&ws);
 }
 
-// This was temporarily moved out of gl_renderhacks.cpp so that the dependency on GLWall could be eliminated until things have progressed a bit.
-void FDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
-{
-	for(unsigned int j=0;j<lowersegs.Size();j++)
-	{
-		seg_t * seg=lowersegs[j];
-		GLWall wall;
-		wall.ProcessLowerMiniseg(this, seg, seg->Subsector->render_sector, seg->PartnerSeg->Subsector->render_sector);
-		rendered_lines++;
-	}
-}
-
 // Same here for the dependency on the portal.
-void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub)
+void FDrawInfo::AddSubsectorToPortal(FSectorPortalGroup *ptg, subsector_t *sub)
 {
-	portal->GetRenderState()->AddSubsector(sub);
+	auto portal = FindPortal(ptg);
+	if (!portal)
+	{
+		portal = new GLScenePortal(&GLRenderer->mPortalState, new HWSectorStackPortal(ptg));
+		Portals.Push(portal);
+	}
+	auto ptl = static_cast<HWSectorStackPortal*>(static_cast<GLScenePortal*>(portal)->mScene);
+	ptl->AddSubsector(sub);
 }
 
 std::pair<FFlatVertex *, unsigned int> FDrawInfo::AllocVertices(unsigned int count)
@@ -522,6 +508,11 @@ GLDecal *FDrawInfo::AddDecal(bool onmirror)
 int FDrawInfo::UploadLights(FDynLightData &data)
 {
 	return GLRenderer->mLights->UploadLights(data);
+}
+
+bool FDrawInfo::SetDepthClamp(bool on)
+{
+	return gl_RenderState.SetDepthClamp(on);
 }
 
 

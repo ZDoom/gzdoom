@@ -27,6 +27,7 @@
 #include "st_stuff.h"
 #include "r_data/r_translate.h"
 #include "r_data/r_interpolate.h"
+#include "r_data/models/models.h"
 #include "poly_renderer.h"
 #include "d_net.h"
 #include "po_man.h"
@@ -41,6 +42,9 @@
 
 EXTERN_CVAR(Int, screenblocks)
 EXTERN_CVAR(Float, r_visibility)
+EXTERN_CVAR(Bool, r_models)
+
+extern bool r_modelscene;
 
 /////////////////////////////////////////////////////////////////////////////
 
@@ -54,7 +58,7 @@ PolyRenderer::PolyRenderer()
 {
 }
 
-void PolyRenderer::RenderView(player_t *player, DCanvas *target)
+void PolyRenderer::RenderView(player_t *player, DCanvas *target, void *videobuffer)
 {
 	using namespace swrenderer;
 	
@@ -66,6 +70,11 @@ void PolyRenderer::RenderView(player_t *player, DCanvas *target)
 	RenderActorView(player->mo, false);
 
 	Threads.MainThread()->FlushDrawQueue();
+
+	auto copyqueue = std::make_shared<DrawerCommandQueue>(Threads.MainThread()->FrameMemory.get());
+	copyqueue->Push<MemcpyCommand>(videobuffer, target->GetPixels(), target->GetWidth(), target->GetHeight(), target->GetPitch(), target->IsBgra() ? 4 : 1);
+	DrawerThreads::Execute(copyqueue);
+
 	PolyDrawerWaitCycles.Clock();
 	DrawerThreads::WaitForWorkers();
 	PolyDrawerWaitCycles.Unclock();
@@ -154,7 +163,16 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 
 	ScreenTriangle::FuzzStart = (ScreenTriangle::FuzzStart + 14) % FUZZTABLE;
 
-	ClearBuffers();
+	r_modelscene = r_models && Models.Size() > 0;
+
+	NextStencilValue = 0;
+	Threads.Clear();
+	Threads.MainThread()->SectorPortals.clear();
+	Threads.MainThread()->LinePortals.clear();
+	Threads.MainThread()->TranslucentObjects.clear();
+
+	PolyTriangleDrawer::ResizeBuffers(RenderTarget);
+	PolyTriangleDrawer::ClearStencil(Threads.MainThread()->DrawQueue, 0);
 	SetSceneViewport();
 
 	PolyPortalViewpoint mainViewpoint = SetupPerspectiveMatrix();
@@ -172,16 +190,6 @@ void PolyRenderer::RenderActorView(AActor *actor, bool dontmaplines)
 void PolyRenderer::RenderRemainingPlayerSprites()
 {
 	PlayerSprites.RenderRemainingSprites();
-}
-
-void PolyRenderer::ClearBuffers()
-{
-	Threads.Clear();
-	PolyTriangleDrawer::ClearBuffers(RenderTarget);
-	NextStencilValue = 0;
-	Threads.MainThread()->SectorPortals.clear();
-	Threads.MainThread()->LinePortals.clear();
-	Threads.MainThread()->TranslucentObjects.clear();
 }
 
 void PolyRenderer::SetSceneViewport()

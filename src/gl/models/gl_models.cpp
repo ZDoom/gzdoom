@@ -50,7 +50,7 @@ CVAR(Bool, gl_light_models, true, CVAR_ARCHIVE)
 VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 {
 	VSMatrix objectToWorldMatrix;
-	gl_RenderState.mViewMatrix.inverseMatrix(objectToWorldMatrix);
+	di->VPUniforms.mViewMatrix.inverseMatrix(objectToWorldMatrix);
 	return objectToWorldMatrix;
 }
 
@@ -65,7 +65,7 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CCW : GL_CW);
+		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CCW : GL_CW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -91,7 +91,7 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
 	{
 		glEnable(GL_CULL_FACE);
-		glFrontFace((mirrored ^ GLPortal::isMirrored()) ? GL_CW : GL_CCW);
+		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CW : GL_CCW);
 	}
 
 	gl_RenderState.mModelMatrix = objectToWorldMatrix;
@@ -157,7 +157,7 @@ void FGLModelRenderer::DrawElements(int numIndices, size_t offset)
 //===========================================================================
 
 FModelVertexBuffer::FModelVertexBuffer(bool needindex, bool singleframe)
-	: FVertexBuffer(singleframe || !gl.legacyMode)
+	: FVertexBuffer(true)
 {
 	vbo_ptr = nullptr;
 	ibo_id = 0;
@@ -177,20 +177,11 @@ void FModelVertexBuffer::BindVBO()
 {
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
-	if (!gl.legacyMode)
-	{
-		glEnableVertexAttribArray(VATTR_VERTEX);
-		glEnableVertexAttribArray(VATTR_TEXCOORD);
-		glEnableVertexAttribArray(VATTR_VERTEX2);
-		glEnableVertexAttribArray(VATTR_NORMAL);
-		glDisableVertexAttribArray(VATTR_COLOR);
-	}
-	else
-	{
-		glEnableClientState(GL_VERTEX_ARRAY);
-		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-		glDisableClientState(GL_COLOR_ARRAY);
-	}
+	glEnableVertexAttribArray(VATTR_VERTEX);
+	glEnableVertexAttribArray(VATTR_TEXCOORD);
+	glEnableVertexAttribArray(VATTR_VERTEX2);
+	glEnableVertexAttribArray(VATTR_NORMAL);
+	glDisableVertexAttribArray(VATTR_COLOR);
 }
 
 //===========================================================================
@@ -223,10 +214,7 @@ FModelVertex *FModelVertexBuffer::LockVertexBuffer(unsigned int size)
 	{
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 		glBufferData(GL_ARRAY_BUFFER, size * sizeof(FModelVertex), nullptr, GL_STATIC_DRAW);
-		if (!gl.legacyMode)
-			return (FModelVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, size * sizeof(FModelVertex), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-		else
-			return (FModelVertex*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
+		return (FModelVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, size * sizeof(FModelVertex), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 	}
 	else
 	{
@@ -264,10 +252,7 @@ unsigned int *FModelVertexBuffer::LockIndexBuffer(unsigned int size)
 	{
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ibo_id);
 		glBufferData(GL_ELEMENT_ARRAY_BUFFER, size * sizeof(unsigned int), NULL, GL_STATIC_DRAW);
-		if (!gl.legacyMode)
-			return (unsigned int*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, size * sizeof(unsigned int), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
-		else
-			return (unsigned int*)glMapBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_WRITE_ONLY);
+		return (unsigned int*)glMapBufferRange(GL_ELEMENT_ARRAY_BUFFER, 0, size * sizeof(unsigned int), GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
 	}
 	else
 	{
@@ -304,19 +289,10 @@ void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame
 	glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
 	if (vbo_id > 0)
 	{
-		if (!gl.legacyMode)
-		{
-			glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].x);
-			glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);
-			glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
-			glVertexAttribPointer(VATTR_NORMAL, 4, GL_INT_2_10_10_10_REV, true, sizeof(FModelVertex), &VMO[frame2].packedNormal);
-		}
-		else
-		{
-			// only used for single frame models so there is no vertex2 here, which has no use without a shader.
-			glVertexPointer(3, GL_FLOAT, sizeof(FModelVertex), &VMO[frame1].x);
-			glTexCoordPointer(2, GL_FLOAT, sizeof(FModelVertex), &VMO[frame1].u);
-		}
+		glVertexAttribPointer(VATTR_VERTEX, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].x);
+		glVertexAttribPointer(VATTR_TEXCOORD, 2, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame1].u);
+		glVertexAttribPointer(VATTR_VERTEX2, 3, GL_FLOAT, false, sizeof(FModelVertex), &VMO[frame2].x);
+		glVertexAttribPointer(VATTR_NORMAL, 4, GL_INT_2_10_10_10_REV, true, sizeof(FModelVertex), &VMO[frame2].packedNormal);
 	}
 	else if (frame1 == frame2 || size == 0 || gl_RenderState.GetInterpolationFactor() == 0.f)
 	{
@@ -337,28 +313,4 @@ void FModelVertexBuffer::SetupFrame(FModelRenderer *renderer, unsigned int frame
 			iBuffer[i].z = vbo_ptr[frame1 + i].z * (1.f - frac) + vbo_ptr[frame2 + i].z * frac;
 		}
 	}
-}
-
-//===========================================================================
-//
-// gl_RenderModel
-//
-//===========================================================================
-
-void gl_RenderModel(GLSprite * spr, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderModel(spr->x, spr->y, spr->z, spr->modelframe, spr->actor);
-}
-
-//===========================================================================
-//
-// gl_RenderHUDModel
-//
-//===========================================================================
-
-void gl_RenderHUDModel(DPSprite *psp, float ofsX, float ofsY, int mli)
-{
-	FGLModelRenderer renderer(mli);
-	renderer.RenderHUDModel(psp, ofsX, ofsY);
 }

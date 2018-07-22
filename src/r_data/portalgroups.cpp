@@ -363,7 +363,6 @@ static void GroupSectorPortals()
 				FSectorPortalGroup *portal = new FSectorPortalGroup;
 				portal->mDisplacement = pair->Key.mDisplacement;
 				portal->plane = (i == 1 ? sector_t::floor : sector_t::ceiling);	/**/
-				portal->glportal = NULL;
 				level.portalGroups.Push(portal);
 				for (unsigned j = 0; j < pair->Value.Size(); j++)
 				{

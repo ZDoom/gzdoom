@@ -46,6 +46,7 @@ struct FMemArena::Block
 	Block *NextBlock;
 	void *Limit;			// End of this block
 	void *Avail;			// Start of free space in this block
+	void *alignme;			// align to 16 bytes.
 
 	void Reset();
 	void *Alloc(size_t size);
@@ -55,14 +56,13 @@ struct FMemArena::Block
 //
 // RoundPointer
 //
-// Rounds a pointer up to the size of the largest integral type.
+// Rounds a pointer up to a pointer-sized boundary.
 //
 //==========================================================================
 
 static inline void *RoundPointer(void *ptr)
 {
-	const auto roundsize = std::max(sizeof(void*), sizeof(double));
-	return (void *)(((size_t)ptr + roundsize - 1) & ~(roundsize - 1));
+	return (void *)(((size_t)ptr + sizeof(void*) - 1) & ~(sizeof(void*) - 1));
 }
 
 //==========================================================================
@@ -95,7 +95,7 @@ FMemArena::~FMemArena()
 //
 //==========================================================================
 
-void *FMemArena::Alloc(size_t size)
+void *FMemArena::iAlloc(size_t size)
 {
 	Block *block;
 
@@ -109,6 +109,11 @@ void *FMemArena::Alloc(size_t size)
 	}
 	block = AddBlock(size);
 	return block->Alloc(size);
+}
+
+void *FMemArena::Alloc(size_t size)
+{
+	return iAlloc((size + 15) & ~15);
 }
 
 //==========================================================================
@@ -317,7 +322,7 @@ FString *FSharedStringArena::Alloc(const FString &source)
 	strnode = FindString(source, source.Len(), hash);
 	if (strnode == NULL)
 	{
-		strnode = (Node *)FMemArena::Alloc(sizeof(Node));
+		strnode = (Node *)iAlloc(sizeof(Node));
 		::new(&strnode->String) FString(source);
 		strnode->Hash = hash;
 		hash %= countof(Buckets);
@@ -352,7 +357,7 @@ FString *FSharedStringArena::Alloc(const char *source, size_t strlen)
 	strnode = FindString(source, strlen, hash);
 	if (strnode == NULL)
 	{
-		strnode = (Node *)FMemArena::Alloc(sizeof(Node));
+		strnode = (Node *)iAlloc(sizeof(Node));
 		::new(&strnode->String) FString(source, strlen);
 		strnode->Hash = hash;
 		hash %= countof(Buckets);

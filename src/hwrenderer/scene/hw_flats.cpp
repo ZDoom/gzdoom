@@ -41,6 +41,7 @@
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/scene/hw_drawinfo.h"
+#include "hwrenderer/data/flatvertices.h"
 #include "hw_drawstructs.h"
 
 #ifdef _DEBUG
@@ -86,9 +87,51 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 	return false;
 }
 
+
 //==========================================================================
 //
-// Flats 
+// special handling for skyboxes which need texture clamping.
+// This will find the bounding rectangle of the sector and just
+// draw one single polygon filling that rectangle with a clamped
+// texture.
+//
+//==========================================================================
+
+void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
+{
+	float minx = FLT_MAX, miny = FLT_MAX;
+	float maxx = -FLT_MAX, maxy = -FLT_MAX;
+
+	for (auto ln : sector->Lines)
+	{
+		float x = ln->v1->fX();
+		float y = ln->v1->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+		x = ln->v2->fX();
+		y = ln->v2->fY();
+		if (x < minx) minx = x;
+		if (y < miny) miny = y;
+		if (x > maxx) maxx = x;
+		if (y > maxy) maxy = y;
+	}
+
+	float z = plane.plane.ZatPoint(0., 0.) + dz;
+	static float uvals[] = { 0, 0, 1, 1 };
+	static float vvals[] = { 1, 0, 0, 1 };
+	int rot = -xs_FloorToInt(plane.Angle / 90.f);
+
+	vert[0].Set(minx, z, miny, uvals[rot & 3], vvals[rot & 3]);
+	vert[1].Set(minx, z, maxy, uvals[(rot + 1) & 3], vvals[(rot + 1) & 3]);
+	vert[2].Set(maxx, z, maxy, uvals[(rot + 2) & 3], vvals[(rot + 2) & 3]);
+	vert[3].Set(maxx, z, miny, uvals[(rot + 3) & 3], vvals[(rot + 3) & 3]);
+}
+
+//==========================================================================
+//
+//
 //
 //==========================================================================
 
@@ -147,7 +190,7 @@ bool GLFlat::SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdat
 
 inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 {
-	if (di->FixedColormap)
+	if (di->isFullbrightScene())
 	{
 		Colormap.Clear();
 	}
@@ -263,6 +306,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	dynlightindex = -1;
 
 	uint8_t &srf = di->sectorrenderflags[sector->sectornum];
+    const auto &vp = di->Viewpoint;
 
 	//
 	//
@@ -271,7 +315,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	//
 	//
 	//
-	if (frontsector->floorplane.ZatPoint(r_viewpoint.Pos) <= r_viewpoint.Pos.Z)
+	if (frontsector->floorplane.ZatPoint(vp.Pos) <= vp.Pos.Z)
 	{
 		// process the original floor first.
 
@@ -331,7 +375,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 	//
 	//
 	//
-	if (frontsector->ceilingplane.ZatPoint(r_viewpoint.Pos) >= r_viewpoint.Pos.Z)
+	if (frontsector->ceilingplane.ZatPoint(vp.Pos) >= vp.Pos.Z)
 	{
 		// process the original ceiling first.
 
@@ -416,13 +460,13 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 			{
-				if (rover->flags&FF_FOG && di->FixedColormap) continue;
+				if (rover->flags&FF_FOG && di->isFullbrightScene()) continue;
 				if (!rover->top.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
 				{
 					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
 					if (ff_top < lastceilingheight)
 					{
-						if (r_viewpoint.Pos.Z <= rover->top.plane->ZatPoint(r_viewpoint.Pos))
+						if (vp.Pos.Z <= rover->top.plane->ZatPoint(vp.Pos))
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
@@ -436,7 +480,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);
 					if (ff_bottom < lastceilingheight)
 					{
-						if (r_viewpoint.Pos.Z <= rover->bottom.plane->ZatPoint(r_viewpoint.Pos))
+						if (vp.Pos.Z <= rover->bottom.plane->ZatPoint(vp.Pos))
 						{
 							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
@@ -456,13 +500,13 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 			if ((rover->flags&(FF_EXISTS | FF_RENDERPLANES | FF_THISINSIDE)) == (FF_EXISTS | FF_RENDERPLANES))
 			{
-				if (rover->flags&FF_FOG && di->FixedColormap) continue;
+				if (rover->flags&FF_FOG && di->isFullbrightScene()) continue;
 				if (!rover->bottom.copied && rover->flags&(FF_INVERTPLANES | FF_BOTHPLANES))
 				{
 					double ff_bottom = rover->bottom.plane->ZatPoint(sector->centerspot);
 					if (ff_bottom > lastfloorheight || (rover->flags&FF_FIX))
 					{
-						if (r_viewpoint.Pos.Z >= rover->bottom.plane->ZatPoint(r_viewpoint.Pos))
+						if (vp.Pos.Z >= rover->bottom.plane->ZatPoint(vp.Pos))
 						{
 							SetFrom3DFloor(rover, false, !(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;
@@ -483,7 +527,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 					double ff_top = rover->top.plane->ZatPoint(sector->centerspot);
 					if (ff_top > lastfloorheight)
 					{
-						if (r_viewpoint.Pos.Z >= rover->top.plane->ZatPoint(r_viewpoint.Pos))
+						if (vp.Pos.Z >= rover->top.plane->ZatPoint(vp.Pos))
 						{
 							SetFrom3DFloor(rover, true, !!(rover->flags&FF_FOG));
 							Colormap.FadeColor = frontsector->Colormap.FadeColor;

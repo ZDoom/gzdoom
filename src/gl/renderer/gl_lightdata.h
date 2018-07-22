@@ -2,7 +2,7 @@
 #define __GL_LIGHTDATA
 
 #include "v_palette.h"
-#include "p_3dfloors.h"
+#include "r_defs.h"
 #include "r_data/renderstyle.h"
 #include "hwrenderer/utility/hw_lighting.h"
 #include "r_data/colormaps.h"

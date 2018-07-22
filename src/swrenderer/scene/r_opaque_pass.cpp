@@ -76,11 +76,12 @@ EXTERN_CVAR(Bool, r_drawvoxels);
 EXTERN_CVAR(Bool, r_debug_disable_vis_filter);
 extern uint32_t r_renderercaps;
 
+double model_distance_cull = 1e16;
+
 namespace
 {
 	double sprite_distance_cull = 1e16;
 	double line_distance_cull = 1e16;
-	double model_distance_cull = 1e16;
 }
 
 CUSTOM_CVAR(Float, r_sprite_distance_cull, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
@@ -935,7 +936,15 @@ namespace swrenderer
 			if (IsPotentiallyVisible(thing))
 			{
 				ThingSprite sprite;
-				if (GetThingSprite(thing, sprite))
+				int spritenum = thing->sprite;
+				bool isPicnumOverride = thing->picnum.isValid();
+				FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
+				if (r_modelscene && modelframe && (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared() < model_distance_cull)
+				{
+					DVector3 pos = thing->InterpolatedPosition(Thread->Viewport->viewpoint.TicFrac);
+					RenderModel::Project(Thread, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
+				}
+				else if (GetThingSprite(thing, sprite))
 				{
 					FDynamicColormap *thingColormap = basecolormap;
 					int thingShade = spriteshade;
@@ -954,24 +963,9 @@ namespace swrenderer
 					{
 						RenderVoxel::Project(Thread, thing, sprite.pos, sprite.voxel, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
 					}
-					else if (!r_models)
-					{
-						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
-					}
 					else
 					{
-						int spritenum = thing->sprite;
-						bool isPicnumOverride = thing->picnum.isValid();
-						FSpriteModelFrame *modelframe = isPicnumOverride ? nullptr : FindModelFrame(thing->GetClass(), spritenum, thing->frame, !!(thing->flags & MF_DROPPED));
-						if (modelframe && (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared() < model_distance_cull)
-						{
-							DVector3 pos = thing->InterpolatedPosition(Thread->Viewport->viewpoint.TicFrac);
-							RenderModel::Project(Thread, (float)pos.X, (float)pos.Y, (float)pos.Z, modelframe, thing);
-						}
-						else
-						{
-							RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
-						}
+						RenderSprite::Project(Thread, thing, sprite.pos, sprite.tex, sprite.spriteScale, sprite.renderflags, fakeside, fakefloor, fakeceiling, sec, thingShade, foggy, thingColormap);
 					}
 				}
 			}

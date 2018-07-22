@@ -187,25 +187,27 @@ void P_LoadStrifeConversations (MapData *map, const char *mapname)
 	}
 	else
 	{
-		if (strnicmp (mapname, "MAP", 3) != 0)
+		if (strnicmp (mapname, "MAP", 3) == 0)
 		{
-			return;
-		}
-		char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
-		char scriptname_t[9] = { 'D','I','A','L','O','G',mapname[3],mapname[4],0 };
+			char scriptname_b[9] = { 'S','C','R','I','P','T',mapname[3],mapname[4],0 };
+			char scriptname_t[9] = { 'D','I','A','L','O','G',mapname[3],mapname[4],0 };
 
-		if (!LoadScriptFile(scriptname_t, false, 2))
-		{
-			if (!LoadScriptFile (scriptname_b, false, 1))
+			if (   LoadScriptFile(scriptname_t, false, 2)
+				|| LoadScriptFile(scriptname_b, false, 1))
 			{
-				if (gameinfo.Dialogue.IsNotEmpty())
-				{
-					if (LoadScriptFile(gameinfo.Dialogue, false, 0)) return;
-				}
-
-				LoadScriptFile ("SCRIPT00", false, 1);
+				return;
 			}
 		}
+
+		if (gameinfo.Dialogue.IsNotEmpty())
+		{
+			if (LoadScriptFile(gameinfo.Dialogue, false, 0))
+			{
+				return;
+			}
+		}
+
+		LoadScriptFile("SCRIPT00", false, 1);
 	}
 }
 
@@ -811,7 +813,8 @@ void P_StartConversation (AActor *npc, AActor *pc, bool facetalker, bool saveang
 	npc->target = pc;
 	if (facetalker)
 	{
-		A_FaceTarget (npc);
+		if (!(npc->flags8 & MF8_DONTFACETALKER))
+			A_FaceTarget (npc);
 		pc->Angles.Yaw = pc->AngleTo(npc);
 	}
 	if ((npc->flags & MF_FRIENDLY) || (npc->flags4 & MF4_NOHATEPLAYERS))
@@ -934,7 +937,8 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 	if (reply == NULL)
 	{
 		// The default reply was selected
-		npc->Angles.Yaw = player->ConversationNPCAngle;
+		if (!(npc->flags8 & MF8_DONTFACETALKER))
+			npc->Angles.Yaw = player->ConversationNPCAngle;
 		npc->flags5 &= ~MF5_INCONVERSATION;
 		return;
 	}
@@ -950,7 +954,8 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 				TerminalResponse(reply->QuickNo);
 			}
 			npc->ConversationAnimation(2);
-			npc->Angles.Yaw = player->ConversationNPCAngle;
+			if (!(npc->flags8 & MF8_DONTFACETALKER))
+				npc->Angles.Yaw = player->ConversationNPCAngle;
 			npc->flags5 &= ~MF5_INCONVERSATION;
 			return;
 		}
@@ -1078,7 +1083,8 @@ static void HandleReply(player_t *player, bool isconsole, int nodenum, int reply
 		}
 	}
 
-	npc->Angles.Yaw = player->ConversationNPCAngle;
+	if (!(npc->flags8 & MF8_DONTFACETALKER))
+		npc->Angles.Yaw = player->ConversationNPCAngle;
 
 	// [CW] Set these to NULL because we're not using to them
 	// anymore. However, this can interfere with slideshows
@@ -1127,7 +1133,8 @@ void P_ConversationCommand (int netcode, int pnum, uint8_t **stream)
 		assert(netcode == DEM_CONVNULL || netcode == DEM_CONVCLOSE);
 		if (player->ConversationNPC != NULL)
 		{
-			player->ConversationNPC->Angles.Yaw = player->ConversationNPCAngle;
+			if (!(player->ConversationNPC->flags8 & MF8_DONTFACETALKER))
+				player->ConversationNPC->Angles.Yaw = player->ConversationNPCAngle;
 			player->ConversationNPC->flags5 &= ~MF5_INCONVERSATION;
 		}
 		if (netcode == DEM_CONVNULL)

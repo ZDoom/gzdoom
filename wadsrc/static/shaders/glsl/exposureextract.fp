@@ -1,10 +1,8 @@
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform sampler2D SceneTexture;
-uniform vec2 Scale;
-uniform vec2 Offset;
+layout(binding=0) uniform sampler2D SceneTexture;
 
 void main()
 {

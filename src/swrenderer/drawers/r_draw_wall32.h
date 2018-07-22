@@ -331,8 +331,6 @@ namespace swrenderer
 				return outcolor;
 			}
 		}
-
-		FString DebugInfo() override { return "DrawWall32T"; }
 	};
 
 	typedef DrawWall32T<DrawWall32TModes::OpaqueWall> DrawWall32Command;

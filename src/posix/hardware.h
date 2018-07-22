@@ -66,30 +66,8 @@ typedef sem_t Semaphore;
 	sem_init(&sem, shared, value);
 #endif
 
-class IVideo
-{
- public:
-	virtual ~IVideo () {}
-
-	virtual EDisplayType GetDisplayType () = 0;
-	virtual void SetWindowedScale (float scale) = 0;
-
-	virtual DFrameBuffer *CreateFrameBuffer (int width, int height, bool bgra, bool fs, DFrameBuffer *old) = 0;
-
-	virtual void StartModeIterator (int bits, bool fs) = 0;
-	virtual bool NextMode (int *width, int *height, bool *letterbox) = 0;
-
-	virtual bool SetResolution (int width, int height, int bits);
-
-	virtual void DumpAdapters();
-};
-
-void I_InitGraphics ();
-void I_ShutdownGraphics ();
-
 extern Semaphore FPSLimitSemaphore;
 void I_SetFPSLimit(int limit);
 
-extern IVideo *Video;
 
 #endif	// __HARDWARE_H__

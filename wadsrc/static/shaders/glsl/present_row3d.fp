@@ -1,13 +1,9 @@
 
 in vec2 TexCoord;
-out vec4 FragColor;
+layout(location=0) out vec4 FragColor;
 
-uniform sampler2D LeftEyeTexture;
-uniform sampler2D RightEyeTexture;
-uniform float InvGamma;
-uniform float Contrast;
-uniform float Brightness;
-uniform int WindowPositionParity; // top-of-window might not be top-of-screen
+layout(binding=0) uniform sampler2D LeftEyeTexture;
+layout(binding=1) uniform sampler2D RightEyeTexture;
 
 vec4 ApplyGamma(vec4 c)
 {

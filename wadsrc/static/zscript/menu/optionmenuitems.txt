@@ -937,143 +937,6 @@ class OptionMenuItemColorPicker : OptionMenuItem
 	}
 }
 
-class OptionMenuItemScreenResolution : OptionMenuItem
-{
-	String mResTexts[3];
-	int mSelection;
-	int mHighlight;
-	int mMaxValid;
-
-	enum EValues
-	{
-		SRL_INDEX = 0x30000,
-		SRL_SELECTION = 0x30003,
-		SRL_HIGHLIGHT = 0x30004,
-	};
-
-	OptionMenuItemScreenResolution Init(String command)
-	{
-		Super.Init("", command);
-		mSelection = 0;
-		mHighlight = -1;
-		return self;
-	}
-
-	override bool SetValue(int i, int v)
-	{
-		if (i == SRL_SELECTION)
-		{
-			mSelection = v;
-			return true;
-		}
-		else if (i == SRL_HIGHLIGHT)
-		{
-			mHighlight = v;
-			return true;
-		}
-		return false;
-	}
-
-	override bool, int GetValue(int i)
-	{
-		if (i == SRL_SELECTION)
-		{
-			return true, mSelection;
-		}
-		return false, 0;
-	}
-
-	override bool SetString(int i, String newtext)
-	{
-		if (i >= SRL_INDEX && i <= SRL_INDEX+2) 
-		{
-			mResTexts[i-SRL_INDEX] = newtext;
-			if (mResTexts[0].Length() == 0) mMaxValid = -1;
-			else if (mResTexts[1].Length() == 0) mMaxValid = 0;
-			else if (mResTexts[2].Length() == 0) mMaxValid = 1;
-			else mMaxValid = 2;
-			return true;
-		}
-		return false;
-	}
-
-	override bool, String GetString(int i)
-	{
-		if (i >= SRL_INDEX && i <= SRL_INDEX+2) 
-		{
-			return true, mResTexts[i-SRL_INDEX];
-		}
-		return false, "";
-	}
-
-	override bool MenuEvent (int mkey, bool fromcontroller)
-	{
-		if (mkey == Menu.MKEY_Left)
-		{
-			if (--mSelection < 0) mSelection = mMaxValid;
-			Menu.MenuSound ("menu/cursor");
-			return true;
-		}
-		else if (mkey == Menu.MKEY_Right)
-		{
-			if (++mSelection > mMaxValid) mSelection = 0;
-			Menu.MenuSound ("menu/cursor");
-			return true;
-		}
-		else 
-		{
-			return Super.MenuEvent(mkey, fromcontroller);
-		}
-		return false;
-	}
-
-	override bool MouseEvent(int type, int x, int y)
-	{
-		int colwidth = screen.GetWidth() / 3;
-		mSelection = x / colwidth;
-		return Super.MouseEvent(type, x, y);
-	}
-
-	override bool Activate()
-	{
-		Menu.MenuSound("menu/choose");
-		Menu.SetVideoMode();
-		return true;
-	}
-
-	override int Draw(OptionMenuDescriptor desc, int y, int indent, bool selected)
-	{
-		int colwidth = screen.GetWidth() / 3;
-		int col;
-
-		for (int x = 0; x < 3; x++)
-		{
-			if (selected && mSelection == x)
-				col = OptionMenuSettings.mFontColorSelection;
-			else if (x == mHighlight)
-				col = OptionMenuSettings.mFontColorHighlight;
-			else
-				col = OptionMenuSettings.mFontColorValue;
-
-			screen.DrawText (SmallFont, col, colwidth * x + 20 * CleanXfac_1, y, mResTexts[x], DTA_CleanNoMove_1, true);
-		}
-		return colwidth * mSelection + 20 * CleanXfac_1 - CursorSpace();
-	}
-
-	override bool Selectable()
-	{
-		return mMaxValid >= 0;
-	}
-
-	override void Ticker()
-	{
-		if (Selectable() && mSelection > mMaxValid)
-		{
-			mSelection = mMaxValid;
-		}
-	}
-}
-
 //=============================================================================
 //
 // [TP] OptionMenuFieldBase
@@ -1332,3 +1195,42 @@ class OptionMenuItemScaleSlider : OptionMenuItemSlider
 	
 }
 
+//=============================================================================
+//
+// Placeholder classes for overhauled video mode menu. Do not use!
+// Their sole purpose is to support mods with full copy of embedded MENUDEF
+//
+//=============================================================================
+
+class OptionMenuItemScreenResolution : OptionMenuItem
+{
+	String mResTexts[3];
+	int mSelection;
+	int mHighlight;
+	int mMaxValid;
+
+	enum EValues
+	{
+		SRL_INDEX = 0x30000,
+		SRL_SELECTION = 0x30003,
+		SRL_HIGHLIGHT = 0x30004,
+	};
+
+	OptionMenuItemScreenResolution Init(String command)
+	{
+		return self;
+	}
+
+	override bool Selectable()
+	{
+		return false;
+	}
+}
+
+class VideoModeMenu : OptionMenu
+{
+	static bool SetSelectedSize()
+	{
+		return false;
+	}
+}

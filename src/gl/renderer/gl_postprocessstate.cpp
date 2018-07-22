@@ -73,13 +73,10 @@ void FGLPostProcessState::SaveTextureBindings(unsigned int numUnits)
 		glBindTexture(GL_TEXTURE_2D, 0);
 		textureBinding.Push(texture);
 
-		if (gl.flags & RFL_SAMPLER_OBJECTS)
-		{
-			GLint sampler;
-			glGetIntegerv(GL_SAMPLER_BINDING, &sampler);
-			glBindSampler(i, 0);
-			samplerBinding.Push(sampler);
-		}
+		GLint sampler;
+		glGetIntegerv(GL_SAMPLER_BINDING, &sampler);
+		glBindSampler(i, 0);
+		samplerBinding.Push(sampler);
 	}
 	glActiveTexture(GL_TEXTURE0);
 }

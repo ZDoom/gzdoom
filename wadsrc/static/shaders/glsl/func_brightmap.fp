@@ -1,11 +1,9 @@
 
-vec4 ProcessTexel()
+Material ProcessMaterial()
 {
-	return getTexel(vTexCoord.st);
-}
-
-vec4 ProcessLight(vec4 color)
-{
-	vec4 brightpix = desaturate(texture(brighttexture, vTexCoord.st));
-	return vec4(min (color.rgb + brightpix.rgb, 1.0), color.a);
+	Material material;
+	material.Base = getTexel(vTexCoord.st);
+	material.Normal = ApplyNormalMap(vTexCoord.st);
+	material.Bright = texture(brighttexture, vTexCoord.st);
+	return material;
 }

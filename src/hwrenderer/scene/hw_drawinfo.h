@@ -1,7 +1,11 @@
 #pragma once
 
 #include <atomic>
+#include "vectors.h"
 #include "r_defs.h"
+#include "r_utility.h"
+#include "hw_viewpointuniforms.h"
+#include "v_video.h"
 
 
 struct FSectorPortalGroup;
@@ -18,6 +22,8 @@ struct HUDSprite;
 class Clipper;
 class IPortal;
 class FFlatVertexGenerator;
+class IRenderQueue;
+class HWScenePortalBase;
 
 //==========================================================================
 //
@@ -53,7 +59,10 @@ enum EPortalClip
 
 struct HWDrawInfo
 {
-	virtual ~HWDrawInfo() {}
+	virtual ~HWDrawInfo() 
+	{
+		ClearBuffers();
+	}
 
 	struct wallseg
 	{
@@ -79,15 +88,29 @@ struct HWDrawInfo
 		subsector_t * sub;
 		uint8_t flags;
 	};
+
+	enum EFullbrightFlags
+	{
+		Fullbright = 1,
+		Nightvision = 2,
+		StealthVision = 4
+	};
+
+	bool isFullbrightScene() const { return !!(FullbrightFlags & Fullbright); }
+	bool isNightvision() const { return !!(FullbrightFlags & Nightvision); }
+	bool isStealthVision() const { return !!(FullbrightFlags & StealthVision); }
     
-    int FixedColormap;
+	HWDrawInfo * outer = nullptr;
+	int FullbrightFlags;
 	std::atomic<int> spriteindex;
-	IPortal *mClipPortal;
-	FRotator mAngles;
-	FVector2 mViewVector;
-	AActor *mViewActor;
+	HWScenePortalBase *mClipPortal;
+	IPortal *mCurrentPortal;
+	//FRotator mAngles;
 	IShadowMap *mShadowMap;
 	Clipper *mClipper;
+	FRenderViewpoint Viewpoint;
+	HWViewpointUniforms VPUniforms;	// per-viewpoint uniform state
+	TArray<IPortal *> Portals;
 
 	TArray<MissingTextureInfo> MissingUpperTextures;
 	TArray<MissingTextureInfo> MissingLowerTextures;
@@ -127,6 +150,7 @@ private:
 
     sector_t fakesec;    // this is a struct member because it gets used in recursively called functions so it cannot be put on the stack.
 
+
 	void UnclipSubsector(subsector_t *sub);
 	void AddLine(seg_t *seg, bool portalclip);
 	void PolySubsector(subsector_t * sub);
@@ -137,10 +161,36 @@ private:
 	void RenderThings(subsector_t * sub, sector_t * sector);
 	void DoSubsector(subsector_t * sub);
 public:
+
+	void SetCameraPos(const DVector3 &pos)
+	{
+		VPUniforms.mCameraPos = { (float)pos.X, (float)pos.Z, (float)pos.Y, 0.f };
+	}
+
+	void SetClipHeight(float h, float d)
+	{
+		VPUniforms.mClipHeight = h;
+		VPUniforms.mClipHeightDirection = d;
+		VPUniforms.mClipLine.X = -1000001.f;
+	}
+
+	void SetClipLine(line_t *line)
+	{
+		VPUniforms.mClipLine = { (float)line->v1->fX(), (float)line->v1->fY(), (float)line->Delta().X, (float)line->Delta().Y };
+		VPUniforms.mClipHeight = 0;
+	}
+
+	bool ClipLineShouldBeActive()
+	{
+		return (screen->hwcaps & RFL_NO_CLIP_PLANES) && VPUniforms.mClipLine.X > -1000000.f;
+	}
+
+	IPortal * FindPortal(const void * src);
 	void RenderBSPNode(void *node);
 
 	void ClearBuffers();
 	void SetViewArea();
+	int SetFullbrightFlags(player_t *player);
 
 	bool DoOneSectorUpper(subsector_t * subsec, float planez, area_t in_area);
 	bool DoOneSectorLower(subsector_t * subsec, float planez, area_t in_area);
@@ -176,6 +226,9 @@ public:
 	void PrepareTargeterSprites();
 
 	void UpdateCurrentMapSection();
+	void SetViewMatrix(const FRotator &angles, float vx, float vy, float vz, bool mirror, bool planemirror);
+	void SetupView(float vx, float vy, float vz, bool mirror, bool planemirror);
+	angle_t FrustumAngle();
 
 	virtual void DrawWall(GLWall *wall, int pass) = 0;
 	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;
@@ -183,7 +236,7 @@ public:
 
 	virtual void FloodUpperGap(seg_t * seg) = 0;
 	virtual void FloodLowerGap(seg_t * seg) = 0;
-	virtual void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs) = 0;
+	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
     
     virtual void AddWall(GLWall *w) = 0;
@@ -194,9 +247,10 @@ public:
 	virtual void AddHUDSprite(HUDSprite *huds) = 0;
 
 	virtual int UploadLights(FDynLightData &data) = 0;
+	virtual void ApplyVPUniforms() = 0;
+	virtual bool SetDepthClamp(bool on) = 0;
 
     virtual GLDecal *AddDecal(bool onmirror) = 0;
 	virtual std::pair<FFlatVertex *, unsigned int> AllocVertices(unsigned int count) = 0;
-
 };
 

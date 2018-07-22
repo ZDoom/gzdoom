@@ -25,6 +25,7 @@ class Archvile : Actor
 		ActiveSound "vile/active";
 		MeleeSound "vile/stop";
 		Obituary "$OB_VILE";
+		Tag "$FN_ARCH";
 	}
 	States
 	{

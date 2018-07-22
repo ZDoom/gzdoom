@@ -68,8 +68,9 @@ EXTERN_CVAR(Float, transsouls)
 //
 //==========================================================================
 
-bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
+bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v, DVector3 *vp)
 {
+	const auto &HWAngles = di->Viewpoint.HWAngles;
 	if (actor != nullptr && (actor->renderflags & RF_SPRITETYPEMASK) == RF_FLATSPRITE)
 	{
 		Matrix3x4 mat;
@@ -146,10 +147,10 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 		{
 			// [CMB] Rotate relative to camera XY position, not just camera direction,
 			// which is nicer in VR
-			float xrel = xcenter - r_viewpoint.Pos.X;
-			float yrel = ycenter - r_viewpoint.Pos.Y;
+			float xrel = xcenter - vp->X;
+			float yrel = ycenter - vp->Y;
 			float absAngleDeg = RAD2DEG(atan2(-yrel, xrel));
-			float counterRotationDeg = 270. - di->mAngles.Yaw.Degrees; // counteracts existing sprite rotation
+			float counterRotationDeg = 270. - HWAngles.Yaw.Degrees; // counteracts existing sprite rotation
 			float relAngleDeg = counterRotationDeg + absAngleDeg;
 
 			mat.Rotate(0, 1, 0, relAngleDeg);
@@ -157,7 +158,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 
 		// [fgsfds] calculate yaw vectors
 		float yawvecX = 0, yawvecY = 0, rollDegrees = 0;
-		float angleRad = (270. - di->mAngles.Yaw).Radians();
+		float angleRad = (270. - HWAngles.Yaw).Radians();
 		if (actor)	rollDegrees = Angles.Roll.Degrees;
 		if (isFlatSprite)
 		{
@@ -181,7 +182,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 			if (useOffsets) mat.Translate(xx, zz, yy);
 			if (drawWithXYBillboard)
 			{
-				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -di->mAngles.Pitch.Degrees);
+				mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees);
 			}
 			mat.Rotate(cos(angleRad), 0, sin(angleRad), rollDegrees);
 			if (useOffsets) mat.Translate(-xx, -zz, -yy);
@@ -191,7 +192,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 			// Rotate the sprite about the vector starting at the center of the sprite
 			// triangle strip and with direction orthogonal to where the player is looking
 			// in the x/y plane.
-			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -di->mAngles.Pitch.Degrees);
+			mat.Rotate(-sin(angleRad), 0, cos(angleRad), -HWAngles.Pitch.Degrees);
 		}
 
 		mat.Translate(-xcenter, -zcenter, -ycenter); // retreat from sprite center
@@ -219,7 +220,7 @@ bool GLSprite::CalculateVertices(HWDrawInfo *di, FVector3 *v)
 inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 {
 	// That's a lot of checks...
-	if (modelframe && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && di->FixedColormap == CM_DEFAULT && !fullbright && !(screen->hwcaps & RFL_NO_SHADERS))
+	if (modelframe && RenderStyle.BlendOp != STYLEOP_Shadow && gl_light_sprites && level.HasDynamicLights && !di->isFullbrightScene() && !fullbright)
 	{
 		hw_GetDynModelLight(actor, lightdata);
 		dynlightindex = di->UploadLights(lightdata);
@@ -403,11 +404,12 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		return;
 	}
 
-	AActor *camera = r_viewpoint.camera;
+    const auto &vp = di->Viewpoint;
+	AActor *camera = vp.camera;
 
 	if (thing->renderflags & RF_INVISIBLE || !thing->RenderStyle.IsVisible(thing->Alpha))
 	{
-		if (!(thing->flags & MF_STEALTH) || !di->FixedColormap || !gl_enhanced_nightvision || thing == camera)
+		if (!(thing->flags & MF_STEALTH) || !di->isStealthVision() || thing == camera)
 			return;
 	}
 
@@ -425,26 +427,26 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 
 	// [RH] Interpolate the sprite's position to make it look smooth
-	DVector3 thingpos = thing->InterpolatedPosition(r_viewpoint.TicFrac);
+	DVector3 thingpos = thing->InterpolatedPosition(vp.TicFrac);
 	if (thruportal == 1) thingpos += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
 
 	// Some added checks if the camera actor is not supposed to be seen. It can happen that some portal setup has this actor in view in which case it may not be skipped here
-	if (thing == camera && !r_viewpoint.showviewer)
+	if (thing == camera && !vp.showviewer)
 	{
 		DVector3 thingorigin = thing->Pos();
 		if (thruportal == 1) thingorigin += level.Displacements.getOffset(thing->Sector->PortalGroup, sector->PortalGroup);
-		if (fabs(thingorigin.X - r_viewpoint.ActorPos.X) < 2 && fabs(thingorigin.Y - r_viewpoint.ActorPos.Y) < 2) return;
+		if (fabs(thingorigin.X - vp.ActorPos.X) < 2 && fabs(thingorigin.Y - vp.ActorPos.Y) < 2) return;
 	}
 	// Thing is invisible if close to the camera.
 	if (thing->renderflags & RF_MAYBEINVISIBLE)
 	{
-		if (fabs(thingpos.X - r_viewpoint.Pos.X) < 32 && fabs(thingpos.Y - r_viewpoint.Pos.Y) < 32) return;
+		if (fabs(thingpos.X - vp.Pos.X) < 32 && fabs(thingpos.Y - vp.Pos.Y) < 32) return;
 	}
 
 	// Too close to the camera. This doesn't look good if it is a sprite.
-	if (fabs(thingpos.X - r_viewpoint.Pos.X) < 2 && fabs(thingpos.Y - r_viewpoint.Pos.Y) < 2)
+	if (fabs(thingpos.X - vp.Pos.X) < 2 && fabs(thingpos.Y - vp.Pos.Y) < 2)
 	{
-		if (r_viewpoint.Pos.Z >= thingpos.Z - 2 && r_viewpoint.Pos.Z <= thingpos.Z + thing->Height + 2)
+		if (vp.Pos.Z >= thingpos.Z - 2 && vp.Pos.Z <= thingpos.Z + thing->Height + 2)
 		{
 			// exclude vertically moving objects from this check.
 			if (!thing->Vel.isZero())
@@ -460,13 +462,13 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// don't draw first frame of a player missile
 	if (thing->flags&MF_MISSILE)
 	{
-		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == di->mViewActor && di->mViewActor != nullptr)
+		if (!(thing->flags7 & MF7_FLYCHEAT) && thing->target == vp.ViewActor && vp.ViewActor != nullptr)
 		{
 			double speed = thing->Vel.Length();
 			if (speed >= thing->target->radius / 2)
 			{
 				double clipdist = clamp(thing->Speed, thing->target->radius, thing->target->radius * 2);
-				if ((thingpos - r_viewpoint.Pos).LengthSquared() < clipdist * clipdist) return;
+				if ((thingpos - vp.Pos).LengthSquared() < clipdist * clipdist) return;
 			}
 		}
 		thing->flags7 |= MF7_FLYCHEAT;	// do this only once for the very first frame, but not if it gets into range again.
@@ -479,7 +481,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	}
 	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
 	if (thing->renderflags & RF_INTERPOLATEANGLES)
-		Angles = thing->InterpolatedAngles(r_viewpoint.TicFrac);
+		Angles = thing->InterpolatedAngles(vp.TicFrac);
 	else
 		Angles = thing->Angles;
 
@@ -506,7 +508,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// [RH] Make floatbobbing a renderer-only effect.
 	if (thing->flags2 & MF2_FLOATBOB)
 	{
-		float fz = thing->GetBobOffset(r_viewpoint.TicFrac);
+		float fz = thing->GetBobOffset(vp.TicFrac);
 		z += fz;
 	}
 
@@ -514,7 +516,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (!modelframe)
 	{
 		bool mirror;
-		DAngle ang = (thingpos - r_viewpoint.Pos).Angle();
+		DAngle ang = (thingpos - vp.Pos).Angle();
 		FTextureID patch;
 		// [ZZ] add direct picnum override
 		if (isPicnumOverride)
@@ -531,7 +533,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			int rot;
 			if (!(thing->renderflags & RF_FLATSPRITE) || thing->flags7 & MF7_SPRITEANGLE)
 			{
-				sprangle = thing->GetSpriteAngle(ang, r_viewpoint.TicFrac);
+				sprangle = thing->GetSpriteAngle(ang, vp.TicFrac);
 				rot = -1;
 			}
 			else
@@ -596,8 +598,8 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		switch (spritetype)
 		{
 		case RF_FACESPRITE:
-			viewvecX = di->mViewVector.X;
-			viewvecY = di->mViewVector.Y;
+			viewvecX = vp.ViewVector.X;
+			viewvecY = vp.ViewVector.Y;
 
 			x1 = x - viewvecY*leftfac;
 			x2 = x - viewvecY*rightfac;
@@ -632,7 +634,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		gltexture = nullptr;
 	}
 
-	depth = FloatToFixed((x - r_viewpoint.Pos.X) * r_viewpoint.TanCos + (y - r_viewpoint.Pos.Y) * r_viewpoint.TanSin);
+	depth = FloatToFixed((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
 
 	// light calculation
 
@@ -655,19 +657,15 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	RenderStyle = thing->RenderStyle;
 
 	// colormap stuff is a little more complicated here...
-	if (di->FixedColormap)
+	if (di->isFullbrightScene())
 	{
-		if ((gl_enhanced_nv_stealth > 0 && di->FixedColormap == CM_LITE)		// Infrared powerup only
-			|| (gl_enhanced_nv_stealth == 2 && di->FixedColormap >= CM_TORCH)// Also torches
-			|| (gl_enhanced_nv_stealth == 3))								// Any fixed colormap
-			enhancedvision = true;
+		enhancedvision = di->isStealthVision();
 
 		Colormap.Clear();
 
-		if (di->FixedColormap == CM_LITE)
+		if (di->isNightvision())
 		{
-			if (gl_enhanced_nightvision &&
-				(thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
+			if ((thing->IsKindOf(RUNTIME_CLASS(AInventory)) || thing->flags3&MF3_ISMONSTER || thing->flags&MF_MISSILE || thing->flags&MF_CORPSE))
 			{
 				RenderStyle.Flags |= STYLEF_InvertSource;
 			}
@@ -709,7 +707,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		RenderStyle.CheckFuzz();
 		if (RenderStyle.BlendOp == STYLEOP_Fuzz)
 		{
-			if (gl_fuzztype != 0 && !(screen->hwcaps & RFL_NO_SHADERS) && !(RenderStyle.Flags & STYLEF_InvertSource))
+			if (gl_fuzztype != 0 && !(RenderStyle.Flags & STYLEF_InvertSource))
 			{
 				RenderStyle = LegacyRenderStyles[STYLE_Translucent];
 				OverrideShader = SHADER_NoTexture + gl_fuzztype;
@@ -811,7 +809,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	// 3. any bright object
 	// 4. any with render style shadow (which doesn't use the sector light)
 	// 5. anything with render style reverse subtract (light effect is not what would be desired here)
-	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && di->FixedColormap == CM_DEFAULT && !fullbright &&
+	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright &&
 		RenderStyle.BlendOp != STYLEOP_Shadow && RenderStyle.BlendOp != STYLEOP_RevSub)
 	{
 		if (screen->hwcaps & RFL_NO_CLIP_PLANES)	// on old hardware we are rather limited...
@@ -853,7 +851,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		sector->GetCeilingLight() : sector->GetFloorLight());
 	foglevel = (uint8_t)clamp<short>(sector->lightlevel, 0, 255);
 
-	if (di->FixedColormap) 
+	if (di->isFullbrightScene()) 
 	{
 		Colormap.Clear();
 	}
@@ -927,7 +925,8 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		}
 	}
 
-	double timefrac = r_viewpoint.TicFrac;
+    const auto &vp = di->Viewpoint;
+	double timefrac = vp.TicFrac;
 	if (paused || bglobal.freeze || (level.flags2 & LEVEL2_FROZEN))
 		timefrac = 0.;
 	float xvf = (particle->Vel.X) * timefrac;
@@ -944,8 +943,8 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	else factor = 1 / 7.f;
 	float scalefac=particle->size * factor;
 
-	float viewvecX = di->mViewVector.X;
-	float viewvecY = di->mViewVector.Y;
+	float viewvecX = vp.ViewVector.X;
+	float viewvecY = vp.ViewVector.Y;
 
 	x1=x+viewvecY*scalefac;
 	x2=x-viewvecY*scalefac;
@@ -954,7 +953,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	z1=z-scalefac;
 	z2=z+scalefac;
 
-	depth = FloatToFixed((x - r_viewpoint.Pos.X) * r_viewpoint.TanCos + (y - r_viewpoint.Pos.Y) * r_viewpoint.TanSin);
+	depth = FloatToFixed((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
 
 	actor=nullptr;
 	this->particle=particle;
@@ -964,7 +963,7 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	if (gl_particles_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
 	else hw_styleflags = STYLEHW_NoAlphaTest;
 
-	if (sector->e->XFloor.lightlist.Size() != 0 && di->FixedColormap == CM_DEFAULT && !fullbright)
+	if (sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright)
 		lightlist = &sector->e->XFloor.lightlist;
 	else
 		lightlist = nullptr;
@@ -984,6 +983,7 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 	TMap<AActor*, bool> processcheck;
 	if (glport->validcount == validcount) return;	// only process once per frame
 	glport->validcount = validcount;
+    const auto &vp = Viewpoint;
 	for (auto port : glport->lines)
 	{
 		line_t *line = port->mOrigin;
@@ -1007,9 +1007,9 @@ void HWDrawInfo::ProcessActorsInPortal(FLinePortalSpan *glport, area_t in_area)
 					DVector3 newpos = savedpos;
 					sector_t fakesector;
 
-					if (!r_viewpoint.showviewer && th == r_viewpoint.camera)
+					if (!vp.showviewer && th == vp.camera)
 					{
-						if (fabs(savedpos.X - r_viewpoint.ActorPos.X) < 2 && fabs(savedpos.Y - r_viewpoint.ActorPos.Y) < 2)
+						if (fabs(savedpos.X - vp.ActorPos.X) < 2 && fabs(savedpos.Y - vp.ActorPos.Y) < 2)
 						{
 							continue;
 						}

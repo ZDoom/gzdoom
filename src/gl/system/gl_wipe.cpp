@@ -128,23 +128,8 @@ bool OpenGLFrameBuffer::WipeStartScreen(int type)
 		glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	};
 
-	if (FGLRenderBuffers::IsEnabled())
-	{
-		GLRenderer->mBuffers->BindCurrentFB();
-		copyPixels();
-	}
-	else if (gl.legacyMode)
-	{
-		copyPixels();
-	}
-	else
-	{
-		GLint readbuffer = 0;
-		glGetIntegerv(GL_READ_BUFFER, &readbuffer);
-		glReadBuffer(GL_FRONT);
-		copyPixels();
-		glReadBuffer(readbuffer);
-	}
+	GLRenderer->mBuffers->BindCurrentFB();
+	copyPixels();
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -170,8 +155,7 @@ void OpenGLFrameBuffer::WipeEndScreen()
 	glFinish();
 	wipeendscreen->Bind(0, false, false);
 
-	if (FGLRenderBuffers::IsEnabled())
-		GLRenderer->mBuffers->BindCurrentFB();
+	GLRenderer->mBuffers->BindCurrentFB();
 
 	glCopyTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, viewport.left, viewport.top, viewport.width, viewport.height);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -203,12 +187,9 @@ bool OpenGLFrameBuffer::WipeDo(int ticks)
 		glDisable(GL_DEPTH_TEST);
 		glDepthMask(false);
 
-		if (FGLRenderBuffers::IsEnabled())
-		{
-			GLRenderer->mBuffers->BindCurrentFB();
-			const auto &bounds = screen->mScreenViewport;
-			glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
-		}
+		GLRenderer->mBuffers->BindCurrentFB();
+		const auto &bounds = screen->mScreenViewport;
+		glViewport(bounds.left, bounds.top, bounds.width, bounds.height);
 
 		done = ScreenWipe->Run(ticks, this);
 		glDepthMask(true);
@@ -242,7 +223,7 @@ void OpenGLFrameBuffer::WipeCleanup()
 		delete wipeendscreen;
 		wipeendscreen = NULL;
 	}
-	FMaterial::ClearLastTexture();
+	gl_RenderState.ClearLastMaterial();
 }
 
 //==========================================================================
@@ -270,11 +251,11 @@ void OpenGLFrameBuffer::Wiper::MakeVBO(OpenGLFrameBuffer *fb)
 
 	ptr->Set(0, 0, 0, 0, vb);
 	ptr++;
-	ptr->Set(0, fb->Height, 0, 0, 0);
+	ptr->Set(0, fb->GetHeight(), 0, 0, 0);
 	ptr++;
-	ptr->Set(fb->Width, 0, 0, ur, vb);
+	ptr->Set(fb->GetWidth(), 0, 0, ur, vb);
 	ptr++;
-	ptr->Set(fb->Width, fb->Height, 0, ur, 0);
+	ptr->Set(fb->GetWidth(), fb->GetHeight(), 0, ur, 0);
 	mVertexBuf->set(make, 4);
 }
 
@@ -363,11 +344,11 @@ int OpenGLFrameBuffer::Wiper_Melt::MakeVBO(int ticks, OpenGLFrameBuffer *fb, boo
 
 	ptr->Set(0, 0, 0, 0, vb);
 	ptr++;
-	ptr->Set(0, fb->Height, 0, 0, 0);
+	ptr->Set(0, fb->GetHeight(), 0, 0, 0);
 	ptr++;
-	ptr->Set(fb->Width, 0, 0, ur, vb);
+	ptr->Set(fb->GetWidth(), 0, 0, ur, vb);
 	ptr++;
-	ptr->Set(fb->Width, fb->Height, 0, ur, 0);
+	ptr->Set(fb->GetWidth(), fb->GetHeight(), 0, ur, 0);
 	ptr++;
 
 	// Copy the old screen in vertical strips on top of the new one.
@@ -403,18 +384,18 @@ int OpenGLFrameBuffer::Wiper_Melt::MakeVBO(int ticks, OpenGLFrameBuffer *fb, boo
 				// Only draw for the final tick.
 				// No need for optimization. Wipes won't ever be drawn with anything else.
 
-				dpt.x = i * fb->Width / WIDTH;
-				dpt.y = MAX(0, y[i] * fb->Height / HEIGHT);
+				dpt.x = i * fb->GetWidth() / WIDTH;
+				dpt.y = MAX(0, y[i] * fb->GetHeight() / HEIGHT);
 				rect.left = dpt.x;
 				rect.top = 0;
-				rect.right = (i + 1) * fb->Width / WIDTH;
-				rect.bottom = fb->Height - dpt.y;
+				rect.right = (i + 1) * fb->GetWidth() / WIDTH;
+				rect.bottom = fb->GetHeight() - dpt.y;
 				if (rect.bottom > rect.top)
 				{
-					float tw = (float)FHardwareTexture::GetTexDimension(fb->Width);
-					float th = (float)FHardwareTexture::GetTexDimension(fb->Height);
-					rect.bottom = fb->Height - rect.bottom;
-					rect.top = fb->Height - rect.top;
+					float tw = (float)FHardwareTexture::GetTexDimension(fb->GetWidth());
+					float th = (float)FHardwareTexture::GetTexDimension(fb->GetHeight());
+					rect.bottom = fb->GetHeight() - rect.bottom;
+					rect.top = fb->GetHeight() - rect.top;
 
 					ptr->Set(rect.left, rect.bottom, 0, rect.left / tw, rect.top / th);
 					ptr++;

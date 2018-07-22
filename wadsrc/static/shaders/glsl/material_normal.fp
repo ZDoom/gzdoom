@@ -35,10 +35,10 @@ vec3 lightContribution(int i, vec3 normal)
 	}
 }
 
-vec3 ProcessMaterial(vec3 material, vec3 color)
+vec3 ProcessMaterialLight(Material material, vec3 color)
 {
 	vec4 dynlight = uDynLightColor;
-	vec3 normal = ApplyNormalMap();
+	vec3 normal = material.Normal;
 
 	if (uLightIndex >= 0)
 	{
@@ -59,7 +59,7 @@ vec3 ProcessMaterial(vec3 material, vec3 color)
 		}
 	}
 
-	vec3 frag = material * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
+	vec3 frag = material.Base.rgb * clamp(color + desaturate(dynlight).rgb, 0.0, 1.4);
 
 	if (uLightIndex >= 0)
 	{

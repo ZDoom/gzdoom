@@ -78,6 +78,22 @@ void NETWORK_WriteByte( BYTESTREAM_s *pByteStream, int Byte )
 
 //*****************************************************************************
 //
+void NETWORK_WriteBuffer( BYTESTREAM_s *pByteStream, const void *pvBuffer, int nLength )
+{
+	if (( pByteStream->pbStream + nLength ) > pByteStream->pbStreamEnd )
+	{
+		Printf( "NETWORK_WriteLBuffer: Overflow!\n" );
+		return;
+	}
+
+	memcpy( pByteStream->pbStream, pvBuffer, nLength );
+
+	// Advance the pointer.
+	NETWORK_AdvanceByteStreamPointer ( pByteStream, nLength, true );
+}
+
+//*****************************************************************************
+//
 void NetSyncData::AssignNetID ( AActor *pActor )
 {
 	if ( netserver )
@@ -132,6 +148,91 @@ void BYTESTREAM_s::EnsureBitSpace( int bits, bool writing )
 
 		bitShift = 0;
 	}
+}
+
+//*****************************************************************************
+//
+NETBUFFER_s::NETBUFFER_s ( )
+{
+	this->pbData = NULL;
+	this->ulMaxSize = 0;
+	this->BufferType = (BUFFERTYPE_e)0;
+	Clear();
+}
+
+//*****************************************************************************
+//
+NETBUFFER_s::NETBUFFER_s ( const NETBUFFER_s &Buffer )
+{
+	Init ( Buffer.ulMaxSize, Buffer.BufferType );
+	Clear();
+
+	memcpy( this->pbData, Buffer.pbData, Buffer.ulMaxSize );
+	this->ByteStream.pbStream = this->pbData + ( Buffer.ByteStream.pbStream - Buffer.pbData );
+	this->ByteStream.pbStreamEnd = this->pbData + ( Buffer.ByteStream.pbStreamEnd - Buffer.pbData );
+	this->ByteStream.bitShift = Buffer.ByteStream.bitShift;
+	if ( Buffer.ByteStream.bitBuffer != NULL )
+		this->ByteStream.bitBuffer = this->ByteStream.pbStream + ( Buffer.ByteStream.bitBuffer - Buffer.ByteStream.pbStream );
+
+	this->ulCurrentSize = Buffer.ulCurrentSize;
+}
+
+//*****************************************************************************
+//
+void NETBUFFER_s::Init( unsigned int ulLength, BUFFERTYPE_e BufferType )
+{
+	memset( this, 0, sizeof( *this ));
+	this->ulMaxSize = ulLength;
+	this->pbData = new uint8_t[ulLength];
+	this->BufferType = BufferType;
+}
+
+//*****************************************************************************
+//
+void NETBUFFER_s::Free()
+{
+	if ( this->pbData )
+	{
+		delete[] ( this->pbData );
+		this->pbData = NULL;
+	}
+
+	this->ulMaxSize = 0;
+	this->BufferType = (BUFFERTYPE_e)0;
+}
+
+//*****************************************************************************
+//
+void NETBUFFER_s::Clear()
+{
+	this->ulCurrentSize = 0;
+	this->ByteStream.pbStream = this->pbData;
+	this->ByteStream.bitBuffer = NULL;
+	this->ByteStream.bitShift = -1;
+	if ( this->BufferType == BUFFERTYPE_READ )
+		this->ByteStream.pbStreamEnd = this->ByteStream.pbStream;
+	else
+		this->ByteStream.pbStreamEnd = this->ByteStream.pbStream + this->ulMaxSize;
+}
+
+//*****************************************************************************
+//
+int NETBUFFER_s::CalcSize() const
+{
+	if ( this->BufferType == BUFFERTYPE_READ )
+		return ( int( this->ByteStream.pbStreamEnd - this->ByteStream.pbStream ));
+	else
+		return ( int( this->ByteStream.pbStream - this->pbData ));
+}
+
+//*****************************************************************************
+//
+int NETBUFFER_s::WriteTo( BYTESTREAM_s &ByteStream ) const
+{
+	int bufferSize = CalcSize();
+	if ( bufferSize > 0 )
+		NETWORK_WriteBuffer( &ByteStream, this->pbData, bufferSize );
+	return bufferSize;
 }
 
 //*****************************************************************************

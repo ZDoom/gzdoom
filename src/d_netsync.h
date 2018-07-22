@@ -53,6 +53,43 @@ struct BYTESTREAM_s
 	int			bitShift;
 };
 
+//*****************************************************************************
+enum BUFFERTYPE_e
+{
+	BUFFERTYPE_READ,
+	BUFFERTYPE_WRITE,
+
+};
+
+//*****************************************************************************
+struct NETBUFFER_s
+{
+	// This is the data in our packet.
+	uint8_t			*pbData;
+
+	// The maximum amount of data this packet can hold.
+	unsigned int	ulMaxSize;
+
+	// How much data is currently in this packet?
+	unsigned int	ulCurrentSize;
+
+	// Byte stream for this buffer for managing our current position and where
+	// the end of the stream is.
+	BYTESTREAM_s	ByteStream;
+
+	// Is this a buffer that we write to, or read from?
+	BUFFERTYPE_e	BufferType;
+
+	NETBUFFER_s ( );
+	NETBUFFER_s ( const NETBUFFER_s &Buffer );
+
+	void			Init( unsigned int ulLength, BUFFERTYPE_e BufferType );
+	void			Free();
+	void			Clear();
+	int				CalcSize() const;
+	int				WriteTo( BYTESTREAM_s &ByteStream ) const;
+};
+
 //==========================================================================
 //
 // IDList

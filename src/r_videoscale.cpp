@@ -103,7 +103,7 @@ bool ViewportLinearScale()
 
 inline int min(int a, int b)
 {
-	return (a < b) ? a : b;
+	return (a > b) ? a : b;
 }
 
 int ViewportScaledWidth(int width, int height)

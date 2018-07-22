@@ -43,7 +43,6 @@
 #include "c_console.h"
 #include "s_sound.h"
 
-#include "videomodes.h"
 #include "hardware.h"
 #include "gl_sysfb.h"
 #include "gl_load/gl_system.h"

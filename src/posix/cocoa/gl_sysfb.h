@@ -57,6 +57,7 @@ public:
 	int GetClientWidth() override;
 	int GetClientHeight() override;
 	void ToggleFullscreen(bool yes) override;
+	void SetWindowSize(int width, int height) override;
 
 	void SetMode(bool fullscreen, bool hiDPI);
 
@@ -66,27 +67,34 @@ public:
 	static void SetWindowTitle(const char* title);
 
 protected:
-	CocoaWindow* m_window;
-
-	bool m_fullscreen;
-	bool m_hiDPI;
-
-	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
-	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
-	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
-
-	bool				m_supportsGamma;
-	uint16_t			m_originalGamma[GAMMA_TABLE_SIZE];
-
 	SystemGLFrameBuffer() {}
-
-	void SetFullscreenMode();
-	void SetWindowedMode();
 
 	void SwapBuffers();
 
 	void SetGammaTable(uint16_t* table);
 	void ResetGammaTable();
+
+	bool m_supportsGamma;
+
+private:
+	void SetFullscreenMode();
+	void SetWindowedMode();
+
+	bool m_fullscreen;
+	bool m_hiDPI;
+
+	CocoaWindow* m_window;
+
+	static const uint32_t GAMMA_CHANNEL_SIZE = 256;
+	static const uint32_t GAMMA_CHANNEL_COUNT = 3;
+	static const uint32_t GAMMA_TABLE_SIZE = GAMMA_CHANNEL_SIZE * GAMMA_CHANNEL_COUNT;
+
+	uint16_t m_originalGamma[GAMMA_TABLE_SIZE];
+
+	int GetTitleBarHeight() const;
+
+	static const int MINIMUM_WIDTH  = 320;
+	static const int MINIMUM_HEIGHT = 200;
 };
 
 #endif // COCOA_GL_SYSFB_H_INCLUDED

@@ -319,9 +319,9 @@ static SystemGLFrameBuffer* frameBuffer;
 
 SystemGLFrameBuffer::SystemGLFrameBuffer(void*, const bool fullscreen)
 : DFrameBuffer(vid_defwidth, vid_defheight)
-, m_window(CreateWindow(STYLE_MASK_WINDOWED))
 , m_fullscreen(false)
 , m_hiDPI(false)
+, m_window(CreateWindow(STYLE_MASK_WINDOWED))
 {
 	SetFlash(0, 0);
 
@@ -386,6 +386,35 @@ bool SystemGLFrameBuffer::IsFullscreen()
 void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
 {
 	SetMode(yes, m_hiDPI);
+}
+
+void SystemGLFrameBuffer::SetWindowSize(int width, int height)
+{
+	if (width < MINIMUM_WIDTH || height < MINIMUM_HEIGHT)
+	{
+		return;
+	}
+
+	if (fullscreen)
+	{
+		// Enter windowed mode in order to calculate title bar height
+		fullscreen = false;
+		SetMode(false, m_hiDPI);
+	}
+
+	win_w = width;
+	win_h = height + GetTitleBarHeight();
+
+	SetMode(false, m_hiDPI);
+}
+
+int SystemGLFrameBuffer::GetTitleBarHeight() const
+{
+	const NSRect windowFrame = [m_window frame];
+	const NSRect contentFrame = [m_window contentRectForFrameRect:windowFrame];
+	const int titleBarHeight = windowFrame.size.height - contentFrame.size.height;
+
+	return titleBarHeight;
 }
 
 
@@ -465,7 +494,9 @@ void SystemGLFrameBuffer::SetWindowedMode()
 		[m_window setHidesOnDeactivate:NO];
 	}
 
-	const bool isFrameValid = win_x >= 0 && win_y >= 0 && win_w > 320 && win_h > 200;
+	const bool isFrameValid = win_x >= 0 && win_y >= 0
+		&& win_w >= MINIMUM_WIDTH
+		&& win_h - GetTitleBarHeight() >= MINIMUM_HEIGHT;
 	const NSRect frameSize = isFrameValid
 		? NSMakeRect(win_x, win_y, win_w, win_h)
 		: NSMakeRect(0, 0, vid_defwidth, vid_defheight);

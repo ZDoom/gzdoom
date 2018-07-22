@@ -28,11 +28,26 @@
 
 #define NUMSCALEMODES 6
 
+extern bool setsizeneeded;
+
 EXTERN_CVAR(Int, vid_aspect)
-CVAR(Int, vid_scale_customwidth, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Int, vid_scale_customheight, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Int, vid_scale_customwidth, 320, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 320)
+		self = 320;
+	setsizeneeded = true;
+}
+CUSTOM_CVAR(Int, vid_scale_customheight, 200, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	if (self < 200)
+		self = 200;
+	setsizeneeded = true;
+}
 CVAR(Bool, vid_scale_customlinear, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
-CVAR(Bool, vid_scale_customstretched, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+CUSTOM_CVAR(Bool, vid_scale_customstretched, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG)
+{
+	setsizeneeded = true;
+}
 
 namespace
 {
@@ -57,8 +72,6 @@ namespace
 	};
 	bool isOutOfBounds(int x)
 	{
-        if (vScaleTable[x].isCustom)
-            return ((vid_scale_customwidth < 80) || (vid_scale_customheight < 50));
 		return (x < 0 || x >= NUMSCALEMODES || vScaleTable[x].isValid == false);
 	}
 }
@@ -88,13 +101,18 @@ bool ViewportLinearScale()
 	return (vid_scalefactor > 1.0) ? true : vScaleTable[vid_scalemode].isLinear;
 }
 
+inline int max(int a, int b)
+{
+	return (a < b) ? a : b;
+}
+
 int ViewportScaledWidth(int width, int height)
 {
 	if (isOutOfBounds(vid_scalemode))
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		width = ((float)width/height > ActiveRatio(width, height)) ? (int)(height * ActiveRatio(width, height)) : width;
-	return vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor));
+	return max(320, vScaleTable[vid_scalemode].GetScaledWidth((int)((float)width * vid_scalefactor)));
 }
 
 int ViewportScaledHeight(int width, int height)
@@ -103,7 +121,7 @@ int ViewportScaledHeight(int width, int height)
 		vid_scalemode = 0;
 	if (vid_cropaspect && height > 0)
 		height = ((float)width/height < ActiveRatio(width, height)) ? (int)(width / ActiveRatio(width, height)) : height;
-	return vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor));
+	return max(200, vScaleTable[vid_scalemode].GetScaledHeight((int)((float)height * vid_scalefactor)));
 }
 
 bool ViewportIsScaled43()

@@ -3,6 +3,13 @@
 
 #include "vectors.h"
 #include "r_data/renderstyle.h"
+#include "d_netserver.h"
+
+// Maximum size of the packets sent out by the server.
+#define	MAX_UDP_PACKET				8192
+
+// This is the longest possible string we can pass over the network.
+#define	MAX_NETWORK_STRING			2048
 
 struct NetSyncData {
 	DVector3		Pos;
@@ -88,6 +95,33 @@ struct NETBUFFER_s
 	void			Clear();
 	int				CalcSize() const;
 	int				WriteTo( BYTESTREAM_s &ByteStream ) const;
+};
+
+/**
+ * \author Benjamin Berkels
+ */
+class NetCommand {
+	NETBUFFER_s	_buffer;
+	bool		_unreliable;
+
+public:
+	NetCommand ( const NetPacketType Header );
+	~NetCommand ( );
+
+	void addInteger( const int IntValue, const int Size );
+	void addByte ( const int ByteValue );
+	void addShort ( const int ShortValue );
+	void addLong ( const int32_t LongValue );
+	void addFloat ( const float FloatValue );
+	void addString ( const char *pszString );
+	void addName ( FName name );
+	void addBit ( const bool value );
+	void addVariable ( const int value );
+	void addShortByte ( int value, int bits );
+	void writeCommandToStream ( BYTESTREAM_s &ByteStream ) const;
+	bool isUnreliable() const;
+	void setUnreliable ( bool a );
+	int calcSize() const;
 };
 
 //==========================================================================

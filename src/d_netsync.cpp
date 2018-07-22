@@ -78,6 +78,42 @@ void NETWORK_WriteByte( BYTESTREAM_s *pByteStream, int Byte )
 
 //*****************************************************************************
 //
+void NETWORK_WriteShort( BYTESTREAM_s *pByteStream, int Short )
+{
+	if (( pByteStream->pbStream + 2 ) > pByteStream->pbStreamEnd )
+	{
+		Printf( "NETWORK_WriteShort: Overflow!\n" );
+		return;
+	}
+
+	pByteStream->pbStream[0] = Short & 0xff;
+	pByteStream->pbStream[1] = Short >> 8;
+
+	// Advance the pointer.
+	NETWORK_AdvanceByteStreamPointer ( pByteStream, 2, true );
+}
+
+//*****************************************************************************
+//
+void NETWORK_WriteLong( BYTESTREAM_s *pByteStream, int Long )
+{
+	if (( pByteStream->pbStream + 4 ) > pByteStream->pbStreamEnd )
+	{
+		Printf( "NETWORK_WriteLong: Overflow!\n" );
+		return;
+	}
+
+	pByteStream->pbStream[0] = Long & 0xff;
+	pByteStream->pbStream[1] = ( Long >> 8 ) & 0xff;
+	pByteStream->pbStream[2] = ( Long >> 16 ) & 0xff;
+	pByteStream->pbStream[3] = ( Long >> 24 );
+
+	// Advance the pointer.
+	NETWORK_AdvanceByteStreamPointer ( pByteStream, 4, true );
+}
+
+//*****************************************************************************
+//
 void NETWORK_WriteBuffer( BYTESTREAM_s *pByteStream, const void *pvBuffer, int nLength )
 {
 	if (( pByteStream->pbStream + nLength ) > pByteStream->pbStreamEnd )
@@ -90,6 +126,63 @@ void NETWORK_WriteBuffer( BYTESTREAM_s *pByteStream, const void *pvBuffer, int n
 
 	// Advance the pointer.
 	NETWORK_AdvanceByteStreamPointer ( pByteStream, nLength, true );
+}
+
+//*****************************************************************************
+//
+void NETWORK_WriteBit( BYTESTREAM_s *byteStream, bool bit )
+{
+	// Add a bit to this byte
+	byteStream->EnsureBitSpace( 1, true );
+	if ( bit )
+		*byteStream->bitBuffer |= 1 << byteStream->bitShift;
+	++byteStream->bitShift;
+}
+
+//*****************************************************************************
+//
+void NETWORK_WriteVariable( BYTESTREAM_s *byteStream, int value )
+{
+	int length;
+
+	// Determine how long we need to send this value
+	if ( value == 0 )
+		length = 0; // 0 - don't bother sending it at all
+	else if (( value <= 0xFF ) && ( value >= 0 ))
+		length = 1; // Can be sent as a byte
+	else if (( value <= 0x7FFF ) && ( value >= -0x8000 ))
+		length = 2; // Can be sent as a short
+	else
+		length = 3; // Must be sent as a long
+
+	// Write this length as two bits
+	NETWORK_WriteBit( byteStream, !!( length & 1 ) );
+	NETWORK_WriteBit( byteStream, !!( length & 2 ) );
+
+	// Depending on the required length, write the value.
+	switch ( length )
+	{
+	case 1: NETWORK_WriteByte( byteStream, value ); break;
+	case 2: NETWORK_WriteShort( byteStream, value ); break;
+	case 3: NETWORK_WriteLong( byteStream, value ); break;
+	}
+}
+
+//*****************************************************************************
+//
+void NETWORK_WriteShortByte( BYTESTREAM_s *byteStream, int value, int bits )
+{
+	if (( bits < 1 ) || ( bits > 8 ))
+	{
+		Printf( "NETWORK_WriteShortByte: bits must be within range [1..8], got %d.\n", bits );
+		return;
+	}
+
+	byteStream->EnsureBitSpace( bits, true );
+	value &= (( 1 << bits ) - 1 ); // Form a mask from the bits and trim our value using it.
+	value <<= byteStream->bitShift; // Shift the value to its proper position.
+	*byteStream->bitBuffer |= value; // Add it to the byte.
+	byteStream->bitShift += bits; // Bump the shift value accordingly.
 }
 
 //*****************************************************************************
@@ -233,6 +326,163 @@ int NETBUFFER_s::WriteTo( BYTESTREAM_s &ByteStream ) const
 	if ( bufferSize > 0 )
 		NETWORK_WriteBuffer( &ByteStream, this->pbData, bufferSize );
 	return bufferSize;
+}
+
+//*****************************************************************************
+//
+NetCommand::NetCommand ( const NetPacketType Header ) :
+	_unreliable( false )
+{
+	_buffer.Init( MAX_UDP_PACKET, BUFFERTYPE_WRITE );
+	_buffer.Clear();
+	addByte( static_cast<int>(Header) );
+}
+
+//*****************************************************************************
+//
+NetCommand::~NetCommand ( )
+{
+	_buffer.Free();
+}
+
+//*****************************************************************************
+//
+void NetCommand::addInteger( const int IntValue, const int Size )
+{
+	if ( ( _buffer.ByteStream.pbStream + Size ) > _buffer.ByteStream.pbStreamEnd )
+	{
+		Printf( "NetCommand::AddInteger: Overflow! Header: %d\n", _buffer.pbData[0] );
+		return;
+	}
+
+	for ( int i = 0; i < Size; ++i )
+		_buffer.ByteStream.pbStream[i] = ( IntValue >> ( 8*i ) ) & 0xff;
+
+	_buffer.ByteStream.pbStream += Size;
+	_buffer.ulCurrentSize = _buffer.CalcSize();
+}
+
+//*****************************************************************************
+//
+void NetCommand::addByte ( const int ByteValue )
+{
+	addInteger( static_cast<uint8_t> ( ByteValue ), sizeof( uint8_t ) );
+}
+
+//*****************************************************************************
+//
+void NetCommand::addShort ( const int ShortValue )
+{
+	addInteger( static_cast<int16_t> ( ShortValue ), sizeof( int16_t ) );
+}
+
+//*****************************************************************************
+//
+void NetCommand::addLong ( const int32_t LongValue )
+{
+	addInteger( LongValue, sizeof( int32_t ) );
+}
+
+//*****************************************************************************
+//
+void NetCommand::addFloat ( const float FloatValue )
+{
+	union
+	{
+		float	f;
+		int32_t	l;
+	} dat;
+	dat.f = FloatValue;
+	addInteger ( dat.l, sizeof( int32_t ) );
+}
+
+//*****************************************************************************
+//
+void NetCommand::addBit( const bool value )
+{
+	NETWORK_WriteBit( &_buffer.ByteStream, value );
+	_buffer.ulCurrentSize = _buffer.CalcSize();
+}
+
+//*****************************************************************************
+//
+void NetCommand::addVariable( const int value )
+{
+	NETWORK_WriteVariable( &_buffer.ByteStream, value );
+	_buffer.ulCurrentSize = _buffer.CalcSize();
+}
+
+//*****************************************************************************
+// [TP]
+//
+void NetCommand::addShortByte ( int value, int bits )
+{
+	NETWORK_WriteShortByte( &_buffer.ByteStream, value, bits );
+	_buffer.ulCurrentSize = _buffer.CalcSize();
+}
+
+//*****************************************************************************
+//
+void NetCommand::addString ( const char *pszString )
+{
+	const int len = ( pszString != NULL ) ? strlen( pszString ) : 0;
+
+	if ( len > MAX_NETWORK_STRING )
+	{
+		Printf( "NETWORK_WriteString: String exceeds %d characters! Header: %d\n", MAX_NETWORK_STRING, _buffer.pbData[0] );
+		return;
+	}
+
+	for ( int i = 0; i < len; ++i )
+		addByte( pszString[i] );
+	addByte( 0 );
+}
+
+//*****************************************************************************
+//
+void NetCommand::addName ( FName name )
+{
+	if ( name.IsPredefined() )
+	{
+		addShort( name );
+	}
+	else
+	{
+		addShort( -1 );
+		addString( name );
+	}
+}
+
+//*****************************************************************************
+//
+void NetCommand::writeCommandToStream ( BYTESTREAM_s &ByteStream ) const
+{
+	// [BB] This also handles the traffic counting (NETWORK_StartTrafficMeasurement/NETWORK_StopTrafficMeasurement).
+	_buffer.WriteTo ( ByteStream );
+}
+
+//*****************************************************************************
+// [TP]
+//
+bool NetCommand::isUnreliable() const
+{
+	return _unreliable;
+}
+
+//*****************************************************************************
+// [TP]
+//
+void NetCommand::setUnreliable ( bool a )
+{
+	_unreliable = a;
+}
+
+//*****************************************************************************
+// [TP] Returns the size of this net command.
+//
+int NetCommand::calcSize() const
+{
+	return _buffer.CalcSize();
 }
 
 //*****************************************************************************

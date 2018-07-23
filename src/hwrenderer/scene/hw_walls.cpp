@@ -194,7 +194,7 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 
 	bool solid;
 	if (passflag[type] == 1) solid = true;
-	else if (type == RENDERWALL_FFBLOCK) solid = (gltexture && gltexture->isMasked());
+	else if (type == RENDERWALL_FFBLOCK) solid = gltexture && !gltexture->isMasked();
 	else solid = false;
 	if (solid) ProcessDecals(di);
 

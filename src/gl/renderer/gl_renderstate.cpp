@@ -310,6 +310,7 @@ void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, i
 	mShaderTimer = mat->tex->shaderspeed;
 	SetSpecular(mat->tex->Glossiness, mat->tex->SpecularLevel);
 
+	auto tex = mat->tex;
 	if (tex->UseType == ETextureType::SWCanvas) clampmode = CLAMP_NOFILTER;
 	if (tex->bHasCanvas) clampmode = CLAMP_CAMTEX;
 	else if ((tex->bWarped || tex->shaderindex >= FIRST_USER_SHADER) && clampmode <= CLAMP_XY) clampmode = CLAMP_NONE;
@@ -322,7 +323,6 @@ void FRenderState::SetMaterial(FMaterial *mat, int clampmode, int translation, i
 
 	int usebright = false;
 	int maxbound = 0;
-	auto tex = mat->tex;
 
 	// Textures that are already scaled in the texture lump will not get replaced by hires textures.
 	int flags = mat->isExpanded() ? CTF_Expand : (gl_texture_usehires && tex->Scale.X == 1 && tex->Scale.Y == 1 && clampmode <= CLAMP_XY) ? CTF_CheckHires : 0;

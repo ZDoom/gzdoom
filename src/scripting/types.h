@@ -485,6 +485,7 @@ public:
 
 	void SetDefaultValue(void *base, unsigned offset, TArray<FTypeAndOffset> *special) override;
 	void SetPointer(void *base, unsigned offset, TArray<size_t> *special) override;
+	void SetPointerArray(void *base, unsigned offset, TArray<size_t> *ptrofs = NULL) override;
 };
 
 class PStaticArray : public PArray

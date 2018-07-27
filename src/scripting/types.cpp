@@ -1750,6 +1750,23 @@ void PArray::SetPointer(void *base, unsigned offset, TArray<size_t> *special)
 
 //==========================================================================
 //
+// PArray :: SetPointerArray
+//
+//==========================================================================
+
+void PArray::SetPointerArray(void *base, unsigned offset, TArray<size_t> *special)
+{
+	if (ElementType->isStruct())
+	{
+		for (unsigned int i = 0; i < ElementCount; ++i)
+		{
+			ElementType->SetPointerArray(base, offset + ElementSize * i, special);
+		}
+	}
+}
+
+//==========================================================================
+//
 // NewArray
 //
 // Returns a PArray for the given type and size, making sure not to create

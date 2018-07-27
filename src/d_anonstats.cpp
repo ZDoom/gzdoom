@@ -273,7 +273,7 @@ static int GetRenderInfo()
 	if (info.first < 3.3) return 0;
 	if (!info.second)
 	{
-		if (screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE) == RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE) return 3;
+		if ((screen->hwcaps & (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) == (RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE)) return 3;
 		return 4;
 	}
 	return 5;

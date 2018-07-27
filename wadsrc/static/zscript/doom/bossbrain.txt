@@ -284,6 +284,12 @@ extend class Actor
 		Actor eye = master; // The eye is the spawnshot's master, not the target!
 		Actor targ = target; // Unlike other projectiles, the target is the intended destination.
 		int r;
+
+		if (targ == null)
+		{
+			Destroy();
+			return;
+		}
 			
 		// [GZ] Should be more viable than a countdown...
 		if (special2 != 0)

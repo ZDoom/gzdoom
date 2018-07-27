@@ -16,7 +16,7 @@ matrix:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Debug -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
     - os: osx
-      osx_image: xcode9.3
+      osx_image: xcode9.4
       env:
         - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=Release -DCMAKE_OSX_DEPLOYMENT_TARGET=10.9"
 
@@ -73,6 +73,20 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - g++-7
+            - libsdl2-dev
+            - libgtk-3-dev
+
+    - os: linux
+      compiler: gcc
+      env:
+        - GCC_VERSION=8
+        - CMAKE_OPTIONS="-DCMAKE_BUILD_TYPE=MinSizeRel -DCMAKE_CXX_FLAGS=-Wno-implicit-fallthrough"
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - g++-8
             - libsdl2-dev
             - libgtk-3-dev
 

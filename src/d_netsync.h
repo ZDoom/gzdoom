@@ -49,6 +49,28 @@ struct BYTESTREAM_s
 	BYTESTREAM_s();
 	void EnsureBitSpace( int bits, bool writing );
 
+	int	ReadByte();
+	int ReadShort();
+	int	ReadLong();
+	float ReadFloat();
+	const char* ReadString();
+	bool ReadBit();
+	int ReadVariable();
+	int ReadShortByte( int bits );
+	void ReadBuffer( void* buffer, size_t length );
+
+	void WriteByte( int Byte );
+	void WriteShort( int Short );
+	void WriteLong( int Long );
+	void WriteFloat( float Float );
+	void WriteString( const char *pszString );
+	void WriteBit( bool bit );
+	void WriteVariable( int value );
+	void WriteShortByte( int value, int bits );
+	void WriteBuffer( const void *pvBuffer, int nLength );
+
+	void WriteHeader( int Byte );
+
 	// Pointer to our stream of data.
 	uint8_t		*pbStream;
 
@@ -58,6 +80,8 @@ struct BYTESTREAM_s
 
 	uint8_t		*bitBuffer;
 	int			bitShift;
+
+	void AdvancePointer( const int NumBytes, const bool OutboundTraffic );
 };
 
 //*****************************************************************************

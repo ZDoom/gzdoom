@@ -493,12 +493,19 @@ void SystemGLFrameBuffer::SetWindowedMode()
 	const NSSize minimumFrameSize = NSMakeSize(minimumFrameWidth, minimumFrameHeight);
 	[m_window setMinSize:minimumFrameSize];
 
-	const bool isFrameValid = win_x >= 0 && win_y >= 0
+	const bool isFrameValid = win_x != -1 && win_y != -1
 		&& win_w >= minimumFrameWidth && win_h >= minimumFrameHeight;
-	const NSRect frameSize = isFrameValid
-		? NSMakeRect(win_x, win_y, win_w, win_h)
-		: NSMakeRect(0, 0, vid_defwidth, vid_defheight);
 
+	if (!isFrameValid)
+	{
+		const NSRect screenSize = [[NSScreen mainScreen] frame];
+		win_x = screenSize.origin.x + screenSize.size.width  / 10;
+		win_y = screenSize.origin.y + screenSize.size.height / 10;
+		win_w = screenSize.size.width  * 8 / 10;
+		win_h = screenSize.size.height * 8 / 10 + GetTitleBarHeight();
+	}
+
+	const NSRect frameSize = NSMakeRect(win_x, win_y, win_w, win_h);
 	[m_window setFrame:frameSize display:YES];
 	[m_window enterFullscreenOnZoom];
 	[m_window exitAppOnClose];

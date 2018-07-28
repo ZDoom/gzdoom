@@ -10,7 +10,7 @@ class SystemBaseFrameBuffer : public DFrameBuffer
 	void RestoreWindowedPos();
 
 public:
-	SystemBaseFrameBuffer() {}
+	SystemBaseFrameBuffer();
 	// Actually, hMonitor is a HMONITOR, but it's passed as a void * as there
     // look to be some cross-platform bits in the way.
 	SystemBaseFrameBuffer(void *hMonitor, bool fullscreen);
@@ -28,7 +28,7 @@ protected:
 	void GetCenteredPos(int in_w, int in_h, int &winx, int &winy, int &winw, int &winh, int &scrwidth, int &scrheight);
 	void KeepWindowOnScreen(int &winx, int &winy, int winw, int winh, int scrwidth, int scrheight);
 
-	void PositionWindow(bool fullscreen);
+	void PositionWindow(bool fullscreen, bool initialcall = false);
 
 	void ResetGammaTable();
 	void SetGammaTable(uint16_t * tbl);

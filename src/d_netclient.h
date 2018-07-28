@@ -51,9 +51,9 @@ public:
 
 private:
 	void OnClose(const NetPacket &packet);
-	void OnConnectResponse(const NetPacket &packet);
+	void OnConnectResponse(NetPacket &packet);
 	void OnDisconnect(const NetPacket &packet);
-	void OnTic(const NetPacket &packet);
+	void OnTic(NetPacket &packet);
 
 	std::unique_ptr<doomcom_t> mComm;
 	int mServerNode = -1;

@@ -76,8 +76,10 @@ NetClient::NetClient(FString server)
 
 	NetPacket packet;
 	packet.node = mServerNode;
-	packet.size = 1;
-	packet[0] = (uint8_t)NetPacketType::ConnectRequest;
+
+	NetCommand cmd ( NetPacketType::ConnectRequest );
+	cmd.writeCommandToPacket ( packet );
+
 	mComm->PacketSend(packet);
 }
 
@@ -101,7 +103,7 @@ void NetClient::Update()
 		}
 		else
 		{
-			NetPacketType type = (NetPacketType)packet[0];
+			NetPacketType type = (NetPacketType)packet.stream.ReadByte();
 			switch (type)
 			{
 			default: OnClose(packet); break;
@@ -137,10 +139,12 @@ void NetClient::EndCurrentTic()
 {
 	NetPacket packet;
 	packet.node = mServerNode;
-	packet.size = 2 + sizeof(usercmd_t);
-	packet[0] = (uint8_t)NetPacketType::Tic;
-	packet[1] = 0; // target gametic
-	memcpy(&packet[2], &mCurrentInput[consoleplayer].ucmd, sizeof(usercmd_t));
+
+	NetCommand cmd ( NetPacketType::Tic );
+	cmd.addByte ( 0 ); // target gametic
+	cmd.addBuffer ( &mCurrentInput[consoleplayer].ucmd, sizeof(usercmd_t) );
+	cmd.writeCommandToPacket ( packet );
+
 	mComm->PacketSend(packet);
 
 	mCurrentCommands = mSendCommands;
@@ -220,17 +224,18 @@ void NetClient::OnClose(const NetPacket &packet)
 	}
 }
 
-void NetClient::OnConnectResponse(const NetPacket &packet)
+void NetClient::OnConnectResponse(NetPacket &packet)
 {
 	if (packet.size != 3)
 		return;
 
-	int version = packet[1]; // Protocol version
+	int version = packet.stream.ReadByte(); // Protocol version
 	if (version == 1)
 	{
-		if (packet[2] != 255) // Join accepted
+		int playernum = packet.stream.ReadByte();
+		if (playernum != 255) // Join accepted
 		{
-			mPlayer = packet[2];
+			mPlayer = playernum;
 			mStatus = NodeStatus::InGame;
 
 			G_InitClientNetGame(mPlayer, "e1m1");
@@ -262,17 +267,17 @@ void NetClient::OnDisconnect(const NetPacket &packet)
 	mStatus = NodeStatus::Closed;
 }
 
-void NetClient::OnTic(const NetPacket &packet)
+void NetClient::OnTic(NetPacket &packet)
 {
 	if (packet.size != 2 + sizeof(float) * 5)
 		return;
 
-	int tic = packet[1];
-	float x = *(float*)&packet[2];
-	float y = *(float*)&packet[6];
-	float z = *(float*)&packet[10];
-	float yaw = *(float*)&packet[14];
-	float pitch = *(float*)&packet[18];
+	int tic = packet.stream.ReadByte();
+	float x = packet.stream.ReadFloat();
+	float y = packet.stream.ReadFloat();
+	float z = packet.stream.ReadFloat();
+	float yaw = packet.stream.ReadFloat();
+	float pitch = packet.stream.ReadFloat();
 
 	if (playeringame[consoleplayer] && players[consoleplayer].mo)
 	{

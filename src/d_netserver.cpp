@@ -91,7 +91,7 @@ void NetServer::Update()
 		}
 		else
 		{
-			NetPacketType type = (NetPacketType)packet[0];
+			NetPacketType type = (NetPacketType)packet.stream.ReadByte();
 			switch (type)
 			{
 			default: OnClose(node, packet); break;
@@ -117,27 +117,28 @@ void NetServer::EndCurrentTic()
 		{
 			NetPacket packet;
 			packet.node = i;
-			packet.size = 2 + sizeof(float) * 5;
-			packet[0] = (uint8_t)NetPacketType::Tic;
-			packet[1] = gametic;
+
+			NetCommand cmd ( NetPacketType::Tic);
+			cmd.addByte ( gametic );
 
 			int player = mNodes[i].Player;
 			if (playeringame[player] && players[player].mo)
 			{
-				*(float*)&packet[2] = (float)players[player].mo->X();
-				*(float*)&packet[6] = (float)players[player].mo->Y();
-				*(float*)&packet[10] = (float)players[player].mo->Z();
-				*(float*)&packet[14] = (float)players[player].mo->Angles.Yaw.Degrees;
-				*(float*)&packet[18] = (float)players[player].mo->Angles.Pitch.Degrees;
+				cmd.addFloat ( static_cast<float> ( players[player].mo->X() ) );
+				cmd.addFloat ( static_cast<float> ( players[player].mo->Y() ) );
+				cmd.addFloat ( static_cast<float> ( players[player].mo->Z() ) );
+				cmd.addFloat ( static_cast<float> ( players[player].mo->Angles.Yaw.Degrees ) );
+				cmd.addFloat ( static_cast<float> ( players[player].mo->Angles.Pitch.Degrees ) );
 			}
 			else
 			{
-				*(float*)&packet[2] = 0.0f;
-				*(float*)&packet[6] = 0.0f;
-				*(float*)&packet[10] = 0.0f;
-				*(float*)&packet[14] = 0.0f;
-				*(float*)&packet[18] = 0.0f;
+				cmd.addFloat ( 0.0f );
+				cmd.addFloat ( 0.0f );
+				cmd.addFloat ( 0.0f );
+				cmd.addFloat ( 0.0f );
+				cmd.addFloat ( 0.0f );
 			}
+			cmd.writeCommandToPacket ( packet );
 
 			mComm->PacketSend(packet);
 		}
@@ -264,10 +265,12 @@ void NetServer::OnConnectRequest(NetNode &node, const NetPacket &packet)
 
 		NetPacket response;
 		response.node = packet.node;
-		response[0] = (uint8_t)NetPacketType::ConnectResponse;
-		response[1] = 1; // Protocol version
-		response[2] = 255;
-		response.size = 3;
+
+		NetCommand cmd ( NetPacketType::ConnectResponse );
+		cmd.addByte ( 1 ); // Protocol version
+		cmd.addByte ( 255 );
+		cmd.writeCommandToPacket ( response );
+
 		mComm->PacketSend(response);
 
 		node.Status = NodeStatus::Closed;
@@ -290,14 +293,15 @@ void NetServer::OnDisconnect(NetNode &node, const NetPacket &packet)
 	mComm->Close(packet.node);
 }
 
-void NetServer::OnTic(NetNode &node, const NetPacket &packet)
+void NetServer::OnTic(NetNode &node, NetPacket &packet)
 {
 	if (node.Status == NodeStatus::InGame)
 	{
 		if (packet.size != 2 + sizeof(usercmd_t))
 			return;
 
-		memcpy(&mCurrentInput[node.Player].ucmd, &packet[2], sizeof(usercmd_t));
+		/* gametic */ packet.stream.ReadByte();
+		packet.stream.ReadBuffer ( &mCurrentInput[node.Player].ucmd, sizeof(usercmd_t));
 	}
 	else
 	{

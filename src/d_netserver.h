@@ -72,7 +72,7 @@ private:
 	void OnClose(NetNode &node, const NetPacket &packet);
 	void OnConnectRequest(NetNode &node, const NetPacket &packet);
 	void OnDisconnect(NetNode &node, const NetPacket &packet);
-	void OnTic(NetNode &node, const NetPacket &packet);
+	void OnTic(NetNode &node, NetPacket &packet);
 
 	std::unique_ptr<doomcom_t> mComm;
 	NetNode mNodes[MAXNETNODES];

@@ -39,7 +39,7 @@
 void PeekThreadedErrorPane();
 #endif
 
-CVAR(Bool, r_multithreaded, true, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
+CVAR(Int, r_multithreaded, 1, CVAR_ARCHIVE | CVAR_GLOBALCONFIG);
 CVAR(Int, r_debug_draw, 0, 0);
 
 /////////////////////////////////////////////////////////////////////////////
@@ -66,10 +66,11 @@ void DrawerThreads::Execute(DrawerCommandQueuePtr commands)
 	
 	auto queue = Instance();
 
+	queue->StartThreads();
+
 	// Add to queue and awaken worker threads
 	std::unique_lock<std::mutex> start_lock(queue->start_mutex);
 	std::unique_lock<std::mutex> end_lock(queue->end_mutex);
-	queue->StartThreads();
 	queue->active_commands.push_back(commands);
 	queue->tasks_left += queue->threads.size();
 	end_lock.unlock();
@@ -171,22 +172,31 @@ void DrawerThreads::WorkerMain(DrawerThread *thread)
 
 void DrawerThreads::StartThreads()
 {
-	if (!threads.empty())
-		return;
+	std::unique_lock<std::mutex> lock(threads_mutex);
 
 	int num_threads = std::thread::hardware_concurrency();
 	if (num_threads == 0)
 		num_threads = 4;
 
-	threads.resize(num_threads);
+	if (r_multithreaded == 0)
+		num_threads = 1;
+	else if (r_multithreaded != 1)
+		num_threads = r_multithreaded;
 
-	for (int i = 0; i < num_threads; i++)
+	if (num_threads != (int)threads.size())
 	{
-		DrawerThreads *queue = this;
-		DrawerThread *thread = &threads[i];
-		thread->core = i;
-		thread->num_cores = num_threads;
-		thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
+		StopThreads();
+
+		threads.resize(num_threads);
+
+		for (int i = 0; i < num_threads; i++)
+		{
+			DrawerThreads *queue = this;
+			DrawerThread *thread = &threads[i];
+			thread->core = i;
+			thread->num_cores = num_threads;
+			thread->thread = std::thread([=]() { queue->WorkerMain(thread); });
+		}
 	}
 }
 

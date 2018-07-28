@@ -44,7 +44,7 @@
 void PeekThreadedErrorPane();
 #endif
 
-EXTERN_CVAR(Bool, r_scene_multithreaded);
+EXTERN_CVAR(Int, r_scene_multithreaded);
 
 PolyRenderThread::PolyRenderThread(int threadIndex) : MainThread(threadIndex == 0), ThreadIndex(threadIndex)
 {
@@ -151,8 +151,10 @@ void PolyRenderThreads::RenderThreadSlices(int totalcount, std::function<void(Po
 	if (numThreads == 0)
 		numThreads = 4;
 
-	if (!r_scene_multithreaded || !r_multithreaded)
+	if (r_scene_multithreaded == 0 || r_multithreaded == 0)
 		numThreads = 1;
+	else if (r_scene_multithreaded != 1)
+		numThreads = r_scene_multithreaded;
 
 	if (numThreads != (int)Threads.size())
 	{

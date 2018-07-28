@@ -8,7 +8,7 @@
 struct FSWColormap;
 struct FLightNode;
 
-EXTERN_CVAR(Bool, r_multithreaded);
+EXTERN_CVAR(Int, r_multithreaded);
 EXTERN_CVAR(Bool, r_magfilter);
 EXTERN_CVAR(Bool, r_minfilter);
 EXTERN_CVAR(Bool, r_mipmap);

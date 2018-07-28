@@ -67,10 +67,6 @@ CUSTOM_CVAR(Bool, vr_enable_quadbuffered, false, CVAR_ARCHIVE | CVAR_GLOBALCONFI
 	Printf("You must restart " GAMENAME " to switch quad stereo mode\n");
 }
 
-EXTERN_CVAR(Int, vid_defwidth)
-EXTERN_CVAR(Int, vid_defheight)
-
-
 //==========================================================================
 //
 // Windows framebuffer

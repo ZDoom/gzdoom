@@ -46,7 +46,6 @@
 #include "win32glvideo.h"
 #include "swrenderer/r_swrenderer.h"
 
-EXTERN_CVAR (Bool, fullscreen)
 EXTERN_CVAR(Int, vid_maxfps)
 
 extern HWND Window;

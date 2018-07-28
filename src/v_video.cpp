@@ -104,8 +104,6 @@ int active_con_scale();
 
 FRenderer *SWRenderer;
 
-EXTERN_CVAR (Bool, fullscreen)
-
 #define DBGBREAK assert(0)
 
 class DDummyFrameBuffer : public DFrameBuffer

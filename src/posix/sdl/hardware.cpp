@@ -42,8 +42,6 @@
 #include "m_argv.h"
 #include "swrenderer/r_swrenderer.h"
 
-EXTERN_CVAR (Bool, fullscreen)
-
 IVideo *Video;
 
 void I_RestartRenderer();

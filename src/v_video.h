@@ -88,6 +88,12 @@ void V_OutputResized (int width, int height);
 void V_CalcCleanFacs (int designwidth, int designheight, int realwidth, int realheight, int *cleanx, int *cleany, int *cx1=NULL, int *cx2=NULL);
 
 EXTERN_CVAR(Int, vid_rendermode)
+EXTERN_CVAR(Bool, fullscreen)
+EXTERN_CVAR(Int, win_x)
+EXTERN_CVAR(Int, win_y)
+EXTERN_CVAR(Int, win_w)
+EXTERN_CVAR(Int, win_h)
+
 
 inline bool V_IsHardwareRenderer()
 {

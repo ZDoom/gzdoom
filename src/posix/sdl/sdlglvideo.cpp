@@ -223,11 +223,19 @@ SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 	{
 		static_cast<SDLGLVideo*>(Video)->SetupPixelFormat(false, 0, glvers[glveridx]);
 
-		Screen = SDL_CreateWindow (caption,
-			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-			SDL_WINDOWPOS_UNDEFINED_DISPLAY(vid_adapter),
-			vid_defwidth, vid_defheight, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE
-		);
+		SDL_Rect bounds;
+		SDL_GetDisplayBounds(vid_adapter,&bounds);
+		// set default size
+		if ( win_w <= 0 || win_h <= 0 )
+		{
+			win_w = bounds.w * 8 / 10;
+			win_h = bounds.h * 8 / 10;
+		}
+
+		Screen = SDL_CreateWindow(caption,
+			(win_x <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_x,
+			(win_y <= 0) ? SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter) : win_y,
+			win_w, win_h, (fullscreen ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0) | (win_maximized ? SDL_WINDOW_MAXIMIZED : 0) | SDL_WINDOW_OPENGL | SDL_WINDOW_RESIZABLE);
 		if (Screen != NULL)
 		{
 			// enforce minimum size limit
@@ -239,20 +247,6 @@ SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 				m_supportsGamma = -1 != SDL_GetWindowGammaRamp(Screen,
 					 m_origGamma[0], m_origGamma[1], m_origGamma[2]
 				);
-
-				if (!fullscreen)
-				{
-					if (win_w >= MIN_WIDTH && win_h >= MIN_HEIGHT)
-					{
-						SDL_SetWindowSize(Screen, win_w, win_h);
-					}
-
-					if (win_x >= 0 && win_y >= 0)
-					{
-						SDL_SetWindowPosition(Screen, win_x, win_y);
-					}
-
-				}
 
 				return;
 			}
@@ -376,7 +370,7 @@ void SystemGLFrameBuffer::SetWindowSize(int w, int h)
 	{
 		win_maximized = false;
 		SDL_SetWindowSize(Screen, w, h);
-		SDL_SetWindowPosition(Screen, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+		SDL_SetWindowPosition(Screen, SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter), SDL_WINDOWPOS_CENTERED_DISPLAY(vid_adapter));
 		SetSize(GetClientWidth(), GetClientHeight());
 		int x, y;
 		SDL_GetWindowPosition(Screen, &x, &y);

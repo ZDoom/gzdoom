@@ -651,6 +651,14 @@ void NetCommand::addName ( FName name )
 
 //*****************************************************************************
 //
+void NetCommand::addBuffer ( const void *pvBuffer, int nLength )
+{
+	_buffer.ByteStream.WriteBuffer( pvBuffer, nLength );
+	_buffer.ulCurrentSize = _buffer.CalcSize();
+}
+
+//*****************************************************************************
+//
 void NetCommand::writeCommandToStream ( BYTESTREAM_s &ByteStream ) const
 {
 	// [BB] This also handles the traffic counting (NETWORK_StartTrafficMeasurement/NETWORK_StopTrafficMeasurement).

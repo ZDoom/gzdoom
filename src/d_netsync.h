@@ -153,6 +153,7 @@ public:
 	void addBit ( const bool value );
 	void addVariable ( const int value );
 	void addShortByte ( int value, int bits );
+	void addBuffer ( const void *pvBuffer, int nLength );
 	void writeCommandToStream ( BYTESTREAM_s &ByteStream ) const;
 	void writeCommandToPacket ( NetPacket &response ) const;
 	bool isUnreliable() const;

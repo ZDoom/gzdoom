@@ -333,6 +333,7 @@ void FDrawInfo::DrawScene(int drawmode)
 	{
 		gl_RenderState.EnableDrawBuffers(1);
 		GLRenderer->AmbientOccludeScene(VPUniforms.mProjectionMatrix.get()[5]);
+		glViewport(screen->mSceneViewport.left, screen->mSceneViewport.top, screen->mSceneViewport.width, screen->mSceneViewport.height);
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();

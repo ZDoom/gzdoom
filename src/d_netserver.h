@@ -23,14 +23,6 @@
 
 #include "d_net.h"
 
-enum class NetPacketType
-{
-	ConnectRequest,
-	ConnectResponse,
-	Disconnect,
-	Tic
-};
-
 enum class NodeStatus
 {
 	Closed,

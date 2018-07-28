@@ -21,6 +21,7 @@
 #include "c_dispatch.h"
 #include "actor.h"
 #include "doomstat.h"
+#include "i_net.h"
 
 extern bool netserver, netclient;
 

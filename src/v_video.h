@@ -93,6 +93,7 @@ EXTERN_CVAR(Int, win_x)
 EXTERN_CVAR(Int, win_y)
 EXTERN_CVAR(Int, win_w)
 EXTERN_CVAR(Int, win_h)
+EXTERN_CVAR(Bool, win_maximized)
 
 
 inline bool V_IsHardwareRenderer()

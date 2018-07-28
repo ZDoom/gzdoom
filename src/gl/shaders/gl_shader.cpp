@@ -365,7 +365,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	clipheightdirection_index = glGetUniformLocation(hShader, "uClipHeightDirection");
 	clipline_index = glGetUniformLocation(hShader, "uClipLine");
 
-	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
+	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
 		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);

@@ -39,7 +39,10 @@ FLightBuffer::FLightBuffer()
 
 	mBufferSize = INITIAL_BUFFER_SIZE;
 	mByteSize = mBufferSize * sizeof(float);
-	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
+	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
+	// We only want to disable using SSBOs for lights but not disable the feature entirely.
+	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
+	if (gl.flags & RFL_SHADER_STORAGE_BUFFER && !strstr(gl.vendorstring, "Intel"))
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
 		mBlockAlign = 0;
@@ -50,6 +53,7 @@ FLightBuffer::FLightBuffer()
 		mBufferType = GL_UNIFORM_BUFFER;
 		mBlockSize = gl.maxuniformblock / 16;
 		if (mBlockSize > 2048) mBlockSize = 2048;	// we don't really need a larger buffer
+
 		mBlockAlign = mBlockSize / 2;
 	}
 

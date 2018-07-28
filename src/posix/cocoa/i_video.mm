@@ -400,6 +400,8 @@ void SystemGLFrameBuffer::SetWindowSize(int width, int height)
 	win_h = height + GetTitleBarHeight();
 
 	SetMode(false, m_hiDPI);
+
+	[m_window center];
 }
 
 int SystemGLFrameBuffer::GetTitleBarHeight() const

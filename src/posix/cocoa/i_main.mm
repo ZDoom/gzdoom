@@ -259,7 +259,6 @@ int OriginalMain(int argc, char** argv)
 	vid_defwidth  = static_cast<int>(screenSize.width);
 	vid_defheight = static_cast<int>(screenSize.height);
 	vid_vsync     = true;
-	fullscreen    = true;
 
 	OriginalMainExcept(argc, argv);
 

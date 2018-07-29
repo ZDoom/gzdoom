@@ -227,22 +227,12 @@ void gl_LoadExtensions()
 		if (!stricmp(lm, "deferred") && gl.buffermethod == BM_PERSISTENT) gl.buffermethod = BM_DEFERRED;
 	}
 
-	if (!(gl.flags & RFL_SHADER_STORAGE_BUFFER))
-	{
-		glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
-		gl.maxuniforms = v;
-		glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
-		gl.maxuniformblock = v;
-		glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
-		gl.uniformblockalignment = v;
-	}
-	else
-	{
-		gl.maxuniforms = 0;
-		gl.maxuniformblock = 0;
-		gl.uniformblockalignment = 0;
-	}
-
+	glGetIntegerv(GL_MAX_FRAGMENT_UNIFORM_COMPONENTS, &v);
+	gl.maxuniforms = v;
+	glGetIntegerv(GL_MAX_UNIFORM_BLOCK_SIZE, &v);
+	gl.maxuniformblock = v;
+	glGetIntegerv(GL_UNIFORM_BUFFER_OFFSET_ALIGNMENT, &v);
+	gl.uniformblockalignment = v;
 
 	glGetIntegerv(GL_MAX_TEXTURE_SIZE, &gl.max_texturesize);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);

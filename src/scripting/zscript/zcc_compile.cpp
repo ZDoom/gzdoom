@@ -2694,7 +2694,9 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 
 			if (forclass)
 			{
-				int vindex = clstype->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
+				auto parentfunc = clstype->ParentClass? dyn_cast<PFunction>(clstype->ParentClass->VMType->Symbols.FindSymbol(sym->SymbolName, true)) : nullptr;
+
+				int vindex = clstype->FindVirtualIndex(sym->SymbolName, &sym->Variants[0], parentfunc);
 				// specifying 'override' is necessary to prevent one of the biggest problem spots with virtual inheritance: Mismatching argument types.
 				if (varflags & VARF_Override)
 				{
@@ -2705,7 +2707,6 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 					else
 					{
 						auto oldfunc = clstype->Virtuals[vindex];
-						auto parentfunc = dyn_cast<PFunction>(clstype->ParentClass->VMType->Symbols.FindSymbol(sym->SymbolName, true));
 						if (parentfunc && parentfunc->mVersion > mVersion)
 						{
 							Error(f, "Attempt to override function %s which is incompatible with version %d.%d.%d", FName(f->Name).GetChars(), mVersion.major, mVersion.minor, mVersion.revision);
@@ -2765,7 +2766,7 @@ void ZCCCompiler::CompileFunction(ZCC_StructWork *c, ZCC_FuncDeclarator *f, bool
 		}
 		else if (forclass)
 		{
-			int vindex = clstype->FindVirtualIndex(sym->SymbolName, sym->Variants[0].Proto);
+			int vindex = clstype->FindVirtualIndex(sym->SymbolName, &sym->Variants[0], nullptr);
 			if (vindex != -1)
 			{
 				Error(f, "Function %s attempts to override parent function without 'override' qualifier", FName(f->Name).GetChars());

@@ -776,16 +776,18 @@ PClass *PClass::FindClassTentative(FName name)
 //
 //==========================================================================
 
-int PClass::FindVirtualIndex(FName name, PPrototype *proto)
+int PClass::FindVirtualIndex(FName name, PFunction::Variant *variant, PFunction *parentfunc)
 {
+	auto proto = variant->Proto;
 	for (unsigned i = 0; i < Virtuals.Size(); i++)
 	{
 		if (Virtuals[i]->Name == name)
 		{
 			auto vproto = Virtuals[i]->Proto;
 			if (vproto->ReturnTypes.Size() != proto->ReturnTypes.Size() ||
-				vproto->ArgumentTypes.Size() != proto->ArgumentTypes.Size())
+				vproto->ArgumentTypes.Size() < proto->ArgumentTypes.Size())
 			{
+
 				continue;	// number of parameters does not match, so it's incompatible
 			}
 			bool fail = false;
@@ -808,7 +810,26 @@ int PClass::FindVirtualIndex(FName name, PPrototype *proto)
 					break;
 				}
 			}
-			if (!fail) return i;
+			if (!fail)
+			{
+				if (vproto->ArgumentTypes.Size() > proto->ArgumentTypes.Size() && parentfunc)
+				{
+					// Check if the difference between both functions is only some optional arguments.
+					for (unsigned a = proto->ArgumentTypes.Size(); a < vproto->ArgumentTypes.Size(); a++)
+					{
+						if (!(parentfunc->Variants[0].ArgFlags[a] & VARF_Optional)) return -1;
+					}
+
+					// Todo: extend the prototype
+					for (unsigned a = proto->ArgumentTypes.Size(); a < vproto->ArgumentTypes.Size(); a++)
+					{
+						proto->ArgumentTypes.Push(vproto->ArgumentTypes[a]);
+						variant->ArgFlags.Push(parentfunc->Variants[0].ArgFlags[a]);
+						variant->ArgNames.Push(NAME_None);
+					}
+				}
+				return i;
+			}
 		}
 	}
 	return -1;

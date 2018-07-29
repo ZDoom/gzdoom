@@ -2177,32 +2177,25 @@ static void PutSaveWads (FSerializer &arc)
 
 static void PutSaveComment (FSerializer &arc)
 {
-	char comment[256];
 	const char *readableTime;
-	uint16_t len;
 	int levelTime;
 
 	// Get the current date and time
 	readableTime = myasctime ();
 
-	strncpy (comment, readableTime, 10);
-	strncpy (comment+10, readableTime+19, 5);
-	strncpy (comment+15, readableTime+10, 9);
-	comment[24] = 0;
+	FString comment;
+	comment.Format("%.10s%.5s%.9s", readableTime, &readableTime[19], &readableTime[10]);
 
 	arc.AddString("Creation Time", comment);
 
 	// Get level name
 	//strcpy (comment, level.level_name);
-	mysnprintf(comment, countof(comment), "%s - %s", level.MapName.GetChars(), level.LevelName.GetChars());
-	len = (uint16_t)strlen (comment);
-	comment[len] = '\n';
+	comment.Format("%s - %s\n", level.MapName.GetChars(), level.LevelName.GetChars());
 
 	// Append elapsed time
 	levelTime = level.time / TICRATE;
-	mysnprintf (comment + len + 1, countof(comment) - len - 1, "time: %02d:%02d:%02d",
+	comment.AppendFormat("time: %02d:%02d:%02d",
 		levelTime/3600, (levelTime%3600)/60, levelTime%60);
-	comment[len+16] = 0;
 
 	// Write out the comment
 	arc.AddString("Comment", comment);

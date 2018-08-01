@@ -1927,6 +1927,37 @@ OptionMenu VideoModeMenu protected
 	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
+	
+	SubMenu "Resolution Mode", CustomResolutionMenu
+	SubMenu "Window Size", CustomWindowSizeMenu
+}
+
+OptionMenu CustomResolutionMenu protected
+{
+	Title "Resolution Mode"
+	
+	StaticText "Custom Resolution Mode"
+	TextField "Custom Width", vid_scale_customwidth
+	TextField "Custom Height", vid_scale_customheight
+	StaticText ""
+	StaticText "Preset Resolution Modes"
+	StaticText "4:3 Aspect"
+	Command "320x240", "vid_setscale 320 200"
+	Command "640x480", "vid_setscale 640 480"
+	Command "1024x768", "vid_setscale 1024 768"
+	StaticText "16:9 Aspect"
+	Command "960x540", "vid_setscale 960 540"
+	Command "1920x1080", "vid_setscale 1920 1080"
+}
+
+OptionMenu CustomWindowSizeMenu protected
+{
+	Title "Windowed Mode Preset Sizes"
+	Command "320x200", "vid_setsize 320 200"
+	Command "640x480", "vid_setsize 640 480"
+	Command "960x540", "vid_setsize 960 540"
+	Command "640x480", "vid_setsize 640 480"
+	Command "1920x1080", "vid_setsize 1920 1080"
 }
 
 /*=======================================

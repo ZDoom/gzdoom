@@ -1927,37 +1927,46 @@ OptionMenu VideoModeMenu protected
 	Option "$VIDMNU_CROPASPECT",		"vid_cropaspect", "CropAspect"
 	Option "$VIDMNU_SCALEMODE",			"vid_scalemode", "ScaleModes"
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
+
+	StaticText ""
 	
-	SubMenu "Resolution Mode", CustomResolutionMenu
-	SubMenu "Window Size", CustomWindowSizeMenu
+	SubMenu "Custom Resolution Scaling", CustomResolutionMenu
 }
 
 OptionMenu CustomResolutionMenu protected
 {
-	Title "Resolution Mode"
+	Title "Custom Resolution Scaling"
 	
 	StaticText "Custom Resolution Mode"
-	TextField "Custom Width", vid_scale_customwidth
-	TextField "Custom Height", vid_scale_customheight
+	TextField "Custom Width", menu_resolution_custom_width
+	TextField "Custom Height", menu_resolution_custom_height
+	Option "Use Linear Scaling (Fullscreen)", "vid_scale_customlinear", "YesNo"
+	StaticText ""
+	Command "Commit Changes (Windowed)", "menu_resolution_commit_changes 0"
+	Command "Commit Changes (Fullscreen)", "menu_resolution_commit_changes 1"
 	StaticText ""
 	StaticText "Preset Resolution Modes"
+	StaticText ""
 	StaticText "4:3 Aspect"
-	Command "320x240", "vid_setscale 320 200"
-	Command "640x480", "vid_setscale 640 480"
-	Command "1024x768", "vid_setscale 1024 768"
+	Command "320x240", "menu_resolution_set_custom 320 240"
+	Command "640x480", "menu_resolution_set_custom 640 480"
+	Command "1024x768", "menu_resolution_set_custom 1024 768"
+	Command "1280x960", "menu_resolution_set_custom 1280 960"
+	Command "1600x1200", "menu_resolution_set_custom 1600 1200"
+	StaticText ""
 	StaticText "16:9 Aspect"
-	Command "960x540", "vid_setscale 960 540"
-	Command "1920x1080", "vid_setscale 1920 1080"
-}
-
-OptionMenu CustomWindowSizeMenu protected
-{
-	Title "Windowed Mode Preset Sizes"
-	Command "320x200", "vid_setsize 320 200"
-	Command "640x480", "vid_setsize 640 480"
-	Command "960x540", "vid_setsize 960 540"
-	Command "640x480", "vid_setsize 640 480"
-	Command "1920x1080", "vid_setsize 1920 1080"
+	Command "960x540", "menu_resolution_set_custom 960 540"
+	Command "(720p HD)   1280x720", "menu_resolution_set_custom 1280 720"
+	Command "1366x768", "menu_resolution_set_custom 1366 768"
+	Command "(1080p HD) 1920x1080", "menu_resolution_set_custom 1920 1080"
+	Command "(1440p HD)  2560x1440", "menu_resolution_set_custom 2560 1440"
+	StaticText ""
+	StaticText "16:10 Aspect"
+	Command "960x600", "menu_resolution_set_custom 960 600"
+	Command "1280x800", "menu_resolution_set_custom 1280 800"
+	Command "1440x900", "menu_resolution_set_custom 1440 900"
+	Command "1680x1050", "menu_resolution_set_custom 1680 1050"
+	Command "1920x1200", "menu_resolution_set_custom 1920 1200"
 }
 
 /*=======================================

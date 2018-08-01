@@ -1929,22 +1929,22 @@ OptionMenu VideoModeMenu protected
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
 
 	StaticText ""
-	
-	SubMenu "Custom Resolution Scaling", CustomResolutionMenu
-}
-
-OptionMenu CustomResolutionMenu protected
-{
-	Title "Custom Resolution Scaling"
-	
 	StaticText "Custom Resolution Mode"
 	TextField "Custom Width", menu_resolution_custom_width
 	TextField "Custom Height", menu_resolution_custom_height
 	Option "Use Linear Scaling (Fullscreen)", "vid_scale_customlinear", "YesNo"
 	StaticText ""
-	Command "Commit Changes (Windowed)", "menu_resolution_commit_changes 0"
-	Command "Commit Changes (Fullscreen)", "menu_resolution_commit_changes 1"
+	Command "Apply Changes (Windowed)", "menu_resolution_commit_changes 0"
+	Command "Apply Changes (Fullscreen)", "menu_resolution_commit_changes 1"
 	StaticText ""
+
+	SubMenu "Choose Resolution Preset", CustomResolutionMenu
+}
+
+OptionMenu CustomResolutionMenu protected
+{
+	Title "Custom Resolution Presets"
+	
 	StaticText "Preset Resolution Modes"
 	StaticText ""
 	StaticText "4:3 Aspect"

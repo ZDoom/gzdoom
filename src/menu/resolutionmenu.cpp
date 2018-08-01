@@ -37,6 +37,7 @@
 #include "c_dispatch.h"
 #include "c_cvars.h"
 #include "v_video.h"
+#include "menu/menu.h"
 
 CVAR(Int, menu_resolution_custom_width, 640, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
 CVAR(Int, menu_resolution_custom_height, 480, CVAR_ARCHIVE|CVAR_GLOBALCONFIG)
@@ -61,6 +62,7 @@ CCMD (menu_resolution_set_custom)
 	{
 		Printf("This command is not meant to be used outside the menu! But if you want to use it, please specify <x> and <y>.\n");
 	}
+	M_PreviousMenu();
 }
 
 CCMD (menu_resolution_commit_changes)

@@ -1929,39 +1929,39 @@ OptionMenu VideoModeMenu protected
 	Slider "$VIDMNU_SCALEFACTOR",		"vid_scalefactor", 0.25, 2.0, 0.25, 2
 
 	StaticText ""
-	StaticText "Custom Resolution Mode"
-	TextField "Custom Width", menu_resolution_custom_width
-	TextField "Custom Height", menu_resolution_custom_height
-	Option "Use Linear Scaling (Fullscreen)", "vid_scale_customlinear", "YesNo"
+	StaticText "$VIDMNU_CUSTOMRES"
+	TextField "$VIDMNU_CUSTOMX", menu_resolution_custom_width
+	TextField "$VIDMNU_CUSTOMY", menu_resolution_custom_height
+	Option "$VIDMNU_USELINEAR", "vid_scale_customlinear", "YesNo"
 	StaticText ""
-	Command "Apply Changes (Windowed)", "menu_resolution_commit_changes 0"
-	Command "Apply Changes (Fullscreen)", "menu_resolution_commit_changes 1"
+	Command "$VIDMNU_APPLYW", "menu_resolution_commit_changes 0"
+	Command "$VIDMNU_APPLYFS", "menu_resolution_commit_changes 1"
 	StaticText ""
 
-	SubMenu "Choose Resolution Preset", CustomResolutionMenu
+	SubMenu "$VIDMNU_RESPRESET", CustomResolutionMenu
 }
 
 OptionMenu CustomResolutionMenu protected
 {
-	Title "Custom Resolution Presets"
+	Title "$VIDMNU_RESPRESETTTL"
 	
-	StaticText "Preset Resolution Modes"
+	StaticText "$VIDMNU_RESPRESETHEAD"
 	StaticText ""
-	StaticText "4:3 Aspect"
+	StaticText "$VIDMNU_ASPECT43"
 	Command "320x240", "menu_resolution_set_custom 320 240"
 	Command "640x480", "menu_resolution_set_custom 640 480"
 	Command "1024x768", "menu_resolution_set_custom 1024 768"
 	Command "1280x960", "menu_resolution_set_custom 1280 960"
 	Command "1600x1200", "menu_resolution_set_custom 1600 1200"
 	StaticText ""
-	StaticText "16:9 Aspect"
+	StaticText "$VIDMNU_ASPECT169"
 	Command "960x540", "menu_resolution_set_custom 960 540"
 	Command "(720p HD)   1280x720", "menu_resolution_set_custom 1280 720"
 	Command "1366x768", "menu_resolution_set_custom 1366 768"
 	Command "(1080p HD) 1920x1080", "menu_resolution_set_custom 1920 1080"
 	Command "(1440p HD)  2560x1440", "menu_resolution_set_custom 2560 1440"
 	StaticText ""
-	StaticText "16:10 Aspect"
+	StaticText "$VIDMNU_ASPECT1610"
 	Command "960x600", "menu_resolution_set_custom 960 600"
 	Command "1280x800", "menu_resolution_set_custom 1280 800"
 	Command "1440x900", "menu_resolution_set_custom 1440 900"

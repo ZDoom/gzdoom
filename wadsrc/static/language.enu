@@ -2277,10 +2277,6 @@ VIDMNU_RESPRESETHEAD	= "Preset Resolution Modes";
 VIDMNU_ASPECT43			= "4:3 Aspect";
 VIDMNU_ASPECT169		= "16:9 Aspect";
 VIDMNU_ASPECT1610		= "16:10 Aspect";
-VIDMNU_CUSTOMX			= "Custom Width";
-VIDMNU_CUSTOMX			= "Custom Width";
-VIDMNU_CUSTOMX			= "Custom Width";
-VIDMNU_CUSTOMX			= "Custom Width";
 
 // Network Options
 NETMNU_TITLE					= "NETWORK OPTIONS";

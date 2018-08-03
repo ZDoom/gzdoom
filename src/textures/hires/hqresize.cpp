@@ -285,13 +285,13 @@ static unsigned char *xbrzHelper( void (*xbrzFunction) ( size_t, const uint32_t*
 		parallel_for(inHeight, thresholdHeight, [=](int sliceY)
 		{
 			xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-				inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
+				inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), sliceY, sliceY + thresholdHeight);
 		});
 	}
 	else
 	{
 		xbrzFunction(N, reinterpret_cast<uint32_t*>(inputBuffer), reinterpret_cast<uint32_t*>(newBuffer),
-			inWidth, inHeight, xbrz::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
+			inWidth, inHeight, xbrz::ColorFormat::ARGB, xbrz::ScalerCfg(), 0, std::numeric_limits<int>::max());
 	}
 
 	delete[] inputBuffer;

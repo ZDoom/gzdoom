@@ -46,6 +46,8 @@ FModule SndFileModule{"SndFile"};
 #define SNDFILELIB "libsndfile-1.dll"
 #elif defined(__APPLE__)
 #define SNDFILELIB "libsndfile.1.dylib"
+#elif defined(__OpenBSD__)
+#define SNDFILELIB "libsndfile.so"
 #else
 #define SNDFILELIB "libsndfile.so.1"
 #endif

@@ -46,6 +46,8 @@ FModule MPG123Module{"MPG123"};
 #define MPG123LIB "libmpg123-0.dll"
 #elif defined(__APPLE__)
 #define MPG123LIB "libmpg123.0.dylib"
+#elif defined(__OpenBSD__)
+#define MPG123LIB "libmpg123.so"
 #else
 #define MPG123LIB "libmpg123.so.0"
 #endif

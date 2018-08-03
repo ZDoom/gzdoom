@@ -61,7 +61,9 @@ extern "C" unsigned __stdcall GetSystemDirectoryA(char *lpBuffer, unsigned uSize
 
 #ifdef __APPLE__
 #define FLUIDSYNTHLIB1	"libfluidsynth.1.dylib"
-#else // !__APPLE__
+#elif defined(__OpenBSD__)
+#define FLUIDSYNTHLIB1	"libfluidsynth.so"
+#else // !__APPLE__ && !__OpenBSD__
 #define FLUIDSYNTHLIB1	"libfluidsynth.so.1"
 #endif // __APPLE__
 #endif

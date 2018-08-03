@@ -39,6 +39,14 @@
 #pragma GCC diagnostic ignored "-Waddress"
 #endif
 
+#ifdef __OpenBSD__
+#define GTKLIB "libgtk-3.so"
+#define GTKX11LIB "libgtk-x11-2.0.so"
+#else
+#define GTKLIB "libgtk-3.so.0"
+#define GTKX11LIB "libgtk-x11-2.0.so.0"
+#endif
+
 #include <gtk/gtk.h>
 #if GTK_MAJOR_VERSION >= 3
 #include <gdk/gdk.h>
@@ -427,7 +435,7 @@ bool I_GtkAvailable()
 
 	if(GtkAvailable < 0)
 	{
-		if (!GtkModule.Load({"libgtk-3.so.0", "libgtk-x11-2.0.so.0"}))
+		if (!GtkModule.Load({GTKLIB, GTKX11LIB}))
 		{
 			GtkAvailable = 0;
 			return false;

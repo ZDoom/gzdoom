@@ -100,7 +100,7 @@ void FUE1Model::LoadGeometry()
 				// convert padded XYZ16
 				Vert.Pos = FVector3(dxverts[j+i*numVerts].x,
 					dxverts[j+i*numVerts].z,
-					-dxverts[j+i*numVerts].y);
+					(float)-dxverts[j+i*numVerts].y);
 			}
 			else
 			{

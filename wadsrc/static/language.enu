@@ -2770,6 +2770,7 @@ GLTEXMNU_ANISOTROPIC	= "Anisotropic filter";
 GLTEXMNU_TEXFORMAT 		= "Texture Format";
 GLTEXMNU_ENABLEHIRES 	= "Enable hires textures";
 GLTEXMNU_HQRESIZE 		= "High Quality Resize mode";
+GLTEXMNU_HQRESIZEWARN 	= "This mode requires %d times more video memory";
 GLTEXMNU_RESIZETEX 		= "Resize textures";
 GLTEXMNU_RESIZESPR 		= "Resize sprites";
 GLTEXMNU_RESIZEFNT 		= "Resize fonts";

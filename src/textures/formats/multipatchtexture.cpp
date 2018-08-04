@@ -1285,7 +1285,7 @@ void FMultiPatchTexture::ResolvePatches()
 		{
 			if (Parts[i].Texture == nullptr)
 			{
-				memcpy(&Parts[i], &Parts[i + 1], (NumParts - i - 1) * sizeof(TexPart));
+				memmove(&Parts[i], &Parts[i + 1], (NumParts - i - 1) * sizeof(TexPart));
 				i--;
 				NumParts--;
 			}

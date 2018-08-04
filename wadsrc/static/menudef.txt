@@ -2256,12 +2256,15 @@ OptionMenu "GLTextureGLOptions" protected
 	{
 		Option "$GLTEXMNU_HQRESIZE",		gl_texture_hqresize,			"HqResizeModesNoMMX"
 	}
+	StaticText "!HQRESIZE_WARNING!"
+
 	Option "$GLTEXMNU_RESIZETEX",		gl_texture_hqresize_textures,	"OnOff"
 	Option "$GLTEXMNU_RESIZESPR",		gl_texture_hqresize_sprites,	"OnOff"
 	Option "$GLTEXMNU_RESIZEFNT",		gl_texture_hqresize_fonts,		"OnOff"
 	Option "$GLTEXMNU_PRECACHETEX",		gl_precache,					"YesNo"
 	Option "$GLTEXMNU_TRIMSPREDGE",		gl_trimsprites,					"OnOff"
 	Option "$GLTEXMNU_SORTDRAWLIST", 	gl_sort_textures,				"YesNo"
+	Class "GLTextureGLOptions"
 }
 
 OptionMenu "GLLightOptions" protected

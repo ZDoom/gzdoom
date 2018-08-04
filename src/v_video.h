@@ -43,6 +43,7 @@
 #include "c_cvars.h"
 #include "v_colortables.h"
 #include "v_2ddrawer.h"
+#include <functional>
 
 struct sector_t;
 class IShaderProgram;
@@ -463,6 +464,8 @@ public:
 	virtual void WipeEndScreen();
 	virtual bool WipeDo(int ticks);
 	virtual void WipeCleanup();
+
+	virtual void PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D) { if (afterBloomDrawEndScene2D) afterBloomDrawEndScene2D(); }
 
 	void ScaleCoordsFromWindow(int16_t &x, int16_t &y);
 

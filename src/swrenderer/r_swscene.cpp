@@ -122,6 +122,13 @@ sector_t *SWSceneDrawer::RenderView(player_t *player)
 
 	auto map = swrenderer::CameraLight::Instance()->ShaderColormap();
 	screen->DrawTexture(fbtex.get(), 0, 0, DTA_SpecialColormap, map, TAG_DONE);
-	SWRenderer->DrawRemainingPlayerSprites();
+	screen->Draw2D();
+	screen->Clear2D();
+	screen->PostProcessScene(CM_DEFAULT, [&]() {
+		SWRenderer->DrawRemainingPlayerSprites();
+		screen->Draw2D();
+		screen->Clear2D();
+	});
+
 	return r_viewpoint.sector;
 }

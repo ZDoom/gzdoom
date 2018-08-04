@@ -479,3 +479,8 @@ void OpenGLFrameBuffer::Draw2D()
 {
 	if (GLRenderer != nullptr) GLRenderer->Draw2D(&m2DDrawer);
 }
+
+void OpenGLFrameBuffer::PostProcessScene(int fixedcm, const std::function<void()> &afterBloomDrawEndScene2D)
+{
+	GLRenderer->PostProcessScene(fixedcm, afterBloomDrawEndScene2D);
+}

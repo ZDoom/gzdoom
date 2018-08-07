@@ -17,11 +17,12 @@ vec4 ApplyGamma(vec4 c)
 	return vec4(val, c.a);
 }
 
+float halfstep = 15./32.;
 float DitherMatrix[16] = float[](
-	 0.0 / 16.0 - 0.5,  8.0 / 16.0 - 0.5,  2.0 / 16.0 - 0.5, 10.0 / 16.0 - 0.5,
-	12.0 / 16.0 - 0.5,  4.0 / 16.0 - 0.5, 14.0 / 16.0 - 0.5,  6.0 / 16.0 - 0.5,
-	 3.0 / 16.0 - 0.5, 11.0 / 16.0 - 0.5,  1.0 / 16.0 - 0.5,  9.0 / 16.0 - 0.5,
-	15.0 / 16.0 - 0.5,  7.0 / 16.0 - 0.5, 13.0 / 16.0 - 0.5,  5.0 / 16.0 - 0.5
+	 0.0 / 16.0 - halfstep,  8.0 / 16.0 - halfstep,  2.0 / 16.0 - halfstep, 10.0 / 16.0 - halfstep,
+	12.0 / 16.0 - halfstep,  4.0 / 16.0 - halfstep, 14.0 / 16.0 - halfstep,  6.0 / 16.0 - halfstep,
+	 3.0 / 16.0 - halfstep, 11.0 / 16.0 - halfstep,  1.0 / 16.0 - halfstep,  9.0 / 16.0 - halfstep,
+	15.0 / 16.0 - halfstep,  7.0 / 16.0 - halfstep, 13.0 / 16.0 - halfstep,  5.0 / 16.0 - halfstep
 );
 
 vec4 Dither(vec4 c, float colorscale)

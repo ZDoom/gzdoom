@@ -17,18 +17,30 @@ vec4 ApplyGamma(vec4 c)
 	return vec4(val, c.a);
 }
 
-float halfstep = 1./32.;
-float DitherMatrix[16] = float[](
-	 0.0 / 16.0 + halfstep,  8.0 / 16.0 + halfstep,  2.0 / 16.0 + halfstep, 10.0 / 16.0 + halfstep,
-	12.0 / 16.0 + halfstep,  4.0 / 16.0 + halfstep, 14.0 / 16.0 + halfstep,  6.0 / 16.0 + halfstep,
-	 3.0 / 16.0 + halfstep, 11.0 / 16.0 + halfstep,  1.0 / 16.0 + halfstep,  9.0 / 16.0 + halfstep,
-	15.0 / 16.0 + halfstep,  7.0 / 16.0 + halfstep, 13.0 / 16.0 + halfstep,  5.0 / 16.0 + halfstep
+float halfstep = 1./65.;
+float DitherMatrix[64] = float[](
+	 0.0 / 16.0 + halfstep * 1,  8.0 / 16.0 + halfstep * 1,  2.0 / 16.0 + halfstep * 1, 10.0 / 16.0 + halfstep * 1,
+	 0.0 / 16.0 + halfstep * 3,  8.0 / 16.0 + halfstep * 3,  2.0 / 16.0 + halfstep * 3, 10.0 / 16.0 + halfstep * 3,
+	12.0 / 16.0 + halfstep * 1,  4.0 / 16.0 + halfstep * 1, 14.0 / 16.0 + halfstep * 1,  6.0 / 16.0 + halfstep * 1,
+	12.0 / 16.0 + halfstep * 3,  4.0 / 16.0 + halfstep * 3, 14.0 / 16.0 + halfstep * 3,  6.0 / 16.0 + halfstep * 3,
+	 3.0 / 16.0 + halfstep * 1, 11.0 / 16.0 + halfstep * 1,  1.0 / 16.0 + halfstep * 1,  9.0 / 16.0 + halfstep * 1,
+	 3.0 / 16.0 + halfstep * 3, 11.0 / 16.0 + halfstep * 3,  1.0 / 16.0 + halfstep * 3,  9.0 / 16.0 + halfstep * 3,
+	15.0 / 16.0 + halfstep * 1,  7.0 / 16.0 + halfstep * 1, 13.0 / 16.0 + halfstep * 1,  5.0 / 16.0 + halfstep * 1,
+	15.0 / 16.0 + halfstep * 3,  7.0 / 16.0 + halfstep * 3, 13.0 / 16.0 + halfstep * 3,  5.0 / 16.0 + halfstep * 3,
+	 0.0 / 16.0 + halfstep * 4,  8.0 / 16.0 + halfstep * 4,  2.0 / 16.0 + halfstep * 4, 10.0 / 16.0 + halfstep * 4,
+	 0.0 / 16.0 + halfstep * 2,  8.0 / 16.0 + halfstep * 2,  2.0 / 16.0 + halfstep * 2, 10.0 / 16.0 + halfstep * 2,
+	12.0 / 16.0 + halfstep * 4,  4.0 / 16.0 + halfstep * 4, 14.0 / 16.0 + halfstep * 4,  6.0 / 16.0 + halfstep * 4,
+	12.0 / 16.0 + halfstep * 2,  4.0 / 16.0 + halfstep * 2, 14.0 / 16.0 + halfstep * 2,  6.0 / 16.0 + halfstep * 2,
+	 3.0 / 16.0 + halfstep * 4, 11.0 / 16.0 + halfstep * 4,  1.0 / 16.0 + halfstep * 4,  9.0 / 16.0 + halfstep * 4,
+	 3.0 / 16.0 + halfstep * 2, 11.0 / 16.0 + halfstep * 2,  1.0 / 16.0 + halfstep * 2,  9.0 / 16.0 + halfstep * 2,
+	15.0 / 16.0 + halfstep * 4,  7.0 / 16.0 + halfstep * 4, 13.0 / 16.0 + halfstep * 4,  5.0 / 16.0 + halfstep * 4,
+	15.0 / 16.0 + halfstep * 2,  7.0 / 16.0 + halfstep * 2, 13.0 / 16.0 + halfstep * 2,  5.0 / 16.0 + halfstep * 2
 );
 
 vec4 Dither(vec4 c, float colorscale)
 {
-	ivec2 pos = ivec2(gl_FragCoord.xy) & 3;
-	float threshold = DitherMatrix[pos.x + (pos.y << 2)];
+	ivec2 pos = ivec2(gl_FragCoord.xy) & 7;
+	float threshold = DitherMatrix[pos.x + (pos.y << 3)];
 	return vec4(floor(c.rgb * colorscale + threshold) / colorscale, c.a);
 }
 

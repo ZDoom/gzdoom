@@ -61,6 +61,7 @@ FGLRenderBuffers::~FGLRenderBuffers()
 	ClearPipeline();
 	ClearEyeBuffers();
 	ClearShadowMap();
+	DeleteTexture(mDitherTexture);
 }
 
 void FGLRenderBuffers::ClearScene()
@@ -557,6 +558,36 @@ void FGLRenderBuffers::BindEyeFB(int eye, bool readBuffer)
 {
 	CreateEyeBuffers(eye);
 	glBindFramebuffer(readBuffer ? GL_READ_FRAMEBUFFER : GL_FRAMEBUFFER, mEyeFBs[eye].handle);
+}
+
+void FGLRenderBuffers::BindDitherTexture(int texunit)
+{
+	if (!mDitherTexture)
+	{
+		float halfstep = 1.0f / 65.0f;
+		float data[64] =
+		{
+			0.0f / 16.0f + halfstep * 1, 8.0f / 16.0f + halfstep * 1, 2.0f / 16.0f + halfstep * 1, 10.0f / 16.0f + halfstep * 1,
+			0.0f / 16.0f + halfstep * 3, 8.0f / 16.0f + halfstep * 3, 2.0f / 16.0f + halfstep * 3, 10.0f / 16.0f + halfstep * 3,
+			12.0f / 16.0f + halfstep * 1, 4.0f / 16.0f + halfstep * 1, 14.0f / 16.0f + halfstep * 1, 6.0f / 16.0f + halfstep * 1,
+			12.0f / 16.0f + halfstep * 3, 4.0f / 16.0f + halfstep * 3, 14.0f / 16.0f + halfstep * 3, 6.0f / 16.0f + halfstep * 3,
+			3.0f / 16.0f + halfstep * 1, 11.0f / 16.0f + halfstep * 1, 1.0f / 16.0f + halfstep * 1, 9.0f / 16.0f + halfstep * 1,
+			3.0f / 16.0f + halfstep * 3, 11.0f / 16.0f + halfstep * 3, 1.0f / 16.0f + halfstep * 3, 9.0f / 16.0f + halfstep * 3,
+			15.0f / 16.0f + halfstep * 1, 7.0f / 16.0f + halfstep * 1, 13.0f / 16.0f + halfstep * 1, 5.0f / 16.0f + halfstep * 1,
+			15.0f / 16.0f + halfstep * 3, 7.0f / 16.0f + halfstep * 3, 13.0f / 16.0f + halfstep * 3, 5.0f / 16.0f + halfstep * 3,
+			0.0f / 16.0f + halfstep * 4, 8.0f / 16.0f + halfstep * 4, 2.0f / 16.0f + halfstep * 4, 10.0f / 16.0f + halfstep * 4,
+			0.0f / 16.0f + halfstep * 2, 8.0f / 16.0f + halfstep * 2, 2.0f / 16.0f + halfstep * 2, 10.0f / 16.0f + halfstep * 2,
+			12.0f / 16.0f + halfstep * 4, 4.0f / 16.0f + halfstep * 4, 14.0f / 16.0f + halfstep * 4, 6.0f / 16.0f + halfstep * 4,
+			12.0f / 16.0f + halfstep * 2, 4.0f / 16.0f + halfstep * 2, 14.0f / 16.0f + halfstep * 2, 6.0f / 16.0f + halfstep * 2,
+			3.0f / 16.0f + halfstep * 4, 11.0f / 16.0f + halfstep * 4, 1.0f / 16.0f + halfstep * 4, 9.0f / 16.0f + halfstep * 4,
+			3.0f / 16.0f + halfstep * 2, 11.0f / 16.0f + halfstep * 2, 1.0f / 16.0f + halfstep * 2, 9.0f / 16.0f + halfstep * 2,
+			15.0f / 16.0f + halfstep * 4, 7.0f / 16.0f + halfstep * 4, 13.0f / 16.0f + halfstep * 4, 5.0f / 16.0f + halfstep * 4,
+			15.0f / 16.0f + halfstep * 2, 7.0f / 16.0f + halfstep * 2, 13.0f / 16.0f + halfstep * 2, 5.0f / 16.0f + halfstep * 2
+		};
+
+		mDitherTexture = Create2DTexture("DitherTexture", GL_R32F, 8, 8, data);
+	}
+	mDitherTexture.Bind(1, GL_NEAREST, GL_REPEAT);
 }
 
 //==========================================================================

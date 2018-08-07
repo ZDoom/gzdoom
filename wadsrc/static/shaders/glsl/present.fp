@@ -3,6 +3,7 @@ in vec2 TexCoord;
 layout(location=0) out vec4 FragColor;
 
 layout(binding=0) uniform sampler2D InputTexture;
+layout(binding=1) uniform sampler2D DitherTexture;
 
 vec4 ApplyGamma(vec4 c)
 {
@@ -17,30 +18,10 @@ vec4 ApplyGamma(vec4 c)
 	return vec4(val, c.a);
 }
 
-#define HALFSTEP 1./65.
-float DitherMatrix[64] = float[](
-	 0.0 / 16.0 + HALFSTEP * 1,  8.0 / 16.0 + HALFSTEP * 1,  2.0 / 16.0 + HALFSTEP * 1, 10.0 / 16.0 + HALFSTEP * 1,
-	 0.0 / 16.0 + HALFSTEP * 3,  8.0 / 16.0 + HALFSTEP * 3,  2.0 / 16.0 + HALFSTEP * 3, 10.0 / 16.0 + HALFSTEP * 3,
-	12.0 / 16.0 + HALFSTEP * 1,  4.0 / 16.0 + HALFSTEP * 1, 14.0 / 16.0 + HALFSTEP * 1,  6.0 / 16.0 + HALFSTEP * 1,
-	12.0 / 16.0 + HALFSTEP * 3,  4.0 / 16.0 + HALFSTEP * 3, 14.0 / 16.0 + HALFSTEP * 3,  6.0 / 16.0 + HALFSTEP * 3,
-	 3.0 / 16.0 + HALFSTEP * 1, 11.0 / 16.0 + HALFSTEP * 1,  1.0 / 16.0 + HALFSTEP * 1,  9.0 / 16.0 + HALFSTEP * 1,
-	 3.0 / 16.0 + HALFSTEP * 3, 11.0 / 16.0 + HALFSTEP * 3,  1.0 / 16.0 + HALFSTEP * 3,  9.0 / 16.0 + HALFSTEP * 3,
-	15.0 / 16.0 + HALFSTEP * 1,  7.0 / 16.0 + HALFSTEP * 1, 13.0 / 16.0 + HALFSTEP * 1,  5.0 / 16.0 + HALFSTEP * 1,
-	15.0 / 16.0 + HALFSTEP * 3,  7.0 / 16.0 + HALFSTEP * 3, 13.0 / 16.0 + HALFSTEP * 3,  5.0 / 16.0 + HALFSTEP * 3,
-	 0.0 / 16.0 + HALFSTEP * 4,  8.0 / 16.0 + HALFSTEP * 4,  2.0 / 16.0 + HALFSTEP * 4, 10.0 / 16.0 + HALFSTEP * 4,
-	 0.0 / 16.0 + HALFSTEP * 2,  8.0 / 16.0 + HALFSTEP * 2,  2.0 / 16.0 + HALFSTEP * 2, 10.0 / 16.0 + HALFSTEP * 2,
-	12.0 / 16.0 + HALFSTEP * 4,  4.0 / 16.0 + HALFSTEP * 4, 14.0 / 16.0 + HALFSTEP * 4,  6.0 / 16.0 + HALFSTEP * 4,
-	12.0 / 16.0 + HALFSTEP * 2,  4.0 / 16.0 + HALFSTEP * 2, 14.0 / 16.0 + HALFSTEP * 2,  6.0 / 16.0 + HALFSTEP * 2,
-	 3.0 / 16.0 + HALFSTEP * 4, 11.0 / 16.0 + HALFSTEP * 4,  1.0 / 16.0 + HALFSTEP * 4,  9.0 / 16.0 + HALFSTEP * 4,
-	 3.0 / 16.0 + HALFSTEP * 2, 11.0 / 16.0 + HALFSTEP * 2,  1.0 / 16.0 + HALFSTEP * 2,  9.0 / 16.0 + HALFSTEP * 2,
-	15.0 / 16.0 + HALFSTEP * 4,  7.0 / 16.0 + HALFSTEP * 4, 13.0 / 16.0 + HALFSTEP * 4,  5.0 / 16.0 + HALFSTEP * 4,
-	15.0 / 16.0 + HALFSTEP * 2,  7.0 / 16.0 + HALFSTEP * 2, 13.0 / 16.0 + HALFSTEP * 2,  5.0 / 16.0 + HALFSTEP * 2
-);
-
 vec4 Dither(vec4 c, float colorscale)
 {
-	ivec2 pos = ivec2(gl_FragCoord.xy) & 7;
-	float threshold = DitherMatrix[pos.x + (pos.y << 3)];
+	vec2 texSize = vec2(textureSize(DitherTexture, 0));
+	float threshold = texture(DitherTexture, gl_FragCoord.xy / texSize).r;
 	return vec4(floor(c.rgb * colorscale + threshold) / colorscale, c.a);
 }
 

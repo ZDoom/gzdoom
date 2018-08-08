@@ -564,7 +564,7 @@ void FGLRenderBuffers::BindDitherTexture(int texunit)
 {
 	if (!mDitherTexture)
 	{
-		float data[64] =
+		static const float data[64] =
 		{
 			 .0078125, .2578125, .1328125, .3828125, .0234375, .2734375, .1484375, .3984375,
 			 .7578125, .5078125, .8828125, .6328125, .7734375, .5234375, .8984375, .6484375,

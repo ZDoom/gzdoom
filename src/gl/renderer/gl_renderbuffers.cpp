@@ -564,25 +564,16 @@ void FGLRenderBuffers::BindDitherTexture(int texunit)
 {
 	if (!mDitherTexture)
 	{
-		float halfstep = 1.0f / 65.0f;
 		float data[64] =
 		{
-			0.0f / 16.0f + halfstep * 1, 8.0f / 16.0f + halfstep * 1, 2.0f / 16.0f + halfstep * 1, 10.0f / 16.0f + halfstep * 1,
-			0.0f / 16.0f + halfstep * 3, 8.0f / 16.0f + halfstep * 3, 2.0f / 16.0f + halfstep * 3, 10.0f / 16.0f + halfstep * 3,
-			12.0f / 16.0f + halfstep * 1, 4.0f / 16.0f + halfstep * 1, 14.0f / 16.0f + halfstep * 1, 6.0f / 16.0f + halfstep * 1,
-			12.0f / 16.0f + halfstep * 3, 4.0f / 16.0f + halfstep * 3, 14.0f / 16.0f + halfstep * 3, 6.0f / 16.0f + halfstep * 3,
-			3.0f / 16.0f + halfstep * 1, 11.0f / 16.0f + halfstep * 1, 1.0f / 16.0f + halfstep * 1, 9.0f / 16.0f + halfstep * 1,
-			3.0f / 16.0f + halfstep * 3, 11.0f / 16.0f + halfstep * 3, 1.0f / 16.0f + halfstep * 3, 9.0f / 16.0f + halfstep * 3,
-			15.0f / 16.0f + halfstep * 1, 7.0f / 16.0f + halfstep * 1, 13.0f / 16.0f + halfstep * 1, 5.0f / 16.0f + halfstep * 1,
-			15.0f / 16.0f + halfstep * 3, 7.0f / 16.0f + halfstep * 3, 13.0f / 16.0f + halfstep * 3, 5.0f / 16.0f + halfstep * 3,
-			0.0f / 16.0f + halfstep * 4, 8.0f / 16.0f + halfstep * 4, 2.0f / 16.0f + halfstep * 4, 10.0f / 16.0f + halfstep * 4,
-			0.0f / 16.0f + halfstep * 2, 8.0f / 16.0f + halfstep * 2, 2.0f / 16.0f + halfstep * 2, 10.0f / 16.0f + halfstep * 2,
-			12.0f / 16.0f + halfstep * 4, 4.0f / 16.0f + halfstep * 4, 14.0f / 16.0f + halfstep * 4, 6.0f / 16.0f + halfstep * 4,
-			12.0f / 16.0f + halfstep * 2, 4.0f / 16.0f + halfstep * 2, 14.0f / 16.0f + halfstep * 2, 6.0f / 16.0f + halfstep * 2,
-			3.0f / 16.0f + halfstep * 4, 11.0f / 16.0f + halfstep * 4, 1.0f / 16.0f + halfstep * 4, 9.0f / 16.0f + halfstep * 4,
-			3.0f / 16.0f + halfstep * 2, 11.0f / 16.0f + halfstep * 2, 1.0f / 16.0f + halfstep * 2, 9.0f / 16.0f + halfstep * 2,
-			15.0f / 16.0f + halfstep * 4, 7.0f / 16.0f + halfstep * 4, 13.0f / 16.0f + halfstep * 4, 5.0f / 16.0f + halfstep * 4,
-			15.0f / 16.0f + halfstep * 2, 7.0f / 16.0f + halfstep * 2, 13.0f / 16.0f + halfstep * 2, 5.0f / 16.0f + halfstep * 2
+			 .0078125, .2578125, .1328125, .3828125, .0234375, .2734375, .1484375, .3984375,
+			 .7578125, .5078125, .8828125, .6328125, .7734375, .5234375, .8984375, .6484375,
+			 .0703125, .3203125, .1953125, .4453125, .0859375, .3359375, .2109375, .4609375,
+			 .8203125, .5703125, .9453125, .6953125, .8359375, .5859375, .9609375, .7109375,
+			 .0390625, .2890625, .1640625, .4140625, .0546875, .3046875, .1796875, .4296875,
+			 .7890625, .5390625, .9140625, .6640625, .8046875, .5546875, .9296875, .6796875,
+			 .1015625, .3515625, .2265625, .4765625, .1171875, .3671875, .2421875, .4921875,
+			 .8515625, .6015625, .9765625, .7265625, .8671875, .6171875, .9921875, .7421875,
 		};
 
 		mDitherTexture = Create2DTexture("DitherTexture", GL_R32F, 8, 8, data);

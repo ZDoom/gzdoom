@@ -49,7 +49,7 @@
 
 extern bool vid_hdr_active;
 
-CVAR(Bool, gl_dither, false, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
+CVAR(Int, gl_dither_bpc, 0, CVAR_ARCHIVE | CVAR_GLOBALCONFIG | CVAR_NOINITCALL)
 
 void FGLRenderer::RenderScreenQuad()
 {
@@ -236,11 +236,11 @@ void FGLRenderer::DrawPresentTexture(const IntRect &box, bool applyGamma)
 		// Full screen exclusive mode treats a rgba16f frame buffer as linear.
 		// It probably will eventually in desktop mode too, but the DWM doesn't seem to support that.
 		mPresentShader->Uniforms->InvGamma *= 2.2f;
-		mPresentShader->Uniforms->ColorScale = gl_dither ? 1023.0f : 0.0f;
+		mPresentShader->Uniforms->ColorScale = (gl_dither_bpc == -1) ? 1023.0f : (float)(1 << gl_dither_bpc - 1);
 	}
 	else
 	{
-		mPresentShader->Uniforms->ColorScale = gl_dither ? 255.0f : 0.0f;
+		mPresentShader->Uniforms->ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)(1 << gl_dither_bpc - 1);
 	}
 	mPresentShader->Uniforms->Scale = { screen->mScreenViewport.width / (float)mBuffers->GetWidth(), screen->mScreenViewport.height / (float)mBuffers->GetHeight() };
 	mPresentShader->Uniforms.Set();

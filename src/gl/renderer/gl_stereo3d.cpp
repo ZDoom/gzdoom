@@ -39,7 +39,7 @@ EXTERN_CVAR(Float, vid_saturation)
 EXTERN_CVAR(Float, vid_brightness)
 EXTERN_CVAR(Float, vid_contrast)
 EXTERN_CVAR(Int, gl_satformula)
-EXTERN_CVAR(Bool, gl_dither)
+EXTERN_CVAR(Int, gl_dither_bpc)
 
 //==========================================================================
 //
@@ -163,7 +163,7 @@ static void prepareInterleavedPresent(FPresentShaderBase& shader)
 		shader.Uniforms->Saturation = clamp<float>(vid_saturation, -15.0f, 15.0f);
 		shader.Uniforms->GrayFormula = static_cast<int>(gl_satformula);
 	}
-	shader.Uniforms->ColorScale = gl_dither ? 255.0f : 0.0f;
+	shader.Uniforms->ColorScale = (gl_dither_bpc == -1) ? 255.0f : (float)(1 << gl_dither_bpc - 1);
 	shader.Uniforms->Scale = {
 		screen->mScreenViewport.width / (float)GLRenderer->mBuffers->GetWidth(),
 		screen->mScreenViewport.height / (float)GLRenderer->mBuffers->GetHeight()

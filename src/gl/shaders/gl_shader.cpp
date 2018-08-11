@@ -49,18 +49,30 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	static char buffer[10000];
 	FString error;
 
-	FString i_data;
-	
-	// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
-	i_data += "precision highp int;\n";
-	i_data += "precision highp float;\n";
+	FString i_data = R"(
+		// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
+		precision highp int;
+		precision highp float;
 
-	i_data += "uniform vec4 uCameraPos;\n";
+		// This must match the HWViewpointUniforms struct
+		layout(std140) uniform ViewpointUBO {
+			mat4 ProjectionMatrix;
+			mat4 ViewMatrix;
+			mat4 NormalViewMatrix;
+
+			vec4 uCameraPos;
+			vec4 uClipLine;
+
+			float uGlobVis;			// uGlobVis = R_GetGlobVis(r_visibility) / 32.0
+			int uPalLightLevels;	
+			int uViewHeight;		// Software fuzz scaling
+			float uClipHeight;
+			float uClipHeightDirection;
+		};
+	)";
+	
 	i_data += "uniform int uTextureMode;\n";
-	i_data += "uniform float uClipHeight;\n";
-	i_data += "uniform float uClipHeightDirection;\n";
 	i_data += "uniform vec2 uClipSplit;\n";
-	i_data += "uniform vec4 uClipLine;\n";
 	i_data += "uniform float uAlphaThreshold;\n";
 
 	// colors
@@ -87,14 +99,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "#define uLightFactor uLightAttr.g\n";
 	i_data += "#define uLightDist uLightAttr.r\n";
 	i_data += "uniform int uFogEnabled;\n";
-	i_data += "uniform int uPalLightLevels;\n";
-	i_data += "uniform float uGlobVis;\n"; // uGlobVis = R_GetGlobVis(r_visibility) / 32.0
 
 	// dynamic lights
 	i_data += "uniform int uLightIndex;\n";
-
-	// Software fuzz scaling
-	i_data += "uniform int uViewHeight;\n";
 
 	// Blinn glossiness and specular level
 	i_data += "uniform vec2 uSpecularMaterial;\n";
@@ -107,10 +114,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "#endif\n";
 
 	// matrices
-	i_data += "uniform mat4 ProjectionMatrix;\n";
-	i_data += "uniform mat4 ViewMatrix;\n";
 	i_data += "uniform mat4 ModelMatrix;\n";
-	i_data += "uniform mat4 NormalViewMatrix;\n";
 	i_data += "uniform mat4 NormalModelMatrix;\n";
 	i_data += "uniform mat4 TextureMatrix;\n";
 
@@ -348,28 +352,20 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 
 	lights_index = glGetUniformLocation(hShader, "lights");
 	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
-	projectionmatrix_index = glGetUniformLocation(hShader, "ProjectionMatrix");
-	viewmatrix_index = glGetUniformLocation(hShader, "ViewMatrix");
 	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 	vertexmatrix_index = glGetUniformLocation(hShader, "uQuadVertices");
 	texcoordmatrix_index = glGetUniformLocation(hShader, "uQuadTexCoords");
-	normalviewmatrix_index = glGetUniformLocation(hShader, "NormalViewMatrix");
 	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
-	viewheight_index = glGetUniformLocation(hShader, "uViewHeight");
-	camerapos_index = glGetUniformLocation(hShader, "uCameraPos");
-	pallightlevels_index = glGetUniformLocation(hShader, "uPalLightLevels");
-	globvis_index = glGetUniformLocation(hShader, "uGlobVis");
-	clipheight_index = glGetUniformLocation(hShader, "uClipHeight");
-	clipheightdirection_index = glGetUniformLocation(hShader, "uClipHeightDirection");
-	clipline_index = glGetUniformLocation(hShader, "uClipLine");
 
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
 		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
 	}
+	int tempindex = glGetUniformBlockIndex(hShader, "ViewpointUBO");
+	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, VIEWPOINT_BINDINGPOINT);
 
 	glUseProgram(hShader);
 	if (quadmode_index > 0) glUniform1i(quadmode_index, 0);
@@ -446,27 +442,6 @@ FShader *FShaderCollection::Compile (const char *ShaderName, const char *ShaderP
 		I_FatalError("Unable to load shader %s:\n%s\n", ShaderName, err.GetMessage());
 	}
 	return shader;
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FShader::ApplyMatrices(HWViewpointUniforms *u)
-{
-	Bind();
-	glUniformMatrix4fv(projectionmatrix_index, 1, false, u->mProjectionMatrix.get());
-	glUniformMatrix4fv(viewmatrix_index, 1, false, u->mViewMatrix.get());
-	glUniformMatrix4fv(normalviewmatrix_index, 1, false, u->mNormalViewMatrix.get());
-	
-	glUniform4fv(camerapos_index, 1, &u->mCameraPos[0]);
-	glUniform1i(viewheight_index, u->mViewHeight);
-	glUniform1i(pallightlevels_index, u->mPalLightLevels);
-	glUniform1f(globvis_index, u->mGlobVis);
-	glUniform1f(clipheight_index, u->mClipHeight);
-	glUniform1f(clipheightdirection_index, u->mClipHeightDirection);
 }
 
 //==========================================================================
@@ -564,15 +539,6 @@ FShader *FShaderManager::Get(unsigned int eff, bool alphateston, EPassType passT
 		return mPassShaders[passType]->Get(eff, alphateston);
 	else
 		return nullptr;
-}
-
-void FShaderManager::ApplyMatrices(HWViewpointUniforms *u, EPassType passType)
-{
-	if (passType < mPassShaders.Size())
-		mPassShaders[passType]->ApplyMatrices(u);
-
-	if (mActiveShader)
-		mActiveShader->Bind();
 }
 
 //==========================================================================
@@ -705,35 +671,6 @@ FShader *FShaderCollection::BindEffect(int effect)
 	return NULL;
 }
 
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-EXTERN_CVAR(Int, gl_fuzztype)
-
-void FShaderCollection::ApplyMatrices(HWViewpointUniforms *u)
-{
-	for (int i = 0; i < SHADER_NoTexture; i++)
-	{
-		mMaterialShaders[i]->ApplyMatrices(u);
-		mMaterialShadersNAT[i]->ApplyMatrices(u);
-	}
-	mMaterialShaders[SHADER_NoTexture]->ApplyMatrices(u);
-	if (gl_fuzztype != 0)
-	{
-		mMaterialShaders[SHADER_NoTexture + gl_fuzztype]->ApplyMatrices(u);
-	}
-	for (unsigned i = FIRST_USER_SHADER; i < mMaterialShaders.Size(); i++)
-	{
-		mMaterialShaders[i]->ApplyMatrices(u);
-	}
-	for (int i = 0; i < MAX_EFFECTS; i++)
-	{
-		mEffectShaders[i]->ApplyMatrices(u);
-	}
-}
 
 //==========================================================================
 //

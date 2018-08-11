@@ -46,12 +46,46 @@
 #include "p_spec.h"
 #include "g_levellocals.h"
 #include "actorinlines.h"
+#include "vm.h"
 
 //==========================================================================
 //
 //  3D Floors
 //
 //==========================================================================
+
+using planeref = F3DFloor::planeref;
+
+DEFINE_FIELD_X(PlaneRef, planeref, plane);
+DEFINE_FIELD_X(PlaneRef, planeref, model);
+DEFINE_FIELD_X(PlaneRef, planeref, isceiling);
+DEFINE_FIELD_X(PlaneRef, planeref, vindex);
+DEFINE_FIELD_X(PlaneRef, planeref, copied);
+
+DEFINE_ACTION_FUNCTION(_PlaneRef, GetTexture)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(planeref);
+	if ( self->texture )
+		ACTION_RETURN_INT(self->texture->GetIndex());
+	else ACTION_RETURN_INT(0);
+}
+
+DEFINE_ACTION_FUNCTION(_PlaneRef, GetFlatColor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(planeref);
+	if ( self->flatcolor )
+		ACTION_RETURN_INT(*(self->flatcolor));
+	else ACTION_RETURN_INT(0);
+}
+
+DEFINE_FIELD_X(F3DFloor, F3DFloor, bottom);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, top);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, flags);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, master);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, model);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, target);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, lastlight);
+DEFINE_FIELD_X(F3DFloor, F3DFloor, alpha);
 
 //==========================================================================
 //
@@ -968,6 +1002,21 @@ int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, d
 
 	// Failsafe
 	return -1;
+}
+
+DEFINE_ACTION_FUNCTION(_Sector, Find3DFloor)
+{
+	PARAM_SELF_STRUCT_PROLOGUE(sector_t);
+	PARAM_FLOAT(x);
+	PARAM_FLOAT(y);
+	PARAM_FLOAT(z);
+	PARAM_BOOL(above);
+	PARAM_BOOL(floor);
+	PARAM_FLOAT(cmpz);
+	int ffloor = P_Find3DFloor(self,DVector3(x,y,z),above,floor,cmpz);
+	if ( numret > 0 ) ret[0].SetPointer((ffloor!=-1)?(self->e->XFloor.ffloors[ffloor]):nullptr);
+	if ( numret > 1 ) ret[1].SetFloat(cmpz);
+	return numret;
 }
 
 #include "c_dispatch.h"

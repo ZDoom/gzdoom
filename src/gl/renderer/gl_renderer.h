@@ -35,6 +35,7 @@ class FHardwareTexture;
 class FShadowMapShader;
 class FCustomPostProcessShaders;
 class SWSceneDrawer;
+class GLViewpointBuffer;
 struct FRenderViewpoint;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
@@ -51,33 +52,34 @@ class FGLRenderer
 public:
 
 	OpenGLFrameBuffer *framebuffer;
-	int mMirrorCount;
-	int mPlaneMirrorCount;
-	FShaderManager *mShaderManager;
-	FSamplerManager *mSamplerManager;
+	int mMirrorCount = 0;
+	int mPlaneMirrorCount = 0;
+	FShaderManager *mShaderManager = nullptr;
+	FSamplerManager *mSamplerManager = nullptr;
 	unsigned int mFBID;
 	unsigned int mVAOID;
 	unsigned int PortalQueryObject;
 
 	int mOldFBID;
 
-	FGLRenderBuffers *mBuffers;
-	FGLRenderBuffers *mScreenBuffers;
-	FGLRenderBuffers *mSaveBuffers;
-	FPresentShader *mPresentShader;
-	FPresent3DCheckerShader *mPresent3dCheckerShader;
-	FPresent3DColumnShader *mPresent3dColumnShader;
-	FPresent3DRowShader *mPresent3dRowShader;
-	FShadowMapShader *mShadowMapShader;
-	FCustomPostProcessShaders *mCustomPostProcessShaders;
+	FGLRenderBuffers *mBuffers = nullptr;
+	FGLRenderBuffers *mScreenBuffers = nullptr;
+	FGLRenderBuffers *mSaveBuffers = nullptr;
+	FPresentShader *mPresentShader = nullptr;
+	FPresent3DCheckerShader *mPresent3dCheckerShader = nullptr;
+	FPresent3DColumnShader *mPresent3dColumnShader = nullptr;
+	FPresent3DRowShader *mPresent3dRowShader = nullptr;
+	FShadowMapShader *mShadowMapShader = nullptr;
+	FCustomPostProcessShaders *mCustomPostProcessShaders = nullptr;
 
 	FShadowMap mShadowMap;
 
 	//FRotator mAngles;
 
-	FFlatVertexBuffer *mVBO;
-	FSkyVertexBuffer *mSkyVBO;
-	FLightBuffer *mLights;
+	FFlatVertexBuffer *mVBO = nullptr;
+	FSkyVertexBuffer *mSkyVBO = nullptr;
+	FLightBuffer *mLights = nullptr;
+	GLViewpointBuffer *mViewpoints = nullptr;
 	SWSceneDrawer *swdrawer = nullptr;
 
 	FPortalSceneState mPortalState;

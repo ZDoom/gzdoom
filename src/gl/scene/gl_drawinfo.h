@@ -38,6 +38,7 @@ struct FDrawInfo : public HWDrawInfo
 	HWDrawList drawlists[GLDL_TYPES];
 	TArray<HUDSprite> hudsprites;	// These may just be stored by value.
 	TArray<GLDecal *> decals[2];	// the second slot is for mirrors which get rendered in a separate pass.
+	int vpIndex;
 	
 	void ApplyVPUniforms() override;
 

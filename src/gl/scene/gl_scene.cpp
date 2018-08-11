@@ -50,6 +50,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/data/gl_viewpointbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "gl/scene/gl_drawinfo.h"
@@ -76,19 +77,7 @@ EXTERN_CVAR (Bool, r_drawvoxels)
 void FDrawInfo::ApplyVPUniforms()
 {
 	VPUniforms.CalcDependencies();
-	GLRenderer->mShaderManager->ApplyMatrices(&VPUniforms, gl_RenderState.GetPassType());
-
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		if (VPUniforms.mClipHeightDirection != 0.f || VPUniforms.mClipLine.X > -10000000.0f)
-		{
-			glEnable(GL_CLIP_DISTANCE0);
-		}
-		else
-		{
-			glDisable(GL_CLIP_DISTANCE0);
-		}
-	}
+	vpIndex = GLRenderer->mViewpoints->SetViewpoint(&VPUniforms);
 }
 
 
@@ -337,7 +326,7 @@ void FDrawInfo::DrawScene(int drawmode)
 		GLRenderer->mBuffers->BindSceneFB(true);
 		gl_RenderState.EnableDrawBuffers(gl_RenderState.GetPassDrawBufferCount());
 		gl_RenderState.Apply();
-		ApplyVPUniforms();
+		GLRenderer->mViewpoints->Bind(vpIndex);
 	}
 
 	// Handle all portals after rendering the opaque objects but before
@@ -383,9 +372,10 @@ void FDrawInfo::DrawEndScene2D(sector_t * viewsector)
 	const bool renderHUDModel = IsHUDModelForPlayerAvailable(players[consoleplayer].camera->player);
 	auto vrmode = VRMode::GetVRMode(true);
 
-	VPUniforms.mViewMatrix.loadIdentity();
-	VPUniforms.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
-	ApplyVPUniforms();
+	HWViewpointUniforms vp = VPUniforms;
+	vp.mViewMatrix.loadIdentity();
+	vp.mProjectionMatrix = vrmode->GetHUDSpriteProjection();
+	GLRenderer->mViewpoints->SetViewpoint(&vp);
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_MULTISAMPLE);
 
@@ -459,6 +449,7 @@ sector_t * FGLRenderer::RenderViewpoint (FRenderViewpoint &mainvp, AActor * came
     // Render (potentially) multiple views for stereo 3d
 	// Fixme. The view offsetting should be done with a static table and not require setup of the entire render state for the mode.
 	auto vrmode = VRMode::GetVRMode(mainview && toscreen);
+	mViewpoints->Clear();
 	for (int eye_ix = 0; eye_ix < vrmode->mEyeCount; ++eye_ix)
 	{
 		const auto &eye = vrmode->mEyes[eye_ix];

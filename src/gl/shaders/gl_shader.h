@@ -267,16 +267,6 @@ class FShader
 	int normalmodelmatrix_index;
 	int texturematrix_index;
 
-	int projectionmatrix_index;
-	int viewmatrix_index;
-	int normalviewmatrix_index;
-	int viewheight_index;
-	int camerapos_index;
-	int pallightlevels_index;
-	int globvis_index;
-	int clipheight_index;
-	int clipheightdirection_index;
-	int clipline_index;
 
 public:
 	int vertexmatrix_index;
@@ -308,9 +298,6 @@ public:
 
 	bool Bind();
 	unsigned int GetHandle() const { return hShader; }
-
-	void ApplyMatrices(HWViewpointUniforms *u);
-
 };
 
 //==========================================================================
@@ -329,7 +316,6 @@ public:
 
 	FShader *BindEffect(int effect, EPassType passType);
 	FShader *Get(unsigned int eff, bool alphateston, EPassType passType);
-	void ApplyMatrices(HWViewpointUniforms *u, EPassType passType);
 
 private:
 	FShader *mActiveShader = nullptr;
@@ -351,7 +337,6 @@ public:
 	FShader *Compile(const char *ShaderName, const char *ShaderPath, const char *LightModePath, const char *shaderdefines, bool usediscard, EPassType passType);
 	int Find(const char *mame);
 	FShader *BindEffect(int effect);
-	void ApplyMatrices(HWViewpointUniforms *u);
 
 	FShader *Get(unsigned int eff, bool alphateston)
 	{

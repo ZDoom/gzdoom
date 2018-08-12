@@ -167,9 +167,7 @@ bool FModelRenderer::SetupModelMatrix(VSMatrix &objectToWorldMatrix, float x, fl
 
 bool FModelRenderer::SetupHUDModelMatrix(VSMatrix &objectToWorldMatrix, FSpriteModelFrame *smf, float ofsX, float ofsY)
 {
-	// The model position and orientation has to be drawn independently from the position of the player,
-	// but we need to position it correctly in the world for light to work properly.
-	objectToWorldMatrix = GetViewToWorldMatrix();
+	// caller must provide the inverse view matrix as input so that this function does not need to make a virtual call.
 
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
 	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
@@ -195,7 +193,9 @@ bool FModelRenderer::SetupHUDModelMatrix(VSMatrix &objectToWorldMatrix, FSpriteM
 
 void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
 {
-	VSMatrix objectToWorldMatrix;
+	// The model position and orientation has to be drawn independently from the position of the player,
+	// but we need to position it correctly in the world for light to work properly.
+	VSMatrix objectToWorldMatrix = GetViewToWorldMatrix();
 
 	// Setup transformation.
 

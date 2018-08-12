@@ -84,6 +84,11 @@ class VSMatrix {
 			return mMatrix;
 		}
 
+		void setElement(int x, int y, float val)
+		{
+			mMatrix[x * 4 + y] = val;
+		}
+
 		void multMatrixPoint(const FLOATTYPE *point, FLOATTYPE *res);
 
 #ifdef USE_DOUBLE
@@ -94,7 +99,7 @@ class VSMatrix {
 		{
 			computeNormalMatrix(aMatrix.mMatrix);
 		}
-		bool inverseMatrix(VSMatrix &result);
+		bool inverseMatrix(VSMatrix &result) const;
 		void transpose();
 
 	protected:

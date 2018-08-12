@@ -2,6 +2,7 @@
 
 #include "r_data/matrix.h"
 #include "r_utility.h"
+#include "r_data/matrix.h"
 
 struct HWViewpointUniforms
 {
@@ -23,6 +24,13 @@ struct HWViewpointUniforms
 	}
 
 	void SetDefaults();
+
+	VSMatrix ViewToWorldMatrix() const
+	{
+		VSMatrix objectToWorldMatrix;
+		mViewMatrix.inverseMatrix(objectToWorldMatrix);
+		return objectToWorldMatrix;
+	}
 
 };
 

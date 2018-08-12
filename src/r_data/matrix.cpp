@@ -653,7 +653,7 @@ static void mat4Adjoint(const FLOATTYPE *matrix, FLOATTYPE *result)
 	result[3 * 4 + 3] = mat3Determinant(mMat3x3_p);
 }
 
-bool VSMatrix::inverseMatrix(VSMatrix &result)
+bool VSMatrix::inverseMatrix(VSMatrix &result) const
 {
 	// Calculate mat4 determinant
 	FLOATTYPE det = mat4Determinant(mMatrix);

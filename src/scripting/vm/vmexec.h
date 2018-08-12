@@ -81,7 +81,7 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 			sfunc->JitCompiled = true;
 		}
 		if (sfunc->JitFunc)
-			return sfunc->JitFunc(stack, ret, numret);
+			return sfunc->JitFunc(stack, &reg, ret, numret);
 	}
 
 	void *ptr;

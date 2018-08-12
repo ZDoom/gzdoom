@@ -45,9 +45,9 @@ static asmjit::JitRuntime jit;
 #define ABCs			(pc[0].i24)
 #define JMPOFS(x)		((x)->i24)
 #define KC				(konstd[C])
-#define RC				(reg.d[C])
-#define PA				(reg.a[A])
-#define PB				(reg.a[B])
+#define RC				(regD[C])
+#define PA				(regA[A])
+#define PB				(regA[B])
 
 #define ASSERTD(x)		assert((unsigned)(x) < sfunc->NumRegD)
 #define ASSERTF(x)		assert((unsigned)(x) < sfunc->NumRegF)
@@ -153,8 +153,8 @@ static bool CanJit(VMScriptFunction *sfunc)
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
-#if 0 // For debugging
-	if (strcmp(sfunc->Name.GetChars(), "EmptyFunction") != 0 && !CanJit(sfunc))
+#if 1 // For debugging
+	if (strcmp(sfunc->Name.GetChars(), "EmptyFunction") != 0)
 		return nullptr;
 #else
 	if (!CanJit(sfunc))
@@ -174,13 +174,15 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		X86Compiler cc(&code);
 
 		X86Gp stack = cc.newIntPtr("stack"); // VMFrameStack *stack
+		X86Gp vmregs = cc.newIntPtr("vmregs"); // void *vmregs
 		X86Gp ret = cc.newIntPtr("ret"); // VMReturn *ret
 		X86Gp numret = cc.newInt32("numret"); // int numret
 
-		cc.addFunc(FuncSignature3<int, void/*VMFrameStack*/ *, void/*VMReturn*/ *, int>());
+		cc.addFunc(FuncSignature4<int, void/*VMFrameStack*/ *, void *, void/*VMReturn*/ *, int>());
 		cc.setArg(0, stack);
-		cc.setArg(1, ret);
-		cc.setArg(2, numret);
+		cc.setArg(1, vmregs);
+		cc.setArg(2, ret);
+		cc.setArg(3, numret);
 
 		const int *konstd = sfunc->KonstD;
 		const double *konstf = sfunc->KonstF;
@@ -189,13 +191,52 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 		TArray<X86Gp> regD(sfunc->NumRegD, true);
 		TArray<X86Xmm> regF(sfunc->NumRegF, true);
-		//TArray<X86Gp> regA(sfunc->NumRegA, true);
+		TArray<X86Gp> regA(sfunc->NumRegA, true);
 		//TArray<X86Gp> regS(sfunc->NumRegS, true);
 
-		for (int i = 0; i < sfunc->NumRegD; i++) regD[i] = cc.newInt32();
-		for (int i = 0; i < sfunc->NumRegF; i++) regF[i] = cc.newXmm();
-		//for (int i = 0; i < sfunc->NumRegA; i++) regA[i] = cc.newIntPtr();
-		//for (int i = 0; i < sfunc->NumRegS; i++) regS[i] = cc.newGpd();
+		X86Gp initreg = cc.newIntPtr();
+		if (sfunc->NumRegD > 0)
+		{
+			cc.mov(initreg, x86::ptr(vmregs, 0));
+			for (int i = 0; i < sfunc->NumRegD; i++)
+			{
+				regD[i] = cc.newInt32();
+				cc.mov(regD[i], x86::dword_ptr(initreg, i * 4));
+			}
+		}
+		if (sfunc->NumRegF > 0)
+		{
+			cc.mov(initreg, x86::ptr(vmregs, sizeof(void*)));
+			for (int i = 0; i < sfunc->NumRegF; i++)
+			{
+				regF[i] = cc.newXmm();
+				cc.movsd(regF[i], x86::qword_ptr(initreg, i * 4));
+			}
+		}
+		/*if (sfunc->NumRegS > 0)
+		{
+			cc.mov(initreg, x86::ptr(vmregs, sizeof(void*) * 2));
+			for (int i = 0; i < sfunc->NumRegS; i++)
+			{
+				regS[i] = cc.newGpd();
+			}
+		}*/
+		if (sfunc->NumRegA > 0)
+		{
+			cc.mov(initreg, x86::ptr(vmregs, sizeof(void*) * 3));
+			for (int i = 0; i < sfunc->NumRegA; i++)
+			{
+				regA[i] = cc.newIntPtr();
+				cc.mov(regA[i], x86::ptr(initreg, i * 4));
+			}
+		}
+
+		/*
+		typedef void(*FuncPtr)();
+		cc.call((ptrdiff_t)(FuncPtr)[] {
+			Printf("c++ from asmjit\n");
+		}, FuncSignature0<void>());
+		*/
 
 		int size = sfunc->CodeSize;
 		for (int i = 0; i < size; i++)
@@ -280,11 +321,23 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 			// Store instructions. *(rA + rkC) = rB
 			case OP_SB: // store byte
+				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				cc.mov(x86::byte_ptr(PA, KC), regD[B]);
+				break;
 			case OP_SB_R:
+				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				cc.mov(x86::byte_ptr(PA, RC), regD[B]);
+				break;
 			case OP_SH: // store halfword
 			case OP_SH_R:
 			case OP_SW: // store word
+				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				cc.mov(x86::dword_ptr(PA, KC), regD[B]);
+				break;
 			case OP_SW_R:
+				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				cc.mov(x86::dword_ptr(PA, RC), regD[B]);
+				break;
 			case OP_SSP: // store single-precision fp
 			case OP_SSP_R:
 			case OP_SDP: // store double-precision fp
@@ -361,7 +414,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					Label L_endif = cc.newLabel();
 
 					cc.mov(reg_retnum, retnum);
-					cc.test(reg_retnum, numret); // Operand size mismatch: test eax, rcx
+					cc.test(reg_retnum, numret);
 					cc.jg(L_endif);
 
 					cc.mov(location, x86::ptr(ret, retnum * sizeof(VMReturn)));
@@ -695,8 +748,20 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 			// Pointer math.
 			case OP_ADDA_RR: // pA = pB + dkC
+				cc.mov(regA[a], regA[B]);
+				cc.add(regA[a], regD[C]);
+				break;
+
 			case OP_ADDA_RK:
+				cc.mov(regA[a], regA[B]);
+				cc.add(regA[a], konstd[C]);
+				break;
+
 			case OP_SUBA: // dA = pB - pC
+				cc.mov(regA[a], regA[B]);
+				cc.sub(regA[a], regD[C]);
+				break;
+
 			case OP_EQA_R: // if ((pB == pkC) != A) then pc++
 			case OP_EQA_K:
 				break;

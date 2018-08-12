@@ -54,14 +54,8 @@ extern TDeletingArray<FVoxelDef *> VoxelDefs;
 
 DeletingModelArray Models;
 
-void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
+bool FModelRenderer::SetupModelMatrix(VSMatrix &objectToWorldMatrix, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
 {
-	// Setup transformation.
-
-	int translation = 0;
-	if (!(smf->flags & MDL_IGNORETRANSLATION))
-		translation = actor->Translation;
-
 	// y scale for a sprite means height, i.e. z in the world!
 	float scaleFactorX = actor->Scale.X * smf->xscale;
 	float scaleFactorY = actor->Scale.X * smf->yscale;
@@ -86,7 +80,7 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 		if (actor->Vel.LengthSquared() > EQUAL_EPSILON)
 		{
 			// [BB] Calculate the pitch using spherical coordinates.
-			if (z || x || y) pitch = float(atan(z / sqrt(x*x + y*y)) / M_PI * 180);
+			if (z || x || y) pitch = float(atan(z / sqrt(x*x + y * y)) / M_PI * 180);
 
 			// Correcting pitch if model is moving backwards
 			if (fabs(x) > EQUAL_EPSILON || fabs(y) > EQUAL_EPSILON)
@@ -121,7 +115,6 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	}
 	if (smf->flags & MDL_USEACTORROLL) roll += angles.Roll.Degrees;
 
-	VSMatrix objectToWorldMatrix;
 	objectToWorldMatrix.loadIdentity();
 
 	// Model space => World space
@@ -169,25 +162,14 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 	float stretch = (smf->modelIDs[0] != -1 ? Models[smf->modelIDs[0]]->getAspectFactor() : 1.f) / level.info->pixelstretch;
 	objectToWorldMatrix.scale(1, stretch, 1);
 
-	float orientation = scaleFactorX * scaleFactorY * scaleFactorZ;
-
-	BeginDrawModel(actor, smf, objectToWorldMatrix, orientation < 0);
-	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
-	EndDrawModel(actor, smf);
+	return scaleFactorX * scaleFactorY * scaleFactorZ < 0;
 }
 
-void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
+bool FModelRenderer::SetupHUDModelMatrix(VSMatrix &objectToWorldMatrix, FSpriteModelFrame *smf, float ofsX, float ofsY)
 {
-	AActor * playermo = players[consoleplayer].camera;
-	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
-
-	// [BB] No model found for this sprite, so we can't render anything.
-	if (smf == nullptr)
-		return;
-
 	// The model position and orientation has to be drawn independently from the position of the player,
 	// but we need to position it correctly in the world for light to work properly.
-	VSMatrix objectToWorldMatrix = GetViewToWorldMatrix();
+	objectToWorldMatrix = GetViewToWorldMatrix();
 
 	// Scaling model (y scale for a sprite means height, i.e. z in the world!).
 	objectToWorldMatrix.scale(smf->xscale, smf->zscale, smf->yscale);
@@ -207,9 +189,39 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 	objectToWorldMatrix.rotate(smf->pitchoffset, 0, 0, 1);
 	objectToWorldMatrix.rotate(-smf->rolloffset, 1, 0, 0);
 
-	float orientation = smf->xscale * smf->yscale * smf->zscale;
+	return smf->xscale * smf->yscale * smf->zscale < 0;
+}
 
-	BeginDrawHUDModel(playermo, objectToWorldMatrix, orientation < 0);
+
+void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac)
+{
+	VSMatrix objectToWorldMatrix;
+
+	// Setup transformation.
+
+	int translation = 0;
+	if (!(smf->flags & MDL_IGNORETRANSLATION))
+		translation = actor->Translation;
+
+	bool mirrored = SetupModelMatrix(objectToWorldMatrix, x, y, z, smf, actor, ticFrac);
+	BeginDrawModel(actor, smf, objectToWorldMatrix, mirrored);
+	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
+	EndDrawModel(actor, smf);
+}
+
+void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
+{
+	AActor * playermo = players[consoleplayer].camera;
+	FSpriteModelFrame *smf = FindModelFrame(playermo->player->ReadyWeapon->GetClass(), psp->GetState()->sprite, psp->GetState()->GetFrame(), false);
+	VSMatrix objectToWorldMatrix;
+
+	// [BB] No model found for this sprite, so we can't render anything.
+	if (smf == nullptr)
+		return;
+
+	bool mirrored = SetupHUDModelMatrix(objectToWorldMatrix, smf, ofsX, ofsY);
+
+	BeginDrawHUDModel(playermo, objectToWorldMatrix, mirrored);
 	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
 	EndDrawHUDModel(playermo);
 }

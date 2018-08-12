@@ -60,6 +60,9 @@ class FModelRenderer
 public:
 	virtual ~FModelRenderer() { }
 
+	bool SetupModelMatrix(VSMatrix &objectToWorldMatrix, float x, float y, float z, FSpriteModelFrame *smf, AActor *actor, double ticFrac);
+	bool SetupHUDModelMatrix(VSMatrix &objectToWorldMatrix, FSpriteModelFrame *smf, float ofsX, float ofsY);
+
 	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor, double ticFrac);
 	void RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
 

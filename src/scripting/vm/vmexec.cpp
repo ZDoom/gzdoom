@@ -37,6 +37,7 @@
 #include "r_state.h"
 #include "stats.h"
 #include "vmintern.h"
+#include "jit.h"
 #include "types.h"
 
 extern cycle_t VMCycles[10];

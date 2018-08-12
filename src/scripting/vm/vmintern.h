@@ -437,6 +437,8 @@ extern thread_local VMFrameStack GlobalVMStack;
 
 typedef std::pair<const class PType *, unsigned> FTypeAndOffset;
 
+typedef int(*JitFuncPtr)(VMFrameStack *stack, VMReturn *ret, int numret);
+
 class VMScriptFunction : public VMFunction
 {
 public:
@@ -466,6 +468,9 @@ public:
 	VM_UHALF MaxParam;		// Maximum number of parameters this function has on the stack at once
 	VM_UBYTE NumArgs;		// Number of arguments this function takes
 	TArray<FTypeAndOffset> SpecialInits;	// list of all contents on the extra stack which require construction and destruction
+
+	bool JitCompiled = false;
+	JitFuncPtr JitFunc = nullptr;
 
 	void InitExtra(void *addr);
 	void DestroyExtra(void *addr);

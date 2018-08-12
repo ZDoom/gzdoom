@@ -73,6 +73,17 @@ static int Exec(VMFrameStack *stack, const VMOP *pc, VMReturn *ret, int numret)
 		konsta = NULL;
 	}
 
+	if (sfunc && sfunc->Code == pc)
+	{
+		if (!sfunc->JitCompiled)
+		{
+			sfunc->JitFunc = JitCompile(sfunc);
+			sfunc->JitCompiled = true;
+		}
+		if (sfunc->JitFunc)
+			return sfunc->JitFunc(stack, ret, numret);
+	}
+
 	void *ptr;
 	double fb, fc;
 	const double *fbp, *fcp;

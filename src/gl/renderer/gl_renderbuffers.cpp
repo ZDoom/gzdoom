@@ -576,6 +576,7 @@ void FGLRenderBuffers::BindDitherTexture(int texunit)
 			 .8515625, .6015625, .9765625, .7265625, .8671875, .6171875, .9921875, .7421875,
 		};
 
+		glActiveTexture(GL_TEXTURE0 + texunit);
 		mDitherTexture = Create2DTexture("DitherTexture", GL_R32F, 8, 8, data);
 	}
 	mDitherTexture.Bind(1, GL_NEAREST, GL_REPEAT);

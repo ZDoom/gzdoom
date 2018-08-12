@@ -42,14 +42,16 @@ void main()
 	{
 		#ifndef SIMPLE
 			parmPosition = mix(parmPosition, aVertex2, NormalModelMatrix[3][3]);
+			vWorldNormal = NormalModelMatrix * vec4(normalize(aNormal.xyz), 1.0);
 		#endif
 		worldcoord = ModelMatrix * parmPosition;
-		vWorldNormal = NormalModelMatrix * vec4(normalize(aNormal.xyz), 1.0);
 	}
 	else
 	{
 		worldcoord = parmPosition;
- 		vWorldNormal = normalize(aNormal.xyz);
+		#ifndef SIMPLE
+	 		vWorldNormal = vec4(normalize(aNormal.xyz), 1.0);
+		#endif
 	}
 
 	vec4 eyeCoordPos = ViewMatrix * worldcoord;

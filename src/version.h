@@ -55,9 +55,9 @@ const char *GetVersionString();
 #define RC_FILEVERSION 3,5,9999,0
 #define RC_PRODUCTVERSION 3,5,9999,0
 #define RC_PRODUCTVERSION2 VERSIONSTR
-// These are for content versioning. The current state is '3.3'.
+// These are for content versioning. The current state is '3.5'.
 #define VER_MAJOR 3
-#define VER_MINOR 4
+#define VER_MINOR 5
 #define VER_REVISION 0
 
 // Version identifier for network games.

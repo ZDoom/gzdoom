@@ -36,6 +36,7 @@
 #include "hwrenderer/scene/hw_drawstructs.h"
 
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/data/gl_modelbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
@@ -509,6 +510,11 @@ GLDecal *FDrawInfo::AddDecal(bool onmirror)
 int FDrawInfo::UploadLights(FDynLightData &data)
 {
 	return GLRenderer->mLights->UploadLights(data);
+}
+
+int FDrawInfo::UploadModelMatrix(VSMatrix &data, float ifactor)
+{
+	return GLRenderer->mModelMatrix->Upload(&data, ifactor);
 }
 
 bool FDrawInfo::SetDepthClamp(bool on)

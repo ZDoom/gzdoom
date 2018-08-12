@@ -65,7 +65,7 @@ void FDrawInfo::DrawPSprite (HUDSprite *huds)
 	{
 		gl_RenderState.AlphaFunc(GL_GEQUAL, 0);
         FGLModelRenderer renderer(this, huds->lightindex);
-        renderer.RenderHUDModel(huds->weapon, huds->mx, huds->my);
+        renderer.RenderHUDModel(huds->mframe, huds->weapon, huds->modelmirrored);
 	}
 	else
 	{

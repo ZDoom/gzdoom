@@ -160,10 +160,10 @@ namespace swrenderer
 		}
 	}
 
-	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
+	void SWModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix *objectToWorldMatrix, bool mirrored)
 	{
 		ModelActor = actor;
-		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+		objectToWorldMatrix->copy(ObjectToWorld.Matrix);
 
 		ClipTop = {};
 		ClipBottom = {};
@@ -172,7 +172,7 @@ namespace swrenderer
 			// Convert 3d floor clipping planes from world to object space
 
 			VSMatrix inverseMat;
-			const_cast<VSMatrix &>(objectToWorldMatrix).inverseMatrix(inverseMat);
+			objectToWorldMatrix->inverseMatrix(inverseMat);
 			Mat4f worldToObject;
 			inverseMat.copy(worldToObject.Matrix);
 
@@ -261,10 +261,10 @@ namespace swrenderer
 		return objectToWorld;
 	}
 
-	void SWModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
+	void SWModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix *objectToWorldMatrix, bool mirrored)
 	{
 		ModelActor = actor;
-		const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+		objectToWorldMatrix->copy(ObjectToWorld.Matrix);
 		ClipTop = {};
 		ClipBottom = {};
 		SetTransform();

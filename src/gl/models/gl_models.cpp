@@ -52,7 +52,7 @@ VSMatrix FGLModelRenderer::GetViewToWorldMatrix()
 	return di->VPUniforms.ViewToWorldMatrix();
 }
 
-void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
+void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix *objectToWorldMatrix, bool mirrored)
 {
 	glDepthFunc(GL_LEQUAL);
 	gl_RenderState.EnableTexture(true);
@@ -65,9 +65,7 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 		glEnable(GL_CULL_FACE);
 		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CCW : GL_CW);
 	}
-
-	gl_RenderState.mModelMatrix = objectToWorldMatrix;
-	gl_RenderState.EnableModelMatrix(true);
+	assert(objectToWorldMatrix == nullptr);
 }
 
 void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
@@ -79,7 +77,7 @@ void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 		glDisable(GL_CULL_FACE);
 }
 
-void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
+void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix *objectToWorldMatrix, bool mirrored)
 {
 	glDepthFunc(GL_LEQUAL);
 
@@ -91,9 +89,7 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectTo
 		glEnable(GL_CULL_FACE);
 		glFrontFace((mirrored ^ GLRenderer->mPortalState.isMirrored()) ? GL_CW : GL_CCW);
 	}
-
-	gl_RenderState.mModelMatrix = objectToWorldMatrix;
-	gl_RenderState.EnableModelMatrix(true);
+	assert(objectToWorldMatrix == nullptr);
 }
 
 void FGLModelRenderer::EndDrawHUDModel(AActor *actor)
@@ -122,7 +118,6 @@ void FGLModelRenderer::ResetVertexBuffer()
 
 void FGLModelRenderer::SetInterpolation(double inter)
 {
-	gl_RenderState.SetInterpolationFactor((float)inter);
 }
 
 void FGLModelRenderer::SetMaterial(FTexture *skin, bool clampNoFilter, int translation)

@@ -91,7 +91,6 @@ void FRenderState::Reset()
 	stAlphaThreshold = -1.f;
 	stAlphaTest = 0;
 	mLastDepthClamp = true;
-	mInterpolationFactor = 0.0f;
 
 	mColor.Set(1.0f, 1.0f, 1.0f, 1.0f);
 	mGlowTop.Set(0.0f, 0.0f, 0.0f, 0.0f);
@@ -162,7 +161,6 @@ bool FRenderState::ApplyShader()
 	activeShader->muObjectColor.Set(mObjectColor);
 	activeShader->muObjectColor2.Set(mObjectColor2);
 	activeShader->muDynLightColor.Set(mDynColor.vec);
-	activeShader->muInterpolationFactor.Set(mInterpolationFactor);
 	activeShader->muTimer.Set((double)(screen->FrameTime - firstFrame) * (double)mShaderTimer / 1000.);
 	activeShader->muAlphaThreshold.Set(mAlphaThreshold);
 	activeShader->muLightIndex.Set(-1);
@@ -212,6 +210,7 @@ bool FRenderState::ApplyShader()
 		matrixToGL(identityMatrix, activeShader->texturematrix_index);
 	}
 
+	/*
 	if (mModelMatrixEnabled)
 	{
 		matrixToGL(mModelMatrix, activeShader->modelmatrix_index);
@@ -226,6 +225,7 @@ bool FRenderState::ApplyShader()
 		matrixToGL(identityMatrix, activeShader->modelmatrix_index);
 		matrixToGL(identityMatrix, activeShader->normalmodelmatrix_index);
 	}
+	*/
 	return true;
 }
 

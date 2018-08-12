@@ -93,7 +93,6 @@ class FRenderState
 	bool mModelMatrixEnabled;
 	bool mTextureMatrixEnabled;
 	bool mLastDepthClamp;
-	float mInterpolationFactor;
 	float mGlossiness, mSpecularLevel;
 	float mShaderTimer;
 
@@ -412,16 +411,6 @@ public:
 		else glEnable(GL_DEPTH_CLAMP);
 		mLastDepthClamp = on;
 		return res;
-	}
-
-	void SetInterpolationFactor(float fac)
-	{
-		mInterpolationFactor = fac;
-	}
-
-	float GetInterpolationFactor()
-	{
-		return mInterpolationFactor;
 	}
 
 	void SetPassType(EPassType passType)

@@ -50,6 +50,7 @@
 #include "gl/models/gl_models.h"
 #include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "gl/data/gl_modelbuffer.h"
 
 extern uint32_t r_renderercaps;
 
@@ -243,6 +244,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			gl_RenderState.SetSplitPlanes(topp, bottomp);
 		}
 
+		GLRenderer->mModelMatrix->Bind(sprite->modelindex);
 		if (!sprite->modelframe)
 		{
 			gl_RenderState.Apply();
@@ -278,7 +280,7 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 		else
 		{
             FGLModelRenderer renderer(this, sprite->dynlightindex);
-            renderer.RenderModel(sprite->x, sprite->y, sprite->z, sprite->modelframe, sprite->actor, vp.TicFrac);
+            renderer.RenderModel(sprite->modelframe, sprite->actor, sprite->modelmirrored);
 		}
 	}
 

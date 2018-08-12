@@ -485,10 +485,16 @@ void HWDrawInfo::PreparePlayerSprites(sector_t * viewsector, area_t in_area)
 		{
 			hudsprite.mx = spos.X;
 			hudsprite.my = spos.Y;
+
+			VSMatrix mat = VPUniforms.ViewToWorldMatrix();
+			hudsprite.modelmirrored = FModelRenderer::SetupHUDModelMatrix(mat, smf, spos.X, spos.Y);
+			hudsprite.modelindex = UploadModelMatrix(mat, (float)vp.TicFrac);
+
 		}
 		else
 		{
 			if (!hudsprite.GetWeaponRect(this, psp, spos.X, spos.Y, player)) continue;
+			hudsprite.modelindex = 0;
 		}
 		AddHUDSprite(&hudsprite);
 	}

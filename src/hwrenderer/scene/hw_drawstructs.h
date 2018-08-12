@@ -381,6 +381,8 @@ public:
 	DRotator Angles;
 
 	int dynlightindex;
+	int modelindex;
+	bool modelmirrored;
 
 	void SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 	void PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight);

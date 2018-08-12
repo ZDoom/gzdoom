@@ -57,6 +57,7 @@
 #include "gl/textures/gl_samplers.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/data/gl_viewpointbuffer.h"
+#include "gl/data/gl_modelbuffer.h"
 #include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
@@ -104,6 +105,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mSkyVBO = new FSkyVertexBuffer;
 	mLights = new FLightBuffer();
 	mViewpoints = new GLViewpointBuffer;
+	mModelMatrix = new GLModelBuffer;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	mOldFBID = 0;
@@ -124,6 +126,7 @@ FGLRenderer::~FGLRenderer()
 	if (mSkyVBO != nullptr) delete mSkyVBO;
 	if (mLights != nullptr) delete mLights;
 	if (mViewpoints != nullptr) delete mViewpoints;
+	if (mModelMatrix != nullptr) delete mModelMatrix;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 	if (mVAOID != 0)
 	{

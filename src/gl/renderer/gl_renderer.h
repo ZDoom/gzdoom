@@ -36,6 +36,7 @@ class FShadowMapShader;
 class FCustomPostProcessShaders;
 class SWSceneDrawer;
 class GLViewpointBuffer;
+class GLModelBuffer;
 struct FRenderViewpoint;
 #define NOQUEUE nullptr	// just some token to be used as a placeholder
 
@@ -80,6 +81,7 @@ public:
 	FSkyVertexBuffer *mSkyVBO = nullptr;
 	FLightBuffer *mLights = nullptr;
 	GLViewpointBuffer *mViewpoints = nullptr;
+	GLModelBuffer *mModelMatrix = nullptr;
 	SWSceneDrawer *swdrawer = nullptr;
 
 	FPortalSceneState mPortalState;

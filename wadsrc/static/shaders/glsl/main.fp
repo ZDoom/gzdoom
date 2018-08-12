@@ -311,7 +311,7 @@ vec3 ApplyNormalMap(vec2 texcoord)
 	#define WITH_NORMALMAP_GREEN_UP
 	//#define WITH_NORMALMAP_2CHANNEL
 
-	vec3 interpolatedNormal = normalize(vWorldNormal.xyz);
+	vec3 interpolatedNormal = normalize( vWorldNormal.xyz);
 
 	vec3 map = texture(normaltexture, texcoord).xyz;
 	#if defined(WITH_NORMALMAP_UNSIGNED)

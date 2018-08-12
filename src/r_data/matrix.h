@@ -64,7 +64,7 @@ class VSMatrix {
 		void perspective(FLOATTYPE fov, FLOATTYPE ratio, FLOATTYPE nearp, FLOATTYPE farp);
 		void ortho(FLOATTYPE left, FLOATTYPE right, FLOATTYPE bottom, FLOATTYPE top, FLOATTYPE nearp=-1.0f, FLOATTYPE farp=1.0f);
 		void frustum(FLOATTYPE left, FLOATTYPE right, FLOATTYPE bottom, FLOATTYPE top, FLOATTYPE nearp, FLOATTYPE farp);
-		void copy(FLOATTYPE * pDest)
+		void copy(FLOATTYPE * pDest) const
 		{
 			memcpy(pDest, mMatrix, 16 * sizeof(FLOATTYPE));
 		}

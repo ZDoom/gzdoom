@@ -247,6 +247,7 @@ public:
 	virtual void AddHUDSprite(HUDSprite *huds) = 0;
 
 	virtual int UploadLights(FDynLightData &data) = 0;
+	virtual int UploadModelMatrix(VSMatrix &data, float ifactor) = 0;
 	virtual void ApplyVPUniforms() = 0;
 	virtual bool SetDepthClamp(bool on) = 0;
 

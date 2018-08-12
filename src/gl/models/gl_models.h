@@ -39,13 +39,13 @@ public:
 	FGLModelRenderer(FDrawInfo *d, int mli) : modellightindex(mli), di(d)
 	{}
 	ModelRendererType GetType() const override { return GLModelRendererType; }
-	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
+	void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix *objectToWorldMatrix, bool mirrored) override;
 	void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) override;
 	IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) override;
 	void SetVertexBuffer(IModelVertexBuffer *buffer) override;
 	void ResetVertexBuffer() override;
 	VSMatrix GetViewToWorldMatrix() override;
-	void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) override;
+	void BeginDrawHUDModel(AActor *actor, const VSMatrix *objectToWorldMatrix, bool mirrored) override;
 	void EndDrawHUDModel(AActor *actor) override;
 	void SetInterpolation(double interpolation) override;
 	void SetMaterial(FTexture *skin, bool clampNoFilter, int translation) override;

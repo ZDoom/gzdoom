@@ -46,6 +46,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/renderer/gl_quaddrawer.h"
+#include "gl/data/gl_modelbuffer.h"
 
 //==========================================================================
 //
@@ -303,6 +304,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	auto &plane = flat->plane;
     auto processLights = level.HasDynamicLights && !isFullbrightScene();
 	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
+	GLRenderer->mModelMatrix->Bind(0);
 
 	switch (pass)
 	{

@@ -257,22 +257,23 @@ class FShader
 	FUniform4f muGlowTopPlane;
 	FUniform4f muSplitBottomPlane;
 	FUniform4f muSplitTopPlane;
-	FBufferedUniform1f muInterpolationFactor;
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
 	
 	int lights_index;
-	int modelmatrix_index;
-	int normalmodelmatrix_index;
 	int texturematrix_index;
 
 
+	/*
+	FBufferedUniform1f muInterpolationFactor;
+	int modelmatrix_index;
+	int normalmodelmatrix_index;
+	*/
 public:
 	int vertexmatrix_index;
 	int texcoordmatrix_index;
 	int quadmode_index;
-	int fakevb_index;
 private:
 	int currentglowstate = 0;
 	int currentsplitstate = 0;

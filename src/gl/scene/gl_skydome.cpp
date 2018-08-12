@@ -31,6 +31,7 @@
 
 #include "gl_load/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
+#include "gl/data/gl_modelbuffer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -118,18 +119,23 @@ void FSkyVertexBuffer::RenderDome(FMaterial *tex, int mode)
 
 void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, int mode)
 {
+	int mmindex = 0;
 	if (tex)
 	{
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
-		gl_RenderState.EnableModelMatrix(true);
 		gl_RenderState.EnableTextureMatrix(true);
 
-		GLRenderer->mSkyVBO->SetupMatrices(tex, x_offset, y_offset, mirror, mode, gl_RenderState.mModelMatrix, gl_RenderState.mTextureMatrix);
+		VSMatrix modelmatrix;
+		GLRenderer->mSkyVBO->SetupMatrices(tex, x_offset, y_offset, mirror, mode, modelmatrix, gl_RenderState.mTextureMatrix);
+		GLRenderer->mModelMatrix->Map();
+		auto ndx = GLRenderer->mModelMatrix->Upload(&modelmatrix, 0);
+		GLRenderer->mModelMatrix->Unmap();
+		GLRenderer->mModelMatrix->Bind(ndx);
 	}
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);
 	gl_RenderState.EnableTextureMatrix(false);
-	gl_RenderState.EnableModelMatrix(false);
+	GLRenderer->mModelMatrix->Bind(0);
 }
 
 
@@ -145,13 +151,17 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	int faces;
 	FMaterial * tex;
 
-	gl_RenderState.EnableModelMatrix(true);
-	gl_RenderState.mModelMatrix.loadIdentity();
+	GLRenderer->mModelMatrix->Map();
 
+	VSMatrix modelmatrix(0);
 	if (!sky2)
-		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, level.info->skyrotatevector.X, level.info->skyrotatevector.Z, level.info->skyrotatevector.Y);
+		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector.X, level.info->skyrotatevector.Z, level.info->skyrotatevector.Y);
 	else
-		gl_RenderState.mModelMatrix.rotate(-180.0f+x_offset, level.info->skyrotatevector2.X, level.info->skyrotatevector2.Z, level.info->skyrotatevector2.Y);
+		modelmatrix.rotate(-180.0f + x_offset, level.info->skyrotatevector2.X, level.info->skyrotatevector2.Z, level.info->skyrotatevector2.Y);
+
+	auto ndx = GLRenderer->mModelMatrix->Upload(&modelmatrix, 0);
+	GLRenderer->mModelMatrix->Unmap();
+	GLRenderer->mModelMatrix->Bind(ndx);
 
 	if (sb->faces[5]) 
 	{
@@ -202,7 +212,7 @@ static void RenderBox(FTextureID texno, FMaterial * gltex, float x_offset, bool 
 	gl_RenderState.Apply();
 	glDrawArrays(GL_TRIANGLE_STRIP, GLRenderer->mSkyVBO->FaceStart(4), 4);
 
-	gl_RenderState.EnableModelMatrix(false);
+	GLRenderer->mModelMatrix->Bind(0);
 }
 
 //-----------------------------------------------------------------------------

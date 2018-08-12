@@ -51,6 +51,7 @@
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_viewpointbuffer.h"
+#include "gl/data/gl_modelbuffer.h"
 #include "hwrenderer/scene/hw_clipper.h"
 #include "hwrenderer/scene/hw_portal.h"
 #include "gl/scene/gl_drawinfo.h"
@@ -105,6 +106,7 @@ void FDrawInfo::CreateScene()
 	Bsp.Clock();
 	GLRenderer->mVBO->Map();
 	GLRenderer->mLights->Begin();
+	GLRenderer->mModelMatrix->Map();
 
 	// Give the DrawInfo the viewpoint in fixed point because that's what the nodes are.
 	viewx = FLOAT2FIXED(vp.Pos.X);
@@ -128,6 +130,7 @@ void FDrawInfo::CreateScene()
 	HandleMissingTextures(in_area);	// Missing upper/lower textures
 	HandleHackedSubsectors();	// open sector hacks for deep water
 	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
+	GLRenderer->mModelMatrix->Unmap();
 	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();
 
@@ -209,6 +212,7 @@ void FDrawInfo::RenderScene(int recursion)
 	}
 
 	drawlists[GLDL_MODELS].Draw(this, pass);
+	GLRenderer->mModelMatrix->Bind(0);
 
 	gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -264,6 +268,7 @@ void FDrawInfo::RenderTranslucent()
 	drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, GLPASS_TRANSLUCENT);
 	glDepthMask(false);
 	DrawSorted(GLDL_TRANSLUCENT);
+	GLRenderer->mModelMatrix->Bind(0);
 	gl_RenderState.EnableBrightmap(false);
 
 

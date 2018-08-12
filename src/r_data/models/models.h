@@ -66,9 +66,12 @@ public:
 	void RenderModel(float x, float y, float z, FSpriteModelFrame *modelframe, AActor *actor, double ticFrac);
 	void RenderHUDModel(DPSprite *psp, float ofsx, float ofsy);
 
+	void RenderModel(FSpriteModelFrame *smf, AActor *actor, bool mirrored);
+	void RenderHUDModel(FSpriteModelFrame *smf, DPSprite *psp, bool mirrored);
+
 	virtual ModelRendererType GetType() const = 0;
 
-	virtual void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
+	virtual void BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix *objectToWorldMatrix, bool mirrored) = 0;
 	virtual void EndDrawModel(AActor *actor, FSpriteModelFrame *smf) = 0;
 
 	virtual IModelVertexBuffer *CreateVertexBuffer(bool needindex, bool singleframe) = 0;
@@ -78,7 +81,7 @@ public:
 
 	virtual VSMatrix GetViewToWorldMatrix() = 0;
 
-	virtual void BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored) = 0;
+	virtual void BeginDrawHUDModel(AActor *actor, const VSMatrix *objectToWorldMatrix, bool mirrored) = 0;
 	virtual void EndDrawHUDModel(AActor *actor) = 0;
 
 	virtual void SetInterpolation(double interpolation) = 0;

@@ -37,6 +37,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/scene/gl_portal.h"
+#include "gl/data/gl_modelbuffer.h"
 
 EXTERN_CVAR(Bool, gl_seamless)
 
@@ -247,6 +248,8 @@ void FDrawInfo::DrawWall(GLWall *wall, int pass)
 		}
 		wall->MakeVertices(this, !!(wall->flags & GLWall::GLWF_TRANSLUCENT));
 	}
+
+	GLRenderer->mModelMatrix->Bind(0);
 
 	gl_RenderState.SetNormal(wall->glseg.Normal());
 	switch (pass)

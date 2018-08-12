@@ -118,10 +118,10 @@ void PolyModelRenderer::AddLights(AActor *actor)
 	}
 }
 
-void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix &objectToWorldMatrix, bool mirrored)
+void PolyModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, const VSMatrix *objectToWorldMatrix, bool mirrored)
 {
 	ModelActor = actor;
-	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+	objectToWorldMatrix->copy(ObjectToWorld.Matrix);
 	SetTransform();
 
 	if (actor->RenderStyle == LegacyRenderStyles[STYLE_Normal] || !!(smf->flags & MDL_DONTCULLBACKFACES))
@@ -167,10 +167,10 @@ VSMatrix PolyModelRenderer::GetViewToWorldMatrix()
 	return objectToWorld;
 }
 
-void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix &objectToWorldMatrix, bool mirrored)
+void PolyModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix *objectToWorldMatrix, bool mirrored)
 {
 	ModelActor = actor;
-	const_cast<VSMatrix &>(objectToWorldMatrix).copy(ObjectToWorld.Matrix);
+	objectToWorldMatrix->copy(ObjectToWorld.Matrix);
 	SetTransform();
 	PolyTriangleDrawer::SetWeaponScene(Thread->DrawQueue, true);
 

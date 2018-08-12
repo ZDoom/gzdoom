@@ -44,6 +44,8 @@ struct HUDSprite
 	float dynrgb[3];
 
 	int lightindex;
+	int modelindex;
+	bool modelmirrored;
 
 	void SetBright(bool isbelow);
 	bool GetWeaponRenderStyle(DPSprite *psp, AActor *playermo, sector_t *viewsector, WeaponLighting &light);

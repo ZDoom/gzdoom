@@ -625,6 +625,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 			y2 = y - viewvecX*rightfac;
 			break;
 		}
+		modelindex = 0;
 	}
 	else
 	{
@@ -632,6 +633,9 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		y1 = y2 = y;
 		z1 = z2 = z;
 		gltexture = nullptr;
+		VSMatrix mat;
+		modelmirrored = FModelRenderer::SetupModelMatrix(mat, x, y, z, modelframe, thing, vp.TicFrac);
+		modelindex = di->UploadModelMatrix(mat, (float)vp.TicFrac);
 	}
 
 	depth = FloatToFixed((x - vp.Pos.X) * vp.TanCos + (y - vp.Pos.Y) * vp.TanSin);
@@ -958,7 +962,8 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 	actor=nullptr;
 	this->particle=particle;
 	fullbright = !!particle->bright;
-	
+	modelindex = 0;
+
 	// [BB] Translucent particles have to be rendered without the alpha test.
 	if (gl_particles_style != 2 && trans>=1.0f-FLT_EPSILON) hw_styleflags = STYLEHW_Solid;
 	else hw_styleflags = STYLEHW_NoAlphaTest;

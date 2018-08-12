@@ -50,7 +50,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	FString error;
 
 	FString i_data = R"(
-		// these settings are actually pointless but there seem to be some old ATI drivers that fail to compile the shader without setting the precision here.
 		precision highp int;
 		precision highp float;
 
@@ -63,72 +62,61 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 			vec4 uCameraPos;
 			vec4 uClipLine;
 
-			float uGlobVis;			// uGlobVis = R_GetGlobVis(r_visibility) / 32.0
+			float uGlobVis;
 			int uPalLightLevels;	
-			int uViewHeight;		// Software fuzz scaling
+			int uViewHeight;
 			float uClipHeight;
 			float uClipHeightDirection;
 		};
-	)";
-	
-	i_data += "uniform int uTextureMode;\n";
-	i_data += "uniform vec2 uClipSplit;\n";
-	i_data += "uniform float uAlphaThreshold;\n";
 
-	// colors
+		layout(std140) uniform ModelUBO {
+			mat4 ModelMatrix;
+			mat4 NormalModelMatrix;
+			#define uInterpolationFactor NormalModelMatrix[3][3]
+		};
+		
+
+	#ifdef SHADER_STORAGE_LIGHTS
+		layout(std430, binding = 1) buffer LightBufferSSO
+		{
+		    vec4 lights[];
+		};
+	#elif defined NUM_UBO_LIGHTS
+		uniform LightBufferUBO
+		{
+		    vec4 lights[NUM_UBO_LIGHTS];
+		};
+	#endif
+
+	)";
+
+	// Base
+	i_data += "uniform mat4 TextureMatrix;\n";	// 16, 8
 	i_data += "uniform vec4 uObjectColor;\n";
 	i_data += "uniform vec4 uObjectColor2;\n";
-	i_data += "uniform vec4 uDynLightColor;\n";
-	i_data += "uniform vec4 uFogColor;\n";
-	i_data += "uniform float uDesaturationFactor;\n";
-	i_data += "uniform float uInterpolationFactor;\n";
-
-	// Glowing walls stuff
 	i_data += "uniform vec4 uGlowTopPlane;\n";
-	i_data += "uniform vec4 uGlowTopColor;\n";
+	i_data += "uniform vec4 uGlowTopColor;\n";	// 32, 24
 	i_data += "uniform vec4 uGlowBottomPlane;\n";
 	i_data += "uniform vec4 uGlowBottomColor;\n";
-
 	i_data += "uniform vec4 uSplitTopPlane;\n";
-	i_data += "uniform vec4 uSplitBottomPlane;\n";
-
-	// Lighting + Fog
+	i_data += "uniform vec4 uSplitBottomPlane;\n";	// 48, 40
+	i_data += "uniform vec4 uFogColor;\n";
+	i_data += "uniform vec4 uDynLightColor;\n";
 	i_data += "uniform vec4 uLightAttr;\n";
-	i_data += "#define uLightLevel uLightAttr.a\n";
-	i_data += "#define uFogDensity uLightAttr.b\n";
-	i_data += "#define uLightFactor uLightAttr.g\n";
-	i_data += "#define uLightDist uLightAttr.r\n";
+	i_data += "uniform vec2 uClipSplit;\n";
+	i_data += "uniform float uDesaturationFactor;\n";
+	i_data += "uniform float timer;\n";			//  64, 56
+	i_data += "uniform float uAlphaThreshold;\n";
+	i_data += "uniform int uTextureMode;\n";
 	i_data += "uniform int uFogEnabled;\n";
-
-	// dynamic lights
-	i_data += "uniform int uLightIndex;\n";
-
-	// Blinn glossiness and specular level
-	i_data += "uniform vec2 uSpecularMaterial;\n";
+	i_data += "uniform int uLightIndex;\n";		
+	i_data += "uniform vec2 uSpecularMaterial;\n";	// 70, 62
 
 	// quad drawer stuff
 	i_data += "#ifdef USE_QUAD_DRAWER\n";
 	i_data += "uniform mat4 uQuadVertices;\n";
 	i_data += "uniform mat4 uQuadTexCoords;\n";
 	i_data += "uniform int uQuadMode;\n";
-	i_data += "#endif\n";
-
-	// matrices
-	i_data += "uniform mat4 ModelMatrix;\n";
-	i_data += "uniform mat4 NormalModelMatrix;\n";
-	i_data += "uniform mat4 TextureMatrix;\n";
-
-	// light buffers
-	i_data += "#ifdef SHADER_STORAGE_LIGHTS\n";
-	i_data += "layout(std430, binding = 1) buffer LightBufferSSO\n";
-	i_data += "{\n";
-	i_data += "    vec4 lights[];\n";
-	i_data += "};\n";
-	i_data += "#elif defined NUM_UBO_LIGHTS\n";
-	i_data += "uniform LightBufferUBO\n";
-	i_data += "{\n";
-	i_data += "    vec4 lights[NUM_UBO_LIGHTS];\n";
-	i_data += "};\n";
 	i_data += "#endif\n";
 
 	// textures
@@ -141,7 +129,11 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	i_data += "uniform sampler2D texture6;\n";
 
 	// timer data
-	i_data += "uniform float timer;\n"; // To do: we must search user shaders for this declaration and remove it
+
+	i_data += "#define uLightLevel uLightAttr.a\n";
+	i_data += "#define uFogDensity uLightAttr.b\n";
+	i_data += "#define uLightFactor uLightAttr.g\n";
+	i_data += "#define uLightDist uLightAttr.r\n";
 
 	// material types
 	i_data += "#if defined(SPECULAR)\n";
@@ -345,18 +337,14 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muGlowTopPlane.Init(hShader, "uGlowTopPlane");
 	muSplitBottomPlane.Init(hShader, "uSplitBottomPlane");
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
-	muInterpolationFactor.Init(hShader, "uInterpolationFactor");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
-	fakevb_index = glGetUniformLocation(hShader, "fakeVB");
-	modelmatrix_index = glGetUniformLocation(hShader, "ModelMatrix");
 	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
 	vertexmatrix_index = glGetUniformLocation(hShader, "uQuadVertices");
 	texcoordmatrix_index = glGetUniformLocation(hShader, "uQuadTexCoords");
-	normalmodelmatrix_index = glGetUniformLocation(hShader, "NormalModelMatrix");
 	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
@@ -366,6 +354,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	}
 	int tempindex = glGetUniformBlockIndex(hShader, "ViewpointUBO");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, VIEWPOINT_BINDINGPOINT);
+
+	tempindex = glGetUniformBlockIndex(hShader, "ModelUBO");
+	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, MODELBUF_BINDINGPOINT);
 
 	glUseProgram(hShader);
 	if (quadmode_index > 0) glUniform1i(quadmode_index, 0);

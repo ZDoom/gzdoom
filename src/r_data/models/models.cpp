@@ -204,7 +204,19 @@ void FModelRenderer::RenderModel(float x, float y, float z, FSpriteModelFrame *s
 		translation = actor->Translation;
 
 	bool mirrored = SetupModelMatrix(objectToWorldMatrix, x, y, z, smf, actor, ticFrac);
-	BeginDrawModel(actor, smf, objectToWorldMatrix, mirrored);
+	BeginDrawModel(actor, smf, &objectToWorldMatrix, mirrored);
+	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
+	EndDrawModel(actor, smf);
+}
+
+// Variant which uses an already set up matrix
+void FModelRenderer::RenderModel(FSpriteModelFrame *smf, AActor *actor, bool mirrored)
+{
+	int translation = 0;
+	if (!(smf->flags & MDL_IGNORETRANSLATION))
+		translation = actor->Translation;
+
+	BeginDrawModel(actor, smf, nullptr, mirrored);
 	RenderFrameModels(smf, actor->state, actor->tics, actor->GetClass(), translation);
 	EndDrawModel(actor, smf);
 }
@@ -221,10 +233,21 @@ void FModelRenderer::RenderHUDModel(DPSprite *psp, float ofsX, float ofsY)
 
 	bool mirrored = SetupHUDModelMatrix(objectToWorldMatrix, smf, ofsX, ofsY);
 
-	BeginDrawHUDModel(playermo, objectToWorldMatrix, mirrored);
+	BeginDrawHUDModel(playermo, &objectToWorldMatrix, mirrored);
 	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
 	EndDrawHUDModel(playermo);
 }
+
+// Variant which uses an already set up matrix
+void FModelRenderer::RenderHUDModel(FSpriteModelFrame *smf, DPSprite *psp, bool mirrored)
+{
+	AActor * playermo = players[consoleplayer].camera;
+
+	BeginDrawHUDModel(playermo, nullptr, mirrored);
+	RenderFrameModels(smf, psp->GetState(), psp->GetTics(), playermo->player->ReadyWeapon->GetClass(), 0);
+	EndDrawHUDModel(playermo);
+}
+
 
 void FModelRenderer::RenderFrameModels(const FSpriteModelFrame *smf, const FState *curState, const int curTics, const PClass *ti, int translation)
 {

@@ -103,6 +103,48 @@ static bool CanJit(VMScriptFunction *sfunc)
 			}
 			break;
 		case OP_RETI:
+		case OP_SLL_RR:
+		case OP_SLL_RI:
+		case OP_SLL_KR:
+		case OP_SRL_RR:
+		case OP_SRL_RI:
+		case OP_SRL_KR:
+		case OP_SRA_RR:
+		case OP_SRA_RI:
+		case OP_SRA_KR:
+		case OP_ADD_RR:
+		case OP_ADD_RK:
+		case OP_ADDI:
+		case OP_SUB_RR:
+		case OP_SUB_RK:
+		case OP_SUB_KR:
+		case OP_MUL_RR:
+		case OP_MUL_RK:
+		case OP_DIV_RR:
+		case OP_DIV_RK:
+		case OP_DIV_KR:
+		case OP_DIVU_RR:
+		case OP_DIVU_RK:
+		case OP_DIVU_KR:
+		//case OP_MOD_RR:
+		//case OP_MOD_RK:
+		//case OP_MOD_KR:
+		//case OP_MODU_RR:
+		//case OP_MODU_RK:
+		//case OP_MODU_KR:
+		case OP_AND_RR:
+		case OP_AND_RK:
+		case OP_OR_RR:
+		case OP_OR_RK:
+		case OP_XOR_RR:
+		case OP_XOR_RK:
+		//case OP_MIN_RR:
+		//case OP_MIN_RK:
+		//case OP_MAX_RR:
+		//case OP_MAX_RK:
+		//case OP_ABS:
+		case OP_NEG:
+		case OP_NOT:
 			break;
 		}
 	}
@@ -431,47 +473,148 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 			// Integer math.
 			case OP_SLL_RR: // dA = dkB << diC
+				cc.mov(regD[a], regD[B]);
+				cc.shl(regD[a], regD[C]);
+				break;
 			case OP_SLL_RI:
+				cc.mov(regD[a], regD[B]);
+				cc.shl(regD[a], C);
+				break;
 			case OP_SLL_KR:
+				cc.mov(regD[a], konstd[B]);
+				cc.shl(regD[a], C);
+				break;
 			case OP_SRL_RR: // dA = dkB >> diC  -- unsigned
+				cc.mov(regD[a], regD[B]);
+				cc.shr(regD[a], regD[C]);
+				break;
 			case OP_SRL_RI:
+				cc.mov(regD[a], regD[B]);
+				cc.shr(regD[a], C);
+				break;
 			case OP_SRL_KR:
+				cc.mov(regD[a], konstd[B]);
+				cc.shr(regD[a], C);
+				break;
 			case OP_SRA_RR: // dA = dkB >> diC  -- signed
+				cc.mov(regD[a], regD[B]);
+				cc.sar(regD[a], regD[C]);
+				break;
 			case OP_SRA_RI:
+				cc.mov(regD[a], regD[B]);
+				cc.sar(regD[a], C);
+				break;
 			case OP_SRA_KR:
+				cc.mov(regD[a], konstd[B]);
+				cc.sar(regD[a], regD[C]);
+				break;
 			case OP_ADD_RR: // dA = dB + dkC
+				cc.mov(regD[a], regD[B]);
+				cc.add(regD[a], regD[C]);
+				break;
 			case OP_ADD_RK:
+				cc.mov(regD[a], regD[B]);
+				cc.add(regD[a], konstd[C]);
+				break;
 			case OP_ADDI: // dA = dB + C		-- C is a signed 8-bit constant
+				cc.mov(regD[a], regD[B]);
+				cc.add(regD[a], Cs);
+				break;
 			case OP_SUB_RR: // dA = dkB - dkC
+				cc.mov(regD[a], regD[B]);
+				cc.sub(regD[a], regD[C]);
+				break;
 			case OP_SUB_RK:
+				cc.mov(regD[a], regD[B]);
+				cc.sub(regD[a], konstd[C]);
+				break;
 			case OP_SUB_KR:
+				cc.mov(regD[a], konstd[B]);
+				cc.sub(regD[a], regD[C]);
+				break;
 			case OP_MUL_RR: // dA = dB * dkC
+				cc.mov(regD[a], regD[B]);
+				cc.mul(regD[a], regD[C]);
+				break;
 			case OP_MUL_RK:
+				cc.mov(regD[a], regD[B]);
+				cc.mul(regD[a], konstd[C]);
+				break;
 			case OP_DIV_RR: // dA = dkB / dkC (signed)
+				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+				cc.mov(regD[a], regD[B]);
+				cc.idiv(regD[a], regD[C]);
+				break;
 			case OP_DIV_RK:
+				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+				cc.mov(regD[a], regD[B]);
+				cc.div(regD[a], konstd[C]);
+				break;
 			case OP_DIV_KR:
+				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+				cc.mov(regD[a], konstd[B]);
+				cc.idiv(regD[a], regD[C]);
+				break;
 			case OP_DIVU_RR: // dA = dkB / dkC (unsigned)
+				 // To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+				cc.mov(regD[a], regD[B]);
+				cc.div(regD[a], regD[C]);
+				break;
 			case OP_DIVU_RK:
+				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+				cc.mov(regD[a], regD[B]);
+				cc.div(regD[a], konstd[C]);
+				break;
 			case OP_DIVU_KR:
+				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
+				cc.mov(regD[a], konstd[B]);
+				cc.div(regD[a], regD[C]);
+				break;
 			case OP_MOD_RR: // dA = dkB % dkC (signed)
 			case OP_MOD_RK:
 			case OP_MOD_KR:
 			case OP_MODU_RR: // dA = dkB % dkC (unsigned)
 			case OP_MODU_RK:
 			case OP_MODU_KR:
+				break;
 			case OP_AND_RR: // dA = dB & dkC
+				cc.mov(regD[a], regD[B]);
+				cc.and_(regD[a], regD[C]);
+				break;
 			case OP_AND_RK:
+				cc.mov(regD[a], regD[B]);
+				cc.and_(regD[a], konstd[C]);
+				break;
 			case OP_OR_RR: // dA = dB | dkC
+				cc.mov(regD[a], regD[B]);
+				cc.or_(regD[a], regD[C]);
+				break;
 			case OP_OR_RK:
+				cc.mov(regD[a], regD[B]);
+				cc.or_(regD[a], konstd[C]);
+				break;
 			case OP_XOR_RR: // dA = dB ^ dkC
+				cc.mov(regD[a], regD[B]);
+				cc.xor_(regD[a], regD[C]);
+				break;
 			case OP_XOR_RK:
+				cc.mov(regD[a], regD[B]);
+				cc.xor_(regD[a], konstd[C]);
+				break;
 			case OP_MIN_RR: // dA = min(dB,dkC)
 			case OP_MIN_RK:
 			case OP_MAX_RR: // dA = max(dB,dkC)
 			case OP_MAX_RK:
 			case OP_ABS: // dA = abs(dB)
+				break;
 			case OP_NEG: // dA = -dB
+				cc.xor_(regD[a], regD[a]);
+				cc.sub(regD[a], regD[B]);
+				break;
 			case OP_NOT: // dA = ~dB
+				cc.mov(regD[a], regD[B]);
+				cc.not_(regD[a]);
+				break;
 			case OP_EQ_R: // if ((dB == dkC) != A) then pc++
 			case OP_EQ_K:
 			case OP_LT_RR: // if ((dkB < dkC) != A) then pc++

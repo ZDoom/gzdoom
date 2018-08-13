@@ -28,7 +28,6 @@ enum DrawListType
 enum Drawpasses
 {
 	GLPASS_ALL,			// Main pass with dynamic lights
-	GLPASS_LIGHTSONLY,	// only collect dynamic lights
 	GLPASS_DECALS,		// Draws a decal
 	GLPASS_TRANSLUCENT,	// Draws translucent objects
 };
@@ -76,10 +75,7 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawFlat(GLFlat *flat, int pass, bool trans) override;	// trans only has meaning for GLPASS_LIGHTSONLY
 	void DrawSkyboxSector(GLFlat *flat, int pass, bool processlights);
 	void DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans);
-	void ProcessLights(GLFlat *flat, bool istrans);
 	void DrawSubsector(GLFlat *flat, subsector_t * sub);
-	void SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli);
-	void SetupSectorLights(GLFlat *flat, int pass, int *dli);
 
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);

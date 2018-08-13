@@ -163,18 +163,6 @@ void FDrawInfo::RenderScene(int recursion)
 		drawlists[GLDL_MASKEDWALLSOFS].SortWalls();
 	}
 
-	// if we don't have a persistently mapped buffer, we have to process all the dynamic lights up front,
-	// so that we don't have to do repeated map/unmap calls on the buffer.
-	if (gl.lightmethod == LM_DEFERRED && level.HasDynamicLights && !isFullbrightScene())
-	{
-		GLRenderer->mLights->Begin();
-		drawlists[GLDL_PLAINFLATS].DrawFlats(this, GLPASS_LIGHTSONLY);
-		drawlists[GLDL_MASKEDFLATS].DrawFlats(this, GLPASS_LIGHTSONLY);
-		drawlists[GLDL_TRANSLUCENTBORDER].Draw(this, GLPASS_LIGHTSONLY);
-		drawlists[GLDL_TRANSLUCENT].Draw(this, GLPASS_LIGHTSONLY, true);
-		GLRenderer->mLights->Finish();
-	}
-
 	// Part 1: solid geometry. This is set up so that there are no transparent parts
 	glDepthFunc(GL_LESS);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);

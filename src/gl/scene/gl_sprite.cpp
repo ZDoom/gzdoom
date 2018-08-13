@@ -71,7 +71,7 @@ void gl_SetRenderStyle(FRenderStyle style, bool drawopaque, bool allowcolorblend
 
 void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 {
-	if (pass == GLPASS_DECALS || pass == GLPASS_LIGHTSONLY) return;
+	if (pass == GLPASS_DECALS) return;
 
 	auto RenderStyle = sprite->RenderStyle;
 

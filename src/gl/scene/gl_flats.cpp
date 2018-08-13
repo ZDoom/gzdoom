@@ -49,64 +49,6 @@
 
 //==========================================================================
 //
-// Flats 
-//
-//==========================================================================
-
-void FDrawInfo::SetupSubsectorLights(GLFlat *flat, int pass, subsector_t * sub, int *dli)
-{
-	if (dli != NULL && *dli != -1)
-	{
-		if (flat->renderstyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
-		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
-		(*dli)++;
-		return;
-	}
-	if (flat->SetupSubsectorLights(pass, sub, lightdata))
-	{
-		int d = GLRenderer->mLights->UploadLights(lightdata);
-		if (pass == GLPASS_LIGHTSONLY)
-		{
-			GLRenderer->mLights->StoreIndex(d);
-		}
-		else
-		{
-			gl_RenderState.ApplyLightIndex(d);
-		}
-	}
-}
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FDrawInfo::SetupSectorLights(GLFlat *flat, int pass, int *dli)
-{
-	if (dli != NULL && *dli != -1)
-	{
-		if (flat->renderstyle == STYLE_Add && !level.lightadditivesurfaces) return;	// no lights on additively blended surfaces.
-		gl_RenderState.ApplyLightIndex(GLRenderer->mLights->GetIndex(*dli));
-		(*dli)++;
-		return;
-	}
-	if (flat->SetupSectorLights(pass, flat->sector, lightdata))
-	{
-		int d = GLRenderer->mLights->UploadLights(lightdata);
-		if (pass == GLPASS_LIGHTSONLY)
-		{
-			GLRenderer->mLights->StoreIndex(d);
-		}
-		else
-		{
-			gl_RenderState.ApplyLightIndex(d);
-		}
-	}
-}
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -158,49 +100,6 @@ void FDrawInfo::DrawSubsector(GLFlat *flat, subsector_t * sub)
 
 //==========================================================================
 //
-// this is only used by LM_DEFERRED
-//
-//==========================================================================
-
-void FDrawInfo::ProcessLights(GLFlat *flat, bool istrans)
-{
-	flat->dynlightindex = GLRenderer->mLights->GetIndexPtr();
-	
-	if (flat->sector->ibocount > 0 && !ClipLineShouldBeActive())
-	{
-		SetupSectorLights(flat, GLPASS_LIGHTSONLY, nullptr);
-	}
-	else
-	{
-		// Draw the subsectors belonging to this sector
-		for (int i = 0; i < flat->sector->subsectorcount; i++)
-		{
-			subsector_t * sub = flat->sector->subsectors[i];
-			if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
-			{
-				SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, sub, nullptr);
-			}
-		}
-	}
-	
-	// Draw the subsectors assigned to it due to missing textures
-	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
-	{
-		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
-			GetOtherFloorPlanes(flat->sector->sectornum) :
-			GetOtherCeilingPlanes(flat->sector->sectornum);
-
-		while (node)
-		{
-			SetupSubsectorLights(flat, GLPASS_LIGHTSONLY, node->sub, nullptr);
-			node = node->next;
-		}
-	}
-}
-
-
-//==========================================================================
-//
 //
 //
 //==========================================================================
@@ -213,11 +112,12 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	gl_RenderState.Apply();
 	auto iboindex = flat->iboindex;
 
+	if (processlights) gl_RenderState.ApplyLightIndex(flat->dynlightindex);
+
 	if (iboindex >= 0)
 	{
 		if (vcount > 0 && !ClipLineShouldBeActive())
 		{
-			if (processlights) SetupSectorLights(flat, GLPASS_ALL, &dli);
 			drawcalls.Clock();
 			glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + iboindex);
 			drawcalls.Unclock();
@@ -234,7 +134,6 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 				if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
 				{
-					if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
 					drawcalls.Clock();
 					glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
 					drawcalls.Unclock();
@@ -253,7 +152,6 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 			subsector_t * sub = flat->sector->subsectors[i];
 			if (ss_renderflags[sub->Index()]& flat->renderflags || istrans)
 			{
-				if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, sub, &dli);
 				DrawSubsector(flat, sub);
 			}
 		}
@@ -268,7 +166,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 		while (node)
 		{
-			if (processlights) SetupSubsectorLights(flat, GLPASS_ALL, node->sub, &dli);
+			if (processlights) gl_RenderState.ApplyLightIndex(node->lightindex);
 			DrawSubsector(flat, node->sub);
 			node = node->next;
 		}
@@ -326,13 +224,6 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			DrawSkyboxSector(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1));
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
-		break;
-
-	case GLPASS_LIGHTSONLY:
-		if ((!trans || flat->gltexture) && processLights)
-		{
-			ProcessLights(flat, trans);
-		}
 		break;
 
 	case GLPASS_TRANSLUCENT:

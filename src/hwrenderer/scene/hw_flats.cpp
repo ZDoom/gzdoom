@@ -135,13 +135,15 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 //
 //==========================================================================
 
-bool GLFlat::SetupLights(int pass, FLightNode * node, FDynLightData &lightdata, int portalgroup)
+void GLFlat::SetupLights(HWDrawInfo *di, FLightNode * node, FDynLightData &lightdata, int portalgroup)
 {
 	Plane p;
 
-	lightdata.Clear();
-	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces) return false;	// no lights on additively blended surfaces.
-
+	if (renderstyle == STYLE_Add && !level.lightadditivesurfaces)
+	{
+		dynlightindex = -1;
+		return;	// no lights on additively blended surfaces.
+	}
 	while (node)
 	{
 		ADynamicLight * light = node->lightsource;
@@ -167,17 +169,7 @@ bool GLFlat::SetupLights(int pass, FLightNode * node, FDynLightData &lightdata, 
 		node = node->nextLight;
 	}
 
-	return true;
-}
-
-bool GLFlat::SetupSubsectorLights(int pass, subsector_t * sub, FDynLightData &lightdata)
-{
-	return SetupLights(pass, sub->lighthead, lightdata, sub->sector->PortalGroup);
-}
-
-bool GLFlat::SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdata)
-{
-	return SetupLights(pass, sec->lighthead, lightdata, sec->PortalGroup);
+	dynlightindex = di->UploadLights(lightdata);
 }
 
 //==========================================================================
@@ -190,11 +182,15 @@ bool GLFlat::SetupSectorLights(int pass, sector_t * sec, FDynLightData &lightdat
 
 inline void GLFlat::PutFlat(HWDrawInfo *di, bool fog)
 {
+
 	if (di->isFullbrightScene())
 	{
 		Colormap.Clear();
 	}
-	dynlightindex = -1;	// make sure this is always initialized to something proper.
+	else if (level.HasDynamicLights && gltexture != nullptr)
+	{
+		SetupLights(di, sector->lighthead, lightdata, sector->PortalGroup);
+	}
 	di->AddFlat(this, fog);
 }
 

@@ -918,29 +918,201 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 			// Vector math. (2D)
 			case OP_NEGV2: // vA = -vB
+				cc.xorpd(regF[a], regF[a]);
+				cc.xorpd(regF[a + 1], regF[a + 1]);
+				cc.subsd(regF[a], regF[B]);
+				cc.subsd(regF[a + 1], regF[B + 1]);
+				break;
 			case OP_ADDV2_RR: // vA = vB + vkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.addsd(regF[a], regF[C]);
+				cc.addsd(regF[a + 1], regF[C + 1]);
+				break;
 			case OP_SUBV2_RR: // vA = vkB - vkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.subsd(regF[a], regF[C]);
+				cc.subsd(regF[a + 1], regF[C + 1]);
+				break;
 			case OP_DOTV2_RR: // va = vB dot vkC
+			{
+				auto tmp = cc.newXmmSd();
+				cc.movsd(regF[a], regF[B]);
+				cc.mulsd(regF[a], regF[C]);
+				cc.movsd(tmp, regF[B + 1]);
+				cc.mulsd(tmp, regF[C + 1]);
+				cc.addsd(regF[a], tmp);
+				break;
+			}
 			case OP_MULVF2_RR: // vA = vkB * fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.mulsd(regF[a], regF[C]);
+				cc.mulsd(regF[a + 1], regF[C]);
+				break;
 			case OP_MULVF2_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mulsd(regF[a], x86::qword_ptr(tmp));
+				cc.mulsd(regF[a + 1], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_DIVVF2_RR: // vA = vkB / fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.divsd(regF[a], regF[C]);
+				cc.divsd(regF[a + 1], regF[C]);
+				break;
 			case OP_DIVVF2_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.divsd(regF[a], x86::qword_ptr(tmp));
+				cc.divsd(regF[a + 1], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_LENV2: // fA = vB.Length
+			{
+				auto tmp = cc.newXmmSd();
+				cc.movsd(regF[a], regF[B]);
+				cc.mulsd(regF[a], regF[B]);
+				cc.movsd(tmp, regF[B + 1]);
+				cc.mulsd(tmp, regF[B + 1]);
+				cc.addsd(regF[a], tmp);
+				cc.sqrtsd(regF[a], regF[a]);
+				break;
+			}
 			case OP_EQV2_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
 			case OP_EQV2_K: // this will never be used.
 				break;
 
 			// Vector math. (3D)
 			case OP_NEGV3: // vA = -vB
+				cc.xorpd(regF[a], regF[a]);
+				cc.xorpd(regF[a + 1], regF[a + 1]);
+				cc.xorpd(regF[a + 2], regF[a + 2]);
+				cc.subsd(regF[a], regF[B]);
+				cc.subsd(regF[a + 1], regF[B + 1]);
+				cc.subsd(regF[a + 2], regF[B + 2]);
+				break;
 			case OP_ADDV3_RR: // vA = vB + vkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.movsd(regF[a + 2], regF[B + 2]);
+				cc.addsd(regF[a], regF[C]);
+				cc.addsd(regF[a + 1], regF[C + 1]);
+				cc.addsd(regF[a + 2], regF[C + 2]);
+				break;
 			case OP_SUBV3_RR: // vA = vkB - vkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.movsd(regF[a + 2], regF[B + 2]);
+				cc.subsd(regF[a], regF[C]);
+				cc.subsd(regF[a + 1], regF[C + 1]);
+				cc.subsd(regF[a + 2], regF[C + 2]);
+				break;
 			case OP_DOTV3_RR: // va = vB dot vkC
+			{
+				auto tmp = cc.newXmmSd();
+				cc.movsd(regF[a], regF[B]);
+				cc.mulsd(regF[a], regF[C]);
+				cc.movsd(tmp, regF[B + 1]);
+				cc.mulsd(tmp, regF[C + 1]);
+				cc.addsd(regF[a], tmp);
+				cc.movsd(tmp, regF[B + 2]);
+				cc.mulsd(tmp, regF[C + 2]);
+				cc.addsd(regF[a], tmp);
+				break;
+			}
 			case OP_CROSSV_RR: // vA = vkB cross vkC
+			{
+				auto tmp = cc.newXmmSd();
+				auto& a0 = regF[B]; auto& a1 = regF[B + 1]; auto& a2 = regF[B + 2];
+				auto& b0 = regF[C]; auto& b1 = regF[C + 1]; auto& b2 = regF[C + 2];
+
+				// r0 = a1b2 - a2b1
+				cc.movsd(regF[a], a1);
+				cc.mulsd(regF[a], b2);
+				cc.movsd(tmp, a2);
+				cc.mulsd(tmp, b1);
+				cc.subsd(regF[a], tmp);
+
+				// r1 = a2b0 - a0b2
+				cc.movsd(regF[a + 1], a2);
+				cc.mulsd(regF[a + 1], b0);
+				cc.movsd(tmp, a0);
+				cc.mulsd(tmp, b2);
+				cc.subsd(regF[a + 1], tmp);
+
+				// r2 = a0b1 - a1b0
+				cc.movsd(regF[a + 2], a0);
+				cc.mulsd(regF[a + 2], b1);
+				cc.movsd(tmp, a1);
+				cc.mulsd(tmp, b0);
+				cc.subsd(regF[a + 2], tmp);
+
+				break;
+			}
 			case OP_MULVF3_RR: // vA = vkB * fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.movsd(regF[a + 2], regF[B + 2]);
+				cc.mulsd(regF[a], regF[C]);
+				cc.mulsd(regF[a + 1], regF[C]);
+				cc.mulsd(regF[a + 2], regF[C]);
+				break;
 			case OP_MULVF3_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.movsd(regF[a + 2], regF[B + 2]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mulsd(regF[a], x86::qword_ptr(tmp));
+				cc.mulsd(regF[a + 1], x86::qword_ptr(tmp));
+				cc.mulsd(regF[a + 2], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_DIVVF3_RR: // vA = vkB / fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.movsd(regF[a + 2], regF[B + 2]);
+				cc.divsd(regF[a], regF[C]);
+				cc.divsd(regF[a + 1], regF[C]);
+				cc.divsd(regF[a + 2], regF[C]);
+				break;
 			case OP_DIVVF3_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.movsd(regF[a + 1], regF[B + 1]);
+				cc.movsd(regF[a + 2], regF[B + 2]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.divsd(regF[a], x86::qword_ptr(tmp));
+				cc.divsd(regF[a + 1], x86::qword_ptr(tmp));
+				cc.divsd(regF[a + 2], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_LENV3: // fA = vB.Length
+			{
+				auto tmp = cc.newXmmSd();
+				cc.movsd(regF[a], regF[B]);
+				cc.mulsd(regF[a], regF[B]);
+				cc.movsd(tmp, regF[B + 1]);
+				cc.mulsd(tmp, regF[B + 1]);
+				cc.addsd(regF[a], tmp);
+				cc.movsd(tmp, regF[B + 2]);
+				cc.mulsd(tmp, regF[B + 2]);
+				cc.addsd(regF[a], tmp);
+				cc.sqrtsd(regF[a], regF[a]);
+				break;
+			}
 			case OP_EQV3_R: // if ((vB == vkC) != A) then pc++ (inexact if A & 32)
 			case OP_EQV3_K: // this will never be used.
 				break;

@@ -204,6 +204,7 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
 	// make sure that following parts of the same linedef do not get this one's vertex and lighting info.
 	vertcount = 0;	
 	dynlightindex = -1;
+	flags &= ~GLWF_TRANSLUCENT;
 }
 
 void GLWall::PutPortal(HWDrawInfo *di, int ptype)

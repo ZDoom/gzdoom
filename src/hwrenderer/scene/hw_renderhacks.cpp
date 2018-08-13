@@ -29,12 +29,51 @@
 #include "r_utility.h"
 #include "r_sky.h"
 #include "g_levellocals.h"
+#include "a_dynlight.h"
 
 #include "hw_drawinfo.h"
 #include "hw_drawstructs.h"
 #include "hwrenderer/utility/hw_clock.h"
+#include "hwrenderer/dynlights/hw_dynlightdata.h"
 
 sector_t * hw_FakeFlat(sector_t * sec, sector_t * dest, area_t in_area, bool back);
+
+//==========================================================================
+//
+// light setup for render hacks.
+// This can ignore many of the special checks because
+// this will never be translucent and never be part of a portal or a 3D floor
+//
+//==========================================================================
+
+int HWDrawInfo::SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane)
+{
+	if (level.HasDynamicLights && !isFullbrightScene())
+	{
+		Plane p;
+		FLightNode * node = sub->lighthead;
+
+		lightdata.Clear();
+		while (node)
+		{
+			ADynamicLight * light = node->lightsource;
+
+			if (light->flags2&MF2_DORMANT)
+			{
+				node = node->nextLight;
+				continue;
+			}
+			iter_dlightf++;
+
+			p.Set(plane->Normal(), plane->fD());
+			lightdata.GetLight(sub->sector->PortalGroup, p, light, true);
+			node = node->nextLight;
+		}
+
+		return UploadLights(lightdata);
+	}
+	else return -1;
+}
 
 //==========================================================================
 //
@@ -52,6 +91,7 @@ void HWDrawInfo::AddOtherFloorPlane(int sector, gl_subsectorrendernode * node)
 		for(int i=oldcnt;i<=sector;i++) otherfloorplanes[i]=NULL;
 	}
 	node->next = otherfloorplanes[sector];
+	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &node->sub->sector->floorplane);
 	otherfloorplanes[sector] = node;
 }
 
@@ -65,6 +105,7 @@ void HWDrawInfo::AddOtherCeilingPlane(int sector, gl_subsectorrendernode * node)
 		for(int i=oldcnt;i<=sector;i++) otherceilingplanes[i]=NULL;
 	}
 	node->next = otherceilingplanes[sector];
+	node->lightindex = SetupLightsForOtherPlane(node->sub, lightdata, &node->sub->sector->ceilingplane);
 	otherceilingplanes[sector] = node;
 }
 

@@ -34,6 +34,7 @@ struct gl_subsectorrendernode
 {
 	gl_subsectorrendernode *	next;
 	subsector_t *				sub;
+	int							lightindex;
 };
 
 enum area_t : int;
@@ -160,6 +161,7 @@ private:
 	void AddSpecialPortalLines(subsector_t * sub, sector_t * sector, line_t *line);
 	void RenderThings(subsector_t * sub, sector_t * sector);
 	void DoSubsector(subsector_t * sub);
+	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
 public:
 
 	void SetCameraPos(const DVector3 &pos)

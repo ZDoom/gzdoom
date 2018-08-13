@@ -84,7 +84,6 @@ FLightBuffer::~FLightBuffer()
 void FLightBuffer::Clear()
 {
 	mIndex = 0;
-	mIndices.Clear();
 	mUploadIndex = 0;
 }
 

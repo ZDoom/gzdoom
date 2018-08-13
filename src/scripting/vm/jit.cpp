@@ -58,6 +58,9 @@ static asmjit::JitRuntime jit;
 #define ASSERTKA(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstA)
 #define ASSERTKS(x)		assert(sfunc != NULL && (unsigned)(x) < sfunc->NumKonstS)
 
+// [pbeta] TODO: VM aborts
+#define NULL_POINTER_CHECK(a,o,x) 
+
 static bool CanJit(VMScriptFunction *sfunc)
 {
 	int size = sfunc->CodeSize;
@@ -74,13 +77,45 @@ static bool CanJit(VMScriptFunction *sfunc)
 		case OP_NOP:
 		case OP_LI:
 		case OP_LK:
-		//case OP_LKF:
+		case OP_LKF:
 		//case OP_LKS:
-		//case OP_LKP:
+		case OP_LKP:
 		case OP_LK_R:
-		//case OP_LKF_R:
+		case OP_LKF_R:
 		//case OP_LKS_R:
 		//case OP_LKP_R:
+		case OP_LB:
+		case OP_LB_R:
+		case OP_LH:
+		case OP_LH_R:
+		case OP_LW:
+		case OP_LW_R:
+		case OP_LBU:
+		case OP_LBU_R:
+		case OP_LHU:
+		case OP_LHU_R:
+		case OP_LSP:
+		case OP_LSP_R:
+		case OP_LDP:
+		case OP_LDP_R:
+		case OP_LV2:
+		case OP_LV2_R:
+		case OP_LV3:
+		case OP_LV3_R:
+		case OP_SB:
+		case OP_SB_R:
+		case OP_SH:
+		case OP_SH_R:
+		case OP_SW:
+		case OP_SW_R:
+		case OP_SSP:
+		case OP_SSP_R:
+		case OP_SDP:
+		case OP_SDP_R:
+		case OP_SV2:
+		case OP_SV2_R:
+		case OP_SV3:
+		case OP_SV3_R:
 		case OP_MOVE:
 		//case OP_MOVEF:
 		//case OP_MOVES:
@@ -95,7 +130,6 @@ static bool CanJit(VMScriptFunction *sfunc)
 				int regnum = C;
 				switch (regtype & REGT_TYPE)
 				{
-				case REGT_FLOAT:
 				case REGT_STRING:
 				case REGT_POINTER:
 					return false;
@@ -209,7 +243,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			cc.mov(initreg, x86::ptr(vmregs, sizeof(void*)));
 			for (int i = 0; i < sfunc->NumRegF; i++)
 			{
-				regF[i] = cc.newXmm();
+				regF[i] = cc.newXmmSd ();
 				cc.movsd(regF[i], x86::qword_ptr(initreg, i * 4));
 			}
 		}
@@ -252,30 +286,38 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				break;
 
 			case OP_NOP: // no operation
-				cc.nop();
+				cc.nop ();
 				break;
 
-			// Load constants.
+				// Load constants.
 			case OP_LI: // load immediate signed 16-bit constant
-				cc.mov(regD[a], BCs);
+				cc.mov (regD[a], BCs);
 				break;
 			case OP_LK: // load integer constant
-				cc.mov(regD[a], konstd[BC]);
+				cc.mov (regD[a], konstd[BC]);
 				break;
 			case OP_LKF: // load float constant
-				cc.movsd(regF[a], x86::ptr((ptrdiff_t)&konstf[BC]));
+				{
+					auto tmp = cc.newIntPtr ();
+					cc.mov (tmp, (ptrdiff_t)&(konstf[BC]));
+					cc.movsd (regF[a], x86::qword_ptr (tmp));
+				}
 				break;
 			case OP_LKS: // load string constant
 				//cc.mov(regS[a], konsts[BC]);
 				break;
 			case OP_LKP: // load pointer constant
-				//cc.mov(regA[a], konsta[BC].v);
+				cc.mov(regA[a], (int64_t) konsta[BC].v);
 				break;
 			case OP_LK_R: // load integer constant indexed
 				cc.mov(regD[a], x86::ptr((ptrdiff_t)konstd, regD[B], 2, C * 4));
 				break;
 			case OP_LKF_R: // load float constant indexed
-				cc.movsd(regF[a], x86::ptr((ptrdiff_t)konstf, regD[B], 3, C * 8));
+				{
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, (ptrdiff_t)&(konstf[BC]));
+					cc.movsd(regF[a], x86::qword_ptr(tmp, regD[B], 3, C * 8));
+				}
 				break;
 			case OP_LKS_R: // load string constant indexed
 				//cc.mov(regS[a], konsts[regD[B] + C]);
@@ -291,57 +333,166 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 			// Load from memory. rA = *(rB + rkC)
 			case OP_LB: // load byte
+				NULL_POINTER_CHECK (PB, KC, X_READ_NIL);
+				cc.movsx (regD[a], x86::byte_ptr (PB, KC));
+				break;
 			case OP_LB_R:
+				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
+				cc.movsx (regD[a], x86::byte_ptr (PB, KC));
+				break;
 			case OP_LH: // load halfword
+				NULL_POINTER_CHECK (PB, KC, X_READ_NIL);
+				cc.movsx (regD[a], x86::word_ptr (PB, KC));
+				break;
 			case OP_LH_R:
+				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
+				cc.movsx (regD[a], x86::word_ptr (PB, KC));
+				break;
 			case OP_LW: // load word
+				NULL_POINTER_CHECK (PB, KC, X_READ_NIL);
+				cc.movsx (regD[a], x86::dword_ptr (PB, KC));
+				break;
 			case OP_LW_R:
+				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
+				cc.movsx (regD[a], x86::dword_ptr (PB, KC));
+				break;
 			case OP_LBU: // load byte unsigned
+				NULL_POINTER_CHECK (PB, KC, X_READ_NIL);
+				cc.mov (regD[a], x86::byte_ptr (PB, KC));
+				break;
 			case OP_LBU_R:
+				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
+				cc.mov (regD[a], x86::byte_ptr (PB, KC));
+				break;
 			case OP_LHU: // load halfword unsigned
+				NULL_POINTER_CHECK (PB, KC, X_READ_NIL);
+				cc.mov (regD[a], x86::word_ptr (PB, KC));
+				break;
 			case OP_LHU_R:
+				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
+				cc.mov (regD[a], x86::word_ptr (PB, KC));
+				break;
 			case OP_LSP: // load single-precision fp
+				NULL_POINTER_CHECK (PB, KC, X_READ_NIL);
+				cc.movss (regF[a], x86::dword_ptr (PB, KC));
+				break;
 			case OP_LSP_R:
+				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
+				cc.movss (regF[a], x86::dword_ptr (PB, RC));
+				break;
 			case OP_LDP: // load double-precision fp
+				NULL_POINTER_CHECK (PB, KC, X_READ_NIL);
+				cc.movsd (regF[a], x86::qword_ptr (PB, KC));
+				break;
 			case OP_LDP_R:
+				NULL_POINTER_CHECK (PB, RC, X_READ_NIL);
+				cc.movsd (regF[a], x86::qword_ptr (PB, RC));
+				break;
 			case OP_LS: // load string
 			case OP_LS_R:
 			case OP_LO: // load object
 			case OP_LO_R:
 			case OP_LP: // load pointer
 			case OP_LP_R:
+				break;
 			case OP_LV2: // load vector2
-			case OP_LV2_R:
+				NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+				{
+					auto tmp = cc.newIntPtr ();
+					cc.mov(tmp, PB);
+					cc.add(tmp, KC);
+					cc.movsd(regF[a], x86::qword_ptr(tmp));
+					cc.movsd(regF[a+1], x86::qword_ptr(tmp, 8));
+				}
+				break;
+			case OP_LV2_R: // Not used?
+				NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+				{
+					auto tmp = cc.newIntPtr ();
+					cc.mov(tmp, PB);
+					cc.add(tmp, RC);
+					cc.movsd(regF[a], x86::qword_ptr(tmp));
+					cc.movsd(regF[a+1], x86::qword_ptr(tmp, 8));
+				}
+				break;
 			case OP_LV3: // load vector3
+				NULL_POINTER_CHECK(PB, KC, X_READ_NIL);
+				{
+					auto tmp = cc.newIntPtr ();
+					cc.mov(tmp, PB);
+					cc.add(tmp, KC);
+					cc.movsd(regF[a], x86::qword_ptr(tmp));
+					cc.movsd(regF[a+1], x86::qword_ptr(tmp, 8));
+					cc.movsd(regF[a+2], x86::qword_ptr(tmp, 16));
+				}
+				break;
 			case OP_LV3_R:
+				NULL_POINTER_CHECK(PB, RC, X_READ_NIL);
+				{
+					auto tmp = cc.newIntPtr ();
+					cc.mov(tmp, PB);
+					cc.add(tmp, RC);
+					cc.movsd(regF[a], x86::qword_ptr(tmp));
+					cc.movsd(regF[a+1], x86::qword_ptr(tmp, 8));
+					cc.movsd(regF[a+2], x86::qword_ptr(tmp, 16));
+				}
+				break;
 			case OP_LCS: // load string from char ptr.
 			case OP_LCS_R:
+				break;
 			case OP_LBIT: // rA = !!(*rB & C)  -- *rB is a byte
+				/*NULL_POINTER_CHECK (PB, 0, X_READ_NIL);
+				{
+					auto tmp = cc.newInt8 ();
+					cc.mov (regD[a], PB);
+					cc.and_ (regD[a], C);
+					cc.test (regD[a], regD[a]);
+					cc.sete (tmp);
+					cc.movzx (regD[a], tmp);
+				}*/
 				break;
 
 			// Store instructions. *(rA + rkC) = rB
 			case OP_SB: // store byte
-				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
 				cc.mov(x86::byte_ptr(PA, KC), regD[B]);
 				break;
 			case OP_SB_R:
-				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
 				cc.mov(x86::byte_ptr(PA, RC), regD[B]);
 				break;
 			case OP_SH: // store halfword
+				NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
+				cc.mov(x86::word_ptr(PA, KC), regD[B]);
+				break;
 			case OP_SH_R:
+				NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
+				cc.mov(x86::word_ptr(PA, RC), regD[B]);
+				break;
 			case OP_SW: // store word
-				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
 				cc.mov(x86::dword_ptr(PA, KC), regD[B]);
 				break;
 			case OP_SW_R:
-				//if (PA == NULL) { ThrowAbortException(X_WRITE_NIL, nullptr); return 0; }
+				NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
 				cc.mov(x86::dword_ptr(PA, RC), regD[B]);
 				break;
 			case OP_SSP: // store single-precision fp
+				NULL_POINTER_CHECK (PB, KC, X_WRITE_NIL);
+				cc.movss(x86::dword_ptr(PA, KC), regF[B]);
+				break;
 			case OP_SSP_R:
+				NULL_POINTER_CHECK (PB, RC, X_WRITE_NIL);
+				cc.movss(x86::dword_ptr(PA, RC), regF[B]);
+				break;
 			case OP_SDP: // store double-precision fp
+				NULL_POINTER_CHECK (PB, KC, X_WRITE_NIL);
+				cc.movsd(x86::qword_ptr(PA, KC), regF[B]);
+				break;
 			case OP_SDP_R:
+				NULL_POINTER_CHECK (PB, RC, X_WRITE_NIL);
+				cc.movsd(x86::qword_ptr(PA, RC), regF[B]);
+				break;
 			case OP_SS: // store string
 			case OP_SS_R:
 			case OP_SO: // store object pointer with write barrier (only needed for non thinkers and non types)
@@ -349,9 +500,47 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			case OP_SP: // store pointer
 			case OP_SP_R:
 			case OP_SV2: // store vector2
+				NULL_POINTER_CHECK (PB, KC, X_WRITE_NIL);
+				{
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, PB);
+					cc.add(tmp, KC);
+					cc.movsd(x86::qword_ptr(tmp), regF[B]);
+					cc.movsd(x86::qword_ptr(tmp, 8), regF[B+1]);
+				}
+				break;
 			case OP_SV2_R:
+				NULL_POINTER_CHECK (PB, RC, X_WRITE_NIL);
+				{
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, PB);
+					cc.add(tmp, RC);
+					cc.movsd(x86::qword_ptr(tmp), regF[B]);
+					cc.movsd(x86::qword_ptr(tmp, 8), regF[B+1]);
+				}
+				break;
 			case OP_SV3: // store vector3
+				NULL_POINTER_CHECK (PB, KC, X_WRITE_NIL);
+				{
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, PB);
+					cc.add(tmp, KC);
+					cc.movsd(x86::qword_ptr(tmp), regF[B]);
+					cc.movsd(x86::qword_ptr(tmp, 8), regF[B+1]);
+					cc.movsd(x86::qword_ptr(tmp, 16), regF[B+2]);
+				}
+				break;
 			case OP_SV3_R:
+				NULL_POINTER_CHECK (PB, RC, X_WRITE_NIL);
+				{
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, PB);
+					cc.add(tmp, RC);
+					cc.movsd(x86::qword_ptr(tmp), regF[B]);
+					cc.movsd(x86::qword_ptr(tmp, 8), regF[B+1]);
+					cc.movsd(x86::qword_ptr(tmp, 16), regF[B+2]);
+				}
+				break;
 			case OP_SBIT: // *rA |= C if rB is true, *rA &= ~C otherwise
 				break;
 
@@ -432,20 +621,30 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					case REGT_FLOAT:
 						if (regtype & REGT_KONST)
 						{
+							auto tmp = cc.newInt64();
 							if (regtype & REGT_MULTIREG3)
 							{
-								cc.mov(x86::qword_ptr(location), (int64_t)(ptrdiff_t)&konstf[regnum]);
-								cc.mov(x86::qword_ptr(location, 8), (int64_t)(ptrdiff_t)&konstf[regnum + 1]);
-								cc.mov(x86::qword_ptr(location, 16), (int64_t)(ptrdiff_t)&konstf[regnum + 2]);
+								cc.mov(tmp, (((int64_t *)konstf)[regnum]));
+								cc.mov(x86::qword_ptr(location), tmp);
+
+								cc.mov(tmp, (((int64_t *)konstf)[regnum + 1]));
+								cc.mov(x86::qword_ptr(location, 8), tmp);
+
+								cc.mov(tmp, (((int64_t *)konstf)[regnum + 2]));
+								cc.mov(x86::qword_ptr(location, 16), tmp);
 							}
 							else if (regtype & REGT_MULTIREG2)
 							{
-								cc.mov(x86::qword_ptr(location), (int64_t)(ptrdiff_t)&konstf[regnum]);
-								cc.mov(x86::qword_ptr(location, 8), (int64_t)(ptrdiff_t)&konstf[regnum + 1]);
+								cc.mov(tmp, (((int64_t *)konstf)[regnum]));
+								cc.mov(x86::qword_ptr(location), tmp);
+
+								cc.mov(tmp, (((int64_t *)konstf)[regnum + 1]));
+								cc.mov(x86::qword_ptr(location, 8), tmp);
 							}
 							else
 							{
-								cc.mov(x86::qword_ptr(location), (int64_t)(ptrdiff_t)&konstf[regnum]);
+								cc.mov(tmp, (((int64_t *)konstf)[regnum]));
+								cc.mov(x86::qword_ptr(location), tmp);
 							}
 						}
 						else

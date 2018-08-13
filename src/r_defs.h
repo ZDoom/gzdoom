@@ -1092,7 +1092,6 @@ public:
 	int				ibocount;		// number of indices per plane (identical for all planes.) If this is -1 the index buffer is not in use.
 
 	float GetReflect(int pos) { return gl_plane_reflection_i? reflect[pos] : 0; }
-	bool VBOHeightcheck(int pos) const { return vboheight[pos] == GetPlaneTexZ(pos); }
 	FSectorPortalGroup *GetPortalGroup(int plane) { return portals[plane]; }
 
 	enum

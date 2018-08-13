@@ -118,46 +118,31 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 		flat->SetupLights(this, flat->sector->lighthead, lightdata, flat->sector->PortalGroup);
 	}
 	gl_RenderState.ApplyLightIndex(flat->dynlightindex);
-	if (iboindex >= 0)
+	if (vcount > 0 && !ClipLineShouldBeActive())
 	{
-		if (vcount > 0 && !ClipLineShouldBeActive())
-		{
-			drawcalls.Clock();
-			glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + iboindex);
-			drawcalls.Unclock();
-			flatvertices += vcount;
-			flatprimitives++;
-		}
-		else
-		{
-			int index = iboindex;
-			for (int i = 0; i < flat->sector->subsectorcount; i++)
-			{
-				subsector_t * sub = flat->sector->subsectors[i];
-				if (sub->numlines <= 2) continue;
-
-				if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
-				{
-					drawcalls.Clock();
-					glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
-					drawcalls.Unclock();
-					flatvertices += sub->numlines;
-					flatprimitives++;
-				}
-				index += (sub->numlines - 2) * 3;
-			}
-		}
+		drawcalls.Clock();
+		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + iboindex);
+		drawcalls.Unclock();
+		flatvertices += vcount;
+		flatprimitives++;
 	}
 	else
 	{
-		// Draw the subsectors belonging to this sector
-		for (int i=0; i<flat->sector->subsectorcount; i++)
+		int index = iboindex;
+		for (int i = 0; i < flat->sector->subsectorcount; i++)
 		{
 			subsector_t * sub = flat->sector->subsectors[i];
-			if (ss_renderflags[sub->Index()]& flat->renderflags || istrans)
+			if (sub->numlines <= 2) continue;
+
+			if (ss_renderflags[sub->Index()] & flat->renderflags || istrans)
 			{
-				DrawSubsector(flat, sub);
+				drawcalls.Clock();
+				glDrawElements(GL_TRIANGLES, (sub->numlines - 2) * 3, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + index);
+				drawcalls.Unclock();
+				flatvertices += sub->numlines;
+				flatprimitives++;
 			}
+			index += (sub->numlines - 2) * 3;
 		}
 	}
 

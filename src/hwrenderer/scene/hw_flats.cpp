@@ -269,14 +269,7 @@ void GLFlat::SetFrom3DFloor(F3DFloor *rover, bool top, bool underside)
 
 	alpha = rover->alpha/255.0f;
 	renderstyle = rover->flags&FF_ADDITIVETRANS? STYLE_Add : STYLE_Translucent;
-	if (plane.model->VBOHeightcheck(plane.isceiling))
-	{
-		iboindex = plane.vindex;
-	}
-	else
-	{
-		iboindex = -1;
-	}
+	iboindex = plane.vindex;
 }
 
 //==========================================================================
@@ -339,14 +332,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 		if (alpha != 0.f && frontsector->GetTexture(sector_t::floor) != skyflatnum)
 		{
-			if (frontsector->VBOHeightcheck(sector_t::floor))
-			{
-				iboindex = frontsector->iboindex[sector_t::floor];
-			}
-			else
-			{
-				iboindex = -1;
-			}
+			iboindex = frontsector->iboindex[sector_t::floor];
 
 			ceiling = false;
 			renderflags = SSRF_RENDERFLOOR;
@@ -399,15 +385,7 @@ void GLFlat::ProcessSector(HWDrawInfo *di, sector_t * frontsector)
 
 		if (alpha != 0.f && frontsector->GetTexture(sector_t::ceiling) != skyflatnum)
 		{
-			if (frontsector->VBOHeightcheck(sector_t::ceiling))
-			{
-				iboindex = frontsector->iboindex[sector_t::ceiling];
-			}
-			else
-			{
-				iboindex = -1;
-			}
-
+			iboindex = frontsector->iboindex[sector_t::ceiling];
 			ceiling = true;
 			renderflags = SSRF_RENDERCEILING;
 

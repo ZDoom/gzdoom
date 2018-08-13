@@ -264,12 +264,6 @@ class FShader
 	int lights_index;
 	int texturematrix_index;
 
-
-	/*
-	FBufferedUniform1f muInterpolationFactor;
-	int modelmatrix_index;
-	int normalmodelmatrix_index;
-	*/
 public:
 	int vertexmatrix_index;
 	int texcoordmatrix_index;

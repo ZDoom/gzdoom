@@ -210,22 +210,6 @@ bool FRenderState::ApplyShader()
 		matrixToGL(identityMatrix, activeShader->texturematrix_index);
 	}
 
-	/*
-	if (mModelMatrixEnabled)
-	{
-		matrixToGL(mModelMatrix, activeShader->modelmatrix_index);
-		VSMatrix norm;
-		norm.computeNormalMatrix(mModelMatrix);
-		matrixToGL(norm, activeShader->normalmodelmatrix_index);
-		activeShader->currentModelMatrixState = true;
-	}
-	else if (activeShader->currentModelMatrixState)
-	{
-		activeShader->currentModelMatrixState = false;
-		matrixToGL(identityMatrix, activeShader->modelmatrix_index);
-		matrixToGL(identityMatrix, activeShader->normalmodelmatrix_index);
-	}
-	*/
 	return true;
 }
 

@@ -117,11 +117,11 @@ static bool CanJit(VMScriptFunction *sfunc)
 		case OP_SV3:
 		case OP_SV3_R:
 		case OP_MOVE:
-		//case OP_MOVEF:
-		//case OP_MOVES:
-		//case OP_MOVEA:
-		//case OP_MOVEV2:
-		//case OP_MOVEV3:
+		case OP_MOVEF:
+		case OP_MOVES:
+		case OP_MOVEA:
+		case OP_MOVEV2:
+		case OP_MOVEV3:
 			break;
 		case OP_RET:
 			if (B != REGT_NIL)
@@ -179,6 +179,42 @@ static bool CanJit(VMScriptFunction *sfunc)
 		//case OP_ABS:
 		case OP_NEG:
 		case OP_NOT:
+		case OP_ADDF_RR:
+		case OP_ADDF_RK:
+		case OP_SUBF_RR:
+		case OP_SUBF_RK:
+		case OP_SUBF_KR:
+		case OP_MULF_RR:
+		case OP_MULF_RK:
+		case OP_DIVF_RR:
+		case OP_DIVF_RK:
+		case OP_DIVF_KR:
+		case OP_NEGV2:
+		case OP_ADDV2_RR:
+		case OP_SUBV2_RR:
+		case OP_DOTV2_RR:
+		case OP_MULVF2_RR:
+		case OP_MULVF2_RK:
+		case OP_DIVVF2_RR:
+		case OP_DIVVF2_RK:
+		case OP_LENV2:
+		// case OP_EQV2_R:
+		// case OP_EQV2_K:
+		case OP_NEGV3:
+		case OP_ADDV3_RR:
+		case OP_SUBV3_RR:
+		case OP_DOTV3_RR:
+		case OP_CROSSV_RR:
+		case OP_MULVF3_RR:
+		case OP_MULVF3_RK:
+		case OP_DIVVF3_RR:
+		case OP_DIVVF3_RK:
+		case OP_LENV3:
+		//case OP_EQV3_R:
+		//case OP_EQV3_K:
+		case OP_ADDA_RR:
+		case OP_ADDA_RK:
+		case OP_SUBA:
 			break;
 		}
 	}
@@ -187,7 +223,7 @@ static bool CanJit(VMScriptFunction *sfunc)
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
-#if 1 // For debugging
+#if 0 // For debugging
 	if (strcmp(sfunc->Name.GetChars(), "EmptyFunction") != 0)
 		return nullptr;
 #else
@@ -283,6 +319,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			switch (op)
 			{
 			default:
+				I_FatalError("JIT error: Unknown VM opcode %d\n", op);
 				break;
 
 			case OP_NOP: // no operation
@@ -885,15 +922,69 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 
 			// Double-precision floating point math.
 			case OP_ADDF_RR: // fA = fB + fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.addsd(regF[a], regF[C]);
+				break;
 			case OP_ADDF_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.addsd(regF[a], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_SUBF_RR: // fA = fkB - fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.subsd(regF[a], regF[C]);
+				break;
 			case OP_SUBF_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.subsd(regF[a], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_SUBF_KR:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.movsd(regF[a], x86::qword_ptr(tmp));
+				cc.subsd(regF[a], regF[B]);
+				break;
+			}
 			case OP_MULF_RR: // fA = fB * fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.mulsd(regF[a], regF[C]);
+				break;
 			case OP_MULF_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.mulsd(regF[a], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_DIVF_RR: // fA = fkB / fkC
+				cc.movsd(regF[a], regF[B]);
+				cc.divsd(regF[a], regF[C]);
+				break;
 			case OP_DIVF_RK:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.movsd(regF[a], regF[B]);
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.divsd(regF[a], x86::qword_ptr(tmp));
+				break;
+			}
 			case OP_DIVF_KR:
+			{
+				auto tmp = cc.newIntPtr();
+				cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+				cc.movsd(regF[a], x86::qword_ptr(tmp));
+				cc.divsd(regF[a], regF[B]);
+				break;
+			}
 			case OP_MODF_RR: // fA = fkB % fkC
 			case OP_MODF_RK:
 			case OP_MODF_KR:

@@ -73,8 +73,8 @@ struct FDrawInfo : public HWDrawInfo
 
 	// Flat drawer
 	void DrawFlat(GLFlat *flat, int pass, bool trans) override;	// trans only has meaning for GLPASS_LIGHTSONLY
-	void DrawSkyboxSector(GLFlat *flat, int pass, bool processlights);
-	void DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans);
+	void DrawSkyboxSector(GLFlat *flat, int pass);
+	void DrawSubsectors(GLFlat *flat, int pass, bool istrans);
 	void DrawSubsector(GLFlat *flat, subsector_t * sub);
 
 	// Sprite drawer

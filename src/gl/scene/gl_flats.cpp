@@ -105,7 +105,7 @@ void FDrawInfo::DrawSubsector(GLFlat *flat, subsector_t * sub)
 //
 //==========================================================================
 
-void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool istrans)
+void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 {
 	int dli = flat->dynlightindex;
 	auto vcount = flat->sector->ibocount;
@@ -113,7 +113,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 	gl_RenderState.Apply();
 	auto iboindex = flat->iboindex;
 
-	if (processlights) gl_RenderState.ApplyLightIndex(flat->dynlightindex);
+	gl_RenderState.ApplyLightIndex(flat->dynlightindex);
 
 	if (iboindex >= 0)
 	{
@@ -167,7 +167,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 
 		while (node)
 		{
-			if (processlights) gl_RenderState.ApplyLightIndex(node->lightindex);
+			gl_RenderState.ApplyLightIndex(node->lightindex);
 			DrawSubsector(flat, node->sub);
 			node = node->next;
 		}
@@ -181,10 +181,11 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool processlights, bool 
 //
 //==========================================================================
 
-void FDrawInfo::DrawSkyboxSector(GLFlat *flat, int pass, bool processlights)
+void FDrawInfo::DrawSkyboxSector(GLFlat *flat, int pass)
 {
 	FQuadDrawer qd;
 	flat->CreateSkyboxVertices(qd.Pointer());
+	gl_RenderState.ApplyLightIndex(flat->dynlightindex);
 	qd.Render(GL_TRIANGLE_FAN);
 
 	flatvertices += 4;
@@ -202,7 +203,6 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 	int rel = getExtraLight();
 
 	auto &plane = flat->plane;
-    auto processLights = level.HasDynamicLights && !isFullbrightScene();
 	gl_RenderState.SetNormal(plane.plane.Normal().X, plane.plane.Normal().Z, plane.plane.Normal().Y);
 	GLRenderer->mModelMatrix->Bind(0);
 
@@ -217,13 +217,13 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), false);
+			DrawSubsectors(flat, pass, false);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		else
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			DrawSkyboxSector(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1));
+			DrawSkyboxSector(flat, pass);
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;
@@ -238,7 +238,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		{
 			gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.EnableTexture(false);
-			DrawSubsectors(flat, pass, false, true);
+			DrawSubsectors(flat, pass, true);
 			gl_RenderState.EnableTexture(true);
 		}
 		else 
@@ -247,7 +247,7 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
 			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
-			DrawSubsectors(flat, pass, processLights && (gl.lightmethod == LM_DIRECT || flat->dynlightindex > -1), true);
+			DrawSubsectors(flat, pass, true);
 			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

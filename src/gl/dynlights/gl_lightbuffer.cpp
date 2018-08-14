@@ -50,7 +50,7 @@ FLightBuffer::FLightBuffer()
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
 		mBlockAlign = 0;
-		mBlockSize = mBufferSize / ELEMENT_SIZE;
+		mBlockSize = mBufferSize;
 		mMaxUploadSize = mBlockSize;
 	}
 	else

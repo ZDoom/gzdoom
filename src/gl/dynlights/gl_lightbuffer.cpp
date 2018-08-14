@@ -32,13 +32,17 @@
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
 #include "hwrenderer/data/shaderuniforms.h"
 
-static const int INITIAL_BUFFER_SIZE = 160000;	// This means 80000 lights per frame and 160000*16 bytes == 2.56 MB.
+static const int ELEMENTS_PER_LIGHT = 4;			// each light needs 4 vec4's.
+static const int ELEMENT_SIZE = (4*sizeof(float));
+
 
 FLightBuffer::FLightBuffer()
 {
-
-	mBufferSize = INITIAL_BUFFER_SIZE;
-	mByteSize = mBufferSize * sizeof(float);
+	int maxNumberOfLights = gl.lightmethod ==  LM_DIRECT? 80000 : 40000;
+	
+	mBufferSize = maxNumberOfLights * ELEMENTS_PER_LIGHT;
+	mByteSize = mBufferSize * ELEMENT_SIZE;
+	
 	// Hack alert: On Intel's GL driver SSBO's perform quite worse than UBOs.
 	// We only want to disable using SSBOs for lights but not disable the feature entirely.
 	// Note that using an uniform buffer here will limit the number of lights per surface so it isn't done for NVidia and AMD.
@@ -46,15 +50,16 @@ FLightBuffer::FLightBuffer()
 	{
 		mBufferType = GL_SHADER_STORAGE_BUFFER;
 		mBlockAlign = 0;
-		mBlockSize = mBufferSize;
+		mBlockSize = mBufferSize / ELEMENT_SIZE;
+		mMaxUploadSize = mBlockSize;
 	}
 	else
 	{
 		mBufferType = GL_UNIFORM_BUFFER;
-		mBlockSize = gl.maxuniformblock / 16;
-		if (mBlockSize > 2048) mBlockSize = 2048;	// we don't really need a larger buffer
-
-		mBlockAlign = mBlockSize / 2;
+		mBlockSize = gl.maxuniformblock / ELEMENT_SIZE;
+		mBlockAlign = gl.uniformblockalignment / ELEMENT_SIZE;
+		mMaxUploadSize = (mBlockSize - mBlockAlign);
+		mByteSize += gl.maxuniformblock;	// to avoid mapping beyond the end of the buffer.
 	}
 
 	glGenBuffers(1, &mBufferId);
@@ -84,96 +89,50 @@ FLightBuffer::~FLightBuffer()
 void FLightBuffer::Clear()
 {
 	mIndex = 0;
-	mUploadIndex = 0;
 }
 
 int FLightBuffer::UploadLights(FDynLightData &data)
 {
+	// All meaasurements here are in vec4's.
 	int size0 = data.arrays[0].Size()/4;
 	int size1 = data.arrays[1].Size()/4;
 	int size2 = data.arrays[2].Size()/4;
 	int totalsize = size0 + size1 + size2 + 1;
 
-	// pointless type casting because some compilers can't print enough warnings.
-	if (mBlockAlign > 0 && (unsigned int)totalsize + (mIndex % mBlockAlign) > mBlockSize)
+	if (totalsize > (int)mMaxUploadSize)
 	{
-		mIndex = ((mIndex + mBlockAlign) / mBlockAlign) * mBlockAlign;
-
-		// can't be rendered all at once.
-		if ((unsigned int)totalsize > mBlockSize)
+		int diff = totalsize - (int)mMaxUploadSize;
+		
+		size2 -= diff;
+		if (size2 < 0)
 		{
-			int diff = totalsize - (int)mBlockSize;
-
-			size2 -= diff;
-			if (size2 < 0)
-			{
-				size1 += size2;
-				size2 = 0;
-			}
-			if (size1 < 0)
-			{
-				size0 += size1;
-				size1 = 0;
-			}
-			totalsize = size0 + size1 + size2 + 1;
+			size1 += size2;
+			size2 = 0;
 		}
+		if (size1 < 0)
+		{
+			size0 += size1;
+			size1 = 0;
+		}
+		totalsize = size0 + size1 + size2 + 1;
 	}
 
-	if (totalsize <= 1) return -1;
+	assert(mBufferPointer != nullptr);
+	if (mBufferPointer == nullptr) return -1;
 
-	if (mIndex + totalsize > mBufferSize/4)
-	{
-		// reallocate the buffer with twice the size
-		unsigned int newbuffer;
+	if (totalsize <= 4 || mIndex + totalsize > mBufferSize) return -1;
+	auto thisindex = mIndex.fetch_add(totalsize);
+	if (thisindex + totalsize > mBufferSize) return -1;	// must retest because another thread might have changed mIndex.
 
-		// first unmap the old buffer
-		glBindBuffer(mBufferType, mBufferId);
-		glUnmapBuffer(mBufferType);
-
-		// create and bind the new buffer, bind the old one to a copy target (too bad that DSA is not yet supported well enough to omit this crap.)
-		glGenBuffers(1, &newbuffer);
-		glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, newbuffer);
-		glBindBuffer(mBufferType, newbuffer);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
-		glBindBuffer(GL_COPY_READ_BUFFER, mBufferId);
-
-		// create the new buffer's storage (twice as large as the old one)
-		mBufferSize *= 2;
-		mByteSize *= 2;
-		if (gl.lightmethod == LM_DIRECT)
-		{
-			glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-			mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
-		}
-		else
-		{
-			glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
-			mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
-		}
-
-		// copy contents and delete the old buffer.
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, mBufferType, 0, 0, mByteSize/2);
-		glBindBuffer(GL_COPY_READ_BUFFER, 0);
-		glDeleteBuffers(1, &mBufferId);
-		mBufferId = newbuffer;
-	}
-
-	float *copyptr;
-	
-	assert(mBufferPointer != NULL);
-	if (mBufferPointer == NULL) return -1;
-	copyptr = mBufferPointer + mIndex * 4;
+	float *copyptr = mBufferPointer + thisindex*4;
 
 	float parmcnt[] = { 0, float(size0), float(size0 + size1), float(size0 + size1 + size2) };
+	memcpy(&copyptr[0], parmcnt, ELEMENT_SIZE);
+	memcpy(&copyptr[4], &data.arrays[0][0], size0 * ELEMENT_SIZE);
+	memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], size1 * ELEMENT_SIZE);
+	memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], size2 * ELEMENT_SIZE);
 
-	memcpy(&copyptr[0], parmcnt, 4 * sizeof(float));
-	memcpy(&copyptr[4], &data.arrays[0][0], 4 * size0*sizeof(float));
-	memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], 4 * size1*sizeof(float));
-	memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], 4 * size2*sizeof(float));
-
-	unsigned int bufferindex = mIndex;
-	mIndex += totalsize;
-	draw_dlight += (totalsize-1) / 2;
-	return bufferindex;
+	return thisindex;
 }
 
 void FLightBuffer::Begin()
@@ -203,7 +162,7 @@ int FLightBuffer::BindUBO(unsigned int index)
 	{
 		// this will only get called if a uniform buffer is used. For a shader storage buffer we only need to bind the buffer once at the start to all shader programs
 		mLastMappedIndex = offset;
-		glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTBUF_BINDINGPOINT, mBufferId, offset*16, mBlockSize*16);	// we go from counting vec4's to counting bytes here.
+		glBindBufferRange(GL_UNIFORM_BUFFER, LIGHTBUF_BINDINGPOINT, mBufferId, offset * ELEMENT_SIZE, mBlockSize * ELEMENT_SIZE);
 	}
 	return (index - offset);
 }

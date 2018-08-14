@@ -203,9 +203,9 @@ if( MSVC )
 	# Avoid CRT DLL dependancies in release builds, optionally generate assembly output for checking crash locations.
 	option( ZDOOM_GENERATE_ASM "Generate assembly output." OFF )
 	if( ZDOOM_GENERATE_ASM )
-		set( REL_C_FLAGS "/MT /Oy /Oi /FAcs" )
+		set( REL_C_FLAGS "/MT /Oy /Oi /FAcs /GS-" )
 	else()
-		set( REL_C_FLAGS "/MT /Oy /Oi" )
+		set( REL_C_FLAGS "/MT /Oy /Oi /GS-" )
 	endif()
 
 	

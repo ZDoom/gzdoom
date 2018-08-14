@@ -309,12 +309,19 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		*/
 
 		int size = sfunc->CodeSize;
+
+		TArray<Label> labels(size, true);
+
+		for (int i = 0; i < size; i++) labels[i] = cc.newLabel();
+
 		for (int i = 0; i < size; i++)
 		{
 			const VMOP *pc = sfunc->Code + i;
 			VM_UBYTE op = pc->op;
 			int a = pc->a;
 			int b;// , c;
+
+			cc.bind(labels[i]);
 
 			switch (op)
 			{
@@ -905,6 +912,29 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.not_(regD[a]);
 				break;
 			case OP_EQ_R: // if ((dB == dkC) != A) then pc++
+			{
+				Label elseLabel = cc.newLabel();
+
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+
+				cc.cmp(regD[B], regD[C]);
+				cc.sete(tmp0);
+
+				cc.mov(tmp1, A);
+				cc.and_(tmp1, CMP_CHECK);
+				cc.setz(tmp1);
+
+				cc.cmp(tmp0, tmp1);
+				cc.je(elseLabel);
+
+				cc.jmp(labels[i + 2 + JMPOFS(pc + 1)]);
+
+				cc.bind(elseLabel);
+				cc.jmp(labels[i + 2]);
+
+				break;
+			}
 			case OP_EQ_K:
 			case OP_LT_RR: // if ((dkB < dkC) != A) then pc++
 			case OP_LT_RK:

@@ -38,7 +38,7 @@ static const int ELEMENT_SIZE = (4*sizeof(float));
 
 FLightBuffer::FLightBuffer()
 {
-	int maxNumberOfLights = gl.lightmethod ==  LM_DIRECT? 80000 : 40000;
+	int maxNumberOfLights = 40000;
 	
 	mBufferSize = maxNumberOfLights * ELEMENTS_PER_LIGHT;
 	mByteSize = mBufferSize * ELEMENT_SIZE;
@@ -91,6 +91,56 @@ void FLightBuffer::Clear()
 	mIndex = 0;
 }
 
+void FLightBuffer::CheckSize()
+{
+	// reallocate the buffer with twice the size
+	unsigned int newbuffer;
+	
+	// first unmap the old buffer
+	glBindBuffer(mBufferType, mBufferId);
+	glUnmapBuffer(mBufferType);
+	
+	// create and bind the new buffer, bind the old one to a copy target (too bad that DSA is not yet supported well enough to omit this crap.)
+	glGenBuffers(1, &newbuffer);
+	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, newbuffer);
+	glBindBuffer(mBufferType, newbuffer);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
+	glBindBuffer(GL_COPY_READ_BUFFER, mBufferId);
+	
+	// create the new buffer's storage (twice as large as the old one)
+	int oldbytesize = mByteSize;
+	unsigned int bufferbytesize = mBufferedData.Size() * 4;
+	if (bufferbytesize > mByteSize)
+	{
+		mByteSize += bufferbytesize;
+	}
+	else
+	{
+		mByteSize *= 2;
+	}
+	mBufferSize = mByteSize / ELEMENT_SIZE;
+
+	if (gl.lightmethod == LM_DIRECT)
+	{
+		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+	}
+	else
+	{
+		glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
+		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT|GL_MAP_INVALIDATE_BUFFER_BIT);
+	}
+	
+	// copy contents and delete the old buffer.
+	glCopyBufferSubData(GL_COPY_READ_BUFFER, mBufferType, 0, 0, mByteSize/2);
+	glBindBuffer(GL_COPY_READ_BUFFER, 0);
+	glDeleteBuffers(1, &mBufferId);
+	mBufferId = newbuffer;
+	Begin();
+	memcpy(mBufferPointer + mBlockSize*4, &mBufferedData[0], bufferbytesize);
+	mBufferedData.Clear();
+	Finish();
+}
+
 int FLightBuffer::UploadLights(FDynLightData &data)
 {
 	// All meaasurements here are in vec4's.
@@ -119,20 +169,34 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 
 	assert(mBufferPointer != nullptr);
 	if (mBufferPointer == nullptr) return -1;
-
-	if (totalsize <= 4 || mIndex + totalsize > mBufferSize) return -1;
-	auto thisindex = mIndex.fetch_add(totalsize);
-	if (thisindex + totalsize > mBufferSize) return -1;	// must retest because another thread might have changed mIndex.
-
-	float *copyptr = mBufferPointer + thisindex*4;
-
+	if (totalsize <= 1) return -1;	// there are no lights
+	
+	unsigned thisindex = mIndex.fetch_add(totalsize);
 	float parmcnt[] = { 0, float(size0), float(size0 + size1), float(size0 + size1 + size2) };
-	memcpy(&copyptr[0], parmcnt, ELEMENT_SIZE);
-	memcpy(&copyptr[4], &data.arrays[0][0], size0 * ELEMENT_SIZE);
-	memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], size1 * ELEMENT_SIZE);
-	memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], size2 * ELEMENT_SIZE);
 
-	return thisindex;
+	if (thisindex + totalsize <= mBufferSize)
+	{
+		float *copyptr = mBufferPointer + thisindex*4;
+		
+		memcpy(&copyptr[0], parmcnt, ELEMENT_SIZE);
+		memcpy(&copyptr[4], &data.arrays[0][0], size0 * ELEMENT_SIZE);
+		memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], size1 * ELEMENT_SIZE);
+		memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], size2 * ELEMENT_SIZE);
+		return thisindex;
+	}
+	else
+	{
+		// The buffered data always starts at the old buffer's end to avoid more extensive synchronization.
+		std::lock_guard<std::mutex> lock(mBufferMutex);
+		auto index = mBufferedData.Reserve(totalsize);
+		float *copyptr =&mBufferedData[index];
+		// The copy operation must be inside the mutexed block of code here!
+		memcpy(&copyptr[0], parmcnt, ELEMENT_SIZE);
+		memcpy(&copyptr[4], &data.arrays[0][0], size0 * ELEMENT_SIZE);
+		memcpy(&copyptr[4 + 4*size0], &data.arrays[1][0], size1 * ELEMENT_SIZE);
+		memcpy(&copyptr[4 + 4*(size0 + size1)], &data.arrays[2][0], size2 * ELEMENT_SIZE);
+		return mBufferSize + index;
+	}
 }
 
 void FLightBuffer::Begin()
@@ -152,6 +216,7 @@ void FLightBuffer::Finish()
 		glUnmapBuffer(mBufferType);
 		mBufferPointer = NULL;
 	}
+	if (mBufferedData.Size() > 0) CheckSize();
 }
 
 int FLightBuffer::BindUBO(unsigned int index)

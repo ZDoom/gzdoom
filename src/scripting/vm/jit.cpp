@@ -8,6 +8,7 @@
 
 #include <asmjit/asmjit.h>
 #include <asmjit/x86.h>
+#include <functional>
 
 class AsmJitException : public std::exception
 {
@@ -221,6 +222,29 @@ static bool CanJit(VMScriptFunction *sfunc)
 	return true;
 }
 
+template <typename Func>
+void emitComparisonOpcode(asmjit::X86Compiler& cc, const TArray<asmjit::Label>& labels, const VMOP* pc, int i, Func compFunc) {
+	using namespace asmjit;
+
+	Label elseLabel = cc.newLabel();
+
+	auto tmp0 = cc.newInt32();
+	auto tmp1 = cc.newInt32();
+
+	compFunc(tmp0);
+
+	cc.mov(tmp1, A);
+	cc.and_(tmp1, CMP_CHECK);
+
+	cc.cmp(tmp0, tmp1);
+	cc.jne(elseLabel);
+
+	cc.jmp(labels[i + 2 + JMPOFS(pc + 1)]);
+
+	cc.bind(elseLabel);
+	cc.jmp(labels[i + 2]);
+}
+
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
 #if 0 // For debugging
@@ -309,12 +333,19 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 		*/
 
 		int size = sfunc->CodeSize;
+
+		TArray<Label> labels(size, true);
+
+		for (int i = 0; i < size; i++) labels[i] = cc.newLabel();
+
 		for (int i = 0; i < size; i++)
 		{
 			const VMOP *pc = sfunc->Code + i;
 			VM_UBYTE op = pc->op;
 			int a = pc->a;
 			int b;// , c;
+
+			cc.bind(labels[i]);
 
 			switch (op)
 			{
@@ -905,20 +936,153 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				cc.not_(regD[a]);
 				break;
 			case OP_EQ_R: // if ((dB == dkC) != A) then pc++
-			case OP_EQ_K:
-			case OP_LT_RR: // if ((dkB < dkC) != A) then pc++
-			case OP_LT_RK:
-			case OP_LT_KR:
-			case OP_LE_RR: // if ((dkB <= dkC) != A) then pc++
-			case OP_LE_RK:
-			case OP_LE_KR:
-			case OP_LTU_RR: // if ((dkB < dkC) != A) then pc++		-- unsigned
-			case OP_LTU_RK:
-			case OP_LTU_KR:
-			case OP_LEU_RR: // if ((dkB <= dkC) != A) then pc++		-- unsigned
-			case OP_LEU_RK:
-			case OP_LEU_KR:
+			{
+				auto compLambda = [&] (X86Gp& result) {
+					cc.cmp(regD[B], regD[C]);
+					cc.sete(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
 				break;
+			}
+			case OP_EQ_K:
+			{
+				auto compLambda = [&] (X86Gp& result) { 
+					cc.cmp(regD[B], konstd[C]);
+					cc.sete(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LT_RR: // if ((dkB < dkC) != A) then pc++
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], regD[C]);
+					cc.setl(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LT_RK:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], konstd[C]);
+					cc.setl(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LT_KR:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
+					cc.cmp(x86::ptr(tmp), regD[B]);
+					cc.setl(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LE_RR: // if ((dkB <= dkC) != A) then pc++
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], regD[C]);
+					cc.setle(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LE_RK:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], konstd[C]);
+					cc.setle(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LE_KR:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
+					cc.cmp(x86::ptr(tmp), regD[B]);
+					cc.setle(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LTU_RR: // if ((dkB < dkC) != A) then pc++		-- unsigned
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], regD[C]);
+					cc.setb(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LTU_RK:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], konstd[C]);
+					cc.setb(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LTU_KR:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
+					cc.cmp(x86::ptr(tmp), regD[B]);
+					cc.setb(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LEU_RR: // if ((dkB <= dkC) != A) then pc++		-- unsigned
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], regD[C]);
+					cc.setbe(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LEU_RK:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.cmp(regD[B], konstd[C]);
+					cc.setbe(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
+			case OP_LEU_KR:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
+					cc.cmp(x86::ptr(tmp), regD[B]);
+					cc.setbe(result);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 
 			// Double-precision floating point math.
 			case OP_ADDF_RR: // fA = fB + fkC

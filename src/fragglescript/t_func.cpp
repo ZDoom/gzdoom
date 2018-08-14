@@ -2905,6 +2905,7 @@ void FParser::SF_MoveCamera(void)
 			else movepos = campos + movement.Resized(movespeed);
 			cam->SetOrigin(movepos, true);
 		}
+		else finishedmove = true;
 
 		DAngle targetangle = DAngle(floatvalue(t_argv[4])).Normalized360();
 		if (cam->Angles.Yaw != targetangle)
@@ -2940,6 +2941,7 @@ void FParser::SF_MoveCamera(void)
 			}
 			cam->SetAngle(anglenow, false);
 		}
+		else finishedangle = true;
 		t_return.value.i = !(finishedmove & finishedangle);
 		t_return.type = svt_int;
 	}

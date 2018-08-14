@@ -3,6 +3,7 @@
 
 #include "tarray.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include <atomic>
 
 class FLightBuffer
 {
@@ -10,13 +11,13 @@ class FLightBuffer
 	float * mBufferPointer;
 
 	unsigned int mBufferType;
-	unsigned int mIndex;
-	unsigned int mUploadIndex;
+    std::atomic<unsigned int> mIndex;
 	unsigned int mLastMappedIndex;
 	unsigned int mBlockAlign;
 	unsigned int mBlockSize;
 	unsigned int mBufferSize;
 	unsigned int mByteSize;
+    unsigned int mMaxUploadSize;
 
 public:
 

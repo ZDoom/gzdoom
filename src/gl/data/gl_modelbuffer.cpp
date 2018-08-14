@@ -31,14 +31,7 @@
 #include "gl_modelbuffer.h"
 #include "r_data/matrix.h"
 
-static const int INITIAL_BUFFER_SIZE = 256;	// that's 64 kb.
-
-struct ModelBufferData
-{
-	VSMatrix modelMatrix;
-	VSMatrix normalModelMatrix;
-	// normalModelMatrix[3][3] contains the interpolation factor, because this element does not affect anything relevant when multiplying with it.
-};
+static const int INITIAL_BUFFER_SIZE = 512;	// that's 128 kb.
 
 
 GLModelBuffer::GLModelBuffer()
@@ -87,26 +80,43 @@ void GLModelBuffer::Allocate()
 
 void GLModelBuffer::CheckSize()
 {
-	if (mUploadIndex >= mBufferSize)
+	assert (mBufferedData.Size() == (mUploadIndex - mBufferSize));
+	// reallocate the buffer with twice the size
+	unsigned int oldbuffer = mBufferId;
+	unsigned int oldsize = mBufferSize;
+	
+	if (mUploadIndex < mBufferSize * 2)
 	{
-		// reallocate the buffer with twice the size
-		unsigned int oldbuffer = mBufferId;
-
 		mBufferSize *= 2;
-		mByteSize *= 2;
-		
-		// first unmap the old buffer
-		glBindBuffer(mBufferType, mBufferId);
-		glUnmapBuffer(mBufferType);
-		
-		Allocate();
-		glBindBuffer(GL_COPY_READ_BUFFER, oldbuffer);
-
-		// copy contents and delete the old buffer.
-		glCopyBufferSubData(GL_COPY_READ_BUFFER, mBufferType, 0, 0, mByteSize / 2);	// old size is half of the current one.
-		glBindBuffer(GL_COPY_READ_BUFFER, 0);
-		glDeleteBuffers(1, &oldbuffer);
 	}
+	else
+	{
+		mBufferSize = mUploadIndex + 1;
+	}
+	mByteSize = mBufferSize * mBlockAlign;
+	
+	// first unmap the old buffer
+	glBindBuffer(mBufferType, mBufferId);
+	glUnmapBuffer(mBufferType);
+	
+	Allocate();
+	glBindBuffer(GL_COPY_READ_BUFFER, oldbuffer);
+	
+	// copy contents and delete the old buffer.
+	glCopyBufferSubData(GL_COPY_READ_BUFFER, mBufferType, 0, 0, mByteSize / 2);	// old size is half of the current one.
+	glBindBuffer(GL_COPY_READ_BUFFER, 0);
+	glDeleteBuffers(1, &oldbuffer);
+	
+	Map();
+	for(auto &md : mBufferedData)
+	{
+		auto writeptr = (ModelBufferData *) (((char*)mBufferPointer) + mBlockAlign * oldsize);
+		*writeptr = md;
+		oldsize++;
+	}
+	mBufferedData.Clear();
+	Unmap();
+	
 }
 
 void GLModelBuffer::Map()
@@ -126,21 +136,34 @@ void GLModelBuffer::Unmap()
 		glUnmapBuffer(mBufferType);
 		mBufferPointer = nullptr;
 	}
+	if (mUploadIndex >= mBufferSize) CheckSize();
 }
 
 int GLModelBuffer::Upload(VSMatrix *mat, float factor)
 {
 	assert(mBufferPointer != nullptr);	// May only be called when the buffer is mapped.
-	CheckSize();
+	if (mBufferPointer == nullptr) return 0;
 	
-	VSMatrix norm;
-	norm.computeNormalMatrix(*mat);
-	norm.setElement(3, 3, factor);
+	ModelBufferData mdata;
+	mdata.modelMatrix = *mat;
+	mdata.normalModelMatrix.computeNormalMatrix(*mat);
+	mdata.normalModelMatrix.setElement(3, 3, factor);
+
+	auto ui = mUploadIndex.fetch_add(1);
+	// In a multithreaded context this cannot reallocate the buffer, so we have to store the data in an intermediate buffer,
+	// until the CheckSize function can do the actual reallocation on the main thread.
+	if (ui >= mBufferSize)
+	{
+		// This code is not thread safe and must be mutexed.
+		std::lock_guard<std::mutex> lock(mBufferMutex);
+		auto ndx = mBufferedData.Size();
+		mBufferedData.Push(mdata);
+		return mBufferSize + ndx;
+	}
 	
-	auto writeptr = (ModelBufferData *) (((char*)mBufferPointer) + mBlockAlign * mUploadIndex);
-	writeptr->modelMatrix = *mat;
-	writeptr->normalModelMatrix = norm;
-	return mUploadIndex++;
+	auto writeptr = (ModelBufferData *) (((char*)mBufferPointer) + mBlockAlign * ui);
+	*writeptr = mdata;
+	return ui;
 }
 
 void GLModelBuffer::Clear()
@@ -148,4 +171,5 @@ void GLModelBuffer::Clear()
 	// Index 0 is reserved for the identity rotation.
 	mUploadIndex = 1;
 }
+
 

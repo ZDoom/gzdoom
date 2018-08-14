@@ -8,12 +8,12 @@ class GLViewpointBuffer
 	unsigned int mBufferId;
 	unsigned int mBufferSize;
 	unsigned int mBlockAlign;
-	unsigned int mUploadIndex;
+    unsigned int mUploadIndex;
 	unsigned int mLastMappedIndex;
 	unsigned int mByteSize;
 	void * mBufferPointer;
 	
-	unsigned int m2DWidth = ~0u, m2DHeight = ~0u;
+	int m2DWidth = -1, m2DHeight = -1;
 
 	unsigned int mBlockSize;
 

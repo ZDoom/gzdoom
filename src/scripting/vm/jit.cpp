@@ -226,23 +226,17 @@ template <typename Func>
 void emitComparisonOpcode(asmjit::X86Compiler& cc, const TArray<asmjit::Label>& labels, const VMOP* pc, int i, Func compFunc) {
 	using namespace asmjit;
 
-	Label elseLabel = cc.newLabel();
+	auto tmp = cc.newInt32();
 
-	auto tmp0 = cc.newInt32();
-	auto tmp1 = cc.newInt32();
+	compFunc(tmp);
 
-	compFunc(tmp0);
+	bool check = static_cast<bool>(A & CMP_CHECK);
 
-	cc.mov(tmp1, A);
-	cc.and_(tmp1, CMP_CHECK);
-
-	cc.cmp(tmp0, tmp1);
-	cc.jne(elseLabel);
+	cc.test(tmp, tmp);
+	if (check) cc.je (labels[i + 2]);
+	else       cc.jne(labels[i + 2]);
 
 	cc.jmp(labels[i + 2 + JMPOFS(pc + 1)]);
-
-	cc.bind(elseLabel);
-	cc.jmp(labels[i + 2]);
 }
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
@@ -979,8 +973,8 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
-					cc.cmp(x86::ptr(tmp), regD[B]);
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[B])));
+					cc.cmp(x86::ptr(tmp), regD[C]);
 					cc.setl(result);
 				};
 				emitComparisonOpcode(cc, labels, pc, i, compLambda);
@@ -1011,8 +1005,8 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
-					cc.cmp(x86::ptr(tmp), regD[B]);
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[B])));
+					cc.cmp(x86::ptr(tmp), regD[C]);
 					cc.setle(result);
 				};
 				emitComparisonOpcode(cc, labels, pc, i, compLambda);
@@ -1043,8 +1037,8 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			{
 				auto compLambda = [&](X86Gp& result) {
 					auto tmp = cc.newIntPtr();
-					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[C])));
-					cc.cmp(x86::ptr(tmp), regD[B]);
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstd[B])));
+					cc.cmp(x86::ptr(tmp), regD[C]);
 					cc.setb(result);
 				};
 				emitComparisonOpcode(cc, labels, pc, i, compLambda);
@@ -1162,13 +1156,118 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			case OP_ATAN2: // fA = atan2(fB,fC), result is in degrees
 			case OP_FLOP: // fA = f(fB), where function is selected by C
 			case OP_EQF_R: // if ((fB == fkC) != (A & 1)) then pc++
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto tmp = cc.newInt32();
+					cc.ucomisd(regF[B], regF[C]);
+					cc.sete(result);
+					cc.setnp(tmp);
+					cc.and_(result, tmp);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 			case OP_EQF_K:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto konstTmp = cc.newIntPtr();
+					auto parityTmp = cc.newInt32();
+					cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+
+					cc.ucomisd(regF[B], x86::qword_ptr(konstTmp));
+					cc.sete(result);
+					cc.setnp(parityTmp);
+					cc.and_(result, parityTmp);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 			case OP_LTF_RR: // if ((fkB < fkC) != (A & 1)) then pc++
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.ucomisd(regF[C], regF[B]);
+					cc.seta(result);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 			case OP_LTF_RK:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto constTmp = cc.newIntPtr();
+					auto xmmTmp = cc.newXmmSd();
+					cc.mov(constTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+					cc.movsd(xmmTmp, x86::qword_ptr(constTmp));
+
+					cc.ucomisd(xmmTmp, regF[B]);
+					cc.seta(result);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 			case OP_LTF_KR:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[B])));
+
+					cc.ucomisd(regF[C], x86::qword_ptr(tmp));
+					cc.seta(result);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 			case OP_LEF_RR: // if ((fkb <= fkC) != (A & 1)) then pc++
+			{
+				auto compLambda = [&](X86Gp& result) {
+					cc.ucomisd(regF[C], regF[B]);
+					cc.setae(result);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 			case OP_LEF_RK:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto constTmp = cc.newIntPtr();
+					auto xmmTmp = cc.newXmmSd();
+					cc.mov(constTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+					cc.movsd(xmmTmp, x86::qword_ptr(constTmp));
+
+					cc.ucomisd(xmmTmp, regF[B]);
+					cc.setae(result);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 			case OP_LEF_KR:
+			{
+				auto compLambda = [&](X86Gp& result) {
+					auto tmp = cc.newIntPtr();
+					cc.mov(tmp, reinterpret_cast<ptrdiff_t>(&(konstf[B])));
+
+					cc.ucomisd(regF[C], x86::qword_ptr(tmp));
+					cc.setae(result);
+					cc.and_(result, 1);
+				};
+				emitComparisonOpcode(cc, labels, pc, i, compLambda);
+
+				break;
+			}
 				break;
 
 			// Vector math. (2D)

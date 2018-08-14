@@ -226,16 +226,15 @@ template <typename Func>
 void emitComparisonOpcode(asmjit::X86Compiler& cc, const TArray<asmjit::Label>& labels, const VMOP* pc, int i, Func compFunc) {
 	using namespace asmjit;
 
-	auto tmp0 = cc.newInt32();
-	auto tmp1 = cc.newInt32();
+	auto tmp = cc.newInt32();
 
-	compFunc(tmp0);
+	compFunc(tmp);
 
-	cc.mov(tmp1, A);
-	cc.and_(tmp1, CMP_CHECK);
+	bool check = static_cast<bool>(A & CMP_CHECK);
 
-	cc.cmp(tmp0, tmp1);
-	cc.jne(labels[i + 2]);
+	cc.test(tmp, tmp);
+	if (check) cc.je (labels[i + 2]);
+	else       cc.jne(labels[i + 2]);
 
 	cc.jmp(labels[i + 2 + JMPOFS(pc + 1)]);
 }

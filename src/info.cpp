@@ -425,7 +425,9 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 			lookskill = false; skillrepname = NAME_None;
 		}
 	}
-	auto Replacement = ActorInfo()->Replacement;
+	// [MK] ZScript replacement through Event Handlers, has priority over others
+	PClassActor *Replacement = ActorInfo()->Replacement;
+	E_CheckReplacement(this,&Replacement);
 	if (Replacement == nullptr && (!lookskill || skillrepname == NAME_None))
 	{
 		return this;

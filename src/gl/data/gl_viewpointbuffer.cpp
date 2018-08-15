@@ -56,8 +56,8 @@ void GLViewpointBuffer::Allocate()
 	glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
 	if (gl.flags & RFL_BUFFER_STORAGE)
 	{
-		glBufferStorage(GL_UNIFORM_BUFFER, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
-		mBufferPointer = glMapBufferRange(GL_UNIFORM_BUFFER, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT);
+		glBufferStorage(GL_UNIFORM_BUFFER, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mBufferPointer = glMapBufferRange(GL_UNIFORM_BUFFER, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 	}
 	else
 	{
@@ -106,10 +106,6 @@ void GLViewpointBuffer::Unmap()
 		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
 		glUnmapBuffer(GL_UNIFORM_BUFFER);
 		mBufferPointer = nullptr;
-	}
-	else
-	{
-		glMemoryBarrier(GL_CLIENT_MAPPED_BUFFER_BARRIER_BIT);
 	}
 }
 

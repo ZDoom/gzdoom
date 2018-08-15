@@ -285,6 +285,12 @@ struct ConsoleEvent native version("2.4")
     native readonly bool IsManual;
 }
 
+struct ReplaceEvent native version("2.4")
+{
+	native readonly Class<Actor> Replacee;
+	native Class<Actor> Replacement;
+}
+
 class StaticEventHandler : Object native play version("2.4")
 {
     // static event handlers CAN register other static event handlers.
@@ -329,6 +335,9 @@ class StaticEventHandler : Object native play version("2.4")
     virtual native ui void ConsoleProcess(ConsoleEvent e);
     virtual native void NetworkProcess(ConsoleEvent e);
     
+    //
+    virtual native void CheckReplacement(ReplaceEvent e);
+
     // this value will be queried on Register() to decide the relative order of this handler to every other.
     // this is most useful in UI systems.
     // default is 0.

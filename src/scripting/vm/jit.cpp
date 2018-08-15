@@ -1461,18 +1461,38 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			case OP_ADDA_RR: // pA = pB + dkC
 			{
 				auto tmp = cc.newIntPtr();
+				Label label = cc.newLabel();
+
 				cc.mov(tmp, regA[B]);
+
+				// Check if zero, the first operand is zero, if it is, don't add.
+				cc.cmp(tmp, 0);
+				cc.je(label);
+
 				cc.add(tmp, regD[C]);
+
+				cc.bind(label);
 				cc.mov(regA[a], tmp);
+
 				break;
 			}
 
 			case OP_ADDA_RK:
 			{
 				auto tmp = cc.newIntPtr();
+				Label label = cc.newLabel();
+
 				cc.mov(tmp, regA[B]);
+
+				// Check if zero, the first operand is zero, if it is, don't add.
+				cc.cmp(tmp, 0);
+				cc.je(label);
+
 				cc.add(tmp, konstd[C]);
+
+				cc.bind(label);
 				cc.mov(regA[a], tmp);
+
 				break;
 			}
 

@@ -126,8 +126,8 @@ static bool CanJit(VMScriptFunction *sfunc)
 		case OP_SV3_R:
 		case OP_MOVE:
 		case OP_MOVEF:
-		case OP_MOVES:
-		case OP_MOVEA:
+		//case OP_MOVES:
+		//case OP_MOVEA:
 		case OP_MOVEV2:
 		case OP_MOVEV3:
 			break;
@@ -187,6 +187,20 @@ static bool CanJit(VMScriptFunction *sfunc)
 		//case OP_ABS:
 		case OP_NEG:
 		case OP_NOT:
+		case OP_EQ_R:
+		case OP_EQ_K:
+		case OP_LT_RR:
+		case OP_LT_RK:
+		case OP_LT_KR:
+		case OP_LE_RR:
+		case OP_LE_RK:
+		case OP_LE_KR:
+		case OP_LTU_RR:
+		case OP_LTU_RK:
+		case OP_LTU_KR:
+		case OP_LEU_RR:
+		case OP_LEU_RK:
+		case OP_LEU_KR:
 		case OP_ADDF_RR:
 		case OP_ADDF_RK:
 		case OP_SUBF_RR:
@@ -197,6 +211,14 @@ static bool CanJit(VMScriptFunction *sfunc)
 		case OP_DIVF_RR:
 		case OP_DIVF_RK:
 		case OP_DIVF_KR:
+		case OP_EQF_R:
+		case OP_EQF_K:
+		case OP_LTF_RR:
+		case OP_LTF_RK:
+		case OP_LTF_KR:
+		case OP_LEF_RR:
+		case OP_LEF_RK:
+		case OP_LEF_KR:
 		case OP_NEGV2:
 		case OP_ADDV2_RR:
 		case OP_SUBV2_RR:

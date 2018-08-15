@@ -295,7 +295,6 @@ class GLFlat
 {
 public:
 	sector_t * sector;
-	float dz; // z offset for rendering hacks
 	float z; // the z position of the flat (only valid for non-sloped planes)
 	FMaterial *gltexture;
 
@@ -351,6 +350,7 @@ public:
 	uint8_t foglevel;
 	uint8_t hw_styleflags;
 	bool fullbright;
+	bool polyoffset;
 	PalEntry ThingColor;	// thing's own color
 	FColormap Colormap;
 	FSpriteModelFrame * modelframe;

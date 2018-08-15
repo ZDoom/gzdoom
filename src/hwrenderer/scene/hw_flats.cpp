@@ -118,7 +118,6 @@ void GLFlat::CreateSkyboxVertices(FFlatVertex *vert)
 		if (y > maxy) maxy = y;
 	}
 
-	float z = plane.plane.ZatPoint(0., 0.) + dz;
 	static float uvals[] = { 0, 0, 1, 1 };
 	static float vvals[] = { 1, 0, 0, 1 };
 	int rot = -xs_FloorToInt(plane.Angle / 90.f);
@@ -231,11 +230,14 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 		lightlevel = abs(lightlevel);
 	}
 
-	// get height from vplane
-	if (whichplane == sector_t::floor && sector->transdoor) dz = -1;
-	else dz = 0;
-
 	z = plane.plane.ZatPoint(0.f, 0.f);
+	if (sector->special == GLSector_Skybox)
+	{
+		auto vert = di->AllocVertices(4);
+		CreateSkyboxVertices(vert.first);
+		iboindex = vert.second;
+	}
+
 	
 	PutFlat(di, fog);
 	rendered_flats++;

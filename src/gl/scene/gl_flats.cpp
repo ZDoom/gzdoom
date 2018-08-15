@@ -206,24 +206,6 @@ void FDrawInfo::ClearFloodStencil(int vindex)
 //
 //
 //==========================================================================
-
-void FDrawInfo::DrawSkyboxSector(GLFlat *flat, int pass)
-{
-	FQuadDrawer qd;
-	flat->CreateSkyboxVertices(qd.Pointer());
-	gl_RenderState.ApplyLightIndex(flat->dynlightindex);
-	qd.Render(GL_TRIANGLE_FAN);
-
-	flatvertices += 4;
-	flatprimitives++;
-}
-
-
-//==========================================================================
-//
-//
-//
-//==========================================================================
 void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has meaning for GLPASS_LIGHTSONLY
 {
 	int rel = getExtraLight();
@@ -248,7 +230,10 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		else
 		{
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_XY, 0, -1, false);
-			DrawSkyboxSector(flat, pass);
+			gl_RenderState.ApplyLightIndex(flat->dynlightindex);
+			glDrawArrays(GL_TRIANGLE_FAN, flat->iboindex, 4);
+			flatvertices += 4;
+			flatprimitives++;
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;

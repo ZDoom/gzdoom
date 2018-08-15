@@ -47,55 +47,6 @@
 #include "gl/scene/gl_drawinfo.h"
 #include "gl/renderer/gl_quaddrawer.h"
 
-//==========================================================================
-//
-//
-//
-//==========================================================================
-
-void FDrawInfo::DrawSubsector(GLFlat *flat, subsector_t * sub)
-{
-	if (gl.buffermethod != BM_DEFERRED)
-	{
-		FFlatVertex *ptr = GLRenderer->mVBO->GetBuffer();
-		for (unsigned int k = 0; k < sub->numlines; k++)
-		{
-			vertex_t *vt = sub->firstline[k].v1;
-			ptr->x = vt->fX();
-			ptr->z = flat->plane.plane.ZatPoint(vt) + flat->dz;
-			ptr->y = vt->fY();
-			ptr->u = vt->fX() / 64.f;
-			ptr->v = -vt->fY() / 64.f;
-			ptr++;
-		}
-		GLRenderer->mVBO->RenderCurrent(ptr, GL_TRIANGLE_FAN);
-	}
-	else
-	{
-		// if we cannot access the buffer, use the quad drawer as fallback by splitting the subsector into quads.
-		// Trying to get this into the vertex buffer in the processing pass is too costly and this is only used for render hacks.
-		FQuadDrawer qd;
-		unsigned int vi[4];
-
-		vi[0] = 0;
-		for (unsigned int i = 0; i < sub->numlines - 2; i += 2)
-		{
-			for (unsigned int j = 1; j < 4; j++)
-			{
-				vi[j] = MIN(i + j, sub->numlines - 1);
-			}
-			for (unsigned int x = 0; x < 4; x++)
-			{
-				vertex_t *vt = sub->firstline[vi[x]].v1;
-				qd.Set(x, vt->fX(), flat->plane.plane.ZatPoint(vt) + flat->dz, vt->fY(), vt->fX() / 64.f, -vt->fY() / 64.f);
-			}
-			qd.Render(GL_TRIANGLE_FAN);
-		}
-	}
-
-	flatvertices += sub->numlines;
-	flatprimitives++;
-}
 
 
 //==========================================================================
@@ -146,9 +97,9 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 		}
 	}
 
-	// Draw the subsectors assigned to it due to missing textures
 	if (!(flat->renderflags&SSRF_RENDER3DPLANES))
 	{
+		// Draw the subsectors assigned to it due to missing textures
 		gl_subsectorrendernode * node = (flat->renderflags&SSRF_RENDERFLOOR)?
 			GetOtherFloorPlanes(flat->sector->sectornum) :
 			GetOtherCeilingPlanes(flat->sector->sectornum);
@@ -156,12 +107,99 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 		while (node)
 		{
 			gl_RenderState.ApplyLightIndex(node->lightindex);
-			DrawSubsector(flat, node->sub);
+			auto num = node->sub->numlines;
+			flatvertices += num;
+			flatprimitives++;
+			glDrawArrays(GL_TRIANGLE_FAN, node->vertexindex, num);
 			node = node->next;
 		}
+		// Flood gaps with the back side's ceiling/floor texture
+		// This requires a stencil because the projected plane interferes with
+		// the depth buffer
+		gl_floodrendernode * fnode = (flat->renderflags&SSRF_RENDERFLOOR) ?
+			GetFloodFloorSegs(flat->sector->sectornum) :
+			GetFloodCeilingSegs(flat->sector->sectornum);
+
+		gl_RenderState.ApplyLightIndex(flat->dynlightindex);
+		while (fnode)
+		{
+			flatvertices += 12;
+			flatprimitives+=3;
+
+			// Push bleeding floor/ceiling textures back a little in the z-buffer
+			// so they don't interfere with overlapping mid textures.
+			glEnable(GL_POLYGON_OFFSET_FILL);
+			glPolygonOffset(1.0f, 128.0f);
+
+			SetupFloodStencil(fnode->vertexindex);
+			glDrawArrays(GL_TRIANGLE_FAN, fnode->vertexindex + 4, 4);
+			ClearFloodStencil(fnode->vertexindex);
+
+			glPolygonOffset(0.0f, 0.0f);
+			glDisable(GL_POLYGON_OFFSET_FILL);
+
+			fnode = fnode->next;
+		}
+
 	}
 }
 
+//==========================================================================
+//
+//
+//==========================================================================
+
+void FDrawInfo::SetupFloodStencil(int vindex)
+{
+	int recursion = GLRenderer->mPortalState.GetRecursion();
+
+	// Create stencil 
+	gl_RenderState.SetEffect(EFF_STENCIL);
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.Apply();
+
+	glStencilFunc(GL_EQUAL, recursion, ~0);		// create stencil
+	glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);		// increment stencil of valid pixels
+												
+	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
+
+	glDrawArrays(GL_TRIANGLE_FAN, vindex, 4);
+
+	glStencilFunc(GL_EQUAL, recursion + 1, ~0);		// draw sky into stencil
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);		// this stage doesn't modify the stencil
+
+	glColorMask(1, 1, 1, 1);						// don't write to the graphics buffer
+	glDisable(GL_DEPTH_TEST);
+	glDepthMask(false);
+	gl_RenderState.EnableTexture(true);
+	gl_RenderState.SetEffect(EFF_NONE);
+	gl_RenderState.Apply();
+}
+
+void FDrawInfo::ClearFloodStencil(int vindex)
+{
+	int recursion = GLRenderer->mPortalState.GetRecursion();
+
+	gl_RenderState.SetEffect(EFF_STENCIL);
+	gl_RenderState.EnableTexture(false);
+	gl_RenderState.Apply();
+	glStencilOp(GL_KEEP, GL_KEEP, GL_DECR);
+	// Use revertible color mask, to avoid stomping on anaglyph 3D state
+	glColorMask(0, 0, 0, 0);						// don't write to the graphics buffer
+
+	glDrawArrays(GL_TRIANGLE_FAN, vindex, 4);
+
+	// restore old stencil op.
+	glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+	glStencilFunc(GL_EQUAL, recursion, ~0);
+	glColorMask(1, 1, 1, 1);
+	glEnable(GL_DEPTH_TEST);
+	glDepthMask(true);
+	gl_RenderState.EnableTexture(true);
+	gl_RenderState.SetEffect(EFF_NONE);
+}
 
 //==========================================================================
 //

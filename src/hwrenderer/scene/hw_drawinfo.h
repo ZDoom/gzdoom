@@ -35,6 +35,15 @@ struct gl_subsectorrendernode
 	gl_subsectorrendernode *	next;
 	subsector_t *				sub;
 	int							lightindex;
+	int							vertexindex;
+};
+
+struct gl_floodrendernode
+{
+	gl_floodrendernode * next;
+	seg_t *seg;
+	int vertexindex;
+	// This will use the light list of the originating sector.
 };
 
 enum area_t : int;
@@ -123,6 +132,8 @@ struct HWDrawInfo
 
 	TArray<gl_subsectorrendernode*> otherfloorplanes;
 	TArray<gl_subsectorrendernode*> otherceilingplanes;
+	TArray<gl_floodrendernode*> floodfloorsegs;
+	TArray<gl_floodrendernode*> floodceilingsegs;
 
 	TArray<sector_t *> CeilingStacks;
 	TArray<sector_t *> FloorStacks;
@@ -162,7 +173,34 @@ private:
 	void RenderThings(subsector_t * sub, sector_t * sector);
 	void DoSubsector(subsector_t * sub);
 	int SetupLightsForOtherPlane(subsector_t * sub, FDynLightData &lightdata, const secplane_t *plane);
+	int CreateOtherPlaneVertices(subsector_t *sub, const secplane_t *plane);
 public:
+
+	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
+	{
+		if (sector<otherfloorplanes.Size()) return otherfloorplanes[sector];
+		else return nullptr;
+	}
+
+	gl_subsectorrendernode * GetOtherCeilingPlanes(unsigned int sector)
+	{
+		if (sector<otherceilingplanes.Size()) return otherceilingplanes[sector];
+		else return nullptr;
+	}
+
+	gl_floodrendernode * GetFloodFloorSegs(unsigned int sector)
+	{
+		if (sector<floodfloorsegs.Size()) return floodfloorsegs[sector];
+		else return nullptr;
+	}
+
+	gl_floodrendernode * GetFloodCeilingSegs(unsigned int sector)
+	{
+		if (sector<floodceilingsegs.Size()) return floodceilingsegs[sector];
+		else return nullptr;
+	}
+
+
 
 	void SetCameraPos(const DVector3 &pos)
 	{
@@ -209,7 +247,12 @@ public:
 	void AddUpperMissingTexture(side_t * side, subsector_t *sub, float backheight);
 	void AddLowerMissingTexture(side_t * side, subsector_t *sub, float backheight);
 	void HandleMissingTextures(area_t in_area);
-	void DrawUnhandledMissingTextures();
+	void PrepareUnhandledMissingTextures();
+	void PrepareUpperGap(seg_t * seg);
+	void PrepareLowerGap(seg_t * seg);
+	void CreateFloodPoly(wallseg * ws, FFlatVertex *vertices, float planez, sector_t * sec, bool ceiling);
+	void CreateFloodStencilPoly(wallseg * ws, FFlatVertex *vertices);
+
 	void AddHackedSubsector(subsector_t * sub);
 	void HandleHackedSubsectors();
 	void AddFloorStack(sector_t * sec);
@@ -236,8 +279,6 @@ public:
 	virtual void DrawFlat(GLFlat *flat, int pass, bool trans) = 0;
 	virtual void DrawSprite(GLSprite *sprite, int pass) = 0;
 
-	virtual void FloodUpperGap(seg_t * seg) = 0;
-	virtual void FloodLowerGap(seg_t * seg) = 0;
 	void ProcessLowerMinisegs(TArray<seg_t *> &lowersegs);
     virtual void AddSubsectorToPortal(FSectorPortalGroup *portal, subsector_t *sub) = 0;
     

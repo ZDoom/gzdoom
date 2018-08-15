@@ -128,6 +128,7 @@ void FDrawInfo::CreateScene()
 	HandleMissingTextures(in_area);	// Missing upper/lower textures
 	HandleHackedSubsectors();	// open sector hacks for deep water
 	ProcessSectorStacks(in_area);		// merge visplanes of sector stacks
+	PrepareUnhandledMissingTextures();
 	GLRenderer->mLights->Finish();
 	GLRenderer->mVBO->Unmap();
 
@@ -208,28 +209,10 @@ void FDrawInfo::RenderScene(int recursion)
 	DrawDecals();
 
 	gl_RenderState.SetTextureMode(TM_MODULATE);
-
-	glDepthMask(true);
-
-
-	// Push bleeding floor/ceiling textures back a little in the z-buffer
-	// so they don't interfere with overlapping mid textures.
-	glPolygonOffset(1.0f, 128.0f);
-
-	// Part 5: flood all the gaps with the back sector's flat texture
-	// This will always be drawn like GLDL_PLAIN, depending on the fog settings
-	
-	glDepthMask(false);							// don't write to Z-buffer!
-	gl_RenderState.EnableFog(true);
-	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
-	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
-	DrawUnhandledMissingTextures();
-	glDepthMask(true);
-
 	glPolygonOffset(0.0f, 0.0f);
 	glDisable(GL_POLYGON_OFFSET_FILL);
+	glDepthMask(true);
 	RenderAll.Unclock();
-
 }
 
 //-----------------------------------------------------------------------------

@@ -175,6 +175,8 @@ IVideo *gl_CreateVideo()
 SystemGLFrameBuffer::SystemGLFrameBuffer (void *, bool fullscreen)
 	: DFrameBuffer (vid_defwidth, vid_defheight)
 {
+	m_fsswitch = false;
+
 	// SDL_GetWindowBorderSize() is only available since 2.0.5, but because
 	// GZDoom supports platforms with older SDL2 versions, this function
 	// has to be dynamically loaded
@@ -334,8 +336,16 @@ void SystemGLFrameBuffer::ToggleFullscreen(bool yes)
 	SDL_SetWindowFullscreen(Screen, yes ? SDL_WINDOW_FULLSCREEN_DESKTOP : 0);
 	if ( !yes )
 	{
-		fullscreen = false;
-		SetWindowSize(win_w, win_h);
+		if ( !m_fsswitch )
+		{
+			m_fsswitch = true;
+			fullscreen = false;
+		}
+		else
+		{
+			m_fsswitch = false;
+			SetWindowSize(win_w, win_h);
+		}
 	}
 }
 
@@ -414,7 +424,7 @@ void ProcessSDLWindowEvent(const SDL_WindowEvent &event)
 		break;
 
 	case SDL_WINDOWEVENT_RESIZED:
-		if (!fullscreen)
+		if (!fullscreen && !(static_cast<SystemGLFrameBuffer *>(screen)->m_fsswitch))
 		{
 			win_w = event.data1;
 			win_h = event.data2;

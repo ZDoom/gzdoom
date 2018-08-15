@@ -31,6 +31,8 @@ public:
 	SDL_Window *GetSDLWindow() { return Screen; }
 	void GetWindowBordersSize(int &top, int &left);
 
+	bool m_fsswitch;
+
 protected:
 	void SetGammaTable(uint16_t *tbl);
 	void ResetGammaTable();

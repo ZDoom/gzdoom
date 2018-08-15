@@ -58,11 +58,11 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawDecalsForMirror(GLWall *wall);
 
 	void StartScene();
-	void SetupFloodStencil(wallseg * ws);
-	void ClearFloodStencil(wallseg * ws);
+	void SetupFloodStencil(int vindex);
+	void ClearFloodStencil(int vindex);
 	void DrawFloodedPlane(wallseg * ws, float planez, sector_t * sec, bool ceiling);
-	void FloodUpperGap(seg_t * seg) override;
-	void FloodLowerGap(seg_t * seg) override;
+	void FloodUpperGap(seg_t * seg);
+	void FloodLowerGap(seg_t * seg);
 
 	// Wall drawer
 	void RenderWall(GLWall *wall, int textured);
@@ -76,7 +76,6 @@ struct FDrawInfo : public HWDrawInfo
 	void DrawFlat(GLFlat *flat, int pass, bool trans) override;	// trans only has meaning for GLPASS_LIGHTSONLY
 	void DrawSkyboxSector(GLFlat *flat, int pass);
 	void DrawSubsectors(GLFlat *flat, int pass, bool istrans);
-	void DrawSubsector(GLFlat *flat, subsector_t * sub);
 
 	// Sprite drawer
 	void DrawSprite(GLSprite *sprite, int pass);
@@ -101,18 +100,6 @@ struct FDrawInfo : public HWDrawInfo
 	static FDrawInfo *StartDrawInfo(FRenderViewpoint &parentvp, HWViewpointUniforms *uniforms);
 	FDrawInfo *EndDrawInfo();
 	
-	gl_subsectorrendernode * GetOtherFloorPlanes(unsigned int sector)
-	{
-		if (sector<otherfloorplanes.Size()) return otherfloorplanes[sector];
-		else return NULL;
-	}
-	
-	gl_subsectorrendernode * GetOtherCeilingPlanes(unsigned int sector)
-	{
-		if (sector<otherceilingplanes.Size()) return otherceilingplanes[sector];
-		else return NULL;
-	}
-
 	void SetColor(int light, int rellight, const FColormap &cm, float alpha, bool weapon = false)
 	{
 		gl_SetColor(light, rellight, isFullbrightScene(), cm, alpha, weapon);

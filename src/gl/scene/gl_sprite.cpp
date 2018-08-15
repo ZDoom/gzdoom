@@ -252,7 +252,8 @@ void FDrawInfo::DrawSprite(GLSprite *sprite, int pass)
 			FVector3 v[4];
 			gl_RenderState.SetNormal(0, 0, 0);
             
-			if (sprite->CalculateVertices(this, v, &vp.Pos))
+			sprite->polyoffset = sprite->CalculateVertices(this, v, &vp.Pos);
+			if (sprite->polyoffset)
 			{
 				glEnable(GL_POLYGON_OFFSET_FILL);
 				glPolygonOffset(-1.0f, -128.0f);

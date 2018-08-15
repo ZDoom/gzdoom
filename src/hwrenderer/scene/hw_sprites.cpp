@@ -238,55 +238,6 @@ inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 //
 //==========================================================================
 
-void GLSprite::SplitSprite(HWDrawInfo *di, sector_t * frontsector, bool translucent)
-{
-	GLSprite copySprite;
-	double lightbottom;
-	unsigned int i;
-	bool put=false;
-	TArray<lightlist_t> & lightlist=frontsector->e->XFloor.lightlist;
-
-	for(i=0;i<lightlist.Size();i++)
-	{
-		// Particles don't go through here so we can safely assume that actor is not nullptr
-		if (i<lightlist.Size()-1) lightbottom=lightlist[i+1].plane.ZatPoint(actor);
-		else lightbottom=frontsector->floorplane.ZatPoint(actor);
-
-		if (lightbottom<z2) lightbottom=z2;
-
-		if (lightbottom<z1)
-		{
-			copySprite=*this;
-			copySprite.lightlevel = hw_ClampLight(*lightlist[i].p_lightlevel);
-			copySprite.Colormap.CopyLight(lightlist[i].extra_colormap);
-
-			if (level.flags3 & LEVEL3_NOCOLOREDSPRITELIGHTING)
-			{
-				copySprite.Colormap.Decolorize();
-			}
-
-			if (!ThingColor.isWhite())
-			{
-				copySprite.Colormap.LightColor.r = (copySprite.Colormap.LightColor.r*ThingColor.r) >> 8;
-				copySprite.Colormap.LightColor.g = (copySprite.Colormap.LightColor.g*ThingColor.g) >> 8;
-				copySprite.Colormap.LightColor.b = (copySprite.Colormap.LightColor.b*ThingColor.b) >> 8;
-			}
-
-			z1=copySprite.z2=lightbottom;
-			vt=copySprite.vb=copySprite.vt+ 
-				(lightbottom-copySprite.z1)*(copySprite.vb-copySprite.vt)/(z2-copySprite.z1);
-			copySprite.PutSprite(di, translucent);
-			put=true;
-		}
-	}
-}
-
-//==========================================================================
-//
-// 
-//
-//==========================================================================
-
 void GLSprite::PerformSpriteClipAdjustment(AActor *thing, const DVector2 &thingpos, float spriteheight)
 {
 	const float NO_VAL = 100000000.0f;
@@ -816,18 +767,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 	if (thing->Sector->e->XFloor.lightlist.Size() != 0 && !di->isFullbrightScene() && !fullbright &&
 		RenderStyle.BlendOp != STYLEOP_Shadow && RenderStyle.BlendOp != STYLEOP_RevSub)
 	{
-		if (screen->hwcaps & RFL_NO_CLIP_PLANES)	// on old hardware we are rather limited...
-		{
-			lightlist = nullptr;
-			if (!drawWithXYBillboard && !modelframe)
-			{
-				SplitSprite(di, thing->Sector, hw_styleflags != STYLEHW_Solid);
-			}
-		}
-		else
-		{
-			lightlist = &thing->Sector->e->XFloor.lightlist;
-		}
+		lightlist = &thing->Sector->e->XFloor.lightlist;
 	}
 	else
 	{

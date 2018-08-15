@@ -231,99 +231,6 @@ void GLWall::Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent
 	PutWall(di, translucent);
 }
 
-//==========================================================================
-//
-//  Splits a wall vertically if a 3D-floor
-//	creates different lighting across the wall
-//
-//==========================================================================
-
-bool GLWall::SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright)
-{
-	// check for an intersection with the upper plane
-	if ((maplightbottomleft<ztop[0] && maplightbottomright>ztop[1]) ||
-		(maplightbottomleft>ztop[0] && maplightbottomright<ztop[1]))
-	{
-		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
-
-		float dch = ztop[1] - ztop[0];
-		float dfh = maplightbottomright - maplightbottomleft;
-		float coeff = (ztop[0] - maplightbottomleft) / (dfh - dch);
-
-		// check for inaccuracies - let's be a little generous here!
-		if (coeff*clen<.1f)
-		{
-			maplightbottomleft = ztop[0];
-		}
-		else if (coeff*clen>clen - .1f)
-		{
-			maplightbottomright = ztop[1];
-		}
-		else
-		{
-			// split the wall in two at the intersection and recursively split both halves
-			GLWall copyWall1 = *this, copyWall2 = *this;
-
-			copyWall1.glseg.x2 = copyWall2.glseg.x1 = glseg.x1 + coeff * (glseg.x2 - glseg.x1);
-			copyWall1.glseg.y2 = copyWall2.glseg.y1 = glseg.y1 + coeff * (glseg.y2 - glseg.y1);
-			copyWall1.ztop[1] = copyWall2.ztop[0] = ztop[0] + coeff * (ztop[1] - ztop[0]);
-			copyWall1.zbottom[1] = copyWall2.zbottom[0] = zbottom[0] + coeff * (zbottom[1] - zbottom[0]);
-			copyWall1.glseg.fracright = copyWall2.glseg.fracleft = glseg.fracleft + coeff * (glseg.fracright - glseg.fracleft);
-			copyWall1.tcs[UPRGT].u = copyWall2.tcs[UPLFT].u = tcs[UPLFT].u + coeff * (tcs[UPRGT].u - tcs[UPLFT].u);
-			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
-			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
-			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
-
-			copyWall1.SplitWall(di, frontsector, translucent);
-			copyWall2.SplitWall(di, frontsector, translucent);
-			return true;
-		}
-	}
-
-	// check for an intersection with the lower plane
-	if ((maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
-		(maplightbottomleft>zbottom[0] && maplightbottomright<zbottom[1]))
-	{
-		float clen = MAX<float>(fabsf(glseg.x2 - glseg.x1), fabsf(glseg.y2 - glseg.y1));
-
-		float dch = zbottom[1] - zbottom[0];
-		float dfh = maplightbottomright - maplightbottomleft;
-		float coeff = (zbottom[0] - maplightbottomleft) / (dfh - dch);
-
-		// check for inaccuracies - let's be a little generous here because there's
-		// some conversions between floats and fixed_t's involved
-		if (coeff*clen<.1f)
-		{
-			maplightbottomleft = zbottom[0];
-		}
-		else if (coeff*clen>clen - .1f)
-		{
-			maplightbottomright = zbottom[1];
-		}
-		else
-		{
-			// split the wall in two at the intersection and recursively split both halves
-			GLWall copyWall1 = *this, copyWall2 = *this;
-
-			copyWall1.glseg.x2 = copyWall2.glseg.x1 = glseg.x1 + coeff * (glseg.x2 - glseg.x1);
-			copyWall1.glseg.y2 = copyWall2.glseg.y1 = glseg.y1 + coeff * (glseg.y2 - glseg.y1);
-			copyWall1.ztop[1] = copyWall2.ztop[0] = ztop[0] + coeff * (ztop[1] - ztop[0]);
-			copyWall1.zbottom[1] = copyWall2.zbottom[0] = zbottom[0] + coeff * (zbottom[1] - zbottom[0]);
-			copyWall1.glseg.fracright = copyWall2.glseg.fracleft = glseg.fracleft + coeff * (glseg.fracright - glseg.fracleft);
-			copyWall1.tcs[UPRGT].u = copyWall2.tcs[UPLFT].u = tcs[UPLFT].u + coeff * (tcs[UPRGT].u - tcs[UPLFT].u);
-			copyWall1.tcs[UPRGT].v = copyWall2.tcs[UPLFT].v = tcs[UPLFT].v + coeff * (tcs[UPRGT].v - tcs[UPLFT].v);
-			copyWall1.tcs[LORGT].u = copyWall2.tcs[LOLFT].u = tcs[LOLFT].u + coeff * (tcs[LORGT].u - tcs[LOLFT].u);
-			copyWall1.tcs[LORGT].v = copyWall2.tcs[LOLFT].v = tcs[LOLFT].v + coeff * (tcs[LORGT].v - tcs[LOLFT].v);
-
-			copyWall1.SplitWall(di, frontsector, translucent);
-			copyWall2.SplitWall(di, frontsector, translucent);
-			return true;
-		}
-	}
-
-	return false;
-}
-
 void GLWall::SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent)
 {
 	float maplightbottomleft;
@@ -374,19 +281,11 @@ void GLWall::SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent)
 				(maplightbottomleft<zbottom[0] && maplightbottomright>zbottom[1]) ||
 				(maplightbottomleft > zbottom[0] && maplightbottomright < zbottom[1]))
 			{
-				if (!(screen->hwcaps & RFL_NO_CLIP_PLANES))
-				{
-					// Use hardware clipping if this cannot be done cleanly.
-					this->lightlist = &lightlist;
-					PutWall(di, translucent);
+				// Use hardware clipping because this cannot be done cleanly.
+				this->lightlist = &lightlist;
+				PutWall(di, translucent);
 
-					goto out;
-				}
-				// crappy fallback if no clip planes available
-				else if (SplitWallComplex(di, frontsector, translucent, maplightbottomleft, maplightbottomright))
-				{
-					goto out;
-				}
+				goto out;
 			}
 
 			// 3D floor is completely within this light

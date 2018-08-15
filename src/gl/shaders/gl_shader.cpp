@@ -263,13 +263,6 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		fp_comb << pp_data.GetString().GetChars() << "\n";
 	}
 
-	if (gl.flags & RFL_NO_CLIP_PLANES)
-	{
-		// On ATI's GL3 drivers we have to disable gl_ClipDistance because it's hopelessly broken.
-		// This will cause some glitches and regressions but is the only way to avoid total display garbage.
-		vp_comb.Substitute("gl_ClipDistance", "//");
-	}
-
 	hVertProg = glCreateShader(GL_VERTEX_SHADER);
 	hFragProg = glCreateShader(GL_FRAGMENT_SHADER);	
 

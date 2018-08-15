@@ -202,7 +202,6 @@ public:
 	void CheckTexturePosition(FTexCoordInfo *tci);
 
 	void Put3DWall(HWDrawInfo *di, lightlist_t * lightlist, bool translucent);
-	bool SplitWallComplex(HWDrawInfo *di, sector_t * frontsector, bool translucent, float& maplightbottomleft, float& maplightbottomright);
 	void SplitWall(HWDrawInfo *di, sector_t * frontsector, bool translucent);
 
 	void SetupLights(HWDrawInfo *di, FDynLightData &lightdata);

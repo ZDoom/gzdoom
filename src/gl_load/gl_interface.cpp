@@ -172,12 +172,6 @@ void gl_LoadExtensions()
 	gl.buffermethod = BM_DEFERRED;
 	if (gl_version < 4.f)
 	{
-#ifdef _WIN32
-		if (strstr(gl.vendorstring, "ATI Tech"))
-		{
-			gl.flags |= RFL_NO_CLIP_PLANES;	// gl_ClipDistance is horribly broken on ATI GL3 drivers for Windows. (TBD: Relegate to vintage build? Maybe after the next survey.)
-		}
-#endif
 		gl.glslversion = 3.31f;	// Force GLSL down to 3.3.
 	}
 	else if (gl_version < 4.5f)

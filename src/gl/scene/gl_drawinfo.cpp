@@ -135,17 +135,11 @@ void FDrawInfo::DrawSorted(int listindex)
 		GLRenderer->mVBO->Unmap();
 	}
 	gl_RenderState.ClearClipSplit();
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		glEnable(GL_CLIP_DISTANCE1);
-		glEnable(GL_CLIP_DISTANCE2);
-	}
+	glEnable(GL_CLIP_DISTANCE1);
+	glEnable(GL_CLIP_DISTANCE2);
 	DoDrawSorted(dl, dl->sorted);
-	if (!(gl.flags & RFL_NO_CLIP_PLANES))
-	{
-		glDisable(GL_CLIP_DISTANCE1);
-		glDisable(GL_CLIP_DISTANCE2);
-	}
+	glDisable(GL_CLIP_DISTANCE1);
+	glDisable(GL_CLIP_DISTANCE2);
 	gl_RenderState.ClearClipSplit();
 }
 

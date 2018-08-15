@@ -278,27 +278,6 @@ void HWDrawList::SortWallIntoPlane(SortNode * head, SortNode * sort)
 		GLWall *w = NewWall();
 		*w = *ws;
 
-		// Splitting is done in the shader with clip planes, if available
-		if (screen->hwcaps & RFL_NO_CLIP_PLANES)
-		{
-			ws->vertcount = 0;	// invalidate current vertices.
-			float newtexv = ws->tcs[GLWall::UPLFT].v + ((ws->tcs[GLWall::LOLFT].v - ws->tcs[GLWall::UPLFT].v) / (ws->zbottom[0] - ws->ztop[0])) * (fh->z - ws->ztop[0]);
-
-			// I make the very big assumption here that translucent walls in sloped sectors
-			// and 3D-floors never coexist in the same level. If that were the case this
-			// code would become extremely more complicated.
-			if (!ceiling)
-			{
-				ws->ztop[1] = w->zbottom[1] = ws->ztop[0] = w->zbottom[0] = fh->z;
-				ws->tcs[GLWall::UPRGT].v = w->tcs[GLWall::LORGT].v = ws->tcs[GLWall::UPLFT].v = w->tcs[GLWall::LOLFT].v = newtexv;
-			}
-			else
-			{
-				w->ztop[1] = ws->zbottom[1] = w->ztop[0] = ws->zbottom[0] = fh->z;
-				w->tcs[GLWall::UPLFT].v = ws->tcs[GLWall::LOLFT].v = w->tcs[GLWall::UPRGT].v = ws->tcs[GLWall::LORGT].v = newtexv;
-			}
-		}
-
 		SortNode * sort2 = SortNodes.GetNew();
 		memset(sort2, 0, sizeof(SortNode));
 		sort2->itemindex = drawitems.Size() - 1;
@@ -337,24 +316,6 @@ void HWDrawList::SortSpriteIntoPlane(SortNode * head, SortNode * sort)
 		// We have to split this sprite
 		GLSprite *s = NewSprite();
 		*s = *ss;
-
-		// Splitting is done in the shader with clip planes, if available.
-		// The fallback here only really works for non-y-billboarded sprites.
-		if (screen->hwcaps & RFL_NO_CLIP_PLANES)
-		{
-			float newtexv = ss->vt + ((ss->vb - ss->vt) / (ss->z2 - ss->z1))*(fh->z - ss->z1);
-
-			if (!ceiling)
-			{
-				ss->z1 = s->z2 = fh->z;
-				ss->vt = s->vb = newtexv;
-			}
-			else
-			{
-				s->z1 = ss->z2 = fh->z;
-				s->vt = ss->vb = newtexv;
-			}
-		}
 
 		SortNode * sort2 = SortNodes.GetNew();
 		memset(sort2, 0, sizeof(SortNode));

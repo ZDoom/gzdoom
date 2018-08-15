@@ -252,19 +252,16 @@ public:
 
 	void EnableSplit(bool on)
 	{
-		if (!(gl.flags & RFL_NO_CLIP_PLANES))
+		mSplitEnabled = on;
+		if (on)
 		{
-			mSplitEnabled = on;
-			if (on)
-			{
-				glEnable(GL_CLIP_DISTANCE3);
-				glEnable(GL_CLIP_DISTANCE4);
-			}
-			else
-			{
-				glDisable(GL_CLIP_DISTANCE3);
-				glDisable(GL_CLIP_DISTANCE4);
-			}
+			glEnable(GL_CLIP_DISTANCE3);
+			glEnable(GL_CLIP_DISTANCE4);
+		}
+		else
+		{
+			glDisable(GL_CLIP_DISTANCE3);
+			glDisable(GL_CLIP_DISTANCE4);
 		}
 	}
 

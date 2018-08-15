@@ -66,7 +66,7 @@ void FDrawInfo::DrawSubsectors(GLFlat *flat, int pass, bool istrans)
 
 	gl_RenderState.ApplyLightIndex(flat->dynlightindex);
 
-	if (vcount > 0 && !ClipLineShouldBeActive())
+	if (vcount > 0)
 	{
 		drawcalls.Clock();
 		glDrawElements(GL_TRIANGLES, vcount, GL_UNSIGNED_INT, GLRenderer->mVBO->GetIndexPointer() + iboindex);

@@ -1675,19 +1675,19 @@ public:
 					break;
 
 				case NAME_floorglowcolor:
-					sec->planes[sector_t::floor].GlowColor = CheckInt(key);
+					sec->SetGlowColor(sector_t::floor, CheckInt(key));
 					break;
 
 				case NAME_floorglowheight:
-					sec->planes[sector_t::floor].GlowHeight = (float)CheckFloat(key);
+					sec->SetGlowHeight(sector_t::floor, (float)CheckFloat(key));
 					break;
 
 				case NAME_ceilingglowcolor:
-					sec->planes[sector_t::ceiling].GlowColor = CheckInt(key);
+					sec->SetGlowColor(sector_t::ceiling, CheckInt(key));
 					break;
 
 				case NAME_ceilingglowheight:
-					sec->planes[sector_t::ceiling].GlowHeight = (float)CheckFloat(key);
+					sec->SetGlowHeight(sector_t::ceiling, (float)CheckFloat(key));
 					break;
 
 				case NAME_Noattack:

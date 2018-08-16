@@ -66,15 +66,17 @@ void GLModelBuffer::Allocate()
 	glGenBuffers(1, &mBufferId);
 	glBindBufferBase(mBufferType, MODELBUF_BINDINGPOINT, mBufferId);
 	glBindBuffer(mBufferType, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
-	if (gl.flags & RFL_BUFFER_STORAGE)
+	if (gl.buffermethod == BM_PERSISTENT)
 	{
 		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		mBufferPointer = glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mPersistent = true;
 	}
 	else
 	{
 		glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
-		mBufferPointer = NULL;
+		mBufferPointer = nullptr;
+		mPersistent = false;
 	}
 }
 
@@ -121,7 +123,7 @@ void GLModelBuffer::CheckSize()
 
 void GLModelBuffer::Map()
 {
-	if (!(gl.flags & RFL_BUFFER_STORAGE))
+	if (!mPersistent)
 	{
 		glBindBuffer(mBufferType, mBufferId);
 		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT);
@@ -130,7 +132,7 @@ void GLModelBuffer::Map()
 
 void GLModelBuffer::Unmap()
 {
-	if (!(gl.flags & RFL_BUFFER_STORAGE))
+	if (!mPersistent)
 	{
 		glBindBuffer(mBufferType, mBufferId);
 		glUnmapBuffer(mBufferType);

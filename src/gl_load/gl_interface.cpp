@@ -185,7 +185,6 @@ void gl_LoadExtensions()
 			{
 				gl.flags |= RFL_SHADER_STORAGE_BUFFER;
 			}
-			gl.flags |= RFL_BUFFER_STORAGE;
 			gl.lightmethod = LM_DIRECT;
 			gl.buffermethod = BM_PERSISTENT;
 		}
@@ -193,7 +192,7 @@ void gl_LoadExtensions()
 	else
 	{
 		// Assume that everything works without problems on GL 4.5 drivers where these things are core features.
-		gl.flags |= RFL_SHADER_STORAGE_BUFFER | RFL_BUFFER_STORAGE;
+		gl.flags |= RFL_SHADER_STORAGE_BUFFER;
 		gl.lightmethod = LM_DIRECT;
 		gl.buffermethod = BM_PERSISTENT;
 	}

@@ -182,14 +182,11 @@ void GLWall::PutWall(HWDrawInfo *di, bool translucent)
     if (di->isFullbrightScene() || (Colormap.LightColor.isWhite() && lightlevel == 255))
         flags &= ~GLWF_GLOW;
     
-	if (!(screen->hwcaps & RFL_BUFFER_STORAGE))
+	if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
 	{
-		if (level.HasDynamicLights && !di->isFullbrightScene() && gltexture != nullptr)
-		{
-			SetupLights(di, lightdata);
-		}
-		MakeVertices(di, translucent);
+		SetupLights(di, lightdata);
 	}
+	MakeVertices(di, translucent);
 
 
 	bool solid;

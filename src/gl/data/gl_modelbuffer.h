@@ -19,6 +19,7 @@ struct ModelBufferData
 class GLModelBuffer
 {
 	bool mIndexed;
+	bool mPersistent;
 	unsigned int mBufferId;
 	unsigned int mBufferType;
 	unsigned int mBufferSize;

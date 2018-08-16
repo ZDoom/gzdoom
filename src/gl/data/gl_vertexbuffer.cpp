@@ -108,6 +108,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 		glBufferStorage(GL_ARRAY_BUFFER, bytesize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		map = (FFlatVertex*)glMapBufferRange(GL_ARRAY_BUFFER, 0, bytesize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		DPrintf(DMSG_NOTIFY, "Using persistent buffer\n");
+		mPersistent = true;
 	}
 	else
 	{
@@ -116,6 +117,7 @@ FFlatVertexBuffer::FFlatVertexBuffer(int width, int height)
 		glBufferData(GL_ARRAY_BUFFER, bytesize, NULL, GL_STREAM_DRAW);
 		map = nullptr;
 		DPrintf(DMSG_NOTIFY, "Using deferred buffer\n");
+		mPersistent = false;
 	}
 	mIndex = mCurIndex = 0;
 	mNumReserved = NUM_RESERVED;
@@ -165,7 +167,7 @@ void FFlatVertexBuffer::BindVBO()
 
 void FFlatVertexBuffer::Map()
 {
-	if (gl.buffermethod == BM_DEFERRED)
+	if (!mPersistent)
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);
@@ -176,7 +178,7 @@ void FFlatVertexBuffer::Map()
 
 void FFlatVertexBuffer::Unmap()
 {
-	if (gl.buffermethod == BM_DEFERRED)
+	if (!mPersistent)
 	{
 		unsigned int bytesize = BUFFER_SIZE * sizeof(FFlatVertex);
 		glBindBuffer(GL_ARRAY_BUFFER, vbo_id);

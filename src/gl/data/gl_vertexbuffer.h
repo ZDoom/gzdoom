@@ -95,6 +95,7 @@ public:
 
 class FFlatVertexBuffer : public FVertexBuffer, public FFlatVertexGenerator
 {
+	bool mPersistent;
 	unsigned int ibo_id;
 	FFlatVertex *map;
 	unsigned int mIndex;

@@ -5,6 +5,7 @@ struct HWViewpointUniforms;
 
 class GLViewpointBuffer
 {
+	bool mPersistent;
 	unsigned int mBufferId;
 	unsigned int mBufferSize;
 	unsigned int mBlockAlign;

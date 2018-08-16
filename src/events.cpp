@@ -507,10 +507,12 @@ bool E_CheckRequireMouse()
 	return false;
 }
 
-void E_CheckReplacement( PClassActor *replacee, PClassActor **replacement )
+bool E_CheckReplacement( PClassActor *replacee, PClassActor **replacement )
 {
+	bool final = false;
 	for (DStaticEventHandler *handler = E_FirstEventHandler; handler; handler = handler->next)
-		handler->CheckReplacement(replacee,replacement);
+		handler->CheckReplacement(replacee,replacement,&final);
+	return final;
 }
 
 // normal event loopers (non-special, argument-less)
@@ -580,6 +582,7 @@ DEFINE_FIELD_X(ConsoleEvent, FConsoleEvent, IsManual)
 
 DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, Replacee)
 DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, Replacement)
+DEFINE_FIELD_X(ReplaceEvent, FReplaceEvent, IsFinal)
 
 DEFINE_ACTION_FUNCTION(DStaticEventHandler, SetOrder)
 {
@@ -1135,18 +1138,19 @@ void DStaticEventHandler::ConsoleProcess(int player, FString name, int arg1, int
 	}
 }
 
-void DStaticEventHandler::CheckReplacement( PClassActor *replacee, PClassActor **replacement )
+void DStaticEventHandler::CheckReplacement( PClassActor *replacee, PClassActor **replacement, bool *final )
 {
 	IFVIRTUAL(DStaticEventHandler, CheckReplacement)
 	{
 		// don't create excessive DObjects if not going to be processed anyway
 		if (func == DStaticEventHandler_CheckReplacement_VMPtr)
 			return;
-		FReplaceEvent e = { replacee, *replacement };
+		FReplaceEvent e = { replacee, *replacement, *final };
 		VMValue params[2] = { (DStaticEventHandler*)this, &e };
 		VMCall(func, params, 2, nullptr, 0);
 		if ( e.Replacement != replacee ) // prevent infinite recursion
 			*replacement = e.Replacement;
+		*final = e.IsFinal;
 	}
 }
 

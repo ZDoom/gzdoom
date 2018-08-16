@@ -427,7 +427,11 @@ PClassActor *PClassActor::GetReplacement(bool lookskill)
 	}
 	// [MK] ZScript replacement through Event Handlers, has priority over others
 	PClassActor *Replacement = ActorInfo()->Replacement;
-	E_CheckReplacement(this,&Replacement);
+	if ( E_CheckReplacement(this,&Replacement) )
+	{
+		// [MK] the replacement is final, so don't continue with the chain
+		return Replacement ? Replacement : this;
+	}
 	if (Replacement == nullptr && (!lookskill || skillrepname == NAME_None))
 	{
 		return this;

@@ -65,15 +65,17 @@ FLightBuffer::FLightBuffer()
 	glGenBuffers(1, &mBufferId);
 	glBindBufferBase(mBufferType, LIGHTBUF_BINDINGPOINT, mBufferId);
 	glBindBuffer(mBufferType, mBufferId);	// Note: Some older AMD drivers don't do that in glBindBufferBase, as they should.
-	if (gl.lightmethod == LM_DIRECT)
+	if (gl.buffermethod == BM_PERSISTENT)
 	{
 		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
+		mPersistent = true;
 	}
 	else
 	{
 		glBufferData(mBufferType, mByteSize, NULL, GL_DYNAMIC_DRAW);
 		mBufferPointer = NULL;
+		mPersistent = false;
 	}
 
 	Clear();
@@ -119,7 +121,7 @@ void FLightBuffer::CheckSize()
 	}
 	mBufferSize = mByteSize / ELEMENT_SIZE;
 
-	if (gl.lightmethod == LM_DIRECT)
+	if (mPersistent)
 	{
 		glBufferStorage(mBufferType, mByteSize, NULL, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
 		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT);
@@ -201,7 +203,7 @@ int FLightBuffer::UploadLights(FDynLightData &data)
 
 void FLightBuffer::Begin()
 {
-	if (gl.lightmethod == LM_DEFERRED)
+	if (!mPersistent)
 	{
 		glBindBuffer(mBufferType, mBufferId);
 		mBufferPointer = (float*)glMapBufferRange(mBufferType, 0, mByteSize, GL_MAP_WRITE_BIT);
@@ -210,7 +212,7 @@ void FLightBuffer::Begin()
 
 void FLightBuffer::Finish()
 {
-	if (gl.lightmethod == LM_DEFERRED)
+	if (!mPersistent)
 	{
 		glBindBuffer(mBufferType, mBufferId);
 		glUnmapBuffer(mBufferType);

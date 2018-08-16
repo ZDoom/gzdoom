@@ -20,21 +20,8 @@ void main()
 	vec2 parmTexCoord;
 	vec4 parmPosition;
 	
-	#ifndef USE_QUAD_DRAWER
-		parmTexCoord = aTexCoord;
-		parmPosition = aPosition;
-	#else
-		if (uQuadMode == 0)
-		{
-			parmTexCoord = aTexCoord;
-			parmPosition = aPosition;
-		}
-		else
-		{
-			parmPosition = uQuadVertices[int(aPosition.x)];
-			parmTexCoord = uQuadTexCoords[int(aPosition.x)].st;
-		}
-	#endif
+	parmTexCoord = aTexCoord;
+	parmPosition = aPosition;
 
 	vec4 worldcoord;
 	// Only set up the model rotation if it is in use.

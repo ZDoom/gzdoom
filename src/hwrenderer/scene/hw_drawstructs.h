@@ -378,6 +378,7 @@ public:
 	DRotator Angles;
 
 	int dynlightindex;
+	int vertexindex;
 	int modelindex;
 	bool modelmirrored;
 

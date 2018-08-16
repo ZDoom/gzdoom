@@ -10,6 +10,7 @@ class FLightBuffer
 {
 	unsigned int mBufferId;
 	float * mBufferPointer;
+	bool mPersistent;
 
 	unsigned int mBufferType;
     std::atomic<unsigned int> mIndex;

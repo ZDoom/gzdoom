@@ -41,7 +41,6 @@
 #include "hwrenderer/scene/hw_clipper.h"
 #include "gl/scene/gl_portal.h"
 #include "gl/renderer/gl_renderstate.h"
-#include "gl/renderer/gl_quaddrawer.h"
 #include "gl/dynlights/gl_lightbuffer.h"
 
 class FDrawInfoList

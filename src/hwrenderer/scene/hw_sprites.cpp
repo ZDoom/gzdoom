@@ -51,6 +51,7 @@
 #include "hwrenderer/utility/hw_lighting.h"
 #include "hwrenderer/textures/hw_material.h"
 #include "hwrenderer/dynlights/hw_dynlightdata.h"
+#include "hwrenderer/data/flatvertices.h"
 
 extern TArray<spritedef_t> sprites;
 extern TArray<spriteframe_t> SpriteFrames;
@@ -228,6 +229,20 @@ inline void GLSprite::PutSprite(HWDrawInfo *di, bool translucent)
 	else
 		dynlightindex = -1;
 
+	vertexindex = -1;
+	if (modelframe == nullptr)
+	{
+		FVector3 v[4];
+		polyoffset = CalculateVertices(di, v, &di->Viewpoint.Pos);
+		auto vert = di->AllocVertices(4);
+		auto vp = vert.first;
+		vertexindex = vert.second;
+
+		vp[0].Set(v[0][0], v[0][1], v[0][2], ul, vt);
+		vp[1].Set(v[1][0], v[1][1], v[1][2], ur, vt);
+		vp[2].Set(v[2][0], v[2][1], v[2][2], ul, vb);
+		vp[3].Set(v[3][0], v[3][1], v[3][2], ur, vb);
+	}
 
 	di->AddSprite(this, translucent);
 }

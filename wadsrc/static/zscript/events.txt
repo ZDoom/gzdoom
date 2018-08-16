@@ -289,6 +289,7 @@ struct ReplaceEvent native version("2.4")
 {
 	native readonly Class<Actor> Replacee;
 	native Class<Actor> Replacement;
+	native bool IsFinal;
 }
 
 class StaticEventHandler : Object native play version("2.4")

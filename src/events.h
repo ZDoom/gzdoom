@@ -70,7 +70,7 @@ bool E_Responder(const event_t* ev); // splits events into InputProcess and UiPr
 void E_Console(int player, FString name, int arg1, int arg2, int arg3, bool manual);
 
 // called when looking up the replacement for an actor class
-void E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
+bool E_CheckReplacement(PClassActor* replacee, PClassActor** replacement);
 
 // send networked event. unified function.
 bool E_SendNetworkEvent(FString name, int arg1, int arg2, int arg3, bool manual);
@@ -171,7 +171,7 @@ public:
 	void ConsoleProcess(int player, FString name, int arg1, int arg2, int arg3, bool manual);
 
 	//
-	void CheckReplacement(PClassActor* replacee, PClassActor** replacement);
+	void CheckReplacement(PClassActor* replacee, PClassActor** replacement, bool* final);
 };
 class DEventHandler : public DStaticEventHandler
 {
@@ -272,6 +272,7 @@ struct FReplaceEvent
 {
 	PClassActor* Replacee;
 	PClassActor* Replacement;
+	bool IsFinal;
 };
 
 #endif

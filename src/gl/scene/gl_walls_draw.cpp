@@ -92,9 +92,6 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 {
 	if (!TexMan.mirrorTexture.isValid()) return;
 
-	// we use texture coordinates and texture matrix to pass the normal stuff to the shader so that the default vertex buffer format can be used as is.
-	gl_RenderState.EnableTextureMatrix(true);
-
 	// Use sphere mapping for this
 	gl_RenderState.SetEffect(EFF_SPHEREMAP);
 
@@ -110,7 +107,6 @@ void FDrawInfo::RenderMirrorSurface(GLWall *wall)
 	wall->flags &= ~GLWall::GLWF_GLOW;
 	RenderWall(wall, GLWall::RWF_BLANK);
 
-	gl_RenderState.EnableTextureMatrix(false);
 	gl_RenderState.SetEffect(EFF_NONE);
 
 	// Restore the defaults for the translucent pass

@@ -222,7 +222,7 @@ public:
 	bool operator > (FTextureID other) const { return texnum > other.texnum; }
 
 protected:
-	FTextureID(int num) { texnum = num; }
+	FTextureID(int num) : texnum(num) {}
 private:
 	int texnum;
 };

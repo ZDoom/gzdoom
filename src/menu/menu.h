@@ -287,7 +287,7 @@ class DMenuItemBase : public DObject
 	DECLARE_CLASS(DMenuItemBase, DObject)
 public:
 	double mXpos, mYpos;
-	FNameNoInit mAction;
+	FName mAction;
 	bool mEnabled;
 
 	bool Activate();

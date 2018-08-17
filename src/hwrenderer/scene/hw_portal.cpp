@@ -171,8 +171,8 @@ void HWScenePortalBase::ClearClipper(HWDrawInfo *di, Clipper *clipper)
 	clipper->SafeAddClipRange(0, 0xffffffff);
 	for (unsigned int i = 0; i < lines.Size(); i++)
 	{
-		DAngle startAngle = (DVector2(lines[i].glseg.x2, lines[i].glseg.y2) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
-		DAngle endAngle = (DVector2(lines[i].glseg.x1, lines[i].glseg.y1) - outer_di->Viewpoint.Pos).Angle() + angleOffset;
+		DAngle startAngle = (DVector2{lines[i].glseg.x2, lines[i].glseg.y2} - outer_di->Viewpoint.Pos).Angle() + angleOffset;
+		DAngle endAngle = (DVector2{lines[i].glseg.x1, lines[i].glseg.y1} - outer_di->Viewpoint.Pos).Angle() + angleOffset;
 
 		if (deltaangle(endAngle, startAngle) < 0)
 		{
@@ -206,7 +206,7 @@ int HWLinePortal::ClipSeg(seg_t *seg, const DVector3 &viewpos)
 	{
 		return PClip_Inside;	// should be handled properly.
 	}
-	return P_ClipLineToPortal(linedef, line(), viewpos) ? PClip_InFront : PClip_Inside;
+	return P_ClipLineToPortal(linedef, line(), viewpos.XY()) ? PClip_InFront : PClip_Inside;
 }
 
 int HWLinePortal::ClipSubsector(subsector_t *sub)
@@ -303,7 +303,7 @@ bool HWMirrorPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 		vp.Pos.Y = (y1 + r * dy) * 2 - y;
 
 		// Compensation for reendering inaccuracies
-		FVector2 v(-dx, dy);
+		FVector2 v{-dx, dy};
 		v.MakeUnit();
 
 		vp.Pos.X += v[1] * state->renderdepth / 2;
@@ -366,7 +366,7 @@ bool HWLineToLinePortal::Setup(HWDrawInfo *di, Clipper *clipper)
 	P_TranslatePortalZ(origin, vp.Pos.Z);
 	P_TranslatePortalXY(origin, vp.Path[0].X, vp.Path[0].Y);
 	P_TranslatePortalXY(origin, vp.Path[1].X, vp.Path[1].Y);
-	if (!vp.showviewer && vp.camera != nullptr && P_PointOnLineSidePrecise(vp.Path[0], glport->lines[0]->mDestination) != P_PointOnLineSidePrecise(vp.Path[1], glport->lines[0]->mDestination))
+	if (!vp.showviewer && vp.camera != nullptr && P_PointOnLineSidePrecise(vp.Path[0].XY(), glport->lines[0]->mDestination) != P_PointOnLineSidePrecise(vp.Path[1].XY(), glport->lines[0]->mDestination))
 	{
 		double distp = (vp.Path[0] - vp.Path[1]).Length();
 		if (distp > EQUAL_EPSILON)
@@ -451,8 +451,8 @@ bool HWSkyboxPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 	vp.Angles.Yaw += (origin->PrevAngles.Yaw + deltaangle(origin->PrevAngles.Yaw, origin->Angles.Yaw) * vp.TicFrac);
 
 	// Don't let the viewpoint be too close to a floor or ceiling
-	double floorh = origin->Sector->floorplane.ZatPoint(origin->Pos());
-	double ceilh = origin->Sector->ceilingplane.ZatPoint(origin->Pos());
+	double floorh = origin->Sector->floorplane.ZatPoint(origin->Pos().XY());
+	double ceilh = origin->Sector->ceilingplane.ZatPoint(origin->Pos().XY());
 	if (vp.Pos.Z < floorh + 4) vp.Pos.Z = floorh + 4;
 	if (vp.Pos.Z > ceilh - 4) vp.Pos.Z = ceilh - 4;
 
@@ -554,7 +554,7 @@ bool HWSectorStackPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 
 	// If the viewpoint is not within the portal, we need to invalidate the entire clip area.
 	// The portal will re-validate the necessary parts when its subsectors get traversed.
-	subsector_t *sub = R_PointInSubsector(vp.Pos);
+	subsector_t *sub = R_PointInSubsector(vp.Pos.XY());
 	if (!(di->ss_renderflags[sub->Index()] & SSRF_SEEN))
 	{
 		clipper->SafeAddClipRange(0, ANGLE_MAX);
@@ -603,7 +603,7 @@ bool HWPlaneMirrorPortal::Setup(HWDrawInfo *di, Clipper *clipper)
 	// the player is always visible in a mirror.
 	vp.showviewer = true;
 
-	double planez = origin->ZatPoint(vp.Pos);
+	double planez = origin->ZatPoint(vp.Pos.XY());
 	vp.Pos.Z = 2 * planez - vp.Pos.Z;
 	vp.ViewActor = nullptr;
 	state->PlaneMirrorMode = origin->fC() < 0 ? -1 : 1;

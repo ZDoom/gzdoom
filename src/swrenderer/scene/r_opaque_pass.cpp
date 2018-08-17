@@ -213,8 +213,8 @@ namespace swrenderer
 				}
 			}
 
-			double refceilz = s->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
-			double orgceilz = sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
+			double refceilz = s->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos.XY());
+			double orgceilz = sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos.XY());
 
 #if 1
 			// [RH] Allow viewing underwater areas through doors/windows that
@@ -857,7 +857,7 @@ namespace swrenderer
 			node_t *bsp = (node_t *)node;
 
 			// Decide which side the view point is on.
-			int side = R_PointOnSide(Thread->Viewport->viewpoint.Pos, bsp);
+			int side = R_PointOnSide(Thread->Viewport->viewpoint.Pos.XY(), bsp);
 
 			// Recursively divide front space (toward the viewer).
 			RenderBSPNode(bsp->children[side]);
@@ -993,7 +993,7 @@ namespace swrenderer
 		// [ZZ] Or less definitely not visible (hue)
 		// [ZZ] 10.01.2016: don't try to clip stuff inside a skybox against the current portal.
 		RenderPortal *renderportal = Thread->Portal.get();
-		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos(), renderportal->CurrentPortal->dst))
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && !!P_PointOnLineSidePrecise(thing->Pos().XY(), renderportal->CurrentPortal->dst))
 			return false;
 
 		double distanceSquared = (thing->Pos() - Thread->Viewport->viewpoint.Pos).LengthSquared();

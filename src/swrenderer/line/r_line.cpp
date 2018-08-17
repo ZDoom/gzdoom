@@ -108,7 +108,7 @@ namespace swrenderer
 
 		// reject lines that aren't seen from the portal (if any)
 		// [ZZ] 10.01.2016: lines inside a skybox shouldn't be clipped, although this imposes some limitations on portals in skyboxes.
-		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos))
+		if (!renderportal->CurrentPortalInSkybox && renderportal->CurrentPortal && P_ClipLineToPortal(line->linedef, renderportal->CurrentPortal->dst, Thread->Viewport->viewpoint.Pos.XY()))
 			return;
 
 		vertex_t *v1 = line->linedef->v1;

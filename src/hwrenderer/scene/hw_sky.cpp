@@ -341,7 +341,7 @@ void GLWall::SkyBottom(HWDrawInfo *di, seg_t * seg,sector_t * fs,sector_t * bs,v
 			else
 			{
 				// Special hack for Vrack2b
-				if (bs->floorplane.ZatPoint(di->Viewpoint.Pos) > di->Viewpoint.Pos.Z) return;
+				if (bs->floorplane.ZatPoint(di->Viewpoint.Pos.XY()) > di->Viewpoint.Pos.Z) return;
 			}
 		}
 		zbottom[0]=zbottom[1]=-32768.0f;

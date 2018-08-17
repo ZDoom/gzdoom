@@ -293,7 +293,7 @@ void DPusher::Tick ()
 			}
 			else // special water sector
 			{
-				ht = hsec->floorplane.ZatPoint(pos);
+				ht = hsec->floorplane.ZatPoint(pos.XY());
 				if (thing->Z() > ht) // above ground
 				{
 					pushvel = m_PushVec; // full force
@@ -320,7 +320,7 @@ void DPusher::Tick ()
 			{ // special water sector
 				floor = &hsec->floorplane;
 			}
-			if (thing->Z() > floor->ZatPoint(pos))
+			if (thing->Z() > floor->ZatPoint(pos.XY()))
 			{ // above ground
 				pushvel.Zero(); // no force
 			}

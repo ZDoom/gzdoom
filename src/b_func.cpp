@@ -571,7 +571,7 @@ DAngle DBot::FireRox (AActor *enemy, ticcmd_t *cmd)
 	//Predict.
 	m = ((dist+1) / GetDefaultByName("Rocket")->Speed);
 
-	bglobal.SetBodyAt(DVector3((enemy->Pos() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
+	bglobal.SetBodyAt(DVector3((enemy->Pos().XY() + enemy->Vel * (m + 2)), ONFLOORZ), 1);
 	
 	//try the predicted location
 	if (P_CheckSight (actor, bglobal.body1, SF_IGNOREVISIBILITY)) //See the predicted location, so give a test missile
@@ -603,7 +603,7 @@ bool FCajunMaster::SafeCheckPosition (AActor *actor, double x, double y, FCheckP
 {
 	ActorFlags savedFlags = actor->flags;
 	actor->flags &= ~MF_PICKUP;
-	bool res = P_CheckPosition (actor, DVector2(x, y), tm);
+	bool res = P_CheckPosition (actor, DVector2{x, y}, tm);
 	actor->flags = savedFlags;
 	return res;
 }

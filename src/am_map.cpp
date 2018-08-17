@@ -976,7 +976,7 @@ void AM_StaticInit()
 
 DVector2 AM_GetPosition()
 {
-	return DVector2((m_x + m_w / 2), (m_y + m_h / 2));
+	return DVector2{(m_x + m_w / 2), (m_y + m_h / 2)};
 }
 
 //=============================================================================
@@ -1958,14 +1958,14 @@ sector_t * AM_FakeFlat(AActor *viewer, sector_t * sec, sector_t * dest)
 	}
 	else
 	{
-		in_area = pos.Z <= viewer->Sector->heightsec->floorplane.ZatPoint(pos) ? -1 :
-			(pos.Z > viewer->Sector->heightsec->ceilingplane.ZatPoint(pos) && !(viewer->Sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? 1 : 0;
+		in_area = pos.Z <= viewer->Sector->heightsec->floorplane.ZatPoint(pos.XY()) ? -1 :
+			(pos.Z > viewer->Sector->heightsec->ceilingplane.ZatPoint(pos.XY()) && !(viewer->Sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? 1 : 0;
 	}
 
 	int diffTex = (sec->heightsec->MoreFlags & SECMF_CLIPFAKEPLANES);
 	sector_t * s = sec->heightsec;
 
-	memcpy(dest, sec, sizeof(sector_t));
+    *dest = *sec;
 
 	// Replace floor height with control sector's heights.
 	// The automap is only interested in the floor so let's skip the ceiling.
@@ -2828,7 +2828,7 @@ void AM_drawPlayers ()
 		int numarrowlines;
 
 		double vh = players[consoleplayer].viewheight;
-		DVector2 pos = am_portaloverlay? players[consoleplayer].camera->GetPortalTransition(vh) : players[consoleplayer].camera->Pos();
+		DVector2 pos = am_portaloverlay? players[consoleplayer].camera->GetPortalTransition(vh).XY() : players[consoleplayer].camera->Pos().XY();
 		pt.x = pos.X;
 		pt.y = pos.Y;
 		if (am_rotate == 1 || (am_rotate == 2 && viewactive))

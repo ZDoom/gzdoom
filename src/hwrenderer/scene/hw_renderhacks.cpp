@@ -859,7 +859,7 @@ void HWDrawInfo::ProcessLowerMinisegs(TArray<seg_t *> &lowersegs)
 
 void HWDrawInfo::HandleHackedSubsectors()
 {
-	viewsubsector = R_PointInSubsector(Viewpoint.Pos);
+	viewsubsector = R_PointInSubsector(Viewpoint.Pos.XY());
 
 	// Each subsector may only be processed once in this loop!
 	validcount++;

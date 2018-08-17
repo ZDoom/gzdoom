@@ -127,8 +127,8 @@ namespace swrenderer
 		{
 			node_t *bsp = (node_t *)node;
 
-			DVector2 planePos(FIXED2DBL(bsp->x), FIXED2DBL(bsp->y));
-			DVector2 planeNormal = DVector2(FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx));
+			DVector2 planePos{FIXED2DBL(bsp->x), FIXED2DBL(bsp->y)};
+			DVector2 planeNormal{FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx)};
 			double planeD = planeNormal | planePos;
 
 			int side = (worldPos | planeNormal) > planeD;

@@ -72,10 +72,10 @@ LevelAABBTree::LevelAABBTree()
 double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end)
 {
 	// Precalculate some of the variables used by the ray/line intersection test
-	DVector2 raydelta = ray_end - ray_start;
+	DVector2 raydelta = (ray_end - ray_start).XY();
 	double raydist2 = raydelta | raydelta;
-	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
-	double rayd = raynormal | ray_start;
+	DVector2 raynormal = DVector2{raydelta.Y, -raydelta.X};
+	double rayd = raynormal | ray_start.XY();
 	if (raydist2 < 1.0)
 		return 1.0f;
 
@@ -89,7 +89,7 @@ double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end
 	{
 		int node_index = stack[stack_pos - 1];
 
-		if (!OverlapRayAABB(ray_start, ray_end, nodes[node_index]))
+		if (!OverlapRayAABB(ray_start.XY(), ray_end.XY(), nodes[node_index]))
 		{
 			// If the ray doesn't overlap this node's AABB we're done for this subtree
 			stack_pos--;
@@ -97,7 +97,7 @@ double LevelAABBTree::RayTest(const DVector3 &ray_start, const DVector3 &ray_end
 		else if (nodes[node_index].line_index != -1) // isLeaf(node_index)
 		{
 			// We reached a leaf node. Do a ray/line intersection test to see if we hit the line.
-			hit_fraction = MIN(IntersectRayLine(ray_start, ray_end, nodes[node_index].line_index, raydelta, rayd, raydist2), hit_fraction);
+			hit_fraction = MIN(IntersectRayLine(ray_start.XY(), ray_end.XY(), nodes[node_index].line_index, raydelta, rayd, raydist2), hit_fraction);
 			stack_pos--;
 		}
 		else if (stack_pos == 16)
@@ -158,10 +158,10 @@ double LevelAABBTree::IntersectRayLine(const DVector2 &ray_start, const DVector2
 	const double epsilon = 0.0000001;
 	const AABBTreeLine &line = lines[line_index];
 
-	DVector2 raynormal = DVector2(raydelta.Y, -raydelta.X);
+	DVector2 raynormal = DVector2{raydelta.Y, -raydelta.X};
 
-	DVector2 line_pos(line.x, line.y);
-	DVector2 line_delta(line.dx, line.dy);
+	DVector2 line_pos{line.x, line.y};
+	DVector2 line_delta{line.dx, line.dy};
 
 	double den = raynormal | line_delta;
 	if (fabs(den) > epsilon)
@@ -184,7 +184,7 @@ int LevelAABBTree::GenerateTreeNode(int *lines, int num_lines, const FVector2 *c
 		return -1;
 
 	// Find bounding box and median of the lines
-	FVector2 median = FVector2(0.0f, 0.0f);
+	FVector2 median = FVector2{0.0f, 0.0f};
 	FVector2 aabb_min, aabb_max;
 	aabb_min.X = (float)level.lines[lines[0]].v1->fX();
 	aabb_min.Y = (float)level.lines[lines[0]].v1->fY();
@@ -222,7 +222,7 @@ int LevelAABBTree::GenerateTreeNode(int *lines, int num_lines, const FVector2 *c
 		aabb_max.Y - aabb_min.Y
 	};
 	int axis_order[2] = { 0, 1 };
-	FVector2 axis_plane[2] = { FVector2(1.0f, 0.0f), FVector2(0.0f, 1.0f) };
+	FVector2 axis_plane[2] = { FVector2{1.0f, 0.0f}, FVector2{0.0f, 1.0f} };
 	std::sort(axis_order, axis_order + 2, [&](int a, int b) { return axis_lengths[a] > axis_lengths[b]; });
 
 	// Try sort at longest axis, then if that fails then the other one.

@@ -881,7 +881,7 @@ static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, i
 			// Find the closest point on the sector's boundary lines and use
 			// that as the perceived origin of the sound.
 			DVector2 xy;
-			sec->ClosestPoint(listenpos, xy);
+			sec->ClosestPoint(listenpos.XY(), xy);
 			pos.X = (float)xy.X;
 			pos.Z = (float)xy.Y;
 		}
@@ -895,15 +895,15 @@ static void CalcSectorSoundOrg(const DVector3 &listenpos, const sector_t *sec, i
 	// Set sound vertical position based on channel.
 	if (channum == CHAN_FLOOR)
 	{
-		pos.Y = (float)MIN<double>(sec->floorplane.ZatPoint(listenpos), listenpos.Z);
+		pos.Y = (float)MIN<double>(sec->floorplane.ZatPoint(listenpos.XY()), listenpos.Z);
 	}
 	else if (channum == CHAN_CEILING)
 	{
-		pos.Y = (float)MAX<double>(sec->ceilingplane.ZatPoint(listenpos), listenpos.Z);
+		pos.Y = (float)MAX<double>(sec->ceilingplane.ZatPoint(listenpos.XY()), listenpos.Z);
 	}
 	else if (channum == CHAN_INTERIOR)
 	{
-		pos.Y = (float)clamp<double>(listenpos.Z, sec->floorplane.ZatPoint(listenpos), sec->ceilingplane.ZatPoint(listenpos));
+		pos.Y = (float)clamp<double>(listenpos.Z, sec->floorplane.ZatPoint(listenpos.XY()), sec->ceilingplane.ZatPoint(listenpos.XY()));
 	}
 }
 
@@ -924,11 +924,11 @@ static void CalcPolyobjSoundOrg(const DVector3 &listenpos, const FPolyObj *poly,
 	sector_t *sec;
 
 	DVector2 ppos;
-	poly->ClosestPoint(listenpos, ppos, &side);
+	poly->ClosestPoint(listenpos.XY(), ppos, &side);
 	pos.X = (float)ppos.X;
 	pos.Z = (float)ppos.Y;
 	sec = side->sector;
-	pos.Y = (float)clamp<double>(listenpos.Z, sec->floorplane.ZatPoint(listenpos), sec->ceilingplane.ZatPoint(listenpos));
+	pos.Y = (float)clamp<double>(listenpos.Z, sec->floorplane.ZatPoint(listenpos.XY()), sec->ceilingplane.ZatPoint(listenpos.XY()));
 }
 
 //==========================================================================

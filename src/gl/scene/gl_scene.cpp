@@ -412,7 +412,7 @@ void FDrawInfo::ProcessScene(bool toscreen)
 	iter_dlightf = iter_dlight = draw_dlight = draw_dlightf = 0;
 	GLRenderer->mPortalState.BeginScene();
 
-	int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	int mapsection = R_PointInSubsector(Viewpoint.Pos.XY())->mapsection;
 	CurrentMapSections.Set(mapsection);
 	DrawScene(toscreen ? DM_MAINVIEW : DM_OFFSCREEN);
 

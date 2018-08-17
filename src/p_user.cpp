@@ -313,7 +313,7 @@ player_t::player_t()
   viewheight(0),
   deltaviewheight(0),
   bob(0),
-  Vel(0, 0),
+  Vel({0, 0}),
   centering(0),
   turnticks(0),
   attackdown(0),

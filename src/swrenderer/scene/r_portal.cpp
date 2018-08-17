@@ -386,7 +386,7 @@ namespace swrenderer
 			P_TranslatePortalXY(pds->src, viewpoint.Path[0].X, viewpoint.Path[0].Y);
 			P_TranslatePortalXY(pds->src, viewpoint.Path[1].X, viewpoint.Path[1].Y);
 
-			if (!viewpoint.showviewer && viewpoint.camera && P_PointOnLineSidePrecise(viewpoint.Path[0], pds->dst) != P_PointOnLineSidePrecise(viewpoint.Path[1], pds->dst))
+			if (!viewpoint.showviewer && viewpoint.camera && P_PointOnLineSidePrecise(viewpoint.Path[0].XY(), pds->dst) != P_PointOnLineSidePrecise(viewpoint.Path[1].XY(), pds->dst))
 			{
 				double distp = (viewpoint.Path[0] - viewpoint.Path[1]).Length();
 				if (distp > EQUAL_EPSILON)

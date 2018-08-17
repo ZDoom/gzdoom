@@ -153,8 +153,8 @@ namespace swrenderer
 		DVector2 angvec = (curline->v2->fPos() - curline->v1->fPos()).Unit();
 		float maskedScaleY;
 
-		decal_left = decal_pos - edge_left * angvec - thread->Viewport->viewpoint.Pos;
-		decal_right = decal_pos + edge_right * angvec - thread->Viewport->viewpoint.Pos;
+		decal_left = decal_pos - edge_left * angvec - thread->Viewport->viewpoint.Pos.XY();
+		decal_right = decal_pos + edge_right * angvec - thread->Viewport->viewpoint.Pos.XY();
 
 		CameraLight *cameraLight;
 		double texturemid;

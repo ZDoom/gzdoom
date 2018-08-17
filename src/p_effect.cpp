@@ -79,11 +79,11 @@ static const struct ColorList {
 	{&grey3,	50,  50,  50 },
 	{&grey4,	210, 210, 210},
 	{&grey5,	128, 128, 128},
-	{&red,		255, 0,   0  },  
-	{&green,	0,   200, 0  },  
+	{&red,		255, 0,   0  },
+	{&green,	0,   200, 0  },
 	{&blue,		0,   0,   255},
-	{&yellow,	255, 255, 0  },  
-	{&black,	0,   0,   0  },  
+	{&yellow,	255, 255, 0  },
+	{&black,	0,   0,   0  },
 	{&red1,		255, 127, 127},
 	{&green1,	127, 255, 127},
 	{&blue1,	127, 127, 255},
@@ -173,7 +173,23 @@ void P_ClearParticles ()
 {
 	int i;
 
-	memset (Particles, 0, NumParticles * sizeof(particle_t));
+	for (auto j = 0; j < NumParticles; j++) {
+        Particles[j].Pos = {0,0,0};
+        Particles[j].Vel = {0,0,0};
+        Particles[j].Acc = {0,0,0};
+        Particles[j].size = 0;
+        Particles[j].sizestep = 0;
+        Particles[j].subsector = nullptr;
+        Particles[j].ttl = 0;
+        Particles[j].bright = 0;
+        Particles[j].notimefreeze = false;
+        Particles[j].fadestep = 0;
+        Particles[j].alpha = 0;
+        Particles[j].color = 0;
+        Particles[j].tnext = 0;
+        Particles[j].snext = 0;
+    }
+
 	ActiveParticles = NO_PARTICLE;
 	InactiveParticles = 0;
 	for (i = 0; i < NumParticles-1; i++)
@@ -201,7 +217,7 @@ void P_FindParticleSubsectors ()
 	for (uint16_t i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos);
+		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos.XY());
 		int ssnum = Particles[i].subsector->Index();
 		Particles[i].snext = ParticlesInSubsec[ssnum];
 		ParticlesInSubsec[ssnum] = i;
@@ -262,13 +278,27 @@ void P_ThinkParticles ()
 			prev = particle;
 			continue;
 		}
-		
+
 		auto oldtrans = particle->alpha;
 		particle->alpha -= particle->fadestep;
 		particle->size += particle->sizestep;
 		if (particle->alpha <= 0 || oldtrans < particle->alpha || --particle->ttl <= 0 || (particle->size <= 0))
 		{ // The particle has expired, so free it
-			memset (particle, 0, sizeof(particle_t));
+            particle->Pos = {0,0,0};
+            particle->Vel = {0,0,0};
+            particle->Acc = {0,0,0};
+            particle->size = 0;
+            particle->sizestep = 0;
+            particle->subsector = nullptr;
+            particle->ttl = 0;
+            particle->bright = 0;
+            particle->notimefreeze = false;
+            particle->fadestep = 0;
+            particle->alpha = 0;
+            particle->color = 0;
+            particle->tnext = 0;
+            particle->snext = 0;
+
 			if (prev)
 				prev->tnext = i;
 			else
@@ -284,7 +314,7 @@ void P_ThinkParticles ()
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
-		particle->subsector = R_PointInSubsector(particle->Pos);
+		particle->subsector = R_PointInSubsector(particle->Pos.XY());
 		sector_t *s = particle->subsector->sector;
 		// Handle crossing a sector portal.
 		if (!s->PortalBlocksMovement(sector_t::ceiling))
@@ -313,7 +343,7 @@ enum PSFlag
 	PS_NOTIMEFREEZE =	1 << 5,
 };
 
-void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size, 
+void P_SpawnParticle(const DVector3 &pos, const DVector3 &vel, const DVector3 &accel, PalEntry color, double startalpha, int lifetime, double size,
 	double fadestep, double sizestep, int flags)
 {
 	particle_t *particle = NewParticle();
@@ -491,7 +521,7 @@ void P_RunEffect (AActor *actor, int effects)
 	{
 		// Particle fountain
 
-		static const int *fountainColors[16] = 
+		static const int *fountainColors[16] =
 			{ &black,	&black,
 			  &red,		&red1,
 			  &green,	&green1,
@@ -621,7 +651,7 @@ void P_DrawSplash2 (int count, const DVector3 &pos, DAngle angle, int updown, in
 		p->color = M_Random() & 0x80 ? color1 : color2;
 		p->Vel.Z = M_Random() * zvel;
 		p->Acc.Z = -1 / 22.;
-		if (kind) 
+		if (kind)
 		{
 			an = angle + ((M_Random() - 128) * (180 / 256.));
 			p->Vel.X = M_Random() * an.Cos() / 2048.;
@@ -690,7 +720,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 
 		double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
 		r = clamp<double>(r, 0., 1.);
-		seg.soundpos = seg.start + r * seg.dir;
+		seg.soundpos = (seg.start + r * seg.dir).XY();
 		seg.sounddist = (seg.soundpos - mo->Pos()).LengthSquared();
 		trail.Push(seg);
 	}
@@ -703,7 +733,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 		if (!(flags & RAF_SILENT))
 		{
 			FSoundID sound;
-			
+
 			// Allow other sounds than 'weapons/railgf'!
 			if (!source->player) sound = source->AttackSound;
 			else if (source->player->ReadyWeapon) sound = source->player->ReadyWeapon->AttackSound;
@@ -742,7 +772,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 		int spiral_steps = (int)(steps * r_rail_spiralsparsity / sparsity);
 		segment = 0;
 		lencount = trail[0].length;
-		
+
 		color1 = color1 == 0 ? -1 : ParticleColor(color1);
 		pos = trail[0].start;
 		deg = (double)SpiralOffset;
@@ -781,7 +811,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				else
 					p->color = rblue4;
 			}
-			else 
+			else
 			{
 				p->color = color1;
 			}
@@ -856,7 +886,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 				else
 					p->color = grey1;
 			}
-			else 
+			else
 			{
 				p->color = color2;
 			}
@@ -902,7 +932,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 					diff.Y = clamp<double>(diff.Y + ((rnd & 16) ? 1 : -1), -maxdiff, maxdiff);
 				if (rnd & 4)
 					diff.Z = clamp<double>(diff.Z + ((rnd & 32) ? 1 : -1), -maxdiff, maxdiff);
-			}			
+			}
 			AActor *thing = Spawn (spawnclass, pos + diff, ALLOW_REPLACE);
 			if (thing)
 			{

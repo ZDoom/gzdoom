@@ -423,7 +423,7 @@ DEFINE_ACTION_FUNCTION(DLevelCompatibility, SetVertex)
 
 	if (vertex < level.vertexes.Size())
 	{
-		level.vertexes[vertex].p = DVector2(x, y);
+		level.vertexes[vertex].p = DVector2{x, y};
 	}
 	ForceNodeBuild = true;
 	return 0;

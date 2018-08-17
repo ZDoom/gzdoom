@@ -866,25 +866,25 @@ public:
 
 	double Distance2DSquared(AActor *other, bool absolute = false)
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
 		return (Pos().XY() - otherpos).LengthSquared();
 	}
 
 	double Distance2D(AActor *other, bool absolute = false)
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
 		return (Pos().XY() - otherpos).Length();
 	}
 
 	double Distance2D(double x, double y) const
 	{
-		return DVector2(X() - x, Y() - y).Length();
+		return DVector2{X() - x, Y() - y}.Length();
 	}
 
 	double Distance2D(AActor *other, double xadd, double yadd, bool absolute = false)
 	{
 		DVector3 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return DVector2(X() - otherpos.X + xadd, Y() - otherpos.Y + yadd).Length();
+		return DVector2{X() - otherpos.X + xadd, Y() - otherpos.Y + yadd}.Length();
 	}
 
 
@@ -903,19 +903,19 @@ public:
 
 	DAngle AngleTo(AActor *other, bool absolute = false)
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
 		return VecToAngle(otherpos - Pos().XY());
 	}
 
 	DAngle AngleTo(AActor *other, double oxofs, double oyofs, bool absolute = false) const
 	{
-		DVector2 otherpos = absolute ? other->Pos() : other->PosRelative(this);
-		return VecToAngle(otherpos - Pos() + DVector2(oxofs, oyofs));
+		DVector2 otherpos = absolute ? other->Pos().XY() : other->PosRelative(this).XY();
+		return VecToAngle(otherpos - Pos() + DVector2{oxofs, oyofs});
 	}
 
 	DVector2 Vec2To(AActor *other) const
 	{
-		return other->PosRelative(this) - Pos();
+		return (other->PosRelative(this) - Pos()).XY();
 	}
 
 	DVector3 Vec3To(AActor *other) const
@@ -1141,7 +1141,7 @@ public:
 	uint8_t			WeaveIndexZ;
 	int				skillrespawncount;
 	int				TIDtoHate;			// TID of things to hate (0 if none)
-	FNameNoInit		Species;		// For monster families
+	FName		Species;		// For monster families
 	TObjPtr<AActor*>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
 	TObjPtr<AActor*>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor*>	master;			// Thing which spawned this one (prevents mutual attacks)
@@ -1184,12 +1184,12 @@ public:
 	line_t			*BlockingLine;	// Line that blocked the last move
 
 	int PoisonDamage; // Damage received per tic from poison.
-	FNameNoInit PoisonDamageType; // Damage type dealt by poison.
+	FName PoisonDamageType; // Damage type dealt by poison.
 	int PoisonDuration; // Duration left for receiving poison damage.
 	int PoisonPeriod; // How often poison damage is applied. (Every X tics.)
 
 	int PoisonDamageReceived; // Damage received per tic from poison.
-	FNameNoInit PoisonDamageTypeReceived; // Damage type received by poison.
+	FName PoisonDamageTypeReceived; // Damage type received by poison.
 	int PoisonDurationReceived; // Duration left for receiving poison damage.
 	int PoisonPeriodReceived; // How often poison damage is applied. (Every X tics.)
 	TObjPtr<AActor*> Poisoner; // Last source of received poison damage.
@@ -1229,13 +1229,13 @@ public:
 	int32_t Mass;
 	int16_t PainChance;
 	int PainThreshold;
-	FNameNoInit DamageType;
-	FNameNoInit DamageTypeReceived;
+	FName DamageType;
+	FName DamageTypeReceived;
 	double DamageFactor;
 	double DamageMultiply;
 
-	FNameNoInit PainType;
-	FNameNoInit DeathType;
+	FName PainType;
+	FName DeathType;
 	PClassActor *TeleFogSourceType;
 	PClassActor *TeleFogDestType;
 	int RipperLevel;
@@ -1439,7 +1439,7 @@ public:
 
 	double VelXYToSpeed() const
 	{
-		return DVector2(Vel.X, Vel.Y).Length();
+		return DVector2{Vel.X, Vel.Y}.Length();
 	}
 
 	double VelToSpeed() const

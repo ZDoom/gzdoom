@@ -122,7 +122,7 @@ void FUE1Model::LoadGeometry()
 			Poly.V[j] = dpolys[i].vertices[j];
 		// unpack coords
 		for ( int j=0; j<3; j++ )
-			Poly.C[j] = FVector2(dpolys[i].uv[j][0]/255.f,dpolys[i].uv[j][1]/255.f);
+			Poly.C[j] = FVector2{dpolys[i].uv[j][0]/255.f,dpolys[i].uv[j][1]/255.f};
 		// compute facet normal
 		FVector3 dir[2];
 		dir[0] = verts[Poly.V[1]].Pos-verts[Poly.V[0]].Pos;

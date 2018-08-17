@@ -66,24 +66,9 @@ struct TVector2
 {
 	vec_t X, Y;
 
-	TVector2 ()
-	{
-	}
+	TVector2 () = default;
 
-	TVector2 (vec_t a, vec_t b)
-		: X(a), Y(b)
-	{
-	}
-
-	TVector2 (const TVector2 &other)
-		: X(other.X), Y(other.Y)
-	{
-	}
-
-	TVector2 (const TVector3<vec_t> &other)	// Copy the X and Y from the 3D vector and discard the Z
-		: X(other.X), Y(other.Y)
-	{
-	}
+	TVector2 (const TVector2 &other) = default;
 
 	void Zero()
 	{
@@ -95,18 +80,7 @@ struct TVector2
 		return X == 0 && Y == 0;
 	}
 
-	TVector2 &operator= (const TVector2 &other)
-	{
-		// This might seem backwards, but this helps produce smaller code when a newly
-		// created vector is assigned, because the components can just be popped off
-		// the FPU stack in order without the need for fxch. For platforms with a
-		// more sensible registered-based FPU, of course, the order doesn't matter.
-		// (And, yes, I know fxch can improve performance in the right circumstances,
-		// but this isn't one of those times. Here, it's little more than a no-op that
-		// makes the exe 2 bytes larger whenever you assign one vector to another.)
-		Y = other.Y, X = other.X;
-		return *this;
-	}
+	TVector2 &operator= (const TVector2 &other) = default;
 
 	// Access X and Y as an array
 	vec_t &operator[] (int index)
@@ -146,7 +120,7 @@ struct TVector2
 	// Unary negation
 	TVector2 operator- () const
 	{
-		return TVector2(-X, -Y);
+		return TVector2{-X, -Y};
 	}
 
 	// Scalar addition
@@ -158,12 +132,12 @@ struct TVector2
 
 	friend TVector2 operator+ (const TVector2 &v, vec_t scalar)
 	{
-		return TVector2(v.X + scalar, v.Y + scalar);
+		return TVector2{v.X + scalar, v.Y + scalar};
 	}
 
 	friend TVector2 operator+ (vec_t scalar, const TVector2 &v)
 	{
-		return TVector2(v.X + scalar, v.Y + scalar);
+		return TVector2{v.X + scalar, v.Y + scalar};
 	}
 
 	// Scalar subtraction
@@ -175,7 +149,7 @@ struct TVector2
 
 	TVector2 operator- (vec_t scalar) const
 	{
-		return TVector2(X - scalar, Y - scalar);
+		return TVector2{X - scalar, Y - scalar};
 	}
 
 	// Scalar multiplication
@@ -187,12 +161,12 @@ struct TVector2
 
 	friend TVector2 operator* (const TVector2 &v, vec_t scalar)
 	{
-		return TVector2(v.X * scalar, v.Y * scalar);
+		return TVector2{v.X * scalar, v.Y * scalar};
 	}
 
 	friend TVector2 operator* (vec_t scalar, const TVector2 &v)
 	{
-		return TVector2(v.X * scalar, v.Y * scalar);
+		return TVector2{v.X * scalar, v.Y * scalar};
 	}
 
 	// Scalar division
@@ -205,7 +179,7 @@ struct TVector2
 	TVector2 operator/ (vec_t scalar) const
 	{
 		scalar = 1 / scalar;
-		return TVector2(X * scalar, Y * scalar);
+		return TVector2{X * scalar, Y * scalar};
 	}
 
 	// Vector addition
@@ -217,7 +191,7 @@ struct TVector2
 
 	TVector2 operator+ (const TVector2 &other) const
 	{
-		return TVector2(X + other.X, Y + other.Y);
+		return TVector2{X + other.X, Y + other.Y};
 	}
 
 	// Vector subtraction
@@ -229,7 +203,7 @@ struct TVector2
 
 	TVector2 operator- (const TVector2 &other) const
 	{
-		return TVector2(X - other.X, Y - other.Y);
+		return TVector2{X - other.X, Y - other.Y};
 	}
 
 	// Vector length
@@ -285,7 +259,7 @@ struct TVector2
 	{
 		double cosval = g_cosdeg (angle);
 		double sinval = g_sindeg (angle);
-		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
+		return TVector2{X*cosval - Y*sinval, Y*cosval + X*sinval};
 	}
 
 	// Returns a rotated vector. angle is in degrees.
@@ -294,19 +268,19 @@ struct TVector2
 	{
 		double cosval = angle.Cos();
 		double sinval = angle.Sin();
-		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
+		return TVector2{X*cosval - Y*sinval, Y*cosval + X*sinval};
 	}
 
 	// Returns a vector rotated 90 degrees clockwise.
 	TVector2 Rotated90CW()
 	{
-		return TVector2(Y, -X);
+		return TVector2{Y, -X};
 	}
 
 	// Returns a vector rotated 90 degrees counterclockwise.
 	TVector2 Rotated90CCW()
 	{
-		return TVector2(-Y, X);
+		return TVector2{-Y, X};
 	}
 };
 
@@ -317,9 +291,7 @@ struct TVector3
 
 	vec_t X, Y, Z;
 
-	TVector3 ()
-	{
-	}
+	TVector3 () = default;
 
 	TVector3 (vec_t a, vec_t b, vec_t c)
 		: X(a), Y(b), Z(c)
@@ -331,10 +303,7 @@ struct TVector3
 	{
 	}
 
-	TVector3 (const TVector3 &other)
-		: X(other.X), Y(other.Y), Z(other.Z)
-	{
-	}
+	TVector3 (const TVector3 &other) = default;
 
 	TVector3 (const Vector2 &xy, vec_t z)
 		: X(xy.X), Y(xy.Y), Z(z)
@@ -353,11 +322,7 @@ struct TVector3
 		return X == 0 && Y == 0 && Z == 0;
 	}
 
-	TVector3 &operator= (const TVector3 &other)
-	{
-		Z = other.Z, Y = other.Y, X = other.X;
-		return *this;
-	}
+	TVector3 &operator= (const TVector3 &other) = default;
 
 	// Access X and Y and Z as an array
 	vec_t &operator[] (int index)
@@ -516,14 +481,14 @@ struct TVector3
 
 	friend Vector2 operator+ (const Vector2 &v2, const TVector3 &v3)
 	{
-		return Vector2(v2.X + v3.X, v2.Y + v3.Y);
+		return Vector2{v2.X + v3.X, v2.Y + v3.Y};
 	}
 
 	// Subtract a 3D vector and a 2D vector.
 	// Discards the Z component of the 3D vector and returns a 2D vector.
 	friend Vector2 operator- (const TVector2<vec_t> &v2, const TVector3 &v3)
 	{
-		return Vector2(v2.X - v3.X, v2.Y - v3.Y);
+		return Vector2{v2.X - v3.X, v2.Y - v3.Y};
 	}
 
 	void GetRightUp(TVector3 &right, TVector3 &up)
@@ -662,9 +627,7 @@ struct TVector4
 
 	vec_t X, Y, Z, W;
 
-	TVector4()
-	{
-	}
+	TVector4() = default;
 
 	TVector4(vec_t a, vec_t b, vec_t c, vec_t d)
 		: X(a), Y(b), Z(c), W(d)
@@ -939,9 +902,7 @@ struct TMatrix3x3
 
 	vec_t Cells[3][3];
 
-	TMatrix3x3()
-	{
-	}
+	TMatrix3x3() = default;
 
 	TMatrix3x3(const TMatrix3x3 &other)
 	{
@@ -1151,9 +1112,7 @@ struct TAngle
 	TAngle &operator= (long other) = delete;
 	TAngle &operator= (unsigned long other) = delete;
 
-	TAngle ()
-	{
-	}
+	TAngle () = default;
 
 	TAngle (vec_t amt)
 		: Degrees(amt)
@@ -1372,7 +1331,7 @@ struct TAngle
 
 	TVector2<vec_t> ToVector(vec_t length = 1) const
 	{
-		return TVector2<vec_t>(length * Cos(), length * Sin());
+		return TVector2<vec_t>{length * Cos(), length * Sin()};
 	}
 
 	vec_t Cos() const
@@ -1477,7 +1436,7 @@ TAngle<T> TVector3<T>::Angle() const
 template<class T>
 TAngle<T> TVector3<T>::Pitch() const
 {
-	return VecToAngle(TVector2<T>(X, Y).Length(), Z);
+	return VecToAngle(TVector2<T>{X, Y}.Length(), Z);
 }
 
 // Much of this is copied from TVector3. Is all that functionality really appropriate?
@@ -1491,9 +1450,7 @@ struct TRotator
 	Angle Roll;		// rotation about the forward axis.
 	Angle CamRoll;	// Roll specific to actor cameras. Used by quakes.
 
-	TRotator ()
-	{
-	}
+	TRotator () = default;
 
 	TRotator (const Angle &p, const Angle &y, const Angle &r)
 		: Pitch(p), Yaw(y), Roll(r)
@@ -1672,7 +1629,6 @@ typedef TVector4<double>		DVector4;
 typedef TRotator<double>		DRotator;
 typedef TMatrix3x3<double>		DMatrix3x3;
 typedef TAngle<double>			DAngle;
-
 
 class Plane
 {

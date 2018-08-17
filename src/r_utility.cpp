@@ -449,8 +449,8 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		NoInterpolateView = false;
 		iview->Old = iview->New;
 	}
-	int oldgroup = R_PointInSubsector(iview->Old.Pos)->sector->PortalGroup;
-	int newgroup = R_PointInSubsector(iview->New.Pos)->sector->PortalGroup;
+	int oldgroup = R_PointInSubsector(iview->Old.Pos.XY())->sector->PortalGroup;
+	int newgroup = R_PointInSubsector(iview->New.Pos.XY())->sector->PortalGroup;
 
 	DAngle oviewangle = iview->Old.Angles.Yaw;
 	DAngle nviewangle = iview->New.Angles.Yaw;
@@ -505,7 +505,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 						nviewz -= totalzdiff - zdiff;
 						oviewangle += adiff;
 						nviewangle -= totaladiff - adiff;
-						DVector2 viewpos = start.pos + (fragfrac * (end.pos - start.pos));
+						DVector2 viewpos = (start.pos + (fragfrac * (end.pos - start.pos))).XY();
 						viewpoint.Pos = { viewpos, oviewz + Frac * (nviewz - oviewz) };
 						break;
 					}
@@ -555,7 +555,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 	}
 	
 	// Due to interpolation this is not necessarily the same as the sector the camera is in.
-	viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+	viewpoint.sector = R_PointInSubsector(viewpoint.Pos.XY())->sector;
 	bool moved = false;
 	while (!viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
 	{
@@ -563,7 +563,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 		{
 			viewpoint.Pos += viewpoint.sector->GetPortalDisplacement(sector_t::ceiling);
 			viewpoint.ActorPos += viewpoint.sector->GetPortalDisplacement(sector_t::ceiling);
-			viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+			viewpoint.sector = R_PointInSubsector(viewpoint.Pos.XY())->sector;
 			moved = true;
 		}
 		else break;
@@ -576,7 +576,7 @@ void R_InterpolateView (FRenderViewpoint &viewpoint, player_t *player, double Fr
 			{
 				viewpoint.Pos += viewpoint.sector->GetPortalDisplacement(sector_t::floor);
 				viewpoint.ActorPos += viewpoint.sector->GetPortalDisplacement(sector_t::floor);
-				viewpoint.sector = R_PointInSubsector(viewpoint.Pos)->sector;
+				viewpoint.sector = R_PointInSubsector(viewpoint.Pos.XY())->sector;
 				moved = true;
 			}
 			else break;
@@ -806,7 +806,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	if (player != NULL && gamestate != GS_TITLELEVEL &&
 		((player->cheats & CF_CHASECAM) || (r_deathcamera && viewpoint.camera->health <= 0)))
 	{
-		sector_t *oldsector = R_PointInSubsector(iview->Old.Pos)->sector;
+		sector_t *oldsector = R_PointInSubsector(iview->Old.Pos.XY())->sector;
 		// [RH] Use chasecam view
 		DVector3 campos;
 		DAngle camangle;
@@ -858,7 +858,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 	// Keep the view within the sector's floor and ceiling
 	if (viewpoint.sector->PortalBlocksMovement(sector_t::ceiling))
 	{
-		double theZ = viewpoint.sector->ceilingplane.ZatPoint(viewpoint.Pos) - 4;
+		double theZ = viewpoint.sector->ceilingplane.ZatPoint(viewpoint.Pos.XY()) - 4;
 		if (viewpoint.Pos.Z > theZ)
 		{
 			viewpoint.Pos.Z = theZ;
@@ -867,7 +867,7 @@ void R_SetupFrame (FRenderViewpoint &viewpoint, FViewWindow &viewwindow, AActor 
 
 	if (viewpoint.sector->PortalBlocksMovement(sector_t::floor))
 	{
-		double theZ = viewpoint.sector->floorplane.ZatPoint(viewpoint.Pos) + 4;
+		double theZ = viewpoint.sector->floorplane.ZatPoint(viewpoint.Pos.XY()) + 4;
 		if (viewpoint.Pos.Z < theZ)
 		{
 			viewpoint.Pos.Z = theZ;

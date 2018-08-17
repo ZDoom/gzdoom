@@ -72,7 +72,7 @@ void P_SpawnTeleportFog(AActor *mobj, const DVector3 &pos, bool beforeTele, bool
 	else
 	{
 		double fogDelta = mobj->flags & MF_MISSILE ? 0 : TELEFOGHEIGHT;
-		mo = Spawn((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos, pos.Z + fogDelta), ALLOW_REPLACE);
+		mo = Spawn((beforeTele ? mobj->TeleFogSourceType : mobj->TeleFogDestType), DVector3(pos.XY(), pos.Z + fogDelta), ALLOW_REPLACE);
 	}
 
 	if (mo != NULL && setTarget)
@@ -114,8 +114,8 @@ bool P_Teleport (AActor *thing, DVector3 pos, DAngle angle, int flags)
 	player = thing->player;
 	if (player && player->mo != thing)
 		player = NULL;
-	floorheight = destsect->floorplane.ZatPoint (pos);
-	ceilingheight = destsect->ceilingplane.ZatPoint (pos);
+	floorheight = destsect->floorplane.ZatPoint (pos.XY());
+	ceilingheight = destsect->ceilingplane.ZatPoint (pos.XY());
 	if (thing->flags & MF_MISSILE)
 	{ // We don't measure z velocity, because it doesn't change.
 		missilespeed = thing->VelXYToSpeed();
@@ -386,7 +386,7 @@ bool EV_Teleport (int tid, int tag, line_t *line, int side, AActor *thing, int f
 	{
 		badangle = 0.01;
 	}
-	if (P_Teleport (thing, DVector3(searcher->Pos(), z), searcher->Angles.Yaw + badangle, flags))
+	if (P_Teleport (thing, DVector3(searcher->Pos().XY(), z), searcher->Angles.Yaw + badangle, flags))
 	{
 		// [RH] Lee Killough's changes for silent teleporters from BOOM
 		if (line)
@@ -612,7 +612,7 @@ bool EV_TeleportOther (int other_tid, int dest_tid, bool fog)
 static bool DoGroupForOne (AActor *victim, AActor *source, AActor *dest, bool floorz, bool fog)
 {
 	DAngle an = dest->Angles.Yaw - source->Angles.Yaw;
-	DVector2 off = victim->Pos() - source->Pos();
+	DVector2 off = (victim->Pos() - source->Pos()).XY();
 	DAngle offAngle = victim->Angles.Yaw - source->Angles.Yaw;
 	DVector2 newp = { off.X * an.Cos() - off.Y * an.Sin(), off.X * an.Sin() + off.Y * an.Cos() };
 	double z = floorz ? ONFLOORZ : dest->Z() + victim->Z() - source->Z();

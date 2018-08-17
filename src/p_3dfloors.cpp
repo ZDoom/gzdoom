@@ -904,7 +904,7 @@ secplane_t P_FindFloorPlane(sector_t * sector, const DVector3 &pos)
 		{
 			if(!(rover->flags & FF_SOLID) || !(rover->flags & FF_EXISTS)) continue;
 
-			if (rover->top.plane->ZatPoint(pos) == pos.Z)
+			if (rover->top.plane->ZatPoint(pos.XY()) == pos.Z)
 			{
 				retplane = *rover->top.plane;
 				if (retplane.fC() < 0) retplane.FlipVert();
@@ -929,12 +929,12 @@ int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, d
 		sec = P_PointInSector(pos);
 
 	// Above normal ceiling
-	cmpz = sec->ceilingplane.ZatPoint(pos);
+	cmpz = sec->ceilingplane.ZatPoint(pos.XY());
 	if (pos.Z >= cmpz)
 		return -1;
 
 	// Below normal floor
-	cmpz = sec->floorplane.ZatPoint(pos);
+	cmpz = sec->floorplane.ZatPoint(pos.XY());
 	if (pos.Z <= cmpz)
 		return -1;
 
@@ -949,19 +949,19 @@ int	P_Find3DFloor(sector_t * sec, const DVector3 &pos, bool above, bool floor, d
 		if (above)
 		{
 			// z is above that floor
-			if (floor && (pos.Z >= (cmpz = rover->top.plane->ZatPoint(pos))))
+			if (floor && (pos.Z >= (cmpz = rover->top.plane->ZatPoint(pos.XY()))))
 				return i - 1;
 			// z is above that ceiling
-			if (pos.Z >= (cmpz = rover->bottom.plane->ZatPoint(pos)))
+			if (pos.Z >= (cmpz = rover->bottom.plane->ZatPoint(pos.XY())))
 				return i - 1;
 		}
 		else // below
 		{
 			// z is below that ceiling
-			if (!floor && (pos.Z <= (cmpz = rover->bottom.plane->ZatPoint(pos))))
+			if (!floor && (pos.Z <= (cmpz = rover->bottom.plane->ZatPoint(pos.XY()))))
 				return i;
 			// z is below that floor
-			if (pos.Z <= (cmpz = rover->top.plane->ZatPoint(pos)))
+			if (pos.Z <= (cmpz = rover->top.plane->ZatPoint(pos.XY())))
 				return i;
 		}
 	}

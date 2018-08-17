@@ -570,7 +570,7 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 		{
 			nextlevel = level.NextMap;	// If there is already an end sequence please leave it alone!
 		}
-		else 
+		else
 		{
 			nextlevel.Format("enDSeQ%04x", int(gameinfo.DefaultEndSequence));
 		}
@@ -613,8 +613,8 @@ void G_ChangeLevel(const char *levelname, int position, int flags, int nextSkill
 	startpos = position;
 	gameaction = ga_completed;
 	level.SetMusicVolume(1.0);
-		
-	if (nextinfo != NULL) 
+
+	if (nextinfo != NULL)
 	{
 		if (thiscluster != nextcluster || (thiscluster && !(thiscluster->flags & CLUSTER_HUB)))
 		{
@@ -713,7 +713,7 @@ void G_ExitLevel (int position, bool keepFacing)
 	G_ChangeLevel(G_GetExitMap(), position, keepFacing ? CHANGELEVEL_KEEPFACING : 0);
 }
 
-void G_SecretExitLevel (int position) 
+void G_SecretExitLevel (int position)
 {
 	level.flags3 |= LEVEL3_EXITSECRETUSED;
 	G_ChangeLevel(G_GetSecretExitMap(), position, 0);
@@ -726,7 +726,7 @@ void G_SecretExitLevel (int position)
 
 void G_DoCompleted (void)
 {
-	int i; 
+	int i;
 
 	gameaction = ga_nothing;
 
@@ -909,14 +909,14 @@ void DAutosaver::Tick ()
 
 //==========================================================================
 //
-// G_DoLoadLevel 
+// G_DoLoadLevel
 //
 //==========================================================================
 
-extern gamestate_t 	wipegamestate; 
- 
+extern gamestate_t 	wipegamestate;
+
 void G_DoLoadLevel (int position, bool autosave)
-{ 
+{
 	static int lastposition = 0;
 	gamestate_t oldgs = gamestate;
 	int i;
@@ -958,7 +958,7 @@ void G_DoLoadLevel (int position, bool autosave)
 
 	if (gamestate != GS_TITLELEVEL)
 	{
-		gamestate = GS_LEVEL; 
+		gamestate = GS_LEVEL;
 	}
 
 	// Set the sky map.
@@ -978,7 +978,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	R_InitSkyMap ();
 
 	for (i = 0; i < MAXPLAYERS; i++)
-	{ 
+	{
 		if (playeringame[i] && (deathmatch || players[i].playerstate == PST_DEAD))
 			players[i].playerstate = PST_ENTER;	// [BC]
 		memset (players[i].frags,0,sizeof(players[i].frags));
@@ -1011,14 +1011,14 @@ void G_DoLoadLevel (int position, bool autosave)
 		P_StartLightning ();
 	}
 
-	gameaction = ga_nothing; 
+	gameaction = ga_nothing;
 
 	// clear cmd building stuff
 	ResetButtonStates ();
 
 	SendItemUse = NULL;
 	SendItemDrop = NULL;
-	mousex = mousey = 0; 
+	mousex = mousey = 0;
 	sendpause = sendsave = sendturn180 = SendLand = false;
 	LocalViewAngle = 0;
 	LocalViewPitch = 0;
@@ -1093,7 +1093,7 @@ void G_DoLoadLevel (int position, bool autosave)
 	//      regular world load (savegames are handled internally)
 	E_WorldLoaded();
 	P_DoDeferedScripts ();	// [RH] Do script actions that were triggered on another map.
-	
+
 	if (demoplayback || oldgs == GS_STARTUP || oldgs == GS_TITLELEVEL)
 		C_HideConsole ();
 
@@ -1113,16 +1113,16 @@ void G_DoLoadLevel (int position, bool autosave)
 
 //==========================================================================
 //
-// G_WorldDone 
+// G_WorldDone
 //
 //==========================================================================
 
-void G_WorldDone (void) 
-{ 
+void G_WorldDone (void)
+{
 	cluster_info_t *nextcluster;
 	cluster_info_t *thiscluster;
 
-	gameaction = ga_worlddone; 
+	gameaction = ga_worlddone;
 
 	if (level.flags & LEVEL_CHANGEMAPCHEAT)
 		return;
@@ -1173,7 +1173,7 @@ void G_WorldDone (void)
 	else
 	{
 		FExitText *ext = nullptr;
-		
+
 		if (level.flags3 & LEVEL3_EXITSECRETUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Secret);
 		else if (level.flags3 & LEVEL3_EXITNORMALUSED) ext = level.info->ExitMapTexts.CheckKey(NAME_Normal);
 		if (ext == nullptr) ext = level.info->ExitMapTexts.CheckKey(nextlevel);
@@ -1223,8 +1223,8 @@ void G_WorldDone (void)
 			}
 		}
 	}
-} 
- 
+}
+
 DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 {
 	G_WorldDone();
@@ -1236,8 +1236,8 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, WorldDone)
 //
 //==========================================================================
 
-void G_DoWorldDone (void) 
-{		 
+void G_DoWorldDone (void)
+{
 	gamestate = GS_LEVEL;
 	if (wminfo.next[0] == 0)
 	{
@@ -1252,7 +1252,7 @@ void G_DoWorldDone (void)
 	G_DoLoadLevel (startpos, true);
 	startpos = 0;
 	gameaction = ga_nothing;
-	viewactive = true; 
+	viewactive = true;
 }
 
 //==========================================================================
@@ -1319,7 +1319,7 @@ int G_FinishTravel ()
 	int pnum;
 	int failnum = 0;
 
-	// 
+	//
 	APlayerPawn* pawns[MAXPLAYERS];
 	int pawnsnum = 0;
 
@@ -1424,7 +1424,7 @@ int G_FinishTravel ()
 	DThinker::DestroyThinkersInList(STAT_TRAVELLING);
 	return failnum;
 }
- 
+
 //==========================================================================
 //
 //
@@ -1501,7 +1501,7 @@ void G_InitLevelLocals ()
 	level.F1Pic = info->F1Pic;
 	level.hazardcolor = info->hazardcolor;
 	level.hazardflash = info->hazardflash;
-	
+
 	// GL fog stuff modifiable by SetGlobalFogParameter.
 	level.fogdensity = info->fogdensity;
 	level.outsidefogdensity = info->outsidefogdensity;
@@ -1909,7 +1909,7 @@ void P_WriteACSDefereds (FSerializer &arc)
 void P_ReadACSDefereds (FSerializer &arc)
 {
 	FString MapName;
-	
+
 	P_RemoveDefereds ();
 
 	if (arc.BeginObject("deferred"))
@@ -2028,7 +2028,7 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Diff)
 	PARAM_FLOAT(y1);
 	PARAM_FLOAT(x2);
 	PARAM_FLOAT(y2);
-	ACTION_RETURN_VEC2(VecDiff(DVector2(x1, y1), DVector2(x2, y2)));
+	ACTION_RETURN_VEC2(VecDiff(DVector2{x1, y1}, DVector2{x2, y2}));
 }
 
 DEFINE_ACTION_FUNCTION(FLevelLocals, Vec3Diff)
@@ -2053,7 +2053,8 @@ DEFINE_ACTION_FUNCTION(FLevelLocals, Vec2Offset)
 	PARAM_BOOL_DEF(absolute);
 	if (absolute)
 	{
-		ACTION_RETURN_VEC2(DVector2(x + dx, y + dy));
+        auto dv = DVector2{x + dx, y + dy};
+		ACTION_RETURN_VEC2(dv);
 	}
 	else
 	{

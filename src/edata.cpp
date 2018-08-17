@@ -120,7 +120,7 @@ struct EDSector
 
 	int damageamount;
 	int damageinterval;
-	FNameNoInit damagetype;
+	FName damagetype;
 	uint8_t leaky;
 	uint8_t leakyadd;
 	uint8_t leakyremove;

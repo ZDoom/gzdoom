@@ -1442,9 +1442,11 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetScaledSize)
 	auto tex = TexMan.ByIndex(texid);
 	if (tex != nullptr)
 	{
-		ACTION_RETURN_VEC2(DVector2(tex->GetScaledWidthDouble(), tex->GetScaledHeightDouble()));
+        auto dv = DVector2{tex->GetScaledWidthDouble(), tex->GetScaledHeightDouble()};
+		ACTION_RETURN_VEC2(dv);
 	}
-	ACTION_RETURN_VEC2(DVector2(-1, -1));
+    auto dv = DVector2{-1, -1};
+	ACTION_RETURN_VEC2(dv);
 }
 
 //==========================================================================
@@ -1460,9 +1462,11 @@ DEFINE_ACTION_FUNCTION(_TexMan, GetScaledOffset)
 	auto tex = TexMan.ByIndex(texid);
 	if (tex != nullptr)
 	{
-		ACTION_RETURN_VEC2(DVector2(tex->GetScaledLeftOffsetDouble(0), tex->GetScaledTopOffsetDouble(0)));
+        auto dv = DVector2{tex->GetScaledLeftOffsetDouble(0), tex->GetScaledTopOffsetDouble(0)};
+		ACTION_RETURN_VEC2(dv);
 	}
-	ACTION_RETURN_VEC2(DVector2(-1, -1));
+    auto dv = DVector2{-1, -1};
+	ACTION_RETURN_VEC2(dv);
 }
 
 //==========================================================================

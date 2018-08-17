@@ -134,7 +134,7 @@ static int CheckForMissingSegs()
 		if (seg.sidedef != nullptr)
 		{
 			// check all the segs and calculate the length they occupy on their sidedef
-			DVector2 vec1(seg.v2->fX() - seg.v1->fX(), seg.v2->fY() - seg.v1->fY());
+			DVector2 vec1{seg.v2->fX() - seg.v1->fX(), seg.v2->fY() - seg.v1->fY()};
 			added_seglen[seg.sidedef->Index()] += vec1.Length();
 		}
 	}

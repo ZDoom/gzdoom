@@ -58,7 +58,7 @@ static void P_SlopeLineToPoint (int lineid, const DVector3 &pos, bool slopeCeil)
 		sector_t *sec;
 		secplane_t *plane;
 		
-		if (P_PointOnLineSidePrecise (pos, line) == 0)
+		if (P_PointOnLineSidePrecise (pos.XY(), line) == 0)
 		{
 			sec = line->frontsector;
 		}
@@ -398,7 +398,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 				refplane = &sec->floorplane;
 				ceiling = false;
 			}
-			pos.Z = refplane->ZatPoint (mt->pos) + mt->pos.Z;
+			pos.Z = refplane->ZatPoint (mt->pos.XY()) + mt->pos.Z;
 
 			if (mt->info->Special <= SMT_SlopeCeilingPointLine)
 			{ // SlopeFloorPointLine and SlopCeilingPointLine
@@ -421,7 +421,7 @@ void P_SpawnSlopeMakers (FMapThing *firstmt, FMapThing *lastmt, const int *oldve
 		if (mt->info != NULL && mt->info->Type == NULL &&
 			(mt->info->Special == SMT_CopyFloorPlane || mt->info->Special == SMT_CopyCeilingPlane))
 		{
-			P_CopyPlane (mt->args[0], mt->pos, mt->info->Special == SMT_CopyCeilingPlane);
+			P_CopyPlane (mt->args[0], mt->pos.XY(), mt->info->Special == SMT_CopyCeilingPlane);
 			mt->EdNum = 0;
 		}
 	}

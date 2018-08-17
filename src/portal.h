@@ -14,7 +14,7 @@ struct subsector_t;
 // that are connected by portals.
 // The idea here is basically the same as implemented in Eternity Engine:
 //
-// - each portal creates two sector groups in the map 
+// - each portal creates two sector groups in the map
 //   which are offset by the displacement of the portal anchors
 //
 // - for two or multiple groups the displacement is calculated by
@@ -47,7 +47,12 @@ struct FDisplacementTable
 	void Create(int numgroups)
 	{
 		data.Resize(numgroups*numgroups);
-		memset(&data[0], 0, numgroups*numgroups*sizeof(data[0]));
+        for (auto i = 0; i < size; ++i) {
+            data[i].pos = {0,0};
+            data[i].isSet = false;
+            data[i].indirect = 0;
+        }
+		//memset(&data[0], 0, numgroups*numgroups*sizeof(data[0]));
 		size = numgroups;
 	}
 

@@ -1214,7 +1214,7 @@ DEFINE_ACTION_FUNCTION(_Sector, HighestCeilingAt)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	sector_t *s;
-	double h = self->HighestCeilingAt(DVector2(x, y), &s);
+	double h = self->HighestCeilingAt(DVector2{x, y}, &s);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(s);
 	return numret;
@@ -1249,7 +1249,7 @@ DEFINE_ACTION_FUNCTION(_Sector, LowestFloorAt)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	sector_t *s;
-	double h = self->LowestFloorAt(DVector2(x, y), &s);
+	double h = self->LowestFloorAt(DVector2{x, y}, &s);
 	if (numret > 0) ret[0].SetFloat(h);
 	if (numret > 1) ret[1].SetPointer(s);
 	return numret;
@@ -1536,7 +1536,7 @@ DEFINE_ACTION_FUNCTION(_Sector, NextLowestFloorAt)
 
 	 if (bottomglowcolor[3]> 0)
 	 {
-		 double floordiff = pos.Z - floorplane.ZatPoint(pos);
+		 double floordiff = pos.Z - floorplane.ZatPoint(pos.XY());
 		 if (floordiff < bottomglowcolor[3])
 		 {
 			 int maxlight = (255 + lightlevel) >> 1;
@@ -2611,7 +2611,7 @@ DEFINE_ACTION_FUNCTION(_Secplane, PointToDist)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_FLOAT(z);
-	ACTION_RETURN_FLOAT(self->PointToDist(DVector2(x, y), z));
+	ACTION_RETURN_FLOAT(self->PointToDist(DVector2{x, y}, z));
 }
 
 

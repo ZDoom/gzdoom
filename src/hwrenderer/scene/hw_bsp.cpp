@@ -471,7 +471,7 @@ void HWDrawInfo::DoSubsector(subsector_t * sub)
 		{
 			if (mClipPortal)
 			{
-				int clipres = mClipPortal->ClipPoint(Particles[i].Pos);
+				int clipres = mClipPortal->ClipPoint(Particles[i].Pos.XY());
 				if (clipres == PClip_InFront) continue;
 			}
 

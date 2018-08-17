@@ -377,7 +377,7 @@ static void GetWallStuff (side_t *wall, vertex_t *&v1, double &ldx, double &ldy)
 
 static double Length (double dx, double dy)
 {
-	return DVector2(dx, dy).Length();
+	return DVector2{dx, dy}.Length();
 }
 
 static side_t *NextWall (const side_t *wall)

@@ -178,7 +178,7 @@ FTexture * FTexture::CreateTexture (const char *name, int lumpnum, ETextureType 
 
 FTexture::FTexture (const char *name, int lumpnum)
 	: 
-  WidthBits(0), HeightBits(0), Scale(1,1), SourceLump(lumpnum),
+  WidthBits(0), HeightBits(0), Scale({1,1}), SourceLump(lumpnum),
   UseType(ETextureType::Any), bNoDecals(false), bNoRemap0(false), bWorldPanning(false),
   bMasked(true), bAlphaTexture(false), bHasCanvas(false), bWarped(0), bComplex(false), bMultiPatch(false), bKeepAround(false), bFullNameTexture(false),
 	Rotations(0xFFFF), SkyOffset(0), Width(0), Height(0), WidthMask(0)

@@ -46,7 +46,7 @@ class FString;
 class FName
 {
 public:
-	FName () : Index(0) {}
+	FName () = default;
 	FName (const char *text) { Index = NameData.FindName (text, false); }
 	FName (const char *text, bool noCreate) { Index = NameData.FindName (text, noCreate); }
 	FName (const char *text, size_t textlen, bool noCreate) { Index = NameData.FindName (text, textlen, noCreate); }
@@ -87,7 +87,7 @@ public:
 	bool operator >= (ENamedName index) const { return Index >= index; }
 
 protected:
-	int Index;
+	int Index = 0;
 
 	struct NameEntry
 	{
@@ -120,20 +120,6 @@ protected:
 	};
 
 	static NameManager NameData;
-
-	enum EDummy { NoInit };
-	FName (EDummy) {}
-};
-
-class FNameNoInit : public FName
-{
-public:
-	FNameNoInit() : FName(NoInit) {}
-
-	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
-	FName &operator = (const FString &text);
-	FName &operator = (const FName &other) { Index = int(other); return *this; }
-	FName &operator = (ENamedName index) { Index = index; return *this; }
 };
 
 #endif

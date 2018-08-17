@@ -116,19 +116,19 @@ namespace swrenderer
 		{
 			if (fakeside == WaterFakeSide::AboveCeiling)
 			{
-				if (gzt < heightsec->ceilingplane.ZatPoint(pos))
+				if (gzt < heightsec->ceilingplane.ZatPoint(pos.XY()))
 					return;
 			}
 			else if (fakeside == WaterFakeSide::BelowFloor)
 			{
-				if (gzb >= heightsec->floorplane.ZatPoint(pos))
+				if (gzb >= heightsec->floorplane.ZatPoint(pos.XY()))
 					return;
 			}
 			else
 			{
-				if (gzt < heightsec->floorplane.ZatPoint(pos))
+				if (gzt < heightsec->floorplane.ZatPoint(pos.XY()))
 					return;
-				if (!(heightsec->MoreFlags & SECMF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint(pos))
+				if (!(heightsec->MoreFlags & SECMF_FAKEFLOORONLY) && gzb >= heightsec->ceilingplane.ZatPoint(pos.XY()))
 					return;
 			}
 		}

@@ -102,7 +102,7 @@ namespace swrenderer
 		lyscale = _yscale * ifloatpow2[drawerargs.TextureHeightBits()];
 		xscale = 64.f / lxscale;
 		yscale = 64.f / lyscale;
-		zeroheight = pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos);
+		zeroheight = pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos.XY());
 
 		pviewx = xs_ToFixed(32 - drawerargs.TextureWidthBits(), pl->xform.xOffs * pl->xform.xScale);
 		pviewy = xs_ToFixed(32 - drawerargs.TextureHeightBits(), pl->xform.yOffs * pl->xform.yScale);
@@ -173,7 +173,7 @@ namespace swrenderer
 		basecolormap = colormap;
 		bool foggy = level.fadeto || basecolormap->Fade || (level.flags & LEVEL_HASFADETABLE);;
 
-		planelightfloat = (Thread->Light->SlopePlaneGlobVis(foggy) * lxscale * lyscale) / (fabs(pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos) - Thread->Viewport->viewpoint.Pos.Z)) / 65536.f;
+		planelightfloat = (Thread->Light->SlopePlaneGlobVis(foggy) * lxscale * lyscale) / (fabs(pl->height.ZatPoint(Thread->Viewport->viewpoint.Pos.XY()) - Thread->Viewport->viewpoint.Pos.Z)) / 65536.f;
 
 		if (pl->height.fC() > 0)
 			planelightfloat = -planelightfloat;

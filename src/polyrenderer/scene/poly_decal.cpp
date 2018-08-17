@@ -67,7 +67,7 @@ void RenderPolyDecal::Render(PolyRenderThread *thread, DBaseDecal *decal, const 
 
 	double dcx, dcy;
 	decal->GetXY(line->sidedef, dcx, dcy);
-	DVector2 decal_pos = DVector2(dcx, dcy) + normal;
+	DVector2 decal_pos = DVector2{dcx, dcy} + normal;
 	DVector2 decal_left = decal_pos - edge_left * angvec;
 	DVector2 decal_right = decal_pos + edge_right * angvec;
 

@@ -1166,12 +1166,34 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			case OP_EQF_R: // if ((fB == fkC) != (A & 1)) then pc++
 			{
 				auto compLambda = [&](X86Gp& result) {
-					auto tmp = cc.newInt32();
-					cc.ucomisd(regF[B], regF[C]);
-					cc.sete(result);
-					cc.setnp(tmp);
-					cc.and_(result, tmp);
-					cc.and_(result, 1);
+					bool approx = static_cast<bool>(A & CMP_APPROX);
+					if (!approx) {
+						auto tmp = cc.newInt32();
+						cc.ucomisd(regF[B], regF[C]);
+						cc.sete(result);
+						cc.setnp(tmp);
+						cc.and_(result, tmp);
+						cc.and_(result, 1);
+					}
+					else {
+						auto tmp = cc.newXmmSd();
+
+						const int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
+						auto absMask = cc.newDoubleConst(kConstScopeLocal, reinterpret_cast<const double&>(absMaskInt));
+						auto absMaskXmm = cc.newXmmPd();
+
+						auto epsilon = cc.newDoubleConst(kConstScopeLocal, VM_EPSILON);
+						auto epsilonXmm = cc.newXmmSd();
+
+						cc.movsd(tmp, regF[B]);
+						cc.subsd(tmp, regF[C]);
+						cc.movsd(absMaskXmm, absMask);
+						cc.andpd(tmp, absMaskXmm);
+						cc.movsd(epsilonXmm, epsilon);
+						cc.ucomisd(epsilonXmm, tmp);
+						cc.seta(result);
+						cc.and_(result, 1);
+					}
 				};
 				emitComparisonOpcode(cc, labels, pc, i, compLambda);
 
@@ -1180,15 +1202,40 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			case OP_EQF_K:
 			{
 				auto compLambda = [&](X86Gp& result) {
-					auto konstTmp = cc.newIntPtr();
-					auto parityTmp = cc.newInt32();
-					cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+					bool approx = static_cast<bool>(A & CMP_APPROX);
+					if (!approx) {
+						auto konstTmp = cc.newIntPtr();
+						auto parityTmp = cc.newInt32();
+						cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
 
-					cc.ucomisd(regF[B], x86::qword_ptr(konstTmp));
-					cc.sete(result);
-					cc.setnp(parityTmp);
-					cc.and_(result, parityTmp);
-					cc.and_(result, 1);
+						cc.ucomisd(regF[B], x86::qword_ptr(konstTmp));
+						cc.sete(result);
+						cc.setnp(parityTmp);
+						cc.and_(result, parityTmp);
+						cc.and_(result, 1);
+					}
+					else {
+						auto konstTmp = cc.newIntPtr();
+						auto subTmp = cc.newXmmSd();
+
+						const int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
+						auto absMask = cc.newDoubleConst(kConstScopeLocal, reinterpret_cast<const double&>(absMaskInt));
+						auto absMaskXmm = cc.newXmmPd();
+
+						auto epsilon = cc.newDoubleConst(kConstScopeLocal, VM_EPSILON);
+						auto epsilonXmm = cc.newXmmSd();
+
+						cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&(konstf[C])));
+
+						cc.movsd(subTmp, regF[B]);
+						cc.subsd(subTmp, x86::qword_ptr(konstTmp));
+						cc.movsd(absMaskXmm, absMask);
+						cc.andpd(subTmp, absMaskXmm);
+						cc.movsd(epsilonXmm, epsilon);
+						cc.ucomisd(epsilonXmm, subTmp);
+						cc.seta(result);
+						cc.and_(result, 1);
+					}
 				};
 				emitComparisonOpcode(cc, labels, pc, i, compLambda);
 

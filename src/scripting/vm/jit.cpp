@@ -270,7 +270,7 @@ void emitComparisonOpcode(asmjit::X86Compiler& cc, const TArray<asmjit::Label>& 
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
-#if 0 // For debugging
+#if 1 // For debugging
 	if (strcmp(sfunc->Name.GetChars(), "EmptyFunction") != 0)
 		return nullptr;
 #else
@@ -1178,7 +1178,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 					else {
 						auto tmp = cc.newXmmSd();
 
-						int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
+						const int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
 						auto absMask = cc.newDoubleConst(kConstScopeLocal, reinterpret_cast<const double&>(absMaskInt));
 						auto absMaskXmm = cc.newXmmPd();
 
@@ -1218,7 +1218,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 						auto konstTmp = cc.newIntPtr();
 						auto subTmp = cc.newXmmSd();
 
-						int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
+						const int64_t absMaskInt = 0x7FFFFFFFFFFFFFFF;
 						auto absMask = cc.newDoubleConst(kConstScopeLocal, reinterpret_cast<const double&>(absMaskInt));
 						auto absMaskXmm = cc.newXmmPd();
 

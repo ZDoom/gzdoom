@@ -34,9 +34,6 @@ struct FDisplacement
 
 };
 
-#include <type_traits>
-//static_assert(std::is_trivial<DVector2>::value, "DVector2 is not trivial");
-
 struct FDisplacementTable
 {
 	TArray<FDisplacement> data;

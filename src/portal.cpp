@@ -718,7 +718,9 @@ DEFINE_ACTION_FUNCTION(FSectorPortal, GetSkyboxPortal)
 unsigned P_GetPortal(int type, int plane, sector_t *from, sector_t *to, const DVector2 &displacement)
 {
 	unsigned i = level.sectorPortals.Reserve(1);
-	memset(&level.sectorPortals[i], 0, sizeof(level.sectorPortals[i]));
+	level.sectorPortals[i].mFlags = 0;
+	level.sectorPortals[i].mPartner = 0;
+	level.sectorPortals[i].mSkybox = nullptr;
 	level.sectorPortals[i].mType = type;
 	level.sectorPortals[i].mPlane = plane;
 	level.sectorPortals[i].mOrigin = from;
@@ -739,7 +741,8 @@ unsigned P_GetPortal(int type, int plane, sector_t *from, sector_t *to, const DV
 unsigned P_GetStackPortal(AActor *point, int plane)
 {
 	unsigned i = level.sectorPortals.Reserve(1);
-	memset(&level.sectorPortals[i], 0, sizeof(level.sectorPortals[i]));
+	level.sectorPortals[i].mFlags = 0;
+	level.sectorPortals[i].mPartner = 0;
 	level.sectorPortals[i].mType = PORTS_STACKEDSECTORTHING;
 	level.sectorPortals[i].mPlane = plane;
 	level.sectorPortals[i].mOrigin = point->target->Sector;

@@ -134,8 +134,8 @@ public:
 	{
 		return &Array[Count];
 	}
-	
-	
+
+
 
 	////////
 	// This is a dummy constructor that does nothing. The purpose of this
@@ -302,7 +302,9 @@ public:
 			Array[index].~T();
 			if (index < --Count)
 			{
-				memmove (&Array[index], &Array[index+1], sizeof(T)*(Count - index));
+                for (auto i = index; i < Count; ++i) {
+                    Array[i] = Array[i+1];
+                }
 			}
 		}
 	}
@@ -322,7 +324,9 @@ public:
 			Count -= deletecount;
 			if (index < Count)
 			{
-				memmove (&Array[index], &Array[index+deletecount], sizeof(T)*(Count - index));
+                for (auto i = index; i < Count; ++i) {
+                    Array[i] = Array[i+deletecount];
+                }
 			}
 		}
 	}
@@ -344,7 +348,9 @@ public:
 			Resize (Count + 1);
 
 			// Now move items from the index and onward out of the way
-			memmove (&Array[index+1], &Array[index], sizeof(T)*(Count - index - 1));
+            for (auto i = index; i < Count - 1; ++i) {
+                Array[i + 1] = Array[i];
+            }
 
 			// And put the new element in
 			::new ((void *)&Array[index]) T(item);
@@ -498,7 +504,7 @@ public:
 	{
 		for (unsigned int i = 0; i < TArray<T,TT>::Size(); ++i)
 		{
-			if ((*this)[i] != NULL) 
+			if ((*this)[i] != NULL)
 				delete (*this)[i];
 		}
 	}
@@ -506,7 +512,7 @@ public:
 	{
 		for (unsigned int i = 0; i < TArray<T,TT>::Size(); ++i)
 		{
-			if ((*this)[i] != NULL) 
+			if ((*this)[i] != NULL)
 				delete (*this)[i];
 		}
 		this->Clear();
@@ -991,11 +997,11 @@ protected:
 	}
 
 	/*
-	** Inserts a new key into a hash table; first, check whether key's main 
-	** position is free. If not, check whether colliding node is in its main 
-	** position or not: if it is not, move colliding node to an empty place and 
-	** put new key in its main position; otherwise (colliding node is in its main 
-	** position), new key goes to an empty position. 
+	** Inserts a new key into a hash table; first, check whether key's main
+	** position is free. If not, check whether colliding node is in its main
+	** position or not: if it is not, move colliding node to an empty place and
+	** put new key in its main position; otherwise (colliding node is in its main
+	** position), new key goes to an empty position.
 	**
 	** The Value field is left unconstructed.
 	*/

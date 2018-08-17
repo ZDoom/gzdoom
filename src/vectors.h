@@ -80,18 +80,7 @@ struct TVector2
 		return X == 0 && Y == 0;
 	}
 
-	TVector2 &operator= (const TVector2 &other)
-	{
-		// This might seem backwards, but this helps produce smaller code when a newly
-		// created vector is assigned, because the components can just be popped off
-		// the FPU stack in order without the need for fxch. For platforms with a
-		// more sensible registered-based FPU, of course, the order doesn't matter.
-		// (And, yes, I know fxch can improve performance in the right circumstances,
-		// but this isn't one of those times. Here, it's little more than a no-op that
-		// makes the exe 2 bytes larger whenever you assign one vector to another.)
-		Y = other.Y, X = other.X;
-		return *this;
-	}
+	TVector2 &operator= (const TVector2 &other) = default;
 
 	// Access X and Y as an array
 	vec_t &operator[] (int index)
@@ -314,10 +303,7 @@ struct TVector3
 	{
 	}
 
-	TVector3 (const TVector3 &other)
-		: X(other.X), Y(other.Y), Z(other.Z)
-	{
-	}
+	TVector3 (const TVector3 &other) = default;
 
 	TVector3 (const Vector2 &xy, vec_t z)
 		: X(xy.X), Y(xy.Y), Z(z)
@@ -336,11 +322,7 @@ struct TVector3
 		return X == 0 && Y == 0 && Z == 0;
 	}
 
-	TVector3 &operator= (const TVector3 &other)
-	{
-		Z = other.Z, Y = other.Y, X = other.X;
-		return *this;
-	}
+	TVector3 &operator= (const TVector3 &other) = default;
 
 	// Access X and Y and Z as an array
 	vec_t &operator[] (int index)

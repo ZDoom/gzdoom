@@ -30,6 +30,7 @@
 
 #include <string.h>
 #include <stdint.h>
+#include <climits>
 #include "timidity.h"
 #include "tables.h"
 #include "common.h"
@@ -3373,7 +3374,7 @@ void Reverb::do_lofi1(int32_t *buf, int32_t count, EffectList *ef)
 	const int32_t level_shift = info->level_shift;
 
 	if(count == MAGIC_INIT_EFFECT_INFO) {
-		info->bit_mask = ~0L << (info->lofi_type * 2);
+		info->bit_mask = UINT32_MAX << (info->lofi_type * 2);
 		info->level_shift = ~info->bit_mask >> 1;
 		info->dryi = TIM_FSCALE(info->dry * info->level, 24);
 		info->weti = TIM_FSCALE(info->wet * info->level, 24);
@@ -3435,7 +3436,7 @@ void Reverb::do_lofi2(int32_t *buf, int32_t count, EffectList *ef)
 			fil->freq = -1;	/* bypass */
 			calc_filter_biquad_low(fil);
 		}
-		info->bit_mask = ~0L << (info->lofi_type * 2);
+		info->bit_mask = UINT32_MAX << (info->lofi_type * 2);
 		info->level_shift = ~info->bit_mask >> 1;
 		info->dryi = TIM_FSCALE(info->dry * info->level, 24);
 		info->weti = TIM_FSCALE(info->wet * info->level, 24);

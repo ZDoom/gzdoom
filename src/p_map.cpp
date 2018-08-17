@@ -1554,8 +1554,8 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 
 		if (tm.thing->target != NULL)
 		{
-			if (thing == tm.thing->target)
-			{ // Don't missile self
+			if (thing == tm.thing->target && !(tm.thing->flags8 & MF8_HITOWNER))
+			{ // Don't missile self -- [MK] unless explicitly allowed
 				return true;
 			}
 

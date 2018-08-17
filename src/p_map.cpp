@@ -1539,7 +1539,7 @@ bool PIT_CheckThing(FMultiBlockThingsIterator &it, FMultiBlockThingsIterator::Ch
 		// MBF bouncer might have a non-0 damage value, but they must not deal damage on impact either.
 		if ((tm.thing->BounceFlags & BOUNCE_Actors) && (tm.thing->IsZeroDamage() || !(tm.thing->flags & MF_MISSILE)))
 		{
-			return (tm.thing->target == thing || !(thing->flags & MF_SOLID));
+			return ((tm.thing->target == thing && !(tm.thing->flags8 & MF8_HITOWNER)) || !(thing->flags & MF_SOLID));
 		}
 
 		switch (tm.thing->SpecialMissileHit(thing))

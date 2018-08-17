@@ -93,7 +93,7 @@ struct vertexdata_t
 
 struct vertex_t
 {
-	DVector2 p;
+	DVector2 p{0, 0};
 
 	void set(fixed_t x, fixed_t y)
 	{
@@ -141,24 +141,15 @@ struct vertex_t
 	void RecalcVertexHeights();
 
 
-	angle_t viewangle;	// precalculated angle for clipping
-	int angletime;		// recalculation time for view angle
-	bool dirty;			// something has changed and needs to be recalculated
-	int numheights;
-	int numsectors;
-	sector_t ** sectors;
-	float * heightlist;
+	angle_t viewangle = 0;	// precalculated angle for clipping
+	int angletime = 0;		// recalculation time for view angle
+	bool dirty = true;			// something has changed and needs to be recalculated
+	int numheights = 0;
+	int numsectors = 0;
+	sector_t ** sectors = nullptr;
+	float * heightlist = nullptr;
 
-	vertex_t()
-	{
-		p = { 0,0 };
-		angletime = 0;
-		viewangle = 0;
-		dirty = true;
-		numheights = numsectors = 0;
-		sectors = NULL;
-		heightlist = NULL;
-	}
+	vertex_t() = default;
 
 	~vertex_t()
 	{
@@ -215,9 +206,7 @@ struct FUDMFKey
 	double FloatVal;
 	FString StringVal;
 
-	FUDMFKey()
-	{
-	}
+	FUDMFKey() = default;
 
 	FUDMFKey& operator =(int val)
 	{
@@ -583,11 +572,11 @@ struct FTransform
 struct secspecial_t
 {
 	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
-	int damageamount;			// [RH] Damage to do while standing on floor
-	short special;
-	short damageinterval;	// Interval for damage application
-	short leakydamage;		// chance of leaking through radiation suit
-	int Flags;
+	int damageamount = 0;			// [RH] Damage to do while standing on floor
+	short special = 0;
+	short damageinterval = 0;	// Interval for damage application
+	short leakydamage = 0;		// chance of leaking through radiation suit
+	int Flags = 0;
 
 	secspecial_t()
 	{

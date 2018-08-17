@@ -66,9 +66,7 @@ struct TVector2
 {
 	vec_t X, Y;
 
-	TVector2 ()
-	{
-	}
+	TVector2 () = default;
 
 	TVector2 (vec_t a, vec_t b)
 		: X(a), Y(b)
@@ -317,9 +315,7 @@ struct TVector3
 
 	vec_t X, Y, Z;
 
-	TVector3 ()
-	{
-	}
+	TVector3 () = default;
 
 	TVector3 (vec_t a, vec_t b, vec_t c)
 		: X(a), Y(b), Z(c)
@@ -662,9 +658,7 @@ struct TVector4
 
 	vec_t X, Y, Z, W;
 
-	TVector4()
-	{
-	}
+	TVector4() = default;
 
 	TVector4(vec_t a, vec_t b, vec_t c, vec_t d)
 		: X(a), Y(b), Z(c), W(d)
@@ -939,9 +933,7 @@ struct TMatrix3x3
 
 	vec_t Cells[3][3];
 
-	TMatrix3x3()
-	{
-	}
+	TMatrix3x3() = default;
 
 	TMatrix3x3(const TMatrix3x3 &other)
 	{
@@ -1151,9 +1143,7 @@ struct TAngle
 	TAngle &operator= (long other) = delete;
 	TAngle &operator= (unsigned long other) = delete;
 
-	TAngle ()
-	{
-	}
+	TAngle () = default;
 
 	TAngle (vec_t amt)
 		: Degrees(amt)
@@ -1491,9 +1481,7 @@ struct TRotator
 	Angle Roll;		// rotation about the forward axis.
 	Angle CamRoll;	// Roll specific to actor cameras. Used by quakes.
 
-	TRotator ()
-	{
-	}
+	TRotator () = default;
 
 	TRotator (const Angle &p, const Angle &y, const Angle &r)
 		: Pitch(p), Yaw(y), Roll(r)

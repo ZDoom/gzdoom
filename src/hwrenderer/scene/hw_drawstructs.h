@@ -262,18 +262,11 @@ public:
 	int CountVertices();
 
 public:
-	GLWall() {}
+	GLWall() = default;
 
-	GLWall(const GLWall &other)
-	{
-		memcpy(this, &other, sizeof(GLWall));
-	}
+	GLWall(const GLWall &other) = default;
 
-	GLWall & operator=(const GLWall &other)
-	{
-		memcpy(this, &other, sizeof(GLWall));
-		return *this;
-	}
+	GLWall & operator=(const GLWall &other) = default;
 
 	void Process(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
 	void ProcessLowerMiniseg(HWDrawInfo *di, seg_t *seg, sector_t *frontsector, sector_t *backsector);
@@ -324,18 +317,11 @@ public:
 	void SetFrom3DFloor(F3DFloor *rover, bool top, bool underside);
 	void ProcessSector(HWDrawInfo *di, sector_t * frontsector);
 	
-	GLFlat() {}
+	GLFlat() = default;
 
-	GLFlat(const GLFlat &other)
-	{
-		memcpy(this, &other, sizeof(GLFlat));
-	}
+	GLFlat(const GLFlat &other) = default;
 
-	GLFlat & operator=(const GLFlat &other)
-	{
-		memcpy(this, &other, sizeof(GLFlat));
-		return *this;
-	}
+	GLFlat & operator=(const GLFlat &other) = default;
 
 };
 
@@ -388,21 +374,14 @@ public:
 
 public:
 
-	GLSprite() {}
+	GLSprite() = default;
 	void PutSprite(HWDrawInfo *di, bool translucent);
 	void Process(HWDrawInfo *di, AActor* thing,sector_t * sector, area_t in_area, int thruportal = false);
 	void ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *sector);//, int shade, int fakeside)
 
-	GLSprite(const GLSprite &other)
-	{
-		memcpy(this, &other, sizeof(GLSprite));
-	}
+	GLSprite(const GLSprite &other) = default;
 
-	GLSprite & operator=(const GLSprite &other)
-	{
-		memcpy(this, &other, sizeof(GLSprite));
-		return *this;
-	}
+	GLSprite & operator=(const GLSprite &other) = default;
 
 };
 

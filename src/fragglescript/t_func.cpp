@@ -853,7 +853,7 @@ void FParser::SF_Spawn(void)
 			// [Graf Zahl] added option of spawning with a relative z coordinate
 			if(t_argc > 5)
 			{
-				if (intvalue(t_argv[5])) pos.Z += P_PointInSector(pos)->floorplane.ZatPoint(pos);
+				if (intvalue(t_argv[5])) pos.Z += P_PointInSector(pos.XY())->floorplane.ZatPoint(pos.XY());
 			}
 		}
 		else
@@ -1375,7 +1375,7 @@ void FParser::SF_PointToAngle(void)
 		double x2 = floatvalue(t_argv[2]);
 		double y2 = floatvalue(t_argv[3]);
 		
-		t_return.setDouble(DVector2(x2 - x1, y2 - y1).Angle().Normalized360().Degrees);
+		t_return.setDouble(DVector2{x2 - x1, y2 - y1}.Angle().Normalized360().Degrees);
 	}
 }
 
@@ -2887,7 +2887,7 @@ void FParser::SF_MoveCamera(void)
 		double targetheight = floatvalue(t_argv[2]);
 		double movespeed = floatvalue(t_argv[3]);
 		DVector3 campos = cam->Pos();
-		DVector3 targpos = DVector3(target->Pos(), targetheight);
+		DVector3 targpos = DVector3(target->Pos().XY(), targetheight);
 		DVector3 movement = targpos - campos;
 		double movelen = movement.Length();
 
@@ -3078,7 +3078,7 @@ void FParser::SF_SpawnExplosion()
 		if(t_argc > 3)
 			pos.Z = floatvalue(t_argv[3]);
 		else
-			pos.Z = P_PointInSector(pos)->floorplane.ZatPoint(pos);
+			pos.Z = P_PointInSector(pos.XY())->floorplane.ZatPoint(pos.XY());
 		
 		spawn = Spawn (pclass, pos, ALLOW_REPLACE);
 		t_return.type = svt_int;

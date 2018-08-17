@@ -52,7 +52,7 @@ DEFINE_ACTION_FUNCTION(DShape2D, PushVertex)
 	PARAM_SELF_PROLOGUE(DShape2D);
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
-	self->mVertices.Push(DVector2(x,y));
+	self->mVertices.Push(DVector2{x,y});
 	return 0;
 }
 
@@ -61,7 +61,7 @@ DEFINE_ACTION_FUNCTION(DShape2D, PushCoord)
 	PARAM_SELF_PROLOGUE(DShape2D);
 	PARAM_FLOAT(u);
 	PARAM_FLOAT(v);
-	self->mCoords.Push(DVector2(u,v));
+	self->mCoords.Push(DVector2{u,v});
 	return 0;
 }
 

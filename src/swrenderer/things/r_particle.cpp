@@ -89,7 +89,7 @@ namespace swrenderer
 		RenderPortal *renderportal = thread->Portal.get();
 
 		// [ZZ] Particle not visible through the portal plane
-		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos, renderportal->CurrentPortal->dst))
+		if (renderportal->CurrentPortal && !!P_PointOnLineSide(particle->Pos.XY(), renderportal->CurrentPortal->dst))
 			return;
 
 		// transform the origin point
@@ -192,9 +192,9 @@ namespace swrenderer
 			map = GetColorTable(sector->Colormap, sector->SpecialColors[sector_t::sprites], true);
 		}
 
-		if (botpic != skyflatnum && ippz < botplane->ZatPoint(particle->Pos))
+		if (botpic != skyflatnum && ippz < botplane->ZatPoint(particle->Pos.XY()))
 			return;
-		if (toppic != skyflatnum && ippz >= topplane->ZatPoint(particle->Pos))
+		if (toppic != skyflatnum && ippz >= topplane->ZatPoint(particle->Pos.XY()))
 			return;
 
 		// store information in a vissprite

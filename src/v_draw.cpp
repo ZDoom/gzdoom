@@ -991,8 +991,8 @@ DEFINE_ACTION_FUNCTION(_Screen, VirtualToRealCoords)
 	PARAM_BOOL_DEF(vbottom);
 	PARAM_BOOL_DEF(handleaspect);
 	screen->VirtualToRealCoords(x, y, w, h, vw, vh, vbottom, handleaspect);
-	if (numret >= 1) ret[0].SetVector2(DVector2(x, y));
-	if (numret >= 2) ret[1].SetVector2(DVector2(w, h));
+	if (numret >= 1) ret[0].SetVector2(DVector2{x, y});
+	if (numret >= 2) ret[1].SetVector2(DVector2{w, h});
 	return MIN(numret, 2);
 }
 
@@ -1407,9 +1407,9 @@ void DFrameBuffer::DrawBlend(sector_t * viewsector)
 			{
 				double lightbottom;
 				if (i < lightlist.Size() - 1)
-					lightbottom = lightlist[i + 1].plane.ZatPoint(vpp);
+					lightbottom = lightlist[i + 1].plane.ZatPoint(vpp.XY());
 				else
-					lightbottom = viewsector->floorplane.ZatPoint(vpp);
+					lightbottom = viewsector->floorplane.ZatPoint(vpp.XY());
 
 				if (lightbottom < vpp.Z && (!lightlist[i].caster || !(lightlist[i].caster->flags&FF_FADEWALLS)))
 				{

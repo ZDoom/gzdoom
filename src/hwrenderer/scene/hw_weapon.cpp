@@ -169,11 +169,11 @@ static WeaponLighting GetWeaponLighting(sector_t *viewsector, const DVector3 &po
 
 				if (i<lightlist.Size() - 1)
 				{
-					lightbottom = lightlist[i + 1].plane.ZatPoint(pos);
+					lightbottom = lightlist[i + 1].plane.ZatPoint(pos.XY());
 				}
 				else
 				{
-					lightbottom = viewsector->floorplane.ZatPoint(pos);
+					lightbottom = viewsector->floorplane.ZatPoint(pos.XY());
 				}
 
 				if (lightbottom < pos.Z)

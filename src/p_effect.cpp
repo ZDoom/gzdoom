@@ -201,7 +201,7 @@ void P_FindParticleSubsectors ()
 	for (uint16_t i = ActiveParticles; i != NO_PARTICLE; i = Particles[i].tnext)
 	{
 		 // Try to reuse the subsector from the last portal check, if still valid.
-		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos);
+		if (Particles[i].subsector == NULL) Particles[i].subsector = R_PointInSubsector(Particles[i].Pos.XY());
 		int ssnum = Particles[i].subsector->Index();
 		Particles[i].snext = ParticlesInSubsec[ssnum];
 		ParticlesInSubsec[ssnum] = i;
@@ -284,7 +284,7 @@ void P_ThinkParticles ()
 		particle->Pos.Y = newxy.Y;
 		particle->Pos.Z += particle->Vel.Z;
 		particle->Vel += particle->Acc;
-		particle->subsector = R_PointInSubsector(particle->Pos);
+		particle->subsector = R_PointInSubsector(particle->Pos.XY());
 		sector_t *s = particle->subsector->sector;
 		// Handle crossing a sector portal.
 		if (!s->PortalBlocksMovement(sector_t::ceiling))
@@ -690,7 +690,7 @@ void P_DrawRailTrail(AActor *source, TArray<SPortalHit> &portalhits, int color1,
 
 		double r = ((seg.start.Y - mo->Y()) * (-seg.dir.Y) - (seg.start.X - mo->X()) * (seg.dir.X)) / (seg.length * seg.length);
 		r = clamp<double>(r, 0., 1.);
-		seg.soundpos = seg.start + r * seg.dir;
+		seg.soundpos = (seg.start + r * seg.dir).XY();
 		seg.sounddist = (seg.soundpos - mo->Pos()).LengthSquared();
 		trail.Push(seg);
 	}

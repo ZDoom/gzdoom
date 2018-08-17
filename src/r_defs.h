@@ -301,7 +301,7 @@ public:
 	{
 		return D;
 	}
-	
+
 	bool isSlope() const
 	{
 		return !normal.XY().isZero();
@@ -476,7 +476,7 @@ enum
 	SECF_NORESPAWN		= 8,	// players can not respawn in this sector
 	SECF_FRICTION		= 16,	// sector has friction enabled
 	SECF_PUSH			= 32,	// pushers enabled
-	SECF_SILENTMOVE		= 64,	// Sector movement makes mo sound (Eternity got this so this may be useful for an extended cross-port standard.) 
+	SECF_SILENTMOVE		= 64,	// Sector movement makes mo sound (Eternity got this so this may be useful for an extended cross-port standard.)
 	SECF_DMGTERRAINFX	= 128,	// spawns terrain splash when inflicting damage
 	SECF_ENDGODMODE		= 256,	// getting damaged by this sector ends god mode
 	SECF_ENDLEVEL		= 512,	// ends level when health goes below 10
@@ -571,21 +571,23 @@ struct FTransform
 
 struct secspecial_t
 {
-	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
+	FName damagetype;		// [RH] Means-of-death for applied damage
 	int damageamount = 0;			// [RH] Damage to do while standing on floor
 	short special = 0;
 	short damageinterval = 0;	// Interval for damage application
 	short leakydamage = 0;		// chance of leaking through radiation suit
 	int Flags = 0;
 
-	secspecial_t()
-	{
-		Clear();
-	}
+	secspecial_t() = default;
 
 	void Clear()
 	{
-		memset(this, 0, sizeof(*this));
+        damagetype = FName{};
+		damageamount = 0;
+		special = 0;
+        damageinterval = 0;
+        leakydamage = 0;
+        Flags = 0;
 	}
 };
 
@@ -792,7 +794,7 @@ public:
 		planes[pos].Flags |= Or;
 	}
 
-	int GetPlaneLight(int pos) const 
+	int GetPlaneLight(int pos) const
 	{
 		return planes[pos].Light;
 	}
@@ -986,7 +988,7 @@ public:
 	short		seqType;		// this sector's sound sequence
 
 	int			sky;
-	FNameNoInit	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
+	FName	SeqName;		// Sound sequence name. Setting seqType non-negative will override this.
 
 	DVector2	centerspot;		// origin for any sounds played by the sector
 	int 		validcount;		// if == validcount, already checked
@@ -1036,7 +1038,7 @@ public:
 	struct msecnode_t *touching_renderthings; // this is used to allow wide things to be rendered not only from their main sector.
 
 	double gravity;			// [RH] Sector gravity (1.0 is normal)
-	FNameNoInit damagetype;		// [RH] Means-of-death for applied damage
+	FName damagetype;		// [RH] Means-of-death for applied damage
 	int damageamount;			// [RH] Damage to do while standing on floor
 	short damageinterval;	// Interval for damage application
 	short leakydamage;		// chance of leaking through radiation suit
@@ -1175,7 +1177,7 @@ struct side_t
 	{
 		textures[which].xOffset = offset;;
 	}
-	
+
 	void SetTextureXOffset(double offset)
 	{
 		textures[top].xOffset =
@@ -1393,7 +1395,7 @@ struct seg_t
 {
 	vertex_t*	v1;
 	vertex_t*	v2;
-	
+
 	side_t* 	sidedef;
 	line_t* 	linedef;
 
@@ -1458,7 +1460,7 @@ struct subsector_t
 };
 
 
-	
+
 
 //
 // BSP node.
@@ -1513,6 +1515,11 @@ typedef uint8_t lighttable_t;	// This could be wider for >8 bit display.
 subsector_t *P_PointInSubsector(double x, double y);
 
 inline sector_t *P_PointInSector(const DVector2 &pos)
+{
+	return P_PointInSubsector(pos.X, pos.Y)->sector;
+}
+
+inline sector_t *P_PointInSector(const DVector3 &pos)
 {
 	return P_PointInSubsector(pos.X, pos.Y)->sector;
 }

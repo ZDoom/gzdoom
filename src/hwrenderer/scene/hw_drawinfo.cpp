@@ -107,7 +107,7 @@ void HWDrawInfo::ClearBuffers()
 
 void HWDrawInfo::UpdateCurrentMapSection()
 {
-	const int mapsection = R_PointInSubsector(Viewpoint.Pos)->mapsection;
+	const int mapsection = R_PointInSubsector(Viewpoint.Pos.XY())->mapsection;
 	CurrentMapSections.Set(mapsection);
 }
 
@@ -122,13 +122,13 @@ void HWDrawInfo::SetViewArea()
 {
     auto &vp = Viewpoint;
 	// The render_sector is better suited to represent the current position in GL
-	vp.sector = R_PointInSubsector(vp.Pos)->render_sector;
+	vp.sector = R_PointInSubsector(vp.Pos.XY())->render_sector;
 
 	// Get the heightsec state from the render sector, not the current one!
 	if (vp.sector->GetHeightSec())
 	{
-		in_area = vp.Pos.Z <= vp.sector->heightsec->floorplane.ZatPoint(vp.Pos) ? area_below :
-			(vp.Pos.Z > vp.sector->heightsec->ceilingplane.ZatPoint(vp.Pos) &&
+		in_area = vp.Pos.Z <= vp.sector->heightsec->floorplane.ZatPoint(vp.Pos.XY()) ? area_below :
+			(vp.Pos.Z > vp.sector->heightsec->ceilingplane.ZatPoint(vp.Pos.XY()) &&
 				!(vp.sector->heightsec->MoreFlags&SECMF_FAKEFLOORONLY)) ? area_above : area_normal;
 	}
 	else

@@ -3729,7 +3729,7 @@ DEFINE_ACTION_FUNCTION(AActor, A_Respawn)
 	}
 	else
 	{
-		oktorespawn = P_CheckPosition(self, self->Pos(), true);
+		oktorespawn = P_CheckPosition(self, self->Pos().XY(), true);
 	}
 
 	if (oktorespawn)
@@ -6491,7 +6491,7 @@ DEFINE_ACTION_FUNCTION(AActor, CheckBlock)
 		if (flags & CBF_NOACTORS)	fpass |= PCM_NOACTORS;
 		if (flags & CBF_NOLINES)	fpass |= PCM_NOLINES;
 		mobj->SetZ(pos.Z);
-		checker = P_CheckMove(mobj, pos, fpass);
+		checker = P_CheckMove(mobj, pos.XY(), fpass);
 		mobj->SetZ(oldpos.Z);
 	}
 	else

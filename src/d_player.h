@@ -141,7 +141,7 @@ public:
 	double		SideMove1, SideMove2;
 	FTextureID	ScoreIcon;
 	int			SpawnMask;
-	FNameNoInit	MorphWeapon;
+	FName	MorphWeapon;
 	double		AttackZOffset;			// attack height, relative to player center
 	double		UseRange;				// [NS] Distance at which player can +use
 	double		AirCapacity;			// Multiplier for air supply underwater.
@@ -155,10 +155,10 @@ public:
 	double		ViewBob;
 
 	// Former class properties that were moved into the object to get rid of the meta class.
-	FNameNoInit SoundClass;		// Sound class
-	FNameNoInit Face;			// Doom status bar face (when used)
-	FNameNoInit Portrait;
-	FNameNoInit Slot[10];
+	FName SoundClass;		// Sound class
+	FName Face;			// Doom status bar face (when used)
+	FName Portrait;
+	FName Slot[10];
 	double HexenArmor[5];
 	uint8_t ColorRangeStart;	// Skin color range
 	uint8_t ColorRangeEnd;

@@ -1176,7 +1176,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 							performBlockingThrust = true;
 						}
 
-						DVector2 pos = mobj->PosRelative(ld);
+						DVector2 pos = mobj->PosRelative(ld).XY();
 						FBoundingBox box(pos.X, pos.Y, mobj->radius);
 
 						if (!box.inRange(ld) || box.BoxOnLineSide(ld) != -1)
@@ -1187,7 +1187,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						if (ld->isLinePortal())
 						{
 							// Fixme: this still needs to figure out if the polyobject move made the player cross the portal line.
-							if (P_TryMove(mobj, mobj->Pos(), false))
+                            if (P_TryMove(mobj, mobj->Pos().XY(), false))
 							{
 								continue;
 							}
@@ -1197,7 +1197,7 @@ bool FPolyObj::CheckMobjBlocking (side_t *sd)
 						// Best use the one facing the player and ignore the back side.
 						if (ld->sidedef[1] != NULL)
 						{
-							int side = P_PointOnLineSidePrecise(mobj->Pos(), ld);
+							int side = P_PointOnLineSidePrecise(mobj->Pos().XY(), ld);
 							if (ld->sidedef[side] != sd)
 							{
 								continue;

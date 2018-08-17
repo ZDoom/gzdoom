@@ -164,7 +164,7 @@ FUNC(LS_Polyobj_MoveTimes8)
 FUNC(LS_Polyobj_MoveTo)
 // Polyobj_MoveTo (po, speed, x, y)
 {
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), DVector2(arg2, arg3), false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), DVector2{arg2, arg3}, false);
 }
 
 FUNC(LS_Polyobj_MoveToSpot)
@@ -173,7 +173,7 @@ FUNC(LS_Polyobj_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->Pos(), false);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->Pos().XY(), false);
 }
 
 FUNC(LS_Polyobj_DoorSwing)
@@ -215,7 +215,7 @@ FUNC(LS_Polyobj_OR_MoveTimes8)
 FUNC(LS_Polyobj_OR_MoveTo)
 // Polyobj_OR_MoveTo (po, speed, x, y)
 {
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), DVector2(arg2, arg3), true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), DVector2{arg2, arg3}, true);
 }
 
 FUNC(LS_Polyobj_OR_MoveToSpot)
@@ -224,7 +224,7 @@ FUNC(LS_Polyobj_OR_MoveToSpot)
 	FActorIterator iterator (arg2);
 	AActor *spot = iterator.Next();
 	if (spot == NULL) return false;
-	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->Pos(), true);
+	return EV_MovePolyTo (ln, arg0, SPEED(arg1), spot->Pos().XY(), true);
 }
 
 FUNC(LS_Polyobj_Stop)
@@ -3267,10 +3267,10 @@ FUNC(LS_GlassBreak)
 		if (!arg0)
 		{ // Break some glass
 
-			DVector2 linemid((ln->v1->fX() + ln->v2->fX()) / 2, (ln->v1->fY() + ln->v2->fY()) / 2);
+			DVector2 linemid{(ln->v1->fX() + ln->v2->fX()) / 2, (ln->v1->fY() + ln->v2->fY()) / 2};
 
 			// remove dependence on sector size and always spawn 2 map units in front of the line.
-			DVector2 normal(ln->Delta().Y, -ln->Delta().X);
+			DVector2 normal{ln->Delta().Y, -ln->Delta().X};
 			linemid += normal.Unit() * 2;
 			/* old code:
 			x += (ln->frontsector->centerspot.x - x) / 5;

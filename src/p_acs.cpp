@@ -5964,7 +5964,7 @@ int DLevelScript::CallFunction(int argCount, int funcIndex, int32_t *args)
 			return DoubleToACS(g_sqrt(ACSToDouble(args[0])));
 
 		case ACSF_VectorLength:
-			return DoubleToACS(DVector2(ACSToDouble(args[0]), ACSToDouble(args[1])).Length());
+			return DoubleToACS(DVector2{ACSToDouble(args[0]), ACSToDouble(args[1])}.Length());
 
 		case ACSF_SetHUDClipRect:
 			ClipRectLeft = argCount > 0 ? args[0] : 0;
@@ -6851,7 +6851,7 @@ doplaysound:			if (funcIndex == ACSF_PlayActorSound)
 			double result = delta[funcIndex - ACSF_GetLineX] * ACSToDouble(args[1]);
 			if (args[2])
 			{
-				DVector2 normal = DVector2(delta.Y, -delta.X).Unit();
+				DVector2 normal = DVector2{delta.Y, -delta.X}.Unit();
 				result += normal[funcIndex - ACSF_GetLineX] * ACSToDouble(args[2]);
 			}
 			return DoubleToACS(result);

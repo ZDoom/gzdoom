@@ -122,15 +122,4 @@ protected:
 	static NameManager NameData;
 };
 
-class FNameNoInit : public FName
-{
-public:
-	FNameNoInit() : FName() {}
-
-	FName &operator = (const char *text) { Index = NameData.FindName (text, false); return *this; }
-	FName &operator = (const FString &text);
-	FName &operator = (const FName &other) { Index = int(other); return *this; }
-	FName &operator = (ENamedName index) { Index = index; return *this; }
-};
-
 #endif

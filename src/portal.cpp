@@ -761,7 +761,7 @@ unsigned P_GetStackPortal(AActor *point, int plane)
 
 DVector2 P_GetOffsetPosition(double x, double y, double dx, double dy)
 {
-	DVector2 dest(x + dx, y + dy);
+	DVector2 dest{x + dx, y + dy};
 	if (level.PortalBlockmap.containsLines)
 	{
 		double actx = x, acty = y;

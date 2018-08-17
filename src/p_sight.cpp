@@ -121,7 +121,7 @@ public:
 	void init(AActor * t1, AActor * t2, sector_t *startsector, SightTask *task, int flags)
 	{
 		sightstart = t1->PosRelative(task->portalgroup);
-		sightend = t2->PosRelative(task->portalgroup);
+		sightend = t2->PosRelative(task->portalgroup).XY();
 		sightstart.Z += t1->Height * 0.75;
 
 		portalgroup = task->portalgroup;
@@ -257,7 +257,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	if (open.portalflags)
 	{
 		sector_t *frontsec, *backsec;
-		frontflag = P_PointOnLineSidePrecise(sightstart, li);
+		frontflag = P_PointOnLineSidePrecise(sightstart.XY(), li);
 		if (!frontflag)
 		{
 			frontsec = li->frontsector;
@@ -292,7 +292,7 @@ bool SightCheck::PTR_SightTraverse (intercept_t *in)
 	// now handle 3D-floors
 	if(li->frontsector->e->XFloor.ffloors.Size() || li->backsector->e->XFloor.ffloors.Size())
 	{
-		if (frontflag == -1) frontflag = P_PointOnLineSidePrecise(sightstart, li);
+		if (frontflag == -1) frontflag = P_PointOnLineSidePrecise(sightstart.XY(), li);
 		
 		//Check 3D FLOORS!
 		for(int i=1;i<=2;i++)
@@ -638,8 +638,8 @@ bool SightCheck::P_SightPathTraverse ()
 	{
 		if(!(rover->flags & FF_EXISTS)) continue;
 		
-		double ff_bottom=rover->bottom.plane->ZatPoint(sightstart);
-		double ff_top=rover->top.plane->ZatPoint(sightstart);
+		double ff_bottom=rover->bottom.plane->ZatPoint(sightstart.XY());
+		double ff_top=rover->top.plane->ZatPoint(sightstart.XY());
 
 		if (sightstart.Z < ff_top) checkceiling = false;
 		if (sightstart.Z >= ff_bottom) checkfloor = false;

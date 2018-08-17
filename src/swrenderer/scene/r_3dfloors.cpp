@@ -94,7 +94,7 @@ namespace swrenderer
 		HeightLevel *near;
 		HeightLevel *curr;
 
-		double height = add->ZatPoint(Thread->Viewport->viewpoint.Pos);
+		double height = add->ZatPoint(Thread->Viewport->viewpoint.Pos.XY());
 		if (height >= sec->CenterCeiling()) return;
 		if (height <= sec->CenterFloor()) return;
 

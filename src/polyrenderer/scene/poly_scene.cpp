@@ -81,7 +81,7 @@ void RenderPolyScene::Render(PolyPortalViewpoint *viewpoint)
 				double distanceSquared = (thing->Pos() - rviewpoint.Pos).LengthSquared();
 				if (r_modelscene && modelframe && distanceSquared < model_distance_cull)
 				{
-					AddModel(thread, thing, distanceSquared, thing->Pos());
+					AddModel(thread, thing, distanceSquared, thing->Pos().XY());
 				}
 				else
 				{
@@ -201,7 +201,7 @@ void RenderPolyScene::RenderPolyNode(PolyRenderThread *thread, void *node, uint3
 		node_t *bsp = (node_t *)node;
 
 		// Decide which side the view point is on.
-		int side = PointOnSide(PolyRenderer::Instance()->Viewpoint.Pos, bsp);
+		int side = PointOnSide(PolyRenderer::Instance()->Viewpoint.Pos.XY(), bsp);
 
 		// Recursively divide front space (toward the viewer).
 		RenderPolyNode(thread, bsp->children[side], subsectorDepth, frontsector);
@@ -272,8 +272,8 @@ void RenderPolyScene::AddSprite(PolyRenderThread *thread, AActor *thing, double 
 	{
 		node_t *bsp = (node_t *)node;
 		
-		DVector2 planePos(FIXED2DBL(bsp->x), FIXED2DBL(bsp->y));
-		DVector2 planeNormal = DVector2(FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx));
+		DVector2 planePos{FIXED2DBL(bsp->x), FIXED2DBL(bsp->y)};
+		DVector2 planeNormal{FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx)};
 		double planeD = planeNormal | planePos;
 		
 		int sideLeft = (left | planeNormal) > planeD;
@@ -317,8 +317,8 @@ void RenderPolyScene::AddModel(PolyRenderThread *thread, AActor *thing, double s
 		{
 			node_t *bsp = (node_t *)node;
 
-			DVector2 planePos(FIXED2DBL(bsp->x), FIXED2DBL(bsp->y));
-			DVector2 planeNormal = DVector2(FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx));
+			DVector2 planePos{FIXED2DBL(bsp->x), FIXED2DBL(bsp->y)};
+			DVector2 planeNormal{FIXED2DBL(-bsp->dy), FIXED2DBL(bsp->dx)};
 			double planeD = planeNormal | planePos;
 
 			int side = (pos | planeNormal) > planeD;
@@ -513,8 +513,8 @@ PolyTransferHeights::PolyTransferHeights(subsector_t *sub) : Subsector(sub)
 			}
 		}
 
-		double refceilz = s->ceilingplane.ZatPoint(PolyRenderer::Instance()->Viewpoint.Pos);
-		double orgceilz = sec->ceilingplane.ZatPoint(PolyRenderer::Instance()->Viewpoint.Pos);
+		double refceilz = s->ceilingplane.ZatPoint(PolyRenderer::Instance()->Viewpoint.Pos.XY());
+		double orgceilz = sec->ceilingplane.ZatPoint(PolyRenderer::Instance()->Viewpoint.Pos.XY());
 
 		if (underwater || doorunderwater)
 		{

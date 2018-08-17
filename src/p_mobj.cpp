@@ -1970,7 +1970,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 	if (line != NULL && cl_missiledecals)
 	{
 		DVector3 pos = mo->PosRelative(line);
-		int side = P_PointOnLineSidePrecise (pos, line);
+		int side = P_PointOnLineSidePrecise (pos.XY(), line);
 		if (line->sidedef[side] == NULL)
 			side ^= 1;
 		if (line->sidedef[side] != NULL)
@@ -2001,7 +2001,7 @@ void P_ExplodeMissile (AActor *mo, line_t *line, AActor *target, bool onsky)
 
 							if ((rover->flags&(FF_EXISTS|FF_SOLID|FF_RENDERSIDES))==(FF_EXISTS|FF_SOLID|FF_RENDERSIDES))
 							{
-								if (pos.Z <= rover->top.plane->ZatPoint(linepos) && pos.Z >= rover->bottom.plane->ZatPoint(linepos))
+								if (pos.Z <= rover->top.plane->ZatPoint(linepos.XY()) && pos.Z >= rover->bottom.plane->ZatPoint(linepos.XY()))
 								{
 									ffloor = rover;
 									break;
@@ -2328,7 +2328,7 @@ bool P_SeekerMissile (AActor *actor, double thresh, double turnMax, bool precise
 			{
 				aimheight = static_cast<APlayerPawn *>(target)->ViewHeight;
 			}
-			pitch = DVector2(dist, target->Z() + aimheight - actor->Center()).Angle();
+			pitch = DVector2{dist, target->Z() + aimheight - actor->Center()}.Angle();
 		}
 		actor->Vel3DFromAngle(-pitch, speed);
 	}
@@ -2403,7 +2403,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 	{
 		mo->Vel.MakeResize(VELOCITY_THRESHOLD);
 	}
-	move = mo->Vel;
+	move = mo->Vel.XY();
 	// [RH] Carrying sectors didn't work with low speeds in BOOM. This is
 	// because BOOM relied on the speed being fast enough to accumulate
 	// despite friction. If the speed is too low, then its movement will get
@@ -2489,7 +2489,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 	// because it also calls P_CheckSlopeWalk on its clipped steps.
 	DVector2 onestep = startmove / steps;
 
-	start = mo->Pos();
+	start = mo->Pos().XY();
 	step = 1;
 	totalsteps = steps;
 
@@ -2514,7 +2514,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 
 		ptry = start + move * step / steps;
 
-		DVector2 startvel = mo->Vel;
+		DVector2 startvel = mo->Vel.XY();
 
 		// killough 3/15/98: Allow objects to drop off
 		// [RH] If walking on a slope, stay on the slope
@@ -2551,7 +2551,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 						// If the move is done a second time (because it was too fast for one move), it
 						// is still clipped against the wall at its full speed, so you effectively
 						// execute two moves in one tic.
-							P_SlideMove (mo, mo->Vel, 1);
+							P_SlideMove (mo, mo->Vel.XY(), 1);
 						}
 						else
 						{
@@ -2565,7 +2565,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 						{
 							if (!player || !(i_compatflags & COMPATF_WALLRUN))
 							{
-								move = mo->Vel;
+								move = mo->Vel.XY();
 								onestep = move / steps;
 								P_CheckSlopeWalk (mo, move);
 							}
@@ -2582,7 +2582,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 					DVector2 t;
 					t.X = 0, t.Y = onestep.Y;
 					walkplane = P_CheckSlopeWalk (mo, t);
-					if (P_TryMove (mo, mo->Pos() + t, true, walkplane, tm))
+					if (P_TryMove (mo, mo->Pos().XY() + t, true, walkplane, tm))
 					{
 						mo->Vel.X = 0;
 					}
@@ -2590,7 +2590,7 @@ double P_XYMovement (AActor *mo, DVector2 scroll)
 					{
 						t.X = onestep.X, t.Y = 0;
 						walkplane = P_CheckSlopeWalk (mo, t);
-						if (P_TryMove (mo, mo->Pos() + t, true, walkplane, tm))
+						if (P_TryMove (mo, mo->Pos().XY() + t, true, walkplane, tm))
 						{
 							mo->Vel.Y = 0;
 						}
@@ -2689,7 +2689,7 @@ explode:
 					if (tm.ceilingline &&
 						tm.ceilingline->backsector &&
 						tm.ceilingline->backsector->GetTexture(sector_t::ceiling) == skyflatnum &&
-						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline)))
+						mo->Z() >= tm.ceilingline->backsector->ceilingplane.ZatPoint(mo->PosRelative(tm.ceilingline).XY()))
 					{
 						if (!(mo->flags3 & MF3_SKYEXPLODE))
 						{
@@ -2742,7 +2742,7 @@ explode:
 						move = move.Rotated(anglediff);
 						oldangle = mo->Angles.Yaw;
 					}
-					start = mo->Pos() - move * step / steps;
+					start = mo->Pos().XY() - move * step / steps;
 				}
 			}
 		}
@@ -3392,7 +3392,7 @@ void P_NightmareRespawn (AActor *mobj)
 	}
 
 	// something is occupying its position?
-	if (!P_CheckPosition(mo, mo->Pos(), true))
+	if (!P_CheckPosition(mo, mo->Pos().XY(), true))
 	{
 		//[GrafZahl] MF_COUNTKILL still needs to be checked here.
 		mo->ClearCounters();
@@ -3421,7 +3421,7 @@ void P_NightmareRespawn (AActor *mobj)
 	P_SpawnTeleportFog(mobj, mobj->Pos(), true, true);
 
 	// spawn a teleport fog at the new spot
-	P_SpawnTeleportFog(mobj, DVector3(mobj->SpawnPoint, z), false, true);
+	P_SpawnTeleportFog(mobj, DVector3(mobj->SpawnPoint.XY(), z), false, true);
 
 	// remove the old monster
 	mobj->Destroy ();
@@ -4263,7 +4263,7 @@ void AActor::Tick ()
 		}
 
 		// [RH] Consider carrying sectors here
-		DVector2 cumm(0, 0);
+		DVector2 cumm{0, 0};
 
 		if ((((flags8 & MF8_INSCROLLSEC) && level.Scrolls.Size() > 0) || player != NULL) && !(flags & MF_NOCLIP) && !(flags & MF_NOSECTOR))
 		{
@@ -4364,7 +4364,7 @@ void AActor::Tick ()
 					continue;
 				}
 				DVector3 pos = PosRelative(sec);
-				height = sec->floorplane.ZatPoint (pos);
+				height = sec->floorplane.ZatPoint (pos.XY());
 				double height2 = sec->floorplane.ZatPoint(this);
 				if (isAbove(height))
 				{
@@ -4373,7 +4373,7 @@ void AActor::Tick ()
 						continue;
 					}
 
-					waterheight = heightsec->floorplane.ZatPoint (pos);
+					waterheight = heightsec->floorplane.ZatPoint (pos.XY());
 					if (waterheight > height && Z() >= waterheight)
 					{
 						continue;
@@ -4413,7 +4413,7 @@ void AActor::Tick ()
 			floorplane = P_FindFloorPlane(floorsector, PosAtZ(floorz));
 
 			if (floorplane.fC() < STEEPSLOPE &&
-				floorplane.ZatPoint (PosRelative(floorsector)) <= floorz)
+				floorplane.ZatPoint (PosRelative(floorsector).XY()) <= floorz)
 			{
 				const msecnode_t *node;
 				bool dopush = true;
@@ -4425,7 +4425,7 @@ void AActor::Tick ()
 						const sector_t *sec = node->m_sector;
 						if (sec->floorplane.fC() >= STEEPSLOPE)
 						{
-							if (floorplane.ZatPoint(PosRelative(node->m_sector)) >= Z() - MaxStepHeight)
+							if (floorplane.ZatPoint(PosRelative(node->m_sector).XY()) >= Z() - MaxStepHeight)
 							{
 								dopush = false;
 								break;
@@ -4985,8 +4985,8 @@ AActor *AActor::StaticSpawn (PClassActor *type, const DVector3 &pos, replace_t a
 	actor->LinkToWorld (nullptr, SpawningMapThing);
 	actor->ClearInterpolation();
 
-	actor->dropoffz = actor->floorz = actor->Sector->floorplane.ZatPoint(pos);
-	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint(pos);
+	actor->dropoffz = actor->floorz = actor->Sector->floorplane.ZatPoint(pos.XY());
+	actor->ceilingz = actor->Sector->ceilingplane.ZatPoint(pos.XY());
 
 	// The z-coordinate needs to be set once before calling P_FindFloorCeiling
 	// For FLOATRANDZ just use the floor here.
@@ -5420,7 +5420,7 @@ void AActor::AdjustFloorClip ()
 	{
 		DVector3 pos = PosRelative(m->m_sector);
 		sector_t *hsec = m->m_sector->GetHeightSec();
-		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos) == Z())
+		if (hsec == NULL && m->m_sector->floorplane.ZatPoint (pos.XY()) == Z())
 		{
 			double clip = Terrains[m->m_sector->GetTerrain(sector_t::floor)].FootClip;
 			if (clip < shallowestclip)
@@ -5785,7 +5785,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	{
 		polyspawns_t *polyspawn = new polyspawns_t;
 		polyspawn->next = polyspawns;
-		polyspawn->pos = mthing->pos;
+		polyspawn->pos = mthing->pos.XY();
 		polyspawn->angle = mthing->angle;
 		polyspawn->type = mentry->Special;
 		polyspawns = polyspawn;
@@ -6003,7 +6003,7 @@ AActor *P_SpawnMapThing (FMapThing *mthing, int position)
 	else
 		sz = ONFLOORZ;
 
-	mobj = AActor::StaticSpawn (i, DVector3(mthing->pos, sz), NO_REPLACE, true);
+	mobj = AActor::StaticSpawn (i, DVector3(mthing->pos.XY(), sz), NO_REPLACE, true);
 
 	if (sz == ONFLOORZ)
 	{
@@ -6545,7 +6545,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool check
 		{
 			F3DFloor * rover = sec->e->XFloor.ffloors[i];
 			if (!(rover->flags & FF_EXISTS)) continue;
-			double planez = rover->top.plane->ZatPoint(pos);
+			double planez = rover->top.plane->ZatPoint(pos.XY());
 				if (pos.Z > planez - 0.5 && pos.Z < planez + 0.5)	// allow minor imprecisions
 			{
 				if ((rover->flags & (FF_SOLID | FF_SWIMMABLE)) || rover->alpha > 0)
@@ -6554,7 +6554,7 @@ bool P_HitWater (AActor * thing, sector_t * sec, const DVector3 &pos, bool check
 					goto foundone;
 				}
 			}
-			planez = rover->bottom.plane->ZatPoint(pos);
+			planez = rover->bottom.plane->ZatPoint(pos.XY());
 			if (planez < pos.Z && !(planez < thing->floorz)) return false;
 		}
 	}
@@ -6681,7 +6681,7 @@ bool P_HitFloor (AActor *thing)
 	for (m = thing->touching_sectorlist; m; m = m->m_tnext)
 	{
 		pos = thing->PosRelative(m->m_sector);
-		if (thing->Z() == m->m_sector->floorplane.ZatPoint(pos))
+		if (thing->Z() == m->m_sector->floorplane.ZatPoint(pos.XY()))
 		{
 			break;
 		}
@@ -6693,7 +6693,7 @@ bool P_HitFloor (AActor *thing)
 			if (!(rover->flags & FF_EXISTS)) continue;
 			if (rover->flags & (FF_SOLID|FF_SWIMMABLE))
 			{
-				if (rover->top.plane->ZatPoint(pos) == thing->Z())
+				if (rover->top.plane->ZatPoint(pos.XY()) == thing->Z())
 				{
 					return P_HitWater (thing, m->m_sector, pos);
 				}
@@ -6801,7 +6801,7 @@ bool P_CheckMissileSpawn (AActor* th, double maxdist)
 	// killough 3/15/98: no dropoff (really = don't care for missiles)
 	auto oldf2 = th->flags2;
 	th->flags2 &= ~(MF2_MCROSS|MF2_PCROSS);	// The following check is not supposed to activate missile triggers.
-	if (!(P_TryMove (th, newpos, false, NULL, tm, true)))
+	if (!(P_TryMove (th, newpos.XY(), false, NULL, tm, true)))
 	{
 		// [RH] Don't explode ripping missiles that spawn inside something
 		if (th->BlockingMobj == NULL || !(th->flags2 & MF2_RIP) || (th->BlockingMobj->flags5 & MF5_DONTRIP))
@@ -7988,7 +7988,7 @@ static FRandom pr_restore("RestorePos");
 void AActor::RestoreSpecialPosition()
 {
 	// Move item back to its original location
-	DVector2 sp = SpawnPoint;
+	DVector2 sp = SpawnPoint.XY();
 
 	FLinkContext ctx;
 	UnlinkFromWorld(&ctx);
@@ -8252,7 +8252,8 @@ DEFINE_ACTION_FUNCTION(AActor, RotateVector)
 	PARAM_FLOAT(x);
 	PARAM_FLOAT(y);
 	PARAM_ANGLE(angle);
-	ACTION_RETURN_VEC2(DVector2(x, y).Rotated(angle));
+    auto dv = DVector2{x, y};
+	ACTION_RETURN_VEC2(dv.Rotated(angle));
 }
 
 DEFINE_ACTION_FUNCTION(AActor, Normalize180)

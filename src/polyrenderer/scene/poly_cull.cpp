@@ -91,7 +91,7 @@ void PolyCull::CullNode(void *node)
 		node_t *bsp = (node_t *)node;
 
 		// Decide which side the view point is on.
-		int side = PointOnSide(PolyRenderer::Instance()->Viewpoint.Pos, bsp);
+		int side = PointOnSide(PolyRenderer::Instance()->Viewpoint.Pos.XY(), bsp);
 
 		// Recursively divide front space (toward the viewer).
 		CullNode(bsp->children[side]);

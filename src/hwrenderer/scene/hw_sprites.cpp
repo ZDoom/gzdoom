@@ -476,7 +476,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 
 	if (thruportal != 2 && di->mClipPortal != nullptr)
 	{
-		int clipres = di->mClipPortal->ClipPoint(thingpos);
+		int clipres = di->mClipPortal->ClipPoint(thingpos.XY());
 		if (clipres == PClip_InFront) return;
 	}
 	// disabled because almost none of the actual game code is even remotely prepared for this. If desired, use the INTERPOLATE flag.
@@ -590,7 +590,7 @@ void GLSprite::Process(HWDrawInfo *di, AActor* thing, sector_t * sector, area_t 
 		// Tests show that this doesn't look good for many decorations and corpses
 		if (spriteheight > 0 && gl_spriteclip > 0 && (thing->renderflags & RF_SPRITETYPEMASK) == RF_FACESPRITE)
 		{
-			PerformSpriteClipAdjustment(thing, thingpos, spriteheight);
+			PerformSpriteClipAdjustment(thing, thingpos.XY(), spriteheight);
 		}
 
 		float viewvecX;
@@ -863,8 +863,8 @@ void GLSprite::ProcessParticle (HWDrawInfo *di, particle_t *particle, sector_t *
 		Colormap = sector->Colormap;
 		for(unsigned int i=0;i<lightlist.Size();i++)
 		{
-			if (i<lightlist.Size()-1) lightbottom = lightlist[i+1].plane.ZatPoint(particle->Pos);
-			else lightbottom = sector->floorplane.ZatPoint(particle->Pos);
+			if (i<lightlist.Size()-1) lightbottom = lightlist[i+1].plane.ZatPoint(particle->Pos.XY());
+			else lightbottom = sector->floorplane.ZatPoint(particle->Pos.XY());
 
 			if (lightbottom < particle->Pos.Z)
 			{

@@ -743,7 +743,7 @@ bool EV_BuildStairs (int tag, DFloor::EStair type, line_t *line,
 				floor = Create<DFloor> (sec);
 				floor->StartFloorSound ();
 				floor->m_Direction = (type == DFloor::buildUp) ? 1 : -1;
-				floor->m_FloorDestDist = sec->floorplane.PointToDist (DVector2(0, 0), height);
+				floor->m_FloorDestDist = sec->floorplane.PointToDist (DVector2{0, 0}, height);
 				// [RH] Set up delay values
 				floor->m_Delay = delay;
 				floor->m_PauseTime = 0;
@@ -1249,7 +1249,7 @@ void DWaggleBase::DoWaggle (bool ceiling)
 	m_Accumulator += m_AccDelta;
 
 	dist = plane->fD();
-	plane->setD(m_OriginalDist + plane->PointToDist (DVector2(0, 0), BobSin(m_Accumulator) *m_Scale));
+	plane->setD(m_OriginalDist + plane->PointToDist (DVector2{0, 0}, BobSin(m_Accumulator) *m_Scale));
 	m_Sector->ChangePlaneTexZ(pos, plane->HeightDiff (dist));
 	dist = plane->HeightDiff (dist);
 

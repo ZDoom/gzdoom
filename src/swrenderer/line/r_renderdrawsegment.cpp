@@ -106,7 +106,7 @@ namespace swrenderer
 		CameraLight *cameraLight = CameraLight::Instance();
 		if (cameraLight->FixedLightLevel() < 0)
 		{
-			double clipTop = m3DFloor.clipTop ? m3DFloor.sclipTop : sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos);
+			double clipTop = m3DFloor.clipTop ? m3DFloor.sclipTop : sec->ceilingplane.ZatPoint(Thread->Viewport->viewpoint.Pos.XY());
 			for (int i = frontsector->e->XFloor.lightlist.Size() - 1; i >= 0; i--)
 			{
 				if (clipTop <= frontsector->e->XFloor.lightlist[i].plane.Zat0())

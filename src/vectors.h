@@ -68,20 +68,7 @@ struct TVector2
 
 	TVector2 () = default;
 
-	TVector2 (vec_t a, vec_t b)
-		: X(a), Y(b)
-	{
-	}
-
-	TVector2 (const TVector2 &other)
-		: X(other.X), Y(other.Y)
-	{
-	}
-
-	TVector2 (const TVector3<vec_t> &other)	// Copy the X and Y from the 3D vector and discard the Z
-		: X(other.X), Y(other.Y)
-	{
-	}
+	TVector2 (const TVector2 &other) = default;
 
 	void Zero()
 	{
@@ -144,7 +131,7 @@ struct TVector2
 	// Unary negation
 	TVector2 operator- () const
 	{
-		return TVector2(-X, -Y);
+		return TVector2{-X, -Y};
 	}
 
 	// Scalar addition
@@ -156,12 +143,12 @@ struct TVector2
 
 	friend TVector2 operator+ (const TVector2 &v, vec_t scalar)
 	{
-		return TVector2(v.X + scalar, v.Y + scalar);
+		return TVector2{v.X + scalar, v.Y + scalar};
 	}
 
 	friend TVector2 operator+ (vec_t scalar, const TVector2 &v)
 	{
-		return TVector2(v.X + scalar, v.Y + scalar);
+		return TVector2{v.X + scalar, v.Y + scalar};
 	}
 
 	// Scalar subtraction
@@ -173,7 +160,7 @@ struct TVector2
 
 	TVector2 operator- (vec_t scalar) const
 	{
-		return TVector2(X - scalar, Y - scalar);
+		return TVector2{X - scalar, Y - scalar};
 	}
 
 	// Scalar multiplication
@@ -185,12 +172,12 @@ struct TVector2
 
 	friend TVector2 operator* (const TVector2 &v, vec_t scalar)
 	{
-		return TVector2(v.X * scalar, v.Y * scalar);
+		return TVector2{v.X * scalar, v.Y * scalar};
 	}
 
 	friend TVector2 operator* (vec_t scalar, const TVector2 &v)
 	{
-		return TVector2(v.X * scalar, v.Y * scalar);
+		return TVector2{v.X * scalar, v.Y * scalar};
 	}
 
 	// Scalar division
@@ -203,7 +190,7 @@ struct TVector2
 	TVector2 operator/ (vec_t scalar) const
 	{
 		scalar = 1 / scalar;
-		return TVector2(X * scalar, Y * scalar);
+		return TVector2{X * scalar, Y * scalar};
 	}
 
 	// Vector addition
@@ -215,7 +202,7 @@ struct TVector2
 
 	TVector2 operator+ (const TVector2 &other) const
 	{
-		return TVector2(X + other.X, Y + other.Y);
+		return TVector2{X + other.X, Y + other.Y};
 	}
 
 	// Vector subtraction
@@ -227,7 +214,7 @@ struct TVector2
 
 	TVector2 operator- (const TVector2 &other) const
 	{
-		return TVector2(X - other.X, Y - other.Y);
+		return TVector2{X - other.X, Y - other.Y};
 	}
 
 	// Vector length
@@ -283,7 +270,7 @@ struct TVector2
 	{
 		double cosval = g_cosdeg (angle);
 		double sinval = g_sindeg (angle);
-		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
+		return TVector2{X*cosval - Y*sinval, Y*cosval + X*sinval};
 	}
 
 	// Returns a rotated vector. angle is in degrees.
@@ -292,19 +279,19 @@ struct TVector2
 	{
 		double cosval = angle.Cos();
 		double sinval = angle.Sin();
-		return TVector2(X*cosval - Y*sinval, Y*cosval + X*sinval);
+		return TVector2{X*cosval - Y*sinval, Y*cosval + X*sinval};
 	}
 
 	// Returns a vector rotated 90 degrees clockwise.
 	TVector2 Rotated90CW()
 	{
-		return TVector2(Y, -X);
+		return TVector2{Y, -X};
 	}
 
 	// Returns a vector rotated 90 degrees counterclockwise.
 	TVector2 Rotated90CCW()
 	{
-		return TVector2(-Y, X);
+		return TVector2{-Y, X};
 	}
 };
 
@@ -512,14 +499,14 @@ struct TVector3
 
 	friend Vector2 operator+ (const Vector2 &v2, const TVector3 &v3)
 	{
-		return Vector2(v2.X + v3.X, v2.Y + v3.Y);
+		return Vector2{v2.X + v3.X, v2.Y + v3.Y};
 	}
 
 	// Subtract a 3D vector and a 2D vector.
 	// Discards the Z component of the 3D vector and returns a 2D vector.
 	friend Vector2 operator- (const TVector2<vec_t> &v2, const TVector3 &v3)
 	{
-		return Vector2(v2.X - v3.X, v2.Y - v3.Y);
+		return Vector2{v2.X - v3.X, v2.Y - v3.Y};
 	}
 
 	void GetRightUp(TVector3 &right, TVector3 &up)
@@ -1362,7 +1349,7 @@ struct TAngle
 
 	TVector2<vec_t> ToVector(vec_t length = 1) const
 	{
-		return TVector2<vec_t>(length * Cos(), length * Sin());
+		return TVector2<vec_t>{length * Cos(), length * Sin()};
 	}
 
 	vec_t Cos() const
@@ -1467,7 +1454,7 @@ TAngle<T> TVector3<T>::Angle() const
 template<class T>
 TAngle<T> TVector3<T>::Pitch() const
 {
-	return VecToAngle(TVector2<T>(X, Y).Length(), Z);
+	return VecToAngle(TVector2<T>{X, Y}.Length(), Z);
 }
 
 // Much of this is copied from TVector3. Is all that functionality really appropriate?
@@ -1660,7 +1647,6 @@ typedef TVector4<double>		DVector4;
 typedef TRotator<double>		DRotator;
 typedef TMatrix3x3<double>		DMatrix3x3;
 typedef TAngle<double>			DAngle;
-
 
 class Plane
 {

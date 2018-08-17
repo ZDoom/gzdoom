@@ -185,7 +185,7 @@ void ADynamicLight::PostBeginPlay()
 		Activate (NULL);
 	}
 
-	subsector = R_PointInSubsector(Pos());
+	subsector = R_PointInSubsector(Pos().XY());
 }
 
 
@@ -364,7 +364,7 @@ void ADynamicLight::UpdateLocation()
 			DVector3 pos = target->Vec3Offset(m_off.X * c + m_off.Y * s, m_off.X * s - m_off.Y * c, m_off.Z + target->GetBobOffset());
 			SetXYZ(pos); // attached lights do not need to go into the regular blockmap
 			Prev = target->Pos();
-			subsector = R_PointInSubsector(Prev);
+			subsector = R_PointInSubsector(Prev.XY());
 			Sector = subsector->sector;
 
 			// Some z-coordinate fudging to prevent the light from getting too close to the floor or ceiling planes. With proper attenuation this would render them invisible.
@@ -699,7 +699,7 @@ void ADynamicLight::LinkLight()
 	if (radius>0)
 	{
 		// passing in radius*radius allows us to do a distance check without any calls to sqrt
-		subsector_t * subSec = R_PointInSubsector(Pos());
+		subsector_t * subSec = R_PointInSubsector(Pos().XY());
 		::validcount++;
 		CollectWithinRadius(Pos(), subSec, float(radius*radius));
 

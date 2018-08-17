@@ -270,7 +270,7 @@ void emitComparisonOpcode(asmjit::X86Compiler& cc, const TArray<asmjit::Label>& 
 
 JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 {
-#if 1 // For debugging
+#if 0 // For debugging
 	if (strcmp(sfunc->Name.GetChars(), "EmptyFunction") != 0)
 		return nullptr;
 #else

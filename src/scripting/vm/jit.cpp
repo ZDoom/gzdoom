@@ -327,7 +327,7 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			for (int i = 0; i < sfunc->NumRegF; i++)
 			{
 				regF[i] = cc.newXmmSd ();
-				cc.movsd(regF[i], x86::qword_ptr(initreg, i * 4));
+				cc.movsd(regF[i], x86::qword_ptr(initreg, i * 8));
 			}
 		}
 		/*if (sfunc->NumRegS > 0)
@@ -871,36 +871,133 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				BINARY_OP_INT(mul, regD[a], regD[B], konstd[C]);
 				break;
 			case OP_DIV_RR: // dA = dkB / dkC (signed)
-				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
-				BINARY_OP_INT(idiv, regD[a], regD[B], regD[C]);
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, regD[B]);
+				cc.cdq(tmp1, tmp0);
+				cc.idiv(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp0);
 				break;
+			}
 			case OP_DIV_RK:
-				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
-				BINARY_OP_INT(idiv, regD[a], regD[B], konstd[C]);
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				auto konstTmp = cc.newIntPtr();
+				cc.mov(tmp0, regD[B]);
+				cc.cdq(tmp1, tmp0);
+				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.idiv(tmp1, tmp0, x86::ptr(konstTmp));
+				cc.mov(regD[A], tmp0);
 				break;
+			}
 			case OP_DIV_KR:
-				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
-				BINARY_OP_INT(idiv, regD[a], konstd[B], regD[C]);
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, konstd[B]);
+				cc.cdq(tmp1, tmp0);
+				cc.idiv(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp0);
 				break;
+			}
 			case OP_DIVU_RR: // dA = dkB / dkC (unsigned)
-				 // To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
-				BINARY_OP_INT(div, regD[a], regD[B], regD[C]);
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, regD[B]);
+				cc.mov(tmp1, 0);
+				cc.div(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp0);
 				break;
+			}
 			case OP_DIVU_RK:
-				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
-				BINARY_OP_INT(div, regD[a], regD[B], konstd[C]);
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				auto konstTmp = cc.newIntPtr();
+				cc.mov(tmp0, regD[B]);
+				cc.mov(tmp1, 0);
+				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.div(tmp1, tmp0, x86::ptr(konstTmp));
+				cc.mov(regD[A], tmp0);
 				break;
+			}
 			case OP_DIVU_KR:
-				// To do: ThrowAbortException(X_DIVISION_BY_ZERO, nullptr);
-				BINARY_OP_INT(div, regD[a], konstd[B], regD[C]);
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, konstd[B]);
+				cc.mov(tmp1, 0);
+				cc.div(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp0);
 				break;
+			}
 			case OP_MOD_RR: // dA = dkB % dkC (signed)
-			case OP_MOD_RK:
-			case OP_MOD_KR:
-			case OP_MODU_RR: // dA = dkB % dkC (unsigned)
-			case OP_MODU_RK:
-			case OP_MODU_KR:
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, regD[B]);
+				cc.cdq(tmp1, tmp0);
+				cc.idiv(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp1);
 				break;
+			}
+			case OP_MOD_RK:
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				auto konstTmp = cc.newIntPtr();
+				cc.mov(tmp0, regD[B]);
+				cc.cdq(tmp1, tmp0);
+				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.idiv(tmp1, tmp0, x86::ptr(konstTmp));
+				cc.mov(regD[A], tmp1);
+				break;
+			}
+			case OP_MOD_KR:
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, konstd[B]);
+				cc.cdq(tmp1, tmp0);
+				cc.idiv(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp1);
+				break;
+			}
+			case OP_MODU_RR: // dA = dkB % dkC (unsigned)
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, regD[B]);
+				cc.mov(tmp1, 0);
+				cc.div(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp1);
+				break;
+			}
+			case OP_MODU_RK:
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				auto konstTmp = cc.newIntPtr();
+				cc.mov(tmp0, regD[B]);
+				cc.mov(tmp1, 0);
+				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.div(tmp1, tmp0, x86::ptr(konstTmp));
+				cc.mov(regD[A], tmp1);
+				break;
+			}
+			case OP_MODU_KR:
+			{
+				auto tmp0 = cc.newInt32();
+				auto tmp1 = cc.newInt32();
+				cc.mov(tmp0, konstd[B]);
+				cc.mov(tmp1, 0);
+				cc.div(tmp1, tmp0, regD[C]);
+				cc.mov(regD[A], tmp1);
+				break;
+			}
 			case OP_AND_RR: // dA = dB & dkC
 				BINARY_OP_INT(and_, regD[a], regD[B], regD[C]);
 				break;
@@ -920,11 +1017,59 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 				BINARY_OP_INT(xor_, regD[a], regD[B], konstd[C]);
 				break;
 			case OP_MIN_RR: // dA = min(dB,dkC)
-			case OP_MIN_RK:
-			case OP_MAX_RR: // dA = max(dB,dkC)
-			case OP_MAX_RK:
-			case OP_ABS: // dA = abs(dB)
+			{
+				auto tmp0 = cc.newXmmSs();
+				auto tmp1 = cc.newXmmSs();
+				cc.movd(tmp0, regD[B]);
+				cc.movd(tmp1, regD[C]);
+				cc.pminsd(tmp0, tmp1);
+				cc.movd(regD[a], tmp0);
 				break;
+			}
+			case OP_MIN_RK:
+			{
+				auto tmp0 = cc.newXmmSs();
+				auto tmp1 = cc.newXmmSs();
+				auto konstTmp = cc.newIntPtr();
+				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.movd(tmp0, regD[B]);
+				cc.movss(tmp1, x86::dword_ptr(konstTmp));
+				cc.pminsd(tmp0, tmp1);
+				cc.movd(regD[a], tmp0);
+				break;
+			}
+			case OP_MAX_RR: // dA = max(dB,dkC)
+			{
+				auto tmp0 = cc.newXmmSs();
+				auto tmp1 = cc.newXmmSs();
+				cc.movd(tmp0, regD[B]);
+				cc.movd(tmp1, regD[C]);
+				cc.pmaxsd(tmp0, tmp1);
+				cc.movd(regD[a], tmp0);
+				break;
+			}
+			case OP_MAX_RK:
+			{
+				auto tmp0 = cc.newXmmSs();
+				auto tmp1 = cc.newXmmSs();
+				auto konstTmp = cc.newIntPtr();
+				cc.mov(konstTmp, reinterpret_cast<ptrdiff_t>(&konstd[C]));
+				cc.movd(tmp0, regD[B]);
+				cc.movss(tmp1, x86::dword_ptr(konstTmp));
+				cc.pmaxsd(tmp0, tmp1);
+				cc.movd(regD[a], tmp0);
+				break;
+			}
+			case OP_ABS: // dA = abs(dB)
+			{
+				auto tmp = cc.newInt32();
+				cc.mov(tmp, regD[B]);
+				cc.sar(tmp, 31);
+				cc.mov(regD[A], tmp);
+				cc.xor_(regD[A], regD[B]);
+				cc.sub(regD[A], tmp);
+				break;
+			}
 			case OP_NEG: // dA = -dB
 			{
 				auto tmp = cc.newInt32 ();

@@ -2,7 +2,7 @@
  ** i_main.mm
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2015 Alexey Lysiuk
+ ** Copyright 2012-2018 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -405,23 +405,23 @@ extern bool AppActive;
 
 	NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
 
-    while (true)
-    {
-        NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
+	while (true)
+	{
+		NSEvent* event = [NSApp nextEventMatchingMask:NSAnyEventMask
 											untilDate:[NSDate dateWithTimeIntervalSinceNow:0]
 											   inMode:NSDefaultRunLoopMode
 											  dequeue:YES];
-        if (nil == event)
-        {
-            break;
-        }
+		if (nil == event)
+		{
+			break;
+		}
 
 		I_ProcessEvent(event);
 
 		[NSApp sendEvent:event];
 	}
-    
-    [NSApp updateWindows];
+
+	[NSApp updateWindows];
 
 	[pool release];
 }

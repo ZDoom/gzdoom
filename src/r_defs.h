@@ -696,26 +696,20 @@ public:
 		int ubIndexMatrix;	// index in uniform buffer for texture matrix data
 	};
 
-	splane planes[2];	// never write directly to this. Always use the access functions!
-
-	enum
-	{
-		INV_FLOORPLANE = 1,
-		INV_CEILINGPLANE = 2,
-		INV_FLOORMATRIX = 4,
-		INV_CEILINGMATRIX = 8
-	};
-
-	int invalidflags;
+	splane planes[2];
 
 	void InvalidateMatrix(int pos)
 	{
-		invalidflags |= pos == sector_t::ceiling ? INV_CEILINGMATRIX : INV_FLOORMATRIX;
+		// negate the buffer index to mark it as invalid.
+		auto & p = planes[pos].ubIndexMatrix;
+		if (p > 0) p = -p;
 	}
 
 	void InvalidatePlane(int pos)
 	{
-		invalidflags |= pos == sector_t::ceiling ? INV_CEILINGPLANE : INV_FLOORPLANE;
+		// negate the buffer index to mark it as invalid.
+		auto & p = planes[pos].ubIndexPlane;
+		if (p > 0) p = -p;
 	}
 
 	void SetXOffset(int pos, double o)

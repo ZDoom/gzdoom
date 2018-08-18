@@ -57,6 +57,8 @@ GLModelBuffer::GLModelBuffer()
 
 GLModelBuffer::~GLModelBuffer()
 {
+	glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
+	glUnmapBuffer(GL_UNIFORM_BUFFER);
 	glBindBuffer(mBufferType, 0);
 	glDeleteBuffers(1, &mBufferId);
 }
@@ -132,7 +134,7 @@ void GLModelBuffer::Map()
 
 void GLModelBuffer::Unmap()
 {
-	if (!mPersistent)
+	if (!mPersistent && mBufferPointer)
 	{
 		glBindBuffer(mBufferType, mBufferId);
 		glUnmapBuffer(mBufferType);

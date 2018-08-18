@@ -58,6 +58,7 @@
 #include "gl/dynlights/gl_lightbuffer.h"
 #include "gl/data/gl_viewpointbuffer.h"
 #include "gl/data/gl_modelbuffer.h"
+#include "gl/data/gl_texturematrixbuffer.h"
 #include "r_videoscale.h"
 
 EXTERN_CVAR(Int, screenblocks)
@@ -106,6 +107,7 @@ void FGLRenderer::Initialize(int width, int height)
 	mLights = new FLightBuffer();
 	mViewpoints = new GLViewpointBuffer;
 	mModelMatrix = new GLModelBuffer;
+	mTextureMatrices = new GLTextureMatrixBuffer;
 	gl_RenderState.SetVertexBuffer(mVBO);
 	mFBID = 0;
 	mOldFBID = 0;
@@ -127,6 +129,7 @@ FGLRenderer::~FGLRenderer()
 	if (mLights != nullptr) delete mLights;
 	if (mViewpoints != nullptr) delete mViewpoints;
 	if (mModelMatrix != nullptr) delete mModelMatrix;
+	if (mTextureMatrices != nullptr) delete mTextureMatrices;
 	if (mFBID != 0) glDeleteFramebuffers(1, &mFBID);
 	if (mVAOID != 0)
 	{
@@ -161,6 +164,7 @@ void FGLRenderer::ResetSWScene()
 void FGLRenderer::SetupLevel()
 {
 	mVBO->CreateVBO();
+	mTextureMatrices->ValidateSize(level.sectors.Size());
 }
 
 //===========================================================================
@@ -509,10 +513,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 			// Canvas textures are stored upside down
 			if (cmd.mTexture->bHasCanvas)
 			{
-				gl_RenderState.mTextureMatrix.loadIdentity();
-				gl_RenderState.mTextureMatrix.scale(1.f, -1.f, 1.f);
-				gl_RenderState.mTextureMatrix.translate(0.f, 1.f, 0.0f);
-				gl_RenderState.EnableTextureMatrix(true);
+				gl_RenderState.SetTexMatrixIndex(1);
 			}
 		}
 		else
@@ -538,7 +539,7 @@ void FGLRenderer::Draw2D(F2DDrawer *drawer)
 		}
 		gl_RenderState.SetObjectColor(0xffffffff);
 		gl_RenderState.SetObjectColor2(0);
-		gl_RenderState.EnableTextureMatrix(false);
+		gl_RenderState.SetTexMatrixIndex(0);
 	}
 	glDisable(GL_SCISSOR_TEST);
 

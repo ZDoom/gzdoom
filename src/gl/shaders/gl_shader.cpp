@@ -43,6 +43,7 @@
 #include "gl/renderer/gl_renderstate.h"
 #include "gl/shaders/gl_shader.h"
 #include "gl/dynlights/gl_lightbuffer.h"
+#include "gl/data/gl_texturematrixbuffer.h"
 
 bool FShader::Load(const char * name, const char * vert_prog_lump, const char * frag_prog_lump, const char * proc_prog_lump, const char * light_fragprog, const char * defines)
 {
@@ -76,41 +77,51 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 		};
 		
 
-	#ifdef SHADER_STORAGE_LIGHTS
+	#ifdef USE_SHADER_STORAGE
 		layout(std430, binding = 1) buffer LightBufferSSO
 		{
 		    vec4 lights[];
 		};
-	#elif defined NUM_UBO_LIGHTS
+
+		layout(std430, binding = 5) buffer TexMatrixSSO
+		{
+			mat4 TextureMatrices[];
+		};
+	#else
 		uniform LightBufferUBO
 		{
 		    vec4 lights[NUM_UBO_LIGHTS];
+		};
+
+		uniform TexMatrixUBO
+		{
+			mat4 TextureMatrices[NUM_TEXMATRICES];
 		};
 	#endif
 
 	)";
 
 	// Base
-	i_data += "uniform mat4 TextureMatrix;\n";	// 16, 8
 	i_data += "uniform vec4 uObjectColor;\n";
 	i_data += "uniform vec4 uObjectColor2;\n";
 	i_data += "uniform vec4 uGlowTopPlane;\n";
-	i_data += "uniform vec4 uGlowTopColor;\n";	// 32, 24
+	i_data += "uniform vec4 uGlowTopColor;\n";	// 16
 	i_data += "uniform vec4 uGlowBottomPlane;\n";
 	i_data += "uniform vec4 uGlowBottomColor;\n";
 	i_data += "uniform vec4 uSplitTopPlane;\n";
-	i_data += "uniform vec4 uSplitBottomPlane;\n";	// 48, 40
+	i_data += "uniform vec4 uSplitBottomPlane;\n";	// 32
 	i_data += "uniform vec4 uFogColor;\n";
 	i_data += "uniform vec4 uDynLightColor;\n";
-	i_data += "uniform vec4 uLightAttr;\n";
+	i_data += "uniform vec4 uLightAttr;\n";	
 	i_data += "uniform vec2 uClipSplit;\n";
 	i_data += "uniform float uDesaturationFactor;\n";
-	i_data += "uniform float timer;\n";			//  64, 56
+	i_data += "uniform float timer;\n";				// 48
 	i_data += "uniform float uAlphaThreshold;\n";
 	i_data += "uniform int uTextureMode;\n";
 	i_data += "uniform int uFogEnabled;\n";
-	i_data += "uniform int uLightIndex;\n";		
-	i_data += "uniform vec2 uSpecularMaterial;\n";	// 70, 62
+	i_data += "uniform int uLightIndex;\n";	
+	i_data += "uniform int uTexMatrixIndex;\n";		// 53
+	i_data += "uniform vec2 uSpecularMaterial;\n";	
 
 	// textures
 	i_data += "uniform sampler2D tex;\n";
@@ -161,6 +172,7 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	assert(GLRenderer->mLights != NULL);
 	unsigned int lightbuffertype = GLRenderer->mLights->GetBufferType();
 	unsigned int lightbuffersize = GLRenderer->mLights->GetBlockSize();
+	unsigned int tmatbuffersize = GLRenderer->mTextureMatrices->GetBlockSize();
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
 		vp_comb.Format("#version 330 core\n#define NUM_UBO_LIGHTS %d\n", lightbuffersize);
@@ -169,9 +181,9 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	{
 		// This differentiation is for Intel which do not seem to expose the full extension, even if marked as required.
 		if (gl.glslversion < 4.3f)
-			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define SHADER_STORAGE_LIGHTS\n";
+			vp_comb = "#version 400 core\n#extension GL_ARB_shader_storage_buffer_object : require\n#define USE_SHADER_STORAGE\n";
 		else
-			vp_comb = "#version 430 core\n#define SHADER_STORAGE_LIGHTS\n";
+			vp_comb = "#version 430 core\n#define USE_SHADER_STORAGE\n";
 	}
 
 	if (gl.flags & RFL_SHADER_STORAGE_BUFFER)
@@ -319,27 +331,28 @@ bool FShader::Load(const char * name, const char * vert_prog_lump, const char * 
 	muSplitTopPlane.Init(hShader, "uSplitTopPlane");
 	muAlphaThreshold.Init(hShader, "uAlphaThreshold");
 	muSpecularMaterial.Init(hShader, "uSpecularMaterial");
+	muTexMatrixIndex.Init(hShader, "uTexMatrixIndex");
 	muTimer.Init(hShader, "timer");
 
 	lights_index = glGetUniformLocation(hShader, "lights");
-	texturematrix_index = glGetUniformLocation(hShader, "TextureMatrix");
-	vertexmatrix_index = glGetUniformLocation(hShader, "uQuadVertices");
-	texcoordmatrix_index = glGetUniformLocation(hShader, "uQuadTexCoords");
-	quadmode_index = glGetUniformLocation(hShader, "uQuadMode");
 
+	int tempindex;
 	if (lightbuffertype == GL_UNIFORM_BUFFER)
 	{
-		int tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
+		tempindex = glGetUniformBlockIndex(hShader, "LightBufferUBO");
 		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, LIGHTBUF_BINDINGPOINT);
+
+		tempindex = glGetUniformBlockIndex(hShader, "TexMatrixUBO");
+		if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, TEXMATRIX_BINDINGPOINT);
+
 	}
-	int tempindex = glGetUniformBlockIndex(hShader, "ViewpointUBO");
+	tempindex = glGetUniformBlockIndex(hShader, "ViewpointUBO");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, VIEWPOINT_BINDINGPOINT);
 
 	tempindex = glGetUniformBlockIndex(hShader, "ModelUBO");
 	if (tempindex != -1) glUniformBlockBinding(hShader, tempindex, MODELBUF_BINDINGPOINT);
 
 	glUseProgram(hShader);
-	if (quadmode_index > 0) glUniform1i(quadmode_index, 0);
 
 	// set up other texture units (if needed by the shader)
 	for (int i = 2; i<16; i++)

@@ -219,10 +219,9 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 			gl_RenderState.SetObjectColor(flat->FlatColor | 0xff000000);
 		if (flat->sector->special != GLSector_Skybox)
 		{
+			gl_RenderState.SetTexMatrixIndex(flat->plane.ubIndexMatrix);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
-			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
 			DrawSubsectors(flat, pass, false);
-			gl_RenderState.EnableTextureMatrix(false);
 		}
 		else
 		{
@@ -252,15 +251,15 @@ void FDrawInfo::DrawFlat(GLFlat *flat, int pass, bool trans)	// trans only has m
 		{
 			if (!flat->gltexture->tex->GetTranslucency()) gl_RenderState.AlphaFunc(GL_GEQUAL, gl_mask_threshold);
 			else gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
+			gl_RenderState.SetTexMatrixIndex(flat->plane.ubIndexMatrix);
 			gl_RenderState.SetMaterial(flat->gltexture, CLAMP_NONE, 0, -1, false);
-			gl_RenderState.SetPlaneTextureRotation(&plane, flat->gltexture);
 			DrawSubsectors(flat, pass, true);
-			gl_RenderState.EnableTextureMatrix(false);
 		}
 		if (flat->renderstyle==STYLE_Add) gl_RenderState.BlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 		gl_RenderState.SetObjectColor(0xffffffff);
 		break;
 	}
+	gl_RenderState.SetTexMatrixIndex(0);
 }
 
 //==========================================================================

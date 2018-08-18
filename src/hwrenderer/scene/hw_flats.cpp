@@ -84,6 +84,7 @@ bool hw_SetPlaneTextureRotation(const GLSectorPlane * secplane, FMaterial * glte
 		dest.rotate(angle, 0.0f, 0.0f, 1.0f);
 		return true;
 	}
+	dest.loadIdentity();
 	return false;
 }
 
@@ -220,6 +221,17 @@ void GLFlat::Process(HWDrawInfo *di, sector_t * model, int whichplane, bool fog)
 		{
 			Colormap.MakeWhite();
 			lightlevel=255;
+		}
+
+		if (plane.ubIndexMatrix < 0)
+		{
+			// Need to recalculate the texture matrix.
+			// (Note that theoretically two threads can do this at the same time, but since they'd create the same data this isn't critical.)
+			VSMatrix mat;
+			plane.ubIndexMatrix = -plane.ubIndexMatrix;
+			model->planes[whichplane].ubIndexMatrix = plane.ubIndexMatrix;
+			hw_SetPlaneTextureRotation(&plane, gltexture, mat);
+			di->UploadTextureMatrix(mat, plane.ubIndexMatrix);
 		}
 	}
 	else 

@@ -260,21 +260,13 @@ class FShader
 	FBufferedUniform1f muAlphaThreshold;
 	FBufferedUniform2f muSpecularMaterial;
 	FBufferedUniform1f muTimer;
+	FBufferedUniform1i muTexMatrixIndex;
 	
 	int lights_index;
-	int texturematrix_index;
 
-public:
-	int vertexmatrix_index;
-	int texcoordmatrix_index;
-	int quadmode_index;
 private:
 	int currentglowstate = 0;
 	int currentsplitstate = 0;
-	int currentcliplinestate = 0;
-	int currentfixedcolormap = 0;
-	bool currentTextureMatrixState = true;// by setting the matrix state to 'true' it is guaranteed to be set the first time the render state gets applied.
-	bool currentModelMatrixState = true;
 
 public:
 	FShader(const char *name)

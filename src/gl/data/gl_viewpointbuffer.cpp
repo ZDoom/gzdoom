@@ -45,6 +45,8 @@ GLViewpointBuffer::GLViewpointBuffer()
 
 GLViewpointBuffer::~GLViewpointBuffer()
 {
+	glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
+	glUnmapBuffer(GL_UNIFORM_BUFFER);
 	glBindBuffer(GL_UNIFORM_BUFFER, 0);
 	glDeleteBuffers(1, &mBufferId);
 }
@@ -103,7 +105,7 @@ void GLViewpointBuffer::Map()
 
 void GLViewpointBuffer::Unmap()
 {
-	if (!mPersistent)
+	if (!mPersistent && mBufferPointer)
 	{
 		glBindBuffer(GL_UNIFORM_BUFFER, mBufferId);
 		glUnmapBuffer(GL_UNIFORM_BUFFER);

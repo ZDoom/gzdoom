@@ -428,7 +428,7 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	gl_RenderState.SetMaterial(gltexture, CLAMP_NONE, 0, -1, false);
 	gl_RenderState.SetObjectColor(origin->specialcolor);
 
-	gl_RenderState.SetPlaneTextureRotation(sp, gltexture);
+	gl_RenderState.SetTexMatrixIndex(sp->ubIndexMatrix);
 	gl_RenderState.AlphaFunc(GL_GEQUAL, 0.f);
 	gl_RenderState.BlendFunc(GL_ONE,GL_ZERO);
 	gl_RenderState.Apply();
@@ -440,7 +440,7 @@ void GLHorizonPortal::DrawContents(HWDrawInfo *hwdi)
 	}
 	GLRenderer->mVBO->RenderArray(GL_TRIANGLE_STRIP, voffset + vcount, 10);
 
-	gl_RenderState.EnableTextureMatrix(false);
+	gl_RenderState.SetTexMatrixIndex(0);
 }
 
 

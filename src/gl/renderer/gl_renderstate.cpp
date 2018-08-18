@@ -37,6 +37,7 @@
 #include "gl/dynlights//gl_lightbuffer.h"
 #include "gl/renderer/gl_renderbuffers.h"
 #include "gl/textures/gl_hwtexture.h"
+#include "gl/data/gl_texturematrixbuffer.h"
 
 void gl_SetTextureMode(int type);
 
@@ -72,8 +73,6 @@ void FRenderState::Reset()
 	mDstBlend = GL_ONE_MINUS_SRC_ALPHA;
 	mAlphaThreshold = 0.5f;
 	mBlendEquation = GL_FUNC_ADD;
-	mModelMatrixEnabled = false;
-	mTextureMatrixEnabled = false;
 	mObjectColor = 0xffffffff;
 	mObjectColor2 = 0;
 	mVertexBuffer = mCurrentVertexBuffer = NULL;
@@ -84,6 +83,7 @@ void FRenderState::Reset()
 	mGlossiness = 0.0f;
 	mSpecularLevel = 0.0f;
 	mShaderTimer = 0.0f;
+	mTexMatrixIndex = 0;
 	ClearClipSplit();
 
 	stSrcBlend = stDstBlend = -1;
@@ -166,6 +166,7 @@ bool FRenderState::ApplyShader()
 	activeShader->muLightIndex.Set(-1);
 	activeShader->muClipSplit.Set(mClipSplit);
 	activeShader->muSpecularMaterial.Set(mGlossiness, mSpecularLevel);
+	activeShader->muTexMatrixIndex.Set(GLRenderer->mTextureMatrices->Bind(mTexMatrixIndex));
 
 	if (mGlowEnabled)
 	{
@@ -198,18 +199,6 @@ bool FRenderState::ApplyShader()
 		activeShader->muSplitBottomPlane.Set(nulvec);
 		activeShader->currentsplitstate = 0;
 	}
-
-	if (mTextureMatrixEnabled)
-	{
-		matrixToGL(mTextureMatrix, activeShader->texturematrix_index);
-		activeShader->currentTextureMatrixState = true;
-	}
-	else if (activeShader->currentTextureMatrixState)
-	{
-		activeShader->currentTextureMatrixState = false;
-		matrixToGL(identityMatrix, activeShader->texturematrix_index);
-	}
-
 	return true;
 }
 

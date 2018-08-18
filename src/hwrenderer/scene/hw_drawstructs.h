@@ -74,6 +74,7 @@ struct GLSectorPlane
 	float	Angle;
 	FVector2 Offs;
 	FVector2 Scale;
+	int ubIndexMatrix;
 
 	void GetFromSector(sector_t * sec, int ceiling)
 	{
@@ -85,6 +86,7 @@ struct GLSectorPlane
 		texture = sec->GetTexture(ceiling);
 		plane = sec->GetSecPlane(ceiling);
 		Texheight = (float)((ceiling == sector_t::ceiling)? plane.fD() : -plane.fD());
+		ubIndexMatrix = sec->planes[ceiling].ubIndexMatrix;
 	}
 };
 
@@ -308,7 +310,6 @@ public:
 	bool ceiling;
 	uint8_t renderflags;
 	int iboindex;
-	//int vboheight;
 
 	int dynlightindex;
 

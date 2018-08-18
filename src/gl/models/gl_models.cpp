@@ -70,8 +70,6 @@ void FGLModelRenderer::BeginDrawModel(AActor *actor, FSpriteModelFrame *smf, con
 
 void FGLModelRenderer::EndDrawModel(AActor *actor, FSpriteModelFrame *smf)
 {
-	gl_RenderState.EnableModelMatrix(false);
-
 	glDepthFunc(GL_LESS);
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]) && !(smf->flags & MDL_DONTCULLBACKFACES))
 		glDisable(GL_CULL_FACE);
@@ -94,8 +92,6 @@ void FGLModelRenderer::BeginDrawHUDModel(AActor *actor, const VSMatrix *objectTo
 
 void FGLModelRenderer::EndDrawHUDModel(AActor *actor)
 {
-	gl_RenderState.EnableModelMatrix(false);
-
 	glDepthFunc(GL_LESS);
 	if (!(actor->RenderStyle == LegacyRenderStyles[STYLE_Normal]))
 		glDisable(GL_CULL_FACE);

@@ -32,6 +32,7 @@
 #include "gl_load/gl_interface.h"
 #include "gl/data/gl_vertexbuffer.h"
 #include "gl/data/gl_modelbuffer.h"
+#include "gl/data/gl_texturematrixbuffer.h"
 #include "gl/renderer/gl_lightdata.h"
 #include "gl/renderer/gl_renderer.h"
 #include "gl/renderer/gl_renderstate.h"
@@ -123,18 +124,20 @@ void RenderDome(FMaterial * tex, float x_offset, float y_offset, bool mirror, in
 	if (tex)
 	{
 		gl_RenderState.SetMaterial(tex, CLAMP_NONE, 0, -1, false);
-		gl_RenderState.EnableTextureMatrix(true);
 
-		VSMatrix modelmatrix;
-		GLRenderer->mSkyVBO->SetupMatrices(tex, x_offset, y_offset, mirror, mode, modelmatrix, gl_RenderState.mTextureMatrix);
+		VSMatrix modelmatrix, texturematrix;
+		GLRenderer->mSkyVBO->SetupMatrices(tex, x_offset, y_offset, mirror, mode, modelmatrix, texturematrix);
 		GLRenderer->mModelMatrix->Map();
 		auto ndx = GLRenderer->mModelMatrix->Upload(&modelmatrix, 0);
 		GLRenderer->mModelMatrix->Unmap();
 		GLRenderer->mModelMatrix->Bind(ndx);
+		GLRenderer->mTextureMatrices->Map();
+		gl_RenderState.SetTexMatrixIndex(GLRenderer->mTextureMatrices->Upload(texturematrix, -1));
+		GLRenderer->mTextureMatrices->Unmap();
 	}
 
 	GLRenderer->mSkyVBO->RenderDome(tex, mode);
-	gl_RenderState.EnableTextureMatrix(false);
+	gl_RenderState.SetTexMatrixIndex(0);
 	GLRenderer->mModelMatrix->Bind(0);
 }
 

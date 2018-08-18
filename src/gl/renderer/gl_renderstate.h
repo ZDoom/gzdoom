@@ -90,11 +90,10 @@ class FRenderState
 	int mSrcBlend, mDstBlend;
 	float mAlphaThreshold;
 	int mBlendEquation;
-	bool mModelMatrixEnabled;
-	bool mTextureMatrixEnabled;
 	bool mLastDepthClamp;
 	float mGlossiness, mSpecularLevel;
 	float mShaderTimer;
+	int mTexMatrixIndex;
 
 	FVertexBuffer *mVertexBuffer, *mCurrentVertexBuffer;
 	FStateVec4 mNormal;
@@ -270,14 +269,9 @@ public:
 		mBrightmapEnabled = on;
 	}
 
-	void EnableModelMatrix(bool on)
+	void SetTexMatrixIndex(int index)
 	{
-		mModelMatrixEnabled = on;
-	}
-
-	void EnableTextureMatrix(bool on)
-	{
-		mTextureMatrixEnabled = on;
+		mTexMatrixIndex = index;
 	}
 
 	void SetGlowParams(float *t, float *b)
@@ -436,10 +430,7 @@ public:
 		return mPassType == GBUFFER_PASS ? 3 : 1;
 	}
 
-	// Backwards compatibility crap follows
-	void ApplyFixedFunction();
-	void DrawColormapOverlay();
-
+	/*
 	void SetPlaneTextureRotation(GLSectorPlane *plane, FMaterial *texture)
 	{
 		if (hw_SetPlaneTextureRotation(plane, texture, mTextureMatrix))
@@ -447,6 +438,7 @@ public:
 			EnableTextureMatrix(true);
 		}
 	}
+	*/
 
 };
 

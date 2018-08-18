@@ -2480,6 +2480,12 @@ FxExpression *FxAssign::Resolve(FCompileContext &ctx)
 			delete this;
 			return nullptr;
 		}
+		else if (Base->IsDynamicArray())
+		{
+			ScriptPosition.Message(MSG_ERROR, "Cannot assign dymanic arrays, use Copy() or Move() function instead");
+			delete this;
+			return nullptr;
+		}
 		if (!Base->IsVector() && Base->ValueType->isStruct())
 		{
 			ScriptPosition.Message(MSG_ERROR, "Struct assignment not implemented yet");

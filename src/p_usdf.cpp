@@ -400,9 +400,9 @@ class USDFParser : public UDMFParserBase
 
 	bool ParseConversation()
 	{
-		PClassActor *type = NULL;
+		PClassActor *type = nullptr;
 		int dlgid = -1;
-		FName clsid;
+		FName clsid = NAME_None;
 		unsigned int startpos = StrifeDialogues.Size();
 
 		while (!sc.CheckToken('}'))

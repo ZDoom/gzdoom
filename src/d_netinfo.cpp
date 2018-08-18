@@ -756,7 +756,7 @@ void D_ReadUserInfoStrings (int pnum, uint8_t **stream, bool update)
 	const char *breakpt;
 	FString value;
 	bool compact;
-	FName keyname;
+	FName keyname = NAME_None;
 	unsigned int infotype = 0;
 
 	if (*ptr++ != '\\')
@@ -925,8 +925,6 @@ void WriteUserInfo(FSerializer &arc, userinfo_t &info)
 
 void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 {
-	FName name;
-	FBaseCVar **cvar;
 	UCVarValue val;
 	const char *key;
 	const char *str;
@@ -938,8 +936,8 @@ void ReadUserInfo(FSerializer &arc, userinfo_t &info, FString &skin)
 		while ((key = arc.GetKey()))
 		{
 			arc.StringPtr(nullptr, str);
-			name = key;
-			cvar = info.CheckKey(name);
+			FName name = key;
+			FBaseCVar **cvar = info.CheckKey(name);
 			if (cvar != NULL && *cvar != NULL)
 			{
 				switch (name)

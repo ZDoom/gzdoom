@@ -421,7 +421,7 @@ static FxExpression *ParseExpression0 (FScanner &sc, PClassActor *cls)
 	}
 	else if (sc.CheckToken(TK_NameConst))
 	{
-		return new FxConstant(sc.Name, scpos);
+		return new FxConstant(FName(sc.String), scpos);
 	}
 	else if (sc.CheckToken(TK_StringConst))
 	{

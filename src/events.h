@@ -198,7 +198,7 @@ struct FWorldEvent
 	AActor* Inflictor = nullptr; // can be null - for damagemobj
 	AActor* DamageSource = nullptr; // can be null
 	int Damage = 0;
-	FName DamageType;
+	FName DamageType = NAME_None;
 	int DamageFlags = 0;
 	DAngle DamageAngle;
 	// for line(pre)activated

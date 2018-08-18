@@ -314,7 +314,7 @@ void DSeqNode::Serialize(FSerializer &arc)
 {
 	int seqOffset;
 	unsigned int i;
-	FName seqName;
+	FName seqName = NAME_None;
 	int delayTics = 0;
 	FSoundID id;
 	float volume;
@@ -571,8 +571,8 @@ void S_ParseSndSeq (int levellump)
 	TArray<uint32_t> ScriptTemp;
 	int lastlump, lump;
 	char seqtype = ':';
-	FName seqname;
-	FName slot;
+	FName seqname = NAME_None;
+	FName slot = NAME_None;
 	int stopsound;
 	int delaybase;
 	float volumebase;

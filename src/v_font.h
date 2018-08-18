@@ -130,7 +130,7 @@ protected:
 	uint8_t *PatchRemap;
 
 	int Lump;
-	FName FontName;
+	FName FontName = NAME_None;
 	FFont *Next;
 
 	static FFont *FirstFont;

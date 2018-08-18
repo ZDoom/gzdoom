@@ -33,7 +33,7 @@ struct FStrifeDialogueNode
 	FString Goodbye; // must init to null for binary scripts to work as intended
 
 	FStrifeDialogueReply *Children = nullptr;
-	FName MenuClassName;
+	FName MenuClassName = NAME_None;
 	FString UserData;
 };
 

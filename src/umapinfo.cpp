@@ -403,7 +403,7 @@ void CommitUMapinfo(level_info_t *defaultinfo)
 		if (map.nextmap[0]) levelinfo->NextMap = map.nextmap;
 		else if (map.endpic[0])
 		{
-			FName name;
+			FName name = NAME_None;
 
 			if (!stricmp(map.endpic, "$CAST"))
 			{

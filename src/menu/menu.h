@@ -121,7 +121,7 @@ class DMenuDescriptor : public DObject
 {
 	DECLARE_CLASS(DMenuDescriptor, DObject)
 public:
-	FName mMenuName;
+	FName mMenuName = NAME_None;
 	FString mNetgameMessage;
 	PClass *mClass = nullptr;
 	bool mProtected = false;
@@ -287,7 +287,7 @@ class DMenuItemBase : public DObject
 	DECLARE_CLASS(DMenuItemBase, DObject)
 public:
 	double mXpos, mYpos;
-	FNameNoInit mAction;
+	FName mAction;
 	bool mEnabled;
 
 	bool Activate();

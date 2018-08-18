@@ -8,7 +8,7 @@ class UDMFParserBase
 {
 protected:
 	FScanner sc;
-	FName namespc;
+	FName namespc = NAME_None;
 	int namespace_bits;
 	FString parsedString;
 	bool BadCoordinates = false;

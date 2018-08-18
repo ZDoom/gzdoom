@@ -196,7 +196,7 @@ bool AActor::HasSpecialDeathStates () const
 TArray<FName> &MakeStateNameList(const char * fname)
 {
 	static TArray<FName> namelist(3);
-	FName firstpart, secondpart;
+	FName firstpart = NAME_None, secondpart = NAME_None;
 	char *c;
 
 	// Handle the old names for the existing death states
@@ -256,21 +256,19 @@ TArray<FName> &MakeStateNameList(const char * fname)
 FState *PClassActor::FindState(int numnames, FName *names, bool exact) const
 {
 	FStateLabels *labels = GetStateLabels();
-	FState *best = NULL;
+	FState *best = nullptr;
 
-	if (labels != NULL)
+	if (labels != nullptr)
 	{
 		int count = 0;
-		FStateLabel *slabel = NULL;
-		FName label;
 
 		// Find the best-matching label for this class.
-		while (labels != NULL && count < numnames)
+		while (labels != nullptr && count < numnames)
 		{
-			label = *names++;
-			slabel = labels->FindLabel(label);
+			FName label = *names++;
+			FStateLabel *slabel = labels->FindLabel(label);
 
-			if (slabel != NULL)
+			if (slabel != nullptr)
 			{
 				count++;
 				labels = slabel->Children;
@@ -283,7 +281,7 @@ FState *PClassActor::FindState(int numnames, FName *names, bool exact) const
 		}
 		if (count < numnames && exact)
 		{
-			return NULL;
+			return nullptr;
 		}
 	}
 	return best;
@@ -411,7 +409,7 @@ FStateDefine *FStateDefinitions::FindStateLabelInList(TArray<FStateDefine> & lis
 	{
 		FStateDefine def;
 		def.Label = name;
-		def.State = NULL;
+		def.State = nullptr;
 		def.DefineFlags = SDF_NEXT;
 		return &list[list.Push(def)];
 	}

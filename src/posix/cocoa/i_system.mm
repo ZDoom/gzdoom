@@ -2,7 +2,7 @@
  ** i_system.mm
  **
  **---------------------------------------------------------------------------
- ** Copyright 2012-2015 Alexey Lysiuk
+ ** Copyright 2012-2018 Alexey Lysiuk
  ** All rights reserved.
  **
  ** Redistribution and use in source and binary forms, with or without
@@ -63,7 +63,7 @@ void I_Tactile(int /*on*/, int /*off*/, int /*total*/)
 ticcmd_t* I_BaseTiccmd()
 {
 	static ticcmd_t emptycmd;
-    return &emptycmd;
+	return &emptycmd;
 }
 
 
@@ -109,16 +109,16 @@ void I_Init(void)
 	DumpCPUInfo(&CPU);
 
 	atterm(I_ShutdownSound);
-    I_InitSound();
+	I_InitSound();
 }
 
 static int has_exited;
 
 void I_Quit()
 {
-    has_exited = 1; // Prevent infinitely recursive exits -- killough
+	has_exited = 1; // Prevent infinitely recursive exits -- killough
 
-    if (demorecording)
+	if (demorecording)
 	{
 		G_CheckDemoStatus();
 	}
@@ -132,11 +132,11 @@ bool gameisdead;
 
 void I_FatalError(const char* const error, ...)
 {
-    static bool alreadyThrown = false;
-    gameisdead = true;
+	static bool alreadyThrown = false;
+	gameisdead = true;
 
-    if (!alreadyThrown) // ignore all but the first message -- killough
-    {
+	if (!alreadyThrown) // ignore all but the first message -- killough
+	{
 		alreadyThrown = true;
 
 		char errortext[MAX_ERRORTEXT];
@@ -158,25 +158,25 @@ void I_FatalError(const char* const error, ...)
 
 		fprintf(stderr, "%s\n", errortext);
 		exit(-1);
-    }
+	}
 
-    if (!has_exited) // If it hasn't exited yet, exit now -- killough
-    {
+	if (!has_exited) // If it hasn't exited yet, exit now -- killough
+	{
 		has_exited = 1; // Prevent infinitely recursive exits -- killough
 		exit(-1);
-    }
+	}
 }
 
 void I_Error(const char* const error, ...)
 {
-    va_list argptr;
-    char errortext[MAX_ERRORTEXT];
+	va_list argptr;
+	char errortext[MAX_ERRORTEXT];
 
-    va_start(argptr, error);
-    vsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
-    va_end(argptr);
+	va_start(argptr, error);
+	vsnprintf(errortext, MAX_ERRORTEXT, error, argptr);
+	va_end(argptr);
 
-    throw CRecoverableError(errortext);
+	throw CRecoverableError(errortext);
 }
 
 
@@ -270,7 +270,7 @@ static int matchfile(struct dirent *ent)
 static int matchfile(const struct dirent *ent)
 #endif
 {
-    return fnmatch(pattern, ent->d_name, FNM_NOESCAPE) == 0;
+	return fnmatch(pattern, ent->d_name, FNM_NOESCAPE) == 0;
 }
 
 void* I_FindFirst(const char* const filespec, findstate_t* const fileinfo)
@@ -290,24 +290,24 @@ void* I_FindFirst(const char* const filespec, findstate_t* const fileinfo)
 		dir = ".";
 	}
 
-    fileinfo->current = 0;
-    fileinfo->count = scandir(dir.GetChars(), &fileinfo->namelist, matchfile, alphasort);
+	fileinfo->current = 0;
+	fileinfo->count = scandir(dir.GetChars(), &fileinfo->namelist, matchfile, alphasort);
 
-    if (fileinfo->count > 0)
-    {
+	if (fileinfo->count > 0)
+	{
 		return fileinfo;
-    }
+	}
 
-    return (void*)-1;
+	return (void*)-1;
 }
 
 int I_FindNext(void* const handle, findstate_t* const fileinfo)
 {
-    findstate_t* const state = static_cast<findstate_t*>(handle);
+	findstate_t* const state = static_cast<findstate_t*>(handle);
 
-    if (state->current < fileinfo->count)
-    {
-	    return ++state->current < fileinfo->count ? 0 : -1;
+	if (state->current < fileinfo->count)
+	{
+		return ++state->current < fileinfo->count ? 0 : -1;
 	}
 
 	return -1;

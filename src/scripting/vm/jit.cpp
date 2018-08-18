@@ -569,19 +569,19 @@ JitFuncPtr JitCompile(VMScriptFunction *sfunc)
 			// Store instructions. *(rA + rkC) = rB
 			case OP_SB: // store byte
 				NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
-				cc.mov(x86::byte_ptr(PA, KC), regD[B]);
+				cc.mov(x86::byte_ptr(PA, KC), regD[B].r8Lo());
 				break;
 			case OP_SB_R:
 				NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
-				cc.mov(x86::byte_ptr(PA, RC), regD[B]);
+				cc.mov(x86::byte_ptr(PA, RC), regD[B].r8Lo());
 				break;
 			case OP_SH: // store halfword
 				NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);
-				cc.mov(x86::word_ptr(PA, KC), regD[B]);
+				cc.mov(x86::word_ptr(PA, KC), regD[B].r16());
 				break;
 			case OP_SH_R:
 				NULL_POINTER_CHECK(PA, RC, X_WRITE_NIL);
-				cc.mov(x86::word_ptr(PA, RC), regD[B]);
+				cc.mov(x86::word_ptr(PA, RC), regD[B].r16());
 				break;
 			case OP_SW: // store word
 				NULL_POINTER_CHECK(PA, KC, X_WRITE_NIL);

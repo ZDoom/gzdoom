@@ -12,6 +12,7 @@ class GLViewpointBuffer
 	unsigned int mLastMappedIndex;
 	unsigned int mByteSize;
 	void * mBufferPointer;
+	TArray<bool> mClipPlaneInfo;
 	
 	unsigned int m2DWidth = ~0u, m2DHeight = ~0u;
 

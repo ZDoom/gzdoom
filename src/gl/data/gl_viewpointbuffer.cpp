@@ -121,8 +121,12 @@ int GLViewpointBuffer::Bind(unsigned int index)
 		glBindBufferRange(GL_UNIFORM_BUFFER, VIEWPOINT_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
 
 		// Update the viewpoint-related clip plane setting.
+		Map();
 		auto *vp = (HWViewpointUniforms*)(((char*)mBufferPointer) + mUploadIndex * mBlockAlign);
-		if (index > 0 && (vp->mClipHeightDirection != 0.f || vp->mClipLine.X > -10000000.0f))
+		const bool enableClip = index > 0 && (vp->mClipHeightDirection != 0.f || vp->mClipLine.X > -10000000.0f);
+		Unmap();
+
+		if (enableClip)
 		{
 			glEnable(GL_CLIP_DISTANCE0);
 		}

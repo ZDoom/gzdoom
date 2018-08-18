@@ -2147,7 +2147,7 @@ template<> FSerializer &Serialize(FSerializer &arc, const char *key, FFont *&fon
 	}
 	else
 	{
-		FName n;
+		FName n = NAME_None;
 		arc(key, n);
 		font = V_GetFont(n);
 		if (font == nullptr)

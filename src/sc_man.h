@@ -82,7 +82,6 @@ public:
 	int TokenType;
 	int Number;
 	double Float;
-	FName Name;
 	int Line;
 	bool End;
 	bool Crossed;

@@ -1141,7 +1141,7 @@ public:
 	uint8_t			WeaveIndexZ;
 	int				skillrespawncount;
 	int				TIDtoHate;			// TID of things to hate (0 if none)
-	FNameNoInit		Species;		// For monster families
+	FName		Species;		// For monster families
 	TObjPtr<AActor*>	alternative;	// (Un)Morphed actors stored here. Those with the MF_UNMORPHED flag are the originals.
 	TObjPtr<AActor*>	tracer;			// Thing being chased/attacked for tracers
 	TObjPtr<AActor*>	master;			// Thing which spawned this one (prevents mutual attacks)
@@ -1184,12 +1184,12 @@ public:
 	line_t			*BlockingLine;	// Line that blocked the last move
 
 	int PoisonDamage; // Damage received per tic from poison.
-	FNameNoInit PoisonDamageType; // Damage type dealt by poison.
+	FName PoisonDamageType; // Damage type dealt by poison.
 	int PoisonDuration; // Duration left for receiving poison damage.
 	int PoisonPeriod; // How often poison damage is applied. (Every X tics.)
 
 	int PoisonDamageReceived; // Damage received per tic from poison.
-	FNameNoInit PoisonDamageTypeReceived; // Damage type received by poison.
+	FName PoisonDamageTypeReceived; // Damage type received by poison.
 	int PoisonDurationReceived; // Duration left for receiving poison damage.
 	int PoisonPeriodReceived; // How often poison damage is applied. (Every X tics.)
 	TObjPtr<AActor*> Poisoner; // Last source of received poison damage.
@@ -1229,13 +1229,13 @@ public:
 	int32_t Mass;
 	int16_t PainChance;
 	int PainThreshold;
-	FNameNoInit DamageType;
-	FNameNoInit DamageTypeReceived;
+	FName DamageType;
+	FName DamageTypeReceived;
 	double DamageFactor;
 	double DamageMultiply;
 
-	FNameNoInit PainType;
-	FNameNoInit DeathType;
+	FName PainType;
+	FName DeathType;
 	PClassActor *TeleFogSourceType;
 	PClassActor *TeleFogDestType;
 	int RipperLevel;

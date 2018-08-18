@@ -274,7 +274,7 @@ static void ParseSingleFile(FScanner *pSC, const char *filename, int lump, void 
 			break;
 
 		case TK_NameConst:
-			value.Int = sc.Name;
+			value.Int = FName(sc.String).GetIndex();
 			tokentype = ZCC_NAMECONST;
 			break;
 

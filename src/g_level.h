@@ -264,9 +264,8 @@ struct level_info_t;
 
 struct FOptionalMapinfoData
 {
-	FOptionalMapinfoData *Next;
-	FName identifier;
-	FOptionalMapinfoData() { Next = NULL; identifier = NAME_None; }
+	FOptionalMapinfoData *Next = nullptr;
+	FName identifier = NAME_None;
 	virtual ~FOptionalMapinfoData() {}
 	virtual FOptionalMapinfoData *Clone() const = 0;
 };
@@ -572,7 +571,7 @@ typedef TMap<FName, FName> SkillActorReplacement;
 
 struct FSkillInfo
 {
-	FName Name;
+	FName Name = NAME_None;
 	double AmmoFactor, DoubleAmmoFactor, DropAmmoFactor;
 	double DamageFactor;
 	double ArmorFactor;

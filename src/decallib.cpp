@@ -1037,8 +1037,8 @@ FDecalLib::FTranslation *FDecalLib::GenerateTranslation (uint32_t start, uint32_
 }
 
 FDecalBase::FDecalBase ()
+	: Name(NAME_None)
 {
-	Name = NAME_None;
 }
 
 FDecalBase::~FDecalBase ()
@@ -1152,8 +1152,8 @@ const FDecalTemplate *FDecalGroup::GetDecal () const
 }
 
 FDecalAnimator::FDecalAnimator (const char *name)
+	: Name(name)
 {
-	Name = name;
 }
 
 FDecalAnimator::~FDecalAnimator ()

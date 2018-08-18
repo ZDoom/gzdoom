@@ -296,51 +296,16 @@ void setPCOnAbort(VMScriptFunction *sfunc, VMOP* pc) {
 	sfunc->pcOnJitAbort = pc;
 }
 
-template <typename T>
-void setCallArg(T call, int num, int64_t arg) {
-	call->setArg(num, asmjit::imm(arg));
-}
-
-void setCallArg(asmjit::CCFuncCall* call, int num, uint64_t arg) {
-	call->setArg(num, asmjit::imm_u(arg));
-}
-
-void setCallArg(asmjit::CCFuncCall* call, int num, const asmjit::Reg& arg) {
-	call->setArg(num, arg);
-}
-
-template <typename Arg>
-void setCallArg(asmjit::CCFuncCall* call, int num, Arg* arg) {
-	call->setArg(num, asmjit::imm_ptr(arg));
-}
-
-template <typename Arg>
-void emitCallVariadicArgs(asmjit::CCFuncCall* call, int num, Arg arg) {
-	setCallArg(call, num, arg);
-}
-
-template <typename Arg, typename... Args>
-void emitCallVariadicArgs(asmjit::CCFuncCall* call, int num, Arg arg, Args... args) {
-	setCallArg(call, num, arg);
-	emitCallVariadicArgs(call, num + 1, args...);
-}
-
-void emitCallVariadicArgs(asmjit::CCFuncCall*, int num) {}
-
-template <typename... ArgTypes, typename... Args>
-void emitAbortExceptionCall(asmjit::X86Compiler& cc, VMScriptFunction* sfunc, const VMOP* pc, EVMAbortException reason, const char* moreinfo, Args... args) {
+void emitAbortExceptionCall(asmjit::X86Compiler& cc, VMScriptFunction* sfunc, const VMOP* pc, EVMAbortException reason, const char* moreinfo) {
 	using namespace asmjit;
-
-	auto ptr = cc.newIntPtr();
 
 	CCFuncCall* setPCCall = cc.call(imm_ptr((void*)setPCOnAbort), FuncSignature2<void, VMScriptFunction*, VMOP*>(CallConv::kIdHost));
 	setPCCall->setArg(0, imm_ptr(sfunc));
 	setPCCall->setArg(1, imm_ptr(pc));
 
-	CCFuncCall* throwAbortCall = cc.call(imm_ptr((void*)ThrowAbortException), FuncSignatureT<void, int, const char*, ArgTypes...>(CallConv::kIdHost));
+	CCFuncCall* throwAbortCall = cc.call(imm_ptr((void*)ThrowAbortException), FuncSignatureT<void, int, const char*>(CallConv::kIdHost));
 	throwAbortCall->setArg(0, imm(reason));
 	throwAbortCall->setArg(1, imm_ptr(moreinfo));
-	emitCallVariadicArgs(throwAbortCall, 2, args...);
 }
 
 static void CallSqrt(asmjit::X86Compiler& cc, const asmjit::X86Xmm &a, const asmjit::X86Xmm &b)

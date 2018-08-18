@@ -41,6 +41,7 @@ GLViewpointBuffer::GLViewpointBuffer()
 	Allocate();
 	Clear();
 	mLastMappedIndex = UINT_MAX;
+	mClipPlaneInfo.Push(0);
 }
 
 GLViewpointBuffer::~GLViewpointBuffer()
@@ -121,8 +122,7 @@ int GLViewpointBuffer::Bind(unsigned int index)
 		glBindBufferRange(GL_UNIFORM_BUFFER, VIEWPOINT_BINDINGPOINT, mBufferId, index * mBlockAlign, mBlockAlign);
 
 		// Update the viewpoint-related clip plane setting.
-		auto *vp = (HWViewpointUniforms*)(((char*)mBufferPointer) + mUploadIndex * mBlockAlign);
-		if (index > 0 && (vp->mClipHeightDirection != 0.f || vp->mClipLine.X > -10000000.0f))
+		if (mClipPlaneInfo[index])
 		{
 			glEnable(GL_CLIP_DISTANCE0);
 		}
@@ -159,6 +159,7 @@ int GLViewpointBuffer::SetViewpoint(HWViewpointUniforms *vp)
 	memcpy(((char*)mBufferPointer) + mUploadIndex * mBlockAlign, vp, sizeof(*vp));
 	Unmap();
 
+	mClipPlaneInfo.Push(vp->mClipHeightDirection != 0.f || vp->mClipLine.X > -10000000.0f);
 	return Bind(mUploadIndex++);
 }
 
@@ -166,5 +167,6 @@ void GLViewpointBuffer::Clear()
 {
 	// Index 0 is reserved for the 2D projection.
 	mUploadIndex = 1;
+	mClipPlaneInfo.Resize(1);
 }
 
